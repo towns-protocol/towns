@@ -2,13 +2,12 @@
 pragma solidity ^0.8.23;
 
 // interfaces
-import {IProxy} from "../IProxy.sol";
 
 // libraries
 
 // contracts
 
-interface IManagedProxyBase is IProxy {
+interface IManagedProxyBase {
   struct ManagedProxyInit {
     bytes4 managerSelector;
     address manager;
@@ -17,4 +16,10 @@ interface IManagedProxyBase is IProxy {
   error ManagedProxy__FetchImplementationFailed();
   error ManagedProxy__InvalidManager();
   error ManagedProxy__InvalidManagerSelector();
+}
+
+interface IManagedProxy is IManagedProxyBase {
+  function getManager() external view returns (address);
+
+  function setManager(address manager) external;
 }

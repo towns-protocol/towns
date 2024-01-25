@@ -1016,11 +1016,11 @@
       ]
     },
     "contracts/src/diamond/proxy/managed/IManagedProxy.sol": {
-      "keccak256": "0x9c9d89e121fae4722576b7ce352f2f365d2c66f57667bbe10f49b6ebc892c9f3",
+      "keccak256": "0xfe2eb6696cc83c8679684e309a4dbe8a67a89871f66ea07e7ccefc39ecb5c1a0",
       "license": "Apache-2.0",
       "urls": [
-        "bzz-raw://502c07192626f1368a5fb6cb90c098aebcd9b6474f071647a7903231056f9330",
-        "dweb:/ipfs/QmWm2dGXn7Ves4uTuYuwyU87TssKeS2WS8bhaNBxvB6XLk"
+        "bzz-raw://982de386c295ba17d4440c952513acd2e27c0a143e9939f59824d0a603eef9dc",
+        "dweb:/ipfs/QmaboWYqrswF6UP3K9RBR2R7YcSd1mm7ZGTtbydMeCAQcS"
       ]
     },
     "contracts/src/diamond/proxy/managed/ManagedProxyBase.sol": {

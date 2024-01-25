@@ -11,6 +11,7 @@ import {IDiamond, Diamond} from "contracts/src/diamond/Diamond.sol";
 import {OwnableHelper} from "contracts/test/diamond/ownable/OwnableSetup.sol";
 import {DiamondCutHelper} from "contracts/test/diamond/cut/DiamondCutSetup.sol";
 import {DiamondLoupeHelper} from "contracts/test/diamond/loupe/DiamondLoupeSetup.sol";
+import {ManagedProxyHelper} from "contracts/test/diamond/proxy/ManagedProxyHelper.sol";
 import {MultiInit} from "contracts/src/diamond/initializers/MultiInit.sol";
 
 /// @title MockDiamondHelper
@@ -20,14 +21,16 @@ contract MockDiamondHelper is TestUtils {
     OwnableHelper ownableHelper = new OwnableHelper();
     DiamondCutHelper diamondCutHelper = new DiamondCutHelper();
     DiamondLoupeHelper diamondLoupeHelper = new DiamondLoupeHelper();
+    ManagedProxyHelper managedProxyHelper = new ManagedProxyHelper();
     MultiInit multiInit = new MultiInit();
 
-    uint256 cutCount = 3;
+    uint256 cutCount = 4;
 
     Diamond.FacetCut[] memory cuts = new Diamond.FacetCut[](cutCount);
     cuts[0] = ownableHelper.makeCut(IDiamond.FacetCutAction.Add);
     cuts[1] = diamondCutHelper.makeCut(IDiamond.FacetCutAction.Add);
     cuts[2] = diamondLoupeHelper.makeCut(IDiamond.FacetCutAction.Add);
+    cuts[3] = managedProxyHelper.makeCut(IDiamond.FacetCutAction.Add);
 
     address[] memory addresses = new address[](cutCount);
     bytes[] memory payloads = new bytes[](cutCount);
@@ -35,10 +38,12 @@ contract MockDiamondHelper is TestUtils {
     addresses[0] = ownableHelper.facet();
     addresses[1] = diamondCutHelper.facet();
     addresses[2] = diamondLoupeHelper.facet();
+    addresses[3] = managedProxyHelper.facet();
 
     payloads[0] = ownableHelper.makeInitData(owner);
     payloads[1] = diamondCutHelper.makeInitData("");
     payloads[2] = diamondLoupeHelper.makeInitData("");
+    payloads[3] = managedProxyHelper.makeInitData("");
 
     return
       new Diamond(

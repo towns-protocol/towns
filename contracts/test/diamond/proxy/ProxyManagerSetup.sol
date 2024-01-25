@@ -9,32 +9,35 @@ import {IDiamond, Diamond} from "contracts/src/diamond/Diamond.sol";
 // contracts
 import {FacetHelper, FacetTest} from "contracts/test/diamond/Facet.t.sol";
 import {ProxyManager} from "contracts/src/diamond/proxy/manager/ProxyManager.sol";
-import {ManagedProxy} from "contracts/src/diamond/proxy/managed/ManagedProxy.sol";
 
 // helpers
 import {OwnableHelper} from "contracts/test/diamond/ownable/OwnableSetup.sol";
 import {DiamondLoupeHelper} from "contracts/test/diamond/loupe/DiamondLoupeSetup.sol";
-import {MockDiamondHelper} from "contracts/test/mocks/MockDiamond.sol";
-
 import {MultiInit} from "contracts/src/diamond/initializers/MultiInit.sol";
+
+// mocks
+import {MockDiamondHelper} from "contracts/test/mocks/MockDiamond.sol";
+import {MockOwnableManagedProxy} from "contracts/test/mocks/MockOwnableManagedProxy.sol";
 
 abstract contract ProxyManagerSetup is FacetTest {
   address internal proxyOwner;
+  address internal proxyTokenOwner;
 
   ProxyManager internal proxyManager;
-  ManagedProxy internal proxy;
+  MockOwnableManagedProxy internal proxy;
   Diamond internal implementation;
 
   function setUp() public virtual override {
     super.setUp();
 
     proxyOwner = _randomAddress();
+    proxyTokenOwner = _randomAddress();
     proxyManager = ProxyManager(diamond);
 
-    // Create a managed proxy
+    // Create an ownable managed proxy
     // The owner of the managed proxy is a proxyOwner
     vm.prank(proxyOwner);
-    proxy = new ManagedProxy(
+    proxy = new MockOwnableManagedProxy(
       ProxyManager.getImplementation.selector,
       address(proxyManager)
     );

@@ -6,6 +6,7 @@ import {IDiamond} from "contracts/src/diamond/Diamond.sol";
 import {IDiamondCut} from "contracts/src/diamond/facets/cut/IDiamondCut.sol";
 import {IERC173} from "contracts/src/diamond/facets/ownable/IERC173.sol";
 import {IProxyManager} from "contracts/src/diamond/proxy/manager/IProxyManager.sol";
+import {IManagedProxy} from "contracts/src/diamond/proxy/managed/IManagedProxy.sol";
 
 // libraries
 
@@ -83,5 +84,21 @@ contract ProxyManagerTest is ProxyManagerSetup {
     // assert facet function is not callable from implementation
     vm.expectRevert();
     IMockFacet(address(implementation)).mockFunction();
+  }
+
+  function test_setManager() external {
+    address currentManager = IManagedProxy(address(proxy)).getManager();
+
+    assertEq(currentManager, address(proxyManager));
+
+    address newManager = _randomAddress();
+
+    // We're opting out of using the proxy manager
+    vm.prank(proxyOwner);
+    IManagedProxy(address(proxy)).setManager(newManager);
+
+    // since we changed the manager, we should no longer be able to call the mock function
+    vm.expectRevert();
+    IMockFacet(address(proxy)).mockFunction();
   }
 }
