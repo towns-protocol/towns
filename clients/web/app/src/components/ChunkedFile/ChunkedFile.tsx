@@ -54,35 +54,34 @@ const ChunkedFileDownload = (props: Props) => {
     )
 
     return (
-        <Stack horizontal>
-            <Stack
-                horizontal
-                gap
-                paddingX="md"
-                paddingY="sm"
-                width="auto"
-                border="level3"
-                rounded="sm"
-                pointerEvents="auto"
-                cursor="pointer"
-                alignItems="center"
-                onClick={onDownloadClicked}
-            >
-                <Icon type="file" size="square_md" color="gray2" />
-                <Stack gap="sm">
-                    <Text fontWeight="medium" color="default" size="md">
-                        {filename}
+        <Stack
+            horizontal
+            gap
+            paddingX="md"
+            paddingY="sm"
+            border="level3"
+            rounded="sm"
+            pointerEvents="auto"
+            cursor="pointer"
+            alignItems="center"
+            maxWidth="300"
+            tooltip={filename}
+            onClick={onDownloadClicked}
+        >
+            <Icon type="file" size="square_md" color="gray2" />
+            <Stack gap="sm" overflow="hidden">
+                <Text truncate fontWeight="medium" color="default" size="md">
+                    {filename}
+                </Text>
+                {mimetype.length > 0 && (
+                    <Text truncate color="gray2" size="sm">
+                        {mimetype}
                     </Text>
-                    {mimetype.length > 0 && (
-                        <Text color="gray2" size="sm">
-                            {mimetype}
-                        </Text>
-                    )}
-                </Stack>
-                <Button tone="level2" color="gray2" border="level3" size="button_sm" rounded="sm">
-                    <Icon type="download" color="gray2" size="square_sm" />
-                </Button>
+                )}
             </Stack>
+            <Button tone="level2" color="gray2" border="level3" size="button_sm" rounded="sm">
+                <Icon type="download" color="gray2" size="square_sm" />
+            </Button>
         </Stack>
     )
 }
