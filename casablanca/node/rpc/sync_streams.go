@@ -584,7 +584,7 @@ func (n *syncNode) syncRemoteNode(
 		}
 	}()
 
-	stream, err := n.stub.SyncStreams(
+	responseStream, err := n.stub.SyncStreams(
 		ctx,
 		&connect_go.Request[protocol.SyncStreamsRequest]{
 			Msg: &protocol.SyncStreamsRequest{
@@ -598,13 +598,23 @@ func (n *syncNode) syncRemoteNode(
 		return
 	}
 
-	n.remoteSyncId = stream.Msg().SyncId
+	if !responseStream.Receive() {
+		receiver.OnSyncError(responseStream.Err())
+		return
+	}
+
+	if responseStream.Msg().SyncOp != protocol.SyncOp_SYNC_NEW || responseStream.Msg().SyncId == "" {
+		receiver.OnSyncError(base.RiverError(protocol.Err_INTERNAL, "first sync response should be SYNC_NEW and have SyncId").Func("syncRemoteNode"))
+		return
+	}
+
+	n.remoteSyncId = responseStream.Msg().SyncId
 	n.forwarderSyncId = forwarderSyncId
 
-	if !n.setStream(stream) {
+	if !n.setStream(responseStream) {
 		log.Debug("SyncStreams: syncRemoteNode already closed")
 		// means that n.close() was already called.
-		stream.Close()
+		responseStream.Close()
 		return
 	}
 
@@ -613,22 +623,22 @@ func (n *syncNode) syncRemoteNode(
 		return
 	}
 
-	for stream.Receive() {
+	for responseStream.Receive() {
 		if ctx.Err() != nil || n.isClosed() {
 			log.Debug("SyncStreams: syncRemoteNode receive canceled", "context_error", ctx.Err())
 			return
 		}
 
-		log.Debug("SyncStreams: syncRemoteNode received update", "resp", stream.Msg())
+		log.Debug("SyncStreams: syncRemoteNode received update", "resp", responseStream.Msg())
 
-		receiver.OnUpdate(stream.Msg().GetStream())
+		receiver.OnUpdate(responseStream.Msg().GetStream())
 	}
 
 	if ctx.Err() != nil || n.isClosed() {
 		return
 	}
 
-	if err := stream.Err(); err != nil {
+	if err := responseStream.Err(); err != nil {
 		log.Debug("SyncStreams: syncRemoteNode receive failed", "err", err)
 		receiver.OnSyncError(err)
 		return
