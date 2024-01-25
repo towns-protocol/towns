@@ -41,16 +41,12 @@ function deploy_and_wait() {
         --service=${SERVICE_NAME} \
         --cluster=${CLUSTER_NAME} \
         --task-definition=${TASK_DEFINITION_ARN} > /dev/null \
-        --force-new-deployment
-}
+        --enable-execute-command
 
-function main() {
-   # Run the deploy and wait function, with a timeout of 10 minutes
-   deploy_and_wait
    if ! ( timeout 600 aws ecs wait services-stable --cluster="${CLUSTER_NAME}" --services="${SERVICE_NAME}" ); then
         echo "Service failed to stabilize in time"
         exit 1
     fi
 }
 
-main
+deploy_and_wait

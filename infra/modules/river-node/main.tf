@@ -95,30 +95,6 @@ resource "aws_iam_role" "ecs_task_execution_role" {
   tags = module.global_constants.tags
 }
 
-resource "aws_iam_policy" "ssm_policy" {
-  name = "${local.node_name}-ssmPolicy"
-  policy = jsonencode({
-    "Version" : "2012-10-17",
-    "Statement" : [
-      {
-        "Effect" : "Allow",
-        "Action" : [
-          "ssmmessages:CreateControlChannel",
-          "ssmmessages:CreateDataChannel",
-          "ssmmessages:OpenControlChannel",
-          "ssmmessages:OpenDataChannel"
-        ],
-        "Resource" : "*"
-      }
-    ]
-  })
-}
-
-resource "aws_iam_role_policy_attachment" "ssm_policy_attachment" {
-  role       = aws_iam_role.ecs_task_execution_role.name
-  policy_arn = aws_iam_policy.ssm_policy.arn
-}
-
 # Behind the load balancer
 module "river_internal_sg" {
   source = "terraform-aws-modules/security-group/aws"
@@ -262,6 +238,26 @@ resource "aws_iam_role_policy" "river_node_credentials" {
   EOF
 }
 
+resource "aws_iam_role_policy" "ssm_policy" {
+  name = "${local.node_name}-ssmPolicy"
+  role = aws_iam_role.ecs_task_execution_role.id
+
+  policy = jsonencode({
+    "Version" : "2012-10-17",
+    "Statement" : [
+      {
+        "Effect" : "Allow",
+        "Action" : [
+          "ssmmessages:CreateControlChannel",
+          "ssmmessages:CreateDataChannel",
+          "ssmmessages:OpenControlChannel",
+          "ssmmessages:OpenDataChannel"
+        ],
+        "Resource" : "*"
+      }
+    ]
+  })
+}
 resource "aws_lb_target_group" "blue" {
   name        = "${local.node_name}-blue"
   protocol    = "HTTP"
@@ -272,7 +268,7 @@ resource "aws_lb_target_group" "blue" {
 
   health_check {
     path                = "/info"
-    interval            = 30
+    interval            = 15
     timeout             = 6
     healthy_threshold   = 2
     unhealthy_threshold = 2
@@ -290,7 +286,7 @@ resource "aws_lb_target_group" "green" {
 
   health_check {
     path                = "/info"
-    interval            = 30
+    interval            = 15
     timeout             = 6
     healthy_threshold   = 2
     unhealthy_threshold = 2
@@ -606,8 +602,8 @@ resource "aws_ecs_service" "river-ecs-service" {
   cluster                            = var.ecs_cluster.id
   task_definition                    = aws_ecs_task_definition.river-fargate.arn
   desired_count                      = 1
-  deployment_minimum_healthy_percent = 0
-  deployment_maximum_percent         = 100
+  deployment_minimum_healthy_percent = 50
+  deployment_maximum_percent         = 200
 
   # do not attempt to create the service before the lambda runs
   depends_on = [
