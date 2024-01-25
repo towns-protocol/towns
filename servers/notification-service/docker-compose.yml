@@ -1,0 +1,27 @@
+version: '3'
+services:
+  server:
+    build:
+      context: ../../
+      dockerfile: ./servers/notification-service/Dockerfile
+    ports:
+      - '3030:3030'
+    environment:
+      - DATABASE_URL=postgres://postgres:password@db:5432/postgres
+    depends_on:
+      - db
+    volumes:
+      - .:/app
+      - /app/node_modules
+    command: yarn dev
+  db:
+    image: postgres:13
+    environment:
+      - POSTGRES_USER=postgres
+      - POSTGRES_PASSWORD=password
+      - POSTGRES_DB=postgres
+    volumes:
+      - postgres_data:/var/lib/postgresql/data/
+
+volumes:
+  postgres_data:
