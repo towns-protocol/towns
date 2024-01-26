@@ -9,7 +9,7 @@ export const TopBar = () => {
     return (
         <Stack horizontal minHeight="x7">
             <Box centerContent width="x8">
-                <a href="https://towns.com" rel="noreferrer, noopener">
+                <a href="https://towns.com" rel=", noopener noreferrer" target="_blank">
                     <LogoSingleLetter />
                 </a>
             </Box>
