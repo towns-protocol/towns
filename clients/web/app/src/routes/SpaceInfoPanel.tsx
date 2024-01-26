@@ -338,7 +338,7 @@ export const SpaceInfoPanel = () => {
                 <MdGap>
                     <>
                         <Paragraph strong color="default">
-                            Owner
+                            Founder
                         </Paragraph>
                         {spaceOwner && ownerProfileLink ? (
                             <>
