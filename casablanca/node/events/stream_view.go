@@ -249,7 +249,7 @@ func (r *streamViewImpl) makeMiniblockHeader(
 			}
 		}
 		// update with current events in minipool
-		for i, e := range r.minipool.events.Values {
+		for i, e := range events {
 			err := Update_Snapshot(snapshot, e, nextMiniblockNum, eventNumOffset+int64(i))
 			if err != nil {
 				log.Error("Failed to update snapshot",
