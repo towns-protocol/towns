@@ -1,6 +1,6 @@
 import { useCallback, useEffect, useMemo, useState } from 'react'
 import { useZionContext } from '../components/ZionContextProvider'
-import { Channel, Membership, SpaceData } from '../types/zion-types'
+import { Channel, SpaceData } from '../types/zion-types'
 import isEqual from 'lodash/isEqual'
 import { isChannelStreamId, isSpaceStreamId } from '@river/sdk'
 
@@ -49,14 +49,22 @@ function useMyMembershipsCasablanca(channelIds: string[]) {
         if (!userId) {
             return
         }
+
+        if (!casablancaClient || !casablancaClient.userStreamId) {
+            return
+        }
+        const userStream = casablancaClient.streams.get(casablancaClient.userStreamId)
+        if (!userStream) {
+            return
+        }
+
         const inChannelIdSet = new Set(channelIds.map((channelId) => channelId))
         const updateState = () => {
             const memberships = new Set(
                 channelIds
                     .filter((channelId) => {
                         try {
-                            const roomData = client?.getRoomData(channelId)
-                            return roomData?.membership === Membership.Join
+                            return userStream.view.userContent.userJoinedStreams.has(channelId)
                         } catch (error) {
                             return false
                         }
