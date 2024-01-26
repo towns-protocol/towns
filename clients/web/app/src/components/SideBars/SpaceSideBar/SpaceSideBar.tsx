@@ -26,11 +26,11 @@ import { PATHS } from 'routes'
 import { AllChannelsList } from 'routes/AllChannelsList/AllChannelsList'
 import { useStore } from 'store/store'
 import { SideBar } from '../_SideBar'
-import { CondensedChannelNavItem } from './DirectMessageChannelList'
 import { SidebarListLayout } from './SidebarListLayout'
 import * as styles from './SpaceSideBar.css'
 import { SpaceSideBarHeader } from './SpaceSideBarHeader'
 import { SidebarLoadingAnimation } from './SpaceSideBarLoading'
+import { CondensedChannelNavItem } from './CondensedChannelNavItem'
 
 type Props = {
     space: SpaceData
@@ -261,6 +261,7 @@ export const SpaceSideBar = (props: Props) => {
                                         icon="compose"
                                         color="gray2"
                                         cursor="pointer"
+                                        tooltip="New message"
                                         onClick={onDisplayCreate}
                                     />
                                 }
