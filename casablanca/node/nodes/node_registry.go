@@ -12,6 +12,7 @@ import (
 	"github.com/river-build/river/dlog"
 	. "github.com/river-build/river/protocol"
 	. "github.com/river-build/river/protocol/protocolconnect"
+	"golang.org/x/net/http2"
 
 	"github.com/bufbuild/connect-go"
 )
@@ -83,10 +84,13 @@ func LoadNodeRegistry(ctx context.Context, nodeRegistryPath string, localNodeAdd
 
 	log.Info("Node Registry Loaded", "Nodes", registry.Nodes, "localAddress", localNodeAddress)
 
+	http2Transport := &http2.Transport{}
+	httpClient2 := &http.Client{Transport: http2Transport}
+
 	n := &nodeRegistryImpl{
 		nodes:      make(map[string]*NodeRecord),
 		nodesFlat:  make([]*NodeRecord, 0, len(registry.Nodes)),
-		httpClient: &http.Client{},
+		httpClient: httpClient2,
 	}
 	localFound := false
 	for _, node := range registry.Nodes {
@@ -115,11 +119,13 @@ func NewNodeRegistryFromString(ctx context.Context, nodeRegistryString string, l
 	log.Info("Loading node registry from string", "nodeRegistryString", nodeRegistryString, "localAddress", localNodeAddress)
 
 	vals := strings.Split(nodeRegistryString, ",")
+	http2Transport := &http2.Transport{}
+	httpClient2 := &http.Client{Transport: http2Transport}
 
 	n := &nodeRegistryImpl{
 		nodes:      make(map[string]*NodeRecord),
 		nodesFlat:  make([]*NodeRecord, 0, len(vals)/2),
-		httpClient: &http.Client{},
+		httpClient: httpClient2,
 	}
 	localFound := false
 	for i := 0; i < len(vals); i += 2 {
@@ -162,10 +168,13 @@ func MakeSingleNodeRegistry(ctx context.Context, localNodeAddress string) *nodeR
 		address: localNodeAddress,
 		local:   true,
 	}
+	http2Transport := &http2.Transport{}
+	httpClient2 := &http.Client{Transport: http2Transport}
+
 	return &nodeRegistryImpl{
 		nodes:      map[string]*NodeRecord{localNodeAddress: nn},
 		nodesFlat:  []*NodeRecord{nn},
-		httpClient: &http.Client{},
+		httpClient: httpClient2,
 	}
 }
 
