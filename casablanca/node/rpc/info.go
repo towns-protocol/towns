@@ -64,9 +64,19 @@ func (s *Service) info(
 			}
 			streamId := request.Msg.Debug[1]
 			log.Info("Info Debug request to make miniblock", "stream_id", streamId)
-			err := s.debugMakeMiniblock(ctx, streamId)
-			if err != nil {
-				return nil, err
+			retryCount := 0
+			// the miniblock creation can clash with the scheduled miniblock creation, so we retry a few times
+			for {
+				err := s.debugMakeMiniblock(ctx, streamId)
+				if err != nil {
+					if retryCount < 3 {
+						log.Warn("Failed to make miniblock, retrying", "error", err)
+						retryCount++
+						continue
+					}
+					return nil, err
+				}
+				break
 			}
 			return connect_go.NewResponse(&InfoResponse{}), nil
 		}
