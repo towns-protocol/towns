@@ -7,6 +7,7 @@ import (
 	. "github.com/river-build/river/base"
 	"github.com/river-build/river/config"
 	"github.com/river-build/river/crypto"
+	"github.com/river-build/river/dlog"
 	. "github.com/river-build/river/protocol"
 	"github.com/river-build/river/storage"
 )
@@ -145,12 +146,16 @@ func (s *streamCacheImpl) GetLoadedViews(ctx context.Context) []StreamView {
 }
 
 func (s *streamCacheImpl) onNewBlock(ctx context.Context, blockNum int64, blockHash []byte) {
+	log := dlog.CtxLog(ctx)
+	log.Debug("onNewBlock: ENTER producing new miniblocks", "blockNum", blockNum, "blockHash", blockHash)
+
 	// Try lock to have only one invocation at a time. Previous onNewBlock may still be running.
 	if !s.onNewBlockMutex.TryLock() {
 		return
 	}
 	defer s.onNewBlockMutex.Unlock()
 
+	var total, errors, produced int
 	s.cache.Range(func(key, value interface{}) bool {
 		stream := value.(*streamImpl)
 
@@ -158,10 +163,18 @@ func (s *streamCacheImpl) onNewBlock(ctx context.Context, blockNum int64, blockH
 			// TODO: replace with vote
 			// For now: only first assigned node produces blocks.
 			if stream.nodes.localNodeIndex == 0 {
+				total++
 				// Nothing to do on error, MakeMiniblock logs on error level if there is an error.
-				_ = stream.MakeMiniblock(ctx)
+				ok, err := stream.MakeMiniblock(ctx)
+				if err != nil {
+					errors++
+				} else if ok {
+					produced++
+				}
 			}
 		}
 		return true
 	})
+
+	log.Debug("onNewBlock: EXIT produced new miniblocks", "blockNum", blockNum, "total", total, "errors", errors, "produced", produced)
 }

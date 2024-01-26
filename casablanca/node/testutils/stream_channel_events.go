@@ -38,7 +38,7 @@ type StreamContext_T struct {
 
 func (s *StreamContext_T) Refresh() *StreamContext_T {
 	// force a new miniblock to be created so that the stream view is updated
-	_ = s.SyncStream.MakeMiniblock(s.Context)
+	_, _ = s.SyncStream.MakeMiniblock(s.Context)
 	// reload the stream and the view
 	syncStream, streamView, err := s.StreamCache.GetStream(s.Context, s.StreamView.StreamId(), getStreamNodes())
 	assert.NoError(s.t, err)

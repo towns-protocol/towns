@@ -39,7 +39,8 @@ type SyncStream interface {
 	Sub(ctx context.Context, cookie *SyncCookie, receiver SyncResultReceiver) error
 	Unsub(receiver SyncResultReceiver)
 
-	MakeMiniblock(ctx context.Context) error // TODO: doesn't seem pertinent to SyncStream
+	// Returns true if miniblock was created, false if not.
+	MakeMiniblock(ctx context.Context) (bool, error) // TODO: doesn't seem pertinent to SyncStream
 }
 
 func SyncStreamsResponseFromStreamAndCookie(result *StreamAndCookie) *SyncStreamsResponse {
@@ -178,33 +179,34 @@ func (s *streamImpl) ApplyMiniblock(ctx context.Context, miniblockHeader *Minibl
 	return nil
 }
 
-func (s *streamImpl) MakeMiniblock(ctx context.Context) error {
+// Returns true if miniblock was created, false if not.
+func (s *streamImpl) MakeMiniblock(ctx context.Context) (bool, error) {
 	log := dlog.CtxLog(ctx)
 
 	proposal, err := s.ProposeNextMiniblock(ctx)
 	if err != nil {
 		log.Error("Stream.MakeMiniblock: ProposeNextMiniblock failed", "error", err, "streamId", s.streamId)
-		return err
+		return false, err
 	}
 	if proposal == nil {
-		return nil
+		return false, nil
 	}
 
 	miniblockHeader, envelopes, err := s.MakeMiniblockHeader(ctx, proposal)
 	if err != nil {
 		log.Error("Stream.MakeMiniblock: MakeMiniblockHeader failed", "error", err, "streamId", s.streamId)
-		return err
+		return false, err
 	}
 	if miniblockHeader == nil {
-		return nil
+		return false, nil
 	}
 
 	err = s.ApplyMiniblock(ctx, miniblockHeader, envelopes)
 	if err != nil {
 		log.Error("Stream.MakeMiniblock: ApplyMiniblock failed", "error", err, "streamId", s.streamId)
-		return err
+		return false, err
 	}
-	return nil
+	return true, nil
 }
 
 func createStream(

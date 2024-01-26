@@ -97,6 +97,7 @@ func (s *Service) debugMakeMiniblock(ctx context.Context, streamId string) error
 		if err != nil {
 			return err
 		}
-		return stream.MakeMiniblock(ctx)
+		_, err = stream.MakeMiniblock(ctx)
+		return err
 	}
 }

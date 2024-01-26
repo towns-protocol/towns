@@ -25,7 +25,7 @@ func NewFakeBlockMonitor(ctx context.Context, fakeBlockTimeMs int64) *fakeBlockM
 	if fakeBlockTimeMs <= 0 {
 		blockTime = time.Second * 2
 	} else {
-		blockTime = time.Microsecond * time.Duration(fakeBlockTimeMs)
+		blockTime = time.Millisecond * time.Duration(fakeBlockTimeMs)
 	}
 
 	go b.runTicker(blockTime)
