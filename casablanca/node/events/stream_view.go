@@ -513,7 +513,8 @@ func (r *streamViewImpl) ValidateNextEvent(parsedEvent *ParsedEvent, config *con
 		)
 	}
 	// make sure we're recent
-	if !r.isRecentBlock(r.blocks[foundBlockAt], config) {
+	// if the user isn't adding the latest block, allow it if the block after was recently created
+	if foundBlockAt < len(r.blocks)-1 && !r.isRecentBlock(r.blocks[foundBlockAt+1], config) {
 		return RiverError(
 			Err_BAD_PREV_MINIBLOCK_HASH,
 			"prevMiniblockHash did not reference a recent block",
@@ -550,9 +551,6 @@ func (r *streamViewImpl) ValidateNextEvent(parsedEvent *ParsedEvent, config *con
 }
 
 func (r *streamViewImpl) isRecentBlock(block *miniblockInfo, config *config.RecencyConstraintsConfig) bool {
-	if block == r.LastBlock() {
-		return true
-	}
 	currentTime := time.Now()
 	maxAgeDuration := time.Duration(config.AgeSeconds) * time.Second
 	diff := currentTime.Sub(block.header().Timestamp.AsTime())

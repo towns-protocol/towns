@@ -189,7 +189,7 @@ func TestLoad(t *testing.T) {
 	join4, err := MakeEnvelopeWithPayload(
 		wallet,
 		Make_UserPayload_Membership(protocol.MembershipOp_SO_LEAVE, "userid$3", "streamid$1", nil),
-		newSV1.blocks[len(newSV1.blocks)-2].Hash,
+		newSV1.blocks[0].Hash,
 	)
 	assert.NoError(t, err)
 	nextEvent = parsedEvent(t, join4)
