@@ -75,16 +75,16 @@ func (s *Service) createStream(ctx context.Context, req *CreateStreamRequest) (*
 		resp, err = s.createStream_Space(ctx, log, parsedEvents, inception)
 
 	case *UserPayload_Inception:
-		resp, err = s.createStream_User(ctx, log, parsedEvents, inception)
+		resp, err = s.createStream_UserPrefix(ctx, log, parsedEvents, inception.StreamId, STREAM_USER_PREFIX_DASH)
 
 	case *UserDeviceKeyPayload_Inception:
-		resp, err = s.createStream_UserDeviceKey(ctx, log, parsedEvents, inception)
+		resp, err = s.createStream_UserPrefix(ctx, log, parsedEvents, inception.StreamId, STREAM_USER_DEVICE_KEY_PREFIX_DASH)
 
 	case *UserSettingsPayload_Inception:
-		resp, err = s.createStream_UserSettings(ctx, log, parsedEvents, inception)
+		resp, err = s.createStream_UserPrefix(ctx, log, parsedEvents, inception.StreamId, STREAM_USER_SETTINGS_PREFIX_DASH)
 
 	case *UserToDevicePayload_Inception:
-		resp, err = s.createStream_UserToDevice(ctx, log, parsedEvents, inception)
+		resp, err = s.createStream_UserPrefix(ctx, log, parsedEvents, inception.StreamId, STREAM_USER_TO_DEVICE_PREFIX_DASH)
 
 	case *MediaPayload_Inception:
 		resp, err = s.createStream_Media(ctx, log, parsedEvents, inception)
@@ -482,103 +482,25 @@ func (s *Service) createStream_Space(
 	return resp, nil
 }
 
-func (s *Service) createStream_User(
+func (s *Service) createStream_UserPrefix(
 	ctx context.Context,
 	log *slog.Logger,
 	parsedEvents []*ParsedEvent,
-	inception *UserPayload_Inception,
+	streamId string,
+	streamPrefix string,
 ) (*CreateStreamResponse, error) {
 	if len(parsedEvents) != 1 {
 		return nil, RiverError(Err_BAD_STREAM_CREATION_PARAMS, "user stream must have only one event")
 	}
 
 	// Validation of creation params.
-	err := CheckUserStreamId(inception.StreamId, parsedEvents[0].Event.CreatorAddress)
+	err := CheckUserStreamIdForPrefix(streamId, parsedEvents[0].Event.CreatorAddress, streamPrefix)
 	if err != nil {
 		return nil, err
 	}
 
 	// TODO: Authorization.
 
-	streamId := inception.GetStreamId()
-	resp, err := s.createReplicatedStream(ctx, streamId, parsedEvents)
-	if err != nil {
-		return nil, err
-	}
-
-	return resp, nil
-}
-
-func (s *Service) createStream_UserToDevice(
-	ctx context.Context,
-	log *slog.Logger,
-	parsedEvents []*ParsedEvent,
-	inception *UserToDevicePayload_Inception,
-) (*CreateStreamResponse, error) {
-	if len(parsedEvents) != 1 {
-		return nil, RiverError(Err_BAD_STREAM_CREATION_PARAMS, "user to device stream must have only one event")
-	}
-
-	err := CheckUserToDeviceStreamId(inception.StreamId, parsedEvents[0].Event.CreatorAddress)
-	if err != nil {
-		return nil, err
-	}
-	// TODO: Authorization.
-	streamId := inception.GetStreamId()
-	resp, err := s.createReplicatedStream(ctx, streamId, parsedEvents)
-	if err != nil {
-		return nil, err
-	}
-
-	return resp, nil
-}
-
-func (s *Service) createStream_UserDeviceKey(
-	ctx context.Context,
-	log *slog.Logger,
-	parsedEvents []*ParsedEvent,
-	inception *UserDeviceKeyPayload_Inception,
-) (*CreateStreamResponse, error) {
-	if len(parsedEvents) != 1 {
-		return nil, RiverError(Err_BAD_STREAM_CREATION_PARAMS, "user device key stream must have only one event")
-	}
-
-	// Validation of creation params.
-	err := CheckUserDeviceKeyStreamId(inception.StreamId, parsedEvents[0].Event.CreatorAddress)
-	if err != nil {
-		return nil, err
-	}
-
-	// TODO: Authorization.
-
-	streamId := inception.GetStreamId()
-	resp, err := s.createReplicatedStream(ctx, streamId, parsedEvents)
-	if err != nil {
-		return nil, err
-	}
-
-	return resp, nil
-}
-
-func (s *Service) createStream_UserSettings(
-	ctx context.Context,
-	log *slog.Logger,
-	parsedEvents []*ParsedEvent,
-	inception *UserSettingsPayload_Inception,
-) (*CreateStreamResponse, error) {
-	if len(parsedEvents) != 1 {
-		return nil, RiverError(Err_BAD_STREAM_CREATION_PARAMS, "user settings stream must have only one event")
-	}
-
-	// Validation of creation params.
-	err := CheckUserSettingsStreamId(inception.StreamId, parsedEvents[0].Event.CreatorAddress)
-	if err != nil {
-		return nil, err
-	}
-
-	// TODO: Authorization.
-
-	streamId := inception.GetStreamId()
 	resp, err := s.createReplicatedStream(ctx, streamId, parsedEvents)
 	if err != nil {
 		return nil, err
