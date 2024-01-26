@@ -52,14 +52,14 @@ export const ValidateMembership = () => {
 
     const isMember = space?.membership === Membership.Join
 
-    if (!isMember) {
+    if (space && !space.isLoadingMemberships && !isMember) {
         return <PublicTownPage />
     }
 
     return (
         <>
             <Outlet />
-            {!usernameConfirmed && <SetUsernameForm spaceData={space} />}
+            {space && !usernameConfirmed && <SetUsernameForm spaceData={space} />}
         </>
     )
 }

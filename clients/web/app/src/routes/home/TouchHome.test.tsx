@@ -42,6 +42,7 @@ const mockSpaceData: Lib.SpaceData = {
     ],
     membership: '',
     isLoadingChannels: false,
+    isLoadingMemberships: false,
 }
 
 const mockChainSpace = {
