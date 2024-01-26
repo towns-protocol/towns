@@ -9,7 +9,7 @@ import { useZionClientListener } from '../hooks/use-zion-client-listener'
 import { Room, SpaceHierarchies, SpaceItem } from '../types/zion-types'
 import { Web3ContextProvider } from './Web3ContextProvider'
 import { QueryProvider } from './QueryProvider'
-import { Client as CasablancaClient } from '@river/sdk'
+import { Client as CasablancaClient, ClientInitStatus } from '@river/sdk'
 import { useCasablancaTimelines } from '../hooks/ZionContext/useCasablancaTimelines'
 import { useCasablancaRooms } from '../hooks/ZionContext/useCasablancaRooms'
 import { useCasablancaDMs } from '../hooks/CasablancClient/useCasablancaDMs'
@@ -17,7 +17,7 @@ import { DMChannelIdentifier } from '../types/dm-channel-identifier'
 import { useDMUnreads } from '../hooks/ZionContext/useDMUnreads'
 import { useTimelineFilter } from '../store/use-timeline-filter'
 import { ZTEvent } from '../types/timeline-types'
-import { useStreamSyncActive } from '../hooks/ZionContext/useStreamSyncActive'
+import { useClientInitStatus } from '../hooks/ZionContext/useClientInitStatus'
 import { GlobalContextUserLookupProvider } from './UserLookupContextProviders'
 import { ZionOpts } from '../client/ZionClientTypes'
 import { Chain } from 'viem/chains'
@@ -38,7 +38,7 @@ export interface IZionContext {
     spaceHierarchies: SpaceHierarchies
     dmChannels: DMChannelIdentifier[]
     dmUnreadChannelIds: Set<string> // dmChannelId -> set of channelIds with unreads
-    streamSyncActive: boolean
+    clientStatus: ClientInitStatus & { streamSyncActive: boolean }
 }
 
 export const ZionContext = createContext<IZionContext | undefined>(undefined)
@@ -123,7 +123,7 @@ const ZionContextImpl = (props: ZionContextProviderProps): JSX.Element => {
     })
     const { invitedToIds } = useSpacesIds(casablancaClient)
     useContentAwareTimelineDiffCasablanca(casablancaClient)
-    const { streamSyncActive } = useStreamSyncActive(casablancaClient)
+    const { clientStatus } = useClientInitStatus(casablancaClient)
     const { spaces } = useSpaces(casablancaClient)
     const { channels: dmChannels } = useCasablancaDMs(casablancaClient)
     const spaceHierarchies = useCasablancaSpaceHierarchies(casablancaClient)
@@ -159,7 +159,7 @@ const ZionContextImpl = (props: ZionContextProviderProps): JSX.Element => {
                 dmChannels,
                 dmUnreadChannelIds,
                 casablancaServerUrl: casablancaServerUrl,
-                streamSyncActive,
+                clientStatus,
             }}
         >
             <GlobalContextUserLookupProvider>{props.children}</GlobalContextUserLookupProvider>

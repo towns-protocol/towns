@@ -98,6 +98,7 @@ import {
     ParsedStreamResponse,
     make_GDMChannelPayload_ChannelProperties,
     ParsedMiniblock,
+    ClientInitStatus,
 } from './types'
 
 import debug from 'debug'
@@ -192,6 +193,7 @@ export class Client
         this.syncedStreamsExtensions = new SyncedStreamsExtension({
             startSyncStreams: () => this.streams.startSyncStreams(),
             initStream: (streamId, allowGetStream) => this.initStream(streamId, allowGetStream),
+            emitClientInitStatus: (status) => this.emit('clientInitStatusUpdated', status),
             emitStreamSyncActive: (active) => this.emit('streamSyncActive', active),
         })
 
@@ -201,6 +203,11 @@ export class Client
 
     get streamSyncActive(): boolean {
         return this.streams.syncState === SyncState.Syncing
+    }
+
+    get clientInitStatus(): ClientInitStatus {
+        check(this.syncedStreamsExtensions !== undefined, 'syncedStreamsExtensions must be set')
+        return this.syncedStreamsExtensions.initStatus
     }
 
     get cryptoEnabled(): boolean {

@@ -15,7 +15,7 @@ export function BetaDebugger() {
     const show = () => setIsVisible(true)
     const hide = () => setIsVisible(false)
     const { errorMessage, clearSiteData } = useClearSiteData()
-    const { streamSyncActive } = useZionContext()
+    const { clientStatus } = useZionContext()
     const [mismatchedActiveWallet, setMismatchedActiveWallet] = useState(false)
     const { isOffline } = useNetworkStatus()
 
@@ -34,10 +34,15 @@ export function BetaDebugger() {
                         width="x1"
                         height="x1"
                         rounded="full"
-                        background={streamSyncActive && !isOffline ? 'cta1' : 'error'}
+                        background={clientStatus.streamSyncActive && !isOffline ? 'cta1' : 'error'}
                     />
-                    <Text color={streamSyncActive && !isOffline ? 'cta1' : 'error'} fontSize="sm">
-                        {streamSyncActive && !isOffline ? 'Sync active' : 'Sync Offline'}
+                    <Text
+                        color={clientStatus.streamSyncActive && !isOffline ? 'cta1' : 'error'}
+                        fontSize="sm"
+                    >
+                        {clientStatus.streamSyncActive && !isOffline
+                            ? 'Sync active'
+                            : 'Sync Offline'}
                     </Text>
                 </Stack>
 

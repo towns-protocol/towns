@@ -8,6 +8,7 @@ import {
 } from './id'
 import { check, dlog, dlogError } from '@river/waterproof'
 import { Stream } from './stream'
+import { ClientInitStatus } from './types'
 
 interface StreamSyncItem {
     streamId: string
@@ -17,6 +18,7 @@ interface StreamSyncItem {
 interface SyncedStreamsExtensionDelegate {
     startSyncStreams: () => Promise<void>
     initStream(streamId: string, allowGetStream: boolean): Promise<Stream>
+    emitClientInitStatus: (status: ClientInitStatus) => void
     emitStreamSyncActive: (active: boolean) => void
 }
 
@@ -34,6 +36,14 @@ export class SyncedStreamsExtension {
     private timeoutId?: NodeJS.Timeout
     private highPriorityIds = new Set<string>()
     private startSyncRequested = false
+    initStatus: ClientInitStatus = {
+        isLocalDataLoaded: false,
+        isRemoteDataLoaded: false,
+        progress: 0,
+    }
+    // Need these for progress calculation
+    private totalStreamCount = 0
+    private loadedStreamCount = 0
 
     constructor(delegate: SyncedStreamsExtensionDelegate) {
         this.delegate = delegate
@@ -47,6 +57,7 @@ export class SyncedStreamsExtension {
         this.queue.push(item)
         this.queue.sort((a, b) => a.priority - b.priority)
         this.checkStartTicking()
+        this.totalStreamCount++
     }
 
     public setHighPriority(streamIds: string[]) {
@@ -82,6 +93,7 @@ export class SyncedStreamsExtension {
             this.nonCachedQueue.length === 0 &&
             !this.startSyncRequested
         ) {
+            this.emitClientStatus()
             return
         }
 
@@ -121,9 +133,11 @@ export class SyncedStreamsExtension {
                             item.streamId,
                             this.highPriorityIds.has(item.streamId),
                         )
+                        this.loadedStreamCount++
                     } catch (err) {
                         this.nonCachedQueue.push(item)
                     }
+                    this.emitClientStatus()
                 }),
             )
         } else if (this.startSyncRequested) {
@@ -142,6 +156,8 @@ export class SyncedStreamsExtension {
                     } catch (err) {
                         this.log('Error initializing stream', item.streamId)
                     }
+                    this.loadedStreamCount++
+                    this.emitClientStatus()
                 }),
             )
         }
@@ -155,6 +171,15 @@ export class SyncedStreamsExtension {
             this.logError('sync failure', err)
             this.delegate.emitStreamSyncActive(false)
         }
+    }
+
+    private emitClientStatus() {
+        this.initStatus.isLocalDataLoaded = this.queue.length === 0
+        this.initStatus.isRemoteDataLoaded = this.nonCachedQueue.length === 0
+        if (this.totalStreamCount > 0) {
+            this.initStatus.progress = this.loadedStreamCount / this.totalStreamCount
+        }
+        this.delegate.emitClientInitStatus(this.initStatus)
     }
 
     private async stopTicking() {

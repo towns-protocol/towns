@@ -5,6 +5,7 @@ import {
     UserToDevicePayload_MegolmSessions,
 } from '@river/proto'
 import {
+    ClientInitStatus,
     ConfirmedTimelineEvent,
     DecryptedTimelineEvent,
     KeySolicitationContent,
@@ -41,6 +42,7 @@ export type StreamEncryptionEvents = {
 
 /// Stream state events, emitted after initialization
 export type StreamStateEvents = {
+    clientInitStatusUpdated: (status: ClientInitStatus) => void
     streamNewUserJoined: (streamId: string, userId: string) => void
     streamNewUserInvited: (streamId: string, userId: string) => void
     streamUserLeft: (streamId: string, userId: string) => void

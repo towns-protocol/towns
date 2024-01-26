@@ -12,16 +12,23 @@ import { WelcomeLayout } from './layouts/WelcomeLayout'
 
 export const ValidateMembership = () => {
     const { serverSpace: space, chainSpace, chainSpaceLoading } = useContractAndServerSpaceData()
-    const { spaces } = useZionContext()
+    const { spaces, clientStatus } = useZionContext()
     const initialSyncComplete = useWaitForInitialSync()
     const spaceId = useSpaceIdFromPathname()
     const { confirmed: usernameConfirmed } = useUsernameConfirmed()
-
     const riverSpace = useMemo(() => spaces.find((s) => s.id === spaceId), [spaceId, spaces])
 
     useEffect(() => {
         console.log('ValidateMembership', spaceId, { chainSpaceLoading, initialSyncComplete })
     }, [chainSpaceLoading, spaceId, initialSyncComplete])
+
+    if (!clientStatus.isRemoteDataLoaded || !clientStatus.isLocalDataLoaded) {
+        return (
+            <WelcomeLayout
+                showProgress={clientStatus.isLocalDataLoaded ? clientStatus.progress : undefined}
+            />
+        )
+    }
 
     if (!spaceId) {
         return <Outlet />

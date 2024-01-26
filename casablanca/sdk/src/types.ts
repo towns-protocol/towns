@@ -150,6 +150,12 @@ export interface KeySolicitationContent {
     sessionIds: string[]
 }
 
+export type ClientInitStatus = {
+    isLocalDataLoaded: boolean
+    isRemoteDataLoaded: boolean
+    progress: number
+}
+
 export function isCiphertext(text: string): boolean {
     const cipherRegex = /^[A-Za-z0-9+/]{16,}$/
     // suffices to check prefix of chars for ciphertext

@@ -4,7 +4,7 @@ import { Box, Icon } from '@ui'
 import { useStore } from 'store/store'
 
 export const BugReportButton = () => {
-    const { streamSyncActive } = useZionContext()
+    const { clientStatus } = useZionContext()
 
     const { sidePanel, setSidePanel } = useStore(({ sidePanel, setSidePanel }) => ({
         sidePanel,
@@ -35,7 +35,7 @@ export const BugReportButton = () => {
                     size="square_sm"
                     type={sidePanel === 'bugReport' ? 'bugFill' : 'bug'}
                     color={
-                        !streamSyncActive
+                        !clientStatus.streamSyncActive
                             ? 'error'
                             : sidePanel === 'bugReport'
                             ? 'default'
