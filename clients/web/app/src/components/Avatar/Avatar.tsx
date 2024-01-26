@@ -6,7 +6,7 @@ import { ImageVariant, useImageSource } from '@components/UploadImage/useImageSo
 import { useImageStore } from '@components/UploadImage/useImageStore'
 import { FadeInBox } from '@components/Transitions'
 import { useGreenDot } from 'hooks/useGreenDot'
-import { TooltipBox as Box, TooltipBoxProps as BoxProps } from '../../ui/components/Box/TooltipBox'
+import { Box, BoxProps } from '@ui'
 import {
     AvatarAtoms,
     avatarAtoms,
@@ -97,6 +97,11 @@ const _Avatar = forwardRef<
         src,
         resourceId,
         icon,
+        dot: _dot,
+        tooltip,
+        tooltipOptions,
+        onClick,
+
         ...boxProps
     } = props
 
@@ -148,7 +153,7 @@ const _Avatar = forwardRef<
         }
     }
 
-    const dot = props.dot && (
+    const dot = _dot && (
         <FadeInBox
             background="positive"
             borderRadius="full"
@@ -171,7 +176,6 @@ const _Avatar = forwardRef<
     return (
         <Container
             display="block"
-            variants={{ initial: { scale: 1 }, hover: { scale: 1.1 } }}
             ref={ref}
             shrink={false}
             position="relative"
@@ -183,6 +187,9 @@ const _Avatar = forwardRef<
             <Box
                 absoluteFill
                 overflow="hidden"
+                tooltip={tooltip}
+                tooltipOptions={tooltipOptions}
+                onClick={onClick}
                 {...boxProps}
                 className={clsx(
                     avatarToggleClasses({ stacked, border, circle: type === 'user' }),
