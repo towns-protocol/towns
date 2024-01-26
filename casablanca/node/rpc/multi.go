@@ -8,10 +8,7 @@ import (
 	"sync"
 	"time"
 
-	"github.com/bufbuild/connect-go"
 	"github.com/river-build/river/dlog"
-	"github.com/river-build/river/protocol"
-	"github.com/river-build/river/protocol/protocolconnect"
 	"golang.org/x/net/http2"
 )
 
@@ -96,7 +93,7 @@ func MultiHandler(ctx context.Context, streamService *Service) http.HandlerFunc 
 			}{
 				Results:   make(map[string][]HTTPResponseInfo),
 				Nodes:     []string{},
-				Protocols: []string{"HTTP/1", "HTTP/2", "GRPC"},
+				Protocols: []string{"HTTP/1", "HTTP/2"},
 			}
 
 			var mutex = &sync.Mutex{}
@@ -130,39 +127,6 @@ func MultiHandler(ctx context.Context, streamService *Service) http.HandlerFunc 
 				mutex.Unlock()
 			}
 
-			makeInfoRequest := func(s protocolconnect.StreamServiceClient, node string) {
-				defer wg.Done()
-
-				start := time.Now()
-
-				status := 200
-
-				resp, err := s.Info(ctx, connect.NewRequest(&protocol.InfoRequest{}))
-
-				if err != nil {
-					log.Error("Error fetching info", "err", err)
-					status = 500
-
-				}
-
-				if (resp == nil) || (resp.Msg == nil) {
-					log.Error("Error fetching info", "err", "resp or resp.Msg is nil")
-					status = 500
-				}
-
-				elapsed := time.Since(start)
-
-				responseInfo := HTTPResponseInfo{
-					Protocol:     "GRPC",
-					ResponseTime: elapsed,
-					StatusCode:   status,
-				}
-
-				mutex.Lock()
-				data.Results[node] = append(data.Results[node], responseInfo)
-				mutex.Unlock()
-			}
-
 			numNode := streamService.nodeRegistry.NumNodes()
 			for i := 0; i < numNode; i++ {
 
@@ -173,23 +137,8 @@ func MultiHandler(ctx context.Context, streamService *Service) http.HandlerFunc 
 				http2Transport := &http2.Transport{}
 				httpClient2 := &http.Client{Transport: http2Transport}
 				node, err := streamService.nodeRegistry.GetNodeRecordByIndex(i)
-
 				if err != nil {
 					log.Error("Error fetching node record", "err", err)
-					http.Error(w, "Internal Server Error", http.StatusInternalServerError)
-					continue
-				}
-
-				address, err := streamService.nodeRegistry.GetNodeAddressByIndex(i)
-				if err != nil {
-					log.Error("Error fetching node address", "err", err)
-					http.Error(w, "Internal Server Error", http.StatusInternalServerError)
-					continue
-				}
-
-				s, err := streamService.nodeRegistry.GetStreamServiceClientForAddress(address)
-				if err != nil {
-					log.Error("Error fetching GetStreamServiceClientForAddress", "err", err)
 					http.Error(w, "Internal Server Error", http.StatusInternalServerError)
 					continue
 				}
@@ -197,14 +146,13 @@ func MultiHandler(ctx context.Context, streamService *Service) http.HandlerFunc 
 				// Construct URL
 				url := fmt.Sprintf("%s/info", node.Url())
 
-				wg.Add(3)
+				wg.Add(2)
 
 				data.Nodes = append(data.Nodes, node.Url())
 
 				// Initiate both requests in parallel
 				go makeRequest(httpClient1, url, "HTTP/1", node.Url())
 				go makeRequest(httpClient2, url, "HTTP/2", node.Url())
-				go makeInfoRequest(s, node.Url())
 
 			}
 			wg.Wait()

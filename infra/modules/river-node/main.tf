@@ -7,8 +7,7 @@ data "aws_vpc" "vpc" {
 }
 
 locals {
-  node_name   = "river${var.node_number}-${terraform.workspace}"
-  grpc_record = "river${var.node_number}-grpc-${terraform.workspace}"
+  node_name = "river${var.node_number}-${terraform.workspace}"
 
   service_name        = "river-node"
   global_remote_state = module.global_constants.global_remote_state.outputs
@@ -278,15 +277,12 @@ resource "aws_lb_target_group" "blue" {
   tags = local.river_node_tags
 }
 
-resource "aws_lb_target_group" "blue-grpc" {
-  name             = "${local.node_name}-blue-grpc"
-  protocol         = "HTTP"
-  protocol_version = "HTTP2"
-  port             = 80
-  target_type      = "ip"
-  vpc_id           = var.vpc_id
-
-  tags = local.river_node_tags
+resource "aws_lb_target_group" "green" {
+  name        = "${local.node_name}-green"
+  protocol    = "HTTP"
+  port        = 80
+  target_type = "ip"
+  vpc_id      = var.vpc_id
 
   health_check {
     path                = "/info"
@@ -295,9 +291,11 @@ resource "aws_lb_target_group" "blue-grpc" {
     healthy_threshold   = 2
     unhealthy_threshold = 2
   }
+
+  tags = local.river_node_tags
 }
 
-resource "aws_lb_listener_rule" "http_rule" {
+resource "aws_lb_listener_rule" "host_rule" {
   listener_arn = var.alb_https_listener_arn
 
   lifecycle {
@@ -312,25 +310,6 @@ resource "aws_lb_listener_rule" "http_rule" {
   condition {
     host_header {
       values = ["${local.node_name}.${module.global_constants.primary_hosted_zone_name}"]
-    }
-  }
-}
-
-resource "aws_lb_listener_rule" "grpc_rule" {
-  listener_arn = var.alb_https_listener_arn
-
-  lifecycle {
-    ignore_changes = [action]
-  }
-
-  action {
-    type             = "forward"
-    target_group_arn = aws_lb_target_group.blue-grpc.arn
-  }
-
-  condition {
-    host_header {
-      values = ["${local.grpc_record}.${module.global_constants.primary_hosted_zone_name}"]
     }
   }
 }
@@ -639,17 +618,11 @@ resource "aws_ecs_service" "river-ecs-service" {
   platform_version = "1.4.0"
 
   lifecycle {
-    ignore_changes = [task_definition, desired_count]
+    ignore_changes = [task_definition, desired_count, load_balancer]
   }
 
   load_balancer {
     target_group_arn = aws_lb_target_group.blue.arn
-    container_name   = "river-node"
-    container_port   = 5157
-  }
-
-  load_balancer {
-    target_group_arn = aws_lb_target_group.blue-grpc.arn
     container_name   = "river-node"
     container_port   = 5157
   }
@@ -671,20 +644,9 @@ data "cloudflare_zone" "zone" {
   name = module.global_constants.primary_hosted_zone_name
 }
 
-resource "cloudflare_record" "http_dns" {
+resource "cloudflare_record" "alb_dns" {
   zone_id = data.cloudflare_zone.zone.id
   name    = local.node_name
-  value   = var.alb_dns_name
-  type    = "CNAME"
-  ttl     = 60
-  lifecycle {
-    ignore_changes = all
-  }
-}
-
-resource "cloudflare_record" "grpc_dns" {
-  zone_id = data.cloudflare_zone.zone.id
-  name    = local.grpc_record
   value   = var.alb_dns_name
   type    = "CNAME"
   ttl     = 60
