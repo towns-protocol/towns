@@ -4,7 +4,6 @@ import { Membership, useZionContext } from 'use-zion-client'
 import { Box } from '@ui'
 import { useContractAndServerSpaceData } from 'hooks/useContractAndServerSpaceData'
 import { useSpaceIdFromPathname } from 'hooks/useSpaceInfoFromPathname'
-import { useWaitForInitialSync } from 'hooks/useWaitForInitialSync'
 import { SetUsernameForm } from '@components/SetUsernameForm/SetUsernameForm'
 import { useUsernameConfirmed } from 'hooks/useUsernameConfirmed'
 import { PublicTownPage, TownNotFoundBox } from './PublicTownPage'
@@ -13,14 +12,13 @@ import { WelcomeLayout } from './layouts/WelcomeLayout'
 export const ValidateMembership = () => {
     const { serverSpace: space, chainSpace, chainSpaceLoading } = useContractAndServerSpaceData()
     const { spaces, clientStatus } = useZionContext()
-    const initialSyncComplete = useWaitForInitialSync()
     const spaceId = useSpaceIdFromPathname()
     const { confirmed: usernameConfirmed } = useUsernameConfirmed()
     const riverSpace = useMemo(() => spaces.find((s) => s.id === spaceId), [spaceId, spaces])
 
     useEffect(() => {
-        console.log('ValidateMembership', spaceId, { chainSpaceLoading, initialSyncComplete })
-    }, [chainSpaceLoading, spaceId, initialSyncComplete])
+        console.log('ValidateMembership', spaceId, { chainSpaceLoading })
+    }, [chainSpaceLoading, spaceId])
 
     if (!clientStatus.isRemoteDataLoaded || !clientStatus.isLocalDataLoaded) {
         return (
@@ -34,7 +32,7 @@ export const ValidateMembership = () => {
         return <Outlet />
     }
 
-    if (chainSpaceLoading || !initialSyncComplete) {
+    if (chainSpaceLoading) {
         return riverSpace ? (
             <Outlet />
         ) : (
