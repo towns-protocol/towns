@@ -8,6 +8,7 @@ message MiniblockProposal {
     repeated bytes hashes = 1;
     int64 new_miniblock_num = 2;
     bytes prev_miniblock_hash = 3;
+    bool should_snapshot = 4;
 }
 
 message AllocateStreamRequest {

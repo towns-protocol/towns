@@ -185,6 +185,7 @@ func (r *streamViewImpl) ProposeNextMiniblock(ctx context.Context) (*MiniblockPr
 		Hashes:            hashes,
 		NewMiniblockNum:   r.minipool.generation,
 		PrevMiniblockHash: r.LastBlock().headerEvent.Hash,
+		ShouldSnapshot:    r.shouldSnapshot(),
 	}, nil
 }
 
@@ -230,7 +231,7 @@ func (r *streamViewImpl) makeMiniblockHeader(
 	if last.header().Snapshot != nil {
 		miniblockNumOfPrevSnapshot = last.header().MiniblockNum
 	}
-	if r.shouldSnapshot() {
+	if proposal.ShouldSnapshot {
 		snapshot = proto.Clone(r.snapshot).(*Snapshot)
 		// update all blocks since last snapshot
 		for i := r.snapshotIndex + 1; i < len(r.blocks); i++ {
