@@ -35,7 +35,7 @@ type StreamView interface {
 	LastBlock() *miniblockInfo
 	ValidateNextEvent(parsedEvent *ParsedEvent, config *config.RecencyConstraintsConfig) error
 	GetStats() StreamViewStats
-	ProposeNextMiniblock(ctx context.Context) (*MiniblockProposal, error)
+	ProposeNextMiniblock(ctx context.Context, forceSnapshot bool) (*MiniblockProposal, error)
 }
 
 func MakeStreamView(streamData *storage.ReadStreamFromLastSnapshotResult) (*streamViewImpl, error) {
@@ -173,8 +173,8 @@ func (r *streamViewImpl) LastBlock() *miniblockInfo {
 }
 
 // Returns nil if there are no events to propose.
-func (r *streamViewImpl) ProposeNextMiniblock(ctx context.Context) (*MiniblockProposal, error) {
-	if r.minipool.events.Len() == 0 {
+func (r *streamViewImpl) ProposeNextMiniblock(ctx context.Context, forceSnapshot bool) (*MiniblockProposal, error) {
+	if r.minipool.events.Len() == 0 && !forceSnapshot {
 		return nil, nil
 	}
 	hashes := make([][]byte, 0, r.minipool.events.Len())
@@ -185,7 +185,7 @@ func (r *streamViewImpl) ProposeNextMiniblock(ctx context.Context) (*MiniblockPr
 		Hashes:            hashes,
 		NewMiniblockNum:   r.minipool.generation,
 		PrevMiniblockHash: r.LastBlock().headerEvent.Hash,
-		ShouldSnapshot:    r.shouldSnapshot(),
+		ShouldSnapshot:    forceSnapshot || r.shouldSnapshot(),
 	}, nil
 }
 

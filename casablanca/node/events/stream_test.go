@@ -141,7 +141,7 @@ func mbTest(
 	addEvent(t, stream, "1", view.LastBlock().Hash)
 	addEvent(t, stream, "2", view.LastBlock().Hash)
 
-	proposal, err := stream.ProposeNextMiniblock(ctx)
+	proposal, err := stream.ProposeNextMiniblock(ctx, false)
 	assert.NoError(err)
 	assert.Equal(2, len(proposal.Hashes))
 	assert.EqualValues(view.LastBlock().Hash, proposal.PrevMiniblockHash)

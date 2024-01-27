@@ -2,7 +2,7 @@
  * @group main
  */
 
-import { MembershipOp, StreamSettings } from '@river/proto'
+import { MembershipOp } from '@river/proto'
 import { makeTestClient, waitFor } from './util.test'
 
 describe('syncedStream', () => {
@@ -15,12 +15,7 @@ describe('syncedStream', () => {
         await alice.initializeUser()
         alice.startSync()
 
-        const { streamId } = await bob.createDMChannel(
-            alice.userId,
-            new StreamSettings({
-                minEventsPerSnapshot: 1,
-            }),
-        )
+        const { streamId } = await bob.createDMChannel(alice.userId)
 
         const aliceStream = await alice.waitForStream(streamId)
         // Bob waits for stream and goes offline

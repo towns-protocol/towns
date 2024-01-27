@@ -60,14 +60,18 @@ func (s *Service) info(
 			}), nil
 		} else if debug == "make_miniblock" {
 			if len(request.Msg.Debug) < 2 {
-				return nil, RiverError(Err_DEBUG_ERROR, "make_miniblock requires a stream id")
+				return nil, RiverError(Err_DEBUG_ERROR, "make_miniblock requires a stream id and bool")
 			}
 			streamId := request.Msg.Debug[1]
+			forceSnapshot := "false"
+			if len(request.Msg.Debug) > 2 {
+				forceSnapshot = request.Msg.Debug[2]
+			}
 			log.Info("Info Debug request to make miniblock", "stream_id", streamId)
 			retryCount := 0
 			// the miniblock creation can clash with the scheduled miniblock creation, so we retry a few times
 			for {
-				err := s.debugMakeMiniblock(ctx, streamId)
+				err := s.debugMakeMiniblock(ctx, streamId, forceSnapshot)
 				if err != nil {
 					if retryCount < 3 {
 						log.Warn("Failed to make miniblock, retrying", "error", err)
@@ -89,25 +93,23 @@ func (s *Service) info(
 	}), nil
 }
 
-func (s *Service) debugMakeMiniblock(ctx context.Context, streamId string) error {
+func (s *Service) debugMakeMiniblock(ctx context.Context, streamId string, forceSnapshot string) error {
 	stub, nodes, err := s.getStubForStream(ctx, streamId)
 	if err != nil {
 		return err
 	}
 
 	if stub != nil {
-		_, err := stub.Info(ctx, connect_go.NewRequest(
-			&InfoRequest{
-				Debug: []string{"make_miniblock", streamId},
-			},
-		))
+		_, err := stub.Info(ctx, connect_go.NewRequest(&InfoRequest{
+			Debug: []string{"make_miniblock", streamId, forceSnapshot},
+		}))
 		return err
 	} else {
 		stream, _, err := s.cache.GetStream(ctx, streamId, nodes)
 		if err != nil {
 			return err
 		}
-		_, err = stream.MakeMiniblock(ctx)
+		_, err = stream.MakeMiniblock(ctx, forceSnapshot == "true")
 		return err
 	}
 }

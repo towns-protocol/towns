@@ -165,7 +165,7 @@ func (s *streamCacheImpl) onNewBlock(ctx context.Context, blockNum int64, blockH
 			if stream.nodes.localNodeIndex == 0 {
 				total++
 				// Nothing to do on error, MakeMiniblock logs on error level if there is an error.
-				ok, err := stream.MakeMiniblock(ctx)
+				ok, err := stream.MakeMiniblock(ctx, false)
 				if err != nil {
 					errors++
 				} else if ok {

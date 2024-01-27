@@ -19,11 +19,9 @@ import { ZionTestWeb3Provider } from './helpers/ZionTestWeb3Provider'
 import { useChannelTimeline } from '../../src/hooks/use-channel-timeline'
 import { useZionClient } from '../../src/hooks/use-zion-client'
 import { TestConstants } from './helpers/TestConstants'
-import { sleep } from '../../src/utils/zion-utils'
 import { Permission } from '@river/web3'
 import { ZTEvent } from '../../src/types/timeline-types'
 import { TSigner } from '../../src/types/web3-types'
-import { StreamSettings } from '@river/proto'
 
 // TODO Zustand https://docs.pmnd.rs/zustand/testing
 
@@ -48,18 +46,17 @@ describe('messageHistoryHooks', () => {
                 name: 'bobs channel',
                 parentSpaceId: spaceId,
                 roleIds: [],
-                streamSettings: new StreamSettings({ minEventsPerSnapshot: 5 }),
             })) as string
             //
-            // send 15 messages, five first, then 10 more
-            for (let i = 0; i < 5; i++) {
+            // send 15 messages, make block every 5
+            const NUM_MESSAGES = 15
+            for (let i = 0; i < NUM_MESSAGES; i++) {
                 await bob.sendMessage(channelId, `message ${i}`)
-            }
-
-            await sleep(2 * 1000) // we make miniblocks every 1 seconds, give it a bit of time to make a miniblock
-
-            for (let i = 5; i < 15; i++) {
-                await bob.sendMessage(channelId, `message ${i}`)
+                if (i % 5 === 0) {
+                    await bob.casablancaClient?.debugForceMakeMiniblock(channelId, {
+                        forceSnapshot: true,
+                    })
+                }
             }
 
             // create a veiw for alice
@@ -68,7 +65,15 @@ describe('messageHistoryHooks', () => {
                 const { timeline } = useChannelTimeline()
                 const messages = timeline.filter((x) => x.content?.kind === ZTEvent.RoomMessage)
                 const onClickScrollback = useCallback(() => {
-                    void scrollback(channelId, 30)
+                    void (async () => {
+                        // eslint-disable-next-line no-constant-condition
+                        while (true) {
+                            const result = await scrollback(channelId, 30)
+                            if (!result || result.terminus) {
+                                break
+                            }
+                        }
+                    })()
                 }, [scrollback])
                 return (
                     <>
@@ -120,7 +125,7 @@ describe('messageHistoryHooks', () => {
                 TestConstants.DecaDefaultWaitForTimeout,
             )
             await waitFor(() => expect(+messageslength.textContent!).toBeGreaterThan(0))
-            await waitFor(() => expect(+messageslength.textContent!).toBeLessThanOrEqual(20))
+            await waitFor(() => expect(+messageslength.textContent!).toBeLessThan(NUM_MESSAGES))
             const firstCount = +messageslength.textContent!
             // have bob send a message to jane
             fireEvent.click(scrollbackButton)
@@ -130,6 +135,7 @@ describe('messageHistoryHooks', () => {
                 () => expect(+messageslength.textContent!).toBeGreaterThan(firstCount),
                 TestConstants.DecaDefaultWaitForTimeout,
             )
+            await waitFor(() => expect(+messageslength.textContent!).toEqual(NUM_MESSAGES))
         },
         TestConstants.DecaDefaultWaitForTimeout.timeout! * 4,
     )

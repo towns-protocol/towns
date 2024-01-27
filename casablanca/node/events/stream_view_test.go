@@ -124,7 +124,7 @@ func TestLoad(t *testing.T) {
 	assert.Equal(t, false, view.shouldSnapshot())
 
 	// and miniblocks should have nil snapshots
-	proposal, _ := view.ProposeNextMiniblock(context.Background())
+	proposal, _ := view.ProposeNextMiniblock(context.Background(), false)
 	miniblockHeader, _, _ = view.makeMiniblockHeader(context.Background(), proposal)
 	assert.Nil(t, miniblockHeader.Snapshot)
 
@@ -146,7 +146,7 @@ func TestLoad(t *testing.T) {
 	assert.Equal(t, 1, len(view.blocks))
 	assert.Equal(t, 2, len(view.blocks[0].events))
 	// and miniblocks should have non - nil snapshots
-	proposal, _ = view.ProposeNextMiniblock(context.Background())
+	proposal, _ = view.ProposeNextMiniblock(context.Background(), false)
 	miniblockHeader, envelopes, _ := view.makeMiniblockHeader(context.Background(), proposal)
 	assert.NotNil(t, miniblockHeader.Snapshot)
 

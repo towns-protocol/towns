@@ -1764,7 +1764,12 @@ export class Client
         }
     }
 
-    public async debugForceMakeMiniblock(streamId: string): Promise<void> {
-        await this.rpcClient.info({ debug: ['make_miniblock', streamId] })
+    public async debugForceMakeMiniblock(
+        streamId: string,
+        opts: { forceSnapshot?: boolean } = {},
+    ): Promise<void> {
+        await this.rpcClient.info({
+            debug: ['make_miniblock', streamId, opts.forceSnapshot === true ? 'true' : 'false'],
+        })
     }
 }

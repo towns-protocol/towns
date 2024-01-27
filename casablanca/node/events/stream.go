@@ -40,7 +40,7 @@ type SyncStream interface {
 	Unsub(receiver SyncResultReceiver)
 
 	// Returns true if miniblock was created, false if not.
-	MakeMiniblock(ctx context.Context) (bool, error) // TODO: doesn't seem pertinent to SyncStream
+	MakeMiniblock(ctx context.Context, forceSnapshot bool) (bool, error) // TODO: doesn't seem pertinent to SyncStream
 }
 
 func SyncStreamsResponseFromStreamAndCookie(result *StreamAndCookie) *SyncStreamsResponse {
@@ -93,7 +93,7 @@ func (s *streamImpl) loadInternal(ctx context.Context) {
 	}
 }
 
-func (s *streamImpl) ProposeNextMiniblock(ctx context.Context) (*MiniblockProposal, error) {
+func (s *streamImpl) ProposeNextMiniblock(ctx context.Context, forceSnapshot bool) (*MiniblockProposal, error) {
 	s.mu.RLock()
 	defer s.mu.RUnlock()
 
@@ -102,7 +102,7 @@ func (s *streamImpl) ProposeNextMiniblock(ctx context.Context) (*MiniblockPropos
 		return nil, nil
 	}
 
-	return s.view.ProposeNextMiniblock(ctx)
+	return s.view.ProposeNextMiniblock(ctx, forceSnapshot)
 }
 
 func (s *streamImpl) MakeMiniblockHeader(
@@ -180,10 +180,10 @@ func (s *streamImpl) ApplyMiniblock(ctx context.Context, miniblockHeader *Minibl
 }
 
 // Returns true if miniblock was created, false if not.
-func (s *streamImpl) MakeMiniblock(ctx context.Context) (bool, error) {
+func (s *streamImpl) MakeMiniblock(ctx context.Context, forceSnapshot bool) (bool, error) {
 	log := dlog.CtxLog(ctx)
 
-	proposal, err := s.ProposeNextMiniblock(ctx)
+	proposal, err := s.ProposeNextMiniblock(ctx, forceSnapshot)
 	if err != nil {
 		log.Error("Stream.MakeMiniblock: ProposeNextMiniblock failed", "error", err, "streamId", s.streamId)
 		return false, err

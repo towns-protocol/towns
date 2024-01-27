@@ -407,11 +407,11 @@ func TestMethods(t *testing.T) {
 		)
 		assert.NoError(t, err)
 
-		_, err = client.Info(ctx, connect.NewRequest(&protocol.InfoRequest{Debug: []string{"make_miniblock", channel1Name}}))
+		_, err = client.Info(ctx, connect.NewRequest(&protocol.InfoRequest{Debug: []string{"make_miniblock", channel1Name, "false"}}))
 		assert.NoError(t, err)
 
 		_, err = client.Info(ctx, connect.NewRequest(&protocol.InfoRequest{
-			Debug: []string{"make_miniblock", shared.ChannelStreamIdFromName("channel1")},
+			Debug: []string{"make_miniblock", shared.ChannelStreamIdFromName("channel1"), "false"},
 		}))
 		assert.NoError(t, err)
 
@@ -435,11 +435,11 @@ func TestMethods(t *testing.T) {
 		)
 		assert.NoError(t, err)
 
-		_, err = client.Info(ctx, connect.NewRequest(&protocol.InfoRequest{Debug: []string{"make_miniblock", channel1Name}}))
+		_, err = client.Info(ctx, connect.NewRequest(&protocol.InfoRequest{Debug: []string{"make_miniblock", channel1Name, "false"}}))
 		assert.NoError(t, err)
 
 		_, err = client.Info(ctx, connect.NewRequest(&protocol.InfoRequest{
-			Debug: []string{"make_miniblock", shared.ChannelStreamIdFromName("channel1")},
+			Debug: []string{"make_miniblock", shared.ChannelStreamIdFromName("channel1"), "false"},
 		}))
 		assert.NoError(t, err)
 
