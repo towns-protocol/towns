@@ -262,7 +262,7 @@ export class Client
                 (streamId) => isDMChannelStreamId(streamId) || isGDMChannelStreamId(streamId),
             ),
         ]
-        for (const streamId of streamIds) {
+        for (const streamId of Array.from(new Set(streamIds))) {
             this.syncedStreamsExtensions.addStream(streamId)
         }
     }
