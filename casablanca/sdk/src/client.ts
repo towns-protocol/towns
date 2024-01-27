@@ -822,14 +822,17 @@ export class Client
                     throw new Error(`Failed to initialize stream ${streamId} from persistence`)
                 }
 
-                const response = await this.rpcClient.getStream({ streamId })
-                const unpacked = await unpackStream(response.stream)
-                await stream.initializeFromResponse(unpacked)
-
-                if (stream.view.syncCookie) {
-                    await this.streams.addStreamToSync(stream.view.syncCookie)
+                try {
+                    const response = await this.rpcClient.getStream({ streamId })
+                    const unpacked = await unpackStream(response.stream)
+                    await stream.initializeFromResponse(unpacked)
+                    if (stream.view.syncCookie) {
+                        await this.streams.addStreamToSync(stream.view.syncCookie)
+                    }
+                } catch (err) {
+                    this.logError('Failed to initialize stream', streamId)
+                    this.streams.delete(streamId)
                 }
-
                 return stream
             }
         } catch (err) {
