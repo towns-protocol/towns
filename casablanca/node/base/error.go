@@ -13,9 +13,9 @@ import (
 	"strconv"
 	"strings"
 
+	"connectrpc.com/connect"
 	"github.com/river-build/river/protocol"
 
-	connect_go "github.com/bufbuild/connect-go"
 	"github.com/ethereum/go-ethereum/accounts/abi"
 	"github.com/ethereum/go-ethereum/rpc"
 	"golang.org/x/exp/slog"
@@ -201,7 +201,7 @@ func AsRiverError(err error, defaulCode ...protocol.Err) *RiverErrorImpl {
 	}
 
 	// Map connect errors to river errors
-	if ce, ok := err.(*connect_go.Error); ok {
+	if ce, ok := err.(*connect.Error); ok {
 		if value, ok := ce.Meta()[RIVER_ERROR_HEADER]; ok && len(value) > 0 {
 			v, ok := protocol.Err_value[value[0]]
 			if ok {
@@ -268,15 +268,15 @@ func WrapRiverError(code protocol.Err, err error) *RiverErrorImpl {
 	return e
 }
 
-func ErrToConnectCode(err protocol.Err) connect_go.Code {
+func ErrToConnectCode(err protocol.Err) connect.Code {
 	if err < protocol.Err_CANCELED || err > protocol.Err_UNAUTHENTICATED {
-		return connect_go.CodeFailedPrecondition
+		return connect.CodeFailedPrecondition
 	}
-	return connect_go.Code(err)
+	return connect.Code(err)
 }
 
-func (e *RiverErrorImpl) AsConnectError() *connect_go.Error {
-	err := connect_go.NewError(ErrToConnectCode(e.Code), TruncateErrorToConnectLimit(e))
+func (e *RiverErrorImpl) AsConnectError() *connect.Error {
+	err := connect.NewError(ErrToConnectCode(e.Code), TruncateErrorToConnectLimit(e))
 	if str, ok := protocol.Err_name[int32(e.Code)]; ok {
 		err.Meta()[RIVER_ERROR_HEADER] = []string{str}
 	}
@@ -335,17 +335,17 @@ func (e *RiverErrorImpl) LogDebug(l *slog.Logger) *RiverErrorImpl {
 	return e.LogWithLevel(l, slog.LevelDebug)
 }
 
-func ToConnectError(err error) *connect_go.Error {
+func ToConnectError(err error) *connect.Error {
 	if err == nil {
 		return nil
 	}
-	if e, ok := err.(*connect_go.Error); ok {
+	if e, ok := err.(*connect.Error); ok {
 		return e
 	}
 	if e, ok := err.(*RiverErrorImpl); ok {
 		return e.AsConnectError()
 	}
-	return connect_go.NewError(connect_go.CodeUnknown, TruncateErrorToConnectLimit(err))
+	return connect.NewError(connect.CodeUnknown, TruncateErrorToConnectLimit(err))
 }
 
 func TruncateErrorToConnectLimit(err error) error {

@@ -4,12 +4,12 @@ import (
 	"context"
 	"sync"
 
+	"connectrpc.com/connect"
 	"github.com/river-build/river/base"
 	"github.com/river-build/river/dlog"
 	"github.com/river-build/river/events"
 	"github.com/river-build/river/protocol"
 
-	connect_go "github.com/bufbuild/connect-go"
 	"golang.org/x/exp/slog"
 )
 
@@ -282,7 +282,7 @@ func (s *syncSubscriptionImpl) OnClose() {
 	}
 }
 
-func (s *syncSubscriptionImpl) Dispatch(res *connect_go.ServerStream[protocol.SyncStreamsResponse]) {
+func (s *syncSubscriptionImpl) Dispatch(res *connect.ServerStream[protocol.SyncStreamsResponse]) {
 	log := dlog.CtxLog(s.ctx)
 
 	for {

@@ -3,7 +3,7 @@ package rpc
 import (
 	"context"
 
-	"github.com/bufbuild/connect-go"
+	"connectrpc.com/connect"
 
 	. "github.com/river-build/river/base"
 	. "github.com/river-build/river/events"

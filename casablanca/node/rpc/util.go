@@ -7,7 +7,7 @@ import (
 	"github.com/river-build/river/dlog"
 	. "github.com/river-build/river/protocol"
 
-	"github.com/bufbuild/connect-go"
+	"connectrpc.com/connect"
 	"github.com/ethereum/go-ethereum/common"
 	"golang.org/x/exp/slog"
 )

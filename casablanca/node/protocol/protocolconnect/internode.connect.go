@@ -5,9 +5,9 @@
 package protocolconnect
 
 import (
+	"connectrpc.com/connect"
 	context "context"
 	errors "errors"
-	connect_go "github.com/bufbuild/connect-go"
 	protocol "github.com/river-build/river/protocol"
 	http "net/http"
 	strings "strings"
@@ -18,7 +18,7 @@ import (
 // generated with a version of connect newer than the one compiled into your binary. You can fix the
 // problem by either regenerating this code with an older version of connect or updating the connect
 // version compiled into your binary.
-const _ = connect_go.IsAtLeastVersion0_1_0
+const _ = connect.IsAtLeastVersion1_13_0
 
 const (
 	// NodeToNodeName is the fully-qualified name of the NodeToNode service.
@@ -44,11 +44,19 @@ const (
 	NodeToNodeNewEventInPoolProcedure = "/river.NodeToNode/NewEventInPool"
 )
 
+// These variables are the protoreflect.Descriptor objects for the RPCs defined in this package.
+var (
+	nodeToNodeServiceDescriptor                = protocol.File_internode_proto.Services().ByName("NodeToNode")
+	nodeToNodeAllocateStreamMethodDescriptor   = nodeToNodeServiceDescriptor.Methods().ByName("AllocateStream")
+	nodeToNodeNewEventReceivedMethodDescriptor = nodeToNodeServiceDescriptor.Methods().ByName("NewEventReceived")
+	nodeToNodeNewEventInPoolMethodDescriptor   = nodeToNodeServiceDescriptor.Methods().ByName("NewEventInPool")
+)
+
 // NodeToNodeClient is a client for the river.NodeToNode service.
 type NodeToNodeClient interface {
-	AllocateStream(context.Context, *connect_go.Request[protocol.AllocateStreamRequest]) (*connect_go.Response[protocol.AllocateStreamResponse], error)
-	NewEventReceived(context.Context, *connect_go.Request[protocol.NewEventReceivedRequest]) (*connect_go.Response[protocol.NewEventReceivedResponse], error)
-	NewEventInPool(context.Context, *connect_go.Request[protocol.NewEventInPoolRequest]) (*connect_go.Response[protocol.NewEventInPoolResponse], error)
+	AllocateStream(context.Context, *connect.Request[protocol.AllocateStreamRequest]) (*connect.Response[protocol.AllocateStreamResponse], error)
+	NewEventReceived(context.Context, *connect.Request[protocol.NewEventReceivedRequest]) (*connect.Response[protocol.NewEventReceivedResponse], error)
+	NewEventInPool(context.Context, *connect.Request[protocol.NewEventInPoolRequest]) (*connect.Response[protocol.NewEventInPoolResponse], error)
 }
 
 // NewNodeToNodeClient constructs a client for the river.NodeToNode service. By default, it uses the
@@ -58,54 +66,57 @@ type NodeToNodeClient interface {
 //
 // The URL supplied here should be the base URL for the Connect or gRPC server (for example,
 // http://api.acme.com or https://acme.com/grpc).
-func NewNodeToNodeClient(httpClient connect_go.HTTPClient, baseURL string, opts ...connect_go.ClientOption) NodeToNodeClient {
+func NewNodeToNodeClient(httpClient connect.HTTPClient, baseURL string, opts ...connect.ClientOption) NodeToNodeClient {
 	baseURL = strings.TrimRight(baseURL, "/")
 	return &nodeToNodeClient{
-		allocateStream: connect_go.NewClient[protocol.AllocateStreamRequest, protocol.AllocateStreamResponse](
+		allocateStream: connect.NewClient[protocol.AllocateStreamRequest, protocol.AllocateStreamResponse](
 			httpClient,
 			baseURL+NodeToNodeAllocateStreamProcedure,
-			opts...,
+			connect.WithSchema(nodeToNodeAllocateStreamMethodDescriptor),
+			connect.WithClientOptions(opts...),
 		),
-		newEventReceived: connect_go.NewClient[protocol.NewEventReceivedRequest, protocol.NewEventReceivedResponse](
+		newEventReceived: connect.NewClient[protocol.NewEventReceivedRequest, protocol.NewEventReceivedResponse](
 			httpClient,
 			baseURL+NodeToNodeNewEventReceivedProcedure,
-			opts...,
+			connect.WithSchema(nodeToNodeNewEventReceivedMethodDescriptor),
+			connect.WithClientOptions(opts...),
 		),
-		newEventInPool: connect_go.NewClient[protocol.NewEventInPoolRequest, protocol.NewEventInPoolResponse](
+		newEventInPool: connect.NewClient[protocol.NewEventInPoolRequest, protocol.NewEventInPoolResponse](
 			httpClient,
 			baseURL+NodeToNodeNewEventInPoolProcedure,
-			opts...,
+			connect.WithSchema(nodeToNodeNewEventInPoolMethodDescriptor),
+			connect.WithClientOptions(opts...),
 		),
 	}
 }
 
 // nodeToNodeClient implements NodeToNodeClient.
 type nodeToNodeClient struct {
-	allocateStream   *connect_go.Client[protocol.AllocateStreamRequest, protocol.AllocateStreamResponse]
-	newEventReceived *connect_go.Client[protocol.NewEventReceivedRequest, protocol.NewEventReceivedResponse]
-	newEventInPool   *connect_go.Client[protocol.NewEventInPoolRequest, protocol.NewEventInPoolResponse]
+	allocateStream   *connect.Client[protocol.AllocateStreamRequest, protocol.AllocateStreamResponse]
+	newEventReceived *connect.Client[protocol.NewEventReceivedRequest, protocol.NewEventReceivedResponse]
+	newEventInPool   *connect.Client[protocol.NewEventInPoolRequest, protocol.NewEventInPoolResponse]
 }
 
 // AllocateStream calls river.NodeToNode.AllocateStream.
-func (c *nodeToNodeClient) AllocateStream(ctx context.Context, req *connect_go.Request[protocol.AllocateStreamRequest]) (*connect_go.Response[protocol.AllocateStreamResponse], error) {
+func (c *nodeToNodeClient) AllocateStream(ctx context.Context, req *connect.Request[protocol.AllocateStreamRequest]) (*connect.Response[protocol.AllocateStreamResponse], error) {
 	return c.allocateStream.CallUnary(ctx, req)
 }
 
 // NewEventReceived calls river.NodeToNode.NewEventReceived.
-func (c *nodeToNodeClient) NewEventReceived(ctx context.Context, req *connect_go.Request[protocol.NewEventReceivedRequest]) (*connect_go.Response[protocol.NewEventReceivedResponse], error) {
+func (c *nodeToNodeClient) NewEventReceived(ctx context.Context, req *connect.Request[protocol.NewEventReceivedRequest]) (*connect.Response[protocol.NewEventReceivedResponse], error) {
 	return c.newEventReceived.CallUnary(ctx, req)
 }
 
 // NewEventInPool calls river.NodeToNode.NewEventInPool.
-func (c *nodeToNodeClient) NewEventInPool(ctx context.Context, req *connect_go.Request[protocol.NewEventInPoolRequest]) (*connect_go.Response[protocol.NewEventInPoolResponse], error) {
+func (c *nodeToNodeClient) NewEventInPool(ctx context.Context, req *connect.Request[protocol.NewEventInPoolRequest]) (*connect.Response[protocol.NewEventInPoolResponse], error) {
 	return c.newEventInPool.CallUnary(ctx, req)
 }
 
 // NodeToNodeHandler is an implementation of the river.NodeToNode service.
 type NodeToNodeHandler interface {
-	AllocateStream(context.Context, *connect_go.Request[protocol.AllocateStreamRequest]) (*connect_go.Response[protocol.AllocateStreamResponse], error)
-	NewEventReceived(context.Context, *connect_go.Request[protocol.NewEventReceivedRequest]) (*connect_go.Response[protocol.NewEventReceivedResponse], error)
-	NewEventInPool(context.Context, *connect_go.Request[protocol.NewEventInPoolRequest]) (*connect_go.Response[protocol.NewEventInPoolResponse], error)
+	AllocateStream(context.Context, *connect.Request[protocol.AllocateStreamRequest]) (*connect.Response[protocol.AllocateStreamResponse], error)
+	NewEventReceived(context.Context, *connect.Request[protocol.NewEventReceivedRequest]) (*connect.Response[protocol.NewEventReceivedResponse], error)
+	NewEventInPool(context.Context, *connect.Request[protocol.NewEventInPoolRequest]) (*connect.Response[protocol.NewEventInPoolResponse], error)
 }
 
 // NewNodeToNodeHandler builds an HTTP handler from the service implementation. It returns the path
@@ -113,21 +124,24 @@ type NodeToNodeHandler interface {
 //
 // By default, handlers support the Connect, gRPC, and gRPC-Web protocols with the binary Protobuf
 // and JSON codecs. They also support gzip compression.
-func NewNodeToNodeHandler(svc NodeToNodeHandler, opts ...connect_go.HandlerOption) (string, http.Handler) {
-	nodeToNodeAllocateStreamHandler := connect_go.NewUnaryHandler(
+func NewNodeToNodeHandler(svc NodeToNodeHandler, opts ...connect.HandlerOption) (string, http.Handler) {
+	nodeToNodeAllocateStreamHandler := connect.NewUnaryHandler(
 		NodeToNodeAllocateStreamProcedure,
 		svc.AllocateStream,
-		opts...,
+		connect.WithSchema(nodeToNodeAllocateStreamMethodDescriptor),
+		connect.WithHandlerOptions(opts...),
 	)
-	nodeToNodeNewEventReceivedHandler := connect_go.NewUnaryHandler(
+	nodeToNodeNewEventReceivedHandler := connect.NewUnaryHandler(
 		NodeToNodeNewEventReceivedProcedure,
 		svc.NewEventReceived,
-		opts...,
+		connect.WithSchema(nodeToNodeNewEventReceivedMethodDescriptor),
+		connect.WithHandlerOptions(opts...),
 	)
-	nodeToNodeNewEventInPoolHandler := connect_go.NewUnaryHandler(
+	nodeToNodeNewEventInPoolHandler := connect.NewUnaryHandler(
 		NodeToNodeNewEventInPoolProcedure,
 		svc.NewEventInPool,
-		opts...,
+		connect.WithSchema(nodeToNodeNewEventInPoolMethodDescriptor),
+		connect.WithHandlerOptions(opts...),
 	)
 	return "/river.NodeToNode/", http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
 		switch r.URL.Path {
@@ -146,14 +160,14 @@ func NewNodeToNodeHandler(svc NodeToNodeHandler, opts ...connect_go.HandlerOptio
 // UnimplementedNodeToNodeHandler returns CodeUnimplemented from all methods.
 type UnimplementedNodeToNodeHandler struct{}
 
-func (UnimplementedNodeToNodeHandler) AllocateStream(context.Context, *connect_go.Request[protocol.AllocateStreamRequest]) (*connect_go.Response[protocol.AllocateStreamResponse], error) {
-	return nil, connect_go.NewError(connect_go.CodeUnimplemented, errors.New("river.NodeToNode.AllocateStream is not implemented"))
+func (UnimplementedNodeToNodeHandler) AllocateStream(context.Context, *connect.Request[protocol.AllocateStreamRequest]) (*connect.Response[protocol.AllocateStreamResponse], error) {
+	return nil, connect.NewError(connect.CodeUnimplemented, errors.New("river.NodeToNode.AllocateStream is not implemented"))
 }
 
-func (UnimplementedNodeToNodeHandler) NewEventReceived(context.Context, *connect_go.Request[protocol.NewEventReceivedRequest]) (*connect_go.Response[protocol.NewEventReceivedResponse], error) {
-	return nil, connect_go.NewError(connect_go.CodeUnimplemented, errors.New("river.NodeToNode.NewEventReceived is not implemented"))
+func (UnimplementedNodeToNodeHandler) NewEventReceived(context.Context, *connect.Request[protocol.NewEventReceivedRequest]) (*connect.Response[protocol.NewEventReceivedResponse], error) {
+	return nil, connect.NewError(connect.CodeUnimplemented, errors.New("river.NodeToNode.NewEventReceived is not implemented"))
 }
 
-func (UnimplementedNodeToNodeHandler) NewEventInPool(context.Context, *connect_go.Request[protocol.NewEventInPoolRequest]) (*connect_go.Response[protocol.NewEventInPoolResponse], error) {
-	return nil, connect_go.NewError(connect_go.CodeUnimplemented, errors.New("river.NodeToNode.NewEventInPool is not implemented"))
+func (UnimplementedNodeToNodeHandler) NewEventInPool(context.Context, *connect.Request[protocol.NewEventInPoolRequest]) (*connect.Response[protocol.NewEventInPoolResponse], error) {
+	return nil, connect.NewError(connect.CodeUnimplemented, errors.New("river.NodeToNode.NewEventInPool is not implemented"))
 }

@@ -6,7 +6,7 @@ import (
 	"fmt"
 	"strings"
 
-	"github.com/bufbuild/connect-go"
+	"connectrpc.com/connect"
 
 	"github.com/river-build/river/auth"
 	. "github.com/river-build/river/base"

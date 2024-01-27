@@ -3,7 +3,7 @@ module github.com/river-build/river
 go 1.21
 
 require (
-	github.com/bufbuild/connect-go v1.8.0
+	connectrpc.com/connect v1.14.0
 	github.com/deckarep/golang-set/v2 v2.1.0
 	github.com/ethereum/go-ethereum v1.13.6
 	github.com/gologme/log v1.3.0
@@ -26,7 +26,7 @@ require (
 	golang.org/x/exp v0.0.0-20231214170342-aacd6d4b4611
 	golang.org/x/net v0.19.0
 	golang.org/x/text v0.14.0
-	google.golang.org/protobuf v1.30.0
+	google.golang.org/protobuf v1.32.0
 	gopkg.in/DataDog/dd-trace-go.v1 v1.57.0
 	gopkg.in/yaml.v3 v3.0.1
 )

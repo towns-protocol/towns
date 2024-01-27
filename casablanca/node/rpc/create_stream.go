@@ -12,8 +12,7 @@ import (
 	. "github.com/river-build/river/protocol"
 	"github.com/river-build/river/shared"
 
-	"github.com/bufbuild/connect-go"
-	connect_go "github.com/bufbuild/connect-go"
+	"connectrpc.com/connect"
 	"golang.org/x/exp/slog"
 
 	. "github.com/river-build/river/base"
@@ -24,8 +23,8 @@ var createStreamRequests = infra.NewSuccessMetrics("create_stream_requests", ser
 
 func (s *Service) createStreamImpl(
 	ctx context.Context,
-	req *connect_go.Request[CreateStreamRequest],
-) (*connect_go.Response[CreateStreamResponse], error) {
+	req *connect.Request[CreateStreamRequest],
+) (*connect.Response[CreateStreamResponse], error) {
 	stream, err := s.createStream(ctx, req.Msg)
 	if err != nil {
 		createStreamRequests.FailInc()
@@ -35,7 +34,7 @@ func (s *Service) createStreamImpl(
 	resMsg := &CreateStreamResponse{
 		Stream: stream,
 	}
-	return connect_go.NewResponse(resMsg), nil
+	return connect.NewResponse(resMsg), nil
 }
 
 func (s *Service) createStream(ctx context.Context, req *CreateStreamRequest) (*StreamAndCookie, error) {
@@ -186,8 +185,8 @@ func (s *Service) createReplicatedStream(
 	}
 
 	return &StreamAndCookie{
-			NextSyncCookie: cookie,
-			Miniblocks:     []*Miniblock{mb},
+		NextSyncCookie: cookie,
+		Miniblocks:     []*Miniblock{mb},
 	}, nil
 }
 

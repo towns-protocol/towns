@@ -9,6 +9,7 @@ import (
 	"os/signal"
 	"syscall"
 
+	"connectrpc.com/connect"
 	"github.com/river-build/river/auth"
 	. "github.com/river-build/river/base"
 	"github.com/river-build/river/config"
@@ -20,7 +21,6 @@ import (
 	"github.com/river-build/river/registries"
 	"github.com/river-build/river/storage"
 
-	connect_go "github.com/bufbuild/connect-go"
 	"github.com/rs/cors"
 	"golang.org/x/exp/slog"
 	"golang.org/x/net/http2"
@@ -237,7 +237,7 @@ func StartServer(ctx context.Context, cfg *config.Config, wallet *crypto.Wallet)
 		),
 	)
 
-	interceptors := connect_go.WithInterceptors(NewMetricsInterceptor())
+	interceptors := connect.WithInterceptors(NewMetricsInterceptor())
 	streamServicePattern, streamServiceHandler := protocolconnect.NewStreamServiceHandler(streamService, interceptors)
 	log.Info("Registering StreamServiceHandler", "pattern", streamServicePattern)
 	mux.Handle(streamServicePattern, newHttpHandler(streamServiceHandler, log))

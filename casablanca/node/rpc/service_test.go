@@ -24,7 +24,7 @@ import (
 	"github.com/river-build/river/testutils"
 	"github.com/river-build/river/testutils/dbtestutils"
 
-	"github.com/bufbuild/connect-go"
+	"connectrpc.com/connect"
 	eth_crypto "github.com/ethereum/go-ethereum/crypto"
 	"github.com/stretchr/testify/assert"
 	"google.golang.org/protobuf/proto"

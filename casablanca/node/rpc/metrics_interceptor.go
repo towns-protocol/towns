@@ -7,7 +7,7 @@ import (
 	"github.com/river-build/river/infra"
 	"gopkg.in/DataDog/dd-trace-go.v1/ddtrace/tracer"
 
-	"github.com/bufbuild/connect-go"
+	"connectrpc.com/connect"
 )
 
 type streamIdProvider interface {

@@ -5,6 +5,7 @@ import (
 	"errors"
 	"sync"
 
+	"connectrpc.com/connect"
 	"github.com/river-build/river/base"
 	"github.com/river-build/river/crypto"
 	"github.com/river-build/river/dlog"
@@ -13,7 +14,6 @@ import (
 	"github.com/river-build/river/protocol"
 	"github.com/river-build/river/protocol/protocolconnect"
 
-	connect_go "github.com/bufbuild/connect-go"
 	"github.com/google/uuid"
 )
 
@@ -48,21 +48,21 @@ func NewSyncHandler(
 type SyncHandler interface {
 	SyncStreams(
 		ctx context.Context,
-		req *connect_go.Request[protocol.SyncStreamsRequest],
-		res *connect_go.ServerStream[protocol.SyncStreamsResponse],
+		req *connect.Request[protocol.SyncStreamsRequest],
+		res *connect.ServerStream[protocol.SyncStreamsResponse],
 	) error
 	AddStreamToSync(
 		ctx context.Context,
-		req *connect_go.Request[protocol.AddStreamToSyncRequest],
-	) (*connect_go.Response[protocol.AddStreamToSyncResponse], error)
+		req *connect.Request[protocol.AddStreamToSyncRequest],
+	) (*connect.Response[protocol.AddStreamToSyncResponse], error)
 	RemoveStreamFromSync(
 		ctx context.Context,
-		req *connect_go.Request[protocol.RemoveStreamFromSyncRequest],
-	) (*connect_go.Response[protocol.RemoveStreamFromSyncResponse], error)
+		req *connect.Request[protocol.RemoveStreamFromSyncRequest],
+	) (*connect.Response[protocol.RemoveStreamFromSyncResponse], error)
 	CancelSync(
 		ctx context.Context,
-		req *connect_go.Request[protocol.CancelSyncRequest],
-	) (*connect_go.Response[protocol.CancelSyncResponse], error)
+		req *connect.Request[protocol.CancelSyncRequest],
+	) (*connect.Response[protocol.CancelSyncResponse], error)
 }
 
 type syncHandlerImpl struct {
@@ -81,43 +81,43 @@ type syncNode struct {
 	stub            protocolconnect.StreamServiceClient
 
 	mu     sync.Mutex
-	stream *connect_go.ServerStreamForClient[protocol.SyncStreamsResponse]
+	stream *connect.ServerStreamForClient[protocol.SyncStreamsResponse]
 	closed bool
 }
 
 func (s *Service) SyncStreams(
 	ctx context.Context,
-	req *connect_go.Request[protocol.SyncStreamsRequest],
-	res *connect_go.ServerStream[protocol.SyncStreamsResponse],
+	req *connect.Request[protocol.SyncStreamsRequest],
+	res *connect.ServerStream[protocol.SyncStreamsResponse],
 ) error {
 	return s.syncHandler.SyncStreams(ctx, req, res)
 }
 
 func (s *Service) AddStreamToSync(
 	ctx context.Context,
-	req *connect_go.Request[protocol.AddStreamToSyncRequest],
-) (*connect_go.Response[protocol.AddStreamToSyncResponse], error) {
+	req *connect.Request[protocol.AddStreamToSyncRequest],
+) (*connect.Response[protocol.AddStreamToSyncResponse], error) {
 	return s.syncHandler.AddStreamToSync(ctx, req)
 }
 
 func (s *Service) RemoveStreamFromSync(
 	ctx context.Context,
-	req *connect_go.Request[protocol.RemoveStreamFromSyncRequest],
-) (*connect_go.Response[protocol.RemoveStreamFromSyncResponse], error) {
+	req *connect.Request[protocol.RemoveStreamFromSyncRequest],
+) (*connect.Response[protocol.RemoveStreamFromSyncResponse], error) {
 	return s.syncHandler.RemoveStreamFromSync(ctx, req)
 }
 
 func (s *Service) CancelSync(
 	ctx context.Context,
-	req *connect_go.Request[protocol.CancelSyncRequest],
-) (*connect_go.Response[protocol.CancelSyncResponse], error) {
+	req *connect.Request[protocol.CancelSyncRequest],
+) (*connect.Response[protocol.CancelSyncResponse], error) {
 	return s.syncHandler.CancelSync(ctx, req)
 }
 
 func (s *syncHandlerImpl) SyncStreams(
 	ctx context.Context,
-	req *connect_go.Request[protocol.SyncStreamsRequest],
-	res *connect_go.ServerStream[protocol.SyncStreamsResponse],
+	req *connect.Request[protocol.SyncStreamsRequest],
+	res *connect.ServerStream[protocol.SyncStreamsResponse],
 ) error {
 	ctx, log := ctxAndLogForRequest(ctx, req)
 
@@ -162,8 +162,8 @@ func (s *syncHandlerImpl) SyncStreams(
 }
 
 func (s *syncHandlerImpl) handleSyncRequest(
-	req *connect_go.Request[protocol.SyncStreamsRequest],
-	res *connect_go.ServerStream[protocol.SyncStreamsResponse],
+	req *connect.Request[protocol.SyncStreamsRequest],
+	res *connect.ServerStream[protocol.SyncStreamsResponse],
 	sub *syncSubscriptionImpl,
 ) error {
 	if sub == nil {
@@ -229,8 +229,8 @@ func (s *syncHandlerImpl) handleSyncRequest(
 
 func (s *syncHandlerImpl) CancelSync(
 	ctx context.Context,
-	req *connect_go.Request[protocol.CancelSyncRequest],
-) (*connect_go.Response[protocol.CancelSyncResponse], error) {
+	req *connect.Request[protocol.CancelSyncRequest],
+) (*connect.Response[protocol.CancelSyncResponse], error) {
 	_, log := ctxAndLogForRequest(ctx, req)
 	log.Debug("SyncStreams:SyncHandlerV2.CancelSync ENTER", "syncId", req.Msg.SyncId)
 	sub := s.getSub(req.Msg.SyncId)
@@ -238,7 +238,7 @@ func (s *syncHandlerImpl) CancelSync(
 		sub.OnClose()
 	}
 	log.Debug("SyncStreams:SyncHandlerV2.CancelSync LEAVE", "syncId", req.Msg.SyncId)
-	return connect_go.NewResponse(&protocol.CancelSyncResponse{}), nil
+	return connect.NewResponse(&protocol.CancelSyncResponse{}), nil
 }
 
 func getLocalAndRemoteCookies(
@@ -369,8 +369,8 @@ func (s *syncHandlerImpl) addLocalStreamToSync(
 
 func (s *syncHandlerImpl) AddStreamToSync(
 	ctx context.Context,
-	req *connect_go.Request[protocol.AddStreamToSyncRequest],
-) (*connect_go.Response[protocol.AddStreamToSyncResponse], error) {
+	req *connect.Request[protocol.AddStreamToSyncRequest],
+) (*connect.Response[protocol.AddStreamToSyncResponse], error) {
 	ctx, log := ctxAndLogForRequest(ctx, req)
 	log.Debug("SyncStreams:SyncHandlerV2.AddStreamToSync ENTER", "syncId", req.Msg.SyncId, "syncPos", req.Msg.SyncPos)
 
@@ -394,7 +394,7 @@ func (s *syncHandlerImpl) AddStreamToSync(
 		}
 		// done.
 		log.Debug("SyncStreams:SyncHandlerV2.AddStreamToSync: LEAVE", "syncId", syncId)
-		return connect_go.NewResponse(&protocol.AddStreamToSyncResponse{}), nil
+		return connect.NewResponse(&protocol.AddStreamToSyncResponse{}), nil
 	}
 
 	// Case 2: remote cookie
@@ -444,13 +444,13 @@ func (s *syncHandlerImpl) AddStreamToSync(
 	}
 
 	log.Debug("SyncStreams:SyncHandlerV2.AddStreamToSync LEAVE", "syncId", req.Msg.SyncId)
-	return connect_go.NewResponse(&protocol.AddStreamToSyncResponse{}), nil
+	return connect.NewResponse(&protocol.AddStreamToSyncResponse{}), nil
 }
 
 func (s *syncHandlerImpl) RemoveStreamFromSync(
 	ctx context.Context,
-	req *connect_go.Request[protocol.RemoveStreamFromSyncRequest],
-) (*connect_go.Response[protocol.RemoveStreamFromSyncResponse], error) {
+	req *connect.Request[protocol.RemoveStreamFromSyncRequest],
+) (*connect.Response[protocol.RemoveStreamFromSyncResponse], error) {
 	_, log := ctxAndLogForRequest(ctx, req)
 	log.Info("SyncStreams:SyncHandlerV2.RemoveStreamFromSync ENTER", "syncId", req.Msg.SyncId, "streamId", req.Msg.StreamId)
 
@@ -488,13 +488,13 @@ func (s *syncHandlerImpl) RemoveStreamFromSync(
 	}
 
 	log.Info("SyncStreams:SyncHandlerV2.RemoveStreamFromSync LEAVE", "syncId", syncId)
-	return connect_go.NewResponse(&protocol.RemoveStreamFromSyncResponse{}), nil
+	return connect.NewResponse(&protocol.RemoveStreamFromSyncResponse{}), nil
 }
 
 func (s *syncHandlerImpl) addSubscription(
 	ctx context.Context,
-	req *connect_go.Request[protocol.SyncStreamsRequest],
-	res *connect_go.ServerStream[protocol.SyncStreamsResponse],
+	req *connect.Request[protocol.SyncStreamsRequest],
+	res *connect.ServerStream[protocol.SyncStreamsResponse],
 	syncId string,
 ) (*syncSubscriptionImpl, error) {
 	log := dlog.CtxLog(ctx)
@@ -586,7 +586,7 @@ func (n *syncNode) syncRemoteNode(
 
 	responseStream, err := n.stub.SyncStreams(
 		ctx,
-		&connect_go.Request[protocol.SyncStreamsRequest]{
+		&connect.Request[protocol.SyncStreamsRequest]{
 			Msg: &protocol.SyncStreamsRequest{
 				SyncPos: syncPos,
 			},
@@ -664,7 +664,7 @@ func (n *syncNode) addStreamToSync(
 
 	_, err := n.stub.AddStreamToSync(
 		ctx,
-		&connect_go.Request[protocol.AddStreamToSyncRequest]{
+		&connect.Request[protocol.AddStreamToSyncRequest]{
 			Msg: &protocol.AddStreamToSyncRequest{
 				SyncPos: cookie,
 				SyncId:  n.remoteSyncId,
@@ -698,7 +698,7 @@ func (n *syncNode) removeStreamFromSync(
 
 	_, err := n.stub.RemoveStreamFromSync(
 		ctx,
-		&connect_go.Request[protocol.RemoveStreamFromSyncRequest]{
+		&connect.Request[protocol.RemoveStreamFromSyncRequest]{
 			Msg: &protocol.RemoveStreamFromSyncRequest{
 				SyncId:   n.remoteSyncId,
 				StreamId: streamId,
@@ -712,7 +712,7 @@ func (n *syncNode) removeStreamFromSync(
 	return err
 }
 
-func (n *syncNode) setStream(stream *connect_go.ServerStreamForClient[protocol.SyncStreamsResponse]) bool {
+func (n *syncNode) setStream(stream *connect.ServerStreamForClient[protocol.SyncStreamsResponse]) bool {
 	n.mu.Lock()
 	defer n.mu.Unlock()
 	if !n.closed {

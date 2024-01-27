@@ -4,7 +4,7 @@ import (
 	"context"
 	"errors"
 
-	connect_go "github.com/bufbuild/connect-go"
+	"connectrpc.com/connect"
 	"golang.org/x/exp/slog"
 
 	. "github.com/river-build/river/base"
@@ -14,7 +14,7 @@ import (
 
 var infoRequests = infra.NewSuccessMetrics("info_requests", serviceRequests)
 
-func (s *Service) Info(ctx context.Context, req *connect_go.Request[InfoRequest]) (*connect_go.Response[InfoResponse], error) {
+func (s *Service) Info(ctx context.Context, req *connect.Request[InfoRequest]) (*connect.Response[InfoResponse], error) {
 	ctx, log := ctxAndLogForRequest(ctx, req)
 
 	log.Debug("Info ENTER", "request", req.Msg)
@@ -34,8 +34,8 @@ func (s *Service) Info(ctx context.Context, req *connect_go.Request[InfoRequest]
 func (s *Service) info(
 	ctx context.Context,
 	log *slog.Logger,
-	request *connect_go.Request[InfoRequest],
-) (*connect_go.Response[InfoResponse], error) {
+	request *connect.Request[InfoRequest],
+) (*connect.Response[InfoResponse], error) {
 	// TODO: flag to disable debug requests
 	if len(request.Msg.Debug) > 0 {
 		debug := request.Msg.Debug[0]
@@ -49,13 +49,13 @@ func (s *Service) info(
 		} else if debug == "flush_cache" {
 			log.Info("FLUSHING CACHE")
 			s.cache.ForceFlushAll(ctx)
-			return connect_go.NewResponse(&InfoResponse{
+			return connect.NewResponse(&InfoResponse{
 				Graffiti: "cache flushed",
 			}), nil
 		} else if debug == "exit" {
 			log.Info("GOT REQUEST TO EXIT NODE")
 			s.exitSignal <- errors.New("info_debug_exit")
-			return connect_go.NewResponse(&InfoResponse{
+			return connect.NewResponse(&InfoResponse{
 				Graffiti: "exiting...",
 			}), nil
 		} else if debug == "make_miniblock" {
@@ -82,13 +82,13 @@ func (s *Service) info(
 				}
 				break
 			}
-			return connect_go.NewResponse(&InfoResponse{}), nil
+			return connect.NewResponse(&InfoResponse{}), nil
 		}
 	}
 
 	// TODO: set graffiti in config
 	// TODO: return version
-	return connect_go.NewResponse(&InfoResponse{
+	return connect.NewResponse(&InfoResponse{
 		Graffiti: "Towns.com node welcomes you!",
 	}), nil
 }
@@ -100,7 +100,7 @@ func (s *Service) debugMakeMiniblock(ctx context.Context, streamId string, force
 	}
 
 	if stub != nil {
-		_, err := stub.Info(ctx, connect_go.NewRequest(&InfoRequest{
+		_, err := stub.Info(ctx, connect.NewRequest(&InfoRequest{
 			Debug: []string{"make_miniblock", streamId, forceSnapshot},
 		}))
 		return err
