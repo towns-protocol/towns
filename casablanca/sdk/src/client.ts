@@ -191,7 +191,10 @@ export class Client
         )
         this.streams = new SyncedStreams(this.userId, this.rpcClient, this.persistenceStore, this)
         this.syncedStreamsExtensions = new SyncedStreamsExtension({
-            startSyncStreams: () => this.streams.startSyncStreams(),
+            startSyncStreams: async () => {
+                await this.streams.startSyncStreams()
+                this.decryptionExtensions?.start()
+            },
             initStream: (streamId, allowGetStream) => this.initStream(streamId, allowGetStream),
             emitClientInitStatus: (status) => this.emit('clientInitStatusUpdated', status),
             emitStreamSyncActive: (active) => this.emit('streamSyncActive', active),
@@ -312,7 +315,6 @@ export class Client
 
         await this.initUserJoinedStreams()
 
-        this.decryptionExtensions.start()
         this.syncedStreamsExtensions.start()
         const initializeUserEndTime = performance.now()
         const executionTime = initializeUserEndTime - initializeUserStartTime
