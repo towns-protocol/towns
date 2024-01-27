@@ -120,15 +120,17 @@ export const DMChannelInfoPanel = () => {
                     {usernameProperties && (
                         <SetUsernameDisplayName titleProperties={usernameProperties} />
                     )}
-                    <Stack gap padding background="level2" rounded="sm">
-                        {data?.isGroup ? (
-                            <RoomPropertiesInputField defaultTitle={membersText} data={data} />
-                        ) : (
-                            <Text fontWeight="medium" color="default">
-                                {membersText}
-                            </Text>
-                        )}
-                    </Stack>
+                    {memberNamesExludingSelf.length > 0 && (
+                        <Stack gap padding background="level2" rounded="sm">
+                            {data?.isGroup ? (
+                                <RoomPropertiesInputField defaultTitle={membersText} data={data} />
+                            ) : (
+                                <Text fontWeight="medium" color="default">
+                                    {membersText}
+                                </Text>
+                            )}
+                        </Stack>
+                    )}
                     <PanelButton onClick={onMembersClick}>
                         <Icon type="people" size="square_sm" color="gray2" />
                         <Text color="default" fontWeight="medium">
