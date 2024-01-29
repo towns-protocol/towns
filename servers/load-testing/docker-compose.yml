@@ -1,5 +1,10 @@
 version: '3'
 services:
+  redis:
+      image: redis:latest
+      container_name: stress-testing-redis
+      ports:
+          - '6379:6379'
   leader-node:
     build:
       context: ../../
@@ -8,6 +13,20 @@ services:
       - "5001:80"
     environment:
       - MODE=leader
+      - NUM_TOWNS=10
+      - NUM_CHANNELS_PER_TOWN=10
+      - NUM_FOLLOWERS=2
+      # TODO: generate random private key
+      - COORDINATION_SPACE_ID=SPCE-EJC7EVqlJZWfvilJuaabg
+      - COORDINATION_CHANNEL_ID=CHAN-wFt9WKKnsGGNrT878aabg
+      - RIVER_NODE_URL=http://localhost:5157
+      - BASE_CHAIN_RPC_URL=http://localhost:8545
+      - CHANNEL_SAMPLING_RATE=100
+      # 10 minutes
+      - LOAD_TEST_DURATION_MS=600000
+      - COORDINATOR_LEAVE_CHANNELS=true
+    depends_on:
+      - stress-testing-redis
   follower-1:
     build:
       context: ../../
@@ -17,7 +36,16 @@ services:
     environment:
       - MODE=follower
       - FOLLOWER_ID=follower-1
-      - LEADER_URL=http://leader-node:80
+      - COORDINATION_SPACE_ID=SPCE-EJC7EVqlJZWfvilJuaabg
+      - COORDINATION_CHANNEL_ID=CHAN-wFt9WKKnsGGNrT878aabg
+      - RIVER_NODE_URL=http://localhost:5157
+      - BASE_CHAIN_RPC_URL=http://localhost:8545
+      # 10 minutes
+      - LOAD_TEST_DURATION_MS=600000
+      - MAX_MSG_DELAY_MS=10000
+      - JOIN_FACTOR=2
+    depends_on:
+      - stress-testing-redis
   follower-2:
     build:
       context: ../../
@@ -27,4 +55,13 @@ services:
     environment:
       - MODE=follower
       - FOLLOWER_ID=follower-2
-      - LEADER_URL=http://leader-node:80
+      - COORDINATION_SPACE_ID=SPCE-EJC7EVqlJZWfvilJuaabg
+      - COORDINATION_CHANNEL_ID=CHAN-wFt9WKKnsGGNrT878aabg
+      - RIVER_NODE_URL=http://localhost:5157
+      - BASE_CHAIN_RPC_URL=http://localhost:8545
+      # 10 minutes
+      - LOAD_TEST_DURATION_MS=600000
+      - MAX_MSG_DELAY_MS=10000
+      - JOIN_FACTOR=2
+    depends_on:
+      - stress-testing-redis
