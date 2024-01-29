@@ -87,56 +87,62 @@ export const DirectMessageList = () => {
             <Stack minHeight="100svh" paddingBottom="safeAreaInsetBottom" gap="sm">
                 {channels.length > 0 && <SearchField ref={searchRef} onSearchValue={onSearch} />}
 
-                {searchResults.length > 0 ? (
-                    <SearchContext.Provider value="messages">
-                        {searchResults.map((s, index, items) => {
-                            const result = (
-                                <DMChannelContextUserLookupProvider
-                                    fallbackToParentContext
-                                    key={s.item.key}
-                                    channelId={
-                                        s.item.type === 'dmMessage'
-                                            ? s.item.channelId
-                                            : s.item.type === 'dmChannel'
-                                            ? s.item.source.id
-                                            : undefined
-                                    }
-                                >
-                                    <ResultItem
+                {searchValue ? (
+                    searchResults.length === 0 ? (
+                        <Box padding centerContent color="gray2">
+                            No results found
+                        </Box>
+                    ) : (
+                        <SearchContext.Provider value="messages">
+                            {searchResults.map((s, index, items) => {
+                                const result = (
+                                    <DMChannelContextUserLookupProvider
+                                        fallbackToParentContext
                                         key={s.item.key}
-                                        result={s}
-                                        misc={miscProps}
-                                        paddingY="sm"
-                                        paddingX="sm"
-                                        rounded="sm"
-                                        background={
-                                            s.item.type === 'dmMessage' && hashId === s.item.key
-                                                ? 'level2'
-                                                : 'level1'
+                                        channelId={
+                                            s.item.type === 'dmMessage'
+                                                ? s.item.channelId
+                                                : s.item.type === 'dmChannel'
+                                                ? s.item.source.id
+                                                : undefined
                                         }
-                                    />
-                                </DMChannelContextUserLookupProvider>
-                            )
-                            const prevItemType = items[index - 1]?.item?.type
-                            if (s.item.type !== prevItemType) {
-                                return (
-                                    <>
-                                        <Box
+                                    >
+                                        <ResultItem
+                                            key={s.item.key}
+                                            result={s}
+                                            misc={miscProps}
+                                            paddingY="sm"
                                             paddingX="sm"
-                                            paddingTop="sm"
-                                            paddingBottom="sm"
-                                            color="gray2"
-                                        >
-                                            {getSectionTitle(s.item.type)}
-                                        </Box>
-                                        {result}
-                                    </>
+                                            rounded="sm"
+                                            background={
+                                                s.item.type === 'dmMessage' && hashId === s.item.key
+                                                    ? 'level2'
+                                                    : 'level1'
+                                            }
+                                        />
+                                    </DMChannelContextUserLookupProvider>
                                 )
-                            } else {
-                                return result
-                            }
-                        })}
-                    </SearchContext.Provider>
+                                const prevItemType = items[index - 1]?.item?.type
+                                if (s.item.type !== prevItemType) {
+                                    return (
+                                        <>
+                                            <Box
+                                                paddingX="sm"
+                                                paddingTop="sm"
+                                                paddingBottom="sm"
+                                                color="gray2"
+                                            >
+                                                {getSectionTitle(s.item.type)}
+                                            </Box>
+                                            {result}
+                                        </>
+                                    )
+                                } else {
+                                    return result
+                                }
+                            })}
+                        </SearchContext.Provider>
+                    )
                 ) : channels.length > 0 ? (
                     channels.map((channel) => {
                         return (
