@@ -31,7 +31,7 @@ const generateSpaceData = (networkId: string) => {
         channelGroups: [],
         membership: Lib.Membership.Join,
         isLoadingChannels: false,
-        isLoadingMemberships: false,
+        hasLoadedMemberships: false,
     }
 
     const onChainSpaceInfo = {

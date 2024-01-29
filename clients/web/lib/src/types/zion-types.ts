@@ -54,7 +54,7 @@ export interface SpaceData {
     channelGroups: ChannelGroup[]
     membership: string
     isLoadingChannels: boolean
-    isLoadingMemberships: boolean
+    hasLoadedMemberships: boolean
 }
 
 export interface SpaceHierarchies {

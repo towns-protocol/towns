@@ -4,7 +4,6 @@ import { matchPath, useNavigate } from 'react-router'
 import { Membership, useSpaceData } from 'use-zion-client'
 import { PATHS } from 'routes'
 import { useStore } from 'store/store'
-import { CheckValidSpaceOrInvite } from './CheckValidSpaceOrInvite'
 
 export const SpaceHome = () => {
     const space = useSpaceData()
@@ -66,12 +65,7 @@ export const SpaceHome = () => {
         }
     }, [navigate, space, spaceId, channels])
 
-    return (
-        <CheckValidSpaceOrInvite>
-            {/* don't need to render anything, redirects above take user elsewhere */}
-            <></>
-        </CheckValidSpaceOrInvite>
-    )
+    return <>{/* don't need to render anything, redirects above take user elsewhere */}</>
 }
 
 export default SpaceHome

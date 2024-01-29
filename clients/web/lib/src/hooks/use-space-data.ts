@@ -137,7 +137,7 @@ export function formatRoom(
         membership: membership,
         // 3.21.23 adding this prop instead of changing channelGroups always being an array, in case code is relying on that
         isLoadingChannels: spaceHierarchy?.children === undefined,
-        isLoadingMemberships: true,
+        hasLoadedMemberships: true,
     }
 }
 
@@ -400,6 +400,6 @@ function rollupSpace(
         ],
         membership: membership,
         isLoadingChannels: false,
-        isLoadingMemberships: stream.view.isInitialized,
+        hasLoadedMemberships: stream.view.isInitialized,
     }
 }

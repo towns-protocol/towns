@@ -1,5 +1,5 @@
 import React, { Fragment } from 'react'
-import { Navigate, Outlet, Route, Routes, useLocation } from 'react-router'
+import { Route, Routes } from 'react-router'
 import { SpaceSettings } from '@components/SpaceSettings/SpaceSettings'
 import { PATHS } from 'routes'
 import { RoleSettings } from '@components/SpaceSettings/RoleSettings/RoleSettings'
@@ -34,15 +34,6 @@ import { TouchSearchTab } from './TouchSearchTab'
 import { ValidateMembership } from './ValidateMembership'
 import { DirectMessages } from './DMRoute'
 import { DMInfoPanelWrapper } from './DMInfoPanel'
-
-const CheckRedirect = () => {
-    const { state } = useLocation()
-    if (state?.redirectTo) {
-        return <Navigate replace to={state.redirectTo} />
-    }
-
-    return <Outlet />
-}
 
 const desktopSpaceProfilePanelRoutes = (prefix: string = 'profile') => [
     // eslint-disable-next-line react/jsx-key
@@ -150,10 +141,8 @@ const OutsideTownRoutes = () => {
             {messageRoutes}
 
             {/* catch all */}
-            <Route element={<CheckRedirect />}>
-                <Route path="*" element={<NoJoinedSpacesFallback />}>
-                    {...desktopSpaceProfilePanelRoutes('me')}
-                </Route>
+            <Route path="*" element={<NoJoinedSpacesFallback />}>
+                {...desktopSpaceProfilePanelRoutes('me')}
             </Route>
         </Routes>
     )

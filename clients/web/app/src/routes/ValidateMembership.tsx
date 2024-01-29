@@ -12,35 +12,42 @@ import { WelcomeLayout } from './layouts/WelcomeLayout'
 export const ValidateMembership = () => {
     const { serverSpace: space, chainSpace, chainSpaceLoading } = useContractAndServerSpaceData()
     const { spaces, clientStatus } = useZionContext()
-    const spaceId = useSpaceIdFromPathname()
+    const spaceIdFromPathname = useSpaceIdFromPathname()
     const { confirmed: usernameConfirmed } = useUsernameConfirmed()
-    const riverSpace = useMemo(() => spaces.find((s) => s.id === spaceId), [spaceId, spaces])
+    const riverSpace = useMemo(
+        () => spaces.find((s) => s.id === spaceIdFromPathname),
+        [spaceIdFromPathname, spaces],
+    )
 
     useEffect(() => {
-        console.log('ValidateMembership', spaceId, { chainSpaceLoading })
-    }, [chainSpaceLoading, spaceId])
+        console.log('ValidateMembership', spaceIdFromPathname, { chainSpaceLoading })
+    }, [chainSpaceLoading, spaceIdFromPathname])
 
     if (!clientStatus.isRemoteDataLoaded || !clientStatus.isLocalDataLoaded) {
         return (
             <WelcomeLayout
+                debugText="validate membership: loading local data"
                 showProgress={clientStatus.isLocalDataLoaded ? clientStatus.progress : undefined}
             />
         )
     }
 
-    if (!spaceId) {
+    if (!spaceIdFromPathname) {
         return <Outlet />
     }
 
+    // when you navigate to another town, after the first town is loaded,
+    // we can show the river space while the chainSpace is loading
     if (chainSpaceLoading) {
         return riverSpace ? (
             <Outlet />
         ) : (
-            <WelcomeLayout debugText="validate membership: loading town data" />
+            <WelcomeLayout debugText="validate membership: loading blockchain space data" />
         )
     }
 
-    if (!chainSpace && !space) {
+    // TODO: if we persist react-query data, this will pass even if node provider is down
+    if (!chainSpace) {
         return (
             <Box absoluteFill centerContent>
                 <TownNotFoundBox />
@@ -48,9 +55,15 @@ export const ValidateMembership = () => {
         )
     }
 
+    // space will always be undefined if you are logged out or not a member
+    // but if you are logged in and a member, it might need some time to get your membership status
+    if (space && !space.hasLoadedMemberships) {
+        return <WelcomeLayout debugText="validate membership: loading river memberships" />
+    }
+
     const isMember = space?.membership === Membership.Join
 
-    if (space && !space.isLoadingMemberships && !isMember) {
+    if (!isMember) {
         return <PublicTownPage />
     }
 

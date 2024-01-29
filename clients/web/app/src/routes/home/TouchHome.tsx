@@ -62,7 +62,6 @@ import { BugReportPanel } from 'routes/BugReportPanel'
 import { ShakeToReport } from '@components/BugReportButton/ShakeToReport'
 import { AllChannelsList, ChannelItem } from '../AllChannelsList/AllChannelsList'
 import { TouchTabBarLayout } from '../layouts/TouchTabBarLayout'
-import { CheckValidSpaceOrInvite } from './CheckValidSpaceOrInvite'
 
 const transition = {
     layout: { type: 'spring', duration: 0.4 },
@@ -202,152 +201,148 @@ export const TouchHome = () => {
             <ShakeToReport />
             <VisualViewportContextProvider>
                 <TouchTabBarLayout>
-                    <CheckValidSpaceOrInvite>
-                        <AnimatePresence>
-                            <BlurredBackground
-                                height="x20"
-                                imageSrc={imageSrc}
-                                initial={{ filter: `blur(50px)` }}
-                                animate={{ filter: 'blur(5px)', opacity: isSearching ? 0 : 1 }}
-                            />
+                    <AnimatePresence>
+                        <BlurredBackground
+                            height="x20"
+                            imageSrc={imageSrc}
+                            initial={{ filter: `blur(50px)` }}
+                            animate={{ filter: 'blur(5px)', opacity: isSearching ? 0 : 1 }}
+                        />
+                        <MotionStack
+                            absoluteFill
+                            layout="position"
+                            paddingTop="safeAreaInsetTop"
+                            key="container"
+                        >
+                            {!isSearching && (
+                                <TouchLayoutHeader onDisplayMainPanel={onDisplayMainPanel} />
+                            )}
                             <MotionStack
-                                absoluteFill
+                                horizontal
+                                paddingX
                                 layout="position"
-                                paddingTop="safeAreaInsetTop"
-                                key="container"
+                                alignItems="center"
+                                paddingY="xs"
+                                gap="sm"
+                                animate={{
+                                    caretColor: caretVisible
+                                        ? vars.color.foreground.accent
+                                        : 'rgba(0,0,0,0)',
+                                }}
+                                transition={transition}
+                                key="search_header"
                             >
-                                {!isSearching && (
-                                    <TouchLayoutHeader onDisplayMainPanel={onDisplayMainPanel} />
+                                {!isLoadingChannels && (
+                                    <TextField
+                                        placeholder="Jump to..."
+                                        height="x5"
+                                        background="level2"
+                                        value={searchString}
+                                        onFocus={onFocus}
+                                        onChange={onChange}
+                                    />
                                 )}
-                                <MotionStack
-                                    horizontal
-                                    paddingX
-                                    layout="position"
-                                    alignItems="center"
-                                    paddingY="xs"
-                                    gap="sm"
-                                    animate={{
-                                        caretColor: caretVisible
-                                            ? vars.color.foreground.accent
-                                            : 'rgba(0,0,0,0)',
-                                    }}
-                                    transition={transition}
-                                    key="search_header"
-                                >
-                                    {!isLoadingChannels && (
-                                        <TextField
-                                            placeholder="Jump to..."
-                                            height="x5"
-                                            background="level2"
-                                            value={searchString}
-                                            onFocus={onFocus}
-                                            onChange={onChange}
-                                        />
-                                    )}
-                                    {isSearching && (
-                                        <IconButton icon="close" onClick={onCloseSearch} />
-                                    )}
-                                </MotionStack>
-                                <MotionBox
-                                    scroll
-                                    grow
-                                    scrollbars
-                                    layout="position"
-                                    initial="initial"
-                                    exit="exit"
-                                    animate="animate"
-                                    transition={transition}
-                                    variants={variants}
-                                    key="results"
-                                    id={TouchScrollToTopScrollId.HomeTabScrollId}
-                                    onScroll={onScroll}
-                                >
-                                    {isLoadingChannels ? (
-                                        <Box absoluteFill centerContent>
-                                            <ButtonSpinner />
-                                        </Box>
-                                    ) : (
-                                        <Box minHeight="forceScroll">
+                                {isSearching && <IconButton icon="close" onClick={onCloseSearch} />}
+                            </MotionStack>
+                            <MotionBox
+                                scroll
+                                grow
+                                scrollbars
+                                layout="position"
+                                initial="initial"
+                                exit="exit"
+                                animate="animate"
+                                transition={transition}
+                                variants={variants}
+                                key="results"
+                                id={TouchScrollToTopScrollId.HomeTabScrollId}
+                                onScroll={onScroll}
+                            >
+                                {isLoadingChannels ? (
+                                    <Box absoluteFill centerContent>
+                                        <ButtonSpinner />
+                                    </Box>
+                                ) : (
+                                    <Box minHeight="forceScroll">
+                                        <>
+                                            {displayThreadsItem || displayMentionsItem ? (
+                                                <Spacer />
+                                            ) : (
+                                                <></>
+                                            )}
+                                            {displayThreadsItem && (
+                                                <TouchGenericResultRow
+                                                    to={threadsLink}
+                                                    title="Threads"
+                                                    icon="message"
+                                                    highlight={unreadThreadsCount > 0}
+                                                    badgeCount={unreadThreadMentions}
+                                                />
+                                            )}
+                                            {displayMentionsItem && (
+                                                <TouchGenericResultRow
+                                                    to={mentionsLink}
+                                                    title="Mentions"
+                                                    icon="at"
+                                                />
+                                            )}
+                                        </>
+
+                                        <Spacer />
+
+                                        {space && (
                                             <>
-                                                {displayThreadsItem || displayMentionsItem ? (
-                                                    <Spacer />
-                                                ) : (
-                                                    <></>
-                                                )}
-                                                {displayThreadsItem && (
-                                                    <TouchGenericResultRow
-                                                        to={threadsLink}
-                                                        title="Threads"
-                                                        icon="message"
-                                                        highlight={unreadThreadsCount > 0}
-                                                        badgeCount={unreadThreadMentions}
-                                                    />
-                                                )}
-                                                {displayMentionsItem && (
-                                                    <TouchGenericResultRow
-                                                        to={mentionsLink}
-                                                        title="Mentions"
-                                                        icon="at"
-                                                    />
-                                                )}
-                                            </>
-
-                                            <Spacer />
-
-                                            {space && (
-                                                <>
-                                                    <ChannelList
-                                                        label="Unread"
-                                                        channelItems={filteredUnreadChannels}
-                                                        space={space}
-                                                    />
-                                                    <ChannelList
-                                                        label="Channels"
-                                                        channelItems={filteredReadChannels}
-                                                        space={space}
-                                                    />
-                                                    <BrowseChannelRow
+                                                <ChannelList
+                                                    label="Unread"
+                                                    channelItems={filteredUnreadChannels}
+                                                    space={space}
+                                                />
+                                                <ChannelList
+                                                    label="Channels"
+                                                    channelItems={filteredReadChannels}
+                                                    space={space}
+                                                />
+                                                <BrowseChannelRow
+                                                    onClick={() =>
+                                                        setActiveOverlay('browse-channels')
+                                                    }
+                                                />
+                                                {canCreateChannel && (
+                                                    <CreateChannelRow
                                                         onClick={() =>
-                                                            setActiveOverlay('browse-channels')
+                                                            setActiveOverlay('create-channel')
                                                         }
                                                     />
-                                                    {canCreateChannel && (
-                                                        <CreateChannelRow
-                                                            onClick={() =>
-                                                                setActiveOverlay('create-channel')
-                                                            }
-                                                        />
-                                                    )}
-                                                    {filteredDms.length > 0 && (
-                                                        <ChannelList
-                                                            label="Direct Messages"
-                                                            channelItems={filteredDms}
-                                                            space={space}
-                                                        />
-                                                    )}
-                                                    {filteredMembers.length > 0 && (
-                                                        <>
-                                                            <Spacer />
-                                                            <SectionHeader title="Members" />
-                                                            <UserList members={filteredMembers} />
-                                                        </>
-                                                    )}
-                                                </>
-                                            )}
+                                                )}
+                                                {filteredDms.length > 0 && (
+                                                    <ChannelList
+                                                        label="Direct Messages"
+                                                        channelItems={filteredDms}
+                                                        space={space}
+                                                    />
+                                                )}
+                                                {filteredMembers.length > 0 && (
+                                                    <>
+                                                        <Spacer />
+                                                        <SectionHeader title="Members" />
+                                                        <UserList members={filteredMembers} />
+                                                    </>
+                                                )}
+                                            </>
+                                        )}
 
-                                            {isSearching && searchString.length > 1 && (
-                                                <>
-                                                    {hasResult ? <Divider space="sm" /> : <></>}
-                                                    <SearchForTermRow searchString={searchString} />
-                                                </>
-                                            )}
-                                        </Box>
-                                    )}
-                                </MotionBox>
-                            </MotionStack>
-                        </AnimatePresence>
-                        <OutletOrPanel />
-                    </CheckValidSpaceOrInvite>
+                                        {isSearching && searchString.length > 1 && (
+                                            <>
+                                                {hasResult ? <Divider space="sm" /> : <></>}
+                                                <SearchForTermRow searchString={searchString} />
+                                            </>
+                                        )}
+                                    </Box>
+                                )}
+                            </MotionBox>
+                        </MotionStack>
+                    </AnimatePresence>
+                    <OutletOrPanel />
                 </TouchTabBarLayout>
                 <AnimatePresence>
                     {activeOverlay === 'main-panel' && <TouchHomeOverlay onClose={onHideOverlay} />}

@@ -30,7 +30,7 @@ describe('<AppPanelLayout />', () => {
                 channelGroups: [],
                 membership: '',
                 isLoadingChannels: false,
-                isLoadingMemberships: false,
+                hasLoadedMemberships: false,
             }
         })
         render(<Wrapper />)
@@ -49,7 +49,7 @@ describe('<AppPanelLayout />', () => {
                 channelGroups: [],
                 membership: '',
                 isLoadingChannels: false,
-                isLoadingMemberships: false,
+                hasLoadedMemberships: false,
             }
         })
         render(<Wrapper />)

@@ -316,7 +316,7 @@ const LoggedUserMenu = () => {
 }
 
 export const TownNotFoundBox = () => (
-    <FadeInBox centerContent gap="lg" maxWidth="400">
+    <FadeInBox centerContent gap="lg" maxWidth="400" data-testid="town-not-found-box">
         <Box padding background="error" borderRadius="sm">
             <Icon color="default" type="alert" size="square_md" />
         </Box>

@@ -17,7 +17,7 @@ export const mockSpaceData: SpaceData = {
     ],
     membership: '',
     isLoadingChannels: false,
-    isLoadingMemberships: false,
+    hasLoadedMemberships: true,
 }
 
 export const mockSpaceDataWith2Channels: SpaceData = {

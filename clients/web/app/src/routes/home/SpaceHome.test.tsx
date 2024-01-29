@@ -1,12 +1,11 @@
 import React from 'react'
-import { render, screen, waitFor } from '@testing-library/react'
+import { render, waitFor } from '@testing-library/react'
 import { describe, expect, test, vi } from 'vitest'
 // eslint-disable-next-line no-restricted-imports
 import * as Lib from 'use-zion-client'
 import * as Router from 'react-router'
 import { PATHS } from 'routes'
 import { TestApp } from 'test/testUtils'
-import * as useContractAndServerSpaceDataHook from 'hooks/useContractAndServerSpaceData'
 import { SpaceHome } from './SpaceHome'
 
 vi.mock('react-router', async () => {
@@ -32,15 +31,7 @@ const mockSpaceData: Lib.SpaceData = {
     ],
     membership: '',
     isLoadingChannels: false,
-    isLoadingMemberships: false,
-}
-
-const mockChainSpace = {
-    address: '0x1',
-    networkId: 'some-id',
-    name: 'some-name',
-    owner: '0x0',
-    disabled: false,
+    hasLoadedMemberships: false,
 }
 
 const Wrapper = () => {
@@ -54,35 +45,6 @@ const Wrapper = () => {
 }
 
 describe('<SpaceHome />', () => {
-    test('renders join space UI when it is an invite link', async () => {
-        vi.spyOn(Router, 'useLocation').mockReturnValue({
-            search: '?invite',
-            state: undefined,
-            key: '',
-            pathname: '',
-            hash: '',
-        })
-
-        // <CheckValidSpaceOrInvite /> mock
-        vi.spyOn(
-            useContractAndServerSpaceDataHook,
-            'useContractAndServerSpaceData',
-        ).mockImplementation(() => {
-            return {
-                chainSpaceLoading: false,
-                chainSpace: mockChainSpace,
-                serverSpace: mockSpaceData,
-            }
-        })
-        render(<Wrapper />)
-
-        await waitFor(() => {
-            expect(screen.getByTestId('space-join')).toBeInTheDocument()
-        })
-
-        expect(screen.getByTestId('timeline-shimmer')).toBeInTheDocument()
-    })
-
     test('routes to spaces/:id/threads when no channel groups', async () => {
         const serverSpaceData = {
             ...mockSpaceData,
@@ -92,17 +54,6 @@ describe('<SpaceHome />', () => {
         // <SpaceHome /> mock
         vi.spyOn(Lib, 'useSpaceData').mockImplementation(() => {
             return serverSpaceData
-        })
-        // <CheckValidSpaceOrInvite /> mock
-        vi.spyOn(
-            useContractAndServerSpaceDataHook,
-            'useContractAndServerSpaceData',
-        ).mockImplementation(() => {
-            return {
-                chainSpaceLoading: false,
-                chainSpace: mockChainSpace,
-                serverSpace: serverSpaceData,
-            }
         })
 
         const navigateSpy = vi.fn()
@@ -130,18 +81,6 @@ describe('<SpaceHome />', () => {
             return serverSpaceData
         })
 
-        // <CheckValidSpaceOrInvite /> mock
-        vi.spyOn(
-            useContractAndServerSpaceDataHook,
-            'useContractAndServerSpaceData',
-        ).mockImplementation(() => {
-            return {
-                chainSpaceLoading: false,
-                chainSpace: mockChainSpace,
-                serverSpace: serverSpaceData,
-            }
-        })
-
         const navigateSpy = vi.fn()
         vi.spyOn(Router, 'useNavigate').mockReturnValue((args) => navigateSpy(args))
 
@@ -157,24 +96,5 @@ describe('<SpaceHome />', () => {
                 timeout: 4000,
             },
         )
-    })
-
-    test('shows not found message when town does not exist', async () => {
-        vi.spyOn(
-            useContractAndServerSpaceDataHook,
-            'useContractAndServerSpaceData',
-        ).mockImplementation(() => {
-            return {
-                chainSpaceLoading: false,
-                chainSpace: undefined,
-                serverSpace: undefined,
-            }
-        })
-
-        render(<Wrapper />)
-
-        await waitFor(() => {
-            expect(screen.getByText(/town not found/gi)).toBeInTheDocument()
-        })
     })
 })
