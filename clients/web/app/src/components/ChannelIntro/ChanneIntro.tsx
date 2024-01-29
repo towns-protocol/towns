@@ -58,12 +58,10 @@ export const ChannelDMIntro = (props: { roomIdentifier: string }) => {
     return (
         <Stack gap="md" paddingX="lg" paddingY="sm">
             <Stack horizontal gap="lg">
-                <Avatar key={userIds[0]} userId={userIds[0] || myUserId} size="avatar_x10" />
+                <Avatar key={userIds[0]} userId={userIds[0] || myUserId} size="avatar_md" />
 
-                <Stack justifyContent="start" paddingY="sm" overflow="hidden">
-                    <Paragraph color="gray1" size="lg">
-                        Direct Message
-                    </Paragraph>
+                <Stack justifyContent="start" paddingTop="xs" overflow="hidden">
+                    <Paragraph color="gray1">Direct Message</Paragraph>
                     {userIds.length === 0 ? (
                         <Paragraph color="gray2" size="lg">
                             <Text strong display="inline" as="span" color="default" size="lg">
@@ -100,15 +98,13 @@ export const ChannelGDMIntro = (props: { roomIdentifier: string }) => {
     return (
         <Stack gap="md" paddingX="lg" paddingY="sm">
             <Stack horizontal gap>
-                <Box centerContent rounded="sm" aspectRatio="1/1" width="x12">
-                    <GroupDMIcon roomIdentifier={props.roomIdentifier} width="x12" />
+                <Box centerContent rounded="sm" aspectRatio="1/1" width="x6">
+                    <GroupDMIcon roomIdentifier={props.roomIdentifier} width="x6" />
                 </Box>
 
-                <Stack justifyContent="center" paddingY="sm" overflow="hidden">
-                    <Paragraph color="gray1" size="lg">
-                        Group Message
-                    </Paragraph>
-                    <Paragraph color="gray2" size="lg">
+                <Stack justifyContent="center" paddingY="xs" overflow="hidden">
+                    <Paragraph color="gray1">Group Message</Paragraph>
+                    <Paragraph color="gray2">
                         This end-to-end encrypted chat is just between {userList}
                     </Paragraph>
                 </Stack>
