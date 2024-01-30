@@ -226,6 +226,25 @@ export class Town {
         return err
     }
 
+    public parseLog(log: ethers.providers.Log): ethers.utils.LogDescription {
+        const operations = [
+            () => this.channel.parseLog(log),
+            () => this.pausable.parseLog(log),
+            () => this.entitlements.parseLog(log),
+            () => this.roles.parseLog(log),
+            () => this.membership.parseLog(log),
+        ]
+
+        for (const operation of operations) {
+            try {
+                return operation()
+            } catch (error) {
+                // ignore, throw error if none match
+            }
+        }
+        throw new Error('Failed to parse log: ' + JSON.stringify(log))
+    }
+
     private async getEntitlementByAddress(address: string): Promise<EntitlementShim> {
         if (!this.addressToEntitlement[address]) {
             const entitlement = await this.entitlements.read.getEntitlement(address)

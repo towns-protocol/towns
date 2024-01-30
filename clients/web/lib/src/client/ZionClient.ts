@@ -794,18 +794,19 @@ export class ZionClient implements EntitlementsDelegate {
         const txResult = await this._waitForBlockchainTransaction(context)
 
         if (txResult.status === TransactionStatus.Success && txResult.data?.spaceNetworkId) {
-            // w/o user ops, the first event log contains the relevant data
-            // w/ user ops, the first event log is the user op, so get the second log
-            const logTarget = this.isAccountAbstractionEnabled()
-                ? txResult.receipt.logs[1]
-                : txResult.receipt.logs[0]
+            const parsedLogs = await this.spaceDapp.parseSpaceLogs(
+                txResult.data.spaceNetworkId,
+                txResult.receipt.logs,
+            )
 
-            const roleId = BigNumber.from(logTarget.topics[2]).toNumber()
-            // John: how can we best decode this 32 byte hex string to a human readable string ?
-            const roleName = logTarget.topics[1]
+            const roleCreatedEvent = parsedLogs.find((log) => log?.name === 'RoleCreated')
+            if (!roleCreatedEvent) {
+                throw new Error('RoleCreated event not found')
+            }
+            const roleId = (roleCreatedEvent.args[1] as BigNumber).toNumber()
+
             const roleIdentifier: RoleIdentifier = {
                 roleId,
-                name: roleName,
                 spaceNetworkId: txResult.data.spaceNetworkId,
             }
 

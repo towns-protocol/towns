@@ -97,6 +97,10 @@ export interface ISpaceDapp {
     ) => Promise<boolean>
     parseSpaceFactoryError: (error: unknown) => Error
     parseSpaceError: (spaceId: string, error: unknown) => Promise<Error>
+    parseSpaceLogs: (
+        spaceId: string,
+        logs: ethers.providers.Log[],
+    ) => Promise<(ethers.utils.LogDescription | undefined)[]>
     updateChannel: (params: UpdateChannelParams, signer: SignerType) => Promise<TransactionType>
     updateRole: (params: UpdateRoleParams, signer: SignerType) => Promise<TransactionType>
     updateSpaceName: (spaceId: string, name: string, signer: SignerType) => Promise<TransactionType>

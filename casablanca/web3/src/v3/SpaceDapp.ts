@@ -234,6 +234,24 @@ export class SpaceDapp implements ISpaceDapp {
         return decodedErr
     }
 
+    public async parseSpaceLogs(
+        spaceId: string,
+        logs: ethers.providers.Log[],
+    ): Promise<(ethers.utils.LogDescription | undefined)[]> {
+        const town = await this.getTown(spaceId)
+        if (!town) {
+            throw new Error(`Town with spaceId "${spaceId}" is not found.`)
+        }
+        return logs.map((log) => {
+            try {
+                return town.parseLog(log)
+            } catch (err) {
+                console.error(err)
+                return
+            }
+        })
+    }
+
     public async updateChannel(
         params: UpdateChannelParams,
         signer: ethers.Signer,

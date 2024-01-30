@@ -24,7 +24,6 @@ export enum WalletStatus {
 }
 export interface RoleIdentifier {
     roleId: number
-    name: string
     spaceNetworkId: string
 }
 

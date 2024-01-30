@@ -209,6 +209,10 @@ export class BaseContractShim<
         }
     }
 
+    public parseLog(log: ethers.providers.Log) {
+        return this.contractInterface.parseLog(log)
+    }
+
     private createReadContractInstance(): ethers.Contract {
         if (!this.provider) {
             throw new Error('No provider')
