@@ -54,7 +54,7 @@ func (s *PostgresEventStore) createStream(ctx context.Context, streamId string, 
 		return WrapRiverError(Err_DB_OPERATION_FAILURE, err).Message("error starting transaction")
 	}
 
-	defer rollbackTx(ctx, tx, "createStream")
+	defer s.rollbackTx(ctx, tx, "createStream")
 
 	err = s.compareUUID(ctx, tx)
 	if err != nil {
@@ -148,7 +148,7 @@ func (s *PostgresEventStore) getStreamFromLastSnapshot(
 		return nil, WrapRiverError(Err_DB_OPERATION_FAILURE, err).Message("error starting transaction")
 	}
 
-	defer rollbackTx(ctx, tx, "getStreamFromLastSnapshot")
+	defer s.rollbackTx(ctx, tx, "getStreamFromLastSnapshot")
 
 	err = s.compareUUID(ctx, tx)
 	if err != nil {
@@ -317,7 +317,7 @@ func (s *PostgresEventStore) addEvent(
 		return WrapRiverError(Err_DB_OPERATION_FAILURE, err).Message("error starting transaction")
 	}
 
-	defer rollbackTx(ctx, tx, "addEvent")
+	defer s.rollbackTx(ctx, tx, "addEvent")
 
 	err = s.compareUUID(ctx, tx)
 	if err != nil {
@@ -490,7 +490,7 @@ func (s *PostgresEventStore) createBlock(
 		return WrapRiverError(Err_DB_OPERATION_FAILURE, err).Message("Error starting transaction")
 	}
 
-	defer rollbackTx(ctx, tx, "createBlock")
+	defer s.rollbackTx(ctx, tx, "createBlock")
 
 	err = s.compareUUID(ctx, tx)
 	if err != nil {
@@ -810,7 +810,7 @@ func (s *PostgresEventStore) deleteStream(ctx context.Context, streamId string) 
 		return WrapRiverError(Err_DB_OPERATION_FAILURE, err).Message("error starting transaction")
 	}
 
-	defer rollbackTx(ctx, tx, "deleteStream")
+	defer s.rollbackTx(ctx, tx, "deleteStream")
 
 	err = s.compareUUID(ctx, tx)
 	if err != nil {
@@ -917,14 +917,21 @@ func newPostgresEventStore(
 		return nil, WrapRiverError(Err_DB_OPERATION_FAILURE, err).Message("New with config error")
 	}
 
+	store := &PostgresEventStore{
+		pool:       pool,
+		schemaName: databaseSchemaName,
+		nodeUUID:   instanceId,
+		exitSignal: exitSignal,
+	}
+
 	if clean {
-		err = cleanStorage(ctx, pool)
+		err = store.cleanStorage(ctx)
 		if err != nil {
 			return nil, WrapRiverError(Err_MINIBLOCKS_STORAGE_FAILURE, err).Message("CleanStorage error")
 		}
 	}
 
-	err = InitStorage(ctx, pool, databaseSchemaName, instanceId)
+	err = store.InitStorage(ctx)
 	if err != nil {
 		return nil, WrapRiverError(Err_MINIBLOCKS_STORAGE_FAILURE, err).Message("InitStorage error")
 	}
@@ -947,8 +954,6 @@ func newPostgresEventStore(
 		}
 	}()
 
-	store := &PostgresEventStore{pool: pool, schemaName: databaseSchemaName, nodeUUID: instanceId, exitSignal: exitSignal}
-
 	return store, nil
 }
 
@@ -958,27 +963,27 @@ func (s *PostgresEventStore) Close() error {
 	return nil
 }
 
-func cleanStorage(ctx context.Context, pool *pgxpool.Pool) error {
+func (s *PostgresEventStore) cleanStorage(ctx context.Context) error {
 	defer infra.StoreExecutionTimeMetrics("cleanStorage", infra.DB_CALLS_CATEGORY, time.Now())
 
-	tx, err := pool.Begin(ctx)
+	tx, err := s.pool.Begin(ctx)
 	if err != nil {
 		return err
 	}
 
-	defer rollbackTx(ctx, tx, "cleanStorage")
+	defer s.rollbackTx(ctx, tx, "cleanStorage")
 
 	// TODO: fix approach to the query - not critical as it is pure internal, though to bring the right order it is helpful
 	_, err = tx.Exec(
 		ctx,
-		fmt.Sprintf("DROP SCHEMA IF EXISTS %s CASCADE", pool.Config().ConnConfig.Config.RuntimeParams["search_path"]),
+		fmt.Sprintf("DROP SCHEMA IF EXISTS %s CASCADE", s.pool.Config().ConnConfig.Config.RuntimeParams["search_path"]),
 	)
 	if err != nil {
 		return WrapRiverError(Err_DB_OPERATION_FAILURE, err).Func("cleanStorage").Message("Schema deletion transaction error")
 	}
 
 	// TODO: fix approach to the query - not critical as it is pure internal, though to bring the right order it is helpful
-	_, err = tx.Exec(ctx, fmt.Sprintf("CREATE SCHEMA %s", pool.Config().ConnConfig.Config.RuntimeParams["search_path"]))
+	_, err = tx.Exec(ctx, fmt.Sprintf("CREATE SCHEMA %s", s.pool.Config().ConnConfig.Config.RuntimeParams["search_path"]))
 	if err != nil {
 		return WrapRiverError(Err_DB_OPERATION_FAILURE, err).Func("cleanStorage").Message("Schema creation transaction error")
 	}
@@ -994,46 +999,46 @@ func cleanStorage(ctx context.Context, pool *pgxpool.Pool) error {
 //go:embed init_db.sql
 var schema string
 
-func InitStorage(ctx context.Context, pool *pgxpool.Pool, databaseSchemaName string, instanceId string) error {
-	err := initStorage(ctx, pool, databaseSchemaName, instanceId)
+func (s *PostgresEventStore) InitStorage(ctx context.Context) error {
+	err := s.initStorage(ctx)
 	if err != nil {
-		return AsRiverError(err).Func("InitStorage").Tag("schema", schema).Tag("schemaName", databaseSchemaName)
+		return AsRiverError(err).Func("InitStorage").Tag("schema", schema).Tag("schemaName", s.schemaName)
 	}
 
 	return nil
 }
 
-func initStorage(ctx context.Context, pool *pgxpool.Pool, databaseSchemaName string, instanceId string) error {
+func (s *PostgresEventStore) initStorage(ctx context.Context) error {
 	defer infra.StoreExecutionTimeMetrics("initStorage", infra.DB_CALLS_CATEGORY, time.Now())
 
 	log := dlog.CtxLog(ctx)
 
-	tx, err := pool.Begin(ctx)
+	tx, err := s.pool.Begin(ctx)
 	if err != nil {
 		return WrapRiverError(Err_DB_OPERATION_FAILURE, err).Message("InitStorage startTx error")
 	}
 
-	defer rollbackTx(ctx, tx, "initStorage")
+	defer s.rollbackTx(ctx, tx, "initStorage")
 
 	// check if schema exists
 	var schemaExists bool
 	err = tx.QueryRow(
 		ctx,
 		"SELECT EXISTS(SELECT 1 FROM information_schema.schemata WHERE schema_name = $1)",
-		databaseSchemaName).Scan(&schemaExists)
+		s.schemaName).Scan(&schemaExists)
 	if err != nil {
 		return WrapRiverError(Err_DB_OPERATION_FAILURE, err).Message("Error checking schema existence")
 	}
 
 	if !schemaExists {
-		createSchemaQuery := fmt.Sprintf("CREATE SCHEMA \"%s\"", databaseSchemaName)
+		createSchemaQuery := fmt.Sprintf("CREATE SCHEMA \"%s\"", s.schemaName)
 		_, err := tx.Exec(ctx, createSchemaQuery)
 		if err != nil {
 			return WrapRiverError(Err_DB_OPERATION_FAILURE, err).Message("Error creating schema")
 		}
-		log.Info("DB Schema created", "schema", databaseSchemaName)
+		log.Info("DB Schema created", "schema", s.schemaName)
 	} else {
-		log.Info("DB Schema already exists", "schema", databaseSchemaName)
+		log.Info("DB Schema already exists", "schema", s.schemaName)
 	}
 
 	_, err = tx.Exec(ctx, schema)
@@ -1069,9 +1074,9 @@ func initStorage(ctx context.Context, pool *pgxpool.Pool, databaseSchemaName str
 	_, err = tx.Exec(
 		ctx,
 		"INSERT INTO singlenodekey (uuid, storage_connection_time, info) VALUES ($1, $2, $3)",
-		instanceId,
+		s.nodeUUID,
 		timestamp,
-		getCurrentNodeProcessInfo(databaseSchemaName),
+		getCurrentNodeProcessInfo(s.schemaName),
 	)
 	if err != nil {
 		return WrapRiverError(Err_DB_OPERATION_FAILURE, err).Message("singlenodekey UUID insert errorr")
@@ -1085,7 +1090,7 @@ func initStorage(ctx context.Context, pool *pgxpool.Pool, databaseSchemaName str
 	return nil
 }
 
-func rollbackTx(ctx context.Context, tx pgx.Tx, funcName string) {
+func (s *PostgresEventStore) rollbackTx(ctx context.Context, tx pgx.Tx, funcName string) {
 	err := tx.Rollback(context.Background())
 	if err != nil {
 		if errors.Is(err, pgx.ErrTxClosed) {
