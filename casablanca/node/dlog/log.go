@@ -25,9 +25,9 @@ func LogWith(args ...any) *slog.Logger {
 	return Log().With(args...)
 }
 
-type dlogCtxKeyType int
+type dlogCtxKeyType struct{}
 
-const dlogCtxKey dlogCtxKeyType = 77
+var dlogCtxKey = dlogCtxKeyType{}
 
 func CtxWithLog(ctx context.Context, l *slog.Logger) context.Context {
 	return context.WithValue(ctx, dlogCtxKey, l)
