@@ -20,10 +20,10 @@ import (
 )
 
 type WalletLinkContract interface {
-	GetLatestNonceForRootKey(rootKey common.Address) (*big.Int, error)
-	GetWalletsByRootKey(rootKey common.Address) ([]common.Address, error)
-	GetRootKeyForWallet(wallet common.Address) (common.Address, error)
-	CheckIfLinked(rootKey common.Address, wallet common.Address) (bool, error)
+	GetLatestNonceForRootKey(ctx context.Context, rootKey common.Address) (*big.Int, error)
+	GetWalletsByRootKey(ctx context.Context, rootKey common.Address) ([]common.Address, error)
+	GetRootKeyForWallet(ctx context.Context, wallet common.Address) (common.Address, error)
+	CheckIfLinked(ctx context.Context, rootKey common.Address, wallet common.Address) (bool, error)
 }
 
 type GeneratedWalletLinkContract interface {
@@ -44,7 +44,7 @@ var (
 	checkIfLinkedCalls       = infra.NewSuccessMetrics("check_if_linked_calls", contractCalls)
 )
 
-func NewTownsWalletLink(cfg *config.ContractConfig, backend bind.ContractBackend) (*TownsWalletLink, error) {
+func NewTownsWalletLink(ctx context.Context, cfg *config.ContractConfig, backend bind.ContractBackend) (*TownsWalletLink, error) {
 	address, err := crypto.ParseOrLoadAddress(cfg.Address)
 	if err != nil {
 		return nil, AsRiverError(err, Err_BAD_CONFIG).Message("Failed to parse contract address").Func("NewTownsWalletLink")
@@ -79,8 +79,8 @@ func NewTownsWalletLink(cfg *config.ContractConfig, backend bind.ContractBackend
 	}, nil
 }
 
-func (l *TownsWalletLink) GetWalletsByRootKey(rootKey common.Address) ([]common.Address, error) {
-	log := dlog.CtxLog(context.Background())
+func (l *TownsWalletLink) GetWalletsByRootKey(ctx context.Context, rootKey common.Address) ([]common.Address, error) {
+	log := dlog.CtxLog(ctx)
 	start := time.Now()
 	defer infra.StoreExecutionTimeMetrics("GetWalletsByRootKey", infra.CONTRACT_CALLS_CATEGORY, start)
 	log.Debug("GetWalletsByRootKey", "rootKey", rootKey)
@@ -95,8 +95,8 @@ func (l *TownsWalletLink) GetWalletsByRootKey(rootKey common.Address) ([]common.
 	return result, nil
 }
 
-func (l *TownsWalletLink) GetRootKeyForWallet(wallet common.Address) (common.Address, error) {
-	log := dlog.CtxLog(context.Background())
+func (l *TownsWalletLink) GetRootKeyForWallet(ctx context.Context, wallet common.Address) (common.Address, error) {
+	log := dlog.CtxLog(ctx)
 	start := time.Now()
 	defer infra.StoreExecutionTimeMetrics("GetRootKeyForWallet", infra.CONTRACT_CALLS_CATEGORY, start)
 	log.Debug("GetRootKeyForWallet", "wallet", wallet)
@@ -111,8 +111,8 @@ func (l *TownsWalletLink) GetRootKeyForWallet(wallet common.Address) (common.Add
 	return result, nil
 }
 
-func (l *TownsWalletLink) GetLatestNonceForRootKey(rootKey common.Address) (*big.Int, error) {
-	log := dlog.CtxLog(context.Background())
+func (l *TownsWalletLink) GetLatestNonceForRootKey(ctx context.Context, rootKey common.Address) (*big.Int, error) {
+	log := dlog.CtxLog(ctx)
 	start := time.Now()
 	defer infra.StoreExecutionTimeMetrics("GetLatestNonceForRootKey", infra.CONTRACT_CALLS_CATEGORY, start)
 	log.Debug("GetLatestNonceForRootKey", "rootKey", rootKey)
@@ -127,8 +127,8 @@ func (l *TownsWalletLink) GetLatestNonceForRootKey(rootKey common.Address) (*big
 	return result, nil
 }
 
-func (l *TownsWalletLink) CheckIfLinked(rootKey common.Address, wallet common.Address) (bool, error) {
-	log := dlog.CtxLog(context.Background())
+func (l *TownsWalletLink) CheckIfLinked(ctx context.Context, rootKey common.Address, wallet common.Address) (bool, error) {
+	log := dlog.CtxLog(ctx)
 	start := time.Now()
 	defer infra.StoreExecutionTimeMetrics("CheckIfLinked", infra.CONTRACT_CALLS_CATEGORY, start)
 	log.Debug("CheckIfLinked", "rootKey", rootKey, "wallet", wallet)

@@ -118,7 +118,7 @@ func NewChainAuth(
 		return nil, err
 	}
 
-	walletLinkContract, err := NewTownsWalletLink(walletLinkCfg, blockchain.Client)
+	walletLinkContract, err := NewTownsWalletLink(ctx, walletLinkCfg, blockchain.Client)
 	if err != nil {
 		return nil, err
 	}
@@ -318,7 +318,7 @@ func (ca *chainAuth) getLinkedWallets(ctx context.Context, rootKey common.Addres
 	}
 
 	// get all the wallets for the root key.
-	wallets, err := ca.walletLinkContract.GetWalletsByRootKey(rootKey)
+	wallets, err := ca.walletLinkContract.GetWalletsByRootKey(ctx, rootKey)
 	if err != nil {
 		log.Error("error getting all wallets", "rootKey", rootKey.Hex(), "error", err)
 		return nil, err
