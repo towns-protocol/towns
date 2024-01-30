@@ -72,7 +72,7 @@ func NewTownsChannels(version string, address common.Address, backend bind.Contr
 			Err_CANNOT_CONNECT,
 			err,
 		).Tags("address", address, "version", version).
-			Func("NewTownsPausable").
+			Func("NewTownsChannels").
 			Message("Failed to initialize contract")
 	}
 	if c == nil {
@@ -83,7 +83,7 @@ func NewTownsChannels(version string, address common.Address, backend bind.Contr
 			address,
 			"version",
 			version,
-		).Func("NewTownsPausable")
+		).Func("NewTownsChannels")
 	}
 	return &townsChannelsProxy{contract: c}, nil
 }
