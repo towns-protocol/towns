@@ -249,61 +249,21 @@ export function useZionClient(): ZionClientImpl {
 const useWithCatch = <T extends Array<unknown>, U>(
     fn?: (...args: T) => Promise<U | undefined>,
 ): ((...args: T) => Promise<U | undefined>) => {
-    const { appendError } = useZionErrorStore()
     const client = useZionContext().client
     return useMemo(
         () =>
             async (...args: T): Promise<U | undefined> => {
                 if (fn && client) {
-                    let retryCount = 0
-                    // eslint-disable-next-line no-constant-condition
-                    while (true) {
-                        retryCount++
-                        try {
-                            const value = await fn.apply(client, args)
-                            if (retryCount > 0) {
-                                console.log(`useWithCatch succeeded after ${retryCount} retries`)
-                            }
-                            return value
-                        } catch (err) {
-                            if (client.opts.verbose === true) {
-                                appendError(formatError<T, U>(err, retryCount, fn, args))
-                            }
-                            // just give up
-                            console.error('Not a retryable error', err)
-                            return
-                        }
+                    try {
+                        const value = await fn.apply(client, args)
+                        return value
+                    } catch (err) {
+                        // just give up
+                        console.error('Not a retryable error', err)
+                        return
                     }
-                } else {
-                    console.log('useZionClient: Not logged in')
                 }
             },
-        [fn, client, appendError],
+        [fn, client],
     )
-}
-
-function formatError<T extends Array<unknown>, U>(
-    err: unknown,
-    retryCount: number,
-    fn: (...args: T) => Promise<U | undefined>,
-    args: T,
-): string {
-    try {
-        return `ERROR: ${errorToString(err)} retryCount: ${retryCount} fn: ${
-            fn.name
-        } args: ${JSON.stringify(args)}`
-    } catch (e) {
-        // eslint-disable-next-line @typescript-eslint/restrict-template-expressions
-        return `unformattable ERROR: ${e}`
-    }
-}
-
-function errorToString(err: unknown): string {
-    try {
-        const attempt1 = JSON.stringify(err)
-        // combine both the json and the stringified error, so that we see codes and messages
-        return `${attempt1} ${String(err)}`
-    } catch (e) {
-        return `unformattable ERROR: ${String(e)}`
-    }
 }
