@@ -624,61 +624,35 @@ func (s *Service) addMembershipEvent(
 		return err
 	}
 
-	var permission auth.Permission
-	switch membership.Op {
-	case MembershipOp_SO_INVITE:
-		if member {
-			return RiverError(Err_FAILED_PRECONDITION, "user is already a member of the channel", "user", userId)
-		}
-		userId = creator
-		permission = auth.PermissionInvite
-
-	case MembershipOp_SO_JOIN:
-		if userId != creator {
-			return RiverError(Err_PERMISSION_DENIED, "user must join themselves", "user", userId)
-		}
-		if member {
-			return RiverError(Err_FAILED_PRECONDITION, "user is already a member of the channel", "user", userId)
-		}
-		// join event should be allowed for read only users
-		permission = auth.PermissionRead
-
-	case MembershipOp_SO_LEAVE:
-		// TODO-ENT: add check that the creator is either the user or the admin
-		if !member {
-			return RiverError(Err_FAILED_PRECONDITION, "user is not a member of the channel", "user", userId)
-		}
-		permission = auth.PermissionRead
-
-	case MembershipOp_SO_UNSPECIFIED:
-		fallthrough
-
-	default:
-		return RiverError(Err_BAD_EVENT, "Need valid membership op", "op", membership.Op)
-	}
-
-	var args *auth.AuthCheckArgs
-	switch i := view.InceptionPayload().(type) {
-	case *SpacePayload_Inception:
-		args = auth.NewAuthCheckArgsForSpace(
-			streamId,
-			userId,
-			permission,
-		)
-	case *ChannelPayload_Inception:
-		args = auth.NewAuthCheckArgsForChannel(
-			i.SpaceId,
-			streamId,
-			userId,
-			permission,
-		)
-	default:
-		return RiverError(Err_INTERNAL, "Must be space or channel")
-	}
-
-	err = s.authChecker.CheckPermission(ctx, args)
+	permission, permissionUserId, err := getPermissionsForMembershipOp(membership, userId, member, creator)
 	if err != nil {
 		return err
+	}
+
+	if permission != auth.PermissionUndefined {
+		var args *auth.AuthCheckArgs
+		switch i := view.InceptionPayload().(type) {
+		case *SpacePayload_Inception:
+			args = auth.NewAuthCheckArgsForSpace(
+				streamId,
+				permissionUserId,
+				permission,
+			)
+		case *ChannelPayload_Inception:
+			args = auth.NewAuthCheckArgsForChannel(
+				i.SpaceId,
+				streamId,
+				permissionUserId,
+				permission,
+			)
+		default:
+			return RiverError(Err_INTERNAL, "Must be space or channel")
+		}
+
+		err = s.authChecker.CheckPermission(ctx, args)
+		if err != nil {
+			return err
+		}
 	}
 
 	err = stream.AddEvent(ctx, parsedEvent)
@@ -687,6 +661,43 @@ func (s *Service) addMembershipEvent(
 	}
 
 	return s.addDerivedMembershipEventToUserStream(ctx, userStream, userStreamView, streamId, parsedEvent, membership.Op)
+}
+
+func getPermissionsForMembershipOp(membership *Membership, userId string, member bool, creatorId string) (auth.Permission, string, error) {
+	switch membership.Op {
+	case MembershipOp_SO_INVITE:
+		if member {
+			return auth.PermissionUndefined, "", RiverError(Err_FAILED_PRECONDITION, "user is already a member of the channel", "user", userId)
+		}
+		return auth.PermissionInvite, creatorId, nil
+
+	case MembershipOp_SO_JOIN:
+		if userId != creatorId {
+			return auth.PermissionUndefined, "", RiverError(Err_PERMISSION_DENIED, "user must join themselves", "user", userId)
+		}
+		if member {
+			return auth.PermissionUndefined, "", RiverError(Err_FAILED_PRECONDITION, "user is already a member of the channel", "user", userId)
+		}
+		// join event should be allowed for read only users
+		return auth.PermissionRead, userId, nil
+
+	case MembershipOp_SO_LEAVE:
+		if !member {
+			return auth.PermissionUndefined, "", RiverError(Err_FAILED_PRECONDITION, "user is not a member of the channel", "user", userId)
+		}
+		if userId != creatorId {
+			// if the user is not the creator, then the user must be an admin
+			return auth.PermissionOwner, creatorId, nil
+		} else {
+			return auth.PermissionUndefined, userId, nil
+		}
+
+	case MembershipOp_SO_UNSPECIFIED:
+		fallthrough
+
+	default:
+		return auth.PermissionUndefined, "", RiverError(Err_BAD_EVENT, "Need valid membership op", "op", membership.Op)
+	}
 }
 
 func (s *Service) addDMMembershipEvent(
