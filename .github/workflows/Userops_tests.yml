@@ -49,6 +49,7 @@ jobs:
               run: yarn woker:wait:stackup
 
             - name: Run userops tests
+              timeout-minutes: 10
               env:
                 AA_PAYMASTER_PROXY_URL: http://127.0.0.1:8686
                 CASABLANCA_SERVER_URL: https://river1-test-beta.towns.com
