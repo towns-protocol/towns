@@ -1,6 +1,8 @@
 package config
 
 import (
+	"context"
+
 	infra "github.com/river-build/river/infra/config"
 )
 
@@ -114,4 +116,19 @@ type ContractConfig struct {
 	Address string
 	// Version of the contract to use.
 	Version string
+}
+
+type configCtxKeyType struct{}
+
+var configCtxKey = configCtxKeyType{}
+
+func CtxWithConfig(ctx context.Context, config *Config) context.Context {
+	return context.WithValue(ctx, configCtxKey, config)
+}
+
+func FromCtx(ctx context.Context) *Config {
+	if config, ok := ctx.Value(configCtxKey).(*Config); ok {
+		return config
+	}
+	return &Config{}
 }
