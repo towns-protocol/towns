@@ -24,6 +24,7 @@ type TownsEntitlements interface {
 type townsEntitlementsProxy struct {
 	contract TownsEntitlements
 	address  common.Address
+	ctx      context.Context
 }
 
 var (
@@ -31,7 +32,7 @@ var (
 	isEntitledToTownCalls    = infra.NewSuccessMetrics("is_entitled_to_town_calls", contractCalls)
 )
 
-func NewTownsEntitlements(version string, address common.Address, backend bind.ContractBackend) (TownsEntitlements, error) {
+func NewTownsEntitlements(ctx context.Context, version string, address common.Address, backend bind.ContractBackend) (TownsEntitlements, error) {
 	var c TownsEntitlements
 	var err error
 	switch version {
@@ -61,6 +62,7 @@ func NewTownsEntitlements(version string, address common.Address, backend bind.C
 	return &townsEntitlementsProxy{
 		contract: c,
 		address:  address,
+		ctx:      ctx,
 	}, nil
 }
 
@@ -70,7 +72,7 @@ func (proxy *townsEntitlementsProxy) IsEntitledToChannel(
 	user common.Address,
 	permission string,
 ) (bool, error) {
-	log := dlog.CtxLog(context.Background())
+	log := dlog.CtxLog(proxy.ctx)
 	start := time.Now()
 	defer infra.StoreExecutionTimeMetrics("IsEntitledToChannel", infra.CONTRACT_CALLS_CATEGORY, start)
 	log.Debug(
@@ -122,7 +124,7 @@ func (proxy *townsEntitlementsProxy) IsEntitledToChannel(
 }
 
 func (proxy *townsEntitlementsProxy) IsEntitledToTown(opts *bind.CallOpts, user common.Address, permission string) (bool, error) {
-	log := dlog.CtxLog(context.Background())
+	log := dlog.CtxLog(proxy.ctx)
 	start := time.Now()
 	defer infra.StoreExecutionTimeMetrics("IsEntitledToTown", infra.CONTRACT_CALLS_CATEGORY, start)
 	log.Debug("IsEntitledToTown", "user", user, "permission", permission, "address", proxy.address)

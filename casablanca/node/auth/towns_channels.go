@@ -50,7 +50,7 @@ func (c *devCaller) IsDisabled(opts *bind.CallOpts, channelNetworkId string) (bo
 
 var getChannelCalls = infra.NewSuccessMetrics("get_channel_calls", contractCalls)
 
-func NewTownsChannels(version string, address common.Address, backend bind.ContractBackend) (TownsChannels, error) {
+func NewTownsChannels(ctx context.Context, version string, address common.Address, backend bind.ContractBackend) (TownsChannels, error) {
 	var c TownsChannels
 	var err error
 	switch version {
@@ -85,17 +85,22 @@ func NewTownsChannels(version string, address common.Address, backend bind.Contr
 			version,
 		).Func("NewTownsChannels")
 	}
-	return &townsChannelsProxy{contract: c}, nil
+	return &townsChannelsProxy{
+			contract: c,
+			ctx:      ctx,
+		},
+		nil
 }
 
 type townsChannelsProxy struct {
 	contract TownsChannels
+	ctx      context.Context
 }
 
 var _ TownsChannels = (*townsChannelsProxy)(nil)
 
 func (p *townsChannelsProxy) IsDisabled(opts *bind.CallOpts, channelNetworkId string) (bool, error) {
-	log := dlog.CtxLog(context.Background())
+	log := dlog.CtxLog(p.ctx)
 	start := time.Now()
 	defer infra.StoreExecutionTimeMetrics("IsDisabled", infra.CONTRACT_CALLS_CATEGORY, start)
 	log.Debug("IsDisabled", "channelNetworkId", channelNetworkId)

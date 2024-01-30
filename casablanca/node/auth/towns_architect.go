@@ -26,11 +26,12 @@ type TownsArchitect interface {
 type townsArchitectProxy struct {
 	contract TownsArchitect
 	address  common.Address
+	ctx      context.Context
 }
 
 var getTownByIdCalls = infra.NewSuccessMetrics("towns_architect_calls", contractCalls)
 
-func NewTownsArchitect(cfg *config.ContractConfig, backend bind.ContractBackend) (TownsArchitect, error) {
+func NewTownsArchitect(ctx context.Context, cfg *config.ContractConfig, backend bind.ContractBackend) (TownsArchitect, error) {
 	address, err := crypto.ParseOrLoadAddress(cfg.Address)
 	if err != nil {
 		return nil, AsRiverError(err, Err_BAD_CONFIG).Message("Failed to parse contract address").Func("NewTownsArchitect")
@@ -63,11 +64,12 @@ func NewTownsArchitect(cfg *config.ContractConfig, backend bind.ContractBackend)
 	return &townsArchitectProxy{
 		contract: c,
 		address:  address,
+		ctx:      ctx,
 	}, nil
 }
 
 func (proxy *townsArchitectProxy) GetTownById(opts *bind.CallOpts, townId string) (common.Address, error) {
-	log := dlog.CtxLog(context.Background())
+	log := dlog.CtxLog(proxy.ctx)
 	start := time.Now()
 	defer infra.StoreExecutionTimeMetrics("GetTownById", infra.CONTRACT_CALLS_CATEGORY, start)
 	log.Debug("GetTownById", "address", proxy.address, "networkId", townId)

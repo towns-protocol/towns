@@ -184,7 +184,7 @@ func (ca *chainAuth) isWalletAllowed(ctx context.Context, args *AuthCheckArgs) (
 
 func (ca *chainAuth) isSpaceEnabledUncached(ctx context.Context, args *AuthCheckArgs) (bool, error) {
 	// This is awkward as we want enabled to be cached for 15 minutes, but the API returns the inverse
-	isDisabled, err := ca.spaceContract.IsSpaceDisabled(args.spaceId)
+	isDisabled, err := ca.spaceContract.IsSpaceDisabled(ctx, args.spaceId)
 	return !isDisabled, err
 }
 
@@ -213,7 +213,7 @@ func (ca *chainAuth) checkSpaceEnabled(ctx context.Context, spaceId string) erro
 
 func (ca *chainAuth) isChannelEnabledUncached(ctx context.Context, args *AuthCheckArgs) (bool, error) {
 	// This is awkward as we want enabled to be cached for 15 minutes, but the API returns the inverse
-	isDisabled, err := ca.spaceContract.IsChannelDisabled(args.spaceId, args.channelId)
+	isDisabled, err := ca.spaceContract.IsChannelDisabled(ctx, args.spaceId, args.channelId)
 	return !isDisabled, err
 }
 
@@ -241,6 +241,7 @@ func (ca *chainAuth) checkChannelEnabled(ctx context.Context, spaceId string, ch
 
 func (ca *chainAuth) isEntitledToSpaceUncached(ctx context.Context, args *AuthCheckArgs) (bool, error) {
 	return ca.spaceContract.IsEntitledToSpace(
+		ctx,
 		args.spaceId,
 		args.principal,
 		args.permission,
@@ -273,6 +274,7 @@ func (ca *chainAuth) isEntitledToSpace(ctx context.Context, args *AuthCheckArgs)
 
 func (ca *chainAuth) isEntitledToChannelUncached(ctx context.Context, args *AuthCheckArgs) (bool, error) {
 	return ca.spaceContract.IsEntitledToChannel(
+		ctx,
 		args.spaceId,
 		args.channelId,
 		args.principal,

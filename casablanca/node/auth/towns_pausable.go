@@ -23,11 +23,12 @@ type TownsPausable interface {
 type townsPausableProxy struct {
 	address  common.Address
 	contract TownsPausable
+	ctx      context.Context
 }
 
 var pausedCalls = infra.NewSuccessMetrics("paused_calls", contractCalls)
 
-func NewTownsPausable(version string, address common.Address, backend bind.ContractBackend) (TownsPausable, error) {
+func NewTownsPausable(ctx context.Context, version string, address common.Address, backend bind.ContractBackend) (TownsPausable, error) {
 	var c TownsPausable
 	var err error
 	switch version {
@@ -57,11 +58,12 @@ func NewTownsPausable(version string, address common.Address, backend bind.Contr
 	return &townsPausableProxy{
 		contract: c,
 		address:  address,
+		ctx:      ctx,
 	}, nil
 }
 
 func (proxy *townsPausableProxy) Paused(callOpts *bind.CallOpts) (bool, error) {
-	log := dlog.CtxLog(context.Background())
+	log := dlog.CtxLog(proxy.ctx)
 	start := time.Now()
 	defer infra.StoreExecutionTimeMetrics("Paused", infra.CONTRACT_CALLS_CATEGORY, start)
 	log.Debug("Paused", "address", proxy.address)

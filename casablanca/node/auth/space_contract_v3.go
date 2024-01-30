@@ -38,7 +38,7 @@ func NewSpaceContractV3(
 	backend bind.ContractBackend,
 	// walletLinkingCfg *config.ContractConfig,
 ) (SpaceContract, error) {
-	townsArchitect, err := NewTownsArchitect(townsArchitectCfg, backend)
+	townsArchitect, err := NewTownsArchitect(ctx, townsArchitectCfg, backend)
 	if err != nil {
 		return nil, err
 	}
@@ -54,12 +54,13 @@ func NewSpaceContractV3(
 }
 
 func (sc *SpaceContractV3) IsEntitledToSpace(
+	ctx context.Context,
 	spaceNetworkId string,
 	user common.Address,
 	permission Permission,
 ) (bool, error) {
 	// get the town entitlements and check if user is entitled.
-	town, err := sc.getTown(spaceNetworkId)
+	town, err := sc.getTown(ctx, spaceNetworkId)
 	if err != nil || town == nil {
 		return false, err
 	}
@@ -72,13 +73,14 @@ func (sc *SpaceContractV3) IsEntitledToSpace(
 }
 
 func (sc *SpaceContractV3) IsEntitledToChannel(
+	ctx context.Context,
 	spaceNetworkId string,
 	channelNetworkId string,
 	user common.Address,
 	permission Permission,
 ) (bool, error) {
 	// get the town entitlements and check if user is entitled to the channel
-	town, err := sc.getTown(spaceNetworkId)
+	town, err := sc.getTown(ctx, spaceNetworkId)
 	if err != nil || town == nil {
 		return false, err
 	}
@@ -92,8 +94,8 @@ func (sc *SpaceContractV3) IsEntitledToChannel(
 	return isEntitled, err
 }
 
-func (sc *SpaceContractV3) IsSpaceDisabled(spaceNetworkId string) (bool, error) {
-	town, err := sc.getTown(spaceNetworkId)
+func (sc *SpaceContractV3) IsSpaceDisabled(ctx context.Context, spaceNetworkId string) (bool, error) {
+	town, err := sc.getTown(ctx, spaceNetworkId)
 	if err != nil || town == nil {
 		return false, err
 	}
@@ -102,8 +104,8 @@ func (sc *SpaceContractV3) IsSpaceDisabled(spaceNetworkId string) (bool, error) 
 	return isDisabled, err
 }
 
-func (sc *SpaceContractV3) IsChannelDisabled(spaceNetworkId string, channelNetworkId string) (bool, error) {
-	channel, err := sc.getChannel(spaceNetworkId, channelNetworkId)
+func (sc *SpaceContractV3) IsChannelDisabled(ctx context.Context, spaceNetworkId string, channelNetworkId string) (bool, error) {
+	channel, err := sc.getChannel(ctx, spaceNetworkId, channelNetworkId)
 	if err != nil || channel == nil {
 		return false, err
 	}
@@ -111,7 +113,7 @@ func (sc *SpaceContractV3) IsChannelDisabled(spaceNetworkId string, channelNetwo
 	return isDisabled, err
 }
 
-func (sc *SpaceContractV3) getTown(townId string) (*Town, error) {
+func (sc *SpaceContractV3) getTown(ctx context.Context, townId string) (*Town, error) {
 	sc.townsLock.Lock()
 	defer sc.townsLock.Unlock()
 	if sc.towns[townId] == nil {
@@ -120,11 +122,11 @@ func (sc *SpaceContractV3) getTown(townId string) (*Town, error) {
 		if err != nil || townAddress == EMPTY_ADDRESS {
 			return nil, err
 		}
-		entitlements, err := NewTownsEntitlements(sc.version, townAddress, sc.backend)
+		entitlements, err := NewTownsEntitlements(ctx, sc.version, townAddress, sc.backend)
 		if err != nil {
 			return nil, err
 		}
-		pausable, err := NewTownsPausable(sc.version, townAddress, sc.backend)
+		pausable, err := NewTownsPausable(ctx, sc.version, townAddress, sc.backend)
 		if err != nil {
 			return nil, err
 		}
@@ -139,15 +141,15 @@ func (sc *SpaceContractV3) getTown(townId string) (*Town, error) {
 	return sc.towns[townId], nil
 }
 
-func (sc *SpaceContractV3) getChannel(spaceNetworkId string, channelNetworkId string) (TownsChannels, error) {
-	town, err := sc.getTown(spaceNetworkId)
+func (sc *SpaceContractV3) getChannel(ctx context.Context, spaceNetworkId string, channelNetworkId string) (TownsChannels, error) {
+	town, err := sc.getTown(ctx, spaceNetworkId)
 	if err != nil || town == nil {
 		return nil, err
 	}
 	town.channelsLock.Lock()
 	defer town.channelsLock.Unlock()
 	if town.channels[channelNetworkId] == nil {
-		channel, err := NewTownsChannels(sc.version, town.address, sc.backend)
+		channel, err := NewTownsChannels(ctx, sc.version, town.address, sc.backend)
 		if err != nil {
 			return nil, err
 		}
