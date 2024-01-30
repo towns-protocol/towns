@@ -5,7 +5,6 @@ import { AppErrorFallback } from 'AppErrorFallback'
 import { ZLayerProvider } from '@ui'
 import { useRootTheme } from 'hooks/useRootTheme'
 import { PrivyProvider } from 'PrivyProvider'
-import { ClearStaleWagmiStorage } from 'ClearStaleWagmiStorage'
 import { WelcomeLayout } from 'routes/layouts/WelcomeLayout'
 import { ReloadPrompt } from '@components/ReloadPrompt/ReloadPrompt'
 import { env } from 'utils'
@@ -20,7 +19,6 @@ export const Main = () => {
 
     return (
         <ErrorBoundary FallbackComponent={AppErrorFallback}>
-            <ClearStaleWagmiStorage />
             <PrivyProvider>
                 <BrowserRouter>
                     <Suspense fallback={<WelcomeLayout debugText="lazy loading app" />}>
