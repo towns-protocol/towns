@@ -58,7 +58,6 @@ func MakeChannelStreamContext_T(
 	streamCache := events.NewStreamCache(&events.StreamCacheParams{
 		Storage:                storage.NewMemStorage(),
 		Wallet:                 wallet,
-		DefaultCtx:             ctx,
 		RiverChainBlockMonitor: crypto.NewFakeBlockMonitor(ctx, 100),
 	}, streamConfig_t)
 	// create a channel stream and auto-add the creator as a member

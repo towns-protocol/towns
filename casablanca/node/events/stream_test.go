@@ -62,7 +62,6 @@ func TestMain(m *testing.M) {
 	streamCacheParams = &StreamCacheParams{
 		Storage:    store,
 		Wallet:     wallet,
-		DefaultCtx: ctx,
 	}
 
 	// Run tests
@@ -127,7 +126,7 @@ func mbTest(
 	t *testing.T,
 	params mbTestParams,
 ) {
-	ctx := streamCacheParams.DefaultCtx
+	ctx := context.Background()
 	assert := assert.New(t)
 
 	spaceStreamId := GenShortNanoid()

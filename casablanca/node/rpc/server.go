@@ -204,7 +204,6 @@ func StartServer(ctx context.Context, cfg *config.Config, wallet *crypto.Wallet)
 		&events.StreamCacheParams{
 			Storage:                store,
 			Wallet:                 wallet,
-			DefaultCtx:             ctx,
 			RiverChainBlockMonitor: riverChainBlockMonitor,
 		},
 		&cfg.Stream,

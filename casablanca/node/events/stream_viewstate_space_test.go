@@ -224,7 +224,6 @@ func TestSpaceViewState(t *testing.T) {
 		&StreamCacheParams{
 			Storage:                storage.NewMemStorage(),
 			Wallet:                 nodeWallet,
-			DefaultCtx:             ctx,
 			RiverChainBlockMonitor: &noopBlockMonitor{},
 		},
 		&streamConfig_t)
@@ -299,7 +298,6 @@ func TestChannelViewState_JoinedMembers(t *testing.T) {
 	streamCache := NewStreamCache(&StreamCacheParams{
 		Storage:                storage.NewMemStorage(),
 		Wallet:                 nodeWallet,
-		DefaultCtx:             ctx,
 		RiverChainBlockMonitor: &noopBlockMonitor{},
 	}, &streamConfig_t)
 	// create a space stream and add the members
@@ -353,7 +351,6 @@ func TestChannelViewState_RemainingMembers(t *testing.T) {
 	streamCache := NewStreamCache(&StreamCacheParams{
 		Storage:                storage.NewMemStorage(),
 		Wallet:                 nodeWallet,
-		DefaultCtx:             ctx,
 		RiverChainBlockMonitor: &noopBlockMonitor{},
 	}, &streamConfig_t)
 	// create a space stream and add the members

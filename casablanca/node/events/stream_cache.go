@@ -15,7 +15,6 @@ import (
 type StreamCacheParams struct {
 	Storage                storage.StreamStorage
 	Wallet                 *crypto.Wallet
-	DefaultCtx             context.Context
 	RiverChainBlockMonitor crypto.BlockMonitor
 }
 
