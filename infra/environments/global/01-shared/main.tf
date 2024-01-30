@@ -20,6 +20,33 @@ module "global_constants" {
   source = "../../../modules/global-constants"
 }
 
+module "vpc" {
+  source = "terraform-aws-modules/vpc/aws"
+
+  name = "river-vpc-${terraform.workspace}"
+  cidr = "10.5.0.0/16"
+
+  azs = ["us-east-1a"]
+
+  public_subnets  = ["10.5.101.0/24"]
+  private_subnets = ["10.5.1.0/24"]
+
+  enable_vpn_gateway     = false
+  enable_nat_gateway     = true
+  single_nat_gateway     = true
+  one_nat_gateway_per_az = false
+
+  tags = module.global_constants.tags
+
+  enable_dns_hostnames = true
+}
+
+module "river_node_ssl_cert" {
+  source = "../../../modules/river-node-ssl-cert"
+
+  subnet_ids = module.vpc.private_subnets
+}
+
 resource "aws_acm_certificate" "primary_hosted_zone_cert" {
   domain_name       = module.global_constants.primary_hosted_zone_name
   validation_method = "DNS"

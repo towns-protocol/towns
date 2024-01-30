@@ -1,0 +1,15 @@
+{
+    "name": "ssl-cert-config-lambda-function",
+    "version": "1.0.0",
+    "description": "",
+    "main": "index.js",
+    "dependencies": {
+        "@aws-sdk/client-secrets-manager": "3.460.0"
+    },
+    "scripts": {
+      "test": "echo \"Error: no test specified\" && exit 1"
+    },
+    "author": "",
+    "license": "ISC"
+  }
+  
