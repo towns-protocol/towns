@@ -18,7 +18,7 @@ export default [
     "inputs": [],
     "outputs": [
       {
-        "name": "",
+        "name": "result",
         "type": "bytes32",
         "internalType": "bytes32"
       }
@@ -465,7 +465,7 @@ export default [
     ],
     "outputs": [
       {
-        "name": "",
+        "name": "result",
         "type": "uint256",
         "internalType": "uint256"
       }

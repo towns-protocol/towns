@@ -12,7 +12,7 @@ import {ERC721A} from "contracts/src/diamond/facets/token/ERC721A/ERC721A.sol";
 import {TownOwnerBase} from "./TownOwnerBase.sol";
 import {OwnableBase} from "contracts/src/diamond/facets/ownable/OwnableBase.sol";
 import {GuardianBase} from "contracts/src/towns/facets/guardian/GuardianBase.sol";
-import {VotesBase} from "contracts/src/diamond/facets/governance/votes/VotesBase.sol";
+import {Votes} from "contracts/src/diamond/facets/governance/votes/Votes.sol";
 import {TownOwnerUriBase} from "./uri/TownOwnerUriBase.sol";
 
 contract TownOwner is
@@ -21,7 +21,7 @@ contract TownOwner is
   TownOwnerUriBase,
   OwnableBase,
   GuardianBase,
-  VotesBase,
+  Votes,
   ERC721A
 {
   function __TownOwner_init(
@@ -73,6 +73,14 @@ contract TownOwner is
   ) external {
     _onlyTownOwner(town);
     _updateTown(town, name, uri);
+  }
+
+  function nonces(address owner) external view returns (uint256 result) {
+    return _latestNonce(owner);
+  }
+
+  function DOMAIN_SEPARATOR() external view returns (bytes32 result) {
+    return _domainSeparatorV4();
   }
 
   // =============================================================

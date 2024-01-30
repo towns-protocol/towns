@@ -17,13 +17,6 @@ abstract contract Nonces {
   error InvalidAccountNonce(address account, uint256 currentNonce);
 
   /**
-   * @dev Returns the next unused nonce for an address.
-   */
-  function nonces(address owner) public view virtual returns (uint256) {
-    return _latestNonce(owner);
-  }
-
-  /**
    * @dev Returns the current nonce for an address.
    */
   function _latestNonce(address owner) internal view virtual returns (uint256) {

@@ -65,7 +65,7 @@ abstract contract EIP712 is Initializable, IERC5267 {
   function __EIP712_init_unchained(
     string memory name,
     string memory version
-  ) internal onlyInitializing {
+  ) internal {
     EIP712Storage.layout()._name = name;
     EIP712Storage.layout()._version = version;
 

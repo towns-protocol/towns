@@ -62,8 +62,10 @@ contract BaseSetup is FacetTest, TownHelper {
     founder = _randomAddress();
 
     vm.startPrank(founder);
-    space = TownArchitect(diamond).createTown(_createTownInfo("BaseSetupTown"));
-    everyoneSpace = TownArchitect(diamond).createTown(
+    space = TownArchitect(townFactory).createTown(
+      _createTownInfo("BaseSetupTown")
+    );
+    everyoneSpace = TownArchitect(townFactory).createTown(
       _createEveryoneTownInfo("BaseSetupEveryoneTown")
     );
     vm.stopPrank();

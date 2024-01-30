@@ -7,9 +7,9 @@ pragma solidity ^0.8.23;
 
 // contracts
 import {ERC721A} from "contracts/src/diamond/facets/token/ERC721A/ERC721A.sol";
-import {VotesBase} from "contracts/src/diamond/facets/governance/votes/VotesBase.sol";
+import {Votes} from "contracts/src/diamond/facets/governance/votes/Votes.sol";
 
-contract MockERC721Votes is VotesBase, ERC721A {
+contract MockERC721Votes is Votes, ERC721A {
   function mintTo(address to) external returns (uint256 tokenId) {
     tokenId = _nextTokenId();
     _mint(to, 1);

@@ -270,25 +270,6 @@
         "inputs": [
           {
             "internalType": "address",
-            "name": "owner",
-            "type": "address"
-          }
-        ],
-        "name": "nonces",
-        "outputs": [
-          {
-            "internalType": "uint256",
-            "name": "",
-            "type": "uint256"
-          }
-        ],
-        "stateMutability": "view",
-        "type": "function"
-      },
-      {
-        "inputs": [
-          {
-            "internalType": "address",
             "name": "wallet",
             "type": "address"
           }
@@ -344,9 +325,6 @@
             "nonce": "a nonce used to prevent replay attacks, nonce must always be higher than previous nonce",
             "rootKeySignature": "a signature signing the hash of the wallet address with the rootKey's private key"
           }
-        },
-        "nonces(address)": {
-          "details": "Returns the next unused nonce for an address."
         },
         "removeLink(address)": {
           "params": {
@@ -475,11 +453,11 @@
       ]
     },
     "contracts/src/diamond/utils/Nonces.sol": {
-      "keccak256": "0x672cb79a36c3b7cae3030dd9ca3f2f3ab4a3e72a622b55a31c37f234c4031c24",
+      "keccak256": "0x8beaaf845e41dd3e5e117ef2f52cd999e13d687ec785fc2c329716b3cc72f887",
       "license": "Apache-2.0",
       "urls": [
-        "bzz-raw://005d3f36e6d3f27d94d179c4083a24b14eca08819af6352e595a303ede435321",
-        "dweb:/ipfs/Qmc3eJZf4np4Ure8vFvUZjxX7PBXWz62DaSHT2gvJdufLn"
+        "bzz-raw://69db9b2af576a32b24c1d8de9198d35c71407ef255fd812ac920d4b076ef7336",
+        "dweb:/ipfs/QmdeEJnXeFEnE9PY6igay1SCP7b4Q3GWGYk4zMzBUasLpN"
       ]
     },
     "contracts/src/river/wallet-link/IWalletLink.sol": {

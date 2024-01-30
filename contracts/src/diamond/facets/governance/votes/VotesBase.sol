@@ -33,7 +33,6 @@ import {EIP712} from "contracts/src/diamond/utils/cryptography/EIP712.sol";
  * {ERC721-balanceOf}), and can use {_transferVotingUnits} to track a change in the distribution of those units (in the
  * previous example, it would be included in {ERC721-_beforeTokenTransfer}).
  *
- * _Available since v4.5._
  */
 abstract contract VotesBase is IERC5805, Context, EIP712, Nonces {
   using VotesStorage for VotesStorage.Layout;
@@ -46,14 +45,6 @@ abstract contract VotesBase is IERC5805, Context, EIP712, Nonces {
   bytes32 private constant _DELEGATION_TYPEHASH =
     keccak256("Delegation(address delegatee,uint256 nonce,uint256 expiry)");
 
-  /**
-   * @dev Returns the contract's {EIP712} domain separator.
-   */
-  // solhint-disable-next-line func-name-mixedcase
-  function DOMAIN_SEPARATOR() external view returns (bytes32) {
-    return _domainSeparatorV4();
-  }
-
   // =============================================================
   //                           ERC 5805
   // =============================================================
@@ -62,7 +53,7 @@ abstract contract VotesBase is IERC5805, Context, EIP712, Nonces {
    * @dev Clock used for flagging checkpoints. Can be overridden to implement timestamp based
    * checkpoints (and voting), in which case {CLOCK_MODE} should be overridden as well to match.
    */
-  function clock() public view virtual override returns (uint48) {
+  function _clock() internal view returns (uint48) {
     return SafeCast.toUint48(block.number);
   }
 
@@ -70,9 +61,9 @@ abstract contract VotesBase is IERC5805, Context, EIP712, Nonces {
    * @dev Machine-readable description of the clock as specified in EIP-6372.
    */
   // solhint-disable-next-line func-name-mixedcase
-  function CLOCK_MODE() public view virtual override returns (string memory) {
+  function _clockMode() internal view returns (string memory) {
     // Check that the clock was not modified
-    require(clock() == block.number, "Votes: broken clock mode");
+    require(_clock() == block.number, "Votes: broken clock mode");
     return "mode=blocknumber&from=default";
   }
 
@@ -83,9 +74,7 @@ abstract contract VotesBase is IERC5805, Context, EIP712, Nonces {
   /**
    * @dev Returns the current amount of votes that `account` has.
    */
-  function getVotes(
-    address account
-  ) public view virtual override returns (uint256) {
+  function _getVotes(address account) internal view returns (uint256) {
     return VotesStorage.layout()._delegateCheckpoints[account].latest();
   }
 
@@ -97,11 +86,11 @@ abstract contract VotesBase is IERC5805, Context, EIP712, Nonces {
    *
    * - `timepoint` must be in the past. If operating using block numbers, the block must be already mined.
    */
-  function getPastVotes(
+  function _getPastVotes(
     address account,
     uint256 timepoint
-  ) public view virtual override returns (uint256) {
-    require(timepoint < clock(), "Votes: future lookup");
+  ) internal view returns (uint256) {
+    require(timepoint < _clock(), "Votes: future lookup");
     return
       VotesStorage.layout()._delegateCheckpoints[account].upperLookupRecent(
         SafeCast.toUint32(timepoint)
@@ -120,10 +109,10 @@ abstract contract VotesBase is IERC5805, Context, EIP712, Nonces {
    *
    * - `timepoint` must be in the past. If operating using block numbers, the block must be already mined.
    */
-  function getPastTotalSupply(
+  function _getPastTotalSupply(
     uint256 timepoint
-  ) public view virtual override returns (uint256) {
-    require(timepoint < clock(), "Votes: future lookup");
+  ) internal view returns (uint256) {
+    require(timepoint < _clock(), "Votes: future lookup");
     return
       VotesStorage.layout()._totalCheckpoints.upperLookupRecent(
         SafeCast.toUint32(timepoint)
@@ -133,31 +122,21 @@ abstract contract VotesBase is IERC5805, Context, EIP712, Nonces {
   /**
    * @dev Returns the delegate that `account` has chosen.
    */
-  function delegates(
-    address account
-  ) public view virtual override returns (address) {
+  function _delegates(address account) internal view returns (address) {
     return VotesStorage.layout()._delegation[account];
-  }
-
-  /**
-   * @dev Delegates votes from the sender to `delegatee`.
-   */
-  function delegate(address delegatee) public virtual override {
-    address account = _msgSender();
-    _delegate(account, delegatee);
   }
 
   /**
    * @dev Delegates votes from signer to `delegatee`.
    */
-  function delegateBySig(
+  function _delegateBySig(
     address delegatee,
     uint256 nonce,
     uint256 expiry,
     uint8 v,
     bytes32 r,
     bytes32 s
-  ) public virtual override {
+  ) internal {
     require(block.timestamp <= expiry, "Votes: signature expired");
     address signer = ECDSA.recover(
       _hashTypedDataV4(
@@ -167,6 +146,7 @@ abstract contract VotesBase is IERC5805, Context, EIP712, Nonces {
       r,
       s
     );
+
     _useCheckedNonce(signer, nonce);
     _delegate(signer, delegatee);
   }
@@ -193,9 +173,10 @@ abstract contract VotesBase is IERC5805, Context, EIP712, Nonces {
    * Emits events {IVotes-DelegateChanged} and {IVotes-DelegateVotesChanged}.
    */
   function _delegate(address account, address delegatee) internal virtual {
-    address oldDelegate = delegates(account);
-    VotesStorage.layout()._delegation[account] = delegatee;
+    _beforeDelegate(account, delegatee);
 
+    address oldDelegate = _delegates(account);
+    VotesStorage.layout()._delegation[account] = delegatee;
     emit DelegateChanged(account, oldDelegate, delegatee);
     _moveDelegateVotes(oldDelegate, delegatee, _getVotingUnits(account));
   }
@@ -223,7 +204,7 @@ abstract contract VotesBase is IERC5805, Context, EIP712, Nonces {
         SafeCast.toUint224(amount)
       );
     }
-    _moveDelegateVotes(delegates(from), delegates(to), amount);
+    _moveDelegateVotes(_delegates(from), _delegates(to), amount);
   }
 
   /**
@@ -259,7 +240,7 @@ abstract contract VotesBase is IERC5805, Context, EIP712, Nonces {
     function(uint224, uint224) view returns (uint224) op,
     uint224 delta
   ) private returns (uint224, uint224) {
-    return store.push(SafeCast.toUint32(clock()), op(store.latest(), delta));
+    return store.push(SafeCast.toUint32(_clock()), op(store.latest(), delta));
   }
 
   function _add(uint224 a, uint224 b) private pure returns (uint224) {
@@ -269,4 +250,14 @@ abstract contract VotesBase is IERC5805, Context, EIP712, Nonces {
   function _subtract(uint224 a, uint224 b) private pure returns (uint224) {
     return a - b;
   }
+
+  /**
+   * @dev Hook that is called before any delegate operation. This includes {delegate} and {delegateBySig}.
+   * @param signer The account that signs the delegation.
+   * @param delegatee The account that will be delegated to.
+   */
+  function _beforeDelegate(
+    address signer,
+    address delegatee
+  ) internal virtual {}
 }

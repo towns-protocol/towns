@@ -11,7 +11,6 @@ import {MockERC721Votes} from "contracts/test/mocks/MockERC721Votes.sol";
 
 import {IERC6372} from "contracts/src/diamond/facets/governance/votes/IERC6372.sol";
 import {IVotes} from "contracts/src/diamond/facets/governance/votes/IVotes.sol";
-import {VotesBase} from "contracts/src/diamond/facets/governance/votes/VotesBase.sol";
 
 contract VotesHelper is FacetHelper {
   MockERC721Votes internal mockERC721Votes;
@@ -19,11 +18,10 @@ contract VotesHelper is FacetHelper {
   constructor() {
     mockERC721Votes = new MockERC721Votes();
 
-    bytes4[] memory selectors_ = new bytes4[](9);
+    bytes4[] memory selectors_ = new bytes4[](8);
     uint256 index;
 
     // Votes
-    selectors_[index++] = VotesBase.DOMAIN_SEPARATOR.selector;
     selectors_[index++] = IERC6372.clock.selector;
     selectors_[index++] = IERC6372.CLOCK_MODE.selector;
     selectors_[index++] = IVotes.getVotes.selector;
