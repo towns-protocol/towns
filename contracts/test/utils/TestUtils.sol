@@ -19,7 +19,11 @@ contract TestUtils is PRBTest, StdCheats {
   }
 
   constructor() {
-    vm.setEnv("TESTING", "true");
+    vm.setEnv("IN_TESTING", "true");
+    vm.setEnv(
+      "LOCAL_PRIVATE_KEY",
+      "0xac0974bec39a17e36ba4a6b4d238ff944bacb478cbed5efcae784d7bf4f2ff80"
+    );
 
     // solhint-disable
     _NONCE = uint256(
@@ -100,5 +104,17 @@ contract TestUtils is PRBTest, StdCheats {
     }
 
     return accounts;
+  }
+
+  function isAnvil() internal view returns (bool) {
+    return block.chainid == 31337 || block.chainid == 31338;
+  }
+
+  function isTesting() internal returns (bool) {
+    return vm.envOr("IN_TESTING", false);
+  }
+
+  function getDeployer() internal view returns (address) {
+    return vm.addr(vm.envUint("LOCAL_PRIVATE_KEY"));
   }
 }

@@ -11,7 +11,6 @@ pragma solidity ^0.8.19;
 import {TownArchitect} from "contracts/src/towns/facets/architect/TownArchitect.sol";
 
 import {BaseSetup} from "contracts/test/towns/BaseSetup.sol";
-import {TownHelper} from "contracts/test/towns/Town.t.sol";
 import {PrepayFacet} from "contracts/src/towns/facets/prepay/PrepayFacet.sol";
 import {MembershipFacet} from "contracts/src/towns/facets/membership/MembershipFacet.sol";
 

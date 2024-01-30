@@ -32,7 +32,7 @@ abstract contract Deployer is Script, DeployBase {
     address existingAddr = getDeployment(versionName());
     bool overrideDeployment = vm.envOr("OVERRIDE_DEPLOYMENTS", uint256(0)) > 0;
 
-    if (!overrideDeployment && existingAddr != address(0)) {
+    if (!overrideDeployment && existingAddr != address(0) && !isTesting()) {
       debug(
         string.concat("found existing ", versionName(), " deployment at"),
         existingAddr
@@ -47,25 +47,29 @@ abstract contract Deployer is Script, DeployBase {
 
     address deployer = vm.addr(pk);
 
-    info(
-      string.concat(
-        unicode"deploying \n\t📜 ",
-        versionName(),
-        unicode"\n\t⚡️ on ",
-        chainAlias(),
-        unicode"\n\t📬 from deployer address"
-      ),
-      vm.toString(deployer)
-    );
+    if (!isTesting()) {
+      info(
+        string.concat(
+          unicode"deploying \n\t📜 ",
+          versionName(),
+          unicode"\n\t⚡️ on ",
+          chainAlias(),
+          unicode"\n\t📬 from deployer address"
+        ),
+        vm.toString(deployer)
+      );
+    }
 
     deployedAddr = __deploy(pk, deployer);
 
-    info(
-      string.concat(unicode"✅ ", versionName(), " deployed at"),
-      vm.toString(deployedAddr)
-    );
+    if (!isTesting()) {
+      info(
+        string.concat(unicode"✅ ", versionName(), " deployed at"),
+        vm.toString(deployedAddr)
+      );
+    }
 
-    if (deployedAddr != address(0)) {
+    if (deployedAddr != address(0) && !isTesting()) {
       saveDeployment(versionName(), deployedAddr);
     }
   }

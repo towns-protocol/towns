@@ -13,7 +13,7 @@ import {Migration} from "../common/Migration.s.sol";
 
 // helpers
 import {TownArchitectHelper} from "contracts/test/towns/architect/TownArchitectSetup.sol";
-import {PrepayHelper} from "contracts/test/towns/prepay/PrepaySetup.sol";
+import {PrepayHelper} from "contracts/test/towns/prepay/PrepayHelper.sol";
 
 // facets
 import {TownArchitect} from "contracts/src/towns/facets/architect/TownArchitect.sol";

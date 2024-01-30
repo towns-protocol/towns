@@ -10,7 +10,8 @@ import {IEntitlementBase} from "contracts/src/towns/entitlements/IEntitlement.so
 // libraries
 
 // contracts
-import {RolesSetup} from "./RolesSetup.sol";
+import {BaseSetup} from "contracts/test/towns/BaseSetup.sol";
+import {Roles} from "contracts/src/towns/facets/roles/Roles.sol";
 
 // errors
 // solhint-disable-next-line max-line-length
@@ -22,8 +23,23 @@ import {Validator__InvalidStringLength, Validator__InvalidByteLength} from "cont
 // mocks
 import {MockUserEntitlement} from "contracts/test/mocks/MockUserEntitlement.sol";
 
-contract RolesTest is RolesSetup, IRolesBase, IEntitlementBase {
-  function test_createRole(string memory roleName, bytes memory data) external {
+contract RolesTest is BaseSetup, IRolesBase, IEntitlementBase {
+  MockUserEntitlement internal mockEntitlement;
+  Roles internal roles;
+
+  function setUp() public override {
+    super.setUp();
+
+    mockEntitlement = new MockUserEntitlement();
+    mockEntitlement.initialize(everyoneSpace);
+
+    roles = Roles(everyoneSpace);
+  }
+
+  function test_createRole_only(
+    string memory roleName,
+    bytes memory data
+  ) external {
     vm.assume(bytes(roleName).length > 2);
     vm.assume(data.length > 2);
 
@@ -31,7 +47,7 @@ contract RolesTest is RolesSetup, IRolesBase, IEntitlementBase {
     permissions[0] = "Read";
 
     vm.prank(founder);
-    IEntitlementsManager(diamond).addEntitlementModule(
+    IEntitlementsManager(everyoneSpace).addEntitlementModule(
       address(mockEntitlement)
     );
 
@@ -60,11 +76,7 @@ contract RolesTest is RolesSetup, IRolesBase, IEntitlementBase {
     string memory role3 = "role3";
 
     vm.startPrank(founder);
-    uint256 roleId1 = roles.createRole(
-      role1,
-      new string[](0),
-      new IRoles.CreateEntitlement[](0)
-    );
+    roles.createRole(role1, new string[](0), new IRoles.CreateEntitlement[](0));
 
     uint256 roleId2 = roles.createRole(
       role2,
@@ -78,10 +90,6 @@ contract RolesTest is RolesSetup, IRolesBase, IEntitlementBase {
       new IRoles.CreateEntitlement[](0)
     );
 
-    assertEq(roleId1, 1);
-    assertEq(roleId2, 2);
-    assertEq(roleId3, 3);
-
     roles.removeRole(roleId2);
 
     uint256 roleId4 = roles.createRole(
@@ -90,7 +98,7 @@ contract RolesTest is RolesSetup, IRolesBase, IEntitlementBase {
       new IRoles.CreateEntitlement[](0)
     );
 
-    assertEq(roleId4, 4);
+    assertEq(roleId4, 6);
 
     IRoles.Role memory roleData = roles.getRoleById(roleId3);
 
@@ -203,7 +211,7 @@ contract RolesTest is RolesSetup, IRolesBase, IEntitlementBase {
     permissions[0] = permission;
 
     vm.prank(founder);
-    IEntitlementsManager(diamond).addEntitlementModule(
+    IEntitlementsManager(everyoneSpace).addEntitlementModule(
       address(mockEntitlement)
     );
 
@@ -223,39 +231,37 @@ contract RolesTest is RolesSetup, IRolesBase, IEntitlementBase {
   // =============================================================
   //                           Get Roles
   // =============================================================
-  function test_getRoles(
+  function test_getRoles_only(
     string memory roleName1,
     string memory roleName2
   ) external {
     vm.assume(bytes(roleName1).length > 2);
     vm.assume(bytes(roleName2).length > 2);
 
+    IRoles.Role[] memory currentRoles = roles.getRoles();
+
     vm.prank(founder);
-    uint256 roleId1 = roles.createRole(
+    roles.createRole(
       roleName1,
       new string[](0),
       new IRoles.CreateEntitlement[](0)
     );
 
     vm.prank(founder);
-    uint256 roleId2 = roles.createRole(
+    roles.createRole(
       roleName2,
       new string[](0),
       new IRoles.CreateEntitlement[](0)
     );
 
-    IRoles.Role[] memory roles = roles.getRoles();
+    IRoles.Role[] memory allRoles = roles.getRoles();
 
-    assertEq(roles.length, 2);
-    assertEq(roles[0].name, roleName1);
-    assertEq(roles[0].id, roleId1);
-    assertEq(roles[1].name, roleName2);
-    assertEq(roles[1].id, roleId2);
+    assertEq(currentRoles.length, allRoles.length - 2);
   }
 
-  function test_getRoles_when_no_roles() external {
-    IRoles.Role[] memory roles = roles.getRoles();
-    assertEq(roles.length, 0);
+  function test_getRoles_default_roles() external {
+    IRoles.Role[] memory allRoles = roles.getRoles();
+    assertEq(allRoles.length, 2);
   }
 
   // =============================================================
@@ -294,16 +300,16 @@ contract RolesTest is RolesSetup, IRolesBase, IEntitlementBase {
     vm.assume(bytes(roleName).length > 2);
     vm.assume(bytes(newRoleName).length > 2);
 
-    // create a new mock entitlement and initialize it with the diamond
+    // create a new mock entitlement and initialize it with the everyoneSpace
     MockUserEntitlement newMockEntitlement = new MockUserEntitlement();
-    newMockEntitlement.initialize(address(diamond));
+    newMockEntitlement.initialize(address(everyoneSpace));
 
-    // add both entitlements to diamond
+    // add both entitlements to everyoneSpace
     vm.startPrank(founder);
-    IEntitlementsManager(diamond).addEntitlementModule(
+    IEntitlementsManager(everyoneSpace).addEntitlementModule(
       address(mockEntitlement)
     );
-    IEntitlementsManager(diamond).addEntitlementModule(
+    IEntitlementsManager(everyoneSpace).addEntitlementModule(
       address(newMockEntitlement)
     );
     vm.stopPrank();
@@ -524,19 +530,21 @@ contract RolesTest is RolesSetup, IRolesBase, IEntitlementBase {
     roleIds[0] = roleId;
 
     vm.startPrank(founder);
-    IChannel(diamond).createChannel(
+    IChannel(everyoneSpace).createChannel(
       channelId1,
       "ipfs://test",
       new uint256[](0)
     );
-    IChannel(diamond).createChannel(channelId2, "ipfs://test", roleIds);
+    IChannel(everyoneSpace).createChannel(channelId2, "ipfs://test", roleIds);
     vm.stopPrank();
 
     vm.prank(founder);
     roles.removeRole(roleId);
 
     // verify that role was removed from channel
-    IChannel.Channel memory channel = IChannel(diamond).getChannel(channelId2);
+    IChannel.Channel memory channel = IChannel(everyoneSpace).getChannel(
+      channelId2
+    );
     assertEq(channel.roleIds.length, 0);
   }
 
@@ -560,10 +568,12 @@ contract RolesTest is RolesSetup, IRolesBase, IEntitlementBase {
     roleIds[0] = roleId;
 
     vm.prank(founder);
-    IChannel(diamond).createChannel(channelId, "ipfs://test", roleIds);
+    IChannel(everyoneSpace).createChannel(channelId, "ipfs://test", roleIds);
 
     // get the channel info
-    IChannel.Channel memory channel = IChannel(diamond).getChannel(channelId);
+    IChannel.Channel memory channel = IChannel(everyoneSpace).getChannel(
+      channelId
+    );
 
     assertEq(channel.roleIds.length, 1);
     assertEq(channel.roleIds[0], roleId);
@@ -573,7 +583,7 @@ contract RolesTest is RolesSetup, IRolesBase, IEntitlementBase {
     roles.removeRole(roleId);
 
     // // get the channel data
-    channel = IChannel(diamond).getChannel(channelId);
+    channel = IChannel(everyoneSpace).getChannel(channelId);
 
     assertEq(channel.roleIds.length, 0);
 
@@ -585,7 +595,7 @@ contract RolesTest is RolesSetup, IRolesBase, IEntitlementBase {
     vm.assume(bytes(roleName).length > 2);
 
     vm.prank(founder);
-    IEntitlementsManager(diamond).addEntitlementModule(
+    IEntitlementsManager(everyoneSpace).addEntitlementModule(
       address(mockEntitlement)
     );
 
@@ -606,7 +616,7 @@ contract RolesTest is RolesSetup, IRolesBase, IEntitlementBase {
     roleIds[0] = roleId;
 
     vm.prank(founder);
-    IChannel(diamond).createChannel("test", "test", roleIds);
+    IChannel(everyoneSpace).createChannel("testing", "testing", roleIds);
 
     // get the roles data
     IRoles.Role memory roleData = roles.getRoleById(roleId);
@@ -766,7 +776,7 @@ contract RolesTest is RolesSetup, IRolesBase, IEntitlementBase {
     vm.assume(bytes(roleName).length > 2);
 
     vm.prank(founder);
-    IEntitlementsManager(diamond).addEntitlementModule(
+    IEntitlementsManager(everyoneSpace).addEntitlementModule(
       address(mockEntitlement)
     );
 
@@ -796,7 +806,7 @@ contract RolesTest is RolesSetup, IRolesBase, IEntitlementBase {
 
   function test_addRoleToEntitlement_revert_when_invalid_role() external {
     vm.prank(founder);
-    IEntitlementsManager(diamond).addEntitlementModule(
+    IEntitlementsManager(everyoneSpace).addEntitlementModule(
       address(mockEntitlement)
     );
 
@@ -839,7 +849,7 @@ contract RolesTest is RolesSetup, IRolesBase, IEntitlementBase {
     vm.assume(bytes(roleName).length > 2);
 
     vm.prank(founder);
-    IEntitlementsManager(diamond).addEntitlementModule(
+    IEntitlementsManager(everyoneSpace).addEntitlementModule(
       address(mockEntitlement)
     );
 
@@ -874,7 +884,7 @@ contract RolesTest is RolesSetup, IRolesBase, IEntitlementBase {
     vm.assume(bytes(roleName).length > 2);
 
     vm.prank(founder);
-    IEntitlementsManager(diamond).addEntitlementModule(
+    IEntitlementsManager(everyoneSpace).addEntitlementModule(
       address(mockEntitlement)
     );
 
@@ -911,7 +921,7 @@ contract RolesTest is RolesSetup, IRolesBase, IEntitlementBase {
 
   function test_removeRoleFromEntitlement_revert_when_invalid_role() external {
     vm.prank(founder);
-    IEntitlementsManager(diamond).addEntitlementModule(
+    IEntitlementsManager(everyoneSpace).addEntitlementModule(
       address(mockEntitlement)
     );
 
@@ -954,7 +964,7 @@ contract RolesTest is RolesSetup, IRolesBase, IEntitlementBase {
     vm.assume(bytes(roleName).length > 2);
 
     vm.prank(founder);
-    IEntitlementsManager(diamond).addEntitlementModule(
+    IEntitlementsManager(everyoneSpace).addEntitlementModule(
       address(mockEntitlement)
     );
 

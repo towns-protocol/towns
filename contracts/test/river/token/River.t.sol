@@ -6,13 +6,13 @@ import {IERC20} from "@openzeppelin/contracts/token/ERC20/IERC20.sol";
 import {IERC20Permit} from "@openzeppelin/contracts/token/ERC20/extensions/draft-IERC20Permit.sol";
 import {IERC20Metadata} from "@openzeppelin/contracts/token/ERC20/extensions/IERC20Metadata.sol";
 import {ILockBase} from "contracts/src/tokens/lock/ILock.sol";
-import {IRiverBase} from "contracts/src/tokens/IRiver.sol";
+import {IRiverBase} from "contracts/src/river/token/IRiver.sol";
 import {ITownArchitect} from "contracts/src/towns/facets/architect/ITownArchitect.sol";
 
 //libraries
 
 //contracts
-import {River} from "contracts/src/tokens/River.sol";
+import {River} from "contracts/src/river/token/River.sol";
 import {BaseSetup} from "contracts/test/towns/BaseSetup.sol";
 
 contract RiverTest is BaseSetup, IRiverBase, ILockBase {

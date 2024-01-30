@@ -13,7 +13,7 @@ update:; forge update
 build:
 	@forge build
 
-test :; forge test
+test :; forge test --ffi
 
 snapshot :; forge snapshot
 

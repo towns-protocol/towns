@@ -10,7 +10,7 @@ import {console} from "forge-std/console.sol";
 import {CommonBase} from "forge-std/Base.sol";
 
 abstract contract DeployHelpers is CommonBase {
-  bool internal DEBUG = true;
+  bool internal DEBUG = vm.envOr("DEBUG", false);
 
   // =============================================================
   //                      LOGGING HELPERS

@@ -17,7 +17,7 @@ abstract contract FacetTest is IDiamond, TestUtils {
   address internal diamond;
 
   function setUp() public virtual {
-    deployer = _randomAddress();
+    deployer = getDeployer();
 
     vm.prank(deployer);
     diamond = address(new Diamond(diamondInitParams()));

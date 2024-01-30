@@ -10,15 +10,23 @@ import {IOwnableBase} from "contracts/src/diamond/facets/ownable/IERC173.sol";
 //libraries
 
 //contracts
-import {PlatformRequirementsSetup} from "./PlatformRequirementsSetup.sol";
+import {BaseSetup} from "contracts/test/towns/BaseSetup.sol";
+import {PlatformRequirementsFacet} from "contracts/src/towns/facets/platform/requirements/PlatformRequirementsFacet.sol";
 
 contract PlatformRequirementsTest is
-  PlatformRequirementsSetup,
+  BaseSetup,
   IPlatformRequirementsBase,
   IOwnableBase
 {
-  // Fee Recipient
+  PlatformRequirementsFacet platformReqs;
 
+  function setUp() public override {
+    super.setUp();
+
+    platformReqs = PlatformRequirementsFacet(townFactory);
+  }
+
+  // Fee Recipient
   function test_getFeeRecipient() public {
     address feeRecipient = platformReqs.getFeeRecipient();
     assertEq(feeRecipient, address(deployer));
@@ -45,7 +53,7 @@ contract PlatformRequirementsTest is
 
   function test_getMembershipBps() public {
     uint16 membershipBps = platformReqs.getMembershipBps();
-    assertEq(membershipBps, 0);
+    assertEq(membershipBps, 500);
   }
 
   function test_setMembershipBps() public {
@@ -73,7 +81,7 @@ contract PlatformRequirementsTest is
 
   function test_getMembershipFee() public {
     uint256 membershipFee = platformReqs.getMembershipFee();
-    assertEq(membershipFee, 0);
+    assertEq(membershipFee, 1 ether);
   }
 
   function test_setMembershipFee() public {

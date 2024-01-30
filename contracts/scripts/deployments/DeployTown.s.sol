@@ -14,13 +14,14 @@ import {TokenOwnableHelper} from "contracts/test/diamond/ownable/token/TokenOwna
 import {DiamondCutHelper} from "contracts/test/diamond/cut/DiamondCutSetup.sol";
 import {DiamondLoupeHelper} from "contracts/test/diamond/loupe/DiamondLoupeSetup.sol";
 import {EntitlementsHelper} from "contracts/test/towns/entitlements/EntitlementsSetup.sol";
-import {RolesHelper} from "contracts/test/towns/roles/RolesSetup.sol";
+import {RolesHelper} from "contracts/test/towns/roles/RolesHelper.sol";
 import {ChannelsHelper} from "contracts/test/towns/channels/ChannelsHelper.sol";
 import {TokenPausableHelper} from "contracts/test/diamond/pausable/token/TokenPausableSetup.sol";
 import {IntrospectionHelper} from "contracts/test/diamond/introspection/IntrospectionSetup.sol";
 import {MembershipHelper} from "contracts/test/towns/membership/MembershipSetup.sol";
 import {MembershipReferralHelper} from "contracts/test/towns/membership/MembershipReferralSetup.sol";
 import {ERC721AHelper} from "contracts/test/diamond/erc721a/ERC721ASetup.sol";
+import {BanningHelper} from "contracts/test/towns/banning/BanningHelper.sol";
 
 // Facets
 import {OwnablePendingFacet} from "contracts/src/diamond/facets/ownable/pending/OwnablePendingFacet.sol";
@@ -34,8 +35,12 @@ import {TokenPausableFacet} from "contracts/src/diamond/facets/pausable/token/To
 import {IntrospectionFacet} from "contracts/src/diamond/facets/introspection/IntrospectionFacet.sol";
 import {MembershipFacet} from "contracts/src/towns/facets/membership/MembershipFacet.sol";
 import {MembershipReferralFacet} from "contracts/src/towns/facets/membership/referral/MembershipReferralFacet.sol";
+import {Banning} from "contracts/src/towns/facets/banning/Banning.sol";
 
 import {MultiInit} from "contracts/src/diamond/initializers/MultiInit.sol";
+
+// helpers
+import {DeployMultiInit} from "contracts/scripts/deployments/DeployMultiInit.s.sol";
 
 contract DeployTown is DiamondDeployer {
   TokenOwnableHelper tokenOwnableHelper = new TokenOwnableHelper();
@@ -51,6 +56,7 @@ contract DeployTown is DiamondDeployer {
   MembershipHelper membershipHelper = new MembershipHelper();
   MembershipReferralHelper membershipReferralHelper =
     new MembershipReferralHelper();
+  BanningHelper banningHelper = new BanningHelper();
 
   uint256 initDataCount = 4;
 
@@ -68,6 +74,7 @@ contract DeployTown is DiamondDeployer {
   address introspection;
   address membership;
   address membershipReferral;
+  address banning;
   address town;
 
   function versionName() public pure override returns (string memory) {
@@ -78,6 +85,9 @@ contract DeployTown is DiamondDeployer {
     uint256 deployerPK,
     address deployer
   ) public override returns (Diamond.InitParams memory) {
+    DeployMultiInit deployMultiInit = new DeployMultiInit();
+    address multiInit = deployMultiInit.deploy();
+
     vm.startBroadcast(deployerPK);
     ownable = address(new OwnablePendingFacet());
     tokenOwnable = address(new TokenOwnableFacet());
@@ -90,11 +100,12 @@ contract DeployTown is DiamondDeployer {
     introspection = address(new IntrospectionFacet());
     membership = address(new MembershipFacet());
     membershipReferral = address(new MembershipReferralFacet());
+    banning = address(new Banning());
     vm.stopBroadcast();
 
     membershipHelper.addSelectors(erc721aHelper.selectors());
 
-    IDiamond.FacetCut[] memory cuts = new IDiamond.FacetCut[](10);
+    IDiamond.FacetCut[] memory cuts = new IDiamond.FacetCut[](11);
 
     cuts[index++] = tokenOwnableHelper.makeCut(
       tokenOwnable,
@@ -133,6 +144,7 @@ contract DeployTown is DiamondDeployer {
       membershipReferral,
       IDiamond.FacetCutAction.Add
     );
+    cuts[index++] = banningHelper.makeCut(banning, IDiamond.FacetCutAction.Add);
 
     _resetIndex();
 
@@ -151,7 +163,7 @@ contract DeployTown is DiamondDeployer {
     return
       Diamond.InitParams({
         baseFacets: cuts,
-        init: getDeployment("multiInit"),
+        init: multiInit,
         initData: abi.encodeWithSelector(
           MultiInit.multiInit.selector,
           initAddresses,

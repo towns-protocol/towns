@@ -30,6 +30,8 @@ import {VotesHelper} from "contracts/test/governance/votes/VotesSetup.sol";
 
 import {MultiInit} from "contracts/src/diamond/initializers/MultiInit.sol";
 
+import {DeployMultiInit} from "contracts/scripts/deployments/DeployMultiInit.s.sol";
+
 contract DeployTownOwner is DiamondDeployer {
   DiamondCutHelper diamondCutHelper = new DiamondCutHelper();
   DiamondLoupeHelper diamondLoupeHelper = new DiamondLoupeHelper();
@@ -38,8 +40,9 @@ contract DeployTownOwner is DiamondDeployer {
   IntrospectionHelper introspectionHelper = new IntrospectionHelper();
   ERC721AHelper erc721aHelper = new ERC721AHelper();
   VotesHelper votesHelper = new VotesHelper();
-
   TownOwnerHelper townOwnerHelper = new TownOwnerHelper();
+
+  DeployMultiInit deployMultiInit = new DeployMultiInit();
 
   address[] addresses = new address[](6);
   bytes[] payloads = new bytes[](6);
@@ -59,6 +62,8 @@ contract DeployTownOwner is DiamondDeployer {
     uint256 pk,
     address deployer
   ) public override returns (Diamond.InitParams memory) {
+    address multiInit = deployMultiInit.deploy();
+
     vm.startBroadcast(pk);
     diamondCut = address(new DiamondCutFacet());
     diamondLoupe = address(new DiamondLoupeFacet());
@@ -120,7 +125,7 @@ contract DeployTownOwner is DiamondDeployer {
     return
       Diamond.InitParams({
         baseFacets: cuts,
-        init: getDeployment("multiInit"),
+        init: multiInit,
         initData: abi.encodeWithSelector(
           MultiInit.multiInit.selector,
           addresses,

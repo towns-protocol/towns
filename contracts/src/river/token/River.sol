@@ -2,7 +2,7 @@
 pragma solidity ^0.8.23;
 
 // interfaces
-import {IRiver} from "contracts/src/tokens/IRiver.sol";
+import {IRiver} from "contracts/src/river/token/IRiver.sol";
 import {IVotes} from "contracts/src/diamond/facets/governance/votes/IVotes.sol";
 import {ITownArchitect} from "contracts/src/towns/facets/architect/ITownArchitect.sol";
 

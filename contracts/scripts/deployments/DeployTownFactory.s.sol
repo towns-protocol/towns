@@ -32,9 +32,8 @@ import {TownArchitectHelper} from "contracts/test/towns/architect/TownArchitectS
 import {ProxyManagerHelper} from "contracts/test/diamond/proxy/ProxyManagerSetup.sol";
 import {OwnableHelper} from "contracts/test/diamond/ownable/OwnableSetup.sol";
 import {PausableHelper} from "contracts/test/diamond/pausable/PausableSetup.sol";
-import {PlatformRequirementsHelper} from "contracts/test/towns/platform/requirements/PlatformRequirementsSetup.sol";
-import {PrepayHelper} from "contracts/test/towns/prepay/PrepaySetup.sol";
-
+import {PlatformRequirementsHelper} from "contracts/test/towns/platform/requirements/PlatformRequirementsHelper.sol";
+import {PrepayHelper} from "contracts/test/towns/prepay/PrepayHelper.sol";
 import {MultiInit} from "contracts/src/diamond/initializers/MultiInit.sol";
 
 // mocks

@@ -15,7 +15,6 @@ import {IERC721ABase} from "contracts/src/diamond/facets/token/ERC721A/IERC721A.
 
 // contracts
 import {BaseSetup} from "contracts/test/towns/BaseSetup.sol";
-import {TownHelper} from "contracts/test/towns/Town.t.sol";
 import {TownArchitect} from "contracts/src/towns/facets/architect/TownArchitect.sol";
 import {MockERC721} from "contracts/test/mocks/MockERC721.sol";
 

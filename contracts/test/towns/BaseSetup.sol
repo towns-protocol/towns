@@ -21,19 +21,28 @@ import {TownArchitectHelper} from "contracts/test/towns/architect/TownArchitectS
 import {ProxyManagerHelper} from "contracts/test/diamond/proxy/ProxyManagerSetup.sol";
 import {OwnableHelper} from "contracts/test/diamond/ownable/OwnableSetup.sol";
 import {PausableHelper} from "contracts/test/diamond/pausable/PausableSetup.sol";
-import {PlatformRequirementsHelper} from "contracts/test/towns/platform/requirements/PlatformRequirementsSetup.sol";
-import {PrepayHelper} from "contracts/test/towns/prepay/PrepaySetup.sol";
-import {TownHelper} from "contracts/test/towns/Town.t.sol";
+import {PlatformRequirementsHelper} from "contracts/test/towns/platform/requirements/PlatformRequirementsHelper.sol";
+import {PrepayHelper} from "contracts/test/towns/prepay/PrepayHelper.sol";
+import {TownHelper} from "contracts/test/towns/TownHelper.sol";
 
-// implementations
-import {TownOwnerImplementation} from "contracts/test/towns/owner/TownOwnerSetup.sol";
-import {TownImplementation} from "contracts/test/towns/Town.t.sol";
+// deployments
+import {DeployUserEntitlement} from "contracts/scripts/deployments/DeployUserEntitlement.s.sol";
+import {DeployTokenEntitlement} from "contracts/scripts/deployments/DeployTokenEntitlement.s.sol";
+import {DeployMultiInit} from "contracts/scripts/deployments/DeployMultiInit.s.sol";
+import {DeployTown} from "contracts/scripts/deployments/DeployTown.s.sol";
+import {DeployTownOwner} from "contracts/scripts/deployments/DeployTownOwner.s.sol";
 
 /*
  * @notice - This is the base setup to start testing the entire suite of contracts
  * @dev - This contract is inherited by all other test contracts, it will create one diamond contract which represent the factory contract that creates all spaces
  */
 contract BaseSetup is FacetTest, TownHelper {
+  DeployMultiInit deployMultiInit = new DeployMultiInit();
+  DeployTown deployTown = new DeployTown();
+  DeployTownOwner deployTownOwner = new DeployTownOwner();
+  DeployUserEntitlement deployUserEntitlement = new DeployUserEntitlement();
+  DeployTokenEntitlement deployTokenEntitlement = new DeployTokenEntitlement();
+
   // @dev look at deploy-towns-contracts.sh for the order of deployment
   address internal multiInit;
   address internal townOwner;
@@ -77,8 +86,6 @@ contract BaseSetup is FacetTest, TownHelper {
     override
     returns (Diamond.InitParams memory)
   {
-    multiInit = address(new MultiInit());
-
     /// @dev Creates towns
     TownArchitectHelper townArchitectHelper = new TownArchitectHelper();
 
@@ -97,27 +104,22 @@ contract BaseSetup is FacetTest, TownHelper {
     /// @dev Prepay memberships
     PrepayHelper prepayHelper = new PrepayHelper();
 
-    /// @dev Town Owner
-    TownOwnerImplementation townOwnerImplementation = new TownOwnerImplementation();
+    vm.stopPrank();
 
-    /// @dev Town Implementation
-    TownImplementation townImplementation = new TownImplementation();
+    // deploy multi init
+    multiInit = address(deployMultiInit.deploy());
 
     /// @dev Deploy user entitlement
-    userEntitlement = address(new UserEntitlement());
+    userEntitlement = deployUserEntitlement.deploy();
 
     /// @dev Deploy token entitlement
-    tokenEntitlement = address(new TokenEntitlement());
+    tokenEntitlement = deployTokenEntitlement.deploy();
 
     /// @dev Deploy town owner nft
-    townOwner = address(
-      new Diamond(townOwnerImplementation.diamondInitParams({owner: deployer}))
-    );
+    townOwner = deployTownOwner.deploy();
 
-    /// @dev Deploy town
-    townDiamond = address(
-      new Diamond(townImplementation.diamondInitParams({owner: deployer}))
-    );
+    /// @dev Deploy town diamond
+    townDiamond = deployTown.deploy();
 
     IDiamond.FacetCut[] memory cuts = new IDiamond.FacetCut[](6);
     address[] memory addresses = new address[](6);

@@ -36,7 +36,7 @@ abstract contract DiamondDeployer is Deployer {
     address existingAddr = getDeployment(versionName());
     bool overrideDeployment = vm.envOr("OVERRIDE_DEPLOYMENTS", uint256(0)) > 0;
 
-    if (!overrideDeployment && existingAddr != address(0)) {
+    if (!overrideDeployment && existingAddr != address(0) && !isTesting()) {
       debug(
         string.concat("found existing ", versionName(), " deployment at"),
         existingAddr
@@ -51,28 +51,31 @@ abstract contract DiamondDeployer is Deployer {
 
     address deployer = vm.addr(pk);
 
-    info(
-      string.concat(
-        unicode"deploying \n\t📜 ",
-        versionName(),
-        unicode"\n\t⚡️ on ",
-        chainAlias(),
-        unicode"\n\t📬 from deployer address"
-      ),
-      vm.toString(deployer)
-    );
+    if (!isTesting()) {
+      info(
+        string.concat(
+          unicode"deploying \n\t📜 ",
+          versionName(),
+          unicode"\n\t⚡️ on ",
+          chainAlias(),
+          unicode"\n\t📬 from deployer address"
+        ),
+        vm.toString(deployer)
+      );
+    }
 
     Diamond.InitParams memory initParams = diamondInitParams(pk, deployer);
 
     vm.broadcast(pk);
     deployedAddr = address(new Diamond(initParams));
 
-    info(
-      string.concat(unicode"✅ ", versionName(), " deployed at"),
-      vm.toString(deployedAddr)
-    );
-
-    saveDeployment(versionName(), deployedAddr);
+    if (!isTesting()) {
+      info(
+        string.concat(unicode"✅ ", versionName(), " deployed at"),
+        vm.toString(deployedAddr)
+      );
+      saveDeployment(versionName(), deployedAddr);
+    }
 
     _afterDeployment(pk, deployer, deployedAddr);
   }
