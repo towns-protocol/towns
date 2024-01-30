@@ -243,7 +243,7 @@
     {
       "label": "BaseChain",
       "type": "shell",
-      "command": "./scripts/start-local-basechain.sh",
+      "command": "RIVER_BLOCK_TIME=1 ./scripts/start-local-basechain.sh",
       "isBackground": true,
       "problemMatcher": [],
       "presentation": {
@@ -253,7 +253,7 @@
     {
       "label": "RiverChain",
       "type": "shell",
-      "command": "./scripts/start-local-riverchain.sh",
+      "command": "RIVER_BLOCK_TIME=1 ./scripts/start-local-riverchain.sh",
       "isBackground": true,
       "problemMatcher": [],
       "presentation": {
