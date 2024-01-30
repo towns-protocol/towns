@@ -46,6 +46,9 @@ export class PersistenceStore extends Dexie {
             syncedStreams: 'streamId',
             miniblocks: '[streamId+miniblockNum]',
         })
+
+        this.requestPersistentStorage()
+        this.logPersistenceStats()
     }
 
     async saveCleartext(eventId: string, cleartext: string) {
@@ -129,5 +132,37 @@ export class PersistenceStore extends Dexie {
             })
             .filter(isDefined)
         return miniblocks.length === ids.length ? miniblocks : []
+    }
+
+    private requestPersistentStorage() {
+        if (navigator.storage && navigator.storage.persist) {
+            navigator.storage
+                .persist()
+                .then((persisted) => {
+                    this.log('Persisted storage granted: ', persisted)
+                })
+                .catch((e) => {
+                    this.log("Couldn't get persistent storage: ", e)
+                })
+        } else {
+            this.log('navigator.storage unavailable')
+        }
+    }
+
+    private logPersistenceStats() {
+        if (navigator.storage && navigator.storage.estimate) {
+            navigator.storage
+                .estimate()
+                .then((estimate) => {
+                    const usage = ((estimate.usage ?? 0) / 1024 / 1024).toFixed(1)
+                    const quota = ((estimate.quota ?? 0) / 1024 / 1024).toFixed(1)
+                    this.log(`Using ${usage} out of ${quota} MB.`)
+                })
+                .catch((e) => {
+                    this.log("Couldn't get storage estimate: ", e)
+                })
+        } else {
+            this.log('navigator.storage unavailable')
+        }
     }
 }
