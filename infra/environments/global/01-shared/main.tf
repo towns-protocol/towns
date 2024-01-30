@@ -223,7 +223,8 @@ module "public_ecr" {
     "river-node",
     "forked-chain-service",
     "hnt-infra",
-    "hnt-load-test-node"
+    "hnt-load-test-node",
+    "hnt-ecs-service-discovery"
   ]
   repository_type = "public"
   tags            = module.global_constants.tags
