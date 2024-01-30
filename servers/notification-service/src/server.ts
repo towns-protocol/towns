@@ -1,12 +1,15 @@
-import express from 'express';
+import express from 'express'
+import { routes } from './application/routes/routes'
+import { handleGlobalError } from './application/middleware/errors'
 
-const app = express();
-const port = 3030;
+const app = express()
+app.use(express.json())
 
-app.get('/', (req, res) => {
-  res.send('notification service!');
-});
+app.use(routes)
 
+app.use(handleGlobalError)
+
+const port = 3030
 app.listen(port, () => {
-  console.log(`notification service is running at http://localhost:${port}`);
-});
+    console.log(`notification service is running at http://localhost:${port}`)
+})

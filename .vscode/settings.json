@@ -11,6 +11,7 @@
     "./clients/web/app",
     "./clients/web/lib",
     "./clients/web/sample-app",
+    "./servers/notification-service",
     "./servers/workers/worker-common",
     "./servers/workers/token-worker",
     "./servers/workers/gateway-worker",

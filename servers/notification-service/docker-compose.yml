@@ -1,27 +1,29 @@
 version: '3'
 services:
-  server:
-    build:
-      context: ../../
-      dockerfile: ./servers/notification-service/Dockerfile
-    ports:
-      - '3030:3030'
-    environment:
-      - DATABASE_URL=postgres://postgres:password@db:5432/postgres
-    depends_on:
-      - db
-    volumes:
-      - .:/app
-      - /app/node_modules
-    command: yarn dev
-  db:
-    image: postgres:13
-    environment:
-      - POSTGRES_USER=postgres
-      - POSTGRES_PASSWORD=password
-      - POSTGRES_DB=postgres
-    volumes:
-      - postgres_data:/var/lib/postgresql/data/
+    server:
+        platform: linux/amd64
+        build:
+            context: ../../
+            dockerfile: ./servers/notification-service/Dockerfile
+        ports:
+            - '3030:3030'
+        environment:
+            - NOTIFICATION_DATABASE_URL=postgres://postgres:password@db:5432/notification
+        depends_on:
+            - db
+        volumes:
+            - .:/monorepo/servers/notification-service
+        command: yarn dev:migrate
+    db:
+        image: postgres:13
+        environment:
+            - POSTGRES_USER=postgres
+            - POSTGRES_PASSWORD=password
+            - POSTGRES_DB=notification
+        volumes:
+            - postgres_data:/var/lib/postgresql/data/
+        ports:
+            - '5431:5432'
 
 volumes:
-  postgres_data:
+    postgres_data:

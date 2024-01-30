@@ -1,0 +1,54 @@
+generator client {
+  provider      = "prisma-client-js"
+  binaryTargets = ["native", "linux-musl-arm64-openssl-3.0.x", "linux-musl-openssl-3.0.x"]
+}
+
+datasource db {
+  provider = "postgresql"
+  url      = env("NOTIFICATION_DATABASE_URL")
+}
+
+model NotificationTag {
+  SpaceId   String
+  ChannelId String
+  UserId    String
+  Tag       String
+
+  @@id([ChannelId, UserId])
+}
+
+model PushSubscription {
+  PushType         String @default("web-push")
+  UserId           String
+  PushSubscription String @id
+
+  @@index([UserId], map: "idx_user_id")
+}
+
+model UserSettings {
+  UserId              String                @id
+  ReplyTo             Int                   @default(1)
+  Mention             Int                   @default(1)
+  DirectMessage       Int                   @default(1)
+  UserSettingsChannel UserSettingsChannel[]
+  UserSettingsSpace   UserSettingsSpace[]
+}
+
+model UserSettingsChannel {
+  SpaceId      String
+  ChannelId    String
+  UserId       String
+  ChannelMute  String       @default("default")
+  UserSettings UserSettings @relation(fields: [UserId], references: [UserId], onDelete: Cascade, onUpdate: NoAction)
+
+  @@id([ChannelId, UserId])
+}
+
+model UserSettingsSpace {
+  SpaceId      String
+  UserId       String
+  SpaceMute    String       @default("default")
+  UserSettings UserSettings @relation(fields: [UserId], references: [UserId], onDelete: Cascade, onUpdate: NoAction)
+
+  @@id([SpaceId, UserId])
+}
