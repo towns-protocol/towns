@@ -1,6 +1,8 @@
 package rpc
 
 import (
+	"context"
+
 	"github.com/river-build/river/auth"
 	"github.com/river-build/river/config"
 	"github.com/river-build/river/crypto"
@@ -22,6 +24,7 @@ type Service struct {
 	streamConfig   config.StreamConfig
 	notification   nodes.PushNotification
 	syncHandler    SyncHandler
+	defaultCtx     context.Context
 }
 
 var (
