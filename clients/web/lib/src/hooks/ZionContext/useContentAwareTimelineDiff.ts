@@ -63,22 +63,19 @@ function updateFullyReadMarkersFromRemote(
     fullyReadMarkersMap: Map<string, Record<string, FullyReadMarker>>,
 ) {
     useFullyReadMarkerStore.setState((state) => {
-        let didUpdate = false
+        let markersUpdated = 0
         const updated = { ...state.markers }
         for (const [_, fullyReadMarkers] of fullyReadMarkersMap) {
             for (const [key, marker] of Object.entries(fullyReadMarkers)) {
                 // if we don't have a marker, or if the remote marker has been marked as read more recently than our local marker, update
                 if (!updated[key] || updated[key].beginUnreadWindow < marker.beginUnreadWindow) {
-                    console.log('$ onRoomAccountDataEvent: setting marker for', {
-                        key,
-                        marker,
-                    })
                     updated[key] = marker
-                    didUpdate = true
+                    markersUpdated++
                 }
             }
         }
-        if (didUpdate) {
+        if (markersUpdated > 0) {
+            console.log('$ onRoomAccountDataEvent: set markers for ', { markersUpdated })
             return { markers: updated }
         } else {
             return state
