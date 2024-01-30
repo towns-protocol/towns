@@ -1,5 +1,5 @@
 // SPDX-License-Identifier: Apache-2.0
-pragma solidity ^0.8.19;
+pragma solidity ^0.8.23;
 
 import {INodeRegistry, RegisterNode, Node} from "./INodeRegistry.sol";
 import {EIP712} from "@openzeppelin/contracts/utils/cryptography/EIP712.sol";

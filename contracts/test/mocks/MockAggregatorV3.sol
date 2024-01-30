@@ -1,5 +1,5 @@
 // SPDX-License-Identifier: Apache-2.0
-pragma solidity ^0.8.19;
+pragma solidity ^0.8.23;
 
 // interfaces
 import {AggregatorV3Interface} from "contracts/src/utils/interfaces/AggregatorV3Interface.sol";

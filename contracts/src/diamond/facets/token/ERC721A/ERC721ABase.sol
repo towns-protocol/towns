@@ -1,5 +1,5 @@
 // SPDX-License-Identifier: Apache-2.0
-pragma solidity ^0.8.19;
+pragma solidity ^0.8.23;
 
 // interfaces
 import {IERC721ABase, ERC721A__IERC721ReceiverUpgradeable} from "./IERC721A.sol";

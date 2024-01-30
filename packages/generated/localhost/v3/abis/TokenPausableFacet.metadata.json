@@ -237,11 +237,11 @@
       ]
     },
     "contracts/src/diamond/facets/initializable/Initializable.sol": {
-      "keccak256": "0x2a4f3a99b3b3ac6c2c18431cea80b40774c1d8265ddefac21b26da561e069096",
+      "keccak256": "0x74f93da9ffed901d60051d3491adc2d029d0f61d707c28eb7d177ee52a489492",
       "license": "MIT",
       "urls": [
-        "bzz-raw://36dbba730942b1fd345f242051ea7f33e979f70392fbd929d8522c0c9c6dd367",
-        "dweb:/ipfs/QmYMvYnvg9zQJpDQX9yMHZ1AET9Vx7UXtDenXAs1JhfPpd"
+        "bzz-raw://7c1689c778f69b56e622d886d129944fba1e8339afc85fad2212de0c9bc62e18",
+        "dweb:/ipfs/QmbEqQmSE9NaPP3JmrPHpLvfzXt66sMvkJSSq13TiKSWXi"
       ]
     },
     "contracts/src/diamond/facets/initializable/InitializableStorage.sol": {

@@ -1,5 +1,5 @@
 // SPDX-License-Identifier: Apache-2.0
-pragma solidity ^0.8.19;
+pragma solidity ^0.8.23;
 
 // interfaces
 import {IERC20PermitBase} from "./IERC20PermitBase.sol";

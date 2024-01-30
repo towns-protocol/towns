@@ -1,5 +1,5 @@
 // SPDX-License-Identifier: MIT
-pragma solidity ^0.8.19;
+pragma solidity ^0.8.23;
 
 // Deploy: ./scripts/deploy-river-registry.sh
 // Generate bindings: ./scripts/build-town-types.sh

@@ -1,5 +1,5 @@
 // SPDX-License-Identifier: Apache-2.0
-pragma solidity ^0.8.19;
+pragma solidity ^0.8.23;
 
 import {INodeRegistryBase, Node, RegisterNode} from "./INodeRegistry.sol";
 import {PublicKey} from "contracts/src/utils/PublicKey.sol";

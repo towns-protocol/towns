@@ -1,5 +1,5 @@
 // SPDX-License-Identifier: Apache-2.0
-pragma solidity ^0.8.19;
+pragma solidity ^0.8.23;
 
 // interfaces
 import {IERC5643, IERC5643Base} from "contracts/src/diamond/facets/token/ERC5643/IERC5643.sol";

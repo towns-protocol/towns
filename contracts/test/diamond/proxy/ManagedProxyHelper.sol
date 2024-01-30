@@ -1,5 +1,5 @@
 // SPDX-License-Identifier: Apache-2.0
-pragma solidity ^0.8.19;
+pragma solidity ^0.8.23;
 
 // interfaces
 import {IManagedProxy} from "contracts/src/diamond/proxy/managed/IManagedProxy.sol";

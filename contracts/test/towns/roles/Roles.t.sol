@@ -1,5 +1,5 @@
 // SPDX-License-Identifier: Apache-2.0
-pragma solidity ^0.8.19;
+pragma solidity ^0.8.23;
 
 //interfaces
 import {IRoles, IRolesBase} from "contracts/src/towns/facets/roles/IRoles.sol";
