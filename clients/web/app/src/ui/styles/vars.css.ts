@@ -383,6 +383,11 @@ const root = createGlobalTheme(':root', {
                 [zIndexVar]: `5`,
             },
         },
+        below: {
+            vars: {
+                [zIndexVar]: `-1`,
+            },
+        },
         ui: {
             vars: {
                 [zIndexVar]: `10`,

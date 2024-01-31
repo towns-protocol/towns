@@ -1,7 +1,7 @@
 import React, { useMemo } from 'react'
 import { Link } from 'react-router-dom'
 import { useDMData, useMyUserId } from 'use-zion-client'
-import { GroupDMIcon } from '@components/DirectMessages/GroupDMIcon'
+import { AvatarGroup } from '@components/DirectMessages/GroupDMIcon'
 import { ProfileHoverCard } from '@components/ProfileHoverCard/ProfileHoverCard'
 import { UserList } from '@components/UserList/UserList'
 import { Box, Icon, Paragraph, Stack, Text } from '@ui'
@@ -21,17 +21,28 @@ export const ChannelIntro = (props: Props) => {
     if (channelType === 'channel') {
         return <RegularChannelIntro {...props} />
     } else if (channelType === 'dm') {
-        return <ChannelDMIntro roomIdentifier={roomIdentifier} />
+        return <WrappedChannelDMIntro roomIdentifier={roomIdentifier} />
     } else if (channelType === 'gdm') {
-        return <ChannelGDMIntro roomIdentifier={roomIdentifier} />
+        return <WrappedChannelGDMIntro roomIdentifier={roomIdentifier} />
     }
+}
+
+const WrappedChannelDMIntro = (props: Props) => {
+    const { counterParty } = useDMData(props.roomIdentifier)
+    const dmUserIds = useMemo(() => [counterParty].filter(notUndefined), [counterParty])
+    return <ChannelDMIntro userIds={dmUserIds} />
+}
+
+const WrappedChannelGDMIntro = (props: Props) => {
+    const { data } = useDMData(props.roomIdentifier)
+    return <ChannelGDMIntro userIds={data?.userIds} />
 }
 
 const RegularChannelIntro = (props: Props) => {
     const { name = 'general', description } = props
 
     return (
-        <Stack gap="md" paddingX="lg" paddingY="sm">
+        <Stack gap="md" paddingX="md" paddingY="sm">
             <Stack horizontal gap>
                 <Box centerContent rounded="sm" background="level2" aspectRatio="1/1" height="x7">
                     <Icon type="tag" color="gray2" size="square_lg" />
@@ -49,16 +60,25 @@ const RegularChannelIntro = (props: Props) => {
     )
 }
 
-export const ChannelDMIntro = (props: { roomIdentifier: string }) => {
-    const { counterParty } = useDMData(props.roomIdentifier)
+export const DMChannelIntro = (props: { userIds: string[] | undefined }) => {
+    const { userIds } = props
+    if (userIds?.length === 1) {
+        return <ChannelDMIntro userIds={userIds} />
+    } else {
+        return <ChannelGDMIntro userIds={userIds} />
+    }
+}
+
+const ChannelDMIntro = (props: { userIds: string[] }) => {
+    const { userIds } = props
     const myUserId = useMyUserId()
 
-    const userIds = useMemo(() => [counterParty].filter(notUndefined), [counterParty])
-
     return (
-        <Stack gap="md" paddingX="lg" paddingY="sm">
+        <Stack gap="md" paddingX="md" paddingY="sm">
             <Stack horizontal gap="lg">
-                <Avatar key={userIds[0]} userId={userIds[0] || myUserId} size="avatar_md" />
+                <Box centerContent rounded="sm" aspectRatio="1/1" width="x5">
+                    <Avatar key={userIds[0]} userId={userIds[0] || myUserId} size="avatar_md" />
+                </Box>
 
                 <Stack justifyContent="start" paddingTop="xs" overflow="hidden">
                     <Paragraph color="gray1">Direct Message</Paragraph>
@@ -86,20 +106,20 @@ export const ChannelDMIntro = (props: { roomIdentifier: string }) => {
     )
 }
 
-export const ChannelGDMIntro = (props: { roomIdentifier: string }) => {
-    const { data } = useDMData(props.roomIdentifier)
+const ChannelGDMIntro = (props: { userIds: string[] | undefined }) => {
+    const { userIds } = props
 
-    const userList = data?.userIds ? (
-        <UserList userIds={data?.userIds} renderUser={(props) => <UserWithTooltip {...props} />} />
+    const userList = userIds ? (
+        <UserList userIds={userIds} renderUser={(props) => <UserWithTooltip {...props} />} />
     ) : (
         <></>
     )
 
     return (
-        <Stack gap="md" paddingX="lg" paddingY="sm">
+        <Stack gap="md" paddingX="md" paddingY="sm">
             <Stack horizontal gap>
                 <Box centerContent rounded="sm" aspectRatio="1/1" width="x6">
-                    <GroupDMIcon roomIdentifier={props.roomIdentifier} width="x6" />
+                    <AvatarGroup userIds={userIds} width="x6" />
                 </Box>
 
                 <Stack justifyContent="center" paddingY="xs" overflow="hidden">

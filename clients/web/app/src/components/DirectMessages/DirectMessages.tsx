@@ -1,9 +1,8 @@
 import React, { useCallback } from 'react'
 import { useNavigate } from 'react-router'
 import { TouchPanelNavigationBar } from '@components/TouchPanelNavigationBar/TouchPanelNavigationBar'
-import { Box, BoxProps, Icon, IconButton, IconName, Stack, Text } from '@ui'
+import { Box, BoxProps, IconButton, IconName, Stack, Text } from '@ui'
 import { useDevice } from 'hooks/useDevice'
-import { ModalContainer } from '@components/Modals/ModalContainer'
 import { ZLayerBox } from '@components/ZLayer/ZLayerContext'
 import { useShortcut } from 'hooks/useShortcut'
 import { useCreateLink } from 'hooks/useCreateLink'
@@ -11,18 +10,6 @@ import { DirectMessageList } from './DirectMessageList'
 
 type DirectMessagesPanelProps = {
     hideNavigation?: boolean
-}
-
-export const DirectMessagesModal = (props: { onHide: () => void }) => {
-    return (
-        <ModalContainer
-            touchTitle="Direct Messages"
-            rightBarButton={<Icon type="compose" color="gray2" />}
-            onHide={props.onHide}
-        >
-            <DirectMessagesPanel hideNavigation />
-        </ModalContainer>
-    )
 }
 
 export const DirectMessagesPanel = (props: DirectMessagesPanelProps) => {
@@ -35,7 +22,7 @@ export const DirectMessagesPanel = (props: DirectMessagesPanelProps) => {
     const onDisplayCreate = useCallback(() => {
         const link = createLink({ messageId: 'new' })
         if (link) {
-            navigate(link)
+            navigate(`${link}?ref=messages`)
         }
     }, [createLink, navigate])
 

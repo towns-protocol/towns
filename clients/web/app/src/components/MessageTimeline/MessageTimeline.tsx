@@ -590,7 +590,7 @@ export const MessageTimeline = (props: Props) => {
     ) : (
         <Box grow position="relative" justifyContent="end">
             <VList
-                overscan={3}
+                overscan={1}
                 align={props.align}
                 list={listItems}
                 padding={16}

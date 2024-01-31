@@ -10,7 +10,7 @@ import {
     useSpaceThreadRootsUnreadCount,
     useSpaceUnreadThreadMentions,
 } from 'use-zion-client'
-import { CreateDirectMessage } from '@components/DirectMessages/CreateDirectMessage'
+import { CreateDirectMessage } from '@components/DirectMessages/CreateDirectMessage/CreateDirectMessage'
 import { ModalContainer } from '@components/Modals/ModalContainer'
 import { ActionNavItem } from '@components/NavItem/ActionNavItem'
 import { ChannelNavGroup } from '@components/NavItem/ChannelNavGroup'

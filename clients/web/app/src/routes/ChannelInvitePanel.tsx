@@ -8,7 +8,7 @@ import {
 } from 'use-zion-client'
 import { Panel } from '@components/Panel/Panel'
 import { Box, Button, Stack } from '@ui'
-import { DirectMessageInviteUserList } from '@components/DirectMessages/DirectMessageInviteUserList'
+import { InviteUserList } from '@components/InviteUserList/InviteUserList'
 import { ModalContainer } from '@components/Modals/ModalContainer'
 
 const ChannelInvite = (props: { onClose: () => void }) => {
@@ -38,7 +38,7 @@ const ChannelInvite = (props: { onClose: () => void }) => {
 
     return (
         <>
-            <DirectMessageInviteUserList
+            <InviteUserList
                 isMultiSelect
                 hiddenUserIds={currentMemberIds}
                 onSelectionChange={onSelectionChange}

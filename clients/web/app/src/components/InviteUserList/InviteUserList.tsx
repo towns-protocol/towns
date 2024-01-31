@@ -1,8 +1,8 @@
 import { AnimatePresence } from 'framer-motion'
 import fuzzysort from 'fuzzysort'
-import React, { useCallback, useEffect, useMemo, useState } from 'react'
+import React, { useCallback, useEffect, useState } from 'react'
 import { firstBy } from 'thenby'
-import { useMyUserId, useUser, useUserLookupContext, useZionContext } from 'use-zion-client'
+import { useMyUserId, useUser, useUserLookupContext } from 'use-zion-client'
 import { Avatar } from '@components/Avatar/Avatar'
 import { FadeInBox } from '@components/Transitions'
 import {
@@ -21,8 +21,16 @@ import { useDevice } from 'hooks/useDevice'
 import { usePersistOrder } from 'hooks/usePersistOrder'
 import { useGetUserBio } from 'hooks/useUserBio'
 import { getPrettyDisplayName } from 'utils/getPrettyDisplayName'
+import { useRecentUsers } from '../../hooks/useRecentUsers'
 
-export const DirectMessageInviteUserList = (props: {
+/**
+ * InviteUserList was first create to select users to participate in a channel
+ * and was later repurposed to select users to invite to a direct message.
+ * Jan 2024 - This component is now only used to select users to a channel and
+ * may have traces of the direct message use case.
+ */
+
+export const InviteUserList = (props: {
     onSelectionChange?: (userIds: Set<string>) => void
     hiddenUserIds?: Set<string>
     isMultiSelect?: boolean
@@ -83,7 +91,7 @@ export const DirectMessageInviteUserList = (props: {
         setSearchTerm('')
     }, [onSelectionChange, selectedUserIds])
 
-    const onToggleGroupDM = useCallback(() => {
+    const onToggleMultiSelect = useCallback(() => {
         if (props.onToggleMultiSelect) {
             setSelectedUserIds(new Set())
             if (!filteredUserIds.length) {
@@ -203,7 +211,7 @@ export const DirectMessageInviteUserList = (props: {
                                 selected={false}
                                 id={`search-item-${0}`}
                                 isHighlighted={activeIndex === 0}
-                                onClick={onToggleGroupDM}
+                                onClick={onToggleMultiSelect}
                             >
                                 <IconButton
                                     background="level2"
@@ -347,23 +355,6 @@ const SelectedParticipant = (props: ParticipantProps) => {
             </Box>
         </MotionStack>
     )
-}
-
-const useRecentUsers = (userId?: string) => {
-    const { dmChannels } = useZionContext()
-    return useMemo(() => {
-        return dmChannels.reduce((acc, channel) => {
-            if (acc.length >= 10) {
-                return acc
-            }
-            channel.userIds.forEach((id) => {
-                if (id !== userId && !acc.includes(id)) {
-                    acc.push(id)
-                }
-            })
-            return acc
-        }, [] as string[])
-    }, [dmChannels, userId])
 }
 
 const ListItem = (props: {

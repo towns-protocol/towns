@@ -275,7 +275,7 @@ const MessageWrapper = React.memo((props: MessageWrapperProps) => {
             user={user}
             paddingTop={displayContext === 'head' || displayContext === 'single' ? 'md' : 'sm'}
             paddingBottom={displayContext === 'tail' || displayContext === 'single' ? 'md' : 'sm'}
-            paddingX={isTouch ? 'md' : 'lg'}
+            paddingX="md"
             spaceId={spaceId}
             reactions={reactions}
             relativeDate={isRelativeDate}

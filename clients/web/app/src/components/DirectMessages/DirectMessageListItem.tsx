@@ -17,17 +17,14 @@ import { formatShortDate } from 'utils/formatShortDate'
 import { getPrettyDisplayName } from 'utils/getPrettyDisplayName'
 import { GroupDMIcon, GroupDMIconProps } from './GroupDMIcon'
 
-export const DirectMessageListItem = (props: {
+type Props = {
     channel: DMChannelIdentifier
     onSelect: (channelId: string) => void
-    selected: boolean
     unread: boolean
-}) => {
-    const { channel, onSelect, selected, unread } = props
+}
 
-    const { latest, unreadCount } = useDMLatestMessage(channel.id)
-    const latestUser = useUser(latest?.sender?.id)
-    const myUserId = useMyUserId()
+export const DirectMessageListItem = (props: Props & { selected: boolean }) => {
+    const { channel, onSelect, selected, unread } = props
 
     const onClick = useCallback(() => {
         onSelect(channel.id)
@@ -35,6 +32,22 @@ export const DirectMessageListItem = (props: {
 
     return (
         <DirectMessageMotionContainer selected={selected} onClick={onClick}>
+            <DirectMessageRowContent channel={channel} unread={unread} />
+        </DirectMessageMotionContainer>
+    )
+}
+
+export const DirectMessageRowContent = (props: {
+    channel: DMChannelIdentifier
+    unread?: boolean
+}) => {
+    const { channel, unread } = props
+    const { latest, unreadCount } = useDMLatestMessage(channel.id)
+    const latestUser = useUser(latest?.sender?.id)
+    const myUserId = useMyUserId()
+
+    return (
+        <>
             <DirectMessageIcon
                 channel={channel}
                 width="x4"
@@ -111,7 +124,7 @@ export const DirectMessageListItem = (props: {
                     )}
                 </Stack>
             </Box>
-        </DirectMessageMotionContainer>
+        </>
     )
 }
 

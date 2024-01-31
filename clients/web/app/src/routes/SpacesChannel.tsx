@@ -24,7 +24,6 @@ import { MediaDropContextProvider } from '@components/MediaDropContext/MediaDrop
 import { MessageTimeline } from '@components/MessageTimeline/MessageTimeline'
 import { MessageTimelineWrapper } from '@components/MessageTimeline/MessageTimelineContext'
 import { RichTextEditor } from '@components/RichText/RichTextEditor'
-import { ChannelHeaderShimmer } from '@components/Shimmer/TimelineShimmer'
 import { RegisterChannelShortcuts } from '@components/Shortcuts/RegisterChannelShortcuts'
 import { useUserList } from '@components/UserList/UserList'
 import { Box, Button, Stack, Text } from '@ui'
@@ -39,11 +38,14 @@ import { CentralPanelLayout } from './layouts/CentralPanelLayout'
 
 type Props = {
     onTouchClose?: () => void
+    channelId?: string
+    preventAutoFocus?: boolean
+    hideHeader?: boolean
 }
 
 export const SpacesChannel = (props: Props) => {
     return (
-        <SpaceChannelWrapper>
+        <SpaceChannelWrapper channelId={props.channelId}>
             <SpacesChannelComponent {...props} />
         </SpaceChannelWrapper>
     )
@@ -57,16 +59,17 @@ export const SpacesChannelRoute = () => {
     )
 }
 
-const SpaceChannelWrapper = (props: { children: React.ReactElement }) => {
+const SpaceChannelWrapper = (props: { children: React.ReactElement } & { channelId?: string }) => {
     const { channelSlug } = useParams()
-    if (!channelSlug) {
+    const channelId = props.channelId ?? channelSlug
+    if (!channelId) {
         return <>SpacesChannel Route expects a channelSlug</>
     }
-    return <ChannelContextProvider channelId={channelSlug}>{props.children}</ChannelContextProvider>
+    return <ChannelContextProvider channelId={channelId}>{props.children}</ChannelContextProvider>
 }
 
-const SpacesChannelComponent = (props: Props) => {
-    const { messageId } = useParams()
+export const SpacesChannelComponent = (props: Props) => {
+    const { messageId: threadId } = useParams()
     const { isTouch } = useDevice()
     const { joinRoom, leaveRoom, scrollback, sendMessage } = useZionClient()
 
@@ -103,7 +106,7 @@ const SpacesChannelComponent = (props: Props) => {
         leaveRoom(channelId)
     }, [leaveRoom, channelId])
 
-    const hasThreadOpen = !!messageId
+    const hasThreadOpen = !!threadId
 
     const highlightId = useMemo(() => {
         const eventHash = location.hash?.replace(/^#/, '')
@@ -170,15 +173,7 @@ const SpacesChannelComponent = (props: Props) => {
     return (
         <CentralPanelLayout>
             {!isTouch && <RegisterChannelShortcuts />}
-            {!channel || !channelId || !myMembership ? (
-                <>
-                    {channel ? (
-                        <ChannelHeader channel={channel} spaceId={spaceId} />
-                    ) : (
-                        <ChannelHeaderShimmer />
-                    )}
-                </>
-            ) : showJoinChannel ? (
+            {channel && showJoinChannel ? (
                 <Box absoluteFill centerContent padding="lg">
                     <Button key={channelId} size="button_lg" onClick={onJoinChannel}>
                         <Text truncate>Join #{channel.label}</Text>
@@ -198,17 +193,24 @@ const SpacesChannelComponent = (props: Props) => {
                         events={channelMessages}
                         isChannelWritable={isChannelWritable}
                     >
-                        <ChannelHeader
-                            channel={channel}
-                            spaceId={spaceId}
-                            onTouchClose={props.onTouchClose}
-                        />
+                        {channel && !props.hideHeader && (
+                            <ChannelHeader
+                                channel={channel}
+                                spaceId={spaceId}
+                                onTouchClose={props.onTouchClose}
+                            />
+                        )}
 
                         <MessageTimeline
                             align="bottom"
                             containerRef={timelineContainerRef}
                             header={
-                                <ChannelIntro name={channel.label} roomIdentifier={channel.id} />
+                                channel && (
+                                    <ChannelIntro
+                                        name={channel.label}
+                                        roomIdentifier={channel.id}
+                                    />
+                                )
                             }
                             prepend={
                                 <>
@@ -219,16 +221,16 @@ const SpacesChannelComponent = (props: Props) => {
                                     />
                                 </>
                             }
-                            highlightId={messageId || highlightId}
+                            highlightId={threadId || highlightId}
                         />
                     </MessageTimelineWrapper>
                     <BoxDebugger />
                     <Box
                         gap
-                        paddingBottom={isTouch ? 'none' : 'lg'}
-                        paddingX={isTouch ? 'none' : 'lg'}
+                        paddingBottom={isTouch ? 'none' : 'md'}
+                        paddingX={isTouch ? 'none' : 'md'}
                     >
-                        {!showDMAcceptInvitation && (
+                        {!showDMAcceptInvitation && channel && (
                             <RichTextEditor
                                 isFullWidthOnTouch
                                 editable={!!isChannelWritable}
@@ -236,7 +238,7 @@ const SpacesChannelComponent = (props: Props) => {
                                 displayButtons={isTouch ? 'on-focus' : 'always'}
                                 key={`${channelId}-${isChannelWritable ? '' : '-readonly'}`}
                                 storageId={channel.id}
-                                autoFocus={!hasThreadOpen && !isTouch}
+                                autoFocus={!hasThreadOpen && !isTouch && !props.preventAutoFocus}
                                 initialValue=""
                                 placeholder={placeholder}
                                 channels={channels}
