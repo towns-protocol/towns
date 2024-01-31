@@ -18,7 +18,7 @@ import {
     makeTownsDelegateSig,
     makeOldTownsDelegateSig,
     publicKeyToAddress,
-} from '@river/waterproof'
+} from '@river/encryption'
 import { bin_fromHexString, bin_toHexString, check, dlog } from '@river/dlog'
 import { ethers } from 'ethers'
 import { RiverDbManager } from './riverDbManager'

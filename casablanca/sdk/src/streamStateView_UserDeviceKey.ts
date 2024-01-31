@@ -9,7 +9,7 @@ import {
 import { StreamStateView_AbstractContent } from './streamStateView_AbstractContent'
 import { check } from '@river/dlog'
 import { logNever } from './check'
-import { UserDevice } from '@river/waterproof'
+import { UserDevice } from '@river/encryption'
 import { StreamStateView_UserStreamMembership } from './streamStateView_Membership'
 import { StreamEncryptionEvents, StreamStateEvents } from './streamEvents'
 

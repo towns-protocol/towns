@@ -8,7 +8,7 @@ import {
     townsSign,
     publicKeyToAddress,
     publicKeyToUint8Array,
-} from '@river/waterproof'
+} from '@river/encryption'
 import { genIdBlob, userIdFromAddress } from './id'
 import { ParsedEvent, ParsedMiniblock, ParsedStreamAndCookie, ParsedStreamResponse } from './types'
 import { ecrecover, fromRpcSig, hashPersonalMessage } from '@ethereumjs/util'

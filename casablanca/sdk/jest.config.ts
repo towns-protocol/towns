@@ -28,8 +28,8 @@ const config: JestConfigWithTsJest = {
         // match "hash.js" but not whateverHash.js - viem has many of these which should not be
         '\\bhash\\.js\\b': 'hash.js',
         '(.+)\\.js': '$1',
-        // need for waterproof/olm
-        '\\.(wasm)$': require.resolve('../waterproof/src/mock-wasm-file.js'),
+        // need for encryption/olm
+        '\\.(wasm)$': require.resolve('../encryption/src/mock-wasm-file.js'),
         msgpackr: '<rootDir>/../../node_modules/msgpackr/dist/node.cjs',
     },
     collectCoverage: true,

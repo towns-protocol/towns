@@ -80,7 +80,7 @@
       "label": "Start Watches",
       "dependsOn": [
         "WatchCasablancaDlog",
-        "WatchCasablancaMechOlm",
+        "WatchCasablancaEncryption",
         "WatchCasablancaProto",
         "WatchWorkersCommon",
         "WatchSharedLib",
@@ -115,7 +115,7 @@
         "Anvil",
         "Deploy Smart Contracts",
         "WatchCasablancaSdk",
-        "WatchCasablancaMechOlm",
+        "WatchCasablancaEncryption",
         "WatchCasablancaDlog",
       ],
       "problemMatcher": [],
@@ -348,9 +348,9 @@
       }
     },
     {
-      "label": "WatchCasablancaMechOlm",
+      "label": "WatchCasablancaEncryption",
       "type": "shell",
-      "command": "cd casablanca/waterproof && yarn watch",
+      "command": "cd casablanca/encryption && yarn watch",
       "isBackground": true,
       "problemMatcher": [],
       "presentation": {

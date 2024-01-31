@@ -8,7 +8,7 @@ import {
     EntitlementsDelegate,
 } from '@river/sdk'
 import { bin_fromHexString } from '@river/dlog'
-import { makeOldTownsDelegateSig } from '@river/waterproof'
+import { makeOldTownsDelegateSig } from '@river/encryption'
 import { FullyReadMarker } from '@river/proto'
 import {
     ChannelTransactionContext,

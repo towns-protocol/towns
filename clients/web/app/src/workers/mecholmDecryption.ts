@@ -1,4 +1,4 @@
-import { CryptoStore, MegolmDecryption, OlmDevice, OlmMegolmDelegate } from '@river/waterproof'
+import { CryptoStore, MegolmDecryption, OlmDevice, OlmMegolmDelegate } from '@river/encryption'
 
 import { EncryptedData } from '@river/proto'
 

@@ -41,7 +41,7 @@ import {
     OlmDevice,
     UserDevice,
     UserDeviceCollection,
-} from '@river/waterproof'
+} from '@river/encryption'
 import { errorContains, getRpcErrorProperty, StreamRpcClientType } from './makeStreamRpcClient'
 import EventEmitter from 'events'
 import TypedEmitter from 'typed-emitter'

@@ -4,7 +4,7 @@
 
 import { dlog, check } from '@river/dlog'
 import { isDefined } from './check'
-import { UserDevice } from '@river/waterproof'
+import { UserDevice } from '@river/encryption'
 import { Client } from './client'
 import {
     genId,

@@ -1,5 +1,5 @@
 {
-    "name": "@river/waterproof",
+    "name": "@river/encryption",
     "packageManager": "yarn@3.2.3",
     "type": "module",
     "main": "dist/index.js",

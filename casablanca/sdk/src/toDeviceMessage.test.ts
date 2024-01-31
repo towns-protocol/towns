@@ -5,7 +5,7 @@
 import { Client } from './client'
 import { makeDonePromise, makeTestClient } from './util.test'
 import { dlog } from '@river/dlog'
-import { UserDeviceCollection } from '@river/waterproof'
+import { UserDeviceCollection } from '@river/encryption'
 import { UserToDevicePayload_MegolmSessions } from '@river/proto'
 
 const log = dlog('test:toDeviceMessage')

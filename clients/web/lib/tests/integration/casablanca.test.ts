@@ -11,7 +11,7 @@ import {
     SignerContext,
 } from '@river/sdk'
 import { bin_fromHexString } from '@river/dlog'
-import { makeOldTownsDelegateSig } from '@river/waterproof'
+import { makeOldTownsDelegateSig } from '@river/encryption'
 import { ethers } from 'ethers'
 import { RoomMessageEvent, ZTEvent } from '../../src/types/timeline-types'
 import {

@@ -13,7 +13,7 @@ import {
     RemoteTimelineEvent,
     StreamTimelineEvent,
 } from './types'
-import { UserDevice } from '@river/waterproof'
+import { UserDevice } from '@river/encryption'
 import { EncryptedContent } from './encryptedContentTypes'
 
 export type StreamChange = {
