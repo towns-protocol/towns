@@ -1,5 +1,5 @@
 import { isDMChannelStreamId, isGDMChannelStreamId } from '@river/sdk'
-import React, { MutableRefObject, useCallback, useMemo, useRef } from 'react'
+import React, { MutableRefObject, useCallback, useEffect, useMemo, useRef, useState } from 'react'
 import { useInView } from 'react-intersection-observer'
 import { Outlet, useLocation, useParams } from 'react-router'
 import {
@@ -34,6 +34,7 @@ import { useIsChannelWritable } from 'hooks/useIsChannelWritable'
 import { useSpaceChannels } from 'hooks/useSpaceChannels'
 import { QUERY_PARAMS } from 'routes'
 import { notUndefined } from 'ui/utils/utils'
+import { SECOND_MS } from 'data/constants'
 import { CentralPanelLayout } from './layouts/CentralPanelLayout'
 
 type Props = {
@@ -122,11 +123,11 @@ const SpacesChannelComponent = (props: Props) => {
 
     const isDmOrGDM = isDMChannelStreamId(channelId) || isGDMChannelStreamId(channelId)
 
-    const { isChannelWritable } = useIsChannelWritable(
+    const isChannelWritable = !!useIsChannelWritable(
         isDmOrGDM ? undefined : spaceId,
         channelId,
         loggedInWalletAddress,
-    )
+    )?.isChannelWritable
 
     const { counterParty, data } = useDMData(channelId)
 
@@ -137,21 +138,13 @@ const SpacesChannelComponent = (props: Props) => {
 
     const userList = useUserList({ excludeSelf: true, userIds }).join('')
 
-    const placeholderContent = isDmOrGDM
-        ? `Send a message to ${userList}`
-        : `Send a message to #${channel?.label}`
-
-    const placeholder = isChannelWritable
-        ? placeholderContent
-        : isChannelWritable === false
-        ? `You don't have permission to send messages to this channel`
-        : `Loading permissions`
-
-    const imageUploadTitle = isChannelWritable
-        ? `Upload to #${channel?.label}`
-        : isChannelWritable === false
-        ? `You don't have permission to send media to this channel`
-        : `Loading permissions`
+    const { placeholder, imageUploadTitle } = useMessageFieldPlaceholders({
+        channelId,
+        channelLabel: channel?.label,
+        isChannelWritable,
+        isDmOrGDM,
+        userList,
+    })
 
     const onLoadMore = useCallback(() => {
         scrollback(channelId, 100)
@@ -241,7 +234,7 @@ const SpacesChannelComponent = (props: Props) => {
                                 editable={!!isChannelWritable}
                                 background={isChannelWritable ? 'level2' : 'level1'}
                                 displayButtons={isTouch ? 'on-focus' : 'always'}
-                                key={channelId}
+                                key={`${channelId}-${isChannelWritable ? '' : '-readonly'}`}
                                 storageId={channel.id}
                                 autoFocus={!hasThreadOpen && !isTouch}
                                 initialValue=""
@@ -307,4 +300,51 @@ const BoxDebugger = () => {
         { enabled: debug.enabled('app:vlist') },
     )
     return isToggled ? <Box background="accent" width="100%" height="200" /> : <></>
+}
+
+const useMessageFieldPlaceholders = (params: {
+    isChannelWritable: boolean
+    channelId: string
+    channelLabel?: string
+    isDmOrGDM: boolean
+    userList: string
+}) => {
+    const { isChannelWritable, channelId, channelLabel, isDmOrGDM, userList } = params
+
+    // for a short time, we show the user the message input even if they don't
+    // have permission to send messages to the channel, this is to avoid
+    // glitches while switching channels
+
+    const [isOptimisticPermission, setOptimisticPermission] = useState(true)
+
+    useEffect(() => {
+        if (!isChannelWritable && channelId) {
+            setOptimisticPermission(true)
+            const timeout = setTimeout(() => {
+                setOptimisticPermission(false)
+            }, 3 * SECOND_MS)
+            return () => {
+                clearTimeout(timeout)
+            }
+        }
+    }, [channelId, isChannelWritable])
+
+    const placeholderContent = isDmOrGDM
+        ? `Send a message to ${userList}`
+        : `Send a message to #${channelLabel}`
+
+    const placeholder =
+        isChannelWritable || isOptimisticPermission
+            ? placeholderContent
+            : isChannelWritable === false
+            ? `You don't have permission to send messages to this channel`
+            : `Loading permissions`
+
+    const imageUploadTitle = isChannelWritable
+        ? `Upload to #${channelLabel}`
+        : isChannelWritable === false
+        ? `You don't have permission to send media to this channel`
+        : `Loading permissions`
+
+    return { placeholder, imageUploadTitle }
 }

@@ -161,7 +161,7 @@ export const MessageTimeline = (props: Props) => {
     const isThread = timelineContext?.type === MessageTimelineType.Thread
     const channelType = useChannelType(channelId)
 
-    const dateGroups = useMemo(
+    const _dateGroups = useMemo(
         () =>
             getEventsByDate(
                 events,
@@ -182,6 +182,13 @@ export const MessageTimeline = (props: Props) => {
             repliesMap,
         ],
     )
+
+    // prevent re-renders
+    const groupRefs = useRef(_dateGroups)
+    if (!isEqual(groupRefs.current, _dateGroups)) {
+        groupRefs.current = _dateGroups
+    }
+    const dateGroups = groupRefs.current
 
     // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
     //                                    estimate height of blocks before they get rendered

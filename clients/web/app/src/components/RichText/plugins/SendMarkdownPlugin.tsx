@@ -9,13 +9,13 @@ import {
     INSERT_PARAGRAPH_COMMAND,
     KEY_ENTER_COMMAND,
 } from 'lexical'
-import React, { useCallback, useEffect, useState } from 'react'
+import React, { useCallback, useEffect, useRef, useState } from 'react'
 import { Mention } from 'use-zion-client'
 import { AnimatePresence } from 'framer-motion'
 import { Button, Icon, MotionBox, Stack } from '@ui'
 import { notUndefined } from 'ui/utils/utils'
 import { useDevice } from 'hooks/useDevice'
-import { useNetworkStatus } from 'hooks/useNetworkStatus'
+
 import { $isMentionNode } from '../nodes/MentionNode'
 
 export const SendMarkdownPlugin = (props: {
@@ -59,6 +59,9 @@ export const SendMarkdownPlugin = (props: {
         }
     }, [])
 
+    const editorEmptyRef = useRef(isEditorEmpty)
+    editorEmptyRef.current = isEditorEmpty
+
     useEffect(() => {
         return editor.registerUpdateListener(({ dirtyElements, prevEditorState, tags }) => {
             editor.getEditorState().read(() => {
@@ -66,13 +69,20 @@ export const SendMarkdownPlugin = (props: {
                 const children = root.getChildren()
 
                 if (children.length > 1) {
-                    setIsEditorEmpty(false)
+                    if (editorEmptyRef.current) {
+                        setIsEditorEmpty(false)
+                    }
                 } else {
                     if ($isParagraphNode(children[0])) {
                         const paragraphChildren = children[0].getChildren()
-                        setIsEditorEmpty(paragraphChildren.length === 0)
+                        const value = paragraphChildren.length === 0
+                        if (value !== editorEmptyRef.current) {
+                            setIsEditorEmpty(value)
+                        }
                     } else {
-                        setIsEditorEmpty(false)
+                        if (editorEmptyRef.current) {
+                            setIsEditorEmpty(false)
+                        }
                     }
                 }
             })
@@ -134,6 +144,7 @@ export const SendMarkdownPlugin = (props: {
                         isEditing={props.isEditing}
                         isEditorEmpty={isEditorEmpty}
                         hasImage={hasImage}
+                        disabled={disabled}
                         onCancel={props.onCancel}
                         onSave={sendMessage}
                     />
@@ -149,9 +160,9 @@ const EditMessageButtons = (props: {
     isEditing: boolean
     isEditorEmpty: boolean
     hasImage: boolean
+    disabled?: boolean
 }) => {
     const { isTouch } = useDevice()
-    const { isOffline } = useNetworkStatus()
     const { onCancel, onSave, isEditing, isEditorEmpty, hasImage } = props
 
     useEffect(() => {
@@ -187,7 +198,7 @@ const EditMessageButtons = (props: {
         [onSave],
     )
 
-    const disabled = (isEditorEmpty && !hasImage) || isOffline
+    const disabled = props.disabled || (isEditorEmpty && !hasImage)
 
     return (
         <Stack horizontal gap paddingX={isTouch ? 'none' : 'xs'}>

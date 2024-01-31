@@ -7,30 +7,29 @@ export const WelcomeLayout = (props: {
     debugText?: string
     showProgress?: number
 }) => (
-    <Stack centerContent scroll height="100vh" background="level1" width="100vw">
-        <Stack padding justifyContent="end" alignItems="center">
-            <TransitionLogo />
+    <>
+        <Stack centerContent scroll height="100vh" background="level1" width="100vw">
+            <Stack padding justifyContent="end" alignItems="center">
+                <TransitionLogo />
 
-            {props.showProgress !== undefined && (
-                <WelcomeProgressBar progress={props.showProgress} />
-            )}
-        </Stack>
-        <Stack padding>
-            <Stack justifyContent="start" minHeight="height_xl" gap="lg">
-                {props.children}
+                {props.showProgress !== undefined && (
+                    <WelcomeProgressBar progress={props.showProgress} />
+                )}
+            </Stack>
+            <Stack padding>
+                <Stack justifyContent="start" minHeight="height_xl" gap="lg">
+                    {props.children}
+                </Stack>
             </Stack>
         </Stack>
-
         {props.debugText && (
-            <Box paddingTop="safeAreaInsetTop" position="topLeft" key={props.debugText}>
-                <Box paddingTop="lg" paddingX="xs">
-                    <Paragraph color="gray2" size="xs" textTransform="uppercase">
-                        {props.debugText}
-                    </Paragraph>
-                </Box>
+            <Box padding position="bottomRight" key={props.debugText} overflow="hidden">
+                <Paragraph color="gray2" size="xs" textTransform="uppercase">
+                    {props.debugText}
+                </Paragraph>
             </Box>
         )}
-    </Stack>
+    </>
 )
 
 const WelcomeProgressBar = (props: { progress: number }) => {

@@ -167,7 +167,12 @@ export const RichTextUI = (props: Props) => {
                 readOnly={props.readOnly}
                 background={props.background}
             >
-                <Box position="relative" paddingX="md" width="100%">
+                <Box
+                    position="relative"
+                    paddingX="md"
+                    width="100%"
+                    minHeight={{ default: 'x6', touch: 'x5' }}
+                >
                     {props.children}
                 </Box>
                 {canShowInlineToolbar &&

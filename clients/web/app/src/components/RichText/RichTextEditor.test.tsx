@@ -31,16 +31,7 @@ describe('#RichTextEditor editable', () => {
                 />
             </Wrapper>,
         )
-        expect(screen.getByText('this field is read only')).toBeDefined()
-    })
-
-    test('it should not display value if not editable', async () => {
-        render(
-            <Wrapper>
-                <RichTextEditor editable={false} initialValue="welcome!" channels={[]} users={[]} />
-            </Wrapper>,
-        )
-        expect(screen.queryByText('welcome!')).toBeNull()
+        expect(screen.getByRole('textbox')).toHaveAttribute('contenteditable', 'false')
     })
 })
 

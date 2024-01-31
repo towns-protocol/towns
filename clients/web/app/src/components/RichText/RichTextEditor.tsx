@@ -32,7 +32,7 @@ import { OnFocusPlugin } from './plugins/OnFocusPlugin'
 import { SendMarkdownPlugin } from './plugins/SendMarkdownPlugin'
 import * as styles from './RichTextEditor.css'
 import { RichTextPlaceholder } from './ui/Placeholder/RichTextEditorPlaceholder'
-import { RichTextUI, RichTextUIContainer } from './ui/RichTextEditorUI'
+import { RichTextUI } from './ui/RichTextEditorUI'
 import { RememberInputPlugin } from './plugins/RememberInputPlugin'
 import CodeHighlightPlugin from './plugins/CodeHighlightPlugin'
 import { TabIndentationPlugin } from './plugins/TabIndentationPlugin'
@@ -81,7 +81,6 @@ const RichTextEditorWithoutBoundary = React.memo((props: Props) => {
         editing: isEditing,
         onSend,
         tabIndex,
-        isFullWidthOnTouch,
     } = props
 
     const { transformers } = useTransformers({ members, channels })
@@ -134,16 +133,6 @@ const RichTextEditorWithoutBoundary = React.memo((props: Props) => {
         setIsAttemptingSend(true)
     }, [])
 
-    if (!editable) {
-        return (
-            <RichTextUIContainer
-                rounded={{ default: 'sm', touch: isFullWidthOnTouch ? 'none' : 'sm' }}
-            >
-                <RichTextPlaceholder placeholder={placeholder} color="level4" />
-            </RichTextUIContainer>
-        )
-    }
-
     const showFormattingToolbar = !isTouch
         ? isFormattingToolbarOpen
         : isFormattingToolbarOpen && focused
@@ -163,6 +152,7 @@ const RichTextEditorWithoutBoundary = React.memo((props: Props) => {
                 <Stack horizontal width="100%" paddingRight="sm" alignItems="end">
                     <Box grow width="100%">
                         <RichTextUI
+                            readOnly={!editable}
                             focused={focused || !isEditorEmpty}
                             editing={isEditing}
                             background={background}
@@ -188,7 +178,7 @@ const RichTextEditorWithoutBoundary = React.memo((props: Props) => {
                     <Box paddingY="sm" paddingRight="xs">
                         <SendMarkdownPlugin
                             displayButtons={props.displayButtons ?? 'on-focus'}
-                            disabled={isOffline}
+                            disabled={isOffline || !editable}
                             focused={focused}
                             isEditing={isEditing ?? false}
                             isEditorEmpty={isEditorEmpty}
@@ -202,7 +192,13 @@ const RichTextEditorWithoutBoundary = React.memo((props: Props) => {
                     </Box>
                 </Stack>
 
-                <Stack gap shrink paddingX paddingBottom="sm">
+                <Stack
+                    gap
+                    shrink
+                    paddingX
+                    paddingBottom="sm"
+                    pointerEvents={editable ? 'auto' : 'none'}
+                >
                     {protocol === SpaceProtocol.Casablanca && <PasteFilePlugin />}
                     <RichTextBottomToolbar
                         editing={isEditing}
