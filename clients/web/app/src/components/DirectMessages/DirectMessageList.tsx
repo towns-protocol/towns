@@ -1,29 +1,14 @@
-import React, {
-    ChangeEvent,
-    useCallback,
-    useDeferredValue,
-    useEffect,
-    useMemo,
-    useRef,
-    useState,
-} from 'react'
-import { useLocation, useMatch, useNavigate } from 'react-router'
+import React, { useCallback, useEffect, useMemo, useRef } from 'react'
+import { useMatch, useNavigate } from 'react-router'
 import {
     DMChannelContextUserLookupProvider,
     DMChannelIdentifier,
-    useTimelineStore,
     useZionContext,
 } from 'use-zion-client'
-import { ResultItem } from '@components/SearchBar/SearchResultItem'
-import { Box, Icon, IconButton, Paragraph, Stack, TextField } from '@ui'
+import { Box, Icon, Paragraph, Stack } from '@ui'
 import { useCreateLink } from 'hooks/useCreateLink'
-import { useDmChannels } from 'hooks/useDMChannels'
 import { useDevice } from 'hooks/useDevice'
-import { useSearch } from 'hooks/useSearch'
-import { notUndefined } from 'ui/utils/utils'
-import { SearchContext } from '@components/SearchContext/SearchContext'
 import { useShortcut } from 'hooks/useShortcut'
-import { getSectionTitle } from 'routes/TouchSearchTab'
 import { DirectMessageListItem } from './DirectMessageListItem'
 
 export const DirectMessageList = () => {
@@ -32,49 +17,10 @@ export const DirectMessageList = () => {
     const routeMatch = useMatch('messages/:channelId/*')
 
     const channelId = routeMatch?.params?.channelId
-    const hashId = useLocation().hash.replace('#', '')
 
     const { dmUnreadChannelIds } = useZionContext()
 
     const { selectMessage } = useSelectMessage(dmChannelIds, channelId)
-
-    const [searchValue, setSearchValue] = useState('')
-
-    const onSearch = useCallback((value: string) => {
-        setSearchValue(value)
-    }, [])
-
-    const searchResults = useSearch(searchValue).searchResults.filter(
-        (r) => r.item.type === 'dmMessage' || r.item.type === 'dmChannel' || r.item.type === 'user',
-    )
-
-    const { threadsStats } = useTimelineStore(({ threadsStats }) => ({
-        threadsStats,
-    }))
-
-    const channels = searchResults.length
-        ? searchResults
-              .filter((r) => r.item.type === 'dmMessage')
-              .map((r) => {
-                  return dmChannelIds.find(
-                      (c) => r.item.type === 'dmMessage' && c.id === r.item.channelId,
-                  )
-              })
-              .filter(notUndefined)
-        : dmChannelIds
-
-    const dmChannels = useDmChannels()
-
-    const miscProps = useMemo(
-        () => ({
-            channels: [...dmChannels],
-            dmChannelIds,
-            members: [],
-            threadsStats,
-            spaceId: undefined,
-        }),
-        [dmChannelIds, dmChannels, threadsStats],
-    )
 
     const searchRef = useRef<HTMLInputElement>(null)
 
@@ -85,66 +31,8 @@ export const DirectMessageList = () => {
     return (
         <Stack scroll padding="sm">
             <Stack minHeight="100svh" paddingBottom="safeAreaInsetBottom" gap="sm">
-                {channels.length > 0 && <SearchField ref={searchRef} onSearchValue={onSearch} />}
-
-                {searchValue ? (
-                    searchResults.length === 0 ? (
-                        <Box padding centerContent color="gray2">
-                            No results found
-                        </Box>
-                    ) : (
-                        <SearchContext.Provider value="messages">
-                            {searchResults.map((s, index, items) => {
-                                const result = (
-                                    <DMChannelContextUserLookupProvider
-                                        fallbackToParentContext
-                                        key={s.item.key}
-                                        channelId={
-                                            s.item.type === 'dmMessage'
-                                                ? s.item.channelId
-                                                : s.item.type === 'dmChannel'
-                                                ? s.item.source.id
-                                                : undefined
-                                        }
-                                    >
-                                        <ResultItem
-                                            key={s.item.key}
-                                            result={s}
-                                            misc={miscProps}
-                                            paddingY="sm"
-                                            paddingX="sm"
-                                            rounded="sm"
-                                            background={
-                                                s.item.type === 'dmMessage' && hashId === s.item.key
-                                                    ? 'level2'
-                                                    : 'level1'
-                                            }
-                                        />
-                                    </DMChannelContextUserLookupProvider>
-                                )
-                                const prevItemType = items[index - 1]?.item?.type
-                                if (s.item.type !== prevItemType) {
-                                    return (
-                                        <>
-                                            <Box
-                                                paddingX="sm"
-                                                paddingTop="sm"
-                                                paddingBottom="sm"
-                                                color="gray2"
-                                            >
-                                                {getSectionTitle(s.item.type)}
-                                            </Box>
-                                            {result}
-                                        </>
-                                    )
-                                } else {
-                                    return result
-                                }
-                            })}
-                        </SearchContext.Provider>
-                    )
-                ) : channels.length > 0 ? (
-                    channels.map((channel) => {
+                {dmChannelIds.length > 0 ? (
+                    dmChannelIds.map((channel) => {
                         return (
                             <DMChannelContextUserLookupProvider
                                 fallbackToParentContext
@@ -181,58 +69,6 @@ export const DirectMessageList = () => {
         </Stack>
     )
 }
-
-const SearchField = React.forwardRef<HTMLInputElement, { onSearchValue: (value: string) => void }>(
-    (props, ref) => {
-        const { onSearchValue } = props
-
-        const [value, setValue] = useState('')
-
-        const onChange = (e: ChangeEvent<HTMLInputElement>) => {
-            if (e.target) {
-                setValue(e.target.value)
-            }
-        }
-
-        const onClearSearch = useCallback(() => {
-            setValue('')
-        }, [])
-
-        const deferredValue = useDeferredValue(value)
-
-        useEffect(() => {
-            onSearchValue(deferredValue)
-        }, [deferredValue, onSearchValue])
-
-        return (
-            <Stack horizontal>
-                <Box horizontal grow padding="sm" height="x8" shrink={false}>
-                    <TextField
-                        tone="none"
-                        background="level2"
-                        height="100%"
-                        placeholder="Search DMs"
-                        value={value ?? undefined}
-                        ref={ref}
-                        onKeyDown={(e) => e.key === 'Escape' && onClearSearch()}
-                        onChange={onChange}
-                    />
-                </Box>
-                {!!value && (
-                    <Box centerContent>
-                        <IconButton
-                            padding="sm"
-                            size="square_sm"
-                            color="gray2"
-                            icon="close"
-                            onClick={onClearSearch}
-                        />
-                    </Box>
-                )}
-            </Stack>
-        )
-    },
-)
 
 const useFilteredDirectMessages = () => {
     const { dmChannels: _dmChannels } = useZionContext()

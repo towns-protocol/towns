@@ -1,5 +1,5 @@
 import React, { ChangeEvent, useCallback, useEffect, useMemo, useRef, useState } from 'react'
-import { useLocation } from 'react-router'
+import { matchPath, useLocation } from 'react-router'
 import {
     useSpaceData,
     useSpaceId,
@@ -14,13 +14,15 @@ import { useShortcut } from 'hooks/useShortcut'
 import { useSpaceChannels } from 'hooks/useSpaceChannels'
 import { getSectionTitle } from 'routes/TouchSearchTab'
 import { useDmChannels } from 'hooks/useDMChannels'
+import { PATHS } from 'routes'
 import { ResultItem } from './SearchResultItem'
 import { CombinedResult } from './types'
 
 export const SearchBar = () => {
     const spaceData = useSpaceData()
-
-    const searchLabel = `Search ${spaceData?.name ?? 'Town'}`
+    const location = useLocation()
+    const isMessages = matchPath(`/${PATHS.MESSAGES}/*`, location.pathname)
+    const searchLabel = isMessages ? `Search messages` : `Search ${spaceData?.name ?? 'Town'}`
 
     const [isSearchActive, setIsSearchActive] = useState(false)
     const [value, setValue] = useState('')
@@ -64,74 +66,64 @@ export const SearchBar = () => {
     })
 
     return (
-        <>
-            <Box grow horizontal paddingX="lg" position="relative" width="100%" ref={containerRef}>
-                <Box
-                    horizontal
-                    width="100%"
-                    height="100%"
-                    position="relative"
-                    justifyContent="center"
-                >
-                    <AnimatePresence>
-                        {spaceData && (
-                            <Box
-                                border={isSearchActive}
-                                boxShadow={isSearchActive ? 'search' : undefined}
-                                position="absolute"
-                                background="level2"
-                                zIndex="tooltips"
-                                top="sm"
-                                rounded="sm"
-                                overflow="hidden"
-                                maxWidth="100%"
-                                width="700"
-                            >
-                                <Box
-                                    horizontal
-                                    grow
-                                    background="level2"
-                                    cursor={isSearchActive ? 'default' : 'pointer'}
-                                    height="x5"
-                                    gap="sm"
-                                    alignItems="start"
-                                    justifyContent="center"
-                                    maxWidth="100%"
-                                    borderTopLeftRadius="sm"
-                                    borderTopRightRadius="sm"
-                                    zIndex="tooltipsAbove"
-                                    onClick={() => setIsSearchActive(true)}
-                                >
-                                    {isSearchActive ? (
-                                        <Box horizontal centerContent height="x5">
-                                            <TextField
-                                                autoFocus
-                                                tone="none"
-                                                background="level2"
-                                                height="100%"
-                                                width="700"
-                                                placeholder="Enter terms to search..."
-                                                value={value ?? undefined}
-                                                onChange={onChange}
-                                            />
-                                        </Box>
-                                    ) : (
-                                        <Box horizontal centerContent gap="sm" height="x5">
-                                            <Icon type="search" color="gray2" size="square_xs" />
-                                            <Paragraph color="gray2">{searchLabel}</Paragraph>
-                                            {/* <ShortcutKeys keys="Meta+K" size="sm" /> */}
-                                        </Box>
-                                    )}
+        <Box grow horizontal paddingX="lg" position="relative" width="100%" ref={containerRef}>
+            <Box horizontal width="100%" height="100%" position="relative" justifyContent="center">
+                <AnimatePresence>
+                    <Box
+                        border={isSearchActive}
+                        boxShadow={isSearchActive ? 'search' : undefined}
+                        position="absolute"
+                        background="level2"
+                        zIndex="tooltips"
+                        top="sm"
+                        rounded="sm"
+                        overflow="hidden"
+                        maxWidth="100%"
+                        width="700"
+                    >
+                        <Box
+                            horizontal
+                            grow
+                            background="level2"
+                            cursor={isSearchActive ? 'default' : 'pointer'}
+                            height="x5"
+                            gap="sm"
+                            alignItems="start"
+                            justifyContent="center"
+                            maxWidth="100%"
+                            borderTopLeftRadius="sm"
+                            borderTopRightRadius="sm"
+                            zIndex="tooltipsAbove"
+                            onClick={() => setIsSearchActive(true)}
+                        >
+                            {isSearchActive ? (
+                                <Box horizontal centerContent height="x5">
+                                    <TextField
+                                        autoFocus
+                                        tone="none"
+                                        background="level2"
+                                        height="100%"
+                                        width="700"
+                                        placeholder="Enter terms to search..."
+                                        value={value ?? undefined}
+                                        onChange={onChange}
+                                    />
                                 </Box>
-                                {hasActiveResults && (
-                                    <SearchResults searchResults={searchResults} onHide={onHide} />
-                                )}
-                            </Box>
+                            ) : (
+                                <Box horizontal centerContent gap="sm" height="x5">
+                                    <Icon type="search" color="gray2" size="square_xs" />
+                                    <Paragraph color="gray2">{searchLabel}</Paragraph>
+                                    {/* <ShortcutKeys keys="Meta+K" size="sm" /> */}
+                                </Box>
+                            )}
+                        </Box>
+                        {hasActiveResults && (
+                            <SearchResults searchResults={searchResults} onHide={onHide} />
                         )}
-                    </AnimatePresence>
-                </Box>
+                    </Box>
+                </AnimatePresence>
             </Box>
-        </>
+        </Box>
     )
 }
 
