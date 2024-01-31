@@ -28,6 +28,7 @@ type PostgresEventStore struct {
 	schemaName string
 	nodeUUID   string
 	exitSignal chan error
+	serverCtx  context.Context
 }
 
 const (
@@ -54,7 +55,7 @@ func (s *PostgresEventStore) createStream(ctx context.Context, streamId string, 
 		return WrapRiverError(Err_DB_OPERATION_FAILURE, err).Message("error starting transaction")
 	}
 
-	defer s.rollbackTx(ctx, tx, "createStream")
+	defer s.rollbackTx(tx, "createStream")
 
 	err = s.compareUUID(ctx, tx)
 	if err != nil {
@@ -148,7 +149,7 @@ func (s *PostgresEventStore) getStreamFromLastSnapshot(
 		return nil, WrapRiverError(Err_DB_OPERATION_FAILURE, err).Message("error starting transaction")
 	}
 
-	defer s.rollbackTx(ctx, tx, "getStreamFromLastSnapshot")
+	defer s.rollbackTx(tx, "getStreamFromLastSnapshot")
 
 	err = s.compareUUID(ctx, tx)
 	if err != nil {
@@ -317,7 +318,7 @@ func (s *PostgresEventStore) addEvent(
 		return WrapRiverError(Err_DB_OPERATION_FAILURE, err).Message("error starting transaction")
 	}
 
-	defer s.rollbackTx(ctx, tx, "addEvent")
+	defer s.rollbackTx(tx, "addEvent")
 
 	err = s.compareUUID(ctx, tx)
 	if err != nil {
@@ -490,7 +491,7 @@ func (s *PostgresEventStore) createBlock(
 		return WrapRiverError(Err_DB_OPERATION_FAILURE, err).Message("Error starting transaction")
 	}
 
-	defer s.rollbackTx(ctx, tx, "createBlock")
+	defer s.rollbackTx(tx, "createBlock")
 
 	err = s.compareUUID(ctx, tx)
 	if err != nil {
@@ -810,7 +811,7 @@ func (s *PostgresEventStore) deleteStream(ctx context.Context, streamId string) 
 		return WrapRiverError(Err_DB_OPERATION_FAILURE, err).Message("error starting transaction")
 	}
 
-	defer s.rollbackTx(ctx, tx, "deleteStream")
+	defer s.rollbackTx(tx, "deleteStream")
 
 	err = s.compareUUID(ctx, tx)
 	if err != nil {
@@ -922,6 +923,7 @@ func newPostgresEventStore(
 		schemaName: databaseSchemaName,
 		nodeUUID:   instanceId,
 		exitSignal: exitSignal,
+		serverCtx:  ctx,
 	}
 
 	if clean {
@@ -971,7 +973,7 @@ func (s *PostgresEventStore) cleanStorage(ctx context.Context) error {
 		return err
 	}
 
-	defer s.rollbackTx(ctx, tx, "cleanStorage")
+	defer s.rollbackTx(tx, "cleanStorage")
 
 	// TODO: fix approach to the query - not critical as it is pure internal, though to bring the right order it is helpful
 	_, err = tx.Exec(
@@ -1018,7 +1020,7 @@ func (s *PostgresEventStore) initStorage(ctx context.Context) error {
 		return WrapRiverError(Err_DB_OPERATION_FAILURE, err).Message("InitStorage startTx error")
 	}
 
-	defer s.rollbackTx(ctx, tx, "initStorage")
+	defer s.rollbackTx(tx, "initStorage")
 
 	// check if schema exists
 	var schemaExists bool
@@ -1090,8 +1092,8 @@ func (s *PostgresEventStore) initStorage(ctx context.Context) error {
 	return nil
 }
 
-func (s *PostgresEventStore) rollbackTx(ctx context.Context, tx pgx.Tx, funcName string) {
-	err := tx.Rollback(context.Background())
+func (s *PostgresEventStore) rollbackTx(tx pgx.Tx, funcName string) {
+	err := tx.Rollback(s.serverCtx)
 	if err != nil {
 		if errors.Is(err, pgx.ErrTxClosed) {
 			return
