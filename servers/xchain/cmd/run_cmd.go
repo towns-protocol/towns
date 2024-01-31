@@ -21,7 +21,7 @@ func run() error {
 
 	pid := os.Getpid()
 
-	log := dlog.CtxLog(ctx).With("pid", pid)
+	log := dlog.FromCtx(ctx).With("pid", pid)
 
 	ctx = dlog.CtxWithLog(ctx, log)
 

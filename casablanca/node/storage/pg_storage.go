@@ -592,7 +592,7 @@ func (s *PostgresEventStore) GetStreamsNumber(ctx context.Context) (int, error) 
 }
 
 func (s *PostgresEventStore) compareUUID(ctx context.Context, tx pgx.Tx) error {
-	log := dlog.CtxLog(ctx)
+	log := dlog.FromCtx(ctx)
 	// First we select UUID only assuming happy path
 	rows, err := tx.Query(ctx, "SELECT uuid FROM singlenodekey")
 	if err != nil {
@@ -900,7 +900,7 @@ func newPostgresEventStore(
 ) (*PostgresEventStore, error) {
 	defer infra.StoreExecutionTimeMetrics("NewPostgresEventStore", infra.DB_CALLS_CATEGORY, time.Now())
 
-	log := dlog.CtxLog(ctx)
+	log := dlog.FromCtx(ctx)
 
 	pool_conf, err := pgxpool.ParseConfig(database_url)
 	if err != nil {
@@ -1013,7 +1013,7 @@ func (s *PostgresEventStore) InitStorage(ctx context.Context) error {
 func (s *PostgresEventStore) initStorage(ctx context.Context) error {
 	defer infra.StoreExecutionTimeMetrics("initStorage", infra.DB_CALLS_CATEGORY, time.Now())
 
-	log := dlog.CtxLog(ctx)
+	log := dlog.FromCtx(ctx)
 
 	tx, err := s.pool.Begin(ctx)
 	if err != nil {

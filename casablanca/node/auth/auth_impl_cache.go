@@ -29,7 +29,7 @@ type entitlementCacheValue struct {
 }
 
 func newEntitlementCache(ctx context.Context, cfg *config.ChainConfig) (*entitlementCache, error) {
-	log := dlog.CtxLog(ctx)
+	log := dlog.FromCtx(ctx)
 
 	positiveCacheSize := 10000
 	if cfg.PositiveEntitlementCacheSize > 0 {

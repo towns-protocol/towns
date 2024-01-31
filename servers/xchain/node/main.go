@@ -8,7 +8,7 @@ import (
 )
 
 func main() {
-	log := dlog.CtxLog(context.Background())
+	log := dlog.FromCtx(context.Background())
 
 	cmd.Execute()
 

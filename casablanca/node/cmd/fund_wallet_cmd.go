@@ -13,7 +13,7 @@ import (
 
 func fund_wallet(cfg *config.Config) error {
 	ctx := context.Background()
-	log := dlog.CtxLog(ctx)
+	log := dlog.FromCtx(ctx)
 
 	wallet, err := crypto.LoadWallet(ctx, crypto.WALLET_PATH_PRIVATE_KEY)
 	if err != nil {

@@ -54,7 +54,7 @@ func GetTestContractUrl() string {
 }
 
 func FundWallet(fromAddress common.Address) (err error) {
-	log := dlog.CtxLog(context.Background())
+	log := dlog.FromCtx(context.Background())
 
 	client, err := ethclient.Dial(GetCheckerContractUrl())
 	if err != nil {
@@ -76,7 +76,7 @@ func FundWallet(fromAddress common.Address) (err error) {
 }
 
 func WaitForTransaction(client *ethclient.Client, tx *types.Transaction) *big.Int {
-	log := dlog.CtxLog(context.Background())
+	log := dlog.FromCtx(context.Background())
 	for {
 		receipt, err := client.TransactionReceipt(context.Background(), tx.Hash())
 		if err != nil {

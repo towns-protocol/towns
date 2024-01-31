@@ -312,7 +312,7 @@ type entitlementCheckResult struct {
 }
 
 func (ca *chainAuth) getLinkedWallets(ctx context.Context, rootKey common.Address) ([]common.Address, error) {
-	log := dlog.CtxLog(ctx)
+	log := dlog.FromCtx(ctx)
 
 	if ca.walletLinkContract == nil {
 		log.Warn("Wallet link contract is not setup properly, returning root key only")
@@ -337,7 +337,7 @@ func (ca *chainAuth) getLinkedWallets(ctx context.Context, rootKey common.Addres
  * If any of the operations fail before getting positive result, the whole operation fails.
  */
 func (ca *chainAuth) checkEntitiement(ctx context.Context, args *AuthCheckArgs) (bool, error) {
-	log := dlog.CtxLog(ctx)
+	log := dlog.FromCtx(ctx)
 
 	ctx, cancel := context.WithTimeout(ctx, time.Millisecond*time.Duration(ca.contractCallsTimeoutMs))
 	defer cancel()

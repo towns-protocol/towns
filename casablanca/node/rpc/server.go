@@ -36,7 +36,7 @@ func loadNodeRegistry(
 	nodeRegistryCsv string,
 	localNodeAddress string,
 ) (nodes.NodeRegistry, error) {
-	log := dlog.CtxLog(ctx)
+	log := dlog.FromCtx(ctx)
 
 	if nodeRegistryCsv != "" {
 		log.Info("Node registry constructed from CSV", "csb", nodeRegistryCsv)
@@ -74,7 +74,7 @@ func createStore(
 	instanceId string,
 	exitSignal chan error,
 ) (storage.StreamStorage, Cleanup, error) {
-	log := dlog.CtxLog(ctx)
+	log := dlog.FromCtx(ctx)
 	if storageType == "in-memory" {
 		log.Warn("Using in-memory storage")
 		return storage.NewMemStorage(), nil, nil
@@ -101,7 +101,7 @@ func createStore(
 }
 
 func StartServer(ctx context.Context, cfg *config.Config, wallet *crypto.Wallet) (func(), int, chan error, error) {
-	log := dlog.CtxLog(ctx)
+	log := dlog.FromCtx(ctx)
 
 	privKey := cfg.WalletPrivateKey
 	cfg.WalletPrivateKey = ""
@@ -329,7 +329,7 @@ func StartServer(ctx context.Context, cfg *config.Config, wallet *crypto.Wallet)
 }
 
 func RunServer(ctx context.Context, config *config.Config) error {
-	log := dlog.CtxLog(ctx)
+	log := dlog.FromCtx(ctx)
 
 	closer, _, exitSignal, error := StartServer(ctx, config, nil)
 	if error != nil {

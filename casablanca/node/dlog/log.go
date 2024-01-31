@@ -37,7 +37,7 @@ func CtxWithLogValues(ctx context.Context, args ...any) context.Context {
 	return context.WithValue(ctx, dlogCtxKey, LogWith(args...))
 }
 
-func CtxLog(ctx context.Context) *slog.Logger {
+func FromCtx(ctx context.Context) *slog.Logger {
 	if l, ok := ctx.Value(dlogCtxKey).(*slog.Logger); ok {
 		return l
 	}

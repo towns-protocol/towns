@@ -72,7 +72,7 @@ func (proxy *townsEntitlementsProxy) IsEntitledToChannel(
 	user common.Address,
 	permission string,
 ) (bool, error) {
-	log := dlog.CtxLog(proxy.ctx)
+	log := dlog.FromCtx(proxy.ctx)
 	start := time.Now()
 	defer infra.StoreExecutionTimeMetrics("IsEntitledToChannel", infra.CONTRACT_CALLS_CATEGORY, start)
 	log.Debug(
@@ -124,7 +124,7 @@ func (proxy *townsEntitlementsProxy) IsEntitledToChannel(
 }
 
 func (proxy *townsEntitlementsProxy) IsEntitledToTown(opts *bind.CallOpts, user common.Address, permission string) (bool, error) {
-	log := dlog.CtxLog(proxy.ctx)
+	log := dlog.FromCtx(proxy.ctx)
 	start := time.Now()
 	defer infra.StoreExecutionTimeMetrics("IsEntitledToTown", infra.CONTRACT_CALLS_CATEGORY, start)
 	log.Debug("IsEntitledToTown", "user", user, "permission", permission, "address", proxy.address)

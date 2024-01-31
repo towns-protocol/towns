@@ -169,7 +169,7 @@ func (s *syncHandlerImpl) handleSyncRequest(
 	if sub == nil {
 		return base.RiverError(protocol.Err_NOT_FOUND, "SyncId not found").Func("SyncStreams")
 	}
-	log := dlog.CtxLog(sub.ctx)
+	log := dlog.FromCtx(sub.ctx)
 
 	defer func() {
 		s.removeSubscription(sub.ctx, sub.syncId)
@@ -265,7 +265,7 @@ func (s *syncHandlerImpl) syncLocalNode(
 	syncPos []*protocol.SyncCookie,
 	sub *syncSubscriptionImpl,
 ) {
-	log := dlog.CtxLog(ctx)
+	log := dlog.FromCtx(ctx)
 
 	if ctx.Err() != nil {
 		log.Error("SyncStreams:SyncHandlerV2.SyncStreams: syncLocalNode not starting", "context_error", ctx.Err())
@@ -317,7 +317,7 @@ func (s *syncHandlerImpl) addLocalStreamToSync(
 	cookie *protocol.SyncCookie,
 	subs *syncSubscriptionImpl,
 ) error {
-	log := dlog.CtxLog(ctx)
+	log := dlog.FromCtx(ctx)
 	log.Debug("SyncStreams:SyncHandlerV2.addLocalStreamToSync ENTER", "syncId", subs.syncId, "syncPos", cookie)
 
 	if ctx.Err() != nil {
@@ -497,7 +497,7 @@ func (s *syncHandlerImpl) addSubscription(
 	res *connect.ServerStream[protocol.SyncStreamsResponse],
 	syncId string,
 ) (*syncSubscriptionImpl, error) {
-	log := dlog.CtxLog(ctx)
+	log := dlog.FromCtx(ctx)
 	s.mu.Lock()
 	defer func() {
 		s.mu.Unlock()
@@ -528,7 +528,7 @@ func (s *syncHandlerImpl) removeSubscription(
 	ctx context.Context,
 	syncId string,
 ) {
-	log := dlog.CtxLog(ctx)
+	log := dlog.FromCtx(ctx)
 	sub := s.getSub(syncId)
 	if sub != nil {
 		sub.deleteRemoteNodes()
@@ -562,7 +562,7 @@ func (n *syncNode) syncRemoteNode(
 	syncPos []*protocol.SyncCookie,
 	receiver events.SyncResultReceiver,
 ) {
-	log := dlog.CtxLog(ctx)
+	log := dlog.FromCtx(ctx)
 	if ctx.Err() != nil || n.isClosed() {
 		log.Debug("SyncStreams: syncRemoteNode not started", "context_error", ctx.Err())
 		return
@@ -650,7 +650,7 @@ func (n *syncNode) addStreamToSync(
 	cookie *protocol.SyncCookie,
 	receiver events.SyncResultReceiver,
 ) {
-	log := dlog.CtxLog(ctx)
+	log := dlog.FromCtx(ctx)
 	if ctx.Err() != nil || n.isClosed() {
 		log.Debug("SyncStreams:syncNode addStreamToSync not started", "context_error", ctx.Err())
 	}
@@ -682,7 +682,7 @@ func (n *syncNode) removeStreamFromSync(
 	streamId string,
 	receiver events.SyncResultReceiver,
 ) error {
-	log := dlog.CtxLog(ctx)
+	log := dlog.FromCtx(ctx)
 	if ctx.Err() != nil || n.isClosed() {
 		log.Debug("SyncStreams:syncNode removeStreamsFromSync not started", "context_error", ctx.Err())
 		return ctx.Err()

@@ -145,7 +145,7 @@ func (s *streamCacheImpl) GetLoadedViews(ctx context.Context) []StreamView {
 }
 
 func (s *streamCacheImpl) onNewBlock(ctx context.Context, blockNum int64, blockHash []byte) {
-	log := dlog.CtxLog(ctx)
+	log := dlog.FromCtx(ctx)
 	log.Debug("onNewBlock: ENTER producing new miniblocks", "blockNum", blockNum, "blockHash", blockHash)
 
 	// Try lock to have only one invocation at a time. Previous onNewBlock may still be running.

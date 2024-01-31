@@ -32,7 +32,7 @@ func (s *syncReceiver) OnUpdate(r *StreamAndCookie) {
 	default:
 		err := RiverError(Err_BUFFER_FULL, "channel full, dropping update and canceling", "streamId", r.NextSyncCookie.StreamId).
 			Func("OnUpdate").
-			LogWarn(dlog.CtxLog(s.ctx))
+			LogWarn(dlog.FromCtx(s.ctx))
 		s.setErrorAndCancel(err)
 		return
 	}
@@ -43,7 +43,7 @@ func (s *syncReceiver) OnSyncError(err error) {
 		return
 	}
 	s.setErrorAndCancel(err)
-	dlog.CtxLog(s.ctx).Warn("OnSyncError: cancelling sync", "error", err)
+	dlog.FromCtx(s.ctx).Warn("OnSyncError: cancelling sync", "error", err)
 }
 
 func (s *syncReceiver) setErrorAndCancel(err error) {
@@ -57,7 +57,7 @@ func (s *syncReceiver) setErrorAndCancel(err error) {
 }
 
 func (s *syncReceiver) Dispatch(sender syncStream) {
-	log := dlog.CtxLog(s.ctx)
+	log := dlog.FromCtx(s.ctx)
 
 	for {
 		select {

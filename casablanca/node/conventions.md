@@ -13,11 +13,11 @@ log.Debug("Starting new snapshot", "streamId", streamId, "blockNumber", curBlock
 There is wrapper called [dlog](https://github.com/HereNotThere/harmony/tree/main/casablanca/node/dlog) which
 provides coloring and better formatting for types we user frequently (protos, binary arrays).
 
-Normally logger is passed in [context](https://pkg.go.dev/context) and retrieved using `dlog.CtxLog`:
+Normally logger is passed in [context](https://pkg.go.dev/context) and retrieved using `dlog.FromCtx`:
 
 ```go
 func loadNodeRegistry(ctx context.Context, nodeRegistryPath string, localNode *nodes.LocalNode) (nodes.NodeRegistry, error) {
-	log := dlog.CtxLog(ctx)
+	log := dlog.FromCtx(ctx)
 
 	if nodeRegistryPath == "" {
 		log.Warn("No node registry path specified, running in single node configuration")

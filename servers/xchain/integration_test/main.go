@@ -35,7 +35,7 @@ func main() {
 	bc := context.Background()
 	pid := os.Getpid()
 
-	log := dlog.CtxLog(bc).With("pid", pid)
+	log := dlog.FromCtx(bc).With("pid", pid)
 
 	ctx := dlog.CtxWithLog(bc, log)
 

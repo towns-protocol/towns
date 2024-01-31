@@ -181,7 +181,7 @@ func (s *streamImpl) ApplyMiniblock(ctx context.Context, miniblockHeader *Minibl
 
 // Returns true if miniblock was created, false if not.
 func (s *streamImpl) MakeMiniblock(ctx context.Context, forceSnapshot bool) (bool, error) {
-	log := dlog.CtxLog(ctx)
+	log := dlog.FromCtx(ctx)
 
 	proposal, err := s.ProposeNextMiniblock(ctx, forceSnapshot)
 	if err != nil {
@@ -350,7 +350,7 @@ func (s *streamImpl) addEventImpl(ctx context.Context, event *ParsedEvent) error
 }
 
 func (s *streamImpl) Sub(ctx context.Context, cookie *SyncCookie, receiver SyncResultReceiver) error {
-	log := dlog.CtxLog(ctx)
+	log := dlog.FromCtx(ctx)
 	if cookie.NodeAddress != s.params.Wallet.AddressStr {
 		return RiverError(
 			Err_BAD_SYNC_COOKIE,

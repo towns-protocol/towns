@@ -80,7 +80,7 @@ func NewTownsWalletLink(ctx context.Context, cfg *config.ContractConfig, backend
 }
 
 func (l *TownsWalletLink) GetWalletsByRootKey(ctx context.Context, rootKey common.Address) ([]common.Address, error) {
-	log := dlog.CtxLog(ctx)
+	log := dlog.FromCtx(ctx)
 	start := time.Now()
 	defer infra.StoreExecutionTimeMetrics("GetWalletsByRootKey", infra.CONTRACT_CALLS_CATEGORY, start)
 	log.Debug("GetWalletsByRootKey", "rootKey", rootKey)
@@ -96,7 +96,7 @@ func (l *TownsWalletLink) GetWalletsByRootKey(ctx context.Context, rootKey commo
 }
 
 func (l *TownsWalletLink) GetRootKeyForWallet(ctx context.Context, wallet common.Address) (common.Address, error) {
-	log := dlog.CtxLog(ctx)
+	log := dlog.FromCtx(ctx)
 	start := time.Now()
 	defer infra.StoreExecutionTimeMetrics("GetRootKeyForWallet", infra.CONTRACT_CALLS_CATEGORY, start)
 	log.Debug("GetRootKeyForWallet", "wallet", wallet)
@@ -112,7 +112,7 @@ func (l *TownsWalletLink) GetRootKeyForWallet(ctx context.Context, wallet common
 }
 
 func (l *TownsWalletLink) GetLatestNonceForRootKey(ctx context.Context, rootKey common.Address) (*big.Int, error) {
-	log := dlog.CtxLog(ctx)
+	log := dlog.FromCtx(ctx)
 	start := time.Now()
 	defer infra.StoreExecutionTimeMetrics("GetLatestNonceForRootKey", infra.CONTRACT_CALLS_CATEGORY, start)
 	log.Debug("GetLatestNonceForRootKey", "rootKey", rootKey)
@@ -128,7 +128,7 @@ func (l *TownsWalletLink) GetLatestNonceForRootKey(ctx context.Context, rootKey 
 }
 
 func (l *TownsWalletLink) CheckIfLinked(ctx context.Context, rootKey common.Address, wallet common.Address) (bool, error) {
-	log := dlog.CtxLog(ctx)
+	log := dlog.FromCtx(ctx)
 	start := time.Now()
 	defer infra.StoreExecutionTimeMetrics("CheckIfLinked", infra.CONTRACT_CALLS_CATEGORY, start)
 	log.Debug("CheckIfLinked", "rootKey", rootKey, "wallet", wallet)

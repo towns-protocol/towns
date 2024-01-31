@@ -100,7 +100,7 @@ type townsChannelsProxy struct {
 var _ TownsChannels = (*townsChannelsProxy)(nil)
 
 func (p *townsChannelsProxy) IsDisabled(opts *bind.CallOpts, channelNetworkId string) (bool, error) {
-	log := dlog.CtxLog(p.ctx)
+	log := dlog.FromCtx(p.ctx)
 	start := time.Now()
 	defer infra.StoreExecutionTimeMetrics("IsDisabled", infra.CONTRACT_CALLS_CATEGORY, start)
 	log.Debug("IsDisabled", "channelNetworkId", channelNetworkId)

@@ -24,7 +24,7 @@ func (s *Service) localAddEvent(
 	req *connect.Request[AddEventRequest],
 	nodes *StreamNodes,
 ) (*connect.Response[AddEventResponse], error) {
-	log := dlog.CtxLog(ctx)
+	log := dlog.FromCtx(ctx)
 
 	parsedEvent, err := ParseEvent(req.Msg.Event)
 	if err != nil {

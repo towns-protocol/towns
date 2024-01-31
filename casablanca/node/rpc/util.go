@@ -17,7 +17,7 @@ type RequestWithStreamId interface {
 }
 
 func ctxAndLogForRequest[T any](ctx context.Context, req *connect.Request[T]) (context.Context, *slog.Logger) {
-	log := dlog.CtxLog(ctx)
+	log := dlog.FromCtx(ctx)
 
 	// Add streamId to log context if present in request
 	if reqMsg, ok := any(req.Msg).(RequestWithStreamId); ok {

@@ -69,7 +69,7 @@ func NewTownsArchitect(ctx context.Context, cfg *config.ContractConfig, backend 
 }
 
 func (proxy *townsArchitectProxy) GetTownById(opts *bind.CallOpts, townId string) (common.Address, error) {
-	log := dlog.CtxLog(proxy.ctx)
+	log := dlog.FromCtx(proxy.ctx)
 	start := time.Now()
 	defer infra.StoreExecutionTimeMetrics("GetTownById", infra.CONTRACT_CALLS_CATEGORY, start)
 	log.Debug("GetTownById", "address", proxy.address, "networkId", townId)

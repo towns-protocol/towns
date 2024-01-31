@@ -31,7 +31,7 @@ func isClosed(ch <-chan struct{}) bool {
 }
 func RunServer(ctx context.Context, workerID int, shutdown <-chan struct{}) {
 
-	log := dlog.CtxLog(ctx).With("worker_id", workerID)
+	log := dlog.FromCtx(ctx).With("worker_id", workerID)
 
 	ctx = dlog.CtxWithLog(ctx, log)
 
@@ -74,7 +74,7 @@ func RunServer(ctx context.Context, workerID int, shutdown <-chan struct{}) {
 }
 
 func registerNode(ctx context.Context, workerID int, fromAddress common.Address, privateKey *ecdsa.PrivateKey) (*uint64, error) {
-	log := dlog.CtxLog(ctx)
+	log := dlog.FromCtx(ctx)
 	chainId := big.NewInt(int64(config.GetConfig().EntitlementContract.ChainId))
 	log.Info("Registering node", "Url", config.GetConfig().EntitlementContract.Url)
 	client, err := ethclient.Dial(config.GetConfig().EntitlementContract.Url)
@@ -131,7 +131,7 @@ func registerNode(ctx context.Context, workerID int, fromAddress common.Address,
 }
 
 func unregisterNode(ctx context.Context, workerID int, fromAddress common.Address, privateKey *ecdsa.PrivateKey) {
-	log := dlog.CtxLog(ctx)
+	log := dlog.FromCtx(ctx)
 	chainId := big.NewInt(int64(config.GetConfig().EntitlementContract.ChainId))
 
 	client, err := ethclient.Dial(config.GetConfig().EntitlementContract.Url)
@@ -180,7 +180,7 @@ func unregisterNode(ctx context.Context, workerID int, fromAddress common.Addres
 }
 
 func eventLoop(ctx context.Context, workerID int, blockNumber *uint64, events chan *e.LocalhostIEntitlementCheckerEntitlementCheckRequested, shutdown <-chan struct{}, fromAddress common.Address, privateKey *ecdsa.PrivateKey) bool {
-	log := dlog.CtxLog(ctx)
+	log := dlog.FromCtx(ctx)
 	chainId := big.NewInt(int64(config.GetConfig().EntitlementContract.ChainId))
 
 	client, err := ethclient.Dial(config.GetConfig().EntitlementContract.Url)
@@ -238,7 +238,7 @@ func eventLoop(ctx context.Context, workerID int, blockNumber *uint64, events ch
 			// in case the client needs to restart
 			*blockNumber = event.Raw.BlockNumber
 
-			log := dlog.CtxLog(ctx).With("transaction_id", hex.EncodeToString(event.TransactionId[:]), "block_num", event.Raw.BlockNumber)
+			log := dlog.FromCtx(ctx).With("transaction_id", hex.EncodeToString(event.TransactionId[:]), "block_num", event.Raw.BlockNumber)
 
 			eventCtx := dlog.CtxWithLog(ctx, log)
 
@@ -257,7 +257,7 @@ func eventLoop(ctx context.Context, workerID int, blockNumber *uint64, events ch
 }
 
 func postCheckResult(ctx context.Context, workerID int, event *e.LocalhostIEntitlementCheckerEntitlementCheckRequested, client *ethclient.Client, fromAddress common.Address, auth *bind.TransactOpts) {
-	log := dlog.CtxLog(ctx)
+	log := dlog.FromCtx(ctx)
 	log.Info("EntitlementCheckRequested being handeled")
 
 	nonce, err := client.PendingNonceAt(ctx, fromAddress)

@@ -73,7 +73,7 @@ type HTTPResponseInfo struct {
 
 // Initializes the template and returns a HTTP handler function
 func MultiHandler(ctx context.Context, streamService *Service) http.HandlerFunc {
-	log := dlog.CtxLog(ctx)
+	log := dlog.FromCtx(ctx)
 
 	tmpl, err := template.New("multistats").Parse(multiHtmlTemplate)
 

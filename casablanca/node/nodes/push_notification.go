@@ -35,7 +35,7 @@ type pushNotificationImpl struct {
 var _ PushNotification = (*pushNotificationImpl)(nil)
 
 func MakePushNotification(ctx context.Context, cfg *config.PushNotificationConfig) PushNotification {
-	log := dlog.CtxLog(ctx)
+	log := dlog.FromCtx(ctx)
 	if (cfg.Url == "") || (cfg.AuthToken == "") {
 		log.Warn("PushNotification disabled")
 		return nil
@@ -66,7 +66,7 @@ func (p pushNotificationImpl) sendNotificationRequest(
 	senderId string,
 	event *protocol.StreamEvent,
 ) {
-	log := dlog.CtxLog(ctx)
+	log := dlog.FromCtx(ctx)
 	var spaceId string
 	if channelInfo, err := events.ChannelInceptionFromView(channel); err == nil {
 		spaceId = channelInfo.SpaceId

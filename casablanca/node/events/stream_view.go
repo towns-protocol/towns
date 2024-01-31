@@ -205,7 +205,7 @@ func (r *streamViewImpl) makeMiniblockHeader(
 		)
 	}
 
-	log := dlog.CtxLog(ctx)
+	log := dlog.FromCtx(ctx)
 	hashes := make([][]byte, 0, r.minipool.events.Len())
 	events := make([]*ParsedEvent, 0, r.minipool.events.Len())
 

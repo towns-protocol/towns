@@ -118,7 +118,7 @@ func (m *SuccessMetrics) FailIncForChild(child string) {
 }
 
 func StartMetricsService(ctx context.Context, config config.MetricsConfig) {
-	log := dlog.CtxLog(ctx)
+	log := dlog.FromCtx(ctx)
 
 	r := mux.NewRouter()
 

@@ -20,7 +20,7 @@ import (
 )
 
 func ClientSimulator() {
-	log := dlog.CtxLog(context.Background())
+	log := dlog.FromCtx(context.Background())
 
 	privateKey, err := crypto.GenerateKey()
 	if err != nil {

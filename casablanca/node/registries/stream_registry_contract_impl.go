@@ -27,7 +27,7 @@ func newStreamRegistryContractImpl(
 	blockchain *crypto.Blockchain,
 	cfg *config.ContractConfig,
 ) (*streamRegistryContractImpl, error) {
-	log := dlog.CtxLog(ctx)
+	log := dlog.FromCtx(ctx)
 
 	if cfg.Version != "dev" {
 		return nil, RiverError(

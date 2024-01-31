@@ -35,7 +35,7 @@ func (s *syncSubscriptionImpl) addLocalStream(
 	syncCookie *protocol.SyncCookie,
 	stream *events.SyncStream,
 ) error {
-	log := dlog.CtxLog(ctx)
+	log := dlog.FromCtx(ctx)
 	log.Debug(
 		"SyncStreams:syncSubscriptionImpl:addLocalStream: adding local stream",
 		"syncId",
@@ -239,7 +239,7 @@ func (s *syncSubscriptionImpl) OnSyncError(err error) {
 	if s.ctx.Err() != nil {
 		return
 	}
-	log := dlog.CtxLog(s.ctx)
+	log := dlog.FromCtx(s.ctx)
 	log.Info("SyncStreams:syncSubscriptionImpl:OnSyncError: received error", "error", err)
 	s.setErrorAndCancel(err)
 	log.Warn("SyncStreams:syncSubscriptionImpl:OnSyncError: cancelling sync", "error", err)
@@ -258,7 +258,7 @@ func (s *syncSubscriptionImpl) OnUpdate(r *protocol.StreamAndCookie) {
 		// end the update stream if the channel is full
 		err := base.RiverError(protocol.Err_BUFFER_FULL, "channel full, dropping update and canceling", "streamId", r.NextSyncCookie.StreamId).
 			Func("OnUpdate").
-			LogWarn(dlog.CtxLog(s.ctx))
+			LogWarn(dlog.FromCtx(s.ctx))
 		s.setErrorAndCancel(err)
 		return
 	}
@@ -270,7 +270,7 @@ func (s *syncSubscriptionImpl) OnClose() {
 		return
 	}
 
-	log := dlog.CtxLog(s.ctx)
+	log := dlog.FromCtx(s.ctx)
 	log.Debug("SyncStreams:syncSubscriptionImpl:OnClose: closing stream", "syncId", s.syncId)
 	c := protocol.SyncOp_SYNC_CLOSE
 	select {
@@ -283,7 +283,7 @@ func (s *syncSubscriptionImpl) OnClose() {
 }
 
 func (s *syncSubscriptionImpl) Dispatch(res *connect.ServerStream[protocol.SyncStreamsResponse]) {
-	log := dlog.CtxLog(s.ctx)
+	log := dlog.FromCtx(s.ctx)
 
 	for {
 		select {
@@ -328,7 +328,7 @@ func (s *syncSubscriptionImpl) Dispatch(res *connect.ServerStream[protocol.SyncS
 						"err",
 						err,
 					)
-					dlog.CtxLog(s.ctx).Warn("SyncStreams:syncSubscriptionImpl:closeStream: error canceling stream", "err", err)
+					dlog.FromCtx(s.ctx).Warn("SyncStreams:syncSubscriptionImpl:closeStream: error canceling stream", "err", err)
 				}
 				s.cancel()
 				log.Debug("SyncStreams:syncSubscriptionImpl:Dispatch: closed stream", "syncId", s.syncId)

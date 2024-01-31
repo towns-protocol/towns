@@ -38,7 +38,7 @@ func (s *Service) createStreamImpl(
 }
 
 func (s *Service) createStream(ctx context.Context, req *CreateStreamRequest) (*StreamAndCookie, error) {
-	log := dlog.CtxLog(ctx)
+	log := dlog.FromCtx(ctx)
 
 	if len(req.Events) == 0 {
 		return nil, RiverError(Err_BAD_STREAM_CREATION_PARAMS, "no events")

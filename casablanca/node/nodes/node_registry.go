@@ -68,7 +68,7 @@ type nodeRegistryImpl struct {
 var _ NodeRegistry = (*nodeRegistryImpl)(nil)
 
 func LoadNodeRegistry(ctx context.Context, nodeRegistryPath string, localNodeAddress string) (*nodeRegistryImpl, error) {
-	log := dlog.CtxLog(ctx)
+	log := dlog.FromCtx(ctx)
 
 	jsonStr, err := os.ReadFile(nodeRegistryPath)
 	if err != nil {
@@ -110,7 +110,7 @@ func LoadNodeRegistry(ctx context.Context, nodeRegistryPath string, localNodeAdd
 }
 
 func NewNodeRegistryFromString(ctx context.Context, nodeRegistryString string, localNodeAddress string) (*nodeRegistryImpl, error) {
-	log := dlog.CtxLog(ctx)
+	log := dlog.FromCtx(ctx)
 
 	log.Info("Loading node registry from string", "nodeRegistryString", nodeRegistryString, "localAddress", localNodeAddress)
 
