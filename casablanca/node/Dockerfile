@@ -33,7 +33,7 @@ RUN SKIP_GENKEY=true \
     NODE_REGISTRY="''" \
     REPL_FACTOR=1 \
     USE_BLOCKCHAIN_STREAM_REGISTRY=false \
-    ./config_instance.sh docker-single-node
+    ./config_instance.sh
 
 RUN SKIP_GENKEY=true \
     RUN_BASE=./run_files \
