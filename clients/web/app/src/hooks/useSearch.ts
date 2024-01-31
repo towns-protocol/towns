@@ -105,6 +105,7 @@ export const useSearch = (searchTerms: string) => {
     const searchResults = useMiniSearch(searchItems, searchTerms)
         .map((r) => ({ searchResult: r, item: searchItems.find((i) => i.key === r.id) }))
         .filter(isCombinedResultItem)
+        .slice(0, 50)
         .sort(firstBy((r) => order.indexOf(r.item.type)))
 
     return { searchResults }
