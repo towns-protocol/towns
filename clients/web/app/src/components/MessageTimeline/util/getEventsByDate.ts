@@ -13,6 +13,7 @@ import {
     ZTEvent,
 } from 'use-zion-client'
 import { ExperimentsState } from 'store/experimentsStore'
+import { HOUR_MS } from 'data/constants'
 
 export enum RenderEventType {
     UserMessages = 'UserMessages',
@@ -264,8 +265,7 @@ export const getEventsByDate = (
 
                 const prevEvent = renderEvents[renderEvents.length - 1]
 
-                // - - - - - - - - - - - - - - - - - - - - - - - - inline thread updates
-
+                // inline thread updates
                 if (!isThread && event.threadParentId && isRoomMessage(event)) {
                     // experimental feature to show thread updates inline
                     if (!experiments?.enableInlineThreadUpdates) {
@@ -281,25 +281,23 @@ export const getEventsByDate = (
                             })
                         }
                     }
-                } else if (
-                    groupByUser &&
-                    prevEvent &&
-                    // keep messages grouped id they are from the same user
-                    prevEvent.type === RenderEventType.UserMessages &&
-                    prevEvent.events[0].sender.id === event.sender.id &&
-                    // start new group if previous event is redacted
-                    !prevEvent.events.at(prevEvent.events.length - 1)?.isRedacted &&
-                    (index > 1 || !isThread)
-                ) {
-                    // - - - - - - - - - - - - - - -  add event to previous group
-                    prevEvent.events.push(event)
                 } else {
-                    // - - - - - - - - - - - - - - -  create new group
-                    renderEvents.push({
-                        type: RenderEventType.UserMessages,
-                        key: event.eventId,
-                        events: [event],
-                    })
+                    const p =
+                        groupByUser &&
+                        (!isThread || index > 1) &&
+                        canGroupWithPrevMessage(prevEvent, event)
+
+                    if (p) {
+                        // add event to previous group
+                        prevEvent?.events?.push(event)
+                    } else {
+                        // create new group
+                        renderEvents.push({
+                            type: RenderEventType.UserMessages,
+                            key: event.eventId,
+                            events: [event],
+                        })
+                    }
                 }
             } else if (isRoomMember(event) && channelType !== 'dm') {
                 if (channelType === 'gdm' && event.content.membership === Membership.Join) {
@@ -395,4 +393,26 @@ export const getEventsByDate = (
     )
 
     return result.dateGroups
+}
+
+function canGroupWithPrevMessage(
+    prevEvent: RenderEvent,
+    event: TimelineEvent,
+): prevEvent is UserMessagesRenderEvent {
+    const prevMessage =
+        prevEvent?.type === RenderEventType.UserMessages &&
+        prevEvent?.events?.at(prevEvent.events.length - 1)
+
+    if (!prevMessage) {
+        return false
+    }
+
+    // preconditions: only group messages by same user
+    let p: boolean = prevMessage.sender.id === event.sender.id
+    // only group messages that are not redacted
+    p = p && !prevMessage.isRedacted
+    // only group messages that are close enough in time
+    p = p && event.createdAtEpocMs - prevMessage.createdAtEpocMs < HOUR_MS
+
+    return p
 }
