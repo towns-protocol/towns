@@ -104,6 +104,7 @@ export class StreamStateView_DMChannel extends StreamStateView_AbstractContent {
                 this.updateLastEvent(event.remoteEvent)
                 break
             case 'message':
+                this.updateLastEvent(event.remoteEvent)
                 this.decryptEvent(
                     'channelMessage',
                     event,
