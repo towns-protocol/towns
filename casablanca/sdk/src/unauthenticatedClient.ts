@@ -47,6 +47,7 @@ export class UnauthenticatedClient {
                 streamAndCookie.events,
                 snapshot,
                 streamAndCookie.miniblocks,
+                [],
                 prevSnapshotMiniblockNum,
                 undefined,
                 undefined,

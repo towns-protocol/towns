@@ -12,7 +12,9 @@ import { DLogger, bin_toHexString, dlog } from '@river/dlog'
 import { isDefined } from './check'
 import { PersistenceStore } from './persistenceStore'
 import { StreamEvents } from './streamEvents'
+import { isChannelStreamId, isDMChannelStreamId, isGDMChannelStreamId } from './id'
 
+const CACHED_SCROLLBACK_COUNT = 3
 export class SyncedStream extends Stream {
     log: DLogger
     readonly persistenceStore: PersistenceStore
@@ -48,11 +50,45 @@ export class SyncedStream extends Stream {
             return false
         }
 
+        // If this is a channel, DM or GDM, perform a few scrollbacks
+        let prependedMiniblocks: ParsedMiniblock[] = []
+        if (
+            isChannelStreamId(this.streamId) ||
+            isDMChannelStreamId(this.streamId) ||
+            isGDMChannelStreamId(this.streamId)
+        ) {
+            let fromInclusive = miniblocks[0].header.prevSnapshotMiniblockNum
+            let toExclusive = miniblocks[0].header.miniblockNum
+
+            for (let i = 0; i < CACHED_SCROLLBACK_COUNT; i++) {
+                if (toExclusive <= 0n) {
+                    break
+                }
+                const result = await this.persistenceStore.getMiniblocks(
+                    this.streamId,
+                    fromInclusive,
+                    toExclusive - 1n,
+                )
+                if (result.length > 0) {
+                    prependedMiniblocks = [...result, ...prependedMiniblocks]
+                    fromInclusive = result[0].header.prevSnapshotMiniblockNum
+                    toExclusive = result[0].header.miniblockNum
+                } else {
+                    break
+                }
+            }
+        }
+
         const snapshotEventIds = eventIdsFromSnapshot(snapshot)
         const eventIds = miniblocks.flatMap((mb) => mb.events.map((e) => e.hashStr))
+        const prependedEventIds = prependedMiniblocks.flatMap((mb) =>
+            mb.events.map((e) => e.hashStr),
+        )
+
         const cleartexts = await this.persistenceStore.getCleartexts([
             ...eventIds,
             ...snapshotEventIds,
+            ...prependedEventIds,
         ])
 
         this.log('Initializing from persistence', this.streamId)
@@ -61,6 +97,7 @@ export class SyncedStream extends Stream {
             cachedSyncedStream.minipoolEvents,
             snapshot,
             miniblocks,
+            prependedMiniblocks,
             miniblocks[0].header.prevSnapshotMiniblockNum,
             cleartexts,
         )
@@ -72,6 +109,7 @@ export class SyncedStream extends Stream {
         events: ParsedEvent[],
         snapshot: Snapshot,
         miniblocks: ParsedMiniblock[],
+        prependedMiniblocks: ParsedMiniblock[],
         prevSnapshotMiniblockNum: bigint,
         cleartexts: Record<string, string> | undefined,
     ): Promise<void> {
@@ -80,6 +118,7 @@ export class SyncedStream extends Stream {
             events,
             snapshot,
             miniblocks,
+            prependedMiniblocks,
             prevSnapshotMiniblockNum,
             cleartexts,
         )
@@ -104,6 +143,7 @@ export class SyncedStream extends Stream {
             response.streamAndCookie.events,
             response.snapshot,
             response.streamAndCookie.miniblocks,
+            [],
             response.prevSnapshotMiniblockNum,
             cleartexts,
         )

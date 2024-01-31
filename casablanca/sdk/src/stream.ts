@@ -38,6 +38,7 @@ export class Stream extends (EventEmitter as new () => TypedEmitter<StreamEvents
         minipoolEvents: ParsedEvent[],
         snapshot: Snapshot,
         miniblocks: ParsedMiniblock[],
+        prependedMiniblocks: ParsedMiniblock[],
         prevSnapshotMiniblockNum: bigint,
         cleartexts: Record<string, string> | undefined,
     ): void {
@@ -47,6 +48,7 @@ export class Stream extends (EventEmitter as new () => TypedEmitter<StreamEvents
             minipoolEvents,
             snapshot,
             miniblocks,
+            prependedMiniblocks,
             prevSnapshotMiniblockNum,
             cleartexts,
             this,

@@ -782,6 +782,7 @@ export class Client
                 unpackedResponse.streamAndCookie.events,
                 unpackedResponse.snapshot,
                 unpackedResponse.streamAndCookie.miniblocks,
+                [],
                 unpackedResponse.prevSnapshotMiniblockNum,
                 undefined,
                 undefined,

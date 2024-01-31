@@ -479,6 +479,7 @@ export class StreamStateView {
         minipoolEvents: ParsedEvent[],
         snapshot: Snapshot,
         miniblocks: ParsedMiniblock[],
+        prependedMiniblocks: ParsedMiniblock[],
         prevSnapshotMiniblockNum: bigint,
         cleartexts: Record<string, string> | undefined,
         emitter: TypedEmitter<StreamEvents> | undefined,
@@ -530,6 +531,16 @@ export class StreamStateView {
         // append the minipool events
         this.appendStreamAndCookie(nextSyncCookie, minipoolEvents, cleartexts, emitter, undefined)
         this.prevSnapshotMiniblockNum = prevSnapshotMiniblockNum
+
+        if (prependedMiniblocks.length > 0) {
+            this.prependEvents(
+                prependedMiniblocks,
+                cleartexts,
+                prependedMiniblocks[0].header.miniblockNum === 0n,
+                undefined,
+            )
+        }
+
         // let everyone know
         this.isInitialized = true
         emitter?.emit('streamInitialized', this.streamId, this.contentKind)
