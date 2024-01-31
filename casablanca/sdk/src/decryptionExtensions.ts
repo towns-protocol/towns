@@ -161,14 +161,19 @@ export class DecryptionExtensions extends (EventEmitter as new () => TypedEmitte
             }
             if (keySolicitation.sessionIds.length > 0 || keySolicitation.isNewDevice) {
                 this.log.debug('new key solicitation', keySolicitation)
-                this.queues.keySolicitations.push({
-                    streamId,
-                    fromUserId,
-                    solicitation: keySolicitation,
-                    respondAfter: new Date(
-                        Date.now() + this.getRespondDelayMSForKeySolicitation(streamId, fromUserId),
-                    ),
-                })
+                insertSorted(
+                    this.queues.keySolicitations,
+                    {
+                        streamId,
+                        fromUserId,
+                        solicitation: keySolicitation,
+                        respondAfter: new Date(
+                            Date.now() +
+                                this.getRespondDelayMSForKeySolicitation(streamId, fromUserId),
+                        ),
+                    },
+                    (x) => x.respondAfter,
+                )
                 this.checkStartTicking()
             } else if (index > -1) {
                 this.log.debug('cleared key solicitation', keySolicitation)
@@ -381,10 +386,14 @@ export class DecryptionExtensions extends (EventEmitter as new () => TypedEmitte
             ) {
                 this.log.debug('skipping, session is pending in to device stream')
                 // if we have a pending session for this key, waiting for confirmation then we can't decrypt it yet
-                this.queues.decryptionRetries.push({
-                    event: item,
-                    retryAt: new Date(Date.now() + 1000), // give it 1 seconds for miniblockblock to confirm
-                })
+                insertSorted(
+                    this.queues.decryptionRetries,
+                    {
+                        event: item,
+                        retryAt: new Date(Date.now() + 1000), // give it 1 seconds for miniblockblock to confirm
+                    },
+                    (x) => x.retryAt,
+                )
             } else {
                 // do the work to decrypt the event
                 this.log.debug('decrypting content')
@@ -408,10 +417,14 @@ export class DecryptionExtensions extends (EventEmitter as new () => TypedEmitte
                 this.client,
             )
             if (sessionNotFound) {
-                this.queues.decryptionRetries.push({
-                    event: item,
-                    retryAt: new Date(Date.now() + 3000), // give it 3 seconds, maybe someone will send us the key
-                })
+                insertSorted(
+                    this.queues.decryptionRetries,
+                    {
+                        event: item,
+                        retryAt: new Date(Date.now() + 3000), // give it 3 seconds, maybe someone will send us the key
+                    },
+                    (x) => x.retryAt,
+                )
             }
         }
     }
@@ -449,10 +462,11 @@ export class DecryptionExtensions extends (EventEmitter as new () => TypedEmitte
                 this.decryptionFailures[streamId][sessionId].push(item)
 
                 removeItem(this.queues.missingKeys, (x) => x.streamId === streamId)
-                this.queues.missingKeys.push({
-                    streamId: item.streamId,
-                    waitUntil: new Date(Date.now() + 1000),
-                })
+                insertSorted(
+                    this.queues.missingKeys,
+                    { streamId, waitUntil: new Date(Date.now() + 1000) },
+                    (x) => x.waitUntil,
+                )
             }
         }
     }
@@ -605,13 +619,30 @@ export class DecryptionExtensions extends (EventEmitter as new () => TypedEmitte
     }
 }
 
+// Insert an item into a sorted array
+// maintain the sort order
+// optimize for the case where the new item is the largest
+function insertSorted<T>(items: T[], newItem: T, dateFn: (x: T) => Date): void {
+    let position = items.length
+
+    // Iterate backwards to find the correct position
+    for (let i = items.length - 1; i >= 0; i--) {
+        if (dateFn(items[i]) <= dateFn(newItem)) {
+            position = i + 1
+            break
+        }
+    }
+
+    // Insert the item at the correct position
+    items.splice(position, 0, newItem)
+}
+
 /// Returns the first item from the array,
 /// if dateFn is provided, returns the first item where dateFn(item) <= now
 function dequeue<T>(items: T[], now: Date, dateFn: (x: T) => Date): T | undefined {
     if (items.length === 0) {
         return undefined
     }
-    items.sort((a, b) => dateFn(a).getTime() - dateFn(b).getTime())
     if (dateFn(items[0]) > now) {
         return undefined
     }
