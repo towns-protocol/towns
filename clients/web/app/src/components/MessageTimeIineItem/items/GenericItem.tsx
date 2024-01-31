@@ -1,6 +1,6 @@
 import React from 'react'
 import { TimelineEvent } from 'use-zion-client'
-import { RichTextPreview } from '@components/RichText/RichTextEditor'
+import { RichTextPreview } from '@components/RichText/RichTextPreview'
 import { Box } from '@ui'
 
 type Props = {

@@ -1,6 +1,6 @@
 import { randNumber, randParagraph, randUuid, seed } from '@ngneat/falso'
 import React, { useCallback, useEffect, useRef, useState } from 'react'
-import { RichTextPreview } from '@components/RichText/RichTextEditor'
+import { RichTextPreview } from '@components/RichText/RichTextPreview'
 import { Box, Button, Paragraph, Stack, Toggle } from '@ui'
 import { VList } from 'ui/components/VList2/VList'
 import { ExampleMessage } from './ExampleMessage'

@@ -9,7 +9,7 @@ import {
 } from 'use-zion-client'
 import { formatDistance } from 'date-fns'
 import { isDMChannelStreamId, isGDMChannelStreamId } from '@river/sdk'
-import { RichTextPreview } from '@components/RichText/RichTextEditor'
+import { RichTextPreview } from '@components/RichText/RichTextPreview'
 import { Box, BoxProps, Stack, Text } from '@ui'
 import { useSpaceChannels } from 'hooks/useSpaceChannels'
 import { PATHS } from 'routes'

@@ -8,7 +8,7 @@ import {
 } from 'use-zion-client'
 import { isDMChannelStreamId, isGDMChannelStreamId } from '@river/sdk'
 import { MessageLayout } from '@components/MessageLayout'
-import { RichTextPreview } from '@components/RichText/RichTextEditor'
+import { RichTextPreview } from '@components/RichText/RichTextPreview'
 import { Box, BoxProps } from '@ui'
 import { useDevice } from 'hooks/useDevice'
 import { useSpaceChannels } from 'hooks/useSpaceChannels'
