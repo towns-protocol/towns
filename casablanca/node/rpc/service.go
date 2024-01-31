@@ -24,7 +24,7 @@ type Service struct {
 	streamConfig   config.StreamConfig
 	notification   nodes.PushNotification
 	syncHandler    SyncHandler
-	defaultCtx     context.Context
+	serverCtx      context.Context
 }
 
 var (

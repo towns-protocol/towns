@@ -463,7 +463,7 @@ func (s *Service) addChannelMessage(ctx context.Context, stream AddableStream, v
 		// Client connection session may be closed while the node is sending the
 		// notification request. It causes random context cancellation. Using
 		// s.defaultContext to avoid this issue.
-		s.notification.SendPushNotification(s.defaultCtx, view, user, parsedEvent.Event)
+		s.notification.SendPushNotification(s.serverCtx, view, user, parsedEvent.Event)
 	}
 	return nil
 }
@@ -493,8 +493,8 @@ func (s *Service) addDMChannelMessage(ctx context.Context, stream AddableStream,
 	if s.notification != nil {
 		// Client connection session may be closed while the node is sending the
 		// notification request. It causes random context cancellation. Using
-		// s.defaultCtx to avoid this issue.
-		s.notification.SendPushNotification(s.defaultCtx, view, userId, parsedEvent.Event)
+		// s.serverCtx to avoid this issue.
+		s.notification.SendPushNotification(s.serverCtx, view, userId, parsedEvent.Event)
 	}
 	return nil
 }
@@ -521,8 +521,8 @@ func (s *Service) addGDMChannelMessage(ctx context.Context, stream AddableStream
 	if s.notification != nil {
 		// Client connection session may be closed while the node is sending the
 		// notification request. It causes random context cancellation. Using
-		// s.defaultCtx to avoid this issue.
-		s.notification.SendPushNotification(s.defaultCtx, view, userId, parsedEvent.Event)
+		// s.serverCtx to avoid this issue.
+		s.notification.SendPushNotification(s.serverCtx, view, userId, parsedEvent.Event)
 	}
 	return nil
 }

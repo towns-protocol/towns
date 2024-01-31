@@ -228,7 +228,7 @@ func StartServer(ctx context.Context, cfg *config.Config, wallet *crypto.Wallet)
 		streamConfig:   cfg.Stream,
 		notification:   notification,
 		syncHandler:    syncHandler,
-		defaultCtx:     ctx,
+		serverCtx:      ctx,
 	}
 
 	mux := httptrace.NewServeMux(
