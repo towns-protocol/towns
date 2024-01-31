@@ -240,7 +240,7 @@ jobs:
                   PGPASSWORD: postgres
 
             - name: Run Casablanca node (without entitlements)
-              run: yarn csb:start:no-entitlements &
+              run: ./casablanca/node/run_single.sh --de &
 
             - name: Wait for Casablanca (without entitlements) node to be up
               run: yarn csb:wait:no-entitlements
@@ -379,8 +379,7 @@ jobs:
             - name: Run multiple nodes
               run: |
                   cd ./casablanca/node
-                  ./run_multi.sh -c -n 10 --de
-                  ./run_multi.sh -r
+                  ./run_multi.sh --de -c -r
                   for i in {5170..5179}; do yarn wait-on tcp:$i --timeout=400000 --i=5000 --verbose; done
 
             - name: Run SDK Tests (without entitlements)
@@ -512,7 +511,7 @@ jobs:
                   PGPASSWORD: postgres
 
             - name: Start Casablanca node with entitlements
-              run: yarn csb:start:entitlements  &
+              run: ./casablanca/node/run_single.sh &
 
             - name: Wait for Casablanca (with entitlements) node to be up
               run: yarn csb:wait:entitlements
@@ -648,8 +647,7 @@ jobs:
             - name: Run multiple nodes
               run: |
                   cd ./casablanca/node
-                  ./run_multi.sh -c -n 10
-                  ./run_multi.sh -r
+                  ./run_multi.sh -c -r
                   for i in {5170..5179}; do yarn wait-on tcp:$i --timeout=400000 --i=5000 --verbose; done
 
             - name: Build & Test (with entitlements)

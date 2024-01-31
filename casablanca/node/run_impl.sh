@@ -2,18 +2,20 @@
 set -euo pipefail
 cd -P -- "$(dirname -- "${BASH_SOURCE[0]}")"
 
-export USE_CONTRACT=true
-export METRICS_ENABLED=true
-export RPC_PORT=5170
-export METRICS_PORT=8010
-export DB_PORT=5433
-export USE_BLOCKCHAIN_STREAM_REGISTRY=true
-export NODE_REGISTRY=../node_registry.json
-export LOG_NOCOLOR=false
-export LOG_LEVEL=info
-export NUM_INSTANCES=10
-export REPL_FACTOR=1
-export RUN_BASE=./run_files
+: ${RUN_BASE:?}
+
+export DB_PORT="${DB_PORT:-5433}"
+export LOG_LEVEL="${LOG_LEVEL:-info}"
+export LOG_NOCOLOR="${LOG_NOCOLOR:-false}"
+export METRICS_ENABLED="${METRICS_ENABLED:-true}"
+export METRICS_PORT="${METRICS_PORT:-8010}"
+export NODE_REGISTRY="${NODE_REGISTRY:-../node_registry.json}"
+export NODE_REGISTRY_PATH="${NODE_REGISTRY_PATH:-${RUN_BASE}/node_registry.json}"
+export NUM_INSTANCES="${NUM_INSTANCES:-10}"
+export REPL_FACTOR="${REPL_FACTOR:-1}"
+export RPC_PORT="${RPC_PORT:-5170}"
+export USE_BLOCKCHAIN_STREAM_REGISTRY="${USE_BLOCKCHAIN_STREAM_REGISTRY:-true}"
+export USE_CONTRACT="${USE_CONTRACT:-true}"
 
 CONFIG=false
 RUN=false
@@ -22,11 +24,6 @@ RUN=false
 args=() # Collect arguments to pass to the last command
 while [[ "$#" -gt 0 ]]; do
     case "$1" in
-        --disable_entitlements|--de)
-            USE_CONTRACT=false
-            METRICS_ENABLED=false
-            shift
-            ;;
         --config|-c)
             CONFIG=true
             shift
@@ -48,8 +45,11 @@ if [ "$CONFIG" == "false" ] && [ "$RUN" == "false" ]; then
 fi
 
 if [ "$CONFIG" == "true" ]; then
-    echo "{" > ${RUN_BASE}/node_registry.json
-    echo "  \"nodes\": [" >> ${RUN_BASE}/node_registry.json
+    mkdir -p ${RUN_BASE}
+    cp -r ./run_files/addresses ${RUN_BASE}/addresses
+
+    echo "{" > ${NODE_REGISTRY_PATH}
+    echo "  \"nodes\": [" >> ${NODE_REGISTRY_PATH}
 
     for ((i=0; i<NUM_INSTANCES; i++)); do
         printf -v INSTANCE "%02d" $i
@@ -62,12 +62,12 @@ if [ "$CONFIG" == "true" ]; then
         ./config_instance.sh
 
         NODE_ADDRESS=$(cat ${RUN_BASE}/$INSTANCE/wallet/node_address)
-        echo "    { \"name\": \"$INSTANCE\", \"address\": \"$NODE_ADDRESS\", \"url\": \"http://localhost:$I_RPC_PORT\", \"port\": $I_RPC_PORT }," >> ${RUN_BASE}/node_registry.json
+        echo "    { \"name\": \"$INSTANCE\", \"address\": \"$NODE_ADDRESS\", \"url\": \"http://localhost:$I_RPC_PORT\", \"port\": $I_RPC_PORT }," >> ${NODE_REGISTRY_PATH}
     done
 
-    sed -i.bak '$ s/,$//' ${RUN_BASE}/node_registry.json && rm ${RUN_BASE}/node_registry.json.bak
-    echo "  ]" >> ${RUN_BASE}/node_registry.json
-    echo "}" >> ${RUN_BASE}/node_registry.json
+    sed -i.bak '$ s/,$//' ${NODE_REGISTRY_PATH} && rm ${NODE_REGISTRY_PATH}.bak
+    echo "  ]" >> ${NODE_REGISTRY_PATH}
+    echo "}" >> ${NODE_REGISTRY_PATH}
 fi
 
 if [ "$RUN" == "true" ]; then
@@ -75,14 +75,30 @@ if [ "$RUN" == "true" ]; then
     mkdir -p ${RUN_BASE}/bin
     go build -o ${RUN_BASE}/bin/river_node -race ./node/main.go
 
-    jq -r ".nodes[].name" ${RUN_BASE}/node_registry.json | while read -r INSTANCE; do
+    jq -r ".nodes[].name" ${NODE_REGISTRY_PATH} | while read -r INSTANCE; do
         pushd ${RUN_BASE}/$INSTANCE
         echo "Running instance '$INSTANCE' with extra aguments: '${args[@]:-}'"
         if [ "$USE_BLOCKCHAIN_STREAM_REGISTRY" == "true" ]; then
             echo "And funding it with 1 ETH"
             cast rpc -r http://127.0.0.1:8546 anvil_setBalance `cat ./wallet/node_address` 1000000000000000000 > /dev/null
         fi
-        ../bin/river_node run --config config/config.yaml "${args[@]:-}" &
+
+        # if NUM_INSTANCES in not one, run in background, otherwise run with optional restart
+        if [ "$NUM_INSTANCES" -ne 1 ]; then
+            ../bin/river_node run --config config/config.yaml "${args[@]:-}" &
+        else 
+            while true; do
+                # Run the built executable
+                ../bin/river_node run "${args[@]:-}" || exit_status=$?
+
+                # Break if exit status is not 22 (restart initiated by test)
+                if [ "${exit_status:-0}" -ne 22 ]; then
+                break
+                fi
+
+                echo "RESTARTING"
+            done
+        fi
         popd
     done
 fi
