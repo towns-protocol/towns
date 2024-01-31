@@ -4,17 +4,9 @@ import chunk from 'lodash/chunk'
 import { Permission } from '@river/web3'
 import { Client } from './client'
 import { EncryptedContent } from './encryptedContentTypes'
-import {
-    shortenHexString,
-    MEGOLM_ALGORITHM,
-    MegolmSession,
-    UserDevice,
-    dlog,
-    dlogError,
-    DLogger,
-    check,
-    isDefined,
-} from '@river/waterproof'
+import { shortenHexString, dlog, dlogError, DLogger, check } from '@river/dlog'
+import { isDefined } from './check'
+import { MEGOLM_ALGORITHM, MegolmSession, UserDevice } from '@river/waterproof'
 import { SessionKeys, UserToDevicePayload_MegolmSessions } from '@river/proto'
 import {
     KeySolicitationContent,

@@ -5,7 +5,7 @@
 import { allAccounts, minimalBalance, senderAccount } from './loadconfig'
 import { ethers } from 'ethers'
 import { deposit, getBalance } from './walletManagement'
-import { dlog } from '@river/waterproof'
+import { dlog } from '@river/dlog'
 
 const log = dlog('csb:test:walletManagement')
 describe('walletManagementTest', () => {

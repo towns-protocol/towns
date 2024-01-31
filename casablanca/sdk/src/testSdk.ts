@@ -3,7 +3,7 @@ import { ISpaceDapp, MembershipStruct, Permission } from '@river/web3'
 import { makeUniqueChannelStreamId, makeUniqueSpaceStreamId } from './id'
 import { getFilteredRolesFromSpace } from '@river/web3/dist/ContractHelpers'
 import { BigNumber, ethers } from 'ethers'
-import { dlog } from '@river/waterproof'
+import { dlog } from '@river/dlog'
 
 const ETH_ADDRESS = '0xEeeeeEeeeEeEeeEeEeEeeEEEeeeeEeeeeeeeEEeE'
 

@@ -4,7 +4,7 @@
 
 import { makeEvent, SignerContext, unpackStreamEnvelopes } from './sign'
 import { MembershipOp } from '@river/proto'
-import { dlog } from '@river/waterproof'
+import { dlog } from '@river/dlog'
 import { lastEventFiltered, makeRandomUserContext, makeTestRpcClient } from './util.test'
 import {
     genId,

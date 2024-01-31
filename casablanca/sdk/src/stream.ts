@@ -1,5 +1,5 @@
 import { MembershipOp, Snapshot, SyncCookie } from '@river/proto'
-import { DLogger } from '@river/waterproof'
+import { DLogger } from '@river/dlog'
 import EventEmitter from 'events'
 import TypedEmitter from 'typed-emitter'
 import { StreamStateView } from './streamStateView'

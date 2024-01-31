@@ -4,7 +4,7 @@ import { ConfirmedTimelineEvent, RemoteTimelineEvent } from './types'
 import { StreamEncryptionEvents, StreamStateEvents } from './streamEvents'
 import { UserMetadata_Usernames } from './userMetadata_Usernames'
 import { UserMetadata_DisplayNames } from './userMetadata_DisplayNames'
-import { bin_toHexString } from '@river/waterproof'
+import { bin_toHexString } from '@river/dlog'
 
 export class StreamStateView_UserMetadata {
     readonly userId: string

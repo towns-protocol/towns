@@ -7,7 +7,7 @@ import {
 } from '@river/proto'
 import { ConfirmedTimelineEvent, KeySolicitationContent, ParsedEvent } from './types'
 import { removeCommon } from './utils'
-import { logNever } from '@river/waterproof'
+import { logNever } from './check'
 import { StreamEncryptionEvents, StreamStateEvents } from './streamEvents'
 
 // common payloads exist in all streams, this data structure helps aggregates them

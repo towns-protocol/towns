@@ -1,6 +1,6 @@
 import { EncryptedData } from '@river/proto'
 import TypedEmitter from 'typed-emitter'
-import { dlog } from '@river/waterproof'
+import { dlog } from '@river/dlog'
 import { StreamEncryptionEvents, StreamStateEvents } from './streamEvents'
 
 export class UserMetadata_DisplayNames {

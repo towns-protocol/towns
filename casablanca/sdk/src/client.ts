@@ -27,6 +27,13 @@ import {
     bin_fromHexString,
     bin_toHexString,
     shortenHexString,
+    DLogger,
+    check,
+    dlog,
+    dlogError,
+} from '@river/dlog'
+import { assert, isDefined } from './check'
+import {
     CryptoStore,
     IMegolmClient,
     MegolmCrypto,
@@ -34,12 +41,6 @@ import {
     OlmDevice,
     UserDevice,
     UserDeviceCollection,
-    DLogger,
-    dlog,
-    dlogError,
-    assert,
-    isDefined,
-    check,
 } from '@river/waterproof'
 import { errorContains, getRpcErrorProperty, StreamRpcClientType } from './makeStreamRpcClient'
 import EventEmitter from 'events'

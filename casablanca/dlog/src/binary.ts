@@ -14,6 +14,7 @@ export function bin_fromBase64(base64String: string): Uint8Array {
 export function bin_toBase64(uint8Array: Uint8Array): string {
     return protoBase64.enc(uint8Array)
 }
+
 export function bin_fromHexString(hexString: string): Uint8Array {
     return hexToBytes(hexString)
 }

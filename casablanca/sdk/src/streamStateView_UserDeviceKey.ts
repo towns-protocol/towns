@@ -7,7 +7,9 @@ import {
     UserDeviceKeyPayload_Snapshot,
 } from '@river/proto'
 import { StreamStateView_AbstractContent } from './streamStateView_AbstractContent'
-import { UserDevice, check, logNever } from '@river/waterproof'
+import { check } from '@river/dlog'
+import { logNever } from './check'
+import { UserDevice } from '@river/waterproof'
 import { StreamStateView_UserStreamMembership } from './streamStateView_Membership'
 import { StreamEncryptionEvents, StreamStateEvents } from './streamEvents'
 

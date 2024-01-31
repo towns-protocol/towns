@@ -3,7 +3,8 @@
  */
 
 import { Client } from './client'
-import { dlog, isDefined } from '@river/waterproof'
+import { dlog } from '@river/dlog'
+import { isDefined } from './check'
 import { DecryptedContentError } from './encryptedContentTypes'
 import { genId, makeSpaceStreamId } from './id'
 import { TestClientOpts, makeTestClient, waitFor } from './util.test'

@@ -15,7 +15,7 @@ import {
 
 import { Permission } from '@river/web3'
 import { waitFor } from '@testing-library/dom'
-import { check } from '@river/waterproof'
+import { check } from '@river/dlog'
 import { DecryptedTimelineEvent } from '@river/sdk'
 import { SnapshotCaseType } from '@river/proto'
 

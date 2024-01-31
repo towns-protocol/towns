@@ -131,6 +131,7 @@ commands=(
     "watch_lib:cd clients/web/lib && yarn watch"
     "watch_sdk:cd casablanca/sdk && yarn watch"
     "watch_mecholm:cd casablanca/waterproof && yarn watch"
+    "watch_dlog:cd casablanca/dlog && yarn watch"
     "watch_worker:cd servers/workers/worker-common && yarn watch"
     "watch_proto:cd casablanca/proto && yarn watch"
     "watch_web3:cd casablanca/web3 && yarn watch"

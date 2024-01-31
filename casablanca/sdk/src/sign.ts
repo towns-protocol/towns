@@ -1,18 +1,13 @@
 import { PlainMessage } from '@bufbuild/protobuf'
+import { bin_equal, bin_fromHexString, bin_toHexString, check } from '@river/dlog'
+import { isDefined, assert, hasElements } from './check'
 import { Envelope, EventRef, StreamEvent, Err, Miniblock, StreamAndCookie } from '@river/proto'
 import {
-    bin_equal,
-    bin_fromHexString,
-    bin_toHexString,
     townsHash,
     townsRecoverPubKey,
     townsSign,
     publicKeyToAddress,
     publicKeyToUint8Array,
-    check,
-    isDefined,
-    assert,
-    hasElements,
 } from '@river/waterproof'
 import { genIdBlob, userIdFromAddress } from './id'
 import { ParsedEvent, ParsedMiniblock, ParsedStreamAndCookie, ParsedStreamResponse } from './types'

@@ -2,7 +2,7 @@
  * @group main
  */
 
-import { dlog } from '@river/waterproof'
+import { dlog } from '@river/dlog'
 import { converse } from './testDriver.test_util'
 
 const log = dlog('test:aliceAndFriends')

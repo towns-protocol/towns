@@ -9,7 +9,7 @@ import { makeDonePromise, makeRandomUserContext, makeTestRpcClient } from './uti
 import { makeUserStreamId, userIdFromAddress } from './id'
 import { make_UserPayload_Inception } from './types'
 import { PersistenceStore } from './persistenceStore'
-import { dlog } from '@river/waterproof'
+import { dlog } from '@river/dlog'
 import { mock } from 'jest-mock-extended'
 import TypedEmitter from 'typed-emitter'
 import { StreamEvents } from './streamEvents'

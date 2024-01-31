@@ -2,7 +2,7 @@
  * @group load-tests-s2
  */
 
-import { check, dlog } from '@river/waterproof'
+import { check, dlog } from '@river/dlog'
 import { makeDonePromise } from '../util.test'
 // eslint-disable-next-line import/no-extraneous-dependencies
 import { waitFor } from '@testing-library/react'

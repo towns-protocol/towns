@@ -1,7 +1,7 @@
 import TypedEmitter from 'typed-emitter'
 import { EncryptedData } from '@river/proto'
 import { usernameChecksum } from './utils'
-import { dlog } from '@river/waterproof'
+import { dlog } from '@river/dlog'
 import { StreamEncryptionEvents, StreamStateEvents } from './streamEvents'
 
 export class UserMetadata_Usernames {

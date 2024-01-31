@@ -1,8 +1,7 @@
 /**
  * @group stress-test-follower
  */
-
-import { dlog } from '@river/waterproof'
+import { dlog } from '@river/dlog'
 import { ethers } from 'ethers'
 import { makeUserContextFromWallet } from '../util.test'
 import { makeStreamRpcClient } from '../makeStreamRpcClient'

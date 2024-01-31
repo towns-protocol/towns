@@ -9,11 +9,9 @@ import { MegolmEncryption } from './megolmEncryption'
 import { OlmDevice } from './olmDevice'
 import { OlmMegolmDelegate } from './olm'
 import { assertBytes } from 'ethereum-cryptography/utils'
-import { bin_fromHexString } from './binary'
-import { check } from './check'
+import { bin_fromHexString, check, dlog } from '@river/dlog'
 import { ethers } from 'ethers'
 import { keccak256 } from 'ethereum-cryptography/keccak'
-import { dlog } from './dlog'
 
 const log = dlog('csb:megolm:crypto')
 

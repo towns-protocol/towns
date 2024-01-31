@@ -4,7 +4,7 @@
 
 import { makeEvent, makeEvents, SignerContext, unpackStreamEnvelopes } from './sign'
 import { MembershipOp, SyncStreamsResponse, SyncCookie, SyncOp } from '@river/proto'
-import { dlog } from '@river/waterproof'
+import { dlog } from '@river/dlog'
 import {
     makeEvent_test,
     makeRandomUserContext,

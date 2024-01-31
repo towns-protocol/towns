@@ -1,5 +1,6 @@
+import { bin_toHexString, isHexString, shortenHexString } from './binary'
 import debug, { Debugger } from 'debug'
-import { isHexString, shortenHexString, bin_toHexString } from './binary'
+
 import { isJest } from './utils'
 
 // Works as debug.enabled, but falls back on options if not explicitly set in env instead of returning false.

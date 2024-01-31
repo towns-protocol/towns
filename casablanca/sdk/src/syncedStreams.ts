@@ -1,4 +1,5 @@
-import { DLogger, dlog, dlogError, isDefined, shortenHexString } from '@river/waterproof'
+import { DLogger, dlog, dlogError, shortenHexString } from '@river/dlog'
+import { isDefined } from './check'
 import { Err, SyncCookie, SyncOp, SyncStreamsResponse } from '@river/proto'
 import { PersistenceStore } from './persistenceStore'
 import { Stream } from './stream'

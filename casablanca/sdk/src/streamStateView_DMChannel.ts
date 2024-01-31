@@ -6,7 +6,8 @@ import { ConfirmedTimelineEvent, ParsedEvent, RemoteTimelineEvent } from './type
 import { StreamStateView_UserMetadata } from './streamStateView_UserMetadata'
 import { DecryptedContent } from './encryptedContentTypes'
 import { StreamEncryptionEvents, StreamStateEvents } from './streamEvents'
-import { check, logNever } from '@river/waterproof'
+import { check } from '@river/dlog'
+import { logNever } from './check'
 
 export class StreamStateView_DMChannel extends StreamStateView_AbstractContent {
     readonly streamId: string

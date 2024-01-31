@@ -15,14 +15,11 @@ import { userIdFromAddress } from './id'
 import { ParsedEvent, DecryptedTimelineEvent } from './types'
 import { getPublicKey, utils } from 'ethereum-cryptography/secp256k1'
 import {
-    bin_fromHexString,
-    bin_toHexString,
-    check,
-    dlog,
     makeTownsDelegateSig,
     makeOldTownsDelegateSig,
     publicKeyToAddress,
 } from '@river/waterproof'
+import { bin_fromHexString, bin_toHexString, check, dlog } from '@river/dlog'
 import { ethers } from 'ethers'
 import { RiverDbManager } from './riverDbManager'
 import { StreamRpcClientType, makeStreamRpcClient } from './makeStreamRpcClient'

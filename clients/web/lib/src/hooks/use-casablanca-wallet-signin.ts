@@ -4,7 +4,7 @@ import { useCredentialStore } from '../store/use-credential-store'
 import { useZionContext } from '../components/ZionContextProvider'
 import { useCasablancaStore } from '../store/use-casablanca-store'
 import { LoginStatus } from './login'
-import { bin_toHexString } from '@river/waterproof'
+import { bin_toHexString } from '@river/dlog'
 import { TSigner, Address } from '../types/web3-types'
 import { SignerUndefinedError } from '../types/error-types'
 

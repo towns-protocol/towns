@@ -10,7 +10,8 @@ import {
     MockEntitlementsDelegate,
     SignerContext,
 } from '@river/sdk'
-import { bin_fromHexString, makeOldTownsDelegateSig } from '@river/waterproof'
+import { bin_fromHexString } from '@river/dlog'
+import { makeOldTownsDelegateSig } from '@river/waterproof'
 import { ethers } from 'ethers'
 import { RoomMessageEvent, ZTEvent } from '../../src/types/timeline-types'
 import {

@@ -6,7 +6,7 @@ import { Account, InboundGroupSession, OutboundGroupSession, Utility, Session } 
 import { OlmMegolmDelegate } from './olm'
 import { IOutboundGroupSessionKey } from './megolmTypes'
 import { MEGOLM_ALGORITHM, MegolmSession } from './olmLib'
-import { dlog } from './dlog'
+import { dlog } from '@river/dlog'
 
 const log = dlog('csb:olmDevice')
 

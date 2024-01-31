@@ -1,5 +1,5 @@
 import { keccak256 } from 'ethereum-cryptography/keccak'
-import { bin_toHexString, isJest } from '@river/waterproof'
+import { bin_toHexString, isJest } from '@river/dlog'
 import { Permission } from '@river/web3'
 import { isBrowser, isNode } from 'browser-or-node'
 

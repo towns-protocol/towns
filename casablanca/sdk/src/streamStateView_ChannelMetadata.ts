@@ -1,6 +1,6 @@
 import TypedEmitter from 'typed-emitter'
 import { ChannelProperties, EncryptedData, WrappedEncryptedData } from '@river/proto'
-import { bin_toHexString, dlog, check } from '@river/waterproof'
+import { bin_toHexString, dlog, check } from '@river/dlog'
 import { DecryptedContent, toDecryptedContent } from './encryptedContentTypes'
 import { StreamEncryptionEvents, StreamEvents, StreamStateEvents } from './streamEvents'
 import { RemoteTimelineEvent } from './types'

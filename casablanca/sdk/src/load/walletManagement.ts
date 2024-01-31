@@ -5,7 +5,7 @@ import { baseSepolia } from 'wagmi/chains'
 // eslint-disable-next-line import/no-extraneous-dependencies
 import { generatePrivateKey, privateKeyToAccount } from 'viem/accounts'
 import { jsonRpcProviderUrl, minimalBalance } from './loadconfig'
-import { dlog } from '@river/waterproof'
+import { dlog } from '@river/dlog'
 import { isValidEthAddress } from '../util.test'
 
 const transport = http(jsonRpcProviderUrl)

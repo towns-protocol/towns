@@ -7,7 +7,8 @@ import { StreamStateView_UserMetadata } from './streamStateView_UserMetadata'
 import { DecryptedContent } from './encryptedContentTypes'
 import { StreamEncryptionEvents, StreamEvents, StreamStateEvents } from './streamEvents'
 import { StreamStateView_ChannelMetadata } from './streamStateView_ChannelMetadata'
-import { check, logNever } from '@river/waterproof'
+import { check } from '@river/dlog'
+import { logNever } from './check'
 
 export class StreamStateView_GDMChannel extends StreamStateView_AbstractContent {
     readonly streamId: string

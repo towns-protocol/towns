@@ -10,7 +10,8 @@ import {
 import { StreamEncryptionEvents, StreamEvents, StreamStateEvents } from './streamEvents'
 import { StreamStateView_AbstractContent } from './streamStateView_AbstractContent'
 import { StreamStateView_UserStreamMembership } from './streamStateView_Membership'
-import { check, logNever } from '@river/waterproof'
+import { check } from '@river/dlog'
+import { logNever } from './check'
 
 export class StreamStateView_User extends StreamStateView_AbstractContent {
     readonly streamId: string

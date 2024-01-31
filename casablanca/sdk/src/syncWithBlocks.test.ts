@@ -1,9 +1,8 @@
 /**
  * @group main
  */
-
 import { MembershipOp, StreamAndCookie, SyncOp } from '@river/proto'
-import { dlog } from '@river/waterproof'
+import { dlog } from '@river/dlog'
 import {
     genId,
     makeChannelStreamId,

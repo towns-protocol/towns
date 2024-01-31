@@ -4,9 +4,11 @@ import {
     ParsedEvent,
     StreamTimelineEvent,
     isCiphertext,
+    isDefined,
     isRemoteEvent,
     isDecryptedEvent,
     isLocalEvent,
+    logNever,
     LocalTimelineEvent,
     StreamChange,
     DecryptedTimelineEvent,
@@ -61,7 +63,6 @@ import {
     EventStatus,
     RoomMessageEventContent_ChunkedMedia,
 } from '../../types/timeline-types'
-import { isDefined, logNever } from '@river/waterproof'
 
 type SuccessResult = {
     content: TimelineEvent_OneOf

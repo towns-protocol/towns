@@ -5,10 +5,8 @@
 import _ from 'lodash'
 import { checkDelegateSig, unpackEnvelope, makeEvent, SignerContext } from './sign'
 import { make_UserPayload_Inception } from './types'
+import { dlog, bin_fromHexString, bin_toHexString } from '@river/dlog'
 import {
-    dlog,
-    bin_fromHexString,
-    bin_toHexString,
     makeTownsDelegateSig,
     makeOldTownsDelegateSig,
     publicKeyToAddress,

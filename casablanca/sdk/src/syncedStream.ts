@@ -8,7 +8,8 @@ import {
 } from '@river/proto'
 import { Stream } from './stream'
 import { ParsedMiniblock, ParsedEvent, ParsedStreamResponse } from './types'
-import { DLogger, bin_toHexString, dlog, isDefined } from '@river/waterproof'
+import { DLogger, bin_toHexString, dlog } from '@river/dlog'
+import { isDefined } from './check'
 import { PersistenceStore } from './persistenceStore'
 import { StreamEvents } from './streamEvents'
 

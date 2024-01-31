@@ -1,6 +1,6 @@
 import { makeEvent, SignerContext, unpackStreamEnvelopes } from './sign'
 import { MembershipOp, SyncStreamsResponse, Envelope, SyncOp } from '@river/proto'
-import { DLogger } from '@river/waterproof'
+import { DLogger } from '@river/dlog'
 import {
     lastEventFiltered,
     makeEvent_test,

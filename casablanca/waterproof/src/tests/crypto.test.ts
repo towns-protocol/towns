@@ -2,11 +2,10 @@
  * @group main
  */
 
-import { bin_fromHexString, bin_toHexString } from '../binary'
+import { bin_fromHexString, bin_toHexString, dlog } from '@river/dlog'
 import { getPublicKey, utils } from 'ethereum-cryptography/secp256k1'
 import { readFileSync, writeFileSync } from 'fs'
 import { townsHash, townsRecoverPubKey, townsSign, townsVerifySignature } from '../megolmCrypto'
-import { dlog } from '../dlog'
 
 const log = dlog('test:crypto')
 

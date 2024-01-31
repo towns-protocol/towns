@@ -3,7 +3,8 @@ import { StreamStateView_Membership } from './streamStateView_Membership'
 import { RemoteTimelineEvent } from './types'
 import { ChannelPayload, ChannelPayload_Snapshot, Snapshot } from '@river/proto'
 import { StreamStateView_AbstractContent } from './streamStateView_AbstractContent'
-import { check, logNever } from '@river/waterproof'
+import { check } from '@river/dlog'
+import { logNever } from './check'
 import { StreamEncryptionEvents, StreamStateEvents } from './streamEvents'
 
 export class StreamStateView_Channel extends StreamStateView_AbstractContent {

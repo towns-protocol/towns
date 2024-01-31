@@ -3,7 +3,7 @@ import type { OlmGroupSessionExtraData } from './olmDevice'
 import { DecryptionAlgorithm, DecryptionError, IDecryptionParams } from './base'
 import { MegolmSession } from './olmLib'
 import { EncryptedData } from '@river/proto'
-import { dlog } from './dlog'
+import { dlog } from '@river/dlog'
 
 const log = dlog('csb:megolm:decryption')
 

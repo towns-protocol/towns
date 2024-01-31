@@ -19,7 +19,7 @@ import {
     pauseForXMiliseconds,
     getRandomInt,
 } from '../testSdk'
-import { dlog } from '@river/waterproof'
+import { dlog } from '@river/dlog'
 import {
     mainSpaceId,
     mainChannelId,

@@ -1,6 +1,7 @@
 import { PersistedEvent, PersistedMiniblock, PersistedSyncedStream, SyncCookie } from '@river/proto'
 import { ParsedEvent, ParsedMiniblock } from './types'
-import { bin_toHexString, isDefined } from '@river/waterproof'
+import { bin_toHexString } from '@river/dlog'
+import { isDefined } from './check'
 
 export function persistedEventToParsedEvent(event: PersistedEvent): ParsedEvent | undefined {
     if (!event.event) {

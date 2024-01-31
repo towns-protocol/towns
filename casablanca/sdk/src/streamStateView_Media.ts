@@ -2,7 +2,8 @@ import TypedEmitter from 'typed-emitter'
 import { Snapshot, MediaPayload, MediaPayload_Snapshot } from '@river/proto'
 import { RemoteTimelineEvent } from './types'
 import { StreamStateView_AbstractContent } from './streamStateView_AbstractContent'
-import { check, logNever } from '@river/waterproof'
+import { check } from '@river/dlog'
+import { logNever } from './check'
 import { StreamEncryptionEvents, StreamStateEvents } from './streamEvents'
 
 export class StreamStateView_Media extends StreamStateView_AbstractContent {

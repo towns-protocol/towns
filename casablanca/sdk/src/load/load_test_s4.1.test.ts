@@ -2,7 +2,7 @@
  * @group load-tests-s4.1
  */
 
-import { check, dlog } from '@river/waterproof'
+import { check, dlog } from '@river/dlog'
 import { waitFor } from '../util.test'
 import { bobsAccount, accounts, jsonRpcProviderUrl, nodeRpcURL } from './loadconfig'
 import { Client } from '../client'

@@ -2,7 +2,7 @@ import { EncryptedData } from '@river/proto'
 import { PlainMessage } from '@bufbuild/protobuf'
 import { EncryptionAlgorithm, IEncryptionParams } from './base'
 import { MEGOLM_ALGORITHM } from './olmLib'
-import { dlog } from './dlog'
+import { dlog } from '@river/dlog'
 
 const log = dlog('csb:megolm:encryption')
 

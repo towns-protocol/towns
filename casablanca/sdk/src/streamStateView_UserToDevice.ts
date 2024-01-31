@@ -10,7 +10,8 @@ import {
 } from '@river/proto'
 import { StreamStateView_AbstractContent } from './streamStateView_AbstractContent'
 import { StreamStateView_UserStreamMembership } from './streamStateView_Membership'
-import { check, logNever } from '@river/waterproof'
+import { check } from '@river/dlog'
+import { logNever } from './check'
 import { StreamEncryptionEvents, StreamStateEvents } from './streamEvents'
 
 export class StreamStateView_UserToDevice extends StreamStateView_AbstractContent {

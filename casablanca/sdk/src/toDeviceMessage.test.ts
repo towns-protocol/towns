@@ -4,7 +4,8 @@
 
 import { Client } from './client'
 import { makeDonePromise, makeTestClient } from './util.test'
-import { dlog, UserDeviceCollection } from '@river/waterproof'
+import { dlog } from '@river/dlog'
+import { UserDeviceCollection } from '@river/waterproof'
 import { UserToDevicePayload_MegolmSessions } from '@river/proto'
 
 const log = dlog('test:toDeviceMessage')

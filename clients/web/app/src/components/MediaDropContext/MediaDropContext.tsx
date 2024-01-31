@@ -1,7 +1,7 @@
 import React, { createContext, useCallback, useContext, useState } from 'react'
 import { toast } from 'react-hot-toast/headless'
 import { uniqueId } from 'lodash'
-import { isDefined } from '@river/waterproof'
+import { isDefined } from '@river/sdk'
 import { Attachment } from 'use-zion-client'
 import { Box, Heading, Icon, Stack } from '@ui'
 import { SpaceProtocol, useEnvironment } from 'hooks/useEnvironmnet'
