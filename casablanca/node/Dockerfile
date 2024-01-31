@@ -20,29 +20,35 @@ RUN go build -trimpath -o bin/ ./node/
 
 # TODO: we should also simplify this config script so
 # that we don't have to pass "Null" to values we don't need.
-RUN SKIP_GENKEY=true ./config_instance.sh docker-single-node \
-    RPC_PORT 5157 \
-    DB_PORT null \
-    USE_CONTRACT true \
-    METRICS_ENABLED false \
-    METRICS_PORT null \
-    LOG_NOCOLOR true \
-    LOG_LEVEL info \
-    NODE_REGISTRY "''" \
-    REPL_FACTOR 1 \
-    USE_BLOCKCHAIN_STREAM_REGISTRY false
+RUN SKIP_GENKEY=true \
+    RUN_BASE=./run_files \
+    INSTANCE=docker-single-node \
+    RPC_POR=5157 \
+    DB_PORT=null \
+    USE_CONTRACT=true \
+    METRICS_ENABLED=false \
+    METRICS_PORT=null \
+    LOG_NOCOLOR=true \
+    LOG_LEVEL=info \
+    NODE_REGISTRY="''" \
+    REPL_FACTOR=1 \
+    USE_BLOCKCHAIN_STREAM_REGISTRY=false \
+    ./config_instance.sh docker-single-node
 
-RUN SKIP_GENKEY=true ./config_instance.sh docker-multi-node \
-    RPC_PORT 5157 \
-    DB_PORT null \
-    USE_CONTRACT true \
-    METRICS_ENABLED false \
-    METRICS_PORT null \
-    LOG_NOCOLOR true \
-    LOG_LEVEL info \
-    NODE_REGISTRY "''" \
-    REPL_FACTOR 1 \
-    USE_BLOCKCHAIN_STREAM_REGISTRY false
+RUN SKIP_GENKEY=true \
+    RUN_BASE=./run_files \
+    INSTANCE=docker-multi-node \
+    RPC_PORT=5157 \
+    DB_PORT=null \
+    USE_CONTRACT=true \
+    METRICS_ENABLED =alse \
+    METRICS_PORT=null \
+    LOG_NOCOLOR=true \
+    LOG_LEVEL=info \
+    NODE_REGISTRY="''" \
+    REPL_FACTOR=1 \
+    USE_BLOCKCHAIN_STREAM_REGISTRY=false \
+    ./config_instance.sh
 
 FROM alpine:latest
 
