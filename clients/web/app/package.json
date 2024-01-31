@@ -19,7 +19,7 @@
         "@capsizecss/vanilla-extract": "^1.0.0",
         "@cassiozen/usestatemachine": "^1.0.1",
         "@datadog/browser-logs": "^4.48.1",
-        "@datadog/browser-rum": "^5.2.0",
+        "@datadog/browser-rum": "^5.8.0",
         "@emoji-mart/data": "^1.1.2",
         "@emoji-mart/react": "^1.1.1",
         "@giphy/js-fetch-api": "^4.4.0",

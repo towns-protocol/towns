@@ -2676,10 +2676,10 @@ __metadata:
   languageName: node
   linkType: hard
 
-"@datadog/browser-core@npm:5.2.0":
-  version: 5.2.0
-  resolution: "@datadog/browser-core@npm:5.2.0"
-  checksum: a53643ef9466c97abfa90d6b74deb5d00a9272605c29f3e9b339bc9d8ed1ead66d0bf9059a0691c3ac3df23aff734c7d899bd4656c3f0736bdc2b5d299ccaeb4
+"@datadog/browser-core@npm:5.8.0":
+  version: 5.8.0
+  resolution: "@datadog/browser-core@npm:5.8.0"
+  checksum: 3282c104976b7e151a3db5d67100b2b98714d092f3c8395cf8dbafd6db470a83ef54a61ffb1e2a171e147145a95a0a0af50918baa5a14251996b8c68788a5c0b
   languageName: node
   linkType: hard
 
@@ -2697,27 +2697,27 @@ __metadata:
   languageName: node
   linkType: hard
 
-"@datadog/browser-rum-core@npm:5.2.0":
-  version: 5.2.0
-  resolution: "@datadog/browser-rum-core@npm:5.2.0"
+"@datadog/browser-rum-core@npm:5.8.0":
+  version: 5.8.0
+  resolution: "@datadog/browser-rum-core@npm:5.8.0"
   dependencies:
-    "@datadog/browser-core": 5.2.0
-  checksum: d5b4c3579645810b623b0bacb3a816ff81df3138684a05ddf485d832c912db650529ae03670afd2961ba0abc3e233d1875f1de9508654b1a6532b65b1b7737ee
+    "@datadog/browser-core": 5.8.0
+  checksum: b99d5dbe5dc2b9976362a5028cf97cd8f274b65729e92f3d8086e24c540ad987ae558e8f246a6b10ff41bf27c3679b8d43736b462411a3ad06cd9b9d9d72de80
   languageName: node
   linkType: hard
 
-"@datadog/browser-rum@npm:^5.2.0":
-  version: 5.2.0
-  resolution: "@datadog/browser-rum@npm:5.2.0"
+"@datadog/browser-rum@npm:^5.8.0":
+  version: 5.8.0
+  resolution: "@datadog/browser-rum@npm:5.8.0"
   dependencies:
-    "@datadog/browser-core": 5.2.0
-    "@datadog/browser-rum-core": 5.2.0
+    "@datadog/browser-core": 5.8.0
+    "@datadog/browser-rum-core": 5.8.0
   peerDependencies:
-    "@datadog/browser-logs": 5.2.0
+    "@datadog/browser-logs": 5.8.0
   peerDependenciesMeta:
     "@datadog/browser-logs":
       optional: true
-  checksum: fd7266b71edda01d5d1ee183872e10fd68464f78b01156d2dcc65df1df693500986afbb6af0513ce6ba0b2c9e19a35aa264fa3c174eea3161bbc360badbdaaba
+  checksum: ca564c4a23c3b2d2343c048c74ca03774a90c32bac8aea29050ed286a3698d4a071fa00ea7a629543df6bcbc88595f9b78dd8fa032be623819100110dfbd996b
   languageName: node
   linkType: hard
 
@@ -6585,7 +6585,7 @@ __metadata:
     "@bufbuild/protobuf": ^1.4.1
     "@connectrpc/connect": ^1.1.3
     "@connectrpc/connect-web": ^1.1.3
-    "@datadog/browser-rum": ^5.2.0
+    "@datadog/browser-rum": ^5.8.0
     "@ethereumjs/util": ^8.0.1
     "@jest/globals": ^29.6.2
     "@river/dlog": "workspace:^"
@@ -14894,7 +14894,7 @@ __metadata:
     "@capsizecss/vanilla-extract": ^1.0.0
     "@cassiozen/usestatemachine": ^1.0.1
     "@datadog/browser-logs": ^4.48.1
-    "@datadog/browser-rum": ^5.2.0
+    "@datadog/browser-rum": ^5.8.0
     "@emoji-mart/data": ^1.1.2
     "@emoji-mart/react": ^1.1.1
     "@giphy/js-fetch-api": ^4.4.0
