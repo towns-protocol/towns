@@ -259,7 +259,9 @@ jobs:
               uses: actions/upload-artifact@v3
               with:
                   name: 'river-node-${{ github.job }}'
-                  path: ./casablanca/node/run_files/
+                  path: |
+                      ./casablanca/node/run_files/
+                      !./casablanca/node/run_files/**/bin/**
 
             # If CI failed, we send a slack notification
             - name: Slack notification
@@ -392,7 +394,9 @@ jobs:
               uses: actions/upload-artifact@v3
               with:
                   name: 'river-node-${{ github.job }}'
-                  path: ./casablanca/node/run_files/
+                  path: |
+                      ./casablanca/node/run_files/
+                      !./casablanca/node/run_files/**/bin/**
 
             # If CI failed, we send a slack notification
             - name: Slack notification
@@ -524,7 +528,9 @@ jobs:
               uses: actions/upload-artifact@v3
               with:
                   name: 'river-node-${{ github.job }}'
-                  path: ./casablanca/node/run_files/
+                  path: |
+                      ./casablanca/node/run_files/
+                      !./casablanca/node/run_files/**/bin/**
 
             # If CI failed, we send a slack notification
             - name: Slack notification
@@ -657,7 +663,9 @@ jobs:
               uses: actions/upload-artifact@v3
               with:
                   name: 'river-node-${{ github.job }}'
-                  path: ./casablanca/node/run_files/
+                  path: |
+                      ./casablanca/node/run_files/
+                      !./casablanca/node/run_files/**/bin/**
 
             # If CI failed, we send a slack notification
             - name: Slack notification

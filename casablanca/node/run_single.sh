@@ -1,13 +1,19 @@
-#!/bin/bash -ue
+#!/bin/bash
+set -euo pipefail
 cd -P -- "$(dirname -- "${BASH_SOURCE[0]}")"
 
-INSTANCE=single
-USE_CONTRACT=true
-METRICS_ENABLED=true
-RPC_PORT=5157
-LOG_NOCOLOR=false
-LOG_LEVEL=info
-USE_BLOCKCHAIN_STREAM_REGISTRY=true
+export RUN_BASE=./run_files
+export INSTANCE=single
+export USE_CONTRACT=true
+export METRICS_ENABLED=true
+export METRICS_PORT=8081
+export RPC_PORT=5157
+export DB_PORT=5433
+export LOG_NOCOLOR=false
+export LOG_LEVEL=info
+export USE_BLOCKCHAIN_STREAM_REGISTRY=true
+export NODE_REGISTRY="''"
+export REPL_FACTOR=1
 
 CONFIG_ONLY=false
 SKIP_CONFIG=false
@@ -42,45 +48,32 @@ done
 
 if [ "$SKIP_CONFIG" = false ]; then
   # Generate the config file
-  ./config_instance.sh $INSTANCE \
-      RPC_PORT ${RPC_PORT} \
-      DB_PORT 5433 \
-      USE_CONTRACT $USE_CONTRACT \
-      METRICS_ENABLED $METRICS_ENABLED \
-      METRICS_PORT 8081 \
-      NODE_REGISTRY "''" \
-      LOG_NOCOLOR ${LOG_NOCOLOR} \
-      LOG_LEVEL ${LOG_LEVEL} \
-      REPL_FACTOR 1 \
-      USE_BLOCKCHAIN_STREAM_REGISTRY $USE_BLOCKCHAIN_STREAM_REGISTRY
+  ./config_instance.sh
 fi
 
 # Skip running the server if -c flag is provided
 if [ "$CONFIG_ONLY" = false ]; then
+  echo Building node binary
+  mkdir -p ${RUN_BASE}/bin
+  go build -o ${RUN_BASE}/bin/river_node -race ./node/main.go
+
   cd ./run_files/$INSTANCE
   echo "Running instance '$INSTANCE' with extra arguments: '${args[@]:-}'"
 
-  # Build the executable
-  go build -o river_node -race ../../node/main.go
+  if [ "$USE_BLOCKCHAIN_STREAM_REGISTRY" == "true" ]; then
+    echo "And funding it with 1 ETH"
+    cast rpc -r http://127.0.0.1:8546 anvil_setBalance `cat ./wallet/node_address` 1000000000000000000 > /dev/null
+  fi
 
-  set +e
   while true; do
-    temp_file=$(mktemp)
-
     # Run the built executable
-    ./river_node run "${args[@]:-}" | tee "$temp_file"
+    ../bin/river_node run "${args[@]:-}" || exit_status=$?
 
-    # Check for exit code 22
-    grep_result=$(grep "Exiting with code 22 to initiate a restart" "$temp_file")
-
-    rm -f "$temp_file"
-
-    if [ -n "$grep_result" ]; then
-      echo "RESTARTING"
-      # Rebuild the executable if needed
-      go build -o river_node -race ../../node/main.go
-    else
-      break
+    # Break if exit status is not 22 (restart initiated by test)
+    if [ "${exit_status:-0}" -ne 22 ]; then
+        break
     fi
+
+    echo "RESTARTING"
   done
 fi

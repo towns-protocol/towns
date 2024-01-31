@@ -1,17 +1,14 @@
-#!/bin/bash -ue
+#!/bin/bash
+set -euo pipefail
 cd -P -- "$(dirname -- "${BASH_SOURCE[0]}")"
 
-# Ensure at least 3 arguments (instance_name and at least one key-value pair)
-if [ "$#" -lt 3 ]; then
-    echo "Usage: $0 instance_dir KEY VALUE [KEY VALUE]..."
-    exit 1
-fi
+# Explicitely check required vars are set
+: ${RUN_BASE:?}
+: ${INSTANCE:?}
 
-INSTANCE_NAME=$1
-INSTANCE_DIR="./run_files/${INSTANCE_NAME}"
+INSTANCE_DIR="${RUN_BASE}/${INSTANCE}"
 TEMPLATE_FILE="./config-template.yaml"
 OUTPUT_FILE="${INSTANCE_DIR}/config/config.yaml"
-shift # Removing the instance_name argument from the list
 
 # Ensure the directory for the output file exists
 mkdir -p "$INSTANCE_DIR/config"
@@ -28,10 +25,9 @@ else  # Linux
     SED_I=""
 fi
 
-# Parse key-value pairs from the arguments
-while [[ "$#" -gt 1 ]]; do
-    key=$1
-    value=$2
+ grep -o '<.*>' "$TEMPLATE_FILE" | while read KEY; do
+    key=$(echo "$KEY" | sed 's/^.\(.*\).$/\1/')
+    value=${!key:?$key is not set}
 
     if [ -z "$value" ]; then
         echo "Error: Missing value for key $key" >&2
@@ -46,28 +42,18 @@ while [[ "$#" -gt 1 ]]; do
 
     # Substitute the key with the value
     sed -i ${SED_I} "s^<${key}>^${value}^g" $OUTPUT_FILE
-
-    shift 2
 done
 
-# Check if any placeholders remain
-if grep -q '<.*>' $OUTPUT_FILE; then
-    echo "Error: Not all placeholders were substituted!" >&2
-    exit 1
-fi
 
 # Generate a new wallet if one doesn't exist and SKIP_GENKEY is not set
 
 if [ "$SKIP_GENKEY" = true ]; then
-    echo "Skipping wallet generation for instance '${INSTANCE_NAME}'"
+    echo "Skipping wallet generation for instance '${INSTANCE}'"
 elif [ ! -f "${INSTANCE_DIR}/wallet/private_key" ]; then
-    echo "Generating a new wallet for instance '${INSTANCE_NAME}'"
-    cd "$INSTANCE_DIR"
-    go run ../../node/main.go genkey
-    go run ../../node/main.go fund_wallet
+    echo "Generating a new wallet for instance '${INSTANCE}'"
+    cast wallet new --json > "${INSTANCE_DIR}/wallet/wallet.json"
+    jq -r .[0].address "${INSTANCE_DIR}/wallet/wallet.json" > "${INSTANCE_DIR}/wallet/node_address"
+    jq -r .[0].private_key "${INSTANCE_DIR}/wallet/wallet.json" | sed 's/^0x//' > "${INSTANCE_DIR}/wallet/private_key"
 else
-    echo "Using existing wallet for instance '${INSTANCE_NAME}'"
-    # Old wallets might not be funded yet
-    cd "$INSTANCE_DIR"
-    go run ../../node/main.go fund_wallet
+    echo "Using existing wallet for instance '${INSTANCE}'"
 fi
