@@ -23,7 +23,7 @@ RUN go build -trimpath -o bin/ ./node/
 RUN SKIP_GENKEY=true \
     RUN_BASE=./run_files \
     INSTANCE=docker-single-node \
-    RPC_POR=5157 \
+    RPC_PORT=5157 \
     DB_PORT=null \
     USE_CONTRACT=true \
     METRICS_ENABLED=false \
