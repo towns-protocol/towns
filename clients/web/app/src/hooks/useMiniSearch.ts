@@ -4,6 +4,7 @@ import { uniqBy } from 'lodash'
 import debug from 'debug'
 import { useDebounce } from 'hooks/useDebounce'
 import { EventDocument } from '../components/SearchBar/types'
+import { useThrottledValue } from './useThrottledValue'
 
 const log = debug('app:search')
 log.enabled = true
@@ -18,7 +19,7 @@ export const useMiniSearch = (_messages: EventDocument[], _search: string) => {
             }),
     )
     const messages = useDebounce(_messages, 1000)
-    const search = useDebounce(_search, 250)
+    const search = useThrottledValue(_search, 500)
 
     const filteredMessages = useMemo(
         () =>

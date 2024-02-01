@@ -54,6 +54,8 @@ export const SearchBar = () => {
             return () => {
                 window.removeEventListener('pointerup', onClick)
             }
+        } else {
+            setValue('')
         }
     }, [isSearchActive])
 
