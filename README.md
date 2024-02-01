@@ -29,6 +29,12 @@ Welcome to the Harmony mono repo. Here you will find all of the components to ru
     brew install libusb
 ```
 
+- **jq**
+
+```
+    brew install jq
+```
+
 ## Setup
 
 1. Update submodules: `git submodule update --init --recursive`
