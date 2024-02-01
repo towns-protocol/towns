@@ -151,7 +151,6 @@ describe('Stress test', () => {
             }
 
             handleEventDecrypted(result.riverSDK.client)
-
             await result.riverSDK.createTownAndChannelWithPresetIDs(
                 'main town',
                 coordinationSpaceId,
@@ -159,6 +158,7 @@ describe('Stress test', () => {
                 'main channel',
                 coordinationChannelId,
             )
+
             await result.riverSDK.joinChannel(coordinationChannelId)
 
             while (followersCounter != 0) {
@@ -167,6 +167,11 @@ describe('Stress test', () => {
                 await pauseForXMiliseconds(1000)
             }
             log('All followers joined main channel')
+
+            //clean coordination information from redis
+            await redis.del('coordinationSpaceId')
+            await redis.del('coordinationChannelId')
+
             await result.riverSDK.sendTextMessage(
                 coordinationChannelId,
                 'All followers joined main channel',
