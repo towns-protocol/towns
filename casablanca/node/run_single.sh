@@ -31,6 +31,7 @@ while [[ "$#" -gt 0 ]]; do
             ;;
         --disable_entitlements|--de)
             INSTANCE=single_ne
+            RUN_BASE=./run_files/single_ne
             METRICS_ENABLED=false
             METRICS_PORT=8082
             RPC_PORT=5158
