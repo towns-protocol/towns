@@ -7,6 +7,7 @@ import { makeUserContextFromWallet, makeTestClient, makeDonePromise } from './ut
 import { genId, makeChannelStreamId, makeSpaceStreamId, makeUserStreamId } from './id'
 import { ethers } from 'ethers'
 import { MembershipStruct } from '@river/web3'
+import { MembershipOp } from '@river/proto'
 const { LocalhostWeb3Provider, createSpaceDapp, Permission } = await import('@river/web3')
 
 const base_log = dlog('csb:test:withEntitlements')
@@ -79,7 +80,7 @@ describe('withEntitlements', () => {
         // Now there must be "joined space" event in the user stream.
         const bobUserStreamView = bob.stream(bobsUserStreamId)!.view
         expect(bobUserStreamView).toBeDefined()
-        expect(bobUserStreamView.userContent.userJoinedStreams).toContain(spaceId)
+        expect(bobUserStreamView.userContent.isMember(spaceId, MembershipOp.SO_JOIN)).toBe(true)
 
         const waitForStreamPromise = makeDonePromise()
         bob.on('userJoinedStream', (streamId) => {
@@ -102,7 +103,7 @@ describe('withEntitlements', () => {
         await waitForStreamPromise.expectToSucceed()
         // Now there must be "joined channel" event in the user stream.
         expect(bobUserStreamView).toBeDefined()
-        expect(bobUserStreamView.userContent.userJoinedStreams).toContain(channelId)
+        expect(bobUserStreamView.userContent.isMember(channelId, MembershipOp.SO_JOIN)).toBe(true)
 
         // todo  getDevicesInRoom is randomly failing in ci renable https://linear.app/hnt-labs/issue/HNT-3439/getdevicesinroom-is-randomly-failing-in-ci
         // await expect(bob.sendMessage(channelId, 'Hello, world from Bob!')).toResolve()

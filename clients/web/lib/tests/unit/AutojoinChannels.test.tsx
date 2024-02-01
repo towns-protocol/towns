@@ -6,6 +6,7 @@ import { jest } from '@jest/globals'
 import { render, waitFor } from '@testing-library/react'
 import React from 'react'
 import { mockSpaceDataWith2Channels } from '../mocks/spaceData'
+import { MembershipOp } from '@river/proto'
 
 const joinRoomMock = jest.fn()
 
@@ -33,8 +34,16 @@ const useZionContextResponse = {
                 return {
                     view: {
                         userContent: {
-                            userJoinedStreams: userJoinedSet,
-                            userLeftStreams: userLeftSet,
+                            isMember: (streamId: string, membershipOp: MembershipOp) => {
+                                switch (membershipOp) {
+                                    case MembershipOp.SO_JOIN:
+                                        return userJoinedSet.has(streamId)
+                                    case MembershipOp.SO_LEAVE:
+                                        return userLeftSet.has(streamId)
+                                    default:
+                                        return false
+                                }
+                            },
                         },
                     },
                 }

@@ -3,6 +3,7 @@ import { useZionContext } from '../components/ZionContextProvider'
 import { Channel, SpaceData } from '../types/zion-types'
 import isEqual from 'lodash/isEqual'
 import { isChannelStreamId, isSpaceStreamId } from '@river/sdk'
+import { MembershipOp } from '@river/proto'
 
 export function useMyChannels(space?: SpaceData) {
     const channelIds = useMemo(() => {
@@ -64,7 +65,10 @@ function useMyMembershipsCasablanca(channelIds: string[]) {
                 channelIds
                     .filter((channelId) => {
                         try {
-                            return userStream.view.userContent.userJoinedStreams.has(channelId)
+                            return userStream.view.userContent.isMember(
+                                channelId,
+                                MembershipOp.SO_JOIN,
+                            )
                         } catch (error) {
                             return false
                         }

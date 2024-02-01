@@ -16,9 +16,7 @@ import { logNever } from './check'
 export class StreamStateView_User extends StreamStateView_AbstractContent {
     readonly streamId: string
     readonly memberships: StreamStateView_UserStreamMembership
-    readonly userInvitedStreams = new Set<string>()
-    readonly userJoinedStreams = new Set<string>()
-    readonly userLeftStreams = new Set<string>()
+    readonly streamMemberships: { [key: string]: UserPayload_UserMembership } = {}
     readonly toDeviceMessages: ParsedEvent[] = []
 
     constructor(streamId: string) {
@@ -85,20 +83,18 @@ export class StreamStateView_User extends StreamStateView_AbstractContent {
         emitter: TypedEmitter<StreamEvents> | undefined,
     ): void {
         const { op, streamId } = payload
+        const wasInvited = this.streamMemberships[streamId]?.op === MembershipOp.SO_INVITE
+        const wasJoined = this.streamMemberships[streamId]?.op === MembershipOp.SO_JOIN
+        this.streamMemberships[streamId] = payload
         switch (op) {
             case MembershipOp.SO_INVITE:
-                this.userInvitedStreams.add(streamId)
                 emitter?.emit('userInvitedToStream', streamId)
                 break
             case MembershipOp.SO_JOIN:
-                this.userJoinedStreams.add(streamId)
                 emitter?.emit('userJoinedStream', streamId)
                 break
             case MembershipOp.SO_LEAVE:
                 {
-                    const wasInvited = this.userInvitedStreams.delete(streamId)
-                    const wasJoined = this.userJoinedStreams.delete(streamId)
-                    this.userLeftStreams.add(streamId)
                     if (wasInvited || wasJoined) {
                         emitter?.emit('userLeftStream', streamId)
                     }
@@ -109,5 +105,9 @@ export class StreamStateView_User extends StreamStateView_AbstractContent {
             default:
                 logNever(op)
         }
+    }
+
+    isMember(streamId: string, membership: MembershipOp): boolean {
+        return this.streamMemberships[streamId]?.op === membership
     }
 }

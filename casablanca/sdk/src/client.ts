@@ -257,12 +257,20 @@ export class Client
         stream.on('userInvitedToStream', (s) => void this.onInvitedToStream(s))
         stream.on('userLeftStream', (s) => void this.onLeftStream(s))
 
-        const streamIds = [
-            ...Array.from(stream.view.userContent.userJoinedStreams),
-            ...Array.from(stream.view.userContent.userInvitedStreams).filter(
-                (streamId) => isDMChannelStreamId(streamId) || isGDMChannelStreamId(streamId),
-            ),
-        ]
+        const streamIds = Object.entries(stream.view.userContent.streamMemberships).reduce(
+            (acc, [streamId, payload]) => {
+                if (
+                    payload.op === MembershipOp.SO_JOIN ||
+                    (payload.op === MembershipOp.SO_INVITE &&
+                        (isDMChannelStreamId(streamId) || isGDMChannelStreamId(streamId)))
+                ) {
+                    acc.push(streamId)
+                }
+                return acc
+            },
+            [] as string[],
+        )
+
         for (const streamId of Array.from(new Set(streamIds))) {
             this.syncedStreamsExtensions.addStream(streamId)
         }
