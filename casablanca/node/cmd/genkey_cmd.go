@@ -11,7 +11,7 @@ import (
 )
 
 func genkey(cfg *config.Config, overwrite bool) error {
-	ctx := context.Background()
+	ctx := context.Background() // lint:ignore context.Background() is fine here
 
 	wallet, err := crypto.NewWallet(ctx)
 	if err != nil {
@@ -38,7 +38,7 @@ func genkey(cfg *config.Config, overwrite bool) error {
 }
 
 func readKey(cfg *config.Config, overwrite bool) error {
-	ctx := context.Background()
+	ctx := context.Background() // lint:ignore context.Background() is fine here
 	wallet, err := crypto.NewWalletFromPrivKey(ctx, cfg.WalletPrivateKey)
 	if err != nil {
 		return err

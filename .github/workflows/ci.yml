@@ -113,6 +113,16 @@ jobs:
                   working-directory: casablanca/node
                   skip-pkg-cache: true
 
+            - name: Linting River Node W/ Custom Rules
+              run: |
+                  cd casablanca/node
+                  ./lint_extensions.sh > river_lint_extensions.txt
+                  if [ -s river_lint_extensions.txt ]; then
+                    echo "Linter found issues:"
+                    cat river_lint_extensions.txt
+                    exit 1
+                  fi
+
             # - name: Terraform Lint
             #   run: make lint
             #   working-directory: ./infra

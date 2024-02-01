@@ -17,7 +17,7 @@ import (
 )
 
 func run(cfg *config.Config) error {
-	ctx := context.Background()
+	ctx := context.Background() // lint:ignore context.Background() is fine here
 	if cfg.Metrics.Enabled {
 		go infra.StartMetricsService(ctx, cfg.Metrics)
 	}

@@ -12,7 +12,7 @@ import (
 )
 
 func fund_wallet(cfg *config.Config) error {
-	ctx := context.Background()
+	ctx := context.Background() // lint:ignore context.Background() is fine here
 	log := dlog.FromCtx(ctx)
 
 	wallet, err := crypto.LoadWallet(ctx, crypto.WALLET_PATH_PRIVATE_KEY)
