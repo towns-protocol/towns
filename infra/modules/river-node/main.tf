@@ -526,11 +526,11 @@ resource "aws_ecs_task_definition" "river-fargate" {
       {
         # TODO: remove this env var after migrating to the actual ndoe registry smart contract
         name  = "NODEREGISTRYCSV"
-        value = var.is_transient ? local.node_registry_csv_multinode : ""
+        value = var.is_multi_node ? local.node_registry_csv_multinode : ""
       },
       {
         name  = "USEBLOCKCHAINSTREAMREGISTRY",
-        value = var.is_transient ? "true" : "false"
+        value = var.is_multi_node ? "true" : "false"
       },
       ],
       local.base_chain_override_td_env_config,
