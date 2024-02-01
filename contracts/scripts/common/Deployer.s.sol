@@ -24,13 +24,14 @@ abstract contract Deployer is Script, DeployBase {
   ) public virtual returns (address);
 
   // will first try to load existing deployments from `deployments/<network>/<contract>.json`
-  // if OVERRIDE_DEPLOYMENTS is set or if no deployment is found:
+  // if OVERRIDE_DEPLOYMENTS is set to true or if no cached deployment is found:
   // - read PRIVATE_KEY from env
   // - invoke __deploy() with the private key
   // - save the deployment to `deployments/<network>/<contract>.json`
   function deploy() public virtual returns (address deployedAddr) {
-    address existingAddr = getDeployment(versionName());
     bool overrideDeployment = vm.envOr("OVERRIDE_DEPLOYMENTS", uint256(0)) > 0;
+
+    address existingAddr = getDeployment(versionName());
 
     if (!overrideDeployment && existingAddr != address(0) && !isTesting()) {
       debug(
@@ -60,6 +61,7 @@ abstract contract Deployer is Script, DeployBase {
       );
     }
 
+    // call __deploy hook
     deployedAddr = __deploy(pk, deployer);
 
     if (!isTesting()) {
@@ -67,12 +69,20 @@ abstract contract Deployer is Script, DeployBase {
         string.concat(unicode"✅ ", versionName(), " deployed at"),
         vm.toString(deployedAddr)
       );
+
+      if (deployedAddr != address(0)) {
+        saveDeployment(versionName(), deployedAddr);
+      }
     }
 
-    if (deployedAddr != address(0) && !isTesting()) {
-      saveDeployment(versionName(), deployedAddr);
-    }
+    _afterDeployment(pk, deployer, deployedAddr);
   }
+
+  function _afterDeployment(
+    uint256 pk,
+    address deployer,
+    address deployment
+  ) internal virtual {}
 
   function run() public virtual {
     deploy();
