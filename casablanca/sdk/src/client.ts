@@ -320,7 +320,9 @@ export class Client
         const initializeUserEndTime = performance.now()
         const executionTime = initializeUserEndTime - initializeUserStartTime
 
-        datadogRum.addTiming('inititalizeUser', Math.round(executionTime))
+        datadogRum.addAction('userInitializationDuration', {
+            value: executionTime,
+        })
     }
 
     // special wrapper around rpcClient.getStream which catches NOT_FOUND errors but re-throws everything else
