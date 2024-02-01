@@ -6,6 +6,12 @@
       name="viewport"
       content="width=device-width, initial-scale=1, viewport-fit=cover, maximum-scale=1, user-scalable=no, shrink-to-fit=no"
     />
+    <script type="module">
+      if (window.location.pathname.match(/\/SPCE-.+\/CHAN|DMDM/)) {
+        window.townsAppStartTime = Date.now();
+        window.townsMeasureFlag = true;
+      }
+    </script>
     <title>Towns BETA</title>
     <link rel="icon" href="/favicon.png" />
     <meta name="apple-mobile-web-app-capable" content="yes" />

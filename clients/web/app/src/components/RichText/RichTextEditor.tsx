@@ -12,6 +12,7 @@ import LexicalErrorBoundary from '@lexical/react/LexicalErrorBoundary'
 import { clsx } from 'clsx'
 import React, { useCallback, useState } from 'react'
 import { Channel, Mention, MessageType, RoomMember, SendTextMessageOptions } from 'use-zion-client'
+import { datadogRum } from '@datadog/browser-rum'
 import { ErrorBoundary } from '@components/ErrorBoundary/ErrorBoundary'
 import * as fieldStyles from 'ui/components/_internal/Field/Field.css'
 import { useInputStore } from 'store/store'
@@ -64,6 +65,17 @@ type Props = {
 const inputClassName = clsx([fieldStyles.field, styles.richText, styles.contentEditable])
 
 export const RichTextEditor = (props: Props) => {
+    React.useEffect(() => {
+        if (window.townsMeasureFlag && props.editable) {
+            if (props.editable) {
+                const durationTillEditable = Date.now() - window.townsAppStartTime
+                window.townsMeasureFlag = false
+                datadogRum.addAction('SendMessageEditable', {
+                    durationTillEditable: durationTillEditable,
+                })
+            }
+        }
+    }, [props.editable])
     return (
         <ErrorBoundary FallbackComponent={RichTextEditorFallbackComponent}>
             <RichTextEditorWithoutBoundary {...props} />

@@ -6,4 +6,8 @@ declare global {
             extends jest.Matchers<void, T>,
                 TestingLibraryMatchers<T, void> {}
     }
+    interface Window {
+        townsAppStartTime: number
+        townsMeasureFlag: boolean
+    }
 }
