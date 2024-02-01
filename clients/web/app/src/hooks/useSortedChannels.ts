@@ -132,9 +132,17 @@ export const useSortedChannels = ({ spaceId, currentRouteId }: Params) => {
     const unreadChannels = useMemo(() => {
         const value = [
             ...channelItems.filter(
-                (c) => (c.unread && joinedChannels.has(c.id)) || c.channel.id === persistUnreadId,
+                (c) =>
+                    (c.unread && joinedChannels.has(c.id)) ||
+                    c.channel.id === persistUnreadId ||
+                    prevUnreads.current.includes(c.id),
             ),
-            ...dmItems.filter((c) => c.unread || c.channel.id === persistUnreadId),
+            ...dmItems.filter(
+                (c) =>
+                    c.unread ||
+                    c.channel.id === persistUnreadId ||
+                    prevUnreads.current.includes(c.channel.id),
+            ),
         ].sort((a, b) => Math.sign(b.latestMs - a.latestMs))
 
         unreadChannelsRef.current = isEqual(value, unreadChannelsRef.current)
@@ -149,7 +157,11 @@ export const useSortedChannels = ({ spaceId, currentRouteId }: Params) => {
     const readChannels = useMemo(() => {
         return [
             ...channelItems.filter(
-                (c) => !c.unread && joinedChannels.has(c.id) && persistUnreadId !== c.id,
+                (c) =>
+                    !c.unread &&
+                    joinedChannels.has(c.id) &&
+                    persistUnreadId !== c.id &&
+                    !prevUnreads.current.includes(c.id),
             ),
         ].sort((a, b) => a.channel.label.localeCompare(b.channel.label))
     }, [channelItems, joinedChannels, persistUnreadId])
@@ -158,9 +170,11 @@ export const useSortedChannels = ({ spaceId, currentRouteId }: Params) => {
 
     const readDMsRef = useRef<DMChannelMenuItem[]>([])
     const readDms = useMemo(() => {
-        const value = [...dmItems.filter((c) => !c.unread && persistUnreadId !== c.id)].sort(
-            (a, b) => Math.sign(b.latestMs - a.latestMs),
-        )
+        const value = [
+            ...dmItems.filter(
+                (c) => !c.unread && persistUnreadId !== c.id && !prevUnreads.current.includes(c.id),
+            ),
+        ].sort((a, b) => Math.sign(b.latestMs - a.latestMs))
         readDMsRef.current = isEqual(value, readDMsRef.current) ? readDMsRef.current : value
         return readDMsRef.current
     }, [dmItems, persistUnreadId])
