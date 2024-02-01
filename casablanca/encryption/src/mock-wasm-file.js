@@ -1,2 +1,2 @@
-// mock Olm's wasm file used in waterproof/olm.ts
+// mock Olm's wasm file used in encryption/encryptionDelegate.ts
 export default 'file-mock'

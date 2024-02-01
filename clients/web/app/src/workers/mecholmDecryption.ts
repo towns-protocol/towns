@@ -1,4 +1,9 @@
-import { CryptoStore, MegolmDecryption, OlmDevice, OlmMegolmDelegate } from '@river/encryption'
+import {
+    CryptoStore,
+    EncryptionDelegate,
+    EncryptionDevice,
+    GroupDecryption,
+} from '@river/encryption'
 
 import { EncryptedData } from '@river/proto'
 
@@ -6,7 +11,7 @@ import { EncryptedData } from '@river/proto'
 globalThis.OLM_OPTIONS = {}
 // cache the crypto store and decryptor for each user
 const cryptoStoreCache = new Map<string, CryptoStore>()
-const decryptorCache = new Map<string, MegolmDecryption>()
+const decryptorCache = new Map<string, GroupDecryption>()
 const log = console.debug.bind(console, 'sw:push:')
 
 export interface PlaintextDetails {
@@ -16,7 +21,7 @@ export interface PlaintextDetails {
     reaction: string | undefined
 }
 
-export async function decryptWithMegolm(
+export async function decrypt(
     userId: string,
     channelId: string,
     encryptedData: EncryptedData,
@@ -36,7 +41,7 @@ async function getDecryptor(userId: string) {
         if (!cryptoStore) {
             throw new Error('Could not get crypto store')
         }
-        const decryptor = await newMegolmDecryption(userId, cryptoStore)
+        const decryptor = await newGroupDecryption(userId, cryptoStore)
         decryptorCache.set(userId, decryptor)
     }
     const decryptor = decryptorCache.get(userId)
@@ -54,14 +59,14 @@ function getCryptoStore(userId: string) {
     return cryptoStoreCache.get(userId)
 }
 
-async function newMegolmDecryption(
+async function newGroupDecryption(
     userId: string,
     cryptoStore: CryptoStore,
-): Promise<MegolmDecryption> {
-    const olmDelegate = new OlmMegolmDelegate()
-    await olmDelegate.init()
-    const olmDevice = new OlmDevice(olmDelegate, cryptoStore)
-    return new MegolmDecryption({ olmDevice })
+): Promise<GroupDecryption> {
+    const delegate = new EncryptionDelegate()
+    await delegate.init()
+    const encyptionDevice = new EncryptionDevice(delegate, cryptoStore)
+    return new GroupDecryption({ device: encyptionDevice })
 }
 
 const bodyRegex = /"body":"(.*?)"(?=,|})/

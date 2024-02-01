@@ -4,7 +4,7 @@ import { EncryptionAlgorithm, IEncryptionParams } from './base'
 import { MEGOLM_ALGORITHM } from './olmLib'
 import { dlog } from '@river/dlog'
 
-const log = dlog('csb:megolm:encryption')
+const log = dlog('csb:encryption:groupEncryption')
 
 /** Note Jterzis 07/26/23: Several features are intentionally left out of this module,
  * that we may want to implement in the future:
@@ -17,22 +17,22 @@ const log = dlog('csb:megolm:encryption')
  */
 
 /**
- * Megolm encryption implementation
+ * Group encryption implementation
  *
  * @param params - parameters, as per {@link EncryptionAlgorithm}
  */
-export class MegolmEncryption extends EncryptionAlgorithm {
+export class GroupEncryption extends EncryptionAlgorithm {
     public constructor(params: IEncryptionParams) {
         super(params)
     }
 
     private async ensureOutboundSession(streamId: string): Promise<void> {
         try {
-            await this.olmDevice.getOutboundGroupSessionKey(streamId)
+            await this.device.getOutboundGroupSessionKey(streamId)
             return
         } catch (error) {
             // if we don't have a cached session at this point, create a new one
-            const sessionId = await this.olmDevice.createOutboundGroupSession(streamId)
+            const sessionId = await this.device.createOutboundGroupSession(streamId)
             log(`Started new megolm session ${sessionId}`)
             // don't wait for the session to be shared
             void this.shareSession(streamId, sessionId)
@@ -41,13 +41,13 @@ export class MegolmEncryption extends EncryptionAlgorithm {
 
     private async shareSession(streamId: string, sessionId: string): Promise<void> {
         const devicesInRoom = await this.client.getDevicesInStream(streamId)
-        const session = await this.olmDevice.exportInboundGroupSession(streamId, sessionId)
+        const session = await this.device.exportInboundGroupSession(streamId, sessionId)
 
         if (!session) {
             throw new Error('Session key not found for session ' + sessionId)
         }
 
-        await this.client.encryptAndShareMegolmSessions(streamId, [session], devicesInRoom)
+        await this.client.encryptAndShareGroupSessions(streamId, [session], devicesInRoom)
     }
 
     /**
@@ -60,11 +60,11 @@ export class MegolmEncryption extends EncryptionAlgorithm {
 
         await this.ensureOutboundSession(streamId)
 
-        const result = await this.olmDevice.encryptGroupMessage(payload, streamId)
+        const result = await this.device.encryptGroupMessage(payload, streamId)
 
         return new EncryptedData({
             algorithm: MEGOLM_ALGORITHM,
-            senderKey: this.olmDevice.deviceCurve25519Key!,
+            senderKey: this.device.deviceCurve25519Key!,
             ciphertext: result.ciphertext,
             sessionId: result.sessionId,
         } satisfies PlainMessage<EncryptedData>)

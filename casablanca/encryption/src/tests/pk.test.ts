@@ -1,22 +1,23 @@
-import { OlmMegolmDelegate } from '../olm'
+import { EncryptionDelegate } from '../encryptionDelegate'
 import debug from 'debug'
+import { PkDecryption, PkEncryption, PkSigning } from '../encryptionTypes'
 
 const log = debug('test')
 
 describe('Pk Signing and Encryption', () => {
-    let encryption: Olm.PkEncryption | undefined
-    let decryption: Olm.PkDecryption | undefined
-    let signing: Olm.PkSigning | undefined
-    let OlmDelegate: OlmMegolmDelegate | undefined
+    let encryption: PkEncryption | undefined
+    let decryption: PkDecryption | undefined
+    let signing: PkSigning | undefined
+    let delegate: EncryptionDelegate | undefined
 
     beforeEach(async () => {
-        OlmDelegate = new OlmMegolmDelegate()
-        await OlmDelegate.init()
+        delegate = new EncryptionDelegate()
+        await delegate.init()
         // create a key pair for encryption
-        encryption = OlmDelegate.createPkEncryption()
+        encryption = delegate.createPkEncryption()
         // create a key pair for decryption
-        decryption = OlmDelegate.createPkDecryption()
-        signing = OlmDelegate.createPkSigning()
+        decryption = delegate.createPkDecryption()
+        signing = delegate.createPkSigning()
     })
 
     afterEach(async () => {
@@ -67,7 +68,7 @@ describe('Pk Signing and Encryption', () => {
     })
 
     test('shouldPickleAndUnpickleKey', async () => {
-        if (encryption === undefined || decryption === undefined || OlmDelegate === undefined) {
+        if (encryption === undefined || decryption === undefined || delegate === undefined) {
             throw new Error('key pairs not initialized')
         }
         const TEST_TEXT = 'test text'
@@ -78,7 +79,7 @@ describe('Pk Signing and Encryption', () => {
         const PICKLE_KEY = 'secret_key'
         const pickle = decryption.pickle(PICKLE_KEY)
 
-        const new_decryption = OlmDelegate.createPkDecryption()
+        const new_decryption = delegate.createPkDecryption()
         const new_pubkey = new_decryption.unpickle(PICKLE_KEY, pickle)
         expect(new_pubkey).toEqual(pubkey)
         const decrypted = new_decryption.decrypt(
@@ -92,7 +93,7 @@ describe('Pk Signing and Encryption', () => {
     })
 
     test('shouldSignAndVerify', async () => {
-        if (signing === undefined || OlmDelegate === undefined) {
+        if (signing === undefined || delegate === undefined) {
             throw new Error('key pairs not initialized')
         }
         const seed = new Uint8Array([
@@ -103,7 +104,7 @@ describe('Pk Signing and Encryption', () => {
         const TEST_TEXT = 'I am attesting to this text'
         const pubkey = signing.init_with_seed(seed)
         const sig = signing.sign(TEST_TEXT)
-        const util = OlmDelegate.createOlmUtil()
+        const util = delegate.createUtility()
         util.ed25519_verify(pubkey, TEST_TEXT, sig)
         let verifyFailure = null
         try {

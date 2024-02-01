@@ -1,18 +1,18 @@
-import type { OlmGroupSessionExtraData } from './olmDevice'
+import type { GroupSessionExtraData } from './encryptionDevice'
 
 import { DecryptionAlgorithm, DecryptionError, IDecryptionParams } from './base'
-import { MegolmSession } from './olmLib'
+import { GroupEncryptionSession } from './olmLib'
 import { EncryptedData } from '@river/proto'
 import { dlog } from '@river/dlog'
 
-const log = dlog('csb:megolm:decryption')
+const log = dlog('csb:encryption:groupDecryption')
 
 /**
- * Megolm decryption implementation
+ * Group decryption implementation
  *
  * @param params - parameters, as per {@link DecryptionAlgorithm}
  */
-export class MegolmDecryption extends DecryptionAlgorithm {
+export class GroupDecryption extends DecryptionAlgorithm {
     public constructor(params: IDecryptionParams) {
         super(params)
     }
@@ -25,10 +25,10 @@ export class MegolmDecryption extends DecryptionAlgorithm {
      */
     public async decrypt(streamId: string, content: EncryptedData): Promise<string> {
         if (!content.senderKey || !content.sessionId || !content.ciphertext) {
-            throw new DecryptionError('MEGOLM_MISSING_FIELDS', 'Missing fields in input')
+            throw new DecryptionError('GROUP_DECRYPTION_MISSING_FIELDS', 'Missing fields in input')
         }
 
-        const { session } = await this.olmDevice.getInboundGroupSession(streamId, content.sessionId)
+        const { session } = await this.device.getInboundGroupSession(streamId, content.sessionId)
 
         if (!session) {
             throw new Error('Session not found')
@@ -40,12 +40,12 @@ export class MegolmDecryption extends DecryptionAlgorithm {
 
     /**
      * @param streamId - the stream id of the session
-     * @param session- the megolm session object
+     * @param session- the group session object
      */
-    public async importStreamKey(streamId: string, session: MegolmSession): Promise<void> {
-        const extraSessionData: OlmGroupSessionExtraData = {}
+    public async importStreamKey(streamId: string, session: GroupEncryptionSession): Promise<void> {
+        const extraSessionData: GroupSessionExtraData = {}
         try {
-            await this.olmDevice.addInboundGroupSession(
+            await this.device.addInboundGroupSession(
                 streamId,
                 session.sessionId,
                 session.sessionKey,

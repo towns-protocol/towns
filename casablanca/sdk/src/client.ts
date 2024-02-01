@@ -35,10 +35,10 @@ import {
 import { assert, isDefined } from './check'
 import {
     CryptoStore,
-    IMegolmClient,
-    MegolmCrypto,
-    MegolmSession,
-    OlmDevice,
+    EncryptionDevice,
+    GroupEncryptionCrypto,
+    GroupEncryptionSession,
+    IGroupEncryptionClient,
     UserDevice,
     UserDeviceCollection,
 } from '@river/encryption'
@@ -115,7 +115,7 @@ import { SyncedStreamsExtension } from './syncedStreamsExtension'
 
 export class Client
     extends (EventEmitter as new () => TypedEmitter<StreamEvents>)
-    implements IMegolmClient
+    implements IGroupEncryptionClient
 {
     readonly signerContext: SignerContext
     readonly rpcClient: StreamRpcClientType
@@ -136,7 +136,7 @@ export class Client
     private readonly logInfo: DLogger
     private readonly logDebug: DLogger
 
-    public cryptoBackend?: MegolmCrypto
+    public cryptoBackend?: GroupEncryptionCrypto
     public cryptoStore: CryptoStore
 
     private getStreamRequests: Map<string, Promise<StreamStateView>> = new Map()
@@ -218,11 +218,11 @@ export class Client
         return this.cryptoBackend !== undefined
     }
 
-    get olmDevice(): OlmDevice {
+    get encryptionDevice(): EncryptionDevice {
         if (!this.cryptoBackend) {
             throw new Error('cryptoBackend not initialized')
         }
-        return this.cryptoBackend.olmDevice
+        return this.cryptoBackend.encryptionDevice
     }
 
     async stop(): Promise<void> {
@@ -657,7 +657,7 @@ export class Client
         check(isDefined(this.cryptoBackend))
 
         const channelProps = make_ChannelProperties(channelName, channelTopic).toJsonString()
-        const encryptedData = await this.cryptoBackend.encryptMegolmEvent(streamId, channelProps)
+        const encryptedData = await this.cryptoBackend.encryptGroupEvent(streamId, channelProps)
 
         const event = make_GDMChannelPayload_ChannelProperties(encryptedData)
         return this.makeEventAndAddToStream(streamId, event, {
@@ -691,7 +691,7 @@ export class Client
 
     async setDisplayName(streamId: string, displayName: string) {
         check(isDefined(this.cryptoBackend))
-        const encryptedData = await this.cryptoBackend.encryptMegolmEvent(streamId, displayName)
+        const encryptedData = await this.cryptoBackend.encryptGroupEvent(streamId, displayName)
         const makePayload = () => {
             if (isSpaceStreamId(streamId)) {
                 return make_SpacePayload_DisplayName(encryptedData)
@@ -708,7 +708,7 @@ export class Client
 
     async setUsername(streamId: string, username: string) {
         check(isDefined(this.cryptoBackend))
-        const encryptedData = await this.cryptoBackend.encryptMegolmEvent(streamId, username)
+        const encryptedData = await this.cryptoBackend.encryptGroupEvent(streamId, username)
         encryptedData.checksum = usernameChecksum(username, streamId)
 
         const makePayload = () => {
@@ -1570,7 +1570,7 @@ export class Client
 
         await this.cryptoStore.initialize()
 
-        const crypto = new MegolmCrypto(this, this.cryptoStore)
+        const crypto = new GroupEncryptionCrypto(this, this.cryptoStore)
         await crypto.init()
         this.cryptoBackend = crypto
         this.decryptionExtensions = new DecryptionExtensions(
@@ -1644,21 +1644,24 @@ export class Client
      * Decrypt a ToDevice message using Olm algorithm.
      *
      */
-    public async decryptOlmEvent(ciphertext: string, senderDeviceKey: string): Promise<string> {
+    public async decryptWithDeviceKey(
+        ciphertext: string,
+        senderDeviceKey: string,
+    ): Promise<string> {
         if (!this.cryptoBackend) {
             throw new Error('crypto backend not initialized')
         }
-        return this.cryptoBackend.decryptOlmEvent(ciphertext, senderDeviceKey)
+        return this.cryptoBackend.decryptWithDeviceKey(ciphertext, senderDeviceKey)
     }
     /**
      * decrypts and applies megolm event
      */
-    public async decryptMegolmEvent(
+    public async decryptGroupEvent(
         streamId: string,
         eventId: string,
         encryptedContent: EncryptedContent,
     ): Promise<void> {
-        this.logCall('decryptMegolmEvent', streamId, eventId, encryptedContent)
+        this.logCall('decryptGroupEvent', streamId, eventId, encryptedContent)
         const stream = this.stream(streamId)
         check(isDefined(stream), 'stream not found')
         const cleartext = await this.cleartextForMegolmEvent(streamId, eventId, encryptedContent)
@@ -1681,7 +1684,7 @@ export class Client
         if (!this.cryptoBackend) {
             throw new Error('crypto backend not initialized')
         }
-        const cleartext = await this.cryptoBackend.decryptMegolmEvent(
+        const cleartext = await this.cryptoBackend.decryptGroupEvent(
             streamId,
             encryptedContent.content,
         )
@@ -1691,19 +1694,22 @@ export class Client
     }
 
     public hasInboundSessionKeys(streamId: string, sessionId: string): Promise<boolean> {
-        return this.cryptoBackend?.olmDevice?.hasInboundSessionKeys(
+        return this.cryptoBackend?.encryptionDevice?.hasInboundSessionKeys(
             streamId,
             sessionId,
         ) as Promise<boolean>
     }
 
-    public async importRoomKeys(streamId: string, keys: MegolmSession[]): Promise<void> {
-        return this.cryptoBackend?.importRoomKeys(streamId, keys)
+    public async importSessionKeys(
+        streamId: string,
+        keys: GroupEncryptionSession[],
+    ): Promise<void> {
+        return this.cryptoBackend?.importSessionKeys(streamId, keys)
     }
 
-    public async encryptAndShareMegolmSessions(
+    public async encryptAndShareGroupSessions(
         streamId: string,
-        sessions: MegolmSession[],
+        sessions: GroupEncryptionSession[],
         toDevices: UserDeviceCollection,
     ) {
         check(isDefined(this.cryptoBackend), "crypto backend isn't initialized")
@@ -1760,14 +1766,14 @@ export class Client
             throw new Error('crypto backend not initialized')
         }
         const cleartext = event.toJsonString()
-        return this.cryptoBackend.encryptMegolmEvent(streamId, cleartext)
+        return this.cryptoBackend.encryptGroupEvent(streamId, cleartext)
     }
 
     async encryptOlm(payload: Message, deviceKeys: UserDevice[]): Promise<Record<string, string>> {
         check(isDefined(this.cryptoBackend), 'crypto backend not initialized')
 
         // Don't encrypt to our own device
-        return this.cryptoBackend.encryptOlm(
+        return this.cryptoBackend.encryptWithDeviceKeys(
             payload.toJsonString(),
             deviceKeys.filter((key) => key.deviceKey !== this.userDeviceKey().deviceKey),
         )
@@ -1776,8 +1782,8 @@ export class Client
     // Used during testing
     userDeviceKey(): UserDevice {
         return {
-            deviceKey: this.olmDevice.deviceCurve25519Key!,
-            fallbackKey: this.olmDevice.fallbackKey.key,
+            deviceKey: this.encryptionDevice.deviceCurve25519Key!,
+            fallbackKey: this.encryptionDevice.fallbackKey.key,
         }
     }
 

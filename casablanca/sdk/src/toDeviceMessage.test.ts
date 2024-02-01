@@ -56,7 +56,7 @@ describe('toDeviceMessageTest', () => {
 
         // bob sends a message to Alice's device.
         await expect(
-            bobsClient.encryptAndShareMegolmSessions(
+            bobsClient.encryptAndShareGroupSessions(
                 '200',
                 [
                     {

@@ -737,7 +737,7 @@ describe('clientTest', () => {
         expect(Object.keys(fallbackKeys)).toContain(alicesUserId)
         expect(Object.keys(fallbackKeys).length).toEqual(1)
         expect(fallbackKeys[alicesUserId].map((k) => k.fallbackKey)).toContain(
-            Object.values(alicesClient.olmDevice.fallbackKey)[0],
+            Object.values(alicesClient.encryptionDevice.fallbackKey)[0],
         )
     })
 
@@ -799,7 +799,7 @@ describe('clientTest', () => {
 
         expect(knownDevices.length).toBe(1)
         expect(knownDevices[0].fallbackKey).toBe(
-            Object.values(alicesClient.olmDevice.fallbackKey)[0],
+            Object.values(alicesClient.encryptionDevice.fallbackKey)[0],
         )
     })
 

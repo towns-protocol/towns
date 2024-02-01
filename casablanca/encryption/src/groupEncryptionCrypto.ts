@@ -1,19 +1,19 @@
 import { EncryptedData, Err } from '@river/proto'
-import { MEGOLM_ALGORITHM, MegolmSession, OLM_ALGORITHM, UserDevice } from './olmLib'
+import { MEGOLM_ALGORITHM, GroupEncryptionSession, OLM_ALGORITHM, UserDevice } from './olmLib'
 import { recoverPublicKey, signSync, verify } from 'ethereum-cryptography/secp256k1'
 
 import { CryptoStore } from './cryptoStore'
-import { IMegolmClient } from './base'
-import { MegolmDecryption } from './megolmDecryption'
-import { MegolmEncryption } from './megolmEncryption'
-import { OlmDevice } from './olmDevice'
-import { OlmMegolmDelegate } from './olm'
+import { IGroupEncryptionClient } from './base'
+import { GroupDecryption } from './groupDecryption'
+import { GroupEncryption } from './groupEncryption'
+import { EncryptionDevice } from './encryptionDevice'
+import { EncryptionDelegate } from './encryptionDelegate'
 import { assertBytes } from 'ethereum-cryptography/utils'
 import { bin_fromHexString, check, dlog } from '@river/dlog'
 import { ethers } from 'ethers'
 import { keccak256 } from 'ethereum-cryptography/keccak'
 
-const log = dlog('csb:megolm:crypto')
+const log = dlog('csb:encryption:groupEncryptionCrypto')
 
 // Create hash header as Uint8Array from string 'CSBLANCA'
 const HASH_HEADER = new Uint8Array([67, 83, 66, 76, 65, 78, 67, 65])
@@ -121,35 +121,35 @@ export async function makeOldTownsDelegateSig(
     return bin_fromHexString(await primaryWallet.signMessage(devicePubKey))
 }
 
-export class MegolmCrypto {
-    private olmDelegate: OlmMegolmDelegate | undefined
+export class GroupEncryptionCrypto {
+    private delegate: EncryptionDelegate | undefined
 
     public readonly supportedAlgorithms: string[]
-    public readonly olmDevice: OlmDevice
-    public readonly megolmEncryption: MegolmEncryption
-    public readonly megolmDecryption: MegolmDecryption
+    public readonly encryptionDevice: EncryptionDevice
+    public readonly groupEncryption: GroupEncryption
+    public readonly groupDecryption: GroupDecryption
     public readonly cryptoStore: CryptoStore
     public globalBlacklistUnverifiedDevices = false
     public globalErrorOnUnknownDevices = true
 
-    public constructor(client: IMegolmClient, cryptoStore: CryptoStore) {
+    public constructor(client: IGroupEncryptionClient, cryptoStore: CryptoStore) {
         this.cryptoStore = cryptoStore
         // initialize Olm library
-        this.olmDelegate = new OlmMegolmDelegate()
+        this.delegate = new EncryptionDelegate()
         // olm lib returns a Promise<void> on init, hence the catch if it rejects
-        this.olmDelegate.init().catch((e) => {
+        this.delegate.init().catch((e) => {
             log('error initializing olm', e)
             throw e
         })
-        this.olmDevice = new OlmDevice(this.olmDelegate, cryptoStore)
+        this.encryptionDevice = new EncryptionDevice(this.delegate, cryptoStore)
         this.supportedAlgorithms = [OLM_ALGORITHM, MEGOLM_ALGORITHM]
 
-        this.megolmEncryption = new MegolmEncryption({
-            olmDevice: this.olmDevice,
+        this.groupEncryption = new GroupEncryption({
+            device: this.encryptionDevice,
             client,
         })
-        this.megolmDecryption = new MegolmDecryption({
-            olmDevice: this.olmDevice,
+        this.groupDecryption = new GroupDecryption({
+            device: this.encryptionDevice,
         })
     }
 
@@ -158,31 +158,34 @@ export class MegolmCrypto {
      */
     public async init(): Promise<void> {
         // initialize deviceKey and fallbackKey
-        await this.olmDevice.init()
+        await this.encryptionDevice.init()
 
         // build device keys to upload
-        if (!this.olmDevice.deviceCurve25519Key || !this.olmDevice.deviceDoNotUseKey) {
+        if (
+            !this.encryptionDevice.deviceCurve25519Key ||
+            !this.encryptionDevice.deviceDoNotUseKey
+        ) {
             log('device keys not initialized, cannot encrypt event')
         }
     }
 
     /**
-     * Encrypt an event using Olm
+     * Encrypt an event using the device keys
      *
-     * @param payload -  string to be encrypted with Olm
+     * @param payload -  string to be encrypted
      * @param deviceKeys - recipients to encrypt message for
      *
      * @returns Promise which resolves when the event has been
      *     encrypted, or null if nothing was needed
      */
-    public async encryptOlm(
+    public async encryptWithDeviceKeys(
         payload: string,
         deviceKeys: UserDevice[],
     ): Promise<Record<string, string>> {
         const ciphertextRecord: Record<string, string> = {}
         await Promise.all(
             deviceKeys.map(async (deviceKey) => {
-                const encrypted = await this.olmDevice.encryptUsingFallbackKey(
+                const encrypted = await this.encryptionDevice.encryptUsingFallbackKey(
                     deviceKey.deviceKey,
                     deviceKey.fallbackKey,
                     payload,
@@ -195,47 +198,53 @@ export class MegolmCrypto {
     }
 
     /**
-     * Decrypt a received event using Olm
+     * Decrypt a received event using the device key
      *
      * @returns a promise which resolves once we have finished decrypting.
      * Rejects with an error if there is a problem decrypting the event.
      */
-    public async decryptOlmEvent(ciphertext: string, senderDeviceKey: string): Promise<string> {
-        return await this.olmDevice.decryptMessage(ciphertext, senderDeviceKey)
+    public async decryptWithDeviceKey(
+        ciphertext: string,
+        senderDeviceKey: string,
+    ): Promise<string> {
+        return await this.encryptionDevice.decryptMessage(ciphertext, senderDeviceKey)
     }
 
     /**
-     * Encrypt an event using Megolm
+     * Encrypt an event using group encryption algorithm
      *
      * @returns Promise which resolves when the event has been
      *     encrypted, or null if nothing was needed
      */
-    public async encryptMegolmEvent(streamId: string, payload: string): Promise<EncryptedData> {
-        return this.megolmEncryption.encrypt(streamId, payload)
+    public async encryptGroupEvent(streamId: string, payload: string): Promise<EncryptedData> {
+        return this.groupEncryption.encrypt(streamId, payload)
     }
     /**
-     * Decrypt a received event using Megolm
+     * Decrypt a received event using group encryption algorithm
      *
      * @returns a promise which resolves once we have finished decrypting.
      * Rejects with an error if there is a problem decrypting the event.
      */
-    public async decryptMegolmEvent(streamId: string, content: EncryptedData) {
-        return this.megolmDecryption.decrypt(streamId, content)
+    public async decryptGroupEvent(streamId: string, content: EncryptedData) {
+        return this.groupDecryption.decrypt(streamId, content)
     }
 
     /**
-     * Import a list of Megolm room keys previously exported by exportRoomKeys
+     * Import a list of group session keys previously exported by exportRoomKeys
      *
      * @param streamId - the id of the stream the keys are for
      * @param keys - a list of session export objects
      * @returns a promise which resolves once the keys have been imported
      */
-    public async importRoomKeys(streamId: string, keys: MegolmSession[]): Promise<void> {
-        await this.cryptoStore.withMegolmSessions(async () =>
+    public async importSessionKeys(
+        streamId: string,
+        keys: GroupEncryptionSession[],
+    ): Promise<void> {
+        await this.cryptoStore.withGroupSessions(async () =>
             Promise.all(
                 keys.map(async (key) => {
                     try {
-                        await this.megolmDecryption.importStreamKey(streamId, key)
+                        await this.groupDecryption.importStreamKey(streamId, key)
                     } catch {
                         log(`failed to import key`)
                     }

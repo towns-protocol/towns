@@ -1,12 +1,13 @@
-import { OlmMegolmDelegate } from '../olm'
+import { EncryptionDelegate } from '../encryptionDelegate'
 import debug from 'debug'
+import { InboundGroupSession, OutboundGroupSession } from '../encryptionTypes'
 
 const log = debug('test')
 
-describe('Megolm Encryption Protocol', () => {
-    let aliceSession: Olm.OutboundGroupSession | undefined
-    let bobSession: Olm.InboundGroupSession | undefined
-    let eveSession: Olm.InboundGroupSession | undefined
+describe('Group Encryption Protocol', () => {
+    let aliceSession: OutboundGroupSession | undefined
+    let bobSession: InboundGroupSession | undefined
+    let eveSession: InboundGroupSession | undefined
 
     afterAll(async () => {
         if (aliceSession !== undefined) {
@@ -26,9 +27,9 @@ describe('Megolm Encryption Protocol', () => {
     })
 
     test('noInitShouldFail', async () => {
-        const OlmDelegate = new OlmMegolmDelegate()
+        const delegate = new EncryptionDelegate()
         try {
-            aliceSession = OlmDelegate.createOutboundGroupSession()
+            aliceSession = delegate.createOutboundGroupSession()
         } catch (e) {
             expect((e as Error).message).toEqual('olm not initialized')
         }
@@ -36,11 +37,11 @@ describe('Megolm Encryption Protocol', () => {
     })
 
     test('shouldEncryptAndDecryptGroup', async () => {
-        const OlmDelegate = new OlmMegolmDelegate()
-        await OlmDelegate.init()
-        aliceSession = OlmDelegate.createOutboundGroupSession()
-        bobSession = OlmDelegate.createInboundGroupSession()
-        eveSession = OlmDelegate.createInboundGroupSession()
+        const delegate = new EncryptionDelegate()
+        await delegate.init()
+        aliceSession = delegate.createOutboundGroupSession()
+        bobSession = delegate.createInboundGroupSession()
+        eveSession = delegate.createInboundGroupSession()
 
         aliceSession.create()
         expect(aliceSession.message_index()).toEqual(0)
@@ -75,18 +76,18 @@ describe('Megolm Encryption Protocol', () => {
     })
 
     test('shouldEncryptAndDecryptGroupMultipleInit', async () => {
-        const OlmDelegate = new OlmMegolmDelegate()
-        await OlmDelegate.init()
-        aliceSession = OlmDelegate.createOutboundGroupSession()
-        bobSession = OlmDelegate.createInboundGroupSession()
-        eveSession = OlmDelegate.createInboundGroupSession()
+        const delegate = new EncryptionDelegate()
+        await delegate.init()
+        aliceSession = delegate.createOutboundGroupSession()
+        bobSession = delegate.createInboundGroupSession()
+        eveSession = delegate.createInboundGroupSession()
 
         aliceSession.create()
         expect(aliceSession.message_index()).toEqual(0)
         bobSession.create(aliceSession.session_key())
         eveSession.create(aliceSession.session_key())
 
-        await OlmDelegate.init()
+        await delegate.init()
         let TEST_TEXT = 'alice test text'
         let encrypted = aliceSession.encrypt(TEST_TEXT)
         let decrypted = bobSession.decrypt(encrypted)
@@ -94,7 +95,7 @@ describe('Megolm Encryption Protocol', () => {
         expect(decrypted.plaintext).toEqual(TEST_TEXT)
         expect(decrypted.message_index).toEqual(0)
 
-        await OlmDelegate.init()
+        await delegate.init()
         TEST_TEXT = 'alice test text: ='
         encrypted = aliceSession.encrypt(TEST_TEXT)
         decrypted = bobSession.decrypt(encrypted)
@@ -102,7 +103,7 @@ describe('Megolm Encryption Protocol', () => {
         expect(decrypted.plaintext).toEqual(TEST_TEXT)
         expect(decrypted.message_index).toEqual(1)
 
-        await OlmDelegate.init()
+        await delegate.init()
         TEST_TEXT = '!'
         encrypted = aliceSession.encrypt(TEST_TEXT)
         decrypted = bobSession.decrypt(encrypted)
@@ -110,7 +111,7 @@ describe('Megolm Encryption Protocol', () => {
         expect(decrypted.plaintext).toEqual(TEST_TEXT)
         expect(decrypted.message_index).toEqual(2)
 
-        await OlmDelegate.init()
+        await delegate.init()
         decrypted = eveSession.decrypt(encrypted)
         log('eve decrypted ciphertext: ', decrypted)
         expect(decrypted.plaintext).toEqual(TEST_TEXT)

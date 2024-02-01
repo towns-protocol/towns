@@ -6,7 +6,7 @@ import { Client } from './client'
 import { EncryptedContent } from './encryptedContentTypes'
 import { shortenHexString, dlog, dlogError, DLogger, check } from '@river/dlog'
 import { isDefined } from './check'
-import { MEGOLM_ALGORITHM, MegolmSession, UserDevice } from '@river/encryption'
+import { MEGOLM_ALGORITHM, GroupEncryptionSession, UserDevice } from '@river/encryption'
 import { SessionKeys, UserToDevicePayload_MegolmSessions } from '@river/proto'
 import {
     KeySolicitationContent,
@@ -335,7 +335,7 @@ export class DecryptionExtensions extends (EventEmitter as new () => TypedEmitte
             return
         }
         // decrypt the message
-        const cleartext = await this.client.decryptOlmEvent(ciphertext, session.senderKey)
+        const cleartext = await this.client.decryptWithDeviceKey(ciphertext, session.senderKey)
         const sessionKeys = SessionKeys.fromJsonString(cleartext)
         check(sessionKeys.keys.length === session.sessionIds.length, 'bad sessionKeys')
         // make megolm sessions
@@ -352,7 +352,7 @@ export class DecryptionExtensions extends (EventEmitter as new () => TypedEmitte
             'count: ',
             sessions.length,
         )
-        await this.client.importRoomKeys(session.streamId, sessions)
+        await this.client.importSessionKeys(session.streamId, sessions)
         // re-enqueue any decryption failures with these ids
         for (const session of sessions) {
             if (this.decryptionFailures[session.streamId]?.[session.sessionId]) {
@@ -397,7 +397,7 @@ export class DecryptionExtensions extends (EventEmitter as new () => TypedEmitte
             } else {
                 // do the work to decrypt the event
                 this.log.debug('decrypting content')
-                await this.client.decryptMegolmEvent(
+                await this.client.decryptGroupEvent(
                     item.streamId,
                     item.eventId,
                     item.encryptedContent,
@@ -437,7 +437,7 @@ export class DecryptionExtensions extends (EventEmitter as new () => TypedEmitte
         const item = retryItem.event
         try {
             this.log.debug('retrying decryption', item)
-            await this.client.decryptMegolmEvent(item.streamId, item.eventId, item.encryptedContent)
+            await this.client.decryptGroupEvent(item.streamId, item.eventId, item.encryptedContent)
         } catch (err) {
             const sessionNotFound = isSessionNotFoundError(err)
             this.log.debug('failed to decrypt on retry', err, 'sessionNotFound', sessionNotFound)
@@ -502,7 +502,9 @@ export class DecryptionExtensions extends (EventEmitter as new () => TypedEmitte
             return
         }
         const knownSessionIds =
-            (await this.client.cryptoBackend?.olmDevice?.getInboundGroupSessionIds(streamId)) ?? []
+            (await this.client.cryptoBackend?.encryptionDevice?.getInboundGroupSessionIds(
+                streamId,
+            )) ?? []
 
         const isNewDevice = knownSessionIds.length === 0
 
@@ -533,7 +535,9 @@ export class DecryptionExtensions extends (EventEmitter as new () => TypedEmitte
         const stream = this.client.stream(streamId)
         check(isDefined(stream), 'stream not found')
         const knownSessionIds =
-            (await this.client.cryptoBackend?.olmDevice.getInboundGroupSessionIds(streamId)) ?? []
+            (await this.client.cryptoBackend?.encryptionDevice.getInboundGroupSessionIds(
+                streamId,
+            )) ?? []
 
         knownSessionIds.sort()
         const requestedSessionIds = new Set(item.solicitation.sessionIds.sort())
@@ -562,9 +566,9 @@ export class DecryptionExtensions extends (EventEmitter as new () => TypedEmitte
                 return
             }
         }
-        const sessions: MegolmSession[] = []
+        const sessions: GroupEncryptionSession[] = []
         for (const sessionId of replySessionIds) {
-            const megolmSession = await this.client.olmDevice.exportInboundGroupSession(
+            const megolmSession = await this.client.encryptionDevice.exportInboundGroupSession(
                 streamId,
                 sessionId,
             )
@@ -593,7 +597,7 @@ export class DecryptionExtensions extends (EventEmitter as new () => TypedEmitte
 
         const chunked = chunk(sessions, 100)
         for (const chunk of chunked) {
-            await this.client.encryptAndShareMegolmSessions(streamId, chunk, {
+            await this.client.encryptAndShareGroupSessions(streamId, chunk, {
                 [item.fromUserId]: [
                     {
                         deviceKey: item.solicitation.deviceKey,

@@ -28,7 +28,8 @@ describe('clientCrypto', () => {
         bobsClient.startSync()
         await expect(alicesClient.initializeUser()).toResolve()
         expect(
-            alicesClient.olmDevice.deviceCurve25519Key !== bobsClient.olmDevice.deviceCurve25519Key,
+            alicesClient.encryptionDevice.deviceCurve25519Key !==
+                bobsClient.encryptionDevice.deviceCurve25519Key,
         ).toBe(true)
         alicesClient.startSync()
         const keys = new SessionKeys({ keys: ['hi!'] })
@@ -36,7 +37,7 @@ describe('clientCrypto', () => {
         const envelope = await alicesClient.encryptOlm(keys, [bobsClient.userDeviceKey()])
         expect(envelope[bobsClient.userDeviceKey().deviceKey]).toBeDefined()
         // ensure olm session with bob
-        const clear = await bobsClient.decryptOlmEvent(
+        const clear = await bobsClient.decryptWithDeviceKey(
             envelope[bobsClient.userDeviceKey().deviceKey],
             alicesClient.userDeviceKey().deviceKey,
         )
@@ -51,7 +52,8 @@ describe('clientCrypto', () => {
         bobsClient.startSync()
         await expect(alicesClient.initializeUser()).toResolve()
         expect(
-            alicesClient.olmDevice.deviceCurve25519Key !== bobsClient.olmDevice.deviceCurve25519Key,
+            alicesClient.encryptionDevice.deviceCurve25519Key !==
+                bobsClient.encryptionDevice.deviceCurve25519Key,
         ).toBe(true)
         alicesClient.startSync()
 
@@ -61,7 +63,7 @@ describe('clientCrypto', () => {
             const envelope = await alicesClient.encryptOlm(keys, [bobsClient.userDeviceKey()])
             expect(envelope[bobsClient.userDeviceKey().deviceKey]).toBeDefined()
             // ensure olm session with bob
-            const clear = await bobsClient.decryptOlmEvent(
+            const clear = await bobsClient.decryptWithDeviceKey(
                 envelope[bobsClient.userDeviceKey().deviceKey],
                 alicesClient.userDeviceKey().deviceKey,
             )

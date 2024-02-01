@@ -26,7 +26,6 @@ const config: JestConfigWithTsJest = {
         'bn.js': 'bn.js',
         'hash.js': 'hash.js',
         '(.+)\\.js': '$1',
-        // need for waterproof/olm
         '\\.(wasm)$': require.resolve('./src/mock-wasm-file.js'),
     },
     collectCoverage: true,

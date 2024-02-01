@@ -31,7 +31,7 @@ export interface UserDeviceCollection {
     [userId: string]: UserDevice[]
 }
 
-export interface MegolmSession {
+export interface GroupEncryptionSession {
     streamId: string
     sessionId: string
     sessionKey: string

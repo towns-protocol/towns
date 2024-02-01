@@ -1,22 +1,23 @@
 /* eslint-disable @typescript-eslint/no-unsafe-member-access */
-import { OlmMegolmDelegate } from '../olm'
+import { EncryptionDelegate } from '../encryptionDelegate'
 import debug from 'debug'
+import { Account, Session } from '../encryptionTypes'
 
 const log = debug('test')
 
-describe('Olm Encryption Protocol', () => {
-    let aliceAccount: Olm.Account | undefined
-    let bobAccount: Olm.Account | undefined
-    let aliceSession: Olm.Session | undefined
-    let bobSession: Olm.Session | undefined
+describe('Encryption Protocol', () => {
+    let aliceAccount: Account | undefined
+    let bobAccount: Account | undefined
+    let aliceSession: Session | undefined
+    let bobSession: Session | undefined
 
     beforeAll(async () => {
-        const OlmDelegate = new OlmMegolmDelegate()
-        await OlmDelegate.init()
-        aliceAccount = OlmDelegate.createAccount()
-        bobAccount = OlmDelegate.createAccount()
-        aliceSession = OlmDelegate.createSession()
-        bobSession = OlmDelegate.createSession()
+        const delegate = new EncryptionDelegate()
+        await delegate.init()
+        aliceAccount = delegate.createAccount()
+        bobAccount = delegate.createAccount()
+        aliceSession = delegate.createSession()
+        bobSession = delegate.createSession()
     })
 
     afterAll(async () => {
@@ -48,12 +49,12 @@ describe('Olm Encryption Protocol', () => {
             aliceSession === undefined ||
             bobSession === undefined
         ) {
-            throw new Error('Olm objects not initialized')
+            throw new Error('Account and Session objects not initialized')
         }
         aliceAccount.create()
         bobAccount.create()
 
-        // public one time key for pre-key message generation to establish olm session
+        // public one time key for pre-key message generation to establish the session
         bobAccount.generate_one_time_keys(2)
         const bobOneTimeKeys = JSON.parse(bobAccount.one_time_keys()).curve25519
         log('bobOneTimeKeys', bobOneTimeKeys)
@@ -61,13 +62,13 @@ describe('Olm Encryption Protocol', () => {
 
         const bobIdKey = JSON.parse(bobAccount?.identity_keys()).curve25519
         const otkId = Object.keys(bobOneTimeKeys)[0]
-        // create outbound olm sessions using bob's one time key
+        // create outbound sessions using bob's one time key
         aliceSession.create_outbound(aliceAccount, bobIdKey, bobOneTimeKeys[otkId])
         let TEST_TEXT = 'test message for bob'
         let encrypted = aliceSession.encrypt(TEST_TEXT)
         expect(encrypted.type).toEqual(0)
 
-        // create inbound olm sessions using own account and encrypted body from alice
+        // create inbound sessions using own account and encrypted body from alice
         bobSession.create_inbound(bobAccount, encrypted.body)
         bobAccount.remove_one_time_keys(bobSession)
 
@@ -90,12 +91,12 @@ describe('Olm Encryption Protocol', () => {
             aliceSession === undefined ||
             bobSession === undefined
         ) {
-            throw new Error('Olm objects not initialized')
+            throw new Error('Account and session objects not initialized')
         }
         aliceAccount.create()
         bobAccount.create()
 
-        // public fallback key for pre-key message generation to establish olm session
+        // public fallback key for pre-key message generation to establish the session
         bobAccount.generate_fallback_key()
         const bobFallbackKey = JSON.parse(bobAccount.unpublished_fallback_key()).curve25519
         log('bobFallbackKeys', bobFallbackKey)
@@ -103,14 +104,14 @@ describe('Olm Encryption Protocol', () => {
         // eslint-disable-next-line @typescript-eslint/no-unsafe-member-access
         const bobIdKey = JSON.parse(bobAccount?.identity_keys()).curve25519
         const otkId = Object.keys(bobFallbackKey)[0]
-        // create outbound olm sessions using bob's fallback key
+        // create outbound sessions using bob's fallback key
         aliceSession.create_outbound(aliceAccount, bobIdKey, bobFallbackKey[otkId])
         let TEST_TEXT = 'test message for bob'
         let encrypted = aliceSession.encrypt(TEST_TEXT)
         expect(encrypted.type).toEqual(0)
         log('aliceSession sessionId', aliceSession.session_id())
 
-        // create inbound olm sessions using own account and encrypted body from alice
+        // create inbound sessions using own account and encrypted body from alice
         bobSession.create_inbound(bobAccount, encrypted.body)
 
         let decrypted = bobSession.decrypt(encrypted.type, encrypted.body)
@@ -143,12 +144,12 @@ describe('Olm Encryption Protocol', () => {
             aliceSession === undefined ||
             bobSession === undefined
         ) {
-            throw new Error('Olm objects not initialized')
+            throw new Error('Account and session objects not initialized')
         }
         aliceAccount.create()
         bobAccount.create()
 
-        // public fallback key for pre-key message generation to establish olm session
+        // public fallback key for pre-key message generation to establish the session
         aliceAccount.generate_fallback_key()
         const aliceFallbackKey = JSON.parse(aliceAccount.unpublished_fallback_key()).curve25519
         log('aliceFallbackKey', aliceFallbackKey)
@@ -156,14 +157,14 @@ describe('Olm Encryption Protocol', () => {
         const bobIdKey = JSON.parse(bobAccount?.identity_keys()).curve25519
         const aliceIdKey = JSON.parse(aliceAccount?.identity_keys()).curve25519
         const otkId = Object.keys(aliceFallbackKey)[0]
-        // create outbound olm sessions using alice's fallback key (should fail)
+        // create outbound sessions using alice's fallback key (should fail)
         aliceSession.create_outbound(aliceAccount, bobIdKey, aliceFallbackKey[otkId])
         const TEST_TEXT = 'test message for bob'
         const encrypted = aliceSession.encrypt(TEST_TEXT)
         expect(encrypted.type).toEqual(0)
         log('aliceSession sessionId', aliceSession.session_id())
 
-        // create inbound olm sessions using own account and encrypted body from alice
+        // create inbound sessions using own account and encrypted body from alice
         // this should fail as outbound session was not created using bob's fallback key
         try {
             bobSession.create_inbound_from(bobAccount, aliceIdKey, encrypted.body)

@@ -3,7 +3,7 @@ export interface AccountRecord {
     accountPickle: string
 }
 
-export interface MegolmSessionRecord {
+export interface GroupSessionRecord {
     sessionId: string
     session: string
     streamId: string

@@ -1,18 +1,18 @@
-import { OlmMegolmDelegate } from '../olm'
+import { EncryptionDelegate } from '../encryptionDelegate'
 
-describe('MegolmPlayground', () => {
-    const OlmDelegate = new OlmMegolmDelegate()
+describe('EncryptionDelegate with group session', () => {
+    const delegate = new EncryptionDelegate()
 
     beforeEach(async () => {
-        await OlmDelegate.init()
+        await delegate.init()
     })
 
     test('decrypt messages out of order', async () => {
-        const outboundSession = OlmDelegate.createOutboundGroupSession()
+        const outboundSession = delegate.createOutboundGroupSession()
         outboundSession.create()
 
         const exportedSession = outboundSession.session_key()
-        const inboundSession = OlmDelegate.createInboundGroupSession()
+        const inboundSession = delegate.createInboundGroupSession()
         inboundSession.create(exportedSession)
 
         const encrypted1 = outboundSession.encrypt('message 1')

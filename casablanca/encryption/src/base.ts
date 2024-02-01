@@ -1,12 +1,12 @@
-import { MegolmSession, UserDeviceCollection } from './olmLib'
+import { GroupEncryptionSession, UserDeviceCollection } from './olmLib'
 
-import { OlmDevice } from './olmDevice'
+import { EncryptionDevice } from './encryptionDevice'
 
-export interface IMegolmClient {
+export interface IGroupEncryptionClient {
     downloadUserDeviceInfo(userIds: string[], forceDownload: boolean): Promise<UserDeviceCollection>
-    encryptAndShareMegolmSessions(
+    encryptAndShareGroupSessions(
         streamId: string,
-        sessions: MegolmSession[],
+        sessions: GroupEncryptionSession[],
         devicesInRoom: UserDeviceCollection,
     ): Promise<void>
     getDevicesInStream(streamId: string): Promise<UserDeviceCollection>
@@ -14,27 +14,27 @@ export interface IMegolmClient {
 
 export interface IDecryptionParams {
     /** olm.js wrapper */
-    olmDevice: OlmDevice
+    device: EncryptionDevice
 }
 
 export interface IEncryptionParams {
-    client: IMegolmClient
+    client: IGroupEncryptionClient
     /** olm.js wrapper */
-    olmDevice: OlmDevice
+    device: EncryptionDevice
 }
 
 /**
  * base type for encryption implementations
  */
 export abstract class EncryptionAlgorithm implements IEncryptionParams {
-    public readonly olmDevice: OlmDevice
-    public readonly client: IMegolmClient
+    public readonly device: EncryptionDevice
+    public readonly client: IGroupEncryptionClient
 
     /**
      * @param params - parameters
      */
     public constructor(params: IEncryptionParams) {
-        this.olmDevice = params.olmDevice
+        this.device = params.device
         this.client = params.client
     }
 }
@@ -43,10 +43,10 @@ export abstract class EncryptionAlgorithm implements IEncryptionParams {
  * base type for decryption implementations
  */
 export abstract class DecryptionAlgorithm implements IDecryptionParams {
-    public readonly olmDevice: OlmDevice
+    public readonly device: EncryptionDevice
 
     public constructor(params: IDecryptionParams) {
-        this.olmDevice = params.olmDevice
+        this.device = params.device
     }
 }
 

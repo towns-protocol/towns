@@ -1,14 +1,14 @@
-import { AccountRecord, MegolmSessionRecord, UserDeviceRecord } from './storeTypes'
+import { AccountRecord, GroupSessionRecord, UserDeviceRecord } from './storeTypes'
 import Dexie, { Table } from 'dexie'
 
-import { InboundGroupSessionData } from './olmDevice'
+import { InboundGroupSessionData } from './encryptionDevice'
 import { UserDevice } from './olmLib'
 
 const DEFAULT_USER_DEVICE_EXPIRATION_TIME_MS = 15 * 60 * 1000 // 15 minutes todo increase to like 10 days or something https://github.com/HereNotThere/harmony/pull/4222#issuecomment-1822935596
 
 export class CryptoStore extends Dexie {
     account!: Table<AccountRecord>
-    outboundGroupSessions!: Table<MegolmSessionRecord>
+    outboundGroupSessions!: Table<GroupSessionRecord>
     inboundGroupSessions!: Table<InboundGroupSessionData & { streamId: string; sessionId: string }>
     devices!: Table<UserDeviceRecord>
     userId: string
@@ -92,7 +92,7 @@ export class CryptoStore extends Dexie {
         return await this.transaction('rw', this.account, fn)
     }
 
-    async withMegolmSessions<T>(fn: () => Promise<T>): Promise<T> {
+    async withGroupSessions<T>(fn: () => Promise<T>): Promise<T> {
         return await this.transaction(
             'rw',
             this.outboundGroupSessions,

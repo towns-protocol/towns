@@ -5,9 +5,14 @@
 import { bin_fromHexString, bin_toHexString, dlog } from '@river/dlog'
 import { getPublicKey, utils } from 'ethereum-cryptography/secp256k1'
 import { readFileSync, writeFileSync } from 'fs'
-import { townsHash, townsRecoverPubKey, townsSign, townsVerifySignature } from '../megolmCrypto'
+import {
+    townsHash,
+    townsRecoverPubKey,
+    townsSign,
+    townsVerifySignature,
+} from '../groupEncryptionCrypto'
 
-const log = dlog('test:crypto')
+const log = dlog('test:encryption')
 
 // To generate test data run as:
 //

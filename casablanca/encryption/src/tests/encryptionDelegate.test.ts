@@ -1,18 +1,20 @@
-import { OlmMegolmDelegate } from '../olm'
+import { EncryptionDelegate } from '../encryptionDelegate'
+import { Account } from '../encryptionTypes'
 
-describe('OlmPlayground', () => {
-    const OlmDelegate = new OlmMegolmDelegate()
-    let bob: Olm.Account
-    let alice: Olm.Account
+describe('EncrytionDelegate', () => {
+    const delegate = new EncryptionDelegate()
+    let bob: Account
+    let alice: Account
 
     beforeEach(async () => {
-        await OlmDelegate.init()
-        bob = OlmDelegate.createAccount()
-        alice = OlmDelegate.createAccount()
+        await delegate.init()
+        bob = delegate.createAccount()
+        alice = delegate.createAccount()
         bob.create()
         alice.create()
     })
-    function getFallbackKey(account: Olm.Account): string {
+
+    function getFallbackKey(account: Account): string {
         // eslint-disable-next-line @typescript-eslint/no-unsafe-member-access
         return Object.values(
             // eslint-disable-next-line @typescript-eslint/no-unsafe-member-access
@@ -20,7 +22,7 @@ describe('OlmPlayground', () => {
         )[0] as string
     }
 
-    function getIdentityKey(account: Olm.Account): string {
+    function getIdentityKey(account: Account): string {
         // eslint-disable-next-line @typescript-eslint/no-unsafe-return, @typescript-eslint/no-unsafe-member-access
         return JSON.parse(account.identity_keys()).curve25519
     }
@@ -29,11 +31,11 @@ describe('OlmPlayground', () => {
         alice.generate_fallback_key()
         const aliceFallbackKey = getFallbackKey(alice)
         const aliceIdentityKey = getIdentityKey(alice)
-        const bobToAlice = OlmDelegate.createSession()
+        const bobToAlice = delegate.createSession()
         bobToAlice.create_outbound(bob, aliceIdentityKey, aliceFallbackKey)
 
         const encrypted = bobToAlice.encrypt('bob to alice 1')
-        const aliceToBob = OlmDelegate.createSession()
+        const aliceToBob = delegate.createSession()
         aliceToBob.create_inbound(alice, encrypted.body)
         const decrypted = aliceToBob.decrypt(encrypted.type, encrypted.body)
         expect(decrypted).toEqual('bob to alice 1')
@@ -47,15 +49,15 @@ describe('OlmPlayground', () => {
         alice.generate_fallback_key()
         const aliceFallbackKey = getFallbackKey(alice)
         const aliceIdentityKey = getIdentityKey(alice)
-        const bobToAlice = OlmDelegate.createSession()
+        const bobToAlice = delegate.createSession()
         bobToAlice.create_outbound(bob, aliceIdentityKey, aliceFallbackKey)
 
         const encrypted = bobToAlice.encrypt('bob to alice 1')
-        const aliceToBob = OlmDelegate.createSession()
+        const aliceToBob = delegate.createSession()
         aliceToBob.create_inbound(alice, encrypted.body)
         expect(aliceToBob.decrypt(encrypted.type, encrypted.body)).toEqual('bob to alice 1')
 
-        const aliceToBob2 = OlmDelegate.createSession()
+        const aliceToBob2 = delegate.createSession()
         aliceToBob2.create_inbound(alice, encrypted.body)
         expect(aliceToBob2.decrypt(encrypted.type, encrypted.body)).toEqual('bob to alice 1')
     })
@@ -64,11 +66,11 @@ describe('OlmPlayground', () => {
         alice.generate_fallback_key()
         const aliceFallbackKey = getFallbackKey(alice)
         const aliceIdentityKey = getIdentityKey(alice)
-        const bobToAlice = OlmDelegate.createSession()
+        const bobToAlice = delegate.createSession()
         bobToAlice.create_outbound(bob, aliceIdentityKey, aliceFallbackKey)
 
         const encrypted = bobToAlice.encrypt('bob to alice 1')
-        const aliceToBob = OlmDelegate.createSession()
+        const aliceToBob = delegate.createSession()
         aliceToBob.create_inbound(alice, encrypted.body)
         expect(aliceToBob.decrypt(encrypted.type, encrypted.body)).toEqual('bob to alice 1')
         expect(() => aliceToBob.decrypt(encrypted.type, encrypted.body)).toThrow()
@@ -78,13 +80,13 @@ describe('OlmPlayground', () => {
         alice.generate_fallback_key()
         const aliceFallbackKey = getFallbackKey(alice)
         const aliceIdentityKey = getIdentityKey(alice)
-        const bobToAlice = OlmDelegate.createSession()
+        const bobToAlice = delegate.createSession()
         bobToAlice.create_outbound(bob, aliceIdentityKey, aliceFallbackKey)
 
         const encrypted1 = bobToAlice.encrypt('bob to alice 1')
         const encrypted2 = bobToAlice.encrypt('bob to alice 2')
 
-        const aliceToBob = OlmDelegate.createSession()
+        const aliceToBob = delegate.createSession()
         aliceToBob.create_inbound(alice, encrypted2.body)
         expect(aliceToBob.decrypt(encrypted2.type, encrypted2.body)).toEqual('bob to alice 2')
         expect(aliceToBob.decrypt(encrypted1.type, encrypted1.body)).toEqual('bob to alice 1')

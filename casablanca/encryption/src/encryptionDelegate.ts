@@ -7,10 +7,20 @@
 import olmWasm from '@matrix-org/olm/olm.wasm?url'
 import Olm from '@matrix-org/olm'
 import { isJest } from '@river/dlog'
+import {
+    Account,
+    InboundGroupSession,
+    OutboundGroupSession,
+    PkDecryption,
+    PkEncryption,
+    PkSigning,
+    Session,
+    Utility,
+} from './encryptionTypes'
 
 type OlmLib = typeof Olm
 
-export class OlmMegolmDelegate {
+export class EncryptionDelegate {
     readonly delegate: OlmLib
     public initialized = false
 
@@ -37,56 +47,56 @@ export class OlmMegolmDelegate {
         this.initialized = typeof this.delegate.get_library_version === 'function'
     }
 
-    public createAccount(): Olm.Account {
+    public createAccount(): Account {
         if (!this.initialized) {
             throw new Error('olm not initialized')
         }
         return new this.delegate.Account()
     }
 
-    public createSession(): Olm.Session {
+    public createSession(): Session {
         if (!this.initialized) {
             throw new Error('olm not initialized')
         }
         return new this.delegate.Session()
     }
 
-    public createInboundGroupSession(): Olm.InboundGroupSession {
+    public createInboundGroupSession(): InboundGroupSession {
         if (!this.initialized) {
             throw new Error('olm not initialized')
         }
         return new this.delegate.InboundGroupSession()
     }
 
-    public createOutboundGroupSession(): Olm.OutboundGroupSession {
+    public createOutboundGroupSession(): OutboundGroupSession {
         if (!this.initialized) {
             throw new Error('olm not initialized')
         }
         return new this.delegate.OutboundGroupSession()
     }
 
-    public createPkEncryption(): Olm.PkEncryption {
+    public createPkEncryption(): PkEncryption {
         if (!this.initialized) {
             throw new Error('olm not initialized')
         }
         return new this.delegate.PkEncryption()
     }
 
-    public createPkDecryption(): Olm.PkDecryption {
+    public createPkDecryption(): PkDecryption {
         if (!this.initialized) {
             throw new Error('olm not initialized')
         }
         return new this.delegate.PkDecryption()
     }
 
-    public createPkSigning(): Olm.PkSigning {
+    public createPkSigning(): PkSigning {
         if (!this.initialized) {
             throw new Error('olm not initialized')
         }
         return new this.delegate.PkSigning()
     }
 
-    public createOlmUtil(): Olm.Utility {
+    public createUtility(): Utility {
         if (!this.initialized) {
             throw new Error('olm not initialized')
         }
