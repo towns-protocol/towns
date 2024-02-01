@@ -173,7 +173,7 @@ func MakeSingleNodeRegistry(ctx context.Context, localNodeAddress string) *nodeR
 func (n *nodeRegistryImpl) GetStreamServiceClientForAddress(address string) (StreamServiceClient, error) {
 	node := n.nodes[address]
 	if node == nil {
-		return nil, RiverError(Err_UNKNOWN_NODE, "No record for node", "address", address)
+		return nil, RiverError(Err_UNKNOWN_NODE, "No record for node", "address", address, "nodes", n.nodes).Func("GetStreamServiceClientForAddress")
 	}
 
 	if node.local {
@@ -190,7 +190,9 @@ func (n *nodeRegistryImpl) GetStreamServiceClientForAddress(address string) (Str
 func (n *nodeRegistryImpl) GetNodeToNodeClientForAddress(address string) (NodeToNodeClient, error) {
 	node := n.nodes[address]
 	if node == nil {
-		return nil, RiverError(Err_UNKNOWN_NODE, "No record for node", "address", address)
+		return nil, RiverError(Err_UNKNOWN_NODE, "No record for node", "address", address, "nodes", n.nodes).Func(
+			"GetNodeToNodeClientForAddress",
+		)
 	}
 
 	if node.local {
@@ -206,7 +208,7 @@ func (n *nodeRegistryImpl) GetNodeToNodeClientForAddress(address string) (NodeTo
 func (n *nodeRegistryImpl) CheckNodeIsValid(address string) error {
 	node, ok := n.nodes[address]
 	if !ok || node == nil {
-		return RiverError(Err_UNKNOWN_NODE, "No record for node", "address", address)
+		return RiverError(Err_UNKNOWN_NODE, "No record for node", "address", address, "nodes", n.nodes).Func("CheckNodeIsValid")
 	}
 	return nil
 }

@@ -104,7 +104,7 @@ export class SyncedStreamsExtension {
         this.timeoutId = setTimeout(() => {
             this.inProgressTick = this.tick()
             this.inProgressTick
-                .catch((e) => this.log('ProcessTick Error', e))
+                .catch((e) => this.logError('ProcessTick Error', e))
                 .finally(() => {
                     this.timeoutId = undefined
                     this.checkStartTicking()
@@ -144,6 +144,7 @@ export class SyncedStreamsExtension {
                         this.loadedStreamCount++
                         this.numStreamsLoadedFromCache++
                     } catch (err) {
+                        this.logError('Error initializing stream', item.streamId, err)
                         this.nonCachedQueue.push(item)
                     }
                     this.emitClientStatus()
@@ -164,6 +165,7 @@ export class SyncedStreamsExtension {
                         await this.delegate.initStream(item.streamId, true)
                         this.numStreamsLoadedFromNetwork++
                     } catch (err) {
+                        this.logError('Error initializing stream2', item.streamId, err)
                         this.log('Error initializing stream', item.streamId)
                         this.numStreamsFailedToLoad++
                     }

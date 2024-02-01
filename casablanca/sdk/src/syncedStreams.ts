@@ -335,7 +335,7 @@ export class SyncedStreams {
                                 }
                             }
                         } catch (err) {
-                            this.log('syncLoop error', err)
+                            this.logError('syncLoop error', err)
                             await this.attemptRetry()
                         }
                     }
@@ -425,7 +425,7 @@ export class SyncedStreams {
                 }
             })
         } else {
-            this.log('attemptRetry: invalid state transition', this.syncState)
+            this.logError('attemptRetry: invalid state transition', this.syncState)
             // throw new Error('attemptRetry from invalid state')
         }
     }

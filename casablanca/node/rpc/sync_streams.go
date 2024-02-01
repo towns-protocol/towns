@@ -177,12 +177,12 @@ func (s *syncHandlerImpl) handleSyncRequest(
 
 	localCookies, remoteCookies := getLocalAndRemoteCookies(s.wallet.AddressStr, req.Msg.SyncPos)
 
-	for nodeAddr, cookies := range remoteCookies {
+	for nodeAddr, remoteCookie := range remoteCookies {
 		var r *syncNode
 		if r = sub.getRemoteNode(nodeAddr); r == nil {
 			stub, err := s.nodeRegistry.GetStreamServiceClientForAddress(nodeAddr)
 			if err != nil {
-				// TODO: Handle the case when node is no longer available.
+				// TODO: Handle the case when node is no longer available. HNT-4715
 				log.Error(
 					"SyncStreams:SyncHandlerV2.SyncStreams failed to get stream service client",
 					"syncId",
@@ -199,7 +199,7 @@ func (s *syncHandlerImpl) handleSyncRequest(
 				stub:            stub,
 			}
 		}
-		sub.addSyncNode(r, cookies)
+		sub.addSyncNode(r, remoteCookie)
 	}
 
 	if len(localCookies) > 0 {
