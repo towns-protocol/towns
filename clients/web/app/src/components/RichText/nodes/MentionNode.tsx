@@ -156,7 +156,7 @@ export class MentionNode extends TextNode {
 export function $createMentionNode(mentionName: string, userId: string): MentionNode {
     const prettyDisplayName = getPrettyDisplayName({ displayName: mentionName, userId })
     const mentionNode = new MentionNode(mentionName, prettyDisplayName, userId)
-    mentionNode.setMode('segmented').toggleDirectionless()
+    mentionNode.setMode('token').toggleDirectionless()
     return $applyNodeReplacement(mentionNode)
 }
 
@@ -176,7 +176,7 @@ export const createMentionTransformer = (
     }, {} as Record<string, string>)
     return {
         dependencies: [MentionNode],
-        export: (node, exportChildren, exportFormat) => {
+        export: (node) => {
             if (!$isMentionNode(node)) {
                 return null
             }

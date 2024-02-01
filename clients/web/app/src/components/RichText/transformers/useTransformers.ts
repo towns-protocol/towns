@@ -3,11 +3,11 @@ import { Channel, RoomMember } from 'use-zion-client'
 import isEqual from 'lodash/isEqual'
 import { CHECK_LIST, HEADING, LINK, TRANSFORMERS } from '@lexical/markdown'
 import { createMentionTransformer } from '@components/RichText/nodes/MentionNode'
-import { createChannelLinkTransformer } from '@components/RichText/nodes/ChannelLinkNode'
 import { createHighlightTransformer } from '@components/RichText/nodes/HightlightNode'
 import { getPrettyDisplayName } from 'utils/getPrettyDisplayName'
 import { notUndefined } from 'ui/utils/utils'
 import { BLANK_LINK } from '../transformers/LinkTransformer'
+import { createChannelLinkTransformer } from '../nodes/ChannelMentionNode'
 
 interface IUseTransformers {
     members: RoomMember[]

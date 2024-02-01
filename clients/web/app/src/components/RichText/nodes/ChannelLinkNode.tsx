@@ -1,4 +1,3 @@
-import { TextMatchTransformer } from '@lexical/markdown'
 import {
     DecoratorNode,
     EditorConfig,
@@ -104,35 +103,4 @@ export function $createChannelLinkNode(channel: Channel): ChannelLinkNode {
 
 export function $isChannelLinkNode(node: LexicalNode | null | undefined): node is ChannelLinkNode {
     return node instanceof ChannelLinkNode
-}
-
-export const createChannelLinkTransformer = (channels: Channel[]): TextMatchTransformer => {
-    const concat = channels.map((c) => c.label).join('|')
-
-    return {
-        dependencies: [ChannelLinkNode],
-        export: (node) => {
-            if (!$isChannelLinkNode(node)) {
-                return null
-            }
-            return node.getChannel().label
-        },
-        importRegExp: new RegExp('(#(' + concat + '))', 'i'),
-        regExp: /(#[a-z0-9_-]+)$/i,
-        replace: (textNode, match) => {
-            // TODO: there is probably better way to do this by
-            // 1. Using $createChannelLinkNode within ChannelMentionPlugin instead of $createChannelMentionNode
-            // 2. Saving the JSON or HTML with the entire channel data or data-attrs with channel slug
-            // But using $createChannelLinkNode in ChannelMentionPlugin, can't get the content to render in timeline
-            const labelWithoutHash = match[1].replace('#', '')
-            const ch = channels.find((c) => c.label === labelWithoutHash)
-            if (!ch) {
-                return
-            }
-            const linkNode = $createChannelLinkNode(ch)
-            textNode.replace(linkNode)
-        },
-        trigger: '#',
-        type: 'text-match',
-    }
 }

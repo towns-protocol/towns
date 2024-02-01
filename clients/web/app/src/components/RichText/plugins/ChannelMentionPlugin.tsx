@@ -54,7 +54,7 @@ export const ChannelMentionPlugin = (props: Props) => {
             closeMenu: () => void,
         ) => {
             editor.update(() => {
-                const channelNode = $createChannelMentionNode(`#${selectedOption.channel.label}`)
+                const channelNode = $createChannelMentionNode(selectedOption.channel)
                 const spaceNode = $createTextNode(' ')
 
                 if (nodeToReplace) {

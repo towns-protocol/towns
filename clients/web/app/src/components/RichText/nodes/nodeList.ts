@@ -3,7 +3,6 @@ import { AutoLinkNode, LinkNode } from '@lexical/link'
 import { ListItemNode, ListNode } from '@lexical/list'
 import { HeadingNode, QuoteNode } from '@lexical/rich-text'
 import { AnnotationNode } from './AnnotationNode'
-import { ChannelLinkNode } from './ChannelLinkNode'
 import { ChannelMentionNode } from './ChannelMentionNode'
 import { EmojiNode } from './EmojiNode'
 import { MentionNode } from './MentionNode'
@@ -22,6 +21,5 @@ export const nodeTypeList = [
     MentionNode,
     HightlightNode,
     ChannelMentionNode,
-    ChannelLinkNode,
     QuoteNode,
 ]
