@@ -36,6 +36,10 @@ export class SyncedStreamsExtension {
     private timeoutId?: NodeJS.Timeout
     private highPriorityIds = new Set<string>()
     private startSyncRequested = false
+    private numStreamsLoadedFromCache = 0
+    private numStreamsLoadedFromNetwork = 0
+    private numStreamsFailedToLoad = 0
+
     initStatus: ClientInitStatus = {
         isLocalDataLoaded: false,
         isRemoteDataLoaded: false,
@@ -117,6 +121,10 @@ export class SyncedStreamsExtension {
     */
 
     private async tick(): Promise<void> {
+        this.numStreamsLoadedFromCache = 0
+        this.numStreamsLoadedFromNetwork = 0
+        this.numStreamsFailedToLoad = 0
+
         if (this.queue.length > 0) {
             const items = this.queue.splice(0, MAX_CACHED_STREAMS_PER_TICK)
             this.log(
@@ -134,6 +142,7 @@ export class SyncedStreamsExtension {
                             this.highPriorityIds.has(item.streamId),
                         )
                         this.loadedStreamCount++
+                        this.numStreamsLoadedFromCache++
                     } catch (err) {
                         this.nonCachedQueue.push(item)
                     }
@@ -153,14 +162,19 @@ export class SyncedStreamsExtension {
                 items.map(async (item) => {
                     try {
                         await this.delegate.initStream(item.streamId, true)
+                        this.numStreamsLoadedFromNetwork++
                     } catch (err) {
                         this.log('Error initializing stream', item.streamId)
+                        this.numStreamsFailedToLoad++
                     }
                     this.loadedStreamCount++
                     this.emitClientStatus()
                 }),
             )
         }
+        this.log('Streams loaded from cache', this.numStreamsLoadedFromCache)
+        this.log('Streams loaded from network', this.numStreamsLoadedFromNetwork)
+        this.log('Streams failed to load', this.numStreamsFailedToLoad)
     }
 
     private async startSync() {
