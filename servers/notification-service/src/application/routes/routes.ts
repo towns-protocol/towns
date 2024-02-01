@@ -1,6 +1,8 @@
 import { Router } from 'express'
-import { routerApi } from './routerApi'
+import { subscriptionRouter } from './subscriptionRouter'
+import { tagRouter } from './tagRouter'
 
 export const routes = Router()
 
-routes.use('/api', routerApi)
+routes.use('/api', subscriptionRouter)
+routes.use('/api', tagRouter)

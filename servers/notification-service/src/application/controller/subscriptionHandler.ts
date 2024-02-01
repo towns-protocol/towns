@@ -1,9 +1,9 @@
 import { Request, Response } from 'express'
 import { StatusCodes } from 'http-status-codes'
 import { database } from '../../infrastructure/database/prisma'
-import { PushType } from '../schema/subscription'
+import { PushType } from '../schema/subscriptionSchema'
 
-export async function subscriptionHandler(request: Request, res: Response) {
+export async function addSubscriptionHandler(request: Request, res: Response) {
     try {
         const subscriptionData = {
             UserId: request.body.userId,
@@ -23,4 +23,25 @@ export async function subscriptionHandler(request: Request, res: Response) {
         console.error(error)
         return res.status(StatusCodes.UNPROCESSABLE_ENTITY).json({ error: 'Invalid data' })
     }
+}
+
+export async function removeSubscriptionHandler(request: Request, res: Response) {
+    const subscriptionData = {
+        PushSubscription: JSON.stringify(request.body.subscriptionObject),
+        UserId: request.body.userId,
+    }
+
+    const existingSubscription = await database.pushSubscription.findUnique({
+        where: subscriptionData,
+    })
+
+    if (!existingSubscription) {
+        return res.status(StatusCodes.NOT_FOUND).json({ error: 'Subscription not found' })
+    }
+
+    await database.pushSubscription.delete({
+        where: subscriptionData,
+    })
+
+    return res.sendStatus(StatusCodes.NO_CONTENT)
 }
