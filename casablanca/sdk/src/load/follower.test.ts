@@ -23,8 +23,6 @@ import Redis from 'ioredis'
 import {
     jsonRpcProviderUrl,
     rpcClientURL,
-    mainSpaceId,
-    mainChannelId,
     defaultJoinFactor,
     maxDelayBetweenMessagesPerUserMiliseconds,
     loadDurationMs,
@@ -36,12 +34,6 @@ const baseChainRpcUrl = process.env.BASE_CHAIN_RPC_URL
     ? process.env.BASE_CHAIN_RPC_URL
     : jsonRpcProviderUrl
 const riverNodeUrl = process.env.RIVER_NODE_URL ? process.env.RIVER_NODE_URL : rpcClientURL
-const coordinationSpaceId = process.env.COORDINATION_SPACE_ID
-    ? process.env.COORDINATION_SPACE_ID
-    : mainSpaceId
-const coordinationChannelId = process.env.COORDINATION_CHANNEL_ID
-    ? process.env.COORDINATION_CHANNEL_ID
-    : mainChannelId
 const joinFactor = process.env.JOIN_FACTOR ? parseInt(process.env.JOIN_FACTOR) : defaultJoinFactor
 const maxMsgDelayMs = process.env.MAX_MSG_DELAY_MS
     ? parseInt(process.env.MAX_MSG_DELAY_MS)
@@ -58,6 +50,9 @@ const redis = new Redis({
     host: redisHost, // Redis server host
     port: redisPort, // Redis server port
 })
+
+let coordinationSpaceId: string
+let coordinationChannelId: string
 
 describe('Stress test', () => {
     test(
@@ -196,9 +191,24 @@ describe('Stress test', () => {
 
             while (!joinedMainTown) {
                 try {
+                    const redisCoordinationSpaceId = await redis.get('coordinationSpaceId')
+                    if (redisCoordinationSpaceId != null) {
+                        coordinationSpaceId = redisCoordinationSpaceId
+                    }
+                    const redisCoordinationChannelId = await redis.get('coordinationChannelId')
+                    if (redisCoordinationChannelId != null) {
+                        coordinationChannelId = redisCoordinationChannelId
+                    }
+
+                    if (coordinationSpaceId === undefined || coordinationChannelId === undefined) {
+                        log('Coordination space or channel id wasnt set')
+                        throw 'Coordination space or channel id wasnt set'
+                    }
+                    log('Coordination space id', coordinationSpaceId)
+                    log('Coordination channel id', coordinationChannelId)
                     await result.riverSDK.joinTown(coordinationSpaceId)
-                    joinedMainTown = true
                     await result.riverSDK.joinChannel(coordinationChannelId)
+                    joinedMainTown = true
                 } catch (e) {
                     log('Cannot join town yet')
                 }

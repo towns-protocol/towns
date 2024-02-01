@@ -5,7 +5,7 @@
 import { ethers } from 'ethers'
 import { makeUserContextFromWallet } from '../util.test'
 import { makeStreamRpcClient } from '../makeStreamRpcClient'
-import { userIdFromAddress } from '../id'
+import { userIdFromAddress, makeUniqueSpaceStreamId, makeUniqueChannelStreamId } from '../id'
 import { Client } from '../client'
 import { RiverDbManager } from '../riverDbManager'
 import { MockEntitlementsDelegate } from '../utils'
@@ -21,8 +21,6 @@ import {
 } from '../testSdk'
 import { dlog } from '@river/dlog'
 import {
-    mainSpaceId,
-    mainChannelId,
     townsToCreate,
     channelsPerTownToCreate,
     followersNumber,
@@ -39,12 +37,8 @@ const baseChainRpcUrl = process.env.BASE_CHAIN_RPC_URL
     ? process.env.BASE_CHAIN_RPC_URL
     : jsonRpcProviderUrl
 const riverNodeUrl = process.env.RIVER_NODE_URL ? process.env.RIVER_NODE_URL : rpcClientURL
-const coordinationSpaceId = process.env.COORDINATION_SPACE_ID
-    ? process.env.COORDINATION_SPACE_ID
-    : mainSpaceId
-const coordinationChannelId = process.env.COORDINATION_CHANNEL_ID
-    ? process.env.COORDINATION_CHANNEL_ID
-    : mainChannelId
+const coordinationSpaceId = makeUniqueSpaceStreamId()
+const coordinationChannelId = makeUniqueChannelStreamId()
 const numTowns = process.env.NUM_TOWNS ? parseInt(process.env.NUM_TOWNS) : townsToCreate
 const numChannelsPerTown = process.env.NUM_CHANNELS_PER_TOWN
     ? parseInt(process.env.NUM_CHANNELS_PER_TOWN)
@@ -85,10 +79,13 @@ describe('Stress test', () => {
     test(
         'stress test',
         async () => {
+            redis.flushall()
+
             log('coordinationSpaceId: ', coordinationSpaceId)
             log('coordinationChannelId: ', coordinationChannelId)
+            await redis.set('coordinationSpaceId', coordinationSpaceId)
+            await redis.set('coordinationChannelId', coordinationChannelId)
 
-            redis.flushall()
             const result = await createFundedTestUser()
             fundWallet(result.walletWithProvider)
 
