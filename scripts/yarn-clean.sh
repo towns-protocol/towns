@@ -33,6 +33,11 @@ find . -name ".turbo" -type d -exec rm -r "{}" \;
 find . -name "tsconfig.tsbuildinfo" -type f -exec rm -r "{}" \;
 find . -name ".eslintcache" -type f -exec rm -r "{}" \;
 
+# remove run_files
+pushd "casablanca/node" > /dev/null
+rm -rf run_files/*
+popd > /dev/null
+
 echo ""
 
 # remove files not tracked by git, but keep dev files
