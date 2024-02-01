@@ -321,7 +321,7 @@ export class Client
         const executionTime = initializeUserEndTime - initializeUserStartTime
 
         datadogRum.addAction('userInitializationDuration', {
-            value: executionTime,
+            userInitializationDuration: executionTime,
         })
     }
 
