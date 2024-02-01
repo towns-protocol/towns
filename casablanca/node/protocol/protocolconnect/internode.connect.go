@@ -5,7 +5,7 @@
 package protocolconnect
 
 import (
-	"connectrpc.com/connect"
+	connect "connectrpc.com/connect"
 	context "context"
 	errors "errors"
 	protocol "github.com/river-build/river/protocol"

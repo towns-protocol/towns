@@ -132,7 +132,7 @@ message FullyReadMarkers {
 }
 
 /** 
-* ToDeviceMessage payload for megolm session key sharing.
+* ToDeviceMessage payload for group session key sharing.
 */
 message SessionKeys {
     repeated string keys = 1;
