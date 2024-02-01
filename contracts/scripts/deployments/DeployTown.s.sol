@@ -18,7 +18,7 @@ import {RolesHelper} from "contracts/test/towns/roles/RolesHelper.sol";
 import {ChannelsHelper} from "contracts/test/towns/channels/ChannelsHelper.sol";
 import {TokenPausableHelper} from "contracts/test/diamond/pausable/token/TokenPausableSetup.sol";
 import {IntrospectionHelper} from "contracts/test/diamond/introspection/IntrospectionSetup.sol";
-import {MembershipHelper} from "contracts/test/towns/membership/MembershipSetup.sol";
+import {MembershipHelper} from "contracts/test/towns/membership/MembershipHelper.sol";
 import {MembershipReferralHelper} from "contracts/test/towns/membership/MembershipReferralSetup.sol";
 import {ERC721AHelper} from "contracts/test/diamond/erc721a/ERC721ASetup.sol";
 import {BanningHelper} from "contracts/test/towns/banning/BanningHelper.sol";
@@ -38,9 +38,6 @@ import {MembershipReferralFacet} from "contracts/src/towns/facets/membership/ref
 import {Banning} from "contracts/src/towns/facets/banning/Banning.sol";
 
 import {MultiInit} from "contracts/src/diamond/initializers/MultiInit.sol";
-
-// helpers
-import {DeployMultiInit} from "contracts/scripts/deployments/DeployMultiInit.s.sol";
 
 contract DeployTown is DiamondDeployer {
   TokenOwnableHelper tokenOwnableHelper = new TokenOwnableHelper();
@@ -77,6 +74,13 @@ contract DeployTown is DiamondDeployer {
   address banning;
   address town;
 
+  address internal _multiInit;
+
+  function deploy(address multiInit) public returns (address) {
+    _multiInit = multiInit;
+    return super.deploy();
+  }
+
   function versionName() public pure override returns (string memory) {
     return "town";
   }
@@ -85,9 +89,6 @@ contract DeployTown is DiamondDeployer {
     uint256 deployerPK,
     address deployer
   ) public override returns (Diamond.InitParams memory) {
-    DeployMultiInit deployMultiInit = new DeployMultiInit();
-    address multiInit = deployMultiInit.deploy();
-
     vm.startBroadcast(deployerPK);
     ownable = address(new OwnablePendingFacet());
     tokenOwnable = address(new TokenOwnableFacet());
@@ -163,7 +164,7 @@ contract DeployTown is DiamondDeployer {
     return
       Diamond.InitParams({
         baseFacets: cuts,
-        init: multiInit,
+        init: _multiInit,
         initData: abi.encodeWithSelector(
           MultiInit.multiInit.selector,
           initAddresses,

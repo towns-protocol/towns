@@ -54,16 +54,21 @@ contract DeployTownOwner is DiamondDeployer {
   address guardian;
   address introspection;
 
+  address _multiInit;
+
   function versionName() public pure override returns (string memory) {
     return "townOwner";
+  }
+
+  function deploy(address multiInit) public returns (address) {
+    _multiInit = multiInit;
+    return super.deploy();
   }
 
   function diamondInitParams(
     uint256 pk,
     address deployer
   ) public override returns (Diamond.InitParams memory) {
-    address multiInit = deployMultiInit.deploy();
-
     vm.startBroadcast(pk);
     diamondCut = address(new DiamondCutFacet());
     diamondLoupe = address(new DiamondLoupeFacet());
@@ -125,7 +130,7 @@ contract DeployTownOwner is DiamondDeployer {
     return
       Diamond.InitParams({
         baseFacets: cuts,
-        init: multiInit,
+        init: _multiInit,
         initData: abi.encodeWithSelector(
           MultiInit.multiInit.selector,
           addresses,

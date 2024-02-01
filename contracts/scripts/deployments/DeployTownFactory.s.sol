@@ -36,9 +36,20 @@ import {PlatformRequirementsHelper} from "contracts/test/towns/platform/requirem
 import {PrepayHelper} from "contracts/test/towns/prepay/PrepayHelper.sol";
 import {MultiInit} from "contracts/src/diamond/initializers/MultiInit.sol";
 
-// mocks
+// deployments
+import {DeployUserEntitlement} from "contracts/scripts/deployments/DeployUserEntitlement.s.sol";
+import {DeployTokenEntitlement} from "contracts/scripts/deployments/DeployTokenEntitlement.s.sol";
+import {DeployMultiInit} from "contracts/scripts/deployments/DeployMultiInit.s.sol";
+import {DeployTown} from "contracts/scripts/deployments/DeployTown.s.sol";
+import {DeployTownOwner} from "contracts/scripts/deployments/DeployTownOwner.s.sol";
 
 contract DeployTownFactory is DiamondDeployer {
+  DeployMultiInit deployMultiInit = new DeployMultiInit();
+  DeployTown deployTown = new DeployTown();
+  DeployTownOwner deployTownOwner = new DeployTownOwner();
+  DeployUserEntitlement deployUserEntitlement = new DeployUserEntitlement();
+  DeployTokenEntitlement deployTokenEntitlement = new DeployTokenEntitlement();
+
   // diamond helpers
   DiamondCutHelper cutHelper = new DiamondCutHelper();
   DiamondLoupeHelper loupeHelper = new DiamondLoupeHelper();
@@ -73,6 +84,10 @@ contract DeployTownFactory is DiamondDeployer {
   address platformReqs;
   address prepay;
 
+  address public userEntitlement;
+  address public tokenEntitlement;
+  address public townOwner;
+
   function versionName() public pure override returns (string memory) {
     return "townFactory";
   }
@@ -81,6 +96,13 @@ contract DeployTownFactory is DiamondDeployer {
     uint256 deployerPK,
     address deployer
   ) public override returns (Diamond.InitParams memory) {
+    address multiInit = deployMultiInit.deploy();
+
+    address town = deployTown.deploy(multiInit);
+    townOwner = deployTownOwner.deploy(multiInit);
+    userEntitlement = deployUserEntitlement.deploy();
+    tokenEntitlement = deployTokenEntitlement.deploy();
+
     vm.startBroadcast(deployerPK);
     diamondCut = address(new DiamondCutFacet());
     diamondLoupe = address(new DiamondLoupeFacet());
@@ -93,7 +115,6 @@ contract DeployTownFactory is DiamondDeployer {
     pausable = address(new PausableFacet());
     platformReqs = address(new PlatformRequirementsFacet());
     prepay = address(new PrepayFacet());
-
     vm.stopBroadcast();
 
     IDiamond.FacetCut[] memory cuts = new IDiamond.FacetCut[](totalFacets);
@@ -146,11 +167,11 @@ contract DeployTownFactory is DiamondDeployer {
     initDatas[index++] = introspectionHelper.makeInitData("");
     initDatas[index++] = abi.encodeWithSelector(
       townArchitectHelper.initializer(),
-      getDeployment("townOwner"), // townToken
-      getDeployment("userEntitlement"), // userEntitlement
-      getDeployment("tokenEntitlement") // tokenEntitlement
+      townOwner, // townToken
+      userEntitlement, // userEntitlement
+      tokenEntitlement // tokenEntitlement
     );
-    initDatas[index++] = proxyManagerHelper.makeInitData(getDeployment("town"));
+    initDatas[index++] = proxyManagerHelper.makeInitData(town);
 
     initDatas[index++] = ownableHelper.makeInitData(deployer);
     initDatas[index++] = pausableHelper.makeInitData("");
@@ -167,7 +188,7 @@ contract DeployTownFactory is DiamondDeployer {
     return
       Diamond.InitParams({
         baseFacets: cuts,
-        init: getDeployment("multiInit"),
+        init: multiInit,
         initData: abi.encodeWithSelector(
           MultiInit.multiInit.selector,
           initAddresses,
@@ -181,10 +202,8 @@ contract DeployTownFactory is DiamondDeployer {
     address,
     address townFactory
   ) internal override {
-    address townToken = getDeployment("townOwner");
-
     vm.startBroadcast(pk);
-    ITownOwner(townToken).setFactory(address(townFactory));
+    ITownOwner(townOwner).setFactory(address(townFactory));
     vm.stopBroadcast();
   }
 }

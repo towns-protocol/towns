@@ -29,11 +29,6 @@ contract ChannelsHelper is FacetHelper {
     addSelectors(selectors_);
   }
 
-  function deploy() public returns (address) {
-    channels = new Channels();
-    return address(channels);
-  }
-
   function facet() public view override returns (address) {
     return address(channels);
   }

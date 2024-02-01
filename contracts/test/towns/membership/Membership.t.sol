@@ -14,19 +14,55 @@ import {CurrencyTransfer} from "contracts/src/utils/libraries/CurrencyTransfer.s
 import {BasisPoints} from "contracts/src/utils/libraries/BasisPoints.sol";
 
 // contracts
-import {MembershipSetup} from "./MembershipSetup.sol";
+import {BaseSetup} from "contracts/test/towns/BaseSetup.sol";
 import {MockAggregatorV3} from "contracts/test/mocks/MockAggregatorV3.sol";
 import {TieredLogPricingOracle} from "contracts/src/towns/facets/membership/pricing/TieredLogPricingOracle.sol";
+
+import {TownArchitect} from "contracts/src/towns/facets/architect/TownArchitect.sol";
+import {MembershipFacet} from "contracts/src/towns/facets/membership/MembershipFacet.sol";
 
 contract MembershipTest is
   IMembershipBase,
   IEntitlementBase,
   IERC721ABase,
-  MembershipSetup
+  BaseSetup
 {
   int256 public constant EXCHANGE_RATE = 222616000000;
   uint256 public constant REFERRAL_CODE = 1;
   uint256 public constant MAX_BPS = 10000;
+
+  MembershipFacet public membership;
+
+  // entitled user
+  address internal alice;
+  address internal charlie;
+
+  // non-entitled user
+  address internal bob;
+
+  // receiver of protocol fees
+  address internal feeRecipient;
+
+  function setUp() public override {
+    super.setUp();
+
+    alice = _randomAddress();
+    bob = _randomAddress();
+    charlie = _randomAddress();
+    feeRecipient = founder;
+
+    address[] memory allowedUsers = new address[](2);
+    allowedUsers[0] = alice;
+    allowedUsers[1] = charlie;
+
+    vm.startPrank(founder);
+    address userSpace = TownArchitect(townFactory).createTown(
+      _createUserTown("MembershipSpace", allowedUsers)
+    );
+    vm.stopPrank();
+
+    membership = MembershipFacet(userSpace);
+  }
 
   // =============================================================
   //                           Join Town
@@ -55,8 +91,6 @@ contract MembershipTest is
   function test_joinTown_revert_sender_AlreadyMember() external {
     vm.prank(alice);
     membership.joinTown(alice);
-
-    address bob = _randomAddress();
 
     vm.prank(alice);
     vm.expectRevert(Membership__AlreadyMember.selector);
@@ -87,17 +121,11 @@ contract MembershipTest is
     assertTrue(membership.getMembershipLimit() == 1);
 
     vm.prank(alice);
-    membership.joinTown(alice);
-
-    vm.prank(founder);
     vm.expectRevert(Membership__MaxSupplyReached.selector);
-    membership.joinTown(_randomAddress());
+    membership.joinTown(alice);
   }
 
   function test_joinTown_revert_when_updating_maxSupply() external {
-    vm.prank(diamond);
-    entitlement.setEntitlement(1, abi.encode(bob));
-
     vm.prank(founder);
     membership.setMembershipLimit(2);
 
@@ -106,9 +134,6 @@ contract MembershipTest is
 
     vm.prank(founder);
     membership.joinTown(alice);
-
-    vm.prank(founder);
-    membership.joinTown(bob);
 
     vm.prank(founder);
     vm.expectRevert(Membership__InvalidMaxSupply.selector);
@@ -186,7 +211,7 @@ contract MembershipTest is
     assertEq(bob.balance, referralFee);
 
     // assert the founder's DAO got its fee
-    assertEq(founderDAO.balance, netMembershipPrice - referralFee);
+    assertEq(feeRecipient.balance, netMembershipPrice - referralFee);
 
     // assert the minter's eth got taken
     assertEq(charlie.balance, 0 ether);
@@ -256,11 +281,6 @@ contract MembershipTest is
     membership.setMembershipPrice(membershipPrice);
     vm.stopPrank();
 
-    // mint membership to founder
-    vm.prank(founder);
-    membership.joinTown(founder);
-    assertEq(membership.balanceOf(founder), 1);
-
     // get paid joinTown
     vm.prank(alice);
     vm.deal(alice, membershipPrice);
@@ -276,7 +296,7 @@ contract MembershipTest is
     uint256 potentialFee = BasisPoints.calculate(membershipPrice, bpsFee);
 
     assertEq(protocolRecipient.balance, potentialFee);
-    assertEq(founderDAO.balance, membershipPrice - potentialFee);
+    assertEq(feeRecipient.balance, membershipPrice - potentialFee);
 
     uint64 membershipDuration = IPlatformRequirements(townFactory)
       .getMembershipDuration();
@@ -327,10 +347,6 @@ contract MembershipTest is
     membership.setMembershipCurrency(CurrencyTransfer.NATIVE_TOKEN);
     membership.setMembershipPrice(membershipPrice);
     vm.stopPrank();
-
-    // mint membership to founder
-    vm.prank(founder);
-    membership.joinTown(founder);
 
     // join the town
     vm.prank(alice);

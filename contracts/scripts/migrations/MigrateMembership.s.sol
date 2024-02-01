@@ -13,7 +13,7 @@ import {MembershipFacet} from "contracts/src/towns/facets/membership/MembershipF
 
 // helpers
 import {ERC721AHelper} from "contracts/test/diamond/erc721a/ERC721ASetup.sol";
-import {MembershipHelper} from "contracts/test/towns/membership/MembershipSetup.sol";
+import {MembershipHelper} from "contracts/test/towns/membership/MembershipHelper.sol";
 
 contract MigrateMembership is Migration {
   ERC721AHelper erc721aHelper = new ERC721AHelper();
