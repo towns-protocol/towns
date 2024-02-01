@@ -263,9 +263,11 @@ export interface ITownOwner extends BaseContract {
     TownOwner__SetFactory(factory?: null): TownOwner__SetFactoryEventFilter;
 
     "TownOwner__UpdateTown(address)"(
-      town?: null
+      town?: PromiseOrValue<string> | null
     ): TownOwner__UpdateTownEventFilter;
-    TownOwner__UpdateTown(town?: null): TownOwner__UpdateTownEventFilter;
+    TownOwner__UpdateTown(
+      town?: PromiseOrValue<string> | null
+    ): TownOwner__UpdateTownEventFilter;
   };
 
   estimateGas: {

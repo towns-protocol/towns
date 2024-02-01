@@ -121,13 +121,13 @@
         "anonymous": false,
         "inputs": [
           {
-            "indexed": false,
+            "indexed": true,
             "internalType": "address",
             "name": "wallet",
             "type": "address"
           },
           {
-            "indexed": false,
+            "indexed": true,
             "internalType": "address",
             "name": "rootKey",
             "type": "address"
@@ -140,13 +140,13 @@
         "anonymous": false,
         "inputs": [
           {
-            "indexed": false,
+            "indexed": true,
             "internalType": "address",
             "name": "wallet",
             "type": "address"
           },
           {
-            "indexed": false,
+            "indexed": true,
             "internalType": "address",
             "name": "secondWallet",
             "type": "address"
@@ -461,11 +461,11 @@
       ]
     },
     "contracts/src/river/wallet-link/IWalletLink.sol": {
-      "keccak256": "0xe7e038659c8c251ca15784ed73a2f0c99a66a4f2b2daf53cd783f3a141b30603",
+      "keccak256": "0x0d6f4b0d6ba2cca41f652356d895c411c0bcb83325349dd5a2839c7e84833e4f",
       "license": "Apache-2.0",
       "urls": [
-        "bzz-raw://b4d44c8fcd40041c9f4d4d4711ed6ae38588ea37025d10eb689921e2e077f5a4",
-        "dweb:/ipfs/QmPLt34n9cdLGuCzgcf9gfmo21P3jZSbaGWzKdZQkM8t4d"
+        "bzz-raw://6bab70c4eb1bbce65f3346c75f403e995d40412c12b5f7e19c196240ba184a73",
+        "dweb:/ipfs/QmakgkJykNfCDWBVfiiXtSKKhopTrerWFFY7kYadQtYSit"
       ]
     },
     "contracts/src/river/wallet-link/WalletLink.sol": {

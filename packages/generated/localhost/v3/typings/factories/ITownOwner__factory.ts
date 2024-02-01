@@ -156,7 +156,7 @@ const _abi = [
       {
         name: "town",
         type: "address",
-        indexed: false,
+        indexed: true,
         internalType: "address",
       },
     ],

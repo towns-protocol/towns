@@ -416,7 +416,7 @@
         "anonymous": false,
         "inputs": [
           {
-            "indexed": false,
+            "indexed": true,
             "internalType": "address",
             "name": "town",
             "type": "address"
@@ -1553,11 +1553,11 @@
       ]
     },
     "contracts/src/towns/facets/owner/ITownOwner.sol": {
-      "keccak256": "0x90929420c9a171f1690ac54e7e33ba918556fc53eff0b93d7271177f8c0f623e",
+      "keccak256": "0x552ed06d622fe5db5d67b9133a63bf619c122cbd983b25592c4ded7db49137cd",
       "license": "Apache-2.0",
       "urls": [
-        "bzz-raw://fe2f1df44ee066e6043401bc38c75258a4d4600c9ecebbf68aa9801e8bec2860",
-        "dweb:/ipfs/QmUgiksLQZJBivcRgJkXnjg4vx7BbragDxWT1X96XgkSWh"
+        "bzz-raw://04a7aaf96717e63703e2bb57f63d10c63e9dfeacf0252578283b4865a149cd01",
+        "dweb:/ipfs/QmPKKAXv1UYpmXmRoyugSs1jZDrvgNRmZ3TqB4rYkALFpL"
       ]
     },
     "contracts/src/towns/facets/owner/TownOwner.sol": {

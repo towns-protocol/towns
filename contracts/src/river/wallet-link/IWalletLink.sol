@@ -9,10 +9,10 @@ pragma solidity ^0.8.23;
 
 interface IWalletLinkBase {
   /// @notice Emitted when a user links their wallet to a rootKey
-  event LinkWalletToRootKey(address wallet, address rootKey);
+  event LinkWalletToRootKey(address indexed wallet, address indexed rootKey);
 
   /// @notice Emitted when two wallets are unlinked
-  event RemoveLink(address wallet, address secondWallet);
+  event RemoveLink(address indexed wallet, address indexed secondWallet);
 
   // =============================================================
   //                      Errors

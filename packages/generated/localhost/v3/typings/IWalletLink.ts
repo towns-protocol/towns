@@ -261,19 +261,22 @@ export interface IWalletLink extends BaseContract {
 
   filters: {
     "LinkWalletToRootKey(address,address)"(
-      wallet?: null,
-      rootKey?: null
+      wallet?: PromiseOrValue<string> | null,
+      rootKey?: PromiseOrValue<string> | null
     ): LinkWalletToRootKeyEventFilter;
     LinkWalletToRootKey(
-      wallet?: null,
-      rootKey?: null
+      wallet?: PromiseOrValue<string> | null,
+      rootKey?: PromiseOrValue<string> | null
     ): LinkWalletToRootKeyEventFilter;
 
     "RemoveLink(address,address)"(
-      wallet?: null,
-      secondWallet?: null
+      wallet?: PromiseOrValue<string> | null,
+      secondWallet?: PromiseOrValue<string> | null
     ): RemoveLinkEventFilter;
-    RemoveLink(wallet?: null, secondWallet?: null): RemoveLinkEventFilter;
+    RemoveLink(
+      wallet?: PromiseOrValue<string> | null,
+      secondWallet?: PromiseOrValue<string> | null
+    ): RemoveLinkEventFilter;
   };
 
   estimateGas: {
