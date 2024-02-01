@@ -29,7 +29,7 @@ anvil :; anvil -m 'test test test test test test test test test test test junk'
 # 				   Anvil
 # ===========================
 deploy-base-anvil-nb:
-	@SAVE_DEPLOYMENTS=1 OVERRIDE_DEPLOYMENTS=1 forge script scripts/deployments/${contract}.s.sol:${contract} --ffi --rpc-url base_anvil --private-key ${LOCAL_PRIVATE_KEY} --broadcast --watch
+	@SAVE_DEPLOYMENTS=1 OVERRIDE_DEPLOYMENTS=1 forge script scripts/deployments/${contract}.s.sol:${contract} --ffi --rpc-url base_anvil --private-key ${LOCAL_PRIVATE_KEY} --broadcast --slow
 
 deploy-base-anvil: build deploy-base-anvil-nb
 
