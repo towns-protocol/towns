@@ -28,5 +28,8 @@
   "go.lintFlags": [
     "--fast"
   ],
-  "solidity.defaultCompiler": "localNodeModule"
+  "solidity.defaultCompiler": "localNodeModule",
+  "[makefile]": {
+    "editor.renderWhitespace": "all"
+  }
 }

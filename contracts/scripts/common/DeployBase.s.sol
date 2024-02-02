@@ -118,14 +118,28 @@ contract DeployBase is DeployHelpers, Script {
       return;
     }
 
-    // make sure the network directory exists
-    string memory _networkDirPath = networkDirPath();
-    createDir(_networkDirPath);
-    createChainIdFile(_networkDirPath);
+    string memory path;
+    string memory pathOverride = vm.envOr("SAVE_DEPLOYMENTS_PATH", string(""));
+    if (bytes(pathOverride).length > 0) {
+      string memory dirPath = string.concat(
+        vm.projectRoot(),
+        "/",
+        pathOverride
+      );
+      createDir(dirPath);
+      path = string.concat(dirPath, "/", versionName, ".json");
+      info("Saving contract address to overridden path: ", path);
+    } else {
+      // make sure the network directory exists
+      string memory _networkDirPath = networkDirPath();
+      createDir(_networkDirPath);
+      createChainIdFile(_networkDirPath);
+
+      path = deploymentPath(versionName);
+    }
 
     // save deployment
     string memory jsonStr = vm.serializeAddress("{}", "address", contractAddr);
-    string memory path = deploymentPath(versionName);
     debug("saving deployment to: ", path);
     vm.writeFile(path, jsonStr);
   }

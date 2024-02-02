@@ -277,7 +277,6 @@
     {
       "label": "Deploy Smart Contracts",
       "dependsOn": [
-        "DeployStreamRegistry",
         "DeployZionGovernance",
         "DeployWalletLink",
       ],
@@ -286,16 +285,6 @@
       },
       "problemMatcher": [],
       "dependsOrder": "sequence"
-    },
-    {
-      "label": "DeployStreamRegistry",
-      "type": "shell",
-      "command": "./scripts/wait-for-basechain.sh && ./scripts/deploy-river-registry.sh",
-      "isBackground": true,
-      "problemMatcher": [],
-      "presentation": {
-        "group": "ephemeral"
-      }
     },
     {
       "label": "DeployWalletLink",

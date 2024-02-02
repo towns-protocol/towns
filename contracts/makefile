@@ -50,7 +50,25 @@ migrate-anvil:;
 # 				 River
 # ===========================
 deploy-river-anvil-nb:
-	@SAVE_DEPLOYMENTS=1 OVERRIDE_DEPLOYMENTS=1 forge script scripts/deployments/${contract}.s.sol:${contract} --ffi --rpc-url river_anvil --chain-id 31338 --private-key ${LOCAL_PRIVATE_KEY} --broadcast --watch
+	@SAVE_DEPLOYMENTS=1 OVERRIDE_DEPLOYMENTS=1 \
+		forge script scripts/deployments/${contract}.s.sol:${contract} \
+		--ffi \
+		--rpc-url river_anvil \
+		--chain-id 31338 \
+		--private-key ${LOCAL_PRIVATE_KEY} \
+		--broadcast \
+		--watch
+
+deploy-river-anvil-explicit:
+	@test -n "$(SAVE_DEPLOYMENTS_PATH)"  # $$SAVE_DEPLOYMENTS_PATH is not set
+	@mkdir -p "../${SAVE_DEPLOYMENTS_PATH}"
+	@SAVE_DEPLOYMENTS=1 SAVE_DEPLOYMENTS_PATH="${SAVE_DEPLOYMENTS_PATH}" OVERRIDE_DEPLOYMENTS=1 \
+		forge script scripts/deployments/${contract}.s.sol:${contract} \
+		--ffi \
+		--rpc-url river_anvil \
+		--chain-id 31338 \
+		--private-key ${LOCAL_PRIVATE_KEY} \
+		--broadcast 
 
 deploy-river-anvil: build deploy-river-anvil-nb
 

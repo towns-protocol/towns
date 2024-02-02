@@ -47,6 +47,7 @@ fi
 if [ "$CONFIG" == "true" ]; then
     mkdir -p ${RUN_BASE}
     cp -r ./run_files/addresses ${RUN_BASE}/addresses
+    SAVE_DEPLOYMENTS_PATH=casablanca/node/${RUN_BASE}/addresses ../../scripts/deploy-river-registry.sh
 
     echo "{" > ${NODE_REGISTRY_PATH}
     echo "  \"nodes\": [" >> ${NODE_REGISTRY_PATH}
