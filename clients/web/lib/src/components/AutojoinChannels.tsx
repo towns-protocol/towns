@@ -4,6 +4,7 @@ import { useSpaceData } from '../hooks/use-space-data'
 import { useAsyncTaskQueue } from '../utils/useAsyncTaskQueue'
 import { useZionClient } from '../hooks/use-zion-client'
 import { MembershipOp } from '@river/proto'
+import { MembershipReason } from '@river/proto'
 
 // When loading a space, join all eligible channels
 export const AutojoinChannels = () => {
@@ -41,13 +42,19 @@ export const AutojoinChannels = () => {
 
         const streamsToJoin = channels
             .map((c) => c.id)
-            .filter(
-                (streamId) => !userStream.view.userContent.isMember(streamId, MembershipOp.SO_JOIN),
-            )
-            .filter(
-                (streamId) =>
-                    !userStream.view.userContent.isMember(streamId, MembershipOp.SO_LEAVE),
-            )
+            .filter((streamId) => {
+                const membership = userStream.view.userContent.streamMemberships[streamId]
+                if (membership?.op === MembershipOp.SO_JOIN) {
+                    return false
+                }
+                if (
+                    membership?.op === MembershipOp.SO_LEAVE &&
+                    membership.reason !== MembershipReason.MR_LEFT_SPACE
+                ) {
+                    return false
+                }
+                return true
+            })
 
         setStreamIdsToJoin(streamsToJoin)
     }, [casablancaClient, channels, casablancaClient?.userStreamId])
