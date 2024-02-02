@@ -170,7 +170,7 @@ export const SpacesChannelComponent = (props: Props) => {
         [onLoadMore],
     )
 
-    const showJoinChannel = myMembership !== Membership.Join && !isDmOrGDM
+    const showJoinChannel = myMembership && myMembership !== Membership.Join && !isDmOrGDM
     const showDMAcceptInvitation = myMembership === Membership.Invite && isDmOrGDM
 
     const Editor = env.VITE_ENABLE_SLATE_EDITOR ? RichTextSlate : RichTextEditor
