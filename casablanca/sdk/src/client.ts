@@ -90,8 +90,8 @@ import {
     make_UserToDevicePayload_Ack,
     make_UserToDevicePayload_Inception,
     make_fake_encryptedData,
-    make_UserDeviceKeyPayload_MegolmDevice,
-    make_UserToDevicePayload_MegolmSessions,
+    make_UserDeviceKeyPayload_EncryptionDevice,
+    make_UserToDevicePayload_GroupEncryptionSessions,
     make_SpacePayload_Username,
     make_DMChannelPayload_DisplayName,
     make_GDMChannelPayload_DisplayName,
@@ -1621,7 +1621,7 @@ export class Client
 
         return this.makeEventAndAddToStream(
             this.userDeviceKeyStreamId,
-            make_UserDeviceKeyPayload_MegolmDevice({
+            make_UserDeviceKeyPayload_EncryptionDevice({
                 ...this.userDeviceKey(),
             }),
             { method: 'userDeviceKey' },
@@ -1759,7 +1759,7 @@ export class Client
                 })
                 await this.makeEventWithHashAndAddToStream(
                     toStreamId,
-                    make_UserToDevicePayload_MegolmSessions({
+                    make_UserToDevicePayload_GroupEncryptionSessions({
                         streamId,
                         senderKey: userDevice.deviceKey,
                         sessionIds: sessionIds,

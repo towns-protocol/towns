@@ -336,26 +336,26 @@ func update_Snapshot_UserDeviceKey(iSnapshot *Snapshot, userDeviceKeyPayload *Us
 	switch content := userDeviceKeyPayload.Content.(type) {
 	case *UserDeviceKeyPayload_Inception_:
 		return errors.New("cannot update blockheader with inception event")
-	case *UserDeviceKeyPayload_MegolmDevice_:
-		if snapshot.UserDeviceKeyContent.MegolmDevices == nil {
-			snapshot.UserDeviceKeyContent.MegolmDevices = make([]*UserDeviceKeyPayload_MegolmDevice, 0)
+	case *UserDeviceKeyPayload_EncryptionDevice_:
+		if snapshot.UserDeviceKeyContent.EncryptionDevices == nil {
+			snapshot.UserDeviceKeyContent.EncryptionDevices = make([]*UserDeviceKeyPayload_EncryptionDevice, 0)
 		}
 		// filter out the key if it already exists
 		i := 0
-		for _, key := range snapshot.UserDeviceKeyContent.MegolmDevices {
-			if key.DeviceKey != content.MegolmDevice.DeviceKey {
-				snapshot.UserDeviceKeyContent.MegolmDevices[i] = key
+		for _, key := range snapshot.UserDeviceKeyContent.EncryptionDevices {
+			if key.DeviceKey != content.EncryptionDevice.DeviceKey {
+				snapshot.UserDeviceKeyContent.EncryptionDevices[i] = key
 				i++
 			}
 		}
-		if i == len(snapshot.UserDeviceKeyContent.MegolmDevices)-1 {
+		if i == len(snapshot.UserDeviceKeyContent.EncryptionDevices)-1 {
 			// just an inplace sort operation
-			snapshot.UserDeviceKeyContent.MegolmDevices[i] = content.MegolmDevice
+			snapshot.UserDeviceKeyContent.EncryptionDevices[i] = content.EncryptionDevice
 		} else {
 			// truncate and stick the new key on the end
 			MAX_DEVICES := 10
 			startIndex := max(0, i-MAX_DEVICES)
-			snapshot.UserDeviceKeyContent.MegolmDevices = append(snapshot.UserDeviceKeyContent.MegolmDevices[startIndex:i], content.MegolmDevice)
+			snapshot.UserDeviceKeyContent.EncryptionDevices = append(snapshot.UserDeviceKeyContent.EncryptionDevices[startIndex:i], content.EncryptionDevice)
 		}
 		return nil
 	default:
@@ -376,12 +376,12 @@ func update_Snapshot_UserToDevice(
 	switch content := userToDevicePayload.Content.(type) {
 	case *UserToDevicePayload_Inception_:
 		return errors.New("cannot update blockheader with inception event")
-	case *UserToDevicePayload_MegolmSessions_:
+	case *UserToDevicePayload_GroupEncryptionSessions_:
 		if snapshot.UserToDeviceContent.DeviceSummary == nil {
 			snapshot.UserToDeviceContent.DeviceSummary = make(map[string]*UserToDevicePayload_Snapshot_DeviceSummary)
 		}
 		// loop over keys in the ciphertext map
-		for deviceKey := range content.MegolmSessions.Ciphertexts {
+		for deviceKey := range content.GroupEncryptionSessions.Ciphertexts {
 			if summary, ok := snapshot.UserToDeviceContent.DeviceSummary[deviceKey]; ok {
 				summary.UpperBound = miniblockNum
 			} else {

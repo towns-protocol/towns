@@ -3,7 +3,7 @@ import { RemoteTimelineEvent } from './types'
 import {
     Snapshot,
     UserDeviceKeyPayload,
-    UserDeviceKeyPayload_MegolmDevice,
+    UserDeviceKeyPayload_EncryptionDevice,
     UserDeviceKeyPayload_Snapshot,
 } from '@river/proto'
 import { StreamStateView_AbstractContent } from './streamStateView_AbstractContent'
@@ -34,7 +34,7 @@ export class StreamStateView_UserDeviceKeys extends StreamStateView_AbstractCont
         encryptionEmitter: TypedEmitter<StreamEncryptionEvents> | undefined,
     ): void {
         // dispatch events for all device keys, todo this seems inefficient?
-        for (const value of content.megolmDevices) {
+        for (const value of content.encryptionDevices) {
             this.addUserDeviceKey(value, encryptionEmitter)
         }
     }
@@ -59,7 +59,7 @@ export class StreamStateView_UserDeviceKeys extends StreamStateView_AbstractCont
         switch (payload.content.case) {
             case 'inception':
                 break
-            case 'megolmDevice':
+            case 'encryptionDevice':
                 this.addUserDeviceKey(payload.content.value, encryptionEmitter)
                 break
             case undefined:
@@ -70,7 +70,7 @@ export class StreamStateView_UserDeviceKeys extends StreamStateView_AbstractCont
     }
 
     private addUserDeviceKey(
-        value: UserDeviceKeyPayload_MegolmDevice,
+        value: UserDeviceKeyPayload_EncryptionDevice,
         encryptionEmitter: TypedEmitter<StreamEncryptionEvents> | undefined,
     ) {
         const device = {

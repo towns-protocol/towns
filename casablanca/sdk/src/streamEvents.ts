@@ -2,7 +2,7 @@ import {
     ChannelProperties,
     SnapshotCaseType,
     FullyReadMarker,
-    UserToDevicePayload_MegolmSessions,
+    UserToDevicePayload_GroupEncryptionSessions,
 } from '@river/proto'
 import {
     ClientInitStatus,
@@ -25,7 +25,10 @@ export type StreamChange = {
 
 /// Encryption events, emitted by streams, always emitted.
 export type StreamEncryptionEvents = {
-    newMegolmSessions: (sessions: UserToDevicePayload_MegolmSessions, senderId: string) => void
+    newMegolmSessions: (
+        sessions: UserToDevicePayload_GroupEncryptionSessions,
+        senderId: string,
+    ) => void
     newEncryptedContent: (streamId: string, eventId: string, content: EncryptedContent) => void
     newKeySolicitation: (
         streamId: string,

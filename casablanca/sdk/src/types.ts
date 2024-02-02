@@ -25,8 +25,8 @@ import {
     UserToDevicePayload_Ack,
     UserToDevicePayload_Inception,
     CommonPayload,
-    UserDeviceKeyPayload_MegolmDevice,
-    UserToDevicePayload_MegolmSessions,
+    UserDeviceKeyPayload_EncryptionDevice,
+    UserToDevicePayload_GroupEncryptionSessions,
     CommonPayload_KeyFulfillment,
     CommonPayload_KeySolicitation,
     SyncCookie,
@@ -576,14 +576,14 @@ export const make_ChannelPayload_Membership = (
     }
 }
 
-export const make_UserToDevicePayload_MegolmSessions = (
-    value: PlainMessage<UserToDevicePayload_MegolmSessions>,
+export const make_UserToDevicePayload_GroupEncryptionSessions = (
+    value: PlainMessage<UserToDevicePayload_GroupEncryptionSessions>,
 ): PlainMessage<StreamEvent>['payload'] => {
     return {
         case: 'userToDevicePayload',
         value: {
             content: {
-                case: 'megolmSessions',
+                case: 'groupEncryptionSessions',
                 value,
             },
         },
@@ -604,14 +604,14 @@ export const make_UserToDevicePayload_Ack = (
     }
 }
 
-export const make_UserDeviceKeyPayload_MegolmDevice = (
-    value: PlainMessage<UserDeviceKeyPayload_MegolmDevice>,
+export const make_UserDeviceKeyPayload_EncryptionDevice = (
+    value: PlainMessage<UserDeviceKeyPayload_EncryptionDevice>,
 ): PlainMessage<StreamEvent>['payload'] => {
     return {
         case: 'userDeviceKeyPayload',
         value: {
             content: {
-                case: 'megolmDevice',
+                case: 'encryptionDevice',
                 value,
             },
         },

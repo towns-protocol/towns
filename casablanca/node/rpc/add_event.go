@@ -293,7 +293,7 @@ func (s *Service) addUserDeviceKeyPayload(
 	case *UserDeviceKeyPayload_Inception_:
 		return RiverError(Err_INVALID_ARGUMENT, "can't add inception event")
 
-	case *UserDeviceKeyPayload_MegolmDevice_:
+	case *UserDeviceKeyPayload_EncryptionDevice_:
 		return s.addUserDeviceKeyEvent(ctx, stream, streamView, parsedEvent)
 
 	default:
@@ -311,7 +311,7 @@ func (s *Service) addUserToDevicePayload(
 	switch payload.UserToDevicePayload.Content.(type) {
 	case *UserToDevicePayload_Inception_:
 		return RiverError(Err_INVALID_ARGUMENT, "can't add inception event")
-	case *UserToDevicePayload_MegolmSessions_:
+	case *UserToDevicePayload_GroupEncryptionSessions_:
 		return stream.AddEvent(ctx, parsedEvent)
 	case *UserToDevicePayload_Ack_:
 		err := s.checkIsCreatorOfUserStream(ctx, streamView, parsedEvent)

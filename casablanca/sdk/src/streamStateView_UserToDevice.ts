@@ -5,7 +5,7 @@ import {
     UserToDevicePayload,
     UserToDevicePayload_Snapshot,
     UserToDevicePayload_Snapshot_DeviceSummary,
-    UserToDevicePayload_MegolmSessions,
+    UserToDevicePayload_GroupEncryptionSessions,
     UserToDevicePayload_Ack,
 } from '@river/proto'
 import { StreamStateView_AbstractContent } from './streamStateView_AbstractContent'
@@ -20,7 +20,7 @@ export class StreamStateView_UserToDevice extends StreamStateView_AbstractConten
     deviceSummary: Record<string, UserToDevicePayload_Snapshot_DeviceSummary> = {}
     pendingMegolmSessions: Record<
         string,
-        { creatorUserId: string; value: UserToDevicePayload_MegolmSessions }
+        { creatorUserId: string; value: UserToDevicePayload_GroupEncryptionSessions }
     > = {}
 
     constructor(streamId: string) {
@@ -63,7 +63,7 @@ export class StreamStateView_UserToDevice extends StreamStateView_AbstractConten
         switch (payload.content.case) {
             case 'inception':
                 break
-            case 'megolmSessions':
+            case 'groupEncryptionSessions':
                 this.addMegolmSessions(
                     event.creatorUserId,
                     payload.content.value,
@@ -90,7 +90,7 @@ export class StreamStateView_UserToDevice extends StreamStateView_AbstractConten
         switch (payload.content.case) {
             case 'inception':
                 break
-            case 'megolmSessions':
+            case 'groupEncryptionSessions':
                 this.pendingMegolmSessions[event.hashStr] = {
                     creatorUserId: event.creatorUserId,
                     value: payload.content.value,
@@ -120,7 +120,7 @@ export class StreamStateView_UserToDevice extends StreamStateView_AbstractConten
 
     private addMegolmSessions(
         creatorUserId: string,
-        content: UserToDevicePayload_MegolmSessions,
+        content: UserToDevicePayload_GroupEncryptionSessions,
         encryptionEmitter: TypedEmitter<StreamEncryptionEvents> | undefined,
     ) {
         encryptionEmitter?.emit('newMegolmSessions', content, creatorUserId)

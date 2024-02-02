@@ -6,7 +6,7 @@ import { Client } from './client'
 import { makeDonePromise, makeTestClient } from './util.test'
 import { dlog } from '@river/dlog'
 import { UserDeviceCollection } from '@river/encryption'
-import { UserToDevicePayload_MegolmSessions } from '@river/proto'
+import { UserToDevicePayload_GroupEncryptionSessions } from '@river/proto'
 
 const log = dlog('test:toDeviceMessage')
 
@@ -38,7 +38,7 @@ describe('toDeviceMessageTest', () => {
         const aliceSelfToDevice = makeDonePromise()
         alicesClient.once(
             'newMegolmSessions',
-            (sessions: UserToDevicePayload_MegolmSessions, senderUserId: string): void => {
+            (sessions: UserToDevicePayload_GroupEncryptionSessions, senderUserId: string): void => {
                 log('toDeviceMessage for Alice', sessions, senderUserId)
                 aliceSelfToDevice.runAndDone(() => {
                     expect(senderUserId).toEqual(bobsClient.userId)

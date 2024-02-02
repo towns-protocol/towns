@@ -7,7 +7,7 @@ import { EncryptedContent } from './encryptedContentTypes'
 import { shortenHexString, dlog, dlogError, DLogger, check } from '@river/dlog'
 import { isDefined } from './check'
 import { MEGOLM_ALGORITHM, GroupEncryptionSession, UserDevice } from '@river/encryption'
-import { SessionKeys, UserToDevicePayload_MegolmSessions } from '@river/proto'
+import { SessionKeys, UserToDevicePayload_GroupEncryptionSessions } from '@river/proto'
 import {
     KeySolicitationContent,
     make_CommonPayload_KeyFulfillment,
@@ -90,7 +90,7 @@ export class DecryptionExtensions extends (EventEmitter as new () => TypedEmitte
     private onStopFn?: () => void
     private queues = {
         priorityTasks: new Array<() => Promise<void>>(),
-        newMegolmSession: new Array<UserToDevicePayload_MegolmSessions>(),
+        newMegolmSession: new Array<UserToDevicePayload_GroupEncryptionSessions>(),
         encryptedContent: new Array<EncryptedContentItem>(),
         decryptionRetries: new Array<DecryptionRetryItem>(),
         missingKeys: new Array<MissingKeysItem>(),
@@ -122,7 +122,7 @@ export class DecryptionExtensions extends (EventEmitter as new () => TypedEmitte
 
         this.log.debug('new DecryptionExtensions', { userDevice })
         const onNewMegolmSessions = (
-            sessions: UserToDevicePayload_MegolmSessions,
+            sessions: UserToDevicePayload_GroupEncryptionSessions,
             _senderId: string,
         ) => {
             this.queues.newMegolmSession.push(sessions)
@@ -312,7 +312,7 @@ export class DecryptionExtensions extends (EventEmitter as new () => TypedEmitte
      * re-enqueue any decryption failures with matching session id
      */
     private async processNewMegolmSession(
-        session: UserToDevicePayload_MegolmSessions,
+        session: UserToDevicePayload_GroupEncryptionSessions,
     ): Promise<void> {
         this.log.debug('processNewMegolmSession', session)
         // check if this message is to our device

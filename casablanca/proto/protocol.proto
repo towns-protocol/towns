@@ -353,7 +353,7 @@ message UserToDevicePayload {
         StreamSettings settings = 2;
     }
 
-    message MegolmSessions {
+    message GroupEncryptionSessions {
         string stream_id = 1;
         string sender_key = 2;
         repeated string session_ids = 3;
@@ -369,7 +369,7 @@ message UserToDevicePayload {
     oneof content {
         Inception inception = 1;
         Ack ack = 2;
-        MegolmSessions megolm_sessions = 3;
+        GroupEncryptionSessions group_encryption_sessions = 3;
         
     }
 }
@@ -409,7 +409,7 @@ message UserDeviceKeyPayload {
         // inception
         Inception inception = 1;
         // device keys for this user, unique by device_key, capped at N, most recent last
-        repeated MegolmDevice megolm_devices = 2;
+        repeated EncryptionDevice encryption_devices = 2;
     }
 
     message Inception {
@@ -417,14 +417,14 @@ message UserDeviceKeyPayload {
         StreamSettings settings = 3;
     }
 
-    message MegolmDevice {
+    message EncryptionDevice {
         string device_key = 1;
         string fallback_key = 2;
     }
 
     oneof content {
         Inception inception = 1;
-        MegolmDevice megolm_device = 2;
+        EncryptionDevice encryption_device = 2;
     }
 }
 
