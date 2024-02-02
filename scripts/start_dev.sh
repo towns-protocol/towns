@@ -2,7 +2,7 @@
 set -euo pipefail
 
 SESSION_NAME="River"
-YAML_FILE="./casablanca/node/run_files/single/config/config.yaml"
+YAML_FILE="./casablanca/node/run_files/single/00/config/config.yaml"
 PNW_URL="http://localhost:8787"
 PNW_AUTH_TOKEN="Zm9v"
 
