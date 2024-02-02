@@ -39,8 +39,6 @@ export function balanceOfMockNFT(
     throw new Error(`Unsupported chainId ${chainId}, only 31337 is supported.`)
 }
 
-export const foundryMockNftAddress = getContractsInfo(31337).mockErc721aAddress
-
 export async function getTestGatingNftAddress(_chainId: number): Promise<string> {
     return await getTestGatingNFTContractAddress()
 }

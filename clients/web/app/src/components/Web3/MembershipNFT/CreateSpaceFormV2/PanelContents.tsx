@@ -2,7 +2,7 @@ import React, { ChangeEvent, PropsWithChildren, useCallback, useMemo } from 'rea
 import { UseFormReturn, useFormContext } from 'react-hook-form'
 import { AnimatePresence } from 'framer-motion'
 import { ethers } from 'ethers'
-import { foundryMockNftAddress } from 'use-zion-client'
+import { getContractsInfo } from 'use-zion-client'
 import {
     Box,
     Dropdown,
@@ -137,9 +137,11 @@ function GatingContent() {
                                 {env.DEV && chainId === 31337 && (
                                     <ClipboardCopy
                                         label={`Mock NFT ${shortAddress(
-                                            foundryMockNftAddress,
+                                            getContractsInfo(31337).mockErc721aAddress,
                                         )} (local wallet linking)`}
-                                        clipboardContent={foundryMockNftAddress}
+                                        clipboardContent={
+                                            getContractsInfo(31337).mockErc721aAddress
+                                        }
                                     />
                                 )}
                                 <TokensList

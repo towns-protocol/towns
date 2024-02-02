@@ -13,7 +13,9 @@ export interface IStaticContractsInfo {
 
 const invalidAddress = '0xEeeeeEeeeEeEeeEeEeEeeEEEeeeeEeeeeeeeEEeE'
 
-const extractAddress = (m: any): Address => {
+const extractAddress = async (name: string): Promise<Address> => {
+    const path = `@towns/generated/localhost/addresses/${name}`
+    const m = await import(path)
     /* eslint-disable @typescript-eslint/no-unsafe-member-access */
     if (m.address !== undefined) {
         return m.address as Address
@@ -28,21 +30,11 @@ const extractAddress = (m: any): Address => {
 const loadLocalhostContractsInfo = async (): Promise<IStaticContractsInfo> => {
     try {
         const ret: IStaticContractsInfo = {
-            townFactoryAddress: extractAddress(
-                await import('@towns/generated/localhost/addresses/townFactory.json'),
-            ),
-            townOwnerAddress: extractAddress(
-                await import('@towns/generated/localhost/addresses/townOwner.json'),
-            ),
-            mockErc721aAddress: extractAddress(
-                await import('@towns/generated/localhost/addresses/mockNFT.json'),
-            ),
-            testGatingTokenAddress: extractAddress(
-                await import('@towns/generated/localhost/addresses/member.json'),
-            ),
-            walletLinkAddress: extractAddress(
-                await import('@towns/generated/localhost/addresses/walletLink.json'),
-            ),
+            townFactoryAddress: await extractAddress('townFactory.json'),
+            townOwnerAddress: await extractAddress('townOwner.json'),
+            mockErc721aAddress: await extractAddress('mockNFT.json'),
+            testGatingTokenAddress: await extractAddress('member.json'),
+            walletLinkAddress: await extractAddress('walletLink.json'),
         }
         console.log('Loaded localhost contracts info:', ret)
         return ret
