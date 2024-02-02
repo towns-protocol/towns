@@ -1,9 +1,3 @@
-import LocalhostTownFactoryAddress from '@towns/generated/localhost/addresses/townFactory.json' assert { type: 'json' }
-import LocalhostTownOwnerAddress from '@towns/generated/localhost/addresses/townOwner.json' assert { type: 'json' }
-import LocalhostMockNFTAddress from '@towns/generated/localhost/addresses/mockNFT.json' assert { type: 'json' }
-import LocalhostMemberAddress from '@towns/generated/localhost/addresses/member.json' assert { type: 'json' }
-import LocalhostWalletLinkAddress from '@towns/generated/localhost/addresses/walletLink.json' assert { type: 'json' }
-
 import BaseSepoliaTownFactoryAddress from '@towns/generated/base_sepolia/addresses/townFactory.json' assert { type: 'json' }
 import BaseSepoliaTownOwnerAddress from '@towns/generated/base_sepolia/addresses/townOwner.json' assert { type: 'json' }
 import BaseSepoliaWalletLinkAddress from '@towns/generated/base_sepolia/addresses/walletLink.json' assert { type: 'json' }
@@ -17,13 +11,54 @@ export interface IStaticContractsInfo {
     walletLinkAddress: Address
 }
 
-const localhostContractsInfo: IStaticContractsInfo = {
-    townFactoryAddress: LocalhostTownFactoryAddress.address as Address,
-    townOwnerAddress: LocalhostTownOwnerAddress.address as Address,
-    mockErc721aAddress: LocalhostMockNFTAddress.address as Address,
-    testGatingTokenAddress: LocalhostMemberAddress.address as Address,
-    walletLinkAddress: LocalhostWalletLinkAddress.address as Address,
+const invalidAddress = '0xEeeeeEeeeEeEeeEeEeEeeEEEeeeeEeeeeeeeEEeE'
+
+const extractAddress = (m: any): Address => {
+    /* eslint-disable @typescript-eslint/no-unsafe-member-access */
+    if (m.address !== undefined) {
+        return m.address as Address
+    }
+    if (m.default !== undefined && m.default.address !== undefined) {
+        return m.default.address as Address
+    }
+    throw new Error('Failed to extract address from module: ' + m)
+    /* eslint-enable @typescript-eslint/no-unsafe-member-access */
 }
+
+const loadLocalhostContractsInfo = async (): Promise<IStaticContractsInfo> => {
+    try {
+        const ret: IStaticContractsInfo = {
+            townFactoryAddress: extractAddress(
+                await import('@towns/generated/localhost/addresses/townFactory.json'),
+            ),
+            townOwnerAddress: extractAddress(
+                await import('@towns/generated/localhost/addresses/townOwner.json'),
+            ),
+            mockErc721aAddress: extractAddress(
+                await import('@towns/generated/localhost/addresses/mockNFT.json'),
+            ),
+            testGatingTokenAddress: extractAddress(
+                await import('@towns/generated/localhost/addresses/member.json'),
+            ),
+            walletLinkAddress: extractAddress(
+                await import('@towns/generated/localhost/addresses/walletLink.json'),
+            ),
+        }
+        console.log('Loaded localhost contracts info:', ret)
+        return ret
+    } catch (e) {
+        console.error(e)
+        return {
+            townFactoryAddress: invalidAddress,
+            townOwnerAddress: invalidAddress,
+            mockErc721aAddress: invalidAddress,
+            testGatingTokenAddress: invalidAddress,
+            walletLinkAddress: invalidAddress,
+        }
+    }
+}
+
+const localhostContractsInfo = await loadLocalhostContractsInfo()
 
 const baseSepoliaContractsInfo: IStaticContractsInfo = {
     townFactoryAddress: BaseSepoliaTownFactoryAddress.address as Address,
@@ -37,6 +72,11 @@ export function getContractsInfo(chainId: number): IStaticContractsInfo {
     switch (chainId) {
         case 0:
         case 31337:
+            if (localhostContractsInfo.townFactoryAddress === invalidAddress) {
+                throw new Error(
+                    'Failed to load localhost contract address. Deploy contracts first.',
+                )
+            }
             return localhostContractsInfo
         case 84532:
             return baseSepoliaContractsInfo

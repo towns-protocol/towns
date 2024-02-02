@@ -83,6 +83,9 @@ jobs:
                   node-version: '20'
                   cache: 'yarn'
 
+            - name: Start and configure blockchains
+              run: ./scripts/bc-all-start.sh
+
             - name: Install node dependencies
               run: yarn install --immutable
 
@@ -129,9 +132,6 @@ jobs:
 
             - name: Build town types
               run: ./scripts/build-town-types.sh localhost --frozen
-
-            - name: Start and configure blockchains
-              run: ./scripts/bc-all-start.sh
 
             - name: Unit Tests
               run: yarn test:unit
@@ -225,6 +225,9 @@ jobs:
             - name: Print versions
               run: ./scripts/print-versions.sh
 
+            - name: Start and configure blockchains
+              run: ./scripts/bc-all-start.sh
+
             - name: Install node dependencies
               run: yarn install --immutable
 
@@ -238,9 +241,6 @@ jobs:
                   key: ${{ runner.os }}-turbo-${{ github.run_id }}
                   restore-keys: |
                       ${{ runner.os }}-turbo-
-
-            - name: Start and configure blockchains
-              run: ./scripts/bc-all-start.sh
 
             - name: Casablanca create db
               run: psql -h localhost -p 5433 -U postgres -f scripts/sql/create_db.sql
@@ -362,6 +362,9 @@ jobs:
             - name: Print versions
               run: ./scripts/print-versions.sh
 
+            - name: Start and configure blockchains
+              run: ./scripts/bc-all-start.sh
+
             - name: Install node dependencies
               run: yarn install --immutable
 
@@ -375,9 +378,6 @@ jobs:
                   key: ${{ runner.os }}-turbo-${{ github.run_id }}
                   restore-keys: |
                       ${{ runner.os }}-turbo-
-
-            - name: Start and configure blockchains
-              run: ./scripts/bc-all-start.sh
 
             - name: Casablanca create db
               run: psql -h localhost -p 5433 -U postgres -f scripts/sql/create_db.sql
@@ -496,6 +496,9 @@ jobs:
             - name: Print versions
               run: ./scripts/print-versions.sh
 
+            - name: Start and configure blockchains
+              run: ./scripts/bc-all-start.sh
+
             - name: Install node dependencies
               run: yarn install --immutable
 
@@ -509,9 +512,6 @@ jobs:
                   key: ${{ runner.os }}-turbo-${{ github.run_id }}
                   restore-keys: |
                       ${{ runner.os }}-turbo-
-
-            - name: Start and configure blockchains
-              run: ./scripts/bc-all-start.sh
 
             - name: Casablanca create db
               run: psql -h localhost -p 5433 -U postgres -f scripts/sql/create_db.sql
@@ -630,6 +630,9 @@ jobs:
             - name: Print versions
               run: ./scripts/print-versions.sh
 
+            - name: Start and configure blockchains
+              run: ./scripts/bc-all-start.sh
+
             - name: Install node dependencies
               run: yarn install --immutable
 
@@ -643,9 +646,6 @@ jobs:
                   key: ${{ runner.os }}-turbo-${{ github.run_id }}
                   restore-keys: |
                       ${{ runner.os }}-turbo-
-
-            - name: Start and configure blockchains
-              run: ./scripts/bc-all-start.sh
 
             - name: Casablanca create db
               run: psql -h localhost -p 5433 -U postgres -f scripts/sql/create_db.sql
@@ -794,17 +794,6 @@ jobs:
                   node-version: '20'
                   cache: 'yarn'
 
-            - name: Install node dependencies
-              run: yarn install --immutable
-
-            - name: Maintain Turbo cache
-              uses: actions/cache@v3
-              with:
-                  path: node_modules/.cache/turbo
-                  key: ${{ runner.os }}-turbo-${{ github.run_id }}
-                  restore-keys: |
-                      ${{ runner.os }}-turbo-
-
             - name: Install Foundry
               uses: foundry-rs/foundry-toolchain@v1
               with:
@@ -813,11 +802,22 @@ jobs:
             - name: Install Forge modules
               run: ./scripts/install-deps.sh
 
+            - name: Start and configure blockchains
+              run: ./scripts/bc-all-start.sh
+
+            - name: Install node dependencies
+              run: yarn install --immutable
+
             - name: Generate xchain contract bindings
               run: ./scripts/build-town-types.sh localhost
 
-            - name: Start and configure blockchains
-              run: ./scripts/bc-all-start.sh
+            - name: Maintain Turbo cache
+              uses: actions/cache@v3
+              with:
+                  path: node_modules/.cache/turbo
+                  key: ${{ runner.os }}-turbo-${{ github.run_id }}
+                  restore-keys: |
+                      ${{ runner.os }}-turbo-
 
             - name: Run xchain node tests
               run: go test --race ./...
