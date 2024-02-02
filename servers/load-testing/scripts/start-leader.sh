@@ -23,16 +23,6 @@ function check_env() {
         exit 1
     fi
 
-    if [ -z "$COORDINATION_SPACE_ID" ]; then
-        echo "COORDINATION_SPACE_ID is not set"
-        exit 1
-    fi
-
-    if [ -z "$COORDINATION_CHANNEL_ID" ]; then
-        echo "COORDINATION_CHANNEL_ID is not set"
-        exit 1
-    fi
-
     if [ -z "$RIVER_NODE_URL" ]; then
         echo "RIVER_NODE_URL is not set"
         exit 1
