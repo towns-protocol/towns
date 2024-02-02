@@ -34,7 +34,9 @@ import { useSpaceChannels } from 'hooks/useSpaceChannels'
 import { QUERY_PARAMS } from 'routes'
 import { notUndefined } from 'ui/utils/utils'
 import { SECOND_MS } from 'data/constants'
+import RichTextSlate from '@components/RichTextSlate/RichTextSlate'
 import { CentralPanelLayout } from './layouts/CentralPanelLayout'
+import { env } from '../utils'
 
 type Props = {
     onTouchClose?: () => void
@@ -170,6 +172,8 @@ export const SpacesChannelComponent = (props: Props) => {
 
     const showJoinChannel = myMembership !== Membership.Join && !isDmOrGDM
     const showDMAcceptInvitation = myMembership === Membership.Invite && isDmOrGDM
+
+    const Editor = env.VITE_ENABLE_SLATE_EDITOR ? RichTextSlate : RichTextEditor
     return (
         <CentralPanelLayout>
             {!isTouch && <RegisterChannelShortcuts />}
@@ -231,7 +235,7 @@ export const SpacesChannelComponent = (props: Props) => {
                         paddingX={isTouch ? 'none' : 'md'}
                     >
                         {!showDMAcceptInvitation && channel && (
-                            <RichTextEditor
+                            <Editor
                                 isFullWidthOnTouch
                                 editable={!!isChannelWritable}
                                 background={isChannelWritable ? 'level2' : 'level1'}
