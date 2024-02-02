@@ -660,7 +660,7 @@ func (s *Service) addMembershipEvent(
 		return err
 	}
 
-	return s.addDerivedMembershipEventToUserStream(ctx, userStream, userStreamView, streamId, parsedEvent, membership.Op)
+	return s.addDerivedMembershipEventToUserStream(ctx, userStream, userStreamView, streamId, parsedEvent, membership.Op, membership.Reason)
 }
 
 func getPermissionsForMembershipOp(membership *Membership, userId string, member bool, creatorId string) (auth.Permission, string, error) {
@@ -747,7 +747,7 @@ func (s *Service) addDMMembershipEvent(
 	if err != nil {
 		return err
 	}
-	return s.addDerivedMembershipEventToUserStream(ctx, userStream, userStreamView, streamId, parsedEvent, membership.Op)
+	return s.addDerivedMembershipEventToUserStream(ctx, userStream, userStreamView, streamId, parsedEvent, membership.Op, membership.Reason)
 }
 
 func (s *Service) addGDMMembershipEvent(
@@ -810,7 +810,7 @@ func (s *Service) addGDMMembershipEvent(
 		return err
 	}
 
-	return s.addDerivedMembershipEventToUserStream(ctx, userStream, userStreamView, streamId, parsedEvent, membership.Op)
+	return s.addDerivedMembershipEventToUserStream(ctx, userStream, userStreamView, streamId, parsedEvent, membership.Op, membership.Reason)
 }
 
 func (s *Service) addDerivedMembershipEventToUserStream(
@@ -820,6 +820,7 @@ func (s *Service) addDerivedMembershipEventToUserStream(
 	originStreamId string,
 	originEvent *ParsedEvent,
 	op MembershipOp,
+	reason *MembershipReason,
 ) error {
 	inviterId, err := shared.AddressHex(originEvent.Event.CreatorAddress)
 	if err != nil {
@@ -831,6 +832,7 @@ func (s *Service) addDerivedMembershipEventToUserStream(
 		s.wallet,
 		Make_UserPayload_Membership(
 			op,
+			reason,
 			inviterId,
 			originStreamId,
 			&EventRef{

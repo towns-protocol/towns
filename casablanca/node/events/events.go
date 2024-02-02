@@ -256,6 +256,7 @@ func Make_UserDeviceKeyPayload_Inception(
 
 func Make_UserPayload_Membership(
 	op protocol.MembershipOp,
+	reason *protocol.MembershipReason,
 	inviterId string,
 	streamId string,
 	originEvent *protocol.EventRef,
@@ -268,6 +269,7 @@ func Make_UserPayload_Membership(
 					OriginEvent: originEvent,
 					InviterId:   inviterId,
 					Op:          op,
+					Reason:      reason,
 				},
 			},
 		},

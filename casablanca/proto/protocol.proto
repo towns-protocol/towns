@@ -317,6 +317,7 @@ message UserPayload {
         EventRef origin_event = 2;
         string inviter_id = 3;
         MembershipOp op = 4;
+        optional MembershipReason reason = 5;
     }
     
     oneof content {
@@ -504,6 +505,7 @@ message StreamSettings {
 message Membership {
     MembershipOp op = 1;
     string user_id = 2;
+    optional MembershipReason reason = 3;
 }
 
 message EncryptedData {
@@ -662,6 +664,11 @@ enum MembershipOp {
     SO_INVITE = 1;
     SO_JOIN = 2;
     SO_LEAVE = 3;
+}
+
+enum MembershipReason {
+    MR_UNSPECIFIED = 0;
+    MR_LEFT_SPACE = 1;
 }
 
 enum ChannelOp {

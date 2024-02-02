@@ -2,6 +2,7 @@ import { Message, PlainMessage } from '@bufbuild/protobuf'
 import { datadogRum } from '@datadog/browser-rum'
 import {
     MembershipOp,
+    MembershipReason,
     ChannelOp,
     ChannelMessage_Post_Mention,
     ChannelMessage,
@@ -1231,7 +1232,7 @@ export class Client
         return stream
     }
 
-    async leaveStream(streamId: string): Promise<void> {
+    async leaveStream(streamId: string, reason?: MembershipReason): Promise<void> {
         this.logCall('leaveStream', streamId)
         if (isChannelStreamId(streamId)) {
             return this.makeEventAndAddToStream(
@@ -1239,6 +1240,7 @@ export class Client
                 make_ChannelPayload_Membership({
                     op: MembershipOp.SO_LEAVE,
                     userId: this.userId,
+                    reason: reason,
                 }),
                 { method: 'leaveChannel' },
             )
@@ -1248,6 +1250,7 @@ export class Client
                 make_DMChannelPayload_Membership({
                     op: MembershipOp.SO_LEAVE,
                     userId: this.userId,
+                    reason: reason,
                 }),
                 { method: 'leaveDMChannel' },
             )
@@ -1257,6 +1260,7 @@ export class Client
                 make_GDMChannelPayload_Membership({
                     op: MembershipOp.SO_LEAVE,
                     userId: this.userId,
+                    reason: reason,
                 }),
             )
         } else if (isSpaceStreamId(streamId)) {
@@ -1264,7 +1268,7 @@ export class Client
                 this.stream(streamId)?.view.spaceContent.spaceChannelsMetadata.keys() ?? []
 
             for (const channelId of channelIds) {
-                await this.leaveStream(channelId)
+                await this.leaveStream(channelId, MembershipReason.MR_LEFT_SPACE)
             }
 
             return this.makeEventAndAddToStream(

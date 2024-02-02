@@ -267,7 +267,7 @@ func (s *Service) createStream_Channel(
 		return nil, err
 	}
 
-	err = s.addDerivedMembershipEventToUserStream(ctx, userStream, userView, streamId, joinEvent, MembershipOp_SO_JOIN)
+	err = s.addDerivedMembershipEventToUserStream(ctx, userStream, userView, streamId, joinEvent, MembershipOp_SO_JOIN, nil)
 	if err != nil {
 		return nil, err
 	}
@@ -324,11 +324,11 @@ func (s *Service) createStream_DMChannel(
 		return nil, err
 	}
 
-	err = s.addDerivedMembershipEventToUserStream(ctx, userStream, userView, streamId, joinEvent, MembershipOp_SO_JOIN)
+	err = s.addDerivedMembershipEventToUserStream(ctx, userStream, userView, streamId, joinEvent, MembershipOp_SO_JOIN, nil)
 	if err != nil {
 		return nil, err
 	}
-	err = s.addDerivedMembershipEventToUserStream(ctx, otherUserStream, otherUserView, streamId, inviteEvent, MembershipOp_SO_JOIN)
+	err = s.addDerivedMembershipEventToUserStream(ctx, otherUserStream, otherUserView, streamId, inviteEvent, MembershipOp_SO_JOIN, nil)
 	if err != nil {
 		return nil, err
 	}
@@ -406,7 +406,7 @@ func (s *Service) createStream_GDMChannel(
 		return nil, err
 	}
 
-	err = s.addDerivedMembershipEventToUserStream(ctx, userStream, userView, streamId, joinEvent, MembershipOp_SO_JOIN)
+	err = s.addDerivedMembershipEventToUserStream(ctx, userStream, userView, streamId, joinEvent, MembershipOp_SO_JOIN, nil)
 	if err != nil {
 		return nil, err
 	}
@@ -417,7 +417,8 @@ func (s *Service) createStream_GDMChannel(
 			invitation.streamView,
 			streamId,
 			invitation.event,
-			MembershipOp_SO_JOIN)
+			MembershipOp_SO_JOIN,
+			nil)
 		if err != nil {
 			return nil, err
 		}
@@ -474,7 +475,7 @@ func (s *Service) createStream_Space(
 	}
 
 	// Side effects.
-	err = s.addDerivedMembershipEventToUserStream(ctx, userStream, userView, streamId, joinEvent, MembershipOp_SO_JOIN)
+	err = s.addDerivedMembershipEventToUserStream(ctx, userStream, userView, streamId, joinEvent, MembershipOp_SO_JOIN, nil)
 	if err != nil {
 		return nil, err
 	}
