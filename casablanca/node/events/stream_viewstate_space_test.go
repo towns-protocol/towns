@@ -13,7 +13,7 @@ import (
 	"google.golang.org/protobuf/proto"
 )
 
-var streamConfig_t = config.StreamConfig{
+var streamConfig_viewstate_space_t = config.StreamConfig{
 	Media: config.MediaStreamConfig{
 		MaxChunkCount: 100,
 		MaxChunkSize:  1000000,
@@ -226,7 +226,7 @@ func TestSpaceViewState(t *testing.T) {
 			Wallet:                 nodeWallet,
 			RiverChainBlockMonitor: &noopBlockMonitor{},
 		},
-		&streamConfig_t)
+		&streamConfig_viewstate_space_t)
 	// create a stream
 	_, mb := makeTestSpaceStream(t, user1Wallet, "user_1", "space_1", nil)
 	s, _, err := streamCache.CreateStream(ctx, "streamid$1", getStreamNodes(), mb)
@@ -299,7 +299,7 @@ func TestChannelViewState_JoinedMembers(t *testing.T) {
 		Storage:                storage.NewMemStorage(),
 		Wallet:                 nodeWallet,
 		RiverChainBlockMonitor: &noopBlockMonitor{},
-	}, &streamConfig_t)
+	}, &streamConfig_viewstate_space_t)
 	// create a space stream and add the members
 	_, mb := makeTestSpaceStream(t, userWallet, alice, spaceStreamId, nil)
 	sStream, _, _ := streamCache.CreateStream(ctx, spaceStreamId, getStreamNodes(), mb)
@@ -352,7 +352,7 @@ func TestChannelViewState_RemainingMembers(t *testing.T) {
 		Storage:                storage.NewMemStorage(),
 		Wallet:                 nodeWallet,
 		RiverChainBlockMonitor: &noopBlockMonitor{},
-	}, &streamConfig_t)
+	}, &streamConfig_viewstate_space_t)
 	// create a space stream and add the members
 	_, mb := makeTestSpaceStream(t, userWallet, alice, spaceStreamId, nil)
 	sStream, _, _ := streamCache.CreateStream(ctx, spaceStreamId, getStreamNodes(), mb)
