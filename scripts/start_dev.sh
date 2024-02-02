@@ -1,6 +1,7 @@
 #!/bin/bash
 set -euo pipefail
 
+set -x
 SESSION_NAME="River"
 YAML_FILE="./casablanca/node/run_files/single/00/config/config.yaml"
 PNW_URL="http://localhost:8787"
@@ -90,27 +91,17 @@ echo "Both Anvil chains and Postgres are now running, deploying contracts"
 tmpfile_river_chain=$(mktemp /tmp/anvil_river_chain.XXXXXX)
 tmpfile_base_chain=$(mktemp /tmp/anvil_base_chain.XXXXXX)
 
-# Run the scripts in the background and capture their outputs
-(./scripts/deploy-river-registry.sh > "$tmpfile_river_chain" 2>&1 && ./scripts/deploy-entitlement-checker.sh >> "$tmpfile_river_chain" 2>&1) &
+(./scripts/deploy-towns-contracts.sh > "$tmpfile_base_chain" 2>&1 && ./scripts/deploy-wallet-link-contracts.sh >> "$tmpfile_base_chain" 2>&1) 
 pid1=$!
-(./scripts/deploy-towns-contracts.sh > "$tmpfile_base_chain" 2>&1 && ./scripts/deploy-wallet-link-contracts.sh >> "$tmpfile_base_chain" 2>&1) &
-pid2=$!
 
 # Wait for all scripts to finish
 wait $pid1
 exit_status1=$?
-wait $pid2
-exit_status2=$?
 
 # Check the exit status of each script and display the output if it failed
 if [ $exit_status1 -ne 0 ]; then
-    echo "Anvil river chain deploy failed with exit status $exit_status1"
+    echo "Anvil base chain deploy failed with exit status $exit_status1"
     cat "$tmpfile_river_chain"
-fi
-
-if [ $exit_status2 -ne 0 ]; then
-    echo "Anvil base chain deploy failed with exit status $exit_status2"
-    cat "$tmpfile_base_chain"
 fi
 
 # Now generate the casablanca server config
