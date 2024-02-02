@@ -132,6 +132,7 @@ export const MessageThread = (props: {
                             paddingX={{ default: 'md', touch: 'none' }}
                         >
                             <RichTextEditor
+                                key={`${parentId}-${isChannelWritable ? '' : '-readonly'}`}
                                 editable={!!isChannelWritable}
                                 threadId={parentId}
                                 displayButtons={isTouch ? 'on-focus' : 'always'}

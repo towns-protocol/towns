@@ -106,6 +106,7 @@ export const MessageThreadPanel = (props: Props) => {
                     >
                         <RichTextEditor
                             isFullWidthOnTouch
+                            key={`${messageId}-${isChannelWritable ? '' : '-readonly'}`}
                             autoFocus={!isTouch}
                             editable={!!isChannelWritable}
                             displayButtons="on-focus"
