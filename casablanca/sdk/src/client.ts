@@ -286,42 +286,12 @@ export class Client
         check(isDefined(this.syncedStreamsExtensions), 'syncedStreamsExtensions must be defined')
         // todo as part of HNT-2826 we should check/create all these streamson the node
 
-        this.userStreamId = makeUserStreamId(this.userId)
-        const userStream = this.createSyncedStream(this.userStreamId)
-        if (!(await userStream.initializeFromPersistence())) {
-            const response =
-                (await this.getUserStream(this.userStreamId)) ??
-                (await this.createUserStream(this.userStreamId))
-            await userStream.initializeFromResponse(response)
-        }
-
-        this.userToDeviceStreamId = makeUserToDeviceStreamId(this.userId)
-        const userToDeviceStream = this.createSyncedStream(this.userToDeviceStreamId)
-        if (!(await userToDeviceStream.initializeFromPersistence())) {
-            const response =
-                (await this.getUserStream(this.userToDeviceStreamId)) ??
-                (await this.createUserToDeviceStream(this.userToDeviceStreamId))
-            await userToDeviceStream.initializeFromResponse(response)
-        }
-
-        this.userDeviceKeyStreamId = makeUserDeviceKeyStreamId(this.userId)
-        const userDeviceKeyStream = this.createSyncedStream(this.userDeviceKeyStreamId)
-        if (!(await userDeviceKeyStream.initializeFromPersistence())) {
-            const response =
-                (await this.getUserStream(this.userDeviceKeyStreamId)) ??
-                (await this.createUserDeviceKeyStream(this.userDeviceKeyStreamId))
-            await userDeviceKeyStream.initializeFromResponse(response)
-        }
-
-        this.userSettingsStreamId = makeUserSettingsStreamId(this.userId)
-        const userSettingsStream = this.createSyncedStream(this.userSettingsStreamId)
-        if (!(await userSettingsStream.initializeFromPersistence())) {
-            const response =
-                (await this.getUserStream(this.userSettingsStreamId)) ??
-                (await this.createUserSettingsStream(this.userSettingsStreamId))
-            await userSettingsStream.initializeFromResponse(response)
-        }
-
+        await Promise.all([
+            this.initUserStream(),
+            this.initUserToDeviceStream(),
+            this.initUserDeviceKeyStream(),
+            this.initUserSettingsStream(),
+        ])
         await this.initUserJoinedStreams()
 
         this.syncedStreamsExtensions.start()
@@ -331,6 +301,50 @@ export class Client
         datadogRum.addAction('userInitializationDuration', {
             userInitializationDuration: executionTime,
         })
+    }
+
+    private async initUserStream() {
+        this.userStreamId = makeUserStreamId(this.userId)
+        const userStream = this.createSyncedStream(this.userStreamId)
+        if (!(await userStream.initializeFromPersistence())) {
+            const response =
+                (await this.getUserStream(this.userStreamId)) ??
+                (await this.createUserStream(this.userStreamId))
+            await userStream.initializeFromResponse(response)
+        }
+    }
+
+    private async initUserToDeviceStream() {
+        this.userToDeviceStreamId = makeUserToDeviceStreamId(this.userId)
+        const userToDeviceStream = this.createSyncedStream(this.userToDeviceStreamId)
+        if (!(await userToDeviceStream.initializeFromPersistence())) {
+            const response =
+                (await this.getUserStream(this.userToDeviceStreamId)) ??
+                (await this.createUserToDeviceStream(this.userToDeviceStreamId))
+            await userToDeviceStream.initializeFromResponse(response)
+        }
+    }
+
+    private async initUserDeviceKeyStream() {
+        this.userDeviceKeyStreamId = makeUserDeviceKeyStreamId(this.userId)
+        const userDeviceKeyStream = this.createSyncedStream(this.userDeviceKeyStreamId)
+        if (!(await userDeviceKeyStream.initializeFromPersistence())) {
+            const response =
+                (await this.getUserStream(this.userDeviceKeyStreamId)) ??
+                (await this.createUserDeviceKeyStream(this.userDeviceKeyStreamId))
+            await userDeviceKeyStream.initializeFromResponse(response)
+        }
+    }
+
+    private async initUserSettingsStream() {
+        this.userSettingsStreamId = makeUserSettingsStreamId(this.userId)
+        const userSettingsStream = this.createSyncedStream(this.userSettingsStreamId)
+        if (!(await userSettingsStream.initializeFromPersistence())) {
+            const response =
+                (await this.getUserStream(this.userSettingsStreamId)) ??
+                (await this.createUserSettingsStream(this.userSettingsStreamId))
+            await userSettingsStream.initializeFromResponse(response)
+        }
     }
 
     // special wrapper around rpcClient.getStream which catches NOT_FOUND errors but re-throws everything else
