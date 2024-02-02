@@ -272,9 +272,7 @@ export class Client
             [] as string[],
         )
 
-        for (const streamId of Array.from(new Set(streamIds))) {
-            this.syncedStreamsExtensions.addStream(streamId)
-        }
+        this.syncedStreamsExtensions.setStreamIds(streamIds)
     }
 
     async initializeUser(): Promise<void> {
@@ -1337,8 +1335,8 @@ export class Client
         for (const miniblock of response.miniblocks) {
             const unpackedMiniblock = await unpackMiniblock(miniblock)
             unpackedMiniblocks.push(unpackedMiniblock)
-            await this.persistenceStore.saveMiniblock(streamId, unpackedMiniblock)
         }
+        await this.persistenceStore.saveMiniblocks(streamId, unpackedMiniblocks)
         return {
             terminus: response.terminus,
             miniblocks: [...unpackedMiniblocks, ...cachedMiniblocks],

@@ -130,9 +130,7 @@ export class SyncedStream extends Stream {
             lastMiniblockNum: miniblocks[miniblocks.length - 1].header.miniblockNum,
         })
         await this.persistenceStore.saveSyncedStream(this.streamId, cachedSyncedStream)
-        for (const mb of miniblocks) {
-            await this.persistenceStore.saveMiniblock(this.streamId, mb)
-        }
+        await this.persistenceStore.saveMiniblocks(this.streamId, miniblocks)
     }
 
     async initializeFromResponse(response: ParsedStreamResponse) {
@@ -165,12 +163,6 @@ export class SyncedStream extends Stream {
                 default:
                     break
             }
-        }
-    }
-
-    async saveMiniblocks(miniblocks: ParsedMiniblock[]) {
-        for (const miniblock of miniblocks) {
-            await this.persistenceStore.saveMiniblock(this.streamId, miniblock)
         }
     }
 

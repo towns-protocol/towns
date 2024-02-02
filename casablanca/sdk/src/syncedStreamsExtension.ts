@@ -9,6 +9,8 @@ import {
 import { check, dlog, dlogError } from '@river/dlog'
 import { Stream } from './stream'
 import { ClientInitStatus } from './types'
+import pLimit from 'p-limit'
+import { datadogRum } from '@datadog/browser-rum'
 
 interface StreamSyncItem {
     streamId: string
@@ -22,52 +24,49 @@ interface SyncedStreamsExtensionDelegate {
     emitStreamSyncActive: (active: boolean) => void
 }
 
-const MAX_CACHED_STREAMS_PER_TICK = 50
-const MAX_UNCACHED_STREAMS_PER_TICK = 10
+const concurrencyLimit = pLimit(50)
 
 export class SyncedStreamsExtension {
     private log = dlog('csb:syncedStreamsExtension')
     private logError = dlogError('csb:syncedStreamsExtension')
     private readonly delegate: SyncedStreamsExtensionDelegate
-    private queue = new Array<StreamSyncItem>()
-    private nonCachedQueue = new Array<StreamSyncItem>()
+
+    private readonly tasks = new Array<() => Promise<void>>()
+    private streamIds = new Set<string>()
+    private highPriorityIds = new Set<string>()
     private started: boolean = false
     private inProgressTick?: Promise<void>
     private timeoutId?: NodeJS.Timeout
-    private highPriorityIds = new Set<string>()
+    private initStreamsStartTime = performance.now()
+
     private startSyncRequested = false
+    private didLoadStreamsFromPersistence = false
+    private streamCountRequiringNetworkAccess = 0
     private numStreamsLoadedFromCache = 0
     private numStreamsLoadedFromNetwork = 0
     private numStreamsFailedToLoad = 0
+    private totalStreamCount = 0
+    private loadedStreamCount = 0
 
     initStatus: ClientInitStatus = {
         isLocalDataLoaded: false,
         isRemoteDataLoaded: false,
         progress: 0,
     }
-    // Need these for progress calculation
-    private totalStreamCount = 0
-    private loadedStreamCount = 0
 
     constructor(delegate: SyncedStreamsExtensionDelegate) {
         this.delegate = delegate
     }
 
-    public addStream(streamId: string) {
-        const item = {
-            streamId,
-            priority: this.priorityFromStreamId(streamId),
-        } satisfies StreamSyncItem
-        this.queue.push(item)
-        this.queue.sort((a, b) => a.priority - b.priority)
-        this.checkStartTicking()
-        this.totalStreamCount++
+    public setStreamIds(streamIds: string[]) {
+        check(this.streamIds.size === 0, 'setStreamIds called twice')
+        this.streamIds = new Set(streamIds)
+        this.totalStreamCount = streamIds.length
     }
 
     public setHighPriority(streamIds: string[]) {
+        check(this.highPriorityIds.size === 0, 'setHighPriority called twice')
         this.highPriorityIds = new Set(streamIds)
-        this.queue.sort((a, b) => a.priority - b.priority)
-        this.checkStartTicking()
     }
 
     public setStartSyncRequested(startSyncRequested: boolean) {
@@ -80,6 +79,14 @@ export class SyncedStreamsExtension {
     start() {
         check(!this.started, 'start() called twice')
         this.started = true
+        this.numStreamsLoadedFromCache = 0
+        this.numStreamsLoadedFromNetwork = 0
+        this.numStreamsFailedToLoad = 0
+
+        this.tasks.push(() => this.loadHighPriorityStreams())
+        this.tasks.push(() => this.loadStreamsFromPersistence())
+        this.tasks.push(() => this.loadStreamsFromNetwork())
+
         this.checkStartTicking()
     }
 
@@ -92,12 +99,24 @@ export class SyncedStreamsExtension {
             return
         }
 
-        if (
-            this.queue.length === 0 &&
-            this.nonCachedQueue.length === 0 &&
-            !this.startSyncRequested
-        ) {
+        // This means that we're finished. Ticking stops here.
+        if (this.tasks.length === 0 && !this.startSyncRequested) {
             this.emitClientStatus()
+
+            const initStreamsEndTime = performance.now()
+            const executionTime = initStreamsEndTime - this.initStreamsStartTime
+
+            datadogRum.addAction('streamInitializationDuration', {
+                streamInitializationDuration: executionTime,
+                streamsInitializedFromCache: this.numStreamsLoadedFromCache,
+                streamsInitializedFromNetwork: this.numStreamsLoadedFromNetwork,
+                streamsFailedToLoad: this.numStreamsFailedToLoad,
+            })
+
+            this.log('Streams loaded from cache', this.numStreamsLoadedFromCache)
+            this.log('Streams loaded from network', this.numStreamsLoadedFromNetwork)
+            this.log('Streams failed to load', this.numStreamsFailedToLoad)
+            this.log(`Total time: ${executionTime.toFixed(0)} ms`)
             return
         }
 
@@ -112,71 +131,82 @@ export class SyncedStreamsExtension {
         }, 0)
     }
 
-    /*
-    Ticking:
-    - If there are high priority streams, prioritize them
-    - If there are synced streams, add MAX_CACHED_STREAMS_PER_TICK of them
-    - Start sync
-    - For any remaining non-cached streams, add MAX_UNCACHED_STREAMS_PER_TICK of them
-    */
+    private async loadHighPriorityStreams() {
+        const streamIds = Array.from(this.highPriorityIds)
+        await Promise.all(streamIds.map((streamId) => this.loadStreamFromPersistence(streamId)))
+        this.emitClientStatus()
+    }
+
+    private async loadStreamsFromPersistence() {
+        const syncItems = Array.from(this.streamIds).map((streamId) => {
+            return {
+                streamId,
+                priority: this.priorityFromStreamId(streamId),
+            } satisfies StreamSyncItem
+        })
+        syncItems.sort((a, b) => a.priority - b.priority)
+        await Promise.all(syncItems.map((item) => this.loadStreamFromPersistence(item.streamId)))
+        this.didLoadStreamsFromPersistence = true
+        this.emitClientStatus()
+    }
+
+    private async loadStreamFromPersistence(streamId: string) {
+        const allowGetStream = this.highPriorityIds.has(streamId)
+        return concurrencyLimit(async () => {
+            try {
+                await this.delegate.initStream(streamId, allowGetStream)
+                this.loadedStreamCount++
+                this.numStreamsLoadedFromCache++
+                this.streamIds.delete(streamId)
+            } catch (err) {
+                this.streamCountRequiringNetworkAccess++
+                this.logError('Error initializing stream from persistence', streamId, err)
+            }
+            this.emitClientStatus()
+        })
+    }
+
+    private async loadStreamsFromNetwork() {
+        const syncItems = Array.from(this.streamIds).map((streamId) => {
+            return {
+                streamId,
+                priority: this.priorityFromStreamId(streamId),
+            } satisfies StreamSyncItem
+        })
+        syncItems.sort((a, b) => a.priority - b.priority)
+        await Promise.all(syncItems.map((item) => this.loadStreamFromNetwork(item.streamId)))
+        this.emitClientStatus()
+    }
+
+    private async loadStreamFromNetwork(streamId: string) {
+        this.log('Performance: adding stream from network', streamId)
+        return concurrencyLimit(async () => {
+            try {
+                await this.delegate.initStream(streamId, true)
+                this.numStreamsLoadedFromNetwork++
+                this.streamIds.delete(streamId)
+            } catch (err) {
+                this.logError('Error initializing stream', streamId, err)
+                this.log('Error initializing stream', streamId)
+                this.numStreamsFailedToLoad++
+            }
+            this.loadedStreamCount++
+            this.streamCountRequiringNetworkAccess--
+            this.emitClientStatus()
+        })
+    }
 
     private async tick(): Promise<void> {
-        this.numStreamsLoadedFromCache = 0
-        this.numStreamsLoadedFromNetwork = 0
-        this.numStreamsFailedToLoad = 0
-
-        if (this.queue.length > 0) {
-            const items = this.queue.splice(0, MAX_CACHED_STREAMS_PER_TICK)
-            this.log(
-                'Performance: adding synced streams',
-                items.map((item) => item.streamId),
-            )
-
-            // Allow downloading of high priority streams,
-            // all other streams will only be loaded from persistence in this step
-            await Promise.all(
-                items.map(async (item) => {
-                    try {
-                        await this.delegate.initStream(
-                            item.streamId,
-                            this.highPriorityIds.has(item.streamId),
-                        )
-                        this.loadedStreamCount++
-                        this.numStreamsLoadedFromCache++
-                    } catch (err) {
-                        this.logError('Error initializing stream', item.streamId, err)
-                        this.nonCachedQueue.push(item)
-                    }
-                    this.emitClientStatus()
-                }),
-            )
-        } else if (this.startSyncRequested) {
-            this.startSyncRequested = false
-            await this.startSync()
-        } else if (this.nonCachedQueue.length > 0) {
-            const items = this.nonCachedQueue.splice(0, MAX_UNCACHED_STREAMS_PER_TICK)
-            this.log(
-                'Performance: adding non-cached streams',
-                items.map((item) => item.streamId),
-            )
-            await Promise.all(
-                items.map(async (item) => {
-                    try {
-                        await this.delegate.initStream(item.streamId, true)
-                        this.numStreamsLoadedFromNetwork++
-                    } catch (err) {
-                        this.logError('Error initializing stream2', item.streamId, err)
-                        this.log('Error initializing stream', item.streamId)
-                        this.numStreamsFailedToLoad++
-                    }
-                    this.loadedStreamCount++
-                    this.emitClientStatus()
-                }),
-            )
+        const task = this.tasks.shift()
+        if (task) {
+            return task()
         }
-        this.log('Streams loaded from cache', this.numStreamsLoadedFromCache)
-        this.log('Streams loaded from network', this.numStreamsLoadedFromNetwork)
-        this.log('Streams failed to load', this.numStreamsFailedToLoad)
+
+        // Finish everything before starting sync
+        if (this.startSyncRequested) {
+            this.startSyncRequested = false
+            return this.startSync()
+        }
     }
 
     private async startSync() {
@@ -190,10 +220,12 @@ export class SyncedStreamsExtension {
     }
 
     private emitClientStatus() {
-        this.initStatus.isLocalDataLoaded = this.queue.length === 0
-        this.initStatus.isRemoteDataLoaded = this.nonCachedQueue.length === 0
+        this.initStatus.isLocalDataLoaded = this.didLoadStreamsFromPersistence
+        this.initStatus.isRemoteDataLoaded =
+            this.didLoadStreamsFromPersistence && this.streamCountRequiringNetworkAccess === 0
         if (this.totalStreamCount > 0) {
-            this.initStatus.progress = this.loadedStreamCount / this.totalStreamCount
+            this.initStatus.progress =
+                (this.totalStreamCount - this.streamIds.size) / this.totalStreamCount
         }
         this.delegate.emitClientInitStatus(this.initStatus)
     }

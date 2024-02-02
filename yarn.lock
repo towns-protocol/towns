@@ -6605,6 +6605,7 @@ __metadata:
     jest-runner-groups: ^2.2.0
     lodash: ^4.17.21
     nanoid: ^4.0.0
+    p-limit: ^5.0.0
     seedrandom: ^3.0.5
     supports-color: ^9.2.3
     ts-jest: ^29.1.1

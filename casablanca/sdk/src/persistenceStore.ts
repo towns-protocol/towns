@@ -100,6 +100,18 @@ export class PersistenceStore extends Dexie {
         })
     }
 
+    async saveMiniblocks(streamId: string, miniblocks: ParsedMiniblock[]) {
+        await this.miniblocks.bulkPut(
+            miniblocks.map((mb) => {
+                return {
+                    streamId: streamId,
+                    miniblockNum: mb.header.miniblockNum.toString(),
+                    data: parsedMiniblockToPersistedMiniblock(mb).toBinary(),
+                }
+            }),
+        )
+    }
+
     async getMiniblock(
         streamId: string,
         miniblockNum: bigint,
