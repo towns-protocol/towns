@@ -79,7 +79,7 @@ describe('Stress test', () => {
     test(
         'stress test',
         async () => {
-            redis.flushall()
+            await redis.flushall()
 
             log('coordinationSpaceId: ', coordinationSpaceId)
             log('coordinationChannelId: ', coordinationChannelId)
@@ -164,6 +164,7 @@ describe('Stress test', () => {
             while (followersCounter != 0) {
                 // Perform some actions in the loop
                 log('Waiting for followers')
+                log('Remaining followers counter', followersCounter)
                 await pauseForXMiliseconds(1000)
             }
             log('All followers joined main channel')
