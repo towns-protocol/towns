@@ -108,29 +108,6 @@ export const isUserToDeviceStreamId = (streamId: string): boolean =>
 export const isValidStreamId = (streamId: string): boolean =>
     allowedStreamPrefixes().some((prefix) => streamId.startsWith(prefix))
 
-export const getStreamPayloadCase = (streamId: string): string | undefined => {
-    if (!isValidStreamId(streamId)) {
-        return undefined
-    }
-    if (isUserStreamId(streamId)) {
-        return 'userPayload'
-    } else if (isChannelStreamId(streamId)) {
-        return 'channelPayload'
-    } else if (isDMChannelStreamId(streamId)) {
-        return 'dmChannelPayload'
-    } else if (isGDMChannelStreamId(streamId)) {
-        return 'gdmChannelPayload'
-    } else if (isSpaceStreamId(streamId)) {
-        return 'spacePayload'
-    } else if (isMediaStreamId(streamId)) {
-        return 'mediaPayload'
-    } else if (isUserSettingsStreamId(streamId)) {
-        return 'userSettingsPayload'
-    } else if (isUserDeviceStreamId(streamId)) {
-        return 'userDevicePayload'
-    }
-    return
-}
 export const genId = (): string => {
     return nanoid()
 }
