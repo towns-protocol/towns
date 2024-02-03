@@ -1,0 +1,40 @@
+init
+└── it should initialize with correct name, symbol and interfaceId
+
+registerOperator
+├── when registerOperator is called with a valid address
+│   ├── it should mint a token to the new operator
+│   ├── it should set operator status to Standby
+│   └── it should emit an OperatorRegistered event
+├── when registerOperator is called with the zero address
+│   └── it should revert with "NodeOperator__InvalidAddress"
+└── when registerOperator is called for an already registered operator
+    └── it should revert with "NodeOperator__AlreadyRegistered"
+
+setOperatorStatus
+├── when setOperatorStatus is called by a non-owner
+│   └── it should revert with "Ownable: caller is not the owner"
+├── when setOperatorStatus is called by an owner
+│   ├── given an operator address is zero
+│   │   └── it should revert with "NodeOperator__InvalidAddress"
+│   ├── given an operator is not registered (balance is 0)
+│   │   └── it should revert with "NodeOperator__NotRegistered"
+│   ├── given an operator is registered
+│   │   ├── when setOperatorStatus is called with the same current status
+│   │   │   └── it should revert with "NodeOperator__InvalidStatusTransition"
+│   │   ├── when setOperatorStatus is called from Standby to Exiting
+│   │   │   └── it should revert with "NodeOperator__InvalidStatusTransition"
+│   │   ├── when setOperatorStatus is called from Approved to Standby
+│   │   │   └── it should revert with "NodeOperator__InvalidStatusTransition"
+│   │   ├── when setOperatorStatus is called from Exiting to Approved
+│   │   │   └── it should revert with "NodeOperator__InvalidStatusTransition"
+│   │   ├── it should successfully update the operator's status
+│   │       └── it should emit a OperatorStatusChanged event (if your contract emits an event on status change)
+
+Non-Transferability
+    ├── given an operator token is minted
+    │   ├── when transfer or safeTransferFrom is attempted
+    │   │   └── it should revert with "NodeOperator__NotTransferable"
+    └── given no operator token is minted
+        ├── when transfer or safeTransferFrom is attempted
+        │   └── it should revert regardless of token existence

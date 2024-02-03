@@ -15,8 +15,11 @@ contract NodeOperatorHelper is FacetHelper {
   constructor() {
     operator = new NodeOperatorFacet();
 
-    bytes4[] memory selectors_ = new bytes4[](1);
+    bytes4[] memory selectors_ = new bytes4[](4);
     selectors_[0] = NodeOperatorFacet.registerOperator.selector;
+    selectors_[1] = NodeOperatorFacet.setOperatorStatus.selector;
+    selectors_[2] = NodeOperatorFacet.operatorStatus.selector;
+    selectors_[3] = NodeOperatorFacet.approvedOperators.selector;
 
     addSelectors(selectors_);
   }

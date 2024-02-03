@@ -7,11 +7,10 @@ pragma solidity ^0.8.23;
 
 // contracts
 import {TestUtils} from "contracts/test/utils/TestUtils.sol";
-import {NodeRegistryFacet} from "contracts/src/node/registry/NodeRegistryFacet.sol";
 import {NodeOperatorFacet} from "contracts/src/node/operator/NodeOperatorFacet.sol";
-import {NodeStatusFacet} from "contracts/src/node/status/NodeStatusFacet.sol";
-import {AccessControlListFacet} from "contracts/src/node/acl/AccessControlListFacet.sol";
 import {OwnableFacet} from "contracts/src/diamond/facets/ownable/OwnableFacet.sol";
+import {IntrospectionFacet} from "contracts/src/diamond/facets/introspection/IntrospectionFacet.sol";
+import {ERC721A} from "contracts/src/diamond/facets/token/ERC721A/ERC721A.sol";
 
 // deployments
 import {DeployNodeRegistry} from "contracts/scripts/deployments/DeployNodeRegistry.s.sol";
@@ -19,11 +18,10 @@ import {DeployNodeRegistry} from "contracts/scripts/deployments/DeployNodeRegist
 abstract contract NodeBaseSetup is TestUtils {
   DeployNodeRegistry internal deployNodeRegistry = new DeployNodeRegistry();
 
-  NodeRegistryFacet internal nodeRegistryFacet;
-  NodeOperatorFacet internal nodeOperatorFacet;
-  NodeStatusFacet internal serviceStatusFacet;
-  AccessControlListFacet internal accessControlListFacet;
-  OwnableFacet internal ownableFacet;
+  NodeOperatorFacet internal operator;
+  OwnableFacet internal ownable;
+  IntrospectionFacet internal introspection;
+  ERC721A internal erc721;
 
   address deployer;
 
@@ -32,10 +30,9 @@ abstract contract NodeBaseSetup is TestUtils {
 
     address diamond = deployNodeRegistry.deploy();
 
-    nodeOperatorFacet = NodeOperatorFacet(diamond);
-    nodeRegistryFacet = NodeRegistryFacet(diamond);
-    serviceStatusFacet = NodeStatusFacet(diamond);
-    accessControlListFacet = AccessControlListFacet(diamond);
-    ownableFacet = OwnableFacet(diamond);
+    operator = NodeOperatorFacet(diamond);
+    ownable = OwnableFacet(diamond);
+    introspection = IntrospectionFacet(diamond);
+    erc721 = ERC721A(diamond);
   }
 }

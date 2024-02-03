@@ -8,10 +8,14 @@ pragma solidity ^0.8.0;
 //contracts
 import {Deployer} from "./Deployer.s.sol";
 
-import {Diamond} from "contracts/src/diamond/Diamond.sol";
+import {IDiamond, Diamond} from "contracts/src/diamond/Diamond.sol";
 
 abstract contract DiamondDeployer is Deployer {
   uint256 index = 0;
+
+  IDiamond.FacetCut[] internal _cuts;
+  address[] internal _initAddresses;
+  bytes[] internal _initDatas;
 
   // override this with the actual deployment logic, no need to worry about:
   // - existing deployments
@@ -37,6 +41,28 @@ abstract contract DiamondDeployer is Deployer {
     // deploy diamond and return address
     vm.broadcast(deployerPrivateKey);
     return address(new Diamond(initParams));
+  }
+
+  function addInit(address initAddress, bytes memory initData) internal {
+    _initAddresses.push(initAddress);
+    _initDatas.push(initData);
+  }
+
+  function addCut(IDiamond.FacetCut memory cut) internal {
+    _cuts.push(cut);
+  }
+
+  function addFacet(
+    IDiamond.FacetCut memory cut,
+    address initAddress,
+    bytes memory initData
+  ) internal {
+    addCut(cut);
+    addInit(initAddress, initData);
+  }
+
+  function baseFacets() internal view returns (IDiamond.FacetCut[] memory) {
+    return _cuts;
   }
 
   function _resetIndex() internal {
