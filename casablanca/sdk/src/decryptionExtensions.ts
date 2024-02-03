@@ -549,8 +549,8 @@ export class DecryptionExtensions extends (EventEmitter as new () => TypedEmitte
             return
         }
 
-        if (!stream.view.userIsEntitledToKeyExchange(this.client.userId)) {
-            this.log.info('user is not a member of the room and cannot request keys')
+        if (!stream.view.userIsEntitledToKeyExchange(item.fromUserId)) {
+            this.log.info('user is not a member of the stream and cannot request keys')
             return
         }
         if (stream.view.contentKind === 'channelContent') {
