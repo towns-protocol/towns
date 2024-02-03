@@ -11,18 +11,18 @@ import (
 
 type StreamRegistry interface {
 	GetStreamInfo(ctx context.Context, streamId string) ([]string, []byte, error)
-	AllocateStream(ctx context.Context, streamId string, genesisMiniblockHash []byte) ([]string, error)
+	AllocateStream(ctx context.Context, streamId string, genesisMiniblockHash []byte, genesisMiniblock []byte) ([]string, error)
 }
 
 type streamRegistryImpl struct {
 	nodeRegistry NodeRegistry
 	replFactor   int
-	contract     registries.StreamRegistryContract
+	contract     *registries.RiverRegistryContract
 }
 
 var _ StreamRegistry = (*streamRegistryImpl)(nil)
 
-func NewStreamRegistry(nodeRegistry NodeRegistry, contract registries.StreamRegistryContract, replFactor int) *streamRegistryImpl {
+func NewStreamRegistry(nodeRegistry NodeRegistry, contract *registries.RiverRegistryContract, replFactor int) *streamRegistryImpl {
 	if replFactor < 1 {
 		replFactor = 1
 	}
@@ -34,16 +34,20 @@ func NewStreamRegistry(nodeRegistry NodeRegistry, contract registries.StreamRegi
 }
 
 func (sr *streamRegistryImpl) GetStreamInfo(ctx context.Context, streamId string) ([]string, []byte, error) {
-	return sr.contract.GetStream(ctx, streamId)
+	ret, err := sr.contract.GetStream(ctx, streamId)
+	if err != nil {
+		return nil, nil, err
+	}
+	return ret.Nodes, ret.GenesisMiniblockHash, nil
 }
 
-func (sr *streamRegistryImpl) AllocateStream(ctx context.Context, streamId string, genesisMiniblockHash []byte) ([]string, error) {
+func (sr *streamRegistryImpl) AllocateStream(ctx context.Context, streamId string, genesisMiniblockHash []byte, genesisMiniblock []byte) ([]string, error) {
 	addrs, err := chooseStreamNodes(ctx, streamId, sr.nodeRegistry, sr.replFactor)
 	if err != nil {
 		return nil, err
 	}
 
-	err = sr.contract.AllocateStream(ctx, streamId, addrs, genesisMiniblockHash)
+	err = sr.contract.AllocateStream(ctx, streamId, addrs, genesisMiniblockHash, genesisMiniblock)
 	if err != nil {
 		return nil, err
 	}

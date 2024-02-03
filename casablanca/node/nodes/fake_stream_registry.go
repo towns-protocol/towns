@@ -30,6 +30,7 @@ func (sr *fakeStreamRegistryImpl) AllocateStream(
 	ctx context.Context,
 	streamId string,
 	genesisMiniblockHash []byte,
+	genesisMiniblock []byte,
 ) ([]string, error) {
 	return chooseStreamNodes(ctx, streamId, sr.nodeRegistry, sr.replFactor)
 }

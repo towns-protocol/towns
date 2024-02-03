@@ -30,8 +30,8 @@ walletLinkContract:
 
 # River contracts
 registryContract:
-    address: '../addresses/streamRegistry.json'
-    version: 'dev'
+    address: '../addresses/riverRegistry.json'
+    version: '' # Explicitely uses IRiverRegistryV1 interface
 
 # Logging
 log:

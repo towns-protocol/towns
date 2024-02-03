@@ -49,7 +49,12 @@ if [ "$CONFIG" == "true" ]; then
     cp -r ./run_files/addresses ${RUN_BASE}/addresses
     SAVE_DEPLOYMENTS_PATH=casablanca/node/${RUN_BASE}/addresses ../../scripts/deploy-river-registry.sh
 
-    echo "{" > ${NODE_REGISTRY_PATH}
+    if [ "$USE_BLOCKCHAIN_STREAM_REGISTRY" == "true" ]; then
+        source ../../contracts/.env.localhost
+        RIVER_REGISTRY_ADDRESS=$(jq -r .address ${RUN_BASE}/addresses/riverRegistry.json)
+    fi
+    
+   echo "{" > ${NODE_REGISTRY_PATH}
     echo "  \"nodes\": [" >> ${NODE_REGISTRY_PATH}
 
     for ((i=0; i<NUM_INSTANCES; i++)); do
@@ -64,11 +69,31 @@ if [ "$CONFIG" == "true" ]; then
 
         NODE_ADDRESS=$(cat ${RUN_BASE}/$INSTANCE/wallet/node_address)
         echo "    { \"name\": \"$INSTANCE\", \"address\": \"$NODE_ADDRESS\", \"url\": \"http://localhost:$I_RPC_PORT\", \"port\": $I_RPC_PORT }," >> ${NODE_REGISTRY_PATH}
+
+        if [ "$USE_BLOCKCHAIN_STREAM_REGISTRY" == "true" ]; then
+            echo "Adding node record to blockchain river registry"
+            cast send \
+                --rpc-url http://127.0.0.1:8546 \
+                --private-key $LOCAL_PRIVATE_KEY \
+                $RIVER_REGISTRY_ADDRESS \
+                "addNode(address,string)" \
+                $NODE_ADDRESS \
+                http://localhost:$I_RPC_PORT > /dev/null
+        fi
     done
 
     sed -i.bak '$ s/,$//' ${NODE_REGISTRY_PATH} && rm ${NODE_REGISTRY_PATH}.bak
     echo "  ]" >> ${NODE_REGISTRY_PATH}
     echo "}" >> ${NODE_REGISTRY_PATH}
+
+    if [ "$USE_BLOCKCHAIN_STREAM_REGISTRY" == "true" ]; then
+        echo "Node records in contract:"
+        cast call \
+            --rpc-url http://127.0.0.1:8546 \
+            $RIVER_REGISTRY_ADDRESS \
+            "getAllNodes()((address,string,string)[])" | sed 's/),/),\n/g'
+        echo "<<<<<<<<<<<<<<<<<<<<<<<<<"
+    fi
 fi
 
 if [ "$RUN" == "true" ]; then

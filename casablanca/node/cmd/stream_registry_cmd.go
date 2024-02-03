@@ -20,26 +20,27 @@ func srdump(cfg *config.Config) error {
 		return err
 	}
 
-	streamRegistryContract, err := registries.NewStreamRegistryContract(ctx, blockchain, &cfg.RegistryContract)
+	registryContract, err := registries.NewRiverRegistryContract(ctx, blockchain, &cfg.RegistryContract)
 	if err != nil {
 		return err
 	}
 
-	streamNum, err := streamRegistryContract.GetStreamsLength(ctx)
+	streamNum, err := registryContract.GetStreamCount(ctx)
 	if err != nil {
 		return err
 	}
 
-	fmt.Printf("Number of stream slots in stream registry: %d\n", streamNum)
+	fmt.Printf("Stream count reported: %d\n", streamNum)
 
-	for i := int64(0); i < streamNum; i++ {
-		streamId, nodes, hash, err := streamRegistryContract.GetStreamByIndex(ctx, i)
-		if err != nil {
-			return err
-		}
-		s := fmt.Sprintf("%4d %s", i, streamId)
-		fmt.Printf("%-54s %s\n", s, hex.EncodeToString(hash))
-		for _, node := range nodes {
+	streams, err := registryContract.GetAllStreams(ctx)
+	if err != nil {
+		return err
+	}
+
+	for i, strm := range streams {
+		s := fmt.Sprintf("%4d %s", i, strm.StreamId)
+		fmt.Printf("%-54s %4d, %s\n", s, strm.LastMiniblockNum, hex.EncodeToString(strm.LastMiniblockHash))
+		for _, node := range strm.Nodes {
 			fmt.Printf("        %s\n", node)
 		}
 	}
@@ -55,18 +56,18 @@ func srstream(cfg *config.Config, streamId string) error {
 		return err
 	}
 
-	streamRegistryContract, err := registries.NewStreamRegistryContract(ctx, blockchain, &cfg.RegistryContract)
+	registryContract, err := registries.NewRiverRegistryContract(ctx, blockchain, &cfg.RegistryContract)
 	if err != nil {
 		return err
 	}
 
-	nodes, hash, err := streamRegistryContract.GetStream(ctx, streamId)
+	stream, err := registryContract.GetStream(ctx, streamId)
 	if err != nil {
 		return err
 	}
 
-	fmt.Printf("%s\n", hex.EncodeToString(hash))
-	for _, node := range nodes {
+	fmt.Printf("%d %s\n", stream.LastMiniblockNum, hex.EncodeToString(stream.LastMiniblockHash))
+	for _, node := range stream.Nodes {
 		fmt.Printf("%s\n", node)
 	}
 

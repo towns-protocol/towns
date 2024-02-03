@@ -188,12 +188,12 @@ func StartServer(ctx context.Context, cfg *config.Config, wallet *crypto.Wallet)
 		}
 		riverChainBlockMonitor = riverChain.BlockMonitor
 
-		streamRegistryContract, err := registries.NewStreamRegistryContract(ctx, riverChain, &cfg.RegistryContract)
+		registryContract, err := registries.NewRiverRegistryContract(ctx, riverChain, &cfg.RegistryContract)
 		if err != nil {
-			log.Error("NewStreamRegistryContract", "error", err)
+			log.Error("NewRiverRegistryContract", "error", err)
 			return nil, 0, nil, err
 		}
-		streamRegistry = nodes.NewStreamRegistry(nodeRegistry, streamRegistryContract, cfg.Stream.ReplicationFactor)
+		streamRegistry = nodes.NewStreamRegistry(nodeRegistry, registryContract, cfg.Stream.ReplicationFactor)
 
 		log.Info("Using blockchain stream registry")
 	} else {

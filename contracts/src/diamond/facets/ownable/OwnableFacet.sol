@@ -12,6 +12,10 @@ import {OwnableBase} from "./OwnableBase.sol";
 
 contract OwnableFacet is IERC173, OwnableBase, Facet {
   function __Ownable_init(address owner_) external onlyInitializing {
+    __Ownable_init_unchained(owner_);
+  }
+
+  function __Ownable_init_unchained(address owner_) internal {
     _transferOwnership(owner_);
     _addInterface(type(IERC173).interfaceId);
   }

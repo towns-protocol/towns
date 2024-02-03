@@ -13,4 +13,4 @@ if [ "${1-}" != "nobuild" ]; then
     make build
 fi
 
-make deploy-river-anvil-explicit contract=DeployStreamRegistry
+make deploy-river-anvil-explicit contract=DeployRiverRegistry

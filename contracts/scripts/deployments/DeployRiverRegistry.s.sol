@@ -2,11 +2,11 @@
 pragma solidity ^0.8.23;
 
 import {Deployer} from "../common/Deployer.s.sol";
-import {StreamRegistry} from "contracts/src/river/registry/StreamRegistry.sol";
+import {RiverRegistry} from "contracts/src/river/registry/RiverRegistry.sol";
 
-contract DeployStreamRegistry is Deployer {
+contract DeployRiverRegistry is Deployer {
   function versionName() public pure override returns (string memory) {
-    return "streamRegistry";
+    return "riverRegistry";
   }
 
   function __deploy(
@@ -14,6 +14,6 @@ contract DeployStreamRegistry is Deployer {
     address
   ) public override returns (address) {
     vm.broadcast(deployerPK);
-    return address(new StreamRegistry());
+    return address(new RiverRegistry());
   }
 }

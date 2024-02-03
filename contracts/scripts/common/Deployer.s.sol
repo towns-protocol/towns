@@ -31,9 +31,11 @@ abstract contract Deployer is Script, DeployBase {
   function deploy() public virtual returns (address deployedAddr) {
     bool overrideDeployment = vm.envOr("OVERRIDE_DEPLOYMENTS", uint256(0)) > 0;
 
-    address existingAddr = getDeployment(versionName());
+    address existingAddr = isTesting()
+      ? address(0)
+      : getDeployment(versionName());
 
-    if (!overrideDeployment && existingAddr != address(0) && !isTesting()) {
+    if (!overrideDeployment && existingAddr != address(0)) {
       debug(
         string.concat("found existing ", versionName(), " deployment at"),
         existingAddr

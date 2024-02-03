@@ -11,6 +11,7 @@ import (
 	"github.com/river-build/river/infra"
 	. "github.com/river-build/river/protocol"
 	"github.com/river-build/river/shared"
+	"google.golang.org/protobuf/proto"
 
 	"connectrpc.com/connect"
 	"golang.org/x/exp/slog"
@@ -122,7 +123,12 @@ func (s *Service) createReplicatedStream(
 		return nil, err
 	}
 
-	nodesList, err := s.streamRegistry.AllocateStream(ctx, streamId, mb.Header.Hash)
+	mbBytes, err := proto.Marshal(mb)
+	if err != nil {
+		return nil, err
+	}
+
+	nodesList, err := s.streamRegistry.AllocateStream(ctx, streamId, mb.Header.Hash, mbBytes)
 	if err != nil {
 		return nil, err
 	}
