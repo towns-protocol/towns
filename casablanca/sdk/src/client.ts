@@ -384,9 +384,6 @@ export class Client
                 this.signerContext,
                 make_UserDeviceKeyPayload_Inception({
                     streamId: userDeviceKeyStreamId,
-                    // device keys are updated often, and we're limited to
-                    // 10, so after ten just snapshot
-                    settings: new StreamSettings({ minEventsPerSnapshot: 10 }),
                 }),
             ),
         ]
@@ -406,15 +403,6 @@ export class Client
                 this.signerContext,
                 make_UserToDevicePayload_Inception({
                     streamId: userToDeviceStreamId,
-                    // todo: move this to a config on the node https://linear.app/hnt-labs/issue/HNT-3931/move-custom-snapshot-config-for-user-streams-to-node
-                    // aellis optimizing the to device stream to make blocks
-                    // faster and snapshot often, because of the way we ack
-                    // for different devices,
-                    // this keeps us from having to re-download things for other
-                    // devices. This should be configured on the node side.
-                    settings: new StreamSettings({
-                        minEventsPerSnapshot: 10,
-                    }),
                 }),
             ),
         ]

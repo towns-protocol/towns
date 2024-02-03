@@ -3,12 +3,14 @@ package events
 import (
 	"bytes"
 	"context"
+	"strings"
 	"time"
 
 	. "github.com/river-build/river/base"
 	"github.com/river-build/river/config"
 	"github.com/river-build/river/dlog"
 	. "github.com/river-build/river/protocol"
+	. "github.com/river-build/river/shared"
 	"github.com/river-build/river/storage"
 	. "github.com/river-build/river/utils"
 
@@ -185,7 +187,7 @@ func (r *streamViewImpl) ProposeNextMiniblock(ctx context.Context, forceSnapshot
 		Hashes:            hashes,
 		NewMiniblockNum:   r.minipool.generation,
 		PrevMiniblockHash: r.LastBlock().headerEvent.Hash,
-		ShouldSnapshot:    forceSnapshot || r.shouldSnapshot(),
+		ShouldSnapshot:    forceSnapshot || r.shouldSnapshot(ctx),
 	}, nil
 }
 
@@ -456,18 +458,25 @@ func (r *streamViewImpl) SyncCookie(localNodeAddress string) *SyncCookie {
 	}
 }
 
-func (r *streamViewImpl) getMinEventsPerSnapshot() int {
-	// TODO this should be a system level config https://linear.app/hnt-labs/issue/HNT-2011
-	defaultMinEventsPerSnapshot := 100
-	settings := r.InceptionPayload().GetSettings()
-	if settings == nil || settings.GetMinEventsPerSnapshot() == 0 {
-		return defaultMinEventsPerSnapshot
+func (r *streamViewImpl) getMinEventsPerSnapshot(ctx context.Context) int {
+	cfg := config.FromCtx(ctx)
+	// does this stream have a custom value for it's prefix?
+	if cfg.Stream.MinEventsPerSnapshot != nil {
+		streamPrefix := strings.ToLower(GetStreamIdPrefix(r.streamId))
+		if value, ok := cfg.Stream.MinEventsPerSnapshot[streamPrefix]; ok {
+			return value
+		}
 	}
-	return int(settings.GetMinEventsPerSnapshot())
+	// is the value set in the config?
+	if cfg.Stream.DefaultMinEventsPerSnapshot != 0 {
+		return cfg.Stream.DefaultMinEventsPerSnapshot
+	}
+	// nothing is set, return magic number
+	return 100
 }
 
-func (r *streamViewImpl) shouldSnapshot() bool {
-	minEventsPerSnapshot := r.getMinEventsPerSnapshot()
+func (r *streamViewImpl) shouldSnapshot(ctx context.Context) bool {
+	minEventsPerSnapshot := r.getMinEventsPerSnapshot(ctx)
 
 	count := 0
 	// count the events in the minipool

@@ -70,6 +70,13 @@ stream:
         # The node will load M generation miniblocks before the most recent snapshot
         generations: 5
     replicationFactor: <REPL_FACTOR>
+    defaultMinEventsPerSnapshot: 100
+    minEventsPerSnapshot:
+        # stream prefixes should be lower case because go is lower casing them anyway
+        user: 10
+        udev: 10
+        udks: 10
+        uset: 10
 
 # Debug feature flags.
 useBlockchainStreamRegistry: <USE_BLOCKCHAIN_STREAM_REGISTRY>

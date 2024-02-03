@@ -17,7 +17,7 @@ func getStreamNodes() *events.StreamNodes {
 	return events.NewStreamNodes([]string{"node_1", "node_2", "node_3"}, "node_1")
 }
 
-var streamConfig_t = &config.StreamConfig{
+var streamConfig_t = config.StreamConfig{
 	Media: config.MediaStreamConfig{
 		MaxChunkCount: 100,
 		MaxChunkSize:  1000000,
@@ -26,6 +26,12 @@ var streamConfig_t = &config.StreamConfig{
 		Generations: 5,
 		AgeSeconds:  11,
 	},
+	DefaultMinEventsPerSnapshot: 2,
+	MinEventsPerSnapshot:        map[string]int{},
+}
+
+var config_t = config.Config{
+	Stream: streamConfig_t,
 }
 
 type StreamContext_T struct {
@@ -47,6 +53,10 @@ func (s *StreamContext_T) Refresh() *StreamContext_T {
 	return s
 }
 
+func MakeCxtWithConfig_T() context.Context {
+	return config.CtxWithConfig(context.Background(), &config_t) // lint:ignore context.Background is fine in tests
+}
+
 func MakeChannelStreamContext_T(
 	t *testing.T,
 	ctx context.Context,
@@ -59,7 +69,7 @@ func MakeChannelStreamContext_T(
 		Storage:                storage.NewMemStorage(),
 		Wallet:                 wallet,
 		RiverChainBlockMonitor: crypto.NewFakeBlockMonitor(ctx, 100),
-	}, streamConfig_t)
+	}, &streamConfig_t)
 	// create a channel stream and auto-add the creator as a member
 	channelEvents := MakeChannelInceptionEvents_T(
 		t,
@@ -200,7 +210,6 @@ func MakeChannelInceptionEvents_T(
 	spaceStreamId string,
 ) []*events.ParsedEvent {
 	streamSettings := &protocol.StreamSettings{
-		MinEventsPerSnapshot:     2,
 		DisableMiniblockCreation: true,
 	}
 	channelProperties := &protocol.EncryptedData{

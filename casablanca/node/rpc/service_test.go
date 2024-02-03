@@ -36,7 +36,8 @@ var (
 )
 
 func TestMain(m *testing.M) {
-	db, schemaName, closer, err := dbtestutils.StartDB(context.Background())
+	ctx := testutils.MakeCxtWithConfig_T()
+	db, schemaName, closer, err := dbtestutils.StartDB(ctx)
 	if err != nil {
 		panic(err)
 	}
@@ -312,7 +313,7 @@ func testServerAndClient(
 }
 
 func TestMethods(t *testing.T) {
-	ctx := context.Background()
+	ctx := testutils.MakeCxtWithConfig_T()
 	client, _, closer := testServerAndClient(ctx, testDatabaseUrl, testSchemaName, false, 0)
 	wallet1, _ := crypto.NewWallet(ctx)
 	wallet2, _ := crypto.NewWallet(ctx)
@@ -371,7 +372,6 @@ func TestMethods(t *testing.T) {
 			shared.SpaceStreamIdFromName("test"),
 			"channel1",
 			&protocol.StreamSettings{
-				MinEventsPerSnapshot:     200,
 				DisableMiniblockCreation: true,
 			},
 		)
@@ -450,7 +450,7 @@ func TestMethods(t *testing.T) {
 		}))
 		assert.NoError(t, err)
 
-		syncCtx, syncCancel := context.WithCancel(context.Background())
+		syncCtx, syncCancel := context.WithCancel(ctx)
 		syncRes, err := client.SyncStreams(
 			syncCtx,
 			connect.NewRequest(
@@ -501,7 +501,7 @@ func TestMethods(t *testing.T) {
 }
 
 func TestRiverDeviceId(t *testing.T) {
-	ctx := context.Background()
+	ctx := testutils.MakeCxtWithConfig_T()
 	client, _, closer := testServerAndClient(ctx, testDatabaseUrl, testSchemaName, false, 0)
 	wallet, _ := crypto.NewWallet(ctx)
 	deviceWallet, _ := crypto.NewWallet(ctx)
@@ -579,7 +579,7 @@ func TestSyncStreams(t *testing.T) {
 	Arrange
 	*/
 	// create the test client and server
-	ctx := context.Background()
+	ctx := testutils.MakeCxtWithConfig_T()
 	client, _, closer := testServerAndClient(ctx, testDatabaseUrl, testSchemaName, false, 2)
 	defer closer()
 	// create the streams for a user
@@ -601,7 +601,7 @@ func TestSyncStreams(t *testing.T) {
 	Act
 	*/
 	// sync streams
-	syncCtx, syncCancel := context.WithCancel(context.Background())
+	syncCtx, syncCancel := context.WithCancel(ctx)
 	syncRes, err := client.SyncStreams(
 		syncCtx,
 		connect.NewRequest(
@@ -652,7 +652,7 @@ func TestAddStreamsToSync(t *testing.T) {
 	Arrange
 	*/
 	// create the test client and server
-	ctx := context.Background()
+	ctx := testutils.MakeCxtWithConfig_T()
 	aliceClient, port, closer := testServerAndClient(ctx, testDatabaseUrl, testSchemaName, false, 2)
 	defer closer()
 	// create alice's wallet and streams
@@ -693,7 +693,7 @@ func TestAddStreamsToSync(t *testing.T) {
 	Act
 	*/
 	// bob sync streams
-	syncCtx, syncCancel := context.WithCancel(context.Background())
+	syncCtx, syncCancel := context.WithCancel(ctx)
 	syncRes, err := bobClient.SyncStreams(
 		syncCtx,
 		connect.NewRequest(
@@ -753,7 +753,7 @@ func TestRemoveStreamsFromSync(t *testing.T) {
 	Arrange
 	*/
 	// create the test client and server
-	ctx := context.Background()
+	ctx := testutils.MakeCxtWithConfig_T()
 	aliceClient, port, closer := testServerAndClient(ctx, testDatabaseUrl, testSchemaName, false, 2)
 	defer closer()
 	// create alice's wallet and streams
@@ -785,7 +785,7 @@ func TestRemoveStreamsFromSync(t *testing.T) {
 	assert.Nilf(t, err, "error calling createChannel: %v", err)
 	assert.NotNil(t, channel1, "nil sync cookie")
 	// bob sync streams
-	syncCtx, syncCancel := context.WithCancel(context.Background())
+	syncCtx, syncCancel := context.WithCancel(ctx)
 	syncRes, err := bobClient.SyncStreams(
 		syncCtx,
 		connect.NewRequest(
@@ -894,7 +894,7 @@ func TestRemoveStreamsFromSync(t *testing.T) {
 
 // TODO: revamp with block support
 func DisableTestManyUsers(t *testing.T) {
-	ctx := context.Background()
+	ctx := testutils.MakeCxtWithConfig_T()
 	client, _, closer := testServerAndClient(ctx, testDatabaseUrl, testSchemaName, false, 0)
 	defer closer()
 

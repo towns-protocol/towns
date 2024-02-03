@@ -19,6 +19,26 @@ var recencyConstraintsConfig_t = config.RecencyConstraintsConfig{
 	Generations: 5,
 	AgeSeconds:  11,
 }
+var minEventsPerSnapshot = 2
+
+var streamConfig_t = config.StreamConfig{
+	Media: config.MediaStreamConfig{
+		MaxChunkCount: 100,
+		MaxChunkSize:  1000000,
+	},
+	RecencyConstraints: config.RecencyConstraintsConfig{
+		AgeSeconds:  11,
+		Generations: 5,
+	},
+	DefaultMinEventsPerSnapshot: minEventsPerSnapshot,
+	MinEventsPerSnapshot: map[string]int{
+		"streamid$1": minEventsPerSnapshot,
+	},
+}
+
+var config_t = &config.Config{
+	Stream: streamConfig_t,
+}
 
 func parsedEvent(t *testing.T, envelope *protocol.Envelope) *ParsedEvent {
 	parsed, err := ParseEvent(envelope)
@@ -27,12 +47,12 @@ func parsedEvent(t *testing.T, envelope *protocol.Envelope) *ParsedEvent {
 }
 
 func TestLoad(t *testing.T) {
-	wallet, _ := crypto.NewWallet(context.Background())
-	minEventsPerSnapshot := 2
+	ctx := config.CtxWithConfig(context.Background(), config_t)
+	wallet, _ := crypto.NewWallet(ctx)
 
 	inception, err := MakeEnvelopeWithPayload(
 		wallet,
-		Make_UserPayload_Inception("streamid$1", &protocol.StreamSettings{MinEventsPerSnapshot: int32(minEventsPerSnapshot)}),
+		Make_UserPayload_Inception("streamid$1", nil),
 		nil,
 	)
 	assert.NoError(t, err)
@@ -100,10 +120,14 @@ func TestLoad(t *testing.T) {
 	// Check minipool, should be empty
 	assert.Equal(t, 0, len(view.minipool.events.Values))
 
+	// check for invalid config
+	num := view.getMinEventsPerSnapshot(context.Background())
+	assert.Equal(t, num, 100) // hard coded default
+
 	// check snapshot generation
-	num := view.getMinEventsPerSnapshot()
+	num = view.getMinEventsPerSnapshot(ctx)
 	assert.Equal(t, minEventsPerSnapshot, num)
-	assert.Equal(t, false, view.shouldSnapshot())
+	assert.Equal(t, false, view.shouldSnapshot(ctx))
 
 	blockHash := view.LastBlock().Hash
 
@@ -121,11 +145,11 @@ func TestLoad(t *testing.T) {
 	assert.NoError(t, err)
 
 	// with one new event, we shouldn't snapshot yet
-	assert.Equal(t, false, view.shouldSnapshot())
+	assert.Equal(t, false, view.shouldSnapshot(ctx))
 
 	// and miniblocks should have nil snapshots
-	proposal, _ := view.ProposeNextMiniblock(context.Background(), false)
-	miniblockHeader, _, _ = view.makeMiniblockHeader(context.Background(), proposal)
+	proposal, _ := view.ProposeNextMiniblock(ctx, false)
+	miniblockHeader, _, _ = view.makeMiniblockHeader(ctx, proposal)
 	assert.Nil(t, miniblockHeader.Snapshot)
 
 	// add another join event
@@ -142,12 +166,12 @@ func TestLoad(t *testing.T) {
 	view, err = view.copyAndAddEvent(nextEvent)
 	assert.NoError(t, err)
 	// with two new events, we should snapshot
-	assert.Equal(t, true, view.shouldSnapshot())
+	assert.Equal(t, true, view.shouldSnapshot(ctx))
 	assert.Equal(t, 1, len(view.blocks))
 	assert.Equal(t, 2, len(view.blocks[0].events))
 	// and miniblocks should have non - nil snapshots
-	proposal, _ = view.ProposeNextMiniblock(context.Background(), false)
-	miniblockHeader, envelopes, _ := view.makeMiniblockHeader(context.Background(), proposal)
+	proposal, _ = view.ProposeNextMiniblock(ctx, false)
+	miniblockHeader, envelopes, _ := view.makeMiniblockHeader(ctx, proposal)
 	assert.NotNil(t, miniblockHeader.Snapshot)
 
 	// check count

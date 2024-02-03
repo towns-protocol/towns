@@ -99,6 +99,8 @@ type StreamConfig struct {
 	Media              MediaStreamConfig
 	RecencyConstraints RecencyConstraintsConfig
 	ReplicationFactor  int
+	DefaultMinEventsPerSnapshot int
+	MinEventsPerSnapshot map[string]int
 }
 
 type MediaStreamConfig struct {

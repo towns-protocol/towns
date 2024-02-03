@@ -492,10 +492,7 @@ message EventRef {
  * StreamSettings is a part of inception payload for each stream type.
  */
 message StreamSettings {
-    reserved 1;
-
-    // Minimum number of events before we take a snapshot.
-    int32 min_events_per_snapshot = 2;
+    reserved 1, 2;
 
     // Test setting for testing with manual miniblock creation through Info debug request. 
     bool disable_miniblock_creation = 3;

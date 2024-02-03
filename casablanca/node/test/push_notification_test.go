@@ -1,7 +1,6 @@
 package test
 
 import (
-	"context"
 	"encoding/json"
 	"fmt"
 	"io"
@@ -118,7 +117,7 @@ func assertEvent(
 
 func TestPushNotification_JoinedMembers(t *testing.T) {
 	/* Arrange */
-	ctx := context.Background()
+	ctx := testutils.MakeCxtWithConfig_T()
 	wallet, _ := crypto.NewWallet(ctx)
 	alice := "alice"
 	others := []string{"bob", "carol"}
@@ -184,7 +183,7 @@ func TestPushNotification_JoinedMembers(t *testing.T) {
 
 func TestPushNotification_RemainingMembers(t *testing.T) {
 	/* Arrange */
-	ctx := context.Background()
+	ctx := testutils.MakeCxtWithConfig_T()
 	wallet, _ := crypto.NewWallet(ctx)
 	alice := "alice"
 	others := []string{"bob", "carol"}
@@ -256,7 +255,7 @@ func TestPushNotification_RemainingMembers(t *testing.T) {
 
 func TestPushNotification_Dm(t *testing.T) {
 	/* Arrange */
-	ctx := context.Background()
+	ctx := testutils.MakeCxtWithConfig_T()
 	wallet, _ := crypto.NewWallet(ctx)
 	alice := "alice"
 	others := []string{"bob", "carol"}

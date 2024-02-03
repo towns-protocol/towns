@@ -69,6 +69,15 @@ func UserStreamIdFromAddress(address []byte) (string, error) {
 	return STREAM_USER_PREFIX_DASH + userId, nil
 }
 
+func GetStreamIdPrefix(streamId string) string {
+	// split string on "-" return first index
+	index := strings.Index(streamId, "-")
+	if index == -1 {
+		return streamId
+	}
+	return streamId[:index]
+}
+
 func ValidUserStreamId(id string) bool {
 	return len(id) == 45 && strings.HasPrefix(id, STREAM_USER_PREFIX_DASH_HEX)
 }
