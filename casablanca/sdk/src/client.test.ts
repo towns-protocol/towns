@@ -163,7 +163,7 @@ describe('clientTest', () => {
         await bobsClient.waitForStream(channelId)
 
         // hand construct a message, (don't do this normally! just use sendMessage(..))
-        const encrypted = await bobsClient.encryptMegolmEvent(
+        const encrypted = await bobsClient.encryptGroupEvent(
             new ChannelMessage({
                 payload: {
                     case: 'post',
@@ -820,7 +820,7 @@ describe('clientTest', () => {
             await bobsClient.uploadDeviceKeys()
         }
 
-        const keys = stream.view.userDeviceKeyContent.megolmKeys
+        const keys = stream.view.userDeviceKeyContent.deviceKeys
         expect(keys).toHaveLength(1)
     })
 })

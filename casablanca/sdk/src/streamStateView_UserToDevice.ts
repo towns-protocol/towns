@@ -18,7 +18,7 @@ export class StreamStateView_UserToDevice extends StreamStateView_AbstractConten
     readonly streamId: string
     readonly memberships: StreamStateView_UserStreamMembership
     deviceSummary: Record<string, UserToDevicePayload_Snapshot_DeviceSummary> = {}
-    pendingMegolmSessions: Record<
+    pendingGroupSessions: Record<
         string,
         { creatorUserId: string; value: UserToDevicePayload_GroupEncryptionSessions }
     > = {}
@@ -45,10 +45,10 @@ export class StreamStateView_UserToDevice extends StreamStateView_AbstractConten
     ): void {
         super.onConfirmedEvent(event, emitter)
         const eventId = event.hashStr
-        const payload = this.pendingMegolmSessions[eventId]
+        const payload = this.pendingGroupSessions[eventId]
         if (payload) {
-            delete this.pendingMegolmSessions[eventId]
-            this.addMegolmSessions(payload.creatorUserId, payload.value, emitter)
+            delete this.pendingGroupSessions[eventId]
+            this.addGroupSessions(payload.creatorUserId, payload.value, emitter)
         }
     }
 
@@ -64,11 +64,7 @@ export class StreamStateView_UserToDevice extends StreamStateView_AbstractConten
             case 'inception':
                 break
             case 'groupEncryptionSessions':
-                this.addMegolmSessions(
-                    event.creatorUserId,
-                    payload.content.value,
-                    encryptionEmitter,
-                )
+                this.addGroupSessions(event.creatorUserId, payload.content.value, encryptionEmitter)
                 break
             case 'ack':
                 break
@@ -91,7 +87,7 @@ export class StreamStateView_UserToDevice extends StreamStateView_AbstractConten
             case 'inception':
                 break
             case 'groupEncryptionSessions':
-                this.pendingMegolmSessions[event.hashStr] = {
+                this.pendingGroupSessions[event.hashStr] = {
                     creatorUserId: event.creatorUserId,
                     value: payload.content.value,
                 }
@@ -107,7 +103,7 @@ export class StreamStateView_UserToDevice extends StreamStateView_AbstractConten
     }
 
     hasPendingSessionId(deviceKey: string, sessionId: string): boolean {
-        for (const [_, payload] of Object.entries(this.pendingMegolmSessions)) {
+        for (const [_, payload] of Object.entries(this.pendingGroupSessions)) {
             if (
                 payload.value.sessionIds.includes(sessionId) &&
                 payload.value.ciphertexts[deviceKey]
@@ -118,12 +114,12 @@ export class StreamStateView_UserToDevice extends StreamStateView_AbstractConten
         return false
     }
 
-    private addMegolmSessions(
+    private addGroupSessions(
         creatorUserId: string,
         content: UserToDevicePayload_GroupEncryptionSessions,
         encryptionEmitter: TypedEmitter<StreamEncryptionEvents> | undefined,
     ) {
-        encryptionEmitter?.emit('newMegolmSessions', content, creatorUserId)
+        encryptionEmitter?.emit('newGroupSessions', content, creatorUserId)
     }
 
     private updateDeviceSummary(event: ParsedEvent, content: UserToDevicePayload_Ack) {

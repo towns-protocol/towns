@@ -37,7 +37,7 @@ describe('toDeviceMessageTest', () => {
 
         const aliceSelfToDevice = makeDonePromise()
         alicesClient.once(
-            'newMegolmSessions',
+            'newGroupSessions',
             (sessions: UserToDevicePayload_GroupEncryptionSessions, senderUserId: string): void => {
                 log('toDeviceMessage for Alice', sessions, senderUserId)
                 aliceSelfToDevice.runAndDone(() => {

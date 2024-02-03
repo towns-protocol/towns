@@ -918,7 +918,7 @@ export class Client
         check(stream !== undefined, 'stream not found')
         const localId = stream.view.appendLocalEvent(payload, this)
         const cleartext = payload.toJsonString()
-        const message = await this.encryptMegolmEvent(payload, streamId)
+        const message = await this.encryptGroupEvent(payload, streamId)
         if (!message) {
             throw new Error('failed to encrypt message')
         }
@@ -1465,7 +1465,7 @@ export class Client
                     // return latest 10 device keys
                     const deviceLookback = 10
                     const stream = await this.getStream(streamId)
-                    const userDevices = stream.userDeviceKeyContent.megolmKeys.slice(
+                    const userDevices = stream.userDeviceKeyContent.deviceKeys.slice(
                         -deviceLookback,
                     )
                     await this.cryptoStore.saveUserDevices(userId, userDevices)
@@ -1598,7 +1598,7 @@ export class Client
     }
 
     /**
-     * Resets crypto backend and creates a new Olm account, uploading device keys to UserDeviceKey stream.
+     * Resets crypto backend and creates a new encryption account, uploading device keys to UserDeviceKey stream.
      */
     async resetCrypto(): Promise<void> {
         this.logCall('resetCrypto')
@@ -1657,7 +1657,7 @@ export class Client
     }
 
     /**
-     * Decrypt a ToDevice message using Olm algorithm.
+     * Decrypt a ToDevice message using river's decryption algorithm.
      *
      */
     public async decryptWithDeviceKey(
@@ -1670,7 +1670,7 @@ export class Client
         return this.cryptoBackend.decryptWithDeviceKey(ciphertext, senderDeviceKey)
     }
     /**
-     * decrypts and applies megolm event
+     * decrypts and updates the decrypted event
      */
     public async decryptGroupEvent(
         streamId: string,
@@ -1680,12 +1680,12 @@ export class Client
         this.logCall('decryptGroupEvent', streamId, eventId, encryptedContent)
         const stream = this.stream(streamId)
         check(isDefined(stream), 'stream not found')
-        const cleartext = await this.cleartextForMegolmEvent(streamId, eventId, encryptedContent)
+        const cleartext = await this.cleartextForGroupEvent(streamId, eventId, encryptedContent)
         const decryptedContent = toDecryptedContent(encryptedContent.kind, cleartext)
         stream.view.updateDecryptedContent(eventId, decryptedContent, this)
     }
 
-    private async cleartextForMegolmEvent(
+    private async cleartextForGroupEvent(
         streamId: string,
         eventId: string,
         encryptedContent: EncryptedContent,
@@ -1746,14 +1746,14 @@ export class Client
         })
         const promises = Object.entries(toDevices).map(async ([userId, deviceKeys]) => {
             try {
-                const ciphertext = await this.encryptOlm(payload, deviceKeys)
+                const ciphertext = await this.encryptWithDeviceKeys(payload, deviceKeys)
                 if (Object.keys(ciphertext).length === 0) {
-                    this.logCall('encryptAndShareMegolmSessions: no ciphertext to send', userId)
+                    this.logCall('encryptAndShareGroupSessions: no ciphertext to send', userId)
                     return
                 }
                 const toStreamId: string = makeUserToDeviceStreamId(userId)
                 const miniblockHash = await this.getStreamLastMiniblockHash(toStreamId)
-                this.logCall("encryptAndShareMegolmSessions: sent to user's devices", {
+                this.logCall("encryptAndShareGroupSessions: sent to user's devices", {
                     toStreamId,
                     deviceKeys: deviceKeys.map((d) => d.deviceKey).join(','),
                 })
@@ -1768,7 +1768,7 @@ export class Client
                     miniblockHash,
                 )
             } catch (error) {
-                this.logError('encryptAndShareMegolmSessions: ERROR', error)
+                this.logError('encryptAndShareGroupSessions: ERROR', error)
                 return undefined
             }
         })
@@ -1776,8 +1776,8 @@ export class Client
         await Promise.all(promises)
     }
 
-    // Encrypt event using Megolm.
-    public encryptMegolmEvent(event: Message, streamId: string): Promise<EncryptedData> {
+    // Encrypt event using GroupEncryption.
+    public encryptGroupEvent(event: Message, streamId: string): Promise<EncryptedData> {
         if (!this.cryptoBackend) {
             throw new Error('crypto backend not initialized')
         }
@@ -1785,7 +1785,10 @@ export class Client
         return this.cryptoBackend.encryptGroupEvent(streamId, cleartext)
     }
 
-    async encryptOlm(payload: Message, deviceKeys: UserDevice[]): Promise<Record<string, string>> {
+    async encryptWithDeviceKeys(
+        payload: Message,
+        deviceKeys: UserDevice[],
+    ): Promise<Record<string, string>> {
         check(isDefined(this.cryptoBackend), 'crypto backend not initialized')
 
         // Don't encrypt to our own device

@@ -33,10 +33,12 @@ describe('clientCrypto', () => {
         ).toBe(true)
         alicesClient.startSync()
         const keys = new SessionKeys({ keys: ['hi!'] })
-        // create a message to encrypt with Bob's devices over Olm
-        const envelope = await alicesClient.encryptOlm(keys, [bobsClient.userDeviceKey()])
+        // create a message to encrypt with Bob's devices
+        const envelope = await alicesClient.encryptWithDeviceKeys(keys, [
+            bobsClient.userDeviceKey(),
+        ])
         expect(envelope[bobsClient.userDeviceKey().deviceKey]).toBeDefined()
-        // ensure olm session with bob
+        // ensure decrypting with bob's device key works
         const clear = await bobsClient.decryptWithDeviceKey(
             envelope[bobsClient.userDeviceKey().deviceKey],
             alicesClient.userDeviceKey().deviceKey,
@@ -59,10 +61,12 @@ describe('clientCrypto', () => {
 
         for (const message of ['oh hello', 'why how are you?']) {
             const keys = new SessionKeys({ keys: [message] })
-            // create a message to encrypt with Bob's devices over Olm
-            const envelope = await alicesClient.encryptOlm(keys, [bobsClient.userDeviceKey()])
+            // create a message to encrypt with Bob's devices
+            const envelope = await alicesClient.encryptWithDeviceKeys(keys, [
+                bobsClient.userDeviceKey(),
+            ])
             expect(envelope[bobsClient.userDeviceKey().deviceKey]).toBeDefined()
-            // ensure olm session with bob
+            // ensure decrypting with bob device key works
             const clear = await bobsClient.decryptWithDeviceKey(
                 envelope[bobsClient.userDeviceKey().deviceKey],
                 alicesClient.userDeviceKey().deviceKey,

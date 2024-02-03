@@ -26,7 +26,7 @@ export interface EntitlementsDelegate {
 export enum DecryptionStatus {
     initializing,
     updating,
-    processingNewMegolmSessions,
+    processingNewGroupSessions,
     decryptingEvents,
     retryingDecryption,
     requestingKeys,
@@ -90,7 +90,7 @@ export class DecryptionExtensions extends (EventEmitter as new () => TypedEmitte
     private onStopFn?: () => void
     private queues = {
         priorityTasks: new Array<() => Promise<void>>(),
-        newMegolmSession: new Array<UserToDevicePayload_GroupEncryptionSessions>(),
+        newGroupSession: new Array<UserToDevicePayload_GroupEncryptionSessions>(),
         encryptedContent: new Array<EncryptedContentItem>(),
         decryptionRetries: new Array<DecryptionRetryItem>(),
         missingKeys: new Array<MissingKeysItem>(),
@@ -121,11 +121,11 @@ export class DecryptionExtensions extends (EventEmitter as new () => TypedEmitte
         }
 
         this.log.debug('new DecryptionExtensions', { userDevice })
-        const onNewMegolmSessions = (
+        const onNewGroupSessions = (
             sessions: UserToDevicePayload_GroupEncryptionSessions,
             _senderId: string,
         ) => {
-            this.queues.newMegolmSession.push(sessions)
+            this.queues.newGroupSession.push(sessions)
             this.checkStartTicking()
         }
 
@@ -180,13 +180,13 @@ export class DecryptionExtensions extends (EventEmitter as new () => TypedEmitte
             }
         }
 
-        client.on('newMegolmSessions', onNewMegolmSessions)
+        client.on('newGroupSessions', onNewGroupSessions)
         client.on('newEncryptedContent', onNewEncryptedContent)
         client.on('newKeySolicitation', onKeySolicitation)
         client.on('updatedKeySolicitation', onKeySolicitation)
 
         this.onStopFn = () => {
-            client.off('newMegolmSessions', onNewMegolmSessions)
+            client.off('newGroupSessions', onNewGroupSessions)
             client.off('newEncryptedContent', onNewEncryptedContent)
             client.off('newKeySolicitation', onKeySolicitation)
             client.off('updatedKeySolicitation', onKeySolicitation)
@@ -255,7 +255,7 @@ export class DecryptionExtensions extends (EventEmitter as new () => TypedEmitte
     }
 
     private getDelayMs() {
-        if (this.queues.newMegolmSession.length > 0) {
+        if (this.queues.newGroupSession.length > 0) {
             return 0
         } else {
             return this.delayMs
@@ -272,10 +272,10 @@ export class DecryptionExtensions extends (EventEmitter as new () => TypedEmitte
             return priorityTask()
         }
 
-        const session = this.queues.newMegolmSession.shift()
+        const session = this.queues.newGroupSession.shift()
         if (session) {
-            this.setStatus(DecryptionStatus.processingNewMegolmSessions)
-            return this.processNewMegolmSession(session)
+            this.setStatus(DecryptionStatus.processingNewGroupSessions)
+            return this.processNewGroupSession(session)
         }
 
         const encryptedContent = this.queues.encryptedContent.shift()
@@ -307,14 +307,14 @@ export class DecryptionExtensions extends (EventEmitter as new () => TypedEmitte
     }
 
     /**
-     * processNewMegolmSession
-     * process new megolm sessions that were sent to our to device stream inbox
+     * processNewGroupSession
+     * process new group sessions that were sent to our to device stream inbox
      * re-enqueue any decryption failures with matching session id
      */
-    private async processNewMegolmSession(
+    private async processNewGroupSession(
         session: UserToDevicePayload_GroupEncryptionSessions,
     ): Promise<void> {
-        this.log.debug('processNewMegolmSession', session)
+        this.log.debug('processNewGroupSession', session)
         // check if this message is to our device
         const ciphertext = session.ciphertexts[this.userDevice.deviceKey]
         if (!ciphertext) {
@@ -338,7 +338,7 @@ export class DecryptionExtensions extends (EventEmitter as new () => TypedEmitte
         const cleartext = await this.client.decryptWithDeviceKey(ciphertext, session.senderKey)
         const sessionKeys = SessionKeys.fromJsonString(cleartext)
         check(sessionKeys.keys.length === session.sessionIds.length, 'bad sessionKeys')
-        // make megolm sessions
+        // make group sessions
         const sessions = neededKeyIndexs.map((i) => ({
             streamId: session.streamId,
             sessionId: session.sessionIds[i],
@@ -347,7 +347,7 @@ export class DecryptionExtensions extends (EventEmitter as new () => TypedEmitte
         }))
         // import the sessions
         this.log.info(
-            'importing megolm sessions streamId:',
+            'importing group sessions streamId:',
             session.streamId,
             'count: ',
             sessions.length,
@@ -363,7 +363,7 @@ export class DecryptionExtensions extends (EventEmitter as new () => TypedEmitte
             }
         }
         // if we processed them all, ack the stream
-        if (this.queues.newMegolmSession.length === 0) {
+        if (this.queues.newGroupSession.length === 0) {
             await this.client.ackToDeviceStream()
         }
     }
@@ -568,12 +568,12 @@ export class DecryptionExtensions extends (EventEmitter as new () => TypedEmitte
         }
         const sessions: GroupEncryptionSession[] = []
         for (const sessionId of replySessionIds) {
-            const megolmSession = await this.client.encryptionDevice.exportInboundGroupSession(
+            const groupSession = await this.client.encryptionDevice.exportInboundGroupSession(
                 streamId,
                 sessionId,
             )
-            if (megolmSession) {
-                sessions.push(megolmSession)
+            if (groupSession) {
+                sessions.push(groupSession)
             }
         }
         this.log.debug('processing key solicitation with', item.streamId, {

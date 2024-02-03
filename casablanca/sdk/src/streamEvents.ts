@@ -25,7 +25,7 @@ export type StreamChange = {
 
 /// Encryption events, emitted by streams, always emitted.
 export type StreamEncryptionEvents = {
-    newMegolmSessions: (
+    newGroupSessions: (
         sessions: UserToDevicePayload_GroupEncryptionSessions,
         senderId: string,
     ) => void

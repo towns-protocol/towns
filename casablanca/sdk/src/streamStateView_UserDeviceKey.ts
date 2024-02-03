@@ -19,7 +19,7 @@ export class StreamStateView_UserDeviceKeys extends StreamStateView_AbstractCont
     readonly streamCreatorId: string
 
     // user_id -> device_keys, fallback_keys
-    readonly megolmKeys: UserDevice[] = []
+    readonly deviceKeys: UserDevice[] = []
 
     constructor(userId: string, streamId: string) {
         super()
@@ -77,11 +77,11 @@ export class StreamStateView_UserDeviceKeys extends StreamStateView_AbstractCont
             deviceKey: value.deviceKey,
             fallbackKey: value.fallbackKey,
         } satisfies UserDevice
-        const existing = this.megolmKeys.findIndex((x) => x.deviceKey === device.deviceKey)
+        const existing = this.deviceKeys.findIndex((x) => x.deviceKey === device.deviceKey)
         if (existing >= 0) {
-            this.megolmKeys.splice(existing, 1)
+            this.deviceKeys.splice(existing, 1)
         }
-        this.megolmKeys.push(device)
+        this.deviceKeys.push(device)
         encryptionEmitter?.emit('userDeviceKeyMessage', this.streamId, this.streamCreatorId, device)
     }
 }

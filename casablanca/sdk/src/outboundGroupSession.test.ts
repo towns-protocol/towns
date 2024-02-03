@@ -47,8 +47,8 @@ describe('outboundSessionTests', () => {
         await expect(bobsOtherClient.initializeUser()).toResolve()
         bobsOtherClient.startSync()
 
-        const encrypted1 = await bobsClient.encryptMegolmEvent(message, channelId)
-        const encrypted2 = await bobsOtherClient.encryptMegolmEvent(message, channelId)
+        const encrypted1 = await bobsClient.encryptGroupEvent(message, channelId)
+        const encrypted2 = await bobsOtherClient.encryptGroupEvent(message, channelId)
 
         expect(encrypted1?.sessionId).toBeDefined()
         expect(encrypted1.sessionId).toEqual(encrypted2.sessionId)
@@ -84,9 +84,9 @@ describe('outboundSessionTests', () => {
             },
         })
 
-        const encryptedChannel1_1 = await bobsClient.encryptMegolmEvent(message, channelId1)
-        const encryptedChannel1_2 = await bobsClient.encryptMegolmEvent(message, channelId1)
-        const encryptedChannel2_1 = await bobsClient.encryptMegolmEvent(message, channelId2)
+        const encryptedChannel1_1 = await bobsClient.encryptGroupEvent(message, channelId1)
+        const encryptedChannel1_2 = await bobsClient.encryptGroupEvent(message, channelId1)
+        const encryptedChannel2_1 = await bobsClient.encryptGroupEvent(message, channelId2)
 
         expect(encryptedChannel1_1?.sessionId).toBeDefined()
         expect(encryptedChannel1_2?.sessionId).toBeDefined()
