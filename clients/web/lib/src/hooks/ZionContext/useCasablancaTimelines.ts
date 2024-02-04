@@ -174,12 +174,12 @@ export function useCasablancaTimelines(
 
         casablancaClient.on('streamInitialized', onStreamInitialized)
         casablancaClient.on('streamUpdated', onStreamUpdated)
-        casablancaClient.on('streamLocalEventIdReplaced', onStreamLocalEventIdReplaced)
+        casablancaClient.on('streamLocalEventUpdated', onStreamLocalEventIdReplaced)
 
         return () => {
             casablancaClient.off('streamInitialized', onStreamInitialized)
             casablancaClient.off('streamUpdated', onStreamUpdated)
-            casablancaClient.off('streamLocalEventIdReplaced', onStreamLocalEventIdReplaced)
+            casablancaClient.off('streamLocalEventUpdated', onStreamLocalEventIdReplaced)
             setState.reset(Array.from(streamIds))
         }
     }, [casablancaClient, setState, eventFilter])
@@ -224,6 +224,7 @@ export function toEvent(timelineEvent: StreamTimelineEvent, userId: string): Tim
         fallbackContent: fbc,
         isEncrypting: eventId.startsWith('~'),
         isLocalPending: timelineEvent.remoteEvent === undefined,
+        isSendFailed: timelineEvent.localEvent?.status === 'failed',
         confirmedEventNum: timelineEvent.confirmedEventNum,
         confirmedInBlockNum: timelineEvent.miniblockNum,
         threadParentId: getThreadParentId(content),
@@ -809,7 +810,17 @@ function getEventStatus(timelineEvent: StreamTimelineEvent): EventStatus {
     } else if (timelineEvent.localEvent && timelineEvent.hashStr.startsWith('~')) {
         return EventStatus.ENCRYPTING
     } else if (timelineEvent.localEvent) {
-        return EventStatus.SENDING
+        switch (timelineEvent.localEvent.status) {
+            case 'failed':
+                return EventStatus.NOT_SENT
+            case 'sending':
+                return EventStatus.SENDING
+            case 'sent':
+                return EventStatus.SENT
+            default:
+                logNever(timelineEvent.localEvent.status)
+                return EventStatus.NOT_SENT
+        }
     } else {
         console.error('$$$ useCasablancaTimelines unknown event status', { timelineEvent })
         return EventStatus.NOT_SENT

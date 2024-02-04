@@ -5,17 +5,20 @@ import { SECOND_MS } from 'data/constants'
 export type SendStatus = {
     isLocalPending: boolean
     isEncrypting: boolean
+    isFailed: boolean
 }
 
 const Step = {
     Encrypting: 'Encrypting',
     LocalPending: 'LocalPending',
+    Failed: 'Failed',
     Sent: 'Sent',
 } as const
 
 const StepColor = new Map([
     ['Encrypting', 'gray2'],
-    ['LocalPending', 'error'],
+    ['LocalPending', 'gray2'],
+    ['Failed', 'error'],
     ['Sent', 'positive'],
 ] as const)
 
@@ -24,6 +27,8 @@ export const SendStatusIndicator = (props: { status: SendStatus }) => {
 
     const step = status.isEncrypting
         ? Step.Encrypting
+        : status.isFailed
+        ? Step.Failed
         : status.isLocalPending
         ? Step.LocalPending
         : Step.Sent

@@ -12,6 +12,7 @@ import {
 import TypedEmitter from 'typed-emitter'
 import {
     ConfirmedTimelineEvent,
+    LocalEventStatus,
     ParsedEvent,
     ParsedMiniblock,
     RemoteTimelineEvent,
@@ -610,6 +611,7 @@ export class StreamStateView {
 
     appendLocalEvent(
         channelMessage: ChannelMessage,
+        status: LocalEventStatus,
         emitter: TypedEmitter<StreamEvents> | undefined,
     ) {
         const localId = genLocalId()
@@ -617,7 +619,7 @@ export class StreamStateView {
             hashStr: localId,
             creatorUserId: this.userId,
             eventNum: this.lastEventNum++,
-            localEvent: { localId, channelMessage },
+            localEvent: { localId, channelMessage, status },
             createdAtEpocMs: BigInt(Date.now()),
         } satisfies StreamTimelineEvent
         this.events.set(localId, timelineEvent)
@@ -631,18 +633,22 @@ export class StreamStateView {
     updateLocalEvent(
         localId: string,
         parsedEventHash: string,
+        status: LocalEventStatus,
         emitter: TypedEmitter<StreamEvents>,
     ) {
         const timelineEvent = this.events.get(localId)
         check(isDefined(timelineEvent), `Local event not found ${localId}`)
         check(isLocalEvent(timelineEvent), `Event is not local ${localId}`)
+        const previousId = timelineEvent.hashStr
         timelineEvent.hashStr = parsedEventHash
+        timelineEvent.localEvent.status = status
         this.events.set(parsedEventHash, timelineEvent)
+
         emitter?.emit(
-            'streamLocalEventIdReplaced',
+            'streamLocalEventUpdated',
             this.streamId,
             this.contentKind,
-            localId,
+            previousId,
             timelineEvent,
         )
     }

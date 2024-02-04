@@ -235,9 +235,10 @@ const MessageWrapper = React.memo((props: MessageWrapperProps) => {
                 ? {
                       isLocalPending: event.isLocalPending,
                       isEncrypting: event.isEncrypting,
+                      isFailed: event.isSendFailed,
                   }
                 : undefined,
-        [event.isEncrypting, event.isLocalPending, event.localEventId],
+        [event.isEncrypting, event.isLocalPending, event.isSendFailed, event.localEventId],
     )
 
     const attachments =

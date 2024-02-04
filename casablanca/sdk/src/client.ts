@@ -904,7 +904,7 @@ export class Client
     async sendChannelMessage(streamId: string, payload: ChannelMessage): Promise<void> {
         const stream = this.stream(streamId)
         check(stream !== undefined, 'stream not found')
-        const localId = stream.view.appendLocalEvent(payload, this)
+        const localId = stream.view.appendLocalEvent(payload, 'sending', this)
         const cleartext = payload.toJsonString()
         const message = await this.encryptGroupEvent(payload, streamId)
         if (!message) {
@@ -1517,7 +1517,7 @@ export class Client
             // when we have a localId, we need to update the local event with the eventId
             const stream = this.streams.get(streamId)
             assert(stream !== undefined, 'unknown stream ' + streamId)
-            stream.view.updateLocalEvent(localId, eventId, this)
+            stream.view.updateLocalEvent(localId, eventId, 'sending', this)
         }
 
         if (cleartext) {
@@ -1527,6 +1527,10 @@ export class Client
 
         try {
             await this.rpcClient.addEvent({ streamId, event })
+            if (localId) {
+                const stream = this.streams.get(streamId)
+                stream?.view.updateLocalEvent(localId, eventId, 'sent', this)
+            }
         } catch (err) {
             // custom retry logic for addEvent
             // if we send up a stale prevMiniblockHash, the server will return a BAD_PREV_MINIBLOCK_HASH
@@ -1553,6 +1557,10 @@ export class Client
                     retryCount + 1,
                 )
             } else {
+                if (localId) {
+                    const stream = this.streams.get(streamId)
+                    stream?.view.updateLocalEvent(localId, eventId, 'failed', this)
+                }
                 throw err
             }
         }

@@ -46,6 +46,7 @@ function generateMessageRenderEvent(messageContent: MessageContent): MessageRend
             isEncrypting: false,
             isMentioned: false,
             isRedacted: false,
+            isSendFailed: false,
             content: generateRoomMessageEvent(messageContent),
             sender: {
                 id: 'sender-id',

@@ -81,7 +81,7 @@ export type StreamStateEvents = {
     ) => void
     streamInitialized: (streamId: string, contentKind: SnapshotCaseType) => void
     streamUpdated: (streamId: string, contentKind: SnapshotCaseType, change: StreamChange) => void
-    streamLocalEventIdReplaced: (
+    streamLocalEventUpdated: (
         streamId: string,
         contentKind: SnapshotCaseType,
         localEventId: string,

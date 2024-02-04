@@ -37,9 +37,11 @@ import { bin_toHexString } from '@river/dlog'
 import { isDefined } from './check'
 import { DecryptedContent, DecryptedContentError } from './encryptedContentTypes'
 
+export type LocalEventStatus = 'sending' | 'sent' | 'failed'
 export interface LocalEvent {
     localId: string
     channelMessage: ChannelMessage
+    status: LocalEventStatus
 }
 
 export interface ParsedEvent {
