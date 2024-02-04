@@ -53,3 +53,11 @@ output "base_chain_network_url_secret" {
 output "river_chain_network_url_secret" {
   value = aws_secretsmanager_secret.river_chain_network_url_secret
 }
+
+output "river_node_acme_account_secret" {
+  value = aws_secretsmanager_secret.river_node_acme_account
+}
+
+output "cloudflare_api_token_secret" {
+  value = aws_secretsmanager_secret.cloudflare_api_token
+}

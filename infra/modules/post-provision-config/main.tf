@@ -19,11 +19,11 @@ locals {
 
 module "post_provision_config_lambda_function" {
   source                 = "terraform-aws-modules/lambda/aws"
-  version                = "6.4.0"
+  version                = "7.2.0"
   function_name          = "${var.river_node_name}-post-provision-config"
   description            = "Lambda function to configure the infra after provisioning"
   handler                = "index.handler"
-  runtime                = "nodejs18.x"
+  runtime                = "nodejs20.x"
   ephemeral_storage_size = 512
   architectures          = ["x86_64"]
   publish                = true

@@ -72,6 +72,13 @@ init: env check
 _init:
 	terraform -chdir=${terraform_folder} init -backend-config=../../backend.conf --reconfigure
 
+# This is for terraform init
+upgrade: env check
+	@$(CMD) make _upgrade GIT_PR_NUMBER=$(GIT_PR_NUMBER)
+
+_upgrade:
+	terraform -chdir=${terraform_folder} init -upgrade -backend-config=../../backend.conf --reconfigure
+
 # This will format the whole terraform code
 fmt: env
 	$(CMD) terraform fmt --recursive

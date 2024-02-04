@@ -81,6 +81,13 @@ resource "aws_secretsmanager_secret_version" "rpc_proxy_global_access_key" {
   secret_string = "DUMMY"
 }
 
+module "river_node_ssl_cert" {
+  source                       = "../../modules/river-node-ssl-cert"
+  subnet_ids                   = module.vpc.private_subnets
+  common_name                  = "*.nodes.transient.towns.com"
+  challenge_dns_record_fq_name = "_acme-challenge.nodes.transient.towns.com"
+}
+
 module "pgadmin" {
   source          = "../../modules/pgadmin"
   vpc_id          = module.vpc.vpc_id

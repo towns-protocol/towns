@@ -2,7 +2,7 @@ terraform {
   required_providers {
     aws = {
       source  = "hashicorp/aws"
-      version = "~> 5.31.0"
+      version = ">= 5.13.1"
     }
   }
 
@@ -39,12 +39,6 @@ module "vpc" {
   tags = module.global_constants.tags
 
   enable_dns_hostnames = true
-}
-
-module "river_node_ssl_cert" {
-  source = "../../../modules/river-node-ssl-cert"
-
-  subnet_ids = module.vpc.private_subnets
 }
 
 resource "aws_acm_certificate" "primary_hosted_zone_cert" {
@@ -217,7 +211,7 @@ resource "aws_s3_bucket_versioning" "post_provision_config_lambda_code_versionin
 
 module "public_ecr" {
   source  = "mattyait/ecr/aws"
-  version = "1.1.0"
+  version = "1.2.0"
 
   image_names = [
     "river-node",
@@ -228,4 +222,16 @@ module "public_ecr" {
   ]
   repository_type = "public"
   tags            = module.global_constants.tags
+}
+
+# a secret that contains account used to register with the ACME server
+resource "aws_secretsmanager_secret" "river_node_acme_account" {
+  name        = "river-node-ssl-acme-account-secret-${terraform.workspace}"
+  tags        = module.global_constants.tags
+  description = "ACME account for the river node"
+}
+
+resource "aws_secretsmanager_secret" "cloudflare_api_token" {
+  name        = "cloudflare-api-token-${terraform.workspace}"
+  description = "cloudflare api token"
 }
