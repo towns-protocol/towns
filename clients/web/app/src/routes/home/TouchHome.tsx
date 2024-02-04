@@ -196,6 +196,8 @@ export const TouchHome = () => {
     const displayMentionsItem =
         mentionsLink && (!isSearching || filteredMenuItems.some((f) => f.obj.value === 'mentions'))
 
+    const outlet = useOutlet()
+
     return (
         <ErrorBoundary FallbackComponent={ErrorFallbackComponent}>
             <ShakeToReport />
@@ -232,7 +234,7 @@ export const TouchHome = () => {
                                 transition={transition}
                                 key="search_header"
                             >
-                                {!isLoadingChannels && (
+                                {!isLoadingChannels && !(activeOverlay || outlet) && (
                                     <TextField
                                         placeholder="Jump to..."
                                         height="x5"
@@ -342,7 +344,7 @@ export const TouchHome = () => {
                             </MotionBox>
                         </MotionStack>
                     </AnimatePresence>
-                    <OutletOrPanel />
+                    <OutletOrPanel outlet={outlet} />
                 </TouchTabBarLayout>
                 <AnimatePresence>
                     {activeOverlay === 'main-panel' && <TouchHomeOverlay onClose={onHideOverlay} />}
@@ -360,12 +362,13 @@ export const TouchHome = () => {
     )
 }
 
-const OutletOrPanel = () => {
+const OutletOrPanel = (props: { outlet: ReturnType<typeof useOutlet> }) => {
+    const { outlet } = props
     const { sidePanel, setSidePanel } = useStore(({ sidePanel, setSidePanel }) => ({
         sidePanel,
         setSidePanel,
     }))
-    const outlet = useOutlet()
+
     const outletRef = useRef(outlet)
 
     useEffect(() => {

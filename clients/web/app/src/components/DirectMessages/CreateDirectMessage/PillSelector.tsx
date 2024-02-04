@@ -25,21 +25,28 @@ type Props<T> = {
     optionSorter: (options: T[]) => T[]
     pillRenderer: (params: { key: string; onDelete: () => void }) => JSX.Element
     placeholder?: string
+    initialFocusIndex?: number
 }
 
 export const PillSelector = <T,>(props: Props<T>) => {
-    const { options, keys, getOptionKey, optionRenderer, optionSorter, pillRenderer, placeholder } =
-        props
+    const { isTouch } = useDevice()
+
+    const {
+        options,
+        keys,
+        getOptionKey,
+        optionRenderer,
+        optionSorter,
+        pillRenderer,
+        placeholder,
+        initialFocusIndex = isTouch ? -1 : 0,
+    } = props
 
     // search field
     const fieldRef = useRef<HTMLInputElement>(null)
 
     // search results container
     const listRef = useRef<HTMLDivElement>(null)
-
-    const { isTouch } = useDevice()
-
-    const initialFocusIndex = isTouch ? -1 : 0
 
     const [searchTerm, setSearchTerm] = useState<string>('')
     const [focusIndex, setFocusIndex] = useState(initialFocusIndex)
@@ -50,7 +57,7 @@ export const PillSelector = <T,>(props: Props<T>) => {
     const prevSearchItems = useRef<T[]>([])
     const searchItems = useMemo(() => {
         // only show suggested before typing
-        if (!searchTerm && selection.size > 0) {
+        if (!searchTerm && selection.size > (isTouch ? 1 : 0)) {
             return []
         }
         const results = fuzzysort
@@ -63,7 +70,7 @@ export const PillSelector = <T,>(props: Props<T>) => {
         return isEqual(sortedResults, prevSearchItems.current)
             ? prevSearchItems.current
             : sortedResults
-    }, [getOptionKey, keys, optionSorter, options, searchTerm, selection])
+    }, [getOptionKey, isTouch, keys, optionSorter, options, searchTerm, selection])
 
     useEffect(() => {
         const previewItem = searchItems[focusIndex]

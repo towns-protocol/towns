@@ -1,4 +1,4 @@
-import React, { useCallback, useMemo, useState } from 'react'
+import React, { CSSProperties, useCallback, useMemo, useState } from 'react'
 import { firstBy } from 'thenby'
 import { LookupUser, useMyUserId, useUserLookupContext } from 'use-zion-client'
 import { Avatar } from '@components/Avatar/Avatar'
@@ -77,8 +77,10 @@ export const UserPillSelector = (props: Props) => {
         [usersMap],
     )
 
+    const showSuggestions = numSelected < 2
+
     return (
-        <Stack absoluteFill pointerEvents="none" zIndex="layer">
+        <Stack absoluteFill pointerEvents="none" zIndex="layer" style={preventGlitchStyle}>
             <Box gap paddingTop="md" paddingX="md" pointerEvents="auto" position="relative">
                 {/* backdrop */}
                 <Box absoluteFill paddingBottom="sm" zIndex="below">
@@ -89,7 +91,8 @@ export const UserPillSelector = (props: Props) => {
                     <PillSelector
                         options={users}
                         keys={['username', 'displayName']}
-                        label={!numSelected ? 'Suggested' : 'Add people'}
+                        label={showSuggestions ? 'Suggested' : 'Add people'}
+                        initialFocusIndex={-1}
                         placeholder={
                             !numSelected
                                 ? 'Search for people or channels'
@@ -137,3 +140,6 @@ export const UserOption = (props: { user: LookupUser; selected: boolean }) => {
         </Box>
     )
 }
+
+// fixes: mobile layer dissappears in some cases when adding people
+const preventGlitchStyle: CSSProperties = { transform: `translate3d(0,0,0)` }

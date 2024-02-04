@@ -232,6 +232,23 @@ export const CreateDirectMessage = (props: Props) => {
         channelPreview?.id ||
         (numSelectedUsers === 0 ? userChannelPreview?.id : undefined)
 
+    const channelContainerRef = React.useRef<HTMLDivElement>(null)
+
+    useEffect(() => {
+        // capture click on channel preview to select channel on desktop
+        if (!selectedChannelId && preview) {
+            const onClickScreen = (e: MouseEvent) => {
+                if (channelContainerRef.current?.contains(e.target as Node)) {
+                    onSelectChannel(preview)
+                }
+            }
+            window.addEventListener('click', onClickScreen)
+            return () => {
+                window.removeEventListener('click', onClickScreen)
+            }
+        }
+    }, [onSelectChannel, preview, selectedChannelId])
+
     const animationKey = [
         channelPreview?.id,
         selectedUserArray.join(),
@@ -251,17 +268,19 @@ export const CreateDirectMessage = (props: Props) => {
                     transition={{ duration: 0.3, delay: 0, ease: 'easeInOut' }}
                 >
                     {preview ? (
-                        <DMChannelContextUserLookupProvider
-                            fallbackToParentContext
-                            channelId={selectedChannelId || preview}
-                        >
-                            <ChannelContextProvider channelId={preview}>
-                                <SpacesChannelComponent
-                                    hideHeader
-                                    preventAutoFocus={!selectedChannelId}
-                                />
-                            </ChannelContextProvider>
-                        </DMChannelContextUserLookupProvider>
+                        <Box grow ref={channelContainerRef}>
+                            <DMChannelContextUserLookupProvider
+                                fallbackToParentContext
+                                channelId={selectedChannelId || preview}
+                            >
+                                <ChannelContextProvider channelId={preview}>
+                                    <SpacesChannelComponent
+                                        hideHeader
+                                        preventAutoFocus={!selectedChannelId}
+                                    />
+                                </ChannelContextProvider>
+                            </DMChannelContextUserLookupProvider>
+                        </Box>
                     ) : (
                         <Box grow>
                             <ChannelPlaceholder
@@ -275,12 +294,12 @@ export const CreateDirectMessage = (props: Props) => {
                             />
                         </Box>
                     )}
-                    {!selectedChannelId && (
+                    {isTouch && !selectedChannelId && (
                         <Box
                             absoluteFill
                             cursor="pointer"
                             background="level1"
-                            style={{ opacity: 0.5 }}
+                            style={{ opacity: 0 }}
                             onClick={() => onSelectChannel(preview)}
                         />
                     )}
