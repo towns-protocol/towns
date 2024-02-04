@@ -30,7 +30,6 @@ RUN SKIP_GENKEY=true \
     METRICS_PORT=null \
     LOG_NOCOLOR=true \
     LOG_LEVEL=info \
-    NODE_REGISTRY="''" \
     REPL_FACTOR=1 \
     USE_BLOCKCHAIN_STREAM_REGISTRY=false \
     ./config_instance.sh
@@ -45,9 +44,8 @@ RUN SKIP_GENKEY=true \
     METRICS_PORT=null \
     LOG_NOCOLOR=true \
     LOG_LEVEL=info \
-    NODE_REGISTRY="''" \
     REPL_FACTOR=1 \
-    USE_BLOCKCHAIN_STREAM_REGISTRY=false \
+    USE_BLOCKCHAIN_STREAM_REGISTRY=true \
     ./config_instance.sh
 
 FROM alpine:latest

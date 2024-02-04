@@ -30,26 +30,6 @@ import (
 
 type Cleanup func(context.Context) error
 
-func loadNodeRegistry(
-	ctx context.Context,
-	nodeRegistryPath string,
-	nodeRegistryCsv string,
-	localNodeAddress string,
-) (nodes.NodeRegistry, error) {
-	log := dlog.FromCtx(ctx)
-
-	if nodeRegistryCsv != "" {
-		log.Info("Node registry constructed from CSV", "csb", nodeRegistryCsv)
-		return nodes.NewNodeRegistryFromString(ctx, nodeRegistryCsv, localNodeAddress)
-	} else if nodeRegistryPath != "" {
-		log.Info("Loading node registry", "path", nodeRegistryPath)
-		return nodes.LoadNodeRegistry(ctx, nodeRegistryPath, localNodeAddress)
-	} else {
-		log.Warn("No node registry path specified, running in single node configuration")
-		return nodes.MakeSingleNodeRegistry(ctx, localNodeAddress), nil
-	}
-}
-
 func getDbURL(dbConfig config.DatabaseConfig) string {
 	if dbConfig.Password != "" {
 		return fmt.Sprintf(
@@ -168,16 +148,8 @@ func StartServer(ctx context.Context, cfg *config.Config, wallet *crypto.Wallet)
 		ctx,
 		&cfg.PushNotification,
 	)
-	nodeRegistry, err := loadNodeRegistry(
-		ctx,
-		cfg.NodeRegistry,
-		cfg.NodeRegistryCsv,
-		wallet.AddressStr,
-	)
-	if err != nil {
-		return nil, 0, nil, err
-	}
 
+	var nodeRegistry nodes.NodeRegistry
 	var streamRegistry nodes.StreamRegistry
 	var riverChainBlockMonitor crypto.BlockMonitor
 	if cfg.UseBlockChainStreamRegistry {
@@ -193,13 +165,21 @@ func StartServer(ctx context.Context, cfg *config.Config, wallet *crypto.Wallet)
 			log.Error("NewRiverRegistryContract", "error", err)
 			return nil, 0, nil, err
 		}
+
+		nodeRegistry, err = nodes.LoadNodeRegistry(ctx, registryContract, wallet.AddressStr)
+		if err != nil {
+			log.Error("Failed to load node registry", "error", err)
+			return nil, 0, nil, err
+		}
+
 		streamRegistry = nodes.NewStreamRegistry(nodeRegistry, registryContract, cfg.Stream.ReplicationFactor)
 
-		log.Info("Using blockchain stream registry")
+		log.Info("Using blockchain river registry")
 	} else {
+		nodeRegistry = nodes.MakeSingleNodeRegistry(ctx, wallet.AddressStr)
 		streamRegistry = nodes.NewFakeStreamRegistry(nodeRegistry, cfg.Stream.ReplicationFactor)
-		log.Warn("Using fake stream registry")
 		riverChainBlockMonitor = crypto.NewFakeBlockMonitor(ctx, cfg.RiverChain.FakeBlockTimeMs)
+		log.Warn("Using fake river registry")
 	}
 
 	cache := events.NewStreamCache(

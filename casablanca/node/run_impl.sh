@@ -9,8 +9,6 @@ export LOG_LEVEL="${LOG_LEVEL:-info}"
 export LOG_NOCOLOR="${LOG_NOCOLOR:-false}"
 export METRICS_ENABLED="${METRICS_ENABLED:-true}"
 export METRICS_PORT="${METRICS_PORT:-8010}"
-export NODE_REGISTRY="${NODE_REGISTRY:-../node_registry.json}"
-export NODE_REGISTRY_PATH="${NODE_REGISTRY_PATH:-${RUN_BASE}/node_registry.json}"
 export NUM_INSTANCES="${NUM_INSTANCES:-10}"
 export REPL_FACTOR="${REPL_FACTOR:-1}"
 export RPC_PORT="${RPC_PORT:-5170}"
@@ -54,9 +52,6 @@ if [ "$CONFIG" == "true" ]; then
         RIVER_REGISTRY_ADDRESS=$(jq -r .address ${RUN_BASE}/addresses/riverRegistry.json)
     fi
     
-   echo "{" > ${NODE_REGISTRY_PATH}
-    echo "  \"nodes\": [" >> ${NODE_REGISTRY_PATH}
-
     for ((i=0; i<NUM_INSTANCES; i++)); do
         printf -v INSTANCE "%02d" $i
         export INSTANCE
@@ -68,8 +63,6 @@ if [ "$CONFIG" == "true" ]; then
         ./config_instance.sh
 
         NODE_ADDRESS=$(cat ${RUN_BASE}/$INSTANCE/wallet/node_address)
-        echo "    { \"name\": \"$INSTANCE\", \"address\": \"$NODE_ADDRESS\", \"url\": \"http://localhost:$I_RPC_PORT\", \"port\": $I_RPC_PORT }," >> ${NODE_REGISTRY_PATH}
-
         if [ "$USE_BLOCKCHAIN_STREAM_REGISTRY" == "true" ]; then
             echo "Adding node record to blockchain river registry"
             cast send \
@@ -81,10 +74,6 @@ if [ "$CONFIG" == "true" ]; then
                 http://localhost:$I_RPC_PORT > /dev/null
         fi
     done
-
-    sed -i.bak '$ s/,$//' ${NODE_REGISTRY_PATH} && rm ${NODE_REGISTRY_PATH}.bak
-    echo "  ]" >> ${NODE_REGISTRY_PATH}
-    echo "}" >> ${NODE_REGISTRY_PATH}
 
     if [ "$USE_BLOCKCHAIN_STREAM_REGISTRY" == "true" ]; then
         echo "Node records in contract:"
@@ -101,8 +90,13 @@ if [ "$RUN" == "true" ]; then
     mkdir -p ${RUN_BASE}/bin
     go build -o ${RUN_BASE}/bin/river_node -race ./node/main.go
 
-    jq -r ".nodes[].name" ${NODE_REGISTRY_PATH} | while read -r INSTANCE; do
-        pushd ${RUN_BASE}/$INSTANCE
+    pushd ${RUN_BASE} > /dev/null
+    find . -type d -mindepth 1 -maxdepth 1 | sort | while read -r INSTANCE; do
+        if [ ! -f $INSTANCE/config/config.yaml ]; then
+            continue
+        fi
+
+        pushd $INSTANCE > /dev/null
         echo "Running instance '$INSTANCE' with extra aguments: '${args[@]:-}'"
         if [ "$USE_BLOCKCHAIN_STREAM_REGISTRY" == "true" ]; then
             echo "And funding it with 1 ETH"
@@ -125,8 +119,9 @@ if [ "$RUN" == "true" ]; then
                 echo "RESTARTING"
             done
         fi
-        popd
+        popd > /dev/null
     done
+    popd  > /dev/null
 fi
 
 

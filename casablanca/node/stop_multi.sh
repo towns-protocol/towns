@@ -3,13 +3,13 @@ cd -P -- "$(dirname -- "${BASH_SOURCE[0]}")"
 
 BASE="${1:-multi_ne}"
 
-# Default number of instances to stop
 WAIT_TIME=1
 MAX_ATTEMPTS=5
-RPC_PORT=5170
 
 echo "Stopping instances"
-jq ".nodes[].port" ./run_files/${BASE}/node_registry.json | while read -r I_RPC_PORT; do
+
+find ./run_files/${BASE} -type f -name "config.yaml" -exec grep -o '^port:.*' {} \; | sort | while read -r I_RPC_PORT; do
+  I_RPC_PORT="${I_RPC_PORT//[!0-9]/}"
   echo "Stopping instance on port $I_RPC_PORT"
 
   PID="$(lsof -t -i:${I_RPC_PORT} || true)"

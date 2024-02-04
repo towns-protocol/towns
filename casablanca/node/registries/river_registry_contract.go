@@ -146,6 +146,16 @@ func (sr *RiverRegistryContract) GetAllStreams(ctx context.Context) ([]*GetStrea
 	return ret, nil
 }
 
+type NodeRecord = contracts.IRiverRegistryBaseNode
+
+func (se *RiverRegistryContract) GetAllNodes(ctx context.Context) ([]NodeRecord, error) {
+	nodes, err := se.registry.GetAllNodes(se.callOpts(ctx))
+	if err != nil {
+		return nil, WrapRiverError(Err_CANNOT_CALL_CONTRACT, err).Func("GetAllNodes").Message("Call failed")
+	}
+	return nodes, nil
+}
+
 func (sr *RiverRegistryContract) callOpts(ctx context.Context) *bind.CallOpts {
 	return &bind.CallOpts{
 		Context: ctx,

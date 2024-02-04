@@ -49,10 +49,6 @@ performanceTracking:
     profilingEnabled: false
     tracingEnabled: false
 
-# Node registry JSON path
-nodeRegistry: <NODE_REGISTRY>
-nodeRegistryCsv:
-
 # Push notification configuration
 pushNotification:
     url: '' # URL to the push notification worker. Default empty string disables it.

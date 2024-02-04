@@ -43,17 +43,13 @@ type Config struct {
 	// Stream configuration
 	Stream StreamConfig
 
-	// Node registry configuration.
-	// Path to .json file with node registry (to be moved to blockchain).
-	NodeRegistry string
-
-	// If set, use instead of trying to load from filesystem.
-	// Makes configuring node by env vars easier.
-	NodeRegistryCsv string
-
 	// Feature flags
 	// Used to disable functionality for some testing setups.
-	UseContract                 bool
+
+	// Disable base chain contract usage.
+	UseContract bool
+
+	// Disable river chain contract usage.
 	UseBlockChainStreamRegistry bool
 
 	// If set, use instead of trying to load from filesystem.
@@ -96,11 +92,11 @@ type PushNotificationConfig struct {
 }
 
 type StreamConfig struct {
-	Media              MediaStreamConfig
-	RecencyConstraints RecencyConstraintsConfig
-	ReplicationFactor  int
+	Media                       MediaStreamConfig
+	RecencyConstraints          RecencyConstraintsConfig
+	ReplicationFactor           int
 	DefaultMinEventsPerSnapshot int
-	MinEventsPerSnapshot map[string]int
+	MinEventsPerSnapshot        map[string]int
 }
 
 type MediaStreamConfig struct {

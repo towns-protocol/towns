@@ -2,16 +2,14 @@ package nodes
 
 import (
 	"context"
-	"encoding/json"
 	"net/http"
-	"os"
-	"strings"
 	"sync"
 
 	. "github.com/river-build/river/base"
 	"github.com/river-build/river/dlog"
 	. "github.com/river-build/river/protocol"
 	. "github.com/river-build/river/protocol/protocolconnect"
+	"github.com/river-build/river/registries"
 
 	"connectrpc.com/connect"
 )
@@ -27,14 +25,6 @@ type NodeRegistry interface {
 	NumNodes() int
 	GetNodeAddressByIndex(index int) (string, error)
 	GetNodeRecordByIndex(index int) (*NodeRecord, error)
-}
-
-type nodeJson struct {
-	Address string `json:"address"`
-	Url     string `json:"url"`
-}
-type nodeRegistryJson struct {
-	Nodes []nodeJson `json:"nodes"`
 }
 
 type NodeRecord struct {
@@ -67,88 +57,35 @@ type nodeRegistryImpl struct {
 
 var _ NodeRegistry = (*nodeRegistryImpl)(nil)
 
-func LoadNodeRegistry(ctx context.Context, nodeRegistryPath string, localNodeAddress string) (*nodeRegistryImpl, error) {
+func LoadNodeRegistry(ctx context.Context, contract *registries.RiverRegistryContract, localNodeAddress string) (*nodeRegistryImpl, error) {
 	log := dlog.FromCtx(ctx)
 
-	jsonStr, err := os.ReadFile(nodeRegistryPath)
+	nodes, err := contract.GetAllNodes(ctx)
 	if err != nil {
-		return nil, err
+		return nil, AsRiverError(err).Func("LoadNodeRegistry")
 	}
 
-	// Unmarshal the JSON data into the nodeRegistryImpl struct
-	var registry nodeRegistryJson
-	if err := json.Unmarshal(jsonStr, &registry); err != nil {
-		return nil, err
-	}
-
-	log.Info("Node Registry Loaded", "Nodes", registry.Nodes, "localAddress", localNodeAddress)
+	log.Info("Node Registry Loaded from contract", "Nodes", nodes, "localAddress", localNodeAddress)
 
 	n := &nodeRegistryImpl{
 		nodes:      make(map[string]*NodeRecord),
-		nodesFlat:  make([]*NodeRecord, 0, len(registry.Nodes)),
+		nodesFlat:  make([]*NodeRecord, 0, len(nodes)),
 		httpClient: &http.Client{},
 	}
 	localFound := false
-	for _, node := range registry.Nodes {
+	for _, node := range nodes {
 		local := false
-		if node.Address == localNodeAddress {
+		addr := EthAddressToAddressStr(node.NodeAddress)
+		if addr == localNodeAddress {
 			local = true
 			localFound = true
 		}
 		nn := &NodeRecord{
-			address: node.Address,
+			address: addr,
 			url:     node.Url,
 			local:   local,
 		}
-		n.nodes[node.Address] = nn
-		n.nodesFlat = append(n.nodesFlat, nn)
-	}
-	if !localFound {
-		return nil, RiverError(Err_UNKNOWN_NODE, "Local node not found in registry", "localAddress", localNodeAddress)
-	}
-	return n, nil
-}
-
-func NewNodeRegistryFromString(ctx context.Context, nodeRegistryString string, localNodeAddress string) (*nodeRegistryImpl, error) {
-	log := dlog.FromCtx(ctx)
-
-	log.Info("Loading node registry from string", "nodeRegistryString", nodeRegistryString, "localAddress", localNodeAddress)
-
-	vals := strings.Split(nodeRegistryString, ",")
-
-	n := &nodeRegistryImpl{
-		nodes:      make(map[string]*NodeRecord),
-		nodesFlat:  make([]*NodeRecord, 0, len(vals)/2),
-		httpClient: &http.Client{},
-	}
-	localFound := false
-	for i := 0; i < len(vals); i += 2 {
-		if i+1 >= len(vals) {
-			return nil, RiverError(
-				Err_BAD_CONFIG,
-				"Invalid node registry string, odd number of values",
-				"nodeRegistryString",
-				nodeRegistryString,
-			)
-		}
-		url := vals[i+1]
-		addr, err := AddressStrToEthAddress(vals[i])
-		if err != nil {
-			return nil, AsRiverError(err).Func("NewNodeRegistryFromCsv")
-		}
-		addrStr := EthAddressToAddressStr(addr)
-
-		local := false
-		if addrStr == localNodeAddress {
-			local = true
-			localFound = true
-		}
-		nn := &NodeRecord{
-			address: addrStr,
-			url:     url,
-			local:   local,
-		}
-		n.nodes[addrStr] = nn
+		n.nodes[addr] = nn
 		n.nodesFlat = append(n.nodesFlat, nn)
 	}
 	if !localFound {
