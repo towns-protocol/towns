@@ -173,7 +173,7 @@ export const SpacesChannelComponent = (props: Props) => {
     const showJoinChannel = myMembership && myMembership !== Membership.Join && !isDmOrGDM
     const showDMAcceptInvitation = myMembership === Membership.Invite && isDmOrGDM
 
-    const Editor = env.VITE_ENABLE_SLATE_EDITOR ? RichTextSlate : RichTextEditor
+    const MessageEditor = env.VITE_ENABLE_SLATE_EDITOR ? RichTextSlate : RichTextEditor
     return (
         <CentralPanelLayout>
             {!isTouch && <RegisterChannelShortcuts />}
@@ -235,7 +235,7 @@ export const SpacesChannelComponent = (props: Props) => {
                         paddingX={isTouch ? 'none' : 'md'}
                     >
                         {!showDMAcceptInvitation && channel && (
-                            <Editor
+                            <MessageEditor
                                 isFullWidthOnTouch
                                 editable={!!isChannelWritable}
                                 background={isChannelWritable ? 'level2' : 'level1'}

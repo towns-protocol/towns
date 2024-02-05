@@ -1,4 +1,4 @@
-import React, { useMemo } from 'react'
+import React, { useMemo, useState } from 'react'
 import { Descendant, createEditor } from 'slate'
 import { withHistory } from 'slate-history'
 import { Editable, Slate, withReact } from 'slate-react'
@@ -8,6 +8,9 @@ import * as fieldStyles from 'ui/components/_internal/Field/Field.css'
 import { Box, BoxProps, Stack } from '@ui'
 import * as styles from './RichTextEditor.css'
 import { useDevice } from '../../hooks/useDevice'
+import { handleDOMBeforeInput } from './utils/handleDOMBeforeInput'
+import { withMDShortcuts } from './utils/withMDShortcuts'
+import { LeafElement } from './ui/LeafElement'
 
 type Props = {
     onSend?: (value: string, options: SendTextMessageOptions | undefined) => void
@@ -36,7 +39,8 @@ const RichTextSlate: React.FC<Props> = ({
     editing: isEditing,
 }) => {
     const { isTouch } = useDevice()
-    const editor = useMemo(() => withReact(withHistory(createEditor())), [])
+    const [editor] = useState(() => withMDShortcuts(withReact(withHistory(createEditor()))))
+    const useHandleDOMBeforeInput = useMemo(() => handleDOMBeforeInput(editor), [editor])
 
     const background = isEditing && !isTouch ? 'level1' : 'level2'
 
@@ -62,10 +66,11 @@ const RichTextSlate: React.FC<Props> = ({
                         <Editable
                             spellCheck
                             autoFocus
-                            disableDefaultStyles
+                            // disableDefaultStyles
                             className={inputClassName}
                             placeholder={placeholder}
-                            // onDOMBeforeInput={handleDOMBeforeInput}
+                            renderElement={LeafElement}
+                            onDOMBeforeInput={useHandleDOMBeforeInput}
                         />
                     </Box>
                 </Stack>

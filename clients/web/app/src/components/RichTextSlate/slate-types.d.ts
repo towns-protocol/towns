@@ -20,17 +20,17 @@ export type BulletedListElement = {
     children: Descendant[]
 }
 
-export type HeadingElement = {
-    type: 'heading'
+export type HeadingOneElement = {
+    type: 'heading-one'
     align?: string
     children: Descendant[]
 }
 
-export type HeadingTwoElement = {
-    type: 'heading-two'
-    align?: string
-    children: Descendant[]
-}
+export type HeadingTwoElement = Omit<HeadingElement, 'type'> & { type: 'heading-two' }
+export type HeadingThreeElement = Omit<HeadingElement, 'type'> & { type: 'heading-three' }
+export type HeadingFourElement = Omit<HeadingElement, 'type'> & { type: 'heading-four' }
+export type HeadingFiveElement = Omit<HeadingElement, 'type'> & { type: 'heading-five' }
+export type HeadingSixElement = Omit<HeadingElement, 'type'> & { type: 'heading-six' }
 
 export type LinkElement = { type: 'link'; url: string; children: Descendant[] }
 
@@ -62,14 +62,20 @@ export type CodeLineElement = {
 type CustomElement =
     | BlockQuoteElement
     | BulletedListElement
-    | HeadingElement
+    | HeadingOneElement
     | HeadingTwoElement
+    | HeadingThreeElement
+    | HeadingFourElement
+    | HeadingFiveElement
+    | HeadingSixElement
     | LinkElement
     | ListItemElement
     | MentionElement
     | ParagraphElement
     | CodeBlockElement
     | CodeLineElement
+
+export type OneEnterBreak = CustomElement['type']
 
 export type CustomText = {
     bold?: boolean
