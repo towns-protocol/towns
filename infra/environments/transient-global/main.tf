@@ -71,16 +71,6 @@ resource "aws_ecs_cluster" "river_ecs_cluster" {
   tags = module.global_constants.tags
 }
 
-resource "aws_secretsmanager_secret" "rpc_proxy_global_access_key" {
-  name = "${terraform.workspace}-rpc-proxy-global-access-key"
-  tags = module.global_constants.tags
-}
-
-resource "aws_secretsmanager_secret_version" "rpc_proxy_global_access_key" {
-  secret_id     = aws_secretsmanager_secret.rpc_proxy_global_access_key.id
-  secret_string = "DUMMY"
-}
-
 module "river_node_ssl_cert" {
   source                       = "../../modules/river-node-ssl-cert"
   subnet_ids                   = module.vpc.private_subnets
