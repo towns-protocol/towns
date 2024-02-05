@@ -253,11 +253,11 @@ describe('Stress test', () => {
 
             log('Number of mismatched messages:', await redis.dbsize())
             await pauseForXMiliseconds(60000)
-            await expect(redis.dbsize()).resolves.toBe(0)
-            //await expect(countKeysNotEqualToZero()).resolves.toBe(0)
+            await result.riverSDK.client.stopSync()
+            const dbSize = await redis.dbsize()
+            expect(dbSize).toBe(0)
 
             await redis.quit()
-            await result.riverSDK.client.stopSync()
         },
         loadTestDurationMs * 10,
     )

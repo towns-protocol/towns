@@ -87,7 +87,7 @@ describe('Stress test', () => {
             await redis.set('coordinationChannelId', coordinationChannelId)
 
             const result = await createFundedTestUser()
-            fundWallet(result.walletWithProvider)
+            await fundWallet(result.walletWithProvider)
 
             log('Main user address: ', result.walletWithProvider.address)
 
@@ -293,7 +293,11 @@ describe('Stress test', () => {
                 await pauseForXMiliseconds(1000)
             }
             await pauseForXMiliseconds(60000)
-            result.riverSDK.client.stopSync()
+            await result.riverSDK.client.stopSync()
+            const dbSize = await redis.dbsize()
+            expect(dbSize).toBe(0)
+            log('Test executed successfully')
+            await redis.quit()
         },
         loadTestDurationMs * 10,
     )
