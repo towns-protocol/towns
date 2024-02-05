@@ -216,6 +216,7 @@ module "public_ecr" {
   image_names = [
     "river-node",
     "forked-chain-service",
+    "notification-service",
     "hnt-infra",
     "hnt-load-test-node",
     "hnt-ecs-service-discovery"
