@@ -1,0 +1,168 @@
+locals {
+  container_name      = "loadtest-follower"
+  name                = "${local.container_name}-${var.follower_id}-${terraform.workspace}"
+  global_remote_state = module.global_constants.global_remote_state.outputs
+
+  custom_tags = merge(
+    var.tags,
+    {
+      Service = local.container_name
+    }
+  )
+}
+
+module "global_constants" {
+  source = "../../global-constants"
+}
+
+data "aws_vpc" "vpc" {
+  id = var.vpc_id
+}
+
+resource "aws_cloudwatch_log_group" "log_group" {
+  name = "/ecs/${local.name}"
+  tags = local.custom_tags
+}
+
+resource "aws_cloudwatch_log_subscription_filter" "log_group_filter" {
+  name            = "${local.name}-log-group"
+  log_group_name  = aws_cloudwatch_log_group.log_group.name
+  filter_pattern  = ""
+  destination_arn = module.global_constants.datadug_forwarder_stack_lambda.arn
+}
+
+resource "aws_iam_role" "ecs_task_execution_role" {
+  name                = "${local.name}-ecsTaskExecutionRole"
+  managed_policy_arns = ["arn:aws:iam::aws:policy/service-role/AmazonECSTaskExecutionRolePolicy"]
+  assume_role_policy = jsonencode({
+    "Version" : "2012-10-17",
+    "Statement" : [
+      {
+        "Sid" : "",
+        "Effect" : "Allow",
+        "Principal" : {
+          "Service" : "ecs-tasks.amazonaws.com"
+        },
+        "Action" : "sts:AssumeRole"
+      }
+    ]
+  })
+
+  tags = local.custom_tags
+}
+
+resource "aws_ecs_task_definition" "task_definition" {
+  family = "${local.name}-fargate"
+
+  ephemeral_storage {
+    size_in_gib = 21
+  }
+
+  network_mode = "awsvpc"
+
+  task_role_arn      = aws_iam_role.ecs_task_execution_role.arn
+  execution_role_arn = aws_iam_role.ecs_task_execution_role.arn
+
+  cpu    = 1024
+  memory = 2048
+
+  requires_compatibilities = ["FARGATE"]
+
+  ipc_mode = null
+
+  pid_mode = null
+
+  container_definitions = jsonencode([{
+    name  = local.container_name
+    image = "${local.global_remote_state.public_ecr.repository_url_map["hnt-load-test-node"]}:latest"
+
+    essential = true
+    portMappings = [{
+      containerPort = 80
+      hostPort      = 80
+      protocol      = "tcp"
+    }]
+
+    cpu    = 1024
+    memory = 2048
+    environment = [
+      {
+        name  = "MODE",
+        value = "follower"
+      },
+      {
+        name  = "FOLLOWER_ID",
+        value = tostring(var.follower_id)
+      },
+      {
+        name  = "RIVER_NODE_URL",
+        value = var.river_node_url
+      },
+      {
+        name  = "BASE_CHAIN_RPC_URL",
+        value = var.base_chain_rpc_url
+      },
+      {
+        name  = "CHANNEL_SAMPLING_RATE",
+        value = "100"
+      },
+      {
+        name  = "LOAD_TEST_DURATION_MS",
+        value = "60000"
+      },
+      {
+        name  = "MAX_MSG_DELAY_MS",
+        value = "10000"
+      },
+      {
+        name  = "JOIN_FACTOR",
+        value = "2"
+      },
+      {
+        name  = "REDIS_HOST",
+        value = var.redis_url
+      },
+      {
+        name  = "REDIS_PORT",
+        value = "6379"
+      },
+      {
+        name  = "DEBUG",
+        value = "csb:test:stress*"
+      }
+    ]
+
+    logConfiguration = {
+      logDriver = "awslogs"
+      options = {
+        "awslogs-group"         = aws_cloudwatch_log_group.log_group.name
+        "awslogs-region"        = "us-east-1"
+        "awslogs-stream-prefix" = local.name
+      }
+    }
+  }])
+
+  tags = local.custom_tags
+}
+
+module "follower_ecs_sg" {
+  source = "terraform-aws-modules/security-group/aws"
+
+  name        = "${local.name}_sg"
+  description = "Security group for follower ECS task"
+  vpc_id      = var.vpc_id
+
+  // TODO - Need to check later if ingress to security group require or a particular CIDR range
+  ingress_with_cidr_blocks = [
+    {
+      from_port   = 80
+      to_port     = 80
+      protocol    = "tcp"
+      description = "Allowing access from VPC CIDR range for now"
+      cidr_blocks = data.aws_vpc.vpc.cidr_block
+    },
+  ]
+
+  egress_cidr_blocks = ["0.0.0.0/0"]
+  egress_rules       = ["all-all"]
+}

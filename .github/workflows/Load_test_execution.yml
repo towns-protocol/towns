@@ -1,0 +1,53 @@
+name: Manual Load test run
+
+on:
+  workflow_dispatch:
+    inputs:
+      environment_name:
+        description: 'Environment to trigger the load run'
+        required: true
+
+jobs:
+  deploy:
+    runs-on: ubuntu-latest
+
+    outputs:
+      cluster_name: ${{ steps.cluster_and_task_def.outputs.cluster_name }}
+      leader_task_def: ${{ steps.cluster_and_task_def.outputs.leader_task_def }}
+      follower_task_def: ${{ steps.cluster_and_task_def.outputs.follower_task_def }}
+
+    steps:
+    - name: Checkout
+      uses: actions/checkout@v3
+
+    - name: Setup AWS Credentials
+      uses: aws-actions/configure-aws-credentials@v4
+      with:
+        aws-access-key-id: ${{ secrets.AWS_ACCESS_KEY_ID }}
+        aws-secret-access-key: ${{ secrets.AWS_SECRET_ACCESS_KEY }}
+        aws-region: us-east-1
+
+    - name: cluster_and_task_def
+      env:
+        environment_name: ${{ inputs.environment_name }}
+      run: |
+        if [ "${{ env.environment_name }}" == "transient" ]; then
+          echo "::set-output name=cluster_name::test-beta"
+          echo "::set-output name=leader_task_def::latest"
+          echo "::set-output name=follower_task_def::latest"
+        elif [ "${{ env.environment_name }}" == "test-beta" ]; then
+          echo "::set-output name=cluster_name::test-beta"
+          echo "::set-output name=leader_task_def::latest"
+          echo "::set-output name=follower_task_def::latest"
+        else
+          echo "::error::Unhandled environment type"
+          exit 1
+        fi
+
+    - name: Run ECS Task
+      env:
+        cluster_name: ${{ steps.cluster_and_task_def.outputs.cluster_name }}
+        leader_task_def: ${{ steps.cluster_and_task_def.outputs.leader_task_def }}
+        follower_task_def: ${{ steps.cluster_and_task_def.outputs.follower_task_def }}
+      run: |
+        aws ecs run-task --cluster $cluster_name --task-definition $leader_task_def

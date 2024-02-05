@@ -275,7 +275,7 @@ async function createFundedTestUser(): Promise<{
     const walletWithProvider = wallet.connect(provider)
 
     const context = await makeUserContextFromWallet(walletWithProvider)
-
+    log('River node url from createFundedTestUser:', riverNodeUrl)
     const rpcClient = makeStreamRpcClient(riverNodeUrl)
     const userId = userIdFromAddress(context.creatorAddress)
 

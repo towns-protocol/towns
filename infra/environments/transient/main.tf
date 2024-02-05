@@ -176,3 +176,12 @@ module "river_node" {
   alb_dns_name           = local.transient_global_remote_state.river_alb.lb_dns_name
   alb_https_listener_arn = local.transient_global_remote_state.river_alb.lb_https_listener_arn
 }
+
+module "loadtest" {
+  source             = "../../modules/loadtest"
+  vpc_id             = local.transient_global_remote_state.vpc.vpc_id
+  public_subnets     = local.transient_global_remote_state.vpc.public_subnets
+  private_subnets    = local.transient_global_remote_state.vpc.private_subnets
+  base_chain_rpc_url = module.base_forked_chain_service[0].network_url
+  river_node_url     = "https://river1-${terraform.workspace}.${module.global_constants.primary_hosted_zone_name}"
+}

@@ -17,8 +17,6 @@ services:
       - NUM_CHANNELS_PER_TOWN=10
       - NUM_FOLLOWERS=2
       # TODO: generate random private key
-      - COORDINATION_SPACE_ID=SPCE-EJC7EVqlJZWfvilJuaabg
-      - COORDINATION_CHANNEL_ID=CHAN-wFt9WKKnsGGNrT878aabg
       - RIVER_NODE_URL=http://localhost:5157
       - BASE_CHAIN_RPC_URL=http://localhost:8545
       - CHANNEL_SAMPLING_RATE=100
@@ -26,7 +24,7 @@ services:
       - LOAD_TEST_DURATION_MS=600000
       - COORDINATOR_LEAVE_CHANNELS=true
     depends_on:
-      - stress-testing-redis
+      - redis
   follower-1:
     build:
       context: ../../
@@ -36,8 +34,6 @@ services:
     environment:
       - MODE=follower
       - FOLLOWER_ID=follower-1
-      - COORDINATION_SPACE_ID=SPCE-EJC7EVqlJZWfvilJuaabg
-      - COORDINATION_CHANNEL_ID=CHAN-wFt9WKKnsGGNrT878aabg
       - RIVER_NODE_URL=http://localhost:5157
       - BASE_CHAIN_RPC_URL=http://localhost:8545
       # 10 minutes
@@ -45,7 +41,7 @@ services:
       - MAX_MSG_DELAY_MS=10000
       - JOIN_FACTOR=2
     depends_on:
-      - stress-testing-redis
+      - redis
   follower-2:
     build:
       context: ../../
@@ -55,8 +51,6 @@ services:
     environment:
       - MODE=follower
       - FOLLOWER_ID=follower-2
-      - COORDINATION_SPACE_ID=SPCE-EJC7EVqlJZWfvilJuaabg
-      - COORDINATION_CHANNEL_ID=CHAN-wFt9WKKnsGGNrT878aabg
       - RIVER_NODE_URL=http://localhost:5157
       - BASE_CHAIN_RPC_URL=http://localhost:8545
       # 10 minutes
@@ -64,4 +58,4 @@ services:
       - MAX_MSG_DELAY_MS=10000
       - JOIN_FACTOR=2
     depends_on:
-      - stress-testing-redis
+      - redis

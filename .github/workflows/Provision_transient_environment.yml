@@ -17,6 +17,7 @@ jobs:
             continuous_deploy_iterations: ${{ steps.check_labels.outputs.continuous_deploy_iterations }}
             river_node_log_level: ${{ steps.check_labels.outputs.river_node_log_level }}
             is_clean_environment: ${{ steps.check_labels.outputs.is_clean_environment }}
+            skip_river_node_continuous_deploys: ${{ steps.check_labels.outputs.skip_river_node_continuous_deploys }}
         steps:
             - name: Check labels
               id: check_labels
@@ -39,6 +40,8 @@ jobs:
                         single_node_transient_environment ? 'single-node' :
                                                             'lite';
 
+                      const skipRiverNodeContinuousDeploys = labels.data.some(label => label.name === 'transient:skip-river-cd');
+
                       const numNodes =
                         transientEnvironmentType === 'multi-node'  ? 10 :
                         transientEnvironmentType === 'single-node' ? 1 : 0;
@@ -51,6 +54,7 @@ jobs:
                       core.setOutput('continuous_deploy_iterations', JSON.stringify(continuousDeployIterations));
                       core.setOutput('is_clean_environment', is_clean_environment);
                       core.setOutput('river_node_log_level', river_node_log_level);
+                      core.setOutput('skip_river_node_continuous_deploys', skipRiverNodeContinuousDeploys);
 
 
     provision_transient_environment:
@@ -120,7 +124,7 @@ jobs:
         needs: check_labels
         permissions: write-all
 
-        if: needs.check_labels.outputs.num_nodes > 0
+        if: needs.check_labels.outputs.num_nodes > 0 
         # TODO: only run if a change in /casablanca/node is detected
         # TODO: only deploy if the new docker image is different than what's currently active
         with:
@@ -137,7 +141,7 @@ jobs:
         needs: [check_labels, provision_transient_environment, river_node_docker]
         permissions: write-all
 
-        if: needs.check_labels.outputs.num_nodes > 0
+        if: needs.check_labels.outputs.num_nodes > 0 && !needs.check_labels.outputs.skip_river_node_continuous_deploys
         # TODO: only run if a change in /casablanca/node is detected
         # TODO: only deploy if the new docker image is different than what's currently active
         strategy:

@@ -1,0 +1,56 @@
+name: 'Run_river_stress_tests'
+
+on:
+    workflow_dispatch:
+        inputs:
+            environment_name:
+                description: 'Environment name'
+                required: true
+                type: string
+
+concurrency:
+    group: ${{ github.workflow }}-${{ github.ref }}-${{ inputs.node_number }}
+    cancel-in-progress: false
+
+env:
+    SLACK_WEBHOOK_URL: ${{ secrets.SLACK_WEBHOOK_URL || secrets.SLACK_CD_WORKFLOW_WEBHOOK_URL }}
+
+jobs:
+    deploy:
+        name: Deploy to AWS ECS
+        runs-on: ubuntu-latest
+
+        permissions:
+            contents: write
+            packages: write
+
+        steps:
+            - name: Checkout
+              uses: actions/checkout@v3
+
+            - name: Configure AWS credentials
+              uses: aws-actions/configure-aws-credentials@v1
+              with:
+                  aws-access-key-id: ${{ secrets.AWS_ACCESS_KEY_ID }}
+                  aws-secret-access-key: ${{ secrets.AWS_SECRET_ACCESS_KEY }}
+                  aws-region: us-east-1
+
+            - name: Run ECS Cluster Tasks
+              env:
+                  ENVIRONMENT_NAME: ${{ inputs.environment_name }}
+              run: ./scripts/run-river-stress-tests.sh
+
+            # If action failed, we send a slack notification
+            - name: Slack notification
+              if: failure()
+              uses: slackapi/slack-github-action@v1.24.0
+              with:
+                  payload: |
+                      {
+                          "step": "Run River Stress Tests",
+                          "environment": "${{ inputs.environment_name }}",
+                          "branch": "${{ github.ref }}",
+                          "url": "https://github.com/${{ github.repository }}/actions/runs/${{ github.run_id }}",
+                          "commit": "${{ github.sha }}",
+                          "actor": "${{ github.actor }}"
+                      }

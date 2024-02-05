@@ -314,11 +314,14 @@ async function createFundedTestUser(): Promise<{
     const wallet = ethers.Wallet.createRandom()
     log('Wallet:', wallet)
     // Create a new wallet
+    log('baseChainRpcUrl:', baseChainRpcUrl)
     const provider = new ethers.providers.JsonRpcProvider(baseChainRpcUrl)
+    log('provided:', provider)
     const walletWithProvider = wallet.connect(provider)
-
+    log('Wallet wtih Provided:', walletWithProvider)
     const context = await makeUserContextFromWallet(walletWithProvider)
-
+    log('Context:', context)
+    log('River node url from createFundedTestUser:', riverNodeUrl)
     const rpcClient = makeStreamRpcClient(riverNodeUrl)
     const userId = userIdFromAddress(context.creatorAddress)
 
