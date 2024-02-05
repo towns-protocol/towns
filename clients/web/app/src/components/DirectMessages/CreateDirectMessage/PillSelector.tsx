@@ -8,7 +8,7 @@ import React, {
     useRef,
     useState,
 } from 'react'
-import { isEqual } from 'lodash'
+import { isEqual, isEqualWith } from 'lodash'
 import { Box, Paragraph, Stack, TextField } from '@ui'
 import { useDevice } from 'hooks/useDevice'
 
@@ -16,7 +16,7 @@ type Props<T> = {
     emptySelectionElement?: (params: { searchTerm: string }) => JSX.Element
     getOptionKey: (option: T) => string
     keys: string[]
-    label: string
+    label?: string | JSX.Element
     onConfirm?: () => void
     onPreviewChange?: (previewItem: T | undefined) => void
     onSelectionChange?: (selection: Set<string>) => void
@@ -79,11 +79,20 @@ export const PillSelector = <T,>(props: Props<T>) => {
 
     prevSearchItems.current = searchItems
 
+    const searchItemsRef = useRef<T[]>(searchItems)
     useEffect(() => {
-        if (searchItems) {
-            setFocusIndex(initialFocusIndex)
+        if (
+            isEqualWith(
+                searchItems,
+                searchItemsRef.current,
+                (a, b) => getOptionKey(a) === getOptionKey(b),
+            )
+        ) {
+            return
         }
-    }, [initialFocusIndex, searchItems])
+        searchItemsRef.current = searchItems
+        setFocusIndex(initialFocusIndex)
+    }, [getOptionKey, initialFocusIndex, searchItems])
 
     const onAddItem = useCallback((key: string) => {
         setSelection((s) => new Set(s.add(key)))
@@ -215,7 +224,7 @@ export const PillSelector = <T,>(props: Props<T>) => {
                 />
             </Box>
             {/* dropdown */}
-            {searchItems?.length ? (
+            {searchItems?.length > 0 ? (
                 <Box
                     padding
                     gap
@@ -226,9 +235,13 @@ export const PillSelector = <T,>(props: Props<T>) => {
                     boxShadow="card"
                 >
                     {/* label */}
-                    <Box>
-                        <Paragraph color="gray2">{props.label}</Paragraph>
-                    </Box>
+                    {typeof props.label === 'string' ? (
+                        <Box>
+                            <Paragraph color="gray2">{props.label}</Paragraph>
+                        </Box>
+                    ) : (
+                        props.label
+                    )}
                     {/* list container*/}
                     <Stack gap="sm" ref={listRef}>
                         {searchItems.map((o, i) => (

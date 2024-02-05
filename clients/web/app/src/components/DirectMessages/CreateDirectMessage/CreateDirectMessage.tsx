@@ -108,25 +108,18 @@ export const CreateDirectMessage = (props: Props) => {
         }
     }, [navigate])
 
-    const [selectedChannelId, setSelectedChannelId] = useState<string | undefined>()
-
     const onSelectChannel = useCallback(
         (channelId?: string) => {
             if (!channelId) {
                 return
             }
-            if (isTouch) {
-                // on touch we just stay in the "create message" panel but with
-                // the channel selected
-                setSelectedChannelId(channelId)
-            } else {
-                const link = createLink({ messageId: channelId })
-                if (link) {
-                    navigate(link)
-                }
+
+            const link = createLink({ messageId: channelId })
+            if (link) {
+                navigate(link)
             }
         },
-        [createLink, isTouch, navigate],
+        [createLink, navigate],
     )
 
     // preview a channel when selecting first user from dropdown
@@ -182,8 +175,8 @@ export const CreateDirectMessage = (props: Props) => {
     )
 
     const emptySelectionElement = useCallback(
-        ({ searchTerm }: { searchTerm: string }) =>
-            searchTerm?.length && !inclusiveMatches?.length ? (
+        ({ searchTerm }: { searchTerm: string }) => {
+            return searchTerm?.length && !inclusiveMatches?.length ? (
                 <Box
                     padding
                     horizontal
@@ -207,7 +200,8 @@ export const CreateDirectMessage = (props: Props) => {
                 />
             ) : (
                 <></>
-            ),
+            )
+        },
         [createCTA, inclusiveMatches, numSelectedUsers, onSubmit, onSelectChannel],
     )
 
@@ -228,15 +222,13 @@ export const CreateDirectMessage = (props: Props) => {
     }, [channelPreview, onSelectChannel])
 
     const preview =
-        selectedChannelId ||
-        channelPreview?.id ||
-        (numSelectedUsers === 0 ? userChannelPreview?.id : undefined)
+        channelPreview?.id || (numSelectedUsers === 0 ? userChannelPreview?.id : undefined)
 
     const channelContainerRef = React.useRef<HTMLDivElement>(null)
 
     useEffect(() => {
         // capture click on channel preview to select channel on desktop
-        if (!selectedChannelId && preview) {
+        if (preview) {
             const onClickScreen = (e: MouseEvent) => {
                 if (channelContainerRef.current?.contains(e.target as Node)) {
                     onSelectChannel(preview)
@@ -247,75 +239,72 @@ export const CreateDirectMessage = (props: Props) => {
                 window.removeEventListener('click', onClickScreen)
             }
         }
-    }, [onSelectChannel, preview, selectedChannelId])
+    }, [onSelectChannel, preview])
 
     const animationKey = [
         channelPreview?.id,
-        selectedUserArray.join(),
-        userChannelPreview?.id,
+        // selectedUserArray.join(),
+        // userChannelPreview?.id,
     ].join()
 
     return (
         <Stack grow position="relative">
-            <AnimatePresence mode="sync">
-                <MotionBox
-                    grow
-                    position="relative"
-                    key={animationKey}
-                    initial={{ opacity: 0 }}
-                    animate={{ opacity: 1 }}
-                    exit={{ opacity: 0, transition: { duration: 0 } }}
-                    transition={{ duration: 0.3, delay: 0, ease: 'easeInOut' }}
-                >
-                    {preview ? (
-                        <Box grow ref={channelContainerRef}>
-                            <DMChannelContextUserLookupProvider
-                                fallbackToParentContext
-                                channelId={selectedChannelId || preview}
-                            >
-                                <ChannelContextProvider channelId={preview}>
-                                    <SpacesChannelComponent
-                                        hideHeader
-                                        preventAutoFocus={!selectedChannelId}
-                                    />
-                                </ChannelContextProvider>
-                            </DMChannelContextUserLookupProvider>
-                        </Box>
-                    ) : (
-                        <Box grow>
-                            <ChannelPlaceholder
-                                userIds={
-                                    selectedUserArray?.length
-                                        ? selectedUserArray
-                                        : userPreview
-                                        ? [userPreview]
-                                        : []
-                                }
+            {!isTouch && numSelectedUsers && (
+                <AnimatePresence mode="sync">
+                    <MotionBox
+                        grow
+                        position="relative"
+                        key={animationKey}
+                        initial={{ opacity: 0 }}
+                        animate={{ opacity: 1 }}
+                        exit={{ opacity: 0, transition: { duration: 0 } }}
+                        transition={{ duration: 0.3, delay: 0, ease: 'easeInOut' }}
+                    >
+                        {preview ? (
+                            <Box grow ref={channelContainerRef}>
+                                <DMChannelContextUserLookupProvider
+                                    fallbackToParentContext
+                                    channelId={preview}
+                                >
+                                    <ChannelContextProvider channelId={preview}>
+                                        <SpacesChannelComponent hideHeader preventAutoFocus />
+                                    </ChannelContextProvider>
+                                </DMChannelContextUserLookupProvider>
+                            </Box>
+                        ) : (
+                            <Box grow>
+                                <ChannelPlaceholder
+                                    userIds={
+                                        selectedUserArray?.length
+                                            ? selectedUserArray
+                                            : userPreview
+                                            ? [userPreview]
+                                            : []
+                                    }
+                                />
+                            </Box>
+                        )}
+                        {isTouch && (
+                            <Box
+                                absoluteFill
+                                cursor="pointer"
+                                background="level1"
+                                style={{ opacity: 0 }}
+                                onClick={() => onSelectChannel(preview)}
                             />
-                        </Box>
-                    )}
-                    {isTouch && !selectedChannelId && (
-                        <Box
-                            absoluteFill
-                            cursor="pointer"
-                            background="level1"
-                            style={{ opacity: 0 }}
-                            onClick={() => onSelectChannel(preview)}
-                        />
-                    )}
-                </MotionBox>
-            </AnimatePresence>
-
-            {!selectedChannelId && (
-                <ZLayerBox>
-                    <UserPillSelector
-                        emptySelectionElement={emptySelectionElement}
-                        onSelectionChange={onSelectionChange}
-                        onConfirm={onConfirm}
-                        onUserPreviewChange={onUserPreviewChange}
-                    />
-                </ZLayerBox>
+                        )}
+                    </MotionBox>
+                </AnimatePresence>
             )}
+
+            <ZLayerBox>
+                <UserPillSelector
+                    emptySelectionElement={emptySelectionElement}
+                    onSelectionChange={onSelectionChange}
+                    onConfirm={onConfirm}
+                    onUserPreviewChange={onUserPreviewChange}
+                />
+            </ZLayerBox>
         </Stack>
     )
 }

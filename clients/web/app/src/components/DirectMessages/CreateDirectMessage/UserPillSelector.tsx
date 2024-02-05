@@ -2,10 +2,11 @@ import React, { CSSProperties, useCallback, useMemo, useState } from 'react'
 import { firstBy } from 'thenby'
 import { LookupUser, useMyUserId, useUserLookupContext } from 'use-zion-client'
 import { Avatar } from '@components/Avatar/Avatar'
-import { Box, IconButton, Paragraph, Stack, Text } from '@ui'
+import { Box, Button, IconButton, Paragraph, Stack, Text } from '@ui'
 import { useRecentUsers } from 'hooks/useRecentUsers'
 import { useGetUserBio } from 'hooks/useUserBio'
 import { getPrettyDisplayName } from 'utils/getPrettyDisplayName'
+import { useDevice } from 'hooks/useDevice'
 import { PillSelector } from './PillSelector'
 
 type Props = {
@@ -79,6 +80,26 @@ export const UserPillSelector = (props: Props) => {
 
     const showSuggestions = numSelected < 2
 
+    const { isTouch } = useDevice()
+
+    const createMessageButton =
+        isTouch && numSelected === 1 ? (
+            <Box>
+                <Button>Message {getPrettyDisplayName(usersMap[selectedIdsArray?.[0]])}</Button>
+            </Box>
+        ) : undefined
+
+    const label = showSuggestions ? 'Suggested' : 'Add people'
+
+    const labelElement = (
+        <>
+            {createMessageButton}
+            <Box>
+                <Paragraph color="gray2">{label}</Paragraph>
+            </Box>
+        </>
+    )
+
     return (
         <Stack absoluteFill pointerEvents="none" zIndex="layer" style={preventGlitchStyle}>
             <Box gap paddingTop="md" paddingX="md" pointerEvents="auto" position="relative">
@@ -91,8 +112,8 @@ export const UserPillSelector = (props: Props) => {
                     <PillSelector
                         options={users}
                         keys={['username', 'displayName']}
-                        label={showSuggestions ? 'Suggested' : 'Add people'}
-                        initialFocusIndex={-1}
+                        label={labelElement}
+                        initialFocusIndex={isTouch ? -1 : 0}
                         placeholder={
                             !numSelected
                                 ? 'Search for people or channels'

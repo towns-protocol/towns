@@ -12,22 +12,20 @@ export const useMatchingMessages = (params: {
     const inclusiveMatches = useMemo(
         () =>
             dmChannels.filter((dm) => {
-                switch (numSelectedUsers) {
-                    case 0: // 0 users = no match
-                        return false
-                    case 1: // 1 user = 1:1 DM only
-                        return !dm.isGroup && dm.userIds.includes(selectedUserArray[0])
-                    default: // 2+ users = dm/gdm including all selected users
-                        return selectedUserArray.every((id) => dm.userIds.includes(id))
+                if (numSelectedUsers > 1) {
+                    return selectedUserArray.every((id) => dm.userIds.includes(id))
                 }
             }),
         [dmChannels, numSelectedUsers, selectedUserArray],
     )
 
     const matchingDM = useMemo(
-        () => numSelectedUsers === 1 && inclusiveMatches.at(0),
-        [inclusiveMatches, numSelectedUsers],
+        () =>
+            numSelectedUsers === 1 &&
+            dmChannels.find((c) => !c.isGroup && c.userIds.includes(selectedUserArray[0])),
+        [dmChannels, numSelectedUsers, selectedUserArray],
     )
+
     const matchingGDM = useMemo(
         () =>
             numSelectedUsers > 1
