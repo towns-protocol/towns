@@ -65,7 +65,7 @@ jobs:
               run: git submodule update --init --recursive
 
             - name: Setup Go
-              uses: actions/setup-go@v4
+              uses: actions/setup-go@v5
               with:
                   go-version-file: 'go.work'
                   cache-dependency-path: '**/*.sum'
@@ -78,7 +78,7 @@ jobs:
             - name: Install Forge modules
               run: ./scripts/install-deps.sh
 
-            - uses: actions/setup-node@v3
+            - uses: actions/setup-node@v4
               with:
                   node-version: '20'
                   cache: 'yarn'
@@ -90,7 +90,7 @@ jobs:
               run: yarn install --immutable
 
             - name: Maintain Turbo cache
-              uses: actions/cache@v3
+              uses: actions/cache@v4
               with:
                   path: node_modules/.cache/turbo
                   key: ${{ runner.os }}-turbo-${{ github.run_id }}
@@ -204,7 +204,7 @@ jobs:
               run: git submodule update --init --recursive
 
             - name: Setup Go
-              uses: actions/setup-go@v4
+              uses: actions/setup-go@v5
               with:
                   go-version-file: 'go.work'
                   cache-dependency-path: '**/*.sum'
@@ -217,7 +217,7 @@ jobs:
             - name: Install Forge modules
               run: ./scripts/install-deps.sh
 
-            - uses: actions/setup-node@v3
+            - uses: actions/setup-node@v4
               with:
                   node-version: '20'
                   cache: 'yarn'
@@ -235,7 +235,7 @@ jobs:
               run: yarn info --name-only --all
 
             - name: Maintain Turbo cache
-              uses: actions/cache@v3
+              uses: actions/cache@v4
               with:
                   path: node_modules/.cache/turbo
                   key: ${{ runner.os }}-turbo-${{ github.run_id }}
@@ -341,7 +341,7 @@ jobs:
               run: git submodule update --init --recursive
 
             - name: Setup Go
-              uses: actions/setup-go@v4
+              uses: actions/setup-go@v5
               with:
                   go-version-file: 'go.work'
                   cache-dependency-path: '**/*.sum'
@@ -354,7 +354,7 @@ jobs:
             - name: Install Forge modules
               run: ./scripts/install-deps.sh
 
-            - uses: actions/setup-node@v3
+            - uses: actions/setup-node@v4
               with:
                   node-version: '20'
                   cache: 'yarn'
@@ -372,7 +372,7 @@ jobs:
               run: yarn info --name-only --all
 
             - name: Maintain Turbo cache
-              uses: actions/cache@v3
+              uses: actions/cache@v4
               with:
                   path: node_modules/.cache/turbo
                   key: ${{ runner.os }}-turbo-${{ github.run_id }}
@@ -475,7 +475,7 @@ jobs:
               run: git submodule update --init --recursive
 
             - name: Setup Go
-              uses: actions/setup-go@v4
+              uses: actions/setup-go@v5
               with:
                   go-version-file: 'go.work'
                   cache-dependency-path: '**/*.sum'
@@ -488,9 +488,9 @@ jobs:
             - name: Install Forge modules
               run: ./scripts/install-deps.sh
 
-            - uses: actions/setup-node@v3
+            - uses: actions/setup-node@v4
               with:
-                  node-version: '18.13.0'
+                  node-version: '20'
                   cache: 'yarn'
 
             - name: Print versions
@@ -506,7 +506,7 @@ jobs:
               run: yarn info --name-only --all
 
             - name: Maintain Turbo cache
-              uses: actions/cache@v3
+              uses: actions/cache@v4
               with:
                   path: node_modules/.cache/turbo
                   key: ${{ runner.os }}-turbo-${{ github.run_id }}
@@ -609,7 +609,7 @@ jobs:
               run: git submodule update --init --recursive
 
             - name: Setup Go
-              uses: actions/setup-go@v4
+              uses: actions/setup-go@v5
               with:
                   go-version-file: 'go.work'
                   cache-dependency-path: '**/*.sum'
@@ -622,7 +622,7 @@ jobs:
             - name: Install Forge modules
               run: ./scripts/install-deps.sh
 
-            - uses: actions/setup-node@v3
+            - uses: actions/setup-node@v4
               with:
                   node-version: '20'
                   cache: 'yarn'
@@ -640,7 +640,7 @@ jobs:
               run: yarn info --name-only --all
 
             - name: Maintain Turbo cache
-              uses: actions/cache@v3
+              uses: actions/cache@v4
               with:
                   path: node_modules/.cache/turbo
                   key: ${{ runner.os }}-turbo-${{ github.run_id }}
@@ -721,7 +721,7 @@ jobs:
               run: git submodule update --init --recursive
 
             - name: Setup Go
-              uses: actions/setup-go@v4
+              uses: actions/setup-go@v5
               with:
                   go-version-file: 'go.work'
                   cache-dependency-path: '**/*.sum'
@@ -734,9 +734,9 @@ jobs:
             - name: Install Forge modules
               run: ./scripts/install-deps.sh
 
-            - uses: actions/setup-node@v3
+            - uses: actions/setup-node@v4
               with:
-                  node-version: '18.13.0'
+                  node-version: '20'
                   cache: 'yarn'
 
             - name: Start and configure blockchains
@@ -784,12 +784,12 @@ jobs:
               run: git submodule update --init --recursive
 
             - name: Setup Go
-              uses: actions/setup-go@v4
+              uses: actions/setup-go@v5
               with:
                   go-version-file: 'go.work'
                   cache-dependency-path: '**/*.sum'
 
-            - uses: actions/setup-node@v3
+            - uses: actions/setup-node@v4
               with:
                   node-version: '20'
                   cache: 'yarn'
@@ -812,7 +812,7 @@ jobs:
               run: ./scripts/build-town-types.sh localhost
 
             - name: Maintain Turbo cache
-              uses: actions/cache@v3
+              uses: actions/cache@v4
               with:
                   path: node_modules/.cache/turbo
                   key: ${{ runner.os }}-turbo-${{ github.run_id }}
