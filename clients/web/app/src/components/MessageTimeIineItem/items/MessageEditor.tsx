@@ -72,6 +72,7 @@ export const TimelineMessageEditor = (props: Props) => {
                 <RichTextEditor
                     editable
                     editing
+                    autoFocus
                     displayButtons="always"
                     initialValue={initialValue}
                     channels={channels}
