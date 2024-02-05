@@ -359,7 +359,7 @@ export const getCollectionMetadataAlchemyMock: GetContractMetadataAlchemyRespons
         tokenType: 'ERC721',
         contractDeployer: '0xc9b6321dc216d91e626e9baa61b06b0e4d55bdb1',
         deployedBlockNumber: 12907782,
-        openSea: {
+        openSeaMetadata: {
             floorPrice: 1.895,
             collectionName: 'World of Women',
             // safelistRequestStatus: 'verified',

@@ -92,6 +92,8 @@ const envSchema = z.object({
     VITE_AA_ENTRY_POINT_ADDRESS: z.string().optional(),
     VITE_AA_FACTORY_ADDRESS: z.string().optional(),
     VITE_AA_PAYMASTER_PROXY_URL: z.string().url().optional(),
+
+    VITE_ADDRESS_FOR_MAINNET_TOKENS_DEV: z.string().optional(),
     VITE_ENABLE_SLATE_EDITOR: boolish.default(false),
 })
 

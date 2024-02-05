@@ -69,7 +69,7 @@ export interface GetContractMetadataAlchemyResponse extends ContractMetadata {
         tokenType: string
         contractDeployer: string
         deployedBlockNumber: number
-        openSea: OpenSeaCollectionMetadata
+        openSeaMetadata: OpenSeaCollectionMetadata
     }
 }
 

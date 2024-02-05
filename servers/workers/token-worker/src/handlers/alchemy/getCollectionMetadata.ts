@@ -46,6 +46,6 @@ function toContractMetadata(response: GetContractMetadataAlchemyResponse): Contr
         name: contractMetadata.name,
         symbol: contractMetadata.symbol,
         tokenType: contractMetadata.tokenType,
-        imageUrl: contractMetadata.openSea?.imageUrl,
+        imageUrl: contractMetadata.openSeaMetadata?.imageUrl,
     }
 }

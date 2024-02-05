@@ -13,7 +13,9 @@ async function getCollectionMetadata(
     nftNetwork: string,
 ): Promise<ContractMetadata> {
     const TOKENS_SERVER_URL = env.VITE_TOKEN_SERVER_URL
-    const url = `${TOKENS_SERVER_URL}/api/getCollectionMetadata/in/${nftNetwork}?contractAddress=${address}`
+    // TODO: rename path to /alchemy/nftNetwork
+    // See token-worker README for more information
+    const url = `${TOKENS_SERVER_URL}/api/getCollectionMetadata/al/${nftNetwork}?contractAddress=${address}`
     const response = await axiosClient.get(url)
 
     return response.data

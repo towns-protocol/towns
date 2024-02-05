@@ -7,7 +7,7 @@ import { TokenProps, TokenType } from '@components/Tokens/types'
 import { env } from 'utils'
 import {
     fetchBaseSepolia,
-    fetchVitalikTokens,
+    fetchMainnetTokens,
     useNetworkForNftApi,
 } from 'hooks/useNetworkForNftApi'
 import { getTokenType } from '@components/Web3/checkTokenType'
@@ -43,15 +43,15 @@ const zSchema: z.ZodType<GetCollectionsForOwnerResponse> = z.object({
 
 // Get the tokens in a user's wallet
 export function useCollectionsForOwner({ wallet, enabled, chainId }: UseTokenContractsForAdress) {
-    const alchmeyNetwork = useNetworkForNftApi()
+    const nftNetwork = useNetworkForNftApi()
 
     return useQuery({
         queryKey: [queryKey],
 
         queryFn: () =>
             chainId === 31337
-                ? getLocalHostTokens(wallet, alchmeyNetwork)
-                : getTokenContractsForAddress(wallet, alchmeyNetwork),
+                ? getLocalHostTokens(wallet, nftNetwork)
+                : getTokenContractsForAddress(wallet, nftNetwork),
 
         staleTime: 1000 * 15,
         refetchOnMount: false,
@@ -71,10 +71,10 @@ export function useCachedTokensForWallet() {
     }, [queryClient])
 }
 
-async function getLocalHostTokens(wallet: string, alchmeyNetwork: string) {
-    // to test with a big list of tokens, add ?vitalikTokens to the url, or ?base_sepolia to use the base_sepolia testnet
-    if (fetchVitalikTokens || fetchBaseSepolia) {
-        return getTokenContractsForAddress(wallet, alchmeyNetwork)
+async function getLocalHostTokens(wallet: string, nftNetwork: string) {
+    // to test with a big list of tokens, add ?mainnet to the url, or ?base_sepolia to use the base_sepolia testnet
+    if (fetchMainnetTokens || fetchBaseSepolia) {
+        return getTokenContractsForAddress(wallet, nftNetwork)
     }
 
     // on local, just return the zion token, if it exists (must be anvil account)
@@ -85,9 +85,11 @@ async function getLocalHostTokens(wallet: string, alchmeyNetwork: string) {
     }
 }
 
-async function getTokenContractsForAddress(wallet: string, alchmeyNetwork: string) {
+async function getTokenContractsForAddress(wallet: string, nftNetwork: string) {
     const TOKENS_SERVER_URL = env.VITE_TOKEN_SERVER_URL
-    const url = `${TOKENS_SERVER_URL}/api/getCollectionsForOwner/in/${alchmeyNetwork}/${wallet}`
+    // TODO: rename path to /alchemy/nftNetwork
+    // See token-worker README for more information
+    const url = `${TOKENS_SERVER_URL}/api/getCollectionsForOwner/al/${nftNetwork}/${wallet}`
     const response = await axiosClient.get(url)
     const parseResult = zSchema.safeParse(response.data)
 

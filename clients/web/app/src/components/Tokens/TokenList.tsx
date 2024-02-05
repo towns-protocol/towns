@@ -7,7 +7,7 @@ import { FadeIn, FadeInBox } from '@components/Transitions'
 import { Box, BoxProps, MotionBox, Paragraph, Text, TextField } from '@ui'
 import { useCollectionsForOwner } from 'api/lib/tokenContracts'
 import { env } from 'utils'
-import { fetchVitalikTokens, vitalikAddress } from 'hooks/useNetworkForNftApi'
+import { fetchMainnetTokens, mainnetTokenAddress } from 'hooks/useNetworkForNftApi'
 import {
     AddressListSearch,
     SelectedItemsList,
@@ -81,7 +81,7 @@ export function TokensList({
         isLoading,
         isError,
     } = useCollectionsForOwner({
-        wallet: fetchVitalikTokens ? vitalikAddress : wallet,
+        wallet: fetchMainnetTokens && mainnetTokenAddress ? mainnetTokenAddress : wallet,
         enabled: Boolean(chainId),
         chainId,
     })
@@ -180,10 +180,10 @@ export function TokensList({
                     <FadeInBox key="dev-message" maxWidth="400">
                         <Paragraph size="sm" color="error">
                             DEV message: Localhost will only return the zion token for anvil
-                            accounts. To test a long list, add ?vitalikTokens to url. To test your
-                            sepolia tokens, add ?sepolia. Please note that if you use these query
-                            params, you may get unexpected behavior in other parts of the app, if
-                            you are pointed to local homeserver.
+                            accounts. To test a long list, add ?mainnet to url. To test your sepolia
+                            tokens, add ?sepolia. Please note that if you use these query params,
+                            you may get unexpected behavior in other parts of the app, if you are
+                            pointed to local homeserver.
                         </Paragraph>
                     </FadeInBox>
                 )}

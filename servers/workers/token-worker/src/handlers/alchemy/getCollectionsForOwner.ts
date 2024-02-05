@@ -17,10 +17,11 @@ const fetchAlchemyNfts = async (
         url = url.concat(`&pageKey=${pageKey}`)
     }
 
-    // alchemy changed things up and filter doesn't work on goerli
-    if (rpcUrl.includes('eth-mainnet')) {
-        url = url.concat('&includeFilters[]=SPAM')
-    }
+    // alchemy updated so spam filter is only available for paid levels
+    // And if you try to add the filters w/out paid, it errors!
+    // if (rpcUrl.includes('eth-mainnet')) {
+    //     url = url.concat('&includeFilters[]=SPAM')
+    // }
 
     try {
         const response = await fetch(url)
@@ -45,12 +46,13 @@ export const getCollectionsForOwner = async (request: TokenProviderRequest, env:
     const pageKey = query?.pageKey || ''
 
     const json = await fetchAlchemyNfts(rpcUrl, wallet, pageKey)
+    json.contracts = withOpenSeaImage(json.contracts)
 
     try {
         while (json.pageKey) {
             const res = await fetchAlchemyNfts(rpcUrl, wallet, json.pageKey || '')
             json.pageKey = res.pageKey
-            json.contracts = [...json.contracts, ...res.contracts]
+            json.contracts = [...json.contracts, ...withOpenSeaImage(res.contracts)]
         }
 
         const collectionResponseForClient: GetCollectionsForOwnerResponse = {
@@ -65,4 +67,20 @@ export const getCollectionsForOwner = async (request: TokenProviderRequest, env:
     } catch (error) {
         return new Response(`Error ${JSON.stringify(error)}`, { status: 500 })
     }
+}
+
+function withOpenSeaImage(
+    contracts: GetContractsForOwnerAlchemyResponse['contracts'],
+): GetContractsForOwnerAlchemyResponse['contracts'] {
+    return contracts.map((contract) => {
+        // TODO: need to update alchemy sdk to get proper types
+        // eslint-disable-next-line @typescript-eslint/ban-ts-comment
+        // @ts-ignore
+        const { openSeaMetadata, ...rest } = contract
+
+        return {
+            ...rest,
+            imageUrl: openSeaMetadata?.imageUrl,
+        }
+    })
 }

@@ -12,16 +12,14 @@ import { getCollectionsForOwner as getCollectionsForOwnerInfura } from './handle
 import { getCollectionsForOwner as getCollectionsForOwnerAlchemy } from './handlers/alchemy/getCollectionsForOwner'
 import { Buffer } from 'buffer'
 
-const alchemyNetworks = {
+const networks = {
     mainnet: 'eth-mainnet',
-    goerli: 'eth-goerli',
-    sepolia: 'eth-sepolia', // not supported as of 3.23.2023
+    baseSepolia: 'base-sepolia',
 }
 
-const alchemyNetworkMapToChainId = {
-    [alchemyNetworks.mainnet]: 1,
-    [alchemyNetworks.sepolia]: 11155111,
-    [alchemyNetworks.goerli]: 5,
+const networksToChainId = {
+    [networks.mainnet]: 1,
+    [networks.baseSepolia]: 84532,
 }
 
 enum ProviderAlias {
@@ -47,14 +45,11 @@ const withNetwork = async (request: TokenProviderRequest, env: Env) => {
     if (provider === ProviderAlias.Infura) {
         const base = `https://nft.api.infura.io/networks`
         switch (network) {
-            case alchemyNetworks.mainnet:
-                request.rpcUrl = `${base}/${alchemyNetworkMapToChainId[alchemyNetworks.mainnet]}`
+            case networks.mainnet:
+                request.rpcUrl = `${base}/${networksToChainId[networks.mainnet]}`
                 break
-            case alchemyNetworks.goerli:
-                request.rpcUrl = `${base}/${alchemyNetworkMapToChainId[alchemyNetworks.goerli]}`
-                break
-            case alchemyNetworks.sepolia:
-                request.rpcUrl = `${base}/${alchemyNetworkMapToChainId[alchemyNetworks.sepolia]}`
+            case networks.baseSepolia:
+                request.rpcUrl = `${base}/${networksToChainId[networks.baseSepolia]}`
                 break
             default:
                 return new Response(`invalid network:: ${network}`, { status: 400 })
@@ -62,20 +57,16 @@ const withNetwork = async (request: TokenProviderRequest, env: Env) => {
     } else if (provider === ProviderAlias.Alchemy) {
         let base
         switch (network) {
-            case alchemyNetworks.mainnet:
-                base = `https://${alchemyNetworks.mainnet}`
+            case networks.mainnet:
+                base = `https://${networks.mainnet}`
                 break
-            case alchemyNetworks.goerli:
-                base = `https://${alchemyNetworks.goerli}`
-                break
-            case alchemyNetworks.sepolia:
-                base = `https://${alchemyNetworks.sepolia}`
+            case networks.baseSepolia:
+                base = `https://${networks.baseSepolia}`
                 break
             default:
                 return new Response(`invalid network:: ${network}`, { status: 400 })
         }
-
-        request.rpcUrl = `${base}.g.alchemy.com/nft/v2/${env.ALCHEMY_API_KEY}`
+        request.rpcUrl = `${base}.g.alchemy.com/nft/v3/${env.ALCHEMY_API_KEY}`
     } else {
         return new Response(`invalid provider:: ${provider}`, { status: 400 })
     }

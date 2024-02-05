@@ -3,21 +3,22 @@ import { env, hasQueryParam } from 'utils'
 import { useEnvironment } from 'hooks/useEnvironmnet'
 
 // For debugging
-// Use ?vitalikTokens to grab Vitalik's tokens from mainnet
+// Use ?mainnet to grab tokens from mainnet
 // when fetching tokens for a wallet
-export const hasVitalkTokensParam = () => {
-    return hasQueryParam('vitalikTokens')
+export const hasMainnetParam = () => {
+    return hasQueryParam('mainnet')
 }
 
 export const hasBaseSepoliaParam = () => {
     return hasQueryParam('base_sepolia')
 }
 
-export const fetchVitalikTokens = env.DEV && hasVitalkTokensParam()
+export const fetchMainnetTokens = env.DEV && hasMainnetParam()
 export const fetchBaseSepolia = env.DEV && hasBaseSepoliaParam()
-export const vitalikAddress = '0xd8da6bf26964af9d7eed9e03e53415d37aa96045'
+// random address from opensea with tokens on mainnet
+export const mainnetTokenAddress = env.VITE_ADDRESS_FOR_MAINNET_TOKENS_DEV
 const MAINNET = 'eth-mainnet'
-const BASE_SEPOLIA = 'eth-base-sepolia'
+const BASE_SEPOLIA = 'base-sepolia'
 
 const NETWORK_NAME_MAP: Record<number, string | undefined> = {
     1: MAINNET,
@@ -31,8 +32,8 @@ export const useNetworkForNftApi = () => {
     const { chainId } = useEnvironment()
     return useMemo(() => {
         // special cases that only apply for local testing against different alchmey urls
-        // fetch vitalik's tokens so we can see how a ton of tokens looks in the UI
-        if (fetchVitalikTokens) {
+        // fetch mainnet tokens
+        if (fetchMainnetTokens) {
             return MAINNET
         }
 

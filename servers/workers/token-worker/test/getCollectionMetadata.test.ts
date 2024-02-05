@@ -7,7 +7,7 @@ import {
 
 const ALCHEMY_URL = 'https://eth-mainnet.g.alchemy.com'
 const ALCHEMY_GET_CONTRACT_METADATA_PATH =
-    '/nft/v2/fake_key/getContractMetadata?contractAddress=0x1234'
+    '/nft/v3/fake_key/getContractMetadata?contractAddress=0x1234'
 
 const INFURA_URL = 'https://nft.api.infura.io'
 const INFURA_GET_CONTRACT_METADATA_PATH = '/networks/1/nfts/0x1234'

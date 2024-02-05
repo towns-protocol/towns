@@ -15,7 +15,15 @@ Cloudflare worker for interacting with NFTs (via Alchemy)
 
 ## Endpoints
 
-`api/getNftsForOwner/:network/:address`
+```
+/api/getCollectionMetadata/:provider/:network
+/api/getCollectionsForOwner/:provider/:network/:address
+```
+
+Where `:provider` is the nft api provider:
+
+`al` - Alchemy
+`in` - Infura - deprecated
 
 Where `:network` is `eth-mainnet` or any string (anything besides `eth-mainnet` will point to Goerli).
 

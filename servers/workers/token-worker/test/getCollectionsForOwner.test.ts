@@ -7,10 +7,9 @@ import {
 } from './mocks'
 
 const ALCHEMY_URL = 'https://eth-mainnet.g.alchemy.com'
-const GET_COLLECTIONS_PATH_ALCHEMY =
-    '/nft/v2/fake_key/getContractsForOwner?owner=0x12345&includeFilters[]=SPAM'
+const GET_COLLECTIONS_PATH_ALCHEMY = '/nft/v3/fake_key/getContractsForOwner?owner=0x12345' // need to add back &includeFilters[]=SPAM if we add in handler
 const GET_COLLECTIONS_PATH_ALCHEMY_PAGE_2 =
-    '/nft/v2/fake_key/getContractsForOwner?owner=0x12345&pageKey=abcd&includeFilters[]=SPAM'
+    '/nft/v3/fake_key/getContractsForOwner?owner=0x12345&pageKey=abcd' // need to add back &includeFilters[]=SPAM if we add in handler
 
 const INFURA_URL = 'https://nft.api.infura.io'
 const GET_COLLECTIONS_PATH_INFURA = `/networks/1/accounts/0x12345/assets/collections?cursor=`
