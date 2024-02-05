@@ -28,10 +28,12 @@ type PaymasterProxyPostData = IUserOperation & {
 
 export const paymasterProxyMiddleware: ({
     paymasterProxyAuthSecret,
+    skipConfirmation,
 }: {
     paymasterProxyAuthSecret: string
+    skipConfirmation?: boolean
 }) => UserOpsConfig['paymasterMiddleware'] =
-    ({ paymasterProxyAuthSecret }) =>
+    ({ skipConfirmation, paymasterProxyAuthSecret }) =>
     async (args) => {
         const { getState, setState } = userOpsStore
 
@@ -66,6 +68,9 @@ export const paymasterProxyMiddleware: ({
         }
 
         async function waitForConfirmOrDeny() {
+            if (skipConfirmation) {
+                return
+            }
             const estimate = await fallbackEstimate()
             await new Promise((resolve, reject) => {
                 setState({
@@ -127,10 +132,21 @@ export const paymasterProxyMiddleware: ({
                 },
             })
             const json = await response.json()
+
+            if (!response.ok) {
+                throw new Error(
+                    `[paymasterProxyMiddleware] Error getting paymaster proxy response:: ${
+                        response.status
+                    } ${response.statusText} ${JSON.stringify(json)}`,
+                )
+            }
+
             const parseResult = zSchema.safeParse(json)
             if (!parseResult.success) {
                 throw new Error(
-                    `Error parsing PaymasterProxyResponse:: ${JSON.stringify(parseResult.error)}`,
+                    `[paymasterProxyMiddleware] Error parsing PaymasterProxyResponse:: ${JSON.stringify(
+                        parseResult.error,
+                    )}`,
                 )
             }
             ctx.op.paymasterAndData = parseResult.data.paymasterAndData
@@ -141,10 +157,7 @@ export const paymasterProxyMiddleware: ({
             // if the paymaster responds with an error
             // just estimate the gas the same way Presets.SimpleAccount does when no paymaster is passed
             // meaning a user will have to pay for gas and this can still fail if they don't have funds
-            console.error(
-                '[paymasterProxyMiddleware] Error getting paymaster proxy response, using fallback gas estimate',
-                error,
-            )
+            console.error('[paymasterProxyMiddleware] using fallback gas estimate:', error)
             await waitForConfirmOrDeny()
         }
     }

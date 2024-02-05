@@ -45,7 +45,7 @@ export async function checkLinkKVOverrides(
     })
     let privyVerified = false
     // check if wallet is signed up with privy
-    const searchParam = { searchTerm: rootAddress }
+    const searchParam = { walletAddresses: [rootAddress] }
     const privyResponse = await searchPrivyForUser(searchParam, env)
     if (isPrivyApiSearchResponse(privyResponse)) {
         if (privyResponse.data.length > 0) {
@@ -153,7 +153,7 @@ export async function checkMintKVOverrides(
         },
     )
     // check if wallet is signed up with privy
-    const searchParam = { searchTerm: rootAddress }
+    const searchParam = { walletAddresses: [rootAddress] }
     const privyResponse = await searchPrivyForUser(searchParam, env)
     // check for whitelisted emails that are associated with privy users
     if (

@@ -45,7 +45,7 @@ describe('http router', () => {
 
         const text = await result.text()
         const statusText = result.statusText
-        expect(text).toBe('Invalid Paymaster Response')
+        expect(text).toContain('Invalid Paymaster Response')
     })
 
     // TODO: this test should mock/intercept anvil RPC calls

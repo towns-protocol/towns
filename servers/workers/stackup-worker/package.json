@@ -7,7 +7,7 @@
     "type": "module",
     "scripts": {
         "dev": "echo use dev:local for now - see wrangler.toml",
-        "dev:local": "wrangler dev --port 8686",
+        "dev:local": "wrangler dev --port ${PORT:-8686}",
         "dev:remote": "wrangler dev --remote",
         "lint": "yarn eslint --format unix ./src",
         "prettier:check": "prettier --check .",

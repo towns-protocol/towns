@@ -44,7 +44,7 @@ router.post('/api/transaction-limits', async (request: WorkerRequest, env: Env) 
     // check payload is IUserOperation with townId
     const content = await getContentAsJson(request)
     if (!content || !isTransactionLimitRequest(content)) {
-        return new Response('Bad Request', { status: 400 })
+        return new Response(toJson({ error: 'Bad Request' }), { status: 400 })
     }
     const { environment, operation, rootAddress, blockLookbackNum } = content
 
@@ -70,11 +70,13 @@ router.post('/api/transaction-limits', async (request: WorkerRequest, env: Env) 
                     blockLookbackNum,
                 )
                 if (!queryResult) {
-                    return new Response('Internal Service Error', { status: 500 })
+                    return new Response(toJson({ error: 'Internal Service Error' }), {
+                        status: 500,
+                    })
                 }
                 const restricted = await checkMintKVOverrides(rootAddress, env)
                 return new Response(
-                    JSON.stringify({
+                    toJson({
                         ...queryResult,
                         maxActionsPerDay: TRANSACTION_LIMIT_DEFAULTS_PER_DAY.createTown,
                         restricted: !restricted?.verified,
@@ -116,11 +118,13 @@ router.post('/api/transaction-limits', async (request: WorkerRequest, env: Env) 
                 break
             }
             default:
-                return new Response(`Unknown operation ${operation}`, { status: 404 })
+                return new Response(toJson({ error: `Unknown operation ${operation}` }), {
+                    status: 404,
+                })
         }
     } catch (error) {
         console.error(`returned error: ${isErrorType(error) ? error?.message : 'Unknown error'}`)
-        return new Response('Internal Service Error', { status: 500 })
+        return new Response(toJson({ error: 'Internal Service Error' }), { status: 500 })
     }
 })
 
@@ -128,7 +132,7 @@ router.post('/api/sponsor-userop', async (request: WorkerRequest, env: Env) => {
     // check payload is IUserOperation with townId
     const content = await getContentAsJson(request)
     if (!content || !isTownsUserOperation(content)) {
-        return new Response('Bad Request', { status: 400 })
+        return new Response(toJson({ error: 'Bad Request' }), { status: 400 })
     }
     // check town is associated with paymaster
     const { townId, functionHash, rootKeyAddress, ...userOperation } = content
@@ -148,19 +152,28 @@ router.post('/api/sponsor-userop', async (request: WorkerRequest, env: Env) => {
             // todo: functionHash should be a keccak hash of the function signature
             case 'createTown': {
                 if (!isHexString(rootKeyAddress)) {
-                    return new Response(`rootKeyAddress ${rootKeyAddress} not valid`, {
-                        status: 400,
-                    })
+                    return new Response(
+                        toJson({ error: `rootKeyAddress ${rootKeyAddress} not valid` }),
+                        {
+                            status: 400,
+                        },
+                    )
                 }
                 if (!isHexString(userOperation.sender)) {
-                    return new Response(`userOperation.sender ${userOperation.sender} not valid`, {
-                        status: 400,
-                    })
+                    return new Response(
+                        toJson({ error: `userOperation.sender ${userOperation.sender} not valid` }),
+                        {
+                            status: 400,
+                        },
+                    )
                 }
                 if (!townId) {
-                    return new Response(`Missing townId, cannot verify that town does not exist`, {
-                        status: 400,
-                    })
+                    return new Response(
+                        toJson({ error: `Missing townId, cannot verify that town does not exist` }),
+                        {
+                            status: 400,
+                        },
+                    )
                 }
                 if (env.SKIP_TOWNID_VERIFICATION !== 'true') {
                     const verification = await verifyCreateTown({
@@ -170,26 +183,38 @@ router.post('/api/sponsor-userop', async (request: WorkerRequest, env: Env) => {
                         env,
                     })
                     if (!verification.verified) {
-                        return new Response(`Unauthorized: ${verification.error}`, { status: 401 })
+                        return new Response(
+                            toJson({ error: `Unauthorized: ${verification.error}` }),
+                            { status: 401 },
+                        )
                     }
                 }
                 break
             }
             case 'joinTown': {
                 if (!isHexString(rootKeyAddress)) {
-                    return new Response(`rootKeyAddress ${rootKeyAddress} not valid`, {
-                        status: 400,
-                    })
+                    return new Response(
+                        toJson({ error: `rootKeyAddress ${rootKeyAddress} not valid` }),
+                        {
+                            status: 400,
+                        },
+                    )
                 }
                 if (!isHexString(userOperation.sender)) {
-                    return new Response(`userOperation.sender ${userOperation.sender} not valid`, {
-                        status: 400,
-                    })
+                    return new Response(
+                        toJson({ error: `userOperation.sender ${userOperation.sender} not valid` }),
+                        {
+                            status: 400,
+                        },
+                    )
                 }
                 if (!townId) {
-                    return new Response(`Missing townId, cannot verify that town exists`, {
-                        status: 400,
-                    })
+                    return new Response(
+                        toJson({ error: `Missing townId, cannot verify that town exists` }),
+                        {
+                            status: 400,
+                        },
+                    )
                 }
                 if (env.SKIP_TOWNID_VERIFICATION !== 'true') {
                     const verification = await verifyJoinTown({
@@ -199,21 +224,30 @@ router.post('/api/sponsor-userop', async (request: WorkerRequest, env: Env) => {
                         env,
                     })
                     if (!verification.verified) {
-                        return new Response(`Unauthorized: ${verification.error}`, { status: 401 })
+                        return new Response(
+                            toJson({ error: `Unauthorized: ${verification.error}` }),
+                            { status: 401 },
+                        )
                     }
                 }
                 break
             }
             case 'linkWallet': {
                 if (!isHexString(rootKeyAddress)) {
-                    return new Response(`rootKeyAddress ${rootKeyAddress} not valid`, {
-                        status: 400,
-                    })
+                    return new Response(
+                        toJson({ error: `rootKeyAddress ${rootKeyAddress} not valid` }),
+                        {
+                            status: 400,
+                        },
+                    )
                 }
                 if (!isHexString(userOperation.sender)) {
-                    return new Response(`userOperation.sender ${userOperation.sender} not valid`, {
-                        status: 400,
-                    })
+                    return new Response(
+                        toJson({ error: `userOperation.sender ${userOperation.sender} not valid` }),
+                        {
+                            status: 400,
+                        },
+                    )
                 }
                 if (env.SKIP_TOWNID_VERIFICATION !== 'true') {
                     const verification = await verifyLinkWallet({
@@ -222,7 +256,10 @@ router.post('/api/sponsor-userop', async (request: WorkerRequest, env: Env) => {
                         env,
                     })
                     if (!verification.verified) {
-                        return new Response(`Unauthorized: ${verification.error}`, { status: 401 })
+                        return new Response(
+                            toJson({ error: `Unauthorized: ${verification.error}` }),
+                            { status: 401 },
+                        )
                     }
                 }
                 break
@@ -238,19 +275,28 @@ router.post('/api/sponsor-userop', async (request: WorkerRequest, env: Env) => {
             case 'updateChannel':
             case 'removeChannel': {
                 if (!isHexString(rootKeyAddress)) {
-                    return new Response(`rootKeyAddress ${rootKeyAddress} not valid`, {
-                        status: 400,
-                    })
+                    return new Response(
+                        toJson({ error: `rootKeyAddress ${rootKeyAddress} not valid` }),
+                        {
+                            status: 400,
+                        },
+                    )
                 }
                 if (!isHexString(userOperation.sender)) {
-                    return new Response(`userOperation.sender ${userOperation.sender} not valid`, {
-                        status: 400,
-                    })
+                    return new Response(
+                        toJson({ error: `userOperation.sender ${userOperation.sender} not valid` }),
+                        {
+                            status: 400,
+                        },
+                    )
                 }
                 if (!townId) {
-                    return new Response(`Missing townId, cannot verify town exists`, {
-                        status: 400,
-                    })
+                    return new Response(
+                        toJson({ error: `Missing townId, cannot verify town exists` }),
+                        {
+                            status: 400,
+                        },
+                    )
                 }
                 if (env.SKIP_TOWNID_VERIFICATION !== 'true') {
                     const verification = await verifyUseTown({
@@ -261,7 +307,10 @@ router.post('/api/sponsor-userop', async (request: WorkerRequest, env: Env) => {
                         transactionName: functionHash,
                     })
                     if (!verification.verified) {
-                        return new Response(`Unauthorized: ${verification.error}`, { status: 401 })
+                        return new Response(
+                            toJson({ error: `Unauthorized: ${verification.error}` }),
+                            { status: 401 },
+                        )
                     }
                 }
                 break
@@ -272,19 +321,28 @@ router.post('/api/sponsor-userop', async (request: WorkerRequest, env: Env) => {
             }
             case 'createTown_linkWallet': {
                 if (!isHexString(rootKeyAddress)) {
-                    return new Response(`rootKeyAddress ${rootKeyAddress} not valid`, {
-                        status: 400,
-                    })
+                    return new Response(
+                        toJson({ error: `rootKeyAddress ${rootKeyAddress} not valid` }),
+                        {
+                            status: 400,
+                        },
+                    )
                 }
                 if (!isHexString(userOperation.sender)) {
-                    return new Response(`userOperation.sender ${userOperation.sender} not valid`, {
-                        status: 400,
-                    })
+                    return new Response(
+                        toJson({ error: `userOperation.sender ${userOperation.sender} not valid` }),
+                        {
+                            status: 400,
+                        },
+                    )
                 }
                 if (!townId) {
-                    return new Response(`Missing townId, cannot verify that town does not exist`, {
-                        status: 400,
-                    })
+                    return new Response(
+                        toJson({ error: `Missing townId, cannot verify that town does not exist` }),
+                        {
+                            status: 400,
+                        },
+                    )
                 }
                 if (env.SKIP_TOWNID_VERIFICATION !== 'true') {
                     const verificationLink = await verifyLinkWallet({
@@ -300,33 +358,50 @@ router.post('/api/sponsor-userop', async (request: WorkerRequest, env: Env) => {
                     })
 
                     if (!verificationLink.verified) {
-                        return new Response(`Unauthorized: ${verificationLink.error}`, {
-                            status: 401,
-                        })
+                        return new Response(
+                            toJson({ error: `Unauthorized: ${verificationLink.error}` }),
+                            {
+                                status: 401,
+                            },
+                        )
                     }
                     if (!verificationCreate.verified) {
-                        return new Response(`Unauthorized: ${verificationCreate.error}`, {
-                            status: 401,
-                        })
+                        return new Response(
+                            toJson({ error: `Unauthorized: ${verificationCreate.error}` }),
+                            {
+                                status: 401,
+                            },
+                        )
                     }
                 }
                 break
             }
             case 'joinTown_linkWallet': {
                 if (!isHexString(rootKeyAddress)) {
-                    return new Response(`rootKeyAddress ${rootKeyAddress} not valid`, {
-                        status: 400,
-                    })
+                    return new Response(
+                        toJson({ error: `rootKeyAddress ${rootKeyAddress} not valid` }),
+                        {
+                            status: 400,
+                        },
+                    )
                 }
                 if (!isHexString(userOperation.sender)) {
-                    return new Response(`userOperation.sender ${userOperation.sender} not valid`, {
-                        status: 400,
-                    })
+                    return new Response(
+                        toJson({ error: `userOperation.sender ${userOperation.sender} not valid` }),
+                        {
+                            status: 400,
+                        },
+                    )
                 }
                 if (!townId) {
-                    return new Response(`Missing townId, cannot verify that town does not exist`, {
-                        status: 400,
-                    })
+                    return new Response(
+                        toJson({
+                            error: `Missing townId, cannot verify that town does not exist`,
+                        }),
+                        {
+                            status: 400,
+                        },
+                    )
                 }
                 if (env.SKIP_TOWNID_VERIFICATION !== 'true') {
                     const verificationLink = await verifyLinkWallet({
@@ -341,24 +416,32 @@ router.post('/api/sponsor-userop', async (request: WorkerRequest, env: Env) => {
                         env,
                     })
                     if (!verificationLink.verified) {
-                        return new Response(`Unauthorized: ${verificationLink.error}`, {
-                            status: 401,
-                        })
+                        return new Response(
+                            toJson({ error: `Unauthorized: ${verificationLink.error}` }),
+                            {
+                                status: 401,
+                            },
+                        )
                     }
                     if (!verificationJoin.verified) {
-                        return new Response(`Unauthorized: ${verificationJoin.error}`, {
-                            status: 401,
-                        })
+                        return new Response(
+                            toJson({ error: `Unauthorized: ${verificationJoin.error}` }),
+                            {
+                                status: 401,
+                            },
+                        )
                     }
                 }
                 break
             }
             default:
-                return new Response(`Unknown functionHash ${functionHash}`, { status: 404 })
+                return new Response(toJson({ error: `Unknown functionHash ${functionHash}` }), {
+                    status: 404,
+                })
         }
     } catch (error) {
         console.error(`KV returned error: ${isErrorType(error) ? error?.message : 'Unknown error'}`)
-        return new Response('Internal Service Error', { status: 500 })
+        return new Response(toJson({ error: 'Internal Service Error' }), { status: 500 })
     }
     // if so, fetch paymasterAndData from Stackup api
     const requestInit = createPmSponsorUserOperationRequest({
@@ -373,28 +456,30 @@ router.post('/api/sponsor-userop', async (request: WorkerRequest, env: Env) => {
     }
     const responseFetched = await fetch(`${STACKUP_API_URL}/${env.STACKUP_API_TOKEN}`, requestInit)
     if (responseFetched.status !== 200) {
-        return new Response('Invalid Paymaster Response', { status: responseFetched.status })
+        return new Response(toJson({ error: 'Invalid Paymaster Response' }), {
+            status: responseFetched.status,
+        })
     }
     const json = await responseFetched.json()
     if (!isPmSponsorUserOperationResponse(json)) {
-        return new Response('Invalid Paymaster Response', { status: 400 })
+        return new Response(toJson({ error: 'Invalid Paymaster Response' }), { status: 400 })
     }
     const statusCode = responseFetched.status
     if (statusCode !== 200) {
-        return new Response('Paymaster Error', {
+        return new Response(toJson({ error: 'Paymaster Error' }), {
             status: statusCode,
             statusText: `Error code ${json?.error?.code}, message ${json?.error?.message}`,
         })
     } else {
         if (json.error) {
             console.error(`stackup API returned error: ${json.error.code}, ${json.error.message}`)
-            return new Response('Internal Service Error', {
+            return new Response(toJson({ error: 'Internal Service Error' }), {
                 status: 500,
                 statusText: `Error code ${json.error.code}, message ${json.error.message}`,
             })
         }
         console.log('stackup API response:', json.result)
-        return new Response(JSON.stringify(json.result), { status: 200 })
+        return new Response(toJson(json.result), { status: 200 })
     }
     // proxy successful VerifyingPaymasterResult response to caller
 })
@@ -404,40 +489,33 @@ router.post('/admin/api/add-override', async (request: WorkerRequest, env: Env) 
 
     const content = await getContentAsJson(request)
     if (!content || !isOverrideOperation(content)) {
-        return new Response('Bad Request', { status: 400 })
+        return new Response(toJson({ error: 'Bad Request' }), { status: 400 })
     }
     const { operation, enabled, n } = content
     switch (operation) {
         case Overrides.EveryWalletCanMintWhitelistedEmail: {
-            await env.OVERRIDES.put(
-                operation,
-                JSON.stringify({ operation: operation, enabled: enabled }),
-            )
+            await env.OVERRIDES.put(operation, toJson({ operation: operation, enabled: enabled }))
             break
         }
         case Overrides.EveryWhitelistedWalletCanLinkNWallets: {
             await env.OVERRIDES.put(
                 operation,
-                JSON.stringify({ operation: operation, enabled: enabled, n: n }),
+                toJson({ operation: operation, enabled: enabled, n: n }),
             )
             break
         }
         case Overrides.EveryWalletCanJoinTownOnWhitelist: {
-            await env.OVERRIDES.put(
-                operation,
-                JSON.stringify({ operation: operation, enabled: enabled }),
-            )
+            await env.OVERRIDES.put(operation, toJson({ operation: operation, enabled: enabled }))
             break
         }
         case Overrides.EveryWalletCanUseTownOnWhitelist: {
-            await env.OVERRIDES.put(
-                operation,
-                JSON.stringify({ operation: operation, enabled: enabled }),
-            )
+            await env.OVERRIDES.put(operation, toJson({ operation: operation, enabled: enabled }))
             break
         }
         default:
-            return new Response(`Unknown operation ${operation}`, { status: 404 })
+            return new Response(toJson({ error: `Unknown operation ${operation}` }), {
+                status: 404,
+            })
     }
     return new Response('Ok', { status: 200 })
 })
@@ -447,29 +525,31 @@ router.post('/admin/api/add-to-whitelist', async (request: WorkerRequest, env: E
 
     const content = await getContentAsJson(request)
     if (!content || !isWhitelistOperation(content)) {
-        return new Response('Bad Request', { status: 400 })
+        return new Response(toJson({ error: 'Bad Request' }), { status: 400 })
     }
     const { operation, enabled, data } = content
     switch (operation) {
         case Whitelist.EmailWhitelist: {
             // add to KV
             // todo: check if email is valid
-            await env.EMAIL_WHITELIST.put(data, JSON.stringify({ data: data, enabled: enabled }))
+            await env.EMAIL_WHITELIST.put(data, toJson({ data: data, enabled: enabled }))
             break
         }
         case Whitelist.AddressWhitelist: {
             // privy address whitelist
-            await env.ADDRESS_WHITELIST.put(data, JSON.stringify({ data: data, enabled: enabled }))
+            await env.ADDRESS_WHITELIST.put(data, toJson({ data: data, enabled: enabled }))
             break
         }
         case Whitelist.TownIdWhitelist: {
             // add to KV
             // todo: check if townId is conformant
-            await env.TOWN_WHITELIST.put(data, JSON.stringify({ data: data, enabled: enabled }))
+            await env.TOWN_WHITELIST.put(data, toJson({ data: data, enabled: enabled }))
             break
         }
         default:
-            return new Response(`Unknown operation ${operation}`, { status: 404 })
+            return new Response(toJson({ error: `Unknown operation ${operation}` }), {
+                status: 404,
+            })
     }
     return new Response('Ok', { status: 200 })
 })
@@ -477,3 +557,7 @@ router.post('/admin/api/add-to-whitelist', async (request: WorkerRequest, env: E
 router.get('*', () => new Response('Not Found', { status: 404 }))
 
 export const handleRequest = (request: WorkerRequest, env: Env) => router.handle(request, env)
+
+function toJson(data: object | undefined) {
+    return JSON.stringify(data)
+}

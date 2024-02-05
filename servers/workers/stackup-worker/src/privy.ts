@@ -23,7 +23,8 @@ interface PrivyApiResponse {
 
 interface PrivySearchRequest {
     // Filter users by email's, phone number's, and wallet address's that contain the term
-    searchTerm: string
+    searchTerm?: string
+    walletAddresses?: string[]
 }
 
 // Type guard for Privy search respoonse

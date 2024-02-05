@@ -4,6 +4,7 @@ import { CreateSpaceInfo } from '../../src/types/zion-types'
 import { ethers } from 'ethers'
 import { ZionOpts } from '../../src/client/ZionClientTypes'
 import { paymasterProxyMiddleware } from '@towns/userops'
+import { TestConstants } from '../integration/helpers/TestConstants'
 
 /**
  * Create a town with an "Everyone" role that is gated only by a membership token
@@ -77,10 +78,24 @@ export function getAccountAbstractionConfig() {
         aaRpcUrl: process.env.AA_RPC_URL,
         paymasterMiddleware: paymasterProxyMiddleware({
             paymasterProxyAuthSecret: process.env.AA_PAYMASTER_PROXY_AUTH_SECRET,
+            skipConfirmation: true,
         }),
         // entryPointAddress: process.env.ENTRY_POINT_ADDRESS, // omitted, using stackup default
         // factoryAddress: process.env.FACTORY_ADDRESS, // omitted, using stackup default
     }
 
     return accountAbstractionConfig
+}
+
+/**
+ * Generate a random wallet or use a private key if provided
+ */
+export async function generateRandomUnfundedOrPrivateKeyWallet(privateKey?: string) {
+    let wallet
+    if (privateKey) {
+        wallet = await TestConstants.getWalletFromPrivateKey(privateKey)
+    } else {
+        wallet = await TestConstants.getUnfundedWallet()
+    }
+    return wallet
 }

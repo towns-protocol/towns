@@ -1,6 +1,6 @@
 import { TestConstants } from '../integration/helpers/TestConstants'
 import { registerAndStartClient } from '../integration/helpers/TestUtils'
-import { getAccountAbstractionConfig } from './testUtils'
+import { generateRandomUnfundedOrPrivateKeyWallet, getAccountAbstractionConfig } from './testUtils'
 
 /**
  *
@@ -14,9 +14,13 @@ const accountAbstractionConfig = getAccountAbstractionConfig()
 // that way the root key can pay for the userop
 // we need either that or a wallet that contains eth for testing
 test.skip('can join a space via userop and pass entitlement check to become a member', async () => {
-    const alice = await registerAndStartClient('alice', TestConstants.getUnfundedWallet(), {
-        accountAbstractionConfig,
-    })
+    const alice = await registerAndStartClient(
+        'alice',
+        generateRandomUnfundedOrPrivateKeyWallet(process.env.PRIVY_WALLET_PRIVATE_KEY_1),
+        {
+            accountAbstractionConfig,
+        },
+    )
     const metamaskWallet = await TestConstants.getUnfundedWallet()
 
     await alice.linkWallet(alice.wallet, metamaskWallet)

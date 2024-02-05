@@ -1,7 +1,10 @@
 import { Permission } from '@river/web3'
-import { TestConstants } from '../integration/helpers/TestConstants'
 import { registerAndStartClient } from '../integration/helpers/TestUtils'
-import { createUngatedSpace, getAccountAbstractionConfig } from './testUtils'
+import {
+    createUngatedSpace,
+    generateRandomUnfundedOrPrivateKeyWallet,
+    getAccountAbstractionConfig,
+} from './testUtils'
 
 /**
  *
@@ -14,9 +17,13 @@ const ROLE_NAME = 'role_name'
 const NEW_ROLE_NAME = 'new_role_name'
 
 test('can create, update, and delete a role with user ops', async () => {
-    const alice = await registerAndStartClient('alice', TestConstants.getUnfundedWallet(), {
-        accountAbstractionConfig,
-    })
+    const alice = await registerAndStartClient(
+        'alice',
+        generateRandomUnfundedOrPrivateKeyWallet(process.env.PRIVY_WALLET_PRIVATE_KEY_1),
+        {
+            accountAbstractionConfig,
+        },
+    )
 
     // send a user op that creates a space and links AA wallet so entitlement passes
     const spaceId = await createUngatedSpace(alice, [Permission.Read, Permission.Write])

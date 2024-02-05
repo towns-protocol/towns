@@ -1,7 +1,10 @@
 import { Permission } from '@river/web3'
-import { TestConstants } from '../integration/helpers/TestConstants'
 import { registerAndStartClient } from '../integration/helpers/TestUtils'
-import { createUngatedSpace, getAccountAbstractionConfig } from './testUtils'
+import {
+    createUngatedSpace,
+    getAccountAbstractionConfig,
+    generateRandomUnfundedOrPrivateKeyWallet,
+} from './testUtils'
 
 /**
  *
@@ -12,9 +15,13 @@ import { createUngatedSpace, getAccountAbstractionConfig } from './testUtils'
 const accountAbstractionConfig = getAccountAbstractionConfig()
 
 test('can create a space via userop and pass entitlement check to become member', async () => {
-    const alice = await registerAndStartClient('alice', TestConstants.getUnfundedWallet(), {
-        accountAbstractionConfig,
-    })
+    const alice = await registerAndStartClient(
+        'alice',
+        generateRandomUnfundedOrPrivateKeyWallet(process.env.PRIVY_WALLET_PRIVATE_KEY_1),
+        {
+            accountAbstractionConfig,
+        },
+    )
 
     // send a user op that creates a space and links AA wallet so entitlement passes
     const spaceId = await createUngatedSpace(alice, [Permission.Read, Permission.Write])

@@ -52,4 +52,8 @@ export class TestConstants {
 
         return Promise.resolve(wallet)
     }
+
+    public static getWalletFromPrivateKey(privateKey: string): Promise<ethers.Wallet> {
+        return Promise.resolve(new ethers.Wallet(privateKey, provider))
+    }
 }

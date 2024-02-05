@@ -89,8 +89,13 @@ export async function verifyCreateTown(
             NetworkBlocksPerDay.get(params.env.ENVIRONMENT) ?? undefined,
         )
         if (!queryResult || !queryResult.events) {
-            return { verified: false, error: 'Unable to queryFilter' }
+            return { verified: false, error: 'Unable to queryFilter for create town' }
         }
+
+        if (params.env.SKIP_LIMIT_VERIFICATION === 'true') {
+            return { verified: true, maxActionsPerDay: 1_000_000 }
+        }
+
         if (queryResult.events.length >= TRANSACTION_LIMIT_DEFAULTS_PER_DAY.createTown) {
             return { verified: false, error: 'user has reached max mints' }
         }
@@ -129,7 +134,7 @@ export async function verifyJoinTown(params: ITownTransactionParams): Promise<IV
         }
         // check if user is in privy db
         // check if wallet is signed up with privy
-        const searchParam = { searchTerm: params.rootKeyAddress }
+        const searchParam = { walletAddresses: [params.rootKeyAddress] }
         const privyResponse = await searchPrivyForUser(searchParam, params.env)
         if (isPrivyApiSearchResponse(privyResponse)) {
             if (privyResponse.data.length > 0) {
@@ -249,7 +254,7 @@ export async function verifyUseTown(
             params.env.ENVIRONMENT,
             network,
             params.env,
-            'Town',
+            mapTransactionNameToContractName(params.transactionName),
             eventName,
             // all we case about is conditioning the log query on msg.sender, which is AA
             [params.senderAddress, null],
@@ -257,8 +262,16 @@ export async function verifyUseTown(
             NetworkBlocksPerDay.get(params.env.ENVIRONMENT) ?? undefined,
         )
         if (!queryResult || !queryResult.events) {
-            return { verified: false, error: 'Unable to queryFilter' }
+            return { verified: false, error: 'Unable to queryFilter for use town' }
         }
+
+        if (params.env.SKIP_LIMIT_VERIFICATION === 'true') {
+            return {
+                verified: true,
+                maxActionsPerDay: 1_000_000,
+            }
+        }
+
         let maxActionsPerDay: number | null = null
         switch (params.transactionName) {
             case 'createChannel':
@@ -299,6 +312,21 @@ export async function verifyUseTown(
     }
 }
 
+function mapTransactionNameToContractName(transactionName: string): string {
+    switch (transactionName) {
+        case 'createChannel':
+        case 'updateChannel':
+        case 'removeChannel':
+            return 'Channels'
+        case 'createRole':
+        case 'removeRole':
+        case 'updateRole':
+            return 'Roles'
+        default:
+            throw new Error('Unknown transactionName, cannot map to contract name')
+    }
+}
+
 /* Verifies if a user can link an external wallet
 
    Verification criteria in order:
@@ -336,12 +364,19 @@ export async function verifyLinkWallet(
             params.env,
             'WalletLink',
             'LinkWalletToRootKey',
-            [null, params.rootKeyAddress],
+            // neither of these params are indexed so we can't filter on them
+            [null, null],
             createFilterWrapper,
             NetworkBlocksPerDay.get(params.env.ENVIRONMENT) ?? undefined,
         )
         if (!queryResult || !queryResult.events) {
-            return { verified: false, error: 'Unable to queryFilter' }
+            return { verified: false, error: 'Unable to queryFilter for wallet linking' }
+        }
+        if (params.env.SKIP_LIMIT_VERIFICATION === 'true') {
+            return {
+                verified: true,
+                maxActionsPerDay: 1_000_000,
+            }
         }
         if (queryResult.events.length >= TRANSACTION_LIMIT_DEFAULTS_PER_DAY.linkWallet) {
             return { verified: false, error: 'user has reached max wallet links for the day' }
