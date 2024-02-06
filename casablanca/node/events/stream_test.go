@@ -51,7 +51,6 @@ func TestMain(m *testing.M) {
 		testDatabaseUrl,
 		testSchemaName,
 		GenShortNanoid(),
-		true,
 		exitSignal,
 	)
 	exitOnError(err, "Failed to create event store")
@@ -60,8 +59,8 @@ func TestMain(m *testing.M) {
 	exitOnError(err, "Failed to create wallet")
 
 	streamCacheParams = &StreamCacheParams{
-		Storage:    store,
-		Wallet:     wallet,
+		Storage: store,
+		Wallet:  wallet,
 	}
 
 	// Run tests

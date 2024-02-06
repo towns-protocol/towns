@@ -17,7 +17,6 @@ import (
 	"github.com/river-build/river/dlog"
 	"github.com/river-build/river/infra"
 
-	"github.com/gologme/log"
 	"github.com/jackc/pgx/v5"
 	"github.com/jackc/pgx/v5/pgxpool"
 	"golang.org/x/crypto/sha3"
@@ -879,10 +878,9 @@ func NewPostgresEventStore(
 	database_url string,
 	databaseSchemaName string,
 	instanceId string,
-	clean bool,
 	exitSignal chan error,
 ) (*PostgresEventStore, error) {
-	store, err := newPostgresEventStore(ctx, database_url, databaseSchemaName, instanceId, clean, exitSignal)
+	store, err := newPostgresEventStore(ctx, database_url, databaseSchemaName, instanceId, exitSignal)
 	if err != nil {
 		return nil, AsRiverError(err).Func("NewPostgresEventStore")
 	}
@@ -895,7 +893,6 @@ func newPostgresEventStore(
 	database_url string,
 	databaseSchemaName string,
 	instanceId string,
-	clean bool,
 	exitSignal chan error,
 ) (*PostgresEventStore, error) {
 	defer infra.StoreExecutionTimeMetrics("NewPostgresEventStore", infra.DB_CALLS_CATEGORY, time.Now())
@@ -924,13 +921,6 @@ func newPostgresEventStore(
 		nodeUUID:   instanceId,
 		exitSignal: exitSignal,
 		serverCtx:  ctx,
-	}
-
-	if clean {
-		err = store.cleanStorage(ctx)
-		if err != nil {
-			return nil, WrapRiverError(Err_MINIBLOCKS_STORAGE_FAILURE, err).Message("CleanStorage error")
-		}
 	}
 
 	err = store.InitStorage(ctx)
@@ -962,39 +952,6 @@ func newPostgresEventStore(
 // Close closes the connection to the database
 func (s *PostgresEventStore) Close() error {
 	s.pool.Close()
-	return nil
-}
-
-func (s *PostgresEventStore) cleanStorage(ctx context.Context) error {
-	defer infra.StoreExecutionTimeMetrics("cleanStorage", infra.DB_CALLS_CATEGORY, time.Now())
-
-	tx, err := s.pool.Begin(ctx)
-	if err != nil {
-		return err
-	}
-
-	defer s.rollbackTx(tx, "cleanStorage")
-
-	// TODO: fix approach to the query - not critical as it is pure internal, though to bring the right order it is helpful
-	_, err = tx.Exec(
-		ctx,
-		fmt.Sprintf("DROP SCHEMA IF EXISTS %s CASCADE", s.pool.Config().ConnConfig.Config.RuntimeParams["search_path"]),
-	)
-	if err != nil {
-		return WrapRiverError(Err_DB_OPERATION_FAILURE, err).Func("cleanStorage").Message("Schema deletion transaction error")
-	}
-
-	// TODO: fix approach to the query - not critical as it is pure internal, though to bring the right order it is helpful
-	_, err = tx.Exec(ctx, fmt.Sprintf("CREATE SCHEMA %s", s.pool.Config().ConnConfig.Config.RuntimeParams["search_path"]))
-	if err != nil {
-		return WrapRiverError(Err_DB_OPERATION_FAILURE, err).Func("cleanStorage").Message("Schema creation transaction error")
-	}
-
-	err = tx.Commit(ctx)
-	if err != nil {
-		return WrapRiverError(Err_DB_OPERATION_FAILURE, err).Func("cleanStorage").Message("error committing transaction")
-	}
-
 	return nil
 }
 
@@ -1098,7 +1055,6 @@ func (s *PostgresEventStore) rollbackTx(tx pgx.Tx, funcName string) {
 		if errors.Is(err, pgx.ErrTxClosed) {
 			return
 		}
-		log.Warn(funcName+": error starting transaction", "error", err)
 	}
 }
 
@@ -1110,7 +1066,6 @@ func createTableSuffix(streamId string) string {
 func getCurrentNodeProcessInfo(currentSchemaName string) string {
 	currentHostname, err := os.Hostname()
 	if err != nil {
-		log.Error("hostname retrieval error", "error", err)
 		currentHostname = "unknown"
 	}
 	currentPID := os.Getpid()

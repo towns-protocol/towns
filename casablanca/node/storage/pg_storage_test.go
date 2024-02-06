@@ -22,7 +22,7 @@ var (
 
 func setupTest() func() {
 	instanceId := GenShortNanoid()
-	store, err := NewPostgresEventStore(context.Background(), testDatabaseUrl, testSchemaName, instanceId, true, exitSignal)
+	store, err := NewPostgresEventStore(context.Background(), testDatabaseUrl, testSchemaName, instanceId, exitSignal)
 	if err != nil {
 		panic("Can't create event store: " + err.Error())
 	}
@@ -210,7 +210,7 @@ func TestAddEventConsistencyChecksImproperGeneration(t *testing.T) {
 	ctx := context.Background()
 	assert := assert.New(t)
 
-	streamId := STREAM_CHANNEL_PREFIX_DASH + "0sfdsf_sdfds1"
+	streamId := STREAM_CHANNEL_PREFIX_DASH + "0sfdsf_sdfds14"
 
 	prepareTestDataForAddEventConsistencyCheck(ctx, streamId)
 
@@ -233,7 +233,7 @@ func TestAddEventConsistencyChecksGaps(t *testing.T) {
 	ctx := context.Background()
 	assert := assert.New(t)
 
-	streamId := STREAM_CHANNEL_PREFIX_DASH + "0sfdsf_sdfds1"
+	streamId := STREAM_CHANNEL_PREFIX_DASH + "0sfdsf_sdfds1qq"
 
 	prepareTestDataForAddEventConsistencyCheck(ctx, streamId)
 
@@ -255,7 +255,7 @@ func TestAddEventConsistencyChecksEventsNumberMismatch(t *testing.T) {
 	ctx := context.Background()
 	assert := assert.New(t)
 
-	streamId := STREAM_CHANNEL_PREFIX_DASH + "0sfdsf_sdfds1"
+	streamId := STREAM_CHANNEL_PREFIX_DASH + "0sfdsf_sdfds1dfd"
 
 	prepareTestDataForAddEventConsistencyCheck(ctx, streamId)
 
@@ -286,7 +286,7 @@ func TestCreateBlockConsistencyChecksProperNewMinipoolGeneration(t *testing.T) {
 
 	assert := assert.New(t)
 
-	streamId := STREAM_CHANNEL_PREFIX_DASH + "0sfdsf_sdfds1"
+	streamId := STREAM_CHANNEL_PREFIX_DASH + "0sfdsf_sdfds1aaa"
 	genesisMiniblock := []byte("genesisMinoblock")
 	_ = pgEventStore.CreateStreamStorage(ctx, streamId, genesisMiniblock)
 
@@ -318,7 +318,7 @@ func TestCreateBlockNoSuchStreamError(t *testing.T) {
 
 	assert := assert.New(t)
 
-	streamId := STREAM_CHANNEL_PREFIX_DASH + "0sfdsf_sdfds1"
+	streamId := STREAM_CHANNEL_PREFIX_DASH + "0sfdsf_sdfds1fff"
 	genesisMiniblock := []byte("genesisMinoblock")
 	_ = pgEventStore.CreateStreamStorage(ctx, streamId, genesisMiniblock)
 
@@ -330,19 +330,19 @@ func TestCreateBlockNoSuchStreamError(t *testing.T) {
 
 	assert.NotNil(err)
 	assert.Contains(err.Error(), "No blocks for the stream found in block storage")
-	assert.Equal(AsRiverError(err).GetTag("streamId"), STREAM_CHANNEL_PREFIX_DASH+"0sfdsf_sdfds1")
+	assert.Equal(AsRiverError(err).GetTag("streamId"), STREAM_CHANNEL_PREFIX_DASH+"0sfdsf_sdfds1fff")
 }
 
 func TestExitIfSecondStorageCreated(t *testing.T) {
 	teardownTest := setupTest()
 	defer teardownTest()
 	ctx := context.Background()
-	_, err := NewPostgresEventStore(context.Background(), testDatabaseUrl, testSchemaName, GenShortNanoid(), true, exitSignal)
+	_, err := NewPostgresEventStore(context.Background(), testDatabaseUrl, testSchemaName, GenShortNanoid(), exitSignal)
 	if err != nil {
 		t.Fatal("Error creating new storage instance", err)
 	}
 	genesisMiniblock := []byte("genesisMinoblock")
-	streamId := STREAM_CHANNEL_PREFIX_DASH + "0sfdsf_sdfds1"
+	streamId := STREAM_CHANNEL_PREFIX_DASH + "0sfdsf_sdfds1zzz"
 	err = pgEventStore.CreateStreamStorage(ctx, streamId, genesisMiniblock)
 	assert.NotNil(t, err)
 	assert.Contains(t, err.Error(), "Node number mismatch")
@@ -357,7 +357,7 @@ func TestGetStreamFromLastSnapshotConsistencyChecksMissingBlockFailure(t *testin
 
 	assert := assert.New(t)
 
-	streamId := STREAM_CHANNEL_PREFIX_DASH + "0sfdsf_sdfds1"
+	streamId := STREAM_CHANNEL_PREFIX_DASH + "0sfdsf_sdfds1adf"
 	genesisMiniblock := []byte("genesisMinoblock")
 	_ = pgEventStore.CreateStreamStorage(ctx, streamId, genesisMiniblock)
 	var testEnvelopes1 [][]byte
@@ -389,7 +389,7 @@ func TestGetStreamFromLastSnapshotConsistencyCheckWrongEnvelopeGeneration(t *tes
 
 	assert := assert.New(t)
 
-	streamId := STREAM_CHANNEL_PREFIX_DASH + "0sfdsf_sdfds1"
+	streamId := STREAM_CHANNEL_PREFIX_DASH + "0sfdsf_sdfds11234"
 	genesisMiniblock := []byte("genesisMinoblock")
 	_ = pgEventStore.CreateStreamStorage(ctx, streamId, genesisMiniblock)
 
@@ -421,7 +421,7 @@ func TestGetStreamFromLastSnapshotConsistencyCheckNoZeroIndexEnvelope(t *testing
 
 	assert := assert.New(t)
 
-	streamId := STREAM_CHANNEL_PREFIX_DASH + "0sfdsf_sdfds1"
+	streamId := STREAM_CHANNEL_PREFIX_DASH + "0sfdsf_sdfds143543"
 	genesisMiniblock := []byte("genesisMinoblock")
 	_ = pgEventStore.CreateStreamStorage(ctx, streamId, genesisMiniblock)
 
@@ -454,7 +454,7 @@ func TestGetStreamFromLastSnapshotConsistencyCheckGapInEnvelopesIndexes(t *testi
 
 	assert := assert.New(t)
 
-	streamId := STREAM_CHANNEL_PREFIX_DASH + "0sfdsf_sdfds1"
+	streamId := STREAM_CHANNEL_PREFIX_DASH + "0sfdsf_sdfds15555"
 	genesisMiniblock := []byte("genesisMinoblock")
 	_ = pgEventStore.CreateStreamStorage(ctx, streamId, genesisMiniblock)
 
@@ -488,7 +488,7 @@ func TestGetMiniblocksConsistencyChecks(t *testing.T) {
 
 	assert := assert.New(t)
 
-	streamId := STREAM_CHANNEL_PREFIX_DASH + "0sfdsf_sdfds1"
+	streamId := STREAM_CHANNEL_PREFIX_DASH + "0sfdsf_sdfds16666"
 	genesisMiniblock := []byte("genesisMinoblock")
 	_ = pgEventStore.CreateStreamStorage(ctx, streamId, genesisMiniblock)
 

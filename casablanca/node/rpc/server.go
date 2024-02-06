@@ -61,7 +61,7 @@ func createStore(
 	} else {
 		dbUrl := getDbURL(dbConfig)
 		schema := storage.DbSchemaNameFromAddress(address)
-		store, err := storage.NewPostgresEventStore(ctx, dbUrl, schema, instanceId, false, exitSignal)
+		store, err := storage.NewPostgresEventStore(ctx, dbUrl, schema, instanceId, exitSignal)
 		if err != nil {
 			return nil, nil, err
 		}

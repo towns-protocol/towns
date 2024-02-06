@@ -35,7 +35,7 @@ var (
 	testSchemaName  string
 )
 
-func TestMain(m *testing.M) {
+func testMainImpl(m *testing.M) int {
 	ctx := testutils.MakeCxtWithConfig_T()
 	db, schemaName, closer, err := dbtestutils.StartDB(ctx)
 	if err != nil {
@@ -45,10 +45,12 @@ func TestMain(m *testing.M) {
 	testDatabaseUrl = db
 	testSchemaName = schemaName
 
-	// Run tests
-	code := m.Run()
+	return m.Run()
+}
 
-	os.Exit(code)
+func TestMain(m *testing.M) {
+	// Second function allows deferes to run before os.Exit
+	os.Exit(testMainImpl(m))
 }
 
 var channel1Name = shared.ChannelStreamIdFromName("channel1")
