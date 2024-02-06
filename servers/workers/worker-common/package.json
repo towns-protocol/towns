@@ -2,7 +2,7 @@
     "name": "worker-common",
     "description": "Shared Cloudflare Worker Library",
     "author": "john@hntlabs.com",
-    "packageManager": "yarn@3.2.3",
+    "packageManager": "yarn@3.8.0",
     "type": "module",
     "main": "src/index.ts",
     "types": "dist/index.d.ts",

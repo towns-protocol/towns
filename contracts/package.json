@@ -2,7 +2,7 @@
     "name": "@towns/contracts",
     "version": "0.1.0",
     "private": true,
-    "packageManager": "yarn@3.2.2",
+    "packageManager": "yarn@3.8.0",
     "scripts": {
         "all": "make all",
         "build": "make all",

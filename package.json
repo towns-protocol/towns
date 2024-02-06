@@ -3,7 +3,7 @@
     "version": "1.0.0",
     "license": "MIT",
     "private": true,
-    "packageManager": "yarn@3.5.1",
+    "packageManager": "yarn@3.8.0",
     "scripts": {
         "anvil": "yarn workspace @towns/contracts exec anvil",
         "build": "turbo build",

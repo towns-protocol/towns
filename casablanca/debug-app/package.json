@@ -1,6 +1,6 @@
 {
     "name": "@river/debug-app",
-    "packageManager": "yarn@3.2.3",
+    "packageManager": "yarn@3.8.0",
     "type": "module",
     "scripts": {
         "build": "tsc",

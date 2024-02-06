@@ -1,6 +1,6 @@
 {
     "name": "@river/dlog",
-    "packageManager": "yarn@3.5.1",
+    "packageManager": "yarn@3.8.0",
     "type": "module",
     "main": "dist/index.js",
     "types": "dist/index.d.ts",

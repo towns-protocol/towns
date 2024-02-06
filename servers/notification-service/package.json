@@ -3,7 +3,7 @@
     "version": "1.0.0",
     "license": "MIT OR Apache-2.0",
     "private": true,
-    "packageManager": "yarn@3.5.1",
+    "packageManager": "yarn@3.8.0",
     "type": "module",
     "scripts": {
         "build": "tsc",
