@@ -1,4 +1,4 @@
-import React from 'react'
+import React, { useCallback } from 'react'
 import { Channel, EventStatus, RoomMember, RoomMessageEvent, TimelineEvent } from 'use-zion-client'
 import { UnfurlData } from '@unfurl-worker/types'
 import { ErrorBoundary, FallbackProps } from '@components/ErrorBoundary/ErrorBoundary'
@@ -65,6 +65,14 @@ export const MessageBody = ({
     })
 
     const invalidContent = isError || !Array.isArray(unfurledContent)
+    const onRetryButtonClicked = useCallback(
+        (event: React.MouseEvent) => {
+            event.preventDefault()
+            event.stopPropagation()
+            onRetrySend?.()
+        },
+        [onRetrySend],
+    )
 
     let statusAnnotation: MessageStatusAnnotation | undefined = undefined
     if (eventContent.editsEventId !== undefined) {
@@ -100,7 +108,7 @@ export const MessageBody = ({
                         tooltip="This message failed to send. Try again."
                     >
                         <Icon type="arrowCircle" paddingBottom="xxs" />
-                        <TextButton color="default" onClick={onRetrySend}>
+                        <TextButton color="default" onClick={onRetryButtonClicked}>
                             Retry
                         </TextButton>
                     </Stack>
