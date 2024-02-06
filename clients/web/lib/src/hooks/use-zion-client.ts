@@ -153,6 +153,7 @@ interface ZionClientImpl {
         | undefined
     >
     sendMessage: (roomId: string, message: string, options?: SendMessageOptions) => Promise<void>
+    retrySendMessage: (roomId: string, localEventId: string) => Promise<void>
     sendReaction: (roomId: string, eventId: string, reaction: string) => Promise<void>
     sendMediaPayload: (streamId: string, data: Uint8Array, chunkIndex: number) => Promise<void>
     sendReadReceipt: (marker: FullyReadMarker) => Promise<void>
@@ -233,6 +234,7 @@ export function useZionClient(): ZionClientImpl {
         resetFullyReadMarkers,
         scrollback: useWithCatch(client?.scrollback),
         sendMessage: useWithCatch(client?.sendMessage),
+        retrySendMessage: useWithCatch(client?.retrySendMessage),
         sendReaction: useWithCatch(client?.sendReaction),
         sendMediaPayload: useWithCatch(client?.sendMediaPayload),
         sendReadReceipt: useWithCatch(sendReadReceipt),

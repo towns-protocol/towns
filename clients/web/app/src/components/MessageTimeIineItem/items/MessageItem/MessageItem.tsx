@@ -5,6 +5,7 @@ import {
     TimelineEvent,
     ZTEvent,
     staticAssertNever,
+    useZionClient,
 } from 'use-zion-client'
 import { useNavigate } from 'react-router'
 import {
@@ -46,6 +47,7 @@ type Props = {
 export const MessageItem = (props: Props) => {
     const { itemData, isHighlight } = props
     const event = itemData.event
+    const { client } = useZionClient()
 
     const { isTouch } = useDevice()
     const messageTooltipRef = useRef<HTMLElement | null>(null)
@@ -67,6 +69,13 @@ export const MessageItem = (props: Props) => {
         },
         [navigate, event.eventId, event.threadParentId],
     )
+
+    const onRetryClick = useCallback(() => {
+        if (!event.localEventId || !timelineContext?.channelId || !client) {
+            return
+        }
+        client.retrySendMessage(timelineContext.channelId, event.localEventId)
+    }, [client, timelineContext, event.localEventId])
 
     if (!timelineContext) {
         return <></>
@@ -173,6 +182,7 @@ export const MessageItem = (props: Props) => {
                                 messageTooltipRef.current = ref ?? null
                                 setHoveredMentionUserId(userId)
                             }}
+                            onRetrySend={onRetryClick}
                         />
                         {hoveredMentionUserId && messageTooltipRef.current && !isTouch && (
                             <TooltipRenderer

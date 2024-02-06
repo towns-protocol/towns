@@ -136,7 +136,7 @@ export function useCasablancaTimelines(
             }
         }
 
-        const onStreamLocalEventIdReplaced = (
+        const onStreamLocalEventUpdated = (
             streamId: string,
             kind: SnapshotCaseType,
             localEventId: string,
@@ -174,12 +174,12 @@ export function useCasablancaTimelines(
 
         casablancaClient.on('streamInitialized', onStreamInitialized)
         casablancaClient.on('streamUpdated', onStreamUpdated)
-        casablancaClient.on('streamLocalEventUpdated', onStreamLocalEventIdReplaced)
+        casablancaClient.on('streamLocalEventUpdated', onStreamLocalEventUpdated)
 
         return () => {
             casablancaClient.off('streamInitialized', onStreamInitialized)
             casablancaClient.off('streamUpdated', onStreamUpdated)
-            casablancaClient.off('streamLocalEventUpdated', onStreamLocalEventIdReplaced)
+            casablancaClient.off('streamLocalEventUpdated', onStreamLocalEventUpdated)
             setState.reset(Array.from(streamIds))
         }
     }, [casablancaClient, setState, eventFilter])

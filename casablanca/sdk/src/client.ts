@@ -905,6 +905,16 @@ export class Client
         const stream = this.stream(streamId)
         check(stream !== undefined, 'stream not found')
         const localId = stream.view.appendLocalEvent(payload, 'sending', this)
+        return this.makeAndSendChannelMessageEvent(streamId, payload, localId)
+    }
+
+    private async makeAndSendChannelMessageEvent(
+        streamId: string,
+        payload: ChannelMessage,
+        localId?: string,
+    ) {
+        const stream = this.stream(streamId)
+        check(isDefined(stream), 'stream not found')
         const cleartext = payload.toJsonString()
         const message = await this.encryptGroupEvent(payload, streamId)
         if (!message) {
@@ -1130,6 +1140,20 @@ export class Client
                 value: content,
             },
         })
+    }
+
+    async retrySendMessage(streamId: string, localId: string): Promise<void> {
+        const stream = this.stream(streamId)
+        check(isDefined(stream), 'stream not found' + streamId)
+        const event = stream.view.events.get(localId)
+        check(isDefined(event), 'event not found')
+        check(isDefined(event.localEvent), 'event not found')
+        check(event.localEvent.status === 'failed', 'event not in failed state')
+        await this.makeAndSendChannelMessageEvent(
+            streamId,
+            event.localEvent.channelMessage,
+            event.hashStr,
+        )
     }
 
     async inviteUser(streamId: string, userId: string): Promise<void> {

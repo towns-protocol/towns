@@ -1338,6 +1338,20 @@ export class ZionClient implements EntitlementsDelegate {
     }
 
     /************************************************
+     * retrySendMessage
+     *************************************************/
+    public async retrySendMessage(roomId: string, localEventId: string): Promise<void> {
+        if (!this.casablancaClient) {
+            throw new Error('Casablanca client not initialized')
+        }
+        try {
+            await this.casablancaClient.retrySendMessage(roomId, localEventId)
+        } catch (err) {
+            console.error('retrySendMessage failed', err)
+        }
+    }
+
+    /************************************************
      * editMessage
      *************************************************/
     public async editMessage(

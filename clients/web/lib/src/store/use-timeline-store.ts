@@ -179,7 +179,12 @@ function makeTimelineStoreInterface(
         timelineEvent: TimelineEvent,
     ) => {
         const timeline = state.timelines[roomId] ?? []
-        const eventIndex = timeline.findIndex((e: TimelineEvent) => e.eventId === replacedMsgId)
+        const eventIndex = timeline.findIndex(
+            (e: TimelineEvent) =>
+                e.eventId === replacedMsgId ||
+                (e.localEventId && e.localEventId === timelineEvent.localEventId),
+        )
+
         if (eventIndex === -1) {
             // if we didn't find an event to replace...
             if (state.pendingReplacedEvents[roomId]?.[replacedMsgId]) {
@@ -204,7 +209,12 @@ function makeTimelineStoreInterface(
 
         const threadParentId = newEvent.threadParentId
         const threadTimeline = threadParentId ? state.threads[roomId]?.[threadParentId] : undefined
-        const threadEventIndex = threadTimeline?.findIndex((e) => e.eventId === replacedMsgId) ?? -1
+        const threadEventIndex =
+            threadTimeline?.findIndex(
+                (e) =>
+                    e.eventId === replacedMsgId ||
+                    (e.localEventId && e.localEventId === timelineEvent.localEventId),
+            ) ?? -1
 
         return {
             timelines: replaceTimelineEvent(

@@ -7,6 +7,7 @@ import { getMessageBody, getUrls } from 'utils/ztevent_util'
 import { RatioedBackgroundImage } from '@components/RatioedBackgroundImage'
 import { MessageStatusAnnotation } from '@components/RichText/hooks/useInitialConfig'
 import { useDevice } from 'hooks/useDevice'
+import { Box, Text } from '@ui'
 import { useUnfurlContent } from '../../../../../api/lib/unfurl'
 import { UnfurledTwitterBlock } from './UnfurledTwitterBlock'
 import { UnfurledGenericBlock } from './UnfurledGenericBlock'
@@ -18,6 +19,7 @@ type Props = {
     channels: Channel[]
     onMentionClick?: (mentionName: string) => void
     onMentionHover?: (element?: HTMLElement, userId?: string) => void
+    onRetrySend?: () => void
 }
 
 function ErrorFallback({ error, resetErrorBoundary }: FallbackProps) {
@@ -51,6 +53,7 @@ export const MessageBody = ({
     channels,
     onMentionClick,
     onMentionHover,
+    onRetrySend,
 }: Props) => {
     const body = getMessageBody(event.eventId, eventContent)
     const urls = getUrls(body)
@@ -87,6 +90,14 @@ export const MessageBody = ({
                           <UnfurlBlock {...unfurlData} />
                       </ErrorBoundary>
                   ))}
+
+            {statusAnnotation === 'not-sent' && (
+                <Box onClick={onRetrySend}>
+                    <Text size="sm" color="gray2" fontWeight="strong">
+                        Retry
+                    </Text>
+                </Box>
+            )}
         </>
     )
 }
