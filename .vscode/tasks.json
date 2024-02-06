@@ -215,7 +215,7 @@
       "isBackground": true,
       "problemMatcher": [],
       "presentation": {
-        "group": "local-servers"
+        "group": "ephemeral"
       }
     },
     {
@@ -249,7 +249,7 @@
       "isBackground": true,
       "problemMatcher": [],
       "presentation": {
-        "group": "local-servers"
+        "group": "local-blockchains"
       }
     },
     {
@@ -259,7 +259,7 @@
       "isBackground": true,
       "problemMatcher": [],
       "presentation": {
-        "group": "local-servers"
+        "group": "local-blockchains"
       }
     },
     {
