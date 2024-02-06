@@ -555,9 +555,9 @@ func (s *Service) createStream_Media(
 			return nil, err
 		}
 
-		err = s.authChecker.CheckPermission(
+		err = s.chainAuth.IsEntitled(
 			ctx,
-			auth.NewAuthCheckArgsForChannel(
+			auth.NewChainAuthArgsForChannel(
 				channelInception.SpaceId,
 				inception.ChannelId,
 				user,
@@ -626,9 +626,9 @@ func (s *Service) authAddRemoveChannelsInSpace(
 		return err
 	}
 
-	err = s.authChecker.CheckPermission(
+	err = s.chainAuth.IsEntitled(
 		ctx,
-		auth.NewAuthCheckArgsForSpace(spaceId, userId, auth.PermissionAddRemoveChannels),
+		auth.NewChainAuthArgsForSpace(spaceId, userId, auth.PermissionAddRemoveChannels),
 	)
 	if err != nil {
 		return err

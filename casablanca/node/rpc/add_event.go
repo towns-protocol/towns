@@ -441,9 +441,9 @@ func (s *Service) addChannelMessage(ctx context.Context, stream AddableStream, v
 		return err
 	}
 
-	err = s.authChecker.CheckPermission(
+	err = s.chainAuth.IsEntitled(
 		ctx,
-		auth.NewAuthCheckArgsForChannel(
+		auth.NewChainAuthArgsForChannel(
 			channelInfo.SpaceId,
 			streamId,
 			user,
@@ -630,16 +630,16 @@ func (s *Service) addMembershipEvent(
 	}
 
 	if permission != auth.PermissionUndefined {
-		var args *auth.AuthCheckArgs
+		var args *auth.ChainAuthArgs
 		switch i := view.InceptionPayload().(type) {
 		case *SpacePayload_Inception:
-			args = auth.NewAuthCheckArgsForSpace(
+			args = auth.NewChainAuthArgsForSpace(
 				streamId,
 				permissionUserId,
 				permission,
 			)
 		case *ChannelPayload_Inception:
-			args = auth.NewAuthCheckArgsForChannel(
+			args = auth.NewChainAuthArgsForChannel(
 				i.SpaceId,
 				streamId,
 				permissionUserId,
@@ -649,7 +649,7 @@ func (s *Service) addMembershipEvent(
 			return RiverError(Err_INTERNAL, "Must be space or channel")
 		}
 
-		err = s.authChecker.CheckPermission(ctx, args)
+		err = s.chainAuth.IsEntitled(ctx, args)
 		if err != nil {
 			return err
 		}

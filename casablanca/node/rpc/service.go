@@ -16,7 +16,7 @@ var serviceRequests = infra.NewSuccessMetrics(infra.RPC_CATEGORY, nil)
 
 type Service struct {
 	cache          events.StreamCache
-	authChecker    auth.AuthChecker
+	chainAuth      auth.ChainAuth
 	wallet         *crypto.Wallet
 	exitSignal     chan error
 	nodeRegistry   nodes.NodeRegistry

@@ -5,14 +5,14 @@ import (
 )
 
 // This checkers always returns true, used for some testing scenarios.
-func NewFakeAuthChecker() *fakeAuthChecker {
-	return &fakeAuthChecker{}
+func NewFakeChainAuth() *fakeChainAuth {
+	return &fakeChainAuth{}
 }
 
-type fakeAuthChecker struct{}
+type fakeChainAuth struct{}
 
-var _ AuthChecker = (*fakeAuthChecker)(nil)
+var _ ChainAuth = (*fakeChainAuth)(nil)
 
-func (a *fakeAuthChecker) CheckPermission(ctx context.Context, args *AuthCheckArgs) error {
+func (a *fakeChainAuth) IsEntitled(ctx context.Context, args *ChainAuthArgs) error {
 	return nil
 }

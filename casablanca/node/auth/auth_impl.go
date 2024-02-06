@@ -16,22 +16,22 @@ import (
 	"github.com/ethereum/go-ethereum/common"
 )
 
-type AuthChecker interface {
-	CheckPermission(ctx context.Context, args *AuthCheckArgs) error
+type ChainAuth interface {
+	IsEntitled(ctx context.Context, args *ChainAuthArgs) error
 }
 
-func NewAuthCheckArgsForSpace(spaceId string, userId string, permission Permission) *AuthCheckArgs {
-	return &AuthCheckArgs{
-		kind:       authCheckKindSpace,
+func NewChainAuthArgsForSpace(spaceId string, userId string, permission Permission) *ChainAuthArgs {
+	return &ChainAuthArgs{
+		kind:       chainAuthKindSpace,
 		spaceId:    spaceId,
 		principal:  common.HexToAddress(userId),
 		permission: permission,
 	}
 }
 
-func NewAuthCheckArgsForChannel(spaceId string, channelId string, userId string, permission Permission) *AuthCheckArgs {
-	return &AuthCheckArgs{
-		kind:       authCheckKindChannel,
+func NewChainAuthArgsForChannel(spaceId string, channelId string, userId string, permission Permission) *ChainAuthArgs {
+	return &ChainAuthArgs{
+		kind:       chainAuthKindChannel,
 		spaceId:    spaceId,
 		channelId:  channelId,
 		principal:  common.HexToAddress(userId),
@@ -39,17 +39,17 @@ func NewAuthCheckArgsForChannel(spaceId string, channelId string, userId string,
 	}
 }
 
-type authCheckKind int
+type chainAuthKind int
 
 const (
-	authCheckKindSpace authCheckKind = iota
-	authCheckKindChannel
-	authCheckKindSpaceEnabled
-	authCheckKindChannelEnabled
+	chainAuthKindSpace chainAuthKind = iota
+	chainAuthKindChannel
+	chainAuthKindSpaceEnabled
+	chainAuthKindChannelEnabled
 )
 
-type AuthCheckArgs struct {
-	kind       authCheckKind
+type ChainAuthArgs struct {
+	kind       chainAuthKind
 	spaceId    string
 	channelId  string
 	principal  common.Address
@@ -57,22 +57,22 @@ type AuthCheckArgs struct {
 }
 
 // Replaces principal with given wallet and returns new copy of args.
-func (args *AuthCheckArgs) withWallet(wallet common.Address) *AuthCheckArgs {
+func (args *ChainAuthArgs) withWallet(wallet common.Address) *ChainAuthArgs {
 	ret := *args
 	ret.principal = wallet
 	return &ret
 }
 
-func newArgsForEnabledSpace(spaceId string) *AuthCheckArgs {
-	return &AuthCheckArgs{
-		kind:    authCheckKindSpaceEnabled,
+func newArgsForEnabledSpace(spaceId string) *ChainAuthArgs {
+	return &ChainAuthArgs{
+		kind:    chainAuthKindSpaceEnabled,
 		spaceId: spaceId,
 	}
 }
 
-func newArgsForEnabledChannel(spaceId string, channelId string) *AuthCheckArgs {
-	return &AuthCheckArgs{
-		kind:      authCheckKindChannelEnabled,
+func newArgsForEnabledChannel(spaceId string, channelId string) *ChainAuthArgs {
+	return &ChainAuthArgs{
+		kind:      chainAuthKindChannelEnabled,
 		spaceId:   spaceId,
 		channelId: channelId,
 	}
@@ -103,7 +103,7 @@ type chainAuth struct {
 	entitlementCache       *entitlementCache
 }
 
-var _ AuthChecker = (*chainAuth)(nil)
+var _ ChainAuth = (*chainAuth)(nil)
 
 func NewChainAuth(
 	ctx context.Context,
@@ -145,7 +145,7 @@ func NewChainAuth(
 	}, nil
 }
 
-func (ca *chainAuth) CheckPermission(ctx context.Context, args *AuthCheckArgs) error {
+func (ca *chainAuth) IsEntitled(ctx context.Context, args *ChainAuthArgs) error {
 	// TODO: counter for cache hits here?
 	result, _, err := ca.entitlementCache.executeUsingCache(
 		ctx,
@@ -172,17 +172,17 @@ func (ca *chainAuth) CheckPermission(ctx context.Context, args *AuthCheckArgs) e
 	return nil
 }
 
-func (ca *chainAuth) isWalletAllowed(ctx context.Context, args *AuthCheckArgs) (bool, error) {
-	if args.kind == authCheckKindSpace {
+func (ca *chainAuth) isWalletEntitled(ctx context.Context, args *ChainAuthArgs) (bool, error) {
+	if args.kind == chainAuthKindSpace {
 		return ca.isEntitledToSpace(ctx, args)
-	} else if args.kind == authCheckKindChannel {
+	} else if args.kind == chainAuthKindChannel {
 		return ca.isEntitledToChannel(ctx, args)
 	} else {
-		return false, RiverError(Err_INTERNAL, "Unknown auth check kind").Func("isWalletAllowed")
+		return false, RiverError(Err_INTERNAL, "Unknown chain auth kind").Func("isWalletEntitled")
 	}
 }
 
-func (ca *chainAuth) isSpaceEnabledUncached(ctx context.Context, args *AuthCheckArgs) (bool, error) {
+func (ca *chainAuth) isSpaceEnabledUncached(ctx context.Context, args *ChainAuthArgs) (bool, error) {
 	// This is awkward as we want enabled to be cached for 15 minutes, but the API returns the inverse
 	isDisabled, err := ca.spaceContract.IsSpaceDisabled(ctx, args.spaceId)
 	return !isDisabled, err
@@ -211,7 +211,7 @@ func (ca *chainAuth) checkSpaceEnabled(ctx context.Context, spaceId string) erro
 	}
 }
 
-func (ca *chainAuth) isChannelEnabledUncached(ctx context.Context, args *AuthCheckArgs) (bool, error) {
+func (ca *chainAuth) isChannelEnabledUncached(ctx context.Context, args *ChainAuthArgs) (bool, error) {
 	// This is awkward as we want enabled to be cached for 15 minutes, but the API returns the inverse
 	isDisabled, err := ca.spaceContract.IsChannelDisabled(ctx, args.spaceId, args.channelId)
 	return !isDisabled, err
@@ -239,7 +239,7 @@ func (ca *chainAuth) checkChannelEnabled(ctx context.Context, spaceId string, ch
 	}
 }
 
-func (ca *chainAuth) isEntitledToSpaceUncached(ctx context.Context, args *AuthCheckArgs) (bool, error) {
+func (ca *chainAuth) isEntitledToSpaceUncached(ctx context.Context, args *ChainAuthArgs) (bool, error) {
 	return ca.spaceContract.IsEntitledToSpace(
 		ctx,
 		args.spaceId,
@@ -248,9 +248,9 @@ func (ca *chainAuth) isEntitledToSpaceUncached(ctx context.Context, args *AuthCh
 	)
 }
 
-func (ca *chainAuth) isEntitledToSpace(ctx context.Context, args *AuthCheckArgs) (bool, error) {
-	if args.kind != authCheckKindSpace {
-		return false, RiverError(Err_INTERNAL, "Wrong auth check kind")
+func (ca *chainAuth) isEntitledToSpace(ctx context.Context, args *ChainAuthArgs) (bool, error) {
+	if args.kind != chainAuthKindSpace {
+		return false, RiverError(Err_INTERNAL, "Wrong chain auth kind")
 	}
 
 	// TODO: right now this check happens for every wallet, but it needs to be done only once.
@@ -272,7 +272,7 @@ func (ca *chainAuth) isEntitledToSpace(ctx context.Context, args *AuthCheckArgs)
 	return isEntitled, nil
 }
 
-func (ca *chainAuth) isEntitledToChannelUncached(ctx context.Context, args *AuthCheckArgs) (bool, error) {
+func (ca *chainAuth) isEntitledToChannelUncached(ctx context.Context, args *ChainAuthArgs) (bool, error) {
 	return ca.spaceContract.IsEntitledToChannel(
 		ctx,
 		args.spaceId,
@@ -282,9 +282,9 @@ func (ca *chainAuth) isEntitledToChannelUncached(ctx context.Context, args *Auth
 	)
 }
 
-func (ca *chainAuth) isEntitledToChannel(ctx context.Context, args *AuthCheckArgs) (bool, error) {
-	if args.kind != authCheckKindChannel {
-		return false, RiverError(Err_INTERNAL, "Wrong auth check kind")
+func (ca *chainAuth) isEntitledToChannel(ctx context.Context, args *ChainAuthArgs) (bool, error) {
+	if args.kind != chainAuthKindChannel {
+		return false, RiverError(Err_INTERNAL, "Wrong chain auth kind")
 	}
 
 	// TODO: right now this check happens for every wallet, but it needs to be done only once.
@@ -336,7 +336,7 @@ func (ca *chainAuth) getLinkedWallets(ctx context.Context, rootKey common.Addres
  * If any of the wallets is entitled, the user is entitled and all inflight requests are cancelled.
  * If any of the operations fail before getting positive result, the whole operation fails.
  */
-func (ca *chainAuth) checkEntitiement(ctx context.Context, args *AuthCheckArgs) (bool, error) {
+func (ca *chainAuth) checkEntitiement(ctx context.Context, args *ChainAuthArgs) (bool, error) {
 	log := dlog.FromCtx(ctx)
 
 	ctx, cancel := context.WithTimeout(ctx, time.Millisecond*time.Duration(ca.contractCallsTimeoutMs))
@@ -370,7 +370,7 @@ func (ca *chainAuth) checkEntitiement(ctx context.Context, args *AuthCheckArgs) 
 			wg.Add(1)
 			go func(address common.Address) {
 				defer wg.Done()
-				result, err := ca.isWalletAllowed(ctx, args.withWallet(address))
+				result, err := ca.isWalletEntitled(ctx, args.withWallet(address))
 				resultsChan <- entitlementCheckResult{allowed: result, err: err}
 			}(wallet)
 		}
@@ -380,7 +380,7 @@ func (ca *chainAuth) checkEntitiement(ctx context.Context, args *AuthCheckArgs) 
 	wg.Add(1)
 	go func() {
 		defer wg.Done()
-		result, err := ca.isWalletAllowed(ctx, args)
+		result, err := ca.isWalletEntitled(ctx, args)
 		resultsChan <- entitlementCheckResult{allowed: result, err: err}
 	}()
 

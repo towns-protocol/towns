@@ -16,8 +16,8 @@ type entitlementCache struct {
 	// Not using expirable version, as it retains the cache hits for a min TTL, but
 	// then continues to return that value as long as a hit happens in that tTL window.
 	// We want to return the value only if the cache is fresh, and not continue to return
-	positiveCache    *lru.ARCCache[AuthCheckArgs, entitlementCacheValue]
-	negativeCache    *lru.ARCCache[AuthCheckArgs, entitlementCacheValue]
+	positiveCache    *lru.ARCCache[ChainAuthArgs, entitlementCacheValue]
+	negativeCache    *lru.ARCCache[ChainAuthArgs, entitlementCacheValue]
 	positiveCacheTTL time.Duration
 	negativeCacheTTL time.Duration
 }
@@ -41,12 +41,12 @@ func newEntitlementCache(ctx context.Context, cfg *config.ChainConfig) (*entitle
 		negativeCacheSize = cfg.NegativeEntitlementCacheSize
 	}
 	// Need to figure out how to determine the size of the cache
-	positiveCache, err := lru.NewARC[AuthCheckArgs, entitlementCacheValue](positiveCacheSize)
+	positiveCache, err := lru.NewARC[ChainAuthArgs, entitlementCacheValue](positiveCacheSize)
 	if err != nil {
 		log.Error("error creating auth_impl positive cache", "error", err)
 		return nil, WrapRiverError(protocol.Err_CANNOT_CONNECT, err)
 	}
-	negativeCache, err := lru.NewARC[AuthCheckArgs, entitlementCacheValue](negativeCacheSize)
+	negativeCache, err := lru.NewARC[ChainAuthArgs, entitlementCacheValue](negativeCacheSize)
 	if err != nil {
 		log.Error("error creating auth_impl negative cache", "error", err)
 		return nil, WrapRiverError(protocol.Err_CANNOT_CONNECT, err)
@@ -72,8 +72,8 @@ func newEntitlementCache(ctx context.Context, cfg *config.ChainConfig) (*entitle
 // Returns: result, isCacheHit, error
 func (ec *entitlementCache) executeUsingCache(
 	ctx context.Context,
-	key *AuthCheckArgs,
-	onMiss func(context.Context, *AuthCheckArgs) (bool, error),
+	key *ChainAuthArgs,
+	onMiss func(context.Context, *ChainAuthArgs) (bool, error),
 ) (bool, bool, error) {
 	// Check positive cache first
 	if val, ok := ec.positiveCache.Get(*key); ok {

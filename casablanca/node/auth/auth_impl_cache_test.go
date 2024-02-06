@@ -26,8 +26,8 @@ func TestCache(t *testing.T) {
 	var cacheMissForReal bool
 	result, cacheHit, err := c.executeUsingCache(
 		ctx,
-		NewAuthCheckArgsForChannel("1", "2", "3", PermissionWrite),
-		func(context.Context, *AuthCheckArgs) (bool, error) {
+		NewChainAuthArgsForChannel("1", "2", "3", PermissionWrite),
+		func(context.Context, *ChainAuthArgs) (bool, error) {
 			cacheMissForReal = true
 			return true, nil
 		},
@@ -40,8 +40,8 @@ func TestCache(t *testing.T) {
 	cacheMissForReal = false
 	result, cacheHit, err = c.executeUsingCache(
 		ctx,
-		NewAuthCheckArgsForChannel("1", "2", "3", PermissionWrite),
-		func(context.Context, *AuthCheckArgs) (bool, error) {
+		NewChainAuthArgsForChannel("1", "2", "3", PermissionWrite),
+		func(context.Context, *ChainAuthArgs) (bool, error) {
 			cacheMissForReal = true
 			return false, nil
 		},
