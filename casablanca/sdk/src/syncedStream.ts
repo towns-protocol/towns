@@ -92,15 +92,20 @@ export class SyncedStream extends Stream {
         ])
 
         this.log('Initializing from persistence', this.streamId)
-        super.initialize(
-            cachedSyncedStream.syncCookie,
-            cachedSyncedStream.minipoolEvents,
-            snapshot,
-            miniblocks,
-            prependedMiniblocks,
-            miniblocks[0].header.prevSnapshotMiniblockNum,
-            cleartexts,
-        )
+        try {
+            super.initialize(
+                cachedSyncedStream.syncCookie,
+                cachedSyncedStream.minipoolEvents,
+                snapshot,
+                miniblocks,
+                prependedMiniblocks,
+                miniblocks[0].header.prevSnapshotMiniblockNum,
+                cleartexts,
+            )
+        } catch (e) {
+            this.log('Error initializing from persistence', this.streamId, e)
+            return false
+        }
         return true
     }
 
