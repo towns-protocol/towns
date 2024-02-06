@@ -61,7 +61,6 @@ interface ZionContextProviderProps {
     timelineFilter?: Set<ZTEvent>
     children: JSX.Element
     mutedChannelIds?: string[]
-    initalSyncSortPredicate?: InitialSyncSortPredicate
     QueryClientProvider?: React.ElementType<{ children: JSX.Element }>
     pushNotificationAuthToken?: string
     pushNotificationWorkerUrl?: string

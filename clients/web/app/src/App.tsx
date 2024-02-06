@@ -1,7 +1,7 @@
 import { ReactQueryDevtools } from '@tanstack/react-query-devtools'
-import React, { useCallback, useEffect, useRef, useState } from 'react'
-import { matchPath, useLocation, useNavigate } from 'react-router'
-import { InitialSyncSortPredicate, ZTEvent, ZionContextProvider } from 'use-zion-client'
+import React, { useEffect, useRef, useState } from 'react'
+import { matchPath, useNavigate } from 'react-router'
+import { ZTEvent, ZionContextProvider } from 'use-zion-client'
 import { Helmet } from 'react-helmet'
 import { EmbeddedSignerContextProvider } from '@towns/privy'
 import { isDefined } from '@river/sdk'
@@ -80,21 +80,6 @@ export const App = () => {
     // aellis april 2023, the two server urls and the chain id should all be considered
     // a single piece of state, PROD, TEST, and LOCAL each should have {casablancaUrl, chainId}
     const environment = useEnvironment()
-    const location = useLocation()
-    const routeOnLoad = useRef(location.pathname)
-    const initalSyncSortPredicate: InitialSyncSortPredicate = useCallback((a, b) => {
-        const bookmark = useStore.getState().spaceIdBookmark
-        // if directly navigating to a space, prioritize it
-        if (routeOnLoad.current.includes(a)) {
-            return -1
-        }
-        // if there's a bookmark, prioritize it, as long as there's not also a direct navigation
-        if (bookmark === a && !routeOnLoad.current.includes(b)) {
-            return -1
-        }
-        return 1
-    }, [])
-
     const accountAbstractionConfig = useAccountAbstractionConfig(environment.chainId)
 
     return (
@@ -102,7 +87,6 @@ export const App = () => {
             mutedChannelIds={mutedChannelIds}
             casablancaServerUrl={environment.casablancaUrl}
             chain={environment.chain}
-            initalSyncSortPredicate={initalSyncSortPredicate}
             timelineFilter={new Set([ZTEvent.Fulfillment, ZTEvent.KeySolicitation])}
             pushNotificationAuthToken={env.VITE_AUTH_WORKER_HEADER_SECRET}
             pushNotificationWorkerUrl={env.VITE_WEB_PUSH_WORKER_URL}
