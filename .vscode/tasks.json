@@ -263,22 +263,21 @@
       }
     },
     {
-      "label": "Start Blockchains & Deploy Smart Contracts",
-      "dependsOn": [
-        "BaseChain",
-        "RiverChain",
-        "Deploy Smart Contracts",
-      ],
-      "group": {
-        "kind": "build",
-      },
+      "label": "BuildContracts",
+      "type": "shell",
+      "command": "./scripts/build-contracts.sh",
+      "isBackground": true,
       "problemMatcher": [],
+      "presentation": {
+        "group": "ephemeral"
+      }
     },
     {
       "label": "Deploy Smart Contracts",
       "dependsOn": [
-        "DeployZionGovernance",
-        "DeployWalletLink",
+        "BuildContracts",
+        "DeployBase",
+        "DeployRiver",
       ],
       "group": {
         "kind": "build",
@@ -287,9 +286,9 @@
       "dependsOrder": "sequence"
     },
     {
-      "label": "DeployWalletLink",
+      "label": "DeployRiver",
       "type": "shell",
-      "command": "./scripts/wait-for-basechain.sh && ./scripts/deploy-wallet-link-contracts.sh",
+      "command": "./scripts/deploy-river.sh",
       "isBackground": true,
       "problemMatcher": [],
       "presentation": {
@@ -297,9 +296,9 @@
       }
     },
     {
-      "label": "DeployZionGovernance",
+      "label": "DeployBase",
       "type": "shell",
-      "command": "./scripts/wait-for-basechain.sh && ./scripts/deploy-towns-contracts.sh",
+      "command": "./scripts/deploy-base.sh",
       "isBackground": true,
       "problemMatcher": [],
       "presentation": {

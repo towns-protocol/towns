@@ -13,12 +13,7 @@ wait_for_process() {
 }
 
 # Start contract build in background
-pushd contracts
-set -a
-. .env.localhost
-set +a
-make build & BUILD_PID=$!
-popd
+./scripts/build-contracts.sh & BUILD_PID=$!
 
 # Start chain in background
 ./scripts/start-local-basechain.sh &
