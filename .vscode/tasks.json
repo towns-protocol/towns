@@ -135,7 +135,9 @@
       "isBackground": true,
       "problemMatcher": [],
       "presentation": {
-        "group": "ephemeral"
+        "group": "ephemeral",
+        "focus": true,
+        "panel": "shared",
       }
     },
     {
@@ -145,7 +147,9 @@
       "isBackground": true,
       "problemMatcher": [],
       "presentation": {
-        "group": "ephemeral"
+        "group": "ephemeral",
+        "focus": true,
+        "panel": "shared",
       }
     },
     {
@@ -155,7 +159,9 @@
       "isBackground": true,
       "problemMatcher": [],
       "presentation": {
-        "group": "ephemeral"
+        "group": "ephemeral",
+        "focus": true,
+        "panel": "shared",
       }
     },
     {
@@ -165,7 +171,9 @@
       "isBackground": true,
       "problemMatcher": [],
       "presentation": {
-        "group": "ephemeral"
+        "group": "ephemeral",
+        "focus": true,
+        "panel": "shared",
       }
     },
     {
@@ -175,7 +183,9 @@
       "isBackground": true,
       "problemMatcher": [],
       "presentation": {
-        "group": "ephemeral"
+        "group": "ephemeral",
+        "focus": true,
+        "panel": "shared",
       }
     },
     {
@@ -215,7 +225,9 @@
       "isBackground": true,
       "problemMatcher": [],
       "presentation": {
-        "group": "ephemeral"
+        "group": "ephemeral",
+        "focus": true,
+        "panel": "shared",
       }
     },
     {
@@ -269,7 +281,9 @@
       "isBackground": true,
       "problemMatcher": [],
       "presentation": {
-        "group": "ephemeral"
+        "group": "ephemeral",
+        "focus": true,
+        "panel": "shared",
       }
     },
     {
@@ -292,17 +306,21 @@
       "isBackground": true,
       "problemMatcher": [],
       "presentation": {
-        "group": "ephemeral"
+        "group": "ephemeral",
+        "focus": true,
+        "panel": "shared",
       }
     },
     {
       "label": "DeployBase",
       "type": "shell",
       "command": "./scripts/deploy-base.sh",
-      "isBackground": true,
+      "isBackground": false,
       "problemMatcher": [],
       "presentation": {
-        "group": "ephemeral"
+        "group": "ephemeral",
+        "focus": true,
+        "panel": "shared",
       }
     },
     {
@@ -312,7 +330,9 @@
       "isBackground": true,
       "problemMatcher": [],
       "presentation": {
-        "group": "ephemeral"
+        "group": "ephemeral",
+        "focus": true,
+        "panel": "shared",
       }
     },
     {
@@ -482,7 +502,9 @@
       "isBackground": true,
       "problemMatcher": [],
       "presentation": {
-        "group": "ephemeral"
+        "group": "ephemeral",
+        "focus": true,
+        "panel": "shared",
       }
     },
     {
@@ -492,7 +514,9 @@
       "isBackground": false,
       "problemMatcher": [],
       "presentation": {
-        "group": "ephemeral"
+        "group": "ephemeral",
+        "focus": true,
+        "panel": "shared",
       }
     },
     {
@@ -502,7 +526,9 @@
       "isBackground": true,
       "problemMatcher": [],
       "presentation": {
-        "group": "ephemeral"
+        "group": "ephemeral",
+        "focus": true,
+        "panel": "shared",
       }
     },
   ]
