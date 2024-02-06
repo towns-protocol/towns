@@ -173,7 +173,10 @@ export const SpacesChannelComponent = (props: Props) => {
     const showJoinChannel = myMembership && myMembership !== Membership.Join && !isDmOrGDM
     const showDMAcceptInvitation = myMembership === Membership.Invite && isDmOrGDM
 
-    const MessageEditor = env.VITE_ENABLE_SLATE_EDITOR ? RichTextSlate : RichTextEditor
+    const MessageEditor =
+        env.VITE_ENABLE_SLATE_EDITOR || channel?.label.match(/slate$/)
+            ? RichTextSlate
+            : RichTextEditor
     return (
         <CentralPanelLayout>
             {!isTouch && <RegisterChannelShortcuts />}
