@@ -9,7 +9,7 @@ globalThis.OLM_OPTIONS = {}
 // Supported algorithms
 enum Algorithm {
     Olm = 'm.olm.v1.curve25519-aes-sha2',
-    Megolm = 'm.megolm.v1.aes-sha2',
+    GroupEncryption = 'm.megolm.v1.aes-sha2',
 }
 
 /**
@@ -18,9 +18,9 @@ enum Algorithm {
 export const OLM_ALGORITHM = Algorithm.Olm
 
 /**
- * river algorithm tag for megolm
+ * river algorithm tag for group encryption
  */
-export const MEGOLM_ALGORITHM = Algorithm.Megolm
+export const GROUP_ENCRYPTION_ALGORITHM = Algorithm.GroupEncryption
 
 export interface UserDevice {
     deviceKey: string

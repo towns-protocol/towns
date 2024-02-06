@@ -1,7 +1,7 @@
 import { EncryptedData } from '@river/proto'
 import { PlainMessage } from '@bufbuild/protobuf'
 import { EncryptionAlgorithm, IEncryptionParams } from './base'
-import { MEGOLM_ALGORITHM } from './olmLib'
+import { GROUP_ENCRYPTION_ALGORITHM } from './olmLib'
 import { dlog } from '@river/dlog'
 
 const log = dlog('csb:encryption:groupEncryption')
@@ -63,7 +63,7 @@ export class GroupEncryption extends EncryptionAlgorithm {
         const result = await this.device.encryptGroupMessage(payload, streamId)
 
         return new EncryptedData({
-            algorithm: MEGOLM_ALGORITHM,
+            algorithm: GROUP_ENCRYPTION_ALGORITHM,
             senderKey: this.device.deviceCurve25519Key!,
             ciphertext: result.ciphertext,
             sessionId: result.sessionId,

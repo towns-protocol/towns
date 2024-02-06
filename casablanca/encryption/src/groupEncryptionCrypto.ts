@@ -1,5 +1,10 @@
 import { EncryptedData, Err } from '@river/proto'
-import { MEGOLM_ALGORITHM, GroupEncryptionSession, OLM_ALGORITHM, UserDevice } from './olmLib'
+import {
+    GROUP_ENCRYPTION_ALGORITHM,
+    GroupEncryptionSession,
+    OLM_ALGORITHM,
+    UserDevice,
+} from './olmLib'
 import { recoverPublicKey, signSync, verify } from 'ethereum-cryptography/secp256k1'
 
 import { CryptoStore } from './cryptoStore'
@@ -142,7 +147,7 @@ export class GroupEncryptionCrypto {
             throw e
         })
         this.encryptionDevice = new EncryptionDevice(this.delegate, cryptoStore)
-        this.supportedAlgorithms = [OLM_ALGORITHM, MEGOLM_ALGORITHM]
+        this.supportedAlgorithms = [OLM_ALGORITHM, GROUP_ENCRYPTION_ALGORITHM]
 
         this.groupEncryption = new GroupEncryption({
             device: this.encryptionDevice,

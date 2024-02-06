@@ -11,7 +11,7 @@ import {
 } from './encryptionTypes'
 import { EncryptionDelegate } from './encryptionDelegate'
 import { IOutboundGroupSessionKey } from './encryptionTypes'
-import { MEGOLM_ALGORITHM, GroupEncryptionSession } from './olmLib'
+import { GROUP_ENCRYPTION_ALGORITHM, GroupEncryptionSession } from './olmLib'
 import { dlog } from '@river/dlog'
 
 const log = dlog('csb:encryption:encryptionDevice')
@@ -658,7 +658,7 @@ export class EncryptionDevice {
             streamId: streamId,
             sessionId: sessionId,
             sessionKey: sessionKey,
-            algorithm: MEGOLM_ALGORITHM,
+            algorithm: GROUP_ENCRYPTION_ALGORITHM,
         }
     }
 }

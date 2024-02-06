@@ -6,7 +6,7 @@ import { Client } from './client'
 import { EncryptedContent } from './encryptedContentTypes'
 import { shortenHexString, dlog, dlogError, DLogger, check } from '@river/dlog'
 import { isDefined } from './check'
-import { MEGOLM_ALGORITHM, GroupEncryptionSession, UserDevice } from '@river/encryption'
+import { GROUP_ENCRYPTION_ALGORITHM, GroupEncryptionSession, UserDevice } from '@river/encryption'
 import { SessionKeys, UserToDevicePayload_GroupEncryptionSessions } from '@river/proto'
 import {
     KeySolicitationContent,
@@ -343,7 +343,7 @@ export class DecryptionExtensions extends (EventEmitter as new () => TypedEmitte
             streamId: session.streamId,
             sessionId: session.sessionIds[i],
             sessionKey: sessionKeys.keys[i],
-            algorithm: MEGOLM_ALGORITHM,
+            algorithm: GROUP_ENCRYPTION_ALGORITHM,
         }))
         // import the sessions
         this.log.info(
