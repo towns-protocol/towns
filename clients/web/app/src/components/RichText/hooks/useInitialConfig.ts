@@ -66,7 +66,7 @@ function appendStatusAnnotation(statusAnnotation: MessageStatusAnnotation) {
         root.append(lastElement)
     }
 
-    const text = statusAnnotation === 'edited' ? '(edited)' : '(Message failed to send)'
+    const text = statusAnnotation === 'edited' ? '(edited)' : ''
 
     if ($isCodeNode(lastElement)) {
         const paragraphNode = $createParagraphNode()

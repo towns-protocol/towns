@@ -118,6 +118,17 @@ export const ArrowRight = forwardRef<SVGSVGElement, SVGIconProps>((props, ref) =
     </svg>
 ))
 
+export const ArrowCircle = forwardRef<SVGSVGElement, SVGIconProps>((props, ref) => (
+    <svg width="24" height="24" viewBox="0 0 24 24" fill="none" {...props} ref={ref}>
+        <path
+            fillRule="evenodd"
+            clipRule="evenodd"
+            d="M18.5965 6.36325L18.2509 10.3136C18.2349 10.497 18.0732 10.6327 17.8898 10.6166L13.9395 10.271C13.6436 10.2451 13.5268 9.87447 13.7542 9.68358L15.2872 8.39732C14.6404 7.88729 13.8723 7.54557 13.0521 7.40904C11.9898 7.23222 10.8988 7.40941 9.94699 7.91335C8.99522 8.41728 8.23543 9.22003 7.78456 10.1981C7.33369 11.1761 7.21671 12.2752 7.45164 13.3262C7.68657 14.3772 8.26038 15.3219 9.08476 16.0148C9.90914 16.7078 10.9384 17.1106 12.0142 17.1614C13.0899 17.2121 14.1525 16.9079 15.0385 16.2956C15.9244 15.6833 16.5846 14.7968 16.9174 13.7726C17.0311 13.4224 17.4072 13.2308 17.7574 13.3445C18.1076 13.4583 18.2992 13.8344 18.1854 14.1846C17.7623 15.4868 16.923 16.6139 15.7965 17.3924C14.6701 18.171 13.3191 18.5577 11.9514 18.4932C10.5836 18.4287 9.27497 17.9165 8.22682 17.0355C7.17867 16.1544 6.44911 14.9533 6.15042 13.617C5.85172 12.2807 6.00045 10.8833 6.5737 9.63984C7.14696 8.39635 8.11297 7.37571 9.32308 6.73499C10.5332 6.09428 11.9203 5.86899 13.271 6.0938C14.4054 6.28262 15.4613 6.78013 16.3256 7.52595L18.0502 6.07885C18.2777 5.88796 18.6224 6.06741 18.5965 6.36325Z"
+            fill="currentColor"
+        />
+    </svg>
+))
+
 export const AtIcon = forwardRef<SVGSVGElement, SVGIconProps>((props, ref) => (
     <svg width="24" height="24" viewBox="0 0 24 24" fill="none" {...props} ref={ref}>
         <path
@@ -1551,6 +1562,7 @@ const iconMap = {
     arrowDownActive: ArrowDownActive,
     arrowLeft: ArrowLeft,
     arrowRight: ArrowRight,
+    arrowCircle: ArrowCircle,
     at: AtIcon,
     attachment: AttachmentIcon,
     back: BackIcon,

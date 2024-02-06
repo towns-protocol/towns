@@ -7,7 +7,7 @@ import { getMessageBody, getUrls } from 'utils/ztevent_util'
 import { RatioedBackgroundImage } from '@components/RatioedBackgroundImage'
 import { MessageStatusAnnotation } from '@components/RichText/hooks/useInitialConfig'
 import { useDevice } from 'hooks/useDevice'
-import { Box, Text } from '@ui'
+import { Box, Icon, Stack, TextButton } from '@ui'
 import { useUnfurlContent } from '../../../../../api/lib/unfurl'
 import { UnfurledTwitterBlock } from './UnfurledTwitterBlock'
 import { UnfurledGenericBlock } from './UnfurledGenericBlock'
@@ -90,13 +90,22 @@ export const MessageBody = ({
                           <UnfurlBlock {...unfurlData} />
                       </ErrorBoundary>
                   ))}
-
             {statusAnnotation === 'not-sent' && (
-                <Box onClick={onRetrySend}>
-                    <Text size="sm" color="gray2" fontWeight="strong">
-                        Retry
-                    </Text>
-                </Box>
+                <Stack horizontal>
+                    <Stack
+                        horizontal
+                        alignItems="center"
+                        insetTop="xs"
+                        insetLeft="xxs"
+                        tooltip="This message failed to send. Try again."
+                    >
+                        <Icon type="arrowCircle" paddingBottom="xxs" />
+                        <TextButton color="default" onClick={onRetrySend}>
+                            Retry
+                        </TextButton>
+                    </Stack>
+                    <Box grow />
+                </Stack>
             )}
         </>
     )
