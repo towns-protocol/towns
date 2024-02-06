@@ -11,7 +11,7 @@ import {
     NotificationReplyTo,
     WEB_PUSH_NAVIGATION_CHANNEL,
 } from './types.d'
-import { PlaintextDetails, decrypt } from './mecholmDecryption'
+import { PlaintextDetails, decrypt } from './decryptionFn'
 import {
     appNotificationFromPushEvent,
     notificationContentFromEvent,
@@ -528,7 +528,7 @@ async function tryDecryptEvent(
             log('tryDecryptEvent', event)
             const encryptedData = getEncryptedData(event)
             plaintext = await decrypt(userId, channelId, encryptedData)
-            log(`decryptWithMegolm returns "${plaintext}"`)
+            log(`decrypt returns "${plaintext}"`)
             return plaintext
         } catch (error) {
             logError('error decrypting', error)

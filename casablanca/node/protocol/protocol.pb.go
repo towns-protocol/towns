@@ -1695,7 +1695,7 @@ func (*UserPayload_UserMembership_) isUserPayload_Content() {}
 
 // *
 // UserToDevicePayload
-// olm encrypted payloads
+// encrypted payloads
 type UserToDevicePayload struct {
 	state         protoimpl.MessageState
 	sizeCache     protoimpl.SizeCache

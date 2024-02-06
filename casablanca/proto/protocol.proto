@@ -328,7 +328,7 @@ message UserPayload {
 
 /**
 * UserToDevicePayload
-* olm encrypted payloads 
+* encrypted payloads 
 */
 message UserToDevicePayload {
     message Snapshot {

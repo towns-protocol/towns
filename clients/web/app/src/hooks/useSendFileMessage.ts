@@ -9,7 +9,7 @@ import imageCompression from 'browser-image-compression'
 import { isMediaMimeType } from 'utils/isMediaMimeType'
 
 /* 
-The encryption limit is 65536*3/4 = 49152 chars (olmDevice.ts)
+The encryption limit is 65536*3/4 = 49152 chars (encryptionDevice.ts)
 40k will sometimes overshoot when the protobuf is serialized, while 35k seems ok!
 */
 const MAX_EMBEDDED_SIZE = 35 * 1024
