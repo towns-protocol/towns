@@ -141,7 +141,7 @@ jobs:
         needs: [check_labels, provision_transient_environment, river_node_docker]
         permissions: write-all
 
-        if: needs.check_labels.outputs.num_nodes > 0 && !needs.check_labels.outputs.skip_river_node_continuous_deploys
+        if: needs.check_labels.outputs.num_nodes > 0 && needs.check_labels.outputs.skip_river_node_continuous_deploys != 'true'
         # TODO: only run if a change in /casablanca/node is detected
         # TODO: only deploy if the new docker image is different than what's currently active
         strategy:
