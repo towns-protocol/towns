@@ -3,7 +3,6 @@ module "global_constants" {
 }
 
 locals {
-  rpc_proxy_global_access_key_arn        = module.global_constants.transient_global_remote_state.outputs.rpc_proxy_global_access_key.arn
   post_provision_config_lambda_s3_object = module.global_constants.global_remote_state.outputs.post_provision_config_lambda_s3_object
   tags = merge(
     module.global_constants.tags,
