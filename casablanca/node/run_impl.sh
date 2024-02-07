@@ -100,7 +100,7 @@ if [ "$RUN" == "true" ]; then
         echo "Running instance '$INSTANCE' with extra aguments: '${args[@]:-}'"
         if [ "$USE_BLOCKCHAIN_STREAM_REGISTRY" == "true" ]; then
             echo "And funding it with 1 ETH"
-            cast rpc -r http://127.0.0.1:8546 anvil_setBalance `cat ./wallet/node_address` 1000000000000000000 > /dev/null
+            cast rpc -r http://127.0.0.1:8546 anvil_setBalance `cat ./wallet/node_address` 10000000000000000000 > /dev/null
         fi
 
         # if NUM_INSTANCES in not one, run in background, otherwise run with optional restart
