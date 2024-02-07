@@ -341,12 +341,37 @@ func TestMethods(t *testing.T) {
 			t.Fatalf("expected Error when calling CreateStream with mismatched id")
 		}
 
+		userStreamId, err := shared.UserStreamIdFromAddress(wallet1.Address.Bytes())
+		assert.NoError(t, err)
+
+		// if optional is true, stream should be nil instead of throwing an error
+		resp, err := client.GetStream(ctx, connect.NewRequest(&protocol.GetStreamRequest{
+			StreamId: userStreamId,
+			Optional: true,
+		}))
+		assert.NoError(t, err)
+		assert.Nil(t, resp.Msg.Stream, "expected user stream to not exist")
+
+		// if optional is false, error should be thrown
+		_, err = client.GetStream(ctx, connect.NewRequest(&protocol.GetStreamRequest{
+			StreamId: userStreamId,
+		}))
+		assert.Error(t, err)
+
 		// create user stream for user 1
 		res, _, err := createUser(ctx, wallet1, client)
 		assert.NoError(t, err)
 		if res == nil {
 			t.Errorf("nil sync cookie")
 		}
+
+		// get stream optional should now return not nil
+		resp, err = client.GetStream(ctx, connect.NewRequest(&protocol.GetStreamRequest{
+			StreamId: userStreamId,
+			Optional: true,
+		}))
+		assert.NoError(t, err)
+		assert.NotNil(t, resp.Msg, "expected user stream to not exist")
 
 		_, _, err = createUserDeviceKeyStream(ctx, wallet2, client)
 		assert.NoError(t, err)

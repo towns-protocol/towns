@@ -563,6 +563,8 @@ message CreateStreamResponse {
 
 message GetStreamRequest {
     string stream_id = 1;
+    // if optional is true and stream doesn't exist, response will be a nil stream instead of ERROR NOT_FOUND
+    bool optional = 2;
 }
 
 message GetStreamResponse {

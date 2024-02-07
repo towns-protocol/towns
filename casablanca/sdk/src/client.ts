@@ -346,17 +346,12 @@ export class Client
         }
     }
 
-    // special wrapper around rpcClient.getStream which catches NOT_FOUND errors but re-throws everything else
     private async getUserStream(streamId: string): Promise<ParsedStreamResponse | undefined> {
-        try {
-            const response = await this.rpcClient.getStream({ streamId })
+        const response = await this.rpcClient.getStream({ streamId, optional: true })
+        if (response.stream) {
             return unpackStream(response.stream)
-        } catch (e) {
-            if (isIConnectError(e) && e.code === (Code.NotFound as number)) {
-                return undefined
-            } else {
-                throw e
-            }
+        } else {
+            return undefined
         }
     }
 

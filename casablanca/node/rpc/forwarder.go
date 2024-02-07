@@ -71,7 +71,10 @@ func (s *Service) getStreamImpl(
 	req *connect.Request[GetStreamRequest],
 ) (*connect.Response[GetStreamResponse], error) {
 	stub, nodes, err := s.getStubForStream(ctx, req.Msg.StreamId)
-	if err != nil {
+
+	if err != nil && req.Msg.Optional && AsRiverError(err).Code == Err_NOT_FOUND {
+		return connect.NewResponse(&GetStreamResponse{}), nil
+	} else if err != nil {
 		return nil, err
 	}
 
