@@ -205,7 +205,7 @@ func StartServer(ctx context.Context, cfg *config.Config, wallet *crypto.Wallet)
 		exitSignal:     exitSignal,
 		nodeRegistry:   nodeRegistry,
 		streamRegistry: streamRegistry,
-		streamConfig:   cfg.Stream,
+		streamConfig:   &cfg.Stream,
 		notification:   notification,
 		syncHandler:    syncHandler,
 		serverCtx:      ctx,

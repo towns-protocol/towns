@@ -21,7 +21,7 @@ type Service struct {
 	exitSignal     chan error
 	nodeRegistry   nodes.NodeRegistry
 	streamRegistry nodes.StreamRegistry
-	streamConfig   config.StreamConfig
+	streamConfig   *config.StreamConfig
 	notification   nodes.PushNotification
 	syncHandler    SyncHandler
 	serverCtx      context.Context
