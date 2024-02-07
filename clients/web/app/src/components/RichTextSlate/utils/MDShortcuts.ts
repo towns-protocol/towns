@@ -1,20 +1,26 @@
-import { CustomElement } from '@components/RichTextSlate/slate-types'
+import {
+    ALL_TAG_TYPES,
+    BLOCK_QUOTE,
+    CustomElement,
+    H1,
+    LIST_ITEM,
+} from '@components/RichTextSlate/utils/schema'
 
 /**
  * @desc Starting a new line with any of these texts should convert the block of text on that line to the
  * corresponding type from the hash map below
  */
-export const SLATE_MD_SHORTCUTS: { [x: string]: string } = {
-    '*': 'list-item',
-    '-': 'list-item',
-    '+': 'list-item',
-    '>': 'block-quote',
-    '#': 'heading-one',
-    '##': 'heading-two',
-    '###': 'heading-three',
-    '####': 'heading-four',
-    '#####': 'heading-five',
-    '######': 'heading-six',
+export const SLATE_MD_SHORTCUTS: { [x: string]: ALL_TAG_TYPES } = {
+    '*': LIST_ITEM,
+    '-': LIST_ITEM,
+    '+': LIST_ITEM,
+    '>': BLOCK_QUOTE,
+    '#': H1,
+    '##': H1,
+    '###': H1,
+    '####': H1,
+    '#####': H1,
+    '######': H1,
     // # TODO: Add code block and inline code
 }
 
@@ -26,14 +32,12 @@ export const SLATE_MD_SHORTCUTS: { [x: string]: string } = {
  * it should convert the new line into a normal `paragraph` block
  */
 export const ONE_ENTER_KEY_BREAK: CustomElement['type'][] = [
-    'heading-one',
-    'heading-two',
-    'heading-three',
-    'heading-four',
-    'heading-five',
-    'heading-six',
-    'code-line',
-    'mention',
+    'heading',
+    'heading_two',
+    'heading_three',
+    'heading_four',
+    'heading_five',
+    'heading_six',
     'link',
 ]
 
@@ -54,7 +58,8 @@ export const ONE_ENTER_KEY_BREAK: CustomElement['type'][] = [
  * `code` block and change the new line to paragraph
  */
 export const DOUBLE_ENTER_KEY_BREAK: CustomElement['type'][] = [
-    'block-quote',
-    'bulleted-list',
-    'code-block',
+    'block_quote',
+    'ol_list',
+    'ul_list',
+    'code_block',
 ]

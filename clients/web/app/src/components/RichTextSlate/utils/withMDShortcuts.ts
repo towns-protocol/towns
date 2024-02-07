@@ -1,5 +1,6 @@
 import { Editor, Point, Range, Element as SlateElement, Transforms } from 'slate'
-import { BulletedListElement, CustomEditor, CustomElement } from '../slate-types'
+import { CustomEditor } from '../slate-types'
+import { ALL_TAG_TYPES, CustomElement, LIST_ITEM, PARAGRAPH, UL_LIST } from './schema'
 import { ONE_ENTER_KEY_BREAK, SLATE_MD_SHORTCUTS } from './MDShortcuts'
 
 export const withMDShortcuts = (editor: CustomEditor) => {
@@ -24,7 +25,7 @@ export const withMDShortcuts = (editor: CustomEditor) => {
 
             if (oneEnterBreak) {
                 Transforms.insertNodes<CustomElement>(editor, [
-                    { children: [{ text: '' }], type: 'paragraph' },
+                    { children: [{ text: '' }], type: PARAGRAPH },
                 ])
                 return
             }
@@ -36,7 +37,7 @@ export const withMDShortcuts = (editor: CustomEditor) => {
      * @desc Change the block type based on the first character in the line.
      * @example
      * Typing ## My Title
-     * Will insert My Title as a `heading-two` block
+     * Will insert My Title as a `heading_two` block
      * @see SLATE_MD_SHORTCUTS
      */
     editor.insertText = (text) => {
@@ -61,22 +62,26 @@ export const withMDShortcuts = (editor: CustomEditor) => {
                 }
 
                 const newProperties: Partial<SlateElement> = {
-                    type: type as CustomElement['type'],
+                    type: type as ALL_TAG_TYPES,
+                    depth: beforeText.includes('#')
+                        ? (beforeText.match(/#/g) || []).length
+                        : undefined,
                 }
                 Transforms.setNodes<SlateElement>(editor, newProperties, {
                     match: (n) => SlateElement.isElement(n) && Editor.isBlock(editor, n),
                 })
 
-                if (type === 'list-item') {
-                    const list: BulletedListElement = {
-                        type: 'bulleted-list',
+                if (type === LIST_ITEM) {
+                    const list: CustomElement = {
+                        type: UL_LIST,
                         children: [],
+                        data: { tight: true },
                     }
                     Transforms.wrapNodes(editor, list, {
                         match: (n) =>
                             !Editor.isEditor(n) &&
                             SlateElement.isElement(n) &&
-                            n.type === 'list-item',
+                            n.type === LIST_ITEM,
                     })
                 }
 
@@ -108,20 +113,20 @@ export const withMDShortcuts = (editor: CustomEditor) => {
                 if (
                     !Editor.isEditor(block) &&
                     SlateElement.isElement(block) &&
-                    block.type !== 'paragraph' &&
+                    block.type !== PARAGRAPH &&
                     Point.equals(selection.anchor, start)
                 ) {
                     const newProperties: Partial<SlateElement> = {
-                        type: 'paragraph',
+                        type: PARAGRAPH,
                     }
                     Transforms.setNodes(editor, newProperties)
 
-                    if (block.type === 'list-item') {
+                    if (block.type === LIST_ITEM) {
                         Transforms.unwrapNodes(editor, {
                             match: (n) =>
                                 !Editor.isEditor(n) &&
                                 SlateElement.isElement(n) &&
-                                n.type === 'bulleted-list',
+                                n.type === UL_LIST,
                             split: true,
                         })
                     }
