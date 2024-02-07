@@ -270,7 +270,12 @@ func StartServer(ctx context.Context, cfg *config.Config, wallet *crypto.Wallet)
 
 	// For gRPC clients, it's convenient to support HTTP/2 without TLS. You can
 	// avoid x/net/http2 by using http.ListenAndServeTLS.
-	srv := &http.Server{Handler: h2c.NewHandler(corsMiddleware.Handler(mux), &http2.Server{})}
+	srv := &http.Server{
+		Handler: h2c.NewHandler(corsMiddleware.Handler(mux), &http2.Server{}),
+		BaseContext: func(_ net.Listener) context.Context {
+			return ctx
+		},
+	}
 	go func() {
 		err := srv.Serve(httpListener)
 		log.Info("Server stopped", "reason", err)
