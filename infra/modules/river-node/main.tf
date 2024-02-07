@@ -10,8 +10,13 @@ locals {
   node_name   = "river${var.node_number}-${terraform.workspace}"
   grpc_record = "river${var.node_number}-grpc-${terraform.workspace}"
 
+  rpc_http_port  = 80
+  rpc_https_port = 443
+
   service_name        = "river-node"
   global_remote_state = module.global_constants.global_remote_state.outputs
+
+  cloudflare_api_token_secret_arn = local.global_remote_state.cloudflare_api_token_secret.arn
 
   shared_credentials = local.global_remote_state.river_node_credentials_secret[var.node_number - 1]
 
@@ -23,10 +28,20 @@ locals {
       Node_Name   = local.node_name
     }
   )
+
   dd_agent_tags = merge(
     module.global_constants.tags,
     {
       Service     = "dd-agent"
+      Node_Number = var.node_number
+      Node_Name   = local.node_name
+    }
+  )
+
+  service_discovery_tags = merge(
+    module.global_constants.tags,
+    {
+      Service     = "service-discovery"
       Node_Number = var.node_number
       Node_Name   = local.node_name
     }
@@ -96,7 +111,6 @@ resource "aws_iam_role" "ecs_task_execution_role" {
   tags = module.global_constants.tags
 }
 
-# Behind the load balancer
 module "river_internal_sg" {
   source = "terraform-aws-modules/security-group/aws"
 
@@ -105,18 +119,35 @@ module "river_internal_sg" {
   vpc_id      = var.vpc_id
 
 
-  # Open for security group id (rule or from_port+to_port+protocol+description)
-  ingress_with_source_security_group_id = [
+  ingress_with_cidr_blocks = [
     {
-      rule                     = "http-80-tcp"
-      source_security_group_id = var.alb_security_group_id
+      from_port   = local.rpc_http_port,
+      to_port     = local.rpc_http_port,
+      protocol    = "tcp",
+      description = "Allow incoming TCP traffic from onto port 80 from the public internet",
+      cidr_blocks = "0.0.0.0/0"
     },
     {
-      protocol                 = "tcp"
-      from_port                = 5157
-      to_port                  = 5157
-      source_security_group_id = var.alb_security_group_id
+      from_port   = local.rpc_https_port,
+      to_port     = local.rpc_https_port,
+      protocol    = "tcp",
+      description = "Allow incoming TCP traffic from onto port 443 from the public internet",
+      cidr_blocks = "0.0.0.0/0"
     },
+    {
+      from_port   = local.rpc_http_port,
+      to_port     = local.rpc_http_port,
+      protocol    = "udp",
+      description = "Allow incoming UDP traffic from onto port 80 from the public internet",
+      cidr_blocks = "0.0.0.0/0"
+    },
+    {
+      from_port   = local.rpc_https_port,
+      to_port     = local.rpc_https_port,
+      protocol    = "udp",
+      description = "Allow incoming UDP traffic from onto port 443 from the public internet",
+      cidr_blocks = "0.0.0.0/0"
+    }
   ]
 
   egress_cidr_blocks = ["0.0.0.0/0"] # public internet
@@ -212,6 +243,19 @@ resource "aws_cloudwatch_log_subscription_filter" "dd_agent_log_group_filter" {
   destination_arn = module.global_constants.datadug_forwarder_stack_lambda.arn
 }
 
+resource "aws_cloudwatch_log_group" "service_discovery_log_group" {
+  name = "/ecs/service-discovery/${local.node_name}"
+
+  tags = local.service_discovery_tags
+}
+
+resource "aws_cloudwatch_log_subscription_filter" "service_discovery_log_group_filter" {
+  name            = "${local.node_name}-service-discovery-log-group"
+  log_group_name  = aws_cloudwatch_log_group.service_discovery_log_group.name
+  filter_pattern  = ""
+  destination_arn = module.global_constants.datadug_forwarder_stack_lambda.arn
+}
+
 resource "aws_iam_role_policy" "river_node_credentials" {
   name = "${local.node_name}-node-credentials"
   role = aws_iam_role.ecs_task_execution_role.id
@@ -231,8 +275,23 @@ resource "aws_iam_role_policy" "river_node_credentials" {
           "${local.global_remote_state.river_global_dd_agent_api_key.arn}",
           "${local.global_remote_state.base_chain_network_url_secret.arn}",
           "${local.global_remote_state.river_chain_network_url_secret.arn}",
-          "${local.global_remote_state.river_global_push_notification_auth_token.arn}"
+          "${local.global_remote_state.river_global_push_notification_auth_token.arn}",
+          "${local.global_remote_state.cloudflare_api_token_secret.arn}"
         ]
+      },
+      {
+        "Action": [
+          "ec2:DescribeNetworkInterfaces"
+        ],
+        "Effect": "Allow",
+        "Resource": "*"
+      },
+      {
+        "Action": [
+          "ecs:DescribeTasks"
+        ],
+        "Effect": "Allow",
+        "Resource": "*"
       }
     ]
   }
@@ -259,10 +318,11 @@ resource "aws_iam_role_policy" "ssm_policy" {
     ]
   })
 }
+
 resource "aws_lb_target_group" "blue" {
   name        = "${local.node_name}-blue"
   protocol    = "HTTP"
-  port        = 80
+  port        = local.rpc_http_port
   target_type = "ip"
   vpc_id      = var.vpc_id
 
@@ -282,7 +342,7 @@ resource "aws_lb_target_group" "blue-grpc" {
   name             = "${local.node_name}-blue-grpc"
   protocol         = "HTTP"
   protocol_version = "HTTP2"
-  port             = 80
+  port             = local.rpc_http_port
   target_type      = "ip"
   vpc_id           = var.vpc_id
 
@@ -377,6 +437,10 @@ locals {
   node_registry_csv_multinode = "${local.nodes[0].address},${local.nodes[0].url},${local.nodes[1].address},${local.nodes[1].url},${local.nodes[2].address},${local.nodes[2].url},${local.nodes[3].address},${local.nodes[3].url},${local.nodes[4].address},${local.nodes[4].url},${local.nodes[5].address},${local.nodes[5].url},${local.nodes[6].address},${local.nodes[6].url},${local.nodes[7].address},${local.nodes[7].url},${local.nodes[8].address},${local.nodes[8].url},${local.nodes[9].address},${local.nodes[9].url}"
 }
 
+data "cloudflare_zone" "zone" {
+  name = module.global_constants.primary_hosted_zone_name
+}
+
 resource "aws_ecs_task_definition" "river-fargate" {
   family = "${local.node_name}-fargate"
 
@@ -407,8 +471,8 @@ resource "aws_ecs_task_definition" "river-fargate" {
 
     essential = true
     portMappings = [{
-      containerPort = 5157
-      hostPort      = 5157
+      containerPort = local.rpc_http_port
+      hostPort      = local.rpc_http_port
       protocol      = "tcp"
       }, {
       containerPort = 8081
@@ -455,6 +519,10 @@ resource "aws_ecs_task_definition" "river-fargate" {
       {
         name  = "METRICS__ENABLED",
         value = "true"
+      },
+      {
+        name  = "PORT",
+        value = tostring(local.rpc_http_port)
       },
       {
         name  = "METRICS__PORT",
@@ -613,7 +681,47 @@ resource "aws_ecs_task_definition" "river-fargate" {
           "awslogs-stream-prefix" = "dd-agent-${local.node_name}"
         }
       }
-  }])
+    },
+    {
+      name      = "service-discovery"
+      image     = "${local.global_remote_state.public_ecr.repository_url_map["hnt-ecs-service-discovery"]}:latest"
+      essential = false
+
+      # TODO: set cpu and memory for this container.
+
+      secrets = [{
+        name      = "CLOUDFLARE_API_TOKEN"
+        valueFrom = local.cloudflare_api_token_secret_arn
+      }]
+
+      environment = [
+        {
+          name  = "CLUSTER_NAME",
+          value = var.ecs_cluster.name,
+        },
+        {
+          name  = "CLOUDFLARE_ZONE_ID",
+          value = data.cloudflare_zone.zone.id
+        },
+        {
+          name = "NODE_NAME",
+          # TODO: change this env var from NODE_NAME into DNS_NAME
+          value = var.dns_name
+        }
+        // TODO: Run a healthcheck on the node first,
+        // and only then register it with Cloudflare.
+      ]
+
+      logConfiguration = {
+        logDriver = "awslogs"
+        options = {
+          "awslogs-group"         = aws_cloudwatch_log_group.service_discovery_log_group.name
+          "awslogs-region"        = "us-east-1"
+          "awslogs-stream-prefix" = "service-discovery-${local.node_name}"
+        }
+      }
+    }
+  ])
 
   tags = module.global_constants.tags
 }
@@ -645,13 +753,13 @@ resource "aws_ecs_service" "river-ecs-service" {
   load_balancer {
     target_group_arn = aws_lb_target_group.blue.arn
     container_name   = "river-node"
-    container_port   = 5157
+    container_port   = local.rpc_http_port
   }
 
   load_balancer {
     target_group_arn = aws_lb_target_group.blue-grpc.arn
     container_name   = "river-node"
-    container_port   = 5157
+    container_port   = local.rpc_http_port
   }
 
   network_configuration {
@@ -665,10 +773,6 @@ resource "aws_ecs_service" "river-ecs-service" {
     delete = "60m"
   }
   tags = local.river_node_tags
-}
-
-data "cloudflare_zone" "zone" {
-  name = module.global_constants.primary_hosted_zone_name
 }
 
 resource "cloudflare_record" "http_dns" {
@@ -687,6 +791,17 @@ resource "cloudflare_record" "grpc_dns" {
   name    = local.grpc_record
   value   = var.alb_dns_name
   type    = "CNAME"
+  ttl     = 60
+  lifecycle {
+    ignore_changes = all
+  }
+}
+
+resource "cloudflare_record" "public_ip_a_record" {
+  zone_id = data.cloudflare_zone.zone.id
+  name    = var.dns_name
+  value   = "1.1.1.1" # this is a placeholder value. it will be updated by the service discovery container. we need this, so that terraform can remember to destroy the record when a transient environment is destroyed.
+  type    = "A"
   ttl     = 60
   lifecycle {
     ignore_changes = all

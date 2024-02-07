@@ -143,17 +143,19 @@ module "river_forked_chain_service" {
   vpc_id              = local.transient_global_remote_state.vpc.vpc_id
 }
 
+
 module "river_node" {
   source      = "../../modules/river-node"
   count       = var.num_nodes
   node_number = count.index + 1
+  dns_name    = "river${count.index + 1}-${var.git_pr_number}.nodes.transient"
 
   river_node_db = local.create_db_cluster ? module.river_db_cluster[0] : null
 
   is_transient  = true
   git_pr_number = var.git_pr_number
 
-  node_subnets = local.transient_global_remote_state.vpc.private_subnets
+  node_subnets = local.transient_global_remote_state.vpc.public_subnets
   vpc_id       = local.transient_global_remote_state.vpc.vpc_id
 
   is_multi_node = var.num_nodes > 1

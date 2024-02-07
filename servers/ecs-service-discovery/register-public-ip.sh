@@ -1,6 +1,8 @@
 #!/bin/bash
 set -eo pipefail
 
+TTL=60
+
 function check_env() {
     # check for CLUSTER_NAME
     if [ -z "$CLUSTER_NAME" ]; then
@@ -29,18 +31,6 @@ function check_env() {
     # check for AWS_REGION
     if [ -z "$AWS_REGION" ]; then
         echo "AWS_REGION is not set"
-        exit 1
-    fi
-
-    # check for AWS_ACCESS_KEY_ID
-    if [ -z "$AWS_ACCESS_KEY_ID" ]; then
-        echo "AWS_ACCESS_KEY_ID is not set"
-        exit 1
-    fi
-
-    # check for AWS_SECRET_ACCESS_KEY
-    if [ -z "$AWS_SECRET_ACCESS_KEY" ]; then
-        echo "AWS_SECRET_ACCESS_KEY is not set"
         exit 1
     fi
 }
@@ -99,15 +89,6 @@ function get_record_id() {
     echo $RECORD_ID
 }
 
-# Function to create a DNS record
-function create_dns_record() {
-    local public_ip=$1
-    curl -s -X POST "https://api.cloudflare.com/client/v4/zones/$CLOUDFLARE_ZONE_ID/dns_records" \
-         -H "Authorization: Bearer $CLOUDFLARE_API_TOKEN" \
-         -H "Content-Type: application/json" \
-         --data "{\"type\":\"A\",\"name\":\"$NODE_NAME\",\"content\":\"$public_ip\",\"proxied\":false}"
-}
-
 # Function to update a DNS record
 function update_dns_record() {
     local public_ip=$1
@@ -115,20 +96,22 @@ function update_dns_record() {
 
     # Updating DNS record
     curl -s -X PUT "https://api.cloudflare.com/client/v4/zones/$CLOUDFLARE_ZONE_ID/dns_records/$record_id" \
+        -H "X-Auth-Email: kerem@hntlabs.com" \
         -H "Authorization: Bearer $CLOUDFLARE_API_TOKEN" \
         -H "Content-Type: application/json" \
-       --data "{\"type\":\"A\",\"name\":\"$NODE_NAME\",\"content\":\"$public_ip\",\"proxied\":false}"
+       --data "{\"type\":\"A\",\"name\":\"$NODE_NAME\",\"content\":\"$public_ip\",\"proxied\":false, \"ttl\":$TTL}"
 }
 
 function main() {
     my_task_id=$(get_own_task_id)
     public_ip=$(get_public_ip_of_ecs_task $my_task_id)
     record_id=$(get_record_id)
-    if [ -z "$record_id" ]; then
-        echo "Record does not exist. Creating a new record."
-        create_dns_record $public_ip
+    echo "Record ID: $record_id"
+    if [ "$record_id" == "null" ]; then
+        echo "Record does not exist, even thought terraform should have created it."
+        exit 1
     else
-        echo "Record already exists. Updating."
+        echo "Found record. Updating."
         update_dns_record $public_ip $record_id
     fi
 }

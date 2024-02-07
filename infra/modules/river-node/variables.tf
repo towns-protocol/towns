@@ -9,6 +9,11 @@ variable "git_pr_number" {
   default     = null
 }
 
+variable "dns_name" {
+  description = "dns record name for the river node"
+  type        = string
+}
+
 variable "node_number" {
   description = "The number assigned to the node. i.e 1 for river-1-test-beta.towns.com"
   type        = number
