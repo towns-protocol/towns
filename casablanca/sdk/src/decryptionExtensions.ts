@@ -454,12 +454,12 @@ export class DecryptionExtensions extends (EventEmitter as new () => TypedEmitte
                 const streamId = item.streamId
                 const sessionId = item.encryptedContent.content.sessionId
                 if (!this.decryptionFailures[streamId]) {
-                    this.decryptionFailures[streamId] = {}
+                    this.decryptionFailures[streamId] = { [sessionId]: [item] }
+                } else if (!this.decryptionFailures[streamId][sessionId]) {
+                    this.decryptionFailures[streamId][sessionId] = [item]
+                } else if (!this.decryptionFailures[streamId][sessionId].includes(item)) {
+                    this.decryptionFailures[streamId][sessionId].push(item)
                 }
-                if (!this.decryptionFailures[streamId][sessionId]) {
-                    this.decryptionFailures[streamId][sessionId] = []
-                }
-                this.decryptionFailures[streamId][sessionId].push(item)
 
                 removeItem(this.queues.missingKeys, (x) => x.streamId === streamId)
                 insertSorted(
