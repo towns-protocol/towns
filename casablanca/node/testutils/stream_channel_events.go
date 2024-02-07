@@ -30,10 +30,6 @@ var streamConfig_t = config.StreamConfig{
 	MinEventsPerSnapshot:        map[string]int{},
 }
 
-var config_t = config.Config{
-	Stream: streamConfig_t,
-}
-
 type StreamContext_T struct {
 	t           *testing.T
 	Context     context.Context
@@ -51,10 +47,6 @@ func (s *StreamContext_T) Refresh() *StreamContext_T {
 	s.SyncStream = syncStream
 	s.StreamView = streamView
 	return s
-}
-
-func MakeCxtWithConfig_T() context.Context {
-	return config.CtxWithConfig(context.Background(), &config_t) // lint:ignore context.Background is fine in tests
 }
 
 func MakeChannelStreamContext_T(

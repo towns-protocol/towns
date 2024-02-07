@@ -26,10 +26,6 @@ var streamConfig_viewstate_space_t = config.StreamConfig{
 	MinEventsPerSnapshot:        map[string]int{},
 }
 
-var config_viewstate_space_t = config.Config{
-	Stream: streamConfig_viewstate_space_t,
-}
-
 type noopBlockMonitor struct{}
 
 var _ crypto.BlockMonitor = (*noopBlockMonitor)(nil)
@@ -218,7 +214,7 @@ func getStreamNodes() *StreamNodes {
 }
 
 func TestSpaceViewState(t *testing.T) {
-	ctx := config.CtxWithConfig(context.Background(), &config_viewstate_space_t)
+	ctx := context.Background()
 	nodeWallet, _ := crypto.NewWallet(ctx)
 	user1Wallet, _ := crypto.NewWallet(ctx)
 	user2Wallet, _ := crypto.NewWallet(ctx)
@@ -291,7 +287,7 @@ func spaceViewStateTest_CheckUserJoined(t *testing.T, view JoinableStreamView, u
 
 func TestChannelViewState_JoinedMembers(t *testing.T) {
 	/* Arrange */
-	ctx := config.CtxWithConfig(context.Background(), &config_viewstate_space_t)
+	ctx := context.Background()
 	nodeWallet, _ := crypto.NewWallet(ctx)
 	userWallet, _ := crypto.NewWallet(ctx)
 	alice := "alice"
@@ -344,7 +340,7 @@ func TestChannelViewState_JoinedMembers(t *testing.T) {
 
 func TestChannelViewState_RemainingMembers(t *testing.T) {
 	/* Arrange */
-	ctx := config.CtxWithConfig(context.Background(), &config_viewstate_space_t)
+	ctx := context.Background()
 	nodeWallet, _ := crypto.NewWallet(ctx)
 	userWallet, _ := crypto.NewWallet(ctx)
 	alice := "alice"

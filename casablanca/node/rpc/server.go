@@ -109,8 +109,6 @@ func StartServer(ctx context.Context, cfg *config.Config, wallet *crypto.Wallet)
 	ctx = dlog.CtxWithLog(ctx, log)
 	slog.SetDefault(log)
 
-	ctx = config.CtxWithConfig(ctx, cfg)
-
 	exitSignal := make(chan error, 1)
 
 	store, storageCleaner, err := createStore(ctx, cfg.Database, cfg.StorageType, wallet.AddressStr, instanceId, exitSignal)

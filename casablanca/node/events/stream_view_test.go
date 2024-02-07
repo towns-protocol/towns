@@ -36,10 +36,6 @@ var streamConfig_t = config.StreamConfig{
 	},
 }
 
-var config_t = &config.Config{
-	Stream: streamConfig_t,
-}
-
 func parsedEvent(t *testing.T, envelope *protocol.Envelope) *ParsedEvent {
 	parsed, err := ParseEvent(envelope)
 	assert.NoError(t, err)
@@ -47,7 +43,7 @@ func parsedEvent(t *testing.T, envelope *protocol.Envelope) *ParsedEvent {
 }
 
 func TestLoad(t *testing.T) {
-	ctx := config.CtxWithConfig(context.Background(), config_t)
+	ctx := context.Background()
 	wallet, _ := crypto.NewWallet(ctx)
 
 	inception, err := MakeEnvelopeWithPayload(

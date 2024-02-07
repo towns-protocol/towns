@@ -36,7 +36,7 @@ var (
 )
 
 func testMainImpl(m *testing.M) int {
-	ctx := testutils.MakeCxtWithConfig_T()
+	ctx := context.Background()
 	db, schemaName, closer, err := dbtestutils.StartDB(ctx)
 	if err != nil {
 		panic(err)
@@ -315,7 +315,7 @@ func testServerAndClient(
 }
 
 func TestMethods(t *testing.T) {
-	ctx := testutils.MakeCxtWithConfig_T()
+	ctx := context.Background()
 	client, _, closer := testServerAndClient(ctx, testDatabaseUrl, testSchemaName, false, 0)
 	wallet1, _ := crypto.NewWallet(ctx)
 	wallet2, _ := crypto.NewWallet(ctx)
@@ -503,7 +503,7 @@ func TestMethods(t *testing.T) {
 }
 
 func TestRiverDeviceId(t *testing.T) {
-	ctx := testutils.MakeCxtWithConfig_T()
+	ctx := context.Background()
 	client, _, closer := testServerAndClient(ctx, testDatabaseUrl, testSchemaName, false, 0)
 	wallet, _ := crypto.NewWallet(ctx)
 	deviceWallet, _ := crypto.NewWallet(ctx)
@@ -581,7 +581,7 @@ func TestSyncStreams(t *testing.T) {
 	Arrange
 	*/
 	// create the test client and server
-	ctx := testutils.MakeCxtWithConfig_T()
+	ctx := context.Background()
 	client, _, closer := testServerAndClient(ctx, testDatabaseUrl, testSchemaName, false, 2)
 	defer closer()
 	// create the streams for a user
@@ -654,7 +654,7 @@ func TestAddStreamsToSync(t *testing.T) {
 	Arrange
 	*/
 	// create the test client and server
-	ctx := testutils.MakeCxtWithConfig_T()
+	ctx := context.Background()
 	aliceClient, port, closer := testServerAndClient(ctx, testDatabaseUrl, testSchemaName, false, 2)
 	defer closer()
 	// create alice's wallet and streams
@@ -755,7 +755,7 @@ func TestRemoveStreamsFromSync(t *testing.T) {
 	Arrange
 	*/
 	// create the test client and server
-	ctx := testutils.MakeCxtWithConfig_T()
+	ctx := context.Background()
 	aliceClient, port, closer := testServerAndClient(ctx, testDatabaseUrl, testSchemaName, false, 2)
 	defer closer()
 	// create alice's wallet and streams
@@ -896,7 +896,7 @@ func TestRemoveStreamsFromSync(t *testing.T) {
 
 // TODO: revamp with block support
 func DisableTestManyUsers(t *testing.T) {
-	ctx := testutils.MakeCxtWithConfig_T()
+	ctx := context.Background()
 	client, _, closer := testServerAndClient(ctx, testDatabaseUrl, testSchemaName, false, 0)
 	defer closer()
 
