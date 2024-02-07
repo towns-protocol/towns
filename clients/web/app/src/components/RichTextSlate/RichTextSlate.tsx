@@ -17,8 +17,8 @@ import { withMDShortcuts } from './utils/withMDShortcuts'
 import withSchema from './hooks/withSchema'
 import { LeafElement } from './ui/LeafElement'
 import Element from './ui/Element'
-import { RichTextBottomToolbar } from './RichTextBottomToolbar'
 import { useNetworkStatus } from '../../hooks/useNetworkStatus'
+import { RichTextBottomToolbar } from './RichTextBottomToolbar'
 
 type Props = {
     onSend?: (value: string, options: SendTextMessageOptions | undefined) => void
@@ -103,6 +103,7 @@ const RichTextSlate: React.FC<Props> = ({
         (event) => {
             if (event.key === 'Enter') {
                 if (!event.shiftKey) {
+                    event.preventDefault()
                     onSendCb().catch((err) => {})
                 }
             }
@@ -150,24 +151,26 @@ const RichTextSlate: React.FC<Props> = ({
                             />
                         </Box>
                     </Stack>
-                    <Stack
-                        gap
-                        shrink
-                        paddingX
-                        paddingBottom="sm"
-                        pointerEvents={editable ? 'auto' : 'none'}
-                    >
-                        <RichTextBottomToolbar
-                            editing={isEditing}
-                            focused={false}
-                            threadId={restProps.threadId}
-                            threadPreview={restProps.threadPreview}
-                            visible={!isTouch}
-                            isFormattingToolbarOpen={false}
-                            setIsFormattingToolbarOpen={() => null}
-                            key="toolbar"
-                        />
-                    </Stack>
+                    {!isTouch && (
+                        <Stack
+                            gap
+                            shrink
+                            paddingX
+                            paddingBottom="sm"
+                            pointerEvents={editable ? 'auto' : 'none'}
+                        >
+                            <RichTextBottomToolbar
+                                editing={isEditing}
+                                focused={false}
+                                threadId={restProps.threadId}
+                                threadPreview={restProps.threadPreview}
+                                visible={!isTouch}
+                                isFormattingToolbarOpen={false}
+                                setIsFormattingToolbarOpen={() => null}
+                                key="toolbar"
+                            />
+                        </Stack>
+                    )}
                 </Slate>
             </Stack>
         </>

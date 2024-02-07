@@ -1,11 +1,11 @@
 import React from 'react'
 import { RenderPlaceholderProps } from 'slate-react'
-import { Text } from '@ui'
+import { Box, Text } from '@ui'
 
 export const Placeholder = ({ children, attributes }: RenderPlaceholderProps) => {
     return (
-        <Text {...attributes} style={{}} display="inline-block" color="gray2">
-            {children}
-        </Text>
+        <Box {...attributes} paddingY="paragraph">
+            <Text color="gray2">{children}</Text>
+        </Box>
     )
 }
