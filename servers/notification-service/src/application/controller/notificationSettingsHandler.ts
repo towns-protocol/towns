@@ -16,9 +16,9 @@ export async function saveNotificationSettingsHandler(req: Request, res: Respons
         try {
             const userSettingsData = {
                 UserId: userId,
-                DirectMessage: settingsData.directMessage ? 1 : 0,
-                Mention: settingsData.mention ? 1 : 0,
-                ReplyTo: settingsData.replyTo ? 1 : 0,
+                DirectMessage: settingsData.directMessage,
+                Mention: settingsData.mention,
+                ReplyTo: settingsData.replyTo,
             }
 
             // upsert user settings
@@ -104,16 +104,20 @@ export async function getNotificationSettingsHandler(req: Request, res: Response
             },
         })
 
+        if (!userSettings) {
+            return res.status(StatusCodes.NOT_FOUND).json({ error: 'User settings not found' })
+        }
+
         return res.status(StatusCodes.OK).json({
             userId,
-            directMessage: !!userSettings?.DirectMessage,
-            mention: !!userSettings?.Mention,
-            replyTo: !!userSettings?.ReplyTo,
-            spaceSettings: (userSettings?.UserSettingsSpace ?? []).map((s) => ({
+            directMessage: userSettings.DirectMessage,
+            mention: userSettings.Mention,
+            replyTo: userSettings.ReplyTo,
+            spaceSettings: (userSettings.UserSettingsSpace ?? []).map((s) => ({
                 spaceId: s.SpaceId,
                 spaceMute: s.SpaceMute,
             })),
-            channelSettings: (userSettings?.UserSettingsChannel ?? []).map((c) => ({
+            channelSettings: (userSettings.UserSettingsChannel ?? []).map((c) => ({
                 spaceId: c.SpaceId,
                 channelId: c.ChannelId,
                 channelMute: c.ChannelMute,

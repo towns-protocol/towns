@@ -27,9 +27,9 @@ model PushSubscription {
 
 model UserSettings {
   UserId              String                @id
-  ReplyTo             Int                   @default(1)
-  Mention             Int                   @default(1)
-  DirectMessage       Int                   @default(1)
+  ReplyTo             Boolean               @default(true)
+  Mention             Boolean               @default(true)
+  DirectMessage       Boolean               @default(true)
   UserSettingsChannel UserSettingsChannel[]
   UserSettingsSpace   UserSettingsSpace[]
 }

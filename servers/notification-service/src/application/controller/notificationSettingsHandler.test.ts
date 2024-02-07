@@ -153,9 +153,9 @@ describe('getNotificationSettingsHandler', () => {
     it('should get notification settings and return 200 OK', async () => {
         const userSettings = {
             UserId: 'user123',
-            DirectMessage: 1,
-            Mention: 1,
-            ReplyTo: 1,
+            DirectMessage: true,
+            Mention: true,
+            ReplyTo: true,
             UserSettingsSpace: [
                 { SpaceId: 'space1', SpaceMute: Mute.Default },
                 { SpaceId: 'space2', SpaceMute: Mute.Unmuted },
@@ -205,5 +205,14 @@ describe('getNotificationSettingsHandler', () => {
         expect(console.error).toHaveBeenCalledWith('getSettings error', error)
         expect(res.status).toHaveBeenCalledWith(StatusCodes.UNPROCESSABLE_ENTITY)
         expect(res.json).toHaveBeenCalledWith({ error: 'Invalid data' })
+    })
+
+    it('should handle not finding user settings and return 404 not found', async () => {
+        ;(database.userSettings.findUnique as jest.Mock).mockResolvedValue(undefined)
+
+        await getNotificationSettingsHandler(req, res)
+
+        expect(database.userSettings.findUnique).toHaveBeenCalledTimes(1)
+        expect(res.status).toHaveBeenCalledWith(StatusCodes.NOT_FOUND)
     })
 })
