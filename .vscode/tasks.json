@@ -201,7 +201,7 @@
     {
       "label": "Casablanca",
       "type": "shell",
-      "command": "sleep 3 && ./scripts/start-local-casablanca.sh",
+      "command": "sleep 3 && yarn run --top-level csb:dev:entitlements",
       "isBackground": true,
       "problemMatcher": [],
       "presentation": {
