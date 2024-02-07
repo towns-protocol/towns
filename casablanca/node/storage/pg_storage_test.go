@@ -529,3 +529,15 @@ func TestAlreadyExists(t *testing.T) {
 	err = pgEventStore.CreateStreamStorage(ctx, streamId, genesisMiniblock)
 	require.Equal(Err_ALREADY_EXISTS, AsRiverError(err).Code)
 }
+
+func TestNotFound(t *testing.T) {
+	teardownTest := setupTest()
+	defer teardownTest()
+	ctx := context.Background()
+	assert := assert.New(t)
+
+	streamId := GenNanoid()
+	result, err := pgEventStore.ReadStreamFromLastSnapshot(ctx, streamId, 0)
+	assert.Nil(result)
+	assert.Equal(Err_NOT_FOUND, AsRiverError(err).Code)
+}
