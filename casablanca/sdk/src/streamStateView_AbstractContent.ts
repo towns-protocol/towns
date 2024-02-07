@@ -1,6 +1,6 @@
 import TypedEmitter from 'typed-emitter'
 import { EncryptedData } from '@river/proto'
-import { ConfirmedTimelineEvent, RemoteTimelineEvent } from './types'
+import { ConfirmedTimelineEvent, RemoteTimelineEvent, StreamTimelineEvent } from './types'
 import { StreamStateView_Membership } from './streamStateView_Membership'
 import { DecryptedContent, EncryptedContent, toDecryptedContent } from './encryptedContentTypes'
 import { StreamStateView_UserMetadata } from './streamStateView_UserMetadata'
@@ -52,6 +52,10 @@ export abstract class StreamStateView_AbstractContent {
         _content: DecryptedContent,
         _stateEmitter: TypedEmitter<StreamStateEvents> | undefined,
     ): void {
+        //
+    }
+
+    onAppendLocalEvent(_event: StreamTimelineEvent): void {
         //
     }
 

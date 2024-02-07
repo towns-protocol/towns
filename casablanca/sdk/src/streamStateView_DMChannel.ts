@@ -2,7 +2,12 @@ import TypedEmitter from 'typed-emitter'
 import { DmChannelPayload_Snapshot, Snapshot, DmChannelPayload } from '@river/proto'
 import { StreamStateView_AbstractContent } from './streamStateView_AbstractContent'
 import { StreamStateView_Membership } from './streamStateView_Membership'
-import { ConfirmedTimelineEvent, ParsedEvent, RemoteTimelineEvent } from './types'
+import {
+    ConfirmedTimelineEvent,
+    ParsedEvent,
+    RemoteTimelineEvent,
+    StreamTimelineEvent,
+} from './types'
 import { StreamStateView_UserMetadata } from './streamStateView_UserMetadata'
 import { DecryptedContent } from './encryptedContentTypes'
 import { StreamEncryptionEvents, StreamStateEvents } from './streamEvents'
@@ -141,6 +146,10 @@ export class StreamStateView_DMChannel extends StreamStateView_AbstractContent {
     ): void {
         super.onConfirmedEvent(event, stateEmitter)
         this.userMetadata.onConfirmedEvent(event, stateEmitter)
+    }
+
+    onAppendLocalEvent(event: StreamTimelineEvent): void {
+        this.lastEventCreatedAtEpocMs = event.createdAtEpocMs
     }
 
     private updateLastEvent(event: ParsedEvent) {

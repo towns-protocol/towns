@@ -624,6 +624,8 @@ export class StreamStateView {
         } satisfies StreamTimelineEvent
         this.events.set(localId, timelineEvent)
         this.timeline.push(timelineEvent)
+        this.getContent().onAppendLocalEvent(timelineEvent)
+
         emitter?.emit('streamUpdated', this.streamId, this.contentKind, {
             appended: [timelineEvent],
         })

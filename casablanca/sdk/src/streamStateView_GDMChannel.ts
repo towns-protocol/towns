@@ -2,7 +2,12 @@ import TypedEmitter from 'typed-emitter'
 import { GdmChannelPayload, GdmChannelPayload_Snapshot, Snapshot } from '@river/proto'
 import { StreamStateView_AbstractContent } from './streamStateView_AbstractContent'
 import { StreamStateView_Membership } from './streamStateView_Membership'
-import { ConfirmedTimelineEvent, ParsedEvent, RemoteTimelineEvent } from './types'
+import {
+    ConfirmedTimelineEvent,
+    ParsedEvent,
+    RemoteTimelineEvent,
+    StreamTimelineEvent,
+} from './types'
 import { StreamStateView_UserMetadata } from './streamStateView_UserMetadata'
 import { DecryptedContent } from './encryptedContentTypes'
 import { StreamEncryptionEvents, StreamEvents, StreamStateEvents } from './streamEvents'
@@ -152,6 +157,10 @@ export class StreamStateView_GDMChannel extends StreamStateView_AbstractContent 
     ): void {
         super.onConfirmedEvent(event, emitter)
         this.userMetadata.onConfirmedEvent(event, emitter)
+    }
+
+    onAppendLocalEvent(event: StreamTimelineEvent): void {
+        this.lastEventCreatedAtEpocMs = event.createdAtEpocMs
     }
 
     getUserMetadata(): StreamStateView_UserMetadata {
