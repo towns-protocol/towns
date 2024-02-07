@@ -29,6 +29,7 @@ export type FileUpload = {
 const MediaDropContext = createContext<{
     files: FileUpload[]
     channelId: string
+    eventId?: string
     isUploadingFiles: boolean
     removeFile?: (id: string) => void
     uploadFiles?: () => Promise<Attachment[]>
@@ -180,6 +181,7 @@ export const MediaDropContextProvider = ({
                 files: files,
                 addFiles: addFiles,
                 channelId: props.channelId,
+                eventId: props.eventId,
                 removeFile: removeFile,
                 uploadFiles: uploadFiles,
                 isUploadingFiles: isUploadingFiles,

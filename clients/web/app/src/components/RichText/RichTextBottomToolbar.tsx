@@ -70,7 +70,7 @@ export const RichTextBottomToolbar = (props: Props) => {
         [mediaDropContext],
     )
 
-    const mediaInputId = 'media' + mediaDropContext.channelId
+    const mediaInputId = 'media' + mediaDropContext.channelId + mediaDropContext.eventId
 
     return (
         <Stack horizontal gap="xs" alignItems="center">
