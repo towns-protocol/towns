@@ -54,10 +54,18 @@ function start_follower() {
     echo "MAX_MSG_DELAY_MS: ${MAX_MSG_DELAY_MS}"
     echo "JOIN_FACTOR: ${JOIN_FACTOR}"
 
+    # 30 minutes
+    local safety_margin_ms=1800000
+
+    # convert load_test_duration_ms to number, and add 30 minutes
+    local timeout_duration_ms=$(expr $LOAD_TEST_DURATION_MS + $safety_margin_ms)
+
     sdk_dir="$MONOREPO_ROOT/casablanca/sdk"
     pushd $sdk_dir
-        pwd
-        yarn run test:ci:stress-test-follower
+        if ! ( timeout $timeout_duration_ms yarn run test:ci:stress-test-follower ); then
+            echo "Terminating the follower"
+            exit 1
+        fi
     popd
 }
 

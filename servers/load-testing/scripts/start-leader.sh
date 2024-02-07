@@ -54,10 +54,19 @@ function start_leader() {
     echo "CHANNEL_SAMPLING_RATE: ${CHANNEL_SAMPLING_RATE}"
     echo "LOAD_TEST_DURATION_MS: ${LOAD_TEST_DURATION_MS}"
 
+    # 30 minutes
+    local safety_margin_ms=1800000
+
+    # convert load_test_duration_ms to number, and add 30 minutes
+    local timeout_duration_ms=$(expr $LOAD_TEST_DURATION_MS + $safety_margin_ms)
+
     sdk_dir="$MONOREPO_ROOT/casablanca/sdk"
     pushd $sdk_dir
         pwd
-        yarn run test:ci:stress-test-leader
+        if ! ( timeout $timeout_duration_ms yarn run test:ci:stress-test-leader ); then
+            echo "Terminating the leader"
+            exit 1
+        fi
     popd
 }
 
