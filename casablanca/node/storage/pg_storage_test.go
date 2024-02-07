@@ -7,10 +7,12 @@ import (
 	"testing"
 
 	. "github.com/river-build/river/base"
+	. "github.com/river-build/river/protocol"
 	. "github.com/river-build/river/shared"
 	"github.com/river-build/river/testutils/dbtestutils"
 
 	"github.com/stretchr/testify/assert"
+	"github.com/stretchr/testify/require"
 )
 
 var (
@@ -511,4 +513,19 @@ func TestGetMiniblocksConsistencyChecks(t *testing.T) {
 	assert.Contains(err.Error(), "Miniblocks consistency violation")
 	assert.Equal(AsRiverError(err).GetTag("ActualBlockNumber"), 3)
 	assert.Equal(AsRiverError(err).GetTag("ExpectedBlockNumber"), 2)
+}
+
+func TestAlreadyExists(t *testing.T) {
+	teardownTest := setupTest()
+	defer teardownTest()
+	ctx := context.Background()
+	require := require.New(t)
+
+	streamId := GenNanoid()
+	genesisMiniblock := []byte("genesisMinoblock")
+	err := pgEventStore.CreateStreamStorage(ctx, streamId, genesisMiniblock)
+	require.NoError(err)
+
+	err = pgEventStore.CreateStreamStorage(ctx, streamId, genesisMiniblock)
+	require.Equal(Err_ALREADY_EXISTS, AsRiverError(err).Code)
 }

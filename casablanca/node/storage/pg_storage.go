@@ -17,7 +17,9 @@ import (
 	"github.com/river-build/river/dlog"
 	"github.com/river-build/river/infra"
 
+	"github.com/jackc/pgerrcode"
 	"github.com/jackc/pgx/v5"
+	"github.com/jackc/pgx/v5/pgconn"
 	"github.com/jackc/pgx/v5/pgxpool"
 	"golang.org/x/crypto/sha3"
 )
@@ -40,7 +42,7 @@ func (s *PostgresEventStore) CreateStreamStorage(ctx context.Context, streamId s
 	err := s.createStream(ctx, streamId, genesisMiniblock)
 	if err != nil {
 		dbCalls.FailIncForChild("CreateStream")
-		return s.enrichErrorWithNodeInfo(AsRiverError(err).Func("pg.CreateStream").Tag("streamId", streamId))
+		return s.enrichErrorWithNodeInfo(AsRiverError(err, Err_DB_OPERATION_FAILURE).Func("pg.CreateStream").Tag("streamId", streamId))
 	}
 	dbCalls.PassIncForChild("CreateStream")
 	return nil
@@ -51,9 +53,8 @@ func (s *PostgresEventStore) createStream(ctx context.Context, streamId string, 
 
 	tx, err := startTx(ctx, s.pool)
 	if err != nil {
-		return WrapRiverError(Err_DB_OPERATION_FAILURE, err).Message("error starting transaction")
+		return err
 	}
-
 	defer s.rollbackTx(tx, "createStream")
 
 	err = s.compareUUID(ctx, tx)
@@ -61,61 +62,27 @@ func (s *PostgresEventStore) createStream(ctx context.Context, streamId string, 
 		return err
 	}
 
-	// create record in es table
-	err = s.createEventStreamInstance(ctx, tx, streamId)
-	if err != nil {
-		return WrapRiverError(Err_MINIBLOCKS_STORAGE_FAILURE, err).Message("error creating stream instance")
-	}
-
-	// create related miniblocks table and put there genesis block
 	tableSuffix := createTableSuffix(streamId)
-
-	// Create partition in miniblocks table for new stream
-	_, err = tx.Exec(
-		ctx,
-		fmt.Sprintf(`CREATE TABLE miniblocks_%s PARTITION OF miniblocks FOR VALUES IN ($1)`, tableSuffix),
-		streamId,
+	sql := fmt.Sprintf(
+		`INSERT INTO es (stream_id, latest_snapshot_miniblock) VALUES ($1, 0);
+		CREATE TABLE miniblocks_%s PARTITION OF miniblocks FOR VALUES IN ($1);
+		CREATE TABLE minipools_%s PARTITION OF minipools FOR VALUES IN ($1);
+		INSERT INTO miniblocks (stream_id, seq_num, blockdata) VALUES ($1, 0, $2);
+		INSERT INTO minipools (stream_id, generation, slot_num) VALUES ($1, 1, -1);`,
+		tableSuffix,
+		tableSuffix,
 	)
+	_, err = tx.Exec(ctx, sql, streamId, genesisMiniblock)
 	if err != nil {
-		return WrapRiverError(Err_DB_OPERATION_FAILURE, err).Message("error creating miniblock table")
+		if pgerr, ok := err.(*pgconn.PgError); ok {
+			if pgerr.Code == pgerrcode.UniqueViolation {
+				return WrapRiverError(Err_ALREADY_EXISTS, err).Message("stream already exists")
+			}
+		}
+		return err
 	}
 
-	// Insert genesis miniblock
-	_, err = tx.Exec(
-		ctx,
-		`INSERT INTO miniblocks (stream_id, seq_num, blockdata) VALUES ($1, $2, $3)`,
-		streamId,
-		0,
-		genesisMiniblock,
-	)
-	if err != nil {
-		return WrapRiverError(Err_DB_OPERATION_FAILURE, err).Message("error inserting genesis miniblock")
-	}
-
-	// create related minipool table and insert there -1 record
-	_, err = tx.Exec(ctx, fmt.Sprintf(`CREATE TABLE minipools_%s PARTITION OF minipools FOR VALUES IN ($1)`, tableSuffix), streamId)
-	if err != nil {
-		return WrapRiverError(Err_DB_OPERATION_FAILURE, err).Message("error creating minipool table")
-	}
-
-	_, err = tx.Exec(
-		ctx,
-		`INSERT INTO minipools (stream_id, generation, slot_num, envelope) VALUES ($1, $2, $3, $4)`,
-		streamId,
-		1,
-		-1,
-		nil,
-	)
-	if err != nil {
-		return WrapRiverError(Err_DB_OPERATION_FAILURE, err).Message("error inserting minipool record")
-	}
-
-	err = tx.Commit(ctx)
-	if err != nil {
-		return WrapRiverError(Err_DB_OPERATION_FAILURE, err).Message("error committing transaction")
-	}
-
-	return nil
+	return tx.Commit(ctx)
 }
 
 func (s *PostgresEventStore) ReadStreamFromLastSnapshot(
@@ -731,31 +698,6 @@ func (s *PostgresEventStore) CleanupStorage(ctx context.Context) error {
 
 func (s *PostgresEventStore) enrichErrorWithNodeInfo(err *RiverErrorImpl) *RiverErrorImpl {
 	return err.Tag("currentUUID", s.nodeUUID).Tag("currentInfo", getCurrentNodeProcessInfo(s.schemaName))
-}
-
-// Creates record in es table for the stream
-// Should always be used in scope of open transaction tx
-func (s *PostgresEventStore) createEventStreamInstance(ctx context.Context, tx pgx.Tx, streamId string) error {
-	defer infra.StoreExecutionTimeMetrics("createEventStreamInstance", infra.DB_CALLS_CATEGORY, time.Now())
-
-	err := s.compareUUID(ctx, tx)
-	if err != nil {
-		return err
-	}
-
-	_, err = tx.Exec(ctx, `INSERT INTO es (stream_id, latest_snapshot_miniblock) VALUES ($1, 0)`, streamId)
-	if err != nil {
-		return s.enrichErrorWithNodeInfo(
-			WrapRiverError(
-				Err_DB_OPERATION_FAILURE,
-				err,
-			).Func("createEventStreamInstance").
-				Message("Create event stream instance error").
-				Tag("streamId", streamId),
-		)
-	}
-
-	return nil
 }
 
 // GetStreams returns a list of all event streams
