@@ -102,7 +102,7 @@ func (s *streamImpl) ProposeNextMiniblock(ctx context.Context, forceSnapshot boo
 		return nil, nil
 	}
 
-	return s.view.ProposeNextMiniblock(ctx, forceSnapshot)
+	return s.view.ProposeNextMiniblock(ctx, s.config, forceSnapshot)
 }
 
 func (s *streamImpl) MakeMiniblockHeader(

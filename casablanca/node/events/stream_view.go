@@ -35,9 +35,9 @@ type StreamView interface {
 	MiniblocksFromLastSnapshot() []*Miniblock
 	SyncCookie(localNodeAddress string) *SyncCookie
 	LastBlock() *miniblockInfo
-	ValidateNextEvent(parsedEvent *ParsedEvent, config *config.RecencyConstraintsConfig) error
+	ValidateNextEvent(cfg *config.RecencyConstraintsConfig, parsedEvent *ParsedEvent) error
 	GetStats() StreamViewStats
-	ProposeNextMiniblock(ctx context.Context, forceSnapshot bool) (*MiniblockProposal, error)
+	ProposeNextMiniblock(ctx context.Context, cfg *config.StreamConfig, forceSnapshot bool) (*MiniblockProposal, error)
 }
 
 func MakeStreamView(streamData *storage.ReadStreamFromLastSnapshotResult) (*streamViewImpl, error) {
@@ -175,7 +175,7 @@ func (r *streamViewImpl) LastBlock() *miniblockInfo {
 }
 
 // Returns nil if there are no events to propose.
-func (r *streamViewImpl) ProposeNextMiniblock(ctx context.Context, forceSnapshot bool) (*MiniblockProposal, error) {
+func (r *streamViewImpl) ProposeNextMiniblock(ctx context.Context, cfg *config.StreamConfig, forceSnapshot bool) (*MiniblockProposal, error) {
 	if r.minipool.events.Len() == 0 && !forceSnapshot {
 		return nil, nil
 	}
@@ -187,7 +187,7 @@ func (r *streamViewImpl) ProposeNextMiniblock(ctx context.Context, forceSnapshot
 		Hashes:            hashes,
 		NewMiniblockNum:   r.minipool.generation,
 		PrevMiniblockHash: r.LastBlock().headerEvent.Hash,
-		ShouldSnapshot:    forceSnapshot || r.shouldSnapshot(ctx),
+		ShouldSnapshot:    forceSnapshot || r.shouldSnapshot(cfg),
 	}, nil
 }
 
@@ -278,7 +278,7 @@ func (r *streamViewImpl) makeMiniblockHeader(
 	}, events, nil
 }
 
-func (r *streamViewImpl) copyAndApplyBlock(miniblock *miniblockInfo, config *config.StreamConfig) (*streamViewImpl, error) {
+func (r *streamViewImpl) copyAndApplyBlock(miniblock *miniblockInfo, cfg *config.StreamConfig) (*streamViewImpl, error) {
 	header := miniblock.headerEvent.Event.GetMiniblockHeader()
 	if header == nil {
 		return nil, RiverError(
@@ -338,7 +338,7 @@ func (r *streamViewImpl) copyAndApplyBlock(miniblock *miniblockInfo, config *con
 	var snapshot *Snapshot
 	if header.Snapshot != nil {
 		snapshot = header.Snapshot
-		startIndex = max(0, len(r.blocks)-config.RecencyConstraints.Generations)
+		startIndex = max(0, len(r.blocks)-cfg.RecencyConstraints.Generations)
 		snapshotIndex = len(r.blocks) - startIndex
 	} else {
 		startIndex = 0
@@ -458,25 +458,24 @@ func (r *streamViewImpl) SyncCookie(localNodeAddress string) *SyncCookie {
 	}
 }
 
-func (r *streamViewImpl) getMinEventsPerSnapshot(ctx context.Context) int {
-	cfg := config.FromCtx(ctx)
+func (r *streamViewImpl) getMinEventsPerSnapshot(cfg *config.StreamConfig) int {
 	// does this stream have a custom value for it's prefix?
-	if cfg.Stream.MinEventsPerSnapshot != nil {
+	if cfg.MinEventsPerSnapshot != nil {
 		streamPrefix := strings.ToLower(GetStreamIdPrefix(r.streamId))
-		if value, ok := cfg.Stream.MinEventsPerSnapshot[streamPrefix]; ok {
+		if value, ok := cfg.MinEventsPerSnapshot[streamPrefix]; ok {
 			return value
 		}
 	}
 	// is the value set in the config?
-	if cfg.Stream.DefaultMinEventsPerSnapshot != 0 {
-		return cfg.Stream.DefaultMinEventsPerSnapshot
+	if cfg.DefaultMinEventsPerSnapshot != 0 {
+		return cfg.DefaultMinEventsPerSnapshot
 	}
 	// nothing is set, return magic number
 	return 100
 }
 
-func (r *streamViewImpl) shouldSnapshot(ctx context.Context) bool {
-	minEventsPerSnapshot := r.getMinEventsPerSnapshot(ctx)
+func (r *streamViewImpl) shouldSnapshot(cfg *config.StreamConfig) bool {
+	minEventsPerSnapshot := r.getMinEventsPerSnapshot(cfg)
 
 	count := 0
 	// count the events in the minipool
@@ -498,7 +497,7 @@ func (r *streamViewImpl) shouldSnapshot(ctx context.Context) bool {
 	return false
 }
 
-func (r *streamViewImpl) ValidateNextEvent(parsedEvent *ParsedEvent, config *config.RecencyConstraintsConfig) error {
+func (r *streamViewImpl) ValidateNextEvent(cfg *config.RecencyConstraintsConfig, parsedEvent *ParsedEvent) error {
 	// the preceding miniblock hash should reference a recent block
 	// the event should not already exist in any block after the preceding miniblock
 	// the event should not exist in the minipool
@@ -524,7 +523,7 @@ func (r *streamViewImpl) ValidateNextEvent(parsedEvent *ParsedEvent, config *con
 	}
 	// make sure we're recent
 	// if the user isn't adding the latest block, allow it if the block after was recently created
-	if foundBlockAt < len(r.blocks)-1 && !r.isRecentBlock(r.blocks[foundBlockAt+1], config) {
+	if foundBlockAt < len(r.blocks)-1 && !r.isRecentBlock(r.blocks[foundBlockAt+1], cfg) {
 		return RiverError(
 			Err_BAD_PREV_MINIBLOCK_HASH,
 			"prevMiniblockHash did not reference a recent block",
@@ -560,9 +559,9 @@ func (r *streamViewImpl) ValidateNextEvent(parsedEvent *ParsedEvent, config *con
 	return nil
 }
 
-func (r *streamViewImpl) isRecentBlock(block *miniblockInfo, config *config.RecencyConstraintsConfig) bool {
+func (r *streamViewImpl) isRecentBlock(block *miniblockInfo, cfg *config.RecencyConstraintsConfig) bool {
 	currentTime := time.Now()
-	maxAgeDuration := time.Duration(config.AgeSeconds) * time.Second
+	maxAgeDuration := time.Duration(cfg.AgeSeconds) * time.Second
 	diff := currentTime.Sub(block.header().Timestamp.AsTime())
 	return diff <= maxAgeDuration
 }

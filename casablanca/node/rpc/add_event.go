@@ -55,7 +55,7 @@ func (s *Service) addParsedEvent(ctx context.Context, streamId string, parsedEve
 	}
 
 	// check preceding miniblock hash
-	err = streamView.ValidateNextEvent(parsedEvent, &s.streamConfig.RecencyConstraints)
+	err = streamView.ValidateNextEvent(&s.streamConfig.RecencyConstraints, parsedEvent)
 	if err != nil {
 		return err
 	}

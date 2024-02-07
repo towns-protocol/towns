@@ -121,13 +121,13 @@ func TestLoad(t *testing.T) {
 	assert.Equal(t, 0, len(view.minipool.events.Values))
 
 	// check for invalid config
-	num := view.getMinEventsPerSnapshot(context.Background())
+	num := view.getMinEventsPerSnapshot(&config.StreamConfig{})
 	assert.Equal(t, num, 100) // hard coded default
 
 	// check snapshot generation
-	num = view.getMinEventsPerSnapshot(ctx)
+	num = view.getMinEventsPerSnapshot(&streamConfig_t)
 	assert.Equal(t, minEventsPerSnapshot, num)
-	assert.Equal(t, false, view.shouldSnapshot(ctx))
+	assert.Equal(t, false, view.shouldSnapshot(&streamConfig_t))
 
 	blockHash := view.LastBlock().Hash
 
@@ -139,16 +139,16 @@ func TestLoad(t *testing.T) {
 	)
 	assert.NoError(t, err)
 	nextEvent := parsedEvent(t, join2)
-	err = view.ValidateNextEvent(nextEvent, &recencyConstraintsConfig_t)
+	err = view.ValidateNextEvent(&recencyConstraintsConfig_t, nextEvent)
 	assert.NoError(t, err)
 	view, err = view.copyAndAddEvent(nextEvent)
 	assert.NoError(t, err)
 
 	// with one new event, we shouldn't snapshot yet
-	assert.Equal(t, false, view.shouldSnapshot(ctx))
+	assert.Equal(t, false, view.shouldSnapshot(&streamConfig_t))
 
 	// and miniblocks should have nil snapshots
-	proposal, _ := view.ProposeNextMiniblock(ctx, false)
+	proposal, _ := view.ProposeNextMiniblock(ctx, &streamConfig_t, false)
 	miniblockHeader, _, _ = view.makeMiniblockHeader(ctx, proposal)
 	assert.Nil(t, miniblockHeader.Snapshot)
 
@@ -161,16 +161,16 @@ func TestLoad(t *testing.T) {
 	assert.NoError(t, err)
 	nextEvent = parsedEvent(t, join3)
 	assert.NoError(t, err)
-	err = view.ValidateNextEvent(nextEvent, &recencyConstraintsConfig_t)
+	err = view.ValidateNextEvent(&recencyConstraintsConfig_t, nextEvent)
 	assert.NoError(t, err)
 	view, err = view.copyAndAddEvent(nextEvent)
 	assert.NoError(t, err)
 	// with two new events, we should snapshot
-	assert.Equal(t, true, view.shouldSnapshot(ctx))
+	assert.Equal(t, true, view.shouldSnapshot(&streamConfig_t))
 	assert.Equal(t, 1, len(view.blocks))
 	assert.Equal(t, 2, len(view.blocks[0].events))
 	// and miniblocks should have non - nil snapshots
-	proposal, _ = view.ProposeNextMiniblock(ctx, false)
+	proposal, _ = view.ProposeNextMiniblock(ctx, &streamConfig_t, false)
 	miniblockHeader, envelopes, _ := view.makeMiniblockHeader(ctx, proposal)
 	assert.NotNil(t, miniblockHeader.Snapshot)
 
@@ -218,17 +218,17 @@ func TestLoad(t *testing.T) {
 	assert.NoError(t, err)
 	nextEvent = parsedEvent(t, join4)
 	assert.NoError(t, err)
-	err = newSV1.ValidateNextEvent(nextEvent, &recencyConstraintsConfig_t)
+	err = newSV1.ValidateNextEvent(&recencyConstraintsConfig_t, nextEvent)
 	assert.NoError(t, err)
 	_, err = newSV1.copyAndAddEvent(nextEvent)
 	assert.NoError(t, err)
 	// wait 1 second
 	time.Sleep(1 * time.Second)
 	// try with tighter recency constraints
-	err = newSV1.ValidateNextEvent(nextEvent, &config.RecencyConstraintsConfig{
+	err = newSV1.ValidateNextEvent(&config.RecencyConstraintsConfig{
 		Generations: 5,
 		AgeSeconds:  1,
-	})
+	}, nextEvent)
 	assert.Error(t, err)
 	assert.Contains(t, err.Error(), "BAD_PREV_MINIBLOCK_HASH")
 

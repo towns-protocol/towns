@@ -313,10 +313,10 @@ func StartServer(ctx context.Context, cfg *config.Config, wallet *crypto.Wallet)
 	return closer, actualPort, streamService.exitSignal, nil
 }
 
-func RunServer(ctx context.Context, config *config.Config) error {
+func RunServer(ctx context.Context, cfg *config.Config) error {
 	log := dlog.FromCtx(ctx)
 
-	closer, _, exitSignal, error := StartServer(ctx, config, nil)
+	closer, _, exitSignal, error := StartServer(ctx, cfg, nil)
 	if error != nil {
 		log.Error("Failed to start server", "error", error)
 		return error
