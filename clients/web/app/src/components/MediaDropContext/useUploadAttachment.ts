@@ -21,9 +21,8 @@ export const useUploadAttachment = () => {
         ): Promise<Attachment> => {
             const encryptionResult = await encryptAESGCM(data)
             const chunkCount = Math.ceil(encryptionResult.ciphertext.length / CHUNK_SIZE)
-
-            const streamId = await createMediaStream(channelId, chunkCount)
-            if (!streamId) {
+            const mediaStreamInfo = await createMediaStream(channelId, chunkCount)
+            if (!mediaStreamInfo) {
                 throw new Error('Failed to create media stream')
             }
 
@@ -31,14 +30,23 @@ export const useUploadAttachment = () => {
             for (let i = 0; i < encryptionResult.ciphertext.length; i += CHUNK_SIZE) {
                 const chunk = encryptionResult.ciphertext.slice(i, i + CHUNK_SIZE)
                 setProgress(i / encryptionResult.ciphertext.length)
-                await sendMediaPayload(streamId, chunk, chunkIndex++)
+                const result = await sendMediaPayload(
+                    mediaStreamInfo.streamId,
+                    chunk,
+                    chunkIndex++,
+                    mediaStreamInfo.prevMiniblockHash,
+                )
+                if (!result) {
+                    throw new Error('Failed to send media payload')
+                }
+                mediaStreamInfo.prevMiniblockHash = result.prevMiniblockHash
             }
             setProgress(1)
 
             return {
-                id: streamId,
+                id: mediaStreamInfo.streamId,
                 type: 'chunked_media',
-                streamId,
+                streamId: mediaStreamInfo.streamId,
                 encryption: {
                     iv: encryptionResult.iv,
                     secretKey: encryptionResult.secretKey,

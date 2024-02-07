@@ -597,7 +597,7 @@ export class Client
         channelId: string,
         chunkCount: number,
         streamSettings?: PlainMessage<StreamSettings>,
-    ): Promise<{ streamId: string }> {
+    ): Promise<{ streamId: string; prevMiniblockHash: Uint8Array }> {
         const streamId = makeUniqueMediaStreamId()
 
         this.logCall('createMedia', channelId, streamId)
@@ -625,9 +625,21 @@ export class Client
         })
 
         const unpackedResponse = await unpackStream(response.stream)
-        const stream = this.createSyncedStream(streamId)
-        await stream.initializeFromResponse(unpackedResponse)
-        return { streamId: streamId }
+        const streamView = new StreamStateView(this.userId, streamId)
+        streamView.initialize(
+            unpackedResponse.streamAndCookie.nextSyncCookie,
+            unpackedResponse.streamAndCookie.events,
+            unpackedResponse.snapshot,
+            unpackedResponse.streamAndCookie.miniblocks,
+            [],
+            unpackedResponse.prevSnapshotMiniblockNum,
+            undefined,
+            undefined,
+        )
+
+        check(isDefined(streamView.prevMiniblockHash), 'prevMiniblockHash must be defined')
+
+        return { streamId: streamId, prevMiniblockHash: streamView.prevMiniblockHash }
     }
 
     async updateChannel(
@@ -1061,12 +1073,23 @@ export class Client
         )
     }
 
-    async sendMediaPayload(streamId: string, data: Uint8Array, chunkIndex: number): Promise<void> {
+    async sendMediaPayload(
+        streamId: string,
+        data: Uint8Array,
+        chunkIndex: number,
+        prevMiniblockHash: Uint8Array,
+    ): Promise<{ prevMiniblockHash: Uint8Array }> {
         const payload = make_MediaPayload_Chunk({
             data: data,
             chunkIndex: chunkIndex,
         })
-        return this.makeEventAndAddToStream(streamId, payload, { method: 'sendMedia' })
+        return this.makeEventWithHashAndAddToStream(
+            streamId,
+            payload,
+            prevMiniblockHash,
+            undefined,
+            undefined,
+        )
     }
 
     async sendChannelMessage_Reaction(
@@ -1534,7 +1557,7 @@ export class Client
         localId?: string,
         cleartext?: string,
         retryCount?: number,
-    ): Promise<void> {
+    ): Promise<{ prevMiniblockHash: Uint8Array }> {
         const event = await makeEvent(this.signerContext, payload, prevMiniblockHash)
         const eventId = bin_toHexString(event.hash)
         if (localId) {
@@ -1572,7 +1595,7 @@ export class Client
                     expectedHash,
                 )
                 check(isDefined(expectedHash), 'expected hash not found in error')
-                await this.makeEventWithHashAndAddToStream(
+                return await this.makeEventWithHashAndAddToStream(
                     streamId,
                     payload,
                     bin_fromHexString(expectedHash),
@@ -1588,6 +1611,7 @@ export class Client
                 throw err
             }
         }
+        return { prevMiniblockHash }
     }
 
     async getStreamLastMiniblockHash(streamId: string): Promise<Uint8Array> {

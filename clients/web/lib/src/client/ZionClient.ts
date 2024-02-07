@@ -635,12 +635,14 @@ export class ZionClient implements EntitlementsDelegate {
     /************************************************
      * Media
      *************************************************/
-    public async createMediaStream(channelId: string, chunkCount: number): Promise<string> {
+    public async createMediaStream(
+        channelId: string,
+        chunkCount: number,
+    ): Promise<{ streamId: string; prevMiniblockHash: Uint8Array }> {
         if (!this.casablancaClient) {
             throw new Error("Casablanca client doesn't exist")
         }
-        const { streamId } = await this.casablancaClient.createMediaStream(channelId, chunkCount)
-        return streamId
+        return await this.casablancaClient.createMediaStream(channelId, chunkCount)
     }
 
     /************************************************
@@ -1316,11 +1318,21 @@ export class ZionClient implements EntitlementsDelegate {
         this._eventHandlers?.onSendMessage?.(roomId, message, options)
     }
 
-    public async sendMediaPayload(streamId: string, data: Uint8Array, chunkIndex: number) {
+    public async sendMediaPayload(
+        streamId: string,
+        data: Uint8Array,
+        chunkIndex: number,
+        prevMiniblockHash: Uint8Array,
+    ): Promise<{ prevMiniblockHash: Uint8Array }> {
         if (!this.casablancaClient) {
             throw new Error('Casablanca client not initialized')
         }
-        await this.casablancaClient.sendMediaPayload(streamId, data, chunkIndex)
+        return await this.casablancaClient.sendMediaPayload(
+            streamId,
+            data,
+            chunkIndex,
+            prevMiniblockHash,
+        )
     }
 
     /************************************************

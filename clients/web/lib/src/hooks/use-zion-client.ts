@@ -76,7 +76,10 @@ interface ZionClientImpl {
     waitForUpdateChannelTransaction: (
         context: ChannelUpdateTransactionContext | undefined,
     ) => Promise<ChannelUpdateTransactionContext | undefined>
-    createMediaStream: (channelId: string, chunkCount: number) => Promise<string | undefined>
+    createMediaStream: (
+        channelId: string,
+        chunkCount: number,
+    ) => Promise<{ streamId: string; prevMiniblockHash: Uint8Array } | undefined>
     createRoleTransaction: (
         spaceNetworkId: string,
         roleName: string,
@@ -155,7 +158,12 @@ interface ZionClientImpl {
     sendMessage: (roomId: string, message: string, options?: SendMessageOptions) => Promise<void>
     retrySendMessage: (roomId: string, localEventId: string) => Promise<void>
     sendReaction: (roomId: string, eventId: string, reaction: string) => Promise<void>
-    sendMediaPayload: (streamId: string, data: Uint8Array, chunkIndex: number) => Promise<void>
+    sendMediaPayload: (
+        streamId: string,
+        data: Uint8Array,
+        chunkIndex: number,
+        prevMiniblockHash: Uint8Array,
+    ) => Promise<{ prevMiniblockHash: Uint8Array } | undefined>
     sendReadReceipt: (marker: FullyReadMarker) => Promise<void>
     setAvatarUrl: (ravatarUrl: string) => Promise<void>
     setRoomProperties: (roomId: string, title: string, topic: string) => Promise<void>

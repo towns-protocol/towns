@@ -19,15 +19,16 @@ describe('mediaTests', () => {
         await bobsClient.stop()
     })
 
-    async function bobCreateMediaStream(chunkCount: number): Promise<string> {
+    async function bobCreateMediaStream(
+        chunkCount: number,
+    ): Promise<{ streamId: string; prevMiniblockHash: Uint8Array }> {
         const spaceId = makeSpaceStreamId('bobs-space-' + genId())
         await expect(bobsClient.createSpace(spaceId)).toResolve()
 
         const channelId = makeChannelStreamId('bobs-channel-' + genId())
         await expect(bobsClient.createChannel(spaceId, 'Channel', 'Topic', channelId)).toResolve()
 
-        const { streamId } = await bobsClient.createMediaStream(channelId, chunkCount)
-        return streamId
+        return await bobsClient.createMediaStream(channelId, chunkCount)
     }
 
     test('clientCanCreateMediaStream', async () => {
@@ -35,30 +36,45 @@ describe('mediaTests', () => {
     })
 
     test('clientCanSendMediaPayload', async () => {
-        const mediaStreamId = await bobCreateMediaStream(10)
+        const mediaStreamInfo = await bobCreateMediaStream(10)
+
         const chunk = new Uint8Array(100)
         for (let i = 0; i < 10; i++) {
-            await expect(bobsClient.sendMediaPayload(mediaStreamId, chunk, i)).toResolve()
+            const result = await bobsClient.sendMediaPayload(
+                mediaStreamInfo.streamId,
+                chunk,
+                i,
+                mediaStreamInfo.prevMiniblockHash,
+            )
+            mediaStreamInfo.prevMiniblockHash = result.prevMiniblockHash
         }
     })
 
     test('chunkIndexNeedsToBeWithinBounds', async () => {
-        const mediaStreamId = await bobCreateMediaStream(10)
+        const result = await bobCreateMediaStream(10)
         const chunk = new Uint8Array(100)
-        await expect(bobsClient.sendMediaPayload(mediaStreamId, chunk, -1)).toReject()
-        await expect(bobsClient.sendMediaPayload(mediaStreamId, chunk, 10)).toReject()
+        await expect(
+            bobsClient.sendMediaPayload(result.streamId, chunk, -1, result.prevMiniblockHash),
+        ).toReject()
+        await expect(
+            bobsClient.sendMediaPayload(result.streamId, chunk, 10, result.prevMiniblockHash),
+        ).toReject()
     })
 
     test('chunkSizeCanBeAtLimit', async () => {
-        const mediaStreamId = await bobCreateMediaStream(10)
+        const result = await bobCreateMediaStream(10)
         const chunk = new Uint8Array(500000)
-        await expect(bobsClient.sendMediaPayload(mediaStreamId, chunk, 0)).toResolve()
+        await expect(
+            bobsClient.sendMediaPayload(result.streamId, chunk, 0, result.prevMiniblockHash),
+        ).toResolve()
     })
 
     test('chunkSizeNeedsToBeWithinLimit', async () => {
-        const mediaStreamId = await bobCreateMediaStream(10)
+        const result = await bobCreateMediaStream(10)
         const chunk = new Uint8Array(500001)
-        await expect(bobsClient.sendMediaPayload(mediaStreamId, chunk, 0)).toReject()
+        await expect(
+            bobsClient.sendMediaPayload(result.streamId, chunk, 0, result.prevMiniblockHash),
+        ).toReject()
     })
 
     test('chunkCountNeedsToBeWithinLimit', async () => {
@@ -66,16 +82,16 @@ describe('mediaTests', () => {
     })
 
     test('clientCanOnlyPostToTheirOwnMediaStream', async () => {
-        const mediaStreamId = await bobCreateMediaStream(10)
+        const result = await bobCreateMediaStream(10)
         const chunk = new Uint8Array(100)
 
         const alicesClient = await makeTestClient()
         await alicesClient.initializeUser()
         alicesClient.startSync()
 
-        // @ts-ignore
-        await alicesClient.initStream(mediaStreamId)
-        await expect(alicesClient.sendMediaPayload(mediaStreamId, chunk, 5)).toReject()
+        await expect(
+            alicesClient.sendMediaPayload(result.streamId, chunk, 5, result.prevMiniblockHash),
+        ).toReject()
         await alicesClient.stop()
     })
 
