@@ -479,7 +479,7 @@ describe('isEntitledToSpace and isEntitledToChannel tests', () => {
         /** Assert */
         expect(isEntitledToChannel).toBe(false)
 
-        await alice.updateRoleTransaction(
+        const transaction = await alice.updateRoleTransaction(
             spaceId,
             roleId!.roleId,
             roleName,
@@ -488,6 +488,8 @@ describe('isEntitledToSpace and isEntitledToChannel tests', () => {
             [bobAccountAddress],
             alice.provider.wallet,
         )
+
+        await transaction.transaction?.wait()
         /** Act */
         // test the user's entitlement to the space
         const isNowEntitledToChannel = await bobWithNft.isEntitled(

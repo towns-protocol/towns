@@ -224,7 +224,7 @@ function TestComponent(args: {
     // handle click to update a role
     const onClickUpdateRole = useCallback(() => {
         const handleClick = async () => {
-            await updateRoleTransaction(
+            const txn = await updateRoleTransaction(
                 spaceNetworkId,
                 roleId,
                 args.updatedRoleName,
@@ -233,6 +233,7 @@ function TestComponent(args: {
                 args.updatedRoleUsers,
                 args.signer,
             )
+            await txn?.transaction?.wait()
         }
         void handleClick()
     }, [args, spaceNetworkId, roleId, updateRoleTransaction])
