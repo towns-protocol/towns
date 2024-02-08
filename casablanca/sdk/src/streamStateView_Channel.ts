@@ -11,11 +11,16 @@ export class StreamStateView_Channel extends StreamStateView_AbstractContent {
     readonly streamId: string
     readonly memberships: StreamStateView_Membership
     spaceId: string = ''
+    private reachedRenderableContent = false
 
     constructor(userId: string, streamId: string) {
         super()
         this.memberships = new StreamStateView_Membership(userId, streamId)
         this.streamId = streamId
+    }
+
+    needsScrollback(): boolean {
+        return !this.reachedRenderableContent
     }
 
     applySnapshot(
@@ -39,6 +44,7 @@ export class StreamStateView_Channel extends StreamStateView_AbstractContent {
             case 'inception':
                 break
             case 'message':
+                this.reachedRenderableContent = true
                 this.decryptEvent(
                     'channelMessage',
                     event,
@@ -48,6 +54,7 @@ export class StreamStateView_Channel extends StreamStateView_AbstractContent {
                 )
                 break
             case 'membership':
+                this.reachedRenderableContent = true
                 // nothing to do, membership was conveyed in the snapshot
                 break
             case undefined:
@@ -69,6 +76,7 @@ export class StreamStateView_Channel extends StreamStateView_AbstractContent {
             case 'inception':
                 break
             case 'message':
+                this.reachedRenderableContent = true
                 this.decryptEvent(
                     'channelMessage',
                     event,
@@ -78,6 +86,7 @@ export class StreamStateView_Channel extends StreamStateView_AbstractContent {
                 )
                 break
             case 'membership':
+                this.reachedRenderableContent = true
                 this.memberships.appendMembershipEvent(
                     event.hashStr,
                     payload.content.value,

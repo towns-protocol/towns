@@ -66,4 +66,8 @@ export abstract class StreamStateView_AbstractContent {
     getChannelMetadata(): StreamStateView_ChannelMetadata | undefined {
         return undefined
     }
+
+    needsScrollback(): boolean {
+        return false
+    }
 }
