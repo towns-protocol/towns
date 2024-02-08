@@ -142,6 +142,7 @@ export const RichTextBottomToolbar = (props: Props) => {
                         </Box>
                     )}
                     <input
+                        multiple
                         type="file"
                         name="image-file-input"
                         id={mediaInputId}
