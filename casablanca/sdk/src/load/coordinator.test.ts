@@ -292,15 +292,27 @@ describe('Stress test', () => {
                 log('Waiting')
                 await pauseForXMiliseconds(1000)
             }
-            await pauseForXMiliseconds(60000)
-            let dbSize = await redis.dbsize()
-            log('DB size', dbSize)
-            await pauseForXMiliseconds(120000)
-            dbSize = await redis.dbsize()
-            log('DB size #2', dbSize)
+            let messagesProcessed = false
+            let timeCounter = 1000
+            let lastDbSize = 0
+            while (!messagesProcessed && timeCounter < 300000) {
+                lastDbSize = await redis.dbsize()
+                await pauseForXMiliseconds(1000)
+                timeCounter += 1000
+                if (lastDbSize === 0) {
+                    messagesProcessed = true
+                }
+                log(
+                    '# of not processed messages: ',
+                    lastDbSize,
+                    ' at ',
+                    timeCounter,
+                    ' ms after all sent',
+                )
+            }
+            log('Test executed')
             await result.riverSDK.client.stopSync()
-            expect(dbSize).toBe(0)
-            log('Test executed successfully')
+            expect(lastDbSize).toBe(0)
             await redis.quit()
         },
         loadTestDurationMs * 10,
