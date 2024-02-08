@@ -211,6 +211,7 @@ describe('Stress test', () => {
                     joinedMainTown = true
                 } catch (e) {
                     log('Cannot join town yet')
+                    log('Error:', e)
                 }
                 await new Promise((resolve) => setTimeout(resolve, 1000)) // Delay for 1 second
             }

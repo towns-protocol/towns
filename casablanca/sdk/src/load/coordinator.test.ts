@@ -290,6 +290,7 @@ describe('Stress test', () => {
 
             while (loadOverUsers.size != numFollowers) {
                 log('Waiting')
+                log('Unprocessed messages number:', await redis.dbsize())
                 await pauseForXMiliseconds(1000)
             }
             let messagesProcessed = false
