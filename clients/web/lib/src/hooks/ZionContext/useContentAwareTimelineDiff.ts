@@ -2,6 +2,7 @@ import { useEffect } from 'react'
 import { FullyReadMarker } from '@river/proto'
 import {
     Client as CasablancaClient,
+    Stream,
     isChannelStreamId,
     isDMChannelStreamId,
     isDefined,
@@ -26,24 +27,37 @@ export function useContentAwareTimelineDiffCasablanca(casablancaClient?: Casabla
         const onTimelineChange = (timelineState: TimelineStore, prev: TimelineStore) => {
             diffTimeline(timelineState, prev, userId)
         }
-        // initialize markers
-        const initFulyReadMarkers = (streamId: string) => {
+
+        // init the stream (can happen more than once)
+        const initFullyReadMarkers = (stream: Stream) => {
+            const markers = stream.view.userSettingsContent.fullyReadMarkers
+            updateFullyReadMarkersFromRemote(markers)
+        }
+        // callback for initialize stream
+        const onInitFulyReadMarkers = (streamId: string) => {
             if (streamId === casablancaClient.userSettingsStreamId) {
+                console.log('$ init fully read markers')
                 const stream = casablancaClient.stream(casablancaClient.userSettingsStreamId)
                 check(isDefined(stream), 'stream must be defined')
-                const markers = stream.view.userSettingsContent.fullyReadMarkers
-                updateFullyReadMarkersFromRemote(markers)
+                initFullyReadMarkers(stream)
+            }
+        }
+        // check if stream is intialized at time of hook
+        if (casablancaClient.userSettingsStreamId) {
+            const stream = casablancaClient.stream(casablancaClient.userSettingsStreamId)
+            if (stream && stream.view.isInitialized) {
+                initFullyReadMarkers(stream)
             }
         }
         // subscribe
         const unsubTimeline = useTimelineStore.subscribe(onTimelineChange)
         casablancaClient.on('fullyReadMarkersUpdated', fullyReadMarkersUpdated)
-        casablancaClient.on('streamInitialized', initFulyReadMarkers)
+        casablancaClient.on('streamInitialized', onInitFulyReadMarkers)
         // return ability to unsubscribe
         return () => {
             unsubTimeline()
             casablancaClient.off('fullyReadMarkersUpdated', fullyReadMarkersUpdated)
-            casablancaClient.off('streamInitialized', initFulyReadMarkers)
+            casablancaClient.off('streamInitialized', onInitFulyReadMarkers)
         }
     }, [casablancaClient])
 }
@@ -255,7 +269,7 @@ function diffAdded(
         const endUnreadWindow = eventSegment[eventSegment.length - 1].eventNum
 
         if (beginUnreadWindow > endUnreadWindow) {
-            console.log('beginUnreadWindow must be <= endUnreadWindow')
+            console.log('$ beginUnreadWindow must be <= endUnreadWindow')
             return
         }
 
