@@ -3,6 +3,7 @@ import { LookupUser, LookupUserMap } from 'types/user-lookup'
 
 export type UserLookupContextType = {
     streamId?: string
+    spaceId?: string
     users: LookupUser[]
     usersMap: LookupUserMap
 }

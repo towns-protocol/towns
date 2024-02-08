@@ -1,7 +1,7 @@
 import React, { useEffect, useRef } from 'react'
 import { Outlet, useNavigate, useOutlet, useParams } from 'react-router'
 import { useSearchParams } from 'react-router-dom'
-import { GlobalContextUserLookupProvider, useZionContext } from 'use-zion-client'
+import { useZionContext } from 'use-zion-client'
 import { DirectMessagesPanel } from '@components/DirectMessages/DirectMessages'
 import { ZLayerBox } from '@components/ZLayer/ZLayerContext'
 import { Box, Heading, Icon, Paragraph, Stack } from '@ui'
@@ -26,14 +26,12 @@ export const DirectMessages = () => {
             return <Outlet />
         }
         return (
-            <GlobalContextUserLookupProvider>
-                <Box absoluteFill background="level1">
-                    <DirectMessagesPanel />
-                    <ZLayerBox>
-                        <Outlet />
-                    </ZLayerBox>
-                </Box>
-            </GlobalContextUserLookupProvider>
+            <Box absoluteFill background="level1">
+                <DirectMessagesPanel />
+                <ZLayerBox>
+                    <Outlet />
+                </ZLayerBox>
+            </Box>
         )
     } else {
         return (

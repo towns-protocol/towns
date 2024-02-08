@@ -5,7 +5,7 @@ import { useSpaceContext } from './SpaceContextProvider'
 import isEqual from 'lodash/isEqual'
 import { UserLookupContext } from './UserLookupContext'
 import { useUserLookupContext } from '../hooks/use-user-lookup-context'
-import { LookupUser, LookupUserMap } from '../types/user-lookup'
+import { LookupUser, LookupUserMap, UserLookupContextType } from '../types/user-lookup'
 
 /**
  * utility provider added to topmost zion context
@@ -21,8 +21,13 @@ export const GlobalContextUserLookupProvider = (props: { children: React.ReactNo
  * utility provider added to each space context
  */
 export const SpaceContextUserLookupProvider = (props: { children: React.ReactNode }) => {
-    const { spaceId } = useSpaceContext()
-    const { usersMap: parentContextUsersMap, users: parentContextUsers } = useUserLookupContext()
+    const {
+        usersMap: parentContextUsersMap,
+        users: parentContextUsers,
+        spaceId: rootSpaceId,
+    } = useUserLookupContext()
+
+    const spaceId = useSpaceContext()?.spaceId ?? rootSpaceId
 
     const members = useRoom(spaceId)
     const usersCache = useRef<LookupUserMap>({})
@@ -49,15 +54,17 @@ export const SpaceContextUserLookupProvider = (props: { children: React.ReactNod
             }, {} as { [key: string]: LookupUser })
             return {
                 streamId: spaceId,
+                spaceId: spaceId,
                 users,
                 usersMap,
-            }
+            } satisfies UserLookupContextType
         } else {
             return {
                 streamId: spaceId,
+                spaceId: spaceId,
                 users: parentContextUsers,
                 usersMap: parentContextUsersMap,
-            }
+            } satisfies UserLookupContextType
         }
     }, [members, parentContextUsers, parentContextUsersMap, spaceId])
 
@@ -73,7 +80,7 @@ export const DMChannelContextUserLookupProvider = (props: {
 
     const room = useRoomWithStreamId(channelId)
     const parentContext = useUserLookupContext()
-    const spaceId = parentContext?.streamId
+    const spaceId = parentContext?.spaceId
 
     const value = useMemo(() => {
         if (!room) {
@@ -104,9 +111,10 @@ export const DMChannelContextUserLookupProvider = (props: {
         }, {} as { [key: string]: LookupUser })
         return {
             streamId: channelId,
+            spaceId: spaceId,
             users,
             usersMap,
-        }
+        } satisfies UserLookupContextType
     }, [room, props.fallbackToParentContext, channelId, parentContext?.usersMap, spaceId])
 
     return <UserLookupContext.Provider value={value}>{props.children}</UserLookupContext.Provider>

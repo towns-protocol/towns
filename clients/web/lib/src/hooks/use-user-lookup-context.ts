@@ -4,6 +4,7 @@ import React from 'react'
 
 export type UserLookupContextType = {
     streamId?: string
+    spaceId?: string
     users: LookupUser[]
     usersMap: LookupUserMap
 }

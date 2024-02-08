@@ -3,6 +3,7 @@ import { RoomMember } from './zion-types'
 export type LookupUserMap = { [key: string]: LookupUser }
 
 export type UserLookupContextType = {
+    spaceId?: string
     streamId?: string
     users: LookupUser[]
     usersMap: LookupUserMap
