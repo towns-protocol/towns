@@ -4,6 +4,7 @@ import {
     Client as CasablancaClient,
     isChannelStreamId,
     isDMChannelStreamId,
+    isDefined,
     isGDMChannelStreamId,
 } from '@river/sdk'
 import { TimelineEvent, ZTEvent } from '../../types/timeline-types'
@@ -21,32 +22,28 @@ export function useContentAwareTimelineDiffCasablanca(casablancaClient?: Casabla
             // can happen on logout
             return
         }
-        let cancelled = false
         // listen to the timeine for changes, diff each change, and update the unread counts
         const onTimelineChange = (timelineState: TimelineStore, prev: TimelineStore) => {
             diffTimeline(timelineState, prev, userId)
         }
         // initialize markers
-        const initFulyReadMarkers = async () => {
-            if (casablancaClient.userSettingsStreamId) {
-                const stream = await casablancaClient.waitForStream(
-                    casablancaClient.userSettingsStreamId,
-                )
-                if (!cancelled) {
-                    const markers = stream.view.userSettingsContent.fullyReadMarkers
-                    updateFullyReadMarkersFromRemote(markers)
-                }
+        const initFulyReadMarkers = (streamId: string) => {
+            if (streamId === casablancaClient.userSettingsStreamId) {
+                const stream = casablancaClient.stream(casablancaClient.userSettingsStreamId)
+                check(isDefined(stream), 'stream must be defined')
+                const markers = stream.view.userSettingsContent.fullyReadMarkers
+                updateFullyReadMarkersFromRemote(markers)
             }
         }
-        void initFulyReadMarkers()
         // subscribe
         const unsubTimeline = useTimelineStore.subscribe(onTimelineChange)
         casablancaClient.on('fullyReadMarkersUpdated', fullyReadMarkersUpdated)
+        casablancaClient.on('streamInitialized', initFulyReadMarkers)
         // return ability to unsubscribe
         return () => {
-            cancelled = true
             unsubTimeline()
             casablancaClient.off('fullyReadMarkersUpdated', fullyReadMarkersUpdated)
+            casablancaClient.off('streamInitialized', initFulyReadMarkers)
         }
     }, [casablancaClient])
 }
