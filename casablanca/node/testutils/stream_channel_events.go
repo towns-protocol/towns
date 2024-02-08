@@ -105,6 +105,7 @@ func JoinChannel_T(
 					events.Make_ChannelPayload_Membership(
 						protocol.MembershipOp_SO_JOIN,
 						user,
+						user,
 					),
 					prevMiniblockHash,
 				),
@@ -135,6 +136,7 @@ func LeaveChannel_T(
 					wallet,
 					events.Make_ChannelPayload_Membership(
 						protocol.MembershipOp_SO_LEAVE,
+						user,
 						user,
 					),
 					prevHash,
@@ -221,7 +223,7 @@ func MakeChannelInceptionEvents_T(
 	join := MakeEnvelopeWithPayload_T(
 		t,
 		wallet,
-		events.Make_ChannelPayload_Membership(protocol.MembershipOp_SO_JOIN, userId),
+		events.Make_ChannelPayload_Membership(protocol.MembershipOp_SO_JOIN, userId, userId),
 		nil,
 	)
 	return []*events.ParsedEvent{

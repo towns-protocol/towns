@@ -24,7 +24,6 @@ describe('channel with roles and permissions', () => {
             'tokenGrantedUser',
             TestConstants.getWalletWithTestGatingNft(),
         )
-        const tokenGrantedUserId = tokenGrantedUser.getUserId() as string
         const { alice } = await registerAndStartClients(['alice'])
         // create a space with token entitlement to read & write
         await alice.fundWallet()
@@ -39,9 +38,6 @@ describe('channel with roles and permissions', () => {
             parentSpaceId: spaceId,
             roleIds: [],
         })) as string
-
-        // invite user to join the channel
-        await alice.inviteUser(channelId, tokenGrantedUserId)
 
         /** Act */
 
@@ -81,7 +77,6 @@ describe('channel with roles and permissions', () => {
 
         // create all the users for the test
         const { alice, bob } = await registerAndStartClients(['alice', 'bob'])
-        const bobUserId = bob.getUserId() as string
         await alice.fundWallet()
         const spaceId = (await createTestSpaceGatedByTownNft(alice, [
             Permission.Read,
@@ -109,8 +104,6 @@ describe('channel with roles and permissions', () => {
             parentSpaceId: spaceId,
             roleIds: [roleIdentifier.roleId],
         })) as string
-        // invite user to join the channel
-        await alice.inviteUser(channelId, bobUserId)
 
         /** Act & Assert */
 

@@ -183,6 +183,7 @@ func createSpace(
 		events.Make_SpacePayload_Membership(
 			protocol.MembershipOp_SO_JOIN,
 			userId,
+			userId,
 		),
 		nil,
 	)
@@ -234,6 +235,7 @@ func createChannel(
 		wallet,
 		events.Make_ChannelPayload_Membership(
 			protocol.MembershipOp_SO_JOIN,
+			userId,
 			userId,
 		),
 		nil,
@@ -337,9 +339,7 @@ func TestMethods(t *testing.T) {
 		assert.NoError(t, err)
 
 		_, _, err = createUserWithMismatchedId(ctx, wallet1, client)
-		if err == nil {
-			t.Fatalf("expected Error when calling CreateStream with mismatched id")
-		}
+		assert.Error(t, err) // expected Error when calling CreateStream with mismatched id
 
 		userStreamId, err := shared.UserStreamIdFromAddress(wallet1.Address.Bytes())
 		assert.NoError(t, err)
@@ -381,6 +381,7 @@ func TestMethods(t *testing.T) {
 		assert.NoError(t, err)
 		if resuser == nil {
 			t.Errorf("nil sync cookie")
+			return
 		}
 
 		// create space
@@ -388,6 +389,7 @@ func TestMethods(t *testing.T) {
 		assert.NoError(t, err)
 		if resspace == nil {
 			t.Errorf("nil sync cookie")
+			return
 		}
 
 		// create channel
@@ -408,17 +410,15 @@ func TestMethods(t *testing.T) {
 		}
 
 		// user2 joins channel
-		userId, err := shared.AddressHex(wallet2.Address.Bytes())
-		if err != nil {
-			t.Errorf("error getting user id: %v", err)
-		}
-		join, err := events.MakeEnvelopeWithPayload(
+		userJoin, err := events.MakeEnvelopeWithPayload(
 			wallet2,
-			events.Make_ChannelPayload_Membership(
+			events.Make_UserPayload_Membership(
 				protocol.MembershipOp_SO_JOIN,
-				userId,
+				channel1Name,
+				nil,
+				nil,
 			),
-			channelHash,
+			resuser.PrevMiniblockHash,
 		)
 		if err != nil {
 			t.Errorf("error creating join event: %v", err)
@@ -427,8 +427,8 @@ func TestMethods(t *testing.T) {
 			ctx,
 			connect.NewRequest(
 				&protocol.AddEventRequest{
-					StreamId: channel1Name,
-					Event:    join,
+					StreamId: resuser.StreamId,
+					Event:    userJoin,
 				},
 			),
 		)
@@ -595,9 +595,7 @@ func TestRiverDeviceId(t *testing.T) {
 				},
 			),
 		)
-		if err == nil {
-			t.Fatalf("expected error calling AddEvent: %v", err)
-		}
+		assert.Error(t, err) // expected error when calling AddEvent
 	}
 }
 
@@ -973,21 +971,30 @@ func DisableTestManyUsers(t *testing.T) {
 		for j := 0; j < totalChannels; j++ {
 			userId, err := shared.AddressHex(wallets[i].Address.Bytes())
 			assert.NoError(t, err)
+			channelId := shared.ChannelStreamIdFromName(fmt.Sprintf("channel-%d", j))
+			userStreamId, err := shared.UserStreamIdFromId(userId)
+			assert.NoError(t, err)
 
-			join, err := events.MakeEnvelopeWithPayload(
+			userBlockHash, err := client.GetLastMiniblockHash(ctx, connect.NewRequest(&protocol.GetLastMiniblockHashRequest{
+				StreamId: userStreamId,
+			}))
+			assert.NoError(t, err)
+
+			userJoin, err := events.MakeEnvelopeWithPayload(
 				wallets[i],
-				events.Make_ChannelPayload_Membership(
+				events.Make_UserPayload_Membership(
 					protocol.MembershipOp_SO_JOIN,
-					userId,
+					channelId,
+					nil,
+					nil,
 				),
-				channelHashes[j],
+				userBlockHash.Msg.Hash,
 			)
-			channelHashes[j] = join.Hash
 
 			assert.NoError(t, err)
 			_, err = client.AddEvent(ctx, connect.NewRequest(&protocol.AddEventRequest{
-				StreamId: shared.ChannelStreamIdFromName(fmt.Sprintf("channel-%d", j)),
-				Event:    join,
+				StreamId: userStreamId,
+				Event:    userJoin,
 			},
 			))
 			assert.NoError(t, err)
@@ -1024,16 +1031,16 @@ func DisableTestManyUsers(t *testing.T) {
 		}
 	}
 
-	if len(streams) != totalChannels {
-		t.Fatalf("expected %d stream, got %d", totalChannels, len(streams))
-	}
+	assert.Equal(t, totalChannels, len(streams))
+
 	for i := 0; i < totalChannels; i++ {
-		if len(streams[i].Events) != (totalUsers-1)*2 {
-			t.Fatalf("expected %d event, got %d", (totalUsers-1)*2, len(streams[0].Events))
-		}
-		for syncPosIdx := range channels {
-			if channels[syncPosIdx].StreamId == streams[i].NextSyncCookie.StreamId {
-				channels[syncPosIdx] = streams[i].NextSyncCookie
+		if streams[i] != nil {
+			assert.Equal(t, len(streams[i].Events), (totalUsers-1)*2)
+
+			for syncPosIdx := range channels {
+				if channels[syncPosIdx].StreamId == streams[i].NextSyncCookie.StreamId {
+					channels[syncPosIdx] = streams[i].NextSyncCookie
+				}
 			}
 		}
 	}
@@ -1098,28 +1105,34 @@ func DisableTestManyUsers(t *testing.T) {
 			err := syncRes.Err()
 			msg := syncRes.Msg()
 			assert.NoError(t, err)
-
-			for syncPosStrem := range channels {
-				if channels[syncPosStrem].StreamId == msg.Stream.NextSyncCookie.StreamId {
-					channels[syncPosStrem] = msg.Stream.NextSyncCookie
+			if msg.Stream != nil {
+				for syncPosStrem := range channels {
+					if channels[syncPosStrem] != nil {
+						if channels[syncPosStrem].StreamId == msg.Stream.NextSyncCookie.StreamId {
+							channels[syncPosStrem] = msg.Stream.NextSyncCookie
+						}
+					}
 				}
-			}
-			received += len(msg.Stream.Events)
-			for _, event := range msg.Stream.Events {
-				e, err := events.ParseEvent(event)
-				assert.NoError(t, err)
-				msg := e.GetChannelMessage()
-				assert.NotNil(t, msg)
-				tokens := strings.Split(msg.Message.Ciphertext, " ")
-				assert.Equal(t, 4, len(tokens))
-				id, err := strconv.Atoi(tokens[0])
-				assert.NoError(t, err)
-				msgTable[id]++
-				assert.Equal(t, 1, msgTable[id])
-			}
+				received += len(msg.Stream.Events)
+				for _, event := range msg.Stream.Events {
+					e, err := events.ParseEvent(event)
+					assert.NoError(t, err)
+					msg := e.GetChannelMessage()
+					assert.NotNil(t, msg)
+					if msg.Message != nil {
+						tokens := strings.Split(msg.Message.Ciphertext, " ")
+						assert.Equal(t, 4, len(tokens))
+						id, err := strconv.Atoi(tokens[0])
+						assert.NoError(t, err)
 
-			if received >= selectedUsers*selectedChannels {
-				syncCancel()
+						msgTable[id]++
+						assert.Equal(t, 1, msgTable[id])
+					}
+				}
+
+				if received >= selectedUsers*selectedChannels {
+					syncCancel()
+				}
 			}
 		}
 		syncCount <- received

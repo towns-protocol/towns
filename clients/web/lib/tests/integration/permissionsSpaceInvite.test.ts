@@ -15,6 +15,8 @@ import { Room } from 'use-zion-client/src/types/zion-types'
 import { TestConstants } from './helpers/TestConstants'
 import { ZionTestClient } from './helpers/ZionTestClient'
 import { sleep } from '../../src/utils/zion-utils'
+import { check } from '@river/dlog'
+import { isDefined } from '@river/sdk'
 
 describe('space invite', () => {
     test('Inviter is not allowed due to missing Invite permission', async () => {
@@ -169,19 +171,18 @@ describe('space invite', () => {
         // create a space with token entitlement for minting
         const spaceId = await createTestSpaceGatedByTownAndZionNfts(bob, [Permission.Read])
 
+        check(isDefined(spaceId), 'spaceId')
+
         // invite users to join the space.
-        if (spaceId) {
-            const aliceUserId = alice.getUserId()
-            if (aliceUserId) {
-                await bob.inviteUser(spaceId, aliceUserId)
-            }
+
+        const aliceUserId = alice.getUserId()
+        if (aliceUserId) {
+            await bob.inviteUser(spaceId, aliceUserId)
         }
 
         /** Act */
         try {
-            if (spaceId) {
-                await alice.joinTown(spaceId, alice.wallet)
-            }
+            await alice.joinTown(spaceId, alice.wallet)
         } catch (e) {
             const error = e as Error
             /** Assert */

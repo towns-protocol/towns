@@ -23,6 +23,7 @@ type NodeRegistry interface {
 
 	// Next two methods are required for hash-based stream placement, they will be removed once on-chain registry is implemented.
 	NumNodes() int
+	GetValidNodeAddresses() []string
 	GetNodeAddressByIndex(index int) (string, error)
 	GetNodeRecordByIndex(index int) (*NodeRecord, error)
 }
@@ -152,6 +153,14 @@ func (n *nodeRegistryImpl) CheckNodeIsValid(address string) error {
 
 func (n *nodeRegistryImpl) NumNodes() int {
 	return len(n.nodesFlat)
+}
+
+func (n *nodeRegistryImpl) GetValidNodeAddresses() []string {
+	ret := make([]string, 0, len(n.nodesFlat))
+	for key := range n.nodes {
+		ret = append(ret, key)
+	}
+	return ret
 }
 
 func (n *nodeRegistryImpl) GetNodeAddressByIndex(index int) (string, error) {

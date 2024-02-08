@@ -1,22 +1,31 @@
 package events
 
 import (
-	"errors"
 	"fmt"
 	"sort"
 
+	. "github.com/river-build/river/base"
 	. "github.com/river-build/river/protocol"
 	"github.com/river-build/river/shared"
 )
 
 func Make_GenisisSnapshot(events []*ParsedEvent) (*Snapshot, error) {
+	if len(events) == 0 {
+		return nil, RiverError(Err_INVALID_ARGUMENT, "no events to make snapshot from")
+	}
+
+	creatorId, err := shared.AddressHex(events[0].Event.CreatorAddress)
+	if err != nil {
+		return nil, err
+	}
+
 	inceptionPayload := events[0].Event.GetInceptionPayload()
 
 	if inceptionPayload == nil {
-		return nil, errors.New("inceptionEvent is not an inception event")
+		return nil, RiverError(Err_INVALID_ARGUMENT, "inceptionEvent is not an inception event")
 	}
 
-	content, err := make_SnapshotContent(inceptionPayload)
+	content, err := make_SnapshotContent(inceptionPayload, creatorId)
 	if err != nil {
 		return nil, err
 	}
@@ -37,9 +46,9 @@ func Make_GenisisSnapshot(events []*ParsedEvent) (*Snapshot, error) {
 	return snapshot, nil
 }
 
-func make_SnapshotContent(iPayload IsInceptionPayload) (IsSnapshot_Content, error) {
+func make_SnapshotContent(iPayload IsInceptionPayload, creatorId string) (IsSnapshot_Content, error) {
 	if iPayload == nil {
-		return nil, errors.New("inceptionEvent is not an inception event")
+		return nil, RiverError(Err_INVALID_ARGUMENT, "inceptionEvent is not an inception event")
 	}
 
 	switch payload := iPayload.(type) {
@@ -95,6 +104,7 @@ func make_SnapshotContent(iPayload IsInceptionPayload) (IsSnapshot_Content, erro
 		return &Snapshot_MediaContent{
 			MediaContent: &MediaPayload_Snapshot{
 				Inception: payload,
+				CreatorId: creatorId,
 			},
 		}, nil
 	default:
@@ -151,11 +161,11 @@ func Update_Snapshot(iSnapshot *Snapshot, event *ParsedEvent, miniblockNum int64
 func update_Snapshot_Space(iSnapshot *Snapshot, spacePayload *SpacePayload, user string, eventNum int64, eventHash []byte) error {
 	snapshot := iSnapshot.Content.(*Snapshot_SpaceContent)
 	if snapshot == nil {
-		return errors.New("blockheader snapshot is not a space snapshot")
+		return RiverError(Err_INVALID_ARGUMENT, "blockheader snapshot is not a space snapshot")
 	}
 	switch content := spacePayload.Content.(type) {
 	case *SpacePayload_Inception_:
-		return errors.New("cannot update blockheader with inception event")
+		return RiverError(Err_INVALID_ARGUMENT, "cannot update blockheader with inception event")
 	case *SpacePayload_Channel_:
 		if snapshot.SpaceContent.Channels == nil {
 			snapshot.SpaceContent.Channels = make(map[string]*SpacePayload_Channel)
@@ -188,12 +198,12 @@ func update_Snapshot_Space(iSnapshot *Snapshot, spacePayload *SpacePayload, user
 func update_Snapshot_Channel(iSnapshot *Snapshot, channelPayload *ChannelPayload) error {
 	snapshot := iSnapshot.Content.(*Snapshot_ChannelContent)
 	if snapshot == nil {
-		return errors.New("blockheader snapshot is not a channel snapshot")
+		return RiverError(Err_INVALID_ARGUMENT, "blockheader snapshot is not a channel snapshot")
 	}
 
 	switch content := channelPayload.Content.(type) {
 	case *ChannelPayload_Inception_:
-		return errors.New("cannot update blockheader with inception event")
+		return RiverError(Err_INVALID_ARGUMENT, "cannot update blockheader with inception event")
 	case *ChannelPayload_Membership:
 		if snapshot.ChannelContent.Memberships == nil {
 			snapshot.ChannelContent.Memberships = make(map[string]*Membership)
@@ -216,11 +226,11 @@ func update_Snapshot_DmChannel(
 ) error {
 	snapshot := iSnapshot.Content.(*Snapshot_DmChannelContent)
 	if snapshot == nil {
-		return errors.New("blockheader snapshot is not a dm channel snapshot")
+		return RiverError(Err_INVALID_ARGUMENT, "blockheader snapshot is not a dm channel snapshot")
 	}
 	switch content := dmChannelPayload.Content.(type) {
 	case *DmChannelPayload_Inception_:
-		return errors.New("cannot update blockheader with inception event")
+		return RiverError(Err_INVALID_ARGUMENT, "cannot update blockheader with inception event")
 	case *DmChannelPayload_Membership:
 		if snapshot.DmChannelContent.Memberships == nil {
 			snapshot.DmChannelContent.Memberships = make(map[string]*Membership)
@@ -255,12 +265,12 @@ func update_Snapshot_GdmChannel(
 ) error {
 	snapshot := iSnapshot.Content.(*Snapshot_GdmChannelContent)
 	if snapshot == nil {
-		return errors.New("blockheader snapshot is not a channel snapshot")
+		return RiverError(Err_INVALID_ARGUMENT, "blockheader snapshot is not a channel snapshot")
 	}
 
 	switch content := channelPayload.Content.(type) {
 	case *GdmChannelPayload_Inception_:
-		return errors.New("cannot update blockheader with inception event")
+		return RiverError(Err_INVALID_ARGUMENT, "cannot update blockheader with inception event")
 	case *GdmChannelPayload_Membership:
 		if snapshot.GdmChannelContent.Memberships == nil {
 			snapshot.GdmChannelContent.Memberships = make(map[string]*Membership)
@@ -293,11 +303,11 @@ func update_Snapshot_GdmChannel(
 func update_Snapshot_User(iSnapshot *Snapshot, userPayload *UserPayload) error {
 	snapshot := iSnapshot.Content.(*Snapshot_UserContent)
 	if snapshot == nil {
-		return errors.New("blockheader snapshot is not a user snapshot")
+		return RiverError(Err_INVALID_ARGUMENT, "blockheader snapshot is not a user snapshot")
 	}
 	switch content := userPayload.Content.(type) {
 	case *UserPayload_Inception_:
-		return errors.New("cannot update blockheader with inception event")
+		return RiverError(Err_INVALID_ARGUMENT, "cannot update blockheader with inception event")
 	case *UserPayload_UserMembership_:
 		if snapshot.UserContent.Memberships == nil {
 			snapshot.UserContent.Memberships = make(map[string]*UserPayload_UserMembership)
@@ -312,11 +322,11 @@ func update_Snapshot_User(iSnapshot *Snapshot, userPayload *UserPayload) error {
 func update_Snapshot_UserSettings(iSnapshot *Snapshot, userSettingsPayload *UserSettingsPayload) error {
 	snapshot := iSnapshot.Content.(*Snapshot_UserSettingsContent)
 	if snapshot == nil {
-		return errors.New("blockheader snapshot is not a user settings snapshot")
+		return RiverError(Err_INVALID_ARGUMENT, "blockheader snapshot is not a user settings snapshot")
 	}
 	switch content := userSettingsPayload.Content.(type) {
 	case *UserSettingsPayload_Inception_:
-		return errors.New("cannot update blockheader with inception event")
+		return RiverError(Err_INVALID_ARGUMENT, "cannot update blockheader with inception event")
 	case *UserSettingsPayload_FullyReadMarkers_:
 		if snapshot.UserSettingsContent.FullyReadMarkers == nil {
 			snapshot.UserSettingsContent.FullyReadMarkers = make(map[string]*UserSettingsPayload_FullyReadMarkers)
@@ -331,11 +341,11 @@ func update_Snapshot_UserSettings(iSnapshot *Snapshot, userSettingsPayload *User
 func update_Snapshot_UserDeviceKey(iSnapshot *Snapshot, userDeviceKeyPayload *UserDeviceKeyPayload) error {
 	snapshot := iSnapshot.Content.(*Snapshot_UserDeviceKeyContent)
 	if snapshot == nil {
-		return errors.New("blockheader snapshot is not a user device key snapshot")
+		return RiverError(Err_INVALID_ARGUMENT, "blockheader snapshot is not a user device key snapshot")
 	}
 	switch content := userDeviceKeyPayload.Content.(type) {
 	case *UserDeviceKeyPayload_Inception_:
-		return errors.New("cannot update blockheader with inception event")
+		return RiverError(Err_INVALID_ARGUMENT, "cannot update blockheader with inception event")
 	case *UserDeviceKeyPayload_EncryptionDevice_:
 		if snapshot.UserDeviceKeyContent.EncryptionDevices == nil {
 			snapshot.UserDeviceKeyContent.EncryptionDevices = make([]*UserDeviceKeyPayload_EncryptionDevice, 0)
@@ -371,11 +381,11 @@ func update_Snapshot_UserToDevice(
 ) error {
 	snapshot := iSnapshot.Content.(*Snapshot_UserToDeviceContent)
 	if snapshot == nil {
-		return errors.New("blockheader snapshot is not a user to device snapshot")
+		return RiverError(Err_INVALID_ARGUMENT, "blockheader snapshot is not a user to device snapshot")
 	}
 	switch content := userToDevicePayload.Content.(type) {
 	case *UserToDevicePayload_Inception_:
-		return errors.New("cannot update blockheader with inception event")
+		return RiverError(Err_INVALID_ARGUMENT, "cannot update blockheader with inception event")
 	case *UserToDevicePayload_GroupEncryptionSessions_:
 		if snapshot.UserToDeviceContent.DeviceSummary == nil {
 			snapshot.UserToDeviceContent.DeviceSummary = make(map[string]*UserToDevicePayload_Snapshot_DeviceSummary)
@@ -429,7 +439,7 @@ func cleanup_Snapshot_UserToDevice(snapshot *Snapshot_UserToDeviceContent, curre
 func update_Snapshot_Common(iSnapshot *Snapshot, commonPayload *CommonPayload, senderId string) error {
 	snapshot := iSnapshot.Common
 	if snapshot == nil {
-		return errors.New("blockheader snapshot common is undefined")
+		return RiverError(Err_INVALID_ARGUMENT, "blockheader snapshot common is undefined")
 	}
 	switch content := commonPayload.Content.(type) {
 	case *CommonPayload_KeySolicitation_:

@@ -1,0 +1,21 @@
+package events
+
+import (
+	. "github.com/river-build/river/base"
+	. "github.com/river-build/river/protocol"
+)
+
+type ChannelStreamView interface {
+	JoinableStreamView
+	GetChannelInception() (*ChannelPayload_Inception, error)
+}
+
+func (r *streamViewImpl) GetChannelInception() (*ChannelPayload_Inception, error) {
+	i := r.InceptionPayload()
+	c, ok := i.(*ChannelPayload_Inception)
+	if ok {
+		return c, nil
+	} else {
+		return nil, RiverError(Err_WRONG_STREAM_TYPE, "Expected channel stream", "streamId", i.GetStreamId())
+	}
+}

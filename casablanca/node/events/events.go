@@ -134,13 +134,14 @@ func Make_ChannelPayload_Inception(
 	}
 }
 
-func Make_ChannelPayload_Membership(op protocol.MembershipOp, userId string) *StreamEvent_ChannelPayload {
+func Make_ChannelPayload_Membership(op protocol.MembershipOp, userId string, initiatorId string) *StreamEvent_ChannelPayload {
 	return &StreamEvent_ChannelPayload{
 		ChannelPayload: &ChannelPayload{
 			Content: &ChannelPayload_Membership{
 				Membership: &Membership{
-					Op:     op,
-					UserId: userId,
+					Op:          op,
+					UserId:      userId,
+					InitiatorId: initiatorId,
 				},
 			},
 		},
@@ -153,6 +154,34 @@ func Make_ChannelPayload_Message(content string) *StreamEvent_ChannelPayload {
 			Content: &ChannelPayload_Message{
 				Message: &protocol.EncryptedData{
 					Ciphertext: content,
+				},
+			},
+		},
+	}
+}
+
+func Make_DmChannelPayload_Membership(op protocol.MembershipOp, userId string, initiatorId string) *StreamEvent_DmChannelPayload {
+	return &StreamEvent_DmChannelPayload{
+		DmChannelPayload: &DmChannelPayload{
+			Content: &DmChannelPayload_Membership{
+				Membership: &Membership{
+					Op:          op,
+					UserId:      userId,
+					InitiatorId: initiatorId,
+				},
+			},
+		},
+	}
+}
+
+func Make_GdmChannelPayload_Membership(op protocol.MembershipOp, userId string, initiatorId string) *StreamEvent_GdmChannelPayload {
+	return &StreamEvent_GdmChannelPayload{
+		GdmChannelPayload: &GdmChannelPayload{
+			Content: &GdmChannelPayload_Membership{
+				Membership: &Membership{
+					Op:          op,
+					UserId:      userId,
+					InitiatorId: initiatorId,
 				},
 			},
 		},
@@ -172,13 +201,14 @@ func Make_SpacePayload_Inception(streamId string, settings *StreamSettings) *Str
 	}
 }
 
-func Make_SpacePayload_Membership(op MembershipOp, userId string) *StreamEvent_SpacePayload {
+func Make_SpacePayload_Membership(op MembershipOp, userId string, initiatorId string) *StreamEvent_SpacePayload {
 	return &StreamEvent_SpacePayload{
 		SpacePayload: &SpacePayload{
 			Content: &protocol.SpacePayload_Membership{
 				Membership: &Membership{
-					Op:     op,
-					UserId: userId,
+					Op:          op,
+					UserId:      userId,
+					InitiatorId: initiatorId,
 				},
 			},
 		},
@@ -256,20 +286,18 @@ func Make_UserDeviceKeyPayload_Inception(
 
 func Make_UserPayload_Membership(
 	op protocol.MembershipOp,
-	reason *protocol.MembershipReason,
-	inviterId string,
 	streamId string,
-	originEvent *protocol.EventRef,
+	inviter *string,
+	reason *protocol.MembershipReason,
 ) *StreamEvent_UserPayload {
 	return &StreamEvent_UserPayload{
 		UserPayload: &UserPayload{
 			Content: &protocol.UserPayload_UserMembership_{
 				UserMembership: &UserPayload_UserMembership{
-					StreamId:    streamId,
-					OriginEvent: originEvent,
-					InviterId:   inviterId,
-					Op:          op,
-					Reason:      reason,
+					StreamId: streamId,
+					Op:       op,
+					Inviter:  inviter,
+					Reason:   reason,
 				},
 			},
 		},

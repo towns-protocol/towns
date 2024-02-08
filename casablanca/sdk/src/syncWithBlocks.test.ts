@@ -74,6 +74,7 @@ describe('syncWithBlocks', () => {
                     make_SpacePayload_Membership({
                         userId: bobsUserId,
                         op: MembershipOp.SO_JOIN,
+                        initiatorId: bobsUserId,
                     }),
                 ),
             ],
@@ -96,6 +97,7 @@ describe('syncWithBlocks', () => {
             make_ChannelPayload_Membership({
                 userId: bobsUserId,
                 op: MembershipOp.SO_JOIN,
+                initiatorId: bobsUserId,
             }),
         )
         let nextHash = channelJoinEvent.hash

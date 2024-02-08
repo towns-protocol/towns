@@ -11,6 +11,7 @@ type JoinableStreamView interface {
 	IsUserJoined(userId string) (bool, error)
 	IsUserInvited(userId string) (bool, error)
 	GetChannelMembers() (*mapset.Set[string], error)
+	GetMembership(userId string) (protocol.MembershipOp, error)
 }
 
 func (r *streamViewImpl) IsUserJoined(userId string) (bool, error) {
@@ -132,6 +133,77 @@ func (r *streamViewImpl) getMembers() (*mapset.Set[string], error) {
 	return &members, nil
 }
 
+func (r *streamViewImpl) GetMembership(userId string) (protocol.MembershipOp, error) {
+	retValue := protocol.MembershipOp_SO_UNSPECIFIED
+	switch snapshotContent := r.snapshot.Content.(type) {
+	case *protocol.Snapshot_SpaceContent:
+		m, ok := snapshotContent.SpaceContent.GetMemberships()[userId]
+		if ok {
+			retValue = m.GetOp()
+		}
+	case *protocol.Snapshot_ChannelContent:
+		m, ok := snapshotContent.ChannelContent.GetMemberships()[userId]
+		if ok {
+			retValue = m.GetOp()
+		}
+	case *protocol.Snapshot_GdmChannelContent:
+		m, ok := snapshotContent.GdmChannelContent.GetMemberships()[userId]
+		if ok {
+			retValue = m.GetOp()
+		}
+	case *protocol.Snapshot_DmChannelContent:
+		m, ok := snapshotContent.DmChannelContent.GetMemberships()[userId]
+		if ok {
+			retValue = m.GetOp()
+		}
+	default:
+		break
+	}
+
+	err := r.forEachEvent(r.snapshotIndex+1, func(e *ParsedEvent) (bool, error) {
+		switch payload := e.Event.Payload.(type) {
+		case *protocol.StreamEvent_SpacePayload:
+			switch spacePayload := payload.SpacePayload.Content.(type) {
+			case *protocol.SpacePayload_Membership:
+				if userId == spacePayload.Membership.UserId {
+					retValue = spacePayload.Membership.GetOp()
+				}
+			default:
+				break
+			}
+		case *protocol.StreamEvent_ChannelPayload:
+			switch channelPayload := payload.ChannelPayload.Content.(type) {
+			case *protocol.ChannelPayload_Membership:
+				if userId == channelPayload.Membership.UserId {
+					retValue = channelPayload.Membership.GetOp()
+				}
+			default:
+				break
+			}
+		case *protocol.StreamEvent_GdmChannelPayload:
+			switch gdmChannelPayload := payload.GdmChannelPayload.Content.(type) {
+			case *protocol.GdmChannelPayload_Membership:
+				if userId == gdmChannelPayload.Membership.UserId {
+					retValue = gdmChannelPayload.Membership.GetOp()
+				}
+			default:
+				break
+			}
+		case *protocol.StreamEvent_DmChannelPayload:
+			switch dmChannelPayload := payload.DmChannelPayload.Content.(type) {
+			case *protocol.DmChannelPayload_Membership:
+				if userId == dmChannelPayload.Membership.UserId {
+					retValue = dmChannelPayload.Membership.GetOp()
+				}
+			default:
+				break
+			}
+		}
+		return true, nil
+	})
+	return retValue, err
+}
+
 func (r *streamViewImpl) getInvites() (*mapset.Set[string], error) {
 	invites := mapset.NewSet[string]()
 	switch snapshotContent := r.snapshot.Content.(type) {
@@ -191,3 +263,4 @@ func (r *streamViewImpl) getInvites() (*mapset.Set[string], error) {
 
 	return &invites, nil
 }
+

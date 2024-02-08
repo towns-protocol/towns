@@ -305,7 +305,7 @@ func (s *Service) createStream_DMChannel(
 		return nil, err
 	}
 
-	if !ValidDMChannelStreamId(inception.StreamId, inceptionEvent.Event.CreatorAddress, otherUserAddress) {
+	if !ValidDMChannelStreamIdBetween(inception.StreamId, inceptionEvent.Event.CreatorAddress, otherUserAddress) {
 		return nil, RiverError(Err_BAD_STREAM_ID, "invalid DM channel stream id")
 	}
 
@@ -550,7 +550,7 @@ func (s *Service) createStream_Media(
 	}
 
 	if ValidChannelStreamId(inception.GetChannelId()) {
-		channelInception, err := ChannelFromInception(channelStreamView.InceptionPayload())
+		channelInception, err := channelStreamView.(ChannelStreamView).GetChannelInception()
 		if err != nil {
 			return nil, err
 		}
@@ -582,13 +582,12 @@ func (s *Service) createStream_Media(
 			return nil, err
 		}
 
-		inceptionPayload := streamView.InceptionPayload()
-		info, err := DMStreamInfoFromInceptionPayload(inceptionPayload, inception.GetChannelId())
+		inception, err := streamView.(DMChannelStreamView).GetDMChannelInception()
 		if err != nil {
 			return nil, err
 		}
 
-		if user != info.FirstPartyId && user != info.SecondPartyId {
+		if user != inception.FirstPartyId && user != inception.SecondPartyId {
 			return nil, RiverError(Err_PERMISSION_DENIED, "user is not a member of DM", "user", user)
 		}
 	} else if ValidGDMChannelStreamId(inception.GetChannelId()) {
@@ -695,4 +694,40 @@ func validateJoinEventPayload(event *ParsedEvent, membership *Membership) error 
 		return RiverError(Err_BAD_STREAM_CREATION_PARAMS, "bad join user", "id", membership.UserId, "created_by", creatorUserId)
 	}
 	return nil
+}
+
+func (s *Service) addDerivedMembershipEventToUserStream(
+	ctx context.Context,
+	userStream AddableStream,
+	userStreamView StreamView,
+	originStreamId string,
+	originEvent *ParsedEvent,
+	op MembershipOp,
+	reason *MembershipReason,
+) error {
+	inviterId, err := shared.AddressHex(originEvent.Event.CreatorAddress)
+	if err != nil {
+		return err
+	}
+
+	prevHash := userStreamView.LastBlock().Hash
+	userStreamEvent, err := MakeParsedEventWithPayload(
+		s.wallet,
+		Make_UserPayload_Membership(
+			op,
+			originStreamId,
+			&inviterId,
+			reason,
+		),
+		prevHash,
+	)
+	if err != nil {
+		return err
+	}
+
+	return userStream.AddEvent(ctx, userStreamEvent)
+}
+
+func (s *Service) checkMembership(ctx context.Context, view StreamView, userId string) (bool, error) {
+	return view.IsMember(userId)
 }

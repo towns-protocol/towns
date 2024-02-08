@@ -31,6 +31,7 @@ import {
     CommonPayload_KeySolicitation,
     SyncCookie,
     Snapshot,
+    UserPayload_UserMembershipAction,
 } from '@river/proto'
 import { keccak256 } from 'ethereum-cryptography/keccak'
 import { bin_toHexString } from '@river/dlog'
@@ -187,6 +188,34 @@ export const make_UserPayload_Inception = (
         },
     }
 }
+export const make_UserPayload_UserMembership = (
+    value: PlainMessage<UserPayload_UserMembership>,
+): PlainMessage<StreamEvent>['payload'] => {
+    return {
+        case: 'userPayload',
+        value: {
+            content: {
+                case: 'userMembership',
+                value,
+            },
+        },
+    }
+}
+
+export const make_UserPayload_UserMembershipAction = (
+    value: PlainMessage<UserPayload_UserMembershipAction>,
+): PlainMessage<StreamEvent>['payload'] => {
+    return {
+        case: 'userPayload',
+        value: {
+            content: {
+                case: 'userMembershipAction',
+                value,
+            },
+        },
+    }
+}
+
 export const make_SpacePayload_Inception = (
     value: PlainMessage<SpacePayload_Inception>,
 ): PlainMessage<StreamEvent>['payload'] => {

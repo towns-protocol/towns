@@ -50,6 +50,8 @@ export class StreamStateView_User extends StreamStateView_AbstractContent {
             case 'userMembership':
                 // memberships are handled in the snapshot
                 break
+            case 'userMembershipAction':
+                break
             case undefined:
                 break
             default:
@@ -70,6 +72,8 @@ export class StreamStateView_User extends StreamStateView_AbstractContent {
                 break
             case 'userMembership':
                 this.addUserPayload_userMembership(payload.content.value, stateEmitter)
+                break
+            case 'userMembershipAction':
                 break
             case undefined:
                 break

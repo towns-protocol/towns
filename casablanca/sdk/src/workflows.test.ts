@@ -68,6 +68,7 @@ describe('workflows', () => {
                     make_SpacePayload_Membership({
                         userId: bobsUserId,
                         op: MembershipOp.SO_JOIN,
+                        initiatorId: bobsUserId,
                     }),
                 ),
             ],
@@ -102,6 +103,7 @@ describe('workflows', () => {
             make_ChannelPayload_Membership({
                 userId: bobsUserId,
                 op: MembershipOp.SO_JOIN,
+                initiatorId: bobsUserId,
             }),
         )
         await bob.createStream({

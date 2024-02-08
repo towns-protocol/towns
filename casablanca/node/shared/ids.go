@@ -78,6 +78,15 @@ func GetStreamIdPrefix(streamId string) string {
 	return streamId[:index]
 }
 
+func GetStreamIdPostfix(streamId string) string {
+	// split string on "-" return first index
+	index := strings.Index(streamId, "-")
+	if index == -1 || index == len(streamId)-1 {
+		return streamId
+	}
+	return streamId[index+1:]
+}
+
 func ValidUserStreamId(id string) bool {
 	return len(id) == 45 && strings.HasPrefix(id, STREAM_USER_PREFIX_DASH_HEX)
 }
@@ -175,7 +184,11 @@ func hashString(str string) string {
 	return fmt.Sprintf("%x", slice)
 }
 
-func ValidDMChannelStreamId(id string, userIdA []byte, userIdB []byte) bool {
+func ValidDMChannelStreamId(id string) bool {
+	return strings.HasPrefix(id, STREAM_DM_CHANNEL_PREFIX_DASH)
+}
+
+func ValidDMChannelStreamIdBetween(id string, userIdA []byte, userIdB []byte) bool {
 	// Lowercase the user ids, sort them and join them with a dash
 	addressUserA, err := AddressHex(userIdA)
 	if err != nil {

@@ -51,11 +51,9 @@ func make_User_Membership(
 		wallet,
 		Make_UserPayload_Membership(
 			membershipOp,
-			nil,
-			"inviter$1", // inviter
 			streamId,
-			nil, // original event ref
-
+			nil,
+			nil,
 		),
 		prevMiniblockHash,
 	)
@@ -76,6 +74,7 @@ func make_Space_Membership(
 		wallet,
 		Make_SpacePayload_Membership(
 			membershipOp,
+			userId,
 			userId,
 		),
 		prevMiniblockHash,

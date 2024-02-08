@@ -54,7 +54,7 @@ func TestLoad(t *testing.T) {
 	assert.NoError(t, err)
 	join, err := MakeEnvelopeWithPayload(
 		wallet,
-		Make_UserPayload_Membership(protocol.MembershipOp_SO_JOIN, nil, "userid$1", "streamid$1", nil),
+		Make_UserPayload_Membership(protocol.MembershipOp_SO_JOIN, "streamid$1", nil, nil),
 		nil,
 	)
 	assert.NoError(t, err)
@@ -130,12 +130,12 @@ func TestLoad(t *testing.T) {
 	// add one more event (just join again)
 	join2, err := MakeEnvelopeWithPayload(
 		wallet,
-		Make_UserPayload_Membership(protocol.MembershipOp_SO_JOIN, nil, "userid$2", "streamid$1", nil),
+		Make_UserPayload_Membership(protocol.MembershipOp_SO_JOIN, "streamid$1", nil, nil),
 		blockHash,
 	)
 	assert.NoError(t, err)
 	nextEvent := parsedEvent(t, join2)
-	err = view.ValidateNextEvent(&recencyConstraintsConfig_t, nextEvent)
+	err = view.ValidateNextEvent(ctx, &recencyConstraintsConfig_t, nextEvent, time.Now())
 	assert.NoError(t, err)
 	view, err = view.copyAndAddEvent(nextEvent)
 	assert.NoError(t, err)
@@ -151,13 +151,13 @@ func TestLoad(t *testing.T) {
 	// add another join event
 	join3, err := MakeEnvelopeWithPayload(
 		wallet,
-		Make_UserPayload_Membership(protocol.MembershipOp_SO_JOIN, nil, "userid$3", "streamid$1", nil),
+		Make_UserPayload_Membership(protocol.MembershipOp_SO_JOIN, "streamid$1", nil, nil),
 		view.LastBlock().Hash,
 	)
 	assert.NoError(t, err)
 	nextEvent = parsedEvent(t, join3)
 	assert.NoError(t, err)
-	err = view.ValidateNextEvent(&recencyConstraintsConfig_t, nextEvent)
+	err = view.ValidateNextEvent(ctx, &recencyConstraintsConfig_t, nextEvent, time.Now())
 	assert.NoError(t, err)
 	view, err = view.copyAndAddEvent(nextEvent)
 	assert.NoError(t, err)
@@ -208,23 +208,23 @@ func TestLoad(t *testing.T) {
 	// add an event with an old hash
 	join4, err := MakeEnvelopeWithPayload(
 		wallet,
-		Make_UserPayload_Membership(protocol.MembershipOp_SO_LEAVE, nil, "userid$3", "streamid$1", nil),
+		Make_UserPayload_Membership(protocol.MembershipOp_SO_LEAVE, "streamid$1", nil, nil),
 		newSV1.blocks[0].Hash,
 	)
 	assert.NoError(t, err)
 	nextEvent = parsedEvent(t, join4)
 	assert.NoError(t, err)
-	err = newSV1.ValidateNextEvent(&recencyConstraintsConfig_t, nextEvent)
+	err = newSV1.ValidateNextEvent(ctx, &recencyConstraintsConfig_t, nextEvent, time.Now())
 	assert.NoError(t, err)
 	_, err = newSV1.copyAndAddEvent(nextEvent)
 	assert.NoError(t, err)
 	// wait 1 second
 	time.Sleep(1 * time.Second)
 	// try with tighter recency constraints
-	err = newSV1.ValidateNextEvent(&config.RecencyConstraintsConfig{
+	err = newSV1.ValidateNextEvent(ctx, &config.RecencyConstraintsConfig{
 		Generations: 5,
 		AgeSeconds:  1,
-	}, nextEvent)
+	}, nextEvent, time.Now())
 	assert.Error(t, err)
 	assert.Contains(t, err.Error(), "BAD_PREV_MINIBLOCK_HASH")
 

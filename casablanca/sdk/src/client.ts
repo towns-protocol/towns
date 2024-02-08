@@ -101,6 +101,8 @@ import {
     make_GDMChannelPayload_ChannelProperties,
     ParsedMiniblock,
     ClientInitStatus,
+    make_UserPayload_UserMembershipAction,
+    make_UserPayload_UserMembership,
 } from './types'
 
 import debug from 'debug'
@@ -448,6 +450,7 @@ export class Client
             make_SpacePayload_Membership({
                 userId: this.userId,
                 op: MembershipOp.SO_JOIN,
+                initiatorId: this.userId,
             }),
         )
 
@@ -487,6 +490,7 @@ export class Client
             make_ChannelPayload_Membership({
                 userId: this.userId,
                 op: MembershipOp.SO_JOIN,
+                initiatorId: this.userId,
             }),
         )
 
@@ -518,6 +522,7 @@ export class Client
             make_DMChannelPayload_Membership({
                 userId: this.userId,
                 op: MembershipOp.SO_JOIN,
+                initiatorId: this.userId,
             }),
         )
 
@@ -526,6 +531,7 @@ export class Client
             make_DMChannelPayload_Membership({
                 userId: userId,
                 op: MembershipOp.SO_JOIN,
+                initiatorId: this.userId,
             }),
         )
 
@@ -567,6 +573,7 @@ export class Client
             make_GDMChannelPayload_Membership({
                 userId: this.userId,
                 op: MembershipOp.SO_JOIN,
+                initiatorId: this.userId,
             }),
         )
         events.push(joinEvent)
@@ -577,6 +584,7 @@ export class Client
                 make_GDMChannelPayload_Membership({
                     userId: userId,
                     op: MembershipOp.SO_JOIN,
+                    initiatorId: this.userId,
                 }),
             )
             events.push(inviteEvent)
@@ -1191,35 +1199,16 @@ export class Client
 
     async inviteUser(streamId: string, userId: string): Promise<void> {
         await this.initStream(streamId)
-        if (isSpaceStreamId(streamId)) {
-            return this.makeEventAndAddToStream(
+        check(isDefined(this.userStreamId))
+        return this.makeEventAndAddToStream(
+            this.userStreamId,
+            make_UserPayload_UserMembershipAction({
+                op: MembershipOp.SO_INVITE,
+                userId,
                 streamId,
-                make_SpacePayload_Membership({
-                    op: MembershipOp.SO_INVITE,
-                    userId, // TODO: USER_ID: other encoding?
-                }),
-                { method: 'inviteUser' },
-            )
-        } else if (isChannelStreamId(streamId)) {
-            return this.makeEventAndAddToStream(
-                streamId,
-                make_ChannelPayload_Membership({
-                    op: MembershipOp.SO_INVITE,
-                    userId, // TODO: USER_ID: other encoding?
-                }),
-                { method: 'inviteUser' },
-            )
-        } else if (isGDMChannelStreamId(streamId)) {
-            return this.makeEventAndAddToStream(
-                streamId,
-                make_GDMChannelPayload_Membership({
-                    op: MembershipOp.SO_INVITE,
-                    userId,
-                }),
-            )
-        } else {
-            throw new Error('invalid streamId')
-        }
+            }),
+            { method: 'inviteUser' },
+        )
     }
 
     async joinStream(
@@ -1227,48 +1216,21 @@ export class Client
         opts?: { skipWaitForMiniblockConfirmation: boolean },
     ): Promise<Stream> {
         this.logCall('joinStream', streamId)
+        check(isDefined(this.userStreamId))
         const stream = await this.initStream(streamId)
         if (stream.view.getMemberships().isMemberJoined(this.userId)) {
             this.logError('joinStream: user already a member', streamId)
             return stream
         }
-        if (isChannelStreamId(streamId)) {
-            await this.makeEventAndAddToStream(
+        await this.makeEventAndAddToStream(
+            this.userStreamId,
+            make_UserPayload_UserMembership({
+                op: MembershipOp.SO_JOIN,
                 streamId,
-                make_ChannelPayload_Membership({
-                    op: MembershipOp.SO_JOIN,
-                    userId: this.userId,
-                }),
-                { method: 'joinChannel' },
-            )
-        } else if (isSpaceStreamId(streamId)) {
-            await this.makeEventAndAddToStream(
-                streamId,
-                make_SpacePayload_Membership({
-                    op: MembershipOp.SO_JOIN,
-                    userId: this.userId,
-                }),
-                { method: 'joinSpace' },
-            )
-        } else if (isDMChannelStreamId(streamId)) {
-            await this.makeEventAndAddToStream(
-                streamId,
-                make_DMChannelPayload_Membership({
-                    op: MembershipOp.SO_JOIN,
-                    userId: this.userId,
-                }),
-            )
-        } else if (isGDMChannelStreamId(streamId)) {
-            await this.makeEventAndAddToStream(
-                streamId,
-                make_GDMChannelPayload_Membership({
-                    op: MembershipOp.SO_JOIN,
-                    userId: this.userId,
-                }),
-            )
-        } else {
-            throw new Error('invalid streamId')
-        }
+            }),
+            { method: 'joinStream' },
+        )
+
         if (opts?.skipWaitForMiniblockConfirmation !== true) {
             await stream.waitForMembership(MembershipOp.SO_JOIN)
         }
@@ -1277,69 +1239,47 @@ export class Client
 
     async leaveStream(streamId: string, reason?: MembershipReason): Promise<void> {
         this.logCall('leaveStream', streamId)
-        if (isChannelStreamId(streamId)) {
-            return this.makeEventAndAddToStream(
-                streamId,
-                make_ChannelPayload_Membership({
-                    op: MembershipOp.SO_LEAVE,
-                    userId: this.userId,
-                    reason: reason,
-                }),
-                { method: 'leaveChannel' },
-            )
-        } else if (isDMChannelStreamId(streamId)) {
-            return this.makeEventAndAddToStream(
-                streamId,
-                make_DMChannelPayload_Membership({
-                    op: MembershipOp.SO_LEAVE,
-                    userId: this.userId,
-                    reason: reason,
-                }),
-                { method: 'leaveDMChannel' },
-            )
-        } else if (isGDMChannelStreamId(streamId)) {
-            return this.makeEventAndAddToStream(
-                streamId,
-                make_GDMChannelPayload_Membership({
-                    op: MembershipOp.SO_LEAVE,
-                    userId: this.userId,
-                    reason: reason,
-                }),
-            )
-        } else if (isSpaceStreamId(streamId)) {
+        check(isDefined(this.userStreamId))
+
+        if (isSpaceStreamId(streamId)) {
             const channelIds =
                 this.stream(streamId)?.view.spaceContent.spaceChannelsMetadata.keys() ?? []
 
+            const userStream = this.stream(this.userStreamId)
             for (const channelId of channelIds) {
-                await this.leaveStream(channelId, MembershipReason.MR_LEFT_SPACE)
+                if (
+                    userStream?.view.userContent.streamMemberships[channelId]?.op ===
+                    MembershipOp.SO_JOIN
+                ) {
+                    await this.leaveStream(channelId, MembershipReason.MR_LEFT_SPACE)
+                }
             }
-
-            return this.makeEventAndAddToStream(
-                streamId,
-                make_SpacePayload_Membership({
-                    op: MembershipOp.SO_LEAVE,
-                    userId: this.userId,
-                }),
-                { method: 'leaveSpace' },
-            )
-        } else {
-            throw new Error('invalid streamId')
         }
+
+        return this.makeEventAndAddToStream(
+            this.userStreamId,
+            make_UserPayload_UserMembership({
+                op: MembershipOp.SO_LEAVE,
+                streamId,
+                reason,
+            }),
+            { method: 'leaveStream' },
+        )
     }
 
     async removeUser(streamId: string, userId: string): Promise<void> {
+        check(isDefined(this.userStreamId))
         this.logCall('removeUser', streamId, userId)
-        if (isGDMChannelStreamId(streamId)) {
-            return this.makeEventAndAddToStream(
+
+        return this.makeEventAndAddToStream(
+            this.userStreamId,
+            make_UserPayload_UserMembershipAction({
+                op: MembershipOp.SO_LEAVE,
+                userId,
                 streamId,
-                make_GDMChannelPayload_Membership({
-                    op: MembershipOp.SO_LEAVE,
-                    userId,
-                }),
-            )
-        } else {
-            throw new Error('invalid streamId')
-        }
+            }),
+            { method: 'removeUser' },
+        )
     }
 
     async getMiniblocks(
@@ -1867,5 +1807,10 @@ export class Client
         await this.rpcClient.info({
             debug: ['make_miniblock', streamId, opts.forceSnapshot === true ? 'true' : 'false'],
         })
+    }
+
+    public async debugForceAddEvent(streamId: string, event: Envelope): Promise<void> {
+        const jsonStr = event.toJsonString()
+        await this.rpcClient.info({ debug: ['add_event', streamId, jsonStr] })
     }
 }

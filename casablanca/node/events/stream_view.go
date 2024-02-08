@@ -29,15 +29,17 @@ type StreamViewStats struct {
 
 type StreamView interface {
 	StreamId() string
+	StreamParentId() *string
 	InceptionPayload() IsInceptionPayload
 	LastEvent() *ParsedEvent
 	MinipoolEnvelopes() []*Envelope
 	MiniblocksFromLastSnapshot() []*Miniblock
 	SyncCookie(localNodeAddress string) *SyncCookie
 	LastBlock() *miniblockInfo
-	ValidateNextEvent(cfg *config.RecencyConstraintsConfig, parsedEvent *ParsedEvent) error
+	ValidateNextEvent(ctx context.Context, cfg *config.RecencyConstraintsConfig, parsedEvent *ParsedEvent, currentTime time.Time) error
 	GetStats() StreamViewStats
 	ProposeNextMiniblock(ctx context.Context, cfg *config.StreamConfig, forceSnapshot bool) (*MiniblockProposal, error)
+	IsMember(userId string) (bool, error)
 }
 
 func MakeStreamView(streamData *storage.ReadStreamFromLastSnapshotResult) (*streamViewImpl, error) {
@@ -497,7 +499,7 @@ func (r *streamViewImpl) shouldSnapshot(cfg *config.StreamConfig) bool {
 	return false
 }
 
-func (r *streamViewImpl) ValidateNextEvent(cfg *config.RecencyConstraintsConfig, parsedEvent *ParsedEvent) error {
+func (r *streamViewImpl) ValidateNextEvent(ctx context.Context, cfg *config.RecencyConstraintsConfig, parsedEvent *ParsedEvent, currentTime time.Time) error {
 	// the preceding miniblock hash should reference a recent block
 	// the event should not already exist in any block after the preceding miniblock
 	// the event should not exist in the minipool
@@ -523,7 +525,7 @@ func (r *streamViewImpl) ValidateNextEvent(cfg *config.RecencyConstraintsConfig,
 	}
 	// make sure we're recent
 	// if the user isn't adding the latest block, allow it if the block after was recently created
-	if foundBlockAt < len(r.blocks)-1 && !r.isRecentBlock(r.blocks[foundBlockAt+1], cfg) {
+	if foundBlockAt < len(r.blocks)-1 && !r.isRecentBlock(ctx, cfg, r.blocks[foundBlockAt+1], currentTime) {
 		return RiverError(
 			Err_BAD_PREV_MINIBLOCK_HASH,
 			"prevMiniblockHash did not reference a recent block",
@@ -559,9 +561,11 @@ func (r *streamViewImpl) ValidateNextEvent(cfg *config.RecencyConstraintsConfig,
 	return nil
 }
 
-func (r *streamViewImpl) isRecentBlock(block *miniblockInfo, cfg *config.RecencyConstraintsConfig) bool {
-	currentTime := time.Now()
+func (r *streamViewImpl) isRecentBlock(ctx context.Context, cfg *config.RecencyConstraintsConfig, block *miniblockInfo, currentTime time.Time) bool {
 	maxAgeDuration := time.Duration(cfg.AgeSeconds) * time.Second
+	if maxAgeDuration == 0 {
+		maxAgeDuration = 5 * time.Second
+	}
 	diff := currentTime.Sub(block.header().Timestamp.AsTime())
 	return diff <= maxAgeDuration
 }
@@ -587,4 +591,54 @@ func (r *streamViewImpl) GetStats() StreamViewStats {
 	stats.TotalEventsEver += r.minipool.events.Len()
 
 	return stats
+}
+
+func (r *streamViewImpl) IsMember(userId string) (bool, error) {
+	// aellis this should probably be migrated to the common payload
+	streamId := r.StreamId()
+	switch snapshotContent := r.snapshot.Content.(type) {
+	case *Snapshot_SpaceContent:
+		membership, err := r.GetMembership(userId)
+		if err != nil {
+			return false, err
+		}
+		return membership == MembershipOp_SO_JOIN, nil
+	case *Snapshot_ChannelContent:
+		membership, err := r.GetMembership(userId)
+		if err != nil {
+			return false, err
+		}
+		return membership == MembershipOp_SO_JOIN, nil
+	case *Snapshot_GdmChannelContent:
+		membership, err := r.GetMembership(userId)
+		if err != nil {
+			return false, err
+		}
+		return membership == MembershipOp_SO_JOIN, nil
+	case *Snapshot_DmChannelContent:
+		incpt := snapshotContent.DmChannelContent.Inception
+		return userId == incpt.FirstPartyId || userId == incpt.SecondPartyId, nil
+	case *Snapshot_UserContent:
+		return GetStreamIdPostfix(streamId) == userId, nil
+	case *Snapshot_UserSettingsContent:
+		return GetStreamIdPostfix(streamId) == userId, nil
+	case *Snapshot_UserDeviceKeyContent:
+		return GetStreamIdPostfix(streamId) == userId, nil
+	case *Snapshot_UserToDeviceContent:
+		return GetStreamIdPostfix(streamId) == userId, nil
+	case *Snapshot_MediaContent:
+		return snapshotContent.MediaContent.GetCreatorId() == userId, nil
+	default:
+		return false, RiverError(Err_INVALID_ARGUMENT, "IsMember::Unknown Payload Type", "streamId", streamId)
+	}
+}
+
+func (r *streamViewImpl) StreamParentId() *string {
+	// aellis this should probably be migrated to the common payload
+	switch snapshotContent := r.snapshot.Content.(type) {
+	case *Snapshot_ChannelContent:
+		return &snapshotContent.ChannelContent.Inception.SpaceId
+	default:
+		return nil
+	}
 }

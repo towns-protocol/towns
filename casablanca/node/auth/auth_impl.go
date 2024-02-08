@@ -158,7 +158,7 @@ func (ca *chainAuth) IsEntitled(ctx context.Context, args *ChainAuthArgs) error 
 	if !result {
 		return RiverError(
 			Err_PERMISSION_DENIED,
-			"Permission denied",
+			"IsEntitled failed",
 			"spaceId",
 			args.spaceId,
 			"channelId",

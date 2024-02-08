@@ -42,12 +42,12 @@ func TestMain(m *testing.M) {
 		os.Exit(code)
 	}()
 
-	testDatabaseUrl, testSchemaName, closer, err := dbtestutils.StartDB(context.Background())
+	testDatabaseUrl, testSchemaName, closer, err := dbtestutils.StartDB(ctx)
 	exitOnError(err, "Failed to start test database")
 	exitSignal := make(chan error, 1)
 
 	store, err = storage.NewPostgresEventStore(
-		context.Background(),
+		ctx,
 		testDatabaseUrl,
 		testSchemaName,
 		GenShortNanoid(),
@@ -107,9 +107,9 @@ func MakeEvent(
 	return parsedEvent(t, envelope)
 }
 
-func addEvent(t *testing.T, stream SyncStream, data string, mbHash []byte) {
+func addEvent(t *testing.T, ctx context.Context, stream SyncStream, data string, mbHash []byte) {
 	err := stream.AddEvent(
-		context.Background(),
+		ctx,
 		MakeEvent(t, streamCacheParams.Wallet, Make_SpacePayload_Username(&EncryptedData{Ciphertext: data}), mbHash),
 	)
 	assert.NoError(t, err)
@@ -136,8 +136,8 @@ func mbTest(
 	stream, view, err := createStream(ctx, streamCacheParams, &config.StreamConfig{}, spaceStreamId, streamNodes, miniblockProto)
 	assert.NoError(err)
 
-	addEvent(t, stream, "1", view.LastBlock().Hash)
-	addEvent(t, stream, "2", view.LastBlock().Hash)
+	addEvent(t, ctx, stream, "1", view.LastBlock().Hash)
+	addEvent(t, ctx, stream, "2", view.LastBlock().Hash)
 
 	proposal, err := stream.ProposeNextMiniblock(ctx, false)
 	assert.NoError(err)
@@ -146,7 +146,7 @@ func mbTest(
 	assert.Equal(int64(1), proposal.NewMiniblockNum)
 
 	if params.addAfterProposal {
-		addEvent(t, stream, "3", view.LastBlock().Hash)
+		addEvent(t, ctx, stream, "3", view.LastBlock().Hash)
 	}
 
 	mb, events, err := stream.MakeMiniblockHeader(ctx, proposal)
@@ -157,7 +157,7 @@ func mbTest(
 	assert.Equal(int64(1), mb.MiniblockNum)
 
 	if params.addAfterMake {
-		addEvent(t, stream, "4", view.LastBlock().Hash)
+		addEvent(t, ctx, stream, "4", view.LastBlock().Hash)
 	}
 
 	err = stream.ApplyMiniblock(ctx, mb, events)
@@ -167,7 +167,7 @@ func mbTest(
 	assert.NoError(err)
 	stats := view2.GetStats()
 	assert.Equal(params.eventsInMinipool, stats.EventsInMinipool)
-	addEvent(t, stream, "5", view2.LastBlock().Hash)
+	addEvent(t, ctx, stream, "5", view2.LastBlock().Hash)
 
 	view2, err = stream.GetView(ctx)
 	assert.NoError(err)

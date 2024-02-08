@@ -68,7 +68,7 @@ func (p pushNotificationImpl) sendNotificationRequest(
 ) {
 	log := dlog.FromCtx(ctx)
 	var spaceId string
-	if channelInfo, err := events.ChannelInceptionFromView(channel); err == nil {
+	if channelInfo, err := channel.(events.ChannelStreamView).GetChannelInception(); err == nil {
 		spaceId = channelInfo.SpaceId
 	}
 

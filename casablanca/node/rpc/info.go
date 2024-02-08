@@ -6,9 +6,12 @@ import (
 
 	"connectrpc.com/connect"
 	"golang.org/x/exp/slog"
+	"google.golang.org/protobuf/encoding/protojson"
 
 	. "github.com/river-build/river/base"
+	"github.com/river-build/river/events"
 	"github.com/river-build/river/infra"
+	"github.com/river-build/river/protocol"
 	. "github.com/river-build/river/protocol"
 )
 
@@ -83,6 +86,38 @@ func (s *Service) info(
 				break
 			}
 			return connect.NewResponse(&InfoResponse{}), nil
+		} else if debug == "add_event" {
+			if len(request.Msg.Debug) < 3 {
+				return nil, RiverError(Err_DEBUG_ERROR, "add_event requires a stream id and event")
+			}
+			streamId := request.Msg.Debug[1]
+			log.Info("Info Debug request to add event", "stream_id", streamId)
+			stub, nodes, err := s.getStubForStream(ctx, streamId)
+			if err != nil {
+				return nil, err
+			}
+			if stub != nil {
+				_, err := stub.Info(ctx, connect.NewRequest(&InfoRequest{
+					Debug: []string{"add_event", streamId},
+				}))
+				return nil, err
+			}
+			stream, _, err := s.cache.GetStream(ctx, streamId, nodes)
+			if err != nil {
+				return nil, err
+			}
+			eventStr := request.Msg.Debug[2]
+			envelope := &protocol.Envelope{}
+			err = protojson.Unmarshal([]byte(eventStr), envelope)
+			if err != nil {
+				return nil, err
+			}
+			parsedEvent, err := events.ParseEvent(envelope)
+			if err != nil {
+				return nil, err
+			}
+			err = stream.AddEvent(ctx, parsedEvent)
+			return nil, err
 		}
 	}
 

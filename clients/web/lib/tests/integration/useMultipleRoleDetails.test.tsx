@@ -28,7 +28,7 @@ import { TSigner } from '../../src/types/web3-types'
 /**
  * This test suite tests the useRoles hook.
  */
-describe('useRoleDetails', () => {
+describe('useMultipleRoleDetails', () => {
     test('create a space and get multiple role details', async () => {
         /* Arrange */
         const provider = new ZionTestWeb3Provider()

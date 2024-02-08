@@ -67,7 +67,7 @@ func makeTestSpaceStream(
 	join := makeEnvelopeWithPayload_T(
 		t,
 		wallet,
-		Make_SpacePayload_Membership(protocol.MembershipOp_SO_JOIN, userId),
+		Make_SpacePayload_Membership(protocol.MembershipOp_SO_JOIN, userId, userId),
 		nil,
 	)
 
@@ -113,7 +113,7 @@ func makeTestChannelStream(
 	join := makeEnvelopeWithPayload_T(
 		t,
 		wallet,
-		Make_ChannelPayload_Membership(protocol.MembershipOp_SO_JOIN, userId),
+		Make_ChannelPayload_Membership(protocol.MembershipOp_SO_JOIN, userId, userId),
 		nil,
 	)
 	events := []*ParsedEvent{
@@ -144,6 +144,7 @@ func joinSpace_T(
 					Make_SpacePayload_Membership(
 						protocol.MembershipOp_SO_JOIN,
 						user,
+						user,
 					),
 					stream.view.LastBlock().Hash,
 				),
@@ -172,6 +173,7 @@ func joinChannel_T(
 					Make_ChannelPayload_Membership(
 						protocol.MembershipOp_SO_JOIN,
 						user,
+						user,
 					),
 					stream.view.LastBlock().Hash,
 				),
@@ -199,6 +201,7 @@ func leaveChannel_T(
 					wallet,
 					Make_ChannelPayload_Membership(
 						protocol.MembershipOp_SO_LEAVE,
+						user,
 						user,
 					),
 					stream.view.LastBlock().Hash,

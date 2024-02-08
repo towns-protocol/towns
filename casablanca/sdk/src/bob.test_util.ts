@@ -76,6 +76,7 @@ export const bobTalksToHimself = async (
                 make_SpacePayload_Membership({
                     userId: bobsUserId,
                     op: MembershipOp.SO_JOIN,
+                    initiatorId: bobsUserId,
                 }),
             ),
         ],
@@ -99,6 +100,7 @@ export const bobTalksToHimself = async (
         make_ChannelPayload_Membership({
             userId: bobsUserId,
             op: MembershipOp.SO_JOIN,
+            initiatorId: bobsUserId,
         }),
     )
     const channelEvents = [channelInceptionEvent, channelJoinEvent]

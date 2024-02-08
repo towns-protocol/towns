@@ -312,17 +312,26 @@ message UserPayload {
         StreamSettings settings = 2;
     }
     
+    // update own membership
     message UserMembership {
+        reserved 2, 3;
         string stream_id = 1;
-        EventRef origin_event = 2;
-        string inviter_id = 3;
         MembershipOp op = 4;
         optional MembershipReason reason = 5;
+        optional string inviter = 6;
     }
-    
+
+    // update someone else's membership
+    message UserMembershipAction {
+        string stream_id = 1;
+        string user_id = 2;
+        MembershipOp op = 4;
+    }
+
     oneof content {
         Inception inception = 1;
         UserMembership user_membership = 2;
+        UserMembershipAction user_membership_action = 3;
     }
 }
 
@@ -434,6 +443,7 @@ message UserDeviceKeyPayload {
 message MediaPayload {
     message Snapshot {
         Inception inception = 1;
+        string creator_id = 2;
     }
     
     message Inception {
@@ -500,9 +510,10 @@ message StreamSettings {
 
 
 message Membership {
+    reserved 3;
     MembershipOp op = 1;
     string user_id = 2;
-    optional MembershipReason reason = 3;
+    string initiator_id = 4;
 }
 
 message EncryptedData {

@@ -248,7 +248,7 @@ describe('gdmsTests', () => {
         // @ts-ignore
         await expect(chucksClient.initStream(streamId)).toResolve()
         await expect(chucksClient.removeUser(streamId, charliesClient.userId)).rejects.toThrow(
-            'user is not a member of gdm channel',
+            'initiator of leave is not a member of GDM',
         )
     })
 })

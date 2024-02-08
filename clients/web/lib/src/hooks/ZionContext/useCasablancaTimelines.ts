@@ -455,12 +455,28 @@ function toTownsContent_UserPayload(
             return {
                 content: {
                     kind: ZTEvent.RoomMember,
-                    userId: payload.inviterId, // TODO: this is incorrect, userId should be set to the owner of the stream. Somebody else could have invited the user.
+                    userId: payload.streamId.split('-').at(1) ?? '??', // this is just the current user
                     avatarUrl: undefined, // todo avatarUrl
                     displayName: '---TODO---', // todo displayName
                     isDirect: undefined, // todo is this needed?
                     membership: toMembership(payload.op),
                     streamId: payload.streamId,
+                    reason: payload.reason,
+                } satisfies RoomMemberEvent,
+            }
+        }
+        case 'userMembershipAction': {
+            // these are admin actions where you can invite, join, or kick someone
+            const payload = value.content.value
+            return {
+                content: {
+                    kind: ZTEvent.RoomMember,
+                    userId: payload.userId,
+                    avatarUrl: undefined, // todo avatarUrl
+                    displayName: payload.userId, // todo displayName
+                    isDirect: undefined, // todo is this needed?
+                    membership: toMembership(payload.op),
+                    reason: undefined,
                 } satisfies RoomMemberEvent,
             }
         }
