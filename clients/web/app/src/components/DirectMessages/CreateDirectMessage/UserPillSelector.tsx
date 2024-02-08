@@ -85,7 +85,9 @@ export const UserPillSelector = (props: Props) => {
     const createMessageButton =
         isTouch && numSelected === 1 ? (
             <Box>
-                <Button>Message {getPrettyDisplayName(usersMap[selectedIdsArray?.[0]])}</Button>
+                <Button onClick={props.onConfirm}>
+                    Message {getPrettyDisplayName(usersMap[selectedIdsArray?.[0]])}
+                </Button>
             </Box>
         ) : undefined
 

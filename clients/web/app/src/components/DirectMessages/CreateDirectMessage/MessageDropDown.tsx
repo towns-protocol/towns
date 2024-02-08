@@ -2,6 +2,7 @@ import React, { useEffect, useState } from 'react'
 import { firstBy } from 'thenby'
 import { DMChannelIdentifier } from 'use-zion-client'
 import { Box, BoxProps, Paragraph, Stack } from '@ui'
+import { useDevice } from 'hooks/useDevice'
 import { DirectMessageRowContent } from '../DirectMessageListItem'
 
 type Props = {
@@ -18,12 +19,13 @@ export const MessageDropDown = (props: Props) => {
 
     const extraIncrement = createNewCTA ? 1 : 0
     const [focusedIndex, setFocusedIndex] = useState(0)
+    const { isTouch } = useDevice()
 
     useEffect(() => {
         if (channels) {
-            setFocusedIndex(0)
+            setFocusedIndex(isTouch ? -1 : 0)
         }
-    }, [channels])
+    }, [channels, isTouch])
 
     useEffect(() => {
         const onKeyDown = (e: KeyboardEvent) => {
@@ -65,7 +67,7 @@ export const MessageDropDown = (props: Props) => {
     }, [channels, extraIncrement, focusedIndex, onCreateNew, onSelectChannel])
 
     useEffect(() => {
-        listRef.current?.children[focusedIndex]?.scrollIntoView({
+        listRef.current?.querySelectorAll('[data-list-item]').item(focusedIndex)?.scrollIntoView({
             block: 'end',
         })
         onFocusChange(channels[focusedIndex - extraIncrement])
@@ -79,47 +81,52 @@ export const MessageDropDown = (props: Props) => {
         <Box
             gap
             scroll
-            elevate
             paddingX="md"
             paddingY="sm"
-            background="level1"
+            background="level2"
             rounded="sm"
             style={{ maxHeight: 288 }}
             boxShadow="card"
+            ref={listRef}
         >
-            <Box paddingTop="sm">
-                <Paragraph color="gray2">
-                    {props.channels.length === 0
-                        ? 'Create group'
-                        : props.channels.length === 1 && !props.channels[0].isGroup
-                        ? 'Open direct message'
-                        : 'Common Groups'}
-                </Paragraph>
-            </Box>
-
-            <Stack ref={listRef} gap="xs">
-                {createNewCTA && (
-                    <ContainerItem
-                        height="x6"
-                        alignItems="center"
-                        gap="sm"
-                        key="create-new"
-                        background={focusedIndex === 0 ? 'level2' : 'level1'}
-                        onClick={props.onCreateNew}
-                    >
-                        {createNewCTA}
-                    </ContainerItem>
-                )}
-                {props.channels?.sort(firstBy((c) => c.userIds.length)).map((c, index) => (
-                    <ContainerItem
-                        key={c.id}
-                        background={index + extraIncrement === focusedIndex ? 'level2' : 'level1'}
-                        onClick={() => props.onSelectChannel(c?.id)}
-                    >
-                        <DirectMessageRowContent channel={c} unread={false} />
-                    </ContainerItem>
-                ))}
-            </Stack>
+            {createNewCTA && (
+                <ContainerItem
+                    height="x6"
+                    alignItems="center"
+                    gap="sm"
+                    key="create-new"
+                    background={focusedIndex === 0 ? 'level3' : 'level2'}
+                    data-list-item="0"
+                    onClick={props.onCreateNew}
+                >
+                    {createNewCTA}
+                </ContainerItem>
+            )}
+            {props.channels.length > 0 && (
+                <>
+                    <Box paddingTop="sm">
+                        <Paragraph color="gray2">
+                            {props.channels.length === 1 && !props.channels[0].isGroup
+                                ? 'Open direct message'
+                                : 'Common Groups'}
+                        </Paragraph>
+                    </Box>
+                    <Stack elevate gap="xs">
+                        {props.channels?.sort(firstBy((c) => c.userIds.length)).map((c, index) => (
+                            <ContainerItem
+                                key={c.id}
+                                data-list-item={`${index + extraIncrement}`}
+                                background={
+                                    index + extraIncrement === focusedIndex ? 'level2' : 'level1'
+                                }
+                                onClick={() => props.onSelectChannel(c?.id)}
+                            >
+                                <DirectMessageRowContent channel={c} unread={false} />
+                            </ContainerItem>
+                        ))}
+                    </Stack>
+                </>
+            )}
         </Box>
     )
 }

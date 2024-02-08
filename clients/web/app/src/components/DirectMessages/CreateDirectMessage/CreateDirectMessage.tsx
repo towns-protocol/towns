@@ -13,7 +13,7 @@ import {
 import { Panel } from '@components/Panel/Panel'
 import { UserList } from '@components/UserList/UserList'
 import { ZLayerBox } from '@components/ZLayer/ZLayerContext'
-import { Box, Icon, MotionBox, Paragraph, Stack, Text } from '@ui'
+import { Box, Button, Icon, MotionBox, Paragraph, Stack, Text } from '@ui'
 import { useCreateLink } from 'hooks/useCreateLink'
 import { useDevice } from 'hooks/useDevice'
 import { SpacesChannelComponent } from 'routes/SpacesChannel'
@@ -150,6 +150,10 @@ export const CreateDirectMessage = (props: Props) => {
                         />
                     </Stack>
                 )
+            ) : isTouch ? (
+                <Box grow>
+                    <Button>Create {matchingGDM.length > 0 ? 'new' : ''} group</Button>
+                </Box>
             ) : (
                 <Stack horizontal grow gap="sm" alignItems="center">
                     <Box
@@ -171,7 +175,7 @@ export const CreateDirectMessage = (props: Props) => {
                     </Paragraph>
                 </Stack>
             ),
-        [matchingDM, matchingGDM.length, numSelectedUsers, selectedUsers, usersMap],
+        [isTouch, matchingDM, matchingGDM.length, numSelectedUsers, selectedUsers, usersMap],
     )
 
     const emptySelectionElement = useCallback(
@@ -218,8 +222,10 @@ export const CreateDirectMessage = (props: Props) => {
     const onConfirm = useCallback(() => {
         if (channelPreview) {
             onSelectChannel(channelPreview.id)
+        } else {
+            onSubmit()
         }
-    }, [channelPreview, onSelectChannel])
+    }, [channelPreview, onSelectChannel, onSubmit])
 
     const preview =
         channelPreview?.id || (numSelectedUsers === 0 ? userChannelPreview?.id : undefined)
@@ -228,40 +234,34 @@ export const CreateDirectMessage = (props: Props) => {
 
     useEffect(() => {
         // capture click on channel preview to select channel on desktop
-        if (preview) {
-            const onClickScreen = (e: MouseEvent) => {
-                if (channelContainerRef.current?.contains(e.target as Node)) {
-                    onSelectChannel(preview)
-                }
-            }
-            window.addEventListener('click', onClickScreen)
-            return () => {
-                window.removeEventListener('click', onClickScreen)
+        const onClickScreen = (e: MouseEvent) => {
+            if (channelContainerRef.current?.contains(e.target as Node)) {
+                onConfirm()
             }
         }
-    }, [onSelectChannel, preview])
+        window.addEventListener('click', onClickScreen)
+        return () => {
+            window.removeEventListener('click', onClickScreen)
+        }
+    }, [onConfirm, onSelectChannel, preview])
 
-    const animationKey = [
-        channelPreview?.id,
-        // selectedUserArray.join(),
-        // userChannelPreview?.id,
-    ].join()
+    const animationKey = [channelPreview?.id].join()
 
     return (
         <Stack grow position="relative">
             {!isTouch && numSelectedUsers && (
-                <AnimatePresence mode="sync">
-                    <MotionBox
-                        grow
-                        position="relative"
-                        key={animationKey}
-                        initial={{ opacity: 0 }}
-                        animate={{ opacity: 1 }}
-                        exit={{ opacity: 0, transition: { duration: 0 } }}
-                        transition={{ duration: 0.3, delay: 0, ease: 'easeInOut' }}
-                    >
-                        {preview ? (
-                            <Box grow ref={channelContainerRef}>
+                <Box grow ref={channelContainerRef}>
+                    <AnimatePresence mode="sync">
+                        <MotionBox
+                            grow
+                            position="relative"
+                            key={animationKey}
+                            initial={{ opacity: 0 }}
+                            animate={{ opacity: 1 }}
+                            exit={{ opacity: 0, transition: { duration: 0 } }}
+                            transition={{ duration: 0.3, delay: 0, ease: 'easeInOut' }}
+                        >
+                            {preview ? (
                                 <DMChannelContextUserLookupProvider
                                     fallbackToParentContext
                                     channelId={preview}
@@ -270,9 +270,7 @@ export const CreateDirectMessage = (props: Props) => {
                                         <SpacesChannelComponent hideHeader preventAutoFocus />
                                     </ChannelContextProvider>
                                 </DMChannelContextUserLookupProvider>
-                            </Box>
-                        ) : (
-                            <Box grow>
+                            ) : (
                                 <ChannelPlaceholder
                                     userIds={
                                         selectedUserArray?.length
@@ -282,19 +280,20 @@ export const CreateDirectMessage = (props: Props) => {
                                             : []
                                     }
                                 />
-                            </Box>
-                        )}
-                        {isTouch && (
-                            <Box
-                                absoluteFill
-                                cursor="pointer"
-                                background="level1"
-                                style={{ opacity: 0 }}
-                                onClick={() => onSelectChannel(preview)}
-                            />
-                        )}
-                    </MotionBox>
-                </AnimatePresence>
+                            )}
+
+                            {isTouch && (
+                                <Box
+                                    absoluteFill
+                                    cursor="pointer"
+                                    background="level1"
+                                    style={{ opacity: 0 }}
+                                    onClick={() => onSelectChannel(preview)}
+                                />
+                            )}
+                        </MotionBox>
+                    </AnimatePresence>
+                </Box>
             )}
 
             <ZLayerBox>
