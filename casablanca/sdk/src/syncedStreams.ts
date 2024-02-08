@@ -112,6 +112,7 @@ export class SyncedStreams {
     }
 
     public delete(streamId: string) {
+        this.streams.get(streamId)?.stop()
         this.streams.delete(streamId)
     }
 
@@ -217,7 +218,7 @@ export class SyncedStreams {
                 // Trigger restart of sync loop
                 this.log('removeStreamFromSync err', err)
             }
-            stream.removeAllListeners()
+            stream.stop()
             this.streams.delete(streamId)
             this.log('removed stream from sync', streamId)
             this.clientEmitter.emit('streamRemovedFromSync', streamId)
@@ -344,7 +345,7 @@ export class SyncedStreams {
                     if (stateConstraints[this.syncState].has(SyncState.NotSyncing)) {
                         this.setSyncState(SyncState.NotSyncing)
                         this.streams.forEach((stream) => {
-                            stream.removeAllListeners()
+                            stream.stop()
                         })
                         this.streams.clear()
                         this.abortRetry = undefined

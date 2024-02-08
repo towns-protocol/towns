@@ -11,6 +11,7 @@ export class Stream extends (EventEmitter as new () => TypedEmitter<StreamEvents
     readonly logEmitFromStream: DLogger
     readonly userId: string
     view: StreamStateView
+    private stopped = false
 
     constructor(
         userId: string,
@@ -55,6 +56,11 @@ export class Stream extends (EventEmitter as new () => TypedEmitter<StreamEvents
         )
     }
 
+    stop(): void {
+        this.removeAllListeners()
+        this.stopped = true
+    }
+
     async appendEvents(
         events: ParsedEvent[],
         nextSyncCookie: SyncCookie,
@@ -72,6 +78,9 @@ export class Stream extends (EventEmitter as new () => TypedEmitter<StreamEvents
     }
 
     emit<E extends keyof StreamEvents>(event: E, ...args: Parameters<StreamEvents[E]>): boolean {
+        if (this.stopped) {
+            return false
+        }
         this.logEmitFromStream(event, ...args)
         this.clientEmitter.emit(event, ...args)
         return super.emit(event, ...args)
