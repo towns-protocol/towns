@@ -7,6 +7,7 @@ import { useRecentUsers } from 'hooks/useRecentUsers'
 import { useGetUserBio } from 'hooks/useUserBio'
 import { getPrettyDisplayName } from 'utils/getPrettyDisplayName'
 import { useDevice } from 'hooks/useDevice'
+import { lookupUserNameSearchString } from 'hooks/useSearch'
 import { PillSelector } from './PillSelector'
 
 type Props = {
@@ -24,13 +25,7 @@ export const UserPillSelector = (props: Props) => {
         return _users
             .filter((u) => u.userId !== userId)
             .map((user: LookupUser) => {
-                // Users may have different names in different spaces, and we want to search all of them.
-                // The easiest way is to just concatenate all the names into a single string.
-                const search = Object.values(user.memberOf ?? {})
-                    .flatMap((info) => [info.displayName, info.username])
-                    .join(' ')
-
-                return { ...user, search: search }
+                return { ...user, search: lookupUserNameSearchString(user) }
             }) as LookupUser[]
     }, [_users, userId])
 

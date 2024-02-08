@@ -1,6 +1,6 @@
 import { useCallback, useMemo } from 'react'
 import { firstBy } from 'thenby'
-import { useUserLookupContext } from 'use-zion-client'
+import { LookupUser, useUserLookupContext } from 'use-zion-client'
 import {
     ActionEventDocument,
     ChannelEventDocument,
@@ -51,10 +51,10 @@ export const useSearch = (searchTerms: string) => {
 
     const indexedMembers = useMemo<UserEventDocument[]>(
         () =>
-            users.map((u) => ({
+            users.map((u: LookupUser) => ({
                 key: `user-${u.userId}`,
                 type: 'user' as const,
-                body: `${u.displayName ?? ''} + ${u.username ?? ''}`.trim(),
+                body: lookupUserNameSearchString(u),
                 source: u,
             })),
         [users],
@@ -109,4 +109,13 @@ export const useSearch = (searchTerms: string) => {
         .sort(firstBy((r) => order.indexOf(r.item.type)))
 
     return { searchResults }
+}
+
+export function lookupUserNameSearchString(user: LookupUser) {
+    // Users may have different names in different spaces, and we want to search all of them.
+    // The easiest way is to just concatenate all the names into a single string.
+    return Object.values(user.memberOf ?? {})
+        .flatMap((info) => [info.displayName, info.username])
+        .join(' ')
+        .trim()
 }
