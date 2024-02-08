@@ -15,3 +15,9 @@ dist/
 
 # dependencies
 node_modules/
+
+# vapid-keys
+.keys/
+
+# local env files 
+.env.local

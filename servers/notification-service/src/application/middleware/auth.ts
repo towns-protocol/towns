@@ -11,7 +11,7 @@ export function validateAuthToken(req: Request, res: Response, next: NextFunctio
     }
 
     try {
-        const decodedToken = Buffer.from(token, 'base64').toString('utf8')
+        const decodedToken = Buffer.from(token.replace('Bearer ', ''), 'base64').toString('utf8')
         if (decodedToken === authSecret) {
             next()
             return

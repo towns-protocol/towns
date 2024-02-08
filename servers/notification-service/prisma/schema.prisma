@@ -38,7 +38,7 @@ model UserSettingsChannel {
   SpaceId      String
   ChannelId    String
   UserId       String
-  ChannelMute  Mute         @default(Default)
+  ChannelMute  Mute         @default(default)
   UserSettings UserSettings @relation(fields: [UserId], references: [UserId], onDelete: Cascade, onUpdate: NoAction)
 
   @@id([ChannelId, UserId])
@@ -47,14 +47,14 @@ model UserSettingsChannel {
 model UserSettingsSpace {
   SpaceId      String
   UserId       String
-  SpaceMute    Mute         @default(Default)
+  SpaceMute    Mute         @default(default)
   UserSettings UserSettings @relation(fields: [UserId], references: [UserId], onDelete: Cascade, onUpdate: NoAction)
 
   @@id([SpaceId, UserId])
 }
 
 enum Mute {
-  Default
-  Unmuted
-  Muted
+  default
+  unmuted
+  muted
 }

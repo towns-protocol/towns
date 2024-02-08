@@ -4,7 +4,7 @@ This is a Node.js service that handles notifications.
 
 ## Starting the development server
 
-Run with docker compose: `$ docker-compose up --remove-orphans`
+Run with docker compose: `$ docker compose up --remove-orphans`
 
 ## Test
 

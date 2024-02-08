@@ -9,6 +9,8 @@
             "runtimeExecutable": "node",
             "preLaunchTask": "start dev",
             "runtimeArgs": [
+                "--env-file",
+                ".env.local",
                 "--experimental-specifier-resolution=node",
                 "--watch",
                 "--loader",

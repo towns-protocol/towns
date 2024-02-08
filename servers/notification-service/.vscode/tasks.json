@@ -27,7 +27,7 @@
         {
             "label": "start db",
             "type": "shell",
-            "command": "docker-compose",
+            "command": "docker compose",
             "args": ["up", "-d", "db"],
             "group": {
                 "kind": "build",

@@ -9,27 +9,28 @@ import {
 import { z } from 'zod'
 
 export async function saveNotificationSettingsHandler(req: Request, res: Response) {
-    const settingsData: z.infer<typeof saveUserSettingsSchema> = req.body
-    const { userId } = settingsData
+    const payload: z.infer<typeof saveUserSettingsSchema> = req.body
+    const { userSettings } = payload
+    const { userId } = userSettings
 
     database.$transaction(async (tx) => {
         try {
             const userSettingsData = {
                 UserId: userId,
-                DirectMessage: settingsData.directMessage,
-                Mention: settingsData.mention,
-                ReplyTo: settingsData.replyTo,
+                DirectMessage: userSettings.directMessage,
+                Mention: userSettings.mention,
+                ReplyTo: userSettings.replyTo,
             }
 
             // upsert user settings
             await tx.userSettings.upsert({
-                where: { UserId: settingsData.userId },
+                where: { UserId: userSettings.userId },
                 update: userSettingsData,
                 create: userSettingsData,
             })
 
             // upsert space settings
-            for (const spaceSettings of settingsData.spaceSettings) {
+            for (const spaceSettings of userSettings.spaceSettings) {
                 await tx.userSettingsSpace.upsert({
                     where: {
                         SpaceId_UserId: {
@@ -49,7 +50,7 @@ export async function saveNotificationSettingsHandler(req: Request, res: Respons
             }
 
             // upsert channel settings
-            for (const channelSettings of settingsData.channelSettings) {
+            for (const channelSettings of userSettings.channelSettings) {
                 const newSettings = {
                     SpaceId: channelSettings.spaceId,
                     ChannelId: channelSettings.channelId,
@@ -74,7 +75,7 @@ export async function saveNotificationSettingsHandler(req: Request, res: Respons
         }
     })
 
-    return res.status(StatusCodes.OK).json(settingsData)
+    return res.status(StatusCodes.OK).json(userSettings)
 }
 
 export async function deleteNotificationSettingsHandler(req: Request, res: Response) {

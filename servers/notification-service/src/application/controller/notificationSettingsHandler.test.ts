@@ -157,12 +157,12 @@ describe('getNotificationSettingsHandler', () => {
             Mention: true,
             ReplyTo: true,
             UserSettingsSpace: [
-                { SpaceId: 'space1', SpaceMute: Mute.Default },
-                { SpaceId: 'space2', SpaceMute: Mute.Unmuted },
+                { SpaceId: 'space1', SpaceMute: Mute.default },
+                { SpaceId: 'space2', SpaceMute: Mute.unmuted },
             ],
             UserSettingsChannel: [
-                { SpaceId: 'space1', ChannelId: 'channel1', ChannelMute: Mute.Unmuted },
-                { SpaceId: 'space2', ChannelId: 'channel2', ChannelMute: Mute.Muted },
+                { SpaceId: 'space1', ChannelId: 'channel1', ChannelMute: Mute.unmuted },
+                { SpaceId: 'space2', ChannelId: 'channel2', ChannelMute: Mute.muted },
             ],
         }
         jest.spyOn(database, '$transaction').mockImplementation((callback) => callback(database))
@@ -185,12 +185,12 @@ describe('getNotificationSettingsHandler', () => {
             mention: true,
             replyTo: true,
             spaceSettings: [
-                { spaceId: 'space1', spaceMute: Mute.Default },
-                { spaceId: 'space2', spaceMute: Mute.Unmuted },
+                { spaceId: 'space1', spaceMute: Mute.default },
+                { spaceId: 'space2', spaceMute: Mute.unmuted },
             ],
             channelSettings: [
-                { spaceId: 'space1', channelId: 'channel1', channelMute: Mute.Unmuted },
-                { spaceId: 'space2', channelId: 'channel2', channelMute: Mute.Muted },
+                { spaceId: 'space1', channelId: 'channel1', channelMute: Mute.unmuted },
+                { spaceId: 'space2', channelId: 'channel2', channelMute: Mute.muted },
             ],
         })
     })
