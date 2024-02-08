@@ -21,7 +21,17 @@ export const UserPillSelector = (props: Props) => {
     const recentUsers = useRecentUsers()
     const userId = useMyUserId()
     const users = useMemo(() => {
-        return _users.filter((u) => u.userId !== userId)
+        return _users
+            .filter((u) => u.userId !== userId)
+            .map((user: LookupUser) => {
+                // Users may have different names in different spaces, and we want to search all of them.
+                // The easiest way is to just concatenate all the names into a single string.
+                const search = Object.values(user.memberOf ?? {})
+                    .flatMap((info) => [info.displayName, info.username])
+                    .join(' ')
+
+                return { ...user, search: search }
+            }) as LookupUser[]
     }, [_users, userId])
 
     // -------------------------------------------------------------------------
@@ -113,7 +123,7 @@ export const UserPillSelector = (props: Props) => {
                 <Box zIndex="layer">
                     <PillSelector
                         options={users}
-                        keys={['username', 'displayName']}
+                        keys={['search']}
                         label={labelElement}
                         initialFocusIndex={isTouch ? -1 : 0}
                         placeholder={

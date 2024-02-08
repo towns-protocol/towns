@@ -61,7 +61,7 @@ export const PillSelector = <T,>(props: Props<T>) => {
             return []
         }
         const results = fuzzysort
-            .go(searchTerm, options, { keys, all: true })
+            .go(searchTerm, options, { keys, all: true, threshold: -10000 })
             .map((r) => r.obj)
             // prevent showing already selected options
             .filter((f) => !selection.has(getOptionKey(f)))
