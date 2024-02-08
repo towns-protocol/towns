@@ -293,8 +293,12 @@ describe('Stress test', () => {
                 await pauseForXMiliseconds(1000)
             }
             await pauseForXMiliseconds(60000)
+            let dbSize = await redis.dbsize()
+            log('DB size', dbSize)
+            await pauseForXMiliseconds(120000)
+            dbSize = await redis.dbsize()
+            log('DB size #2', dbSize)
             await result.riverSDK.client.stopSync()
-            const dbSize = await redis.dbsize()
             expect(dbSize).toBe(0)
             log('Test executed successfully')
             await redis.quit()
