@@ -107,7 +107,7 @@ import buffer from 'buffer'
 const { Buffer } = buffer
 
 // ...
-if (!window.Buffer) {
+if (typeof window !== 'undefined' && !window.Buffer) {
     window.Buffer = Buffer
 }
 
