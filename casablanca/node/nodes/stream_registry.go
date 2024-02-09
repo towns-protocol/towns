@@ -10,7 +10,9 @@ import (
 )
 
 type StreamRegistry interface {
+	// GetStreamInfo: returns nodes, genesisMiniblockHash, error
 	GetStreamInfo(ctx context.Context, streamId string) ([]string, []byte, error)
+	// GetStreamInfo: returns nodes, error
 	AllocateStream(ctx context.Context, streamId string, genesisMiniblockHash []byte, genesisMiniblock []byte) ([]string, error)
 }
 
