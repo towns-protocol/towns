@@ -8,11 +8,6 @@ function check_env() {
         exit 1
     fi
 
-    if [ -z "$FOLLOWER_ID" ]; then
-        echo "FOLLOWER_ID is not set"
-        exit 1
-    fi
-
     if [ -z "$RIVER_NODE_URL" ]; then
         echo "RIVER_NODE_URL is not set"
         exit 1
@@ -46,7 +41,6 @@ function check_env() {
 
 function start_follower() {
     echo "starting follower"
-    echo "FOLLOWER_ID: ${FOLLOWER_ID}"
     echo "RIVER_NODE_URL: ${RIVER_NODE_URL}"
     echo "BASE_CHAIN_RPC_URL: ${BASE_CHAIN_RPC_URL}"
     echo "CHANNEL_SAMPLING_RATE: ${CHANNEL_SAMPLING_RATE}"

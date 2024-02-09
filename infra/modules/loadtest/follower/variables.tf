@@ -22,11 +22,6 @@ variable "tags" {
   default     = {}
 }
 
-variable "follower_id" {
-  description = "Counter in iteration based on follower number"
-  type        = number
-}
-
 variable "river_node_url" {
   description = "river node url to pass as environment details"
   type        = string

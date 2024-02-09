@@ -1,6 +1,6 @@
 locals {
   container_name      = "loadtest-follower"
-  name                = "${local.container_name}-${var.follower_id}-${terraform.workspace}"
+  name                = "${local.container_name}-${terraform.workspace}"
   global_remote_state = module.global_constants.global_remote_state.outputs
 
   custom_tags = merge(
@@ -89,10 +89,6 @@ resource "aws_ecs_task_definition" "task_definition" {
       {
         name  = "MODE",
         value = "follower"
-      },
-      {
-        name  = "FOLLOWER_ID",
-        value = tostring(var.follower_id)
       },
       {
         name  = "RIVER_NODE_URL",

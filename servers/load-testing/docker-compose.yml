@@ -33,7 +33,6 @@ services:
       - "5002:80"
     environment:
       - MODE=follower
-      - FOLLOWER_ID=follower-1
       - RIVER_NODE_URL=http://localhost:5157
       - BASE_CHAIN_RPC_URL=http://localhost:8545
       # 10 minutes
@@ -50,7 +49,6 @@ services:
       - "5003:80"
     environment:
       - MODE=follower
-      - FOLLOWER_ID=follower-2
       - RIVER_NODE_URL=http://localhost:5157
       - BASE_CHAIN_RPC_URL=http://localhost:8545
       # 10 minutes

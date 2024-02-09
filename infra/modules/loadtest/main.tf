@@ -69,8 +69,6 @@ module "leader" {
 
 module "follower" {
   source             = "./follower"
-  count              = local.num_followers
-  follower_id        = count.index + 1
   vpc_id             = var.vpc_id
   subnets            = var.private_subnets
   ecs_cluster        = aws_ecs_cluster.loadtest_cluster
