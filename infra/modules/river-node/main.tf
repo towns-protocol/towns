@@ -549,8 +549,9 @@ resource "aws_ecs_task_definition" "river-fargate" {
         value = "true"
       },
       {
+        # TODO: update river node internal env vars for better naming convention
         name  = "PUSHNOTIFICATION__URL",
-        value = var.push_notification_worker_url
+        value = var.notification_service_url
       },
       {
         name  = "DD_SERVICE",

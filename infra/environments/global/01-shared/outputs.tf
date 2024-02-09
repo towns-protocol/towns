@@ -61,3 +61,7 @@ output "river_node_acme_account_secret" {
 output "cloudflare_api_token_secret" {
   value = aws_secretsmanager_secret.cloudflare_api_token
 }
+
+output "notification_service_db_password_secret" {
+  value = aws_secretsmanager_secret.notification_service_db_password_secret
+}

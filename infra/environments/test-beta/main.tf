@@ -99,7 +99,7 @@ module "river_node_1" {
   alb_dns_name           = module.river_alb.lb_dns_name
   alb_https_listener_arn = module.river_alb.lb_https_listener_arn
 
-  push_notification_worker_url = "https://push-notification-worker-${terraform.workspace}.towns.com"
+  notification_service_url = "https://push-notification-worker-${terraform.workspace}.towns.com"
 
   node_number    = 1
   base_chain_id  = 84532

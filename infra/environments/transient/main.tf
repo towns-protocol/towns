@@ -51,6 +51,7 @@ locals {
 
   create_db_cluster           = var.num_nodes > 0
   create_forked_chain_service = var.num_nodes > 0
+  create_notification_service = var.num_nodes > 0
   create_load_testing_module  = var.num_nodes > 0
   base_chain_id               = 84532
   river_chain_id              = 6524490
@@ -144,6 +145,32 @@ module "river_forked_chain_service" {
 }
 
 
+# module "notification_service" {
+#   count  = local.create_notification_service ? 1 : 0
+#   source = "../../modules/notification-service"
+
+#   alb_security_group_id  = local.transient_global_remote_state.river_alb.security_group_id
+#   alb_dns_name           = local.transient_global_remote_state.river_alb.lb_dns_name
+#   alb_https_listener_arn = local.transient_global_remote_state.river_alb.lb_https_listener_arn
+
+#   ecs_cluster = {
+#     id   = local.transient_global_remote_state.river_ecs_cluster.id
+#     name = local.transient_global_remote_state.river_ecs_cluster.name
+#   }
+
+#   git_pr_number = var.git_pr_number
+#   is_transient  = true
+
+#   subnets = local.transient_global_remote_state.vpc.private_subnets
+#   vpc_id  = local.transient_global_remote_state.vpc.vpc_id
+
+#   vapid_key_secret_arn = local.transient_global_remote_state.notification_vapid_key.arn
+#   vapid_subject        = "mailto:test@towns.com"
+
+#   river_node_db = local.create_db_cluster ? module.river_db_cluster[0] : null
+# }
+
+
 module "river_node" {
   source      = "../../modules/river-node"
   count       = var.num_nodes
@@ -172,8 +199,7 @@ module "river_node" {
     name = local.transient_global_remote_state.river_ecs_cluster.name
   }
 
-  # TODO: generalize this to env name once we start deploying transient workers
-  push_notification_worker_url = "https://push-notification-worker-test-beta.towns.com"
+  notification_service_url = "https://push-notification-worker-${terraform.workspace}.towns.com"
 
   alb_security_group_id  = local.transient_global_remote_state.river_alb.security_group_id
   alb_dns_name           = local.transient_global_remote_state.river_alb.lb_dns_name

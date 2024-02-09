@@ -26,7 +26,7 @@ module "post_provision_config_lambda_function" {
   ephemeral_storage_size = 512
   architectures          = ["x86_64"]
   publish                = true
-  timeout                = 30 #seconds
+  timeout                = 300 #seconds
   create_package         = false
   s3_existing_package = {
     bucket     = local.post_provision_config_lambda_s3_object.bucket
@@ -59,6 +59,13 @@ module "post_provision_config_lambda_function" {
       USER         = "river-readonly"
       PASSWORD_ARN = local.global_remote_state.readonlyuser_db_password_secret.arn
     })
+    NOTIFICATION_SERVICE_USER_DB_CONFIG = jsonencode({
+      HOST         = var.river_user_db_config.host
+      PORT         = var.river_user_db_config.port
+      DATABASE     = var.river_user_db_config.database
+      USER         = "notification-service"
+      PASSWORD_ARN = local.global_remote_state.notification_service_db_password_secret.arn
+    })
     HOME_CHAIN_ID                           = var.base_chain_id
     RIVER_NODE_WALLET_CREDENTIALS_ARN       = var.river_node_wallet_credentials_arn
     RIVER_DB_CLUSTER_MASTER_USER_SECRET_ARN = var.river_db_cluster_master_user_secret_arn
@@ -86,7 +93,8 @@ module "post_provision_config_lambda_function" {
           "Resource": [
             "${var.river_user_db_config.password_arn}",
             "${local.global_remote_state.readonlyuser_db_password_secret.arn}",
-            "${var.river_node_wallet_credentials_arn}"
+            "${var.river_node_wallet_credentials_arn}",
+            "${local.global_remote_state.notification_service_db_password_secret.arn}"
           ]
         }
       ]

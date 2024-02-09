@@ -151,6 +151,16 @@ resource "aws_secretsmanager_secret_version" "river_chain_network_url_secret" {
   secret_string = "DUMMY"
 }
 
+resource "aws_secretsmanager_secret" "notification_service_db_password_secret" {
+  name        = "notification-service-db-password"
+  description = "Notification service db password"
+}
+
+resource "aws_secretsmanager_secret_version" "notification_service_db_password_secret" {
+  secret_id     = aws_secretsmanager_secret.notification_service_db_password_secret.id
+  secret_string = "DUMMY"
+}
+
 module "river_node_credentials" {
   source = "../../../modules/river-node-credentials"
 

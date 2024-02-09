@@ -16,3 +16,7 @@ output "river_ecs_cluster" {
 output "pgadmin_security_group_id" {
   value = module.pgadmin.security_group_id
 }
+
+output "notification_vapid_key" {
+  value = aws_secretsmanager_secret.notification_vapid_key
+}

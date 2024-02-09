@@ -47,8 +47,8 @@ variable "alb_dns_name" {
   type        = string
 }
 
-variable "push_notification_worker_url" {
-  description = "The url of the push notification worker"
+variable "notification_service_url" {
+  description = "The url of the notification service"
   type        = string
 }
 

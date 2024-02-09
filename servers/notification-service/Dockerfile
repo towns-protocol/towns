@@ -12,4 +12,4 @@ RUN yarn prisma generate
 
 EXPOSE 3030
 
-CMD ["node", "dist/server.js"]
+CMD ["./scripts/run.sh"]

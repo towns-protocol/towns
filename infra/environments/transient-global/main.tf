@@ -93,3 +93,8 @@ module "pgadmin" {
   alb_dns_name           = module.river_alb.lb_dns_name
   alb_https_listener_arn = module.river_alb.lb_https_listener_arn
 }
+
+resource "aws_secretsmanager_secret" "notification_vapid_key" {
+  name        = "notification-vapid-key-${terraform.workspace}"
+  description = "Key-pair for notification service"
+}
