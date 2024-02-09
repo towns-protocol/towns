@@ -132,8 +132,10 @@ describe('withEntitlements', () => {
 
         await expect(alice.joinStream(spaceId)).toResolve()
         await expect(alice.joinStream(channelId)).toResolve()
-        // todo  getDevicesInRoom is randomly failing in ci renable https://linear.app/hnt-labs/issue/HNT-3439/getdevicesinroom-is-randomly-failing-in-ci
-        // await expect(alice.sendMessage(channelId, 'Hello, world from Alice!')).toResolve()
+
+        await expect(alice.sendMessage(channelId, 'Hello, world from Alice!')).toResolve()
+
+        await expect(alice.leaveStream(channelId)).toResolve()
 
         // kill the clients
         bob.stopSync()

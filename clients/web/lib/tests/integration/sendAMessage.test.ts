@@ -112,6 +112,8 @@ describe('sendAMessage', () => {
             const events = getMessages(bobRecievedEvents)
             expect(events).toContain(`Hello Bob! from ${client.getUserId()!}`)
         })
+
+        await bob.leave(channelId)
     }) // end test
 }) // end describe
 

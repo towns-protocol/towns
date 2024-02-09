@@ -153,7 +153,7 @@ func (ca *chainAuth) IsEntitled(ctx context.Context, args *ChainAuthArgs) error 
 		ca.checkEntitiement,
 	)
 	if err != nil {
-		return AsRiverError(err).Func("IsAllowed")
+		return AsRiverError(err).Func("IsEntitled")
 	}
 	if !result {
 		return RiverError(

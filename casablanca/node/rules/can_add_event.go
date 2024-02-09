@@ -583,10 +583,16 @@ func (ru *caeRules) parentEventForUserMembershipAction() (*RequiredParentEvent, 
 
 func (ru *caeRules) spaceMembershipEntitlements() (*auth.ChainAuthArgs, error) {
 	streamId := ru.streamView.StreamId()
+
 	permission, permissionUser, err := ru.getPermissionForMembershipOp()
 	if err != nil {
 		return nil, err
 	}
+
+	if permission == auth.PermissionUndefined {
+		return nil, nil
+	}
+
 	chainAuthArgs := auth.NewChainAuthArgsForSpace(
 		streamId,
 		permissionUser,
@@ -604,6 +610,10 @@ func (ru *caeRules) channelMembershipEntitlements() (*auth.ChainAuthArgs, error)
 	permission, permissionUser, err := ru.getPermissionForMembershipOp()
 	if err != nil {
 		return nil, err
+	}
+
+	if permission == auth.PermissionUndefined {
+		return nil, nil
 	}
 
 	chainAuthArgs := auth.NewChainAuthArgsForChannel(
