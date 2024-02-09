@@ -1,7 +1,6 @@
 package events
 
 import (
-	"fmt"
 	"sort"
 
 	. "github.com/river-build/river/base"
@@ -108,7 +107,7 @@ func make_SnapshotContent(iPayload IsInceptionPayload, creatorId string) (IsSnap
 			},
 		}, nil
 	default:
-		return nil, fmt.Errorf("unknown inception payload type %T", iPayload)
+		return nil, RiverError(Err_INVALID_ARGUMENT, "unknown inception payload type %T", iPayload)
 	}
 }
 
@@ -154,7 +153,7 @@ func Update_Snapshot(iSnapshot *Snapshot, event *ParsedEvent, miniblockNum int64
 		}
 		return update_Snapshot_Common(iSnapshot, payload.CommonPayload, creator)
 	default:
-		return fmt.Errorf("unknown payload type %T", event.Event.Payload)
+		return RiverError(Err_INVALID_ARGUMENT, "unknown payload type %T", event.Event.Payload)
 	}
 }
 
@@ -191,7 +190,7 @@ func update_Snapshot_Space(iSnapshot *Snapshot, spacePayload *SpacePayload, user
 		snapshot.SpaceContent.DisplayNames[user] = &WrappedEncryptedData{Data: content.DisplayName, EventNum: eventNum, EventHash: eventHash}
 		return nil
 	default:
-		return fmt.Errorf("unknown space payload type %T", spacePayload.Content)
+		return RiverError(Err_INVALID_ARGUMENT, "unknown space payload type %T", spacePayload.Content)
 	}
 }
 
@@ -213,7 +212,7 @@ func update_Snapshot_Channel(iSnapshot *Snapshot, channelPayload *ChannelPayload
 	case *ChannelPayload_Message:
 		return nil
 	default:
-		return fmt.Errorf("unknown channel payload type %T", channelPayload.Content)
+		return RiverError(Err_INVALID_ARGUMENT, "unknown channel payload type %T", channelPayload.Content)
 	}
 }
 
@@ -252,7 +251,7 @@ func update_Snapshot_DmChannel(
 	case *DmChannelPayload_Message:
 		return nil
 	default:
-		return fmt.Errorf("unknown dm channel payload type %T", dmChannelPayload.Content)
+		return RiverError(Err_INVALID_ARGUMENT, "unknown dm channel payload type %T", dmChannelPayload.Content)
 	}
 }
 
@@ -296,7 +295,7 @@ func update_Snapshot_GdmChannel(
 	case *GdmChannelPayload_Message:
 		return nil
 	default:
-		return fmt.Errorf("unknown channel payload type %T", channelPayload.Content)
+		return RiverError(Err_INVALID_ARGUMENT, "unknown channel payload type %T", channelPayload.Content)
 	}
 }
 
@@ -314,8 +313,10 @@ func update_Snapshot_User(iSnapshot *Snapshot, userPayload *UserPayload) error {
 		}
 		snapshot.UserContent.Memberships[content.UserMembership.StreamId] = content.UserMembership
 		return nil
+	case *UserPayload_UserMembershipAction_:
+		return nil
 	default:
-		return fmt.Errorf("unknown user payload type %T", userPayload.Content)
+		return RiverError(Err_INVALID_ARGUMENT, "unknown user payload type %T", userPayload.Content)
 	}
 }
 
@@ -334,7 +335,7 @@ func update_Snapshot_UserSettings(iSnapshot *Snapshot, userSettingsPayload *User
 		snapshot.UserSettingsContent.FullyReadMarkers[content.FullyReadMarkers.ChannelStreamId] = content.FullyReadMarkers
 		return nil
 	default:
-		return fmt.Errorf("unknown user settings payload type %T", userSettingsPayload.Content)
+		return RiverError(Err_INVALID_ARGUMENT, "unknown user settings payload type %T", userSettingsPayload.Content)
 	}
 }
 
@@ -369,7 +370,7 @@ func update_Snapshot_UserDeviceKey(iSnapshot *Snapshot, userDeviceKeyPayload *Us
 		}
 		return nil
 	default:
-		return fmt.Errorf("unknown user device key payload type %T", userDeviceKeyPayload.Content)
+		return RiverError(Err_INVALID_ARGUMENT, "unknown user device key payload type %T", userDeviceKeyPayload.Content)
 	}
 }
 
@@ -420,7 +421,7 @@ func update_Snapshot_UserToDevice(
 		cleanup_Snapshot_UserToDevice(snapshot, miniblockNum)
 		return nil
 	default:
-		return fmt.Errorf("unknown user to device payload type %T", userToDevicePayload.Content)
+		return RiverError(Err_INVALID_ARGUMENT, "unknown user to device payload type %T", userToDevicePayload.Content)
 	}
 }
 
@@ -479,7 +480,7 @@ func update_Snapshot_Common(iSnapshot *Snapshot, commonPayload *CommonPayload, s
 		}
 		return nil
 	default:
-		return fmt.Errorf("unknown common payload type %T", commonPayload.Content)
+		return RiverError(Err_INVALID_ARGUMENT, "unknown common payload type %T", commonPayload.Content)
 	}
 }
 
