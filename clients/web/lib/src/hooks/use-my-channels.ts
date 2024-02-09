@@ -2,18 +2,11 @@ import { useCallback, useEffect, useMemo, useState } from 'react'
 import { useZionContext } from '../components/ZionContextProvider'
 import { Channel, SpaceData } from '../types/zion-types'
 import isEqual from 'lodash/isEqual'
-import { isChannelStreamId, isSpaceStreamId } from '@river/sdk'
+import { isUserStreamId } from '@river/sdk'
 import { MembershipOp } from '@river/proto'
 
 export function useMyChannels(space?: SpaceData) {
-    const channelIds = useMemo(() => {
-        return (
-            space?.channelGroups.flatMap((group) => group.channels.map((channel) => channel.id)) ??
-            []
-        )
-    }, [space?.channelGroups])
-
-    const casablancaChannelIds = useMyMembershipsCasablanca(channelIds)
+    const casablancaChannelIds = useMyMembershipsCasablanca()
 
     const filterUnjoinedChannels = useCallback(
         (channels: Channel[]) => {
@@ -38,44 +31,31 @@ export function useMyChannels(space?: SpaceData) {
     return channelGroups
 }
 
-function useMyMembershipsCasablanca(channelIds: string[]) {
-    const { casablancaClient, client } = useZionContext()
-    const [isMemberOf, setIsMemberOf] = useState<Set<string>>(new Set())
+function useMyMembershipsCasablanca() {
+    const { casablancaClient } = useZionContext()
+    const [myMemberships, setMyMemberships] = useState<Set<string>>(new Set())
 
     useEffect(() => {
-        if (!casablancaClient || !client) {
+        if (!casablancaClient) {
             return
         }
         const userId = casablancaClient.userId
-        if (!userId) {
+        const userStreamId = casablancaClient.userStreamId
+        if (!userId || !userStreamId) {
             return
         }
 
-        if (!casablancaClient || !casablancaClient.userStreamId) {
-            return
-        }
-        const userStream = casablancaClient.streams.get(casablancaClient.userStreamId)
-        if (!userStream) {
-            return
-        }
-
-        const inChannelIdSet = new Set(channelIds.map((channelId) => channelId))
         const updateState = () => {
+            const userStream = casablancaClient.streams.get(userStreamId)
+            if (!userStream) {
+                return
+            }
             const memberships = new Set(
-                channelIds
-                    .filter((channelId) => {
-                        try {
-                            return userStream.view.userContent.isMember(
-                                channelId,
-                                MembershipOp.SO_JOIN,
-                            )
-                        } catch (error) {
-                            return false
-                        }
-                    })
-                    .map((channelId) => channelId),
+                Object.values(userStream.view.userContent.streamMemberships)
+                    .filter((membership) => membership.op === MembershipOp.SO_JOIN)
+                    .map((membership) => membership.streamId),
             )
-            setIsMemberOf((prev) => {
+            setMyMemberships((prev) => {
                 if (isEqual(prev, memberships)) {
                     return prev
                 }
@@ -83,30 +63,31 @@ function useMyMembershipsCasablanca(channelIds: string[]) {
             })
         }
 
-        const onStreamUserMembership = (streamId: string, oUserId: string) => {
-            if (oUserId === userId && inChannelIdSet.has(streamId)) {
-                updateState()
-            }
+        const onUserJoinedStream = (_streamId: string) => {
+            updateState()
+        }
+        const onUserLeftStream = (_streamId: string) => {
+            updateState()
         }
 
         const onStreamInitialized = (streamId: string) => {
-            if (isSpaceStreamId(streamId) || isChannelStreamId(streamId)) {
+            if (isUserStreamId(streamId)) {
                 updateState()
             }
         }
 
         updateState()
 
-        casablancaClient.on('streamNewUserJoined', onStreamUserMembership)
-        casablancaClient.on('streamUserLeft', onStreamUserMembership)
+        casablancaClient.on('userJoinedStream', onUserJoinedStream)
+        casablancaClient.on('userLeftStream', onUserLeftStream)
         casablancaClient.on('streamInitialized', onStreamInitialized)
 
         return () => {
-            casablancaClient.off('streamNewUserJoined', onStreamUserMembership)
-            casablancaClient.off('streamUserLeft', onStreamUserMembership)
+            casablancaClient.off('userJoinedStream', onUserJoinedStream)
+            casablancaClient.off('userLeftStream', onUserLeftStream)
             casablancaClient.off('streamInitialized', onStreamInitialized)
         }
-    }, [channelIds, client, casablancaClient])
+    }, [casablancaClient])
 
-    return isMemberOf
+    return myMemberships
 }

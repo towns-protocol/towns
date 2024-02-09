@@ -16,6 +16,7 @@ import { CreateChannelInfo } from '../../src/types/zion-types'
 import { SpaceContextProvider } from '../../src/components/SpaceContextProvider'
 import { TestConstants } from './helpers/TestConstants'
 import { createMembershipStruct } from '@river/web3'
+import { useZionClient } from '../../src/hooks/use-zion-client'
 
 /// regression, channels weren't showing in sidebar after they were created
 describe('createSpaceChannelHooks', () => {
@@ -28,6 +29,7 @@ describe('createSpaceChannelHooks', () => {
 
         // create a veiw for bob
         const TestComponent = () => {
+            const { leaveRoom } = useZionClient()
             const spaceTransaction = useCreateSpaceTransaction()
             const { createSpaceTransactionWithRole } = spaceTransaction
             const channelTransaction = useCreateChannelTransaction()
@@ -72,11 +74,24 @@ describe('createSpaceChannelHooks', () => {
                     console.log('onClickCreateChannel', name)
                 })()
             }, [createChannelTransaction, spaceId])
+            const onClickLeaveChannel = useCallback(() => {
+                console.log('onClickLeaveChannel:start')
+                const channel = channelGroups
+                    ?.at(0)
+                    ?.channels?.find((c) => c.label.includes('aliceChannel'))
+                if (!channel) {
+                    throw new Error('no channel')
+                }
+                void leaveRoom(channel.id)
+                console.log('onClickLeaveChannel:END', channel)
+            }, [channelGroups, leaveRoom])
+
             return (
                 <>
                     <RegisterWallet signer={aliceProvider.wallet} />
                     <button onClick={onClickCreateSpace}>createSpace</button>
                     <button onClick={onClickCreateChannel}>createChannel</button>
+                    <button onClick={onClickLeaveChannel}>leaveChannel</button>
                     <div data-testid="seenStates"></div>
                     <div data-testid="spaceId">{JSON.stringify(spaceId)}</div>
                     <div data-testid="spaceData">{JSON.stringify(spaceData)}</div>
@@ -105,6 +120,9 @@ describe('createSpaceChannelHooks', () => {
         const createChannel = screen.getByRole('button', {
             name: 'createChannel',
         })
+        const leaveChannel = screen.getByRole('button', {
+            name: 'leaveChannel',
+        })
         await waitFor(() => expect(loginStatus).toHaveTextContent('LoggedIn'))
         await waitFor(() => expect(clientRunning).toHaveTextContent('true'))
         //
@@ -127,5 +145,13 @@ describe('createSpaceChannelHooks', () => {
             () => expect(channelGroups).toHaveTextContent('aliceChannel'),
             TestConstants.DecaDefaultWaitForTimeout,
         )
-    }) // end test with bob
+        fireEvent.click(leaveChannel)
+        // the space data should update
+        await waitFor(
+            () => expect(channelGroups).not.toHaveTextContent('aliceChannel'),
+            TestConstants.DecaDefaultWaitForTimeout,
+        )
+        // space data remains unchanged
+        expect(spaceData).toHaveTextContent('aliceChannel')
+    }, 180_000) // end test with bob
 }) // end describe
