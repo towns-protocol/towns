@@ -1,6 +1,8 @@
 #!/bin/bash -ue
 cd -P -- "$(dirname -- "${BASH_SOURCE[0]}")"
 
-~/go/bin/golangci-lint run
+golangci-lint run
 
 ./lint_extensions.sh
+
+staticcheck ./...

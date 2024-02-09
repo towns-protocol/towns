@@ -331,7 +331,7 @@ describe('streamRpcClient', () => {
         log('error_untyped', err)
         expect(err).toBeDefined()
         log('error_untyped', err!.toString())
-        expect(err!.toString()).toContain('[unknown] Error requested through Info request')
+        expect(err!.toString()).toContain('[unknown] error requested through Info request')
     })
 
     test('panic', async () => {

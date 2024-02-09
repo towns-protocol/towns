@@ -11,7 +11,6 @@ import (
 	. "github.com/river-build/river/base"
 	"github.com/river-build/river/events"
 	"github.com/river-build/river/infra"
-	"github.com/river-build/river/protocol"
 	. "github.com/river-build/river/protocol"
 )
 
@@ -45,7 +44,7 @@ func (s *Service) info(
 		if debug == "error" {
 			return nil, RiverError(Err_DEBUG_ERROR, "Error requested through Info request")
 		} else if debug == "error_untyped" {
-			return nil, errors.New("Error requested through Info request")
+			return nil, errors.New("error requested through Info request")
 		} else if debug == "panic" {
 			log.Error("panic requested through Info request")
 			panic("panic requested through Info request")
@@ -107,7 +106,7 @@ func (s *Service) info(
 				return nil, err
 			}
 			eventStr := request.Msg.Debug[2]
-			envelope := &protocol.Envelope{}
+			envelope := &Envelope{}
 			err = protojson.Unmarshal([]byte(eventStr), envelope)
 			if err != nil {
 				return nil, err

@@ -6,18 +6,16 @@ import (
 	"sync"
 
 	"github.com/river-build/river/auth"
+	. "github.com/river-build/river/base"
 	"github.com/river-build/river/dlog"
 	. "github.com/river-build/river/events"
 	"github.com/river-build/river/infra"
 	. "github.com/river-build/river/protocol"
-	"github.com/river-build/river/shared"
+	. "github.com/river-build/river/shared"
 	"google.golang.org/protobuf/proto"
 
 	"connectrpc.com/connect"
 	"golang.org/x/exp/slog"
-
-	. "github.com/river-build/river/base"
-	. "github.com/river-build/river/shared"
 )
 
 var createStreamRequests = infra.NewSuccessMetrics("create_stream_requests", serviceRequests)
@@ -544,7 +542,7 @@ func (s *Service) createStream_Media(
 		return nil, RiverError(Err_BAD_STREAM_CREATION_PARAMS, "channel does not exist")
 	}
 
-	user, err := shared.AddressHex(parsedEvents[0].Event.CreatorAddress)
+	user, err := AddressHex(parsedEvents[0].Event.CreatorAddress)
 	if err != nil {
 		return nil, err
 	}
@@ -705,7 +703,7 @@ func (s *Service) addDerivedMembershipEventToUserStream(
 	op MembershipOp,
 	reason *MembershipReason,
 ) error {
-	inviterId, err := shared.AddressHex(originEvent.Event.CreatorAddress)
+	inviterId, err := AddressHex(originEvent.Event.CreatorAddress)
 	if err != nil {
 		return err
 	}

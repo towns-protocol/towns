@@ -5,10 +5,8 @@ import (
 	"testing"
 
 	"github.com/river-build/river/crypto"
-	"github.com/river-build/river/protocol"
-	"github.com/river-build/river/shared"
-
 	. "github.com/river-build/river/protocol"
+	"github.com/river-build/river/shared"
 
 	"github.com/stretchr/testify/assert"
 	"google.golang.org/protobuf/proto"
@@ -89,7 +87,7 @@ func make_Space_Username(wallet *crypto.Wallet, username string, streamId string
 	envelope, err := MakeEnvelopeWithPayload(
 		wallet,
 		Make_SpacePayload_Username(
-			&protocol.EncryptedData{Ciphertext: username},
+			&EncryptedData{Ciphertext: username},
 		),
 		prevHash,
 	)
@@ -109,7 +107,7 @@ func make_Space_DisplayName(
 	envelope, err := MakeEnvelopeWithPayload(
 		wallet,
 		Make_SpacePayload_DisplayName(
-			&protocol.EncryptedData{Ciphertext: displayName},
+			&EncryptedData{Ciphertext: displayName},
 		),
 		prevHash,
 	)
