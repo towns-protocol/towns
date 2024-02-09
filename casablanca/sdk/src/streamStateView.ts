@@ -538,6 +538,7 @@ export class StreamStateView {
                 prependedMiniblocks,
                 cleartexts,
                 prependedMiniblocks[0].header.miniblockNum === 0n,
+                emitter,
                 undefined,
             )
         }
@@ -571,7 +572,8 @@ export class StreamStateView {
         miniblocks: ParsedMiniblock[],
         cleartexts: Record<string, string> | undefined,
         terminus: boolean,
-        emitter: TypedEmitter<StreamEvents> | undefined,
+        encryptionEmitter: TypedEmitter<StreamEncryptionEvents> | undefined,
+        stateEmitter: TypedEmitter<StreamStateEvents> | undefined,
     ) {
         const prependedFull = miniblocks.flatMap((mb) =>
             mb.events.map((parsedEvent, i) =>
@@ -599,14 +601,19 @@ export class StreamStateView {
         // prepend the new block events in reverse order
         for (let i = prepended.length - 1; i >= 0; i--) {
             const event = prepended[i]
-            this.processPrependedEvent(event, cleartexts?.[event.hashStr], emitter, emitter)
+            this.processPrependedEvent(
+                event,
+                cleartexts?.[event.hashStr],
+                encryptionEmitter,
+                stateEmitter,
+            )
         }
 
         if (this.miniblockInfo && terminus) {
             this.miniblockInfo.terminusReached = true
         }
 
-        emitter?.emit('streamUpdated', this.streamId, this.contentKind, { prepended })
+        stateEmitter?.emit('streamUpdated', this.streamId, this.contentKind, { prepended })
     }
 
     appendLocalEvent(

@@ -74,7 +74,7 @@ export class Stream extends (EventEmitter as new () => TypedEmitter<StreamEvents
         cleartexts: Record<string, string> | undefined,
         terminus: boolean,
     ) {
-        this.view.prependEvents(miniblocks, cleartexts, terminus, this)
+        this.view.prependEvents(miniblocks, cleartexts, terminus, this, this)
     }
 
     emit<E extends keyof StreamEvents>(event: E, ...args: Parameters<StreamEvents[E]>): boolean {
