@@ -27,9 +27,12 @@ variable "ecs_cluster" {
   })
 }
 
-variable "node_subnets" {
-  description = "A list of subnets to associate with the river nodes"
-  type        = list(string)
+variable "public_subnets" {
+  type = list(string)
+}
+
+variable "private_subnets" {
+  type = list(string)
 }
 
 variable "alb_security_group_id" {

@@ -192,7 +192,7 @@ module "post_provision_config" {
 
   river_node_number                       = var.node_number
   river_node_name                         = local.node_name
-  subnet_ids                              = var.node_subnets
+  subnet_ids                              = var.private_subnets
   river_node_wallet_credentials_arn       = local.shared_credentials.wallet_private_key.arn
   river_db_cluster_master_user_secret_arn = var.river_node_db.root_user_secret_arn
   river_user_db_config                    = local.river_user_db_config
@@ -765,7 +765,7 @@ resource "aws_ecs_service" "river-ecs-service" {
 
   network_configuration {
     security_groups  = [module.river_internal_sg.security_group_id]
-    subnets          = var.node_subnets
+    subnets          = var.public_subnets
     assign_public_ip = true
   }
 

@@ -182,8 +182,9 @@ module "river_node" {
   is_transient  = true
   git_pr_number = var.git_pr_number
 
-  node_subnets = local.transient_global_remote_state.vpc.public_subnets
-  vpc_id       = local.transient_global_remote_state.vpc.vpc_id
+  public_subnets  = local.transient_global_remote_state.vpc.public_subnets
+  private_subnets = local.transient_global_remote_state.vpc.private_subnets
+  vpc_id          = local.transient_global_remote_state.vpc.vpc_id
 
   is_multi_node = var.num_nodes > 1
 
