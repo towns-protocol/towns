@@ -1,9 +1,5 @@
 FROM docker.io/golang:1.21-bookworm
 
-### Node.js 20 ###
-# Install Node.js 20
-RUN curl -sL https://deb.nodesource.com/setup_20.x | bash -
-
 # Install core binaries
 RUN apt-get update
 RUN apt-get upgrade -y
