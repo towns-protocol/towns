@@ -62,6 +62,8 @@ const coordinatorLeaveChannels = process.env.COORDINATOR_LEAVE_CHANNELS
 
 const log = dlog('csb:test:stress')
 
+log('Current Node Version:', process.version)
+
 const followers: Map<string, string> = new Map()
 const readyUsers: Set<string> = new Set()
 const loadOverUsers: Set<string> = new Set()
