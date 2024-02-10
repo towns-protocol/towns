@@ -105,7 +105,7 @@ describe('Stress test', () => {
                                         channelId,
                                     )
                                     await result.riverSDK.joinChannel(channelId)
-                                    result.riverSDK.sendTextMessage(
+                                    await result.riverSDK.sendTextMessage(
                                         coordinationChannelId,
                                         'USER JOINED CHANNEL: ' +
                                             result.walletWithProvider.address +
@@ -242,7 +242,7 @@ describe('Stress test', () => {
                     }
                 }
                 if (recepients > 0 && trackedChannels.has(channelToSendMessage)) {
-                    redis.set(testMessageText, recepients)
+                    await redis.set(testMessageText, recepients)
                     log('redis set', testMessageText, recepients)
                 }
                 await result.riverSDK.sendTextMessage(channelToSendMessage, testMessageText)
