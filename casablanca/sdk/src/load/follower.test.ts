@@ -228,6 +228,7 @@ describe('Stress test', () => {
 
             const startLoadTime = Date.now()
             while (Date.now() - startLoadTime <= loadTestDurationMs) {
+                const beforeContentPrepared = performance.now()
                 // Perform some actions or logic in the loop
                 const channelToSendMessage = channelsJoined[getRandomInt(channelsJoined.length)]
                 const newHash = await generateRandomHash()
@@ -245,9 +246,18 @@ describe('Stress test', () => {
                     await redis.set(testMessageText, recepients)
                     log('redis set', testMessageText, recepients)
                 }
+                const afterContentPrepared = performance.now()
                 await result.riverSDK.sendTextMessage(channelToSendMessage, testMessageText)
+                const afterMessageSent = performance.now()
+                if (afterMessageSent - afterContentPrepared > 500) {
+                    log('Sending message took ', afterMessageSent - afterContentPrepared, 'ms')
+                }
                 // Introduce a delay (e.g., 1 second) before the next iteration
-                await pauseForXMiliseconds(getRandomInt(maxMsgDelayMs) + 1000)
+                const pauseTime = getRandomInt(maxMsgDelayMs - 1000) + 1000
+                const afterAllDone = performance.now()
+                if (pauseTime > afterAllDone - beforeContentPrepared) {
+                    await pauseForXMiliseconds(pauseTime - (afterAllDone - beforeContentPrepared))
+                }
             }
 
             await result.riverSDK.sendTextMessage(coordinationChannelId, 'LOAD OVER')
