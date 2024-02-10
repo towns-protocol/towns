@@ -12,13 +12,13 @@
       "processId": "river_node"
     },
     {
-      "name": "Jest: current file in 'casablanca/waterproof/'",
+      "name": "Jest: current file in 'casablanca/encryption/'",
       "type": "node",
       "request": "launch",
       "env": { "NODE_ENV": "development" },
       "program": "${workspaceFolder}/node_modules/.bin/jest",
       "runtimeArgs": ["--experimental-vm-modules", "--experimental-wasm-modules"],
-      "args": ["${file}", "--config", "${workspaceFolder}/casablanca/waterproof/jest.config.ts", "-i", "--no-cache", "--forceExit"],
+      "args": ["${file}", "--config", "${workspaceFolder}/casablanca/encryption/jest.config.ts", "-i", "--no-cache", "--forceExit"],
       "console": "integratedTerminal",
     },
     {
