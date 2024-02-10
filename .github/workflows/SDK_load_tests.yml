@@ -23,7 +23,7 @@ jobs:
             LAST_FAILED_STEP: ""
         steps:
             - name: Checkout code
-              uses: actions/checkout@v3
+              uses: actions/checkout@v4
 
             - name: Git submodules
               run: git submodule update --init --recursive

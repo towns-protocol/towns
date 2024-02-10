@@ -70,7 +70,7 @@ jobs:
 
         steps:
             - name: Checkout
-              uses: actions/checkout@v3
+              uses: actions/checkout@v4
 
             - name: Put abbreviated commit hash to release version
               id: set_release_version

@@ -29,7 +29,7 @@ jobs:
         steps:
             # install yarn and go
             - name: Checkout Code
-              uses: actions/checkout@v3
+              uses: actions/checkout@v4
               with:
                   submodules: recursive
 
@@ -73,7 +73,7 @@ jobs:
         name: Build Client Library
         needs: [generate-types]
         steps:
-            - uses: actions/checkout@v3
+            - uses: actions/checkout@v4
             - name: Cache node modules
               uses: actions/cache@v4
               env:
