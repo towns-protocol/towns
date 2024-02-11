@@ -16,6 +16,7 @@ type StreamCacheParams struct {
 	Storage                storage.StreamStorage
 	Wallet                 *crypto.Wallet
 	RiverChainBlockMonitor crypto.BlockMonitor
+	StreamConfig           *config.StreamConfig
 }
 
 type StreamCache interface {
@@ -32,17 +33,15 @@ type StreamCache interface {
 
 type streamCacheImpl struct {
 	params          *StreamCacheParams
-	config          *config.StreamConfig
 	cache           sync.Map
 	onNewBlockMutex sync.Mutex
 }
 
 var _ StreamCache = (*streamCacheImpl)(nil)
 
-func NewStreamCache(params *StreamCacheParams, config *config.StreamConfig) *streamCacheImpl {
+func NewStreamCache(params *StreamCacheParams) *streamCacheImpl {
 	c := &streamCacheImpl{
 		params: params,
-		config: config,
 	}
 	params.RiverChainBlockMonitor.AddListener(c.onNewBlock)
 	return c
@@ -66,7 +65,6 @@ func (s *streamCacheImpl) GetStream(ctx context.Context, streamId string, nodes 
 	if entry == nil {
 		entry, _ = s.cache.LoadOrStore(streamId, &streamImpl{
 			params:   s.params,
-			config:   s.config,
 			streamId: streamId,
 			nodes:    nodes,
 		})
@@ -109,7 +107,7 @@ func (s *streamCacheImpl) CreateStream(
 		return nil, nil, RiverError(Err_ALREADY_EXISTS, "stream already exists", "streamId", streamId)
 	}
 
-	stream, view, err := createStream(ctx, s.params, s.config, streamId, nodes, genesisMiniblock)
+	stream, view, err := createStream(ctx, s.params, streamId, nodes, genesisMiniblock)
 	if err != nil {
 		return nil, nil, err
 	}

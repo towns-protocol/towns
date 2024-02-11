@@ -59,8 +59,9 @@ func TestMain(m *testing.M) {
 	exitOnError(err, "Failed to create wallet")
 
 	streamCacheParams = &StreamCacheParams{
-		Storage: store,
-		Wallet:  wallet,
+		Storage:      store,
+		Wallet:       wallet,
+		StreamConfig: &config.StreamConfig{},
 	}
 
 	// Run tests
@@ -133,7 +134,7 @@ func mbTest(
 
 	streamNodes := NewStreamNodes([]string{streamCacheParams.Wallet.AddressStr}, streamCacheParams.Wallet.AddressStr)
 
-	stream, view, err := createStream(ctx, streamCacheParams, &config.StreamConfig{}, spaceStreamId, streamNodes, miniblockProto)
+	stream, view, err := createStream(ctx, streamCacheParams, spaceStreamId, streamNodes, miniblockProto)
 	assert.NoError(err)
 
 	addEvent(t, ctx, stream, "1", view.LastBlock().Hash)

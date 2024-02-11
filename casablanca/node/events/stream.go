@@ -4,7 +4,6 @@ import (
 	"context"
 	"sync"
 
-	"github.com/river-build/river/config"
 	"github.com/river-build/river/dlog"
 	"github.com/river-build/river/storage"
 
@@ -54,7 +53,6 @@ type streamImpl struct {
 
 	streamId string
 	nodes    *StreamNodes
-	config   *config.StreamConfig
 
 	// Mutex protects fields below
 	// View is copied on write.
@@ -78,7 +76,7 @@ func (s *streamImpl) loadInternal(ctx context.Context) {
 	streamData, err := s.params.Storage.ReadStreamFromLastSnapshot(
 		ctx,
 		s.streamId,
-		max(0, s.config.RecencyConstraints.Generations-1),
+		max(0, s.params.StreamConfig.RecencyConstraints.Generations-1),
 	)
 	if err != nil {
 		s.loadError = err
@@ -102,7 +100,7 @@ func (s *streamImpl) ProposeNextMiniblock(ctx context.Context, forceSnapshot boo
 		return nil, nil
 	}
 
-	return s.view.ProposeNextMiniblock(ctx, s.config, forceSnapshot)
+	return s.view.ProposeNextMiniblock(ctx, s.params.StreamConfig, forceSnapshot)
 }
 
 func (s *streamImpl) MakeMiniblockHeader(
@@ -139,7 +137,7 @@ func (s *streamImpl) ApplyMiniblock(ctx context.Context, miniblockHeader *Minibl
 	}
 
 	// Lets see if this miniblock can be applied.
-	newSV, err := s.view.copyAndApplyBlock(miniblock, s.config)
+	newSV, err := s.view.copyAndApplyBlock(miniblock, s.params.StreamConfig)
 	if err != nil {
 		return err
 	}
@@ -212,7 +210,6 @@ func (s *streamImpl) MakeMiniblock(ctx context.Context, forceSnapshot bool) (boo
 func createStream(
 	ctx context.Context,
 	params *StreamCacheParams,
-	config *config.StreamConfig,
 	streamId string,
 	nodes *StreamNodes,
 	genesisMiniblock *Miniblock,
@@ -240,7 +237,6 @@ func createStream(
 		params:   params,
 		streamId: streamId,
 		nodes:    nodes,
-		config:   config,
 		view:     view,
 	}
 	return stream, view, nil

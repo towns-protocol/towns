@@ -185,8 +185,8 @@ func StartServer(ctx context.Context, cfg *config.Config, wallet *crypto.Wallet)
 			Storage:                store,
 			Wallet:                 wallet,
 			RiverChainBlockMonitor: riverChainBlockMonitor,
+			StreamConfig:           &cfg.Stream,
 		},
-		&cfg.Stream,
 	)
 
 	syncHandler := NewSyncHandler(
