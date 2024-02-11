@@ -48,7 +48,7 @@ type RoleProps = {
     onToggle: (id: Permission, value: boolean) => void
 }
 
-const RoleRow = (props: RoleProps) => {
+export const RoleRow = (props: RoleProps) => {
     const { permissionId, metaData, defaultToggled, role } = props
     const [checked, setChecked] = React.useState(defaultToggled)
     const onToggle = (checked: boolean) => {

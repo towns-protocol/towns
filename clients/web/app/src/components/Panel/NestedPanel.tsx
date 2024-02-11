@@ -4,13 +4,18 @@ import { NESTED_PROFILE_PANEL_PATHS } from 'routes'
 import { Panel } from '@components/Panel/Panel'
 import { IconButton } from '@ui'
 import { WalletLinkingPanel } from '@components/Web3/WalletLinkingPanel'
-const { WALLETS } = NESTED_PROFILE_PANEL_PATHS
+const { WALLETS, ROLES } = NESTED_PROFILE_PANEL_PATHS
 
 function renderPanel(path: string | undefined) {
     switch (path) {
         case WALLETS:
             return {
                 label: 'Wallets',
+                component: <WalletLinkingPanel />,
+            }
+        case ROLES:
+            return {
+                label: 'Roles',
                 component: <WalletLinkingPanel />,
             }
         default:

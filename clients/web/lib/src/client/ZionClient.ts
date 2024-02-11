@@ -756,6 +756,7 @@ export class ZionClient implements EntitlementsDelegate {
             type: BlockchainTransactionType.CreateRole,
             data: {
                 spaceStreamId: spaceNetworkId,
+                roleName: roleName,
             },
         })
 
@@ -915,6 +916,7 @@ export class ZionClient implements EntitlementsDelegate {
             type: BlockchainTransactionType.UpdateRole,
             data: {
                 spaceStreamId: spaceNetworkId,
+                roleName,
             },
         })
 

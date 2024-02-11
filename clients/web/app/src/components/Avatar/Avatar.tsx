@@ -33,8 +33,9 @@ type Props = {
     children?: React.ReactNode
     userId?: string
     icon?: IconProps['type']
+    iconSize?: IconProps['size']
     imageVariant?: ImageVariant
-} & Omit<AvatarAtoms, 'circle'> &
+} & Omit<AvatarAtoms, 'circle' | 'square'> &
     Pick<BoxProps, 'tooltip' | 'tooltipOptions'>
 
 export type AvatarProps = Props
@@ -101,7 +102,7 @@ const _Avatar = forwardRef<
         tooltip,
         tooltipOptions,
         onClick,
-
+        iconSize,
         ...boxProps
     } = props
 
@@ -128,7 +129,7 @@ const _Avatar = forwardRef<
         if (icon) {
             return (
                 <Box centerContent horizontal height="100%" background="level4">
-                    <Icon type={icon} color="gray2" />
+                    <Icon type={icon} color="gray2" size={iconSize} />
                 </Box>
             )
         }

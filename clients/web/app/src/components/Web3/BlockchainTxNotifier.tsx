@@ -1,4 +1,4 @@
-import React, { useMemo, useState } from 'react'
+import React, { useCallback, useMemo, useState } from 'react'
 import {
     BlockchainStoreTx,
     BlockchainTransactionType,
@@ -8,6 +8,7 @@ import {
 } from 'use-zion-client'
 
 import headlessToast, { Toast, toast } from 'react-hot-toast/headless'
+import { useSearchParams } from 'react-router-dom'
 import { useSpaceIdFromPathname } from 'hooks/useSpaceInfoFromPathname'
 import { Box, Icon, IconButton, Text } from '@ui'
 import { ButtonSpinner } from 'ui/components/Spinner/ButtonSpinner'
@@ -53,6 +54,33 @@ export function BlockchainTxNotifier() {
                         successMessage: 'Unlinked your wallet!',
                     })
                     break
+                case BlockchainTransactionType.CreateRole: {
+                    const roleName = tx.data?.roleName
+                    generateToast({
+                        tx,
+                        pendingMessage: `Creating ${roleName} role...`,
+                        successMessage: `${roleName} role created!`,
+                    })
+                    break
+                }
+                case BlockchainTransactionType.UpdateRole: {
+                    const roleName = tx.data?.roleName
+
+                    generateToast({
+                        tx,
+                        pendingMessage: `Updating ${roleName} role...`,
+                        successMessage: `${roleName} role updated!`,
+                    })
+                    break
+                }
+                case BlockchainTransactionType.DeleteRole: {
+                    generateToast({
+                        tx,
+                        pendingMessage: `Deleting role...`,
+                        successMessage: `Role deleted!`,
+                    })
+                    break
+                }
                 default:
                     break
             }
@@ -81,6 +109,9 @@ function MonitoringNotification(props: ToastProps & { toast: Toast }) {
     } = props
 
     const [status, setStatus] = useState(tx.status)
+
+    const [searchParams, setSearchParams] = useSearchParams()
+    const rolesParam = searchParams.get('roles')
 
     const isSuccess = status === 'success'
     const isPending = status === 'pending'
@@ -111,9 +142,33 @@ function MonitoringNotification(props: ToastProps & { toast: Toast }) {
         errorContextMessage,
     ])
 
-    useOnTransactionUpdated((tx) => {
-        setStatus(tx.status)
+    useOnTransactionUpdated((_tx) => {
+        if (_tx.id !== tx.id) {
+            return
+        }
+        setStatus(_tx.status)
+
+        if (_tx.status === 'success') {
+            onSuccess()
+        }
     })
+
+    const onSuccess = useCallback(() => {
+        switch (tx.type) {
+            case BlockchainTransactionType.CreateRole:
+            case BlockchainTransactionType.DeleteRole:
+            case BlockchainTransactionType.UpdateRole:
+                // navigate back to the role list panel
+                if (rolesParam) {
+                    searchParams.set('roles', '')
+                    setSearchParams(searchParams)
+                }
+                break
+
+            default:
+                break
+        }
+    }, [rolesParam, searchParams, setSearchParams, tx.type])
 
     return (
         <Box gap width="300" justifyContent="spaceBetween">

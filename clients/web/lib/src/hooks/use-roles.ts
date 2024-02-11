@@ -57,7 +57,6 @@ export function useRoles(_spaceId: string | undefined) {
         // query will not execute until the spaceId is defined.
         {
             enabled: spaceId.length > 0,
-            refetchOnMount: true,
         },
     )
 

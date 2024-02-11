@@ -55,6 +55,11 @@ export const fieldTones = styleVariants({
             [focusedOpacityVar]: '1',
             [focusedColorVar]: vars.color.foreground.error,
         },
+        selectors: {
+            [`${field} ~ &`]: {
+                opacity: 1,
+            },
+        },
     },
     positive: {
         opacity: 1,

@@ -64,17 +64,19 @@ export function TokensList({
     onUpdate,
     listMaxHeight,
     singleContractAddress,
+    hideTokenSearch,
 }: {
     wallet: string
     showTokenList: boolean
     initialItems?: TokenDataStruct[]
     onUpdate: (items: TokenDataStruct[]) => void
     listMaxHeight?: BoxProps['maxHeight']
+    hideTokenSearch?: boolean
     // if present, will not show the search input, and will only show the data for this address
     singleContractAddress?: string
 }) {
     const { chainId } = useEnvironment()
-    const showTokenSearch = !singleContractAddress
+    const _hideTokenSearch = hideTokenSearch || singleContractAddress
 
     const {
         data: nftApiData,
@@ -143,7 +145,7 @@ export function TokensList({
                     )
                 }}
             </SelectedItemsList>
-            {showTokenSearch && (
+            {!_hideTokenSearch && (
                 <MotionBox layout="position">
                     <TextField
                         data-testid="token-search"
@@ -197,7 +199,7 @@ export function TokensList({
                     loader={() => {
                         return isLoading ? (
                             <Loader
-                                simpleLoadingMessage={!showTokenSearch ? 'Loading ...' : undefined}
+                                simpleLoadingMessage={_hideTokenSearch ? 'Loading ...' : undefined}
                             />
                         ) : undefined
                     }}

@@ -13,7 +13,7 @@ import {
 import { getTokenType } from '@components/Web3/checkTokenType'
 import { axiosClient } from '../apiClient'
 
-const queryKey = 'tokenContractsForAddress'
+export const queryKey = 'tokenContractsForAddress'
 
 type CachedData = {
     previousPageKey?: string
@@ -32,7 +32,7 @@ const zContractData: z.ZodType<ContractMetadata> = z.object({
     name: z.string().optional(),
     symbol: z.string().optional(),
     tokenType: z.string().optional(),
-    imageUrl: z.string().optional(),
+    imageUrl: z.string().optional().nullable(),
 })
 
 const zSchema: z.ZodType<GetCollectionsForOwnerResponse> = z.object({
@@ -94,6 +94,7 @@ async function getTokenContractsForAddress(wallet: string, nftNetwork: string) {
     const parseResult = zSchema.safeParse(response.data)
 
     if (!parseResult.success) {
+        console.error(`Error parsing ContractMetadataResponse:: ${parseResult.error}`)
         throw new Error(`Error parsing ContractMetadataResponse:: ${parseResult.error}`)
     }
 
@@ -103,7 +104,7 @@ async function getTokenContractsForAddress(wallet: string, nftNetwork: string) {
     return { tokens, nextPageKey }
 }
 
-async function mapToTokenProps(token: ContractMetadata): Promise<TokenProps> {
+export async function mapToTokenProps(token: ContractMetadata): Promise<TokenProps> {
     let type: TokenType | undefined
     try {
         type = token.address ? await getTokenType({ address: token.address as Address }) : undefined

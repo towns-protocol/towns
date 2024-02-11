@@ -56,14 +56,24 @@ export const UserPillSelector = (props: Props) => {
     )
 
     const optionRenderer = useCallback(
-        ({ option, selected }: { option: LookupUser; selected: boolean }) => (
-            <UserOption key={option.userId} user={option} selected={selected} />
+        ({
+            option,
+            selected,
+            onAddItem,
+        }: {
+            option: LookupUser
+            selected: boolean
+            onAddItem: (customKey?: string) => void
+        }) => (
+            <Box cursor="pointer" onClick={() => onAddItem()}>
+                <UserOption key={option.userId} user={option} selected={selected} />
+            </Box>
         ),
         [],
     )
 
     const pillRenderer = useCallback(
-        (params: { key: string; onDelete: () => void }) => (
+        (params: { key: string; onDelete: (customKey?: string) => void }) => (
             <Box
                 horizontal
                 gap="sm"
@@ -77,7 +87,7 @@ export const UserPillSelector = (props: Props) => {
                 <Paragraph whiteSpace="nowrap">
                     {getPrettyDisplayName(usersMap[params.key])}
                 </Paragraph>
-                <IconButton icon="close" size="square_xs" onClick={params.onDelete} />
+                <IconButton icon="close" size="square_xs" onClick={() => params.onDelete()} />
             </Box>
         ),
         [usersMap],

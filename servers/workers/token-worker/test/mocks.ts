@@ -352,26 +352,24 @@ export const getNftsContractMetaMock = {
 
 export const getCollectionMetadataAlchemyMock: GetContractMetadataAlchemyResponse = {
     address: '0xe785e82358879f061bc3dcac6f0444462d4b5330',
-    contractMetadata: {
-        name: 'World Of Women',
-        symbol: 'WOW',
-        totalSupply: '10000',
-        tokenType: 'ERC721',
-        contractDeployer: '0xc9b6321dc216d91e626e9baa61b06b0e4d55bdb1',
-        deployedBlockNumber: 12907782,
-        openSeaMetadata: {
-            floorPrice: 1.895,
-            collectionName: 'World of Women',
-            // safelistRequestStatus: 'verified',
-            imageUrl:
-                'https://i.seadn.io/gae/EFAQpIktMBU5SU0TqSdPWZ4byHr3hFirL_mATsR8KWhM5z-GJljX8E73V933lkyKgv2SAFlfRRjGsWvWbQQmJAwu3F2FDXVa1C9F?w=500&auto=format',
-            description:
-                "World of Women is a collection of 10,000 NFTs that gives you full access to our network of artists, creators, entrepreneurs, and executives who are championing diversity and equal opportunity on the blockchain.\n\nCreated and illustrated by Yam Karkai (@ykarkai), World of Women has made prominent appearances at Christie's, The New Yorker and Billboard.\n\nJoin us to receive exclusive access to NFT drops, experiences, and much more.\n\nThe Time is WoW.",
-            externalUrl: 'http://worldofwomen.art',
-            twitterUsername: 'worldofwomennft',
-            discordUrl: 'https://discord.gg/worldofwomen',
-            lastIngestedAt: '2023-02-16T12:43:49.000Z',
-        },
+    name: 'World Of Women',
+    symbol: 'WOW',
+    totalSupply: '10000',
+    tokenType: 'ERC721',
+    contractDeployer: '0xc9b6321dc216d91e626e9baa61b06b0e4d55bdb1',
+    deployedBlockNumber: 12907782,
+    openSeaMetadata: {
+        floorPrice: 1.895,
+        collectionName: 'World of Women',
+        // safelistRequestStatus: 'verified',
+        imageUrl:
+            'https://i.seadn.io/gae/EFAQpIktMBU5SU0TqSdPWZ4byHr3hFirL_mATsR8KWhM5z-GJljX8E73V933lkyKgv2SAFlfRRjGsWvWbQQmJAwu3F2FDXVa1C9F?w=500&auto=format',
+        description:
+            "World of Women is a collection of 10,000 NFTs that gives you full access to our network of artists, creators, entrepreneurs, and executives who are championing diversity and equal opportunity on the blockchain.\n\nCreated and illustrated by Yam Karkai (@ykarkai), World of Women has made prominent appearances at Christie's, The New Yorker and Billboard.\n\nJoin us to receive exclusive access to NFT drops, experiences, and much more.\n\nThe Time is WoW.",
+        externalUrl: 'http://worldofwomen.art',
+        twitterUsername: 'worldofwomennft',
+        discordUrl: 'https://discord.gg/worldofwomen',
+        lastIngestedAt: '2023-02-16T12:43:49.000Z',
     },
 }
 

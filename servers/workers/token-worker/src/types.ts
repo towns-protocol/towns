@@ -62,15 +62,13 @@ export type GetContractsForOwnerAlchemyResponse = GetContractsForOwnerResponse
 
 export interface GetContractMetadataAlchemyResponse extends ContractMetadata {
     address: string
-    contractMetadata: {
-        name: string
-        symbol: string
-        totalSupply: string
-        tokenType: string
-        contractDeployer: string
-        deployedBlockNumber: number
-        openSeaMetadata: OpenSeaCollectionMetadata
-    }
+    name: string
+    symbol: string
+    totalSupply: string
+    contractDeployer: string
+    deployedBlockNumber: number
+    tokenType: string
+    openSeaMetadata: OpenSeaCollectionMetadata
 }
 
 // worker response for /getCollectionsForOwner
@@ -94,7 +92,7 @@ export type ContractMetadata = {
     name?: string
     symbol?: string
     tokenType?: string
-    imageUrl?: string // from OpenSea data if available
+    imageUrl?: string | null // from OpenSea data if available
 }
 
 // TODO: remove? we probably won't use this endpoint

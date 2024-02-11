@@ -21,6 +21,7 @@ type Props = {
     rightBarButton?: React.ReactNode
     onClose?: () => void
     background?: BoxProps['background']
+    position?: BoxProps['position']
 }
 
 export const Panel = (props: Props) => {
@@ -33,7 +34,7 @@ const DesktopPanel = (props: Props) => {
     useSafeEscapeKeyCancellation({ onEscape: onClose, capture: false })
 
     return (
-        <Stack height="100%" background="level1">
+        <Stack height="100%" background="level1" position={props.position}>
             <Stack
                 horizontal
                 hoverable

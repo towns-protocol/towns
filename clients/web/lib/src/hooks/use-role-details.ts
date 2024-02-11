@@ -11,7 +11,7 @@ import { RoleDetails } from '../types/web3-types'
 
 export function useRoleDetails(
     spaceId: string,
-    roleId: number,
+    roleId: number | undefined,
 ): {
     isLoading: boolean
     roleDetails: RoleDetails | undefined | null
@@ -24,7 +24,7 @@ export function useRoleDetails(
         provider,
     })
 
-    const isEnabled = spaceDapp && spaceId.length > 0 && roleId >= 0
+    const isEnabled = spaceDapp && spaceId.length > 0 && roleId != undefined && roleId >= 0
 
     const getRole = useCallback(
         async function () {
@@ -42,12 +42,11 @@ export function useRoleDetails(
         data: roleDetails,
         error,
     } = useQuery(
-        blockchainKeys.roleDetails(spaceId, roleId),
+        blockchainKeys.roleDetails(spaceId, isEnabled ? roleId : -1),
         getRole,
         // options for the query.
         {
             enabled: isEnabled,
-            refetchOnMount: true,
         },
     )
 

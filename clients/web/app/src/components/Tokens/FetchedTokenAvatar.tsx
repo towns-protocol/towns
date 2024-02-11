@@ -15,7 +15,7 @@ type Props = {
     'layoutProps' | 'labelProps' | 'tokenIds' | 'noLabel' | 'avatarToggleClasses'
 >
 
-// TokenAvatar that fetches metadata from NFT API
+// TokenAvatar that fetches metadata from NFT API - either from cached owner collection data, or for the inidividual collection - see useTokenMetadata
 export function FetchedTokenAvatar({
     address,
     size,
@@ -31,7 +31,7 @@ export function FetchedTokenAvatar({
     // a subsequent success will re-render the component and show the correct data
     const isLoading = isFetched ? false : failureCount === 0
     const _tokenIds = useMemo(() => tokenIds ?? [], [tokenIds])
-    const _showUnknownLabel = showUnknownLabel && !isLoading && !data?.name
+    const _showUnknownLabel = showUnknownLabel && !isLoading && !data?.label
 
     return (
         <TokenAvatar
@@ -41,9 +41,9 @@ export function FetchedTokenAvatar({
             contractAddress={address ?? ''}
             tokenIds={_tokenIds}
             isLoading={isLoading}
-            imgSrc={data?.imageUrl}
+            imgSrc={data?.imgSrc ?? undefined}
             size={size ?? 'avatar_md'}
-            label={_showUnknownLabel ? 'Unknown NFT' : data?.name}
+            label={_showUnknownLabel ? 'Unknown NFT' : data?.label}
             noLabel={noLabel}
             avatarToggleClasses={avatarToggleClasses}
         />

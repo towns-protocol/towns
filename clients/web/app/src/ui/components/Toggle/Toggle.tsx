@@ -20,6 +20,7 @@ export const Toggle = <D,>(props: Props<D>) => {
     return (
         <Box display="block">
             <Box
+                data-testid="toggle"
                 as="label"
                 flexDirection="row"
                 display="inline-flex"

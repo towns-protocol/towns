@@ -2,7 +2,7 @@ import { Permission } from '@river/web3'
 import React, { useCallback, useRef, useState } from 'react'
 import { toast } from 'react-hot-toast/headless'
 import { useNavigate } from 'react-router'
-import { Link } from 'react-router-dom'
+import { Link, useSearchParams } from 'react-router-dom'
 import { useEvent } from 'react-use-event-hook'
 import {
     useHasPermission,
@@ -50,6 +50,7 @@ import { getPrettyDisplayName } from 'utils/getPrettyDisplayName'
 import { ConfirmLeaveModal } from '@components/ConfirmLeaveModal/ConfirmLeaveModal'
 import { Avatar } from '@components/Avatar/Avatar'
 import { WalletLinkingPanel } from '@components/Web3/WalletLinkingPanel'
+import { RolesPanel } from '@components/SpaceSettingsPanel/RolesPanel'
 import { useContractSpaceInfo } from '../hooks/useContractSpaceInfo'
 import { env } from '../utils/environment'
 import { AllChannelsList } from './AllChannelsList/AllChannelsList'
@@ -64,6 +65,9 @@ const MdGap = ({ children, ...boxProps }: { children: JSX.Element } & BoxProps) 
 export const SpaceInfoPanel = () => {
     const space = useSpaceData()
     const { isTouch } = useDevice()
+    const [searchParams, setSearchParams] = useSearchParams()
+    // touch handles roles panel with modals
+    const isRolesPanel = !isTouch && searchParams.get('roles') != null
 
     const { leaveRoom } = useZionClient()
     const channels = useSpaceChannels()
@@ -95,6 +99,7 @@ export const SpaceInfoPanel = () => {
         | 'settings'
         | 'preview'
         | 'wallets'
+        | 'roles'
         | undefined
     >(undefined)
 
@@ -181,8 +186,14 @@ export const SpaceInfoPanel = () => {
         }
     }, [isTouch, navigate, spaceID])
 
-    const onSettingsClick = useEvent(() => {
-        navigate(`/${PATHS.SPACES}/${spaceID}/settings`)
+    const onManageRolesClick = useEvent(() => {
+        if (!isRolesPanel) {
+            searchParams.set('roles', '')
+            setSearchParams(searchParams)
+            if (isTouch) {
+                setActiveModal('roles')
+            }
+        }
     })
 
     const onLeaveClick = useCallback(() => {
@@ -410,10 +421,10 @@ export const SpaceInfoPanel = () => {
                     </Paragraph>
                 </PanelButton>
 
-                {canEdit && !isTouch && (
-                    <PanelButton onClick={onSettingsClick}>
+                {canEdit && (
+                    <PanelButton onClick={onManageRolesClick}>
                         <Icon type="settings" size="square_sm" color="gray2" />
-                        <Paragraph color="default">Settings</Paragraph>
+                        <Paragraph color="default">Manage Roles</Paragraph>
                     </PanelButton>
                 )}
 
@@ -469,6 +480,18 @@ export const SpaceInfoPanel = () => {
             {activeModal === 'wallets' && (
                 <ModalContainer touchTitle="Wallets" onHide={() => setActiveModal(undefined)}>
                     <WalletLinkingPanel />
+                </ModalContainer>
+            )}
+
+            {isRolesPanel && <RolesPanel setActiveModal={(m) => setActiveModal(m)} />}
+
+            {activeModal === 'roles' && (
+                <ModalContainer
+                    padding="none"
+                    border="none"
+                    onHide={() => setActiveModal(undefined)}
+                >
+                    <RolesPanel setActiveModal={(m) => setActiveModal(m)} />
                 </ModalContainer>
             )}
         </Panel>

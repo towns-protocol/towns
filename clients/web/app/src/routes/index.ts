@@ -36,4 +36,5 @@ export type CHANNEL_INFO_PARAMS_VALUES =
 
 export const NESTED_PROFILE_PANEL_PATHS = {
     WALLETS: 'wallets',
+    ROLES: 'roles',
 } as const

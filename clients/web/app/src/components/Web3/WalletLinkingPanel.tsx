@@ -126,9 +126,11 @@ export function WalletLinkingPanel() {
 export function FullPanelOverlay({
     text,
     background = 'level3',
+    withSpinner = true,
 }: {
     text?: string
     background?: BoxProps['background']
+    withSpinner?: boolean
 }) {
     return (
         <Stack
@@ -149,7 +151,7 @@ export function FullPanelOverlay({
             />
             <Stack gap="lg" position="relative">
                 <Text>{text}</Text>
-                <ButtonSpinner />
+                {withSpinner && <ButtonSpinner />}
             </Stack>
         </Stack>
     )

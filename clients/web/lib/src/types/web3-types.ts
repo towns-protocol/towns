@@ -46,6 +46,7 @@ export type BlockchainTransaction = {
     hashOrUserOpHash: Address
     transaction: TransactionOrUserOperation
     data?: {
+        [x: string]: unknown
         spaceStreamId?: string
         channeStreamId?: string
     }

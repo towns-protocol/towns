@@ -39,13 +39,11 @@ export const getCollectionMetadata = async (request: TokenProviderRequest, env: 
 }
 
 function toContractMetadata(response: GetContractMetadataAlchemyResponse): ContractMetadata {
-    const { contractMetadata, address } = response
-
     return {
-        address,
-        name: contractMetadata.name,
-        symbol: contractMetadata.symbol,
-        tokenType: contractMetadata.tokenType,
-        imageUrl: contractMetadata.openSeaMetadata?.imageUrl,
+        address: response.address,
+        name: response.name,
+        symbol: response.symbol,
+        tokenType: response.tokenType,
+        imageUrl: response.openSeaMetadata?.imageUrl,
     }
 }

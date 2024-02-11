@@ -13,19 +13,43 @@ import { Box, Paragraph, Stack, TextField } from '@ui'
 import { useDevice } from 'hooks/useDevice'
 
 type Props<T> = {
-    emptySelectionElement?: (params: { searchTerm: string }) => JSX.Element
+    emptySelectionElement?: (params: {
+        searchTerm: string
+        onAddItem: (customKey: string) => void
+    }) => JSX.Element
     getOptionKey: (option: T) => string
     keys: string[]
     label?: string | JSX.Element
     onConfirm?: () => void
     onPreviewChange?: (previewItem: T | undefined) => void
     onSelectionChange?: (selection: Set<string>) => void
-    optionRenderer: (props: { option: T; selected: boolean }) => JSX.Element
+    optionRenderer: (props: {
+        option: T
+        selected: boolean
+        onAddItem: (customKey?: string) => void
+    }) => JSX.Element
     options: T[]
     optionSorter: (options: T[]) => T[]
-    pillRenderer: (params: { key: string; onDelete: () => void }) => JSX.Element
+    pillRenderer: (params: {
+        key: string
+        onDelete: (customKey?: string) => void
+        selection: Set<string>
+    }) => JSX.Element
     placeholder?: string
     initialFocusIndex?: number
+    initialSelection?: Set<string>
+    /**
+     * Pass a function to transform the selection before rendering the pills
+     * A hack for manipulating the selection strings to shove in extra data, later we should allow selection to be whatever we want
+     */
+    transformSelectionForPillRendering?: (selection: Set<string>) => Set<string>
+    /**
+     * Hides the initial search items until the input is focused
+     */
+    hideResultsWhenNotActive?: boolean
+    autoFocus?: boolean
+    inputContainerRef?: React.RefObject<HTMLDivElement>
+    isError?: boolean
 }
 
 export const PillSelector = <T,>(props: Props<T>) => {
@@ -40,7 +64,15 @@ export const PillSelector = <T,>(props: Props<T>) => {
         pillRenderer,
         placeholder,
         initialFocusIndex = isTouch ? -1 : 0,
+        transformSelectionForPillRendering,
+        hideResultsWhenNotActive,
+        autoFocus = true,
+        inputContainerRef,
+        initialSelection,
+        isError,
     } = props
+
+    const containerRef = useRef<HTMLDivElement>(null)
 
     // search field
     const fieldRef = useRef<HTMLInputElement>(null)
@@ -50,16 +82,23 @@ export const PillSelector = <T,>(props: Props<T>) => {
 
     const [searchTerm, setSearchTerm] = useState<string>('')
     const [focusIndex, setFocusIndex] = useState(initialFocusIndex)
-    const [selection, setSelection] = useState<Set<string>>(() => new Set())
-
+    const [selection, setSelection] = useState<Set<string>>(() => initialSelection ?? new Set())
+    const [isInsideContainer, setIsInsideContainer] = useState(false)
     // -------------------------------------------------------------------------
 
     const prevSearchItems = useRef<T[]>([])
     const searchItems = useMemo(() => {
-        // only show suggested before typing
+        // default behavior is to show suggested before typing
+        // once a selection is made, suggestions are shown once user starts typing
         if (!searchTerm && selection.size > (isTouch ? 1 : 0)) {
             return []
         }
+
+        // hideResultsWhenNotActive hides the initial suggestion until input is focused
+        if (hideResultsWhenNotActive && !isInsideContainer) {
+            return []
+        }
+
         const results = fuzzysort
             .go(searchTerm, options, { keys, all: true, threshold: -10000 })
             .map((r) => r.obj)
@@ -70,7 +109,43 @@ export const PillSelector = <T,>(props: Props<T>) => {
         return isEqual(sortedResults, prevSearchItems.current)
             ? prevSearchItems.current
             : sortedResults
-    }, [getOptionKey, isTouch, keys, optionSorter, options, searchTerm, selection])
+    }, [
+        searchTerm,
+        selection,
+        isTouch,
+        hideResultsWhenNotActive,
+        isInsideContainer,
+        options,
+        keys,
+        optionSorter,
+        getOptionKey,
+    ])
+
+    useEffect(() => {
+        const handleFocus = (event: FocusEvent) => {
+            if (containerRef.current?.contains(event.target as Node | null)) {
+                setIsInsideContainer(true)
+            } else {
+                setIsInsideContainer(false)
+            }
+        }
+
+        function handleClickOutside(event: MouseEvent) {
+            if (containerRef.current?.contains(event.target as Node | null)) {
+                setIsInsideContainer(true)
+            } else {
+                setIsInsideContainer(false)
+            }
+        }
+
+        document.addEventListener('focus', handleFocus, true)
+        document.addEventListener('click', handleClickOutside, true)
+
+        return () => {
+            document.removeEventListener('focus', handleFocus, true)
+            document.removeEventListener('click', handleClickOutside, true)
+        }
+    }, [])
 
     useEffect(() => {
         const previewItem = searchItems[focusIndex]
@@ -126,7 +201,14 @@ export const PillSelector = <T,>(props: Props<T>) => {
                     const el = listRef.current?.children[focusIndex] as HTMLDivElement
                     if (el) {
                         e.stopPropagation()
-                        el?.click()
+                        // grab the first click handler inside the optionRederer
+                        for (let i = 0; i < el.children.length; i++) {
+                            const child = el.children[i] as HTMLButtonElement
+                            if (child.onclick != null) {
+                                child.click()
+                                break
+                            }
+                        }
                     } else {
                         props.onConfirm?.()
                     }
@@ -163,8 +245,10 @@ export const PillSelector = <T,>(props: Props<T>) => {
     }, [focusIndex])
 
     useEffect(() => {
-        selection
-        fieldRef.current?.focus()
+        if (selection.size > 0) {
+            selection
+            fieldRef.current?.focus()
+        }
     }, [selection])
 
     // -------------------------------------------------------------------------
@@ -183,10 +267,11 @@ export const PillSelector = <T,>(props: Props<T>) => {
     // -------------------------------------------------------------------------
 
     return (
-        <Stack gap>
+        <Stack gap ref={containerRef}>
             {/* input container */}
             <Box
                 horizontal
+                ref={inputContainerRef}
                 paddingX="md"
                 paddingY="sm"
                 gap="sm"
@@ -195,22 +280,28 @@ export const PillSelector = <T,>(props: Props<T>) => {
                 flexWrap="wrap"
                 minHeight="x6"
                 boxShadow="card"
+                overflow="hidden"
+                border={isError ? 'negative' : 'default'}
                 onClick={() => {
                     fieldRef?.current?.focus()
                 }}
             >
-                {Array.from(selection).map((key) => (
-                    <Box horizontal key={key}>
-                        {pillRenderer({
-                            key,
-                            onDelete: () => {
-                                onDeleteItem(key)
-                            },
-                        })}
-                    </Box>
-                ))}
+                {Array.from(transformSelectionForPillRendering?.(selection) ?? selection).map(
+                    (key) => (
+                        <Box horizontal key={key}>
+                            {pillRenderer({
+                                key,
+                                selection,
+                                onDelete: (customKey?: string) => {
+                                    onDeleteItem(customKey ?? key)
+                                },
+                            })}
+                        </Box>
+                    ),
+                )}
                 <TextField
-                    autoFocus
+                    data-testid="pill-selector-input"
+                    autoFocus={autoFocus}
                     ref={fieldRef}
                     tone="none"
                     value={searchTerm}
@@ -245,21 +336,22 @@ export const PillSelector = <T,>(props: Props<T>) => {
                     {/* list container*/}
                     <Stack gap="sm" ref={listRef}>
                         {searchItems.map((o, i) => (
-                            <Box
-                                key={getOptionKey(o)}
-                                cursor="pointer"
-                                onClick={() => onAddItem(getOptionKey(o))}
-                            >
+                            <Box key={getOptionKey(o)}>
                                 {optionRenderer({
                                     option: o,
                                     selected: focusIndex === i,
+                                    onAddItem: (customKey?: string) =>
+                                        onAddItem(customKey ?? getOptionKey(o)),
                                 })}
                             </Box>
                         ))}
                     </Stack>
                 </Box>
-            ) : (
-                props.emptySelectionElement?.({ searchTerm })
+            ) : hideResultsWhenNotActive && !isInsideContainer ? null : (
+                props.emptySelectionElement?.({
+                    searchTerm,
+                    onAddItem: (customKey: string) => onAddItem(customKey),
+                })
             )}
         </Stack>
     )
