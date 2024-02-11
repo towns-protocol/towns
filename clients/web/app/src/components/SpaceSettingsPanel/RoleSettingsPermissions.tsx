@@ -1,43 +1,18 @@
 import React, { useEffect } from 'react'
-import { useParams } from 'react-router'
-import { useEvent } from 'react-use-event-hook'
 import { Permission } from '@river/web3'
 import { Paragraph, Stack, Toggle } from '@ui'
-import {
-    Role,
-    useSettingsRolesStore,
-} from '@components/SpaceSettings/store/hooks/settingsRolesStore'
-import { enabledRolePermissions, rolePermissionDescriptions } from './rolePermissions.const'
+import { TokenDataStruct } from '@components/Web3/CreateSpaceForm/types'
+import { rolePermissionDescriptions } from './rolePermissions.const'
 
 type PermissionMeta = (typeof rolePermissionDescriptions)[keyof typeof rolePermissionDescriptions]
 
-export const RoleSettingsPermissions = () => {
-    const { role: roleId = '' } = useParams()
-    const role = useSettingsRolesStore((state) => state.getRole(roleId))
-
-    const setPermission = useSettingsRolesStore((state) => state.setPermission)
-    const onToggleRole = useEvent((permissionId: Permission, value: boolean) => {
-        if (roleId) {
-            setPermission(roleId, permissionId, value)
-        }
-    })
-
-    return (
-        <Stack gap="x4" key={roleId} data-testid="role-settings-permissions-content">
-            {enabledRolePermissions.map((permissionId: Permission) => {
-                return role ? (
-                    <RoleRow
-                        permissionId={permissionId}
-                        role={role}
-                        defaultToggled={!!role?.permissions.includes(permissionId)}
-                        metaData={rolePermissionDescriptions[permissionId]}
-                        key={permissionId}
-                        onToggle={onToggleRole}
-                    />
-                ) : null
-            })}
-        </Stack>
-    )
+export type Role = {
+    id: string
+    name: string
+    color?: string
+    permissions: Permission[]
+    tokens: TokenDataStruct[]
+    users: string[]
 }
 
 type RoleProps = {

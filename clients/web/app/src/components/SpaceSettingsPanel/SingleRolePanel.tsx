@@ -39,8 +39,8 @@ import { ButtonSpinner } from 'ui/components/Spinner/ButtonSpinner'
 import {
     enabledRolePermissions,
     rolePermissionDescriptions,
-} from '@components/SpaceSettings/RoleSettings/rolePermissions.const'
-import { RoleRow } from '@components/SpaceSettings/RoleSettings/RoleSettingsPermissions'
+} from '@components/SpaceSettingsPanel/rolePermissions.const'
+import { RoleRow } from '@components/SpaceSettingsPanel/RoleSettingsPermissions'
 import { ModalContainer } from '@components/Modals/ModalContainer'
 import { createTokenEntitlementStruct } from '@components/Web3/utils'
 import { FullPanelOverlay } from '@components/Web3/WalletLinkingPanel'

@@ -1,11 +1,6 @@
 import React, { Fragment } from 'react'
 import { Route, Routes } from 'react-router'
-import { SpaceSettings } from '@components/SpaceSettings/SpaceSettings'
 import { PATHS } from 'routes'
-import { RoleSettings } from '@components/SpaceSettings/RoleSettings/RoleSettings'
-import { RoleSettingsPermissions } from '@components/SpaceSettings/RoleSettings/RoleSettingsPermissions'
-import { RoleSettingsGating } from '@components/SpaceSettings/RoleSettings/RoleSettingsGating'
-import { RoleSettingsDisplay } from '@components/SpaceSettings/RoleSettings/RoleSettingsDisplay'
 import { SpaceContextRoute } from 'routes/SpaceContextRoute'
 import { useDevice } from 'hooks/useDevice'
 import { DirectMessageThread } from '@components/DirectMessages/DirectMessageThread'
@@ -20,7 +15,6 @@ import { SpaceMentions } from './SpaceMentions'
 import { SpacesChannel, SpacesChannelRoute } from './SpacesChannel'
 import { SpacesChannelReplies } from './SpacesChannelReplies'
 import { SpacesInvite } from './SpacesInvite'
-import { SpacesSettingsOld } from './SpaceSettingsOld'
 import { SpaceThreads } from './SpaceThreads'
 import { SpaceProfilePanel } from './SpacesProfilePanel'
 import { SpaceMembers } from './SpaceMembers'
@@ -34,6 +28,7 @@ import { TouchSearchTab } from './TouchSearchTab'
 import { ValidateMembership } from './ValidateMembership'
 import { DirectMessages } from './DMRoute'
 import { DMInfoPanelWrapper } from './DMInfoPanel'
+import { SpacesSettingsOld } from './SpaceSettingsOld'
 
 const desktopSpaceProfilePanelRoutes = (prefix: string = 'profile') => [
     // eslint-disable-next-line react/jsx-key
@@ -170,14 +165,6 @@ const TownRoutes = () => (
 
         {/* TODO: Remove SpacesSettingsOld */}
         <Route path="settings-legacy" element={<SpacesSettingsOld />} />
-
-        <Route path="settings" element={<SpaceSettings />}>
-            <Route path="roles/:role" element={<RoleSettings />}>
-                <Route index path="permissions" element={<RoleSettingsPermissions />} />
-                <Route path="gating" element={<RoleSettingsGating />} />
-                <Route path="display" element={<RoleSettingsDisplay />} />
-            </Route>
-        </Route>
 
         <Route path="invite" element={<SpacesInvite />} />
 
