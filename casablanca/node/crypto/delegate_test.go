@@ -1,21 +1,23 @@
 package crypto
 
 import (
-	"context"
 	"testing"
 
 	"github.com/ethereum/go-ethereum/accounts"
-	eth_crypto "github.com/ethereum/go-ethereum/crypto"
+	"github.com/ethereum/go-ethereum/crypto"
+	"github.com/river-build/river/base/test"
 	"github.com/stretchr/testify/assert"
 )
 
 func TestDelegate(t *testing.T) {
-	primaryWallet, err := NewWallet(context.Background())
+	ctx := test.NewTestContext()
+
+	primaryWallet, err := NewWallet(ctx)
 	assert.NoError(t, err)
 
-	deviceWallet, err := NewWallet(context.Background())
+	deviceWallet, err := NewWallet(ctx)
 	assert.NoError(t, err)
-	devicePubKey := eth_crypto.FromECDSAPub(&deviceWallet.PrivateKeyStruct.PublicKey)
+	devicePubKey := crypto.FromECDSAPub(&deviceWallet.PrivateKeyStruct.PublicKey)
 
 	delegatSig, err := primaryWallet.SignHash(TownsHash(devicePubKey))
 	assert.NoError(t, err)
@@ -25,15 +27,17 @@ func TestDelegate(t *testing.T) {
 }
 
 func TestDelegateOld(t *testing.T) {
-	primaryWallet, err := NewWallet(context.Background())
+	ctx := test.NewTestContext()
+
+	primaryWallet, err := NewWallet(ctx)
 	assert.NoError(t, err)
 
-	deviceWallet, err := NewWallet(context.Background())
+	deviceWallet, err := NewWallet(ctx)
 	assert.NoError(t, err)
-	devicePubKey := eth_crypto.FromECDSAPub(&deviceWallet.PrivateKeyStruct.PublicKey)
+	devicePubKey := crypto.FromECDSAPub(&deviceWallet.PrivateKeyStruct.PublicKey)
 
 	hash := accounts.TextHash(devicePubKey)
-	delegatSig, err := eth_crypto.Sign(hash, primaryWallet.PrivateKeyStruct)
+	delegatSig, err := crypto.Sign(hash, primaryWallet.PrivateKeyStruct)
 	assert.NoError(t, err)
 	delegatSig[64] += 27
 

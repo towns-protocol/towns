@@ -19,11 +19,10 @@
   fs_permissions = [
     { access = "read-write", path = "./packages"}, 
     { access = "read-write", path = "./contracts/deployments"}, 
-    { access = "read-write", path = "./casablanca/node/auth"},
     { access = "read-write", path = "./casablanca/node/run_files"}
   ] # Configures permissions for cheatcodes that touch the filesystem
-  extra_output = ["metadata", "abi"]
-  extra_output_files = ["metadata", "abi"]
+  extra_output = ["metadata", "abi", "bin"]
+  extra_output_files = ["metadata", "abi", "bin"]
 [profile.ci]
   fuzz = { runs = 10_000 }
   verbosity = 4

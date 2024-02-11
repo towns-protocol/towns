@@ -39,6 +39,20 @@ generate_go_nover() {
         --out "${OUT_DIR}/${GO_NAME}.go"
 }
 
+generate_go_deploy() {
+    local CONTRACT=$1
+    local GO_NAME=$2
+
+    local OUT_DIR="casablanca/node/contracts/deploy"
+    mkdir -p "${OUT_DIR}"
+    go run github.com/ethereum/go-ethereum/cmd/abigen@${ABIGEN_VERSION} \
+        --abi contracts/out/${CONTRACT}.sol/${CONTRACT}.abi.json \
+        --bin contracts/out/${CONTRACT}.sol/${CONTRACT}.bin \
+        --pkg "deploy" \
+        --type "${GO_NAME}" \
+        --out "${OUT_DIR}/${GO_NAME}.go"
+}
+
 generate_go ${VERSION} TownArchitect town_architect
 generate_go ${VERSION} Channels channels
 generate_go ${VERSION} EntitlementsManager entitlements_manager
@@ -46,3 +60,4 @@ generate_go ${VERSION} Pausable pausable
 generate_go ${VERSION} WalletLink wallet_link
 
 generate_go_nover IRiverRegistry river_registry_v1
+generate_go_deploy RiverRegistry river_registry_deploy

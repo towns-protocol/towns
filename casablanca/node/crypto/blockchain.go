@@ -8,8 +8,30 @@ import (
 	"github.com/river-build/river/config"
 	. "github.com/river-build/river/protocol"
 
+	"github.com/ethereum/go-ethereum"
 	"github.com/ethereum/go-ethereum/ethclient"
 )
+
+// BlockchainClient is an interface that covers common functionality
+// between ethclient.Client and simulated.Backend.
+// go-ethereum splits functionality into multiple implicit interfaces,
+// but there is no explicit interface for client.
+type BlockchainClient interface {
+	ethereum.BlockNumberReader
+	ethereum.ChainReader
+	ethereum.ChainStateReader
+	ethereum.ContractCaller
+	ethereum.GasEstimator
+	ethereum.GasPricer
+	ethereum.GasPricer1559
+	ethereum.FeeHistoryReader
+	ethereum.LogFilterer
+	ethereum.PendingStateReader
+	ethereum.PendingContractCaller
+	ethereum.TransactionReader
+	ethereum.TransactionSender
+	ethereum.ChainIDReader
+}
 
 // Holds necessary information to interact with the blockchain.
 // Use NewReadOnlyBlockchain to create a read-only Blockchain.
@@ -17,7 +39,7 @@ import (
 type Blockchain struct {
 	ChainId      *big.Int
 	Wallet       *Wallet
-	Client       *ethclient.Client
+	Client       BlockchainClient
 	TxRunner     *TxRunner
 	Config       *config.ChainConfig
 	BlockMonitor BlockMonitor

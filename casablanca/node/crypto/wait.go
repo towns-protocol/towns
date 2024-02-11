@@ -8,7 +8,6 @@ import (
 	"github.com/ethereum/go-ethereum"
 	"github.com/ethereum/go-ethereum/common"
 	"github.com/ethereum/go-ethereum/core/types"
-	"github.com/ethereum/go-ethereum/ethclient"
 
 	. "github.com/river-build/river/base"
 	. "github.com/river-build/river/protocol"
@@ -16,7 +15,7 @@ import (
 
 func WaitMined(
 	ctx context.Context,
-	b *ethclient.Client,
+	b BlockchainClient,
 	txHash common.Hash,
 	pollPeriod time.Duration,
 	maxWait time.Duration,

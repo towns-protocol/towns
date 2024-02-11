@@ -82,7 +82,7 @@ func (sr *RiverRegistryContract) AllocateStream(
 	transactor := contracts.RiverRegistryV1TransactorRaw{
 		Contract: &sr.registry.RiverRegistryV1Transactor,
 	}
-	_, _, err = sr.blockchain.TxRunner.SumbitAndWait(ctx, &transactor, "allocateStream", streamId, addrs, hash, genesisMiniblock)
+	_, _, err = sr.blockchain.TxRunner.SubmitAndWait(ctx, &transactor, "allocateStream", streamId, addrs, hash, genesisMiniblock)
 	if err != nil {
 		return AsRiverError(err, Err_CANNOT_CALL_CONTRACT).Func("AllocateStream").Message("Smart contract call failed")
 	}

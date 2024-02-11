@@ -1,14 +1,16 @@
 package crypto
 
 import (
-	"context"
 	"testing"
 
+	"github.com/river-build/river/base/test"
 	"github.com/stretchr/testify/assert"
 )
 
 func TestSign(t *testing.T) {
-	wallet, err := NewWallet(context.Background())
+	ctx := test.NewTestContext()
+
+	wallet, err := NewWallet(ctx)
 	if err != nil {
 		return
 	}

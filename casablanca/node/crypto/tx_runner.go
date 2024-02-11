@@ -10,7 +10,6 @@ import (
 	"github.com/ethereum/go-ethereum/common"
 	"github.com/ethereum/go-ethereum/core/types"
 	ethCrypto "github.com/ethereum/go-ethereum/crypto"
-	"github.com/ethereum/go-ethereum/ethclient"
 
 	. "github.com/river-build/river/base"
 	. "github.com/river-build/river/protocol"
@@ -22,7 +21,7 @@ type Transactor interface {
 
 type TxRunnerParams struct {
 	Wallet         *Wallet
-	Client         *ethclient.Client
+	Client         BlockchainClient
 	ChainId        *big.Int
 	WaitPollPeriod time.Duration
 	MaxWait        time.Duration
@@ -107,7 +106,7 @@ func (tr *TxRunner) Submit(
 
 // TODO: this is very naive implementation. In reality it should wait for new block and notify
 // waiters with matching hashes at once, instead of polling in parallel.
-func (tr *TxRunner) SumbitAndWait(
+func (tr *TxRunner) SubmitAndWait(
 	ctx context.Context,
 	contract Transactor,
 	method string,
@@ -115,12 +114,12 @@ func (tr *TxRunner) SumbitAndWait(
 ) (*types.Transaction, *types.Receipt, error) {
 	tx, err := tr.Submit(ctx, contract, method, params...)
 	if err != nil {
-		return nil, nil, AsRiverError(err).Func("SumbitAndWait")
+		return nil, nil, AsRiverError(err).Func("SubmitAndWait")
 	}
 
 	receipt, err := WaitMined(ctx, tr.p.Client, tx.Hash(), tr.p.WaitPollPeriod, tr.p.MaxWait)
 	if err != nil {
-		return nil, nil, AsRiverError(err).Func("SumbitAndWait")
+		return nil, nil, AsRiverError(err).Func("SubmitAndWait")
 	}
 	return tx, receipt, nil
 }

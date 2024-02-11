@@ -67,7 +67,7 @@ type DatabaseConfig struct {
 
 type ChainConfig struct {
 	NetworkUrl      string
-	ChainId         int
+	ChainId         uint64
 	FakeBlockTimeMs int64
 
 	// TODO: these need to be removed from here
