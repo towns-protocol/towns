@@ -3,6 +3,7 @@ package crypto
 import (
 	"context"
 	"math/big"
+	"os"
 
 	"github.com/river-build/river/config"
 	"github.com/river-build/river/contracts/deploy"
@@ -10,6 +11,7 @@ import (
 	"github.com/ethereum/go-ethereum/accounts/abi/bind"
 	"github.com/ethereum/go-ethereum/common"
 	"github.com/ethereum/go-ethereum/core"
+	"github.com/ethereum/go-ethereum/ethclient"
 	"github.com/ethereum/go-ethereum/ethclient/simulated"
 	"github.com/river-build/river/contracts"
 )
@@ -22,29 +24,87 @@ var (
 
 type BlockchainTestContext struct {
 	Backend              *simulated.Backend
+	EthClient            *ethclient.Client
 	Wallets              []*Wallet
 	RiverRegistryAddress common.Address
 	RiverRegistry        *contracts.RiverRegistryV1
 	ChainId              *big.Int
 }
 
-func NewBlockchainTestContext(ctx context.Context, numKeys int) (*BlockchainTestContext, error) {
-	// Add one for deployer
-	numKeys += 1
-
+func initSimulated(ctx context.Context, numKeys int) ([]*Wallet, *simulated.Backend, error) {
 	wallets := make([]*Wallet, numKeys)
 	genesisAlloc := map[common.Address]core.GenesisAccount{}
 	var err error
 	for i := 0; i < numKeys; i++ {
 		wallets[i], err = NewWallet(ctx)
 		if err != nil {
-			return nil, err
+			return nil, nil, err
 		}
 		genesisAlloc[wallets[i].Address] = core.GenesisAccount{Balance: Eth_100}
 	}
 
 	backend := simulated.NewBackend(genesisAlloc)
-	chainId, err := backend.Client().ChainID(ctx)
+	return wallets, backend, nil
+}
+
+func initAnvil(ctx context.Context, url string, numKeys int) ([]*Wallet, *ethclient.Client, error) {
+	client, err := ethclient.DialContext(ctx, url)
+	if err != nil {
+		return nil, nil, err
+	}
+
+	wallets := make([]*Wallet, numKeys)
+	for i := 0; i < numKeys; i++ {
+		wallets[i], err = NewWallet(ctx)
+		if err != nil {
+			return nil, nil, err
+		}
+
+		err = client.Client().CallContext(ctx, nil, "anvil_setBalance", wallets[i].Address, Eth_100.String())
+		if err != nil {
+			return nil, nil, err
+		}
+	}
+
+	return wallets, client, nil
+}
+
+func mineBlock(backend *simulated.Backend, client *ethclient.Client) error {
+	if backend != nil {
+		backend.Commit()
+		return nil
+	} else if client != nil {
+		return client.Client().Call(nil, "evm_mine")
+	} else {
+		panic("no backend or client")
+	}
+}
+
+func NewBlockchainTestContext(ctx context.Context, numKeys int) (*BlockchainTestContext, error) {
+	// Add one for deployer
+	numKeys += 1
+
+	var wallets []*Wallet
+	var backend *simulated.Backend
+	var ethClient *ethclient.Client
+	var client BlockchainClient
+	var err error
+	anvilUrl := os.Getenv("RIVER_TEST_ANVIL_URL")
+	if anvilUrl != "" {
+		wallets, ethClient, err = initAnvil(ctx, anvilUrl, numKeys)
+		if err != nil {
+			return nil, err
+		}
+		client = ethClient
+	} else {
+		wallets, backend, err = initSimulated(ctx, numKeys)
+		if err != nil {
+			return nil, err
+		}
+		client = backend.Client()
+	}
+
+	chainId, err := client.ChainID(ctx)
 	if err != nil {
 		return nil, err
 	}
@@ -54,19 +114,23 @@ func NewBlockchainTestContext(ctx context.Context, numKeys int) (*BlockchainTest
 		return nil, err
 	}
 
-	addr, _, _, err := deploy.DeployRiverRegistryDeploy(auth, backend.Client())
+	addr, _, _, err := deploy.DeployRiverRegistryDeploy(auth, client)
 	if err != nil {
 		return nil, err
 	}
-	backend.Commit()
+	err = mineBlock(backend, ethClient)
+	if err != nil {
+		return nil, err
+	}
 
-	river_registry, err := contracts.NewRiverRegistryV1(addr, backend.Client())
+	river_registry, err := contracts.NewRiverRegistryV1(addr, client)
 	if err != nil {
 		return nil, err
 	}
 
 	return &BlockchainTestContext{
 		Backend:              backend,
+		EthClient:            ethClient,
 		Wallets:              wallets,
 		RiverRegistryAddress: addr,
 		RiverRegistry:        river_registry,
@@ -75,15 +139,36 @@ func NewBlockchainTestContext(ctx context.Context, numKeys int) (*BlockchainTest
 }
 
 func (c *BlockchainTestContext) Close() {
-	c.Backend.Close()
+	if c.Backend != nil {
+		c.Backend.Close()
+	} else if c.EthClient != nil {
+		c.EthClient.Close()
+	}
 }
 
 func (c *BlockchainTestContext) Commit() {
-	c.Backend.Commit()
+	err := mineBlock(c.Backend, c.EthClient)
+	if err != nil {
+		panic(err)
+	}
 }
 
 func (c *BlockchainTestContext) Client() BlockchainClient {
-	return c.Backend.Client()
+	if c.Backend != nil {
+		return c.Backend.Client()
+	} else if c.EthClient != nil {
+		return c.EthClient
+	} else {
+		return nil
+	}
+}
+
+func (c *BlockchainTestContext) IsAnvil() bool {
+	return c.EthClient != nil
+}
+
+func (c *BlockchainTestContext) IsSimulated() bool {
+	return c.Backend != nil
 }
 
 func (c *BlockchainTestContext) GetDeployerWallet() *Wallet {

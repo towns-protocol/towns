@@ -62,7 +62,9 @@ func TestBlockchain(t *testing.T) {
 
 	secondBlockNum, err := tc.Client().BlockNumber(ctx)
 	require.NoError(err)
-	assert.Equal(firstBlockNum+1, secondBlockNum)
+	if tc.IsSimulated() {
+		assert.Equal(firstBlockNum+1, secondBlockNum)
+	}
 
 	_, err = WaitMined(ctx, owner.Client, tx1.Hash(), time.Millisecond, time.Second*10)
 	require.NoError(err)
