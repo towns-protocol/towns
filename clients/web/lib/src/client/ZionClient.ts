@@ -37,11 +37,6 @@ import {
 import { SignerContext } from '@river/sdk'
 import { PushNotificationClient } from './PushNotificationClient'
 import { SignerUndefinedError } from '../types/error-types'
-import {
-    createCasablancaChannel,
-    updateCasablancaChannel,
-} from './casablanca/CreateOrUpdateChannel'
-import { createCasablancaSpace } from './casablanca/CreateSpace'
 import { makeUniqueChannelStreamId } from '@river/sdk'
 import { makeUniqueSpaceStreamId } from '@river/sdk'
 import { staticAssertNever } from '../utils/zion-utils'
@@ -269,8 +264,12 @@ export class ZionClient implements EntitlementsDelegate {
                 if (!this.casablancaClient) {
                     throw new Error("Casablanca client doesn't exist")
                 }
-                await createCasablancaSpace(this.casablancaClient, spaceId)
-                console.log('[waitForCreateSpaceTransaction] Space stream created', spaceId)
+                const result = await this.casablancaClient.createSpace(spaceId)
+                await this.casablancaClient.waitForStream(spaceId)
+                console.log('[waitForCreateSpaceTransaction] Space stream created', {
+                    result: result,
+                    spaceId,
+                })
 
                 await this.createSpaceDefaultChannelRoom(spaceId, 'general', channelId)
                 console.log(
@@ -291,19 +290,6 @@ export class ZionClient implements EntitlementsDelegate {
         logTxnResult('waitForCreateSpaceTransaction', txContext)
 
         return txContext
-    }
-
-    /************************************************
-     * createSpace
-     *************************************************/
-    private async createSpaceRoom(
-        _createSpaceInfo: CreateSpaceInfo,
-        networkId?: string,
-    ): Promise<string> {
-        if (!this.casablancaClient) {
-            throw new Error("Casablanca client doesn't exist")
-        }
-        return createCasablancaSpace(this.casablancaClient, networkId)
     }
 
     private async createCasablancaSpaceTransaction(
@@ -379,14 +365,16 @@ export class ZionClient implements EntitlementsDelegate {
         if (networkId === undefined) {
             throw new Error('createChannel: networkId is undefined')
         }
-        return createCasablancaChannel(
-            this.casablancaClient,
+
+        const { streamId } = await this.casablancaClient.createChannel(
             createInfo.parentSpaceId,
             createInfo.name,
             createInfo.topic ? createInfo.topic : '',
             networkId,
             createInfo.streamSettings,
         )
+        await this.casablancaClient.waitForStream(streamId)
+        return streamId
     }
 
     private async createSpaceDefaultChannelRoom(
@@ -596,12 +584,11 @@ export class ZionClient implements EntitlementsDelegate {
         if (!updateChannelInfo.updatedChannelName) {
             throw new Error('updateChannel: channelName cannot be empty')
         }
-        await updateCasablancaChannel(
-            this.casablancaClient,
+        await this.casablancaClient.updateChannel(
             updateChannelInfo.parentSpaceId,
+            updateChannelInfo.channelId,
             updateChannelInfo.updatedChannelName,
             updateChannelInfo.updatedChannelTopic ?? '',
-            updateChannelInfo.channelId,
         )
     }
 
