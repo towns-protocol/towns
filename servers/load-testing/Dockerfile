@@ -1,9 +1,23 @@
 FROM docker.io/golang:1.21-bookworm
 
-# Install core binaries
-RUN apt-get update
-RUN apt-get upgrade -y
-RUN apt-get install -y nodejs bash git npm curl protobuf-compiler python3 python3-pip make
+# Install curl and software-properties-common, necessary for adding repositories
+RUN apt-get update && apt-get install -y curl software-properties-common gnupg2
+
+# Add the NodeSource Node.js 20.x repo for Debian-based distributions
+RUN curl -fsSL https://deb.nodesource.com/setup_20.x | bash -
+
+# Now install Node.js (which includes npm) and other dependencies
+RUN apt-get update && apt-get install -y \
+    nodejs \
+    bash \
+    git \
+    curl \
+    protobuf-compiler \
+    python3 \
+    python3-pip \
+    make \
+ && apt-get clean \
+ && rm -rf /var/lib/apt/lists/*
 
 # Python config
 RUN pip3 install --break-system-packages --no-cache --upgrade pip setuptools
