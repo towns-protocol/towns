@@ -19,6 +19,8 @@ type memStorage struct {
 	mutex   sync.Mutex
 }
 
+var _ StreamStorage = (*memStorage)(nil)
+
 func (m *memStorage) CreateStreamStorage(ctx context.Context, streamId string, genesisMiniblock []byte) error {
 	m.mutex.Lock()
 	defer m.mutex.Unlock()
@@ -122,6 +124,8 @@ func (m *memStorage) WriteBlock(
 	}
 	return nil
 }
+
+func (m *memStorage) Close() {}
 
 func NewMemStorage() *memStorage {
 	return &memStorage{

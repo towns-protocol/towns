@@ -32,6 +32,8 @@ type PostgresEventStore struct {
 	serverCtx  context.Context
 }
 
+var _ StreamStorage = (*PostgresEventStore)(nil)
+
 const (
 	PG_REPORT_INTERVAL = 3 * time.Minute
 )
@@ -892,9 +894,8 @@ func newPostgresEventStore(
 }
 
 // Close closes the connection to the database
-func (s *PostgresEventStore) Close() error {
+func (s *PostgresEventStore) Close() {
 	s.pool.Close()
-	return nil
 }
 
 //go:embed init_db.sql

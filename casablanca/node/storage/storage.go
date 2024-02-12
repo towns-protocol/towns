@@ -45,4 +45,6 @@ type StreamStorage interface {
 		snapshotMiniblock bool,
 		envelopes [][]byte,
 	) error
+
+	Close()
 }

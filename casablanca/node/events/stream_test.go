@@ -2,71 +2,14 @@ package events
 
 import (
 	"context"
-	"fmt"
-	"os"
 	"testing"
 
 	. "github.com/river-build/river/base"
-	"github.com/river-build/river/config"
 	"github.com/river-build/river/crypto"
 	. "github.com/river-build/river/protocol"
-	"github.com/river-build/river/storage"
-	"github.com/river-build/river/testutils/dbtestutils"
 
 	"github.com/stretchr/testify/assert"
 )
-
-var streamCacheParams *StreamCacheParams
-
-func exitOnError(err error, msg string) {
-	if err != nil {
-		fmt.Printf("%s: %v\n", msg, err)
-		os.Exit(1)
-	}
-}
-
-func TestMain(m *testing.M) {
-	ctx := context.Background()
-
-	var code int = 1
-	var closer func()
-	var store *storage.PostgresEventStore
-	// Defer the cleanup so it always runs, even if something panics
-	defer func() {
-		if store != nil {
-			store.Close()
-		}
-		if closer != nil {
-			closer()
-		}
-		os.Exit(code)
-	}()
-
-	testDatabaseUrl, testSchemaName, closer, err := dbtestutils.StartDB(ctx)
-	exitOnError(err, "Failed to start test database")
-	exitSignal := make(chan error, 1)
-
-	store, err = storage.NewPostgresEventStore(
-		ctx,
-		testDatabaseUrl,
-		testSchemaName,
-		GenShortNanoid(),
-		exitSignal,
-	)
-	exitOnError(err, "Failed to create event store")
-
-	wallet, err := crypto.NewWallet(ctx)
-	exitOnError(err, "Failed to create wallet")
-
-	streamCacheParams = &StreamCacheParams{
-		Storage:      store,
-		Wallet:       wallet,
-		StreamConfig: &config.StreamConfig{},
-	}
-
-	// Run tests
-	code = m.Run()
-}
 
 func MakeGenesisMiniblockForSpaceStream(
 	t *testing.T,
@@ -108,7 +51,7 @@ func MakeEvent(
 	return parsedEvent(t, envelope)
 }
 
-func addEvent(t *testing.T, ctx context.Context, stream SyncStream, data string, mbHash []byte) {
+func addEvent(t *testing.T, ctx context.Context, streamCacheParams *StreamCacheParams, stream SyncStream, data string, mbHash []byte) {
 	err := stream.AddEvent(
 		ctx,
 		MakeEvent(t, streamCacheParams.Wallet, Make_SpacePayload_Username(&EncryptedData{Ciphertext: data}), mbHash),
@@ -126,7 +69,8 @@ func mbTest(
 	t *testing.T,
 	params mbTestParams,
 ) {
-	ctx := context.Background()
+	ctx, streamCacheParams, closer := makeTestStreamParams(testParams{usePostgres: true})
+	defer closer()
 	assert := assert.New(t)
 
 	spaceStreamId := GenShortNanoid()
@@ -137,8 +81,8 @@ func mbTest(
 	stream, view, err := createStream(ctx, streamCacheParams, spaceStreamId, streamNodes, miniblockProto)
 	assert.NoError(err)
 
-	addEvent(t, ctx, stream, "1", view.LastBlock().Hash)
-	addEvent(t, ctx, stream, "2", view.LastBlock().Hash)
+	addEvent(t, ctx, streamCacheParams, stream, "1", view.LastBlock().Hash)
+	addEvent(t, ctx, streamCacheParams, stream, "2", view.LastBlock().Hash)
 
 	proposal, err := stream.ProposeNextMiniblock(ctx, false)
 	assert.NoError(err)
@@ -147,7 +91,7 @@ func mbTest(
 	assert.Equal(int64(1), proposal.NewMiniblockNum)
 
 	if params.addAfterProposal {
-		addEvent(t, ctx, stream, "3", view.LastBlock().Hash)
+		addEvent(t, ctx, streamCacheParams, stream, "3", view.LastBlock().Hash)
 	}
 
 	mb, events, err := stream.MakeMiniblockHeader(ctx, proposal)
@@ -158,7 +102,7 @@ func mbTest(
 	assert.Equal(int64(1), mb.MiniblockNum)
 
 	if params.addAfterMake {
-		addEvent(t, ctx, stream, "4", view.LastBlock().Hash)
+		addEvent(t, ctx, streamCacheParams, stream, "4", view.LastBlock().Hash)
 	}
 
 	err = stream.ApplyMiniblock(ctx, mb, events)
@@ -168,7 +112,7 @@ func mbTest(
 	assert.NoError(err)
 	stats := view2.GetStats()
 	assert.Equal(params.eventsInMinipool, stats.EventsInMinipool)
-	addEvent(t, ctx, stream, "5", view2.LastBlock().Hash)
+	addEvent(t, ctx, streamCacheParams, stream, "5", view2.LastBlock().Hash)
 
 	view2, err = stream.GetView(ctx)
 	assert.NoError(err)
