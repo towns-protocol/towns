@@ -2,7 +2,6 @@ import { Message, PlainMessage } from '@bufbuild/protobuf'
 import { datadogRum } from '@datadog/browser-rum'
 import {
     MembershipOp,
-    MembershipReason,
     ChannelOp,
     ChannelMessage_Post_Mention,
     ChannelMessage,
@@ -1237,7 +1236,7 @@ export class Client
         return stream
     }
 
-    async leaveStream(streamId: string, reason?: MembershipReason): Promise<void> {
+    async leaveStream(streamId: string): Promise<void> {
         this.logCall('leaveStream', streamId)
         check(isDefined(this.userStreamId))
 
@@ -1251,7 +1250,7 @@ export class Client
                     userStream?.view.userContent.streamMemberships[channelId]?.op ===
                     MembershipOp.SO_JOIN
                 ) {
-                    await this.leaveStream(channelId, MembershipReason.MR_LEFT_SPACE)
+                    await this.leaveStream(channelId)
                 }
             }
         }
@@ -1261,7 +1260,6 @@ export class Client
             make_UserPayload_UserMembership({
                 op: MembershipOp.SO_LEAVE,
                 streamId,
-                reason,
             }),
             { method: 'leaveStream' },
         )

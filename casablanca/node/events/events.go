@@ -288,7 +288,6 @@ func Make_UserPayload_Membership(
 	op MembershipOp,
 	streamId string,
 	inviter *string,
-	reason *MembershipReason,
 ) *StreamEvent_UserPayload {
 	return &StreamEvent_UserPayload{
 		UserPayload: &UserPayload{
@@ -297,7 +296,6 @@ func Make_UserPayload_Membership(
 					StreamId: streamId,
 					Op:       op,
 					Inviter:  inviter,
-					Reason:   reason,
 				},
 			},
 		},

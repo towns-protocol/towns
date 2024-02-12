@@ -110,7 +110,6 @@ export interface UserIdToMember {
 export interface CreateSpaceInfo {
     name: string
     spaceMetadata?: string
-    disableEncryption?: boolean
     defaultChannelName?: string
 }
 
@@ -118,7 +117,6 @@ export interface CreateChannelInfo {
     name: string
     parentSpaceId: string
     roleIds: number[]
-    disableEncryption?: boolean
     topic?: string
     streamSettings?: PlainMessage<StreamSettings>
 }

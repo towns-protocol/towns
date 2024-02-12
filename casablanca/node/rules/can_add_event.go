@@ -508,7 +508,7 @@ func (ru *caeRules) requireStreamParentMembership() (*RequiredParentEvent, error
 	}
 	// for joins and invites, require space membership
 	return &RequiredParentEvent{
-		Payload:  events.Make_UserPayload_Membership(MembershipOp_SO_JOIN, *streamParentId, &ru.membership.InitiatorId, nil),
+		Payload:  events.Make_UserPayload_Membership(MembershipOp_SO_JOIN, *streamParentId, &ru.membership.InitiatorId),
 		StreamId: userStreamId,
 	}, nil
 }
@@ -570,7 +570,7 @@ func (ru *caeRules) parentEventForUserMembershipAction() (*RequiredParentEvent, 
 	if err != nil {
 		return nil, err
 	}
-	payload := events.Make_UserPayload_Membership(action.Op, action.StreamId, &inviterId, nil)
+	payload := events.Make_UserPayload_Membership(action.Op, action.StreamId, &inviterId)
 	streamId, err := shared.UserStreamIdFromId(action.UserId)
 	if err != nil {
 		return nil, err

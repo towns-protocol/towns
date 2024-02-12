@@ -51,7 +51,6 @@ func make_User_Membership(
 			membershipOp,
 			streamId,
 			nil,
-			nil,
 		),
 		prevMiniblockHash,
 	)

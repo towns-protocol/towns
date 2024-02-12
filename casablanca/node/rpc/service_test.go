@@ -417,7 +417,6 @@ func TestMethods(t *testing.T) {
 				protocol.MembershipOp_SO_JOIN,
 				channel1Name,
 				nil,
-				nil,
 			),
 			resuser.PrevMiniblockHash,
 		)
@@ -986,7 +985,6 @@ func DisableTestManyUsers(t *testing.T) {
 				events.Make_UserPayload_Membership(
 					protocol.MembershipOp_SO_JOIN,
 					channelId,
-					nil,
 					nil,
 				),
 				userBlockHash.Msg.Hash,

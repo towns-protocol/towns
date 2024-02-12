@@ -314,10 +314,9 @@ message UserPayload {
     
     // update own membership
     message UserMembership {
-        reserved 2, 3;
+        reserved 2, 3, 5;
         string stream_id = 1;
         MembershipOp op = 4;
-        optional MembershipReason reason = 5;
         optional string inviter = 6;
     }
 
@@ -674,11 +673,6 @@ enum MembershipOp {
     SO_INVITE = 1;
     SO_JOIN = 2;
     SO_LEAVE = 3;
-}
-
-enum MembershipReason {
-    MR_UNSPECIFIED = 0;
-    MR_LEFT_SPACE = 1;
 }
 
 enum ChannelOp {

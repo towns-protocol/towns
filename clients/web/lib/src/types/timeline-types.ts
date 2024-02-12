@@ -6,7 +6,6 @@ import {
     ChannelOp,
     ChannelProperties,
     FullyReadMarker,
-    MembershipReason,
     MiniblockHeader,
     PayloadCaseType,
 } from '@river/proto'
@@ -162,7 +161,6 @@ export interface RoomMemberEvent {
     displayName?: string
     isDirect?: boolean
     membership: Membership
-    reason?: MembershipReason
     streamId?: string // in a case of an invitation to a channel with a streamId
 }
 

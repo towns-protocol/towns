@@ -271,7 +271,7 @@ func (s *Service) createStream_Channel(
 		return nil, err
 	}
 
-	err = s.addDerivedMembershipEventToUserStream(ctx, userStream, userView, streamId, joinEvent, MembershipOp_SO_JOIN, nil)
+	err = s.addDerivedMembershipEventToUserStream(ctx, userStream, userView, streamId, joinEvent, MembershipOp_SO_JOIN)
 	if err != nil {
 		return nil, err
 	}
@@ -328,11 +328,11 @@ func (s *Service) createStream_DMChannel(
 		return nil, err
 	}
 
-	err = s.addDerivedMembershipEventToUserStream(ctx, userStream, userView, streamId, joinEvent, MembershipOp_SO_JOIN, nil)
+	err = s.addDerivedMembershipEventToUserStream(ctx, userStream, userView, streamId, joinEvent, MembershipOp_SO_JOIN)
 	if err != nil {
 		return nil, err
 	}
-	err = s.addDerivedMembershipEventToUserStream(ctx, otherUserStream, otherUserView, streamId, inviteEvent, MembershipOp_SO_JOIN, nil)
+	err = s.addDerivedMembershipEventToUserStream(ctx, otherUserStream, otherUserView, streamId, inviteEvent, MembershipOp_SO_JOIN)
 	if err != nil {
 		return nil, err
 	}
@@ -410,7 +410,7 @@ func (s *Service) createStream_GDMChannel(
 		return nil, err
 	}
 
-	err = s.addDerivedMembershipEventToUserStream(ctx, userStream, userView, streamId, joinEvent, MembershipOp_SO_JOIN, nil)
+	err = s.addDerivedMembershipEventToUserStream(ctx, userStream, userView, streamId, joinEvent, MembershipOp_SO_JOIN)
 	if err != nil {
 		return nil, err
 	}
@@ -421,8 +421,7 @@ func (s *Service) createStream_GDMChannel(
 			invitation.streamView,
 			streamId,
 			invitation.event,
-			MembershipOp_SO_JOIN,
-			nil)
+			MembershipOp_SO_JOIN)
 		if err != nil {
 			return nil, err
 		}
@@ -479,7 +478,7 @@ func (s *Service) createStream_Space(
 	}
 
 	// Side effects.
-	err = s.addDerivedMembershipEventToUserStream(ctx, userStream, userView, streamId, joinEvent, MembershipOp_SO_JOIN, nil)
+	err = s.addDerivedMembershipEventToUserStream(ctx, userStream, userView, streamId, joinEvent, MembershipOp_SO_JOIN)
 	if err != nil {
 		return nil, err
 	}
@@ -701,7 +700,6 @@ func (s *Service) addDerivedMembershipEventToUserStream(
 	originStreamId string,
 	originEvent *ParsedEvent,
 	op MembershipOp,
-	reason *MembershipReason,
 ) error {
 	inviterId, err := AddressHex(originEvent.Event.CreatorAddress)
 	if err != nil {
@@ -715,7 +713,6 @@ func (s *Service) addDerivedMembershipEventToUserStream(
 			op,
 			originStreamId,
 			&inviterId,
-			reason,
 		),
 		prevHash,
 	)

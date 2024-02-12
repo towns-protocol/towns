@@ -460,7 +460,6 @@ function toTownsContent_UserPayload(
                     isDirect: undefined, // todo is this needed?
                     membership: toMembership(payload.op),
                     streamId: payload.streamId,
-                    reason: payload.reason,
                 } satisfies RoomMemberEvent,
             }
         }
@@ -475,7 +474,6 @@ function toTownsContent_UserPayload(
                     displayName: payload.userId, // todo displayName
                     isDirect: undefined, // todo is this needed?
                     membership: toMembership(payload.op),
-                    reason: undefined,
                 } satisfies RoomMemberEvent,
             }
         }
@@ -519,7 +517,6 @@ function toTownsContent_ChannelPayload(
                     displayName: payload.userId, // todo displayName
                     isDirect: undefined, // todo is this needed?
                     membership: toMembership(payload.op),
-                    reason: undefined, // todo is this needed?
                 } satisfies RoomMemberEvent,
             }
         }
@@ -783,7 +780,6 @@ function toTownsContent_SpacePayload(
                     displayName: payload.userId, // todo displayName
                     isDirect: undefined, // todo is this needed?
                     membership: toMembership(payload.op),
-                    reason: undefined, // todo is this needed?
                 } satisfies RoomMemberEvent,
             }
         }

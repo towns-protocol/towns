@@ -53,7 +53,7 @@ func TestLoad(t *testing.T) {
 	assert.NoError(t, err)
 	join, err := MakeEnvelopeWithPayload(
 		wallet,
-		Make_UserPayload_Membership(MembershipOp_SO_JOIN, "streamid$1", nil, nil),
+		Make_UserPayload_Membership(MembershipOp_SO_JOIN, "streamid$1", nil),
 		nil,
 	)
 	assert.NoError(t, err)
@@ -129,7 +129,7 @@ func TestLoad(t *testing.T) {
 	// add one more event (just join again)
 	join2, err := MakeEnvelopeWithPayload(
 		wallet,
-		Make_UserPayload_Membership(MembershipOp_SO_JOIN, "streamid$1", nil, nil),
+		Make_UserPayload_Membership(MembershipOp_SO_JOIN, "streamid$1", nil),
 		blockHash,
 	)
 	assert.NoError(t, err)
@@ -150,7 +150,7 @@ func TestLoad(t *testing.T) {
 	// add another join event
 	join3, err := MakeEnvelopeWithPayload(
 		wallet,
-		Make_UserPayload_Membership(MembershipOp_SO_JOIN, "streamid$1", nil, nil),
+		Make_UserPayload_Membership(MembershipOp_SO_JOIN, "streamid$1", nil),
 		view.LastBlock().Hash,
 	)
 	assert.NoError(t, err)
@@ -207,7 +207,7 @@ func TestLoad(t *testing.T) {
 	// add an event with an old hash
 	join4, err := MakeEnvelopeWithPayload(
 		wallet,
-		Make_UserPayload_Membership(MembershipOp_SO_LEAVE, "streamid$1", nil, nil),
+		Make_UserPayload_Membership(MembershipOp_SO_LEAVE, "streamid$1", nil),
 		newSV1.blocks[0].Hash,
 	)
 	assert.NoError(t, err)
