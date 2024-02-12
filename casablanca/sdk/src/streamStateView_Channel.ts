@@ -13,9 +13,9 @@ export class StreamStateView_Channel extends StreamStateView_AbstractContent {
     spaceId: string = ''
     private reachedRenderableContent = false
 
-    constructor(userId: string, streamId: string) {
+    constructor(_userId: string, streamId: string) {
         super()
-        this.memberships = new StreamStateView_Membership(userId, streamId)
+        this.memberships = new StreamStateView_Membership(streamId)
         this.streamId = streamId
     }
 

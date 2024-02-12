@@ -93,15 +93,16 @@ export class StreamStateView_User extends StreamStateView_AbstractContent {
         switch (op) {
             case MembershipOp.SO_INVITE:
                 emitter?.emit('userInvitedToStream', streamId)
+                emitter?.emit('userStreamMembershipChanged', streamId)
                 break
             case MembershipOp.SO_JOIN:
                 emitter?.emit('userJoinedStream', streamId)
+                emitter?.emit('userStreamMembershipChanged', streamId)
                 break
             case MembershipOp.SO_LEAVE:
-                {
-                    if (wasInvited || wasJoined) {
-                        emitter?.emit('userLeftStream', streamId)
-                    }
+                if (wasInvited || wasJoined) {
+                    emitter?.emit('userLeftStream', streamId)
+                    emitter?.emit('userStreamMembershipChanged', streamId)
                 }
                 break
             case MembershipOp.SO_UNSPECIFIED:
@@ -111,7 +112,15 @@ export class StreamStateView_User extends StreamStateView_AbstractContent {
         }
     }
 
+    getMembership(streamId: string): UserPayload_UserMembership | undefined {
+        return this.streamMemberships[streamId]
+    }
+
     isMember(streamId: string, membership: MembershipOp): boolean {
-        return this.streamMemberships[streamId]?.op === membership
+        return this.getMembership(streamId)?.op === membership
+    }
+
+    isJoined(streamId: string): boolean {
+        return this.isMember(streamId, MembershipOp.SO_JOIN)
     }
 }

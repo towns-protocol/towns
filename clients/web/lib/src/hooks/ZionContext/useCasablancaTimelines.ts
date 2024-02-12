@@ -15,7 +15,6 @@ import {
     RemoteTimelineEvent,
 } from '@river/sdk'
 import {
-    MembershipOp,
     ChannelMessage_Post,
     UserPayload,
     ChannelPayload,
@@ -31,7 +30,7 @@ import {
     ChannelMessage_Post_Attachment,
 } from '@river/proto'
 import { useEffect } from 'react'
-import { Membership, MessageType } from '../../types/zion-types'
+import { MessageType, toMembership } from '../../types/zion-types'
 import {
     getIsMentioned,
     getReactionParentId,
@@ -841,18 +840,6 @@ function getEventStatus(timelineEvent: StreamTimelineEvent): EventStatus {
         console.error('$$$ useCasablancaTimelines unknown event status', { timelineEvent })
         return EventStatus.NOT_SENT
     }
-}
-
-function toMembership(op: MembershipOp): Membership {
-    switch (op) {
-        case MembershipOp.SO_JOIN:
-            return Membership.Join
-        case MembershipOp.SO_LEAVE:
-            return Membership.Leave
-        case MembershipOp.SO_INVITE:
-            return Membership.Invite
-    }
-    return Membership.None
 }
 
 function hasTimelineContent(kind: SnapshotCaseType): boolean {

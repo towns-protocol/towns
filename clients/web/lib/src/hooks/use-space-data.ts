@@ -3,12 +3,13 @@ import {
     Channel,
     ChannelGroup,
     InviteData,
+    Membership,
     Room,
     SpaceChild,
     SpaceData,
     SpaceHierarchies,
     SpaceHierarchy,
-    getMembershipFor,
+    toMembership,
 } from '../types/zion-types'
 import { useRoom, useRoomNames } from './use-room'
 import { useZionContext } from '../components/ZionContextProvider'
@@ -303,9 +304,10 @@ function useSpaceRollup(streamId: string | undefined): SpaceData | undefined {
     const stream = useCasablancaStream(streamId)
     const { isLoading, spaceName, error } = useSpaceName(streamId ?? '')
     const [space, setSpace] = useState<SpaceData | undefined>(undefined)
+    const userStream = useCasablancaStream(casablancaClient?.userStreamId)
 
     useEffect(() => {
-        if (!stream || !casablancaClient) {
+        if (!stream || !casablancaClient || !userStream) {
             return
         }
         if (stream.view.contentKind !== 'spaceContent') {
@@ -313,18 +315,19 @@ function useSpaceRollup(streamId: string | undefined): SpaceData | undefined {
             return
         }
 
-        const userId = casablancaClient.userId
-
         // wrap the update op, we get the channel ids and
         // rollup the space channels into a space
         const update = () => {
+            const membership = toMembership(
+                userStream.view.userContent.getMembership(stream.streamId)?.op,
+            )
             const channelIds = Array.from(stream.view.spaceContent.spaceChannelsMetadata.keys())
             console.log(
                 `useSpaceRollup: updating space ${stream.streamId} with spaceName ${
                     spaceName ?? ''
                 }`,
             )
-            const newSpace = rollupSpace(stream, userId, channelIds, spaceName)
+            const newSpace = rollupSpace(stream, membership, channelIds, spaceName)
             setSpace((prev) => {
                 if (isEqual(prev, newSpace)) {
                     return prev
@@ -347,31 +350,29 @@ function useSpaceRollup(streamId: string | undefined): SpaceData | undefined {
         casablancaClient.on('streamInitialized', onSpaceChannelUpdated)
         casablancaClient.on('spaceChannelCreated', onSpaceChannelUpdated)
         casablancaClient.on('spaceChannelUpdated', onSpaceChannelUpdated)
-        casablancaClient.on('streamMyMembershipUpdated', onSpaceChannelUpdated)
+        casablancaClient.on('userStreamMembershipChanged', onSpaceChannelUpdated)
 
         return () => {
             // remove lsiteners and clear state when the effect stops
             casablancaClient.off('streamInitialized', onSpaceChannelUpdated)
             casablancaClient.off('spaceChannelCreated', onSpaceChannelUpdated)
             casablancaClient.off('spaceChannelUpdated', onSpaceChannelUpdated)
-            casablancaClient.off('streamMyMembershipUpdated', onSpaceChannelUpdated)
+            casablancaClient.off('userStreamMembershipChanged', onSpaceChannelUpdated)
             setSpace(undefined)
         }
-    }, [casablancaClient, stream, isLoading, spaceName, error])
+    }, [casablancaClient, stream, isLoading, spaceName, error, userStream])
     return space
 }
 
 function rollupSpace(
     stream: Stream,
-    userId: string,
+    membership: Membership,
     channels: string[],
     spaceName?: string,
 ): SpaceData | undefined {
     if (stream.view.contentKind !== 'spaceContent') {
         throw new Error('stream is not a space')
     }
-
-    const membership = getMembershipFor(userId, stream)
 
     return {
         id: stream.view.streamId,

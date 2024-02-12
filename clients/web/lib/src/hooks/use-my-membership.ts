@@ -21,7 +21,7 @@ export function useMyMembership(streamId?: string): Membership {
         }
         const updateMember = () => {
             const membershipOp = userStream.view.userContent.streamMemberships[streamId]?.op
-            const membership = membershipOp ? toMembership(membershipOp) : Membership.None
+            const membership = toMembership(membershipOp)
             setMembership(membership)
         }
 
@@ -31,13 +31,11 @@ export function useMyMembership(streamId?: string): Membership {
             updateMember()
         }
 
-        userStream.on('userJoinedStream', onUserStreamUpdate)
-        userStream.on('userLeftStream', onUserStreamUpdate)
+        userStream.on('userStreamMembershipChanged', onUserStreamUpdate)
         userStream.on('streamInitialized', onUserStreamUpdate)
 
         return () => {
-            userStream.off('userJoinedStream', onUserStreamUpdate)
-            userStream.off('userLeftStream', onUserStreamUpdate)
+            userStream.off('userStreamMembershipChanged', onUserStreamUpdate)
             userStream.off('streamInitialized', onUserStreamUpdate)
         }
     }, [streamId, userStream])

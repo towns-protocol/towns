@@ -5,7 +5,6 @@ import { ConfirmedTimelineEvent } from './types'
 import { logNever } from './check'
 
 export class StreamStateView_Membership {
-    readonly userId: string
     readonly streamId: string
     readonly joinedUsers = new Set<string>()
     readonly invitedUsers = new Set<string>()
@@ -15,8 +14,7 @@ export class StreamStateView_Membership {
     readonly pendingLeftUsers = new Set<string>()
     readonly pendingEvents = new Map<string, Membership>()
 
-    constructor(userId: string, streamId: string) {
-        this.userId = userId
+    constructor(streamId: string) {
         this.streamId = streamId
     }
 
@@ -57,15 +55,14 @@ export class StreamStateView_Membership {
     /**
      * If no userId is provided, checks current user
      */
-    isMemberJoined(userId?: string): boolean {
-        return this.joinedUsers.has(userId ?? this.userId)
+    isMemberJoined(userId: string): boolean {
+        return this.joinedUsers.has(userId)
     }
 
     /**
      * If no userId is provided, checks current user
      */
-    isMember(membership: MembershipOp, inUserId?: string): boolean {
-        const userId = inUserId ?? this.userId
+    isMember(membership: MembershipOp, userId: string): boolean {
         switch (membership) {
             case MembershipOp.SO_INVITE:
                 return this.invitedUsers.has(userId)
@@ -143,19 +140,13 @@ export class StreamStateView_Membership {
         streamId: string,
     ) {
         stateEmitter?.emit('streamMembershipUpdated', streamId, userId)
-        if (userId === this.userId) {
-            stateEmitter?.emit('streamMyMembershipUpdated', streamId, {
-                invited: this.invitedUsers.has(userId),
-                joined: this.joinedUsers.has(userId),
-            })
-        }
     }
 }
 
 export class StreamStateView_UserStreamMembership extends StreamStateView_Membership {
     constructor(streamId: string) {
         const userId = streamId.split('-')[1]
-        super(userId, streamId)
+        super(streamId)
         this.joinedUsers.add(userId)
     }
 }

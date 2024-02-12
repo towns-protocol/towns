@@ -1,6 +1,5 @@
 import { PlainMessage } from '@bufbuild/protobuf'
 import { MembershipOp, StreamSettings } from '@river/proto'
-import { Stream } from '@river/sdk'
 import { Attachment } from './timeline-types'
 import { staticAssertNever } from '../utils/zion-utils'
 
@@ -240,17 +239,7 @@ export function isThreadIdOptions(options: SendMessageOptions): options is Threa
     return 'threadId' in options && typeof options.threadId === 'string'
 }
 
-export function getMembershipFor(userId: string, stream: Stream): Membership {
-    if (stream.view.getMemberships().joinedUsers.has(userId)) {
-        return Membership.Join
-    }
-    if (stream.view.getMemberships().invitedUsers.has(userId)) {
-        return Membership.Invite
-    }
-    return Membership.None
-}
-
-export function toMembership(membershipOp: MembershipOp): Membership {
+export function toMembership(membershipOp?: MembershipOp): Membership {
     switch (membershipOp) {
         case MembershipOp.SO_JOIN:
             return Membership.Join
@@ -259,6 +248,8 @@ export function toMembership(membershipOp: MembershipOp): Membership {
         case MembershipOp.SO_LEAVE:
             return Membership.Leave
         case MembershipOp.SO_UNSPECIFIED:
+            return Membership.None
+        case undefined:
             return Membership.None
         default:
             staticAssertNever(membershipOp)

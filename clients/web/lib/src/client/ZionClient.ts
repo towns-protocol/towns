@@ -35,7 +35,6 @@ import {
     UpdateChannelInfo,
 } from '../types/zion-types'
 import { SignerContext } from '@river/sdk'
-import { toZionCasablancaUser } from '../store/use-casablanca-store'
 import { PushNotificationClient } from './PushNotificationClient'
 import { SignerUndefinedError } from '../types/error-types'
 import {
@@ -1446,7 +1445,15 @@ export class ZionClient implements EntitlementsDelegate {
      ************************************************/
     public getUser(userId: string): RoomMember | undefined {
         //TODO: Make real implementation when user profile support will be implemented
-        return toZionCasablancaUser(userId)
+        return {
+            userId: userId ?? '',
+            username: userId ?? '',
+            usernameConfirmed: true,
+            usernameEncrypted: false,
+            displayName: userId ?? '',
+            displayNameEncrypted: false,
+            avatarUrl: userId,
+        }
     }
 
     /************************************************

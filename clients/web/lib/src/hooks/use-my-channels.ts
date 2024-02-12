@@ -4,6 +4,7 @@ import { Channel, SpaceData } from '../types/zion-types'
 import isEqual from 'lodash/isEqual'
 import { isUserStreamId } from '@river/sdk'
 import { MembershipOp } from '@river/proto'
+import { useCasablancaStream } from './CasablancClient/useCasablancaStream'
 
 export function useMyChannels(space?: SpaceData) {
     const casablancaChannelIds = useMyMembershipsCasablanca()
@@ -34,19 +35,14 @@ export function useMyChannels(space?: SpaceData) {
 function useMyMembershipsCasablanca() {
     const { casablancaClient } = useZionContext()
     const [myMemberships, setMyMemberships] = useState<Set<string>>(new Set())
+    const userStream = useCasablancaStream(casablancaClient?.userStreamId)
 
     useEffect(() => {
-        if (!casablancaClient) {
-            return
-        }
-        const userId = casablancaClient.userId
-        const userStreamId = casablancaClient.userStreamId
-        if (!userId || !userStreamId) {
+        if (!casablancaClient || !userStream) {
             return
         }
 
         const updateState = () => {
-            const userStream = casablancaClient.streams.get(userStreamId)
             if (!userStream) {
                 return
             }
@@ -63,10 +59,7 @@ function useMyMembershipsCasablanca() {
             })
         }
 
-        const onUserJoinedStream = (_streamId: string) => {
-            updateState()
-        }
-        const onUserLeftStream = (_streamId: string) => {
+        const onUserStreamMembershipChanged = (_streamId: string) => {
             updateState()
         }
 
@@ -78,16 +71,14 @@ function useMyMembershipsCasablanca() {
 
         updateState()
 
-        casablancaClient.on('userJoinedStream', onUserJoinedStream)
-        casablancaClient.on('userLeftStream', onUserLeftStream)
+        casablancaClient.on('userStreamMembershipChanged', onUserStreamMembershipChanged)
         casablancaClient.on('streamInitialized', onStreamInitialized)
 
         return () => {
-            casablancaClient.off('userJoinedStream', onUserJoinedStream)
-            casablancaClient.off('userLeftStream', onUserLeftStream)
+            casablancaClient.off('userStreamMembershipChanged', onUserStreamMembershipChanged)
             casablancaClient.off('streamInitialized', onStreamInitialized)
         }
-    }, [casablancaClient])
+    }, [casablancaClient, userStream])
 
     return myMemberships
 }

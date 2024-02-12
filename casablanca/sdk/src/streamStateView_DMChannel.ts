@@ -24,7 +24,7 @@ export class StreamStateView_DMChannel extends StreamStateView_AbstractContent {
 
     constructor(userId: string, streamId: string) {
         super()
-        this.memberships = new StreamStateView_Membership(userId, streamId)
+        this.memberships = new StreamStateView_Membership(streamId)
         this.userMetadata = new StreamStateView_UserMetadata(userId, streamId)
         this.streamId = streamId
     }

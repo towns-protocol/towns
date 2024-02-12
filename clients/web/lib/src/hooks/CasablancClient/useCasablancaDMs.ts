@@ -1,7 +1,7 @@
-import { Client as CasablancaClient } from '@river/sdk'
+import { Client as CasablancaClient, isDMChannelStreamId, isGDMChannelStreamId } from '@river/sdk'
 import { useEffect, useState } from 'react'
 import { Stream } from '@river/sdk'
-import { MembershipOp, SnapshotCaseType } from '@river/proto'
+import { MembershipOp } from '@river/proto'
 import isEqual from 'lodash/isEqual'
 import { DMChannelIdentifier } from '../../types/dm-channel-identifier'
 
@@ -10,9 +10,13 @@ export function useCasablancaDMs(casablancaClient?: CasablancaClient): {
 } {
     const [channels, setChannels] = useState<DMChannelIdentifier[]>(() => [])
     const userId = casablancaClient?.userId
-
+    const userStreamId = casablancaClient?.userStreamId
     useEffect(() => {
-        if (!casablancaClient) {
+        if (!casablancaClient || !userId || !userStreamId) {
+            return
+        }
+        const userStream = casablancaClient.streams.get(userStreamId)
+        if (!userStream) {
             return
         }
 
@@ -24,8 +28,14 @@ export function useCasablancaDMs(casablancaClient?: CasablancaClient): {
                     (stream: Stream) =>
                         ({
                             id: stream.view.streamId,
-                            joined: stream.view.getMemberships().isMemberJoined(),
-                            left: stream.view.getMemberships().isMember(MembershipOp.SO_LEAVE),
+                            joined: userStream.view.userContent.isMember(
+                                stream.view.streamId,
+                                MembershipOp.SO_JOIN,
+                            ),
+                            left: userStream.view.userContent.isMember(
+                                stream.view.streamId,
+                                MembershipOp.SO_LEAVE,
+                            ),
                             userIds: Array.from(stream.view.dmChannelContent.participants())
                                 .filter((memberUserId) => memberUserId !== userId)
                                 .sort((a, b) => a.localeCompare(b)),
@@ -42,8 +52,14 @@ export function useCasablancaDMs(casablancaClient?: CasablancaClient): {
                     (stream: Stream) =>
                         ({
                             id: stream.view.streamId,
-                            joined: stream.view.getMemberships().isMemberJoined(),
-                            left: stream.view.getMemberships().isMember(MembershipOp.SO_LEAVE),
+                            joined: userStream.view.userContent.isMember(
+                                stream.view.streamId,
+                                MembershipOp.SO_JOIN,
+                            ),
+                            left: userStream.view.userContent.isMember(
+                                stream.view.streamId,
+                                MembershipOp.SO_LEAVE,
+                            ),
                             userIds: Array.from(stream.view.gdmChannelContent.participants())
                                 .filter((memberUserId) => memberUserId !== userId)
                                 .sort((a, b) => a.localeCompare(b)),
@@ -95,26 +111,24 @@ export function useCasablancaDMs(casablancaClient?: CasablancaClient): {
             })
         }
 
-        const onStreamChange = (_streamId: string, kind: SnapshotCaseType) => {
-            if (kind === 'dmChannelContent' || kind === 'gdmChannelContent') {
+        const onStreamChange = (streamId: string) => {
+            if (isDMChannelStreamId(streamId) || isGDMChannelStreamId(streamId)) {
                 updateChannels()
             }
-        }
-
-        const onLeftStream = (_: string) => {
-            updateChannels()
         }
 
         updateChannels()
 
         casablancaClient.on('streamInitialized', onStreamChange)
         casablancaClient.on('streamUpdated', onStreamChange)
-        casablancaClient.on('streamRemovedFromSync', onLeftStream)
+        casablancaClient.on('userStreamMembershipChanged', onStreamChange)
+        casablancaClient.on('streamRemovedFromSync', onStreamChange)
         return () => {
             casablancaClient.off('streamInitialized', onStreamChange)
             casablancaClient.off('streamUpdated', onStreamChange)
-            casablancaClient.off('streamRemovedFromSync', onLeftStream)
+            casablancaClient.off('userStreamMembershipChanged', onStreamChange)
+            casablancaClient.off('streamRemovedFromSync', onStreamChange)
         }
-    }, [casablancaClient, userId])
+    }, [casablancaClient, userId, userStreamId])
     return { channels }
 }

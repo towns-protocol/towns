@@ -51,14 +51,11 @@ export type StreamStateEvents = {
     streamUserLeft: (streamId: string, userId: string) => void
     streamMembershipUpdated: (streamId: string, userId: string) => void
     streamPendingMembershipUpdated: (streamId: string, userId: string) => void
-    streamMyMembershipUpdated: (
-        streamId: string,
-        membership: { joined: boolean; invited: boolean },
-    ) => void
     streamSyncActive: (active: boolean) => void
     userJoinedStream: (streamId: string) => void
     userInvitedToStream: (streamId: string) => void
     userLeftStream: (streamId: string) => void
+    userStreamMembershipChanged: (streamId: string) => void
     spaceChannelCreated: (
         spaceId: string,
         channelId: string,
