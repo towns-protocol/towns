@@ -4,6 +4,7 @@ import (
 	"context"
 	"fmt"
 	"math/rand"
+	"net"
 	"net/http"
 	"os"
 	"strconv"
@@ -13,15 +14,14 @@ import (
 	"testing"
 	"time"
 
+	"github.com/river-build/river/base/test"
 	"github.com/river-build/river/config"
 	"github.com/river-build/river/crypto"
 	"github.com/river-build/river/events"
-	"github.com/river-build/river/infra"
 	"github.com/river-build/river/protocol"
 	"github.com/river-build/river/protocol/protocolconnect"
 	"github.com/river-build/river/rpc"
 	"github.com/river-build/river/shared"
-	"github.com/river-build/river/testutils"
 	"github.com/river-build/river/testutils/dbtestutils"
 
 	"connectrpc.com/connect"
@@ -36,7 +36,7 @@ var (
 )
 
 func testMainImpl(m *testing.M) int {
-	ctx := context.Background()
+	ctx := test.NewTestContext()
 	db, schemaName, closer, err := dbtestutils.StartDB(ctx)
 	if err != nil {
 		panic(err)
@@ -263,20 +263,9 @@ func testServerAndClient(
 	dbUrl string,
 	dbSchemaName string,
 	useContract bool,
-	syncVersion int,
-) (client protocolconnect.StreamServiceClient, port int, closer func()) {
+) (protocolconnect.StreamServiceClient, string, func()) {
 	cfg := &config.Config{
 		UseContract: useContract,
-		BaseChain: config.ChainConfig{
-			ChainId:    infra.CHAIN_ID_LOCALHOST,
-			NetworkUrl: "http://localhost:8545",
-		},
-		RiverChain: config.ChainConfig{
-			ChainId:    infra.CHAIN_ID_LOCALHOST,
-			NetworkUrl: "http://localhost:8545",
-		},
-		Address:     "localhost",
-		Port:        1234,
 		Database:    config.DatabaseConfig{Url: dbUrl},
 		StorageType: "postgres",
 		Stream: config.StreamConfig{
@@ -289,36 +278,48 @@ func testServerAndClient(
 				Generations: 5,
 			},
 		},
+		UseBlockChainStreamRegistry: true,
 	}
 
-	wallet, err := crypto.NewWallet(ctx)
+	btc, err := crypto.NewBlockchainTestContext(ctx, 1)
+	if err != nil {
+		panic(err)
+	}
+	cfg.RegistryContract = btc.RegistryConfig()
+
+	bc := btc.GetBlockchain(ctx, 0, true)
+
+	listener, err := net.Listen("tcp", "localhost:0")
+	if err != nil {
+		panic(err)
+	}
+	port := listener.Addr().(*net.TCPAddr).Port
+	url := fmt.Sprintf("http://localhost:%d", port)
+
+	err = btc.InitNodeRecord(ctx, 0, url)
 	if err != nil {
 		panic(err)
 	}
 
-	if useContract {
-		err = testutils.FundWallet(ctx, wallet.Address, cfg.RiverChain.NetworkUrl)
-		if err != nil {
-			panic(err)
-		}
-	}
-
-	closer, port, _, err = rpc.StartServer(ctx, cfg, wallet)
+	serverCloser, _, _, err := rpc.StartServer(ctx, cfg, bc, listener)
 	if err != nil {
 		panic(err)
 	}
 
-	client = protocolconnect.NewStreamServiceClient(
+	client := protocolconnect.NewStreamServiceClient(
 		http.DefaultClient,
-		fmt.Sprintf("http://localhost:%d", port),
+		url,
 	)
 
-	return client, port, closer
+	return client, url, func() {
+		serverCloser()
+		btc.Close()
+	}
 }
 
 func TestMethods(t *testing.T) {
-	ctx := context.Background()
-	client, _, closer := testServerAndClient(ctx, testDatabaseUrl, testSchemaName, false, 0)
+	ctx := test.NewTestContext()
+	client, _, closer := testServerAndClient(ctx, testDatabaseUrl, testSchemaName, false)
 	wallet1, _ := crypto.NewWallet(ctx)
 	wallet2, _ := crypto.NewWallet(ctx)
 	defer closer()
@@ -528,8 +529,8 @@ func TestMethods(t *testing.T) {
 }
 
 func TestRiverDeviceId(t *testing.T) {
-	ctx := context.Background()
-	client, _, closer := testServerAndClient(ctx, testDatabaseUrl, testSchemaName, false, 0)
+	ctx := test.NewTestContext()
+	client, _, closer := testServerAndClient(ctx, testDatabaseUrl, testSchemaName, false)
 	wallet, _ := crypto.NewWallet(ctx)
 	deviceWallet, _ := crypto.NewWallet(ctx)
 	defer closer()
@@ -604,8 +605,8 @@ func TestSyncStreams(t *testing.T) {
 	Arrange
 	*/
 	// create the test client and server
-	ctx := context.Background()
-	client, _, closer := testServerAndClient(ctx, testDatabaseUrl, testSchemaName, false, 2)
+	ctx := test.NewTestContext()
+	client, _, closer := testServerAndClient(ctx, testDatabaseUrl, testSchemaName, false)
 	defer closer()
 	// create the streams for a user
 	wallet, _ := crypto.NewWallet(ctx)
@@ -677,8 +678,8 @@ func TestAddStreamsToSync(t *testing.T) {
 	Arrange
 	*/
 	// create the test client and server
-	ctx := context.Background()
-	aliceClient, port, closer := testServerAndClient(ctx, testDatabaseUrl, testSchemaName, false, 2)
+	ctx := test.NewTestContext()
+	aliceClient, url, closer := testServerAndClient(ctx, testDatabaseUrl, testSchemaName, false)
 	defer closer()
 	// create alice's wallet and streams
 	aliceWallet, _ := crypto.NewWallet(ctx)
@@ -690,7 +691,7 @@ func TestAddStreamsToSync(t *testing.T) {
 	// create bob's client, wallet, and streams
 	bobClient := protocolconnect.NewStreamServiceClient(
 		http.DefaultClient,
-		fmt.Sprintf("http://localhost:%d", port),
+		url,
 	)
 	bobWallet, _ := crypto.NewWallet(ctx)
 	bob, _, err := createUser(ctx, bobWallet, bobClient)
@@ -778,8 +779,8 @@ func TestRemoveStreamsFromSync(t *testing.T) {
 	Arrange
 	*/
 	// create the test client and server
-	ctx := context.Background()
-	aliceClient, port, closer := testServerAndClient(ctx, testDatabaseUrl, testSchemaName, false, 2)
+	ctx := test.NewTestContext()
+	aliceClient, url, closer := testServerAndClient(ctx, testDatabaseUrl, testSchemaName, false)
 	defer closer()
 	// create alice's wallet and streams
 	aliceWallet, _ := crypto.NewWallet(ctx)
@@ -791,7 +792,7 @@ func TestRemoveStreamsFromSync(t *testing.T) {
 	// create bob's client, wallet, and streams
 	bobClient := protocolconnect.NewStreamServiceClient(
 		http.DefaultClient,
-		fmt.Sprintf("http://localhost:%d", port),
+		url,
 	)
 	bobWallet, _ := crypto.NewWallet(ctx)
 	bob, _, err := createUser(ctx, bobWallet, bobClient)
@@ -919,8 +920,8 @@ func TestRemoveStreamsFromSync(t *testing.T) {
 
 // TODO: revamp with block support
 func DisableTestManyUsers(t *testing.T) {
-	ctx := context.Background()
-	client, _, closer := testServerAndClient(ctx, testDatabaseUrl, testSchemaName, false, 0)
+	ctx := test.NewTestContext()
+	client, _, closer := testServerAndClient(ctx, testDatabaseUrl, testSchemaName, false)
 	defer closer()
 
 	totalUsers := 14

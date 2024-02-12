@@ -17,6 +17,7 @@ import (
 	"github.com/river-build/river/dlog"
 	"github.com/river-build/river/events"
 	"github.com/river-build/river/nodes"
+	. "github.com/river-build/river/protocol"
 	"github.com/river-build/river/protocol/protocolconnect"
 	"github.com/river-build/river/registries"
 	"github.com/river-build/river/storage"
@@ -80,7 +81,12 @@ func createStore(
 	}
 }
 
-func StartServer(ctx context.Context, cfg *config.Config, wallet *crypto.Wallet) (func(), int, chan error, error) {
+func StartServer(
+	ctx context.Context,
+	cfg *config.Config,
+	riverchain *crypto.Blockchain,
+	listener net.Listener,
+) (func(), int, chan error, error) {
 	log := dlog.FromCtx(ctx)
 
 	privKey := cfg.WalletPrivateKey
@@ -89,7 +95,8 @@ func StartServer(ctx context.Context, cfg *config.Config, wallet *crypto.Wallet)
 	log.Info("Starting server", "config", cfg)
 
 	var err error
-	if wallet == nil {
+	var wallet *crypto.Wallet
+	if riverchain == nil {
 		if privKey != "" {
 			wallet, err = crypto.NewWalletFromPrivKey(ctx, privKey)
 		} else {
@@ -98,6 +105,8 @@ func StartServer(ctx context.Context, cfg *config.Config, wallet *crypto.Wallet)
 		if err != nil {
 			return nil, 0, nil, err
 		}
+	} else {
+		wallet = riverchain.Wallet
 	}
 
 	instanceId := GenShortNanoid()
@@ -149,16 +158,17 @@ func StartServer(ctx context.Context, cfg *config.Config, wallet *crypto.Wallet)
 
 	var nodeRegistry nodes.NodeRegistry
 	var streamRegistry nodes.StreamRegistry
-	var riverChainBlockMonitor crypto.BlockMonitor
+	var registryContract *registries.RiverRegistryContract
 	if cfg.UseBlockChainStreamRegistry {
-		riverChain, err := crypto.NewReadWriteBlockchain(ctx, &cfg.RiverChain, wallet)
-		if err != nil {
-			log.Error("Failed to initialize blockchain for river", "error", err, "chain_config", cfg.RiverChain)
-			return nil, 0, nil, err
+		if riverchain == nil {
+			riverchain, err = crypto.NewReadWriteBlockchain(ctx, &cfg.RiverChain, wallet)
+			if err != nil {
+				log.Error("Failed to initialize blockchain for river", "error", err, "chain_config", cfg.RiverChain)
+				return nil, 0, nil, err
+			}
 		}
-		riverChainBlockMonitor = riverChain.BlockMonitor
 
-		registryContract, err := registries.NewRiverRegistryContract(ctx, riverChain, &cfg.RegistryContract)
+		registryContract, err = registries.NewRiverRegistryContract(ctx, riverchain, &cfg.RegistryContract)
 		if err != nil {
 			log.Error("NewRiverRegistryContract", "error", err)
 			return nil, 0, nil, err
@@ -176,18 +186,27 @@ func StartServer(ctx context.Context, cfg *config.Config, wallet *crypto.Wallet)
 	} else {
 		nodeRegistry = nodes.MakeSingleNodeRegistry(ctx, wallet.AddressStr)
 		streamRegistry = nodes.NewFakeStreamRegistry(nodeRegistry, cfg.Stream.ReplicationFactor)
-		riverChainBlockMonitor = crypto.NewFakeBlockMonitor(ctx, cfg.RiverChain.FakeBlockTimeMs)
+		riverchain = &crypto.Blockchain{
+			Wallet:       wallet,
+			BlockMonitor: crypto.NewFakeBlockMonitor(ctx, cfg.RiverChain.FakeBlockTimeMs),
+		}
 		log.Warn("Using fake river registry")
 	}
 
-	cache := events.NewStreamCache(
+	cache, err := events.NewStreamCache(
+		ctx,
 		&events.StreamCacheParams{
-			Storage:                store,
-			Wallet:                 wallet,
-			RiverChainBlockMonitor: riverChainBlockMonitor,
-			StreamConfig:           &cfg.Stream,
+			Storage:      store,
+			Wallet:       wallet,
+			Riverchain:   riverchain,
+			Registry:     registryContract,
+			StreamConfig: &cfg.Stream,
 		},
 	)
+	if err != nil {
+		log.Error("Failed to create stream cache", "error", err)
+		return nil, 0, nil, err
+	}
 
 	syncHandler := NewSyncHandler(
 		wallet,
@@ -239,13 +258,19 @@ func StartServer(ctx context.Context, cfg *config.Config, wallet *crypto.Wallet)
 
 	registerDebugHandlers(ctx, mux, cache, streamService)
 
-	address := fmt.Sprintf("%s:%d", cfg.Address, cfg.Port)
-	httpListener, err := net.Listen("tcp", address)
-	if err != nil {
-		log.Error("failed to listen", "error", err)
-		return nil, 0, nil, err
+	if listener == nil {
+		if cfg.Port == 0 {
+			log.Error("Port is not set")
+			return nil, 0, nil, RiverError(Err_BAD_CONFIG, "Port is not set")
+		}
+		address := fmt.Sprintf("%s:%d", cfg.Address, cfg.Port)
+		listener, err = net.Listen("tcp", address)
+		if err != nil {
+			log.Error("failed to listen", "error", err)
+			return nil, 0, nil, err
+		}
+		log.Info("Listening", "addr", address+streamServicePattern)
 	}
-	actualPort := httpListener.Addr().(*net.TCPAddr).Port
 
 	corsMiddleware := cors.New(cors.Options{
 		AllowCredentials: false,
@@ -275,7 +300,7 @@ func StartServer(ctx context.Context, cfg *config.Config, wallet *crypto.Wallet)
 		},
 	}
 	go func() {
-		err := srv.Serve(httpListener)
+		err := srv.Serve(listener)
 		log.Info("Server stopped", "reason", err)
 	}()
 	closer := func() {
@@ -300,21 +325,20 @@ func StartServer(ctx context.Context, cfg *config.Config, wallet *crypto.Wallet)
 		}
 	}
 
-	log.Info("Listening", "addr", address+streamServicePattern)
 	log.Info("Using DB", "url", getDbURL(cfg.Database))
 	if cfg.UseContract {
 		log.Info("Using chain", "id", cfg.BaseChain.ChainId)
 	} else {
 		log.Info("Running Without Entitlements")
 	}
-	log.Info("Available on port", "port", actualPort)
-	return closer, actualPort, streamService.exitSignal, nil
+	log.Info("Server started")
+	return closer, cfg.Port, streamService.exitSignal, nil
 }
 
 func RunServer(ctx context.Context, cfg *config.Config) error {
 	log := dlog.FromCtx(ctx)
 
-	closer, _, exitSignal, error := StartServer(ctx, cfg, nil)
+	closer, _, exitSignal, error := StartServer(ctx, cfg, nil, nil)
 	if error != nil {
 		log.Error("Failed to start server", "error", error)
 		return error

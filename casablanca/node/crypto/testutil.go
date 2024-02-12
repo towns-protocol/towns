@@ -4,6 +4,7 @@ import (
 	"context"
 	"math/big"
 	"os"
+	"time"
 
 	"github.com/river-build/river/config"
 	"github.com/river-build/river/contracts/deploy"
@@ -176,24 +177,63 @@ func (c *BlockchainTestContext) GetDeployerWallet() *Wallet {
 }
 
 func (c *BlockchainTestContext) GetDeployerBlockchain(ctx context.Context) *Blockchain {
-	return c.GetBlockchain(ctx, len(c.Wallets)-1)
+	return c.GetBlockchain(ctx, len(c.Wallets)-1, false)
 }
 
-func (c *BlockchainTestContext) GetBlockchain(ctx context.Context, index int) *Blockchain {
+func (c *BlockchainTestContext) GetBlockchain(ctx context.Context, index int, autoMine bool) *Blockchain {
 	if index >= len(c.Wallets) {
 		return nil
 	}
 	wallet := c.Wallets[index]
+	var onSumbit func()
+	if autoMine {
+		onSumbit = func() {
+			c.Commit()
+		}
+	}
 	return &Blockchain{
 		ChainId: c.ChainId,
 		Wallet:  wallet,
 		Client:  c.Client(),
 		TxRunner: NewTxRunner(ctx, &TxRunnerParams{
-			Wallet:  wallet,
-			Client:  c.Client(),
-			ChainId: c.ChainId,
+			Wallet:   wallet,
+			Client:   c.Client(),
+			ChainId:  c.ChainId,
+			OnSubmit: onSumbit,
 		}),
 		Config:       &config.ChainConfig{ChainId: c.ChainId.Uint64()},
 		BlockMonitor: NewFakeBlockMonitor(ctx, 100),
+	}
+}
+
+func (c *BlockchainTestContext) InitNodeRecord(ctx context.Context, index int, url string) error {
+	owner := c.GetDeployerBlockchain(ctx)
+
+	transactor := contracts.RiverRegistryV1TransactorRaw{
+		Contract: &(c.RiverRegistry.RiverRegistryV1Transactor),
+	}
+	tx, err := owner.TxRunner.Submit(
+		ctx,
+		&transactor,
+		"addNode",
+		c.Wallets[index].Address,
+		url,
+	)
+	if err != nil {
+		return err
+	}
+
+	err = mineBlock(c.Backend, c.EthClient)
+	if err != nil {
+		return err
+	}
+
+	_, err = WaitMined(ctx, owner.Client, tx.Hash(), time.Millisecond, time.Second*10)
+	return err
+}
+
+func (c *BlockchainTestContext) RegistryConfig() config.ContractConfig {
+	return config.ContractConfig{
+		Address: c.RiverRegistryAddress.Hex(),
 	}
 }

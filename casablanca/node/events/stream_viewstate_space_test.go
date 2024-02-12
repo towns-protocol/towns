@@ -4,9 +4,11 @@ import (
 	"context"
 	"testing"
 
+	"github.com/river-build/river/base/test"
 	"github.com/river-build/river/config"
 	"github.com/river-build/river/crypto"
 	"github.com/river-build/river/protocol"
+	"github.com/river-build/river/registries"
 	"github.com/river-build/river/storage"
 
 	"github.com/stretchr/testify/assert"
@@ -216,20 +218,52 @@ func getStreamNodes() *StreamNodes {
 	return NewStreamNodes([]string{"node_1", "node_2", "node_3"}, "node_1")
 }
 
+func makeTestSreamCache() (context.Context, StreamCache, func()) {
+	ctx := test.NewTestContext()
+	btc, err := crypto.NewBlockchainTestContext(ctx, 1)
+	if err != nil {
+		panic(err)
+	}
+
+	bc := btc.GetBlockchain(ctx, 0, true)
+
+	err = btc.InitNodeRecord(ctx, 0, "fakeurl")
+	if err != nil {
+		panic(err)
+	}
+
+	cfg := btc.RegistryConfig()
+	registry, err := registries.NewRiverRegistryContract(ctx, bc, &cfg)
+	if err != nil {
+		panic(err)
+	}
+
+	streamCache, err := NewStreamCache(
+		ctx,
+		&StreamCacheParams{
+			Storage:      storage.NewMemStorage(),
+			Wallet:       bc.Wallet,
+			Riverchain:   bc,
+			Registry:     registry,
+			StreamConfig: &streamConfig_viewstate_space_t,
+		})
+	if err != nil {
+		panic(err)
+	}
+
+	return ctx, streamCache, func() {
+		btc.Close()
+	}
+}
+
 func TestSpaceViewState(t *testing.T) {
-	ctx := context.Background()
-	nodeWallet, _ := crypto.NewWallet(ctx)
+	ctx, streamCache, closer := makeTestSreamCache()
+	defer closer()
+
 	user1Wallet, _ := crypto.NewWallet(ctx)
 	user2Wallet, _ := crypto.NewWallet(ctx)
 	user3Wallet, _ := crypto.NewWallet(ctx)
 
-	streamCache := NewStreamCache(
-		&StreamCacheParams{
-			Storage:                storage.NewMemStorage(),
-			Wallet:                 nodeWallet,
-			RiverChainBlockMonitor: &noopBlockMonitor{},
-			StreamConfig:           &streamConfig_viewstate_space_t,
-		})
 	// create a stream
 	_, mb := makeTestSpaceStream(t, user1Wallet, "user_1", "space_1", nil)
 	s, _, err := streamCache.CreateStream(ctx, "streamid$1", getStreamNodes(), mb)
@@ -289,21 +323,16 @@ func spaceViewStateTest_CheckUserJoined(t *testing.T, view JoinableStreamView, u
 }
 
 func TestChannelViewState_JoinedMembers(t *testing.T) {
-	/* Arrange */
-	ctx := context.Background()
-	nodeWallet, _ := crypto.NewWallet(ctx)
+	ctx, streamCache, closer := makeTestSreamCache()
+	defer closer()
+
 	userWallet, _ := crypto.NewWallet(ctx)
 	alice := "alice"
 	bob := "bob"
 	carol := "carol"
 	spaceStreamId := "space_1_streamId"
 	channelStreamId := "channel_1_streamId"
-	streamCache := NewStreamCache(&StreamCacheParams{
-		Storage:                storage.NewMemStorage(),
-		Wallet:                 nodeWallet,
-		RiverChainBlockMonitor: &noopBlockMonitor{},
-		StreamConfig:           &streamConfig_viewstate_space_t,
-	})
+
 	// create a space stream and add the members
 	_, mb := makeTestSpaceStream(t, userWallet, alice, spaceStreamId, nil)
 	sStream, _, _ := streamCache.CreateStream(ctx, spaceStreamId, getStreamNodes(), mb)
@@ -343,21 +372,16 @@ func TestChannelViewState_JoinedMembers(t *testing.T) {
 }
 
 func TestChannelViewState_RemainingMembers(t *testing.T) {
-	/* Arrange */
-	ctx := context.Background()
-	nodeWallet, _ := crypto.NewWallet(ctx)
+	ctx, streamCache, closer := makeTestSreamCache()
+	defer closer()
+
 	userWallet, _ := crypto.NewWallet(ctx)
 	alice := "alice"
 	bob := "bob"
 	carol := "carol"
 	spaceStreamId := "space_1_streamId"
 	channelStreamId := "channel_1_streamId"
-	streamCache := NewStreamCache(&StreamCacheParams{
-		Storage:                storage.NewMemStorage(),
-		Wallet:                 nodeWallet,
-		RiverChainBlockMonitor: &noopBlockMonitor{},
-		StreamConfig:           &streamConfig_viewstate_space_t,
-	})
+
 	// create a space stream and add the members
 	_, mb := makeTestSpaceStream(t, userWallet, alice, spaceStreamId, nil)
 	sStream, _, _ := streamCache.CreateStream(ctx, spaceStreamId, getStreamNodes(), mb)

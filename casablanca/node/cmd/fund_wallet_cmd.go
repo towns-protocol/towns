@@ -29,7 +29,7 @@ func fund_wallet(cfg *config.Config) error {
 	if err != nil {
 		return err
 	}
-	log.Info("Wallet funded for top-chain", "address", wallet.Address.String())
+	log.Info("Wallet funded for River chain", "address", wallet.Address.String())
 	return nil
 }
 

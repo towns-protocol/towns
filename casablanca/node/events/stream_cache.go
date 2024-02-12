@@ -9,14 +9,16 @@ import (
 	"github.com/river-build/river/crypto"
 	"github.com/river-build/river/dlog"
 	. "github.com/river-build/river/protocol"
+	"github.com/river-build/river/registries"
 	"github.com/river-build/river/storage"
 )
 
 type StreamCacheParams struct {
-	Storage                storage.StreamStorage
-	Wallet                 *crypto.Wallet
-	RiverChainBlockMonitor crypto.BlockMonitor
-	StreamConfig           *config.StreamConfig
+	Storage      storage.StreamStorage
+	Wallet       *crypto.Wallet
+	Riverchain   *crypto.Blockchain
+	Registry     *registries.RiverRegistryContract
+	StreamConfig *config.StreamConfig
 }
 
 type StreamCache interface {
@@ -39,12 +41,12 @@ type streamCacheImpl struct {
 
 var _ StreamCache = (*streamCacheImpl)(nil)
 
-func NewStreamCache(params *StreamCacheParams) *streamCacheImpl {
+func NewStreamCache(ctx context.Context, params *StreamCacheParams) (*streamCacheImpl, error) {
 	c := &streamCacheImpl{
 		params: params,
 	}
-	params.RiverChainBlockMonitor.AddListener(c.onNewBlock)
-	return c
+	params.Riverchain.BlockMonitor.AddListener(c.onNewBlock)
+	return c, nil
 }
 
 func (s *streamCacheImpl) GetStream(ctx context.Context, streamId string, nodes *StreamNodes) (SyncStream, StreamView, error) {

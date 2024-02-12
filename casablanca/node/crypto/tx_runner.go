@@ -25,6 +25,7 @@ type TxRunnerParams struct {
 	ChainId        *big.Int
 	WaitPollPeriod time.Duration
 	MaxWait        time.Duration
+	OnSubmit       func()
 }
 
 // Transactions signed by the same address need to have sequential nonces.
@@ -100,6 +101,10 @@ func (tr *TxRunner) Submit(
 	}
 
 	tr.nonce.Add(tr.nonce, big.NewInt(1))
+
+	if tr.p.OnSubmit != nil {
+		tr.p.OnSubmit()
+	}
 
 	return tx, nil
 }
