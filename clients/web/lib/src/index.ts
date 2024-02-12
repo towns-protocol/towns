@@ -11,7 +11,6 @@ export {
     type InitialSyncSortPredicate,
 } from './components/ZionContextProvider'
 export { useWeb3Context } from './components/Web3ContextProvider'
-export { AutojoinChannels } from './components/AutojoinChannels'
 export type { DMChannelIdentifier } from './types/dm-channel-identifier'
 export * from './components/UserLookupContextProviders'
 
