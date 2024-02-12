@@ -50,34 +50,10 @@ export class SyncedStream extends Stream {
             return false
         }
 
-        // If this is a channel, DM or GDM, perform a few scrollbacks
-        let prependedMiniblocks: ParsedMiniblock[] = []
-        if (
-            isChannelStreamId(this.streamId) ||
-            isDMChannelStreamId(this.streamId) ||
-            isGDMChannelStreamId(this.streamId)
-        ) {
-            let fromInclusive = miniblocks[0].header.prevSnapshotMiniblockNum
-            let toExclusive = miniblocks[0].header.miniblockNum
-
-            for (let i = 0; i < CACHED_SCROLLBACK_COUNT; i++) {
-                if (toExclusive <= 0n) {
-                    break
-                }
-                const result = await this.persistenceStore.getMiniblocks(
-                    this.streamId,
-                    fromInclusive,
-                    toExclusive - 1n,
-                )
-                if (result.length > 0) {
-                    prependedMiniblocks = [...result, ...prependedMiniblocks]
-                    fromInclusive = result[0].header.prevSnapshotMiniblockNum
-                    toExclusive = result[0].header.miniblockNum
-                } else {
-                    break
-                }
-            }
-        }
+        const prependedMiniblocks = await this.cachedScrollback(
+            miniblocks[0].header.prevSnapshotMiniblockNum,
+            miniblocks[0].header.miniblockNum,
+        )
 
         const snapshotEventIds = eventIdsFromSnapshot(snapshot)
         const eventIds = miniblocks.flatMap((mb) => mb.events.map((e) => e.hashStr))
@@ -215,6 +191,36 @@ export class SyncedStream extends Stream {
             lastMiniblockNum: miniblock.header.miniblockNum,
         })
         await this.persistenceStore.saveSyncedStream(this.streamId, cachedSyncedStream)
+    }
+
+    async cachedScrollback(fromInclusive: bigint, toExclusive: bigint): Promise<ParsedMiniblock[]> {
+        // If this is a channel, DM or GDM, perform a few scrollbacks
+        if (
+            !isChannelStreamId(this.streamId) &&
+            !isDMChannelStreamId(this.streamId) &&
+            !isGDMChannelStreamId(this.streamId)
+        ) {
+            return []
+        }
+        let miniblocks: ParsedMiniblock[] = []
+        for (let i = 0; i < CACHED_SCROLLBACK_COUNT; i++) {
+            if (toExclusive <= 0n) {
+                break
+            }
+            const result = await this.persistenceStore.getMiniblocks(
+                this.streamId,
+                fromInclusive,
+                toExclusive - 1n,
+            )
+            if (result.length > 0) {
+                miniblocks = [...result, ...miniblocks]
+                fromInclusive = result[0].header.prevSnapshotMiniblockNum
+                toExclusive = result[0].header.miniblockNum
+            } else {
+                break
+            }
+        }
+        return miniblocks
     }
 }
 
