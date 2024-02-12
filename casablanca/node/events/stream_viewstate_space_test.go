@@ -217,8 +217,8 @@ func getStreamNodes() *StreamNodes {
 }
 
 func TestSpaceViewState(t *testing.T) {
-	ctx, streamCache, closer := makeTestSreamCache(testParams{})
-	defer closer()
+	ctx, tt := makeTestStreamCache(testParams{})
+	defer tt.closer()
 
 	user1Wallet, _ := crypto.NewWallet(ctx)
 	user2Wallet, _ := crypto.NewWallet(ctx)
@@ -226,7 +226,7 @@ func TestSpaceViewState(t *testing.T) {
 
 	// create a stream
 	_, mb := makeTestSpaceStream(t, user1Wallet, "user_1", "space_1", nil)
-	s, _, err := streamCache.CreateStream(ctx, "streamid$1", getStreamNodes(), mb)
+	s, _, err := tt.cache.CreateStream(ctx, "streamid$1", getStreamNodes(), mb)
 	stream := s.(*streamImpl)
 	assert.NoError(t, err)
 	assert.NotNil(t, stream)
@@ -283,8 +283,8 @@ func spaceViewStateTest_CheckUserJoined(t *testing.T, view JoinableStreamView, u
 }
 
 func TestChannelViewState_JoinedMembers(t *testing.T) {
-	ctx, streamCache, closer := makeTestSreamCache(testParams{})
-	defer closer()
+	ctx, tt := makeTestStreamCache(testParams{})
+	defer tt.closer()
 
 	userWallet, _ := crypto.NewWallet(ctx)
 	alice := "alice"
@@ -295,12 +295,12 @@ func TestChannelViewState_JoinedMembers(t *testing.T) {
 
 	// create a space stream and add the members
 	_, mb := makeTestSpaceStream(t, userWallet, alice, spaceStreamId, nil)
-	sStream, _, _ := streamCache.CreateStream(ctx, spaceStreamId, getStreamNodes(), mb)
+	sStream, _, _ := tt.cache.CreateStream(ctx, spaceStreamId, getStreamNodes(), mb)
 	spaceStream := sStream.(*streamImpl)
 	joinSpace_T(t, userWallet, ctx, spaceStream, []string{bob, carol})
 	// create a channel stream and add the members
 	_, mb = makeTestChannelStream(t, userWallet, alice, channelStreamId, spaceStreamId, nil, nil)
-	cStream, _, _ := streamCache.CreateStream(ctx, channelStreamId, getStreamNodes(), mb)
+	cStream, _, _ := tt.cache.CreateStream(ctx, channelStreamId, getStreamNodes(), mb)
 	channelStream := cStream.(*streamImpl)
 	joinChannel_T(t, userWallet, ctx, channelStream, []string{alice, bob, carol})
 	// make a miniblock
@@ -332,8 +332,8 @@ func TestChannelViewState_JoinedMembers(t *testing.T) {
 }
 
 func TestChannelViewState_RemainingMembers(t *testing.T) {
-	ctx, streamCache, closer := makeTestSreamCache(testParams{})
-	defer closer()
+	ctx, tt := makeTestStreamCache(testParams{})
+	defer tt.closer()
 
 	userWallet, _ := crypto.NewWallet(ctx)
 	alice := "alice"
@@ -344,12 +344,12 @@ func TestChannelViewState_RemainingMembers(t *testing.T) {
 
 	// create a space stream and add the members
 	_, mb := makeTestSpaceStream(t, userWallet, alice, spaceStreamId, nil)
-	sStream, _, _ := streamCache.CreateStream(ctx, spaceStreamId, getStreamNodes(), mb)
+	sStream, _, _ := tt.cache.CreateStream(ctx, spaceStreamId, getStreamNodes(), mb)
 	spaceStream := sStream.(*streamImpl)
 	joinSpace_T(t, userWallet, ctx, spaceStream, []string{bob, carol})
 	// create a channel stream and add the members
 	_, mb = makeTestChannelStream(t, userWallet, alice, channelStreamId, spaceStreamId, nil, nil)
-	cStream, _, _ := streamCache.CreateStream(ctx, channelStreamId, getStreamNodes(), mb)
+	cStream, _, _ := tt.cache.CreateStream(ctx, channelStreamId, getStreamNodes(), mb)
 	channelStream := cStream.(*streamImpl)
 	joinChannel_T(t, userWallet, ctx, channelStream, []string{alice, bob, carol})
 	// bob leaves the channel

@@ -11,11 +11,18 @@ import (
 	"github.com/river-build/river/testutils/dbtestutils"
 )
 
+type testContext struct {
+	bcTest *crypto.BlockchainTestContext
+	params *StreamCacheParams
+	cache  StreamCache
+	closer func()
+}
+
 type testParams struct {
 	usePostgres bool
 }
 
-func makeTestStreamParams(p testParams) (context.Context, *StreamCacheParams, func()) {
+func makeTestStreamParams(p testParams) (context.Context, *testContext) {
 	ctx := test.NewTestContext()
 	btc, err := crypto.NewBlockchainTestContext(ctx, 1)
 	if err != nil {
@@ -59,30 +66,34 @@ func makeTestStreamParams(p testParams) (context.Context, *StreamCacheParams, fu
 	}
 
 	return ctx,
-		&StreamCacheParams{
-			Storage:      streamStorage,
-			Wallet:       bc.Wallet,
-			Riverchain:   bc,
-			Registry:     registry,
-			StreamConfig: &streamConfig_viewstate_space_t,
-		},
-		func() {
-			btc.Close()
-			streamStorage.Close()
-			if schemaDeleter != nil {
-				schemaDeleter()
-			}
+		&testContext{
+			bcTest: btc,
+			params: &StreamCacheParams{
+				Storage:      streamStorage,
+				Wallet:       bc.Wallet,
+				Riverchain:   bc,
+				Registry:     registry,
+				StreamConfig: &streamConfig_viewstate_space_t,
+			},
+			closer: func() {
+				btc.Close()
+				streamStorage.Close()
+				if schemaDeleter != nil {
+					schemaDeleter()
+				}
+			},
 		}
 }
 
-func makeTestSreamCache(p testParams) (context.Context, StreamCache, func()) {
-	ctx, params, closer := makeTestStreamParams(p)
+func makeTestStreamCache(p testParams) (context.Context, *testContext) {
+	ctx, testContext := makeTestStreamParams(p)
 
-	streamCache, err := NewStreamCache(ctx, params)
+	streamCache, err := NewStreamCache(ctx, testContext.params)
 	if err != nil {
-		closer()
+		testContext.closer()
 		panic(err)
 	}
+	testContext.cache = streamCache
 
-	return ctx, streamCache, closer
+	return ctx, testContext
 }
