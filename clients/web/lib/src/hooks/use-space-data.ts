@@ -1,17 +1,13 @@
 import { useCallback, useEffect, useMemo, useState } from 'react'
 import {
-    Channel,
-    ChannelGroup,
     InviteData,
     Membership,
     Room,
-    SpaceChild,
     SpaceData,
     SpaceHierarchies,
     SpaceHierarchy,
     toMembership,
 } from '../types/zion-types'
-import { useRoom, useRoomNames } from './use-room'
 import { useZionContext } from '../components/ZionContextProvider'
 import { useSpaceContext } from '../components/SpaceContextProvider'
 import { useCasablancaStream } from './CasablancClient/useCasablancaStream'
@@ -26,37 +22,9 @@ import { isDefined } from '../utils/isDefined'
 
 /// returns default space if no space slug is provided
 export function useSpaceData(inSpaceId?: string): SpaceData | undefined {
-    const { spaceHierarchies } = useZionContext()
     const { spaceId: contextSpaceId } = useSpaceContext()
     const spaceId = inSpaceId ?? contextSpaceId
-    // https://linear.app/hnt-labs/issue/HNT-4575/simplify-use-space-data-hook
-    // the space holds the channel ids, but
-    // we don't sync the channels until after joining, so blend the hierarchy data
-    // with local data and hope the channel names come out right.
-    const spaceRoom = useRoom(spaceId)
-    const spaceHierarchy = useMemo(
-        () => (spaceId ? spaceHierarchies[spaceId] : undefined),
-        [spaceId, spaceHierarchies],
-    )
-    const spaceRoomNames = useRoomNames(spaceHierarchy?.children.map((c) => c.id) ?? [])
-    // casablanca is much simpler, just get the data from the stream
-    const casablancaSpaceData = useSpaceRollup(spaceId)
-
-    return useMemo(() => {
-        if (casablancaSpaceData) {
-            return casablancaSpaceData
-        } else if (spaceRoom || spaceHierarchy) {
-            return formatSpace(
-                // eslint-disable-next-line @typescript-eslint/no-non-null-assertion
-                spaceRoom ?? spaceHierarchy!.root,
-                spaceHierarchy,
-                spaceRoom?.membership ?? '',
-                '/placeholders/nft_29.png',
-                spaceRoomNames,
-            )
-        }
-        return undefined
-    }, [casablancaSpaceData, spaceRoom, spaceHierarchy, spaceRoomNames])
+    return useSpaceRollup(spaceId)
 }
 
 export function useInvites(): InviteData[] {
@@ -80,12 +48,6 @@ export function useInvites(): InviteData[] {
     )
 }
 
-// eslint-disable-next-line @typescript-eslint/no-unused-vars
-export const useInvitesForSpace = (spaceId: string) => {
-    // todo this doesn't work yet
-    return useInvites()
-}
-
 export const useInviteData = (slug: string | undefined) => {
     const invites = useInvites()
     return useMemo(
@@ -105,43 +67,6 @@ function getParentSpaceId(roomId: string, spaces: SpaceHierarchies): string | un
     return parentId
 }
 
-/// formatting helper for changing a room join to a space
-function formatSpace(
-    root: Room | SpaceChild,
-    spaceHierarchy: SpaceHierarchy | undefined,
-    membership: string,
-    avatarSrc: string,
-    roomNames: Record<string, string>,
-): SpaceData {
-    return formatRoom(
-        root,
-        membership,
-        avatarSrc,
-        toChannelGroups(spaceHierarchy?.children ?? [], roomNames),
-        spaceHierarchy,
-    )
-}
-
-/// formatting helper for changing a room to a space
-export function formatRoom(
-    r: Room | SpaceChild,
-    membership: string,
-    avatarSrc: string,
-    channelGroups: ChannelGroup[] = [],
-    spaceHierarchy: SpaceHierarchy | undefined,
-): SpaceData {
-    return {
-        id: r.id,
-        name: r.name,
-        avatarSrc: avatarSrc,
-        channelGroups: channelGroups,
-        membership: membership,
-        // 3.21.23 adding this prop instead of changing channelGroups always being an array, in case code is relying on that
-        isLoadingChannels: spaceHierarchy?.children === undefined,
-        hasLoadedMemberships: true,
-    }
-}
-
 function formatInvite(r: Room, spaceParentId: string | undefined, avatarSrc: string): InviteData {
     return {
         id: r.id,
@@ -150,39 +75,6 @@ function formatInvite(r: Room, spaceParentId: string | undefined, avatarSrc: str
         isSpaceRoom: r.isSpaceRoom,
         spaceParentId: spaceParentId,
     }
-}
-
-function formatChannel(spaceChild: SpaceChild, roomNames: Record<string, string>): Channel {
-    const roomName = roomNames[spaceChild.id]
-    return {
-        id: spaceChild.id,
-        label: roomName ?? spaceChild.name ?? '',
-        private: !spaceChild.worldReadable,
-        highlight: false,
-        topic: spaceChild.topic,
-    }
-}
-
-function toChannelGroup(
-    label: string,
-    channels: SpaceChild[],
-    roomNames: Record<string, string>,
-): ChannelGroup {
-    return {
-        label: label,
-        channels: channels.map((c) => formatChannel(c, roomNames)),
-    }
-}
-
-function toChannelGroups(
-    children: SpaceChild[],
-    roomNames: Record<string, string>,
-): ChannelGroup[] {
-    if (children.length === 0) {
-        return []
-    }
-    // the backend doesn't yet support tags, just return all channels in the "Channels" group
-    return [toChannelGroup('Channels', children, roomNames)]
 }
 
 export function useSpaceNames(client?: CasablancaClient) {
@@ -336,9 +228,8 @@ function useSpaceRollup(streamId: string | undefined): SpaceData | undefined {
             })
         }
 
-        // if any channel is updated in this stream, update it
-        const onSpaceChannelUpdated = (spaceId: string) => {
-            if (spaceId === stream.streamId) {
+        const onStreamUpdated = (streamId: string) => {
+            if (streamId === stream.streamId || streamId === userStream.streamId) {
                 update()
             }
         }
@@ -346,18 +237,19 @@ function useSpaceRollup(streamId: string | undefined): SpaceData | undefined {
         // run the first update
         update()
 
-        // add listeners
-        casablancaClient.on('streamInitialized', onSpaceChannelUpdated)
-        casablancaClient.on('spaceChannelCreated', onSpaceChannelUpdated)
-        casablancaClient.on('spaceChannelUpdated', onSpaceChannelUpdated)
-        casablancaClient.on('userStreamMembershipChanged', onSpaceChannelUpdated)
+        // this hook produces a list of channel metadata and the current user's membership
+        // listen to space events and user membership events to update the spaceData
+        casablancaClient.on('streamInitialized', onStreamUpdated)
+        casablancaClient.on('spaceChannelCreated', onStreamUpdated)
+        casablancaClient.on('spaceChannelUpdated', onStreamUpdated)
+        casablancaClient.on('userStreamMembershipChanged', onStreamUpdated)
 
         return () => {
             // remove lsiteners and clear state when the effect stops
-            casablancaClient.off('streamInitialized', onSpaceChannelUpdated)
-            casablancaClient.off('spaceChannelCreated', onSpaceChannelUpdated)
-            casablancaClient.off('spaceChannelUpdated', onSpaceChannelUpdated)
-            casablancaClient.off('userStreamMembershipChanged', onSpaceChannelUpdated)
+            casablancaClient.off('streamInitialized', onStreamUpdated)
+            casablancaClient.off('spaceChannelCreated', onStreamUpdated)
+            casablancaClient.off('spaceChannelUpdated', onStreamUpdated)
+            casablancaClient.off('userStreamMembershipChanged', onStreamUpdated)
             setSpace(undefined)
         }
     }, [casablancaClient, stream, isLoading, spaceName, error, userStream])
@@ -381,15 +273,6 @@ function rollupSpace(
         channelGroups: [
             {
                 label: 'Channels',
-                // channels: Array.from(stream.view.spaceChannels)
-                //     .sort()
-                //     .map((c) => ({
-                //         id: makeRoomIdentifier(c),
-                //         label: c,
-                //         private: false,
-                //         highlight: false,
-                //         topic: '',
-                //     })),
                 channels: channels
                     .sort((a, b) => a.localeCompare(b))
                     .map((c) => ({
