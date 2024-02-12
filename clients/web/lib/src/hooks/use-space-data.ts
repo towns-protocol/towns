@@ -1,4 +1,4 @@
-import { useCallback, useEffect, useMemo, useRef, useState } from 'react'
+import { useCallback, useEffect, useMemo, useState } from 'react'
 import {
     Channel,
     ChannelGroup,
@@ -194,35 +194,37 @@ export function useSpaceNames(client?: CasablancaClient) {
 
     const isEnabled = spaceDapp && client && client.streams.size() > 0
 
-    const previousSpaceIdsRef = useRef<string[]>([])
-    const spaceIds = useMemo(() => {
-        if (!isEnabled || !client?.streams || client?.streams.size() == 0) {
-            return previousSpaceIdsRef.current
-        }
-        const newSpaceIds = client.streams.getStreamIds().filter((id) => isSpaceStreamId(id))
-        if (isEqual(previousSpaceIdsRef.current, newSpaceIds)) {
-            // If all elements are the same, return the previous array
-            console.log(
-                `useSpaceNames: spaceIds unchanged, returning previous array`,
-                previousSpaceIdsRef.current,
-                newSpaceIds,
-            )
-            return previousSpaceIdsRef.current
+    const [spaceIds, setSpaceIds] = useState<string[]>([])
+    useEffect(() => {
+        if (!isEnabled || !client) {
+            return
         }
 
-        // Update the ref with the new array
-        previousSpaceIdsRef.current = newSpaceIds
-        console.log(
-            `useSpaceNames: spaceIds changed, returning new array`,
-            previousSpaceIdsRef.current,
-            newSpaceIds,
-        )
-        return newSpaceIds
-    }, [isEnabled, client?.streams])
+        const updateSpaceIds = () => {
+            const newSpaceIds = client.streams.getStreamIds().filter((id) => isSpaceStreamId(id))
+            if (!isEqual(newSpaceIds, spaceIds)) {
+                setSpaceIds(newSpaceIds)
+            }
+        }
+
+        const streamUpdated = (streamId: string) => {
+            if (isSpaceStreamId(streamId)) {
+                updateSpaceIds()
+            }
+        }
+        updateSpaceIds()
+
+        client.on('streamInitialized', streamUpdated)
+        client.on('userLeftStream', streamUpdated)
+        return () => {
+            client.off('streamInitialized', streamUpdated)
+            client.off('userLeftStream', streamUpdated)
+        }
+    }, [isEnabled, client, spaceIds, setSpaceIds])
 
     const getSpaceNames = useCallback(
         async function (): Promise<SpaceInfo[]> {
-            if (!spaceDapp || !isEnabled || !spaceIds) {
+            if (!spaceDapp || !isEnabled || spaceIds.length === 0) {
                 return []
             }
             const getSpaceInfoPromises = spaceIds.map((streamId) =>
