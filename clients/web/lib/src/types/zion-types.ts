@@ -1,7 +1,8 @@
 import { PlainMessage } from '@bufbuild/protobuf'
-import { StreamSettings } from '@river/proto'
+import { MembershipOp, StreamSettings } from '@river/proto'
 import { Stream } from '@river/sdk'
 import { Attachment } from './timeline-types'
+import { staticAssertNever } from '../utils/zion-utils'
 
 export enum Membership {
     Join = 'join',
@@ -247,4 +248,20 @@ export function getMembershipFor(userId: string, stream: Stream): Membership {
         return Membership.Invite
     }
     return Membership.None
+}
+
+export function toMembership(membershipOp: MembershipOp): Membership {
+    switch (membershipOp) {
+        case MembershipOp.SO_JOIN:
+            return Membership.Join
+        case MembershipOp.SO_INVITE:
+            return Membership.Invite
+        case MembershipOp.SO_LEAVE:
+            return Membership.Leave
+        case MembershipOp.SO_UNSPECIFIED:
+            return Membership.None
+        default:
+            staticAssertNever(membershipOp)
+            return Membership.None
+    }
 }
