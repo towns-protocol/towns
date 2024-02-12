@@ -1,26 +1,23 @@
 import { useCallback, useEffect } from 'react'
 import { useConnectivity } from 'use-zion-client'
 import { useGetEmbeddedSigner } from '@towns/privy'
-import useStateMachine, { t } from '@cassiozen/usestatemachine'
+import useStateMachine from '@cassiozen/usestatemachine'
 type UseConnectivtyReturnValue = ReturnType<typeof useConnectivity>
 
 export function useAutoLoginToRiverIfEmbeddedWallet({
     riverLogin,
     riverLoginError,
+    isRiverAuthencticated,
 }: {
     riverLogin: UseConnectivtyReturnValue['login']
     riverLoginError: UseConnectivtyReturnValue['loginError']
+    isRiverAuthencticated: UseConnectivtyReturnValue['isAuthenticated']
 }) {
     const getSigner = useGetEmbeddedSigner()
 
     const [state, send] = useStateMachine({
-        schema: {
-            events: {
-                CYCLE: t<{ riverIsAuthenticated: boolean }>(),
-            },
-        },
         context: { isAutoLoggingInToRiver: false, hasSuccessfulLogin: false },
-        initial: 'loggedOutBoth',
+        initial: isRiverAuthencticated ? 'loggedInBoth' : 'loggedOutBoth',
         states: {
             loggedOutBoth: {
                 on: {
@@ -47,7 +44,13 @@ export function useAutoLoginToRiverIfEmbeddedWallet({
                 },
                 effect({ setContext }) {
                     async function _login() {
+                        // just in case
+                        if (isRiverAuthencticated) {
+                            console.warn('Aborting auto login to river, already logged in')
+                            return
+                        }
                         setContext((c) => ({ ...c, isAutoLoggingInToRiver: true }))
+
                         let signer
                         try {
                             signer = await getSigner()

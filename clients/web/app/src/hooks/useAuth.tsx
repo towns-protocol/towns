@@ -75,6 +75,7 @@ function useAuthContext(): AuthContext {
         useAutoLoginToRiverIfEmbeddedWallet({
             riverLogin,
             riverLoginError: loginError,
+            isRiverAuthencticated: riverIsAuthenticated,
         })
 
     const { privyLogin } = usePrivyLoginWithErrorHandler({
@@ -157,7 +158,9 @@ function usePrivyLoginWithErrorHandler({
     const { login: privyLogin } = useLogin({
         onComplete(user, isNewUser, wasAlreadyAuthenticated, loginMethod) {
             // don't call on page load when user already authenticated
-            if (!wasAlreadyAuthenticated) {
+            // BUG in privy: this hook is ALSO called when calling privy.useConnectWallet - and who knows when else
+            // so we need to check if the user is already authenticated to river too (loggedInWalletAddress)
+            if (!wasAlreadyAuthenticated && !loggedInWalletAddress) {
                 loginToRiverAfterPrivy?.()
             }
         },
