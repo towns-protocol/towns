@@ -200,7 +200,7 @@ module "river_node" {
     name = local.transient_global_remote_state.river_ecs_cluster.name
   }
 
-  notification_service_url = "https://push-notification-worker-${terraform.workspace}.towns.com"
+  notification_service_url = "https://push-notification-worker-test-beta.towns.com"
 
   alb_security_group_id  = local.transient_global_remote_state.river_alb.security_group_id
   alb_dns_name           = local.transient_global_remote_state.river_alb.lb_dns_name
