@@ -1,11 +1,15 @@
 import { useEffect } from 'react'
-import { useNavigate } from 'react-router'
+import { matchPath, useNavigate } from 'react-router'
 import { WEB_PUSH_NAVIGATION_CHANNEL } from 'workers/types.d'
+import { PATHS } from 'routes'
+import { useStore } from 'store/store'
+import { useDevice } from './useDevice'
 
 const log = console.debug
 
 export const useAppNotifications = () => {
     const navigate = useNavigate()
+    const { isTouch } = useDevice()
 
     useEffect(() => {
         async function handleVisibilityChange() {
@@ -43,13 +47,23 @@ export const useAppNotifications = () => {
     useEffect(() => {
         const broadcastChannel = new BroadcastChannel(WEB_PUSH_NAVIGATION_CHANNEL)
         broadcastChannel.onmessage = (event) => {
+            if (isTouch) {
+                const match = matchPath(`${PATHS.MESSAGES}/:channelId`, event.data.path)
+                const spaceId = useStore.getState().spaceIdBookmark
+                if (match && match.params.channelId && spaceId) {
+                    navigate(
+                        `/${PATHS.SPACES}/${spaceId}/${PATHS.MESSAGES}/${match.params.channelId}`,
+                    )
+                    return
+                }
+            }
             navigate(event.data.path)
         }
 
         return () => {
             broadcastChannel.close()
         }
-    }, [navigate])
+    }, [navigate, isTouch])
 }
 
 function isNavigatorDefined(): boolean {
