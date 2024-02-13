@@ -81,13 +81,14 @@ const nftContracts = new Map<string, `0x${string}`>()
 const nftContractsMutex = new Mutex()
 
 export async function getContractAddress(nftName: string): Promise<`0x${string}`> {
+    let retryCount = 0
+    let lastError: unknown
     try {
         // If mulitple callers are in a Promise.all() and they all try to deploy the same contract at the same time,
         // we want to make sure that only one of them actually deploys the contract.
         await nftContractsMutex.lock()
 
         if (!nftContracts.has(nftName)) {
-            let retryCount = 0
             while (retryCount++ < 5) {
                 try {
                     const client = createTestClient({
@@ -121,7 +122,9 @@ export async function getContractAddress(nftName: string): Promise<`0x${string}`
                     } else {
                         throw new Error('Failed to deploy contract')
                     }
+                    break
                 } catch (e) {
+                    lastError = e
                     if (
                         typeof e === 'object' &&
                         e !== null &&
@@ -134,7 +137,6 @@ export async function getContractAddress(nftName: string): Promise<`0x${string}`
                         throw e
                     }
                 }
-                break
             }
         }
     } finally {
@@ -143,7 +145,10 @@ export async function getContractAddress(nftName: string): Promise<`0x${string}`
 
     const contractAddress = nftContracts.get(nftName)
     if (!contractAddress) {
-        throw new Error('Failed to get contract address')
+        throw new Error(
+            // eslint-disable-next-line @typescript-eslint/restrict-template-expressions
+            `Failed to get contract address: ${nftName} retryCount: ${retryCount} lastError: ${lastError} `,
+        )
     }
 
     return contractAddress
