@@ -145,12 +145,11 @@ function toZionCasablancaRoom(
         if (parentSpace === undefined) {
             throw new Error('Parent space not found for streamId: ' + streamId)
         }
-        name =
-            client.streams.get(parentSpace)?.view.spaceContent.spaceChannelsMetadata.get(streamId)
-                ?.name ?? ''
-        topic = client.streams
+        const channelMetadata = client.streams
             .get(parentSpace)
-            ?.view.spaceContent.spaceChannelsMetadata.get(streamId)?.topic
+            ?.view.spaceContent.spaceChannelsMetadata.get(streamId)
+        name = channelMetadata?.name ?? ''
+        topic = channelMetadata?.topic
     } else {
         name = info.filter((i) => i !== undefined).find((i) => i.networkId == streamId)?.name ?? ''
     }

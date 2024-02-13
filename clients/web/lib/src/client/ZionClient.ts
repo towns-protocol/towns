@@ -27,12 +27,14 @@ import {
 import {
     CreateChannelInfo,
     CreateSpaceInfo,
+    Membership,
     MessageType,
-    Room,
     RoomMember,
     SendMessageOptions,
     SendTextMessageOptions,
+    StreamView,
     UpdateChannelInfo,
+    toMembership,
 } from '../types/zion-types'
 import { SignerContext } from '@river/sdk'
 import { PushNotificationClient } from './PushNotificationClient'
@@ -41,7 +43,7 @@ import { makeUniqueChannelStreamId } from '@river/sdk'
 import { makeUniqueSpaceStreamId } from '@river/sdk'
 import { staticAssertNever } from '../utils/zion-utils'
 import { toUtf8String } from 'ethers/lib/utils.js'
-import { toZionRoomFromStream } from './casablanca/CasablancaUtils'
+import { toStreamView } from './casablanca/CasablancaUtils'
 import {
     RoleIdentifier,
     BlockchainTransactionType,
@@ -1089,7 +1091,7 @@ export class ZionClient implements EntitlementsDelegate {
             parentId = stream.view.channelContent.spaceId
         }
         this._eventHandlers?.onJoinRoom?.(roomId, parentId)
-        return toZionRoomFromStream(stream, this.casablancaClient.userId)
+        return toStreamView(stream, this.getMembership(roomId))
     }
 
     public async removeUser(streamId: string, userId: string): Promise<void> {
@@ -1404,14 +1406,20 @@ export class ZionClient implements EntitlementsDelegate {
     }
 
     /************************************************
-     * getRoomData
+     * getMembership
      ************************************************/
-    public getRoomData(roomId: string): Room | undefined {
+    public getMembership(streamId: string): Membership {
         if (!this.casablancaClient) {
             throw new Error('casablanca client is undefined')
         }
-        const stream = this.casablancaClient.stream(roomId)
-        return stream ? toZionRoomFromStream(stream, this.casablancaClient.userId) : undefined
+        const userStreamId = this.casablancaClient.userStreamId
+        if (!userStreamId) {
+            return Membership.None
+        }
+        const membershipOp = this.casablancaClient
+            .stream(userStreamId)
+            ?.view.userContent.getMembership(streamId)?.op
+        return toMembership(membershipOp)
     }
 
     /************************************************
@@ -1420,6 +1428,20 @@ export class ZionClient implements EntitlementsDelegate {
     public getRoomMember(roomId: string, userId: string): RoomMember | undefined {
         const roomData = this.getRoomData(roomId)
         return roomData?.members.find((x) => x.userId === userId)
+    }
+
+    /************************************************
+     * getRoomData
+     ************************************************/
+    public getRoomData(roomId: string): StreamView | undefined {
+        if (!this.casablancaClient) {
+            throw new Error('casablanca client is undefined')
+        }
+        const stream = this.casablancaClient.stream(roomId)
+        if (!stream) {
+            return undefined
+        }
+        return toStreamView(stream, this.getMembership(roomId))
     }
 
     /************************************************

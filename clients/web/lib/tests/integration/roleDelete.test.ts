@@ -3,7 +3,7 @@
  * @group casablanca
  */
 import { NoThrownError, getError } from './helpers/ErrorUtils'
-import { Room } from '../../src/types/zion-types'
+import { StreamView } from '../../src/types/zion-types'
 import {
     createTestSpaceGatedByTownAndZionNfts,
     registerAndStartClient,
@@ -95,7 +95,7 @@ describe('delete role', () => {
 
         /** Act */
         let receipt: ContractReceipt | undefined
-        let rejoinedRoom: Room | undefined
+        let rejoinedRoom: StreamView | undefined
         try {
             // delete the role
             const transaction = await alice.spaceDapp.deleteRole(
@@ -129,7 +129,7 @@ describe('delete role', () => {
         // verify bob can join the room with cached entitlement
         expect(rejoinedRoom).toBeDefined()
 
-        let carolJoinedRoom: Room | undefined
+        let carolJoinedRoom: StreamView | undefined
 
         // carol tries to join the room, and can't as the NFT is no longer accepted
         const carolError = await getError<Error>(async function () {
@@ -222,7 +222,7 @@ describe('delete role', () => {
 
         /** Act */
         let receipt: ContractReceipt | undefined
-        let rejoinedRoom: Room | undefined
+        let rejoinedRoom: StreamView | undefined
         try {
             // delete the role
             const transaction = await alice.spaceDapp.deleteRole(
@@ -254,7 +254,7 @@ describe('delete role', () => {
         // verify transaction was successful
         expect(receipt?.status).toEqual(1)
 
-        let carolJoinedRoom: Room | undefined
+        let carolJoinedRoom: StreamView | undefined
         // bob tries to join the room again
         // expect that bob cannot join the room
         const carolError = await getError<Error>(async function () {

@@ -11,7 +11,7 @@ import {
 } from 'use-zion-client/tests/integration/helpers/TestUtils'
 
 import { Permission } from '@river/web3'
-import { Room } from 'use-zion-client/src/types/zion-types'
+import { StreamView } from 'use-zion-client/src/types/zion-types'
 import { TestConstants } from './helpers/TestConstants'
 import { ZionTestClient } from './helpers/ZionTestClient'
 import { sleep } from '../../src/utils/zion-utils'
@@ -151,7 +151,7 @@ describe('space invite', () => {
             }
         }
         /** Act */
-        let actualJoin: Room | undefined
+        let actualJoin: StreamView | undefined
         if (spaceId) {
             actualJoin = await tokenGrantedUser.joinTown(spaceId, tokenGrantedUser.wallet)
         }

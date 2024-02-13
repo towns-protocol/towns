@@ -78,6 +78,19 @@ export interface SpaceChild {
     numjoinedMembers: number
 }
 
+export interface StreamView {
+    // aellis, it is possible for membership and members to get out of sync
+    // with the actual membership of the stream.  This is because the membership
+    // is updated in the userStream, and the members are updated in the stream
+    // itself. In this case the client should either retry the join or leave request
+    // to get back into a good state.
+    id: string
+    // the current user's membership, tracted in the userStream
+    membership: Membership
+    // the members of the stream
+    members: RoomMember[]
+}
+
 export interface Room {
     id: string
     name: string

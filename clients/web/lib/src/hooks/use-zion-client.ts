@@ -14,9 +14,9 @@ import {
 import {
     CreateChannelInfo,
     CreateSpaceInfo,
-    Room,
     SendMessageOptions,
     SendTextMessageOptions,
+    StreamView,
     UpdateChannelInfo,
 } from '../types/zion-types'
 import { RoomMessageEvent } from '../types/timeline-types'
@@ -134,11 +134,11 @@ interface ZionClientImpl {
     getIsWalletRegisteredWithCasablanca: () => Promise<boolean>
     getServerVersions: () => Promise<IZionServerVersions | undefined>
     inviteUser: (roomId: string, userId: string) => Promise<void>
-    joinRoom: (roomId: string, parentNetworkId?: string) => Promise<Room | undefined>
+    joinRoom: (roomId: string, parentNetworkId?: string) => Promise<StreamView | undefined>
     leaveRoom: (roomId: string, parentNetworkId?: string) => Promise<void>
     logout: () => Promise<void>
     loginWithWalletToCasablanca: (statement: string, signer: TSigner) => Promise<void>
-    joinTown: (spaceId: string, signer: TSigner) => Promise<Room | undefined>
+    joinTown: (spaceId: string, signer: TSigner) => Promise<StreamView | undefined>
     redactEvent: (roomId: string, eventId: string, reason?: string) => Promise<void>
     registerWalletWithCasablanca: (statement: string, signer: TSigner) => Promise<void>
     removeUser: (streamId: string, userId: string) => Promise<void>
