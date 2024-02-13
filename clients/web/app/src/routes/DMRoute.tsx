@@ -7,6 +7,7 @@ import { ZLayerBox } from '@components/ZLayer/ZLayerContext'
 import { Box, Heading, Icon, Paragraph, Stack } from '@ui'
 import { useDevice } from 'hooks/useDevice'
 import { PATHS } from 'routes'
+import { useStore } from 'store/store'
 import { WelcomeLayout } from './layouts/WelcomeLayout'
 
 export const DirectMessages = () => {
@@ -55,7 +56,7 @@ export const DirectMessages = () => {
 
 /**
  * on a touch device landing on  a desktop message route (i.e. outside of /t/:townId)
- * will redirect to the first space
+ * will redirect to the currently bookmarked space and fallback to the first available space
  */
 const useTouchRedirect = ({ isTouch }: { isTouch: boolean }) => {
     const navigate = useNavigate()
@@ -68,10 +69,11 @@ const useTouchRedirect = ({ isTouch }: { isTouch: boolean }) => {
     const isDesktopRoute = !spaceId
     const hasRedirectedRef = useRef(false)
     const { spaces } = useZionContext()
-    const firstSpaceStreamId = spaces[0]?.id
+    const storeState = useStore.getState()
+    const spaceStreamId = storeState.spaceIdBookmark ?? spaces[0]?.id
 
     const needsRedirect = isTouch && isDesktopRoute
-    const canRedirect = !hasRedirectedRef.current && !!firstSpaceStreamId
+    const canRedirect = !hasRedirectedRef.current && !!spaceStreamId
 
     useEffect(() => {
         if (needsRedirect && canRedirect) {
@@ -79,8 +81,8 @@ const useTouchRedirect = ({ isTouch }: { isTouch: boolean }) => {
             const messageSegment = channelId ? `${channelId}/` : ''
             const threadSegment = replyId ? `${PATHS.REPLIES}/${replyId}` : ''
             navigate(
-                `/${PATHS.SPACES}/${firstSpaceStreamId}/${PATHS.MESSAGES}/${messageSegment}${threadSegment}`,
+                `/${PATHS.SPACES}/${spaceStreamId}/${PATHS.MESSAGES}/${messageSegment}${threadSegment}`,
             )
         }
-    }, [canRedirect, channelId, firstSpaceStreamId, navigate, needsRedirect, replyId])
+    }, [canRedirect, channelId, spaceStreamId, navigate, needsRedirect, replyId])
 }
