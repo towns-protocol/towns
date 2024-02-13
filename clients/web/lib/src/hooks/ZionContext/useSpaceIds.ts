@@ -20,12 +20,10 @@ export const useSpaceIdStore = create<SpaceIdStoreInterface>((set) => ({
 }))
 
 /// returns a stable list of space ids (if the networkId is the same, the object reference should stay the same)
-export function useSpacesIds(casablancaClient: CasablancaClient | undefined): {
-    invitedToIds: string[]
-} {
+export function useSpacesIds(casablancaClient: CasablancaClient | undefined) {
     const { setSpaceIds } = useSpaceIdStore()
 
-    const { spaceIds, invitedToIds } = useSpacesIds_Casablanca(casablancaClient)
+    const { spaceIds } = useSpacesIds_Casablanca(casablancaClient)
 
     useEffect(() => {
         const newSpaceIds = spaceIds
@@ -40,6 +38,4 @@ export function useSpacesIds(casablancaClient: CasablancaClient | undefined): {
             return { spaceIds: newSpaceIds }
         })
     }, [spaceIds, setSpaceIds])
-
-    return { invitedToIds }
 }

@@ -30,7 +30,6 @@ export interface IZionContext {
     clientSingleton?: ZionClient /// always set, can be use for , this duplication can be removed once we transition to casablanca
     casablancaClient?: CasablancaClient /// set if we're logged in and casablanca client is started
     rooms: Record<string, Room | undefined>
-    invitedToIds: string[] // ordered list of invites (spaces and channels)
     spaceUnreads: Record<string, boolean> // spaceId -> aggregated hasUnread
     spaceMentions: Record<string, number | undefined> // spaceId -> aggregated mentionCount
     spaceUnreadChannelIds: Record<string, Set<string> | undefined> // spaceId -> array of channelIds with unreads
@@ -120,7 +119,7 @@ const ZionContextImpl = (props: ZionContextProviderProps): JSX.Element => {
         accountAbstractionConfig: props.accountAbstractionConfig,
         highPriorityStreamIds: props.highPriorityStreamIds,
     })
-    const { invitedToIds } = useSpacesIds(casablancaClient)
+    useSpacesIds(casablancaClient)
     useContentAwareTimelineDiffCasablanca(casablancaClient)
     const { clientStatus } = useClientInitStatus(casablancaClient)
     const { spaces } = useSpaces(casablancaClient)
@@ -149,7 +148,6 @@ const ZionContextImpl = (props: ZionContextProviderProps): JSX.Element => {
                 clientSingleton,
                 casablancaClient,
                 rooms,
-                invitedToIds,
                 spaceUnreads,
                 spaceMentions,
                 spaceUnreadChannelIds,

@@ -25,10 +25,10 @@ const getBadgeCount = (
 }
 
 export function useBadgeStatus() {
-    const { invitedToIds, spaceUnreads, spaceMentions } = useZionContext()
+    const { spaceUnreads, spaceMentions } = useZionContext()
     return useMemo(
-        () => getBadgeCount(invitedToIds, spaceUnreads, spaceMentions),
-        [invitedToIds, spaceMentions, spaceUnreads],
+        () => getBadgeCount([], spaceUnreads, spaceMentions),
+        [spaceMentions, spaceUnreads],
     )
 }
 

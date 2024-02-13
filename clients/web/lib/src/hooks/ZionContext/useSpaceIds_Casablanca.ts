@@ -4,10 +4,8 @@ import isEqual from 'lodash/isEqual'
 import { SnapshotCaseType } from '@river/proto'
 
 export function useSpacesIds_Casablanca(casablancaClient: CasablancaClient | undefined): {
-    invitedToIds: string[]
     spaceIds: string[]
 } {
-    const [invitedToIds, setInvitedToIds] = useState<string[]>([])
     const [spaceIds, setSpaceIds] = useState<string[]>([])
 
     useEffect(() => {
@@ -30,21 +28,11 @@ export function useSpacesIds_Casablanca(casablancaClient: CasablancaClient | und
                 .filter((stream) => stream.view.getMemberships().joinedUsers.has(userId))
                 .map((stream) => stream.view.streamId)
 
-            const invited = streams
-                .filter((stream) => stream.view.getMemberships().invitedUsers.has(userId))
-                .map((stream) => stream.view.streamId)
-
             setSpaceIds((prev) => {
                 if (isEqual(prev, joined)) {
                     return prev
                 }
                 return joined
-            })
-            setInvitedToIds((prev) => {
-                if (isEqual(prev, invited)) {
-                    return prev
-                }
-                return invited
             })
         }
 
@@ -65,7 +53,6 @@ export function useSpacesIds_Casablanca(casablancaClient: CasablancaClient | und
     }, [casablancaClient])
 
     return {
-        invitedToIds,
         spaceIds,
     }
 }

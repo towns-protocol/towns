@@ -1,13 +1,5 @@
 import { useCallback, useEffect, useMemo, useState } from 'react'
-import {
-    InviteData,
-    Membership,
-    Room,
-    SpaceData,
-    SpaceHierarchies,
-    SpaceHierarchy,
-    toMembership,
-} from '../types/zion-types'
+import { InviteData, Membership, SpaceData, toMembership } from '../types/zion-types'
 import { useZionContext } from '../components/ZionContextProvider'
 import { useSpaceContext } from '../components/SpaceContextProvider'
 import { useCasablancaStream } from './CasablancClient/useCasablancaStream'
@@ -28,24 +20,7 @@ export function useSpaceData(inSpaceId?: string): SpaceData | undefined {
 }
 
 export function useInvites(): InviteData[] {
-    const { invitedToIds, spaceHierarchies, client } = useZionContext()
-    return useMemo(
-        () =>
-            invitedToIds
-                .map((id) => {
-                    const room = client?.getRoomData(id)
-                    if (!room) {
-                        return undefined
-                    }
-                    return formatInvite(
-                        room,
-                        getParentSpaceId(id, spaceHierarchies),
-                        '/placeholders/nft_29.png',
-                    )
-                })
-                .filter((x) => x !== undefined) as InviteData[],
-        [client, invitedToIds, spaceHierarchies],
-    )
+    return []
 }
 
 export const useInviteData = (slug: string | undefined) => {
@@ -58,25 +33,6 @@ export const useInviteData = (slug: string | undefined) => {
         [invites, slug],
     )
 }
-
-function getParentSpaceId(roomId: string, spaces: SpaceHierarchies): string | undefined {
-    const hasChild = (space: SpaceHierarchy, id: string) =>
-        space.children.some((child) => child.id === id)
-
-    const parentId = Object.values(spaces).find((space) => hasChild(space, roomId))?.root.id
-    return parentId
-}
-
-function formatInvite(r: Room, spaceParentId: string | undefined, avatarSrc: string): InviteData {
-    return {
-        id: r.id,
-        name: r.name,
-        avatarSrc: avatarSrc,
-        isSpaceRoom: r.isSpaceRoom,
-        spaceParentId: spaceParentId,
-    }
-}
-
 export function useSpaceNames(client?: CasablancaClient) {
     const { provider, chain } = useWeb3Context()
 
