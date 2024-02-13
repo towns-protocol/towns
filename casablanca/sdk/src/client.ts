@@ -1216,7 +1216,10 @@ export class Client
 
     async joinStream(
         streamId: string,
-        opts?: { skipWaitForMiniblockConfirmation: boolean },
+        opts?: {
+            skipWaitForMiniblockConfirmation?: boolean
+            skipWaitForUserStreamUpdate?: boolean
+        },
     ): Promise<Stream> {
         this.logCall('joinStream', streamId)
         check(isDefined(this.userStreamId))
@@ -1233,6 +1236,16 @@ export class Client
             }),
             { method: 'joinStream' },
         )
+
+        if (opts?.skipWaitForUserStreamUpdate !== true) {
+            const userStream = this.streams.get(this.userStreamId)
+            check(isDefined(userStream), 'userStream not found')
+            if (!userStream.view.userContent.isJoined(streamId)) {
+                await userStream.waitFor('userStreamMembershipChanged', (streamId) =>
+                    userStream.view.userContent.isJoined(streamId),
+                )
+            }
+        }
 
         if (opts?.skipWaitForMiniblockConfirmation !== true) {
             await stream.waitForMembership(MembershipOp.SO_JOIN)
