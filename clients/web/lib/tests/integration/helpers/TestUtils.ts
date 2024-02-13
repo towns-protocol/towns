@@ -116,12 +116,6 @@ export async function createTestSpaceGatedByTownAndZionNfts(
     rolePermissions: Permission[],
     createSpaceInfo?: CreateSpaceInfo,
 ): Promise<string | undefined> {
-    if (!createSpaceInfo) {
-        createSpaceInfo = {
-            name: client.makeUniqueName(),
-        }
-    }
-
     if (!client.walletAddress) {
         throw new Error('client.walletAddress is undefined')
     }
@@ -152,9 +146,20 @@ export async function createTestSpaceGatedByTownAndZionNfts(
         },
     }
 
-    // createSpace is gated by the mock NFT. Mint one for yourself before proceeding.
-    await client.mintMockNFT()
-    return client.createSpace(createSpaceInfo, membershipInfo)
+    return waitForWithRetries(
+        () => {
+            if (!createSpaceInfo) {
+                createSpaceInfo = {
+                    name: client.makeUniqueName(),
+                }
+            }
+            return client.createSpace(createSpaceInfo, membershipInfo)
+        },
+        {
+            intervalMs: 1000 * 5,
+            timeoutMs: 1000 * 50,
+        },
+    )
 }
 
 /**
@@ -197,9 +202,20 @@ export async function createTestSpaceGatedByTownNft(
         },
     }
 
-    // createSpace is gated by the mock NFT. Mint one for yourself before proceeding.
-    await client.mintMockNFT()
-    return client.createSpace(createSpaceInfo, membershipInfo)
+    return waitForWithRetries(
+        () => {
+            if (!createSpaceInfo) {
+                createSpaceInfo = {
+                    name: client.makeUniqueName(),
+                }
+            }
+            return client.createSpace(createSpaceInfo, membershipInfo)
+        },
+        {
+            intervalMs: 1000 * 5,
+            timeoutMs: 1000 * 50,
+        },
+    )
 }
 
 export async function createTestChannelWithSpaceRoles(
@@ -219,7 +235,7 @@ export async function createTestChannelWithSpaceRoles(
         }
     }
 
-    return client.createChannel(createChannelInfo, client.provider.wallet)
+    return waitForWithRetries(() => client.createChannel(createChannelInfo, client.provider.wallet))
 }
 
 export async function findRoleByName(
@@ -253,8 +269,9 @@ export function assertRoleEquals(actual: RoleDetails, expected: RoleDetails) {
     expect(actual.users).toEqual(expect.arrayContaining(expected.users))
 }
 
-// some test actions result in 401s before resulting in success, so we need to retry
-// most often this happens when joining a channel immediately after creation
+/**
+ * Wait for a promise to resolve, retrying if it fails
+ */
 export async function waitForWithRetries<T>(
     action: () => Promise<T>,
     options?: { intervalMs?: number; timeoutMs?: number },

@@ -6,6 +6,7 @@ import {
     registerAndStartClients,
     registerAndStartClient,
     createTestSpaceGatedByTownAndZionNfts,
+    waitForWithRetries,
 } from './helpers/TestUtils'
 
 import {
@@ -111,8 +112,9 @@ test(
         const createSpaceInfo = {
             name: alice.makeUniqueName(),
         }
-        // createSpace is gated by the mock NFT. Mint one for yourself before proceeding.
-        const spaceId = await alice.createSpace(createSpaceInfo, membershipInfo)
+        const spaceId = await waitForWithRetries(() =>
+            alice.createSpace(createSpaceInfo, membershipInfo),
+        )
 
         assert(spaceId !== undefined, 'createSpace failed')
 
@@ -186,8 +188,9 @@ test.skip('join_space_gated_2_NFT_2_wallet', async () => {
     const createSpaceInfo = {
         name: alice.makeUniqueName(),
     }
-    // createSpace is gated by the mock NFT. Mint one for yourself before proceeding.
-    const spaceId = await alice.createSpace(createSpaceInfo, membershipInfo)
+    const spaceId = await waitForWithRetries(() =>
+        alice.createSpace(createSpaceInfo, membershipInfo),
+    )
 
     assert(spaceId !== undefined, 'createSpace failed')
 

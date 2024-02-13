@@ -489,7 +489,11 @@ describe('isEntitledToSpace and isEntitledToChannel tests', () => {
             alice.provider.wallet,
         )
 
-        await transaction.transaction?.wait()
+        await alice.waitForUpdateRoleTransaction(transaction)
+
+        // Wait a bit for the TTL on the cache to expire, currently set to 2s in auth_impl_cache.go
+        await new Promise((resolve) => setTimeout(resolve, 2000))
+
         /** Act */
         // test the user's entitlement to the space
         const isNowEntitledToChannel = await bobWithNft.isEntitled(
@@ -498,8 +502,6 @@ describe('isEntitledToSpace and isEntitledToChannel tests', () => {
             bobAccountAddress,
             Permission.Read,
         )
-        // Wait a bit for the TTL on the cache to expire, currently set to 2s in auth_impl_cache.go
-        await new Promise((resolve) => setTimeout(resolve, 2000))
 
         expect(isNowEntitledToChannel).toBe(true)
     }) // end test

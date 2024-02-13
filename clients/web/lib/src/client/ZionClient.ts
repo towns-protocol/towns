@@ -1633,9 +1633,22 @@ export class ZionClient implements EntitlementsDelegate {
      * Error when web3Provider.waitForTransaction receipt has a status of 0
      */
     private async throwTransactionError(receipt: ContractReceipt): Promise<Error> {
-        const code = await this.opts.web3Provider?.call(receipt, receipt.blockNumber)
-        const reason = toUtf8String(`0x${code?.substring(138) || ''}`)
-        throw new Error(reason)
+        try {
+            const code = await this.opts.web3Provider?.call(receipt, receipt.blockNumber)
+            const reason = toUtf8String(`0x${code?.substring(138) || ''}`)
+            throw new Error(reason)
+        } catch (error) {
+            // This might be causing issues https://github.com/foundry-rs/foundry/issues/4843
+            // and hopefully this provides a little better error message
+            // eslint-disable-next-line @typescript-eslint/ban-ts-comment
+            // @ts-ignore
+            // eslint-disable-next-line @typescript-eslint/no-unsafe-member-access
+            const deepMessage = error.error?.error?.message as string | undefined
+            if (deepMessage) {
+                throw new Error(deepMessage)
+            }
+            throw error
+        }
     }
 
     // eslint-disable-next-line @typescript-eslint/no-explicit-any

@@ -51,7 +51,7 @@ describe('write messages', () => {
             [],
             bob.wallet,
         )
-        await tx1.transaction?.wait()
+        await bob.waitForUpdateRoleTransaction(tx1)
 
         // create read only role
         const tx2 = await bob.createRoleTransaction(
@@ -63,7 +63,7 @@ describe('write messages', () => {
             bob.wallet,
         )
 
-        await tx2.transaction?.wait()
+        await bob.waitForCreateRoleTransaction(tx2)
 
         if (!spaceId) {
             throw new Error('Failed to create room')

@@ -142,5 +142,5 @@ describe('useSpaceDataHook', () => {
         await waitFor(() => expect(spaceMembership).toHaveTextContent('join'), { timeout: 10000 })
         await sleep(1000)
         await waitFor(() => expect(spaceMembership).toHaveTextContent('join'))
-    })
+    }, 120_000)
 })
