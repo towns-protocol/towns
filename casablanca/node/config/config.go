@@ -49,10 +49,6 @@ type Config struct {
 
 	// Disable river chain contract usage.
 	UseBlockChainStreamRegistry bool
-
-	// If set, use instead of trying to load from filesystem.
-	// Makes configuring node by env vars easier.
-	WalletPrivateKey string
 }
 
 type DatabaseConfig struct {

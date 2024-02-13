@@ -24,8 +24,8 @@ var (
 var cmdConfig *config.Config
 
 var rootCmd = &cobra.Command{
-	Use:          "node",
-	Short:        "Towns.com node",
+	Use:          "river_node",
+	Short:        "River Protocol Node",
 	SilenceUsage: true, // Do not print usage when an error occurs
 }
 

@@ -17,6 +17,7 @@ export USE_CONTRACT="${USE_CONTRACT:-true}"
 
 CONFIG=false
 RUN=false
+BUILD=false
 
 # Parse command-line options
 args=() # Collect arguments to pass to the last command
@@ -28,6 +29,11 @@ while [[ "$#" -gt 0 ]]; do
             ;;
         --run|-r)
             RUN=true
+            BUILD=true
+            shift
+            ;;    
+        --build|-b)
+            BUILD=true
             shift
             ;;    
         *)
@@ -37,8 +43,8 @@ while [[ "$#" -gt 0 ]]; do
     esac
 done
 
-if [ "$CONFIG" == "false" ] && [ "$RUN" == "false" ]; then
-  echo "--config to config. --run to run. Both to config and run."
+if [ "$CONFIG" == "false" ] && [ "$RUN" == "false" ] && [ "$BUILD" == "false" ]; then
+  echo "--config to config. --run to run. --build to build without running. --config --run to config and run."
   exit 1
 fi
 
@@ -85,11 +91,13 @@ if [ "$CONFIG" == "true" ]; then
     fi
 fi
 
-if [ "$RUN" == "true" ]; then
+if [ "$BUILD" == "true" ]; then
     echo Building node binary
     mkdir -p ${RUN_BASE}/bin
     go build -o ${RUN_BASE}/bin/river_node -race ./node/main.go
+fi
 
+if [ "$RUN" == "true" ]; then
     pushd ${RUN_BASE} > /dev/null
     find . -type d -mindepth 1 -maxdepth 1 | sort | while read -r INSTANCE; do
         if [ ! -f $INSTANCE/config/config.yaml ]; then

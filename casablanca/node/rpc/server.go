@@ -89,8 +89,11 @@ func StartServer(
 ) (func(), int, chan error, error) {
 	log := dlog.FromCtx(ctx)
 
-	privKey := cfg.WalletPrivateKey
-	cfg.WalletPrivateKey = ""
+	// Read env var WALLETPRIVATEKEY or PRIVATE_KEY
+	privKey := os.Getenv("WALLETPRIVATEKEY")
+	if privKey == "" {
+		privKey = os.Getenv("PRIVATE_KEY")
+	}
 
 	log.Info("Starting server", "config", cfg)
 

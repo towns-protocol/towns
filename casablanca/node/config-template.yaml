@@ -77,4 +77,3 @@ stream:
 # Debug feature flags.
 useBlockchainStreamRegistry: <USE_BLOCKCHAIN_STREAM_REGISTRY>
 useContract: <USE_CONTRACT>
-walletprivatekey:

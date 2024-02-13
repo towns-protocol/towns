@@ -15,8 +15,7 @@ else
 fi
 
 if [ -n "$SKIP_GENKEY" ]; then
-    echo "Reading wallet from environment."
-    /usr/bin/node readkey
+    echo "Using private key set by env var."
 elif [ ! -f "./wallet/private_key" ]; then
     echo "Generating a new wallet."
     /usr/bin/node genkey
