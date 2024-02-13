@@ -372,6 +372,7 @@ export class ZionClient implements EntitlementsDelegate {
             createInfo.topic ? createInfo.topic : '',
             networkId,
             createInfo.streamSettings,
+            createInfo.isDefault,
         )
         await this.casablancaClient.waitForStream(streamId)
         return streamId
@@ -386,6 +387,7 @@ export class ZionClient implements EntitlementsDelegate {
             name: channelName ?? 'general',
             parentSpaceId,
             roleIds: [],
+            isDefault: true,
         }
         return await this.createChannelRoom(channelInfo, channelId)
     }
@@ -581,14 +583,17 @@ export class ZionClient implements EntitlementsDelegate {
         if (updateChannelInfo.channelId === undefined) {
             throw new Error('updateChannel: channelId is undefined')
         }
-        if (!updateChannelInfo.updatedChannelName) {
-            throw new Error('updateChannel: channelName cannot be empty')
-        }
+        const channelProperties = this.casablancaClient.streams
+            .get(updateChannelInfo.parentSpaceId)
+            ?.view.spaceContent.spaceChannelsMetadata.get(updateChannelInfo.channelId)
+
+        // update to updated info if it's defined, otherwise update to the current info
         await this.casablancaClient.updateChannel(
             updateChannelInfo.parentSpaceId,
             updateChannelInfo.channelId,
-            updateChannelInfo.updatedChannelName,
-            updateChannelInfo.updatedChannelTopic ?? '',
+            updateChannelInfo.updatedChannelName ?? channelProperties?.name ?? '',
+            updateChannelInfo.updatedChannelTopic ?? channelProperties?.topic ?? '',
+            updateChannelInfo.isDefault ?? channelProperties?.isDefault ?? false,
         )
     }
 

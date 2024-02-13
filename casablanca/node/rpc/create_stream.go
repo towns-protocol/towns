@@ -259,6 +259,7 @@ func (s *Service) createStream_Channel(
 				Hash:      inceptionEvent.Envelope.Hash,
 				Signature: inceptionEvent.Envelope.Signature,
 			},
+			inception.IsDefault,
 		),
 		prevHash,
 	)

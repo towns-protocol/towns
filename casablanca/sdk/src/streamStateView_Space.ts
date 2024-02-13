@@ -18,11 +18,17 @@ import { DecryptedContent } from './encryptedContentTypes'
 import { check, throwWithCode } from '@river/dlog'
 import { isDefined, logNever } from './check'
 
+export type ParsedChannelProperties = {
+    name?: string
+    topic?: string
+    isDefault: boolean
+}
+
 export class StreamStateView_Space extends StreamStateView_AbstractContent {
     readonly streamId: string
     readonly memberships: StreamStateView_Membership
     readonly userMetadata: StreamStateView_UserMetadata
-    readonly spaceChannelsMetadata = new Map<string, ChannelProperties>()
+    readonly spaceChannelsMetadata = new Map<string, ParsedChannelProperties>()
 
     constructor(userId: string, streamId: string) {
         super()
@@ -138,7 +144,11 @@ export class StreamStateView_Space extends StreamStateView_AbstractContent {
         switch (op) {
             case ChannelOp.CO_CREATED: {
                 const props = this.decryptChannelProps(channelProperties)
-                this.spaceChannelsMetadata.set(channelId, props)
+                this.spaceChannelsMetadata.set(channelId, {
+                    name: props.name,
+                    topic: props.topic,
+                    isDefault: payload.isDefault,
+                })
                 stateEmitter?.emit('spaceChannelCreated', this.streamId, channelId, props)
                 break
             }
@@ -149,7 +159,11 @@ export class StreamStateView_Space extends StreamStateView_AbstractContent {
                 break
             case ChannelOp.CO_UPDATED: {
                 const props = this.decryptChannelProps(channelProperties)
-                this.spaceChannelsMetadata.set(channelId, props)
+                this.spaceChannelsMetadata.set(channelId, {
+                    name: props.name,
+                    topic: props.topic,
+                    isDefault: payload.isDefault,
+                })
                 stateEmitter?.emit('spaceChannelUpdated', this.streamId, channelId, props)
                 break
             }

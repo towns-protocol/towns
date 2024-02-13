@@ -193,7 +193,7 @@ export class RiverSDK {
         const streamStateView = await this.client.getStream(townId)
         const result = new Map<string, string>()
         streamStateView.spaceContent.spaceChannelsMetadata.forEach((channelProperties, id) => {
-            result.set(id, channelProperties.name)
+            result.set(id, channelProperties.name ?? '')
         })
         return result
     }

@@ -200,6 +200,7 @@ message SpacePayload {
         string channel_id = 2;
         EventRef origin_event = 3;
         EncryptedData channel_properties = 4;
+        bool is_default = 5;
     }
 
     oneof content {
@@ -226,12 +227,12 @@ message ChannelPayload {
         string stream_id = 1;
         string space_id = 3;
         /**
-        * channel_name and channel_topic from this payload will be used to 
-        * create associated with that channel space event for stream as we agreed
-        * that channel names and topics will be delivered using space stream
+        * channel_properties and is_default be used to 
+        * create associated with that channel in the space stream
         */
         EncryptedData channel_properties = 4;
         StreamSettings settings = 5;
+        bool is_default = 6;
     }
 
     oneof content {

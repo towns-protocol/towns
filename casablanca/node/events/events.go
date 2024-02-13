@@ -220,6 +220,7 @@ func Make_SpacePayload_Channel(
 	channelId string,
 	channelProperties *EncryptedData,
 	originEvent *EventRef,
+	isDefault bool,
 ) *StreamEvent_SpacePayload {
 	return &StreamEvent_SpacePayload{
 		SpacePayload: &SpacePayload{
@@ -229,6 +230,7 @@ func Make_SpacePayload_Channel(
 					ChannelId:         channelId,
 					OriginEvent:       originEvent,
 					ChannelProperties: channelProperties,
+					IsDefault:         isDefault,
 				},
 			},
 		},

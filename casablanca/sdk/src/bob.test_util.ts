@@ -93,6 +93,7 @@ export const bobTalksToHimself = async (
             streamId: channelId,
             spaceId: spacedStreamId,
             channelProperties: { ...TEST_ENCRYPTED_MESSAGE_PROPS, ciphertext: channelProperties },
+            isDefault: false,
         }),
     )
     const channelJoinEvent = await makeEvent(

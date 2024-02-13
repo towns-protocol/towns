@@ -466,6 +466,7 @@ export class Client
         channelTopic: string,
         channelId?: string,
         streamSettings?: PlainMessage<StreamSettings>,
+        isDefault?: boolean,
     ): Promise<{ streamId: string }> {
         channelId = channelId ?? makeUniqueChannelStreamId()
         this.logCall('createChannel', channelId, spaceId)
@@ -482,6 +483,7 @@ export class Client
                     make_ChannelProperties(channelName, channelTopic).toJsonString(),
                 ),
                 settings: streamSettings,
+                isDefault: isDefault === true,
             }),
         )
         const joinEvent = await makeEvent(
@@ -650,6 +652,7 @@ export class Client
         channelId: string,
         channelName: string,
         channelTopic: string,
+        isDefault: boolean,
     ) {
         this.logCall('updateChannel', channelId, spaceId, channelName, channelTopic)
         assert(isSpaceStreamId(spaceId), 'spaceId must be a valid streamId')
@@ -662,6 +665,7 @@ export class Client
                 op: ChannelOp.CO_UPDATED,
                 channelId: channelId,
                 channelProperties: make_fake_encryptedData(channelProps),
+                isDefault: isDefault === true,
             }),
             { method: 'updateChannel' },
         )

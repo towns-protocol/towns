@@ -96,6 +96,7 @@ describe('workflows', () => {
                 streamId: channelId,
                 spaceId: spacedStreamId,
                 channelProperties: make_fake_encryptedData(channelProperties),
+                isDefault: false,
             }),
         )
         const channelJoinEvent = await makeEvent(
