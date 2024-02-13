@@ -142,11 +142,13 @@ export function handleNotifications(worker: ServiceWorkerGlobalScope) {
                 )
 
                 if (hadWindowToFocus) {
+                    log('notification: posting message')
                     await hadWindowToFocus.focus()
                     const navigationChannel = new BroadcastChannel(WEB_PUSH_NAVIGATION_CHANNEL)
                     // avoid reloading the page
                     navigationChannel.postMessage({ path: pathToNavigateTo })
                 } else {
+                    log('notification: opening window')
                     const url = new URL(worker.location.origin)
                     url.pathname = pathToNavigateTo
                     const window = await worker.clients.openWindow(url.toString())

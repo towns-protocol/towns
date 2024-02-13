@@ -47,6 +47,7 @@ export const useAppNotifications = () => {
     useEffect(() => {
         const broadcastChannel = new BroadcastChannel(WEB_PUSH_NAVIGATION_CHANNEL)
         broadcastChannel.onmessage = (event) => {
+            log('useAppNotifications:push: received navigation event', event.data.path)
             if (isTouch) {
                 const match = matchPath(`${PATHS.MESSAGES}/:channelId`, event.data.path)
                 const spaceId = useStore.getState().spaceIdBookmark
