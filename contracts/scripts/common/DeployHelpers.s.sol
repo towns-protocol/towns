@@ -112,11 +112,7 @@ abstract contract DeployHelpers is CommonBase {
   //                     FILE SYSTEM HELPERS
   // =============================================================
   function exists(string memory path) internal returns (bool) {
-    bytes memory result = ffi("ls", path);
-
-    // ideally we would just check the return code, but the ffi function doesn't return it yet
-    // ffi only returns stdout, the "No such file or directory" message is sent to stderr
-    return result.length > 0;
+    return vm.exists(path);
   }
 
   function createDir(string memory path) internal {
