@@ -11,3 +11,7 @@ export function formatShortDate(date: number | Date) {
         return format(date, 'MM/dd/yy')
     }
 }
+
+export function formatDate(date: number | Date) {
+    return format(date, 'PP')
+}

@@ -7,6 +7,8 @@ import { vars } from 'ui/styles/vars.css'
 import { MessageTimelineContext } from '@components/MessageTimeline/MessageTimelineContext'
 import { useShortcut } from 'hooks/useShortcut'
 import { ShortcutTooltip } from '@components/Shortcuts/ShortcutTooltip'
+import useCopyToClipboard from 'hooks/useCopyToClipboard'
+import { PATHS } from 'routes'
 import { DeleteMessagePrompt } from './DeleteMessagePrompt'
 
 type Props = {
@@ -37,11 +39,22 @@ export const MessageContextMenu = (props: Props) => {
     }, [eventId, onOpenMessageThread])
 
     const onEditClick = useCallback(() => {
-        timelineContext?.timelineActions.onSelectEditingMessage(eventId)
+        timelineContext?.timelineActions?.onSelectEditingMessage(eventId)
     }, [eventId, timelineContext])
 
+    const [copiedText, copy] = useCopyToClipboard()
+    const hasCopied = !!copiedText
+
+    const onCopyLinkToMessage = useCallback(() => {
+        console.log('Copy link to message')
+        const link = `/${PATHS.SPACES}/${spaceId}/${PATHS.CHANNELS}/${channelId}#${eventId}`
+        if (link) {
+            copy(`${location.origin}${link}`)
+        }
+    }, [channelId, copy, eventId, spaceId])
+
     const onSelectEmoji = useCallback(
-        (data: EmojiPickerSelection) => {
+        (data: { id: string }) => {
             if (!channelId) {
                 console.error('no channel id')
                 return
@@ -78,7 +91,7 @@ export const MessageContextMenu = (props: Props) => {
         'EditMessage',
         useCallback(() => {
             if (props.canEdit) {
-                timelineContext?.timelineActions.onSelectEditingMessage(props.eventId)
+                timelineContext?.timelineActions?.onSelectEditingMessage(props.eventId)
             }
         }, [props.canEdit, props.eventId, timelineContext?.timelineActions]),
         { enableOnContentEditable: false },
@@ -102,6 +115,15 @@ export const MessageContextMenu = (props: Props) => {
                 setShowDeletePrompt(true)
             }
         }, [props.canEdit]),
+        { enableOnContentEditable: false },
+        [],
+    )
+
+    useShortcut(
+        'CopyLinkToMessage',
+        useCallback(() => {
+            console.log('Copy link to message')
+        }, []),
         { enableOnContentEditable: false },
         [],
     )
@@ -148,6 +170,15 @@ export const MessageContextMenu = (props: Props) => {
                             onSelectEmoji={onSelectEmoji}
                         />
                     )}
+                    <IconButton
+                        color={hasCopied ? 'positive' : 'gray2'}
+                        tooltip={
+                            hasCopied ? 'Copied!' : <ShortcutTooltip action="CopyLinkToMessage" />
+                        }
+                        icon="link"
+                        size="square_sm"
+                        onClick={onCopyLinkToMessage}
+                    />
                     {props.canEdit && (
                         <IconButton
                             tooltip={<ShortcutTooltip action="DeleteMessage" />}

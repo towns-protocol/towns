@@ -83,6 +83,10 @@ export const Shortcuts = {
             keys: '+',
             description: 'React to message',
         },
+        CopyLinkToMessage: {
+            keys: 'L',
+            description: 'Copy link to message',
+        },
     },
     Editor: {
         BoldText: {

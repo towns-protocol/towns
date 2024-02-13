@@ -1,6 +1,9 @@
 import {
+    ChannelMessage_Post,
     ChannelMessage_Post_Attachment,
     ChannelMessage_Post_Content_ChunkedMedia_AESGCM,
+    ChannelMessage_Post_Content_EmbeddedMessage_Info,
+    ChannelMessage_Post_Content_EmbeddedMessage_StaticInfo,
     ChannelMessage_Post_Content_Image_Info,
     ChannelMessage_Post_Content_MediaInfo,
     ChannelOp,
@@ -372,7 +375,21 @@ export type EmbeddedMediaAttachment = {
     id: string
 }
 
-export type Attachment = ImageAttachment | ChunkedMediaAttachment | EmbeddedMediaAttachment
+export type EmbeddedMessageAttachment = {
+    type: 'embedded_message'
+    url: string
+    post?: ChannelMessage_Post | PlainMessage<ChannelMessage_Post>
+    roomMessageEvent?: RoomMessageEvent
+    info: PlainMessage<ChannelMessage_Post_Content_EmbeddedMessage_Info>
+    staticInfo?: PlainMessage<ChannelMessage_Post_Content_EmbeddedMessage_StaticInfo>
+    id: string
+}
+
+export type Attachment =
+    | ImageAttachment
+    | ChunkedMediaAttachment
+    | EmbeddedMediaAttachment
+    | EmbeddedMessageAttachment
 
 export function getFallbackContent(
     senderDisplayName: string,
@@ -496,6 +513,33 @@ export function transformAttachments(attachments?: Attachment[]): ChannelMessage
                             },
                         },
                     })
+                case 'embedded_message': {
+                    const { roomMessageEvent, ...content } = attachment
+                    if (!roomMessageEvent) {
+                        return
+                    }
+                    const post = new ChannelMessage_Post({
+                        threadId: roomMessageEvent.inReplyTo,
+                        threadPreview: roomMessageEvent.threadPreview,
+                        content: {
+                            case: 'text' as const,
+                            value: {
+                                ...roomMessageEvent,
+                                attachments: transformAttachments(roomMessageEvent.attachments),
+                            },
+                        },
+                    })
+                    const value = new ChannelMessage_Post_Attachment({
+                        content: {
+                            case: 'embeddedMessage',
+                            value: {
+                                ...content,
+                                post,
+                            },
+                        },
+                    })
+                    return value
+                }
                 default:
                     return undefined
             }

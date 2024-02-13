@@ -1,4 +1,4 @@
-import React, { useCallback } from 'react'
+import React, { useCallback, useMemo } from 'react'
 import { Channel, EventStatus, RoomMember, RoomMessageEvent, TimelineEvent } from 'use-zion-client'
 import { UnfurlData } from '@unfurl-worker/types'
 import { ErrorBoundary, FallbackProps } from '@components/ErrorBoundary/ErrorBoundary'
@@ -16,6 +16,7 @@ type Props = {
     event: TimelineEvent
     eventContent: RoomMessageEvent
     members: RoomMember[]
+    attachedLinks: string[]
     channels: Channel[]
     onMentionClick?: (mentionName: string) => void
     onMentionHover?: (element?: HTMLElement, userId?: string) => void
@@ -47,6 +48,7 @@ const UnfurlBlock = (props: UnfurlData) => {
 }
 
 export const MessageBody = ({
+    attachedLinks,
     eventContent,
     event,
     members,
@@ -55,9 +57,18 @@ export const MessageBody = ({
     onMentionHover,
     onRetrySend,
 }: Props) => {
-    const body = getMessageBody(event.eventId, eventContent)
+    let body = getMessageBody(event.eventId, eventContent)
     const urls = getUrls(body)
+
     const { isTouch } = useDevice()
+
+    body = useMemo(() => {
+        const textWithoutLinks = attachedLinks.reduce((text, link) => {
+            return text.replace(link, '')
+        }, body)
+
+        return !textWithoutLinks.trim() ? '' : body
+    }, [attachedLinks, body])
 
     const { data: unfurledContent, isError } = useUnfurlContent({
         urlsArray: urls,
@@ -83,14 +94,16 @@ export const MessageBody = ({
 
     return (
         <>
-            <RichTextPreview
-                content={getMessageBody(event.eventId, eventContent)}
-                statusAnnotation={statusAnnotation}
-                members={members}
-                channels={channels}
-                onMentionClick={onMentionClick}
-                onMentionHover={isTouch ? undefined : onMentionHover}
-            />
+            {body && (
+                <RichTextPreview
+                    content={body}
+                    statusAnnotation={statusAnnotation}
+                    members={members}
+                    channels={channels}
+                    onMentionClick={onMentionClick}
+                    onMentionHover={isTouch ? undefined : onMentionHover}
+                />
+            )}
             {invalidContent
                 ? null
                 : unfurledContent.map((unfurlData: UnfurlData) => (

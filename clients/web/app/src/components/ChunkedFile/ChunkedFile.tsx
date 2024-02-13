@@ -4,6 +4,7 @@ import { useDownloadFile } from 'use-zion-client/dist/hooks/use-chunked-media'
 import { Box, Button, Icon, IconButton, Stack, Text } from '@ui'
 import { isMediaMimeType } from 'utils/isMediaMimeType'
 import { useDevice } from 'hooks/useDevice'
+import { useIsMessageAttachementContext } from '@components/MessageAttachments/useIsMessageAttachementContext'
 
 type Props = {
     streamId: string
@@ -112,7 +113,34 @@ const ChunkedMedia = (props: Props) => {
         }
     }, [thumbnail])
 
-    return (
+    const { isMessageAttachementContext } = useIsMessageAttachementContext()
+
+    const src = objectURL ?? thumbnailURL ?? ''
+
+    const touchButton = isTouch && (
+        <IconButton
+            opaque
+            icon="maximize"
+            position="absolute"
+            bottom="sm"
+            right="sm"
+            onClick={onClick}
+        />
+    )
+
+    return isMessageAttachementContext ? (
+        <Box
+            width="100"
+            height="100"
+            rounded="sm"
+            overflow="hidden"
+            cursor="zoom-in"
+            onClick={isTouch ? undefined : onClick}
+        >
+            <Box fit="full" as="img" src={src} objectFit="cover" />
+            {touchButton}
+        </Box>
+    ) : (
         <Box
             position="relative"
             cursor="zoom-in"
@@ -129,23 +157,14 @@ const ChunkedMedia = (props: Props) => {
                 style={{
                     width: '100%',
                     height: '100%',
-                    backgroundImage: `url(${objectURL ?? thumbnailURL ?? ''}`,
+                    backgroundImage: `url(${src}`,
                     backgroundPosition: 'center',
                     backgroundSize: 'cover',
                     backgroundRepeat: 'no-repeat',
                 }}
                 onClick={isTouch ? undefined : onClick}
             />
-            {isTouch && (
-                <IconButton
-                    opaque
-                    icon="maximize"
-                    position="absolute"
-                    bottom="sm"
-                    right="sm"
-                    onClick={onClick}
-                />
-            )}
+            {touchButton}
         </Box>
     )
 }

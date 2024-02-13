@@ -13,7 +13,7 @@ import { TimelineEncryptedContent } from '@components/EncryptedContent/Encrypted
 import { UserList } from '@components/UserList/UserList'
 import { Box, BoxProps, MotionBox, Paragraph, Stack, Text } from '@ui'
 import { notUndefined } from 'ui/utils/utils'
-import { formatShortDate } from 'utils/formatShortDate'
+import { formatShortDate } from 'utils/formatDates'
 import { getPrettyDisplayName } from 'utils/getPrettyDisplayName'
 import { GroupDMIcon, GroupDMIconProps } from './GroupDMIcon'
 

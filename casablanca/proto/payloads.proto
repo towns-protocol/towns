@@ -28,6 +28,7 @@ message ChannelMessage {
                 Content.Image image = 101;
                 Content.EmbeddedMedia embeddedMedia = 102;
                 Content.ChunkedMedia chunkedMedia = 103;
+                Content.EmbeddedMessage embeddedMessage = 104;
             }
         }
         
@@ -82,6 +83,30 @@ message ChannelMessage {
                 oneof encryption {
                     AESGCM aesgcm = 101;
                 }
+            }
+            
+            message EmbeddedMessage {
+            
+                message Info {
+                    string userId = 1;
+                    int64 createdAtEpocMs = 2;
+                    string spaceId = 3;
+                    string channelId = 4;
+                    string messageId = 5;
+                    optional string replyId = 6;
+                }
+                
+                message StaticInfo {
+                    optional string userName = 1;
+                    optional string displayName = 2;
+                    optional string channelName = 3;
+                    optional string spaceName = 4;
+                }
+
+                string url = 1;
+                ChannelMessage.Post post = 2;
+                Info info = 3;
+                StaticInfo staticInfo = 4;
             }
         }
         

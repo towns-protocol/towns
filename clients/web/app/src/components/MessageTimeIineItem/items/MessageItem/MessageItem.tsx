@@ -22,19 +22,23 @@ import { EmbeddedMedia } from '@components/EmbeddedMedia/EmbeddedMedia'
 import { QUERY_PARAMS } from 'routes'
 import { SendStatus } from '@components/MessageLayout/SendStatusIndicator'
 import {
+    MessageAttachments,
+    isEmbeddedMessageAttachment,
+} from '@components/MessageAttachments/MessageAttachments'
+import {
     MessageTimelineContext,
     MessageTimelineType,
     useTimelineContext,
-} from '../../../MessageTimeline/MessageTimelineContext'
-import { TimelineMessageEditor } from '../MessageEditor'
+} from '@components/MessageTimeline/MessageTimelineContext'
 import {
     EncryptedMessageRenderEvent,
     MessageRenderEvent,
     RedactedMessageRenderEvent,
     RenderEventType,
     isRedactedRoomMessage,
-} from '../../../MessageTimeline/util/getEventsByDate'
-import { TimelineEncryptedContent } from '../../../EncryptedContent/EncryptedMessageBody'
+} from '@components/MessageTimeline/util/getEventsByDate'
+import { TimelineEncryptedContent } from '@components/EncryptedContent/EncryptedMessageBody'
+import { TimelineMessageEditor } from '../MessageEditor'
 import { MessageBody } from './MessageBody/MessageBody'
 
 type ItemDataType = MessageRenderEvent | EncryptedMessageRenderEvent | RedactedMessageRenderEvent
@@ -53,10 +57,11 @@ export const MessageItem = (props: Props) => {
     const messageTooltipRef = useRef<HTMLElement | null>(null)
     const [hoveredMentionUserId, setHoveredMentionUserId] = useState<string | undefined>(undefined)
     const navigate = useNavigate()
+
     const timelineContext = useContext(MessageTimelineContext)
 
     const onMediaClick = useCallback(
-        (e: React.MouseEvent<HTMLElement>) => {
+        (e: React.MouseEvent) => {
             e.stopPropagation()
             e.preventDefault()
             if (!event.threadParentId || event.threadParentId.length === 0) {
@@ -76,6 +81,14 @@ export const MessageItem = (props: Props) => {
         }
         client.retrySendMessage(timelineContext.channelId, event.localEventId)
     }, [client, timelineContext, event.localEventId])
+
+    const attachedLinks = useMemo(() => {
+        return (
+            (event.content.kind === ZTEvent.RoomMessage &&
+                event.content.attachments?.filter(isEmbeddedMessageAttachment).map((a) => a.url)) ||
+            []
+        )
+    }, [event.content])
 
     if (!timelineContext) {
         return <></>
@@ -119,6 +132,7 @@ export const MessageItem = (props: Props) => {
             displayContext={displayContext}
             replies={replies}
             key={`${event.eventId}${event.updatedAtEpocMs ?? event.createdAtEpocMs}${msgTypeKey}`}
+            onMediaClick={onMediaClick}
         >
             {isEncryptedMessage ? (
                 <TimelineEncryptedContent event={event} content={itemData.event.content} />
@@ -136,6 +150,7 @@ export const MessageItem = (props: Props) => {
                         {/* Always show message on touch devices, even while editing also disables onMentionClick. */}
                         {isTouch && (
                             <MessageBody
+                                attachedLinks={attachedLinks}
                                 eventContent={event.content}
                                 event={event}
                                 members={members}
@@ -173,6 +188,7 @@ export const MessageItem = (props: Props) => {
                 ) : (
                     <>
                         <MessageBody
+                            attachedLinks={attachedLinks}
                             eventContent={event.content}
                             event={event}
                             members={members}
@@ -184,6 +200,7 @@ export const MessageItem = (props: Props) => {
                             }}
                             onRetrySend={onRetryClick}
                         />
+
                         {hoveredMentionUserId && messageTooltipRef.current && !isTouch && (
                             <TooltipRenderer
                                 active
@@ -207,10 +224,11 @@ type MessageWrapperProps = {
     selectable?: boolean
     children: React.ReactNode
     replies?: ThreadStats
+    onMediaClick: (e: React.MouseEvent) => void
 }
 
 const MessageWrapper = React.memo((props: MessageWrapperProps) => {
-    const { event, displayContext, selectable, replies } = props
+    const { event, displayContext, selectable, replies, onMediaClick } = props
     const { sender } = event
     const navigate = useNavigate()
     const timelineContext = useTimelineContext()
@@ -254,7 +272,7 @@ const MessageWrapper = React.memo((props: MessageWrapperProps) => {
     const attachments =
         event.content?.kind === ZTEvent.RoomMessage ? event.content.attachments : undefined
 
-    const onMediaClick = useCallback(
+    const onAttachmentClick = useCallback(
         (attachmentId: string) => {
             if (!threadParentId || threadParentId.length === 0) {
                 navigate(`./?${QUERY_PARAMS.GALLERY_ID}=${attachmentId}`)
@@ -292,13 +310,19 @@ const MessageWrapper = React.memo((props: MessageWrapperProps) => {
             relativeDate={isRelativeDate}
             replies={replies}
             messageBody={body}
-            attachments={attachments}
             sendStatus={sendStatus}
             sessionId={event.sessionId}
             onReaction={handleReaction}
-            onMediaClick={onMediaClick}
         >
             {props.children}
+
+            {attachments && attachments.length > 0 && (
+                <MessageAttachments
+                    attachments={attachments}
+                    onAttachmentClick={onAttachmentClick}
+                    onClick={isTouch && selectable ? onMediaClick : undefined}
+                />
+            )}
         </MessageLayout>
     )
 })

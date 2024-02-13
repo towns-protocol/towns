@@ -61,6 +61,7 @@ import {
     ImageAttachment,
     EventStatus,
     RoomMessageEventContent_ChunkedMedia,
+    EmbeddedMessageAttachment,
 } from '../../types/timeline-types'
 
 type SuccessResult = {
@@ -895,6 +896,28 @@ function toAttachment(
                 return undefined
             }
             return { type: 'image', info, id } satisfies ImageAttachment
+        }
+        case 'embeddedMessage': {
+            const content = attachment.content.value
+            if (!content?.post || !content?.info) {
+                return undefined
+            }
+            const roomMessageEvent = toTownsContent_ChannelPayload_Message_Post(
+                content.post,
+                content.info.messageId,
+                undefined,
+                '',
+            ).content
+
+            return roomMessageEvent?.kind === ZTEvent.RoomMessage
+                ? ({
+                      type: 'embedded_message',
+                      ...content,
+                      info: content.info,
+                      roomMessageEvent,
+                      id,
+                  } satisfies EmbeddedMessageAttachment)
+                : undefined
         }
         default:
             return undefined

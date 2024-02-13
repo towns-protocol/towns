@@ -1,12 +1,6 @@
 import { format, formatDistance } from 'date-fns'
 import React, { useCallback, useEffect, useRef, useState } from 'react'
-import {
-    Attachment,
-    ChunkedMediaAttachment,
-    LookupUser,
-    MessageReactions,
-    ThreadStats,
-} from 'use-zion-client'
+import { LookupUser, MessageReactions, ThreadStats } from 'use-zion-client'
 import { Link } from 'react-router-dom'
 import debug from 'debug'
 import { ProfileHoverCard } from '@components/ProfileHoverCard/ProfileHoverCard'
@@ -23,8 +17,6 @@ import { useDevice } from 'hooks/useDevice'
 import { useFocused } from 'hooks/useFocused'
 import { ZRoomMessageRedactedEvent } from '@components/MessageTimeline/util/getEventsByDate'
 import { getPrettyDisplayName } from 'utils/getPrettyDisplayName'
-import { ChunkedFile } from '@components/ChunkedFile/ChunkedFile'
-import { isMediaMimeType } from 'utils/isMediaMimeType'
 import { MessageContextMenu } from './MessageContextMenu'
 import { MessageModalSheet } from './MessageModalSheet'
 import { SendStatus, SendStatusIndicator } from './SendStatusIndicator'
@@ -38,7 +30,6 @@ type Props = {
     displayContext?: 'single' | 'head' | 'body' | 'tail'
     messageSourceAnnotation?: string
     messageBody?: string
-    attachments?: Attachment[]
     reactions?: MessageReactions
     replies?: ThreadStats
     canReply?: boolean
@@ -61,7 +52,6 @@ type Props = {
     isChannelWritable?: boolean
     sendStatus?: SendStatus
     sessionId?: string
-    onMediaClick?: (streamId: string) => void
 } & BoxProps
 
 export type MessageLayoutProps = Props
@@ -74,7 +64,6 @@ export const MessageLayout = (props: Props) => {
         avatarSize = 'avatar_md',
         user,
         messageBody,
-        attachments,
         messageSourceAnnotation,
         channelId,
         spaceId,
@@ -94,7 +83,6 @@ export const MessageLayout = (props: Props) => {
         timestamp,
         children,
         sessionId,
-        onMediaClick,
         ...boxProps
     } = props
 
@@ -253,14 +241,6 @@ export const MessageLayout = (props: Props) => {
                         <ButtonText color="gray2" as="span">
                             {messageSourceAnnotation}
                         </ButtonText>
-                    )}
-
-                    {attachments && attachments.length > 0 && (
-                        <Attachments
-                            attachments={attachments}
-                            onClickMedia={onMediaClick}
-                            onClick={isTouch && isSelectable ? onClick : undefined}
-                        />
                     )}
 
                     {hasReactions || hasReplies ? (
@@ -428,70 +408,4 @@ const ActiveAvatar = (props: AvatarProps & { userId: string; link: string }) => 
             <AvatarWithoutDot userId={userId} {...avatarProps} />
         </Link>
     )
-}
-
-export const Attachments = (props: {
-    attachments: Attachment[]
-    onClick?: () => void
-    onClickMedia?: (streamId: string) => void
-}) => {
-    const { onClickMedia, attachments, onClick } = props
-
-    const mediaAttachments: ChunkedMediaAttachment[] = attachments.filter(isRichMediaAttachment)
-    const fileAttachments: ChunkedMediaAttachment[] = attachments.filter(isRegularFileAttachment)
-
-    return (
-        <>
-            {mediaAttachments.length > 0 && (
-                <Stack horizontal gap="sm" flexWrap="wrap" onClick={onClick}>
-                    {mediaAttachments.map((attachment) => (
-                        <ChunkedFile
-                            key={attachment.streamId}
-                            mimetype={attachment.info.mimetype}
-                            width={attachment.info.widthPixels}
-                            height={attachment.info.heightPixels}
-                            filename={attachment.info.filename}
-                            streamId={attachment.streamId}
-                            iv={attachment.encryption.iv}
-                            secretKey={attachment.encryption.secretKey}
-                            onClick={(e) => {
-                                e.preventDefault()
-                                e.stopPropagation()
-                                onClickMedia?.(attachment.id)
-                            }}
-                        />
-                    ))}
-                </Stack>
-            )}
-            {fileAttachments.length > 0 && (
-                <Stack horizontal gap="sm" flexWrap="wrap">
-                    {fileAttachments.map((attachment) => (
-                        <ChunkedFile
-                            key={attachment.streamId}
-                            mimetype={attachment.info.mimetype}
-                            width={attachment.info.widthPixels}
-                            height={attachment.info.heightPixels}
-                            filename={attachment.info.filename}
-                            streamId={attachment.streamId}
-                            iv={attachment.encryption.iv}
-                            secretKey={attachment.encryption.secretKey}
-                            onClick={(e) => {
-                                e.preventDefault()
-                                e.stopPropagation()
-                                onClickMedia?.(attachment.id)
-                            }}
-                        />
-                    ))}
-                </Stack>
-            )}
-        </>
-    )
-}
-
-function isRichMediaAttachment(attachment: Attachment): attachment is ChunkedMediaAttachment {
-    return attachment.type === 'chunked_media' && isMediaMimeType(attachment.info.mimetype)
-}
-
-function isRegularFileAttachment(attachment: Attachment): attachment is ChunkedMediaAttachment {
-    return attachment.type === 'chunked_media' && !isMediaMimeType(attachment.info.mimetype)
 }
