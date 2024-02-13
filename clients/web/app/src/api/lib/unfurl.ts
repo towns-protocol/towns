@@ -26,6 +26,6 @@ export function useUnfurlContent({
         refetchOnMount: false,
         refetchOnWindowFocus: false,
         refetchOnReconnect: false,
-        staleTime: 1000 * 60 * 60 * 24,
+        staleTime: 31 * 24 * 60 * 60 * 1000, // 31 days
     })
 }

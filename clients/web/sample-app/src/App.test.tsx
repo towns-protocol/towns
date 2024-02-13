@@ -1,3 +1,5 @@
+/* eslint-disable @typescript-eslint/ban-ts-comment */
+import 'fake-indexeddb/auto'
 import { describe, expect, test } from 'vitest'
 
 import { render, screen } from '@testing-library/react'

@@ -78,6 +78,7 @@ export { useTimelineStore } from './store/use-timeline-store'
 export * from './store/use-timeline-filter'
 export * from './store/use-transactions-store'
 export type { BlockchainStoreTx } from './client/BlockchainTransactionStore'
+export { queryClient } from './query/queryClient'
 
 export * from './types/zion-types'
 export { Membership, MessageType } from './types/zion-types'
