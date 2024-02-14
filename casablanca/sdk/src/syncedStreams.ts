@@ -80,6 +80,12 @@ export class SyncedStreams {
     private currentRetryCount: number = 0
     private forceStopSyncStreams: (() => void) | undefined
 
+    // Only responses related to the current syncId are processed.
+    // Responses are queued and processed in order
+    // and are cleared when sync stops
+    private responsesQueue: SyncStreamsResponse[] = []
+    private inProgressTick?: Promise<void>
+
     constructor(
         userId: string,
         rpcClient: StreamRpcClientType,
@@ -132,8 +138,36 @@ export class SyncedStreams {
         return await this.createSyncLoop()
     }
 
+    private checkStartTicking() {
+        if (this.inProgressTick) {
+            return
+        }
+
+        if (this.responsesQueue.length === 0) {
+            return
+        }
+
+        const tick = this.tick()
+        this.inProgressTick = tick
+        queueMicrotask(() => {
+            tick.catch((e) => this.logError('ProcessTick Error', e)).finally(() => {
+                this.inProgressTick = undefined
+                this.checkStartTicking()
+            })
+        })
+    }
+
+    private async tick() {
+        const item = this.responsesQueue.shift()
+        if (!item || item.syncId !== this.syncId) {
+            return
+        }
+        await this.onUpdate(item)
+    }
+
     public async stopSync() {
         this.log('sync STOP CALLED')
+        this.responsesQueue = []
         if (stateConstraints[this.syncState].has(SyncState.Canceling)) {
             const syncId = this.syncId
             const syncLoop = this.syncLoop
@@ -326,7 +360,8 @@ export class SyncedStreams {
                                         this.syncClosed()
                                         break
                                     case SyncOp.SYNC_UPDATE:
-                                        await this.onUpdate(value)
+                                        this.responsesQueue.push(value)
+                                        this.checkStartTicking()
                                         break
                                     default:
                                         this.log(
