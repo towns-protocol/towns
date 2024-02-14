@@ -28,6 +28,7 @@ export interface Env extends AuthEnv {
     PRIVY_APP_ID: string
     ALCHEMY_API_KEY: string
     SKIP_LIMIT_VERIFICATION: string
+    REFUSE_ALL_OPS: string
 }
 
 export default {

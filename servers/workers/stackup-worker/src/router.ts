@@ -129,6 +129,9 @@ router.post('/api/transaction-limits', async (request: WorkerRequest, env: Env) 
 })
 
 router.post('/api/sponsor-userop', async (request: WorkerRequest, env: Env) => {
+    if (env.REFUSE_ALL_OPS === 'true') {
+        return new Response(toJson({ error: 'User operations are not available' }), { status: 503 })
+    }
     // check payload is IUserOperation with townId
     const content = await getContentAsJson(request)
     if (!content || !isTownsUserOperation(content)) {
