@@ -340,12 +340,7 @@ func (s *syncHandlerImpl) addLocalStreamToSync(
 		return nil
 	}
 
-	nodes, _, err := s.streamRegistry.GetStreamInfo(ctx, cookie.StreamId)
-	if err != nil {
-		return err
-	}
-
-	streamSub, _, err := s.cache.GetStream(ctx, cookie.StreamId, events.NewStreamNodes(nodes, s.wallet.AddressStr))
+	streamSub, _, err := s.cache.GetStream(ctx, cookie.StreamId)
 	if err != nil {
 		log.Info("SyncStreams:SyncHandlerV2.addLocalStreamToSync: failed to get stream", "streamId", cookie.StreamId, "err", err)
 		return err

@@ -156,7 +156,7 @@ func StartServer(
 		chainAuth = auth.NewFakeChainAuth()
 	}
 
-	notification := nodes.MakePushNotification(
+	notification := MakePushNotification(
 		ctx,
 		&cfg.PushNotification,
 	)
@@ -185,12 +185,12 @@ func StartServer(
 			return nil, 0, nil, err
 		}
 
-		streamRegistry = nodes.NewStreamRegistry(nodeRegistry, registryContract, cfg.Stream.ReplicationFactor)
+		streamRegistry = nodes.NewStreamRegistry(wallet.AddressStr, nodeRegistry, registryContract, cfg.Stream.ReplicationFactor)
 
 		log.Info("Using blockchain river registry")
 	} else {
 		nodeRegistry = nodes.MakeSingleNodeRegistry(ctx, wallet.AddressStr)
-		streamRegistry = nodes.NewFakeStreamRegistry(nodeRegistry, cfg.Stream.ReplicationFactor)
+		streamRegistry = nodes.NewFakeStreamRegistry(wallet.AddressStr, nodeRegistry, cfg.Stream.ReplicationFactor)
 		riverchain = &crypto.Blockchain{
 			Wallet:       wallet,
 			BlockMonitor: crypto.NewFakeBlockMonitor(ctx, cfg.RiverChain.FakeBlockTimeMs),
@@ -205,6 +205,7 @@ func StartServer(
 			Wallet:       wallet,
 			Riverchain:   riverchain,
 			Registry:     registryContract,
+			SR:           streamRegistry,
 			StreamConfig: &cfg.Stream,
 		},
 	)

@@ -1,4 +1,4 @@
-package events
+package nodes
 
 import "slices"
 
@@ -21,6 +21,11 @@ func NewStreamNodes(nodes []string, localNode string) *StreamNodes {
 
 func (s *StreamNodes) IsLocal() bool {
 	return s.localNodeIndex >= 0
+}
+
+// LocalAndFirst is used for fake leader election currently.
+func (s *StreamNodes) LocalAndFirst() bool {
+	return s.localNodeIndex == 0
 }
 
 func (s *StreamNodes) GetNodes() []string {

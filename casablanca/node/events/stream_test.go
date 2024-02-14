@@ -6,6 +6,7 @@ import (
 
 	. "github.com/river-build/river/base"
 	"github.com/river-build/river/crypto"
+	. "github.com/river-build/river/nodes"
 	. "github.com/river-build/river/protocol"
 
 	"github.com/stretchr/testify/assert"

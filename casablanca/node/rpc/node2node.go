@@ -25,7 +25,7 @@ func (s *Service) AllocateStream(
 }
 
 func (s *Service) allocateStream(ctx context.Context, req *AllocateStreamRequest) (*AllocateStreamResponse, error) {
-	nodes, err := s.getNodesForStream(ctx, req.StreamId)
+	nodes, _, err := s.streamRegistry.GetStreamInfo(ctx, req.StreamId)
 	if err != nil {
 		return nil, err
 	}
@@ -41,7 +41,7 @@ func (s *Service) allocateStream(ctx context.Context, req *AllocateStreamRequest
 
 	// TODO: check request is signed by correct node
 	// TODO: all checks that should be done on create?
-	_, view, err := s.cache.CreateStream(ctx, req.StreamId, nodes, req.Miniblock)
+	_, view, err := s.cache.CreateStream(ctx, req.StreamId, req.Miniblock)
 	if err != nil {
 		return nil, err
 	}
@@ -65,18 +65,13 @@ func (s *Service) NewEventReceived(
 }
 
 func (s *Service) newEventReceived(ctx context.Context, req *NewEventReceivedRequest) (*NewEventReceivedResponse, error) {
-	nodes, err := s.getNodesForStream(ctx, req.StreamId)
-	if err != nil {
-		return nil, err
-	}
-
 	// TODO: check request is signed by correct node
 	parsedEvent, err := ParseEvent(req.Event)
 	if err != nil {
 		return nil, err
 	}
 
-	stream, _, err := s.cache.GetStream(ctx, req.StreamId, nodes)
+	stream, _, err := s.cache.GetStream(ctx, req.StreamId)
 	if err != nil {
 		return nil, err
 	}

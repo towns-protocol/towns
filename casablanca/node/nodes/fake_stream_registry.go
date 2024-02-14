@@ -8,22 +8,24 @@ import (
 
 // Temp implementation that hashed the streamId and returns the node that is responsible for it.
 type fakeStreamRegistryImpl struct {
-	nodeRegistry NodeRegistry
-	replFactor   int
+	localNodeAddress string
+	nodeRegistry     NodeRegistry
+	replFactor       int
 }
 
 var _ StreamRegistry = (*fakeStreamRegistryImpl)(nil)
 
-func NewFakeStreamRegistry(nodeRegistry NodeRegistry, replFactor int) *fakeStreamRegistryImpl {
+func NewFakeStreamRegistry(localNodeAddress string, nodeRegistry NodeRegistry, replFactor int) *fakeStreamRegistryImpl {
 	return &fakeStreamRegistryImpl{
-		nodeRegistry: nodeRegistry,
-		replFactor:   replFactor,
+		localNodeAddress: localNodeAddress,
+		nodeRegistry:     nodeRegistry,
+		replFactor:       replFactor,
 	}
 }
 
-func (sr *fakeStreamRegistryImpl) GetStreamInfo(ctx context.Context, streamId string) ([]string, []byte, error) {
+func (sr *fakeStreamRegistryImpl) GetStreamInfo(ctx context.Context, streamId string) (*StreamNodes, []byte, error) {
 	nodes, err := chooseStreamNodes(ctx, streamId, sr.nodeRegistry, sr.replFactor)
-	return nodes, ZeroHashBytes, err
+	return NewStreamNodes(nodes, sr.localNodeAddress), ZeroHashBytes, err
 }
 
 func (sr *fakeStreamRegistryImpl) AllocateStream(

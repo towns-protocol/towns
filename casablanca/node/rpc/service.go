@@ -22,7 +22,7 @@ type Service struct {
 	nodeRegistry   nodes.NodeRegistry
 	streamRegistry nodes.StreamRegistry
 	streamConfig   *config.StreamConfig
-	notification   nodes.PushNotification
+	notification   PushNotification
 	syncHandler    SyncHandler
 	serverCtx      context.Context
 }

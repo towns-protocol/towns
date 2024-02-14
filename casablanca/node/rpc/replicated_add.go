@@ -4,6 +4,7 @@ import (
 	"context"
 
 	. "github.com/river-build/river/events"
+	. "github.com/river-build/river/nodes"
 	. "github.com/river-build/river/protocol"
 
 	"connectrpc.com/connect"

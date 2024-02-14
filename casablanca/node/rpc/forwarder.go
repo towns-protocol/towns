@@ -6,22 +6,13 @@ import (
 	"connectrpc.com/connect"
 	. "github.com/river-build/river/base"
 	"github.com/river-build/river/dlog"
-	. "github.com/river-build/river/events"
+	. "github.com/river-build/river/nodes"
 	. "github.com/river-build/river/protocol"
 	. "github.com/river-build/river/protocol/protocolconnect"
 )
 
-func (s *Service) getNodesForStream(ctx context.Context, streamId string) (*StreamNodes, error) {
-	nodes, _, err := s.streamRegistry.GetStreamInfo(ctx, streamId)
-	if err != nil {
-		return nil, err
-	}
-
-	return NewStreamNodes(nodes, s.wallet.AddressStr), nil
-}
-
 func (s *Service) getStubForStream(ctx context.Context, streamId string) (StreamServiceClient, *StreamNodes, error) {
-	nodes, err := s.getNodesForStream(ctx, streamId)
+	nodes, _, err := s.streamRegistry.GetStreamInfo(ctx, streamId)
 	if err != nil {
 		return nil, nil, err
 	}
@@ -70,7 +61,7 @@ func (s *Service) getStreamImpl(
 	ctx context.Context,
 	req *connect.Request[GetStreamRequest],
 ) (*connect.Response[GetStreamResponse], error) {
-	stub, nodes, err := s.getStubForStream(ctx, req.Msg.StreamId)
+	stub, _, err := s.getStubForStream(ctx, req.Msg.StreamId)
 
 	if err != nil && req.Msg.Optional && AsRiverError(err).Code == Err_NOT_FOUND {
 		return connect.NewResponse(&GetStreamResponse{}), nil
@@ -85,7 +76,7 @@ func (s *Service) getStreamImpl(
 		}
 		return connect.NewResponse(ret.Msg), nil
 	} else {
-		return s.localGetStream(ctx, req, nodes)
+		return s.localGetStream(ctx, req)
 	}
 }
 
@@ -107,7 +98,7 @@ func (s *Service) getMiniblocksImpl(
 	ctx context.Context,
 	req *connect.Request[GetMiniblocksRequest],
 ) (*connect.Response[GetMiniblocksResponse], error) {
-	stub, nodes, err := s.getStubForStream(ctx, req.Msg.StreamId)
+	stub, _, err := s.getStubForStream(ctx, req.Msg.StreamId)
 	if err != nil {
 		return nil, err
 	}
@@ -119,7 +110,7 @@ func (s *Service) getMiniblocksImpl(
 		}
 		return connect.NewResponse(ret.Msg), nil
 	} else {
-		return s.localGetMiniblocks(ctx, req, nodes)
+		return s.localGetMiniblocks(ctx, req)
 	}
 }
 
@@ -141,7 +132,7 @@ func (s *Service) getLastMiniblockHashImpl(
 	ctx context.Context,
 	req *connect.Request[GetLastMiniblockHashRequest],
 ) (*connect.Response[GetLastMiniblockHashResponse], error) {
-	stub, nodes, err := s.getStubForStream(ctx, req.Msg.StreamId)
+	stub, _, err := s.getStubForStream(ctx, req.Msg.StreamId)
 	if err != nil {
 		return nil, err
 	}
@@ -153,7 +144,7 @@ func (s *Service) getLastMiniblockHashImpl(
 		}
 		return connect.NewResponse(ret.Msg), nil
 	} else {
-		return s.localGetLastMiniblockHash(ctx, req, nodes)
+		return s.localGetLastMiniblockHash(ctx, req)
 	}
 }
 
@@ -177,7 +168,7 @@ func (s *Service) addEventImpl(
 ) (*connect.Response[AddEventResponse], error) {
 	streamId := req.Msg.StreamId
 
-	nodes, err := s.getNodesForStream(ctx, streamId)
+	nodes, _, err := s.streamRegistry.GetStreamInfo(ctx, streamId)
 	if err != nil {
 		return nil, err
 	}

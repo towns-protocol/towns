@@ -8,6 +8,7 @@ import (
 	"github.com/river-build/river/config"
 	"github.com/river-build/river/crypto"
 	"github.com/river-build/river/dlog"
+	. "github.com/river-build/river/nodes"
 	. "github.com/river-build/river/protocol"
 	"github.com/river-build/river/registries"
 	"github.com/river-build/river/storage"
@@ -18,15 +19,15 @@ type StreamCacheParams struct {
 	Wallet       *crypto.Wallet
 	Riverchain   *crypto.Blockchain
 	Registry     *registries.RiverRegistryContract
+	SR           StreamRegistry // This is temporary field here, cache itself replaces it, but for fake configurations it is still being used.
 	StreamConfig *config.StreamConfig
 }
 
 type StreamCache interface {
-	GetStream(ctx context.Context, streamId string, nodes *StreamNodes) (SyncStream, StreamView, error)
+	GetStream(ctx context.Context, streamId string) (SyncStream, StreamView, error)
 	CreateStream(
 		ctx context.Context,
 		streamId string,
-		nodes *StreamNodes,
 		genesisMiniblock *Miniblock,
 	) (SyncStream, StreamView, error)
 	ForceFlushAll(ctx context.Context)
@@ -49,7 +50,12 @@ func NewStreamCache(ctx context.Context, params *StreamCacheParams) (*streamCach
 	return c, nil
 }
 
-func (s *streamCacheImpl) GetStream(ctx context.Context, streamId string, nodes *StreamNodes) (SyncStream, StreamView, error) {
+func (s *streamCacheImpl) GetStream(ctx context.Context, streamId string) (SyncStream, StreamView, error) {
+	nodes, _, err := s.params.SR.GetStreamInfo(ctx, streamId)
+	if err != nil {
+		return nil, nil, err
+	}
+
 	if !nodes.IsLocal() {
 		return nil, nil, RiverError(
 			Err_INTERNAL,
@@ -89,9 +95,13 @@ func (s *streamCacheImpl) GetStream(ctx context.Context, streamId string, nodes 
 func (s *streamCacheImpl) CreateStream(
 	ctx context.Context,
 	streamId string,
-	nodes *StreamNodes,
 	genesisMiniblock *Miniblock,
 ) (SyncStream, StreamView, error) {
+	nodes, _, err := s.params.SR.GetStreamInfo(ctx, streamId)
+	if err != nil {
+		return nil, nil, err
+	}
+
 	if !nodes.IsLocal() {
 		return nil, nil, RiverError(
 			Err_INTERNAL,
@@ -119,7 +129,7 @@ func (s *streamCacheImpl) CreateStream(
 		return stream, view, nil
 	} else {
 		// Assume that parallel GetStream created cache entry, fallback to it to retrieve winning cache entry.
-		return s.GetStream(ctx, streamId, nodes)
+		return s.GetStream(ctx, streamId)
 	}
 }
 
@@ -161,7 +171,7 @@ func (s *streamCacheImpl) onNewBlock(ctx context.Context, blockNum int64, blockH
 		if stream.mbCreationEnabled() {
 			// TODO: replace with vote
 			// For now: only first assigned node produces blocks.
-			if stream.nodes.localNodeIndex == 0 {
+			if stream.nodes.LocalAndFirst() {
 				total++
 				// Nothing to do on error, MakeMiniblock logs on error level if there is an error.
 				ok, err := stream.MakeMiniblock(ctx, false)

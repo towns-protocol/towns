@@ -10,6 +10,7 @@ import (
 	"github.com/river-build/river/storage"
 
 	"github.com/stretchr/testify/assert"
+	"github.com/stretchr/testify/require"
 	"google.golang.org/protobuf/proto"
 )
 
@@ -39,7 +40,7 @@ func makeEnvelopeWithPayload_T(
 	prevMiniblockHash []byte,
 ) *protocol.Envelope {
 	envelope, err := MakeEnvelopeWithPayload(wallet, payload, prevMiniblockHash)
-	assert.NoError(t, err)
+	require.NoError(t, err)
 	return envelope
 }
 
@@ -76,7 +77,7 @@ func makeTestSpaceStream(
 		parsedEvent(t, join),
 	}
 	mb, err := MakeGenesisMiniblock(wallet, events)
-	assert.NoError(t, err)
+	require.NoError(t, err)
 	return events, mb
 }
 
@@ -121,7 +122,7 @@ func makeTestChannelStream(
 		parsedEvent(t, join),
 	}
 	mb, err := MakeGenesisMiniblock(wallet, events)
-	assert.NoError(t, err)
+	require.NoError(t, err)
 	return events, mb
 }
 
@@ -150,7 +151,7 @@ func joinSpace_T(
 				),
 			),
 		)
-		assert.NoError(t, err)
+		require.NoError(t, err)
 	}
 }
 
@@ -179,7 +180,7 @@ func joinChannel_T(
 				),
 			),
 		)
-		assert.NoError(t, err)
+		require.NoError(t, err)
 	}
 }
 
@@ -208,12 +209,8 @@ func leaveChannel_T(
 				),
 			),
 		)
-		assert.NoError(t, err)
+		require.NoError(t, err)
 	}
-}
-
-func getStreamNodes() *StreamNodes {
-	return NewStreamNodes([]string{"node_1", "node_2", "node_3"}, "node_1")
 }
 
 func TestSpaceViewState(t *testing.T) {
@@ -226,9 +223,9 @@ func TestSpaceViewState(t *testing.T) {
 
 	// create a stream
 	_, mb := makeTestSpaceStream(t, user1Wallet, "user_1", "space_1", nil)
-	s, _, err := tt.cache.CreateStream(ctx, "streamid$1", getStreamNodes(), mb)
+	s, _, err := tt.createStream(ctx, "streamid$1", mb)
+	require.NoError(t, err)
 	stream := s.(*streamImpl)
-	assert.NoError(t, err)
 	assert.NotNil(t, stream)
 	// add two more membership events
 	// user_2
@@ -237,19 +234,19 @@ func TestSpaceViewState(t *testing.T) {
 	joinSpace_T(t, user3Wallet, ctx, stream, []string{"user_3"})
 	// refresh view
 	view1, err := stream.GetView(ctx)
-	assert.NoError(t, err)
+	require.NoError(t, err)
 	// check that users 2 and 3 are not joined yet, since we haven't made a miniblock
 	spaceViewStateTest_CheckUserJoined(t, view1.(JoinableStreamView), "user_1", true)
 	spaceViewStateTest_CheckUserJoined(t, view1.(JoinableStreamView), "user_2", false)
 	spaceViewStateTest_CheckUserJoined(t, view1.(JoinableStreamView), "user_3", false)
 	// make a miniblock
 	_, err = stream.MakeMiniblock(ctx, false)
-	assert.NoError(t, err)
+	require.NoError(t, err)
 	// check that we have 2 blocks
 	assert.Equal(t, 2, len(stream.view.blocks))
 	// refresh view
 	view2, err := stream.GetView(ctx)
-	assert.NoError(t, err)
+	require.NoError(t, err)
 	// check that users are joined
 	spaceViewStateTest_CheckUserJoined(t, view2.(JoinableStreamView), "user_1", true)
 	spaceViewStateTest_CheckUserJoined(t, view2.(JoinableStreamView), "user_2", true)
@@ -259,7 +256,7 @@ func TestSpaceViewState(t *testing.T) {
 	assert.Equal(t, 1, len(miniblocks))
 	miniblock := miniblocks[0]
 	miniblockProtoBytes, err := proto.Marshal(miniblock)
-	assert.NoError(t, err)
+	require.NoError(t, err)
 
 	// load up a brand new view from the latest snapshot result
 	var view3 StreamView
@@ -267,7 +264,7 @@ func TestSpaceViewState(t *testing.T) {
 		StartMiniblockNumber: 1,
 		Miniblocks:           [][]byte{miniblockProtoBytes},
 	})
-	assert.NoError(t, err)
+	require.NoError(t, err)
 	assert.NotNil(t, view3)
 
 	// check that users are joined when loading from the snapshot
@@ -278,7 +275,7 @@ func TestSpaceViewState(t *testing.T) {
 
 func spaceViewStateTest_CheckUserJoined(t *testing.T, view JoinableStreamView, userId string, expected bool) {
 	joined, err := view.IsUserJoined(userId)
-	assert.NoError(t, err)
+	require.NoError(t, err)
 	assert.Equal(t, expected, joined)
 }
 
@@ -295,17 +292,18 @@ func TestChannelViewState_JoinedMembers(t *testing.T) {
 
 	// create a space stream and add the members
 	_, mb := makeTestSpaceStream(t, userWallet, alice, spaceStreamId, nil)
-	sStream, _, _ := tt.cache.CreateStream(ctx, spaceStreamId, getStreamNodes(), mb)
+	sStream, _, err := tt.createStream(ctx, spaceStreamId, mb)
+	require.NoError(t, err)
 	spaceStream := sStream.(*streamImpl)
 	joinSpace_T(t, userWallet, ctx, spaceStream, []string{bob, carol})
 	// create a channel stream and add the members
 	_, mb = makeTestChannelStream(t, userWallet, alice, channelStreamId, spaceStreamId, nil, nil)
-	cStream, _, _ := tt.cache.CreateStream(ctx, channelStreamId, getStreamNodes(), mb)
+	cStream, _, _ := tt.createStream(ctx, channelStreamId, mb)
 	channelStream := cStream.(*streamImpl)
 	joinChannel_T(t, userWallet, ctx, channelStream, []string{alice, bob, carol})
 	// make a miniblock
-	_, err := channelStream.MakeMiniblock(ctx, false)
-	assert.NoError(t, err)
+	_, err = channelStream.MakeMiniblock(ctx, false)
+	require.NoError(t, err)
 	// get the miniblock's last snapshot and convert it into bytes
 	miniblocks := channelStream.view.MiniblocksFromLastSnapshot()
 	miniblock := miniblocks[0]
@@ -316,7 +314,7 @@ func TestChannelViewState_JoinedMembers(t *testing.T) {
 		StartMiniblockNumber: 1,
 		Miniblocks:           [][]byte{miniblockProtoBytes},
 	})
-	assert.NoError(t, err)
+	require.NoError(t, err)
 
 	/* Act */
 	// create a channel view from the stream view
@@ -324,7 +322,7 @@ func TestChannelViewState_JoinedMembers(t *testing.T) {
 	allJoinedMembers, err := channelView.GetChannelMembers()
 
 	/* Assert */
-	assert.NoError(t, err)
+	require.NoError(t, err)
 	assert.Equal(t, (*allJoinedMembers).Cardinality(), 3)
 	assert.Equal(t, (*allJoinedMembers).Contains(alice), true)
 	assert.Equal(t, (*allJoinedMembers).Contains(bob), true)
@@ -344,19 +342,21 @@ func TestChannelViewState_RemainingMembers(t *testing.T) {
 
 	// create a space stream and add the members
 	_, mb := makeTestSpaceStream(t, userWallet, alice, spaceStreamId, nil)
-	sStream, _, _ := tt.cache.CreateStream(ctx, spaceStreamId, getStreamNodes(), mb)
+	sStream, _, err := tt.createStream(ctx, spaceStreamId, mb)
+	require.NoError(t, err)
 	spaceStream := sStream.(*streamImpl)
 	joinSpace_T(t, userWallet, ctx, spaceStream, []string{bob, carol})
 	// create a channel stream and add the members
 	_, mb = makeTestChannelStream(t, userWallet, alice, channelStreamId, spaceStreamId, nil, nil)
-	cStream, _, _ := tt.cache.CreateStream(ctx, channelStreamId, getStreamNodes(), mb)
+	cStream, _, err := tt.createStream(ctx, channelStreamId, mb)
+	require.NoError(t, err)
 	channelStream := cStream.(*streamImpl)
 	joinChannel_T(t, userWallet, ctx, channelStream, []string{alice, bob, carol})
 	// bob leaves the channel
 	leaveChannel_T(t, userWallet, ctx, channelStream, []string{bob})
 	// make a miniblock
-	_, err := channelStream.MakeMiniblock(ctx, false)
-	assert.NoError(t, err)
+	_, err = channelStream.MakeMiniblock(ctx, false)
+	require.NoError(t, err)
 	// get the miniblock's last snapshot and convert it into bytes
 	miniblocks := channelStream.view.MiniblocksFromLastSnapshot()
 	miniblock := miniblocks[0]
@@ -367,7 +367,7 @@ func TestChannelViewState_RemainingMembers(t *testing.T) {
 		StartMiniblockNumber: 1,
 		Miniblocks:           [][]byte{miniblockProtoBytes},
 	})
-	assert.NoError(t, err)
+	require.NoError(t, err)
 
 	/* Act */
 	// create a channel view from the stream view
@@ -375,7 +375,7 @@ func TestChannelViewState_RemainingMembers(t *testing.T) {
 	allJoinedMembers, err := channelView.GetChannelMembers()
 
 	/* Assert */
-	assert.NoError(t, err)
+	require.NoError(t, err)
 	assert.Equal(t, (*allJoinedMembers).Cardinality(), 2)
 	assert.Equal(t, (*allJoinedMembers).Contains(alice), true)
 	assert.Equal(t, (*allJoinedMembers).Contains(bob), false)

@@ -10,6 +10,7 @@ import (
 	"github.com/river-build/river/dlog"
 	. "github.com/river-build/river/events"
 	"github.com/river-build/river/infra"
+	. "github.com/river-build/river/nodes"
 	. "github.com/river-build/river/protocol"
 	. "github.com/river-build/river/shared"
 	"google.golang.org/protobuf/proto"
@@ -137,7 +138,7 @@ func (s *Service) createReplicatedStream(
 	var localSyncCookie *SyncCookie
 	if nodes.IsLocal() {
 		sender.GoLocal(func() error {
-			_, sv, err := s.cache.CreateStream(ctx, streamId, nodes, mb)
+			_, sv, err := s.cache.CreateStream(ctx, streamId, mb)
 			if err != nil {
 				return err
 			}

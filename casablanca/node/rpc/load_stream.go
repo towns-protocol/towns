@@ -17,14 +17,14 @@ type remoteStream struct {
 
 var _ Stream = (*remoteStream)(nil)
 
-func (s *Service) loadStream(ctx context.Context, streamID string) (Stream, StreamView, error) {
-	nodes, err := s.getNodesForStream(ctx, streamID)
+func (s *Service) loadStream(ctx context.Context, streamId string) (Stream, StreamView, error) {
+	nodes, _, err := s.streamRegistry.GetStreamInfo(ctx, streamId)
 	if err != nil {
 		return nil, nil, err
 	}
 
 	if nodes.IsLocal() {
-		return s.cache.GetStream(ctx, streamID, nodes)
+		return s.cache.GetStream(ctx, streamId)
 	}
 
 	targetNode := nodes.GetRemotes()[0]
@@ -34,7 +34,7 @@ func (s *Service) loadStream(ctx context.Context, streamID string) (Stream, Stre
 	}
 
 	resp, err := stub.GetStream(ctx, connect.NewRequest(&GetStreamRequest{
-		StreamId: streamID,
+		StreamId: streamId,
 	}))
 	if err != nil {
 		return nil, nil, err
@@ -46,7 +46,7 @@ func (s *Service) loadStream(ctx context.Context, streamID string) (Stream, Stre
 	}
 
 	return &remoteStream{
-		streamID: streamID,
+		streamID: streamId,
 		stub:     stub,
 	}, streamView, nil
 }

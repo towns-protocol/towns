@@ -5,7 +5,6 @@ import (
 
 	"connectrpc.com/connect"
 	. "github.com/river-build/river/base"
-	. "github.com/river-build/river/events"
 	"github.com/river-build/river/infra"
 	. "github.com/river-build/river/protocol"
 )
@@ -15,9 +14,8 @@ var getStreamRequests = infra.NewSuccessMetrics("get_stream_requests", serviceRe
 func (s *Service) localGetStream(
 	ctx context.Context,
 	req *connect.Request[GetStreamRequest],
-	nodes *StreamNodes,
 ) (*connect.Response[GetStreamResponse], error) {
-	res, err := s.getStream(ctx, req, nodes)
+	res, err := s.getStream(ctx, req)
 	if err != nil {
 		getStreamRequests.FailInc()
 		return nil, err
@@ -30,18 +28,21 @@ func (s *Service) localGetStream(
 func (s *Service) getStream(
 	ctx context.Context,
 	req *connect.Request[GetStreamRequest],
-	nodes *StreamNodes,
 ) (*connect.Response[GetStreamResponse], error) {
 	streamId := req.Msg.StreamId
 
-	_, streamView, err := s.cache.GetStream(ctx, streamId, nodes)
+	_, streamView, err := s.cache.GetStream(ctx, streamId)
 
-	if err != nil && req.Msg.Optional && AsRiverError(err).Code == Err_NOT_FOUND {
-		// aellis - this is actually an error, if the forwarder thinks the stream exists, but it doesn't exist in the cache
-		// it's a real error, but currently (feb 2024) in single node this will reach here
-		return connect.NewResponse(&GetStreamResponse{}), nil
-	} else if err != nil {
-		return nil, err
+	if err != nil {
+		if req.Msg.Optional && AsRiverError(err).Code == Err_NOT_FOUND {
+			// aellis - this is actually an error, if the forwarder thinks the stream exists, but it doesn't exist in the cache
+			// it's a real error, but currently (feb 2024) in single node this will reach here
+			// If optional is set, empty response indicates that there is no stream.
+			// This reduces log spam for the case where stream legitimately may not exist yet.
+			return connect.NewResponse(&GetStreamResponse{}), nil
+		} else {
+			return nil, err
+		}
 	} else {
 		return connect.NewResponse(&GetStreamResponse{
 			Stream: &StreamAndCookie{

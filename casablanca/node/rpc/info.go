@@ -91,7 +91,7 @@ func (s *Service) info(
 			}
 			streamId := request.Msg.Debug[1]
 			log.Info("Info Debug request to add event", "stream_id", streamId)
-			stub, nodes, err := s.getStubForStream(ctx, streamId)
+			stub, _, err := s.getStubForStream(ctx, streamId)
 			if err != nil {
 				return nil, err
 			}
@@ -101,7 +101,7 @@ func (s *Service) info(
 				}))
 				return nil, err
 			}
-			stream, _, err := s.cache.GetStream(ctx, streamId, nodes)
+			stream, _, err := s.cache.GetStream(ctx, streamId)
 			if err != nil {
 				return nil, err
 			}
@@ -128,7 +128,7 @@ func (s *Service) info(
 }
 
 func (s *Service) debugMakeMiniblock(ctx context.Context, streamId string, forceSnapshot string) error {
-	stub, nodes, err := s.getStubForStream(ctx, streamId)
+	stub, _, err := s.getStubForStream(ctx, streamId)
 	if err != nil {
 		return err
 	}
@@ -139,7 +139,7 @@ func (s *Service) debugMakeMiniblock(ctx context.Context, streamId string, force
 		}))
 		return err
 	} else {
-		stream, _, err := s.cache.GetStream(ctx, streamId, nodes)
+		stream, _, err := s.cache.GetStream(ctx, streamId)
 		if err != nil {
 			return err
 		}

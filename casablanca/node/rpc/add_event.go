@@ -10,6 +10,7 @@ import (
 	"github.com/river-build/river/dlog"
 	. "github.com/river-build/river/events"
 	"github.com/river-build/river/infra"
+	. "github.com/river-build/river/nodes"
 	. "github.com/river-build/river/protocol"
 	"github.com/river-build/river/rules"
 )
@@ -43,7 +44,7 @@ func (s *Service) localAddEvent(
 
 func (s *Service) addParsedEvent(ctx context.Context, streamId string, parsedEvent *ParsedEvent, nodes *StreamNodes) error {
 
-	localStream, streamView, err := s.cache.GetStream(ctx, streamId, nodes)
+	localStream, streamView, err := s.cache.GetStream(ctx, streamId)
 	if err != nil {
 		return err
 	}
@@ -63,16 +64,16 @@ func (s *Service) addParsedEvent(ctx context.Context, streamId string, parsedEve
 
 	if chainAuthArgs != nil {
 		err := s.chainAuth.IsEntitled(ctx, chainAuthArgs)
-	if err != nil {
-		return err
-	}
+		if err != nil {
+			return err
+		}
 	}
 
 	if requiredParentEvent != nil {
 		err := s.addRequiredParentEvent(ctx, requiredParentEvent)
-	if err != nil {
-		return err
-	}
+		if err != nil {
+			return err
+		}
 	}
 
 	stream := &replicatedStream{
@@ -91,7 +92,7 @@ func (s *Service) addParsedEvent(ctx context.Context, streamId string, parsedEve
 		sendsPush, senderId := rules.SendsPushNotification(parsedEvent)
 		if sendsPush {
 			s.notification.SendPushNotification(s.serverCtx, streamView, senderId, parsedEvent.Event)
-	}
+		}
 	}
 
 	return nil
@@ -100,7 +101,7 @@ func (s *Service) addParsedEvent(ctx context.Context, streamId string, parsedEve
 func (s *Service) addRequiredParentEvent(ctx context.Context, requiredParentEvent *rules.RequiredParentEvent) error {
 	hashRequest := &GetLastMiniblockHashRequest{
 		StreamId: requiredParentEvent.StreamId,
-		}
+	}
 	hashResponse, err := s.GetLastMiniblockHash(ctx, connect.NewRequest(hashRequest))
 	if err != nil {
 		return err

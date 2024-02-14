@@ -6,9 +6,12 @@ import (
 	. "github.com/river-build/river/base"
 	"github.com/river-build/river/base/test"
 	"github.com/river-build/river/crypto"
+	. "github.com/river-build/river/nodes"
+	. "github.com/river-build/river/protocol"
 	"github.com/river-build/river/registries"
 	"github.com/river-build/river/storage"
 	"github.com/river-build/river/testutils/dbtestutils"
+	"google.golang.org/protobuf/proto"
 )
 
 type testContext struct {
@@ -20,6 +23,7 @@ type testContext struct {
 
 type testParams struct {
 	usePostgres bool
+	replFactor  int
 }
 
 func makeTestStreamParams(p testParams) (context.Context, *testContext) {
@@ -65,6 +69,13 @@ func makeTestStreamParams(p testParams) (context.Context, *testContext) {
 		panic(err)
 	}
 
+	nr, err := LoadNodeRegistry(ctx, registry, bc.Wallet.AddressStr)
+	if err != nil {
+		panic(err)
+	}
+
+	sr := NewStreamRegistry(bc.Wallet.AddressStr, nr, registry, p.replFactor)
+
 	return ctx,
 		&testContext{
 			bcTest: btc,
@@ -73,6 +84,7 @@ func makeTestStreamParams(p testParams) (context.Context, *testContext) {
 				Wallet:       bc.Wallet,
 				Riverchain:   bc,
 				Registry:     registry,
+				SR:           sr,
 				StreamConfig: &streamConfig_viewstate_space_t,
 			},
 			closer: func() {
@@ -96,4 +108,22 @@ func makeTestStreamCache(p testParams) (context.Context, *testContext) {
 	testContext.cache = streamCache
 
 	return ctx, testContext
+}
+
+func (tt *testContext) createStream(
+	ctx context.Context,
+	streamId string,
+	genesisMiniblock *Miniblock,
+) (SyncStream, StreamView, error) {
+	mbBytes, err := proto.Marshal(genesisMiniblock)
+	if err != nil {
+		return nil, nil, err
+	}
+
+	_, err = tt.params.SR.AllocateStream(ctx, streamId, genesisMiniblock.Header.Hash, mbBytes)
+	if err != nil {
+		return nil, nil, err
+	}
+
+	return tt.cache.CreateStream(ctx, streamId, genesisMiniblock)
 }
