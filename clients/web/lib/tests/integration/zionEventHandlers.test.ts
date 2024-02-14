@@ -74,18 +74,16 @@ describe('Zion event handlers test', () => {
     })
 
     test('onJoinRoom', async () => {
-        let eventHandlerResult:
-            | {
-                  roomId: string
-              }
-            | undefined
+        const eventHandlerResult: {
+            roomId: string
+        }[] = []
 
         const { alice, bob } = await registerAndStartClients(['alice', 'bob'], {
             eventHandlers: {
                 onJoinRoom(roomId) {
-                    eventHandlerResult = {
+                    eventHandlerResult.push({
                         roomId,
-                    }
+                    })
                 },
             },
         })
@@ -118,7 +116,7 @@ describe('Zion event handlers test', () => {
         await bob.joinTown(spaceId, bob.wallet)
         await waitFor(() => expect(eventHandlerResult).toBeDefined())
 
-        expect(eventHandlerResult?.roomId).toEqual(spaceId)
+        expect(eventHandlerResult.at(0)?.roomId).toEqual(spaceId)
     })
 
     test('onSendMessage', async () => {

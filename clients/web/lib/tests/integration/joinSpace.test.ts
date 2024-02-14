@@ -19,8 +19,9 @@ import {
 } from '@river/web3'
 import { TestConstants } from './helpers/TestConstants'
 import { ethers } from 'ethers'
-import { assert } from '@river/sdk'
+import { ParsedChannelProperties, assert } from '@river/sdk'
 import { getTransactionHashFromTransactionOrUserOp } from '@towns/userops'
+import { waitFor } from '@testing-library/dom'
 
 test('create space, and have user join', async () => {
     // create clients
@@ -38,6 +39,31 @@ test('create space, and have user join', async () => {
     // alice joins the space
     await alice.joinTown(spaceId, alice.wallet)
     expect(alice.getRoomData(spaceId)?.id).toEqual(spaceId)
+
+    let defaultChannel: [string, ParsedChannelProperties] | undefined
+    await waitFor(() => {
+        const channelsMeta =
+            alice.casablancaClient?.streams.get(spaceId)?.view.spaceContent.spaceChannelsMetadata
+        console.log('channelsMeta', channelsMeta)
+        expect(channelsMeta).toBeDefined()
+        expect(channelsMeta?.size).toBeGreaterThan(0)
+        defaultChannel = Array.from(channelsMeta!.entries()).find((c) => c[1].isDefault)
+        expect(defaultChannel).toBeDefined()
+    })
+
+    const channelId = defaultChannel![0]
+
+    // expect alice to also join the default channel
+    const channelStream = alice.casablancaClient?.streams.get(channelId)
+    expect(channelStream).toBeDefined()
+    await waitFor(() =>
+        expect(
+            channelStream!.view.getMemberships().isMemberJoined(alice.getUserId()!),
+        ).toBeTruthy(),
+    )
+    const userStreamId = alice.casablancaClient?.userStreamId
+    const userStream = alice.casablancaClient?.streams.get(userStreamId!)
+    await waitFor(() => expect(userStream?.view.userContent.isJoined(channelId)).toBeTruthy())
 })
 
 test('create space, and have user that already has membership NFT join ', async () => {

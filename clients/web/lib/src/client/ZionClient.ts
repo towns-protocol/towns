@@ -404,6 +404,7 @@ export class ZionClient implements EntitlementsDelegate {
         if (!signer) {
             throw new SignerUndefinedError()
         }
+        console.log('[createChannel] creating channel', createChannelInfo)
         const txContext = await this.createChannelTransaction(createChannelInfo, signer)
         if (txContext.error) {
             throw txContext.error
@@ -588,6 +589,11 @@ export class ZionClient implements EntitlementsDelegate {
         const channelProperties = this.casablancaClient.streams
             .get(updateChannelInfo.parentSpaceId)
             ?.view.spaceContent.spaceChannelsMetadata.get(updateChannelInfo.channelId)
+
+        console.log('[updateChannelRoom] channelProperties', {
+            prev: channelProperties,
+            new: updateChannelInfo,
+        })
 
         // update to updated info if it's defined, otherwise update to the current info
         await this.casablancaClient.updateChannel(
@@ -1079,7 +1085,10 @@ export class ZionClient implements EntitlementsDelegate {
     public async joinRoom(
         roomId: string,
         _parentNetworkId?: string,
-        opts?: { skipWaitForMiniblockConfirmation: boolean },
+        opts?: {
+            skipWaitForMiniblockConfirmation?: boolean
+            skipWaitForUserStreamUpdate?: boolean
+        },
     ) {
         // TODO: not doing event handlers here since Casablanca is not part of alpha
         if (!this.casablancaClient) {
@@ -1129,6 +1138,19 @@ export class ZionClient implements EntitlementsDelegate {
 
         const room = await this.joinRoom(spaceId)
         console.log('[joinTown] room', room)
+        // join the default channels
+        const spaceContent = this.casablancaClient?.streams.get(spaceId)?.view.spaceContent
+        if (spaceContent) {
+            for (const [key, value] of spaceContent.spaceChannelsMetadata.entries()) {
+                if (value.isDefault) {
+                    console.log('[joinTown] joining default channel', key)
+                    await this.joinRoom(key, undefined, {
+                        skipWaitForMiniblockConfirmation: true,
+                        skipWaitForUserStreamUpdate: true,
+                    })
+                }
+            }
+        }
         return room
     }
 

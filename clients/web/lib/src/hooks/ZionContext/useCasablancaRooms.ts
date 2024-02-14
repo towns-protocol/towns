@@ -140,6 +140,7 @@ function toZionCasablancaRoom(
     //Room topic is available only for channels
     let topic: string | undefined = undefined
     let name: string
+    let isDefault: boolean = false
     if (isChannelStreamId(streamId)) {
         const parentSpace = client.streams.get(streamId)?.view.channelContent.spaceId
         if (parentSpace === undefined) {
@@ -150,6 +151,7 @@ function toZionCasablancaRoom(
             ?.view.spaceContent.spaceChannelsMetadata.get(streamId)
         name = channelMetadata?.name ?? ''
         topic = channelMetadata?.topic
+        isDefault = channelMetadata?.isDefault ?? false
     } else {
         name = info.filter((i) => i !== undefined).find((i) => i.networkId == streamId)?.name ?? ''
     }
@@ -163,6 +165,7 @@ function toZionCasablancaRoom(
         membersMap: membersMap,
         isSpaceRoom: isSpaceStreamId(streamId),
         topic: topic,
+        isDefault: isDefault,
     }
 }
 

@@ -45,9 +45,9 @@ describe('write messages', () => {
         const tx1 = await bob.updateRoleTransaction(
             spaceId,
             2,
-            'Member',
-            [Permission.Read, Permission.Write],
-            [councilToken, membershipToken],
+            'Read only',
+            [Permission.Read],
+            [membershipToken],
             [],
             bob.wallet,
         )
@@ -56,9 +56,9 @@ describe('write messages', () => {
         // create read only role
         const tx2 = await bob.createRoleTransaction(
             spaceId,
-            'Read only',
-            [Permission.Read],
-            [membershipToken],
+            'Member',
+            [Permission.Read, Permission.Write],
+            [councilToken, membershipToken],
             [],
             bob.wallet,
         )
@@ -79,6 +79,14 @@ describe('write messages', () => {
         if (!channelId) {
             throw new Error('Failed to create room')
         }
+
+        const spaceContent = Array.from(
+            bob.casablancaClient?.streams
+                .get(spaceId)
+                ?.view.spaceContent.spaceChannelsMetadata.entries() ?? [],
+        )
+        const defaultChannelId = spaceContent.at(0)?.[0]
+        console.log('defaultChannelId', defaultChannelId)
 
         // /** Act */
         // invite user to join the space by first checking if they can read.

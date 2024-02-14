@@ -100,6 +100,7 @@ export interface Room {
     inviter?: string
     isSpaceRoom: boolean
     topic?: string
+    isDefault: boolean
 }
 
 export interface Rooms {
