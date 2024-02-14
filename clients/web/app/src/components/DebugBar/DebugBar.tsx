@@ -423,7 +423,10 @@ const DebugBar = ({
                     </>
                 ) : (
                     <>
-                        {accountAbstractionConfig && '4337 ON'}
+                        <Text size="sm">
+                            {accountAbstractionConfig && '4337 ON'}
+                            {accountAbstractionConfig?.paymasterProxyUrl && ' $$'}
+                        </Text>
 
                         <Box>
                             {synced && (

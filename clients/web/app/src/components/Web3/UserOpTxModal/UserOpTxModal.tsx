@@ -6,10 +6,24 @@ import { useBalance } from 'wagmi'
 import { Box, Button, Heading, Icon, IconButton, Text } from '@ui'
 import { shortAddress } from 'ui/utils/utils'
 import { ButtonSpinner } from 'ui/components/Spinner/ButtonSpinner'
+import { ModalContainer } from '@components/Modals/ModalContainer'
 import { formatEthDisplay } from '../utils'
 import { CopyWalletAddressButton } from '../TokenVerification/Buttons'
 
 export function UserOpTxModal({ additionalWei }: { additionalWei?: bigint }) {
+    const { currOpGas, deny } = userOpsStore()
+
+    if (!currOpGas) {
+        return null
+    }
+    return (
+        <ModalContainer minWidth="auto" onHide={() => deny?.()}>
+            <UserOpTxModalContent additionalWei={additionalWei} />
+        </ModalContainer>
+    )
+}
+
+function UserOpTxModalContent({ additionalWei }: { additionalWei?: bigint }) {
     const { currOpGas, confirm, deny, smartAccountAddress } = userOpsStore()
     const gasPrice = currOpGas?.maxFeePerGas ?? 0.0
     const gasLimit = currOpGas?.callGasLimit ?? 0.0

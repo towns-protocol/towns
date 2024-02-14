@@ -27,6 +27,8 @@ import { useRequireTransactionNetwork } from 'hooks/useRequireTransactionNetwork
 import { useContractRoles } from 'hooks/useContractRoles'
 import { ModalContainer } from '@components/Modals/ModalContainer'
 import { useCurrentWalletEqualsSignedInAccount } from 'hooks/useCurrentWalletEqualsSignedInAccount'
+import { UserOpTxModal } from '@components/Web3/UserOpTxModal/UserOpTxModal'
+import { mapToErrorMessage } from '../utils'
 
 type Props = {
     spaceId: string
@@ -96,6 +98,8 @@ export const CreateChannelForm = (props: Props) => {
 
     const errorBox = useMemo(() => {
         let errMsg: string | undefined = undefined
+        // TODO: refactor error handling to use Web3/utils.mapToErrorMessage
+        // https://linear.app/hnt-labs/issue/HNT-4621/refactor-create-channel-and-edit-channel-error-reporting
         switch (true) {
             case transactionError instanceof SignerUndefinedError:
                 errMsg = 'Wallet is not connected'
@@ -117,7 +121,8 @@ export const CreateChannelForm = (props: Props) => {
                 errMsg = undefined
                 break
         }
-        if (errMsg) {
+        // mapToErrorMessage(transactionError) handles more cases that might result in not showing the error message to a user - i.e. transasction rejected by user
+        if (errMsg && mapToErrorMessage(transactionError)) {
             return (
                 <Box paddingBottom="sm" flexDirection="row" justifyContent="end">
                     <ErrorMessageText message={errMsg} />
@@ -317,13 +322,24 @@ export const CreateChannelFormContainer = ({ spaceId, onHide }: Omit<Props, 'onC
         [navigate, spaceId, onHide],
     )
 
-    return <CreateChannelForm spaceId={spaceId} onHide={onHide} onCreateChannel={onCreateChannel} />
+    return (
+        <>
+            <CreateChannelForm
+                spaceId={spaceId}
+                onHide={onHide}
+                onCreateChannel={onCreateChannel}
+            />
+            <UserOpTxModal />
+        </>
+    )
 }
 
 export const CreateChannelFormModal = ({ spaceId, onHide }: Omit<Props, 'onCreateChannel'>) => {
     return (
-        <ModalContainer onHide={onHide}>
-            <CreateChannelFormContainer spaceId={spaceId} onHide={onHide} />
-        </ModalContainer>
+        <>
+            <ModalContainer onHide={onHide}>
+                <CreateChannelFormContainer spaceId={spaceId} onHide={onHide} />
+            </ModalContainer>
+        </>
     )
 }

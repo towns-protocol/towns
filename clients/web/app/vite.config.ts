@@ -68,7 +68,8 @@ export default ({ mode }: { mode: string }) => {
         define: {
             APP_VERSION: JSON.stringify(process.env.npm_package_version),
             APP_COMMIT_HASH: JSON.stringify(commitHash),
-            ...(mode === 'development'
+            // userops mode is used for loading env.userops.local
+            ...(mode === 'development' || mode === 'userops'
                 ? {
                       'process.env': {
                           NODE_ENV: JSON.stringify(mode),

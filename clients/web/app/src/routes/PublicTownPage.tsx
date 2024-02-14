@@ -6,7 +6,6 @@ import { Permission, useHasPermission, useMyProfile } from 'use-zion-client'
 import { isAddress } from 'viem'
 
 import { Allotment } from 'allotment'
-import { userOpsStore } from '@towns/userops'
 import { TokenVerification } from '@components/Web3/TokenVerification/TokenVerification'
 import { Avatar } from '@components/Avatar/Avatar'
 import { ClipboardCopy } from '@components/ClipboardCopy/ClipboardCopy'
@@ -56,8 +55,6 @@ export const PublicTownPage = () => {
         })
 
     const { joinSpace, errorMessage, isNoFundsError } = useJoinTown(spaceInfo?.networkId)
-
-    const { currOpGas, deny } = userOpsStore()
 
     const onJoinClick = useCallback(async () => {
         if (meetsMembershipRequirements) {
@@ -140,11 +137,7 @@ export const PublicTownPage = () => {
                 </ModalContainer>
             )}
 
-            {currOpGas && (
-                <ModalContainer minWidth="auto" onHide={() => deny?.()}>
-                    <UserOpTxModal />
-                </ModalContainer>
-            )}
+            <UserOpTxModal />
         </>
     ) : isLoading ? (
         <WelcomeLayout debugText="fetching town data" />

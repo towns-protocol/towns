@@ -44,6 +44,7 @@ import { RoleRow } from '@components/SpaceSettingsPanel/RoleSettingsPermissions'
 import { ModalContainer } from '@components/Modals/ModalContainer'
 import { createTokenEntitlementStruct } from '@components/Web3/utils'
 import { FullPanelOverlay } from '@components/Web3/WalletLinkingPanel'
+import { UserOpTxModal } from '@components/Web3/UserOpTxModal/UserOpTxModal'
 import { convertToNumber, splitKeyToContractAddressAndTokenId } from './utils'
 import { formSchema } from './schema'
 import { TokenPillSelector } from './TokenPillSelector'
@@ -245,6 +246,8 @@ export function SingleRolePanel() {
                     <FullPanelOverlay withSpinner={false} />
                 </Stack>
             )}
+
+            <UserOpTxModal />
         </Panel>
     )
 }

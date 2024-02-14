@@ -148,7 +148,14 @@ function MonitoringNotification(props: ToastProps & { toast: Toast }) {
         }
         setStatus(_tx.status)
 
-        if (_tx.status === 'success') {
+        if (_tx.status === 'failure') {
+            const errorMessage = mapToErrorMessage(_tx.error)
+            // if the error message is empty, the user rejected the tx and we can dismiss the toast
+            if (!errorMessage) {
+                headlessToast.dismiss(toast.id)
+                return
+            }
+        } else if (_tx.status === 'success') {
             onSuccess()
         }
     })
@@ -169,6 +176,11 @@ function MonitoringNotification(props: ToastProps & { toast: Toast }) {
                 break
         }
     }, [rolesParam, searchParams, setSearchParams, tx.type])
+
+    // prevent flash when user rejects tx
+    if (tx.status === 'failure' && !errorMessage) {
+        return null
+    }
 
     return (
         <Box gap width="300" justifyContent="spaceBetween">

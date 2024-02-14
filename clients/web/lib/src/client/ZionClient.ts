@@ -49,6 +49,7 @@ import {
     BlockchainTransactionType,
     ReceiptType,
     TransactionOrUserOperation,
+    Address,
 } from '../types/web3-types'
 import {
     createSpaceDapp,
@@ -1563,7 +1564,17 @@ export class ZionClient implements EntitlementsDelegate {
         })
 
         try {
-            if (this.isAccountAbstractionEnabled()) {
+            // evan 2.13.24 - wallet link contract needs update for this to work
+            // see https://linear.app/hnt-labs/issue/HNT-4908/refactor-wallet-linking-for-smart-accounts-or-dont-use-it-with-smart
+            // we need to link the smart account to root account when either creating or joining a space
+            // other scenarios for wallet linking do not work with smart accounts + current wallet link contract
+            if (
+                this.isAccountAbstractionEnabled() &&
+                (await wallet.getAddress()) ===
+                    (await this.userOps?.getAbstractAccountAddress({
+                        rootKeyAddress: (await rootKey.getAddress()) as Address,
+                    }))
+            ) {
                 transaction = await this.userOps?.sendWalletLinkOp([rootKey, wallet])
             } else {
                 transaction = await walletLink.linkWallet(rootKey, wallet)
@@ -1600,13 +1611,20 @@ export class ZionClient implements EntitlementsDelegate {
     ): Promise<WalletLinkTransactionContext> {
         const walletLink = this.spaceDapp.getWalletLink()
 
-        let transaction: ContractTransaction | undefined = undefined
+        let transaction: TransactionOrUserOperation | undefined = undefined
         let error: Error | undefined = undefined
         const continueStoreTx = this.blockchainTransactionStore.begin({
             type: BlockchainTransactionType.UnlinkWallet,
         })
 
         try {
+            // evan 2.13.24 - wallet link contract needs update for this to work
+            // see https://linear.app/hnt-labs/issue/HNT-4908/refactor-wallet-linking-for-smart-accounts-or-dont-use-it-with-smart
+            // if (this.isAccountAbstractionEnabled()) {
+            //     transaction = await this.userOps?.sendRemoveWalletLinkOp([rootKey, walletAddress])
+            // } else {
+            //     transaction = await walletLink.removeLink(rootKey, walletAddress)
+            // }
             transaction = await walletLink.removeLink(rootKey, walletAddress)
         } catch (err) {
             const parsedError = walletLink.parseError(err)

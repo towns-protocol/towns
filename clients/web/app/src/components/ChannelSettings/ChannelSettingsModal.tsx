@@ -5,8 +5,8 @@ import {
     TransactionStatus,
     UpdateChannelInfo,
     WalletDoesNotMatchSignedInAccountError,
+    useIsTransactionPending,
     useRoom,
-    useTransactionStore,
     useUpdateChannelTransaction,
 } from 'use-zion-client'
 import React, { useCallback, useMemo, useState } from 'react'
@@ -22,6 +22,8 @@ import { TransactionButton } from '@components/TransactionButton'
 import { useAllRoleDetails } from 'hooks/useAllRoleDetails'
 import { useRequireTransactionNetwork } from 'hooks/useRequireTransactionNetwork'
 import { useCurrentWalletEqualsSignedInAccount } from 'hooks/useCurrentWalletEqualsSignedInAccount'
+import { UserOpTxModal } from '@components/Web3/UserOpTxModal/UserOpTxModal'
+import { mapToErrorMessage } from '@components/Web3/utils'
 import { FormState, FormStateKeys, emptyDefaultValues, schema } from './formConfig'
 import { ModalContainer } from '../Modals/ModalContainer'
 import { RoleCheckboxProps, RolesSection, getCheckedValuesForRoleIdsField } from './RolesSection'
@@ -153,6 +155,8 @@ export function ChannelSettingsForm({
 
     const errorBox = useMemo(() => {
         let errMsg: string | undefined = undefined
+        // TODO: refactor error handling to use Web3/utils.mapToErrorMessage
+        // https://linear.app/hnt-labs/issue/HNT-4621/refactor-create-channel-and-edit-channel-error-reporting
         switch (true) {
             case transactionError instanceof SignerUndefinedError:
                 errMsg = 'Wallet is not connected'
@@ -174,7 +178,8 @@ export function ChannelSettingsForm({
                 errMsg = undefined
                 break
         }
-        if (errMsg) {
+        // mapToErrorMessage(transactionError) handles more cases that might result in not showing the error message to a user - i.e. transasction rejected by user
+        if (errMsg && mapToErrorMessage(transactionError)) {
             return (
                 <Box paddingBottom="sm" flexDirection="row" justifyContent="end">
                     <ErrorMessageText message={errMsg} />
@@ -322,29 +327,33 @@ export function ChannelSettingsModal({
     onHide,
     onUpdatedChannel,
 }: ChannelSettingsModalProps): JSX.Element {
-    const storedTransactions = useTransactionStore()
     const [transactionMessage, setTransactionMessage] = useState<string | undefined>()
+    const hasPendingTx = useIsTransactionPending(BlockchainTransactionType.EditChannel)
 
     const _onHide = useCallback(() => {
-        const pendingTransaction = Object.values(storedTransactions).some(
-            (v) => v.type === BlockchainTransactionType.EditChannel,
-        )
-        if (pendingTransaction) {
+        if (hasPendingTx) {
             setTransactionMessage('Please wait for the transaction to complete.')
             return
         }
         onHide()
-    }, [onHide, storedTransactions])
+    }, [onHide, hasPendingTx])
 
     return (
-        <ModalContainer key={`${spaceId}_${channelId}}`} touchTitle="Edit Channel" onHide={_onHide}>
-            <ChannelSettingsForm
-                spaceId={spaceId}
-                preventCloseMessage={transactionMessage}
-                channelId={channelId}
-                onHide={onHide}
-                onUpdatedChannel={onUpdatedChannel}
-            />
-        </ModalContainer>
+        <>
+            <ModalContainer
+                key={`${spaceId}_${channelId}}`}
+                touchTitle="Edit Channel"
+                onHide={_onHide}
+            >
+                <ChannelSettingsForm
+                    spaceId={spaceId}
+                    preventCloseMessage={transactionMessage}
+                    channelId={channelId}
+                    onHide={onHide}
+                    onUpdatedChannel={onUpdatedChannel}
+                />
+            </ModalContainer>
+            <UserOpTxModal />
+        </>
     )
 }

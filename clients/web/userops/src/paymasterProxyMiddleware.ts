@@ -23,7 +23,7 @@ const zSchema: z.ZodType<PaymasterProxyResponse> = z.object({
 type PaymasterProxyPostData = IUserOperation & {
     rootKeyAddress: string
     functionHash: string
-    townId: string
+    townId: string | undefined
 }
 
 export const paymasterProxyMiddleware: ({
@@ -54,15 +54,23 @@ export const paymasterProxyMiddleware: ({
 
         async function fallbackEstimate() {
             if (provider) {
-                await Presets.Middleware.estimateUserOperationGas(
-                    new BundlerJsonRpcProvider(rpcUrl).setBundlerRpc(bundlerUrl),
-                )(ctx)
-                return {
-                    maxFeePerGas: ctx.op.maxFeePerGas,
-                    maxPriorityFeePerGas: ctx.op.maxPriorityFeePerGas,
-                    preverificationGas: ctx.op.preVerificationGas,
-                    verificationGasLimit: ctx.op.verificationGasLimit,
-                    callGasLimit: ctx.op.callGasLimit,
+                try {
+                    await Presets.Middleware.estimateUserOperationGas(
+                        new BundlerJsonRpcProvider(rpcUrl).setBundlerRpc(bundlerUrl),
+                    )(ctx)
+                    return {
+                        maxFeePerGas: ctx.op.maxFeePerGas,
+                        maxPriorityFeePerGas: ctx.op.maxPriorityFeePerGas,
+                        preverificationGas: ctx.op.preVerificationGas,
+                        verificationGasLimit: ctx.op.verificationGasLimit,
+                        callGasLimit: ctx.op.callGasLimit,
+                    }
+                } catch (error) {
+                    console.error(
+                        '[paymasterProxyMiddleware] error estimating gas for user operation that was rejected by paymaster:',
+                        error,
+                    )
+                    throw error
                 }
             }
         }
@@ -108,9 +116,17 @@ export const paymasterProxyMiddleware: ({
             if (!functionHashForPaymasterProxy) {
                 throw new Error('functionHashForPaymasterProxy is required')
             }
-            if (!townId) {
-                throw new Error('townId is required')
+
+            if (
+                !townId &&
+                functionHashForPaymasterProxy !== 'linkWallet' &&
+                functionHashForPaymasterProxy !== 'removeLink'
+            ) {
+                throw new Error(
+                    '[paymasterProxyMiddleware] townId is required for all non wallet-linking operations',
+                )
             }
+
             const userOp: PaymasterProxyPostData = {
                 ...ctx.op,
                 functionHash: functionHashForPaymasterProxy,

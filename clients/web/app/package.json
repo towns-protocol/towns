@@ -8,6 +8,7 @@
         "build-preview": "yarn build && yarn preview --port 3002",
         "coverage": "vitest run --coverage",
         "dev": "vite",
+        "dev:userops": "yarn dev --mode userops",
         "lint": "eslint .  --max-warnings=0",
         "lint:fix": "yarn lint --fix",
         "preview": "vite preview",
