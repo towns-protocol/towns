@@ -64,8 +64,8 @@ resource "aws_ecs_task_definition" "task_definition" {
   task_role_arn      = aws_iam_role.ecs_task_execution_role.arn
   execution_role_arn = aws_iam_role.ecs_task_execution_role.arn
 
-  cpu    = 1024
-  memory = 2048
+  cpu    = 8192
+  memory = 16384
 
   requires_compatibilities = ["FARGATE"]
 
@@ -84,8 +84,8 @@ resource "aws_ecs_task_definition" "task_definition" {
       protocol      = "tcp"
     }]
 
-    cpu    = 1024
-    memory = 2048
+    cpu    = 8192
+    memory = 16384
     environment = [
       {
         name  = "MODE",
@@ -101,7 +101,7 @@ resource "aws_ecs_task_definition" "task_definition" {
       },
       {
         name  = "NUM_FOLLOWERS",
-        value = "10"
+        value = tostring(var.num_followers)
       },
       {
         name  = "RIVER_NODE_URL",
@@ -117,7 +117,7 @@ resource "aws_ecs_task_definition" "task_definition" {
       },
       {
         name  = "LOAD_TEST_DURATION_MS",
-        value = "600000" #10 min
+        value = tostring(var.loadtest_duration)
       },
       {
         name  = "REDIS_HOST",
@@ -166,4 +166,32 @@ module "leader_ecs_sg" {
 
   egress_cidr_blocks = ["0.0.0.0/0"]
   egress_rules       = ["all-all"]
+}
+
+resource "aws_ecs_service" "leader_ecs_service" {
+  name                               = "${local.name}-service"
+  cluster                            = var.ecs_cluster.id
+  task_definition                    = aws_ecs_task_definition.task_definition.arn
+  desired_count                      = 0
+  deployment_minimum_healthy_percent = 0
+  deployment_maximum_percent         = 100
+
+  launch_type      = "FARGATE"
+  platform_version = "1.4.0"
+
+  lifecycle {
+    ignore_changes = [desired_count]
+  }
+
+  network_configuration {
+    security_groups  = [module.leader_ecs_sg.security_group_id]
+    subnets          = var.subnets
+    assign_public_ip = false
+  }
+
+  timeouts {
+    create = "60m"
+    delete = "60m"
+  }
+  tags = local.custom_tags
 }

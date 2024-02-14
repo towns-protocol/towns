@@ -39,7 +39,8 @@ module "redis_sg" {
 
 locals {
   # TODO: we should allow this to be configured at runtime, not infra time.
-  num_followers = 10
+  num_followers     = 100
+  loadtest_duration = 1800000
 }
 
 resource "aws_elasticache_cluster" "redis" {
@@ -63,11 +64,15 @@ module "leader" {
   base_chain_rpc_url = var.base_chain_rpc_url
   river_node_url     = var.river_node_url
   redis_url          = aws_elasticache_cluster.redis.cache_nodes[0].address
-  tags               = module.global_constants.tags
   num_followers      = local.num_followers
+  loadtest_duration  = local.loadtest_duration
+
+  tags = module.global_constants.tags
 }
 
 module "follower" {
+  count              = local.num_followers
+  follower_id        = count.index + 1
   source             = "./follower"
   vpc_id             = var.vpc_id
   subnets            = var.private_subnets
@@ -75,5 +80,7 @@ module "follower" {
   base_chain_rpc_url = var.base_chain_rpc_url
   river_node_url     = var.river_node_url
   redis_url          = aws_elasticache_cluster.redis.cache_nodes[0].address
-  tags               = module.global_constants.tags
+  loadtest_duration  = local.loadtest_duration
+
+  tags = module.global_constants.tags
 }

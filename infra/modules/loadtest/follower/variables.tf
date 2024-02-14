@@ -36,3 +36,12 @@ variable "redis_url" {
   description = "redis endpoint to pass as an environment details"
   type        = string
 }
+
+variable "loadtest_duration" {
+  description = "number of follower nodes"
+  type        = number
+}
+
+variable "follower_id" {
+  type = number
+}
