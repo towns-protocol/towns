@@ -13,8 +13,8 @@ export NUM_INSTANCES=1
 export REPL_FACTOR=1
 export RPC_PORT=5157
 export RUN_BASE=./run_files/single
-export USE_BLOCKCHAIN_STREAM_REGISTRY=true
-export USE_CONTRACT=true
+export DISABLE_RIVER_CHAIN=false
+export DISABLE_BASE_CHAIN=false
 
 # Parse command-line options
 RUN_OPT="-c -r"
@@ -35,8 +35,7 @@ while [[ "$#" -gt 0 ]]; do
             METRICS_ENABLED=false
             METRICS_PORT=8082
             RPC_PORT=5158
-            USE_BLOCKCHAIN_STREAM_REGISTRY=true
-            USE_CONTRACT=false
+            DISABLE_BASE_CHAIN=true
             shift
             ;;
         *)

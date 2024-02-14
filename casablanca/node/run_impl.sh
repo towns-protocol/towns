@@ -12,8 +12,8 @@ export METRICS_PORT="${METRICS_PORT:-8010}"
 export NUM_INSTANCES="${NUM_INSTANCES:-10}"
 export REPL_FACTOR="${REPL_FACTOR:-1}"
 export RPC_PORT="${RPC_PORT:-5170}"
-export USE_BLOCKCHAIN_STREAM_REGISTRY="${USE_BLOCKCHAIN_STREAM_REGISTRY:-true}"
-export USE_CONTRACT="${USE_CONTRACT:-true}"
+export DISABLE_RIVER_CHAIN="${DISABLE_RIVER_CHAIN:-false}"
+export DISABLE_BASE_CHAIN="${DISABLE_BASE_CHAIN:-false}"
 
 CONFIG=false
 RUN=false
@@ -53,7 +53,7 @@ if [ "$CONFIG" == "true" ]; then
     cp -r ./run_files/addresses ${RUN_BASE}/addresses
     SAVE_DEPLOYMENTS_PATH=casablanca/node/${RUN_BASE}/addresses ../../scripts/deploy-river-registry.sh
 
-    if [ "$USE_BLOCKCHAIN_STREAM_REGISTRY" == "true" ]; then
+    if [ "$DISABLE_RIVER_CHAIN" != "true" ]; then
         source ../../contracts/.env.localhost
         RIVER_REGISTRY_ADDRESS=$(jq -r .address ${RUN_BASE}/addresses/riverRegistry.json)
     fi
@@ -69,7 +69,7 @@ if [ "$CONFIG" == "true" ]; then
         ./config_instance.sh
 
         NODE_ADDRESS=$(cat ${RUN_BASE}/$INSTANCE/wallet/node_address)
-        if [ "$USE_BLOCKCHAIN_STREAM_REGISTRY" == "true" ]; then
+        if [ "$DISABLE_RIVER_CHAIN" != "true" ]; then
             echo "Adding node record to blockchain river registry"
             cast send \
                 --rpc-url http://127.0.0.1:8546 \
@@ -81,7 +81,7 @@ if [ "$CONFIG" == "true" ]; then
         fi
     done
 
-    if [ "$USE_BLOCKCHAIN_STREAM_REGISTRY" == "true" ]; then
+    if [ "$DISABLE_RIVER_CHAIN" != "true" ]; then
         echo "Node records in contract:"
         cast call \
             --rpc-url http://127.0.0.1:8546 \
@@ -109,7 +109,7 @@ if [ "$RUN" == "true" ]; then
 
         pushd $INSTANCE
         echo "Running instance '$INSTANCE' with extra aguments: '${args[@]:-}'"
-        if [ "$USE_BLOCKCHAIN_STREAM_REGISTRY" == "true" ]; then
+        if [ "$DISABLE_RIVER_CHAIN" != "true" ]; then
             echo "And funding it with 1 ETH"
             cast rpc -r http://127.0.0.1:8546 anvil_setBalance `cat ./wallet/node_address` 10000000000000000000
         fi

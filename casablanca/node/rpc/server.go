@@ -131,7 +131,7 @@ func StartServer(
 	}
 
 	var chainAuth auth.ChainAuth
-	if cfg.UseContract {
+	if !cfg.DisableBaseChain {
 		baseChain, err := crypto.NewReadOnlyBlockchain(ctx, &cfg.BaseChain)
 		if err != nil {
 			log.Error("Failed to initialize blockchain for base", "error", err, "chain_config", cfg.BaseChain)
@@ -164,7 +164,7 @@ func StartServer(
 	var nodeRegistry nodes.NodeRegistry
 	var streamRegistry nodes.StreamRegistry
 	var registryContract *registries.RiverRegistryContract
-	if cfg.UseBlockChainStreamRegistry {
+	if !cfg.DisableRiverChain {
 		if riverchain == nil {
 			riverchain, err = crypto.NewReadWriteBlockchain(ctx, &cfg.RiverChain, wallet)
 			if err != nil {
@@ -395,7 +395,7 @@ func StartServer(
 	log.Info("Server started", "port", port, "https", https)
 
 	log.Info("Using DB", "url", cfg.Database)
-	if cfg.UseContract {
+	if !cfg.DisableBaseChain {
 		log.Info("Using chain", "id", cfg.BaseChain.ChainId)
 	} else {
 		log.Info("Running Without Entitlements")

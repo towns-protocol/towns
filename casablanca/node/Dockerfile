@@ -25,13 +25,13 @@ RUN SKIP_GENKEY=true \
     INSTANCE=docker-single-node \
     RPC_PORT=5157 \
     DB_PORT=null \
-    USE_CONTRACT=true \
+    DISABLE_BASE_CHAIN=false \
     METRICS_ENABLED=false \
     METRICS_PORT=null \
     LOG_NOCOLOR=true \
     LOG_LEVEL=info \
     REPL_FACTOR=1 \
-    USE_BLOCKCHAIN_STREAM_REGISTRY=false \
+    DISABLE_RIVER_CHAIN=true \
     ./config_instance.sh
 
 RUN SKIP_GENKEY=true \
@@ -39,13 +39,13 @@ RUN SKIP_GENKEY=true \
     INSTANCE=docker-multi-node \
     RPC_PORT=5157 \
     DB_PORT=null \
-    USE_CONTRACT=true \
+    DISABLE_BASE_CHAIN=false \
     METRICS_ENABLED=false \
     METRICS_PORT=null \
     LOG_NOCOLOR=true \
     LOG_LEVEL=info \
     REPL_FACTOR=1 \
-    USE_BLOCKCHAIN_STREAM_REGISTRY=true \
+    DISABLE_RIVER_CHAIN=false \
     ./config_instance.sh
 
 FROM alpine:latest

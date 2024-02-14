@@ -54,10 +54,10 @@ type Config struct {
 	// Used to disable functionality for some testing setups.
 
 	// Disable base chain contract usage.
-	UseContract bool
+	DisableBaseChain bool
 
 	// Disable river chain contract usage.
-	UseBlockChainStreamRegistry bool
+	DisableRiverChain bool
 }
 
 type DatabaseConfig struct {

@@ -81,5 +81,5 @@ stream:
         uset: 10
 
 # Debug feature flags.
-useBlockchainStreamRegistry: <USE_BLOCKCHAIN_STREAM_REGISTRY>
-useContract: <USE_CONTRACT>
+disableRiverChain: <DISABLE_RIVER_CHAIN>
+disableBaseChain: <DISABLE_BASE_CHAIN>

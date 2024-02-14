@@ -266,12 +266,11 @@ func testServerAndClient(
 	ctx context.Context,
 	dbUrl string,
 	dbSchemaName string,
-	useContract bool,
 ) (protocolconnect.StreamServiceClient, string, func()) {
 	cfg := &config.Config{
-		UseContract: useContract,
-		Database:    config.DatabaseConfig{Url: dbUrl},
-		StorageType: "postgres",
+		DisableBaseChain: true,
+		Database:         config.DatabaseConfig{Url: dbUrl},
+		StorageType:      "postgres",
 		Stream: config.StreamConfig{
 			Media: config.MediaStreamConfig{
 				MaxChunkCount: 100,
@@ -282,7 +281,6 @@ func testServerAndClient(
 				Generations: 5,
 			},
 		},
-		UseBlockChainStreamRegistry: true,
 	}
 
 	infra.InitLogFromConfig(&cfg.Log)
@@ -346,7 +344,7 @@ func testServerAndClient(
 
 func TestMethods(t *testing.T) {
 	ctx := test.NewTestContext()
-	client, _, closer := testServerAndClient(t, ctx, testDatabaseUrl, testSchemaName, false)
+	client, _, closer := testServerAndClient(t, ctx, testDatabaseUrl, testSchemaName)
 	wallet1, _ := crypto.NewWallet(ctx)
 	wallet2, _ := crypto.NewWallet(ctx)
 
@@ -557,7 +555,7 @@ func TestMethods(t *testing.T) {
 
 func TestRiverDeviceId(t *testing.T) {
 	ctx := test.NewTestContext()
-	client, _, closer := testServerAndClient(t, ctx, testDatabaseUrl, testSchemaName, false)
+	client, _, closer := testServerAndClient(t, ctx, testDatabaseUrl, testSchemaName)
 	wallet, _ := crypto.NewWallet(ctx)
 	deviceWallet, _ := crypto.NewWallet(ctx)
 	defer closer()
@@ -633,7 +631,7 @@ func TestSyncStreams(t *testing.T) {
 	*/
 	// create the test client and server
 	ctx := test.NewTestContext()
-	client, _, closer := testServerAndClient(t, ctx, testDatabaseUrl, testSchemaName, false)
+	client, _, closer := testServerAndClient(t, ctx, testDatabaseUrl, testSchemaName)
 	defer closer()
 	// create the streams for a user
 	wallet, _ := crypto.NewWallet(ctx)
@@ -706,7 +704,7 @@ func TestAddStreamsToSync(t *testing.T) {
 	*/
 	// create the test client and server
 	ctx := test.NewTestContext()
-	aliceClient, url, closer := testServerAndClient(t, ctx, testDatabaseUrl, testSchemaName, false)
+	aliceClient, url, closer := testServerAndClient(t, ctx, testDatabaseUrl, testSchemaName)
 	defer closer()
 	// create alice's wallet and streams
 	aliceWallet, _ := crypto.NewWallet(ctx)
@@ -820,7 +818,7 @@ func TestRemoveStreamsFromSync(t *testing.T) {
 	*/
 	// create the test client and server
 	ctx := test.NewTestContext()
-	aliceClient, url, closer := testServerAndClient(t, ctx, testDatabaseUrl, testSchemaName, false)
+	aliceClient, url, closer := testServerAndClient(t, ctx, testDatabaseUrl, testSchemaName)
 	defer closer()
 	// create alice's wallet and streams
 	aliceWallet, _ := crypto.NewWallet(ctx)
@@ -974,7 +972,7 @@ func TestRemoveStreamsFromSync(t *testing.T) {
 // TODO: revamp with block support
 func DisableTestManyUsers(t *testing.T) {
 	ctx := test.NewTestContext()
-	client, _, closer := testServerAndClient(t, ctx, testDatabaseUrl, testSchemaName, false)
+	client, _, closer := testServerAndClient(t, ctx, testDatabaseUrl, testSchemaName)
 	defer closer()
 
 	totalUsers := 14

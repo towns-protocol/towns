@@ -2,7 +2,7 @@
 set -euo pipefail
 cd -P -- "$(dirname -- "${BASH_SOURCE[0]}")"
 
-export USE_CONTRACT="${USE_CONTRACT:-true}"
+export DISABLE_BASE_CHAIN="${DISABLE_BASE_CHAIN:-false}"
 export METRICS_ENABLED="${METRICS_ENABLED:-true}"
 export RUN_BASE="${RUN_BASE:-./run_files/multi_ent}"
 
@@ -11,7 +11,7 @@ args=() # Collect arguments to pass to the last command
 while [[ "$#" -gt 0 ]]; do
     case "$1" in
         --disable_entitlements|--de)
-            USE_CONTRACT=false
+            DISABLE_BASE_CHAIN=true
             METRICS_ENABLED=false
             RUN_BASE="./run_files/multi_ne"
             shift
