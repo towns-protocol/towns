@@ -56,6 +56,14 @@ jobs:
             - name: Build town types
               run: ./scripts/build-town-types.sh localhost --frozen
 
+            - name: Setup River CA for testing certificates
+              run: ./scripts/register-ca.sh
+              working-directory: casablanca
+
+            - name: Set up Custom CA Certificate for Node.js
+              run: |
+                echo "NODE_EXTRA_CA_CERTS=$HOME/river-ca-cert.pem" >> $GITHUB_ENV
+
             - name: Run Synthetic Test
               run: yarn test:ci:synthetic:all
               env:

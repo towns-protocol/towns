@@ -8,8 +8,12 @@ import (
 	"sync"
 	"time"
 
+	"connectrpc.com/connect"
+	"github.com/river-build/river/config"
 	"github.com/river-build/river/dlog"
-	"golang.org/x/net/http2"
+	"github.com/river-build/river/http_client"
+	"github.com/river-build/river/protocol"
+	"github.com/river-build/river/protocol/protocolconnect"
 )
 
 const multiHtmlTemplate = `
@@ -72,7 +76,7 @@ type HTTPResponseInfo struct {
 }
 
 // Initializes the template and returns a HTTP handler function
-func MultiHandler(ctx context.Context, streamService *Service) http.HandlerFunc {
+func MultiHandler(ctx context.Context, cfg *config.Config, streamService *Service) http.HandlerFunc {
 	log := dlog.FromCtx(ctx)
 
 	tmpl, err := template.New("multistats").Parse(multiHtmlTemplate)
@@ -93,7 +97,7 @@ func MultiHandler(ctx context.Context, streamService *Service) http.HandlerFunc 
 			}{
 				Results:   make(map[string][]HTTPResponseInfo),
 				Nodes:     []string{},
-				Protocols: []string{"HTTP/1", "HTTP/2"},
+				Protocols: []string{"HTTP", "GRPC"},
 			}
 
 			var mutex = &sync.Mutex{}
@@ -127,32 +131,74 @@ func MultiHandler(ctx context.Context, streamService *Service) http.HandlerFunc 
 				mutex.Unlock()
 			}
 
+			makeInfoRequest := func(s protocolconnect.StreamServiceClient, node string) {
+				defer wg.Done()
+
+				start := time.Now()
+
+				status := 200
+
+				resp, err := s.Info(ctx, connect.NewRequest(&protocol.InfoRequest{}))
+
+				if err != nil {
+					log.Error("Error fetching info", "err", err)
+					status = 500
+
+				}
+
+				if (resp == nil) || (resp.Msg == nil) {
+					log.Error("Error fetching info", "err", "resp or resp.Msg is nil")
+					status = 500
+				}
+
+				elapsed := time.Since(start)
+
+				responseInfo := HTTPResponseInfo{
+					Protocol:     "GRPC",
+					ResponseTime: elapsed,
+					StatusCode:   status,
+				}
+
+				mutex.Lock()
+				data.Results[node] = append(data.Results[node], responseInfo)
+				mutex.Unlock()
+			}
+
 			numNode := streamService.nodeRegistry.NumNodes()
 			for i := 0; i < numNode; i++ {
+				client, err := http_client.GetHttpClient(ctx)
+				if err != nil {
+					log.Error("Error getting http client", "err", err)
+				}
 
-				// HTTP/1 Client
-				httpClient1 := &http.Client{}
-
-				// HTTP/2 Client
-				http2Transport := &http2.Transport{}
-				httpClient2 := &http.Client{Transport: http2Transport}
 				node, err := streamService.nodeRegistry.GetNodeRecordByIndex(i)
 				if err != nil {
 					log.Error("Error fetching node record", "err", err)
-					http.Error(w, "Internal Server Error", http.StatusInternalServerError)
-					continue
 				}
 
-				// Construct URL
-				url := fmt.Sprintf("%s/info", node.Url())
+				if !node.IsLocal() {
+					address, err := streamService.nodeRegistry.GetNodeAddressByIndex(i)
+					if err != nil {
+						log.Error("Error fetching node address", "err", err)
+					}
 
-				wg.Add(2)
+					s, err := streamService.nodeRegistry.GetStreamServiceClientForAddress(address)
+					if err != nil {
+						log.Error("Error fetching GetStreamServiceClientForAddress", "address", address, "err", err)
+					}
 
-				data.Nodes = append(data.Nodes, node.Url())
+					nodeUrl := node.GetUrl()
+					// Construct URL
+					url := fmt.Sprintf("%s/info", nodeUrl)
 
-				// Initiate both requests in parallel
-				go makeRequest(httpClient1, url, "HTTP/1", node.Url())
-				go makeRequest(httpClient2, url, "HTTP/2", node.Url())
+					wg.Add(2)
+
+					data.Nodes = append(data.Nodes, nodeUrl)
+
+					// Initiate both requests in parallel
+					go makeRequest(client, url, "HTTP", nodeUrl)
+					go makeInfoRequest(s, nodeUrl)
+				}
 
 			}
 			wg.Wait()

@@ -2,6 +2,8 @@ package rpc
 
 import (
 	"context"
+	"crypto/tls"
+	"encoding/base64"
 	"fmt"
 	"net"
 	"net/http"
@@ -259,7 +261,7 @@ func StartServer(
 		}
 	})
 
-	registerDebugHandlers(ctx, mux, cache, streamService)
+	registerDebugHandlers(ctx, cfg, mux, cache, streamService)
 
 	if listener == nil {
 		if cfg.Port == 0 {
@@ -273,6 +275,10 @@ func StartServer(
 			return nil, 0, nil, err
 		}
 		log.Info("Listening", "addr", address+streamServicePattern)
+	} else {
+		if cfg.Port != 0 {
+			log.Warn("Port is ignored when listener is provided")
+		}
 	}
 
 	corsMiddleware := cors.New(cors.Options{
@@ -294,18 +300,55 @@ func StartServer(
 		},
 	})
 
-	// For gRPC clients, it's convenient to support HTTP/2 without TLS. You can
-	// avoid x/net/http2 by using http.ListenAndServeTLS.
-	srv := &http.Server{
-		Handler: h2c.NewHandler(corsMiddleware.Handler(mux), &http2.Server{}),
-		BaseContext: func(_ net.Listener) context.Context {
-			return ctx
-		},
+	address := fmt.Sprintf("%s:%d", cfg.Address, cfg.Port)
+	var srv *http.Server
+	var https bool
+
+	if cfg.UsesHTTPS() {
+		if (cfg.TLSConfig.Cert != "") && (cfg.TLSConfig.Key != "") {
+			fileExists := func(filename string) bool {
+				_, err := os.Stat(filename)
+				return err == nil
+			}
+
+			isBase64 := func(s string) bool {
+				_, err := base64.StdEncoding.DecodeString(s)
+				return err == nil
+			}
+
+			decodeBase64 := func(s string) string {
+				decoded, err := base64.StdEncoding.DecodeString(s)
+				if err != nil {
+					return ""
+				}
+				return string(decoded)
+			}
+			if fileExists(cfg.TLSConfig.Cert) && fileExists(cfg.TLSConfig.Key) {
+				srv, err = createServerFromFile(ctx, address, corsMiddleware.Handler(mux), cfg.TLSConfig.Cert, cfg.TLSConfig.Key)
+				https = true
+			} else if isBase64(cfg.TLSConfig.Cert) && isBase64(cfg.TLSConfig.Key) {
+				srv, err = createServerFromStrings(ctx, address, corsMiddleware.Handler(mux), decodeBase64(cfg.TLSConfig.Cert), decodeBase64(cfg.TLSConfig.Key))
+				https = true
+			} else {
+				log.Warn("TLSConfig.Cert and TLSConfig.Key must be valid file paths or base64 encoded strings, Using H2C server instead of HTTPS")
+				srv, err = createH2CServer(ctx, address, corsMiddleware.Handler(mux))
+				https = false
+			}
+		} else {
+			log.Error("TLSConfig.Cert and TLSConfig.Key must be set")
+			return nil, 0, nil, err
+		}
+	} else {
+		log.Info("Using H2C server")
+		srv, err = createH2CServer(ctx, address, corsMiddleware.Handler(mux))
+		https = false
 	}
-	go func() {
-		err := srv.Serve(listener)
-		log.Info("Server stopped", "reason", err)
-	}()
+
+	if err != nil {
+		log.Error("failed to create server", "err", err)
+		return nil, 0, nil, err
+	}
+
 	closer := func() {
 		log.Info("closing server")
 
@@ -328,14 +371,100 @@ func StartServer(
 		}
 	}
 
-	log.Info("Using DB", "url", getDbURL(cfg.Database))
+	// Run the server with graceful shutdown
+	go func() {
+		defer listener.Close()
+
+		if https {
+			// Since we are using a custom TLS config, we pass empty strings for the cert and key files
+			if err := srv.ServeTLS(listener, "", ""); err != nil && err != http.ErrServerClosed {
+				log.Error("ServeTLS failed", "err", err)
+			}
+		} else {
+			if err := srv.Serve(listener); err != nil && err != http.ErrServerClosed {
+				log.Error("Serve failed", "err", err)
+			}
+		}
+	}()
+
+	// Retrieve the TCP address of the listener
+	tcpAddr := listener.Addr().(*net.TCPAddr)
+
+	// Get the port as an integer
+	port := tcpAddr.Port
+	log.Info("Server started", "port", port, "https", https)
+
+	log.Info("Using DB", "url", cfg.Database)
 	if cfg.UseContract {
 		log.Info("Using chain", "id", cfg.BaseChain.ChainId)
 	} else {
 		log.Info("Running Without Entitlements")
 	}
-	log.Info("Server started")
-	return closer, cfg.Port, streamService.exitSignal, nil
+	log.Info("Available on port", "port", port)
+	return closer, port, streamService.exitSignal, nil
+}
+
+func createServerFromStrings(ctx context.Context, address string, handler http.Handler, certString, keyString string) (*http.Server, error) {
+	log := dlog.FromCtx(ctx)
+	// Load the certificate and key from strings
+	cert, err := tls.X509KeyPair([]byte(certString), []byte(keyString))
+	if err != nil {
+		log.Error("Failed to create X509KeyPair from strings", "error", err)
+		return nil, err
+	}
+	log.Info("Loaded certificate and key from strings")
+
+	return &http.Server{
+		Addr:    address,
+		Handler: handler,
+		TLSConfig: &tls.Config{
+			Certificates: []tls.Certificate{cert},
+		},
+		BaseContext: func(listener net.Listener) context.Context {
+			return ctx
+		},
+	}, nil
+}
+
+func createServerFromFile(ctx context.Context, address string, handler http.Handler, certFile, keyFile string) (*http.Server, error) {
+	log := dlog.FromCtx(ctx)
+	// Read certificate and key from files
+	cert, err := tls.LoadX509KeyPair(certFile, keyFile)
+	if err != nil {
+		log.Error("Failed to LoadX509KeyPair from files", "error", err)
+		return nil, err
+	} else {
+		log.Info("Loaded certificate and key from files", "certFile", certFile, "keyFile", keyFile)
+	}
+
+	return &http.Server{
+		Addr:    address,
+		Handler: handler,
+		TLSConfig: &tls.Config{
+			Certificates: []tls.Certificate{cert},
+		},
+		BaseContext: func(listener net.Listener) context.Context {
+			return ctx
+		},
+	}, nil
+}
+
+func createH2CServer(ctx context.Context, address string, handler http.Handler) (*http.Server, error) {
+	// Create an HTTP/2 server without TLS
+	h2s := &http2.Server{}
+	return &http.Server{
+		Addr:    address,
+		Handler: h2c.NewHandler(handler, h2s),
+		BaseContext: func(listener net.Listener) context.Context {
+			return ctx
+		},
+	}, nil
+}
+
+// Struct to match the JSON structure.
+type CertKey struct {
+	Cert string `json:"cert"`
+	Key  string `json:"key"`
 }
 
 func RunServer(ctx context.Context, cfg *config.Config) error {

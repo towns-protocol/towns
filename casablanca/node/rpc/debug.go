@@ -11,6 +11,7 @@ import (
 	"slices"
 	"strings"
 
+	"github.com/river-build/river/config"
 	. "github.com/river-build/river/events"
 )
 
@@ -195,13 +196,13 @@ type httpMux interface {
 	Handle(pattern string, handler http.Handler)
 }
 
-func registerDebugHandlers(ctx context.Context, mux httpMux, cache StreamCache, streamService *Service) {
+func registerDebugHandlers(ctx context.Context, cfg *config.Config, mux httpMux, cache StreamCache, streamService *Service) {
 	handler := debugHandler{}
 	mux.HandleFunc("/debug", handler.ServeHTTP)
 
 	handler.Handle(mux, "/debug/cache", &cacheHandler{cache: cache})
 	handler.Handle(mux, "/debug/memory", MemoryHandler())
-	handler.Handle(mux, "/debug/multi", MultiHandler(ctx, streamService))
+	handler.Handle(mux, "/debug/multi", MultiHandler(ctx, cfg, streamService))
 	handler.HandleFunc(mux, "/debug/pprof/", pprof.Index)
 	mux.HandleFunc("/debug/pprof/cmdline", pprof.Cmdline)
 	mux.HandleFunc("/debug/pprof/profile", pprof.Profile)

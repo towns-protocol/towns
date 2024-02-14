@@ -77,7 +77,7 @@ if [ "$CONFIG" == "true" ]; then
                 $RIVER_REGISTRY_ADDRESS \
                 "addNode(address,string)" \
                 $NODE_ADDRESS \
-                http://localhost:$I_RPC_PORT > /dev/null
+                https://localhost:$I_RPC_PORT > /dev/null
         fi
     done
 
@@ -98,38 +98,60 @@ if [ "$BUILD" == "true" ]; then
 fi
 
 if [ "$RUN" == "true" ]; then
-    pushd ${RUN_BASE} > /dev/null
-    find . -type d -mindepth 1 -maxdepth 1 | sort | while read -r INSTANCE; do
+    pushd ${RUN_BASE}
+    while read -r INSTANCE; do
+
         if [ ! -f $INSTANCE/config/config.yaml ]; then
+            echo "Skipping directory '$INSTANCE' because it does not have a config.yaml file"
+
             continue
         fi
 
-        pushd $INSTANCE > /dev/null
+        pushd $INSTANCE
         echo "Running instance '$INSTANCE' with extra aguments: '${args[@]:-}'"
         if [ "$USE_BLOCKCHAIN_STREAM_REGISTRY" == "true" ]; then
             echo "And funding it with 1 ETH"
-            cast rpc -r http://127.0.0.1:8546 anvil_setBalance `cat ./wallet/node_address` 10000000000000000000 > /dev/null
+            cast rpc -r http://127.0.0.1:8546 anvil_setBalance `cat ./wallet/node_address` 10000000000000000000
         fi
 
         # if NUM_INSTANCES in not one, run in background, otherwise run with optional restart
         if [ "$NUM_INSTANCES" -ne 1 ]; then
+            echo "Running instance in background"
             ../bin/river_node run --config config/config.yaml "${args[@]:-}" &
-        else 
+        else
+            echo "Running single $INSTANCE in the retry loop"
             while true; do
                 # Run the built executable
-                ../bin/river_node run "${args[@]:-}" || exit_status=$?
+                ../bin/river_node run "${args[@]:-}" &
+                job_pid=$!
 
-                # Break if exit status is not 22 (restart initiated by test)
+                # Wait for the job to finish and capture its exit status
+                wait $job_pid
+                exit_status=$?
+
                 if [ "${exit_status:-0}" -ne 22 ]; then
-                break
+                    break
                 fi
 
                 echo "RESTARTING"
             done
         fi
-        popd > /dev/null
-    done
-    popd  > /dev/null
+
+        popd
+    done < <(find . -type d -mindepth 1 -maxdepth 1 | sort)
+
+    echo "All instances started"
+
+    # At the end of the script, or in a cleanup handler
+    cleanup() {
+        while read -r job_pid; do
+            echo "Waiting on job with PID $job_pid"
+            wait "$job_pid" 2>/dev/null
+        done < <(jobs -p)
+        echo "Cleanup complete."
+    }
+
+    # Register the cleanup function to handle SIGINT and SIGTERM
+    trap cleanup SIGINT SIGTERM
+    wait
 fi
-
-

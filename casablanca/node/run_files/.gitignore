@@ -1,4 +1,0 @@
-# Contains files and logs used for local node testing.
-# Ignore all files and subdirectories in this directory.
-*
-!.gitignore

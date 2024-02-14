@@ -17,6 +17,10 @@ output "pgadmin_security_group_id" {
   value = module.pgadmin.security_group_id
 }
 
+output "river_node_ssl_cert_secret_arn" {
+  value = module.river_node_ssl_cert.river_node_ssl_cert_secret_arn
+}
+
 output "notification_vapid_key" {
   value = aws_secretsmanager_secret.notification_vapid_key
 }
