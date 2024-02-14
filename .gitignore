@@ -78,3 +78,5 @@ common/xchain/dist/*
 servers/xchain/run_files/*
 casablanca/node/river_node
 casablanca/node/run_files/*
+
+go.work.sum
