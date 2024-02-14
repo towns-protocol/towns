@@ -5,6 +5,7 @@ import { vi } from 'vitest'
 import { act } from 'react-test-renderer'
 import { ResizeObserver } from '@juggle/resize-observer' // dependency of react-hook/resize-observer
 import { ConnectedWallet, EIP1193Provider } from '@privy-io/react-auth'
+import { Chain } from 'wagmi'
 
 server.listen()
 
@@ -59,6 +60,7 @@ vi.mock('@privy-io/react-auth', async () => {
                 },
             ],
         }),
+        addRpcUrlOverrideToChain: (c: Chain) => c,
     }
 })
 

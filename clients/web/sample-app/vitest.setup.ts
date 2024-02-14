@@ -3,6 +3,7 @@ import 'vitest-canvas-mock'
 import { vi } from 'vitest'
 import { ResizeObserver } from '@juggle/resize-observer' // dependency of react-hook/resize-observer
 import { ConnectedWallet } from '@privy-io/react-auth'
+import { Chain } from 'wagmi'
 
 beforeAll(() => {
     globalThis.ResizeObserver = ResizeObserver
@@ -59,6 +60,7 @@ vi.mock('@privy-io/react-auth', async () => {
                 },
             ],
         }),
+        addRpcUrlOverrideToChain: (c: Chain) => c,
     }
 })
 

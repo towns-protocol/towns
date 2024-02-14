@@ -69,7 +69,7 @@ get_pr_number_of_preview() {
     if [ "$status" -ne 200 ]; then
         echo "Error while getting the service info. [HTTP status: $status]"
         echo "$body"
-        return 1
+        exit 1
     fi
 
     slug=$(echo "$body" | jq -r '.slug')
