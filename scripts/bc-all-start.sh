@@ -30,4 +30,4 @@ wait_for_process "$BUILD_PID" "build"
 wait_for_process "$PID1" "deploy-base.sh"
 wait_for_process "$PID2" "deploy-river.sh"
 
-echo "STARTED ALL CHAINS AND DEPLOYED ALL CONTRACTS"
+echo "STARTED ALL CHAINS AND DEPLOYED ALL CONTRACTS, BLOCK_TIME=${RIVER_BLOCK_TIME:-0}"

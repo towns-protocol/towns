@@ -10,7 +10,7 @@ import { ZionTestWeb3Provider } from './helpers/ZionTestWeb3Provider'
 import { makeUniqueName } from './helpers/TestUtils'
 import { useSpaceData } from '../../src/hooks/use-space-data'
 import { useMyChannels } from '../../src/hooks/use-my-channels'
-import { useCreateSpaceTransaction } from '../../src/hooks/use-create-space-transaction'
+import { useCreateSpaceTransactionWithRetries } from '../../src/hooks/use-create-space-transaction'
 import { useCreateChannelTransaction } from '../../src/hooks/use-create-channel-transaction'
 import { CreateChannelInfo } from '../../src/types/zion-types'
 import { SpaceContextProvider } from '../../src/components/SpaceContextProvider'
@@ -30,8 +30,8 @@ describe('createSpaceChannelHooks', () => {
         // create a veiw for bob
         const TestComponent = () => {
             const { leaveRoom } = useZionClient()
-            const spaceTransaction = useCreateSpaceTransaction()
-            const { createSpaceTransactionWithRole } = spaceTransaction
+            const spaceTransaction = useCreateSpaceTransactionWithRetries()
+            const { createSpaceTransactionWithRetries } = spaceTransaction
             const channelTransaction = useCreateChannelTransaction()
             const { createChannelTransaction } = channelTransaction
             const [spaceId, setSpaceId] = useState<string | undefined>(undefined)
@@ -42,7 +42,7 @@ describe('createSpaceChannelHooks', () => {
             const onClickCreateSpace = useCallback(() => {
                 const name = makeUniqueName('aliceSpace')
                 void (async () => {
-                    const result = await createSpaceTransactionWithRole(
+                    const result = await createSpaceTransactionWithRetries(
                         {
                             name: name,
                         },
@@ -56,7 +56,7 @@ describe('createSpaceChannelHooks', () => {
                     setSpaceId(result?.data?.spaceId)
                     console.log('onClickCreateSpace', { name, result })
                 })()
-            }, [createSpaceTransactionWithRole])
+            }, [createSpaceTransactionWithRetries])
             const onClickCreateChannel = useCallback(() => {
                 const name = makeUniqueName('aliceChannel')
                 const parentSpaceId = spaceId

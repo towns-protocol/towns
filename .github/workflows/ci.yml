@@ -1,6 +1,7 @@
 name: Continuous Integration
 env:
     FOUNDRY_VERSION: nightly
+    RIVER_BLOCK_TIME: 1
 on:
     schedule:
         # run during working hours
@@ -52,8 +53,8 @@ jobs:
         timeout-minutes: 30
 
         steps:
-            - name: Set RIVER_BLOCK_TIME
-              run: echo "RIVER_BLOCK_TIME=1" >> $GITHUB_ENV
+            - name: Print bash environment
+              run: env
 
             - name: Cancel previous runs
               if: github.event_name != 'schedule'

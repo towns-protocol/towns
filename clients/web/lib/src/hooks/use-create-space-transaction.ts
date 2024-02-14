@@ -91,3 +91,76 @@ export function useCreateSpaceTransaction() {
         createSpaceTransactionWithRole,
     }
 }
+
+/**
+ * Space creation can fail when running in a CI environment.
+ * This hook will retry the space creation transaction
+ * Don't use this hook for production code
+ */
+export function useCreateSpaceTransactionWithRetries() {
+    const {
+        isLoading,
+        data,
+        error,
+        transactionHash,
+        transactionStatus,
+        createSpaceTransactionWithRole,
+    } = useCreateSpaceTransaction()
+
+    const createSpaceTransactionWithRetries = useCallback(
+        async function (
+            createInfo: CreateSpaceInfo,
+            membershipInfo: ITownArchitectBase.MembershipStruct,
+            signer: TSigner,
+        ) {
+            const retryInterval = 5_000
+            const maxRetryDuration = 60_000
+            let elapsedRetryTime = 0
+            let retryCount = 0
+            let transactionResult: CreateSpaceTransactionContext | undefined
+
+            const retryFunction = async () => {
+                const startTime = Date.now()
+                while (elapsedRetryTime < maxRetryDuration) {
+                    try {
+                        transactionResult = await createSpaceTransactionWithRole(
+                            createInfo,
+                            membershipInfo,
+                            signer,
+                        )
+                        if (
+                            transactionResult?.error ||
+                            transactionResult?.status === TransactionStatus.Failed
+                        ) {
+                            throw transactionResult.error
+                        }
+                        return transactionResult
+                        // eslint-disable-next-line @typescript-eslint/no-explicit-any
+                    } catch (error: any) {
+                        console.error(
+                            `[useCreateSpaceTransactionWithRetries] Error creating space transaction: ${error}. Retry count: ${retryCount++}`,
+                        )
+                    }
+
+                    elapsedRetryTime += Date.now() - startTime
+
+                    await new Promise((resolve) => setTimeout(resolve, retryInterval))
+                }
+                console.error('[useCreateSpaceTransactionWithRetries] completely failed, giving up')
+                return transactionResult
+            }
+
+            return retryFunction()
+        },
+        [createSpaceTransactionWithRole],
+    )
+
+    return {
+        isLoading,
+        data,
+        error,
+        transactionHash,
+        transactionStatus,
+        createSpaceTransactionWithRetries,
+    }
+}

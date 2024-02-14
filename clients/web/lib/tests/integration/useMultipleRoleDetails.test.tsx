@@ -10,7 +10,7 @@ import { SpaceContextProvider } from '../../src/components/SpaceContextProvider'
 import { ZionTestApp } from './helpers/ZionTestApp'
 import { ZionTestWeb3Provider } from './helpers/ZionTestWeb3Provider'
 import { makeUniqueName } from './helpers/TestUtils'
-import { useCreateSpaceTransaction } from '../../src/hooks/use-create-space-transaction'
+import { useCreateSpaceTransactionWithRetries } from '../../src/hooks/use-create-space-transaction'
 import { useMultipleRoleDetails } from '../../src/hooks/use-role-details'
 import { useRoles } from '../../src/hooks/use-roles'
 import { useSpacesFromContract } from '../../src/hooks/use-spaces-from-contract'
@@ -143,13 +143,13 @@ function TestComponentMultiple(args: {
     councilNftAddress: string
     signer: TSigner
 }): JSX.Element {
-    const spaceTransaction = useCreateSpaceTransaction()
-    const { createSpaceTransactionWithRole, data: txData, transactionStatus } = spaceTransaction
+    const spaceTransaction = useCreateSpaceTransactionWithRetries()
+    const { createSpaceTransactionWithRetries, data: txData, transactionStatus } = spaceTransaction
     const spaceId = txData?.spaceId
     // handle click to create a space
     const onClickCreateSpace = useCallback(() => {
         const handleClick = async () => {
-            await createSpaceTransactionWithRole(
+            await createSpaceTransactionWithRetries(
                 {
                     name: args.spaceNames[0],
                 },
@@ -161,7 +161,7 @@ function TestComponentMultiple(args: {
                 args.signer,
             )
 
-            await createSpaceTransactionWithRole(
+            await createSpaceTransactionWithRetries(
                 {
                     name: args.spaceNames[1],
                 },
@@ -180,7 +180,7 @@ function TestComponentMultiple(args: {
         args.permissions,
         args.roleName,
         args.spaceNames,
-        createSpaceTransactionWithRole,
+        createSpaceTransactionWithRetries,
         args.signer,
     ])
     // the view

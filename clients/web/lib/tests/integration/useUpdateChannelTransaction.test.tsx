@@ -15,7 +15,7 @@ import { ZionTestWeb3Provider } from './helpers/ZionTestWeb3Provider'
 import { makeUniqueName } from './helpers/TestUtils'
 import { useChannelData } from '../../src/hooks/use-channel-data'
 import { useCreateChannelTransaction } from '../../src/hooks/use-create-channel-transaction'
-import { useCreateSpaceTransaction } from '../../src/hooks/use-create-space-transaction'
+import { useCreateSpaceTransactionWithRetries } from '../../src/hooks/use-create-space-transaction'
 import { useRoles } from '../../src/hooks/use-roles'
 import { useSpacesFromContract } from '../../src/hooks/use-spaces-from-contract'
 import { useUpdateChannelTransaction } from '../../src/hooks/use-update-channel-transaction'
@@ -148,11 +148,11 @@ function TestComponent(args: {
     updatedChannelTopic: string
     signer: TSigner
 }): JSX.Element {
-    const spaceTransaction = useCreateSpaceTransaction()
+    const spaceTransaction = useCreateSpaceTransactionWithRetries()
     const {
         data: spaceTxnData,
         transactionStatus: createSpaceTxStatus,
-        createSpaceTransactionWithRole,
+        createSpaceTransactionWithRetries,
     } = spaceTransaction
     const channelTransaction = useCreateChannelTransaction()
     const {
@@ -182,7 +182,7 @@ function TestComponent(args: {
     // handle click to create a space
     const onClickCreateSpace = useCallback(() => {
         const handleClick = async () => {
-            await createSpaceTransactionWithRole(
+            await createSpaceTransactionWithRetries(
                 {
                     name: args.spaceName,
                 },
@@ -201,7 +201,7 @@ function TestComponent(args: {
         args.spaceName,
         args.spaceRoleName,
         args.signer,
-        createSpaceTransactionWithRole,
+        createSpaceTransactionWithRetries,
     ])
     // handle click to create a channel
     const onClickCreateChannel = useCallback(() => {

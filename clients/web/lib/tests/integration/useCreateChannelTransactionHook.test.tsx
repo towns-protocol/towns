@@ -16,7 +16,7 @@ import { ZionTestWeb3Provider } from './helpers/ZionTestWeb3Provider'
 import { makeUniqueName } from './helpers/TestUtils'
 import { useChannelData } from '../../src/hooks/use-channel-data'
 import { useCreateChannelTransaction } from '../../src/hooks/use-create-channel-transaction'
-import { useCreateSpaceTransaction } from '../../src/hooks/use-create-space-transaction'
+import { useCreateSpaceTransactionWithRetries } from '../../src/hooks/use-create-space-transaction'
 import { useRoles } from '../../src/hooks/use-roles'
 import { useSpacesFromContract } from '../../src/hooks/use-spaces-from-contract'
 import { useTransactionStore } from '../../src/store/use-transactions-store'
@@ -69,9 +69,9 @@ describe('useCreateChannelTransactionHook', () => {
         }
 
         const TestComponent = ({ signer }: { signer: TSigner }) => {
-            const spaceTransaction = useCreateSpaceTransaction()
+            const spaceTransaction = useCreateSpaceTransactionWithRetries()
             const {
-                createSpaceTransactionWithRole,
+                createSpaceTransactionWithRetries,
                 data: txData,
                 transactionStatus: createSpaceTxStatus,
             } = spaceTransaction
@@ -104,7 +104,7 @@ describe('useCreateChannelTransactionHook', () => {
 
             const onClickCreateSpace = useCallback(() => {
                 const handleClick = async () => {
-                    await createSpaceTransactionWithRole(
+                    await createSpaceTransactionWithRetries(
                         {
                             name: spaceName,
                         },
@@ -122,7 +122,7 @@ describe('useCreateChannelTransactionHook', () => {
                 }
 
                 void handleClick()
-            }, [createSpaceTransactionWithRole, signer])
+            }, [createSpaceTransactionWithRetries, signer])
 
             // callback to create a channel with zion token entitlement
             const onClickCreateChannel = useCallback(() => {

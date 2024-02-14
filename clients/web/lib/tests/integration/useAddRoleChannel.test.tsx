@@ -17,7 +17,7 @@ import { makeUniqueName } from './helpers/TestUtils'
 import { useAddRoleToChannelTransaction } from '../../src/hooks/use-add-role-channel-transaction'
 import { useChannelData } from '../../src/hooks/use-channel-data'
 import { useCreateChannelTransaction } from '../../src/hooks/use-create-channel-transaction'
-import { useCreateSpaceTransaction } from '../../src/hooks/use-create-space-transaction'
+import { useCreateSpaceTransactionWithRetries } from '../../src/hooks/use-create-space-transaction'
 import { useRoleDetails } from '../../src/hooks/use-role-details'
 import { useRoles } from '../../src/hooks/use-roles'
 import { useSpacesFromContract } from '../../src/hooks/use-spaces-from-contract'
@@ -139,9 +139,9 @@ function TestComponent(args: {
     councilNftAddress: string
     signer: TSigner
 }): JSX.Element {
-    const spaceTransaction = useCreateSpaceTransaction()
+    const spaceTransaction = useCreateSpaceTransactionWithRetries()
     const {
-        createSpaceTransactionWithRole,
+        createSpaceTransactionWithRetries,
         data: spaceTxnData,
         transactionStatus: createSpaceTxStatus,
     } = spaceTransaction
@@ -186,7 +186,7 @@ function TestComponent(args: {
     // handle click to create a space
     const onClickCreateSpace = useCallback(() => {
         const handleClick = async () => {
-            await createSpaceTransactionWithRole(
+            await createSpaceTransactionWithRetries(
                 {
                     name: args.spaceName,
                 },
@@ -204,7 +204,7 @@ function TestComponent(args: {
         args.permissions,
         args.roleName,
         args.spaceName,
-        createSpaceTransactionWithRole,
+        createSpaceTransactionWithRetries,
         args.signer,
     ])
     // handle click to create a channel

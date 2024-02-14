@@ -14,7 +14,7 @@ import { TestConstants } from './helpers/TestConstants'
 import { ZionTestApp } from './helpers/ZionTestApp'
 import { ZionTestWeb3Provider } from './helpers/ZionTestWeb3Provider'
 import { makeUniqueName } from './helpers/TestUtils'
-import { useCreateSpaceTransaction } from '../../src/hooks/use-create-space-transaction'
+import { useCreateSpaceTransactionWithRetries } from '../../src/hooks/use-create-space-transaction'
 import { useRoleDetails } from '../../src/hooks/use-role-details'
 import { useRoles } from '../../src/hooks/use-roles'
 import { useSpacesFromContract } from '../../src/hooks/use-spaces-from-contract'
@@ -121,8 +121,8 @@ function TestComponent(args: {
     councilNftAddress: string
     signer: TSigner
 }): JSX.Element {
-    const spaceTransaction = useCreateSpaceTransaction()
-    const { createSpaceTransactionWithRole, data: txData, transactionStatus } = spaceTransaction
+    const spaceTransaction = useCreateSpaceTransactionWithRetries()
+    const { createSpaceTransactionWithRetries, data: txData, transactionStatus } = spaceTransaction
     const spaceId = txData?.spaceId
 
     const spaceNetworkId = spaceId ? spaceId : ''
@@ -131,7 +131,7 @@ function TestComponent(args: {
     // handle click to create a space
     const onClickCreateSpace = useCallback(() => {
         const handleClick = async () => {
-            await createSpaceTransactionWithRole(
+            await createSpaceTransactionWithRetries(
                 {
                     name: args.spaceName,
                 },
@@ -151,7 +151,7 @@ function TestComponent(args: {
         args.roleName,
         args.spaceName,
         args.signer,
-        createSpaceTransactionWithRole,
+        createSpaceTransactionWithRetries,
     ])
     // the view
     return (

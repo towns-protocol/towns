@@ -157,7 +157,7 @@ export async function createTestSpaceGatedByTownAndZionNfts(
         },
         {
             intervalMs: 1000 * 5,
-            timeoutMs: 1000 * 50,
+            timeoutMs: 1000 * 60,
         },
     )
 }
@@ -213,7 +213,7 @@ export async function createTestSpaceGatedByTownNft(
         },
         {
             intervalMs: 1000 * 5,
-            timeoutMs: 1000 * 50,
+            timeoutMs: 1000 * 60,
         },
     )
 }

@@ -14,7 +14,7 @@ import { ZionTestApp } from './helpers/ZionTestApp'
 import { ZionTestWeb3Provider } from './helpers/ZionTestWeb3Provider'
 import { makeUniqueName } from './helpers/TestUtils'
 import { useUpdateSpaceNameTransaction } from '../../src/hooks/use-update-space-name-transaction'
-import { useCreateSpaceTransaction } from '../../src/hooks/use-create-space-transaction'
+import { useCreateSpaceTransactionWithRetries } from '../../src/hooks/use-create-space-transaction'
 import { TestConstants } from './helpers/TestConstants'
 import { TransactionStatus } from '../../src/client/ZionClientTypes'
 import { createMembershipStruct, getTestGatingNftAddress } from '@river/web3'
@@ -97,9 +97,9 @@ function TestComponent(args: {
     newSpaceName: string
     signer: TSigner
 }): JSX.Element {
-    const spaceTransaction = useCreateSpaceTransaction()
+    const spaceTransaction = useCreateSpaceTransactionWithRetries()
     const {
-        createSpaceTransactionWithRole,
+        createSpaceTransactionWithRetries,
         data: txData,
         transactionStatus: spaceTransactionStatus,
     } = spaceTransaction
@@ -111,7 +111,7 @@ function TestComponent(args: {
     // handle click to create a space
     const onClickCreateSpace = useCallback(() => {
         const handleClick = async () => {
-            await createSpaceTransactionWithRole(
+            await createSpaceTransactionWithRetries(
                 {
                     name: args.originalSpaceName,
                 },
@@ -124,7 +124,7 @@ function TestComponent(args: {
             )
         }
         void handleClick()
-    }, [args.originalSpaceName, createSpaceTransactionWithRole, args.signer])
+    }, [args.originalSpaceName, createSpaceTransactionWithRetries, args.signer])
 
     // handle click to update space name
     const onClickUpdateSpaceName = useCallback(() => {

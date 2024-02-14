@@ -3,7 +3,7 @@ import { useCasablancaCredentials } from '../../../src/hooks/use-casablanca-cred
 import { useMyMembership } from '../../../src/hooks/use-my-membership'
 import { useZionClient } from '../../../src/hooks/use-zion-client'
 import { TSigner } from '../../../src/types/web3-types'
-import { useCreateSpaceTransaction } from '../../../src/hooks/use-create-space-transaction'
+import { useCreateSpaceTransactionWithRetries } from '../../../src/hooks/use-create-space-transaction'
 import { useCreateChannelTransaction } from '../../../src/hooks/use-create-channel-transaction'
 import { useAddRoleToChannelTransaction } from '../../../src/hooks/use-add-role-channel-transaction'
 import { useUpdateChannelTransaction } from '../../../src/hooks/use-update-channel-transaction'
@@ -143,7 +143,7 @@ export const RegisterAndJoin = (props: {
 
 export function TransactionInfo<
     T extends
-        | ReturnType<typeof useCreateSpaceTransaction>
+        | ReturnType<typeof useCreateSpaceTransactionWithRetries>
         | ReturnType<typeof useCreateChannelTransaction>
         | ReturnType<typeof useUpdateChannelTransaction>
         | ReturnType<typeof useAddRoleToChannelTransaction>
