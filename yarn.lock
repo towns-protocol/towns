@@ -3741,6 +3741,13 @@ __metadata:
   languageName: node
   linkType: hard
 
+"@eth-optimism/contracts-bedrock@npm:^0.17.1":
+  version: 0.17.1
+  resolution: "@eth-optimism/contracts-bedrock@npm:0.17.1"
+  checksum: ae75458ca843dc36d050a484a97226112d1c5a1453cb8a59a1a64e4805052984663b2d83ca1a2764751ea182e09ee53ddc1ab19c6a94885a6e743371498060a2
+  languageName: node
+  linkType: hard
+
 "@ethereumjs/common@npm:^3.2.0":
   version: 3.2.0
   resolution: "@ethereumjs/common@npm:3.2.0"
@@ -7335,6 +7342,7 @@ __metadata:
   version: 0.0.0-use.local
   resolution: "@towns/contracts@workspace:contracts"
   dependencies:
+    "@eth-optimism/contracts-bedrock": ^0.17.1
     "@harmony/eslint-config": 1.0.0
     "@harmony/prettier-config": "workspace:^"
     keccak256: ^1.0.6

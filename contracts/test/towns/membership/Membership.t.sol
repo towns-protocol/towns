@@ -56,7 +56,7 @@ contract MembershipTest is
     allowedUsers[1] = charlie;
 
     vm.startPrank(founder);
-    address userSpace = TownArchitect(townFactory).createTown(
+    address userSpace = TownArchitect(spaceFactory).createTown(
       _createUserTown("MembershipSpace", allowedUsers)
     );
     vm.stopPrank();
@@ -183,7 +183,7 @@ contract MembershipTest is
       referralCode
     );
 
-    IPlatformRequirements platformReqs = IPlatformRequirements(townFactory);
+    IPlatformRequirements platformReqs = IPlatformRequirements(spaceFactory);
 
     address protocol = platformReqs.getFeeRecipient();
     uint16 bpsFee = platformReqs.getMembershipBps();
@@ -289,16 +289,16 @@ contract MembershipTest is
     assertEq(membership.balanceOf(alice), 1);
     assertEq(alice.balance, 0 ether);
 
-    address protocolRecipient = IPlatformRequirements(townFactory)
+    address protocolRecipient = IPlatformRequirements(spaceFactory)
       .getFeeRecipient();
-    uint16 bpsFee = IPlatformRequirements(townFactory).getMembershipBps();
+    uint16 bpsFee = IPlatformRequirements(spaceFactory).getMembershipBps();
 
     uint256 potentialFee = BasisPoints.calculate(membershipPrice, bpsFee);
 
     assertEq(protocolRecipient.balance, potentialFee);
     assertEq(feeRecipient.balance, membershipPrice - potentialFee);
 
-    uint64 membershipDuration = IPlatformRequirements(townFactory)
+    uint64 membershipDuration = IPlatformRequirements(spaceFactory)
       .getMembershipDuration();
 
     assertEq(
@@ -311,7 +311,7 @@ contract MembershipTest is
   //                           Renew Membership
   // =============================================================
   function test_renewMembership() external {
-    uint64 membershipDuration = IPlatformRequirements(townFactory)
+    uint64 membershipDuration = IPlatformRequirements(spaceFactory)
       .getMembershipDuration();
     uint256 membershipExpirationDate = block.timestamp + membershipDuration;
 
@@ -354,7 +354,7 @@ contract MembershipTest is
     uint256 tokenId = membership.joinTown{value: membershipPrice}(alice);
 
     // calculate membership expiration date
-    uint64 membershipDuration = IPlatformRequirements(townFactory)
+    uint64 membershipDuration = IPlatformRequirements(spaceFactory)
       .getMembershipDuration();
     uint256 membershipExpirationDate = block.timestamp + membershipDuration;
 
@@ -450,12 +450,12 @@ contract MembershipTest is
   function test_getMembershipDuration() external {
     assertEq(
       membership.getMembershipDuration(),
-      IPlatformRequirements(townFactory).getMembershipDuration()
+      IPlatformRequirements(spaceFactory).getMembershipDuration()
     );
   }
 
   function test_setMembershipDuration_revert_invalidDuration() external {
-    uint64 duration = IPlatformRequirements(townFactory)
+    uint64 duration = IPlatformRequirements(spaceFactory)
       .getMembershipDuration();
 
     vm.prank(founder);
@@ -478,7 +478,7 @@ contract MembershipTest is
   function test_setMembershipFreeAllocation_revert_when_adding_more_than_mint_limit()
     external
   {
-    uint256 maxFreeAllocation = IPlatformRequirements(townFactory)
+    uint256 maxFreeAllocation = IPlatformRequirements(spaceFactory)
       .getMembershipMintLimit();
 
     uint256 newAllocation = maxFreeAllocation + 1;

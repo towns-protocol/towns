@@ -23,7 +23,7 @@ contract PlatformRequirementsTest is
   function setUp() public override {
     super.setUp();
 
-    platformReqs = PlatformRequirementsFacet(townFactory);
+    platformReqs = PlatformRequirementsFacet(spaceFactory);
   }
 
   // Fee Recipient

@@ -31,6 +31,7 @@ abstract contract FacetTest is IDiamond, TestUtils {
 
 abstract contract FacetHelper is IDiamond {
   bytes4[] public functionSelectors;
+  uint256 internal _index;
 
   /// @dev Deploy facet contract in constructor and return address for testing.
   function facet() public view virtual returns (address);

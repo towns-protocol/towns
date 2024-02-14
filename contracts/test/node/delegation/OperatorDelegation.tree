@@ -1,0 +1,18 @@
+#OperatorDelegation
+
+#addSpaceDelegation
+## given caller is not space owner
+### when calling addSpaceDelegation
+#### it should revert with NotSpaceOwner
+## given caller is space owner
+### when calling with address(0)
+#### it should revert with InvalidAddress
+### when calling with not registered operator
+#### it should revert with NotRegistered
+### when calling with exited operator
+#### it should revert with NotRegistered
+### when calling with already delegated operator
+#### it should revert with AlreadDelegated
+### when calling with registered and valid operator
+#### it should set the operator address
+#### it should emit OperatorDelegated(from, to) event

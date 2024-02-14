@@ -41,6 +41,13 @@ interface ILock is ILockBase {
   function isLockEnabled(address account) external view returns (bool);
 
   /**
+   * @notice get the lock cooldown for an account
+   * @param account address to check
+   * @return cooldown in seconds
+   */
+  function lockCooldown(address account) external view returns (uint256);
+
+  /**
    * @notice set the default lock cooldown
    * @param cooldown cooldown in seconds
    */

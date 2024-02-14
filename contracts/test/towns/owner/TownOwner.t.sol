@@ -5,7 +5,7 @@ pragma solidity ^0.8.23;
 import {IGuardian} from "contracts/src/towns/facets/guardian/IGuardian.sol";
 import {IOwnableBase} from "contracts/src/diamond/facets/ownable/IERC173.sol";
 import {ITownOwnerBase} from "contracts/src/towns/facets/owner/ITownOwner.sol";
-import {Validator__InvalidStringLength, Validator__InvalidByteLength, Validator__InvalidAddress} from "contracts/src/utils/Validator.sol";
+import {Validator__InvalidStringLength, Validator__InvalidAddress} from "contracts/src/utils/Validator.sol";
 
 // libraries
 
@@ -31,9 +31,9 @@ contract TownOwnerTest is ITownOwnerBase, IOwnableBase, BaseSetup {
     address alice = _randomAddress();
     address bob = _randomAddress();
 
-    vm.startPrank(townFactory);
+    vm.startPrank(spaceFactory);
     uint256 tokenId = _townOwnerNFT.mintTown(name, uri, networkId, townAddress);
-    _townOwnerNFT.transferFrom(townFactory, alice, tokenId);
+    _townOwnerNFT.transferFrom(spaceFactory, alice, tokenId);
     vm.stopPrank();
 
     vm.prank(alice);
@@ -58,7 +58,7 @@ contract TownOwnerTest is ITownOwnerBase, IOwnableBase, BaseSetup {
   function test_mintTown_revert_invalidName() external {
     address townAddress = _randomAddress();
 
-    vm.prank(townFactory);
+    vm.prank(spaceFactory);
     vm.expectRevert(Validator__InvalidStringLength.selector);
     _townOwnerNFT.mintTown("", uri, networkId, townAddress);
   }
@@ -66,13 +66,13 @@ contract TownOwnerTest is ITownOwnerBase, IOwnableBase, BaseSetup {
   function test_mintTown_revert_invalidNetworkId() external {
     address townAddress = _randomAddress();
 
-    vm.prank(townFactory);
+    vm.prank(spaceFactory);
     vm.expectRevert(Validator__InvalidStringLength.selector);
     _townOwnerNFT.mintTown(name, uri, "", townAddress);
   }
 
   function test_mintTown_revert_invalidAddress() external {
-    vm.prank(townFactory);
+    vm.prank(spaceFactory);
     vm.expectRevert(Validator__InvalidAddress.selector);
     _townOwnerNFT.mintTown(name, uri, networkId, address(0));
   }
@@ -82,10 +82,10 @@ contract TownOwnerTest is ITownOwnerBase, IOwnableBase, BaseSetup {
   function test_updateTownInfo() external {
     address townAddress = _randomAddress();
 
-    vm.prank(townFactory);
+    vm.prank(spaceFactory);
     _townOwnerNFT.mintTown(name, uri, networkId, townAddress);
 
-    vm.prank(townFactory);
+    vm.prank(spaceFactory);
     _townOwnerNFT.updateTownInfo(townAddress, "New Name", "ipfs://new-name");
 
     Town memory town = _townOwnerNFT.getTownInfo(townAddress);
@@ -98,9 +98,9 @@ contract TownOwnerTest is ITownOwnerBase, IOwnableBase, BaseSetup {
     address townAddress = _randomAddress();
     address alice = _randomAddress();
 
-    vm.startPrank(townFactory);
+    vm.startPrank(spaceFactory);
     uint256 tokenId = _townOwnerNFT.mintTown(name, uri, networkId, townAddress);
-    _townOwnerNFT.transferFrom(townFactory, alice, tokenId);
+    _townOwnerNFT.transferFrom(spaceFactory, alice, tokenId);
     vm.stopPrank();
 
     vm.prank(alice);
@@ -116,10 +116,10 @@ contract TownOwnerTest is ITownOwnerBase, IOwnableBase, BaseSetup {
   function test_updateTown_revert_invalidName() external {
     address townAddress = _randomAddress();
 
-    vm.prank(townFactory);
+    vm.prank(spaceFactory);
     _townOwnerNFT.mintTown(name, uri, networkId, townAddress);
 
-    vm.prank(townFactory);
+    vm.prank(spaceFactory);
     vm.expectRevert(Validator__InvalidStringLength.selector);
     _townOwnerNFT.updateTownInfo(townAddress, "", "ipfs://new-name");
   }
@@ -127,10 +127,10 @@ contract TownOwnerTest is ITownOwnerBase, IOwnableBase, BaseSetup {
   function test_updateTown_revert_invalidUri() external {
     address townAddress = _randomAddress();
 
-    vm.prank(townFactory);
+    vm.prank(spaceFactory);
     _townOwnerNFT.mintTown(name, uri, networkId, townAddress);
 
-    vm.prank(townFactory);
+    vm.prank(spaceFactory);
     vm.expectRevert(Validator__InvalidStringLength.selector);
     _townOwnerNFT.updateTownInfo(townAddress, "New Name", "");
   }
@@ -165,10 +165,10 @@ contract TownOwnerTest is ITownOwnerBase, IOwnableBase, BaseSetup {
   function test_getVotes() external {
     assertEq(_townOwnerNFT.getVotes(deployer), 0);
 
-    vm.prank(townFactory);
+    vm.prank(spaceFactory);
     _townOwnerNFT.mintTown(name, "", networkId, _randomAddress());
 
-    vm.prank(townFactory);
+    vm.prank(spaceFactory);
     _townOwnerNFT.delegate(deployer);
 
     assertEq(_townOwnerNFT.getVotes(deployer), 1);

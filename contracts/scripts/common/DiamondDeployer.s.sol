@@ -32,6 +32,8 @@ abstract contract DiamondDeployer is Deployer {
     uint256 deployerPrivateKey,
     address deployer
   ) public override returns (address) {
+    bytes32 salt = bytes32(uint256(deployerPrivateKey));
+
     // call diamond params hook
     Diamond.InitParams memory initParams = diamondInitParams(
       deployerPrivateKey,
@@ -40,7 +42,7 @@ abstract contract DiamondDeployer is Deployer {
 
     // deploy diamond and return address
     vm.broadcast(deployerPrivateKey);
-    return address(new Diamond(initParams));
+    return address(new Diamond{salt: salt}(initParams));
   }
 
   function addInit(address initAddress, bytes memory initData) internal {

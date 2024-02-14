@@ -32,7 +32,7 @@ contract TownArchitectTest is
 
   function setUp() public override {
     super.setUp();
-    townArchitect = TownArchitect(townFactory);
+    townArchitect = TownArchitect(spaceFactory);
   }
 
   function test_createTown_only() external {

@@ -30,7 +30,7 @@ contract Integration_CreateTown is BaseSetup, IRolesBase, ITownArchitectBase {
   function setUp() public override {
     super.setUp();
 
-    townArchitect = TownArchitect(townFactory);
+    townArchitect = TownArchitect(spaceFactory);
   }
 
   function test_create_town_with_default_channel() external {
@@ -182,7 +182,7 @@ contract Integration_CreateTown is BaseSetup, IRolesBase, ITownArchitectBase {
     townInfo.membership.requirements.users[0] = bob;
 
     vm.prank(founder);
-    address newTown = ITownArchitect(townFactory).createTown(townInfo);
+    address newTown = ITownArchitect(spaceFactory).createTown(townInfo);
 
     assertTrue(
       IEntitlementsManager(newTown).isEntitledToTown(bob, "JoinTown"),

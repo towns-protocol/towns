@@ -86,11 +86,11 @@ jobs:
                   node-version: '20'
                   cache: 'yarn'
 
-            - name: Start and configure blockchains
-              run: ./scripts/bc-all-start.sh
-
             - name: Install node dependencies
               run: yarn install --immutable
+
+            - name: Start and configure blockchains
+              run: ./scripts/bc-all-start.sh
 
             - name: Maintain Turbo cache
               uses: actions/cache@v4
@@ -228,11 +228,11 @@ jobs:
             - name: Print versions
               run: ./scripts/print-versions.sh
 
-            - name: Start and configure blockchains
-              run: ./scripts/bc-all-start.sh
-
             - name: Install node dependencies
               run: yarn install --immutable
+
+            - name: Start and configure blockchains
+              run: ./scripts/bc-all-start.sh
 
             - name: Print Yarn package versions
               run: yarn info --name-only --all
@@ -383,11 +383,11 @@ jobs:
             - name: Print versions
               run: ./scripts/print-versions.sh
 
-            - name: Start and configure blockchains
-              run: ./scripts/bc-all-start.sh
-
             - name: Install node dependencies
               run: yarn install --immutable
+
+            - name: Start and configure blockchains
+              run: ./scripts/bc-all-start.sh
 
             - name: Print Yarn package versions
               run: yarn info --name-only --all
@@ -413,8 +413,8 @@ jobs:
 
             - name: Set up Custom CA Certificate for Node.js
               run: |
-                echo "NODE_EXTRA_CA_CERTS=$HOME/river-ca-cert.pem" >> $GITHUB_ENV                      
-              
+                echo "NODE_EXTRA_CA_CERTS=$HOME/river-ca-cert.pem" >> $GITHUB_ENV
+
             - name: Run multiple nodes
               run: |
                   cd ./casablanca/node
@@ -525,11 +525,11 @@ jobs:
             - name: Print versions
               run: ./scripts/print-versions.sh
 
-            - name: Start and configure blockchains
-              run: ./scripts/bc-all-start.sh
-
             - name: Install node dependencies
               run: yarn install --immutable
+
+            - name: Start and configure blockchains
+              run: ./scripts/bc-all-start.sh
 
             - name: Print Yarn package versions
               run: yarn info --name-only --all
@@ -663,11 +663,11 @@ jobs:
             - name: Print versions
               run: ./scripts/print-versions.sh
 
-            - name: Start and configure blockchains
-              run: ./scripts/bc-all-start.sh
-
             - name: Install node dependencies
               run: yarn install --immutable
+
+            - name: Start and configure blockchains
+              run: ./scripts/bc-all-start.sh
 
             - name: Print Yarn package versions
               run: yarn info --name-only --all
@@ -694,8 +694,8 @@ jobs:
 
             - name: Set up Custom CA Certificate for Node.js
               run: |
-                echo "NODE_EXTRA_CA_CERTS=$HOME/river-ca-cert.pem" >> $GITHUB_ENV                      
-    
+                echo "NODE_EXTRA_CA_CERTS=$HOME/river-ca-cert.pem" >> $GITHUB_ENV
+
             - name: Run multiple nodes
               run: |
                   cd ./casablanca/node
@@ -781,6 +781,9 @@ jobs:
                   node-version: '20'
                   cache: 'yarn'
 
+            - name: Install node dependencies
+              run: yarn install --immutable
+
             - name: Start and configure blockchains
               run: ./scripts/bc-all-start.sh
 
@@ -848,11 +851,11 @@ jobs:
             - name: Install Forge modules
               run: ./scripts/install-deps.sh
 
-            - name: Start and configure blockchains
-              run: ./scripts/bc-all-start.sh
-
             - name: Install node dependencies
               run: yarn install --immutable
+
+            - name: Start and configure blockchains
+              run: ./scripts/bc-all-start.sh
 
             - name: Generate xchain contract bindings
               run: ./scripts/build-town-types.sh localhost

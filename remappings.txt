@@ -12,3 +12,4 @@ forge-std/=lib/forge-std/src/
 openzeppelin-contracts-upgradeable/=lib/openzeppelin-contracts-upgradeable/contracts
 openzeppelin-contracts/=lib/openzeppelin-contracts/
 operator-filter-registry/=lib/operator-filter-registry/
+@eth-optimism/contracts-bedrock/=node_modules/@eth-optimism/contracts-bedrock

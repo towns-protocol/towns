@@ -15,11 +15,18 @@ contract NodeOperatorHelper is FacetHelper {
   constructor() {
     operator = new NodeOperatorFacet();
 
-    bytes4[] memory selectors_ = new bytes4[](4);
-    selectors_[0] = NodeOperatorFacet.registerOperator.selector;
-    selectors_[1] = NodeOperatorFacet.setOperatorStatus.selector;
-    selectors_[2] = NodeOperatorFacet.operatorStatus.selector;
-    selectors_[3] = NodeOperatorFacet.approvedOperators.selector;
+    bytes4[] memory selectors_ = new bytes4[](11);
+    selectors_[_index++] = NodeOperatorFacet.registerOperator.selector;
+    selectors_[_index++] = NodeOperatorFacet.isOperator.selector;
+    selectors_[_index++] = NodeOperatorFacet.setOperatorStatus.selector;
+    selectors_[_index++] = NodeOperatorFacet.getOperatorStatus.selector;
+    selectors_[_index++] = NodeOperatorFacet.getOperators.selector;
+    selectors_[_index++] = NodeOperatorFacet.getOperatorsByStatus.selector;
+    selectors_[_index++] = NodeOperatorFacet.getApprovedOperators.selector;
+    selectors_[_index++] = NodeOperatorFacet.setRiverToken.selector;
+    selectors_[_index++] = NodeOperatorFacet.addSpaceDelegation.selector;
+    selectors_[_index++] = NodeOperatorFacet.removeSpaceDelegation.selector;
+    selectors_[_index++] = NodeOperatorFacet.getSpaceDelegation.selector;
 
     addSelectors(selectors_);
   }
@@ -34,5 +41,12 @@ contract NodeOperatorHelper is FacetHelper {
 
   function initializer() public pure override returns (bytes4) {
     return NodeOperatorFacet.__NodeOperator_init.selector;
+  }
+
+  function makeInitData(
+    address spaceOwner,
+    uint256 stakeRequirement
+  ) public pure returns (bytes memory) {
+    return abi.encodeWithSelector(initializer(), spaceOwner, stakeRequirement);
   }
 }

@@ -14,6 +14,8 @@ import {TownHelper} from "contracts/test/towns/TownHelper.sol";
 
 // deployments
 import {DeployTownFactory} from "contracts/scripts/deployments/DeployTownFactory.s.sol";
+import {DeployNodeOperator} from "contracts/scripts/deployments/DeployNodeOperator.s.sol";
+import {DeployRiverBase} from "contracts/scripts/deployments/DeployRiverBase.s.sol";
 
 /*
  * @notice - This is the base setup to start testing the entire suite of contracts
@@ -21,36 +23,58 @@ import {DeployTownFactory} from "contracts/scripts/deployments/DeployTownFactory
  */
 contract BaseSetup is TestUtils, TownHelper {
   DeployTownFactory internal deployTownFactory = new DeployTownFactory();
+  DeployNodeOperator internal deployNodeOperator = new DeployNodeOperator();
+  DeployRiverBase internal deployRiverToken = new DeployRiverBase();
 
   address internal deployer;
   address internal founder;
   address internal space;
   address internal everyoneSpace;
-  address internal townFactory;
+  address internal spaceFactory;
 
   address internal userEntitlement;
   address internal tokenEntitlement;
   address internal townOwner;
 
+  address internal nodeOperator;
+  uint256 internal stakeRequirement;
+
+  address internal riverToken;
+  address internal bridge;
+  address internal association;
+
   // @notice - This function is called before each test function
-  // @dev - It will create a new diamond contract and set the townFactory variable to the address of the diamond
+  // @dev - It will create a new diamond contract and set the spaceFactory variable to the address of the diamond
   function setUp() public virtual {
     deployer = getDeployer();
 
-    // run after diamondInitParams
-    townFactory = deployTownFactory.deploy();
+    ///@dev run after diamondInitParams
+
+    // deploy space factory
+    spaceFactory = deployTownFactory.deploy();
     userEntitlement = deployTownFactory.userEntitlement();
     tokenEntitlement = deployTownFactory.tokenEntitlement();
     townOwner = deployTownFactory.townOwner();
+
+    // deploy node operator
+    nodeOperator = deployNodeOperator.deploy(townOwner);
+    stakeRequirement = deployNodeOperator.stakeRequirement();
+
+    // deploy river token
+    riverToken = deployRiverToken.deploy({
+      spaceFactory: spaceFactory,
+      nodeOperator: nodeOperator
+    });
+    bridge = deployRiverToken.bridgeBase();
 
     // create a new space
     founder = _randomAddress();
 
     vm.startPrank(founder);
-    space = TownArchitect(townFactory).createTown(
+    space = TownArchitect(spaceFactory).createTown(
       _createTownInfo("BaseSetupTown")
     );
-    everyoneSpace = TownArchitect(townFactory).createTown(
+    everyoneSpace = TownArchitect(spaceFactory).createTown(
       _createEveryoneTownInfo("BaseSetupEveryoneTown")
     );
     vm.stopPrank();

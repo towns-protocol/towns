@@ -15,13 +15,13 @@ import {PrepayFacet} from "contracts/src/towns/facets/prepay/PrepayFacet.sol";
 import {MembershipFacet} from "contracts/src/towns/facets/membership/MembershipFacet.sol";
 
 contract PrepayTest is BaseSetup {
-  TownArchitect public townArchitect;
+  TownArchitect public architect;
   PrepayFacet public prepay;
 
   function setUp() public override {
     super.setUp();
-    prepay = PrepayFacet(townFactory);
-    townArchitect = TownArchitect(townFactory);
+    prepay = PrepayFacet(spaceFactory);
+    architect = TownArchitect(spaceFactory);
   }
 
   function test_prepayMembership() external {

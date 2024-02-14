@@ -25,6 +25,12 @@ abstract contract LockFacet is ILock, LockBase, Facet {
     return _lockEnabled(account);
   }
 
+  function lockCooldown(
+    address account
+  ) external view virtual returns (uint256) {
+    return _lockCooldown(account);
+  }
+
   /// @inheritdoc ILock
   function enableLock(address account) external virtual onlyAllowed {
     _enableLock(account);

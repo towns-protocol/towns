@@ -29,7 +29,7 @@ import {IntrospectionFacet} from "contracts/src/diamond/facets/introspection/Int
 import {DeployMultiInit} from "contracts/scripts/deployments/DeployMultiInit.s.sol";
 import {MultiInit} from "contracts/src/diamond/initializers/MultiInit.sol";
 
-contract DeployNodeRegistry is DiamondDeployer {
+contract DeployNodeOperator is DiamondDeployer {
   DiamondCutHelper cutHelper = new DiamondCutHelper();
   DiamondLoupeHelper loupeHelper = new DiamondLoupeHelper();
   OwnableHelper ownableHelper = new OwnableHelper();
@@ -37,8 +37,16 @@ contract DeployNodeRegistry is DiamondDeployer {
   ERC721AHelper erc721aHelper = new ERC721AHelper();
   IntrospectionHelper introspectionHelper = new IntrospectionHelper();
 
+  address internal spaceOwnerRegistry;
+  uint256 public constant stakeRequirement = 1 ether; // 1 river token
+
   function versionName() public pure override returns (string memory) {
-    return "nodeRegistry";
+    return "nodeOperator";
+  }
+
+  function deploy(address ownerRegistry) public returns (address) {
+    spaceOwnerRegistry = ownerRegistry;
+    return super.deploy();
   }
 
   function diamondInitParams(
@@ -76,7 +84,7 @@ contract DeployNodeRegistry is DiamondDeployer {
     addFacet(
       operatorHelper.makeCut(operator, IDiamond.FacetCutAction.Add),
       operator,
-      operatorHelper.makeInitData("")
+      operatorHelper.makeInitData(spaceOwnerRegistry, stakeRequirement)
     );
     addFacet(
       introspectionHelper.makeCut(introspection, IDiamond.FacetCutAction.Add),

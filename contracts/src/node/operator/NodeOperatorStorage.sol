@@ -14,8 +14,14 @@ library NodeOperatorStorage {
     keccak256("river.node.operator.storage");
 
   struct Layout {
-    mapping(address => INodeOperatorBase.NodeOperatorStatus) operatorStatus;
+    mapping(address => INodeOperatorBase.NodeOperator) operatorByAddress;
+    EnumerableSet.AddressSet operators;
     EnumerableSet.AddressSet approvedOperators;
+    address spaceOwnerRegistry;
+    mapping(address operator => EnumerableSet.AddressSet) spacesByOperator;
+    mapping(address space => address operator) operatorBySpace;
+    address riverToken;
+    uint256 stakeRequirement;
   }
 
   function layout() internal pure returns (Layout storage l) {
