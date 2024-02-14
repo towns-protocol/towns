@@ -10,12 +10,6 @@ database:
     host: ''
 storageType: postgres
 
-# Certificates for TLS
-TLSConfig:
-    cert: certs/cert.pem
-    key: certs/key.pem
-UseHttps: true
-
 # Blockchain configuration
 baseChain:
     chainId: 31337

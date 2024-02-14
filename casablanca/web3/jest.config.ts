@@ -5,7 +5,7 @@ const config: JestConfigWithTsJest = {
     testEnvironment: './../jest.env.ts',
     testEnvironmentOptions: {
         browsers: ['chrome', 'firefox', 'safari'],
-        url: 'https://localhost:5158',
+        url: 'http://localhost:5158',
     },
     verbose: true,
     testTimeout: 60000,

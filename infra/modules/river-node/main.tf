@@ -10,6 +10,7 @@ locals {
   node_name   = "river${var.node_number}-${terraform.workspace}"
   grpc_record = "river${var.node_number}-grpc-${terraform.workspace}"
 
+  rpc_http_port  = 80
   rpc_https_port = 443
 
   service_name        = "river-node"
@@ -117,19 +118,34 @@ module "river_internal_sg" {
   description = "Security group for river node"
   vpc_id      = var.vpc_id
 
+
   ingress_with_cidr_blocks = [
+    {
+      from_port   = local.rpc_http_port,
+      to_port     = local.rpc_http_port,
+      protocol    = "tcp",
+      description = "Allow incoming TCP traffic from onto port 80 from the public internet",
+      cidr_blocks = "0.0.0.0/0"
+    },
     {
       from_port   = local.rpc_https_port,
       to_port     = local.rpc_https_port,
       protocol    = "tcp",
-      description = "Allow incoming TCP traffic from the public internet on port 443 (TCP)",
+      description = "Allow incoming TCP traffic from onto port 443 from the public internet",
+      cidr_blocks = "0.0.0.0/0"
+    },
+    {
+      from_port   = local.rpc_http_port,
+      to_port     = local.rpc_http_port,
+      protocol    = "udp",
+      description = "Allow incoming UDP traffic from onto port 80 from the public internet",
       cidr_blocks = "0.0.0.0/0"
     },
     {
       from_port   = local.rpc_https_port,
       to_port     = local.rpc_https_port,
       protocol    = "udp",
-      description = "Allow incoming UDP traffic from the public internet on port 443 (UDP)",
+      description = "Allow incoming UDP traffic from onto port 443 from the public internet",
       cidr_blocks = "0.0.0.0/0"
     }
   ]
@@ -260,8 +276,7 @@ resource "aws_iam_role_policy" "river_node_credentials" {
           "${local.global_remote_state.base_chain_network_url_secret.arn}",
           "${local.global_remote_state.river_chain_network_url_secret.arn}",
           "${local.global_remote_state.river_global_push_notification_auth_token.arn}",
-          "${local.global_remote_state.cloudflare_api_token_secret.arn}",
-          "${var.river_node_ssl_cert_secret_arn}"
+          "${local.global_remote_state.cloudflare_api_token_secret.arn}"
         ]
       },
       {
@@ -304,6 +319,82 @@ resource "aws_iam_role_policy" "ssm_policy" {
   })
 }
 
+resource "aws_lb_target_group" "blue" {
+  name        = "${local.node_name}-blue"
+  protocol    = "HTTP"
+  port        = local.rpc_http_port
+  target_type = "ip"
+  vpc_id      = var.vpc_id
+
+
+  health_check {
+    path                = "/info"
+    interval            = 15
+    timeout             = 6
+    healthy_threshold   = 2
+    unhealthy_threshold = 2
+  }
+
+  tags = local.river_node_tags
+}
+
+resource "aws_lb_target_group" "blue-grpc" {
+  name             = "${local.node_name}-blue-grpc"
+  protocol         = "HTTP"
+  protocol_version = "HTTP2"
+  port             = local.rpc_http_port
+  target_type      = "ip"
+  vpc_id           = var.vpc_id
+
+  tags = local.river_node_tags
+
+  health_check {
+    path                = "/info"
+    interval            = 15
+    timeout             = 6
+    healthy_threshold   = 2
+    unhealthy_threshold = 2
+  }
+}
+
+resource "aws_lb_listener_rule" "http_rule" {
+  listener_arn = var.alb_https_listener_arn
+
+  lifecycle {
+    ignore_changes = [action]
+  }
+
+  action {
+    type             = "forward"
+    target_group_arn = aws_lb_target_group.blue.arn
+  }
+
+  condition {
+    host_header {
+      values = ["${local.node_name}.${module.global_constants.primary_hosted_zone_name}"]
+    }
+  }
+}
+
+resource "aws_lb_listener_rule" "grpc_rule" {
+  listener_arn = var.alb_https_listener_arn
+
+  lifecycle {
+    ignore_changes = [action]
+  }
+
+  action {
+    type             = "forward"
+    target_group_arn = aws_lb_target_group.blue-grpc.arn
+  }
+
+  condition {
+    host_header {
+      values = ["${local.grpc_record}.${module.global_constants.primary_hosted_zone_name}"]
+    }
+  }
+}
+
 locals {
   river_user_db_config = {
     host         = var.river_node_db.rds_aurora_postgresql.cluster_endpoint
@@ -340,7 +431,7 @@ locals {
 
   river_registry_contract_td_env_config = var.is_transient ? [{
     name  = "REGISTRYCONTRACT__ADDRESS",
-    value = "0x1FA225F6A364E5F9Dfab75e3772EB566CD84cbeE"
+    value = "0xEd142Ee3F6B445B70f063A30A3F61e5d7855F6Fd"
   }] : []
 
   node_registry_csv_multinode = "${local.nodes[0].address},${local.nodes[0].url},${local.nodes[1].address},${local.nodes[1].url},${local.nodes[2].address},${local.nodes[2].url},${local.nodes[3].address},${local.nodes[3].url},${local.nodes[4].address},${local.nodes[4].url},${local.nodes[5].address},${local.nodes[5].url},${local.nodes[6].address},${local.nodes[6].url},${local.nodes[7].address},${local.nodes[7].url},${local.nodes[8].address},${local.nodes[8].url},${local.nodes[9].address},${local.nodes[9].url}"
@@ -380,8 +471,8 @@ resource "aws_ecs_task_definition" "river-fargate" {
 
     essential = true
     portMappings = [{
-      containerPort = local.rpc_https_port
-      hostPort      = local.rpc_https_port
+      containerPort = local.rpc_http_port
+      hostPort      = local.rpc_http_port
       protocol      = "tcp"
       }, {
       containerPort = 8081
@@ -404,14 +495,6 @@ resource "aws_ecs_task_definition" "river-fargate" {
       {
         name      = "PUSHNOTIFICATION__AUTHTOKEN",
         valueFrom = local.global_remote_state.river_global_push_notification_auth_token.arn
-      },
-      {
-        name      = "TLSCONFIG__CERT",
-        valueFrom = "${var.river_node_ssl_cert_secret_arn}:cert::"
-      },
-      {
-        name      = "TLSCONFIG__KEY",
-        valueFrom = "${var.river_node_ssl_cert_secret_arn}:key::"
       }
       ],
       local.base_chain_default_td_secret_config,
@@ -439,7 +522,7 @@ resource "aws_ecs_task_definition" "river-fargate" {
       },
       {
         name  = "PORT",
-        value = tostring(local.rpc_https_port)
+        value = tostring(local.rpc_http_port)
       },
       {
         name  = "METRICS__PORT",
@@ -668,6 +751,18 @@ resource "aws_ecs_service" "river-ecs-service" {
     ignore_changes = [task_definition, desired_count]
   }
 
+  load_balancer {
+    target_group_arn = aws_lb_target_group.blue.arn
+    container_name   = "river-node"
+    container_port   = local.rpc_http_port
+  }
+
+  load_balancer {
+    target_group_arn = aws_lb_target_group.blue-grpc.arn
+    container_name   = "river-node"
+    container_port   = local.rpc_http_port
+  }
+
   network_configuration {
     security_groups  = [module.river_internal_sg.security_group_id]
     subnets          = var.public_subnets
@@ -706,7 +801,7 @@ resource "cloudflare_record" "grpc_dns" {
 resource "cloudflare_record" "public_ip_a_record" {
   zone_id = data.cloudflare_zone.zone.id
   name    = var.dns_name
-  value   = "192.0.2.0" # this is a placeholder value. it will be updated by the service discovery container. we need this, so that terraform can remember to destroy the record when a transient environment is destroyed.
+  value   = "1.1.1.1" # this is a placeholder value. it will be updated by the service discovery container. we need this, so that terraform can remember to destroy the record when a transient environment is destroyed.
   type    = "A"
   ttl     = 60
   lifecycle {

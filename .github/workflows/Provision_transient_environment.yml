@@ -155,7 +155,7 @@ jobs:
 
     run_synthetic_transactions_test:
         needs: [check_labels, river_node_continuous_deploys]
-        if: needs.check_labels.outputs.num_nodes > 0 && needs.check_labels.outputs.is_clean_environment != 'true'
+        if: needs.check_labels.outputs.num_nodes > 0
         uses: './.github/workflows/Synthetic_transactions.yml'
         secrets:
             SLACK_CI_CHANNEL_WEBHOOK_URL: ${{ secrets.SLACK_CI_CHANNEL_WEBHOOK_URL }}

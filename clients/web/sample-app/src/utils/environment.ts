@@ -19,7 +19,7 @@ export const ENVIRONMENTS: TownsEnvironmentInfo[] = [
     {
         id: TownsEnvironment.Multinode,
         name: 'Multinode (local)',
-        casablancaUrl: Array.from({ length: 10 }, (_, i) => `https://localhost:${5170 + i}`).join(
+        casablancaUrl: Array.from({ length: 10 }, (_, i) => `http://localhost:${5170 + i}`).join(
             ',',
         ),
         chainId: foundry.id,
@@ -28,7 +28,7 @@ export const ENVIRONMENTS: TownsEnvironmentInfo[] = [
     {
         id: TownsEnvironment.Local,
         name: 'Local',
-        casablancaUrl: 'https://localhost:5157',
+        casablancaUrl: 'http://localhost:5157',
         chainId: foundry.id,
         chain: foundry,
     },

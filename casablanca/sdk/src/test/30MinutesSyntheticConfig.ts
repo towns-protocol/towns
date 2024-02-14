@@ -19,19 +19,7 @@ export const testBetaName = 'test-beta'
 export const testSpamChannelName = 'test spam'
 
 export const envName = process.env.ENVIRONMENT_NAME || testBetaName
-
-const getRiverNodeRpcUrl = () => {
-    if (envName.includes('transient')) {
-        const parts = envName.split('-')
-        const prNumber = parts[parts.length - 1]
-        return `https://river1-${prNumber}.nodes.transient.towns.com`
-    } else {
-        return `https://river1.nodes.${envName}.towns.com`
-    }
-}
-
-export const riverNodeRpcUrl = getRiverNodeRpcUrl()
-
+export const riverNodeRpcUrl = 'https://river1-' + envName + '.towns.com'
 export const jsonRpcProviderUrl =
     envName == testBetaName ? 'https://sepolia.base.org' : `https://base-fork-${envName}.towns.com`
 

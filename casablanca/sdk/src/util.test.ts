@@ -30,11 +30,11 @@ import { EntitlementsDelegate } from './decryptionExtensions'
 
 const log = dlog('csb:test:util')
 
-const TEST_URL_SINGLE = 'https://localhost:5158'
-const TEST_URL_SINGLE_ENT = 'https://localhost:5157'
+const TEST_URL_SINGLE = 'http://localhost:5158'
+const TEST_URL_SINGLE_ENT = 'http://localhost:5157'
 const TEST_URL_MULTI =
-    'https://localhost:5170,https://localhost:5171,https://localhost:5172,https://localhost:5173,https://localhost:5174,' +
-    'https://localhost:5175,https://localhost:5176,https://localhost:5177,https://localhost:5178,https://localhost:5179'
+    'http://localhost:5170,http://localhost:5171,http://localhost:5172,http://localhost:5173,http://localhost:5174,' +
+    'http://localhost:5175,http://localhost:5176,http://localhost:5177,http://localhost:5178,http://localhost:5179'
 
 const initTestUrls = () => {
     if (process.env.RIVER_TEST_URLS !== undefined && process.env.RIVER_TEST_URLS !== '') {

@@ -1,14 +1,11 @@
 #!/bin/bash
 set -euo pipefail
 
+set -x
 SESSION_NAME="River"
-
-# Function to wait for a process and exit if it fails
-wait_for_process() {
-    local pid=$1
-    local name=$2
-    wait "$pid" || { echo "Error: $name (PID: $pid) failed." >&2; exit 1; }
-}
+YAML_FILE="./casablanca/node/run_files/single/00/config/config.yaml"
+PNW_URL="http://localhost:8787"
+PNW_AUTH_TOKEN="Zm9v"
 
 # Check if Homebrew is installed
 if ! command -v brew &> /dev/null; then
@@ -54,14 +51,6 @@ fi
 # Create a new tmux session
 tmux new-session -d -s $SESSION_NAME
 
-# Start contract build in background
-pushd contracts
-set -a
-. .env.localhost
-set +a
-make build & BUILD_PID=$!
-popd
-
 ./casablanca/scripts/launch_storage.sh &
 
 # Set the block chains to run with 2 second block times
@@ -96,33 +85,30 @@ wait_for_port 5433
 
 echo "Both Anvil chains and Postgres are now running, deploying contracts"
 
-# Wait for build to finish
-wait_for_process "$BUILD_PID" "build"
+#!/bin/bash
 
-# In your tmux session, start the deployments in background panes/windows
-tmux new-window -t $SESSION_NAME -n deploy-base './scripts/deploy-base.sh nobuild; tmux wait-for -S deploy-base-done'
-tmux new-window -t $SESSION_NAME -n deploy-river './scripts/deploy-river.sh nobuild; tmux wait-for -S deploy-river-done'
+# Create temporary files in the system's temp directory
+tmpfile_river_chain=$(mktemp /tmp/anvil_river_chain.XXXXXX)
+tmpfile_base_chain=$(mktemp /tmp/anvil_base_chain.XXXXXX)
 
-# Now, in your original pane or window, block until the deployments signal they are done
-tmux wait-for deploy-base-done
-tmux wait-for deploy-river-done
+(./scripts/deploy-towns-contracts.sh > "$tmpfile_base_chain" 2>&1 && ./scripts/deploy-wallet-link-contracts.sh >> "$tmpfile_base_chain" 2>&1) 
+pid1=$!
 
-echo "STARTED ALL CHAINS AND DEPLOYED ALL CONTRACTS"
+# Wait for all scripts to finish
+wait $pid1
+exit_status1=$?
 
+# Check the exit status of each script and display the output if it failed
+if [ $exit_status1 -ne 0 ]; then
+    echo "Anvil base chain deploy failed with exit status $exit_status1"
+    cat "$tmpfile_river_chain"
+fi
 
 # Now generate the casablanca server config
-./casablanca/node/run_multi.sh -c -n 10
-
-# Define the base directory for easier reference
-CONFIGS_DIR="./casablanca/node/run_files/multi_ent"
-PNW_URL="http://localhost:8787"
-PNW_AUTH_TOKEN="Zm9v"
-
-# Loop over each config.yaml file in the multi_ent subdirectories
-find "$CONFIGS_DIR" -type f -name "config.yaml" | while read -r YAML_FILE; do
-    yq eval ".pushNotification.url = \"$PNW_URL\"" -i $YAML_FILE
-    yq eval ".pushNotification.authToken = \"$PNW_AUTH_TOKEN\"" -i $YAML_FILE
-done
+./casablanca/node/run_single.sh -c
+# and set the PNW settings in it's config
+yq eval ".pushNotification.url = \"$PNW_URL\"" -i $YAML_FILE
+yq eval ".pushNotification.authToken = \"$PNW_AUTH_TOKEN\"" -i $YAML_FILE
 
 # xchain nodes
 # disabled: https://linear.app/hnt-labs/issue/HNT-4317/create-multish-call-in-the-start-devsh-fails
@@ -148,7 +134,8 @@ commands=(
     "worker_token:cd servers/workers/token-worker && yarn dev:local"
     "worker_gateway:cd servers/workers/gateway-worker && yarn dev:local"
     "worker_push:cd servers/workers/push-notification-worker && ./scripts/start-local-push-worker.sh"
-    "casablanca:./casablanca/node/run_multi.sh -r"
+    "casablanca:./casablanca/node/run_single.sh --skip-config"
+    "casablanca-no-entitlements:./casablanca/node/run_single.sh --disable_entitlements"
     "xchain:./servers/xchain/launch_multi.sh"
 )
 

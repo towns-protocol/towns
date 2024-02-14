@@ -2,7 +2,6 @@ package rpc_test
 
 import (
 	"context"
-	"crypto/tls"
 	"fmt"
 	"math/rand"
 	"net"
@@ -19,13 +18,11 @@ import (
 	"github.com/river-build/river/config"
 	"github.com/river-build/river/crypto"
 	"github.com/river-build/river/events"
-	"github.com/river-build/river/infra"
 	"github.com/river-build/river/protocol"
 	"github.com/river-build/river/protocol/protocolconnect"
 	"github.com/river-build/river/rpc"
 	"github.com/river-build/river/shared"
 	"github.com/river-build/river/testutils/dbtestutils"
-	"golang.org/x/net/http2"
 
 	"connectrpc.com/connect"
 	eth_crypto "github.com/ethereum/go-ethereum/crypto"
@@ -262,7 +259,6 @@ func createChannel(
 }
 
 func testServerAndClient(
-	t *testing.T,
 	ctx context.Context,
 	dbUrl string,
 	dbSchemaName string,
@@ -285,8 +281,6 @@ func testServerAndClient(
 		UseBlockChainStreamRegistry: true,
 	}
 
-	infra.InitLogFromConfig(&cfg.Log)
-
 	btc, err := crypto.NewBlockchainTestContext(ctx, 1)
 	if err != nil {
 		panic(err)
@@ -295,21 +289,14 @@ func testServerAndClient(
 
 	bc := btc.GetBlockchain(ctx, 0, true)
 
-	// This is a hack to get the port number of the listener
-	// so we can register it in the contract before starting
-	// the server
 	listener, err := net.Listen("tcp", "localhost:0")
-
 	if err != nil {
 		panic(err)
 	}
-
 	port := listener.Addr().(*net.TCPAddr).Port
-
 	url := fmt.Sprintf("http://localhost:%d", port)
 
 	err = btc.InitNodeRecord(ctx, 0, url)
-
 	if err != nil {
 		panic(err)
 	}
@@ -319,24 +306,10 @@ func testServerAndClient(
 		panic(err)
 	}
 
-	// Allow insecure TLS connections to HTTP/2 server using HTTP/1.1 and don't validate the certificate
-	http.DefaultTransport.(*http.Transport).TLSClientConfig = &tls.Config{InsecureSkipVerify: true}
-
-	httpClient := &http.Client{
-		Transport: &http2.Transport{
-			// So http2.Transport doesn't complain the URL scheme isn't 'https'
-			AllowHTTP: true,
-			// Pretend we are dialing a TLS endpoint. (Note, we ignore the passed tls.Config)
-			DialTLSContext: func(ctx context.Context, network, addr string, cfg *tls.Config) (net.Conn, error) {
-				var d net.Dialer
-				return d.DialContext(ctx, network, addr)
-			},
-		},
-	}
-
 	client := protocolconnect.NewStreamServiceClient(
-		httpClient,
-		url)
+		http.DefaultClient,
+		url,
+	)
 
 	return client, url, func() {
 		serverCloser()
@@ -346,20 +319,19 @@ func testServerAndClient(
 
 func TestMethods(t *testing.T) {
 	ctx := test.NewTestContext()
-	client, _, closer := testServerAndClient(t, ctx, testDatabaseUrl, testSchemaName, false)
+	client, _, closer := testServerAndClient(ctx, testDatabaseUrl, testSchemaName, false)
 	wallet1, _ := crypto.NewWallet(ctx)
 	wallet2, _ := crypto.NewWallet(ctx)
-
 	defer closer()
-
 	{
 		response, err := client.Info(ctx, connect.NewRequest(&protocol.InfoRequest{}))
 		if err != nil {
 			t.Errorf("error calling Info: %v", err)
 		}
 		assert.Equal(t, "Towns.com node welcomes you!", response.Msg.Graffiti)
-
-		_, err = client.CreateStream(ctx, connect.NewRequest(&protocol.CreateStreamRequest{}))
+	}
+	{
+		_, err := client.CreateStream(ctx, connect.NewRequest(&protocol.CreateStreamRequest{}))
 		if err == nil {
 			t.Errorf("expected error calling CreateStream with no events")
 		}
@@ -557,7 +529,7 @@ func TestMethods(t *testing.T) {
 
 func TestRiverDeviceId(t *testing.T) {
 	ctx := test.NewTestContext()
-	client, _, closer := testServerAndClient(t, ctx, testDatabaseUrl, testSchemaName, false)
+	client, _, closer := testServerAndClient(ctx, testDatabaseUrl, testSchemaName, false)
 	wallet, _ := crypto.NewWallet(ctx)
 	deviceWallet, _ := crypto.NewWallet(ctx)
 	defer closer()
@@ -633,7 +605,7 @@ func TestSyncStreams(t *testing.T) {
 	*/
 	// create the test client and server
 	ctx := test.NewTestContext()
-	client, _, closer := testServerAndClient(t, ctx, testDatabaseUrl, testSchemaName, false)
+	client, _, closer := testServerAndClient(ctx, testDatabaseUrl, testSchemaName, false)
 	defer closer()
 	// create the streams for a user
 	wallet, _ := crypto.NewWallet(ctx)
@@ -706,7 +678,7 @@ func TestAddStreamsToSync(t *testing.T) {
 	*/
 	// create the test client and server
 	ctx := test.NewTestContext()
-	aliceClient, url, closer := testServerAndClient(t, ctx, testDatabaseUrl, testSchemaName, false)
+	aliceClient, url, closer := testServerAndClient(ctx, testDatabaseUrl, testSchemaName, false)
 	defer closer()
 	// create alice's wallet and streams
 	aliceWallet, _ := crypto.NewWallet(ctx)
@@ -715,22 +687,9 @@ func TestAddStreamsToSync(t *testing.T) {
 	assert.NotNil(t, alice, "nil sync cookie for alice")
 	_, _, err = createUserDeviceKeyStream(ctx, aliceWallet, aliceClient)
 	assert.Nilf(t, err, "error calling createUserDeviceKeyStream: %v", err)
-
-	httpClient := &http.Client{
-		Transport: &http2.Transport{
-			// So http2.Transport doesn't complain the URL scheme isn't 'https'
-			AllowHTTP: true,
-			// Pretend we are dialing a TLS endpoint. (Note, we ignore the passed tls.Config)
-			DialTLSContext: func(ctx context.Context, network, addr string, cfg *tls.Config) (net.Conn, error) {
-				var d net.Dialer
-				return d.DialContext(ctx, network, addr)
-			},
-		},
-	}
-
 	// create bob's client, wallet, and streams
 	bobClient := protocolconnect.NewStreamServiceClient(
-		httpClient,
+		http.DefaultClient,
 		url,
 	)
 	bobWallet, _ := crypto.NewWallet(ctx)
@@ -820,7 +779,7 @@ func TestRemoveStreamsFromSync(t *testing.T) {
 	*/
 	// create the test client and server
 	ctx := test.NewTestContext()
-	aliceClient, url, closer := testServerAndClient(t, ctx, testDatabaseUrl, testSchemaName, false)
+	aliceClient, url, closer := testServerAndClient(ctx, testDatabaseUrl, testSchemaName, false)
 	defer closer()
 	// create alice's wallet and streams
 	aliceWallet, _ := crypto.NewWallet(ctx)
@@ -829,22 +788,9 @@ func TestRemoveStreamsFromSync(t *testing.T) {
 	assert.NotNil(t, alice, "nil sync cookie for alice")
 	_, _, err = createUserDeviceKeyStream(ctx, aliceWallet, aliceClient)
 	assert.NoError(t, err)
-
-	httpClient := &http.Client{
-		Transport: &http2.Transport{
-			// So http2.Transport doesn't complain the URL scheme isn't 'https'
-			AllowHTTP: true,
-			// Pretend we are dialing a TLS endpoint. (Note, we ignore the passed tls.Config)
-			DialTLSContext: func(ctx context.Context, network, addr string, cfg *tls.Config) (net.Conn, error) {
-				var d net.Dialer
-				return d.DialContext(ctx, network, addr)
-			},
-		},
-	}
-
 	// create bob's client, wallet, and streams
 	bobClient := protocolconnect.NewStreamServiceClient(
-		httpClient,
+		http.DefaultClient,
 		url,
 	)
 	bobWallet, _ := crypto.NewWallet(ctx)
@@ -974,7 +920,7 @@ func TestRemoveStreamsFromSync(t *testing.T) {
 // TODO: revamp with block support
 func DisableTestManyUsers(t *testing.T) {
 	ctx := test.NewTestContext()
-	client, _, closer := testServerAndClient(t, ctx, testDatabaseUrl, testSchemaName, false)
+	client, _, closer := testServerAndClient(ctx, testDatabaseUrl, testSchemaName, false)
 	defer closer()
 
 	totalUsers := 14

@@ -92,66 +92,48 @@ output "alb_reserved_num_rules" {
   value = 50
 }
 
-locals {
-  num_nodes = 10
-
-  is_transient = length(regexall("transient-\\d+", terraform.workspace)) > 0
-
-  regular_river_node_urls = [
-    for i in range(0, local.num_nodes) : "https://river${i + 1}.nodes.${terraform.workspace}.towns.com"
-  ]
-
-  # take local.transient_env_name, and parse out the number after splitting on '-'
-  transient_no = local.is_transient ? (tonumber(split("-", terraform.workspace)[1])) : 0
-
-  transient_river_node_urls = [
-    for i in range(0, 10) : "https://river${i + 1}-${local.transient_no}.nodes.transient.towns.com"
-  ]
-
-  river_node_urls = local.is_transient ? local.transient_river_node_urls : local.regular_river_node_urls
-}
-
 output "nodes_metadata" {
   value = [
     {
-      address = "0xBF2Fe1D28887A0000A1541291c895a26bD7B1DdD"
-      url     = local.river_node_urls[0]
+      address = "0xbf2fe1d28887a0000a1541291c895a26bd7b1ddd"
+      url     = "https://river1-grpc-${terraform.workspace}.towns.com"
     }
     , {
-      address = "0x43EaCe8E799497f8206E579f7CCd1EC41770d099"
-      url     = local.river_node_urls[1]
+      address = "0x43eace8e799497f8206e579f7ccd1ec41770d099"
+      url     = "https://river2-grpc-${terraform.workspace}.towns.com"
     }
     , {
-      address = "0x4E9baef70f7505fda609967870b8b489AF294796"
-      url     = local.river_node_urls[2]
+      address = "0x4e9baef70f7505fda609967870b8b489af294796"
+      url     = "https://river3-grpc-${terraform.workspace}.towns.com"
     }
     , {
-      address = "0xae2Ef76C62C199BC49bB38DB99B29726bD8A8e53"
-      url     = local.river_node_urls[3]
+      address = "0xae2ef76c62c199bc49bb38db99b29726bd8a8e53"
+      url     = "https://river4-grpc-${terraform.workspace}.towns.com"
     }
     , {
-      address = "0xC4f042CD5aeF82DB8C089AD0CC4DD7d26B2684cB"
-      url     = local.river_node_urls[4]
+      address = "0xc4f042cd5aef82db8c089ad0cc4dd7d26b2684cb"
+      url     = "https://river5-grpc-${terraform.workspace}.towns.com"
     }
     , {
-      address = "0x9BB3b35BBF3FA8030cCdb31030CF78039A0d0D9b"
-      url     = local.river_node_urls[5]
+      address = "0x9bb3b35bbf3fa8030ccdb31030cf78039a0d0d9b"
+      url     = "https://river6-grpc-${terraform.workspace}.towns.com"
     },
     {
-      address = "0x582c64BA11bf70E0BaC39988Cd3Bf0b8f40BDEc4"
-      url     = local.river_node_urls[6]
+      address = "0x582c64ba11bf70e0bac39988cd3bf0b8f40bdec4"
+      url     = "https://river7-grpc-${terraform.workspace}.towns.com"
     },
     {
-      address = "0x9df6e5F15ec682ca58Df6d2a831436973f98fe60"
-      url     = local.river_node_urls[7]
+      address = "0x9df6e5f15ec682ca58df6d2a831436973f98fe60"
+      url     = "https://river8-grpc-${terraform.workspace}.towns.com"
     }
     , {
-      address = "0xB79FaCbFC07Bff49cD2e2971305Da0DF7aCa9bF8"
-      url     = local.river_node_urls[8]
+      address = "0xb79facbfc07bff49cd2e2971305da0df7aca9bf8"
+      url     = "https://river9-grpc-${terraform.workspace}.towns.com"
     }
     , {
-      address = "0xA278267f396a317c5Bb583f47F7f2792Bc00D3b3"
-      url     = local.river_node_urls[9]
+      address = "0xa278267f396a317c5bb583f47f7f2792bc00d3b3"
+      url     = "https://river10-grpc-${terraform.workspace}.towns.com"
     }
+
   ]
 }

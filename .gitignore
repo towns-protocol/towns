@@ -76,5 +76,3 @@ common/xchain/dist/*
 
 .envrc
 servers/xchain/run_files/*
-casablanca/node/river_node
-casablanca/node/run_files/*

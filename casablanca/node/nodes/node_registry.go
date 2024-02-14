@@ -7,7 +7,6 @@ import (
 
 	. "github.com/river-build/river/base"
 	"github.com/river-build/river/dlog"
-	"github.com/river-build/river/http_client"
 	. "github.com/river-build/river/protocol"
 	. "github.com/river-build/river/protocol/protocolconnect"
 	"github.com/river-build/river/registries"
@@ -41,12 +40,12 @@ type NodeRecord struct {
 	nodeToNodeClient     NodeToNodeClient
 }
 
-func (nr *NodeRecord) GetUrl() string {
-	return nr.url
-}
-
-func (nr *NodeRecord) IsLocal() bool {
-	return nr.local
+func (n *NodeRecord) Url() string {
+	if n.local {
+		return "http://localhost:5157"
+	} else {
+		return n.url
+	}
 }
 
 // Currently node registry is immutable, so there is no need for locking yet.
@@ -69,16 +68,10 @@ func LoadNodeRegistry(ctx context.Context, contract *registries.RiverRegistryCon
 
 	log.Info("Node Registry Loaded from contract", "Nodes", nodes, "localAddress", localNodeAddress)
 
-	client, err := http_client.GetHttpClient(ctx)
-	if err != nil {
-		log.Error("Error getting http client", "err", err)
-		return nil, err
-	}
-
 	n := &nodeRegistryImpl{
 		nodes:      make(map[string]*NodeRecord),
 		nodesFlat:  make([]*NodeRecord, 0, len(nodes)),
-		httpClient: client,
+		httpClient: &http.Client{},
 	}
 	localFound := false
 	for _, node := range nodes {
@@ -103,22 +96,14 @@ func LoadNodeRegistry(ctx context.Context, contract *registries.RiverRegistryCon
 }
 
 func MakeSingleNodeRegistry(ctx context.Context, localNodeAddress string) *nodeRegistryImpl {
-	log := dlog.FromCtx(ctx)
 	nn := &NodeRecord{
 		address: localNodeAddress,
 		local:   true,
 	}
-
-	client, err := http_client.GetHttpClient(ctx)
-	if err != nil {
-		log.Error("Error getting http client", "err", err)
-		return nil
-	}
-
 	return &nodeRegistryImpl{
 		nodes:      map[string]*NodeRecord{localNodeAddress: nn},
 		nodesFlat:  []*NodeRecord{nn},
-		httpClient: client,
+		httpClient: &http.Client{},
 	}
 }
 
