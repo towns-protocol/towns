@@ -32,7 +32,7 @@ func srdump(cfg *config.Config) error {
 
 	fmt.Printf("Stream count reported: %d\n", streamNum)
 
-	streams, err := registryContract.GetAllStreams(ctx)
+	streams, err := registryContract.GetAllStreams(ctx, 0)
 	if err != nil {
 		return err
 	}

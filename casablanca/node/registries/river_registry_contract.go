@@ -2,6 +2,7 @@ package registries
 
 import (
 	"context"
+	"math/big"
 
 	. "github.com/river-build/river/base"
 	"github.com/river-build/river/config"
@@ -17,8 +18,8 @@ import (
 
 // Convinience wrapper for the IRiverRegistryV1 interface (abigen exports it as RiverRegistryV1)
 type RiverRegistryContract struct {
-	registry   *contracts.RiverRegistryV1
-	blockchain *crypto.Blockchain
+	Contract   *contracts.RiverRegistryV1
+	Blockchain *crypto.Blockchain
 }
 
 func NewRiverRegistryContract(
@@ -57,8 +58,8 @@ func NewRiverRegistryContract(
 	}
 
 	return &RiverRegistryContract{
-		registry:   registry,
-		blockchain: blockchain,
+		Contract:   registry,
+		Blockchain: blockchain,
 	}, nil
 }
 
@@ -80,9 +81,9 @@ func (sr *RiverRegistryContract) AllocateStream(
 	}
 
 	transactor := contracts.RiverRegistryV1TransactorRaw{
-		Contract: &sr.registry.RiverRegistryV1Transactor,
+		Contract: &sr.Contract.RiverRegistryV1Transactor,
 	}
-	_, _, err = sr.blockchain.TxRunner.SubmitAndWait(ctx, &transactor, "allocateStream", streamId, addrs, hash, genesisMiniblock)
+	_, _, err = sr.Blockchain.TxRunner.SubmitAndWait(ctx, &transactor, "allocateStream", streamId, addrs, hash, genesisMiniblock)
 	if err != nil {
 		return AsRiverError(err, Err_CANNOT_CALL_CONTRACT).Func("AllocateStream").Message("Smart contract call failed")
 	}
@@ -112,7 +113,7 @@ func getStreamResultFromContractStream(stream *contracts.IRiverRegistryBaseStrea
 
 func (sr *RiverRegistryContract) GetStream(ctx context.Context, streamId string) (*GetStreamResult, error) {
 	hash := ethCrypto.Keccak256Hash([]byte(streamId))
-	stream, err := sr.registry.GetStream(sr.callOpts(ctx), hash)
+	stream, err := sr.Contract.GetStream(sr.callOpts(ctx), hash)
 	if err != nil {
 		return nil, WrapRiverError(Err_CANNOT_CALL_CONTRACT, err).Func("GetStream").Message("Call failed")
 	}
@@ -120,7 +121,7 @@ func (sr *RiverRegistryContract) GetStream(ctx context.Context, streamId string)
 }
 
 func (sr *RiverRegistryContract) GetStreamCount(ctx context.Context) (int64, error) {
-	num, err := sr.registry.GetStreamCount(sr.callOpts(ctx))
+	num, err := sr.Contract.GetStreamCount(sr.callOpts(ctx))
 	if err != nil {
 		return 0, WrapRiverError(Err_CANNOT_CALL_CONTRACT, err).Func("GetStreamNum").Message("Call failed")
 	}
@@ -130,8 +131,12 @@ func (sr *RiverRegistryContract) GetStreamCount(ctx context.Context) (int64, err
 	return num.Int64(), nil
 }
 
-func (sr *RiverRegistryContract) GetAllStreams(ctx context.Context) ([]*GetStreamResult, error) {
-	streams, err := sr.registry.GetAllStreams(sr.callOpts(ctx))
+func (sr *RiverRegistryContract) GetAllStreams(ctx context.Context, blockNum uint64) ([]*GetStreamResult, error) {
+	callOpts := sr.callOpts(ctx)
+	if blockNum != 0 {
+		callOpts.BlockNumber = new(big.Int).SetUint64(blockNum)
+	}
+	streams, err := sr.Contract.GetAllStreams(callOpts)
 	if err != nil {
 		return nil, WrapRiverError(
 			Err_CANNOT_CALL_CONTRACT,
@@ -149,7 +154,7 @@ func (sr *RiverRegistryContract) GetAllStreams(ctx context.Context) ([]*GetStrea
 type NodeRecord = contracts.IRiverRegistryBaseNode
 
 func (sr *RiverRegistryContract) GetAllNodes(ctx context.Context) ([]NodeRecord, error) {
-	nodes, err := sr.registry.GetAllNodes(sr.callOpts(ctx))
+	nodes, err := sr.Contract.GetAllNodes(sr.callOpts(ctx))
 	if err != nil {
 		return nil, WrapRiverError(Err_CANNOT_CALL_CONTRACT, err).Func("GetAllNodes").Message("Call failed")
 	}
