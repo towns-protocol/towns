@@ -30,7 +30,7 @@ export const ENVIRONMENTS: TownsEnvironmentInfo[] = [
     {
         id: TownsEnvironment.LocalRiver,
         name: 'Local River',
-        casablancaUrl: 'http://localhost:5157',
+        casablancaUrl: 'https://localhost:5157',
         chainId: 31337,
         chain: foundryClone,
         protocol: SpaceProtocol.Casablanca,

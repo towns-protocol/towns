@@ -28,7 +28,7 @@ get_transient_river_node_url() {
     local pr_number="$1"
     local node_number="$2"
 
-    echo "https://river${node_number}-transient-${pr_number}.towns.com"
+    echo "https://river${node_number}-${pr_number}.nodes.transient.towns.com"
 }
 
 # Function to get comma-separated list of transient river node URLs

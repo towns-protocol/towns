@@ -1,5 +1,4 @@
 /**
- * @group restart
  */
 
 import { MembershipOp } from '@river/proto'

@@ -1,4 +1,5 @@
 import JSDOMEnvironment from 'jest-environment-jsdom'
+process.env['NODE_TLS_REJECT_UNAUTHORIZED'] = '0'
 
 export default class JSDOMEnvironmentWithBuffer extends JSDOMEnvironment {
     constructor(...args: any[]) {

@@ -120,8 +120,11 @@ export const handler: Handler = async (_event: APIGatewayProxyEvent, context: Co
         // Validate certificate chain
         validateCertificateChain(certificate);
 
+        const base64cert = Buffer.from(certificate).toString('base64');
+        const base64key = key.toString('base64');
+
         // Store certificate in AWS Secrets Manager
-        await storeCertificateInSecretManager(certificate, key);
+        await storeCertificateInSecretManager(base64cert, base64key);
         return {
             statusCode: 200,
             body: JSON.stringify({
@@ -249,13 +252,13 @@ async function getOrCreateAccountKey(): Promise<Buffer> {
     console.log('Account key created and stored in Secrets Manager', accountKeyString);
     return accountKeyBuffer;
 }
-async function storeCertificateInSecretManager(cert: string, privateKey: Buffer) {
+async function storeCertificateInSecretManager(cert: string, key: string) {
     const secretsManager = new SecretsManager({ region: 'us-east-1' });
 
     // Store the certificate in AWS Secrets Manager
     await secretsManager.putSecretValue({
         SecretId: ssl_cert,
-        SecretString: JSON.stringify({ cert, privateKey }),
+        SecretString: JSON.stringify({ cert, key }),
     });
 }
 

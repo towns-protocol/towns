@@ -58,6 +58,7 @@ export class ZionTestClient extends ZionClient {
         wallet?: ethers.Wallet,
     ) {
         const provider = new ZionTestWeb3Provider(wallet)
+        console.log('CASABLANCA_SERVER_URL', process.env.CASABLANCA_SERVER_URL)
         // super
         super(
             {

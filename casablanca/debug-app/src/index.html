@@ -5,6 +5,7 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0" />
     <title>TypeScript Node.js Client</title>
   </head>
+
   <body>
     <h1>TypeScript Node.js Client</h1>
     <input type="text" id="urlInput" placeholder="Enter URL" value="/info" />
@@ -34,7 +35,8 @@
         try {
           // Set the URL to the Go server's /info path
           const text = await fetchData(
-            "http://localhost:5157" + document.getElementById("urlInput").value,
+            "https://localhost:5157" +
+              document.getElementById("urlInput").value,
           );
           responseElement.textContent = "Response: " + text;
           errorInfoElement.textContent = "";
@@ -50,7 +52,7 @@
       async function callButtonPressed() {
         try {
           // Set the URL to the Go server's /info path
-          const text = await fetchRpcInfo("http://localhost:5157");
+          const text = await fetchRpcInfo("https://localhost:5157");
           responseElement.textContent = "Response: " + text;
           errorInfoElement.textContent = "";
         } catch (error) {

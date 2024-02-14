@@ -99,3 +99,8 @@ variable "river_chain_network_url_override" {
   type        = any
   default     = null
 }
+
+variable "river_node_ssl_cert_secret_arn" {
+  description = "The secret ARN for the SSL cert and key for the river node"
+  type        = string
+}

@@ -4,6 +4,12 @@ import (
 	infra "github.com/river-build/river/infra/config"
 )
 
+type TLSConfig struct {
+	Cert   string // Path to certificate file or BASE64 encoded certificate
+	Key    string // Path to key file or BASE64 encoded key
+	TestCA string // Path to CA certificate file or BASE64 encoded CA certificate
+}
+
 // Viper uses mapstructure module to marshal settings into config struct.
 type Config struct {
 	// Network
@@ -11,6 +17,9 @@ type Config struct {
 	Port int
 	// DNS name of the node. Used to select interface to listen on. Can be empty.
 	Address string
+
+	UseHttps  bool // If TRUE TLSConfig must be set.
+	TLSConfig TLSConfig
 
 	// Storage
 	Database    DatabaseConfig
@@ -108,4 +117,8 @@ type ContractConfig struct {
 	Address string
 	// Version of the contract to use.
 	Version string
+}
+
+func (cfg *Config) UsesHTTPS() bool {
+	return cfg.UseHttps
 }

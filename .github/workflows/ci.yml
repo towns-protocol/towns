@@ -252,6 +252,24 @@ jobs:
                   POSTGRES_PASSWORD: postgres
                   PGPASSWORD: postgres
 
+            - name: Setup River CA for testing certificates
+              run: ./scripts/register-ca.sh
+              working-directory: casablanca
+
+            - name: Check SSL directories and environment variables
+              run: |
+                echo "Listing /etc/ssl/certs..."
+                ls -l /etc/ssl/certs || echo "/etc/ssl/certs not found"
+
+                echo "Listing /system/etc/security/cacerts..."
+                ls -l /system/etc/security/cacerts || echo "/system/etc/security/cacerts not found"
+
+                echo "Checking SSL_CERT_FILE environment variable..."
+                echo "SSL_CERT_FILE=$SSL_CERT_FILE"
+
+                echo "Checking SSL_CERT_DIR environment variable..."
+                echo "SSL_CERT_DIR=$SSL_CERT_DIR"
+
             - name: Run Casablanca node (without entitlements)
               run: ./casablanca/node/run_single.sh --de &
 
@@ -389,11 +407,19 @@ jobs:
                   POSTGRES_PASSWORD: postgres
                   PGPASSWORD: postgres
 
+            - name: Setup River CA for testing certificates
+              run: ./scripts/register-ca.sh
+              working-directory: casablanca
+
+            - name: Set up Custom CA Certificate for Node.js
+              run: |
+                echo "NODE_EXTRA_CA_CERTS=$HOME/river-ca-cert.pem" >> $GITHUB_ENV                      
+              
             - name: Run multiple nodes
               run: |
                   cd ./casablanca/node
-                  ./run_multi.sh --de -c -r
-                  for i in {5170..5179}; do yarn wait-on tcp:$i --timeout=400000 --i=5000 --verbose; done
+                  ./run_multi.sh --de -c -r &
+                  for i in {5170..5179}; do yarn wait-on https://localhost:$i/debug/multi --timeout=400000 --i=5000 --verbose; done
 
             - name: Run SDK Tests (without entitlements)
               run: |
@@ -522,6 +548,10 @@ jobs:
               env:
                   POSTGRES_PASSWORD: postgres
                   PGPASSWORD: postgres
+
+            - name: Setup River CA for testing certificates
+              run: ./scripts/register-ca.sh
+              working-directory: casablanca
 
             - name: Start Casablanca node with entitlements
               run: ./casablanca/node/run_single.sh &
@@ -657,14 +687,23 @@ jobs:
                   POSTGRES_PASSWORD: postgres
                   PGPASSWORD: postgres
 
+
+            - name: Setup River CA for testing certificates
+              run: ./scripts/register-ca.sh
+              working-directory: casablanca
+
+            - name: Set up Custom CA Certificate for Node.js
+              run: |
+                echo "NODE_EXTRA_CA_CERTS=$HOME/river-ca-cert.pem" >> $GITHUB_ENV                      
+    
             - name: Run multiple nodes
               run: |
                   cd ./casablanca/node
-                  ./run_multi.sh -c -r
-                  for i in {5170..5179}; do yarn wait-on tcp:$i --timeout=400000 --i=5000 --verbose; done
+                  ./run_multi.sh -c -r &
+                  for i in {5170..5179}; do yarn wait-on https://localhost:$i/debug/multi --timeout=400000 --i=5000 --verbose; done
 
             - name: Build & Test (with entitlements)
-              run: CASABLANCA_SERVER_URL=http://localhost:5170,http://localhost:5171,http://localhost:5172,http://localhost:5173,http://localhost:5174,http://localhost:5175,http://localhost:5176,http://localhost:5177,http://localhost:5178,http://localhost:5179 yarn csb:turbo-no-sdk
+              run: CASABLANCA_SERVER_URL=https://localhost:5170,https://localhost:5171,https://localhost:5172,https://localhost:5173,https://localhost:5174,https://localhost:5175,https://localhost:5176,https://localhost:5177,https://localhost:5178,https://localhost:5179 yarn csb:turbo-no-sdk
 
             - name: Run River Tests (with entitlements)
               run: yarn workspace @river/sdk run test:ci:multi:ent
@@ -751,6 +790,10 @@ jobs:
               env:
                   POSTGRES_PASSWORD: postgres
                   PGPASSWORD: postgres
+
+            - name: Setup River CA for testing certificates
+              run: ./scripts/register-ca.sh
+              working-directory: casablanca
 
             - name: Run node tests
               run: go test --race ./...

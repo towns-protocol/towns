@@ -84,6 +84,28 @@ module "lambda_function" {
 
 }
 
+resource "aws_cloudwatch_event_rule" "schedule" {
+  name        = "schedule-${module.lambda_function.lambda_function_name}"
+  description = "Schedule for the ssl lambda function"
+
+  # once per week
+  schedule_expression = "cron(0 0 ? * 1 *)"
+}
+
+resource "aws_cloudwatch_event_target" "schedule_lambda" {
+  rule = aws_cloudwatch_event_rule.schedule.name
+  # target_id = "processing_lambda"
+  arn = module.lambda_function.lambda_function_arn
+}
+
+
+resource "aws_lambda_permission" "allow_events_bridge_to_run_lambda" {
+  statement_id  = "AllowExecutionFromCloudWatch"
+  action        = "lambda:InvokeFunction"
+  function_name = module.lambda_function.lambda_function_name
+  principal     = "events.amazonaws.com"
+}
+
 resource "aws_cloudwatch_log_subscription_filter" "log_group_filter" {
   name            = "${local.lambda_function_service_name}-${terraform.workspace}-log-group-filter"
   log_group_name  = module.lambda_function.lambda_cloudwatch_log_group_name
