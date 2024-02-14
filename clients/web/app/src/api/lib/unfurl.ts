@@ -27,5 +27,6 @@ export function useUnfurlContent({
         refetchOnWindowFocus: false,
         refetchOnReconnect: false,
         staleTime: 31 * 24 * 60 * 60 * 1000, // 31 days
+        gcTime: 31 * 24 * 60 * 60 * 1000, // 31 days
     })
 }
