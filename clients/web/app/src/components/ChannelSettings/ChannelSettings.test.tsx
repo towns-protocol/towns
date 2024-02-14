@@ -69,6 +69,7 @@ vi.mock('use-zion-client', async () => {
                 members: [],
                 membersMap: {},
                 topic: 'channel topic',
+                isDefault: false,
             }
         },
         useMultipleRoleDetails: (): {
@@ -208,6 +209,7 @@ describe('CreateChannelForm', () => {
                     updatedChannelName: 'some channel',
                     updatedChannelTopic: 'channel topic',
                     updatedRoleIds: [7],
+                    isDefault: false,
                 },
                 {},
             )
@@ -285,6 +287,7 @@ describe('CreateChannelForm', () => {
                         updatedChannelName: 'some channel',
                         updatedChannelTopic: 'channel topic',
                         updatedRoleIds: [8],
+                        isDefault: false,
                     },
                     {},
                 )

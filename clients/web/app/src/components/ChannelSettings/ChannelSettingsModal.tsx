@@ -12,7 +12,7 @@ import {
 import React, { useCallback, useMemo, useState } from 'react'
 import { useGetEmbeddedSigner } from '@towns/privy'
 import { ChannelNameRegExp, isForbiddenError, isRejectionError } from 'ui/utils/utils'
-import { Box, Button, ErrorMessage, FormRender, Heading, Stack, TextField } from '@ui'
+import { Box, Button, Checkbox, ErrorMessage, FormRender, Heading, Stack, TextField } from '@ui'
 import { TransactionUIState, toTransactionUIStates } from 'hooks/TransactionUIState'
 
 import { ButtonSpinner } from '@components/Login/LoginButton/Spinner/ButtonSpinner'
@@ -45,6 +45,7 @@ export function ChannelSettingsForm({
     preventCloseMessage: string | undefined
 }): JSX.Element {
     const room = useRoom(channelId)
+    console.log('[ChannelSettingsModal] room', room)
     const { data, isLoading, invalidateQuery } = useAllRoleDetails(spaceId)
 
     const rolesWithDetails = useMemo((): RoleCheckboxProps[] | undefined => {
@@ -70,6 +71,7 @@ export function ChannelSettingsForm({
                 [FormStateKeys.description]: room.topic,
                 // default values for this field are monitored and reset within RolesSection
                 [FormStateKeys.roleIds]: getCheckedValuesForRoleIdsField(rolesWithDetails ?? []),
+                [FormStateKeys.isDefault]: room.isDefault,
             }
         }
         return emptyDefaultValues
@@ -111,13 +113,16 @@ export function ChannelSettingsForm({
                 const name = changes[FormStateKeys.name]
                 const description = changes[FormStateKeys.description]
                 const roleIds = changes[FormStateKeys.roleIds].map((roleId) => Number(roleId))
+                const isDefault = changes[FormStateKeys.isDefault]
                 const channelInfo: UpdateChannelInfo = {
                     parentSpaceId: spaceId,
                     channelId,
                     updatedChannelName: name,
                     updatedChannelTopic: description,
                     updatedRoleIds: roleIds.map((roleId) => Number(roleId)),
+                    isDefault,
                 }
+                console.log('[ChannelSettingsModal] update channel', channelInfo)
                 const txResult = await updateChannelTransaction(channelInfo, signer)
                 console.log('[ChannelSettingsModal] txResult', txResult)
                 if (txResult?.status === TransactionStatus.Success) {
@@ -265,6 +270,17 @@ export function ChannelSettingsForm({
                                 />
 
                                 {errorBox}
+                            </Stack>
+
+                            <Stack paddingTop="sm" paddingRight="md">
+                                <Box padding="sm" background="level2" borderRadius="sm">
+                                    <Checkbox
+                                        width="100%"
+                                        label="Is Default:"
+                                        name={FormStateKeys.isDefault}
+                                        register={register}
+                                    />
+                                </Box>
                             </Stack>
 
                             <Box flexDirection="row" justifyContent="end" gap="sm" paddingTop="lg">
