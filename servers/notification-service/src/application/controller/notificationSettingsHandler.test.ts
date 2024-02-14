@@ -32,18 +32,20 @@ describe('saveNotificationSettingsHandler', () => {
     beforeEach(() => {
         req = {
             body: {
-                userId: 'user123',
-                directMessage: true,
-                mention: true,
-                replyTo: true,
-                spaceSettings: [
-                    { spaceId: 'space1', spaceMute: true },
-                    { spaceId: 'space2', spaceMute: false },
-                ],
-                channelSettings: [
-                    { spaceId: 'space1', channelId: 'channel1', channelMute: true },
-                    { spaceId: 'space2', channelId: 'channel2', channelMute: false },
-                ],
+                userSettings: {
+                    userId: 'user123',
+                    directMessage: true,
+                    mention: true,
+                    replyTo: true,
+                    spaceSettings: [
+                        { spaceId: 'space1', spaceMute: true },
+                        { spaceId: 'space2', spaceMute: false },
+                    ],
+                    channelSettings: [
+                        { spaceId: 'space1', channelId: 'channel1', channelMute: true },
+                        { spaceId: 'space2', channelId: 'channel2', channelMute: false },
+                    ],
+                },
             },
         } as unknown as Request
 
@@ -66,7 +68,7 @@ describe('saveNotificationSettingsHandler', () => {
         expect(database.userSettings.upsert).toHaveBeenCalled()
         expect(database.userSettingsSpace.upsert).toHaveBeenCalled()
         expect(res.status).toHaveBeenCalledWith(StatusCodes.OK)
-        expect(res.json).toHaveBeenCalledWith(req.body)
+        expect(res.json).toHaveBeenCalledWith(req.body.userSettings)
     })
 
     it('should handle errors and return 422 Unprocessable Entity', async () => {

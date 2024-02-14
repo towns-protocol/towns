@@ -18,7 +18,7 @@ export async function notifyUsersHandler(req: Request, res: Response) {
             })
 
             const usersToNotify = notificationData.forceNotify
-                ? notificationData.users
+                ? new Set(notificationData.users)
                 : await notificationService.getUsersToNotify(
                       notificationData,
                       ChannelId,

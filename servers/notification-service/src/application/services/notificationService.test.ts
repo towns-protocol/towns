@@ -27,9 +27,25 @@ jest.mock('./web-push/send-notification', () => ({
 
 describe('NotificationService', () => {
     let notificationService: NotificationService
+    let getMutedMentionUsersMock: jest.SpyInstance
+    let getMutedReplyToUsersMock: jest.SpyInstance
+    let getMutedDirectMessageUsersMock: jest.SpyInstance
+    let getMutedUsersInChannelMock: jest.SpyInstance
 
     beforeEach(() => {
         notificationService = new NotificationService()
+        getMutedMentionUsersMock = jest.spyOn(notificationService, 'getMutedMentionUsers')
+        getMutedReplyToUsersMock = jest.spyOn(notificationService, 'getMutedReplyToUsers')
+        getMutedDirectMessageUsersMock = jest.spyOn(
+            notificationService,
+            'getMutedDirectMessageUsers',
+        )
+        getMutedUsersInChannelMock = jest.spyOn(notificationService, 'getMutedUsersInChannel')
+
+        getMutedMentionUsersMock.mockResolvedValue([])
+        getMutedReplyToUsersMock.mockResolvedValue([])
+        getMutedDirectMessageUsersMock.mockResolvedValue([])
+        getMutedUsersInChannelMock.mockResolvedValue([])
     })
 
     afterEach(() => {
@@ -37,14 +53,14 @@ describe('NotificationService', () => {
     })
 
     describe('getUsersToNotify', () => {
-        describe('Kind: Mention', () => {
+        describe('Tag: Mention', () => {
             const setupMockData = () => {
                 return {
                     notificationData: {
                         users: ['user1', 'user2', 'user3'],
                         payload: {
                             content: {
-                                kind: NotificationKind.Mention,
+                                kind: NotificationKind.NewMessage,
                                 spaceId: 'space123',
                                 channelId: 'channel123',
                                 senderId: 'user4',
@@ -79,25 +95,13 @@ describe('NotificationService', () => {
             it('should return the list of recipients to notify', async () => {
                 const { notificationData, channelId, taggedUsers } = setupMockData()
 
-                const getMutedMentionUsersMock = jest.spyOn(
-                    notificationService,
-                    'getMutedMentionUsers',
-                )
-                getMutedMentionUsersMock.mockResolvedValue([])
-
-                const getMutedUsersInChannelMock = jest.spyOn(
-                    notificationService,
-                    'getMutedUsersInChannel',
-                )
-                getMutedUsersInChannelMock.mockResolvedValue([])
-
                 const result = await notificationService.getUsersToNotify(
                     notificationData,
                     channelId,
                     taggedUsers,
                 )
 
-                expect(result).toEqual(['user1', 'user2', 'user3'])
+                expect(result).toEqual(new Set(['user1', 'user2', 'user3']))
                 expect(getMutedMentionUsersMock).toHaveBeenCalledWith(
                     expect.arrayContaining(['user1', 'user2', 'user3']),
                 )
@@ -106,44 +110,20 @@ describe('NotificationService', () => {
             it('should return the list of recipients to notify excluding user2, who is not tagged', async () => {
                 const { notificationData, channelId, taggedUsers } = setupMockData()
 
-                const getMutedMentionUsersMock = jest.spyOn(
-                    notificationService,
-                    'getMutedMentionUsers',
-                )
-                getMutedMentionUsersMock.mockResolvedValue([])
-
-                const getMutedUsersInChannelMock = jest.spyOn(
-                    notificationService,
-                    'getMutedUsersInChannel',
-                )
-                getMutedUsersInChannelMock.mockResolvedValue([])
-
                 const result = await notificationService.getUsersToNotify(
                     notificationData,
                     channelId,
                     taggedUsers.filter((user) => user.UserId !== 'user2'),
                 )
 
-                expect(result).toEqual(['user1', 'user3'])
+                expect(result).toEqual(new Set(['user1', 'user3']))
                 expect(getMutedMentionUsersMock).toHaveBeenCalledWith(
                     expect.arrayContaining(['user1', 'user3']),
                 )
             })
 
-            it('should return the list of recipients to notify excluding user2, who is tagged in ReplyTo instead of Mention', async () => {
+            it('should return the list of recipients to notify even user2, who is tagged in ReplyTo instead of Mention', async () => {
                 const { notificationData, channelId, taggedUsers } = setupMockData()
-
-                const getMutedMentionUsersMock = jest.spyOn(
-                    notificationService,
-                    'getMutedMentionUsers',
-                )
-                getMutedMentionUsersMock.mockResolvedValue([])
-
-                const getMutedUsersInChannelMock = jest.spyOn(
-                    notificationService,
-                    'getMutedUsersInChannel',
-                )
-                getMutedUsersInChannelMock.mockResolvedValue([])
 
                 const result = await notificationService.getUsersToNotify(
                     notificationData,
@@ -156,7 +136,7 @@ describe('NotificationService', () => {
                     }),
                 )
 
-                expect(result).toEqual(['user1', 'user3'])
+                expect(result).toEqual(new Set(['user1', 'user2', 'user3']))
                 expect(getMutedMentionUsersMock).toHaveBeenCalledWith(
                     expect.arrayContaining(['user1', 'user3']),
                 )
@@ -165,16 +145,6 @@ describe('NotificationService', () => {
             it('should return the list of recipients to notify excluding user1 and user3 who are in mutedUsersInChannel', async () => {
                 const { notificationData, channelId, taggedUsers } = setupMockData()
 
-                const getMutedMentionUsersMock = jest.spyOn(
-                    notificationService,
-                    'getMutedMentionUsers',
-                )
-                getMutedMentionUsersMock.mockResolvedValue([])
-
-                const getMutedUsersInChannelMock = jest.spyOn(
-                    notificationService,
-                    'getMutedUsersInChannel',
-                )
                 getMutedUsersInChannelMock.mockResolvedValue([
                     { UserId: 'user1' },
                     { UserId: 'user3' },
@@ -186,7 +156,7 @@ describe('NotificationService', () => {
                     taggedUsers,
                 )
 
-                expect(result).toEqual(['user2'])
+                expect(result).toEqual(new Set(['user2']))
                 expect(getMutedMentionUsersMock).toHaveBeenCalledWith(
                     expect.arrayContaining(['user2']),
                 )
@@ -194,18 +164,7 @@ describe('NotificationService', () => {
 
             it('should return the list of recipients to notify excluding user1 who is in mutedMentionUsers', async () => {
                 const { notificationData, channelId, taggedUsers } = setupMockData()
-
-                const getMutedMentionUsersMock = jest.spyOn(
-                    notificationService,
-                    'getMutedMentionUsers',
-                )
                 getMutedMentionUsersMock.mockResolvedValue([{ UserId: 'user1' }])
-
-                const getMutedUsersInChannelMock = jest.spyOn(
-                    notificationService,
-                    'getMutedUsersInChannel',
-                )
-                getMutedUsersInChannelMock.mockResolvedValue([])
 
                 const result = await notificationService.getUsersToNotify(
                     notificationData,
@@ -213,7 +172,7 @@ describe('NotificationService', () => {
                     taggedUsers,
                 )
 
-                expect(result).toEqual(['user2', 'user3'])
+                expect(result).toEqual(new Set(['user2', 'user3']))
                 expect(getMutedMentionUsersMock).toHaveBeenCalledWith(
                     expect.arrayContaining(['user2', 'user3']),
                 )
@@ -221,28 +180,11 @@ describe('NotificationService', () => {
 
             it('should return the list of recipients to notify even though all user are in mutedReplyToUsers', async () => {
                 const { notificationData, channelId, taggedUsers } = setupMockData()
-
-                const getMutedReplyToUsersMock = jest.spyOn(
-                    notificationService,
-                    'getMutedReplyToUsers',
-                )
                 getMutedReplyToUsersMock.mockResolvedValue([
                     { UserId: 'user1' },
                     { UserId: 'user2' },
                     { UserId: 'user3' },
                 ])
-
-                const getMutedMentionUsersMock = jest.spyOn(
-                    notificationService,
-                    'getMutedMentionUsers',
-                )
-                getMutedMentionUsersMock.mockResolvedValue([])
-
-                const getMutedUsersInChannelMock = jest.spyOn(
-                    notificationService,
-                    'getMutedUsersInChannel',
-                )
-                getMutedUsersInChannelMock.mockResolvedValue([])
 
                 const result = await notificationService.getUsersToNotify(
                     notificationData,
@@ -250,14 +192,14 @@ describe('NotificationService', () => {
                     taggedUsers,
                 )
 
-                expect(result).toEqual(['user1', 'user2', 'user3'])
+                expect(result).toEqual(new Set(['user1', 'user2', 'user3']))
                 expect(getMutedMentionUsersMock).toHaveBeenCalledWith(
                     expect.arrayContaining(['user1', 'user2', 'user3']),
                 )
             })
         })
 
-        describe('Kind: ReplyTo', () => {
+        describe('Tag: ReplyTo', () => {
             const setupMockData = () => {
                 return {
                     notificationData: {
@@ -299,25 +241,13 @@ describe('NotificationService', () => {
             it('should return the list of recipients to notify', async () => {
                 const { notificationData, channelId, taggedUsers } = setupMockData()
 
-                const getMutedReplyToUsersMock = jest.spyOn(
-                    notificationService,
-                    'getMutedReplyToUsers',
-                )
-                getMutedReplyToUsersMock.mockResolvedValue([])
-
-                const getMutedUsersInChannelMock = jest.spyOn(
-                    notificationService,
-                    'getMutedUsersInChannel',
-                )
-                getMutedUsersInChannelMock.mockResolvedValue([])
-
                 const result = await notificationService.getUsersToNotify(
                     notificationData,
                     channelId,
                     taggedUsers,
                 )
 
-                expect(result).toEqual(['user1', 'user2', 'user3'])
+                expect(result).toEqual(new Set(['user1', 'user2', 'user3']))
                 expect(getMutedReplyToUsersMock).toHaveBeenCalledWith(
                     expect.arrayContaining(['user1', 'user2', 'user3']),
                 )
@@ -326,44 +256,20 @@ describe('NotificationService', () => {
             it('should return the list of recipients to notify excluding user2, who is not tagged', async () => {
                 const { notificationData, channelId, taggedUsers } = setupMockData()
 
-                const getMutedReplyToUsersMock = jest.spyOn(
-                    notificationService,
-                    'getMutedReplyToUsers',
-                )
-                getMutedReplyToUsersMock.mockResolvedValue([])
-
-                const getMutedUsersInChannelMock = jest.spyOn(
-                    notificationService,
-                    'getMutedUsersInChannel',
-                )
-                getMutedUsersInChannelMock.mockResolvedValue([])
-
                 const result = await notificationService.getUsersToNotify(
                     notificationData,
                     channelId,
                     taggedUsers.filter((user) => user.UserId !== 'user2'),
                 )
 
-                expect(result).toEqual(['user1', 'user3'])
+                expect(result).toEqual(new Set(['user1', 'user3']))
                 expect(getMutedReplyToUsersMock).toHaveBeenCalledWith(
                     expect.arrayContaining(['user1', 'user3']),
                 )
             })
 
-            it('should return the list of recipients to notify excluding user2, who is tagged in Mention instead of ReplyTo', async () => {
+            it('should return the list of recipients to notify even user2, who is tagged in Mention instead of ReplyTo', async () => {
                 const { notificationData, channelId, taggedUsers } = setupMockData()
-
-                const getMutedReplyToUsersMock = jest.spyOn(
-                    notificationService,
-                    'getMutedReplyToUsers',
-                )
-                getMutedReplyToUsersMock.mockResolvedValue([])
-
-                const getMutedUsersInChannelMock = jest.spyOn(
-                    notificationService,
-                    'getMutedUsersInChannel',
-                )
-                getMutedUsersInChannelMock.mockResolvedValue([])
 
                 const result = await notificationService.getUsersToNotify(
                     notificationData,
@@ -376,7 +282,7 @@ describe('NotificationService', () => {
                     }),
                 )
 
-                expect(result).toEqual(['user1', 'user3'])
+                expect(result).toEqual(new Set(['user1', 'user2', 'user3']))
                 expect(getMutedReplyToUsersMock).toHaveBeenCalledWith(
                     expect.arrayContaining(['user1', 'user3']),
                 )
@@ -384,17 +290,6 @@ describe('NotificationService', () => {
 
             it('should return the list of recipients to notify excluding user1 and user3 who are in mutedUsersInChannel', async () => {
                 const { notificationData, channelId, taggedUsers } = setupMockData()
-
-                const getMutedReplyToUsersMock = jest.spyOn(
-                    notificationService,
-                    'getMutedReplyToUsers',
-                )
-                getMutedReplyToUsersMock.mockResolvedValue([])
-
-                const getMutedUsersInChannelMock = jest.spyOn(
-                    notificationService,
-                    'getMutedUsersInChannel',
-                )
                 getMutedUsersInChannelMock.mockResolvedValue([
                     { UserId: 'user1' },
                     { UserId: 'user3' },
@@ -406,7 +301,7 @@ describe('NotificationService', () => {
                     taggedUsers,
                 )
 
-                expect(result).toEqual(['user2'])
+                expect(result).toEqual(new Set(['user2']))
                 expect(getMutedReplyToUsersMock).toHaveBeenCalledWith(
                     expect.arrayContaining(['user2']),
                 )
@@ -414,18 +309,7 @@ describe('NotificationService', () => {
 
             it('should return the list of recipients to notify excluding user1 who is in mutedReplyToUsers', async () => {
                 const { notificationData, channelId, taggedUsers } = setupMockData()
-
-                const getMutedReplyToUsersMock = jest.spyOn(
-                    notificationService,
-                    'getMutedReplyToUsers',
-                )
                 getMutedReplyToUsersMock.mockResolvedValue([{ UserId: 'user1' }])
-
-                const getMutedUsersInChannelMock = jest.spyOn(
-                    notificationService,
-                    'getMutedUsersInChannel',
-                )
-                getMutedUsersInChannelMock.mockResolvedValue([])
 
                 const result = await notificationService.getUsersToNotify(
                     notificationData,
@@ -433,7 +317,7 @@ describe('NotificationService', () => {
                     taggedUsers,
                 )
 
-                expect(result).toEqual(['user2', 'user3'])
+                expect(result).toEqual(new Set(['user2', 'user3']))
                 expect(getMutedReplyToUsersMock).toHaveBeenCalledWith(
                     expect.arrayContaining(['user2', 'user3']),
                 )
@@ -441,28 +325,11 @@ describe('NotificationService', () => {
 
             it('should return the list of recipients to notify even though all user are in mutedMentionUsers', async () => {
                 const { notificationData, channelId, taggedUsers } = setupMockData()
-
-                const getMutedMentionUsersMock = jest.spyOn(
-                    notificationService,
-                    'getMutedMentionUsers',
-                )
                 getMutedMentionUsersMock.mockResolvedValue([
                     { UserId: 'user1' },
                     { UserId: 'user2' },
                     { UserId: 'user3' },
                 ])
-
-                const getMutedReplyToUsersMock = jest.spyOn(
-                    notificationService,
-                    'getMutedReplyToUsers',
-                )
-                getMutedReplyToUsersMock.mockResolvedValue([])
-
-                const getMutedUsersInChannelMock = jest.spyOn(
-                    notificationService,
-                    'getMutedUsersInChannel',
-                )
-                getMutedUsersInChannelMock.mockResolvedValue([])
 
                 const result = await notificationService.getUsersToNotify(
                     notificationData,
@@ -470,14 +337,14 @@ describe('NotificationService', () => {
                     taggedUsers,
                 )
 
-                expect(result).toEqual(['user1', 'user2', 'user3'])
+                expect(result).toEqual(new Set(['user1', 'user2', 'user3']))
                 expect(getMutedReplyToUsersMock).toHaveBeenCalledWith(
                     expect.arrayContaining(['user1', 'user2', 'user3']),
                 )
             })
         })
 
-        describe('Kind: DirectMessage', () => {
+        describe('Tag: DirectMessage', () => {
             const setupMockData = () => {
                 return {
                     notificationData: {
@@ -520,25 +387,13 @@ describe('NotificationService', () => {
             it('should return the list of recipients to notify', async () => {
                 const { notificationData, channelId, taggedUsers } = setupMockData()
 
-                const getMutedDirectMessageUsersMock = jest.spyOn(
-                    notificationService,
-                    'getMutedDirectMessageUsers',
-                )
-                getMutedDirectMessageUsersMock.mockResolvedValue([])
-
-                const getMutedUsersInChannelMock = jest.spyOn(
-                    notificationService,
-                    'getMutedUsersInChannel',
-                )
-                getMutedUsersInChannelMock.mockResolvedValue([])
-
                 const result = await notificationService.getUsersToNotify(
                     notificationData,
                     channelId,
                     taggedUsers,
                 )
 
-                expect(result).toEqual(['user1', 'user2', 'user3'])
+                expect(result).toEqual(new Set(['user1', 'user2', 'user3']))
                 expect(getMutedDirectMessageUsersMock).toHaveBeenCalledWith(
                     expect.arrayContaining(['user1', 'user2', 'user3']),
                 )
@@ -547,25 +402,13 @@ describe('NotificationService', () => {
             it('should return the list of recipients even though user2 is not tagged', async () => {
                 const { notificationData, channelId, taggedUsers } = setupMockData()
 
-                const getMutedDirectMessageUsersMock = jest.spyOn(
-                    notificationService,
-                    'getMutedDirectMessageUsers',
-                )
-                getMutedDirectMessageUsersMock.mockResolvedValue([])
-
-                const getMutedUsersInChannelMock = jest.spyOn(
-                    notificationService,
-                    'getMutedUsersInChannel',
-                )
-                getMutedUsersInChannelMock.mockResolvedValue([])
-
                 const result = await notificationService.getUsersToNotify(
                     notificationData,
                     channelId,
                     taggedUsers.filter((user) => user.UserId !== 'user2'),
                 )
 
-                expect(result).toEqual(['user1', 'user2', 'user3'])
+                expect(result).toEqual(new Set(['user1', 'user2', 'user3']))
                 expect(getMutedDirectMessageUsersMock).toHaveBeenCalledWith(
                     expect.arrayContaining(['user1', 'user2', 'user3']),
                 )
@@ -573,17 +416,6 @@ describe('NotificationService', () => {
 
             it('should return the list of recipients to notify even though user1 and user3 are in mutedUsersInChannel', async () => {
                 const { notificationData, channelId, taggedUsers } = setupMockData()
-
-                const getMutedDirectMessageUsersMock = jest.spyOn(
-                    notificationService,
-                    'getMutedDirectMessageUsers',
-                )
-                getMutedDirectMessageUsersMock.mockResolvedValue([])
-
-                const getMutedUsersInChannelMock = jest.spyOn(
-                    notificationService,
-                    'getMutedUsersInChannel',
-                )
                 getMutedUsersInChannelMock.mockResolvedValue([
                     { UserId: 'user1' },
                     { UserId: 'user3' },
@@ -595,7 +427,7 @@ describe('NotificationService', () => {
                     taggedUsers,
                 )
 
-                expect(result).toEqual(['user1', 'user2', 'user3'])
+                expect(result).toEqual(new Set(['user1', 'user2', 'user3']))
                 expect(getMutedDirectMessageUsersMock).toHaveBeenCalledWith(
                     expect.arrayContaining(['user1', 'user2', 'user3']),
                 )
@@ -603,18 +435,7 @@ describe('NotificationService', () => {
 
             it('should return the list of recipients to notify excluding user1 who is in mutedDirectMessageUsers', async () => {
                 const { notificationData, channelId, taggedUsers } = setupMockData()
-
-                const getMutedDirectMessageUsersMock = jest.spyOn(
-                    notificationService,
-                    'getMutedDirectMessageUsers',
-                )
                 getMutedDirectMessageUsersMock.mockResolvedValue([{ UserId: 'user1' }])
-
-                const getMutedUsersInChannelMock = jest.spyOn(
-                    notificationService,
-                    'getMutedUsersInChannel',
-                )
-                getMutedUsersInChannelMock.mockResolvedValue([])
 
                 const result = await notificationService.getUsersToNotify(
                     notificationData,
@@ -622,7 +443,7 @@ describe('NotificationService', () => {
                     taggedUsers,
                 )
 
-                expect(result).toEqual(['user2', 'user3'])
+                expect(result).toEqual(new Set(['user2', 'user3']))
                 expect(getMutedDirectMessageUsersMock).toHaveBeenCalledWith(
                     expect.arrayContaining(['user2', 'user3']),
                 )
@@ -630,28 +451,11 @@ describe('NotificationService', () => {
 
             it('should return the list of recipients to notify even though all user are in mutedMentionUsers', async () => {
                 const { notificationData, channelId, taggedUsers } = setupMockData()
-
-                const getMutedMentionUsersMock = jest.spyOn(
-                    notificationService,
-                    'getMutedMentionUsers',
-                )
                 getMutedMentionUsersMock.mockResolvedValue([
                     { UserId: 'user1' },
                     { UserId: 'user2' },
                     { UserId: 'user3' },
                 ])
-
-                const getMutedDirectMessageUsersMock = jest.spyOn(
-                    notificationService,
-                    'getMutedDirectMessageUsers',
-                )
-                getMutedDirectMessageUsersMock.mockResolvedValue([])
-
-                const getMutedUsersInChannelMock = jest.spyOn(
-                    notificationService,
-                    'getMutedUsersInChannel',
-                )
-                getMutedUsersInChannelMock.mockResolvedValue([])
 
                 const result = await notificationService.getUsersToNotify(
                     notificationData,
@@ -659,7 +463,7 @@ describe('NotificationService', () => {
                     taggedUsers,
                 )
 
-                expect(result).toEqual(['user1', 'user2', 'user3'])
+                expect(result).toEqual(new Set(['user1', 'user2', 'user3']))
                 expect(getMutedDirectMessageUsersMock).toHaveBeenCalledWith(
                     expect.arrayContaining(['user1', 'user2', 'user3']),
                 )
@@ -727,7 +531,7 @@ describe('NotificationService', () => {
 
             const result = await notificationService.createNotificationAsyncRequests(
                 notificationData,
-                usersToNotify,
+                new Set(usersToNotify),
                 tx,
             )
 

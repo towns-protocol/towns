@@ -19,5 +19,6 @@ node_modules/
 # vapid-keys
 .keys/
 
-# local env files 
+# env files 
 .env.local
+.env

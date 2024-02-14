@@ -10,7 +10,7 @@
         "forceConsistentCasingInFileNames": true,
         "incremental": false,
         "isolatedModules": false,
-        "lib": ["esnext"],
+        "lib": ["esnext", "dom"],
         "module": "esnext",
         "moduleResolution": "node",
         "noFallthroughCasesInSwitch": true,

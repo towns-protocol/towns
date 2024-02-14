@@ -19,13 +19,14 @@ export class NotificationService {
         notificationData: NotifyUsersSchema,
         channelId: string,
         taggedUsers: NotificationTag[],
-    ) {
+    ): Promise<Set<string>> {
+        const recipients: Set<string> = new Set([])
         const notificationContent = notificationData.payload.content
-        const notificationKind = notificationContent.kind as NotificationKind
+        const isDMorGDM = notificationContent.kind === NotificationKind.DirectMessage
 
         let mutedUsersInChannel: Set<string> = new Set()
-
-        if (notificationKind === NotificationKind.NewMessage) {
+        // if notification kind is DM or GDM, we don't need to check if user is muted in channel
+        if (!isDMorGDM) {
             mutedUsersInChannel = new Set(
                 (
                     await this.getMutedUsersInChannel(
@@ -37,119 +38,78 @@ export class NotificationService {
             )
         }
 
-        const metionUsersTagged = taggedUsers.filter(
-            (taggedUser) => taggedUser.Tag === NotificationKind.Mention.toString(),
+        const metionUsersTagged = new Set(
+            taggedUsers
+                .filter((taggedUser) => taggedUser.Tag === NotificationKind.Mention.toString())
+                .map((user) => user.UserId),
         )
-        const replyToUsersTagged = taggedUsers.filter(
-            (taggedUser) => taggedUser.Tag === NotificationKind.ReplyTo.toString(),
-        )
-        const dmUsers = taggedUsers.filter(
-            (taggedUser) => taggedUser.Tag === NotificationKind.DirectMessage.toString(),
-        )
-
-        const mentionUsersToNotify = await this.identifyUsersToNotify(
-            notificationData.users,
-            metionUsersTagged,
-            NotificationKind.Mention,
-            mutedUsersInChannel,
+        const replyToUsersTagged = new Set(
+            taggedUsers
+                .filter((taggedUser) => taggedUser.Tag === NotificationKind.ReplyTo.toString())
+                .map((user) => user.UserId),
         )
 
-        const replyToUsersToNotify = await this.identifyUsersToNotify(
-            notificationData.users,
-            replyToUsersTagged,
-            NotificationKind.ReplyTo,
-            mutedUsersInChannel,
-        )
+        let mutedMentionUsers = new Set()
+        if (metionUsersTagged.size > 0) {
+            mutedMentionUsers = new Set(
+                (await this.getMutedMentionUsers(notificationData.users)).map(
+                    (user) => user.UserId,
+                ),
+            )
+        }
 
-        const dmUsersToNotify = await this.identifyUsersToNotify(
-            notificationData.users,
-            dmUsers,
-            NotificationKind.DirectMessage,
-            new Set(), // don't need to check if user is muted in channel for DMs and GDMs
-        )
+        let mutedReplyToUsers = new Set()
+        if (replyToUsersTagged.size > 0) {
+            mutedReplyToUsers = new Set(
+                (await this.getMutedReplyToUsers(notificationData.users)).map(
+                    (user) => user.UserId,
+                ),
+            )
+        }
 
-        return [...mentionUsersToNotify, ...replyToUsersToNotify, ...dmUsersToNotify]
-    }
+        let mutedDMUsers = new Set()
+        if (isDMorGDM) {
+            mutedDMUsers = new Set(
+                (await this.getMutedDirectMessageUsers(notificationData.users)).map(
+                    (user) => user.UserId,
+                ),
+            )
+        }
 
-    private async identifyUsersToNotify(
-        users: string[],
-        taggedUsers: NotificationTag[],
-        notificationKind: NotificationKind,
-        mutedUsersInChannel: Set<string>,
-    ) {
-        const recipients: string[] = []
-        const { usersMutedRule, usersTaggedGroup } = await this.getUsersMutedRuleAndTaggedGroup(
-            users,
-            taggedUsers,
-            notificationKind,
-        )
-
-        for (const userId of users) {
+        for (const userId of notificationData.users) {
             const isUserGloballyMuted = mutedUsersInChannel.has(userId)
-            if (isUserGloballyMuted) {
+            if (!isDMorGDM && isUserGloballyMuted) {
                 continue
             }
 
-            const isUserMutedForNotificationKind = usersMutedRule.has(userId)
-            if (isUserMutedForNotificationKind) {
+            const isUserNotTagged =
+                !isDMorGDM && !metionUsersTagged.has(userId) && !replyToUsersTagged.has(userId)
+            const isUserMutedForMention =
+                metionUsersTagged.has(userId) && mutedMentionUsers.has(userId)
+            const isUserMutedForReplyTo =
+                replyToUsersTagged.has(userId) && mutedReplyToUsers.has(userId)
+            const isUserMutedForDM = isDMorGDM && mutedDMUsers.has(userId)
+
+            if (
+                isUserNotTagged ||
+                isUserMutedForMention ||
+                isUserMutedForReplyTo ||
+                isUserMutedForDM
+            ) {
                 continue
             }
 
-            const isTagged = usersTaggedGroup.has(userId)
-            if (!isTagged) {
-                continue
-            }
-
-            recipients.push(userId)
+            recipients.add(userId)
         }
 
         return recipients
     }
 
-    private async getUsersMutedRuleAndTaggedGroup(
-        users: string[],
-        taggedUsers: NotificationTag[],
-        notificationKind: NotificationKind,
-    ) {
-        let usersMutedRulePromise: Promise<{ UserId: string }[]>
-        let usersTaggedGroup: Set<string>
-
-        switch (notificationKind) {
-            case NotificationKind.Mention:
-                usersMutedRulePromise = this.getMutedMentionUsers(users)
-                usersTaggedGroup = new Set(
-                    taggedUsers
-                        .filter((taggedUser) => taggedUser.Tag === NotificationKind.Mention)
-                        .map((user) => user.UserId),
-                )
-                break
-            case NotificationKind.ReplyTo:
-                usersMutedRulePromise = this.getMutedReplyToUsers(users)
-                usersTaggedGroup = new Set(
-                    taggedUsers
-                        .filter((taggedUser) => taggedUser.Tag === NotificationKind.ReplyTo)
-                        .map((user) => user.UserId),
-                )
-                break
-            case NotificationKind.DirectMessage:
-                usersMutedRulePromise = this.getMutedDirectMessageUsers(users)
-                // no need to tag users for direct messages
-                usersTaggedGroup = new Set(users)
-                break
-            default:
-                throw new Error(`Unsupported notification kind: ${notificationKind}`)
-        }
-
-        const usersMutedRule = new Set((await usersMutedRulePromise).map((user) => user.UserId))
-
-        return { usersMutedRule, usersTaggedGroup }
-    }
-
     public async createNotificationAsyncRequests(
         notificationData: NotifyUsersSchema,
-        usersToNotify: string[],
+        usersToNotify: Set<string>,
         tx: Prisma.TransactionClient,
-    ) {
+    ): Promise<Promise<SendPushResponse>[]> {
         const pushNotificationPromises: Promise<SendPushResponse>[] = []
         const isDMorGDM = notificationData.payload.content.kind === NotificationKind.DirectMessage
 
@@ -173,7 +133,10 @@ export class NotificationService {
 
             for (const subscription of pushSubscriptions) {
                 if (subscription.PushType === PushType.WebPush) {
-                    const sendNotificationPromise = sendNotificationViaWebPush(option, subscription)
+                    const sendNotificationPromise = this.sendNotificationViaWebPush(
+                        option,
+                        subscription,
+                    )
                     pushNotificationPromises.push(sendNotificationPromise)
                 }
             }
@@ -184,14 +147,14 @@ export class NotificationService {
     private async sendNotificationViaWebPush(
         options: NotificationOptions,
         subscription: PushSubscription,
-    ) {
+    ): Promise<SendPushResponse> {
         return sendNotificationViaWebPush(options, subscription)
     }
 
     public async dispatchAllPushNotification(
         pushNotificationRequests: Promise<SendPushResponse>[],
         tx: Prisma.TransactionClient,
-    ) {
+    ): Promise<number> {
         let sendResults: PromiseSettledResult<SendPushResponse>[] = []
         sendResults = await Promise.allSettled(pushNotificationRequests)
 
@@ -218,7 +181,7 @@ export class NotificationService {
     public async deleteFailedSubscription(
         result: PromiseFulfilledResult<SendPushResponse>,
         tx: Prisma.TransactionClient,
-    ) {
+    ): Promise<void> {
         console.log(
             'deleting subscription from the db',
             'userId',
@@ -245,7 +208,7 @@ export class NotificationService {
         }
     }
 
-    private async getMutedDirectMessageUsers(users: string[]) {
+    public async getMutedDirectMessageUsers(users: string[]): Promise<{ UserId: string }[]> {
         return await database.userSettings.findMany({
             where: {
                 DirectMessage: false,
@@ -257,7 +220,11 @@ export class NotificationService {
         })
     }
 
-    private async getMutedUsersInChannel(users: string[], spaceId: string, channelId: string) {
+    public async getMutedUsersInChannel(
+        users: string[],
+        spaceId: string,
+        channelId: string,
+    ): Promise<{ UserId: string }[]> {
         return await database.userSettingsChannel.findMany({
             where: {
                 SpaceId: spaceId,
@@ -271,7 +238,7 @@ export class NotificationService {
         })
     }
 
-    private async getMutedMentionUsers(users: string[]) {
+    public async getMutedMentionUsers(users: string[]): Promise<{ UserId: string }[]> {
         return await database.userSettings.findMany({
             where: {
                 Mention: false,
@@ -283,7 +250,7 @@ export class NotificationService {
         })
     }
 
-    private async getMutedReplyToUsers(users: string[]) {
+    public async getMutedReplyToUsers(users: string[]): Promise<{ UserId: string }[]> {
         return await database.userSettings.findMany({
             where: {
                 ReplyTo: false,
