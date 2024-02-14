@@ -496,6 +496,16 @@
       }
     },
     {
+      "label": "StackupWorker",
+      "type": "shell",
+      "command": "sleep 5 && cd servers/workers/stackup-worker && yarn dev:local",
+      "isBackground": true,
+      "problemMatcher": [],
+      "presentation": {
+        "group": "local-workers"
+      }
+    },
+    {
       "label": "KillAllLocalDev",
       "type": "shell",
       "command": "./scripts/kill-all-local-dev.sh -y",

@@ -148,6 +148,7 @@ commands=(
     "worker_token:cd servers/workers/token-worker && yarn dev:local"
     "worker_gateway:cd servers/workers/gateway-worker && yarn dev:local"
     "worker_push:cd servers/workers/push-notification-worker && ./scripts/start-local-push-worker.sh"
+    "worker_stackup:cd servers/workers/stackup-worker && yarn dev:local"
     "casablanca:./casablanca/node/run_multi.sh -r"
     "xchain:./servers/xchain/launch_multi.sh"
 )
