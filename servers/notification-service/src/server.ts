@@ -3,6 +3,7 @@ import cors from 'cors'
 import { routes } from './application/routes/routes'
 import { handleGlobalError } from './application/middleware/errors'
 import { validateAuthToken } from './application/middleware/auth'
+import { publicRoutes } from './application/routes/publicRoutes'
 
 const app = express()
 
@@ -10,8 +11,10 @@ const app = express()
 app.use(cors()) // TODO: configure cors origins
 app.use(express.json())
 app.use(handleGlobalError)
-app.use(validateAuthToken)
 
+app.use(publicRoutes)
+
+app.use(validateAuthToken)
 app.use(routes)
 
 const port = process.env.PORT || 80
