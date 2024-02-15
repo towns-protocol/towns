@@ -2,7 +2,6 @@ import React, { useEffect } from 'react'
 import { useNavigate } from 'react-router'
 import { Membership, useZionClient, useZionContext } from 'use-zion-client'
 import { Box, Button, Heading, Stack, Text } from '@ui'
-import { useWaitForInitialSync } from 'hooks/useWaitForInitialSync'
 import { PATHS } from 'routes'
 import { env } from 'utils'
 
@@ -17,7 +16,7 @@ export const NoJoinedSpacesFallback = () => {
     const { spaces } = useZionContext()
     const { client } = useZionClient()
     const { logout } = useAuth()
-    const initialSyncComplete = useWaitForInitialSync()
+
     const spaceIdBookmark = useStore((s) => {
         return s.spaceIdBookmark
     })
@@ -25,9 +24,6 @@ export const NoJoinedSpacesFallback = () => {
     const { isTouch } = useDevice()
 
     useEffect(() => {
-        if (!initialSyncComplete) {
-            return
-        }
         if (!client) {
             return
         }
@@ -40,9 +36,9 @@ export const NoJoinedSpacesFallback = () => {
                 navigate(`/${PATHS.SPACES}/${firstSpaceId}/`)
             }
         }
-    }, [spaces, navigate, initialSyncComplete, client, spaceIdBookmark])
+    }, [spaces, navigate, client, spaceIdBookmark])
 
-    if (!initialSyncComplete || spaces.length) {
+    if (spaces.length) {
         return isTouch ? <WelcomeLayout debugText="no joined space fallback" /> : <></>
     }
 

@@ -6,8 +6,6 @@ import { Box, Button, Heading, Icon, Paragraph, Stack, Text } from '@ui'
 import { ModalContainer } from '@components/Modals/ModalContainer'
 import { InteractiveSpaceIcon } from '@components/SpaceIcon'
 import { useAuth } from 'hooks/useAuth'
-import { useWaitForInitialSync } from 'hooks/useWaitForInitialSync'
-import { ButtonSpinner } from '@components/Login/LoginButton/Spinner/ButtonSpinner'
 import 'wagmi/window'
 import { useJoinTown } from 'hooks/useJoinTown'
 export type JoinData = {
@@ -28,7 +26,6 @@ type ModalProps = {
 const SpaceJoinModal = (props: ModalProps) => {
     const data = props.joinData
     const { logout } = useAuth()
-    const initialSyncComplete = useWaitForInitialSync()
     const { address } = useAccount()
 
     const onSwitchWallet = useCallback(async () => {
@@ -142,19 +139,8 @@ const SpaceJoinModal = (props: ModalProps) => {
                             address={data.spaceAddress}
                         />
                         <Box gap="sm">
-                            <Button
-                                tone="cta1"
-                                disabled={!initialSyncComplete}
-                                onClick={props.onJoin}
-                            >
-                                {!initialSyncComplete ? (
-                                    <>
-                                        <ButtonSpinner />
-                                        <Text>Connecting to server</Text>
-                                    </>
-                                ) : (
-                                    <Text>Join {data.name}</Text>
-                                )}
+                            <Button tone="cta1" onClick={props.onJoin}>
+                                <Text>Join {data.name}</Text>
                             </Button>
                             <Button
                                 tone="none"

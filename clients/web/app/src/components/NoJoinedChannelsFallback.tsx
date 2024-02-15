@@ -1,18 +1,12 @@
 import React, { useState } from 'react'
 import { Button, Heading, Paragraph } from '@ui'
 import { AllChannelsList } from 'routes/AllChannelsList/AllChannelsList'
-import { useWaitForInitialSync } from 'hooks/useWaitForInitialSync'
 import { ModalContainer } from './Modals/ModalContainer'
 
 export const NoJoinedChannelsFallback = () => {
     const [isVisible, setIsVisible] = useState(false)
     const show = () => setIsVisible(true)
     const hide = () => setIsVisible(false)
-    const readyToRender = useWaitForInitialSync()
-
-    if (!readyToRender) {
-        return null
-    }
 
     return (
         <>
