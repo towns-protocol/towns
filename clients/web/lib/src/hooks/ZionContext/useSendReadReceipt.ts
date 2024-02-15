@@ -5,24 +5,31 @@ import { ZionClient } from '../../client/ZionClient'
 
 export function useSendReadReceipt(client: ZionClient | undefined) {
     return useCallback(
-        async (marker: FullyReadMarker) => {
+        async (marker: FullyReadMarker, isUnread = false) => {
             if (!client) {
                 throw new Error('No client')
             }
-            console.log('useSendReadReceipt::marker', { marker })
+
             useFullyReadMarkerStore.setState((state) => {
                 const markerId = marker.threadParentId ?? marker.channelId
-                if (state.markers[markerId]?.isUnread === true) {
+
+                const { mentions = 0 } = marker
+
+                if (isUnread || state.markers[markerId]?.isUnread === true) {
                     return {
                         ...state,
                         markers: {
                             ...state.markers,
                             [markerId]: {
                                 ...state.markers[markerId],
-                                isUnread: false,
-                                beginUnreadWindow: state.markers[markerId].endUnreadWindow + 1n,
+                                isUnread,
+                                eventId: marker.eventId,
+                                eventNum: marker.eventNum,
+                                beginUnreadWindow: isUnread
+                                    ? marker.eventNum
+                                    : state.markers[markerId].endUnreadWindow + 1n,
                                 markedReadAtTs: BigInt(Date.now()),
-                                mentions: 0,
+                                mentions,
                             } satisfies FullyReadMarker,
                         },
                     }
@@ -46,7 +53,6 @@ export function useSendReadReceipt(client: ZionClient | undefined) {
                 console.error('Failed to set room account data', e)
             }
         },
-
         [client],
     )
 }

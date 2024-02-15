@@ -16,4 +16,5 @@ export const useShortcut = (
 ) => {
     const shortcut = ShortcutActions[name]
     useHotkeys(shortcut.keys, callback, { ...defaultOptions, ...options }, dependencies)
+    return callback
 }

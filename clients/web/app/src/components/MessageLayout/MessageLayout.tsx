@@ -37,6 +37,7 @@ type Props = {
     editing?: boolean
     editable?: boolean
     eventId?: string
+    threadParentId?: string
     highlight?: boolean
     selectable?: boolean
     listView?: boolean
@@ -60,6 +61,7 @@ export const MessageLayout = (props: Props) => {
     const {
         userId,
         senderId,
+        threadParentId,
         eventId,
         avatarSize = 'avatar_md',
         user,
@@ -284,6 +286,7 @@ export const MessageLayout = (props: Props) => {
                             spaceId={spaceId}
                             eventId={eventId}
                             canEdit={isEditable}
+                            threadParentId={threadParentId}
                         />
                     )}
             </Stack>

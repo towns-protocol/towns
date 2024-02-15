@@ -164,7 +164,7 @@ interface ZionClientImpl {
         chunkIndex: number,
         prevMiniblockHash: Uint8Array,
     ) => Promise<{ prevMiniblockHash: Uint8Array } | undefined>
-    sendReadReceipt: (marker: FullyReadMarker) => Promise<void>
+    sendReadReceipt: (marker: FullyReadMarker, isUnread?: boolean) => Promise<void>
     setAvatarUrl: (ravatarUrl: string) => Promise<void>
     setRoomProperties: (roomId: string, title: string, topic: string) => Promise<void>
     setDisplayName: (streamId: string, displayName: string) => Promise<void>

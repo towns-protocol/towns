@@ -1,20 +1,12 @@
-import { FullyReadMarker } from '@river/proto'
 import { isEqual, uniqBy } from 'lodash'
-import React, { MutableRefObject, useCallback, useEffect, useMemo, useRef, useState } from 'react'
-import {
-    MessageType,
-    TimelineEvent,
-    ZTEvent,
-    useFullyReadMarker,
-    useZionClient,
-} from 'use-zion-client'
+import React, { MutableRefObject, useCallback, useMemo, useRef, useState } from 'react'
+import { MessageType, TimelineEvent, ZTEvent } from 'use-zion-client'
 import { MessageTimelineItem } from '@components/MessageTimeIineItem/TimelineItem'
 import { useVisualViewportContext } from '@components/VisualViewportContext/VisualViewportContext'
 import { Box, Divider, Paragraph } from '@ui'
 import { SECOND_MS } from 'data/constants'
 import { useDevice } from 'hooks/useDevice'
 import { useExperimentsStore } from 'store/experimentsStore'
-import { useStore } from 'store/store'
 import { VList } from 'ui/components/VList2/VList'
 import { notUndefined } from 'ui/utils/utils'
 import { useChannelType } from 'hooks/useChannelType'
@@ -33,6 +25,7 @@ import {
     isRedactedRoomMessage,
     isRoomMessage,
 } from './util/getEventsByDate'
+import { usePersistedUnreadMarkers } from './hooks/usePersistedUnreadMarkers'
 
 type Props = {
     prepend?: JSX.Element
@@ -102,61 +95,17 @@ export const MessageTimeline = (props: Props) => {
         isStartupRef.current = false
     }
 
-    let fullyReadMarker = useFullyReadMarker(channelId, timelineContext?.threadParentId)
+    const { fullyReadMarker, fullreadMarkerPersisted, onMarkAsRead, isUnreadMarkerFaded } =
+        usePersistedUnreadMarkers({ channelId, threadId: timelineContext?.threadParentId })
 
-    if (!fullyReadMarker?.isUnread) {
-        // dismiss inactive fullyReadMarkers
-        fullyReadMarker = undefined
-    }
+    const [initialFullyReadMarker] = useState(() =>
+        fullyReadMarker?.isUnread ? fullyReadMarker : undefined,
+    )
 
     const experiments = useExperimentsStore()
 
     // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
     //
-
-    const isWindowActive = useStore((state) => state.isWindowFocused)
-
-    // if a marker is shown once it will keep displaying until timeline gets
-    // unmounted despite the marker flipping to unread
-    const [fullreadMarkerPersisted, setFullyReadMarkerPersisted] = useState(() =>
-        fullyReadMarker?.isUnread ? fullyReadMarker : undefined,
-    )
-    const [initialFullyReadMarker] = useState(() =>
-        fullyReadMarker?.isUnread ? fullyReadMarker : undefined,
-    )
-
-    const isWindowActiveRef = useRef(isWindowActive)
-    isWindowActiveRef.current = isWindowActive
-
-    useEffect(() => {
-        if (!isWindowActiveRef.current) {
-            setFullyReadMarkerPersisted(fullyReadMarker)
-            setIsUnreadMarkerFaded(false)
-        }
-    }, [fullyReadMarker])
-
-    useEffect(() => {
-        if (fullyReadMarker?.isUnread) {
-            isSentRef.current = false
-        }
-    }, [fullyReadMarker?.isUnread])
-
-    const isSentRef = useRef(fullyReadMarker && !fullyReadMarker.isUnread)
-
-    const { sendReadReceipt } = useZionClient()
-
-    const onMarkAsRead = useCallback(
-        (fullyReadMarker: FullyReadMarker) => {
-            if (isSentRef.current) {
-                // repeated calls can occur if server reponse is lagging and
-                // user scrolls back into view
-                return
-            }
-            sendReadReceipt(fullyReadMarker)
-            isSentRef.current = true
-        },
-        [sendReadReceipt],
-    )
 
     const isThread = timelineContext?.type === MessageTimelineType.Thread
     const channelType = useChannelType(channelId)
@@ -399,10 +348,11 @@ export const MessageTimeline = (props: Props) => {
 
                 if (
                     prev.chunkCount <= 2 ||
-                    (fullyReadMarker?.isUnread && curr.key === fullyReadMarker?.eventId)
+                    (fullreadMarkerPersisted?.isUnread &&
+                        curr.key === fullreadMarkerPersisted?.eventId)
                 ) {
                     // index until which collapsed section ends
-                    prev.collapseEndIndex = index
+                    prev.collapseEndIndex = index - 1
                 }
                 return prev
             },
@@ -434,26 +384,12 @@ export const MessageTimeline = (props: Props) => {
     }, [
         allListItems,
         flatGroups.length,
-        fullyReadMarker?.eventId,
-        fullyReadMarker?.isUnread,
+        fullreadMarkerPersisted?.eventId,
+        fullreadMarkerPersisted?.isUnread,
         groupByUser,
         isCollapsed,
         timelineContext?.type,
     ])
-
-    const hasUnreadMarker = !!fullreadMarkerPersisted
-    const [isUnreadMarkerFaded, setIsUnreadMarkerFaded] = useState(false)
-
-    useEffect(() => {
-        if (hasUnreadMarker && isWindowActive) {
-            const timeout = setTimeout(() => {
-                setIsUnreadMarkerFaded(true)
-            }, 3000)
-            return () => {
-                clearTimeout(timeout)
-            }
-        }
-    }, [hasUnreadMarker, isWindowActive])
 
     const groupIds = useMemo(
         () =>

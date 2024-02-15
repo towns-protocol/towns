@@ -83,6 +83,10 @@ export const Shortcuts = {
             keys: '+',
             description: 'React to message',
         },
+        MarkAsUnread: {
+            keys: 'U',
+            description: 'Mark as Unread',
+        },
         CopyLinkToMessage: {
             keys: 'L',
             description: 'Copy link to message',

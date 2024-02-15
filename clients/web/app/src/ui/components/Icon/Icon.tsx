@@ -701,6 +701,18 @@ export const MessageVariantIcon = forwardRef<SVGSVGElement, SVGIconProps>((props
     </svg>
 ))
 
+export const MessageUnreadIcon = forwardRef<SVGSVGElement, SVGIconProps>((props, ref) => (
+    <svg width="24" height="24" viewBox="0 0 24 24" fill="none" {...props} ref={ref}>
+        <path
+            fillRule="evenodd"
+            clipRule="evenodd"
+            d="M15.1 3H6C4.34315 3 3 4.34315 3 6V18.7308C3 20.4697 5.06612 21.3802 6.34953 20.2068L9.06007 17.7286C9.24439 17.5601 9.4851 17.4667 9.73484 17.4667H18C19.6569 17.4667 21 16.1235 21 14.4667V8.89998C20.6769 8.96557 20.3425 9 20 9C19.6575 9 19.3231 8.96557 19 8.89998V14.4667C19 15.019 18.5523 15.4667 18 15.4667H9.73484C8.98561 15.4667 8.26349 15.747 7.71054 16.2526L5 18.7308V6C5 5.44772 5.44772 5 6 5H15.1C15.0344 4.67689 15 4.34247 15 4C15 3.65753 15.0344 3.32311 15.1 3Z"
+            fill="currentColor"
+        />
+        <circle cx="20" cy="4" r="3" fill="#1FDBF1" />
+    </svg>
+))
+
 const MetamaskIcon = forwardRef<SVGSVGElement, SVGIconProps>((props, ref) => (
     <svg width="24" height="24" viewBox="0 0 24 24" {...props} ref={ref}>
         <path d="M21.0012 3L13.2009 8.80262L14.6516 5.37812L21.0012 3Z" fill="#E17726" />
@@ -1607,6 +1619,7 @@ const iconMap = {
     manifesto: Manifesto,
     message: MessageIcon,
     messageVariant: MessageVariantIcon,
+    messageUnread: MessageUnreadIcon,
     metamask: MetamaskIcon,
     minus: MinusIcon,
     more: MoreIcon,

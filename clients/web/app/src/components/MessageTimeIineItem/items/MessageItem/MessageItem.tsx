@@ -299,6 +299,7 @@ const MessageWrapper = React.memo((props: MessageWrapperProps) => {
             channelId={channelId}
             editable={isOwn && !event.isLocalPending}
             eventId={event.eventId}
+            threadParentId={event.threadParentId}
             displayContext={displayContext}
             isChannelWritable={isChannelWritable}
             user={user}

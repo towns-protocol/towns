@@ -1,5 +1,5 @@
 import React, { useCallback, useContext, useRef } from 'react'
-import { useZionClient } from 'use-zion-client'
+import { TimelineEvent, useFullyReadMarker, useMyUserId, useZionClient } from 'use-zion-client'
 import { EmojiPickerButton } from '@components/EmojiPickerButton'
 import { Box, IconButton, MotionStack, Stack } from '@ui'
 import { useOpenMessageThread } from 'hooks/useOpenThread'
@@ -14,6 +14,7 @@ import { DeleteMessagePrompt } from './DeleteMessagePrompt'
 type Props = {
     eventId: string
     channelId?: string
+    threadParentId?: string
     spaceId?: string
     canEdit?: boolean
     canReply?: boolean
@@ -27,31 +28,15 @@ const style = {
 }
 
 export const MessageContextMenu = (props: Props) => {
-    const { eventId, channelId, spaceId } = props
+    const { eventId, channelId, spaceId, threadParentId } = props
 
-    const { redactEvent, sendReaction } = useZionClient()
+    const { redactEvent, sendReaction, sendReadReceipt } = useZionClient()
     const timelineContext = useContext(MessageTimelineContext)
 
     const { onOpenMessageThread } = useOpenMessageThread(spaceId, channelId)
 
-    const onThreadClick = useCallback(() => {
-        onOpenMessageThread(eventId)
-    }, [eventId, onOpenMessageThread])
-
-    const onEditClick = useCallback(() => {
-        timelineContext?.timelineActions?.onSelectEditingMessage(eventId)
-    }, [eventId, timelineContext])
-
     const [copiedText, copy] = useCopyToClipboard()
     const hasCopied = !!copiedText
-
-    const onCopyLinkToMessage = useCallback(() => {
-        console.log('Copy link to message')
-        const link = `/${PATHS.SPACES}/${spaceId}/${PATHS.CHANNELS}/${channelId}#${eventId}`
-        if (link) {
-            copy(`${location.origin}${link}`)
-        }
-    }, [channelId, copy, eventId, spaceId])
 
     const onSelectEmoji = useCallback(
         (data: { id: string }) => {
@@ -77,53 +62,71 @@ export const MessageContextMenu = (props: Props) => {
         }
     }, [channelId, eventId])
 
-    const onDeleteConfirm = useCallback(() => {
-        if (channelId) {
-            redactEvent(channelId, eventId)
-        }
-    }, [channelId, eventId, redactEvent])
-
     const onDeleteCancel = useCallback(() => {
         setShowDeletePrompt(false)
     }, [])
 
-    useShortcut(
+    const timeline = timelineContext?.events
+
+    const { createUnreadMarker: markAsUnread } = useCreateUnreadMarker({
+        eventId,
+        channelId,
+        threadParentId,
+        timeline,
+    })
+
+    const onEditClick = useShortcut(
         'EditMessage',
         useCallback(() => {
             if (props.canEdit) {
-                timelineContext?.timelineActions?.onSelectEditingMessage(props.eventId)
+                timelineContext?.timelineActions?.onSelectEditingMessage(eventId)
             }
-        }, [props.canEdit, props.eventId, timelineContext?.timelineActions]),
+        }, [eventId, props.canEdit, timelineContext?.timelineActions]),
         { enableOnContentEditable: false },
         [],
     )
-    useShortcut(
+    const onThreadClick = useShortcut(
         'ReplyToMessage',
         useCallback(() => {
             if (props.canReply) {
-                onOpenMessageThread(props.eventId)
+                onOpenMessageThread(eventId)
             }
-        }, [onOpenMessageThread, props.canReply, props.eventId]),
+        }, [eventId, onOpenMessageThread, props.canReply]),
         { enableOnContentEditable: false },
         [],
     )
 
-    useShortcut(
+    const onDeleteConfirm = useShortcut(
         'DeleteMessage',
         useCallback(() => {
-            if (props.canEdit) {
-                setShowDeletePrompt(true)
+            if (channelId) {
+                redactEvent(channelId, eventId)
             }
-        }, [props.canEdit]),
+        }, [channelId, eventId, redactEvent]),
         { enableOnContentEditable: false },
         [],
     )
 
-    useShortcut(
+    const onCopyLinkToMessage = useShortcut(
         'CopyLinkToMessage',
         useCallback(() => {
-            console.log('Copy link to message')
-        }, []),
+            const link = `/${PATHS.SPACES}/${spaceId}/${PATHS.CHANNELS}/${channelId}#${eventId}`
+            if (link) {
+                copy(`${location.origin}${link}`)
+            }
+        }, [channelId, copy, eventId, spaceId]),
+        { enableOnContentEditable: false },
+        [],
+    )
+
+    const onMarkAsUnreadClick = useShortcut(
+        'MarkAsUnread',
+        useCallback(() => {
+            const unreadMarker = markAsUnread()
+            if (unreadMarker) {
+                void sendReadReceipt(unreadMarker, true)
+            }
+        }, [markAsUnread, sendReadReceipt]),
         { enableOnContentEditable: false },
         [],
     )
@@ -170,6 +173,12 @@ export const MessageContextMenu = (props: Props) => {
                             onSelectEmoji={onSelectEmoji}
                         />
                     )}
+                    <IconButton
+                        tooltip={<ShortcutTooltip action="MarkAsUnread" />}
+                        icon="messageUnread"
+                        size="square_sm"
+                        onClick={onMarkAsUnreadClick}
+                    />
                     <IconButton
                         color={hasCopied ? 'positive' : 'gray2'}
                         tooltip={
@@ -224,3 +233,39 @@ const animation = {
         },
     },
 } as const
+
+const useCreateUnreadMarker = (params: {
+    eventId: string
+    channelId?: string
+    threadParentId: string | undefined
+    timeline?: TimelineEvent[]
+}) => {
+    const { eventId, channelId, threadParentId, timeline } = params
+    const myUserId = useMyUserId()
+    const marker = useFullyReadMarker(channelId, threadParentId)
+
+    const createUnreadMarker = useCallback(() => {
+        const event = timeline && timeline.find((e) => e.eventId === eventId)
+        if (event && marker) {
+            const mentions = timeline
+                .slice(timeline.indexOf(event))
+                .filter(
+                    (e) =>
+                        e.isMentioned &&
+                        e.threadParentId === threadParentId &&
+                        e.sender.id !== myUserId,
+                ).length
+            return {
+                ...marker,
+                threadParentId,
+                eventId,
+                eventNum: BigInt(event.eventNum),
+                mentions,
+            }
+        }
+    }, [eventId, marker, myUserId, threadParentId, timeline])
+
+    return {
+        createUnreadMarker,
+    }
+}
