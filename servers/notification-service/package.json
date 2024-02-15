@@ -8,7 +8,7 @@
     "scripts": {
         "build": "tsc",
         "dev": "tsc --watch & node --env-file .env.local --experimental-specifier-resolution=node --watch --loader ts-node/esm dist/server.js",
-        "start": "node dist/server.js",
+        "start": "node --experimental-specifier-resolution=node --loader ts-node/esm dist/server.js",
         "watch": "tsc --watch",
         "test": "jest",
         "migrate": "prisma migrate deploy",

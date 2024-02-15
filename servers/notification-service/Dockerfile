@@ -10,6 +10,6 @@ RUN yarn && yarn build
 
 RUN yarn prisma generate
 
-EXPOSE 3030
+EXPOSE 80
 
 CMD ["./scripts/run.sh"]

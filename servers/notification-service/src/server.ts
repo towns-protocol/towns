@@ -14,7 +14,8 @@ app.use(validateAuthToken)
 
 app.use(routes)
 
-const port = 3030
+const port = process.env.PORT || 80
+
 app.listen(port, () => {
     console.log(`notification service is running at http://localhost:${port}`)
 })

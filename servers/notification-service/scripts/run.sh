@@ -30,16 +30,32 @@ function check_env() {
     fi
 }
 
+function mount_notification_dabase_url() {
+    local db_schema="notification-service"
+    # using the db env vars, contsruct a postgres db url:
+    export NOTIFICATION_DATABASE_URL="postgresql://$DB_USER:$DB_PASSWORD@$DB_HOST:$DB_PORT/$DB_DATABASE?schema=$db_schema"
+}
+
 function main() {
     echo "Running notification-service"
 
-    local db_schema="notification-service"
-
-    # using the db env vars, contsruct a postgres db url:
-    export NOTIFICATION_DATABASE_URL="postgresql://$DB_USER:$DB_PASSWORD@$DB_HOST:$DB_PORT/$DB_DATABASE?schema=$db_schema"
-
+    mount_notification_dabase_url
+ 
     npm start
 }
 
+function dev() {
+    echo "Running notification-service dev"
+
+    mount_notification_dabase_url
+ 
+    yarn tsc --watch & yarn start
+}
+
 check_env
-main
+
+if [ "$1" == "dev" ]; then
+    dev
+else
+    main
+fi

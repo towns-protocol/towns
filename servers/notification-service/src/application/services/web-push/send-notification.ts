@@ -11,6 +11,7 @@ import { base64ToUrlEncoding } from './utils'
 import { NotificationOptions } from '../notificationService'
 import { PushSubscription } from '@prisma/client'
 import { Urgency } from '../../schema/notificationSchema'
+import crypto from 'crypto'
 
 export async function sendNotificationViaWebPush(
     options: NotificationOptions,

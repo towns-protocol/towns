@@ -7,14 +7,13 @@ services:
             dockerfile: ./servers/notification-service/Dockerfile
         ports:
             - '3030:3030'
-        environment:
-            - NOTIFICATION_DATABASE_URL=postgres://postgres:password@db:5432/notification
-            - AUTH_SECRET=secret
+        env_file:
+            - ./.env.local
         depends_on:
             - db
         volumes:
             - .:/monorepo/servers/notification-service
-        command: yarn dev:migrate
+        command: ./scripts/run.sh dev
     db:
         image: postgres:13
         environment:
