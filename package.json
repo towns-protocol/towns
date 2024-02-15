@@ -134,6 +134,7 @@
         "clients/governance-ui",
         "packages/*",
         "servers/workers/*",
+        "servers/notification-service",
         "contracts",
         "common/*"
     ]

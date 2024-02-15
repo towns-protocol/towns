@@ -6,9 +6,7 @@ COPY . .
 
 WORKDIR /monorepo/servers/notification-service
 
-RUN yarn && yarn build
-
-RUN yarn prisma generate
+RUN yarn install && yarn prisma generate && yarn build
 
 EXPOSE 80
 

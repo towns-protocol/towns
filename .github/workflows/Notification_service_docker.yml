@@ -46,9 +46,8 @@ jobs:
                 #This can be custom alias once requested to aws and approved for public repo
                 REGISTRY_ALIAS: l8h0l2e6
                 ECR_REPOSITORY: notification-service
-              working-directory: ./servers/notification-service
               run: |
-                docker build -t $ECR_REGISTRY/$REGISTRY_ALIAS/$ECR_REPOSITORY:latest ../../
+                docker build -t $ECR_REGISTRY/$REGISTRY_ALIAS/$ECR_REPOSITORY:latest . -f ./servers/notification-service/Dockerfile
                 docker push $ECR_REGISTRY/$REGISTRY_ALIAS/$ECR_REPOSITORY:latest
 
             # If action failed, we send a slack notification

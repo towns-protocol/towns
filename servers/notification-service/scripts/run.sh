@@ -32,6 +32,7 @@ function check_env() {
 
 function mount_notification_dabase_url() {
     local db_schema="notification-service"
+
     # using the db env vars, contsruct a postgres db url:
     export NOTIFICATION_DATABASE_URL="postgresql://$DB_USER:$DB_PASSWORD@$DB_HOST:$DB_PORT/$DB_DATABASE?schema=$db_schema"
 }
@@ -40,8 +41,9 @@ function main() {
     echo "Running notification-service"
 
     mount_notification_dabase_url
+    export NODE_ENV="production"
  
-    npm start
+    yarn start
 }
 
 function dev() {
