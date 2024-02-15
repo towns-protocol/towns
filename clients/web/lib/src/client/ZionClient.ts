@@ -870,7 +870,7 @@ export class ZionClient implements EntitlementsDelegate {
         if (!signer) {
             throw new SignerUndefinedError()
         }
-        let transaction: ContractTransaction | undefined = undefined
+        let transaction: TransactionOrUserOperation | undefined = undefined
         let error: Error | undefined = undefined
         const continueStoreTx = this.blockchainTransactionStore.begin({
             type: BlockchainTransactionType.UpdateSpaceName,
@@ -879,7 +879,12 @@ export class ZionClient implements EntitlementsDelegate {
             },
         })
         try {
-            transaction = await this.spaceDapp.updateSpaceName(spaceNetworkId, name, signer)
+            const args = [spaceNetworkId, name, signer] as const
+            if (this.isAccountAbstractionEnabled()) {
+                transaction = await this.userOps?.sendUpdateSpaceNameOp([...args])
+            } else {
+                transaction = await this.spaceDapp.updateSpaceName(...args)
+            }
             console.log(`[updateSpaceNameTransaction] transaction created` /*, transaction*/)
         } catch (err) {
             error = await this.spaceDapp.parseSpaceError(spaceNetworkId, err)

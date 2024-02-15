@@ -35,6 +35,7 @@ export const TRANSACTION_LIMIT_DEFAULTS_PER_DAY = {
     entitlementSet: 20,
     channelCreate: 10,
     linkWallet: 10,
+    updateTownInfo: 10,
 }
 
 /* Verifies if a user can create a town
@@ -312,8 +313,117 @@ export async function verifyUseTown(
     }
 }
 
+export async function verifyUpdateTown(
+    params: ITownTransactionParams & { transactionName: string },
+): Promise<IVerificationResult> {
+    const spaceDapp = await createSpaceDappForNetwork(params.env)
+    if (!spaceDapp) {
+        return { verified: false, error: 'Unable to create SpaceDapp' }
+    }
+
+    try {
+        // check if town does not already exists
+        let spaceInfo: Awaited<ReturnType<typeof spaceDapp.getSpaceInfo>>
+        try {
+            spaceInfo = await spaceDapp.getSpaceInfo(params.townId)
+            if (!spaceInfo) {
+                return { verified: false, error: `Town ${params.townId} does not exists` }
+            }
+        } catch (error) {
+            console.error(error)
+            return { verified: false, error: `Town ${params.townId} does not exists` }
+        }
+        // check for restrictive rule which requires whitelist overrides for town
+        const isOverride = await checkUseTownKVOverrides(params.rootKeyAddress, params.env)
+        if (isOverride !== null && isOverride.verified === false) {
+            return {
+                verified: false,
+                error: 'town not allowed to update space with paymaster',
+            }
+        }
+
+        const network = networkMap.get(params.env.ENVIRONMENT)
+        if (!network) {
+            throw new Error(`Unknown environment network: ${params.env.ENVIRONMENT}`)
+        }
+
+        const eventName = EventByMethod.get(params.transactionName)
+        if (!eventName) {
+            throw new Error(
+                `Unknown transactionName for usage transactions: ${params.transactionName}`,
+            )
+        }
+
+        // check that quota has not been breached on-chain
+        const queryResult = await runLogQuery(
+            params.env.ENVIRONMENT,
+            network,
+            params.env,
+            mapTransactionNameToContractName(params.transactionName),
+            eventName,
+            // TODO: should be spaceInfo.address but TownOwner__UpdateTown(town_address) says its indexed but its not? This only passes with null
+            [null],
+            createFilterWrapper,
+            NetworkBlocksPerDay.get(params.env.ENVIRONMENT) ?? undefined,
+        )
+        if (!queryResult || !queryResult.events) {
+            return { verified: false, error: 'Unable to queryFilter for use town' }
+        }
+
+        if (params.env.SKIP_LIMIT_VERIFICATION === 'true') {
+            return {
+                verified: true,
+                maxActionsPerDay: 1_000_000,
+            }
+        }
+
+        let maxActionsPerDay: number | null = null
+        switch (params.transactionName) {
+            case 'createChannel':
+            case 'updateChannel':
+            case 'removeChannel':
+                maxActionsPerDay = TRANSACTION_LIMIT_DEFAULTS_PER_DAY.channelCreate
+                break
+            case 'createRole':
+            case 'removeRole':
+            case 'updateRole':
+            case 'removeRoleFromChannel':
+            case 'addRoleToChannel':
+                maxActionsPerDay = TRANSACTION_LIMIT_DEFAULTS_PER_DAY.roleSet
+                break
+            case 'removeEntitlementModule':
+            case 'addEntitlementModule':
+                maxActionsPerDay = TRANSACTION_LIMIT_DEFAULTS_PER_DAY.entitlementSet
+                break
+            case 'updateTownInfo':
+                maxActionsPerDay = TRANSACTION_LIMIT_DEFAULTS_PER_DAY.updateTownInfo
+                break
+            default:
+                maxActionsPerDay = null
+                break
+        }
+        if (!maxActionsPerDay) {
+            return { verified: false, error: `transaction not supported ${params.transactionName}` }
+        }
+        if (queryResult.events.length >= maxActionsPerDay) {
+            return { verified: false, error: 'user has reached max mints' }
+        }
+        return {
+            verified: true,
+            maxActionsPerDay: maxActionsPerDay,
+        }
+    } catch (error) {
+        return {
+            verified: false,
+            error: isErrorType(error) ? error?.message : 'Unkown error',
+        }
+    }
+}
+
 function mapTransactionNameToContractName(transactionName: string): string {
     switch (transactionName) {
+        case 'updateTownInfo':
+            return 'TownOwner'
         case 'createChannel':
         case 'updateChannel':
         case 'removeChannel':

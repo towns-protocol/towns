@@ -64,7 +64,7 @@ export const EventByMethod = new Map<string, string>([
     ['removeEntitlementModule', 'EntitlementModuleRemoved'],
     ['addEntitlementModule', 'EntitlementModuleAdded'],
     // TownOwnerBase.soL
-    ['updateTown', 'TownOwner__UpdateTown'],
+    ['updateTownInfo', 'TownOwner__UpdateTown'],
     // WalletLink.sol
     ['linkWalletToRootKey', 'LinkWalletToRootKey'],
 ])

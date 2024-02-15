@@ -15,6 +15,7 @@ import {
     verifyCreateTown,
     verifyJoinTown,
     verifyLinkWallet,
+    verifyUpdateTown,
     verifyUseTown,
 } from './useropVerification'
 
@@ -113,7 +114,7 @@ router.post('/api/transaction-limits', async (request: WorkerRequest, env: Env) 
                 // more restrictive: only Towns on HNT Labs curated whitelist can perform these 3 actions
                 break
             }
-            case 'updateTown': {
+            case 'updateTownInfo': {
                 // todo:
                 break
             }
@@ -318,8 +319,46 @@ router.post('/api/sponsor-userop', async (request: WorkerRequest, env: Env) => {
                 }
                 break
             }
-            case 'updateTown': {
-                // todo:
+            case 'updateTownInfo': {
+                if (!isHexString(rootKeyAddress)) {
+                    return new Response(
+                        toJson({ error: `rootKeyAddress ${rootKeyAddress} not valid` }),
+                        {
+                            status: 400,
+                        },
+                    )
+                }
+                if (!isHexString(userOperation.sender)) {
+                    return new Response(
+                        toJson({ error: `userOperation.sender ${userOperation.sender} not valid` }),
+                        {
+                            status: 400,
+                        },
+                    )
+                }
+                if (!townId) {
+                    return new Response(
+                        toJson({ error: `Missing townId, cannot verify town exists` }),
+                        {
+                            status: 400,
+                        },
+                    )
+                }
+                if (env.SKIP_TOWNID_VERIFICATION !== 'true') {
+                    const verification = await verifyUpdateTown({
+                        rootKeyAddress: rootKeyAddress,
+                        senderAddress: userOperation.sender,
+                        townId: townId,
+                        env,
+                        transactionName: functionHash,
+                    })
+                    if (!verification.verified) {
+                        return new Response(
+                            toJson({ error: `Unauthorized: ${verification.error}` }),
+                            { status: 401 },
+                        )
+                    }
+                }
                 break
             }
             case 'createTown_linkWallet': {

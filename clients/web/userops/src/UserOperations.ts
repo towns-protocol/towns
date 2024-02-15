@@ -378,6 +378,44 @@ export class UserOps {
         // })
     }
 
+    public async sendUpdateSpaceNameOp(
+        args: Parameters<SpaceDapp['updateSpaceName']>,
+    ): Promise<ISendUserOperationResponse> {
+        if (!this.spaceDapp) {
+            throw new Error('spaceDapp is required')
+        }
+        const [spaceId, spaceName, signer] = args
+        const town = await this.spaceDapp.getTown(spaceId)
+
+        if (!town) {
+            throw new Error(`Town with spaceId "${spaceId}" is not found.`)
+        }
+        const townInfo = await town.getTownInfo()
+
+        // the function name in the contract is updateTownInfo
+        // in space dapp we update the space name only using updateSpaceName which calls updateTownInfo
+        const functionName = 'updateTownInfo'
+
+        const functionHashForPaymasterProxy = this.getFunctionSigHash(
+            town.TownOwner.interface,
+            functionName,
+        )
+
+        const callData = await town.TownOwner.encodeFunctionData(functionName, [
+            town.Address,
+            spaceName,
+            townInfo.uri,
+        ])
+
+        return this.sendUserOp({
+            toAddress: town.TownOwner.address,
+            callData: callData,
+            signer,
+            townId: spaceId,
+            functionHashForPaymasterProxy,
+        })
+    }
+
     public async sendCreateChannelOp(
         args: Parameters<SpaceDapp['createChannel']>,
     ): Promise<ISendUserOperationResponse> {
