@@ -66,6 +66,7 @@
         "UnfurlWorker",
         "TokenWorker",
         "GatewayWorker",
+        "StackupWorker",
         "PushNotificationsWorker",
         "Casablanca",
         "Casablanca-No-Entitlements"

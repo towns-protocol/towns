@@ -17,6 +17,10 @@ import { useAuth } from 'hooks/useAuth'
 import { shortAddress } from 'ui/utils/utils'
 import { ButtonSpinner } from 'ui/components/Spinner/ButtonSpinner'
 import { ModalContainer } from '@components/Modals/ModalContainer'
+import {
+    isAbstractAccountAddress,
+    useAbstractAccountAddress,
+} from 'hooks/useAbstractAccountAddress'
 import { formatEthDisplay } from './utils'
 
 export function WalletLinkingPanel() {
@@ -174,9 +178,14 @@ export function LinkedWallet({
         enabled: isTownsWallet,
         watch: true,
     })
+    const { data: aaAdress, isLoading: isLoadingAaAddress } = useAbstractAccountAddress()
+    const isAbstractAccount =
+        aaAdress && isAbstractAccountAddress({ address, abstractAccountAddress: aaAdress })
+
     const isWalletLinkingPending = useIsTransactionPending(BlockchainTransactionType.LinkWallet)
     const isWalletUnLinkingPending = useIsTransactionPending(BlockchainTransactionType.UnlinkWallet)
 
+    // TODO: we have a privy wallet, and AA wallet. Probably we want to filter out the privy wallet, and only show AA wallet address. Do we need to have our own UI for AA wallet assets? Since you can't export it to MM
     return (
         <PanelButton
             cursor="auto"
@@ -205,6 +214,8 @@ export function LinkedWallet({
 
             {isTownsWallet ? (
                 <ExportWallet />
+            ) : isLoadingAaAddress ? null : isAbstractAccount ? (
+                'AA Account'
             ) : (
                 <IconButton
                     cursor={

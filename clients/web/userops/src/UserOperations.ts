@@ -35,7 +35,11 @@ export class UserOps {
         this.spaceDapp = config.spaceDapp
     }
 
-    public async getAbstractAccountAddress({ rootKeyAddress }: { rootKeyAddress: Address }) {
+    public async getAbstractAccountAddress({
+        rootKeyAddress,
+    }: {
+        rootKeyAddress: Address
+    }): Promise<Address | undefined> {
         // copied from userop.js
         // easier b/c we don't need the signer, which we don't store
         //
@@ -73,10 +77,12 @@ export class UserOps {
             // eslint-disable-next-line @typescript-eslint/ban-ts-comment
             // @ts-ignore
             const address = error?.errorArgs?.sender
-            if (!address) throw error
+            if (!address) {
+                throw error
+            }
 
             userOpsStore.setState({ smartAccountAddress: address })
-            return address
+            return address as Address
         }
     }
 
@@ -170,6 +176,9 @@ export class UserOps {
         const abstractAccountAddress = await this.getAbstractAccountAddress({
             rootKeyAddress: await getSignerAddress(signer),
         })
+        if (!abstractAccountAddress) {
+            throw new Error('abstractAccountAddress is required')
+        }
 
         const callDataCreateSpace = this.spaceDapp.townRegistrar.TownArchitect.encodeFunctionData(
             'createTown',
@@ -246,6 +255,9 @@ export class UserOps {
         const abstractAccountAddress = await this.getAbstractAccountAddress({
             rootKeyAddress: await getSignerAddress(signer),
         })
+        if (!abstractAccountAddress) {
+            throw new Error('abstractAccountAddress is required')
+        }
 
         const callDataJoinTown = town.Membership.encodeFunctionData('joinTown', [recipient])
 

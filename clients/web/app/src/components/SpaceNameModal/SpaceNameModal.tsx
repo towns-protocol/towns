@@ -18,6 +18,7 @@ import { isForbiddenError, isRejectionError } from 'ui/utils/utils'
 import { ErrorMessageText } from 'ui/components/ErrorMessage/ErrorMessage'
 import { RequireTransactionNetworkMessage } from '@components/RequireTransactionNetworkMessage/RequireTransactionNetworkMessage'
 import { useCurrentWalletEqualsSignedInAccount } from 'hooks/useCurrentWalletEqualsSignedInAccount'
+import { UserOpTxModal } from '@components/Web3/UserOpTxModal/UserOpTxModal'
 
 type Props = {
     onHide: () => void
@@ -120,77 +121,80 @@ export const SpaceNameModal = (props: Props) => {
     }, [hasServerError, hasTransactionError, transactionError])
 
     return (
-        <ModalContainer onHide={onHide}>
-            <Stack gap="lg">
-                <Heading level={3}>Edit Town</Heading>
+        <>
+            <ModalContainer onHide={onHide}>
+                <Stack gap="lg">
+                    <Heading level={3}>Edit Town</Heading>
 
-                <FormRender<FormState>
-                    schema={schema}
-                    defaultValues={defaultValues}
-                    mode="onChange"
-                    onSubmit={onSubmit}
-                >
-                    {({ register, formState }) => {
-                        const { ...restOfNameProps } = register(FormStateKeys.name)
-                        return (
-                            <Stack gap>
-                                <TextField
-                                    autoFocus
-                                    background="level2"
-                                    label="Name"
-                                    placeholder="Name your town"
-                                    maxLength={30}
-                                    message={
-                                        <ErrorMessage
-                                            errors={formState.errors}
-                                            fieldName={FormStateKeys.name}
-                                        />
-                                    }
-                                    {...restOfNameProps}
-                                />
+                    <FormRender<FormState>
+                        schema={schema}
+                        defaultValues={defaultValues}
+                        mode="onChange"
+                        onSubmit={onSubmit}
+                    >
+                        {({ register, formState }) => {
+                            const { ...restOfNameProps } = register(FormStateKeys.name)
+                            return (
+                                <Stack gap>
+                                    <TextField
+                                        autoFocus
+                                        background="level2"
+                                        label="Name"
+                                        placeholder="Name your town"
+                                        maxLength={30}
+                                        message={
+                                            <ErrorMessage
+                                                errors={formState.errors}
+                                                fieldName={FormStateKeys.name}
+                                            />
+                                        }
+                                        {...restOfNameProps}
+                                    />
 
-                                <Box flexDirection="row" justifyContent="end" gap="sm">
-                                    <Stack horizontal gap justifyContent="end">
-                                        <Button
-                                            tone="level2"
-                                            value="Cancel"
-                                            disabled={
-                                                isDisabled ||
-                                                transactionUIState != TransactionUIState.None
-                                            }
-                                            onClick={onHide}
-                                        >
-                                            Cancel
-                                        </Button>
+                                    <Box flexDirection="row" justifyContent="end" gap="sm">
+                                        <Stack horizontal gap justifyContent="end">
+                                            <Button
+                                                tone="level2"
+                                                value="Cancel"
+                                                disabled={
+                                                    isDisabled ||
+                                                    transactionUIState != TransactionUIState.None
+                                                }
+                                                onClick={onHide}
+                                            >
+                                                Cancel
+                                            </Button>
 
-                                        <TransactionButton
-                                            disabled={isDisabled}
-                                            transactionState={transactionUIState}
-                                            transactingText="Updating town"
-                                            successText="Town updated"
-                                            idleText="Save on chain"
-                                        />
-                                    </Stack>
-                                </Box>
-                                {errorBox}
-                            </Stack>
-                        )
-                    }}
-                </FormRender>
-                {!isTransactionNetwork && (
-                    <Box paddingTop="md" flexDirection="row" justifyContent="end">
-                        <RequireTransactionNetworkMessage
-                            postCta="to update a town."
-                            switchNetwork={switchNetwork}
-                        />
-                    </Box>
-                )}
-                {isTransactionNetwork && !currentWalletEqualsSignedInAccount && (
-                    <Box paddingTop="md" flexDirection="row" justifyContent="end">
-                        <ErrorMessageText message="Wallet is not connected, or is not the same as the signed in account." />
-                    </Box>
-                )}
-            </Stack>
-        </ModalContainer>
+                                            <TransactionButton
+                                                disabled={isDisabled}
+                                                transactionState={transactionUIState}
+                                                transactingText="Updating town"
+                                                successText="Town updated"
+                                                idleText="Save on chain"
+                                            />
+                                        </Stack>
+                                    </Box>
+                                    {errorBox}
+                                </Stack>
+                            )
+                        }}
+                    </FormRender>
+                    {!isTransactionNetwork && (
+                        <Box paddingTop="md" flexDirection="row" justifyContent="end">
+                            <RequireTransactionNetworkMessage
+                                postCta="to update a town."
+                                switchNetwork={switchNetwork}
+                            />
+                        </Box>
+                    )}
+                    {isTransactionNetwork && !currentWalletEqualsSignedInAccount && (
+                        <Box paddingTop="md" flexDirection="row" justifyContent="end">
+                            <ErrorMessageText message="Wallet is not connected, or is not the same as the signed in account." />
+                        </Box>
+                    )}
+                </Stack>
+            </ModalContainer>
+            <UserOpTxModal />
+        </>
     )
 }

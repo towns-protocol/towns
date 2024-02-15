@@ -124,6 +124,14 @@ export class ZionClient implements EntitlementsDelegate {
         return !!this.opts.accountAbstractionConfig?.aaRpcUrl
     }
 
+    public getAbstractAccountAddress({ rootKeyAddress }: { rootKeyAddress: Address }) {
+        try {
+            return this.userOps?.getAbstractAccountAddress({ rootKeyAddress })
+        } catch (error) {
+            this.log('[getAbstractAccountAddress]', error)
+        }
+    }
+
     /************************************************
      * getServerVersions
      *************************************************/
