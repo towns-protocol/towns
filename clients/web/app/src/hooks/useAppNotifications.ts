@@ -49,7 +49,9 @@ export const useAppNotifications = () => {
         broadcastChannel.onmessage = (event) => {
             log('useAppNotifications:push: received navigation event', event.data.path)
             if (isTouch) {
-                const match = matchPath(`${PATHS.MESSAGES}/:channelId`, event.data.path)
+                // matchPath requires the string to start with a '/'
+                const prefix = event.data.path.startsWith('/') ? '' : '/'
+                const match = matchPath(`${PATHS.MESSAGES}/:channelId`, prefix + event.data.path)
                 const spaceId = useStore.getState().spaceIdBookmark
                 if (match && match.params.channelId && spaceId) {
                     navigate(
