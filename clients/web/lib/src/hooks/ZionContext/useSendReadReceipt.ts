@@ -13,7 +13,8 @@ export function useSendReadReceipt(client: ZionClient | undefined) {
             useFullyReadMarkerStore.setState((state) => {
                 const markerId = marker.threadParentId ?? marker.channelId
 
-                const { mentions = 0 } = marker
+                const { mentions: inMentions } = marker
+                const mentions = !isUnread ? 0 : inMentions ?? 0
 
                 if (isUnread || state.markers[markerId]?.isUnread === true) {
                     return {
