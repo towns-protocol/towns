@@ -1,6 +1,6 @@
 import { Environment } from './environment'
 
-function getAllowedOrigins(env: Environment): string[] {
+export function getAllowedOrigins(env: Environment): string[] {
     switch (env) {
         case 'test':
         case 'test-beta':
@@ -44,20 +44,21 @@ function getAllowedOrigins(env: Environment): string[] {
     }
 }
 
-function getOnRenderOrigin(origin: string): string | undefined {
+export function getOnRenderOrigin(origin: string): string | undefined {
     if (origin.includes('onrender.com') && origin.includes('harmony-web')) {
         return origin
     }
     return undefined
 }
 
-function getTownsOrigin(origin: string): string | undefined {
+export function getTownsOrigin(origin: string): string | undefined {
     if (origin.includes('.towns.com')) {
         return origin
     }
+    return undefined
 }
 
-function getLocalDomainOrigin(origin: string, env: Environment): string | undefined {
+export function getLocalDomainOrigin(origin: string, env: Environment): string | undefined {
     // Matches a local domain like https://towns.local:3000
     const rExp = /https:\/\/(\w+).local:3000/
     switch (env) {

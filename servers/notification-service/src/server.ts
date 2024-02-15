@@ -1,14 +1,15 @@
 import express from 'express'
-import cors from 'cors'
+
 import { routes } from './application/routes/routes'
 import { handleGlobalError } from './application/middleware/errors'
 import { validateAuthToken } from './application/middleware/auth'
 import { publicRoutes } from './application/routes/publicRoutes'
+import { cors } from './application/middleware/cors'
 
 const app = express()
 
 // Middlewares
-app.use(cors()) // TODO: configure cors origins
+app.use(cors)
 app.use(express.json())
 app.use(handleGlobalError)
 

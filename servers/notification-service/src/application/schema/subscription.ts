@@ -8,7 +8,6 @@ export enum PushType {
 
 export const subscriptionSchema = z.object({
     userId: z.string(),
-    // TODO: fix this any when I know what it should look like
     subscriptionObject: z.object({
         endpoint: z.string(),
         expirationTime: z.number().nullable(),
