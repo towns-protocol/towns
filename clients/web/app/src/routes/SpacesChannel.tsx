@@ -152,7 +152,7 @@ export const SpacesChannelComponent = (props: Props) => {
     })
 
     const onLoadMore = useCallback(() => {
-        scrollback(channelId, 100)
+        scrollback(channelId)
     }, [channelId, scrollback])
 
     // scrollback handling

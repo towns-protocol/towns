@@ -68,7 +68,7 @@ describe('messageHistoryHooks', () => {
                     void (async () => {
                         // eslint-disable-next-line no-constant-condition
                         while (true) {
-                            const result = await scrollback(channelId, 30)
+                            const result = await scrollback(channelId)
                             if (!result || result.terminus) {
                                 break
                             }

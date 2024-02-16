@@ -39,7 +39,7 @@ describe('messageScrollback', () => {
         //
         await waitFor(() => expect(alice.getEvents(spaceId).length).toBe(20))
         // call scrollback
-        await alice.scrollback(spaceId, 30)
+        await alice.scrollback(spaceId)
         // did we get more events?
         await waitFor(() => expect(alice.getEvents(spaceId).length).toBeGreaterThan(20))
     }) // end test - send a threaded message

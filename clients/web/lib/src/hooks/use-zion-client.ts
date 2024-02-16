@@ -144,10 +144,7 @@ interface ZionClientImpl {
     registerWalletWithCasablanca: (statement: string, signer: TSigner) => Promise<void>
     removeUser: (streamId: string, userId: string) => Promise<void>
     resetFullyReadMarkers: () => void
-    scrollback: (
-        roomId: string,
-        limit?: number,
-    ) => Promise<
+    scrollback: (roomId: string) => Promise<
         | {
               terminus: boolean
               eventCount: number

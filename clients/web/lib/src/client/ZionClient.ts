@@ -1537,10 +1537,7 @@ export class ZionClient implements EntitlementsDelegate {
     /************************************************
      * scrollback
      ************************************************/
-    public async scrollback(
-        roomId: string,
-        _limit?: number,
-    ): Promise<{
+    public async scrollback(roomId: string): Promise<{
         terminus: boolean
         eventCount: number
         firstEventId?: string
