@@ -15,6 +15,9 @@
         "test": "yarn test:unit",
         "test:unit": "make test"
     },
+    "dependencies": {
+        "@eth-optimism/contracts-bedrock": "^0.17.1"
+    },
     "devDependencies": {
         "@harmony/eslint-config": "1.0.0",
         "@harmony/prettier-config": "workspace:^",
@@ -24,8 +27,5 @@
         "prettier-plugin-solidity": "^1.1.3",
         "solhint": "^3.4.1",
         "solhint-plugin-prettier": "^0.0.5"
-    },
-    "dependencies": {
-        "@eth-optimism/contracts-bedrock": "^0.17.1"
     }
 }

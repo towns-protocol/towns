@@ -37,7 +37,6 @@
         "csb:wait": "yarn csb:wait:entitlements",
         "csb:wait:entitlements": "wait-on https://localhost:5157/info --timeout=400000 --i=5000 --verbose",
         "csb:wait:no-entitlements": "wait-on https://localhost:5158/info --timeout=400000 --i=5000 --verbose",
-        "worker:wait:stackup": "wait-on tcp:127.0.0.1:${PORT:-8686} --timeout=400000 --i=5000 --verbose",
         "drt:wait": "wait-on tcp:8008 --timeout=400000 --i=5000 --verbose",
         "forge": "yarn workspace @towns/contracts exec forge",
         "harmonyweb:build": "turbo build --filter harmonyweb",
@@ -53,6 +52,7 @@
         "syncpack:fix": "syncpack fix-mismatches && syncpack format",
         "test": "turbo test",
         "test:unit": "turbo test:unit -- --silent",
+        "worker:wait:stackup": "wait-on tcp:127.0.0.1:${PORT:-8686} --timeout=400000 --i=5000 --verbose",
         "workers:build": "turbo build --filter gateway-worker --filter siwe-worker --filter token-worker --filter unfurl-worker --filter push-notification-worker --filter jwt-worker"
     },
     "devDependencies": {

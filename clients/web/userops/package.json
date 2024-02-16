@@ -7,6 +7,13 @@
         "lint:fix": "yarn lint --fix",
         "test": "DOTENV_CONFIG_PATH=.env.test vitest --coverage"
     },
+    "dependencies": {
+        "@river/web3": "workspace:^",
+        "dotenv": "^16.3.1",
+        "userop": "^0.3.7",
+        "zod": "^3.21.4",
+        "zustand": "^4.3.3"
+    },
     "devDependencies": {
         "@harmony/prettier-config": "workspace:^",
         "@typescript-eslint/eslint-plugin": "^6.10.0",
@@ -16,12 +23,5 @@
         "eslint-plugin-import": "^2.27.5",
         "typescript": "^5.1.6",
         "vitest": "^1.1.1"
-    },
-    "dependencies": {
-        "@river/web3": "workspace:^",
-        "dotenv": "^16.3.1",
-        "userop": "^0.3.7",
-        "zod": "^3.21.4",
-        "zustand": "^4.3.3"
     }
 }

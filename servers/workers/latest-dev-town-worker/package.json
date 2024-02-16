@@ -6,12 +6,12 @@
 	"license": "MIT OR Apache-2.0",
 	"type": "module",
 	"scripts": {
+		"delete-latest-devtown-url:test-beta": "wrangler secret delete LATEST_DEV_TOWN_INVITE_URL --env test-beta",
 		"dev": "echo use dev:local for now - see wrangler.toml",
 		"dev:local": "wrangler dev",
 		"dev:remote": "wrangler dev --remote",
 		"lint": "eslint .",
 		"publish": "wrangler deploy --env $CF_ENV",
-		"delete-latest-devtown-url:test-beta": "wrangler secret delete LATEST_DEV_TOWN_INVITE_URL --env test-beta",
 		"set-latest-devtown-url:test-beta": "echo $LATEST_DEV_TOWN_INVITE_URL | wrangler secret put LATEST_DEV_TOWN_INVITE_URL --env test-beta",
 		"test": "jest"
 	},

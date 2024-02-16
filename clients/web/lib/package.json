@@ -10,6 +10,7 @@
         "build": "tsc",
         "cb": "yarn clean && yarn build",
         "clean": "rm -rf dist",
+        "create-dev-town": "yarn my-jest ./scripts/create-dev-town.test.ts --testTimeout=3000000",
         "csb:test-web-lib": "yarn my-jest --maxWorkers=5",
         "csb:test-web-lib-done": "yarn csb:test-web-lib --group=casablanca",
         "csb:test-web-lib-todo": "yarn csb:test-web-lib --group=-casablanca --group=-integration/load --group=-synthetic",
@@ -23,9 +24,8 @@
         "test:ci": "yarn csb:test-web-lib-done --silent --testTimeout=180000",
         "test:ci-todo": "yarn csb:test-web-lib-todo --silent --testTimeout=180000",
         "test:load:all": "yarn my-jest --group=integration/load --testTimeout=3000000",
-        "test:userops:random-wallet": "DOTENV_CONFIG_PATH=.env.test.userops-random-wallet yarn my-jest --group=integration/userops --testTimeout=3000000 --silent=false --maxWorkers=1",
         "test:userops:privy-wallet": "DOTENV_CONFIG_PATH=.env.test.userops-privy-wallet yarn my-jest --group=integration/userops --testTimeout=3000000 --silent=false --maxWorkers=1",
-        "create-dev-town": "yarn my-jest ./scripts/create-dev-town.test.ts --testTimeout=3000000",
+        "test:userops:random-wallet": "DOTENV_CONFIG_PATH=.env.test.userops-random-wallet yarn my-jest --group=integration/userops --testTimeout=3000000 --silent=false --maxWorkers=1",
         "watch": "tsc --watch"
     },
     "dependencies": {

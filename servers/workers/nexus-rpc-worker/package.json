@@ -10,8 +10,8 @@
 		"dev:remote": "wrangler dev --remote",
 		"lint": "eslint .",
 		"publish": "wrangler deploy --env $CF_ENV",
-		"test:unit": "jest",
-		"test": "yarn test:unit"
+		"test": "yarn test:unit",
+		"test:unit": "jest"
 	},
 	"dependencies": {
 		"@whatsgood/nexus": "0.8.0"

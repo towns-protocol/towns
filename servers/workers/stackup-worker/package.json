@@ -16,6 +16,12 @@
         "test": "yarn test:unit",
         "test:unit": "yarn node --experimental-vm-modules $(yarn bin jest)"
     },
+    "dependencies": {
+        "@towns/generated": "workspace:^",
+        "itty-router": "^2.6.6",
+        "userop.js": "^0.3.7",
+        "worker-common": "workspace:^"
+    },
     "devDependencies": {
         "@cloudflare/workers-types": "^4.20230710.1",
         "@types/jest": "^29.5.3",
@@ -29,11 +35,5 @@
         "ts-jest": "^29.1.1",
         "typescript": "^5.1.6",
         "wrangler": "^3.2.0"
-    },
-    "dependencies": {
-        "@towns/generated": "workspace:^",
-        "itty-router": "^2.6.6",
-        "userop.js": "^0.3.7",
-        "worker-common": "workspace:^"
     }
 }
