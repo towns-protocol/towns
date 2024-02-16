@@ -600,6 +600,7 @@ export class Client
 
     async createMediaStream(
         channelId: string,
+        spaceId: string | undefined,
         chunkCount: number,
         streamSettings?: PlainMessage<StreamSettings>,
     ): Promise<{ streamId: string; prevMiniblockHash: Uint8Array }> {
@@ -619,6 +620,7 @@ export class Client
             make_MediaPayload_Inception({
                 streamId,
                 channelId,
+                spaceId,
                 chunkCount,
                 settings: streamSettings,
             }),

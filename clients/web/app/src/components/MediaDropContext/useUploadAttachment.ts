@@ -17,11 +17,12 @@ export const useUploadAttachment = () => {
             height: number,
             file: File,
             channelId: string,
+            spaceId: string | undefined,
             setProgress: (progress: number) => void,
         ): Promise<Attachment> => {
             const encryptionResult = await encryptAESGCM(data)
             const chunkCount = Math.ceil(encryptionResult.ciphertext.length / CHUNK_SIZE)
-            const mediaStreamInfo = await createMediaStream(channelId, chunkCount)
+            const mediaStreamInfo = await createMediaStream(channelId, spaceId, chunkCount)
             if (!mediaStreamInfo) {
                 throw new Error('Failed to create media stream')
             }
@@ -64,17 +65,27 @@ export const useUploadAttachment = () => {
     )
 
     const uploadFile = useCallback(
-        async (channelId: string, file: File, setProgress: (progress: number) => void) => {
+        async (
+            channelId: string,
+            spaceId: string | undefined,
+            file: File,
+            setProgress: (progress: number) => void,
+        ) => {
             //
             const buffer = await file.arrayBuffer()
             const bytes = new Uint8Array(buffer)
-            return await createChunkedAttachment(bytes, 0, 0, file, channelId, setProgress)
+            return await createChunkedAttachment(bytes, 0, 0, file, channelId, spaceId, setProgress)
         },
         [createChunkedAttachment],
     )
 
     const uploadImageFile = useCallback(
-        async (channelId: string, file: File, setProgress: (progress: number) => void) => {
+        async (
+            channelId: string,
+            spaceId: string | undefined,
+            file: File,
+            setProgress: (progress: number) => void,
+        ) => {
             /** Do some basic compression to avoid ridiculous file sizes
              * unless the image is animated
              */
@@ -94,6 +105,7 @@ export const useUploadAttachment = () => {
                 height,
                 compressed,
                 channelId,
+                spaceId,
                 setProgress,
             )
         },
@@ -101,11 +113,16 @@ export const useUploadAttachment = () => {
     )
 
     const uploadAttachment = useCallback(
-        async (channelId: string, file: File, setProgress: (progress: number) => void) => {
+        async (
+            channelId: string,
+            spaceId: string | undefined,
+            file: File,
+            setProgress: (progress: number) => void,
+        ) => {
             if (isMediaMimeType(file.type)) {
-                return await uploadImageFile(channelId, file, setProgress)
+                return await uploadImageFile(channelId, spaceId, file, setProgress)
             } else {
-                return await uploadFile(channelId, file, setProgress)
+                return await uploadFile(channelId, spaceId, file, setProgress)
             }
         },
         [uploadImageFile, uploadFile],

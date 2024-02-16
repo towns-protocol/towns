@@ -19,13 +19,14 @@ type Props = {
     eventId: string
     eventContent: RoomMessageEvent
     channelId: string
+    spaceId: string | undefined
     initialValue: string
     attachments?: Attachment[]
 }
 
 export const TimelineMessageEditor = (props: Props) => {
     const { isTouch } = useDevice()
-    const { attachments, initialValue, channelId, eventId, eventContent } = props
+    const { attachments, initialValue, channelId, spaceId, eventId, eventContent } = props
     const { timelineActions } = useContext(MessageTimelineContext) ?? {}
     const editChannelEvent = useEditMessage(channelId)
 
@@ -51,7 +52,12 @@ export const TimelineMessageEditor = (props: Props) => {
     return isTouch ? (
         <TouchEditMessageWrapper onCancel={onCancel}>
             <Box grow />
-            <MediaDropContextProvider channelId={channelId} title="" eventId={eventId}>
+            <MediaDropContextProvider
+                channelId={channelId}
+                spaceId={spaceId}
+                title=""
+                eventId={eventId}
+            >
                 <RichTextEditor
                     autoFocus
                     editable
@@ -68,7 +74,12 @@ export const TimelineMessageEditor = (props: Props) => {
         </TouchEditMessageWrapper>
     ) : (
         <Stack gap>
-            <MediaDropContextProvider channelId={channelId} title="" eventId={eventId}>
+            <MediaDropContextProvider
+                channelId={channelId}
+                spaceId={spaceId}
+                title=""
+                eventId={eventId}
+            >
                 <RichTextEditor
                     editable
                     editing

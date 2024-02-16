@@ -28,7 +28,7 @@ describe('mediaTests', () => {
         const channelId = makeChannelStreamId('bobs-channel-' + genId())
         await expect(bobsClient.createChannel(spaceId, 'Channel', 'Topic', channelId)).toResolve()
 
-        return await bobsClient.createMediaStream(channelId, chunkCount)
+        return await bobsClient.createMediaStream(channelId, spaceId, chunkCount)
     }
 
     test('clientCanCreateMediaStream', async () => {
@@ -96,8 +96,11 @@ describe('mediaTests', () => {
     })
 
     test('channelNeedsToExistBeforeCreatingMediaStream', async () => {
-        const nonExistentChannelId = makeChannelStreamId('channel-' + genId())
-        await expect(bobsClient.createMediaStream(nonExistentChannelId, 10)).toReject()
+        const nonExistentSpaceId = makeSpaceStreamId(genId())
+        const nonExistentChannelId = makeChannelStreamId(genId())
+        await expect(
+            bobsClient.createMediaStream(nonExistentChannelId, nonExistentSpaceId, 10),
+        ).toReject()
     })
 
     test('dmChannelNeedsToExistBeforeCreatingMediaStream', async () => {
@@ -106,7 +109,7 @@ describe('mediaTests', () => {
         alicesClient.startSync()
 
         const nonExistentChannelId = makeDMStreamId(bobsClient.userId, alicesClient.userId)
-        await expect(bobsClient.createMediaStream(nonExistentChannelId, 10)).toReject()
+        await expect(bobsClient.createMediaStream(nonExistentChannelId, undefined, 10)).toReject()
         await alicesClient.stop()
     })
 
@@ -116,8 +119,8 @@ describe('mediaTests', () => {
         alicesClient.startSync()
 
         const { streamId } = await bobsClient.createDMChannel(alicesClient.userId)
-        await expect(bobsClient.createMediaStream(streamId, 10)).toResolve()
-        await expect(alicesClient.createMediaStream(streamId, 10)).toResolve()
+        await expect(bobsClient.createMediaStream(streamId, undefined, 10)).toResolve()
+        await expect(alicesClient.createMediaStream(streamId, undefined, 10)).toResolve()
         await alicesClient.stop()
     })
 
@@ -134,7 +137,7 @@ describe('mediaTests', () => {
             alicesClient.userId,
             charliesClient.userId,
         ])
-        await expect(bobsClient.createMediaStream(streamId, 10)).toResolve()
+        await expect(bobsClient.createMediaStream(streamId, undefined, 10)).toResolve()
         await alicesClient.stop()
         await charliesClient.stop()
     })
@@ -150,7 +153,7 @@ describe('mediaTests', () => {
 
         const { streamId } = await bobsClient.createDMChannel(alicesClient.userId)
 
-        await expect(charliesClient.createMediaStream(streamId, 10)).toReject()
+        await expect(charliesClient.createMediaStream(streamId, undefined, 10)).toReject()
         await alicesClient.stop()
         await charliesClient.stop()
     })

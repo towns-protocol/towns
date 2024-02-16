@@ -93,6 +93,7 @@ export const SpaceThreads = () => {
                                         disableDrop
                                         title=""
                                         channelId={channel.id}
+                                        spaceId={spaceId}
                                     >
                                         <>
                                             <MessageThread

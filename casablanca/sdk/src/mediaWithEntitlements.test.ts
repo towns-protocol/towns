@@ -109,14 +109,14 @@ describe('mediaWithEntitlementsTests', () => {
          * Real test starts here
          * Bob is a member of the channel and can therefore create a media stream
          */
-        await expect(bobClient.createMediaStream(channelId, 10)).toResolve()
+        await expect(bobClient.createMediaStream(channelId, spaceStreamId, 10)).toResolve()
         await bobClient.stop()
 
         await aliceClient.initializeUser()
         aliceClient.startSync()
 
         // Alice is NOT a member of the channel is prevented from creating a media stream
-        await expect(aliceClient.createMediaStream(channelId, 10)).toReject()
+        await expect(aliceClient.createMediaStream(channelId, spaceStreamId, 10)).toReject()
         await aliceClient.stop()
     })
 })

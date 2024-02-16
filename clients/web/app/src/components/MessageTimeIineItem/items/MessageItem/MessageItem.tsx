@@ -94,8 +94,15 @@ export const MessageItem = (props: Props) => {
         return <></>
     }
 
-    const { channels, members, channelId, onMentionClick, timelineActions, messageRepliesMap } =
-        timelineContext
+    const {
+        channels,
+        members,
+        channelId,
+        spaceId,
+        onMentionClick,
+        timelineActions,
+        messageRepliesMap,
+    } = timelineContext
 
     const isMessage = itemData.type === RenderEventType.Message
     const isEncryptedMessage = itemData.type === RenderEventType.EncryptedMessage
@@ -144,6 +151,7 @@ export const MessageItem = (props: Props) => {
                             eventId={event.eventId}
                             eventContent={event.content}
                             channelId={channelId}
+                            spaceId={spaceId}
                             attachments={event.content.attachments}
                         />
 

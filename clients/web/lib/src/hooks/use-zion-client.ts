@@ -78,6 +78,7 @@ interface ZionClientImpl {
     ) => Promise<ChannelUpdateTransactionContext | undefined>
     createMediaStream: (
         channelId: string,
+        spaceId: string | undefined,
         chunkCount: number,
     ) => Promise<{ streamId: string; prevMiniblockHash: Uint8Array } | undefined>
     createRoleTransaction: (

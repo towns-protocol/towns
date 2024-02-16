@@ -191,6 +191,7 @@ export const SpacesChannelComponent = (props: Props) => {
                     key={channelId}
                     title={imageUploadTitle}
                     channelId={channelId}
+                    spaceId={spaceId}
                     disableDrop={!isChannelWritable}
                 >
                     <MessageTimelineWrapper

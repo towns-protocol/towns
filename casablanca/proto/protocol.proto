@@ -451,6 +451,7 @@ message MediaPayload {
         string channel_id = 2;
         int32 chunk_count = 3;
         StreamSettings settings = 4;
+        optional string space_id = 5;
     }
 
     message Chunk {

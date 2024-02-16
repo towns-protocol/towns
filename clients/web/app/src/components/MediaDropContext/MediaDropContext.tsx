@@ -51,10 +51,11 @@ export const MediaDropContextProvider = ({
     children: React.ReactNode
     title: string
     channelId: string
+    spaceId: string | undefined
     eventId?: string
     disableDrop?: boolean
 }) => {
-    const { channelId, disableDrop } = props
+    const { channelId, spaceId, disableDrop } = props
     const [isDragging, setIsDragging] = useState(false)
 
     const [isUploadingFiles, setIsUploadingFiles] = useState(false)
@@ -71,13 +72,18 @@ export const MediaDropContextProvider = ({
             if (file.content.kind === 'attachment') {
                 continue
             }
-            const attachment = await uploadAttachment(channelId, file.content.file, (progress) => {
-                const index = uploads.findIndex((f) => f.id === file.id)
-                if (index > -1) {
-                    uploads[index].progress = progress
-                }
-                setFiles([...uploads])
-            })
+            const attachment = await uploadAttachment(
+                channelId,
+                spaceId,
+                file.content.file,
+                (progress) => {
+                    const index = uploads.findIndex((f) => f.id === file.id)
+                    if (index > -1) {
+                        uploads[index].progress = progress
+                    }
+                    setFiles([...uploads])
+                },
+            )
             const index = uploads.findIndex((f) => f.id === file.id)
             if (index > -1) {
                 uploads[index].content = {
@@ -93,7 +99,7 @@ export const MediaDropContextProvider = ({
         return uploads
             .map((f) => (f.content.kind === 'attachment' ? f.content.attachment : undefined))
             .filter(isDefined)
-    }, [files, uploadAttachment, channelId, setFiles])
+    }, [files, uploadAttachment, channelId, spaceId])
 
     const removeFile = useCallback(
         (id: string) => {

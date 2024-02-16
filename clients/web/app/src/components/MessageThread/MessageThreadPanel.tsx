@@ -73,6 +73,7 @@ export const MessageThreadPanel = (props: Props) => {
             <MediaDropContextProvider
                 title={imageUploadTitle}
                 channelId={channelId}
+                spaceId={spaceId}
                 eventId={messageId}
                 key={messageId}
                 disableDrop={!isChannelWritable}
