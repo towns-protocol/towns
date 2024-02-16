@@ -11,7 +11,7 @@
             "mode": "auto",
             "program": "${workspaceFolder}/node/main.go",
             "args": ["run"],
-            "cwd": "${workspaceFolder}/run_files/single"
+            "cwd": "${workspaceFolder}/run_files/single/00"
         },
         {
           "name": "Launch River server (no entitlements)",
@@ -20,7 +20,7 @@
           "mode": "auto",
           "program": "${workspaceFolder}/node/main.go",
           "args": ["run"],
-          "cwd": "${workspaceFolder}/run_files/single_no_ent"
+          "cwd": "${workspaceFolder}/run_files/single_ne/00"
       }
     ]
 }
