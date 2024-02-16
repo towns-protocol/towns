@@ -1,69 +1,62 @@
-import { useMemo, useRef } from 'react'
-import { useCasablancaSpaces } from '../CasablancClient/useCasablancaSpaces'
+import { useEffect, useState } from 'react'
 import { Client as CasablancaClient } from '@river/sdk'
-import { SpaceChild, SpaceHierarchies } from 'types/zion-types'
-import isEqual from 'lodash/isEqual'
+import { SpaceHierarchies, SpaceHierarchy } from 'types/zion-types'
+import { isSpaceStreamId } from '@river/sdk'
 
 export function useCasablancaSpaceHierarchies(
     casablancaClient?: CasablancaClient,
 ): SpaceHierarchies {
-    const spaces = useCasablancaSpaces(casablancaClient)
-    const previousSpaceHierarchiesRef = useRef<SpaceHierarchies>({})
+    const [spaceHierarchies, setSpaceHierarchies] = useState<SpaceHierarchies>({})
 
-    // todo austin - seems like this should be a useEffect that listens to
-    // add/remove channel events
-
-    return useMemo(() => {
+    useEffect(() => {
         if (!casablancaClient) {
-            return {}
+            return
         }
-        const rootHierarchy = spaces.reduce((rootHierarchy, space) => {
-            const spaceId = space.id
-            const spaceHierarchy = toSpaceHierarchy(casablancaClient, spaceId)
-            const prevChannels = previousSpaceHierarchiesRef.current[spaceId]
-            return {
-                ...rootHierarchy,
-                [spaceId]: isEqual(prevChannels, spaceHierarchy) ? prevChannels : spaceHierarchy,
-            }
-        }, {})
+        const updateSpaceHierarchies = () => {
+            const spaceHierarchies = casablancaClient.streams.getStreams().reduce((acc, stream) => {
+                if (isSpaceStreamId(stream.view.streamId)) {
+                    const spaceId = stream.view.streamId
+                    const spaceHierarchy = toSpaceHierarchy(casablancaClient, spaceId)
+                    acc[spaceId] = spaceHierarchy
+                }
+                return acc
+            }, {} as SpaceHierarchies)
+            setSpaceHierarchies(spaceHierarchies)
+        }
 
-        if (isEqual(previousSpaceHierarchiesRef.current, rootHierarchy)) {
-            return previousSpaceHierarchiesRef.current
-        } else {
-            previousSpaceHierarchiesRef.current = rootHierarchy
-            return rootHierarchy
+        const onUpdate = (streamId: string) => {
+            if (isSpaceStreamId(streamId)) {
+                updateSpaceHierarchies()
+            }
         }
-    }, [casablancaClient, spaces])
+
+        updateSpaceHierarchies()
+
+        casablancaClient.on('streamInitialized', onUpdate)
+        casablancaClient.on('spaceChannelCreated', onUpdate)
+        casablancaClient.on('spaceChannelDeleted', onUpdate)
+        return () => {
+            casablancaClient.off('streamInitialized', onUpdate)
+            casablancaClient.off('spaceChannelCreated', onUpdate)
+            casablancaClient.off('spaceChannelDeleted', onUpdate)
+        }
+    }, [casablancaClient])
+
+    return spaceHierarchies
 }
 
-export function toSpaceHierarchy(casablancaClient: CasablancaClient, spaceId: string) {
-    const spaceChannels = Array.from(
-        casablancaClient.stream(spaceId)?.view.spaceContent.spaceChannelsMetadata.keys() || [],
+export function toSpaceHierarchy(
+    casablancaClient: CasablancaClient,
+    spaceId: string,
+): SpaceHierarchy {
+    const channelIds = Array.from(
+        casablancaClient.stream(spaceId)?.view.spaceContent.spaceChannelsMetadata.keys() ?? [],
     )
-    const children: SpaceChild[] = []
-    spaceChannels.forEach((channel) => {
-        children.push({
-            id: channel,
-            name: '',
-            avatarUrl: '',
-            topic: '',
-            worldReadable: false,
-            guestCanJoin: false,
-            numjoinedMembers: 0,
-        } satisfies SpaceChild)
-    })
+    const channels = channelIds.map((id) => ({
+        id: id,
+    }))
 
     return {
-        root: {
-            id: spaceId,
-            name: '',
-            avatarUrl: '',
-            topic: '',
-            worldReadable: false,
-            guestCanJoin: false,
-            numjoinedMembers: 0,
-        } satisfies SpaceChild,
-
-        children: children,
+        channels: channels,
     }
 }

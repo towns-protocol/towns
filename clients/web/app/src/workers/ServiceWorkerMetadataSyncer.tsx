@@ -60,9 +60,9 @@ export function ServiceWorkerMetadataSyncer() {
             {store ? <UsersMetadata store={store} /> : null}
             {store ? <DmMetadata store={store} /> : null}
             {store
-                ? Object.values(spaceHierarchies).map(({ root }) => (
-                      <SpaceContextProvider key={root.id} spaceId={root.id}>
-                          <SpacesAndChannelsMetadata spaceId={root.id} store={store} />
+                ? Object.keys(spaceHierarchies).map((spaceId) => (
+                      <SpaceContextProvider key={spaceId} spaceId={spaceId}>
+                          <SpacesAndChannelsMetadata spaceId={spaceId} store={store} />
                       </SpaceContextProvider>
                   ))
                 : null}

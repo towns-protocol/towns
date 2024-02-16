@@ -90,7 +90,7 @@ export function useSpaceUnreads({
                     mentionCount += markers[spaceId].mentions
                 }
                 // next, check the channels & threads
-                const childIds = new Set(spaceHierarchies[spaceId]?.children.map((x) => x.id) ?? [])
+                const childIds = new Set(spaceHierarchies[spaceId]?.channels.map((x) => x.id) ?? [])
                 // count all channels and threads we're patricipating in
                 Object.values(markers).forEach((marker) => {
                     if (

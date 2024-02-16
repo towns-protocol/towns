@@ -58,24 +58,15 @@ export interface SpaceData {
 }
 
 export interface SpaceHierarchies {
-    [roomId: string]: SpaceHierarchy
+    [streamId: string]: SpaceHierarchy
 }
 
 export interface SpaceHierarchy {
-    root: SpaceChild
-    children: SpaceChild[]
+    channels: SpaceChild[]
 }
 
 export interface SpaceChild {
     id: string
-    name: string
-    avatarUrl?: string
-    topic?: string
-    canonicalAlias?: string
-    aliases?: string[]
-    worldReadable: boolean
-    guestCanJoin: boolean
-    numjoinedMembers: number
 }
 
 export interface StreamView {

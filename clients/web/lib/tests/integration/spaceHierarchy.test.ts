@@ -43,7 +43,7 @@ describe('spaceHierarchy', () => {
 
         await waitFor(() => {
             const bob_spaceInfo = toSpaceHierarchy(bob.casablancaClient!, spaceId)
-            expect(bob_spaceInfo?.children.length).toEqual(2)
+            expect(bob_spaceInfo?.channels.length).toEqual(2)
         })
 
         // alice joins the space
@@ -52,7 +52,7 @@ describe('spaceHierarchy', () => {
         // alice syncs the space
         await waitFor(() => {
             const alice_spaceInfo = toSpaceHierarchy(alice.casablancaClient!, spaceId)
-            expect(alice_spaceInfo?.children.length).toEqual(2)
+            expect(alice_spaceInfo?.channels.length).toEqual(2)
         })
 
         // can she join it?
@@ -88,11 +88,11 @@ describe('spaceHierarchy', () => {
 
         await waitFor(() => {
             const bob_spaceInfo = toSpaceHierarchy(bob.casablancaClient!, spaceId)
-            expect(bob_spaceInfo?.children.length).toEqual(2)
+            expect(bob_spaceInfo?.channels.length).toEqual(2)
         })
 
         // alice syncs the space before getting an invite...
-        expect(toSpaceHierarchy(alice.casablancaClient!, spaceId)?.children).toStrictEqual([])
+        expect(toSpaceHierarchy(alice.casablancaClient!, spaceId)?.channels).toStrictEqual([])
 
         // bob invites alice
         await bob.inviteUser(spaceId, alice.getUserId()!)
@@ -103,7 +103,7 @@ describe('spaceHierarchy', () => {
         // alice syncs the space
         await waitFor(() => {
             const alice_spaceInfo = toSpaceHierarchy(alice.casablancaClient!, spaceId)
-            expect(alice_spaceInfo?.children.length).toEqual(2)
+            expect(alice_spaceInfo?.channels.length).toEqual(2)
         })
 
         // can she join it?
