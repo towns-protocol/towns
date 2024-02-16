@@ -93,11 +93,11 @@ resource "aws_ecs_task_definition" "task_definition" {
       },
       {
         name  = "NUM_TOWNS",
-        value = "2"
+        value = "5"
       },
       {
         name  = "NUM_CHANNELS_PER_TOWN",
-        value = "5"
+        value = "10"
       },
       {
         name  = "NUM_FOLLOWERS",

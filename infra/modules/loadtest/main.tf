@@ -39,8 +39,8 @@ module "redis_sg" {
 
 locals {
   # TODO: we should allow this to be configured at runtime, not infra time.
-  num_followers     = 100
-  loadtest_duration = 1800000
+  num_followers     = 1000
+  loadtest_duration = 3600000
 }
 
 resource "aws_elasticache_cluster" "redis" {

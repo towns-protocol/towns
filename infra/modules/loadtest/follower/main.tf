@@ -113,7 +113,7 @@ resource "aws_ecs_task_definition" "task_definition" {
       },
       {
         name  = "JOIN_FACTOR",
-        value = "2"
+        value = "5"
       },
       {
         name  = "REDIS_HOST",

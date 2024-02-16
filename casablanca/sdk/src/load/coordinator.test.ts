@@ -214,6 +214,7 @@ describe('Stress test', () => {
 
             const totalNumberOfChannels = numTowns * numChannelsPerTown
             let counter = 0
+            let channelsCounter = 0
 
             for (let i = 0; i < numTowns; i++) {
                 const townCreationResult = await result.riverSDK.createTownWithDefaultChannel(
@@ -221,6 +222,9 @@ describe('Stress test', () => {
                     'Channel 0 0',
                 )
                 await result.riverSDK.joinChannel(townCreationResult.defaultChannelStreamId)
+                channelsCounter++
+                log(i + 1, 'towns out of ', numTowns, ' created')
+                log(channelsCounter, 'channels out of ', totalNumberOfChannels, ' created')
 
                 townsWithChannels.addChannelToTown(
                     townCreationResult.spaceStreamId,
@@ -251,6 +255,8 @@ describe('Stress test', () => {
                         '',
                     )
                     await result.riverSDK.joinChannel(channelCreationResult)
+                    channelsCounter++
+                    log(channelsCounter, 'channels out of ', totalNumberOfChannels, ' created')
                     counter++
                     await result.riverSDK.sendTextMessage(
                         coordinationChannelId,
