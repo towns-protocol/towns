@@ -28,7 +28,15 @@ import {
     loadDurationMs,
     defaultRedisHost,
     defaultRedisPort,
+    defaultHeapDumpCounter,
+    defaultHeapDumpFirstSnapshoMs,
+    defaultHeapDumpIntervalMs,
 } from './stressconfig'
+
+//import * as fs from 'fs'
+import * as path from 'path'
+import * as os from 'os'
+import * as v8 from 'v8'
 
 const baseChainRpcUrl = process.env.BASE_CHAIN_RPC_URL
     ? process.env.BASE_CHAIN_RPC_URL
@@ -43,16 +51,74 @@ const loadTestDurationMs = process.env.LOAD_TEST_DURATION_MS
     : loadDurationMs
 const redisHost = process.env.REDIS_HOST ? process.env.REDIS_HOST : defaultRedisHost
 const redisPort = process.env.REDIS_PORT ? parseInt(process.env.REDIS_PORT) : defaultRedisPort
+const heapDumpCounter = process.env.HEAP_DUMP_COUNTER
+    ? parseInt(process.env.HEAP_DUMP_COUNTER)
+    : defaultHeapDumpCounter
+const heapDumpFirstSnapshoMs = process.env.HEAP_DUMP_FIRST_SNAPSHOT_MS
+    ? parseInt(process.env.HEAP_DUMP_FIRST_SNAPSHOT_MS)
+    : defaultHeapDumpFirstSnapshoMs
+const heapDumpIntervalMs = process.env.HEAP_DUMP_INTERVAL_MS
+    ? parseInt(process.env.HEAP_DUMP_INTERVAL_MS)
+    : defaultHeapDumpIntervalMs
 
 const log = dlog('csb:test:stress')
 
 const redis = new Redis({
     host: redisHost, // Redis server host
     port: redisPort, // Redis server port
+    db: 0,
+})
+
+const redisE2EMessageDeliveryTracking = new Redis({
+    host: redisHost, // Redis server host
+    port: redisPort, // Redis server port
+    db: 1,
 })
 
 let coordinationSpaceId: string
 let coordinationChannelId: string
+
+let intervalId: NodeJS.Timeout
+let startCountingHeapTimer = Date.now() + 10000000
+let snapshotsCounter = 0
+
+const sendTimeHistogram = new Map<number | 'inf', number>([
+    [500, 0],
+    [1000, 0],
+    [1500, 0],
+    [2000, 0],
+    ['inf', 0],
+])
+
+beforeAll(() => {
+    // Set up an interval to call generateHeapDump every 30 seconds
+    intervalId = setInterval(() => {
+        //writeHeapSnapshotToStdOut()
+        //if defaultHeapDumpCounter is set to 0, then we don't want to generate heap dumps
+        if (defaultHeapDumpCounter > 0) {
+            // if startCountingHeapTimer >0 , then maybe we should generate a heap dump
+            if (startCountingHeapTimer > 0) {
+                // if the current time is greater than the first snapshot time, then we should generate a heap dump
+                if (
+                    Date.now() >
+                        startCountingHeapTimer +
+                            heapDumpFirstSnapshoMs +
+                            snapshotsCounter * heapDumpIntervalMs &&
+                    snapshotsCounter < heapDumpCounter
+                ) {
+                    snapshotsCounter++
+                    // generate a heap dump
+                    writeHeapSnapshotToStdOut()
+                }
+            }
+        }
+    }, 1000)
+})
+
+afterAll(() => {
+    // Clear the interval to stop calling generateHeapDump after tests are done
+    clearInterval(intervalId)
+})
 
 describe('Stress test', () => {
     test(
@@ -131,6 +197,7 @@ describe('Stress test', () => {
                             }
                             if (body.startsWith('START LOAD:')) {
                                 log('Received start load message', body)
+                                startCountingHeapTimer = Date.now()
                                 const deserializedData = JSON.parse(body.slice(12)) as []
 
                                 const channelTrackingInfo: ChannelTrackingInfo[] =
@@ -173,6 +240,7 @@ describe('Stress test', () => {
                             }
                         } else {
                             log('Received load message', body)
+                            await updateRedisValueIfGreater('R' + body, Date.now())
                             if (body.startsWith('TEST MESSAGE AT')) {
                                 //TODO: add exception handling
                                 log('Decrement called for ', body)
@@ -249,9 +317,31 @@ describe('Stress test', () => {
                 const afterContentPrepared = performance.now()
                 await result.riverSDK.sendTextMessage(channelToSendMessage, testMessageText)
                 const afterMessageSent = performance.now()
+                if (recepients > 0 && trackedChannels.has(channelToSendMessage)) {
+                    const afterMessageSentForDeliveryTracking = Date.now()
+                    const messageSentTrackTimeKey = 'S' + testMessageText
+                    //We use database #1 for tracking message delivery
+                    await redisE2EMessageDeliveryTracking.set(
+                        messageSentTrackTimeKey,
+                        afterMessageSentForDeliveryTracking,
+                    )
+                }
                 if (afterMessageSent - afterContentPrepared > 500) {
                     log('Sending message took ', afterMessageSent - afterContentPrepared, 'ms')
                 }
+
+                //That will do histogram for specific follower
+                incrementSendTimeHistogramMapValue(
+                    afterMessageSent - afterContentPrepared,
+                    sendTimeHistogram,
+                )
+
+                //That will do histogram for all followers
+                await incrementSendTimeHistogramRedisValue(afterMessageSent - afterContentPrepared)
+                log(
+                    'size of unencrypted events queue',
+                    result.riverSDK.client.getSizeOfEncryptedСontentQueue(),
+                )
                 // Introduce a delay (e.g., 1 second) before the next iteration
                 const pauseTime = getRandomInt(maxMsgDelayMs - 1000) + 1000
                 const afterAllDone = performance.now()
@@ -279,9 +369,15 @@ describe('Stress test', () => {
                     timeCounter,
                     ' ms after all sent',
                 )
+                log(
+                    'size of unencrypted events queue',
+                    result.riverSDK.client.getSizeOfEncryptedСontentQueue(),
+                )
             }
             await result.riverSDK.client.stopSync()
+            log(sendTimeHistogram)
             expect(lastDbSize).toBe(0)
+            await redisE2EMessageDeliveryTracking.quit()
             await redis.quit()
         },
         loadTestDurationMs * 10,
@@ -351,4 +447,71 @@ async function decrementAndDeleteIfZero(key: string): Promise<number | null> {
         log('Error:', error)
         throw error
     }
+}
+
+function writeHeapSnapshotToStdOut() {
+    const startWriting = performance.now()
+    const tmpDir = os.tmpdir()
+    const tmpFilename = path.join(tmpDir, `heapdump-${Date.now()}.heapsnapshot`)
+    log('Writing heap snapshot to', tmpFilename)
+    v8.writeHeapSnapshot(tmpFilename)
+    const endWriting = performance.now()
+    log('Heap snapshot written to stdout in ', endWriting - startWriting, ' ms')
+}
+
+function incrementSendTimeHistogramMapValue(
+    sendTime: number,
+    map: Map<number | 'inf', number>,
+): void {
+    let key: number | 'inf'
+
+    if (sendTime >= 0 && sendTime <= 500) {
+        key = 500
+    } else if (sendTime >= 501 && sendTime <= 1000) {
+        key = 1000
+    } else if (sendTime >= 1001 && sendTime <= 1500) {
+        key = 1500
+    } else if (sendTime >= 1501 && sendTime <= 2000) {
+        key = 2000
+    } else {
+        key = 'inf'
+    }
+
+    const currentValue = map.get(key) || 0
+    map.set(key, currentValue + 1)
+}
+
+async function incrementSendTimeHistogramRedisValue(sendTime: number): Promise<void> {
+    let key: string
+
+    if (sendTime >= 0 && sendTime <= 500) {
+        key = 'T500'
+    } else if (sendTime >= 501 && sendTime <= 1000) {
+        key = 'T1000'
+    } else if (sendTime >= 1001 && sendTime <= 1500) {
+        key = 'T1500'
+    } else if (sendTime >= 1501 && sendTime <= 2000) {
+        key = 'T2000'
+    } else {
+        key = 'Tinf'
+    }
+
+    // Increment the value associated with the key in Redis
+    await redisE2EMessageDeliveryTracking.incr(key)
+}
+
+async function updateRedisValueIfGreater(key: string, value: number): Promise<void> {
+    // Lua script for checking and setting the value if the new value is greater
+    const luaScript = `
+        local current = redis.call('GET', KEYS[1])
+        if current == false or tonumber(current) < tonumber(ARGV[1]) then
+            redis.call('SET', KEYS[1], ARGV[1])
+            return 1
+        else
+            return 0
+        end
+    `
+    // Execute the Lua script
+    // KEYS[1] is mapped to `key`, and ARGV[1] is mapped to `value`
+    await redisE2EMessageDeliveryTracking.eval(luaScript, 1, key, value)
 }

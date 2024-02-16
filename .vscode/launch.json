@@ -52,6 +52,16 @@
       "console": "integratedTerminal",
     },
     {
+      "name": "Stress Jest: current file in 'casablanca/sdk/' (single)",
+      "type": "node",
+      "request": "launch",
+      "env": { "NODE_ENV": "development", "RIVER_TEST_CONNECT": "single", "DEBUG": "csb:test:stress*", "DEBUG_DEPTH":"10", "MOCK_PERSISTENCE_STORE":"true" },
+      "program": "${workspaceFolder}/node_modules/.bin/jest",
+      "runtimeArgs": ["--experimental-vm-modules", "--experimental-wasm-modules"],
+      "args": ["${file}", "--config", "${workspaceFolder}/casablanca/sdk/jest.config.ts", "-i", "--no-cache", "--forceExit", "--logHeapUsage", "--runInBand"],
+      "console": "integratedTerminal",
+    },
+    {
       "name": "Jest: current file in 'web/lib/' (multi)",
       "type": "node",
       "request": "launch",

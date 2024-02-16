@@ -1,7 +1,7 @@
 import { DLogger, dlog, dlogError, shortenHexString } from '@river/dlog'
 import { isDefined } from './check'
 import { Err, SyncCookie, SyncOp, SyncStreamsResponse } from '@river/proto'
-import { PersistenceStore } from './persistenceStore'
+import { IPersistenceStore } from './persistenceStore'
 import { Stream } from './stream'
 import { StreamRpcClientType, errorContains } from './makeStreamRpcClient'
 import TypedEmitter from 'typed-emitter'
@@ -57,7 +57,7 @@ export class SyncedStreams {
     private readonly logError: DLogger
     // clientEmitter is used to proxy the events from the streams to the client
     private readonly clientEmitter: TypedEmitter<StreamStateEvents>
-    private readonly persistenceStore: PersistenceStore
+    private readonly persistenceStore: IPersistenceStore
 
     // Starting the client creates the syncLoop
     // While a syncLoop exists, the client tried to keep the syncLoop connected, and if it reconnects, it
@@ -89,7 +89,7 @@ export class SyncedStreams {
     constructor(
         userId: string,
         rpcClient: StreamRpcClientType,
-        persistenceStore: PersistenceStore,
+        persistenceStore: IPersistenceStore,
         clientEmitter: TypedEmitter<StreamStateEvents>,
     ) {
         this.userId = userId

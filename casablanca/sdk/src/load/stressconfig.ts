@@ -17,3 +17,7 @@ export const defaultRedisHost = 'localhost' // REDIS_HOST: required for both lea
 export const defaultRedisPort = 6379 // REDIS_PORT: required for both leader and follower nodes.
 
 export const defaultCoordinatorLeaveChannelsFlag = true // COORDINATOR_LEAVE_CHANNELS: required for leader node.
+
+export const defaultHeapDumpCounter = 0
+export const defaultHeapDumpFirstSnapshoMs = 60000
+export const defaultHeapDumpIntervalMs = 1200000

@@ -211,6 +211,10 @@ export class DecryptionExtensions extends (EventEmitter as new () => TypedEmitte
         await this.stopTicking()
     }
 
+    getSizeOfEncryptedСontentQueue() {
+        return this.queues.encryptedContent.length
+    }
+
     private setStatus(status: DecryptionStatus) {
         if (this.status !== status) {
             this.log.info(`status changed ${DecryptionStatus[status]}`)

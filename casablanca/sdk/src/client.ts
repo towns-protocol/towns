@@ -110,7 +110,7 @@ import { Code } from '@connectrpc/connect'
 import { usernameChecksum, isIConnectError, genPersistenceStoreName } from './utils'
 import { EncryptedContent, toDecryptedContent } from './encryptedContentTypes'
 import { DecryptionExtensions, EntitlementsDelegate } from './decryptionExtensions'
-import { PersistenceStore } from './persistenceStore'
+import { PersistenceStore, IPersistenceStore, StubPersistenceStore } from './persistenceStore'
 import { SyncState, SyncedStreams } from './syncedStreams'
 import { SyncedStream } from './syncedStream'
 import { SyncedStreamsExtension } from './syncedStreamsExtension'
@@ -137,6 +137,7 @@ export class Client
     private readonly logError: DLogger
     private readonly logInfo: DLogger
     private readonly logDebug: DLogger
+    private readonly logStress: DLogger
 
     public cryptoBackend?: GroupEncryptionCrypto
     public cryptoStore: CryptoStore
@@ -146,7 +147,7 @@ export class Client
     private entitlementsDelegate: EntitlementsDelegate
     private decryptionExtensions?: DecryptionExtensions
     private syncedStreamsExtensions?: SyncedStreamsExtension
-    private persistenceStore: PersistenceStore
+    private persistenceStore: IPersistenceStore
 
     constructor(
         signerContext: SignerContext,
@@ -187,11 +188,19 @@ export class Client
         this.logError = dlogError('csb:cl:error').extend(shortId)
         this.logInfo = dlog('csb:cl:info', { defaultEnabled: true }).extend(shortId)
         this.logDebug = dlog('csb:cl:debug').extend(shortId)
+        this.logStress = dlog('csb:test:stress').extend(shortId)
         this.cryptoStore = cryptoStore
 
-        this.persistenceStore = new PersistenceStore(
-            genPersistenceStoreName(this.userId, this.rpcClient.url),
-        )
+        this.logStress('MOCK_PERSISTENCE_STORE', process.env.MOCK_PERSISTENCE_STORE)
+        if (!process.env.MOCK_PERSISTENCE_STORE) {
+            this.persistenceStore = new PersistenceStore(
+                genPersistenceStoreName(this.userId, this.rpcClient.url),
+            )
+        } else {
+            this.logStress('Using StubPersistenceStore')
+            this.persistenceStore = new StubPersistenceStore()
+        }
+
         this.streams = new SyncedStreams(this.userId, this.rpcClient, this.persistenceStore, this)
         this.syncedStreamsExtensions = new SyncedStreamsExtension({
             startSyncStreams: async () => {
@@ -232,6 +241,10 @@ export class Client
         await this.decryptionExtensions?.stop()
         await this.syncedStreamsExtensions?.stop()
         await this.stopSync()
+    }
+
+    getSizeOfEncryptedСontentQueue(): number {
+        return this.decryptionExtensions?.getSizeOfEncryptedСontentQueue() ?? 0
     }
 
     stream(streamId: string): SyncedStream | undefined {

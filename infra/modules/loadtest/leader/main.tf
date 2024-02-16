@@ -130,6 +130,10 @@ resource "aws_ecs_task_definition" "task_definition" {
       {
         name  = "DEBUG",
         value = "csb:test:stress*"
+      },
+      {
+        name  = "MOCK_PERSISTENCE_STORE",
+        value = "true"
       }
     ]
 

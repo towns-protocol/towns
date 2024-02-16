@@ -1,6 +1,6 @@
-import { PersistedMiniblock, PersistedSyncedStream } from '@river/proto'
+import { PersistedMiniblock, PersistedSyncedStream, SyncCookie } from '@river/proto'
 import Dexie, { Table } from 'dexie'
-import { ParsedMiniblock } from './types'
+import { ParsedEvent, ParsedMiniblock } from './types'
 import {
     persistedSyncedStreamToParsedSyncedStream,
     persistedMiniblockToParsedMiniblock,
@@ -10,7 +10,31 @@ import {
 import { dlog } from '@river/dlog'
 import { isDefined } from './check'
 
-export class PersistenceStore extends Dexie {
+export interface IPersistenceStore {
+    saveCleartext(eventId: string, cleartext: string): Promise<void>
+    getCleartext(eventId: string): Promise<string | undefined>
+    getCleartexts(eventIds: string[]): Promise<Record<string, string> | undefined>
+    getSyncedStream(streamId: string): Promise<
+        | {
+              syncCookie: SyncCookie
+              lastSnapshotMiniblockNum: bigint
+              minipoolEvents: ParsedEvent[]
+              lastMiniblockNum: bigint
+          }
+        | undefined
+    >
+    saveSyncedStream(streamId: string, syncedStream: PersistedSyncedStream): Promise<void>
+    saveMiniblock(streamId: string, miniblock: ParsedMiniblock): Promise<void>
+    saveMiniblocks(streamId: string, miniblocks: ParsedMiniblock[]): Promise<void>
+    getMiniblock(streamId: string, miniblockNum: bigint): Promise<ParsedMiniblock | undefined>
+    getMiniblocks(
+        streamId: string,
+        rangeStart: bigint,
+        randeEnd: bigint,
+    ): Promise<ParsedMiniblock[]>
+}
+
+export class PersistenceStore extends Dexie implements IPersistenceStore {
     log = dlog('csb:persistence')
 
     cleartexts!: Table<{ cleartext: string; eventId: string }>
@@ -178,4 +202,59 @@ export class PersistenceStore extends Dexie {
             this.log('navigator.storage unavailable')
         }
     }
+}
+
+//Linting below is disable as this is a stub class which is used for testing and just follows the interface
+export class StubPersistenceStore implements IPersistenceStore {
+    //eslint-disable-next-line @typescript-eslint/no-unused-vars
+    async saveCleartext(eventId: string, cleartext: string) {
+        return Promise.resolve()
+    }
+
+    //eslint-disable-next-line @typescript-eslint/no-unused-vars
+    async getCleartext(eventId: string) {
+        return Promise.resolve(undefined)
+    }
+
+    //eslint-disable-next-line @typescript-eslint/no-unused-vars
+    async getCleartexts(eventIds: string[]) {
+        return Promise.resolve(undefined)
+    }
+
+    //eslint-disable-next-line @typescript-eslint/no-unused-vars
+    async getSyncedStream(streamId: string) {
+        return Promise.resolve(undefined)
+    }
+
+    //eslint-disable-next-line @typescript-eslint/no-unused-vars
+    async saveSyncedStream(streamId: string, syncedStream: PersistedSyncedStream) {
+        return Promise.resolve()
+    }
+
+    //eslint-disable-next-line @typescript-eslint/no-unused-vars
+    async saveMiniblock(streamId: string, miniblock: ParsedMiniblock) {
+        return Promise.resolve()
+    }
+
+    //eslint-disable-next-line @typescript-eslint/no-unused-vars
+    async saveMiniblocks(streamId: string, miniblocks: ParsedMiniblock[]) {
+        return Promise.resolve()
+    }
+
+    /* eslint-disable @typescript-eslint/no-unused-vars */
+    async getMiniblock(
+        streamId: string,
+        miniblockNum: bigint,
+    ): Promise<ParsedMiniblock | undefined> {
+        return Promise.resolve(undefined)
+    }
+
+    async getMiniblocks(
+        streamId: string,
+        rangeStart: bigint,
+        rangeEnd: bigint,
+    ): Promise<ParsedMiniblock[]> {
+        return Promise.resolve([])
+    }
+    /* eslint-enable @typescript-eslint/no-unused-vars */
 }

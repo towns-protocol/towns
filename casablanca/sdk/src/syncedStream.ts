@@ -10,20 +10,20 @@ import { Stream } from './stream'
 import { ParsedMiniblock, ParsedEvent, ParsedStreamResponse } from './types'
 import { DLogger, bin_toHexString, dlog } from '@river/dlog'
 import { isDefined } from './check'
-import { PersistenceStore } from './persistenceStore'
+import { IPersistenceStore } from './persistenceStore'
 import { StreamEvents } from './streamEvents'
 import { isChannelStreamId, isDMChannelStreamId, isGDMChannelStreamId } from './id'
 
 const CACHED_SCROLLBACK_COUNT = 3
 export class SyncedStream extends Stream {
     log: DLogger
-    readonly persistenceStore: PersistenceStore
+    readonly persistenceStore: IPersistenceStore
     constructor(
         userId: string,
         streamId: string,
         clientEmitter: TypedEmitter<StreamEvents>,
         logEmitFromStream: DLogger,
-        persistenceStore: PersistenceStore,
+        persistenceStore: IPersistenceStore,
     ) {
         super(userId, streamId, clientEmitter, logEmitFromStream)
         this.log = dlog('csb:syncedStream').extend(userId)

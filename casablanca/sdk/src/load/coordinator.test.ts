@@ -75,13 +75,41 @@ const channelTrackingInfo: ChannelTrackingInfo[] = []
 const redis = new Redis({
     host: redisHost, // Redis server host
     port: redisPort, // Redis server port
+    db: 0,
 })
+
+const redisE2EMessageDeliveryTracking = new Redis({
+    host: redisHost, // Redis server host
+    port: redisPort, // Redis server port
+    db: 1,
+})
+
+const E2EDeliveryTimeMap = new Map<string, number>()
+
+const E2EDeliveryTimeHistogram = new Map<number | 'inf', number>([
+    [500, 0],
+    [1000, 0],
+    [1500, 0],
+    [2000, 0],
+    [3000, 0],
+    [4000, 0],
+    [5000, 0],
+    ['inf', 0],
+])
 
 describe('Stress test', () => {
     test(
         'stress test',
         async () => {
             await redis.flushall()
+            await redisE2EMessageDeliveryTracking.flushall()
+
+            //initilize Redis key for send time histogram
+            await redisE2EMessageDeliveryTracking.set('T500', 0)
+            await redisE2EMessageDeliveryTracking.set('T1000', 0)
+            await redisE2EMessageDeliveryTracking.set('T1500', 0)
+            await redisE2EMessageDeliveryTracking.set('T2000', 0)
+            await redisE2EMessageDeliveryTracking.set('Tinf', 0)
 
             log('coordinationSpaceId: ', coordinationSpaceId)
             log('coordinationChannelId: ', coordinationChannelId)
@@ -316,6 +344,79 @@ describe('Stress test', () => {
             log('Test executed')
             await result.riverSDK.client.stopSync()
             expect(lastDbSize).toBe(0)
+
+            //--------------------------------------------------------------------------------------------
+            //Let's do delivery histogram here
+            //--------------------------------------------------------------------------------------------
+
+            let cursor = '0'
+
+            do {
+                // Use the SCAN command with cursor, MATCH pattern, and COUNT
+                const [nextCursor, keys] = await redisE2EMessageDeliveryTracking.scan(
+                    cursor,
+                    'MATCH',
+                    '*',
+                    'COUNT',
+                    10,
+                )
+
+                // For each key, fetch and print its value
+                for (const key of keys) {
+                    const value = await redisE2EMessageDeliveryTracking.get(key) // Assuming all keys are string type
+                    const baseKey = key.slice(1)
+                    if (value) {
+                        if (value.charAt(0) === 'S') {
+                            //We are processing sent time key
+                            //Check if map contains this key already - if it is there it means that we already have receiving time there
+                            if (E2EDeliveryTimeMap.has(baseKey)) {
+                                const receivingTime = E2EDeliveryTimeMap.get(baseKey)
+                                const sendingTime = parseInt(value)
+                                if (receivingTime) {
+                                    const diff = receivingTime - sendingTime
+                                    incrementE2EDeliveryTimeHistogramMapValue(
+                                        diff,
+                                        E2EDeliveryTimeHistogram,
+                                    )
+                                    E2EDeliveryTimeMap.delete(baseKey)
+                                }
+                            } else {
+                                //Step 2. If not, add sending time to the map
+                                E2EDeliveryTimeMap.set(baseKey, parseInt(value))
+                            }
+                        } else if (value.charAt(0) === 'R') {
+                            //We are processing recieved time key
+                            //Check if map contains this key already - if it is there it means that we already have sent time there
+                            if (E2EDeliveryTimeMap.has(baseKey)) {
+                                const sendingTime = E2EDeliveryTimeMap.get(baseKey)
+                                const recievingTime = parseInt(value)
+                                if (sendingTime) {
+                                    const diff = recievingTime - sendingTime
+                                    E2EDeliveryTimeMap.delete(baseKey)
+                                    incrementE2EDeliveryTimeHistogramMapValue(
+                                        diff,
+                                        E2EDeliveryTimeHistogram,
+                                    )
+                                }
+                            } else {
+                                //Step 2. If not, add recieving time to the map
+                                E2EDeliveryTimeMap.set(baseKey, parseInt(value))
+                            }
+                        }
+                    }
+                }
+                cursor = nextCursor
+            } while (cursor !== '0')
+
+            log(E2EDeliveryTimeHistogram)
+
+            log('>500: ', await redisE2EMessageDeliveryTracking.get('T500'))
+            log('501-1000', await redisE2EMessageDeliveryTracking.get('T1000'))
+            log('1001-1500', await redisE2EMessageDeliveryTracking.get('T1500'))
+            log('1501-2000', await redisE2EMessageDeliveryTracking.get('T2000'))
+            log('2001-inf', await redisE2EMessageDeliveryTracking.get('Tinf'))
+
+            await redisE2EMessageDeliveryTracking.quit()
             await redis.quit()
         },
         loadTestDurationMs * 10,
@@ -360,4 +461,32 @@ async function createFundedTestUser(): Promise<{
     })
     const riverSDK = new RiverSDK(spaceDapp, client, walletWithProvider)
     return { riverSDK, provider, walletWithProvider }
+}
+
+function incrementE2EDeliveryTimeHistogramMapValue(
+    sendTime: number,
+    map: Map<number | 'inf', number>,
+): void {
+    let key: number | 'inf'
+
+    if (sendTime >= 0 && sendTime <= 500) {
+        key = 500
+    } else if (sendTime >= 501 && sendTime <= 1000) {
+        key = 1000
+    } else if (sendTime >= 1001 && sendTime <= 1500) {
+        key = 1500
+    } else if (sendTime >= 1501 && sendTime <= 2000) {
+        key = 2000
+    } else if (sendTime >= 2001 && sendTime <= 3000) {
+        key = 3000
+    } else if (sendTime >= 3001 && sendTime <= 4000) {
+        key = 4000
+    } else if (sendTime >= 4001 && sendTime <= 5000) {
+        key = 5000
+    } else {
+        key = 'inf'
+    }
+
+    const currentValue = map.get(key) || 0
+    map.set(key, currentValue + 1)
 }
