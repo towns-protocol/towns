@@ -609,17 +609,14 @@ export class DecryptionExtensions extends (EventEmitter as new () => TypedEmitte
     }
 
     private getRespondDelayMSForKeySolicitation(streamId: string, userId: string): number {
-        // if its us requesting... then we can respond immediately
-        if (userId === this.userId) {
-            return 0
-        }
+        const multiplier = userId === this.userId ? 0.5 : 1
         const stream = this.client.stream(streamId)
         check(isDefined(stream), 'stream not found')
         const numMembers = stream.view.getMemberships().joinedUsers.size
         const maxWaitTimeSeconds = Math.max(5, Math.min(30, numMembers))
         const waitTime = maxWaitTimeSeconds * 1000 * Math.random() // this could be much better
         this.log.debug('getRespondDelayMSForKeySolicitation', { streamId, userId, waitTime })
-        return waitTime
+        return waitTime * multiplier
     }
 }
 
