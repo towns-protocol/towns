@@ -423,7 +423,7 @@ export const SpaceInfoPanel = () => {
 
                 {canEdit && (
                     <PanelButton onClick={onManageRolesClick}>
-                        <Icon type="settings" size="square_sm" color="gray2" />
+                        <Icon type="personEdit" size="square_sm" color="gray2" />
                         <Paragraph color="default">Manage Roles</Paragraph>
                     </PanelButton>
                 )}

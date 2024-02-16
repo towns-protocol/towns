@@ -6,17 +6,21 @@ import { useTokenMetadata } from 'api/lib/collectionMetadata'
 import { splitKeyToContractAddressAndTokenId } from './utils'
 
 type Props = {
-    selectionId: string
-    onDelete: (customKey?: string) => void
-    selection: Set<string>
+    selectionId: string | undefined
+    onDelete: ((customKey?: string) => void) | undefined
+    selection: Set<string> | undefined
+    contractAddressIn?: string
+    disableDelete?: boolean
 }
 
 export function TokenPill(props: Props) {
-    const [contractAddress] = splitKeyToContractAddressAndTokenId(props.selectionId)
+    const [contractAddress] = props.contractAddressIn
+        ? [props.contractAddressIn]
+        : splitKeyToContractAddressAndTokenId(props.selectionId ?? '')
     const { data: token } = useTokenMetadata(contractAddress)
 
     const tokenIds: number[] = []
-    props.selection.forEach((k) => {
+    props.selection?.forEach((k) => {
         const [contractAddress, tokenId] = splitKeyToContractAddressAndTokenId(k)
         if (tokenId && token?.contractAddress === contractAddress) {
             tokenIds.push(+tokenId)
@@ -24,10 +28,10 @@ export function TokenPill(props: Props) {
     })
 
     const deleteAll = () => {
-        props.selection.forEach((k) => {
+        props.selection?.forEach((k) => {
             const [contractAddress] = splitKeyToContractAddressAndTokenId(k)
             if (token?.contractAddress === contractAddress) {
-                props.onDelete(k)
+                props.onDelete?.(k)
             }
         })
     }
@@ -71,9 +75,9 @@ export function TokenPill(props: Props) {
                 >
                     {token?.label}
                 </Box>
-                {token?.contractAddress && (
-                    <Box color="gray2" tooltip={token.contractAddress}>
-                        {shortAddress(token.contractAddress)}
+                {contractAddress && (
+                    <Box color="gray2" tooltip={contractAddress}>
+                        {shortAddress(contractAddress)}
                     </Box>
                 )}
                 <Box horizontal gap="xs">
@@ -91,12 +95,14 @@ export function TokenPill(props: Props) {
                         </Box>
                     ))}
                 </Box>
-                <IconButton
-                    data-testid="token-pill-delete"
-                    icon="close"
-                    size="square_xs"
-                    onClick={deleteAll}
-                />
+                {!props.disableDelete && (
+                    <IconButton
+                        data-testid="token-pill-delete"
+                        icon="close"
+                        size="square_xs"
+                        onClick={deleteAll}
+                    />
+                )}
             </>
         </Box>
     )

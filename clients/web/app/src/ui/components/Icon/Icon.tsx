@@ -1473,6 +1473,32 @@ const PersonAdd = forwardRef<SVGSVGElement, SVGIconProps>((props, ref) => (
     </svg>
 ))
 
+const PersonEdit = forwardRef<SVGSVGElement, SVGIconProps>((props, ref) => (
+    <svg
+        width="24"
+        height="24"
+        viewBox="0 0 24 24"
+        fill="none"
+        xmlns="http://www.w3.org/2000/svg"
+        {...props}
+        ref={ref}
+    >
+        <g clipPath="url(#clip0_14175_27302)">
+            <path
+                fillRule="evenodd"
+                clipRule="evenodd"
+                d="M5 7C5 5.34315 6.34315 4 8 4C9.65685 4 11 5.34315 11 7C11 8.65685 9.65685 10 8 10C6.34315 10 5 8.65685 5 7ZM8 2C5.23858 2 3 4.23858 3 7C3 9.76142 5.23858 12 8 12C10.7614 12 13 9.76142 13 7C13 4.23858 10.7614 2 8 2ZM2.26629 21.0821C3.04282 17.0053 5.65545 15.2499 8 15.2499C8.79671 15.2499 9.62437 15.4526 10.4004 15.8803C10.7384 15.2234 11.276 14.6409 11.9574 14.1747C10.7591 13.4021 9.39921 13 8 13C4.3447 13 0.957485 15.7445 0.0197794 20.6675C-0.0965373 21.2782 0.312067 21.866 0.932423 21.9805C1.55278 22.095 2.14997 21.6928 2.26629 21.0821ZM17.0711 11.4142C18.6332 9.85215 21.1659 9.85215 22.728 11.4142C24.2901 12.9763 24.2901 15.509 22.728 17.0711L17.5782 22.2209C17.2288 22.5703 16.7625 22.778 16.2691 22.8039L13.2835 22.9611C12.0975 23.0235 11.1188 22.0447 11.1812 20.8587L11.3383 17.8732C11.3643 17.3798 11.572 16.9134 11.9213 16.5641L17.0711 11.4142ZM21.3138 12.8285C20.5327 12.0474 19.2664 12.0474 18.4854 12.8285L21.3138 15.6569C22.0948 14.8758 22.0948 13.6095 21.3138 12.8285ZM13.3355 17.9783L17.0711 14.2427L19.8996 17.0711L16.164 20.8067L13.1784 20.9638L13.3355 17.9783Z"
+                fill="currentColor"
+            />
+        </g>
+        <defs>
+            <clipPath id="clip0_14175_27302">
+                <rect width="24" height="24" fill="currentColor" />
+            </clipPath>
+        </defs>
+    </svg>
+))
+
 const Help = forwardRef<SVGSVGElement, SVGIconProps>((props, ref) => (
     <svg
         width="24"
@@ -1633,6 +1659,7 @@ const iconMap = {
     openSea: OpenSea,
     people: PeopleIcon,
     personAdd: PersonAdd,
+    personEdit: PersonEdit,
     pin: PinIcon,
     plus: PlusIcon,
     profile: ProfileIcon,

@@ -215,7 +215,7 @@ describe('SingleRolePanel', () => {
         await screen.findByText(/role name is required/gi)
     })
 
-    test('should not submit when token or users are empty', async () => {
+    test('should not submit when token or users are empty, after filling in name input', async () => {
         mockUseSearchParams.mockReturnValue([new URLSearchParams('roles=new'), vi.fn()])
         render(<Wrapper />)
         const submitButton = screen.getByTestId('submit-button')
@@ -227,9 +227,7 @@ describe('SingleRolePanel', () => {
             expect(screen.getAllByDisplayValue(/test role/gi).length).toBe(1)
         })
 
-        await waitFor(() => expect(submitButton).not.toBeDisabled())
-        userEvent.click(submitButton)
-        await screen.findByText(/Select at least one token or user/gi)
+        await waitFor(() => expect(submitButton).toBeDisabled())
     })
 
     test('should submit with gated tokens', async () => {

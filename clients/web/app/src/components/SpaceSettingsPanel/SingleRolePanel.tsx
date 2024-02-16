@@ -49,6 +49,7 @@ import { convertToNumber, splitKeyToContractAddressAndTokenId } from './utils'
 import { formSchema } from './schema'
 import { TokenPillSelector } from './TokenPillSelector'
 import { UserPillSelector } from './UserPillSelector'
+import { TokenPill } from './TokenPill'
 
 export type RoleFormSchemaType = z.infer<typeof formSchema>
 
@@ -173,13 +174,38 @@ export function SingleRolePanel() {
                                                     {..._form.register('name')}
                                                 />
 
-                                                <Stack position="relative" zIndex="tooltipsAbove">
-                                                    <TokenSearch isCreateRole={isCreateRole} />
-                                                </Stack>
+                                                {isDefaultMembershipRole ? (
+                                                    <Stack gap>
+                                                        <Text>Digital Asset Requirement</Text>
+                                                        <Stack alignSelf="start">
+                                                            {roleDetails?.tokens.length === 1 && (
+                                                                <TokenPill
+                                                                    disableDelete
+                                                                    contractAddressIn={
+                                                                        roleDetails.tokens[0]
+                                                                            .contractAddress as string
+                                                                    }
+                                                                    selectionId={undefined}
+                                                                    selection={undefined}
+                                                                    onDelete={undefined}
+                                                                />
+                                                            )}
+                                                        </Stack>
+                                                    </Stack>
+                                                ) : (
+                                                    <Stack
+                                                        position="relative"
+                                                        zIndex="tooltipsAbove"
+                                                    >
+                                                        <TokenSearch isCreateRole={isCreateRole} />
+                                                    </Stack>
+                                                )}
 
-                                                <Stack position="relative" zIndex="tooltips">
-                                                    <UserSearch isCreateRole={isCreateRole} />
-                                                </Stack>
+                                                {!isDefaultMembershipRole && (
+                                                    <Stack position="relative" zIndex="tooltips">
+                                                        <UserSearch isCreateRole={isCreateRole} />
+                                                    </Stack>
+                                                )}
 
                                                 <Stack gap="md">
                                                     <Text>Permissions</Text>
@@ -337,6 +363,7 @@ function SubmitButton({
         formState.isSubmitting ||
         isUnchanged ||
         Object.keys(formState.errors).length > 0 ||
+        (isCreateRole && !watchAllFields.tokens.length && !watchAllFields.users.length) ||
         transactionIsPending
 
     const onValid = useEvent(async (data: RoleFormSchemaType) => {
@@ -422,7 +449,7 @@ function UserSearch({ isCreateRole }: { isCreateRole: boolean }) {
         // and this timeout is a hack to make sure the tokens validation runs after the users are updated
         setTimeout(() => {
             if (isCreateRole) {
-                if (hadAValueAtSomePoint) {
+                if (hadAValueAtSomePoint || formState.isSubmitted) {
                     trigger('tokens')
                 }
             } else {
@@ -540,7 +567,7 @@ function TokenSearch({ isCreateRole }: { isCreateRole: boolean }) {
             // trigger validation
             setTimeout(() => {
                 if (isCreateRole) {
-                    if (hadAValueAtSomePoint) {
+                    if (hadAValueAtSomePoint || formState.isSubmitted) {
                         trigger('tokens')
                     }
                 } else {
@@ -548,7 +575,7 @@ function TokenSearch({ isCreateRole }: { isCreateRole: boolean }) {
                 }
             })
         },
-        [setValue, isCreateRole, hadAValueAtSomePoint, trigger],
+        [setValue, isCreateRole, hadAValueAtSomePoint, formState.isSubmitted, trigger],
     )
 
     return (
