@@ -19,6 +19,7 @@ import { TouchNavBar } from '@components/TouchNavBar/TouchNavBar'
 import { TouchScrollToTopScrollId } from '@components/TouchTabBar/TouchScrollToTopScrollId'
 import { MediaDropContextProvider } from '@components/MediaDropContext/MediaDropContext'
 import { useCreateLink } from 'hooks/useCreateLink'
+import { useSpaceChannels } from 'hooks/useSpaceChannels'
 import { CentralPanelLayout } from './layouts/CentralPanelLayout'
 
 function sortThreads(threads: ThreadResult[]) {
@@ -32,6 +33,7 @@ export const SpaceThreads = () => {
     const spaceId = useSpaceId()
     const threadRoots = useSpaceThreadRoots()
     const { isTouch } = useDevice()
+    const spaceChannels = useSpaceChannels()
 
     const filteredThreadRoots = useMemo(() => {
         return threadRoots.filter((t) => {
@@ -102,6 +104,7 @@ export const SpaceThreads = () => {
                                                 channelId={channel.id}
                                                 channelLabel={channel.label}
                                                 spaceId={spaceId}
+                                                spaceChannels={spaceChannels}
                                             />
                                             {isTouch && index < threads.length - 1 && <Divider />}
                                         </>

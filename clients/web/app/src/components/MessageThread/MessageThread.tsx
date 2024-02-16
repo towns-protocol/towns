@@ -1,5 +1,6 @@
 import React, { useMemo } from 'react'
 import {
+    Channel,
     LookupUser,
     SendMessageOptions,
     ZTEvent,
@@ -17,7 +18,6 @@ import { RichTextEditor } from '@components/RichText/RichTextEditor'
 import { Box, Paragraph, Stack } from '@ui'
 import { useIsChannelWritable } from 'hooks/useIsChannelWritable'
 import { useSendReply } from 'hooks/useSendReply'
-import { useSpaceChannels } from 'hooks/useSpaceChannels'
 import { getPrettyDisplayName } from 'utils/getPrettyDisplayName'
 import { useAuth } from 'hooks/useAuth'
 import { useDevice } from 'hooks/useDevice'
@@ -32,8 +32,9 @@ export const MessageThread = (props: {
     parentId: string
     channelId: string
     spaceId: string
+    spaceChannels: Channel[]
 }) => {
-    const { parentId, spaceId, channelId, channelLabel } = props
+    const { parentId, spaceId, channelId, channelLabel, spaceChannels: channels } = props
     const { parent, messages: unthrottledMessages } = useTimelineThread(channelId, parentId)
     const parentMessage = parent?.parentEvent
     const { isTouch } = useDevice()
@@ -94,7 +95,6 @@ export const MessageThread = (props: {
     const { users } = useUserLookupContext()
     const userId = useMyProfile()?.userId
     const { loggedInWalletAddress } = useAuth()
-    const channels = useSpaceChannels()
 
     const { isChannelWritable } = useIsChannelWritable(spaceId, channelId, loggedInWalletAddress)
 
