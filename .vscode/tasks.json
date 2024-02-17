@@ -23,6 +23,7 @@
         "CheckVersions",
         "YarnInstall",
         "FoundryUp",
+        "ForgeModules",
         "Stage 1"
       ],
       // Mark as the default build task so cmd/ctrl+shift+b will create them
@@ -133,6 +134,18 @@
       "label": "FoundryUp",
       "type": "shell",
       "command": "./scripts/foundry-up.sh",
+      "isBackground": true,
+      "problemMatcher": [],
+      "presentation": {
+        "group": "ephemeral",
+        "focus": true,
+        "panel": "shared",
+      }
+    },
+    {
+      "label": "ForgeModules",
+      "type": "shell",
+      "command": "./scripts/install-deps.sh",
       "isBackground": true,
       "problemMatcher": [],
       "presentation": {
