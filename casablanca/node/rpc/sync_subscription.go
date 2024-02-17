@@ -13,11 +13,28 @@ import (
 	"golang.org/x/exp/slog"
 )
 
+type syncOp interface {
+	getOp() protocol.SyncOp
+}
+
+type baseSyncOp struct {
+	op protocol.SyncOp
+}
+
+func (d *baseSyncOp) getOp() protocol.SyncOp {
+	return d.op
+}
+
+type pingOp struct {
+	baseSyncOp
+	nonce string // used to match a response to a ping request
+}
+
 type syncSubscriptionImpl struct {
 	syncId         string
 	cancel         context.CancelFunc
 	dataChannel    chan *protocol.StreamAndCookie
-	controlChannel chan *protocol.SyncOp
+	controlChannel chan syncOp
 	ctx            context.Context
 	firstError     error
 	localStreams   map[string]*events.SyncStream // mapping of streamId to local stream
@@ -271,13 +288,15 @@ func (s *syncSubscriptionImpl) OnClose() {
 	}
 
 	log := dlog.FromCtx(s.ctx)
-	log.Debug("SyncStreams:syncSubscriptionImpl:OnClose: closing stream", "syncId", s.syncId)
-	c := protocol.SyncOp_SYNC_CLOSE
+	log.Debug("SyncStreams:OnClose: closing stream", "syncId", s.syncId)
+	c := baseSyncOp{
+		op: protocol.SyncOp_SYNC_CLOSE,
+	}
 	select {
 	case s.controlChannel <- &c:
 		return
 	default:
-		log.Info("SyncStreams:syncSubscriptionImpl:OnClose: control channel full")
+		log.Info("SyncStreams:OnClose: control channel full")
 		return
 	}
 }
@@ -294,7 +313,7 @@ func (s *syncSubscriptionImpl) Dispatch(res *connect.ServerStream[protocol.SyncS
 			return
 		case data, ok := <-s.dataChannel:
 			log.Debug(
-				"SyncStreams:syncSubscriptionImpl:Dispatch received response in dispatch loop",
+				"SyncStreams: Dispatch received response in dispatch loop",
 				"syncId",
 				s.syncId,
 				"data",
@@ -306,34 +325,47 @@ func (s *syncSubscriptionImpl) Dispatch(res *connect.ServerStream[protocol.SyncS
 				resp.SyncId = s.syncId
 				resp.SyncOp = protocol.SyncOp_SYNC_UPDATE
 				if err := res.Send(resp); err != nil {
-					log.Info("SyncStreams:syncSubscriptionImpl:Dispatch error sending response", "syncId", s.syncId, "err", err)
+					log.Info("SyncStreams: Dispatch error sending response", "syncId", s.syncId, "err", err)
 					s.setErrorAndCancel(err)
 					return
 				}
 			} else {
-				log.Debug("SyncStreams:syncSubscriptionImpl:Dispatch data channel closed", "syncId", s.syncId)
+				log.Debug("SyncStreams: Dispatch data channel closed", "syncId", s.syncId)
 			}
 		case control := <-s.controlChannel:
-			log.Debug("SyncStreams:syncSubscriptionImpl Dispatch received control message", "syncId", s.syncId, "control", control)
-			if *control == protocol.SyncOp_SYNC_CLOSE {
+			log.Debug("SyncStreams: Dispatch received control message", "syncId", s.syncId, "control", control)
+			if control.getOp() == protocol.SyncOp_SYNC_CLOSE {
 				err := res.Send(&protocol.SyncStreamsResponse{
 					SyncId: s.syncId,
 					SyncOp: protocol.SyncOp_SYNC_CLOSE,
 				})
 				if err != nil {
 					log.Info(
-						"SyncStreams:syncSubscriptionImpl:Dispatch error sending close response",
+						"SyncStreams: Dispatch error sending close response",
 						"syncId",
 						s.syncId,
 						"err",
 						err,
 					)
-					dlog.FromCtx(s.ctx).Warn("SyncStreams:syncSubscriptionImpl:closeStream: error canceling stream", "err", err)
+					log.Warn("SyncStreams: error closing stream", "err", err)
 				}
 				s.cancel()
-				log.Debug("SyncStreams:syncSubscriptionImpl:Dispatch: closed stream", "syncId", s.syncId)
+				log.Debug("SyncStreams: closed stream", "syncId", s.syncId)
+			} else if control.getOp() == protocol.SyncOp_SYNC_PONG {
+				log.Debug("SyncStreams: send pong to client", "syncId", s.syncId)
+				data := control.(*pingOp)
+				err := res.Send(&protocol.SyncStreamsResponse{
+					SyncId:    s.syncId,
+					SyncOp:    protocol.SyncOp_SYNC_PONG,
+					PongNonce: data.nonce,
+				})
+				if err != nil {
+					log.Warn("SyncStreams: error sending pong response", "syncId", s.syncId, "err", err)
+				}
+				s.cancel()
+				log.Debug("SyncStreams: cancel stream", "syncId", s.syncId)
 			} else {
-				log.Warn("SyncStreams:syncSubscriptionImpl:Dispatch unknown control message", "syncId", s.syncId, "control", control)
+				log.Warn("SyncStreams: Dispatch received unknown control message", "syncId", s.syncId, "control", control)
 			}
 		}
 	}

@@ -1,13 +1,15 @@
 import { DLogger, dlog, dlogError, shortenHexString } from '@river/dlog'
-import { isDefined } from './check'
 import { Err, SyncCookie, SyncOp, SyncStreamsResponse } from '@river/proto'
+import { StreamRpcClientType, errorContains } from './makeStreamRpcClient'
+import { unpackStream, unpackStreamAndCookie } from './sign'
+
 import { IPersistenceStore } from './persistenceStore'
 import { Stream } from './stream'
-import { StreamRpcClientType, errorContains } from './makeStreamRpcClient'
-import TypedEmitter from 'typed-emitter'
-import { unpackStreamAndCookie, unpackStream } from './sign'
-import { SyncedStream } from './syncedStream'
 import { StreamStateEvents } from './streamEvents'
+import { SyncedStream } from './syncedStream'
+import TypedEmitter from 'typed-emitter'
+import crypto from 'crypto'
+import { isDefined } from './check'
 
 export enum SyncState {
     Canceling = 'Canceling', // syncLoop, maybe syncId if was syncing, not is was starting or retrying
@@ -46,6 +48,24 @@ const stateConstraints: Record<SyncState, Set<SyncState>> = {
     [SyncState.Canceling]: new Set([SyncState.NotSyncing]),
 }
 
+interface NonceStats {
+    sequence: number
+    nonce: string
+    pingAt: number
+    receivedAt?: number
+    duration?: number
+}
+
+interface Nonces {
+    [nonce: string]: NonceStats
+}
+
+interface PingInfo {
+    nonces: Nonces // the nonce that the server should echo back
+    currentSequence: number // the current sequence number
+    pingInterval?: NodeJS.Timeout // for cancelling the next ping
+}
+
 export class SyncedStreams {
     // userId is the current user id
     private readonly userId: string
@@ -53,7 +73,6 @@ export class SyncedStreams {
     private readonly streams: Map<string, SyncedStream> = new Map()
     // loggers
     private readonly logSync: DLogger
-    private readonly logStream: DLogger
     private readonly logError: DLogger
     // clientEmitter is used to proxy the events from the streams to the client
     private readonly clientEmitter: TypedEmitter<StreamStateEvents>
@@ -85,6 +104,10 @@ export class SyncedStreams {
     // and are cleared when sync stops
     private responsesQueue: SyncStreamsResponse[] = []
     private inProgressTick?: Promise<void>
+    private pingInfo: PingInfo = {
+        currentSequence: 0,
+        nonces: {},
+    }
 
     constructor(
         userId: string,
@@ -100,7 +123,6 @@ export class SyncedStreams {
             this.userId.startsWith('0x') ? this.userId.slice(2) : this.userId,
         )
         this.logSync = dlog('csb:cl:sync').extend(shortId)
-        this.logStream = dlog('csb:cl:sync:stream').extend(shortId)
         this.logError = dlogError('csb:cl:sync:stream').extend(shortId)
     }
 
@@ -173,6 +195,7 @@ export class SyncedStreams {
             const syncLoop = this.syncLoop
             const syncState = this.syncState
             this.setSyncState(SyncState.Canceling)
+            this.stopPing()
             try {
                 this.abortRetry?.()
                 // Give the server 5 seconds to respond to the cancelSync RPC before forceStopSyncStreams
@@ -352,6 +375,7 @@ export class SyncedStreams {
                                     this.log('missing syncId or syncOp', value)
                                     continue
                                 }
+                                let pingStats: NonceStats | undefined
                                 switch (value.syncOp) {
                                     case SyncOp.SYNC_NEW:
                                         this.syncStarted(value.syncId)
@@ -362,6 +386,17 @@ export class SyncedStreams {
                                     case SyncOp.SYNC_UPDATE:
                                         this.responsesQueue.push(value)
                                         this.checkStartTicking()
+                                        break
+                                    case SyncOp.SYNC_PONG:
+                                        pingStats = this.pingInfo.nonces[value.pongNonce]
+                                        if (pingStats) {
+                                            pingStats.receivedAt = performance.now()
+                                            pingStats.duration =
+                                                pingStats.receivedAt - pingStats.pingAt
+                                        } else {
+                                            this.logError('pong nonce not found', value.pongNonce)
+                                            this.printNonces()
+                                        }
                                         break
                                     default:
                                         this.log(
@@ -377,6 +412,7 @@ export class SyncedStreams {
                     }
                 } finally {
                     this.log('sync loop stopping ITERATION', iteration)
+                    this.stopPing()
                     if (stateConstraints[this.syncState].has(SyncState.NotSyncing)) {
                         this.setSyncState(SyncState.NotSyncing)
                         this.streams.forEach((stream) => {
@@ -419,6 +455,7 @@ export class SyncedStreams {
     // The sync loop will keep retrying until it is shutdown, it has no max attempts
     private async attemptRetry(): Promise<void> {
         this.log(`attemptRetry`, this.syncState)
+        this.stopPing()
         if (stateConstraints[this.syncState].has(SyncState.Retrying)) {
             if (this.syncState !== SyncState.Retrying) {
                 this.setSyncState(SyncState.Retrying)
@@ -472,6 +509,7 @@ export class SyncedStreams {
             this.syncId = syncId
             // On sucessful sync, reset retryCount
             this.currentRetryCount = 0
+            this.sendKeepAlivePings() // ping the server periodically to keep the connection alive
             this.log('syncStarted', 'syncId', this.syncId)
             this.clientEmitter.emit('streamSyncActive', true)
             this.log('emitted streamSyncActive', true)
@@ -487,6 +525,7 @@ export class SyncedStreams {
     }
 
     private syncClosed() {
+        this.stopPing()
         if (this.syncState === SyncState.Canceling) {
             this.log('server acknowledged our close atttempt', this.syncId)
         } else {
@@ -548,6 +587,55 @@ export class SyncedStreams {
                 this.syncState,
                 'should have been',
                 SyncState.Syncing,
+            )
+        }
+    }
+
+    private sendKeepAlivePings() {
+        // periodically ping the server to keep the connection alive
+        this.pingInfo.pingInterval = setInterval(() => {
+            const ping = async () => {
+                if (this.syncState === SyncState.Syncing && this.syncId) {
+                    const n = crypto.randomUUID()
+                    this.pingInfo.nonces[n] = {
+                        sequence: this.pingInfo.currentSequence++,
+                        nonce: n,
+                        pingAt: performance.now(),
+                    }
+                    await this.rpcClient.pingSync({
+                        syncId: this.syncId,
+                        nonce: n,
+                    })
+                }
+                if (this.syncState === SyncState.Syncing) {
+                    // schedule the next ping
+                    this.sendKeepAlivePings()
+                }
+            }
+            ping().catch((err) => {
+                // throw err and let the caller handle retries
+                throw err
+            })
+        }, 8 * 1000 * 60) // every 8 minutes
+    }
+
+    private stopPing() {
+        clearInterval(this.pingInfo.pingInterval)
+        this.pingInfo.pingInterval = undefined
+        // print out the nonce stats
+        this.printNonces()
+        // reset the nonce stats
+        this.pingInfo.nonces = {}
+        this.pingInfo.currentSequence = 0
+    }
+
+    private printNonces() {
+        for (const nonce in this.pingInfo.nonces) {
+            const stats = this.pingInfo.nonces[nonce]
+            this.log(
+                `nonce=${nonce} sequence=${stats.sequence} pingAt=${stats.pingAt} receivedAt=${
+                    stats.receivedAt ?? 'none'
+                } duration=${stats.duration ?? 'none'}`,
             )
         }
     }

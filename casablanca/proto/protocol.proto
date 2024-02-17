@@ -620,6 +620,7 @@ message SyncStreamsResponse {
     string sync_id = 1;
     SyncOp sync_op = 2;
     StreamAndCookie stream = 3;
+    string pong_nonce = 4;
 }
 
 message AddStreamToSyncRequest {
@@ -642,6 +643,13 @@ message CancelSyncRequest {
 
 message CancelSyncResponse {}
 
+message PingSyncRequest {
+    string sync_id = 1;
+    string nonce = 2;
+}
+
+message PingSyncResponse {}
+
 message InfoRequest {
     repeated string debug = 1;
 }
@@ -661,6 +669,7 @@ service StreamService {
     rpc CancelSync(CancelSyncRequest) returns (CancelSyncResponse);
     rpc RemoveStreamFromSync(RemoveStreamFromSyncRequest) returns (RemoveStreamFromSyncResponse);
     rpc Info(InfoRequest) returns (InfoResponse);
+    rpc PingSync(PingSyncRequest) returns (PingSyncResponse);
 }
 
 enum SyncOp {
@@ -668,6 +677,7 @@ enum SyncOp {
     SYNC_NEW = 1; // new sync
     SYNC_CLOSE = 2; // close the sync
     SYNC_UPDATE = 3; // update from server
+    SYNC_PONG = 4; // respond to the ping message from the client.
 }
 
 enum MembershipOp {

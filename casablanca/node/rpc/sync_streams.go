@@ -63,6 +63,10 @@ type SyncHandler interface {
 		ctx context.Context,
 		req *connect.Request[protocol.CancelSyncRequest],
 	) (*connect.Response[protocol.CancelSyncResponse], error)
+	PingSync(
+		ctx context.Context,
+		req *connect.Request[protocol.PingSyncRequest],
+	) (*connect.Response[protocol.PingSyncResponse], error)
 }
 
 type syncHandlerImpl struct {
@@ -112,6 +116,13 @@ func (s *Service) CancelSync(
 	req *connect.Request[protocol.CancelSyncRequest],
 ) (*connect.Response[protocol.CancelSyncResponse], error) {
 	return s.syncHandler.CancelSync(ctx, req)
+}
+
+func (s *Service) PingSync(
+	ctx context.Context,
+	req *connect.Request[protocol.PingSyncRequest],
+) (*connect.Response[protocol.PingSyncResponse], error) {
+	return s.syncHandler.PingSync(ctx, req)
 }
 
 func (s *syncHandlerImpl) SyncStreams(
@@ -239,6 +250,39 @@ func (s *syncHandlerImpl) CancelSync(
 	}
 	log.Debug("SyncStreams:SyncHandlerV2.CancelSync LEAVE", "syncId", req.Msg.SyncId)
 	return connect.NewResponse(&protocol.CancelSyncResponse{}), nil
+}
+
+func (s *syncHandlerImpl) PingSync(
+	ctx context.Context,
+	req *connect.Request[protocol.PingSyncRequest],
+) (*connect.Response[protocol.PingSyncResponse], error) {
+	_, log := ctxAndLogForRequest(ctx, req)
+	syncId := req.Msg.SyncId
+
+	sub := s.getSub(syncId)
+	if sub == nil {
+		log.Debug("SyncStreams: ping sync", "syncId", syncId)
+		return nil, base.RiverError(protocol.Err_NOT_FOUND, "SyncId not found").Func("PingSync")
+	}
+
+	// cancel if context is done
+	if sub.ctx.Err() != nil {
+		log.Debug("SyncStreams: ping sync", "syncId", syncId, "context_error", sub.ctx.Err())
+		return nil, base.RiverError(protocol.Err_CANCELED, "SyncId canceled").Func("PingSync")
+	}
+
+	log.Debug("SyncStreams: ping sync", "syncId", syncId)
+	c := pingOp{
+		baseSyncOp: baseSyncOp{op: protocol.SyncOp_SYNC_PONG},
+		nonce:      req.Msg.Nonce,
+	}
+	select {
+	// send the pong response to the client via the control channel
+	case sub.controlChannel <- &c:
+		return connect.NewResponse(&protocol.PingSyncResponse{}), nil
+	default:
+		return nil, base.RiverError(protocol.Err_BUFFER_FULL, "control channel full").Func("PingSync")
+	}
 }
 
 func getLocalAndRemoteCookies(
@@ -512,7 +556,7 @@ func (s *syncHandlerImpl) addSubscription(
 		remoteNodes:    make(map[string]*syncNode),
 		remoteStreams:  make(map[string]*syncNode),
 		dataChannel:    make(chan *protocol.StreamAndCookie, 128),
-		controlChannel: make(chan *protocol.SyncOp),
+		controlChannel: make(chan syncOp),
 	}
 	s.syncIdToSubscription[syncId] = sub
 	log.Debug("SyncStreams:addSubscription: syncId subscription added", "syncId", syncId)
