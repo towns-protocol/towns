@@ -27,9 +27,16 @@ export const useExtractInternalLinks = (text: string): EmbeddedMessageLink[] => 
 
 function getTownsLinks(text: string) {
     const urls = Array.from(text.matchAll(/https:\/\/[^\s]+/g))
-        .filter(notUndefined)
-        .map((u) => new URL(u[0]))
-        .map(parseUrl)
+        .map((u) => {
+            if (u) {
+                try {
+                    const url = new URL(u[0])
+                    return parseUrl(url)
+                } catch (e) {
+                    // ignore, trivial error
+                }
+            }
+        })
         .filter(notUndefined)
 
     return urls
