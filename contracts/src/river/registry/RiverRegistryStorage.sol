@@ -15,12 +15,16 @@ library RiverRegistryStorage {
   struct Layout {
     // Hashes of all streamIds in the system
     EnumerableSet.Bytes32Set streams;
-    // Map of hash of streamId to stream strut
+    // Map of hash of streamId to stream struct
     mapping(bytes32 => IRiverRegistryBase.Stream) streamById;
     // Set of addresses of all nodes in the system
     EnumerableSet.AddressSet nodes;
     // Map of node address to node struct
     mapping(address => IRiverRegistryBase.Node) nodeByAddress;
+    // Set of addresses of all operators in the system
+    EnumerableSet.AddressSet operators;
+    // Map of operator address to nodes they operate
+    mapping(address => EnumerableSet.AddressSet) nodesByOperator;
   }
 
   function layout() internal pure returns (Layout storage l) {

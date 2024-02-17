@@ -24,7 +24,7 @@ func TestBlockchain(t *testing.T) {
 	require.NoError(err)
 	defer tc.Close()
 
-	owner := tc.GetDeployerBlockchain(ctx)
+	owner := tc.DeployerBlockchain
 
 	bc1 := tc.GetBlockchain(ctx, 0, false)
 	bc2 := tc.GetBlockchain(ctx, 1, false)
@@ -40,7 +40,7 @@ func TestBlockchain(t *testing.T) {
 	tx1, err := owner.TxRunner.Submit(
 		ctx,
 		&transactor,
-		"addNode",
+		"registerNode",
 		nodeAddr1,
 		nodeUrl1,
 	)
@@ -49,7 +49,7 @@ func TestBlockchain(t *testing.T) {
 	tx2, err := owner.TxRunner.Submit(
 		ctx,
 		&transactor,
-		"addNode",
+		"registerNode",
 		nodeAddr2,
 		nodeUrl2,
 	)
@@ -83,7 +83,7 @@ func TestBlockchain(t *testing.T) {
 	tx1, err = owner.TxRunner.Submit(
 		ctx,
 		&transactor,
-		"addNode",
+		"registerNode",
 		nodeAddr1,
 		nodeUrl1,
 	)

@@ -30,6 +30,7 @@ type BlockchainTestContext struct {
 	RiverRegistryAddress common.Address
 	RiverRegistry        *contracts.RiverRegistryV1
 	ChainId              *big.Int
+	DeployerBlockchain   *Blockchain
 }
 
 func initSimulated(ctx context.Context, numKeys int) ([]*Wallet, *simulated.Backend, error) {
@@ -115,7 +116,7 @@ func NewBlockchainTestContext(ctx context.Context, numKeys int) (*BlockchainTest
 		return nil, err
 	}
 
-	addr, _, _, err := deploy.DeployRiverRegistryDeploy(auth, client)
+	addr, _, _, err := deploy.DeployRiverRegistryDeploy(auth, client, []common.Address{wallets[len(wallets)-1].Address})
 	if err != nil {
 		return nil, err
 	}
@@ -129,6 +130,9 @@ func NewBlockchainTestContext(ctx context.Context, numKeys int) (*BlockchainTest
 		return nil, err
 	}
 
+	// Add deployer as operator so it can register nodes
+	deployerBC := makeTestBlockchain(ctx, wallets[len(wallets)-1], client, chainId, nil)
+
 	return &BlockchainTestContext{
 		Backend:              backend,
 		EthClient:            ethClient,
@@ -136,6 +140,7 @@ func NewBlockchainTestContext(ctx context.Context, numKeys int) (*BlockchainTest
 		RiverRegistryAddress: addr,
 		RiverRegistry:        river_registry,
 		ChainId:              chainId,
+		DeployerBlockchain:   deployerBC,
 	}, nil
 }
 
@@ -176,8 +181,20 @@ func (c *BlockchainTestContext) GetDeployerWallet() *Wallet {
 	return c.Wallets[len(c.Wallets)-1]
 }
 
-func (c *BlockchainTestContext) GetDeployerBlockchain(ctx context.Context) *Blockchain {
-	return c.GetBlockchain(ctx, len(c.Wallets)-1, false)
+func makeTestBlockchain(ctx context.Context, wallet *Wallet, client BlockchainClient, chainId *big.Int, onSubmit func()) *Blockchain {
+	return &Blockchain{
+		ChainId: chainId,
+		Wallet:  wallet,
+		Client:  client,
+		TxRunner: NewTxRunner(ctx, &TxRunnerParams{
+			Wallet:   wallet,
+			Client:   client,
+			ChainId:  chainId,
+			OnSubmit: onSubmit,
+		}),
+		Config:       &config.ChainConfig{ChainId: chainId.Uint64()},
+		BlockMonitor: NewFakeBlockMonitor(ctx, 100),
+	}
 }
 
 func (c *BlockchainTestContext) GetBlockchain(ctx context.Context, index int, autoMine bool) *Blockchain {
@@ -185,29 +202,18 @@ func (c *BlockchainTestContext) GetBlockchain(ctx context.Context, index int, au
 		return nil
 	}
 	wallet := c.Wallets[index]
-	var onSumbit func()
+	var onSubmit func()
 	if autoMine {
-		onSumbit = func() {
+		onSubmit = func() {
 			c.Commit()
 		}
 	}
-	return &Blockchain{
-		ChainId: c.ChainId,
-		Wallet:  wallet,
-		Client:  c.Client(),
-		TxRunner: NewTxRunner(ctx, &TxRunnerParams{
-			Wallet:   wallet,
-			Client:   c.Client(),
-			ChainId:  c.ChainId,
-			OnSubmit: onSumbit,
-		}),
-		Config:       &config.ChainConfig{ChainId: c.ChainId.Uint64()},
-		BlockMonitor: NewFakeBlockMonitor(ctx, 100),
-	}
+
+	return makeTestBlockchain(ctx, wallet, c.Client(), c.ChainId, onSubmit)
 }
 
 func (c *BlockchainTestContext) InitNodeRecord(ctx context.Context, index int, url string) error {
-	owner := c.GetDeployerBlockchain(ctx)
+	owner := c.DeployerBlockchain
 
 	transactor := contracts.RiverRegistryV1TransactorRaw{
 		Contract: &(c.RiverRegistry.RiverRegistryV1Transactor),
@@ -215,7 +221,7 @@ func (c *BlockchainTestContext) InitNodeRecord(ctx context.Context, index int, u
 	tx, err := owner.TxRunner.Submit(
 		ctx,
 		&transactor,
-		"addNode",
+		"registerNode",
 		c.Wallets[index].Address,
 		url,
 	)

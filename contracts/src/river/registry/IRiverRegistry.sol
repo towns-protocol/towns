@@ -11,16 +11,37 @@ interface IRiverRegistryBase {
     uint64 lastMiniblockNum;
   }
 
+  enum NodeStatus {
+    NotInitialized, // Initial entry, node is not contacted in any way
+    RemoteOnly, // Node proxies data, does not store any data
+    Operational, // Node servers existing data, accepts stream creation
+    Failed, // Node crash-exited, can be set by DAO
+    Departing // Node continues to serve traffic, new streams are not allocated, data needs to be moved out to other nodes before grace period.
+  }
+
   struct Node {
     address nodeAddress;
     string url;
-    // TODO: add state
+    NodeStatus status;
   }
 
   // =============================================================
   //                           Events
   // =============================================================
 
+  // Operator events
+  event OperatorAdded(address indexed operatorAddress);
+
+  event OperatorRemoved(address indexed operatorAddress);
+
+  // Node events
+  event NodeAdded(address indexed nodeAddress, string url, NodeStatus status);
+
+  event NodeStatusUpdated(address indexed nodeAddress, NodeStatus status);
+
+  event NodeUrlUpdated(address indexed nodeAddress, string url);
+
+  // Stream events
   event StreamAllocated(
     string streamId,
     address[] nodes,
@@ -32,8 +53,6 @@ interface IRiverRegistryBase {
     bytes32 lastMiniblockHash,
     uint64 lastMiniblockNum
   );
-
-  event NodeAdded(address nodeAddress, string url);
 }
 
 library RiverRegistryErrors {
@@ -41,6 +60,7 @@ library RiverRegistryErrors {
   //                         Errors
   // =============================================================
   string public constant AlreadyExists = "ALREADY_EXISTS";
+  string public constant OperatorNotFound = "OPERATOR_NOT_FOUND";
   string public constant NodeNotFound = "NODE_NOT_FOUND";
   string public constant StreamNotFound = "NOT_FOUND";
   string public constant OutOfBounds = "OUT_OF_BOUNDS";
@@ -87,7 +107,7 @@ interface IRiverRegistry is IRiverRegistryBase {
    */
   function getAllStreams() external view returns (Stream[] memory);
 
-  function addNode(address nodeAddress, string memory url) external;
+  function registerNode(address nodeAddress, string memory url) external;
 
   function getNode(address nodeAddress) external view returns (Node memory);
 
@@ -110,4 +130,13 @@ interface IRiverRegistry is IRiverRegistryBase {
    * uncallable if the map grows to a point where copying to memory consumes too much gas to fit in a block.
    */
   function getAllNodes() external view returns (Node[] memory);
+
+  // =============================================================
+  //                           Operators
+  // =============================================================
+  function approveOperator(address operator) external;
+
+  function isOperator(address operator) external view returns (bool);
+
+  function removeOperator(address operator) external;
 }

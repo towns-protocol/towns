@@ -3,6 +3,7 @@ pragma solidity ^0.8.23;
 
 // interfaces
 import {IRiverRegistryBase, RiverRegistryErrors} from "contracts/src/river/registry/IRiverRegistry.sol";
+import {IOwnableBase} from "contracts/src/diamond/facets/ownable/IERC173.sol";
 
 // libraries
 
@@ -13,51 +14,103 @@ import {RiverRegistry} from "contracts/src/river/registry/RiverRegistry.sol";
 // deployments
 import {DeployRiverRegistry} from "contracts/scripts/deployments/DeployRiverRegistry.s.sol";
 
-contract RiverRegistryTest is TestUtils, IRiverRegistryBase {
+contract RiverRegistryTest is TestUtils, IRiverRegistryBase, IOwnableBase {
   DeployRiverRegistry internal deployRiverRegistry = new DeployRiverRegistry();
+
+  address deployer;
+  address diamond;
 
   RiverRegistry internal riverRegistry;
 
-  address deployer;
-
   function setUp() public virtual {
     deployer = getDeployer();
-    riverRegistry = RiverRegistry(deployRiverRegistry.deploy());
+    diamond = deployRiverRegistry.deploy();
+
+    riverRegistry = RiverRegistry(diamond);
   }
 
-  modifier givenNodeIsRegistered(address node, string memory url) {
+  modifier givenNodeOperatorIsApproved(address nodeOperator) {
+    vm.assume(nodeOperator != address(0));
+    vm.assume(riverRegistry.isOperator(nodeOperator) == false);
+
     vm.prank(deployer);
     vm.expectEmit();
-    emit NodeAdded(node, url);
-    riverRegistry.addNode(node, url);
+    emit OperatorAdded(nodeOperator);
+    riverRegistry.approveOperator(nodeOperator);
     _;
   }
 
-  function test_addNode(
-    address nodeAddress,
+  modifier givenNodeIsRegistered(
+    address nodeOperator,
+    address node,
     string memory url
-  ) external givenNodeIsRegistered(nodeAddress, url) {
-    Node memory node = riverRegistry.getNode(nodeAddress);
+  ) {
+    vm.assume(nodeOperator != address(0));
+    vm.assume(node != address(0));
 
-    assertEq(node.nodeAddress, nodeAddress);
-    assertEq(node.url, url);
-
-    Node[] memory nodes = riverRegistry.getAllNodes();
-
-    for (uint256 i = 0; i < nodes.length; i++) {
-      if (nodes[i].nodeAddress == nodeAddress) {
-        assertEq(nodes[i].nodeAddress, nodeAddress);
-        assertEq(nodes[i].url, url);
-      }
-    }
+    vm.prank(nodeOperator);
+    vm.expectEmit();
+    emit NodeAdded(node, url, NodeStatus.NotInitialized);
+    riverRegistry.registerNode(node, url);
+    _;
   }
 
-  function test_revertWhen_addNodeWithAlreadyRegisteredNode(
-    address nodeAddress,
-    string memory url
-  ) external givenNodeIsRegistered(nodeAddress, url) {
+  // =============================================================
+  //                           approveOperator
+  // =============================================================
+
+  function test_approveOperator(
+    address nodeOperator
+  ) external givenNodeOperatorIsApproved(nodeOperator) {
+    assertTrue(riverRegistry.isOperator(nodeOperator));
+  }
+
+  function test_revertWhen_approveOperatorWithZeroAddress() external {
+    vm.prank(deployer);
+    vm.expectRevert(bytes(RiverRegistryErrors.BadArg));
+    riverRegistry.approveOperator(address(0));
+  }
+
+  function test_revertWhen_approveOperatorWithAlreadyApprovedOperator(
+    address nodeOperator
+  ) external givenNodeOperatorIsApproved(nodeOperator) {
     vm.prank(deployer);
     vm.expectRevert(bytes(RiverRegistryErrors.AlreadyExists));
-    riverRegistry.addNode(nodeAddress, url);
+    riverRegistry.approveOperator(nodeOperator);
+  }
+
+  function test_revertWhen_approveOperatorWithNonOwner(
+    address nonOwner,
+    address nodeOperator
+  ) external {
+    vm.prank(nonOwner);
+    vm.expectRevert(
+      abi.encodeWithSelector(Ownable__NotOwner.selector, nonOwner)
+    );
+    riverRegistry.approveOperator(nodeOperator);
+  }
+
+  // =============================================================
+  //                           removeOperator
+  // =============================================================
+  function test_removeOperator(
+    address nodeOperator
+  ) external givenNodeOperatorIsApproved(nodeOperator) {
+    assertTrue(riverRegistry.isOperator(nodeOperator));
+
+    vm.prank(deployer);
+    vm.expectEmit();
+    emit OperatorRemoved(nodeOperator);
+    riverRegistry.removeOperator(nodeOperator);
+
+    assertFalse(riverRegistry.isOperator(nodeOperator));
+  }
+
+  function test_revertWhen_removeOperatorWhenOperatorNotFound(
+    address nodeOperator
+  ) external {
+    vm.prank(deployer);
+    vm.expectRevert(bytes(RiverRegistryErrors.OperatorNotFound));
+    riverRegistry.removeOperator(nodeOperator);
   }
 }

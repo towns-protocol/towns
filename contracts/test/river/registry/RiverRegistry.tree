@@ -43,7 +43,7 @@ setStreamLastMiniblock
 │   └── given state is streamId does not exist
 │       └── it should revert with RiverRegistry__StreamNotFound
 
-addNode
+registerNode
 │   ├── given state is node does not exist
 │   │   └── it should successfully add a new node
 │   └── given state is node already exists

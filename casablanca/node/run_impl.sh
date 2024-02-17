@@ -31,11 +31,11 @@ while [[ "$#" -gt 0 ]]; do
             RUN=true
             BUILD=true
             shift
-            ;;    
+            ;;
         --build|-b)
             BUILD=true
             shift
-            ;;    
+            ;;
         *)
             args+=("$1")
             shift
@@ -57,7 +57,7 @@ if [ "$CONFIG" == "true" ]; then
         source ../../contracts/.env.localhost
         RIVER_REGISTRY_ADDRESS=$(jq -r .address ${RUN_BASE}/addresses/riverRegistry.json)
     fi
-    
+
     for ((i=0; i<NUM_INSTANCES; i++)); do
         printf -v INSTANCE "%02d" $i
         export INSTANCE
@@ -75,7 +75,7 @@ if [ "$CONFIG" == "true" ]; then
                 --rpc-url http://127.0.0.1:8546 \
                 --private-key $LOCAL_PRIVATE_KEY \
                 $RIVER_REGISTRY_ADDRESS \
-                "addNode(address,string)" \
+                "registerNode(address,string)" \
                 $NODE_ADDRESS \
                 https://localhost:$I_RPC_PORT > /dev/null
         fi
