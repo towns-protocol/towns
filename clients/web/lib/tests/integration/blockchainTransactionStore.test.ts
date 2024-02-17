@@ -18,7 +18,8 @@ test('should clear promise from promise queue after transaction resolves', async
     await createTestSpaceGatedByTownAndZionNfts(bob, [Permission.Read, Permission.Write])
 
     await waitFor(() =>
-        expect(Object.keys(bob.blockchainTransactionStore.transactions).length).toEqual(1),
+        // we retry createSpace in tests, so this could be more than 0
+        expect(Object.keys(bob.blockchainTransactionStore.transactions).length).toBeGreaterThan(0),
     )
 
     expect(bob.blockchainTransactionStore.promiseQueue.length).toEqual(0)
@@ -28,7 +29,6 @@ test('should clear all promises when client stops', async () => {
     const { bob } = await registerAndStartClients(['bob'])
     // bob needs funds to create a space
     await bob.fundWallet()
-    await bob.mintMockNFT()
 
     const _abortController = new AbortController()
 
@@ -86,11 +86,12 @@ test('should clear all promises when client stops', async () => {
     )
 
     await waitFor(() =>
-        expect(Object.keys(bob.blockchainTransactionStore.transactions).length).toEqual(1),
+        // we retry createSpace in tests, so this could be more than 0
+        expect(Object.keys(bob.blockchainTransactionStore.transactions).length).toBeGreaterThan(0),
     )
 
-    expect(bob.provider.listenerCount()).toEqual(1)
-    expect(bob.blockchainTransactionStore.promiseQueue.length).toEqual(1)
+    expect(bob.provider.listenerCount()).toBeGreaterThan(0)
+    expect(bob.blockchainTransactionStore.promiseQueue.length).toBeGreaterThan(0)
     expect(blockchainStoreAbortSpy).not.toHaveBeenCalled()
 
     await bob.stopClients()

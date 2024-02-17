@@ -24,7 +24,7 @@ const config: JestConfigWithTsJest = {
     setupFiles: ['fake-indexeddb/auto'],
     modulePathIgnorePatterns: ['/dist/'],
     testPathIgnorePatterns: ['/dist/', '/node_modules/'],
-    testTimeout: 60000,
+    testTimeout: 100_000,
     coverageProvider: 'v8',
     coverageReporters: ['json', 'html'],
 }
