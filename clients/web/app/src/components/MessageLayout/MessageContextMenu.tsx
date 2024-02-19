@@ -245,10 +245,10 @@ const useCreateUnreadMarker = (params: {
     const marker = useFullyReadMarker(channelId, threadParentId)
 
     const createUnreadMarker = useCallback(() => {
-        const event = timeline && timeline.find((e) => e.eventId === eventId)
-        if (event && marker) {
+        const eventIndex = timeline?.findIndex((e) => e.eventId === eventId)
+        if (eventIndex && eventIndex >= 0 && marker && timeline) {
             const mentions = timeline
-                .slice(timeline.indexOf(event))
+                .slice(eventIndex)
                 .filter(
                     (e) =>
                         e.isMentioned &&
@@ -259,10 +259,11 @@ const useCreateUnreadMarker = (params: {
                 ...marker,
                 threadParentId,
                 eventId,
-                eventNum: BigInt(event.eventNum),
+                eventNum: BigInt(timeline[eventIndex].eventNum),
                 mentions,
             }
         }
+        return undefined
     }, [eventId, marker, myUserId, threadParentId, timeline])
 
     return {
