@@ -25,6 +25,8 @@ const getRiverNodeRpcUrl = () => {
         const parts = envName.split('-')
         const prNumber = parts[parts.length - 1]
         return `https://river1-${prNumber}.nodes.transient.towns.com`
+    } else if (envName.includes('test-beta')) {
+        return 'https://river1-test-beta.towns.com'
     } else {
         return `https://river1.nodes.${envName}.towns.com`
     }
