@@ -13,7 +13,7 @@ import {
     makeUserStreamId,
     makeUserSettingsStreamId,
     makeUserDeviceKeyStreamId,
-    makeUserToDeviceStreamId,
+    makeUserInboxStreamId,
 } from './id'
 import { makeDonePromise, makeTestClient, waitFor, getChannelMessagePayload } from './util.test'
 import {
@@ -285,7 +285,7 @@ describe('clientTest', () => {
         expect(bobsClient.streams.size()).toEqual(4)
         expect(bobsClient.streams.get(makeUserSettingsStreamId(bobsClient.userId))).toBeDefined()
         expect(bobsClient.streams.get(makeUserStreamId(bobsClient.userId))).toBeDefined()
-        expect(bobsClient.streams.get(makeUserToDeviceStreamId(bobsClient.userId))).toBeDefined()
+        expect(bobsClient.streams.get(makeUserInboxStreamId(bobsClient.userId))).toBeDefined()
         expect(bobsClient.streams.get(makeUserDeviceKeyStreamId(bobsClient.userId))).toBeDefined()
     })
 
@@ -586,12 +586,12 @@ describe('clientTest', () => {
         await expect(bobsClient.initializeUser()).toResolve()
         bobsClient.startSync()
         const bobsUserId = bobsClient.userId
-        const bobSelfToDevice = makeDonePromise()
+        const bobSelfInbox = makeDonePromise()
         bobsClient.once(
             'userDeviceKeyMessage',
             (streamId: string, userId: string, userDevice: UserDevice): void => {
                 log('userDeviceKeyMessage for Bob', streamId, userId, userDevice)
-                bobSelfToDevice.runAndDone(() => {
+                bobSelfInbox.runAndDone(() => {
                     expect(streamId).toBe(bobUserDeviceKeyStreamId)
                     expect(userId).toBe(bobsUserId)
                     expect(userDevice.deviceKey).toBeDefined()
@@ -599,7 +599,7 @@ describe('clientTest', () => {
             },
         )
         const bobUserDeviceKeyStreamId = bobsClient.userDeviceKeyStreamId
-        await bobSelfToDevice.expectToSucceed()
+        await bobSelfInbox.expectToSucceed()
     })
 
     test('bobDownloadsOwnDeviceKeys', async () => {
@@ -608,12 +608,12 @@ describe('clientTest', () => {
         await expect(bobsClient.initializeUser()).toResolve()
         bobsClient.startSync()
         const bobsUserId = bobsClient.userId
-        const bobSelfToDevice = makeDonePromise()
+        const bobSelfInbox = makeDonePromise()
         bobsClient.once(
             'userDeviceKeyMessage',
             (streamId: string, userId: string, deviceKeys: UserDevice): void => {
                 log('userDeviceKeyMessage for Bob', streamId, userId, deviceKeys)
-                bobSelfToDevice.runAndDone(() => {
+                bobSelfInbox.runAndDone(() => {
                     expect(streamId).toBe(bobUserDeviceKeyStreamId)
                     expect(userId).toBe(bobsUserId)
                     expect(deviceKeys.deviceKey).toBeDefined()
@@ -621,7 +621,7 @@ describe('clientTest', () => {
             },
         )
         const bobUserDeviceKeyStreamId = bobsClient.userDeviceKeyStreamId
-        await bobSelfToDevice.expectToSucceed()
+        await bobSelfInbox.expectToSucceed()
         const deviceKeys = await bobsClient.downloadUserDeviceInfo([bobsUserId])
         expect(deviceKeys[bobsUserId]).toBeDefined()
     })
@@ -634,12 +634,12 @@ describe('clientTest', () => {
         bobsClient.startSync()
         alicesClient.startSync()
         const alicesUserId = alicesClient.userId
-        const alicesSelfToDevice = makeDonePromise()
+        const alicesSelfInbox = makeDonePromise()
         alicesClient.once(
             'userDeviceKeyMessage',
             (streamId: string, userId: string, deviceKeys: UserDevice): void => {
                 log('userDeviceKeyMessage for Alice', streamId, userId, deviceKeys)
-                alicesSelfToDevice.runAndDone(() => {
+                alicesSelfInbox.runAndDone(() => {
                     expect(streamId).toBe(aliceUserDeviceKeyStreamId)
                     expect(userId).toBe(alicesUserId)
                     expect(deviceKeys.deviceKey).toBeDefined()
@@ -660,13 +660,13 @@ describe('clientTest', () => {
         alicesClient.startSync()
         const bobsUserId = bobsClient.userId
         const alicesUserId = alicesClient.userId
-        const bobSelfToDevice = makeDonePromise()
+        const bobSelfInbox = makeDonePromise()
         // bobs client should sync userDeviceKeyMessage twice (once for alice, once for bob)
         bobsClient.on(
             'userDeviceKeyMessage',
             (streamId: string, userId: string, deviceKeys: UserDevice): void => {
                 log('userDeviceKeyMessage', streamId, userId, deviceKeys)
-                bobSelfToDevice.runAndDone(() => {
+                bobSelfInbox.runAndDone(() => {
                     expect([bobUserDeviceKeyStreamId, aliceUserDeviceKeyStreamId]).toContain(
                         streamId,
                     )
@@ -693,13 +693,13 @@ describe('clientTest', () => {
         alicesClient.startSync()
         const bobsUserId = bobsClient.userId
         const alicesUserId = alicesClient.userId
-        const bobSelfToDevice = makeDonePromise()
+        const bobSelfInbox = makeDonePromise()
         // bobs client should sync userDeviceKeyMessage twice (once for alice, once for bob)
         bobsClient.on(
             'userDeviceKeyMessage',
             (streamId: string, userId: string, deviceKeys: UserDevice): void => {
                 log('userDeviceKeyMessage', streamId, userId, deviceKeys)
-                bobSelfToDevice.runAndDone(() => {
+                bobSelfInbox.runAndDone(() => {
                     expect([bobUserDeviceKeyStreamId, aliceUserDeviceKeyStreamId]).toContain(
                         streamId,
                     )

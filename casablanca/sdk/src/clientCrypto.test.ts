@@ -49,7 +49,7 @@ describe('clientCrypto', () => {
         expect(keys2.keys[0]).toEqual('hi!')
     })
 
-    test('clientCanEncryptDecryptToDeviceMultipleEventObjects', async () => {
+    test('clientCanEncryptDecryptInboxMultipleEventObjects', async () => {
         await expect(bobsClient.initializeUser()).toResolve()
         bobsClient.startSync()
         await expect(alicesClient.initializeUser()).toResolve()

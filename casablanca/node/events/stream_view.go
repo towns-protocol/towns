@@ -624,7 +624,7 @@ func (r *streamViewImpl) IsMember(userId string) (bool, error) {
 		return GetStreamIdPostfix(streamId) == userId, nil
 	case *Snapshot_UserDeviceKeyContent:
 		return GetStreamIdPostfix(streamId) == userId, nil
-	case *Snapshot_UserToDeviceContent:
+	case *Snapshot_UserInboxContent:
 		return GetStreamIdPostfix(streamId) == userId, nil
 	case *Snapshot_MediaContent:
 		return snapshotContent.MediaContent.GetCreatorId() == userId, nil

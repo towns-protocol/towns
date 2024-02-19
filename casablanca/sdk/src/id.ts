@@ -28,7 +28,7 @@ export enum StreamPrefix {
     Media = 'BLOB-',
     DM = 'DMDM-',
     GDM = 'GDMS-',
-    UserToDevice = 'UDEV-',
+    UserInbox = 'UDEV-',
 }
 
 export const allowedStreamPrefixes = (): string[] => Object.values(StreamPrefix)
@@ -59,10 +59,10 @@ export const makeUserDeviceKeyStreamId = (userId: string | Uint8Array): string =
     )
 }
 
-export const makeUserToDeviceStreamId = (userId: string | Uint8Array): string => {
+export const makeUserInboxStreamId = (userId: string | Uint8Array): string => {
     check(isUserId(userId), 'Invalid user id: ' + userId.toString())
     return makeStreamId(
-        StreamPrefix.UserToDevice,
+        StreamPrefix.UserInbox,
         userId instanceof Uint8Array ? userIdFromAddress(userId) : userId,
     )
 }
@@ -102,8 +102,8 @@ export const isMediaStreamId = (streamId: string): boolean =>
     streamId.startsWith(StreamPrefix.Media)
 export const isGDMChannelStreamId = (streamId: string): boolean =>
     streamId.startsWith(StreamPrefix.GDM)
-export const isUserToDeviceStreamId = (streamId: string): boolean =>
-    streamId.startsWith(StreamPrefix.UserToDevice)
+export const isUserInboxStreamId = (streamId: string): boolean =>
+    streamId.startsWith(StreamPrefix.UserInbox)
 
 export const isValidStreamId = (streamId: string): boolean =>
     allowedStreamPrefixes().some((prefix) => streamId.startsWith(prefix))

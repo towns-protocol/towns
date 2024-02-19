@@ -6,11 +6,11 @@ import { Client } from './client'
 import { makeDonePromise, makeTestClient } from './util.test'
 import { dlog } from '@river/dlog'
 import { UserDeviceCollection } from '@river/encryption'
-import { UserToDevicePayload_GroupEncryptionSessions } from '@river/proto'
+import { UserInboxPayload_GroupEncryptionSessions } from '@river/proto'
 
-const log = dlog('test:toDeviceMessage')
+const log = dlog('test:inboxMessage')
 
-describe('toDeviceMessageTest', () => {
+describe('inboxMessageTest', () => {
     let bobsClient: Client
     let alicesClient: Client
 
@@ -24,8 +24,8 @@ describe('toDeviceMessageTest', () => {
         await alicesClient.stop()
     })
 
-    test('bobSendsAliceToDeviceMessage', async () => {
-        log('bobSendsAliceToDeviceMessage')
+    test('bobSendsAliceInboxMessage', async () => {
+        log('bobSendsAliceInboxMessage')
         // Bob gets created, creates a space, and creates a channel.
         await expect(bobsClient.initializeUser()).toResolve()
         bobsClient.startSync()
@@ -35,12 +35,12 @@ describe('toDeviceMessageTest', () => {
         log('aliceUserStreamId', aliceUserStreamId)
         alicesClient.startSync()
 
-        const aliceSelfToDevice = makeDonePromise()
+        const aliceSelfInbox = makeDonePromise()
         alicesClient.once(
             'newGroupSessions',
-            (sessions: UserToDevicePayload_GroupEncryptionSessions, senderUserId: string): void => {
-                log('toDeviceMessage for Alice', sessions, senderUserId)
-                aliceSelfToDevice.runAndDone(() => {
+            (sessions: UserInboxPayload_GroupEncryptionSessions, senderUserId: string): void => {
+                log('inboxMessage for Alice', sessions, senderUserId)
+                aliceSelfInbox.runAndDone(() => {
                     expect(senderUserId).toEqual(bobsClient.userId)
                     expect(sessions.streamId).toEqual('200')
                     expect(sessions.sessionIds).toEqual(['300'])
@@ -69,6 +69,6 @@ describe('toDeviceMessageTest', () => {
                 recipients,
             ),
         ).toResolve()
-        await aliceSelfToDevice.expectToSucceed()
+        await aliceSelfInbox.expectToSucceed()
     })
 })

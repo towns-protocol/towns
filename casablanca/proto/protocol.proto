@@ -98,7 +98,7 @@ message StreamEvent {
         UserPayload user_payload = 104;
         UserSettingsPayload user_settings_payload = 105;
         UserDeviceKeyPayload user_device_key_payload = 106;
-        UserToDevicePayload user_to_device_payload = 107;
+        UserInboxPayload user_inbox_payload = 107;
         MediaPayload media_payload = 108;
         DmChannelPayload dm_channel_payload = 109;
         GdmChannelPayload gdm_channel_payload = 110;
@@ -336,10 +336,10 @@ message UserPayload {
 }
 
 /**
-* UserToDevicePayload
-* encrypted payloads 
+* UserInboxPayload
+* messages to a user encrypted per deviceId
 */
-message UserToDevicePayload {
+message UserInboxPayload {
     message Snapshot {
         message DeviceSummary {
             /**
@@ -482,7 +482,7 @@ message Snapshot {
         MediaPayload.Snapshot media_content = 106;
         DmChannelPayload.Snapshot dm_channel_content = 107;
         GdmChannelPayload.Snapshot gdm_channel_content = 108;
-        UserToDevicePayload.Snapshot user_to_device_content = 109;
+        UserInboxPayload.Snapshot user_inbox_content = 109;
     }
 }
 

@@ -58,7 +58,7 @@ import {
     makeUserDeviceKeyStreamId,
     makeUserSettingsStreamId,
     makeUserStreamId,
-    makeUserToDeviceStreamId,
+    makeUserInboxStreamId,
     userIdFromAddress,
 } from './id'
 import { SignerContext, makeEvent, unpackMiniblock, unpackStream } from './sign'
@@ -86,11 +86,11 @@ import {
     make_GDMChannelPayload_Membership,
     make_SpacePayload_DisplayName,
     StreamTimelineEvent,
-    make_UserToDevicePayload_Ack,
-    make_UserToDevicePayload_Inception,
+    make_UserInboxPayload_Ack,
+    make_UserInboxPayload_Inception,
     make_fake_encryptedData,
     make_UserDeviceKeyPayload_EncryptionDevice,
-    make_UserToDevicePayload_GroupEncryptionSessions,
+    make_UserInboxPayload_GroupEncryptionSessions,
     make_SpacePayload_Username,
     make_DMChannelPayload_DisplayName,
     make_GDMChannelPayload_DisplayName,
@@ -127,7 +127,7 @@ export class Client
     userStreamId?: string
     userSettingsStreamId?: string
     userDeviceKeyStreamId?: string
-    userToDeviceStreamId?: string
+    userInboxStreamId?: string
 
     private readonly logCall: DLogger
     private readonly logSync: DLogger
@@ -302,7 +302,7 @@ export class Client
 
         await Promise.all([
             this.initUserStream(),
-            this.initUserToDeviceStream(),
+            this.initUserInboxStream(),
             this.initUserDeviceKeyStream(),
             this.initUserSettingsStream(),
         ])
@@ -328,14 +328,14 @@ export class Client
         }
     }
 
-    private async initUserToDeviceStream() {
-        this.userToDeviceStreamId = makeUserToDeviceStreamId(this.userId)
-        const userToDeviceStream = this.createSyncedStream(this.userToDeviceStreamId)
-        if (!(await userToDeviceStream.initializeFromPersistence())) {
+    private async initUserInboxStream() {
+        this.userInboxStreamId = makeUserInboxStreamId(this.userId)
+        const userInboxStream = this.createSyncedStream(this.userInboxStreamId)
+        if (!(await userInboxStream.initializeFromPersistence())) {
             const response =
-                (await this.getUserStream(this.userToDeviceStreamId)) ??
-                (await this.createUserToDeviceStream(this.userToDeviceStreamId))
-            await userToDeviceStream.initializeFromResponse(response)
+                (await this.getUserStream(this.userInboxStreamId)) ??
+                (await this.createUserInboxStream(this.userInboxStreamId))
+            await userInboxStream.initializeFromResponse(response)
         }
     }
 
@@ -405,21 +405,19 @@ export class Client
         return unpackStream(response.stream)
     }
 
-    private async createUserToDeviceStream(
-        userToDeviceStreamId: string,
-    ): Promise<ParsedStreamResponse> {
-        const userToDeviceEvents = [
+    private async createUserInboxStream(userInboxStreamId: string): Promise<ParsedStreamResponse> {
+        const userInboxEvents = [
             await makeEvent(
                 this.signerContext,
-                make_UserToDevicePayload_Inception({
-                    streamId: userToDeviceStreamId,
+                make_UserInboxPayload_Inception({
+                    streamId: userInboxStreamId,
                 }),
             ),
         ]
 
         const response = await this.rpcClient.createStream({
-            events: userToDeviceEvents,
-            streamId: userToDeviceStreamId,
+            events: userInboxEvents,
+            streamId: userInboxStreamId,
         })
         return unpackStream(response.stream)
     }
@@ -1435,17 +1433,17 @@ export class Client
         return await this.downloadUserDeviceInfo(members)
     }
 
-    async downloadNewToDeviceMessages(): Promise<void> {
-        this.logCall('downloadNewToDeviceMessages')
-        check(isDefined(this.userToDeviceStreamId))
-        const stream = this.stream(this.userToDeviceStreamId)
+    async downloadNewInboxMessages(): Promise<void> {
+        this.logCall('downloadNewInboxMessages')
+        check(isDefined(this.userInboxStreamId))
+        const stream = this.stream(this.userInboxStreamId)
         check(isDefined(stream))
         check(isDefined(stream.view.miniblockInfo))
         if (stream.view.miniblockInfo.terminusReached) {
             return
         }
         const deviceSummary =
-            stream.view.userToDeviceContent.deviceSummary[this.userDeviceKey().deviceKey]
+            stream.view.userInboxContent.deviceSummary[this.userDeviceKey().deviceKey]
         if (!deviceSummary) {
             return
         }
@@ -1453,7 +1451,7 @@ export class Client
             const toExclusive = stream.view.miniblockInfo.min
             const fromInclusive = deviceSummary.lowerBound
             const response = await this.getMiniblocks(
-                this.userToDeviceStreamId,
+                this.userInboxStreamId,
                 fromInclusive,
                 toExclusive,
             )
@@ -1652,19 +1650,19 @@ export class Client
         )
     }
 
-    async ackToDeviceStream() {
-        check(isDefined(this.userToDeviceStreamId), 'user to device stream not found')
+    async ackInboxStream() {
+        check(isDefined(this.userInboxStreamId), 'user to device stream not found')
         check(isDefined(this.cryptoBackend), 'crypto backend not initialized')
-        const toDeviceStream = this.streams.get(this.userToDeviceStreamId)
-        check(isDefined(toDeviceStream), 'user to device stream not found')
-        const miniblockNum = toDeviceStream?.view.miniblockInfo?.max
+        const inboxStream = this.streams.get(this.userInboxStreamId)
+        check(isDefined(inboxStream), 'user to device stream not found')
+        const miniblockNum = inboxStream?.view.miniblockInfo?.max
         check(isDefined(miniblockNum), 'miniblockNum not found')
-        this.logCall('ackToDeviceStream:: acking received keys...')
+        this.logCall('ackInboxStream:: acking received keys...')
         const previousAck =
-            toDeviceStream.view.userToDeviceContent.deviceSummary[this.userDeviceKey().deviceKey]
+            inboxStream.view.userInboxContent.deviceSummary[this.userDeviceKey().deviceKey]
         if (previousAck && previousAck.lowerBound >= miniblockNum) {
             this.logCall(
-                'ackToDeviceStream:: already acked',
+                'ackInboxStream:: already acked',
                 previousAck,
                 'miniblockNum:',
                 miniblockNum,
@@ -1672,8 +1670,8 @@ export class Client
             return
         }
         await this.makeEventAndAddToStream(
-            this.userToDeviceStreamId,
-            make_UserToDevicePayload_Ack({
+            this.userInboxStreamId,
+            make_UserInboxPayload_Ack({
                 deviceKey: this.userDeviceKey().deviceKey,
                 miniblockNum,
             }),
@@ -1681,7 +1679,7 @@ export class Client
     }
 
     /**
-     * Decrypt a ToDevice message using river's decryption algorithm.
+     * Decrypt a Inbox message using river's decryption algorithm.
      *
      */
     public async decryptWithDeviceKey(
@@ -1775,7 +1773,7 @@ export class Client
                     this.logCall('encryptAndShareGroupSessions: no ciphertext to send', userId)
                     return
                 }
-                const toStreamId: string = makeUserToDeviceStreamId(userId)
+                const toStreamId: string = makeUserInboxStreamId(userId)
                 const miniblockHash = await this.getStreamLastMiniblockHash(toStreamId)
                 this.logCall("encryptAndShareGroupSessions: sent to user's devices", {
                     toStreamId,
@@ -1783,7 +1781,7 @@ export class Client
                 })
                 await this.makeEventWithHashAndAddToStream(
                     toStreamId,
-                    make_UserToDevicePayload_GroupEncryptionSessions({
+                    make_UserInboxPayload_GroupEncryptionSessions({
                         streamId,
                         senderKey: userDevice.deviceKey,
                         sessionIds: sessionIds,

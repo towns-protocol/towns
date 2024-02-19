@@ -4,7 +4,7 @@ import {
     isUserDeviceStreamId,
     isUserSettingsStreamId,
     isUserStreamId,
-    isUserToDeviceStreamId,
+    isUserInboxStreamId,
 } from './id'
 import { check, dlog, dlogError } from '@river/dlog'
 import { Stream } from './stream'
@@ -249,7 +249,7 @@ export class SyncedStreamsExtension {
     private priorityFromStreamId(streamId: string) {
         if (
             isUserDeviceStreamId(streamId) ||
-            isUserToDeviceStreamId(streamId) ||
+            isUserInboxStreamId(streamId) ||
             isUserStreamId(streamId) ||
             isUserSettingsStreamId(streamId)
         ) {

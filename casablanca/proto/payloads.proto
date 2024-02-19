@@ -157,7 +157,7 @@ message FullyReadMarkers {
 }
 
 /** 
-* ToDeviceMessage payload for group session key sharing.
+* UserInboxMessage payload for group session key sharing.
 */
 message SessionKeys {
     repeated string keys = 1;

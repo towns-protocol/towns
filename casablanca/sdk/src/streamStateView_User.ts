@@ -1,5 +1,5 @@
 import TypedEmitter from 'typed-emitter'
-import { ParsedEvent, RemoteTimelineEvent } from './types'
+import { RemoteTimelineEvent } from './types'
 import {
     MembershipOp,
     Snapshot,
@@ -17,7 +17,6 @@ export class StreamStateView_User extends StreamStateView_AbstractContent {
     readonly streamId: string
     readonly memberships: StreamStateView_UserStreamMembership
     readonly streamMemberships: { [key: string]: UserPayload_UserMembership } = {}
-    readonly toDeviceMessages: ParsedEvent[] = []
 
     constructor(streamId: string) {
         super()

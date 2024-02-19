@@ -2,11 +2,11 @@ import TypedEmitter from 'typed-emitter'
 import { ConfirmedTimelineEvent, ParsedEvent, RemoteTimelineEvent } from './types'
 import {
     Snapshot,
-    UserToDevicePayload,
-    UserToDevicePayload_Snapshot,
-    UserToDevicePayload_Snapshot_DeviceSummary,
-    UserToDevicePayload_GroupEncryptionSessions,
-    UserToDevicePayload_Ack,
+    UserInboxPayload,
+    UserInboxPayload_Snapshot,
+    UserInboxPayload_Snapshot_DeviceSummary,
+    UserInboxPayload_GroupEncryptionSessions,
+    UserInboxPayload_Ack,
 } from '@river/proto'
 import { StreamStateView_AbstractContent } from './streamStateView_AbstractContent'
 import { StreamStateView_UserStreamMembership } from './streamStateView_Membership'
@@ -14,13 +14,13 @@ import { check } from '@river/dlog'
 import { logNever } from './check'
 import { StreamEncryptionEvents, StreamStateEvents } from './streamEvents'
 
-export class StreamStateView_UserToDevice extends StreamStateView_AbstractContent {
+export class StreamStateView_UserInbox extends StreamStateView_AbstractContent {
     readonly streamId: string
     readonly memberships: StreamStateView_UserStreamMembership
-    deviceSummary: Record<string, UserToDevicePayload_Snapshot_DeviceSummary> = {}
+    deviceSummary: Record<string, UserInboxPayload_Snapshot_DeviceSummary> = {}
     pendingGroupSessions: Record<
         string,
-        { creatorUserId: string; value: UserToDevicePayload_GroupEncryptionSessions }
+        { creatorUserId: string; value: UserInboxPayload_GroupEncryptionSessions }
     > = {}
 
     constructor(streamId: string) {
@@ -31,7 +31,7 @@ export class StreamStateView_UserToDevice extends StreamStateView_AbstractConten
 
     applySnapshot(
         snapshot: Snapshot,
-        content: UserToDevicePayload_Snapshot,
+        content: UserInboxPayload_Snapshot,
         _emitter: TypedEmitter<StreamEncryptionEvents> | undefined,
     ): void {
         Object.entries(content.deviceSummary).map(([deviceId, summary]) => {
@@ -58,8 +58,8 @@ export class StreamStateView_UserToDevice extends StreamStateView_AbstractConten
         encryptionEmitter: TypedEmitter<StreamEncryptionEvents> | undefined,
         _stateEmitter: TypedEmitter<StreamStateEvents> | undefined,
     ): void {
-        check(event.remoteEvent.event.payload.case === 'userToDevicePayload')
-        const payload: UserToDevicePayload = event.remoteEvent.event.payload.value
+        check(event.remoteEvent.event.payload.case === 'userInboxPayload')
+        const payload: UserInboxPayload = event.remoteEvent.event.payload.value
         switch (payload.content.case) {
             case 'inception':
                 break
@@ -81,8 +81,8 @@ export class StreamStateView_UserToDevice extends StreamStateView_AbstractConten
         _encryptionEmitter: TypedEmitter<StreamEncryptionEvents> | undefined,
         _stateEmitter: TypedEmitter<StreamStateEvents> | undefined,
     ): void {
-        check(event.remoteEvent.event.payload.case === 'userToDevicePayload')
-        const payload: UserToDevicePayload = event.remoteEvent.event.payload.value
+        check(event.remoteEvent.event.payload.case === 'userInboxPayload')
+        const payload: UserInboxPayload = event.remoteEvent.event.payload.value
         switch (payload.content.case) {
             case 'inception':
                 break
@@ -116,13 +116,13 @@ export class StreamStateView_UserToDevice extends StreamStateView_AbstractConten
 
     private addGroupSessions(
         creatorUserId: string,
-        content: UserToDevicePayload_GroupEncryptionSessions,
+        content: UserInboxPayload_GroupEncryptionSessions,
         encryptionEmitter: TypedEmitter<StreamEncryptionEvents> | undefined,
     ) {
         encryptionEmitter?.emit('newGroupSessions', content, creatorUserId)
     }
 
-    private updateDeviceSummary(event: ParsedEvent, content: UserToDevicePayload_Ack) {
+    private updateDeviceSummary(event: ParsedEvent, content: UserInboxPayload_Ack) {
         const summary = this.deviceSummary[content.deviceKey]
         if (summary) {
             if (summary.upperBound <= content.miniblockNum) {

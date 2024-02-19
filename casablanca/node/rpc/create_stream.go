@@ -85,8 +85,8 @@ func (s *Service) createStream(ctx context.Context, req *CreateStreamRequest) (*
 	case *UserSettingsPayload_Inception:
 		resp, err = s.createStream_UserPrefix(ctx, log, parsedEvents, inception.StreamId, STREAM_USER_SETTINGS_PREFIX_DASH)
 
-	case *UserToDevicePayload_Inception:
-		resp, err = s.createStream_UserPrefix(ctx, log, parsedEvents, inception.StreamId, STREAM_USER_TO_DEVICE_PREFIX_DASH)
+	case *UserInboxPayload_Inception:
+		resp, err = s.createStream_UserPrefix(ctx, log, parsedEvents, inception.StreamId, STREAM_USER_INBOX_PREFIX_DASH)
 
 	case *MediaPayload_Inception:
 		resp, err = s.createStream_Media(ctx, log, parsedEvents, inception)

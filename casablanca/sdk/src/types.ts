@@ -22,11 +22,11 @@ import {
     MediaPayload_Chunk,
     DmChannelPayload_Inception,
     GdmChannelPayload_Inception,
-    UserToDevicePayload_Ack,
-    UserToDevicePayload_Inception,
+    UserInboxPayload_Ack,
+    UserInboxPayload_Inception,
     CommonPayload,
     UserDeviceKeyPayload_EncryptionDevice,
-    UserToDevicePayload_GroupEncryptionSessions,
+    UserInboxPayload_GroupEncryptionSessions,
     CommonPayload_KeyFulfillment,
     CommonPayload_KeySolicitation,
     SyncCookie,
@@ -565,11 +565,11 @@ export const make_UserDeviceKeyPayload_Inception = (
     }
 }
 
-export const make_UserToDevicePayload_Inception = (
-    value: PlainMessage<UserToDevicePayload_Inception>,
+export const make_UserInboxPayload_Inception = (
+    value: PlainMessage<UserInboxPayload_Inception>,
 ): PlainMessage<StreamEvent>['payload'] => {
     return {
-        case: 'userToDevicePayload',
+        case: 'userInboxPayload',
         value: {
             content: {
                 case: 'inception',
@@ -607,11 +607,11 @@ export const make_ChannelPayload_Membership = (
     }
 }
 
-export const make_UserToDevicePayload_GroupEncryptionSessions = (
-    value: PlainMessage<UserToDevicePayload_GroupEncryptionSessions>,
+export const make_UserInboxPayload_GroupEncryptionSessions = (
+    value: PlainMessage<UserInboxPayload_GroupEncryptionSessions>,
 ): PlainMessage<StreamEvent>['payload'] => {
     return {
-        case: 'userToDevicePayload',
+        case: 'userInboxPayload',
         value: {
             content: {
                 case: 'groupEncryptionSessions',
@@ -621,11 +621,11 @@ export const make_UserToDevicePayload_GroupEncryptionSessions = (
     }
 }
 
-export const make_UserToDevicePayload_Ack = (
-    value: PlainMessage<UserToDevicePayload_Ack>,
+export const make_UserInboxPayload_Ack = (
+    value: PlainMessage<UserInboxPayload_Ack>,
 ): PlainMessage<StreamEvent>['payload'] => {
     return {
-        case: 'userToDevicePayload',
+        case: 'userInboxPayload',
         value: {
             content: {
                 case: 'ack',

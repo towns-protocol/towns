@@ -87,9 +87,9 @@ func make_SnapshotContent(iPayload IsInceptionPayload, creatorId string) (IsSnap
 				Inception: payload,
 			},
 		}, nil
-	case *UserToDevicePayload_Inception:
-		return &Snapshot_UserToDeviceContent{
-			UserToDeviceContent: &UserToDevicePayload_Snapshot{
+	case *UserInboxPayload_Inception:
+		return &Snapshot_UserInboxContent{
+			UserInboxContent: &UserInboxPayload_Snapshot{
 				Inception: payload,
 			},
 		}, nil
@@ -140,12 +140,12 @@ func Update_Snapshot(iSnapshot *Snapshot, event *ParsedEvent, miniblockNum int64
 		return update_Snapshot_UserSettings(iSnapshot, payload.UserSettingsPayload)
 	case *StreamEvent_UserDeviceKeyPayload:
 		return update_Snapshot_UserDeviceKey(iSnapshot, payload.UserDeviceKeyPayload)
-	case *StreamEvent_UserToDevicePayload:
+	case *StreamEvent_UserInboxPayload:
 		creator, err := shared.AddressHex(event.Event.CreatorAddress)
 		if err != nil {
 			return err
 		}
-		return update_Snapshot_UserToDevice(iSnapshot, payload.UserToDevicePayload, creator, miniblockNum)
+		return update_Snapshot_UserInbox(iSnapshot, payload.UserInboxPayload, creator, miniblockNum)
 	case *StreamEvent_CommonPayload:
 		creator, err := shared.AddressHex(event.Event.CreatorAddress)
 		if err != nil {
@@ -374,64 +374,64 @@ func update_Snapshot_UserDeviceKey(iSnapshot *Snapshot, userDeviceKeyPayload *Us
 	}
 }
 
-func update_Snapshot_UserToDevice(
+func update_Snapshot_UserInbox(
 	iSnapshot *Snapshot,
-	userToDevicePayload *UserToDevicePayload,
+	userInboxPayload *UserInboxPayload,
 	senderId string,
 	miniblockNum int64,
 ) error {
-	snapshot := iSnapshot.Content.(*Snapshot_UserToDeviceContent)
+	snapshot := iSnapshot.Content.(*Snapshot_UserInboxContent)
 	if snapshot == nil {
 		return RiverError(Err_INVALID_ARGUMENT, "blockheader snapshot is not a user to device snapshot")
 	}
-	switch content := userToDevicePayload.Content.(type) {
-	case *UserToDevicePayload_Inception_:
+	switch content := userInboxPayload.Content.(type) {
+	case *UserInboxPayload_Inception_:
 		return RiverError(Err_INVALID_ARGUMENT, "cannot update blockheader with inception event")
-	case *UserToDevicePayload_GroupEncryptionSessions_:
-		if snapshot.UserToDeviceContent.DeviceSummary == nil {
-			snapshot.UserToDeviceContent.DeviceSummary = make(map[string]*UserToDevicePayload_Snapshot_DeviceSummary)
+	case *UserInboxPayload_GroupEncryptionSessions_:
+		if snapshot.UserInboxContent.DeviceSummary == nil {
+			snapshot.UserInboxContent.DeviceSummary = make(map[string]*UserInboxPayload_Snapshot_DeviceSummary)
 		}
 		// loop over keys in the ciphertext map
 		for deviceKey := range content.GroupEncryptionSessions.Ciphertexts {
-			if summary, ok := snapshot.UserToDeviceContent.DeviceSummary[deviceKey]; ok {
+			if summary, ok := snapshot.UserInboxContent.DeviceSummary[deviceKey]; ok {
 				summary.UpperBound = miniblockNum
 			} else {
-				snapshot.UserToDeviceContent.DeviceSummary[deviceKey] = &UserToDevicePayload_Snapshot_DeviceSummary{
+				snapshot.UserInboxContent.DeviceSummary[deviceKey] = &UserInboxPayload_Snapshot_DeviceSummary{
 					LowerBound: miniblockNum,
 					UpperBound: miniblockNum,
 				}
 			}
 		}
 		// cleanup devices
-		cleanup_Snapshot_UserToDevice(snapshot, miniblockNum)
+		cleanup_Snapshot_UserInbox(snapshot, miniblockNum)
 
 		return nil
-	case *UserToDevicePayload_Ack_:
-		if snapshot.UserToDeviceContent.DeviceSummary == nil {
+	case *UserInboxPayload_Ack_:
+		if snapshot.UserInboxContent.DeviceSummary == nil {
 			return nil
 		}
 		deviceKey := content.Ack.DeviceKey
-		if summary, ok := snapshot.UserToDeviceContent.DeviceSummary[deviceKey]; ok {
+		if summary, ok := snapshot.UserInboxContent.DeviceSummary[deviceKey]; ok {
 			if summary.UpperBound <= content.Ack.MiniblockNum {
-				delete(snapshot.UserToDeviceContent.DeviceSummary, deviceKey)
+				delete(snapshot.UserInboxContent.DeviceSummary, deviceKey)
 			} else {
 				summary.LowerBound = content.Ack.MiniblockNum + 1
 			}
 		}
-		cleanup_Snapshot_UserToDevice(snapshot, miniblockNum)
+		cleanup_Snapshot_UserInbox(snapshot, miniblockNum)
 		return nil
 	default:
-		return RiverError(Err_INVALID_ARGUMENT, "unknown user to device payload type %T", userToDevicePayload.Content)
+		return RiverError(Err_INVALID_ARGUMENT, "unknown user to device payload type %T", userInboxPayload.Content)
 	}
 }
 
-func cleanup_Snapshot_UserToDevice(snapshot *Snapshot_UserToDeviceContent, currentMiniblockNum int64) {
+func cleanup_Snapshot_UserInbox(snapshot *Snapshot_UserInboxContent, currentMiniblockNum int64) {
 	maxGenerations := int64(3600) // blocks are made every 2 seconds if events exist. 3600 would be 5 days of blocks 24 hours a day
-	if snapshot.UserToDeviceContent.DeviceSummary != nil {
-		for deviceKey, deviceSummary := range snapshot.UserToDeviceContent.DeviceSummary {
+	if snapshot.UserInboxContent.DeviceSummary != nil {
+		for deviceKey, deviceSummary := range snapshot.UserInboxContent.DeviceSummary {
 			isOlderThanMaxGenerations := (currentMiniblockNum - deviceSummary.LowerBound) > maxGenerations
 			if isOlderThanMaxGenerations {
-				delete(snapshot.UserToDeviceContent.DeviceSummary, deviceKey)
+				delete(snapshot.UserInboxContent.DeviceSummary, deviceKey)
 			}
 		}
 	}

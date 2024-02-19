@@ -7,7 +7,7 @@ import { EncryptedContent } from './encryptedContentTypes'
 import { shortenHexString, dlog, dlogError, DLogger, check } from '@river/dlog'
 import { isDefined } from './check'
 import { GROUP_ENCRYPTION_ALGORITHM, GroupEncryptionSession, UserDevice } from '@river/encryption'
-import { SessionKeys, UserToDevicePayload_GroupEncryptionSessions } from '@river/proto'
+import { SessionKeys, UserInboxPayload_GroupEncryptionSessions } from '@river/proto'
 import {
     KeySolicitationContent,
     make_CommonPayload_KeyFulfillment,
@@ -90,7 +90,7 @@ export class DecryptionExtensions extends (EventEmitter as new () => TypedEmitte
     private onStopFn?: () => void
     private queues = {
         priorityTasks: new Array<() => Promise<void>>(),
-        newGroupSession: new Array<UserToDevicePayload_GroupEncryptionSessions>(),
+        newGroupSession: new Array<UserInboxPayload_GroupEncryptionSessions>(),
         encryptedContent: new Array<EncryptedContentItem>(),
         decryptionRetries: new Array<DecryptionRetryItem>(),
         missingKeys: new Array<MissingKeysItem>(),
@@ -122,7 +122,7 @@ export class DecryptionExtensions extends (EventEmitter as new () => TypedEmitte
 
         this.log.debug('new DecryptionExtensions', { userDevice })
         const onNewGroupSessions = (
-            sessions: UserToDevicePayload_GroupEncryptionSessions,
+            sessions: UserInboxPayload_GroupEncryptionSessions,
             _senderId: string,
         ) => {
             this.queues.newGroupSession.push(sessions)
@@ -200,7 +200,7 @@ export class DecryptionExtensions extends (EventEmitter as new () => TypedEmitte
         // enqueue a task to upload device keys
         this.queues.priorityTasks.push(() => this.client.uploadDeviceKeys())
         // enqueue a task to download new to-device messages
-        this.queues.priorityTasks.push(() => this.client.downloadNewToDeviceMessages())
+        this.queues.priorityTasks.push(() => this.client.downloadNewInboxMessages())
         // start the tick loop
         this.checkStartTicking()
     }
@@ -316,7 +316,7 @@ export class DecryptionExtensions extends (EventEmitter as new () => TypedEmitte
      * re-enqueue any decryption failures with matching session id
      */
     private async processNewGroupSession(
-        session: UserToDevicePayload_GroupEncryptionSessions,
+        session: UserInboxPayload_GroupEncryptionSessions,
     ): Promise<void> {
         this.log.debug('processNewGroupSession', session)
         // check if this message is to our device
@@ -368,7 +368,7 @@ export class DecryptionExtensions extends (EventEmitter as new () => TypedEmitte
         }
         // if we processed them all, ack the stream
         if (this.queues.newGroupSession.length === 0) {
-            await this.client.ackToDeviceStream()
+            await this.client.ackInboxStream()
         }
     }
 
@@ -379,11 +379,11 @@ export class DecryptionExtensions extends (EventEmitter as new () => TypedEmitte
     private async processEncryptedContentItem(item: EncryptedContentItem): Promise<void> {
         this.log.debug('processEncryptedContentItem', item)
         try {
-            check(isDefined(this.client.userToDeviceStreamId), 'userToDeviceStreamId not found')
-            const toDeviceStream = this.client.stream(this.client.userToDeviceStreamId)
-            check(isDefined(toDeviceStream), 'toDeviceStream not found')
+            check(isDefined(this.client.userInboxStreamId), 'userInboxStreamId not found')
+            const inboxStream = this.client.stream(this.client.userInboxStreamId)
+            check(isDefined(inboxStream), 'inboxStream not found')
             if (
-                toDeviceStream.view.userToDeviceContent.hasPendingSessionId(
+                inboxStream.view.userInboxContent.hasPendingSessionId(
                     this.userDevice.deviceKey,
                     item.encryptedContent.content.sessionId,
                 )

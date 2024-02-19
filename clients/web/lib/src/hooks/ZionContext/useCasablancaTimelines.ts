@@ -353,9 +353,9 @@ function toTownsContent_fromParsedEvent(
             return {
                 error: `${description} userSettingsPayload not supported?`,
             }
-        case 'userToDevicePayload':
+        case 'userInboxPayload':
             return {
-                error: `${description} userToDevicePayload not supported?`,
+                error: `${description} userInboxPayload not supported?`,
             }
         case 'miniblockHeader':
             return toTownsContent_MiniblockHeader(

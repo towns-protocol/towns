@@ -42,9 +42,9 @@ import {
     isUserDeviceStreamId,
     isUserSettingsStreamId,
     isUserStreamId,
-    isUserToDeviceStreamId,
+    isUserInboxStreamId,
 } from './id'
-import { StreamStateView_UserToDevice } from './streamStateView_UserToDevice'
+import { StreamStateView_UserInbox } from './streamStateView_UserInbox'
 import { StreamStateView_CommonContent } from './streamStateView_CommonContent'
 import { DecryptedContent, DecryptedContentError } from './encryptedContentTypes'
 import { StreamStateView_UnknownContent } from './streamStateView_UnknownContent'
@@ -132,13 +132,13 @@ export class StreamStateView {
         return this._userDeviceKeyContent
     }
 
-    private readonly _userToDeviceContent?: StreamStateView_UserToDevice
-    get userToDeviceContent(): StreamStateView_UserToDevice {
+    private readonly _userInboxContent?: StreamStateView_UserInbox
+    get userInboxContent(): StreamStateView_UserInbox {
         check(
-            isDefined(this._userToDeviceContent),
-            `userToDeviceContent not defined for ${this.contentKind}`,
+            isDefined(this._userInboxContent),
+            `userInboxContent not defined for ${this.contentKind}`,
         )
-        return this._userToDeviceContent
+        return this._userInboxContent
     }
 
     private readonly _mediaContent?: StreamStateView_Media
@@ -176,9 +176,9 @@ export class StreamStateView {
         } else if (isUserDeviceStreamId(streamId)) {
             this.contentKind = 'userDeviceKeyContent'
             this._userDeviceKeyContent = new StreamStateView_UserDeviceKeys(userId, streamId)
-        } else if (isUserToDeviceStreamId(streamId)) {
-            this.contentKind = 'userToDeviceContent'
-            this._userToDeviceContent = new StreamStateView_UserToDevice(streamId)
+        } else if (isUserInboxStreamId(streamId)) {
+            this.contentKind = 'userInboxContent'
+            this._userInboxContent = new StreamStateView_UserInbox(streamId)
         } else {
             throw new Error(`Stream doesn't have a content kind ${streamId}`)
         }
@@ -240,8 +240,8 @@ export class StreamStateView {
             case 'userSettingsContent':
                 this.userSettingsContent.applySnapshot(snapshot, snapshot.content.value)
                 break
-            case 'userToDeviceContent':
-                this.userToDeviceContent.applySnapshot(
+            case 'userInboxContent':
+                this.userInboxContent.applySnapshot(
                     snapshot,
                     snapshot.content.value,
                     encryptionEmitter,
@@ -692,8 +692,8 @@ export class StreamStateView {
                 return this.userSettingsContent
             case 'userDeviceKeyContent':
                 return this.userDeviceKeyContent
-            case 'userToDeviceContent':
-                return this.userToDeviceContent
+            case 'userInboxContent':
+                return this.userInboxContent
             case 'mediaContent':
                 return this.mediaContent
             case undefined:

@@ -90,8 +90,8 @@ func (ru *caeRules) canAddEvent() ruleBuilder {
 		return ru.canAddUserDeviceKeyPayload(payload)
 	case *StreamEvent_UserSettingsPayload:
 		return ru.canAddUserSettingsPayload(payload)
-	case *StreamEvent_UserToDevicePayload:
-		return ru.canAddUserToDevicePayload(payload)
+	case *StreamEvent_UserInboxPayload:
+		return ru.canAddUserInboxPayload(payload)
 	case *StreamEvent_MediaPayload:
 		return ru.canAddMediaPayload(payload)
 	case *StreamEvent_CommonPayload:
@@ -252,15 +252,15 @@ func (ru *caeRules) canAddUserSettingsPayload(payload *StreamEvent_UserSettingsP
 	}
 }
 
-func (ru *caeRules) canAddUserToDevicePayload(payload *StreamEvent_UserToDevicePayload) ruleBuilder {
-	switch content := payload.UserToDevicePayload.Content.(type) {
-	case *UserToDevicePayload_Inception_:
+func (ru *caeRules) canAddUserInboxPayload(payload *StreamEvent_UserInboxPayload) ruleBuilder {
+	switch content := payload.UserInboxPayload.Content.(type) {
+	case *UserInboxPayload_Inception_:
 		return builder().
 			fail(invalidContentType(content))
-	case *UserToDevicePayload_GroupEncryptionSessions_:
+	case *UserInboxPayload_GroupEncryptionSessions_:
 		return builder().
 			check(ru.pass)
-	case *UserToDevicePayload_Ack_:
+	case *UserInboxPayload_Ack_:
 		return builder().
 			check(ru.creatorIsMember)
 	default:

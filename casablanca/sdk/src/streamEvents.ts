@@ -2,7 +2,7 @@ import {
     ChannelProperties,
     SnapshotCaseType,
     FullyReadMarker,
-    UserToDevicePayload_GroupEncryptionSessions,
+    UserInboxPayload_GroupEncryptionSessions,
 } from '@river/proto'
 import {
     ClientInitStatus,
@@ -25,10 +25,7 @@ export type StreamChange = {
 
 /// Encryption events, emitted by streams, always emitted.
 export type StreamEncryptionEvents = {
-    newGroupSessions: (
-        sessions: UserToDevicePayload_GroupEncryptionSessions,
-        senderId: string,
-    ) => void
+    newGroupSessions: (sessions: UserInboxPayload_GroupEncryptionSessions, senderId: string) => void
     newEncryptedContent: (streamId: string, eventId: string, content: EncryptedContent) => void
     newKeySolicitation: (
         streamId: string,

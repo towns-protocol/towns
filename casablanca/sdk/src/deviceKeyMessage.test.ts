@@ -29,12 +29,12 @@ describe('deviceKeyMessageTest', () => {
         await alicesClient.initializeUser()
         // Bob gets created, starts syncing, and uploads his device keys.
         const bobsUserId = bobsClient.userId
-        const bobSelfToDevice = makeDonePromise()
+        const bobSelfDeviceKeyDone = makeDonePromise()
         bobsClient.once(
             'userDeviceKeyMessage',
             (streamId: string, userId: string, userDevice: UserDevice): void => {
                 log('userDeviceKeyMessage for Bob', streamId, userId, userDevice)
-                bobSelfToDevice.runAndDone(() => {
+                bobSelfDeviceKeyDone.runAndDone(() => {
                     expect(streamId).toBe(bobUserDeviceKeyStreamId)
                     expect(userId).toBe(bobsUserId)
                     expect(userDevice.deviceKey).toBeDefined()
@@ -44,7 +44,7 @@ describe('deviceKeyMessageTest', () => {
         bobsClient.startSync()
         alicesClient.startSync()
         const bobUserDeviceKeyStreamId = bobsClient.userDeviceKeyStreamId
-        await bobSelfToDevice.expectToSucceed()
+        await bobSelfDeviceKeyDone.expectToSucceed()
     })
 
     test('bobDownloadsOwnDeviceKeys', async () => {
@@ -53,12 +53,12 @@ describe('deviceKeyMessageTest', () => {
         await expect(bobsClient.initializeUser()).toResolve()
         bobsClient.startSync()
         const bobsUserId = bobsClient.userId
-        const bobSelfToDevice = makeDonePromise()
+        const bobSelfDeviceKeyDone = makeDonePromise()
         bobsClient.once(
             'userDeviceKeyMessage',
             (streamId: string, userId: string, userDevice: UserDevice): void => {
                 log('userDeviceKeyMessage for Bob', streamId, userId, userDevice)
-                bobSelfToDevice.runAndDone(() => {
+                bobSelfDeviceKeyDone.runAndDone(() => {
                     expect(streamId).toBe(bobUserDeviceKeyStreamId)
                     expect(userId).toBe(bobsUserId)
                     expect(userDevice.deviceKey).toBeDefined()
@@ -66,7 +66,7 @@ describe('deviceKeyMessageTest', () => {
             },
         )
         const bobUserDeviceKeyStreamId = bobsClient.userDeviceKeyStreamId
-        await bobSelfToDevice.expectToSucceed()
+        await bobSelfDeviceKeyDone.expectToSucceed()
         const deviceKeys = await bobsClient.downloadUserDeviceInfo([bobsUserId])
         expect(deviceKeys[bobsUserId]).toBeDefined()
     })
@@ -79,12 +79,12 @@ describe('deviceKeyMessageTest', () => {
         bobsClient.startSync()
         alicesClient.startSync()
         const alicesUserId = alicesClient.userId
-        const alicesSelfToDevice = makeDonePromise()
+        const alicesSelfDeviceKeyDone = makeDonePromise()
         alicesClient.once(
             'userDeviceKeyMessage',
             (streamId: string, userId: string, userDevice: UserDevice): void => {
                 log('userDeviceKeyMessage for Alice', streamId, userId, userDevice)
-                alicesSelfToDevice.runAndDone(() => {
+                alicesSelfDeviceKeyDone.runAndDone(() => {
                     expect(streamId).toBe(aliceUserDeviceKeyStreamId)
                     expect(userId).toBe(alicesUserId)
                     expect(userDevice.deviceKey).toBeDefined()
@@ -105,13 +105,13 @@ describe('deviceKeyMessageTest', () => {
         alicesClient.startSync()
         const bobsUserId = bobsClient.userId
         const alicesUserId = alicesClient.userId
-        const bobSelfToDevice = makeDonePromise()
+        const bobSelfDeviceKeyDone = makeDonePromise()
         // bobs client should sync userDeviceKeyMessage twice (once for alice, once for bob)
         bobsClient.on(
             'userDeviceKeyMessage',
             (streamId: string, userId: string, userDevice: UserDevice): void => {
                 log('userDeviceKeyMessage', streamId, userId, userDevice)
-                bobSelfToDevice.runAndDone(() => {
+                bobSelfDeviceKeyDone.runAndDone(() => {
                     expect([bobUserDeviceKeyStreamId, aliceUserDeviceKeyStreamId]).toContain(
                         streamId,
                     )
@@ -138,7 +138,7 @@ describe('deviceKeyMessageTest', () => {
         alicesClient.startSync()
         const bobsUserId = bobsClient.userId
         const alicesUserId = alicesClient.userId
-        const bobSelfToDevice = makeDonePromise()
+        const bobSelfDeviceKeyDone = makeDonePromise()
 
         // Alice should restart her cryptoBackend multiple times, each time uploading new device keys.
         let tenthDeviceKey = ''
@@ -156,7 +156,7 @@ describe('deviceKeyMessageTest', () => {
             'userDeviceKeyMessage',
             (streamId: string, userId: string, userDevice: UserDevice): void => {
                 log('userDeviceKeyMessage', streamId, userId, userDevice)
-                bobSelfToDevice.runAndDone(() => {
+                bobSelfDeviceKeyDone.runAndDone(() => {
                     expect([bobUserDeviceKeyStreamId, aliceUserDeviceKeyStreamId]).toContain(
                         streamId,
                     )
