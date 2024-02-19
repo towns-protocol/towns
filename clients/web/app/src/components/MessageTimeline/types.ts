@@ -1,6 +1,7 @@
 import {
     EncryptedMessageRenderEvent,
     MessageRenderEvent,
+    MissingMessageRenderEvent,
     NewDividerRenderEvent,
     RedactedMessageRenderEvent,
     RenderEvent,
@@ -18,7 +19,11 @@ export type ListItem =
     | {
           key: string
           type: 'message'
-          item: MessageRenderEvent | EncryptedMessageRenderEvent | RedactedMessageRenderEvent
+          item:
+              | MessageRenderEvent
+              | EncryptedMessageRenderEvent
+              | RedactedMessageRenderEvent
+              | MissingMessageRenderEvent
       }
     | { key: string; type: 'thread-update'; item: ThreadUpdateRenderEvent }
     | {

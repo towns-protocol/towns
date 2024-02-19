@@ -37,7 +37,7 @@ export const SpaceThreads = () => {
 
     const filteredThreadRoots = useMemo(() => {
         return threadRoots.filter((t) => {
-            return t.thread.isParticipating && !!t.thread.parentEvent
+            return t.thread.isParticipating
         })
     }, [threadRoots])
 

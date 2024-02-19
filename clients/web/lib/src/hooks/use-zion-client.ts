@@ -153,6 +153,11 @@ interface ZionClientImpl {
           }
         | undefined
     >
+    scrollbackToEvent: (
+        roomId: string,
+        eventId: string,
+        limit: number,
+    ) => Promise<boolean | undefined>
     sendMessage: (roomId: string, message: string, options?: SendMessageOptions) => Promise<void>
     retrySendMessage: (roomId: string, localEventId: string) => Promise<void>
     sendReaction: (roomId: string, eventId: string, reaction: string) => Promise<void>
@@ -239,6 +244,7 @@ export function useZionClient(): ZionClientImpl {
         removeUser: useWithCatch(client?.removeUser),
         resetFullyReadMarkers,
         scrollback: useWithCatch(client?.scrollback),
+        scrollbackToEvent: useWithCatch(client?.scrollbackToEvent),
         sendMessage: useWithCatch(client?.sendMessage),
         retrySendMessage: useWithCatch(client?.retrySendMessage),
         sendReaction: useWithCatch(client?.sendReaction),

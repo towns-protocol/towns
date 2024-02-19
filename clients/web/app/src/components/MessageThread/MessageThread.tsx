@@ -2,7 +2,9 @@ import React, { useMemo } from 'react'
 import {
     Channel,
     LookupUser,
+    RoomMessageMissingEvent,
     SendMessageOptions,
+    TimelineEvent,
     ZTEvent,
     useMyProfile,
     useTimelineThread,
@@ -36,7 +38,27 @@ export const MessageThread = (props: {
 }) => {
     const { parentId, spaceId, channelId, channelLabel, spaceChannels: channels } = props
     const { parent, messages: unthrottledMessages } = useTimelineThread(channelId, parentId)
-    const parentMessage = parent?.parentEvent
+    let parentMessage = parent?.parentEvent
+
+    if (parent && !parentMessage) {
+        parentMessage = {
+            eventId: parentId,
+            eventNum: 0n,
+            createdAtEpocMs: 0,
+            fallbackContent: '',
+            isEncrypting: false,
+            isLocalPending: false,
+            isSendFailed: false,
+            isMentioned: false,
+            isRedacted: false,
+            sender: { id: '', displayName: '' },
+            content: {
+                kind: ZTEvent.RoomMessageMissing,
+                eventId: parentId,
+            } satisfies RoomMessageMissingEvent,
+        } satisfies TimelineEvent
+    }
+
     const { isTouch } = useDevice()
     const location = useLocation()
     const searchParams = new URLSearchParams(location.search)

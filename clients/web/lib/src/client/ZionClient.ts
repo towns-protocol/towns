@@ -1557,6 +1557,23 @@ export class ZionClient implements EntitlementsDelegate {
         }
     }
 
+    public async scrollbackToEvent(
+        roomId: string,
+        eventId: string,
+        limit: number,
+    ): Promise<boolean> {
+        if (!this.casablancaClient) {
+            throw new Error('casablanca client is undefined')
+        }
+        for (let i = 0; i < limit; i++) {
+            await this.casablancaClient.scrollback(roomId)
+            if (this.casablancaClient.stream(roomId)?.view.events.get(eventId)) {
+                return true
+            }
+        }
+        return false
+    }
+
     /************************************************
      * Wallet linking
      */

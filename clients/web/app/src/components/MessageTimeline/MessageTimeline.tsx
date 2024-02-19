@@ -19,9 +19,11 @@ import { ListItem } from './types'
 import {
     EncryptedMessageRenderEvent,
     MessageRenderEvent,
+    MissingMessageRenderEvent,
     RedactedMessageRenderEvent,
     RenderEventType,
     getEventsByDate,
+    isMissingMessage,
     isRedactedRoomMessage,
     isRoomMessage,
 } from './util/getEventsByDate'
@@ -229,6 +231,7 @@ export const MessageTimeline = (props: Props) => {
                                 | MessageRenderEvent
                                 | EncryptedMessageRenderEvent
                                 | RedactedMessageRenderEvent
+                                | MissingMessageRenderEvent
 
                             if (isRoomMessage(event)) {
                                 item = {
@@ -251,6 +254,13 @@ export const MessageTimeline = (props: Props) => {
                                     }
                                 } else {
                                     item = null
+                                }
+                            } else if (isMissingMessage(event)) {
+                                item = {
+                                    type: RenderEventType.MissingMessage,
+                                    key: stableKey,
+                                    event,
+                                    displayContext: getMessageDisplayContext(index, events.length),
                                 }
                             } else {
                                 item = {

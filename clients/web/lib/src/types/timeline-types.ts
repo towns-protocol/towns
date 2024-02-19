@@ -59,6 +59,7 @@ export enum ZTEvent {
     RoomMember = 'm.room.member',
     RoomMessage = 'm.room.message',
     RoomMessageEncrypted = 'm.room.encrypted',
+    RoomMessageMissing = 'm.room.missing',
     RoomName = 'm.room.name',
     RoomProperties = 'm.room.properties',
     RoomTopic = 'm.room.topic',
@@ -82,6 +83,7 @@ export type TimelineEvent_OneOf =
     | RoomAvatarEvent
     | RoomCreateEvent
     | RoomMessageEncryptedEvent
+    | RoomMessageMissingEvent
     | RoomMemberEvent
     | RoomMessageEvent
     | RoomNameEvent
@@ -155,6 +157,11 @@ export interface RoomEncryptionEvent {
 export interface RoomMessageEncryptedEvent {
     kind: ZTEvent.RoomMessageEncrypted
     error?: DecryptedContentError
+}
+
+export interface RoomMessageMissingEvent {
+    kind: ZTEvent.RoomMessageMissing
+    eventId: string
 }
 
 export interface RoomMemberEvent {
@@ -463,6 +470,8 @@ export function getFallbackContent(
                 return `KeySolicitation deviceKey: ${content.deviceKey}, newDevice: true`
             }
             return `KeySolicitation deviceKey: ${content.deviceKey} sessionIds: ${content.sessionIds.length}`
+        case ZTEvent.RoomMessageMissing:
+            return `eventId: ${content.eventId}`
         default:
             staticAssertNever(content)
     }

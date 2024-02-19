@@ -8,6 +8,7 @@ import { TimelineThreadUpdates } from './items/ThreadUpdates'
 import { RenderEvent, RenderEventType } from '../MessageTimeline/util/getEventsByDate'
 import { RoomCreate } from './items/RoomCreate'
 import { RoomProperties } from './items/RoomProperties'
+import { MissingMessageItem } from './items/MissingMessageItem'
 
 export const MessageTimelineItem = React.memo(
     (props: {
@@ -76,6 +77,10 @@ export const MessageTimelineItem = React.memo(
             case RenderEventType.UserMessages: {
                 /* UserMessages (grouped per user) are flatmapped into Message events */
                 return null
+            }
+
+            case RenderEventType.MissingMessage: {
+                return <MissingMessageItem key={itemData.key} />
             }
 
             default: {

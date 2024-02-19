@@ -7,6 +7,7 @@ import {
     RoomMemberEvent,
     RoomMessageEncryptedEvent,
     RoomMessageEvent,
+    RoomMessageMissingEvent,
     RoomPropertiesEvent,
     ThreadStats,
     TimelineEvent,
@@ -20,6 +21,7 @@ export enum RenderEventType {
     Message = 'Message',
     EncryptedMessage = 'EncryptedMessage',
     RedactedMessage = 'RedactedMessage',
+    MissingMessage = 'MissingMessage',
     RoomMember = 'RoomMember',
     AccumulatedRoomMembers = 'AccumulatedRoomMembers',
     RoomCreate = 'RoomCreate',
@@ -48,6 +50,11 @@ export type ZRoomMessageRedactedEvent = Omit<TimelineEvent, 'content'> & {
     isRedacted: true
 }
 
+export type ZRoomMissingMessageEvent = Omit<TimelineEvent, 'content'> & {
+    content: RoomMessageMissingEvent
+    isRedacted: false
+}
+
 export type ZRoomMemberEvent = Omit<TimelineEvent, 'content'> & { content: RoomMemberEvent }
 
 export type ZRoomCreateEvent = Omit<TimelineEvent, 'content'> & { content: RoomCreateEvent }
@@ -57,7 +64,12 @@ export type ZRoomPropertiesEvent = Omit<TimelineEvent, 'content'> & { content: R
 export interface UserMessagesRenderEvent extends BaseEvent {
     type: RenderEventType.UserMessages
     key: string
-    events: (ZRoomMessageEvent | ZRoomMessageEncryptedEvent | ZRoomMessageRedactedEvent)[]
+    events: (
+        | ZRoomMessageEvent
+        | ZRoomMessageEncryptedEvent
+        | ZRoomMessageRedactedEvent
+        | ZRoomMissingMessageEvent
+    )[]
 }
 
 export interface MessageRenderEvent extends BaseEvent {
@@ -80,6 +92,13 @@ export interface RedactedMessageRenderEvent extends BaseEvent {
     type: RenderEventType.RedactedMessage
     key: string
     event: ZRoomMessageRedactedEvent
+    displayContext: 'single' | 'head' | 'body' | 'tail'
+}
+
+export interface MissingMessageRenderEvent extends BaseEvent {
+    type: RenderEventType.MissingMessage
+    key: string
+    event: ZRoomMissingMessageEvent
     displayContext: 'single' | 'head' | 'body' | 'tail'
 }
 
@@ -147,6 +166,10 @@ export const isEncryptedRoomMessage = (
     return event.content?.kind === ZTEvent.RoomMessageEncrypted
 }
 
+export const isMissingMessage = (event: TimelineEvent): event is ZRoomMissingMessageEvent => {
+    return event.content?.kind === ZTEvent.RoomMessageMissing
+}
+
 const isRoomMember = (event: TimelineEvent): event is ZRoomMemberEvent => {
     return event.content?.kind === ZTEvent.RoomMember
 }
@@ -168,6 +191,7 @@ export type RenderEvent =
     | AccumulatedRoomMemberRenderEvent
     | ChannelHeaderRenderEvent
     | EncryptedMessageRenderEvent
+    | MissingMessageRenderEvent
     | NewDividerRenderEvent
     | MessageRenderEvent
     | RedactedMessageRenderEvent
@@ -241,7 +265,7 @@ export const getEventsByDate = (
             /**
              * accumulate messages by the same user
              */
-            if (isRoomMessage(event) || isEncryptedRoomMessage(event)) {
+            if (isRoomMessage(event) || isEncryptedRoomMessage(event) || isMissingMessage(event)) {
                 if (fullyReadMarkerEventId === event.eventId) {
                     if (
                         // TODO: if we add readmarkers to more events than
