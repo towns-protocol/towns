@@ -1,3 +1,6 @@
+/**
+ * @group casablanca
+ */
 import { Permission } from '@river/web3'
 import {
     createTestChannelWithSpaceRoles,
