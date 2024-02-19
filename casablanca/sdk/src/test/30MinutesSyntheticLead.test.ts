@@ -240,7 +240,7 @@ describe('mirrorMessages', () => {
                 },
             )
             log('Reply recieved')
-            client.stopSync()
+            await client.stopSync()
             log('Done')
         },
         testRunTimeMs * 2,

@@ -218,7 +218,7 @@ describe('mirrorMessages', () => {
                     timeoutMS: replySentTime,
                 },
             )
-            client.stopSync()
+            await client.stopSync()
             log('Successfully done')
         },
         testRunTimeMs * 2,
