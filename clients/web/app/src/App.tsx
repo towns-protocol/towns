@@ -58,7 +58,8 @@ export const App = () => {
         highPriorityStreamIds.current = [match?.params.spaceId, match?.params.channelId].filter(
             isDefined,
         )
-        if (match) {
+
+        if (match && window.location.pathname === '/') {
             const link = createLink({
                 initial: 'initial',
                 spaceId: match.params.spaceId,
