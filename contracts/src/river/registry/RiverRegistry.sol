@@ -59,8 +59,13 @@ contract RiverRegistry is IRiverRegistry, OwnableBase, Facet {
   function __RiverRegistry_init(
     address[] memory approvedOperators
   ) external onlyInitializing {
-    _addInterface(type(IRiverRegistry).interfaceId);
+    __RiverRegistry_init_unchained(approvedOperators);
+  }
 
+  function __RiverRegistry_init_unchained(
+    address[] memory approvedOperators
+  ) internal {
+    _addInterface(type(IRiverRegistry).interfaceId);
     initImpl(approvedOperators);
   }
 
