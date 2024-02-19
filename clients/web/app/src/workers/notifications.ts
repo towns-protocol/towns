@@ -252,8 +252,18 @@ function generateDM(
         recipients?.filter((recipient) => (myUserId ? recipient.id !== myUserId : false)) ?? []
     const title = generateDmTitle(sender, recipientsExcludeMe, dmChannelName)
     let body = plaintext?.body
+    if (!body) {
+        // always show something to avoid getting throttled
+        // if there's no body, use the default message
+        body =
+            recipientsExcludeMe.length === 0
+                ? 'You got a direct message'
+                : 'A group you’re in has a new message'
+    }
+    log('generateDM INPUT', 'plaintext', plaintext)
     const reaction = plaintext?.reaction ? emoji.get(plaintext.reaction) : undefined
-    if (!body && reaction) {
+    if (reaction) {
+        // if there's a reaction, use it as the content instead
         if (stringHasValue(sender)) {
             body = `@${sender} reacted with: ${reaction}`
         } else {
@@ -261,14 +271,12 @@ function generateDM(
         }
     }
     log('generateDM OUTPUT', { title, body })
-    return body
-        ? {
-              kind: AppNotificationType.DirectMessage,
-              channelId,
-              title,
-              body,
-          }
-        : undefined
+    return {
+        kind: AppNotificationType.DirectMessage,
+        channelId,
+        title,
+        body,
+    }
 }
 
 function generateMentionTitle(

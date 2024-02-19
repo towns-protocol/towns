@@ -59,6 +59,7 @@ export async function addPushSubscription(
   params: AddSubscriptionRequestParams,
   env: Env,
 ) {
+  console.log('addPushSubscription', params.userId)
   const pushType: PushType = params.pushType ?? 'web-push' // default
   const result = await env.DB.prepare(
     PushSubscriptionSqlStatement.InsertIntoPushSubscription,
