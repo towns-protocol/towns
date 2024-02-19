@@ -1,29 +1,22 @@
-import React, { ChangeEvent, PropsWithChildren, useCallback, useMemo } from 'react'
+import React, { ChangeEvent, PropsWithChildren, useCallback, useMemo, useRef } from 'react'
 import { UseFormReturn, useFormContext } from 'react-hook-form'
-import { AnimatePresence } from 'framer-motion'
 import { ethers } from 'ethers'
 import { getContractsInfo } from 'use-zion-client'
-import {
-    Box,
-    Dropdown,
-    ErrorMessage,
-    IconButton,
-    MotionBox,
-    RadioCard,
-    Stack,
-    Text,
-    TextField,
-} from '@ui'
-import { TokensList } from '@components/Tokens'
+import { Box, Dropdown, ErrorMessage, IconButton, RadioCard, Stack, Text, TextField } from '@ui'
 import { FadeInBox } from '@components/Transitions'
-import { TokenDataStruct } from '@components/Web3/CreateSpaceForm/types'
 import { useAuth } from 'hooks/useAuth'
 import { ClipboardCopy } from '@components/ClipboardCopy/ClipboardCopy'
 import { env } from 'utils'
 import { useEnvironment } from 'hooks/useEnvironmnet'
 import { shortAddress } from 'ui/utils/utils'
-import { CreateSpaceFormV2SchemaType, membershipCostError } from './CreateSpaceFormV2.schema'
+import { TokenPillSelector } from '@components/SpaceSettingsPanel/TokenPillSelector'
+import { useCollectionsForLoggedInUser } from 'api/lib/tokenContracts'
+import {
+    mapTokenDataStructToTokenPillSelectorSelection,
+    mapTokenPillSelectorSelectionToTokenDataStruct,
+} from '@components/SpaceSettingsPanel/utils'
 import { PanelContentProps, PanelType } from './types'
+import { CreateSpaceFormV2SchemaType, membershipCostError } from './CreateSpaceFormV2.schema'
 
 export function PanelContent({ onClick, panelType }: PanelContentProps) {
     const title = useMemo(() => {
@@ -70,8 +63,11 @@ export function PanelContent({ onClick, panelType }: PanelContentProps) {
 function GatingContent() {
     const { loggedInWalletAddress: wallet } = useAuth()
     const formProps = useFormContext<CreateSpaceFormV2SchemaType>()
-    const isTokenHolders = formProps.watch('membershipType') === 'tokenHolders'
+    const setValue = formProps.setValue
+    const getValues = formProps.getValues
     const isValid = !Object.values(formProps.formState.errors).length
+    const fieldRefOverride = useRef<HTMLInputElement>(null)
+    const [tokenFieldKey, setTokenFieldKey] = React.useState(0)
 
     const onEveryoneClick = useCallback((formProps: UseFormReturn<CreateSpaceFormV2SchemaType>) => {
         formProps.setValue('membershipType', 'everyone', {
@@ -80,6 +76,8 @@ function GatingContent() {
         formProps.setValue('tokensGatingMembership', [], {
             shouldValidate: true,
         })
+        // reset token component so pills clear
+        setTokenFieldKey((prev) => prev + 1)
     }, [])
 
     const onTokensCardClick = useCallback(
@@ -87,21 +85,31 @@ function GatingContent() {
             formProps.setValue('membershipType', 'tokenHolders', {
                 shouldValidate: true,
             })
+            fieldRefOverride.current?.focus()
         },
         [],
     )
 
-    const onSelectedTokensUpdate = useCallback(
-        (
-            tokens: TokenDataStruct[],
-            setValue: UseFormReturn<CreateSpaceFormV2SchemaType>['setValue'],
-        ) => {
-            setValue?.('tokensGatingMembership', tokens, {
+    const intialTokenSelection = useMemo(() => {
+        // if the everyone card was clicked while the panel was open, the token field is reset and shouldn't be prepopulated
+        if (tokenFieldKey > 0) {
+            return new Set<string>()
+        }
+        const tokens = getValues('tokensGatingMembership')
+        return mapTokenDataStructToTokenPillSelectorSelection(tokens)
+    }, [getValues, tokenFieldKey])
+
+    const onSelectedTokensChange = useCallback(
+        (tokens: Set<string>) => {
+            const tokenDataArray = mapTokenPillSelectorSelectionToTokenDataStruct(tokens)
+            setValue?.('tokensGatingMembership', tokenDataArray, {
                 shouldValidate: true,
             })
         },
-        [],
+        [setValue],
     )
+
+    const { data: nftApiData, isError } = useCollectionsForLoggedInUser()
 
     const chainId = useEnvironment().chainId
 
@@ -144,36 +152,37 @@ function GatingContent() {
                                         }
                                     />
                                 )}
-                                <TokensList
-                                    wallet={wallet}
-                                    showTokenList={isTokenHolders}
-                                    initialItems={formProps.getValues('tokensGatingMembership')}
-                                    onUpdate={(tokens) =>
-                                        onSelectedTokensUpdate(tokens, formProps.setValue)
-                                    }
-                                />
+                                <Box key={'tokens' + tokenFieldKey}>
+                                    <TokenPillSelector
+                                        key={'tokens' + tokenFieldKey}
+                                        isValidationError={false}
+                                        initialSelection={intialTokenSelection}
+                                        nftApiData={nftApiData}
+                                        isNftApiError={isError}
+                                        fieldRefOverride={fieldRefOverride}
+                                        onSelectionChange={onSelectedTokensChange}
+                                    />
+                                </Box>
                             </>
                         )
                     }}
                 </RadioCard>
             )}
-            <MotionBox layout="position">
-                <AnimatePresence>
-                    {isValid ? null : (
-                        <FadeInBox key="error">
-                            <ErrorMessage
-                                errors={formProps.formState.errors}
-                                fieldName="membershipType"
-                            />
+            <Box>
+                {isValid ? null : (
+                    <>
+                        <ErrorMessage
+                            errors={formProps.formState.errors}
+                            fieldName="membershipType"
+                        />
 
-                            <ErrorMessage
-                                errors={formProps.formState.errors}
-                                fieldName="tokensGatingMembership"
-                            />
-                        </FadeInBox>
-                    )}
-                </AnimatePresence>
-            </MotionBox>
+                        <ErrorMessage
+                            errors={formProps.formState.errors}
+                            fieldName="tokensGatingMembership"
+                        />
+                    </>
+                )}
+            </Box>
         </Stack>
     )
 }

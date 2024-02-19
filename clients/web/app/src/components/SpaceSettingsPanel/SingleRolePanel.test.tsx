@@ -6,7 +6,7 @@ import * as Lib from 'use-zion-client'
 import * as RouterDom from 'react-router-dom'
 import userEvent from '@testing-library/user-event'
 import { RoleDetails } from 'use-zion-client/dist/types/web3-types'
-import { useCollectionsForOwner } from 'api/lib/tokenContracts'
+import { useCollectionsForLoggedInUser } from 'api/lib/tokenContracts'
 import {
     everyoneRole,
     memberRole,
@@ -51,7 +51,7 @@ vi.mock('react-router-dom', async () => {
     }
 })
 
-const mockCollectionsForOwner: ReturnType<typeof useCollectionsForOwner>['data'] = {
+const mockCollectionsForOwner: ReturnType<typeof useCollectionsForLoggedInUser>['data'] = {
     tokens: [
         {
             contractAddress: '0x134',
@@ -68,7 +68,7 @@ vi.mock('api/lib/tokenContracts', async () => {
     )) as typeof import('api/lib/tokenContracts')
     return {
         ...actual,
-        useCollectionsForOwner: () => {
+        useCollectionsForLoggedInUser: () => {
             return {
                 data: mockCollectionsForOwner,
                 isLoading: false,

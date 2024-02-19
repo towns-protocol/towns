@@ -16,9 +16,10 @@ type Props = {
     nftApiData: ReturnType<typeof useCollectionsForOwner>['data']
     isNftApiError: ReturnType<typeof useCollectionsForOwner>['isError']
     isValidationError: boolean
-    initialSelection: Set<string>
-    inputContainerRef: React.RefObject<HTMLDivElement>
+    initialSelection?: Set<string>
+    inputContainerRef?: React.RefObject<HTMLDivElement>
     onSelectionChange: (addresses: Set<string>) => void
+    fieldRefOverride?: React.RefObject<HTMLInputElement>
 }
 
 export function TokenPillSelector(props: Props) {
@@ -29,6 +30,7 @@ export function TokenPillSelector(props: Props) {
         initialSelection,
         inputContainerRef,
         isValidationError,
+        fieldRefOverride,
     } = props
     const [selectedTokens, setSelectedTokens] = useState(() => new Set<string>())
 
@@ -125,6 +127,7 @@ export function TokenPillSelector(props: Props) {
                 emptySelectionElement={emptySelectionElement}
                 transformSelectionForPillRendering={transformSelectionForPillRendering}
                 isError={isValidationError}
+                fieldRefOverride={fieldRefOverride}
                 onSelectionChange={onSelectionChange}
             />
             {isNftApiError && (

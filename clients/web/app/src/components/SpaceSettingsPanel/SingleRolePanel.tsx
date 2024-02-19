@@ -30,10 +30,7 @@ import {
     Text,
     TextField,
 } from '@ui'
-import { useAuth } from 'hooks/useAuth'
-import { fetchMainnetTokens, mainnetTokenAddress } from 'hooks/useNetworkForNftApi'
-import { useCollectionsForOwner } from 'api/lib/tokenContracts'
-import { useEnvironment } from 'hooks/useEnvironmnet'
+import { useCollectionsForLoggedInUser } from 'api/lib/tokenContracts'
 import { TokenDataStruct } from '@components/Web3/CreateSpaceForm/types'
 import { ButtonSpinner } from 'ui/components/Spinner/ButtonSpinner'
 import {
@@ -45,10 +42,15 @@ import { ModalContainer } from '@components/Modals/ModalContainer'
 import { createTokenEntitlementStruct } from '@components/Web3/utils'
 import { FullPanelOverlay } from '@components/Web3/WalletLinkingPanel'
 import { UserOpTxModal } from '@components/Web3/UserOpTxModal/UserOpTxModal'
-import { convertToNumber, splitKeyToContractAddressAndTokenId } from './utils'
+import {
+    convertToNumber,
+    mapTokenDataStructToTokenPillSelectorSelection,
+    mapTokenPillSelectorSelectionToTokenDataStruct,
+} from './utils'
 import { formSchema } from './schema'
 import { TokenPillSelector } from './TokenPillSelector'
 import { UserPillSelector } from './UserPillSelector'
+import { SearchInputHeightAdjuster } from './SearchInputHeightAdjuster'
 import { TokenPill } from './TokenPill'
 
 export type RoleFormSchemaType = z.infer<typeof formSchema>
@@ -469,7 +471,7 @@ function UserSearch({ isCreateRole }: { isCreateRole: boolean }) {
     return (
         <Stack gap data-testid="user-search">
             <Text>Search people</Text>
-            <SearchHeightAdjuster>
+            <SearchInputHeightAdjuster>
                 {(inputContainerRef) => (
                     <UserPillSelector
                         initialSelection={initialSelection}
@@ -483,15 +485,12 @@ function UserSearch({ isCreateRole }: { isCreateRole: boolean }) {
                         onSelectionChange={onSelectionChange}
                     />
                 )}
-            </SearchHeightAdjuster>
+            </SearchInputHeightAdjuster>
         </Stack>
     )
 }
 
 function TokenSearch({ isCreateRole }: { isCreateRole: boolean }) {
-    const { chainId } = useEnvironment()
-    // TODO: this should probably be the "primary wallet" the user links
-    const { loggedInWalletAddress } = useAuth()
     const { getValues, setValue, trigger, watch, formState } = useFormContext<RoleFormSchemaType>()
     const valueRef = useRef(false)
     const tokenWatch = watch('tokens')
@@ -502,67 +501,19 @@ function TokenSearch({ isCreateRole }: { isCreateRole: boolean }) {
         return valueRef.current
     }, [tokenWatch])
 
-    const {
-        data: nftApiData,
-        isLoading,
-        isError,
-    } = useCollectionsForOwner({
-        wallet:
-            (fetchMainnetTokens && mainnetTokenAddress
-                ? mainnetTokenAddress
-                : loggedInWalletAddress) ?? '',
-        enabled: Boolean(chainId),
-        chainId,
-    })
+    const { data: nftApiData, isLoading, isError } = useCollectionsForLoggedInUser()
 
     const initialSelection = useMemo(() => {
         if (isLoading) {
             return new Set<string>()
         }
         const tokens = getValues('tokens')
-        const selectedTokens = new Set<string>()
-        // map tokens to a string like <address>__TOKEN_ID__<token_id>
-        tokens.forEach((token: TokenDataStruct) => {
-            if (token.tokenIds.length) {
-                token.tokenIds.forEach((tokenId) => {
-                    selectedTokens.add(`${token.contractAddress}__TOKEN_ID__${tokenId}`)
-                })
-            } else {
-                selectedTokens.add(token.contractAddress)
-            }
-        })
-        return selectedTokens
+        return mapTokenDataStructToTokenPillSelectorSelection(tokens)
     }, [getValues, isLoading])
 
     const onSelectionChange = useCallback(
         (tokens: Set<string>) => {
-            // tokens is a set of strings like <address>__TOKEN_ID__<token_id> "0x1234__TOKEN_ID__1"
-            // token_id is needed for ERC1155 tokens
-            const tokenDataArray: TokenDataStruct[] = []
-            tokens.forEach((tokenIdString) => {
-                const [contractAddress, tokenId] =
-                    splitKeyToContractAddressAndTokenId(tokenIdString)
-                if (!contractAddress) {
-                    return
-                }
-                const match = tokenDataArray.find((x) => x.contractAddress === contractAddress)
-
-                if (match) {
-                    if (tokenId !== undefined) {
-                        match.tokenIds.push(+tokenId)
-                    }
-                } else {
-                    tokenDataArray.push({
-                        contractAddress,
-                        tokenIds: tokenId !== undefined ? [+tokenId] : [],
-                    })
-                }
-
-                if (match?.tokenIds.length) {
-                    match.tokenIds = Array.from(new Set(match.tokenIds))
-                }
-            })
-
+            const tokenDataArray = mapTokenPillSelectorSelectionToTokenDataStruct(tokens)
             setValue('tokens', tokenDataArray)
             // trigger validation
             setTimeout(() => {
@@ -603,7 +554,7 @@ function TokenSearch({ isCreateRole }: { isCreateRole: boolean }) {
                             </Text>
                         </Stack>
                     )}
-                    <SearchHeightAdjuster>
+                    <SearchInputHeightAdjuster>
                         {(inputContainerRef) => (
                             <TokenPillSelector
                                 isValidationError={formState.errors.tokens !== undefined}
@@ -614,28 +565,9 @@ function TokenSearch({ isCreateRole }: { isCreateRole: boolean }) {
                                 onSelectionChange={onSelectionChange}
                             />
                         )}
-                    </SearchHeightAdjuster>
+                    </SearchInputHeightAdjuster>
                 </>
             )}
-        </Stack>
-    )
-}
-
-function SearchHeightAdjuster({
-    children,
-}: {
-    children: (inputContainerRef: React.RefObject<HTMLDivElement>) => React.ReactNode
-}) {
-    const inputContainerRef = useRef<HTMLDivElement>(null)
-
-    return (
-        <Stack position="relative">
-            {/* default to 48 px, the height of the text input */}
-            <Stack style={{ height: inputContainerRef.current?.clientHeight ?? 48 }} />
-            {/* absolute so dropdown flows over rest of form */}
-            <Stack position="absolute" left="none" right="none" overflow="visible">
-                {children(inputContainerRef)}
-            </Stack>
         </Stack>
     )
 }

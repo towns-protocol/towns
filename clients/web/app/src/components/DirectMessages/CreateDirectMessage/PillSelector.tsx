@@ -50,6 +50,7 @@ type Props<T> = {
     autoFocus?: boolean
     inputContainerRef?: React.RefObject<HTMLDivElement>
     isError?: boolean
+    fieldRefOverride?: React.RefObject<HTMLInputElement>
 }
 
 export const PillSelector = <T,>(props: Props<T>) => {
@@ -70,12 +71,14 @@ export const PillSelector = <T,>(props: Props<T>) => {
         inputContainerRef,
         initialSelection,
         isError,
+        fieldRefOverride,
     } = props
 
     const containerRef = useRef<HTMLDivElement>(null)
 
     // search field
-    const fieldRef = useRef<HTMLInputElement>(null)
+    const _fieldRef = useRef<HTMLInputElement>(null)
+    const fieldRef = fieldRefOverride ?? _fieldRef
 
     // search results container
     const listRef = useRef<HTMLDivElement>(null)
@@ -249,7 +252,7 @@ export const PillSelector = <T,>(props: Props<T>) => {
             selection
             fieldRef.current?.focus()
         }
-    }, [selection])
+    }, [fieldRef, selection])
 
     // -------------------------------------------------------------------------
 

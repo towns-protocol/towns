@@ -8,9 +8,12 @@ import { env } from 'utils'
 import {
     fetchBaseSepolia,
     fetchMainnetTokens,
+    mainnetTokenAddress,
     useNetworkForNftApi,
 } from 'hooks/useNetworkForNftApi'
 import { getTokenType } from '@components/Web3/checkTokenType'
+import { useAuth } from 'hooks/useAuth'
+import { useEnvironment } from 'hooks/useEnvironmnet'
 import { axiosClient } from '../apiClient'
 
 export const queryKey = 'tokenContractsForAddress'
@@ -58,6 +61,22 @@ export function useCollectionsForOwner({ wallet, enabled, chainId }: UseTokenCon
         refetchOnWindowFocus: false,
         refetchOnReconnect: false,
         enabled,
+    })
+}
+
+export function useCollectionsForLoggedInUser() {
+    // TODO: this should probably be all linked wallets
+    // and use useQueries to get all the tokens for all the wallets
+    const { loggedInWalletAddress } = useAuth()
+    const { chainId } = useEnvironment()
+
+    return useCollectionsForOwner({
+        wallet:
+            (fetchMainnetTokens && mainnetTokenAddress
+                ? mainnetTokenAddress
+                : loggedInWalletAddress) ?? '',
+        enabled: Boolean(chainId),
+        chainId,
     })
 }
 

@@ -3,7 +3,6 @@ import React from 'react'
 import { Controller, FieldValues, Path, UseFormReturn } from 'react-hook-form'
 import { Stack } from '../../Stack/Stack'
 import { Paragraph } from '../../Text/Paragraph'
-import { MotionBox, MotionStack } from '../../Motion/MotionComponents'
 import * as fieldStyles from '../../_internal/Field/Field.css'
 import { FieldOutline } from '../../_internal/Field/FieldOutline/FieldOutline'
 import * as style from './RadioSelect/RadioSelect.css'
@@ -22,23 +21,8 @@ export const RadioCard = <T extends FieldValues>(props: Props<T>) => {
     const { title, description, children, onClick, name, control } = props
 
     return (
-        <MotionStack
-            layout
-            padding
-            gap
-            style={{ borderRadius: 8, originY: 0 }}
-            background="level2"
-            cursor="pointer"
-            borderRadius="sm"
-            overflow="hidden"
-            onClick={onClick}
-        >
-            <MotionBox
-                horizontal
-                layout="position"
-                justifyContent="spaceBetween"
-                alignItems="start"
-            >
+        <Stack padding gap background="level2" cursor="pointer" borderRadius="sm" onClick={onClick}>
+            <Stack horizontal justifyContent="spaceBetween" alignItems="start">
                 <Stack gap="paragraph">
                     <Paragraph>{title}</Paragraph>
                     <Paragraph size="sm" color="gray2">
@@ -65,8 +49,8 @@ export const RadioCard = <T extends FieldValues>(props: Props<T>) => {
                         )
                     }}
                 />
-            </MotionBox>
+            </Stack>
             {children?.() ?? <></>}
-        </MotionStack>
+        </Stack>
     )
 }
