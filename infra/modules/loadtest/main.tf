@@ -39,8 +39,10 @@ module "redis_sg" {
 
 locals {
   # TODO: we should allow this to be configured at runtime, not infra time.
-  num_followers     = 1000
-  loadtest_duration = 3600000
+  num_follower_containers     = 200
+  num_processes_per_container = 3
+  num_followers               = local.num_follower_containers * local.num_processes_per_container
+  loadtest_duration           = 3600000
 }
 
 resource "aws_elasticache_cluster" "redis" {
@@ -57,30 +59,32 @@ resource "aws_elasticache_cluster" "redis" {
 }
 
 module "leader" {
-  source             = "./leader"
-  vpc_id             = var.vpc_id
-  subnets            = var.private_subnets
-  ecs_cluster        = aws_ecs_cluster.loadtest_cluster
-  base_chain_rpc_url = var.base_chain_rpc_url
-  river_node_url     = var.river_node_url
-  redis_url          = aws_elasticache_cluster.redis.cache_nodes[0].address
-  num_followers      = local.num_followers
-  loadtest_duration  = local.loadtest_duration
+  source                  = "./leader"
+  vpc_id                  = var.vpc_id
+  subnets                 = var.private_subnets
+  ecs_cluster             = aws_ecs_cluster.loadtest_cluster
+  base_chain_rpc_url      = var.base_chain_rpc_url
+  river_node_url          = var.river_node_url
+  redis_url               = aws_elasticache_cluster.redis.cache_nodes[0].address
+  num_followers           = local.num_followers
+  num_follower_containers = local.num_follower_containers
+  loadtest_duration       = local.loadtest_duration
+
 
   tags = module.global_constants.tags
 }
 
 module "follower" {
-  count              = local.num_followers
-  follower_id        = count.index + 1
-  source             = "./follower"
-  vpc_id             = var.vpc_id
-  subnets            = var.private_subnets
-  ecs_cluster        = aws_ecs_cluster.loadtest_cluster
-  base_chain_rpc_url = var.base_chain_rpc_url
-  river_node_url     = var.river_node_url
-  redis_url          = aws_elasticache_cluster.redis.cache_nodes[0].address
-  loadtest_duration  = local.loadtest_duration
-
-  tags = module.global_constants.tags
+  count                       = local.num_follower_containers
+  follower_id                 = count.index + 1
+  source                      = "./follower"
+  vpc_id                      = var.vpc_id
+  subnets                     = var.private_subnets
+  ecs_cluster                 = aws_ecs_cluster.loadtest_cluster
+  base_chain_rpc_url          = var.base_chain_rpc_url
+  river_node_url              = var.river_node_url
+  redis_url                   = aws_elasticache_cluster.redis.cache_nodes[0].address
+  loadtest_duration           = local.loadtest_duration
+  num_processes_per_container = local.num_processes_per_container
+  tags                        = module.global_constants.tags
 }

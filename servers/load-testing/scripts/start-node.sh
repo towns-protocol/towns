@@ -21,6 +21,11 @@ function check_dependencies() {
     fi
 }
 
+function cleanup() {
+    echo "cleaning up"
+    pkill -P $$ # kill all child processes
+}
+
 function start_node() {
     echo "starting node"
     if [ "$MODE" == "leader" ]; then
@@ -32,6 +37,20 @@ function start_node() {
     fi
 }
 
-check_env
+function main() {
+    # Assign PROCESSES_PER_CONTAINER to processesPerContainer, default to 1 if not set
+    followersPerContainer=${PROCESSES_PER_CONTAINER:-1}
+
+    for ((i=1; i<=followersPerContainer; i++))
+    do
+        CLIENT_ID="${i}" start_node &
+    done
+    wait
+}
+
+# trap cleanup on exit to ensure child processes are killed
+trap cleanup EXIT
+
 check_dependencies
-start_node
+check_env
+main

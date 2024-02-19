@@ -70,7 +70,7 @@ function start_load_test() {
 
     #get the total number of follower from leader task def env variables
     leader_task_def_arn=$(aws ecs list-task-definitions --family-prefix $leader_task_def --status ACTIVE --output text | awk '{print $2}')
-    num_followers=$(aws ecs describe-task-definition --task-definition $leader_task_def_arn | jq -r '.taskDefinition.containerDefinitions[].environment[] | select(.name == "NUM_FOLLOWERS").value')
+    num_follower_containers=$(aws ecs describe-task-definition --task-definition $leader_task_def_arn | jq -r '.taskDefinition.containerDefinitions[].environment[] | select(.name == "NUM_FOLLOWER_CONTAINERS").value')
 
     # starting leader service
     start_service "loadtest-leader-${ENVIRONMENT_NAME}-service" $cluster_name
@@ -79,23 +79,11 @@ function start_load_test() {
     sleep $hacky_wait_time
 
     #Logic to wait for leader task up and running
-    start_time=$(date +%s)
-    TIMEOUT=300 #5 min max timeout
-    while leader_task_exist; do
-        current_time=$(date +%s)
-        elapsed_time=$((current_time - start_time))
-        echo "Waiting for load test leader task to be up"
-        sleep 10
-        if [ $elapsed_time -ge $TIMEOUT ]; then
-            echo "Timeout reached. Exiting script."
-            exit 1
-        fi
-    done
 
     echo "starting the follower services"
 
     #Starting the follower services
-    for i in $(seq 1 $num_followers); do
+    for i in $(seq 1 $num_follower_containers); do
         start_service "loadtest-follower-${i}-${ENVIRONMENT_NAME}-service" $cluster_name
     done
 

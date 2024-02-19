@@ -130,6 +130,10 @@ resource "aws_ecs_task_definition" "task_definition" {
       {
         name  = "MOCK_PERSISTENCE_STORE",
         value = "true"
+      },
+      {
+        name  = "PROCESSES_PER_CONTAINER",
+        value = tostring(var.num_processes_per_container)
       }
     ]
 

@@ -41,3 +41,9 @@ variable "river_node_log_level" {
   type        = string
   default     = "info"
 }
+
+variable "has_stress_test_infra" {
+  description = "Flag used to determine whether to create stress test infra"
+  type        = bool
+  default     = false
+}

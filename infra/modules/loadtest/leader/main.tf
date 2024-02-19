@@ -134,6 +134,10 @@ resource "aws_ecs_task_definition" "task_definition" {
       {
         name  = "MOCK_PERSISTENCE_STORE",
         value = "true"
+      },
+      {
+        name  = "NUM_FOLLOWER_CONTAINERS",
+        value = tostring(var.num_follower_containers)
       }
     ]
 

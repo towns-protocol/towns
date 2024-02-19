@@ -18,6 +18,7 @@ jobs:
             river_node_log_level: ${{ steps.check_labels.outputs.river_node_log_level }}
             is_clean_environment: ${{ steps.check_labels.outputs.is_clean_environment }}
             skip_river_node_continuous_deploys: ${{ steps.check_labels.outputs.skip_river_node_continuous_deploys }}
+            has_stress_test_infra: ${{ steps.check_labels.outputs.has_stress_test_infra }}
         steps:
             - name: Check labels
               id: check_labels
@@ -32,6 +33,7 @@ jobs:
                       });
                       const single_node_transient_environment = labels.data.some(label => label.name.includes('single-node'));
                       const multi_node_transient_environment = labels.data.some(label => label.name.includes('multi-node'));
+                      const has_stress_test_infra = labels.data.some(label => label.name.includes('stress-test'));
                       const is_clean_environment = labels.data.some(label => label.name.includes('clean'));
                       const debug_logs_enabled = labels.data.some(label => label.name === 'transient:debug');
                       const river_node_log_level = debug_logs_enabled ? 'debug' : 'info';
@@ -55,6 +57,7 @@ jobs:
                       core.setOutput('is_clean_environment', is_clean_environment);
                       core.setOutput('river_node_log_level', river_node_log_level);
                       core.setOutput('skip_river_node_continuous_deploys', skipRiverNodeContinuousDeploys);
+                      core.setOutput('has_stress_test_infra', has_stress_test_infra);
 
 
     provision_transient_environment:
@@ -71,6 +74,7 @@ jobs:
             TF_VAR_num_nodes: ${{ needs.check_labels.outputs.num_nodes }}
             TF_VAR_river_node_log_level: ${{ needs.check_labels.outputs.river_node_log_level }}
             TF_VAR_is_clean_environment: ${{ needs.check_labels.outputs.is_clean_environment }}
+            TF_VAR_has_stress_test_infra: ${{ needs.check_labels.outputs.has_stress_test_infra }}
             GIT_PR_NUMBER: ${{ github.event.pull_request.number}}
             CI_AUTOAPPROVE: true
 

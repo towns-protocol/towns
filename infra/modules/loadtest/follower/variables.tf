@@ -45,3 +45,7 @@ variable "loadtest_duration" {
 variable "follower_id" {
   type = number
 }
+
+variable "num_processes_per_container" {
+  type = number
+}

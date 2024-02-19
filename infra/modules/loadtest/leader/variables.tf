@@ -42,6 +42,10 @@ variable "num_followers" {
   type        = number
 }
 
+variable "num_follower_containers" {
+  type = number
+}
+
 variable "loadtest_duration" {
   description = "number of follower nodes"
   type        = number

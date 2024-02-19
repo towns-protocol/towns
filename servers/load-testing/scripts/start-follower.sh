@@ -37,6 +37,11 @@ function check_env() {
         echo "JOIN_FACTOR is not set"
         exit 1
     fi
+
+    if [ -z "$CLIENT_ID" ]; then
+        echo "CLIENT_ID is not set"
+        exit 1
+    fi
 }
 
 function start_follower() {
@@ -47,6 +52,7 @@ function start_follower() {
     echo "LOAD_TEST_DURATION_MS: ${LOAD_TEST_DURATION_MS}"
     echo "MAX_MSG_DELAY_MS: ${MAX_MSG_DELAY_MS}"
     echo "JOIN_FACTOR: ${JOIN_FACTOR}"
+    echo "CLIENT_ID: ${CLIENT_ID}"
 
     # 30 minutes
     local safety_margin_ms=1800000
@@ -57,7 +63,7 @@ function start_follower() {
     sdk_dir="$MONOREPO_ROOT/casablanca/sdk"
     pushd $sdk_dir
         if ! ( timeout $timeout_duration_ms yarn run test:ci:stress-test-follower ); then
-            echo "Terminating the follower"
+            echo "Terminating the follower - client-id: ${CLIENT_ID}"
             exit 1
         fi
     popd

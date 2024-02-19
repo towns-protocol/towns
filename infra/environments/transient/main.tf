@@ -52,7 +52,6 @@ locals {
   create_db_cluster           = var.num_nodes > 0
   create_forked_chain_service = var.num_nodes > 0
   create_notification_service = var.num_nodes > 0
-  create_load_testing_module  = var.num_nodes > 0
   base_chain_id               = 84532
   river_chain_id              = 6524490
 }
@@ -209,13 +208,13 @@ module "river_node" {
   alb_https_listener_arn = local.transient_global_remote_state.river_alb.lb_https_listener_arn
 }
 
-# module "loadtest" {
-#   count              = local.create_load_testing_module ? 1 : 0
-#   source             = "../../modules/loadtest"
-#   vpc_id             = local.transient_global_remote_state.vpc.vpc_id
-#   public_subnets     = local.transient_global_remote_state.vpc.public_subnets
-#   private_subnets    = local.transient_global_remote_state.vpc.private_subnets
-#   base_chain_rpc_url = module.base_forked_chain_service[0].network_url
-#   river_node_url     = "https://river1-${terraform.workspace}.${module.global_constants.primary_hosted_zone_name}"
-# }
+module "loadtest" {
+  count              = var.has_stress_test_infra ? 1 : 0
+  source             = "../../modules/loadtest"
+  vpc_id             = local.transient_global_remote_state.vpc.vpc_id
+  public_subnets     = local.transient_global_remote_state.vpc.public_subnets
+  private_subnets    = local.transient_global_remote_state.vpc.private_subnets
+  base_chain_rpc_url = module.base_forked_chain_service[0].network_url
+  river_node_url     = module.global_constants.nodes_metadata[0].url
+}
 

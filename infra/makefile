@@ -28,6 +28,7 @@ ifeq ($(ENV), transient)
 	@echo TF_VAR_num_nodes=$(TF_VAR_num_nodes) >> .env
 	@echo TF_VAR_is_clean_environment=$(TF_VAR_is_clean_environment) >> .env
 	@echo TF_VAR_river_node_log_level=$(TF_VAR_river_node_log_level) >> .env
+	@echo TF_VAR_has_stress_test_infra=$(TF_VAR_has_stress_test_infra) >> .env
 endif
 
 
