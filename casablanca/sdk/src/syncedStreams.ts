@@ -8,8 +8,8 @@ import { Stream } from './stream'
 import { StreamStateEvents } from './streamEvents'
 import { SyncedStream } from './syncedStream'
 import TypedEmitter from 'typed-emitter'
-import crypto from 'crypto'
 import { isDefined } from './check'
+import { nanoid } from 'nanoid'
 
 export enum SyncState {
     Canceling = 'Canceling', // syncLoop, maybe syncId if was syncing, not is was starting or retrying
@@ -596,7 +596,7 @@ export class SyncedStreams {
         this.pingInfo.pingInterval = setInterval(() => {
             const ping = async () => {
                 if (this.syncState === SyncState.Syncing && this.syncId) {
-                    const n = crypto.randomUUID()
+                    const n = nanoid()
                     this.pingInfo.nonces[n] = {
                         sequence: this.pingInfo.currentSequence++,
                         nonce: n,
