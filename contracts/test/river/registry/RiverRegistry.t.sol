@@ -109,6 +109,7 @@ contract RiverRegistryTest is TestUtils, IRiverRegistryBase, IOwnableBase {
   function test_revertWhen_removeOperatorWhenOperatorNotFound(
     address nodeOperator
   ) external {
+    vm.assume(riverRegistry.isOperator(nodeOperator) == false);
     vm.prank(deployer);
     vm.expectRevert(bytes(RiverRegistryErrors.OperatorNotFound));
     riverRegistry.removeOperator(nodeOperator);
