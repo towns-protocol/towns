@@ -2,7 +2,6 @@ import { Environment } from './environment'
 
 export function getAllowedOrigins(env: Environment): string[] {
     switch (env) {
-        case 'test':
         case 'test-beta':
         case 'development':
             /*
@@ -11,6 +10,7 @@ export function getAllowedOrigins(env: Environment): string[] {
             return [
                 'https://app-test.towns.com',
                 'https://app-test-beta.towns.com',
+                'https://app.gamma.towns.com',
                 'https://harmony-web-pr-*.onrender.com',
                 'http://localhost:3000',
                 'http://localhost:3002', // local app prod builds
@@ -19,25 +19,8 @@ export function getAllowedOrigins(env: Environment): string[] {
                 'https://push-notification-worker-test.johnhntlabs.workers.dev',
                 'https://push-notification-worker-test-beta.towns.com',
                 'https://river1-test-beta.towns.com',
+                'https://*.nodes.gamma.towns.com',
                 'https://test-harmony-web-pr-*.onrender.com',
-            ]
-        case 'staging': // Stay as close to production as possible.
-        case 'staging-beta':
-        case 'production':
-        case 'production-beta':
-            /*
-                Production only.
-            */
-            return [
-                'https://alpha.towns.com',
-                'https://beta.towns.com',
-                'https://app.towns.com',
-                'https://app-beta.towns.com',
-                'https://app-staging.towns.com',
-                'https://app-staging-beta.towns.com',
-                'https://harmony-web-pr-*.onrender.com',
-                'https://river1-staging.towns.com',
-                'https://towns.com',
             ]
         default:
             return []
