@@ -554,7 +554,9 @@ export class DecryptionExtensions extends (EventEmitter as new () => TypedEmitte
         }
 
         if (!stream.view.userIsEntitledToKeyExchange(item.fromUserId)) {
-            this.log.info('user is not a member of the stream and cannot request keys')
+            this.log.info(
+                `user ${item.fromUserId} is not a member of stream ${item.streamId} and cannot request keys`,
+            )
             return
         }
         if (stream.view.contentKind === 'channelContent') {
