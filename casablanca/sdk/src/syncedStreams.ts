@@ -2,8 +2,6 @@ import { DLogger, dlog, dlogError, shortenHexString } from '@river/dlog'
 import { Err, SyncCookie, SyncOp, SyncStreamsResponse } from '@river/proto'
 import { StreamRpcClientType, errorContains } from './makeStreamRpcClient'
 import { unpackStream, unpackStreamAndCookie } from './sign'
-
-import { IPersistenceStore } from './persistenceStore'
 import { Stream } from './stream'
 import { StreamStateEvents } from './streamEvents'
 import { SyncedStream } from './syncedStream'
@@ -76,7 +74,6 @@ export class SyncedStreams {
     private readonly logError: DLogger
     // clientEmitter is used to proxy the events from the streams to the client
     private readonly clientEmitter: TypedEmitter<StreamStateEvents>
-    private readonly persistenceStore: IPersistenceStore
 
     // Starting the client creates the syncLoop
     // While a syncLoop exists, the client tried to keep the syncLoop connected, and if it reconnects, it
@@ -112,12 +109,10 @@ export class SyncedStreams {
     constructor(
         userId: string,
         rpcClient: StreamRpcClientType,
-        persistenceStore: IPersistenceStore,
         clientEmitter: TypedEmitter<StreamStateEvents>,
     ) {
         this.userId = userId
         this.rpcClient = rpcClient
-        this.persistenceStore = persistenceStore
         this.clientEmitter = clientEmitter
         const shortId = shortenHexString(
             this.userId.startsWith('0x') ? this.userId.slice(2) : this.userId,
@@ -566,13 +561,10 @@ export class SyncedStreams {
                         await stream.initializeFromResponse(response)
                     } else {
                         const streamAndCookie = await unpackStreamAndCookie(syncStream)
-                        const cleartexts = await this.persistenceStore.getCleartexts(
-                            streamAndCookie.events.map((e) => e.hashStr),
-                        )
                         await stream.appendEvents(
                             streamAndCookie.events,
                             streamAndCookie.nextSyncCookie,
-                            cleartexts,
+                            undefined,
                         )
                     }
                 } catch (err) {

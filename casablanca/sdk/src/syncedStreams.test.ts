@@ -8,9 +8,7 @@ import { SyncedStreams } from './syncedStreams'
 import { makeDonePromise, makeRandomUserContext, makeTestRpcClient } from './util.test'
 import { makeUserStreamId, userIdFromAddress } from './id'
 import { make_UserPayload_Inception } from './types'
-import { PersistenceStore } from './persistenceStore'
 import { dlog } from '@river/dlog'
-import { mock } from 'jest-mock-extended'
 import TypedEmitter from 'typed-emitter'
 import { StreamEvents } from './streamEvents'
 
@@ -58,13 +56,8 @@ describe('syncStreams', () => {
             }
             return true
         }
-        const mockStore = mock<PersistenceStore>()
-        const alicesSyncedStreams = new SyncedStreams(
-            alicesUserId,
-            alice,
-            mockStore,
-            mockClientEmitter,
-        )
+
+        const alicesSyncedStreams = new SyncedStreams(alicesUserId, alice, mockClientEmitter)
         await alicesSyncedStreams.startSyncStreams()
         await done.promise
         await alicesSyncedStreams.addStreamToSync(streamAndCookie.nextSyncCookie)

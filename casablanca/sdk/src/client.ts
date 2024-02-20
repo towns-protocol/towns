@@ -201,7 +201,7 @@ export class Client
             this.persistenceStore = new StubPersistenceStore()
         }
 
-        this.streams = new SyncedStreams(this.userId, this.rpcClient, this.persistenceStore, this)
+        this.streams = new SyncedStreams(this.userId, this.rpcClient, this)
         this.syncedStreamsExtensions = new SyncedStreamsExtension({
             startSyncStreams: async () => {
                 await this.streams.startSyncStreams()
