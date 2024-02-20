@@ -576,7 +576,27 @@ export class SyncedStreams {
                         )
                     }
                 } catch (err) {
-                    this.logError('onUpdate error', err)
+                    const e = err as any
+                    // eslint-disable-next-line @typescript-eslint/no-unsafe-member-access
+                    switch (e.name) {
+                        case 'AbortError':
+                            // eslint-disable-next-line @typescript-eslint/no-unsafe-member-access
+                            if (e.inner) {
+                                // eslint-disable-next-line @typescript-eslint/no-unsafe-member-access
+                                this.logError('AbortError reason:', e.inner)
+                            } else {
+                                // eslint-disable-next-line @typescript-eslint/no-unsafe-member-access
+                                this.logError('AbortError message:' + e.message)
+                            }
+                            break
+                        case 'QuotaExceededError':
+                            // eslint-disable-next-line @typescript-eslint/no-unsafe-member-access
+                            this.logError('QuotaExceededError:', e.message)
+                            break
+                        default:
+                            this.logError('onUpdate error:', err)
+                            break
+                    }
                 }
             } else {
                 this.log('sync RESULTS no stream', syncStream)

@@ -5,12 +5,12 @@ import { CryptoStore } from './cryptoStore'
 import {
     Account,
     InboundGroupSession,
+    IOutboundGroupSessionKey,
     OutboundGroupSession,
     Utility,
     Session,
 } from './encryptionTypes'
 import { EncryptionDelegate } from './encryptionDelegate'
-import { IOutboundGroupSessionKey } from './encryptionTypes'
 import { GROUP_ENCRYPTION_ALGORITHM, GroupEncryptionSession } from './olmLib'
 import { dlog } from '@river/dlog'
 
