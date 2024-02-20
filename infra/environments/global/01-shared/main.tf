@@ -246,3 +246,7 @@ resource "aws_secretsmanager_secret" "cloudflare_api_token" {
   name        = "cloudflare-api-token-${terraform.workspace}"
   description = "cloudflare api token"
 }
+
+resource "aws_secretsmanager_secret" "datadog_application_key" {
+  name = "datadog-application-key-${terraform.workspace}"
+}

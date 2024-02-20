@@ -65,3 +65,7 @@ output "cloudflare_api_token_secret" {
 output "notification_service_db_password_secret" {
   value = aws_secretsmanager_secret.notification_service_db_password_secret
 }
+
+output "datadog_application_key_secret" {
+  value = aws_secretsmanager_secret.datadog_application_key
+}
