@@ -223,7 +223,7 @@ describe('useCreateChannelTransactionHook', () => {
         const channelElement = screen.getByTestId('channel')
 
         const transactionItems = await screen.findAllByTestId('transactionItem')
-        expect(transactionItems.length).toBe(1)
+        expect(transactionItems.length).toBeGreaterThan(0) // any # greater than 0 b/c createSpace retries
         // wait for the space name to render
         await waitFor(
             () => expect(spaceElement).toHaveTextContent(spaceName),
@@ -235,7 +235,7 @@ describe('useCreateChannelTransactionHook', () => {
         fireEvent.click(createChannelButton)
         await waitFor(() => {
             const transactionItems = screen.getAllByTestId('transactionItem')
-            expect(transactionItems.length).toBe(2)
+            expect(transactionItems.length).toBeGreaterThan(1)
         }, TestConstants.DoubleDefaultWaitForTimeout)
 
         /* Assert */
