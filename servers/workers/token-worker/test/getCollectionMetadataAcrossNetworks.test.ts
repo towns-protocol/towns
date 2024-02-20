@@ -5,8 +5,8 @@ const ALCHEMY_URL = 'https://eth-mainnet.g.alchemy.com'
 const ALCHEMY_GET_CONTRACT_METADATA_PATH =
     '/nft/v3/fake_key/getContractMetadata?contractAddress=0x1234'
 
-describe('getCollectionMetadata()', () => {
-    test('alchemy: getCollectionMetadata()', async () => {
+describe('getCollectionMetadataAcrossNetworks()', () => {
+    test('alchemy: getCollectionMetadataAcrossNetworks()', async () => {
         const fetchMock = getMiniflareFetchMock()
 
         fetchMock.disableNetConnect()
@@ -22,7 +22,7 @@ describe('getCollectionMetadata()', () => {
 
         const result = await worker.fetch(
             new Request(
-                'https://fake-cloudflare-worker-url.com/api/getCollectionMetadata/alchemy/1?contractAddress=0x1234',
+                'https://fake-cloudflare-worker-url.com/api/getCollectionMetadataAcrossNetworks/alchemy?contractAddress=0x1234',
             ),
             {
                 ALCHEMY_API_KEY: 'fake_key',
@@ -34,6 +34,29 @@ describe('getCollectionMetadata()', () => {
         )
 
         expect(result.status).toBe(200)
-        expect(await result.json()).toEqual(getContractMetadataMock)
+
+        const expected = [
+            {
+                chainId: 1,
+                data: getContractMetadataMock,
+            },
+            {
+                chainId: 42161,
+                data: undefined,
+            },
+            {
+                chainId: 10,
+                data: undefined,
+            },
+            {
+                chainId: 8453,
+                data: undefined,
+            },
+            {
+                chainId: 84532,
+                data: undefined,
+            },
+        ]
+        expect(await result.json()).toEqual(expected)
     })
 })

@@ -1,24 +1,6 @@
 import { Environment, withCorsHeaders } from 'worker-common'
-import { throwCustomError } from '../../router'
-import {
-    ContractMetadata,
-    GetContractMetadataAlchemyResponse,
-    TokenProviderRequest,
-} from '../../types'
-
-const fetchContractMetadata = async (
-    rpcUrl: string,
-    contractAddress: string,
-): Promise<GetContractMetadataAlchemyResponse> => {
-    const response = await fetch(`${rpcUrl}/getContractMetadata?contractAddress=${contractAddress}`)
-    if (!response.ok) {
-        throwCustomError(
-            (await response.text?.()) || 'could not fetch from alchemy',
-            response.status,
-        )
-    }
-    return response.json()
-}
+import { TokenProviderRequest } from '../../types'
+import { fetchAlchemyContractMetadata, toContractMetadata } from '../../utils'
 
 export const getCollectionMetadata = async (request: TokenProviderRequest, env: Environment) => {
     const { rpcUrl, query } = request
@@ -27,7 +9,7 @@ export const getCollectionMetadata = async (request: TokenProviderRequest, env: 
 
     let json
     try {
-        json = await fetchContractMetadata(rpcUrl, contractAddress)
+        json = await fetchAlchemyContractMetadata(rpcUrl, contractAddress)
     } catch (error) {
         return new Response(`Cant fetch alchemy data: ${JSON.stringify(error)}`, { status: 500 })
     }
@@ -36,14 +18,4 @@ export const getCollectionMetadata = async (request: TokenProviderRequest, env: 
 
     const headers = { 'Content-type': 'application/json', ...withCorsHeaders(request, env) }
     return new Response(body, { headers })
-}
-
-function toContractMetadata(response: GetContractMetadataAlchemyResponse): ContractMetadata {
-    return {
-        address: response.address,
-        name: response.name,
-        symbol: response.symbol,
-        tokenType: response.tokenType,
-        imageUrl: response.openSeaMetadata?.imageUrl,
-    }
 }

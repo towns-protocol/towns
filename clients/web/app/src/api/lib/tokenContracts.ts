@@ -90,7 +90,7 @@ export function useCachedTokensForWallet() {
     }, [queryClient])
 }
 
-async function getLocalHostTokens(wallet: string, nftNetwork: string) {
+async function getLocalHostTokens(wallet: string, nftNetwork: number) {
     // to test with a big list of tokens, add ?mainnet to the url, or ?base_sepolia to use the base_sepolia testnet
     if (fetchMainnetTokens || fetchBaseSepolia) {
         return getTokenContractsForAddress(wallet, nftNetwork)
@@ -104,11 +104,10 @@ async function getLocalHostTokens(wallet: string, nftNetwork: string) {
     }
 }
 
-async function getTokenContractsForAddress(wallet: string, nftNetwork: string) {
+async function getTokenContractsForAddress(wallet: string, nftNetwork: number) {
     const TOKENS_SERVER_URL = env.VITE_TOKEN_SERVER_URL
-    // TODO: rename path to /alchemy/nftNetwork
     // See token-worker README for more information
-    const url = `${TOKENS_SERVER_URL}/api/getCollectionsForOwner/al/${nftNetwork}/${wallet}`
+    const url = `${TOKENS_SERVER_URL}/api/getCollectionsForOwner/alchemy/${nftNetwork}/${wallet}`
     const response = await axiosClient.get(url)
     const parseResult = zSchema.safeParse(response.data)
 

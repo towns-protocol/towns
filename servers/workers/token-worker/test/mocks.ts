@@ -389,7 +389,7 @@ export const getContractMetadataMock: ContractMetadata = {
         'https://i.seadn.io/gae/EFAQpIktMBU5SU0TqSdPWZ4byHr3hFirL_mATsR8KWhM5z-GJljX8E73V933lkyKgv2SAFlfRRjGsWvWbQQmJAwu3F2FDXVa1C9F?w=500&auto=format',
 }
 
-export const alchmeyGetCollectionsMock = {
+export const alchemyGetCollectionsMock = {
     contracts: [
         {
             address: '0x317a8fe0f1c7102e7674ab231441e485c64c178a',
@@ -444,7 +444,7 @@ export const alchmeyGetCollectionsMock = {
     pageKey: 'abcd',
     totalCount: 3,
 }
-export const alchmeyGetCollectionsMockPage2 = {
+export const alchemyGetCollectionsMockPage2 = {
     contracts: [
         {
             address: '0x317a8fe0f1c7102e7674ab231441e485c64c178a',

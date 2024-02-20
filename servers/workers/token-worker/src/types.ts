@@ -78,6 +78,13 @@ export type GetCollectionsForOwnerResponse = {
     collections: ContractMetadata[]
 }
 
+export type GetCollectionsForOwnerAcrossNetworksResponse = {
+    chainId: number
+    status: 'success' | 'error'
+    data?: GetCollectionsForOwnerResponse
+    error?: unknown
+}
+
 // worker reponse for /getNftsForOwner
 export interface GetNftsResponse extends Omit<GetNftsAlchemyResponse, 'ownedNfts'> {
     ownedNftsContract: ContractMetadata[]
@@ -93,6 +100,11 @@ export type ContractMetadata = {
     symbol?: string
     tokenType?: string
     imageUrl?: string | null // from OpenSea data if available
+}
+
+export type GetCollectionMetadataAcrossNetworksResponse = {
+    chainId: number
+    data: ContractMetadata | undefined
 }
 
 // TODO: remove? we probably won't use this endpoint

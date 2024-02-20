@@ -22,8 +22,7 @@ Cloudflare worker for interacting with NFTs (via Alchemy)
 
 Where `:provider` is the nft api provider:
 
-`al` - Alchemy
-`in` - Infura - deprecated
+`alchemy` - Alchemy
 
 Where `:network` is `eth-mainnet` or any string (anything besides `eth-mainnet` will point to Goerli).
 

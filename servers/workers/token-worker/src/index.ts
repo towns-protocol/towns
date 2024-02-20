@@ -4,105 +4,76 @@ import {
     getOptionsResponse,
     isOptionsRequest,
 } from 'worker-common'
-import { getCollectionMetadata as getCollectionMetadataInfura } from './handlers/infura/getCollectionMetadata'
-import { getCollectionMetadata as getCollectionMetadataAlchemy } from './handlers/alchemy/getCollectionMetadata'
+import { getCollectionMetadata } from './handlers/alchemy/getCollectionMetadata'
 import { router } from './router'
 import { Env, TokenProviderRequest } from './types'
-import { getCollectionsForOwner as getCollectionsForOwnerInfura } from './handlers/infura/getCollectionsForOwner'
-import { getCollectionsForOwner as getCollectionsForOwnerAlchemy } from './handlers/alchemy/getCollectionsForOwner'
-import { Buffer } from 'buffer'
+import { getCollectionsForOwner } from './handlers/alchemy/getCollectionsForOwner'
+import { generateAlchemyUrl } from './utils'
+import { getCollectionsForOwnerAcrossNetworks } from './handlers/alchemy/getCollectionsForOwnerAcrossNetworks'
+import { getCollectionMetadataAcrossNetworks } from './handlers/alchemy/getCollectionMetadataAcrossNetworks'
 
-const networks = {
-    mainnet: 'eth-mainnet',
-    baseSepolia: 'base-sepolia',
-}
-
-const networksToChainId = {
-    [networks.mainnet]: 1,
-    [networks.baseSepolia]: 84532,
-}
-
+// enum for supported providers
+// currently only alchemy is supported
 enum ProviderAlias {
-    Infura = 'in',
-    Alchemy = 'al',
-}
-
-const withInfuraAuthHeader = (request: TokenProviderRequest, env: Env) => {
-    const provider = request.params?.provider
-
-    if (provider === ProviderAlias.Infura) {
-        const Auth = Buffer.from(env.INFURA_API_KEY + ':' + env.INFURA_API_SECRET).toString(
-            'base64',
-        )
-        request.authHeader = `Basic ${Auth}`
-    }
+    Alchemy = 'alchemy',
 }
 
 // adds a rpcUrl to the request object
 const withNetwork = async (request: TokenProviderRequest, env: Env) => {
     const provider = request.params?.provider
-    const network = request.params?.network
-    if (provider === ProviderAlias.Infura) {
-        const base = `https://nft.api.infura.io/networks`
-        switch (network) {
-            case networks.mainnet:
-                request.rpcUrl = `${base}/${networksToChainId[networks.mainnet]}`
-                break
-            case networks.baseSepolia:
-                request.rpcUrl = `${base}/${networksToChainId[networks.baseSepolia]}`
-                break
-            default:
-                return new Response(`invalid network:: ${network}`, { status: 400 })
-        }
-    } else if (provider === ProviderAlias.Alchemy) {
-        let base
-        switch (network) {
-            case networks.mainnet:
-                base = `https://${networks.mainnet}`
-                break
-            case networks.baseSepolia:
-                base = `https://${networks.baseSepolia}`
-                break
-            default:
-                return new Response(`invalid network:: ${network}`, { status: 400 })
-        }
-        request.rpcUrl = `${base}.g.alchemy.com/nft/v3/${env.ALCHEMY_API_KEY}`
-    } else {
-        return new Response(`invalid provider:: ${provider}`, { status: 400 })
+    const chainIdStr = request.params?.network
+
+    if (!provider || !chainIdStr) {
+        return new Response('missing provider or network', { status: 400 })
+    }
+    const chainId = +chainIdStr
+
+    switch (provider) {
+        case ProviderAlias.Alchemy:
+            {
+                try {
+                    request.rpcUrl = generateAlchemyUrl(chainId, env.ALCHEMY_API_KEY)
+                } catch (error) {
+                    return new Response(`invalid chainId:: ${chainId}`, { status: 400 })
+                }
+            }
+            break
+        default:
+            return new Response(`invalid provider:: ${provider}`, { status: 400 })
     }
 }
 
 router
     /**
-     * isHolderOfCollection
-     * Not used currently. If needed, must add support for infura
-     * .get('/api/isHolderOfCollection/:network', withNetwork, isHolderOfCollection)
-     */
-
-    /**
-     * getNftsForOwner
-     * Not used currently. If needed, must add support for infura
-     * .get('/api/getNftsForOwner/:network/:wallet', withNetwork, getNftsForOwner)
-     */
-
-    /**
      * getCollectionsForOwner
      * get all collections for a wallet
      *
      * examples
-     * ALCHEMY: /api/getCollectionsForOwner/al/eth-mainnet/0x0
-     * INFURA: /api/getCollectionsForOwner/in/eth-mainnet/0x0
+     * ALCHEMY: /api/getCollectionsForOwner/alchemy/1/0x0
      */
     .get(
         '/api/getCollectionsForOwner/:provider/:network/:wallet',
         withNetwork,
-        withInfuraAuthHeader,
         (request: TokenProviderRequest, env: Env) => {
-            if (request.params?.provider === ProviderAlias.Infura) {
-                return getCollectionsForOwnerInfura(request, env.ENVIRONMENT)
-            } else {
-                return getCollectionsForOwnerAlchemy(request, env.ENVIRONMENT)
-            }
+            return getCollectionsForOwner(request, env.ENVIRONMENT)
+        },
+    )
+
+    /**
+     * getCollectionsForOwnerAcrossNetworks
+     * get all collections for a wallet across supported networks - see utils.supportedNftNetworks
+     *
+     * examples
+     * ALCHEMY: /api/getCollectionsForOwner/alchemy/1/0x0
+     */
+    .get(
+        '/api/getCollectionsForOwnerAcrossNetworks/:provider/:wallet',
+        (request: TokenProviderRequest, env: Env) => {
+            return getCollectionsForOwnerAcrossNetworks(
+                request,
+                env.ALCHEMY_API_KEY,
+                env.ENVIRONMENT,
+            )
         },
     )
 
@@ -114,19 +85,34 @@ router
      * TODO: change query param to path param
      *
      * examples
-     * ALCHEMY: /api/getCollectionMetadata/al/eth-mainnet?contractAddress=0x0
-     * INFURA: /api/getCollectionMetadata/in/eth-mainnet?contractAddress=0x0
+     * ALCHEMY: /api/getCollectionMetadata/alchemy/1?contractAddress=0x0
      */
     .get(
         '/api/getCollectionMetadata/:provider/:network',
         withNetwork,
-        withInfuraAuthHeader,
         (request: TokenProviderRequest, env: Env) => {
-            if (request.params?.provider === ProviderAlias.Infura) {
-                return getCollectionMetadataInfura(request, env)
-            } else {
-                return getCollectionMetadataAlchemy(request, env.ENVIRONMENT)
-            }
+            return getCollectionMetadata(request, env.ENVIRONMENT)
+        },
+    )
+
+    /**
+     * getCollectionMetadataAcrossNetworks
+     * get metadata for a collection
+     *
+     * requires a contractAddress query param
+     * TODO: change query param to path param
+     *
+     * examples
+     * ALCHEMY: /api/getCollectionMetadata/alchemy/1?contractAddress=0x0
+     */
+    .get(
+        '/api/getCollectionMetadataAcrossNetworks/:provider',
+        (request: TokenProviderRequest, env: Env) => {
+            return getCollectionMetadataAcrossNetworks(
+                request,
+                env.ALCHEMY_API_KEY,
+                env.ENVIRONMENT,
+            )
         },
     )
 
