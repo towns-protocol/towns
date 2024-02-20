@@ -72,7 +72,7 @@ export class CryptoStore extends Dexie {
         streamId: string,
         sessionId: string,
     ): Promise<InboundGroupSessionData | undefined> {
-        self.open()
+        await this.open()
         return await this.inboundGroupSessions.get({ sessionId, streamId })
     }
 
