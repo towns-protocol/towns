@@ -77,10 +77,12 @@ export class PersistenceStore extends Dexie implements IPersistenceStore {
     }
 
     async saveCleartext(eventId: string, cleartext: string) {
+        self.open()
         await this.cleartexts.put({ eventId, cleartext })
     }
 
     async getCleartext(eventId: string) {
+        self.open()
         const record = await this.cleartexts.get(eventId)
         return record?.cleartext
     }
