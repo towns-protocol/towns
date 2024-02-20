@@ -112,13 +112,15 @@ echo "STARTED ALL CHAINS AND DEPLOYED ALL CONTRACTS"
 
 # Now generate the casablanca server config
 ./casablanca/node/run_multi.sh -c -n 10
+./casablanca/node/run_single.sh -c
+./casablanca/node/run_single.sh -c --de
 
 # Define the base directory for easier reference
-CONFIGS_DIR="./casablanca/node/run_files/multi_ent"
+CONFIGS_DIR="./casablanca/node/run_files/"
 PNW_URL="http://localhost:8787"
 PNW_AUTH_TOKEN="Zm9v"
 
-# Loop over each config.yaml file in the multi_ent subdirectories
+# Loop over each config.yaml file in the run_files subdirectories
 find "$CONFIGS_DIR" -type f -name "config.yaml" | while read -r YAML_FILE; do
     yq eval ".pushNotification.url = \"$PNW_URL\"" -i $YAML_FILE
     yq eval ".pushNotification.authToken = \"$PNW_AUTH_TOKEN\"" -i $YAML_FILE
@@ -149,8 +151,8 @@ commands=(
     "worker_gateway:cd servers/workers/gateway-worker && yarn dev:local"
     "worker_push:cd servers/workers/push-notification-worker && ./scripts/start-local-push-worker.sh"
     "worker_stackup:cd servers/workers/stackup-worker && yarn dev:local"
-    "casablanca_single:sleep 3 && yarn run --top-level csb:dev:entitlements"
-    "casablanca_single_ne:./scripts/wait-for-casablanca.sh && yarn run --top-level csb:start:no-entitlements"
+    "casablanca_single:sleep 3 && ./casablanca/node/run_single.sh -sc"
+    "casablanca_single_ne:./scripts/wait-for-casablanca.sh && ./casablanca/node/run_single.sh -sc --de"
     "casablanca:./casablanca/node/run_multi.sh -r"
     "xchain:./servers/xchain/launch_multi.sh"
 )
