@@ -51,9 +51,12 @@ export function useSpaceNames(client?: CasablancaClient) {
 
         const updateSpaceIds = () => {
             const newSpaceIds = client.streams.getStreamIds().filter((id) => isSpaceStreamId(id))
-            if (!isEqual(newSpaceIds, spaceIds)) {
-                setSpaceIds(newSpaceIds)
-            }
+            setSpaceIds((prev) => {
+                if (isEqual(prev, newSpaceIds)) {
+                    return prev
+                }
+                return newSpaceIds
+            })
         }
 
         const streamUpdated = (streamId: string) => {
@@ -69,7 +72,7 @@ export function useSpaceNames(client?: CasablancaClient) {
             client.off('streamInitialized', streamUpdated)
             client.off('userLeftStream', streamUpdated)
         }
-    }, [isEnabled, client, spaceIds, setSpaceIds])
+    }, [isEnabled, client, setSpaceIds])
 
     const getSpaceNames = useCallback(
         async function (): Promise<SpaceInfo[]> {
