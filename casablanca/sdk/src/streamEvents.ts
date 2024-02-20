@@ -81,6 +81,7 @@ export type StreamStateEvents = {
         localEventId: string,
         event: LocalTimelineEvent,
     ) => void
+    streamLatestTimestampUpdated: (streamId: string) => void
     streamUsernameUpdated: (streamId: string, userId: string) => void
     streamDisplayNameUpdated: (streamId: string, userId: string) => void
     streamPendingUsernameUpdated: (streamId: string, userId: string) => void

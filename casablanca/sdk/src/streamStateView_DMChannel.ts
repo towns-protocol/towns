@@ -56,7 +56,7 @@ export class StreamStateView_DMChannel extends StreamStateView_AbstractContent {
         const payload: DmChannelPayload = event.remoteEvent.event.payload.value
         switch (payload.content.case) {
             case 'inception':
-                this.updateLastEvent(event.remoteEvent)
+                this.updateLastEvent(event.remoteEvent, stateEmitter)
                 break
 
             case 'message':
@@ -67,7 +67,7 @@ export class StreamStateView_DMChannel extends StreamStateView_AbstractContent {
                     cleartext,
                     encryptionEmitter,
                 )
-                this.updateLastEvent(event.remoteEvent)
+                this.updateLastEvent(event.remoteEvent, stateEmitter)
                 break
 
             case 'membership':
@@ -106,10 +106,10 @@ export class StreamStateView_DMChannel extends StreamStateView_AbstractContent {
         const payload: DmChannelPayload = event.remoteEvent.event.payload.value
         switch (payload.content.case) {
             case 'inception':
-                this.updateLastEvent(event.remoteEvent)
+                this.updateLastEvent(event.remoteEvent, undefined)
                 break
             case 'message':
-                this.updateLastEvent(event.remoteEvent)
+                this.updateLastEvent(event.remoteEvent, undefined)
                 this.decryptEvent(
                     'channelMessage',
                     event,
@@ -147,17 +147,23 @@ export class StreamStateView_DMChannel extends StreamStateView_AbstractContent {
         super.onConfirmedEvent(event, stateEmitter)
         this.userMetadata.onConfirmedEvent(event, stateEmitter)
     }
-
-    onAppendLocalEvent(event: StreamTimelineEvent): void {
+    onAppendLocalEvent(
+        event: StreamTimelineEvent,
+        stateEmitter: TypedEmitter<StreamStateEvents> | undefined,
+    ): void {
         this.lastEventCreatedAtEpocMs = event.createdAtEpocMs
+        stateEmitter?.emit('streamLatestTimestampUpdated', this.streamId)
     }
 
-    private updateLastEvent(event: ParsedEvent) {
+    private updateLastEvent(
+        event: ParsedEvent,
+        stateEmitter: TypedEmitter<StreamStateEvents> | undefined,
+    ) {
         const createdAtEpocMs = event.event.createdAtEpocMs
-        this.lastEventCreatedAtEpocMs =
-            createdAtEpocMs > this.lastEventCreatedAtEpocMs
-                ? createdAtEpocMs
-                : this.lastEventCreatedAtEpocMs
+        if (createdAtEpocMs > this.lastEventCreatedAtEpocMs) {
+            this.lastEventCreatedAtEpocMs = createdAtEpocMs
+            stateEmitter?.emit('streamLatestTimestampUpdated', this.streamId)
+        }
     }
 
     getUserMetadata(): StreamStateView_UserMetadata {

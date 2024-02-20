@@ -55,7 +55,10 @@ export abstract class StreamStateView_AbstractContent {
         //
     }
 
-    onAppendLocalEvent(_event: StreamTimelineEvent): void {
+    onAppendLocalEvent(
+        _event: StreamTimelineEvent,
+        _stateEmitter: TypedEmitter<StreamStateEvents> | undefined,
+    ): void {
         //
     }
 

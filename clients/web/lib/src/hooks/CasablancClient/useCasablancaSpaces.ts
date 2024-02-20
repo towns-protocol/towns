@@ -54,11 +54,9 @@ export function useCasablancaSpaces(casablancaClient?: CasablancaClient): SpaceI
 
         casablancaClient.on('streamInitialized', onStreamChange)
         casablancaClient.on('userStreamMembershipChanged', onStreamChange)
-        casablancaClient.on('streamUpdated', onStreamChange)
         return () => {
             casablancaClient.off('streamInitialized', onStreamChange)
             casablancaClient.off('userStreamMembershipChanged', onStreamChange)
-            casablancaClient.off('streamUpdated', onStreamChange)
         }
     }, [casablancaClient, spaceInfo, userStreamId])
     return spaces

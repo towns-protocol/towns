@@ -1,4 +1,4 @@
-import { Client as CasablancaClient } from '@river/sdk'
+import { Client as CasablancaClient, Stream, isSpaceStreamId } from '@river/sdk'
 import { useEffect, useState } from 'react'
 import isEqual from 'lodash/isEqual'
 import { SnapshotCaseType } from '@river/proto'
@@ -9,30 +9,30 @@ export function useSpacesIds_Casablanca(casablancaClient: CasablancaClient | und
     const [spaceIds, setSpaceIds] = useState<string[]>([])
 
     useEffect(() => {
-        if (!casablancaClient) {
+        if (!casablancaClient || !casablancaClient.userStreamId) {
             return
         }
 
-        if (!casablancaClient) {
+        const userStream = casablancaClient.streams.get(casablancaClient.userStreamId)
+        if (!userStream) {
             return
         }
-
-        const userId = casablancaClient.userId
 
         const updateSpaces = () => {
-            const streams = casablancaClient.streams
+            const spaceIds = casablancaClient.streams
                 .getStreams()
                 .filter((stream) => stream.view.contentKind === 'spaceContent')
+                .filter((stream: Stream) => {
+                    return userStream.view.userContent.isJoined(stream.view.streamId)
+                })
                 .sort((a, b) => a.view.streamId.localeCompare(b.view.streamId))
-            const joined = streams
-                .filter((stream) => stream.view.getMemberships().joinedUsers.has(userId))
                 .map((stream) => stream.view.streamId)
 
             setSpaceIds((prev) => {
-                if (isEqual(prev, joined)) {
+                if (isEqual(prev, spaceIds)) {
                     return prev
                 }
-                return joined
+                return spaceIds
             })
         }
 
@@ -42,13 +42,19 @@ export function useSpacesIds_Casablanca(casablancaClient: CasablancaClient | und
             }
         }
 
+        const onUserMembershipsChanged = (streamId: string) => {
+            if (isSpaceStreamId(streamId)) {
+                updateSpaces()
+            }
+        }
+
         updateSpaces()
 
         casablancaClient.on('streamInitialized', onStreamChange)
-        casablancaClient.on('streamUpdated', onStreamChange)
+        casablancaClient.on('userStreamMembershipChanged', onUserMembershipsChanged)
         return () => {
             casablancaClient.off('streamInitialized', onStreamChange)
-            casablancaClient.off('streamUpdated', onStreamChange)
+            casablancaClient.off('userStreamMembershipChanged', onUserMembershipsChanged)
         }
     }, [casablancaClient])
 
