@@ -33,28 +33,8 @@ contract RiverRegistry is IRiverRegistry, OwnableBase, Facet {
   }
 
   // =============================================================
-  //                           Constructor
+  //                         Initialization
   // =============================================================
-  // Constructor is used for tests that deploy contract directly
-  // since owner is not set in this case.
-  // Regular deployment scripts pass empty array to the constructor.
-  constructor(address[] memory approvedOperators) {
-    initImpl(approvedOperators);
-  }
-
-  // =============================================================
-  //                           Initializer
-  // =============================================================
-
-  function initImpl(address[] memory approvedOperators) private {
-    RiverRegistryStorage.Layout storage ds = RiverRegistryStorage.layout();
-    for (uint256 i = 0; i < approvedOperators.length; ) {
-      ds.operators.add(approvedOperators[i]);
-      unchecked {
-        i++;
-      }
-    }
-  }
 
   function __RiverRegistry_init(
     address[] memory approvedOperators
@@ -66,7 +46,7 @@ contract RiverRegistry is IRiverRegistry, OwnableBase, Facet {
     address[] memory approvedOperators
   ) internal {
     _addInterface(type(IRiverRegistry).interfaceId);
-    initImpl(approvedOperators);
+    _initImpl(approvedOperators);
   }
 
   // =============================================================
@@ -297,5 +277,19 @@ contract RiverRegistry is IRiverRegistry, OwnableBase, Facet {
     }
 
     return streams;
+  }
+
+  // =============================================================
+  //                           Internal
+  // =============================================================
+
+  function _initImpl(address[] memory approvedOperators) internal {
+    RiverRegistryStorage.Layout storage ds = RiverRegistryStorage.layout();
+    for (uint256 i = 0; i < approvedOperators.length; ) {
+      ds.operators.add(approvedOperators[i]);
+      unchecked {
+        i++;
+      }
+    }
   }
 }

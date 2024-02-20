@@ -51,7 +51,7 @@ contract DeployRiverRegistry is DiamondDeployer {
     address diamondLoupe = address(new DiamondLoupeFacet());
     address introspection = address(new IntrospectionFacet());
     address ownable = address(new OwnableFacet());
-    address registry = address(new RiverRegistry(new address[](0)));
+    address registry = address(new RiverRegistry());
     vm.stopBroadcast();
 
     addFacet(

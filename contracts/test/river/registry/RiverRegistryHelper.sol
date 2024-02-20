@@ -15,7 +15,7 @@ contract RiverRegistryHelper is FacetHelper {
   RiverRegistry internal registry;
 
   constructor() {
-    registry = new RiverRegistry(new address[](0));
+    registry = new RiverRegistry();
 
     bytes4[] memory selectors_ = new bytes4[](16);
     selectors_[_index++] = RiverRegistry.approveOperator.selector;
