@@ -11,12 +11,15 @@ const getBadgeCount = (
     invitedToIds: string[],
     spaceUnreads: Record<string, boolean>,
     spaceMentions: Record<string, number | undefined>,
+    dmUnreadChannelIds: Set<string>,
 ) => {
     const hasUnread =
         // all invites
         invitedToIds.length > 0 ||
         // all unreads in the space hierarchy
-        Object.values(spaceUnreads).indexOf(true) >= 0
+        Object.values(spaceUnreads).indexOf(true) >= 0 ||
+        // all unreads in the dm channels
+        dmUnreadChannelIds.size > 0
 
     // mentions
     const mentions = Object.values(spaceMentions).reduce((a, b) => (a ?? 0) + (b ?? 0), 0)
@@ -25,10 +28,10 @@ const getBadgeCount = (
 }
 
 export function useBadgeStatus() {
-    const { spaceUnreads, spaceMentions } = useZionContext()
+    const { spaceUnreads, spaceMentions, dmUnreadChannelIds } = useZionContext()
     return useMemo(
-        () => getBadgeCount([], spaceUnreads, spaceMentions),
-        [spaceMentions, spaceUnreads],
+        () => getBadgeCount([], spaceUnreads, spaceMentions, dmUnreadChannelIds),
+        [spaceMentions, spaceUnreads, dmUnreadChannelIds],
     )
 }
 
