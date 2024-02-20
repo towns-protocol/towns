@@ -10,6 +10,7 @@ override terraform_workspace_name := $(if $(filter transient,$(ENV)),transient-$
 
 # add default value in case of undefined TF_VAR_num_nodes
 override TF_VAR_num_nodes := $(if $(value TF_VAR_num_nodes),$(value TF_VAR_num_nodes),1)
+override TF_VAR_has_stress_test_infra := $(if $(value TF_VAR_has_stress_test_infra),$(value TF_VAR_has_stress_test_infra),false)
 
 env:
 	@cat /dev/null > .env

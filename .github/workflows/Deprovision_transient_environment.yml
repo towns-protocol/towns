@@ -30,6 +30,7 @@ jobs:
             # We need to set these 2 while destroying. otherwise lite environments get confused during the deprovision step as terraform tries to delete components that don't exist. But when we set these, lite or not, all components are deleted.
             TF_VAR_num_nodes: 0
             TF_VAR_is_clean_environment: true
+            TF_VAR_has_loadtest_infra: false
 
         steps:
             - name: Configure AWS credentials
