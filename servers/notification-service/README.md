@@ -2,6 +2,16 @@
 
 This is a Node.js service that handles notifications.
 
+## Env for local development
+
+Copy the `.env.local-sample` as `.env.local`
+`$ cd servers/notification-service && cp .env.local-sample .env.local`
+
+Create VAPID public and private keys by running this script:
+`$ ./scripts/create-vapid-keys.sh`
+
+Keys are in `.keys/vapid-keys.json`, set the `VAPID_PUBLIC_KEY` and `VAPID_PRIVATE_KEY` in your `.env.local`
+
 ## Starting the development server
 
 ### Docker Compose
@@ -15,7 +25,7 @@ This is a Node.js service that handles notifications.
 
 ### VS Code
 
-- Open VS Code in this path `./server/notificaiton-service`
+- Open VS Code in this path `servers/notification-service`
 - Select the `launch notification service` from the Run and Debug in the Activity Bar on the side of VS Code
 
 ## Test

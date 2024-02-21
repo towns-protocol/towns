@@ -1,4 +1,5 @@
 import express from 'express'
+import helmet from 'helmet'
 import 'express-async-errors'
 
 import { cors } from './middleware/cors'
@@ -12,6 +13,7 @@ export async function initializeApp() {
 
     // Middlewares
     app.use(cors)
+    app.use(helmet())
     app.use(express.json())
 
     // public routes
