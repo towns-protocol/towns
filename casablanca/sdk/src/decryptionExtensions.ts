@@ -411,6 +411,11 @@ export class DecryptionExtensions extends (EventEmitter as new () => TypedEmitte
             const sessionNotFound = isSessionNotFoundError(err)
             this.log.debug('failed to decrypt', err, 'sessionNotFound', sessionNotFound)
 
+            // If !sessionNotFound, we want to know more about this error.
+            if (!sessionNotFound) {
+                this.log.error('failed to decrypt', err, 'streamId', item.streamId)
+            }
+
             this.client.stream(item.streamId)?.view.updateDecryptedContentError(
                 item.eventId,
                 {
