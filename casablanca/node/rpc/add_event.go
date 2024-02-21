@@ -70,7 +70,7 @@ func (s *Service) addParsedEvent(ctx context.Context, streamId string, parsedEve
 	}
 
 	if requiredParentEvent != nil {
-		err := s.addRequiredParentEvent(ctx, requiredParentEvent)
+		err := s.addEventPayload(ctx, requiredParentEvent.StreamId, requiredParentEvent.Payload)
 		if err != nil {
 			return err
 		}
@@ -98,21 +98,21 @@ func (s *Service) addParsedEvent(ctx context.Context, streamId string, parsedEve
 	return nil
 }
 
-func (s *Service) addRequiredParentEvent(ctx context.Context, requiredParentEvent *rules.RequiredParentEvent) error {
+func (s *Service) addEventPayload(ctx context.Context, streamId string, payload IsStreamEvent_Payload) error {
 	hashRequest := &GetLastMiniblockHashRequest{
-		StreamId: requiredParentEvent.StreamId,
+		StreamId: streamId,
 	}
 	hashResponse, err := s.GetLastMiniblockHash(ctx, connect.NewRequest(hashRequest))
 	if err != nil {
 		return err
 	}
-	envelope, err := MakeEnvelopeWithPayload(s.wallet, requiredParentEvent.Payload, hashResponse.Msg.Hash)
+	envelope, err := MakeEnvelopeWithPayload(s.wallet, payload, hashResponse.Msg.Hash)
 	if err != nil {
 		return err
 	}
 
 	req := &AddEventRequest{
-		StreamId: requiredParentEvent.StreamId,
+		StreamId: streamId,
 		Event:    envelope,
 	}
 
