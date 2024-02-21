@@ -41,7 +41,7 @@ func NewTownsArchitect(ctx context.Context, cfg *config.ContractConfig, backend 
 	case contracts.DEV:
 		c, err = dev.NewTownArchitect(address, backend)
 	case contracts.V3:
-		c, err = v3.NewTownsArchitect(address, backend)
+		c, err = v3.NewTownArchitect(address, backend)
 	}
 	if err != nil {
 		return nil, WrapRiverError(

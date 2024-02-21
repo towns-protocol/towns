@@ -2,14 +2,14 @@ import {
     IChannel as LocalhostContract,
     IChannelBase as LocalhostIChannelBase,
     IChannelInterface as LocalhostInterface,
-} from '@towns/generated/localhost/v3/typings/IChannel'
+} from '@towns/generated/dev/typings/IChannel'
 import {
     IChannel as BaseSepoliaContract,
     IChannelInterface as BaseSepoliaInterface,
-} from '@towns/generated/base_sepolia/v3/typings/IChannel'
+} from '@towns/generated/v3/typings/IChannel'
 
-import LocalhostAbi from '@towns/generated/localhost/v3/abis/Channels.abi.json' assert { type: 'json' }
-import BaseSepoliaAbi from '@towns/generated/base_sepolia/v3/abis/Channels.abi.json' assert { type: 'json' }
+import LocalhostAbi from '@towns/generated/dev/abis/Channels.abi.json' assert { type: 'json' }
+import BaseSepoliaAbi from '@towns/generated/v3/abis/Channels.abi.json' assert { type: 'json' }
 
 import { ethers } from 'ethers'
 import { BaseContractShim } from './BaseContractShim'

@@ -2,14 +2,14 @@ import {
     ITownOwner as LocalhostContract,
     ITownOwnerBase as LocalhostITownOwnerBase,
     ITownOwnerInterface as LocalhostInterface,
-} from '@towns/generated/localhost/v3/typings/ITownOwner'
+} from '@towns/generated/dev/typings/ITownOwner'
 import {
     ITownOwner as BaseSepoliaContract,
     ITownOwnerInterface as BaseSepoliaInterface,
-} from '@towns/generated/base_sepolia/v3/typings/ITownOwner'
+} from '@towns/generated/v3/typings/ITownOwner'
 
-import LocalhostAbi from '@towns/generated/localhost/v3/abis/TownOwner.abi.json' assert { type: 'json' }
-import BaseSepoliaAbi from '@towns/generated/base_sepolia/v3/abis/TownOwner.abi.json' assert { type: 'json' }
+import LocalhostAbi from '@towns/generated/dev/abis/TownOwner.abi.json' assert { type: 'json' }
+import BaseSepoliaAbi from '@towns/generated/v3/abis/TownOwner.abi.json' assert { type: 'json' }
 
 import { BaseContractShim } from './BaseContractShim'
 import { ethers } from 'ethers'

@@ -1,13 +1,13 @@
 import { ethers } from 'ethers'
 import { Environment, isErrorType } from 'worker-common'
-import BaseSepoliaTownOwnerAbi from '@towns/generated/base_sepolia/v3/abis/TownOwner.abi.json' assert { type: 'json' }
-import BaseSepoliaWalletLinkAbi from '@towns/generated/base_sepolia/v3/abis/WalletLink.abi.json' assert { type: 'json' }
-import BaseSepoliaTownOwnerContract from '@towns/generated/base_sepolia/addresses/townOwner.json' assert { type: 'json' }
-import BaseSepoliaChannelsAbi from '@towns/generated/base_sepolia/v3/abis/Channels.abi.json' assert { type: 'json' }
-import BaseSepoliaRolesAbi from '@towns/generated/base_sepolia/v3/abis/Roles.abi.json' assert { type: 'json' }
-import BaseSepoliaTownFactoryContract from '@towns/generated/base_sepolia/addresses/townFactory.json' assert { type: 'json' }
-import BaseSepoliaTownContract from '@towns/generated/base_sepolia/addresses/town.json' assert { type: 'json' }
-import BaseSepoliaWalletLinkContract from '@towns/generated/base_sepolia/addresses/walletLink.json' assert { type: 'json' }
+import BaseSepoliaTownOwnerAbi from '@towns/generated/v3/abis/TownOwner.abi.json' assert { type: 'json' }
+import BaseSepoliaWalletLinkAbi from '@towns/generated/v3/abis/WalletLink.abi.json' assert { type: 'json' }
+import BaseSepoliaTownOwnerContract from '@towns/generated/v3/addresses/townOwner.json' assert { type: 'json' }
+import BaseSepoliaChannelsAbi from '@towns/generated/v3/abis/Channels.abi.json' assert { type: 'json' }
+import BaseSepoliaRolesAbi from '@towns/generated/v3/abis/Roles.abi.json' assert { type: 'json' }
+import BaseSepoliaTownFactoryContract from '@towns/generated/v3/addresses/townFactory.json' assert { type: 'json' }
+import BaseSepoliaTownContract from '@towns/generated/v3/addresses/town.json' assert { type: 'json' }
+import BaseSepoliaWalletLinkContract from '@towns/generated/v3/addresses/walletLink.json' assert { type: 'json' }
 import { createJsonProvider as createProvider } from './provider'
 import { Env } from '.'
 

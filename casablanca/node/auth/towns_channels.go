@@ -21,7 +21,7 @@ type TownsChannels interface {
 }
 
 type v001Caller struct {
-	contract *v3.TownsChannels
+	contract *v3.Channels
 }
 
 var _ TownsChannels = (*v001Caller)(nil)
@@ -61,8 +61,8 @@ func NewTownsChannels(ctx context.Context, version string, address common.Addres
 			c = &devCaller{contract: cc}
 		}
 	case contracts.V3:
-		var cc *v3.TownsChannels
-		cc, err = v3.NewTownsChannels(address, backend)
+		var cc *v3.Channels
+		cc, err = v3.NewChannels(address, backend)
 		if cc != nil {
 			c = &v001Caller{contract: cc}
 		}

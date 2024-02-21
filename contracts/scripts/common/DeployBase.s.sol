@@ -42,22 +42,19 @@ contract DeployBase is DeployHelpers, Script {
   // =============================================================
   //                      DEPLOYMENT HELPERS
   // =============================================================
-  function chainAlias() internal returns (string memory) {
-    return
-      isAnvil() || block.chainid == 31338
-        ? "localhost"
-        : getChain(block.chainid).chainAlias;
+  function versionAlias() internal returns (string memory) {
+    return isAnvil() || block.chainid == 31338 ? "dev" : "v3";
   }
 
   function deploymentContext() internal returns (string memory context) {
     context = vm.envOr("DEPLOYMENT_CONTEXT", string(""));
 
-    // if no context is provided, use the default chain alias `contracts/deployments/<chainAlias>`
+    // if no context is provided, use the default chain alias `contracts/deployments/<versionAlias>`
     if (bytes(context).length == 0) {
       context = string.concat(
         DEPLOYMENT_CACHE_PATH,
         "/",
-        chainAlias(),
+        versionAlias(),
         "/addresses"
       );
     } else {
@@ -66,7 +63,7 @@ contract DeployBase is DeployHelpers, Script {
         "/",
         context,
         "/",
-        chainAlias(),
+        versionAlias(),
         "/addresses"
       );
     }
@@ -76,11 +73,29 @@ contract DeployBase is DeployHelpers, Script {
     path = string.concat(vm.projectRoot(), "/", deploymentContext());
   }
 
-  function createChainIdFile(string memory _networkDirPath) internal {
+  function upsertChainIdFile(
+    string memory _networkDirPath,
+    address contractAddr
+  ) internal {
     string memory chainIdFilePath = string.concat(_networkDirPath, "/.chainId");
     if (!exists(chainIdFilePath)) {
       debug("creating chain id file: ", chainIdFilePath);
-      vm.writeFile(chainIdFilePath, vm.toString(block.chainid));
+      vm.writeFile(
+        chainIdFilePath,
+        string.concat(
+          vm.toString(contractAddr),
+          string.concat(":", vm.toString(block.chainid))
+        )
+      );
+    } else {
+      debug("writing chain id to file: ", chainIdFilePath);
+      vm.writeLine(
+        chainIdFilePath,
+        string.concat(
+          vm.toString(contractAddr),
+          string.concat(":", vm.toString(block.chainid))
+        )
+      );
     }
   }
 
@@ -99,7 +114,7 @@ contract DeployBase is DeployHelpers, Script {
           "no deployment found for ",
           versionName,
           " on ",
-          chainAlias()
+          versionAlias()
         )
       );
       return address(0);
@@ -133,7 +148,7 @@ contract DeployBase is DeployHelpers, Script {
       // make sure the network directory exists
       string memory _networkDirPath = networkDirPath();
       createDir(_networkDirPath);
-      createChainIdFile(_networkDirPath);
+      upsertChainIdFile(_networkDirPath, contractAddr);
 
       path = deploymentPath(versionName);
     }

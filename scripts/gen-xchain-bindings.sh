@@ -3,7 +3,12 @@ set -ueo pipefail
 cd -P -- "$(dirname -- "${BASH_SOURCE[0]}")"
 cd ..
 
-CHAIN="${1:-localhost}"
+VERSION="${1:-localhost}"
+if [ "$VERSION" = "localhost" ]; then
+  VERSION="dev"
+elif [ "$VERSION" = "base_sepolia" ]; then
+  VERSION="v3"
+fi
 
 if [ -z ${ABIGEN_VERSION+x} ]; then
   ABIGEN_VERSION="v1.13.10"
@@ -19,9 +24,9 @@ generate_go() {
 
     go run github.com/ethereum/go-ethereum/cmd/abigen@${ABIGEN_VERSION} \
         --abi contracts/out/${NAME}.sol/${NAME}.abi.json \
-        --pkg "${CHAIN}${XCHAIN_PACKAGE}" \
-        --type "${CHAIN}${NAME}" \
-        --out "${XCHAIN_DIR}/${CHAIN}_xchain_${NAME}.go"
+        --pkg "${VERSION}${XCHAIN_PACKAGE}" \
+        --type "${VERSION}${NAME}" \
+        --out "${XCHAIN_DIR}/${VERSION}_xchain_${NAME}.go"
 }
 
 generate_go IEntitlementChecker

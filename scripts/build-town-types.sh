@@ -3,15 +3,22 @@ set -ueo pipefail
 cd -P -- "$(dirname -- "${BASH_SOURCE[0]}")"
 cd ..
 
-CHAIN="${1:-localhost}"
+VERSION="${1:-localhost}"
+if [ "$VERSION" = "localhost" ]; then
+  VERSION="dev"
+elif [ "$VERSION" = "base_sepolia" ]; then
+  VERSION="v3"
+fi
 FROZEN="${2:-}"
-ABI_DIR="packages/generated/${CHAIN}/v3/abis"
+ABI_DIR="packages/generated/${VERSION}/abis"
 
 forge build
 
-yarn typechain --target=ethers-v5 "contracts/out/**/?(IDiamond|IDiamondCut|ITownArchitect|IProxyManager|IPausable|IEntitlementsManager|IChannel|IRoles|IMulticall|TokenEntitlement|IWalletLink|OwnableFacet|TokenPausableFacet|UserEntitlement|ITownOwner|MockERC721A|MembershipFacet|Member).json" --out-dir "packages/generated/${CHAIN}/v3/typings"
+CONTRACT_INTERFACES="(IDiamond|IDiamondCut|ITownArchitect|IProxyManager|IPausable|IEntitlementsManager|IChannel|IRoles|IMulticall|TokenEntitlement|IWalletLink|IRiverRegistry|OwnableFacet|TokenPausableFacet|UserEntitlement|ITownOwner|MockERC721A|MembershipFacet|Member)"
 
-mkdir -p $ABI_DIR && cp -a contracts/out/{Diamond,DiamondCutFacet,TownArchitect,ProxyManager,Pausable,EntitlementsManager,Channels,Roles,Multicall,OwnableFacet,TokenEntitlement,WalletLink,TokenPausableFacet,UserEntitlement,TownOwner,MockERC721A,MembershipFacet,Member,IEntitlementRule,MockRiverRegistry}.sol/* "$ABI_DIR"
+yarn typechain --target=ethers-v5 "contracts/out/**/?${CONTRACT_INTERFACES}.json" --out-dir "packages/generated/${VERSION}/typings"
+
+mkdir -p $ABI_DIR && cp -a contracts/out/{Diamond,DiamondCutFacet,TownArchitect,ProxyManager,Pausable,EntitlementsManager,Channels,Roles,Multicall,OwnableFacet,TokenEntitlement,WalletLink,RiverRegistry,TokenPausableFacet,UserEntitlement,TownOwner,MockERC721A,MembershipFacet,Member,IEntitlementRule,MockRiverRegistry}.sol/* "$ABI_DIR"
 
 # Copy the json abis to TS files for type inference
 for file in $ABI_DIR/*.abi.json; do
@@ -19,8 +26,8 @@ for file in $ABI_DIR/*.abi.json; do
   echo "export default $(cat $file) as const" > $ABI_DIR/$filename.ts
 done
 
-./scripts/gen-river-node-bindings.sh $CHAIN
-./scripts/gen-xchain-bindings.sh $CHAIN
+./scripts/gen-river-node-bindings.sh $VERSION
+./scripts/gen-xchain-bindings.sh $VERSION
 
 # Using the $FROZEN flag and git diff, we can check if this script generates any new files
 # under the $ABI_DIR directory.

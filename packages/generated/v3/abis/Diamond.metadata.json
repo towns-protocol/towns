@@ -1,0 +1,487 @@
+{
+  "compiler": {
+    "version": "0.8.23+commit.f704f362"
+  },
+  "language": "Solidity",
+  "output": {
+    "abi": [
+      {
+        "inputs": [
+          {
+            "components": [
+              {
+                "components": [
+                  {
+                    "internalType": "address",
+                    "name": "facetAddress",
+                    "type": "address"
+                  },
+                  {
+                    "internalType": "enum IDiamond.FacetCutAction",
+                    "name": "action",
+                    "type": "uint8"
+                  },
+                  {
+                    "internalType": "bytes4[]",
+                    "name": "functionSelectors",
+                    "type": "bytes4[]"
+                  }
+                ],
+                "internalType": "struct IDiamond.FacetCut[]",
+                "name": "baseFacets",
+                "type": "tuple[]"
+              },
+              {
+                "internalType": "address",
+                "name": "init",
+                "type": "address"
+              },
+              {
+                "internalType": "bytes",
+                "name": "initData",
+                "type": "bytes"
+              }
+            ],
+            "internalType": "struct Diamond.InitParams",
+            "name": "initDiamondCut",
+            "type": "tuple"
+          }
+        ],
+        "stateMutability": "nonpayable",
+        "type": "constructor"
+      },
+      {
+        "inputs": [
+          {
+            "internalType": "bytes4",
+            "name": "selector",
+            "type": "bytes4"
+          }
+        ],
+        "name": "DiamondCut_FunctionAlreadyExists",
+        "type": "error"
+      },
+      {
+        "inputs": [
+          {
+            "internalType": "address",
+            "name": "facet",
+            "type": "address"
+          }
+        ],
+        "name": "DiamondCut_FunctionDoesNotExist",
+        "type": "error"
+      },
+      {
+        "inputs": [
+          {
+            "internalType": "bytes4",
+            "name": "selector",
+            "type": "bytes4"
+          }
+        ],
+        "name": "DiamondCut_FunctionFromSameFacetAlreadyExists",
+        "type": "error"
+      },
+      {
+        "inputs": [],
+        "name": "DiamondCut_ImmutableFacet",
+        "type": "error"
+      },
+      {
+        "inputs": [
+          {
+            "internalType": "address",
+            "name": "init",
+            "type": "address"
+          }
+        ],
+        "name": "DiamondCut_InvalidContract",
+        "type": "error"
+      },
+      {
+        "inputs": [
+          {
+            "internalType": "address",
+            "name": "facet",
+            "type": "address"
+          }
+        ],
+        "name": "DiamondCut_InvalidFacet",
+        "type": "error"
+      },
+      {
+        "inputs": [],
+        "name": "DiamondCut_InvalidFacetCutAction",
+        "type": "error"
+      },
+      {
+        "inputs": [],
+        "name": "DiamondCut_InvalidFacetCutLength",
+        "type": "error"
+      },
+      {
+        "inputs": [
+          {
+            "internalType": "address",
+            "name": "facet",
+            "type": "address"
+          },
+          {
+            "internalType": "bytes4",
+            "name": "selector",
+            "type": "bytes4"
+          }
+        ],
+        "name": "DiamondCut_InvalidFacetRemoval",
+        "type": "error"
+      },
+      {
+        "inputs": [
+          {
+            "internalType": "address",
+            "name": "facet",
+            "type": "address"
+          }
+        ],
+        "name": "DiamondCut_InvalidFacetSelectors",
+        "type": "error"
+      },
+      {
+        "inputs": [],
+        "name": "DiamondCut_InvalidSelector",
+        "type": "error"
+      },
+      {
+        "inputs": [],
+        "name": "Diamond_UnsupportedFunction",
+        "type": "error"
+      },
+      {
+        "inputs": [
+          {
+            "internalType": "uint32",
+            "name": "version",
+            "type": "uint32"
+          }
+        ],
+        "name": "Initializable_AlreadyInitialized",
+        "type": "error"
+      },
+      {
+        "inputs": [],
+        "name": "Introspection_AlreadySupported",
+        "type": "error"
+      },
+      {
+        "inputs": [],
+        "name": "Introspection_NotSupported",
+        "type": "error"
+      },
+      {
+        "inputs": [],
+        "name": "Proxy__ImplementationIsNotContract",
+        "type": "error"
+      },
+      {
+        "anonymous": false,
+        "inputs": [
+          {
+            "components": [
+              {
+                "internalType": "address",
+                "name": "facetAddress",
+                "type": "address"
+              },
+              {
+                "internalType": "enum IDiamond.FacetCutAction",
+                "name": "action",
+                "type": "uint8"
+              },
+              {
+                "internalType": "bytes4[]",
+                "name": "functionSelectors",
+                "type": "bytes4[]"
+              }
+            ],
+            "indexed": false,
+            "internalType": "struct IDiamond.FacetCut[]",
+            "name": "facetCuts",
+            "type": "tuple[]"
+          },
+          {
+            "indexed": false,
+            "internalType": "address",
+            "name": "init",
+            "type": "address"
+          },
+          {
+            "indexed": false,
+            "internalType": "bytes",
+            "name": "initPayload",
+            "type": "bytes"
+          }
+        ],
+        "name": "DiamondCut",
+        "type": "event"
+      },
+      {
+        "anonymous": false,
+        "inputs": [
+          {
+            "indexed": false,
+            "internalType": "uint32",
+            "name": "version",
+            "type": "uint32"
+          }
+        ],
+        "name": "Initialized",
+        "type": "event"
+      },
+      {
+        "anonymous": false,
+        "inputs": [
+          {
+            "indexed": true,
+            "internalType": "bytes4",
+            "name": "interfaceId",
+            "type": "bytes4"
+          }
+        ],
+        "name": "InterfaceAdded",
+        "type": "event"
+      },
+      {
+        "anonymous": false,
+        "inputs": [
+          {
+            "indexed": true,
+            "internalType": "bytes4",
+            "name": "interfaceId",
+            "type": "bytes4"
+          }
+        ],
+        "name": "InterfaceRemoved",
+        "type": "event"
+      },
+      {
+        "stateMutability": "payable",
+        "type": "fallback"
+      },
+      {
+        "stateMutability": "payable",
+        "type": "receive"
+      }
+    ],
+    "devdoc": {
+      "events": {
+        "DiamondCut((address,uint8,bytes4[])[],address,bytes)": {
+          "params": {
+            "facetCuts": "Facet addresses and function selectors.",
+            "init": "Address of contract or facet to execute initPayload.",
+            "initPayload": "A function call, including function selector and arguments."
+          }
+        }
+      },
+      "kind": "dev",
+      "methods": {},
+      "version": 1
+    },
+    "userdoc": {
+      "errors": {
+        "Diamond_UnsupportedFunction()": [
+          {
+            "notice": "Thrown when calling a function that was not registered in the diamond."
+          }
+        ]
+      },
+      "events": {
+        "DiamondCut((address,uint8,bytes4[])[],address,bytes)": {
+          "notice": "Event emitted when facets are added/removed/replaced"
+        },
+        "InterfaceAdded(bytes4)": {
+          "notice": "Emitted when an interface is added to the contract via `_addInterface`."
+        },
+        "InterfaceRemoved(bytes4)": {
+          "notice": "Emitted when an interface is removed from the contract via `_removeInterface`."
+        }
+      },
+      "kind": "user",
+      "methods": {},
+      "version": 1
+    }
+  },
+  "settings": {
+    "compilationTarget": {
+      "contracts/src/diamond/Diamond.sol": "Diamond"
+    },
+    "evmVersion": "paris",
+    "libraries": {},
+    "metadata": {
+      "appendCBOR": false,
+      "bytecodeHash": "none"
+    },
+    "optimizer": {
+      "enabled": true,
+      "runs": 200
+    },
+    "remappings": [
+      ":@eth-optimism/contracts-bedrock/=node_modules/@eth-optimism/contracts-bedrock/",
+      ":@openzeppelin/=lib/openzeppelin-contracts/",
+      ":@prb/math/=lib/prb-math/src/",
+      ":@prb/test/=lib/prb-test/src/",
+      ":ERC721A/=lib/ERC721A/contracts/",
+      ":account-abstraction/=lib/account-abstraction/contracts/",
+      ":base64-sol/=lib/base64/",
+      ":base64/=lib/base64/",
+      ":council/=lib/council/contracts/",
+      ":ds-test/=lib/ds-test/src/",
+      ":erc4626-tests/=lib/operator-filter-registry/lib/openzeppelin-contracts/lib/erc4626-tests/",
+      ":forge-std/=lib/forge-std/src/",
+      ":openzeppelin-contracts-upgradeable/=lib/openzeppelin-contracts-upgradeable/contracts/",
+      ":openzeppelin-contracts/=lib/openzeppelin-contracts/",
+      ":operator-filter-registry/=lib/operator-filter-registry/",
+      ":prb-math/=lib/prb-math/src/",
+      ":prb-test/=lib/prb-test/src/"
+    ]
+  },
+  "sources": {
+    "contracts/src/diamond/Diamond.sol": {
+      "keccak256": "0xa8a96d00848014881be80175311f216bd75acacb82523f4bc6c45b0571c8b618",
+      "license": "Apache-2.0",
+      "urls": [
+        "bzz-raw://fc8b288d95c48076b206358e0f3d06d64af1013c8df27d5a072afe8f2b39e507",
+        "dweb:/ipfs/QmYGJGAEpmtvyDr5N3m2mHz2Mq8NHTjhnK17qNeaK6TRZ9"
+      ]
+    },
+    "contracts/src/diamond/IDiamond.sol": {
+      "keccak256": "0xd4907618ad3b9847c656008815820f23a89a587e408712b450cff075625e1553",
+      "license": "Apache-2.0",
+      "urls": [
+        "bzz-raw://652645a543f65b0415327a8a88398fc7835b1d6ee01df8c898f9e43867d02714",
+        "dweb:/ipfs/QmPXt4Kks2o5CJKbT8U1mCryQJP6EMzzP5kdcqUFvXX7y5"
+      ]
+    },
+    "contracts/src/diamond/facets/cut/DiamondCutBase.sol": {
+      "keccak256": "0x20607fefd986323ef1f73d2cc89b88bd30ab8936a8ffe26e4e1e8080c760cd90",
+      "license": "Apache-2.0",
+      "urls": [
+        "bzz-raw://9f9ea0ad6c8027fdd1bb061aa9d938e1cf10689c36d3a9a9ea247d6ed78794a5",
+        "dweb:/ipfs/QmboVBP4LdKxRfren85gz81VRyVR5AUmv5YDtsXn13wuby"
+      ]
+    },
+    "contracts/src/diamond/facets/cut/DiamondCutStorage.sol": {
+      "keccak256": "0xd7104be26467ee3f794843008c90093d12ec863f3c8de1314e0d102e3a669a4c",
+      "license": "Apache-2.0",
+      "urls": [
+        "bzz-raw://1178a6ddd51413ff1444358e09c6f250fb8b8f101899eb90351a8a840fe8c343",
+        "dweb:/ipfs/QmWhyzX1mY3ZxNmqHyPooCPqcgbroV9h6KgQHET1SBMXih"
+      ]
+    },
+    "contracts/src/diamond/facets/cut/IDiamondCut.sol": {
+      "keccak256": "0xa5985f00fabb7f6e5925542c9d0c955d4e7ec4f9ffe59d0fa81d75bed7ecdd55",
+      "license": "Apache-2.0",
+      "urls": [
+        "bzz-raw://2ebbb450aac3c12f690d7457d04d6fc53736b36cc60dcd757e11840335103688",
+        "dweb:/ipfs/QmbcjTgejYrj3m2Lj9hHpCe2wt63fmLhhN6aY8XFoScitw"
+      ]
+    },
+    "contracts/src/diamond/facets/initializable/Initializable.sol": {
+      "keccak256": "0x74f93da9ffed901d60051d3491adc2d029d0f61d707c28eb7d177ee52a489492",
+      "license": "MIT",
+      "urls": [
+        "bzz-raw://7c1689c778f69b56e622d886d129944fba1e8339afc85fad2212de0c9bc62e18",
+        "dweb:/ipfs/QmbEqQmSE9NaPP3JmrPHpLvfzXt66sMvkJSSq13TiKSWXi"
+      ]
+    },
+    "contracts/src/diamond/facets/initializable/InitializableStorage.sol": {
+      "keccak256": "0x278589764eab56d2f12e536c168a83f8170918b1dd8811f4a8463b3e720c95ba",
+      "license": "Apache-2.0",
+      "urls": [
+        "bzz-raw://f19d4d8f41d28de52ef25fbce3eb29ce5fd57c12b806dda64c27e535a6fa43b6",
+        "dweb:/ipfs/QmPj1TyysUzfBYzNCBDF4AK14mGjcGtPcGfYNoSb2t3U7w"
+      ]
+    },
+    "contracts/src/diamond/facets/introspection/IERC165.sol": {
+      "keccak256": "0x243cfeefa64ba07bee887b0b03704147f9bd2f25571272a6ebca3ba684af1b00",
+      "license": "Apache-2.0",
+      "urls": [
+        "bzz-raw://1aed67ea7251fad9dbfb58a30f59f7edd81d48d7f6b193b98f957be359653361",
+        "dweb:/ipfs/QmQauJL4nFMN3QDutjWezRbBjLX5GsTWt5jeLfkX4JW64T"
+      ]
+    },
+    "contracts/src/diamond/facets/introspection/IntrospectionBase.sol": {
+      "keccak256": "0x5379ee00fe8945cb6820e9f3692c1f141ab2bacb286ac39f096857bd530f91ca",
+      "license": "Apache-2.0",
+      "urls": [
+        "bzz-raw://90c08f3e8e8fc64264ac94bc8005286e881760b0c776a9b0a2e679e4cff0237a",
+        "dweb:/ipfs/QmXcpnF9hcUH7jGvEySkNBRybYYrcGyUjkUHXuTex886cJ"
+      ]
+    },
+    "contracts/src/diamond/facets/introspection/IntrospectionStorage.sol": {
+      "keccak256": "0x6dfdf3a4b7b09bd162e9571abe96ac85244f4b26d1ecbe3cd0c4bf534413445a",
+      "license": "Apache-2.0",
+      "urls": [
+        "bzz-raw://e454b9dd354536d1defe593d88dbb8f7c4d8d46d7bf855d39a3eb9bf07d7c349",
+        "dweb:/ipfs/QmaZFpCsdutxFcpuWVnjiAUb17vLqnhhQ23tv8my86h8u1"
+      ]
+    },
+    "contracts/src/diamond/facets/loupe/DiamondLoupeBase.sol": {
+      "keccak256": "0x214a714d3d52f994c5b668cb609903ba337cf49b063036b41d9f0721db453f40",
+      "license": "Apache-2.0",
+      "urls": [
+        "bzz-raw://e49bb76bbb11d7b378f25be32f0f544a61080a9a26f61064c33a0e5769d6cb42",
+        "dweb:/ipfs/QmTaKNb2DwveNXY6U6RtwsvrbvcCEAeYGSQNUitoThjNwL"
+      ]
+    },
+    "contracts/src/diamond/facets/loupe/IDiamondLoupe.sol": {
+      "keccak256": "0xafbe8346e6043ac3f6977e9ca43603ca3bbbfc2c2962b47024cf9aa0dcb23f7f",
+      "license": "Apache-2.0",
+      "urls": [
+        "bzz-raw://7b0fd31aeddde2f351471e0fd1f5a5da20570491d5604420b283a4749838514c",
+        "dweb:/ipfs/QmbuKxmTX8HC9SHNUPsraBTc6NWECwsbgmXsrpXjPqkLLi"
+      ]
+    },
+    "contracts/src/diamond/proxy/IProxy.sol": {
+      "keccak256": "0xb3cc38cae21021aec88e128eaec4994e926e4961d166c7e6e3a40a41c69aa105",
+      "license": "Apache-2.0",
+      "urls": [
+        "bzz-raw://6da721f34f1359068ebe71ce01472403940b4e8fe87c38ff5be2d77e673520e5",
+        "dweb:/ipfs/QmfNgDv5eQsLzc9bKi1EGWdxDX84Vhr2SARa7zm4pcCdpy"
+      ]
+    },
+    "contracts/src/diamond/proxy/Proxy.sol": {
+      "keccak256": "0xdecce34c90df379d03fbfa648ec731f30898da1a7eaf108686240fe2af177842",
+      "license": "Apache-2.0",
+      "urls": [
+        "bzz-raw://4fa3e5c7c20b6059ca920ae7093b7c93505197953738d2e4662a9b870571f187",
+        "dweb:/ipfs/QmejJW6sVqoDyZ1rkDx6smQrKzPizRdoiBHEe6iW2QWXtZ"
+      ]
+    },
+    "lib/openzeppelin-contracts/contracts/utils/Address.sol": {
+      "keccak256": "0xf96f969e24029d43d0df89e59d365f277021dac62b48e1c1e3ebe0acdd7f1ca1",
+      "license": "MIT",
+      "urls": [
+        "bzz-raw://ec772b45a624be516f1c81970caa8a2e144301e9d0921cbc1a2789fef39a1269",
+        "dweb:/ipfs/QmNyjwxCrGhQMyzLD93oUobJXVe9ceJvRvfXwbEtuxPiEj"
+      ]
+    },
+    "lib/openzeppelin-contracts/contracts/utils/introspection/IERC165.sol": {
+      "keccak256": "0x447a5f3ddc18419d41ff92b3773fb86471b1db25773e07f877f548918a185bf1",
+      "license": "MIT",
+      "urls": [
+        "bzz-raw://be161e54f24e5c6fae81a12db1a8ae87bc5ae1b0ddc805d82a1440a68455088f",
+        "dweb:/ipfs/QmP7C3CHdY9urF4dEMb9wmsp1wMxHF6nhA2yQE5SKiPAdy"
+      ]
+    },
+    "lib/openzeppelin-contracts/contracts/utils/structs/EnumerableSet.sol": {
+      "keccak256": "0xc3ff3f5c4584e1d9a483ad7ced51ab64523201f4e3d3c65293e4ca8aeb77a961",
+      "license": "MIT",
+      "urls": [
+        "bzz-raw://d7d3dd6067a994690471b5fc71b6f81fac3847798b37d404f74db00b4d3c3d0e",
+        "dweb:/ipfs/QmRHF1RarifjNi93RttouNPkYZGyu6CD926PgRDzD5iL35"
+      ]
+    }
+  },
+  "version": 1
+}

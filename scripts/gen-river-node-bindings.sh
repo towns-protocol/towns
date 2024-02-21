@@ -5,6 +5,8 @@ cd ..
 VERSION="${1:-dev}"
 if [ "$VERSION" = "localhost" ]; then
   VERSION="dev"
+elif [ "$VERSION" = "base_sepolia" ]; then
+  VERSION="v3"
 fi
 
 if [ -z ${ABIGEN_VERSION+x} ]; then

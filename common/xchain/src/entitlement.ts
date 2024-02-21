@@ -1,4 +1,4 @@
-import IEntitlementRuleAbi from '@towns/generated/localhost/v3/abis/IEntitlementRule.abi'
+import IEntitlementRuleAbi from '@towns/generated/dev/abis/IEntitlementRule.abi'
 
 import { Transport } from 'viem'
 import { createPublicClient, http, createWalletClient, decodeFunctionResult } from 'viem'

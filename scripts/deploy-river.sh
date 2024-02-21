@@ -5,4 +5,4 @@ cd ..
 
 ./scripts/wait-for-riverchain.sh
 
-#NOTE - river contracts are deployed when running the dev server, see run_impl.sh approx line 48
+# river chain deployed as part of node startup, see run_impl.sh line 54

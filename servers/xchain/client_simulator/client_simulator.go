@@ -49,17 +49,17 @@ func ClientSimulator() {
 		return
 	}
 
-	gatedContract, err := e.NewLocalhostIEntitlementGated(*xc.GetTestContractAddress(), client)
+	gatedContract, err := e.NewDevIEntitlementGated(*xc.GetTestContractAddress(), client)
 	if err != nil {
 		log.Error("Failed to parse contract ABI", "err", err)
 		return
 	}
 
-	resultPosted := make(chan *e.LocalhostIEntitlementGatedEntitlementCheckResultPosted)
+	resultPosted := make(chan *e.DevIEntitlementGatedEntitlementCheckResultPosted)
 
-	checkRequestedResults := make(chan *e.LocalhostIEntitlementCheckerEntitlementCheckRequested)
+	checkRequestedResults := make(chan *e.DevIEntitlementCheckerEntitlementCheckRequested)
 
-	checkerFilterer, err := e.NewLocalhostIEntitlementCheckerFilterer(*xc.GetCheckerContractAddress(), client)
+	checkerFilterer, err := e.NewDevIEntitlementCheckerFilterer(*xc.GetCheckerContractAddress(), client)
 
 	if err != nil {
 		log.Error("Failed call NewEntitlementCheckerEventsFilterer", "err", err)
@@ -80,7 +80,7 @@ func ClientSimulator() {
 		checkRequestedSubCh = checkRequestedSub.Err()
 	}
 
-	gatedFilter, err := e.NewLocalhostIEntitlementGatedFilterer(*xc.GetTestContractAddress(), client)
+	gatedFilter, err := e.NewDevIEntitlementGatedFilterer(*xc.GetTestContractAddress(), client)
 	if err != nil {
 		log.Error("Failed to parse contract ABI", "err", err)
 		return

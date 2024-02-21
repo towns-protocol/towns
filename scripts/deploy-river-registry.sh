@@ -3,8 +3,6 @@ set -euo pipefail
 cd -P -- "$(dirname -- "${BASH_SOURCE[0]}")"
 cd ../contracts
 
-: ${SAVE_DEPLOYMENTS_PATH:?"Error: SAVE_DEPLOYMENTS_PATH must be set"}
-
 set -a
 . .env.localhost
 set +a
@@ -14,3 +12,7 @@ if [ "${1-}" != "nobuild" ]; then
 fi
 
 make deploy-river-anvil-explicit contract=DeployRiverRegistry
+
+cd ..
+mkdir -p casablanca/node/run_files/addresses
+cp packages/generated/dev/addresses/riverRegistry.json casablanca/node/run_files/addresses

@@ -50,8 +50,8 @@ fi
 
 if [ "$CONFIG" == "true" ]; then
     mkdir -p ${RUN_BASE}
-    cp -r ./run_files/addresses ${RUN_BASE}/addresses
-    SAVE_DEPLOYMENTS_PATH=casablanca/node/${RUN_BASE}/addresses ../../scripts/deploy-river-registry.sh
+    ../../scripts/deploy-river-registry.sh
+    cp -r ./run_files/addresses/ ${RUN_BASE}/addresses
 
     if [ "$DISABLE_RIVER_CHAIN" != "true" ]; then
         source ../../contracts/.env.localhost
@@ -70,7 +70,7 @@ if [ "$CONFIG" == "true" ]; then
 
         NODE_ADDRESS=$(cat ${RUN_BASE}/$INSTANCE/wallet/node_address)
         if [ "$DISABLE_RIVER_CHAIN" != "true" ]; then
-            echo "Adding node record to blockchain river registry"
+            echo "Adding node record to blockchain river registry at address ${RIVER_REGISTRY_ADDRESS}"
             cast send \
                 --rpc-url http://127.0.0.1:8546 \
                 --private-key $LOCAL_PRIVATE_KEY \

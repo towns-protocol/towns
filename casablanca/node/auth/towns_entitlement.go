@@ -39,7 +39,7 @@ func NewTownsEntitlements(ctx context.Context, version string, address common.Ad
 	case contracts.DEV:
 		c, err = dev.NewEntitlementsManager(address, backend)
 	case contracts.V3:
-		c, err = v3.NewTownsEntitlements(address, backend)
+		c, err = v3.NewEntitlementsManager(address, backend)
 	}
 	if err != nil {
 		return nil, WrapRiverError(
