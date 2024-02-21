@@ -176,8 +176,9 @@ func TestLoad(t *testing.T) {
 		return true, nil
 	})
 	assert.NoError(t, err)
-	assert.GreaterOrEqual(t, count, 3)
-	assert.Equal(t, int64(count), miniblockHeader.EventNumOffset)
+	assert.Equal(t, int64(3), miniblockHeader.EventNumOffset) // 3 events in the genisis miniblock
+	assert.Equal(t, 2, len(miniblockHeader.EventHashes))      // 2 join events added in test
+	assert.Equal(t, 5, count)                                 // we should iterate over all of them
 	// test copy and apply block
 	// how many blocks do we currently have?
 	assert.Equal(t, len(view.blocks), 1)

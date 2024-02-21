@@ -62,9 +62,6 @@ func (r *streamViewImpl) GetChannelInfo(channelId string) (*SpacePayload_Channel
 	if err != nil {
 		return nil, err
 	}
-	err = r.minipool.forEachEvent(updateFn)
-	if err != nil {
-		return nil, err
-	}
+	
 	return channel, nil
 }

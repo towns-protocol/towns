@@ -65,11 +65,6 @@ func (r *streamViewImpl) IsMemberOf(streamId string) bool {
 		return false
 	}
 
-	err = r.minipool.forEachEvent(updateFn)
-	if err != nil {
-		return false
-	}
-
 	if membership == nil {
 		return false
 	}

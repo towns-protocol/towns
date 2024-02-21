@@ -428,15 +428,6 @@ func (s *streamImpl) Sub(ctx context.Context, cookie *SyncCookie, receiver SyncR
 			panic("Should never happen: Stream.Sub: forEachEvent failed: " + err.Error())
 		}
 
-		// append events from minipool
-		err = s.view.minipool.forEachEvent(func(e *ParsedEvent) (bool, error) {
-			envelopes = append(envelopes, e.Envelope)
-			return true, nil
-		})
-		if err != nil {
-			panic("Should never happen: Stream.Sub: forEachEvent failed: " + err.Error())
-		}
-
 		// always send response, even if there are no events so that the client knows it's upToDate
 		receiver.OnUpdate(
 			&StreamAndCookie{

@@ -133,10 +133,6 @@ func (r *streamViewImpl) getMembers() (*mapset.Set[string], error) {
 	if err != nil {
 		return nil, err
 	}
-	err = r.minipool.forEachEvent(updateFn)
-	if err != nil {
-		return nil, err
-	}
 
 	return &members, nil
 }
@@ -214,10 +210,7 @@ func (r *streamViewImpl) GetMembership(userId string) (protocol.MembershipOp, er
 	if err != nil {
 		return retValue, err
 	}
-	err = r.minipool.forEachEvent(updateFn)
-	if err != nil {
-		return retValue, err
-	}
+
 	return retValue, nil
 }
 
@@ -276,10 +269,6 @@ func (r *streamViewImpl) getInvites() (*mapset.Set[string], error) {
 	}
 	
 	err := r.forEachEvent(r.snapshotIndex+1, updateFn)
-	if err != nil {
-		return nil, err
-	}
-	err = r.minipool.forEachEvent(updateFn)
 	if err != nil {
 		return nil, err
 	}
