@@ -37,7 +37,7 @@ func (s *Service) CreateStream(
 	log.Debug("CreateStream ENTER")
 	r, e := s.createStreamImpl(ctx, req)
 	if e != nil {
-		return nil, AsRiverError(e).Func("CreateStream").Tag("streamId", req.Msg.StreamId).LogWarn(log).AsConnectError()
+		return nil, AsRiverError(e).Func("CreateStream").Tag("req.Msg.StreamId", req.Msg.StreamId).LogWarn(log).AsConnectError()
 	}
 	log.Debug("CreateStream LEAVE", "response", r.Msg)
 	return r, nil
@@ -51,7 +51,7 @@ func (s *Service) GetStream(
 	log.Debug("GetStream ENTER")
 	r, e := s.getStreamImpl(ctx, req)
 	if e != nil {
-		return nil, AsRiverError(e).Func("GetStream").Tag("streamId", req.Msg.StreamId).LogWarn(log).AsConnectError()
+		return nil, AsRiverError(e).Func("GetStream").Tag("req.Msg.StreamId", req.Msg.StreamId).LogWarn(log).AsConnectError()
 	}
 	log.Debug("GetStream LEAVE", "response", r.Msg)
 	return r, nil
@@ -88,7 +88,7 @@ func (s *Service) GetMiniblocks(
 	log.Debug("GetMiniblocks ENTER", "req", req.Msg)
 	r, e := s.getMiniblocksImpl(ctx, req)
 	if e != nil {
-		return nil, AsRiverError(e).Func("GetMiniblocks").Tag("streamId", req.Msg.StreamId).LogWarn(log).AsConnectError()
+		return nil, AsRiverError(e).Func("GetMiniblocks").Tag("req.Msg.StreamId", req.Msg.StreamId).LogWarn(log).AsConnectError()
 	}
 	log.Debug("GetMiniblocks LEAVE", "response", r.Msg)
 	return r, nil
@@ -122,7 +122,7 @@ func (s *Service) GetLastMiniblockHash(
 	log.Debug("GetLastMiniblockHash ENTER", "req", req.Msg)
 	r, e := s.getLastMiniblockHashImpl(ctx, req)
 	if e != nil {
-		return nil, AsRiverError(e).Func("GetLastMiniblockHash").Tag("streamId", req.Msg.StreamId).LogWarn(log).AsConnectError()
+		return nil, AsRiverError(e).Func("GetLastMiniblockHash").Tag("req.Msg.StreamId", req.Msg.StreamId).LogWarn(log).AsConnectError()
 	}
 	log.Debug("GetLastMiniblockHash LEAVE", "response", r.Msg)
 	return r, nil
@@ -156,9 +156,9 @@ func (s *Service) AddEvent(
 	log.Debug("AddEvent ENTER", "req", req.Msg)
 	r, e := s.addEventImpl(ctx, req)
 	if e != nil {
-		return nil, AsRiverError(e).Func("AddEvent").Tag("streamId", req.Msg.StreamId).LogWarn(log).AsConnectError()
+		return nil, AsRiverError(e).Func("AddEvent").Tag("req.Msg.StreamId", req.Msg.StreamId).LogWarn(log).AsConnectError()
 	}
-	log.Debug("AddEvent LEAVE", "streamId", req.Msg.StreamId)
+	log.Debug("AddEvent LEAVE", "req.Msg.StreamId", req.Msg.StreamId)
 	return r, nil
 }
 
