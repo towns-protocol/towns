@@ -45,6 +45,7 @@ interface EncryptedContentItem {
 }
 
 interface DecryptionRetryItem {
+    streamId: string
     event: EncryptedContentItem
     retryAt: Date
 }
@@ -96,6 +97,7 @@ export class DecryptionExtensions extends (EventEmitter as new () => TypedEmitte
         missingKeys: new Array<MissingKeysItem>(),
         keySolicitations: new Array<KeySolicitationItem>(),
     }
+    private upToDateStreams = new Set<string>()
     private decryptionFailures: Record<string, Record<string, EncryptedContentItem[]>> = {} // streamId: sessionId: EncryptedContentItem[]
     private inProgressTick?: Promise<void>
     private timeoutId?: NodeJS.Timeout
@@ -121,6 +123,7 @@ export class DecryptionExtensions extends (EventEmitter as new () => TypedEmitte
         }
 
         this.log.debug('new DecryptionExtensions', { userDevice })
+
         const onNewGroupSessions = (
             sessions: UserInboxPayload_GroupEncryptionSessions,
             _senderId: string,
@@ -180,12 +183,26 @@ export class DecryptionExtensions extends (EventEmitter as new () => TypedEmitte
             }
         }
 
+        const onStreamUpToDate = (streamId: string) => {
+            this.log.debug('streamUpToDate', streamId)
+            this.upToDateStreams.add(streamId)
+            this.checkStartTicking()
+        }
+
+        client.streams.getStreams().forEach((stream) => {
+            if (stream.isUpToDate) {
+                this.upToDateStreams.add(stream.streamId)
+            }
+        })
+
+        client.on('streamUpToDate', onStreamUpToDate)
         client.on('newGroupSessions', onNewGroupSessions)
         client.on('newEncryptedContent', onNewEncryptedContent)
         client.on('newKeySolicitation', onKeySolicitation)
         client.on('updatedKeySolicitation', onKeySolicitation)
 
         this.onStopFn = () => {
+            client.off('streamUpToDate', onStreamUpToDate)
             client.off('newGroupSessions', onNewGroupSessions)
             client.off('newEncryptedContent', onNewEncryptedContent)
             client.off('newKeySolicitation', onKeySolicitation)
@@ -224,7 +241,13 @@ export class DecryptionExtensions extends (EventEmitter as new () => TypedEmitte
     }
 
     private checkStartTicking() {
-        if (!this.started || this.timeoutId || !this.onStopFn) {
+        if (
+            !this.started ||
+            this.timeoutId ||
+            !this.onStopFn ||
+            this.client.userInboxStreamId === undefined ||
+            !this.upToDateStreams.has(this.client.userInboxStreamId)
+        ) {
             return
         }
         if (!Object.values(this.queues).find((q) => q.length > 0)) {
@@ -288,19 +311,34 @@ export class DecryptionExtensions extends (EventEmitter as new () => TypedEmitte
             return this.processEncryptedContentItem(encryptedContent)
         }
 
-        const decryptionRetry = dequeue(this.queues.decryptionRetries, now, (x) => x.retryAt)
+        const decryptionRetry = dequeue(
+            this.queues.decryptionRetries,
+            now,
+            (x) => x.retryAt,
+            this.upToDateStreams,
+        )
         if (decryptionRetry) {
             this.setStatus(DecryptionStatus.retryingDecryption)
             return this.processDecryptionRetry(decryptionRetry)
         }
 
-        const missingKeys = dequeue(this.queues.missingKeys, now, (x) => x.waitUntil)
+        const missingKeys = dequeue(
+            this.queues.missingKeys,
+            now,
+            (x) => x.waitUntil,
+            this.upToDateStreams,
+        )
         if (missingKeys) {
             this.setStatus(DecryptionStatus.requestingKeys)
             return this.processMissingKeys(missingKeys)
         }
 
-        const keySolicitation = dequeue(this.queues.keySolicitations, now, (x) => x.respondAfter)
+        const keySolicitation = dequeue(
+            this.queues.keySolicitations,
+            now,
+            (x) => x.respondAfter,
+            this.upToDateStreams,
+        )
         if (keySolicitation) {
             this.setStatus(DecryptionStatus.respondingToKeyRequests)
             return this.processKeySolicitation(keySolicitation)
@@ -393,6 +431,7 @@ export class DecryptionExtensions extends (EventEmitter as new () => TypedEmitte
                 insertSorted(
                     this.queues.decryptionRetries,
                     {
+                        streamId: item.streamId,
                         event: item,
                         retryAt: new Date(Date.now() + 1000), // give it 1 seconds for miniblockblock to confirm
                     },
@@ -429,6 +468,7 @@ export class DecryptionExtensions extends (EventEmitter as new () => TypedEmitte
                 insertSorted(
                     this.queues.decryptionRetries,
                     {
+                        streamId: item.streamId,
                         event: item,
                         retryAt: new Date(Date.now() + 3000), // give it 3 seconds, maybe someone will send us the key
                     },
@@ -651,14 +691,23 @@ function insertSorted<T>(items: T[], newItem: T, dateFn: (x: T) => Date): void {
 
 /// Returns the first item from the array,
 /// if dateFn is provided, returns the first item where dateFn(item) <= now
-function dequeue<T>(items: T[], now: Date, dateFn: (x: T) => Date): T | undefined {
+function dequeue<T extends { streamId: string }>(
+    items: T[],
+    now: Date,
+    dateFn: (x: T) => Date,
+    upToDateStreams: Set<string>,
+): T | undefined {
     if (items.length === 0) {
         return undefined
     }
     if (dateFn(items[0]) > now) {
         return undefined
     }
-    return items.shift()
+    const index = items.findIndex((x) => dateFn(x) <= now && upToDateStreams.has(x.streamId))
+    if (index === -1) {
+        return undefined
+    }
+    return items.splice(index, 1)[0]
 }
 
 function removeItem<T>(items: T[], predicate: (x: T) => boolean) {

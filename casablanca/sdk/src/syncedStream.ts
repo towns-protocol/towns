@@ -17,6 +17,7 @@ import { isChannelStreamId, isDMChannelStreamId, isGDMChannelStreamId } from './
 const CACHED_SCROLLBACK_COUNT = 3
 export class SyncedStream extends Stream {
     log: DLogger
+    isUpToDate = false
     readonly persistenceStore: IPersistenceStore
     constructor(
         userId: string,
@@ -112,6 +113,7 @@ export class SyncedStream extends Stream {
         })
         await this.persistenceStore.saveSyncedStream(this.streamId, cachedSyncedStream)
         await this.persistenceStore.saveMiniblocks(this.streamId, miniblocks)
+        this.markUpToDate()
     }
 
     async initializeFromResponse(response: ParsedStreamResponse) {
@@ -126,6 +128,7 @@ export class SyncedStream extends Stream {
             response.prevSnapshotMiniblockNum,
             cleartexts,
         )
+        this.markUpToDate()
     }
 
     async appendEvents(
@@ -145,9 +148,10 @@ export class SyncedStream extends Stream {
                     break
             }
         }
+        this.markUpToDate()
     }
 
-    async onMiniblockHeader(
+    private async onMiniblockHeader(
         miniblockHeader: MiniblockHeader,
         miniblockEvent: ParsedEvent,
         hash: Uint8Array,
@@ -193,7 +197,10 @@ export class SyncedStream extends Stream {
         await this.persistenceStore.saveSyncedStream(this.streamId, cachedSyncedStream)
     }
 
-    async cachedScrollback(fromInclusive: bigint, toExclusive: bigint): Promise<ParsedMiniblock[]> {
+    private async cachedScrollback(
+        fromInclusive: bigint,
+        toExclusive: bigint,
+    ): Promise<ParsedMiniblock[]> {
         // If this is a channel, DM or GDM, perform a few scrollbacks
         if (
             !isChannelStreamId(this.streamId) &&
@@ -221,6 +228,14 @@ export class SyncedStream extends Stream {
             }
         }
         return miniblocks
+    }
+
+    private markUpToDate(): void {
+        if (this.isUpToDate) {
+            return
+        }
+        this.isUpToDate = true
+        this.emit('streamUpToDate', this.streamId)
     }
 }
 

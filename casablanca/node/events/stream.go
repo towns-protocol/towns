@@ -383,18 +383,19 @@ func (s *streamImpl) Sub(ctx context.Context, cookie *SyncCookie, receiver SyncR
 		}
 		s.receivers.Add(receiver)
 
+		envelopes := make([]*Envelope, 0, s.view.minipool.events.Len()-int(slot))
 		if slot < int64(s.view.minipool.events.Len()) {
-			envelopes := make([]*Envelope, 0, s.view.minipool.events.Len()-int(slot))
 			for _, e := range s.view.minipool.events.Values[slot:] {
 				envelopes = append(envelopes, e.Envelope)
 			}
-			receiver.OnUpdate(
-				&StreamAndCookie{
-					Events:         envelopes,
-					NextSyncCookie: s.view.SyncCookie(s.params.Wallet.AddressStr),
-				},
-			)
 		}
+		// always send response, even if there are no events so that the client knows it's upToDate
+		receiver.OnUpdate(
+			&StreamAndCookie{
+				Events:         envelopes,
+				NextSyncCookie: s.view.SyncCookie(s.params.Wallet.AddressStr),
+			},
+		)
 		return nil
 	} else {
 		if s.receivers == nil {
@@ -402,7 +403,6 @@ func (s *streamImpl) Sub(ctx context.Context, cookie *SyncCookie, receiver SyncR
 		}
 		s.receivers.Add(receiver)
 
-		envelopes := make([]*Envelope, 0, 16)
 		miniblockIndex, err := s.view.indexOfMiniblockWithNum(cookie.MinipoolGen)
 		if err != nil {
 			// The user's sync cookie is out of date. Send a sync reset and return an up-to-date StreamAndCookie.
@@ -419,6 +419,7 @@ func (s *streamImpl) Sub(ctx context.Context, cookie *SyncCookie, receiver SyncR
 		}
 
 		// append events from blocks
+		envelopes := make([]*Envelope, 0, 16)
 		err = s.view.forEachEvent(miniblockIndex, func(e *ParsedEvent) (bool, error) {
 			envelopes = append(envelopes, e.Envelope)
 			return true, nil
@@ -436,14 +437,13 @@ func (s *streamImpl) Sub(ctx context.Context, cookie *SyncCookie, receiver SyncR
 			panic("Should never happen: Stream.Sub: forEachEvent failed: " + err.Error())
 		}
 
-		if len(envelopes) > 0 {
-			receiver.OnUpdate(
-				&StreamAndCookie{
-					Events:         envelopes,
-					NextSyncCookie: s.view.SyncCookie(s.params.Wallet.AddressStr),
-				},
-			)
-		}
+		// always send response, even if there are no events so that the client knows it's upToDate
+		receiver.OnUpdate(
+			&StreamAndCookie{
+				Events:         envelopes,
+				NextSyncCookie: s.view.SyncCookie(s.params.Wallet.AddressStr),
+			},
+		)
 		return nil
 	}
 }

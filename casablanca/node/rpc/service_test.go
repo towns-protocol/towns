@@ -18,6 +18,7 @@ import (
 	"github.com/river-build/river/base/test"
 	"github.com/river-build/river/config"
 	"github.com/river-build/river/crypto"
+	"github.com/river-build/river/dlog"
 	"github.com/river-build/river/events"
 	"github.com/river-build/river/infra"
 	"github.com/river-build/river/protocol"
@@ -818,6 +819,7 @@ func TestRemoveStreamsFromSync(t *testing.T) {
 	*/
 	// create the test client and server
 	ctx := test.NewTestContext()
+	log := dlog.FromCtx(ctx)
 	aliceClient, url, closer := testServerAndClient(t, ctx, testDatabaseUrl, testSchemaName)
 	defer closer()
 	// create alice's wallet and streams
@@ -895,7 +897,7 @@ func TestRemoveStreamsFromSync(t *testing.T) {
 	assert.Nilf(t, err, "error calling AddEvent: %v", err)
 
 	// bob adds alice's stream to sync
-	_, err = bobClient.AddStreamToSync(
+	resp, err := bobClient.AddStreamToSync(
 		ctx,
 		connect.NewRequest(
 			&protocol.AddStreamToSyncRequest{
@@ -905,21 +907,31 @@ func TestRemoveStreamsFromSync(t *testing.T) {
 		),
 	)
 	assert.Nilf(t, err, "error calling AddStreamsToSync: %v", err)
-
+	log.Info("AddStreamToSync", "resp", resp)
 	// When AddEvent is called, node calls streamImpl.notifyToSubscribers() twice
 	// for different events. 	See hnt-3683 for explanation. First event is for
 	// the externally added event (by AddEvent). Second event is the miniblock
 	// event with headers.
 	// drain the events
 	receivedCount := 0
+OuterLoop:
 	for syncRes.Receive() {
-		syncRes.Msg()
-		receivedCount++
-		if receivedCount == 2 {
-			break
+		update := syncRes.Msg()
+		log.Info("received update", "update", update)
+		if update.Stream != nil {
+			sEvents := update.Stream.Events
+			for _, envelope := range sEvents {
+				receivedCount++
+				parsedEvent, _ := events.ParseEvent(envelope)
+				log.Info("received update inner loop", "envelope", parsedEvent)
+				if parsedEvent != nil && parsedEvent.Event.GetMiniblockHeader() != nil {
+					break OuterLoop
+				}
+			}
 		}
 	}
 
+	assert.Equal(t, 2, receivedCount, "expected 2 events")
 	/**
 	Act
 	*/

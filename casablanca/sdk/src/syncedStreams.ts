@@ -2,7 +2,6 @@ import { DLogger, dlog, dlogError, shortenHexString } from '@river/dlog'
 import { Err, SyncCookie, SyncOp, SyncStreamsResponse } from '@river/proto'
 import { StreamRpcClientType, errorContains } from './makeStreamRpcClient'
 import { unpackStream, unpackStreamAndCookie } from './sign'
-import { Stream } from './stream'
 import { StreamStateEvents } from './streamEvents'
 import { SyncedStream } from './syncedStream'
 import TypedEmitter from 'typed-emitter'
@@ -143,7 +142,7 @@ export class SyncedStreams {
         return this.streams.size
     }
 
-    public getStreams(): Stream[] {
+    public getStreams(): SyncedStream[] {
         return Array.from(this.streams.values())
     }
 

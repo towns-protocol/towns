@@ -2,7 +2,7 @@
 /**
  * @group casablanca
  */
-import React, { useCallback } from 'react'
+import React, { useCallback, useEffect } from 'react'
 import { RoomMessageEvent, TimelineEvent, ZTEvent } from '../../src/types/timeline-types'
 import {
     createTestChannelWithSpaceRoles,
@@ -48,11 +48,12 @@ describe('unreadMessageCountEdgeCases', () => {
         // create a veiw for bob
         const TestComponent = ({ signer }: { signer: TSigner }) => {
             const { sendReadReceipt } = useZionClient()
-            const { spaceUnreads } = useZionContext()
+            const { spaceUnreads, casablancaClient } = useZionContext()
             const channelFullyReadMarker = useFullyReadMarker(channelId)
             const { timeline } = useChannelTimeline()
             const spaceHasUnread = spaceUnreads[spaceId]
             const messages = timeline.filter((x) => x.content?.kind === ZTEvent.RoomMessage)
+            const [upToDateStreams, setUpToDateStreams] = React.useState<string[]>([])
             // send message
             const onMarkAsRead = useCallback(() => {
                 if (channelFullyReadMarker?.isUnread === true) {
@@ -64,10 +65,28 @@ describe('unreadMessageCountEdgeCases', () => {
                 const eventNumStr = `${e.eventNum}/${e.confirmedEventNum ?? '??'}`
                 return `${eventNumStr} ${e.fallbackContent} eventId: ${e.eventId}`
             }
+            useEffect(() => {
+                if (!casablancaClient) {
+                    return
+                }
+                const updateUpToDateStreams = () => {
+                    const upToDateStreams = casablancaClient.streams
+                        .getStreams()
+                        .filter((x) => x.isUpToDate)
+                        .map((x) => x.streamId)
+                    setUpToDateStreams(upToDateStreams)
+                }
+                updateUpToDateStreams()
+                casablancaClient.on('streamUpToDate', updateUpToDateStreams)
+                return () => {
+                    casablancaClient.off('streamUpToDate', updateUpToDateStreams)
+                }
+            }, [casablancaClient])
             return (
                 <>
                     <RegisterAndJoinSpace spaceId={spaceId} channelId={channelId} signer={signer} />
                     <button onClick={onMarkAsRead}>mark as read</button>
+                    <div data-testid="upToDateStreams">{upToDateStreams.join(',')}</div>
                     <div data-testid="spaceHasUnread">
                         {spaceHasUnread === undefined ? 'undefined' : spaceHasUnread.toString()}
                     </div>
