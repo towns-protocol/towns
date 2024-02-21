@@ -1,6 +1,13 @@
 import React, { useCallback, useEffect, useMemo, useRef, useState } from 'react'
 import { Plate, PlateEditor, TElement, resetEditor } from '@udecode/plate-common'
-import { Channel, Mention, MessageType, RoomMember, SendTextMessageOptions } from 'use-zion-client'
+import {
+    Channel,
+    EmbeddedMessageAttachment,
+    Mention,
+    MessageType,
+    RoomMember,
+    SendTextMessageOptions,
+} from 'use-zion-client'
 import { datadogRum } from '@datadog/browser-rum'
 import { isEditorEmpty as PlateIsEditorEmpty } from '@udecode/slate-utils'
 import { TComboboxItemWithData } from '@udecode/plate-combobox'
@@ -13,13 +20,16 @@ import { ErrorBoundary } from '@components/ErrorBoundary/ErrorBoundary'
 import { EditorFallback } from '@components/RichTextPlate/components/EditorFallback'
 import { useMediaDropContext } from '@components/MediaDropContext/MediaDropContext'
 import { toMD } from '@components/RichTextPlate/utils/toMD'
+import { EmbeddedMessagePreview } from '@components/EmbeddedMessageAttachement/EmbeddedMessagePreview'
+import { notUndefined } from 'ui/utils/utils'
+import { SpaceProtocol, useEnvironment } from 'hooks/useEnvironmnet'
 import { PlateToolbar } from './ui/PlateToolbar'
 import { RichTextBottomToolbar } from './components/RichTextBottomToolbar'
 import { RichTextPlaceholder } from './components/RichTextEditorPlaceholder'
 import { SendMarkdownPlugin } from './components/SendMarkdownPlugin'
 import { plugins } from './utils/plugins'
 import { getPrettyDisplayName } from '../../utils/getPrettyDisplayName'
-import { notUndefined } from '../../ui/utils/utils'
+import { PasteFilePlugin } from './components/PasteFilePlugin'
 
 const initialValue: TElement[] = [
     {
@@ -79,7 +89,7 @@ const PlateEditorWithoutBoundary = ({
 }: Props) => {
     const editorRef = useRef<PlateEditor<TElement[]>>(null)
 
-    // const { protocol } = useEnvironment()
+    const { protocol } = useEnvironment()
     const { isTouch } = useDevice()
     const { isOffline } = useNetworkStatus()
     const { uploadFiles, files } = useMediaDropContext()
@@ -89,6 +99,9 @@ const PlateEditorWithoutBoundary = ({
     // eslint-disable-next-line @typescript-eslint/no-unused-vars
     const [isAttemptingSend, setIsAttemptingSend] = useState(false)
     const [isFormattingToolbarOpen, setIsFormattingToolbarOpen] = useState(false)
+    const [embeddedMessageAttachments, setEmbeddedMessageAttachments] = useState<
+        EmbeddedMessageAttachment[]
+    >([])
 
     const mentionables: TComboboxItemWithData<RoomMember>[] = useMemo(() => {
         return props.users
@@ -108,6 +121,20 @@ const PlateEditorWithoutBoundary = ({
         [setFocused],
     )
 
+    const onRemoveAttachment = useCallback(
+        (attachmentId: string) => {
+            setEmbeddedMessageAttachments(
+                embeddedMessageAttachments.filter((attachment) => attachment.id !== attachmentId),
+            )
+        },
+        [embeddedMessageAttachments],
+    )
+
+    // eslint-disable-next-line @typescript-eslint/no-unused-vars
+    const onMessageLinksUpdated = useCallback((links: EmbeddedMessageAttachment[]) => {
+        setEmbeddedMessageAttachments(links)
+    }, [])
+
     const onChange = useCallback(() => {
         if (editorRef.current) {
             const isEmpty = PlateIsEditorEmpty(editorRef.current)
@@ -125,6 +152,7 @@ const PlateEditorWithoutBoundary = ({
     const onSendCb = useCallback(
         async (message: string, mentions: Mention[]) => {
             const attachments = files.length > 0 ? (await uploadFiles?.()) ?? [] : []
+            attachments.push(...embeddedMessageAttachments)
 
             const options: SendTextMessageOptions = { messageType: MessageType.Text }
             if (mentions.length > 0) {
@@ -135,7 +163,7 @@ const PlateEditorWithoutBoundary = ({
             }
             onSend?.(message, options)
         },
-        [onSend, files, uploadFiles],
+        [files.length, uploadFiles, embeddedMessageAttachments, onSend],
     )
 
     const handleSendOnEnter: React.KeyboardEventHandler = useCallback(
@@ -161,82 +189,96 @@ const PlateEditorWithoutBoundary = ({
     const background = isEditing && !isTouch ? 'level1' : 'level2'
 
     return (
-        <Stack
-            background={background}
-            rounded={{ default: 'sm', touch: 'none' }}
-            borderLeft={!isTouch ? 'default' : 'none'}
-            borderRight={!isTouch ? 'default' : 'none'}
-            borderTop="default"
-            borderBottom={!isTouch ? 'default' : 'none'}
-        >
-            <Plate
-                plugins={plugins}
-                editorRef={editorRef}
-                initialValue={initialValue}
-                onChange={onChange}
-            >
-                <Stack horizontal width="100%" paddingRight="sm" alignItems="end">
-                    <Box grow width="100%">
-                        <PlateToolbar
-                            readOnly={!editable}
-                            focused={focused || !isEditorEmpty}
-                            editing={isEditing}
-                            background={background}
-                            attemptingToSend={isAttemptingSend}
-                            threadId={props.threadId}
-                            threadPreview={props.threadPreview}
-                            showFormattingToolbar={isFormattingToolbarOpen}
-                            canShowInlineToolbar={!isTouch && !isFormattingToolbarOpen}
-                            key="editor"
+        <>
+            <Box position="relative">
+                <Box gap grow position="absolute" bottom="none" width="100%">
+                    {embeddedMessageAttachments.map((attachment) => (
+                        <EmbeddedMessagePreview
+                            key={attachment.id}
+                            attachment={attachment}
+                            onRemove={onRemoveAttachment}
                         />
+                    ))}
+                </Box>
+            </Box>
+            <Stack
+                background={background}
+                rounded={{ default: 'sm', touch: 'none' }}
+                borderLeft={!isTouch ? 'default' : 'none'}
+                borderRight={!isTouch ? 'default' : 'none'}
+                borderTop="default"
+                borderBottom={!isTouch ? 'default' : 'none'}
+            >
+                <Plate
+                    plugins={plugins}
+                    editorRef={editorRef}
+                    initialValue={initialValue}
+                    onChange={onChange}
+                >
+                    <Stack horizontal width="100%" paddingRight="sm" alignItems="end">
+                        <Box grow width="100%">
+                            <PlateToolbar
+                                readOnly={!editable}
+                                focused={focused || !isEditorEmpty}
+                                editing={isEditing}
+                                background={background}
+                                attemptingToSend={isAttemptingSend}
+                                threadId={props.threadId}
+                                threadPreview={props.threadPreview}
+                                showFormattingToolbar={isFormattingToolbarOpen}
+                                canShowInlineToolbar={!isTouch && !isFormattingToolbarOpen}
+                                key="editor"
+                            />
 
-                        <Box paddingX="md">
-                            <Editor
-                                tabIndex={tabIndex}
-                                placeholder={placeholder}
-                                renderPlaceholder={RichTextPlaceholder}
-                                onKeyDown={handleSendOnEnter}
+                            <Box paddingX="md">
+                                <Editor
+                                    tabIndex={tabIndex}
+                                    placeholder={placeholder}
+                                    renderPlaceholder={RichTextPlaceholder}
+                                    onKeyDown={handleSendOnEnter}
+                                />
+                            </Box>
+
+                            {/*<CaptureTownsLinkPlugin onUpdate={onMessageLinksUpdated} />*/}
+                            <MentionCombobox id="users" items={mentionables} />
+                        </Box>
+                        <Box paddingY="sm" paddingRight="xs">
+                            <SendMarkdownPlugin
+                                displayButtons={displayButtons ?? 'on-focus'}
+                                disabled={isOffline || !editable}
+                                focused={focused}
+                                isEditing={isEditing ?? false}
+                                hasImage={fileCount > 0}
+                                key="markdownplugin"
+                                isEditorEmpty={isEditorEmpty}
+                                // onSendAttemptWhileDisabled={onSendAttemptWhileDisabled}
+                                onSend={onSendCb}
+                                onCancel={onCancel}
                             />
                         </Box>
-
-                        <MentionCombobox id="users" items={mentionables} />
-                    </Box>
-                    <Box paddingY="sm" paddingRight="xs">
-                        <SendMarkdownPlugin
-                            displayButtons={displayButtons ?? 'on-focus'}
-                            disabled={isOffline || !editable}
+                    </Stack>
+                    <Stack
+                        gap
+                        shrink
+                        paddingX
+                        paddingBottom="sm"
+                        pointerEvents={editable ? 'auto' : 'none'}
+                    >
+                        {protocol === SpaceProtocol.Casablanca && <PasteFilePlugin />}
+                        <RichTextBottomToolbar
+                            editing={isEditing}
                             focused={focused}
-                            isEditing={isEditing ?? false}
-                            hasImage={fileCount > 0}
-                            key="markdownplugin"
-                            isEditorEmpty={isEditorEmpty}
-                            // onSendAttemptWhileDisabled={onSendAttemptWhileDisabled}
-                            onSend={onSendCb}
-                            onCancel={onCancel}
+                            threadId={props.threadId}
+                            threadPreview={props.threadPreview}
+                            visible={!isTouch || focused || !isEditorEmpty}
+                            isFormattingToolbarOpen={isFormattingToolbarOpen}
+                            setIsFormattingToolbarOpen={setIsFormattingToolbarOpen}
+                            key="toolbar"
                         />
-                    </Box>
-                </Stack>
-                <Stack
-                    gap
-                    shrink
-                    paddingX
-                    paddingBottom="sm"
-                    pointerEvents={editable ? 'auto' : 'none'}
-                >
-                    {/*{protocol === SpaceProtocol.Casablanca && <PasteFilePlugin />}*/}
-                    <RichTextBottomToolbar
-                        editing={isEditing}
-                        focused={focused}
-                        threadId={props.threadId}
-                        threadPreview={props.threadPreview}
-                        visible={!isTouch || focused || !isEditorEmpty}
-                        isFormattingToolbarOpen={isFormattingToolbarOpen}
-                        setIsFormattingToolbarOpen={setIsFormattingToolbarOpen}
-                        key="toolbar"
-                    />
-                </Stack>
-            </Plate>
-        </Stack>
+                    </Stack>
+                </Plate>
+            </Stack>
+        </>
     )
 }
 
