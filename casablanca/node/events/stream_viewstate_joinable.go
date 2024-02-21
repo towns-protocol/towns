@@ -14,6 +14,8 @@ type JoinableStreamView interface {
 	GetMembership(userId string) (protocol.MembershipOp, error)
 }
 
+var _ JoinableStreamView = (*streamViewImpl)(nil)
+
 func (r *streamViewImpl) IsUserJoined(userId string) (bool, error) {
 	members, err := r.getMembers()
 	if err != nil {
