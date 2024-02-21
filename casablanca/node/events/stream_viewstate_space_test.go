@@ -9,7 +9,6 @@ import (
 	"github.com/river-build/river/protocol"
 	"github.com/river-build/river/storage"
 
-	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
 	"google.golang.org/protobuf/proto"
 )
@@ -226,24 +225,31 @@ func TestSpaceViewState(t *testing.T) {
 	s, _, err := tt.createStream(ctx, "streamid$1", mb)
 	require.NoError(t, err)
 	stream := s.(*streamImpl)
-	assert.NotNil(t, stream)
+	require.NotNil(t, stream)
+	// refresh view
+	view0, err := stream.GetView(ctx)
+	require.NoError(t, err)
+	// check that users 2 and 3 are not joined yet,
+	spaceViewStateTest_CheckUserJoined(t, view0.(JoinableStreamView), "user_1", true)
+	spaceViewStateTest_CheckUserJoined(t, view0.(JoinableStreamView), "user_2", false)
+	spaceViewStateTest_CheckUserJoined(t, view0.(JoinableStreamView), "user_3", false)
 	// add two more membership events
 	// user_2
 	joinSpace_T(t, user2Wallet, ctx, stream, []string{"user_2"})
 	// user_3
 	joinSpace_T(t, user3Wallet, ctx, stream, []string{"user_3"})
-	// refresh view
+	// get a new view
 	view1, err := stream.GetView(ctx)
 	require.NoError(t, err)
-	// check that users 2 and 3 are not joined yet, since we haven't made a miniblock
+	// users show up as joined imediately, because we need that information to continue to add events
 	spaceViewStateTest_CheckUserJoined(t, view1.(JoinableStreamView), "user_1", true)
-	spaceViewStateTest_CheckUserJoined(t, view1.(JoinableStreamView), "user_2", false)
-	spaceViewStateTest_CheckUserJoined(t, view1.(JoinableStreamView), "user_3", false)
+	spaceViewStateTest_CheckUserJoined(t, view1.(JoinableStreamView), "user_2", true)
+	spaceViewStateTest_CheckUserJoined(t, view1.(JoinableStreamView), "user_3", true)
 	// make a miniblock
 	_, err = stream.MakeMiniblock(ctx, false)
 	require.NoError(t, err)
 	// check that we have 2 blocks
-	assert.Equal(t, 2, len(stream.view.blocks))
+	require.Equal(t, 2, len(stream.view.blocks))
 	// refresh view
 	view2, err := stream.GetView(ctx)
 	require.NoError(t, err)
@@ -253,7 +259,7 @@ func TestSpaceViewState(t *testing.T) {
 	spaceViewStateTest_CheckUserJoined(t, view2.(JoinableStreamView), "user_3", true)
 	// now, turn that block into bytes, then load it back into a view
 	miniblocks := stream.view.MiniblocksFromLastSnapshot()
-	assert.Equal(t, 1, len(miniblocks))
+	require.Equal(t, 1, len(miniblocks))
 	miniblock := miniblocks[0]
 	miniblockProtoBytes, err := proto.Marshal(miniblock)
 	require.NoError(t, err)
@@ -265,7 +271,7 @@ func TestSpaceViewState(t *testing.T) {
 		Miniblocks:           [][]byte{miniblockProtoBytes},
 	})
 	require.NoError(t, err)
-	assert.NotNil(t, view3)
+	require.NotNil(t, view3)
 
 	// check that users are joined when loading from the snapshot
 	spaceViewStateTest_CheckUserJoined(t, view3.(JoinableStreamView), "user_1", true)
@@ -276,7 +282,7 @@ func TestSpaceViewState(t *testing.T) {
 func spaceViewStateTest_CheckUserJoined(t *testing.T, view JoinableStreamView, userId string, expected bool) {
 	joined, err := view.IsUserJoined(userId)
 	require.NoError(t, err)
-	assert.Equal(t, expected, joined)
+	require.Equal(t, expected, joined)
 }
 
 func TestChannelViewState_JoinedMembers(t *testing.T) {
@@ -323,10 +329,10 @@ func TestChannelViewState_JoinedMembers(t *testing.T) {
 
 	/* Assert */
 	require.NoError(t, err)
-	assert.Equal(t, (*allJoinedMembers).Cardinality(), 3)
-	assert.Equal(t, (*allJoinedMembers).Contains(alice), true)
-	assert.Equal(t, (*allJoinedMembers).Contains(bob), true)
-	assert.Equal(t, (*allJoinedMembers).Contains(carol), true)
+	require.Equal(t, (*allJoinedMembers).Cardinality(), 3)
+	require.Equal(t, (*allJoinedMembers).Contains(alice), true)
+	require.Equal(t, (*allJoinedMembers).Contains(bob), true)
+	require.Equal(t, (*allJoinedMembers).Contains(carol), true)
 }
 
 func TestChannelViewState_RemainingMembers(t *testing.T) {
@@ -376,8 +382,8 @@ func TestChannelViewState_RemainingMembers(t *testing.T) {
 
 	/* Assert */
 	require.NoError(t, err)
-	assert.Equal(t, (*allJoinedMembers).Cardinality(), 2)
-	assert.Equal(t, (*allJoinedMembers).Contains(alice), true)
-	assert.Equal(t, (*allJoinedMembers).Contains(bob), false)
-	assert.Equal(t, (*allJoinedMembers).Contains(carol), true)
+	require.Equal(t, (*allJoinedMembers).Cardinality(), 2)
+	require.Equal(t, (*allJoinedMembers).Contains(alice), true)
+	require.Equal(t, (*allJoinedMembers).Contains(bob), false)
+	require.Equal(t, (*allJoinedMembers).Contains(carol), true)
 }

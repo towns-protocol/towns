@@ -70,7 +70,7 @@ func (r *streamViewImpl) getMembers() (*mapset.Set[string], error) {
 		break
 	}
 
-	err := r.forEachEvent(r.snapshotIndex+1, func(e *ParsedEvent) (bool, error) {
+	updateFn := func(e *ParsedEvent) (bool, error) {
 		switch payload := e.Event.Payload.(type) {
 		case *protocol.StreamEvent_SpacePayload:
 			switch spacePayload := payload.SpacePayload.Content.(type) {
@@ -125,7 +125,13 @@ func (r *streamViewImpl) getMembers() (*mapset.Set[string], error) {
 			}
 		}
 		return true, nil
-	})
+	}
+
+	err := r.forEachEvent(r.snapshotIndex+1, updateFn)
+	if err != nil {
+		return nil, err
+	}
+	err = r.minipool.forEachEvent(updateFn)
 	if err != nil {
 		return nil, err
 	}
@@ -160,7 +166,7 @@ func (r *streamViewImpl) GetMembership(userId string) (protocol.MembershipOp, er
 		break
 	}
 
-	err := r.forEachEvent(r.snapshotIndex+1, func(e *ParsedEvent) (bool, error) {
+	updateFn := func(e *ParsedEvent) (bool, error) {
 		switch payload := e.Event.Payload.(type) {
 		case *protocol.StreamEvent_SpacePayload:
 			switch spacePayload := payload.SpacePayload.Content.(type) {
@@ -200,8 +206,17 @@ func (r *streamViewImpl) GetMembership(userId string) (protocol.MembershipOp, er
 			}
 		}
 		return true, nil
-	})
-	return retValue, err
+	}
+
+	err := r.forEachEvent(r.snapshotIndex+1, updateFn)
+	if err != nil {
+		return retValue, err
+	}
+	err = r.minipool.forEachEvent(updateFn)
+	if err != nil {
+		return retValue, err
+	}
+	return retValue, nil
 }
 
 func (r *streamViewImpl) getInvites() (*mapset.Set[string], error) {
@@ -224,7 +239,7 @@ func (r *streamViewImpl) getInvites() (*mapset.Set[string], error) {
 		break
 	}
 
-	err := r.forEachEvent(r.snapshotIndex+1, func(e *ParsedEvent) (bool, error) {
+	updateFn := func(e *ParsedEvent) (bool, error) {
 		switch payload := e.Event.Payload.(type) {
 		case *protocol.StreamEvent_GdmChannelPayload:
 			switch gdmChannelPayload := payload.GdmChannelPayload.Content.(type) {
@@ -256,11 +271,16 @@ func (r *streamViewImpl) getInvites() (*mapset.Set[string], error) {
 		}
 
 		return true, nil
-	})
+	}
+	
+	err := r.forEachEvent(r.snapshotIndex+1, updateFn)
+	if err != nil {
+		return nil, err
+	}
+	err = r.minipool.forEachEvent(updateFn)
 	if err != nil {
 		return nil, err
 	}
 
 	return &invites, nil
 }
-
