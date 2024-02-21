@@ -7,8 +7,61 @@ import {
     parsedMiniblockToPersistedMiniblock,
 } from './streamUtils'
 
-import { dlog } from '@river/dlog'
+import { dlog, dlogError } from '@river/dlog'
 import { isDefined } from './check'
+
+const DEFAULT_RETRY_COUNT = 2
+const log = dlog('csb:persistence')
+const logError = dlogError('csb:persistence')
+
+async function fnReadRetryer<T>(
+    fn: () => Promise<T | undefined>,
+    retries: number,
+): Promise<T | undefined> {
+    let lastErr: unknown
+    let retryCounter = retries
+    while (retryCounter > 0) {
+        try {
+            if (retryCounter < retries) {
+                log('retrying...', `${retryCounter}/${retries} retries left`)
+                retryCounter--
+                // wait a bit before retrying
+                await new Promise((resolve) => setTimeout(resolve, 100))
+            }
+            return await fn()
+        } catch (err) {
+            lastErr = err
+            const e = err as any
+            // eslint-disable-next-line @typescript-eslint/no-unsafe-member-access
+            switch (e.name) {
+                case 'AbortError':
+                    // catch and retry on abort errors
+                    // eslint-disable-next-line @typescript-eslint/no-unsafe-member-access
+                    if (e.inner) {
+                        log(
+                            'AbortError reason:',
+                            // eslint-disable-next-line @typescript-eslint/no-unsafe-member-access
+                            e.inner,
+                            `${retryCounter}/${retries} retries left`,
+                        )
+                    } else {
+                        log(
+                            // eslint-disable-next-line @typescript-eslint/no-unsafe-member-access
+                            'AbortError message:' + e.message,
+                            `${retryCounter}/${retries} retries left`,
+                        )
+                    }
+                    break
+                default:
+                    // don't retry for unknown errors
+                    logError('Unhandled error:', err)
+                    throw lastErr
+            }
+        }
+    }
+    // if we're out of retries, throw the last error
+    throw lastErr
+}
 
 export interface IPersistenceStore {
     saveCleartext(eventId: string, cleartext: string): Promise<void>
@@ -35,8 +88,6 @@ export interface IPersistenceStore {
 }
 
 export class PersistenceStore extends Dexie implements IPersistenceStore {
-    log = dlog('csb:persistence')
-
     cleartexts!: Table<{ cleartext: string; eventId: string }>
     syncedStreams!: Table<{ streamId: string; data: Uint8Array }>
     miniblocks!: Table<{ streamId: string; miniblockNum: string; data: Uint8Array }>
@@ -86,15 +137,17 @@ export class PersistenceStore extends Dexie implements IPersistenceStore {
     }
 
     async getCleartexts(eventIds: string[]) {
-        const records = await this.cleartexts.bulkGet(eventIds)
-        return records.length === 0
-            ? undefined
-            : records.reduce((acc, record) => {
-                  if (record !== undefined) {
-                      acc[record.eventId] = record.cleartext
-                  }
-                  return acc
-              }, {} as Record<string, string>)
+        return fnReadRetryer(async () => {
+            const records = await this.cleartexts.bulkGet(eventIds)
+            return records.length === 0
+                ? undefined
+                : records.reduce((acc, record) => {
+                      if (record !== undefined) {
+                          acc[record.eventId] = record.cleartext
+                      }
+                      return acc
+                  }, {} as Record<string, string>)
+        }, DEFAULT_RETRY_COUNT)
     }
 
     async getSyncedStream(streamId: string) {
@@ -107,7 +160,7 @@ export class PersistenceStore extends Dexie implements IPersistenceStore {
     }
 
     async saveSyncedStream(streamId: string, syncedStream: PersistedSyncedStream) {
-        this.log('saving synced stream', streamId)
+        log('saving synced stream', streamId)
         await this.syncedStreams.put({
             streamId,
             data: syncedStream.toBinary(),
@@ -115,7 +168,7 @@ export class PersistenceStore extends Dexie implements IPersistenceStore {
     }
 
     async saveMiniblock(streamId: string, miniblock: ParsedMiniblock) {
-        this.log('saving miniblock', streamId)
+        log('saving miniblock', streamId)
         const cachedMiniblock = parsedMiniblockToPersistedMiniblock(miniblock)
         await this.miniblocks.put({
             streamId: streamId,
@@ -176,13 +229,13 @@ export class PersistenceStore extends Dexie implements IPersistenceStore {
             navigator.storage
                 .persist()
                 .then((persisted) => {
-                    this.log('Persisted storage granted: ', persisted)
+                    log('Persisted storage granted: ', persisted)
                 })
                 .catch((e) => {
-                    this.log("Couldn't get persistent storage: ", e)
+                    log("Couldn't get persistent storage: ", e)
                 })
         } else {
-            this.log('navigator.storage unavailable')
+            log('navigator.storage unavailable')
         }
     }
 
@@ -193,13 +246,13 @@ export class PersistenceStore extends Dexie implements IPersistenceStore {
                 .then((estimate) => {
                     const usage = ((estimate.usage ?? 0) / 1024 / 1024).toFixed(1)
                     const quota = ((estimate.quota ?? 0) / 1024 / 1024).toFixed(1)
-                    this.log(`Using ${usage} out of ${quota} MB.`)
+                    log(`Using ${usage} out of ${quota} MB.`)
                 })
                 .catch((e) => {
-                    this.log("Couldn't get storage estimate: ", e)
+                    log("Couldn't get storage estimate: ", e)
                 })
         } else {
-            this.log('navigator.storage unavailable')
+            log('navigator.storage unavailable')
         }
     }
 }
