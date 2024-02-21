@@ -29,7 +29,7 @@ export const usePersistedUnreadMarkers = ({
     const isManualUnreadMarker =
         fullyReadMarker?.isUnread &&
         fullyReadMarker.eventId !== initialMarkerRef.current?.eventId &&
-        fullyReadMarker.markedReadAtTs !== 0n
+        fullyReadMarker.markedReadAtTs === 0n
 
     useEffect(() => {
         if (!isWindowActiveRef.current || isManualUnreadMarker) {
@@ -38,13 +38,13 @@ export const usePersistedUnreadMarkers = ({
         }
     }, [fullyReadMarker, isManualUnreadMarker])
 
+    const isSentRef = useRef(fullyReadMarker && !fullyReadMarker.isUnread)
+
     useEffect(() => {
         if (fullyReadMarker?.isUnread && !isManualUnreadMarker) {
             isSentRef.current = false
         }
     }, [fullyReadMarker?.isUnread, isManualUnreadMarker])
-
-    const isSentRef = useRef(fullyReadMarker && !fullyReadMarker.isUnread)
 
     const { sendReadReceipt } = useZionClient()
 
