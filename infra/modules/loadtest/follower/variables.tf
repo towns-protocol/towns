@@ -49,3 +49,7 @@ variable "follower_id" {
 variable "num_processes_per_container" {
   type = number
 }
+
+variable "num_clients_per_process" {
+  type = number
+}

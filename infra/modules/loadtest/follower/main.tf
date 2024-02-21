@@ -116,6 +116,10 @@ resource "aws_ecs_task_definition" "task_definition" {
         value = "5"
       },
       {
+        name  = "NUM_CLIENTS_PER_PROCESS",
+        value = tostring(var.num_clients_per_process)
+      },
+      {
         name  = "REDIS_HOST",
         value = var.redis_url
       },
@@ -125,7 +129,7 @@ resource "aws_ecs_task_definition" "task_definition" {
       },
       {
         name  = "DEBUG",
-        value = "csb:test:stress*"
+        value = "csb:test:stress:run*"
       },
       {
         name  = "MOCK_PERSISTENCE_STORE",

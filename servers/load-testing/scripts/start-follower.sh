@@ -38,6 +38,11 @@ function check_env() {
         exit 1
     fi
 
+    if [ -z "$NUM_CLIENTS_PER_PROCESS" ]; then
+        echo "NUM_CLIENTS_PER_PROCESS is not set"
+        exit 1
+    fi
+
     if [ -z "$CLIENT_ID" ]; then
         echo "CLIENT_ID is not set"
         exit 1
@@ -52,6 +57,7 @@ function start_follower() {
     echo "LOAD_TEST_DURATION_MS: ${LOAD_TEST_DURATION_MS}"
     echo "MAX_MSG_DELAY_MS: ${MAX_MSG_DELAY_MS}"
     echo "JOIN_FACTOR: ${JOIN_FACTOR}"
+    echo "NUM_CLIENTS_PER_PROCESS: ${NUM_CLIENTS_PER_PROCESS}"
     echo "CLIENT_ID: ${CLIENT_ID}"
 
     # 30 minutes

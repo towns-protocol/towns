@@ -60,7 +60,8 @@ const coordinatorLeaveChannels = process.env.COORDINATOR_LEAVE_CHANNELS
     ? process.env.COORDINATOR_LEAVE_CHANNELS
     : defaultCoordinatorLeaveChannelsFlag
 
-const log = dlog('csb:test:stress')
+const log = dlog('csb:test:stress:run')
+const debugLog = dlog('csb:test:stress:debug')
 
 log('Current Node Version:', process.version)
 
@@ -101,6 +102,7 @@ describe('Stress test', () => {
     test(
         'stress test',
         async () => {
+            log('v2.50')
             await redis.flushall()
             await redisE2EMessageDeliveryTracking.flushall()
 
@@ -137,7 +139,6 @@ describe('Stress test', () => {
                         clearEvent.content?.payload?.value?.content?.case === 'text'
                     ) {
                         const body = clearEvent.content?.payload?.value?.content.value?.body
-                        //console.log('Added message', body)
                         if (streamId === coordinationChannelId) {
                             if (body === 'JOINED') {
                                 //Means that we are processing followers joining main channel in the beginning
@@ -193,8 +194,8 @@ describe('Stress test', () => {
 
             while (followersCounter != 0) {
                 // Perform some actions in the loop
-                log('Waiting for followers')
-                log('Remaining followers counter', followersCounter)
+                debugLog('Waiting for followers')
+                debugLog('Remaining followers counter', followersCounter)
                 await pauseForXMiliseconds(1000)
             }
             log('All followers joined main channel')
@@ -293,7 +294,7 @@ describe('Stress test', () => {
 
             while (followersCounter != 0) {
                 // Perform some actions in the loop
-                log('Waiting for followers')
+                debugLog('Waiting for followers')
                 await pauseForXMiliseconds(1000)
             }
 
@@ -303,11 +304,11 @@ describe('Stress test', () => {
             )
 
             while (readyUsers.size != numFollowers) {
-                log('Waiting for followers to be ready')
+                debugLog('Waiting for followers to be ready')
                 await pauseForXMiliseconds(1000)
             }
 
-            log('USERS IN CHANNELS', JSON.stringify(usersInChannels))
+            debugLog('USERS ARE CHANNELS')
 
             usersInChannels.forEach((values, key) => {
                 const trackingInfo = new ChannelTrackingInfo(key)
@@ -322,17 +323,22 @@ describe('Stress test', () => {
                 'START LOAD: ' + JSON.stringify(channelTrackingInfo),
             )
 
+            const loadStartTime = Date.now()
+
             await pauseForXMiliseconds(10000)
 
             while (loadOverUsers.size != numFollowers) {
-                log('Waiting')
+                log('Waiting. Users load over:', loadOverUsers.size)
                 log('Unprocessed messages number:', await redis.dbsize())
                 await pauseForXMiliseconds(1000)
             }
+            log('Final number of user done with load:', loadOverUsers.size)
+            const loadEndTime = Date.now()
+
             let messagesProcessed = false
             let timeCounter = 1000
             let lastDbSize = 0
-            while (!messagesProcessed && timeCounter < 300000) {
+            while (!messagesProcessed && timeCounter < 60000) {
                 lastDbSize = await redis.dbsize()
                 await pauseForXMiliseconds(1000)
                 timeCounter += 1000
@@ -349,7 +355,6 @@ describe('Stress test', () => {
             }
             log('Test executed')
             await result.riverSDK.client.stopSync()
-            expect(lastDbSize).toBe(0)
 
             //--------------------------------------------------------------------------------------------
             //Let's do delivery histogram here
@@ -373,6 +378,7 @@ describe('Stress test', () => {
                     const baseKey = key.slice(1)
                     if (value) {
                         if (value.charAt(0) === 'S') {
+                            log('S value', value)
                             //We are processing sent time key
                             //Check if map contains this key already - if it is there it means that we already have receiving time there
                             if (E2EDeliveryTimeMap.has(baseKey)) {
@@ -391,6 +397,7 @@ describe('Stress test', () => {
                                 E2EDeliveryTimeMap.set(baseKey, parseInt(value))
                             }
                         } else if (value.charAt(0) === 'R') {
+                            log('R value', value)
                             //We are processing recieved time key
                             //Check if map contains this key already - if it is there it means that we already have sent time there
                             if (E2EDeliveryTimeMap.has(baseKey)) {
@@ -422,8 +429,17 @@ describe('Stress test', () => {
             log('1501-2000', await redisE2EMessageDeliveryTracking.get('T2000'))
             log('2001-inf', await redisE2EMessageDeliveryTracking.get('Tinf'))
 
+            const unrecievedMessages = await getAllKeysAndValues(redis)
+            const minMaxDates = findMinMaxDates(unrecievedMessages)
+            log('Min date:', minMaxDates?.minDate)
+            log('Max date:', minMaxDates?.maxDate)
+            log('Load start time:', loadStartTime)
+            log('Load end time:', loadEndTime)
+
             await redisE2EMessageDeliveryTracking.quit()
             await redis.quit()
+            result.riverSDK.client.removeAllListeners()
+            expect(lastDbSize).toBe(0)
         },
         loadTestDurationMs * 10,
     )
@@ -432,7 +448,7 @@ describe('Stress test', () => {
 async function fundWallet(walletToFund: ethers.Wallet) {
     const provider = new ethers.providers.JsonRpcProvider(baseChainRpcUrl)
     const amountInWei = ethers.BigNumber.from(10).pow(18).toHexString()
-    provider.send('anvil_setBalance', [walletToFund.address, amountInWei])
+    await provider.send('anvil_setBalance', [walletToFund.address, amountInWei])
     return true
 }
 
@@ -442,16 +458,16 @@ async function createFundedTestUser(): Promise<{
     walletWithProvider: ethers.Wallet
 }> {
     const wallet = ethers.Wallet.createRandom()
-    log('Wallet:', wallet)
+    debugLog('Wallet:', wallet)
     // Create a new wallet
-    log('baseChainRpcUrl:', baseChainRpcUrl)
+    debugLog('baseChainRpcUrl:', baseChainRpcUrl)
     const provider = new ethers.providers.JsonRpcProvider(baseChainRpcUrl)
-    log('provided:', provider)
+    debugLog('provider:', provider)
     const walletWithProvider = wallet.connect(provider)
-    log('Wallet wtih Provided:', walletWithProvider)
+    debugLog('Wallet wtih Provided:', walletWithProvider)
     const context = await makeUserContextFromWallet(walletWithProvider)
-    log('Context:', context)
-    log('River node url from createFundedTestUser:', riverNodeUrl)
+    debugLog('Context:', context)
+    debugLog('River node url from createFundedTestUser:', riverNodeUrl)
     const rpcClient = makeStreamRpcClient(riverNodeUrl)
     const userId = userIdFromAddress(context.creatorAddress)
 
@@ -495,4 +511,55 @@ function incrementE2EDeliveryTimeHistogramMapValue(
 
     const currentValue = map.get(key) || 0
     map.set(key, currentValue + 1)
+}
+
+async function getAllKeysAndValues(redisInstance: Redis): Promise<Map<Date, string>> {
+    const resultMap: Map<Date, string> = new Map()
+    let cursor = '0'
+    do {
+        // Use the SCAN command to iteratively get keys
+        const reply: [string, string[]] = await redisInstance.scan(
+            cursor,
+            'MATCH',
+            '*',
+            'COUNT',
+            100,
+        )
+        cursor = reply[0]
+        const keys = reply[1]
+
+        for (const key of keys) {
+            const value = await redis.get(key)
+            if (value !== null) {
+                resultMap.set(extractTimestampAndConvertToDate(key), value)
+            }
+        }
+    } while (cursor !== '0')
+    return resultMap
+}
+
+function extractTimestampAndConvertToDate(inputString: string): Date {
+    const timestampString = inputString.substring(16)
+    const date = new Date(timestampString)
+    return date
+}
+
+function findMinMaxDates(map: Map<Date, string>): { minDate: Date; maxDate: Date } | null {
+    if (map.size === 0) {
+        return null
+    }
+
+    let minDate: Date = new Date(Number.MAX_SAFE_INTEGER)
+    let maxDate: Date = new Date(Number.MIN_SAFE_INTEGER)
+
+    map.forEach((value, key) => {
+        if (key < minDate) {
+            minDate = key
+        }
+        if (key > maxDate) {
+            maxDate = key
+        }
+    })
+
+    return { minDate, maxDate }
 }

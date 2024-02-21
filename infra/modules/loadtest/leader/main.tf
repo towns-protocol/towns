@@ -129,7 +129,7 @@ resource "aws_ecs_task_definition" "task_definition" {
       },
       {
         name  = "DEBUG",
-        value = "csb:test:stress*"
+        value = "csb:test:stress:run*"
       },
       {
         name  = "MOCK_PERSISTENCE_STORE",

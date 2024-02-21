@@ -7,7 +7,8 @@ export const townsToCreate = 3 // NUM_TOWNS: number of towns to create. required
 export const channelsPerTownToCreate = 3 // NUM_CHANNELS_PER_TOWN: number of channels to create for every town. required for leader node.
 
 export const defaultJoinFactor = 2 // JOIN_FACTOR: seed range for channel numbers. required for follower nodes.
-export const followersNumber = 2 // NUM_FOLLOWERS: used for verification. required for leader node.
+export const followersNumber = 4 // NUM_FOLLOWERS: used for verification. required for leader node.
+export const defaultNumberOfClientsPerProcess = 2
 export const maxDelayBetweenMessagesPerUserMiliseconds = 10000 // MAX_MSG_DELAY_MS: (milliseconds) maximum delay between 2 messages. required for follower nodes.
 
 export const loadDurationMs = 1000 * 60 * 60 * 0.03 // LOAD_TEST_DURATION_MS: (milliseconds) required for both leader and follower nodes

@@ -8,7 +8,7 @@ docker run \
 -e MODE=leader \
 -e NUM_TOWNS=2 \
 -e NUM_CHANNELS_PER_TOWN=3 \
--e NUM_FOLLOWERS=35 \
+-e NUM_FOLLOWERS=50 \
 -e RIVER_NODE_URL='http://host.docker.internal:5157' \
 -e BASE_CHAIN_RPC_URL='http://host.docker.internal:8545' \
 -e CHANNEL_SAMPLING_RATE=100 \

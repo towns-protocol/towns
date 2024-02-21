@@ -39,10 +39,11 @@ module "redis_sg" {
 
 locals {
   # TODO: we should allow this to be configured at runtime, not infra time.
-  num_follower_containers     = 200
-  num_processes_per_container = 3
-  num_followers               = local.num_follower_containers * local.num_processes_per_container
-  loadtest_duration           = 3600000
+  num_follower_containers     = 5
+  num_processes_per_container = 2
+  num_clients_per_process     = 2 
+  num_followers               = local.num_follower_containers * local.num_processes_per_container * local.num_clients_per_process
+  loadtest_duration           = 600000
 }
 
 resource "aws_elasticache_cluster" "redis" {
@@ -86,5 +87,6 @@ module "follower" {
   redis_url                   = aws_elasticache_cluster.redis.cache_nodes[0].address
   loadtest_duration           = local.loadtest_duration
   num_processes_per_container = local.num_processes_per_container
+  num_clients_per_process     = local.num_clients_per_process
   tags                        = module.global_constants.tags
 }
