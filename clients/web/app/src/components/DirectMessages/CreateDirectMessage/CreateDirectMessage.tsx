@@ -11,6 +11,7 @@ import {
     useZionContext,
 } from 'use-zion-client'
 import { Panel } from '@components/Panel/Panel'
+import { FadeInBox } from '@components/Transitions'
 import { UserList } from '@components/UserList/UserList'
 import { ZLayerBox } from '@components/ZLayer/ZLayerContext'
 import { Box, Button, Icon, MotionBox, Paragraph, Stack, Text } from '@ui'
@@ -86,7 +87,7 @@ export const CreateDirectMessage = (props: Props) => {
         dmChannels,
     })
 
-    const { onSubmit } = useCreateDirectMessage({
+    const { onSubmit, isSubmitting } = useCreateDirectMessage({
         selectedIdsArray: selectedUserArray,
         matchingChannel: inclusiveMatches.length === 1 ? inclusiveMatches[0] : undefined,
         onDirectMessageCreated,
@@ -304,6 +305,20 @@ export const CreateDirectMessage = (props: Props) => {
                     onUserPreviewChange={onUserPreviewChange}
                 />
             </ZLayerBox>
+            <AnimatePresence>
+                {isSubmitting && (
+                    <FadeInBox absoluteFill cursor="progress">
+                        <Box
+                            centerContent
+                            width="100%"
+                            height="100%"
+                            pointerEvents="none"
+                            background="level1"
+                            style={{ opacity: 0.5 }}
+                        />
+                    </FadeInBox>
+                )}
+            </AnimatePresence>
         </Stack>
     )
 }

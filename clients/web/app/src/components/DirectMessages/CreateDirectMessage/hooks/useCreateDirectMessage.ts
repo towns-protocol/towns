@@ -1,4 +1,4 @@
-import { useCallback, useMemo, useState } from 'react'
+import { useCallback, useMemo, useRef, useState } from 'react'
 import { useNavigate } from 'react-router'
 import { useSearchParams } from 'react-router-dom'
 import { DMChannelIdentifier, useZionClient } from 'use-zion-client'
@@ -13,6 +13,10 @@ type Params = {
 
 export const useCreateDirectMessage = (params: Params) => {
     const { selectedIdsArray, matchingChannel, onDirectMessageCreated } = params
+
+    const [isSubmitting, setIsSubmitting] = useState(false)
+    const isSubmittingRef = useRef(isSubmitting)
+    isSubmittingRef.current = isSubmitting
 
     const { createDMChannel, createGDMChannel } = useZionClient()
     const [errorMessage, setErrorMessage] = useState<string | undefined>(undefined)
@@ -33,8 +37,10 @@ export const useCreateDirectMessage = (params: Params) => {
 
     const onSubmit = useCallback(async () => {
         console.log('create dm/gm: submit', selectedIdsArray.join())
-
-        // setIsSubmitting(true)
+        if (isSubmittingRef.current) {
+            console.warn('create dm/gm: submit - already submitting')
+            return
+        }
         if (selectedIdsArray.length === 1 && matchingChannel) {
             console.log('create dm/gm: existingChannel', matchingChannel)
             const link = createLink({ messageId: matchingChannel.id })
@@ -42,7 +48,6 @@ export const useCreateDirectMessage = (params: Params) => {
                 onDirectMessageCreated?.()
                 navigate(link + linkRef)
             }
-            // setIsSubmitting(false)
             return
         }
 
@@ -53,6 +58,7 @@ export const useCreateDirectMessage = (params: Params) => {
         } else if (numSelected === 1) {
             const first = selectedIdsArray[0]
             console.log('create dm: submit', first)
+            setIsSubmitting(true)
             const streamId = await createDMChannel(first)
             if (streamId) {
                 console.log('create dm: created stream', streamId)
@@ -66,10 +72,10 @@ export const useCreateDirectMessage = (params: Params) => {
                 console.error('create dm: failed creating stream')
                 setErrorMessage('failed to create dm stream')
             }
-            // setIsSubmitting(false)
-            // setSelectedIds(new Set())
+            setIsSubmitting(false)
         } else {
             console.log('create gm: submit', selectedIdsArray.join())
+            setIsSubmitting(true)
             const streamId = await createGDMChannel(selectedIdsArray)
             if (streamId) {
                 console.log('create gm: created stream', streamId)
@@ -82,6 +88,7 @@ export const useCreateDirectMessage = (params: Params) => {
             } else {
                 setErrorMessage('failed to create gm stream')
             }
+            setIsSubmitting(false)
         }
     }, [
         createDMChannel,
@@ -93,5 +100,5 @@ export const useCreateDirectMessage = (params: Params) => {
         onDirectMessageCreated,
         selectedIdsArray,
     ])
-    return { onSubmit }
+    return { onSubmit, isSubmitting }
 }

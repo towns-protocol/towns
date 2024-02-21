@@ -33,19 +33,6 @@ export const MessageDropDown = (props: Props) => {
                 return
             }
             switch (e.key) {
-                case 'Tab':
-                case 'Enter': {
-                    if (e.shiftKey || e.altKey || e.metaKey) {
-                        break
-                    }
-                    e.preventDefault()
-                    if (extraIncrement && focusedIndex === 0) {
-                        onCreateNew()
-                    } else {
-                        onSelectChannel(channels[focusedIndex - extraIncrement]?.id)
-                    }
-                    break
-                }
                 case 'ArrowUp': {
                     setFocusedIndex(
                         (i) =>
