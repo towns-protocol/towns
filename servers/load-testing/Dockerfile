@@ -27,7 +27,7 @@ RUN GO111MODULE=on GOBIN=/usr/local/bin go install \
     github.com/bufbuild/buf/cmd/buf@v1.28.1
 
 # Install yarn
-RUN npm install -g corepack
+RUN npm install -g corepack@0.24.1
 RUN corepack enable
 RUN yarn set version 3.5.1
 
