@@ -38,7 +38,7 @@ export const ENVIRONMENTS: TownsEnvironmentInfo[] = [
     {
         id: TownsEnvironment.RiverTest,
         name: 'River Test',
-        casablancaUrl: 'https://river1-test-beta.towns.com',
+        casablancaUrl: 'https://river1.nodes.gamma.towns.com',
         chainId: 84532,
         chain: baseSepoliaClone,
         protocol: SpaceProtocol.Casablanca,

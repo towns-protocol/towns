@@ -101,7 +101,6 @@ if [ "$IS_PULL_REQUEST" = true ]; then
 
     transient_single_node_river_url=$(get_transient_river_node_url $pr_number 1)
     transient_multi_node_river_url=$(get_transient_multinode_csv_node_urls $pr_number 10)
-    test_beta_river_node_url="https://river1-test-beta.towns.com"
 
     # Set VITE_CASABLANCA_HOMESERVER_URL based on mode
     if [ "$mode" = "single-node" ]; then

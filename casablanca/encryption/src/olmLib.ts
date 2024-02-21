@@ -8,8 +8,8 @@ globalThis.OLM_OPTIONS = {}
 
 // Supported algorithms
 enum Algorithm {
-    Olm = 'm.olm.v1.curve25519-aes-sha2',
-    GroupEncryption = 'm.megolm.v1.aes-sha2',
+    Olm = 'r.olm.v1.curve25519-aes-sha2',
+    GroupEncryption = 'r.group-encryption.v1.aes-sha2',
 }
 
 /**

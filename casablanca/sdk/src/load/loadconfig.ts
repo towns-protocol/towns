@@ -9,7 +9,7 @@ export const loadTestSignalCheckInterval = 100
 export const defaultWaitForTimeout = 10000 // refer DefaultWaitForTimeoutMS in TestConstants.ts
 
 export const jsonRpcProviderUrl = 'https://sepolia.base.org'
-export const nodeRpcURL = 'https://river1-test-beta.towns.com'
+export const nodeRpcURL = 'https://river1.nodes.gamma.towns.com'
 export const minimalBalance = 0.1 // ETH
 
 export const connectionOptions = {

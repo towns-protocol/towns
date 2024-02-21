@@ -15,10 +15,10 @@ export const connectionOptions = {
 export const loginWaitTime = 90000
 export const replySentTime = 90000
 
-export const testBetaName = 'test-beta'
+export const defaultEnvironmentName = 'gamma'
 export const testSpamChannelName = 'test spam'
 
-export const envName = process.env.ENVIRONMENT_NAME || testBetaName
+export const envName = process.env.ENVIRONMENT_NAME || defaultEnvironmentName
 
 const getRiverNodeRpcUrl = () => {
     if (envName.includes('transient')) {
@@ -35,7 +35,9 @@ const getRiverNodeRpcUrl = () => {
 export const riverNodeRpcUrl = getRiverNodeRpcUrl()
 
 export const jsonRpcProviderUrl =
-    envName == testBetaName ? 'https://sepolia.base.org' : `https://base-fork-${envName}.towns.com`
+    envName == defaultEnvironmentName
+        ? 'https://sepolia.base.org'
+        : `https://base-fork-${envName}.towns.com`
 
 export const fromFollowerQueueName = 'healthcheckqueuefollower'
 export const fromLeaderQueueName = 'healthcheckqueueleader'

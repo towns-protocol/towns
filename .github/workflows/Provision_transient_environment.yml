@@ -132,7 +132,6 @@ jobs:
         # TODO: only run if a change in /casablanca/node is detected
         # TODO: only deploy if the new docker image is different than what's currently active
         with:
-            auto_deploy: false
             environment_name: ${{ format('transient-{0}', github.event.pull_request.number )}}
             docker_image_tag: ${{ format('transient-{0}-latest', github.event.pull_request.number )}}
 

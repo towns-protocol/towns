@@ -19,63 +19,142 @@ type StreamCacheParams struct {
 	Wallet       *crypto.Wallet
 	Riverchain   *crypto.Blockchain
 	Registry     *registries.RiverRegistryContract
-	SR           StreamRegistry // This is temporary field here, cache itself replaces it, but for fake configurations it is still being used.
 	StreamConfig *config.StreamConfig
 }
 
 type StreamCache interface {
 	GetStream(ctx context.Context, streamId string) (SyncStream, StreamView, error)
-	CreateStream(
-		ctx context.Context,
-		streamId string,
-		genesisMiniblock *Miniblock,
-	) (SyncStream, StreamView, error)
+	CreateStream(ctx context.Context, streamId string) (SyncStream, StreamView, error)
 	ForceFlushAll(ctx context.Context)
 	GetLoadedViews(ctx context.Context) []StreamView
 }
 
 type streamCacheImpl struct {
-	params          *StreamCacheParams
-	cache           sync.Map
+	params *StreamCacheParams
+
+	// streamId -> *streamImpl
+	// cache is populated by getting all streams that should be on local node from River chain.
+	// streamImpl can be in unloaded state, in which case it will be loaded on first GetStream call.
+	cache sync.Map
+
+	// New miniblock production in triggered when there is new block on River chain.
 	onNewBlockMutex sync.Mutex
 }
 
 var _ StreamCache = (*streamCacheImpl)(nil)
 
 func NewStreamCache(ctx context.Context, params *StreamCacheParams) (*streamCacheImpl, error) {
-	c := &streamCacheImpl{
+	s := &streamCacheImpl{
 		params: params,
 	}
-	params.Riverchain.BlockMonitor.AddListener(c.onNewBlock)
-	return c, nil
+
+	blockNum, err := params.Registry.Blockchain.Client.BlockNumber(ctx)
+	if err != nil {
+		return nil, err
+	}
+
+	streams, err := params.Registry.GetAllStreams(ctx, blockNum)
+	if err != nil {
+		return nil, err
+	}
+
+	// TODO: read stream state from storage and schedule required reconciliations.
+
+	for _, stream := range streams {
+		nodes := NewStreamNodes(stream.Nodes, params.Wallet.AddressStr)
+		if nodes.IsLocal() {
+			s.cache.Store(stream.StreamId, &streamImpl{
+				params:   params,
+				streamId: stream.StreamId,
+				nodes:    nodes,
+			})
+		}
+	}
+
+	// TODO: setup monitor for stream updates and update records accordingly.
+
+	params.Riverchain.BlockMonitor.AddListener(s.onNewBlock)
+	return s, nil
 }
 
-func (s *streamCacheImpl) GetStream(ctx context.Context, streamId string) (SyncStream, StreamView, error) {
-	nodes, _, err := s.params.SR.GetStreamInfo(ctx, streamId)
+func (s *streamCacheImpl) tryLoadStreamRecord(ctx context.Context, streamId string) (SyncStream, StreamView, error) {
+	// Same code is called for GetStream and CreateStream.
+	// For GetStream the fact that record is not in cache means that there is race to get it during creation:
+	// Blockchain record is already created, but this fact is not reflected yet in local storage.
+	// This may happen if somebody observes record allocation on blockchain and tries to get stream
+	// while local storage is being initialized.
+	record, err := s.params.Registry.GetStream(ctx, streamId)
 	if err != nil {
 		return nil, nil, err
 	}
+	if record.StreamId != streamId {
+		return nil, nil, RiverError(Err_INTERNAL, "Stream record mismatch", "streamId", streamId, "record", record.StreamId)
+	}
 
+	nodes := NewStreamNodes(record.Nodes, s.params.Wallet.AddressStr)
 	if !nodes.IsLocal() {
 		return nil, nil, RiverError(
 			Err_INTERNAL,
-			"Cache can only be used for local streams",
-			"streamId",
-			streamId,
-			"nodes",
-			nodes.GetNodes(),
-			"localNode",
-			s.params.Wallet.AddressStr,
+			"Stream is not local",
+			"streamId", streamId,
+			"nodes", record.Nodes,
+			"localNode", s.params.Wallet.AddressStr,
 		)
 	}
 
+	stream := &streamImpl{
+		params:   s.params,
+		streamId: streamId,
+		nodes:    nodes,
+	}
+
+	// Lock stream, so parallel creators have to wait for the stream to be intialized.
+	stream.mu.Lock()
+	defer stream.mu.Unlock()
+
+	entry, loaded := s.cache.LoadOrStore(streamId, stream)
+	if !loaded {
+		// Our stream won the race, put into storage.
+		err := s.params.Storage.CreateStreamStorage(ctx, streamId, record.GenesisMiniblock)
+		if err != nil {
+			if AsRiverError(err).Code == Err_ALREADY_EXISTS {
+				// Attempt to load stream from storage. Might as well do it while under lock.
+				err = stream.loadInternal(ctx)
+				if err == nil {
+					return stream, stream.view, nil
+				}
+			}
+			return nil, nil, err
+		}
+
+		// Successfully put data into storage, init stream view.
+		view, err := MakeStreamView(&storage.ReadStreamFromLastSnapshotResult{
+			StartMiniblockNumber: 0,
+			Miniblocks:           [][]byte{record.GenesisMiniblock},
+		})
+		if err != nil {
+			return nil, nil, err
+		}
+		stream.view = view
+		return stream, view, nil
+	} else {
+		// There was another record in the cache, use it.
+		if entry == nil {
+			return nil, nil, RiverError(Err_INTERNAL, "Cache corruption", "streamId", streamId)
+		}
+		stream = entry.(*streamImpl)
+		view, err := stream.GetView(ctx)
+		if err != nil {
+			return nil, nil, err
+		}
+		return stream, view, nil
+	}
+}
+
+func (s *streamCacheImpl) GetStream(ctx context.Context, streamId string) (SyncStream, StreamView, error) {
 	entry, _ := s.cache.Load(streamId)
 	if entry == nil {
-		entry, _ = s.cache.LoadOrStore(streamId, &streamImpl{
-			params:   s.params,
-			streamId: streamId,
-			nodes:    nodes,
-		})
+		return s.tryLoadStreamRecord(ctx, streamId)
 	}
 	stream := entry.(*streamImpl)
 
@@ -84,10 +163,7 @@ func (s *streamCacheImpl) GetStream(ctx context.Context, streamId string) (SyncS
 	if err == nil {
 		return stream, streamView, nil
 	} else {
-		// Ditching the stream from the cache here will trigger a reload on the next call to GetStream.
-		// TODO: it's not cool to drop streams if there are any subs.
-		// Flush subs if load fails?
-		s.cache.CompareAndDelete(streamId, stream)
+		// TODO: if stream is not present in local storage, schedule reconciliation.
 		return nil, nil, err
 	}
 }
@@ -95,42 +171,9 @@ func (s *streamCacheImpl) GetStream(ctx context.Context, streamId string) (SyncS
 func (s *streamCacheImpl) CreateStream(
 	ctx context.Context,
 	streamId string,
-	genesisMiniblock *Miniblock,
 ) (SyncStream, StreamView, error) {
-	nodes, _, err := s.params.SR.GetStreamInfo(ctx, streamId)
-	if err != nil {
-		return nil, nil, err
-	}
-
-	if !nodes.IsLocal() {
-		return nil, nil, RiverError(
-			Err_INTERNAL,
-			"Cache can only be used for local streams",
-			"streamId",
-			streamId,
-			"nodes",
-			nodes.GetNodes(),
-			"localNode",
-			s.params.Wallet.AddressStr,
-		)
-	}
-
-	if existing, _ := s.cache.Load(streamId); existing != nil {
-		return nil, nil, RiverError(Err_ALREADY_EXISTS, "stream already exists", "streamId", streamId)
-	}
-
-	stream, view, err := createStream(ctx, s.params, streamId, nodes, genesisMiniblock)
-	if err != nil {
-		return nil, nil, err
-	}
-
-	_, loaded := s.cache.LoadOrStore(streamId, stream)
-	if !loaded {
-		return stream, view, nil
-	} else {
-		// Assume that parallel GetStream created cache entry, fallback to it to retrieve winning cache entry.
-		return s.GetStream(ctx, streamId)
-	}
+	// Same logic as in GetStream: read from blockchain, create if present.
+	return s.GetStream(ctx, streamId)
 }
 
 func (s *streamCacheImpl) ForceFlushAll(ctx context.Context) {

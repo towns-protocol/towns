@@ -12,7 +12,6 @@ import (
 	. "github.com/river-build/river/protocol"
 
 	mapset "github.com/deckarep/golang-set/v2"
-	"google.golang.org/protobuf/proto"
 )
 
 type AddableStream interface {
@@ -41,6 +40,10 @@ type SyncStream interface {
 
 	// Returns true if miniblock was created, false if not.
 	MakeMiniblock(ctx context.Context, forceSnapshot bool) (bool, error) // TODO: doesn't seem pertinent to SyncStream
+	ProposeNextMiniblock(ctx context.Context, forceSnapshot bool) (*MiniblockProposal, error)
+	MakeMiniblockHeader(ctx context.Context, proposal *MiniblockProposal) (*MiniblockHeader, []*ParsedEvent, error)
+	ApplyMiniblock(ctx context.Context, miniblockHeader *MiniblockHeader, envelopes []*ParsedEvent) error
+	GetView(ctx context.Context) (StreamView, error)
 }
 
 func SyncStreamsResponseFromStreamAndCookie(result *StreamAndCookie) *SyncStreamsResponse {
@@ -52,17 +55,21 @@ func SyncStreamsResponseFromStreamAndCookie(result *StreamAndCookie) *SyncStream
 type streamImpl struct {
 	params *StreamCacheParams
 
+	// TODO: perf optimization: already in map as key, refactor API to remove dup data.
 	streamId string
-	nodes    *StreamNodes
+
+	// TODO: move under lock to support updated.
+	nodes *StreamNodes
 
 	// Mutex protects fields below
 	// View is copied on write.
 	// I.e. if there no calls to AddEvent, readers share the same view object
 	// out of lock, which is immutable, so if there is a need to modify, lock is taken, copy
 	// of view is created, and copy is modified and stored.
-	mu        sync.RWMutex
-	view      *streamViewImpl
-	loadError error
+	mu   sync.RWMutex
+	view *streamViewImpl
+
+	// TODO: perf optimization: support subs on unloaded streams.
 	receivers mapset.Set[SyncResultReceiver]
 }
 
@@ -70,9 +77,9 @@ var _ SyncStream = (*streamImpl)(nil)
 
 // Should be called with lock held
 // Either view or loadError will be set in Stream.
-func (s *streamImpl) loadInternal(ctx context.Context) {
-	if s.view != nil || s.loadError != nil {
-		return
+func (s *streamImpl) loadInternal(ctx context.Context) error {
+	if s.view != nil {
+		return nil
 	}
 	streamData, err := s.params.Storage.ReadStreamFromLastSnapshot(
 		ctx,
@@ -80,16 +87,20 @@ func (s *streamImpl) loadInternal(ctx context.Context) {
 		max(0, s.params.StreamConfig.RecencyConstraints.Generations-1),
 	)
 	if err != nil {
-		s.loadError = err
-		return
+		if AsRiverError(err).Code == Err_NOT_FOUND {
+			return s.initFromBlockchain(ctx)
+		}
+
+		return err
 	}
 
 	view, err := MakeStreamView(streamData)
 	if err != nil {
-		s.loadError = err
-	} else {
-		s.view = view
+		return err
 	}
+
+	s.view = view
+	return nil
 }
 
 func (s *streamImpl) ProposeNextMiniblock(ctx context.Context, forceSnapshot bool) (*MiniblockProposal, error) {
@@ -208,54 +219,58 @@ func (s *streamImpl) MakeMiniblock(ctx context.Context, forceSnapshot bool) (boo
 	return true, nil
 }
 
-func createStream(
-	ctx context.Context,
-	params *StreamCacheParams,
-	streamId string,
-	nodes *StreamNodes,
-	genesisMiniblock *Miniblock,
-) (*streamImpl, *streamViewImpl, error) {
-	serializedMiniblock, err := proto.Marshal(genesisMiniblock)
+func (s *streamImpl) initFromBlockchain(ctx context.Context) error {
+	record, err := s.params.Registry.GetStream(ctx, s.streamId)
 	if err != nil {
-		return nil, nil, err
+		return err
 	}
 
-	err = params.Storage.CreateStreamStorage(ctx, streamId, serializedMiniblock)
+	nodes := NewStreamNodes(record.Nodes, s.params.Wallet.AddressStr)
+	if !nodes.IsLocal() {
+		return RiverError(
+			Err_INTERNAL,
+			"Stream is not local",
+			"streamId", s.streamId,
+			"nodes", record.Nodes,
+			"localNode", s.params.Wallet.AddressStr,
+		)
+	}
+	s.nodes = nodes
+
+	err = s.params.Storage.CreateStreamStorage(ctx, s.streamId, record.GenesisMiniblock)
 	if err != nil {
-		return nil, nil, err
+		return err
 	}
 
-	// TODO: redundant parsing here.
+	// TODO: also there needs to be catch for streams that are already beyond genesis block.
+
+	// Successfully put data into storage, init stream view.
 	view, err := MakeStreamView(&storage.ReadStreamFromLastSnapshotResult{
 		StartMiniblockNumber: 0,
-		Miniblocks:           [][]byte{serializedMiniblock},
+		Miniblocks:           [][]byte{record.GenesisMiniblock},
 	})
 	if err != nil {
-		return nil, nil, err
+		return err
 	}
-
-	stream := &streamImpl{
-		params:   params,
-		streamId: streamId,
-		nodes:    nodes,
-		view:     view,
-	}
-	return stream, view, nil
+	s.view = view
+	return nil
 }
 
 func (s *streamImpl) GetView(ctx context.Context) (StreamView, error) {
 	s.mu.RLock()
 	view := s.view
-	loadError := s.loadError
 	s.mu.RUnlock()
-	if view != nil || loadError != nil {
-		return view, loadError
+	if view != nil {
+		return view, nil
 	}
 
 	s.mu.Lock()
 	defer s.mu.Unlock()
-	s.loadInternal(ctx)
-	return s.view, s.loadError
+	err := s.loadInternal(ctx)
+	if err != nil {
+		return nil, err
+	}
+	return s.view, nil
 }
 
 // Returns StreamView if it's already loaded, or nil if it's not.
@@ -299,9 +314,9 @@ func (s *streamImpl) GetMiniblocks(ctx context.Context, fromInclusive int64, toE
 func (s *streamImpl) AddEvent(ctx context.Context, event *ParsedEvent) error {
 	s.mu.Lock()
 	defer s.mu.Unlock()
-	s.loadInternal(ctx)
-	if s.loadError != nil {
-		return s.loadError
+	err := s.loadInternal(ctx)
+	if err != nil {
+		return err
 	}
 
 	return s.addEventImpl(ctx, event)
@@ -368,9 +383,9 @@ func (s *streamImpl) Sub(ctx context.Context, cookie *SyncCookie, receiver SyncR
 
 	s.mu.Lock()
 	defer s.mu.Unlock()
-	s.loadInternal(ctx)
-	if s.loadError != nil {
-		return s.loadError
+	err := s.loadInternal(ctx)
+	if err != nil {
+		return err
 	}
 
 	if cookie.MinipoolGen == int64(s.view.minipool.generation) {
@@ -456,7 +471,6 @@ func (s *streamImpl) ForceFlush(ctx context.Context) {
 	s.mu.Lock()
 	defer s.mu.Unlock()
 	s.view = nil
-	s.loadError = nil
 	if s.receivers != nil && s.receivers.Cardinality() > 0 {
 		err := RiverError(Err_INTERNAL, "Stream unloaded")
 		for r := range s.receivers.Iter() {

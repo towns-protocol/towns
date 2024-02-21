@@ -7,8 +7,7 @@ data "aws_vpc" "vpc" {
 }
 
 locals {
-  node_name   = "river${var.node_number}-${terraform.workspace}"
-  grpc_record = "river${var.node_number}-grpc-${terraform.workspace}"
+  node_name = "river${var.node_number}-${terraform.workspace}"
 
   rpc_https_port = 443
 
@@ -338,10 +337,12 @@ locals {
     value = var.river_chain_network_url_override
   }]
 
-  river_registry_contract_td_env_config = var.is_transient ? [{
-    name  = "REGISTRYCONTRACT__ADDRESS",
-    value = "0x1FA225F6A364E5F9Dfab75e3772EB566CD84cbeE"
-  }] : []
+  river_registry_contract_td_env_config = var.is_multi_node ? [
+    {
+      name  = "REGISTRYCONTRACT__ADDRESS",
+      value = "0xDABc294d1EfC9055f9FA6ba1303911F846Bb14Ee"
+    }
+  ] : []
 
   node_registry_csv_multinode = "${local.nodes[0].address},${local.nodes[0].url},${local.nodes[1].address},${local.nodes[1].url},${local.nodes[2].address},${local.nodes[2].url},${local.nodes[3].address},${local.nodes[3].url},${local.nodes[4].address},${local.nodes[4].url},${local.nodes[5].address},${local.nodes[5].url},${local.nodes[6].address},${local.nodes[6].url},${local.nodes[7].address},${local.nodes[7].url},${local.nodes[8].address},${local.nodes[8].url},${local.nodes[9].address},${local.nodes[9].url}"
 }
@@ -376,7 +377,7 @@ resource "aws_ecs_task_definition" "river-fargate" {
 
   container_definitions = jsonencode([{
     name  = "river-node"
-    image = "${local.global_remote_state.public_ecr.repository_url_map["river-node"]}:latest"
+    image = "${local.global_remote_state.public_ecr.repository_url_map["river-node"]}:gamma-latest"
 
     essential = true
     portMappings = [{
@@ -512,7 +513,7 @@ resource "aws_ecs_task_definition" "river-fargate" {
       },
       {
         name  = "TOWNSARCHITECTCONTRACT__ADDRESS"
-        value = "0x57E7c90CE73e327c863AD88909C3F73F5543F609"
+        value = "0x6c9aC4782343487cf077d3aD6c3E3Ee99B59F3C8"
       },
       {
         name  = "TOWNSARCHITECTCONTRACT__VERSION"
@@ -520,7 +521,7 @@ resource "aws_ecs_task_definition" "river-fargate" {
       },
       {
         name  = "WALLETLINKCONTRACT__ADDRESS"
-        value = "0xC4a2453c36e107C57c149d933435ee0a4031D526"
+        value = "0x4B53e313773df56d8f8b96942c5Cf7a49cFc9774"
       },
       {
         name  = "WALLETLINKCONTRACT__VERSION"
@@ -679,28 +680,6 @@ resource "aws_ecs_service" "river-ecs-service" {
     delete = "60m"
   }
   tags = local.river_node_tags
-}
-
-resource "cloudflare_record" "http_dns" {
-  zone_id = data.cloudflare_zone.zone.id
-  name    = local.node_name
-  value   = var.alb_dns_name
-  type    = "CNAME"
-  ttl     = 60
-  lifecycle {
-    ignore_changes = all
-  }
-}
-
-resource "cloudflare_record" "grpc_dns" {
-  zone_id = data.cloudflare_zone.zone.id
-  name    = local.grpc_record
-  value   = var.alb_dns_name
-  type    = "CNAME"
-  ttl     = 60
-  lifecycle {
-    ignore_changes = all
-  }
 }
 
 resource "cloudflare_record" "public_ip_a_record" {

@@ -15,10 +15,11 @@ import (
 )
 
 type testContext struct {
-	bcTest *crypto.BlockchainTestContext
-	params *StreamCacheParams
-	cache  StreamCache
-	closer func()
+	bcTest         *crypto.BlockchainTestContext
+	params         *StreamCacheParams
+	cache          StreamCache
+	streamRegistry StreamRegistry
+	closer         func()
 }
 
 type testParams struct {
@@ -76,17 +77,25 @@ func makeTestStreamParams(p testParams) (context.Context, *testContext) {
 
 	sr := NewStreamRegistry(bc.Wallet.AddressStr, nr, registry, p.replFactor)
 
+	params := &StreamCacheParams{
+		Storage:      streamStorage,
+		Wallet:       bc.Wallet,
+		Riverchain:   bc,
+		Registry:     registry,
+		StreamConfig: &streamConfig_viewstate_space_t,
+	}
+
+	cache, err := NewStreamCache(ctx, params)
+	if err != nil {
+		panic(err)
+	}
+
 	return ctx,
 		&testContext{
-			bcTest: btc,
-			params: &StreamCacheParams{
-				Storage:      streamStorage,
-				Wallet:       bc.Wallet,
-				Riverchain:   bc,
-				Registry:     registry,
-				SR:           sr,
-				StreamConfig: &streamConfig_viewstate_space_t,
-			},
+			bcTest:         btc,
+			params:         params,
+			cache:          cache,
+			streamRegistry: sr,
 			closer: func() {
 				btc.Close()
 				streamStorage.Close()
@@ -120,10 +129,10 @@ func (tt *testContext) createStream(
 		return nil, nil, err
 	}
 
-	_, err = tt.params.SR.AllocateStream(ctx, streamId, genesisMiniblock.Header.Hash, mbBytes)
+	_, err = tt.streamRegistry.AllocateStream(ctx, streamId, genesisMiniblock.Header.Hash, mbBytes)
 	if err != nil {
 		return nil, nil, err
 	}
 
-	return tt.cache.CreateStream(ctx, streamId, genesisMiniblock)
+	return tt.cache.CreateStream(ctx, streamId)
 }

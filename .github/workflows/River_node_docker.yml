@@ -14,15 +14,15 @@ on:
             environment_name:
                 description: 'Environment Name'
                 type: string
-                default: 'test-beta'
+                default: 'gamma'
             docker_image_tag:
                 description: 'Docker image tag'
                 required: true
                 default: 'latest'
-            auto_deploy:
-                description: 'Auto deploy to AWS'
-                required: true
-                default: 'true'
+            auto_deploy_node_numbers_json:
+                description: 'JSON array of node numbers to deploy to'
+                type: string
+                default: '[-1]'
 
     workflow_call:
         secrets:
@@ -42,10 +42,10 @@ on:
                 description: 'Docker image tag'
                 type: string
                 required: true
-            auto_deploy:
-                description: 'Auto deploy to AWS'
-                type: boolean
-                required: true
+            auto_deploy_node_numbers_json:
+                description: 'JSON array of node numbers to deploy to'
+                type: string
+                default: '[-1]'
 
 env:
     DOCKER_NAMESPACE: herenotthere
@@ -67,6 +67,7 @@ jobs:
             environment_name: ${{ steps.compute_env_name_and_latest_tag.outputs.environment_name }}
             latest_tag_name: ${{ steps.compute_env_name_and_latest_tag.outputs.latest_tag_name }}
             release_version: ${{ steps.set_release_version.outputs.release_version }}
+            auto_deploy_node_numbers_json: ${{ steps.compute_env_name_and_latest_tag.outputs.auto_deploy_node_numbers_json }}
 
         steps:
             - name: Checkout
@@ -85,11 +86,13 @@ jobs:
                   IS_INPUT_DRIVEN: ${{ inputs.environment_name != '' }}
               run: |
                   if [ "${{ env.IS_PUSH }}" == "true" ]; then
-                      echo "::set-output name=environment_name::test-beta"
+                      echo "::set-output name=environment_name::gamma"
                       echo "::set-output name=latest_tag_name::latest"
+                      echo "::set-output name=auto_deploy_node_numbers_json::[1,2,3,4,5,6,7,8,9,10]"
                   elif [ "${{ env.IS_INPUT_DRIVEN }}" == "true" ]; then
                       echo "::set-output name=environment_name::${{ inputs.environment_name }}"
                       echo "::set-output name=latest_tag_name::${{ inputs.docker_image_tag }}"
+                      echo "::set-output name=auto_deploy_node_numbers_json::${{ inputs.auto_deploy_node_numbers_json }}"
                   else
                       echo "::error::Unhandled event type"
                       exit 1
@@ -141,7 +144,6 @@ jobs:
 
     deploy:
         # if this is a push to main, we deploy to AWS. otherwise we check if the user wants to deploy
-        if: github.event_name == 'push' && github.ref == 'refs/heads/main' || inputs.auto_deploy == 'true'
         uses: './.github/workflows/River_deploy.yml'
         needs: build
         permissions:
@@ -151,7 +153,14 @@ jobs:
             AWS_ACCESS_KEY_ID: ${{ secrets.AWS_ACCESS_KEY_ID }}
             AWS_SECRET_ACCESS_KEY: ${{ secrets.AWS_SECRET_ACCESS_KEY }}
             SLACK_WEBHOOK_URL: ${{ secrets.SLACK_WEBHOOK_URL || secrets.SLACK_CD_WORKFLOW_WEBHOOK_URL }}
+        # TODO: only run if a change in /casablanca/node is detected
+        # TODO: only deploy if the new docker image is different than what's currently active
+        if: ${{ needs.build.outputs.auto_deploy_node_numbers_json != '[-1]' }}
+        strategy:
+            matrix:
+                iteration: ${{ fromJson(needs.build.outputs.auto_deploy_node_numbers_json) }}
+            fail-fast: false
         with:
             environment_name: ${{ needs.build.outputs.environment_name }}
             docker_image_tag: ${{ needs.build.outputs.release_version }}
-            node_number: 1
+            node_number: ${{ matrix.iteration }}

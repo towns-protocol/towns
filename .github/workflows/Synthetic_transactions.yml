@@ -8,7 +8,7 @@ on:
             environment_name:
                 description: 'Environment Name'
                 type: string
-                default: 'test-beta'
+                default: 'gamma'
     workflow_call:
         inputs:
             environment_name:
@@ -67,7 +67,7 @@ jobs:
             - name: Run Synthetic Test
               run: yarn test:ci:synthetic:all
               env:
-                  ENVIRONMENT_NAME: ${{inputs.environment_name || 'test-beta' }} #river1-transient-{0}.towns.com
+                  ENVIRONMENT_NAME: ${{inputs.environment_name || 'gamma' }} 
 
             # If failed, we send a slack notification
             - name: Slack notification
@@ -82,4 +82,4 @@ jobs:
                   SLACK_USERNAME: 'Synthetic Tests'
                   SLACK_ICON_EMOJI: ':test_tube:'
                   SLACK_COLOR: '#FF0000'
-                  SLACK_MESSAGE: ${{ inputs.environment_name == 'test-beta' && env.SLACK_MESSAGE_FOR_MAIN || env.SLACK_MESSAGE_FOR_TRANSIENT}}
+                  SLACK_MESSAGE: ${{ inputs.environment_name == 'gamma' && env.SLACK_MESSAGE_FOR_MAIN || env.SLACK_MESSAGE_FOR_TRANSIENT}}

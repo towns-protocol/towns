@@ -10,7 +10,7 @@ on:
 
 jobs:
     user_ops_tests:
-        environment: test-beta
+        environment: gamma
         runs-on: ubuntu-latest-8-cores
         timeout-minutes: 240
         steps:
@@ -43,14 +43,13 @@ jobs:
               working-directory: ./servers/workers/stackup-worker
               # PAYMASTER_ADDRESS is actually the entrypoint address and we need to change the name of this env var
               # https://linear.app/hnt-labs/issue/HNT-4569/change-paymaster-address-to-entrypoint-address-in-paymaster-proxy
-              run: yarn dev:local --var PAYMASTER_ADDRESS:0x5FF137D4b0FDCD49DcA30c7CF57E578a026d2789 STACKUP_API_TOKEN:${{ secrets.STACKUP_API_TOKEN }} SKIP_TOWNID_VERIFICATION:true AUTH_SECRET:foo &
+              run: yarn dev:local --var PAYMASTER_ADDRESS:0x5FF137D4b0FDCD49DcA30c7CF57E578a026d2789 STACKUP_API_TOKEN:${{ secrets.STACKUP_TEST_API_TOKEN }} SKIP_TOWNID_VERIFICATION:true AUTH_SECRET:foo &
             
             - name: Spin up stackup worker with verification
               working-directory: ./servers/workers/stackup-worker
               # PAYMASTER_ADDRESS is actually the entrypoint address and we need to change the name of this env var
               # https://linear.app/hnt-labs/issue/HNT-4569/change-paymaster-address-to-entrypoint-address-in-paymaster-proxy
-              run: PORT=8787 yarn dev:local --var PAYMASTER_ADDRESS:0x5FF137D4b0FDCD49DcA30c7CF57E578a026d2789 SKIP_LIMIT_VERIFICATION:true STACKUP_API_TOKEN:${{ secrets.STACKUP_API_TOKEN }} PRIVY_APP_KEY:${{ secrets.PRIVY_APP_KEY }} PRIVY_APP_ID:clml5fp7s013vmf0fnkabuaiw ALCHEMY_API_KEY:${{ secrets.ALCHEMY_API_KEY }} AUTH_SECRET:foo ENVIRONMENT:test-beta &
-
+              run: PORT=8787 yarn dev:local --var PAYMASTER_ADDRESS:0x5FF137D4b0FDCD49DcA30c7CF57E578a026d2789 SKIP_LIMIT_VERIFICATION:true STACKUP_API_TOKEN:${{ secrets.STACKUP_TEST_API_TOKEN }} PRIVY_APP_KEY:${{ secrets.PRIVY_APP_KEY }} PRIVY_APP_ID:clml5fp7s013vmf0fnkabuaiw ALCHEMY_API_KEY:${{ secrets.ALCHEMY_API_KEY }} AUTH_SECRET:foo ENVIRONMENT:gamma &
 
             - name: Wait for first stackup worker to be up on 8686
               run: yarn worker:wait:stackup
@@ -62,10 +61,10 @@ jobs:
               timeout-minutes: 10
               env:
                 AA_PAYMASTER_PROXY_URL: http://127.0.0.1:8686
-                CASABLANCA_SERVER_URL: https://river1-test-beta.towns.com
+                CASABLANCA_SERVER_URL: https://river1.nodes.gamma.towns.com
                 AA_PAYMASTER_PROXY_AUTH_SECRET: Zm9v
                 DATADOG_API_KEY: ${{ secrets.DD_TOWNS_LOAD_TESTING_KEY }}
-                ETHERS_NETWORK: ${{ secrets.ETHERS_NETWORK }}
+                ETHERS_NETWORK: ${{ secrets.USEROPS_RPC_URL }}
                 AA_RPC_URL: ${{ secrets.AA_RPC_URL }}
                 AA_BUNDLER_URL: ${{ secrets.AA_BUNDLER_URL }}
                 
@@ -76,10 +75,10 @@ jobs:
               timeout-minutes: 10
               env:
                 AA_PAYMASTER_PROXY_URL: http://127.0.0.1:8787
-                CASABLANCA_SERVER_URL: https://river1-test-beta.towns.com
+                CASABLANCA_SERVER_URL: https://river1.nodes.gamma.towns.com
                 AA_PAYMASTER_PROXY_AUTH_SECRET: Zm9v
                 DATADOG_API_KEY: ${{ secrets.DD_TOWNS_LOAD_TESTING_KEY }}
-                ETHERS_NETWORK: ${{ secrets.ETHERS_NETWORK }}
+                ETHERS_NETWORK: ${{ secrets.USEROPS_RPC_URL }}
                 AA_RPC_URL: ${{ secrets.AA_RPC_URL }}
                 AA_BUNDLER_URL: ${{ secrets.AA_BUNDLER_URL }}
                 PRIVY_WALLET_PRIVATE_KEY_1: 09892cb15045f5989457e72dd4c7321f29d1dcb93b9f90d78da6fc433852a367

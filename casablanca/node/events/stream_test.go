@@ -6,7 +6,6 @@ import (
 
 	. "github.com/river-build/river/base"
 	"github.com/river-build/river/crypto"
-	. "github.com/river-build/river/nodes"
 	. "github.com/river-build/river/protocol"
 
 	"github.com/stretchr/testify/assert"
@@ -77,9 +76,7 @@ func mbTest(
 	spaceStreamId := GenShortNanoid()
 	miniblockProto := MakeGenesisMiniblockForSpaceStream(t, tt.params.Wallet, spaceStreamId)
 
-	streamNodes := NewStreamNodes([]string{tt.params.Wallet.AddressStr}, tt.params.Wallet.AddressStr)
-
-	stream, view, err := createStream(ctx, tt.params, spaceStreamId, streamNodes, miniblockProto)
+	stream, view, err := tt.createStream(ctx, spaceStreamId, miniblockProto)
 	assert.NoError(err)
 
 	addEvent(t, ctx, tt.params, stream, "1", view.LastBlock().Hash)

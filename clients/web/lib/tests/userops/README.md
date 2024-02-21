@@ -15,7 +15,7 @@ First setup the local stackup worker:
 PAYMASTER_ADDRESS=<get from stackup dashboard>
 STACKUP_API_TOKEN=<get from stackup dashboard>
 AUTH_SECRET=foo
-ENVIRONMENT=test-beta
+ENVIRONMENT=gamma
 
 // true if you want to skip all verification checks (skip privy and limit checks) - enable if running yarn test:userops:random-wallet
 SKIP_TOWNID_VERIFICATION=

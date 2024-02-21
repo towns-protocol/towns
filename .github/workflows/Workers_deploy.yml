@@ -6,16 +6,6 @@ on:
             - main
         paths:
             - 'servers/workers/**'
-    workflow_dispatch:
-        inputs:
-            environment:
-                description: 'Environment'
-                required: true
-                default: 'test-beta'
-                type: choice
-                options:
-                    - test-beta
-                    - staging-beta
 
 concurrency:
     group: ${{ github.workflow }}-${{ github.ref }}
@@ -27,13 +17,8 @@ jobs:
         runs-on: ubuntu-latest
 
         env:
-            ENV_NAME: >-
-                ${{
-                  ((github.event_name == 'push' && 
-                    (github.ref == 'refs/heads/main' && 'test-beta') || 
-                    (github.ref == 'refs/heads/staging') && 'staging-beta')
-                  )
-                || github.event.inputs.environment }}
+            # Even though our primary env is gamma, we're still using the test-beta workers.
+            ENV_NAME: test-beta
 
         permissions:
             contents: write

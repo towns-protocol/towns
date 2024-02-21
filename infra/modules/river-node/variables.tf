@@ -15,7 +15,7 @@ variable "dns_name" {
 }
 
 variable "node_number" {
-  description = "The number assigned to the node. i.e 1 for river-1-test-beta.towns.com"
+  description = "The number assigned to the node. i.e 1 for river1.nodes.gamma.towns.com"
   type        = number
 }
 
@@ -33,21 +33,6 @@ variable "public_subnets" {
 
 variable "private_subnets" {
   type = list(string)
-}
-
-variable "alb_security_group_id" {
-  description = "The security group id of the alb"
-  type        = string
-}
-
-variable "alb_https_listener_arn" {
-  description = "The arn of the alb https listener"
-  type        = string
-}
-
-variable "alb_dns_name" {
-  description = "Loadbalancer DNS name for river node"
-  type        = string
 }
 
 variable "notification_service_url" {

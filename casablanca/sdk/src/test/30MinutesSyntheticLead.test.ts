@@ -21,7 +21,7 @@ import {
     fromFollowerQueueName,
     fromLeaderQueueName,
     envName,
-    testBetaName,
+    defaultEnvironmentName,
     testSpamChannelName,
     riverNodeRpcUrl,
 } from './30MinutesSyntheticConfig'
@@ -137,7 +137,7 @@ describe('mirrorMessages', () => {
             let testTownId
             let testChannelId
 
-            if (envName !== testBetaName) {
+            if (envName !== defaultEnvironmentName) {
                 log('Creating town')
                 const result = await riverSDK.createTownWithDefaultChannel(
                     'test town',

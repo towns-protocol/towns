@@ -133,7 +133,7 @@ if (rawEnv.VITE_CASABLANCA_HOMESERVER_DEV_PROXY_PATH) {
 //         // 'production' is the default mode name (the NODE_ENV of vite).
 //         // we want to make sure this value is intentionally set, so we throw if we
 //         // see the default value. in our case, our environments are named "test-alpha",
-//         // "test-beta", "alpha", "beta".
+//         // "gamma", "alpha", "beta".
 //     }
 // }
 

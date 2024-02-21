@@ -6,7 +6,7 @@ data "aws_vpc" "vpc" {
   id = var.vpc_id
 }
 
-// https://notifications-test-beta.towns.com
+// https://notifications-gamma.towns.com
 // https://notifications-transient-1234.towns.com
 locals {
   service_name = "notification-service"

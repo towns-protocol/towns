@@ -25,12 +25,14 @@ import (
 	"github.com/river-build/river/protocol/protocolconnect"
 	"github.com/river-build/river/rpc"
 	"github.com/river-build/river/shared"
+	"github.com/river-build/river/testutils"
 	"github.com/river-build/river/testutils/dbtestutils"
 	"golang.org/x/net/http2"
 
 	"connectrpc.com/connect"
 	eth_crypto "github.com/ethereum/go-ethereum/crypto"
 	"github.com/stretchr/testify/assert"
+	"github.com/stretchr/testify/require"
 	"google.golang.org/protobuf/proto"
 )
 
@@ -43,7 +45,8 @@ func testMainImpl(m *testing.M) int {
 	ctx := test.NewTestContext()
 	db, schemaName, closer, err := dbtestutils.StartDB(ctx)
 	if err != nil {
-		panic(err)
+		fmt.Printf("Failed to start test database: %v\n", err)
+		return 1
 	}
 	defer closer()
 	testDatabaseUrl = db
@@ -56,8 +59,6 @@ func TestMain(m *testing.M) {
 	// Second function allows deferes to run before os.Exit
 	os.Exit(testMainImpl(m))
 }
-
-var channel1Name = shared.ChannelStreamIdFromName("channel1")
 
 func createUserDeviceKeyStream(
 	ctx context.Context,
@@ -164,9 +165,8 @@ func createSpace(
 	ctx context.Context,
 	wallet *crypto.Wallet,
 	client protocolconnect.StreamServiceClient,
-	spaceId string,
+	spaceStreamId string,
 ) (*protocol.SyncCookie, []byte, error) {
-	spaceStreamId := shared.SpaceStreamIdFromName(spaceId)
 	space, err := events.MakeEnvelopeWithPayload(
 		wallet,
 		events.Make_SpacePayload_Inception(
@@ -212,12 +212,11 @@ func createChannel(
 	wallet *crypto.Wallet,
 	client protocolconnect.StreamServiceClient,
 	spaceId string,
-	channelId string,
+	channelStreamId string,
 	streamSettings *protocol.StreamSettings,
 ) (*protocol.SyncCookie, []byte, error) {
 	var channelProperties protocol.EncryptedData
 	channelProperties.Ciphertext = "encrypted text supposed to be here"
-	channelStreamId := shared.ChannelStreamIdFromName(channelId)
 	channel, err := events.MakeEnvelopeWithPayload(
 		wallet,
 		events.Make_ChannelPayload_Inception(
@@ -351,206 +350,205 @@ func TestMethods(t *testing.T) {
 
 	defer closer()
 
-	{
-		response, err := client.Info(ctx, connect.NewRequest(&protocol.InfoRequest{}))
-		if err != nil {
-			t.Errorf("error calling Info: %v", err)
-		}
-		assert.Equal(t, "Towns.com node welcomes you!", response.Msg.Graffiti)
+	response, err := client.Info(ctx, connect.NewRequest(&protocol.InfoRequest{}))
+	if err != nil {
+		t.Errorf("error calling Info: %v", err)
+	}
+	assert.Equal(t, "Towns.com node welcomes you!", response.Msg.Graffiti)
 
-		_, err = client.CreateStream(ctx, connect.NewRequest(&protocol.CreateStreamRequest{}))
-		if err == nil {
-			t.Errorf("expected error calling CreateStream with no events")
-		}
+	_, err = client.CreateStream(ctx, connect.NewRequest(&protocol.CreateStreamRequest{}))
+	if err == nil {
+		t.Errorf("expected error calling CreateStream with no events")
+	}
 
-		_, _, err = createUserDeviceKeyStream(ctx, wallet1, client)
-		assert.NoError(t, err)
+	_, _, err = createUserDeviceKeyStream(ctx, wallet1, client)
+	require.NoError(t, err)
 
-		_, _, err = createUserWithMismatchedId(ctx, wallet1, client)
-		assert.Error(t, err) // expected Error when calling CreateStream with mismatched id
+	_, _, err = createUserWithMismatchedId(ctx, wallet1, client)
+	assert.Error(t, err) // expected Error when calling CreateStream with mismatched id
 
-		userStreamId, err := shared.UserStreamIdFromAddress(wallet1.Address.Bytes())
-		assert.NoError(t, err)
+	userStreamId, err := shared.UserStreamIdFromAddress(wallet1.Address.Bytes())
+	require.NoError(t, err)
 
-		// if optional is true, stream should be nil instead of throwing an error
-		resp, err := client.GetStream(ctx, connect.NewRequest(&protocol.GetStreamRequest{
-			StreamId: userStreamId,
-			Optional: true,
-		}))
-		assert.NoError(t, err)
-		assert.Nil(t, resp.Msg.Stream, "expected user stream to not exist")
+	// if optional is true, stream should be nil instead of throwing an error
+	resp, err := client.GetStream(ctx, connect.NewRequest(&protocol.GetStreamRequest{
+		StreamId: userStreamId,
+		Optional: true,
+	}))
+	require.NoError(t, err)
+	assert.Nil(t, resp.Msg.Stream, "expected user stream to not exist")
 
-		// if optional is false, error should be thrown
-		_, err = client.GetStream(ctx, connect.NewRequest(&protocol.GetStreamRequest{
-			StreamId: userStreamId,
-		}))
-		assert.Error(t, err)
+	// if optional is false, error should be thrown
+	_, err = client.GetStream(ctx, connect.NewRequest(&protocol.GetStreamRequest{
+		StreamId: userStreamId,
+	}))
+	assert.Error(t, err)
 
-		// create user stream for user 1
-		res, _, err := createUser(ctx, wallet1, client)
-		assert.NoError(t, err)
-		if res == nil {
-			t.Errorf("nil sync cookie")
-		}
+	// create user stream for user 1
+	res, _, err := createUser(ctx, wallet1, client)
+	require.NoError(t, err)
+	if res == nil {
+		t.Errorf("nil sync cookie")
+	}
 
-		// get stream optional should now return not nil
-		resp, err = client.GetStream(ctx, connect.NewRequest(&protocol.GetStreamRequest{
-			StreamId: userStreamId,
-			Optional: true,
-		}))
-		assert.NoError(t, err)
-		assert.NotNil(t, resp.Msg, "expected user stream to not exist")
+	// get stream optional should now return not nil
+	resp, err = client.GetStream(ctx, connect.NewRequest(&protocol.GetStreamRequest{
+		StreamId: userStreamId,
+		Optional: true,
+	}))
+	require.NoError(t, err)
+	assert.NotNil(t, resp.Msg, "expected user stream to not exist")
 
-		_, _, err = createUserDeviceKeyStream(ctx, wallet2, client)
-		assert.NoError(t, err)
+	_, _, err = createUserDeviceKeyStream(ctx, wallet2, client)
+	require.NoError(t, err)
 
-		// create user stream for user 2
-		resuser, _, err := createUser(ctx, wallet2, client)
-		assert.NoError(t, err)
-		if resuser == nil {
-			t.Errorf("nil sync cookie")
-			return
-		}
+	// create user stream for user 2
+	resuser, _, err := createUser(ctx, wallet2, client)
+	require.NoError(t, err)
+	if resuser == nil {
+		t.Errorf("nil sync cookie")
+		return
+	}
 
-		// create space
-		resspace, _, err := createSpace(ctx, wallet1, client, "test")
-		assert.NoError(t, err)
-		if resspace == nil {
-			t.Errorf("nil sync cookie")
-			return
-		}
+	// create space
+	spaceId := testutils.FakeStreamId(shared.STREAM_SPACE_PREFIX)
+	resspace, _, err := createSpace(ctx, wallet1, client, spaceId)
+	require.NoError(t, err)
+	if resspace == nil {
+		t.Errorf("nil sync cookie")
+		return
+	}
 
-		// create channel
-		// TODO: add channel setting instead of "channel1"
-		channel, channelHash, err := createChannel(
-			ctx,
-			wallet1,
-			client,
-			shared.SpaceStreamIdFromName("test"),
-			"channel1",
-			&protocol.StreamSettings{
-				DisableMiniblockCreation: true,
+	// create channel
+	channelId := testutils.FakeStreamId(shared.STREAM_CHANNEL_PREFIX)
+	channel, channelHash, err := createChannel(
+		ctx,
+		wallet1,
+		client,
+		spaceId,
+		channelId,
+		&protocol.StreamSettings{
+			DisableMiniblockCreation: true,
+		},
+	)
+	require.NoError(t, err)
+	if channel == nil {
+		t.Errorf("nil sync cookie")
+	}
+
+	// user2 joins channel
+	userJoin, err := events.MakeEnvelopeWithPayload(
+		wallet2,
+		events.Make_UserPayload_Membership(
+			protocol.MembershipOp_SO_JOIN,
+			channelId,
+			nil,
+		),
+		resuser.PrevMiniblockHash,
+	)
+	if err != nil {
+		t.Errorf("error creating join event: %v", err)
+	}
+	_, err = client.AddEvent(
+		ctx,
+		connect.NewRequest(
+			&protocol.AddEventRequest{
+				StreamId: resuser.StreamId,
+				Event:    userJoin,
 			},
-		)
-		assert.NoError(t, err)
-		if channel == nil {
-			t.Errorf("nil sync cookie")
-		}
+		),
+	)
+	require.NoError(t, err)
 
-		// user2 joins channel
-		userJoin, err := events.MakeEnvelopeWithPayload(
-			wallet2,
-			events.Make_UserPayload_Membership(
-				protocol.MembershipOp_SO_JOIN,
-				channel1Name,
-				nil,
-			),
-			resuser.PrevMiniblockHash,
-		)
-		if err != nil {
-			t.Errorf("error creating join event: %v", err)
-		}
-		_, err = client.AddEvent(
-			ctx,
-			connect.NewRequest(
-				&protocol.AddEventRequest{
-					StreamId: resuser.StreamId,
-					Event:    userJoin,
+	_, err = client.Info(ctx, connect.NewRequest(&protocol.InfoRequest{Debug: []string{"make_miniblock", channelId, "false"}}))
+	require.NoError(t, err)
+
+	_, err = client.Info(ctx, connect.NewRequest(&protocol.InfoRequest{
+		Debug: []string{"make_miniblock", channelId, "false"},
+	}))
+	require.NoError(t, err)
+
+	message, err := events.MakeEnvelopeWithPayload(
+		wallet2,
+		events.Make_ChannelPayload_Message("hello"),
+		channelHash,
+	)
+	if err != nil {
+		t.Errorf("error creating message event: %v", err)
+	}
+
+	_, err = client.AddEvent(
+		ctx,
+		connect.NewRequest(
+			&protocol.AddEventRequest{
+				StreamId: channelId,
+				Event:    message,
+			},
+		),
+	)
+	require.NoError(t, err)
+
+	_, err = client.Info(ctx, connect.NewRequest(&protocol.InfoRequest{Debug: []string{"make_miniblock", channelId, "false"}}))
+	require.NoError(t, err)
+
+	_, err = client.Info(ctx, connect.NewRequest(&protocol.InfoRequest{
+		Debug: []string{"make_miniblock", channelId, "false"},
+	}))
+	require.NoError(t, err)
+
+	_, err = client.GetMiniblocks(ctx, connect.NewRequest(&protocol.GetMiniblocksRequest{
+		StreamId:      channelId,
+		FromInclusive: 0,
+		ToExclusive:   1,
+	}))
+	require.NoError(t, err)
+
+	syncCtx, syncCancel := context.WithCancel(ctx)
+	syncRes, err := client.SyncStreams(
+		syncCtx,
+		connect.NewRequest(
+			&protocol.SyncStreamsRequest{
+				SyncPos: []*protocol.SyncCookie{
+					channel,
 				},
-			),
-		)
-		assert.NoError(t, err)
+			},
+		),
+	)
+	require.NoError(t, err)
 
-		_, err = client.Info(ctx, connect.NewRequest(&protocol.InfoRequest{Debug: []string{"make_miniblock", channel1Name, "false"}}))
-		assert.NoError(t, err)
+	syncRes.Receive()
+	// verify the first message is new a sync
+	syncRes.Receive()
+	msg := syncRes.Msg()
+	assert.NotNil(t, msg.SyncId, "expected non-nil sync id")
+	assert.True(t, len(msg.SyncId) > 0, "expected non-empty sync id")
+	msg = syncRes.Msg()
+	syncCancel()
 
-		_, err = client.Info(ctx, connect.NewRequest(&protocol.InfoRequest{
-			Debug: []string{"make_miniblock", shared.ChannelStreamIdFromName("channel1"), "false"},
-		}))
-		assert.NoError(t, err)
+	if msg.Stream == nil {
+		t.Errorf("expected a stream")
+	}
+	// join, miniblock, message, miniblock
+	if len(msg.Stream.Events) != 4 {
+		t.Errorf("expected 4 events, got %d", len(msg.Stream.Events))
+	}
 
-		message, err := events.MakeEnvelopeWithPayload(
-			wallet2,
-			events.Make_ChannelPayload_Message("hello"),
-			channelHash,
-		)
-		if err != nil {
-			t.Errorf("error creating message event: %v", err)
-		}
-
-		_, err = client.AddEvent(
-			ctx,
-			connect.NewRequest(
-				&protocol.AddEventRequest{
-					StreamId: channel1Name,
-					Event:    message,
-				},
-			),
-		)
-		assert.NoError(t, err)
-
-		_, err = client.Info(ctx, connect.NewRequest(&protocol.InfoRequest{Debug: []string{"make_miniblock", channel1Name, "false"}}))
-		assert.NoError(t, err)
-
-		_, err = client.Info(ctx, connect.NewRequest(&protocol.InfoRequest{
-			Debug: []string{"make_miniblock", shared.ChannelStreamIdFromName("channel1"), "false"},
-		}))
-		assert.NoError(t, err)
-
-		_, err = client.GetMiniblocks(ctx, connect.NewRequest(&protocol.GetMiniblocksRequest{
-			StreamId:      channel1Name,
-			FromInclusive: 0,
-			ToExclusive:   1,
-		}))
-		assert.NoError(t, err)
-
-		syncCtx, syncCancel := context.WithCancel(ctx)
-		syncRes, err := client.SyncStreams(
-			syncCtx,
-			connect.NewRequest(
-				&protocol.SyncStreamsRequest{
-					SyncPos: []*protocol.SyncCookie{
-						channel,
-					},
-				},
-			),
-		)
-		assert.NoError(t, err)
-
-		syncRes.Receive()
-		// verify the first message is new a sync
-		syncRes.Receive()
-		msg := syncRes.Msg()
-		assert.NotNil(t, msg.SyncId, "expected non-nil sync id")
-		assert.True(t, len(msg.SyncId) > 0, "expected non-empty sync id")
-		msg = syncRes.Msg()
-		syncCancel()
-
-		if msg.Stream == nil {
-			t.Errorf("expected a stream")
-		}
-		// join, miniblock, message, miniblock
-		if len(msg.Stream.Events) != 4 {
-			t.Errorf("expected 4 events, got %d", len(msg.Stream.Events))
-		}
-
-		var payload protocol.StreamEvent
-		err = proto.Unmarshal(msg.Stream.Events[len(msg.Stream.Events)-2].Event, &payload)
-		if err != nil {
-			t.Errorf("error unmarshaling event: %v", err)
-		}
-		switch p := payload.Payload.(type) {
-		case *protocol.StreamEvent_ChannelPayload:
+	var payload protocol.StreamEvent
+	err = proto.Unmarshal(msg.Stream.Events[len(msg.Stream.Events)-2].Event, &payload)
+	if err != nil {
+		t.Errorf("error unmarshaling event: %v", err)
+	}
+	switch p := payload.Payload.(type) {
+	case *protocol.StreamEvent_ChannelPayload:
+		// ok
+		switch p.ChannelPayload.Content.(type) {
+		case *protocol.ChannelPayload_Message:
 			// ok
-			switch p.ChannelPayload.Content.(type) {
-			case *protocol.ChannelPayload_Message:
-				// ok
-			default:
-				t.Fatalf("expected message event, got %v", p.ChannelPayload.Content)
-			}
 		default:
-			t.Fatalf("expected channel event, got %v", payload.Payload)
+			t.Fatalf("expected message event, got %v", p.ChannelPayload.Content)
 		}
+	default:
+		t.Fatalf("expected channel event, got %v", payload.Payload)
 	}
 }
 
@@ -560,70 +558,71 @@ func TestRiverDeviceId(t *testing.T) {
 	wallet, _ := crypto.NewWallet(ctx)
 	deviceWallet, _ := crypto.NewWallet(ctx)
 	defer closer()
-	{
-		resuser, _, err := createUser(ctx, wallet, client)
-		assert.NoError(t, err)
-		if resuser == nil {
-			t.Errorf("nil sync cookie")
-		}
 
-		_, _, err = createUserDeviceKeyStream(ctx, wallet, client)
-		assert.NoError(t, err)
-
-		space, _, err := createSpace(ctx, wallet, client, "test")
-		assert.NoError(t, err)
-		if space == nil {
-			t.Errorf("nil sync cookie")
-		}
-
-		channel, channelHash, err := createChannel(ctx, wallet, client, shared.SpaceStreamIdFromName("test"), "channel1", nil)
-		assert.NoError(t, err)
-		if channel == nil {
-			t.Errorf("nil sync cookie")
-		}
-
-		delegateSig, err := makeDelegateSig(wallet, deviceWallet)
-		assert.NoError(t, err)
-
-		event, err := events.MakeDelegatedStreamEvent(
-			wallet,
-			events.Make_ChannelPayload_Message(
-				"try to send a message without RDK",
-			),
-			channelHash,
-			delegateSig,
-		)
-		assert.NoError(t, err)
-		msg, err := events.MakeEnvelopeWithEvent(
-			deviceWallet,
-			event,
-		)
-		if err != nil {
-			t.Errorf("error creating message event: %v", err)
-		}
-
-		_, err = client.AddEvent(
-			ctx,
-			connect.NewRequest(
-				&protocol.AddEventRequest{
-					StreamId: channel1Name,
-					Event:    msg,
-				},
-			),
-		)
-		assert.NoError(t, err)
-
-		_, err = client.AddEvent(
-			ctx,
-			connect.NewRequest(
-				&protocol.AddEventRequest{
-					StreamId: channel1Name,
-					Event:    msg,
-				},
-			),
-		)
-		assert.Error(t, err) // expected error when calling AddEvent
+	resuser, _, err := createUser(ctx, wallet, client)
+	require.NoError(t, err)
+	if resuser == nil {
+		t.Errorf("nil sync cookie")
 	}
+
+	_, _, err = createUserDeviceKeyStream(ctx, wallet, client)
+	require.NoError(t, err)
+
+	spaceId := testutils.FakeStreamId(shared.STREAM_SPACE_PREFIX)
+	space, _, err := createSpace(ctx, wallet, client, spaceId)
+	require.NoError(t, err)
+	if space == nil {
+		t.Errorf("nil sync cookie")
+	}
+
+	channelId := testutils.FakeStreamId(shared.STREAM_CHANNEL_PREFIX)
+	channel, channelHash, err := createChannel(ctx, wallet, client, spaceId, channelId, nil)
+	require.NoError(t, err)
+	if channel == nil {
+		t.Errorf("nil sync cookie")
+	}
+
+	delegateSig, err := makeDelegateSig(wallet, deviceWallet)
+	require.NoError(t, err)
+
+	event, err := events.MakeDelegatedStreamEvent(
+		wallet,
+		events.Make_ChannelPayload_Message(
+			"try to send a message without RDK",
+		),
+		channelHash,
+		delegateSig,
+	)
+	require.NoError(t, err)
+	msg, err := events.MakeEnvelopeWithEvent(
+		deviceWallet,
+		event,
+	)
+	if err != nil {
+		t.Errorf("error creating message event: %v", err)
+	}
+
+	_, err = client.AddEvent(
+		ctx,
+		connect.NewRequest(
+			&protocol.AddEventRequest{
+				StreamId: channelId,
+				Event:    msg,
+			},
+		),
+	)
+	require.NoError(t, err)
+
+	_, err = client.AddEvent(
+		ctx,
+		connect.NewRequest(
+			&protocol.AddEventRequest{
+				StreamId: channelId,
+				Event:    msg,
+			},
+		),
+	)
+	assert.Error(t, err) // expected error when calling AddEvent
 }
 
 func TestSyncStreams(t *testing.T) {
@@ -641,11 +640,13 @@ func TestSyncStreams(t *testing.T) {
 	_, _, err = createUserDeviceKeyStream(ctx, wallet, client)
 	assert.Nilf(t, err, "error calling createUserDeviceKeyStream: %v", err)
 	// create space
-	space1, _, err := createSpace(ctx, wallet, client, "space1")
+	spaceId := testutils.FakeStreamId(shared.STREAM_SPACE_PREFIX)
+	space1, _, err := createSpace(ctx, wallet, client, spaceId)
 	assert.Nilf(t, err, "error calling createSpace: %v", err)
 	assert.NotNil(t, space1, "nil sync cookie")
 	// create channel
-	channel1, channelHash, err := createChannel(ctx, wallet, client, shared.SpaceStreamIdFromName("space1"), "channel1", nil)
+	channelId := testutils.FakeStreamId(shared.STREAM_CHANNEL_PREFIX)
+	channel1, channelHash, err := createChannel(ctx, wallet, client, spaceId, channelId, nil)
 	assert.Nilf(t, err, "error calling createChannel: %v", err)
 	assert.NotNil(t, channel1, "nil sync cookie")
 
@@ -679,7 +680,7 @@ func TestSyncStreams(t *testing.T) {
 		ctx,
 		connect.NewRequest(
 			&protocol.AddEventRequest{
-				StreamId: channel1Name,
+				StreamId: channelId,
 				Event:    message,
 			},
 		),
@@ -739,16 +740,18 @@ func TestAddStreamsToSync(t *testing.T) {
 	_, _, err = createUserDeviceKeyStream(ctx, bobWallet, bobClient)
 	assert.Nilf(t, err, "error calling createUserDeviceKeyStream: %v", err)
 	// alice creates a space
-	space1, _, err := createSpace(ctx, aliceWallet, aliceClient, "space1")
+	spaceId := testutils.FakeStreamId(shared.STREAM_SPACE_PREFIX)
+	space1, _, err := createSpace(ctx, aliceWallet, aliceClient, spaceId)
 	assert.Nilf(t, err, "error calling createSpace: %v", err)
 	assert.NotNil(t, space1, "nil sync cookie")
 	// alice creates a channel
+	channelId := testutils.FakeStreamId(shared.STREAM_CHANNEL_PREFIX)
 	channel1, channelHash, err := createChannel(
 		ctx,
 		aliceWallet,
 		aliceClient,
-		shared.SpaceStreamIdFromName("space1"),
-		"channel1",
+		spaceId,
+		channelId,
 		nil,
 	)
 	assert.Nilf(t, err, "error calling createChannel: %v", err)
@@ -782,7 +785,7 @@ func TestAddStreamsToSync(t *testing.T) {
 		ctx,
 		connect.NewRequest(
 			&protocol.AddEventRequest{
-				StreamId: channel1Name,
+				StreamId: channelId,
 				Event:    message,
 			},
 		),
@@ -828,7 +831,7 @@ func TestRemoveStreamsFromSync(t *testing.T) {
 	assert.Nilf(t, err, "error calling createUser: %v", err)
 	assert.NotNil(t, alice, "nil sync cookie for alice")
 	_, _, err = createUserDeviceKeyStream(ctx, aliceWallet, aliceClient)
-	assert.NoError(t, err)
+	require.NoError(t, err)
 
 	httpClient := &http.Client{
 		Transport: &http2.Transport{
@@ -854,13 +857,13 @@ func TestRemoveStreamsFromSync(t *testing.T) {
 	_, _, err = createUserDeviceKeyStream(ctx, bobWallet, bobClient)
 	assert.Nilf(t, err, "error calling createUserDeviceKeyStream: %v", err)
 	// alice creates a space
-	space1, _, err := createSpace(ctx, aliceWallet, aliceClient, "space1")
+	spaceId := testutils.FakeStreamId(shared.STREAM_SPACE_PREFIX)
+	space1, _, err := createSpace(ctx, aliceWallet, aliceClient, spaceId)
 	assert.Nilf(t, err, "error calling createSpace: %v", err)
 	assert.NotNil(t, space1, "nil sync cookie")
 	// alice creates a channel
-	space1StreamId := shared.SpaceStreamIdFromName("space1")
-	channel1StreamId := channel1Name
-	channel1, channelHash, err := createChannel(ctx, aliceWallet, aliceClient, space1StreamId, "channel1", nil)
+	channelId := testutils.FakeStreamId(shared.STREAM_CHANNEL_PREFIX)
+	channel1, channelHash, err := createChannel(ctx, aliceWallet, aliceClient, spaceId, channelId, nil)
 	assert.Nilf(t, err, "error calling createChannel: %v", err)
 	assert.NotNil(t, channel1, "nil sync cookie")
 	// bob sync streams
@@ -889,7 +892,7 @@ func TestRemoveStreamsFromSync(t *testing.T) {
 		ctx,
 		connect.NewRequest(
 			&protocol.AddEventRequest{
-				StreamId: channel1StreamId,
+				StreamId: channelId,
 				Event:    message1,
 			},
 		),
@@ -941,7 +944,7 @@ OuterLoop:
 		connect.NewRequest(
 			&protocol.RemoveStreamFromSyncRequest{
 				SyncId:   syncId,
-				StreamId: channel1StreamId,
+				StreamId: channelId,
 			},
 		),
 	)
@@ -958,7 +961,7 @@ OuterLoop:
 		ctx,
 		connect.NewRequest(
 			&protocol.AddEventRequest{
-				StreamId: channel1StreamId,
+				StreamId: channelId,
 				Event:    message2,
 			},
 		),
@@ -996,15 +999,16 @@ func DisableTestManyUsers(t *testing.T) {
 		wallets = append(wallets, wallet)
 
 		res, _, err := createUser(ctx, wallet, client)
-		assert.NoError(t, err)
+		require.NoError(t, err)
 		if res == nil {
 			t.Fatalf("nil sync cookie")
 		}
 	}
 
 	// create space
-	resspace, _, err := createSpace(ctx, wallets[0], client, "test")
-	assert.NoError(t, err)
+	spaceId := testutils.FakeStreamId(shared.STREAM_SPACE_PREFIX)
+	resspace, _, err := createSpace(ctx, wallets[0], client, spaceId)
+	require.NoError(t, err)
 	if resspace == nil {
 		t.Fatalf("nil sync cookie")
 	}
@@ -1013,16 +1017,16 @@ func DisableTestManyUsers(t *testing.T) {
 	var channelHashes [][]byte
 	var channels []*protocol.SyncCookie
 	for i := 0; i < totalChannels; i++ {
-		// TODO: add channel setting instead of "channel1"
+		// TODO: add channel setting instead of channelId
 		channel, channelHash, err := createChannel(
 			ctx,
 			wallets[0],
 			client,
-			shared.SpaceStreamIdFromName("test"),
+			spaceId,
 			fmt.Sprintf("channel-%d", i),
 			nil,
 		)
-		assert.NoError(t, err)
+		require.NoError(t, err)
 		if channel == nil {
 			t.Fatalf("nil sync cookie")
 		}
@@ -1034,15 +1038,15 @@ func DisableTestManyUsers(t *testing.T) {
 		// users joins channels
 		for j := 0; j < totalChannels; j++ {
 			userId, err := shared.AddressHex(wallets[i].Address.Bytes())
-			assert.NoError(t, err)
+			require.NoError(t, err)
 			channelId := shared.ChannelStreamIdFromName(fmt.Sprintf("channel-%d", j))
 			userStreamId, err := shared.UserStreamIdFromId(userId)
-			assert.NoError(t, err)
+			require.NoError(t, err)
 
 			userBlockHash, err := client.GetLastMiniblockHash(ctx, connect.NewRequest(&protocol.GetLastMiniblockHashRequest{
 				StreamId: userStreamId,
 			}))
-			assert.NoError(t, err)
+			require.NoError(t, err)
 
 			userJoin, err := events.MakeEnvelopeWithPayload(
 				wallets[i],
@@ -1054,27 +1058,27 @@ func DisableTestManyUsers(t *testing.T) {
 				userBlockHash.Msg.Hash,
 			)
 
-			assert.NoError(t, err)
+			require.NoError(t, err)
 			_, err = client.AddEvent(ctx, connect.NewRequest(&protocol.AddEventRequest{
 				StreamId: userStreamId,
 				Event:    userJoin,
 			},
 			))
-			assert.NoError(t, err)
+			require.NoError(t, err)
 
 			message, err := events.MakeEnvelopeWithPayload(
 				wallets[i],
 				events.Make_ChannelPayload_Message("hello"),
 				channelHashes[j],
 			)
-			assert.NoError(t, err)
+			require.NoError(t, err)
 
 			_, err = client.AddEvent(ctx, connect.NewRequest(&protocol.AddEventRequest{
 				StreamId: shared.ChannelStreamIdFromName(fmt.Sprintf("channel-%d", j)),
 				Event:    message,
 			},
 			))
-			assert.NoError(t, err)
+			require.NoError(t, err)
 		}
 	}
 
@@ -1083,7 +1087,7 @@ func DisableTestManyUsers(t *testing.T) {
 	syncRes, err := client.SyncStreams(syncCtx, connect.NewRequest(&protocol.SyncStreamsRequest{
 		SyncPos: channels,
 	}))
-	assert.NoError(t, err)
+	require.NoError(t, err)
 
 	streams := make([]*protocol.StreamAndCookie, 0)
 	for syncRes.Receive() {
@@ -1135,14 +1139,14 @@ func DisableTestManyUsers(t *testing.T) {
 						events.Make_ChannelPayload_Message(fmt.Sprintf("%d hello from %d", msgId.Add(1)-1, user)),
 						channelHashes[channel],
 					)
-					assert.NoError(t, err)
+					require.NoError(t, err)
 
 					_, err = client.AddEvent(ctx, connect.NewRequest(&protocol.AddEventRequest{
 						StreamId: shared.ChannelStreamIdFromName(fmt.Sprintf("channel-%d", channel)),
 						Event:    message,
 					},
 					))
-					assert.NoError(t, err)
+					require.NoError(t, err)
 					waitForMessages.Done()
 				}
 			}
@@ -1163,11 +1167,11 @@ func DisableTestManyUsers(t *testing.T) {
 		syncRes, err = client.SyncStreams(syncCtx, connect.NewRequest(&protocol.SyncStreamsRequest{
 			SyncPos: channels,
 		}))
-		assert.NoError(t, err)
+		require.NoError(t, err)
 		for syncRes.Receive() {
 			err := syncRes.Err()
 			msg := syncRes.Msg()
-			assert.NoError(t, err)
+			require.NoError(t, err)
 			if msg.Stream != nil {
 				for syncPosStrem := range channels {
 					if channels[syncPosStrem] != nil {
@@ -1179,14 +1183,14 @@ func DisableTestManyUsers(t *testing.T) {
 				received += len(msg.Stream.Events)
 				for _, event := range msg.Stream.Events {
 					e, err := events.ParseEvent(event)
-					assert.NoError(t, err)
+					require.NoError(t, err)
 					msg := e.GetChannelMessage()
 					assert.NotNil(t, msg)
 					if msg.Message != nil {
 						tokens := strings.Split(msg.Message.Ciphertext, " ")
 						assert.Equal(t, 4, len(tokens))
 						id, err := strconv.Atoi(tokens[0])
-						assert.NoError(t, err)
+						require.NoError(t, err)
 
 						msgTable[id]++
 						assert.Equal(t, 1, msgTable[id])

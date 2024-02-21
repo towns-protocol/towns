@@ -25,23 +25,9 @@ func (s *Service) AllocateStream(
 }
 
 func (s *Service) allocateStream(ctx context.Context, req *AllocateStreamRequest) (*AllocateStreamResponse, error) {
-	nodes, _, err := s.streamRegistry.GetStreamInfo(ctx, req.StreamId)
-	if err != nil {
-		return nil, err
-	}
-
-	if !nodes.IsLocal() {
-		return nil, RiverError(
-			Err_BAD_STREAM_CREATION_PARAMS,
-			"AllocateStream received for stream that is not local",
-			"streamId", req.StreamId,
-			"nodes", nodes.GetNodes(),
-			"localNode", s.wallet.AddressStr)
-	}
-
 	// TODO: check request is signed by correct node
 	// TODO: all checks that should be done on create?
-	_, view, err := s.cache.CreateStream(ctx, req.StreamId, req.Miniblock)
+	_, view, err := s.cache.CreateStream(ctx, req.StreamId)
 	if err != nil {
 		return nil, err
 	}

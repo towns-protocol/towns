@@ -15,7 +15,7 @@ locals {
 
 # a secret that contains both the .key and the .crt values
 resource "aws_secretsmanager_secret" "river_node_ssl_cert" {
-  name        = "${local.base_name}-secret-cert-${terraform.workspace}"
+  name        = "${local.base_name}-secret-${terraform.workspace}"
   tags        = module.global_constants.tags
   description = "SSL certificate for the river node"
 }

@@ -205,7 +205,6 @@ func StartServer(
 			Wallet:       wallet,
 			Riverchain:   riverchain,
 			Registry:     registryContract,
-			SR:           streamRegistry,
 			StreamConfig: &cfg.Stream,
 		},
 	)

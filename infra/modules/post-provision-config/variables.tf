@@ -8,7 +8,7 @@ variable "river_node_name" {
 }
 
 variable "river_node_number" {
-  description = "The number assigned to the node. i.e 1 for river-1-test-beta.towns.com"
+  description = "The number assigned to the node. i.e 1 for river-1.nodes.gamma.towns.com"
   type        = number
 }
 

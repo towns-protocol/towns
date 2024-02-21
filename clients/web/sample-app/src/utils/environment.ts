@@ -2,7 +2,7 @@ import { Chain, baseSepolia, foundry } from 'wagmi/chains'
 
 export enum TownsEnvironment {
     Prod = 'prod',
-    TestBeta = 'test-beta',
+    Gamma = 'gamma',
     Local = 'local',
     Multinode = 'multinode',
 }
@@ -33,9 +33,9 @@ export const ENVIRONMENTS: TownsEnvironmentInfo[] = [
         chain: foundry,
     },
     {
-        id: TownsEnvironment.TestBeta,
-        name: 'Test Beta',
-        casablancaUrl: 'https://river1-test-beta.towns.com',
+        id: TownsEnvironment.Gamma,
+        name: 'Gamma',
+        casablancaUrl: 'https://river1.nodes.gamma.towns.com',
         chain: baseSepolia,
         chainId: baseSepolia.id,
     },

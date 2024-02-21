@@ -23,7 +23,7 @@ import fs from 'fs'
 test('create dev town', async () => {
     // make sure ETHERS_NETWORK and CASABLANCA_SERVER_URL env vars are set before running this test
     // jest-setup.ts will provide default values for these env vars if they are not set
-    // and they won't work for creating a town on the test-beta environment.
+    // and they won't work for creating a town on the gamma environment.
 
     const { WALLET_PRIVATE_KEY, CHAIN_ID } = process.env
 
@@ -48,7 +48,7 @@ test('create dev town', async () => {
     }
     // create a space
     const streamId = (await createDevTown(harmonyHotWallet))!
-    const inviteLink = `https://app-test-beta.towns.com/t/${streamId}/?invite`
+    const inviteLink = `https://app.gamma.towns.com/t/${streamId}/?invite`
 
     // export the invite link into a json file:
 

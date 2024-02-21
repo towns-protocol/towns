@@ -8,13 +8,12 @@ export LOG_LEVEL=info
 export LOG_NOCOLOR=false
 export METRICS_ENABLED=true
 export METRICS_PORT=8081
-export NODE_REGISTRY="''"
 export NUM_INSTANCES=1
 export REPL_FACTOR=1
 export RPC_PORT=5157
 export RUN_BASE=./run_files/single
-export DISABLE_RIVER_CHAIN=false
-export DISABLE_BASE_CHAIN=false
+export DISABLE_RIVER_CHAIN=${DISABLE_RIVER_CHAIN:-false}
+export DISABLE_BASE_CHAIN=${DISABLE_BASE_CHAIN:-false}
 
 # Parse command-line options
 RUN_OPT="-c -r"
