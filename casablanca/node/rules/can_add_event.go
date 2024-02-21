@@ -15,7 +15,7 @@ import (
 	"github.com/river-build/river/shared"
 )
 
-type caeRules struct {
+type aeRules struct {
 	ctx                context.Context
 	cfg                *config.StreamConfig
 	validNodeAddresses []string
@@ -25,15 +25,19 @@ type caeRules struct {
 	membership         *Membership
 }
 
-/**
+/*
+*
 * CanAddEvent
 * a pure function with no side effects that returns a boolean value and prerequesits
 * for adding an event to a stream.
 *
-* @return canAddEvent bool // true if the event can be added to the stream, will be false in case of duplictate state
-* @return chainAuthArgs *auth.ChainAuthArgs // on chain requirements for adding an event to the stream
-* @return requiredParentEvent *RequiredParentEvent // event that must
-* @return error // if adding result would result in invalid state
+  - @return canAddEvent bool // true if the event can be added to the stream, will be false in case of duplictate state
+  - @return chainAuthArgs *auth.ChainAuthArgs // on chain requirements for adding an event to the stream
+  - @return requiredParentEvent *RequiredParentEvent // event that must exist in the stream before the event can be added
+    // required parent events must be replayable - meaning that in the case of a no-op, the can_add_event function should return false, nil, nil, nil to indicate
+    // that the event cannot be added to the stream, but there is no error
+  - @return error // if adding result would result in invalid state
+
 *
 * example valid states:
 * (false, nil, nil, nil) // event cannot be added to the stream, but there is no error, state would remain the same
@@ -42,7 +46,7 @@ type caeRules struct {
 * (true, nil, &IsStreamEvent_Payload, nil) // event can be added after parent event is added or verified
 * (true, chainAuthArgs, nil, nil) // event can be added if chainAuthArgs are satisfied
 * (true, chainAuthArgs, &IsStreamEvent_Payload, nil) // event can be added if chainAuthArgs are satisfied and parent event is added or verified
- */
+*/
 func CanAddEvent(ctx context.Context, cfg *config.StreamConfig, validNodeAddresses []string, currentTime time.Time, parsedEvent *events.ParsedEvent, streamView events.StreamView) (bool, *auth.ChainAuthArgs, *RequiredParentEvent, error) {
 
 	// validate that event has required properties
@@ -60,7 +64,7 @@ func CanAddEvent(ctx context.Context, cfg *config.StreamConfig, validNodeAddress
 		return false, nil, nil, err
 	}
 
-	ru := &caeRules{
+	ru := &aeRules{
 		ctx:                ctx,
 		cfg:                cfg,
 		validNodeAddresses: validNodeAddresses,
@@ -69,11 +73,11 @@ func CanAddEvent(ctx context.Context, cfg *config.StreamConfig, validNodeAddress
 		streamView:         streamView,
 	}
 	builder := ru.canAddEvent()
-	ru.log().Debug("canAddEvent", "builder", builder)
+	ru.log().Debug("CanAddEvent", "builder", builder)
 	return builder.run()
 }
 
-func (ru *caeRules) canAddEvent() ruleBuilder {
+func (ru *aeRules) canAddEvent() ruleBuilderAE {
 	// run checks per payload type
 	switch payload := ru.parsedEvent.Event.Payload.(type) {
 	case *StreamEvent_ChannelPayload:
@@ -97,212 +101,213 @@ func (ru *caeRules) canAddEvent() ruleBuilder {
 	case *StreamEvent_CommonPayload:
 		return ru.canAddCommonPayload(payload)
 	default:
-		return builder().
+		return aeBuilder().
 			fail(unknownPayloadType(payload))
 	}
 }
 
-func (ru *caeRules) canAddChannelPayload(payload *StreamEvent_ChannelPayload) ruleBuilder {
+func (ru *aeRules) canAddChannelPayload(payload *StreamEvent_ChannelPayload) ruleBuilderAE {
 	switch content := payload.ChannelPayload.Content.(type) {
 	case *ChannelPayload_Inception_:
-		return builder().
+		return aeBuilder().
 			fail(invalidContentType(content))
 	case *ChannelPayload_Membership:
 		ru.membership = content.Membership
-		return builder().
+		return aeBuilder().
 			check(ru.validMembershipTransistionForChannel).
 			requireChainAuth(ru.channelMembershipEntitlements).
 			requireParentEvent(ru.requireStreamParentMembership)
 	case *ChannelPayload_Message:
-		return builder().
+		return aeBuilder().
 			check(ru.creatorIsMember).
 			requireChainAuth(ru.channelMessageEntitlements)
 	default:
-		return builder().
+		return aeBuilder().
 			fail(unknownContentType(content))
 	}
 }
 
-func (ru *caeRules) canAddDmChannelPayload(payload *StreamEvent_DmChannelPayload) ruleBuilder {
+func (ru *aeRules) canAddDmChannelPayload(payload *StreamEvent_DmChannelPayload) ruleBuilderAE {
 	switch content := payload.DmChannelPayload.Content.(type) {
 	case *DmChannelPayload_Inception_:
-		return builder().
+		return aeBuilder().
 			fail(invalidContentType(content))
 	case *DmChannelPayload_Membership:
 		ru.membership = content.Membership
-		return builder().
+		return aeBuilder().
 			check(ru.validMembershipTransistionForDM)
 	case *DmChannelPayload_Message:
-		return builder().
+		return aeBuilder().
 			check(ru.creatorIsMember)
 	case *DmChannelPayload_DisplayName:
-		return builder().
+		return aeBuilder().
 			check(ru.creatorIsMember)
 	case *DmChannelPayload_Username:
-		return builder().
+		return aeBuilder().
 			check(ru.creatorIsMember)
 	default:
-		return builder().
+		return aeBuilder().
 			fail(unknownContentType(content))
 	}
 }
 
-func (ru *caeRules) canAddGdmChannelPayload(payload *StreamEvent_GdmChannelPayload) ruleBuilder {
+func (ru *aeRules) canAddGdmChannelPayload(payload *StreamEvent_GdmChannelPayload) ruleBuilderAE {
 	switch content := payload.GdmChannelPayload.Content.(type) {
 	case *GdmChannelPayload_Inception_:
-		return builder().
+		return aeBuilder().
 			fail(invalidContentType(content))
 	case *GdmChannelPayload_Membership:
 		ru.membership = content.Membership
-		return builder().
+		return aeBuilder().
 			check(ru.validMembershipTransistionForGDM)
 	case *GdmChannelPayload_Message:
-		return builder().
+		return aeBuilder().
 			check(ru.creatorIsMember)
 	case *GdmChannelPayload_DisplayName:
-		return builder().
+		return aeBuilder().
 			check(ru.creatorIsMember)
 	case *GdmChannelPayload_Username:
-		return builder().
+		return aeBuilder().
 			check(ru.creatorIsMember)
 	case *GdmChannelPayload_ChannelProperties:
-		return builder().
+		return aeBuilder().
 			check(ru.creatorIsMember)
 	default:
-		return builder().
+		return aeBuilder().
 			fail(unknownContentType(content))
 	}
 }
 
-func (ru *caeRules) canAddSpacePayload(payload *StreamEvent_SpacePayload) ruleBuilder {
+func (ru *aeRules) canAddSpacePayload(payload *StreamEvent_SpacePayload) ruleBuilderAE {
 	switch content := payload.SpacePayload.Content.(type) {
 	case *SpacePayload_Inception_:
-		return builder().
+		return aeBuilder().
 			fail(invalidContentType(content))
 	case *SpacePayload_Membership:
 		ru.membership = content.Membership
-		return builder().
+		return aeBuilder().
 			check(ru.validMembershipTransistionForSpace).
 			requireChainAuth(ru.spaceMembershipEntitlements)
 	case *SpacePayload_Channel_:
 		if content.Channel.Op == ChannelOp_CO_UPDATED {
-			return builder().
+			return aeBuilder().
 				check(ru.creatorIsMember)
 		} else {
-			return builder().
-				check(ru.creatorIsValidNode)
+			return aeBuilder().
+				check(ru.creatorIsValidNode).
+				check(ru.validSpaceChannelOp)
 		}
 	case *SpacePayload_Username:
-		return builder().
+		return aeBuilder().
 			check(ru.creatorIsMember)
 	case *SpacePayload_DisplayName:
-		return builder().
+		return aeBuilder().
 			check(ru.creatorIsMember)
 	default:
-		return builder().
+		return aeBuilder().
 			fail(unknownContentType(content))
 	}
 }
 
-func (ru *caeRules) canAddUserPayload(payload *StreamEvent_UserPayload) ruleBuilder {
+func (ru *aeRules) canAddUserPayload(payload *StreamEvent_UserPayload) ruleBuilderAE {
 	switch content := payload.UserPayload.Content.(type) {
 	case *UserPayload_Inception_:
-		return builder().
+		return aeBuilder().
 			fail(invalidContentType(content))
 
 	case *UserPayload_UserMembership_:
-		return builder().
+		return aeBuilder().
 			checkOneOf(ru.creatorIsMember, ru.creatorIsValidNode).
 			requireParentEvent(ru.parentEventForUserMembership)
 	case *UserPayload_UserMembershipAction_:
-		return builder().
+		return aeBuilder().
 			check(ru.creatorIsMember).
 			requireParentEvent(ru.parentEventForUserMembershipAction)
 	default:
-		return builder().
+		return aeBuilder().
 			fail(unknownContentType(content))
 	}
 }
 
-func (ru *caeRules) canAddUserDeviceKeyPayload(payload *StreamEvent_UserDeviceKeyPayload) ruleBuilder {
+func (ru *aeRules) canAddUserDeviceKeyPayload(payload *StreamEvent_UserDeviceKeyPayload) ruleBuilderAE {
 	switch content := payload.UserDeviceKeyPayload.Content.(type) {
 	case *UserDeviceKeyPayload_Inception_:
-		return builder().
+		return aeBuilder().
 			fail(invalidContentType(content))
 	case *UserDeviceKeyPayload_EncryptionDevice_:
-		return builder().
+		return aeBuilder().
 			check(ru.creatorIsMember)
 	default:
-		return builder().
+		return aeBuilder().
 			fail(unknownContentType(content))
 	}
 }
 
-func (ru *caeRules) canAddUserSettingsPayload(payload *StreamEvent_UserSettingsPayload) ruleBuilder {
+func (ru *aeRules) canAddUserSettingsPayload(payload *StreamEvent_UserSettingsPayload) ruleBuilderAE {
 	switch content := payload.UserSettingsPayload.Content.(type) {
 	case *UserSettingsPayload_Inception_:
-		return builder().
+		return aeBuilder().
 			fail(invalidContentType(content))
 	case *UserSettingsPayload_FullyReadMarkers_:
-		return builder().
+		return aeBuilder().
 			check(ru.creatorIsMember)
 	default:
-		return builder().
+		return aeBuilder().
 			fail(unknownContentType(content))
 	}
 }
 
-func (ru *caeRules) canAddUserInboxPayload(payload *StreamEvent_UserInboxPayload) ruleBuilder {
+func (ru *aeRules) canAddUserInboxPayload(payload *StreamEvent_UserInboxPayload) ruleBuilderAE {
 	switch content := payload.UserInboxPayload.Content.(type) {
 	case *UserInboxPayload_Inception_:
-		return builder().
+		return aeBuilder().
 			fail(invalidContentType(content))
 	case *UserInboxPayload_GroupEncryptionSessions_:
-		return builder().
+		return aeBuilder().
 			check(ru.pass)
 	case *UserInboxPayload_Ack_:
-		return builder().
+		return aeBuilder().
 			check(ru.creatorIsMember)
 	default:
-		return builder().
+		return aeBuilder().
 			fail(unknownContentType(content))
 	}
 }
 
-func (ru *caeRules) canAddMediaPayload(payload *StreamEvent_MediaPayload) ruleBuilder {
+func (ru *aeRules) canAddMediaPayload(payload *StreamEvent_MediaPayload) ruleBuilderAE {
 	switch content := payload.MediaPayload.Content.(type) {
 	case *MediaPayload_Inception_:
-		return builder().
+		return aeBuilder().
 			fail(invalidContentType(content))
 	case *MediaPayload_Chunk_:
-		return builder().
+		return aeBuilder().
 			check(ru.canAddMediaChunk)
 	default:
-		return builder().
+		return aeBuilder().
 			fail(unknownContentType(content))
 	}
 }
 
-func (ru *caeRules) canAddCommonPayload(payload *StreamEvent_CommonPayload) ruleBuilder {
+func (ru *aeRules) canAddCommonPayload(payload *StreamEvent_CommonPayload) ruleBuilderAE {
 	switch content := payload.CommonPayload.Content.(type) {
 	case *CommonPayload_KeySolicitation_:
-		return builder().
+		return aeBuilder().
 			checkOneOf(ru.creatorIsMember, ru.creatorIsInvited)
 	case *CommonPayload_KeyFulfillment_:
-		return builder().
+		return aeBuilder().
 			checkOneOf(ru.creatorIsMember, ru.creatorIsInvited)
 	default:
-		return builder().
+		return aeBuilder().
 			fail(unknownContentType(content))
 	}
 }
 
-func (ru *caeRules) pass() (bool, error) {
+func (ru *aeRules) pass() (bool, error) {
 	// we probably shouldn't ever have 0 checks... currently this is the case in one place
 	return true, nil
 }
 
-func (ru *caeRules) creatorIsMember() (bool, error) {
+func (ru *aeRules) creatorIsMember() (bool, error) {
 	creatorId, err := shared.AddressHex(ru.parsedEvent.Event.CreatorAddress)
 	if err != nil {
 		return false, err
@@ -317,7 +322,7 @@ func (ru *caeRules) creatorIsMember() (bool, error) {
 	return true, nil
 }
 
-func (ru *caeRules) creatorIsInvited() (bool, error) {
+func (ru *aeRules) creatorIsInvited() (bool, error) {
 	userId, err := shared.AddressHex(ru.parsedEvent.Event.CreatorAddress)
 	if err != nil {
 		return false, err
@@ -332,7 +337,7 @@ func (ru *caeRules) creatorIsInvited() (bool, error) {
 	return true, nil
 }
 
-func (ru *caeRules) validMembershipTransistion() (bool, error) {
+func (ru *aeRules) validMembershipTransistion() (bool, error) {
 	if ru.membership == nil {
 		return false, RiverError(Err_INVALID_ARGUMENT, "membership is nil")
 	}
@@ -373,7 +378,7 @@ func (ru *caeRules) validMembershipTransistion() (bool, error) {
 	}
 }
 
-func (ru *caeRules) validMembershipTransistionForSpace() (bool, error) {
+func (ru *aeRules) validMembershipTransistionForSpace() (bool, error) {
 	canAdd, err := ru.creatorIsValidNode()
 	if !canAdd || err != nil {
 		return canAdd, err
@@ -386,7 +391,7 @@ func (ru *caeRules) validMembershipTransistionForSpace() (bool, error) {
 	return true, nil
 }
 
-func (ru *caeRules) validMembershipTransistionForChannel() (bool, error) {
+func (ru *aeRules) validMembershipTransistionForChannel() (bool, error) {
 	canAdd, err := ru.creatorIsValidNode()
 	if !canAdd || err != nil {
 		return canAdd, err
@@ -400,7 +405,7 @@ func (ru *caeRules) validMembershipTransistionForChannel() (bool, error) {
 }
 
 // / GDMs and DMs don't have blockchain entitlements so we need to run extra checks
-func (ru *caeRules) validMembershipTransistionForDM() (bool, error) {
+func (ru *aeRules) validMembershipTransistionForDM() (bool, error) {
 	canAdd, err := ru.creatorIsValidNode()
 	if !canAdd || err != nil {
 		return canAdd, err
@@ -437,7 +442,7 @@ func (ru *caeRules) validMembershipTransistionForDM() (bool, error) {
 }
 
 // / GDMs and DMs don't have blockchain entitlements so we need to run extra checks
-func (ru *caeRules) validMembershipTransistionForGDM() (bool, error) {
+func (ru *aeRules) validMembershipTransistionForGDM() (bool, error) {
 	canAdd, err := ru.creatorIsValidNode()
 	if !canAdd || err != nil {
 		return canAdd, err
@@ -491,7 +496,7 @@ func (ru *caeRules) validMembershipTransistionForGDM() (bool, error) {
 
 }
 
-func (ru *caeRules) requireStreamParentMembership() (*RequiredParentEvent, error) {
+func (ru *aeRules) requireStreamParentMembership() (*RequiredParentEvent, error) {
 	if ru.membership == nil {
 		return nil, RiverError(Err_INVALID_ARGUMENT, "membership is nil")
 	}
@@ -514,7 +519,7 @@ func (ru *caeRules) requireStreamParentMembership() (*RequiredParentEvent, error
 }
 
 // / user membership triggers membership events on space, channel, dm, gdm streams
-func (ru *caeRules) parentEventForUserMembership() (*RequiredParentEvent, error) {
+func (ru *aeRules) parentEventForUserMembership() (*RequiredParentEvent, error) {
 	if ru.parsedEvent.Event.GetUserPayload() == nil || ru.parsedEvent.Event.GetUserPayload().GetUserMembership() == nil {
 		return nil, RiverError(Err_INVALID_ARGUMENT, "event is not a user membership event")
 	}
@@ -561,7 +566,7 @@ func (ru *caeRules) parentEventForUserMembership() (*RequiredParentEvent, error)
 }
 
 // / user actions perform user membership events on other user's streams
-func (ru *caeRules) parentEventForUserMembershipAction() (*RequiredParentEvent, error) {
+func (ru *aeRules) parentEventForUserMembershipAction() (*RequiredParentEvent, error) {
 	if ru.parsedEvent.Event.GetUserPayload() == nil || ru.parsedEvent.Event.GetUserPayload().GetUserMembershipAction() == nil {
 		return nil, RiverError(Err_INVALID_ARGUMENT, "event is not a user membership action event")
 	}
@@ -581,7 +586,7 @@ func (ru *caeRules) parentEventForUserMembershipAction() (*RequiredParentEvent, 
 	}, nil
 }
 
-func (ru *caeRules) spaceMembershipEntitlements() (*auth.ChainAuthArgs, error) {
+func (ru *aeRules) spaceMembershipEntitlements() (*auth.ChainAuthArgs, error) {
 	streamId := ru.streamView.StreamId()
 
 	permission, permissionUser, err := ru.getPermissionForMembershipOp()
@@ -601,7 +606,7 @@ func (ru *caeRules) spaceMembershipEntitlements() (*auth.ChainAuthArgs, error) {
 	return chainAuthArgs, nil
 }
 
-func (ru *caeRules) channelMembershipEntitlements() (*auth.ChainAuthArgs, error) {
+func (ru *aeRules) channelMembershipEntitlements() (*auth.ChainAuthArgs, error) {
 	inception, err := ru.streamView.(events.ChannelStreamView).GetChannelInception()
 	if err != nil {
 		return nil, err
@@ -626,7 +631,7 @@ func (ru *caeRules) channelMembershipEntitlements() (*auth.ChainAuthArgs, error)
 	return chainAuthArgs, nil
 }
 
-func (ru *caeRules) channelMessageEntitlements() (*auth.ChainAuthArgs, error) {
+func (ru *aeRules) channelMessageEntitlements() (*auth.ChainAuthArgs, error) {
 	userId, err := shared.AddressHex(ru.parsedEvent.Event.CreatorAddress)
 	if err != nil {
 		return nil, err
@@ -647,7 +652,7 @@ func (ru *caeRules) channelMessageEntitlements() (*auth.ChainAuthArgs, error) {
 	return chainAuthArgs, nil
 }
 
-func (ru *caeRules) creatorIsValidNode() (bool, error) {
+func (ru *aeRules) creatorIsValidNode() (bool, error) {
 	creatorAddressStr, err := shared.AddressHex(ru.parsedEvent.Event.CreatorAddress)
 	if err != nil {
 		return false, err
@@ -658,7 +663,7 @@ func (ru *caeRules) creatorIsValidNode() (bool, error) {
 	return true, nil
 }
 
-func (ru *caeRules) getPermissionForMembershipOp() (auth.Permission, string, error) {
+func (ru *aeRules) getPermissionForMembershipOp() (auth.Permission, string, error) {
 	if ru.membership == nil {
 		return auth.PermissionUndefined, "", RiverError(Err_INVALID_ARGUMENT, "membership is nil")
 	}
@@ -699,7 +704,37 @@ func (ru *caeRules) getPermissionForMembershipOp() (auth.Permission, string, err
 	}
 }
 
-func (ru *caeRules) canAddMediaChunk() (bool, error) {
+func (ru *aeRules) validSpaceChannelOp() (bool, error) {
+	if ru.parsedEvent.Event.GetSpacePayload() == nil {
+		return false, RiverError(Err_INVALID_ARGUMENT, "event is not a channel event")
+	}
+	if ru.parsedEvent.Event.GetSpacePayload().GetChannel() == nil {
+		return false, RiverError(Err_INVALID_ARGUMENT, "event is not a channel event")
+	}
+	next := ru.parsedEvent.Event.GetSpacePayload().GetChannel()
+	view := ru.streamView.(events.SpaceStreamView)
+	current, err := view.GetChannelInfo(next.ChannelId)
+	if err != nil {
+		return false, err
+	}
+	// if we don't have a channel, accept add
+	if current == nil {
+		return next.Op == ChannelOp_CO_CREATED, nil
+	}
+
+	if current.Op == ChannelOp_CO_DELETED {
+		return false, RiverError(Err_PERMISSION_DENIED, "channel is deleted", "channelId", next.ChannelId)
+	}
+
+	if next.Op == ChannelOp_CO_CREATED {
+		// this channel is already created, we can't create it again, but it's not an error, this event is a no-op
+		return false, nil
+	}
+
+	return true, nil
+}
+
+func (ru *aeRules) canAddMediaChunk() (bool, error) {
 	canAdd, err := ru.creatorIsMember()
 	if !canAdd || err != nil {
 		return canAdd, err
@@ -731,7 +766,7 @@ func (ru *caeRules) canAddMediaChunk() (bool, error) {
 	return true, nil
 }
 
-func (ru *caeRules) isValidNode(addressOrId string) bool {
+func (ru *aeRules) isValidNode(addressOrId string) bool {
 	for _, item := range ru.validNodeAddresses {
 		if item == addressOrId {
 			return true
@@ -740,18 +775,6 @@ func (ru *caeRules) isValidNode(addressOrId string) bool {
 	return false
 }
 
-func (ru *caeRules) log() *slog.Logger {
+func (ru *aeRules) log() *slog.Logger {
 	return dlog.FromCtx(ru.ctx)
-}
-
-func unknownPayloadType(payload any) error {
-	return RiverError(Err_INVALID_ARGUMENT, "unknown payload type %T", payload)
-}
-
-func unknownContentType(content any) error {
-	return RiverError(Err_INVALID_ARGUMENT, "unknown content type %T", content)
-}
-
-func invalidContentType(content any) error {
-	return RiverError(Err_INVALID_ARGUMENT, "invalid cpmtemt type")
 }
