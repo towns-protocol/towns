@@ -31,6 +31,7 @@ export const TypeaheadMenuItem = <T extends MenuOption>(props: {
             role="option"
             aria-selected={isSelected}
             id={'typeahead-item-' + index}
+            cursor="pointer"
             onMouseEnter={onMouseEnter}
             onClick={onClick}
         >

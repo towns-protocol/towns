@@ -1,6 +1,8 @@
 import React, { useCallback } from 'react'
+import { focusEditor } from '@udecode/slate-react'
+import { useEditorRef } from '@udecode/plate-common'
 import { GiphyEntryDesktop, GiphyEntryTouch } from '@components/Giphy/GiphyEntry'
-import { EmojiPickerButton, EmojiPickerButtonTouch } from '@components/EmojiPickerButton'
+import { EmojiPickerButton } from '@components/EmojiPickerButton'
 import { useDevice } from 'hooks/useDevice'
 import { Box, IconButton, Stack } from '@ui'
 import { MotionIcon, MotionIconButton } from 'ui/components/Motion/MotionComponents'
@@ -19,6 +21,7 @@ type Props = {
 
 export const RichTextBottomToolbar = (props: Props) => {
     const { isTouch } = useDevice()
+    const editor = useEditorRef()
     const mediaDropContext = useMediaDropContext()
     const { protocol } = useEnvironment()
 
@@ -29,15 +32,28 @@ export const RichTextBottomToolbar = (props: Props) => {
         focused: isFocused = false,
     } = props
 
-    const onSelectEmoji = useCallback((data: EmojiPickerSelection) => {}, [])
+    const onSelectEmoji = useCallback(
+        (data: EmojiPickerSelection) => {
+            focusEditor(editor)
+            /*editor.update(() => {
+                const selection = $getSelection()
+                const emojiNode = $createEmojiNode('', data.native)
+                if ($isRangeSelection(selection)) {
+                    selection.insertNodes([emojiNode])
+                }
+            })*/
+        },
+        [editor],
+    )
 
     const onFormattingButtonClicked = useCallback(
         (event: React.MouseEvent) => {
             event.preventDefault()
             event.stopPropagation()
             setIsFormattingToolbarOpen(!isFormattingToolbarOpen)
+            focusEditor(editor)
         },
-        [setIsFormattingToolbarOpen, isFormattingToolbarOpen],
+        [setIsFormattingToolbarOpen, editor, isFormattingToolbarOpen],
     )
 
     const didSelectImages = useCallback(
@@ -53,7 +69,7 @@ export const RichTextBottomToolbar = (props: Props) => {
         [mediaDropContext],
     )
 
-    const mediaInputId = 'media' + mediaDropContext.channelId
+    const mediaInputId = 'media' + mediaDropContext.channelId + mediaDropContext.eventId
 
     return (
         <Stack horizontal gap="xs" alignItems="center">
@@ -78,18 +94,18 @@ export const RichTextBottomToolbar = (props: Props) => {
                             showButton={props.visible}
                         />
                     )}
-                    <EmojiPickerButtonTouch
+                    {/* <EmojiPickerButtonTouch
                         key="emoji"
                         showButton={props.visible}
                         onSelectEmoji={onSelectEmoji}
-                    />
+                    /> */}
                 </>
             ) : (
                 <>
                     <IconButton
                         icon="text"
                         active={false}
-                        tooltip="Formatting (Not implemented, yet)"
+                        tooltip="Formatting"
                         tooltipOptions={{ placement: 'vertical', immediate: true }}
                         onClick={onFormattingButtonClicked}
                     />
@@ -125,6 +141,7 @@ export const RichTextBottomToolbar = (props: Props) => {
                         </Box>
                     )}
                     <input
+                        multiple
                         type="file"
                         name="image-file-input"
                         id={mediaInputId}

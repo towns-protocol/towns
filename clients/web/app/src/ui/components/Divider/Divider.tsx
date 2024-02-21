@@ -34,3 +34,9 @@ export const Divider = ({
             {align !== 'right' && <Box borderBottom grow />}
         </Box>
     )
+
+export const DividerEditorToolbar = () => (
+    <Box paddingX="none">
+        <Box borderLeft grow />
+    </Box>
+)

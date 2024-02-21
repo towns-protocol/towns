@@ -1,12 +1,17 @@
 import React from 'react'
 import { Box, BoxProps } from '../Box/Box'
 
-export const TypeaheadMenu = (props: {
+export const TypeaheadMenu = ({
+    children,
+    zIndex,
+    outerBorder = true,
+}: {
     children: React.ReactNode
     zIndex?: BoxProps['zIndex']
+    outerBorder?: boolean
 }) => {
     return (
-        <Box border position="relative" zIndex={props.zIndex}>
+        <Box border={outerBorder} position="relative" zIndex={zIndex}>
             <Box
                 border
                 bottom="x4"
@@ -19,7 +24,7 @@ export const TypeaheadMenu = (props: {
                 paddingY="xs"
                 background="level2"
             >
-                {props.children}
+                {children}
             </Box>
         </Box>
     )

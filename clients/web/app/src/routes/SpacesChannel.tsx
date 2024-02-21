@@ -34,7 +34,7 @@ import { useSpaceChannels } from 'hooks/useSpaceChannels'
 import { QUERY_PARAMS } from 'routes'
 import { notUndefined } from 'ui/utils/utils'
 import { SECOND_MS } from 'data/constants'
-import RichTextSlate from '@components/RichTextSlate/RichTextSlate'
+import PlateEditor from '@components/RichTextPlate/PlateEditor'
 import { CentralPanelLayout } from './layouts/CentralPanelLayout'
 import { env } from '../utils'
 
@@ -175,7 +175,7 @@ export const SpacesChannelComponent = (props: Props) => {
 
     const MessageEditor =
         env.VITE_ENABLE_SLATE_EDITOR || channel?.label.match(/slate$/)
-            ? RichTextSlate
+            ? PlateEditor
             : RichTextEditor
     return (
         <CentralPanelLayout>

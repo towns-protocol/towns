@@ -1,0 +1,16 @@
+{
+    "$schema": "https://platejs.org/schema.json",
+    "style": "default",
+    "rsc": false,
+    "tailwind": {
+        "config": "tailwind.config.js",
+        "css": "src/ui/styles/global/plate.css",
+        "baseColor": "slate",
+        "cssVariables": true,
+        "prefix": "tw-"
+    },
+    "aliases": {
+        "components": "@components/RichTextPlate/components",
+        "plate-ui": "@components/RichTextPlate/ui"
+    }
+}
