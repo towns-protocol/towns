@@ -1,5 +1,6 @@
 import * as emoji from 'node-emoji'
 
+import { dlog, dlogError } from '@river/dlog'
 import { UserRecord } from 'store/notificationSchema'
 import {
     AppNotification,
@@ -25,8 +26,8 @@ import { env } from '../utils/environment'
 import { getEncryptedData } from './data_transforms'
 
 const MIDDLE_DOT = '\u00B7'
-const log = console.debug.bind(console, 'sw:push:')
-const logError = console.error.bind(console, 'sw:push:')
+const log = dlog('sw:push')
+const logError = dlogError('sw:push')
 
 const notificationStores: Record<string, NotificationStore> = {}
 let currentUserStore: NotificationCurrentUser | undefined = undefined
@@ -41,6 +42,7 @@ async function initCurrentUserNotificationStore(): Promise<string | undefined> {
     const currentUserId = await currentUserStore.getCurrentUserId()
     if (currentUserId && notificationStores[currentUserId] === undefined) {
         notificationStores[currentUserId] = new NotificationStore(currentUserId)
+        await notificationStores[currentUserId].open()
     } else {
         log('no currentUserId in NotificationCurrentUser')
     }
@@ -72,9 +74,9 @@ export function handleNotifications(worker: ServiceWorkerGlobalScope) {
     }
 
     // `activate` fires once old service worker is gone and new one has taken control
-    worker.addEventListener('activate', () => {
+    worker.addEventListener('activate', async () => {
         log('"activate" event')
-        initCurrentUserNotificationStore()
+        await initCurrentUserNotificationStore()
     })
 
     worker.addEventListener('push', (event) => {
@@ -457,6 +459,12 @@ async function getNotificationContent(
         }
     } catch (error) {
         logError('error fetching space/channel/user names from notification store', error)
+        // there may be a problem reading from the notification store, so we'll
+        // reset the cache for next time
+        if (currentUserId) {
+            delete notificationStores[currentUserId]
+        }
+        currentUserId = await initCurrentUserNotificationStore()
     }
 
     // try to decrypt, if we can't, return undefined, and the notification will be a generic message
