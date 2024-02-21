@@ -27,6 +27,8 @@ import { useThrottledValue } from 'hooks/useThrottledValue'
 import { FullScreenMedia } from '@components/FullScreenMedia/FullScreenMedia'
 import { QUERY_PARAMS } from 'routes'
 import { useCreateLink } from 'hooks/useCreateLink'
+import PlateEditor from '@components/RichTextPlate/PlateEditor'
+import { env } from '../../utils'
 
 export const MessageThread = (props: {
     userId: string
@@ -121,6 +123,9 @@ export const MessageThread = (props: {
     const { isChannelWritable } = useIsChannelWritable(spaceId, channelId, loggedInWalletAddress)
 
     const { createLink } = useCreateLink()
+
+    const MessageEditor = env.VITE_ENABLE_SLATE_EDITOR || isTouch ? PlateEditor : RichTextEditor
+
     return parentMessage ? (
         <MessageTimelineWrapper
             events={messagesWithParent}
@@ -153,7 +158,7 @@ export const MessageThread = (props: {
                             paddingBottom="md"
                             paddingX={{ default: 'md', touch: 'none' }}
                         >
-                            <RichTextEditor
+                            <MessageEditor
                                 key={`${parentId}-${isChannelWritable ? '' : '-readonly'}`}
                                 editable={!!isChannelWritable}
                                 threadId={parentId}

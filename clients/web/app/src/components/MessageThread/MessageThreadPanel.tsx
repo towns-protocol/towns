@@ -19,6 +19,8 @@ import { useDevice } from 'hooks/useDevice'
 import { useAuth } from 'hooks/useAuth'
 import { Panel } from '@components/Panel/Panel'
 import { MediaDropContextProvider } from '@components/MediaDropContext/MediaDropContext'
+import PlateEditor from '@components/RichTextPlate/PlateEditor'
+import { env } from '../../utils'
 
 type Props = {
     messageId: string
@@ -68,6 +70,8 @@ export const MessageThreadPanel = (props: Props) => {
         ? `You don't have permission to send media to this channel`
         : `Loading permissions`
 
+    const MessageEditor = env.VITE_ENABLE_SLATE_EDITOR || isTouch ? PlateEditor : RichTextEditor
+
     return (
         <Panel label={panelLabel} onClose={props.onClose}>
             <MediaDropContextProvider
@@ -106,7 +110,7 @@ export const MessageThreadPanel = (props: Props) => {
                         paddingTop={{ default: 'none', touch: 'none' }}
                         bottom={isTouch ? 'sm' : 'none'}
                     >
-                        <RichTextEditor
+                        <MessageEditor
                             isFullWidthOnTouch
                             key={`${messageId}-${isChannelWritable ? '' : '-readonly'}`}
                             autoFocus={!isTouch}
