@@ -61,10 +61,33 @@ const parseTownLink = (url: URL) => {
         url.pathname,
     )
 
+    const matchDM = matchPath(`/messages/:channelId`, url.pathname)
+
     const matchReplies = matchPath(
         `/${PATHS.SPACES}/:spaceId/${PATHS.CHANNELS}/:channelId/${PATHS.REPLIES}/:messageId`,
         url.pathname,
     )
+
+    if (matchDM) {
+        const matchParams = {
+            ...matchDM.params,
+            messageId,
+            isReply: !!matchReplies,
+        }
+
+        return matchParams.channelId && matchParams.messageId
+            ? {
+                  type: 'message' as const,
+                  id: `message-${matchParams.messageId}`,
+                  pathname: url.pathname,
+                  spaceId: '',
+                  channelId: matchParams.channelId,
+                  messageId: matchParams.messageId,
+                  url: url.href,
+              }
+            : undefined
+    }
+
     const match = matchChannel || matchReplies
 
     if (match) {
@@ -74,19 +97,16 @@ const parseTownLink = (url: URL) => {
             isReply: !!matchReplies,
         }
 
-        const parsedTownLink =
-            matchParams.spaceId && matchParams.channelId && matchParams.messageId
-                ? {
-                      type: 'message' as const,
-                      id: `message-${matchParams.messageId}`,
-                      pathname: url.pathname,
-                      spaceId: matchParams.spaceId,
-                      channelId: matchParams.channelId,
-                      messageId: matchParams.messageId,
-                      url: url.href,
-                  }
-                : undefined
-
-        return parsedTownLink
+        return matchParams.spaceId && matchParams.channelId && matchParams.messageId
+            ? {
+                  type: 'message' as const,
+                  id: `message-${matchParams.messageId}`,
+                  pathname: url.pathname,
+                  spaceId: matchParams.spaceId,
+                  channelId: matchParams.channelId,
+                  messageId: matchParams.messageId,
+                  url: url.href,
+              }
+            : undefined
     }
 }

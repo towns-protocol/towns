@@ -1,5 +1,6 @@
 import React, { useCallback, useContext, useRef } from 'react'
 import { TimelineEvent, useFullyReadMarker, useMyUserId, useZionClient } from 'use-zion-client'
+import { isDMChannelStreamId, isGDMChannelStreamId } from '@river/sdk'
 import { EmojiPickerButton } from '@components/EmojiPickerButton'
 import { Box, IconButton, MotionStack, Stack } from '@ui'
 import { useOpenMessageThread } from 'hooks/useOpenThread'
@@ -110,7 +111,13 @@ export const MessageContextMenu = (props: Props) => {
     const onCopyLinkToMessage = useShortcut(
         'CopyLinkToMessage',
         useCallback(() => {
-            const link = `/${PATHS.SPACES}/${spaceId}/${PATHS.CHANNELS}/${channelId}#${eventId}`
+            let link = ''
+            if (channelId && (isDMChannelStreamId(channelId) || isGDMChannelStreamId(channelId))) {
+                link = `/${PATHS.MESSAGES}/${channelId}#${eventId}`
+            } else {
+                link = `/${PATHS.SPACES}/${spaceId}/${PATHS.CHANNELS}/${channelId}#${eventId}`
+            }
+
             if (link) {
                 copy(`${location.origin}${link}`)
             }

@@ -39,7 +39,8 @@ export const EmbeddedMessage = (props: {
             ? `Direct Message`
             : `Private Channel`
 
-    const channelName = channel?.name ? `#${channel?.name}` : `From a ${channelType}`
+    const isKnownChannel = !!channel?.id
+    const channelName = isKnownChannel ? `#${channel?.name}` : `From a ${channelType}`
 
     return (
         <MessageAttachmentsContext.Provider value={{ isMessageAttachementContext: true }}>
@@ -71,17 +72,28 @@ export const EmbeddedMessage = (props: {
                 </Box>
 
                 <Stack horizontal gap="sm" color="gray2" alignItems="center" fontSize="sm">
-                    {channelName ? <Text size="sm">{channelName}</Text> : <></>}
-                    <Text>&bull;</Text>
+                    {isKnownChannel && channelName ? (
+                        <>
+                            <Text size="sm">{channelName}</Text>
+                            <Text>&bull;</Text>
+                        </>
+                    ) : (
+                        <></>
+                    )}
+
                     <Text size="sm">{formatDate(Number(attachment.info.createdAtEpocMs))}</Text>
-                    <Text>&bull;</Text>
-                    <Link
-                        to={`/${PATHS.SPACES}/${attachment.info.spaceId}/${PATHS.CHANNELS}/${attachment.info.channelId}#${attachment.info.messageId}`}
-                    >
-                        <Text size="sm" color="cta2">
-                            View Message
-                        </Text>
-                    </Link>
+                    {isKnownChannel && (
+                        <>
+                            <Text>&bull;</Text>
+                            <Link
+                                to={`/${PATHS.SPACES}/${attachment.info.spaceId}/${PATHS.CHANNELS}/${attachment.info.channelId}#${attachment.info.messageId}`}
+                            >
+                                <Text size="sm" color="cta2">
+                                    View Message
+                                </Text>
+                            </Link>
+                        </>
+                    )}
                 </Stack>
             </Box>
         </MessageAttachmentsContext.Provider>
