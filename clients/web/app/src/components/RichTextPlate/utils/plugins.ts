@@ -92,9 +92,8 @@ export const plugins = createPlugins(
         createSoftBreakPlugin({
             options: {
                 rules: [
-                    { hotkey: 'shift+enter' },
                     {
-                        hotkey: 'enter',
+                        hotkey: 'shift+enter',
                         query: {
                             allow: [ELEMENT_CODE_BLOCK, ELEMENT_BLOCKQUOTE],
                         },
@@ -106,11 +105,7 @@ export const plugins = createPlugins(
             options: {
                 rules: [
                     {
-                        hotkey: 'mod+enter',
-                    },
-                    {
-                        hotkey: 'mod+shift+enter',
-                        before: true,
+                        hotkey: 'shift+enter',
                     },
                     {
                         hotkey: 'enter',
