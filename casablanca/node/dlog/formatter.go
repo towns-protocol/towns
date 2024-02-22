@@ -6,6 +6,7 @@ import (
 	"io"
 	"reflect"
 	"strconv"
+	"strings"
 	"text/tabwriter"
 	"time"
 
@@ -136,7 +137,8 @@ func (p *printer) catchPanic(v reflect.Value, method string) {
 		if v.Kind() == reflect.Ptr && v.IsNil() {
 			writeByte(p, '(')
 			p.writeString(v.Type().String())
-			p.writeString(")(nil)")
+			const vsCodeEditorColoringBugWorkaround = ")(nil)"
+			p.writeString(vsCodeEditorColoringBugWorkaround)
 			return
 		}
 		writeByte(p, '(')
@@ -153,6 +155,7 @@ var (
 	durationType     = reflect.TypeOf(time.Duration(0))
 	errorType        = reflect.TypeOf((*error)(nil)).Elem()
 	taggedObjectType = reflect.TypeOf((*TaggedObject)(nil)).Elem()
+	goStringerType   = reflect.TypeOf((*fmt.GoStringer)(nil)).Elem()
 )
 
 func (p *printer) printValue(v reflect.Value, showType, quote bool, key bool) {
@@ -161,7 +164,7 @@ func (p *printer) printValue(v reflect.Value, showType, quote bool, key bool) {
 		return
 	}
 
-	if v.IsValid() && v.CanInterface() {
+	if v.IsValid() && v.CanInterface() && v.Type().Implements(goStringerType) {
 		i := v.Interface()
 		if goStringer, ok := i.(fmt.GoStringer); ok {
 			defer p.catchPanic(v, "GoString")
@@ -361,14 +364,6 @@ func (p *printer) printArray(v reflect.Value, showType bool) {
 	CloseColor(p.Writer, p.opts.Colors[ColorMap_Brace])
 }
 
-func isProto(v reflect.Value) bool {
-	f, ok := v.Type().FieldByName("state")
-	if !ok {
-		return false
-	}
-	return f.Type.PkgPath() == "google.golang.org/protobuf/internal/impl"
-}
-
 func (p *printer) printTagged(v TaggedObject, msgColorNum int) {
 	if v == nil {
 		p.printNil("")
@@ -420,10 +415,16 @@ func (p *printer) printTagged(v TaggedObject, msgColorNum int) {
 	}
 }
 
+func isProto(t reflect.Type) bool {
+	f, ok := t.FieldByName("state")
+	if !ok {
+		return false
+	}
+	return strings.HasPrefix(f.Type.PkgPath(), "google.golang.org/protobuf")
+}
+
 func (p *printer) printStruct(v reflect.Value, showType bool) {
 	t := v.Type()
-
-	isProto := isProto(v)
 
 	if v.CanAddr() {
 		addr := v.UnsafeAddr()
@@ -445,6 +446,8 @@ func (p *printer) printStruct(v reflect.Value, showType bool) {
 		return
 	}
 
+	isProto := isProto(t)
+
 	OpenColor(p.Writer, p.opts.Colors[ColorMap_Brace])
 	if showType {
 		p.writeString(t.String())
@@ -461,16 +464,19 @@ func (p *printer) printStruct(v reflect.Value, showType bool) {
 		prevPrinted := false
 		for i := 0; i < v.NumField(); i++ {
 			field := t.Field(i)
-			value := getField(v, i)
 
-			if isProto && (field.Name == "sizeCache" || field.Name == "unknownFields" || field.Name == "state" || field.Name == "atomicMessageInfo") {
+			if isProto &&
+				(field.Name == "sizeCache" ||
+					field.Name == "unknownFields" ||
+					field.Name == "state") {
 				continue
 			}
+
+			value := getField(v, i)
 
 			if p.opts.SkipNilAndEmpty && !Nonzero(value) && field.Type.Kind() != reflect.Bool {
 				continue
 			}
-
 
 			if field.Tag.Get("dlog") == "omit" {
 				continue
