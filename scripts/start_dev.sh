@@ -133,6 +133,8 @@ done
 # Continue with rest of the script
 echo "Continuing with the rest of the script..."
 
+yarn install
+
 # Array of commands from the VS Code tasks
 commands=(
     "watch_lib:cd clients/web/lib && yarn watch"

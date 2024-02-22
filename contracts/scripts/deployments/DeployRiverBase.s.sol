@@ -3,8 +3,6 @@ pragma solidity ^0.8.19;
 
 //interfaces
 import {IRiverBase} from "contracts/src/tokens/river/mainnet/IRiver.sol";
-import {INodeOperator} from "contracts/src/node/operator/INodeOperator.sol";
-import {ITownArchitect} from "contracts/src/towns/facets/architect/ITownArchitect.sol";
 
 //libraries
 
@@ -27,37 +25,11 @@ contract DeployRiverBase is Deployer, IRiverBase {
     return "river";
   }
 
-  function deploy(
-    address spaceFactory,
-    address nodeOperator
-  ) public returns (address) {
-    architect = spaceFactory;
-    operator = nodeOperator;
-    return super.deploy();
-  }
-
   function __deploy(
     uint256 deployerPK,
     address
   ) public override returns (address) {
     vm.broadcast(deployerPK);
-    return
-      address(
-        new River({
-          _bridge: bridgeBase,
-          _remoteToken: l1Token,
-          _architect: ITownArchitect(architect),
-          _operator: INodeOperator(operator)
-        })
-      );
-  }
-
-  function _afterDeployment(
-    uint256 pk,
-    address,
-    address deployment
-  ) internal override {
-    vm.broadcast(pk);
-    INodeOperator(operator).setRiverToken(deployment);
+    return address(new River({_bridge: bridgeBase, _remoteToken: l1Token}));
   }
 }

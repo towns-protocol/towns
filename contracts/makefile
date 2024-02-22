@@ -50,7 +50,7 @@ migrate-anvil:;
 # 				 River
 # ===========================
 deploy-river-anvil-nb:
-	@SAVE_DEPLOYMENTS=1 OVERRIDE_DEPLOYMENTS=1 \
+	@SAVE_DEPLOYMENTS=1 \
 		forge script scripts/deployments/${contract}.s.sol:${contract} \
 		--ffi \
 		--rpc-url river_anvil \
@@ -66,7 +66,7 @@ deploy-river-anvil-explicit:
 		--rpc-url river_anvil \
 		--chain-id 31338 \
 		--private-key ${LOCAL_PRIVATE_KEY} \
-		--broadcast 
+		--broadcast
 
 deploy-river-anvil: build deploy-river-anvil-nb
 
@@ -77,6 +77,10 @@ deploy-river :;
 verify-river :;
 	@forge build
 	@forge verify-contract ${address} ${contract} --chain river
+
+interact-river :;
+	@forge build
+	@forge script scripts/interactions/${contract}.s.sol:${contract} --ffi --rpc-url river --private-key ${PRIVATE_KEY} --broadcast
 
 # ===========================
 # 				 Base Sepolia

@@ -5,6 +5,7 @@ pragma solidity ^0.8.23;
 import {INodeOperator} from "./INodeOperator.sol";
 import {IERC173} from "contracts/src/diamond/facets/ownable/IERC173.sol";
 import {IVotes} from "contracts/src/diamond/facets/governance/votes/IVotes.sol";
+import {IMainnetDelegation} from "contracts/src/tokens/river/base/delegation/IMainnetDelegation.sol";
 
 // libraries
 
@@ -20,17 +21,12 @@ contract NodeOperatorFacet is
   ERC721A
 {
   function __NodeOperator_init(
-    address ownerRegistry,
     uint256 stakeRequirement
   ) external onlyInitializing {
-    __NodeOperator_init_unchained(ownerRegistry, stakeRequirement);
+    __NodeOperator_init_unchained(stakeRequirement);
   }
 
-  function __NodeOperator_init_unchained(
-    address ownerRegistry,
-    uint256 stakeRequirement
-  ) internal {
-    _setSpaceOwnerRegistry(ownerRegistry);
+  function __NodeOperator_init_unchained(uint256 stakeRequirement) internal {
     _setStakeRequirement(stakeRequirement);
     __ERC721A_init_unchained("Operator", "OPR");
     _addInterface(type(INodeOperator).interfaceId);
@@ -139,6 +135,18 @@ contract NodeOperatorFacet is
   }
 
   // =============================================================
+  //                      Mainnet Delegation
+  // =============================================================
+  function setMainnetDelegation(address newDelegation) external onlyOwner {
+    _setMainnetDelegation(newDelegation);
+    emit OperatorMainnetDelegationChanged(newDelegation);
+  }
+
+  function getMainnetDelegation() external view returns (address) {
+    return _mainnetDelegation();
+  }
+
+  // =============================================================
   //                           Stake
   // =============================================================
 
@@ -161,6 +169,10 @@ contract NodeOperatorFacet is
   function setSpaceOwnerRegistry(address newRegistry) external onlyOwner {
     _setSpaceOwnerRegistry(newRegistry);
     emit OperatorSpaceOwnerRegistryChanged(newRegistry);
+  }
+
+  function getSpaceOwnerRegistry() external view returns (address) {
+    return _spaceOwnerRegistry();
   }
 
   // =============================================================
@@ -206,6 +218,8 @@ contract NodeOperatorFacet is
   }
 
   function _calculateStake(address operator) internal view returns (uint256) {
+    uint256 delegatedStake = IMainnetDelegation(_mainnetDelegation())
+      .getDelegatedStakeByOperator(operator);
     uint256 stake = IVotes(_riverToken()).getVotes(operator);
 
     address[] memory spaces = _spacesByOperator(operator);
@@ -218,7 +232,7 @@ contract NodeOperatorFacet is
       }
     }
 
-    return stake;
+    return stake + delegatedStake;
   }
 
   // =============================================================

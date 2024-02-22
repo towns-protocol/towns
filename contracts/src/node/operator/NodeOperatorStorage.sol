@@ -22,6 +22,7 @@ library NodeOperatorStorage {
     mapping(address space => address operator) operatorBySpace;
     address riverToken;
     uint256 stakeRequirement;
+    address mainnetDelegation;
   }
 
   function layout() internal pure returns (Layout storage l) {

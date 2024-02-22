@@ -39,6 +39,8 @@ import {Banning} from "contracts/src/towns/facets/banning/Banning.sol";
 
 import {MultiInit} from "contracts/src/diamond/initializers/MultiInit.sol";
 
+import {DeployMultiInit} from "contracts/scripts/deployments/DeployMultiInit.s.sol";
+
 contract DeployTown is DiamondDeployer {
   TokenOwnableHelper tokenOwnableHelper = new TokenOwnableHelper();
   OwnablePendingHelper ownableHelper = new OwnablePendingHelper();
@@ -54,6 +56,7 @@ contract DeployTown is DiamondDeployer {
   MembershipReferralHelper membershipReferralHelper =
     new MembershipReferralHelper();
   BanningHelper banningHelper = new BanningHelper();
+  DeployMultiInit deployMultiInit = new DeployMultiInit();
 
   uint256 initDataCount = 4;
 
@@ -74,13 +77,6 @@ contract DeployTown is DiamondDeployer {
   address banning;
   address town;
 
-  address internal _multiInit;
-
-  function deploy(address multiInit) public returns (address) {
-    _multiInit = multiInit;
-    return super.deploy();
-  }
-
   function versionName() public pure override returns (string memory) {
     return "town";
   }
@@ -89,6 +85,8 @@ contract DeployTown is DiamondDeployer {
     uint256 deployerPK,
     address deployer
   ) public override returns (Diamond.InitParams memory) {
+    address multiInit = deployMultiInit.deploy();
+
     vm.startBroadcast(deployerPK);
     ownable = address(new OwnablePendingFacet());
     tokenOwnable = address(new TokenOwnableFacet());
@@ -164,7 +162,7 @@ contract DeployTown is DiamondDeployer {
     return
       Diamond.InitParams({
         baseFacets: cuts,
-        init: _multiInit,
+        init: multiInit,
         initData: abi.encodeWithSelector(
           MultiInit.multiInit.selector,
           initAddresses,

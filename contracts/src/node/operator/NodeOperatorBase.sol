@@ -109,6 +109,14 @@ abstract contract NodeOperatorBase is INodeOperatorBase {
     return NodeOperatorStorage.layout().riverToken;
   }
 
+  function _setMainnetDelegation(address delegation) internal {
+    NodeOperatorStorage.layout().mainnetDelegation = delegation;
+  }
+
+  function _mainnetDelegation() internal view returns (address) {
+    return NodeOperatorStorage.layout().mainnetDelegation;
+  }
+
   function _setStakeRequirement(uint256 requirement) internal {
     NodeOperatorStorage.layout().stakeRequirement = requirement;
   }

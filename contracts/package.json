@@ -15,9 +15,6 @@
         "test": "yarn test:unit",
         "test:unit": "make test"
     },
-    "dependencies": {
-        "@eth-optimism/contracts-bedrock": "^0.17.1"
-    },
     "devDependencies": {
         "@harmony/eslint-config": "1.0.0",
         "@harmony/prettier-config": "workspace:^",

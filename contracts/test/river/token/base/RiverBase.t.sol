@@ -14,7 +14,6 @@ import {IOwnableBase} from "contracts/src/diamond/facets/ownable/IERC173.sol";
 //contracts
 import {BaseSetup} from "contracts/test/towns/BaseSetup.sol";
 import {River} from "contracts/src/tokens/river/base/River.sol";
-import {NodeOperatorFacet} from "contracts/src/node/operator/NodeOperatorFacet.sol";
 
 contract RiverBaseTest is BaseSetup, IRiverBase, ILockBase, IOwnableBase {
   /// @dev `keccak256("Permit(address owner,address spender,uint256 value,uint256 nonce,uint256 deadline)")`.
@@ -22,12 +21,10 @@ contract RiverBaseTest is BaseSetup, IRiverBase, ILockBase, IOwnableBase {
     0x6e71edae12b1b97f4d1f60370fef10105fa2faae0126114a169c64845d6126c9;
 
   River riverFacet;
-  NodeOperatorFacet nodeOperatorFacet;
 
   function setUp() public override {
     super.setUp();
     riverFacet = River(riverToken);
-    nodeOperatorFacet = NodeOperatorFacet(nodeOperator);
   }
 
   function test_init() external {
@@ -85,13 +82,6 @@ contract RiverBaseTest is BaseSetup, IRiverBase, ILockBase, IOwnableBase {
     _;
   }
 
-  modifier givenOperatorIsRegistered(address operator) {
-    vm.assume(operator != address(0));
-    vm.prank(operator);
-    nodeOperatorFacet.registerOperator(operator);
-    _;
-  }
-
   modifier whenCallerDelegatesToASpace(address caller) {
     vm.prank(caller);
     riverFacet.delegate(space);
@@ -113,45 +103,6 @@ contract RiverBaseTest is BaseSetup, IRiverBase, ILockBase, IOwnableBase {
     vm.expectRevert(River__DelegateeSameAsCurrent.selector);
     riverFacet.delegate(address(0));
     assertEq(riverFacet.delegates(alice), address(0));
-  }
-
-  function test_revertWhen_delegateIsCalledWithInvalidSpaceOrNodeOperator(
-    address alice,
-    uint256 tokenAmount,
-    address operator
-  ) external givenCallerHasBridgedTokens(alice, tokenAmount) {
-    vm.assume(operator != address(0));
-
-    vm.prank(alice);
-    vm.expectRevert(River__InvalidDelegatee.selector);
-    riverFacet.delegate(operator);
-  }
-
-  function test_delegateToAValidSpace(
-    address alice,
-    uint256 amount
-  )
-    external
-    givenCallerHasBridgedTokens(alice, amount)
-    whenCallerDelegatesToASpace(alice)
-  {
-    assertEq(riverFacet.delegates(alice), space);
-    assertEq(riverFacet.getVotes(space), amount);
-    assertEq(riverFacet.isLockEnabled(alice), true);
-  }
-
-  function test_delegateToAValidOperator(
-    address alice,
-    uint256 amount,
-    address operator
-  )
-    external
-    givenCallerHasBridgedTokens(alice, amount)
-    givenOperatorIsRegistered(operator)
-    whenCallerDelegatesToAnOperator(alice, operator)
-  {
-    assertEq(riverFacet.delegates(alice), operator);
-    assertEq(riverFacet.getVotes(operator), amount);
   }
 
   // Locking

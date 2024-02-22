@@ -21,10 +21,9 @@
       "label": "~Start Local Dev~",
       "dependsOn": [
         "CheckVersions",
-        "YarnInstall",
         "FoundryUp",
         "ForgeModules",
-        "Stage 1"
+        "Stage 1",
       ],
       // Mark as the default build task so cmd/ctrl+shift+b will create them
       "group": {
@@ -49,6 +48,7 @@
       "label": "Stage 2",
       "dependsOn": [
         "Deploy Smart Contracts",
+        "YarnInstall",
         "Stage 3"
       ],
       "group": {

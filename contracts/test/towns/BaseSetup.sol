@@ -12,10 +12,14 @@ import {TestUtils} from "contracts/test/utils/TestUtils.sol";
 import {TownArchitect} from "contracts/src/towns/facets/architect/TownArchitect.sol";
 import {TownHelper} from "contracts/test/towns/TownHelper.sol";
 
+import {TownOwner} from "contracts/src/towns/facets/owner/TownOwner.sol";
+import {NodeOperatorFacet} from "contracts/src/node/operator/NodeOperatorFacet.sol";
+
 // deployments
 import {DeployTownFactory} from "contracts/scripts/deployments/DeployTownFactory.s.sol";
 import {DeployNodeOperator} from "contracts/scripts/deployments/DeployNodeOperator.s.sol";
 import {DeployRiverBase} from "contracts/scripts/deployments/DeployRiverBase.s.sol";
+import {DeployMainnetDelegation} from "contracts/scripts/deployments/DeployMainnetDelegation.s.sol";
 
 /*
  * @notice - This is the base setup to start testing the entire suite of contracts
@@ -25,6 +29,8 @@ contract BaseSetup is TestUtils, TownHelper {
   DeployTownFactory internal deployTownFactory = new DeployTownFactory();
   DeployNodeOperator internal deployNodeOperator = new DeployNodeOperator();
   DeployRiverBase internal deployRiverToken = new DeployRiverBase();
+  DeployMainnetDelegation internal deployMainnetDelegation =
+    new DeployMainnetDelegation();
 
   address internal deployer;
   address internal founder;
@@ -43,12 +49,16 @@ contract BaseSetup is TestUtils, TownHelper {
   address internal bridge;
   address internal association;
 
+  address internal mainnetDelegation;
+
   // @notice - This function is called before each test function
   // @dev - It will create a new diamond contract and set the spaceFactory variable to the address of the diamond
   function setUp() public virtual {
     deployer = getDeployer();
 
-    ///@dev run after diamondInitParams
+    // deploy river token
+    riverToken = deployRiverToken.deploy();
+    bridge = deployRiverToken.bridgeBase();
 
     // deploy space factory
     spaceFactory = deployTownFactory.deploy();
@@ -56,16 +66,22 @@ contract BaseSetup is TestUtils, TownHelper {
     tokenEntitlement = deployTownFactory.tokenEntitlement();
     townOwner = deployTownFactory.townOwner();
 
-    // deploy node operator
-    nodeOperator = deployNodeOperator.deploy(townOwner);
-    stakeRequirement = deployNodeOperator.stakeRequirement();
+    // set factory
+    vm.prank(deployer);
+    TownOwner(townOwner).setFactory(spaceFactory);
 
-    // deploy river token
-    riverToken = deployRiverToken.deploy({
-      spaceFactory: spaceFactory,
-      nodeOperator: nodeOperator
-    });
-    bridge = deployRiverToken.bridgeBase();
+    // deploy node operator
+    mainnetDelegation = deployMainnetDelegation.deploy();
+    nodeOperator = deployNodeOperator.deploy();
+
+    // set the space owner registry and mainnet delegation on the node operator
+    vm.startPrank(deployer);
+    NodeOperatorFacet(nodeOperator).setSpaceOwnerRegistry(spaceFactory);
+    NodeOperatorFacet(nodeOperator).setMainnetDelegation(mainnetDelegation);
+    NodeOperatorFacet(nodeOperator).setRiverToken(riverToken);
+    vm.stopPrank();
+
+    stakeRequirement = deployNodeOperator.stakeRequirement();
 
     // create a new space
     founder = _randomAddress();

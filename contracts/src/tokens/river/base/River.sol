@@ -2,13 +2,9 @@
 pragma solidity ^0.8.23;
 
 // interfaces
-import {IOptimismMintableERC20, ILegacyMintableERC20} from "@eth-optimism/contracts-bedrock/src/universal/IOptimismMintableERC20.sol";
-import {ISemver} from "@eth-optimism/contracts-bedrock/src/universal/ISemver.sol";
-
+import {IOptimismMintableERC20, ILegacyMintableERC20} from "contracts/src/tokens/river/base/IOptimismMintableERC20.sol";
+import {ISemver} from "contracts/src/tokens/river/base/ISemver.sol";
 import {IRiverBase} from "contracts/src/tokens/interfaces/IRiverBase.sol";
-import {IVotes} from "contracts/src/diamond/facets/governance/votes/IVotes.sol";
-import {ITownArchitect} from "contracts/src/towns/facets/architect/ITownArchitect.sol";
-import {INodeOperator} from "contracts/src/node/operator/INodeOperator.sol";
 
 // libraries
 
@@ -17,7 +13,6 @@ import {ERC20} from "contracts/src/diamond/facets/token/ERC20/ERC20.sol";
 import {IntrospectionFacet} from "contracts/src/diamond/facets/introspection/IntrospectionFacet.sol";
 import {Votes} from "contracts/src/diamond/facets/governance/votes/Votes.sol";
 import {LockFacet} from "contracts/src/tokens/lock/LockFacet.sol";
-import {ReentrancyGuard} from "contracts/src/diamond/facets/reentrancy/ReentrancyGuard.sol";
 
 contract River is
   IRiverBase,
@@ -27,7 +22,6 @@ contract River is
   ERC20,
   Votes,
   LockFacet,
-  ReentrancyGuard,
   IntrospectionFacet
 {
   ///@notice Address of the corresponding version of this token on the remote chain
@@ -35,12 +29,6 @@ contract River is
 
   /// @notice Address of the StandardBridge on this network.
   address public immutable BRIDGE;
-
-  /// @notice Address of the ARCHITECT contract
-  ITownArchitect public immutable ARCHITECT;
-
-  /// @notice Address of the OPERATOR contract
-  INodeOperator public immutable OPERATOR;
 
   /// @notice Semantic version.
   string public constant version = "1.3.0";
@@ -51,12 +39,7 @@ contract River is
     _;
   }
 
-  constructor(
-    address _bridge,
-    address _remoteToken,
-    ITownArchitect _architect,
-    INodeOperator _operator
-  ) {
+  constructor(address _bridge, address _remoteToken) {
     __IntrospectionBase_init();
     __LockFacet_init_unchained(60 days);
     __ERC20_init_unchained("River", "RVR", 18);
@@ -66,12 +49,6 @@ contract River is
 
     // set the remote token
     REMOTE_TOKEN = _remoteToken;
-
-    // set the ARCHITECT
-    ARCHITECT = _architect;
-
-    // set the OPERATOR
-    OPERATOR = _operator;
 
     // interfaces
     _addInterface(type(IOptimismMintableERC20).interfaceId);
@@ -125,27 +102,6 @@ contract River is
   }
 
   // =============================================================
-  //                           Delegation
-  // =============================================================
-
-  /// @inheritdoc IVotes
-  function delegate(address delegatee) public override nonReentrant {
-    super.delegate(delegatee);
-  }
-
-  /// @inheritdoc IVotes
-  function delegateBySig(
-    address delegatee,
-    uint256 nonce,
-    uint256 expiry,
-    uint8 v,
-    bytes32 r,
-    bytes32 s
-  ) public override nonReentrant {
-    super.delegateBySig(delegatee, nonce, expiry, v, r, s);
-  }
-
-  // =============================================================
   //                           Hooks
   // =============================================================
   function _beforeTokenTransfer(
@@ -190,20 +146,9 @@ contract River is
     if (delegatee == address(0)) {
       _disableLock(account);
     } else {
-      _validateDelegatee(delegatee);
       if (!_lockEnabled(account)) _enableLock(account);
     }
 
     super._beforeDelegate(account, delegatee);
-  }
-
-  // =============================================================
-  //                           Internal
-  // =============================================================
-  function _validateDelegatee(address delegatee) internal view {
-    if (delegatee == address(0)) return;
-    if (ARCHITECT.isTown(delegatee)) return;
-    if (OPERATOR.isOperator(delegatee)) return;
-    revert River__InvalidDelegatee();
   }
 }

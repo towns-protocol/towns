@@ -46,6 +46,7 @@ interface INodeOperatorBase {
   event OperatorSpaceDelegated(address indexed operator, address indexed space);
   event OperatorRiverTokenChanged(address indexed riverToken);
   event OperatorStakeRequirementChanged(uint256 stakeRequirement);
+  event OperatorMainnetDelegationChanged(address indexed mainnetDelegation);
 }
 
 interface INodeOperator is INodeOperatorBase {

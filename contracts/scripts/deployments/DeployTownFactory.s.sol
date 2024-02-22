@@ -98,8 +98,8 @@ contract DeployTownFactory is DiamondDeployer {
   ) public override returns (Diamond.InitParams memory) {
     address multiInit = deployMultiInit.deploy();
 
-    address town = deployTown.deploy(multiInit);
-    townOwner = deployTownOwner.deploy(multiInit);
+    address town = deployTown.deploy();
+    townOwner = deployTownOwner.deploy();
     userEntitlement = deployUserEntitlement.deploy();
     tokenEntitlement = deployTokenEntitlement.deploy();
 

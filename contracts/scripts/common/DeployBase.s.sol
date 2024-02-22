@@ -42,7 +42,7 @@ contract DeployBase is DeployHelpers, Script {
   // =============================================================
   //                      DEPLOYMENT HELPERS
   // =============================================================
-  function versionAlias() internal returns (string memory) {
+  function versionAlias() internal view returns (string memory) {
     return isAnvil() || block.chainid == 31338 ? "dev" : "v3";
   }
 

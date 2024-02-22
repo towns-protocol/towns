@@ -1,6 +1,8 @@
 #!/bin/bash
 set -euo pipefail
 cd -P -- "$(dirname -- "${BASH_SOURCE[0]}")"
+
+rm -rf ../packages/generated/dev/addresses
 cd ../contracts
 
 set -a

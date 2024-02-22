@@ -15,7 +15,7 @@ contract NodeOperatorHelper is FacetHelper {
   constructor() {
     operator = new NodeOperatorFacet();
 
-    bytes4[] memory selectors_ = new bytes4[](11);
+    bytes4[] memory selectors_ = new bytes4[](20);
     selectors_[_index++] = NodeOperatorFacet.registerOperator.selector;
     selectors_[_index++] = NodeOperatorFacet.isOperator.selector;
     selectors_[_index++] = NodeOperatorFacet.setOperatorStatus.selector;
@@ -24,9 +24,20 @@ contract NodeOperatorHelper is FacetHelper {
     selectors_[_index++] = NodeOperatorFacet.getOperatorsByStatus.selector;
     selectors_[_index++] = NodeOperatorFacet.getApprovedOperators.selector;
     selectors_[_index++] = NodeOperatorFacet.setRiverToken.selector;
+    selectors_[_index++] = NodeOperatorFacet.riverToken.selector;
+    selectors_[_index++] = NodeOperatorFacet.setMainnetDelegation.selector;
+    selectors_[_index++] = NodeOperatorFacet.getMainnetDelegation.selector;
+    selectors_[_index++] = NodeOperatorFacet.calculateStake.selector;
+    selectors_[_index++] = NodeOperatorFacet.setStakeRequirement.selector;
+    selectors_[_index++] = NodeOperatorFacet.getStakeRequirement.selector;
+    selectors_[_index++] = NodeOperatorFacet.setSpaceOwnerRegistry.selector;
+    selectors_[_index++] = NodeOperatorFacet.getSpaceOwnerRegistry.selector;
     selectors_[_index++] = NodeOperatorFacet.addSpaceDelegation.selector;
     selectors_[_index++] = NodeOperatorFacet.removeSpaceDelegation.selector;
     selectors_[_index++] = NodeOperatorFacet.getSpaceDelegation.selector;
+    selectors_[_index++] = NodeOperatorFacet
+      .getSpaceDelegationsByOperator
+      .selector;
 
     addSelectors(selectors_);
   }
@@ -44,9 +55,8 @@ contract NodeOperatorHelper is FacetHelper {
   }
 
   function makeInitData(
-    address spaceOwner,
     uint256 stakeRequirement
   ) public pure returns (bytes memory) {
-    return abi.encodeWithSelector(initializer(), spaceOwner, stakeRequirement);
+    return abi.encodeWithSelector(initializer(), stakeRequirement);
   }
 }

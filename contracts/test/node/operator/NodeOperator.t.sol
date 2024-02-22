@@ -16,6 +16,7 @@ import {OwnableFacet} from "contracts/src/diamond/facets/ownable/OwnableFacet.so
 import {IntrospectionFacet} from "contracts/src/diamond/facets/introspection/IntrospectionFacet.sol";
 import {ERC721A} from "contracts/src/diamond/facets/token/ERC721A/ERC721A.sol";
 import {River} from "contracts/src/tokens/river/base/River.sol";
+import {MainnetDelegation} from "contracts/src/tokens/river/base/delegation/MainnetDelegation.sol";
 
 contract NodeOperatorTest is
   BaseSetup,
@@ -28,6 +29,7 @@ contract NodeOperatorTest is
   IntrospectionFacet internal introspection;
   ERC721A internal erc721;
   River internal riverFacet;
+  MainnetDelegation internal mainnetDelegate;
 
   // =============================================================
   //                           Initialization
@@ -40,6 +42,7 @@ contract NodeOperatorTest is
     introspection = IntrospectionFacet(nodeOperator);
     erc721 = ERC721A(nodeOperator);
     riverFacet = River(riverToken);
+    mainnetDelegate = MainnetDelegation(mainnetDelegation);
   }
 
   function test_initialization() public {
@@ -178,13 +181,46 @@ contract NodeOperatorTest is
     _;
   }
 
+  modifier givenStakeComesFromMainnetDelegation(
+    address _delegator,
+    address _operator
+  ) {
+    vm.assume(_delegator != address(0));
+    vm.assume(_operator != address(0));
+    vm.prank(deployer);
+    mainnetDelegate.setDelegation(_delegator, _operator, stakeRequirement);
+    _;
+  }
+
   modifier givenNodeOperatorHasStake(address delegator, address _operator) {
     vm.prank(delegator);
     riverFacet.delegate(_operator);
     _;
   }
 
-  function test_setOperatorStatus_toApproved(
+  function test_setOperatorStatus_toApprovedFromMainnetDelegation(
+    address delegator,
+    address randomOperator
+  )
+    public
+    givenNodeOperatorIsRegistered(randomOperator)
+    givenStakeComesFromMainnetDelegation(delegator, randomOperator)
+    whenSetOperatorStatusIsCalledByTheOwner(
+      randomOperator,
+      NodeOperatorStatus.Approved
+    )
+  {
+    assertEq(
+      mainnetDelegate.getDelegatedStakeByOperator(randomOperator),
+      stakeRequirement
+    );
+    assertTrue(
+      operator.getOperatorStatus(randomOperator) == NodeOperatorStatus.Approved
+    );
+    assertContains(operator.getApprovedOperators(), randomOperator);
+  }
+
+  function test_setOperatorStatus_toApprovedFromBridgedTokens(
     address delegator,
     uint256 amount,
     address randomOperator

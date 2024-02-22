@@ -13,84 +13,77 @@ import {Diamond} from "contracts/src/diamond/Diamond.sol";
 // helpers
 import {DiamondCutHelper} from "contracts/test/diamond/cut/DiamondCutSetup.sol";
 import {DiamondLoupeHelper} from "contracts/test/diamond/loupe/DiamondLoupeSetup.sol";
-import {NodeOperatorHelper} from "contracts/test/node/operator/NodeOperatorHelper.sol";
-import {OwnableHelper} from "contracts/test/diamond/ownable/OwnableSetup.sol";
-import {ERC721AHelper} from "contracts/test/diamond/erc721a/ERC721ASetup.sol";
 import {IntrospectionHelper} from "contracts/test/diamond/introspection/IntrospectionSetup.sol";
+import {OwnableHelper} from "contracts/test/diamond/ownable/OwnableSetup.sol";
 
 // facets
 import {DiamondCutFacet} from "contracts/src/diamond/facets/cut/DiamondCutFacet.sol";
 import {DiamondLoupeFacet} from "contracts/src/diamond/facets/loupe/DiamondLoupeFacet.sol";
-import {NodeOperatorFacet} from "contracts/src/node/operator/NodeOperatorFacet.sol";
-import {OwnableFacet} from "contracts/src/diamond/facets/ownable/OwnableFacet.sol";
 import {IntrospectionFacet} from "contracts/src/diamond/facets/introspection/IntrospectionFacet.sol";
+import {OwnableFacet} from "contracts/src/diamond/facets/ownable/OwnableFacet.sol";
+
+// utils
+import {DeployMultiInit} from "contracts/scripts/deployments/DeployMultiInit.s.sol";
 import {MultiInit} from "contracts/src/diamond/initializers/MultiInit.sol";
 
-// deployers
-import {DeployMultiInit} from "contracts/scripts/deployments/DeployMultiInit.s.sol";
-import {DeployMainnetDelegation} from "contracts/scripts/deployments/DeployMainnetDelegation.s.sol";
-import {DeployTownOwner} from "contracts/scripts/deployments/DeployTownOwner.s.sol";
+// facets
+import {MainnetDelegation} from "contracts/src/tokens/river/base/delegation/MainnetDelegation.sol";
+import {MainnetDelegationHelper} from "contracts/test/tokens/delegation/MainnetDelegationHelper.sol";
 
-contract DeployNodeOperator is DiamondDeployer {
+contract DeployMainnetDelegation is DiamondDeployer {
   DiamondCutHelper cutHelper = new DiamondCutHelper();
   DiamondLoupeHelper loupeHelper = new DiamondLoupeHelper();
-  OwnableHelper ownableHelper = new OwnableHelper();
-  NodeOperatorHelper operatorHelper = new NodeOperatorHelper();
-  ERC721AHelper erc721aHelper = new ERC721AHelper();
   IntrospectionHelper introspectionHelper = new IntrospectionHelper();
-
-  // deployments
-  DeployMultiInit deployMultiInit = new DeployMultiInit();
-  DeployMainnetDelegation deployMainnetDelegation =
-    new DeployMainnetDelegation();
-  DeployTownOwner deployTownOwner = new DeployTownOwner();
-
-  uint256 public constant stakeRequirement = 1 ether; // 1 river token
+  OwnableHelper ownableHelper = new OwnableHelper();
+  MainnetDelegationHelper delegationHelper = new MainnetDelegationHelper();
 
   function versionName() public pure override returns (string memory) {
-    return "nodeOperator";
+    return "mainnetDelegation";
   }
 
   function diamondInitParams(
     uint256 deployerPK,
     address deployer
   ) public override returns (Diamond.InitParams memory) {
+    DeployMultiInit deployMultiInit = new DeployMultiInit();
     address multiInit = deployMultiInit.deploy();
 
     vm.startBroadcast(deployerPK);
     address diamondCut = address(new DiamondCutFacet());
     address diamondLoupe = address(new DiamondLoupeFacet());
     address ownable = address(new OwnableFacet());
-    address operator = address(new NodeOperatorFacet());
     address introspection = address(new IntrospectionFacet());
+    address delegation = address(new MainnetDelegation());
     vm.stopBroadcast();
-
-    operatorHelper.addSelectors(erc721aHelper.selectors());
 
     addFacet(
       cutHelper.makeCut(diamondCut, IDiamond.FacetCutAction.Add),
       diamondCut,
       cutHelper.makeInitData("")
     );
+
     addFacet(
       loupeHelper.makeCut(diamondLoupe, IDiamond.FacetCutAction.Add),
       diamondLoupe,
       loupeHelper.makeInitData("")
     );
+
     addFacet(
       ownableHelper.makeCut(ownable, IDiamond.FacetCutAction.Add),
       ownable,
       ownableHelper.makeInitData(deployer)
     );
-    addFacet(
-      operatorHelper.makeCut(operator, IDiamond.FacetCutAction.Add),
-      operator,
-      operatorHelper.makeInitData(stakeRequirement)
-    );
+
     addFacet(
       introspectionHelper.makeCut(introspection, IDiamond.FacetCutAction.Add),
       introspection,
       introspectionHelper.makeInitData("")
+    );
+
+    addFacet(
+      delegationHelper.makeCut(delegation, IDiamond.FacetCutAction.Add),
+      delegation,
+      delegationHelper.makeInitData("")
     );
 
     return
@@ -103,21 +96,5 @@ contract DeployNodeOperator is DiamondDeployer {
           _initDatas
         )
       });
-  }
-
-  function _afterDeployment(
-    uint256 pk,
-    address,
-    address deployment
-  ) internal override {
-    // set the space owner contract
-    // set the mainnet delegation contract
-    address townOwner = deployTownOwner.cache();
-    address mainnetDelegation = deployMainnetDelegation.cache();
-
-    vm.startBroadcast(pk);
-    NodeOperatorFacet(deployment).setSpaceOwnerRegistry(townOwner);
-    NodeOperatorFacet(deployment).setMainnetDelegation(mainnetDelegation);
-    vm.stopBroadcast();
   }
 }
