@@ -1678,6 +1678,10 @@ export class Client
         )
     }
 
+    public setHighPriorityStreams(streamIds: string[]) {
+        this.decryptionExtensions?.setHighPriorityStreams(streamIds)
+    }
+
     /**
      * Decrypt a Inbox message using river's decryption algorithm.
      *

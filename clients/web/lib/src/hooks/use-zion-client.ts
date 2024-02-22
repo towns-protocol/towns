@@ -171,6 +171,7 @@ interface ZionClientImpl {
     setAvatarUrl: (ravatarUrl: string) => Promise<void>
     setRoomProperties: (roomId: string, title: string, topic: string) => Promise<void>
     setDisplayName: (streamId: string, displayName: string) => Promise<void>
+    setHighPriorityStreams: (streamIds: string[]) => Promise<void>
     updateSpaceNameTransaction: (
         spaceId: string,
         name: string,
@@ -253,6 +254,7 @@ export function useZionClient(): ZionClientImpl {
         setDisplayName: useWithCatch(client?.setDisplayName),
         setRoomProperties: useWithCatch(client?.setRoomProperties),
         setAvatarUrl: useWithCatch(client?.setAvatarUrl),
+        setHighPriorityStreams: useWithCatch(client?.setHighPriorityStreams),
         linkWallet: useWithCatch(client?.linkWallet),
         removeLink: useWithCatch(client?.removeLink),
         getLinkedWallets: useWithCatch(client?.getLinkedWallets),

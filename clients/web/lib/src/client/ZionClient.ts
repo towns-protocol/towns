@@ -1534,6 +1534,14 @@ export class ZionClient implements EntitlementsDelegate {
         await this.casablancaClient.updateGDMChannelProperties(roomId, title, topic)
     }
 
+    // eslint-disable-next-line @typescript-eslint/require-await
+    public async setHighPriorityStreams(streamIds: string[]): Promise<void> {
+        if (!this.casablancaClient) {
+            throw new Error('casablanca client is undefined')
+        }
+        this.casablancaClient.setHighPriorityStreams(streamIds)
+    }
+
     /************************************************
      * scrollback
      ************************************************/

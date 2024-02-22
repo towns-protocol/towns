@@ -98,6 +98,7 @@ export class DecryptionExtensions extends (EventEmitter as new () => TypedEmitte
         keySolicitations: new Array<KeySolicitationItem>(),
     }
     private upToDateStreams = new Set<string>()
+    private highPriorityStreams = new Set<string>()
     private decryptionFailures: Record<string, Record<string, EncryptedContentItem[]>> = {} // streamId: sessionId: EncryptedContentItem[]
     private inProgressTick?: Promise<void>
     private timeoutId?: NodeJS.Timeout
@@ -305,13 +306,16 @@ export class DecryptionExtensions extends (EventEmitter as new () => TypedEmitte
             return this.processNewGroupSession(session)
         }
 
-        const encryptedContent = this.queues.encryptedContent.shift()
+        const encryptedContent = dequeueHighPriority(
+            this.queues.encryptedContent,
+            this.highPriorityStreams,
+        )
         if (encryptedContent) {
             this.setStatus(DecryptionStatus.decryptingEvents)
             return this.processEncryptedContentItem(encryptedContent)
         }
 
-        const decryptionRetry = dequeue(
+        const decryptionRetry = dequeueUpToDate(
             this.queues.decryptionRetries,
             now,
             (x) => x.retryAt,
@@ -322,7 +326,7 @@ export class DecryptionExtensions extends (EventEmitter as new () => TypedEmitte
             return this.processDecryptionRetry(decryptionRetry)
         }
 
-        const missingKeys = dequeue(
+        const missingKeys = dequeueUpToDate(
             this.queues.missingKeys,
             now,
             (x) => x.waitUntil,
@@ -333,7 +337,7 @@ export class DecryptionExtensions extends (EventEmitter as new () => TypedEmitte
             return this.processMissingKeys(missingKeys)
         }
 
-        const keySolicitation = dequeue(
+        const keySolicitation = dequeueUpToDate(
             this.queues.keySolicitations,
             now,
             (x) => x.respondAfter,
@@ -669,6 +673,10 @@ export class DecryptionExtensions extends (EventEmitter as new () => TypedEmitte
         this.log.debug('getRespondDelayMSForKeySolicitation', { streamId, userId, waitTime })
         return waitTime * multiplier
     }
+
+    setHighPriorityStreams(streamIds: string[]) {
+        this.highPriorityStreams = new Set(streamIds)
+    }
 }
 
 // Insert an item into a sorted array
@@ -691,7 +699,7 @@ function insertSorted<T>(items: T[], newItem: T, dateFn: (x: T) => Date): void {
 
 /// Returns the first item from the array,
 /// if dateFn is provided, returns the first item where dateFn(item) <= now
-function dequeue<T extends { streamId: string }>(
+function dequeueUpToDate<T extends { streamId: string }>(
     items: T[],
     now: Date,
     dateFn: (x: T) => Date,
@@ -706,6 +714,17 @@ function dequeue<T extends { streamId: string }>(
     const index = items.findIndex((x) => dateFn(x) <= now && upToDateStreams.has(x.streamId))
     if (index === -1) {
         return undefined
+    }
+    return items.splice(index, 1)[0]
+}
+
+function dequeueHighPriority<T extends { streamId: string }>(
+    items: T[],
+    highPriorityIds: Set<string>,
+): T | undefined {
+    const index = items.findIndex((x) => highPriorityIds.has(x.streamId))
+    if (index === -1) {
+        return items.shift()
     }
     return items.splice(index, 1)[0]
 }

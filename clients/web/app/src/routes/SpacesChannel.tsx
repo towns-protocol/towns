@@ -73,7 +73,7 @@ const SpaceChannelWrapper = (props: { children: React.ReactElement } & { channel
 export const SpacesChannelComponent = (props: Props) => {
     const { messageId: threadId } = useParams()
     const { isTouch } = useDevice()
-    const { joinRoom, leaveRoom, scrollback, sendMessage } = useZionClient()
+    const { joinRoom, leaveRoom, scrollback, sendMessage, setHighPriorityStreams } = useZionClient()
 
     const { spaceId, channelId, channel } = useChannelData()
 
@@ -99,6 +99,13 @@ export const SpacesChannelComponent = (props: Props) => {
         },
         [channelId, spaceId, sendMessage],
     )
+
+    useEffect(() => {
+        const streamIds = spaceId ? [channelId, spaceId] : [channelId]
+        if (channelId) {
+            setHighPriorityStreams(streamIds)
+        }
+    }, [spaceId, channelId, setHighPriorityStreams])
 
     const onJoinChannel = useCallback(() => {
         joinRoom(channelId)
