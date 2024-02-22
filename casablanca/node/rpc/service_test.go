@@ -361,9 +361,6 @@ func TestMethods(t *testing.T) {
 		t.Errorf("expected error calling CreateStream with no events")
 	}
 
-	_, _, err = createUserDeviceKeyStream(ctx, wallet1, client)
-	require.NoError(t, err)
-
 	_, _, err = createUserWithMismatchedId(ctx, wallet1, client)
 	assert.Error(t, err) // expected Error when calling CreateStream with mismatched id
 
@@ -387,9 +384,10 @@ func TestMethods(t *testing.T) {
 	// create user stream for user 1
 	res, _, err := createUser(ctx, wallet1, client)
 	require.NoError(t, err)
-	if res == nil {
-		t.Errorf("nil sync cookie")
-	}
+	require.NotNil(t, res, "nil sync cookie")
+
+	_, _, err = createUserDeviceKeyStream(ctx, wallet1, client)
+	require.NoError(t, err)
 
 	// get stream optional should now return not nil
 	resp, err = client.GetStream(ctx, connect.NewRequest(&protocol.GetStreamRequest{
@@ -397,27 +395,21 @@ func TestMethods(t *testing.T) {
 		Optional: true,
 	}))
 	require.NoError(t, err)
-	assert.NotNil(t, resp.Msg, "expected user stream to not exist")
-
-	_, _, err = createUserDeviceKeyStream(ctx, wallet2, client)
-	require.NoError(t, err)
+	require.NotNil(t, resp.Msg, "expected user stream to not exist")
 
 	// create user stream for user 2
 	resuser, _, err := createUser(ctx, wallet2, client)
 	require.NoError(t, err)
-	if resuser == nil {
-		t.Errorf("nil sync cookie")
-		return
-	}
+	require.NotNil(t, resuser, "nil sync cookie")
+
+	_, _, err = createUserDeviceKeyStream(ctx, wallet2, client)
+	require.NoError(t, err)
 
 	// create space
 	spaceId := testutils.FakeStreamId(shared.STREAM_SPACE_PREFIX)
 	resspace, _, err := createSpace(ctx, wallet1, client, spaceId)
 	require.NoError(t, err)
-	if resspace == nil {
-		t.Errorf("nil sync cookie")
-		return
-	}
+	require.NotNil(t, resspace, "nil sync cookie")
 
 	// create channel
 	channelId := testutils.FakeStreamId(shared.STREAM_CHANNEL_PREFIX)
@@ -432,9 +424,7 @@ func TestMethods(t *testing.T) {
 		},
 	)
 	require.NoError(t, err)
-	if channel == nil {
-		t.Errorf("nil sync cookie")
-	}
+	require.NotNil(t, channel, "nil sync cookie")
 
 	// user2 joins channel
 	userJoin, err := events.MakeEnvelopeWithPayload(
@@ -446,9 +436,8 @@ func TestMethods(t *testing.T) {
 		),
 		resuser.PrevMiniblockHash,
 	)
-	if err != nil {
-		t.Errorf("error creating join event: %v", err)
-	}
+	require.NoError(t, err)
+
 	_, err = client.AddEvent(
 		ctx,
 		connect.NewRequest(
@@ -520,14 +509,13 @@ func TestMethods(t *testing.T) {
 	// verify the first message is new a sync
 	syncRes.Receive()
 	msg := syncRes.Msg()
-	assert.NotNil(t, msg.SyncId, "expected non-nil sync id")
-	assert.True(t, len(msg.SyncId) > 0, "expected non-empty sync id")
+	require.NotNil(t, msg.SyncId, "expected non-nil sync id")
+	require.True(t, len(msg.SyncId) > 0, "expected non-empty sync id")
 	msg = syncRes.Msg()
 	syncCancel()
 
-	if msg.Stream == nil {
-		t.Errorf("expected a stream")
-	}
+	require.NotNil(t, msg.Stream, "expected non-nil stream")
+
 	// join, miniblock, message, miniblock
 	if len(msg.Stream.Events) != 4 {
 		t.Errorf("expected 4 events, got %d", len(msg.Stream.Events))
@@ -696,7 +684,7 @@ func TestSyncStreams(t *testing.T) {
 	Asserts
 	*/
 	assert.NotEmpty(t, syncId, "expected non-empty sync id")
-	assert.NotNil(t, 1, msg.Stream, "expected 1 stream")
+	assert.NotNil(t, msg.Stream, "expected 1 stream")
 	assert.Equal(t, syncId, msg.SyncId, "expected sync id to match")
 }
 
