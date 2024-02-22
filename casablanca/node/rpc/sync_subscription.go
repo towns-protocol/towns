@@ -10,7 +10,7 @@ import (
 	"github.com/river-build/river/events"
 	"github.com/river-build/river/protocol"
 
-	"golang.org/x/exp/slog"
+	"log/slog"
 )
 
 type syncOp interface {

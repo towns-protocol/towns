@@ -7,7 +7,7 @@ import (
 	"github.com/river-build/river/dlog"
 	"github.com/river-build/river/infra"
 
-	"golang.org/x/exp/slog"
+	"log/slog"
 )
 
 var (

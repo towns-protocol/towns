@@ -3,7 +3,7 @@ package dlog
 import (
 	"context"
 
-	"golang.org/x/exp/slog"
+	"log/slog"
 )
 
 // NullHandler is a slog.Handler that does nothing.

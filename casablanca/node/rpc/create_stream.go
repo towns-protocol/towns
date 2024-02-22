@@ -16,7 +16,7 @@ import (
 	"google.golang.org/protobuf/proto"
 
 	"connectrpc.com/connect"
-	"golang.org/x/exp/slog"
+	"log/slog"
 )
 
 var createStreamRequests = infra.NewSuccessMetrics("create_stream_requests", serviceRequests)

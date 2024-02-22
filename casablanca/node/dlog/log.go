@@ -4,7 +4,7 @@ import (
 	"context"
 	"os"
 
-	"golang.org/x/exp/slog"
+	"log/slog"
 )
 
 var (

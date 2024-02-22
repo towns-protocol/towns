@@ -2,7 +2,7 @@
 
 ## Logs
 
-Logging is done using Go's [slog](https://pkg.go.dev/golang.org/x/exp/slog) package for structured logging.
+Logging is done using Go's [slog](https://pkg.go.dev/log/slog) package for structured logging.
 
 Current logger is saved into variable `log` and logging statement takes a message and optional key-value pairs like this:
 

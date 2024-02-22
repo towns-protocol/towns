@@ -15,7 +15,7 @@ import (
 	"time"
 	"unicode/utf8"
 
-	"golang.org/x/exp/slog"
+	"log/slog"
 
 	buffer "github.com/river-build/river/dlog/buffer"
 )

@@ -13,7 +13,7 @@ import (
 
 	"golang.org/x/exp/slices"
 
-	"golang.org/x/exp/slog"
+	"log/slog"
 
 	buffer "github.com/river-build/river/dlog/buffer"
 )

@@ -9,7 +9,7 @@ import (
 
 	"connectrpc.com/connect"
 	"github.com/ethereum/go-ethereum/common"
-	"golang.org/x/exp/slog"
+	"log/slog"
 )
 
 type RequestWithStreamId interface {

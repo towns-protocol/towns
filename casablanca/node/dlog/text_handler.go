@@ -13,7 +13,7 @@ import (
 	"unicode"
 	"unicode/utf8"
 
-	"golang.org/x/exp/slog"
+	"log/slog"
 )
 
 // PrettyTextHandler is a Handler that writes Records to an io.Writer as a

@@ -3,7 +3,7 @@ package dlog
 import (
 	"context"
 
-	"golang.org/x/exp/slog"
+	"log/slog"
 )
 
 // MultiHandler is a slog.Handler that writes to multiple handlers.

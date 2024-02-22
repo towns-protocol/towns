@@ -5,8 +5,8 @@ import (
 	"errors"
 
 	"connectrpc.com/connect"
-	"golang.org/x/exp/slog"
 	"google.golang.org/protobuf/encoding/protojson"
+	"log/slog"
 
 	. "github.com/river-build/river/base"
 	"github.com/river-build/river/events"

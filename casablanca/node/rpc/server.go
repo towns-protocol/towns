@@ -25,10 +25,10 @@ import (
 	"github.com/river-build/river/storage"
 
 	"github.com/rs/cors"
-	"golang.org/x/exp/slog"
 	"golang.org/x/net/http2"
 	"golang.org/x/net/http2/h2c"
 	httptrace "gopkg.in/DataDog/dd-trace-go.v1/contrib/net/http"
+	"log/slog"
 )
 
 type Cleanup func(context.Context) error

@@ -8,7 +8,7 @@ import (
 
 	"github.com/river-build/river/dlog"
 
-	"golang.org/x/exp/slog"
+	"log/slog"
 )
 
 type Data2 struct {
