@@ -26,7 +26,6 @@ import { SyncNotificationSettings } from '@components/SyncNotificationSettings/S
 import { useAccountAbstractionConfig } from 'userOpConfig'
 import { PATHS } from 'routes'
 import { useCreateLink } from 'hooks/useCreateLink'
-import { AppQueryClientProvider } from 'AppQueryClientProvider'
 
 FontLoader.init()
 
@@ -94,7 +93,6 @@ export const App = () => {
             pushNotificationWorkerUrl={env.VITE_WEB_PUSH_WORKER_URL}
             accountAbstractionConfig={accountAbstractionConfig}
             highPriorityStreamIds={highPriorityStreamIds.current}
-            QueryClientProvider={AppQueryClientProvider}
         >
             <EmbeddedSignerContextProvider chainId={environment.chainId}>
                 <AuthContextProvider>
