@@ -86,12 +86,12 @@ func (s *Service) createStream(ctx context.Context, req *CreateStreamRequest) (*
 		err := s.chainAuth.IsEntitled(ctx, csRules.ChainAuth)
 		if err != nil {
 			return nil, err
-	}
+		}
 	}
 
 	// create the stream
 	resp, err := s.createReplicatedStream(ctx, req.StreamId, parsedEvents)
-	if err != nil {
+	if err != nil && AsRiverError(err).Code != Err_ALREADY_EXISTS {
 		return nil, err
 	}
 
