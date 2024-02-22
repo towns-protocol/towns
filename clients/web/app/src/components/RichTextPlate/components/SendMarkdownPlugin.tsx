@@ -1,7 +1,7 @@
 import React, { useCallback } from 'react'
 import { Mention } from 'use-zion-client'
 import { AnimatePresence } from 'framer-motion'
-import { resetEditorChildren, useEditorRef } from '@udecode/plate-common'
+import { useEditorRef } from '@udecode/plate-common'
 import { MotionBox } from '@ui'
 import { useDevice } from 'hooks/useDevice'
 import { toMD } from '../utils/toMD'
@@ -25,7 +25,6 @@ export const SendMarkdownPlugin = (props: {
     const sendMessage = useCallback(async () => {
         const { message, mentions } = await toMD(editor)
         onSend?.(message, mentions)
-        resetEditorChildren(editor)
     }, [editor, onSend])
 
     const shouldDisplayButtons =

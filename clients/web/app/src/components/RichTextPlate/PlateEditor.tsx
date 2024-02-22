@@ -10,6 +10,7 @@ import {
 } from 'use-zion-client'
 import { datadogRum } from '@datadog/browser-rum'
 import { isEditorEmpty as PlateIsEditorEmpty } from '@udecode/slate-utils'
+import { focusEditor } from '@udecode/slate-react'
 import { TComboboxItemWithData } from '@udecode/plate-combobox'
 import { Editor } from '@components/RichTextPlate/ui/editor'
 import { MentionCombobox } from '@components/RichTextPlate/ui/mention-combobox'
@@ -163,6 +164,10 @@ const PlateEditorWithoutBoundary = ({
                 options.attachments = attachments
             }
             onSend?.(message, options)
+            if (editorRef.current) {
+                resetEditor(editorRef.current)
+                focusEditor(editorRef.current)
+            }
         },
         [files.length, uploadFiles, embeddedMessageAttachments, onSend],
     )
@@ -179,7 +184,6 @@ const PlateEditorWithoutBoundary = ({
                 const { message, mentions } = await toMD(editorRef.current)
                 if (message && message.trim().length > 0) {
                     await onSendCb(message, mentions)
-                    resetEditor(editorRef.current)
                 }
             }
         },
