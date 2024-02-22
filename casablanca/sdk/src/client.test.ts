@@ -729,7 +729,7 @@ describe('clientTest', () => {
         alicesClient.startSync()
         await waitFor(() => {
             // @ts-ignore
-            alicesClient.decryptionExtensions?.status === DecryptionStatus.idle
+            expect(alicesClient.decryptionExtensions?.status).toEqual(DecryptionStatus.idle)
         })
         const alicesUserId = alicesClient.userId
 
@@ -791,7 +791,7 @@ describe('clientTest', () => {
         alicesClient.startSync()
         await waitFor(() => {
             // @ts-ignore
-            alicesClient.decryptionExtensions?.status === DecryptionStatus.idle
+            expect(alicesClient.decryptionExtensions?.status).toEqual(DecryptionStatus.idle)
         })
 
         await expect(bobsClient.downloadUserDeviceInfo([alicesClient.userId])).toResolve()
