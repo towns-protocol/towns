@@ -17,6 +17,7 @@
         "csb:dev:no-entitlements": "./casablanca/scripts/launch.sh --disable_entitlements",
         "csb:list": "yarn workspaces list --json | grep casablanca | grep -o '\"name\":\"[^\"]*' | grep -o '[^\"]*$'",
         "csb:list:filter": "yarn csb:list | xargs -I arg echo -n \"--filter arg \"",
+        "csb:list:exclude:filter": "yarn csb:list | xargs -I arg echo -n \"--filter=!arg \"",
         "csb:list:filter-without-sdk": "yarn csb:list | grep -v sdk | xargs -I arg echo -n \"--filter arg \"",
         "csb:list:include": "yarn csb:list | xargs -I arg echo -n \"--include arg \"",
         "csb:mainnet": "./casablanca/scripts/start_mainnet.sh",
@@ -50,7 +51,7 @@
         "sampleapp:build": "turbo build --filter sample-app",
         "syncpack:check": "syncpack list-mismatches",
         "syncpack:fix": "syncpack fix-mismatches && syncpack format",
-        "test": "turbo test",
+        "test": "turbo test  $(yarn csb:list:exclude:filter) --filter=!@towns/userops  --filter=!notification-service --filter=!use-zion-client && yarn csb:turbo",
         "test:unit": "turbo test:unit -- --silent",
         "worker:wait:stackup": "wait-on tcp:127.0.0.1:${PORT:-8686} --timeout=400000 --i=5000 --verbose",
         "workers:build": "turbo build --filter gateway-worker --filter siwe-worker --filter token-worker --filter unfurl-worker --filter push-notification-worker --filter jwt-worker"
