@@ -24,6 +24,9 @@ export interface TownsEnvironmentInfo {
     chainId: number
     chain: Chain
     protocol: SpaceProtocol
+    aaRpcUrl: string | undefined
+    aaBundlerUrl: string | undefined
+    aaPaymasterProxyUrl: string | undefined
 }
 
 export const ENVIRONMENTS: TownsEnvironmentInfo[] = [
@@ -34,6 +37,9 @@ export const ENVIRONMENTS: TownsEnvironmentInfo[] = [
         chainId: 31337,
         chain: foundryClone,
         protocol: SpaceProtocol.Casablanca,
+        aaRpcUrl: undefined,
+        aaBundlerUrl: undefined,
+        aaPaymasterProxyUrl: undefined,
     },
     {
         id: TownsEnvironment.RiverTest,
@@ -42,6 +48,9 @@ export const ENVIRONMENTS: TownsEnvironmentInfo[] = [
         chainId: 84532,
         chain: baseSepoliaClone,
         protocol: SpaceProtocol.Casablanca,
+        aaRpcUrl: env.VITE_AA_RPC_URL,
+        aaBundlerUrl: env.VITE_AA_BUNDLER_URL,
+        aaPaymasterProxyUrl: env.VITE_AA_PAYMASTER_PROXY_URL,
     },
 ]
 
