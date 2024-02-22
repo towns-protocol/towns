@@ -463,13 +463,14 @@ func (p *printer) printStruct(v reflect.Value, showType bool) {
 			field := t.Field(i)
 			value := getField(v, i)
 
+			if isProto && (field.Name == "sizeCache" || field.Name == "unknownFields" || field.Name == "state" || field.Name == "atomicMessageInfo") {
+				continue
+			}
+
 			if p.opts.SkipNilAndEmpty && !Nonzero(value) && field.Type.Kind() != reflect.Bool {
 				continue
 			}
 
-			if isProto && (field.Name == "sizeCache" || field.Name == "unknownFields" || field.Name == "state") {
-				continue
-			}
 
 			if field.Tag.Get("dlog") == "omit" {
 				continue
