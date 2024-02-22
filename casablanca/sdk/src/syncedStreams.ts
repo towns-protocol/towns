@@ -94,6 +94,7 @@ export class SyncedStreams {
     private abortRetry: (() => void) | undefined
     private currentRetryCount: number = 0
     private forceStopSyncStreams: (() => void) | undefined
+    private interruptSync: ((err: unknown) => void) | undefined
 
     // Only responses related to the current syncId are processed.
     // Responses are queued and processed in order
@@ -336,24 +337,30 @@ export class SyncedStreams {
                                 this.syncState === SyncState.Syncing ||
                                 this.syncState === SyncState.Starting
                             ) {
-                                const breakSyncStreamsPromise = new Promise<void>(
-                                    (resolve) =>
-                                        (this.forceStopSyncStreams = () => {
+                                const interruptSyncPromise = new Promise<void>(
+                                    (resolve, reject) => {
+                                        this.forceStopSyncStreams = () => {
                                             this.log('forceStopSyncStreams called')
                                             resolve()
-                                        }),
+                                        }
+                                        this.interruptSync = (e: unknown) => {
+                                            this.log('sync interrupted', e)
+                                            reject(e)
+                                        }
+                                    },
                                 )
                                 const { value, done } = await Promise.race([
                                     iterator.next(),
-                                    breakSyncStreamsPromise.then(() => ({
+                                    interruptSyncPromise.then(() => ({
                                         value: undefined,
                                         done: true,
                                     })),
                                 ])
-                                this.forceStopSyncStreams = undefined
                                 if (done || value === undefined) {
                                     this.log('exiting syncStreams', done, value)
                                     // exit the syncLoop, it's done
+                                    this.forceStopSyncStreams = undefined
+                                    this.interruptSync = undefined
                                     return iteration
                                 }
 
@@ -624,8 +631,7 @@ export class SyncedStreams {
                 }
             }
             ping().catch((err) => {
-                // throw err and let the caller handle retries
-                throw err
+                this.interruptSync?.(err)
             })
         }, 8 * 1000 * 60) // every 8 minutes
     }
@@ -641,12 +647,14 @@ export class SyncedStreams {
     }
 
     private printNonces() {
-        for (const nonce in this.pingInfo.nonces) {
-            const stats = this.pingInfo.nonces[nonce]
+        const sortedNonces = Object.values(this.pingInfo.nonces).sort(
+            (a, b) => a.sequence - b.sequence,
+        )
+        for (const n of sortedNonces) {
             this.log(
-                `nonce=${nonce} sequence=${stats.sequence} pingAt=${stats.pingAt} receivedAt=${
-                    stats.receivedAt ?? 'none'
-                } duration=${stats.duration ?? 'none'}`,
+                `sequence=${n.sequence}, nonce=${n.nonce}, pingAt=${n.pingAt}, receivedAt=${
+                    n.receivedAt ?? 'none'
+                }, duration=${n.duration ?? 'none'}`,
             )
         }
     }

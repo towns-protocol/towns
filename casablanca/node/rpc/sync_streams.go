@@ -556,7 +556,7 @@ func (s *syncHandlerImpl) addSubscription(
 		remoteNodes:    make(map[string]*syncNode),
 		remoteStreams:  make(map[string]*syncNode),
 		dataChannel:    make(chan *protocol.StreamAndCookie, 128),
-		controlChannel: make(chan syncOp),
+		controlChannel: make(chan syncOp, 64),
 	}
 	s.syncIdToSubscription[syncId] = sub
 	log.Debug("SyncStreams:addSubscription: syncId subscription added", "syncId", syncId)

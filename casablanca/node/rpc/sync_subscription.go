@@ -340,7 +340,7 @@ func (s *syncSubscriptionImpl) Dispatch(res *connect.ServerStream[protocol.SyncS
 					SyncOp: protocol.SyncOp_SYNC_CLOSE,
 				})
 				if err != nil {
-					log.Info(
+					log.Warn(
 						"SyncStreams: Dispatch error sending close response",
 						"syncId",
 						s.syncId,
@@ -360,10 +360,9 @@ func (s *syncSubscriptionImpl) Dispatch(res *connect.ServerStream[protocol.SyncS
 					PongNonce: data.nonce,
 				})
 				if err != nil {
-					log.Warn("SyncStreams: error sending pong response", "syncId", s.syncId, "err", err)
+					log.Warn("SyncStreams: cancel stream because of error sending pong response", "syncId", s.syncId, "err", err)
+					s.cancel()
 				}
-				s.cancel()
-				log.Debug("SyncStreams: cancel stream", "syncId", s.syncId)
 			} else {
 				log.Warn("SyncStreams: Dispatch received unknown control message", "syncId", s.syncId, "control", control)
 			}
