@@ -376,8 +376,8 @@ describe('Stress test', () => {
                 for (const key of keys) {
                     const value = await redisE2EMessageDeliveryTracking.get(key) // Assuming all keys are string type
                     const baseKey = key.slice(1)
-                    if (value) {
-                        if (value.charAt(0) === 'S') {
+                    if (value && key) {
+                        if (key.charAt(0) === 'S') {
                             log('S value', value)
                             //We are processing sent time key
                             //Check if map contains this key already - if it is there it means that we already have receiving time there
@@ -396,7 +396,7 @@ describe('Stress test', () => {
                                 //Step 2. If not, add sending time to the map
                                 E2EDeliveryTimeMap.set(baseKey, parseInt(value))
                             }
-                        } else if (value.charAt(0) === 'R') {
+                        } else if (key.charAt(0) === 'R') {
                             log('R value', value)
                             //We are processing recieved time key
                             //Check if map contains this key already - if it is there it means that we already have sent time there
