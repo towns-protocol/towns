@@ -49,7 +49,7 @@ jobs:
               working-directory: ./servers/workers/stackup-worker
               # PAYMASTER_ADDRESS is actually the entrypoint address and we need to change the name of this env var
               # https://linear.app/hnt-labs/issue/HNT-4569/change-paymaster-address-to-entrypoint-address-in-paymaster-proxy
-              run: PORT=8787 yarn dev:local --var PAYMASTER_ADDRESS:0x5FF137D4b0FDCD49DcA30c7CF57E578a026d2789 SKIP_LIMIT_VERIFICATION:true STACKUP_API_TOKEN:${{ secrets.STACKUP_TEST_API_TOKEN }} PRIVY_APP_KEY:${{ secrets.PRIVY_APP_KEY }} PRIVY_APP_ID:clml5fp7s013vmf0fnkabuaiw ALCHEMY_API_KEY:${{ secrets.ALCHEMY_API_KEY }} AUTH_SECRET:foo ENVIRONMENT:gamma &
+              run: PORT=8787 yarn dev:local --var PAYMASTER_ADDRESS:0x5FF137D4b0FDCD49DcA30c7CF57E578a026d2789 SKIP_LIMIT_VERIFICATION:true STACKUP_API_TOKEN:${{ secrets.STACKUP_TEST_API_TOKEN }} PRIVY_APP_KEY:${{ secrets.PRIVY_APP_KEY }} PRIVY_APP_ID:clml5fp7s013vmf0fnkabuaiw ALCHEMY_API_KEY:${{ secrets.ALCHEMY_API_KEY }} AUTH_SECRET:foo ENVIRONMENT:test-beta &
 
             - name: Wait for first stackup worker to be up on 8686
               run: yarn worker:wait:stackup
