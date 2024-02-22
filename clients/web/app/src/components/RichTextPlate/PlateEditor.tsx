@@ -23,13 +23,14 @@ import { toMD } from '@components/RichTextPlate/utils/toMD'
 import { EmbeddedMessagePreview } from '@components/EmbeddedMessageAttachement/EmbeddedMessagePreview'
 import { notUndefined } from 'ui/utils/utils'
 import { SpaceProtocol, useEnvironment } from 'hooks/useEnvironmnet'
+import { getPrettyDisplayName } from 'utils/getPrettyDisplayName'
 import { PlateToolbar } from './ui/PlateToolbar'
 import { RichTextBottomToolbar } from './components/RichTextBottomToolbar'
 import { RichTextPlaceholder } from './components/RichTextEditorPlaceholder'
 import { SendMarkdownPlugin } from './components/SendMarkdownPlugin'
 import { plugins } from './utils/plugins'
-import { getPrettyDisplayName } from '../../utils/getPrettyDisplayName'
 import { PasteFilePlugin } from './components/PasteFilePlugin'
+import { CaptureTownsLinkPlugin } from './components/CaptureTownsLinkPlugin'
 
 const initialValue: TElement[] = [
     {
@@ -239,7 +240,7 @@ const PlateEditorWithoutBoundary = ({
                                 />
                             </Box>
 
-                            {/*<CaptureTownsLinkPlugin onUpdate={onMessageLinksUpdated} />*/}
+                            <CaptureTownsLinkPlugin onUpdate={onMessageLinksUpdated} />
                             <MentionCombobox id="users" items={mentionables} />
                         </Box>
                         <Box paddingY="sm" paddingRight="xs">
