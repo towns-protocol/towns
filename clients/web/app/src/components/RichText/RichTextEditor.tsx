@@ -170,7 +170,6 @@ const RichTextEditorWithoutBoundary = React.memo((props: Props) => {
             if (attachments.length > 0) {
                 options.attachments = attachments
             }
-            console.log('*** MESSAGE', message)
             onSend?.(message, options)
         },
         [embeddedMessageAttachements, files.length, onSend, uploadFiles],
