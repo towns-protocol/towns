@@ -513,7 +513,7 @@ resource "aws_ecs_task_definition" "river-fargate" {
       },
       {
         name  = "TOWNSARCHITECTCONTRACT__ADDRESS"
-        value = "0x6c9aC4782343487cf077d3aD6c3E3Ee99B59F3C8"
+        value = "0x9a523E613416Dbd7a92B1bcFd0443346389881be"
       },
       {
         name  = "TOWNSARCHITECTCONTRACT__VERSION"
