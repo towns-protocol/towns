@@ -203,6 +203,8 @@ module "river_node" {
 
   # TODO: use the correct notification service url for gamma
   notification_service_url = "https://push-notification-worker-test-beta.towns.com"
+
+  river_registry_contract_address = "0xDABc294d1EfC9055f9FA6ba1303911F846Bb14Ee"
 }
 
 # module "loadtest" {
