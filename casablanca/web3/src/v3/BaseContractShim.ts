@@ -181,10 +181,10 @@ export class BaseContractShim<
         }
 
         if (!errorData) {
-            // sometimes it's a stringified object under anyError.reason
+            // sometimes it's a stringified object under anyError.reason or anyError.message
             try {
                 // eslint-disable-next-line @typescript-eslint/no-unsafe-assignment, @typescript-eslint/no-unsafe-member-access
-                const reason = anyError?.reason
+                const reason = anyError?.reason || anyError?.message
                 if (typeof reason === 'string') {
                     const errorMatch = reason?.match(/error\\":\{([^}]+)\}/)?.[1]
                     if (errorMatch) {

@@ -65,12 +65,30 @@ export const paymasterProxyMiddleware: ({
                         verificationGasLimit: ctx.op.verificationGasLimit,
                         callGasLimit: ctx.op.callGasLimit,
                     }
-                } catch (error) {
+                } catch (error: unknown) {
+                    // eslint-disable-next-line @typescript-eslint/no-explicit-any
+                    const _e = error as Error & { body?: any }
                     console.error(
                         '[paymasterProxyMiddleware] error estimating gas for user operation that was rejected by paymaster:',
                         error,
                     )
-                    throw error
+
+                    const body = JSON.parse(_e.body ?? '{}') as
+                        | {
+                              error: {
+                                  code?: string | number
+                                  // eslint-disable-next-line @typescript-eslint/no-explicit-any
+                                  data?: any
+                                  message?: string
+                              }
+                          }
+                        | undefined
+
+                    throw new CodeException(
+                        body?.error?.message ?? 'Error estimating gas for user operation',
+                        body?.error?.code ?? 'UNKNOWN_ERROR',
+                        body?.error?.data,
+                    )
                 }
             }
         }

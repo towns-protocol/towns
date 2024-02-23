@@ -30,6 +30,7 @@ export function BlockchainTxNotifier() {
     const isMember = myMembership === Membership.Join
 
     useOnTransactionUpdated((tx) => {
+        // these potential txs will show a toast that transitions from a pending to a success or failure state
         if (tx.status === 'potential') {
             switch (tx.type) {
                 case BlockchainTransactionType.LinkWallet:
@@ -78,6 +79,24 @@ export function BlockchainTxNotifier() {
                         tx,
                         pendingMessage: `Deleting role...`,
                         successMessage: `Role deleted!`,
+                    })
+                    break
+                }
+                default:
+                    break
+            }
+        }
+
+        // these 'failure' only show a toast when tx fails
+        // this is mostly for transactions that are use older UX patterns, where a toast is not shown when pending or for success
+        // these can be converted over to the nex UX pattern and put in the potential switch above
+        if (tx.status === 'failure') {
+            switch (tx.type) {
+                case BlockchainTransactionType.CreateChannel: {
+                    generateToast({
+                        tx,
+                        successMessage: '',
+                        errorMessage: mapToErrorMessage(tx.error),
                     })
                     break
                 }

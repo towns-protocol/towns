@@ -493,9 +493,7 @@ router.post('/api/sponsor-userop', async (request: WorkerRequest, env: Env) => {
         paymasterAddress: env.PAYMASTER_ADDRESS,
         type: { type: contextType },
     })
-    if (env.ENVIRONMENT === 'development') {
-        console.log('stackup API request:', requestInit.body)
-    }
+    console.log('stackup API request:', requestInit.body)
     const responseFetched = await fetch(`${STACKUP_API_URL}/${env.STACKUP_API_TOKEN}`, requestInit)
     if (responseFetched.status !== 200) {
         return new Response(toJson({ error: 'Invalid Paymaster Response' }), {

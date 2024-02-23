@@ -57,18 +57,15 @@ const walletNotLinkedError = new WalletNotLinkedError()
 type AuthError = ReturnType<(typeof useCasablancaStore)['getState']>['loginError']
 type ErrorTypes = Error | AuthError
 
-function isAuthError(error: ErrorTypes | undefined): error is AuthError {
-    return typeof error === 'object' && error !== null && 'code' in error
-}
-
 export function mapToErrorMessage(error: ErrorTypes | undefined) {
     if (!error) {
         return 'An unknown error occurred. Cannot save transaction.'
     }
     let errorText = ''
-    const errorName = (isAuthError(error) ? error.error?.name : error?.name) ?? ''
     // eslint-disable-next-line @typescript-eslint/no-explicit-any
-    const errorCode = (isAuthError(error) ? error.code : (error?.message as any)?.code) ?? ''
+    const errorName = ((error as any)?.name || (error as any)?.error?.name) ?? ''
+    // eslint-disable-next-line @typescript-eslint/no-explicit-any
+    const errorCode = ((error as any)?.code || (error?.message as any)?.code) ?? ''
 
     if (errorCode === 'ACTION_REJECTED' || errorCode === 4001 || isRejectedErrorMessage(error)) {
         return
