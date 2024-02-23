@@ -455,7 +455,8 @@ export class DecryptionExtensions {
 
             // If !sessionNotFound, we want to know more about this error.
             if (!sessionNotFound) {
-                this.log.error('failed to decrypt', err, 'streamId', item.streamId)
+                // eslint-disable-next-line no-console
+                console.error('failed to decrypt', err, 'streamId', item.streamId)
             }
 
             this.client.stream(item.streamId)?.view.updateDecryptedContentError(
