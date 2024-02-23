@@ -536,27 +536,28 @@ func (ru *csDmChannelRules) derivedDMMembershipEvents() ([]*DerivedEvent, error)
 	}
 
 	// first party
-	payload1 := events.Make_UserPayload_Membership(
+	firstPartyPayload := events.Make_UserPayload_Membership(
 		MembershipOp_SO_JOIN,
 		ru.params.streamId,
 		&ru.params.creatorUserId,
 	)
 
 	// second party
-	payload2 := events.Make_UserPayload_Membership(
+	secondPartyPayload := events.Make_UserPayload_Membership(
 		MembershipOp_SO_JOIN,
 		ru.params.streamId,
 		&ru.params.creatorUserId,
 	)
 
+	// send the first party payload last, so that any failure will be retired by the client
 	return []*DerivedEvent{
 		{
-			StreamId: firstPartyStream,
-			Payload:  payload1,
+			StreamId: secondPartyStream,
+			Payload:  secondPartyPayload,
 		},
 		{
-			StreamId: secondPartyStream,
-			Payload:  payload2,
+			StreamId: firstPartyStream,
+			Payload:  firstPartyPayload,
 		},
 	}, nil
 }
@@ -638,6 +639,14 @@ func (ru *csGdmChannelRules) getGDMUserIds() []string {
 
 func (ru *csGdmChannelRules) derivedGDMMembershipEvents() ([]*DerivedEvent, error) {
 	userIds := ru.getGDMUserIds()
+	// swap the creator into the last position in the array
+	// send the creator's join event last, so that any failure will be retired by the client
+	if len(userIds) < 1 {
+		return nil, RiverError(Err_BAD_STREAM_CREATION_PARAMS, "gdm channel requires 3+ users")
+	}
+	creatorUserId := userIds[0]
+	userIds = append(userIds[1:], creatorUserId)
+	// create derived events for each user
 	derivedEvents := make([]*DerivedEvent, 0, len(userIds))
 	for _, userId := range userIds {
 		userStreamId, err := shared.UserStreamIdFromId(userId)
