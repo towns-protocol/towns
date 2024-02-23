@@ -17,7 +17,7 @@ contract RiverRegistryHelper is FacetHelper {
   constructor() {
     registry = new RiverRegistry();
 
-    bytes4[] memory selectors_ = new bytes4[](16);
+    bytes4[] memory selectors_ = new bytes4[](19);
     selectors_[_index++] = RiverRegistry.approveOperator.selector;
     selectors_[_index++] = RiverRegistry.isOperator.selector;
     selectors_[_index++] = RiverRegistry.removeOperator.selector;
@@ -30,7 +30,10 @@ contract RiverRegistryHelper is FacetHelper {
     selectors_[_index++] = RiverRegistry.getAllNodes.selector;
     selectors_[_index++] = RiverRegistry.allocateStream.selector;
     selectors_[_index++] = RiverRegistry.getStream.selector;
+    selectors_[_index++] = RiverRegistry.getStreamWithGenesis.selector;
     selectors_[_index++] = RiverRegistry.setStreamLastMiniblock.selector;
+    selectors_[_index++] = RiverRegistry.placeStreamOnNode.selector;
+    selectors_[_index++] = RiverRegistry.removeStreamFromNode.selector;
     selectors_[_index++] = RiverRegistry.getStreamCount.selector;
     selectors_[_index++] = RiverRegistry.getAllStreamIds.selector;
     selectors_[_index++] = RiverRegistry.getAllStreams.selector;

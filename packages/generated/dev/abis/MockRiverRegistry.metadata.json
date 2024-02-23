@@ -256,6 +256,31 @@
         "type": "event"
       },
       {
+        "anonymous": false,
+        "inputs": [
+          {
+            "indexed": false,
+            "internalType": "bytes32",
+            "name": "streamId",
+            "type": "bytes32"
+          },
+          {
+            "indexed": false,
+            "internalType": "address",
+            "name": "nodeAddress",
+            "type": "address"
+          },
+          {
+            "indexed": false,
+            "internalType": "bool",
+            "name": "isAdded",
+            "type": "bool"
+          }
+        ],
+        "name": "StreamPlacementUpdated",
+        "type": "event"
+      },
+      {
         "inputs": [
           {
             "internalType": "address[]",
@@ -373,51 +398,48 @@
             "components": [
               {
                 "internalType": "bytes32",
-                "name": "streamId",
+                "name": "id",
                 "type": "bytes32"
               },
               {
-                "internalType": "bytes32",
-                "name": "genesisMiniblockHash",
-                "type": "bytes32"
-              },
-              {
-                "internalType": "bytes32",
-                "name": "lastMiniblockHash",
-                "type": "bytes32"
-              },
-              {
-                "internalType": "uint64",
-                "name": "lastMiniblockNum",
-                "type": "uint64"
-              },
-              {
-                "internalType": "uint64",
-                "name": "flags",
-                "type": "uint64"
-              },
-              {
-                "internalType": "uint64",
-                "name": "reserved0",
-                "type": "uint64"
-              },
-              {
-                "internalType": "uint64",
-                "name": "reserved1",
-                "type": "uint64"
-              },
-              {
-                "internalType": "address[]",
-                "name": "nodes",
-                "type": "address[]"
-              },
-              {
-                "internalType": "bytes",
-                "name": "genesisMiniblock",
-                "type": "bytes"
+                "components": [
+                  {
+                    "internalType": "bytes32",
+                    "name": "lastMiniblockHash",
+                    "type": "bytes32"
+                  },
+                  {
+                    "internalType": "uint64",
+                    "name": "lastMiniblockNum",
+                    "type": "uint64"
+                  },
+                  {
+                    "internalType": "uint64",
+                    "name": "flags",
+                    "type": "uint64"
+                  },
+                  {
+                    "internalType": "uint64",
+                    "name": "reserved0",
+                    "type": "uint64"
+                  },
+                  {
+                    "internalType": "uint64",
+                    "name": "reserved1",
+                    "type": "uint64"
+                  },
+                  {
+                    "internalType": "address[]",
+                    "name": "nodes",
+                    "type": "address[]"
+                  }
+                ],
+                "internalType": "struct IRiverRegistryBase.Stream",
+                "name": "stream",
+                "type": "tuple"
               }
             ],
-            "internalType": "struct IRiverRegistryBase.Stream[]",
+            "internalType": "struct IRiverRegistryBase.StreamWithId[]",
             "name": "",
             "type": "tuple[]"
           }
@@ -488,14 +510,68 @@
             "components": [
               {
                 "internalType": "bytes32",
-                "name": "streamId",
+                "name": "lastMiniblockHash",
                 "type": "bytes32"
               },
               {
-                "internalType": "bytes32",
-                "name": "genesisMiniblockHash",
-                "type": "bytes32"
+                "internalType": "uint64",
+                "name": "lastMiniblockNum",
+                "type": "uint64"
               },
+              {
+                "internalType": "uint64",
+                "name": "flags",
+                "type": "uint64"
+              },
+              {
+                "internalType": "uint64",
+                "name": "reserved0",
+                "type": "uint64"
+              },
+              {
+                "internalType": "uint64",
+                "name": "reserved1",
+                "type": "uint64"
+              },
+              {
+                "internalType": "address[]",
+                "name": "nodes",
+                "type": "address[]"
+              }
+            ],
+            "internalType": "struct IRiverRegistryBase.Stream",
+            "name": "",
+            "type": "tuple"
+          }
+        ],
+        "stateMutability": "view",
+        "type": "function"
+      },
+      {
+        "inputs": [],
+        "name": "getStreamCount",
+        "outputs": [
+          {
+            "internalType": "uint256",
+            "name": "",
+            "type": "uint256"
+          }
+        ],
+        "stateMutability": "view",
+        "type": "function"
+      },
+      {
+        "inputs": [
+          {
+            "internalType": "bytes32",
+            "name": "streamId",
+            "type": "bytes32"
+          }
+        ],
+        "name": "getStreamWithGenesis",
+        "outputs": [
+          {
+            "components": [
               {
                 "internalType": "bytes32",
                 "name": "lastMiniblockHash",
@@ -525,29 +601,21 @@
                 "internalType": "address[]",
                 "name": "nodes",
                 "type": "address[]"
-              },
-              {
-                "internalType": "bytes",
-                "name": "genesisMiniblock",
-                "type": "bytes"
               }
             ],
             "internalType": "struct IRiverRegistryBase.Stream",
             "name": "",
             "type": "tuple"
-          }
-        ],
-        "stateMutability": "view",
-        "type": "function"
-      },
-      {
-        "inputs": [],
-        "name": "getStreamCount",
-        "outputs": [
+          },
           {
-            "internalType": "uint256",
+            "internalType": "bytes32",
             "name": "",
-            "type": "uint256"
+            "type": "bytes32"
+          },
+          {
+            "internalType": "bytes",
+            "name": "",
+            "type": "bytes"
           }
         ],
         "stateMutability": "view",
@@ -570,6 +638,24 @@
           }
         ],
         "stateMutability": "view",
+        "type": "function"
+      },
+      {
+        "inputs": [
+          {
+            "internalType": "bytes32",
+            "name": "streamId",
+            "type": "bytes32"
+          },
+          {
+            "internalType": "address",
+            "name": "nodeAddress",
+            "type": "address"
+          }
+        ],
+        "name": "placeStreamOnNode",
+        "outputs": [],
+        "stateMutability": "nonpayable",
         "type": "function"
       },
       {
@@ -599,6 +685,24 @@
           }
         ],
         "name": "removeOperator",
+        "outputs": [],
+        "stateMutability": "nonpayable",
+        "type": "function"
+      },
+      {
+        "inputs": [
+          {
+            "internalType": "bytes32",
+            "name": "streamId",
+            "type": "bytes32"
+          },
+          {
+            "internalType": "address",
+            "name": "nodeAddress",
+            "type": "address"
+          }
+        ],
+        "name": "removeStreamFromNode",
         "outputs": [],
         "stateMutability": "nonpayable",
         "type": "function"
@@ -677,6 +781,11 @@
         },
         "getAllStreams()": {
           "details": "WARNING: This operation will copy the entire storage to memory, which can be quite expensive. This is designed to mostly be used by view accessors that are queried without any gas fees. Developers should keep in mind that this function has an unbounded cost, and using it as part of a state-changing function may render the function uncallable if the map grows to a point where copying to memory consumes too much gas to fit in a block."
+        },
+        "getStreamWithGenesis(bytes32)": {
+          "returns": {
+            "_0": "stream, genesisMiniblockHash, genesisMiniblock"
+          }
         }
       },
       "version": 1
@@ -816,27 +925,27 @@
       ]
     },
     "contracts/src/river/registry/IRiverRegistry.sol": {
-      "keccak256": "0x796d0397db98ca7390c98c70a5b6cc7ad304d1118626e65354ba40559309f2e8",
+      "keccak256": "0x01c842edf619f2164dc35ce21cb98811a70ce36cc23b3473cce19aa67d7b1196",
       "license": "Apache-2.0",
       "urls": [
-        "bzz-raw://006951a0bc2913bbf23e4a95f0dd4c6ff9f921bbd70cd924f40f0a069cfcf3cf",
-        "dweb:/ipfs/QmSssiat9ZLrg66WFazx5J9yeQiJRycEV3Rsc3psNH6Uft"
+        "bzz-raw://a20b30e4fa4fb13c8670ec4c9b654130d475f23ff7f3f4adb9d45bc2638fc34d",
+        "dweb:/ipfs/QmTn47JjjtKzXhw6asqjXwhCEVUo5E8qxkg3V98VP9u69a"
       ]
     },
     "contracts/src/river/registry/RiverRegistry.sol": {
-      "keccak256": "0x4ba5b955437886523df0f3ebf98b319e542402f3ee3da834d050e59a913440e2",
+      "keccak256": "0xa737b86907c626d481de67d30edcd19c74087f0da804942d0e079ab472466af9",
       "license": "MIT",
       "urls": [
-        "bzz-raw://59b15957630bd22cea992617efb3baaae9591227dd42db165ecb81b6bebd9d9a",
-        "dweb:/ipfs/QmQe4mVJk5aHw6UQpuSkExuuFb9rtbtp6bnbQbQu71thng"
+        "bzz-raw://d67dad2d4c25dc25815ff83d2b38036f31828efe3f5296fe1d8f37fe074ccfec",
+        "dweb:/ipfs/QmXorx8atsQVoAeAqGn5FHfdWwFG1CqvbuxY9Jq8u5w8Ca"
       ]
     },
     "contracts/src/river/registry/RiverRegistryStorage.sol": {
-      "keccak256": "0x52e3a8e1d09f35cd1622022c959dbdf69d17288b4b03f291262feb5d5c24f960",
+      "keccak256": "0xd2fc5437db58cd00b38b817bffd5e2703be4c2b6f9241f914df848fa7af35e08",
       "license": "Apache-2.0",
       "urls": [
-        "bzz-raw://61fb08fb01de37e4bb0dc97452d2818cf9af3a7cb3c73ffeb0bddb6dc71da2f3",
-        "dweb:/ipfs/QmXUW7uc8ik1m5gcF6yCsVjx4eVwgnZ9SijF5ZAbokoTfD"
+        "bzz-raw://74e757be655603f73c2de77eca6db2d2e881aefc1077d33b0ee41a5c47842c14",
+        "dweb:/ipfs/QmayjCKrVBP9DnPKgP1T5ZHuh4R1icVVw6Cu9E1kgukJgq"
       ]
     },
     "contracts/test/mocks/MockRiverRegistry.sol": {

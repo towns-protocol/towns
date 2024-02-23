@@ -178,19 +178,18 @@ contract RiverRegistry is IRiverRegistry, OwnableBase, Facet {
 
     // Add the stream to the registry
     Stream memory stream = Stream({
-      streamId: streamId,
-      genesisMiniblockHash: genesisMiniblockHash,
       lastMiniblockHash: genesisMiniblockHash,
       lastMiniblockNum: 0,
       flags: 0,
       reserved0: 0,
       reserved1: 0,
-      nodes: nodes,
-      genesisMiniblock: genesisMiniblock
+      nodes: nodes
     });
 
     ds.streams.add(streamId);
     ds.streamById[streamId] = stream;
+    ds.genesisMiniblockByStreamId[streamId] = genesisMiniblock;
+    ds.genesisMiniblockHashByStreamId[streamId] = genesisMiniblockHash;
 
     emit StreamAllocated(streamId, nodes, genesisMiniblockHash);
   }
@@ -202,6 +201,22 @@ contract RiverRegistry is IRiverRegistry, OwnableBase, Facet {
       revert(RiverRegistryErrors.StreamNotFound);
 
     return ds.streamById[streamId];
+  }
+
+  /// @return stream, genesisMiniblockHash, genesisMiniblock
+  function getStreamWithGenesis(
+    bytes32 streamId
+  ) external view returns (Stream memory, bytes32, bytes memory) {
+    RiverRegistryStorage.Layout storage ds = RiverRegistryStorage.layout();
+
+    if (!ds.streams.contains(streamId))
+      revert(RiverRegistryErrors.StreamNotFound);
+
+    return (
+      ds.streamById[streamId],
+      ds.genesisMiniblockHashByStreamId[streamId],
+      ds.genesisMiniblockByStreamId[streamId]
+    );
   }
 
   function setStreamLastMiniblock(
@@ -229,12 +244,71 @@ contract RiverRegistry is IRiverRegistry, OwnableBase, Facet {
     stream.lastMiniblockNum = lastMiniblockNum;
     if (isSealed) stream.flags |= STREAM_FLAG_SEALED;
 
+    // delete genesis miniblock bytes if stream is moving beyond genesis
+    if (lastMiniblockNum == 1) {
+      delete ds.genesisMiniblockByStreamId[streamId];
+    }
+
     emit StreamLastMiniblockUpdated(
-      stream.streamId,
+      streamId,
       lastMiniblockHash,
       lastMiniblockNum,
       isSealed
     );
+  }
+
+  function placeStreamOnNode(bytes32 streamId, address nodeAddress) external {
+    RiverRegistryStorage.Layout storage ds = RiverRegistryStorage.layout();
+
+    // validate that the streamId is in the registry
+    if (!ds.streams.contains(streamId))
+      revert(RiverRegistryErrors.StreamNotFound);
+
+    // validate that the node is in the registry
+    if (!ds.nodes.contains(nodeAddress))
+      revert(RiverRegistryErrors.NodeNotFound);
+
+    Stream storage stream = ds.streamById[streamId];
+
+    // validate that the node is not already on the stream
+    for (uint256 i = 0; i < stream.nodes.length; ++i) {
+      if (stream.nodes[i] == nodeAddress)
+        revert(RiverRegistryErrors.AlreadyExists);
+    }
+
+    stream.nodes.push(nodeAddress);
+
+    emit StreamPlacementUpdated(streamId, nodeAddress, true);
+  }
+
+  function removeStreamFromNode(
+    bytes32 streamId,
+    address nodeAddress
+  ) external {
+    RiverRegistryStorage.Layout storage ds = RiverRegistryStorage.layout();
+
+    // validate that the streamId is in the registry
+    if (!ds.streams.contains(streamId))
+      revert(RiverRegistryErrors.StreamNotFound);
+
+    // validate that the node is in the registry
+    if (!ds.nodes.contains(nodeAddress))
+      revert(RiverRegistryErrors.NodeNotFound);
+
+    Stream storage stream = ds.streamById[streamId];
+
+    bool found = false;
+    for (uint256 i = 0; i < stream.nodes.length; ++i) {
+      if (stream.nodes[i] == nodeAddress) {
+        stream.nodes[i] = stream.nodes[stream.nodes.length - 1];
+        stream.nodes.pop();
+        found = true;
+        break;
+      }
+    }
+    if (!found) revert(RiverRegistryErrors.NodeNotFound);
+
+    emit StreamPlacementUpdated(streamId, nodeAddress, false);
   }
 
   function getStreamCount() external view returns (uint256) {
@@ -246,13 +320,14 @@ contract RiverRegistry is IRiverRegistry, OwnableBase, Facet {
     return ds.streams.values();
   }
 
-  function getAllStreams() external view returns (Stream[] memory) {
+  function getAllStreams() external view returns (StreamWithId[] memory) {
     RiverRegistryStorage.Layout storage ds = RiverRegistryStorage.layout();
 
-    Stream[] memory streams = new Stream[](ds.streams.length());
+    StreamWithId[] memory streams = new StreamWithId[](ds.streams.length());
 
     for (uint256 i = 0; i < ds.streams.length(); ++i) {
-      streams[i] = ds.streamById[ds.streams.at(i)];
+      bytes32 id = ds.streams.at(i);
+      streams[i] = StreamWithId({id: id, stream: ds.streamById[id]});
     }
 
     return streams;

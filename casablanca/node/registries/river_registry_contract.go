@@ -14,6 +14,7 @@ import (
 	"github.com/river-build/river/crypto"
 
 	"github.com/ethereum/go-ethereum/accounts/abi/bind"
+	"github.com/ethereum/go-ethereum/common"
 	"github.com/ethereum/go-ethereum/core/types"
 )
 
@@ -100,28 +101,24 @@ func (sr *RiverRegistryContract) AllocateStream(
 }
 
 type GetStreamResult struct {
-	StreamId             string
-	Nodes                []string
-	GenesisMiniblockHash []byte
-	GenesisMiniblock     []byte
-	LastMiniblockHash    []byte
-	LastMiniblockNum     uint64
-	IsSealed             bool
+	StreamId          string
+	Nodes             []string
+	LastMiniblockHash []byte
+	LastMiniblockNum  uint64
+	IsSealed          bool
 }
 
-func getStreamResultFromContractStream(stream *contracts.IRiverRegistryBaseStream) (*GetStreamResult, error) {
-	id, err := StreamIdToString(stream.StreamId)
+func getStreamResultFromContractStream(streamId StreamId, stream *contracts.IRiverRegistryBaseStream) (*GetStreamResult, error) {
+	id, err := StreamIdToString(streamId)
 	if err != nil {
 		return nil, err
 	}
 	return &GetStreamResult{
-		StreamId:             id,
-		Nodes:                EthAddressesToAddressStrs(stream.Nodes),
-		GenesisMiniblockHash: stream.GenesisMiniblockHash[:],
-		GenesisMiniblock:     stream.GenesisMiniblock,
-		LastMiniblockHash:    stream.LastMiniblockHash[:],
-		LastMiniblockNum:     stream.LastMiniblockNum,
-		IsSealed:             stream.Flags&1 != 0, // TODO: constants for flags
+		StreamId:          id,
+		Nodes:             EthAddressesToAddressStrs(stream.Nodes),
+		LastMiniblockHash: stream.LastMiniblockHash[:],
+		LastMiniblockNum:  stream.LastMiniblockNum,
+		IsSealed:          stream.Flags&1 != 0, // TODO: constants for flags
 	}, nil
 }
 
@@ -134,7 +131,27 @@ func (sr *RiverRegistryContract) GetStream(ctx context.Context, streamId string)
 	if err != nil {
 		return nil, WrapRiverError(Err_CANNOT_CALL_CONTRACT, err).Func("GetStream").Message("Call failed")
 	}
-	return getStreamResultFromContractStream(&stream)
+	return getStreamResultFromContractStream(id, &stream)
+}
+
+// Returns stream, genesis miniblock hash, genesis miniblock, error
+func (sr *RiverRegistryContract) GetStreamWithGenesis(
+	ctx context.Context,
+	streamId string,
+) (*GetStreamResult, common.Hash, []byte, error) {
+	id, err := StreamIdFromString(streamId)
+	if err != nil {
+		return nil, common.Hash{}, nil, AsRiverError(err).Func("GetStreamWithGenesis")
+	}
+	stream, mbHash, mb, err := sr.Contract.GetStreamWithGenesis(sr.callOpts(ctx), id)
+	if err != nil {
+		return nil, common.Hash{}, nil, WrapRiverError(Err_CANNOT_CALL_CONTRACT, err).Func("GetStream").Message("Call failed")
+	}
+	ret, err := getStreamResultFromContractStream(id, &stream)
+	if err != nil {
+		return nil, common.Hash{}, nil, err
+	}
+	return ret, mbHash, mb, nil
 }
 
 func (sr *RiverRegistryContract) GetStreamCount(ctx context.Context) (int64, error) {
@@ -163,7 +180,7 @@ func (sr *RiverRegistryContract) GetAllStreams(ctx context.Context, blockNum uin
 	}
 	ret := make([]*GetStreamResult, len(streams))
 	for i, stream := range streams {
-		ret[i], err = getStreamResultFromContractStream(&stream)
+		ret[i], err = getStreamResultFromContractStream(stream.Id, &stream.Stream)
 		if err != nil {
 			return nil, err
 		}

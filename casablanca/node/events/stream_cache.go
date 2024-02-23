@@ -83,7 +83,7 @@ func (s *streamCacheImpl) tryLoadStreamRecord(ctx context.Context, streamId stri
 	// Blockchain record is already created, but this fact is not reflected yet in local storage.
 	// This may happen if somebody observes record allocation on blockchain and tries to get stream
 	// while local storage is being initialized.
-	record, err := s.params.Registry.GetStream(ctx, streamId)
+	record, _, mb, err := s.params.Registry.GetStreamWithGenesis(ctx, streamId)
 	if err != nil {
 		return nil, nil, err
 	}
@@ -102,6 +102,11 @@ func (s *streamCacheImpl) tryLoadStreamRecord(ctx context.Context, streamId stri
 		)
 	}
 
+	if record.LastMiniblockNum > 0 {
+		// TODO: reconcile from other nodes.
+		return nil, nil, RiverError(Err_INTERNAL, "Stream is past genesis", "streamId", streamId)
+	}
+
 	stream := &streamImpl{
 		params:   s.params,
 		streamId: streamId,
@@ -115,7 +120,7 @@ func (s *streamCacheImpl) tryLoadStreamRecord(ctx context.Context, streamId stri
 	entry, loaded := s.cache.LoadOrStore(streamId, stream)
 	if !loaded {
 		// Our stream won the race, put into storage.
-		err := s.params.Storage.CreateStreamStorage(ctx, streamId, record.GenesisMiniblock)
+		err := s.params.Storage.CreateStreamStorage(ctx, streamId, mb)
 		if err != nil {
 			if AsRiverError(err).Code == Err_ALREADY_EXISTS {
 				// Attempt to load stream from storage. Might as well do it while under lock.
@@ -130,7 +135,7 @@ func (s *streamCacheImpl) tryLoadStreamRecord(ctx context.Context, streamId stri
 		// Successfully put data into storage, init stream view.
 		view, err := MakeStreamView(&storage.ReadStreamFromLastSnapshotResult{
 			StartMiniblockNumber: 0,
-			Miniblocks:           [][]byte{record.GenesisMiniblock},
+			Miniblocks:           [][]byte{mb},
 		})
 		if err != nil {
 			return nil, nil, err

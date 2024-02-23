@@ -3,15 +3,17 @@ pragma solidity ^0.8.23;
 
 interface IRiverRegistryBase {
   struct Stream {
-    bytes32 streamId;
-    bytes32 genesisMiniblockHash;
     bytes32 lastMiniblockHash;
     uint64 lastMiniblockNum; // | Packed into single storage slot
     uint64 flags; //            |
     uint64 reserved0; //        |
     uint64 reserved1; //        |
     address[] nodes;
-    bytes genesisMiniblock; // In the future, we'll optimize this away.
+  }
+
+  struct StreamWithId {
+    bytes32 id;
+    Stream stream;
   }
 
   enum NodeStatus {
@@ -57,6 +59,12 @@ interface IRiverRegistryBase {
     uint64 lastMiniblockNum,
     bool isSealed
   );
+
+  event StreamPlacementUpdated(
+    bytes32 streamId,
+    address nodeAddress,
+    bool isAdded
+  );
 }
 
 // TODO: toplevel or library?
@@ -79,6 +87,9 @@ library RiverRegistryErrors {
 }
 
 interface IRiverRegistry is IRiverRegistryBase {
+  // =============================================================
+  //                           Streams
+  // =============================================================
   function allocateStream(
     bytes32 streamId,
     address[] memory nodes,
@@ -88,12 +99,21 @@ interface IRiverRegistry is IRiverRegistryBase {
 
   function getStream(bytes32 streamId) external view returns (Stream memory);
 
+  /// @return stream, genesisMiniblockHash, genesisMiniblock
+  function getStreamWithGenesis(
+    bytes32 streamId
+  ) external view returns (Stream memory, bytes32, bytes memory);
+
   function setStreamLastMiniblock(
     bytes32 streamId,
     bytes32 lastMiniblockHash,
     uint64 lastMiniblockNum,
     bool isSealed
   ) external;
+
+  function placeStreamOnNode(bytes32 streamId, address nodeAddress) external;
+
+  function removeStreamFromNode(bytes32 streamId, address nodeAddress) external;
 
   function getStreamCount() external view returns (uint256);
 
@@ -113,8 +133,11 @@ interface IRiverRegistry is IRiverRegistryBase {
    * this function has an unbounded cost, and using it as part of a state-changing function may render the function
    * uncallable if the map grows to a point where copying to memory consumes too much gas to fit in a block.
    */
-  function getAllStreams() external view returns (Stream[] memory);
+  function getAllStreams() external view returns (StreamWithId[] memory);
 
+  // =============================================================
+  //                           Nodes
+  // =============================================================
   function registerNode(address nodeAddress, string memory url) external;
 
   function getNode(address nodeAddress) external view returns (Node memory);

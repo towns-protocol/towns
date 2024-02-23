@@ -220,7 +220,7 @@ func (s *streamImpl) MakeMiniblock(ctx context.Context, forceSnapshot bool) (boo
 }
 
 func (s *streamImpl) initFromBlockchain(ctx context.Context) error {
-	record, err := s.params.Registry.GetStream(ctx, s.streamId)
+	record, _, mb, err := s.params.Registry.GetStreamWithGenesis(ctx, s.streamId)
 	if err != nil {
 		return err
 	}
@@ -237,17 +237,19 @@ func (s *streamImpl) initFromBlockchain(ctx context.Context) error {
 	}
 	s.nodes = nodes
 
-	err = s.params.Storage.CreateStreamStorage(ctx, s.streamId, record.GenesisMiniblock)
+	if record.LastMiniblockNum > 0 {
+		return RiverError(Err_INTERNAL, "Stream is past genesis", "streamId", s.streamId)
+	}
+
+	err = s.params.Storage.CreateStreamStorage(ctx, s.streamId, mb)
 	if err != nil {
 		return err
 	}
 
-	// TODO: also there needs to be catch for streams that are already beyond genesis block.
-
 	// Successfully put data into storage, init stream view.
 	view, err := MakeStreamView(&storage.ReadStreamFromLastSnapshotResult{
 		StartMiniblockNumber: 0,
-		Miniblocks:           [][]byte{record.GenesisMiniblock},
+		Miniblocks:           [][]byte{mb},
 	})
 	if err != nil {
 		return err

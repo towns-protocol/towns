@@ -2,8 +2,6 @@ package nodes
 
 import (
 	"context"
-
-	. "github.com/river-build/river/base"
 )
 
 // Temp implementation that hashed the streamId and returns the node that is responsible for it.
@@ -23,9 +21,9 @@ func NewFakeStreamRegistry(localNodeAddress string, nodeRegistry NodeRegistry, r
 	}
 }
 
-func (sr *fakeStreamRegistryImpl) GetStreamInfo(ctx context.Context, streamId string) (*StreamNodes, []byte, error) {
+func (sr *fakeStreamRegistryImpl) GetStreamInfo(ctx context.Context, streamId string) (*StreamNodes, error) {
 	nodes, err := chooseStreamNodes(ctx, streamId, sr.nodeRegistry, sr.replFactor)
-	return NewStreamNodes(nodes, sr.localNodeAddress), ZeroHashBytes, err
+	return NewStreamNodes(nodes, sr.localNodeAddress), err
 }
 
 func (sr *fakeStreamRegistryImpl) AllocateStream(

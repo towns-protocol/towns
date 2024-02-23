@@ -110,12 +110,11 @@ func TestBlockchain(t *testing.T) {
 	_, err = WaitMined(ctx, bc1.Client, tx1.Hash(), time.Millisecond, time.Second*10)
 	require.NoError(err)
 
-	stream, err := tc.RiverRegistry.GetStream(nil, streamId)
+	stream, mbHash, mb, err := tc.RiverRegistry.GetStreamWithGenesis(nil, streamId)
 	require.NoError(err)
-	assert.Equal([32]byte(streamId), stream.StreamId)
 	assert.Equal(addrs, stream.Nodes)
-	assert.Equal(genesisHash, common.Hash(stream.GenesisMiniblockHash))
-	assert.Equal(genesisMiniblock, stream.GenesisMiniblock)
+	assert.Equal(genesisHash, common.Hash(mbHash))
+	assert.Equal(genesisMiniblock, mb)
 	assert.Equal(genesisHash, common.Hash(stream.LastMiniblockHash))
 	assert.Equal(uint64(0), stream.LastMiniblockNum)
 

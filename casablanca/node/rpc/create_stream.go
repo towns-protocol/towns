@@ -75,7 +75,7 @@ func (s *Service) createStream(ctx context.Context, req *CreateStreamRequest) (*
 		if err != nil {
 			return nil, RiverError(Err_PERMISSION_DENIED, "invalid user id", "requiredUserId", userId)
 		}
-		_, _, err = s.streamRegistry.GetStreamInfo(ctx, userStreamId)
+		_, err = s.streamRegistry.GetStreamInfo(ctx, userStreamId)
 		if err != nil {
 			return nil, RiverError(Err_PERMISSION_DENIED, "user does not exist", "requiredUserId", userId)
 		}

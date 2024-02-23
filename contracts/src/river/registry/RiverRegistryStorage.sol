@@ -13,10 +13,14 @@ library RiverRegistryStorage {
   bytes32 public constant STORAGE_SLOT = keccak256("river.registry.storage");
 
   struct Layout {
-    // Hashes of all streamIds in the system
+    // Ids of all streams in the system
     EnumerableSet.Bytes32Set streams;
-    // Map of hash of streamId to stream struct
+    // Map of streamId to stream struct
     mapping(bytes32 => IRiverRegistryBase.Stream) streamById;
+    // Map of streamId to genesis miniblock bytes, only set if stream's miniblock num is 0
+    mapping(bytes32 => bytes) genesisMiniblockByStreamId;
+    // Mapf of streamId to genesis miniblock hash
+    mapping(bytes32 => bytes32) genesisMiniblockHashByStreamId;
     // Set of addresses of all nodes in the system
     EnumerableSet.AddressSet nodes;
     // Map of node address to node struct
