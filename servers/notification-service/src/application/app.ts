@@ -1,5 +1,6 @@
 import express from 'express'
 import helmet from 'helmet'
+import morgan from 'morgan'
 import 'express-async-errors'
 
 import { cors } from './middleware/cors'
@@ -10,8 +11,10 @@ import { routes } from './routes/routes'
 
 export async function initializeApp() {
     const app = express()
+    const isProduction = process.env.NODE_ENV === 'production'
 
     // Middlewares
+    app.use(morgan(isProduction ? 'combined' : 'dev'))
     app.use(cors)
     app.use(helmet())
     app.use(express.json())
