@@ -7,6 +7,7 @@ import {
     useMyUserId,
     useRoom,
     useStreamUpToDate,
+    useZionContext,
 } from 'use-zion-client'
 import { AnimatePresence } from 'framer-motion'
 import { ChannelUsersPill } from '@components/ChannelUserPill/ChannelUserPill'
@@ -31,11 +32,18 @@ type Props = {
 
 export const ChannelHeader = (props: Props) => {
     const { isTouch } = useDevice()
-    return isTouch ? <TouchChannelHeader {...props} /> : <DesktopChannelHeader {...props} />
+    const { upToDate } = useStreamUpToDate(props.channel.id)
+    const { clientStatus } = useZionContext()
+    const showLoadingIndicator = !upToDate || !clientStatus.streamSyncActive
+    return isTouch ? (
+        <TouchChannelHeader {...props} showLoadingIndicator={showLoadingIndicator} />
+    ) : (
+        <DesktopChannelHeader {...props} showLoadingIndicator={showLoadingIndicator} />
+    )
 }
 
-const DesktopChannelHeader = (props: Props) => {
-    const { channel, spaceId } = props
+const DesktopChannelHeader = (props: Props & { showLoadingIndicator: boolean }) => {
+    const { channel, spaceId, showLoadingIndicator } = props
     const { displayNotificationBanner, requestPushPermission, denyPushPermission } =
         usePushNotifications()
     const topic = useRoom(channel.id)?.topic
@@ -47,7 +55,6 @@ const DesktopChannelHeader = (props: Props) => {
     const isMuted = channelIsMuted || spaceIsMuted
     const channelType = useChannelType(channel.id)
     const onInfoPressed = useChannelInfoButton(channelType)
-    const { upToDate } = useStreamUpToDate(channel.id)
 
     return (
         <Stack gap>
@@ -119,7 +126,9 @@ const DesktopChannelHeader = (props: Props) => {
                         <ChannelUsersPill channelId={channel.id} spaceId={spaceId} />
                     )}
                 </Stack>
-                <AnimatePresence>{!upToDate && <AnimatedLoaderGradient />}</AnimatePresence>
+                <AnimatePresence>
+                    {showLoadingIndicator && <AnimatedLoaderGradient />}
+                </AnimatePresence>
             </Stack>
         </Stack>
     )
@@ -161,8 +170,8 @@ const GDMTitleContent = (props: { roomIdentifier: string }) => {
     )
 }
 
-const TouchChannelHeader = (props: Props) => {
-    const { channel, onTouchClose } = props
+const TouchChannelHeader = (props: Props & { showLoadingIndicator: boolean }) => {
+    const { channel, onTouchClose, showLoadingIndicator } = props
     const spaceId = useSpaceIdFromPathname()
     const { memberIds } = useChannelMembers()
     const { displayNotificationBanner, requestPushPermission, denyPushPermission } =
@@ -174,14 +183,13 @@ const TouchChannelHeader = (props: Props) => {
     })
 
     const isMuted = channelIsMuted || spaceIsMuted
-    const { upToDate } = useStreamUpToDate(channel.id)
     const infoButtonPressed = useChannelInfoButton(channelType)
 
     return (
         <Stack gap="sm">
             <TouchNavBar
                 extraHeight
-                showLoadingIndicator={!upToDate}
+                showLoadingIndicator={showLoadingIndicator}
                 contentLeft={
                     <IconButton
                         icon="back"
