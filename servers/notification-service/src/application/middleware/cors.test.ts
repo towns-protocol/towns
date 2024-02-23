@@ -2,13 +2,14 @@ import { Environment } from 'worker-common/src/environment'
 import { isAllowedOrigin } from './cors'
 
 const PRODUCTION_ENVS: Environment[] = ['production', 'staging', 'staging-beta', 'production-beta']
-const DEVELOPMENT_ENVS: Environment[] = ['development', 'test-beta', 'test']
+const DEVELOPMENT_ENVS: Environment[] = ['development', 'test-beta']
 
 describe('isAllowedOrigin', () => {
     test('should return true for allowed origins in development environments', () => {
         const allowedOrigins = [
             'https://app-test.towns.com',
             'https://app-test-beta.towns.com',
+            'https://app.gamma.towns.com',
             'https://harmony-web-pr-*.onrender.com',
             'http://localhost:3000',
             'http://localhost:3002', // local app prod builds
@@ -17,6 +18,7 @@ describe('isAllowedOrigin', () => {
             'https://push-notification-worker-test.johnhntlabs.workers.dev',
             'https://push-notification-worker-test-beta.towns.com',
             'https://river1-test-beta.towns.com',
+            'https://*.nodes.gamma.towns.com',
             'https://test-harmony-web-pr-*.onrender.com',
         ]
 
@@ -35,7 +37,7 @@ describe('isAllowedOrigin', () => {
             'https://app-staging-beta.towns.com',
             'https://harmony-web-pr-*.onrender.com',
             'https://river1-staging.towns.com',
-            'https://towns.com',
+            'https://app.gamma.towns.com',
         ]
 
         allowedOrigins.forEach((origin) => {

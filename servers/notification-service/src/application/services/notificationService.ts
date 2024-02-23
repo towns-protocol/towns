@@ -1,5 +1,4 @@
-import { Mute, NotificationTag, Prisma, PushSubscription } from '@prisma/client'
-import { database } from '../../infrastructure/database/prisma'
+import { NotificationTag, Prisma, PushSubscription } from '@prisma/client'
 import {
     NotificationContentDmSchema,
     NotificationContentMessageSchema,
@@ -11,6 +10,7 @@ import { NotificationKind } from '../schema/tagSchema'
 import { sendNotificationViaWebPush } from './web-push/send-notification'
 import { SendPushResponse, SendPushStatus } from './web-push/web-push-types'
 import { PushType } from '../schema/subscriptionSchema'
+import { UserSettingsTables } from '../utils/userSettingsTables'
 
 export class NotificationService {
     constructor() {}
@@ -29,7 +29,7 @@ export class NotificationService {
         if (!isDMorGDM) {
             mutedUsersInChannel = new Set(
                 (
-                    await this.getMutedUsersInChannel(
+                    await UserSettingsTables.getUserMutedInChannel(
                         notificationData.users,
                         (notificationContent as NotificationContentMessageSchema).spaceId,
                         channelId,
@@ -52,7 +52,7 @@ export class NotificationService {
         let mutedMentionUsers = new Set()
         if (metionUsersTagged.size > 0) {
             mutedMentionUsers = new Set(
-                (await this.getMutedMentionUsers(notificationData.users)).map(
+                (await UserSettingsTables.getUserMutedInMention(notificationData.users)).map(
                     (user) => user.UserId,
                 ),
             )
@@ -61,7 +61,7 @@ export class NotificationService {
         let mutedReplyToUsers = new Set()
         if (replyToUsersTagged.size > 0) {
             mutedReplyToUsers = new Set(
-                (await this.getMutedReplyToUsers(notificationData.users)).map(
+                (await UserSettingsTables.getUserMutedInReplyTo(notificationData.users)).map(
                     (user) => user.UserId,
                 ),
             )
@@ -70,7 +70,7 @@ export class NotificationService {
         let mutedDMUsers = new Set()
         if (isDMorGDM) {
             mutedDMUsers = new Set(
-                (await this.getMutedDirectMessageUsers(notificationData.users)).map(
+                (await UserSettingsTables.getUserMutedInDirectMessage(notificationData.users)).map(
                     (user) => user.UserId,
                 ),
             )
@@ -206,60 +206,6 @@ export class NotificationService {
         } catch (err) {
             console.error('failed to delete subscription from the db', err)
         }
-    }
-
-    public async getMutedDirectMessageUsers(users: string[]): Promise<{ UserId: string }[]> {
-        return await database.userSettings.findMany({
-            where: {
-                DirectMessage: false,
-                UserId: { in: users },
-            },
-            select: {
-                UserId: true,
-            },
-        })
-    }
-
-    public async getMutedUsersInChannel(
-        users: string[],
-        spaceId: string,
-        channelId: string,
-    ): Promise<{ UserId: string }[]> {
-        return await database.userSettingsChannel.findMany({
-            where: {
-                SpaceId: spaceId,
-                ChannelId: channelId,
-                ChannelMute: Mute.muted,
-                UserId: { in: users },
-            },
-            select: {
-                UserId: true,
-            },
-        })
-    }
-
-    public async getMutedMentionUsers(users: string[]): Promise<{ UserId: string }[]> {
-        return await database.userSettings.findMany({
-            where: {
-                Mention: false,
-                UserId: { in: users },
-            },
-            select: {
-                UserId: true,
-            },
-        })
-    }
-
-    public async getMutedReplyToUsers(users: string[]): Promise<{ UserId: string }[]> {
-        return await database.userSettings.findMany({
-            where: {
-                ReplyTo: false,
-                UserId: { in: users },
-            },
-            select: {
-                UserId: true,
-            },
-        })
     }
 }
 

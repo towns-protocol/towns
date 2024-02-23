@@ -5,6 +5,7 @@ import { NotifyUsersSchema } from '../schema/notificationSchema'
 import { NotificationKind } from '../schema/tagSchema'
 import { Prisma, PushSubscription } from '@prisma/client'
 import { sendNotificationViaWebPush } from './web-push/send-notification'
+import { UserSettingsTables } from '../utils/userSettingsTables'
 
 jest.mock('../../infrastructure/database/prisma', () => ({
     database: {
@@ -34,13 +35,14 @@ describe('NotificationService', () => {
 
     beforeEach(() => {
         notificationService = new NotificationService()
-        getMutedMentionUsersMock = jest.spyOn(notificationService, 'getMutedMentionUsers')
-        getMutedReplyToUsersMock = jest.spyOn(notificationService, 'getMutedReplyToUsers')
+
+        getMutedMentionUsersMock = jest.spyOn(UserSettingsTables, 'getUserMutedInMention')
+        getMutedReplyToUsersMock = jest.spyOn(UserSettingsTables, 'getUserMutedInReplyTo')
         getMutedDirectMessageUsersMock = jest.spyOn(
-            notificationService,
-            'getMutedDirectMessageUsers',
+            UserSettingsTables,
+            'getUserMutedInDirectMessage',
         )
-        getMutedUsersInChannelMock = jest.spyOn(notificationService, 'getMutedUsersInChannel')
+        getMutedUsersInChannelMock = jest.spyOn(UserSettingsTables, 'getUserMutedInChannel')
 
         getMutedMentionUsersMock.mockResolvedValue([])
         getMutedReplyToUsersMock.mockResolvedValue([])
