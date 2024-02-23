@@ -4,7 +4,7 @@
 
 import { makeTestClient } from './util.test'
 import { Client } from './client'
-import { genId, makeChannelStreamId, makeDMStreamId, makeSpaceStreamId } from './id'
+import { makeUniqueChannelStreamId, makeDMStreamId, makeUniqueSpaceStreamId } from './id'
 
 describe('mediaTests', () => {
     let bobsClient: Client
@@ -22,10 +22,10 @@ describe('mediaTests', () => {
     async function bobCreateMediaStream(
         chunkCount: number,
     ): Promise<{ streamId: string; prevMiniblockHash: Uint8Array }> {
-        const spaceId = makeSpaceStreamId('bobs-space-' + genId())
+        const spaceId = makeUniqueSpaceStreamId()
         await expect(bobsClient.createSpace(spaceId)).toResolve()
 
-        const channelId = makeChannelStreamId('bobs-channel-' + genId())
+        const channelId = makeUniqueChannelStreamId()
         await expect(bobsClient.createChannel(spaceId, 'Channel', 'Topic', channelId)).toResolve()
 
         return await bobsClient.createMediaStream(channelId, spaceId, chunkCount)
@@ -96,8 +96,8 @@ describe('mediaTests', () => {
     })
 
     test('channelNeedsToExistBeforeCreatingMediaStream', async () => {
-        const nonExistentSpaceId = makeSpaceStreamId(genId())
-        const nonExistentChannelId = makeChannelStreamId(genId())
+        const nonExistentSpaceId = makeUniqueSpaceStreamId()
+        const nonExistentChannelId = makeUniqueChannelStreamId()
         await expect(
             bobsClient.createMediaStream(nonExistentChannelId, nonExistentSpaceId, 10),
         ).toReject()

@@ -187,7 +187,7 @@ describe('syncStreams', () => {
 //             streamId: bobsUserStreamId,
 //         })
 //         // alice creates a space
-//         const spaceId = makeSpaceStreamId('alices-space-' + genId())
+//         const spaceId = makeUniqueSpaceStreamId()
 //         const inceptionEvent = await makeEvent(
 //             alicesContext,
 //             make_SpacePayload_Inception({
@@ -206,7 +206,7 @@ describe('syncStreams', () => {
 //             streamId: spaceId,
 //         })
 //         // alice creates a channel
-//         const channelId = makeChannelStreamId('alices-channel-' + genId())
+//         const channelId = makeUniqueChannelStreamId()
 //         const channelProperties = 'Alices channel properties'
 //         const channelInceptionEvent = await makeEvent(
 //             alicesContext,
@@ -318,7 +318,7 @@ describe('syncStreams', () => {
 //             streamId: bobsUserStreamId,
 //         })
 //         // alice creates a space
-//         const spaceId = makeSpaceStreamId('alices-space-' + genId())
+//         const spaceId = makeUniqueSpaceStreamId()
 //         const inceptionEvent = await makeEvent(
 //             alicesContext,
 //             make_SpacePayload_Inception({
@@ -337,7 +337,7 @@ describe('syncStreams', () => {
 //             streamId: spaceId,
 //         })
 //         // alice creates a channel
-//         const channelId = makeChannelStreamId('alices-channel-' + genId())
+//         const channelId = makeUniqueChannelStreamId()
 //         const channelProperties = 'Alices channel properties'
 //         const channelInceptionEvent = await makeEvent(
 //             alicesContext,

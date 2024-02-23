@@ -15,9 +15,8 @@ import {
     waitForSyncStreams,
 } from './util.test'
 import {
-    genId,
-    makeChannelStreamId,
-    makeSpaceStreamId,
+    makeUniqueChannelStreamId,
+    makeUniqueSpaceStreamId,
     makeUserStreamId,
     userIdFromAddress,
 } from './id'
@@ -79,7 +78,7 @@ describe('streamRpcClient using v2 sync', () => {
             streamId: alicesUserStreamId,
         })
         // alice creates a space
-        const spaceId = makeSpaceStreamId('alices-space-' + genId())
+        const spaceId = makeUniqueSpaceStreamId()
         const inceptionEvent = await makeEvent(
             alicesContext,
             make_SpacePayload_Inception({
@@ -99,7 +98,7 @@ describe('streamRpcClient using v2 sync', () => {
             streamId: spaceId,
         })
         // alice creates a channel
-        const channelId = makeChannelStreamId('alices-channel-' + genId())
+        const channelId = makeUniqueChannelStreamId()
         const channelProperties = 'Alices channel properties'
         const channelInceptionEvent = await makeEvent(
             alicesContext,
@@ -176,7 +175,7 @@ describe('streamRpcClient using v2 sync', () => {
             streamId: bobsUserStreamId,
         })
         // alice creates a space
-        const spaceId = makeSpaceStreamId('alices-space-' + genId())
+        const spaceId = makeUniqueSpaceStreamId()
         const inceptionEvent = await makeEvent(
             alicesContext,
             make_SpacePayload_Inception({
@@ -196,7 +195,7 @@ describe('streamRpcClient using v2 sync', () => {
             streamId: spaceId,
         })
         // alice creates a channel
-        const channelId = makeChannelStreamId('alices-channel-' + genId())
+        const channelId = makeUniqueChannelStreamId()
         const channelProperties = 'Alices channel properties'
         const channelInceptionEvent = await makeEvent(
             alicesContext,
@@ -448,7 +447,7 @@ describe('streamRpcClient', () => {
         })
 
         // Bob creates space
-        const spaceId = makeSpaceStreamId('bobs-space-' + genId())
+        const spaceId = makeUniqueSpaceStreamId()
         const inceptionEvent = await makeEvent(
             bobsContext,
             make_SpacePayload_Inception({
@@ -469,7 +468,7 @@ describe('streamRpcClient', () => {
         })
 
         // Bob creates channel
-        const channelId = makeChannelStreamId('bobs-channel-' + genId())
+        const channelId = makeUniqueChannelStreamId()
         const channelProperties = 'Bobs channel properties'
 
         const channelInceptionEvent = await makeEvent(
@@ -665,7 +664,7 @@ describe('streamRpcClient', () => {
         log('Bob created user, about to create space')
 
         // Bob creates space and channel
-        const spacedStreamId = makeSpaceStreamId('bobs-space-' + genId())
+        const spacedStreamId = makeUniqueSpaceStreamId()
         const spaceEvents = await makeEvents(bobsContext, [
             make_SpacePayload_Inception({
                 streamId: spacedStreamId,
@@ -682,7 +681,7 @@ describe('streamRpcClient', () => {
         })
         log('Bob created space, about to create channel')
 
-        const channelId = makeChannelStreamId('bobs-channel-' + genId())
+        const channelId = makeUniqueChannelStreamId()
         const channelProperties = 'Bobs channel properties'
 
         const channelEvents = await makeEvents(bobsContext, [
@@ -705,7 +704,7 @@ describe('streamRpcClient', () => {
         log('Bob created channel')
 
         log('Bob fails to create channel with badly chained initial events, hash empty')
-        const channelId2 = makeChannelStreamId('bobs-channel2-' + genId())
+        const channelId2 = makeUniqueChannelStreamId()
         const channelProperties2 = 'Bobs channel properties 2'
         const channelEvent2_0 = await makeEvent(
             bobsContext,
@@ -795,7 +794,7 @@ describe('streamRpcClient', () => {
         log('Bob created user, about to create space')
 
         // Bob creates space and channel
-        const spacedStreamId = makeSpaceStreamId('bobs-space-' + genId())
+        const spacedStreamId = makeUniqueSpaceStreamId()
         const spaceEvents = await makeEvents(bobsContext, [
             make_SpacePayload_Inception({
                 streamId: spacedStreamId,
@@ -812,7 +811,7 @@ describe('streamRpcClient', () => {
         })
         log('Bob created space, about to create channel')
 
-        const channelId = makeChannelStreamId('bobs-channel-' + genId())
+        const channelId = makeUniqueChannelStreamId()
         const channelProperties = 'Bobs channel properties'
 
         const channelEvents = await makeEvents(bobsContext, [

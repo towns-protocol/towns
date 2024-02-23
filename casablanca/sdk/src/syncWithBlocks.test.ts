@@ -4,9 +4,8 @@
 import { MembershipOp, StreamAndCookie, SyncOp } from '@river/proto'
 import { dlog } from '@river/dlog'
 import {
-    genId,
-    makeChannelStreamId,
-    makeSpaceStreamId,
+    makeUniqueChannelStreamId,
+    makeUniqueSpaceStreamId,
     makeUserStreamId,
     userIdFromAddress,
 } from './id'
@@ -59,7 +58,7 @@ describe('syncWithBlocks', () => {
         log('Bob created user, about to create space')
 
         // Bob creates space and channel
-        const spacedStreamId = makeSpaceStreamId('bobs-space-' + genId())
+        const spacedStreamId = makeUniqueSpaceStreamId()
         const spaceInceptionEvent = await makeEvent(
             bobsContext,
             make_SpacePayload_Inception({
@@ -81,7 +80,7 @@ describe('syncWithBlocks', () => {
             streamId: spacedStreamId,
         })
 
-        const channelId = makeChannelStreamId('bobs-channel-' + genId())
+        const channelId = makeUniqueChannelStreamId()
         const channelProperties = 'Bobs channel properties'
 
         const channelInceptionEvent = await makeEvent(

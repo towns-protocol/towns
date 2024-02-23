@@ -26,12 +26,6 @@ func (e *ParsedEvent) GetEnvelopeBytes() ([]byte, error) {
 	return proto.Marshal(e.Envelope)
 }
 
-type FullEvent struct {
-	StreamId    string
-	SeqNum      int64
-	ParsedEvent *ParsedEvent
-}
-
 func ParseEvent(envelope *Envelope) (*ParsedEvent, error) {
 	hash := TownsHash(envelope.Event)
 	if !bytes.Equal(hash, envelope.Hash) {

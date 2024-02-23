@@ -5,8 +5,8 @@ import (
 	"context"
 	"fmt"
 	"log/slog"
-	"strings"
 
+	"github.com/ethereum/go-ethereum/common"
 	"github.com/river-build/river/auth"
 	. "github.com/river-build/river/base"
 	"github.com/river-build/river/config"
@@ -163,7 +163,7 @@ func (params *csParams) canCreateStream() ruleBuilderCS {
 		}
 		return builder.
 			check(
-				ru.params.streamIdHasPrefix(shared.STREAM_SPACE_PREFIX_DASH),
+				ru.params.streamIdFormatIsValid(shared.STREAM_SPACE_PREFIX),
 				ru.params.eventCountMatches(2),
 				ru.validateSpaceJoinEvent,
 			).
@@ -178,7 +178,7 @@ func (params *csParams) canCreateStream() ruleBuilderCS {
 		}
 		return builder.
 			check(
-				ru.params.streamIdHasPrefix(shared.STREAM_CHANNEL_PREFIX_DASH),
+				ru.params.streamIdFormatIsValid(shared.STREAM_CHANNEL_PREFIX),
 				ru.params.eventCountMatches(2),
 				ru.validateChannelJoinEvent,
 			).
@@ -199,7 +199,7 @@ func (params *csParams) canCreateStream() ruleBuilderCS {
 		}
 		return builder.
 			check(
-				ru.params.streamIdHasPrefix(shared.STREAM_MEDIA_PREFIX_DASH),
+				ru.params.streamIdFormatIsValid(shared.STREAM_MEDIA_PREFIX),
 				ru.params.eventCountMatches(1),
 				ru.checkMediaInceptionPayload,
 			).
@@ -216,7 +216,7 @@ func (params *csParams) canCreateStream() ruleBuilderCS {
 		}
 		return builder.
 			check(
-				ru.params.streamIdHasPrefix(shared.STREAM_DM_CHANNEL_PREFIX_DASH),
+				ru.params.streamIdFormatIsValid(shared.STREAM_DM_CHANNEL_PREFIX),
 				ru.params.eventCountMatches(3),
 				ru.checkDMInceptionPayload,
 			).
@@ -231,7 +231,7 @@ func (params *csParams) canCreateStream() ruleBuilderCS {
 		}
 		return builder.
 			check(
-				ru.params.streamIdHasPrefix(shared.STREAM_GDM_CHANNEL_PREFIX_DASH),
+				ru.params.streamIdFormatIsValid(shared.STREAM_GDM_CHANNEL_PREFIX),
 				ru.params.eventCountGreaterThanOrEqualTo(4),
 				ru.checkGDMPayloads,
 			).
@@ -246,7 +246,7 @@ func (params *csParams) canCreateStream() ruleBuilderCS {
 		}
 		return builder.
 			check(
-				ru.params.streamIdHasPrefix(shared.STREAM_USER_PREFIX_DASH),
+				ru.params.streamIdFormatIsValid(shared.STREAM_USER_PREFIX),
 				ru.params.eventCountMatches(1),
 				ru.params.isUserStreamId,
 			)
@@ -259,7 +259,7 @@ func (params *csParams) canCreateStream() ruleBuilderCS {
 		}
 		return builder.
 			check(
-				ru.params.streamIdHasPrefix(shared.STREAM_USER_DEVICE_KEY_PREFIX_DASH),
+				ru.params.streamIdFormatIsValid(shared.STREAM_USER_DEVICE_KEY_PREFIX),
 				ru.params.eventCountMatches(1),
 				ru.params.isUserStreamId,
 			)
@@ -272,7 +272,7 @@ func (params *csParams) canCreateStream() ruleBuilderCS {
 		}
 		return builder.
 			check(
-				ru.params.streamIdHasPrefix(shared.STREAM_USER_SETTINGS_PREFIX_DASH),
+				ru.params.streamIdFormatIsValid(shared.STREAM_USER_SETTINGS_PREFIX),
 				ru.params.eventCountMatches(1),
 				ru.params.isUserStreamId,
 			)
@@ -285,7 +285,7 @@ func (params *csParams) canCreateStream() ruleBuilderCS {
 		}
 		return builder.
 			check(
-				ru.params.streamIdHasPrefix(shared.STREAM_USER_INBOX_PREFIX_DASH),
+				ru.params.streamIdFormatIsValid(shared.STREAM_USER_INBOX_PREFIX),
 				ru.params.eventCountMatches(1),
 				ru.params.isUserStreamId,
 			)
@@ -296,25 +296,26 @@ func (params *csParams) canCreateStream() ruleBuilderCS {
 	}
 }
 
-func (ru *csParams) streamIdHasPrefix(prefix string) func() error {
+func (ru *csParams) streamIdFormatIsValid(expectedPrefix string) func() error {
 	return func() error {
-		if !strings.HasPrefix(ru.streamId, prefix) {
-			return RiverError(Err_BAD_STREAM_CREATION_PARAMS, "stream id doesn't match expected prefix", "streamId", ru.streamId, "expected", prefix)
+		if shared.IsValidIdForPrefix(ru.streamId, expectedPrefix) {
+			return nil
+		} else {
+			return RiverError(Err_BAD_STREAM_CREATION_PARAMS, "invalid stream id", "streamId", ru.streamId)
 		}
-		if len(ru.streamId) < len(prefix)+4 {
-			return RiverError(Err_BAD_STREAM_CREATION_PARAMS, "stream id too short", "streamId", ru.streamId)
-		}
-		return nil
 	}
 }
 func (ru *csParams) isUserStreamId() error {
-	creatorUserId, err := shared.AddressHex(ru.parsedEvents[0].Event.GetCreatorAddress())
+	addressInName, err := shared.GetUserAddressFromStreamId(ru.streamId)
 	if err != nil {
 		return err
 	}
 
-	if shared.GetStreamIdPostfix(ru.streamId) != creatorUserId {
-		return RiverError(Err_BAD_STREAM_CREATION_PARAMS, "stream id doesn't match creator address", "streamId", ru.streamId, "creator", creatorUserId)
+	// TODO: there is also ru.creatorAddress, should it be used here?
+	creatorAddress := common.BytesToAddress(ru.parsedEvents[0].Event.GetCreatorAddress())
+
+	if addressInName != creatorAddress {
+		return RiverError(Err_BAD_STREAM_CREATION_PARAMS, "stream id doesn't match creator address", "streamId", ru.streamId, "addressInName", addressInName, "creator", creatorAddress)
 	}
 	return nil
 }
@@ -428,16 +429,13 @@ func (ru *csChannelRules) derivedChannelSpaceParentEvent() (*DerivedEvent, error
 }
 
 func (ru *csParams) derivedMembershipEvent() (*DerivedEvent, error) {
-	creatorAddress := ru.parsedEvents[0].Event.GetCreatorAddress()
+	creatorAddress := common.BytesToAddress(ru.parsedEvents[0].Event.GetCreatorAddress())
 
 	creatorUserStreamId, err := shared.UserStreamIdFromAddress(creatorAddress)
 	if err != nil {
 		return nil, err
 	}
-	inviterId, err := shared.AddressHex(creatorAddress)
-	if err != nil {
-		return nil, err
-	}
+	inviterId := creatorAddress.Hex()
 
 	payload := events.Make_UserPayload_Membership(
 		MembershipOp_SO_JOIN,

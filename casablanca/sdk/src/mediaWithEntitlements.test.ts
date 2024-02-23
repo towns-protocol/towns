@@ -4,7 +4,7 @@
 
 import { SignerContext } from './sign'
 import { makeUserContextFromWallet, makeTestClient } from './util.test'
-import { genId, makeChannelStreamId, makeSpaceStreamId } from './id'
+import { makeUniqueChannelStreamId, makeUniqueSpaceStreamId } from './id'
 import { ethers, Wallet } from 'ethers'
 import { Client } from './client'
 import { jest } from '@jest/globals'
@@ -58,8 +58,8 @@ describe('mediaWithEntitlementsTests', () => {
          * Bob creates a space and a channel, both on chain and in River
          */
 
-        const spaceStreamId = makeSpaceStreamId('bobs-space-' + genId())
-        const channelId = makeChannelStreamId('bobs-channel-' + genId())
+        const spaceStreamId = makeUniqueSpaceStreamId()
+        const channelId = makeUniqueChannelStreamId()
 
         const provider = new LocalhostWeb3Provider(bobWallet)
         const chainId = (await provider.getNetwork()).chainId

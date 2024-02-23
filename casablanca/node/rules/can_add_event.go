@@ -625,7 +625,10 @@ func (ru *aeUserMembershipRules) parentEventForUserMembership() (*RequiredParent
 		return nil, err
 	}
 
-	userId := shared.GetStreamIdPostfix(ru.params.streamView.StreamId())
+	userId, err := shared.GetUserAddressStringFromStreamId(ru.params.streamView.StreamId())
+	if err != nil {
+		return nil, err
+	}
 	toStreamId := userMembership.StreamId
 	var initiatorId string
 	if userMembership.Inviter != nil && ru.params.isValidNode(creatorId) {

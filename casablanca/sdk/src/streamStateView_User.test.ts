@@ -3,7 +3,7 @@
  */
 
 import { MembershipOp } from '@river/proto'
-import { genId, makeSpaceStreamId } from './id'
+import { makeUniqueSpaceStreamId } from './id'
 import { makeTestClient, waitFor } from './util.test'
 
 describe('streamStateView_User', () => {
@@ -14,7 +14,7 @@ describe('streamStateView_User', () => {
         await alice.initializeUser()
         bob.startSync()
         alice.startSync()
-        const spaceId = makeSpaceStreamId(genId())
+        const spaceId = makeUniqueSpaceStreamId()
         await expect(bob.createSpace(spaceId)).toResolve()
         await expect(bob.waitForStream(spaceId)).toResolve()
 

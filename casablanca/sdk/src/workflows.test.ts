@@ -7,9 +7,8 @@ import { MembershipOp } from '@river/proto'
 import { dlog } from '@river/dlog'
 import { lastEventFiltered, makeRandomUserContext, makeTestRpcClient } from './util.test'
 import {
-    genId,
-    makeChannelStreamId,
-    makeSpaceStreamId,
+    makeUniqueChannelStreamId,
+    makeUniqueSpaceStreamId,
     makeUserStreamId,
     userIdFromAddress,
 } from './id'
@@ -53,7 +52,7 @@ describe('workflows', () => {
         })
 
         log('Bob created user, about to create space')
-        const spacedStreamId = makeSpaceStreamId('bobs-space-' + genId())
+        const spacedStreamId = makeUniqueSpaceStreamId()
         const spaceInceptionEvent = await makeEvent(
             bobsContext,
             make_SpacePayload_Inception({
@@ -87,7 +86,7 @@ describe('workflows', () => {
         expect(joinPayload?.streamId).toEqual(spacedStreamId)
 
         log('Bob created space, about to create channel')
-        const channelId = makeChannelStreamId('bobs-channel-' + genId())
+        const channelId = makeUniqueChannelStreamId()
         const channelProperties = 'Bobs channel properties'
 
         const channelInceptionEvent = await makeEvent(

@@ -4,7 +4,7 @@
 
 import { dlog } from '@river/dlog'
 import { makeUserContextFromWallet, makeTestClient, makeDonePromise } from './util.test'
-import { genId, makeChannelStreamId, makeSpaceStreamId, makeUserStreamId } from './id'
+import { makeUniqueChannelStreamId, makeUniqueSpaceStreamId, makeUserStreamId } from './id'
 import { ethers } from 'ethers'
 import { MembershipStruct } from '@river/web3'
 import { MembershipOp } from '@river/proto'
@@ -36,8 +36,8 @@ describe('withEntitlements', () => {
         bob.startSync()
 
         // create a space stream,
-        const spaceId = makeSpaceStreamId('bobs-space-' + genId())
-        const channelId = makeChannelStreamId('bobs-channel-' + genId())
+        const spaceId = makeUniqueSpaceStreamId()
+        const channelId = makeUniqueChannelStreamId()
         log('Bob created user, about to create space', { spaceId, channelId })
         // first on the blockchain
         const membershipInfo: MembershipStruct = {

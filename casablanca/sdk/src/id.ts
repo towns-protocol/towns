@@ -1,6 +1,6 @@
 import { utils } from 'ethers'
-import { nanoid } from 'nanoid'
-import { bin_toHexString, check } from '@river/dlog'
+import { nanoid, customAlphabet } from 'nanoid'
+import { bin_fromHexString, bin_toHexString, check } from '@river/dlog'
 import { hashString } from './utils'
 
 export const userIdFromAddress = (address: Uint8Array): string =>
@@ -20,20 +20,44 @@ export const isUserId = (userId: string | Uint8Array): boolean => {
 
 // reason about data in logs, tests, etc.
 export enum StreamPrefix {
-    User = 'USER-',
-    Space = 'SPCE-',
-    Channel = 'CHAN-',
-    UserDevice = 'UDKS-',
-    UserSettings = 'USET-',
-    Media = 'BLOB-',
-    DM = 'DMDM-',
-    GDM = 'GDMS-',
-    UserInbox = 'UDEV-',
+    Channel = '20',
+    DM = '88',
+    GDM = '77',
+    Media = 'ff',
+    Space = '10',
+    User = 'a8',
+    UserDevice = 'ad',
+    UserInbox = 'a1',
+    UserSettings = 'a5',
 }
 
-export const allowedStreamPrefixes = (): string[] => Object.values(StreamPrefix)
+const allowedStreamPrefixesVar = Object.values(StreamPrefix)
 
-export const makeStreamId = (prefix: StreamPrefix, identity: string): string => prefix + identity
+export const allowedStreamPrefixes = (): string[] => allowedStreamPrefixesVar
+
+const expectedIdentityLenByPrefix: { [key in StreamPrefix]: number } = {
+    [StreamPrefix.User]: 40,
+    [StreamPrefix.Space]: 62,
+    [StreamPrefix.Channel]: 62,
+    [StreamPrefix.UserDevice]: 40,
+    [StreamPrefix.UserSettings]: 40,
+    [StreamPrefix.Media]: 62,
+    [StreamPrefix.DM]: 62,
+    [StreamPrefix.GDM]: 62,
+    [StreamPrefix.UserInbox]: 40,
+}
+
+export const makeStreamId = (prefix: StreamPrefix, identity: string): string => {
+    identity = identity.toLowerCase()
+    if (identity.startsWith('0x')) {
+        identity = identity.slice(2)
+    }
+    check(
+        areValidStreamIdParts(prefix, identity),
+        'Invalid stream id parts: ' + prefix + ' ' + identity,
+    )
+    return prefix + identity
+}
 
 export const makeUserStreamId = (userId: string | Uint8Array): string => {
     check(isUserId(userId), 'Invalid user id: ' + userId.toString())
@@ -67,12 +91,6 @@ export const makeUserInboxStreamId = (userId: string | Uint8Array): string => {
     )
 }
 
-export const makeSpaceStreamId = (identity: string): string =>
-    makeStreamId(StreamPrefix.Space, identity)
-
-export const makeChannelStreamId = (identity: string): string =>
-    makeStreamId(StreamPrefix.Channel, identity)
-
 export const makeUniqueSpaceStreamId = (): string => makeStreamId(StreamPrefix.Space, genId())
 export const makeUniqueChannelStreamId = (): string => makeStreamId(StreamPrefix.Channel, genId())
 export const makeUniqueGDMChannelStreamId = (): string => makeStreamId(StreamPrefix.GDM, genId())
@@ -84,7 +102,7 @@ export const makeDMStreamId = (userIdA: string, userIdB: string): string => {
         .sort()
         .join('-')
     const hashed = hashString(concatenated)
-    return makeStreamId(StreamPrefix.DM, hashed)
+    return makeStreamId(StreamPrefix.DM, hashed.slice(0, 62))
 }
 
 export const isUserStreamId = (streamId: string): boolean => streamId.startsWith(StreamPrefix.User)
@@ -105,11 +123,26 @@ export const isGDMChannelStreamId = (streamId: string): boolean =>
 export const isUserInboxStreamId = (streamId: string): boolean =>
     streamId.startsWith(StreamPrefix.UserInbox)
 
-export const isValidStreamId = (streamId: string): boolean =>
-    allowedStreamPrefixes().some((prefix) => streamId.startsWith(prefix))
+export const areValidStreamIdParts = (prefix: StreamPrefix, identity: string): boolean => {
+    return (
+        allowedStreamPrefixesVar.includes(prefix) &&
+        identity.length === expectedIdentityLenByPrefix[prefix] &&
+        /^[0-9a-f]*$/.test(identity)
+    )
+}
+
+export const isValidStreamId = (streamId: string): boolean => {
+    return areValidStreamIdParts(streamId.slice(0, 2) as StreamPrefix, streamId.slice(2))
+}
+
+export const checkStreamId = (streamId: string): void => {
+    check(isValidStreamId(streamId), 'Invalid stream id: ' + streamId)
+}
+
+const hexNanoId = customAlphabet('0123456789abcdef', 62)
 
 export const genId = (): string => {
-    return nanoid()
+    return hexNanoId()
 }
 
 export const genShortId = (): string => {
@@ -120,5 +153,4 @@ export const genLocalId = (): string => {
     return '~' + nanoid(11)
 }
 
-const textEncoder = new TextEncoder()
-export const genIdBlob = (): Uint8Array => textEncoder.encode(genId())
+export const genIdBlob = (): Uint8Array => bin_fromHexString(hexNanoId(32))

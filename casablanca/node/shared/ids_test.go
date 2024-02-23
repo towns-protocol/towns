@@ -9,17 +9,16 @@ import (
 func TestValidDMStreamId(t *testing.T) {
 	userIdA, _ := AddressFromUserId("0x376eC15Fa24A76A18EB980629093cFFd559333Bb")
 	userIdB, _ := AddressFromUserId("0x6d58a6597Eb5F849Fb46604a81Ee31654D6a4B44")
-	expected := "DMDM-b6cd7a587ea499f57bfdc820b8c57ef654e38bc4572e7843df05321dd74c2f36"
+	expected := "88b6cd7a587ea499f57bfdc820b8c57ef654e38bc4572e7843df05321dd74c2f"
 
-	assert.True(t, ValidDMChannelStreamIdBetween(expected, userIdA, userIdB))
-}
+	res, err := DMStreamIdForUsers(userIdA, userIdB)
+	assert.NoError(t, err)
+	assert.Equal(t, expected, res)
 
-func TestReverseOrderDMStreamId(t *testing.T) {
-	userIdA, _ := AddressFromUserId("0x376eC15Fa24A76A18EB980629093cFFd559333Bb")
-	userIdB, _ := AddressFromUserId("0x6d58a6597Eb5F849Fb46604a81Ee31654D6a4B44")
-	expected := "DMDM-b6cd7a587ea499f57bfdc820b8c57ef654e38bc4572e7843df05321dd74c2f36"
-
-	assert.True(t, ValidDMChannelStreamIdBetween(expected, userIdB, userIdA))
+	// Test that the order of the user ids doesn't matter
+	res, err = DMStreamIdForUsers(userIdB, userIdA)
+	assert.NoError(t, err)
+	assert.Equal(t, expected, res)
 }
 
 func TestInvalidDMStreamId(t *testing.T) {

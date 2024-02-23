@@ -6,7 +6,7 @@ import { Client } from './client'
 import { dlog } from '@river/dlog'
 import { isDefined } from './check'
 import { DecryptedContentError } from './encryptedContentTypes'
-import { genId, makeSpaceStreamId } from './id'
+import { makeUniqueSpaceStreamId } from './id'
 import { TestClientOpts, makeTestClient, waitFor } from './util.test'
 
 const log = dlog('csb:test:decryptionExtensions')
@@ -156,7 +156,7 @@ describe('DecryptionExtensions', () => {
     test('bobIsntOnlineToShareKeys', async () => {
         // have two people come up, go offline, then two more people come up
         const bob1 = await makeAndStartClient({ deviceId: 'bob1' })
-        const spaceId = makeSpaceStreamId('bobs-space-' + genId())
+        const spaceId = makeUniqueSpaceStreamId()
         await bob1.createSpace(spaceId)
         const { streamId: channelId } = await bob1.createChannel(spaceId, 'bob1sChannel', '')
         await sendMessage(bob1, channelId, 'its bob')
@@ -186,7 +186,7 @@ describe('DecryptionExtensions', () => {
         const bob1 = await makeAndStartClient({ deviceId: 'bob1' })
         const alice1 = await makeAndStartClient({ deviceId: 'alice1' })
 
-        const spaceId = makeSpaceStreamId('bobs-space-' + genId())
+        const spaceId = makeUniqueSpaceStreamId()
         await bob1.createSpace(spaceId)
         const { streamId: channel1StreamId } = await bob1.createChannel(spaceId, 'channel1', '')
         const { streamId: channel2StreamId } = await bob1.createChannel(spaceId, 'channel1', '')

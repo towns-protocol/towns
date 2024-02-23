@@ -65,14 +65,7 @@ func createUserDeviceKeyStream(
 	wallet *crypto.Wallet,
 	client protocolconnect.StreamServiceClient,
 ) (*protocol.SyncCookie, []byte, error) {
-	userId, err := shared.AddressHex(wallet.Address.Bytes())
-	if err != nil {
-		return nil, nil, err
-	}
-	userDeviceKeyStreamId, err := shared.UserDeviceKeyStreamIdFromId(userId)
-	if err != nil {
-		return nil, nil, err
-	}
+	userDeviceKeyStreamId := shared.UserDeviceKeyStreamIdFromAddress(wallet.Address)
 	inception, err := events.MakeEnvelopeWithPayload(
 		wallet,
 		events.Make_UserDeviceKeyPayload_Inception(
@@ -106,7 +99,7 @@ func createUserWithMismatchedId(
 	wallet *crypto.Wallet,
 	client protocolconnect.StreamServiceClient,
 ) (*protocol.SyncCookie, []byte, error) {
-	userStreamId, err := shared.UserStreamIdFromAddress(wallet.Address.Bytes())
+	userStreamId, err := shared.UserStreamIdFromAddress(wallet.Address)
 	if err != nil {
 		return nil, nil, err
 	}
@@ -136,7 +129,7 @@ func createUser(
 	wallet *crypto.Wallet,
 	client protocolconnect.StreamServiceClient,
 ) (*protocol.SyncCookie, []byte, error) {
-	userStreamId, err := shared.UserStreamIdFromAddress(wallet.Address.Bytes())
+	userStreamId, err := shared.UserStreamIdFromAddress(wallet.Address)
 	if err != nil {
 		return nil, nil, err
 	}
@@ -364,7 +357,7 @@ func TestMethods(t *testing.T) {
 	_, _, err = createUserWithMismatchedId(ctx, wallet1, client)
 	assert.Error(t, err) // expected Error when calling CreateStream with mismatched id
 
-	userStreamId, err := shared.UserStreamIdFromAddress(wallet1.Address.Bytes())
+	userStreamId, err := shared.UserStreamIdFromAddress(wallet1.Address)
 	require.NoError(t, err)
 
 	// if optional is true, stream should be nil instead of throwing an error
@@ -1027,7 +1020,7 @@ func DisableTestManyUsers(t *testing.T) {
 		for j := 0; j < totalChannels; j++ {
 			userId, err := shared.AddressHex(wallets[i].Address.Bytes())
 			require.NoError(t, err)
-			channelId := shared.ChannelStreamIdFromName(fmt.Sprintf("channel-%d", j))
+			channelId := fmt.Sprintf("channel-%d", j)
 			userStreamId, err := shared.UserStreamIdFromId(userId)
 			require.NoError(t, err)
 
@@ -1062,7 +1055,7 @@ func DisableTestManyUsers(t *testing.T) {
 			require.NoError(t, err)
 
 			_, err = client.AddEvent(ctx, connect.NewRequest(&protocol.AddEventRequest{
-				StreamId: shared.ChannelStreamIdFromName(fmt.Sprintf("channel-%d", j)),
+				StreamId: fmt.Sprintf("channel-%d", j),
 				Event:    message,
 			},
 			))
@@ -1130,7 +1123,7 @@ func DisableTestManyUsers(t *testing.T) {
 					require.NoError(t, err)
 
 					_, err = client.AddEvent(ctx, connect.NewRequest(&protocol.AddEventRequest{
-						StreamId: shared.ChannelStreamIdFromName(fmt.Sprintf("channel-%d", channel)),
+						StreamId: fmt.Sprintf("channel-%d", channel),
 						Event:    message,
 					},
 					))

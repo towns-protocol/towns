@@ -594,6 +594,14 @@ func (r *streamViewImpl) GetStats() StreamViewStats {
 	return stats
 }
 
+func streamIdMatchesUserId(streamId, userId string) (bool, error) {
+	u, err := GetUserAddressStringFromStreamId(streamId)
+	if err != nil {
+		return false, err
+	}
+	return u == userId, nil
+}
+
 func (r *streamViewImpl) IsMember(userId string) (bool, error) {
 	// aellis this should probably be migrated to the common payload
 	streamId := r.StreamId()
@@ -620,13 +628,13 @@ func (r *streamViewImpl) IsMember(userId string) (bool, error) {
 		incpt := snapshotContent.DmChannelContent.Inception
 		return userId == incpt.FirstPartyId || userId == incpt.SecondPartyId, nil
 	case *Snapshot_UserContent:
-		return GetStreamIdPostfix(streamId) == userId, nil
+		return streamIdMatchesUserId(streamId, userId)
 	case *Snapshot_UserSettingsContent:
-		return GetStreamIdPostfix(streamId) == userId, nil
+		return streamIdMatchesUserId(streamId, userId)
 	case *Snapshot_UserDeviceKeyContent:
-		return GetStreamIdPostfix(streamId) == userId, nil
+		return streamIdMatchesUserId(streamId, userId)
 	case *Snapshot_UserInboxContent:
-		return GetStreamIdPostfix(streamId) == userId, nil
+		return streamIdMatchesUserId(streamId, userId)
 	case *Snapshot_MediaContent:
 		return snapshotContent.MediaContent.GetCreatorId() == userId, nil
 	default:

@@ -5,7 +5,7 @@
 import { SnapshotCaseType } from '@river/proto'
 import { Client } from './client'
 import { check, DLogger, dlog } from '@river/dlog'
-import { genId, makeChannelStreamId, makeSpaceStreamId } from './id'
+import { makeUniqueChannelStreamId, makeUniqueSpaceStreamId } from './id'
 import { makeDonePromise, makeTestClient, sendFlush } from './util.test'
 import { DecryptedTimelineEvent } from './types'
 
@@ -73,7 +73,7 @@ describe('clientFlushes', () => {
 
         await sendFlush(bobsClient.rpcClient)
 
-        const bobsSpaceId = makeSpaceStreamId('bobs-space-' + genId())
+        const bobsSpaceId = makeUniqueSpaceStreamId()
         const bobsChannelName = 'Bobs channel'
         const bobsChannelTopic = 'Bobs channel topic'
         await expect(bobsClient.createSpace(bobsSpaceId)).toResolve()
@@ -85,7 +85,7 @@ describe('clientFlushes', () => {
                 bobsSpaceId,
                 bobsChannelName,
                 bobsChannelTopic,
-                makeChannelStreamId('bobs-channel-' + genId()),
+                makeUniqueChannelStreamId(),
             ),
         ).toResolve()
 

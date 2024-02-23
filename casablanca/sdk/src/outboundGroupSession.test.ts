@@ -5,7 +5,7 @@
 import { makeTestClient } from './util.test'
 import { Client } from './client'
 
-import { makeChannelStreamId, makeSpaceStreamId, genId } from './id'
+import { makeUniqueChannelStreamId, makeUniqueSpaceStreamId } from './id'
 import { ChannelMessage } from '@river/proto'
 
 describe('outboundSessionTests', () => {
@@ -24,10 +24,10 @@ describe('outboundSessionTests', () => {
         await expect(bobsClient.initializeUser()).toResolve()
         bobsClient.startSync()
 
-        const spaceId = makeSpaceStreamId('bobs-space-' + genId())
+        const spaceId = makeUniqueSpaceStreamId()
         await expect(bobsClient.createSpace(spaceId)).toResolve()
 
-        const channelId = makeChannelStreamId('bobs-channel-' + genId())
+        const channelId = makeUniqueChannelStreamId()
         await expect(bobsClient.createChannel(spaceId, 'Channel', 'Topic', channelId)).toResolve()
         await expect(bobsClient.waitForStream(channelId)).toResolve()
 
@@ -61,14 +61,14 @@ describe('outboundSessionTests', () => {
         await expect(bobsClient.initializeUser()).toResolve()
         bobsClient.startSync()
 
-        const spaceId = makeSpaceStreamId('bobs-space-' + genId())
+        const spaceId = makeUniqueSpaceStreamId()
         await expect(bobsClient.createSpace(spaceId)).toResolve()
 
-        const channelId1 = makeChannelStreamId('bobs-channel-1' + genId())
+        const channelId1 = makeUniqueChannelStreamId()
         await expect(bobsClient.createChannel(spaceId, '', '', channelId1)).toResolve()
         await expect(bobsClient.waitForStream(channelId1)).toResolve()
 
-        const channelId2 = makeChannelStreamId('bobs-channel-2' + genId())
+        const channelId2 = makeUniqueChannelStreamId()
         await expect(bobsClient.createChannel(spaceId, '', '', channelId2)).toResolve()
         await expect(bobsClient.waitForStream(channelId2)).toResolve()
 

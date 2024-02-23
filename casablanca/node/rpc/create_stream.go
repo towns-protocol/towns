@@ -26,7 +26,7 @@ func (s *Service) createStreamImpl(
 	stream, err := s.createStream(ctx, req.Msg)
 	if err != nil {
 		createStreamRequests.FailInc()
-		return nil, AsRiverError(err).Func("localCreateStream")
+		return nil, AsRiverError(err).Func("createStreamImpl")
 	}
 	createStreamRequests.PassInc()
 	resMsg := &CreateStreamResponse{
@@ -47,7 +47,7 @@ func (s *Service) createStream(ctx context.Context, req *CreateStreamRequest) (*
 		return nil, err
 	}
 
-	log.Debug("localCreateStream", "parsedEvents", parsedEvents)
+	log.Debug("createStream", "parsedEvents", parsedEvents)
 
 	csRules, err := rules.CanCreateStream(ctx, s.streamConfig, req.StreamId, parsedEvents)
 
