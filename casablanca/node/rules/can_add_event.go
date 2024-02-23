@@ -29,6 +29,11 @@ type aeMembershipRules struct {
 	membership *Membership
 }
 
+type aeUserMembershipRules struct {
+	params         *aeRules
+	userMembership *UserPayload_UserMembership
+}
+
 /*
 *
 * CanAddEvent
@@ -232,9 +237,14 @@ func (ru *aeRules) canAddUserPayload(payload *StreamEvent_UserPayload) ruleBuild
 			fail(invalidContentType(content))
 
 	case *UserPayload_UserMembership_:
+		uu := &aeUserMembershipRules{
+			params:         ru,
+			userMembership: content.UserMembership,
+		}
 		return aeBuilder().
 			checkOneOf(ru.creatorIsMember, ru.creatorIsValidNode).
-			requireParentEvent(ru.parentEventForUserMembership)
+			check(uu.validUserMembershipTransistion).
+			requireParentEvent(uu.parentEventForUserMembership)
 	case *UserPayload_UserMembershipAction_:
 		return aeBuilder().
 			check(ru.creatorIsMember).
@@ -534,21 +544,64 @@ func (ru *aeMembershipRules) requireStreamParentMembership() (*RequiredParentEve
 	}, nil
 }
 
+func (uu *aeUserMembershipRules) validUserMembershipTransistion() (bool, error) {
+	if uu.userMembership == nil {
+		return false, RiverError(Err_INVALID_ARGUMENT, "membership is nil")
+	}
+	if uu.userMembership.Op == MembershipOp_SO_UNSPECIFIED {
+		return false, RiverError(Err_INVALID_ARGUMENT, "membership op is unspecified")
+	}
+	currentMembershipOp, err := uu.params.streamView.(events.UserStreamView).GetUserMembership(uu.userMembership.StreamId)
+	if err != nil {
+		return false, err
+	}
+
+	if currentMembershipOp == uu.userMembership.Op {
+		return false, nil
+	}
+
+	switch currentMembershipOp {
+	case MembershipOp_SO_INVITE:
+		// from invite only join and leave are valid
+		return true, nil
+	case MembershipOp_SO_JOIN:
+		// from join only leave is valid
+		if uu.userMembership.Op == MembershipOp_SO_LEAVE {
+			return true, nil
+		} else {
+			return false, RiverError(Err_PERMISSION_DENIED, "only leave is valid from join", "op", uu.userMembership.Op)
+		}
+	case MembershipOp_SO_LEAVE:
+		// from leave, invite and join are valid
+		return true, nil
+	case MembershipOp_SO_UNSPECIFIED:
+		// from unspecified, leave would be a no op, join and invite are valid
+		if uu.userMembership.Op == MembershipOp_SO_LEAVE {
+			return false, nil
+		} else {
+			return true, nil
+		}
+	default:
+		return false, RiverError(Err_BAD_EVENT, "invalid current membership", "op", currentMembershipOp)
+	}
+
+}
+
 // / user membership triggers membership events on space, channel, dm, gdm streams
-func (ru *aeRules) parentEventForUserMembership() (*RequiredParentEvent, error) {
-	if ru.parsedEvent.Event.GetUserPayload() == nil || ru.parsedEvent.Event.GetUserPayload().GetUserMembership() == nil {
+func (ru *aeUserMembershipRules) parentEventForUserMembership() (*RequiredParentEvent, error) {
+	if ru.userMembership == nil {
 		return nil, RiverError(Err_INVALID_ARGUMENT, "event is not a user membership event")
 	}
-	userMembership := ru.parsedEvent.Event.GetUserPayload().GetUserMembership()
-	creatorId, err := shared.AddressHex(ru.parsedEvent.Event.CreatorAddress)
+	userMembership := ru.userMembership
+	creatorId, err := shared.AddressHex(ru.params.parsedEvent.Event.CreatorAddress)
 	if err != nil {
 		return nil, err
 	}
 
-	userId := shared.GetStreamIdPostfix(ru.streamView.StreamId())
+	userId := shared.GetStreamIdPostfix(ru.params.streamView.StreamId())
 	toStreamId := userMembership.StreamId
 	var initiatorId string
-	if userMembership.Inviter != nil && ru.isValidNode(creatorId) {
+	if userMembership.Inviter != nil && ru.params.isValidNode(creatorId) {
 		// the initiator will need permissions to do specific things
 		// if the creator of this payload was a valid node, trust that the inviter was the initiator
 		initiatorId = *userMembership.Inviter

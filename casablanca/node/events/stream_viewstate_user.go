@@ -7,6 +7,7 @@ import (
 
 type UserStreamView interface {
 	GetUserInception() (*UserPayload_Inception, error)
+	GetUserMembership(streamId string) (MembershipOp, error)
 	IsMemberOf(streamId string) bool
 }
 
@@ -36,12 +37,23 @@ func (r *streamViewImpl) IsMemberOf(streamId string) bool {
 	if streamId == r.streamId {
 		return true
 	}
-
-	snap, err := r.GetUserSnapshotContent()
+	userMembershipOp, err := r.GetUserMembership(streamId)
 	if err != nil {
 		return false
 	}
-	membership := snap.Memberships[streamId]
+	return userMembershipOp == MembershipOp_SO_JOIN
+}
+
+func (r *streamViewImpl) GetUserMembership(streamId string) (MembershipOp, error) {
+	retValue := MembershipOp_SO_UNSPECIFIED
+
+	snap, err := r.GetUserSnapshotContent()
+	if err != nil {
+		return retValue, err
+	}
+	if membership, ok := snap.Memberships[streamId]; ok {
+		retValue = membership.Op
+	}
 
 	updateFn := func(e *ParsedEvent) (bool, error) {
 		switch payload := e.Event.Payload.(type) {
@@ -49,7 +61,7 @@ func (r *streamViewImpl) IsMemberOf(streamId string) bool {
 			switch payload := payload.UserPayload.Content.(type) {
 			case *UserPayload_UserMembership_:
 				if payload.UserMembership.StreamId == streamId {
-					membership = payload.UserMembership
+					retValue = payload.UserMembership.Op
 				}
 			default:
 				break
@@ -61,13 +73,5 @@ func (r *streamViewImpl) IsMemberOf(streamId string) bool {
 	}
 
 	err = r.forEachEvent(r.snapshotIndex+1, updateFn)
-	if err != nil {
-		return false
-	}
-
-	if membership == nil {
-		return false
-	}
-
-	return membership.Op == MembershipOp_SO_JOIN
+	return retValue, err
 }
