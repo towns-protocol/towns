@@ -31,7 +31,6 @@ import (
 
 	"connectrpc.com/connect"
 	eth_crypto "github.com/ethereum/go-ethereum/crypto"
-	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
 	"google.golang.org/protobuf/proto"
 )
@@ -347,7 +346,7 @@ func TestMethods(t *testing.T) {
 	if err != nil {
 		t.Errorf("error calling Info: %v", err)
 	}
-	assert.Equal(t, "Towns.com node welcomes you!", response.Msg.Graffiti)
+	require.Equal(t, "Towns.com node welcomes you!", response.Msg.Graffiti)
 
 	_, err = client.CreateStream(ctx, connect.NewRequest(&protocol.CreateStreamRequest{}))
 	if err == nil {
@@ -355,7 +354,7 @@ func TestMethods(t *testing.T) {
 	}
 
 	_, _, err = createUserWithMismatchedId(ctx, wallet1, client)
-	assert.Error(t, err) // expected Error when calling CreateStream with mismatched id
+	require.Error(t, err) // expected Error when calling CreateStream with mismatched id
 
 	userStreamId, err := shared.UserStreamIdFromAddress(wallet1.Address)
 	require.NoError(t, err)
@@ -366,13 +365,13 @@ func TestMethods(t *testing.T) {
 		Optional: true,
 	}))
 	require.NoError(t, err)
-	assert.Nil(t, resp.Msg.Stream, "expected user stream to not exist")
+	require.Nil(t, resp.Msg.Stream, "expected user stream to not exist")
 
 	// if optional is false, error should be thrown
 	_, err = client.GetStream(ctx, connect.NewRequest(&protocol.GetStreamRequest{
 		StreamId: userStreamId,
 	}))
-	assert.Error(t, err)
+	require.Error(t, err)
 
 	// create user stream for user 1
 	res, _, err := createUser(ctx, wallet1, client)
@@ -603,7 +602,7 @@ func TestRiverDeviceId(t *testing.T) {
 			},
 		),
 	)
-	assert.Error(t, err) // expected error when calling AddEvent
+	require.Error(t, err) // expected error when calling AddEvent
 }
 
 func TestSyncStreams(t *testing.T) {
@@ -617,19 +616,19 @@ func TestSyncStreams(t *testing.T) {
 	// create the streams for a user
 	wallet, _ := crypto.NewWallet(ctx)
 	_, _, err := createUser(ctx, wallet, client)
-	assert.Nilf(t, err, "error calling createUser: %v", err)
+	require.Nilf(t, err, "error calling createUser: %v", err)
 	_, _, err = createUserDeviceKeyStream(ctx, wallet, client)
-	assert.Nilf(t, err, "error calling createUserDeviceKeyStream: %v", err)
+	require.Nilf(t, err, "error calling createUserDeviceKeyStream: %v", err)
 	// create space
 	spaceId := testutils.FakeStreamId(shared.STREAM_SPACE_PREFIX)
 	space1, _, err := createSpace(ctx, wallet, client, spaceId)
-	assert.Nilf(t, err, "error calling createSpace: %v", err)
-	assert.NotNil(t, space1, "nil sync cookie")
+	require.Nilf(t, err, "error calling createSpace: %v", err)
+	require.NotNil(t, space1, "nil sync cookie")
 	// create channel
 	channelId := testutils.FakeStreamId(shared.STREAM_CHANNEL_PREFIX)
 	channel1, channelHash, err := createChannel(ctx, wallet, client, spaceId, channelId, nil)
-	assert.Nilf(t, err, "error calling createChannel: %v", err)
-	assert.NotNil(t, channel1, "nil sync cookie")
+	require.Nilf(t, err, "error calling createChannel: %v", err)
+	require.NotNil(t, channel1, "nil sync cookie")
 
 	/**
 	Act
@@ -646,8 +645,8 @@ func TestSyncStreams(t *testing.T) {
 			},
 		),
 	)
-	assert.Nilf(t, err, "error calling SyncStreams: %v", err)
-	// get the syncId for asserts later
+	require.Nilf(t, err, "error calling SyncStreams: %v", err)
+	// get the syncId for requires later
 	syncRes.Receive()
 	syncId := syncRes.Msg().SyncId
 	// add an event to verify that sync is working
@@ -656,7 +655,7 @@ func TestSyncStreams(t *testing.T) {
 		events.Make_ChannelPayload_Message("hello"),
 		channelHash,
 	)
-	assert.Nilf(t, err, "error creating message event: %v", err)
+	require.Nilf(t, err, "error creating message event: %v", err)
 	_, err = client.AddEvent(
 		ctx,
 		connect.NewRequest(
@@ -666,7 +665,7 @@ func TestSyncStreams(t *testing.T) {
 			},
 		),
 	)
-	assert.Nilf(t, err, "error calling AddEvent: %v", err)
+	require.Nilf(t, err, "error calling AddEvent: %v", err)
 	// wait for the sync
 	syncRes.Receive()
 	msg := syncRes.Msg()
@@ -674,11 +673,11 @@ func TestSyncStreams(t *testing.T) {
 	syncCancel()
 
 	/**
-	Asserts
+	requires
 	*/
-	assert.NotEmpty(t, syncId, "expected non-empty sync id")
-	assert.NotNil(t, msg.Stream, "expected 1 stream")
-	assert.Equal(t, syncId, msg.SyncId, "expected sync id to match")
+	require.NotEmpty(t, syncId, "expected non-empty sync id")
+	require.NotNil(t, msg.Stream, "expected 1 stream")
+	require.Equal(t, syncId, msg.SyncId, "expected sync id to match")
 }
 
 func TestAddStreamsToSync(t *testing.T) {
@@ -692,10 +691,10 @@ func TestAddStreamsToSync(t *testing.T) {
 	// create alice's wallet and streams
 	aliceWallet, _ := crypto.NewWallet(ctx)
 	alice, _, err := createUser(ctx, aliceWallet, aliceClient)
-	assert.Nilf(t, err, "error calling createUser: %v", err)
-	assert.NotNil(t, alice, "nil sync cookie for alice")
+	require.Nilf(t, err, "error calling createUser: %v", err)
+	require.NotNil(t, alice, "nil sync cookie for alice")
 	_, _, err = createUserDeviceKeyStream(ctx, aliceWallet, aliceClient)
-	assert.Nilf(t, err, "error calling createUserDeviceKeyStream: %v", err)
+	require.Nilf(t, err, "error calling createUserDeviceKeyStream: %v", err)
 
 	httpClient := &http.Client{
 		Transport: &http2.Transport{
@@ -716,15 +715,15 @@ func TestAddStreamsToSync(t *testing.T) {
 	)
 	bobWallet, _ := crypto.NewWallet(ctx)
 	bob, _, err := createUser(ctx, bobWallet, bobClient)
-	assert.Nilf(t, err, "error calling createUser: %v", err)
-	assert.NotNil(t, bob, "nil sync cookie for bob")
+	require.Nilf(t, err, "error calling createUser: %v", err)
+	require.NotNil(t, bob, "nil sync cookie for bob")
 	_, _, err = createUserDeviceKeyStream(ctx, bobWallet, bobClient)
-	assert.Nilf(t, err, "error calling createUserDeviceKeyStream: %v", err)
+	require.Nilf(t, err, "error calling createUserDeviceKeyStream: %v", err)
 	// alice creates a space
 	spaceId := testutils.FakeStreamId(shared.STREAM_SPACE_PREFIX)
 	space1, _, err := createSpace(ctx, aliceWallet, aliceClient, spaceId)
-	assert.Nilf(t, err, "error calling createSpace: %v", err)
-	assert.NotNil(t, space1, "nil sync cookie")
+	require.Nilf(t, err, "error calling createSpace: %v", err)
+	require.NotNil(t, space1, "nil sync cookie")
 	// alice creates a channel
 	channelId := testutils.FakeStreamId(shared.STREAM_CHANNEL_PREFIX)
 	channel1, channelHash, err := createChannel(
@@ -735,8 +734,8 @@ func TestAddStreamsToSync(t *testing.T) {
 		channelId,
 		nil,
 	)
-	assert.Nilf(t, err, "error calling createChannel: %v", err)
-	assert.NotNil(t, channel1, "nil sync cookie")
+	require.Nilf(t, err, "error calling createChannel: %v", err)
+	require.NotNil(t, channel1, "nil sync cookie")
 
 	/**
 	Act
@@ -751,8 +750,8 @@ func TestAddStreamsToSync(t *testing.T) {
 			},
 		),
 	)
-	assert.Nilf(t, err, "error calling SyncStreams: %v", err)
-	// get the syncId for asserts later
+	require.Nilf(t, err, "error calling SyncStreams: %v", err)
+	// get the syncId for requires later
 	syncRes.Receive()
 	syncId := syncRes.Msg().SyncId
 	// add an event to verify that sync is working
@@ -761,7 +760,7 @@ func TestAddStreamsToSync(t *testing.T) {
 		events.Make_ChannelPayload_Message("hello"),
 		channelHash,
 	)
-	assert.Nilf(t, err, "error creating message event: %v", err)
+	require.Nilf(t, err, "error creating message event: %v", err)
 	_, err = aliceClient.AddEvent(
 		ctx,
 		connect.NewRequest(
@@ -771,7 +770,7 @@ func TestAddStreamsToSync(t *testing.T) {
 			},
 		),
 	)
-	assert.Nilf(t, err, "error calling AddEvent: %v", err)
+	require.Nilf(t, err, "error calling AddEvent: %v", err)
 	// bob adds alice's stream to sync
 	_, err = bobClient.AddStreamToSync(
 		ctx,
@@ -782,7 +781,7 @@ func TestAddStreamsToSync(t *testing.T) {
 			},
 		),
 	)
-	assert.Nilf(t, err, "error calling AddStreamsToSync: %v", err)
+	require.Nilf(t, err, "error calling AddStreamsToSync: %v", err)
 	// wait for the sync
 	syncRes.Receive()
 	msg := syncRes.Msg()
@@ -790,11 +789,11 @@ func TestAddStreamsToSync(t *testing.T) {
 	syncCancel()
 
 	/**
-	Asserts
+	requires
 	*/
-	assert.NotEmpty(t, syncId, "expected non-empty sync id")
-	assert.NotNil(t, msg.Stream, "expected 1 stream")
-	assert.Equal(t, syncId, msg.SyncId, "expected sync id to match")
+	require.NotEmpty(t, syncId, "expected non-empty sync id")
+	require.NotNil(t, msg.Stream, "expected 1 stream")
+	require.Equal(t, syncId, msg.SyncId, "expected sync id to match")
 }
 
 func TestRemoveStreamsFromSync(t *testing.T) {
@@ -809,8 +808,8 @@ func TestRemoveStreamsFromSync(t *testing.T) {
 	// create alice's wallet and streams
 	aliceWallet, _ := crypto.NewWallet(ctx)
 	alice, _, err := createUser(ctx, aliceWallet, aliceClient)
-	assert.Nilf(t, err, "error calling createUser: %v", err)
-	assert.NotNil(t, alice, "nil sync cookie for alice")
+	require.Nilf(t, err, "error calling createUser: %v", err)
+	require.NotNil(t, alice, "nil sync cookie for alice")
 	_, _, err = createUserDeviceKeyStream(ctx, aliceWallet, aliceClient)
 	require.NoError(t, err)
 
@@ -833,20 +832,20 @@ func TestRemoveStreamsFromSync(t *testing.T) {
 	)
 	bobWallet, _ := crypto.NewWallet(ctx)
 	bob, _, err := createUser(ctx, bobWallet, bobClient)
-	assert.Nilf(t, err, "error calling createUser: %v", err)
-	assert.NotNil(t, bob, "nil sync cookie for bob")
+	require.Nilf(t, err, "error calling createUser: %v", err)
+	require.NotNil(t, bob, "nil sync cookie for bob")
 	_, _, err = createUserDeviceKeyStream(ctx, bobWallet, bobClient)
-	assert.Nilf(t, err, "error calling createUserDeviceKeyStream: %v", err)
+	require.Nilf(t, err, "error calling createUserDeviceKeyStream: %v", err)
 	// alice creates a space
 	spaceId := testutils.FakeStreamId(shared.STREAM_SPACE_PREFIX)
 	space1, _, err := createSpace(ctx, aliceWallet, aliceClient, spaceId)
-	assert.Nilf(t, err, "error calling createSpace: %v", err)
-	assert.NotNil(t, space1, "nil sync cookie")
+	require.Nilf(t, err, "error calling createSpace: %v", err)
+	require.NotNil(t, space1, "nil sync cookie")
 	// alice creates a channel
 	channelId := testutils.FakeStreamId(shared.STREAM_CHANNEL_PREFIX)
 	channel1, channelHash, err := createChannel(ctx, aliceWallet, aliceClient, spaceId, channelId, nil)
-	assert.Nilf(t, err, "error calling createChannel: %v", err)
-	assert.NotNil(t, channel1, "nil sync cookie")
+	require.Nilf(t, err, "error calling createChannel: %v", err)
+	require.NotNil(t, channel1, "nil sync cookie")
 	// bob sync streams
 	syncCtx, syncCancel := context.WithCancel(ctx)
 	syncRes, err := bobClient.SyncStreams(
@@ -857,8 +856,8 @@ func TestRemoveStreamsFromSync(t *testing.T) {
 			},
 		),
 	)
-	assert.Nilf(t, err, "error calling SyncStreams: %v", err)
-	// get the syncId for asserts later
+	require.Nilf(t, err, "error calling SyncStreams: %v", err)
+	// get the syncId for requires later
 	syncRes.Receive()
 	syncId := syncRes.Msg().SyncId
 
@@ -868,7 +867,7 @@ func TestRemoveStreamsFromSync(t *testing.T) {
 		events.Make_ChannelPayload_Message("hello"),
 		channelHash,
 	)
-	assert.Nilf(t, err, "error creating message event: %v", err)
+	require.Nilf(t, err, "error creating message event: %v", err)
 	_, err = aliceClient.AddEvent(
 		ctx,
 		connect.NewRequest(
@@ -878,7 +877,7 @@ func TestRemoveStreamsFromSync(t *testing.T) {
 			},
 		),
 	)
-	assert.Nilf(t, err, "error calling AddEvent: %v", err)
+	require.Nilf(t, err, "error calling AddEvent: %v", err)
 
 	// bob adds alice's stream to sync
 	resp, err := bobClient.AddStreamToSync(
@@ -890,7 +889,7 @@ func TestRemoveStreamsFromSync(t *testing.T) {
 			},
 		),
 	)
-	assert.Nilf(t, err, "error calling AddStreamsToSync: %v", err)
+	require.Nilf(t, err, "error calling AddStreamsToSync: %v", err)
 	log.Info("AddStreamToSync", "resp", resp)
 	// When AddEvent is called, node calls streamImpl.notifyToSubscribers() twice
 	// for different events. 	See hnt-3683 for explanation. First event is for
@@ -915,7 +914,7 @@ OuterLoop:
 		}
 	}
 
-	assert.Equal(t, 2, receivedCount, "expected 2 events")
+	require.Equal(t, 2, receivedCount, "expected 2 events")
 	/**
 	Act
 	*/
@@ -929,7 +928,7 @@ OuterLoop:
 			},
 		),
 	)
-	assert.Nilf(t, err, "error calling RemoveStreamsFromSync: %v", err)
+	require.Nilf(t, err, "error calling RemoveStreamsFromSync: %v", err)
 
 	// alice sends another message
 	message2, err := events.MakeEnvelopeWithPayload(
@@ -937,7 +936,7 @@ OuterLoop:
 		events.Make_ChannelPayload_Message("world"),
 		channelHash,
 	)
-	assert.Nilf(t, err, "error creating message event: %v", err)
+	require.Nilf(t, err, "error creating message event: %v", err)
 	_, err = aliceClient.AddEvent(
 		ctx,
 		connect.NewRequest(
@@ -947,7 +946,7 @@ OuterLoop:
 			},
 		),
 	)
-	assert.Nilf(t, err, "error calling AddEvent: %v", err)
+	require.Nilf(t, err, "error calling AddEvent: %v", err)
 
 	/**
 	For debugging only. Uncomment to see syncRes.Receive() block.
@@ -959,10 +958,10 @@ OuterLoop:
 	syncCancel()
 
 	/**
-	Asserts
+	requires
 	*/
-	assert.NotEmpty(t, syncId, "expected non-empty sync id")
-	assert.NotNil(t, removeRes.Msg, "expected non-nil remove response")
+	require.NotEmpty(t, syncId, "expected non-empty sync id")
+	require.NotNil(t, removeRes.Msg, "expected non-nil remove response")
 }
 
 // TODO: revamp with block support
@@ -1079,11 +1078,11 @@ func DisableTestManyUsers(t *testing.T) {
 		}
 	}
 
-	assert.Equal(t, totalChannels, len(streams))
+	require.Equal(t, totalChannels, len(streams))
 
 	for i := 0; i < totalChannels; i++ {
 		if streams[i] != nil {
-			assert.Equal(t, len(streams[i].Events), (totalUsers-1)*2)
+			require.Equal(t, len(streams[i].Events), (totalUsers-1)*2)
 
 			for syncPosIdx := range channels {
 				if channels[syncPosIdx].StreamId == streams[i].NextSyncCookie.StreamId {
@@ -1166,15 +1165,15 @@ func DisableTestManyUsers(t *testing.T) {
 					e, err := events.ParseEvent(event)
 					require.NoError(t, err)
 					msg := e.GetChannelMessage()
-					assert.NotNil(t, msg)
+					require.NotNil(t, msg)
 					if msg.Message != nil {
 						tokens := strings.Split(msg.Message.Ciphertext, " ")
-						assert.Equal(t, 4, len(tokens))
+						require.Equal(t, 4, len(tokens))
 						id, err := strconv.Atoi(tokens[0])
 						require.NoError(t, err)
 
 						msgTable[id]++
-						assert.Equal(t, 1, msgTable[id])
+						require.Equal(t, 1, msgTable[id])
 					}
 				}
 
@@ -1194,5 +1193,5 @@ func DisableTestManyUsers(t *testing.T) {
 	msg2 := <-messagesSent
 	fmt.Println("messagesSent", msg2)
 
-	assert.GreaterOrEqual(t, rcvMessages, selectedUsers*selectedChannels)
+	require.GreaterOrEqual(t, rcvMessages, selectedUsers*selectedChannels)
 }

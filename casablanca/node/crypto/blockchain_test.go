@@ -7,13 +7,13 @@ import (
 	"github.com/ethereum/go-ethereum/accounts/abi/bind"
 	"github.com/ethereum/go-ethereum/common"
 	"github.com/ethereum/go-ethereum/core/types"
-	"github.com/ethereum/go-ethereum/crypto"
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
 
 	. "github.com/river-build/river/base"
 	"github.com/river-build/river/base/test"
 	. "github.com/river-build/river/protocol"
+	. "github.com/river-build/river/shared"
 )
 
 func TestBlockchain(t *testing.T) {
@@ -91,7 +91,7 @@ func TestBlockchain(t *testing.T) {
 	require.NoError(err)
 	assert.Equal(secondBlockNum, currentBlockNum)
 
-	streamId := "abc"
+	streamId := StreamId{0x01, 0x02, 0x03}
 	addrs := []common.Address{nodeAddr1, nodeAddr2}
 
 	genesisHash := common.HexToHash("0x123")
@@ -110,10 +110,9 @@ func TestBlockchain(t *testing.T) {
 	_, err = WaitMined(ctx, bc1.Client, tx1.Hash(), time.Millisecond, time.Second*10)
 	require.NoError(err)
 
-	streamIdHash := crypto.Keccak256Hash([]byte(streamId))
-	stream, err := tc.RiverRegistry.GetStream(nil, streamIdHash)
+	stream, err := tc.RiverRegistry.GetStream(nil, streamId)
 	require.NoError(err)
-	assert.Equal(streamId, stream.StreamId)
+	assert.Equal([32]byte(streamId), stream.StreamId)
 	assert.Equal(addrs, stream.Nodes)
 	assert.Equal(genesisHash, common.Hash(stream.GenesisMiniblockHash))
 	assert.Equal(genesisMiniblock, stream.GenesisMiniblock)
@@ -134,7 +133,7 @@ func TestBlockchain(t *testing.T) {
 	tx1, err = bc1.TxRunner.Submit(
 		ctx,
 		func(opts *bind.TransactOpts) (*types.Transaction, error) {
-			return tc.RiverRegistry.AllocateStream(opts, "otherId", []common.Address{common.HexToAddress("0x123")}, genesisHash, genesisMiniblock)
+			return tc.RiverRegistry.AllocateStream(opts, StreamId{0x11, 0x22}, []common.Address{common.HexToAddress("0x123")}, genesisHash, genesisMiniblock)
 		},
 	)
 	require.Nil(tx1)

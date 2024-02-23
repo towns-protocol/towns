@@ -4,9 +4,10 @@ import (
 	"context"
 	"testing"
 
-	. "github.com/river-build/river/base"
 	"github.com/river-build/river/crypto"
 	. "github.com/river-build/river/protocol"
+	. "github.com/river-build/river/shared"
+	"github.com/river-build/river/testutils"
 
 	"github.com/stretchr/testify/assert"
 )
@@ -73,7 +74,7 @@ func mbTest(
 	defer tt.closer()
 	assert := assert.New(t)
 
-	spaceStreamId := GenShortNanoid()
+	spaceStreamId := testutils.FakeStreamId(STREAM_SPACE_PREFIX)
 	miniblockProto := MakeGenesisMiniblockForSpaceStream(t, tt.params.Wallet, spaceStreamId)
 
 	stream, view, err := tt.createStream(ctx, spaceStreamId, miniblockProto)

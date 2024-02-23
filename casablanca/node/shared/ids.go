@@ -32,6 +32,54 @@ const (
 	STREAM_USER_SETTINGS_PREFIX         = "a5"
 )
 
+type StreamId [32]byte
+
+func StreamIdFromString(s string) (StreamId, error) {
+	var id StreamId
+	b, err := hex.DecodeString(s)
+	if err != nil {
+		return id, WrapRiverError(Err_BAD_STREAM_ID, err).Message("invalid address hex").Tag("streamId", s)
+	}
+	if len(b) > 32 {
+		return id, RiverError(Err_BAD_STREAM_ID, "invalid length", "streamId", s)
+	}
+	copy(id[:], b)
+	return id, nil
+}
+
+func StreamIdToString(id StreamId) (string, error) {
+	n, err := StreamIdLengthForType(id[0])
+	if err != nil {
+		return "", err
+	}
+	return hex.EncodeToString(id[:n]), nil
+}
+
+func StreamIdLengthForType(t uint8) (int, error) {
+	switch t {
+	case STREAM_USER_DEVICE_KEY_BIN:
+		return 21, nil
+	case STREAM_USER_INBOX_BIN:
+		return 21, nil
+	case STREAM_USER_BIN:
+		return 21, nil
+	case STREAM_USER_SETTINGS_BIN:
+		return 21, nil
+	case STREAM_MEDIA_BIN:
+		return 32, nil
+	case STREAM_CHANNEL_BIN:
+		return 32, nil
+	case STREAM_DM_CHANNEL_BIN:
+		return 32, nil
+	case STREAM_GDM_CHANNEL_BIN:
+		return 32, nil
+	case STREAM_SPACE_BIN:
+		return 32, nil
+	default:
+		return 0, RiverError(Err_BAD_STREAM_ID, "invalid stream type", "type", t)
+	}
+}
+
 func AddressHex(address []byte) (string, error) {
 	if len(address) != 20 {
 		return "", RiverError(Err_BAD_ADDRESS, "wrong length", "addr", address)

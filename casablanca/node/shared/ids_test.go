@@ -3,6 +3,7 @@ package shared
 import (
 	"testing"
 
+	"github.com/ethereum/go-ethereum/common"
 	"github.com/stretchr/testify/assert"
 )
 
@@ -27,4 +28,18 @@ func TestInvalidDMStreamId(t *testing.T) {
 	expected := "DMDM-invalid-id"
 
 	assert.False(t, ValidDMChannelStreamIdBetween(expected, userIdA, userIdB))
+}
+
+func TestStreamIdFromString(t *testing.T) {
+	addr := common.HexToAddress("0x376eC15Fa24A76A18EB980629093cFFd559333Bb")
+	a, err := UserStreamIdFromAddress(addr)
+	assert.NoError(t, err)
+	assert.Equal(t, "a8376ec15fa24a76a18eb980629093cffd559333bb", a)
+
+	var expectedId StreamId
+	expectedId[0] = STREAM_USER_BIN
+	copy(expectedId[1:], addr.Bytes())
+	id, err := StreamIdFromString(a)
+	assert.NoError(t, err)
+	assert.Equal(t, expectedId, id)
 }

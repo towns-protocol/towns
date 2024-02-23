@@ -199,7 +199,8 @@ func (s *streamCacheImpl) GetLoadedViews(ctx context.Context) []StreamView {
 
 func (s *streamCacheImpl) onNewBlock(ctx context.Context, blockNum int64, blockHash []byte) {
 	log := dlog.FromCtx(ctx)
-	log.Debug("onNewBlock: ENTER producing new miniblocks", "blockNum", blockNum, "blockHash", blockHash)
+	// Log at level below debug, otherwise it's too chatty.
+	log.Log(ctx, -8, "onNewBlock: ENTER producing new miniblocks", "blockNum", blockNum, "blockHash", blockHash)
 
 	// Try lock to have only one invocation at a time. Previous onNewBlock may still be running.
 	if !s.onNewBlockMutex.TryLock() {
@@ -228,5 +229,6 @@ func (s *streamCacheImpl) onNewBlock(ctx context.Context, blockNum int64, blockH
 		return true
 	})
 
-	log.Debug("onNewBlock: EXIT produced new miniblocks", "blockNum", blockNum, "total", total, "errors", errors, "produced", produced)
+	// Log at level below debug, otherwise it's too chatty.
+	log.Log(ctx, -8, "onNewBlock: EXIT produced new miniblocks", "blockNum", blockNum, "total", total, "errors", errors, "produced", produced)
 }

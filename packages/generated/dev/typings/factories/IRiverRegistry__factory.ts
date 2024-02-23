@@ -16,8 +16,8 @@ const _abi = [
     inputs: [
       {
         name: "streamId",
-        type: "string",
-        internalType: "string",
+        type: "bytes32",
+        internalType: "bytes32",
       },
       {
         name: "nodes",
@@ -101,8 +101,8 @@ const _abi = [
     outputs: [
       {
         name: "",
-        type: "string[]",
-        internalType: "string[]",
+        type: "bytes32[]",
+        internalType: "bytes32[]",
       },
     ],
     stateMutability: "view",
@@ -119,23 +119,13 @@ const _abi = [
         components: [
           {
             name: "streamId",
-            type: "string",
-            internalType: "string",
-          },
-          {
-            name: "nodes",
-            type: "address[]",
-            internalType: "address[]",
+            type: "bytes32",
+            internalType: "bytes32",
           },
           {
             name: "genesisMiniblockHash",
             type: "bytes32",
             internalType: "bytes32",
-          },
-          {
-            name: "genesisMiniblock",
-            type: "bytes",
-            internalType: "bytes",
           },
           {
             name: "lastMiniblockHash",
@@ -146,6 +136,31 @@ const _abi = [
             name: "lastMiniblockNum",
             type: "uint64",
             internalType: "uint64",
+          },
+          {
+            name: "flags",
+            type: "uint64",
+            internalType: "uint64",
+          },
+          {
+            name: "reserved0",
+            type: "uint64",
+            internalType: "uint64",
+          },
+          {
+            name: "reserved1",
+            type: "uint64",
+            internalType: "uint64",
+          },
+          {
+            name: "nodes",
+            type: "address[]",
+            internalType: "address[]",
+          },
+          {
+            name: "genesisMiniblock",
+            type: "bytes",
+            internalType: "bytes",
           },
         ],
       },
@@ -206,7 +221,7 @@ const _abi = [
     name: "getStream",
     inputs: [
       {
-        name: "streamIdHash",
+        name: "streamId",
         type: "bytes32",
         internalType: "bytes32",
       },
@@ -219,23 +234,13 @@ const _abi = [
         components: [
           {
             name: "streamId",
-            type: "string",
-            internalType: "string",
-          },
-          {
-            name: "nodes",
-            type: "address[]",
-            internalType: "address[]",
+            type: "bytes32",
+            internalType: "bytes32",
           },
           {
             name: "genesisMiniblockHash",
             type: "bytes32",
             internalType: "bytes32",
-          },
-          {
-            name: "genesisMiniblock",
-            type: "bytes",
-            internalType: "bytes",
           },
           {
             name: "lastMiniblockHash",
@@ -246,6 +251,31 @@ const _abi = [
             name: "lastMiniblockNum",
             type: "uint64",
             internalType: "uint64",
+          },
+          {
+            name: "flags",
+            type: "uint64",
+            internalType: "uint64",
+          },
+          {
+            name: "reserved0",
+            type: "uint64",
+            internalType: "uint64",
+          },
+          {
+            name: "reserved1",
+            type: "uint64",
+            internalType: "uint64",
+          },
+          {
+            name: "nodes",
+            type: "address[]",
+            internalType: "address[]",
+          },
+          {
+            name: "genesisMiniblock",
+            type: "bytes",
+            internalType: "bytes",
           },
         ],
       },
@@ -320,7 +350,7 @@ const _abi = [
     name: "setStreamLastMiniblock",
     inputs: [
       {
-        name: "streamIdHash",
+        name: "streamId",
         type: "bytes32",
         internalType: "bytes32",
       },
@@ -333,6 +363,11 @@ const _abi = [
         name: "lastMiniblockNum",
         type: "uint64",
         internalType: "uint64",
+      },
+      {
+        name: "isSealed",
+        type: "bool",
+        internalType: "bool",
       },
     ],
     outputs: [],
@@ -433,9 +468,9 @@ const _abi = [
     inputs: [
       {
         name: "streamId",
-        type: "string",
+        type: "bytes32",
         indexed: false,
-        internalType: "string",
+        internalType: "bytes32",
       },
       {
         name: "nodes",
@@ -458,9 +493,9 @@ const _abi = [
     inputs: [
       {
         name: "streamId",
-        type: "string",
+        type: "bytes32",
         indexed: false,
-        internalType: "string",
+        internalType: "bytes32",
       },
       {
         name: "lastMiniblockHash",
@@ -473,6 +508,12 @@ const _abi = [
         type: "uint64",
         indexed: false,
         internalType: "uint64",
+      },
+      {
+        name: "isSealed",
+        type: "bool",
+        indexed: false,
+        internalType: "bool",
       },
     ],
     anonymous: false,

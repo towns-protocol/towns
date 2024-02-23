@@ -3,12 +3,15 @@ pragma solidity ^0.8.23;
 
 interface IRiverRegistryBase {
   struct Stream {
-    string streamId;
-    address[] nodes;
+    bytes32 streamId;
     bytes32 genesisMiniblockHash;
-    bytes genesisMiniblock; // In the future, we'll optimize this away.
     bytes32 lastMiniblockHash;
-    uint64 lastMiniblockNum;
+    uint64 lastMiniblockNum; // | Packed into single storage slot
+    uint64 flags; //            |
+    uint64 reserved0; //        |
+    uint64 reserved1; //        |
+    address[] nodes;
+    bytes genesisMiniblock; // In the future, we'll optimize this away.
   }
 
   enum NodeStatus {
@@ -43,22 +46,27 @@ interface IRiverRegistryBase {
 
   // Stream events
   event StreamAllocated(
-    string streamId,
+    bytes32 streamId,
     address[] nodes,
     bytes32 genesisMiniblockHash
   );
 
   event StreamLastMiniblockUpdated(
-    string streamId,
+    bytes32 streamId,
     bytes32 lastMiniblockHash,
-    uint64 lastMiniblockNum
+    uint64 lastMiniblockNum,
+    bool isSealed
   );
 }
+
+// TODO: toplevel or library?
+uint64 constant STREAM_FLAG_SEALED = 1;
 
 library RiverRegistryErrors {
   // =============================================================
   //                         Errors
   // =============================================================
+  // TODO: common convention for const names IS_DIFFERENT_CASE?
   string public constant AlreadyExists = "ALREADY_EXISTS";
   string public constant OperatorNotFound = "OPERATOR_NOT_FOUND";
   string public constant NodeNotFound = "NODE_NOT_FOUND";
@@ -67,24 +75,24 @@ library RiverRegistryErrors {
   string public constant BadArg = "BAD_ARG";
   string public constant BadAuth = "BAD_AUTH";
   string public constant InvalidStreamId = "INVALID_STREAM_ID";
+  string public constant StreamSealed = "STREAM_SEALED";
 }
 
 interface IRiverRegistry is IRiverRegistryBase {
   function allocateStream(
-    string memory streamId,
+    bytes32 streamId,
     address[] memory nodes,
     bytes32 genesisMiniblockHash,
     bytes memory genesisMiniblock
   ) external;
 
-  function getStream(
-    bytes32 streamIdHash
-  ) external view returns (Stream memory);
+  function getStream(bytes32 streamId) external view returns (Stream memory);
 
   function setStreamLastMiniblock(
-    bytes32 streamIdHash,
+    bytes32 streamId,
     bytes32 lastMiniblockHash,
-    uint64 lastMiniblockNum
+    uint64 lastMiniblockNum,
+    bool isSealed
   ) external;
 
   function getStreamCount() external view returns (uint256);
@@ -96,7 +104,7 @@ interface IRiverRegistry is IRiverRegistryBase {
    * this function has an unbounded cost, and using it as part of a state-changing function may render the function
    * uncallable if the map grows to a point where copying to memory consumes too much gas to fit in a block.
    */
-  function getAllStreamIds() external view returns (string[] memory);
+  function getAllStreamIds() external view returns (bytes32[] memory);
 
   /**
    * @notice Return array containing all streams

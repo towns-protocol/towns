@@ -7,7 +7,9 @@ import (
 	"github.com/river-build/river/config"
 	"github.com/river-build/river/crypto"
 	"github.com/river-build/river/protocol"
+	. "github.com/river-build/river/shared"
 	"github.com/river-build/river/storage"
+	"github.com/river-build/river/testutils"
 
 	"github.com/stretchr/testify/require"
 	"google.golang.org/protobuf/proto"
@@ -221,8 +223,9 @@ func TestSpaceViewState(t *testing.T) {
 	user3Wallet, _ := crypto.NewWallet(ctx)
 
 	// create a stream
-	_, mb := makeTestSpaceStream(t, user1Wallet, "user_1", "space_1", nil)
-	s, _, err := tt.createStream(ctx, "streamid$1", mb)
+	spaceStreamId := testutils.FakeStreamId(STREAM_SPACE_PREFIX)
+	_, mb := makeTestSpaceStream(t, user1Wallet, "user_1", spaceStreamId, nil)
+	s, _, err := tt.createStream(ctx, spaceStreamId, mb)
 	require.NoError(t, err)
 	stream := s.(*streamImpl)
 	require.NotNil(t, stream)
@@ -293,8 +296,8 @@ func TestChannelViewState_JoinedMembers(t *testing.T) {
 	alice := "alice"
 	bob := "bob"
 	carol := "carol"
-	spaceStreamId := "space_1_streamId"
-	channelStreamId := "channel_1_streamId"
+	spaceStreamId := testutils.FakeStreamId(STREAM_SPACE_PREFIX)
+	channelStreamId := testutils.FakeStreamId(STREAM_CHANNEL_PREFIX)
 
 	// create a space stream and add the members
 	_, mb := makeTestSpaceStream(t, userWallet, alice, spaceStreamId, nil)
@@ -343,8 +346,8 @@ func TestChannelViewState_RemainingMembers(t *testing.T) {
 	alice := "alice"
 	bob := "bob"
 	carol := "carol"
-	spaceStreamId := "space_1_streamId"
-	channelStreamId := "channel_1_streamId"
+	spaceStreamId := testutils.FakeStreamId(STREAM_SPACE_PREFIX)
+	channelStreamId := testutils.FakeStreamId(STREAM_CHANNEL_PREFIX)
 
 	// create a space stream and add the members
 	_, mb := makeTestSpaceStream(t, userWallet, alice, spaceStreamId, nil)

@@ -4,7 +4,7 @@ pragma solidity ^0.8.23;
 // libraries
 import {EnumerableSet} from "@openzeppelin/contracts/utils/structs/EnumerableSet.sol";
 
-import {IRiverRegistry, RiverRegistryErrors} from "./IRiverRegistry.sol";
+import {IRiverRegistry, RiverRegistryErrors, STREAM_FLAG_SEALED} from "./IRiverRegistry.sol";
 import {RiverRegistryStorage} from "./RiverRegistryStorage.sol";
 import {OwnableBase} from "contracts/src/diamond/facets/ownable/OwnableBase.sol";
 import {Facet} from "contracts/src/diamond/facets/Facet.sol";
@@ -147,12 +147,8 @@ contract RiverRegistry is IRiverRegistry, OwnableBase, Facet {
 
     Node[] memory nodes = new Node[](ds.nodes.length());
 
-    for (uint256 i = 0; i < ds.nodes.length(); ) {
+    for (uint256 i = 0; i < ds.nodes.length(); ++i) {
       nodes[i] = ds.nodeByAddress[ds.nodes.at(i)];
-
-      unchecked {
-        i++;
-      }
     }
 
     return nodes;
@@ -163,71 +159,67 @@ contract RiverRegistry is IRiverRegistry, OwnableBase, Facet {
   // =============================================================
 
   function allocateStream(
-    string memory streamId,
+    bytes32 streamId,
     address[] memory nodes,
     bytes32 genesisMiniblockHash,
     bytes memory genesisMiniblock
   ) external onlyNode {
-    if (bytes(streamId).length == 0)
-      revert(RiverRegistryErrors.InvalidStreamId);
-
-    bytes32 streamIdHash = keccak256(bytes(streamId));
-
     RiverRegistryStorage.Layout storage ds = RiverRegistryStorage.layout();
 
     // verify that the streamId is not already in the registry
-    if (ds.streams.contains(streamIdHash))
+    if (ds.streams.contains(streamId))
       revert(RiverRegistryErrors.AlreadyExists);
 
     // verify that the nodes stream is placed on are in the registry
-    for (uint256 i = 0; i < nodes.length; ) {
+    for (uint256 i = 0; i < nodes.length; ++i) {
       if (!ds.nodes.contains(nodes[i]))
         revert(RiverRegistryErrors.NodeNotFound);
-
-      unchecked {
-        i++;
-      }
     }
 
     // Add the stream to the registry
     Stream memory stream = Stream({
       streamId: streamId,
-      nodes: nodes,
       genesisMiniblockHash: genesisMiniblockHash,
-      genesisMiniblock: genesisMiniblock,
       lastMiniblockHash: genesisMiniblockHash,
-      lastMiniblockNum: 0
+      lastMiniblockNum: 0,
+      flags: 0,
+      reserved0: 0,
+      reserved1: 0,
+      nodes: nodes,
+      genesisMiniblock: genesisMiniblock
     });
 
-    ds.streams.add(streamIdHash);
-    ds.streamById[streamIdHash] = stream;
+    ds.streams.add(streamId);
+    ds.streamById[streamId] = stream;
 
     emit StreamAllocated(streamId, nodes, genesisMiniblockHash);
   }
 
-  function getStream(
-    bytes32 streamIdHash
-  ) external view returns (Stream memory) {
+  function getStream(bytes32 streamId) external view returns (Stream memory) {
     RiverRegistryStorage.Layout storage ds = RiverRegistryStorage.layout();
 
-    if (!ds.streams.contains(streamIdHash))
+    if (!ds.streams.contains(streamId))
       revert(RiverRegistryErrors.StreamNotFound);
 
-    return ds.streamById[streamIdHash];
+    return ds.streamById[streamId];
   }
 
   function setStreamLastMiniblock(
-    bytes32 streamIdHash,
+    bytes32 streamId,
     bytes32 lastMiniblockHash,
-    uint64 lastMiniblockNum
+    uint64 lastMiniblockNum,
+    bool isSealed
   ) external onlyNode {
     RiverRegistryStorage.Layout storage ds = RiverRegistryStorage.layout();
 
     // validate that the streamId is in the registry
-    if (!ds.streams.contains(streamIdHash))
+    if (!ds.streams.contains(streamId))
       revert(RiverRegistryErrors.StreamNotFound);
 
-    Stream storage stream = ds.streamById[streamIdHash];
+    Stream storage stream = ds.streamById[streamId];
+
+    if (stream.flags & STREAM_FLAG_SEALED != 0)
+      revert(RiverRegistryErrors.StreamSealed);
 
     // validate that the lastMiniblockNum is the next expected miniblock
     if (stream.lastMiniblockNum + 1 != lastMiniblockNum)
@@ -235,11 +227,13 @@ contract RiverRegistry is IRiverRegistry, OwnableBase, Facet {
 
     stream.lastMiniblockHash = lastMiniblockHash;
     stream.lastMiniblockNum = lastMiniblockNum;
+    if (isSealed) stream.flags |= STREAM_FLAG_SEALED;
 
     emit StreamLastMiniblockUpdated(
       stream.streamId,
       lastMiniblockHash,
-      lastMiniblockNum
+      lastMiniblockNum,
+      isSealed
     );
   }
 
@@ -247,20 +241,9 @@ contract RiverRegistry is IRiverRegistry, OwnableBase, Facet {
     return RiverRegistryStorage.layout().streams.length();
   }
 
-  function getAllStreamIds() external view returns (string[] memory) {
+  function getAllStreamIds() external view returns (bytes32[] memory) {
     RiverRegistryStorage.Layout storage ds = RiverRegistryStorage.layout();
-
-    string[] memory streamIds = new string[](ds.streams.length());
-
-    for (uint256 i = 0; i < ds.streams.length(); ) {
-      streamIds[i] = ds.streamById[ds.streams.at(i)].streamId;
-
-      unchecked {
-        i++;
-      }
-    }
-
-    return streamIds;
+    return ds.streams.values();
   }
 
   function getAllStreams() external view returns (Stream[] memory) {
@@ -268,12 +251,8 @@ contract RiverRegistry is IRiverRegistry, OwnableBase, Facet {
 
     Stream[] memory streams = new Stream[](ds.streams.length());
 
-    for (uint256 i = 0; i < ds.streams.length(); ) {
+    for (uint256 i = 0; i < ds.streams.length(); ++i) {
       streams[i] = ds.streamById[ds.streams.at(i)];
-
-      unchecked {
-        i++;
-      }
     }
 
     return streams;
@@ -285,11 +264,8 @@ contract RiverRegistry is IRiverRegistry, OwnableBase, Facet {
 
   function _initImpl(address[] memory approvedOperators) internal {
     RiverRegistryStorage.Layout storage ds = RiverRegistryStorage.layout();
-    for (uint256 i = 0; i < approvedOperators.length; ) {
+    for (uint256 i = 0; i < approvedOperators.length; ++i) {
       ds.operators.add(approvedOperators[i]);
-      unchecked {
-        i++;
-      }
     }
   }
 }

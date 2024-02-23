@@ -18,8 +18,8 @@ export default [
     "inputs": [
       {
         "name": "streamId",
-        "type": "string",
-        "internalType": "string"
+        "type": "bytes32",
+        "internalType": "bytes32"
       },
       {
         "name": "nodes",
@@ -103,8 +103,8 @@ export default [
     "outputs": [
       {
         "name": "",
-        "type": "string[]",
-        "internalType": "string[]"
+        "type": "bytes32[]",
+        "internalType": "bytes32[]"
       }
     ],
     "stateMutability": "view"
@@ -121,23 +121,13 @@ export default [
         "components": [
           {
             "name": "streamId",
-            "type": "string",
-            "internalType": "string"
-          },
-          {
-            "name": "nodes",
-            "type": "address[]",
-            "internalType": "address[]"
+            "type": "bytes32",
+            "internalType": "bytes32"
           },
           {
             "name": "genesisMiniblockHash",
             "type": "bytes32",
             "internalType": "bytes32"
-          },
-          {
-            "name": "genesisMiniblock",
-            "type": "bytes",
-            "internalType": "bytes"
           },
           {
             "name": "lastMiniblockHash",
@@ -148,6 +138,31 @@ export default [
             "name": "lastMiniblockNum",
             "type": "uint64",
             "internalType": "uint64"
+          },
+          {
+            "name": "flags",
+            "type": "uint64",
+            "internalType": "uint64"
+          },
+          {
+            "name": "reserved0",
+            "type": "uint64",
+            "internalType": "uint64"
+          },
+          {
+            "name": "reserved1",
+            "type": "uint64",
+            "internalType": "uint64"
+          },
+          {
+            "name": "nodes",
+            "type": "address[]",
+            "internalType": "address[]"
+          },
+          {
+            "name": "genesisMiniblock",
+            "type": "bytes",
+            "internalType": "bytes"
           }
         ]
       }
@@ -208,7 +223,7 @@ export default [
     "name": "getStream",
     "inputs": [
       {
-        "name": "streamIdHash",
+        "name": "streamId",
         "type": "bytes32",
         "internalType": "bytes32"
       }
@@ -221,23 +236,13 @@ export default [
         "components": [
           {
             "name": "streamId",
-            "type": "string",
-            "internalType": "string"
-          },
-          {
-            "name": "nodes",
-            "type": "address[]",
-            "internalType": "address[]"
+            "type": "bytes32",
+            "internalType": "bytes32"
           },
           {
             "name": "genesisMiniblockHash",
             "type": "bytes32",
             "internalType": "bytes32"
-          },
-          {
-            "name": "genesisMiniblock",
-            "type": "bytes",
-            "internalType": "bytes"
           },
           {
             "name": "lastMiniblockHash",
@@ -248,6 +253,31 @@ export default [
             "name": "lastMiniblockNum",
             "type": "uint64",
             "internalType": "uint64"
+          },
+          {
+            "name": "flags",
+            "type": "uint64",
+            "internalType": "uint64"
+          },
+          {
+            "name": "reserved0",
+            "type": "uint64",
+            "internalType": "uint64"
+          },
+          {
+            "name": "reserved1",
+            "type": "uint64",
+            "internalType": "uint64"
+          },
+          {
+            "name": "nodes",
+            "type": "address[]",
+            "internalType": "address[]"
+          },
+          {
+            "name": "genesisMiniblock",
+            "type": "bytes",
+            "internalType": "bytes"
           }
         ]
       }
@@ -322,7 +352,7 @@ export default [
     "name": "setStreamLastMiniblock",
     "inputs": [
       {
-        "name": "streamIdHash",
+        "name": "streamId",
         "type": "bytes32",
         "internalType": "bytes32"
       },
@@ -335,6 +365,11 @@ export default [
         "name": "lastMiniblockNum",
         "type": "uint64",
         "internalType": "uint64"
+      },
+      {
+        "name": "isSealed",
+        "type": "bool",
+        "internalType": "bool"
       }
     ],
     "outputs": [],
@@ -519,9 +554,9 @@ export default [
     "inputs": [
       {
         "name": "streamId",
-        "type": "string",
+        "type": "bytes32",
         "indexed": false,
-        "internalType": "string"
+        "internalType": "bytes32"
       },
       {
         "name": "nodes",
@@ -544,9 +579,9 @@ export default [
     "inputs": [
       {
         "name": "streamId",
-        "type": "string",
+        "type": "bytes32",
         "indexed": false,
-        "internalType": "string"
+        "internalType": "bytes32"
       },
       {
         "name": "lastMiniblockHash",
@@ -559,6 +594,12 @@ export default [
         "type": "uint64",
         "indexed": false,
         "internalType": "uint64"
+      },
+      {
+        "name": "isSealed",
+        "type": "bool",
+        "indexed": false,
+        "internalType": "bool"
       }
     ],
     "anonymous": false
