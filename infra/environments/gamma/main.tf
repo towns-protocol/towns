@@ -111,7 +111,8 @@ resource "aws_secretsmanager_secret" "notification_vapid_key" {
 }
 
 locals {
-  num_nodes = 10
+  num_nodes                       = 10
+  river_registry_contract_address = "0xDABc294d1EfC9055f9FA6ba1303911F846Bb14Ee"
 }
 
 module "river_node" {
@@ -130,6 +131,8 @@ module "river_node" {
 
   is_multi_node = true
 
+  river_registry_contract_address = local.river_registry_contract_address
+
   base_chain_id  = 84532
   river_chain_id = 6524490
 
@@ -139,6 +142,13 @@ module "river_node" {
   }
 
   notification_service_url = "https://push-notification-worker-gamma.towns.com"
+}
+
+module "eth_balance_monitor" {
+  source = "../../modules/eth-balance-monitor"
+
+  subnet_ids                      = module.vpc.private_subnets
+  river_registry_contract_address = local.river_registry_contract_address
 }
 
 data "cloudflare_zone" "zone" {

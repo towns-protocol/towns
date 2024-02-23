@@ -1,0 +1,221 @@
+import {
+    APIGatewayProxyEvent,
+    APIGatewayProxyResult,
+    Context,
+    Handler,
+  } from "aws-lambda";
+  import { client, v2 } from "@datadog/datadog-api-client";
+  import { SecretsManager } from "@aws-sdk/client-secrets-manager";
+  import { Client, PublicClient, createPublicClient, http as httpViem, isAddress } from "viem";
+  
+  const riverRegistryAbi = [
+    {
+      type: "function",
+      name: "getAllNodeAddresses",
+      inputs: [],
+      outputs: [
+        {
+          name: "",
+          type: "address[]",
+          internalType: "address[]",
+        },
+      ],
+      stateMutability: "view",
+    },
+  ];
+  
+  const KNOWN_NODES: Record<string, number> = {
+    "0xBF2Fe1D28887A0000A1541291c895a26bD7B1DdD": 1,
+    "0x43EaCe8E799497f8206E579f7CCd1EC41770d099": 2,
+    "0x4E9baef70f7505fda609967870b8b489AF294796": 3,
+    "0xae2Ef76C62C199BC49bB38DB99B29726bD8A8e53": 4,
+    "0xC4f042CD5aeF82DB8C089AD0CC4DD7d26B2684cB": 5,
+    "0x9BB3b35BBF3FA8030cCdb31030CF78039A0d0D9b": 6,
+    "0x582c64BA11bf70E0BaC39988Cd3Bf0b8f40BDEc4": 7,
+    "0x9df6e5F15ec682ca58Df6d2a831436973f98fe60": 8,
+    "0xB79FaCbFC07Bff49cD2e2971305Da0DF7aCa9bF8": 9,
+    "0xA278267f396a317c5Bb583f47F7f2792Bc00D3b3": 10,
+  };
+  
+  // Handler function for Lambda
+  // eslint-disable-next-line @typescript-eslint/no-unused-vars
+  export const handler: Handler = async (
+    _event: APIGatewayProxyEvent,
+    context: Context
+  ): Promise<APIGatewayProxyResult> => {
+    const {
+      ENVIRONMENT,
+      DATADOG_API_KEY_SECRET_ARN,
+      RPC_URL_SECRET_ARN,
+      DATADOG_APPLICATION_KEY_SECRET_ARN,
+      RIVER_REGISTRY_CONTRACT_ADDRESS,
+    } = getEnvConfig();
+    const datadogApiKey = await getSecretValue(DATADOG_API_KEY_SECRET_ARN);
+    const datadogApplicationKey = await getSecretValue(
+      DATADOG_APPLICATION_KEY_SECRET_ARN
+    );
+    const rpcUrl = await getSecretValue(RPC_URL_SECRET_ARN);
+    const client = createPublicClient({
+      transport: httpViem(rpcUrl),
+    });
+  
+    const nodeAddresses = await getNodeAddresses(
+      client,
+      RIVER_REGISTRY_CONTRACT_ADDRESS
+    );
+    console.log(`Got node addresses`, nodeAddresses);
+    const walletBalances = await getWalletBalances(client, nodeAddresses);
+    console.log(`Got wallet balances`, walletBalances);
+  
+    await postWalletBalancesToDatadog({
+      walletBalances,
+      env: ENVIRONMENT,
+      datadogApiKey,
+      datadogApplicationKey,
+    });
+  
+    return {
+      statusCode: 200,
+      body: JSON.stringify({
+        message: `Successfully posted wallet balances to Datadog for ${ENVIRONMENT}`,
+      }),
+    };
+  };
+  
+  async function getNodeAddresses(
+    client: PublicClient,
+    riverRegistryContractAddress: string
+  ) {
+    const nodeAddresses = await client.readContract({
+      abi: riverRegistryAbi,
+      address: riverRegistryContractAddress as any,
+      functionName: "getAllNodeAddresses",
+    });
+  
+    return nodeAddresses as string[];
+  }
+  
+  async function getWalletBalances(client: PublicClient, walletAddresses: string[]) {
+    const walletBalances: {walletAddress: string, balance: number}[] = [];
+    for (const walletAddress of walletAddresses) {
+        console.log(`Getting balance for wallet ${walletAddress}`);
+        if (!isAddress(walletAddress)) {
+            throw new Error(`Invalid wallet address: ${walletAddress}`);
+        }
+        const balanceBigInt = await client.getBalance({
+            address: walletAddress,
+            blockTag: "latest",
+        });
+        const balanceNum = Number(balanceBigInt);
+        const balance = balanceNum / 10**18;
+        console.log(`Got balance for wallet ${walletAddress}: ${balance}`);
+        walletBalances.push({ walletAddress, balance });
+    }
+    return walletBalances;
+  }
+  
+  async function postWalletBalancesToDatadog({
+    walletBalances,
+    datadogApiKey,
+    datadogApplicationKey,
+    env,
+  }: {
+    walletBalances: { walletAddress: string; balance: number }[];
+    datadogApiKey: string;
+    datadogApplicationKey: string;
+    env: string;
+  }) {
+    console.log("Posting wallet balances to Datadog:");
+    const configuration = client.createConfiguration({
+      authMethods: {
+        apiKeyAuth: datadogApiKey,
+        appKeyAuth: datadogApplicationKey,
+      },
+    });
+    const timestamp = Math.floor(Date.now() / 1000);
+    const series = walletBalances.map(({ walletAddress, balance }) => {
+      const tags = [`env:${env}`, `wallet_address:${walletAddress}`];
+      const nodeNumber = KNOWN_NODES[walletAddress];
+      if (typeof KNOWN_NODES[walletAddress] === "number") {
+        tags.push(`node_number:${nodeNumber}`);
+      }
+      return {
+        metric: `river_node.wallet_balance`,
+        points: [{ timestamp, value: balance }],
+        tags,
+      };
+    });
+    console.log("Series:", JSON.stringify(series, null, 2));
+    const params: v2.MetricsApiSubmitMetricsRequest = {
+      body: {
+        series,
+      },
+    };
+    const apiInstance = new v2.MetricsApi(configuration);
+  
+    return apiInstance
+      .submitMetrics(params)
+      .then((data: v2.IntakePayloadAccepted) => {
+        console.log(
+          "API called successfully. Returned data: " + JSON.stringify(data)
+        );
+      })
+      .catch((error: any) => console.error(error));
+  }
+  
+  async function getSecretValue(secretArn: string): Promise<string> {
+    const secretsManager = new SecretsManager({ region: "us-east-1" });
+    const secretValue = await secretsManager.getSecretValue({
+      SecretId: secretArn,
+    });
+    const secretString = secretValue.SecretString;
+    if (typeof secretString !== "string") {
+      throw new Error(`Secret value for ${secretArn} is not a string`);
+    }
+    return secretString;
+  }
+  
+  function getEnvConfig() {
+    const {
+      ENVIRONMENT,
+      DATADOG_API_KEY_SECRET_ARN,
+      DATADOG_APPLICATION_KEY_SECRET_ARN,
+      RIVER_REGISTRY_CONTRACT_ADDRESS,
+      RPC_URL_SECRET_ARN,
+    } = process.env;
+    if (typeof ENVIRONMENT !== "string" || !ENVIRONMENT.trim().length) {
+      throw new Error("ENVIRONMENT is not defined");
+    }
+    if (
+      typeof DATADOG_API_KEY_SECRET_ARN !== "string" ||
+      !DATADOG_API_KEY_SECRET_ARN.trim().length
+    ) {
+      throw new Error("DATADOG_API_KEY_SECRET_ARN is not defined");
+    }
+    if (
+      typeof RPC_URL_SECRET_ARN !== "string" ||
+      !RPC_URL_SECRET_ARN.trim().length
+    ) {
+      throw new Error("RPC_URL_SECRET_ARN is not defined");
+    }
+    if (
+      typeof DATADOG_APPLICATION_KEY_SECRET_ARN !== "string" ||
+      !DATADOG_APPLICATION_KEY_SECRET_ARN.trim().length
+    ) {
+      throw new Error("DATADOG_APPLICATION_KEY_SECRET_ARN is not defined");
+    }
+    if (
+      typeof RIVER_REGISTRY_CONTRACT_ADDRESS !== "string" ||
+      !RIVER_REGISTRY_CONTRACT_ADDRESS.trim().length
+    ) {
+      throw new Error("RIVER_REGISTRY_CONTRACT_ADDRESS is not defined");
+    }
+    return {
+      ENVIRONMENT,
+      DATADOG_API_KEY_SECRET_ARN,
+      DATADOG_APPLICATION_KEY_SECRET_ARN,
+      RPC_URL_SECRET_ARN,
+      RIVER_REGISTRY_CONTRACT_ADDRESS,
+    };
+  }
+  

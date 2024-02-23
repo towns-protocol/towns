@@ -1,0 +1,23 @@
+{
+    "name": "eth-balance-monitor",
+    "version": "1.0.0",
+    "type": "module",
+    "description": "",
+    "main": "index.js",
+    "dependencies": {
+        "@aws-sdk/client-secrets-manager": "3.460.0",
+        "@datadog/datadog-api-client": "^1.22.0",
+        "typescript": "^5.3.3",
+        "viem": "^1.18.2"
+    },
+    "scripts": {
+        "test": "echo \"Error: no test specified\" && exit 1",
+        "build": "esbuild src/index.ts --sourcemap=inline --bundle --platform=node --target=node20 --format=cjs --outfile=dist/index.cjs"
+    },
+    "author": "",
+    "license": "ISC",
+    "devDependencies": {
+        "@types/aws-lambda": "^8.10.133",
+        "esbuild": "^0.20.0"
+    }
+}

@@ -89,3 +89,8 @@ variable "river_node_ssl_cert_secret_arn" {
   description = "The secret ARN for the SSL cert and key for the river node"
   type        = string
 }
+
+variable "river_registry_contract_address" {
+  description = "The address of the river registry contract"
+  type        = string
+}

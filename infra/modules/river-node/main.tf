@@ -340,7 +340,7 @@ locals {
   river_registry_contract_td_env_config = var.is_multi_node ? [
     {
       name  = "REGISTRYCONTRACT__ADDRESS",
-      value = "0xDABc294d1EfC9055f9FA6ba1303911F846Bb14Ee"
+      value = var.river_registry_contract_address
     }
   ] : []
 
@@ -377,7 +377,7 @@ resource "aws_ecs_task_definition" "river-fargate" {
 
   container_definitions = jsonencode([{
     name  = "river-node"
-    image = "${local.global_remote_state.public_ecr.repository_url_map["river-node"]}:gamma-latest"
+    image = "${local.global_remote_state.public_ecr.repository_url_map["river-node"]}:latest"
 
     essential = true
     portMappings = [{
