@@ -1,4 +1,3 @@
-import EventEmitter from 'events'
 import TypedEmitter from 'typed-emitter'
 import chunk from 'lodash/chunk'
 import { Permission } from '@river/web3'
@@ -35,7 +34,7 @@ export enum DecryptionStatus {
 }
 
 export type DecryptionEvents = {
-    statusChanged: (status: DecryptionStatus) => void
+    decryptionExtStatusChanged: (status: DecryptionStatus) => void
 }
 
 interface EncryptedContentItem {
@@ -81,7 +80,7 @@ interface MissingKeysItem {
  *
  * We need code to purge bad sessions (if someones sends us the wrong key, or a key that doesn't decrypt the message)
  */
-export class DecryptionExtensions extends (EventEmitter as new () => TypedEmitter<DecryptionEvents>) {
+export class DecryptionExtensions {
     public status: DecryptionStatus = DecryptionStatus.initializing
     private log: {
         debug: DLogger
@@ -108,10 +107,10 @@ export class DecryptionExtensions extends (EventEmitter as new () => TypedEmitte
     constructor(
         private client: Client,
         private delegate: EntitlementsDelegate,
+        private emitter: TypedEmitter<DecryptionEvents>,
         private userId: string,
         private userDevice: UserDevice,
     ) {
-        super()
         const shortId = shortenHexString(
             this.userId.startsWith('0x') ? this.userId.slice(2) : this.userId,
         )
@@ -237,7 +236,7 @@ export class DecryptionExtensions extends (EventEmitter as new () => TypedEmitte
         if (this.status !== status) {
             this.log.info(`status changed ${DecryptionStatus[status]}`)
             this.status = status
-            this.emit('statusChanged', status)
+            this.emitter.emit('decryptionExtStatusChanged', status)
         }
     }
 

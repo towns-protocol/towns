@@ -109,14 +109,20 @@ import { Stream } from './stream'
 import { Code } from '@connectrpc/connect'
 import { usernameChecksum, isIConnectError, genPersistenceStoreName } from './utils'
 import { EncryptedContent, toDecryptedContent } from './encryptedContentTypes'
-import { DecryptionExtensions, EntitlementsDelegate } from './decryptionExtensions'
+import {
+    DecryptionEvents,
+    DecryptionExtensions,
+    EntitlementsDelegate,
+} from './decryptionExtensions'
 import { PersistenceStore, IPersistenceStore, StubPersistenceStore } from './persistenceStore'
 import { SyncState, SyncedStreams } from './syncedStreams'
 import { SyncedStream } from './syncedStream'
 import { SyncedStreamsExtension } from './syncedStreamsExtension'
 
+type ClientEvents = StreamEvents & DecryptionEvents
+
 export class Client
-    extends (EventEmitter as new () => TypedEmitter<StreamEvents>)
+    extends (EventEmitter as new () => TypedEmitter<ClientEvents>)
     implements IGroupEncryptionClient
 {
     readonly signerContext: SignerContext
@@ -927,7 +933,7 @@ export class Client
         await this.streams.stopSync()
     }
 
-    emit<E extends keyof StreamEvents>(event: E, ...args: Parameters<StreamEvents[E]>): boolean {
+    emit<E extends keyof ClientEvents>(event: E, ...args: Parameters<ClientEvents[E]>): boolean {
         this.logEmitFromClient(event, ...args)
         return super.emit(event, ...args)
     }
@@ -1614,6 +1620,7 @@ export class Client
         this.decryptionExtensions = new DecryptionExtensions(
             this,
             this.entitlementsDelegate,
+            this,
             this.userId,
             this.userDeviceKey(),
         )

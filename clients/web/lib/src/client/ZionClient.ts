@@ -227,6 +227,10 @@ export class ZionClient implements EntitlementsDelegate {
             userId: this.casablancaClient.userId,
         })
 
+        this.casablancaClient.on('decryptionExtStatusChanged', (status) => {
+            console.log('Decryption status changed', status) // for zhao to remove when he wires into analytics
+        })
+
         this.casablancaClient.startSync()
         return this.casablancaClient
     }
