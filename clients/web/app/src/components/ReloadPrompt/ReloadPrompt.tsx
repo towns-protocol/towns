@@ -7,7 +7,6 @@ import { FadeInBox } from '@components/Transitions'
 import { Spinner } from '@components/Spinner'
 import { env } from 'utils'
 import { MINUTE_MS, SECOND_MS } from 'data/constants'
-import { useDocumentHidden } from 'hooks/useDocumentHidden'
 
 const UPDATE_INTERVAL_MS = 1 * MINUTE_MS
 
@@ -15,7 +14,6 @@ const log = debug('app:ReloadPrompt')
 log.enabled = true
 
 export const ReloadPrompt = () => {
-    const isHidden = useDocumentHidden()
     const {
         offlineReady: [offlineReady, setOfflineReady],
         needRefresh: [needRefresh, setNeedRefresh],
@@ -143,12 +141,6 @@ export const ReloadPrompt = () => {
         }, 1 * SECOND_MS)
     }, [isUpdating, updateServiceWorker])
 
-    useEffect(() => {
-        if (needRefresh && isHidden) {
-            onUpdateClick()
-        }
-    }, [isHidden, needRefresh, onUpdateClick])
-
     return (
         <Box
             padding="lg"
@@ -173,7 +165,7 @@ export const ReloadPrompt = () => {
                             version {APP_VERSION} ({APP_COMMIT_HASH})
                         </Paragraph>
                     </FadeInBox>
-                ) : needRefresh && !isHidden ? (
+                ) : needRefresh ? (
                     <FadeInBox layout preset="fadeup" key="card">
                         <Card
                             border
