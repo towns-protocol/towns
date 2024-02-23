@@ -56,7 +56,8 @@ export function useHasPermission(props: Props) {
         // options for the query.
         // query will not execute until the client is defined.
         {
-            enabled: client !== undefined && !!walletAddress && isAddress(walletAddress),
+            enabled:
+                client !== undefined && !!walletAddress && isAddress(walletAddress) && !!spaceId,
             refetchOnMount: true,
             // inherits default staleTime of 15 secs
             // server strictly enforces permissions in real time.
