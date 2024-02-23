@@ -83,6 +83,8 @@ contract RiverRegistryTest is TestUtils, IRiverRegistryBase, IOwnableBase {
     address nonOwner,
     address nodeOperator
   ) external {
+    vm.assume(nonOwner != deployer);
+
     vm.prank(nonOwner);
     vm.expectRevert(
       abi.encodeWithSelector(Ownable__NotOwner.selector, nonOwner)

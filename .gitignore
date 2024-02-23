@@ -23,6 +23,8 @@ coverage.json
 contracts/.openzeppelin/unknown-*.json
 contracts/docs/coverage
 contracts/.env
+contracts/addresses/base_anvil
+contracts/addresses/river_anvil
 abi/
 
 /docs
@@ -69,7 +71,6 @@ servers/xchain/bin/*
 servers/xchain/instance_*/*
 servers/xchain/common/localhost_entitlementChecker.json
 servers/xchain/common/localhost_entitlementGatedExample.json
-packages/generated/dev/addresses
 servers/xchain/contracts/*.go
 common/xchain/dist/*
 

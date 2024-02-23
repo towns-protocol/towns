@@ -20,6 +20,7 @@ casablanca/**/run_files/*
 casablanca/node/auth/contracts/*.json
 casablanca/node/registries/contracts/*.json
 contracts/cache/*
+contracts/addresses/*
 contracts/lib/*
 contracts/**/out/*
 contracts/out/*

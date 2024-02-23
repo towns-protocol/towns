@@ -15,5 +15,9 @@ make deploy-base-anvil-nb contract=DeployMultiInit
 make deploy-base-anvil-nb contract=DeployWalletLink
 
 cd ..
+
 mkdir -p casablanca/node/run_files/addresses
-cp packages/generated/dev/addresses/walletLink.json casablanca/node/run_files/addresses
+mkdir -p packages/generated/addresses/base_anvil
+
+cp contracts/addresses/base_anvil/walletLink.json packages/generated/addresses/base_anvil
+cp contracts/addresses/base_anvil/walletLink.json casablanca/node/run_files/addresses
