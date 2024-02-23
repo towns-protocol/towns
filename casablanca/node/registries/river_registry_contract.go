@@ -13,6 +13,7 @@ import (
 	"github.com/river-build/river/crypto"
 
 	"github.com/ethereum/go-ethereum/accounts/abi/bind"
+	"github.com/ethereum/go-ethereum/core/types"
 	ethCrypto "github.com/ethereum/go-ethereum/crypto"
 )
 
@@ -80,10 +81,12 @@ func (sr *RiverRegistryContract) AllocateStream(
 		return AsRiverError(err).Func("AllocateStream")
 	}
 
-	transactor := contracts.RiverRegistryV1TransactorRaw{
-		Contract: &sr.Contract.RiverRegistryV1Transactor,
-	}
-	_, _, err = sr.Blockchain.TxRunner.SubmitAndWait(ctx, &transactor, "allocateStream", streamId, addrs, hash, genesisMiniblock)
+	_, _, err = sr.Blockchain.TxRunner.SubmitAndWait(
+		ctx,
+		func(opts *bind.TransactOpts) (*types.Transaction, error) {
+			return sr.Contract.AllocateStream(opts, streamId, addrs, hash, genesisMiniblock)
+		},
+	)
 	if err != nil {
 		return AsRiverError(err, Err_CANNOT_CALL_CONTRACT).Func("AllocateStream").Message("Smart contract call failed")
 	}

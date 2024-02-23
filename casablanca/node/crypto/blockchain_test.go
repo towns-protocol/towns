@@ -4,14 +4,15 @@ import (
 	"testing"
 	"time"
 
+	"github.com/ethereum/go-ethereum/accounts/abi/bind"
 	"github.com/ethereum/go-ethereum/common"
+	"github.com/ethereum/go-ethereum/core/types"
 	"github.com/ethereum/go-ethereum/crypto"
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
 
 	. "github.com/river-build/river/base"
 	"github.com/river-build/river/base/test"
-	"github.com/river-build/river/contracts"
 	. "github.com/river-build/river/protocol"
 )
 
@@ -34,24 +35,19 @@ func TestBlockchain(t *testing.T) {
 	nodeAddr2 := bc2.Wallet.Address
 	nodeUrl2 := "http://node2.node"
 
-	transactor := contracts.RiverRegistryV1TransactorRaw{
-		Contract: &(tc.RiverRegistry.RiverRegistryV1Transactor),
-	}
 	tx1, err := owner.TxRunner.Submit(
 		ctx,
-		&transactor,
-		"registerNode",
-		nodeAddr1,
-		nodeUrl1,
+		func(opts *bind.TransactOpts) (*types.Transaction, error) {
+			return tc.RiverRegistry.RegisterNode(opts, nodeAddr1, nodeUrl1)
+		},
 	)
 	require.NoError(err)
 
 	tx2, err := owner.TxRunner.Submit(
 		ctx,
-		&transactor,
-		"registerNode",
-		nodeAddr2,
-		nodeUrl2,
+		func(opts *bind.TransactOpts) (*types.Transaction, error) {
+			return tc.RiverRegistry.RegisterNode(opts, nodeAddr2, nodeUrl2)
+		},
 	)
 	require.NoError(err)
 
@@ -82,10 +78,9 @@ func TestBlockchain(t *testing.T) {
 	// Can't add the same node twice
 	tx1, err = owner.TxRunner.Submit(
 		ctx,
-		&transactor,
-		"registerNode",
-		nodeAddr1,
-		nodeUrl1,
+		func(opts *bind.TransactOpts) (*types.Transaction, error) {
+			return tc.RiverRegistry.RegisterNode(opts, nodeAddr1, nodeUrl1)
+		},
 	)
 	// Looks like this is a difference for simulated backend:
 	// this error should be know only after the transaction is mined - i.e. after Commit call.
@@ -102,7 +97,12 @@ func TestBlockchain(t *testing.T) {
 	genesisHash := common.HexToHash("0x123")
 	genesisMiniblock := []byte("genesis")
 
-	tx1, err = bc1.TxRunner.Submit(ctx, &transactor, "allocateStream", streamId, addrs, genesisHash, genesisMiniblock)
+	tx1, err = bc1.TxRunner.Submit(
+		ctx,
+		func(opts *bind.TransactOpts) (*types.Transaction, error) {
+			return tc.RiverRegistry.AllocateStream(opts, streamId, addrs, genesisHash, genesisMiniblock)
+		},
+	)
 	require.NoError(err)
 
 	tc.Commit()
@@ -121,12 +121,22 @@ func TestBlockchain(t *testing.T) {
 	assert.Equal(uint64(0), stream.LastMiniblockNum)
 
 	// Can't allocate the same stream twice
-	tx1, err = bc1.TxRunner.Submit(ctx, &transactor, "allocateStream", streamId, addrs, genesisHash, genesisMiniblock)
+	tx1, err = bc1.TxRunner.Submit(
+		ctx,
+		func(opts *bind.TransactOpts) (*types.Transaction, error) {
+			return tc.RiverRegistry.AllocateStream(opts, streamId, addrs, genesisHash, genesisMiniblock)
+		},
+	)
 	require.Nil(tx1)
 	require.Equal(Err_ALREADY_EXISTS, AsRiverError(err).Code)
 
 	// Can't allocate with unknown node
-	tx1, err = bc1.TxRunner.Submit(ctx, &transactor, "allocateStream", "otherId", []common.Address{common.HexToAddress("0x123")}, genesisHash, genesisMiniblock)
+	tx1, err = bc1.TxRunner.Submit(
+		ctx,
+		func(opts *bind.TransactOpts) (*types.Transaction, error) {
+			return tc.RiverRegistry.AllocateStream(opts, "otherId", []common.Address{common.HexToAddress("0x123")}, genesisHash, genesisMiniblock)
+		},
+	)
 	require.Nil(tx1)
 	require.Equal(Err_CANNOT_CALL_CONTRACT, AsRiverError(err).Code)
 }

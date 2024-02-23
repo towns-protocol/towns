@@ -69,11 +69,11 @@ func NewTxRunner(ctx context.Context, params *TxRunnerParams) *TxRunner {
 	return r
 }
 
+type SubmitterFunc func(*bind.TransactOpts) (*types.Transaction, error)
+
 func (tr *TxRunner) Submit(
 	ctx context.Context,
-	contract Transactor,
-	method string,
-	params ...any,
+	submitterFunc SubmitterFunc,
 ) (*types.Transaction, error) {
 	tr.mu.Lock()
 	defer tr.mu.Unlock()
@@ -94,7 +94,7 @@ func (tr *TxRunner) Submit(
 		Context: ctx,
 	}
 
-	tx, err := contract.Transact(opts, method, params...)
+	tx, err := submitterFunc(opts)
 	if err != nil {
 		// TODO: on nonce error, reset nonce and retry
 		return nil, AsRiverError(err, Err_CANNOT_CALL_CONTRACT).Func("Submit").Message("Transact failed")
@@ -113,11 +113,9 @@ func (tr *TxRunner) Submit(
 // waiters with matching hashes at once, instead of polling in parallel.
 func (tr *TxRunner) SubmitAndWait(
 	ctx context.Context,
-	contract Transactor,
-	method string,
-	params ...any,
+	submitterFunc SubmitterFunc,
 ) (*types.Transaction, *types.Receipt, error) {
-	tx, err := tr.Submit(ctx, contract, method, params...)
+	tx, err := tr.Submit(ctx, submitterFunc)
 	if err != nil {
 		return nil, nil, AsRiverError(err).Func("SubmitAndWait")
 	}

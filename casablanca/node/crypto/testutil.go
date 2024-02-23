@@ -12,6 +12,7 @@ import (
 	"github.com/ethereum/go-ethereum/accounts/abi/bind"
 	"github.com/ethereum/go-ethereum/common"
 	"github.com/ethereum/go-ethereum/core"
+	"github.com/ethereum/go-ethereum/core/types"
 	"github.com/ethereum/go-ethereum/ethclient"
 	"github.com/ethereum/go-ethereum/ethclient/simulated"
 	"github.com/river-build/river/contracts"
@@ -215,15 +216,11 @@ func (c *BlockchainTestContext) GetBlockchain(ctx context.Context, index int, au
 func (c *BlockchainTestContext) InitNodeRecord(ctx context.Context, index int, url string) error {
 	owner := c.DeployerBlockchain
 
-	transactor := contracts.RiverRegistryV1TransactorRaw{
-		Contract: &(c.RiverRegistry.RiverRegistryV1Transactor),
-	}
 	tx, err := owner.TxRunner.Submit(
 		ctx,
-		&transactor,
-		"registerNode",
-		c.Wallets[index].Address,
-		url,
+		func(opts *bind.TransactOpts) (*types.Transaction, error) {
+			return c.RiverRegistry.RegisterNode(opts, c.Wallets[index].Address, url)
+		},
 	)
 	if err != nil {
 		return err
