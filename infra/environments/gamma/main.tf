@@ -141,7 +141,7 @@ module "river_node" {
     name = aws_ecs_cluster.river_ecs_cluster.name
   }
 
-  notification_service_url = "https://push-notification-worker-gamma.towns.com"
+  notification_service_url = "https://push-notification-worker-test-beta.towns.com"
 }
 
 module "eth_balance_monitor" {
