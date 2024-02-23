@@ -48,42 +48,18 @@ export const ul = style({
     margin: `${vars.space.xs} 0`,
     padding: 0,
     listStylePosition: 'outside',
+    listStyleType: 'disc',
 })
 
 export const ol = style({
     margin: `${vars.space.xs} 0`,
     padding: 0,
     listStylePosition: 'inside',
+    listStyleType: 'decimal',
 })
 
 export const listitem = style({
     margin: `${vars.space.none} ${vars.space.none}`,
-})
-
-export const ol1 = style({
-    listStyleType: 'decimal',
-})
-export const ol2 = style({
-    listStyleType: 'lower-alpha',
-})
-export const ol3 = style({
-    listStyleType: 'lower-roman',
-})
-export const ol4 = style({
-    listStyleType: 'decimal',
-})
-
-export const ul1 = style({
-    listStyleType: 'disc',
-})
-export const ul2 = style({
-    listStyleType: 'square',
-})
-export const ul3 = style({
-    listStyleType: 'disc',
-})
-export const ul4 = style({
-    listStyleType: 'square',
 })
 
 export const nestedListItem = style({
@@ -212,4 +188,28 @@ globalStyle(`${richText} ${ul}:first-of-type li:first-child`, {
 
 globalStyle(`${richText} ${ul}:first-of-type li:last-child`, {
     marginBottom: 0,
+})
+
+globalStyle(`${richText} ${ul} ${ul}`, {
+    listStyleType: 'square',
+})
+
+globalStyle(`${richText} ${ul} ${ul} ${ul}`, {
+    listStyleType: 'disc',
+})
+
+globalStyle(`${richText} ${ul} ${ul} ${ul} ${ul}`, {
+    listStyleType: 'square',
+})
+
+globalStyle(`${richText} ${ol} ${ol}`, {
+    listStyleType: 'lower-alpha',
+})
+
+globalStyle(`${richText} ${ol} ${ol} ${ol}`, {
+    listStyleType: 'lower-roman',
+})
+
+globalStyle(`${richText} ${ol} ${ol} ${ol} ${ol}`, {
+    listStyleType: 'decimal',
 })

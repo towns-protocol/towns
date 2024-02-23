@@ -181,7 +181,7 @@ export const SpacesChannelComponent = (props: Props) => {
     const showDMAcceptInvitation = myMembership === Membership.Invite && isDmOrGDM
 
     const MessageEditor =
-        env.VITE_ENABLE_SLATE_EDITOR || isTouch || channel?.label.match(/slate$/)
+        env.VITE_ENABLE_SLATE_EDITOR || isTouch || channel?.label.match(/(spam|slate)$/)
             ? PlateEditor
             : RichTextEditor
     return (

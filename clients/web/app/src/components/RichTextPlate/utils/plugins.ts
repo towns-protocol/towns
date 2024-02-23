@@ -1,7 +1,7 @@
 // eslint-disable-next-line @typescript-eslint/ban-ts-comment
 // @ts-nocheck
 import { withProps } from '@udecode/cn'
-import { PlateElement, PlateLeaf, createPlugins } from '@udecode/plate-common'
+import { PlateLeaf, createPlugins } from '@udecode/plate-common'
 import { ELEMENT_PARAGRAPH, createParagraphPlugin } from '@udecode/plate-paragraph'
 import { ELEMENT_BLOCKQUOTE, createBlockquotePlugin } from '@udecode/plate-block-quote'
 import {
@@ -12,7 +12,13 @@ import {
 } from '@udecode/plate-code-block'
 import { TComboboxItem, createComboboxPlugin } from '@udecode/plate-combobox'
 import { ELEMENT_LINK, createLinkPlugin } from '@udecode/plate-link'
-import { ELEMENT_LI, ELEMENT_OL, ELEMENT_UL, createListPlugin } from '@udecode/plate-list'
+import {
+    ELEMENT_LI,
+    ELEMENT_LIC,
+    ELEMENT_OL,
+    ELEMENT_UL,
+    createListPlugin,
+} from '@udecode/plate-list'
 import { ELEMENT_MENTION, ELEMENT_MENTION_INPUT, createMentionPlugin } from '@udecode/plate-mention'
 import {
     MARK_BOLD,
@@ -43,9 +49,9 @@ import { MentionElement } from '@components/RichTextPlate/ui/mention-element'
 import { MentionInputElement } from '@components/RichTextPlate/ui/mention-input-element'
 import { ParagraphElement } from '@components/RichTextPlate/ui/paragraph-element'
 import { CodeLeaf } from '@components/RichTextPlate/ui/code-leaf'
-import { withPlaceholders } from '@components/RichTextPlate/ui/placeholder'
 import { autoformatRules } from './autoformat'
 import { nodeResetRules } from './node-reset'
+import { createShiftEnterListPlugin } from './shiftEnterListPlugin'
 
 export const plugins = createPlugins(
     [
@@ -95,17 +101,22 @@ export const plugins = createPlugins(
                     {
                         hotkey: 'shift+enter',
                         query: {
+                            exclude: [ELEMENT_LIC],
                             allow: [ELEMENT_CODE_BLOCK, ELEMENT_BLOCKQUOTE],
                         },
                     },
                 ],
             },
         }),
+        createShiftEnterListPlugin(),
         createExitBreakPlugin({
             options: {
                 rules: [
                     {
                         hotkey: 'shift+enter',
+                        query: {
+                            exclude: [ELEMENT_LIC],
+                        },
                     },
                     {
                         hotkey: 'enter',
@@ -123,7 +134,7 @@ export const plugins = createPlugins(
         createDeserializeMdPlugin(),
     ],
     {
-        components: withPlaceholders({
+        components: {
             [ELEMENT_BLOCKQUOTE]: BlockquoteElement,
             [ELEMENT_CODE_BLOCK]: CodeBlockElement,
             [ELEMENT_CODE_LINE]: CodeLineElement,
@@ -131,7 +142,8 @@ export const plugins = createPlugins(
             [ELEMENT_LINK]: LinkElement,
             [ELEMENT_UL]: withProps(ListElement, { variant: 'ul' }),
             [ELEMENT_OL]: withProps(ListElement, { variant: 'ol' }),
-            [ELEMENT_LI]: withProps(PlateElement, { as: 'li' }),
+            [ELEMENT_LI]: withProps(ListElement, { variant: 'li' }),
+            [ELEMENT_LIC]: withProps(ListElement, { variant: 'span' }),
             [ELEMENT_MENTION]: MentionElement,
             [ELEMENT_MENTION_INPUT]: withProps(MentionInputElement, { prefix: '@' }),
             [ELEMENT_PARAGRAPH]: ParagraphElement,
@@ -140,6 +152,6 @@ export const plugins = createPlugins(
             [MARK_ITALIC]: withProps(PlateLeaf, { as: 'em', style: { fontStyle: 'italic' } }),
             [MARK_STRIKETHROUGH]: withProps(PlateLeaf, { as: 's' }),
             [MARK_UNDERLINE]: withProps(PlateLeaf, { as: 'u' }),
-        }),
+        },
     },
 )

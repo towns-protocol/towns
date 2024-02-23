@@ -5,10 +5,12 @@ import { useEditorRef } from '@udecode/plate-common'
 import { focusEditor } from '@udecode/slate-react'
 import { MARK_BOLD, MARK_CODE, MARK_ITALIC, MARK_STRIKETHROUGH } from '@udecode/plate-basic-marks'
 import { upsertLink } from '@udecode/plate-link'
+import { ListStyleType } from '@udecode/plate-indent-list'
 import { Box, BoxProps, DividerEditorToolbar, MotionBox, Stack } from '@ui'
 import { GiphyEntryDesktop } from '@components/Giphy/GiphyEntry'
 import { useDevice } from 'hooks/useDevice'
 import { ShortcutTooltip } from '@components/Shortcuts/ShortcutTooltip'
+import { ListToolbarButton } from './ListToolbarButton'
 import { AddLinkModal } from './LinkModal'
 import { MarkToolbarButton } from './mark-toolbar-button'
 import { LinkToolbarButton } from './link-toolbar-button'
@@ -93,6 +95,17 @@ export const PlateToolbar = ({ showFormattingToolbar, focused }: Props) => {
                                     tooltip="Strikethrough"
                                 />
                                 <LinkToolbarButton onClick={onLinkClick} />
+                                <DividerEditorToolbar />
+                                <ListToolbarButton
+                                    nodeType={ListStyleType.Decimal}
+                                    icon="numberedlist"
+                                    tooltip="Ordered list"
+                                />
+                                <ListToolbarButton
+                                    nodeType={ListStyleType.Disc}
+                                    icon="bulletedlist"
+                                    tooltip="Bulleted list"
+                                />
                                 <DividerEditorToolbar />
                                 <MarkToolbarButton
                                     nodeType={MARK_CODE}

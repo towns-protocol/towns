@@ -1,27 +1,28 @@
 import React from 'react'
-import { withRef, withVariants } from '@udecode/cn'
 import { PlateElement } from '@udecode/plate-common'
-import { cva } from 'class-variance-authority'
+import { withRef } from '@udecode/cn'
+import { Box } from '@ui'
+import { listitem, ol, ul } from '../RichTextEditor.css'
 
-const listVariants = cva('tw-m-0 tw-ps-6', {
-    variants: {
-        variant: {
-            ul: 'tw-list-disc [&_ul]:tw-list-[circle] [&_ul_ul]:tw-list-[square]',
-            ol: 'tw-list-decimal',
-        },
-    },
-})
-
-const ListElementVariants = withVariants(PlateElement, listVariants, ['variant'])
-
-export const ListElement = withRef<typeof ListElementVariants>(
-    ({ children, variant = 'ul', ...props }, ref) => {
+const classNameMap = {
+    ul,
+    ol,
+    li: listitem,
+    span: '',
+}
+export const ListElement = withRef<typeof PlateElement, { variant: 'ul' | 'ol' | 'li' | 'span' }>(
+    ({ className, variant, children, ...props }, ref) => {
         const Component = variant!
-
         return (
-            <ListElementVariants asChild ref={ref} variant={variant} {...props}>
-                <Component>{children}</Component>
-            </ListElementVariants>
+            <PlateElement asChild ref={ref} {...props}>
+                {variant === 'span' ? (
+                    <Box as="span" display="inline-block">
+                        {children}
+                    </Box>
+                ) : (
+                    <Component className={classNameMap[variant]}>{children}</Component>
+                )}
+            </PlateElement>
         )
     },
 )

@@ -107,7 +107,7 @@
         "slate": "^0.102.0",
         "slate-history": "^0.100.0",
         "slate-hyperscript": "^0.100.0",
-        "slate-mark": "https://github.com/abhi-bc/slate-mark.git#2d367697ec255762c3f75fcb7bc982e45b1f39bd",
+        "slate-mark": "https://github.com/abhi-bc/slate-mark.git#1ea95583c70f05c00952e803881c184a3ca90cda",
         "slate-react": "^0.102.0",
         "tailwind-merge": "^2.2.1",
         "thenby": "^1.3.4",
