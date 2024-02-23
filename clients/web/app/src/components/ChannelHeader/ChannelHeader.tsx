@@ -1,6 +1,14 @@
 import React, { useCallback, useMemo } from 'react'
 import { useNavigate } from 'react-router-dom'
-import { Channel, useChannelMembers, useDMData, useMyUserId, useRoom } from 'use-zion-client'
+import {
+    Channel,
+    useChannelMembers,
+    useDMData,
+    useMyUserId,
+    useRoom,
+    useStreamUpToDate,
+} from 'use-zion-client'
+import { AnimatePresence } from 'framer-motion'
 import { ChannelUsersPill } from '@components/ChannelUserPill/ChannelUserPill'
 import { TouchNavBar } from '@components/TouchNavBar/TouchNavBar'
 import { useUserList } from '@components/UserList/UserList'
@@ -13,6 +21,7 @@ import { useSpaceIdFromPathname } from 'hooks/useSpaceInfoFromPathname'
 import { AvatarGroup } from '@components/DirectMessages/GroupDMIcon'
 import { Avatar } from '@components/Avatar/Avatar'
 import type { CHANNEL_INFO_PARAMS_VALUES } from 'routes'
+import { AnimatedLoaderGradient } from '@components/AnimatedLoaderGradient/AnimatedLoaderGradient'
 
 type Props = {
     channel: Channel
@@ -38,6 +47,7 @@ const DesktopChannelHeader = (props: Props) => {
     const isMuted = channelIsMuted || spaceIsMuted
     const channelType = useChannelType(channel.id)
     const onInfoPressed = useChannelInfoButton(channelType)
+    const { upToDate } = useStreamUpToDate(channel.id)
 
     return (
         <Stack gap>
@@ -62,52 +72,54 @@ const DesktopChannelHeader = (props: Props) => {
                     </Button>
                 </Stack>
             )}
-            <Stack
-                horizontal
-                borderBottom
-                gap
-                paddingX="lg"
-                height="x8"
-                alignItems="center"
-                color="gray1"
-                overflow="hidden"
-                shrink={false}
-            >
+            <Stack borderBottom>
                 <Stack
                     horizontal
-                    border
-                    paddingX
-                    hoverable
-                    gap="sm"
-                    paddingY="sm"
-                    background="level2"
+                    gap
+                    paddingX="lg"
+                    height="x8"
                     alignItems="center"
-                    rounded="sm"
-                    minHeight="height_lg"
-                    cursor="pointer"
-                    onClick={onInfoPressed}
+                    color="gray1"
+                    overflow="hidden"
+                    shrink={false}
                 >
-                    {channelType === 'channel' ? (
-                        <>
-                            <Icon type="tag" size="square_sm" color="gray2" />
-                            <Paragraph fontWeight="strong" color="default">
-                                {channel.label}
-                            </Paragraph>
-                        </>
-                    ) : channelType === 'dm' ? (
-                        <DMTitleContent roomIdentifier={channel.id} />
-                    ) : channelType === 'gdm' ? (
-                        <GDMTitleContent roomIdentifier={channel.id} />
-                    ) : (
-                        <></>
+                    <Stack
+                        horizontal
+                        border
+                        paddingX
+                        hoverable
+                        gap="sm"
+                        paddingY="sm"
+                        background="level2"
+                        alignItems="center"
+                        rounded="sm"
+                        minHeight="height_lg"
+                        cursor="pointer"
+                        onClick={onInfoPressed}
+                    >
+                        {channelType === 'channel' ? (
+                            <>
+                                <Icon type="tag" size="square_sm" color="gray2" />
+                                <Paragraph fontWeight="strong" color="default">
+                                    {channel.label}
+                                </Paragraph>
+                            </>
+                        ) : channelType === 'dm' ? (
+                            <DMTitleContent roomIdentifier={channel.id} />
+                        ) : channelType === 'gdm' ? (
+                            <GDMTitleContent roomIdentifier={channel.id} />
+                        ) : (
+                            <></>
+                        )}
+                        {isMuted && <Icon type="muteActive" size="square_sm" color="gray2" />}
+                    </Stack>
+                    {topic && <Paragraph color="gray2">{topic}</Paragraph>}
+                    <Stack grow />
+                    {channelType === 'channel' && (
+                        <ChannelUsersPill channelId={channel.id} spaceId={spaceId} />
                     )}
-                    {isMuted && <Icon type="muteActive" size="square_sm" color="gray2" />}
                 </Stack>
-                {topic && <Paragraph color="gray2">{topic}</Paragraph>}
-                <Stack grow />
-                {channelType === 'channel' && (
-                    <ChannelUsersPill channelId={channel.id} spaceId={spaceId} />
-                )}
+                <AnimatePresence>{!upToDate && <AnimatedLoaderGradient />}</AnimatePresence>
             </Stack>
         </Stack>
     )
@@ -162,13 +174,14 @@ const TouchChannelHeader = (props: Props) => {
     })
 
     const isMuted = channelIsMuted || spaceIsMuted
-
+    const { upToDate } = useStreamUpToDate(channel.id)
     const infoButtonPressed = useChannelInfoButton(channelType)
 
     return (
         <Stack gap="sm">
             <TouchNavBar
                 extraHeight
+                showLoadingIndicator={!upToDate}
                 contentLeft={
                     <IconButton
                         icon="back"

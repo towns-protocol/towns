@@ -1,12 +1,15 @@
 import React from 'react'
+import { AnimatePresence } from 'framer-motion'
 import { Box, Paragraph, Stack } from '@ui'
 import { useVisualViewportContext } from '@components/VisualViewportContext/VisualViewportContext'
+import { AnimatedLoaderGradient } from '@components/AnimatedLoaderGradient/AnimatedLoaderGradient'
 
 type Props = {
     children?: React.ReactNode
     contentLeft?: React.ReactNode
     contentRight?: React.ReactNode
     extraHeight?: boolean
+    showLoadingIndicator?: boolean
 }
 
 export const TouchNavBar = (props: Props) => {
@@ -30,13 +33,8 @@ export const TouchNavBar = (props: Props) => {
                     top: `calc(${offset ?? 0}px - var(--tabbar-vertical-offset, 0))`,
                 }}
             >
-                <Stack
-                    borderBottom
-                    height={props.extraHeight ? 'x7' : 'x5'}
-                    justifyContent="end"
-                    paddingY="sm"
-                >
-                    <Stack horizontal justifyContent="center" height="100%">
+                <Stack borderBottom height={props.extraHeight ? 'x7' : 'x5'} justifyContent="end">
+                    <Stack horizontal justifyContent="center" height="100%" paddingY="sm">
                         {hasSideContent && (
                             <Box centerContent width="x10">
                                 {props.contentLeft}
@@ -63,6 +61,9 @@ export const TouchNavBar = (props: Props) => {
                             </Box>
                         )}
                     </Stack>
+                    <AnimatePresence>
+                        {props.showLoadingIndicator && <AnimatedLoaderGradient />}
+                    </AnimatePresence>
                 </Stack>
             </Box>
         </>
