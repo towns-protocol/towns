@@ -216,6 +216,7 @@ export class ZionClient implements EntitlementsDelegate {
             rpcClient,
             cryptoStore,
             this,
+            `persistence-${userId}-${this.opts.chainId}`,
             this.opts.logNamespaceFilter,
             this.opts.highPriorityStreamIds,
         )

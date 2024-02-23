@@ -160,6 +160,7 @@ export class Client
         rpcClient: StreamRpcClientType,
         cryptoStore: CryptoStore,
         entitlementsDelegate: EntitlementsDelegate,
+        persistenceStoreName?: string,
         logNamespaceFilter?: string,
         highPriorityStreamIds?: string[],
     ) {
@@ -200,7 +201,7 @@ export class Client
         this.logStress('MOCK_PERSISTENCE_STORE', process.env.MOCK_PERSISTENCE_STORE)
         if (!process.env.MOCK_PERSISTENCE_STORE) {
             this.persistenceStore = new PersistenceStore(
-                genPersistenceStoreName(this.userId, this.rpcClient.url),
+                persistenceStoreName ?? genPersistenceStoreName(this.userId, this.rpcClient.url),
             )
         } else {
             this.logStress('Using StubPersistenceStore')

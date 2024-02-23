@@ -87,7 +87,7 @@ export function removeCommon(x: string[], y: string[]): string[] {
 
 export function genPersistenceStoreName(userId: string, url?: string): string {
     if (isTestEnv()) {
-        // In multinode, we cannot use the rpc url as since the rpc url is different
+        // In multinode, we cannot use the rpc url as suffix since the rpc url is different
         // for each client created
         return `persistence-${userId}`
     }
