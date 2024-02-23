@@ -1,6 +1,7 @@
 import { isEqual, uniqBy } from 'lodash'
 import React, { MutableRefObject, useCallback, useMemo, useRef, useState } from 'react'
 import { MessageType, TimelineEvent, ZTEvent } from 'use-zion-client'
+import AnalyticsService, { AnalyticsEvents } from 'use-zion-client/dist/utils/analyticsService'
 import { MessageTimelineItem } from '@components/MessageTimeIineItem/TimelineItem'
 import { useVisualViewportContext } from '@components/VisualViewportContext/VisualViewportContext'
 import { Box, Divider, Paragraph } from '@ui'
@@ -95,6 +96,7 @@ export const MessageTimeline = (props: Props) => {
 
     if (events.length > 0) {
         isStartupRef.current = false
+        AnalyticsService.getInstance().trackEventOnce(AnalyticsEvents.MessageTimeline)
     }
 
     const { fullyReadMarker, fullreadMarkerPersisted, onMarkAsRead, isUnreadMarkerFaded } =

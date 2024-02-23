@@ -6,6 +6,7 @@ import {
     makeStreamRpcClient,
     userIdFromAddress,
     EntitlementsDelegate,
+    DecryptionStatus,
 } from '@river/sdk'
 import { bin_fromHexString } from '@river/dlog'
 import { makeOldTownsDelegateSig } from '@river/encryption'
@@ -61,6 +62,7 @@ import {
 } from '@river/web3'
 import { BlockchainTransactionStore } from './BlockchainTransactionStore'
 import { UserOps, getTransactionHashOrUserOpHash, isUserOpResponse } from '@towns/userops'
+import AnalyticsService, { AnalyticsEvents } from '../utils/analyticsService'
 
 /***
  * Zion Client
@@ -91,6 +93,7 @@ export class ZionClient implements EntitlementsDelegate {
         this.opts = opts
         this.name = name || Math.random().toString(36).substring(7)
         console.log('~~~ new ZionClient ~~~', this.name, this.opts)
+        AnalyticsService.getInstance().trackEventOnce(AnalyticsEvents.ClientWrapperCreated)
         this.spaceDapp = createSpaceDapp({
             chainId: opts.chainId,
             provider: opts.web3Provider,
@@ -228,8 +231,10 @@ export class ZionClient implements EntitlementsDelegate {
             userId: this.casablancaClient.userId,
         })
 
-        this.casablancaClient.on('decryptionExtStatusChanged', (status) => {
-            console.log('Decryption status changed', status) // for zhao to remove when he wires into analytics
+        this.casablancaClient.on('decryptionExtStatusChanged', (status: number) => {
+            AnalyticsService.getInstance().trackEventOnce(
+                `decryptionExtStatus[${DecryptionStatus[status]}]`,
+            )
         })
 
         this.casablancaClient.startSync()

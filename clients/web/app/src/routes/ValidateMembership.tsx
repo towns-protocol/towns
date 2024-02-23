@@ -1,6 +1,7 @@
 import React, { useEffect, useMemo } from 'react'
 import { Outlet } from 'react-router'
 import { Membership, useZionContext } from 'use-zion-client'
+import AnalyticsService, { AnalyticsEvents } from 'use-zion-client/dist/utils/analyticsService'
 import { Box } from '@ui'
 import { useContractAndServerSpaceData } from 'hooks/useContractAndServerSpaceData'
 import { useSpaceIdFromPathname } from 'hooks/useSpaceInfoFromPathname'
@@ -18,12 +19,18 @@ export const ValidateMembership = () => {
         () => spaces.find((s) => s.id === spaceIdFromPathname),
         [spaceIdFromPathname, spaces],
     )
+    const isMember = space?.membership === Membership.Join
+
+    if (isMember) {
+        AnalyticsService.getInstance().trackEventOnce(AnalyticsEvents.IsMember)
+    }
 
     useEffect(() => {
         console.log('ValidateMembership', spaceIdFromPathname, { chainSpaceLoading })
     }, [chainSpaceLoading, spaceIdFromPathname])
 
     if (!clientStatus.isRemoteDataLoaded || !clientStatus.isLocalDataLoaded) {
+        AnalyticsService.getInstance().trackEventOnce(AnalyticsEvents.WelcomeLayoutLoadLocalData)
         return (
             <WelcomeLayout
                 debugText="validate membership: loading local data"
@@ -61,9 +68,8 @@ export const ValidateMembership = () => {
         return <WelcomeLayout debugText="validate membership: loading river memberships" />
     }
 
-    const isMember = space?.membership === Membership.Join
-
     if (!isMember) {
+        AnalyticsService.getInstance().trackEventOnce(AnalyticsEvents.PublicTownPage)
         return <PublicTownPage />
     }
 

@@ -10,6 +10,7 @@ import { useCasablancaStore } from '../store/use-casablanca-store'
 import EventEmitter from 'events'
 import TypedEmitter from 'typed-emitter'
 import { staticAssertNever } from '../utils/zion-utils'
+import AnalyticsService, { AnalyticsEvents } from '../utils/analyticsService'
 
 export const useZionClientListener = (opts: {
     chainId: number
@@ -182,6 +183,7 @@ class ClientStateMachine extends (EventEmitter as new () => TypedEmitter<ClientS
                 return new LoggedOut()
             case LoginStatus.LoggingIn: {
                 check(currentSituation instanceof LoggedOut)
+                AnalyticsService.getInstance().trackEventOnce(AnalyticsEvents.LoggingIn)
                 this.emit('onErrorUpdated', undefined)
                 const { credentials } = transition
                 const pk = credentials.privateKey.slice(2)
@@ -221,6 +223,7 @@ function getTransition(current: Situations, next: Next): Transitions | undefined
             }
             break
         case LoginStatus.LoggedIn:
+            AnalyticsService.getInstance().trackEventOnce(AnalyticsEvents.LoggedIn)
             if (next.credentials !== current.credentials) {
                 return new LoggingOut(current.casablancaClient)
             }

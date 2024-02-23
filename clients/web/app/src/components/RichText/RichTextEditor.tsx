@@ -22,6 +22,7 @@ import {
 import { datadogRum } from '@datadog/browser-rum'
 import { useLexicalComposerContext } from '@lexical/react/LexicalComposerContext'
 import { $getRoot } from 'lexical'
+import AnalyticsService, { AnalyticsEvents } from 'use-zion-client/dist/utils/analyticsService'
 import { ErrorBoundary } from '@components/ErrorBoundary/ErrorBoundary'
 import * as fieldStyles from 'ui/components/_internal/Field/Field.css'
 import { useInputStore } from 'store/store'
@@ -86,6 +87,7 @@ export const RichTextEditor = (props: Props) => {
                 datadogRum.addAction('SendMessageEditable', {
                     durationTillEditable: durationTillEditable,
                 })
+                AnalyticsService.getInstance().trackEventOnce(AnalyticsEvents.SendMessageEditable)
             }
         }
     }, [props.editable])

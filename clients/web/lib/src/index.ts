@@ -102,6 +102,7 @@ export {
 export * from './types/error-types'
 export * from './utils/zion-utils'
 export * from './utils/crypto-utils'
+export * from './utils/analyticsService'
 
 // buffer hack required for casalanca: https://github.com/randlabs/myalgo-connect/issues/27
 import buffer from 'buffer'
