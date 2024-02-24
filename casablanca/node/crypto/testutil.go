@@ -117,7 +117,7 @@ func NewBlockchainTestContext(ctx context.Context, numKeys int) (*BlockchainTest
 		return nil, err
 	}
 
-	addr, _, _, err := deploy.DeployRiverRegistryDeploy(auth, client, []common.Address{wallets[len(wallets)-1].Address})
+	addr, _, _, err := deploy.DeployMockRiverRegistry(auth, client, []common.Address{wallets[len(wallets)-1].Address})
 	if err != nil {
 		return nil, err
 	}

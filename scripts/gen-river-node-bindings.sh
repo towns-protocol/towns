@@ -62,4 +62,4 @@ generate_go ${VERSION} Pausable pausable
 generate_go ${VERSION} WalletLink wallet_link
 
 generate_go_nover IRiverRegistry river_registry_v1
-generate_go_deploy MockRiverRegistry river_registry_deploy
+generate_go_deploy MockRiverRegistry mock_river_registry
