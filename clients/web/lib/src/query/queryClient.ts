@@ -10,6 +10,7 @@ import {
     useQueries,
     QueryClientProvider,
     QueryClientConfig,
+    UseQueryResult,
 } from '@tanstack/react-query'
 
 // queryClient is imported in non React contexts (where we would normally useQueryClient)
@@ -57,3 +58,5 @@ function useQuery<
 
 // [re]exporting from here so other files can import from this file for all their needs
 export { useQuery, queryClient, useQueries, useQueryClient, QueryClientProvider }
+
+export type { UseQueryResult }

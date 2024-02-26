@@ -10,11 +10,11 @@ import { useEffect, useState } from 'react'
 import { SpaceInfo } from '@river/web3'
 import { RoomMember, Membership, Room, toMembership } from '../../types/zion-types'
 import isEqual from 'lodash/isEqual'
-import { useSpaceNames } from '../use-space-data'
+import { useContractSpaceInfos } from '../use-space-data'
 
 export function useCasablancaRooms(client?: CasablancaClient): Record<string, Room | undefined> {
     const [rooms, setRooms] = useState<Record<string, Room | undefined>>({})
-    const { data: spaceInfo, isLoading } = useSpaceNames(client)
+    const { data: spaceInfos, isLoading } = useContractSpaceInfos(client)
 
     //TODO: placeholder for working with Rooms in Casablanca
     useEffect(() => {
@@ -24,7 +24,9 @@ export function useCasablancaRooms(client?: CasablancaClient): Record<string, Ro
 
         // helpers
         const updateState = (streamId: string) => {
-            const newRoom = streamId ? toZionCasablancaRoom(streamId, client, spaceInfo) : undefined
+            const newRoom = streamId
+                ? toZionCasablancaRoom(streamId, client, spaceInfos)
+                : undefined
             setRooms((prev) => {
                 const prevRoom = prev[streamId]
                 const prevMember = prevRoom?.membership === Membership.Join
@@ -51,7 +53,7 @@ export function useCasablancaRooms(client?: CasablancaClient): Record<string, Ro
                     )
                 })
                 .reduce((acc: Record<string, Room | undefined>, stream: string) => {
-                    acc[stream] = toZionCasablancaRoom(stream, client, spaceInfo)
+                    acc[stream] = toZionCasablancaRoom(stream, client, spaceInfos)
                     return acc
                 }, {})
             setRooms(allChannelsAndSpaces)
@@ -71,7 +73,7 @@ export function useCasablancaRooms(client?: CasablancaClient): Record<string, Ro
                 updateState(streamId)
             }
         }
-
+        console.log('useCasablancaRooms spaceInfos', spaceInfos)
         client.on('streamNewUserJoined', onStreamUpdated)
         client.on('streamUserLeft', onStreamUpdated)
         client.on('userStreamMembershipChanged', onStreamUpdated)
@@ -91,7 +93,7 @@ export function useCasablancaRooms(client?: CasablancaClient): Record<string, Ro
             client.off('streamPendingUsernameUpdated', onStreamUpdated)
             setRooms({})
         }
-    }, [client, isLoading, spaceInfo])
+    }, [client, isLoading, spaceInfos])
     return rooms
 }
 

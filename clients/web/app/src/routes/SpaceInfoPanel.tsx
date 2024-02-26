@@ -5,6 +5,7 @@ import { useNavigate } from 'react-router'
 import { Link, useSearchParams } from 'react-router-dom'
 import { useEvent } from 'react-use-event-hook'
 import {
+    useContractSpaceInfo,
     useHasPermission,
     useSpaceData,
     useSpaceId,
@@ -51,7 +52,6 @@ import { ConfirmLeaveModal } from '@components/ConfirmLeaveModal/ConfirmLeaveMod
 import { Avatar } from '@components/Avatar/Avatar'
 import { WalletLinkingPanel } from '@components/Web3/WalletLinkingPanel'
 import { RolesPanel } from '@components/SpaceSettingsPanel/RolesPanel'
-import { useContractSpaceInfo } from '../hooks/useContractSpaceInfo'
 import { env } from '../utils/environment'
 import { AllChannelsList } from './AllChannelsList/AllChannelsList'
 import { PublicTownPage } from './PublicTownPage'

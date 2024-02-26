@@ -6,8 +6,8 @@ import { beforeEach, describe, expect, test, vi } from 'vitest'
 // eslint-disable-next-line no-restricted-imports
 import * as Lib from 'use-zion-client'
 import * as Router from 'react-router'
+// import { useContractSpaceInfo } from 'use-zion-client'
 import { TestApp, getWalletAddress } from 'test/testUtils'
-import * as useContractSpaceInfoHook from 'hooks/useContractSpaceInfo'
 import { getPrettyDisplayName } from 'utils/getPrettyDisplayName'
 import { SpaceInfoPanel } from './SpaceInfoPanel'
 
@@ -98,7 +98,7 @@ describe('<SpaceHome />', () => {
 
         vi.spyOn(Lib, 'useSpaceData').mockReturnValue(spaceData)
         // @ts-ignore
-        vi.spyOn(useContractSpaceInfoHook, 'useContractSpaceInfo').mockReturnValue({
+        vi.spyOn(Lib, 'useContractSpaceInfo').mockReturnValue({
             data: onChainSpaceInfo,
         })
 
@@ -131,7 +131,7 @@ describe('<SpaceHome />', () => {
 
         vi.spyOn(Lib, 'useSpaceData').mockReturnValue(spaceData)
         // @ts-ignore
-        vi.spyOn(useContractSpaceInfoHook, 'useContractSpaceInfo').mockReturnValue({
+        vi.spyOn(Lib, 'useContractSpaceInfo').mockReturnValue({
             data: onChainSpaceInfo,
         })
 
@@ -160,7 +160,7 @@ describe('<SpaceHome />', () => {
 
         vi.spyOn(Lib, 'useSpaceData').mockReturnValue(spaceData)
         // @ts-ignore
-        vi.spyOn(useContractSpaceInfoHook, 'useContractSpaceInfo').mockReturnValue({
+        vi.spyOn(Lib, 'useContractSpaceInfo').mockReturnValue({
             data: onChainSpaceInfo,
         })
 
@@ -187,7 +187,7 @@ describe('<SpaceHome />', () => {
         })
         vi.spyOn(Lib, 'useSpaceData').mockReturnValue(spaceData)
         // @ts-ignore
-        vi.spyOn(useContractSpaceInfoHook, 'useContractSpaceInfo').mockReturnValue({
+        vi.spyOn(Lib, 'useContractSpaceInfo').mockReturnValue({
             data: onChainSpaceInfo,
         })
 
@@ -214,7 +214,7 @@ describe('<SpaceHome />', () => {
         })
         vi.spyOn(Lib, 'useSpaceData').mockReturnValue(spaceData)
         // @ts-ignore
-        vi.spyOn(useContractSpaceInfoHook, 'useContractSpaceInfo').mockReturnValue({
+        vi.spyOn(Lib, 'useContractSpaceInfo').mockReturnValue({
             data: onChainSpaceInfo,
         })
 
@@ -241,7 +241,7 @@ describe('<SpaceHome />', () => {
 
         vi.spyOn(Lib, 'useSpaceData').mockReturnValue(spaceData)
         // @ts-ignore
-        vi.spyOn(useContractSpaceInfoHook, 'useContractSpaceInfo').mockReturnValue({
+        vi.spyOn(Lib, 'useContractSpaceInfo').mockReturnValue({
             data: onChainSpaceInfo,
         })
 

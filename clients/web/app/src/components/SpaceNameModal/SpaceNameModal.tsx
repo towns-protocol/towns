@@ -3,6 +3,7 @@ import {
     SignerUndefinedError,
     TransactionStatus,
     WalletDoesNotMatchSignedInAccountError,
+    useContractSpaceInfo,
     useSpaceData,
     useUpdateSpaceNameTransaction,
 } from 'use-zion-client'
@@ -11,7 +12,6 @@ import { useGetEmbeddedSigner } from '@towns/privy'
 import { Box, Button, ErrorMessage, FormRender, Heading, Stack, TextField } from '@ui'
 import { TransactionButton } from '@components/TransactionButton'
 import { ModalContainer } from '@components/Modals/ModalContainer'
-import { useContractSpaceInfo } from 'hooks/useContractSpaceInfo'
 import { TransactionUIState, toTransactionUIStates } from 'hooks/TransactionUIState'
 import { useRequireTransactionNetwork } from 'hooks/useRequireTransactionNetwork'
 import { isForbiddenError, isRejectionError } from 'ui/utils/utils'

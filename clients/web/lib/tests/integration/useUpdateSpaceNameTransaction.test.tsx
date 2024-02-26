@@ -18,7 +18,7 @@ import { useCreateSpaceTransactionWithRetries } from '../../src/hooks/use-create
 import { TestConstants } from './helpers/TestConstants'
 import { TransactionStatus } from '../../src/client/ZionClientTypes'
 import { createMembershipStruct, getTestGatingNftAddress } from '@river/web3'
-import { useSpaceName } from '../../src/hooks/use-space-data'
+import { useContractSpaceInfo } from '../../src/hooks/use-space-data'
 import { TSigner } from '../../src/types/web3-types'
 
 /**
@@ -157,20 +157,22 @@ function TestComponent(args: {
 function SpacesComponent(args: { spaceId?: string }): JSX.Element {
     // spaces
     const { isLoading: isLoadingSpaceNameTx } = useUpdateSpaceNameTransaction()
-    const { spaceName, isLoading: isLoadingSpaceNames } = useSpaceName(args?.spaceId ?? '')
+    const { data: spaceInfo, isLoading: isLoadingSpaceNames } = useContractSpaceInfo(
+        args?.spaceId ?? '',
+    )
     useEffect(() => {
         console.log({
             isLoadingSpaceNameTx,
-            spaceName,
+            spaceInfo,
         })
-    }, [isLoadingSpaceNameTx, spaceName])
+    }, [isLoadingSpaceNameTx, spaceInfo])
 
-    if (isLoadingSpaceNames || isLoadingSpaceNameTx || !spaceName) {
+    if (isLoadingSpaceNames || isLoadingSpaceNameTx || !spaceInfo?.name) {
         return <React.Fragment />
     }
     return (
         <div data-testid="spacesElement">
-            {[spaceName].map((element) => (
+            {[spaceInfo?.name].map((element) => (
                 <div key={args?.spaceId ?? ''}>spaceName:{element}</div>
             ))}
         </div>

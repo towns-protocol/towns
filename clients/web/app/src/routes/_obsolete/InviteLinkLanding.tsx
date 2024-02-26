@@ -1,10 +1,10 @@
 import React, { useEffect } from 'react'
 import { Navigate, useNavigate, useSearchParams } from 'react-router-dom'
 import { useAccount } from 'wagmi'
+import { useContractSpaceInfo } from 'use-zion-client'
 import { InteractiveSpaceIcon } from '@components/SpaceIcon'
 import { Box, Button, Heading, Icon, Paragraph, Stack, Text } from '@ui'
 // import { useAuth } from 'hooks/useAuth'
-import { useContractSpaceInfo } from 'hooks/useContractSpaceInfo'
 import {
     SignupButtonStatus,
     // useSignupButton

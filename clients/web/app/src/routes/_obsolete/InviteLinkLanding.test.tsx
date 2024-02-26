@@ -1,3 +1,4 @@
+/* eslint-disable @typescript-eslint/ban-ts-comment */
 import React from 'react'
 import { render, screen, waitFor } from '@testing-library/react'
 import { describe, expect, test, vi } from 'vitest'
@@ -9,14 +10,13 @@ import InviteLinkLanding from './InviteLinkLanding'
 
 const SPACE_ID = 'some-room-id'
 
-// mock the fetch fn in useContractSpaceInfo
-let getSpaceInfoMock: ReturnType<Lib.ISpaceDapp['getSpaceInfo']> = Promise.resolve({
+const onChainSpaceInfo = {
     address: '0x111',
     networkId: SPACE_ID,
     name: 'test space',
     owner: '0x222',
     disabled: false,
-})
+}
 
 vi.mock('hooks/useSpaceInfoFromPathname', () => {
     return {
@@ -38,9 +38,6 @@ vi.mock('react-router-dom', async () => {
 vi.mock('use-zion-client', async () => {
     return {
         ...((await vi.importActual('use-zion-client')) as typeof Lib),
-        useSpaceDapp: () => ({
-            getSpaceInfo: () => getSpaceInfoMock,
-        }),
     }
 })
 
@@ -54,6 +51,11 @@ const Wrapper = () => {
 
 describe('<InviteLinkLanding />', () => {
     test('renders town info', async () => {
+        // @ts-ignore
+        vi.spyOn(Lib, 'useContractSpaceInfo').mockReturnValue({
+            data: onChainSpaceInfo,
+        })
+
         render(<Wrapper />)
         await waitFor(() => {
             expect(screen.getByTestId('town-info')).toBeInTheDocument()
@@ -61,7 +63,10 @@ describe('<InviteLinkLanding />', () => {
     })
 
     test('renders not found', async () => {
-        getSpaceInfoMock = Promise.resolve(undefined)
+        // @ts-ignore
+        vi.spyOn(Lib, 'useContractSpaceInfo').mockReturnValue({
+            data: undefined,
+        })
         render(<Wrapper />)
         await waitFor(() => {
             expect(screen.getByTestId('not-found')).toBeInTheDocument()

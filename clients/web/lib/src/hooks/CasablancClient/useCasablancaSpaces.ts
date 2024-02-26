@@ -2,11 +2,11 @@ import { Client as CasablancaClient, Stream, isSpaceStreamId, isUserStreamId } f
 import { useEffect, useState } from 'react'
 import { SpaceItem } from '../../types/zion-types'
 import isEqual from 'lodash/isEqual'
-import { useSpaceNames } from '../../hooks/use-space-data'
+import { useContractSpaceInfos } from '../../hooks/use-space-data'
 
 export function useCasablancaSpaces(casablancaClient?: CasablancaClient): SpaceItem[] {
     const [spaces, setSpaces] = useState<SpaceItem[]>([])
-    const { data: spaceInfo } = useSpaceNames(casablancaClient)
+    const { data: spaceInfos } = useContractSpaceInfos(casablancaClient)
     const userStreamId = casablancaClient?.userStreamId
     useEffect(() => {
         if (!casablancaClient || !userStreamId) {
@@ -31,7 +31,7 @@ export function useCasablancaSpaces(casablancaClient?: CasablancaClient): SpaceI
                         ({
                             id: stream.view.streamId,
                             name:
-                                spaceInfo?.find((i) => i.networkId == stream.streamId)?.name ?? '',
+                                spaceInfos?.find((i) => i.networkId == stream.streamId)?.name ?? '',
                             avatarSrc: '',
                         } satisfies SpaceItem),
                 )
@@ -58,6 +58,6 @@ export function useCasablancaSpaces(casablancaClient?: CasablancaClient): SpaceI
             casablancaClient.off('streamInitialized', onStreamChange)
             casablancaClient.off('userStreamMembershipChanged', onStreamChange)
         }
-    }, [casablancaClient, spaceInfo, userStreamId])
+    }, [casablancaClient, spaceInfos, userStreamId])
     return spaces
 }

@@ -31,8 +31,7 @@ export const blockchainKeys = {
         QuerKeysEnum.ThenByRoleIds,
         roleId,
     ],
-    spaceName: (spaceId: string) => ['spaceName', QuerKeysEnum.FirstBySpaceIds, spaceId],
-    spaceNames: (spaceIds: string[]) => ['spaceNames[]', QuerKeysEnum.FirstBySpaceIds, spaceIds],
+    spaceInfo: (spaceId: string) => ['spaceInfo', QuerKeysEnum.FirstBySpaceIds, spaceId],
     // optional roledIds allow for passing only spaceId to get all multipleRoleDetails queries for this space
     multipleRoleDetails: (spaceId: string, roleIds?: number[]) => {
         const queryKey: (string | number[])[] = [

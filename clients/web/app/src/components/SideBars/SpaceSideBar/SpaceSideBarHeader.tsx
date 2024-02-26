@@ -1,9 +1,14 @@
 import React, { useCallback, useState } from 'react'
 import { useNavigate } from 'react-router'
 import { useEvent } from 'react-use-event-hook'
-import { Membership, SpaceData, useMyMembership, useSpaceMembers } from 'use-zion-client'
+import {
+    Membership,
+    SpaceData,
+    useContractSpaceInfo,
+    useMyMembership,
+    useSpaceMembers,
+} from 'use-zion-client'
 import { AnimatePresence } from 'framer-motion'
-import { useContractSpaceInfo } from 'hooks/useContractSpaceInfo'
 import { useEnvironment } from 'hooks/useEnvironmnet'
 import { PATHS } from 'routes'
 import { useSizeContext } from 'ui/hooks/useSizeContext'

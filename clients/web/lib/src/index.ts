@@ -48,7 +48,12 @@ export { useMyUserId } from './hooks/use-my-user-id'
 export { useRoleDetails, useMultipleRoleDetails } from './hooks/use-role-details'
 export { useRoles } from './hooks/use-roles'
 export { useRoom } from './hooks/use-room'
-export { useSpaceData, useInvites, useInviteData } from './hooks/use-space-data'
+export {
+    useSpaceData,
+    useInvites,
+    useInviteData,
+    useContractSpaceInfo,
+} from './hooks/use-space-data'
 export { useSpaceDapp } from './hooks/use-space-dapp'
 export { useSpaceId } from './hooks/use-space-id'
 export { useSpaceMembers } from './hooks/use-space-members'

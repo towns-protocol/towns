@@ -8,9 +8,11 @@ import isEqual from 'lodash/isEqual'
 import { useSpaceDapp } from './use-space-dapp'
 import { SpaceInfo } from '@river/web3'
 import { useWeb3Context } from '../components/Web3ContextProvider'
-import { useQuery } from '../query/queryClient'
+import { useQuery, useQueries, UseQueryResult } from '../query/queryClient'
 import { blockchainKeys } from '../query/query-keys'
 import { isDefined } from '../utils/isDefined'
+
+const EMPTY_SPACE_INFOS: SpaceInfo[] = []
 
 /// returns default space if no space slug is provided
 export function useSpaceData(inSpaceId?: string): SpaceData | undefined {
@@ -33,7 +35,7 @@ export const useInviteData = (slug: string | undefined) => {
         [invites, slug],
     )
 }
-export function useSpaceNames(client?: CasablancaClient) {
+export function useContractSpaceInfos(client?: CasablancaClient) {
     const { provider, chain } = useWeb3Context()
 
     const spaceDapp = useSpaceDapp({
@@ -74,86 +76,85 @@ export function useSpaceNames(client?: CasablancaClient) {
         }
     }, [isEnabled, client, setSpaceIds])
 
-    const getSpaceNames = useCallback(
-        async function (): Promise<SpaceInfo[]> {
-            if (!spaceDapp || !isEnabled || spaceIds.length === 0) {
-                return []
+    const getSpaceInfo = useCallback(
+        async function (spaceId: string): Promise<SpaceInfo | undefined> {
+            if (!spaceDapp || !isEnabled || spaceId.length === 0) {
+                return undefined
             }
-            const getSpaceInfoPromises = spaceIds.map((streamId) =>
-                spaceDapp.getSpaceInfo(streamId),
-            )
-            const spaceInfos = await Promise.all(getSpaceInfoPromises)
-            console.log(`useSpaceNames: spaceInfos executed with `, spaceIds, spaceInfos)
-            return spaceInfos.filter(isDefined)
+            try {
+                console.log(`useContractSpaceInfos spaceDapp.getSpaceInfo<${spaceId}> `)
+                return await spaceDapp.getSpaceInfo(spaceId)
+            } catch (err) {
+                console.log('useContractSpaceInfos: Error getting space info')
+                return undefined
+            }
         },
-        [spaceDapp, isEnabled, spaceIds],
+        [spaceDapp, isEnabled],
     )
 
-    const queryData = useQuery(
-        spaceIds,
-        getSpaceNames,
-        // options for the query.
-        {
-            enabled: isEnabled,
-            refetchOnMount: true,
+    const queryData = useQueries({
+        queries: spaceIds.map((id) => {
+            return {
+                queryKey: blockchainKeys.spaceInfo(id),
+                queryFn: () => getSpaceInfo(id),
+                enabled: isEnabled,
+                refetchOnMount: true,
+            }
+        }),
+        combine: (results) => {
+            return {
+                data: results.map((r) => r.data).filter(isDefined),
+                isLoading: results.some((r) => r.isLoading),
+            }
         },
-    )
+    })
 
     useEffect(() => {
         console.log(`queryData changed`, queryData.data, queryData.isLoading)
     }, [queryData.data, queryData.isLoading])
 
     return {
-        data: queryData.data,
+        data: queryData.data.length > 0 ? queryData.data : EMPTY_SPACE_INFOS,
         isLoading: queryData.isLoading,
     }
 }
 
-export function useSpaceName(spaceId: string) {
+export const useContractSpaceInfo = (
+    spaceId: string | undefined,
+): UseQueryResult<SpaceInfo | undefined> => {
     const { provider, chain } = useWeb3Context()
     const spaceDapp = useSpaceDapp({
         chainId: chain?.id,
         provider,
     })
 
-    const isEnabled = spaceDapp && spaceId.length > 0
-
-    const getSpaceName = useCallback(
-        async function () {
-            if (!spaceDapp || !isEnabled || !spaceId || spaceId.length === 0) {
-                return undefined
+    return useQuery(
+        blockchainKeys.spaceInfo(spaceId ?? ''),
+        async () => {
+            if (spaceId && spaceDapp) {
+                const spaceInfo: SpaceInfo | undefined = await spaceDapp.getSpaceInfo(spaceId)
+                console.log('useContractSpaceInfo', { spaceInfo })
+                // Query data cannot be undefined. Return a value other than undefined from query function.
+                return spaceInfo ?? null
+            } else {
+                // Query data cannot be undefined. Return a value other than undefined from query function.
+                return null
             }
-            const info = await spaceDapp.getSpaceInfo(spaceId)
-            return info?.name ?? ''
         },
-        [spaceDapp, isEnabled, spaceId],
-    )
-
-    const {
-        isLoading,
-        data: spaceName,
-        error,
-    } = useQuery(
-        blockchainKeys.spaceName(spaceId),
-        getSpaceName,
-        // options for the query.
         {
-            enabled: isEnabled,
-            refetchOnMount: true,
+            enabled: !!spaceId && !!spaceDapp,
+            staleTime: 1000 * 15,
+            refetchOnMount: false,
+            refetchOnWindowFocus: false,
+            refetchOnReconnect: false,
         },
     )
-
-    return {
-        isLoading,
-        spaceName,
-        error,
-    }
 }
 
 function useSpaceRollup(streamId: string | undefined): SpaceData | undefined {
     const { casablancaClient } = useZionContext()
     const stream = useCasablancaStream(streamId)
-    const { isLoading, spaceName, error } = useSpaceName(streamId ?? '')
+    const { isLoading, data: spaceInfo, error } = useContractSpaceInfo(streamId ?? '')
     const [space, setSpace] = useState<SpaceData | undefined>(undefined)
     const userStream = useCasablancaStream(casablancaClient?.userStreamId)
 
@@ -175,10 +176,10 @@ function useSpaceRollup(streamId: string | undefined): SpaceData | undefined {
             const channelIds = Array.from(stream.view.spaceContent.spaceChannelsMetadata.keys())
             console.log(
                 `useSpaceRollup: updating space ${stream.streamId} with spaceName ${
-                    spaceName ?? ''
+                    spaceInfo?.name ?? ''
                 }`,
             )
-            const newSpace = rollupSpace(stream, membership, channelIds, spaceName)
+            const newSpace = rollupSpace(stream, membership, channelIds, spaceInfo?.name)
             setSpace((prev) => {
                 if (isEqual(prev, newSpace)) {
                     return prev
@@ -211,7 +212,7 @@ function useSpaceRollup(streamId: string | undefined): SpaceData | undefined {
             casablancaClient.off('userStreamMembershipChanged', onStreamUpdated)
             setSpace(undefined)
         }
-    }, [casablancaClient, stream, isLoading, spaceName, error, userStream])
+    }, [casablancaClient, stream, isLoading, spaceInfo?.name, error, userStream])
     return space
 }
 
