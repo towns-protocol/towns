@@ -5,6 +5,7 @@ import {
     generateRandomUnfundedOrPrivateKeyWallet,
     getAccountAbstractionConfig,
 } from './testUtils'
+import { Address } from '../../src/types/web3-types'
 
 /**
  *
@@ -79,4 +80,61 @@ test('can create and update channel with user ops', async () => {
     expect(channelDetailsSecondCheck?.name).toBe(NEW_CHANNEL_NAME)
     expect(channelDetailsSecondCheck?.roles).toHaveLength(1)
     expect(channelDetailsSecondCheck?.roles.find((r) => r.name === NEW_ROLE_NAME)).toBeDefined()
+})
+
+test("can create a channel when role is gated by user's smart account", async () => {
+    const alice = await registerAndStartClient(
+        'alice',
+        generateRandomUnfundedOrPrivateKeyWallet(process.env.PRIVY_WALLET_PRIVATE_KEY_1),
+        {
+            accountAbstractionConfig,
+        },
+    )
+
+    const bob = await registerAndStartClient(
+        'bob',
+        generateRandomUnfundedOrPrivateKeyWallet(process.env.PRIVY_WALLET_PRIVATE_KEY_2),
+        {
+            accountAbstractionConfig,
+        },
+    )
+
+    const spaceId = await createUngatedSpace(alice, [Permission.Read, Permission.Write])
+
+    expect(alice.getRoomMember(spaceId!, alice.getUserId()!)).toBeTruthy()
+
+    const room = await bob.joinTown(spaceId!, bob.wallet)
+    expect(room.members.map((m) => m.userId).includes(bob.getUserId()!)).toBeTruthy()
+
+    const bobsSmartAccount = await bob.getAbstractAccountAddress({
+        rootKeyAddress: bob.wallet.address as Address,
+    })
+
+    if (!bobsSmartAccount) {
+        throw new Error('bobsSmartAccount not found')
+    }
+
+    // gate the role by bob's smart account
+    const createRoleTx = await alice.createRole(
+        spaceId!,
+        'new_role',
+        [Permission.Read, Permission.Write, Permission.AddRemoveChannels],
+        [],
+        [bobsSmartAccount],
+    )
+
+    expect(createRoleTx).toBeDefined()
+    const createdRole = await alice.spaceDapp.getRole(spaceId!, 3)
+    expect(createdRole?.permissions).toContain(Permission.AddRemoveChannels)
+
+    const channel = await bob.createChannel(
+        {
+            name: 'test_channel',
+            parentSpaceId: spaceId!,
+            roleIds: [2],
+        },
+        bob.provider.wallet,
+    )
+
+    expect(channel).toBeDefined()
 })

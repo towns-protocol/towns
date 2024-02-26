@@ -94,10 +94,12 @@ export const paymasterProxyMiddleware: ({
         }
 
         async function waitForConfirmOrDeny() {
+            // get the estimate even if skipConfirmation is true
+            // b/c it will throw an error we can parse
+            const estimate = await fallbackEstimate()
             if (skipConfirmation) {
                 return
             }
-            const estimate = await fallbackEstimate()
             await new Promise((resolve, reject) => {
                 setState({
                     currOpGas: estimate,
