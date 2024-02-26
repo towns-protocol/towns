@@ -12,6 +12,7 @@ import {
     make_CommonPayload_KeyFulfillment,
     make_CommonPayload_KeySolicitation,
 } from './types'
+import { isMobileSafari } from './utils'
 
 export interface EntitlementsDelegate {
     isEntitled(
@@ -103,6 +104,7 @@ export class DecryptionExtensions {
     private timeoutId?: NodeJS.Timeout
     private delayMs: number = 15
     private started: boolean = false
+    private isMobileSafariBackgrounded = false
 
     constructor(
         private client: Client,
@@ -189,6 +191,14 @@ export class DecryptionExtensions {
             this.checkStartTicking()
         }
 
+        const mobileSafariPageVisibilityChanged = () => {
+            this.log.debug('onMobileSafariBackgrounded', this.isMobileSafariBackgrounded)
+            this.isMobileSafariBackgrounded = document.visibilityState === 'hidden'
+            if (!this.isMobileSafariBackgrounded) {
+                this.checkStartTicking()
+            }
+        }
+
         client.streams.getStreams().forEach((stream) => {
             if (stream.isUpToDate) {
                 this.upToDateStreams.add(stream.streamId)
@@ -201,12 +211,19 @@ export class DecryptionExtensions {
         client.on('newKeySolicitation', onKeySolicitation)
         client.on('updatedKeySolicitation', onKeySolicitation)
 
+        if (isMobileSafari()) {
+            document.addEventListener('visibilitychange', mobileSafariPageVisibilityChanged)
+        }
+
         this.onStopFn = () => {
             client.off('streamUpToDate', onStreamUpToDate)
             client.off('newGroupSessions', onNewGroupSessions)
             client.off('newEncryptedContent', onNewEncryptedContent)
             client.off('newKeySolicitation', onKeySolicitation)
             client.off('updatedKeySolicitation', onKeySolicitation)
+            if (isMobileSafari()) {
+                document.removeEventListener('visibilitychange', mobileSafariPageVisibilityChanged)
+            }
         }
     }
 
@@ -250,6 +267,11 @@ export class DecryptionExtensions {
         ) {
             return
         }
+
+        if (this.isMobileSafariBackgrounded) {
+            return
+        }
+
         if (!Object.values(this.queues).find((q) => q.length > 0)) {
             this.setStatus(DecryptionStatus.idle)
             return

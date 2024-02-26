@@ -116,3 +116,10 @@ export function getEnvVar(key: string, defaultValue: string = ''): string {
 
     return defaultValue
 }
+
+export function isMobileSafari(): boolean {
+    if (!navigator || !navigator.userAgent) {
+        return false
+    }
+    return /iPad|iPhone|iPod/.test(navigator.userAgent)
+}

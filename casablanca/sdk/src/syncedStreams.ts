@@ -7,6 +7,7 @@ import { SyncedStream } from './syncedStream'
 import TypedEmitter from 'typed-emitter'
 import { isDefined } from './check'
 import { nanoid } from 'nanoid'
+import { isMobileSafari } from './utils'
 
 export enum SyncState {
     Canceling = 'Canceling', // syncLoop, maybe syncId if was syncing, not is was starting or retrying
@@ -95,6 +96,7 @@ export class SyncedStreams {
     private currentRetryCount: number = 0
     private forceStopSyncStreams: (() => void) | undefined
     private interruptSync: ((err: unknown) => void) | undefined
+    private isMobileSafariBackgrounded = false
 
     // Only responses related to the current syncId are processed.
     // Responses are queued and processed in order
@@ -151,7 +153,18 @@ export class SyncedStreams {
         return Array.from(this.streams.keys())
     }
 
+    private onMobileSafariBackgrounded = () => {
+        this.isMobileSafariBackgrounded = document.visibilityState === 'hidden'
+        this.log('onMobileSafariBackgrounded', this.isMobileSafariBackgrounded)
+        if (!this.isMobileSafariBackgrounded) {
+            this.checkStartTicking()
+        }
+    }
+
     public async startSyncStreams() {
+        if (isMobileSafari()) {
+            document.addEventListener('visibilitychange', this.onMobileSafariBackgrounded)
+        }
         return await this.createSyncLoop()
     }
 
@@ -161,6 +174,10 @@ export class SyncedStreams {
         }
 
         if (this.responsesQueue.length === 0) {
+            return
+        }
+
+        if (this.isMobileSafariBackgrounded) {
             return
         }
 
@@ -216,6 +233,9 @@ export class SyncedStreams {
             this.log('sync STOP DONE', syncId)
         } else {
             this.log(`WARN: stopSync called from invalid state ${this.syncState}`)
+        }
+        if (isMobileSafari()) {
+            document.removeEventListener('visibilitychange', this.onMobileSafariBackgrounded)
         }
     }
 
