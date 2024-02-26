@@ -24,7 +24,6 @@ import {
     townsToCreate,
     channelsPerTownToCreate,
     followersNumber,
-    loadDurationMs,
     jsonRpcProviderUrl,
     rpcClientURL,
     defaultChannelSamplingRate,
@@ -46,9 +45,6 @@ const numChannelsPerTown = process.env.NUM_CHANNELS_PER_TOWN
 const numFollowers = process.env.NUM_FOLLOWERS
     ? parseInt(process.env.NUM_FOLLOWERS)
     : followersNumber
-const loadTestDurationMs = process.env.LOAD_TEST_DURATION_MS
-    ? parseInt(process.env.LOAD_TEST_DURATION_MS)
-    : loadDurationMs
 const channelSamplingRate = process.env.CHANNEL_SAMPLING_RATE
     ? parseInt(process.env.CHANNEL_SAMPLING_RATE)
     : defaultChannelSamplingRate
@@ -99,350 +95,341 @@ const E2EDeliveryTimeHistogram = new Map<number | 'inf', number>([
 ])
 
 describe('Stress test', () => {
-    test(
-        'stress test',
-        async () => {
-            log('v2.50')
-            await redis.flushall()
-            await redisE2EMessageDeliveryTracking.flushall()
+    test('stress test', async () => {
+        log('v2.50')
+        await redis.flushall()
+        await redisE2EMessageDeliveryTracking.flushall()
 
-            //initilize Redis key for send time histogram
-            await redisE2EMessageDeliveryTracking.set('T500', 0)
-            await redisE2EMessageDeliveryTracking.set('T1000', 0)
-            await redisE2EMessageDeliveryTracking.set('T1500', 0)
-            await redisE2EMessageDeliveryTracking.set('T2000', 0)
-            await redisE2EMessageDeliveryTracking.set('Tinf', 0)
+        //initilize Redis key for send time histogram
+        await redisE2EMessageDeliveryTracking.set('T500', 0)
+        await redisE2EMessageDeliveryTracking.set('T1000', 0)
+        await redisE2EMessageDeliveryTracking.set('T1500', 0)
+        await redisE2EMessageDeliveryTracking.set('T2000', 0)
+        await redisE2EMessageDeliveryTracking.set('Tinf', 0)
 
-            log('coordinationSpaceId: ', coordinationSpaceId)
-            log('coordinationChannelId: ', coordinationChannelId)
-            await redis.set('coordinationSpaceId', coordinationSpaceId)
-            await redis.set('coordinationChannelId', coordinationChannelId)
+        log('coordinationSpaceId: ', coordinationSpaceId)
+        log('coordinationChannelId: ', coordinationChannelId)
+        await redis.set('coordinationSpaceId', coordinationSpaceId)
+        await redis.set('coordinationChannelId', coordinationChannelId)
 
-            const result = await createFundedTestUser()
-            await fundWallet(result.walletWithProvider)
+        const result = await createFundedTestUser()
+        await fundWallet(result.walletWithProvider)
 
-            log('Main user address: ', result.walletWithProvider.address)
+        log('Main user address: ', result.walletWithProvider.address)
 
-            let followersCounter = numFollowers
+        let followersCounter = numFollowers
 
-            const townsWithChannels = new TownsWithChannels()
-            const channelWithTowns = new ChannelTownPairs()
+        const townsWithChannels = new TownsWithChannels()
+        const channelWithTowns = new ChannelTownPairs()
 
-            function handleEventDecrypted(client: Client) {
-                // eslint-disable-next-line
-                client.on('eventDecrypted', async (streamId, contentKind, event) => {
-                    const clearEvent = event.decryptedContent
-                    if (clearEvent.kind !== 'channelMessage') return
-                    expect(clearEvent.content?.payload).toBeDefined()
-                    if (
-                        clearEvent.content?.payload?.case === 'post' &&
-                        clearEvent.content?.payload?.value?.content?.case === 'text'
-                    ) {
-                        const body = clearEvent.content?.payload?.value?.content.value?.body
-                        if (streamId === coordinationChannelId) {
-                            if (body === 'JOINED') {
-                                //Means that we are processing followers joining main channel in the beginning
-                                followers.set(event.creatorUserId, 'JOINED')
-                                await result.riverSDK.sendTextMessage(
-                                    coordinationChannelId,
-                                    'Follower with ID ' +
-                                        event.creatorUserId +
-                                        ' joined main channel',
-                                )
-                                log('User with Id joined', event.creatorUserId)
-                                followersCounter--
-                                log('Joined main channel')
+        function handleEventDecrypted(client: Client) {
+            // eslint-disable-next-line
+            client.on('eventDecrypted', async (streamId, contentKind, event) => {
+                const clearEvent = event.decryptedContent
+                if (clearEvent.kind !== 'channelMessage') return
+                expect(clearEvent.content?.payload).toBeDefined()
+                if (
+                    clearEvent.content?.payload?.case === 'post' &&
+                    clearEvent.content?.payload?.value?.content?.case === 'text'
+                ) {
+                    const body = clearEvent.content?.payload?.value?.content.value?.body
+                    if (streamId === coordinationChannelId) {
+                        if (body === 'JOINED') {
+                            //Means that we are processing followers joining main channel in the beginning
+                            followers.set(event.creatorUserId, 'JOINED')
+                            await result.riverSDK.sendTextMessage(
+                                coordinationChannelId,
+                                'Follower with ID ' + event.creatorUserId + ' joined main channel',
+                            )
+                            log('User with Id joined', event.creatorUserId)
+                            followersCounter--
+                            log('Joined main channel')
+                        }
+                        if (body === 'READY') {
+                            log('User with Id ready', event.creatorUserId)
+                            readyUsers.add(event.creatorUserId) //We cannot rely purely on counter of ready messages just in case
+                        }
+                        if (body === 'LOAD OVER') {
+                            log('User with Id is done with load', event.creatorUserId)
+                            loadOverUsers.add(event.creatorUserId) //We cannot rely purely on counter of ready messages just in case
+                        }
+                        if (body.startsWith('USER JOINED CHANNEL: ')) {
+                            const userId = body.substring(21, 63)
+                            const channelId = body.substring(66)
+
+                            if (!usersInChannels.has(channelId)) {
+                                usersInChannels.set(channelId, [])
                             }
-                            if (body === 'READY') {
-                                log('User with Id ready', event.creatorUserId)
-                                readyUsers.add(event.creatorUserId) //We cannot rely purely on counter of ready messages just in case
-                            }
-                            if (body === 'LOAD OVER') {
-                                log('User with Id is done with load', event.creatorUserId)
-                                loadOverUsers.add(event.creatorUserId) //We cannot rely purely on counter of ready messages just in case
-                            }
-                            if (body.startsWith('USER JOINED CHANNEL: ')) {
-                                const userId = body.substring(21, 63)
-                                const channelId = body.substring(66)
-
-                                if (!usersInChannels.has(channelId)) {
-                                    usersInChannels.set(channelId, [])
-                                }
-                                if (usersInChannels.get(channelId)) {
-                                    const x = usersInChannels.get(channelId)
-                                    if (x) {
-                                        x.push(userId)
-                                        usersInChannels.set(channelId, x)
-                                    }
+                            if (usersInChannels.get(channelId)) {
+                                const x = usersInChannels.get(channelId)
+                                if (x) {
+                                    x.push(userId)
+                                    usersInChannels.set(channelId, x)
                                 }
                             }
                         }
                     }
-                })
-            }
+                }
+            })
+        }
 
-            handleEventDecrypted(result.riverSDK.client)
-            await result.riverSDK.createTownAndChannelWithPresetIDs(
-                'main town',
-                coordinationSpaceId,
-                'Controller Town',
-                'main channel',
-                coordinationChannelId,
+        handleEventDecrypted(result.riverSDK.client)
+        await result.riverSDK.createTownAndChannelWithPresetIDs(
+            'main town',
+            coordinationSpaceId,
+            'Controller Town',
+            'main channel',
+            coordinationChannelId,
+        )
+
+        await result.riverSDK.joinChannel(coordinationChannelId)
+
+        while (followersCounter != 0) {
+            // Perform some actions in the loop
+            debugLog('Waiting for followers')
+            debugLog('Remaining followers counter', followersCounter)
+            await pauseForXMiliseconds(1000)
+        }
+        log('All followers joined main channel')
+
+        //clean coordination information from redis
+        await redis.del('coordinationSpaceId')
+        await redis.del('coordinationChannelId')
+
+        await result.riverSDK.sendTextMessage(
+            coordinationChannelId,
+            'All followers joined main channel',
+        )
+
+        //--------------------------------------------------------------------------------------------
+        //Now we need to generate test towns and test channels there
+        //--------------------------------------------------------------------------------------------
+
+        const totalNumberOfChannels = numTowns * numChannelsPerTown
+        let counter = 0
+        let channelsCounter = 0
+
+        for (let i = 0; i < numTowns; i++) {
+            const townCreationResult = await result.riverSDK.createTownWithDefaultChannel(
+                'Town ' + i,
+                'Channel 0 0',
+            )
+            await result.riverSDK.joinChannel(townCreationResult.defaultChannelStreamId)
+            channelsCounter++
+            log(i + 1, 'towns out of ', numTowns, ' created')
+            log(channelsCounter, 'channels out of ', totalNumberOfChannels, ' created')
+
+            townsWithChannels.addChannelToTown(
+                townCreationResult.spaceStreamId,
+                townCreationResult.defaultChannelStreamId,
             )
 
-            await result.riverSDK.joinChannel(coordinationChannelId)
-
-            while (followersCounter != 0) {
-                // Perform some actions in the loop
-                debugLog('Waiting for followers')
-                debugLog('Remaining followers counter', followersCounter)
-                await pauseForXMiliseconds(1000)
-            }
-            log('All followers joined main channel')
-
-            //clean coordination information from redis
-            await redis.del('coordinationSpaceId')
-            await redis.del('coordinationChannelId')
-
+            counter++
             await result.riverSDK.sendTextMessage(
                 coordinationChannelId,
-                'All followers joined main channel',
+                counter +
+                    ' channels of ' +
+                    totalNumberOfChannels +
+                    ' created' +
+                    townCreationResult.defaultChannelStreamId,
             )
 
-            //--------------------------------------------------------------------------------------------
-            //Now we need to generate test towns and test channels there
-            //--------------------------------------------------------------------------------------------
+            channelWithTowns.addRecord(
+                townCreationResult.defaultChannelStreamId,
+                townCreationResult.spaceStreamId,
+            )
 
-            const totalNumberOfChannels = numTowns * numChannelsPerTown
-            let counter = 0
-            let channelsCounter = 0
-
-            for (let i = 0; i < numTowns; i++) {
-                const townCreationResult = await result.riverSDK.createTownWithDefaultChannel(
-                    'Town ' + i,
-                    'Channel 0 0',
-                )
-                await result.riverSDK.joinChannel(townCreationResult.defaultChannelStreamId)
-                channelsCounter++
-                log(i + 1, 'towns out of ', numTowns, ' created')
-                log(channelsCounter, 'channels out of ', totalNumberOfChannels, ' created')
-
-                townsWithChannels.addChannelToTown(
+            for (let j = 0; j < numChannelsPerTown - 1; j++) {
+                // -1 because we already created default channel
+                const channelName = 'Channel ' + i + ' ' + j
+                const channelCreationResult = await result.riverSDK.createChannel(
                     townCreationResult.spaceStreamId,
-                    townCreationResult.defaultChannelStreamId,
+                    channelName,
+                    '',
                 )
-
+                await result.riverSDK.joinChannel(channelCreationResult)
+                channelsCounter++
+                log(channelsCounter, 'channels out of ', totalNumberOfChannels, ' created')
                 counter++
                 await result.riverSDK.sendTextMessage(
                     coordinationChannelId,
                     counter +
                         ' channels of ' +
                         totalNumberOfChannels +
-                        ' created' +
-                        townCreationResult.defaultChannelStreamId,
+                        ' created with id' +
+                        channelCreationResult,
                 )
 
-                channelWithTowns.addRecord(
-                    townCreationResult.defaultChannelStreamId,
+                townsWithChannels.addChannelToTown(
                     townCreationResult.spaceStreamId,
+                    channelCreationResult,
                 )
-
-                for (let j = 0; j < numChannelsPerTown - 1; j++) {
-                    // -1 because we already created default channel
-                    const channelName = 'Channel ' + i + ' ' + j
-                    const channelCreationResult = await result.riverSDK.createChannel(
-                        townCreationResult.spaceStreamId,
-                        channelName,
-                        '',
-                    )
-                    await result.riverSDK.joinChannel(channelCreationResult)
-                    channelsCounter++
-                    log(channelsCounter, 'channels out of ', totalNumberOfChannels, ' created')
-                    counter++
-                    await result.riverSDK.sendTextMessage(
-                        coordinationChannelId,
-                        counter +
-                            ' channels of ' +
-                            totalNumberOfChannels +
-                            ' created with id' +
-                            channelCreationResult,
-                    )
-
-                    townsWithChannels.addChannelToTown(
-                        townCreationResult.spaceStreamId,
-                        channelCreationResult,
-                    )
-                    channelWithTowns.addRecord(
-                        channelCreationResult,
-                        townCreationResult.spaceStreamId,
-                    )
-                }
+                channelWithTowns.addRecord(channelCreationResult, townCreationResult.spaceStreamId)
             }
+        }
 
-            if (coordinatorLeaveChannels) {
-                const joinedChannels = channelWithTowns.getRecords()
-                log('Leaving channels number', joinedChannels.length)
-                for (let j = joinedChannels.length - 1; j >= 0; j--) {
-                    await result.riverSDK.leaveChannel(joinedChannels[j][0])
-                    log('Left channel', joinedChannels[j][0])
-                }
+        if (coordinatorLeaveChannels) {
+            const joinedChannels = channelWithTowns.getRecords()
+            log('Leaving channels number', joinedChannels.length)
+            for (let j = joinedChannels.length - 1; j >= 0; j--) {
+                await result.riverSDK.leaveChannel(joinedChannels[j][0])
+                log('Left channel', joinedChannels[j][0])
             }
+        }
 
-            //--------------------------------------------------------------------------------------------
-            //Now we need to generate test towns and test channels there
-            //--------------------------------------------------------------------------------------------
+        //--------------------------------------------------------------------------------------------
+        //Now we need to generate test towns and test channels there
+        //--------------------------------------------------------------------------------------------
 
-            while (followersCounter != 0) {
-                // Perform some actions in the loop
-                debugLog('Waiting for followers')
-                await pauseForXMiliseconds(1000)
+        while (followersCounter != 0) {
+            // Perform some actions in the loop
+            debugLog('Waiting for followers')
+            await pauseForXMiliseconds(1000)
+        }
+
+        await result.riverSDK.sendTextMessage(
+            coordinationChannelId,
+            'WONDERLAND: ' + JSON.stringify(channelWithTowns),
+        )
+
+        while (readyUsers.size != numFollowers) {
+            debugLog('Waiting for followers to be ready')
+            await pauseForXMiliseconds(1000)
+        }
+
+        debugLog('USERS ARE CHANNELS')
+
+        usersInChannels.forEach((values, key) => {
+            const trackingInfo = new ChannelTrackingInfo(key)
+            const randomTrackedValue = getRandomInt(100) < channelSamplingRate
+            trackingInfo.setNumUsersJoined(values.length)
+            trackingInfo.setTracked(randomTrackedValue)
+            channelTrackingInfo.push(trackingInfo)
+        })
+
+        await result.riverSDK.sendTextMessage(
+            coordinationChannelId,
+            'START LOAD: ' + JSON.stringify(channelTrackingInfo),
+        )
+
+        const loadStartTime = Date.now()
+
+        await pauseForXMiliseconds(10000)
+
+        while (loadOverUsers.size != numFollowers) {
+            log('Waiting. Users load over:', loadOverUsers.size)
+            log('Unprocessed messages number:', await redis.dbsize())
+            await pauseForXMiliseconds(1000)
+        }
+        log('Final number of user done with load:', loadOverUsers.size)
+        const loadEndTime = Date.now()
+
+        let messagesProcessed = false
+        let timeCounter = 1000
+        let lastDbSize = 0
+        while (!messagesProcessed && timeCounter < 60000) {
+            lastDbSize = await redis.dbsize()
+            await pauseForXMiliseconds(1000)
+            timeCounter += 1000
+            if (lastDbSize === 0) {
+                messagesProcessed = true
             }
+            log(
+                '# of not processed messages: ',
+                lastDbSize,
+                ' at ',
+                timeCounter,
+                ' ms after all sent',
+            )
+        }
+        log('Test executed')
+        await result.riverSDK.client.stopSync()
 
-            await result.riverSDK.sendTextMessage(
-                coordinationChannelId,
-                'WONDERLAND: ' + JSON.stringify(channelWithTowns),
+        //--------------------------------------------------------------------------------------------
+        //Let's do delivery histogram here
+        //--------------------------------------------------------------------------------------------
+
+        let cursor = '0'
+
+        do {
+            // Use the SCAN command with cursor, MATCH pattern, and COUNT
+            const [nextCursor, keys] = await redisE2EMessageDeliveryTracking.scan(
+                cursor,
+                'MATCH',
+                '*',
+                'COUNT',
+                10,
             )
 
-            while (readyUsers.size != numFollowers) {
-                debugLog('Waiting for followers to be ready')
-                await pauseForXMiliseconds(1000)
-            }
-
-            debugLog('USERS ARE CHANNELS')
-
-            usersInChannels.forEach((values, key) => {
-                const trackingInfo = new ChannelTrackingInfo(key)
-                const randomTrackedValue = getRandomInt(100) < channelSamplingRate
-                trackingInfo.setNumUsersJoined(values.length)
-                trackingInfo.setTracked(randomTrackedValue)
-                channelTrackingInfo.push(trackingInfo)
-            })
-
-            await result.riverSDK.sendTextMessage(
-                coordinationChannelId,
-                'START LOAD: ' + JSON.stringify(channelTrackingInfo),
-            )
-
-            const loadStartTime = Date.now()
-
-            await pauseForXMiliseconds(10000)
-
-            while (loadOverUsers.size != numFollowers) {
-                log('Waiting. Users load over:', loadOverUsers.size)
-                log('Unprocessed messages number:', await redis.dbsize())
-                await pauseForXMiliseconds(1000)
-            }
-            log('Final number of user done with load:', loadOverUsers.size)
-            const loadEndTime = Date.now()
-
-            let messagesProcessed = false
-            let timeCounter = 1000
-            let lastDbSize = 0
-            while (!messagesProcessed && timeCounter < 60000) {
-                lastDbSize = await redis.dbsize()
-                await pauseForXMiliseconds(1000)
-                timeCounter += 1000
-                if (lastDbSize === 0) {
-                    messagesProcessed = true
-                }
-                log(
-                    '# of not processed messages: ',
-                    lastDbSize,
-                    ' at ',
-                    timeCounter,
-                    ' ms after all sent',
-                )
-            }
-            log('Test executed')
-            await result.riverSDK.client.stopSync()
-
-            //--------------------------------------------------------------------------------------------
-            //Let's do delivery histogram here
-            //--------------------------------------------------------------------------------------------
-
-            let cursor = '0'
-
-            do {
-                // Use the SCAN command with cursor, MATCH pattern, and COUNT
-                const [nextCursor, keys] = await redisE2EMessageDeliveryTracking.scan(
-                    cursor,
-                    'MATCH',
-                    '*',
-                    'COUNT',
-                    10,
-                )
-
-                // For each key, fetch and print its value
-                for (const key of keys) {
-                    const value = await redisE2EMessageDeliveryTracking.get(key) // Assuming all keys are string type
-                    const baseKey = key.slice(1)
-                    if (value && key) {
-                        if (key.charAt(0) === 'S') {
-                            log('S value', value)
-                            //We are processing sent time key
-                            //Check if map contains this key already - if it is there it means that we already have receiving time there
-                            if (E2EDeliveryTimeMap.has(baseKey)) {
-                                const receivingTime = E2EDeliveryTimeMap.get(baseKey)
-                                const sendingTime = parseInt(value)
-                                if (receivingTime) {
-                                    const diff = receivingTime - sendingTime
-                                    incrementE2EDeliveryTimeHistogramMapValue(
-                                        diff,
-                                        E2EDeliveryTimeHistogram,
-                                    )
-                                    E2EDeliveryTimeMap.delete(baseKey)
-                                }
-                            } else {
-                                //Step 2. If not, add sending time to the map
-                                E2EDeliveryTimeMap.set(baseKey, parseInt(value))
+            // For each key, fetch and print its value
+            for (const key of keys) {
+                const value = await redisE2EMessageDeliveryTracking.get(key) // Assuming all keys are string type
+                const baseKey = key.slice(1)
+                if (value && key) {
+                    if (key.charAt(0) === 'S') {
+                        log('S value', value)
+                        //We are processing sent time key
+                        //Check if map contains this key already - if it is there it means that we already have receiving time there
+                        if (E2EDeliveryTimeMap.has(baseKey)) {
+                            const receivingTime = E2EDeliveryTimeMap.get(baseKey)
+                            const sendingTime = parseInt(value)
+                            if (receivingTime) {
+                                const diff = receivingTime - sendingTime
+                                incrementE2EDeliveryTimeHistogramMapValue(
+                                    diff,
+                                    E2EDeliveryTimeHistogram,
+                                )
+                                E2EDeliveryTimeMap.delete(baseKey)
                             }
-                        } else if (key.charAt(0) === 'R') {
-                            log('R value', value)
-                            //We are processing recieved time key
-                            //Check if map contains this key already - if it is there it means that we already have sent time there
-                            if (E2EDeliveryTimeMap.has(baseKey)) {
-                                const sendingTime = E2EDeliveryTimeMap.get(baseKey)
-                                const recievingTime = parseInt(value)
-                                if (sendingTime) {
-                                    const diff = recievingTime - sendingTime
-                                    E2EDeliveryTimeMap.delete(baseKey)
-                                    incrementE2EDeliveryTimeHistogramMapValue(
-                                        diff,
-                                        E2EDeliveryTimeHistogram,
-                                    )
-                                }
-                            } else {
-                                //Step 2. If not, add recieving time to the map
-                                E2EDeliveryTimeMap.set(baseKey, parseInt(value))
+                        } else {
+                            //Step 2. If not, add sending time to the map
+                            E2EDeliveryTimeMap.set(baseKey, parseInt(value))
+                        }
+                    } else if (key.charAt(0) === 'R') {
+                        log('R value', value)
+                        //We are processing recieved time key
+                        //Check if map contains this key already - if it is there it means that we already have sent time there
+                        if (E2EDeliveryTimeMap.has(baseKey)) {
+                            const sendingTime = E2EDeliveryTimeMap.get(baseKey)
+                            const recievingTime = parseInt(value)
+                            if (sendingTime) {
+                                const diff = recievingTime - sendingTime
+                                E2EDeliveryTimeMap.delete(baseKey)
+                                incrementE2EDeliveryTimeHistogramMapValue(
+                                    diff,
+                                    E2EDeliveryTimeHistogram,
+                                )
                             }
+                        } else {
+                            //Step 2. If not, add recieving time to the map
+                            E2EDeliveryTimeMap.set(baseKey, parseInt(value))
                         }
                     }
                 }
-                cursor = nextCursor
-            } while (cursor !== '0')
+            }
+            cursor = nextCursor
+        } while (cursor !== '0')
 
-            log(E2EDeliveryTimeHistogram)
+        log(E2EDeliveryTimeHistogram)
 
-            log('>500: ', await redisE2EMessageDeliveryTracking.get('T500'))
-            log('501-1000', await redisE2EMessageDeliveryTracking.get('T1000'))
-            log('1001-1500', await redisE2EMessageDeliveryTracking.get('T1500'))
-            log('1501-2000', await redisE2EMessageDeliveryTracking.get('T2000'))
-            log('2001-inf', await redisE2EMessageDeliveryTracking.get('Tinf'))
+        log('>500: ', await redisE2EMessageDeliveryTracking.get('T500'))
+        log('501-1000', await redisE2EMessageDeliveryTracking.get('T1000'))
+        log('1001-1500', await redisE2EMessageDeliveryTracking.get('T1500'))
+        log('1501-2000', await redisE2EMessageDeliveryTracking.get('T2000'))
+        log('2001-inf', await redisE2EMessageDeliveryTracking.get('Tinf'))
 
-            const unrecievedMessages = await getAllKeysAndValues(redis)
-            const minMaxDates = findMinMaxDates(unrecievedMessages)
-            log('Min date:', minMaxDates?.minDate)
-            log('Max date:', minMaxDates?.maxDate)
-            log('Load start time:', loadStartTime)
-            log('Load end time:', loadEndTime)
+        const unrecievedMessages = await getAllKeysAndValues(redis)
+        const minMaxDates = findMinMaxDates(unrecievedMessages)
+        log('Min date:', minMaxDates?.minDate)
+        log('Max date:', minMaxDates?.maxDate)
+        log('Load start time:', loadStartTime)
+        log('Load end time:', loadEndTime)
 
-            await redisE2EMessageDeliveryTracking.quit()
-            await redis.quit()
-            result.riverSDK.client.removeAllListeners()
-            expect(lastDbSize).toBe(0)
-        },
-        loadTestDurationMs * 10,
-    )
+        await redisE2EMessageDeliveryTracking.quit()
+        await redis.quit()
+        result.riverSDK.client.removeAllListeners()
+        expect(lastDbSize).toBe(0)
+    })
 })
 
 async function fundWallet(walletToFund: ethers.Wallet) {

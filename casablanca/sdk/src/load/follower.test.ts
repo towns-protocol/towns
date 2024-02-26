@@ -117,19 +117,15 @@ afterAll(async () => {
 })
 
 describe('Stress test', () => {
-    test(
-        'stress test',
-        async () => {
-            const followerProcesses = []
+    test('stress test', async () => {
+        const followerProcesses = []
 
-            for (let i = 0; i < numberOfClientsPerProcess; i++) {
-                followerProcesses.push(singleTestProcess())
-            }
-            await Promise.all(followerProcesses)
-            //await singleTestProcess()
-        },
-        loadTestDurationMs * 10,
-    )
+        for (let i = 0; i < numberOfClientsPerProcess; i++) {
+            followerProcesses.push(singleTestProcess())
+        }
+        await Promise.all(followerProcesses)
+        //await singleTestProcess()
+    })
 })
 
 async function singleTestProcess(): Promise<void> {

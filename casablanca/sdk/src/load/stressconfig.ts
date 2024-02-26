@@ -1,5 +1,5 @@
 export const jsonRpcProviderUrl = 'http://localhost:8545' //BASE_CHAIN_RPC_URL: required for follower and leader nodes.
-export const rpcClientURL = 'http://localhost:5157' //RIVER_NODE_URL: required for follower and leader nodes.
+export const rpcClientURL = 'https://localhost:5157' //RIVER_NODE_URL: required for follower and leader nodes.
 
 // http://localhost:3000/t/SPCE-EJC7EVqlJZWfvilJuaaev/?invite
 // http://localhost:3000/t/SPCE-A6HB4WiKq0-XqVw7liRKY/?invite
