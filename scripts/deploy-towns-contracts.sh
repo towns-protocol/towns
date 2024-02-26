@@ -24,8 +24,8 @@ mkdir -p casablanca/node/run_files/addresses
 mkdir -p packages/generated/addresses/base_anvil
 
 # copy contracts to specific places
-cp contracts/addresses/base_anvil/townFactory.json packages/generated/addresses/base_anvil
-cp contracts/addresses/base_anvil/townOwner.json packages/generated/addresses/base_anvil
-cp contracts/addresses/base_anvil/mockNFT.json packages/generated/addresses/base_anvil
-cp contracts/addresses/base_anvil/member.json packages/generated/addresses/base_anvil
-cp contracts/addresses/base_anvil/townFactory.json casablanca/node/run_files/addresses
+cp contracts/deployments/base_anvil/townFactory.json packages/generated/addresses/base_anvil
+cp contracts/deployments/base_anvil/townOwner.json packages/generated/addresses/base_anvil
+cp contracts/deployments/base_anvil/mockNFT.json packages/generated/addresses/base_anvil
+cp contracts/deployments/base_anvil/member.json packages/generated/addresses/base_anvil
+cp contracts/deployments/base_anvil/townFactory.json casablanca/node/run_files/addresses

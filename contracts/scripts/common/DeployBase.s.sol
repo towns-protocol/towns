@@ -10,7 +10,7 @@ import {Script} from "forge-std/Script.sol";
 import {DeployHelpers} from "./DeployHelpers.s.sol";
 
 contract DeployBase is DeployHelpers, Script {
-  string internal constant DEPLOYMENT_CACHE_PATH = "contracts/addresses";
+  string internal constant DEPLOYMENT_CACHE_PATH = "contracts/deployments";
 
   constructor() {
     // set up chains
@@ -43,7 +43,9 @@ contract DeployBase is DeployHelpers, Script {
   // =============================================================
   //                      DEPLOYMENT HELPERS
   // =============================================================
-  function versionAlias() internal returns (string memory) {
+
+  /// @notice returns the chain alias for the current chain
+  function chainIdAlias() internal returns (string memory) {
     return
       block.chainid == 31337
         ? "base_anvil"
@@ -53,56 +55,30 @@ contract DeployBase is DeployHelpers, Script {
   function networkDirPath() internal returns (string memory path) {
     string memory context = vm.envOr("DEPLOYMENT_CONTEXT", string(""));
 
-    // if no context is provided, use the default chain alias `packages/generated/addresses/<chainAlias>`
+    // if no context is provided, use the default path
     if (bytes(context).length == 0) {
-      context = string.concat(DEPLOYMENT_CACHE_PATH, "/", versionAlias());
+      context = string.concat(DEPLOYMENT_CACHE_PATH, "/", chainIdAlias());
     } else {
       context = string.concat(
         DEPLOYMENT_CACHE_PATH,
         "/",
         context,
         "/",
-        versionAlias()
+        chainIdAlias()
       );
     }
 
     path = string.concat(vm.projectRoot(), "/", context);
   }
 
-  function upsertChainIdFile(
-    string memory _networkDirPath,
-    address contractAddr
-  ) internal {
-    string memory chainIdFilePath = string.concat(_networkDirPath, "/.chainId");
-    if (!exists(chainIdFilePath)) {
-      debug("creating chain id file: ", chainIdFilePath);
-      vm.writeFile(
-        chainIdFilePath,
-        string.concat(
-          vm.toString(contractAddr),
-          string.concat(":", vm.toString(block.chainid))
-        )
-      );
-    } else {
-      debug("writing chain id to file: ", chainIdFilePath);
-      vm.writeLine(
-        chainIdFilePath,
-        string.concat(
-          vm.toString(contractAddr),
-          string.concat(":", vm.toString(block.chainid))
-        )
-      );
-    }
-  }
-
-  function deploymentPath(
+  function cachePath(
     string memory contractName
   ) internal returns (string memory path) {
     path = string.concat(networkDirPath(), "/", contractName, ".json");
   }
 
   function getDeployment(string memory versionName) internal returns (address) {
-    string memory path = deploymentPath(versionName);
+    string memory path = cachePath(versionName);
 
     if (!exists(path)) {
       debug(
@@ -110,7 +86,7 @@ contract DeployBase is DeployHelpers, Script {
           "no deployment found for ",
           versionName,
           " on ",
-          versionAlias()
+          chainIdAlias()
         )
       );
       return address(0);
@@ -132,8 +108,8 @@ contract DeployBase is DeployHelpers, Script {
     // create addresses directory
     createDir(networkDirPath());
 
-    // get deployment path `packages/generated/addresses/<chainAlias>/<contract>.json`
-    string memory path = deploymentPath(versionName);
+    // get deployment path
+    string memory path = cachePath(versionName);
 
     // save deployment
     string memory jsonStr = vm.serializeAddress("{}", "address", contractAddr);

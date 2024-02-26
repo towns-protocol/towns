@@ -65,10 +65,7 @@ contract BaseSetup is TestUtils, TownHelper {
     userEntitlement = deployTownFactory.userEntitlement();
     tokenEntitlement = deployTownFactory.tokenEntitlement();
     townOwner = deployTownFactory.townOwner();
-
-    // set factory
-    vm.prank(deployer);
-    TownOwner(townOwner).setFactory(spaceFactory);
+    deployTownFactory.postDeploy(deployer, spaceFactory);
 
     // deploy node operator
     mainnetDelegation = deployMainnetDelegation.deploy();

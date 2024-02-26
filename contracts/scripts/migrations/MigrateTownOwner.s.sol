@@ -8,7 +8,7 @@ import {IDiamondCut} from "contracts/src/diamond/facets/cut/IDiamondCut.sol";
 //libraries
 
 //contracts
-import {Migration} from "../common/Migration.s.sol";
+import {Interaction} from "../common/Interaction.s.sol";
 
 import {TownOwner} from "contracts/src/towns/facets/owner/TownOwner.sol";
 import {TownOwnerHelper} from "contracts/test/towns/owner/TownOwnerSetup.sol";
@@ -16,12 +16,12 @@ import {TownOwnerHelper} from "contracts/test/towns/owner/TownOwnerSetup.sol";
 import {ERC721AHelper} from "contracts/test/diamond/erc721a/ERC721ASetup.sol";
 import {VotesHelper} from "contracts/test/governance/votes/VotesSetup.sol";
 
-contract MigrateTownOwner is Migration {
+contract MigrateTownOwner is Interaction {
   TownOwnerHelper townOwnerHelper = new TownOwnerHelper();
   ERC721AHelper erc721aHelper = new ERC721AHelper();
   VotesHelper votesHelper = new VotesHelper();
 
-  function __migration(uint256 deployerPK, address) public override {
+  function __interact(uint256 deployerPK, address) public override {
     address diamond = getDeployment("townOwner");
 
     vm.startBroadcast(deployerPK);

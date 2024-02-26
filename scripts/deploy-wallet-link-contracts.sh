@@ -19,5 +19,5 @@ cd ..
 mkdir -p casablanca/node/run_files/addresses
 mkdir -p packages/generated/addresses/base_anvil
 
-cp contracts/addresses/base_anvil/walletLink.json packages/generated/addresses/base_anvil
-cp contracts/addresses/base_anvil/walletLink.json casablanca/node/run_files/addresses
+cp contracts/deployments/base_anvil/walletLink.json packages/generated/addresses/base_anvil
+cp contracts/deployments/base_anvil/walletLink.json casablanca/node/run_files/addresses

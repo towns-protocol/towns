@@ -4,8 +4,6 @@ pragma solidity ^0.8.23;
 //interfaces
 import {IDiamond} from "contracts/src/diamond/IDiamond.sol";
 
-//libraries
-
 //contracts
 import {DiamondDeployer} from "../common/DiamondDeployer.s.sol";
 import {Diamond} from "contracts/src/diamond/Diamond.sol";
@@ -105,19 +103,13 @@ contract DeployNodeOperator is DiamondDeployer {
       });
   }
 
-  function _afterDeployment(
-    uint256 pk,
-    address,
-    address deployment
-  ) internal override {
-    // set the space owner contract
-    // set the mainnet delegation contract
-    address townOwner = deployTownOwner.cache();
-    address mainnetDelegation = deployMainnetDelegation.cache();
+  function postDeploy(address deployer, address nodeOperator) public override {
+    address townOwner = deployTownOwner.deploy();
+    address mainnetDelegation = deployMainnetDelegation.deploy();
 
-    vm.startBroadcast(pk);
-    NodeOperatorFacet(deployment).setSpaceOwnerRegistry(townOwner);
-    NodeOperatorFacet(deployment).setMainnetDelegation(mainnetDelegation);
+    vm.startBroadcast(deployer);
+    NodeOperatorFacet(nodeOperator).setSpaceOwnerRegistry(townOwner);
+    NodeOperatorFacet(nodeOperator).setMainnetDelegation(mainnetDelegation);
     vm.stopBroadcast();
   }
 }

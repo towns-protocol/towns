@@ -54,7 +54,6 @@ abstract contract Deployer is Script, DeployBase {
     uint256 pk = isAnvil()
       ? vm.envUint("LOCAL_PRIVATE_KEY")
       : vm.envUint("PRIVATE_KEY");
-
     address deployer = vm.addr(pk);
 
     if (!isTesting()) {
@@ -63,7 +62,7 @@ abstract contract Deployer is Script, DeployBase {
           unicode"deploying \n\t📜 ",
           versionName(),
           unicode"\n\t⚡️ on ",
-          versionAlias(),
+          chainIdAlias(),
           unicode"\n\t📬 from deployer address"
         ),
         vm.toString(deployer)
@@ -84,14 +83,10 @@ abstract contract Deployer is Script, DeployBase {
       }
     }
 
-    if (!isTesting()) _afterDeployment(pk, deployer, deployedAddr);
+    if (!isTesting()) postDeploy(deployer, deployedAddr);
   }
 
-  function _afterDeployment(
-    uint256 pk,
-    address deployer,
-    address deployment
-  ) internal virtual {}
+  function postDeploy(address deployer, address deployment) public virtual {}
 
   function run() public virtual {
     deploy();

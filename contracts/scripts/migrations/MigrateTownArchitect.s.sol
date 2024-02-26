@@ -4,12 +4,11 @@ pragma solidity ^0.8.23;
 //interfaces
 import {IDiamond, Diamond} from "contracts/src/diamond/Diamond.sol";
 import {IDiamondCut} from "contracts/src/diamond/facets/cut/IDiamondCut.sol";
-import {ITownArchitect} from "contracts/src/towns/facets/architect/ITownArchitect.sol";
 
 //libraries
 
 //contracts
-import {Migration} from "../common/Migration.s.sol";
+import {Interaction} from "../common/Interaction.s.sol";
 
 // helpers
 import {TownArchitectHelper} from "contracts/test/towns/architect/TownArchitectSetup.sol";
@@ -19,11 +18,11 @@ import {PrepayHelper} from "contracts/test/towns/prepay/PrepayHelper.sol";
 import {TownArchitect} from "contracts/src/towns/facets/architect/TownArchitect.sol";
 import {PrepayFacet} from "contracts/src/towns/facets/prepay/PrepayFacet.sol";
 
-contract MigrateTownArchitect is Migration {
+contract MigrateTownArchitect is Interaction {
   TownArchitectHelper townArchitectHelper = new TownArchitectHelper();
   PrepayHelper prepayHelper = new PrepayHelper();
 
-  function __migration(uint256 deployerPK, address) public override {
+  function __interact(uint256 deployerPK, address) public override {
     address diamond = getDeployment("townFactory");
     uint256 index = 0;
 

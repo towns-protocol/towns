@@ -1,5 +1,0 @@
-/docker-compose/services/blockscout-db-data
-/docker-compose/services/stats-db-data
-/docker-compose/services/redis-data
-/docker-compose/tmp
-/docker-compose/logs

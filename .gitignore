@@ -23,8 +23,7 @@ coverage.json
 contracts/.openzeppelin/unknown-*.json
 contracts/docs/coverage
 contracts/.env
-contracts/addresses/base_anvil
-contracts/addresses/river_anvil
+contracts/deployments
 abi/
 
 /docs

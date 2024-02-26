@@ -36,7 +36,7 @@ abstract contract Interaction is Script, DeployBase {
       string.concat(
         unicode"running interaction \n\t📜 ",
         unicode"\n\t⚡️ on ",
-        versionAlias(),
+        chainIdAlias(),
         unicode"\n\t📬 from deployer address"
       ),
       vm.toString(deployer)

@@ -15,7 +15,7 @@ abstract contract Migration is Script, DeployBase {
   // - loading private keys
   // - saving deployments
   // - logging
-  function __migration(
+  function __interact(
     uint256 deployerPrivateKey,
     address deployer
   ) public virtual;
@@ -31,13 +31,13 @@ abstract contract Migration is Script, DeployBase {
       string.concat(
         unicode"running migration \n\t📜 ",
         unicode"\n\t⚡️ on ",
-        versionAlias(),
+        chainIdAlias(),
         unicode"\n\t📬 from deployer address"
       ),
       vm.toString(deployer)
     );
 
-    __migration(pk, deployer);
+    __interact(pk, deployer);
 
     info(unicode"✅ ", " migration complete");
   }

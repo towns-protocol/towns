@@ -6,7 +6,7 @@ import {MultiInit} from "contracts/src/diamond/initializers/MultiInit.sol";
 
 contract DeployMultiInit is Deployer {
   function versionName() public pure override returns (string memory) {
-    return "multiInit";
+    return "MultiInit";
   }
 
   function __deploy(

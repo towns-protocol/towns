@@ -197,12 +197,8 @@ contract DeployTownFactory is DiamondDeployer {
       });
   }
 
-  function _afterDeployment(
-    uint256 pk,
-    address,
-    address townFactory
-  ) internal override {
-    vm.startBroadcast(pk);
+  function postDeploy(address deployer, address townFactory) public override {
+    vm.startBroadcast(deployer);
     ITownOwner(townOwner).setFactory(address(townFactory));
     vm.stopBroadcast();
   }

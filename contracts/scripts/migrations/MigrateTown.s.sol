@@ -7,7 +7,7 @@ import {IDiamondCut} from "contracts/src/diamond/facets/cut/IDiamondCut.sol";
 import {IChannel} from "contracts/src/towns/facets/channels/IChannel.sol";
 
 //contracts
-import {Migration} from "../common/Migration.s.sol";
+import {Interaction} from "../common/Interaction.s.sol";
 
 // helpers
 import {ChannelsHelper} from "contracts/test/towns/channels/ChannelsHelper.sol";
@@ -15,10 +15,10 @@ import {ChannelsHelper} from "contracts/test/towns/channels/ChannelsHelper.sol";
 // facets
 import {Channels} from "contracts/src/towns/facets/channels/Channels.sol";
 
-contract MigrateTown is Migration {
+contract MigrateTown is Interaction {
   ChannelsHelper channelsHelper = new ChannelsHelper();
 
-  function __migration(uint256 deployerPK, address) public override {
+  function __interact(uint256 deployerPK, address) public override {
     address diamond = getDeployment("town");
     uint256 index = 0;
 

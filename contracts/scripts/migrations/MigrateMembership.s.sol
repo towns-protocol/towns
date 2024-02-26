@@ -6,7 +6,7 @@ import {IDiamond, Diamond} from "contracts/src/diamond/Diamond.sol";
 import {IDiamondCut} from "contracts/src/diamond/facets/cut/IDiamondCut.sol";
 
 //contracts
-import {Migration} from "../common/Migration.s.sol";
+import {Interaction} from "../common/Interaction.s.sol";
 
 // facets
 import {MembershipFacet} from "contracts/src/towns/facets/membership/MembershipFacet.sol";
@@ -15,11 +15,11 @@ import {MembershipFacet} from "contracts/src/towns/facets/membership/MembershipF
 import {ERC721AHelper} from "contracts/test/diamond/erc721a/ERC721ASetup.sol";
 import {MembershipHelper} from "contracts/test/towns/membership/MembershipHelper.sol";
 
-contract MigrateMembership is Migration {
+contract MigrateMembership is Interaction {
   ERC721AHelper erc721aHelper = new ERC721AHelper();
   MembershipHelper membershipHelper = new MembershipHelper();
 
-  function __migration(uint256 deployerPK, address) public override {
+  function __interact(uint256 deployerPK, address) public override {
     address diamond = getDeployment("town");
     uint256 index = 0;
 

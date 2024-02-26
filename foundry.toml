@@ -17,9 +17,7 @@
   cache_path = "contracts/cache" # The path to the cache, relative to the root of the project.
   verbosity = 3 # The verbosity level to use during tests.
   fs_permissions = [
-    { access = "read-write", path = "./packages"},
-    { access = "read-write", path = "./contracts/addresses"},
-    { access = "read-write", path = "./casablanca/node/run_files"}
+    { access = "read-write", path = "./contracts/deployments"},
   ] # Configures permissions for cheatcodes that touch the filesystem
   extra_output = ["metadata", "abi", "bin"]
   extra_output_files = ["metadata", "abi", "bin"]
