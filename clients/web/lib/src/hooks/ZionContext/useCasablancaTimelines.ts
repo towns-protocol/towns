@@ -870,12 +870,24 @@ function toAttachment(
             if (!info || !encryption) {
                 return undefined
             }
+
+            const thumbnailInfo = attachment.content.value.thumbnail?.info
+            const thumbnailContent = attachment.content.value.thumbnail?.content
+            const thumbnail =
+                thumbnailInfo && thumbnailContent
+                    ? {
+                          info: thumbnailInfo,
+                          content: thumbnailContent,
+                      }
+                    : undefined
+
             return {
                 type: 'chunked_media',
                 info,
                 streamId: attachment.content.value.streamId,
                 encryption: encryption,
                 id,
+                thumbnail: thumbnail,
             } satisfies ChunkedMediaAttachment
         }
         case 'embeddedMedia': {

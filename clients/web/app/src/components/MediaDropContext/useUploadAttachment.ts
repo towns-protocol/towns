@@ -1,9 +1,12 @@
-import { Attachment, encryptAESGCM, useZionClient } from 'use-zion-client'
+import { Attachment, MediaInfo, encryptAESGCM, useZionClient } from 'use-zion-client'
 import { useCallback } from 'react'
 import imageCompression from 'browser-image-compression'
 import { isMediaMimeType } from 'utils/isMediaMimeType'
 
 const CHUNK_SIZE = 500_000
+const MAX_THUMBNAIL_WIDTH = 30 // pixels
+const MAX_THUMBNAIL_SIZE = 0.003 // mb
+
 export const useUploadAttachment = () => {
     const { createMediaStream, sendMediaPayload } = useZionClient()
     function shouldCompressFile(file: File): boolean {
@@ -18,6 +21,7 @@ export const useUploadAttachment = () => {
             file: File,
             channelId: string,
             spaceId: string | undefined,
+            thumbnail: File | undefined,
             setProgress: (progress: number) => void,
         ): Promise<Attachment> => {
             const encryptionResult = await encryptAESGCM(data)
@@ -44,6 +48,20 @@ export const useUploadAttachment = () => {
             }
             setProgress(1)
 
+            let thumbnailInfo: { content: Uint8Array; info: MediaInfo } | undefined
+            if (thumbnail) {
+                thumbnailInfo = {
+                    info: {
+                        filename: thumbnail.name,
+                        mimetype: thumbnail.type,
+                        widthPixels: width,
+                        heightPixels: height,
+                        sizeBytes: BigInt(thumbnail.size),
+                    },
+                    content: new Uint8Array(await thumbnail.arrayBuffer()),
+                }
+            }
+
             return {
                 id: mediaStreamInfo.streamId,
                 type: 'chunked_media',
@@ -59,6 +77,7 @@ export const useUploadAttachment = () => {
                     heightPixels: height,
                     sizeBytes: BigInt(data.length),
                 },
+                thumbnail: thumbnailInfo,
             } satisfies Attachment
         },
         [createMediaStream, sendMediaPayload],
@@ -74,7 +93,16 @@ export const useUploadAttachment = () => {
             //
             const buffer = await file.arrayBuffer()
             const bytes = new Uint8Array(buffer)
-            return await createChunkedAttachment(bytes, 0, 0, file, channelId, spaceId, setProgress)
+            return await createChunkedAttachment(
+                bytes,
+                0,
+                0,
+                file,
+                channelId,
+                spaceId,
+                undefined,
+                setProgress,
+            )
         },
         [createChunkedAttachment],
     )
@@ -95,6 +123,14 @@ export const useUploadAttachment = () => {
                       maxWidthOrHeight: 2048,
                   })
                 : file
+
+            const thumbnail = shouldCompressFile(file)
+                ? await imageCompression(file, {
+                      maxSizeMB: MAX_THUMBNAIL_SIZE,
+                      maxWidthOrHeight: MAX_THUMBNAIL_WIDTH,
+                  })
+                : undefined
+
             const { width, height } = await imageSize(compressed)
             const buffer = await compressed.arrayBuffer()
             const bytes = new Uint8Array(buffer)
@@ -106,6 +142,7 @@ export const useUploadAttachment = () => {
                 compressed,
                 channelId,
                 spaceId,
+                thumbnail,
                 setProgress,
             )
         },

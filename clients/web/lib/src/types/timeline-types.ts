@@ -373,6 +373,7 @@ export type ChunkedMediaAttachment = {
     encryption: Encryption
     info: MediaInfo
     id: string
+    thumbnail?: { content: Uint8Array; info: MediaInfo }
 }
 
 export type EmbeddedMediaAttachment = {
@@ -498,6 +499,10 @@ export function transformAttachments(attachments?: Attachment[]): ChannelMessage
                                         iv: attachment.encryption.iv,
                                         secretKey: attachment.encryption.secretKey,
                                     },
+                                },
+                                thumbnail: {
+                                    info: attachment.thumbnail?.info,
+                                    content: attachment.thumbnail?.content,
                                 },
                             },
                         },

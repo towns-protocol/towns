@@ -49,6 +49,7 @@ export const MessageAttachments = (props: {
                             streamId={attachment.streamId}
                             iv={attachment.encryption.iv}
                             secretKey={attachment.encryption.secretKey}
+                            thumbnail={attachment.thumbnail?.content}
                             onClick={(e) => {
                                 e.preventDefault()
                                 e.stopPropagation()

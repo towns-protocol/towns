@@ -28,6 +28,7 @@ export const FullScreenMediaItem = (props: Props) => {
                 secretKey={attachment.encryption.secretKey}
                 userId={userId}
                 timestamp={timestamp}
+                thumbnail={attachment.thumbnail?.content}
             />
         )
     }

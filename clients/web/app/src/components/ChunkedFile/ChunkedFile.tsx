@@ -116,6 +116,7 @@ const ChunkedMedia = (props: Props) => {
     const { isMessageAttachementContext } = useIsMessageAttachementContext()
 
     const src = objectURL ?? thumbnailURL ?? ''
+    const applyBlur = !objectURL
 
     const touchButton = isTouch && (
         <IconButton
@@ -161,6 +162,7 @@ const ChunkedMedia = (props: Props) => {
                     backgroundPosition: 'center',
                     backgroundSize: 'cover',
                     backgroundRepeat: 'no-repeat',
+                    filter: applyBlur ? 'blur(10px) brightness(80%)' : undefined,
                 }}
                 onClick={isTouch ? undefined : onClick}
             />
