@@ -234,7 +234,7 @@ resource "aws_ecs_task_definition" "fargate_task_definition" {
     environment = [
       {
         name  = "DB_USER",
-        value = "notification-service"
+        value = "notification_service"
       },
       {
         name  = "DB_HOST",

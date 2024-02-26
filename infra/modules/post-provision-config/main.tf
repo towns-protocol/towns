@@ -63,7 +63,7 @@ module "post_provision_config_lambda_function" {
       HOST         = var.river_user_db_config.host
       PORT         = var.river_user_db_config.port
       DATABASE     = var.river_user_db_config.database
-      USER         = "notification-service"
+      USER         = "notification_service"
       PASSWORD_ARN = local.global_remote_state.notification_service_db_password_secret.arn
     })
     HOME_CHAIN_ID                           = var.base_chain_id
