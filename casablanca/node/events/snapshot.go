@@ -119,7 +119,7 @@ func Update_Snapshot(iSnapshot *Snapshot, event *ParsedEvent, miniblockNum int64
 		if err != nil {
 			return err
 		}
-		return update_Snapshot_Space(iSnapshot, payload.SpacePayload, creator, eventNum, event.Hash)
+		return update_Snapshot_Space(iSnapshot, payload.SpacePayload, creator, eventNum, event.Hash.Bytes())
 	case *StreamEvent_ChannelPayload:
 		return update_Snapshot_Channel(iSnapshot, payload.ChannelPayload)
 	case *StreamEvent_DmChannelPayload:
@@ -127,13 +127,13 @@ func Update_Snapshot(iSnapshot *Snapshot, event *ParsedEvent, miniblockNum int64
 		if err != nil {
 			return err
 		}
-		return update_Snapshot_DmChannel(iSnapshot, payload.DmChannelPayload, creator, miniblockNum, event.Hash)
+		return update_Snapshot_DmChannel(iSnapshot, payload.DmChannelPayload, creator, miniblockNum, event.Hash.Bytes())
 	case *StreamEvent_GdmChannelPayload:
 		creator, err := shared.AddressHex(event.Event.CreatorAddress)
 		if err != nil {
 			return err
 		}
-		return update_Snapshot_GdmChannel(iSnapshot, payload.GdmChannelPayload, creator, miniblockNum, event.Hash)
+		return update_Snapshot_GdmChannel(iSnapshot, payload.GdmChannelPayload, creator, miniblockNum, event.Hash.Bytes())
 	case *StreamEvent_UserPayload:
 		return update_Snapshot_User(iSnapshot, payload.UserPayload)
 	case *StreamEvent_UserSettingsPayload:

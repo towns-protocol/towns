@@ -89,7 +89,7 @@ func createUserDeviceKeyStream(
 func makeDelegateSig(primaryWallet *crypto.Wallet, deviceWallet *crypto.Wallet) ([]byte, error) {
 	devicePubKey := eth_crypto.FromECDSAPub(&deviceWallet.PrivateKeyStruct.PublicKey)
 
-	delegatSig, err := primaryWallet.SignHash(crypto.TownsHash(devicePubKey))
+	delegatSig, err := primaryWallet.SignHash(crypto.TownsHash(devicePubKey).Bytes())
 	return delegatSig, err
 }
 

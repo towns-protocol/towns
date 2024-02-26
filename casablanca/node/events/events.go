@@ -6,6 +6,7 @@ import (
 
 	"google.golang.org/protobuf/proto"
 
+	"github.com/ethereum/go-ethereum/common"
 	"github.com/river-build/river/crypto"
 
 	. "github.com/river-build/river/protocol"
@@ -66,7 +67,7 @@ func MakeEnvelopeWithEvent(wallet *crypto.Wallet, streamEvent *StreamEvent) (*En
 	}
 
 	hash := crypto.TownsHash(eventBytes)
-	signature, err := wallet.SignHash(hash)
+	signature, err := wallet.SignHash(hash[:])
 	if err != nil {
 		return nil, err
 	}
@@ -74,7 +75,7 @@ func MakeEnvelopeWithEvent(wallet *crypto.Wallet, streamEvent *StreamEvent) (*En
 	return &Envelope{
 		Event:     eventBytes,
 		Signature: signature,
-		Hash:      hash,
+		Hash:      hash[:],
 	}, nil
 }
 
@@ -105,12 +106,12 @@ func MakeParsedEventWithPayload(
 		return nil, err
 	}
 
+	prevMiniBlockHash := common.BytesToHash(prevMiniblockHash)
 	return &ParsedEvent{
 		Event:             streamEvent,
 		Envelope:          envelope,
-		Hash:              envelope.Hash,
-		HashStr:           string(envelope.Hash),
-		PrevMiniblockHash: string(prevMiniblockHash),
+		Hash:              common.BytesToHash(envelope.Hash),
+		PrevMiniblockHash: &prevMiniBlockHash,
 	}, nil
 }
 

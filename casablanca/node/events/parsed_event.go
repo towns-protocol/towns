@@ -4,6 +4,7 @@ import (
 	"bytes"
 	"strings"
 
+	"github.com/ethereum/go-ethereum/common"
 	"google.golang.org/protobuf/encoding/protojson"
 	"google.golang.org/protobuf/proto"
 
@@ -15,9 +16,8 @@ import (
 type ParsedEvent struct {
 	Event             *StreamEvent
 	Envelope          *Envelope
-	Hash              []byte
-	HashStr           string `dlog:"omit"` // strangely Go can't have key maps of type []byte...
-	PrevMiniblockHash string `dlog:"omit"`
+	Hash              common.Hash
+	PrevMiniblockHash *common.Hash `dlog:"omit"`
 	SignerPubKey      []byte
 	shortDebugStr     string
 }
@@ -28,11 +28,11 @@ func (e *ParsedEvent) GetEnvelopeBytes() ([]byte, error) {
 
 func ParseEvent(envelope *Envelope) (*ParsedEvent, error) {
 	hash := TownsHash(envelope.Event)
-	if !bytes.Equal(hash, envelope.Hash) {
+	if !bytes.Equal(hash[:], envelope.Hash) {
 		return nil, RiverError(Err_BAD_EVENT_HASH, "Bad hash provided", "computed", hash, "got", envelope.Hash)
 	}
 
-	signerPubKey, err := RecoverSignerPublicKey(hash, envelope.Signature)
+	signerPubKey, err := RecoverSignerPublicKey(hash[:], envelope.Signature)
 	if err != nil {
 		return nil, err
 	}
@@ -65,12 +65,12 @@ func ParseEvent(envelope *Envelope) (*ParsedEvent, error) {
 		}
 	}
 
+	PrevMiniblockHash := common.BytesToHash(streamEvent.PrevMiniblockHash)
 	return &ParsedEvent{
 		Event:             &streamEvent,
 		Envelope:          envelope,
-		Hash:              envelope.Hash,
-		HashStr:           string(envelope.Hash),
-		PrevMiniblockHash: string(streamEvent.PrevMiniblockHash),
+		Hash:              common.BytesToHash(envelope.Hash),
+		PrevMiniblockHash: &PrevMiniblockHash,
 		SignerPubKey:      signerPubKey,
 	}, nil
 }

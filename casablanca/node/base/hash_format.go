@@ -3,6 +3,7 @@ package base
 import (
 	"strings"
 
+	"github.com/ethereum/go-ethereum/common"
 	"github.com/river-build/river/protocol"
 )
 
@@ -48,6 +49,10 @@ func FormatHashFromStringToSB(dst *strings.Builder, src string) {
 	}
 }
 
+func FormatHash(h common.Hash) string {
+	return FormatHashFromBytes(h[:])
+}
+
 func FormatHashFromBytes(src []byte) string {
 	var dst strings.Builder
 	dst.Grow(10)
@@ -80,6 +85,10 @@ func FormatFullHashFromBytesToSB(dst *strings.Builder, src []byte) {
 
 func FormatFullHashFromStringToSB(dst *strings.Builder, src string) {
 	encodeHexFromString(dst, src)
+}
+
+func FormatFullHash(h common.Hash) string {
+	return FormatFullHashFromBytes(h[:])
 }
 
 func FormatFullHashFromBytes(src []byte) string {

@@ -1,6 +1,7 @@
 package events
 
 import (
+	"github.com/ethereum/go-ethereum/common"
 	. "github.com/river-build/river/base"
 	"github.com/river-build/river/crypto"
 	. "github.com/river-build/river/protocol"
@@ -33,7 +34,7 @@ func Make_GenesisMiniblockHeader(parsedEvents []*ParsedEvent) (*MiniblockHeader,
 
 	eventHashes := make([][]byte, len(parsedEvents))
 	for i, event := range parsedEvents {
-		eventHashes[i] = event.Hash
+		eventHashes[i] = event.Hash.Bytes()
 	}
 
 	return &MiniblockHeader{
@@ -88,7 +89,7 @@ func NextMiniblockTimestamp(prevBlockTimestamp *timestamppb.Timestamp) *timestam
 }
 
 type miniblockInfo struct {
-	Hash        []byte
+	Hash        common.Hash
 	Num         int64
 	headerEvent *ParsedEvent
 	events      []*ParsedEvent

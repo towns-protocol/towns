@@ -1,10 +1,11 @@
 package events
 
 import (
+	"github.com/ethereum/go-ethereum/common"
 	. "github.com/river-build/river/utils"
 )
 
-type eventMap = *OrderedMap[string, *ParsedEvent]
+type eventMap = *OrderedMap[common.Hash, *ParsedEvent]
 
 type minipoolInstance struct {
 	events     eventMap
@@ -23,7 +24,7 @@ func (m *minipoolInstance) copyAndAddEvent(event *ParsedEvent) *minipoolInstance
 		events:     m.events.Copy(1),
 		generation: m.generation,
 	}
-	m.events.Set(event.HashStr, event)
+	m.events.Set(event.Hash, event)
 	return m
 }
 

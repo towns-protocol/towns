@@ -13,7 +13,7 @@ import (
 
 func RecoverDelegateSigAddress(devicePubKey, delegateSig []byte) (*common.Address, error) {
 	hash := TownsHash(devicePubKey)
-	recoveredKey, err := RecoverSignerPublicKey(hash, delegateSig)
+	recoveredKey, err := RecoverSignerPublicKey(hash.Bytes(), delegateSig)
 	if err != nil {
 		return nil, err
 	}

@@ -37,7 +37,7 @@ func (s *Service) getLastMiniblockHash(
 
 	lastBlock := streamView.LastBlock()
 	resp := &GetLastMiniblockHashResponse{
-		Hash:         lastBlock.Hash,
+		Hash:         lastBlock.Hash[:],
 		MiniblockNum: lastBlock.Num,
 	}
 

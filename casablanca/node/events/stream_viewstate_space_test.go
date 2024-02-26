@@ -148,7 +148,7 @@ func joinSpace_T(
 						user,
 						user,
 					),
-					stream.view.LastBlock().Hash,
+					stream.view.LastBlock().Hash[:],
 				),
 			),
 		)
@@ -177,7 +177,7 @@ func joinChannel_T(
 						user,
 						user,
 					),
-					stream.view.LastBlock().Hash,
+					stream.view.LastBlock().Hash[:],
 				),
 			),
 		)
@@ -206,7 +206,7 @@ func leaveChannel_T(
 						user,
 						user,
 					),
-					stream.view.LastBlock().Hash,
+					stream.view.LastBlock().Hash[:],
 				),
 			),
 		)

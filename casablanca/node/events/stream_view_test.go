@@ -5,6 +5,7 @@ import (
 	"testing"
 	"time"
 
+	"github.com/ethereum/go-ethereum/common"
 	"github.com/river-build/river/config"
 	"github.com/river-build/river/crypto"
 	. "github.com/river-build/river/protocol"
@@ -92,19 +93,19 @@ func TestLoad(t *testing.T) {
 
 	last := view.LastEvent()
 	assert.NotNil(t, last)
-	assert.Equal(t, join.Hash, last.Hash)
+	assert.Equal(t, join.Hash, last.Hash[:])
 
 	miniEnvelopes := view.MinipoolEnvelopes()
 	assert.Equal(t, 0, len(miniEnvelopes))
 
-	newEnvelopesHashes := make([]string, 0)
+	newEnvelopesHashes := make([]common.Hash, 0)
 	_ = view.forEachEvent(0, func(e *ParsedEvent) (bool, error) {
-		newEnvelopesHashes = append(newEnvelopesHashes, e.HashStr)
+		newEnvelopesHashes = append(newEnvelopesHashes, e.Hash)
 		return true, nil
 	})
 
 	assert.Equal(t, 3, len(newEnvelopesHashes))
-	assert.Equal(t, []string{string(inception.Hash), string(join.Hash), string(miniblockHeaderProto.Hash)}, newEnvelopesHashes)
+	assert.Equal(t, []common.Hash{common.BytesToHash(inception.Hash), common.BytesToHash(join.Hash), common.BytesToHash(miniblockHeaderProto.Hash)}, newEnvelopesHashes)
 
 	cookie := view.SyncCookie("nodeAddress$1")
 	assert.NotNil(t, cookie)
@@ -130,7 +131,7 @@ func TestLoad(t *testing.T) {
 	join2, err := MakeEnvelopeWithPayload(
 		wallet,
 		Make_UserPayload_Membership(MembershipOp_SO_JOIN, "streamid$1", nil),
-		blockHash,
+		blockHash[:],
 	)
 	assert.NoError(t, err)
 	nextEvent := parsedEvent(t, join2)
@@ -151,7 +152,7 @@ func TestLoad(t *testing.T) {
 	join3, err := MakeEnvelopeWithPayload(
 		wallet,
 		Make_UserPayload_Membership(MembershipOp_SO_JOIN, "streamid$1", nil),
-		view.LastBlock().Hash,
+		view.LastBlock().Hash[:],
 	)
 	assert.NoError(t, err)
 	nextEvent = parsedEvent(t, join3)
@@ -183,7 +184,7 @@ func TestLoad(t *testing.T) {
 	// how many blocks do we currently have?
 	assert.Equal(t, len(view.blocks), 1)
 	// create a new block
-	miniblockHeaderEvent, err := MakeParsedEventWithPayload(wallet, Make_MiniblockHeader(miniblockHeader), view.LastBlock().Hash)
+	miniblockHeaderEvent, err := MakeParsedEventWithPayload(wallet, Make_MiniblockHeader(miniblockHeader), view.LastBlock().Hash[:])
 	assert.NoError(t, err)
 	miniblock, err := NewMiniblockInfoFromParsed(miniblockHeaderEvent, envelopes)
 	assert.NoError(t, err)
@@ -209,7 +210,7 @@ func TestLoad(t *testing.T) {
 	join4, err := MakeEnvelopeWithPayload(
 		wallet,
 		Make_UserPayload_Membership(MembershipOp_SO_LEAVE, "streamid$1", nil),
-		newSV1.blocks[0].Hash,
+		newSV1.blocks[0].Hash[:],
 	)
 	assert.NoError(t, err)
 	nextEvent = parsedEvent(t, join4)

@@ -4,6 +4,7 @@ import (
 	"context"
 	"testing"
 
+	"github.com/ethereum/go-ethereum/common"
 	"github.com/river-build/river/crypto"
 	. "github.com/river-build/river/protocol"
 	. "github.com/river-build/river/shared"
@@ -52,10 +53,10 @@ func MakeEvent(
 	return parsedEvent(t, envelope)
 }
 
-func addEvent(t *testing.T, ctx context.Context, streamCacheParams *StreamCacheParams, stream SyncStream, data string, mbHash []byte) {
+func addEvent(t *testing.T, ctx context.Context, streamCacheParams *StreamCacheParams, stream SyncStream, data string, mbHash common.Hash) {
 	err := stream.AddEvent(
 		ctx,
-		MakeEvent(t, streamCacheParams.Wallet, Make_SpacePayload_Username(&EncryptedData{Ciphertext: data}), mbHash),
+		MakeEvent(t, streamCacheParams.Wallet, Make_SpacePayload_Username(&EncryptedData{Ciphertext: data}), mbHash.Bytes()),
 	)
 	assert.NoError(t, err)
 }
@@ -86,7 +87,7 @@ func mbTest(
 	proposal, err := stream.ProposeNextMiniblock(ctx, false)
 	assert.NoError(err)
 	assert.Equal(2, len(proposal.Hashes))
-	assert.EqualValues(view.LastBlock().Hash, proposal.PrevMiniblockHash)
+	assert.EqualValues(view.LastBlock().Hash[:], proposal.PrevMiniblockHash)
 	assert.Equal(int64(1), proposal.NewMiniblockNum)
 
 	if params.addAfterProposal {
@@ -97,7 +98,7 @@ func mbTest(
 	assert.NoError(err)
 	assert.Equal(2, len(events))
 	assert.Equal(2, len(mb.EventHashes))
-	assert.EqualValues(view.LastBlock().Hash, mb.PrevMiniblockHash)
+	assert.EqualValues(view.LastBlock().Hash[:], mb.PrevMiniblockHash)
 	assert.Equal(int64(1), mb.MiniblockNum)
 
 	if params.addAfterMake {

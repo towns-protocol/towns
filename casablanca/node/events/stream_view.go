@@ -6,6 +6,7 @@ import (
 	"strings"
 	"time"
 
+	"github.com/ethereum/go-ethereum/common"
 	. "github.com/river-build/river/base"
 	"github.com/river-build/river/config"
 	"github.com/river-build/river/dlog"
@@ -75,7 +76,7 @@ func MakeStreamView(streamData *storage.ReadStreamFromLastSnapshotResult) (*stre
 		return nil, RiverError(Err_STREAM_BAD_EVENT, "no streamId").Func("MakeStreamView")
 	}
 
-	minipoolEvents := NewOrderedMap[string, *ParsedEvent](len(streamData.MinipoolEnvelopes))
+	minipoolEvents := NewOrderedMap[common.Hash, *ParsedEvent](len(streamData.MinipoolEnvelopes))
 	for _, e := range streamData.MinipoolEnvelopes {
 		var env Envelope
 		err := proto.Unmarshal(e, &env)
@@ -86,7 +87,7 @@ func MakeStreamView(streamData *storage.ReadStreamFromLastSnapshotResult) (*stre
 		if err != nil {
 			return nil, err
 		}
-		minipoolEvents.Set(parsed.HashStr, parsed)
+		minipoolEvents.Set(parsed.Hash, parsed)
 	}
 
 	return &streamViewImpl{
@@ -129,13 +130,13 @@ func MakeRemoteStreamView(resp *GetStreamResponse) (*streamViewImpl, error) {
 		return nil, RiverError(Err_STREAM_BAD_EVENT, "no streamId").Func("MakeStreamView")
 	}
 
-	minipoolEvents := NewOrderedMap[string, *ParsedEvent](len(resp.Stream.Events))
+	minipoolEvents := NewOrderedMap[common.Hash, *ParsedEvent](len(resp.Stream.Events))
 	for _, e := range resp.Stream.Events {
 		parsed, err := ParseEvent(e)
 		if err != nil {
 			return nil, err
 		}
-		minipoolEvents.Set(parsed.HashStr, parsed)
+		minipoolEvents.Set(parsed.Hash, parsed)
 	}
 
 	return &streamViewImpl{
@@ -183,12 +184,12 @@ func (r *streamViewImpl) ProposeNextMiniblock(ctx context.Context, cfg *config.S
 	}
 	hashes := make([][]byte, 0, r.minipool.events.Len())
 	for _, e := range r.minipool.events.Values {
-		hashes = append(hashes, e.Hash)
+		hashes = append(hashes, e.Hash[:])
 	}
 	return &MiniblockProposal{
 		Hashes:            hashes,
 		NewMiniblockNum:   r.minipool.generation,
-		PrevMiniblockHash: r.LastBlock().headerEvent.Hash,
+		PrevMiniblockHash: r.LastBlock().headerEvent.Hash[:],
 		ShouldSnapshot:    forceSnapshot || r.shouldSnapshot(cfg),
 	}, nil
 }
@@ -198,7 +199,7 @@ func (r *streamViewImpl) makeMiniblockHeader(
 	proposal *MiniblockProposal,
 ) (*MiniblockHeader, []*ParsedEvent, error) {
 	if r.minipool.generation != proposal.NewMiniblockNum ||
-		!bytes.Equal(proposal.PrevMiniblockHash, r.LastBlock().headerEvent.Hash) {
+		!bytes.Equal(proposal.PrevMiniblockHash, r.LastBlock().headerEvent.Hash[:]) {
 		return nil, nil, RiverError(
 			Err_STREAM_LAST_BLOCK_MISMATCH,
 			"proposal generation or hash mismatch",
@@ -214,7 +215,7 @@ func (r *streamViewImpl) makeMiniblockHeader(
 	events := make([]*ParsedEvent, 0, r.minipool.events.Len())
 
 	for _, h := range proposal.Hashes {
-		e, ok := r.minipool.events.Get(string(h))
+		e, ok := r.minipool.events.Get(common.BytesToHash(h))
 		if !ok {
 			return nil, nil, RiverError(
 				Err_MINIPOOL_MISSING_EVENTS,
@@ -223,7 +224,7 @@ func (r *streamViewImpl) makeMiniblockHeader(
 				FormatHashFromBytes(h),
 			)
 		}
-		hashes = append(hashes, e.Hash)
+		hashes = append(hashes, e.Hash[:])
 		events = append(events, e)
 	}
 
@@ -270,7 +271,7 @@ func (r *streamViewImpl) makeMiniblockHeader(
 		MiniblockNum:             nextMiniblockNum,
 		Timestamp:                NextMiniblockTimestamp(last.header().Timestamp),
 		EventHashes:              hashes,
-		PrevMiniblockHash:        last.headerEvent.Hash,
+		PrevMiniblockHash:        last.headerEvent.Hash[:],
 		Snapshot:                 snapshot,
 		EventNumOffset:           eventNumOffset,
 		PrevSnapshotMiniblockNum: miniblockNumOfPrevSnapshot,
@@ -304,34 +305,34 @@ func (r *streamViewImpl) copyAndApplyBlock(miniblock *miniblockInfo, cfg *config
 			header.MiniblockNum,
 		)
 	}
-	if !bytes.Equal(lastBlock.headerEvent.Hash, header.PrevMiniblockHash) {
+	if !bytes.Equal(lastBlock.headerEvent.Hash[:], header.PrevMiniblockHash) {
 		return nil, RiverError(
 			Err_BAD_BLOCK,
 			"streamViewImpl: block hash mismatch",
 			"expected",
-			FormatHashFromString(string(lastBlock.headerEvent.Hash)),
+			FormatHash(lastBlock.headerEvent.Hash),
 			"actual",
-			FormatHashFromString(string(header.PrevMiniblockHash)),
+			FormatHashFromBytes(header.PrevMiniblockHash),
 		)
 	}
 
-	remaining := make(map[string]*ParsedEvent, max(r.minipool.events.Len()-len(header.EventHashes), 0))
+	remaining := make(map[common.Hash]*ParsedEvent, max(r.minipool.events.Len()-len(header.EventHashes), 0))
 	for k, v := range r.minipool.events.Map {
 		remaining[k] = v
 	}
 
 	for _, e := range miniblock.events {
-		if _, ok := remaining[e.HashStr]; ok {
-			delete(remaining, e.HashStr)
+		if _, ok := remaining[e.Hash]; ok {
+			delete(remaining, e.Hash)
 		} else {
-			return nil, RiverError(Err_BAD_BLOCK, "streamViewImpl: block event not found", "stream", r.streamId, "event_hash", FormatHashFromString(e.HashStr))
+			return nil, RiverError(Err_BAD_BLOCK, "streamViewImpl: block event not found", "stream", r.streamId, "event_hash", FormatHash(e.Hash))
 		}
 	}
 
-	minipoolEvents := NewOrderedMap[string, *ParsedEvent](len(remaining))
+	minipoolEvents := NewOrderedMap[common.Hash, *ParsedEvent](len(remaining))
 	for _, e := range r.minipool.events.Values {
-		if _, ok := remaining[e.HashStr]; ok {
-			minipoolEvents.Set(e.HashStr, e)
+		if _, ok := remaining[e.Hash]; ok {
+			minipoolEvents.Set(e.Hash, e)
 		}
 	}
 
@@ -457,7 +458,7 @@ func (r *streamViewImpl) SyncCookie(localNodeAddress string) *SyncCookie {
 		StreamId:          r.streamId,
 		MinipoolGen:       r.minipool.generation,
 		MinipoolSlot:      int64(r.minipool.events.Len()),
-		PrevMiniblockHash: r.LastBlock().headerEvent.Hash,
+		PrevMiniblockHash: r.LastBlock().headerEvent.Hash[:],
 	}
 }
 
@@ -508,7 +509,7 @@ func (r *streamViewImpl) ValidateNextEvent(ctx context.Context, cfg *config.Rece
 	// loop over blocks backwards to find block with preceding miniblock hash
 	for i := len(r.blocks) - 1; i >= 0; i-- {
 		block := r.blocks[i]
-		if bytes.Equal(block.headerEvent.Hash, parsedEvent.Event.PrevMiniblockHash) {
+		if bytes.Equal(block.headerEvent.Hash[:], parsedEvent.Event.PrevMiniblockHash) {
 			foundBlockAt = i
 			break
 		}
@@ -521,7 +522,7 @@ func (r *streamViewImpl) ValidateNextEvent(ctx context.Context, cfg *config.Rece
 			"event",
 			parsedEvent.ShortDebugStr(),
 			"expected",
-			FormatFullHashFromBytes(r.LastBlock().headerEvent.Hash),
+			FormatFullHash(r.LastBlock().headerEvent.Hash),
 		)
 	}
 	// make sure we're recent
@@ -533,21 +534,21 @@ func (r *streamViewImpl) ValidateNextEvent(ctx context.Context, cfg *config.Rece
 			"event",
 			parsedEvent.ShortDebugStr(),
 			"expected",
-			FormatFullHashFromBytes(r.LastBlock().headerEvent.Hash),
+			FormatFullHash(r.LastBlock().headerEvent.Hash),
 		)
 	}
 	// loop forwards from foundBlockAt and check for duplicate event
 	for i := foundBlockAt + 1; i < len(r.blocks); i++ {
 		block := r.blocks[i]
 		for _, e := range block.events {
-			if bytes.Equal(e.Hash, parsedEvent.Hash) {
+			if e.Hash == parsedEvent.Hash {
 				return RiverError(Err_DUPLICATE_EVENT, "event already exists in block", "event", parsedEvent.ShortDebugStr())
 			}
 		}
 	}
 	// check for duplicates in the minipool
 	for _, e := range r.minipool.events.Values {
-		if bytes.Equal(e.Hash, parsedEvent.Hash) {
+		if e.Hash == parsedEvent.Hash {
 			return RiverError(
 				Err_DUPLICATE_EVENT,
 				"event already exists in minipool",

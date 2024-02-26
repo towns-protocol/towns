@@ -43,7 +43,7 @@ func writeOrPanic(w io.Writer, buf []byte) {
 	}
 }
 
-func TownsHash(buffer []byte) []byte {
+func TownsHash(buffer []byte) common.Hash {
 	hash := sha3.NewLegacyKeccak256()
 	writeOrPanic(hash, HASH_HEADER)
 	// Write length of buffer as 64-bit little endian uint.
@@ -54,7 +54,7 @@ func TownsHash(buffer []byte) []byte {
 	writeOrPanic(hash, HASH_SEPARATOR)
 	writeOrPanic(hash, buffer)
 	writeOrPanic(hash, HASH_FOOTER)
-	return hash.Sum(nil)
+	return common.BytesToHash(hash.Sum(nil))
 }
 
 type Wallet struct {
@@ -270,7 +270,7 @@ func (w *Wallet) SignHash(hash []byte) ([]byte, error) {
 	return secp256k1.Sign(hash, w.PrivateKey)
 }
 
-func RecoverSignerPublicKey(hash, signature []byte) ([]byte, error) {
+func RecoverSignerPublicKey(hash []byte, signature []byte) ([]byte, error) {
 	return secp256k1.RecoverPubkey(hash, signature)
 }
 

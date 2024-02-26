@@ -10,5 +10,5 @@ import (
 func GetDeviceId(wallet *Wallet) (string, error) {
 	publicKey := eth_crypto.FromECDSAPub(&wallet.PrivateKeyStruct.PublicKey)
 	hash := TownsHash(publicKey)
-	return hex.EncodeToString(hash), nil
+	return hex.EncodeToString(hash[:]), nil
 }
