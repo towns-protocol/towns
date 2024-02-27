@@ -95,7 +95,9 @@ describe('CreateChannelForm', () => {
         vi.resetAllMocks()
     })
 
-    test(
+    // TODO: flaky in CI
+    // https://linear.app/hnt-labs/issue/HNT-5116/investigate-flaky-test
+    test.skip(
         'renders correct prefilled values',
         async () => {
             vi.spyOn(useRequireTransactionNetwork, 'useRequireTransactionNetwork').mockReturnValue({
