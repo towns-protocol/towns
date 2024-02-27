@@ -117,8 +117,6 @@ message ChannelMessage {
             Content.Text text = 101;
             Content.Image image = 102;
             Content.GM gm = 103;
-            Content.EmbeddedMedia embeddedMedia = 104;
-            Content.ChunkedMedia chunkedMedia = 105;
         }
     }
     

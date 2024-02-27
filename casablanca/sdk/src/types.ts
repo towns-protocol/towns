@@ -15,7 +15,6 @@ import {
     UserSettingsPayload_FullyReadMarkers,
     MiniblockHeader,
     ChannelMessage_Post_Mention,
-    ChannelMessage_Post_Content_Image_Info,
     ChannelMessage_Post,
     MediaPayload_Inception,
     MediaPayload_Chunk,
@@ -287,28 +286,6 @@ export const make_ChannelMessage_Post_Content_Text = (
                     value: {
                         body,
                         mentions: mentionsPayload,
-                    },
-                },
-            },
-        },
-    })
-}
-
-export const make_ChannelMessage_Post_Content_Image = (
-    title: string,
-    info: PlainMessage<ChannelMessage_Post_Content_Image_Info>,
-    thumbnail?: PlainMessage<ChannelMessage_Post_Content_Image_Info>,
-): ChannelMessage => {
-    return new ChannelMessage({
-        payload: {
-            case: 'post',
-            value: {
-                content: {
-                    case: 'image',
-                    value: {
-                        title,
-                        info,
-                        thumbnail,
                     },
                 },
             },

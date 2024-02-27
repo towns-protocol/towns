@@ -9,13 +9,11 @@ import {
     ChannelMessage_Post_Content_Text,
     ChannelMessage_Post_Content_Image,
     ChannelMessage_Post_Content_GM,
-    ChannelMessage_Post_Content_ChunkedMedia,
     ChannelMessage_Reaction,
     ChannelMessage_Redaction,
     StreamEvent,
     EncryptedData,
     StreamSettings,
-    ChannelMessage_Post_Content_EmbeddedMedia,
     FullyReadMarkers,
     FullyReadMarker,
     Envelope,
@@ -1032,54 +1030,6 @@ export class Client
                         ...options,
                         content: {
                             case: 'gm',
-                            value: content,
-                        },
-                    },
-                },
-            }),
-        )
-    }
-
-    async sendChannelMessage_EmbeddedMedia(
-        streamId: string,
-        payload: Omit<PlainMessage<ChannelMessage_Post>, 'content'> & {
-            content: PlainMessage<ChannelMessage_Post_Content_EmbeddedMedia>
-        },
-    ): Promise<void> {
-        const { content, ...options } = payload
-        return this.sendChannelMessage(
-            streamId,
-            new ChannelMessage({
-                payload: {
-                    case: 'post',
-                    value: {
-                        ...options,
-                        content: {
-                            case: 'embeddedMedia',
-                            value: content,
-                        },
-                    },
-                },
-            }),
-        )
-    }
-
-    async sendChannelMessage_Media(
-        streamId: string,
-        payload: Omit<PlainMessage<ChannelMessage_Post>, 'content'> & {
-            content: PlainMessage<ChannelMessage_Post_Content_ChunkedMedia>
-        },
-    ): Promise<void> {
-        const { content, ...options } = payload
-        return this.sendChannelMessage(
-            streamId,
-            new ChannelMessage({
-                payload: {
-                    case: 'post',
-                    value: {
-                        ...options,
-                        content: {
-                            case: 'chunkedMedia',
                             value: content,
                         },
                     },

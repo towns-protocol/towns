@@ -117,8 +117,6 @@ function toMostRecentMessageInfo(
                 kind: 'text',
                 text: content.body,
             }
-        case MessageType.ChunkedMedia:
-        case MessageType.EmbeddedMedia:
         case MessageType.Image:
             return {
                 kind: 'media',

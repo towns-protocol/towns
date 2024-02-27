@@ -61,7 +61,6 @@ import {
     EmbeddedMediaAttachment,
     ImageAttachment,
     EventStatus,
-    RoomMessageEventContent_ChunkedMedia,
     EmbeddedMessageAttachment,
 } from '../../types/timeline-types'
 
@@ -704,48 +703,6 @@ function toTownsContent_ChannelPayload_Message_Post(
                         msgType: MessageType.GM,
                         data: value.content.value.value,
                     },
-                } satisfies RoomMessageEvent,
-            }
-        case 'embeddedMedia':
-            return {
-                content: {
-                    kind: ZTEvent.RoomMessage,
-                    body: '',
-                    inReplyTo: value.threadId,
-                    threadPreview: value.threadPreview,
-                    mentions: [],
-                    editsEventId: editsEventId,
-                    content: {
-                        msgType: MessageType.EmbeddedMedia,
-                        content: value.content.value.content,
-                        mimetype: value.content.value.info?.mimetype,
-                        widthPixels: value.content.value.info?.widthPixels,
-                        heightPixels: value.content.value.info?.heightPixels,
-                        sizeBytes: value.content.value.info?.sizeBytes,
-                    },
-                } satisfies RoomMessageEvent,
-            }
-        case 'chunkedMedia':
-            return {
-                content: {
-                    kind: ZTEvent.RoomMessage,
-                    body: '',
-                    inReplyTo: value.threadId,
-                    threadPreview: value.threadPreview,
-                    mentions: [],
-                    editsEventId: editsEventId,
-                    content: {
-                        msgType: MessageType.ChunkedMedia,
-                        streamId: value.content.value.streamId,
-                        mimetype: value.content.value.info?.mimetype,
-                        widthPixels: value.content.value.info?.widthPixels,
-                        heightPixels: value.content.value.info?.heightPixels,
-                        filename: value.content.value.info?.filename,
-                        sizeBytes: value.content.value.info?.sizeBytes,
-                        iv: value.content.value.encryption.value?.iv,
-                        secretKey: value.content.value.encryption.value?.secretKey,
-                        thumbnail: value.content.value.thumbnail?.content,
-                    } satisfies RoomMessageEventContent_ChunkedMedia,
                 } satisfies RoomMessageEvent,
             }
         case undefined:

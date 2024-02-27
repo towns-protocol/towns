@@ -17,8 +17,6 @@ import { RatioedBackgroundImage } from '@components/RatioedBackgroundImage'
 import { useDevice } from 'hooks/useDevice'
 import { TooltipRenderer } from '@ui'
 import { ProfileHoverCard } from '@components/ProfileHoverCard/ProfileHoverCard'
-import { ChunkedFile } from '@components/ChunkedFile/ChunkedFile'
-import { EmbeddedMedia } from '@components/EmbeddedMedia/EmbeddedMedia'
 import { QUERY_PARAMS } from 'routes'
 import { SendStatus } from '@components/MessageLayout/SendStatusIndicator'
 import {
@@ -171,26 +169,6 @@ export const MessageItem = (props: Props) => {
                         url={event.content.content.info?.url ?? ''}
                         width={event.content.content.thumbnail?.width}
                         height={event.content.content.thumbnail?.height}
-                        onClick={onMediaClick}
-                    />
-                ) : event.content.content.msgType === MessageType.EmbeddedMedia ? (
-                    <EmbeddedMedia
-                        mimetype={event.content.content.mimetype ?? ''}
-                        width={event.content.content.widthPixels ?? 0}
-                        height={event.content.content.heightPixels ?? 0}
-                        content={event.content.content.content}
-                        onClick={onMediaClick}
-                    />
-                ) : event.content.content.msgType === MessageType.ChunkedMedia ? (
-                    <ChunkedFile
-                        mimetype={event.content.content.mimetype ?? ''}
-                        width={event.content.content.widthPixels ?? 0}
-                        height={event.content.content.heightPixels ?? 0}
-                        filename={event.content.content.filename ?? ''}
-                        streamId={event.content.content.streamId}
-                        iv={event.content.content.iv ?? new Uint8Array()}
-                        secretKey={event.content.content.secretKey ?? new Uint8Array()}
-                        thumbnail={event.content.content.thumbnail}
                         onClick={onMediaClick}
                     />
                 ) : (

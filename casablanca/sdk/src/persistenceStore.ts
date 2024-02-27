@@ -95,29 +95,7 @@ export class PersistenceStore extends Dexie implements IPersistenceStore {
     constructor(databaseName: string) {
         super(databaseName)
 
-        this.version(4)
-            .stores({
-                cleartexts: 'eventId',
-                syncedStreams: 'streamId',
-                miniblocks: '[streamId+miniblockNum]',
-            })
-            .upgrade(async (tx) => {
-                await tx.table('miniblocks').clear()
-                await tx.table('syncedStreams').clear()
-            })
-
-        this.version(3)
-            .stores({
-                cleartexts: 'eventId',
-                syncedStreams: 'streamId',
-                miniblocks: '[streamId+miniblockNum]',
-            })
-            .upgrade(async (tx) => {
-                await tx.table('miniblocks').clear()
-                await tx.table('syncedStreams').clear()
-            })
-
-        this.version(2).stores({
+        this.version(1).stores({
             cleartexts: 'eventId',
             syncedStreams: 'streamId',
             miniblocks: '[streamId+miniblockNum]',

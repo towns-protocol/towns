@@ -1305,55 +1305,6 @@ export class ZionClient implements EntitlementsDelegate {
                     },
                 })
                 break
-            case MessageType.EmbeddedMedia:
-                await this.casablancaClient.sendChannelMessage_EmbeddedMedia(roomId, {
-                    threadId: options.threadId,
-                    threadPreview: options.threadPreview,
-                    content: {
-                        content: options.content,
-                        info: {
-                            sizeBytes: options.info.sizeBytes,
-                            mimetype: options.info.mimetype,
-                            widthPixels: options.info.widthPixels,
-                            heightPixels: options.info.heightPixels,
-                            filename: '',
-                        },
-                    },
-                })
-                break
-            case MessageType.ChunkedMedia:
-                await this.casablancaClient.sendChannelMessage_Media(roomId, {
-                    threadId: options?.threadId,
-                    threadPreview: options?.threadPreview,
-                    content: {
-                        streamId: options.streamId,
-                        info: {
-                            sizeBytes: options.info.sizeBytes,
-                            mimetype: options.info.mimetype,
-                            widthPixels: options.info.widthPixels,
-                            heightPixels: options.info.heightPixels,
-                            filename: options.info.filename,
-                        },
-                        encryption: {
-                            case: 'aesgcm',
-                            value: {
-                                iv: options.iv,
-                                secretKey: options.secretKey,
-                            },
-                        },
-                        thumbnail: {
-                            info: {
-                                sizeBytes: options.thumbnail.info.sizeBytes,
-                                mimetype: options.thumbnail.info.mimetype,
-                                widthPixels: options.thumbnail.info.widthPixels,
-                                heightPixels: options.thumbnail.info.heightPixels,
-                                filename: '',
-                            },
-                            content: options.thumbnail.content,
-                        },
-                    },
-                })
-                break
             default:
                 staticAssertNever(options)
         }

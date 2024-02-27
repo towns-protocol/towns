@@ -205,28 +205,6 @@ export interface RoomMessageEventContent_GM {
     data?: Uint8Array
 }
 
-export interface RoomMessageEventContent_EmbeddedMedia {
-    msgType: MessageType.EmbeddedMedia
-    content: Uint8Array
-    mimetype?: string
-    widthPixels?: number
-    heightPixels?: number
-    sizeBytes?: bigint
-}
-
-export interface RoomMessageEventContent_ChunkedMedia {
-    msgType: MessageType.ChunkedMedia
-    streamId: string
-    mimetype?: string
-    widthPixels?: number
-    heightPixels?: number
-    sizeBytes?: bigint
-    filename?: string
-    iv?: Uint8Array
-    secretKey?: Uint8Array
-    thumbnail?: Uint8Array
-}
-
 export interface RoomMessageEventContent_Text {
     msgType: MessageType.Text
 }
@@ -234,8 +212,6 @@ export interface RoomMessageEventContent_Text {
 export type RoomMessageEventContentOneOf =
     | RoomMessageEventContent_Image
     | RoomMessageEventContent_GM
-    | RoomMessageEventContent_EmbeddedMedia
-    | RoomMessageEventContent_ChunkedMedia
     | RoomMessageEventContent_Text
 
 export interface RoomMessageEvent {
