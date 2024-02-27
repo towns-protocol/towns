@@ -25,7 +25,7 @@ class AnalyticsService {
         )
 
         datadogRum.addAction('appLaunch', {
-            event: performance.now(),
+            [event]: performance.now(),
             funneId: this.funneId,
         })
     }
