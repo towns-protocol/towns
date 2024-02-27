@@ -1,9 +1,8 @@
 import { keyframes, style } from '@vanilla-extract/css'
 
 const animation = keyframes({
-    '0%': { left: '-20%' },
-    '50%': { left: '40%' },
-    '100%': { left: '-20%' },
+    '0%': { left: '-100%' },
+    '100%': { left: '100%' },
 })
 
 export const animatedGradient = style({
@@ -11,7 +10,7 @@ export const animatedGradient = style({
     width: '100%',
     position: 'absolute',
     animationName: animation,
-    animationDuration: '5s',
+    animationDuration: '2.5s',
     animationIterationCount: 'infinite',
     animationFillMode: 'forwards',
     background:
