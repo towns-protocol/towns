@@ -8,7 +8,7 @@ import { useSpaceIdFromPathname } from 'hooks/useSpaceInfoFromPathname'
 import { SetUsernameForm } from '@components/SetUsernameForm/SetUsernameForm'
 import { useUsernameConfirmed } from 'hooks/useUsernameConfirmed'
 import { PublicTownPage, TownNotFoundBox } from './PublicTownPage'
-import { WelcomeLayout } from './layouts/WelcomeLayout'
+import { AppSkeletonView, WelcomeLayout } from './layouts/WelcomeLayout'
 
 export const ValidateMembership = () => {
     const { serverSpace: space, chainSpace, chainSpaceLoading } = useContractAndServerSpaceData()
@@ -32,9 +32,8 @@ export const ValidateMembership = () => {
     if (!clientStatus.isRemoteDataLoaded || !clientStatus.isLocalDataLoaded) {
         AnalyticsService.getInstance().trackEventOnce(AnalyticsEvents.WelcomeLayoutLoadLocalData)
         return (
-            <WelcomeLayout
-                debugText="validate membership: loading local data"
-                showProgress={clientStatus.isLocalDataLoaded ? clientStatus.progress : undefined}
+            <AppSkeletonView
+                progress={clientStatus.isLocalDataLoaded ? clientStatus.progress : undefined}
             />
         )
     }

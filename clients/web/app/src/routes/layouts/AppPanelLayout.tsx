@@ -11,7 +11,7 @@ import { Box, Stack } from '@ui'
 import { usePersistPanes } from 'hooks/usePersistPanes'
 import { useSpaceIdFromPathname } from 'hooks/useSpaceInfoFromPathname'
 import { PATHS } from 'routes'
-import { TopBar } from '@components/TopBar/TopBar'
+import { TopBar, TopBarSkeleton } from '@components/TopBar/TopBar'
 import { atoms } from 'ui/styles/atoms.css'
 import * as styles from './AppPanelLayout.css'
 
@@ -76,6 +76,33 @@ export const AppPanelLayout = () => {
                                 <Outlet />
                             </PotentiallyUnusedSuspenseLoader>
                         </Box>
+                    </Allotment.Pane>
+                </Allotment>
+            </Box>
+            <ShortcutModal />
+        </Stack>
+    )
+}
+
+export const AppPanelLayoutSkeleton = () => {
+    return (
+        <Stack horizontal grow borderTop position="relative">
+            <Box absoluteFill>
+                <TopBarSkeleton />
+                <Allotment className={atoms({ borderTop: 'default' })}>
+                    {/* left-side side-bar goes here */}
+                    <Allotment.Pane minSize={65} maxSize={65} preferredSize={65}>
+                        <></>
+                    </Allotment.Pane>
+
+                    {/* channel side-bar goes here */}
+                    <Allotment.Pane visible minSize={180} maxSize={320} preferredSize={320}>
+                        <SpaceSidebarLoadingPlaceholder />
+                    </Allotment.Pane>
+
+                    {/* main container */}
+                    <Allotment.Pane>
+                        <Box absoluteFill scroll className={styles.allotmentResizeBorderPadding} />
                     </Allotment.Pane>
                 </Allotment>
             </Box>

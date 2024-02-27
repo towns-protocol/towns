@@ -2,22 +2,18 @@ import React from 'react'
 import AnalyticsService, { AnalyticsEvents } from 'use-zion-client/dist/utils/analyticsService'
 import { TransitionLogo } from '@components/Logo/Logo'
 import { Box, MotionBox, Paragraph, Stack, Text } from '@ui'
+import { useDevice } from 'hooks/useDevice'
+import { TimelineShimmer } from '@components/Shimmer'
+import { ModalContainer } from '@components/Modals/ModalContainer'
+import { AppPanelLayoutSkeleton } from './AppPanelLayout'
 
-export const WelcomeLayout = (props: {
-    children?: React.ReactNode
-    debugText?: string
-    showProgress?: number
-}) => {
+export const WelcomeLayout = (props: { children?: React.ReactNode; debugText?: string }) => {
     AnalyticsService.getInstance().trackEventOnce(AnalyticsEvents.Welcome)
     return (
         <>
             <Stack centerContent scroll height="100vh" background="level1" width="100vw">
                 <Stack padding justifyContent="end" alignItems="center">
                     <TransitionLogo />
-
-                    {props.showProgress !== undefined && (
-                        <WelcomeProgressBar progress={props.showProgress} />
-                    )}
                 </Stack>
                 <Stack padding>
                     <Stack justifyContent="start" minHeight="height_xl" gap="lg">
@@ -36,10 +32,24 @@ export const WelcomeLayout = (props: {
     )
 }
 
+export const AppSkeletonView = (props: { progress?: number }) => {
+    const { isTouch } = useDevice()
+    return (
+        <>
+            {isTouch ? <TimelineShimmer /> : <AppPanelLayoutSkeleton />}
+            {props.progress !== undefined && (
+                <ModalContainer minWidth="200" onHide={() => {}}>
+                    {<WelcomeProgressBar progress={props.progress} />}
+                </ModalContainer>
+            )}
+        </>
+    )
+}
+
 const WelcomeProgressBar = (props: { progress: number }) => {
     const { progress } = props
     return (
-        <Stack gap centerContent paddingTop="lg">
+        <Stack gap centerContent>
             <Text color="default" size="md" fontWeight="medium">
                 Setting up local workspace
             </Text>

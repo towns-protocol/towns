@@ -27,6 +27,19 @@ export const TopBar = () => {
     )
 }
 
+export const TopBarSkeleton = () => {
+    return (
+        <Stack horizontal minHeight="x7">
+            <Box centerContent width="x8">
+                <a href="https://towns.com" rel=", noopener noreferrer" target="_blank">
+                    <LogoSingleLetter />
+                </a>
+            </Box>
+            <Box grow />
+        </Stack>
+    )
+}
+
 const LogoSingleLetter = () => (
     <svg width="24" height="25" viewBox="0 0 24 25" fill="none" xmlns="http://www.w3.org/2000/svg">
         <path
