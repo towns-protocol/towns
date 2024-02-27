@@ -87,6 +87,9 @@ jobs:
                   node-version: '20'
                   cache: 'yarn'
 
+            - name: Print versions
+              run: ./scripts/print-versions.sh
+              
             - name: Start and configure blockchains
               run: ./scripts/bc-all-start.sh
 
@@ -783,6 +786,9 @@ jobs:
                   node-version: '20'
                   cache: 'yarn'
 
+            - name: Print versions
+              run: ./scripts/print-versions.sh
+
             - name: Start and configure blockchains
               run: ./scripts/bc-all-start.sh
 
@@ -852,6 +858,9 @@ jobs:
 
             - name: Install Forge modules
               run: ./scripts/install-deps.sh
+
+            - name: Print versions
+              run: ./scripts/print-versions.sh
 
             - name: Start and configure blockchains
               run: ./scripts/bc-all-start.sh
