@@ -7,21 +7,17 @@ import { UserMetadata_DisplayNames } from './userMetadata_DisplayNames'
 import { bin_toHexString } from '@river/dlog'
 
 export class StreamStateView_UserMetadata {
-    readonly userId: string
-    readonly streamId: string
     readonly usernames: UserMetadata_Usernames
     readonly displayNames: UserMetadata_DisplayNames
 
-    constructor(userId: string, streamId: string) {
-        this.userId = userId
-        this.streamId = streamId
+    constructor(streamId: string) {
         this.usernames = new UserMetadata_Usernames(streamId)
         this.displayNames = new UserMetadata_DisplayNames(streamId)
     }
 
     applySnapshot(
-        usernames: { [userId: string]: WrappedEncryptedData },
-        displayNames: { [userId: string]: WrappedEncryptedData },
+        usernames: { userId: string; wrappedEncryptedData: WrappedEncryptedData }[],
+        displayNames: { userId: string; wrappedEncryptedData: WrappedEncryptedData }[],
         cleartexts: Record<string, string> | undefined,
         encryptionEmitter: TypedEmitter<StreamEncryptionEvents> | undefined,
     ) {
@@ -46,7 +42,6 @@ export class StreamStateView_UserMetadata {
                 undefined,
             )
         }
-
         const sortedDisplayNames = sortPayloads(displayNames)
         for (const payload of sortedDisplayNames) {
             if (!payload.wrappedEncryptedData.data) {
@@ -86,37 +81,43 @@ export class StreamStateView_UserMetadata {
         // usernames were conveyed in the snapshot
     }
 
-    appendEncryptedData(
+    appendDisplayName(
         eventId: string,
         data: EncryptedData,
-        kind: 'displayName' | 'username',
+        userId: string,
+        cleartext: string | undefined,
+        encryptionEmitter: TypedEmitter<StreamEncryptionEvents> | undefined,
+        stateEmitter: TypedEmitter<StreamStateEvents> | undefined,
+    ): void {
+        this.displayNames.addEncryptedData(
+            eventId,
+            data,
+            userId,
+            true,
+            cleartext,
+            encryptionEmitter,
+            stateEmitter,
+        )
+    }
+
+    appendUsername(
+        eventId: string,
+        data: EncryptedData,
         userId: string,
         cleartext: string | undefined,
 
         encryptionEmitter: TypedEmitter<StreamEncryptionEvents> | undefined,
         stateEmitter: TypedEmitter<StreamStateEvents> | undefined,
     ): void {
-        if (kind === 'displayName') {
-            this.displayNames.addEncryptedData(
-                eventId,
-                data,
-                userId,
-                true,
-                cleartext,
-                encryptionEmitter,
-                stateEmitter,
-            )
-        } else if (kind === 'username') {
-            this.usernames.addEncryptedData(
-                eventId,
-                data,
-                userId,
-                true,
-                cleartext,
-                encryptionEmitter,
-                stateEmitter,
-            )
-        }
+        this.usernames.addEncryptedData(
+            eventId,
+            data,
+            userId,
+            true,
+            cleartext,
+            encryptionEmitter,
+            stateEmitter,
+        )
     }
 
     onDecryptedContent(
@@ -144,23 +145,16 @@ export class StreamStateView_UserMetadata {
     }
 }
 
-function sortPayloads(object: {
-    [userId: string]: WrappedEncryptedData
-}): { userId: string; wrappedEncryptedData: WrappedEncryptedData }[] {
-    return Object.entries(object)
-        .map(([userId, wrappedEncryptedData]) => {
-            return {
-                userId,
-                wrappedEncryptedData,
-            }
-        })
-        .sort((a, b) => {
-            if (a.wrappedEncryptedData.eventNum > b.wrappedEncryptedData.eventNum) {
-                return 1
-            } else if (a.wrappedEncryptedData.eventNum < b.wrappedEncryptedData.eventNum) {
-                return -1
-            } else {
-                return 0
-            }
-        })
+function sortPayloads(
+    payloads: { userId: string; wrappedEncryptedData: WrappedEncryptedData }[],
+): { userId: string; wrappedEncryptedData: WrappedEncryptedData }[] {
+    return payloads.sort((a, b) => {
+        if (a.wrappedEncryptedData.eventNum > b.wrappedEncryptedData.eventNum) {
+            return 1
+        } else if (a.wrappedEncryptedData.eventNum < b.wrappedEncryptedData.eventNum) {
+            return -1
+        } else {
+            return 0
+        }
+    })
 }

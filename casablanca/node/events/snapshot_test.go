@@ -10,6 +10,7 @@ import (
 	"github.com/river-build/river/testutils"
 
 	"github.com/stretchr/testify/assert"
+	"github.com/stretchr/testify/require"
 	"google.golang.org/protobuf/proto"
 )
 
@@ -86,7 +87,7 @@ func make_Space_Membership(
 func make_Space_Username(wallet *crypto.Wallet, username string, streamId string, prevHash []byte, t *testing.T) *ParsedEvent {
 	envelope, err := MakeEnvelopeWithPayload(
 		wallet,
-		Make_SpacePayload_Username(
+		Make_MemberPayload_Username(
 			&EncryptedData{Ciphertext: username},
 		),
 		prevHash,
@@ -106,7 +107,7 @@ func make_Space_DisplayName(
 ) *ParsedEvent {
 	envelope, err := MakeEnvelopeWithPayload(
 		wallet,
-		Make_SpacePayload_DisplayName(
+		Make_MemberPayload_DisplayName(
 			&EncryptedData{Ciphertext: displayName},
 		),
 		prevHash,
@@ -185,6 +186,9 @@ func TestCloneAndUpdateSpaceSnapshot(t *testing.T) {
 		assert.NoError(t, err)
 	}
 
+	member, err := findMember(snapshot.Members.Joined, inception.Event.CreatorAddress)
+	require.NoError(t, err)
+
 	assert.Equal(
 		t,
 		inception.Event.CreatorAddress,
@@ -193,22 +197,22 @@ func TestCloneAndUpdateSpaceSnapshot(t *testing.T) {
 	assert.Equal(
 		t,
 		"bob",
-		snapshot.Content.(*Snapshot_SpaceContent).SpaceContent.Usernames[userId].Data.Ciphertext,
+		member.Username.Data.Ciphertext,
 	)
 	assert.Equal(
 		t,
 		"bobIsTheGreatest",
-		snapshot.Content.(*Snapshot_SpaceContent).SpaceContent.DisplayNames[userId].Data.Ciphertext,
+		member.DisplayName.Data.Ciphertext,
 	)
 	assert.Equal(
 		t,
 		int64(4),
-		snapshot.Content.(*Snapshot_SpaceContent).SpaceContent.Usernames[userId].EventNum,
+		member.Username.EventNum,
 	)
 	assert.Equal(
 		t,
 		int64(5),
-		snapshot.Content.(*Snapshot_SpaceContent).SpaceContent.DisplayNames[userId].EventNum,
+		member.DisplayName.EventNum,
 	)
 }
 

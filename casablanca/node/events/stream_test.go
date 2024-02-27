@@ -56,7 +56,7 @@ func MakeEvent(
 func addEvent(t *testing.T, ctx context.Context, streamCacheParams *StreamCacheParams, stream SyncStream, data string, mbHash common.Hash) {
 	err := stream.AddEvent(
 		ctx,
-		MakeEvent(t, streamCacheParams.Wallet, Make_SpacePayload_Username(&EncryptedData{Ciphertext: data}), mbHash.Bytes()),
+		MakeEvent(t, streamCacheParams.Wallet, Make_MemberPayload_Username(&EncryptedData{Ciphertext: data}), mbHash.Bytes()),
 	)
 	assert.NoError(t, err)
 }

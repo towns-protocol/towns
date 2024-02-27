@@ -153,25 +153,13 @@ func make_SnapshotMembers(iInception IsInceptionPayload, creatorAddress []byte) 
 func Update_Snapshot(iSnapshot *Snapshot, event *ParsedEvent, miniblockNum int64, eventNum int64) error {
 	switch payload := event.Event.Payload.(type) {
 	case *StreamEvent_SpacePayload:
-		creator, err := shared.AddressHex(event.Event.CreatorAddress)
-		if err != nil {
-			return err
-		}
-		return update_Snapshot_Space(iSnapshot, payload.SpacePayload, creator, eventNum, event.Hash.Bytes())
+		return update_Snapshot_Space(iSnapshot, payload.SpacePayload, eventNum, event.Hash.Bytes())
 	case *StreamEvent_ChannelPayload:
 		return update_Snapshot_Channel(iSnapshot, payload.ChannelPayload)
 	case *StreamEvent_DmChannelPayload:
-		creator, err := shared.AddressHex(event.Event.CreatorAddress)
-		if err != nil {
-			return err
-		}
-		return update_Snapshot_DmChannel(iSnapshot, payload.DmChannelPayload, creator, miniblockNum, event.Hash.Bytes())
+		return update_Snapshot_DmChannel(iSnapshot, payload.DmChannelPayload, miniblockNum, event.Hash.Bytes())
 	case *StreamEvent_GdmChannelPayload:
-		creator, err := shared.AddressHex(event.Event.CreatorAddress)
-		if err != nil {
-			return err
-		}
-		return update_Snapshot_GdmChannel(iSnapshot, payload.GdmChannelPayload, creator, miniblockNum, event.Hash.Bytes())
+		return update_Snapshot_GdmChannel(iSnapshot, payload.GdmChannelPayload, miniblockNum, event.Hash.Bytes())
 	case *StreamEvent_UserPayload:
 		return update_Snapshot_User(iSnapshot, payload.UserPayload)
 	case *StreamEvent_UserSettingsPayload:
@@ -181,7 +169,7 @@ func Update_Snapshot(iSnapshot *Snapshot, event *ParsedEvent, miniblockNum int64
 	case *StreamEvent_UserInboxPayload:
 		return update_Snapshot_UserInbox(iSnapshot, payload.UserInboxPayload, miniblockNum)
 	case *StreamEvent_MemberPayload:
-		return update_Snapshot_Member(iSnapshot, payload.MemberPayload, event.Event.CreatorAddress, miniblockNum, eventNum)
+		return update_Snapshot_Member(iSnapshot, payload.MemberPayload, event.Event.CreatorAddress, miniblockNum, eventNum, event.Hash.Bytes())
 	case *StreamEvent_MediaPayload:
 		return RiverError(Err_BAD_PAYLOAD, "Media payload snapshots are not supported")
 	default:
@@ -189,7 +177,7 @@ func Update_Snapshot(iSnapshot *Snapshot, event *ParsedEvent, miniblockNum int64
 	}
 }
 
-func update_Snapshot_Space(iSnapshot *Snapshot, spacePayload *SpacePayload, user string, eventNum int64, eventHash []byte) error {
+func update_Snapshot_Space(iSnapshot *Snapshot, spacePayload *SpacePayload, eventNum int64, eventHash []byte) error {
 	snapshot := iSnapshot.Content.(*Snapshot_SpaceContent)
 	if snapshot == nil {
 		return RiverError(Err_INVALID_ARGUMENT, "blockheader snapshot is not a space snapshot")
@@ -202,18 +190,6 @@ func update_Snapshot_Space(iSnapshot *Snapshot, spacePayload *SpacePayload, user
 			snapshot.SpaceContent.Channels = make(map[string]*SpacePayload_Channel)
 		}
 		snapshot.SpaceContent.Channels[content.Channel.ChannelId] = content.Channel
-		return nil
-	case *SpacePayload_Username:
-		if snapshot.SpaceContent.Usernames == nil {
-			snapshot.SpaceContent.Usernames = make(map[string]*WrappedEncryptedData)
-		}
-		snapshot.SpaceContent.Usernames[user] = &WrappedEncryptedData{Data: content.Username, EventNum: eventNum, EventHash: eventHash}
-		return nil
-	case *SpacePayload_DisplayName:
-		if snapshot.SpaceContent.DisplayNames == nil {
-			snapshot.SpaceContent.DisplayNames = make(map[string]*WrappedEncryptedData)
-		}
-		snapshot.SpaceContent.DisplayNames[user] = &WrappedEncryptedData{Data: content.DisplayName, EventNum: eventNum, EventHash: eventHash}
 		return nil
 	default:
 		return RiverError(Err_INVALID_ARGUMENT, "unknown space payload type %T", spacePayload.Content)
@@ -239,7 +215,6 @@ func update_Snapshot_Channel(iSnapshot *Snapshot, channelPayload *ChannelPayload
 func update_Snapshot_DmChannel(
 	iSnapshot *Snapshot,
 	dmChannelPayload *DmChannelPayload,
-	user string,
 	eventNum int64,
 	eventHash []byte,
 ) error {
@@ -250,29 +225,16 @@ func update_Snapshot_DmChannel(
 	switch content := dmChannelPayload.Content.(type) {
 	case *DmChannelPayload_Inception_:
 		return RiverError(Err_INVALID_ARGUMENT, "cannot update blockheader with inception event")
-	case *DmChannelPayload_Username:
-		if snapshot.DmChannelContent.Usernames == nil {
-			snapshot.DmChannelContent.Usernames = make(map[string]*WrappedEncryptedData)
-		}
-		snapshot.DmChannelContent.Usernames[user] = &WrappedEncryptedData{Data: content.Username, EventNum: eventNum, EventHash: eventHash}
-		return nil
-	case *DmChannelPayload_DisplayName:
-		if snapshot.DmChannelContent.DisplayNames == nil {
-			snapshot.DmChannelContent.DisplayNames = make(map[string]*WrappedEncryptedData)
-		}
-		snapshot.DmChannelContent.DisplayNames[user] = &WrappedEncryptedData{Data: content.DisplayName, EventNum: eventNum, EventHash: eventHash}
-		return nil
 	case *DmChannelPayload_Message:
 		return nil
 	default:
-		return RiverError(Err_INVALID_ARGUMENT, "unknown dm channel payload type %T", dmChannelPayload.Content)
+		return RiverError(Err_INVALID_ARGUMENT, "unknown dm channel payload type %T", content)
 	}
 }
 
 func update_Snapshot_GdmChannel(
 	iSnapshot *Snapshot,
 	channelPayload *GdmChannelPayload,
-	user string,
 	eventNum int64,
 	eventHash []byte,
 ) error {
@@ -284,22 +246,9 @@ func update_Snapshot_GdmChannel(
 	switch content := channelPayload.Content.(type) {
 	case *GdmChannelPayload_Inception_:
 		return RiverError(Err_INVALID_ARGUMENT, "cannot update blockheader with inception event")
-	case *GdmChannelPayload_Username:
-		if snapshot.GdmChannelContent.Usernames == nil {
-			snapshot.GdmChannelContent.Usernames = make(map[string]*WrappedEncryptedData)
-		}
-		snapshot.GdmChannelContent.Usernames[user] = &WrappedEncryptedData{Data: content.Username, EventNum: eventNum, EventHash: eventHash}
-		return nil
-	case *GdmChannelPayload_DisplayName:
-		if snapshot.GdmChannelContent.DisplayNames == nil {
-			snapshot.GdmChannelContent.DisplayNames = make(map[string]*WrappedEncryptedData)
-		}
-		snapshot.GdmChannelContent.DisplayNames[user] = &WrappedEncryptedData{Data: content.DisplayName, EventNum: eventNum, EventHash: eventHash}
-		return nil
 	case *GdmChannelPayload_ChannelProperties:
 		snapshot.GdmChannelContent.ChannelProperties = &WrappedEncryptedData{Data: content.ChannelProperties, EventNum: eventNum, EventHash: eventHash}
 		return nil
-
 	case *GdmChannelPayload_Message:
 		return nil
 	default:
@@ -444,7 +393,7 @@ func cleanup_Snapshot_UserInbox(snapshot *Snapshot_UserInboxContent, currentMini
 	}
 }
 
-func update_Snapshot_Member(iSnapshot *Snapshot, memberPayload *MemberPayload, creatorAddress []byte, miniblockNum int64, eventNum int64) error {
+func update_Snapshot_Member(iSnapshot *Snapshot, memberPayload *MemberPayload, creatorAddress []byte, miniblockNum int64, eventNum int64, eventHash []byte) error {
 	snapshot := iSnapshot.Members
 	if snapshot == nil {
 		return RiverError(Err_INVALID_ARGUMENT, "blockheader snapshot is not a membership snapshot")
@@ -505,10 +454,23 @@ func update_Snapshot_Member(iSnapshot *Snapshot, memberPayload *MemberPayload, c
 			}
 		}
 		return nil
+	case *MemberPayload_DisplayName:
+		member, err := findMember(snapshot.Joined, creatorAddress)
+		if err != nil {
+			return err
+		}
+		member.DisplayName = &WrappedEncryptedData{Data: content.DisplayName, EventNum: eventNum, EventHash: eventHash}
+		return nil
+	case *MemberPayload_Username:
+		member, err := findMember(snapshot.Joined, creatorAddress)
+		if err != nil {
+			return err
+		}
+		member.Username = &WrappedEncryptedData{Data: content.Username, EventNum: eventNum, EventHash: eventHash}
+		return nil
 	default:
 		return RiverError(Err_INVALID_ARGUMENT, "unknown membership payload type %T", memberPayload.Content)
 	}
-
 }
 
 func removeCommon(x, y []string) []string {

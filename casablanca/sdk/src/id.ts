@@ -134,6 +134,26 @@ export const isGDMChannelStreamId = (streamId: string): boolean =>
 export const isUserInboxStreamId = (streamId: string): boolean =>
     streamId.startsWith(StreamPrefix.UserInbox)
 
+export const getUserAddressFromStreamId = (streamId: string): Uint8Array => {
+    const prefix = streamId.slice(0, 2) as StreamPrefix
+    if (
+        prefix !== StreamPrefix.User &&
+        prefix !== StreamPrefix.UserDevice &&
+        prefix !== StreamPrefix.UserSettings &&
+        prefix !== StreamPrefix.UserInbox
+    ) {
+        throw new Error('Invalid stream id: ' + streamId)
+    }
+    if (streamId.length != 42 || !isLowercaseHex(streamId)) {
+        throw new Error('Invalid stream id format: ' + streamId)
+    }
+    return addressFromUserId('0x' + streamId.slice(2))
+}
+
+export const getUserIdFromStreamId = (streamId: string): string => {
+    return userIdFromAddress(getUserAddressFromStreamId(streamId))
+}
+
 export const areValidStreamIdParts = (prefix: StreamPrefix, identity: string): boolean => {
     return (
         allowedStreamPrefixesVar.includes(prefix) &&
@@ -165,3 +185,5 @@ export const genLocalId = (): string => {
 }
 
 export const genIdBlob = (): Uint8Array => bin_fromHexString(hexNanoId(32))
+
+export const isLowercaseHex = (input: string): boolean => /^[0-9a-f]*$/.test(input)

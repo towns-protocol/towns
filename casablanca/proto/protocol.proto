@@ -152,6 +152,8 @@ message MemberPayload {
             int64 miniblock_num = 2;
             int64 event_num = 3;
             repeated KeySolicitation solicitations = 4;
+            WrappedEncryptedData username = 5;
+            WrappedEncryptedData display_name = 6;
         }
         
         repeated Member joined = 1;
@@ -180,6 +182,8 @@ message MemberPayload {
         Membership membership = 1;
         KeySolicitation key_solicitation = 2;
         KeyFulfillment key_fulfillment = 3;
+        EncryptedData username = 4;
+        EncryptedData display_name = 5;
     }
 }
 
@@ -192,10 +196,6 @@ message SpacePayload {
         Inception inception = 1;
         // streamId: Channel
         map<string, Channel> channels = 2;
-        // userId: Username
-        map<string, WrappedEncryptedData> usernames = 3;
-        // userId: Displayname
-        map<string, WrappedEncryptedData> display_names = 4;
     }
     
     message Inception {
@@ -214,8 +214,6 @@ message SpacePayload {
     oneof content {
         Inception inception = 1;
         Channel channel = 2;
-        EncryptedData username = 3;
-        EncryptedData display_name = 4;
     }
 }
 
@@ -252,8 +250,6 @@ message ChannelPayload {
 message DmChannelPayload {
     message Snapshot {
         Inception inception = 1;
-        map<string, WrappedEncryptedData> usernames = 3;
-        map<string, WrappedEncryptedData> display_names = 4;
     }
 
     message Inception {
@@ -266,8 +262,6 @@ message DmChannelPayload {
     oneof content {
         Inception inception = 1;
         EncryptedData message = 3;
-        EncryptedData username = 4;
-        EncryptedData display_name = 5;
     }
 }
 
@@ -277,9 +271,7 @@ message DmChannelPayload {
 message GdmChannelPayload {
     message Snapshot {
         Inception inception = 1;
-        map<string, WrappedEncryptedData> usernames = 3;
-        map<string, WrappedEncryptedData> display_names = 4;
-        WrappedEncryptedData channel_properties = 5;
+        WrappedEncryptedData channel_properties = 2;
     }
 
     message Inception {
@@ -290,10 +282,8 @@ message GdmChannelPayload {
 
     oneof content {
         Inception inception = 1;
-        EncryptedData message = 3;
-        EncryptedData username = 4;
-        EncryptedData display_name = 5;
-        EncryptedData channel_properties = 6;
+        EncryptedData message = 2;
+        EncryptedData channel_properties = 3;
     }
 }
 

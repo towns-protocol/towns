@@ -7,13 +7,11 @@ import { RemoteTimelineEvent } from './types'
 
 export class StreamStateView_ChannelMetadata {
     log = dlog('csb:streams:channel_metadata')
-    readonly userId: string
     readonly streamId: string
     channelProperties: ChannelProperties | undefined
     latestEncryptedChannelProperties?: { eventId: string; data: EncryptedData }
 
-    constructor(userId: string, streamId: string) {
-        this.userId = userId
+    constructor(streamId: string) {
         this.streamId = streamId
     }
 

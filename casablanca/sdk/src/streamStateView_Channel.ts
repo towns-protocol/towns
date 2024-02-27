@@ -11,7 +11,7 @@ export class StreamStateView_Channel extends StreamStateView_AbstractContent {
     spaceId: string = ''
     private reachedRenderableContent = false
 
-    constructor(_userId: string, streamId: string) {
+    constructor(streamId: string) {
         super()
         this.streamId = streamId
     }

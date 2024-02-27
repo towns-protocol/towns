@@ -2,7 +2,6 @@ import TypedEmitter from 'typed-emitter'
 import { EncryptedData } from '@river/proto'
 import { ConfirmedTimelineEvent, RemoteTimelineEvent, StreamTimelineEvent } from './types'
 import { DecryptedContent, EncryptedContent, toDecryptedContent } from './encryptedContentTypes'
-import { StreamStateView_UserMetadata } from './streamStateView_UserMetadata'
 import { StreamStateView_ChannelMetadata } from './streamStateView_ChannelMetadata'
 import { StreamEncryptionEvents, StreamStateEvents } from './streamEvents'
 
@@ -58,10 +57,6 @@ export abstract class StreamStateView_AbstractContent {
         _stateEmitter: TypedEmitter<StreamStateEvents> | undefined,
     ): void {
         //
-    }
-
-    getUserMetadata(): StreamStateView_UserMetadata | undefined {
-        return undefined
     }
 
     getChannelMetadata(): StreamStateView_ChannelMetadata | undefined {

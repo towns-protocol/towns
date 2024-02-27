@@ -134,6 +134,26 @@ func Make_MemberPayload_Membership(
 	}
 }
 
+func Make_MemberPayload_Username(username *EncryptedData) *StreamEvent_MemberPayload {
+	return &StreamEvent_MemberPayload{
+		MemberPayload: &MemberPayload{
+			Content: &MemberPayload_Username{
+				Username: username,
+			},
+		},
+	}
+}
+
+func Make_MemberPayload_DisplayName(displayName *EncryptedData) *StreamEvent_MemberPayload {
+	return &StreamEvent_MemberPayload{
+		MemberPayload: &MemberPayload{
+			Content: &MemberPayload_DisplayName{
+				DisplayName: displayName,
+			},
+		},
+	}
+}
+
 func Make_ChannelPayload_Inception(
 	streamId string,
 	spaceId string,
@@ -260,26 +280,6 @@ func Make_SpacePayload_Channel(
 					ChannelProperties: channelProperties,
 					IsDefault:         isDefault,
 				},
-			},
-		},
-	}
-}
-
-func Make_SpacePayload_Username(username *EncryptedData) *StreamEvent_SpacePayload {
-	return &StreamEvent_SpacePayload{
-		SpacePayload: &SpacePayload{
-			Content: &SpacePayload_Username{
-				Username: username,
-			},
-		},
-	}
-}
-
-func Make_SpacePayload_DisplayName(displayName *EncryptedData) *StreamEvent_SpacePayload {
-	return &StreamEvent_SpacePayload{
-		SpacePayload: &SpacePayload{
-			Content: &SpacePayload_DisplayName{
-				DisplayName: displayName,
 			},
 		},
 	}

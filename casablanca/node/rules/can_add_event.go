@@ -154,12 +154,6 @@ func (params *aeParams) canAddDmChannelPayload(payload *StreamEvent_DmChannelPay
 	case *DmChannelPayload_Message:
 		return aeBuilder().
 			check(params.creatorIsMember)
-	case *DmChannelPayload_DisplayName:
-		return aeBuilder().
-			check(params.creatorIsMember)
-	case *DmChannelPayload_Username:
-		return aeBuilder().
-			check(params.creatorIsMember)
 	default:
 		return aeBuilder().
 			fail(unknownContentType(content))
@@ -172,12 +166,6 @@ func (params *aeParams) canAddGdmChannelPayload(payload *StreamEvent_GdmChannelP
 		return aeBuilder().
 			fail(invalidContentType(content))
 	case *GdmChannelPayload_Message:
-		return aeBuilder().
-			check(params.creatorIsMember)
-	case *GdmChannelPayload_DisplayName:
-		return aeBuilder().
-			check(params.creatorIsMember)
-	case *GdmChannelPayload_Username:
 		return aeBuilder().
 			check(params.creatorIsMember)
 	case *GdmChannelPayload_ChannelProperties:
@@ -207,12 +195,6 @@ func (params *aeParams) canAddSpacePayload(payload *StreamEvent_SpacePayload) ru
 				check(params.creatorIsValidNode).
 				check(ru.validSpaceChannelOp)
 		}
-	case *SpacePayload_Username:
-		return aeBuilder().
-			check(params.creatorIsMember)
-	case *SpacePayload_DisplayName:
-		return aeBuilder().
-			check(params.creatorIsMember)
 	default:
 		return aeBuilder().
 			fail(unknownContentType(content))
@@ -346,6 +328,12 @@ func (params *aeParams) canAddMemberPayload(payload *StreamEvent_MemberPayload) 
 	case *MemberPayload_KeyFulfillment_:
 		return aeBuilder().
 			checkOneOf(params.creatorIsMember, params.creatorIsInvited)
+	case *MemberPayload_DisplayName:
+		return aeBuilder().
+			check(params.creatorIsMember)
+	case *MemberPayload_Username:
+		return aeBuilder().
+			check(params.creatorIsMember)
 	default:
 		return aeBuilder().
 			fail(unknownContentType(content))

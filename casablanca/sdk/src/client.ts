@@ -82,24 +82,20 @@ import {
     make_DMChannelPayload_Message,
     make_GDMChannelPayload_Inception,
     make_GDMChannelPayload_Message,
-    make_SpacePayload_DisplayName,
     StreamTimelineEvent,
     make_UserInboxPayload_Ack,
     make_UserInboxPayload_Inception,
     make_fake_encryptedData,
     make_UserDeviceKeyPayload_EncryptionDevice,
     make_UserInboxPayload_GroupEncryptionSessions,
-    make_SpacePayload_Username,
-    make_DMChannelPayload_DisplayName,
-    make_GDMChannelPayload_DisplayName,
-    make_DMChannelPayload_Username,
-    make_GDMChannelPayload_Username,
     ParsedStreamResponse,
     make_GDMChannelPayload_ChannelProperties,
     ParsedMiniblock,
     ClientInitStatus,
     make_UserPayload_UserMembershipAction,
     make_UserPayload_UserMembership,
+    make_MemberPayload_DisplayName,
+    make_MemberPayload_Username,
 } from './types'
 
 import debug from 'debug'
@@ -730,46 +726,26 @@ export class Client
     async setDisplayName(streamId: string, displayName: string) {
         check(isDefined(this.cryptoBackend))
         const encryptedData = await this.cryptoBackend.encryptGroupEvent(streamId, displayName)
-        const makePayload = () => {
-            if (isSpaceStreamId(streamId)) {
-                return make_SpacePayload_DisplayName(encryptedData)
-            } else if (isDMChannelStreamId(streamId)) {
-                return make_DMChannelPayload_DisplayName(encryptedData)
-            } else if (isGDMChannelStreamId(streamId)) {
-                return make_GDMChannelPayload_DisplayName(encryptedData)
-            } else {
-                throw new Error(`Invalid streamId ${streamId}`)
-            }
-        }
-        await this.makeEventAndAddToStream(streamId, makePayload(), { method: 'displayName' })
+        await this.makeEventAndAddToStream(
+            streamId,
+            make_MemberPayload_DisplayName(encryptedData),
+            { method: 'displayName' },
+        )
     }
 
     async setUsername(streamId: string, username: string) {
         check(isDefined(this.cryptoBackend))
         const encryptedData = await this.cryptoBackend.encryptGroupEvent(streamId, username)
         encryptedData.checksum = usernameChecksum(username, streamId)
-
-        const makePayload = () => {
-            if (isSpaceStreamId(streamId)) {
-                return make_SpacePayload_Username(encryptedData)
-            } else if (isDMChannelStreamId(streamId)) {
-                return make_DMChannelPayload_Username(encryptedData)
-            } else if (isGDMChannelStreamId(streamId)) {
-                return make_GDMChannelPayload_Username(encryptedData)
-            } else {
-                throw new Error(`Invalid streamId ${streamId}`)
-            }
-        }
-
-        await this.makeEventAndAddToStream(streamId, makePayload(), { method: 'username' })
+        await this.makeEventAndAddToStream(streamId, make_MemberPayload_Username(encryptedData), {
+            method: 'username',
+        })
     }
 
     async isUsernameAvailable(streamId: string, username: string): Promise<boolean> {
         const stream = this.streams.get(streamId)
         check(isDefined(stream), 'stream not found')
-        return (
-            stream.view.getUserMetadata()?.usernames.cleartextUsernameAvailable(username) ?? false
-        )
+        return stream.view.getUserMetadata().usernames.cleartextUsernameAvailable(username) ?? false
     }
 
     async waitForStream(streamId: string): Promise<Stream> {

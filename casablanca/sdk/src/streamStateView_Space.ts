@@ -1,5 +1,4 @@
 import TypedEmitter from 'typed-emitter'
-import { StreamStateView_UserMetadata } from './streamStateView_UserMetadata'
 import { ConfirmedTimelineEvent, RemoteTimelineEvent } from './types'
 import {
     ChannelOp,
@@ -25,29 +24,19 @@ export type ParsedChannelProperties = {
 
 export class StreamStateView_Space extends StreamStateView_AbstractContent {
     readonly streamId: string
-    readonly userMetadata: StreamStateView_UserMetadata
     readonly spaceChannelsMetadata = new Map<string, ParsedChannelProperties>()
 
-    constructor(userId: string, streamId: string) {
+    constructor(streamId: string) {
         super()
-        this.userMetadata = new StreamStateView_UserMetadata(userId, streamId)
         this.streamId = streamId
     }
 
     applySnapshot(
         snapshot: Snapshot,
         content: SpacePayload_Snapshot,
-        cleartexts: Record<string, string> | undefined,
-        encryptionEmitter: TypedEmitter<StreamEncryptionEvents> | undefined,
+        _cleartexts: Record<string, string> | undefined,
+        _encryptionEmitter: TypedEmitter<StreamEncryptionEvents> | undefined,
     ): void {
-        // update memberships
-        this.userMetadata.applySnapshot(
-            content.usernames,
-            content.displayNames,
-            cleartexts,
-            encryptionEmitter,
-        )
-
         // loop over content.channels, update space channels metadata
         for (const [_, payload] of Object.entries(content.channels)) {
             this.addSpacePayload_Channel(payload, undefined)
@@ -55,11 +44,10 @@ export class StreamStateView_Space extends StreamStateView_AbstractContent {
     }
 
     onConfirmedEvent(
-        event: ConfirmedTimelineEvent,
-        emitter: TypedEmitter<StreamEvents> | undefined,
+        _event: ConfirmedTimelineEvent,
+        _emitter: TypedEmitter<StreamEvents> | undefined,
     ): void {
-        super.onConfirmedEvent(event, emitter)
-        this.userMetadata.onConfirmedEvent(event, emitter)
+        // pass
     }
 
     prependEvent(
@@ -75,12 +63,6 @@ export class StreamStateView_Space extends StreamStateView_AbstractContent {
                 break
             case 'channel':
                 // nothing to do, channel data was conveyed in the snapshot
-                break
-            case 'username':
-                // nothing to do, username was conveyed in the snapshot
-                break
-            case 'displayName':
-                // nothing to do, displayName was conveyed in the snapshot
                 break
             case undefined:
                 break
@@ -102,18 +84,6 @@ export class StreamStateView_Space extends StreamStateView_AbstractContent {
                 break
             case 'channel':
                 this.addSpacePayload_Channel(payload.content.value, stateEmitter)
-                break
-            case 'displayName':
-            case 'username':
-                this.userMetadata.appendEncryptedData(
-                    event.hashStr,
-                    payload.content.value,
-                    payload.content.case,
-                    event.creatorUserId,
-                    cleartext,
-                    encryptionEmitter,
-                    stateEmitter,
-                )
                 break
             case undefined:
                 break
@@ -168,16 +138,10 @@ export class StreamStateView_Space extends StreamStateView_AbstractContent {
     }
 
     onDecryptedContent(
-        eventId: string,
-        content: DecryptedContent,
-        stateEmitter: TypedEmitter<StreamStateEvents> | undefined,
+        _eventId: string,
+        _content: DecryptedContent,
+        _stateEmitter: TypedEmitter<StreamStateEvents> | undefined,
     ): void {
-        if (content.kind === 'text') {
-            this.userMetadata.onDecryptedContent(eventId, content.content, stateEmitter)
-        }
-    }
-
-    getUserMetadata(): StreamStateView_UserMetadata {
-        return this.userMetadata
+        // pass
     }
 }

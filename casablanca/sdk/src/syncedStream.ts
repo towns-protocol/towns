@@ -1,11 +1,5 @@
 import TypedEmitter from 'typed-emitter'
-import {
-    PersistedSyncedStream,
-    MiniblockHeader,
-    Snapshot,
-    SyncCookie,
-    WrappedEncryptedData,
-} from '@river/proto'
+import { PersistedSyncedStream, MiniblockHeader, Snapshot, SyncCookie } from '@river/proto'
 import { Stream } from './stream'
 import { ParsedMiniblock, ParsedEvent, ParsedStreamResponse } from './types'
 import { DLogger, bin_toHexString, dlog } from '@river/dlog'
@@ -240,36 +234,24 @@ export class SyncedStream extends Stream {
 }
 
 function eventIdsFromSnapshot(snapshot: Snapshot): string[] {
+    const usernameEventIds =
+        snapshot.members?.joined
+            .filter((m) => isDefined(m.username))
+            .map((m) => bin_toHexString(m.username!.eventHash)) ?? []
+    const displayNameEventIds =
+        snapshot.members?.joined
+            .filter((m) => isDefined(m.displayName))
+            .map((m) => bin_toHexString(m.displayName!.eventHash)) ?? []
+
     switch (snapshot.content.case) {
         case 'gdmChannelContent': {
             const channelPropertiesEventIds = snapshot.content.value.channelProperties
                 ? [bin_toHexString(snapshot.content.value.channelProperties.eventHash)]
                 : []
-            const usernameEventIds = eventIdsFromWrappedEncryptedData(
-                snapshot.content.value.usernames,
-            )
-            const displayNameEventIds = eventIdsFromWrappedEncryptedData(
-                snapshot.content.value.displayNames,
-            )
+
             return [...usernameEventIds, ...displayNameEventIds, ...channelPropertiesEventIds]
         }
-        case 'dmChannelContent':
-        case 'spaceContent': {
-            const usernameEventIds = eventIdsFromWrappedEncryptedData(
-                snapshot.content.value.usernames,
-            )
-            const displayNameEventIds = eventIdsFromWrappedEncryptedData(
-                snapshot.content.value.displayNames,
-            )
-            return [...usernameEventIds, ...displayNameEventIds]
-        }
         default:
-            return []
+            return [...usernameEventIds, ...displayNameEventIds]
     }
-}
-
-function eventIdsFromWrappedEncryptedData(content: {
-    [key: string]: WrappedEncryptedData
-}): string[] {
-    return Object.values(content).map((e) => bin_toHexString(e.eventHash))
 }

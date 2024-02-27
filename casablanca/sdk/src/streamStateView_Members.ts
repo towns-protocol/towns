@@ -1,4 +1,4 @@
-import { MembershipOp, MemberPayload, Snapshot } from '@river/proto'
+import { MembershipOp, MemberPayload, Snapshot, WrappedEncryptedData } from '@river/proto'
 import TypedEmitter from 'typed-emitter'
 import { StreamEncryptionEvents, StreamStateEvents } from './streamEvents'
 import { ConfirmedTimelineEvent, KeySolicitationContent, RemoteTimelineEvent } from './types'
@@ -7,6 +7,8 @@ import { userIdFromAddress } from './id'
 import { StreamStateView_Members_Membership } from './streamStateView_Members_Membership'
 import { StreamStateView_Members_Solicitations } from './streamStateView_Members_Solicitations'
 import { check } from '@river/dlog'
+import { DecryptedContent } from './encryptedContentTypes'
+import { StreamStateView_UserMetadata } from './streamStateView_UserMetadata'
 
 export type StreamMember = {
     userId: string
@@ -14,6 +16,8 @@ export type StreamMember = {
     miniblockNum?: bigint
     eventNum?: bigint
     solicitations: KeySolicitationContent[]
+    encryptedUsername?: WrappedEncryptedData
+    encryptedDisplayName?: WrappedEncryptedData
 }
 
 export class StreamStateView_Members {
@@ -21,17 +25,20 @@ export class StreamStateView_Members {
     readonly joined = new Map<string, StreamMember>()
     readonly membership: StreamStateView_Members_Membership
     readonly solicitHelper: StreamStateView_Members_Solicitations
+    readonly userMetadata: StreamStateView_UserMetadata
 
     constructor(streamId: string) {
         this.streamId = streamId
         this.membership = new StreamStateView_Members_Membership(streamId)
         this.solicitHelper = new StreamStateView_Members_Solicitations(streamId)
+        this.userMetadata = new StreamStateView_UserMetadata(streamId)
     }
 
     // initialization
     applySnapshot(
         snapshot: Snapshot,
-        _encryptionEmitter: TypedEmitter<StreamEncryptionEvents> | undefined,
+        cleartexts: Record<string, string> | undefined,
+        encryptionEmitter: TypedEmitter<StreamEncryptionEvents> | undefined,
     ): void {
         if (!snapshot.members) {
             return
@@ -44,6 +51,8 @@ export class StreamStateView_Members {
                 miniblockNum: member.miniblockNum,
                 eventNum: member.eventNum,
                 solicitations: this.solicitHelper.init(member.solicitations),
+                encryptedUsername: member.username,
+                encryptedDisplayName: member.displayName,
             })
             this.membership.applyMembershipEvent(
                 userId,
@@ -52,6 +61,20 @@ export class StreamStateView_Members {
                 undefined,
             )
         }
+        // user/display names were ported from an older implementation and could be simpler
+        const usernames = Array.from(this.joined.values())
+            .filter((x) => isDefined(x.encryptedUsername))
+            .map((member) => ({
+                userId: member.userId,
+                wrappedEncryptedData: member.encryptedUsername!,
+            }))
+        const displayNames = Array.from(this.joined.values())
+            .filter((x) => isDefined(x.encryptedDisplayName))
+            .map((member) => ({
+                userId: member.userId,
+                wrappedEncryptedData: member.encryptedDisplayName!,
+            }))
+        this.userMetadata.applySnapshot(usernames, displayNames, cleartexts, encryptionEmitter)
     }
 
     prependEvent(
@@ -68,6 +91,7 @@ export class StreamStateView_Members {
      */
     appendEvent(
         event: RemoteTimelineEvent,
+        cleartext: string | undefined,
         payload: MemberPayload,
         encryptionEmitter: TypedEmitter<StreamEncryptionEvents> | undefined,
         stateEmitter: TypedEmitter<StreamStateEvents> | undefined,
@@ -127,6 +151,40 @@ export class StreamStateView_Members {
                     )
                 }
                 break
+            case 'displayName':
+                {
+                    const stateMember = this.joined.get(event.creatorUserId)
+                    check(isDefined(stateMember), 'key fulfillment from non-member')
+                    stateMember.encryptedDisplayName = new WrappedEncryptedData({
+                        data: payload.content.value,
+                    })
+                    this.userMetadata.appendDisplayName(
+                        event.hashStr,
+                        payload.content.value,
+                        event.creatorUserId,
+                        cleartext,
+                        encryptionEmitter,
+                        stateEmitter,
+                    )
+                }
+                break
+            case 'username':
+                {
+                    const stateMember = this.joined.get(event.creatorUserId)
+                    check(isDefined(stateMember), 'key fulfillment from non-member')
+                    stateMember.encryptedUsername = new WrappedEncryptedData({
+                        data: payload.content.value,
+                    })
+                    this.userMetadata.appendUsername(
+                        event.hashStr,
+                        payload.content.value,
+                        event.creatorUserId,
+                        cleartext,
+                        encryptionEmitter,
+                        stateEmitter,
+                    )
+                }
+                break
             case undefined:
                 break
             default:
@@ -166,10 +224,24 @@ export class StreamStateView_Members {
                 break
             case 'keySolicitation':
                 break
+            case 'displayName':
+            case 'username':
+                this.userMetadata.onConfirmedEvent(event, stateEmitter)
+                break
             case undefined:
                 break
             default:
                 logNever(payload.content)
+        }
+    }
+
+    onDecryptedContent(
+        eventId: string,
+        content: DecryptedContent,
+        stateEmitter: TypedEmitter<StreamStateEvents> | undefined,
+    ): void {
+        if (content.kind === 'text') {
+            this.userMetadata.onDecryptedContent(eventId, content.content, stateEmitter)
         }
     }
 

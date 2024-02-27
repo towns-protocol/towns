@@ -246,11 +246,11 @@ export const make_SpacePayload_Inception = (
     }
 }
 
-export const make_SpacePayload_DisplayName = (
+export const make_MemberPayload_DisplayName = (
     value: PlainMessage<EncryptedData>,
 ): PlainMessage<StreamEvent>['payload'] => {
     return {
-        case: 'spacePayload',
+        case: 'memberPayload',
         value: {
             content: {
                 case: 'displayName',
@@ -259,12 +259,11 @@ export const make_SpacePayload_DisplayName = (
         },
     }
 }
-
-export const make_SpacePayload_Username = (
+export const make_MemberPayload_Username = (
     value: PlainMessage<EncryptedData>,
 ): PlainMessage<StreamEvent>['payload'] => {
     return {
-        case: 'spacePayload',
+        case: 'memberPayload',
         value: {
             content: {
                 case: 'username',
@@ -443,34 +442,6 @@ export const make_MemberPayload_Membership2 = (
     })
 }
 
-export const make_DMChannelPayload_DisplayName = (
-    value: PlainMessage<EncryptedData>,
-): PlainMessage<StreamEvent>['payload'] => {
-    return {
-        case: 'dmChannelPayload',
-        value: {
-            content: {
-                case: 'displayName',
-                value: value,
-            },
-        },
-    }
-}
-
-export const make_DMChannelPayload_Username = (
-    value: PlainMessage<EncryptedData>,
-): PlainMessage<StreamEvent>['payload'] => {
-    return {
-        case: 'dmChannelPayload',
-        value: {
-            content: {
-                case: 'username',
-                value: value,
-            },
-        },
-    }
-}
-
 export const make_GDMChannelPayload_Inception = (
     value: PlainMessage<GdmChannelPayload_Inception>,
 ): PlainMessage<StreamEvent>['payload'] => {
@@ -480,34 +451,6 @@ export const make_GDMChannelPayload_Inception = (
             content: {
                 case: 'inception',
                 value,
-            },
-        },
-    }
-}
-
-export const make_GDMChannelPayload_DisplayName = (
-    value: PlainMessage<EncryptedData>,
-): PlainMessage<StreamEvent>['payload'] => {
-    return {
-        case: 'gdmChannelPayload',
-        value: {
-            content: {
-                case: 'displayName',
-                value: value,
-            },
-        },
-    }
-}
-
-export const make_GDMChannelPayload_Username = (
-    value: PlainMessage<EncryptedData>,
-): PlainMessage<StreamEvent>['payload'] => {
-    return {
-        case: 'gdmChannelPayload',
-        value: {
-            content: {
-                case: 'username',
-                value: value,
             },
         },
     }

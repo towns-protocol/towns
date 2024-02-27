@@ -11,6 +11,7 @@ import { check } from '@river/dlog'
 import { logNever } from './check'
 import { UserDevice } from '@river/encryption'
 import { StreamEncryptionEvents, StreamStateEvents } from './streamEvents'
+import { getUserIdFromStreamId } from './id'
 
 export class StreamStateView_UserDeviceKeys extends StreamStateView_AbstractContent {
     readonly streamId: string
@@ -19,10 +20,10 @@ export class StreamStateView_UserDeviceKeys extends StreamStateView_AbstractCont
     // user_id -> device_keys, fallback_keys
     readonly deviceKeys: UserDevice[] = []
 
-    constructor(userId: string, streamId: string) {
+    constructor(streamId: string) {
         super()
         this.streamId = streamId
-        this.streamCreatorId = userId
+        this.streamCreatorId = getUserIdFromStreamId(streamId)
     }
 
     applySnapshot(

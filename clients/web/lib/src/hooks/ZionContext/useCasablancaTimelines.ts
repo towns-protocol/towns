@@ -436,6 +436,22 @@ function toTownsContent_MemberPayload(
                 } satisfies FulfillmentEvent,
             }
 
+        case 'displayName':
+            return {
+                content: {
+                    kind: ZTEvent.SpaceDisplayName,
+                    userId: message.creatorUserId,
+                    displayName: value.content.value.ciphertext,
+                } satisfies SpaceDisplayNameEvent,
+            }
+        case 'username':
+            return {
+                content: {
+                    kind: ZTEvent.SpaceUsername,
+                    userId: message.creatorUserId,
+                    username: value.content.value.ciphertext,
+                } satisfies SpaceUsernameEvent,
+            }
         case undefined:
             return { error: `Undefined payload case: ${description}` }
         default:
@@ -525,9 +541,6 @@ function toTownsContent_ChannelPayload(
             const payload = value.content.value
             return toTownsContent_ChannelPayload_Message(timelineEvent, payload, description)
         }
-        case 'displayName':
-        case 'username':
-            return { error: `${description} displayName/username not supported` }
         case 'channelProperties': {
             const payload = value.content.value
             return toTownsContent_ChannelPayload_ChannelProperties(
@@ -769,30 +782,6 @@ function toTownsContent_SpacePayload(
                     childId: childId,
                     channelOp: payload.op,
                 } satisfies SpaceChildEvent,
-            }
-        }
-        case 'username': {
-            // todo: HNT-2845 - implementation for reflecting username changes in app
-            // todo: HNT-2774 - integration with encryption module
-            const payload = value.content.value
-            return {
-                content: {
-                    kind: ZTEvent.SpaceUsername,
-                    userId: message.creatorUserId,
-                    username: payload.ciphertext,
-                } satisfies SpaceUsernameEvent,
-            }
-        }
-        case 'displayName': {
-            // todo: HNT-2845 - implementation for reflecting username changes in app
-            // todo: HNT-2774 - integration with encryption module
-            const payload = value.content.value
-            return {
-                content: {
-                    kind: ZTEvent.SpaceDisplayName,
-                    userId: message.creatorUserId,
-                    displayName: payload.ciphertext,
-                } satisfies SpaceDisplayNameEvent,
             }
         }
         case undefined:

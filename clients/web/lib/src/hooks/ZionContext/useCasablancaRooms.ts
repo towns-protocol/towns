@@ -227,7 +227,7 @@ function getMembersWithMembership(membership: Membership, stream: Stream): RoomM
 
     //TODO: construct roommembers from userId in a proper way
     users.forEach((userId) => {
-        const info = metadata?.userInfo(userId)
+        const info = metadata.userInfo(userId)
         members.push({
             userId: userId,
             username: info?.username ?? userId,
@@ -248,7 +248,7 @@ function getUsersMap(stream: Stream): { [userId: string]: RoomMember } {
     const metadata = stream.view.getUserMetadata()
     const usersMap = {} as { [userId: string]: RoomMember }
     for (const userId of allUsers) {
-        const info = metadata?.userInfo(userId)
+        const info = metadata.userInfo(userId)
         usersMap[userId] = {
             userId: userId,
             username: info?.username ?? '',

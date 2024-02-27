@@ -13,6 +13,8 @@ import {
     makeUserStreamId,
     userIdFromAddress,
     addressFromUserId,
+    getUserIdFromStreamId,
+    getUserAddressFromStreamId,
 } from './id'
 import { makeRandomUserContext } from './util.test'
 
@@ -90,5 +92,15 @@ describe('idTest', () => {
         const userId = userIdFromAddress(usrCtx.creatorAddress)
         const address = addressFromUserId(userId)
         expect(address).toStrictEqual(usrCtx.creatorAddress)
+    })
+
+    test('userIdFromUserStreamId', async () => {
+        const usrCtx = await makeRandomUserContext()
+        const userId = userIdFromAddress(usrCtx.creatorAddress)
+        const userStreamId = makeUserStreamId(userId)
+        const userAddressFromStreamId = getUserAddressFromStreamId(userStreamId)
+        expect(userAddressFromStreamId).toStrictEqual(usrCtx.creatorAddress)
+        const userIdFromStreamId = getUserIdFromStreamId(userStreamId)
+        expect(userIdFromStreamId).toStrictEqual(userId)
     })
 })

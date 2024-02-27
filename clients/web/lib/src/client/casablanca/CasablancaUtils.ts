@@ -6,7 +6,7 @@ export function toStreamView(stream: Stream, membership: Membership): StreamView
 
     const members: RoomMember[] = Object.values(stream.view.getMembers().joined).map(
         (streamMember: StreamMember) => {
-            const info = metadata?.userInfo(streamMember.userId)
+            const info = metadata.userInfo(streamMember.userId)
             return {
                 userId: streamMember.userId,
                 membership: Membership.Join,

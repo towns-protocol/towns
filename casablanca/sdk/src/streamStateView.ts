@@ -153,16 +153,16 @@ export class StreamStateView {
 
         if (isSpaceStreamId(streamId)) {
             this.contentKind = 'spaceContent'
-            this._spaceContent = new StreamStateView_Space(userId, streamId)
+            this._spaceContent = new StreamStateView_Space(streamId)
         } else if (isChannelStreamId(streamId)) {
             this.contentKind = 'channelContent'
-            this._channelContent = new StreamStateView_Channel(userId, streamId)
+            this._channelContent = new StreamStateView_Channel(streamId)
         } else if (isDMChannelStreamId(streamId)) {
             this.contentKind = 'dmChannelContent'
-            this._dmChannelContent = new StreamStateView_DMChannel(userId, streamId)
+            this._dmChannelContent = new StreamStateView_DMChannel(streamId)
         } else if (isGDMChannelStreamId(streamId)) {
             this.contentKind = 'gdmChannelContent'
-            this._gdmChannelContent = new StreamStateView_GDMChannel(userId, streamId)
+            this._gdmChannelContent = new StreamStateView_GDMChannel(streamId)
         } else if (isMediaStreamId(streamId)) {
             this.contentKind = 'mediaContent'
             this._mediaContent = new StreamStateView_Media(streamId)
@@ -174,7 +174,7 @@ export class StreamStateView {
             this._userSettingsContent = new StreamStateView_UserSettings(streamId)
         } else if (isUserDeviceStreamId(streamId)) {
             this.contentKind = 'userDeviceKeyContent'
-            this._userDeviceKeyContent = new StreamStateView_UserDeviceKeys(userId, streamId)
+            this._userDeviceKeyContent = new StreamStateView_UserDeviceKeys(streamId)
         } else if (isUserInboxStreamId(streamId)) {
             this.contentKind = 'userInboxContent'
             this._userInboxContent = new StreamStateView_UserInbox(streamId)
@@ -252,7 +252,7 @@ export class StreamStateView {
             default:
                 logNever(snapshot.content)
         }
-        this.membershipContent.applySnapshot(snapshot, encryptionEmitter)
+        this.membershipContent.applySnapshot(snapshot, cleartexts, encryptionEmitter)
     }
 
     private appendStreamAndCookie(
@@ -334,6 +334,7 @@ export class StreamStateView {
                 case 'memberPayload':
                     this.membershipContent.appendEvent(
                         timelineEvent,
+                        cleartext,
                         payload.value,
                         encryptionEmitter,
                         stateEmitter,
@@ -466,6 +467,7 @@ export class StreamStateView {
         content: DecryptedContent,
         emitter: TypedEmitter<StreamStateEvents>,
     ) {
+        this.membershipContent.onDecryptedContent(eventId, content, emitter)
         this.getContent().onDecryptedContent(eventId, content, emitter)
         const timelineEvent = this.events.get(eventId)
         if (timelineEvent) {
@@ -692,8 +694,8 @@ export class StreamStateView {
         return this.membershipContent
     }
 
-    getUserMetadata(): StreamStateView_UserMetadata | undefined {
-        return this.getContent().getUserMetadata()
+    getUserMetadata(): StreamStateView_UserMetadata {
+        return this.membershipContent.userMetadata
     }
 
     getChannelMetadata(): StreamStateView_ChannelMetadata | undefined {
