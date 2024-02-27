@@ -19,19 +19,19 @@ import {
     useEventEditorSelectors,
     usePlateSelectors,
 } from '@udecode/plate-common'
-import { RoomMember } from 'use-zion-client'
+import { Channel, RoomMember } from 'use-zion-client'
 import { TypeaheadMenu, TypeaheadMenuItem } from '@ui'
 import { Avatar } from '@components/Avatar/Avatar'
 
 export const ComboboxItem = withRef<
     'div',
-    ComboboxContentItemProps<RoomMember> & {
+    ComboboxContentItemProps<RoomMember | Channel> & {
         isHighlighted: boolean
         isLast: boolean
         editor: PlateEditor
         onSelectItem:
             | null
-            | ((editor: PlateEditor, item: TComboboxItemWithData<RoomMember>) => void)
+            | ((editor: PlateEditor, item: TComboboxItemWithData<RoomMember | Channel>) => void)
     }
 >(
     (
@@ -49,7 +49,12 @@ export const ComboboxItem = withRef<
         },
         ref,
     ) => {
-        const { props } = useComboboxItem({ item, index, combobox, onRenderItem })
+        const { props } = useComboboxItem<RoomMember | Channel>({
+            item,
+            index,
+            combobox,
+            onRenderItem,
+        })
 
         const onClick = useCallback(() => {
             onSelectItem?.(editor, item)
@@ -73,7 +78,13 @@ export const ComboboxItem = withRef<
                     setRefElement: () => ref,
                 }}
                 name={item.text}
-                Icon={<Avatar size="avatar_sm" userId={item.data.userId} />}
+                Icon={
+                    (item.data as RoomMember).userId ? (
+                        <Avatar size="avatar_sm" userId={(item.data as RoomMember).userId} />
+                    ) : (
+                        <>#</>
+                    )
+                }
                 onClick={onClick}
                 onMouseEnter={onMouseEnter}
             />
@@ -81,7 +92,9 @@ export const ComboboxItem = withRef<
     },
 )
 
-export function ComboboxContent(props: ComboboxContentProps<RoomMember> & { editor: PlateEditor }) {
+export const ComboboxContent = <T extends RoomMember | Channel>(
+    props: ComboboxContentProps<T> & { editor: PlateEditor },
+) => {
     const { component: Component, editor, items, combobox, onRenderItem } = props
 
     const filteredItems = useComboboxSelectors.filteredItems() as typeof items
@@ -110,7 +123,7 @@ export function ComboboxContent(props: ComboboxContentProps<RoomMember> & { edit
     )
 }
 
-export function Combobox({
+export const Combobox = <T extends RoomMember | Channel>({
     id,
     trigger,
     searchPattern,
@@ -121,7 +134,7 @@ export function Combobox({
     sort,
     disabled: _disabled,
     ...props
-}: ComboboxProps<RoomMember>) {
+}: ComboboxProps<T>) => {
     const storeItems = useComboboxSelectors.items()
     const disabled = _disabled ?? (storeItems.length === 0 && !props.items?.length)
 
@@ -155,5 +168,5 @@ export function Combobox({
         return null
     }
 
-    return <ComboboxContent combobox={combobox} {...props} editor={editor} />
+    return <ComboboxContent<T> combobox={combobox} {...props} editor={editor} />
 }

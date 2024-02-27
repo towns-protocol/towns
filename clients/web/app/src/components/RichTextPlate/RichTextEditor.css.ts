@@ -44,6 +44,13 @@ export const mentionInput = style([
     }),
 ])
 
+export const mentionChannelInput = style([
+    atoms({
+        display: 'inline-block',
+        cursor: 'pointer',
+    }),
+])
+
 export const ul = style({
     margin: `${vars.space.xs} 0`,
     padding: 0,

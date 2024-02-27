@@ -29,7 +29,8 @@ import { PlateToolbar } from './ui/PlateToolbar'
 import { RichTextBottomToolbar } from './components/RichTextBottomToolbar'
 import { RichTextPlaceholder } from './components/RichTextEditorPlaceholder'
 import { SendMarkdownPlugin } from './components/SendMarkdownPlugin'
-import { plugins } from './utils/plugins'
+import PlatePlugins from './plugins'
+import { ELEMENT_MENTION_CHANNEL } from './plugins/createChannelPlugin'
 import { PasteFilePlugin } from './components/PasteFilePlugin'
 import { CaptureTownsLinkPlugin } from './components/CaptureTownsLinkPlugin'
 
@@ -105,7 +106,7 @@ const PlateEditorWithoutBoundary = ({
         EmbeddedMessageAttachment[]
     >([])
 
-    const mentionables: TComboboxItemWithData<RoomMember>[] = useMemo(() => {
+    const userMentions: TComboboxItemWithData<RoomMember>[] = useMemo(() => {
         return props.users
             .map((user) => ({
                 text: getPrettyDisplayName(user),
@@ -114,6 +115,16 @@ const PlateEditorWithoutBoundary = ({
             }))
             .filter(notUndefined)
     }, [props.users])
+
+    const channelMentions: TComboboxItemWithData<Channel>[] = useMemo(() => {
+        return props.channels
+            .map((channel) => ({
+                text: channel.label,
+                key: channel.id,
+                data: channel,
+            }))
+            .filter(notUndefined)
+    }, [props.channels])
 
     // eslint-disable-next-line @typescript-eslint/no-unused-vars
     const onFocusChange = useCallback(
@@ -215,7 +226,7 @@ const PlateEditorWithoutBoundary = ({
                 borderBottom={!isTouch ? 'default' : 'none'}
             >
                 <Plate
-                    plugins={plugins}
+                    plugins={PlatePlugins}
                     editorRef={editorRef}
                     initialValue={initialValue}
                     onChange={onChange}
@@ -245,7 +256,12 @@ const PlateEditorWithoutBoundary = ({
                             </Box>
 
                             <CaptureTownsLinkPlugin onUpdate={onMessageLinksUpdated} />
-                            <MentionCombobox id="users" items={mentionables} />
+                            <MentionCombobox<RoomMember> id="users" items={userMentions} />
+                            <MentionCombobox<Channel>
+                                pluginKey={ELEMENT_MENTION_CHANNEL}
+                                id="channels"
+                                items={channelMentions}
+                            />
                         </Box>
                         <Box paddingY="sm" paddingRight="xs">
                             <SendMarkdownPlugin

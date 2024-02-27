@@ -1,7 +1,7 @@
 import React from 'react'
 import { withRef } from '@udecode/cn'
 import { PlateElement, getHandler } from '@udecode/plate-common'
-import { mentionInput } from '@components/RichTextPlate/RichTextEditor.css'
+import { mentionInput } from '../RichTextEditor.css'
 
 export const MentionInputElement = withRef<
     typeof PlateElement,
@@ -22,7 +22,7 @@ export const MentionInputElement = withRef<
             {...props}
         >
             <span>
-                {prefix}
+                {element.trigger}
                 {children}
             </span>
         </PlateElement>

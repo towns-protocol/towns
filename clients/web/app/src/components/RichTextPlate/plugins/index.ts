@@ -1,6 +1,7 @@
 // eslint-disable-next-line @typescript-eslint/ban-ts-comment
 // @ts-nocheck
 import { withProps } from '@udecode/cn'
+import { Channel } from 'use-zion-client'
 import { PlateLeaf, createPlugins } from '@udecode/plate-common'
 import { ELEMENT_PARAGRAPH, createParagraphPlugin } from '@udecode/plate-paragraph'
 import { ELEMENT_BLOCKQUOTE, createBlockquotePlugin } from '@udecode/plate-block-quote'
@@ -10,7 +11,7 @@ import {
     ELEMENT_CODE_SYNTAX,
     createCodeBlockPlugin,
 } from '@udecode/plate-code-block'
-import { TComboboxItem, createComboboxPlugin } from '@udecode/plate-combobox'
+import { TComboboxItem, TComboboxItemWithData, createComboboxPlugin } from '@udecode/plate-combobox'
 import { ELEMENT_LINK, createLinkPlugin } from '@udecode/plate-link'
 import {
     ELEMENT_LI,
@@ -39,21 +40,23 @@ import { createExitBreakPlugin, createSoftBreakPlugin } from '@udecode/plate-bre
 import { createDeserializeMdPlugin } from '@udecode/plate-serializer-md'
 import { createAutoformatPlugin } from '@udecode/plate-autoformat'
 
-import { BlockquoteElement } from '@components/RichTextPlate/ui/blockquote-element'
-import { CodeBlockElement } from '@components/RichTextPlate/ui/code-block-element'
-import { CodeLineElement } from '@components/RichTextPlate/ui/code-line-element'
-import { CodeSyntaxLeaf } from '@components/RichTextPlate/ui/code-syntax-leaf'
-import { LinkElement } from '@components/RichTextPlate/ui/link-element'
-import { ListElement } from '@components/RichTextPlate/ui/list-element'
-import { MentionElement } from '@components/RichTextPlate/ui/mention-element'
-import { MentionInputElement } from '@components/RichTextPlate/ui/mention-input-element'
-import { ParagraphElement } from '@components/RichTextPlate/ui/paragraph-element'
-import { CodeLeaf } from '@components/RichTextPlate/ui/code-leaf'
+import { BlockquoteElement } from '../ui/blockquote-element'
+import { CodeBlockElement } from '../ui/code-block-element'
+import { CodeLineElement } from '../ui/code-line-element'
+import { CodeSyntaxLeaf } from '../ui/code-syntax-leaf'
+import { LinkElement } from '../ui/link-element'
+import { ListElement } from '../ui/list-element'
+import { ChannelMentionElement } from '../ui/ChannelMentionElement'
+import { MentionElement } from '../ui/mention-element'
+import { MentionInputElement } from '../ui/mention-input-element'
+import { ParagraphElement } from '../ui/paragraph-element'
+import { CodeLeaf } from '../ui/code-leaf'
 import { autoformatRules } from './autoformat'
 import { nodeResetRules } from './node-reset'
 import { createShiftEnterListPlugin } from './shiftEnterListPlugin'
+import { ELEMENT_MENTION_CHANNEL, createChannelPlugin } from './createChannelPlugin'
 
-export const plugins = createPlugins(
+const PlatePlugins = createPlugins(
     [
         createAutoformatPlugin({
             options: {
@@ -69,6 +72,19 @@ export const plugins = createPlugins(
         createLinkPlugin(),
         createListPlugin(),
         createComboboxPlugin(),
+
+        createChannelPlugin({
+            options: {
+                id: 'channels',
+                trigger: '#',
+                insertSpaceAfterMention: true,
+                triggerPreviousCharPattern: /^$|^[\s"']$/,
+                createMentionNode: (item: TComboboxItemWithData<Channel>) => ({
+                    value: '#' + item.text,
+                    channel: item.data,
+                }),
+            },
+        }),
         createMentionPlugin({
             options: {
                 id: 'users',
@@ -145,7 +161,8 @@ export const plugins = createPlugins(
             [ELEMENT_LI]: withProps(ListElement, { variant: 'li' }),
             [ELEMENT_LIC]: withProps(ListElement, { variant: 'span' }),
             [ELEMENT_MENTION]: MentionElement,
-            [ELEMENT_MENTION_INPUT]: withProps(MentionInputElement, { prefix: '@' }),
+            [ELEMENT_MENTION_CHANNEL]: ChannelMentionElement,
+            [ELEMENT_MENTION_INPUT]: MentionInputElement,
             [ELEMENT_PARAGRAPH]: ParagraphElement,
             [MARK_BOLD]: withProps(PlateLeaf, { as: 'strong' }),
             [MARK_CODE]: CodeLeaf,
@@ -155,3 +172,5 @@ export const plugins = createPlugins(
         },
     },
 )
+
+export default PlatePlugins
