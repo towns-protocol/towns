@@ -109,10 +109,6 @@ export function useContractSpaceInfos(client?: CasablancaClient) {
         },
     })
 
-    useEffect(() => {
-        console.log(`queryData changed`, queryData.data, queryData.isLoading)
-    }, [queryData.data, queryData.isLoading])
-
     return {
         data: queryData.data.length > 0 ? queryData.data : EMPTY_SPACE_INFOS,
         isLoading: queryData.isLoading,
