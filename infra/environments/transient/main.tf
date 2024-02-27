@@ -208,12 +208,12 @@ module "river_node" {
 }
 
 # module "loadtest" {
-#   count              = local.create_load_testing_module ? 1 : 0
-#   source             = "../../modules/loadtest"
-#   vpc_id             = local.transient_global_remote_state.vpc.vpc_id
-#   public_subnets     = local.transient_global_remote_state.vpc.public_subnets
-#   private_subnets    = local.transient_global_remote_state.vpc.private_subnets
-#   base_chain_rpc_url = module.base_forked_chain_service[0].network_url
-#   river_node_url     = module.global_constants.nodes_metadata[0].url
+#   count                        = local.create_load_testing_module ? 1 : 0
+#   source                       = "../../modules/loadtest"
+#   vpc_id                       = local.transient_global_remote_state.vpc.vpc_id
+#   public_subnets               = local.transient_global_remote_state.vpc.public_subnets
+#   private_subnets              = local.transient_global_remote_state.vpc.private_subnets
+#   base_chain_rpc_url_override = module.base_forked_chain_service[0].network_url
+#   river_node_url               = module.global_constants.nodes_metadata[0].url
 # }
 

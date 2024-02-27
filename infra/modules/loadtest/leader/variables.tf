@@ -27,9 +27,10 @@ variable "river_node_url" {
   type        = string
 }
 
-variable "base_chain_rpc_url" {
-  description = "base chain rpc url to pass as environment details"
+variable "base_chain_rpc_url_override" {
+  description = "base chain rpc url"
   type        = string
+  default     = null
 }
 
 variable "redis_url" {

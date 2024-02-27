@@ -41,7 +41,7 @@ locals {
   # TODO: we should allow this to be configured at runtime, not infra time.
   num_follower_containers     = 5
   num_processes_per_container = 2
-  num_clients_per_process     = 2 
+  num_clients_per_process     = 2
   num_followers               = local.num_follower_containers * local.num_processes_per_container * local.num_clients_per_process
   loadtest_duration           = 600000
 }
@@ -60,16 +60,16 @@ resource "aws_elasticache_cluster" "redis" {
 }
 
 module "leader" {
-  source                  = "./leader"
-  vpc_id                  = var.vpc_id
-  subnets                 = var.private_subnets
-  ecs_cluster             = aws_ecs_cluster.loadtest_cluster
-  base_chain_rpc_url      = var.base_chain_rpc_url
-  river_node_url          = var.river_node_url
-  redis_url               = aws_elasticache_cluster.redis.cache_nodes[0].address
-  num_followers           = local.num_followers
-  num_follower_containers = local.num_follower_containers
-  loadtest_duration       = local.loadtest_duration
+  source                      = "./leader"
+  vpc_id                      = var.vpc_id
+  subnets                     = var.private_subnets
+  ecs_cluster                 = aws_ecs_cluster.loadtest_cluster
+  base_chain_rpc_url_override = var.base_chain_rpc_url_override
+  river_node_url              = var.river_node_url
+  redis_url                   = aws_elasticache_cluster.redis.cache_nodes[0].address
+  num_followers               = local.num_followers
+  num_follower_containers     = local.num_follower_containers
+  loadtest_duration           = local.loadtest_duration
 
 
   tags = module.global_constants.tags
@@ -82,7 +82,7 @@ module "follower" {
   vpc_id                      = var.vpc_id
   subnets                     = var.private_subnets
   ecs_cluster                 = aws_ecs_cluster.loadtest_cluster
-  base_chain_rpc_url          = var.base_chain_rpc_url
+  base_chain_rpc_url_override = var.base_chain_rpc_url_override
   river_node_url              = var.river_node_url
   redis_url                   = aws_elasticache_cluster.redis.cache_nodes[0].address
   loadtest_duration           = local.loadtest_duration

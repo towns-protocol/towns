@@ -151,6 +151,14 @@ module "eth_balance_monitor" {
   river_registry_contract_address = local.river_registry_contract_address
 }
 
+module "loadtest" {
+  source          = "../../modules/loadtest"
+  vpc_id          = module.vpc.vpc_id
+  public_subnets  = module.vpc.public_subnets
+  private_subnets = module.vpc.private_subnets
+  river_node_url  = module.global_constants.nodes_metadata[0].url
+}
+
 data "cloudflare_zone" "zone" {
   name = module.global_constants.primary_hosted_zone_name
 }

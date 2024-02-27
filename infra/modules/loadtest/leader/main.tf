@@ -10,6 +10,16 @@ locals {
       Service = local.container_name
     }
   )
+
+  base_chain_default_td_secret_config = var.base_chain_rpc_url_override == null ? [{
+    name      = "BASE_CHAIN_RPC_URL"
+    valueFrom = local.global_remote_state.base_chain_network_url_secret.arn
+  }] : []
+
+  base_chain_override_td_env_config = var.base_chain_rpc_url_override == null ? [] : [{
+    name  = "BASE_CHAIN_RPC_URL"
+    value = var.base_chain_rpc_url_override
+  }]
 }
 
 module "global_constants" {
@@ -52,6 +62,28 @@ resource "aws_iam_role" "ecs_task_execution_role" {
   tags = local.custom_tags
 }
 
+resource "aws_iam_role_policy" "secrets" {
+  name = "${local.name}-secrets"
+  role = aws_iam_role.ecs_task_execution_role.id
+
+  policy = <<-EOF
+  {
+    "Version": "2012-10-17",
+    "Statement": [
+      {
+        "Action": [
+          "secretsmanager:GetSecretValue"
+        ],
+        "Effect": "Allow",
+        "Resource": [
+          "${local.global_remote_state.base_chain_network_url_secret.arn}"
+        ]
+      }
+    ]
+  }
+  EOF
+}
+
 resource "aws_ecs_task_definition" "task_definition" {
   family = "${local.name}-fargate"
 
@@ -86,7 +118,10 @@ resource "aws_ecs_task_definition" "task_definition" {
 
     cpu    = 8192
     memory = 16384
-    environment = [
+
+    secrets = local.base_chain_default_td_secret_config
+
+    environment = concat([
       {
         name  = "MODE",
         value = "leader"
@@ -106,10 +141,6 @@ resource "aws_ecs_task_definition" "task_definition" {
       {
         name  = "RIVER_NODE_URL",
         value = var.river_node_url
-      },
-      {
-        name  = "BASE_CHAIN_RPC_URL",
-        value = var.base_chain_rpc_url
       },
       {
         name  = "CHANNEL_SAMPLING_RATE",
@@ -139,7 +170,9 @@ resource "aws_ecs_task_definition" "task_definition" {
         name  = "NUM_FOLLOWER_CONTAINERS",
         value = tostring(var.num_follower_containers)
       }
-    ]
+      ],
+      local.base_chain_override_td_env_config
+    )
 
     logConfiguration = {
       logDriver = "awslogs"
