@@ -56,6 +56,22 @@ contract RiverRegistryTest is TestUtils, IRiverRegistryBase, IOwnableBase {
   }
 
   // =============================================================
+  //                     updateNodeUrlByOperator
+  // =============================================================
+  function test_updateNodeUrlByOperator(
+    address nodeOperator,
+    address node,
+    string memory url
+  )
+    external
+    givenNodeOperatorIsApproved(nodeOperator)
+    givenNodeIsRegistered(nodeOperator, node, url)
+  {
+    vm.prank(nodeOperator);
+    riverRegistry.updateNodeUrlByOperator(node, url);
+  }
+
+  // =============================================================
   //                           approveOperator
   // =============================================================
 
