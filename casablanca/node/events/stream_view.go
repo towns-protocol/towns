@@ -40,7 +40,7 @@ type StreamView interface {
 	ValidateNextEvent(ctx context.Context, cfg *config.RecencyConstraintsConfig, parsedEvent *ParsedEvent, currentTime time.Time) error
 	GetStats() StreamViewStats
 	ProposeNextMiniblock(ctx context.Context, cfg *config.StreamConfig, forceSnapshot bool) (*MiniblockProposal, error)
-	IsMember(userId string) (bool, error)
+	IsMember(userAddress []byte) (bool, error)
 }
 
 func MakeStreamView(streamData *storage.ReadStreamFromLastSnapshotResult) (*streamViewImpl, error) {
@@ -595,52 +595,12 @@ func (r *streamViewImpl) GetStats() StreamViewStats {
 	return stats
 }
 
-func streamIdMatchesUserId(streamId, userId string) (bool, error) {
-	u, err := GetUserAddressStringFromStreamId(streamId)
+func (r *streamViewImpl) IsMember(userAddress []byte) (bool, error) {
+	membership, err := r.GetMembership(userAddress)
 	if err != nil {
 		return false, err
 	}
-	return u == userId, nil
-}
-
-func (r *streamViewImpl) IsMember(userId string) (bool, error) {
-	// aellis this should probably be migrated to the common payload
-	streamId := r.StreamId()
-	switch snapshotContent := r.snapshot.Content.(type) {
-	case *Snapshot_SpaceContent:
-		membership, err := r.GetMembership(userId)
-		if err != nil {
-			return false, err
-		}
-		return membership == MembershipOp_SO_JOIN, nil
-	case *Snapshot_ChannelContent:
-		membership, err := r.GetMembership(userId)
-		if err != nil {
-			return false, err
-		}
-		return membership == MembershipOp_SO_JOIN, nil
-	case *Snapshot_GdmChannelContent:
-		membership, err := r.GetMembership(userId)
-		if err != nil {
-			return false, err
-		}
-		return membership == MembershipOp_SO_JOIN, nil
-	case *Snapshot_DmChannelContent:
-		incpt := snapshotContent.DmChannelContent.Inception
-		return userId == incpt.FirstPartyId || userId == incpt.SecondPartyId, nil
-	case *Snapshot_UserContent:
-		return streamIdMatchesUserId(streamId, userId)
-	case *Snapshot_UserSettingsContent:
-		return streamIdMatchesUserId(streamId, userId)
-	case *Snapshot_UserDeviceKeyContent:
-		return streamIdMatchesUserId(streamId, userId)
-	case *Snapshot_UserInboxContent:
-		return streamIdMatchesUserId(streamId, userId)
-	case *Snapshot_MediaContent:
-		return snapshotContent.MediaContent.GetCreatorId() == userId, nil
-	default:
-		return false, RiverError(Err_INVALID_ARGUMENT, "IsMember::Unknown Payload Type", "streamId", streamId)
-	}
+	return membership == MembershipOp_SO_JOIN, nil
 }
 
 func (r *streamViewImpl) StreamParentId() *string {

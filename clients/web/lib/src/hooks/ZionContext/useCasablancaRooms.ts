@@ -213,11 +213,11 @@ function getMembersWithMembership(membership: Membership, stream: Stream): RoomM
 
     switch (membership) {
         case Membership.Join: {
-            users = stream.view.getMemberships().joinedUsers
+            users = stream.view.getMembers().membership.joinedUsers
             break
         }
         case Membership.Invite: {
-            users = stream.view.getMemberships().invitedUsers
+            users = stream.view.getMembers().membership.invitedUsers
             break
         }
         default: {
@@ -242,12 +242,8 @@ function getMembersWithMembership(membership: Membership, stream: Stream): RoomM
 }
 
 function getUsersMap(stream: Stream): { [userId: string]: RoomMember } {
-    const memberships = stream.view.getMemberships()
-    const allUsers = new Set<string>([
-        ...memberships.joinedUsers,
-        ...memberships.invitedUsers,
-        ...memberships.leftUsers,
-    ])
+    const memberships = stream.view.getMembers()
+    const allUsers = memberships.participants()
 
     const metadata = stream.view.getUserMetadata()
     const usersMap = {} as { [userId: string]: RoomMember }

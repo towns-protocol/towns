@@ -9,14 +9,12 @@ import {
     UserInboxPayload_Ack,
 } from '@river/proto'
 import { StreamStateView_AbstractContent } from './streamStateView_AbstractContent'
-import { StreamStateView_UserStreamMembership } from './streamStateView_Membership'
 import { check } from '@river/dlog'
 import { logNever } from './check'
 import { StreamEncryptionEvents, StreamStateEvents } from './streamEvents'
 
 export class StreamStateView_UserInbox extends StreamStateView_AbstractContent {
     readonly streamId: string
-    readonly memberships: StreamStateView_UserStreamMembership
     deviceSummary: Record<string, UserInboxPayload_Snapshot_DeviceSummary> = {}
     pendingGroupSessions: Record<
         string,
@@ -26,7 +24,6 @@ export class StreamStateView_UserInbox extends StreamStateView_AbstractContent {
     constructor(streamId: string) {
         super()
         this.streamId = streamId
-        this.memberships = new StreamStateView_UserStreamMembership(streamId)
     }
 
     applySnapshot(

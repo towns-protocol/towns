@@ -1,5 +1,4 @@
 import TypedEmitter from 'typed-emitter'
-import { StreamStateView_Membership } from './streamStateView_Membership'
 import { StreamStateView_UserMetadata } from './streamStateView_UserMetadata'
 import { ConfirmedTimelineEvent, RemoteTimelineEvent } from './types'
 import {
@@ -26,13 +25,11 @@ export type ParsedChannelProperties = {
 
 export class StreamStateView_Space extends StreamStateView_AbstractContent {
     readonly streamId: string
-    readonly memberships: StreamStateView_Membership
     readonly userMetadata: StreamStateView_UserMetadata
     readonly spaceChannelsMetadata = new Map<string, ParsedChannelProperties>()
 
     constructor(userId: string, streamId: string) {
         super()
-        this.memberships = new StreamStateView_Membership(streamId)
         this.userMetadata = new StreamStateView_UserMetadata(userId, streamId)
         this.streamId = streamId
     }
@@ -44,7 +41,6 @@ export class StreamStateView_Space extends StreamStateView_AbstractContent {
         encryptionEmitter: TypedEmitter<StreamEncryptionEvents> | undefined,
     ): void {
         // update memberships
-        this.memberships.applySnapshot(content.memberships, encryptionEmitter)
         this.userMetadata.applySnapshot(
             content.usernames,
             content.displayNames,
@@ -80,9 +76,6 @@ export class StreamStateView_Space extends StreamStateView_AbstractContent {
             case 'channel':
                 // nothing to do, channel data was conveyed in the snapshot
                 break
-            case 'membership':
-                // nothing to do, membership was conveyed in the snapshot
-                break
             case 'username':
                 // nothing to do, username was conveyed in the snapshot
                 break
@@ -109,13 +102,6 @@ export class StreamStateView_Space extends StreamStateView_AbstractContent {
                 break
             case 'channel':
                 this.addSpacePayload_Channel(payload.content.value, stateEmitter)
-                break
-            case 'membership':
-                this.memberships.appendMembershipEvent(
-                    event.hashStr,
-                    payload.content.value,
-                    encryptionEmitter,
-                )
                 break
             case 'displayName':
             case 'username':

@@ -1,6 +1,7 @@
 package events
 
 import (
+	"bytes"
 	"sort"
 
 	. "github.com/river-build/river/base"
@@ -13,10 +14,7 @@ func Make_GenisisSnapshot(events []*ParsedEvent) (*Snapshot, error) {
 		return nil, RiverError(Err_INVALID_ARGUMENT, "no events to make snapshot from")
 	}
 
-	creatorId, err := shared.AddressHex(events[0].Event.CreatorAddress)
-	if err != nil {
-		return nil, err
-	}
+	creatorAddress := events[0].Event.CreatorAddress
 
 	inceptionPayload := events[0].Event.GetInceptionPayload()
 
@@ -24,14 +22,19 @@ func Make_GenisisSnapshot(events []*ParsedEvent) (*Snapshot, error) {
 		return nil, RiverError(Err_INVALID_ARGUMENT, "inceptionEvent is not an inception event")
 	}
 
-	content, err := make_SnapshotContent(inceptionPayload, creatorId)
+	content, err := make_SnapshotContent(inceptionPayload)
+	if err != nil {
+		return nil, err
+	}
+
+	members, err := make_SnapshotMembers(inceptionPayload, creatorAddress)
 	if err != nil {
 		return nil, err
 	}
 
 	snapshot := &Snapshot{
-		Common:  &CommonPayload_Snapshot{},
 		Content: content,
+		Members: members,
 	}
 
 	for i, event := range events[1:] {
@@ -45,69 +48,104 @@ func Make_GenisisSnapshot(events []*ParsedEvent) (*Snapshot, error) {
 	return snapshot, nil
 }
 
-func make_SnapshotContent(iPayload IsInceptionPayload, creatorId string) (IsSnapshot_Content, error) {
-	if iPayload == nil {
+func make_SnapshotContent(iInception IsInceptionPayload) (IsSnapshot_Content, error) {
+	if iInception == nil {
 		return nil, RiverError(Err_INVALID_ARGUMENT, "inceptionEvent is not an inception event")
 	}
 
-	switch payload := iPayload.(type) {
+	switch inception := iInception.(type) {
 	case *SpacePayload_Inception:
 		return &Snapshot_SpaceContent{
 			SpaceContent: &SpacePayload_Snapshot{
-				Inception: payload,
+				Inception: inception,
 			},
 		}, nil
 	case *ChannelPayload_Inception:
 		return &Snapshot_ChannelContent{
 			ChannelContent: &ChannelPayload_Snapshot{
-				Inception: payload,
+				Inception: inception,
 			},
 		}, nil
 	case *DmChannelPayload_Inception:
 		return &Snapshot_DmChannelContent{
 			DmChannelContent: &DmChannelPayload_Snapshot{
-				Inception: payload,
+				Inception: inception,
 			},
 		}, nil
 	case *GdmChannelPayload_Inception:
 		return &Snapshot_GdmChannelContent{
 			GdmChannelContent: &GdmChannelPayload_Snapshot{
-				Inception: payload,
+				Inception: inception,
 			},
 		}, nil
 	case *UserPayload_Inception:
 		return &Snapshot_UserContent{
 			UserContent: &UserPayload_Snapshot{
-				Inception: payload,
+				Inception: inception,
 			},
 		}, nil
 	case *UserSettingsPayload_Inception:
 		return &Snapshot_UserSettingsContent{
 			UserSettingsContent: &UserSettingsPayload_Snapshot{
-				Inception: payload,
+				Inception: inception,
 			},
 		}, nil
 	case *UserInboxPayload_Inception:
 		return &Snapshot_UserInboxContent{
 			UserInboxContent: &UserInboxPayload_Snapshot{
-				Inception: payload,
+				Inception: inception,
 			},
 		}, nil
 	case *UserDeviceKeyPayload_Inception:
 		return &Snapshot_UserDeviceKeyContent{
 			UserDeviceKeyContent: &UserDeviceKeyPayload_Snapshot{
-				Inception: payload,
+				Inception: inception,
 			},
 		}, nil
 	case *MediaPayload_Inception:
 		return &Snapshot_MediaContent{
 			MediaContent: &MediaPayload_Snapshot{
-				Inception: payload,
-				CreatorId: creatorId,
+				Inception: inception,
 			},
 		}, nil
 	default:
-		return nil, RiverError(Err_INVALID_ARGUMENT, "unknown inception payload type %T", iPayload)
+		return nil, RiverError(Err_INVALID_ARGUMENT, "unknown inception type %T", iInception)
+	}
+}
+
+func make_SnapshotMembers(iInception IsInceptionPayload, creatorAddress []byte) (*MemberPayload_Snapshot, error) {
+	if iInception == nil {
+		return nil, RiverError(Err_INVALID_ARGUMENT, "inceptionEvent is not an inception event")
+	}
+
+	switch inception := iInception.(type) {
+	case *UserPayload_Inception, *UserSettingsPayload_Inception, *UserInboxPayload_Inception, *UserDeviceKeyPayload_Inception:
+		// for all user streams, get the address from the stream id
+		userAddress, err := shared.GetUserAddressFromStreamId(iInception.GetStreamId())
+		if err != nil {
+			return nil, err
+		}
+		return &MemberPayload_Snapshot{
+			Joined: addMember(nil, &MemberPayload_Snapshot_Member{
+				UserAddress: userAddress.Bytes(),
+			}),
+		}, nil
+	case *DmChannelPayload_Inception:
+		return &MemberPayload_Snapshot{
+			Joined: addMember(nil, &MemberPayload_Snapshot_Member{
+				UserAddress: inception.FirstPartyAddress,
+			}, &MemberPayload_Snapshot_Member{
+				UserAddress: inception.SecondPartyAddress,
+			}),
+		}, nil
+	case *MediaPayload_Inception:
+		return &MemberPayload_Snapshot{
+			Joined: addMember(nil, &MemberPayload_Snapshot_Member{
+				UserAddress: creatorAddress,
+			}),
+		}, nil
+	default:
+		return &MemberPayload_Snapshot{}, nil
 	}
 }
 
@@ -141,17 +179,11 @@ func Update_Snapshot(iSnapshot *Snapshot, event *ParsedEvent, miniblockNum int64
 	case *StreamEvent_UserDeviceKeyPayload:
 		return update_Snapshot_UserDeviceKey(iSnapshot, payload.UserDeviceKeyPayload)
 	case *StreamEvent_UserInboxPayload:
-		creator, err := shared.AddressHex(event.Event.CreatorAddress)
-		if err != nil {
-			return err
-		}
-		return update_Snapshot_UserInbox(iSnapshot, payload.UserInboxPayload, creator, miniblockNum)
-	case *StreamEvent_CommonPayload:
-		creator, err := shared.AddressHex(event.Event.CreatorAddress)
-		if err != nil {
-			return err
-		}
-		return update_Snapshot_Common(iSnapshot, payload.CommonPayload, creator)
+		return update_Snapshot_UserInbox(iSnapshot, payload.UserInboxPayload, miniblockNum)
+	case *StreamEvent_MemberPayload:
+		return update_Snapshot_Member(iSnapshot, payload.MemberPayload, event.Event.CreatorAddress, miniblockNum, eventNum)
+	case *StreamEvent_MediaPayload:
+		return RiverError(Err_BAD_PAYLOAD, "Media payload snapshots are not supported")
 	default:
 		return RiverError(Err_INVALID_ARGUMENT, "unknown payload type %T", event.Event.Payload)
 	}
@@ -170,12 +202,6 @@ func update_Snapshot_Space(iSnapshot *Snapshot, spacePayload *SpacePayload, user
 			snapshot.SpaceContent.Channels = make(map[string]*SpacePayload_Channel)
 		}
 		snapshot.SpaceContent.Channels[content.Channel.ChannelId] = content.Channel
-		return nil
-	case *SpacePayload_Membership:
-		if snapshot.SpaceContent.Memberships == nil {
-			snapshot.SpaceContent.Memberships = make(map[string]*Membership)
-		}
-		snapshot.SpaceContent.Memberships[content.Membership.UserId] = content.Membership
 		return nil
 	case *SpacePayload_Username:
 		if snapshot.SpaceContent.Usernames == nil {
@@ -203,16 +229,10 @@ func update_Snapshot_Channel(iSnapshot *Snapshot, channelPayload *ChannelPayload
 	switch content := channelPayload.Content.(type) {
 	case *ChannelPayload_Inception_:
 		return RiverError(Err_INVALID_ARGUMENT, "cannot update blockheader with inception event")
-	case *ChannelPayload_Membership:
-		if snapshot.ChannelContent.Memberships == nil {
-			snapshot.ChannelContent.Memberships = make(map[string]*Membership)
-		}
-		snapshot.ChannelContent.Memberships[content.Membership.UserId] = content.Membership
-		return nil
 	case *ChannelPayload_Message:
 		return nil
 	default:
-		return RiverError(Err_INVALID_ARGUMENT, "unknown channel payload type %T", channelPayload.Content)
+		return RiverError(Err_INVALID_ARGUMENT, "unknown channel payload type %T", content)
 	}
 }
 
@@ -230,12 +250,6 @@ func update_Snapshot_DmChannel(
 	switch content := dmChannelPayload.Content.(type) {
 	case *DmChannelPayload_Inception_:
 		return RiverError(Err_INVALID_ARGUMENT, "cannot update blockheader with inception event")
-	case *DmChannelPayload_Membership:
-		if snapshot.DmChannelContent.Memberships == nil {
-			snapshot.DmChannelContent.Memberships = make(map[string]*Membership)
-		}
-		snapshot.DmChannelContent.Memberships[content.Membership.UserId] = content.Membership
-		return nil
 	case *DmChannelPayload_Username:
 		if snapshot.DmChannelContent.Usernames == nil {
 			snapshot.DmChannelContent.Usernames = make(map[string]*WrappedEncryptedData)
@@ -270,12 +284,6 @@ func update_Snapshot_GdmChannel(
 	switch content := channelPayload.Content.(type) {
 	case *GdmChannelPayload_Inception_:
 		return RiverError(Err_INVALID_ARGUMENT, "cannot update blockheader with inception event")
-	case *GdmChannelPayload_Membership:
-		if snapshot.GdmChannelContent.Memberships == nil {
-			snapshot.GdmChannelContent.Memberships = make(map[string]*Membership)
-		}
-		snapshot.GdmChannelContent.Memberships[content.Membership.UserId] = content.Membership
-		return nil
 	case *GdmChannelPayload_Username:
 		if snapshot.GdmChannelContent.Usernames == nil {
 			snapshot.GdmChannelContent.Usernames = make(map[string]*WrappedEncryptedData)
@@ -377,7 +385,6 @@ func update_Snapshot_UserDeviceKey(iSnapshot *Snapshot, userDeviceKeyPayload *Us
 func update_Snapshot_UserInbox(
 	iSnapshot *Snapshot,
 	userInboxPayload *UserInboxPayload,
-	senderId string,
 	miniblockNum int64,
 ) error {
 	snapshot := iSnapshot.Content.(*Snapshot_UserInboxContent)
@@ -437,51 +444,71 @@ func cleanup_Snapshot_UserInbox(snapshot *Snapshot_UserInboxContent, currentMini
 	}
 }
 
-func update_Snapshot_Common(iSnapshot *Snapshot, commonPayload *CommonPayload, senderId string) error {
-	snapshot := iSnapshot.Common
+func update_Snapshot_Member(iSnapshot *Snapshot, memberPayload *MemberPayload, creatorAddress []byte, miniblockNum int64, eventNum int64) error {
+	snapshot := iSnapshot.Members
 	if snapshot == nil {
-		return RiverError(Err_INVALID_ARGUMENT, "blockheader snapshot common is undefined")
+		return RiverError(Err_INVALID_ARGUMENT, "blockheader snapshot is not a membership snapshot")
 	}
-	switch content := commonPayload.Content.(type) {
-	case *CommonPayload_KeySolicitation_:
-		// remove prev solicitation with same device key, sort the event keys in the new event and append it
-		if snapshot.Solicitations == nil {
-			snapshot.Solicitations = make(map[string]*CommonPayload_Snapshot_Solicitations)
+	switch content := memberPayload.Content.(type) {
+	case *MemberPayload_Membership_:
+		switch content.Membership.Op {
+		case MembershipOp_SO_JOIN:
+			snapshot.Joined = addMember(snapshot.Joined, &MemberPayload_Snapshot_Member{
+				UserAddress:  content.Membership.UserAddress,
+				MiniblockNum: miniblockNum,
+				EventNum:     eventNum,
+			})
+			return nil
+		case MembershipOp_SO_LEAVE:
+			snapshot.Joined = removeMember(snapshot.Joined, content.Membership.UserAddress)
+			return nil
+		case MembershipOp_SO_INVITE:
+			// not tracking invites currently
+			return nil
+		case MembershipOp_SO_UNSPECIFIED:
+			return RiverError(Err_INVALID_ARGUMENT, "membership op is unspecified")
+		default:
+			return RiverError(Err_INVALID_ARGUMENT, "unknown membership op %v", content.Membership.Op)
 		}
-		if solicitations, ok := snapshot.Solicitations[senderId]; ok {
-			// remove prev solicitation with same device key
-			i := 0
-			for _, event := range solicitations.Events {
-				if event.DeviceKey != content.KeySolicitation.DeviceKey {
-					solicitations.Events[i] = event
-					i++
-				}
-			}
-			// sort the event keys in the new event and append it
-			event := content.KeySolicitation
-			event.SessionIds = sort.StringSlice(event.SessionIds)
-			solicitations.Events = append(solicitations.Events[:i], event)
-		} else {
-			snapshot.Solicitations[senderId] = &CommonPayload_Snapshot_Solicitations{
-				Events: []*CommonPayload_KeySolicitation{content.KeySolicitation},
+	case *MemberPayload_KeySolicitation_:
+		member, err := findMember(snapshot.Joined, creatorAddress)
+		if err != nil {
+			return err
+		}
+		// if solicitation exists for this device key, remove it by shifting the slice
+		i := 0
+		for _, event := range member.Solicitations {
+			if event.DeviceKey != content.KeySolicitation.DeviceKey {
+				member.Solicitations[i] = event
+				i++
 			}
 		}
+		// sort the event keys in the new event
+		event := content.KeySolicitation
+		event.SessionIds = sort.StringSlice(event.SessionIds)
+		// append it
+		MAX_DEVICES := 10
+		startIndex := max(0, i-MAX_DEVICES)
+		member.Solicitations = append(member.Solicitations[startIndex:i], event)
 		return nil
-	case *CommonPayload_KeyFulfillment_:
+	case *MemberPayload_KeyFulfillment_:
+		member, err := findMember(snapshot.Joined, creatorAddress)
+		if err != nil {
+			return err
+		}
 		// clear out any fulfilled session ids for the device key
-		if solicitation, ok := snapshot.Solicitations[content.KeyFulfillment.UserId]; ok {
-			for _, event := range solicitation.Events {
-				if event.DeviceKey == content.KeyFulfillment.DeviceKey {
-					event.SessionIds = removeCommon(event.SessionIds, content.KeyFulfillment.SessionIds)
-					event.IsNewDevice = false
-					break
-				}
+		for _, event := range member.Solicitations {
+			if event.DeviceKey == content.KeyFulfillment.DeviceKey {
+				event.SessionIds = removeCommon(event.SessionIds, content.KeyFulfillment.SessionIds)
+				event.IsNewDevice = false
+				break
 			}
 		}
 		return nil
 	default:
-		return RiverError(Err_INVALID_ARGUMENT, "unknown common payload type %T", commonPayload.Content)
+		return RiverError(Err_INVALID_ARGUMENT, "unknown membership payload type %T", memberPayload.Content)
 	}
+
 }
 
 func removeCommon(x, y []string) []string {
@@ -506,4 +533,50 @@ func removeCommon(x, y []string) []string {
 	}
 
 	return result
+}
+
+func findMember(members []*MemberPayload_Snapshot_Member, memberAddress []byte) (*MemberPayload_Snapshot_Member, error) {
+	index := sort.Search(len(members), func(i int) bool {
+		return bytes.Compare(members[i].UserAddress, memberAddress) >= 0
+	})
+
+	if index < len(members) && bytes.Equal(members[index].UserAddress, memberAddress) {
+		return members[index], nil
+	}
+
+	return nil, RiverError(Err_INVALID_ARGUMENT, "member not found")
+}
+
+func removeMember(members []*MemberPayload_Snapshot_Member, memberAddress []byte) []*MemberPayload_Snapshot_Member {
+	index := sort.Search(len(members), func(i int) bool {
+		return bytes.Compare(members[i].UserAddress, memberAddress) >= 0
+	})
+
+	// Check if the element is found at the index.
+	if index < len(members) && bytes.Equal(members[index].UserAddress, memberAddress) {
+		// Remove the element by slicing.
+		return append(members[:index], members[index+1:]...)
+	}
+
+	// Element not found, return the original slice.
+	return members
+}
+
+func addMember(members []*MemberPayload_Snapshot_Member, newMembers ...*MemberPayload_Snapshot_Member) []*MemberPayload_Snapshot_Member {
+	for _, member := range newMembers {
+		index := sort.Search(len(members), func(i int) bool {
+			return bytes.Compare(members[i].UserAddress, member.UserAddress) >= 0
+		})
+
+		// Check if the element is found at the index.
+		if index < len(members) && bytes.Equal(members[index].UserAddress, member.UserAddress) {
+			return members
+		}
+
+		// Insert the element by slicing.
+		members = append(members, nil)
+		copy(members[index+1:], members[index:])
+		members[index] = member
+	}
+	return members
 }

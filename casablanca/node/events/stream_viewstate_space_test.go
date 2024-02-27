@@ -7,6 +7,7 @@ import (
 	"github.com/river-build/river/config"
 	"github.com/river-build/river/crypto"
 	"github.com/river-build/river/protocol"
+	"github.com/river-build/river/shared"
 	. "github.com/river-build/river/shared"
 	"github.com/river-build/river/storage"
 	"github.com/river-build/river/testutils"
@@ -47,11 +48,11 @@ func makeEnvelopeWithPayload_T(
 
 func makeTestSpaceStream(
 	t *testing.T,
-	wallet *crypto.Wallet,
-	userId string,
+	userWallet *crypto.Wallet,
 	spaceId string,
 	streamSettings *protocol.StreamSettings,
 ) ([]*ParsedEvent, *protocol.Miniblock) {
+	userAddess := userWallet.Address.Bytes()
 	if streamSettings == nil {
 		streamSettings = &protocol.StreamSettings{
 			DisableMiniblockCreation: true,
@@ -59,7 +60,7 @@ func makeTestSpaceStream(
 	}
 	inception := makeEnvelopeWithPayload_T(
 		t,
-		wallet,
+		userWallet,
 		Make_SpacePayload_Inception(
 			spaceId,
 			streamSettings,
@@ -68,8 +69,8 @@ func makeTestSpaceStream(
 	)
 	join := makeEnvelopeWithPayload_T(
 		t,
-		wallet,
-		Make_SpacePayload_Membership(protocol.MembershipOp_SO_JOIN, userId, userId),
+		userWallet,
+		Make_MemberPayload_Membership(protocol.MembershipOp_SO_JOIN, userAddess, userAddess),
 		nil,
 	)
 
@@ -77,7 +78,7 @@ func makeTestSpaceStream(
 		parsedEvent(t, inception),
 		parsedEvent(t, join),
 	}
-	mb, err := MakeGenesisMiniblock(wallet, events)
+	mb, err := MakeGenesisMiniblock(userWallet, events)
 	require.NoError(t, err)
 	return events, mb
 }
@@ -224,7 +225,12 @@ func TestSpaceViewState(t *testing.T) {
 
 	// create a stream
 	spaceStreamId := testutils.FakeStreamId(STREAM_SPACE_PREFIX)
-	_, mb := makeTestSpaceStream(t, user1Wallet, "user_1", spaceStreamId, nil)
+	user2Id, err := shared.AddressHex(user2Wallet.Address.Bytes())
+	require.NoError(t, err)
+	user3Id, err := shared.AddressHex(user3Wallet.Address.Bytes())
+	require.NoError(t, err)
+
+	_, mb := makeTestSpaceStream(t, user1Wallet, spaceStreamId, nil)
 	s, _, err := tt.createStream(ctx, spaceStreamId, mb)
 	require.NoError(t, err)
 	stream := s.(*streamImpl)
@@ -233,21 +239,21 @@ func TestSpaceViewState(t *testing.T) {
 	view0, err := stream.GetView(ctx)
 	require.NoError(t, err)
 	// check that users 2 and 3 are not joined yet,
-	spaceViewStateTest_CheckUserJoined(t, view0.(JoinableStreamView), "user_1", true)
-	spaceViewStateTest_CheckUserJoined(t, view0.(JoinableStreamView), "user_2", false)
-	spaceViewStateTest_CheckUserJoined(t, view0.(JoinableStreamView), "user_3", false)
+	spaceViewStateTest_CheckUserJoined(t, view0.(JoinableStreamView), user1Wallet, true)
+	spaceViewStateTest_CheckUserJoined(t, view0.(JoinableStreamView), user2Wallet, false)
+	spaceViewStateTest_CheckUserJoined(t, view0.(JoinableStreamView), user3Wallet, false)
 	// add two more membership events
 	// user_2
-	joinSpace_T(t, user2Wallet, ctx, stream, []string{"user_2"})
+	joinSpace_T(t, user2Wallet, ctx, stream, []string{user2Id})
 	// user_3
-	joinSpace_T(t, user3Wallet, ctx, stream, []string{"user_3"})
+	joinSpace_T(t, user3Wallet, ctx, stream, []string{user3Id})
 	// get a new view
 	view1, err := stream.GetView(ctx)
 	require.NoError(t, err)
 	// users show up as joined imediately, because we need that information to continue to add events
-	spaceViewStateTest_CheckUserJoined(t, view1.(JoinableStreamView), "user_1", true)
-	spaceViewStateTest_CheckUserJoined(t, view1.(JoinableStreamView), "user_2", true)
-	spaceViewStateTest_CheckUserJoined(t, view1.(JoinableStreamView), "user_3", true)
+	spaceViewStateTest_CheckUserJoined(t, view1.(JoinableStreamView), user1Wallet, true)
+	spaceViewStateTest_CheckUserJoined(t, view1.(JoinableStreamView), user2Wallet, true)
+	spaceViewStateTest_CheckUserJoined(t, view1.(JoinableStreamView), user3Wallet, true)
 	// make a miniblock
 	_, err = stream.MakeMiniblock(ctx, false)
 	require.NoError(t, err)
@@ -257,9 +263,9 @@ func TestSpaceViewState(t *testing.T) {
 	view2, err := stream.GetView(ctx)
 	require.NoError(t, err)
 	// check that users are joined
-	spaceViewStateTest_CheckUserJoined(t, view2.(JoinableStreamView), "user_1", true)
-	spaceViewStateTest_CheckUserJoined(t, view2.(JoinableStreamView), "user_2", true)
-	spaceViewStateTest_CheckUserJoined(t, view2.(JoinableStreamView), "user_3", true)
+	spaceViewStateTest_CheckUserJoined(t, view2.(JoinableStreamView), user1Wallet, true)
+	spaceViewStateTest_CheckUserJoined(t, view2.(JoinableStreamView), user2Wallet, true)
+	spaceViewStateTest_CheckUserJoined(t, view2.(JoinableStreamView), user3Wallet, true)
 	// now, turn that block into bytes, then load it back into a view
 	miniblocks := stream.view.MiniblocksFromLastSnapshot()
 	require.Equal(t, 1, len(miniblocks))
@@ -277,13 +283,13 @@ func TestSpaceViewState(t *testing.T) {
 	require.NotNil(t, view3)
 
 	// check that users are joined when loading from the snapshot
-	spaceViewStateTest_CheckUserJoined(t, view3.(JoinableStreamView), "user_1", true)
-	spaceViewStateTest_CheckUserJoined(t, view3.(JoinableStreamView), "user_2", true)
-	spaceViewStateTest_CheckUserJoined(t, view3.(JoinableStreamView), "user_3", true)
+	spaceViewStateTest_CheckUserJoined(t, view3.(JoinableStreamView), user1Wallet, true)
+	spaceViewStateTest_CheckUserJoined(t, view3.(JoinableStreamView), user2Wallet, true)
+	spaceViewStateTest_CheckUserJoined(t, view3.(JoinableStreamView), user3Wallet, true)
 }
 
-func spaceViewStateTest_CheckUserJoined(t *testing.T, view JoinableStreamView, userId string, expected bool) {
-	joined, err := view.IsUserJoined(userId)
+func spaceViewStateTest_CheckUserJoined(t *testing.T, view JoinableStreamView, userWallet *crypto.Wallet, expected bool) {
+	joined, err := view.IsMember(userWallet.Address.Bytes())
 	require.NoError(t, err)
 	require.Equal(t, expected, joined)
 }
@@ -293,14 +299,20 @@ func TestChannelViewState_JoinedMembers(t *testing.T) {
 	defer tt.closer()
 
 	userWallet, _ := crypto.NewWallet(ctx)
-	alice := "alice"
-	bob := "bob"
-	carol := "carol"
+	aliceWallet, _ := crypto.NewWallet(ctx)
+	bobWallet, _ := crypto.NewWallet(ctx)
+	carolWallet, _ := crypto.NewWallet(ctx)
+	alice, err := shared.AddressHex(aliceWallet.Address.Bytes())
+	require.NoError(t, err)
+	bob, err := shared.AddressHex(bobWallet.Address.Bytes())
+	require.NoError(t, err)
+	carol, err := shared.AddressHex(carolWallet.Address.Bytes())
+	require.NoError(t, err)
 	spaceStreamId := testutils.FakeStreamId(STREAM_SPACE_PREFIX)
 	channelStreamId := testutils.FakeStreamId(STREAM_CHANNEL_PREFIX)
 
 	// create a space stream and add the members
-	_, mb := makeTestSpaceStream(t, userWallet, alice, spaceStreamId, nil)
+	_, mb := makeTestSpaceStream(t, userWallet, spaceStreamId, nil)
 	sStream, _, err := tt.createStream(ctx, spaceStreamId, mb)
 	require.NoError(t, err)
 	spaceStream := sStream.(*streamImpl)
@@ -343,14 +355,20 @@ func TestChannelViewState_RemainingMembers(t *testing.T) {
 	defer tt.closer()
 
 	userWallet, _ := crypto.NewWallet(ctx)
-	alice := "alice"
-	bob := "bob"
-	carol := "carol"
+	aliceWallet, _ := crypto.NewWallet(ctx)
+	bobWallet, _ := crypto.NewWallet(ctx)
+	carolWallet, _ := crypto.NewWallet(ctx)
+	alice, err := shared.AddressHex(aliceWallet.Address.Bytes())
+	require.NoError(t, err)
+	bob, err := shared.AddressHex(bobWallet.Address.Bytes())
+	require.NoError(t, err)
+	carol, err := shared.AddressHex(carolWallet.Address.Bytes())
+	require.NoError(t, err)
 	spaceStreamId := testutils.FakeStreamId(STREAM_SPACE_PREFIX)
 	channelStreamId := testutils.FakeStreamId(STREAM_CHANNEL_PREFIX)
 
 	// create a space stream and add the members
-	_, mb := makeTestSpaceStream(t, userWallet, alice, spaceStreamId, nil)
+	_, mb := makeTestSpaceStream(t, userWallet, spaceStreamId, nil)
 	sStream, _, err := tt.createStream(ctx, spaceStreamId, mb)
 	require.NoError(t, err)
 	spaceStream := sStream.(*streamImpl)

@@ -4,7 +4,7 @@ import "fmt"
 
 type IsStreamEvent_Payload = isStreamEvent_Payload
 type IsMiniblockHeader_Content = isMiniblockHeader_Content
-type IsCommonPayload_Content = isCommonPayload_Content
+type IsMemberPayload_Content = isMemberPayload_Content
 type IsSpacePayload_Content = isSpacePayload_Content
 type IsChannelPayload_Content = isChannelPayload_Content
 type IsDmChannelPayload_Content = isDmChannelPayload_Content
@@ -200,7 +200,7 @@ func (e *StreamEvent) VerifyPayloadTypeMatchesStreamType(i IsInceptionPayload) e
 		if !ok {
 			return fmt.Errorf("inception type mismatch: *protocol.StreamEvent_MediaPayload::%T vs %T", e.GetMediaPayload().Content, i)
 		}
-	case *StreamEvent_CommonPayload:
+	case *StreamEvent_MemberPayload:
 		return nil
 	default:
 		return fmt.Errorf("inception type type not handled: %T vs %T", e.Payload, i)

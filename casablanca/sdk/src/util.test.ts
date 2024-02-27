@@ -131,6 +131,10 @@ export const makeRandomUserContext = async (): Promise<SignerContext> => {
     return ret
 }
 
+export const makeRandomUserAddress = (): Uint8Array => {
+    return publicKeyToAddress(getPublicKey(utils.randomPrivateKey(), false))
+}
+
 export const makeUserContextFromWallet = async (wallet: ethers.Wallet): Promise<SignerContext> => {
     const userPrimaryWallet = wallet
     const devicePrivateKey = utils.randomPrivateKey()

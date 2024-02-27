@@ -9,7 +9,6 @@ import {
     ChannelProperties,
     ChannelPayload_Inception,
     UserSettingsPayload_Inception,
-    Membership,
     SpacePayload_Channel,
     EncryptedData,
     UserPayload_UserMembership,
@@ -24,19 +23,22 @@ import {
     GdmChannelPayload_Inception,
     UserInboxPayload_Ack,
     UserInboxPayload_Inception,
-    CommonPayload,
     UserDeviceKeyPayload_EncryptionDevice,
     UserInboxPayload_GroupEncryptionSessions,
-    CommonPayload_KeyFulfillment,
-    CommonPayload_KeySolicitation,
     SyncCookie,
     Snapshot,
     UserPayload_UserMembershipAction,
+    MemberPayload_Membership,
+    MembershipOp,
+    MemberPayload_KeyFulfillment,
+    MemberPayload_KeySolicitation,
+    MemberPayload,
 } from '@river/proto'
 import { keccak256 } from 'ethereum-cryptography/keccak'
 import { bin_toHexString } from '@river/dlog'
 import { isDefined } from './check'
 import { DecryptedContent, DecryptedContentError } from './encryptedContentTypes'
+import { addressFromUserId } from './id'
 
 export type LocalEventStatus = 'sending' | 'sent' | 'failed'
 export interface LocalEvent {
@@ -173,6 +175,20 @@ export function isCiphertext(text: string): boolean {
 export const takeKeccakFingerprintInHex = (buf: Uint8Array, n: number): string => {
     const hash = bin_toHexString(keccak256(buf))
     return hash.slice(0, n)
+}
+
+export const make_MemberPayload_Membership = (
+    value: PlainMessage<MemberPayload_Membership>,
+): PlainMessage<StreamEvent>['payload'] => {
+    return {
+        case: 'memberPayload',
+        value: {
+            content: {
+                case: 'membership',
+                value,
+            },
+        },
+    }
 }
 
 export const make_UserPayload_Inception = (
@@ -411,18 +427,20 @@ export const make_DMChannelPayload_Inception = (
     }
 }
 
-export const make_DMChannelPayload_Membership = (
-    value: PlainMessage<Membership>,
+type DeprecatedMembership = {
+    userId: string
+    op: MembershipOp
+    initiatorId: string
+}
+
+export const make_MemberPayload_Membership2 = (
+    value: DeprecatedMembership,
 ): PlainMessage<StreamEvent>['payload'] => {
-    return {
-        case: 'dmChannelPayload',
-        value: {
-            content: {
-                case: 'membership',
-                value,
-            },
-        },
-    }
+    return make_MemberPayload_Membership({
+        userAddress: addressFromUserId(value.userId),
+        op: value.op,
+        initiatorAddress: addressFromUserId(value.initiatorId),
+    })
 }
 
 export const make_DMChannelPayload_DisplayName = (
@@ -461,20 +479,6 @@ export const make_GDMChannelPayload_Inception = (
         value: {
             content: {
                 case: 'inception',
-                value,
-            },
-        },
-    }
-}
-
-export const make_GDMChannelPayload_Membership = (
-    value: PlainMessage<Membership>,
-): PlainMessage<StreamEvent>['payload'] => {
-    return {
-        case: 'gdmChannelPayload',
-        value: {
-            content: {
-                case: 'membership',
                 value,
             },
         },
@@ -579,34 +583,6 @@ export const make_UserInboxPayload_Inception = (
     }
 }
 
-export const make_SpacePayload_Membership = (
-    value: PlainMessage<Membership>,
-): PlainMessage<StreamEvent>['payload'] => {
-    return {
-        case: 'spacePayload',
-        value: {
-            content: {
-                case: 'membership',
-                value,
-            },
-        },
-    }
-}
-
-export const make_ChannelPayload_Membership = (
-    value: PlainMessage<Membership>,
-): PlainMessage<StreamEvent>['payload'] => {
-    return {
-        case: 'channelPayload',
-        value: {
-            content: {
-                case: 'membership',
-                value,
-            },
-        },
-    }
-}
-
 export const make_UserInboxPayload_GroupEncryptionSessions = (
     value: PlainMessage<UserInboxPayload_GroupEncryptionSessions>,
 ): PlainMessage<StreamEvent>['payload'] => {
@@ -663,23 +639,6 @@ export const make_SpacePayload_Channel = (
     }
 }
 
-export const getSpaceOrChannelPayload_Membership = (
-    event: ParsedEvent | StreamEvent | undefined,
-): Membership | undefined => {
-    if (!isDefined(event)) {
-        return undefined
-    }
-    if ('event' in event) {
-        event = event.event as unknown as StreamEvent
-    }
-    if (event.payload?.case === 'spacePayload' || event.payload?.case === 'channelPayload') {
-        if (event.payload.value.content.case === 'membership') {
-            return event.payload.value.content.value
-        }
-    }
-    return undefined
-}
-
 export const getUserPayload_Membership = (
     event: ParsedEvent | StreamEvent | undefined,
 ): UserPayload_UserMembership | undefined => {
@@ -728,31 +687,31 @@ export const make_ChannelPayload_Message = (
     }
 }
 
-export const make_CommonPayload_KeyFulfillment = (
-    content: PlainMessage<CommonPayload_KeyFulfillment>,
+export const make_MemberPayload_KeyFulfillment = (
+    value: PlainMessage<MemberPayload_KeyFulfillment>,
 ): PlainMessage<StreamEvent>['payload'] => {
     return {
-        case: 'commonPayload',
+        case: 'memberPayload',
         value: {
             content: {
                 case: 'keyFulfillment',
-                value: content,
+                value,
             },
-        } satisfies PlainMessage<CommonPayload>,
+        } satisfies PlainMessage<MemberPayload>,
     }
 }
 
-export const make_CommonPayload_KeySolicitation = (
-    content: PlainMessage<CommonPayload_KeySolicitation>,
+export const make_MemberPayload_KeySolicitation = (
+    content: PlainMessage<MemberPayload_KeySolicitation>,
 ): PlainMessage<StreamEvent>['payload'] => {
     return {
-        case: 'commonPayload',
+        case: 'memberPayload',
         value: {
             content: {
                 case: 'keySolicitation',
                 value: content,
             },
-        } satisfies PlainMessage<CommonPayload>,
+        } satisfies PlainMessage<MemberPayload>,
     }
 }
 

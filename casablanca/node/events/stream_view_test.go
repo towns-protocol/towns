@@ -10,6 +10,7 @@ import (
 	"github.com/river-build/river/crypto"
 	. "github.com/river-build/river/protocol"
 	"github.com/river-build/river/storage"
+	"github.com/river-build/river/testutils"
 
 	"github.com/stretchr/testify/assert"
 	"google.golang.org/protobuf/proto"
@@ -31,9 +32,7 @@ var streamConfig_t = config.StreamConfig{
 		Generations: 5,
 	},
 	DefaultMinEventsPerSnapshot: minEventsPerSnapshot,
-	MinEventsPerSnapshot: map[string]int{
-		"streamid$1": minEventsPerSnapshot,
-	},
+	MinEventsPerSnapshot:        map[string]int{},
 }
 
 func parsedEvent(t *testing.T, envelope *Envelope) *ParsedEvent {
@@ -45,16 +44,20 @@ func parsedEvent(t *testing.T, envelope *Envelope) *ParsedEvent {
 func TestLoad(t *testing.T) {
 	ctx := context.Background()
 	wallet, _ := crypto.NewWallet(ctx)
+	var streamId = testutils.UserStreamIdFromAddress(wallet.Address)
+	streamConfig_t.MinEventsPerSnapshot[streamId] = minEventsPerSnapshot
+
+	userAddress := wallet.Address.Bytes()
 
 	inception, err := MakeEnvelopeWithPayload(
 		wallet,
-		Make_UserPayload_Inception("streamid$1", nil),
+		Make_UserPayload_Inception(streamId, nil),
 		nil,
 	)
 	assert.NoError(t, err)
 	join, err := MakeEnvelopeWithPayload(
 		wallet,
-		Make_UserPayload_Membership(MembershipOp_SO_JOIN, "streamid$1", nil),
+		Make_UserPayload_Membership(MembershipOp_SO_JOIN, streamId, nil),
 		nil,
 	)
 	assert.NoError(t, err)
@@ -80,16 +83,16 @@ func TestLoad(t *testing.T) {
 
 	assert.NoError(t, err)
 
-	assert.Equal(t, "streamid$1", view.StreamId())
+	assert.Equal(t, streamId, view.StreamId())
 
 	ip := view.InceptionPayload()
 	assert.NotNil(t, ip)
 	assert.Equal(t, parsedEvent(t, inception).Event.GetInceptionPayload().GetStreamId(), ip.GetStreamId())
-	assert.Equal(t, "streamid$1", ip.GetStreamId())
+	assert.Equal(t, streamId, ip.GetStreamId())
 
-	joined, err := view.IsUserJoined("userid$1") // joined is only valid on space and channel views
+	joined, err := view.IsMember(userAddress) // joined is only valid on user, space and channel views
 	assert.NoError(t, err)
-	assert.False(t, joined)
+	assert.True(t, joined)
 
 	last := view.LastEvent()
 	assert.NotNil(t, last)
@@ -109,7 +112,7 @@ func TestLoad(t *testing.T) {
 
 	cookie := view.SyncCookie("nodeAddress$1")
 	assert.NotNil(t, cookie)
-	assert.Equal(t, "streamid$1", cookie.StreamId)
+	assert.Equal(t, streamId, cookie.StreamId)
 	assert.Equal(t, int64(1), cookie.MinipoolGen)
 	assert.Equal(t, int64(0), cookie.MinipoolSlot)
 
@@ -130,7 +133,7 @@ func TestLoad(t *testing.T) {
 	// add one more event (just join again)
 	join2, err := MakeEnvelopeWithPayload(
 		wallet,
-		Make_UserPayload_Membership(MembershipOp_SO_JOIN, "streamid$1", nil),
+		Make_UserPayload_Membership(MembershipOp_SO_JOIN, streamId, nil),
 		blockHash[:],
 	)
 	assert.NoError(t, err)
@@ -151,7 +154,7 @@ func TestLoad(t *testing.T) {
 	// add another join event
 	join3, err := MakeEnvelopeWithPayload(
 		wallet,
-		Make_UserPayload_Membership(MembershipOp_SO_JOIN, "streamid$1", nil),
+		Make_UserPayload_Membership(MembershipOp_SO_JOIN, streamId, nil),
 		view.LastBlock().Hash[:],
 	)
 	assert.NoError(t, err)
@@ -209,7 +212,7 @@ func TestLoad(t *testing.T) {
 	// add an event with an old hash
 	join4, err := MakeEnvelopeWithPayload(
 		wallet,
-		Make_UserPayload_Membership(MembershipOp_SO_LEAVE, "streamid$1", nil),
+		Make_UserPayload_Membership(MembershipOp_SO_LEAVE, streamId, nil),
 		newSV1.blocks[0].Hash[:],
 	)
 	assert.NoError(t, err)

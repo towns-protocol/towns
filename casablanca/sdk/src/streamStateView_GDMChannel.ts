@@ -1,7 +1,6 @@
 import TypedEmitter from 'typed-emitter'
 import { GdmChannelPayload, GdmChannelPayload_Snapshot, Snapshot } from '@river/proto'
 import { StreamStateView_AbstractContent } from './streamStateView_AbstractContent'
-import { StreamStateView_Membership } from './streamStateView_Membership'
 import {
     ConfirmedTimelineEvent,
     ParsedEvent,
@@ -17,7 +16,6 @@ import { logNever } from './check'
 
 export class StreamStateView_GDMChannel extends StreamStateView_AbstractContent {
     readonly streamId: string
-    readonly memberships: StreamStateView_Membership
     readonly userMetadata: StreamStateView_UserMetadata
     readonly channelMetadata: StreamStateView_ChannelMetadata
 
@@ -25,7 +23,6 @@ export class StreamStateView_GDMChannel extends StreamStateView_AbstractContent 
 
     constructor(userId: string, streamId: string) {
         super()
-        this.memberships = new StreamStateView_Membership(streamId)
         this.userMetadata = new StreamStateView_UserMetadata(userId, streamId)
         this.channelMetadata = new StreamStateView_ChannelMetadata(userId, streamId)
         this.streamId = streamId
@@ -37,7 +34,6 @@ export class StreamStateView_GDMChannel extends StreamStateView_AbstractContent 
         cleartexts: Record<string, string> | undefined,
         encryptionEmitter: TypedEmitter<StreamEncryptionEvents> | undefined,
     ): void {
-        this.memberships.applySnapshot(content.memberships, encryptionEmitter)
         this.userMetadata.applySnapshot(
             content.usernames,
             content.displayNames,
@@ -75,7 +71,6 @@ export class StreamStateView_GDMChannel extends StreamStateView_AbstractContent 
                     encryptionEmitter,
                 )
                 break
-            case 'membership':
             case 'displayName':
             case 'username':
             case 'channelProperties':
@@ -109,13 +104,6 @@ export class StreamStateView_GDMChannel extends StreamStateView_AbstractContent 
                     encryptionEmitter,
                 )
                 this.updateLastEvent(event.remoteEvent, stateEmitter)
-                break
-            case 'membership':
-                this.memberships.appendMembershipEvent(
-                    event.hashStr,
-                    payload.content.value,
-                    encryptionEmitter,
-                )
                 break
             case 'displayName':
             case 'username':
@@ -184,19 +172,5 @@ export class StreamStateView_GDMChannel extends StreamStateView_AbstractContent 
             this.lastEventCreatedAtEpocMs = createdAtEpocMs
             stateEmitter?.emit('streamLatestTimestampUpdated', this.streamId)
         }
-    }
-
-    participants(): Set<string> {
-        return new Set([
-            ...this.memberships.joinedUsers,
-            ...this.memberships.invitedUsers,
-            ...this.memberships.leftUsers,
-        ])
-    }
-
-    // For GDMs, users must be able to see the messages before joining,
-    // but not after leaving.
-    joinedOrInvitedParticipants(): Set<string> {
-        return new Set([...this.memberships.joinedUsers, ...this.memberships.invitedUsers])
     }
 }

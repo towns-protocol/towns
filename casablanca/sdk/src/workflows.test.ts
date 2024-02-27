@@ -16,10 +16,9 @@ import {
     getChannelPayload,
     getUserPayload_Membership,
     make_ChannelPayload_Inception,
-    make_ChannelPayload_Membership,
     make_fake_encryptedData,
+    make_MemberPayload_Membership2,
     make_SpacePayload_Inception,
-    make_SpacePayload_Membership,
     make_UserPayload_Inception,
 } from './types'
 
@@ -64,7 +63,7 @@ describe('workflows', () => {
                 spaceInceptionEvent,
                 await makeEvent(
                     bobsContext,
-                    make_SpacePayload_Membership({
+                    make_MemberPayload_Membership2({
                         userId: bobsUserId,
                         op: MembershipOp.SO_JOIN,
                         initiatorId: bobsUserId,
@@ -100,7 +99,7 @@ describe('workflows', () => {
         )
         const channelJoinEvent = await makeEvent(
             bobsContext,
-            make_ChannelPayload_Membership({
+            make_MemberPayload_Membership2({
                 userId: bobsUserId,
                 op: MembershipOp.SO_JOIN,
                 initiatorId: bobsUserId,

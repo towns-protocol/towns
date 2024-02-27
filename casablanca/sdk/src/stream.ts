@@ -92,14 +92,14 @@ export class Stream extends (EventEmitter as new () => TypedEmitter<StreamEvents
      */
     public async waitForMembership(membership: MembershipOp, userId?: string) {
         // check to see if we're already in that state
-        if (this.view.getMemberships().isMember(membership, userId ?? this.userId)) {
+        if (this.view.getMembers().isMember(membership, userId ?? this.userId)) {
             return
         }
         // wait for a membership updated event, event, check again
         await this.waitFor('streamMembershipUpdated', (_streamId: string, iUserId: string) => {
             return (
                 (userId === undefined || userId === iUserId) &&
-                this.view.getMemberships().isMember(membership, userId ?? this.userId)
+                this.view.getMembers().isMember(membership, userId ?? this.userId)
             )
         })
     }

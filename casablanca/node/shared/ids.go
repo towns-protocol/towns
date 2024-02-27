@@ -97,6 +97,11 @@ func AddressFromUserId(userId string) ([]byte, error) {
 	return hex.DecodeString(userId[2:])
 }
 
+func UserStreamIdFromBytes(addr []byte) (string, error) {
+	address := common.BytesToAddress(addr)
+	return UserStreamIdFromAddress(address)
+}
+
 func UserStreamIdFromAddress(addr common.Address) (string, error) {
 	return STREAM_USER_PREFIX + hex.EncodeToString(addr.Bytes()), nil
 }

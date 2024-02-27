@@ -57,9 +57,7 @@ test('create space, and have user join', async () => {
     const channelStream = alice.casablancaClient?.streams.get(channelId)
     expect(channelStream).toBeDefined()
     await waitFor(() =>
-        expect(
-            channelStream!.view.getMemberships().isMemberJoined(alice.getUserId()!),
-        ).toBeTruthy(),
+        expect(channelStream!.view.getMembers().isMemberJoined(alice.getUserId()!)).toBeTruthy(),
     )
     const userStreamId = alice.casablancaClient?.userStreamId
     const userStream = alice.casablancaClient?.streams.get(userStreamId!)

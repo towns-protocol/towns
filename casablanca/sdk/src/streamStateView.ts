@@ -27,7 +27,7 @@ import { StreamStateView_Channel } from './streamStateView_Channel'
 import { StreamStateView_User } from './streamStateView_User'
 import { StreamStateView_UserSettings } from './streamStateView_UserSettings'
 import { StreamStateView_UserDeviceKeys } from './streamStateView_UserDeviceKey'
-import { StreamStateView_Membership } from './streamStateView_Membership'
+import { StreamStateView_Members } from './streamStateView_Members'
 import { StreamStateView_Media } from './streamStateView_Media'
 import { StreamStateView_GDMChannel } from './streamStateView_GDMChannel'
 import { StreamStateView_AbstractContent } from './streamStateView_AbstractContent'
@@ -45,7 +45,6 @@ import {
     isUserInboxStreamId,
 } from './id'
 import { StreamStateView_UserInbox } from './streamStateView_UserInbox'
-import { StreamStateView_CommonContent } from './streamStateView_CommonContent'
 import { DecryptedContent, DecryptedContentError } from './encryptedContentTypes'
 import { StreamStateView_UnknownContent } from './streamStateView_UnknownContent'
 import { StreamStateView_UserMetadata } from './streamStateView_UserMetadata'
@@ -69,8 +68,8 @@ export class StreamStateView {
     miniblockInfo?: { max: bigint; min: bigint; terminusReached: boolean }
     syncCookie?: SyncCookie
 
-    // Common Content
-    commonContent: StreamStateView_CommonContent
+    // membership content
+    membershipContent: StreamStateView_Members
 
     // Space Content
     private readonly _spaceContent?: StreamStateView_Space
@@ -184,7 +183,7 @@ export class StreamStateView {
         }
 
         this.prevSnapshotMiniblockNum = 0n
-        this.commonContent = new StreamStateView_CommonContent(streamId)
+        this.membershipContent = new StreamStateView_Members(streamId)
     }
 
     applySnapshot(
@@ -253,7 +252,7 @@ export class StreamStateView {
             default:
                 logNever(snapshot.content)
         }
-        this.commonContent.applySnapshot(snapshot, encryptionEmitter)
+        this.membershipContent.applySnapshot(snapshot, encryptionEmitter)
     }
 
     private appendStreamAndCookie(
@@ -325,25 +324,16 @@ export class StreamStateView {
                     this.updateMiniblockInfo(payload.value, { max: payload.value.miniblockNum })
                     timelineEvent.confirmedEventNum =
                         payload.value.eventNumOffset + BigInt(payload.value.eventHashes.length)
-                    confirmed = []
-                    for (let i = 0; i < payload.value.eventHashes.length; i++) {
-                        const eventId = bin_toHexString(payload.value.eventHashes[i])
-                        const event = this.events.get(eventId)
-                        if (!event) {
-                            logError(`Mininblock event not found ${eventId}`) // aellis this is pretty serious
-                            continue
-                        }
-                        event.miniblockNum = payload.value.miniblockNum
-                        event.confirmedEventNum = payload.value.eventNumOffset + BigInt(i)
-                        check(isConfirmedEvent(event), `Event is not confirmed ${eventId}`)
-                        this.getContent().onConfirmedEvent(event, stateEmitter)
-                        this.commonContent.onConfirmedEvent(event, encryptionEmitter, stateEmitter)
-                        confirmed.push(event)
-                    }
+                    confirmed = this.processMiniblockHeader(
+                        payload.value,
+                        payload.value.eventHashes,
+                        encryptionEmitter,
+                        stateEmitter,
+                    )
                     break
-                case 'commonPayload':
-                    this.commonContent.appendCommonContent(
-                        event,
+                case 'memberPayload':
+                    this.membershipContent.appendEvent(
+                        timelineEvent,
                         payload.value,
                         encryptionEmitter,
                         stateEmitter,
@@ -361,6 +351,42 @@ export class StreamStateView {
             }
         } catch (e) {
             logError(`StreamStateView::Error appending event ${event.hashStr}`, e)
+        }
+        return confirmed
+    }
+
+    private processMiniblockHeader(
+        header: MiniblockHeader,
+        eventHashes: Uint8Array[],
+        encryptionEmitter: TypedEmitter<StreamEncryptionEvents> | undefined,
+        stateEmitter: TypedEmitter<StreamStateEvents> | undefined,
+    ): ConfirmedTimelineEvent[] {
+        const confirmed = []
+        for (let i = 0; i < eventHashes.length; i++) {
+            const eventId = bin_toHexString(eventHashes[i])
+            const event = this.events.get(eventId)
+            if (!event) {
+                logError(`Mininblock event not found ${eventId}`) // aellis this is pretty serious
+                continue
+            }
+            event.miniblockNum = header.miniblockNum
+            event.confirmedEventNum = header.eventNumOffset + BigInt(i)
+            check(isConfirmedEvent(event), `Event is not confirmed ${eventId}`)
+            switch (event.remoteEvent.event.payload.case) {
+                case 'memberPayload':
+                    this.membershipContent.onConfirmedEvent(
+                        event,
+                        event.remoteEvent.event.payload.value,
+                        encryptionEmitter,
+                        stateEmitter,
+                    )
+                    break
+                case undefined:
+                    break
+                default:
+                    this.getContent().onConfirmedEvent(event, stateEmitter)
+            }
+            confirmed.push(event)
         }
         return confirmed
     }
@@ -384,9 +410,9 @@ export class StreamStateView {
                     this.updateMiniblockInfo(payload.value, { min: payload.value.miniblockNum })
                     this.prevSnapshotMiniblockNum = payload.value.prevSnapshotMiniblockNum
                     break
-                case 'commonPayload':
-                    this.commonContent.prependCommonContent(
-                        event,
+                case 'memberPayload':
+                    this.membershipContent.prependEvent(
+                        timelineEvent,
                         payload.value,
                         encryptionEmitter,
                         stateEmitter,
@@ -662,10 +688,8 @@ export class StreamStateView {
         )
     }
 
-    getMemberships(): StreamStateView_Membership {
-        const memberships = this.getContent().memberships
-        check(isDefined(memberships), `Memberships object not defined in content ${this.streamId}`)
-        return memberships
+    getMembers(): StreamStateView_Members {
+        return this.membershipContent
     }
 
     getUserMetadata(): StreamStateView_UserMetadata | undefined {
@@ -714,11 +738,11 @@ export class StreamStateView {
         switch (this.contentKind) {
             case 'channelContent':
             case 'spaceContent':
-                return this.getMemberships().isMember(MembershipOp.SO_JOIN, userId)
+                return this.getMembers().isMember(MembershipOp.SO_JOIN, userId)
             case 'dmChannelContent':
-                return this.dmChannelContent.participants().has(userId)
+                return this.getMembers().participants().has(userId)
             case 'gdmChannelContent':
-                return this.gdmChannelContent.joinedOrInvitedParticipants().has(userId)
+                return this.getMembers().joinedOrInvitedParticipants().has(userId)
             default:
                 throw new Error('Stream does not support key exchange') // meow
         }
@@ -727,14 +751,11 @@ export class StreamStateView {
     getUsersEntitledToKeyExchange(): Set<string> {
         switch (this.contentKind) {
             case 'channelContent':
-                return new Set([
-                    ...this.getMemberships().joinedUsers,
-                    ...this.getMemberships().invitedUsers,
-                ])
+                return this.getMembers().joinedOrInvitedParticipants()
             case 'dmChannelContent':
-                return this.dmChannelContent.participants()
+                return this.getMembers().participants()
             case 'gdmChannelContent':
-                return this.gdmChannelContent.joinedOrInvitedParticipants()
+                return this.getMembers().joinedOrInvitedParticipants()
             default:
                 return new Set()
         }

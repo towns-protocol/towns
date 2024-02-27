@@ -154,7 +154,7 @@ const useFetchUnauthenticatedActivity = (townId: string) => {
 
                 const { spaceContent, timeline: spaceTimeline } = stream
 
-                setMembers(Array.from(spaceContent.memberships.joinedUsers))
+                setMembers(Array.from(stream.getMembers().membership.joinedUsers))
                 const remoteEvents: RemoteTimelineEvent[] = spaceTimeline
                     .flatMap((e) => (isRemoteEvent(e) ? e : undefined))
                     .filter(notUndefined)

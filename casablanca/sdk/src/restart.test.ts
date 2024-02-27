@@ -16,10 +16,9 @@ import {
     getChannelPayload,
     getMessagePayload,
     make_ChannelPayload_Inception,
-    make_ChannelPayload_Membership,
     make_ChannelPayload_Message,
+    make_MemberPayload_Membership2,
     make_SpacePayload_Inception,
-    make_SpacePayload_Membership,
     make_UserPayload_Inception,
     make_fake_encryptedData,
 } from './types'
@@ -73,7 +72,7 @@ describe('nodeRestart', () => {
                 spaceInceptionEvent,
                 await makeEvent(
                     bobsContext,
-                    make_SpacePayload_Membership({
+                    make_MemberPayload_Membership2({
                         userId: bobsUserId,
                         op: MembershipOp.SO_JOIN,
                         initiatorId: bobsUserId,
@@ -149,7 +148,7 @@ const createNewChannelAndPostHello = async (
     )
     const channelJoinEvent = await makeEvent(
         bobsContext,
-        make_ChannelPayload_Membership({
+        make_MemberPayload_Membership2({
             userId: bobsUserId,
             op: MembershipOp.SO_JOIN,
             initiatorId: bobsUserId,

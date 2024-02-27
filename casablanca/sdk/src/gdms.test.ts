@@ -75,7 +75,7 @@ describe('gdmsTests', () => {
 
         const stream = await bobsClient.waitForStream(streamId)
         await waitFor(() => {
-            expect(stream.view.getMemberships().joinedUsers).toEqual(
+            expect(stream.view.getMembers().membership.joinedUsers).toEqual(
                 new Set([bobsClient.userId, charliesClient.userId]),
             )
         })

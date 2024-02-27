@@ -196,7 +196,7 @@ describe('syncStreams', () => {
 //         )
 //         const joinEvent = await makeEvent(
 //             alicesContext,
-//             make_SpacePayload_Membership({
+//             make_MemberPayload_Membership2({
 //                 userId: alicesUserId,
 //                 op: MembershipOp.SO_JOIN,
 //             }),
@@ -218,7 +218,7 @@ describe('syncStreams', () => {
 //         )
 //         let event = await makeEvent(
 //             alicesContext,
-//             make_ChannelPayload_Membership({
+//             make_MemberPayload_Membership2({
 //                 userId: alicesUserId,
 //                 op: MembershipOp.SO_JOIN,
 //             }),
@@ -327,7 +327,7 @@ describe('syncStreams', () => {
 //         )
 //         const joinEvent = await makeEvent(
 //             alicesContext,
-//             make_SpacePayload_Membership({
+//             make_MemberPayload_Membership2({
 //                 userId: alicesUserId,
 //                 op: MembershipOp.SO_JOIN,
 //             }),
@@ -349,7 +349,7 @@ describe('syncStreams', () => {
 //         )
 //         let event = await makeEvent(
 //             alicesContext,
-//             make_ChannelPayload_Membership({
+//             make_MemberPayload_Membership2({
 //                 userId: alicesUserId,
 //                 op: MembershipOp.SO_JOIN,
 //             }),

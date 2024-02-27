@@ -38,7 +38,7 @@ func SendsPushNotification(parsedEvent *events.ParsedEvent) (bool, string) {
 		return false, ""
 	case *StreamEvent_MediaPayload:
 		return false, ""
-	case *StreamEvent_CommonPayload:
+	case *StreamEvent_MemberPayload:
 		return false, ""
 	default:
 		return false, ""

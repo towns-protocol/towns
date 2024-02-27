@@ -9,8 +9,8 @@ import { GROUP_ENCRYPTION_ALGORITHM, GroupEncryptionSession, UserDevice } from '
 import { SessionKeys, UserInboxPayload_GroupEncryptionSessions } from '@river/proto'
 import {
     KeySolicitationContent,
-    make_CommonPayload_KeyFulfillment,
-    make_CommonPayload_KeySolicitation,
+    make_MemberPayload_KeyFulfillment,
+    make_MemberPayload_KeySolicitation,
 } from './types'
 import { isMobileSafari } from './utils'
 
@@ -53,6 +53,7 @@ interface DecryptionRetryItem {
 interface KeySolicitationItem {
     streamId: string
     fromUserId: string
+    fromUserAddress: Uint8Array
     solicitation: KeySolicitationContent
     respondAfter: Date
 }
@@ -150,6 +151,7 @@ export class DecryptionExtensions {
         const onKeySolicitation = (
             streamId: string,
             fromUserId: string,
+            fromUserAddress: Uint8Array,
             keySolicitation: KeySolicitationContent,
         ) => {
             if (keySolicitation.deviceKey === this.userDevice.deviceKey) {
@@ -171,12 +173,13 @@ export class DecryptionExtensions {
                     {
                         streamId,
                         fromUserId,
+                        fromUserAddress,
                         solicitation: keySolicitation,
                         respondAfter: new Date(
                             Date.now() +
                                 this.getRespondDelayMSForKeySolicitation(streamId, fromUserId),
                         ),
-                    },
+                    } satisfies KeySolicitationItem,
                     (x) => x.respondAfter,
                 )
                 this.checkStartTicking()
@@ -573,7 +576,8 @@ export class DecryptionExtensions {
         if (!stream) {
             return
         }
-        const solicitedEvents = stream.view.commonContent.solicitations[this.userId] ?? []
+        const solicitedEvents =
+            stream.view.getMembers().joined.get(this.userId)?.solicitations ?? []
         const existingKeyRequest = solicitedEvents.find(
             (x) => x.deviceKey === this.userDevice.deviceKey,
         )
@@ -591,7 +595,7 @@ export class DecryptionExtensions {
 
         const isNewDevice = knownSessionIds.length === 0
 
-        const keySolicitation = make_CommonPayload_KeySolicitation({
+        const keySolicitation = make_MemberPayload_KeySolicitation({
             deviceKey: this.userDevice.deviceKey,
             fallbackKey: this.userDevice.fallbackKey,
             isNewDevice,
@@ -672,8 +676,8 @@ export class DecryptionExtensions {
             return
         }
 
-        const fulfillment = make_CommonPayload_KeyFulfillment({
-            userId: item.fromUserId,
+        const fulfillment = make_MemberPayload_KeyFulfillment({
+            userAddress: item.fromUserAddress,
             deviceKey: item.solicitation.deviceKey,
             sessionIds: item.solicitation.isNewDevice ? [] : sessions.map((x) => x.sessionId),
         })
@@ -697,7 +701,7 @@ export class DecryptionExtensions {
         const multiplier = userId === this.userId ? 0.5 : 1
         const stream = this.client.stream(streamId)
         check(isDefined(stream), 'stream not found')
-        const numMembers = stream.view.getMemberships().joinedUsers.size
+        const numMembers = stream.view.getMembers().participants().size
         const maxWaitTimeSeconds = Math.max(5, Math.min(30, numMembers))
         const waitTime = maxWaitTimeSeconds * 1000 * Math.random() // this could be much better
         this.log.debug('getRespondDelayMSForKeySolicitation', { streamId, userId, waitTime })

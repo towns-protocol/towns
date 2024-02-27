@@ -86,13 +86,14 @@ message StreamEvent {
       * Payloads should obey the following rules:
       * - payloads should have their own unique type
       * - each payload should have a oneof content field
-      * - each payload should have an inception field inside the content oneof
+      * - each payload, with the exception of miniblock header and member payloads
+      *     should have an inception field inside the content oneof
       * - each payload should have a unique Inception type
       * - payloads can't violate previous type recursively to inception payload
     */
     oneof payload {
         MiniblockHeader miniblock_header = 100;
-        CommonPayload common_payload = 101;
+        MemberPayload member_payload = 101;
         SpacePayload space_payload = 102;
         ChannelPayload channel_payload = 103;
         UserPayload user_payload = 104;
@@ -141,19 +142,27 @@ message MiniblockHeader {
 }
 
 /**
-* CommonPayload
+* MemberPayload
 * can appear in any stream
 */
-message CommonPayload {
+message MemberPayload {
     message Snapshot {
-        message Solicitations {
-            // unique by device_key, limited to 10
-            repeated KeySolicitation events = 2;
+        message Member {
+            bytes user_address = 1;
+            int64 miniblock_num = 2;
+            int64 event_num = 3;
+            repeated KeySolicitation solicitations = 4;
         }
-        // user_id: Solicitations
-        map <string, Solicitations> solicitations = 1;
+        
+        repeated Member joined = 1;
     }
 
+    message Membership {
+        MembershipOp op = 1;
+        bytes user_address = 2;
+        bytes initiator_address = 3;
+    }
+    
     message KeySolicitation {
         string device_key = 1; // requesters device_key
         string fallback_key = 2; // requesters fallback_key
@@ -162,14 +171,15 @@ message CommonPayload {
     }
 
     message KeyFulfillment {
-        string user_id = 1;
+        bytes user_address = 1;
         string device_key = 2;
         repeated string session_ids = 3; 
     }
 
     oneof content {
-        KeySolicitation key_solicitation = 1;
-        KeyFulfillment key_fulfillment = 2;
+        Membership membership = 1;
+        KeySolicitation key_solicitation = 2;
+        KeyFulfillment key_fulfillment = 3;
     }
 }
 
@@ -182,12 +192,10 @@ message SpacePayload {
         Inception inception = 1;
         // streamId: Channel
         map<string, Channel> channels = 2;
-        // userId: Membership
-        map<string, Membership> memberships = 3;
         // userId: Username
-        map<string, WrappedEncryptedData> usernames = 4;
+        map<string, WrappedEncryptedData> usernames = 3;
         // userId: Displayname
-        map<string, WrappedEncryptedData> display_names = 5;
+        map<string, WrappedEncryptedData> display_names = 4;
     }
     
     message Inception {
@@ -206,9 +214,8 @@ message SpacePayload {
     oneof content {
         Inception inception = 1;
         Channel channel = 2;
-        Membership membership = 3;
-        EncryptedData username = 4;
-        EncryptedData display_name = 5;
+        EncryptedData username = 3;
+        EncryptedData display_name = 4;
     }
 }
 
@@ -219,8 +226,6 @@ message ChannelPayload {
     message Snapshot {
         // inception
         Inception inception = 1;
-        // userId: Membership
-        map<string, Membership> memberships = 2;
     }
     
     message Inception {
@@ -238,7 +243,6 @@ message ChannelPayload {
     oneof content {
         Inception inception = 1;
         EncryptedData message = 2;
-        Membership membership = 3;
     }
 }
 
@@ -248,21 +252,19 @@ message ChannelPayload {
 message DmChannelPayload {
     message Snapshot {
         Inception inception = 1;
-        map<string, Membership> memberships = 2;
         map<string, WrappedEncryptedData> usernames = 3;
         map<string, WrappedEncryptedData> display_names = 4;
     }
 
     message Inception {
         string stream_id = 1;
-        string first_party_id = 2;
-        string second_party_id = 3;
+        bytes first_party_address = 2;
+        bytes second_party_address = 3;
         StreamSettings settings = 4;
     }
 
     oneof content {
         Inception inception = 1;
-        Membership membership = 2;
         EncryptedData message = 3;
         EncryptedData username = 4;
         EncryptedData display_name = 5;
@@ -275,7 +277,6 @@ message DmChannelPayload {
 message GdmChannelPayload {
     message Snapshot {
         Inception inception = 1;
-        map<string, Membership> memberships = 2;
         map<string, WrappedEncryptedData> usernames = 3;
         map<string, WrappedEncryptedData> display_names = 4;
         WrappedEncryptedData channel_properties = 5;
@@ -289,7 +290,6 @@ message GdmChannelPayload {
 
     oneof content {
         Inception inception = 1;
-        Membership membership = 2;
         EncryptedData message = 3;
         EncryptedData username = 4;
         EncryptedData display_name = 5;
@@ -315,17 +315,16 @@ message UserPayload {
     
     // update own membership
     message UserMembership {
-        reserved 2, 3, 5;
         string stream_id = 1;
-        MembershipOp op = 4;
-        optional string inviter = 6;
+        MembershipOp op = 2;
+        optional string inviter = 3;
     }
 
     // update someone else's membership
     message UserMembershipAction {
         string stream_id = 1;
         string user_id = 2;
-        MembershipOp op = 4;
+        MembershipOp op = 3;
     }
 
     oneof content {
@@ -423,7 +422,7 @@ message UserDeviceKeyPayload {
 
     message Inception {
         string stream_id = 1;
-        StreamSettings settings = 3;
+        StreamSettings settings = 2;
     }
 
     message EncryptionDevice {
@@ -443,7 +442,6 @@ message UserDeviceKeyPayload {
 message MediaPayload {
     message Snapshot {
         Inception inception = 1;
-        string creator_id = 2;
     }
     
     message Inception {
@@ -470,7 +468,7 @@ message MediaPayload {
 */
 message Snapshot {
     
-    CommonPayload.Snapshot common = 1;
+    MemberPayload.Snapshot members = 1;
     
     // Snapshot data specific for each stream type.
     oneof content {
@@ -503,20 +501,13 @@ message EventRef {
  * StreamSettings is a part of inception payload for each stream type.
  */
 message StreamSettings {
-    reserved 1, 2;
-
     // Test setting for testing with manual miniblock creation through Info debug request. 
-    bool disable_miniblock_creation = 3;
+    bool disable_miniblock_creation = 1;
 }
 
-
-message Membership {
-    reserved 3;
-    MembershipOp op = 1;
-    string user_id = 2;
-    string initiator_id = 4;
-}
-
+/**
+ * EncryptedData
+ */
 message EncryptedData {
     /**
     * Ciphertext of the encryption envelope.

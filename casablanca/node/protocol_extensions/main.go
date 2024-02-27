@@ -190,7 +190,7 @@ func (e *StreamEvent) VerifyPayloadTypeMatchesStreamType(i IsInceptionPayload) e
 	}
 	validatorEnd := func() string {
 		return `
-	case *StreamEvent_CommonPayload:
+	case *StreamEvent_MemberPayload:
 		return nil
 	default:
 		return fmt.Errorf("inception type type not handled: %T vs %T", e.Payload, i)

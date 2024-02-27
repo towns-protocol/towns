@@ -49,9 +49,9 @@ export function useCasablancaStreamMembership(
 }
 
 function getCasablancaMembership(stream: Stream, userId: string): Membership {
-    if (stream.view.getMemberships().joinedUsers.has(userId)) {
+    if (stream.view.getMembers().membership.joinedUsers.has(userId)) {
         return Membership.Join
-    } else if (stream.view.getMemberships().invitedUsers.has(userId)) {
+    } else if (stream.view.getMembers().membership.invitedUsers.has(userId)) {
         return Membership.Invite
     } else {
         return Membership.None

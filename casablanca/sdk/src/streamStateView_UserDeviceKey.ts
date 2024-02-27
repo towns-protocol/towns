@@ -10,12 +10,10 @@ import { StreamStateView_AbstractContent } from './streamStateView_AbstractConte
 import { check } from '@river/dlog'
 import { logNever } from './check'
 import { UserDevice } from '@river/encryption'
-import { StreamStateView_UserStreamMembership } from './streamStateView_Membership'
 import { StreamEncryptionEvents, StreamStateEvents } from './streamEvents'
 
 export class StreamStateView_UserDeviceKeys extends StreamStateView_AbstractContent {
     readonly streamId: string
-    readonly memberships: StreamStateView_UserStreamMembership
     readonly streamCreatorId: string
 
     // user_id -> device_keys, fallback_keys
@@ -24,7 +22,6 @@ export class StreamStateView_UserDeviceKeys extends StreamStateView_AbstractCont
     constructor(userId: string, streamId: string) {
         super()
         this.streamId = streamId
-        this.memberships = new StreamStateView_UserStreamMembership(streamId)
         this.streamCreatorId = userId
     }
 

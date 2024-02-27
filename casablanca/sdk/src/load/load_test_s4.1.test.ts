@@ -268,7 +268,7 @@ describe('loadTestsScenario: Test application stability during long period of ti
             // Ensure everyone joins GDM
             if (
                 creatorClient.userId !== client.userId &&
-                !senderStream.getMemberships().joinedUsers.has(client.userId)
+                !senderStream.getMembers().membership.joinedUsers.has(client.userId)
             ) {
                 await expect(client.joinStream(streamId)).toResolve()
             }

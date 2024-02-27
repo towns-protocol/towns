@@ -1,56 +1,18 @@
-import { Membership, MembershipOp } from '@river/proto'
 import TypedEmitter from 'typed-emitter'
-import { StreamEncryptionEvents, StreamStateEvents } from './streamEvents'
-import { ConfirmedTimelineEvent } from './types'
+import { MemberPayload_Membership, MembershipOp } from '@river/proto'
 import { logNever } from './check'
+import { StreamStateEvents } from './streamEvents'
 
-export class StreamStateView_Membership {
-    readonly streamId: string
+export class StreamStateView_Members_Membership {
     readonly joinedUsers = new Set<string>()
     readonly invitedUsers = new Set<string>()
     readonly leftUsers = new Set<string>()
     readonly pendingJoinedUsers = new Set<string>()
     readonly pendingInvitedUsers = new Set<string>()
     readonly pendingLeftUsers = new Set<string>()
-    readonly pendingEvents = new Map<string, Membership>()
+    readonly pendingMembershipEvents = new Map<string, MemberPayload_Membership>()
 
-    constructor(streamId: string) {
-        this.streamId = streamId
-    }
-
-    applySnapshot(
-        memberships: { [key: string]: Membership },
-        _encryptionEmitter: TypedEmitter<StreamEncryptionEvents> | undefined,
-    ) {
-        // iterate over map, add joined and invited users
-        for (const membership of Object.values(memberships)) {
-            this.applyMembershipEvent(membership, 'confirmed', undefined)
-        }
-    }
-
-    onConfirmedEvent(
-        event: ConfirmedTimelineEvent,
-        stateEmitter: TypedEmitter<StreamStateEvents> | undefined,
-    ): void {
-        const eventId = event.hashStr
-        const payload = this.pendingEvents.get(eventId)
-        if (payload) {
-            this.pendingEvents.delete(eventId)
-            this.applyMembershipEvent(payload, 'confirmed', stateEmitter)
-        }
-    }
-
-    /**
-     * Places event in a pending queue, to be applied when the event is confirmed in a miniblock header
-     */
-    appendMembershipEvent(
-        eventHashStr: string,
-        payload: Membership,
-        stateEmitter: TypedEmitter<StreamStateEvents> | undefined,
-    ): void {
-        this.pendingEvents.set(eventHashStr, payload)
-        this.applyMembershipEvent(payload, 'pending', stateEmitter)
-    }
+    constructor(readonly streamId: string) {}
 
     /**
      * If no userId is provided, checks current user
@@ -78,12 +40,22 @@ export class StreamStateView_Membership {
         }
     }
 
-    private applyMembershipEvent(
-        payload: Membership,
+    participants(): Set<string> {
+        return new Set([...this.joinedUsers, ...this.invitedUsers, ...this.leftUsers])
+    }
+
+    // For GDMs, users must be able to see the messages before joining,
+    // but not after leaving.
+    joinedOrInvitedParticipants(): Set<string> {
+        return new Set([...this.joinedUsers, ...this.invitedUsers])
+    }
+
+    applyMembershipEvent(
+        userId: string,
+        op: MembershipOp,
         type: 'pending' | 'confirmed',
         stateEmitter: TypedEmitter<StreamStateEvents> | undefined,
     ) {
-        const { op, userId } = payload
         switch (op) {
             case MembershipOp.SO_INVITE:
                 if (type === 'confirmed') {
@@ -140,13 +112,5 @@ export class StreamStateView_Membership {
         streamId: string,
     ) {
         stateEmitter?.emit('streamMembershipUpdated', streamId, userId)
-    }
-}
-
-export class StreamStateView_UserStreamMembership extends StreamStateView_Membership {
-    constructor(streamId: string) {
-        const userId = streamId.split('-')[1]
-        super(streamId)
-        this.joinedUsers.add(userId)
     }
 }

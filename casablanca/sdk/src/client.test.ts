@@ -14,7 +14,13 @@ import {
     makeUniqueSpaceStreamId,
     makeUniqueChannelStreamId,
 } from './id'
-import { makeDonePromise, makeTestClient, waitFor, getChannelMessagePayload } from './util.test'
+import {
+    makeDonePromise,
+    makeTestClient,
+    waitFor,
+    getChannelMessagePayload,
+    makeRandomUserAddress,
+} from './util.test'
 import {
     CancelSyncRequest,
     CancelSyncResponse,
@@ -33,7 +39,7 @@ import { SignerContext } from './sign'
 import {
     DecryptedTimelineEvent,
     make_ChannelPayload_Message,
-    make_CommonPayload_KeyFulfillment,
+    make_MemberPayload_KeyFulfillment,
 } from './types'
 import { DecryptionStatus } from './decryptionExtensions'
 
@@ -302,13 +308,13 @@ describe('clientTest', () => {
         ).toBeDefined()
     })
 
-    test('bobCanSendCommonPayload', async () => {
+    test('bobCanSendMemberPayload', async () => {
         await expect(bobsClient.initializeUser()).toResolve()
         bobsClient.startSync()
         expect(bobsClient.userSettingsStreamId).toBeDefined()
-        const ping = make_CommonPayload_KeyFulfillment({
+        const ping = make_MemberPayload_KeyFulfillment({
             deviceKey: 'foo',
-            userId: 'baz',
+            userAddress: makeRandomUserAddress(),
             sessionIds: ['bar'],
         })
         await expect(
@@ -317,10 +323,10 @@ describe('clientTest', () => {
         await waitFor(() => {
             const lastEvent = bobsClient.streams
                 .get(bobsClient.userSettingsStreamId!)
-                ?.view.timeline.filter((x) => x.remoteEvent?.event.payload.case === 'commonPayload')
+                ?.view.timeline.filter((x) => x.remoteEvent?.event.payload.case === 'memberPayload')
                 .at(-1)
             expect(lastEvent).toBeDefined()
-            check(lastEvent?.remoteEvent?.event.payload.case === 'commonPayload', '??')
+            check(lastEvent?.remoteEvent?.event.payload.case === 'memberPayload', '??')
             check(
                 lastEvent?.remoteEvent?.event.payload.value.content.case === 'keyFulfillment',
                 '??',
@@ -768,14 +774,16 @@ describe('clientTest', () => {
         const channelStream = bobsClient.stream(bobsChannelId)
         expect(channelStream).toBeDefined()
         await waitFor(() => {
-            expect(channelStream?.view.getMemberships().joinedUsers).toContain(alicesClient.userId)
+            expect(channelStream?.view.getMembers().membership.joinedUsers).toContain(
+                alicesClient.userId,
+            )
         })
         // leave the space
         await expect(alicesClient.leaveStream(bobsSpaceId)).toResolve()
 
         // the channel should be left as well
         await waitFor(() => {
-            expect(channelStream?.view.getMemberships().joinedUsers).not.toContain(
+            expect(channelStream?.view.getMembers().membership.joinedUsers).not.toContain(
                 alicesClient.userId,
             )
         })

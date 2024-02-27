@@ -8,6 +8,7 @@ import (
 
 type CreateStreamRules struct {
 	CreatorStreamId     string
+	RequiredUserAddrs   [][]byte
 	RequiredUsers       []string
 	RequiredMemberships []string
 	ChainAuth           *auth.ChainAuthArgs
@@ -23,6 +24,7 @@ type ruleBuilderCS interface {
 	check(fn ...func() error) ruleBuilderCS
 	checkOneOf(fns ...func() error) ruleBuilderCS
 	requireUser(userIds ...string) ruleBuilderCS
+	requireUserAddr(userAddresses ...[]byte) ruleBuilderCS
 	requireMembership(streamIds ...string) ruleBuilderCS
 	requireChainAuth(f func() (*auth.ChainAuthArgs, error)) ruleBuilderCS
 	requireDerivedEvent(f ...func() (*DerivedEvent, error)) ruleBuilderCS
@@ -35,6 +37,7 @@ type ruleBuilderCSImpl struct {
 	failErr             error
 	creatorStreamId     string
 	requiredUsers       []string
+	requiredUserAddrs   [][]byte
 	requiredMemberships []string
 	checks              [][]func() error
 	chainAuth           func() (*auth.ChainAuthArgs, error)
@@ -48,6 +51,7 @@ func csBuilder(creatorStreamId string) ruleBuilderCS {
 		failErr:             nil,
 		checks:              nil,
 		requiredUsers:       nil,
+		requiredUserAddrs:   nil,
 		requiredMemberships: nil,
 		chainAuth: func() (*auth.ChainAuthArgs, error) {
 			return nil, nil
@@ -70,6 +74,11 @@ func (re *ruleBuilderCSImpl) checkOneOf(fns ...func() error) ruleBuilderCS {
 
 func (re *ruleBuilderCSImpl) requireUser(userIds ...string) ruleBuilderCS {
 	re.requiredUsers = append(re.requiredUsers, userIds...)
+	return re
+}
+
+func (re *ruleBuilderCSImpl) requireUserAddr(userAddresses ...[]byte) ruleBuilderCS {
+	re.requiredUserAddrs = append(re.requiredUserAddrs, userAddresses...)
 	return re
 }
 
@@ -161,6 +170,7 @@ func (re *ruleBuilderCSImpl) run() (*CreateStreamRules, error) {
 	return &CreateStreamRules{
 		CreatorStreamId:     re.creatorStreamId,
 		RequiredUsers:       re.requiredUsers,
+		RequiredUserAddrs:   re.requiredUserAddrs,
 		RequiredMemberships: re.requiredMemberships,
 		ChainAuth:           chainAuthArgs,
 		DerivedEvents:       derivedEvents,

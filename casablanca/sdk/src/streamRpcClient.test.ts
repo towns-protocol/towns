@@ -22,11 +22,10 @@ import {
 } from './id'
 import {
     make_ChannelPayload_Inception,
-    make_ChannelPayload_Membership,
     make_ChannelPayload_Message,
     make_fake_encryptedData,
+    make_MemberPayload_Membership2,
     make_SpacePayload_Inception,
-    make_SpacePayload_Membership,
     make_UserPayload_Inception,
     make_UserPayload_UserMembership,
     make_UserPayload_UserMembershipAction,
@@ -87,7 +86,7 @@ describe('streamRpcClient using v2 sync', () => {
         )
         const joinEvent = await makeEvent(
             alicesContext,
-            make_SpacePayload_Membership({
+            make_MemberPayload_Membership2({
                 userId: alicesUserId,
                 op: MembershipOp.SO_JOIN,
                 initiatorId: alicesUserId,
@@ -111,7 +110,7 @@ describe('streamRpcClient using v2 sync', () => {
         )
         const event = await makeEvent(
             alicesContext,
-            make_ChannelPayload_Membership({
+            make_MemberPayload_Membership2({
                 userId: alicesUserId,
                 op: MembershipOp.SO_JOIN,
                 initiatorId: alicesUserId,
@@ -184,7 +183,7 @@ describe('streamRpcClient using v2 sync', () => {
         )
         const joinEvent = await makeEvent(
             alicesContext,
-            make_SpacePayload_Membership({
+            make_MemberPayload_Membership2({
                 userId: alicesUserId,
                 op: MembershipOp.SO_JOIN,
                 initiatorId: alicesUserId,
@@ -208,7 +207,7 @@ describe('streamRpcClient using v2 sync', () => {
         )
         let event = await makeEvent(
             alicesContext,
-            make_ChannelPayload_Membership({
+            make_MemberPayload_Membership2({
                 userId: alicesUserId,
                 op: MembershipOp.SO_JOIN,
                 initiatorId: alicesUserId,
@@ -456,7 +455,7 @@ describe('streamRpcClient', () => {
         )
         const joinEvent = await makeEvent(
             bobsContext,
-            make_SpacePayload_Membership({
+            make_MemberPayload_Membership2({
                 userId: bobsUserId,
                 op: MembershipOp.SO_JOIN,
                 initiatorId: bobsUserId,
@@ -482,7 +481,7 @@ describe('streamRpcClient', () => {
         )
         let event = await makeEvent(
             bobsContext,
-            make_ChannelPayload_Membership({
+            make_MemberPayload_Membership2({
                 userId: bobsUserId,
                 op: MembershipOp.SO_JOIN,
                 initiatorId: bobsUserId,
@@ -669,7 +668,7 @@ describe('streamRpcClient', () => {
             make_SpacePayload_Inception({
                 streamId: spacedStreamId,
             }),
-            make_SpacePayload_Membership({
+            make_MemberPayload_Membership2({
                 userId: bobsUserId,
                 op: MembershipOp.SO_JOIN,
                 initiatorId: bobsUserId,
@@ -691,7 +690,7 @@ describe('streamRpcClient', () => {
                 spaceId: spacedStreamId,
                 isDefault: false,
             }),
-            make_ChannelPayload_Membership({
+            make_MemberPayload_Membership2({
                 userId: bobsUserId,
                 op: MembershipOp.SO_JOIN,
                 initiatorId: bobsUserId,
@@ -719,7 +718,7 @@ describe('streamRpcClient', () => {
         log('Bob fails to create channel with badly chained initial events, wrong hash value')
         const channelEvent2_2 = await makeEvent(
             bobsContext,
-            make_ChannelPayload_Membership({
+            make_MemberPayload_Membership2({
                 userId: bobsUserId,
                 op: MembershipOp.SO_JOIN,
                 initiatorId: bobsUserId,
@@ -799,7 +798,7 @@ describe('streamRpcClient', () => {
             make_SpacePayload_Inception({
                 streamId: spacedStreamId,
             }),
-            make_SpacePayload_Membership({
+            make_MemberPayload_Membership2({
                 userId: bobsUserId,
                 op: MembershipOp.SO_JOIN,
                 initiatorId: bobsUserId,
@@ -821,7 +820,7 @@ describe('streamRpcClient', () => {
                 channelProperties: make_fake_encryptedData(channelProperties),
                 isDefault: false,
             }),
-            make_ChannelPayload_Membership({
+            make_MemberPayload_Membership2({
                 userId: bobsUserId,
                 op: MembershipOp.SO_JOIN,
                 initiatorId: bobsUserId,

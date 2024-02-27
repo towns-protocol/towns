@@ -14,13 +14,11 @@ import { check, dlog } from '@river/dlog'
 import { logNever } from './check'
 import { StreamStateView_AbstractContent } from './streamStateView_AbstractContent'
 import { toPlainMessage } from '@bufbuild/protobuf'
-import { StreamStateView_UserStreamMembership } from './streamStateView_Membership'
 
 const log = dlog('csb:stream')
 
 export class StreamStateView_UserSettings extends StreamStateView_AbstractContent {
     readonly streamId: string
-    readonly memberships: StreamStateView_UserStreamMembership
     readonly settings = new Map<string, string>()
     readonly fullyReadMarkersSrc = new Map<string, EncryptedData>()
     readonly fullyReadMarkers = new Map<string, Record<string, FullyReadMarker>>()
@@ -28,7 +26,6 @@ export class StreamStateView_UserSettings extends StreamStateView_AbstractConten
     constructor(streamId: string) {
         super()
         this.streamId = streamId
-        this.memberships = new StreamStateView_UserStreamMembership(streamId)
     }
 
     applySnapshot(snapshot: Snapshot, content: UserSettingsPayload_Snapshot): void {

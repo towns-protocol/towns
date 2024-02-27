@@ -11,7 +11,10 @@ import {
     makeUniqueGDMChannelStreamId,
     makeUniqueMediaStreamId,
     makeUserStreamId,
+    userIdFromAddress,
+    addressFromUserId,
 } from './id'
+import { makeRandomUserContext } from './util.test'
 
 describe('idTest', () => {
     test('validStreamId', () => {
@@ -80,5 +83,12 @@ describe('idTest', () => {
         expect(makeUserStreamId('0x376eC15Fa24A76A18EB980629093cFFd559333Bb')).toBe(
             'a8376ec15fa24a76a18eb980629093cffd559333bb',
         )
+    })
+
+    test('userIdFromAddress-addressFromUserId', async () => {
+        const usrCtx = await makeRandomUserContext()
+        const userId = userIdFromAddress(usrCtx.creatorAddress)
+        const address = addressFromUserId(userId)
+        expect(address).toStrictEqual(usrCtx.creatorAddress)
     })
 })

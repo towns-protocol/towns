@@ -1,7 +1,6 @@
 import TypedEmitter from 'typed-emitter'
 import { DmChannelPayload_Snapshot, Snapshot, DmChannelPayload } from '@river/proto'
 import { StreamStateView_AbstractContent } from './streamStateView_AbstractContent'
-import { StreamStateView_Membership } from './streamStateView_Membership'
 import {
     ConfirmedTimelineEvent,
     ParsedEvent,
@@ -13,10 +12,10 @@ import { DecryptedContent } from './encryptedContentTypes'
 import { StreamEncryptionEvents, StreamStateEvents } from './streamEvents'
 import { check } from '@river/dlog'
 import { logNever } from './check'
+import { userIdFromAddress } from './id'
 
 export class StreamStateView_DMChannel extends StreamStateView_AbstractContent {
     readonly streamId: string
-    readonly memberships: StreamStateView_Membership
     readonly userMetadata: StreamStateView_UserMetadata
     firstPartyId?: string
     secondPartyId?: string
@@ -24,7 +23,6 @@ export class StreamStateView_DMChannel extends StreamStateView_AbstractContent {
 
     constructor(userId: string, streamId: string) {
         super()
-        this.memberships = new StreamStateView_Membership(streamId)
         this.userMetadata = new StreamStateView_UserMetadata(userId, streamId)
         this.streamId = streamId
     }
@@ -35,15 +33,16 @@ export class StreamStateView_DMChannel extends StreamStateView_AbstractContent {
         cleartexts: Record<string, string> | undefined,
         encryptionEmitter: TypedEmitter<StreamEncryptionEvents> | undefined,
     ): void {
-        this.memberships.applySnapshot(content.memberships, encryptionEmitter)
         this.userMetadata.applySnapshot(
             content.usernames,
             content.displayNames,
             cleartexts,
             encryptionEmitter,
         )
-        this.firstPartyId = content.inception?.firstPartyId
-        this.secondPartyId = content.inception?.secondPartyId
+        if (content.inception) {
+            this.firstPartyId = userIdFromAddress(content.inception.firstPartyAddress)
+            this.secondPartyId = userIdFromAddress(content.inception.secondPartyAddress)
+        }
     }
 
     appendEvent(
@@ -70,13 +69,6 @@ export class StreamStateView_DMChannel extends StreamStateView_AbstractContent {
                 this.updateLastEvent(event.remoteEvent, stateEmitter)
                 break
 
-            case 'membership':
-                this.memberships.appendMembershipEvent(
-                    event.hashStr,
-                    payload.content.value,
-                    encryptionEmitter,
-                )
-                break
             case 'displayName':
             case 'username':
                 this.userMetadata.appendEncryptedData(
@@ -118,7 +110,6 @@ export class StreamStateView_DMChannel extends StreamStateView_AbstractContent {
                     encryptionEmitter,
                 )
                 break
-            case 'membership':
             case 'displayName':
             case 'username':
                 // nothing to do, conveyed in the snapshot

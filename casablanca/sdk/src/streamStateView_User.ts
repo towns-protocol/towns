@@ -9,19 +9,16 @@ import {
 } from '@river/proto'
 import { StreamEncryptionEvents, StreamEvents, StreamStateEvents } from './streamEvents'
 import { StreamStateView_AbstractContent } from './streamStateView_AbstractContent'
-import { StreamStateView_UserStreamMembership } from './streamStateView_Membership'
 import { check } from '@river/dlog'
 import { logNever } from './check'
 
 export class StreamStateView_User extends StreamStateView_AbstractContent {
     readonly streamId: string
-    readonly memberships: StreamStateView_UserStreamMembership
     readonly streamMemberships: { [key: string]: UserPayload_UserMembership } = {}
 
     constructor(streamId: string) {
         super()
         this.streamId = streamId
-        this.memberships = new StreamStateView_UserStreamMembership(streamId)
     }
 
     applySnapshot(

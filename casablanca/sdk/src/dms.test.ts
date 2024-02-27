@@ -29,7 +29,7 @@ describe('dmsTests', () => {
         const alicesClient = await makeInitAndStartClient()
         const { streamId } = await bobsClient.createDMChannel(alicesClient.userId)
         const stream = await bobsClient.waitForStream(streamId)
-        expect(stream.view.getMemberships().joinedUsers).toEqual(
+        expect(stream.view.getMembers().membership.joinedUsers).toEqual(
             new Set([bobsClient.userId, alicesClient.userId]),
         )
     })
@@ -40,14 +40,16 @@ describe('dmsTests', () => {
         const { streamId } = await bobsClient.createDMChannel(alicesClient.userId)
         const stream = await bobsClient.waitForStream(streamId)
         await waitFor(() => {
-            expect(stream.view.getMemberships().joinedUsers).toEqual(
+            expect(stream.view.getMembers().membership.joinedUsers).toEqual(
                 new Set([bobsClient.userId, alicesClient.userId]),
             )
         })
 
         await expect(alicesClient.leaveStream(streamId)).toResolve()
         await waitFor(() => {
-            expect(stream.view.getMemberships().joinedUsers).toEqual(new Set([bobsClient.userId]))
+            expect(stream.view.getMembers().membership.joinedUsers).toEqual(
+                new Set([bobsClient.userId]),
+            )
         })
     })
 

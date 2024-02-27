@@ -60,6 +60,7 @@ import {
     makeUserStreamId,
     makeUserInboxStreamId,
     userIdFromAddress,
+    addressFromUserId,
 } from './id'
 import { SignerContext, makeEvent, unpackMiniblock, unpackStream } from './sign'
 import { StreamEvents } from './streamEvents'
@@ -68,10 +69,9 @@ import {
     make_UserDeviceKeyPayload_Inception,
     make_ChannelPayload_Inception,
     make_ChannelProperties,
-    make_ChannelPayload_Membership,
     make_ChannelPayload_Message,
+    make_MemberPayload_Membership2,
     make_SpacePayload_Inception,
-    make_SpacePayload_Membership,
     make_UserPayload_Inception,
     make_SpacePayload_Channel,
     make_UserSettingsPayload_FullyReadMarkers,
@@ -79,11 +79,9 @@ import {
     make_MediaPayload_Inception,
     make_MediaPayload_Chunk,
     make_DMChannelPayload_Inception,
-    make_DMChannelPayload_Membership,
     make_DMChannelPayload_Message,
     make_GDMChannelPayload_Inception,
     make_GDMChannelPayload_Message,
-    make_GDMChannelPayload_Membership,
     make_SpacePayload_DisplayName,
     StreamTimelineEvent,
     make_UserInboxPayload_Ack,
@@ -464,7 +462,7 @@ export class Client
         )
         const joinEvent = await makeEvent(
             this.signerContext,
-            make_SpacePayload_Membership({
+            make_MemberPayload_Membership2({
                 userId: this.userId,
                 op: MembershipOp.SO_JOIN,
                 initiatorId: this.userId,
@@ -506,7 +504,7 @@ export class Client
         )
         const joinEvent = await makeEvent(
             this.signerContext,
-            make_ChannelPayload_Membership({
+            make_MemberPayload_Membership2({
                 userId: this.userId,
                 op: MembershipOp.SO_JOIN,
                 initiatorId: this.userId,
@@ -530,15 +528,15 @@ export class Client
             this.signerContext,
             make_DMChannelPayload_Inception({
                 streamId: channelId,
-                firstPartyId: this.userId,
-                secondPartyId: userId,
+                firstPartyAddress: this.signerContext.creatorAddress,
+                secondPartyAddress: addressFromUserId(userId),
                 settings: streamSettings,
             }),
         )
 
         const joinEvent = await makeEvent(
             this.signerContext,
-            make_DMChannelPayload_Membership({
+            make_MemberPayload_Membership2({
                 userId: this.userId,
                 op: MembershipOp.SO_JOIN,
                 initiatorId: this.userId,
@@ -547,7 +545,7 @@ export class Client
 
         const inviteEvent = await makeEvent(
             this.signerContext,
-            make_DMChannelPayload_Membership({
+            make_MemberPayload_Membership2({
                 userId: userId,
                 op: MembershipOp.SO_JOIN,
                 initiatorId: this.userId,
@@ -589,7 +587,7 @@ export class Client
         events.push(inceptionEvent)
         const joinEvent = await makeEvent(
             this.signerContext,
-            make_GDMChannelPayload_Membership({
+            make_MemberPayload_Membership2({
                 userId: this.userId,
                 op: MembershipOp.SO_JOIN,
                 initiatorId: this.userId,
@@ -600,7 +598,7 @@ export class Client
         for (const userId of userIds) {
             const inviteEvent = await makeEvent(
                 this.signerContext,
-                make_GDMChannelPayload_Membership({
+                make_MemberPayload_Membership2({
                     userId: userId,
                     op: MembershipOp.SO_JOIN,
                     initiatorId: this.userId,
@@ -1244,7 +1242,7 @@ export class Client
         this.logCall('joinStream', streamId)
         check(isDefined(this.userStreamId))
         const stream = await this.initStream(streamId)
-        if (stream.view.getMemberships().isMemberJoined(this.userId)) {
+        if (stream.view.getMembers().isMemberJoined(this.userId)) {
             this.logError('joinStream: user already a member', streamId)
             return stream
         }

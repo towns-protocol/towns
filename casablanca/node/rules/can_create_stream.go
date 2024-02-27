@@ -221,7 +221,7 @@ func (params *csParams) canCreateStream() ruleBuilderCS {
 				ru.checkDMInceptionPayload,
 			).
 			requireMembership(ru.params.creatorUserStreamId).
-			requireUser(ru.inception.SecondPartyId).
+			requireUserAddr(ru.inception.SecondPartyAddress).
 			requireDerivedEvents(ru.derivedDMMembershipEvents)
 
 	case *GdmChannelPayload_Inception:
@@ -341,42 +341,39 @@ func (ru *csParams) eventCountGreaterThanOrEqualTo(eventCount int) func() error 
 func (ru *csChannelRules) validateChannelJoinEvent() error {
 	const joinEventIndex = 1
 	event := ru.params.parsedEvents[joinEventIndex]
-	payload, ok := event.Event.GetPayload().(*StreamEvent_ChannelPayload)
-	if !ok {
+	payload := event.Event.GetMemberPayload()
+	if payload == nil {
 		return RiverError(Err_BAD_STREAM_CREATION_PARAMS, "second event is not a channel payload")
 	}
-	membershipPayload, ok := payload.ChannelPayload.GetContent().(*ChannelPayload_Membership)
-	if !ok {
+	membershipPayload := payload.GetMembership()
+	if membershipPayload == nil {
 		return RiverError(Err_BAD_STREAM_CREATION_PARAMS, "second event is not a channel join event")
 	}
-	return ru.params.validateJoinEventPayload(event, membershipPayload.Membership)
+	return ru.params.validateOwnJoinEventPayload(event, membershipPayload)
 
 }
 
 func (ru *csSpaceRules) validateSpaceJoinEvent() error {
 	joinEventIndex := 1
 	event := ru.params.parsedEvents[joinEventIndex]
-	payload, ok := event.Event.GetPayload().(*StreamEvent_SpacePayload)
-	if !ok {
+	payload := event.Event.GetMemberPayload()
+	if payload == nil {
 		return RiverError(Err_BAD_STREAM_CREATION_PARAMS, "second event is not a channel payload")
 	}
-	membershipPayload, ok := payload.SpacePayload.GetContent().(*SpacePayload_Membership)
-	if !ok {
+	membershipPayload := payload.GetMembership()
+	if membershipPayload == nil {
 		return RiverError(Err_BAD_STREAM_CREATION_PARAMS, "second event is not a channel join event")
 	}
-	return ru.params.validateJoinEventPayload(event, membershipPayload.Membership)
+	return ru.params.validateOwnJoinEventPayload(event, membershipPayload)
 }
 
-func (ru *csParams) validateJoinEventPayload(event *events.ParsedEvent, membership *Membership) error {
-	creatorUserId, err := shared.AddressHex(event.Event.GetCreatorAddress())
-	if err != nil {
-		return err
-	}
+func (ru *csParams) validateOwnJoinEventPayload(event *events.ParsedEvent, membership *MemberPayload_Membership) error {
+	creatorAddress := event.Event.GetCreatorAddress()
 	if membership.GetOp() != MembershipOp_SO_JOIN {
 		return RiverError(Err_BAD_STREAM_CREATION_PARAMS, "bad join op", "op", membership.GetOp())
 	}
-	if membership.UserId != creatorUserId {
-		return RiverError(Err_BAD_STREAM_CREATION_PARAMS, "bad join user", "id", membership.UserId, "created_by", creatorUserId)
+	if !bytes.Equal(membership.UserAddress, creatorAddress) {
+		return RiverError(Err_BAD_STREAM_CREATION_PARAMS, "bad join user", "id", membership.UserAddress, "created_by", creatorAddress)
 	}
 	return nil
 }
@@ -500,24 +497,16 @@ func (ru *csMediaRules) getChainAuthForMediaStream() (*auth.ChainAuthArgs, error
 }
 
 func (ru *csDmChannelRules) checkDMInceptionPayload() error {
-	if ru.inception.FirstPartyId == "" || ru.inception.SecondPartyId == "" {
-		return RiverError(Err_BAD_STREAM_CREATION_PARAMS, "user ids must not be nil for dm channel")
+	if len(ru.inception.FirstPartyAddress) != 20 || len(ru.inception.SecondPartyAddress) != 20 {
+		return RiverError(Err_BAD_STREAM_CREATION_PARAMS, "invalid party addresses for dm channel")
 	}
-	if ru.inception.FirstPartyId == ru.inception.SecondPartyId {
+	if bytes.Equal(ru.inception.FirstPartyAddress, ru.inception.SecondPartyAddress) {
 		return RiverError(Err_BAD_STREAM_CREATION_PARAMS, "user ids must not be the same for dm channel")
 	}
-	if ru.params.creatorUserId != ru.inception.FirstPartyId {
+	if !bytes.Equal(ru.params.creatorAddress, ru.inception.FirstPartyAddress) {
 		return RiverError(Err_BAD_STREAM_CREATION_PARAMS, "creator must be first party for dm channel")
 	}
-	addr1, err := shared.AddressFromUserId(ru.inception.FirstPartyId)
-	if err != nil {
-		return err
-	}
-	addr2, err := shared.AddressFromUserId(ru.inception.SecondPartyId)
-	if err != nil {
-		return err
-	}
-	if !shared.ValidDMChannelStreamIdBetween(ru.params.streamId, addr1, addr2) {
+	if !shared.ValidDMChannelStreamIdBetween(ru.params.streamId, ru.inception.FirstPartyAddress, ru.inception.SecondPartyAddress) {
 		return RiverError(Err_BAD_STREAM_CREATION_PARAMS, "invalid stream id for dm channel")
 	}
 	return nil
@@ -525,12 +514,12 @@ func (ru *csDmChannelRules) checkDMInceptionPayload() error {
 
 func (ru *csDmChannelRules) derivedDMMembershipEvents() ([]*DerivedEvent, error) {
 
-	firstPartyStream, err := shared.UserStreamIdFromId(ru.inception.FirstPartyId)
+	firstPartyStream, err := shared.UserStreamIdFromBytes(ru.inception.FirstPartyAddress)
 	if err != nil {
 		return nil, err
 	}
 
-	secondPartyStream, err := shared.UserStreamIdFromId(ru.inception.SecondPartyId)
+	secondPartyStream, err := shared.UserStreamIdFromBytes(ru.inception.SecondPartyAddress)
 	if err != nil {
 		return nil, err
 	}
@@ -562,35 +551,35 @@ func (ru *csDmChannelRules) derivedDMMembershipEvents() ([]*DerivedEvent, error)
 	}, nil
 }
 
-func (ru *csGdmChannelRules) checkGDMPayload(event *events.ParsedEvent, expectedUserId *string) error {
-	payload, ok := event.Event.GetPayload().(*StreamEvent_GdmChannelPayload)
-	if !ok {
+func (ru *csGdmChannelRules) checkGDMMemberPayload(event *events.ParsedEvent, expectedUserAddress *[]byte) error {
+	payload := event.Event.GetMemberPayload()
+	if payload == nil {
 		return RiverError(Err_BAD_STREAM_CREATION_PARAMS, "event is not a gdm channel payload")
 	}
-	membershipPayload, ok := payload.GdmChannelPayload.GetContent().(*GdmChannelPayload_Membership)
-	if !ok {
+	membershipPayload := payload.GetMembership()
+	if membershipPayload == nil {
 		return RiverError(Err_BAD_STREAM_CREATION_PARAMS, "event is not a gdm channel membership event")
 	}
 
-	if membershipPayload.Membership.GetOp() != MembershipOp_SO_JOIN {
+	if membershipPayload.GetOp() != MembershipOp_SO_JOIN {
 		return RiverError(
 			Err_BAD_STREAM_CREATION_PARAMS,
 			"membership op does not match",
 			"op",
-			membershipPayload.Membership.GetOp(),
+			membershipPayload.GetOp(),
 			"expected",
 			MembershipOp_SO_JOIN,
 		)
 	}
 
-	if expectedUserId != nil && membershipPayload.Membership.UserId != *expectedUserId {
+	if expectedUserAddress != nil && !bytes.Equal(*expectedUserAddress, membershipPayload.UserAddress) {
 		return RiverError(
 			Err_BAD_STREAM_CREATION_PARAMS,
 			"membership user id does not match",
 			"userId",
-			membershipPayload.Membership.UserId,
+			membershipPayload.UserAddress,
 			"expected",
-			*expectedUserId,
+			*expectedUserAddress,
 		)
 	}
 
@@ -608,13 +597,13 @@ func (ru *csGdmChannelRules) checkGDMPayloads() error {
 	}
 
 	// check the first join
-	if err := ru.checkGDMPayload(ru.params.parsedEvents[1], &ru.params.creatorUserId); err != nil {
+	if err := ru.checkGDMMemberPayload(ru.params.parsedEvents[1], &ru.params.creatorAddress); err != nil {
 		return err
 	}
 
 	// check the rest
 	for _, event := range ru.params.parsedEvents[2:] {
-		if err := ru.checkGDMPayload(event, nil); err != nil {
+		if err := ru.checkGDMMemberPayload(event, nil); err != nil {
 			return err
 		}
 	}
@@ -624,15 +613,20 @@ func (ru *csGdmChannelRules) checkGDMPayloads() error {
 func (ru *csGdmChannelRules) getGDMUserIds() []string {
 	userIds := make([]string, 0, len(ru.params.parsedEvents)-1)
 	for _, event := range ru.params.parsedEvents[1:] {
-		payload, ok := event.Event.GetPayload().(*StreamEvent_GdmChannelPayload)
-		if !ok {
+		payload := event.Event.GetMemberPayload()
+		if payload == nil {
 			continue
 		}
-		membershipPayload, ok := payload.GdmChannelPayload.GetContent().(*GdmChannelPayload_Membership)
-		if !ok {
+		membershipPayload := payload.GetMembership()
+		if membershipPayload == nil {
 			continue
 		}
-		userIds = append(userIds, membershipPayload.Membership.UserId)
+		// todo we should remove the conversions here
+		userId, err := shared.AddressHex(membershipPayload.UserAddress)
+		if err != nil {
+			continue
+		}
+		userIds = append(userIds, userId)
 	}
 	return userIds
 }

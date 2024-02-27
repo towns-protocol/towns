@@ -87,14 +87,17 @@ describe('loadTestsScenario: Main focus of this scenario is testing of DMs and G
         log('Ensure bob joins stream', loadTestMetadata)
         await expect(bob.waitForStream(streamId)).toResolve()
         const bobsStream = await bob.getStream(streamId)
-        log('bobsStream.getMemberships().joinedUsers:', bobsStream.getMemberships().joinedUsers)
-        if (!bobsStream.getMemberships().joinedUsers.has(alice.userId)) {
+        log(
+            'bobsStream.getMembers().membership.joinedUsers:',
+            bobsStream.getMembers().membership.joinedUsers,
+        )
+        if (!bobsStream.getMembers().membership.joinedUsers.has(alice.userId)) {
             log('Ensure alice joins stream', loadTestMetadata)
             await expect(alice.joinStream(streamId)).toResolve()
         } else {
             log('alice already joined stream', loadTestMetadata)
         }
-        if (!bobsStream.getMemberships().joinedUsers.has(alice.userId)) {
+        if (!bobsStream.getMembers().membership.joinedUsers.has(alice.userId)) {
             log('Ensure charlie joins stream', loadTestMetadata)
             await expect(charlie.joinStream(streamId)).toResolve()
         } else {

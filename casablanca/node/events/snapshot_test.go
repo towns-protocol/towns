@@ -7,6 +7,7 @@ import (
 	"github.com/river-build/river/crypto"
 	. "github.com/river-build/river/protocol"
 	"github.com/river-build/river/shared"
+	"github.com/river-build/river/testutils"
 
 	"github.com/stretchr/testify/assert"
 	"google.golang.org/protobuf/proto"
@@ -118,7 +119,7 @@ func make_Space_DisplayName(
 
 func TestMakeSnapshot(t *testing.T) {
 	wallet, _ := crypto.NewWallet(context.Background())
-	streamId := "streamid$1"
+	streamId := testutils.UserStreamIdFromAddress(wallet.Address)
 	inception := make_User_Inception(wallet, streamId, t)
 	snapshot, err := Make_GenisisSnapshot([]*ParsedEvent{inception})
 	assert.NoError(t, err)
@@ -130,7 +131,7 @@ func TestMakeSnapshot(t *testing.T) {
 
 func TestUpdateSnapshot(t *testing.T) {
 	wallet, _ := crypto.NewWallet(context.Background())
-	streamId := "streamid$1"
+	streamId := testutils.UserStreamIdFromAddress(wallet.Address)
 	inception := make_User_Inception(wallet, streamId, t)
 	snapshot, err := Make_GenisisSnapshot([]*ParsedEvent{inception})
 	assert.NoError(t, err)
@@ -147,7 +148,7 @@ func TestUpdateSnapshot(t *testing.T) {
 
 func TestCloneAndUpdateUserSnapshot(t *testing.T) {
 	wallet, _ := crypto.NewWallet(context.Background())
-	streamId := "streamid$1"
+	streamId := testutils.UserStreamIdFromAddress(wallet.Address)
 	inception := make_User_Inception(wallet, streamId, t)
 	snapshot1, err := Make_GenisisSnapshot([]*ParsedEvent{inception})
 	assert.NoError(t, err)
@@ -166,7 +167,7 @@ func TestCloneAndUpdateUserSnapshot(t *testing.T) {
 
 func TestCloneAndUpdateSpaceSnapshot(t *testing.T) {
 	wallet, _ := crypto.NewWallet(context.Background())
-	streamId := "streamid$1"
+	streamId := testutils.UserStreamIdFromAddress(wallet.Address)
 	inception := make_Space_Inception(wallet, streamId, t)
 	snapshot1, err := Make_GenisisSnapshot([]*ParsedEvent{inception})
 	assert.NoError(t, err)
@@ -186,8 +187,8 @@ func TestCloneAndUpdateSpaceSnapshot(t *testing.T) {
 
 	assert.Equal(
 		t,
-		MembershipOp_SO_JOIN,
-		snapshot.Content.(*Snapshot_SpaceContent).SpaceContent.Memberships[userId].Op,
+		inception.Event.CreatorAddress,
+		snapshot.Members.Joined[0].UserAddress,
 	)
 	assert.Equal(
 		t,
@@ -213,7 +214,7 @@ func TestCloneAndUpdateSpaceSnapshot(t *testing.T) {
 
 func TestUpdateSnapshotFailsIfInception(t *testing.T) {
 	wallet, _ := crypto.NewWallet(context.Background())
-	streamId := "streamid$1"
+	streamId := testutils.UserStreamIdFromAddress(wallet.Address)
 	inception := make_User_Inception(wallet, streamId, t)
 	snapshot, err := Make_GenisisSnapshot([]*ParsedEvent{inception})
 	assert.NoError(t, err)

@@ -8,6 +8,7 @@ import (
 
 	"github.com/ethereum/go-ethereum/common"
 	"github.com/river-build/river/crypto"
+	"github.com/river-build/river/shared"
 
 	. "github.com/river-build/river/protocol"
 )
@@ -115,6 +116,24 @@ func MakeParsedEventWithPayload(
 	}, nil
 }
 
+func Make_MemberPayload_Membership(
+	op MembershipOp,
+	userAddress []byte,
+	initiatorAddress []byte,
+) *StreamEvent_MemberPayload {
+	return &StreamEvent_MemberPayload{
+		MemberPayload: &MemberPayload{
+			Content: &MemberPayload_Membership_{
+				Membership: &MemberPayload_Membership{
+					Op:               op,
+					UserAddress:      userAddress,
+					InitiatorAddress: initiatorAddress,
+				},
+			},
+		},
+	}
+}
+
 func Make_ChannelPayload_Inception(
 	streamId string,
 	spaceId string,
@@ -135,18 +154,20 @@ func Make_ChannelPayload_Inception(
 	}
 }
 
-func Make_ChannelPayload_Membership(op MembershipOp, userId string, initiatorId string) *StreamEvent_ChannelPayload {
-	return &StreamEvent_ChannelPayload{
-		ChannelPayload: &ChannelPayload{
-			Content: &ChannelPayload_Membership{
-				Membership: &Membership{
-					Op:          op,
-					UserId:      userId,
-					InitiatorId: initiatorId,
-				},
-			},
-		},
+// todo delete and replace with Make_MemberPayload_Membership
+func Make_ChannelPayload_Membership(op MembershipOp, userId string, initiatorId string) *StreamEvent_MemberPayload {
+	userAddress, err := shared.AddressFromUserId(userId)
+	if err != nil {
+		panic(err)
 	}
+	var initiatorAddress []byte
+	if initiatorId != "" {
+		initiatorAddress, err = shared.AddressFromUserId(initiatorId)
+		if err != nil {
+			panic(err)
+		}
+	}
+	return Make_MemberPayload_Membership(op, userAddress, initiatorAddress)
 }
 
 func Make_ChannelPayload_Message(content string) *StreamEvent_ChannelPayload {
@@ -161,32 +182,36 @@ func Make_ChannelPayload_Message(content string) *StreamEvent_ChannelPayload {
 	}
 }
 
-func Make_DmChannelPayload_Membership(op MembershipOp, userId string, initiatorId string) *StreamEvent_DmChannelPayload {
-	return &StreamEvent_DmChannelPayload{
-		DmChannelPayload: &DmChannelPayload{
-			Content: &DmChannelPayload_Membership{
-				Membership: &Membership{
-					Op:          op,
-					UserId:      userId,
-					InitiatorId: initiatorId,
-				},
-			},
-		},
+// todo delete and replace with Make_MemberPayload_Membership
+func Make_DmChannelPayload_Membership(op MembershipOp, userId string, initiatorId string) *StreamEvent_MemberPayload {
+	userAddress, err := shared.AddressFromUserId(userId)
+	if err != nil {
+		panic(err)
 	}
+	var initiatorAddress []byte
+	if initiatorId != "" {
+		initiatorAddress, err = shared.AddressFromUserId(initiatorId)
+		if err != nil {
+			panic(err)
+		}
+	}
+	return Make_MemberPayload_Membership(op, userAddress, initiatorAddress)
 }
 
-func Make_GdmChannelPayload_Membership(op MembershipOp, userId string, initiatorId string) *StreamEvent_GdmChannelPayload {
-	return &StreamEvent_GdmChannelPayload{
-		GdmChannelPayload: &GdmChannelPayload{
-			Content: &GdmChannelPayload_Membership{
-				Membership: &Membership{
-					Op:          op,
-					UserId:      userId,
-					InitiatorId: initiatorId,
-				},
-			},
-		},
+// todo delete and replace with Make_MemberPayload_Membership
+func Make_GdmChannelPayload_Membership(op MembershipOp, userId string, initiatorId string) *StreamEvent_MemberPayload {
+	userAddress, err := shared.AddressFromUserId(userId)
+	if err != nil {
+		panic(err)
 	}
+	var initiatorAddress []byte
+	if initiatorId != "" {
+		initiatorAddress, err = shared.AddressFromUserId(initiatorId)
+		if err != nil {
+			panic(err)
+		}
+	}
+	return Make_MemberPayload_Membership(op, userAddress, initiatorAddress)
 }
 
 func Make_SpacePayload_Inception(streamId string, settings *StreamSettings) *StreamEvent_SpacePayload {
@@ -202,18 +227,20 @@ func Make_SpacePayload_Inception(streamId string, settings *StreamSettings) *Str
 	}
 }
 
-func Make_SpacePayload_Membership(op MembershipOp, userId string, initiatorId string) *StreamEvent_SpacePayload {
-	return &StreamEvent_SpacePayload{
-		SpacePayload: &SpacePayload{
-			Content: &SpacePayload_Membership{
-				Membership: &Membership{
-					Op:          op,
-					UserId:      userId,
-					InitiatorId: initiatorId,
-				},
-			},
-		},
+// todo delete and replace with Make_MemberPayload_Membership
+func Make_SpacePayload_Membership(op MembershipOp, userId string, initiatorId string) *StreamEvent_MemberPayload {
+	userAddress, err := shared.AddressFromUserId(userId)
+	if err != nil {
+		panic(err)
 	}
+	var initiatorAddress []byte
+	if initiatorId != "" {
+		initiatorAddress, err = shared.AddressFromUserId(initiatorId)
+		if err != nil {
+			panic(err)
+		}
+	}
+	return Make_MemberPayload_Membership(op, userAddress, initiatorAddress)
 }
 
 func Make_SpacePayload_Channel(

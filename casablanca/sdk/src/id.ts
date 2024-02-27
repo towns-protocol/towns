@@ -6,6 +6,17 @@ import { hashString } from './utils'
 export const userIdFromAddress = (address: Uint8Array): string =>
     utils.getAddress(bin_toHexString(address))
 
+// Assuming `userId` is an Ethereum address in string format
+export const addressFromUserId = (userId: string): Uint8Array => {
+    // Validate and normalize the address to ensure it's properly checksummed.
+    const normalizedAddress = utils.getAddress(userId)
+
+    // Remove the '0x' prefix and convert the hex string to a Uint8Array
+    const addressAsBytes = utils.arrayify(normalizedAddress)
+
+    return addressAsBytes
+}
+
 // User id is an Ethereum address.
 // In string form it is 42 characters long, should start with 0x and TODO: have ERC-55 checksum.
 // In binary form it is 20 bytes long.

@@ -1,6 +1,7 @@
 package rules
 
 import (
+	"bytes"
 	"context"
 	"time"
 
@@ -26,7 +27,7 @@ type aeParams struct {
 
 type aeMembershipRules struct {
 	params     *aeParams
-	membership *Membership
+	membership *MemberPayload_Membership
 }
 
 type aeUserMembershipRules struct {
@@ -122,8 +123,8 @@ func (params *aeParams) canAddEvent() ruleBuilderAE {
 		return params.canAddUserInboxPayload(payload)
 	case *StreamEvent_MediaPayload:
 		return params.canAddMediaPayload(payload)
-	case *StreamEvent_CommonPayload:
-		return params.canAddCommonPayload(payload)
+	case *StreamEvent_MemberPayload:
+		return params.canAddMemberPayload(payload)
 	default:
 		return aeBuilder().
 			fail(unknownPayloadType(payload))
@@ -135,15 +136,6 @@ func (params *aeParams) canAddChannelPayload(payload *StreamEvent_ChannelPayload
 	case *ChannelPayload_Inception_:
 		return aeBuilder().
 			fail(invalidContentType(content))
-	case *ChannelPayload_Membership:
-		ru := &aeMembershipRules{
-			params:     params,
-			membership: content.Membership,
-		}
-		return aeBuilder().
-			check(ru.validMembershipTransistionForChannel).
-			requireChainAuth(ru.channelMembershipEntitlements).
-			requireParentEvent(ru.requireStreamParentMembership)
 	case *ChannelPayload_Message:
 		return aeBuilder().
 			check(params.creatorIsMember).
@@ -159,13 +151,6 @@ func (params *aeParams) canAddDmChannelPayload(payload *StreamEvent_DmChannelPay
 	case *DmChannelPayload_Inception_:
 		return aeBuilder().
 			fail(invalidContentType(content))
-	case *DmChannelPayload_Membership:
-		ru := &aeMembershipRules{
-			params:     params,
-			membership: content.Membership,
-		}
-		return aeBuilder().
-			check(ru.validMembershipTransistionForDM)
 	case *DmChannelPayload_Message:
 		return aeBuilder().
 			check(params.creatorIsMember)
@@ -186,13 +171,6 @@ func (params *aeParams) canAddGdmChannelPayload(payload *StreamEvent_GdmChannelP
 	case *GdmChannelPayload_Inception_:
 		return aeBuilder().
 			fail(invalidContentType(content))
-	case *GdmChannelPayload_Membership:
-		ru := &aeMembershipRules{
-			params:     params,
-			membership: content.Membership,
-		}
-		return aeBuilder().
-			check(ru.validMembershipTransistionForGDM)
 	case *GdmChannelPayload_Message:
 		return aeBuilder().
 			check(params.creatorIsMember)
@@ -216,14 +194,6 @@ func (params *aeParams) canAddSpacePayload(payload *StreamEvent_SpacePayload) ru
 	case *SpacePayload_Inception_:
 		return aeBuilder().
 			fail(invalidContentType(content))
-	case *SpacePayload_Membership:
-		ru := &aeMembershipRules{
-			params:     params,
-			membership: content.Membership,
-		}
-		return aeBuilder().
-			check(ru.validMembershipTransistionForSpace).
-			requireChainAuth(ru.spaceMembershipEntitlements)
 	case *SpacePayload_Channel_:
 		ru := &aeSpaceChannelRules{
 			params:        params,
@@ -341,12 +311,39 @@ func (params *aeParams) canAddMediaPayload(payload *StreamEvent_MediaPayload) ru
 	}
 }
 
-func (params *aeParams) canAddCommonPayload(payload *StreamEvent_CommonPayload) ruleBuilderAE {
-	switch content := payload.CommonPayload.Content.(type) {
-	case *CommonPayload_KeySolicitation_:
+func (params *aeParams) canAddMemberPayload(payload *StreamEvent_MemberPayload) ruleBuilderAE {
+	switch content := payload.MemberPayload.Content.(type) {
+	case *MemberPayload_Membership_:
+		ru := &aeMembershipRules{
+			params:     params,
+			membership: content.Membership,
+		}
+		if shared.ValidSpaceStreamId(ru.params.streamView.StreamId()) {
+			return aeBuilder().
+				check(ru.validMembershipTransistionForSpace).
+				requireChainAuth(ru.spaceMembershipEntitlements)
+
+		} else if shared.ValidChannelStreamId(ru.params.streamView.StreamId()) {
+			return aeBuilder().
+				check(ru.validMembershipTransistionForChannel).
+				requireChainAuth(ru.channelMembershipEntitlements).
+				requireParentEvent(ru.requireStreamParentMembership)
+
+		} else if shared.ValidDMChannelStreamId(ru.params.streamView.StreamId()) {
+			return aeBuilder().
+				check(ru.validMembershipTransistionForDM)
+
+		} else if shared.ValidGDMChannelStreamId(ru.params.streamView.StreamId()) {
+			return aeBuilder().
+				check(ru.validMembershipTransistionForGDM)
+		} else {
+			return aeBuilder().
+				fail(RiverError(Err_INVALID_ARGUMENT, "invalid stream id for membership payload", "streamId", ru.params.streamView.StreamId()))
+		}
+	case *MemberPayload_KeySolicitation_:
 		return aeBuilder().
 			checkOneOf(params.creatorIsMember, params.creatorIsInvited)
-	case *CommonPayload_KeyFulfillment_:
+	case *MemberPayload_KeyFulfillment_:
 		return aeBuilder().
 			checkOneOf(params.creatorIsMember, params.creatorIsInvited)
 	default:
@@ -361,26 +358,20 @@ func (params *aeParams) pass() (bool, error) {
 }
 
 func (params *aeParams) creatorIsMember() (bool, error) {
-	creatorId, err := shared.AddressHex(params.parsedEvent.Event.CreatorAddress)
-	if err != nil {
-		return false, err
-	}
-	isMember, err := params.streamView.IsMember(creatorId)
+	creatorAddress := params.parsedEvent.Event.CreatorAddress
+	isMember, err := params.streamView.IsMember(creatorAddress)
 	if err != nil {
 		return false, err
 	}
 	if !isMember {
-		return false, RiverError(Err_PERMISSION_DENIED, "creator is not a member of the stream", "creatorId", creatorId)
+		return false, RiverError(Err_PERMISSION_DENIED, "creator is not a member of the stream", "creatorAddress", creatorAddress)
 	}
 	return true, nil
 }
 
 func (params *aeParams) creatorIsInvited() (bool, error) {
-	userId, err := shared.AddressHex(params.parsedEvent.Event.CreatorAddress)
-	if err != nil {
-		return false, err
-	}
-	membership, err := params.streamView.(events.JoinableStreamView).GetMembership(userId)
+	creatorAddress := params.parsedEvent.Event.CreatorAddress
+	membership, err := params.streamView.(events.JoinableStreamView).GetMembership(creatorAddress)
 	if err != nil {
 		return false, err
 	}
@@ -397,7 +388,10 @@ func (ru *aeMembershipRules) validMembershipTransistion() (bool, error) {
 	if ru.membership.Op == MembershipOp_SO_UNSPECIFIED {
 		return false, RiverError(Err_INVALID_ARGUMENT, "membership op is unspecified")
 	}
-	currentMembership, err := ru.params.streamView.(events.JoinableStreamView).GetMembership(ru.membership.UserId)
+
+	userAddress := ru.membership.UserAddress
+
+	currentMembership, err := ru.params.streamView.(events.JoinableStreamView).GetMembership(userAddress)
 	if err != nil {
 		return false, err
 	}
@@ -478,14 +472,25 @@ func (ru *aeMembershipRules) validMembershipTransistionForDM() (bool, error) {
 		return false, err
 	}
 
-	if !ru.params.isValidNode(ru.membership.InitiatorId) {
-		if ru.membership.InitiatorId != inception.FirstPartyId && ru.membership.InitiatorId != inception.SecondPartyId {
-			return false, RiverError(Err_PERMISSION_DENIED, "initiator is not a member of DM", "initiator", ru.membership.InitiatorId)
+	fp := inception.FirstPartyAddress
+	sp := inception.SecondPartyAddress
+
+	userAddress := ru.membership.UserAddress
+	initiatorAddress := ru.membership.InitiatorAddress
+
+	initiatorId, err := shared.AddressHex(initiatorAddress)
+	if err != nil {
+		return false, err
+	}
+
+	if !ru.params.isValidNode(initiatorId) {
+		if !bytes.Equal(initiatorAddress, fp) && !bytes.Equal(initiatorAddress, sp) {
+			return false, RiverError(Err_PERMISSION_DENIED, "initiator is not a member of DM", "initiator", initiatorId)
 		}
 	}
 
-	if ru.membership.UserId != inception.FirstPartyId && ru.membership.UserId != inception.SecondPartyId {
-		return false, RiverError(Err_PERMISSION_DENIED, "user is not a member of DM", "user", ru.membership.UserId)
+	if !bytes.Equal(userAddress, fp) && !bytes.Equal(userAddress, sp) {
+		return false, RiverError(Err_PERMISSION_DENIED, "user is not a member of DM", "user", userAddress)
 	}
 
 	if ru.membership.Op != MembershipOp_SO_LEAVE && ru.membership.Op != MembershipOp_SO_JOIN {
@@ -510,35 +515,38 @@ func (ru *aeMembershipRules) validMembershipTransistionForGDM() (bool, error) {
 		return false, RiverError(Err_INVALID_ARGUMENT, "membership is nil")
 	}
 
+	initiatorAddress := ru.membership.InitiatorAddress
+	userAddress := ru.membership.UserAddress
+
 	switch ru.membership.Op {
 	case MembershipOp_SO_INVITE:
 		// only members can invite (also for some reason invited can invite)
-		membership, err := ru.params.streamView.(events.JoinableStreamView).GetMembership(ru.membership.InitiatorId)
+		membership, err := ru.params.streamView.(events.JoinableStreamView).GetMembership(initiatorAddress)
 		if err != nil {
 			return false, err
 		}
 		if membership != MembershipOp_SO_JOIN && membership != MembershipOp_SO_INVITE {
-			return false, RiverError(Err_PERMISSION_DENIED, "initiator of invite is not a member of GDM", "initiator", ru.membership.InitiatorId, "nodes", ru.params.validNodeAddresses)
+			return false, RiverError(Err_PERMISSION_DENIED, "initiator of invite is not a member of GDM", "initiator", initiatorAddress, "nodes", ru.params.validNodeAddresses)
 		}
 		return true, nil
 	case MembershipOp_SO_JOIN:
 		// users have to be invited to join
-		membership, err := ru.params.streamView.(events.JoinableStreamView).GetMembership(ru.membership.UserId)
+		membership, err := ru.params.streamView.(events.JoinableStreamView).GetMembership(userAddress)
 		if err != nil {
 			return false, err
 		}
 		if membership != MembershipOp_SO_INVITE {
-			return false, RiverError(Err_PERMISSION_DENIED, "user is not invited to GDM", "user", ru.membership.UserId)
+			return false, RiverError(Err_PERMISSION_DENIED, "user is not invited to GDM", "user", userAddress)
 		}
 		return true, nil
 	case MembershipOp_SO_LEAVE:
 		// only members can initiate leave
-		membership, err := ru.params.streamView.(events.JoinableStreamView).GetMembership(ru.membership.InitiatorId)
+		membership, err := ru.params.streamView.(events.JoinableStreamView).GetMembership(initiatorAddress)
 		if err != nil {
 			return false, err
 		}
 		if membership != MembershipOp_SO_JOIN && membership != MembershipOp_SO_INVITE {
-			return false, RiverError(Err_PERMISSION_DENIED, "initiator of leave is not a member of GDM", "initiator", ru.membership.InitiatorId)
+			return false, RiverError(Err_PERMISSION_DENIED, "initiator of leave is not a member of GDM", "initiator", initiatorAddress)
 		}
 		return true, nil
 	case MembershipOp_SO_UNSPECIFIED:
@@ -560,13 +568,18 @@ func (ru *aeMembershipRules) requireStreamParentMembership() (*RequiredParentEve
 	if streamParentId == nil {
 		return nil, nil
 	}
-	userStreamId, err := shared.UserStreamIdFromId(ru.membership.UserId)
+	userStreamId, err := shared.UserStreamIdFromBytes(ru.membership.UserAddress)
+	if err != nil {
+		return nil, err
+	}
+	// todo aellis - don't need these conversions
+	initiatorId, err := shared.AddressHex(ru.membership.InitiatorAddress)
 	if err != nil {
 		return nil, err
 	}
 	// for joins and invites, require space membership
 	return &RequiredParentEvent{
-		Payload:  events.Make_UserPayload_Membership(MembershipOp_SO_JOIN, *streamParentId, &ru.membership.InitiatorId),
+		Payload:  events.Make_UserPayload_Membership(MembershipOp_SO_JOIN, *streamParentId, &initiatorId),
 		StreamId: userStreamId,
 	}, nil
 }
@@ -620,48 +633,35 @@ func (ru *aeUserMembershipRules) parentEventForUserMembership() (*RequiredParent
 		return nil, RiverError(Err_INVALID_ARGUMENT, "event is not a user membership event")
 	}
 	userMembership := ru.userMembership
-	creatorId, err := shared.AddressHex(ru.params.parsedEvent.Event.CreatorAddress)
+	creatorAddress := ru.params.parsedEvent.Event.CreatorAddress
+	creatorId, err := shared.AddressHex(creatorAddress)
 	if err != nil {
 		return nil, err
 	}
 
-	userId, err := shared.GetUserAddressStringFromStreamId(ru.params.streamView.StreamId())
+	userAddress, err := shared.GetUserAddressFromStreamId(ru.params.streamView.StreamId())
 	if err != nil {
 		return nil, err
 	}
+
 	toStreamId := userMembership.StreamId
-	var initiatorId string
+	var initiatorAddress []byte
 	if userMembership.Inviter != nil && ru.params.isValidNode(creatorId) {
 		// the initiator will need permissions to do specific things
 		// if the creator of this payload was a valid node, trust that the inviter was the initiator
-		initiatorId = *userMembership.Inviter
+		initiatorAddress, err = shared.AddressFromUserId(*userMembership.Inviter)
+		if err != nil {
+			return nil, err
+		}
 	} else {
 		// otherwise the initiator is the creator of the event
-		initiatorId = creatorId
+		initiatorAddress = creatorAddress
 	}
 
-	if shared.ValidSpaceStreamId(toStreamId) {
-		return &RequiredParentEvent{
-			Payload:  events.Make_SpacePayload_Membership(userMembership.Op, userId, initiatorId),
-			StreamId: toStreamId,
-		}, nil
-	} else if shared.ValidChannelStreamId(toStreamId) {
-		return &RequiredParentEvent{
-			Payload:  events.Make_ChannelPayload_Membership(userMembership.Op, userId, initiatorId),
-			StreamId: toStreamId,
-		}, nil
-	} else if shared.ValidDMChannelStreamId(toStreamId) {
-		return &RequiredParentEvent{
-			Payload:  events.Make_DmChannelPayload_Membership(userMembership.Op, userId, initiatorId),
-			StreamId: toStreamId,
-		}, nil
-	} else if shared.ValidGDMChannelStreamId(toStreamId) {
-		return &RequiredParentEvent{
-			Payload:  events.Make_GdmChannelPayload_Membership(userMembership.Op, userId, initiatorId),
-			StreamId: toStreamId,
-		}, nil
-	}
-	return nil, RiverError(Err_INVALID_ARGUMENT, "invalid stream id for user membership op", "streamId", toStreamId)
+	return &RequiredParentEvent{
+		Payload:  events.Make_MemberPayload_Membership(userMembership.Op, userAddress.Bytes(), initiatorAddress),
+		StreamId: toStreamId,
+	}, nil
 }
 
 // / user actions perform user membership events on other user's streams
@@ -767,32 +767,46 @@ func (ru *aeMembershipRules) getPermissionForMembershipOp() (auth.Permission, st
 		return auth.PermissionUndefined, "", RiverError(Err_INVALID_ARGUMENT, "membership is nil")
 	}
 	membership := ru.membership
-	currentMembership, err := ru.params.streamView.(events.JoinableStreamView).GetMembership(membership.UserId)
+
+	// todo aellis - don't need these conversions
+	initiatorId, err := shared.AddressHex(ru.membership.InitiatorAddress)
+	if err != nil {
+		return auth.PermissionUndefined, "", err
+	}
+
+	userAddress := ru.membership.UserAddress
+	userId, err := shared.AddressHex(userAddress)
+	if err != nil {
+		return auth.PermissionUndefined, "", err
+	}
+
+	currentMembership, err := ru.params.streamView.(events.JoinableStreamView).GetMembership(userAddress)
 	if err != nil {
 		return auth.PermissionUndefined, "", err
 	}
 	if membership.Op == currentMembership {
 		panic("membershipOp should not be the same as currentMembership")
 	}
+
 	switch membership.Op {
 	case MembershipOp_SO_INVITE:
 		if currentMembership == MembershipOp_SO_JOIN {
-			return auth.PermissionUndefined, "", RiverError(Err_FAILED_PRECONDITION, "user is already a member of the channel", "user", membership.UserId, "initiator", membership.InitiatorId)
+			return auth.PermissionUndefined, "", RiverError(Err_FAILED_PRECONDITION, "user is already a member of the channel", "user", userId, "initiator", initiatorId)
 		}
-		return auth.PermissionInvite, membership.InitiatorId, nil
+		return auth.PermissionInvite, initiatorId, nil
 
 	case MembershipOp_SO_JOIN:
-		return auth.PermissionRead, membership.UserId, nil
+		return auth.PermissionRead, userId, nil
 
 	case MembershipOp_SO_LEAVE:
 		if currentMembership != MembershipOp_SO_JOIN {
-			return auth.PermissionUndefined, "", RiverError(Err_FAILED_PRECONDITION, "user is not a member of the channel", "user", membership.UserId, "initiator", membership.InitiatorId)
+			return auth.PermissionUndefined, "", RiverError(Err_FAILED_PRECONDITION, "user is not a member of the channel", "user", userId, "initiator", initiatorId)
 		}
-		if membership.UserId != membership.InitiatorId {
+		if userId != initiatorId {
 			// if the user is not the creator, then the user must be an admin
-			return auth.PermissionOwner, membership.InitiatorId, nil
+			return auth.PermissionOwner, initiatorId, nil
 		} else {
-			return auth.PermissionUndefined, membership.UserId, nil
+			return auth.PermissionUndefined, userId, nil
 		}
 
 	case MembershipOp_SO_UNSPECIFIED:

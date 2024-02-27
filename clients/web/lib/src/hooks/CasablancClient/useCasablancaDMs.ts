@@ -60,7 +60,7 @@ export function useCasablancaDMs(casablancaClient?: CasablancaClient): {
                                 stream.view.streamId,
                                 MembershipOp.SO_LEAVE,
                             ),
-                            userIds: Array.from(stream.view.gdmChannelContent.participants())
+                            userIds: Array.from(stream.view.getMembers().participants())
                                 .filter((memberUserId) => memberUserId !== userId)
                                 .sort((a, b) => a.localeCompare(b)),
                             properties: stream.view.getChannelMetadata()?.channelProperties,

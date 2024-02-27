@@ -13,6 +13,7 @@ import {
     StreamChange,
     DecryptedTimelineEvent,
     RemoteTimelineEvent,
+    userIdFromAddress,
 } from '@river/sdk'
 import {
     ChannelMessage_Post,
@@ -25,9 +26,9 @@ import {
     DmChannelPayload,
     GdmChannelPayload,
     ChannelMessage,
-    CommonPayload,
     ChannelProperties,
     ChannelMessage_Post_Attachment,
+    MemberPayload,
 } from '@river/proto'
 import { useEffect } from 'react'
 import { MessageType, toMembership } from '../../types/zion-types'
@@ -368,8 +369,8 @@ function toTownsContent_fromParsedEvent(
             return {
                 error: `${description} mediaPayload not supported?`,
             }
-        case 'commonPayload':
-            return toTownsContent_CommonPayload(
+        case 'memberPayload':
+            return toTownsContent_MemberPayload(
                 eventId,
                 message,
                 message.event.payload.value,
@@ -397,13 +398,24 @@ function toTownsContent_MiniblockHeader(
     }
 }
 
-function toTownsContent_CommonPayload(
+function toTownsContent_MemberPayload(
     eventId: string,
     message: ParsedEvent,
-    value: CommonPayload,
+    value: MemberPayload,
     description: string,
 ): TownsContentResult {
     switch (value.content.case) {
+        case 'membership':
+            return {
+                content: {
+                    kind: ZTEvent.RoomMember,
+                    userId: userIdFromAddress(value.content.value.userAddress),
+                    avatarUrl: undefined, // todo avatarUrl
+                    displayName: userIdFromAddress(value.content.value.userAddress),
+                    isDirect: undefined, // todo is this needed?
+                    membership: toMembership(value.content.value.op),
+                } satisfies RoomMemberEvent,
+            }
         case 'keySolicitation':
             return {
                 content: {
@@ -419,10 +431,11 @@ function toTownsContent_CommonPayload(
                     kind: ZTEvent.Fulfillment,
                     sessionIds: value.content.value.sessionIds,
                     deviceKey: value.content.value.deviceKey,
-                    to: value.content.value.userId,
+                    to: userIdFromAddress(value.content.value.userAddress),
                     from: message.creatorUserId,
-                } satisfies FulfillmentEvent, // make a real thing
+                } satisfies FulfillmentEvent,
             }
+
         case undefined:
             return { error: `Undefined payload case: ${description}` }
         default:
@@ -506,19 +519,6 @@ function toTownsContent_ChannelPayload(
                     predecessor: undefined, // todo is this needed?
                     type: message.event.payload.case,
                 } satisfies RoomCreateEvent,
-            }
-        }
-        case 'membership': {
-            const payload = value.content.value
-            return {
-                content: {
-                    kind: ZTEvent.RoomMember,
-                    userId: payload.userId,
-                    avatarUrl: undefined, // todo avatarUrl
-                    displayName: payload.userId, // todo displayName
-                    isDirect: undefined, // todo is this needed?
-                    membership: toMembership(payload.op),
-                } satisfies RoomMemberEvent,
             }
         }
         case 'message': {
@@ -769,19 +769,6 @@ function toTownsContent_SpacePayload(
                     childId: childId,
                     channelOp: payload.op,
                 } satisfies SpaceChildEvent,
-            }
-        }
-        case 'membership': {
-            const payload = value.content.value
-            return {
-                content: {
-                    kind: ZTEvent.RoomMember,
-                    userId: payload.userId,
-                    avatarUrl: undefined, // todo avatarUrl
-                    displayName: payload.userId, // todo displayName
-                    isDirect: undefined, // todo is this needed?
-                    membership: toMembership(payload.op),
-                } satisfies RoomMemberEvent,
             }
         }
         case 'username': {
