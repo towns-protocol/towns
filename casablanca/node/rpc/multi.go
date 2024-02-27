@@ -206,7 +206,7 @@ func MultiHandler(ctx context.Context, cfg *config.Config, streamService *Servic
 			log.Debug("data", "data", data)
 			err := tmpl.Execute(w, data) // Use the pre-parsed template
 			if err != nil {
-				log.Error("Error executing template", "err", err)
+				// Template execution failures are low value and typically due to closed tabs, so omit logging.
 				http.Error(w, "Internal Server Error", http.StatusInternalServerError)
 			}
 			log.Info("MultiHandler done")
