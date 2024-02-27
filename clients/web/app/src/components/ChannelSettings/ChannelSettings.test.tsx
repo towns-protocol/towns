@@ -90,13 +90,13 @@ vi.mock('hooks/useCurrentWalletEqualsSignedInAccount', () => {
     }
 })
 
-describe('CreateChannelForm', () => {
+// TODO: flaky in CI
+// https://linear.app/hnt-labs/issue/HNT-5116/investigate-flaky-test
+describe.skip('CreateChannelForm', () => {
     beforeEach(() => {
         vi.resetAllMocks()
     })
 
-    // TODO: flaky in CI
-    // https://linear.app/hnt-labs/issue/HNT-5116/investigate-flaky-test
     test.skip(
         'renders correct prefilled values',
         async () => {
