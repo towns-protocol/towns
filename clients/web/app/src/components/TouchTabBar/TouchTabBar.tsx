@@ -53,7 +53,7 @@ export const TouchTabBar = () => {
                             {showHasUnreadBadgeForCurrentSpace && <Dot position="topRight" />}
                         </Box>
                     )}
-                    to={`/${PATHS.SPACES}/${space.id}/`}
+                    to={`/${PATHS.SPACES}/${space.id}`}
                     scrollToTopId={TouchScrollToTopScrollId.HomeTabScrollId}
                     highlightPattern={`${PATHS.SPACES}/:spaceId/${PATHS.CHANNELS}/:channelId/*`}
                 />
