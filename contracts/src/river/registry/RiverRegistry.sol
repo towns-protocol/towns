@@ -123,6 +123,24 @@ contract RiverRegistry is IRiverRegistry, OwnableBase, Facet {
     emit NodeUrlUpdated(msg.sender, url);
   }
 
+  function updateNodeUrlByOperator(
+    address nodeAddress,
+    string memory url
+  ) external onlyOperator {
+    RiverRegistryStorage.Layout storage ds = RiverRegistryStorage.layout();
+
+    // validate that the node is in the registry
+    if (!ds.nodes.contains(nodeAddress))
+      revert(RiverRegistryErrors.NodeNotFound);
+
+    // validate that the operator is the owner of the node
+    if (!ds.nodesByOperator[msg.sender].contains(nodeAddress))
+      revert(RiverRegistryErrors.BadAuth);
+
+    ds.nodeByAddress[nodeAddress].url = url;
+    emit NodeUrlUpdated(nodeAddress, url);
+  }
+
   function getNode(address nodeAddress) external view returns (Node memory) {
     RiverRegistryStorage.Layout storage ds = RiverRegistryStorage.layout();
 

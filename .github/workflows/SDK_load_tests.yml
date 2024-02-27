@@ -59,12 +59,12 @@ jobs:
               if: github.event.schedule == '0 10 * * *'
               run: |
                 yarn test:ci:load-tests-s3 || (echo "Test failed, setting LAST_FAILED_STEP" && echo "LAST_FAILED_STEP=Run Load Tests S3" >> $GITHUB_ENV && exit 1)
-        
+
             - name: Run Load Tests S3.1
               if: github.event.schedule == '0 11 * * *'
               run: |
                 yarn test:ci:load-tests-s3.1 || (echo "Test failed, setting LAST_FAILED_STEP" && echo "LAST_FAILED_STEP=Run Load Tests S3.1" >> $GITHUB_ENV && exit 1)
-      
+
             - name: Run Load Tests S4.1
               if: github.event.schedule == '0 12 * * *'
               run: |

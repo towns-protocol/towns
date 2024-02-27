@@ -760,6 +760,24 @@
         "outputs": [],
         "stateMutability": "nonpayable",
         "type": "function"
+      },
+      {
+        "inputs": [
+          {
+            "internalType": "address",
+            "name": "nodeAddress",
+            "type": "address"
+          },
+          {
+            "internalType": "string",
+            "name": "url",
+            "type": "string"
+          }
+        ],
+        "name": "updateNodeUrlByOperator",
+        "outputs": [],
+        "stateMutability": "nonpayable",
+        "type": "function"
       }
     ],
     "devdoc": {
@@ -933,11 +951,11 @@
       ]
     },
     "contracts/src/river/registry/RiverRegistry.sol": {
-      "keccak256": "0xa737b86907c626d481de67d30edcd19c74087f0da804942d0e079ab472466af9",
+      "keccak256": "0xf807cbc76908dd75764fe20de7f847f52a0ea15bc5ee81296506a15024a72f6f",
       "license": "MIT",
       "urls": [
-        "bzz-raw://d67dad2d4c25dc25815ff83d2b38036f31828efe3f5296fe1d8f37fe074ccfec",
-        "dweb:/ipfs/QmXorx8atsQVoAeAqGn5FHfdWwFG1CqvbuxY9Jq8u5w8Ca"
+        "bzz-raw://c2253cf94b2d2e24f579f70f9f99aa95727c70fe5f61661bbf04af90531f175f",
+        "dweb:/ipfs/QmZ1MdF7VKVBPaUTZdnVhi8PVKhpzgc21qBKPAuck7nB8r"
       ]
     },
     "contracts/src/river/registry/RiverRegistryStorage.sol": {

@@ -22,7 +22,7 @@ jobs:
     run_synthetic_tests:
         runs-on:
           group: synthetic-test-runners
-        
+
         timeout-minutes: 240
         services:
             redis:
@@ -67,7 +67,7 @@ jobs:
             - name: Run Synthetic Test
               run: yarn test:ci:synthetic:all
               env:
-                  ENVIRONMENT_NAME: ${{inputs.environment_name || 'gamma' }} 
+                  ENVIRONMENT_NAME: ${{inputs.environment_name || 'gamma' }}
 
             # If failed, we send a slack notification
             - name: Slack notification

@@ -10,7 +10,7 @@ on:
         - cron: '0 16 * * *'  # Run at 08:00 PST (16:00 UTC)
     push:
         branches:
-            - wallet    
+            - wallet
 
 jobs:
     run_wallet_management_tests:

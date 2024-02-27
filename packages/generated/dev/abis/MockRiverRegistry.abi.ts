@@ -492,6 +492,24 @@ export default [
     "stateMutability": "nonpayable"
   },
   {
+    "type": "function",
+    "name": "updateNodeUrlByOperator",
+    "inputs": [
+      {
+        "name": "nodeAddress",
+        "type": "address",
+        "internalType": "address"
+      },
+      {
+        "name": "url",
+        "type": "string",
+        "internalType": "string"
+      }
+    ],
+    "outputs": [],
+    "stateMutability": "nonpayable"
+  },
+  {
     "type": "event",
     "name": "Initialized",
     "inputs": [
