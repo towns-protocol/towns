@@ -666,7 +666,7 @@ resource "aws_ecs_service" "river-ecs-service" {
   platform_version = "1.4.0"
 
   lifecycle {
-    ignore_changes = [task_definition, desired_count]
+    ignore_changes = [task_definition]
   }
 
   network_configuration {

@@ -96,7 +96,9 @@ locals {
   base_earliest_fork_block_number = "latest"
 
   # This is when the Stream Registry was first deployed
-  river_earliest_fork_block_number = "3493581"
+  river_clean_fork_block_number = "3843454"
+
+  river_registry_contract_address = "0x4C32EfAeFd4E656736e61Bd7853df1a8B389892F"
 }
 
 module "base_forked_chain_service" {
@@ -136,7 +138,7 @@ module "river_forked_chain_service" {
     name = local.transient_global_remote_state.river_ecs_cluster.name
   }
 
-  fork_block_number = var.is_clean_environment ? local.river_earliest_fork_block_number : "latest"
+  fork_block_number = var.is_clean_environment ? local.river_clean_fork_block_number : "latest"
 
   service_subnets     = local.transient_global_remote_state.vpc.private_subnets
   fork_url_secret_arn = local.global_remote_state.river_chain_network_url_secret.arn
@@ -204,7 +206,7 @@ module "river_node" {
   # TODO: use the correct notification service url for gamma
   notification_service_url = "https://push-notification-worker-test-beta.towns.com"
 
-  river_registry_contract_address = "0xDABc294d1EfC9055f9FA6ba1303911F846Bb14Ee"
+  river_registry_contract_address = local.river_registry_contract_address
 }
 
 # module "loadtest" {
