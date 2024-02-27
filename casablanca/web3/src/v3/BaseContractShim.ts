@@ -1,5 +1,10 @@
 import { BytesLike, ethers } from 'ethers'
-import { LOCALHOST_CHAIN_ID, BASE_SEPOLIA } from '../Web3Constants'
+import {
+    LOCALHOST_CHAIN_ID,
+    BASE_SEPOLIA,
+    RIVER_CHAIN_ID,
+    LOCALHOST_RIVER_CHAIN_ID,
+} from '../Web3Constants'
 
 export type PromiseOrValue<T> = T | Promise<T>
 
@@ -12,10 +17,10 @@ interface Abis {
 // V2 smart contract shim
 // todo: replace BaseContractShim with this when refactoring is done
 export class BaseContractShim<
-    T_LOCALHOST_CONTRACT extends ethers.Contract,
-    T_LOCALHOST_INTERFACE extends ethers.utils.Interface,
-    T_BASE_SEPOLIA_CONTRACT extends ethers.Contract,
-    T_BASE_SEPOLIA_INTERFACE extends ethers.utils.Interface,
+    T_DEV_CONTRACT extends ethers.Contract,
+    T_DEV_INTERFACE extends ethers.utils.Interface,
+    T_VERSIONED_CONTRACT extends ethers.Contract,
+    T_VERSIONED_INTERFACE extends ethers.utils.Interface,
 > {
     public readonly address: string
     public readonly chainId: number
@@ -39,33 +44,37 @@ export class BaseContractShim<
         this.contractInterface = new ethers.utils.Interface(this.abi as string)
     }
 
-    public get interface(): T_LOCALHOST_INTERFACE | T_BASE_SEPOLIA_INTERFACE {
+    public get interface(): T_DEV_INTERFACE | T_VERSIONED_INTERFACE {
         switch (this.chainId) {
             case LOCALHOST_CHAIN_ID:
-                return this.contractInterface as unknown as T_LOCALHOST_INTERFACE
+            case LOCALHOST_RIVER_CHAIN_ID:
+                return this.contractInterface as unknown as T_DEV_INTERFACE
             case BASE_SEPOLIA:
-                return this.contractInterface as unknown as T_BASE_SEPOLIA_INTERFACE
+            case RIVER_CHAIN_ID:
+                return this.contractInterface as unknown as T_VERSIONED_INTERFACE
             default:
                 throw new Error(`Unsupported chainId ${this.chainId}`)
         }
     }
 
-    public get read(): T_LOCALHOST_CONTRACT | T_BASE_SEPOLIA_CONTRACT {
+    public get read(): T_DEV_CONTRACT | T_VERSIONED_CONTRACT {
         // lazy create an instance if it is not already cached
         if (!this.readContract) {
             this.readContract = this.createReadContractInstance()
         }
         switch (this.chainId) {
             case LOCALHOST_CHAIN_ID:
-                return this.readContract as unknown as T_LOCALHOST_CONTRACT
+            case LOCALHOST_RIVER_CHAIN_ID:
+                return this.readContract as unknown as T_DEV_CONTRACT
             case BASE_SEPOLIA:
-                return this.readContract as unknown as T_BASE_SEPOLIA_CONTRACT
+            case RIVER_CHAIN_ID:
+                return this.readContract as unknown as T_VERSIONED_CONTRACT
             default:
                 throw new Error(`Unsupported chainId ${this.chainId}`)
         }
     }
 
-    public write(signer: ethers.Signer): T_LOCALHOST_CONTRACT | T_BASE_SEPOLIA_CONTRACT {
+    public write(signer: ethers.Signer): T_DEV_CONTRACT | T_VERSIONED_CONTRACT {
         // lazy create an instance if it is not already cached
         if (!this.writeContract) {
             this.writeContract = this.createWriteContractInstance(signer)
@@ -77,9 +86,11 @@ export class BaseContractShim<
         }
         switch (this.chainId) {
             case LOCALHOST_CHAIN_ID:
-                return this.writeContract as unknown as T_LOCALHOST_CONTRACT
+            case LOCALHOST_RIVER_CHAIN_ID:
+                return this.writeContract as unknown as T_DEV_CONTRACT
             case BASE_SEPOLIA:
-                return this.writeContract as unknown as T_BASE_SEPOLIA_CONTRACT
+            case RIVER_CHAIN_ID:
+                return this.writeContract as unknown as T_VERSIONED_CONTRACT
             default:
                 throw new Error(`Unsupported chainId ${this.chainId}`)
         }
