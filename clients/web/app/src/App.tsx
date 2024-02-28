@@ -19,7 +19,6 @@ import { RegisterPushSubscription } from '@components/RegisterPushSubscription/R
 import { AllRoutes } from 'AllRoutes'
 import { ServiceWorkerMetadataSyncer } from 'workers/ServiceWorkerMetadataSyncer'
 import { AuthContextProvider } from 'hooks/useAuth'
-import { useWatchForPrivyRequestErrors } from 'hooks/useWatchForPrivyRequestErrors'
 import DebugBar from '@components/DebugBar/DebugBar'
 import { BlockchainTxNotifier } from '@components/Web3/BlockchainTxNotifier'
 import { SyncNotificationSettings } from '@components/SyncNotificationSettings/SyncNotificationSettings'
@@ -76,7 +75,6 @@ export const App = () => {
     }, [touchInitialLink, isTouch])
 
     useWindowListener()
-    useWatchForPrivyRequestErrors()
 
     // aellis april 2023, the two server urls and the chain id should all be considered
     // a single piece of state, PROD, TEST, and LOCAL each should have {casablancaUrl, chainId}

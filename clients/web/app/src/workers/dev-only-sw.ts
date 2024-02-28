@@ -1,4 +1,3 @@
-import { interceptPrivyRequests } from './middleware'
 import { handleNotifications } from './notifications'
 
 declare let self: ServiceWorkerGlobalScope
@@ -10,4 +9,3 @@ declare let self: ServiceWorkerGlobalScope
 self.skipWaiting()
 
 handleNotifications(self)
-interceptPrivyRequests(self)
