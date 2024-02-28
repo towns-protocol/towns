@@ -3,6 +3,7 @@ import { AnimatePresence } from 'framer-motion'
 import { Box, IconButton, MotionBox, Stack, Text } from '@ui'
 import { FileUpload, useMediaDropContext } from '@components/MediaDropContext/MediaDropContext'
 import { isMediaMimeType } from 'utils/isMediaMimeType'
+import { ButtonSpinner } from 'ui/components/Spinner/ButtonSpinner'
 
 export const PasteFilePlugin = () => {
     const { files, removeFile, isUploadingFiles } = useMediaDropContext()
@@ -22,7 +23,7 @@ export const PasteFilePlugin = () => {
                             <PastedFile
                                 key={imageFile.id}
                                 {...imageFile}
-                                shouldSend={isUploadingFiles}
+                                sending={isUploadingFiles}
                                 removeFile={removeFile}
                                 waitingToSend={index !== 0 && isUploadingFiles}
                             />
@@ -35,13 +36,13 @@ export const PasteFilePlugin = () => {
 }
 
 type PastedFileProps = FileUpload & {
-    shouldSend: boolean
+    sending: boolean
     waitingToSend: boolean
     removeFile?: (id: string) => void
 }
 
 const PastedFile = (props: PastedFileProps) => {
-    const { id, content, removeFile, shouldSend, waitingToSend, progress } = props
+    const { id, content, removeFile, sending, waitingToSend } = props
 
     const info = useMemo(() => {
         if (content.kind === 'file') {
@@ -101,7 +102,7 @@ const PastedFile = (props: PastedFileProps) => {
                         backgroundRepeat: 'no-repeat',
                     }}
                     rounded="sm"
-                    opacity={waitingToSend || shouldSend ? '0.5' : 'opaque'}
+                    opacity={waitingToSend || sending ? '0.5' : 'opaque'}
                 />
             ) : (
                 <Box padding paddingRight="lg" border="level3" rounded="sm">
@@ -111,7 +112,11 @@ const PastedFile = (props: PastedFileProps) => {
                 </Box>
             )}
 
-            {!shouldSend && (
+            {sending ? (
+                <Box position="absoluteCenter" overflow="hidden">
+                    <ButtonSpinner />
+                </Box>
+            ) : (
                 <IconButton
                     icon="close"
                     color="default"
@@ -121,32 +126,6 @@ const PastedFile = (props: PastedFileProps) => {
                     onClick={() => removeFile?.(id)}
                 />
             )}
-
-            <Box
-                border={shouldSend ? 'textDefault' : 'none'}
-                height="x1"
-                position="bottomLeft"
-                rounded="xs"
-                overflow="hidden"
-                bottom="xs"
-                left="xs"
-                right="xs"
-            >
-                <MotionBox
-                    position="absolute"
-                    height="100%"
-                    width="100%"
-                    background="inverted"
-                    initial={{
-                        scaleX: 0,
-                        originX: 0,
-                    }}
-                    animate={{
-                        scaleX: progress,
-                    }}
-                    transition={{ duration: 0.1 }}
-                />
-            </Box>
         </MotionBox>
     )
 }

@@ -24,7 +24,7 @@ export const SendMarkdownPlugin = (props: {
     focused: boolean
     isEditing: boolean
     hasImage: boolean
-    onSend?: (value: string, mentions: Mention[]) => void
+    onSend?: (value: string, mentions: Mention[]) => Promise<void>
     onSendAttemptWhileDisabled?: () => void
     onCancel?: () => void
     isEditorEmpty: boolean
@@ -58,6 +58,10 @@ export const SendMarkdownPlugin = (props: {
             window.removeEventListener('keydown', onKey, { capture: true })
         }
     }, [])
+
+    useEffect(() => {
+        editor.setEditable(!disabled)
+    }, [disabled, editor])
 
     const editorEmptyRef = useRef(isEditorEmpty)
     editorEmptyRef.current = isEditorEmpty
@@ -101,8 +105,9 @@ export const SendMarkdownPlugin = (props: {
                 (e: KeyboardEvent, editor) => {
                     if (!e.shiftKey) {
                         if (!disabled) {
-                            parseMarkdown()
-                            editor.dispatchCommand(CLEAR_EDITOR_COMMAND, undefined)
+                            parseMarkdown().then(() => {
+                                editor.dispatchCommand(CLEAR_EDITOR_COMMAND, undefined)
+                            })
                         } else if (onSendAttemptWhileDisabled) {
                             onSendAttemptWhileDisabled()
                         }
@@ -121,9 +126,10 @@ export const SendMarkdownPlugin = (props: {
         )
     }, [editor, parseMarkdown, disabled, registerCommandCount, onSendAttemptWhileDisabled, isTouch])
 
-    const sendMessage = useCallback(() => {
-        parseMarkdown()
-        editor.dispatchCommand(CLEAR_EDITOR_COMMAND, undefined)
+    const sendMessage = useCallback(async () => {
+        parseMarkdown().then(() => {
+            editor.dispatchCommand(CLEAR_EDITOR_COMMAND, undefined)
+        })
     }, [editor, parseMarkdown])
 
     const shouldDisplayButtons =
@@ -228,11 +234,11 @@ const EditMessageButtons = (props: {
     )
 }
 
-const useParseMarkdown = (onSend?: (value: string, mentions: Mention[]) => void) => {
+const useParseMarkdown = (onSend?: (value: string, mentions: Mention[]) => Promise<void>) => {
     const [editor] = useLexicalComposerContext()
-    const parseMarkdown = useCallback(() => {
+    const parseMarkdown = useCallback(async () => {
         if (onSend) {
-            editor.getEditorState().read(() => {
+            await editor.getEditorState().read(async () => {
                 const mentions = $getRoot()
                     .getAllTextNodes()
                     .filter($isMentionNode)
@@ -249,7 +255,7 @@ const useParseMarkdown = (onSend?: (value: string, mentions: Mention[]) => void)
                     })
                     .filter(notUndefined)
                 const markdown = $convertToMarkdownString()
-                onSend(markdown, mentions)
+                await onSend(markdown, mentions)
             })
         } else {
             console.error('No onSend callback provided to SendMarkdownPlugin')

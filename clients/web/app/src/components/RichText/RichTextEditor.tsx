@@ -114,7 +114,7 @@ const RichTextEditorWithoutBoundary = React.memo((props: Props) => {
     const { isTouch } = useDevice()
     const [isEditorEmpty, setIsEditorEmpty] = useState(true)
     const { protocol } = useEnvironment()
-    const { uploadFiles, files } = useMediaDropContext()
+    const { uploadFiles, files, isUploadingFiles } = useMediaDropContext()
     const fileCount = files.length
 
     const userInput = useInputStore((state) =>
@@ -141,6 +141,7 @@ const RichTextEditorWithoutBoundary = React.memo((props: Props) => {
 
     const { isOffline } = useNetworkStatus()
     const [isAttemptingSend, setIsAttemptingSend] = useState(false)
+    const [isSendingMessage, setIsSendingMessage] = useState(false)
 
     const [embeddedMessageAttachements, setEmbeddedMessageAttachments] = useState<
         EmbeddedMessageAttachment[]
@@ -161,20 +162,36 @@ const RichTextEditorWithoutBoundary = React.memo((props: Props) => {
 
     const onSendCb = useCallback(
         async (message: string, mentions: Mention[]) => {
-            const attachments = files.length > 0 ? (await uploadFiles?.()) ?? [] : []
-
-            attachments.push(...embeddedMessageAttachements)
-
-            const options: SendTextMessageOptions = { messageType: MessageType.Text }
-            if (mentions.length > 0) {
-                options.mentions = mentions
+            if (isUploadingFiles) {
+                return
             }
-            if (attachments.length > 0) {
-                options.attachments = attachments
+            setIsSendingMessage(true)
+            try {
+                const attachments = files.length > 0 ? (await uploadFiles?.()) ?? [] : []
+
+                attachments.push(...embeddedMessageAttachements)
+
+                const options: SendTextMessageOptions = { messageType: MessageType.Text }
+                if (mentions.length > 0) {
+                    options.mentions = mentions
+                }
+                if (attachments.length > 0) {
+                    options.attachments = attachments
+                }
+                onSend?.(message, options)
+            } catch {
+                // Do nothing
             }
-            onSend?.(message, options)
+            setIsSendingMessage(false)
         },
-        [embeddedMessageAttachements, files.length, onSend, uploadFiles],
+        [
+            embeddedMessageAttachements,
+            files.length,
+            onSend,
+            uploadFiles,
+            isUploadingFiles,
+            setIsSendingMessage,
+        ],
     )
     const onSendAttemptWhileDisabled = useCallback(() => {
         setIsAttemptingSend(true)
@@ -238,7 +255,7 @@ const RichTextEditorWithoutBoundary = React.memo((props: Props) => {
                         <Box paddingY="sm" paddingRight="xs">
                             <SendMarkdownPlugin
                                 displayButtons={props.displayButtons ?? 'on-focus'}
-                                disabled={isOffline || !editable}
+                                disabled={isOffline || !editable || isSendingMessage}
                                 focused={focused}
                                 isEditing={isEditing ?? false}
                                 isEditorEmpty={isEditorEmpty}

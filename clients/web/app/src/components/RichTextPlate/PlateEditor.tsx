@@ -95,7 +95,8 @@ const PlateEditorWithoutBoundary = ({
     const { protocol } = useEnvironment()
     const { isTouch } = useDevice()
     const { isOffline } = useNetworkStatus()
-    const { uploadFiles, files } = useMediaDropContext()
+    const { uploadFiles, files, isUploadingFiles } = useMediaDropContext()
+    const [isSendingMessage, setIsSendingMessage] = useState(false)
 
     const [focused, setFocused] = useState(true)
     const [isEditorEmpty, setIsEditorEmpty] = useState(true)
@@ -164,6 +165,11 @@ const PlateEditorWithoutBoundary = ({
 
     const onSendCb = useCallback(
         async (message: string, mentions: Mention[]) => {
+            if (isUploadingFiles) {
+                return
+            }
+            setIsSendingMessage(true)
+
             const attachments = files.length > 0 ? (await uploadFiles?.()) ?? [] : []
             attachments.push(...embeddedMessageAttachments)
 
@@ -179,8 +185,16 @@ const PlateEditorWithoutBoundary = ({
                 resetEditor(editorRef.current)
                 focusEditor(editorRef.current)
             }
+            setIsSendingMessage(false)
         },
-        [files.length, uploadFiles, embeddedMessageAttachments, onSend],
+        [
+            files.length,
+            uploadFiles,
+            embeddedMessageAttachments,
+            onSend,
+            isUploadingFiles,
+            setIsSendingMessage,
+        ],
     )
 
     const handleSendOnEnter: React.KeyboardEventHandler = useCallback(
@@ -251,6 +265,7 @@ const PlateEditorWithoutBoundary = ({
                                     tabIndex={tabIndex}
                                     placeholder={placeholder}
                                     renderPlaceholder={RichTextPlaceholder}
+                                    disabled={isSendingMessage}
                                     onKeyDown={handleSendOnEnter}
                                 />
                             </Box>
