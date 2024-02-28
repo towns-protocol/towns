@@ -253,6 +253,27 @@ func createChannel(
 	return reschannel.Msg.Stream.NextSyncCookie, miniblockHash, nil
 }
 
+func testClient(url string) protocolconnect.StreamServiceClient {
+	// Allow insecure TLS connections to HTTP/2 server using HTTP/1.1 and don't validate the certificate
+	http.DefaultTransport.(*http.Transport).TLSClientConfig = &tls.Config{InsecureSkipVerify: true}
+
+	httpClient := &http.Client{
+		Transport: &http2.Transport{
+			// So http2.Transport doesn't complain the URL scheme isn't 'https'
+			AllowHTTP: true,
+			// Pretend we are dialing a TLS endpoint. (Note, we ignore the passed tls.Config)
+			DialTLSContext: func(ctx context.Context, network, addr string, cfg *tls.Config) (net.Conn, error) {
+				var d net.Dialer
+				return d.DialContext(ctx, network, addr)
+			},
+		},
+	}
+
+	return protocolconnect.NewStreamServiceClient(
+		httpClient,
+		url)
+}
+
 func testServerAndClient(
 	t *testing.T,
 	ctx context.Context,
@@ -304,32 +325,13 @@ func testServerAndClient(
 		panic(err)
 	}
 
-	serverCloser, _, _, err := rpc.StartServer(ctx, cfg, bc, listener)
+	service, err := rpc.StartServer(ctx, cfg, bc, listener)
 	if err != nil {
 		panic(err)
 	}
 
-	// Allow insecure TLS connections to HTTP/2 server using HTTP/1.1 and don't validate the certificate
-	http.DefaultTransport.(*http.Transport).TLSClientConfig = &tls.Config{InsecureSkipVerify: true}
-
-	httpClient := &http.Client{
-		Transport: &http2.Transport{
-			// So http2.Transport doesn't complain the URL scheme isn't 'https'
-			AllowHTTP: true,
-			// Pretend we are dialing a TLS endpoint. (Note, we ignore the passed tls.Config)
-			DialTLSContext: func(ctx context.Context, network, addr string, cfg *tls.Config) (net.Conn, error) {
-				var d net.Dialer
-				return d.DialContext(ctx, network, addr)
-			},
-		},
-	}
-
-	client := protocolconnect.NewStreamServiceClient(
-		httpClient,
-		url)
-
-	return client, url, func() {
-		serverCloser()
+	return testClient(url), url, func() {
+		service.Close()
 		btc.Close()
 	}
 }

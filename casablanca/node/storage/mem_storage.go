@@ -125,7 +125,8 @@ func (m *memStorage) WriteBlock(
 	return nil
 }
 
-func (m *memStorage) Close() {}
+func (m *memStorage) Close(ctx context.Context) {
+}
 
 func NewMemStorage() *memStorage {
 	return &memStorage{

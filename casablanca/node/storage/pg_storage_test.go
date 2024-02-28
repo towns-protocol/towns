@@ -7,63 +7,56 @@ import (
 	"testing"
 
 	. "github.com/river-build/river/base"
+	"github.com/river-build/river/base/test"
 	. "github.com/river-build/river/protocol"
 	. "github.com/river-build/river/shared"
 	"github.com/river-build/river/testutils"
 	"github.com/river-build/river/testutils/dbtestutils"
 
-	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
 )
 
 var (
 	testDatabaseUrl string
 	testSchemaName  string
-	pgEventStore    *PostgresEventStore
-	exitSignal      chan error
 )
 
-func setupTest() func() {
+func setupTest(ctx context.Context) *PostgresEventStore {
 	instanceId := GenShortNanoid()
-	store, err := NewPostgresEventStore(context.Background(), testDatabaseUrl, testSchemaName, instanceId, exitSignal)
+	exitSignal := make(chan error, 1)
+	store, err := NewPostgresEventStore(ctx, testDatabaseUrl, testSchemaName, instanceId, exitSignal)
 	if err != nil {
 		panic("Can't create event store: " + err.Error())
 	}
-	pgEventStore = store
-	return func() {
-		pgEventStore.Close()
-	}
+	return store
 }
 
-func TestMain(m *testing.M) {
-	dbUrl, dbSchemaName, closer, err := dbtestutils.StartDB(context.Background())
+func testMainImpl(m *testing.M) int {
+	ctx := test.NewTestContext()
+	dbUrl, dbSchemaName, closer, err := dbtestutils.StartDB(ctx)
 	if err != nil {
 		panic("Could not connect to docker" + err.Error())
 	}
+
+	defer closer()
 	testDatabaseUrl = dbUrl
 	testSchemaName = dbSchemaName
 
-	exitSignal = make(chan error, 1)
-
-	var code int = 1
-
-	// Defer the cleanup so it always runs, even if something panics
-	defer func() {
-		pgEventStore.Close()
-		closer()
-		os.Exit(code)
-	}()
-
 	// Run tests
-	code = m.Run()
+	return m.Run()
+}
+
+func TestMain(m *testing.M) {
+	// This allows deferes to run before os.Exit
+	os.Exit(testMainImpl(m))
 }
 
 func TestPostgresEventStore(t *testing.T) {
 	require := require.New(t)
 
-	teardownTest := setupTest()
-	defer teardownTest()
-	ctx := context.Background()
+	ctx := test.NewTestContext()
+	pgEventStore := setupTest(ctx)
+	defer pgEventStore.Close(ctx)
 
 	streamsNumber, _ := pgEventStore.GetStreamsNumber(ctx)
 	if streamsNumber != 0 {
@@ -175,98 +168,96 @@ func TestPostgresEventStore(t *testing.T) {
 	}
 }
 
-func prepareTestDataForAddEventConsistencyCheck(ctx context.Context, streamId string) string {
+func prepareTestDataForAddEventConsistencyCheck(ctx context.Context, s *PostgresEventStore, streamId string) string {
 	genesisMiniblock := []byte("genesisMinoblock")
-	_ = pgEventStore.CreateStreamStorage(ctx, streamId, genesisMiniblock)
-	_ = pgEventStore.WriteEvent(ctx, streamId, 1, 0, []byte("event1"))
-	_ = pgEventStore.WriteEvent(ctx, streamId, 1, 1, []byte("event2"))
-	_ = pgEventStore.WriteEvent(ctx, streamId, 1, 2, []byte("event3"))
+	_ = s.CreateStreamStorage(ctx, streamId, genesisMiniblock)
+	_ = s.WriteEvent(ctx, streamId, 1, 0, []byte("event1"))
+	_ = s.WriteEvent(ctx, streamId, 1, 1, []byte("event2"))
+	_ = s.WriteEvent(ctx, streamId, 1, 2, []byte("event3"))
 	return streamId
 }
 
 // Test that if there is an event with wrong generation in minipool, we will get error
 func TestAddEventConsistencyChecksImproperGeneration(t *testing.T) {
-	teardownTest := setupTest()
-	defer teardownTest()
-
-	ctx := context.Background()
-	assert := assert.New(t)
+	ctx := test.NewTestContext()
+	pgEventStore := setupTest(ctx)
+	defer pgEventStore.Close(ctx)
+	require := require.New(t)
 
 	streamId := STREAM_CHANNEL_PREFIX + "0sfdsf_sdfds14"
 
-	prepareTestDataForAddEventConsistencyCheck(ctx, streamId)
+	prepareTestDataForAddEventConsistencyCheck(ctx, pgEventStore, streamId)
 
 	// Corrupt record in minipool
 	_, _ = pgEventStore.pool.Exec(ctx, "UPDATE minipools SET generation = 777 WHERE slot_num = 1")
 	err := pgEventStore.WriteEvent(ctx, streamId, 1, 3, []byte("event4"))
 
-	assert.NotNil(err)
-	assert.Contains(err.Error(), "Wrong event generation in minipool")
-	assert.Equal(AsRiverError(err).GetTag("ActualGeneration"), int64(777))
-	assert.Equal(AsRiverError(err).GetTag("ExpectedGeneration"), int64(1))
-	assert.Equal(AsRiverError(err).GetTag("SlotNumber"), 1)
+	require.NotNil(err)
+	require.Contains(err.Error(), "Wrong event generation in minipool")
+	require.Equal(AsRiverError(err).GetTag("ActualGeneration"), int64(777))
+	require.Equal(AsRiverError(err).GetTag("ExpectedGeneration"), int64(1))
+	require.Equal(AsRiverError(err).GetTag("SlotNumber"), 1)
 }
 
 // Test that if there is a gap in minipool records, we will get error
 func TestAddEventConsistencyChecksGaps(t *testing.T) {
-	teardownTest := setupTest()
-	defer teardownTest()
-
-	ctx := context.Background()
-	assert := assert.New(t)
+	ctx := test.NewTestContext()
+	pgEventStore := setupTest(ctx)
+	defer pgEventStore.Close(ctx)
+	require := require.New(t)
 
 	streamId := testutils.FakeStreamId(STREAM_CHANNEL_PREFIX)
 
-	prepareTestDataForAddEventConsistencyCheck(ctx, streamId)
+	prepareTestDataForAddEventConsistencyCheck(ctx, pgEventStore, streamId)
 
 	// Corrupt record in minipool
 	_, _ = pgEventStore.pool.Exec(ctx, "DELETE FROM minipools WHERE slot_num = 1")
 	err := pgEventStore.WriteEvent(ctx, streamId, 1, 3, []byte("event4"))
 
-	assert.NotNil(err)
-	assert.Contains(err.Error(), "Wrong slot number in minipool")
-	assert.Equal(AsRiverError(err).GetTag("ActualSlotNumber"), 2)
-	assert.Equal(AsRiverError(err).GetTag("ExpectedSlotNumber"), 1)
+	require.NotNil(err)
+	require.Contains(err.Error(), "Wrong slot number in minipool")
+	require.Equal(AsRiverError(err).GetTag("ActualSlotNumber"), 2)
+	require.Equal(AsRiverError(err).GetTag("ExpectedSlotNumber"), 1)
 }
 
 // Test that if there is a wrong number minipool records, we will get error
 func TestAddEventConsistencyChecksEventsNumberMismatch(t *testing.T) {
-	teardownTest := setupTest()
-	defer teardownTest()
-
-	ctx := context.Background()
-	assert := assert.New(t)
+	ctx := test.NewTestContext()
+	pgEventStore := setupTest(ctx)
+	defer pgEventStore.Close(ctx)
+	require := require.New(t)
 
 	streamId := testutils.FakeStreamId(STREAM_CHANNEL_PREFIX)
 
-	prepareTestDataForAddEventConsistencyCheck(ctx, streamId)
+	prepareTestDataForAddEventConsistencyCheck(ctx, pgEventStore, streamId)
 
 	// Corrupt record in minipool
 	_, _ = pgEventStore.pool.Exec(ctx, "DELETE FROM minipools WHERE slot_num = 2")
 	err := pgEventStore.WriteEvent(ctx, streamId, 1, 3, []byte("event4"))
 
-	assert.NotNil(err)
-	assert.Contains(err.Error(), "Wrong number of records in minipool")
-	assert.Equal(AsRiverError(err).GetTag("ActualRecordsNumber"), 2)
-	assert.Equal(AsRiverError(err).GetTag("ExpectedRecordsNumber"), 3)
+	require.NotNil(err)
+	require.Contains(err.Error(), "Wrong number of records in minipool")
+	require.Equal(AsRiverError(err).GetTag("ActualRecordsNumber"), 2)
+	require.Equal(AsRiverError(err).GetTag("ExpectedRecordsNumber"), 3)
 }
 
 func TestNoStream(t *testing.T) {
-	teardownTest := setupTest()
-	defer teardownTest()
+	ctx := test.NewTestContext()
+	pgEventStore := setupTest(ctx)
+	defer pgEventStore.Close(ctx)
+
 	res, err := pgEventStore.ReadStreamFromLastSnapshot(context.Background(), "noStream", 0)
-	assert.Nil(t, res)
-	assert.Error(t, err)
-	assert.Contains(t, err.Error(), "NOT_FOUND")
+	require.Nil(t, res)
+	require.Error(t, err)
+	require.Contains(t, err.Error(), "NOT_FOUND")
 }
 
 func TestCreateBlockConsistencyChecksProperNewMinipoolGeneration(t *testing.T) {
-	teardownTest := setupTest()
-	defer teardownTest()
+	ctx := test.NewTestContext()
+	pgEventStore := setupTest(ctx)
+	defer pgEventStore.Close(ctx)
 
-	ctx := context.Background()
-
-	assert := assert.New(t)
+	require := require.New(t)
 
 	streamId := testutils.FakeStreamId(STREAM_CHANNEL_PREFIX)
 	genesisMiniblock := []byte("genesisMinoblock")
@@ -286,19 +277,18 @@ func TestCreateBlockConsistencyChecksProperNewMinipoolGeneration(t *testing.T) {
 
 	err := pgEventStore.WriteBlock(ctx, streamId, 3, 1, []byte("block3"), false, testEnvelopes3)
 
-	assert.NotNil(err)
-	assert.Contains(err.Error(), "Minipool generation missmatch")
-	assert.Equal(AsRiverError(err).GetTag("ActualNewMinipoolGeneration"), int64(2))
-	assert.Equal(AsRiverError(err).GetTag("ExpectedNewMinipoolGeneration"), int64(3))
+	require.NotNil(err)
+	require.Contains(err.Error(), "Minipool generation missmatch")
+	require.Equal(AsRiverError(err).GetTag("ActualNewMinipoolGeneration"), int64(2))
+	require.Equal(AsRiverError(err).GetTag("ExpectedNewMinipoolGeneration"), int64(3))
 }
 
 func TestCreateBlockNoSuchStreamError(t *testing.T) {
-	teardownTest := setupTest()
-	defer teardownTest()
+	ctx := test.NewTestContext()
+	pgEventStore := setupTest(ctx)
+	defer pgEventStore.Close(ctx)
 
-	ctx := context.Background()
-
-	assert := assert.New(t)
+	require := require.New(t)
 
 	streamId := testutils.FakeStreamId(STREAM_CHANNEL_PREFIX)
 	genesisMiniblock := []byte("genesisMinoblock")
@@ -310,34 +300,35 @@ func TestCreateBlockNoSuchStreamError(t *testing.T) {
 	testEnvelopes1 = append(testEnvelopes1, []byte("event1"))
 	err := pgEventStore.WriteBlock(ctx, streamId, 1, 1, []byte("block1"), false, testEnvelopes1)
 
-	assert.NotNil(err)
-	assert.Contains(err.Error(), "No blocks for the stream found in block storage")
-	assert.Equal(AsRiverError(err).GetTag("streamId"), streamId)
+	require.NotNil(err)
+	require.Contains(err.Error(), "No blocks for the stream found in block storage")
+	require.Equal(AsRiverError(err).GetTag("streamId"), streamId)
 }
 
 func TestExitIfSecondStorageCreated(t *testing.T) {
-	teardownTest := setupTest()
-	defer teardownTest()
-	ctx := context.Background()
-	_, err := NewPostgresEventStore(context.Background(), testDatabaseUrl, testSchemaName, GenShortNanoid(), exitSignal)
+	ctx := test.NewTestContext()
+	pgEventStore := setupTest(ctx)
+	defer pgEventStore.Close(ctx)
+
+	exitSignal := make(chan error, 1)
+	_, err := NewPostgresEventStore(ctx, testDatabaseUrl, testSchemaName, GenShortNanoid(), exitSignal)
 	if err != nil {
 		t.Fatal("Error creating new storage instance", err)
 	}
 	genesisMiniblock := []byte("genesisMinoblock")
 	streamId := STREAM_CHANNEL_PREFIX + "0sfdsf_sdfds1zzz"
 	err = pgEventStore.CreateStreamStorage(ctx, streamId, genesisMiniblock)
-	assert.NotNil(t, err)
-	assert.Contains(t, err.Error(), "Node number mismatch")
+	require.NotNil(t, err)
+	require.Contains(t, err.Error(), "Node number mismatch")
 }
 
 // Test that if there is a gap in miniblocks sequence, we will get error
 func TestGetStreamFromLastSnapshotConsistencyChecksMissingBlockFailure(t *testing.T) {
-	teardownTest := setupTest()
-	defer teardownTest()
+	ctx := test.NewTestContext()
+	pgEventStore := setupTest(ctx)
+	defer pgEventStore.Close(ctx)
 
-	ctx := context.Background()
-
-	assert := assert.New(t)
+	require := require.New(t)
 
 	streamId := testutils.FakeStreamId(STREAM_CHANNEL_PREFIX)
 	genesisMiniblock := []byte("genesisMinoblock")
@@ -357,19 +348,18 @@ func TestGetStreamFromLastSnapshotConsistencyChecksMissingBlockFailure(t *testin
 
 	_, err := pgEventStore.getStreamFromLastSnapshot(ctx, streamId, 0)
 
-	assert.NotNil(err)
-	assert.Contains(err.Error(), "Miniblocks consistency violation - wrong block sequence number")
-	assert.Equal(AsRiverError(err).GetTag("ActualSeqNum"), int64(3))
-	assert.Equal(AsRiverError(err).GetTag("ExpectedSeqNum"), int64(2))
+	require.NotNil(err)
+	require.Contains(err.Error(), "Miniblocks consistency violation - wrong block sequence number")
+	require.Equal(AsRiverError(err).GetTag("ActualSeqNum"), int64(3))
+	require.Equal(AsRiverError(err).GetTag("ExpectedSeqNum"), int64(2))
 }
 
 func TestGetStreamFromLastSnapshotConsistencyCheckWrongEnvelopeGeneration(t *testing.T) {
-	teardownTest := setupTest()
-	defer teardownTest()
+	ctx := test.NewTestContext()
+	pgEventStore := setupTest(ctx)
+	defer pgEventStore.Close(ctx)
 
-	ctx := context.Background()
-
-	assert := assert.New(t)
+	require := require.New(t)
 
 	streamId := testutils.FakeStreamId(STREAM_CHANNEL_PREFIX)
 	genesisMiniblock := []byte("genesisMinoblock")
@@ -389,19 +379,18 @@ func TestGetStreamFromLastSnapshotConsistencyCheckWrongEnvelopeGeneration(t *tes
 
 	_, err := pgEventStore.getStreamFromLastSnapshot(ctx, streamId, 0)
 
-	assert.NotNil(err)
-	assert.Contains(err.Error(), "Minipool consistency violation - wrong event generation")
-	assert.Equal(AsRiverError(err).GetTag("ActualGeneration"), int64(777))
-	assert.Equal(AsRiverError(err).GetTag("ExpectedGeneration"), int64(1))
+	require.NotNil(err)
+	require.Contains(err.Error(), "Minipool consistency violation - wrong event generation")
+	require.Equal(AsRiverError(err).GetTag("ActualGeneration"), int64(777))
+	require.Equal(AsRiverError(err).GetTag("ExpectedGeneration"), int64(1))
 }
 
 func TestGetStreamFromLastSnapshotConsistencyCheckNoZeroIndexEnvelope(t *testing.T) {
-	teardownTest := setupTest()
-	defer teardownTest()
+	ctx := test.NewTestContext()
+	pgEventStore := setupTest(ctx)
+	defer pgEventStore.Close(ctx)
 
-	ctx := context.Background()
-
-	assert := assert.New(t)
+	require := require.New(t)
 
 	streamId := testutils.FakeStreamId(STREAM_CHANNEL_PREFIX)
 	genesisMiniblock := []byte("genesisMinoblock")
@@ -422,19 +411,18 @@ func TestGetStreamFromLastSnapshotConsistencyCheckNoZeroIndexEnvelope(t *testing
 
 	_, err := pgEventStore.getStreamFromLastSnapshot(ctx, streamId, 0)
 
-	assert.NotNil(err)
-	assert.Contains(err.Error(), "Minipool consistency violation - slotNums are not sequential")
-	assert.Equal(AsRiverError(err).GetTag("ActualSlotNumber"), int64(1))
-	assert.Equal(AsRiverError(err).GetTag("ExpectedSlotNumber"), int64(0))
+	require.NotNil(err)
+	require.Contains(err.Error(), "Minipool consistency violation - slotNums are not sequential")
+	require.Equal(AsRiverError(err).GetTag("ActualSlotNumber"), int64(1))
+	require.Equal(AsRiverError(err).GetTag("ExpectedSlotNumber"), int64(0))
 }
 
 func TestGetStreamFromLastSnapshotConsistencyCheckGapInEnvelopesIndexes(t *testing.T) {
-	teardownTest := setupTest()
-	defer teardownTest()
+	ctx := test.NewTestContext()
+	pgEventStore := setupTest(ctx)
+	defer pgEventStore.Close(ctx)
 
-	ctx := context.Background()
-
-	assert := assert.New(t)
+	require := require.New(t)
 
 	streamId := testutils.FakeStreamId(STREAM_CHANNEL_PREFIX)
 	genesisMiniblock := []byte("genesisMinoblock")
@@ -456,19 +444,18 @@ func TestGetStreamFromLastSnapshotConsistencyCheckGapInEnvelopesIndexes(t *testi
 
 	_, err := pgEventStore.getStreamFromLastSnapshot(ctx, streamId, 0)
 
-	assert.NotNil(err)
-	assert.Contains(err.Error(), "Minipool consistency violation - slotNums are not sequential")
-	assert.Equal(AsRiverError(err).GetTag("ActualSlotNumber"), int64(2))
-	assert.Equal(AsRiverError(err).GetTag("ExpectedSlotNumber"), int64(1))
+	require.NotNil(err)
+	require.Contains(err.Error(), "Minipool consistency violation - slotNums are not sequential")
+	require.Equal(AsRiverError(err).GetTag("ActualSlotNumber"), int64(2))
+	require.Equal(AsRiverError(err).GetTag("ExpectedSlotNumber"), int64(1))
 }
 
 func TestGetMiniblocksConsistencyChecks(t *testing.T) {
-	teardownTest := setupTest()
-	defer teardownTest()
+	ctx := test.NewTestContext()
+	pgEventStore := setupTest(ctx)
+	defer pgEventStore.Close(ctx)
 
-	ctx := context.Background()
-
-	assert := assert.New(t)
+	require := require.New(t)
 
 	streamId := testutils.FakeStreamId(STREAM_CHANNEL_PREFIX)
 	genesisMiniblock := []byte("genesisMinoblock")
@@ -489,16 +476,16 @@ func TestGetMiniblocksConsistencyChecks(t *testing.T) {
 
 	_, err := pgEventStore.ReadMiniblocks(ctx, streamId, 1, 4)
 
-	assert.NotNil(err)
-	assert.Contains(err.Error(), "Miniblocks consistency violation")
-	assert.Equal(AsRiverError(err).GetTag("ActualBlockNumber"), 3)
-	assert.Equal(AsRiverError(err).GetTag("ExpectedBlockNumber"), 2)
+	require.NotNil(err)
+	require.Contains(err.Error(), "Miniblocks consistency violation")
+	require.Equal(AsRiverError(err).GetTag("ActualBlockNumber"), 3)
+	require.Equal(AsRiverError(err).GetTag("ExpectedBlockNumber"), 2)
 }
 
 func TestAlreadyExists(t *testing.T) {
-	teardownTest := setupTest()
-	defer teardownTest()
-	ctx := context.Background()
+	ctx := test.NewTestContext()
+	pgEventStore := setupTest(ctx)
+	defer pgEventStore.Close(ctx)
 	require := require.New(t)
 
 	streamId := GenNanoid()
@@ -511,13 +498,13 @@ func TestAlreadyExists(t *testing.T) {
 }
 
 func TestNotFound(t *testing.T) {
-	teardownTest := setupTest()
-	defer teardownTest()
-	ctx := context.Background()
-	assert := assert.New(t)
+	ctx := test.NewTestContext()
+	pgEventStore := setupTest(ctx)
+	defer pgEventStore.Close(ctx)
+	require := require.New(t)
 
 	streamId := GenNanoid()
 	result, err := pgEventStore.ReadStreamFromLastSnapshot(ctx, streamId, 0)
-	assert.Nil(result)
-	assert.Equal(Err_NOT_FOUND, AsRiverError(err).Code)
+	require.Nil(result)
+	require.Equal(Err_NOT_FOUND, AsRiverError(err).Code)
 }

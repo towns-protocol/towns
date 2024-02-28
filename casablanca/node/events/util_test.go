@@ -98,7 +98,7 @@ func makeTestStreamParams(p testParams) (context.Context, *testContext) {
 			streamRegistry: sr,
 			closer: func() {
 				btc.Close()
-				streamStorage.Close()
+				streamStorage.Close(ctx)
 				if schemaDeleter != nil {
 					schemaDeleter()
 				}

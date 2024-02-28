@@ -46,5 +46,5 @@ type StreamStorage interface {
 		envelopes [][]byte,
 	) error
 
-	Close()
+	Close(ctx context.Context)
 }

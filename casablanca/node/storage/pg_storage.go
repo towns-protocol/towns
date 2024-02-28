@@ -690,7 +690,7 @@ func (s *PostgresEventStore) CleanupStorage(ctx context.Context) error {
 			err,
 		).Func("pg.CleanupStorage").
 			Message("singlenodekey clean up error").
-			Tag("UUID", s.nodeUUID)
+			Tag("UUID", s.nodeUUID).LogError(dlog.FromCtx(ctx))
 	}
 	dbCalls.PassIncForChild("CleanupStorage")
 	return nil
@@ -893,8 +893,9 @@ func newPostgresEventStore(
 	return store, nil
 }
 
-// Close closes the connection to the database
-func (s *PostgresEventStore) Close() {
+// Close removes instance record from singlenodekey table and closes the connection pool
+func (s *PostgresEventStore) Close(ctx context.Context)  {
+	_ = s.CleanupStorage(ctx)
 	s.pool.Close()
 }
 

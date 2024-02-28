@@ -24,14 +24,13 @@ import (
 	"github.com/river-build/river/registries"
 	"github.com/river-build/river/storage"
 
+	"log/slog"
+
 	"github.com/rs/cors"
 	"golang.org/x/net/http2"
 	"golang.org/x/net/http2/h2c"
 	httptrace "gopkg.in/DataDog/dd-trace-go.v1/contrib/net/http"
-	"log/slog"
 )
-
-type Cleanup func(context.Context) error
 
 func getDbURL(dbConfig config.DatabaseConfig) string {
 	if dbConfig.Password != "" {
@@ -56,59 +55,70 @@ func createStore(
 	address string,
 	instanceId string,
 	exitSignal chan error,
-) (storage.StreamStorage, Cleanup, error) {
+) (storage.StreamStorage, error) {
 	log := dlog.FromCtx(ctx)
 	if storageType == "in-memory" {
 		log.Warn("Using in-memory storage")
-		return storage.NewMemStorage(), nil, nil
+		return storage.NewMemStorage(), nil
 	} else {
 		dbUrl := getDbURL(dbConfig)
 		schema := storage.DbSchemaNameFromAddress(address)
 		store, err := storage.NewPostgresEventStore(ctx, dbUrl, schema, instanceId, exitSignal)
 		if err != nil {
-			return nil, nil, err
+			return nil, err
 		}
 
 		streamsCount, err := store.GetStreamsNumber(ctx)
 		if err != nil {
-			return nil, nil, err
+			return nil, err
 		}
 
 		log.Info("Created postgres event store", "schema", schema)
 		log.Info("Current number of streams in the store", "totalStreamsCount", streamsCount)
-		cleaner := func(ctx context.Context) error {
-			return store.CleanupStorage(ctx)
-		}
-		return store, cleaner, nil
+		return store, nil
 	}
 }
 
+func (s *Service) Close() {
+	err := s.httpServer.Shutdown(s.serverCtx)
+	if err != nil {
+		dlog.FromCtx(s.serverCtx).Error("failed to shutdown http server", "error", err)
+	}
+
+	s.storage.Close(s.serverCtx)
+}
+
+// StartServer starts the server with the given configuration.
+// riverchain and listener can be provided for testing purposes.
+// Returns Service.
+// Service.Close should be called to close listener, db connection and stop stop the server.
+// Error is posted to Serivce.exitSignal if DB conflict is detected (newer instance is started)
+// and server must exit.
 func StartServer(
 	ctx context.Context,
 	cfg *config.Config,
 	riverchain *crypto.Blockchain,
 	listener net.Listener,
-) (func(), int, chan error, error) {
+) (*Service, error) {
 	log := dlog.FromCtx(ctx)
-
-	// Read env var WALLETPRIVATEKEY or PRIVATE_KEY
-	privKey := os.Getenv("WALLETPRIVATEKEY")
-	if privKey == "" {
-		privKey = os.Getenv("PRIVATE_KEY")
-	}
 
 	log.Info("Starting server", "config", cfg)
 
 	var err error
 	var wallet *crypto.Wallet
 	if riverchain == nil {
+		// Read env var WALLETPRIVATEKEY or PRIVATE_KEY
+		privKey := os.Getenv("WALLETPRIVATEKEY")
+		if privKey == "" {
+			privKey = os.Getenv("PRIVATE_KEY")
+		}
 		if privKey != "" {
 			wallet, err = crypto.NewWalletFromPrivKey(ctx, privKey)
 		} else {
 			wallet, err = crypto.LoadWallet(ctx, crypto.WALLET_PATH_PRIVATE_KEY)
 		}
 		if err != nil {
-			return nil, 0, nil, err
+			return nil, err
 		}
 	} else {
 		wallet = riverchain.Wallet
@@ -125,9 +135,9 @@ func StartServer(
 
 	exitSignal := make(chan error, 1)
 
-	store, storageCleaner, err := createStore(ctx, cfg.Database, cfg.StorageType, wallet.AddressStr, instanceId, exitSignal)
+	store, err := createStore(ctx, cfg.Database, cfg.StorageType, wallet.AddressStr, instanceId, exitSignal)
 	if err != nil {
-		return nil, 0, nil, err
+		return nil, err
 	}
 
 	var chainAuth auth.ChainAuth
@@ -135,7 +145,7 @@ func StartServer(
 		baseChain, err := crypto.NewReadOnlyBlockchain(ctx, &cfg.BaseChain)
 		if err != nil {
 			log.Error("Failed to initialize blockchain for base", "error", err, "chain_config", cfg.BaseChain)
-			return nil, 0, nil, err
+			return nil, err
 		}
 
 		log.Info("Using River Auth", "chain_config", cfg.BaseChain)
@@ -149,7 +159,7 @@ func StartServer(
 		)
 		if err != nil {
 			log.Error("failed to create auth", "error", err)
-			return nil, 0, nil, err
+			return nil, err
 		}
 	} else {
 		log.Warn("Using fake auth for testing")
@@ -169,20 +179,20 @@ func StartServer(
 			riverchain, err = crypto.NewReadWriteBlockchain(ctx, &cfg.RiverChain, wallet)
 			if err != nil {
 				log.Error("Failed to initialize blockchain for river", "error", err, "chain_config", cfg.RiverChain)
-				return nil, 0, nil, err
+				return nil, err
 			}
 		}
 
 		registryContract, err = registries.NewRiverRegistryContract(ctx, riverchain, &cfg.RegistryContract)
 		if err != nil {
 			log.Error("NewRiverRegistryContract", "error", err)
-			return nil, 0, nil, err
+			return nil, err
 		}
 
 		nodeRegistry, err = nodes.LoadNodeRegistry(ctx, registryContract, wallet.AddressStr)
 		if err != nil {
 			log.Error("Failed to load node registry", "error", err)
-			return nil, 0, nil, err
+			return nil, err
 		}
 
 		streamRegistry = nodes.NewStreamRegistry(wallet.AddressStr, nodeRegistry, registryContract, cfg.Stream.ReplicationFactor)
@@ -210,7 +220,7 @@ func StartServer(
 	)
 	if err != nil {
 		log.Error("Failed to create stream cache", "error", err)
-		return nil, 0, nil, err
+		return nil, err
 	}
 
 	syncHandler := NewSyncHandler(
@@ -221,6 +231,7 @@ func StartServer(
 	)
 
 	streamService := &Service{
+		storage:        store,
 		cache:          cache,
 		chainAuth:      chainAuth,
 		wallet:         wallet,
@@ -266,13 +277,13 @@ func StartServer(
 	if listener == nil {
 		if cfg.Port == 0 {
 			log.Error("Port is not set")
-			return nil, 0, nil, RiverError(Err_BAD_CONFIG, "Port is not set")
+			return nil, RiverError(Err_BAD_CONFIG, "Port is not set")
 		}
 		address := fmt.Sprintf("%s:%d", cfg.Address, cfg.Port)
 		listener, err = net.Listen("tcp", address)
 		if err != nil {
 			log.Error("failed to listen", "error", err)
-			return nil, 0, nil, err
+			return nil, err
 		}
 		log.Info("Listening", "addr", address+streamServicePattern)
 	} else {
@@ -336,7 +347,7 @@ func StartServer(
 			}
 		} else {
 			log.Error("TLSConfig.Cert and TLSConfig.Key must be set")
-			return nil, 0, nil, err
+			return nil, err
 		}
 	} else {
 		log.Info("Using H2C server")
@@ -346,30 +357,10 @@ func StartServer(
 
 	if err != nil {
 		log.Error("failed to create server", "err", err)
-		return nil, 0, nil, err
+		return nil, err
 	}
 
-	closer := func() {
-		log.Info("closing server")
-
-		// if there is a cleaner, run it
-		if storageCleaner != nil {
-			err := storageCleaner(ctx)
-			if err != nil {
-				log.Error("failed to cleanup storage", "error", err)
-			}
-		}
-
-		if err != nil {
-			log.Error("failed to cleanup storage", "error", err)
-		}
-
-		err = srv.Shutdown(ctx)
-		if err != nil {
-			log.Error("failed to shutdown server", "error", err)
-			panic(err)
-		}
-	}
+	streamService.httpServer = srv
 
 	// Run the server with graceful shutdown
 	go func() {
@@ -401,7 +392,7 @@ func StartServer(
 		log.Info("Running Without Entitlements")
 	}
 	log.Info("Available on port", "port", port)
-	return closer, port, streamService.exitSignal, nil
+	return streamService, nil
 }
 
 func createServerFromStrings(ctx context.Context, address string, handler http.Handler, certString, keyString string) (*http.Server, error) {
@@ -470,20 +461,20 @@ type CertKey struct {
 func RunServer(ctx context.Context, cfg *config.Config) error {
 	log := dlog.FromCtx(ctx)
 
-	closer, _, exitSignal, error := StartServer(ctx, cfg, nil, nil)
+	service, error := StartServer(ctx, cfg, nil, nil)
 	if error != nil {
 		log.Error("Failed to start server", "error", error)
 		return error
 	}
-	defer closer()
+	defer service.Close()
 
 	osSignal := make(chan os.Signal, 1)
 	signal.Notify(osSignal, syscall.SIGINT, syscall.SIGTERM)
 	go func() {
 		sig := <-osSignal
 		log.Info("Got OS signal", "signal", sig.String())
-		exitSignal <- nil
+		service.exitSignal <- nil
 	}()
 
-	return <-exitSignal
+	return <-service.exitSignal
 }
