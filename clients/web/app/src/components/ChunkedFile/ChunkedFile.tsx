@@ -19,15 +19,7 @@ type Props = {
 }
 
 export const ChunkedFile = (props: Props) => {
-    if (isMediaMimeType(props.mimetype)) {
-        return <ChunkedMedia {...props} />
-    } else {
-        return <ChunkedFileDownload {...props} />
-    }
-}
-
-const ChunkedFileDownload = (props: Props) => {
-    const { filename, mimetype } = props
+    const { filename } = props
     const { downloadFile } = useDownloadFile(props)
     const onDownloadClicked = useCallback(
         async (event: React.MouseEvent) => {
@@ -53,6 +45,20 @@ const ChunkedFileDownload = (props: Props) => {
         },
         [downloadFile, filename],
     )
+
+    if (isMediaMimeType(props.mimetype)) {
+        return <ChunkedMedia {...props} onDownloadClicked={onDownloadClicked} />
+    } else {
+        return <ChunkedFileDownload {...props} onDownloadClicked={onDownloadClicked} />
+    }
+}
+
+const ChunkedFileDownload = (
+    props: Props & {
+        onDownloadClicked: (event: React.MouseEvent<Element, MouseEvent>) => Promise<void>
+    },
+) => {
+    const { filename, mimetype, onDownloadClicked } = props
 
     return (
         <Stack
@@ -87,8 +93,12 @@ const ChunkedFileDownload = (props: Props) => {
     )
 }
 
-const ChunkedMedia = (props: Props) => {
-    const { width, height, thumbnail, onClick } = props
+const ChunkedMedia = (
+    props: Props & {
+        onDownloadClicked: (event: React.MouseEvent<Element, MouseEvent>) => Promise<void>
+    },
+) => {
+    const { width, height, thumbnail, onClick, onDownloadClicked } = props
     const [thumbnailURL, setThumbnailURL] = useState<string | undefined>(undefined)
     const { objectURL } = useChunkedMedia(props)
     const { isTouch } = useDevice()
@@ -112,6 +122,14 @@ const ChunkedMedia = (props: Props) => {
             setThumbnailURL(url)
         }
     }, [thumbnail])
+
+    const [isHovering, setIsHovering] = useState(false)
+    const onPointerEnter = useCallback(() => {
+        setIsHovering(true)
+    }, [])
+    const onPointerLeave = useCallback(() => {
+        setIsHovering(false)
+    }, [])
 
     const { isMessageAttachementContext } = useIsMessageAttachementContext()
 
@@ -152,6 +170,8 @@ const ChunkedMedia = (props: Props) => {
             }}
             rounded="sm"
             overflow="hidden"
+            onPointerEnter={isTouch ? undefined : onPointerEnter}
+            onPointerLeave={isTouch ? undefined : onPointerLeave}
         >
             <Box
                 role="image"
@@ -166,6 +186,11 @@ const ChunkedMedia = (props: Props) => {
                 }}
                 onClick={isTouch ? undefined : onClick}
             />
+            {isHovering && (
+                <Box position="bottomRight" padding="sm">
+                    <IconButton icon="download" onClick={onDownloadClicked} />
+                </Box>
+            )}
             {touchButton}
         </Box>
     )
