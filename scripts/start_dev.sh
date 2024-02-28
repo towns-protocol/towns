@@ -62,7 +62,7 @@ set +a
 make build & BUILD_PID=$!
 popd
 
-./casablanca/scripts/launch_storage.sh &
+./core/scripts/launch_storage.sh &
 
 # Set the block chains to run with 2 second block times
 # referenced by the start-local scripts
@@ -110,13 +110,13 @@ tmux wait-for deploy-river-done
 echo "STARTED ALL CHAINS AND DEPLOYED ALL CONTRACTS"
 
 
-# Now generate the casablanca server config
-./casablanca/node/run_multi.sh -c -n 10
-./casablanca/node/run_single.sh -c
-./casablanca/node/run_single.sh -c --de
+# Now generate the core server config
+./core/node/run_multi.sh -c -n 10
+./core/node/run_single.sh -c
+./core/node/run_single.sh -c --de
 
 # Define the base directory for easier reference
-CONFIGS_DIR="./casablanca/node/run_files/"
+CONFIGS_DIR="./core/node/run_files/"
 PNW_URL="http://localhost:8787"
 PNW_AUTH_TOKEN="Zm9v"
 
@@ -138,24 +138,24 @@ yarn install
 # Array of commands from the VS Code tasks
 commands=(
     "watch_lib:cd clients/web/lib && yarn watch"
-    "watch_sdk:cd casablanca/sdk && yarn watch"
-    "watch_encryption:cd casablanca/encryption && yarn watch"
-    "watch_dlog:cd casablanca/dlog && yarn watch"
+    "watch_sdk:cd core/sdk && yarn watch"
+    "watch_encryption:cd core/encryption && yarn watch"
+    "watch_dlog:cd core/dlog && yarn watch"
     "watch_worker:cd servers/workers/worker-common && yarn watch"
-    "watch_proto:cd casablanca/proto && yarn watch"
-    "watch_web3:cd casablanca/web3 && yarn watch"
-    "watch_go:cd casablanca/proto && yarn watch:go"
+    "watch_proto:cd core/proto && yarn watch"
+    "watch_web3:cd core/web3 && yarn watch"
+    "watch_go:cd core/proto && yarn watch:go"
     "app:cd clients/web/app && yarn dev"
     "sample_app:cd clients/web/sample-app && yarn dev"
-    "debug_app:cd casablanca/debug-app && yarn dev"
+    "debug_app:cd core/debug-app && yarn dev"
     "worker_unfurl:cd servers/workers/unfurl-worker && yarn dev:local"
     "worker_token:cd servers/workers/token-worker && yarn dev:local"
     "worker_gateway:cd servers/workers/gateway-worker && yarn dev:local"
     "worker_push:cd servers/workers/push-notification-worker && ./scripts/start-local-push-worker.sh"
     "worker_stackup:cd servers/workers/stackup-worker && yarn dev:local"
-    "casablanca_single:sleep 3 && ./casablanca/node/run_single.sh -sc"
-    "casablanca_single_ne:./scripts/wait-for-casablanca.sh && ./casablanca/node/run_single.sh -sc --de"
-    "casablanca:./casablanca/node/run_multi.sh -r"
+    "core_single:sleep 3 && ./core/node/run_single.sh -sc"
+    "core_single_ne:./scripts/wait-for-core.sh && ./core/node/run_single.sh -sc --de"
+    "core:./core/node/run_multi.sh -r"
     "xchain:./servers/xchain/launch_multi.sh"
 )
 
@@ -178,6 +178,6 @@ is_closed() {
 
 # Wait for the session to close
 if is_closed ; then
-    echo "Session $SESSION_NAME has closed; delete casablanca postgres container and volume"
-    ./casablanca/scripts/stop_storage.sh
+    echo "Session $SESSION_NAME has closed; delete core postgres container and volume"
+    ./core/scripts/stop_storage.sh
 fi

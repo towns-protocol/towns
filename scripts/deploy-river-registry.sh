@@ -14,5 +14,5 @@ fi
 make deploy-river-anvil-explicit contract=DeployRiverRegistry
 
 cd ..
-mkdir -p casablanca/node/run_files/addresses
-cp contracts/deployments/river_anvil/riverRegistry.json casablanca/node/run_files/addresses
+mkdir -p core/node/run_files/addresses
+cp contracts/deployments/river_anvil/riverRegistry.json core/node/run_files/addresses

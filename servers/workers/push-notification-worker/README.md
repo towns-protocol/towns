@@ -21,7 +21,7 @@ In `clients/web/app/.env.local`:
 
 Step 5: Configure Node and restart
 Kill the `Casablanca` task in vscode if it is started.
-In `./casablanca/node/run_files/single/config`, update `config.yaml`:
+In `./core/node/run_files/single/config`, update `config.yaml`:
 
 ```bash
 # Push notification configuration

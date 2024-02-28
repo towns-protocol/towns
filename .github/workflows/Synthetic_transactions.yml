@@ -58,7 +58,7 @@ jobs:
 
             - name: Setup River CA for testing certificates
               run: ./scripts/register-ca.sh
-              working-directory: casablanca
+              working-directory: core
 
             - name: Set up Custom CA Certificate for Node.js
               run: |

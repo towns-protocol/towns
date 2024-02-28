@@ -6,8 +6,8 @@ tmux send-keys -t '=harmony:=anvil' 'anvil' Enter
 tmux new-window -d -t '=harmony' -n deploy
 tmux send-keys -t '=harmony:=deploy' './scripts/deploy-towns-contracts.sh' Enter
 
-tmux new-window -d -t '=harmony' -n casablanca
-tmux send-keys -t '=harmony:=casablanca' 'yarn csb:dev' Enter
+tmux new-window -d -t '=harmony' -n core
+tmux send-keys -t '=harmony:=core' 'yarn csb:dev' Enter
 
 tmux new-window -d -t '=harmony' -n lib -c 'clients/web/lib'
 tmux send-keys -t '=harmony:=lib' 'yarn watch' Enter

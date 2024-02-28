@@ -61,7 +61,7 @@ Then update `clients/web/app/.env.local` with the required (blank) keys.
 
 4. For local Cloudflare workers to run properly, you'll need to add their secret env variables. At `servers/workers/` you'll see: `gateway-worker`, `token-worker`, and `unfurl-worker`. For each, `cp .dev.vars-sample .dev.vars` and add the required config. The `siwe-worker` is optional for local development.
 
-5. Create a Certificate Authority. Run `./casablanca/scripts/register-ca.sh` from the root of the repository. This will create the required `$HOME/river-ca-cert.pem` and `$HOME/river-ca-key.pem` files.
+5. Create a Certificate Authority. Run `./core/scripts/register-ca.sh` from the root of the repository. This will create the required `$HOME/river-ca-cert.pem` and `$HOME/river-ca-key.pem` files.
 
 ## Running everything locally
 

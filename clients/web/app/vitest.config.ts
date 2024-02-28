@@ -17,10 +17,10 @@ export default defineConfig({
                 // workaround to allow tests to work with `use-zion-client`
                 // "Vite will process inlined modules. This could be helpful to handle packages that ship .js in ESM format (that Node can't handle)."
                 /..\/lib\/dist\/(.*\.js)$/,
-                /.*.\/casablanca\/proto\/dist\/(.*\.js)$/,
-                /.*.\/casablanca\/sdk\/dist\/(.*\.js)$/,
-                /.*.\/casablanca\/waterproof\/dist\/(.*\.js)$/,
-                /.*.\/casablanca\/web3\/dist\/(.*\.js)$/,
+                /.*.\/core\/proto\/dist\/(.*\.js)$/,
+                /.*.\/core\/sdk\/dist\/(.*\.js)$/,
+                /.*.\/core\/waterproof\/dist\/(.*\.js)$/,
+                /.*.\/core\/web3\/dist\/(.*\.js)$/,
                 'vitest-canvas-mock',
             ],
         },

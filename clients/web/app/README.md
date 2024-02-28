@@ -36,7 +36,7 @@ yarn dev
 
    To verify that the tunnels are working, you can run just the the app locally and visit `star-app.towns.com` in your browser. You should see the app running.
 
-2. You also have to set the `VITE_CF_TUNNEL_PREFIX` in `.env.local` to the same phrase. Note that setting this flag is going to lock your dev environment to using tunnels for the services listed above. So your casablanca url, blockchain network, etc, will not be able to be swapped to other urls/networks while developing.
+2. You also have to set the `VITE_CF_TUNNEL_PREFIX` in `.env.local` to the same phrase. Note that setting this flag is going to lock your dev environment to using tunnels for the services listed above. So your core url, blockchain network, etc, will not be able to be swapped to other urls/networks while developing.
 3. On your mobile wallet, you need to add a the foundry network via the tunnel url. Make sure anvil is running. Then add the network with the same settings you added via desktop, except the RPC url is going to be the tunnel - `star-anvil.towns.com`.
 4. On your mobile device, you should now be able to visit `star-app.towns.com` and complete the connect/login process. Once you enable push notifications, you should be able to receive them on your mobile device. It's not required to connect your device to your machine, but you'll need to do so to debug any logs.
 

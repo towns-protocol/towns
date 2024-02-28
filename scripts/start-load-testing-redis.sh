@@ -12,4 +12,4 @@ else
   echo "Container $container_name is not running."
 fi
 
-docker-compose -p "load_testing" -f ./casablanca/scripts/load-testing-docker-compose.yml up
+docker-compose -p "load_testing" -f ./core/scripts/load-testing-docker-compose.yml up

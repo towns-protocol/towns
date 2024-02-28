@@ -66,7 +66,7 @@ function start_follower() {
     # convert load_test_duration_ms to number, and add 30 minutes
     local timeout_duration_ms=$(expr $LOAD_TEST_DURATION_MS + $safety_margin_ms)
 
-    sdk_dir="$MONOREPO_ROOT/casablanca/sdk"
+    sdk_dir="$MONOREPO_ROOT/core/sdk"
     pushd $sdk_dir
         if ! ( timeout $timeout_duration_ms yarn run test:ci:stress-test-follower ); then
             echo "Terminating the follower - client-id: ${CLIENT_ID}"

@@ -14,28 +14,28 @@ on:
                 required: false
                 default: false
                 type: boolean
-            skip_casablanca_client_noentitlements:
-                description: Skip Casablanca Client Tests without entitlements
+            skip_client_noentitlements:
+                description: Skip Client Tests without entitlements
                 required: false
                 default: false
                 type: boolean
-            skip_casablanca_multinode:
+            skip_multinode:
                 description: Skip Multi-node Tests
                 required: false
                 default: false
                 type: boolean
-            skip_casablanca_client_entitlements:
-                description: Skip Casablanca Client Tests with entitlements
+            skip_client_entitlements:
+                description: Skip Client Tests with entitlements
                 required: false
                 default: false
                 type: boolean
-            skip_casablanca_multinode_ent:
+            skip_multinode_ent:
                 description: Skip Multi-node Ent Tests
                 required: false
                 default: false
                 type: boolean
-            skip_casablanca_node:
-                description: Skip Casablanca Node Tests
+            skip_node:
+                description: Skip Node Tests
                 required: false
                 default: false
                 type: boolean
@@ -120,13 +120,13 @@ jobs:
               uses: golangci/golangci-lint-action@v3
               with:
                   version: latest
-                  working-directory: casablanca/node
+                  working-directory: core/node
                   skip-pkg-cache: true
                   args: --timeout=10m
 
             - name: Linting River Node W/ Custom Rules
               run: |
-                  cd casablanca/node
+                  cd core/node
                   ./lint_extensions.sh > river_lint_extensions.txt
                   if [ -s river_lint_extensions.txt ]; then
                     echo "Linter found issues:"
@@ -156,13 +156,13 @@ jobs:
                   SLACK_COLOR: '#FF0000'
                   SLACK_MESSAGE: 'CI Failure on ${{ github.repository }}'
 
-    Casablanca_Client_NoEntitlements:
+    Client_NoEntitlements:
         permissions: write-all
-        if: github.event_name != 'workflow_dispatch' || !inputs.skip_casablanca_client_noentitlements
+        if: github.event_name != 'workflow_dispatch' || !inputs.skip_client_noentitlements
         runs-on: ubuntu-latest-8-cores
         timeout-minutes: 30
         services:
-            postgres-casablanca:
+            postgres-core:
                 image: postgres:latest
                 env:
                     POSTGRES_USER: postgres
@@ -175,7 +175,7 @@ jobs:
                     --health-interval 10s
                     --health-timeout 5s
                     --health-retries 5
-                    --name casablanca_postgres_container
+                    --name river_postgres_container
 
         steps:
             - name: Cancel previous runs
@@ -192,11 +192,11 @@ jobs:
 
             - name: Increase max_connections in Postgres
               run: |
-                  docker exec -i casablanca_postgres_container bash << EOF
+                  docker exec -i river_postgres_container bash << EOF
                     echo 'max_connections = 1000' >> /var/lib/postgresql/data/postgresql.conf
                     echo 'shared_buffers = 2GB' >> /var/lib/postgresql/data/postgresql.conf
                   EOF
-                  docker restart --time 0 casablanca_postgres_container
+                  docker restart --time 0 river_postgres_container
                   sleep 5
 
             - name: Show PostgreSQL max_connections
@@ -250,16 +250,16 @@ jobs:
                   restore-keys: |
                       ${{ runner.os }}-turbo-
 
-            - name: Casablanca create db
+            - name: create db
               run: psql -h localhost -p 5433 -U postgres -f scripts/sql/create_db.sql
-              working-directory: casablanca
+              working-directory: core
               env:
                   POSTGRES_PASSWORD: postgres
                   PGPASSWORD: postgres
 
             - name: Setup River CA for testing certificates
               run: ./scripts/register-ca.sh
-              working-directory: casablanca
+              working-directory: core
 
             - name: Check SSL directories and environment variables
               run: |
@@ -275,10 +275,10 @@ jobs:
                 echo "Checking SSL_CERT_DIR environment variable..."
                 echo "SSL_CERT_DIR=$SSL_CERT_DIR"
 
-            - name: Run Casablanca node (without entitlements)
-              run: ./casablanca/node/run_single.sh --de &
+            - name: Run node (without entitlements)
+              run: ./core/node/run_single.sh --de &
 
-            - name: Wait for Casablanca (without entitlements) node to be up
+            - name: Wait for (without entitlements) node to be up
               run: yarn csb:wait:no-entitlements
 
             - name: Run SDK Tests (without entitlements)
@@ -296,8 +296,8 @@ jobs:
               with:
                   name: 'river-node-${{ github.job }}'
                   path: |
-                      ./casablanca/node/run_files/
-                      !./casablanca/node/run_files/**/bin/**
+                      ./core/node/run_files/
+                      !./core/node/run_files/**/bin/**
 
             # If CI failed, we send a slack notification
             - name: Slack notification
@@ -311,13 +311,13 @@ jobs:
                   SLACK_COLOR: '#FF0000'
                   SLACK_MESSAGE: 'CI Failure on ${{ github.repository }}'
 
-    Casablanca_Multinode:
+    Multinode:
         permissions: write-all
-        if: github.event_name != 'workflow_dispatch' || !inputs.skip_casablanca_multinode
+        if: github.event_name != 'workflow_dispatch' || !inputs.skip_multinode
         runs-on: ubuntu-latest-8-cores
         timeout-minutes: 30
         services:
-            postgres-casablanca:
+            postgres-core:
                 image: postgres:latest
                 env:
                     POSTGRES_USER: postgres
@@ -330,7 +330,7 @@ jobs:
                     --health-interval 10s
                     --health-timeout 5s
                     --health-retries 5
-                    --name casablanca_postgres_container
+                    --name river_postgres_container
 
         steps:
             - name: Cancel previous runs
@@ -347,11 +347,11 @@ jobs:
 
             - name: Increase max_connections in Postgres
               run: |
-                  docker exec -i casablanca_postgres_container bash << EOF
+                  docker exec -i river_postgres_container bash << EOF
                     echo 'max_connections = 1000' >> /var/lib/postgresql/data/postgresql.conf
                     echo 'shared_buffers = 2GB' >> /var/lib/postgresql/data/postgresql.conf
                   EOF
-                  docker restart --time 0 casablanca_postgres_container
+                  docker restart --time 0 river_postgres_container
                   sleep 5
 
             - name: Show PostgreSQL max_connections
@@ -405,16 +405,16 @@ jobs:
                   restore-keys: |
                       ${{ runner.os }}-turbo-
 
-            - name: Casablanca create db
+            - name: create db
               run: psql -h localhost -p 5433 -U postgres -f scripts/sql/create_db.sql
-              working-directory: casablanca
+              working-directory: core
               env:
                   POSTGRES_PASSWORD: postgres
                   PGPASSWORD: postgres
 
             - name: Setup River CA for testing certificates
               run: ./scripts/register-ca.sh
-              working-directory: casablanca
+              working-directory: core
 
             - name: Set up Custom CA Certificate for Node.js
               run: |
@@ -422,14 +422,14 @@ jobs:
 
             - name: Run multiple nodes
               run: |
-                  cd ./casablanca/node
+                  cd ./core/node
                   ./run_multi.sh --de -c -r &
                   for i in {5170..5179}; do yarn wait-on https://localhost:$i/debug/multi --timeout=400000 --i=5000 --verbose; done
 
             - name: Run SDK Tests (without entitlements)
               run: |
                   yarn run turbo run build
-                  cd casablanca/sdk
+                  cd core/sdk
                   yarn test:ci:multi
 
             - name: Archive River Node Logs and Settings
@@ -438,8 +438,8 @@ jobs:
               with:
                   name: 'river-node-${{ github.job }}'
                   path: |
-                      ./casablanca/node/run_files/
-                      !./casablanca/node/run_files/**/bin/**
+                      ./core/node/run_files/
+                      !./core/node/run_files/**/bin/**
 
             # If CI failed, we send a slack notification
             - name: Slack notification
@@ -453,13 +453,13 @@ jobs:
                   SLACK_COLOR: '#FF0000'
                   SLACK_MESSAGE: 'CI Failure on ${{ github.repository }}'
 
-    Casablanca_Client_Entitlements:
+    Client_Entitlements:
         permissions: write-all
-        if: github.event_name != 'workflow_dispatch' || !inputs.skip_casablanca_client_entitlements
+        if: github.event_name != 'workflow_dispatch' || !inputs.skip_client_entitlements
         runs-on: ubuntu-latest-8-cores
         timeout-minutes: 30
         services:
-            postgres-casablanca:
+            postgres-core:
                 image: postgres:latest
                 env:
                     POSTGRES_USER: postgres
@@ -472,7 +472,7 @@ jobs:
                     --health-interval 10s
                     --health-timeout 5s
                     --health-retries 5
-                    --name casablanca_postgres_container
+                    --name river_postgres_container
 
         steps:
             - name: Cancel previous runs
@@ -489,11 +489,11 @@ jobs:
 
             - name: Increase max_connections in Postgres
               run: |
-                  docker exec -i casablanca_postgres_container bash << EOF
+                  docker exec -i river_postgres_container bash << EOF
                     echo 'max_connections = 1000' >> /var/lib/postgresql/data/postgresql.conf
                     echo 'shared_buffers = 2GB' >> /var/lib/postgresql/data/postgresql.conf
                   EOF
-                  docker restart --time 0 casablanca_postgres_container
+                  docker restart --time 0 river_postgres_container
                   sleep 5
 
             - name: Show PostgreSQL max_connections
@@ -547,21 +547,21 @@ jobs:
                   restore-keys: |
                       ${{ runner.os }}-turbo-
 
-            - name: Casablanca create db
+            - name: create db
               run: psql -h localhost -p 5433 -U postgres -f scripts/sql/create_db.sql
-              working-directory: casablanca
+              working-directory: core
               env:
                   POSTGRES_PASSWORD: postgres
                   PGPASSWORD: postgres
 
             - name: Setup River CA for testing certificates
               run: ./scripts/register-ca.sh
-              working-directory: casablanca
+              working-directory: core
 
-            - name: Start Casablanca node with entitlements
-              run: ./casablanca/node/run_single.sh &
+            - name: Start node with entitlements
+              run: ./core/node/run_single.sh &
 
-            - name: Wait for Casablanca (with entitlements) node to be up
+            - name: Wait for (with entitlements) node to be up
               run: yarn csb:wait:entitlements
 
             - name: Build & Test (with entitlements)
@@ -576,8 +576,8 @@ jobs:
               with:
                   name: 'river-node-${{ github.job }}'
                   path: |
-                      ./casablanca/node/run_files/
-                      !./casablanca/node/run_files/**/bin/**
+                      ./core/node/run_files/
+                      !./core/node/run_files/**/bin/**
 
             # If CI failed, we send a slack notification
             - name: Slack notification
@@ -591,13 +591,13 @@ jobs:
                   SLACK_COLOR: '#FF0000'
                   SLACK_MESSAGE: 'CI Failure on ${{ github.repository }}'
 
-    Casablanca_Multinode_Ent:
+    Multinode_Ent:
         permissions: write-all
-        if: github.event_name != 'workflow_dispatch' || !inputs.skip_casablanca_multinode_ent
+        if: github.event_name != 'workflow_dispatch' || !inputs.skip_multinode_ent
         runs-on: ubuntu-latest-8-cores
         timeout-minutes: 30
         services:
-            postgres-casablanca:
+            postgres-core:
                 image: postgres:latest
                 env:
                     POSTGRES_USER: postgres
@@ -610,7 +610,7 @@ jobs:
                     --health-interval 10s
                     --health-timeout 5s
                     --health-retries 5
-                    --name casablanca_postgres_container
+                    --name river_postgres_container
 
         steps:
             - name: Cancel previous runs
@@ -627,11 +627,11 @@ jobs:
 
             - name: Increase max_connections in Postgres
               run: |
-                  docker exec -i casablanca_postgres_container bash << EOF
+                  docker exec -i river_postgres_container bash << EOF
                     echo 'max_connections = 1000' >> /var/lib/postgresql/data/postgresql.conf
                     echo 'shared_buffers = 2GB' >> /var/lib/postgresql/data/postgresql.conf
                   EOF
-                  docker restart --time 0 casablanca_postgres_container
+                  docker restart --time 0 river_postgres_container
                   sleep 5
 
             - name: Show PostgreSQL max_connections
@@ -685,9 +685,9 @@ jobs:
                   restore-keys: |
                       ${{ runner.os }}-turbo-
 
-            - name: Casablanca create db
+            - name: create db
               run: psql -h localhost -p 5433 -U postgres -f scripts/sql/create_db.sql
-              working-directory: casablanca
+              working-directory: core
               env:
                   POSTGRES_PASSWORD: postgres
                   PGPASSWORD: postgres
@@ -695,7 +695,7 @@ jobs:
 
             - name: Setup River CA for testing certificates
               run: ./scripts/register-ca.sh
-              working-directory: casablanca
+              working-directory: core
 
             - name: Set up Custom CA Certificate for Node.js
               run: |
@@ -703,12 +703,12 @@ jobs:
 
             - name: Run multiple nodes
               run: |
-                  cd ./casablanca/node
+                  cd ./core/node
                   ./run_multi.sh -c -r &
                   for i in {5170..5179}; do yarn wait-on https://localhost:$i/debug/multi --timeout=400000 --i=5000 --verbose; done
 
             - name: Build & Test (with entitlements)
-              run: CASABLANCA_SERVER_URL=https://localhost:5170,https://localhost:5171,https://localhost:5172,https://localhost:5173,https://localhost:5174,https://localhost:5175,https://localhost:5176,https://localhost:5177,https://localhost:5178,https://localhost:5179 yarn csb:turbo-no-sdk
+              run: SERVER_URL=https://localhost:5170,https://localhost:5171,https://localhost:5172,https://localhost:5173,https://localhost:5174,https://localhost:5175,https://localhost:5176,https://localhost:5177,https://localhost:5178,https://localhost:5179 yarn csb:turbo-no-sdk
 
             - name: Run River Tests (with entitlements)
               run: yarn workspace @river/sdk run test:ci:multi:ent
@@ -719,8 +719,8 @@ jobs:
               with:
                   name: 'river-node-${{ github.job }}'
                   path: |
-                      ./casablanca/node/run_files/
-                      !./casablanca/node/run_files/**/bin/**
+                      ./core/node/run_files/
+                      !./core/node/run_files/**/bin/**
 
             # If CI failed, we send a slack notification
             - name: Slack notification
@@ -734,13 +734,13 @@ jobs:
                   SLACK_COLOR: '#FF0000'
                   SLACK_MESSAGE: 'CI Failure on ${{ github.repository }}'
 
-    Casablanca_Node:
+    Node:
         permissions: write-all
-        if: github.event_name != 'workflow_dispatch' || !inputs.skip_casablanca_node
+        if: github.event_name != 'workflow_dispatch' || !inputs.skip_node
         runs-on: ubuntu-latest-8-cores
         timeout-minutes: 30
         services:
-            postgres-casablanca:
+            postgres-core:
                 image: postgres:latest
                 env:
                     POSTGRES_USER: postgres
@@ -795,20 +795,20 @@ jobs:
             - name: Install node dependencies
               run: yarn install --immutable
 
-            - name: Casablanca create db
+            - name: create db
               run: psql -h localhost -p 5433 -U postgres -f scripts/sql/create_db.sql
-              working-directory: casablanca
+              working-directory: core
               env:
                   POSTGRES_PASSWORD: postgres
                   PGPASSWORD: postgres
 
             - name: Setup River CA for testing certificates
               run: ./scripts/register-ca.sh
-              working-directory: casablanca
+              working-directory: core
 
             - name: Run node tests
               run: go test --race ./...
-              working-directory: casablanca/node
+              working-directory: core/node
 
             # If CI failed, we send a slack notification
             - name: Slack notification

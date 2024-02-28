@@ -69,4 +69,4 @@ require (
 	rsc.io/tmplfunc v0.0.3 // indirect
 )
 
-replace github.com/river-build/river => ./../../casablanca/node
+replace github.com/river-build/river => ./../../core/node

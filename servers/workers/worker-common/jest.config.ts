@@ -2,7 +2,7 @@ import type { JestConfigWithTsJest } from 'ts-jest'
 
 const config: JestConfigWithTsJest = {
     preset: 'ts-jest/presets/default-esm',
-    testEnvironment: './../../../casablanca/jest.env.ts',
+    testEnvironment: './../../../core/jest.env.ts',
     testEnvironmentOptions: {
         browsers: ['chrome', 'firefox', 'safari'],
         url: 'https://localhost:5158',

@@ -6794,9 +6794,9 @@ __metadata:
   languageName: node
   linkType: hard
 
-"@river/debug-app@workspace:casablanca/debug-app":
+"@river/debug-app@workspace:core/debug-app":
   version: 0.0.0-use.local
-  resolution: "@river/debug-app@workspace:casablanca/debug-app"
+  resolution: "@river/debug-app@workspace:core/debug-app"
   dependencies:
     "@river/sdk": "workspace:^"
     ts-node: ^10.9.1
@@ -6805,9 +6805,9 @@ __metadata:
   languageName: unknown
   linkType: soft
 
-"@river/dlog@workspace:^, @river/dlog@workspace:casablanca/dlog":
+"@river/dlog@workspace:^, @river/dlog@workspace:core/dlog":
   version: 0.0.0-use.local
-  resolution: "@river/dlog@workspace:casablanca/dlog"
+  resolution: "@river/dlog@workspace:core/dlog"
   dependencies:
     "@bufbuild/protobuf": ^1.4.1
     "@river/proto": "workspace:^"
@@ -6829,9 +6829,9 @@ __metadata:
   languageName: unknown
   linkType: soft
 
-"@river/encryption@workspace:^, @river/encryption@workspace:casablanca/encryption":
+"@river/encryption@workspace:^, @river/encryption@workspace:core/encryption":
   version: 0.0.0-use.local
-  resolution: "@river/encryption@workspace:casablanca/encryption"
+  resolution: "@river/encryption@workspace:core/encryption"
   dependencies:
     "@bufbuild/protobuf": ^1.4.1
     "@ethereumjs/util": ^8.0.1
@@ -6862,9 +6862,9 @@ __metadata:
   languageName: unknown
   linkType: soft
 
-"@river/proto@workspace:^, @river/proto@workspace:casablanca/proto":
+"@river/proto@workspace:^, @river/proto@workspace:core/proto":
   version: 0.0.0-use.local
-  resolution: "@river/proto@workspace:casablanca/proto"
+  resolution: "@river/proto@workspace:core/proto"
   dependencies:
     "@bufbuild/buf": ^1.27.2
     "@bufbuild/protobuf": ^1.4.1
@@ -6882,9 +6882,9 @@ __metadata:
   languageName: unknown
   linkType: soft
 
-"@river/sdk@workspace:^, @river/sdk@workspace:casablanca/sdk":
+"@river/sdk@workspace:^, @river/sdk@workspace:core/sdk":
   version: 0.0.0-use.local
-  resolution: "@river/sdk@workspace:casablanca/sdk"
+  resolution: "@river/sdk@workspace:core/sdk"
   dependencies:
     "@bufbuild/protobuf": ^1.4.1
     "@connectrpc/connect": ^1.3.0
@@ -6932,9 +6932,9 @@ __metadata:
   languageName: unknown
   linkType: soft
 
-"@river/web3@workspace:^, @river/web3@workspace:casablanca/web3":
+"@river/web3@workspace:^, @river/web3@workspace:core/web3":
   version: 0.0.0-use.local
-  resolution: "@river/web3@workspace:casablanca/web3"
+  resolution: "@river/web3@workspace:core/web3"
   dependencies:
     "@towns/generated": "workspace:^"
     "@types/jest": ^29.5.3

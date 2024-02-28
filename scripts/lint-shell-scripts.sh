@@ -4,7 +4,7 @@
 ## call with a directory or a file
 ## e.g.
 ## ./scripts/lint-shell-scripts.sh
-## ./scripts/lint-shell-scripts.sh casablanca/scripts
+## ./scripts/lint-shell-scripts.sh core/scripts
 ## ./scripts/lint-shell-scripts.sh scripts/lint-shell-scripts.sh
 ##
 

@@ -8,7 +8,7 @@ on:
             - main
         paths:
             - 'servers/load-testing/**'
-            - 'casablanca/**'
+            - 'core/**'
     workflow_dispatch:
 
 env:

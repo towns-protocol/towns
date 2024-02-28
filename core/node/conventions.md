@@ -10,7 +10,7 @@ Current logger is saved into variable `log` and logging statement takes a messag
 log.Debug("Starting new snapshot", "streamId", streamId, "blockNumber", curBlockNum)
 ```
 
-There is wrapper called [dlog](https://github.com/HereNotThere/harmony/tree/main/casablanca/node/dlog) which
+There is wrapper called [dlog](https://github.com/HereNotThere/harmony/tree/main/core/node/dlog) which
 provides coloring and better formatting for types we user frequently (protos, binary arrays).
 
 Normally logger is passed in [context](https://pkg.go.dev/context) and retrieved using `dlog.FromCtx`:
@@ -40,7 +40,7 @@ be to augment the returned error with extra information instead.
 ## Errors
 
 For all errors generated in node use RiverError. If there is no matching error code add new code in
-[protocol.proto](https://github.com/HereNotThere/harmony/blob/main/casablanca/proto/protocol.proto).
+[protocol.proto](https://github.com/HereNotThere/harmony/blob/main/core/proto/protocol.proto).
 Arguments are `errorCode`, `message`, optional key-value pairs:
 
 ```go

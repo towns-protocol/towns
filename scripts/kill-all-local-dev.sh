@@ -4,7 +4,7 @@
 ## If visual studio crashes after running ~start local dev~ 
 ## it will leave lots of things running in the background
 ## this script will kill all the processes that are running on your local machine.
-## it will also clean up casablanca/river docker containers
+## it will also clean up core/river docker containers
 ##
 ## usage: ./kill-all-local-dev.sh -y
 ##
@@ -72,8 +72,8 @@ function do_killl() {
 echo ""
 if prompt 'Stop Casbablanca?:y/n '
 then
-    ./casablanca/scripts/stop_node.sh 
-    ./casablanca/node/stop_multi.sh
+    ./core/scripts/stop_node.sh 
+    ./core/node/stop_multi.sh
 fi
 
 do_killl yarn "$1"
@@ -96,7 +96,7 @@ fi
 echo ""
 if prompt 'Remove Casbablanca Docker Containers?:y/n '
 then
-    ./casablanca/scripts/stop_storage.sh 
+    ./core/scripts/stop_storage.sh 
 fi
 
 

@@ -20,7 +20,7 @@ make deploy-base-anvil-nb contract=DeployMember
 make deploy-base-anvil-nb contract=DeployMockNFT
 
 cd ..
-mkdir -p casablanca/node/run_files/addresses
+mkdir -p core/node/run_files/addresses
 mkdir -p packages/generated/addresses/base_anvil
 
 # copy contracts to specific places
@@ -28,4 +28,4 @@ cp contracts/deployments/base_anvil/townFactory.json packages/generated/addresse
 cp contracts/deployments/base_anvil/townOwner.json packages/generated/addresses/base_anvil
 cp contracts/deployments/base_anvil/mockNFT.json packages/generated/addresses/base_anvil
 cp contracts/deployments/base_anvil/member.json packages/generated/addresses/base_anvil
-cp contracts/deployments/base_anvil/townFactory.json casablanca/node/run_files/addresses
+cp contracts/deployments/base_anvil/townFactory.json core/node/run_files/addresses

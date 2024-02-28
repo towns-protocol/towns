@@ -18,7 +18,7 @@ generate_go() {
     local CONTRACT=$2
     local GO_NAME=$3
 
-    local OUT_DIR="casablanca/node/contracts/${VER}"
+    local OUT_DIR="core/node/contracts/${VER}"
     mkdir -p "${OUT_DIR}"
     go run github.com/ethereum/go-ethereum/cmd/abigen@${ABIGEN_VERSION} \
         --abi contracts/out/${CONTRACT}.sol/${CONTRACT}.abi.json \
@@ -32,7 +32,7 @@ generate_go_nover() {
     local CONTRACT=$1
     local GO_NAME=$2
 
-    local OUT_DIR="casablanca/node/contracts"
+    local OUT_DIR="core/node/contracts"
     mkdir -p "${OUT_DIR}"
     go run github.com/ethereum/go-ethereum/cmd/abigen@${ABIGEN_VERSION} \
         --abi contracts/out/${CONTRACT}.sol/${CONTRACT}.abi.json \
@@ -45,7 +45,7 @@ generate_go_deploy() {
     local CONTRACT=$1
     local GO_NAME=$2
 
-    local OUT_DIR="casablanca/node/contracts/deploy"
+    local OUT_DIR="core/node/contracts/deploy"
     mkdir -p "${OUT_DIR}"
     go run github.com/ethereum/go-ethereum/cmd/abigen@${ABIGEN_VERSION} \
         --abi contracts/out/${CONTRACT}.sol/${CONTRACT}.abi.json \

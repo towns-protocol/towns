@@ -30,7 +30,8 @@ abi/
 
 clients/web/app/storybook-static
 
-casablanca/**/dist/
+core/**/dist/
+core/proto/src/gen/*
 
 contracts/deployments/localhost/
 contracts/cache
@@ -56,9 +57,6 @@ turbo-*.log
 
 # siwe-worker bundle
 servers/workers/siwe-worker/worker/bundle.js
-casablanca/proto/src/gen/*
-/casablanca/node/node/__debug_bin
-casablanca/node/dev.log
 
 # profiling files
 *.prof
@@ -75,7 +73,7 @@ common/xchain/dist/*
 
 .envrc
 servers/xchain/run_files/*
-casablanca/node/river_node
-casablanca/node/run_files/*
+core/node/river_node
+core/node/run_files/*
 
 go.work.sum

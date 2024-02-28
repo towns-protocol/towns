@@ -7,7 +7,7 @@ echo "building protobufs"
 yarn csb:build
 
 # golang
-cd casablanca/node
+cd core/node
 go generate -v -x protocol/gen.go
 
 popd

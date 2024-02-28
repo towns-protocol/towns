@@ -14,11 +14,11 @@ servers/*
 servers/workers/**/coverage/*
 servers/workers/**/dist/*
 servers/workers/**/.keys/*
-casablanca/**/gen/*
-casablanca/**/coverage/*
-casablanca/**/run_files/*
-casablanca/node/auth/contracts/*.json
-casablanca/node/registries/contracts/*.json
+core/**/gen/*
+core/**/coverage/*
+core/**/run_files/*
+core/node/auth/contracts/*.json
+core/node/registries/contracts/*.json
 contracts/cache/*
 contracts/deployments/*
 contracts/addresses/*
@@ -42,4 +42,4 @@ yarn.lock
 
 packages/generated/*
 
-casablanca/proto/src/protocol_*.ts
+core/proto/src/protocol_*.ts
