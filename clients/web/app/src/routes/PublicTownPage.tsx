@@ -27,6 +27,7 @@ import { ButtonSpinner } from 'ui/components/Spinner/ButtonSpinner'
 import { shortAddress } from 'ui/utils/utils'
 import { MainSideBar } from '@components/SideBars'
 import { UserOpTxModal } from '@components/Web3/UserOpTxModal/UserOpTxModal'
+import { useAbstractAccountAddress } from 'hooks/useAbstractAccountAddress'
 import { WelcomeLayout } from './layouts/WelcomeLayout'
 
 const log = debug('app:public-town')
@@ -238,6 +239,9 @@ const LoggedUserAvatar = () => {
 
 const LoggedUserMenu = () => {
     const { logout, loggedInWalletAddress } = useAuth()
+    const { data: abstractAccountAddress } = useAbstractAccountAddress({
+        rootKeyAddress: loggedInWalletAddress,
+    })
     const onLogOut = useCallback(() => {
         logout()
     }, [logout])
@@ -263,7 +267,7 @@ const LoggedUserMenu = () => {
                 <Icon background="level3" type="arrowLeft" padding="sm" size="square_lg" />
                 <Paragraph>Back to App</Paragraph>
             </Stack>
-            {loggedInWalletAddress && (
+            {abstractAccountAddress && (
                 <Stack
                     horizontal
                     gap
@@ -277,8 +281,8 @@ const LoggedUserMenu = () => {
 
                     <ClipboardCopy
                         color="none"
-                        label={shortAddress(loggedInWalletAddress)}
-                        clipboardContent={loggedInWalletAddress}
+                        label={shortAddress(abstractAccountAddress)}
+                        clipboardContent={abstractAccountAddress}
                     />
                 </Stack>
             )}

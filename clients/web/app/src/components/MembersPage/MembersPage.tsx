@@ -1,11 +1,6 @@
 import React, { useMemo } from 'react'
 import { Link } from 'react-router-dom'
-import {
-    RoomMember,
-    getAccountAddress,
-    useSpaceMembers,
-    useUserLookupContext,
-} from 'use-zion-client'
+import { Address, RoomMember, useSpaceMembers, useUserLookupContext } from 'use-zion-client'
 import { CentralPanelLayout } from 'routes/layouts/CentralPanelLayout'
 import { shortAddress } from 'ui/utils/utils'
 import { Box, Grid, Paragraph, Stack } from '@ui'
@@ -16,6 +11,7 @@ import { ModalContainer } from '@components/Modals/ModalContainer'
 import { Avatar } from '@components/Avatar/Avatar'
 import { ProfileHoverCard } from '@components/ProfileHoverCard/ProfileHoverCard'
 import { useDevice } from 'hooks/useDevice'
+import { useAbstractAccountAddress } from 'hooks/useAbstractAccountAddress'
 
 type Props = {
     memberIds: string[]
@@ -67,9 +63,11 @@ export const MembersPageTouchModal = (props: { onHide: () => void }) => {
 }
 
 const GridProfile = ({ member }: { member: RoomMember }) => {
-    const accountAddress = getAccountAddress(member.userId)
+    const { data: abstractAccountAddress } = useAbstractAccountAddress({
+        rootKeyAddress: member.userId as Address | undefined,
+    })
     const { createLink } = useCreateLink()
-    const link = createLink({ profileId: member.userId })
+    const link = createLink({ profileId: abstractAccountAddress })
     const { isTouch } = useDevice()
 
     return (
@@ -96,10 +94,10 @@ const GridProfile = ({ member }: { member: RoomMember }) => {
                         </Paragraph>
                     </Box>
                 </Stack>
-                {accountAddress && accountAddress && (
+                {abstractAccountAddress && (
                     <ClipboardCopy
-                        label={shortAddress(accountAddress)}
-                        clipboardContent={accountAddress}
+                        label={shortAddress(abstractAccountAddress)}
+                        clipboardContent={abstractAccountAddress}
                     />
                 )}
             </Stack>

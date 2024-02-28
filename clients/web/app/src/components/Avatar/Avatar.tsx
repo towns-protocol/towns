@@ -1,12 +1,13 @@
 import { clsx } from 'clsx'
 import React, { forwardRef, useCallback, useEffect, useMemo } from 'react'
-import { getAccountAddress } from 'use-zion-client'
+import { Address } from 'use-zion-client'
 import { AnimatePresence } from 'framer-motion'
 import { ImageVariant, useImageSource } from '@components/UploadImage/useImageSource'
 import { useImageStore } from '@components/UploadImage/useImageStore'
 import { FadeInBox } from '@components/Transitions'
 import { useGreenDot } from 'hooks/useGreenDot'
 import { Box, BoxProps } from '@ui'
+import { useAbstractAccountAddress } from 'hooks/useAbstractAccountAddress'
 import {
     AvatarAtoms,
     avatarAtoms,
@@ -40,11 +41,14 @@ type Props = {
 
 export type AvatarProps = Props
 
-function useAvatarImageSrc(props: { imageVariant?: ImageVariant; userId?: string }) {
-    const { imageVariant = 'thumbnail100', userId } = props
+function useAvatarImageSrc(props: {
+    imageVariant?: ImageVariant
+    abstractAccountAddress?: string
+}) {
+    const { imageVariant = 'thumbnail100', abstractAccountAddress } = props
     const resourceId = useMemo(() => {
-        return getAccountAddress(userId ?? '') ?? ''
-    }, [userId])
+        return abstractAccountAddress ?? ''
+    }, [abstractAccountAddress])
 
     const { imageSrc } = useImageSource(resourceId, imageVariant)
 
@@ -59,10 +63,14 @@ export const Avatar = forwardRef<HTMLElement, Props>((props, ref) => {
 // pass a src prop to force using that image, otherwise pass userId
 export const AvatarWithoutDot = forwardRef<HTMLElement, Props & { dot?: boolean }>((props, ref) => {
     const { src, userId, imageVariant, ...rest } = props
+    const { data: abstractAccountAddress } = useAbstractAccountAddress({
+        rootKeyAddress: userId as Address | undefined,
+    })
     const _imageVariant = imageVariant ?? 'thumbnail100'
+
     const { imageSrc, resourceId } = useAvatarImageSrc({
         imageVariant: _imageVariant,
-        userId,
+        abstractAccountAddress,
     })
 
     useEffect(() => {
@@ -86,7 +94,9 @@ export const AvatarWithoutDot = forwardRef<HTMLElement, Props & { dot?: boolean 
 
 const _Avatar = forwardRef<
     HTMLElement,
-    Omit<Props & { dot?: boolean }, 'userId'> & { resourceId: string }
+    Omit<Props & { dot?: boolean }, 'userId'> & {
+        resourceId: string
+    }
 >((props, ref) => {
     const {
         animate = false,

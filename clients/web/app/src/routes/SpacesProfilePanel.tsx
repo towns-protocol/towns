@@ -3,7 +3,9 @@ import { matchRoutes, useLocation, useNavigate, useParams } from 'react-router'
 import { useSearchParams } from 'react-router-dom'
 import { useEvent } from 'react-use-event-hook'
 import {
-    getAccountAddress,
+    Address,
+    LookupUser,
+    useGetRootKeyFromLinkedWallet,
     useMyProfile,
     useUserLookupContext,
     useZionClient,
@@ -21,6 +23,8 @@ import { useCreateLink } from 'hooks/useCreateLink'
 import { useDevice } from 'hooks/useDevice'
 import { ModalContainer } from '@components/Modals/ModalContainer'
 import { WalletLinkingPanel } from '@components/Web3/WalletLinkingPanel'
+import { useAbstractAccountAddress } from 'hooks/useAbstractAccountAddress'
+import { ButtonSpinner } from 'ui/components/Spinner/ButtonSpinner'
 
 export const SpaceProfilePanel = (props: { children?: React.ReactNode }) => {
     const navigate = useNavigate()
@@ -39,7 +43,11 @@ export const SpaceProfilePanel = (props: { children?: React.ReactNode }) => {
 export const SpaceProfile = (props: { children?: React.ReactNode }) => {
     const [search] = useSearchParams()
     const cameFromSpaceInfoPanel = search.get('spaceInfo') !== null
-    const { profileId = 'me' } = useParams()
+    const { profileId: profileIdFromPath = 'me' } = useParams()
+    const { data: rootKeyAddress, isLoading: isLoadingRootKey } = useGetRootKeyFromLinkedWallet({
+        walletAddress: profileIdFromPath,
+    })
+    const userId = profileIdFromPath === 'me' ? profileIdFromPath : rootKeyAddress
     const { createDMChannel } = useZionClient()
     const [modal, setModal] = useState<'wallets' | undefined>(undefined)
 
@@ -51,7 +59,7 @@ export const SpaceProfile = (props: { children?: React.ReactNode }) => {
         navigate(-1)
     })
 
-    const { logout } = useAuth()
+    const { logout, loggedInWalletAddress } = useAuth()
 
     const onLogoutClick = useEvent(() => {
         logout()
@@ -60,18 +68,21 @@ export const SpaceProfile = (props: { children?: React.ReactNode }) => {
     const { createLink } = useCreateLink()
 
     const onMessageClick = useCallback(async () => {
-        const streamId = await createDMChannel(profileId)
+        if (!userId) {
+            return
+        }
+        const streamId = await createDMChannel(userId)
         const link = streamId && createLink({ messageId: streamId })
         if (link) {
             navigate(link + '?ref=profile')
         }
-    }, [createDMChannel, createLink, navigate, profileId])
+    }, [createDMChannel, createLink, navigate, userId])
 
-    const profileUser = useMyProfile()
+    const myUser = useMyProfile()
 
     const { usersMap } = useUserLookupContext()
     const location = useLocation()
-    const isMeRoute = matchRoutes([{ path: '/me' }], location) || profileId === 'me'
+    const isMeRoute = matchRoutes([{ path: '/me' }], location) || profileIdFromPath === 'me'
 
     const onWalletLinkingClick = useEvent(() => {
         if (isTouch) {
@@ -85,29 +96,32 @@ export const SpaceProfile = (props: { children?: React.ReactNode }) => {
         }
     })
 
-    const user = useMemo(
-        () =>
-            isMeRoute
-                ? {
-                      ...profileUser,
-                      userId: profileUser?.userId ?? '',
-                      displayName: profileUser?.displayName ?? '',
-                  }
-                : profileId
-                ? usersMap[profileId] ?? usersMap[profileId]
-                : undefined,
-        [isMeRoute, profileId, profileUser, usersMap],
-    )
+    const user: LookupUser | undefined = useMemo(() => {
+        if (isMeRoute) {
+            return {
+                ...myUser,
+                userId: myUser?.userId ?? '',
+                displayName: myUser?.displayName ?? '',
+            }
+        }
+        if (userId) {
+            return usersMap[userId]
+        }
+    }, [isMeRoute, userId, myUser, usersMap])
 
     const isValid = !!user
 
-    const userAddress = isValid ? getAccountAddress(user.userId) : undefined
-    const { data: userBio } = useGetUserBio(userAddress)
+    const { data: userAbstractAccountAddress } = useAbstractAccountAddress({
+        rootKeyAddress: user?.userId as Address | undefined,
+    })
 
-    const loggedInUserId = useMyProfile()?.userId
-    const loggedInUserAddress = loggedInUserId ? getAccountAddress(loggedInUserId) : undefined
+    const { data: loggedInAbstractAccountAddress } = useAbstractAccountAddress({
+        rootKeyAddress: loggedInWalletAddress,
+    })
 
-    const canEdit = loggedInUserAddress === userAddress
+    const { data: userBio } = useGetUserBio(userAbstractAccountAddress)
+
+    const canEdit = loggedInAbstractAccountAddress === userAbstractAccountAddress
 
     const { setTheme, theme } = useStore((state) => ({
         theme: state.theme,
@@ -118,9 +132,17 @@ export const SpaceProfile = (props: { children?: React.ReactNode }) => {
         setTheme(theme === 'light' ? 'dark' : 'light')
     }
 
-    const isCurrentUser = user?.userId === profileUser?.userId
+    const isCurrentUser = user?.userId === myUser?.userId
 
     const { isTouch } = useDevice()
+
+    if (isLoadingRootKey) {
+        return (
+            <Stack centerContent grow>
+                <ButtonSpinner />
+            </Stack>
+        )
+    }
 
     return (
         <Stack gap>
@@ -129,8 +151,8 @@ export const SpaceProfile = (props: { children?: React.ReactNode }) => {
                     center
                     key={user.userId}
                     userId={user.userId}
+                    abstractAccountAddress={userAbstractAccountAddress}
                     displayName={getPrettyDisplayName(user)}
-                    userAddress={userAddress}
                     userBio={userBio}
                     canEdit={canEdit}
                 />

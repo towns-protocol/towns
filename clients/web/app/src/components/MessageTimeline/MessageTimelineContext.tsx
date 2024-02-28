@@ -9,6 +9,7 @@ import {
     useZionClient,
 } from 'use-zion-client'
 import { useNavigate } from 'react-router-dom'
+import { toast } from 'react-hot-toast/headless'
 import { ErrorBoundary } from '@components/ErrorBoundary/ErrorBoundary'
 import { SomethingWentWrong } from '@components/Errors/SomethingWentWrong'
 import { Box } from '@ui'
@@ -16,6 +17,8 @@ import { useHandleReaction } from 'hooks/useReactions'
 import { useSpaceChannels } from 'hooks/useSpaceChannels'
 import { useCreateLink } from 'hooks/useCreateLink'
 import { getPrettyDisplayName } from 'utils/getPrettyDisplayName'
+import { useGetAbstractAccountAddressAsync } from 'hooks/useAbstractAccountAddress'
+import { ErrorNotification } from '@components/Notifications/ErrorNotifcation'
 import { useTimelineMessageEditing } from './hooks/useTimelineMessageEditing'
 import { useTimelineRecorder } from './hooks/useTimelineRecorder'
 
@@ -75,24 +78,40 @@ export const MessageTimelineWrapper = (props: {
     const isChannelEncrypted = true
 
     const { usersMap, users: members } = useUserLookupContext()
+    const getAbstractAccountAddress = useGetAbstractAccountAddressAsync()
 
     const navigate = useNavigate()
     const { createLink } = useCreateLink()
 
     const onMentionClick = useCallback(
-        (mentionName: string) => {
+        async (mentionName: string) => {
             const profileId = members?.find(
                 (m) => getPrettyDisplayName(m) === mentionName.trim(),
             )?.userId
             if (!profileId) {
                 return
             }
-            const link = createLink({ profileId })
-            if (link) {
-                navigate(link)
+            try {
+                const abstractAccountAddress = await getAbstractAccountAddress({
+                    rootKeyAddress: profileId,
+                })
+                const link = createLink({ profileId: abstractAccountAddress })
+                if (link) {
+                    navigate(link)
+                }
+            } catch (error) {
+                console.error('Error navigating to user profile', error)
+                toast.custom((t) => {
+                    return (
+                        <ErrorNotification
+                            toast={t}
+                            errorMessage={"There was an error navigating to this users's profile."}
+                        />
+                    )
+                })
             }
         },
-        [createLink, members, navigate],
+        [createLink, getAbstractAccountAddress, members, navigate],
     )
 
     const value = useMemo(() => {

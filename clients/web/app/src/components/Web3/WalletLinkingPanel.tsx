@@ -178,7 +178,9 @@ export function LinkedWallet({
         enabled: isTownsWallet,
         watch: true,
     })
-    const { data: aaAdress, isLoading: isLoadingAaAddress } = useAbstractAccountAddress()
+    const { data: aaAdress, isLoading: isLoadingAaAddress } = useAbstractAccountAddress({
+        rootKeyAddress: loggedInWalletAddress,
+    })
     const isAbstractAccount =
         aaAdress && isAbstractAccountAddress({ address, abstractAccountAddress: aaAdress })
 
@@ -209,6 +211,11 @@ export function LinkedWallet({
                         </>
                     )}
                 </Paragraph>
+                {isTownsWallet && (
+                    <Paragraph size="sm" color="error">
+                        Deprecated
+                    </Paragraph>
+                )}
                 <ClipboardCopy label={shortAddress(address)} clipboardContent={address} />
             </Stack>
 

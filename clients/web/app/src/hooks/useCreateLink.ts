@@ -303,6 +303,12 @@ export const useCreateLink = () => {
                         ...match.params,
                         ...filteredParams,
                     }
+
+                    const someParamIsUndefined = Object.values(params).some((v) => v === undefined)
+                    if (someParamIsUndefined) {
+                        return undefined
+                    }
+
                     const generated = generatePath(path, params)
                     return generated
                 }

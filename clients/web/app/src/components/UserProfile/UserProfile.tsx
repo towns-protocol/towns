@@ -1,10 +1,9 @@
-import { getAccountAddress, useSpaceData, useUserLookupContext } from 'use-zion-client'
+import { useSpaceData, useUserLookupContext } from 'use-zion-client'
 import React, { useEffect, useMemo, useState } from 'react'
 import { useEvent } from 'react-use-event-hook'
 import { toast } from 'react-hot-toast/headless'
 import { Box, FormRender, Paragraph, Stack, Text, TextButton } from '@ui'
 import { useSetUserBio } from 'hooks/useUserBio'
-import { useAuth } from 'hooks/useAuth'
 import { TextArea } from 'ui/components/TextArea/TextArea'
 import { Spinner } from '@components/Spinner'
 import { errorHasInvalidCookieResponseHeader } from 'api/apiClient'
@@ -17,12 +16,12 @@ import { UserWalletContent } from './UserWalletContent'
 
 type Props = {
     displayName: string
-    userAddress?: string
     center?: boolean
     info?: { title: string; content?: string | JSX.Element }[]
     userBio?: string
     userId?: string
     canEdit?: boolean
+    abstractAccountAddress?: string
 }
 
 enum InputId {
@@ -30,22 +29,21 @@ enum InputId {
 }
 
 export const UserProfile = (props: Props) => {
-    const { userId, canEdit, center, info, userAddress, userBio } = props
-    const { loggedInWalletAddress } = useAuth()
+    const { userId, canEdit, center, info, userBio, abstractAccountAddress } = props
     const spaceData = useSpaceData()
     const { usersMap } = useUserLookupContext()
     const user = userId ? usersMap[userId] : undefined
 
-    const { mutateAsync: mutateAsyncBio } = useSetUserBio(userAddress)
+    const { mutateAsync: mutateAsyncBio } = useSetUserBio(abstractAccountAddress)
 
     const resourceId = useMemo(() => {
-        return getAccountAddress(userId ?? '') ?? ''
-    }, [userId])
+        return abstractAccountAddress ?? ''
+    }, [abstractAccountAddress])
 
     const onSaveItem = useEvent((id: string, content: undefined | string) => {
         switch (id) {
             case InputId.Bio: {
-                if (!userAddress) {
+                if (!abstractAccountAddress) {
                     throw new Error('no user address provided')
                 }
 
@@ -73,7 +71,7 @@ export const UserProfile = (props: Props) => {
                 <FormRender maxWidth="200" width="100%" key={resourceId}>
                     {({ register, formState, setError, clearErrors }) => (
                         <LargeUploadImageTemplate
-                            canEdit={Boolean(loggedInWalletAddress === resourceId)}
+                            canEdit={!!canEdit}
                             type="avatar"
                             formFieldName="avatar"
                             resourceId={resourceId}
@@ -120,7 +118,7 @@ export const UserProfile = (props: Props) => {
                             <Text color="default">@{user.username}</Text>
                         </>
                     )}
-                    <UserWalletContent userId={userId} />
+                    <UserWalletContent abstractAccountAddress={abstractAccountAddress} />
                 </Stack>
             )}
 

@@ -76,6 +76,10 @@ export class WalletLink {
         return this.walletLinkShim.read.getWalletsByRootKey(rootKey)
     }
 
+    public getRootKeyForWallet(wallet: string): Promise<string> {
+        return this.walletLinkShim.read.getRootKeyForWallet(wallet)
+    }
+
     public async checkIfLinked(rootKey: ethers.Signer, wallet: string): Promise<boolean> {
         const rootKeyAddress = await rootKey.getAddress()
         return this.walletLinkShim.read.checkIfLinked(rootKeyAddress, wallet)

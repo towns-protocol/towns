@@ -89,6 +89,9 @@ vi.mock('use-zion-client', async () => {
                 client: {
                     isEntitled: () => true,
                     getUser: () => null,
+                    getAbstractAccountAddress: () => {
+                        return EVERYONE_ADDRESS
+                    },
                 },
             }
         },

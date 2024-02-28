@@ -1,11 +1,12 @@
 import React from 'react'
-import { getAccountAddress, useUserLookupContext } from 'use-zion-client'
+import { Address, useUserLookupContext } from 'use-zion-client'
 import { Avatar } from '@components/Avatar/Avatar'
 import { useGetUserBio } from 'hooks/useUserBio'
 import { Stack } from 'ui/components/Stack/Stack'
 import { Paragraph } from 'ui/components/Text/Paragraph'
 import { Tooltip } from 'ui/components/Tooltip/Tooltip'
 import { MutualTowns } from '@components/MutualTowns/MutualTowns'
+import { useAbstractAccountAddress } from 'hooks/useAbstractAccountAddress'
 
 type Props = {
     userId: string
@@ -17,8 +18,10 @@ export const ProfileHoverCard = (props: Props) => {
     const { usersMap } = useUserLookupContext()
 
     const user = usersMap[userId]
-    const userAddress = getAccountAddress(userId)
-    const { data: userBio } = useGetUserBio(userAddress)
+    const { data: abstractAccountAddress } = useAbstractAccountAddress({
+        rootKeyAddress: userId as Address | undefined,
+    })
+    const { data: userBio } = useGetUserBio(abstractAccountAddress)
 
     return user ? (
         <Tooltip gap maxWidth="300" background="level2" border="level3">

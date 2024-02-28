@@ -11,6 +11,7 @@ import { queryClient, useQuery } from '../query/queryClient'
 import { blockchainKeys } from '../query/query-keys'
 import { useConnectivity } from './use-connectivity'
 import { getTransactionHashOrUserOpHash } from '@towns/userops'
+import { isAddress } from 'viem'
 
 export function useLinkWalletTransaction() {
     const { traceTransaction, ...rest } = useLinkTransactionBuilder()
@@ -153,6 +154,26 @@ export function useLinkedWallets() {
             // b/c this query is only invalidated if the transaction hooks await the transaction to be mined (component could be unmounted before that)
             // we need to refetch on mount to make sure we have the latest data
             refetchOnMount: true,
+        },
+    )
+}
+
+export function useGetRootKeyFromLinkedWallet({
+    walletAddress,
+}: {
+    walletAddress: string | undefined
+}) {
+    const { client } = useZionClient()
+    return useQuery(
+        blockchainKeys.rootKeyFromLinkedWallet(walletAddress ?? 'waitingForWalletAddress'),
+        () => {
+            if (!client || !walletAddress) {
+                return
+            }
+            return client.getRootKeyFromLinkedWallet(walletAddress)
+        },
+        {
+            enabled: !!client && !!walletAddress && isAddress(walletAddress),
         },
     )
 }

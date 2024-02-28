@@ -1,19 +1,20 @@
 import React from 'react'
-import { getAccountAddress } from 'use-zion-client'
 import { Box } from '@ui'
 import { ClipboardCopy } from '@components/ClipboardCopy/ClipboardCopy'
 import { shortAddress } from 'workers/utils'
 
-export const UserWalletContent = (props: { userId?: string }) => {
-    const { userId } = props
-    const userAddress = userId ? getAccountAddress(userId) : undefined
+export const UserWalletContent = (props: { abstractAccountAddress?: string }) => {
+    const { abstractAccountAddress } = props
 
-    if (!userId || !userAddress) {
+    if (!abstractAccountAddress) {
         return null
     }
     return (
         <Box horizontal justifyContent="spaceBetween">
-            <ClipboardCopy label={shortAddress(userAddress)} clipboardContent={userAddress} />
+            <ClipboardCopy
+                label={shortAddress(abstractAccountAddress)}
+                clipboardContent={abstractAccountAddress}
+            />
         </Box>
     )
 }

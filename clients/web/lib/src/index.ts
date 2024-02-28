@@ -76,6 +76,7 @@ export {
     useLinkWalletTransaction,
     useUnlinkWalletTransaction,
     useLinkedWallets,
+    useGetRootKeyFromLinkedWallet,
 } from './hooks/use-linked-wallets'
 
 export { useCasablancaStore } from './store/use-casablanca-store'

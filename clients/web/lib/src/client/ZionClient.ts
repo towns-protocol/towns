@@ -1659,6 +1659,11 @@ export class ZionClient implements EntitlementsDelegate {
         return txnContext
     }
 
+    public async getRootKeyFromLinkedWallet(walletAddress: string): Promise<string> {
+        const walletLink = this.spaceDapp.getWalletLink()
+        return await walletLink.getRootKeyForWallet(walletAddress)
+    }
+
     /************************************************
      * log
      *************************************************/

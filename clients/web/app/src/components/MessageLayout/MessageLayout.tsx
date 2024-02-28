@@ -3,6 +3,7 @@ import React, { useCallback, useEffect, useRef, useState } from 'react'
 import { LookupUser, MessageReactions, ThreadStats } from 'use-zion-client'
 import { Link } from 'react-router-dom'
 import debug from 'debug'
+import { Address } from 'wagmi'
 import { ProfileHoverCard } from '@components/ProfileHoverCard/ProfileHoverCard'
 import { Reactions } from '@components/Reactions/Reactions'
 import { RepliesButton } from '@components/Replies/MessageReplies'
@@ -17,6 +18,7 @@ import { useDevice } from 'hooks/useDevice'
 import { useFocused } from 'hooks/useFocused'
 import { ZRoomMessageRedactedEvent } from '@components/MessageTimeline/util/getEventsByDate'
 import { getPrettyDisplayName } from 'utils/getPrettyDisplayName'
+import { useAbstractAccountAddress } from 'hooks/useAbstractAccountAddress'
 import { MessageContextMenu } from './MessageContextMenu'
 import { MessageModalSheet } from './MessageModalSheet'
 import { SendStatus, SendStatusIndicator } from './SendStatusIndicator'
@@ -120,7 +122,10 @@ export const MessageLayout = (props: Props) => {
     }, [canReply, onOpenMessageThread, eventId])
 
     const { createLink } = useCreateLink()
-    const profileLink = createLink({ profileId: senderId })
+    const { data: abstractAccountAddress } = useAbstractAccountAddress({
+        rootKeyAddress: senderId as Address | undefined,
+    })
+    const profileLink = createLink({ profileId: abstractAccountAddress })
 
     const hasReplies = replies && eventId
     const numReactions = reactions ? Object.values(reactions).length : 0

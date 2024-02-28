@@ -8,7 +8,6 @@ import {
     Permission,
     RoomMember,
     SpaceData,
-    getAccountAddress,
     useDMLatestMessage,
     useHasPermission,
     useSpaceData,
@@ -17,6 +16,7 @@ import {
     useSpaceUnreadThreadMentions,
     useUserLookupContext,
 } from 'use-zion-client'
+import { Address } from 'wagmi'
 import { Avatar } from '@components/Avatar/Avatar'
 import {
     DirectMessageIcon,
@@ -60,6 +60,7 @@ import { DMChannelMenuItem, MixedChannelMenuItem, useSortedChannels } from 'hook
 import { notUndefined } from 'ui/utils/utils'
 import { BugReportPanel } from 'routes/BugReportPanel'
 import { ShakeToReport } from '@components/BugReportButton/ShakeToReport'
+import { useAbstractAccountAddress } from 'hooks/useAbstractAccountAddress'
 import { AllChannelsList, ChannelItem } from '../AllChannelsList/AllChannelsList'
 import { TouchTabBarLayout } from '../layouts/TouchTabBarLayout'
 
@@ -516,9 +517,11 @@ const UserList = (props: { members: RoomMember[] }) => {
 
 export const TouchUserResultRow = (props: { member: RoomMember }) => {
     const { member } = props
-    const accountAddress = getAccountAddress(member.userId)
+    const { data: abstractAccountAddress } = useAbstractAccountAddress({
+        rootKeyAddress: member.userId as Address | undefined,
+    })
     const { createLink } = useCreateLink()
-    const link = createLink({ profileId: member.userId })
+    const link = createLink({ profileId: abstractAccountAddress })
 
     return (
         <NavItem to={link} height="x6" padding="none">
@@ -529,9 +532,9 @@ export const TouchUserResultRow = (props: { member: RoomMember }) => {
                         <Text truncate color="default">
                             {getPrettyDisplayName(member)}
                         </Text>
-                        {accountAddress && (
+                        {abstractAccountAddress && (
                             <Paragraph truncate color="gray2" size="xs">
-                                {accountAddress}
+                                {abstractAccountAddress}
                             </Paragraph>
                         )}
                     </Stack>

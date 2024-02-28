@@ -2,8 +2,8 @@ import React, { useCallback, useEffect, useState } from 'react'
 import { useNavigate } from 'react-router'
 import { useEvent } from 'react-use-event-hook'
 import {
+    Address,
     RoomMember,
-    getAccountAddress,
     useChannelData,
     useChannelMembers,
     useMyUserId,
@@ -26,6 +26,7 @@ import { ProfileHoverCard } from '@components/ProfileHoverCard/ProfileHoverCard'
 import { useDevice } from 'hooks/useDevice'
 import { modalSheetClass } from 'ui/styles/globals/sheet.css'
 import { TableCell } from '@components/TableCell/TableCell'
+import { useAbstractAccountAddress } from 'hooks/useAbstractAccountAddress'
 import { ChannelInviteModal } from './ChannelInvitePanel'
 
 export const ChannelDirectoryPanel = () => {
@@ -230,14 +231,11 @@ type ChannelMemberRowProps = {
 const ChannelMemberRow = (props: ChannelMemberRowProps) => {
     const { user, onRemoveMember } = props
     const [isHeaderHovering, setIsHeaderHovering] = useState(false)
-    const isValid = !!user?.userId
-    const link = useCreateLink().createLink({ profileId: user.userId })
+    const { data: abstractAccountAddress } = useAbstractAccountAddress({
+        rootKeyAddress: props.user.userId as Address | undefined,
+    })
+    const link = useCreateLink().createLink({ profileId: abstractAccountAddress })
     const { isTouch } = useDevice()
-    let userAddress
-    if (isValid) {
-        userAddress = getAccountAddress(user.userId)
-    }
-
     const navigate = useNavigate()
     const onClick = useCallback(() => {
         if (isTouch) {
@@ -270,7 +268,7 @@ const ChannelMemberRow = (props: ChannelMemberRowProps) => {
         [onRemoveMember, user.userId],
     )
 
-    if (!userAddress) {
+    if (!abstractAccountAddress) {
         return null
     }
 
@@ -297,10 +295,10 @@ const ChannelMemberRow = (props: ChannelMemberRowProps) => {
                     <Paragraph truncate color="default">
                         {getPrettyDisplayName(globalUser)}
                     </Paragraph>
-                    {userAddress && (
+                    {abstractAccountAddress && (
                         <ClipboardCopy
-                            label={shortAddress(userAddress)}
-                            clipboardContent={userAddress}
+                            label={shortAddress(abstractAccountAddress)}
+                            clipboardContent={abstractAccountAddress}
                         />
                     )}
                 </Stack>
