@@ -24,6 +24,12 @@ import {
     defaultEnvironmentName,
     testSpamChannelName,
     riverNodeRpcUrl,
+    followerId,
+    followerKey,
+    followerUserName,
+    leaderId,
+    leaderUserName,
+    replySentTime,
 } from './30MinutesSyntheticConfig'
 import { DecryptedTimelineEvent } from '../types'
 import { SnapshotCaseType } from '@river/proto'
@@ -46,6 +52,32 @@ jest.unstable_mockModule('viem', async () => {
 })
 
 const log = dlog('csb:test:synthetic')
+
+log(
+    JSON.stringify(
+        {
+            testRunTimeMs,
+            connectionOptions,
+            loginWaitTime,
+            leaderKey,
+            jsonRpcProviderUrl,
+            fromFollowerQueueName,
+            fromLeaderQueueName,
+            envName,
+            defaultEnvironmentName,
+            testSpamChannelName,
+            riverNodeRpcUrl,
+            followerId,
+            followerKey,
+            followerUserName,
+            leaderId,
+            leaderUserName,
+            replySentTime,
+        },
+        null,
+        2,
+    ),
+)
 
 const healthcheckQueueLeader = new Queue(fromLeaderQueueName, {
     connection: connectionOptions,

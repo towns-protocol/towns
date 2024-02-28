@@ -337,13 +337,6 @@ locals {
     value = var.river_chain_network_url_override
   }]
 
-  river_registry_contract_td_env_config = var.is_multi_node ? [
-    {
-      name  = "REGISTRYCONTRACT__ADDRESS",
-      value = var.river_registry_contract_address
-    }
-  ] : []
-
   node_registry_csv_multinode = "${local.nodes[0].address},${local.nodes[0].url},${local.nodes[1].address},${local.nodes[1].url},${local.nodes[2].address},${local.nodes[2].url},${local.nodes[3].address},${local.nodes[3].url},${local.nodes[4].address},${local.nodes[4].url},${local.nodes[5].address},${local.nodes[5].url},${local.nodes[6].address},${local.nodes[6].url},${local.nodes[7].address},${local.nodes[7].url},${local.nodes[8].address},${local.nodes[8].url},${local.nodes[9].address},${local.nodes[9].url}"
 }
 
@@ -528,22 +521,21 @@ resource "aws_ecs_task_definition" "river-fargate" {
         value = "v3"
       },
       {
-        name  = "MODE"
-        value = var.is_multi_node ? "multi-node" : "single-node"
-      },
-      {
-        # TODO: remove this env var after migrating to the actual ndoe registry smart contract
-        name  = "NODEREGISTRYCSV"
-        value = var.is_multi_node ? local.node_registry_csv_multinode : ""
+        name = "MODE"
+        # TODO: remove this from the dockerfile. everything is multinode now.
+        value = "multi-node"
       },
       {
         name  = "USEBLOCKCHAINSTREAMREGISTRY",
-        value = var.is_multi_node ? "true" : "false"
+        value = "true"
       },
+      {
+        name  = "REGISTRYCONTRACT__ADDRESS",
+        value = var.river_registry_contract_address
+      }
       ],
       local.base_chain_override_td_env_config,
-      local.river_chain_override_td_env_config,
-      local.river_registry_contract_td_env_config
+      local.river_chain_override_td_env_config
     )
 
     logConfiguration = {

@@ -68,6 +68,7 @@ jobs:
               run: yarn test:ci:synthetic:all
               env:
                   ENVIRONMENT_NAME: ${{inputs.environment_name || 'gamma' }}
+                  DEBUG: csb:test:synthetic
 
             # If failed, we send a slack notification
             - name: Slack notification

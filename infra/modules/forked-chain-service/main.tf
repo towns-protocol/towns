@@ -13,6 +13,10 @@ locals {
   name                = "${local.service_name}-${terraform.workspace}"
   global_remote_state = module.global_constants.global_remote_state.outputs
   nodes               = module.global_constants.nodes_metadata
+
+  synthetic_transactions_leader_wallet_address = "0x7cab8F39f7FF0CDceB18881526caA33613C1Bc1E"
+
+  synthetic_transactions_follower_wallet_address = "0x0d04e9fF8AF48B749Bb954CceF52d2114BaeE1aD"
 }
 
 terraform {
@@ -121,7 +125,8 @@ resource "aws_iam_role_policy" "ecs_task_execution_role_policy" {
         ],
         "Effect": "Allow",
         "Resource": [
-          "${var.fork_url_secret_arn}"
+          "${var.fork_url_secret_arn}",
+          "${local.wallet_private_key_arn}"
         ]
       }
     ]
@@ -170,6 +175,12 @@ resource "aws_lb_listener_rule" "host_rule" {
   }
 }
 
+locals {
+  # take river1's credentials
+  shared_credentials     = local.global_remote_state.river_node_credentials_secret[0]
+  wallet_private_key_arn = local.shared_credentials.wallet_private_key.arn
+}
+
 resource "aws_ecs_task_definition" "task_definition" {
   family = "${local.name}-fargate"
 
@@ -202,6 +213,10 @@ resource "aws_ecs_task_definition" "task_definition" {
       {
         name      = "FORK_URL",
         valueFrom = var.fork_url_secret_arn
+      },
+      {
+        name      = "PRIVATE_KEY",
+        valueFrom = local.wallet_private_key_arn
       }
     ]
 
@@ -223,6 +238,14 @@ resource "aws_ecs_task_definition" "task_definition" {
         value = "8545"
       },
       {
+        name  = "NODES_CSV"
+        value = var.nodes_csv
+      },
+      {
+        name  = "RIVER_REGISTRY_ADDRESS"
+        value = var.river_registry_contract_address
+      },
+      {
         name  = "FUNDING_WALLETS_CSV",
         value = <<-EOF
         ${local.nodes[0].address},
@@ -234,7 +257,9 @@ resource "aws_ecs_task_definition" "task_definition" {
         ${local.nodes[6].address},
         ${local.nodes[7].address},
         ${local.nodes[8].address},
-        ${local.nodes[9].address}
+        ${local.nodes[9].address},
+        ${local.synthetic_transactions_leader_wallet_address},
+        ${local.synthetic_transactions_follower_wallet_address}
         EOF
       }
     ]
@@ -272,7 +297,7 @@ resource "aws_ecs_service" "ecs-service" {
   network_configuration {
     security_groups  = [module.internal_sg.security_group_id]
     subnets          = var.service_subnets
-    assign_public_ip = true
+    assign_public_ip = false
   }
 
   timeouts {

@@ -129,8 +129,6 @@ module "river_node" {
   private_subnets = module.vpc.private_subnets
   vpc_id          = module.vpc.vpc_id
 
-  is_multi_node = true
-
   river_registry_contract_address = local.river_registry_contract_address
 
   base_chain_id  = 84532

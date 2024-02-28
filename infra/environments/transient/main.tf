@@ -54,6 +54,9 @@ locals {
   create_notification_service = var.num_nodes > 0
   base_chain_id               = 84532
   river_chain_id              = 6524490
+
+  nodes     = var.num_nodes == 0 ? [] : slice(module.global_constants.nodes_metadata, 0, var.num_nodes)
+  nodes_csv = join(",", [for node in local.nodes : "${node.address},${node.url}"])
 }
 
 resource "cloudflare_record" "app_dns" {
@@ -96,9 +99,9 @@ locals {
   base_earliest_fork_block_number = "latest"
 
   # This is when the Stream Registry was first deployed
-  river_clean_fork_block_number = "3890172"
+  river_clean_fork_block_number = "3893509"
 
-  river_registry_contract_address = "0x9280690672d78B005f0E630FE7b99E44839c9D8B"
+  river_registry_contract_address = "0x48000bB01F2066F8dfdfA8299Fc996b4b1BaB3DD"
 }
 
 module "base_forked_chain_service" {
@@ -143,6 +146,10 @@ module "river_forked_chain_service" {
   service_subnets     = local.transient_global_remote_state.vpc.private_subnets
   fork_url_secret_arn = local.global_remote_state.river_chain_network_url_secret.arn
   vpc_id              = local.transient_global_remote_state.vpc.vpc_id
+
+
+  river_registry_contract_address = local.river_registry_contract_address
+  nodes_csv                       = local.nodes_csv
 }
 
 
@@ -189,8 +196,6 @@ module "river_node" {
   private_subnets = local.transient_global_remote_state.vpc.private_subnets
   vpc_id          = local.transient_global_remote_state.vpc.vpc_id
 
-  is_multi_node = var.num_nodes > 1
-
   log_level                       = var.river_node_log_level
   base_chain_id                   = local.base_chain_id
   base_chain_network_url_override = module.base_forked_chain_service[0].network_url
@@ -209,13 +214,13 @@ module "river_node" {
   river_registry_contract_address = local.river_registry_contract_address
 }
 
-# module "loadtest" {
-#   count                        = local.create_load_testing_module ? 1 : 0
-#   source                       = "../../modules/loadtest"
-#   vpc_id                       = local.transient_global_remote_state.vpc.vpc_id
-#   public_subnets               = local.transient_global_remote_state.vpc.public_subnets
-#   private_subnets              = local.transient_global_remote_state.vpc.private_subnets
-#   base_chain_rpc_url_override = module.base_forked_chain_service[0].network_url
-#   river_node_url               = module.global_constants.nodes_metadata[0].url
-# }
+module "loadtest" {
+  count                       = var.has_stress_test_infra ? 1 : 0
+  source                      = "../../modules/loadtest"
+  vpc_id                      = local.transient_global_remote_state.vpc.vpc_id
+  public_subnets              = local.transient_global_remote_state.vpc.public_subnets
+  private_subnets             = local.transient_global_remote_state.vpc.private_subnets
+  base_chain_rpc_url_override = var.has_stress_test_infra ? module.base_forked_chain_service[0].network_url : null
+  river_node_url              = var.has_stress_test_infra ? module.global_constants.nodes_metadata[0].url : null
+}
 

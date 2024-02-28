@@ -55,3 +55,13 @@ variable "fork_url_secret_arn" {
   description = "The secret arn for the fork url"
   type        = string
 }
+
+variable "river_registry_contract_address" {
+  type    = string
+  default = ""
+}
+
+variable "nodes_csv" {
+  type    = string
+  default = ""
+}
