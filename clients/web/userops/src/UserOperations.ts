@@ -181,12 +181,12 @@ export class UserOps {
         }
 
         const callDataCreateSpace = this.spaceDapp.townRegistrar.TownArchitect.encodeFunctionData(
-            'createTown',
+            'createSpace',
             [townInfo],
         )
 
         if (await this.spaceDapp.walletLink.checkIfLinked(signer, abstractAccountAddress)) {
-            const functionName = 'createTown'
+            const functionName = 'createSpace'
 
             const functionHashForPaymasterProxy = this.getFunctionSigHash(
                 this.spaceDapp.townRegistrar.TownArchitect.interface,
