@@ -234,12 +234,13 @@ export const TouchHome = () => {
                                 transition={transition}
                                 key="search_header"
                             >
-                                {!isLoadingChannels && !(activeOverlay || outlet) && (
+                                {!isLoadingChannels && (
                                     <TextField
                                         placeholder="Jump to..."
                                         height="x5"
                                         background="level2"
                                         value={searchString}
+                                        disabled={activeOverlay !== undefined}
                                         onFocus={onFocus}
                                         onChange={onChange}
                                     />
