@@ -371,6 +371,7 @@ const createReadOnlyDbUser = async ({
     console.log('created read only user')
 
     await pgClient.query('SELECT pg_advisory_lock(1);'); // 1 is an arbitrary lock ID
+    
     const grantReadPermissionQuery = `
       GRANT CONNECT ON DATABASE ${riverReadOnlyUserDBConfig.DATABASE} TO "${riverReadOnlyUserDBConfig.USER}";
       GRANT USAGE ON SCHEMA public TO "${riverReadOnlyUserDBConfig.USER}";
@@ -537,6 +538,12 @@ exports.handler = async (event, context, callback) => {
 
     await createReadOnlyDbUser({
       schemaName,
+      riverReadOnlyUserDBConfig,
+      masterUserCredentials,
+    });
+
+    await createReadOnlyDbUser({
+      schemaName: 'notification_service',
       riverReadOnlyUserDBConfig,
       masterUserCredentials,
     });
