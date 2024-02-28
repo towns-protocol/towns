@@ -2,6 +2,7 @@
 pragma solidity ^0.8.23;
 
 // interfaces
+import {ITokenOwnableBase} from "contracts/src/diamond/facets/ownable/token/ITokenOwnable.sol";
 
 // libraries
 
@@ -28,7 +29,7 @@ contract TokenOwnableHelper is FacetHelper {
   }
 
   function initializer() public pure override returns (bytes4) {
-    return TokenOwnableFacet.__Ownable_init.selector;
+    return TokenOwnableFacet.__TokenOwnable_init.selector;
   }
 
   function makeInitData(
@@ -37,9 +38,8 @@ contract TokenOwnableHelper is FacetHelper {
   ) public pure returns (bytes memory) {
     return
       abi.encodeWithSelector(
-        TokenOwnableFacet.__Ownable_init.selector,
-        token,
-        tokenId
+        initializer(),
+        ITokenOwnableBase.TokenOwnable({collection: token, tokenId: tokenId})
       );
   }
 }

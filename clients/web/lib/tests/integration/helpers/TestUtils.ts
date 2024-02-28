@@ -12,7 +12,7 @@ import {
     createExternalTokenStruct,
     getFilteredRolesFromSpace,
     getTestGatingNftAddress,
-    ITownArchitectBase,
+    IArchitectBase,
 } from '@river/web3'
 
 // eslint-disable-next-line @typescript-eslint/no-explicit-any
@@ -125,7 +125,7 @@ export async function createTestSpaceGatedByTownAndZionNfts(
 
     console.log('createTestSpaceGatedByTownAndZionNfts tokens', tokens)
 
-    const membershipInfo: ITownArchitectBase.MembershipStruct = {
+    const membershipInfo: IArchitectBase.MembershipStruct = {
         settings: {
             name: 'Member',
             symbol: 'MEMBER',
@@ -181,7 +181,7 @@ export async function createTestSpaceGatedByTownNft(
     }
 
     // Everyone role
-    const membershipInfo: ITownArchitectBase.MembershipStruct = {
+    const membershipInfo: IArchitectBase.MembershipStruct = {
         settings: {
             name: 'Everyone',
             symbol: 'MEMBER',

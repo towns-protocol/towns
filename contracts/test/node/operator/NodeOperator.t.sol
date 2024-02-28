@@ -9,7 +9,7 @@ import {IERC721ABase} from "contracts/src/diamond/facets/token/ERC721A/IERC721A.
 // libraries
 
 // contracts
-import {BaseSetup} from "contracts/test/towns/BaseSetup.sol";
+import {BaseSetup} from "contracts/test/spaces/BaseSetup.sol";
 
 import {NodeOperatorFacet} from "contracts/src/node/operator/NodeOperatorFacet.sol";
 import {OwnableFacet} from "contracts/src/diamond/facets/ownable/OwnableFacet.sol";

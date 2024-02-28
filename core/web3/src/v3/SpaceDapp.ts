@@ -14,7 +14,7 @@ import {
 } from '../ConvertersEntitlements'
 
 import { IRolesBase } from './IRolesShim'
-import { ITownArchitectBase } from './ITownArchitectShim'
+import { IArchitectBase } from './ITownArchitectShim'
 import { Town } from './Town'
 import { TownRegistrar } from './TownRegistrar'
 import { createEntitlementStruct } from '../ConvertersRoles'
@@ -55,7 +55,7 @@ export class SpaceDapp implements ISpaceDapp {
         params: CreateSpaceParams,
         signer: ethers.Signer,
     ): Promise<ContractTransaction> {
-        const townInfo: ITownArchitectBase.TownInfoStruct = {
+        const townInfo: IArchitectBase.SpaceInfoStruct = {
             id: params.spaceId,
             name: params.spaceName,
             uri: params.spaceMetadata,
@@ -65,7 +65,7 @@ export class SpaceDapp implements ISpaceDapp {
                 metadata: params.channelName || '',
             },
         }
-        return this.townRegistrar.TownArchitect.write(signer).createTown(townInfo)
+        return this.townRegistrar.TownArchitect.write(signer).createSpace(townInfo)
     }
 
     public async createChannel(
@@ -187,7 +187,7 @@ export class SpaceDapp implements ISpaceDapp {
         }
         const townInfo = await town.getTownInfo()
         // update the town name
-        return town.TownOwner.write(signer).updateTownInfo(town.Address, name, townInfo.uri)
+        return town.TownOwner.write(signer).updateSpaceInfo(town.Address, name, townInfo.uri)
     }
 
     public async isEntitledToSpace(
@@ -199,7 +199,7 @@ export class SpaceDapp implements ISpaceDapp {
         if (!town) {
             return false
         }
-        return town.Entitlements.read.isEntitledToTown(user, permission)
+        return town.Entitlements.read.isEntitledToSpace(user, permission)
     }
 
     public async isEntitledToChannel(

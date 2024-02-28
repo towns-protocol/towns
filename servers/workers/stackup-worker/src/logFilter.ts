@@ -1,12 +1,12 @@
 import { ethers } from 'ethers'
 import { Environment, isErrorType } from 'worker-common'
-import BaseSepoliaTownOwnerAbi from '@towns/generated/v3/abis/TownOwner.abi.json' assert { type: 'json' }
+import BaseSepoliaTownOwnerAbi from '@towns/generated/v3/abis/SpaceOwner.abi.json' assert { type: 'json' }
 import BaseSepoliaWalletLinkAbi from '@towns/generated/v3/abis/WalletLink.abi.json' assert { type: 'json' }
-import BaseSepoliaTownOwnerContract from '@towns/generated/addresses/base_sepolia/townOwner.json' assert { type: 'json' }
+import BaseSepoliaTownOwnerContract from '@towns/generated/addresses/base_sepolia/spaceOwner.json' assert { type: 'json' }
 import BaseSepoliaChannelsAbi from '@towns/generated/v3/abis/Channels.abi.json' assert { type: 'json' }
 import BaseSepoliaRolesAbi from '@towns/generated/v3/abis/Roles.abi.json' assert { type: 'json' }
-import BaseSepoliaTownFactoryContract from '@towns/generated/addresses/base_sepolia/townFactory.json' assert { type: 'json' }
-import BaseSepoliaTownContract from '@towns/generated/addresses/base_sepolia/town.json' assert { type: 'json' }
+import BaseSepoliaTownFactoryContract from '@towns/generated/addresses/base_sepolia/spaceFactory.json' assert { type: 'json' }
+import BaseSepoliaTownContract from '@towns/generated/addresses/base_sepolia/space.json' assert { type: 'json' }
 import BaseSepoliaWalletLinkContract from '@towns/generated/addresses/base_sepolia/walletLink.json' assert { type: 'json' }
 import { createJsonProvider as createProvider } from './provider'
 import { Env } from '.'
@@ -29,7 +29,7 @@ type filterArgType = string | number | null
 const BaseSepoliaBlocksPerDay = 43200 // at 2s blocks
 
 const BaseSepoliaContracts = new Map<string, ContractDetails>([
-    ['TownOwner', { address: BaseSepoliaTownOwnerContract.address, abi: BaseSepoliaTownOwnerAbi }],
+    ['SpaceOwner', { address: BaseSepoliaTownOwnerContract.address, abi: BaseSepoliaTownOwnerAbi }],
     ['TownFactory', { address: BaseSepoliaTownFactoryContract.address, abi: undefined }],
     ['Town', { address: BaseSepoliaTownContract.address, abi: undefined }],
     [
@@ -208,7 +208,7 @@ export async function runLogQuery(
     }
 }
 
-// Run a log query using queryFilter interface on TownOwner contract
+// Run a log query using queryFilter interface on SpaceOwner contract
 // with a fixed lookback window based on blockNumber offset
 /*
 export async function runLogQueryTownOwner(
@@ -233,7 +233,7 @@ export async function runLogQueryTownOwner(
         console.error(`Unknown environment network: ${environment}`)
         return null
     }
-    const contract = createContract(network, 'TownOwner', rpcProvider)
+    const contract = createContract(network, 'SpaceOwner', rpcProvider)
     if (!contract) {
         console.error(`Unable to create contract: ${contract}`)
         return null

@@ -419,7 +419,7 @@
   },
   "settings": {
     "compilationTarget": {
-      "contracts/src/towns/entitlements/user/UserEntitlement.sol": "UserEntitlement"
+      "contracts/src/spaces/entitlements/user/UserEntitlement.sol": "UserEntitlement"
     },
     "evmVersion": "paris",
     "libraries": {},
@@ -452,7 +452,7 @@
     ]
   },
   "sources": {
-    "contracts/src/towns/entitlements/IEntitlement.sol": {
+    "contracts/src/spaces/entitlements/IEntitlement.sol": {
       "keccak256": "0x35f1b94c8192c2716c487b49c62c35821dc3b34da9d5deb50e756772407c955f",
       "license": "Apache-2.0",
       "urls": [
@@ -460,15 +460,15 @@
         "dweb:/ipfs/Qme1bgU56x9drrefb6BUkgGQ61ipBK5zoo4ZstRmGXhzkL"
       ]
     },
-    "contracts/src/towns/entitlements/user/UserEntitlement.sol": {
-      "keccak256": "0x496eb8959afc9cde843d6f40a7e5e302523d534f4371b19c231da0923068a74d",
+    "contracts/src/spaces/entitlements/user/UserEntitlement.sol": {
+      "keccak256": "0xf06994da3b670832ce7dfa0ffe1d8905606e3789faea1d476a63a39c72c4cd0b",
       "license": "Apache-2.0",
       "urls": [
-        "bzz-raw://1ca5c0d3c694b724f71121311e0b4b9f1f8de227958198cdf78623590d41a2ea",
-        "dweb:/ipfs/QmNbA5hXtYJZsrVjjrvT1qh9GddmTDn5vD8Yau9pcitoso"
+        "bzz-raw://8d5afa7bddf723735a4e1cad324104c340e84a0f5b4e60c512d0e1c3f0624e87",
+        "dweb:/ipfs/QmXScabWFAgVeV1VTqBLzFoY29G75QAVsqsJ3M5n3x32pV"
       ]
     },
-    "contracts/src/towns/facets/channels/IChannel.sol": {
+    "contracts/src/spaces/facets/channels/IChannel.sol": {
       "keccak256": "0x27e37f82ef6803c8a2bcf8adc7cbadf36bebfb5d972fea747d2d45c7159758a1",
       "license": "Apache-2.0",
       "urls": [
@@ -476,7 +476,7 @@
         "dweb:/ipfs/QmesoENHsrJYyfkTMpoyBJdNpGiCgsM4ajC78pNXLMTZGV"
       ]
     },
-    "contracts/src/towns/facets/roles/IRoles.sol": {
+    "contracts/src/spaces/facets/roles/IRoles.sol": {
       "keccak256": "0x914a4a0309bee60e391c5a4ee7fb587d8902940f87daa4e3445cf7955d1e68f5",
       "license": "Apache-2.0",
       "urls": [

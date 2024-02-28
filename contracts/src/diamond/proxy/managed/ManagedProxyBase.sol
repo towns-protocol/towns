@@ -15,7 +15,7 @@ import {Proxy} from "../Proxy.sol";
  * @dev implementation fetched using immutable function selector
  */
 abstract contract ManagedProxyBase is IManagedProxyBase, Proxy {
-  function __ManagedProxyBase_init(ManagedProxyInit memory init) internal {
+  function __ManagedProxyBase_init(ManagedProxy memory init) internal {
     ManagedProxyStorage.Layout storage ds = ManagedProxyStorage.layout();
     ds.managerSelector = init.managerSelector;
     ds.manager = init.manager;

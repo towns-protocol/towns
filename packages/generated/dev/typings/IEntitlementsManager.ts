@@ -49,7 +49,7 @@ export interface IEntitlementsManagerInterface extends utils.Interface {
     "getEntitlement(address)": FunctionFragment;
     "getEntitlements()": FunctionFragment;
     "isEntitledToChannel(string,address,string)": FunctionFragment;
-    "isEntitledToTown(address,string)": FunctionFragment;
+    "isEntitledToSpace(address,string)": FunctionFragment;
     "removeEntitlementModule(address)": FunctionFragment;
   };
 
@@ -60,7 +60,7 @@ export interface IEntitlementsManagerInterface extends utils.Interface {
       | "getEntitlement"
       | "getEntitlements"
       | "isEntitledToChannel"
-      | "isEntitledToTown"
+      | "isEntitledToSpace"
       | "removeEntitlementModule"
   ): FunctionFragment;
 
@@ -89,7 +89,7 @@ export interface IEntitlementsManagerInterface extends utils.Interface {
     ]
   ): string;
   encodeFunctionData(
-    functionFragment: "isEntitledToTown",
+    functionFragment: "isEntitledToSpace",
     values: [PromiseOrValue<string>, PromiseOrValue<string>]
   ): string;
   encodeFunctionData(
@@ -118,7 +118,7 @@ export interface IEntitlementsManagerInterface extends utils.Interface {
     data: BytesLike
   ): Result;
   decodeFunctionResult(
-    functionFragment: "isEntitledToTown",
+    functionFragment: "isEntitledToSpace",
     data: BytesLike
   ): Result;
   decodeFunctionResult(
@@ -220,7 +220,7 @@ export interface IEntitlementsManager extends BaseContract {
       overrides?: CallOverrides
     ): Promise<[boolean]>;
 
-    isEntitledToTown(
+    isEntitledToSpace(
       user: PromiseOrValue<string>,
       permission: PromiseOrValue<string>,
       overrides?: CallOverrides
@@ -258,7 +258,7 @@ export interface IEntitlementsManager extends BaseContract {
     overrides?: CallOverrides
   ): Promise<boolean>;
 
-  isEntitledToTown(
+  isEntitledToSpace(
     user: PromiseOrValue<string>,
     permission: PromiseOrValue<string>,
     overrides?: CallOverrides
@@ -296,7 +296,7 @@ export interface IEntitlementsManager extends BaseContract {
       overrides?: CallOverrides
     ): Promise<boolean>;
 
-    isEntitledToTown(
+    isEntitledToSpace(
       user: PromiseOrValue<string>,
       permission: PromiseOrValue<string>,
       overrides?: CallOverrides
@@ -353,7 +353,7 @@ export interface IEntitlementsManager extends BaseContract {
       overrides?: CallOverrides
     ): Promise<BigNumber>;
 
-    isEntitledToTown(
+    isEntitledToSpace(
       user: PromiseOrValue<string>,
       permission: PromiseOrValue<string>,
       overrides?: CallOverrides
@@ -390,7 +390,7 @@ export interface IEntitlementsManager extends BaseContract {
       overrides?: CallOverrides
     ): Promise<PopulatedTransaction>;
 
-    isEntitledToTown(
+    isEntitledToSpace(
       user: PromiseOrValue<string>,
       permission: PromiseOrValue<string>,
       overrides?: CallOverrides

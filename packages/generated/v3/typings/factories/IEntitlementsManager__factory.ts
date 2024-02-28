@@ -143,7 +143,7 @@ const _abi = [
   },
   {
     type: "function",
-    name: "isEntitledToTown",
+    name: "isEntitledToSpace",
     inputs: [
       {
         name: "user",

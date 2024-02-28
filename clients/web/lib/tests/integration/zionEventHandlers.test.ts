@@ -12,7 +12,7 @@ import { sleep } from '../../src/utils/zion-utils'
 import {
     createExternalTokenStruct,
     getTestGatingNftAddress,
-    ITownArchitectBase,
+    IArchitectBase,
     Permission,
 } from '@river/web3'
 import { ethers } from 'ethers'
@@ -45,7 +45,7 @@ describe('Zion event handlers test', () => {
         expect(testGatingNftAddress).toBeDefined()
         expect(testGatingNftAddress).not.toBe('')
         const tokens = createExternalTokenStruct([testGatingNftAddress])
-        const membership: ITownArchitectBase.MembershipStruct = {
+        const membership: IArchitectBase.MembershipStruct = {
             settings: {
                 name: 'Member',
                 symbol: 'MEMBER',

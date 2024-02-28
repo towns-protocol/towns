@@ -6,17 +6,6 @@
   "output": {
     "abi": [
       {
-        "inputs": [
-          {
-            "internalType": "address[]",
-            "name": "approvedOperators",
-            "type": "address[]"
-          }
-        ],
-        "stateMutability": "nonpayable",
-        "type": "constructor"
-      },
-      {
         "inputs": [],
         "name": "Initializable_InInitializingState",
         "type": "error"
@@ -204,9 +193,9 @@
         "inputs": [
           {
             "indexed": false,
-            "internalType": "string",
+            "internalType": "bytes32",
             "name": "streamId",
-            "type": "string"
+            "type": "bytes32"
           },
           {
             "indexed": false,
@@ -229,9 +218,9 @@
         "inputs": [
           {
             "indexed": false,
-            "internalType": "string",
+            "internalType": "bytes32",
             "name": "streamId",
-            "type": "string"
+            "type": "bytes32"
           },
           {
             "indexed": false,
@@ -244,9 +233,40 @@
             "internalType": "uint64",
             "name": "lastMiniblockNum",
             "type": "uint64"
+          },
+          {
+            "indexed": false,
+            "internalType": "bool",
+            "name": "isSealed",
+            "type": "bool"
           }
         ],
         "name": "StreamLastMiniblockUpdated",
+        "type": "event"
+      },
+      {
+        "anonymous": false,
+        "inputs": [
+          {
+            "indexed": false,
+            "internalType": "bytes32",
+            "name": "streamId",
+            "type": "bytes32"
+          },
+          {
+            "indexed": false,
+            "internalType": "address",
+            "name": "nodeAddress",
+            "type": "address"
+          },
+          {
+            "indexed": false,
+            "internalType": "bool",
+            "name": "isAdded",
+            "type": "bool"
+          }
+        ],
+        "name": "StreamPlacementUpdated",
         "type": "event"
       },
       {
@@ -265,9 +285,9 @@
       {
         "inputs": [
           {
-            "internalType": "string",
+            "internalType": "bytes32",
             "name": "streamId",
-            "type": "string"
+            "type": "bytes32"
           },
           {
             "internalType": "address[]",
@@ -351,9 +371,9 @@
         "name": "getAllStreamIds",
         "outputs": [
           {
-            "internalType": "string[]",
+            "internalType": "bytes32[]",
             "name": "",
-            "type": "string[]"
+            "type": "bytes32[]"
           }
         ],
         "stateMutability": "view",
@@ -366,37 +386,49 @@
           {
             "components": [
               {
-                "internalType": "string",
-                "name": "streamId",
-                "type": "string"
-              },
-              {
-                "internalType": "address[]",
-                "name": "nodes",
-                "type": "address[]"
-              },
-              {
                 "internalType": "bytes32",
-                "name": "genesisMiniblockHash",
+                "name": "id",
                 "type": "bytes32"
               },
               {
-                "internalType": "bytes",
-                "name": "genesisMiniblock",
-                "type": "bytes"
-              },
-              {
-                "internalType": "bytes32",
-                "name": "lastMiniblockHash",
-                "type": "bytes32"
-              },
-              {
-                "internalType": "uint64",
-                "name": "lastMiniblockNum",
-                "type": "uint64"
+                "components": [
+                  {
+                    "internalType": "bytes32",
+                    "name": "lastMiniblockHash",
+                    "type": "bytes32"
+                  },
+                  {
+                    "internalType": "uint64",
+                    "name": "lastMiniblockNum",
+                    "type": "uint64"
+                  },
+                  {
+                    "internalType": "uint64",
+                    "name": "flags",
+                    "type": "uint64"
+                  },
+                  {
+                    "internalType": "uint64",
+                    "name": "reserved0",
+                    "type": "uint64"
+                  },
+                  {
+                    "internalType": "uint64",
+                    "name": "reserved1",
+                    "type": "uint64"
+                  },
+                  {
+                    "internalType": "address[]",
+                    "name": "nodes",
+                    "type": "address[]"
+                  }
+                ],
+                "internalType": "struct IRiverRegistryBase.Stream",
+                "name": "stream",
+                "type": "tuple"
               }
             ],
-            "internalType": "struct IRiverRegistryBase.Stream[]",
+            "internalType": "struct IRiverRegistryBase.StreamWithId[]",
             "name": "",
             "type": "tuple[]"
           }
@@ -457,7 +489,7 @@
         "inputs": [
           {
             "internalType": "bytes32",
-            "name": "streamIdHash",
+            "name": "streamId",
             "type": "bytes32"
           }
         ],
@@ -465,26 +497,6 @@
         "outputs": [
           {
             "components": [
-              {
-                "internalType": "string",
-                "name": "streamId",
-                "type": "string"
-              },
-              {
-                "internalType": "address[]",
-                "name": "nodes",
-                "type": "address[]"
-              },
-              {
-                "internalType": "bytes32",
-                "name": "genesisMiniblockHash",
-                "type": "bytes32"
-              },
-              {
-                "internalType": "bytes",
-                "name": "genesisMiniblock",
-                "type": "bytes"
-              },
               {
                 "internalType": "bytes32",
                 "name": "lastMiniblockHash",
@@ -494,6 +506,26 @@
                 "internalType": "uint64",
                 "name": "lastMiniblockNum",
                 "type": "uint64"
+              },
+              {
+                "internalType": "uint64",
+                "name": "flags",
+                "type": "uint64"
+              },
+              {
+                "internalType": "uint64",
+                "name": "reserved0",
+                "type": "uint64"
+              },
+              {
+                "internalType": "uint64",
+                "name": "reserved1",
+                "type": "uint64"
+              },
+              {
+                "internalType": "address[]",
+                "name": "nodes",
+                "type": "address[]"
               }
             ],
             "internalType": "struct IRiverRegistryBase.Stream",
@@ -520,6 +552,67 @@
       {
         "inputs": [
           {
+            "internalType": "bytes32",
+            "name": "streamId",
+            "type": "bytes32"
+          }
+        ],
+        "name": "getStreamWithGenesis",
+        "outputs": [
+          {
+            "components": [
+              {
+                "internalType": "bytes32",
+                "name": "lastMiniblockHash",
+                "type": "bytes32"
+              },
+              {
+                "internalType": "uint64",
+                "name": "lastMiniblockNum",
+                "type": "uint64"
+              },
+              {
+                "internalType": "uint64",
+                "name": "flags",
+                "type": "uint64"
+              },
+              {
+                "internalType": "uint64",
+                "name": "reserved0",
+                "type": "uint64"
+              },
+              {
+                "internalType": "uint64",
+                "name": "reserved1",
+                "type": "uint64"
+              },
+              {
+                "internalType": "address[]",
+                "name": "nodes",
+                "type": "address[]"
+              }
+            ],
+            "internalType": "struct IRiverRegistryBase.Stream",
+            "name": "",
+            "type": "tuple"
+          },
+          {
+            "internalType": "bytes32",
+            "name": "",
+            "type": "bytes32"
+          },
+          {
+            "internalType": "bytes",
+            "name": "",
+            "type": "bytes"
+          }
+        ],
+        "stateMutability": "view",
+        "type": "function"
+      },
+      {
+        "inputs": [
+          {
             "internalType": "address",
             "name": "operator",
             "type": "address"
@@ -534,6 +627,24 @@
           }
         ],
         "stateMutability": "view",
+        "type": "function"
+      },
+      {
+        "inputs": [
+          {
+            "internalType": "bytes32",
+            "name": "streamId",
+            "type": "bytes32"
+          },
+          {
+            "internalType": "address",
+            "name": "nodeAddress",
+            "type": "address"
+          }
+        ],
+        "name": "placeStreamOnNode",
+        "outputs": [],
+        "stateMutability": "nonpayable",
         "type": "function"
       },
       {
@@ -571,7 +682,25 @@
         "inputs": [
           {
             "internalType": "bytes32",
-            "name": "streamIdHash",
+            "name": "streamId",
+            "type": "bytes32"
+          },
+          {
+            "internalType": "address",
+            "name": "nodeAddress",
+            "type": "address"
+          }
+        ],
+        "name": "removeStreamFromNode",
+        "outputs": [],
+        "stateMutability": "nonpayable",
+        "type": "function"
+      },
+      {
+        "inputs": [
+          {
+            "internalType": "bytes32",
+            "name": "streamId",
             "type": "bytes32"
           },
           {
@@ -583,6 +712,11 @@
             "internalType": "uint64",
             "name": "lastMiniblockNum",
             "type": "uint64"
+          },
+          {
+            "internalType": "bool",
+            "name": "isSealed",
+            "type": "bool"
           }
         ],
         "name": "setStreamLastMiniblock",
@@ -615,6 +749,24 @@
         "outputs": [],
         "stateMutability": "nonpayable",
         "type": "function"
+      },
+      {
+        "inputs": [
+          {
+            "internalType": "address",
+            "name": "nodeAddress",
+            "type": "address"
+          },
+          {
+            "internalType": "string",
+            "name": "url",
+            "type": "string"
+          }
+        ],
+        "name": "updateNodeUrlByOperator",
+        "outputs": [],
+        "stateMutability": "nonpayable",
+        "type": "function"
       }
     ],
     "devdoc": {
@@ -636,6 +788,11 @@
         },
         "getAllStreams()": {
           "details": "WARNING: This operation will copy the entire storage to memory, which can be quite expensive. This is designed to mostly be used by view accessors that are queried without any gas fees. Developers should keep in mind that this function has an unbounded cost, and using it as part of a state-changing function may render the function uncallable if the map grows to a point where copying to memory consumes too much gas to fit in a block."
+        },
+        "getStreamWithGenesis(bytes32)": {
+          "returns": {
+            "_0": "stream, genesisMiniblockHash, genesisMiniblock"
+          }
         }
       },
       "version": 1
@@ -775,27 +932,27 @@
       ]
     },
     "contracts/src/river/registry/IRiverRegistry.sol": {
-      "keccak256": "0x1287a535795568b4ab628beaa4cb38abec499cfa536477ca6fa7fc76f49ff97a",
+      "keccak256": "0x01c842edf619f2164dc35ce21cb98811a70ce36cc23b3473cce19aa67d7b1196",
       "license": "Apache-2.0",
       "urls": [
-        "bzz-raw://77e139a9254fa9db4fcbb35648164b22befc0664fd98abf984f41f796e31d300",
-        "dweb:/ipfs/QmfQhbP6SEdy174qJCaCmee7Uq64V3NuGXu5584aGNWLWL"
+        "bzz-raw://a20b30e4fa4fb13c8670ec4c9b654130d475f23ff7f3f4adb9d45bc2638fc34d",
+        "dweb:/ipfs/QmTn47JjjtKzXhw6asqjXwhCEVUo5E8qxkg3V98VP9u69a"
       ]
     },
     "contracts/src/river/registry/RiverRegistry.sol": {
-      "keccak256": "0x2da8263eb98ae884357e5a45eede8fd1b6e29cf6aab261a886750427369bc92a",
+      "keccak256": "0xf807cbc76908dd75764fe20de7f847f52a0ea15bc5ee81296506a15024a72f6f",
       "license": "MIT",
       "urls": [
-        "bzz-raw://d837e91ce0867b2d728ae53f119e994d290d338f35e68e32a338e4b22e21b09b",
-        "dweb:/ipfs/QmWaEPfzkUzduMC3wTPyTPLHnRmttQGcgKUPTgDDhYQdH9"
+        "bzz-raw://c2253cf94b2d2e24f579f70f9f99aa95727c70fe5f61661bbf04af90531f175f",
+        "dweb:/ipfs/QmZ1MdF7VKVBPaUTZdnVhi8PVKhpzgc21qBKPAuck7nB8r"
       ]
     },
     "contracts/src/river/registry/RiverRegistryStorage.sol": {
-      "keccak256": "0x52e3a8e1d09f35cd1622022c959dbdf69d17288b4b03f291262feb5d5c24f960",
+      "keccak256": "0xd2fc5437db58cd00b38b817bffd5e2703be4c2b6f9241f914df848fa7af35e08",
       "license": "Apache-2.0",
       "urls": [
-        "bzz-raw://61fb08fb01de37e4bb0dc97452d2818cf9af3a7cb3c73ffeb0bddb6dc71da2f3",
-        "dweb:/ipfs/QmXUW7uc8ik1m5gcF6yCsVjx4eVwgnZ9SijF5ZAbokoTfD"
+        "bzz-raw://74e757be655603f73c2de77eca6db2d2e881aefc1077d33b0ee41a5c47842c14",
+        "dweb:/ipfs/QmayjCKrVBP9DnPKgP1T5ZHuh4R1icVVw6Cu9E1kgukJgq"
       ]
     },
     "lib/openzeppelin-contracts/contracts/utils/Address.sol": {

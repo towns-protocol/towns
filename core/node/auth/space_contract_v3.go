@@ -64,7 +64,7 @@ func (sc *SpaceContractV3) IsEntitledToSpace(
 	if err != nil || town == nil {
 		return false, err
 	}
-	isEntitled, err := town.entitlements.IsEntitledToTown(
+	isEntitled, err := town.entitlements.IsEntitledToSpace(
 		nil,
 		user,
 		permission.String(),
@@ -118,7 +118,7 @@ func (sc *SpaceContractV3) getTown(ctx context.Context, townId string) (*Town, e
 	defer sc.townsLock.Unlock()
 	if sc.towns[townId] == nil {
 		// use the networkId to fetch the town's contract address
-		townAddress, err := sc.townsArchitect.GetTownById(nil, townId)
+		townAddress, err := sc.townsArchitect.GetSpaceById(nil, townId)
 		if err != nil || townAddress == EMPTY_ADDRESS {
 			return nil, err
 		}

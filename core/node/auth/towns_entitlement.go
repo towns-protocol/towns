@@ -18,7 +18,7 @@ import (
 
 type TownsEntitlements interface {
 	IsEntitledToChannel(opts *bind.CallOpts, channelNetworkId string, user common.Address, permission string) (bool, error)
-	IsEntitledToTown(opts *bind.CallOpts, user common.Address, permission string) (bool, error)
+	IsEntitledToSpace(opts *bind.CallOpts, user common.Address, permission string) (bool, error)
 }
 
 type townsEntitlementsProxy struct {
@@ -123,20 +123,20 @@ func (proxy *townsEntitlementsProxy) IsEntitledToChannel(
 	return result, nil
 }
 
-func (proxy *townsEntitlementsProxy) IsEntitledToTown(opts *bind.CallOpts, user common.Address, permission string) (bool, error) {
+func (proxy *townsEntitlementsProxy) IsEntitledToSpace(opts *bind.CallOpts, user common.Address, permission string) (bool, error) {
 	log := dlog.FromCtx(proxy.ctx)
 	start := time.Now()
-	defer infra.StoreExecutionTimeMetrics("IsEntitledToTown", infra.CONTRACT_CALLS_CATEGORY, start)
-	log.Debug("IsEntitledToTown", "user", user, "permission", permission, "address", proxy.address)
-	result, err := proxy.contract.IsEntitledToTown(opts, user, permission)
+	defer infra.StoreExecutionTimeMetrics("IsEntitledToSpace", infra.CONTRACT_CALLS_CATEGORY, start)
+	log.Debug("IsEntitledToSpace", "user", user, "permission", permission, "address", proxy.address)
+	result, err := proxy.contract.IsEntitledToSpace(opts, user, permission)
 	if err != nil {
 		isEntitledToTownCalls.FailInc()
-		log.Error("IsEntitledToTown", "user", user, "permission", permission, "address", proxy.address, "error", err)
+		log.Error("IsEntitledToSpace", "user", user, "permission", permission, "address", proxy.address, "error", err)
 		return false, WrapRiverError(Err_CANNOT_CALL_CONTRACT, err)
 	}
 	isEntitledToTownCalls.PassInc()
 	log.Debug(
-		"IsEntitledToTown",
+		"IsEntitledToSpace",
 		"user",
 		user,
 		"permission",

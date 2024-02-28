@@ -27,7 +27,7 @@ import {MultiInit} from "contracts/src/diamond/initializers/MultiInit.sol";
 // deployers
 import {DeployMultiInit} from "contracts/scripts/deployments/DeployMultiInit.s.sol";
 import {DeployMainnetDelegation} from "contracts/scripts/deployments/DeployMainnetDelegation.s.sol";
-import {DeployTownOwner} from "contracts/scripts/deployments/DeployTownOwner.s.sol";
+import {DeploySpaceOwner} from "contracts/scripts/deployments/DeploySpaceOwner.s.sol";
 
 contract DeployNodeOperator is DiamondDeployer {
   DiamondCutHelper cutHelper = new DiamondCutHelper();
@@ -41,7 +41,7 @@ contract DeployNodeOperator is DiamondDeployer {
   DeployMultiInit deployMultiInit = new DeployMultiInit();
   DeployMainnetDelegation deployMainnetDelegation =
     new DeployMainnetDelegation();
-  DeployTownOwner deployTownOwner = new DeployTownOwner();
+  DeploySpaceOwner deploySpaceOwner = new DeploySpaceOwner();
 
   uint256 public constant stakeRequirement = 1 ether; // 1 river token
 
@@ -104,11 +104,11 @@ contract DeployNodeOperator is DiamondDeployer {
   }
 
   function postDeploy(address deployer, address nodeOperator) public override {
-    address townOwner = deployTownOwner.deploy();
+    address spaceOwner = deploySpaceOwner.deploy();
     address mainnetDelegation = deployMainnetDelegation.deploy();
 
     vm.startBroadcast(deployer);
-    NodeOperatorFacet(nodeOperator).setSpaceOwnerRegistry(townOwner);
+    NodeOperatorFacet(nodeOperator).setSpaceOwnerRegistry(spaceOwner);
     NodeOperatorFacet(nodeOperator).setMainnetDelegation(mainnetDelegation);
     vm.stopBroadcast();
   }

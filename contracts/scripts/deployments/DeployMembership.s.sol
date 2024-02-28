@@ -7,7 +7,7 @@ pragma solidity ^0.8.23;
 
 //contracts
 import {Deployer} from "../common/Deployer.s.sol";
-import {MembershipFacet} from "contracts/src/towns/facets/membership/MembershipFacet.sol";
+import {MembershipFacet} from "contracts/src/spaces/facets/membership/MembershipFacet.sol";
 
 contract DeployMembership is Deployer {
   function versionName() public pure override returns (string memory) {

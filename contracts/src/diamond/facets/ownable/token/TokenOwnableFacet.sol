@@ -3,6 +3,7 @@ pragma solidity ^0.8.23;
 
 // interfaces
 import {IERC173} from "../IERC173.sol";
+import {ITokenOwnable} from "./ITokenOwnable.sol";
 
 // libraries
 
@@ -10,12 +11,11 @@ import {IERC173} from "../IERC173.sol";
 import {Facet} from "contracts/src/diamond/facets/Facet.sol";
 import {TokenOwnableBase} from "./TokenOwnableBase.sol";
 
-contract TokenOwnableFacet is IERC173, TokenOwnableBase, Facet {
-  function __Ownable_init(
-    address collection,
-    uint256 tokenId
+contract TokenOwnableFacet is ITokenOwnable, TokenOwnableBase, Facet {
+  function __TokenOwnable_init(
+    TokenOwnable memory tokenOwnable
   ) external onlyInitializing {
-    __TokenOwnableBase_init(collection, tokenId);
+    __TokenOwnableBase_init(tokenOwnable);
     _addInterface(type(IERC173).interfaceId);
   }
 

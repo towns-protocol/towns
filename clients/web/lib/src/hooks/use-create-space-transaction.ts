@@ -9,7 +9,7 @@ import { useCallback, useMemo, useRef, useState } from 'react'
 import { TSigner } from '../types/web3-types'
 import { CreateSpaceInfo } from '../types/zion-types'
 import { useZionClient } from './use-zion-client'
-import { ITownArchitectBase } from '@river/web3'
+import { IArchitectBase } from '@river/web3'
 import { getTransactionHashOrUserOpHash } from '@towns/userops'
 /**
  * Combine space creation and smart contract space
@@ -35,7 +35,7 @@ export function useCreateSpaceTransaction() {
     const createSpaceTransactionWithRole = useCallback(
         async function (
             createInfo: CreateSpaceInfo,
-            membershipInfo: ITownArchitectBase.MembershipStruct,
+            membershipInfo: IArchitectBase.MembershipStruct,
             signer: TSigner,
         ): Promise<CreateSpaceTransactionContext | undefined> {
             if (isTransacting.current) {
@@ -110,7 +110,7 @@ export function useCreateSpaceTransactionWithRetries() {
     const createSpaceTransactionWithRetries = useCallback(
         async function (
             createInfo: CreateSpaceInfo,
-            membershipInfo: ITownArchitectBase.MembershipStruct,
+            membershipInfo: IArchitectBase.MembershipStruct,
             signer: TSigner,
         ) {
             const retryInterval = 5_000

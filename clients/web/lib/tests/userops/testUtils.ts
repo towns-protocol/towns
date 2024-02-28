@@ -1,4 +1,4 @@
-import { ITownArchitectBase, Permission } from '@river/web3'
+import { IArchitectBase, Permission } from '@river/web3'
 import { ZionTestClient } from '../integration/helpers/ZionTestClient'
 import { CreateSpaceInfo } from '../../src/types/zion-types'
 import { ethers } from 'ethers'
@@ -28,7 +28,7 @@ export async function createUngatedSpace(
     }
 
     // Everyone role
-    const membershipInfo: ITownArchitectBase.MembershipStruct = {
+    const membershipInfo: IArchitectBase.MembershipStruct = {
         settings: {
             name: 'Everyone',
             symbol: 'MEMBER',

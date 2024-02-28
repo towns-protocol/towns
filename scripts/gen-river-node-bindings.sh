@@ -55,7 +55,7 @@ generate_go_deploy() {
         --out "${OUT_DIR}/${GO_NAME}.go"
 }
 
-generate_go ${VERSION} TownArchitect town_architect
+generate_go ${VERSION} Architect town_architect
 generate_go ${VERSION} Channels channels
 generate_go ${VERSION} EntitlementsManager entitlements_manager
 generate_go ${VERSION} Pausable pausable

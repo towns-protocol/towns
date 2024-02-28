@@ -8,7 +8,7 @@ pragma solidity ^0.8.23;
 // contracts
 
 interface IManagedProxyBase {
-  struct ManagedProxyInit {
+  struct ManagedProxy {
     bytes4 managerSelector;
     address manager;
   }

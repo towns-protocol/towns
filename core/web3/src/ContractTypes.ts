@@ -5,7 +5,7 @@ import {
 import { UserEntitlementShim as UserEntitlementShimV3 } from './v3/UserEntitlementShim'
 import {
     IMembershipBase as IMembershipBaseV3,
-    ITownArchitectBase as ITownArchitectBaseV3,
+    IArchitectBase as ITownArchitectBaseV3,
 } from './v3/ITownArchitectShim'
 import { IRolesBase as IRolesBaseV3 } from './v3/IRolesShim'
 
@@ -38,13 +38,13 @@ type TokenEntitlementShim = TokenEntitlementShimV3
 
 type UserEntitlementShim = UserEntitlementShimV3
 
-type MembershipInfoStruct = IMembershipBaseV3.MembershipInfoStruct
+type MembershipInfoStruct = IMembershipBaseV3.MembershipStruct
 
 type TotalSupplyOutputStruct = { totalSupply: number }
 
 export type MembershipStruct = ITownArchitectBaseV3.MembershipStruct
 
-export type TownInfoStruct = ITownArchitectBaseV3.TownInfoStruct
+export type TownInfoStruct = ITownArchitectBaseV3.SpaceInfoStruct
 
 /**
  * Supported entitlement modules

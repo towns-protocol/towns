@@ -29,7 +29,7 @@ import type {
 } from "./common";
 
 export declare namespace IMembershipBase {
-  export type MembershipInfoStruct = {
+  export type MembershipStruct = {
     name: PromiseOrValue<string>;
     symbol: PromiseOrValue<string>;
     price: PromiseOrValue<BigNumberish>;
@@ -41,7 +41,7 @@ export declare namespace IMembershipBase {
     pricingModule: PromiseOrValue<string>;
   };
 
-  export type MembershipInfoStructOutput = [
+  export type MembershipStructOutput = [
     string,
     string,
     BigNumber,
@@ -176,7 +176,7 @@ export interface MembershipFacetInterface extends utils.Interface {
   ): string;
   encodeFunctionData(
     functionFragment: "__Membership_init",
-    values: [IMembershipBase.MembershipInfoStruct, PromiseOrValue<string>]
+    values: [IMembershipBase.MembershipStruct, PromiseOrValue<string>]
   ): string;
   encodeFunctionData(
     functionFragment: "_getMembershipCurrency",
@@ -846,8 +846,8 @@ export interface MembershipFacet extends BaseContract {
     ): Promise<ContractTransaction>;
 
     __Membership_init(
-      info: IMembershipBase.MembershipInfoStruct,
-      townFactory: PromiseOrValue<string>,
+      info: IMembershipBase.MembershipStruct,
+      spaceFactory: PromiseOrValue<string>,
       overrides?: Overrides & { from?: PromiseOrValue<string> }
     ): Promise<ContractTransaction>;
 
@@ -1059,8 +1059,8 @@ export interface MembershipFacet extends BaseContract {
   ): Promise<ContractTransaction>;
 
   __Membership_init(
-    info: IMembershipBase.MembershipInfoStruct,
-    townFactory: PromiseOrValue<string>,
+    info: IMembershipBase.MembershipStruct,
+    spaceFactory: PromiseOrValue<string>,
     overrides?: Overrides & { from?: PromiseOrValue<string> }
   ): Promise<ContractTransaction>;
 
@@ -1268,8 +1268,8 @@ export interface MembershipFacet extends BaseContract {
     ): Promise<void>;
 
     __Membership_init(
-      info: IMembershipBase.MembershipInfoStruct,
-      townFactory: PromiseOrValue<string>,
+      info: IMembershipBase.MembershipStruct,
+      spaceFactory: PromiseOrValue<string>,
       overrides?: CallOverrides
     ): Promise<void>;
 
@@ -1631,8 +1631,8 @@ export interface MembershipFacet extends BaseContract {
     ): Promise<BigNumber>;
 
     __Membership_init(
-      info: IMembershipBase.MembershipInfoStruct,
-      townFactory: PromiseOrValue<string>,
+      info: IMembershipBase.MembershipStruct,
+      spaceFactory: PromiseOrValue<string>,
       overrides?: Overrides & { from?: PromiseOrValue<string> }
     ): Promise<BigNumber>;
 
@@ -1841,8 +1841,8 @@ export interface MembershipFacet extends BaseContract {
     ): Promise<PopulatedTransaction>;
 
     __Membership_init(
-      info: IMembershipBase.MembershipInfoStruct,
-      townFactory: PromiseOrValue<string>,
+      info: IMembershipBase.MembershipStruct,
+      spaceFactory: PromiseOrValue<string>,
       overrides?: Overrides & { from?: PromiseOrValue<string> }
     ): Promise<PopulatedTransaction>;
 

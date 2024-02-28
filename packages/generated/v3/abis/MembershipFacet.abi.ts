@@ -24,7 +24,7 @@ export default [
       {
         "name": "info",
         "type": "tuple",
-        "internalType": "struct IMembershipBase.MembershipInfo",
+        "internalType": "struct IMembershipBase.Membership",
         "components": [
           {
             "name": "name",
@@ -74,7 +74,7 @@ export default [
         ]
       },
       {
-        "name": "townFactory",
+        "name": "spaceFactory",
         "type": "address",
         "internalType": "address"
       }

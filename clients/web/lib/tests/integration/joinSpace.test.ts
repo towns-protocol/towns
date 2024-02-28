@@ -10,7 +10,7 @@ import {
 } from './helpers/TestUtils'
 
 import {
-    ITownArchitectBase,
+    IArchitectBase,
     Permission,
     createExternalTokenStruct,
     getContractAddress,
@@ -112,7 +112,7 @@ test(
         ])
         console.log('create space gated by tokenA and tokenB tokens', externalTokens)
 
-        const membershipInfo: ITownArchitectBase.MembershipStruct = {
+        const membershipInfo: IArchitectBase.MembershipStruct = {
             settings: {
                 name: 'Member',
                 symbol: 'MEMBER',
@@ -188,7 +188,7 @@ test.skip('join_space_gated_2_NFT_2_wallet', async () => {
     }
     expect(tx_link.error).toBeUndefined()
 
-    const membershipInfo: ITownArchitectBase.MembershipStruct = {
+    const membershipInfo: IArchitectBase.MembershipStruct = {
         settings: {
             name: 'Member',
             symbol: 'MEMBER',

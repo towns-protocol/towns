@@ -4,7 +4,7 @@
 import { jest } from '@jest/globals'
 import { registerAndStartClients, createTestSpaceGatedByTownAndZionNfts } from './helpers/TestUtils'
 
-import { ITownArchitectBase, Permission } from '@river/web3'
+import { IArchitectBase, Permission } from '@river/web3'
 import { waitFor } from '@testing-library/dom'
 import { ethers } from 'ethers'
 
@@ -56,7 +56,7 @@ test('should clear all promises when client stops', async () => {
         'abort',
     )
 
-    const membershipInfo: ITownArchitectBase.MembershipStruct = {
+    const membershipInfo: IArchitectBase.MembershipStruct = {
         settings: {
             name: 'Member',
             symbol: 'MEMBER',

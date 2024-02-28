@@ -16,8 +16,8 @@ const _abi = [
     inputs: [
       {
         name: "streamId",
-        type: "string",
-        internalType: "string",
+        type: "bytes32",
+        internalType: "bytes32",
       },
       {
         name: "nodes",
@@ -101,8 +101,8 @@ const _abi = [
     outputs: [
       {
         name: "",
-        type: "string[]",
-        internalType: "string[]",
+        type: "bytes32[]",
+        internalType: "bytes32[]",
       },
     ],
     stateMutability: "view",
@@ -115,37 +115,49 @@ const _abi = [
       {
         name: "",
         type: "tuple[]",
-        internalType: "struct IRiverRegistryBase.Stream[]",
+        internalType: "struct IRiverRegistryBase.StreamWithId[]",
         components: [
           {
-            name: "streamId",
-            type: "string",
-            internalType: "string",
-          },
-          {
-            name: "nodes",
-            type: "address[]",
-            internalType: "address[]",
-          },
-          {
-            name: "genesisMiniblockHash",
+            name: "id",
             type: "bytes32",
             internalType: "bytes32",
           },
           {
-            name: "genesisMiniblock",
-            type: "bytes",
-            internalType: "bytes",
-          },
-          {
-            name: "lastMiniblockHash",
-            type: "bytes32",
-            internalType: "bytes32",
-          },
-          {
-            name: "lastMiniblockNum",
-            type: "uint64",
-            internalType: "uint64",
+            name: "stream",
+            type: "tuple",
+            internalType: "struct IRiverRegistryBase.Stream",
+            components: [
+              {
+                name: "lastMiniblockHash",
+                type: "bytes32",
+                internalType: "bytes32",
+              },
+              {
+                name: "lastMiniblockNum",
+                type: "uint64",
+                internalType: "uint64",
+              },
+              {
+                name: "flags",
+                type: "uint64",
+                internalType: "uint64",
+              },
+              {
+                name: "reserved0",
+                type: "uint64",
+                internalType: "uint64",
+              },
+              {
+                name: "reserved1",
+                type: "uint64",
+                internalType: "uint64",
+              },
+              {
+                name: "nodes",
+                type: "address[]",
+                internalType: "address[]",
+              },
+            ],
           },
         ],
       },
@@ -206,7 +218,7 @@ const _abi = [
     name: "getStream",
     inputs: [
       {
-        name: "streamIdHash",
+        name: "streamId",
         type: "bytes32",
         internalType: "bytes32",
       },
@@ -218,26 +230,6 @@ const _abi = [
         internalType: "struct IRiverRegistryBase.Stream",
         components: [
           {
-            name: "streamId",
-            type: "string",
-            internalType: "string",
-          },
-          {
-            name: "nodes",
-            type: "address[]",
-            internalType: "address[]",
-          },
-          {
-            name: "genesisMiniblockHash",
-            type: "bytes32",
-            internalType: "bytes32",
-          },
-          {
-            name: "genesisMiniblock",
-            type: "bytes",
-            internalType: "bytes",
-          },
-          {
             name: "lastMiniblockHash",
             type: "bytes32",
             internalType: "bytes32",
@@ -246,6 +238,26 @@ const _abi = [
             name: "lastMiniblockNum",
             type: "uint64",
             internalType: "uint64",
+          },
+          {
+            name: "flags",
+            type: "uint64",
+            internalType: "uint64",
+          },
+          {
+            name: "reserved0",
+            type: "uint64",
+            internalType: "uint64",
+          },
+          {
+            name: "reserved1",
+            type: "uint64",
+            internalType: "uint64",
+          },
+          {
+            name: "nodes",
+            type: "address[]",
+            internalType: "address[]",
           },
         ],
       },
@@ -261,6 +273,67 @@ const _abi = [
         name: "",
         type: "uint256",
         internalType: "uint256",
+      },
+    ],
+    stateMutability: "view",
+  },
+  {
+    type: "function",
+    name: "getStreamWithGenesis",
+    inputs: [
+      {
+        name: "streamId",
+        type: "bytes32",
+        internalType: "bytes32",
+      },
+    ],
+    outputs: [
+      {
+        name: "",
+        type: "tuple",
+        internalType: "struct IRiverRegistryBase.Stream",
+        components: [
+          {
+            name: "lastMiniblockHash",
+            type: "bytes32",
+            internalType: "bytes32",
+          },
+          {
+            name: "lastMiniblockNum",
+            type: "uint64",
+            internalType: "uint64",
+          },
+          {
+            name: "flags",
+            type: "uint64",
+            internalType: "uint64",
+          },
+          {
+            name: "reserved0",
+            type: "uint64",
+            internalType: "uint64",
+          },
+          {
+            name: "reserved1",
+            type: "uint64",
+            internalType: "uint64",
+          },
+          {
+            name: "nodes",
+            type: "address[]",
+            internalType: "address[]",
+          },
+        ],
+      },
+      {
+        name: "",
+        type: "bytes32",
+        internalType: "bytes32",
+      },
+      {
+        name: "",
+        type: "bytes",
+        internalType: "bytes",
       },
     ],
     stateMutability: "view",
@@ -283,6 +356,24 @@ const _abi = [
       },
     ],
     stateMutability: "view",
+  },
+  {
+    type: "function",
+    name: "placeStreamOnNode",
+    inputs: [
+      {
+        name: "streamId",
+        type: "bytes32",
+        internalType: "bytes32",
+      },
+      {
+        name: "nodeAddress",
+        type: "address",
+        internalType: "address",
+      },
+    ],
+    outputs: [],
+    stateMutability: "nonpayable",
   },
   {
     type: "function",
@@ -317,10 +408,28 @@ const _abi = [
   },
   {
     type: "function",
+    name: "removeStreamFromNode",
+    inputs: [
+      {
+        name: "streamId",
+        type: "bytes32",
+        internalType: "bytes32",
+      },
+      {
+        name: "nodeAddress",
+        type: "address",
+        internalType: "address",
+      },
+    ],
+    outputs: [],
+    stateMutability: "nonpayable",
+  },
+  {
+    type: "function",
     name: "setStreamLastMiniblock",
     inputs: [
       {
-        name: "streamIdHash",
+        name: "streamId",
         type: "bytes32",
         internalType: "bytes32",
       },
@@ -333,6 +442,11 @@ const _abi = [
         name: "lastMiniblockNum",
         type: "uint64",
         internalType: "uint64",
+      },
+      {
+        name: "isSealed",
+        type: "bool",
+        internalType: "bool",
       },
     ],
     outputs: [],
@@ -433,9 +547,9 @@ const _abi = [
     inputs: [
       {
         name: "streamId",
-        type: "string",
+        type: "bytes32",
         indexed: false,
-        internalType: "string",
+        internalType: "bytes32",
       },
       {
         name: "nodes",
@@ -458,9 +572,9 @@ const _abi = [
     inputs: [
       {
         name: "streamId",
-        type: "string",
+        type: "bytes32",
         indexed: false,
-        internalType: "string",
+        internalType: "bytes32",
       },
       {
         name: "lastMiniblockHash",
@@ -473,6 +587,37 @@ const _abi = [
         type: "uint64",
         indexed: false,
         internalType: "uint64",
+      },
+      {
+        name: "isSealed",
+        type: "bool",
+        indexed: false,
+        internalType: "bool",
+      },
+    ],
+    anonymous: false,
+  },
+  {
+    type: "event",
+    name: "StreamPlacementUpdated",
+    inputs: [
+      {
+        name: "streamId",
+        type: "bytes32",
+        indexed: false,
+        internalType: "bytes32",
+      },
+      {
+        name: "nodeAddress",
+        type: "address",
+        indexed: false,
+        internalType: "address",
+      },
+      {
+        name: "isAdded",
+        type: "bool",
+        indexed: false,
+        internalType: "bool",
       },
     ],
     anonymous: false,

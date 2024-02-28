@@ -4,7 +4,7 @@ import { Versions, BasicRoleInfo, Permission, defaultVersion, Address } from './
 import { getContractsInfo } from './IStaticContractsInfo'
 import { ISpaceDapp } from './ISpaceDapp'
 import {
-    ITownArchitectBase as ITownArchitectBaseV3,
+    IArchitectBase as ITownArchitectBaseV3,
     MockERC721AShim as MockERC721AShimV3,
     TokenEntitlementDataTypes,
     IMembershipBase as IMembershipBaseV3,
@@ -97,7 +97,7 @@ type CreateMembershipStructArgs = {
     tokenAddresses: string[]
     version?: Versions
 } & Omit<
-    IMembershipBaseV3.MembershipInfoStruct,
+    IMembershipBaseV3.MembershipStruct,
     | 'symbol'
     | 'price'
     | 'maxSupply'

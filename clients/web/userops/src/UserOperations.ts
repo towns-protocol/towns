@@ -1,7 +1,7 @@
 import {
     Address,
     ISpaceDapp,
-    ITownArchitectBase,
+    IArchitectBase,
     SpaceDapp,
     createEntitlementStruct,
 } from '@river/web3'
@@ -162,7 +162,7 @@ export class UserOps {
         }
         const [createSpaceParams, signer] = args
 
-        const townInfo: ITownArchitectBase.TownInfoStruct = {
+        const townInfo: IArchitectBase.SpaceInfoStruct = {
             id: createSpaceParams.spaceId,
             name: createSpaceParams.spaceName,
             uri: createSpaceParams.spaceMetadata,

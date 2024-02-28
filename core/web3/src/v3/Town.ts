@@ -15,7 +15,7 @@ import {
 } from '../ContractTypes'
 import { IChannelBase, IChannelShim } from './IChannelShim'
 import { IRolesBase, IRolesShim } from './IRolesShim'
-import { ITownOwnerBase, ITownOwnerShim } from './ITownOwnerShim'
+import { ISpaceOwnerBase, ITownOwnerShim } from './ITownOwnerShim'
 import { TokenEntitlementDataTypes, TokenEntitlementShim } from './TokenEntitlementShim'
 
 import { IEntitlementsShim } from './IEntitlementsShim'
@@ -110,8 +110,8 @@ export class Town {
         return this.membership
     }
 
-    public getTownInfo(): Promise<ITownOwnerBase.TownStruct> {
-        return this.townOwner.read.getTownInfo(this.address)
+    public getTownInfo(): Promise<ISpaceOwnerBase.SpaceStruct> {
+        return this.townOwner.read.getSpaceInfo(this.address)
     }
 
     public async getRole(roleId: BigNumberish): Promise<RoleDetails | null> {

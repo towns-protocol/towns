@@ -54,7 +54,7 @@ import {
 } from '../types/web3-types'
 import {
     createSpaceDapp,
-    ITownArchitectBase,
+    IArchitectBase,
     Permission,
     TokenEntitlementDataTypes,
     SpaceInfo,
@@ -263,7 +263,7 @@ export class ZionClient implements EntitlementsDelegate {
 
     public async createSpaceTransaction(
         createSpaceInfo: CreateSpaceInfo,
-        membership: ITownArchitectBase.MembershipStruct,
+        membership: IArchitectBase.MembershipStruct,
         signer: ethers.Signer | undefined,
     ): Promise<CreateSpaceTransactionContext> {
         if (!signer) {
@@ -315,7 +315,7 @@ export class ZionClient implements EntitlementsDelegate {
 
     private async createCasablancaSpaceTransaction(
         createSpaceInfo: CreateSpaceInfo,
-        membership: ITownArchitectBase.MembershipStruct,
+        membership: IArchitectBase.MembershipStruct,
         signer: ethers.Signer,
     ): Promise<CreateSpaceTransactionContext> {
         const spaceId: string = makeUniqueSpaceStreamId()

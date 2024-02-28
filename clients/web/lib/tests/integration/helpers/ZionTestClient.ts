@@ -20,7 +20,7 @@ import { ethers } from 'ethers'
 import { makeUniqueName } from './TestUtils'
 import { toEvent } from '../../../src/hooks/ZionContext/useCasablancaTimelines'
 import { Client as CasablancaClient } from '@river/sdk'
-import { TokenEntitlementDataTypes, Permission, ITownArchitectBase } from '@river/web3'
+import { TokenEntitlementDataTypes, Permission, IArchitectBase } from '@river/web3'
 
 export interface ZionTestClientProps {
     eventHandlers?: ZionClientEventHandlers
@@ -94,7 +94,7 @@ export class ZionTestClient extends ZionClient {
      *************************************************/
     public async createSpace(
         createSpaceInfo: CreateSpaceInfo,
-        membership: ITownArchitectBase.MembershipStruct,
+        membership: IArchitectBase.MembershipStruct,
     ): Promise<string | undefined> {
         const txContext = await this.createSpaceTransaction(
             createSpaceInfo,

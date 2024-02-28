@@ -1,6 +1,6 @@
 /* eslint-disable @typescript-eslint/no-non-null-assertion */
 
-import { ITownArchitectBase, Permission } from '@river/web3'
+import { IArchitectBase, Permission } from '@river/web3'
 import ethers from 'ethers'
 import { ZionTestClient } from '../tests/integration/helpers/ZionTestClient'
 import { Wallet } from 'ethers'
@@ -60,7 +60,7 @@ export async function createDevTown(client: ZionTestClient): Promise<string | un
         throw new Error('client.walletAddress is undefined')
     }
 
-    const membershipInfo: ITownArchitectBase.MembershipStruct = {
+    const membershipInfo: IArchitectBase.MembershipStruct = {
         settings: {
             name: 'Everyone',
             symbol: 'MEMBER',

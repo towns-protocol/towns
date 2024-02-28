@@ -27,7 +27,7 @@ import { useSendReadReceipt } from './ZionContext/useSendReadReceipt'
 import { useZionContext } from '../components/ZionContextProvider'
 import { useCasablancaWalletSignIn } from './use-casablanca-wallet-signin'
 import { create } from 'zustand'
-import { ITownArchitectBase, TokenEntitlementDataTypes, Permission } from '@river/web3'
+import { IArchitectBase, TokenEntitlementDataTypes, Permission } from '@river/web3'
 import { TSigner } from 'types/web3-types'
 
 export type ZionErrorStoreState = {
@@ -53,7 +53,7 @@ interface ZionClientImpl {
     spaceDapp: ZionClient['spaceDapp'] | undefined
     createSpaceTransaction: (
         createSpaceInfo: CreateSpaceInfo,
-        membership: ITownArchitectBase.MembershipStruct,
+        membership: IArchitectBase.MembershipStruct,
         signer: TSigner | undefined,
     ) => Promise<CreateSpaceTransactionContext | undefined>
     waitForCreateSpaceTransaction: (

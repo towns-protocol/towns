@@ -28,7 +28,7 @@ riverChain:
 
 # Base contracts
 townsArchitectContract:
-    address: '../addresses/townFactory.json'
+    address: '../addresses/spaceFactory.json'
     version: 'dev'
 walletLinkContract:
     address: '../addresses/walletLink.json'

@@ -12,7 +12,7 @@ import {IOwnableBase} from "contracts/src/diamond/facets/ownable/IERC173.sol";
 //libraries
 
 //contracts
-import {BaseSetup} from "contracts/test/towns/BaseSetup.sol";
+import {BaseSetup} from "contracts/test/spaces/BaseSetup.sol";
 import {River} from "contracts/src/tokens/river/base/River.sol";
 
 contract RiverBaseTest is BaseSetup, IRiverBase, ILockBase, IOwnableBase {

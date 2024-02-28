@@ -7,7 +7,7 @@ pragma solidity ^0.8.23;
 
 //contracts
 import {Deployer} from "../common/Deployer.s.sol";
-import {TieredLogPricingOracle} from "contracts/src/towns/facets/membership/pricing/TieredLogPricingOracle.sol";
+import {TieredLogPricingOracle} from "contracts/src/spaces/facets/membership/pricing/TieredLogPricingOracle.sol";
 
 contract DeployTieredLogPricing is Deployer {
   address BASE_GOERLI_ORACLE = 0xcD2A119bD1F7DF95d706DE6F2057fDD45A0503E2;

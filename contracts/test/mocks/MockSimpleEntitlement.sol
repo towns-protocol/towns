@@ -1,7 +1,7 @@
 // SPDX-License-Identifier: Apache-2.0
 pragma solidity 0.8.23;
 
-import {IEntitlement} from "contracts/src/towns/entitlements/IEntitlement.sol";
+import {IEntitlement} from "contracts/src/spaces/entitlements/IEntitlement.sol";
 
 import {EnumerableSet} from "@openzeppelin/contracts/utils/structs/EnumerableSet.sol";
 

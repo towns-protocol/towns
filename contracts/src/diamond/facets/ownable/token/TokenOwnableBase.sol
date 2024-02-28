@@ -2,7 +2,7 @@
 pragma solidity ^0.8.23;
 
 // interfaces
-import {IOwnableBase} from "../IERC173.sol";
+import {ITokenOwnableBase} from "./ITokenOwnable.sol";
 import {IERC721} from "@openzeppelin/contracts/token/ERC721/IERC721.sol";
 
 // libraries
@@ -10,14 +10,11 @@ import {TokenOwnableStorage} from "./TokenOwnableStorage.sol";
 
 // contracts
 
-abstract contract TokenOwnableBase is IOwnableBase {
-  function __TokenOwnableBase_init(
-    address collection,
-    uint256 tokenId
-  ) internal {
+abstract contract TokenOwnableBase is ITokenOwnableBase {
+  function __TokenOwnableBase_init(TokenOwnable memory tokenOwnable) internal {
     TokenOwnableStorage.Layout storage ds = TokenOwnableStorage.layout();
-    ds.collection = collection;
-    ds.tokenId = tokenId;
+    ds.collection = tokenOwnable.collection;
+    ds.tokenId = tokenOwnable.tokenId;
   }
 
   modifier onlyOwner() {

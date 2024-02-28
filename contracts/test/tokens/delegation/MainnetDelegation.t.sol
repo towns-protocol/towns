@@ -2,7 +2,7 @@
 pragma solidity ^0.8.23;
 
 // utils
-import {BaseSetup} from "contracts/test/towns/BaseSetup.sol";
+import {BaseSetup} from "contracts/test/spaces/BaseSetup.sol";
 
 //interfaces
 import {IMainnetDelegationBase} from "contracts/src/tokens/river/base/delegation/IMainnetDelegation.sol";

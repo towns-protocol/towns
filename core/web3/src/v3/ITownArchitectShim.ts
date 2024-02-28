@@ -1,22 +1,22 @@
 import {
     IMembershipBase as LocalhostIMembershipBase,
-    ITownArchitect as LocalhostContract,
-    ITownArchitectBase as LocalhostITownArchitectBase,
-    ITownArchitectInterface as LocalhostInterface,
-} from '@towns/generated/dev/typings/ITownArchitect'
+    IArchitect as LocalhostContract,
+    IArchitectBase as LocalhostITownArchitectBase,
+    IArchitectInterface as LocalhostInterface,
+} from '@towns/generated/dev/typings/IArchitect'
 import {
-    ITownArchitect as BaseSepoliaContract,
-    ITownArchitectInterface as BaseSepoliaInterface,
-} from '@towns/generated/v3/typings/ITownArchitect'
+    IArchitect as BaseSepoliaContract,
+    IArchitectInterface as BaseSepoliaInterface,
+} from '@towns/generated/v3/typings/IArchitect'
 
-import LocalhostAbi from '@towns/generated/dev/abis/TownArchitect.abi.json' assert { type: 'json' }
-import BaseSepoliaAbi from '@towns/generated/v3/abis/TownArchitect.abi.json' assert { type: 'json' }
+import LocalhostAbi from '@towns/generated/dev/abis/Architect.abi.json' assert { type: 'json' }
+import BaseSepoliaAbi from '@towns/generated/v3/abis/Architect.abi.json' assert { type: 'json' }
 
 import { BaseContractShim } from './BaseContractShim'
 import { ethers } from 'ethers'
 
 export type { LocalhostIMembershipBase as IMembershipBase }
-export type { LocalhostITownArchitectBase as ITownArchitectBase }
+export type { LocalhostITownArchitectBase as IArchitectBase }
 
 export class ITownArchitectShim extends BaseContractShim<
     LocalhostContract,

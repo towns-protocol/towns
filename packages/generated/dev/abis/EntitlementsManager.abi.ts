@@ -132,7 +132,7 @@ export default [
   },
   {
     "type": "function",
-    "name": "isEntitledToTown",
+    "name": "isEntitledToSpace",
     "inputs": [
       {
         "name": "user",

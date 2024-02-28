@@ -15,7 +15,7 @@ if [ "${1-}" != "nobuild" ]; then
 fi
 
 # V3 Contracts
-make deploy-base-anvil-nb contract=DeployTownFactory
+make deploy-base-anvil-nb contract=DeploySpaceFactory
 make deploy-base-anvil-nb contract=DeployMember
 make deploy-base-anvil-nb contract=DeployMockNFT
 
@@ -24,8 +24,8 @@ mkdir -p core/node/run_files/addresses
 mkdir -p packages/generated/addresses/base_anvil
 
 # copy contracts to specific places
-cp contracts/deployments/base_anvil/townFactory.json packages/generated/addresses/base_anvil
-cp contracts/deployments/base_anvil/townOwner.json packages/generated/addresses/base_anvil
+cp contracts/deployments/base_anvil/spaceFactory.json packages/generated/addresses/base_anvil
+cp contracts/deployments/base_anvil/spaceOwner.json packages/generated/addresses/base_anvil
 cp contracts/deployments/base_anvil/mockNFT.json packages/generated/addresses/base_anvil
 cp contracts/deployments/base_anvil/member.json packages/generated/addresses/base_anvil
-cp contracts/deployments/base_anvil/townFactory.json core/node/run_files/addresses
+cp contracts/deployments/base_anvil/spaceFactory.json core/node/run_files/addresses

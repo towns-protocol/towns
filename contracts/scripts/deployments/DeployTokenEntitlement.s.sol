@@ -3,7 +3,7 @@ pragma solidity 0.8.23;
 
 import {Deployer} from "../common/Deployer.s.sol";
 
-import {TokenEntitlement} from "contracts/src/towns/entitlements/token/TokenEntitlement.sol";
+import {TokenEntitlement} from "contracts/src/spaces/entitlements/token/TokenEntitlement.sol";
 
 contract DeployTokenEntitlement is Deployer {
   function versionName() public pure override returns (string memory) {
