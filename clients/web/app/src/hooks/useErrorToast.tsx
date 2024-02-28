@@ -17,12 +17,11 @@ export function useErrorToast({
             }
         }
 
-        console.error({
-            errorMessage,
-            contextMessage,
-        })
-
         if (errorMessage) {
+            console.error({
+                errorMessage,
+                contextMessage,
+            })
             toastId = toast.custom(
                 (t) => {
                     return (
