@@ -1,7 +1,10 @@
-import { useCallback, useEffect } from 'react'
+import React, { useCallback, useEffect } from 'react'
 import { useConnectivity } from 'use-zion-client'
 import { useGetEmbeddedSigner } from '@towns/privy'
 import useStateMachine from '@cassiozen/usestatemachine'
+import { usePrivy } from '@privy-io/react-auth'
+import { toast } from 'react-hot-toast/headless'
+import { ErrorNotification } from '@components/Notifications/ErrorNotifcation'
 type UseConnectivtyReturnValue = ReturnType<typeof useConnectivity>
 
 export function useAutoLoginToRiverIfEmbeddedWallet({
@@ -14,6 +17,7 @@ export function useAutoLoginToRiverIfEmbeddedWallet({
     isRiverAuthencticated: UseConnectivtyReturnValue['isAuthenticated']
 }) {
     const getSigner = useGetEmbeddedSigner()
+    const { logout: privyLogout } = usePrivy()
 
     const [state, send] = useStateMachine({
         context: { isAutoLoggingInToRiver: false, hasSuccessfulLogin: false },
@@ -38,9 +42,28 @@ export function useAutoLoginToRiverIfEmbeddedWallet({
                     }))
                 },
             },
-            loggingInToRiver: {
+            noSigner: {
                 on: {
                     RESET: 'loggedOutBoth',
+                },
+                effect() {
+                    async function _logout() {
+                        await privyLogout()
+                        send('RESET')
+                        toast.custom((t) => (
+                            <ErrorNotification
+                                toast={t}
+                                errorMessage="Can't detect signer."
+                                contextMessage="There was an error logging in, please try again."
+                            />
+                        ))
+                    }
+                    _logout()
+                },
+            },
+            loggingInToRiver: {
+                on: {
+                    NO_SIGNER: 'noSigner',
                 },
                 effect({ setContext }) {
                     async function _login() {
@@ -55,7 +78,12 @@ export function useAutoLoginToRiverIfEmbeddedWallet({
                         try {
                             signer = await getSigner()
                         } catch (error) {
-                            send('RESET')
+                            send('NO_SIGNER')
+                            return
+                        }
+                        if (!signer) {
+                            console.warn('useAutoLogin: No signer found')
+                            send('NO_SIGNER')
                             return
                         }
                         riverLogin(signer)
@@ -82,7 +110,7 @@ export function useAutoLoginToRiverIfEmbeddedWallet({
 
     useEffect(() => {
         if (riverLoginError) {
-            send('RESET')
+            send('NO_SIGNER')
         }
     }, [riverLoginError, send])
 
