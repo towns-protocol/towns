@@ -11,6 +11,7 @@ import EventEmitter from 'events'
 import TypedEmitter from 'typed-emitter'
 import { staticAssertNever } from '../utils/zion-utils'
 import AnalyticsService, { AnalyticsEvents } from '../utils/analyticsService'
+import { useNetworkStatus } from './use-network-status'
 
 export const useZionClientListener = (opts: {
     chainId: number
@@ -27,6 +28,7 @@ export const useZionClientListener = (opts: {
     const casablancaCredentials = casablancaCredentialsMap[opts.casablancaServerUrl ?? '']
     const [casablancaClient, setCasablancaClient] = useState<CasablancaClient>()
     const clientSingleton = useRef<ClientStateMachine>()
+    const { isOffline } = useNetworkStatus()
 
     if (!clientSingleton.current) {
         const zionClient = new ZionClient({
@@ -37,6 +39,16 @@ export const useZionClientListener = (opts: {
     }
 
     logServerUrlMismatch(opts, clientSingleton)
+
+    useEffect(() => {
+        if (!casablancaClient) {
+            return
+        }
+        const isOnline = !isOffline
+        if (isOnline) {
+            casablancaClient.streams.onNetworkStatusChanged(isOnline)
+        }
+    }, [casablancaClient, isOffline])
 
     useEffect(() => {
         const stateMachine = clientSingleton.current

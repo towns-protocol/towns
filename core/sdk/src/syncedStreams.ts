@@ -92,7 +92,7 @@ export class SyncedStreams {
     // syncState is used to track the current sync state
     private _syncState: SyncState = SyncState.NotSyncing
     // retry logic
-    private abortRetry: (() => void) | undefined
+    private releaseRetryWait: (() => void) | undefined
     private currentRetryCount: number = 0
     private forceStopSyncStreams: (() => void) | undefined
     private interruptSync: ((err: unknown) => void) | undefined
@@ -153,6 +153,15 @@ export class SyncedStreams {
         return Array.from(this.streams.keys())
     }
 
+    public onNetworkStatusChanged(isOnline: boolean) {
+        this.log('network status changed. Network online?', isOnline)
+        if (isOnline) {
+            // immediate retry if the network comes back online
+            this.log('back online, release retry wait')
+            this.releaseRetryWait?.()
+        }
+    }
+
     private onMobileSafariBackgrounded = () => {
         this.isMobileSafariBackgrounded = document.visibilityState === 'hidden'
         this.log('onMobileSafariBackgrounded', this.isMobileSafariBackgrounded)
@@ -209,7 +218,7 @@ export class SyncedStreams {
             this.setSyncState(SyncState.Canceling)
             this.stopPing()
             try {
-                this.abortRetry?.()
+                this.releaseRetryWait?.()
                 // Give the server 5 seconds to respond to the cancelSync RPC before forceStopSyncStreams
                 const breakTimeout = syncId
                     ? setTimeout(() => {
@@ -440,7 +449,7 @@ export class SyncedStreams {
                             stream.stop()
                         })
                         this.streams.clear()
-                        this.abortRetry = undefined
+                        this.releaseRetryWait = undefined
                         this.syncId = undefined
                         this.clientEmitter.emit('streamSyncActive', false)
                     } else {
@@ -486,8 +495,8 @@ export class SyncedStreams {
 
             // currentRetryCount will increment until MAX_RETRY_COUNT. Then it will stay
             // fixed at this value
-            // 6 retries = 2^6 = 64 seconds (~1 min)
-            const MAX_RETRY_DELAY_FACTOR = 6
+            // 7 retries = 2^7 = 128 seconds (~2 mins)
+            const MAX_RETRY_DELAY_FACTOR = 7
             const nextRetryCount =
                 this.currentRetryCount >= MAX_RETRY_DELAY_FACTOR
                     ? MAX_RETRY_DELAY_FACTOR
@@ -509,13 +518,14 @@ export class SyncedStreams {
 
             await new Promise<void>((resolve) => {
                 const timeout = setTimeout(() => {
-                    this.abortRetry = undefined
+                    this.releaseRetryWait = undefined
                     resolve()
                 }, retryDelay)
-                this.abortRetry = () => {
+                this.releaseRetryWait = () => {
                     clearTimeout(timeout)
-                    this.abortRetry = undefined
+                    this.releaseRetryWait = undefined
                     resolve()
+                    this.log('retry released')
                 }
             })
         } else {

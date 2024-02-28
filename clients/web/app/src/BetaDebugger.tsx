@@ -1,11 +1,10 @@
 import React, { useEffect, useState } from 'react'
-import { useZionContext } from 'use-zion-client'
+import { useNetworkStatus, useZionContext } from 'use-zion-client'
 import { usePrivyWagmi } from '@privy-io/wagmi-connector'
 import { useEmbeddedWallet } from '@towns/privy'
 import { Box, Button, Paragraph, Stack, Text, TextButton } from '@ui'
 import { shortAddress } from 'ui/utils/utils'
 import { ModalContainer } from '@components/Modals/ModalContainer'
-import { useNetworkStatus } from 'hooks/useNetworkStatus'
 import { ClipboardCopy } from '@components/ClipboardCopy/ClipboardCopy'
 
 export function BetaDebugger() {

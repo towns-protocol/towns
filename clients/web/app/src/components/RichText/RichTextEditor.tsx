@@ -18,6 +18,7 @@ import {
     MessageType,
     RoomMember,
     SendTextMessageOptions,
+    useNetworkStatus,
 } from 'use-zion-client'
 import { datadogRum } from '@datadog/browser-rum'
 import { useLexicalComposerContext } from '@lexical/react/LexicalComposerContext'
@@ -27,7 +28,6 @@ import { ErrorBoundary } from '@components/ErrorBoundary/ErrorBoundary'
 import * as fieldStyles from 'ui/components/_internal/Field/Field.css'
 import { useInputStore } from 'store/store'
 import { Box, BoxProps, Stack } from '@ui'
-import { useNetworkStatus } from 'hooks/useNetworkStatus'
 import { SomethingWentWrong } from '@components/Errors/SomethingWentWrong'
 import { useDevice } from 'hooks/useDevice'
 import { SpaceProtocol, useEnvironment } from 'hooks/useEnvironmnet'

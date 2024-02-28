@@ -7,6 +7,7 @@ import {
     MessageType,
     RoomMember,
     SendTextMessageOptions,
+    useNetworkStatus,
 } from 'use-zion-client'
 import { datadogRum } from '@datadog/browser-rum'
 import { isEditorEmpty as PlateIsEditorEmpty } from '@udecode/slate-utils'
@@ -15,7 +16,6 @@ import { TComboboxItemWithData } from '@udecode/plate-combobox'
 import { Editor } from '@components/RichTextPlate/ui/editor'
 import { MentionCombobox } from '@components/RichTextPlate/ui/mention-combobox'
 import { useDevice } from 'hooks/useDevice'
-import { useNetworkStatus } from 'hooks/useNetworkStatus'
 import { Box, BoxProps, Stack } from '@ui'
 import { ErrorBoundary } from '@components/ErrorBoundary/ErrorBoundary'
 import { EditorFallback } from '@components/RichTextPlate/components/EditorFallback'
