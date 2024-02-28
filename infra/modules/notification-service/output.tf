@@ -1,3 +1,3 @@
 output "url" {
-  value = "${local.local_name}.towns.com"
+  value = "https://${local.local_name}.towns.com"
 }

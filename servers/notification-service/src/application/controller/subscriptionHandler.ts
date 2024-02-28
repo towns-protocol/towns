@@ -5,6 +5,7 @@ import { PushType } from '../schema/subscriptionSchema'
 
 export async function addSubscriptionHandler(request: Request, res: Response) {
     try {
+        console.log('addSubscriptionHandler userId', request.body.userId)
         const subscriptionData = {
             UserId: request.body.userId,
             PushSubscription: JSON.stringify(request.body.subscriptionObject),

@@ -10,6 +10,8 @@ import {
 
 import { JwtData, JwtInfo } from './jwt'
 
+import crypto from 'crypto'
+
 export async function sign(jwk: JsonWebKey, jwtData: JwtData): Promise<string> {
     const jwtInfo: JwtInfo = {
         typ: 'JWT',

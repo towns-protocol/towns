@@ -1,7 +1,8 @@
 import { initializeApp } from './application/app'
 import gracefulShutdown from 'http-graceful-shutdown'
+import { env } from './application/utils/environment'
 
-const port = process.env.PORT || 80
+const port = env.PORT
 
 try {
     const app = await initializeApp()

@@ -8,10 +8,11 @@ import { validateAuthToken } from './middleware/auth'
 import { handleGlobalError, handleNotFound } from './middleware/errors'
 import { publicRoutes } from './routes/publicRoutes'
 import { routes } from './routes/routes'
+import { env } from './utils/environment'
 
 export async function initializeApp() {
     const app = express()
-    const isProduction = process.env.NODE_ENV === 'production'
+    const isProduction = env.NODE_ENV === 'production'
 
     // Middlewares
     app.use(morgan(isProduction ? 'combined' : 'dev'))

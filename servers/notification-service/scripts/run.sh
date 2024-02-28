@@ -39,10 +39,10 @@ function mount_notification_dabase_url() {
 
 function main() {
     echo "Running notification-service"
-
-    mount_notification_dabase_url
     export NODE_ENV="production"
  
+    mount_notification_dabase_url
+    yarn db:migrate
     yarn start
 }
 
@@ -50,7 +50,7 @@ function dev() {
     echo "Running notification-service dev"
 
     mount_notification_dabase_url
- 
+    
     yarn tsc --watch & yarn start
 }
 

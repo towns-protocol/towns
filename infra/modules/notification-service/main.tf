@@ -214,7 +214,7 @@ resource "aws_ecs_task_definition" "fargate_task_definition" {
 
     secrets = [
       {
-        name      = "PUSHNOTIFICATION__AUTHTOKEN",
+        name      = "AUTH_SECRET",
         valueFrom = local.global_remote_state.river_global_push_notification_auth_token.arn
       },
       {

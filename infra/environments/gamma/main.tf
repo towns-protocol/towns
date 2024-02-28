@@ -141,7 +141,30 @@ module "river_node" {
     name = aws_ecs_cluster.river_ecs_cluster.name
   }
 
-  notification_service_url = "https://push-notification-worker-test-beta.towns.com"
+  notification_service_url = module.notification_service.url
+}
+
+module "notification_service" {
+  source = "../../modules/notification-service"
+
+  alb_security_group_id  = module.river_alb.security_group_id
+  alb_dns_name           = module.river_alb.lb_dns_name
+  alb_https_listener_arn = module.river_alb.lb_https_listener_arn
+
+  ecs_cluster = {
+    id   = aws_ecs_cluster.river_ecs_cluster.id
+    name = aws_ecs_cluster.river_ecs_cluster.name
+  }
+
+  subnets = module.vpc.private_subnets
+  vpc_id  = module.vpc.vpc_id
+
+  vapid_key_secret_arn = aws_secretsmanager_secret.notification_vapid_key.arn
+
+  # TODO: check with brian & team to see who runs this account
+  vapid_subject = "mailto:support@towns.com"
+
+  river_node_db = module.river_db_cluster
 }
 
 module "eth_balance_monitor" {

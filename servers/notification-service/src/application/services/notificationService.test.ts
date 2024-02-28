@@ -5,7 +5,7 @@ import { NotifyUsersSchema } from '../schema/notificationSchema'
 import { NotificationKind } from '../schema/tagSchema'
 import { Prisma, PushSubscription } from '@prisma/client'
 import { sendNotificationViaWebPush } from './web-push/send-notification'
-import { UserSettingsTables } from '../utils/userSettingsTables'
+import { UserSettingsTables } from '../database/userSettingsTables'
 
 jest.mock('../../infrastructure/database/prisma', () => ({
     database: {

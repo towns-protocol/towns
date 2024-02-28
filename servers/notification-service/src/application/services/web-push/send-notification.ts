@@ -12,15 +12,16 @@ import { NotificationOptions } from '../notificationService'
 import { PushSubscription } from '@prisma/client'
 import { Urgency } from '../../schema/notificationSchema'
 import crypto from 'crypto'
+import { env } from '../../utils/environment'
 
 export async function sendNotificationViaWebPush(
     options: NotificationOptions,
     subscribed: PushSubscription,
 ): Promise<SendPushResponse> {
     const vapidDetails: VapidDetails = {
-        publicKey: process.env.VAPID_PUBLIC_KEY as string,
-        privateKey: process.env.VAPID_PRIVATE_KEY as string,
-        subject: process.env.VAPID_SUBJECT as string,
+        publicKey: env.VAPID_PUBLIC_KEY as string,
+        privateKey: env.VAPID_PRIVATE_KEY as string,
+        subject: env.VAPID_SUBJECT as string,
     }
     if (!vapidDetails.publicKey || !vapidDetails.privateKey || !vapidDetails.subject) {
         throw new Error('Missing required VAPID environment variables')

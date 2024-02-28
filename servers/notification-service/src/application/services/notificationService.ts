@@ -10,7 +10,7 @@ import { NotificationKind } from '../schema/tagSchema'
 import { sendNotificationViaWebPush } from './web-push/send-notification'
 import { SendPushResponse, SendPushStatus } from './web-push/web-push-types'
 import { PushType } from '../schema/subscriptionSchema'
-import { UserSettingsTables } from '../utils/userSettingsTables'
+import { UserSettingsTables } from '../database/userSettingsTables'
 
 export class NotificationService {
     constructor() {}
@@ -172,7 +172,7 @@ export class NotificationService {
                 continue
             }
 
-            console.log('failed to send notification', result.value.status, result.value.userId)
+            console.log('failed to send notification', JSON.stringify(result))
             await this.deleteFailedSubscription(result, tx)
         }
         return notificationsSentCount
