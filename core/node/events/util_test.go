@@ -3,14 +3,14 @@ package events
 import (
 	"context"
 
-	. "github.com/river-build/river/base"
-	"github.com/river-build/river/base/test"
-	"github.com/river-build/river/crypto"
-	. "github.com/river-build/river/nodes"
-	. "github.com/river-build/river/protocol"
-	"github.com/river-build/river/registries"
-	"github.com/river-build/river/storage"
-	"github.com/river-build/river/testutils/dbtestutils"
+	. "github.com/river-build/river/core/node/base"
+	"github.com/river-build/river/core/node/base/test"
+	"github.com/river-build/river/core/node/crypto"
+	. "github.com/river-build/river/core/node/nodes"
+	. "github.com/river-build/river/core/node/protocol"
+	"github.com/river-build/river/core/node/registries"
+	"github.com/river-build/river/core/node/storage"
+	"github.com/river-build/river/core/node/testutils/dbtestutils"
 	"google.golang.org/protobuf/proto"
 )
 

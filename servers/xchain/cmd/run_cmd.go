@@ -9,8 +9,8 @@ import (
 	"sync"
 	"syscall"
 
-	"github.com/river-build/river/dlog"
-	"github.com/river-build/river/infra"
+	"github.com/river-build/river/core/node/dlog"
+	"github.com/river-build/river/core/node/infra"
 
 	"github.com/spf13/cobra"
 )

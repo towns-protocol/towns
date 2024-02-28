@@ -4,7 +4,7 @@ import (
 	"encoding/json"
 	"os"
 
-	. "github.com/river-build/river/base"
+	. "github.com/river-build/river/core/node/base"
 
 	"github.com/ethereum/go-ethereum/common"
 )

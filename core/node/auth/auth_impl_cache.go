@@ -4,10 +4,10 @@ import (
 	"context"
 	"time"
 
-	. "github.com/river-build/river/base"
-	"github.com/river-build/river/config"
-	"github.com/river-build/river/dlog"
-	"github.com/river-build/river/protocol"
+	. "github.com/river-build/river/core/node/base"
+	"github.com/river-build/river/core/node/config"
+	"github.com/river-build/river/core/node/dlog"
+	"github.com/river-build/river/core/node/protocol"
 
 	lru "github.com/hashicorp/golang-lru/arc/v2"
 )

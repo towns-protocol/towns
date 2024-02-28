@@ -4,9 +4,9 @@ import (
 	"bytes"
 	"sort"
 
-	. "github.com/river-build/river/base"
-	. "github.com/river-build/river/protocol"
-	"github.com/river-build/river/shared"
+	. "github.com/river-build/river/core/node/base"
+	. "github.com/river-build/river/core/node/protocol"
+	"github.com/river-build/river/core/node/shared"
 )
 
 func Make_GenisisSnapshot(events []*ParsedEvent) (*Snapshot, error) {

@@ -6,7 +6,7 @@ import (
 	"encoding/hex"
 	"math/big"
 
-	"github.com/river-build/river/dlog"
+	"github.com/river-build/river/core/node/dlog"
 
 	xc "servers/xchain/common"
 	"servers/xchain/config"

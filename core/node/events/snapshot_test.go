@@ -4,10 +4,10 @@ import (
 	"context"
 	"testing"
 
-	"github.com/river-build/river/crypto"
-	. "github.com/river-build/river/protocol"
-	"github.com/river-build/river/shared"
-	"github.com/river-build/river/testutils"
+	"github.com/river-build/river/core/node/crypto"
+	. "github.com/river-build/river/core/node/protocol"
+	"github.com/river-build/river/core/node/shared"
+	"github.com/river-build/river/core/node/testutils"
 
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"

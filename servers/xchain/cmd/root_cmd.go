@@ -4,7 +4,7 @@ import (
 	"servers/xchain/config"
 	"strings"
 
-	"github.com/river-build/river/infra"
+	"github.com/river-build/river/core/node/infra"
 
 	"fmt"
 	"os"

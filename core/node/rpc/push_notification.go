@@ -7,11 +7,11 @@ import (
 	"fmt"
 	"net/http"
 
-	"github.com/river-build/river/config"
-	"github.com/river-build/river/dlog"
-	"github.com/river-build/river/events"
-	"github.com/river-build/river/protocol"
-	"github.com/river-build/river/shared"
+	"github.com/river-build/river/core/node/config"
+	"github.com/river-build/river/core/node/dlog"
+	"github.com/river-build/river/core/node/events"
+	"github.com/river-build/river/core/node/protocol"
+	"github.com/river-build/river/core/node/shared"
 )
 
 // PushNotification is used to trigger push notifications to the client.

@@ -3,7 +3,7 @@ package crypto
 import (
 	"testing"
 
-	"github.com/river-build/river/base/test"
+	"github.com/river-build/river/core/node/base/test"
 	"github.com/stretchr/testify/assert"
 )
 

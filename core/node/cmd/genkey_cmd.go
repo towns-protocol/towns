@@ -4,8 +4,8 @@ import (
 	"context"
 	"os"
 
-	"github.com/river-build/river/config"
-	"github.com/river-build/river/crypto"
+	"github.com/river-build/river/core/node/config"
+	"github.com/river-build/river/core/node/crypto"
 
 	"github.com/spf13/cobra"
 )

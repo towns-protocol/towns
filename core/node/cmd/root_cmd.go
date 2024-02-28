@@ -5,8 +5,8 @@ import (
 	"os"
 	"strings"
 
-	"github.com/river-build/river/config"
-	"github.com/river-build/river/infra"
+	"github.com/river-build/river/core/node/config"
+	"github.com/river-build/river/core/node/infra"
 
 	"github.com/spf13/cobra"
 	"github.com/spf13/viper"

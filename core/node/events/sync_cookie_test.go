@@ -3,7 +3,7 @@ package events
 import (
 	"testing"
 
-	. "github.com/river-build/river/protocol"
+	. "github.com/river-build/river/core/node/protocol"
 
 	"github.com/stretchr/testify/require"
 )

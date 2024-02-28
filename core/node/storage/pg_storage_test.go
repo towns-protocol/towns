@@ -6,12 +6,12 @@ import (
 	"reflect"
 	"testing"
 
-	. "github.com/river-build/river/base"
-	"github.com/river-build/river/base/test"
-	. "github.com/river-build/river/protocol"
-	. "github.com/river-build/river/shared"
-	"github.com/river-build/river/testutils"
-	"github.com/river-build/river/testutils/dbtestutils"
+	. "github.com/river-build/river/core/node/base"
+	"github.com/river-build/river/core/node/base/test"
+	. "github.com/river-build/river/core/node/protocol"
+	. "github.com/river-build/river/core/node/shared"
+	"github.com/river-build/river/core/node/testutils"
+	"github.com/river-build/river/core/node/testutils/dbtestutils"
 
 	"github.com/stretchr/testify/require"
 )

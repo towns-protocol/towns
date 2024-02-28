@@ -4,8 +4,8 @@ import (
 	"errors"
 	"testing"
 
-	"github.com/river-build/river/dlog"
-	"github.com/river-build/river/protocol"
+	"github.com/river-build/river/core/node/dlog"
+	"github.com/river-build/river/core/node/protocol"
 )
 
 func TestRiverError(t *testing.T) {

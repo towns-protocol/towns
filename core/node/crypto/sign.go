@@ -9,7 +9,7 @@ import (
 	"math/big"
 	"os"
 
-	"github.com/river-build/river/dlog"
+	"github.com/river-build/river/core/node/dlog"
 
 	"github.com/ethereum/go-ethereum/accounts/abi"
 	"github.com/ethereum/go-ethereum/common"

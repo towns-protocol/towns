@@ -124,13 +124,13 @@ import (
 
 	"connectrpc.com/connect"
 
-	"github.com/river-build/river/auth"
-	. "github.com/river-build/river/base"
-	"github.com/river-build/river/common"
-	"github.com/river-build/river/crypto"
-	. "github.com/river-build/river/events"
-	"github.com/river-build/river/infra"
-	. "github.com/river-build/river/protocol"
-	"github.com/river-build/river/storage"
+	"github.com/river-build/river/core/node/auth"
+	. "github.com/river-build/river/core/node/base"
+	"github.com/river-build/river/core/node/common"
+	"github.com/river-build/river/core/node/crypto"
+	. "github.com/river-build/river/core/node/events"
+	"github.com/river-build/river/core/node/infra"
+	. "github.com/river-build/river/core/node/protocol"
+	"github.com/river-build/river/core/node/storage"
 )
 ```

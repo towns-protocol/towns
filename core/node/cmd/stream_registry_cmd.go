@@ -5,9 +5,9 @@ import (
 	"encoding/hex"
 	"fmt"
 
-	"github.com/river-build/river/config"
-	"github.com/river-build/river/crypto"
-	"github.com/river-build/river/registries"
+	"github.com/river-build/river/core/node/config"
+	"github.com/river-build/river/core/node/crypto"
+	"github.com/river-build/river/core/node/registries"
 
 	"github.com/spf13/cobra"
 )

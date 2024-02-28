@@ -14,11 +14,12 @@ import (
 	"strings"
 
 	"connectrpc.com/connect"
-	"github.com/river-build/river/protocol"
+	"github.com/river-build/river/core/node/protocol"
+
+	"log/slog"
 
 	"github.com/ethereum/go-ethereum/accounts/abi"
 	"github.com/ethereum/go-ethereum/rpc"
-	"log/slog"
 )
 
 // Constants are not exported when go bindings are generated from solidity, so there is duplication here.

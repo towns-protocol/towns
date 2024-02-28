@@ -1,9 +1,9 @@
 package rules
 
 import (
-	"github.com/river-build/river/auth"
-	. "github.com/river-build/river/base"
-	. "github.com/river-build/river/protocol"
+	"github.com/river-build/river/core/node/auth"
+	. "github.com/river-build/river/core/node/base"
+	. "github.com/river-build/river/core/node/protocol"
 )
 
 type CreateStreamRules struct {

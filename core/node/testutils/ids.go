@@ -5,7 +5,7 @@ import (
 	"encoding/hex"
 
 	"github.com/ethereum/go-ethereum/common"
-	"github.com/river-build/river/shared"
+	"github.com/river-build/river/core/node/shared"
 )
 
 func FakeStreamId(prefix string) string {

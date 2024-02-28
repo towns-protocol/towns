@@ -4,9 +4,9 @@ import (
 	"context"
 
 	"connectrpc.com/connect"
-	. "github.com/river-build/river/base"
-	"github.com/river-build/river/infra"
-	. "github.com/river-build/river/protocol"
+	. "github.com/river-build/river/core/node/base"
+	"github.com/river-build/river/core/node/infra"
+	. "github.com/river-build/river/core/node/protocol"
 )
 
 var getStreamRequests = infra.NewSuccessMetrics("get_stream_requests", serviceRequests)

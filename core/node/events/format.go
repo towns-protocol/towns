@@ -4,7 +4,7 @@ import (
 	"strings"
 
 	"github.com/ethereum/go-ethereum/common"
-	. "github.com/river-build/river/base"
+	. "github.com/river-build/river/core/node/base"
 )
 
 func FormatEventShort(e *ParsedEvent) string {

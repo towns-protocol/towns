@@ -4,14 +4,14 @@ import (
 	"context"
 	"math/big"
 
-	. "github.com/river-build/river/base"
-	"github.com/river-build/river/config"
-	"github.com/river-build/river/contracts"
-	"github.com/river-build/river/dlog"
-	. "github.com/river-build/river/protocol"
-	. "github.com/river-build/river/shared"
+	. "github.com/river-build/river/core/node/base"
+	"github.com/river-build/river/core/node/config"
+	"github.com/river-build/river/core/node/contracts"
+	"github.com/river-build/river/core/node/dlog"
+	. "github.com/river-build/river/core/node/protocol"
+	. "github.com/river-build/river/core/node/shared"
 
-	"github.com/river-build/river/crypto"
+	"github.com/river-build/river/core/node/crypto"
 
 	"github.com/ethereum/go-ethereum/accounts/abi/bind"
 	"github.com/ethereum/go-ethereum/common"

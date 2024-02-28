@@ -6,8 +6,8 @@ import (
 	"os"
 	"time"
 
-	"github.com/river-build/river/config"
-	"github.com/river-build/river/contracts/deploy"
+	"github.com/river-build/river/core/node/config"
+	"github.com/river-build/river/core/node/contracts/deploy"
 
 	"github.com/ethereum/go-ethereum/accounts/abi/bind"
 	"github.com/ethereum/go-ethereum/common"
@@ -15,7 +15,7 @@ import (
 	"github.com/ethereum/go-ethereum/core/types"
 	"github.com/ethereum/go-ethereum/ethclient"
 	"github.com/ethereum/go-ethereum/ethclient/simulated"
-	"github.com/river-build/river/contracts"
+	"github.com/river-build/river/core/node/contracts"
 )
 
 var (

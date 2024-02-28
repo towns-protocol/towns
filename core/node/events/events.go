@@ -7,10 +7,10 @@ import (
 	"google.golang.org/protobuf/proto"
 
 	"github.com/ethereum/go-ethereum/common"
-	"github.com/river-build/river/crypto"
-	"github.com/river-build/river/shared"
+	"github.com/river-build/river/core/node/crypto"
+	"github.com/river-build/river/core/node/shared"
 
-	. "github.com/river-build/river/protocol"
+	. "github.com/river-build/river/core/node/protocol"
 )
 
 func MakeStreamEvent(

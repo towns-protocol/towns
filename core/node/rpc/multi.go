@@ -9,11 +9,11 @@ import (
 	"time"
 
 	"connectrpc.com/connect"
-	"github.com/river-build/river/config"
-	"github.com/river-build/river/dlog"
-	"github.com/river-build/river/http_client"
-	"github.com/river-build/river/protocol"
-	"github.com/river-build/river/protocol/protocolconnect"
+	"github.com/river-build/river/core/node/config"
+	"github.com/river-build/river/core/node/dlog"
+	"github.com/river-build/river/core/node/http_client"
+	"github.com/river-build/river/core/node/protocol"
+	"github.com/river-build/river/core/node/protocol/protocolconnect"
 )
 
 const multiHtmlTemplate = `

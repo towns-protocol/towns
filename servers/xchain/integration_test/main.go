@@ -11,7 +11,7 @@ import (
 	"sync"
 	"syscall"
 
-	"github.com/river-build/river/dlog"
+	"github.com/river-build/river/core/node/dlog"
 )
 
 func keyboardInput(input chan rune) {

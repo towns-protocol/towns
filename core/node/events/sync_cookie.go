@@ -3,8 +3,8 @@ package events
 import (
 	"bytes"
 
-	. "github.com/river-build/river/base"
-	. "github.com/river-build/river/protocol"
+	. "github.com/river-build/river/core/node/base"
+	. "github.com/river-build/river/core/node/protocol"
 )
 
 func SyncCookieEqual(a, b *SyncCookie) bool {

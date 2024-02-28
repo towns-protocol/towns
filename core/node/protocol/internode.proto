@@ -1,6 +1,6 @@
 syntax = "proto3";
 package river;
-option go_package = "github.com/river-build/river/protocol";
+option go_package = "github.com/river-build/river/core/node/protocol";
 
 import "protocol.proto";
 

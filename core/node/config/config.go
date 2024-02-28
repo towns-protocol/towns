@@ -1,7 +1,7 @@
 package config
 
 import (
-	infra "github.com/river-build/river/infra/config"
+	infra "github.com/river-build/river/core/node/infra/config"
 )
 
 type TLSConfig struct {

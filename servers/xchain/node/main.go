@@ -4,7 +4,7 @@ import (
 	"context"
 	"servers/xchain/cmd"
 
-	"github.com/river-build/river/dlog"
+	"github.com/river-build/river/core/node/dlog"
 )
 
 func main() {

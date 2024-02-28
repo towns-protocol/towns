@@ -4,8 +4,8 @@ import (
 	"fmt"
 	"os"
 
-	"github.com/river-build/river/dlog"
-	config "github.com/river-build/river/infra/config"
+	"github.com/river-build/river/core/node/dlog"
+	config "github.com/river-build/river/core/node/infra/config"
 
 	"log/slog"
 )

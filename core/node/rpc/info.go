@@ -4,14 +4,15 @@ import (
 	"context"
 	"errors"
 
-	"connectrpc.com/connect"
-	"google.golang.org/protobuf/encoding/protojson"
 	"log/slog"
 
-	. "github.com/river-build/river/base"
-	"github.com/river-build/river/events"
-	"github.com/river-build/river/infra"
-	. "github.com/river-build/river/protocol"
+	"connectrpc.com/connect"
+	"google.golang.org/protobuf/encoding/protojson"
+
+	. "github.com/river-build/river/core/node/base"
+	"github.com/river-build/river/core/node/events"
+	"github.com/river-build/river/core/node/infra"
+	. "github.com/river-build/river/core/node/protocol"
 )
 
 var infoRequests = infra.NewSuccessMetrics("info_requests", serviceRequests)

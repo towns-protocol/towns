@@ -8,7 +8,7 @@ import (
 	connect "connectrpc.com/connect"
 	context "context"
 	errors "errors"
-	protocol "github.com/river-build/river/protocol"
+	protocol "github.com/river-build/river/core/node/protocol"
 	http "net/http"
 	strings "strings"
 )

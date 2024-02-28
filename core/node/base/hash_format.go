@@ -4,7 +4,7 @@ import (
 	"strings"
 
 	"github.com/ethereum/go-ethereum/common"
-	"github.com/river-build/river/protocol"
+	"github.com/river-build/river/core/node/protocol"
 )
 
 const (

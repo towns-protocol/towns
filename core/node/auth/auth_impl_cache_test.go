@@ -4,7 +4,7 @@ import (
 	"context"
 	"testing"
 
-	"github.com/river-build/river/config"
+	"github.com/river-build/river/core/node/config"
 
 	"github.com/stretchr/testify/assert"
 )

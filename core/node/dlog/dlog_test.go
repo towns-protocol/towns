@@ -6,7 +6,7 @@ import (
 	"testing"
 	"time"
 
-	"github.com/river-build/river/dlog"
+	"github.com/river-build/river/core/node/dlog"
 
 	"log/slog"
 )

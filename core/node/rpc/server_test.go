@@ -3,9 +3,9 @@ package rpc_test
 import (
 	"testing"
 
-	"github.com/river-build/river/base/test"
-	"github.com/river-build/river/protocol"
-	"github.com/river-build/river/testutils/dbtestutils"
+	"github.com/river-build/river/core/node/base/test"
+	"github.com/river-build/river/core/node/protocol"
+	"github.com/river-build/river/core/node/testutils/dbtestutils"
 
 	"connectrpc.com/connect"
 	"github.com/stretchr/testify/require"

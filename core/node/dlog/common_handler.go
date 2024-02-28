@@ -15,7 +15,7 @@ import (
 
 	"log/slog"
 
-	buffer "github.com/river-build/river/dlog/buffer"
+	buffer "github.com/river-build/river/core/node/dlog/buffer"
 )
 
 type PrettyHandlerOptions struct {

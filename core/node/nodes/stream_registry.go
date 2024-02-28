@@ -4,9 +4,9 @@ import (
 	"context"
 	"hash/fnv"
 
-	. "github.com/river-build/river/base"
-	. "github.com/river-build/river/protocol"
-	"github.com/river-build/river/registries"
+	. "github.com/river-build/river/core/node/base"
+	. "github.com/river-build/river/core/node/protocol"
+	"github.com/river-build/river/core/node/registries"
 )
 
 type StreamRegistry interface {

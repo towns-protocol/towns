@@ -3,8 +3,8 @@ package events
 import (
 	"bytes"
 
-	"github.com/river-build/river/protocol"
-	"github.com/river-build/river/shared"
+	"github.com/river-build/river/core/node/protocol"
+	"github.com/river-build/river/core/node/shared"
 
 	mapset "github.com/deckarep/golang-set/v2"
 )
@@ -25,7 +25,7 @@ func (r *streamViewImpl) GetChannelMembers() (*mapset.Set[string], error) {
 		userId, err := shared.AddressHex(member.UserAddress)
 		if err != nil {
 			return nil, err
-			}
+		}
 		members.Add(userId)
 	}
 
@@ -37,7 +37,7 @@ func (r *streamViewImpl) GetChannelMembers() (*mapset.Set[string], error) {
 				user, err := shared.AddressHex(payload.Membership.UserAddress)
 				if err != nil {
 					return false, err
-			}
+				}
 				if payload.Membership.GetOp() == protocol.MembershipOp_SO_JOIN {
 					members.Add(user)
 				} else if payload.Membership.GetOp() == protocol.MembershipOp_SO_LEAVE {

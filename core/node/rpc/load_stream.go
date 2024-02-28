@@ -3,9 +3,9 @@ package rpc
 import (
 	"context"
 
-	. "github.com/river-build/river/events"
-	. "github.com/river-build/river/protocol"
-	. "github.com/river-build/river/protocol/protocolconnect"
+	. "github.com/river-build/river/core/node/events"
+	. "github.com/river-build/river/core/node/protocol"
+	. "github.com/river-build/river/core/node/protocol/protocolconnect"
 
 	"connectrpc.com/connect"
 )

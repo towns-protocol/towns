@@ -4,12 +4,12 @@ import (
 	"context"
 	"sync"
 
-	"github.com/river-build/river/dlog"
-	"github.com/river-build/river/storage"
+	"github.com/river-build/river/core/node/dlog"
+	"github.com/river-build/river/core/node/storage"
 
-	. "github.com/river-build/river/base"
-	. "github.com/river-build/river/nodes"
-	. "github.com/river-build/river/protocol"
+	. "github.com/river-build/river/core/node/base"
+	. "github.com/river-build/river/core/node/nodes"
+	. "github.com/river-build/river/core/node/protocol"
 
 	mapset "github.com/deckarep/golang-set/v2"
 )

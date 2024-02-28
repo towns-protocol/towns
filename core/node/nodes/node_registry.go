@@ -5,12 +5,12 @@ import (
 	"net/http"
 	"sync"
 
-	. "github.com/river-build/river/base"
-	"github.com/river-build/river/dlog"
-	"github.com/river-build/river/http_client"
-	. "github.com/river-build/river/protocol"
-	. "github.com/river-build/river/protocol/protocolconnect"
-	"github.com/river-build/river/registries"
+	. "github.com/river-build/river/core/node/base"
+	"github.com/river-build/river/core/node/dlog"
+	"github.com/river-build/river/core/node/http_client"
+	. "github.com/river-build/river/core/node/protocol"
+	. "github.com/river-build/river/core/node/protocol/protocolconnect"
+	"github.com/river-build/river/core/node/registries"
 
 	"connectrpc.com/connect"
 )

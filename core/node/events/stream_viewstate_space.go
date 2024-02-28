@@ -1,8 +1,8 @@
 package events
 
 import (
-	. "github.com/river-build/river/base"
-	. "github.com/river-build/river/protocol"
+	. "github.com/river-build/river/core/node/base"
+	. "github.com/river-build/river/core/node/protocol"
 )
 
 type SpaceStreamView interface {
@@ -62,6 +62,6 @@ func (r *streamViewImpl) GetChannelInfo(channelId string) (*SpacePayload_Channel
 	if err != nil {
 		return nil, err
 	}
-	
+
 	return channel, nil
 }

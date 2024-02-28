@@ -7,7 +7,7 @@ toolchain go1.21.5
 require (
 	github.com/ethereum/go-ethereum v1.13.12
 	github.com/mitchellh/mapstructure v1.5.0
-	github.com/river-build/river v0.0.0-00010101000000-000000000000
+	github.com/river-build/river/core/node v0.0.0-00010101000000-000000000000
 	github.com/spf13/cobra v1.8.0
 	github.com/spf13/viper v1.18.2
 	gopkg.in/yaml.v3 v3.0.1
@@ -112,4 +112,4 @@ require (
 	rsc.io/tmplfunc v0.0.3 // indirect
 )
 
-replace github.com/river-build/river => ./../../core/node
+replace github.com/river-build/river/core/node => ./../../core/node

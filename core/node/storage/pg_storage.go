@@ -9,13 +9,13 @@ import (
 	"strings"
 	"time"
 
-	. "github.com/river-build/river/base"
-	. "github.com/river-build/river/protocol"
+	. "github.com/river-build/river/core/node/base"
+	. "github.com/river-build/river/core/node/protocol"
 
 	_ "embed"
 
-	"github.com/river-build/river/dlog"
-	"github.com/river-build/river/infra"
+	"github.com/river-build/river/core/node/dlog"
+	"github.com/river-build/river/core/node/infra"
 
 	"github.com/jackc/pgerrcode"
 	"github.com/jackc/pgx/v5"
@@ -894,7 +894,7 @@ func newPostgresEventStore(
 }
 
 // Close removes instance record from singlenodekey table and closes the connection pool
-func (s *PostgresEventStore) Close(ctx context.Context)  {
+func (s *PostgresEventStore) Close(ctx context.Context) {
 	_ = s.CleanupStorage(ctx)
 	s.pool.Close()
 }

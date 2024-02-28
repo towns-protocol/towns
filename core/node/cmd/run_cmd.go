@@ -7,9 +7,9 @@ import (
 	"runtime/pprof"
 	"time"
 
-	"github.com/river-build/river/config"
-	"github.com/river-build/river/infra"
-	"github.com/river-build/river/rpc"
+	"github.com/river-build/river/core/node/config"
+	"github.com/river-build/river/core/node/infra"
+	"github.com/river-build/river/core/node/rpc"
 
 	"github.com/spf13/cobra"
 	"gopkg.in/DataDog/dd-trace-go.v1/ddtrace/tracer"

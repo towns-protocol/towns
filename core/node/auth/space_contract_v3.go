@@ -4,8 +4,8 @@ import (
 	"context"
 	"sync"
 
-	"github.com/river-build/river/config"
-	"github.com/river-build/river/infra"
+	"github.com/river-build/river/core/node/config"
+	"github.com/river-build/river/core/node/infra"
 
 	"github.com/ethereum/go-ethereum/accounts/abi/bind"
 	"github.com/ethereum/go-ethereum/common"

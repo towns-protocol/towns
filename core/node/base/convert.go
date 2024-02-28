@@ -1,7 +1,7 @@
 package base
 
 import (
-	. "github.com/river-build/river/protocol"
+	. "github.com/river-build/river/core/node/protocol"
 
 	"github.com/ethereum/go-ethereum/common"
 )

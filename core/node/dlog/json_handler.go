@@ -17,7 +17,7 @@ import (
 
 	"log/slog"
 
-	buffer "github.com/river-build/river/dlog/buffer"
+	buffer "github.com/river-build/river/core/node/dlog/buffer"
 )
 
 // PrettyJSONHandler is a Handler that writes Records to an io.Writer as

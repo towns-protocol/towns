@@ -3,13 +3,14 @@ package rpc
 import (
 	"context"
 
-	. "github.com/river-build/river/base"
-	"github.com/river-build/river/dlog"
-	. "github.com/river-build/river/protocol"
+	. "github.com/river-build/river/core/node/base"
+	"github.com/river-build/river/core/node/dlog"
+	. "github.com/river-build/river/core/node/protocol"
+
+	"log/slog"
 
 	"connectrpc.com/connect"
 	"github.com/ethereum/go-ethereum/common"
-	"log/slog"
 )
 
 type RequestWithStreamId interface {

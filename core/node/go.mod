@@ -1,4 +1,4 @@
-module github.com/river-build/river
+module github.com/river-build/river/core/node
 
 go 1.21
 

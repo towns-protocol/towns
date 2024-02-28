@@ -3,9 +3,9 @@ package rpc
 import (
 	"net/http"
 
-	. "github.com/river-build/river/base"
-	"github.com/river-build/river/dlog"
-	"github.com/river-build/river/infra"
+	. "github.com/river-build/river/core/node/base"
+	"github.com/river-build/river/core/node/dlog"
+	"github.com/river-build/river/core/node/infra"
 
 	"log/slog"
 )

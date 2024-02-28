@@ -10,10 +10,10 @@ import (
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
 
-	. "github.com/river-build/river/base"
-	"github.com/river-build/river/base/test"
-	. "github.com/river-build/river/protocol"
-	. "github.com/river-build/river/shared"
+	. "github.com/river-build/river/core/node/base"
+	"github.com/river-build/river/core/node/base/test"
+	. "github.com/river-build/river/core/node/protocol"
+	. "github.com/river-build/river/core/node/shared"
 )
 
 func TestBlockchain(t *testing.T) {

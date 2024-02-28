@@ -2,9 +2,9 @@ package events
 
 import (
 	"github.com/ethereum/go-ethereum/common"
-	. "github.com/river-build/river/base"
-	"github.com/river-build/river/crypto"
-	. "github.com/river-build/river/protocol"
+	. "github.com/river-build/river/core/node/base"
+	"github.com/river-build/river/core/node/crypto"
+	. "github.com/river-build/river/core/node/protocol"
 
 	"google.golang.org/protobuf/proto"
 	"google.golang.org/protobuf/types/known/emptypb"

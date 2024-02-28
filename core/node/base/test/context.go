@@ -6,7 +6,7 @@ import (
 
 	"log/slog"
 
-	"github.com/river-build/river/dlog"
+	"github.com/river-build/river/core/node/dlog"
 )
 
 func NewTestContext() context.Context {

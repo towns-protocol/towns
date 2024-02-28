@@ -4,8 +4,8 @@ import (
 	"context"
 
 	"connectrpc.com/connect"
-	"github.com/river-build/river/infra"
-	. "github.com/river-build/river/protocol"
+	"github.com/river-build/river/core/node/infra"
+	. "github.com/river-build/river/core/node/protocol"
 )
 
 var getMiniblocksRequests = infra.NewSuccessMetrics("get_miniblocks_requests", serviceRequests)

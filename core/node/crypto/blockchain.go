@@ -4,9 +4,9 @@ import (
 	"context"
 	"math/big"
 
-	. "github.com/river-build/river/base"
-	"github.com/river-build/river/config"
-	. "github.com/river-build/river/protocol"
+	. "github.com/river-build/river/core/node/base"
+	"github.com/river-build/river/core/node/config"
+	. "github.com/river-build/river/core/node/protocol"
 
 	"github.com/ethereum/go-ethereum"
 	"github.com/ethereum/go-ethereum/ethclient"

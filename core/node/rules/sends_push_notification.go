@@ -1,9 +1,9 @@
 package rules
 
 import (
-	"github.com/river-build/river/events"
-	. "github.com/river-build/river/protocol"
-	"github.com/river-build/river/shared"
+	"github.com/river-build/river/core/node/events"
+	. "github.com/river-build/river/core/node/protocol"
+	"github.com/river-build/river/core/node/shared"
 )
 
 func SendsPushNotification(parsedEvent *events.ParsedEvent) (bool, string) {

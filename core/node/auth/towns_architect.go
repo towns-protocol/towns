@@ -4,19 +4,19 @@ import (
 	"context"
 	"time"
 
-	"github.com/river-build/river/config"
-	"github.com/river-build/river/contracts"
-	"github.com/river-build/river/contracts/dev"
-	v3 "github.com/river-build/river/contracts/v3"
-	"github.com/river-build/river/crypto"
-	"github.com/river-build/river/dlog"
-	"github.com/river-build/river/infra"
-	. "github.com/river-build/river/protocol"
+	"github.com/river-build/river/core/node/config"
+	"github.com/river-build/river/core/node/contracts"
+	"github.com/river-build/river/core/node/contracts/dev"
+	v3 "github.com/river-build/river/core/node/contracts/v3"
+	"github.com/river-build/river/core/node/crypto"
+	"github.com/river-build/river/core/node/dlog"
+	"github.com/river-build/river/core/node/infra"
+	. "github.com/river-build/river/core/node/protocol"
 
 	"github.com/ethereum/go-ethereum/accounts/abi/bind"
 	"github.com/ethereum/go-ethereum/common"
 
-	. "github.com/river-build/river/base"
+	. "github.com/river-build/river/core/node/base"
 )
 
 type TownsArchitect interface {

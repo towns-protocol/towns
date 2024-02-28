@@ -7,8 +7,8 @@ import (
 	"github.com/ethereum/go-ethereum/common"
 	"github.com/ethereum/go-ethereum/crypto/secp256k1"
 
-	. "github.com/river-build/river/base"
-	. "github.com/river-build/river/protocol"
+	. "github.com/river-build/river/core/node/base"
+	. "github.com/river-build/river/core/node/protocol"
 )
 
 func RecoverDelegateSigAddress(devicePubKey, delegateSig []byte) (*common.Address, error) {

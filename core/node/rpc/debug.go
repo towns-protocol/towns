@@ -11,8 +11,8 @@ import (
 	"slices"
 	"strings"
 
-	"github.com/river-build/river/config"
-	. "github.com/river-build/river/events"
+	"github.com/river-build/river/core/node/config"
+	. "github.com/river-build/river/core/node/events"
 )
 
 // GenerateStackHTML generates an HTML table from runtime.Stack

@@ -6,11 +6,11 @@ import (
 	"time"
 
 	"github.com/ethereum/go-ethereum/common"
-	"github.com/river-build/river/config"
-	"github.com/river-build/river/crypto"
-	. "github.com/river-build/river/protocol"
-	"github.com/river-build/river/storage"
-	"github.com/river-build/river/testutils"
+	"github.com/river-build/river/core/node/config"
+	"github.com/river-build/river/core/node/crypto"
+	. "github.com/river-build/river/core/node/protocol"
+	"github.com/river-build/river/core/node/storage"
+	"github.com/river-build/river/core/node/testutils"
 
 	"github.com/stretchr/testify/assert"
 	"google.golang.org/protobuf/proto"

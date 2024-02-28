@@ -4,7 +4,7 @@ import (
 	"context"
 	"time"
 
-	"github.com/river-build/river/infra"
+	"github.com/river-build/river/core/node/infra"
 	"gopkg.in/DataDog/dd-trace-go.v1/ddtrace/tracer"
 
 	"connectrpc.com/connect"
