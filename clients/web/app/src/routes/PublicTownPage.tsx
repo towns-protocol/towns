@@ -51,7 +51,7 @@ export const PublicTownPage = () => {
         useHasPermission({
             spaceId: spaceInfo?.networkId,
             walletAddress: loggedInWalletAddress,
-            permission: Permission.JoinTown,
+            permission: Permission.JoinSpace,
         })
 
     const { joinSpace, errorMessage, isNoFundsError } = useJoinTown(spaceInfo?.networkId)

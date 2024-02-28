@@ -255,7 +255,7 @@ describe('isEntitledToSpace and isEntitledToChannel tests', () => {
             spaceId,
             undefined,
             bob.wallet.address,
-            Permission.JoinTown,
+            Permission.JoinSpace,
         )
 
         /** Assert */
@@ -301,7 +301,7 @@ describe('isEntitledToSpace and isEntitledToChannel tests', () => {
             spaceId,
             undefined,
             bob.wallet.address,
-            Permission.JoinTown,
+            Permission.JoinSpace,
         )
 
         /** Assert */

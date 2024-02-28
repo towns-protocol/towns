@@ -1195,7 +1195,7 @@ export class ZionClient implements EntitlementsDelegate {
                     spaceId,
                     undefined,
                     wallet,
-                    Permission.JoinTown,
+                    Permission.JoinSpace,
                 )
                 if (isEntitled) {
                     return wallet
@@ -1209,7 +1209,7 @@ export class ZionClient implements EntitlementsDelegate {
                         spaceId,
                         undefined,
                         rootWallet,
-                        Permission.JoinTown,
+                        Permission.JoinSpace,
                     )
                     if (isEntitled) {
                         return rootWallet

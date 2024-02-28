@@ -147,7 +147,7 @@ describe('get role details', () => {
             name: 'Minter',
             tokens: [expectedMinterTokens],
             users: [],
-            permissions: [Permission.JoinTown],
+            permissions: [Permission.JoinSpace],
             channels: [],
         }
         const expectedMemberRole: RoleDetails = {
@@ -199,7 +199,7 @@ describe('get role details', () => {
             name: 'Minter',
             tokens: [],
             users: [TestConstants.EveryoneAddress],
-            permissions: [Permission.JoinTown],
+            permissions: [Permission.JoinSpace],
             channels: [],
         }
         const expectedEveryoneRole: RoleDetails = {

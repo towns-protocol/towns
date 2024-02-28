@@ -116,7 +116,7 @@ describe('Link Wallet', () => {
             spaceId,
             undefined,
             bob.wallet.address,
-            Permission.JoinTown,
+            Permission.JoinSpace,
         )
         expect(isEntitledToSpace).toBeTruthy()
 
