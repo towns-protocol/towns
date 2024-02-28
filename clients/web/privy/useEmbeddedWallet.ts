@@ -8,6 +8,8 @@ export function useEmbeddedWallet() {
     }
     if (!ready) {
         console.log('Privy wallet not ready. Authentication status: ', authenticated)
+    } else {
+        console.log('Privy wallet ready. Authentication status: ', authenticated)
     }
     const privyWallet = wallets.find((wallet) => wallet.walletClientType === 'privy')
     if (!privyWallet) {
