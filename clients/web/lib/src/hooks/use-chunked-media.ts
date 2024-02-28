@@ -16,7 +16,8 @@ async function getObjectURL(
     useCache: boolean,
 ): Promise<string | undefined> {
     const cache = await caches.open('chunked-media')
-    const response = await cache.match(streamId)
+    const cacheKey = `/media-stream/${streamId}`
+    const response = await cache.match(cacheKey)
     if (response) {
         const blob = await response.blob()
         return URL.createObjectURL(blob)
@@ -40,7 +41,7 @@ async function getObjectURL(
     const blob = new Blob([decrypted])
     const objectURL = URL.createObjectURL(blob)
     if (useCache) {
-        await cache.put(streamId, new Response(blob))
+        await cache.put(cacheKey, new Response(blob))
     }
     return objectURL
 }
