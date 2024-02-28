@@ -480,8 +480,7 @@ export class DecryptionExtensions {
 
             // If !sessionNotFound, we want to know more about this error.
             if (!sessionNotFound) {
-                // eslint-disable-next-line no-console
-                console.error('failed to decrypt', err, 'streamId', item.streamId)
+                this.log.error('failed to decrypt', err, 'streamId', item.streamId)
             }
 
             this.client.stream(item.streamId)?.view.updateDecryptedContentError(
@@ -494,9 +493,6 @@ export class DecryptionExtensions {
                 this.client,
             )
 
-            // temporarily disabled check to see if we can recover from any IDB errors
-            // error logs will still be added to DD above
-            // if (sessionNotFound) {
             insertSorted(
                 this.queues.decryptionRetries,
                 {
@@ -506,7 +502,6 @@ export class DecryptionExtensions {
                 },
                 (x) => x.retryAt,
             )
-            // }
         }
     }
 
@@ -521,12 +516,8 @@ export class DecryptionExtensions {
             await this.client.decryptGroupEvent(item.streamId, item.eventId, item.encryptedContent)
         } catch (err) {
             const sessionNotFound = isSessionNotFoundError(err)
-            if (!sessionNotFound) {
-                // eslint-disable-next-line no-console
-                console.error('failed to decrypt on retry', err, 'streamId', item.streamId)
-            }
 
-            this.log.debug('failed to decrypt on retry', err, 'sessionNotFound', sessionNotFound)
+            this.log.error('failed to decrypt on retry', err, 'sessionNotFound', sessionNotFound)
             this.client.stream(item.streamId)?.view.updateDecryptedContentError(
                 item.eventId,
                 {
