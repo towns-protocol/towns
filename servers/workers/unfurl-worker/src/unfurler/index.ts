@@ -90,6 +90,13 @@ export async function formattedUnfurlJSData(url: string): Promise<UnfurlData | n
             if (data && !data.description && !data.image) {
                 data = null
             }
+            if (data?.image?.url && (!data.image.width || !data.image.height)) {
+                try {
+                    data.image = (await handleRawImage(data.image.url)).image
+                } catch {
+                    // do nothing
+                }
+            }
         }
         // eslint-disable-next-line @typescript-eslint/no-explicit-any
     } catch (error: any) {

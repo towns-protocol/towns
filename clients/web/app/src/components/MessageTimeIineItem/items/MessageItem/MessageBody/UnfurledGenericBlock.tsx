@@ -1,7 +1,7 @@
 import React from 'react'
 import { UnfurlData } from '@unfurl-worker/types'
 import { Box, Text } from '@ui'
-import { atoms } from 'ui/styles/atoms.css'
+import { RatioedBackgroundImage } from '@components/RatioedBackgroundImage'
 
 export const UnfurledGenericBlock = (props: UnfurlData) => {
     return (
@@ -18,14 +18,12 @@ export const UnfurledGenericBlock = (props: UnfurlData) => {
             gap="md"
             maxWidth="400"
         >
-            {props.image && (
-                <img
+            {props.image?.url && (
+                <RatioedBackgroundImage
                     alt={props.title}
-                    className={atoms({
-                        borderRadius: 'sm',
-                        width: '100%',
-                    })}
-                    src={props.image.url}
+                    url={props.image.url}
+                    width={props.image.width}
+                    height={props.image.height}
                 />
             )}
             <Box>

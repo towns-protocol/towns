@@ -12,11 +12,13 @@ export const RatioedBackgroundImage = ({
     width,
     height,
     onClick,
+    alt,
 }: {
     url: string
     width?: number
     height?: number
     onClick?: (event: React.MouseEvent<HTMLElement>) => void
+    alt?: string
 }) => {
     const MAX_WIDTH = 500
     const MAX_HEIGHT = 400
@@ -48,6 +50,7 @@ export const RatioedBackgroundImage = ({
                     backgroundSize: 'contain',
                     backgroundRepeat: 'no-repeat',
                 })}
+                title={alt}
                 onClick={isTouch ? undefined : onClick}
             >
                 {isTouch && (

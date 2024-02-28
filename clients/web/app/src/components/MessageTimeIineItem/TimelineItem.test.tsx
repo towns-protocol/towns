@@ -156,7 +156,7 @@ describe('#TimelineItem', () => {
             expect(screen.getByTestId('unfurled-generic-block')).toBeInTheDocument()
         })
 
-        expect(screen.getByAltText(normal.title)).toBeInTheDocument()
+        expect(screen.getByTitle(normal.title)).toBeInTheDocument()
         expect(screen.getByText(normal.title)).toBeInTheDocument()
         expect(screen.getByText(normal.description)).toBeInTheDocument()
     })
