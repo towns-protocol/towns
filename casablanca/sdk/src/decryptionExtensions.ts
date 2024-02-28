@@ -570,10 +570,12 @@ export class DecryptionExtensions {
         )
         // limit to 100 keys for now todo revisit https://linear.app/hnt-labs/issue/HNT-3936/revisit-how-we-limit-the-number-of-session-ids-that-we-request
         if (!missingSessionIds.length) {
+            this.log.debug('processing missing keys', item.streamId, 'no missing keys')
             return
         }
         const stream = this.client.stream(streamId)
         if (!stream) {
+            this.log.debug('processing missing keys', item.streamId, 'stream not found')
             return
         }
         const solicitedEvents =
@@ -585,7 +587,10 @@ export class DecryptionExtensions {
             existingKeyRequest?.isNewDevice ||
             sortedArraysEqual(existingKeyRequest?.sessionIds ?? [], missingSessionIds)
         ) {
-            this.log.debug('already requested keys for this session')
+            this.log.debug(
+                'processing missing keys already requested keys for this session',
+                existingKeyRequest,
+            )
             return
         }
         const knownSessionIds =

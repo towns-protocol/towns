@@ -7,13 +7,21 @@ import { removeCommon } from './utils'
 export class StreamStateView_Members_Solicitations {
     constructor(readonly streamId: string) {}
 
-    init(solicitations: MemberPayload_KeySolicitation[]) {
-        return solicitations.map((s) => ({
-            deviceKey: s.deviceKey,
-            fallbackKey: s.fallbackKey,
-            isNewDevice: s.isNewDevice,
-            sessionIds: [...s.sessionIds],
-        }))
+    initSolicitations(
+        members: StreamMember[],
+        encryptionEmitter: TypedEmitter<StreamEncryptionEvents> | undefined,
+    ): void {
+        for (const member of members) {
+            for (const event of member.solicitations) {
+                encryptionEmitter?.emit(
+                    'newKeySolicitation',
+                    this.streamId,
+                    member.userId,
+                    member.userAddress,
+                    event,
+                )
+            }
+        }
     }
 
     applySolicitation(

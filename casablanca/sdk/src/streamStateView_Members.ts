@@ -50,7 +50,15 @@ export class StreamStateView_Members {
                 userAddress: member.userAddress,
                 miniblockNum: member.miniblockNum,
                 eventNum: member.eventNum,
-                solicitations: this.solicitHelper.init(member.solicitations),
+                solicitations: member.solicitations.map(
+                    (s) =>
+                        ({
+                            deviceKey: s.deviceKey,
+                            fallbackKey: s.fallbackKey,
+                            isNewDevice: s.isNewDevice,
+                            sessionIds: [...s.sessionIds],
+                        } satisfies KeySolicitationContent),
+                ),
                 encryptedUsername: member.username,
                 encryptedDisplayName: member.displayName,
             })
@@ -75,6 +83,7 @@ export class StreamStateView_Members {
                 wrappedEncryptedData: member.encryptedDisplayName!,
             }))
         this.userMetadata.applySnapshot(usernames, displayNames, cleartexts, encryptionEmitter)
+        this.solicitHelper.initSolicitations(Array.from(this.joined.values()), encryptionEmitter)
     }
 
     prependEvent(
