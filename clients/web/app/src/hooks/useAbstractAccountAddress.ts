@@ -1,39 +1,46 @@
 import { useQueries, useQuery } from '@tanstack/react-query'
-import { useCallback } from 'react'
+import { useCallback, useMemo } from 'react'
 import {
     Address,
+    LOCALHOST_CHAIN_ID,
     LookupUser,
     queryClient,
+    useSpaceDapp,
     useUserLookupContext,
-    useZionClient,
+    useWeb3Context,
 } from 'use-zion-client'
+import { UserOps } from '@towns/userops'
+import { useAccountAbstractionConfig } from 'userOpConfig'
+import { useEnvironment } from './useEnvironmnet'
 
 const queryKey = 'smartAccountAddress'
 
 function querySetup({
-    client,
     rootKeyAddress,
+    userOpsInstance,
+    chainId,
 }: {
-    client: ReturnType<typeof useZionClient>['client']
     rootKeyAddress: Address | undefined
+    userOpsInstance: UserOps | undefined
+    chainId: number | undefined
 }) {
-    const isAccountAbstractionEnabled = client?.isAccountAbstractionEnabled()
+    // checking chainId instead of zionClient.isAccountAbstractionEnabled b/c we might not have a zionClient if logged out
+    const isAccountAbstractionEnabled = chainId !== LOCALHOST_CHAIN_ID
     return {
         queryKey: [queryKey, { isAccountAbstractionEnabled, rootKeyAddress }],
         queryFn: async () => {
-            if (!client || !rootKeyAddress) {
-                return undefined
-            }
-
-            if (!client.isAccountAbstractionEnabled()) {
+            // if account abstraction is not enabled, we're using the root key address
+            if (!isAccountAbstractionEnabled) {
                 return rootKeyAddress
             }
-
-            return client.getAbstractAccountAddress({
-                rootKeyAddress: rootKeyAddress,
+            if (!rootKeyAddress || !userOpsInstance) {
+                return
+            }
+            return userOpsInstance.getAbstractAccountAddress({
+                rootKeyAddress,
             })
         },
-        enabled: !!client && client.isAccountAbstractionEnabled !== undefined && !!rootKeyAddress,
+        enabled: !!rootKeyAddress,
         refetchOnWindowFocus: false,
         refetchOnMount: false,
         refetchOnReconnect: false,
@@ -47,25 +54,26 @@ export function useAbstractAccountAddress({
 }: {
     rootKeyAddress: Address | undefined
 }) {
-    const { client } = useZionClient()
-
+    const { chainId } = useEnvironment()
+    const userOpsInstance = useUserOpsInstance()
     return useQuery({
-        ...querySetup({ client, rootKeyAddress }),
+        ...querySetup({ rootKeyAddress, userOpsInstance, chainId }),
     })
 }
 
 export function useGetAbstractAccountAddressAsync() {
-    const { client } = useZionClient()
+    const { chainId } = useEnvironment()
+    const userOpsInstance = useUserOpsInstance()
 
     return useCallback(
         ({ rootKeyAddress }: { rootKeyAddress: Address | undefined }) => {
-            const qs = querySetup({ client, rootKeyAddress })
+            const qs = querySetup({ rootKeyAddress, userOpsInstance, chainId })
             return queryClient.fetchQuery({
                 queryKey: qs.queryKey,
                 queryFn: qs.queryFn,
             })
         },
-        [client],
+        [chainId, userOpsInstance],
     )
 }
 
@@ -74,14 +82,15 @@ export type LookupUserWithAbstractAccountAddress = LookupUser & {
 }
 
 export function useLookupUsersWithAbstractAccountAddress() {
-    const { client } = useZionClient()
+    const { chainId } = useEnvironment()
+    const userOpsInstance = useUserOpsInstance()
     const { users: _users } = useUserLookupContext()
 
     return useQueries({
         queries: _users.map((user) => {
             const uId = user.userId
             return {
-                ...querySetup({ client, rootKeyAddress: uId }),
+                ...querySetup({ chainId, rootKeyAddress: uId, userOpsInstance }),
             }
         }),
         combine: (results) => {
@@ -113,4 +122,32 @@ export function isAbstractAccountAddress({
     abstractAccountAddress: Address | undefined
 }) {
     return address.toLowerCase() === abstractAccountAddress?.toLowerCase()
+}
+
+// we need to get abstract account address even while logged out
+// so we use a userOps instance instead of zionClient.getAbstractAccountAddress
+// b/c the latter requires a client, which requires a logged in user
+function useUserOpsInstance() {
+    const { provider } = useWeb3Context()
+    const { chainId } = useEnvironment()
+
+    const spaceDapp = useSpaceDapp({
+        chainId,
+        provider,
+    })
+
+    // undefined if on anvil
+    const aaConfig = useAccountAbstractionConfig(chainId)
+
+    return useMemo(() => {
+        if (!spaceDapp || !chainId || !aaConfig) {
+            return
+        }
+        return UserOps.instance({
+            ...aaConfig,
+            spaceDapp,
+            chainId,
+            provider,
+        })
+    }, [aaConfig, chainId, provider, spaceDapp])
 }

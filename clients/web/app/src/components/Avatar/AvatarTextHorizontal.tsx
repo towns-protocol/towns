@@ -7,22 +7,25 @@ import { Text } from '../../ui/components/Text/Text'
 
 type Props = {
     prepend?: React.ReactNode
-    address: Address
+    userId: string
+    abstractAccountaddress: Address | undefined
     name?: string
 }
-export function AvatarTextHorizontal({ address, name, prepend }: Props) {
+export function AvatarTextHorizontal({ abstractAccountaddress, name, prepend, userId }: Props) {
     return (
         <Stack horizontal gap="sm" alignItems="center">
             {prepend}
-            <Avatar userId={address} size="avatar_sm" insetY="xs" />
+            <Avatar userId={userId} size="avatar_sm" insetY="xs" />
             {name && (
                 <Text strong size="lg">
                     {name}
                 </Text>
             )}
-            <Text size="lg" color="gray2">
-                {shortAddress(address)}
-            </Text>
+            {abstractAccountaddress && (
+                <Text size="lg" color="gray2">
+                    {shortAddress(abstractAccountaddress)}
+                </Text>
+            )}
         </Stack>
     )
 }

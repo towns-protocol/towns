@@ -12,6 +12,8 @@ import { blockchainKeys } from '../query/query-keys'
 import { useConnectivity } from './use-connectivity'
 import { getTransactionHashOrUserOpHash } from '@towns/userops'
 import { isAddress } from 'viem'
+import { useSpaceDapp } from './use-space-dapp'
+import { useWeb3Context } from '../components/Web3ContextProvider'
 
 export function useLinkWalletTransaction() {
     const { traceTransaction, ...rest } = useLinkTransactionBuilder()
@@ -158,22 +160,39 @@ export function useLinkedWallets() {
     )
 }
 
+/**
+ * grab the root key for a linked wallet
+ * this hook might be used in a context where the user is logged out and a client doen't exist
+ * the chainId parameter is optional and should be used when the chainId is not available from useZionClient
+ */
 export function useGetRootKeyFromLinkedWallet({
     walletAddress,
+    chainId,
 }: {
     walletAddress: string | undefined
+    chainId?: number | undefined
 }) {
-    const { client } = useZionClient()
+    const { chainId: clientChainId } = useZionClient()
+    const _chainId = chainId ?? clientChainId
+    const { provider } = useWeb3Context()
+    const spaceDapp = useSpaceDapp({
+        chainId: _chainId,
+        provider,
+    })
+
     return useQuery(
         blockchainKeys.rootKeyFromLinkedWallet(walletAddress ?? 'waitingForWalletAddress'),
         () => {
-            if (!client || !walletAddress) {
+            if (!walletAddress || !spaceDapp) {
                 return
             }
-            return client.getRootKeyFromLinkedWallet(walletAddress)
+            const walletLink = spaceDapp.getWalletLink()
+            return walletLink.getRootKeyForWallet(walletAddress)
         },
         {
-            enabled: !!client && !!walletAddress && isAddress(walletAddress),
+            enabled: !!walletAddress && isAddress(walletAddress) && !!spaceDapp,
+            staleTime: 1000 * 60 * 60 * 24,
+            gcTime: 1000 * 60 * 60 * 24,
         },
     )
 }

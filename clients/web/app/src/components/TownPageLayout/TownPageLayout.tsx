@@ -1,5 +1,6 @@
 import React from 'react'
 import { AnimatePresence } from 'framer-motion'
+import { Address, useGetRootKeyFromLinkedWallet } from 'use-zion-client'
 import { FetchedTokenAvatar } from '@components/Tokens/FetchedTokenAvatar'
 import { InteractiveTownsToken } from '@components/TownsToken/InteractiveTownsToken'
 import { ImageVariants, useImageSource } from '@components/UploadImage/useImageSource'
@@ -8,6 +9,7 @@ import { useDevice } from 'hooks/useDevice'
 import { checkAnyoneCanJoin, useTokensGatingMembership } from 'hooks/useTokensGatingMembership'
 import { AvatarTextHorizontal } from '@components/Avatar/AvatarTextHorizontal'
 import { FadeInBox } from '@components/Transitions'
+import { useEnvironment } from 'hooks/useEnvironmnet'
 import { useReadableMembershipInfo } from './useReadableMembershipInfo'
 
 type TownPageLayoutProps = {
@@ -23,6 +25,8 @@ type TownPageLayoutProps = {
 
 export const TownPageLayout = (props: TownPageLayoutProps) => {
     const { address, bio, name, networkId, owner } = props
+    const { chainId } = useEnvironment()
+    const { data: userId } = useGetRootKeyFromLinkedWallet({ walletAddress: owner, chainId })
 
     const { isTouch } = useDevice()
 
@@ -59,9 +63,10 @@ export const TownPageLayout = (props: TownPageLayoutProps) => {
                                     <Stack gap="lg">
                                         <Heading level={1}>{name}</Heading>
                                         <Box>
-                                            {owner && (
+                                            {userId && (
                                                 <AvatarTextHorizontal
-                                                    address={owner}
+                                                    userId={userId}
+                                                    abstractAccountaddress={owner as Address}
                                                     prepend={<Text>By </Text>}
                                                 />
                                             )}

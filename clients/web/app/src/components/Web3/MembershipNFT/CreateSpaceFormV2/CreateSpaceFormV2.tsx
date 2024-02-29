@@ -28,6 +28,7 @@ import { FadeInBox } from '@components/Transitions'
 import { TEMPORARY_SPACE_ICON_URL } from '@components/Web3/constants'
 import { FetchedTokenAvatar } from '@components/Tokens/FetchedTokenAvatar'
 import { AutoGrowTextArea } from 'ui/components/TextArea/AutoGrowTextArea'
+import { useAbstractAccountAddress } from 'hooks/useAbstractAccountAddress'
 import { CreateSpaceFormV2SchemaType, schema } from './CreateSpaceFormV2.schema'
 import { AvatarPlaceholder } from '../AvatarPlaceholder'
 import { PanelType, TransactionDetails } from './types'
@@ -44,6 +45,10 @@ export function CreateSpaceFormV2() {
     const [transactionDetails, setTransactionDetails] = useState<TransactionDetails>({
         isTransacting: false,
         townAddress: undefined,
+    })
+
+    const { data: abstractAccountAddress } = useAbstractAccountAddress({
+        rootKeyAddress: loggedInWalletAddress,
     })
 
     const [panelType, setPanelType] = useState<PanelType | undefined>()
@@ -152,7 +157,10 @@ export function CreateSpaceFormV2() {
                                                         <>
                                                             {loggedInWalletAddress && (
                                                                 <AvatarTextHorizontal
-                                                                    address={loggedInWalletAddress}
+                                                                    userId={loggedInWalletAddress}
+                                                                    abstractAccountaddress={
+                                                                        abstractAccountAddress
+                                                                    }
                                                                     name={displayName ?? ''}
                                                                 />
                                                             )}

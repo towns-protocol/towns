@@ -4,6 +4,7 @@ import {
     IArchitectBase,
     SpaceDapp,
     createEntitlementStruct,
+    createSpaceDapp,
 } from '@river/web3'
 import { ethers } from 'ethers'
 import { ISendUserOperationResponse, Client as UseropClient, Presets } from 'userop'
@@ -33,6 +34,22 @@ export class UserOps {
         this.factoryAddress = config.factoryAddress ?? ERC4337.SimpleAccount.Factory
         this.paymasterMiddleware = config.paymasterMiddleware
         this.spaceDapp = config.spaceDapp
+    }
+
+    public static instance(
+        config: UserOpsConfig & {
+            spaceDapp: ISpaceDapp
+            chainId: number
+        },
+    ) {
+        const { chainId, provider, aaRpcUrl, bundlerUrl } = config
+        const spaceDapp = createSpaceDapp({ chainId, provider })
+        return new UserOps({
+            aaRpcUrl,
+            bundlerUrl,
+            provider,
+            spaceDapp,
+        })
     }
 
     public async getAbstractAccountAddress({

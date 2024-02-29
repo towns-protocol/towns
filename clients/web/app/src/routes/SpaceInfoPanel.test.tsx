@@ -61,6 +61,7 @@ vi.mock('use-zion-client', async () => {
         ...actual,
         useSpaceMembers: () => ({ memberIds: [ownerUser.userId] }),
         useAllKnownUsers: () => ({ users: [ownerUser] }),
+        useGetRootKeyFromLinkedWallet: () => ({ data: ownerUser.userId }),
         useUser: (userId: string) => {
             const u = actual.useUser(userId)
             // can't seem to add owner to mocked members, workaround:
