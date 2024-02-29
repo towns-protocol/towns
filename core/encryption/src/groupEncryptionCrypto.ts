@@ -50,7 +50,7 @@ export function checkHash(hash: Uint8Array) {
     assertBytes(hash, 32)
 }
 
-export function townsHash(data: Uint8Array): Uint8Array {
+export function riverHash(data: Uint8Array): Uint8Array {
     assertBytes(data)
     const hasher = keccak256.create()
     hasher.update(HASH_HEADER)
@@ -109,7 +109,7 @@ export async function makeTownsDelegateSig(
     userPrivateKey: () => Uint8Array | string,
     devicePubKey: Uint8Array,
 ): Promise<Uint8Array> {
-    const hash = townsHash(devicePubKey)
+    const hash = riverHash(devicePubKey)
     check(devicePubKey.length === 65, 'Bad public key', Err.BAD_PUBLIC_KEY)
     return townsSign(hash, userPrivateKey())
 }

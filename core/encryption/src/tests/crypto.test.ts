@@ -6,7 +6,7 @@ import { bin_fromHexString, bin_toHexString, dlog } from '@river/dlog'
 import { getPublicKey, utils } from 'ethereum-cryptography/secp256k1'
 import { readFileSync, writeFileSync } from 'fs'
 import {
-    townsHash,
+    riverHash,
     townsRecoverPubKey,
     townsSign,
     townsVerifySignature,
@@ -36,7 +36,7 @@ describe('crypto', () => {
         writeFileSync(KEYS_FILE, csv, 'utf8')
 
         const genDataLine = async (d: Uint8Array) => {
-            const hash = townsHash(d)
+            const hash = riverHash(d)
             const ret = [d, hash]
             for (const [pr] of keys) {
                 ret.push(await townsSign(hash, pr))
@@ -106,7 +106,7 @@ describe('crypto', () => {
                     const line = data[i]
                     log_shard('Checking line %d', i)
                     const [d, h, ...sigs] = line.split(',').map(bin_fromHexString)
-                    const hash = townsHash(d)
+                    const hash = riverHash(d)
                     expect(h).toEqual(hash)
                     for (let i = 0; i < keys.length; ++i) {
                         const [pr, pu] = keys[i]

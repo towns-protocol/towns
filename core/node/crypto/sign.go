@@ -43,7 +43,10 @@ func writeOrPanic(w io.Writer, buf []byte) {
 	}
 }
 
-func TownsHash(buffer []byte) common.Hash {
+// RiverHash computes the hash of the given buffer using the River hashing algorithm.
+// It uses Keccak256 to ensure compatability with the EVM and uses a header, separator,
+// and footer to ensure that the hash is unique to River.
+func RiverHash(buffer []byte) common.Hash {
 	hash := sha3.NewLegacyKeccak256()
 	writeOrPanic(hash, HASH_HEADER)
 	// Write length of buffer as 64-bit little endian uint.

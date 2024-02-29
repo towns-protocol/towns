@@ -16,7 +16,7 @@ func TestSign(t *testing.T) {
 	}
 
 	message := []byte("Hello, World!")
-	hash := TownsHash(message)
+	hash := RiverHash(message)
 
 	signature, err := wallet.SignHash(hash[:])
 	assert.Nil(t, err)
@@ -28,7 +28,7 @@ func TestSign(t *testing.T) {
 	assert.Equal(t, wallet.Address, recoveredAddress)
 
 	message2 := []byte("Hello, Universe!")
-	hash2 := TownsHash(message2)
+	hash2 := RiverHash(message2)
 	signature2, err := wallet.SignHash(hash2[:])
 	assert.Nil(t, err)
 	assert.Equal(t, 65, len(signature2))
