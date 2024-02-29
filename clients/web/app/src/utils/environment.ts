@@ -53,7 +53,7 @@ const envSchema = z.object({
     VITE_AUTH_WORKER_HEADER_SECRET: z.string(), // TODO: is it safe to have these as VITE_ env vars on the client?
     VITE_GIPHY_API_KEY: z.string(), // TODO: is it safe to have these as VITE_ env vars on the client?
     VITE_PROVIDER_WS_URL: z.string().url().optional(),
-    VITE_PROVIDER_HTTP_URL: z.string().url().optional(),
+    VITE_PROVIDER_HTTP_URL: z.string().url(),
     VITE_APP_RELEASE_VERSION: z.string().optional(),
     VITE_AMPLITUDE_KEY: z.string().nullish(), // making this optional since we want to allow local development without it
     VITE_GLEAP_API_KEY: z.string().optional(), // making this optional since we want to allow local development without it
@@ -87,7 +87,6 @@ const envSchema = z.object({
         ])
         .optional(),
 
-    VITE_AA_RPC_URL: z.string().url(),
     VITE_AA_BUNDLER_URL: z.string().url(),
     VITE_AA_PAYMASTER_PROXY_URL: z.string().url(),
     VITE_AA_ENTRY_POINT_ADDRESS: z.string().optional(),

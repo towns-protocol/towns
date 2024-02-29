@@ -5,11 +5,11 @@ import { env } from 'utils'
 
 export function useAccountAbstractionConfig(chainId: number) {
     return useMemo(() => {
-        if (chainId === LOCALHOST_CHAIN_ID || !env.VITE_AA_RPC_URL) {
+        if (chainId === LOCALHOST_CHAIN_ID) {
             return
         }
         return {
-            aaRpcUrl: env.VITE_AA_RPC_URL,
+            aaRpcUrl: env.VITE_PROVIDER_HTTP_URL,
             bundlerUrl: env.VITE_AA_BUNDLER_URL,
             entryPointAddress: env.VITE_AA_ENTRY_POINT_ADDRESS,
             factoryAddress: env.VITE_AA_FACTORY_ADDRESS,

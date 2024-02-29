@@ -48,7 +48,7 @@ export const ENVIRONMENTS: TownsEnvironmentInfo[] = [
         chainId: 84532,
         chain: baseSepoliaClone,
         protocol: SpaceProtocol.Casablanca,
-        aaRpcUrl: env.VITE_AA_RPC_URL,
+        aaRpcUrl: env.VITE_PROVIDER_HTTP_URL,
         aaBundlerUrl: env.VITE_AA_BUNDLER_URL,
         aaPaymasterProxyUrl: env.VITE_AA_PAYMASTER_PROXY_URL,
     },
