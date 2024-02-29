@@ -2,14 +2,10 @@ import { NextFunction, Request, Response } from 'express'
 import { StatusCodes } from 'http-status-codes'
 import { env } from '../utils/environment'
 
+const DECODED_AUTH_SECRET = Buffer.from(env.AUTH_SECRET, 'base64').toString('utf8')
+
 export function validateAuthToken(req: Request, res: Response, next: NextFunction) {
     const token = req.headers.authorization
-    const authSecret = env.AUTH_SECRET
-
-    if (!authSecret) {
-        console.error('Env var AUTH_SECRET is not set')
-        return
-    }
 
     if (!token) {
         res.status(StatusCodes.UNAUTHORIZED).json({ error: 'Unauthorized' })
@@ -18,8 +14,7 @@ export function validateAuthToken(req: Request, res: Response, next: NextFunctio
 
     try {
         const decodedToken = Buffer.from(token.replace('Bearer ', ''), 'base64').toString('utf8')
-        const decodedAuthSecret = Buffer.from(authSecret, 'base64').toString('utf8')
-        if (decodedToken === decodedAuthSecret) {
+        if (decodedToken === DECODED_AUTH_SECRET) {
             next()
             return
         }
