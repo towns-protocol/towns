@@ -1,0 +1,11 @@
+out/
+node_modules/
+.sethrc
+artifacts/
+typechain/
+cache/
+gasReporterOutput.json
+.DS_Store
+coverage.json
+coverage/
+.env

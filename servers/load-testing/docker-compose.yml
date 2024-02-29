@@ -1,0 +1,105 @@
+version: '3'
+services:
+  redis:
+      image: redis:latest
+      container_name: stress-testing-redis
+      ports:
+          - '6379:6379'
+  leader-node:
+    build:
+      context: ../../
+      dockerfile: ./servers/load-testing/Dockerfile
+    ports:
+      - "5001:80"
+    environment:
+      - MODE=leader
+      - NUM_TOWNS=5
+      - NUM_CHANNELS_PER_TOWN=5
+      - NUM_FOLLOWERS=12
+      # TODO: generate random private key
+      - RIVER_NODE_URL=http://host.docker.internal:5157
+      - BASE_CHAIN_RPC_URL=http://host.docker.internal:8545
+      - CHANNEL_SAMPLING_RATE=100
+      # 10 minutes
+      - LOAD_TEST_DURATION_MS=600000
+      - REDIS_HOST=host.docker.internal
+      - DEBUG=csb:test:stress:run*
+      - MOCK_PERSISTENCE_STORE=true
+      - COORDINATOR_LEAVE_CHANNELS=true
+    depends_on:
+      - redis
+  follower-1:
+    build:
+      context: ../../
+      dockerfile: ./servers/load-testing/Dockerfile
+    ports:
+      - "5002:80"
+    environment:
+      - MODE=follower
+      - NUM_TOWNS=5
+      - NUM_CHANNELS_PER_TOWN=5
+      - NUM_CLIENTS_PER_PROCESS=2
+      - PROCESSES_PER_CONTAINER=2
+      - NUM_FOLLOWERS=12
+      - RIVER_NODE_URL=http://host.docker.internal:5157
+      - BASE_CHAIN_RPC_URL=http://host.docker.internal:8545
+      - REDIS_HOST=host.docker.internal
+      - CHANNEL_SAMPLING_RATE=100
+      - DEBUG=csb:test:stress:run*
+      - MOCK_PERSISTENCE_STORE=true
+      # 10 minutes
+      - LOAD_TEST_DURATION_MS=600000
+      - MAX_MSG_DELAY_MS=10000
+      - JOIN_FACTOR=7
+    depends_on:
+      - redis
+  follower-2:
+    build:
+      context: ../../
+      dockerfile: ./servers/load-testing/Dockerfile
+    ports:
+      - "5003:80"
+    environment:
+      - MODE=follower
+      - NUM_TOWNS=5
+      - NUM_CHANNELS_PER_TOWN=5
+      - NUM_CLIENTS_PER_PROCESS=2
+      - PROCESSES_PER_CONTAINER=2
+      - NUM_FOLLOWERS=12
+      - RIVER_NODE_URL=http://host.docker.internal:5157
+      - BASE_CHAIN_RPC_URL=http://host.docker.internal:8545
+      - REDIS_HOST=host.docker.internal
+      - CHANNEL_SAMPLING_RATE=100
+      - DEBUG=csb:test:stress:run*
+      - MOCK_PERSISTENCE_STORE=true
+      # 10 minutes
+      - LOAD_TEST_DURATION_MS=600000
+      - MAX_MSG_DELAY_MS=10000
+      - JOIN_FACTOR=7
+    depends_on:
+      - redis
+  follower-3:
+    build:
+      context: ../../
+      dockerfile: ./servers/load-testing/Dockerfile
+    ports:
+      - "5004:80"
+    environment:
+      - MODE=follower
+      - NUM_TOWNS=5
+      - NUM_CHANNELS_PER_TOWN=5
+      - NUM_CLIENTS_PER_PROCESS=2
+      - PROCESSES_PER_CONTAINER=2
+      - NUM_FOLLOWERS=12
+      - RIVER_NODE_URL=http://host.docker.internal:5157
+      - BASE_CHAIN_RPC_URL=http://host.docker.internal:8545
+      - REDIS_HOST=host.docker.internal
+      - CHANNEL_SAMPLING_RATE=100
+      - DEBUG=csb:test:stress:run*
+      - MOCK_PERSISTENCE_STORE=true
+      # 10 minutes
+      - LOAD_TEST_DURATION_MS=600000
+      - MAX_MSG_DELAY_MS=10000
+      - JOIN_FACTOR=7
+    depends_on:
+      - redis    

@@ -1,0 +1,11 @@
+{
+    "extends": "./../tsconfig.base.json",
+    "compilerOptions": {
+        "baseUrl": "./src" /* Specify the root folder within your source files. */,
+        "outDir": "./dist" /* Specify an output folder for all emitted files. */,
+        "jsx": "react",
+        "noImplicitReturns": false,
+        "esModuleInterop": true
+    },
+    "include": ["src/**/*"]
+}

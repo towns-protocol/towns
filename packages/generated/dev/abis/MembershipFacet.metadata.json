@@ -1,0 +1,2200 @@
+{
+  "compiler": {
+    "version": "0.8.23+commit.f704f362"
+  },
+  "language": "Solidity",
+  "output": {
+    "abi": [
+      {
+        "inputs": [],
+        "name": "ApprovalCallerNotOwnerNorApproved",
+        "type": "error"
+      },
+      {
+        "inputs": [],
+        "name": "ApprovalQueryForNonexistentToken",
+        "type": "error"
+      },
+      {
+        "inputs": [],
+        "name": "BalanceQueryForZeroAddress",
+        "type": "error"
+      },
+      {
+        "inputs": [
+          {
+            "internalType": "uint256",
+            "name": "tokenId",
+            "type": "uint256"
+          }
+        ],
+        "name": "Banning__InvalidTokenId",
+        "type": "error"
+      },
+      {
+        "inputs": [],
+        "name": "ERC5643__DurationZero",
+        "type": "error"
+      },
+      {
+        "inputs": [
+          {
+            "internalType": "uint256",
+            "name": "tokenId",
+            "type": "uint256"
+          }
+        ],
+        "name": "ERC5643__InvalidTokenId",
+        "type": "error"
+      },
+      {
+        "inputs": [],
+        "name": "ERC5643__NotApprovedOrOwner",
+        "type": "error"
+      },
+      {
+        "inputs": [
+          {
+            "internalType": "uint256",
+            "name": "tokenId",
+            "type": "uint256"
+          }
+        ],
+        "name": "ERC5643__SubscriptionNotRenewable",
+        "type": "error"
+      },
+      {
+        "inputs": [],
+        "name": "Entitlement__InvalidValue",
+        "type": "error"
+      },
+      {
+        "inputs": [],
+        "name": "Entitlement__NotAllowed",
+        "type": "error"
+      },
+      {
+        "inputs": [],
+        "name": "Entitlement__NotMember",
+        "type": "error"
+      },
+      {
+        "inputs": [],
+        "name": "Entitlement__ValueAlreadyExists",
+        "type": "error"
+      },
+      {
+        "inputs": [],
+        "name": "Initializable_InInitializingState",
+        "type": "error"
+      },
+      {
+        "inputs": [],
+        "name": "Initializable_NotInInitializingState",
+        "type": "error"
+      },
+      {
+        "inputs": [],
+        "name": "Introspection_AlreadySupported",
+        "type": "error"
+      },
+      {
+        "inputs": [],
+        "name": "Introspection_NotSupported",
+        "type": "error"
+      },
+      {
+        "inputs": [],
+        "name": "Membership__AlreadyMember",
+        "type": "error"
+      },
+      {
+        "inputs": [],
+        "name": "Membership__InsufficientPayment",
+        "type": "error"
+      },
+      {
+        "inputs": [],
+        "name": "Membership__InvalidAddress",
+        "type": "error"
+      },
+      {
+        "inputs": [],
+        "name": "Membership__InvalidCurrency",
+        "type": "error"
+      },
+      {
+        "inputs": [],
+        "name": "Membership__InvalidDuration",
+        "type": "error"
+      },
+      {
+        "inputs": [],
+        "name": "Membership__InvalidFeeRecipient",
+        "type": "error"
+      },
+      {
+        "inputs": [],
+        "name": "Membership__InvalidFreeAllocation",
+        "type": "error"
+      },
+      {
+        "inputs": [],
+        "name": "Membership__InvalidLimit",
+        "type": "error"
+      },
+      {
+        "inputs": [],
+        "name": "Membership__InvalidMaxSupply",
+        "type": "error"
+      },
+      {
+        "inputs": [],
+        "name": "Membership__InvalidPrice",
+        "type": "error"
+      },
+      {
+        "inputs": [],
+        "name": "Membership__InvalidPricingModule",
+        "type": "error"
+      },
+      {
+        "inputs": [],
+        "name": "Membership__InvalidReferralBps",
+        "type": "error"
+      },
+      {
+        "inputs": [],
+        "name": "Membership__InvalidReferralCode",
+        "type": "error"
+      },
+      {
+        "inputs": [],
+        "name": "Membership__InvalidReferralTime",
+        "type": "error"
+      },
+      {
+        "inputs": [],
+        "name": "Membership__InvalidTokenId",
+        "type": "error"
+      },
+      {
+        "inputs": [],
+        "name": "Membership__MaxSupplyReached",
+        "type": "error"
+      },
+      {
+        "inputs": [],
+        "name": "Membership__NotExpired",
+        "type": "error"
+      },
+      {
+        "inputs": [],
+        "name": "Membership__NotRenewable",
+        "type": "error"
+      },
+      {
+        "inputs": [],
+        "name": "Membership__PriceTooLow",
+        "type": "error"
+      },
+      {
+        "inputs": [],
+        "name": "MintERC2309QuantityExceedsLimit",
+        "type": "error"
+      },
+      {
+        "inputs": [],
+        "name": "MintToZeroAddress",
+        "type": "error"
+      },
+      {
+        "inputs": [],
+        "name": "MintZeroQuantity",
+        "type": "error"
+      },
+      {
+        "inputs": [
+          {
+            "internalType": "address",
+            "name": "account",
+            "type": "address"
+          }
+        ],
+        "name": "Ownable__NotOwner",
+        "type": "error"
+      },
+      {
+        "inputs": [],
+        "name": "Ownable__ZeroAddress",
+        "type": "error"
+      },
+      {
+        "inputs": [],
+        "name": "OwnerQueryForNonexistentToken",
+        "type": "error"
+      },
+      {
+        "inputs": [],
+        "name": "OwnershipNotInitializedForExtraData",
+        "type": "error"
+      },
+      {
+        "inputs": [],
+        "name": "Pausable__NotPaused",
+        "type": "error"
+      },
+      {
+        "inputs": [],
+        "name": "Pausable__Paused",
+        "type": "error"
+      },
+      {
+        "inputs": [],
+        "name": "ReentrancyGuard__ReentrantCall",
+        "type": "error"
+      },
+      {
+        "inputs": [],
+        "name": "TransferCallerNotOwnerNorApproved",
+        "type": "error"
+      },
+      {
+        "inputs": [],
+        "name": "TransferFromIncorrectOwner",
+        "type": "error"
+      },
+      {
+        "inputs": [],
+        "name": "TransferToNonERC721ReceiverImplementer",
+        "type": "error"
+      },
+      {
+        "inputs": [],
+        "name": "TransferToZeroAddress",
+        "type": "error"
+      },
+      {
+        "inputs": [],
+        "name": "URIQueryForNonexistentToken",
+        "type": "error"
+      },
+      {
+        "anonymous": false,
+        "inputs": [
+          {
+            "indexed": true,
+            "internalType": "address",
+            "name": "owner",
+            "type": "address"
+          },
+          {
+            "indexed": true,
+            "internalType": "address",
+            "name": "approved",
+            "type": "address"
+          },
+          {
+            "indexed": true,
+            "internalType": "uint256",
+            "name": "tokenId",
+            "type": "uint256"
+          }
+        ],
+        "name": "Approval",
+        "type": "event"
+      },
+      {
+        "anonymous": false,
+        "inputs": [
+          {
+            "indexed": true,
+            "internalType": "address",
+            "name": "owner",
+            "type": "address"
+          },
+          {
+            "indexed": true,
+            "internalType": "address",
+            "name": "operator",
+            "type": "address"
+          },
+          {
+            "indexed": false,
+            "internalType": "bool",
+            "name": "approved",
+            "type": "bool"
+          }
+        ],
+        "name": "ApprovalForAll",
+        "type": "event"
+      },
+      {
+        "anonymous": false,
+        "inputs": [
+          {
+            "indexed": true,
+            "internalType": "uint256",
+            "name": "fromTokenId",
+            "type": "uint256"
+          },
+          {
+            "indexed": false,
+            "internalType": "uint256",
+            "name": "toTokenId",
+            "type": "uint256"
+          },
+          {
+            "indexed": true,
+            "internalType": "address",
+            "name": "from",
+            "type": "address"
+          },
+          {
+            "indexed": true,
+            "internalType": "address",
+            "name": "to",
+            "type": "address"
+          }
+        ],
+        "name": "ConsecutiveTransfer",
+        "type": "event"
+      },
+      {
+        "anonymous": false,
+        "inputs": [
+          {
+            "indexed": false,
+            "internalType": "uint32",
+            "name": "version",
+            "type": "uint32"
+          }
+        ],
+        "name": "Initialized",
+        "type": "event"
+      },
+      {
+        "anonymous": false,
+        "inputs": [
+          {
+            "indexed": true,
+            "internalType": "bytes4",
+            "name": "interfaceId",
+            "type": "bytes4"
+          }
+        ],
+        "name": "InterfaceAdded",
+        "type": "event"
+      },
+      {
+        "anonymous": false,
+        "inputs": [
+          {
+            "indexed": true,
+            "internalType": "bytes4",
+            "name": "interfaceId",
+            "type": "bytes4"
+          }
+        ],
+        "name": "InterfaceRemoved",
+        "type": "event"
+      },
+      {
+        "anonymous": false,
+        "inputs": [
+          {
+            "indexed": true,
+            "internalType": "address",
+            "name": "currency",
+            "type": "address"
+          }
+        ],
+        "name": "MembershipCurrencyUpdated",
+        "type": "event"
+      },
+      {
+        "anonymous": false,
+        "inputs": [
+          {
+            "indexed": true,
+            "internalType": "address",
+            "name": "recipient",
+            "type": "address"
+          }
+        ],
+        "name": "MembershipFeeRecipientUpdated",
+        "type": "event"
+      },
+      {
+        "anonymous": false,
+        "inputs": [
+          {
+            "indexed": true,
+            "internalType": "uint256",
+            "name": "allocation",
+            "type": "uint256"
+          }
+        ],
+        "name": "MembershipFreeAllocationUpdated",
+        "type": "event"
+      },
+      {
+        "anonymous": false,
+        "inputs": [
+          {
+            "indexed": true,
+            "internalType": "uint256",
+            "name": "limit",
+            "type": "uint256"
+          }
+        ],
+        "name": "MembershipLimitUpdated",
+        "type": "event"
+      },
+      {
+        "anonymous": false,
+        "inputs": [
+          {
+            "indexed": true,
+            "internalType": "uint256",
+            "name": "price",
+            "type": "uint256"
+          }
+        ],
+        "name": "MembershipPriceUpdated",
+        "type": "event"
+      },
+      {
+        "anonymous": false,
+        "inputs": [
+          {
+            "indexed": true,
+            "internalType": "uint256",
+            "name": "code",
+            "type": "uint256"
+          },
+          {
+            "indexed": false,
+            "internalType": "uint16",
+            "name": "bps",
+            "type": "uint16"
+          }
+        ],
+        "name": "Membership__ReferralCreated",
+        "type": "event"
+      },
+      {
+        "anonymous": false,
+        "inputs": [
+          {
+            "indexed": true,
+            "internalType": "uint256",
+            "name": "code",
+            "type": "uint256"
+          }
+        ],
+        "name": "Membership__ReferralRemoved",
+        "type": "event"
+      },
+      {
+        "anonymous": false,
+        "inputs": [
+          {
+            "indexed": true,
+            "internalType": "uint256",
+            "name": "code",
+            "type": "uint256"
+          },
+          {
+            "indexed": false,
+            "internalType": "uint16",
+            "name": "bps",
+            "type": "uint16"
+          },
+          {
+            "indexed": false,
+            "internalType": "uint256",
+            "name": "startTime",
+            "type": "uint256"
+          },
+          {
+            "indexed": false,
+            "internalType": "uint256",
+            "name": "endTime",
+            "type": "uint256"
+          }
+        ],
+        "name": "Membership__ReferralTimeCreated",
+        "type": "event"
+      },
+      {
+        "anonymous": false,
+        "inputs": [
+          {
+            "indexed": true,
+            "internalType": "address",
+            "name": "previousOwner",
+            "type": "address"
+          },
+          {
+            "indexed": true,
+            "internalType": "address",
+            "name": "newOwner",
+            "type": "address"
+          }
+        ],
+        "name": "OwnershipTransferred",
+        "type": "event"
+      },
+      {
+        "anonymous": false,
+        "inputs": [
+          {
+            "indexed": false,
+            "internalType": "address",
+            "name": "account",
+            "type": "address"
+          }
+        ],
+        "name": "Paused",
+        "type": "event"
+      },
+      {
+        "anonymous": false,
+        "inputs": [
+          {
+            "indexed": true,
+            "internalType": "uint256",
+            "name": "tokenId",
+            "type": "uint256"
+          },
+          {
+            "indexed": false,
+            "internalType": "uint64",
+            "name": "expiration",
+            "type": "uint64"
+          }
+        ],
+        "name": "SubscriptionUpdate",
+        "type": "event"
+      },
+      {
+        "anonymous": false,
+        "inputs": [
+          {
+            "indexed": true,
+            "internalType": "address",
+            "name": "from",
+            "type": "address"
+          },
+          {
+            "indexed": true,
+            "internalType": "address",
+            "name": "to",
+            "type": "address"
+          },
+          {
+            "indexed": true,
+            "internalType": "uint256",
+            "name": "tokenId",
+            "type": "uint256"
+          }
+        ],
+        "name": "Transfer",
+        "type": "event"
+      },
+      {
+        "anonymous": false,
+        "inputs": [
+          {
+            "indexed": false,
+            "internalType": "address",
+            "name": "account",
+            "type": "address"
+          }
+        ],
+        "name": "Unpaused",
+        "type": "event"
+      },
+      {
+        "inputs": [
+          {
+            "internalType": "string",
+            "name": "name_",
+            "type": "string"
+          },
+          {
+            "internalType": "string",
+            "name": "symbol_",
+            "type": "string"
+          }
+        ],
+        "name": "__ERC721A_init",
+        "outputs": [],
+        "stateMutability": "nonpayable",
+        "type": "function"
+      },
+      {
+        "inputs": [
+          {
+            "components": [
+              {
+                "internalType": "string",
+                "name": "name",
+                "type": "string"
+              },
+              {
+                "internalType": "string",
+                "name": "symbol",
+                "type": "string"
+              },
+              {
+                "internalType": "uint256",
+                "name": "price",
+                "type": "uint256"
+              },
+              {
+                "internalType": "uint256",
+                "name": "maxSupply",
+                "type": "uint256"
+              },
+              {
+                "internalType": "uint64",
+                "name": "duration",
+                "type": "uint64"
+              },
+              {
+                "internalType": "address",
+                "name": "currency",
+                "type": "address"
+              },
+              {
+                "internalType": "address",
+                "name": "feeRecipient",
+                "type": "address"
+              },
+              {
+                "internalType": "uint256",
+                "name": "freeAllocation",
+                "type": "uint256"
+              },
+              {
+                "internalType": "address",
+                "name": "pricingModule",
+                "type": "address"
+              }
+            ],
+            "internalType": "struct IMembershipBase.Membership",
+            "name": "info",
+            "type": "tuple"
+          },
+          {
+            "internalType": "address",
+            "name": "spaceFactory",
+            "type": "address"
+          }
+        ],
+        "name": "__Membership_init",
+        "outputs": [],
+        "stateMutability": "nonpayable",
+        "type": "function"
+      },
+      {
+        "inputs": [],
+        "name": "_getMembershipCurrency",
+        "outputs": [
+          {
+            "internalType": "address",
+            "name": "",
+            "type": "address"
+          }
+        ],
+        "stateMutability": "view",
+        "type": "function"
+      },
+      {
+        "inputs": [],
+        "name": "_getMembershipFeeRecipient",
+        "outputs": [
+          {
+            "internalType": "address",
+            "name": "",
+            "type": "address"
+          }
+        ],
+        "stateMutability": "view",
+        "type": "function"
+      },
+      {
+        "inputs": [],
+        "name": "_getMembershipFreeAllocation",
+        "outputs": [
+          {
+            "internalType": "uint256",
+            "name": "",
+            "type": "uint256"
+          }
+        ],
+        "stateMutability": "view",
+        "type": "function"
+      },
+      {
+        "inputs": [
+          {
+            "internalType": "uint256",
+            "name": "totalSupply",
+            "type": "uint256"
+          }
+        ],
+        "name": "_getMembershipPrice",
+        "outputs": [
+          {
+            "internalType": "uint256",
+            "name": "",
+            "type": "uint256"
+          }
+        ],
+        "stateMutability": "view",
+        "type": "function"
+      },
+      {
+        "inputs": [],
+        "name": "_getMembershipSupplyLimit",
+        "outputs": [
+          {
+            "internalType": "uint256",
+            "name": "",
+            "type": "uint256"
+          }
+        ],
+        "stateMutability": "view",
+        "type": "function"
+      },
+      {
+        "inputs": [],
+        "name": "_getPricingModule",
+        "outputs": [
+          {
+            "internalType": "address",
+            "name": "",
+            "type": "address"
+          }
+        ],
+        "stateMutability": "view",
+        "type": "function"
+      },
+      {
+        "inputs": [],
+        "name": "_getTownFactory",
+        "outputs": [
+          {
+            "internalType": "address",
+            "name": "",
+            "type": "address"
+          }
+        ],
+        "stateMutability": "view",
+        "type": "function"
+      },
+      {
+        "inputs": [
+          {
+            "internalType": "address",
+            "name": "newCurrency",
+            "type": "address"
+          }
+        ],
+        "name": "_setMembershipCurrency",
+        "outputs": [],
+        "stateMutability": "nonpayable",
+        "type": "function"
+      },
+      {
+        "inputs": [
+          {
+            "internalType": "address",
+            "name": "newRecipient",
+            "type": "address"
+          }
+        ],
+        "name": "_setMembershipFeeRecipient",
+        "outputs": [],
+        "stateMutability": "nonpayable",
+        "type": "function"
+      },
+      {
+        "inputs": [
+          {
+            "internalType": "uint256",
+            "name": "newAllocation",
+            "type": "uint256"
+          }
+        ],
+        "name": "_setMembershipFreeAllocation",
+        "outputs": [],
+        "stateMutability": "nonpayable",
+        "type": "function"
+      },
+      {
+        "inputs": [
+          {
+            "internalType": "uint256",
+            "name": "newPrice",
+            "type": "uint256"
+          }
+        ],
+        "name": "_setMembershipPrice",
+        "outputs": [],
+        "stateMutability": "nonpayable",
+        "type": "function"
+      },
+      {
+        "inputs": [
+          {
+            "internalType": "uint256",
+            "name": "newLimit",
+            "type": "uint256"
+          }
+        ],
+        "name": "_setMembershipSupplyLimit",
+        "outputs": [],
+        "stateMutability": "nonpayable",
+        "type": "function"
+      },
+      {
+        "inputs": [
+          {
+            "internalType": "address",
+            "name": "newPricingModule",
+            "type": "address"
+          }
+        ],
+        "name": "_setPricingModule",
+        "outputs": [],
+        "stateMutability": "nonpayable",
+        "type": "function"
+      },
+      {
+        "inputs": [
+          {
+            "internalType": "address",
+            "name": "to",
+            "type": "address"
+          },
+          {
+            "internalType": "uint256",
+            "name": "tokenId",
+            "type": "uint256"
+          }
+        ],
+        "name": "approve",
+        "outputs": [],
+        "stateMutability": "payable",
+        "type": "function"
+      },
+      {
+        "inputs": [
+          {
+            "internalType": "address",
+            "name": "account",
+            "type": "address"
+          }
+        ],
+        "name": "balanceOf",
+        "outputs": [
+          {
+            "internalType": "uint256",
+            "name": "",
+            "type": "uint256"
+          }
+        ],
+        "stateMutability": "view",
+        "type": "function"
+      },
+      {
+        "inputs": [
+          {
+            "internalType": "uint256",
+            "name": "tokenId",
+            "type": "uint256"
+          }
+        ],
+        "name": "cancelMembership",
+        "outputs": [],
+        "stateMutability": "nonpayable",
+        "type": "function"
+      },
+      {
+        "inputs": [
+          {
+            "internalType": "uint256",
+            "name": "tokenId",
+            "type": "uint256"
+          }
+        ],
+        "name": "expiresAt",
+        "outputs": [
+          {
+            "internalType": "uint256",
+            "name": "",
+            "type": "uint256"
+          }
+        ],
+        "stateMutability": "view",
+        "type": "function"
+      },
+      {
+        "inputs": [
+          {
+            "internalType": "uint256",
+            "name": "tokenId",
+            "type": "uint256"
+          }
+        ],
+        "name": "getApproved",
+        "outputs": [
+          {
+            "internalType": "address",
+            "name": "",
+            "type": "address"
+          }
+        ],
+        "stateMutability": "view",
+        "type": "function"
+      },
+      {
+        "inputs": [],
+        "name": "getMembershipCurrency",
+        "outputs": [
+          {
+            "internalType": "address",
+            "name": "",
+            "type": "address"
+          }
+        ],
+        "stateMutability": "view",
+        "type": "function"
+      },
+      {
+        "inputs": [],
+        "name": "getMembershipDuration",
+        "outputs": [
+          {
+            "internalType": "uint64",
+            "name": "",
+            "type": "uint64"
+          }
+        ],
+        "stateMutability": "view",
+        "type": "function"
+      },
+      {
+        "inputs": [],
+        "name": "getMembershipFeeRecipient",
+        "outputs": [
+          {
+            "internalType": "address",
+            "name": "",
+            "type": "address"
+          }
+        ],
+        "stateMutability": "view",
+        "type": "function"
+      },
+      {
+        "inputs": [],
+        "name": "getMembershipFreeAllocation",
+        "outputs": [
+          {
+            "internalType": "uint256",
+            "name": "",
+            "type": "uint256"
+          }
+        ],
+        "stateMutability": "view",
+        "type": "function"
+      },
+      {
+        "inputs": [],
+        "name": "getMembershipLimit",
+        "outputs": [
+          {
+            "internalType": "uint256",
+            "name": "",
+            "type": "uint256"
+          }
+        ],
+        "stateMutability": "view",
+        "type": "function"
+      },
+      {
+        "inputs": [],
+        "name": "getMembershipPrice",
+        "outputs": [
+          {
+            "internalType": "uint256",
+            "name": "",
+            "type": "uint256"
+          }
+        ],
+        "stateMutability": "view",
+        "type": "function"
+      },
+      {
+        "inputs": [],
+        "name": "getMembershipPricingModule",
+        "outputs": [
+          {
+            "internalType": "address",
+            "name": "",
+            "type": "address"
+          }
+        ],
+        "stateMutability": "view",
+        "type": "function"
+      },
+      {
+        "inputs": [
+          {
+            "internalType": "uint256",
+            "name": "tokenId",
+            "type": "uint256"
+          }
+        ],
+        "name": "getMembershipRenewalPrice",
+        "outputs": [
+          {
+            "internalType": "uint256",
+            "name": "",
+            "type": "uint256"
+          }
+        ],
+        "stateMutability": "view",
+        "type": "function"
+      },
+      {
+        "inputs": [],
+        "name": "getTownFactory",
+        "outputs": [
+          {
+            "internalType": "address",
+            "name": "",
+            "type": "address"
+          }
+        ],
+        "stateMutability": "view",
+        "type": "function"
+      },
+      {
+        "inputs": [
+          {
+            "internalType": "address",
+            "name": "owner",
+            "type": "address"
+          },
+          {
+            "internalType": "address",
+            "name": "operator",
+            "type": "address"
+          }
+        ],
+        "name": "isApprovedForAll",
+        "outputs": [
+          {
+            "internalType": "bool",
+            "name": "",
+            "type": "bool"
+          }
+        ],
+        "stateMutability": "view",
+        "type": "function"
+      },
+      {
+        "inputs": [
+          {
+            "internalType": "address",
+            "name": "receiver",
+            "type": "address"
+          }
+        ],
+        "name": "joinTown",
+        "outputs": [
+          {
+            "internalType": "uint256",
+            "name": "tokenId",
+            "type": "uint256"
+          }
+        ],
+        "stateMutability": "payable",
+        "type": "function"
+      },
+      {
+        "inputs": [
+          {
+            "internalType": "address",
+            "name": "receiver",
+            "type": "address"
+          },
+          {
+            "internalType": "address",
+            "name": "referrer",
+            "type": "address"
+          },
+          {
+            "internalType": "uint256",
+            "name": "referralCode",
+            "type": "uint256"
+          }
+        ],
+        "name": "joinTownWithReferral",
+        "outputs": [
+          {
+            "internalType": "uint256",
+            "name": "tokenId",
+            "type": "uint256"
+          }
+        ],
+        "stateMutability": "payable",
+        "type": "function"
+      },
+      {
+        "inputs": [],
+        "name": "name",
+        "outputs": [
+          {
+            "internalType": "string",
+            "name": "",
+            "type": "string"
+          }
+        ],
+        "stateMutability": "view",
+        "type": "function"
+      },
+      {
+        "inputs": [
+          {
+            "internalType": "uint256",
+            "name": "tokenId",
+            "type": "uint256"
+          }
+        ],
+        "name": "ownerOf",
+        "outputs": [
+          {
+            "internalType": "address",
+            "name": "",
+            "type": "address"
+          }
+        ],
+        "stateMutability": "view",
+        "type": "function"
+      },
+      {
+        "inputs": [
+          {
+            "internalType": "address",
+            "name": "receiver",
+            "type": "address"
+          }
+        ],
+        "name": "renewMembership",
+        "outputs": [],
+        "stateMutability": "payable",
+        "type": "function"
+      },
+      {
+        "inputs": [
+          {
+            "internalType": "address",
+            "name": "from",
+            "type": "address"
+          },
+          {
+            "internalType": "address",
+            "name": "to",
+            "type": "address"
+          },
+          {
+            "internalType": "uint256",
+            "name": "tokenId",
+            "type": "uint256"
+          }
+        ],
+        "name": "safeTransferFrom",
+        "outputs": [],
+        "stateMutability": "payable",
+        "type": "function"
+      },
+      {
+        "inputs": [
+          {
+            "internalType": "address",
+            "name": "from",
+            "type": "address"
+          },
+          {
+            "internalType": "address",
+            "name": "to",
+            "type": "address"
+          },
+          {
+            "internalType": "uint256",
+            "name": "tokenId",
+            "type": "uint256"
+          },
+          {
+            "internalType": "bytes",
+            "name": "_data",
+            "type": "bytes"
+          }
+        ],
+        "name": "safeTransferFrom",
+        "outputs": [],
+        "stateMutability": "payable",
+        "type": "function"
+      },
+      {
+        "inputs": [
+          {
+            "internalType": "address",
+            "name": "operator",
+            "type": "address"
+          },
+          {
+            "internalType": "bool",
+            "name": "approved",
+            "type": "bool"
+          }
+        ],
+        "name": "setApprovalForAll",
+        "outputs": [],
+        "stateMutability": "nonpayable",
+        "type": "function"
+      },
+      {
+        "inputs": [
+          {
+            "internalType": "address",
+            "name": "newCurrency",
+            "type": "address"
+          }
+        ],
+        "name": "setMembershipCurrency",
+        "outputs": [],
+        "stateMutability": "nonpayable",
+        "type": "function"
+      },
+      {
+        "inputs": [
+          {
+            "internalType": "uint64",
+            "name": "newDuration",
+            "type": "uint64"
+          }
+        ],
+        "name": "setMembershipDuration",
+        "outputs": [],
+        "stateMutability": "nonpayable",
+        "type": "function"
+      },
+      {
+        "inputs": [
+          {
+            "internalType": "address",
+            "name": "newRecipient",
+            "type": "address"
+          }
+        ],
+        "name": "setMembershipFeeRecipient",
+        "outputs": [],
+        "stateMutability": "nonpayable",
+        "type": "function"
+      },
+      {
+        "inputs": [
+          {
+            "internalType": "uint256",
+            "name": "newAllocation",
+            "type": "uint256"
+          }
+        ],
+        "name": "setMembershipFreeAllocation",
+        "outputs": [],
+        "stateMutability": "nonpayable",
+        "type": "function"
+      },
+      {
+        "inputs": [
+          {
+            "internalType": "uint256",
+            "name": "newLimit",
+            "type": "uint256"
+          }
+        ],
+        "name": "setMembershipLimit",
+        "outputs": [],
+        "stateMutability": "nonpayable",
+        "type": "function"
+      },
+      {
+        "inputs": [
+          {
+            "internalType": "uint256",
+            "name": "newPrice",
+            "type": "uint256"
+          }
+        ],
+        "name": "setMembershipPrice",
+        "outputs": [],
+        "stateMutability": "nonpayable",
+        "type": "function"
+      },
+      {
+        "inputs": [
+          {
+            "internalType": "address",
+            "name": "pricingModule",
+            "type": "address"
+          }
+        ],
+        "name": "setMembershipPricingModule",
+        "outputs": [],
+        "stateMutability": "nonpayable",
+        "type": "function"
+      },
+      {
+        "inputs": [],
+        "name": "symbol",
+        "outputs": [
+          {
+            "internalType": "string",
+            "name": "",
+            "type": "string"
+          }
+        ],
+        "stateMutability": "view",
+        "type": "function"
+      },
+      {
+        "inputs": [
+          {
+            "internalType": "uint256",
+            "name": "tokenId",
+            "type": "uint256"
+          }
+        ],
+        "name": "tokenURI",
+        "outputs": [
+          {
+            "internalType": "string",
+            "name": "",
+            "type": "string"
+          }
+        ],
+        "stateMutability": "view",
+        "type": "function"
+      },
+      {
+        "inputs": [],
+        "name": "totalSupply",
+        "outputs": [
+          {
+            "internalType": "uint256",
+            "name": "",
+            "type": "uint256"
+          }
+        ],
+        "stateMutability": "view",
+        "type": "function"
+      },
+      {
+        "inputs": [
+          {
+            "internalType": "address",
+            "name": "from",
+            "type": "address"
+          },
+          {
+            "internalType": "address",
+            "name": "to",
+            "type": "address"
+          },
+          {
+            "internalType": "uint256",
+            "name": "tokenId",
+            "type": "uint256"
+          }
+        ],
+        "name": "transferFrom",
+        "outputs": [],
+        "stateMutability": "payable",
+        "type": "function"
+      }
+    ],
+    "devdoc": {
+      "events": {
+        "Approval(address,address,uint256)": {
+          "details": "Emitted when `owner` enables `approved` to manage the `tokenId` token."
+        },
+        "ApprovalForAll(address,address,bool)": {
+          "details": "Emitted when `owner` enables or disables (`approved`) `operator` to manage all of its assets."
+        },
+        "ConsecutiveTransfer(uint256,uint256,address,address)": {
+          "details": "Emitted when tokens in `fromTokenId` to `toTokenId` (inclusive) is transferred from `from` to `to`, as defined in the [ERC2309](https://eips.ethereum.org/EIPS/eip-2309) standard. See {_mintERC2309} for more details."
+        },
+        "OwnershipTransferred(address,address)": {
+          "details": "This emits when ownership of a contract changes."
+        },
+        "SubscriptionUpdate(uint256,uint64)": {
+          "details": "When a subscription is canceled, the expiration value should also be 0."
+        },
+        "Transfer(address,address,uint256)": {
+          "details": "Emitted when `tokenId` token is transferred from `from` to `to`."
+        }
+      },
+      "kind": "dev",
+      "methods": {
+        "_getMembershipPrice(uint256)": {
+          "details": "Makes it virtual to allow other pricing strategies"
+        },
+        "approve(address,uint256)": {
+          "details": "Gives permission to `to` to transfer `tokenId` token to another account. See {ERC721A-_approve}. Requirements: - The caller must own the token or be an approved operator."
+        },
+        "cancelMembership(uint256)": {
+          "params": {
+            "tokenId": "The token id of the membership"
+          }
+        },
+        "expiresAt(uint256)": {
+          "params": {
+            "tokenId": "The token id of the membership"
+          }
+        },
+        "getApproved(uint256)": {
+          "details": "Returns the account approved for `tokenId` token. Requirements: - `tokenId` must exist."
+        },
+        "getMembershipCurrency()": {
+          "returns": {
+            "_0": "The membership currency"
+          }
+        },
+        "getMembershipDuration()": {
+          "returns": {
+            "_0": "The membership duration"
+          }
+        },
+        "getMembershipFeeRecipient()": {
+          "returns": {
+            "_0": "The membership fee recipient"
+          }
+        },
+        "getMembershipFreeAllocation()": {
+          "returns": {
+            "_0": "The membership free allocation"
+          }
+        },
+        "getMembershipLimit()": {
+          "returns": {
+            "_0": "The membership limit"
+          }
+        },
+        "getMembershipPrice()": {
+          "returns": {
+            "_0": "The membership price"
+          }
+        },
+        "getMembershipPricingModule()": {
+          "returns": {
+            "_0": "The membership pricing module"
+          }
+        },
+        "getMembershipRenewalPrice(uint256)": {
+          "params": {
+            "tokenId": "The token id of the membership"
+          },
+          "returns": {
+            "_0": "The membership renewal price"
+          }
+        },
+        "getTownFactory()": {
+          "returns": {
+            "_0": "The town factory"
+          }
+        },
+        "isApprovedForAll(address,address)": {
+          "details": "Returns if the `operator` is allowed to manage all of the assets of `owner`. See {setApprovalForAll}."
+        },
+        "joinTown(address)": {
+          "params": {
+            "receiver": "The address of the receiver"
+          },
+          "returns": {
+            "tokenId": "The token id of the membership"
+          }
+        },
+        "joinTownWithReferral(address,address,uint256)": {
+          "params": {
+            "receiver": "The address of the receiver",
+            "referralCode": "The referral code",
+            "referrer": "The address of the referrer"
+          },
+          "returns": {
+            "tokenId": "The token id of the membership"
+          }
+        },
+        "name()": {
+          "details": "Returns the token collection name."
+        },
+        "ownerOf(uint256)": {
+          "details": "Returns the owner of the `tokenId` token. Requirements: - `tokenId` must exist."
+        },
+        "renewMembership(address)": {
+          "params": {
+            "receiver": "The address of the receiver"
+          }
+        },
+        "safeTransferFrom(address,address,uint256)": {
+          "details": "Equivalent to `safeTransferFrom(from, to, tokenId, '')`."
+        },
+        "safeTransferFrom(address,address,uint256,bytes)": {
+          "details": "Safely transfers `tokenId` token from `from` to `to`. Requirements: - `from` cannot be the zero address. - `to` cannot be the zero address. - `tokenId` token must exist and be owned by `from`. - If the caller is not `from`, it must be approved to move this token by either {approve} or {setApprovalForAll}. - If `to` refers to a smart contract, it must implement {IERC721Receiver-onERC721Received}, which is called upon a safe transfer. Emits a {Transfer} event."
+        },
+        "setApprovalForAll(address,bool)": {
+          "details": "Approve or remove `operator` as an operator for the caller. Operators can call {transferFrom} or {safeTransferFrom} for any token owned by the caller. Requirements: - The `operator` cannot be the caller. Emits an {ApprovalForAll} event."
+        },
+        "setMembershipCurrency(address)": {
+          "params": {
+            "newCurrency": "The new membership currency"
+          }
+        },
+        "setMembershipDuration(uint64)": {
+          "params": {
+            "newDuration": "The new membership duration"
+          }
+        },
+        "setMembershipFeeRecipient(address)": {
+          "params": {
+            "newRecipient": "The new membership fee recipient"
+          }
+        },
+        "setMembershipFreeAllocation(uint256)": {
+          "params": {
+            "newAllocation": "The new membership free allocation"
+          }
+        },
+        "setMembershipLimit(uint256)": {
+          "params": {
+            "newLimit": "The new membership limit"
+          }
+        },
+        "setMembershipPrice(uint256)": {
+          "params": {
+            "newPrice": "The new membership price"
+          }
+        },
+        "setMembershipPricingModule(address)": {
+          "params": {
+            "pricingModule": "The new pricing module"
+          }
+        },
+        "symbol()": {
+          "details": "Returns the token collection symbol."
+        },
+        "tokenURI(uint256)": {
+          "details": "Returns the Uniform Resource Identifier (URI) for `tokenId` token."
+        },
+        "totalSupply()": {
+          "details": "Returns the total number of tokens in existence. Burned tokens will reduce the count. To get the total number of tokens minted, please see {_totalMinted}."
+        },
+        "transferFrom(address,address,uint256)": {
+          "details": "Transfers `tokenId` from `from` to `to`. Requirements: - `from` cannot be the zero address. - `to` cannot be the zero address. - `tokenId` token must be owned by `from`. - If the caller is not `from`, it must be approved to move this token by either {approve} or {setApprovalForAll}. Emits a {Transfer} event."
+        }
+      },
+      "version": 1
+    },
+    "userdoc": {
+      "errors": {
+        "ApprovalCallerNotOwnerNorApproved()": [
+          {
+            "notice": "The caller must own the token or be an approved operator."
+          }
+        ],
+        "ApprovalQueryForNonexistentToken()": [
+          {
+            "notice": "The token does not exist."
+          }
+        ],
+        "BalanceQueryForZeroAddress()": [
+          {
+            "notice": "Cannot query the balance for the zero address."
+          }
+        ],
+        "MintERC2309QuantityExceedsLimit()": [
+          {
+            "notice": "The `quantity` minted with ERC2309 exceeds the safety limit."
+          }
+        ],
+        "MintToZeroAddress()": [
+          {
+            "notice": "Cannot mint to the zero address."
+          }
+        ],
+        "MintZeroQuantity()": [
+          {
+            "notice": "The quantity of tokens minted must be more than zero."
+          }
+        ],
+        "OwnerQueryForNonexistentToken()": [
+          {
+            "notice": "The token does not exist."
+          }
+        ],
+        "OwnershipNotInitializedForExtraData()": [
+          {
+            "notice": "The `extraData` cannot be set on an unintialized ownership slot."
+          }
+        ],
+        "TransferCallerNotOwnerNorApproved()": [
+          {
+            "notice": "The caller must own the token or be an approved operator."
+          }
+        ],
+        "TransferFromIncorrectOwner()": [
+          {
+            "notice": "The token must be owned by `from`."
+          }
+        ],
+        "TransferToNonERC721ReceiverImplementer()": [
+          {
+            "notice": "Cannot safely transfer to a contract that does not implement the ERC721Receiver interface."
+          }
+        ],
+        "TransferToZeroAddress()": [
+          {
+            "notice": "Cannot transfer to the zero address."
+          }
+        ],
+        "URIQueryForNonexistentToken()": [
+          {
+            "notice": "The token does not exist."
+          }
+        ]
+      },
+      "events": {
+        "InterfaceAdded(bytes4)": {
+          "notice": "Emitted when an interface is added to the contract via `_addInterface`."
+        },
+        "InterfaceRemoved(bytes4)": {
+          "notice": "Emitted when an interface is removed from the contract via `_removeInterface`."
+        },
+        "SubscriptionUpdate(uint256,uint64)": {
+          "notice": "Emitted when a subscription expiration changes"
+        }
+      },
+      "kind": "user",
+      "methods": {
+        "cancelMembership(uint256)": {
+          "notice": "Cancel a town membership"
+        },
+        "expiresAt(uint256)": {
+          "notice": "Return the expiration date of a membership"
+        },
+        "getMembershipCurrency()": {
+          "notice": "Get the membership currency"
+        },
+        "getMembershipDuration()": {
+          "notice": "Get the membership duration"
+        },
+        "getMembershipFeeRecipient()": {
+          "notice": "Get the membership fee recipient"
+        },
+        "getMembershipFreeAllocation()": {
+          "notice": "Get the membership free allocation"
+        },
+        "getMembershipLimit()": {
+          "notice": "Get the membership limit"
+        },
+        "getMembershipPrice()": {
+          "notice": "Get the membership price"
+        },
+        "getMembershipPricingModule()": {
+          "notice": "Get the membership pricing module"
+        },
+        "getMembershipRenewalPrice(uint256)": {
+          "notice": "Get the membership renewal price"
+        },
+        "getTownFactory()": {
+          "notice": "Get the town factory"
+        },
+        "joinTown(address)": {
+          "notice": "Join a town"
+        },
+        "joinTownWithReferral(address,address,uint256)": {
+          "notice": "Join a town with a referral"
+        },
+        "renewMembership(address)": {
+          "notice": "Renew a town membership"
+        },
+        "setMembershipCurrency(address)": {
+          "notice": "Set the membership currency"
+        },
+        "setMembershipDuration(uint64)": {
+          "notice": "Set the membership duration"
+        },
+        "setMembershipFeeRecipient(address)": {
+          "notice": "Set the membership fee recipient"
+        },
+        "setMembershipFreeAllocation(uint256)": {
+          "notice": "Set the membership free allocation"
+        },
+        "setMembershipLimit(uint256)": {
+          "notice": "Set the membership limit"
+        },
+        "setMembershipPrice(uint256)": {
+          "notice": "Set the membership price"
+        },
+        "setMembershipPricingModule(address)": {
+          "notice": "Set the membership pricing module"
+        }
+      },
+      "version": 1
+    }
+  },
+  "settings": {
+    "compilationTarget": {
+      "contracts/src/spaces/facets/membership/MembershipFacet.sol": "MembershipFacet"
+    },
+    "evmVersion": "paris",
+    "libraries": {},
+    "metadata": {
+      "appendCBOR": false,
+      "bytecodeHash": "none"
+    },
+    "optimizer": {
+      "enabled": true,
+      "runs": 200
+    },
+    "remappings": [
+      ":@eth-optimism/contracts-bedrock/=node_modules/@eth-optimism/contracts-bedrock/",
+      ":@openzeppelin/=lib/openzeppelin-contracts/",
+      ":@prb/math/=lib/prb-math/src/",
+      ":@prb/test/=lib/prb-test/src/",
+      ":ERC721A/=lib/ERC721A/contracts/",
+      ":account-abstraction/=lib/account-abstraction/contracts/",
+      ":base64-sol/=lib/base64/",
+      ":base64/=lib/base64/",
+      ":council/=lib/council/contracts/",
+      ":ds-test/=lib/ds-test/src/",
+      ":erc4626-tests/=lib/operator-filter-registry/lib/openzeppelin-contracts/lib/erc4626-tests/",
+      ":forge-std/=lib/forge-std/src/",
+      ":openzeppelin-contracts-upgradeable/=lib/openzeppelin-contracts-upgradeable/contracts/",
+      ":openzeppelin-contracts/=lib/openzeppelin-contracts/",
+      ":operator-filter-registry/=lib/operator-filter-registry/",
+      ":prb-math/=lib/prb-math/src/",
+      ":prb-test/=lib/prb-test/src/"
+    ]
+  },
+  "sources": {
+    "contracts/src/diamond/facets/Facet.sol": {
+      "keccak256": "0xecbb7e8de0dae5bdbcbda879436335abac6808bcc2e14f1f4e9efbdc77c4e8be",
+      "license": "Apache-2.0",
+      "urls": [
+        "bzz-raw://b7b5446461a1492f16c86137ce49a699d8a3452e2174c5568b97f8d2d4bc85a7",
+        "dweb:/ipfs/QmY74odf1qgTwBV3wjF12rV8TXs3DiNoMm9Pg9S8w2F4VP"
+      ]
+    },
+    "contracts/src/diamond/facets/initializable/Initializable.sol": {
+      "keccak256": "0x74f93da9ffed901d60051d3491adc2d029d0f61d707c28eb7d177ee52a489492",
+      "license": "MIT",
+      "urls": [
+        "bzz-raw://7c1689c778f69b56e622d886d129944fba1e8339afc85fad2212de0c9bc62e18",
+        "dweb:/ipfs/QmbEqQmSE9NaPP3JmrPHpLvfzXt66sMvkJSSq13TiKSWXi"
+      ]
+    },
+    "contracts/src/diamond/facets/initializable/InitializableStorage.sol": {
+      "keccak256": "0x278589764eab56d2f12e536c168a83f8170918b1dd8811f4a8463b3e720c95ba",
+      "license": "Apache-2.0",
+      "urls": [
+        "bzz-raw://f19d4d8f41d28de52ef25fbce3eb29ce5fd57c12b806dda64c27e535a6fa43b6",
+        "dweb:/ipfs/QmPj1TyysUzfBYzNCBDF4AK14mGjcGtPcGfYNoSb2t3U7w"
+      ]
+    },
+    "contracts/src/diamond/facets/introspection/IERC165.sol": {
+      "keccak256": "0x243cfeefa64ba07bee887b0b03704147f9bd2f25571272a6ebca3ba684af1b00",
+      "license": "Apache-2.0",
+      "urls": [
+        "bzz-raw://1aed67ea7251fad9dbfb58a30f59f7edd81d48d7f6b193b98f957be359653361",
+        "dweb:/ipfs/QmQauJL4nFMN3QDutjWezRbBjLX5GsTWt5jeLfkX4JW64T"
+      ]
+    },
+    "contracts/src/diamond/facets/introspection/IntrospectionBase.sol": {
+      "keccak256": "0x5379ee00fe8945cb6820e9f3692c1f141ab2bacb286ac39f096857bd530f91ca",
+      "license": "Apache-2.0",
+      "urls": [
+        "bzz-raw://90c08f3e8e8fc64264ac94bc8005286e881760b0c776a9b0a2e679e4cff0237a",
+        "dweb:/ipfs/QmXcpnF9hcUH7jGvEySkNBRybYYrcGyUjkUHXuTex886cJ"
+      ]
+    },
+    "contracts/src/diamond/facets/introspection/IntrospectionStorage.sol": {
+      "keccak256": "0x6dfdf3a4b7b09bd162e9571abe96ac85244f4b26d1ecbe3cd0c4bf534413445a",
+      "license": "Apache-2.0",
+      "urls": [
+        "bzz-raw://e454b9dd354536d1defe593d88dbb8f7c4d8d46d7bf855d39a3eb9bf07d7c349",
+        "dweb:/ipfs/QmaZFpCsdutxFcpuWVnjiAUb17vLqnhhQ23tv8my86h8u1"
+      ]
+    },
+    "contracts/src/diamond/facets/ownable/IERC173.sol": {
+      "keccak256": "0xec6475a73e1229430edadb6fd3e32f1599ebb8af78dbbc762d54ded196e534ae",
+      "license": "Apache-2.0",
+      "urls": [
+        "bzz-raw://46e9fef226666c827f408b5d2c9061600fa5233ddf5fcbc3a2b8956d89e8a872",
+        "dweb:/ipfs/Qmd6L6wtehyrD8XwKqFD7gG5hJxsBZ1ja6hGSf2dtN4XEx"
+      ]
+    },
+    "contracts/src/diamond/facets/ownable/token/ITokenOwnable.sol": {
+      "keccak256": "0x3035bb5eb69a7c939aa038f27eb216b117727beba7d89aa84657c3f24c98b32d",
+      "license": "Apache-2.0",
+      "urls": [
+        "bzz-raw://c1a6860c8105dad4d1b193883ecd700c223ea9b81c096ed86b3d25bd6c9eed7f",
+        "dweb:/ipfs/QmVEDbbF6eyZfmqcM1FfedAuCQqiUYpagDmZMhHM4Ap7n9"
+      ]
+    },
+    "contracts/src/diamond/facets/ownable/token/TokenOwnableBase.sol": {
+      "keccak256": "0xc5ef68652f692a56131badcf0adb92893d822fd5e0d97dda49a4520d1859a00a",
+      "license": "Apache-2.0",
+      "urls": [
+        "bzz-raw://bf38ee4ec154de7ef7de263241454d98392d6e61caf4582e2145325258bb8fa5",
+        "dweb:/ipfs/QmcZGn5KeSPwsTVominE537CDPbTMGoVDgko51onHZoGyW"
+      ]
+    },
+    "contracts/src/diamond/facets/ownable/token/TokenOwnableStorage.sol": {
+      "keccak256": "0x86c57b4dfccdc7459dfb4398d71f41152936ba9081ec29a75a3cc29a3be2c324",
+      "license": "Apache-2.0",
+      "urls": [
+        "bzz-raw://6e3c65245cba71e68a1c5ab9b5298192ad80413643c3afbb61eba1d016472152",
+        "dweb:/ipfs/QmdzCeszA4s9x7de1SzJwYpYjJto83sG3yJZ7XUPAn4suD"
+      ]
+    },
+    "contracts/src/diamond/facets/pausable/IPausable.sol": {
+      "keccak256": "0xd5cc8d743bd12bbd23526178c11808634527c87e2f6da29dfb6aec75dab56261",
+      "license": "Apache-2.0",
+      "urls": [
+        "bzz-raw://c893da163481570ae2e00e5deae732404261cc0e7143fdc0448145810448c6b6",
+        "dweb:/ipfs/QmbyUkcew8vmUXPVLDJ7GjvxMkmTqjhKZWLDYtWEPzZ2SM"
+      ]
+    },
+    "contracts/src/diamond/facets/pausable/PausableBase.sol": {
+      "keccak256": "0xa278c9cdc622351a088d6d96759a51972b1720ef72424f1f98e5822dd9fd6438",
+      "license": "Apache-2.0",
+      "urls": [
+        "bzz-raw://379dabb0f68319e89d4b7447c31d5a3d0d2b4ecbce92b07f6e096974f2541c6c",
+        "dweb:/ipfs/QmPQPKBYtuNiFDNh9nGCJGtLXP2AqPLkZ7BBTKgQZeaVH1"
+      ]
+    },
+    "contracts/src/diamond/facets/pausable/PausableStorage.sol": {
+      "keccak256": "0xe0bbe1c804385ae11c7e0d1054637ee12457f014dec5db1bef77dc0fd3eccbaf",
+      "license": "Apache-2.0",
+      "urls": [
+        "bzz-raw://8f55e470bd7a15f75875ab25705ac584f1184bc289e13e4f0282ba6167c2f5bf",
+        "dweb:/ipfs/QmZumkrGnv5ty65vm7srPLGSzBTua5vJsrSuJcgajMH4JR"
+      ]
+    },
+    "contracts/src/diamond/facets/reentrancy/IReentrancyGuard.sol": {
+      "keccak256": "0xcf0384936029c121c827aca432891d18f7c7db3d234dfbdad69373726d41003a",
+      "license": "Apache-2.0",
+      "urls": [
+        "bzz-raw://6c7127aa6cc24cb43dac1bea76e16b09c2ce26421baf08792f767d6b204ba39b",
+        "dweb:/ipfs/QmSziExRUyaUEVteBXtsxkNMgcdXS9PPaDdCNdLvivcFJq"
+      ]
+    },
+    "contracts/src/diamond/facets/reentrancy/ReentrancyGuard.sol": {
+      "keccak256": "0xf711ce29e4914dfbaf97bbe6296f75992ec28ff550cee80878d82e7da282f610",
+      "license": "Apache-2.0",
+      "urls": [
+        "bzz-raw://928cec674ae3e313754266f08422c9b6841d7119101ea125aaf0e066efbda4e2",
+        "dweb:/ipfs/QmXgyhAKZ47MemMcDRZSgyEqNmsbipucZGh9uh9VvXbu6s"
+      ]
+    },
+    "contracts/src/diamond/facets/reentrancy/ReentrancyGuardStorage.sol": {
+      "keccak256": "0x4a041d8f53b26fef416ff2470abeb0dc2bca9a7ee8179e03f55a162b1b0a6177",
+      "license": "Apache-2.0",
+      "urls": [
+        "bzz-raw://0f032e4a8d31571e67e657bff7f862180e25723fc5910acf7d687e3193a8f502",
+        "dweb:/ipfs/QmZy8CiAgjaCCVQSCkUF3Ct8rZVNciMqNp1fmbzbNvVVyG"
+      ]
+    },
+    "contracts/src/diamond/facets/token/ERC5643/ERC5643Base.sol": {
+      "keccak256": "0x08a5e803cae11a5ca3cb43e3243b4af0339cf044fe8a8f33c02eeac6a89771a3",
+      "license": "Apache-2.0",
+      "urls": [
+        "bzz-raw://1b9dffbbd0c961d87eeaa10665ed93a3a919dc53db0e684b76d66b0f7e2a0714",
+        "dweb:/ipfs/QmbgTB2swkeRsc7Dc1Wf28cLcKTExw2pzDY66zy5kFLeE8"
+      ]
+    },
+    "contracts/src/diamond/facets/token/ERC5643/ERC5643Storage.sol": {
+      "keccak256": "0xd0072cf098f7cf173b0eaacceef34914970f1db2101e32b0439bdcb451baf89e",
+      "license": "Apache-2.0",
+      "urls": [
+        "bzz-raw://e742fd829ecd689d57be5afe55fd850a37e2c2c5a469d59d6ec103329096fada",
+        "dweb:/ipfs/QmTWGrF7w8HkNZ1mD8wyTcqxveaDgwE1ofUqfyyy829fDC"
+      ]
+    },
+    "contracts/src/diamond/facets/token/ERC5643/IERC5643.sol": {
+      "keccak256": "0x3d75267c3894bc9b201b30af94a4587cca8dc3363593a47ee4cc3b9ff27a7218",
+      "license": "Apache-2.0",
+      "urls": [
+        "bzz-raw://3e50378e2ca909177555139f16db11f2fc7f3e97acbc40fc6eea5848bbd61b3f",
+        "dweb:/ipfs/Qmdi2FBhdWAAFE8Kr5DFu9qoESLcH1STb7bm7kXxEjrsJB"
+      ]
+    },
+    "contracts/src/diamond/facets/token/ERC721A/ERC721A.sol": {
+      "keccak256": "0xc8fab662d9a0c4e697c8dcaad72dd2a190331b01476649a742b6f317266ac5a1",
+      "license": "Apache-2.0",
+      "urls": [
+        "bzz-raw://9c84047a6d47a901f45f90f12f713432289ae6d88fea95a383900906005cf70b",
+        "dweb:/ipfs/QmVdLUVdtjTQn2fCG85Uv2ZAzCSfNbWYcAg5eXthunnigc"
+      ]
+    },
+    "contracts/src/diamond/facets/token/ERC721A/ERC721ABase.sol": {
+      "keccak256": "0xe1d57f0d29b0e5fa88e1d7e7384dc5c20901dfdfb81adb667c749cba57673b34",
+      "license": "Apache-2.0",
+      "urls": [
+        "bzz-raw://d2282b33d16f31635acdc951a6e193d88b35d446d81518605006841cd2fcdb25",
+        "dweb:/ipfs/QmSBEbcBkYMmZnfaNWGTkbvMMdMFwU9xrBsKLNZPduwFwc"
+      ]
+    },
+    "contracts/src/diamond/facets/token/ERC721A/ERC721AStorage.sol": {
+      "keccak256": "0x96b4e1886b3697a44deccbaf25f3d59842adc1d8ccb8cc9953a591f10c41c14a",
+      "license": "Apache-2.0",
+      "urls": [
+        "bzz-raw://59e1cc6fd674d7a1b912e28623be7ca3488dd0305e9cf9f53645387e97c3feae",
+        "dweb:/ipfs/QmUSvBk1MzHBWUPjHYWkGgBbtxZGKpnBAQTqiLNJQNqMsF"
+      ]
+    },
+    "contracts/src/diamond/facets/token/ERC721A/IERC721A.sol": {
+      "keccak256": "0xfce3dc8955c337c405c27c7741b7beff81685ed89f2e102fbad517043e20edf9",
+      "license": "Apache-2.0",
+      "urls": [
+        "bzz-raw://6c0ef999aaa971921ba4a4d2190ce5fae92fe15a34a87aac02fd081773fdbe9e",
+        "dweb:/ipfs/QmUFD83GFhupZo2d3PafyK5fjqrzFRDnJHEsTGYhHakzUM"
+      ]
+    },
+    "contracts/src/spaces/entitlements/IEntitlement.sol": {
+      "keccak256": "0x35f1b94c8192c2716c487b49c62c35821dc3b34da9d5deb50e756772407c955f",
+      "license": "Apache-2.0",
+      "urls": [
+        "bzz-raw://ec3a05d15e524da284aa417da3f09b6b34f7732f6ee02d650f26f9c04eb4d336",
+        "dweb:/ipfs/Qme1bgU56x9drrefb6BUkgGQ61ipBK5zoo4ZstRmGXhzkL"
+      ]
+    },
+    "contracts/src/spaces/facets/Entitled.sol": {
+      "keccak256": "0xc2f2195a5dbab66fcd59d2b3dbb9e37f5da79b199209df519f078cfbf837aeff",
+      "license": "Apache-2.0",
+      "urls": [
+        "bzz-raw://c95a13835720a9f097332e71a647aad94ba38df63898d41c9a6170743204addf",
+        "dweb:/ipfs/QmR54jS53PNaBDWZjnW4k5t6vKejNbiaFnkzZXaiBirsaA"
+      ]
+    },
+    "contracts/src/spaces/facets/Permissions.sol": {
+      "keccak256": "0x17fb085f09a3c1cdeebaf6b7719da47ac6fe088d479305cd80be73bed180a3ad",
+      "license": "Apache-2.0",
+      "urls": [
+        "bzz-raw://543fcf44331abab721a7389bf89ae3c47224770e23b5da1368ab0a2faf1b7e23",
+        "dweb:/ipfs/QmYPgksHbYHsxwSd3S5Jz9Wgue6Pabo6vBVdMqyxc1fQzn"
+      ]
+    },
+    "contracts/src/spaces/facets/banning/BanningBase.sol": {
+      "keccak256": "0x0b70a264f43eea6ee33162376a7a5c9aa1c87e6aa7eb96ddffae17a32ce6eb05",
+      "license": "Apache-2.0",
+      "urls": [
+        "bzz-raw://1510bc02c009d1d3fd11a22385a3f576c722d786241d12956a443b24f4bed4b4",
+        "dweb:/ipfs/QmVT291o4p175crTiW1gbbzMfMPC5w4GDK7ZYgevg5L8T5"
+      ]
+    },
+    "contracts/src/spaces/facets/banning/BanningStorage.sol": {
+      "keccak256": "0x86f42359a5be03e864ad03af3bcd5986580c02baa8f4b161aeaeb5ce60d550c4",
+      "license": "Apache-2.0",
+      "urls": [
+        "bzz-raw://25bfb0f266d9e573f24d00b40db7d938d39924898c968704cccd8aa1cdf0276c",
+        "dweb:/ipfs/QmZoxQghM23Wys5EijVyAqPtPBzugxdFChdSfRHaYeQcy5"
+      ]
+    },
+    "contracts/src/spaces/facets/banning/IBanning.sol": {
+      "keccak256": "0xf1d823facff2c2c6606177838e5e00c261e462c2542141eb65e51e5fb46d3560",
+      "license": "Apache-2.0",
+      "urls": [
+        "bzz-raw://f383530d390d6029c21a075a1328e2a1f627965c3c81efb8be1ee47c60a564ac",
+        "dweb:/ipfs/QmU78f5sJYKkCdkoHLvq2tT3kvS5eURcdmev2imc8siXFD"
+      ]
+    },
+    "contracts/src/spaces/facets/entitlements/EntitlementsManagerStorage.sol": {
+      "keccak256": "0x25d81d0f45e65e8c035ed41ac078ace43672a00829f5334b21c2ef23fc4f73ba",
+      "license": "Apache-2.0",
+      "urls": [
+        "bzz-raw://8f621544a327bd541d20e9df4d73179123a96f7f11456b50ecf2f30409073e49",
+        "dweb:/ipfs/Qmf5o4Gt9w1ySMi1bHveoaQ4aTQ4MHa6SoxGWTNgWDBpGw"
+      ]
+    },
+    "contracts/src/spaces/facets/membership/IMembership.sol": {
+      "keccak256": "0xd7d49ffffb9680d16cf8d28bc85b39b385567636892f18c1e7a64b509f4d3d27",
+      "license": "Apache-2.0",
+      "urls": [
+        "bzz-raw://fbe02116a9506901a10be66a8da15f029f17e076ff6f5c924bccb053aa8f33aa",
+        "dweb:/ipfs/QmXSYzs9wkmHmGGR9gA4TaGJDMGHwdafuQBrbuV5rhHr88"
+      ]
+    },
+    "contracts/src/spaces/facets/membership/MembershipBase.sol": {
+      "keccak256": "0x56f211f065c171614c2dc10c75a39316f9804bf4f9ac3cfa2720044679782293",
+      "license": "Apache-2.0",
+      "urls": [
+        "bzz-raw://caae64d292cf3839a1098b718cea05115e25a05440af01552fab70a96addb9ef",
+        "dweb:/ipfs/QmXa1sszCJciBPzyWPPsbkmrhbYiLLdEWzjyxJgwppncYU"
+      ]
+    },
+    "contracts/src/spaces/facets/membership/MembershipFacet.sol": {
+      "keccak256": "0x429e524257bb928c9928105946fda3dfbed6983b2e18e9ad7b4ab617aaec24fa",
+      "license": "Apache-2.0",
+      "urls": [
+        "bzz-raw://3bd4e7dc30b78a308ad4e0145702454e20a683b2ce21578881ff674eb4124e06",
+        "dweb:/ipfs/QmSKgAkZdJJDmNAc8AYREGzwrtQuFG3uadtXwmUbpnyVXy"
+      ]
+    },
+    "contracts/src/spaces/facets/membership/MembershipStorage.sol": {
+      "keccak256": "0x81ded1f28ae642a3304b35f4a141e971bdbef584b00be3813ef93e63fb24849f",
+      "license": "Apache-2.0",
+      "urls": [
+        "bzz-raw://ee38399098d402954db7b3b57e108e46097a37da0abf1000bef254fce471f7f0",
+        "dweb:/ipfs/QmaFn8rbyX3q8JpTs8cYkuJKqE7aQjaPMAaWV4oggJz7xR"
+      ]
+    },
+    "contracts/src/spaces/facets/membership/pricing/IMembershipPricing.sol": {
+      "keccak256": "0x726e956f8d09bc51103660d2c7e1519de101617962f8a959a15123ec9d68b33f",
+      "license": "Apache-2.0",
+      "urls": [
+        "bzz-raw://cf74057ee9b815f9caead688c5a08fce3bd0f29dcbe03e81a98495ce267d89a2",
+        "dweb:/ipfs/QmWFdvKhvacqsZKtDFfPYUvkjSsdgnos61RXkKcKrUBZ2i"
+      ]
+    },
+    "contracts/src/spaces/facets/membership/referral/IMembershipReferral.sol": {
+      "keccak256": "0xeb2feee4b1f3e83509bc1425c0ecd60eaf168fa7686c14dc2bd636e5a691bc6a",
+      "license": "Apache-2.0",
+      "urls": [
+        "bzz-raw://ec9bcb8c4106639ec9e0d37fa59385c1e853fb07f9ebedcd9f2bc1198979a807",
+        "dweb:/ipfs/QmcAdwQKn2jMo7grzXNGSPr9PvQBxdKURF6xxLPorCDrFt"
+      ]
+    },
+    "contracts/src/spaces/facets/membership/referral/MembershipReferralBase.sol": {
+      "keccak256": "0x6f29e73b113fce75e54a41f248621b1adaa5ac4a3b189ef0903308bfa69165ca",
+      "license": "Apache-2.0",
+      "urls": [
+        "bzz-raw://abc7b25a74097434912f4940bfcd6cf9e312b0989279cb31a9a74d7ae6c09636",
+        "dweb:/ipfs/QmPdttVeMBDBb8SMrga6YnKz3aiGDKMqo2MofCXtag4w4E"
+      ]
+    },
+    "contracts/src/spaces/facets/membership/referral/MembershipReferralStorage.sol": {
+      "keccak256": "0xdd7d62d93c6acc497da60f681a7a79083cf52f012addf5dacc776648db7595e5",
+      "license": "Apache-2.0",
+      "urls": [
+        "bzz-raw://324a6120417fdbb3ad9e578a4f3414207c52eccfd9a4b086c3fecdf2c9ceb9b0",
+        "dweb:/ipfs/QmYPD4NJaXEXFneXBPmrLg6SxEy7hBBTVmounuWHcWaRHX"
+      ]
+    },
+    "contracts/src/spaces/facets/platform/requirements/IPlatformRequirements.sol": {
+      "keccak256": "0x21672433fa72a61cddbbe9945ceec73e7fb386ffcc54d81d75de0ba745d3a361",
+      "license": "Apache-2.0",
+      "urls": [
+        "bzz-raw://898641f82ca96ddc50ad984bb0a010f495d7f61c41c720d8748e5607aee67ccf",
+        "dweb:/ipfs/QmZv4ojGP1RDgpMn138FjX2N19HWUfN9dj89wwAGWyUKus"
+      ]
+    },
+    "contracts/src/spaces/facets/prepay/IPrepay.sol": {
+      "keccak256": "0x0c5c097dd77471d041cdbb84011ac789147af937d275329d857d1a4b257635e9",
+      "license": "Apache-2.0",
+      "urls": [
+        "bzz-raw://baca271a5a66856f3144a4bf0ed6a484b0c981539d6bf0c57ffade9e4986eb49",
+        "dweb:/ipfs/QmVgPWMEL5q2J5kmZQZFRadWjuVQeFLaa9K2gCHdhjLUa9"
+      ]
+    },
+    "contracts/src/utils/interfaces/IWETH.sol": {
+      "keccak256": "0xd274612ab96215dcdb6e3717a63e7a0f76c7facadff93b2b23ed278f6e7b3b00",
+      "license": "Apache-2.0",
+      "urls": [
+        "bzz-raw://12444da1f06a0fbe6d2d564d73d6d6bc58c09496af3aeea6988c3d3f9ee81c73",
+        "dweb:/ipfs/QmTkpQ6cZmRYgvLUS4mqzLvFg5nabgQjpMnVK8JENboiA3"
+      ]
+    },
+    "contracts/src/utils/libraries/BasisPoints.sol": {
+      "keccak256": "0x797b0a1d3da51f4256c83b5d5c885b034df5bdff69c8dfa0fac9777cfa2f1d26",
+      "license": "Apache-2.0",
+      "urls": [
+        "bzz-raw://52ba0c85e5de8a7d76e2e4bcbccdaffa68e29281191ae1f889430a496ce5cf1c",
+        "dweb:/ipfs/Qmd5bYypjF6gcJKKagdRpvAgV4LCs4iyn7KYdaLBWjjuHr"
+      ]
+    },
+    "contracts/src/utils/libraries/CurrencyTransfer.sol": {
+      "keccak256": "0x3cab081011060ac80adb86d14e72c1d866a1fbcd0aad680c718e10aa40c71ddf",
+      "license": "Apache-2.0",
+      "urls": [
+        "bzz-raw://deb21eeeb8cd8facd67ed2f5c4798de53cc84c301e451652005d97486db8d15b",
+        "dweb:/ipfs/QmW9wZpntsb7uZZ9zMw1sd15AVxAsDapTHrxXLxskc7DTf"
+      ]
+    },
+    "lib/openzeppelin-contracts/contracts/token/ERC20/IERC20.sol": {
+      "keccak256": "0x9750c6b834f7b43000631af5cc30001c5f547b3ceb3635488f140f60e897ea6b",
+      "license": "MIT",
+      "urls": [
+        "bzz-raw://5a7d5b1ef5d8d5889ad2ed89d8619c09383b80b72ab226e0fe7bde1636481e34",
+        "dweb:/ipfs/QmebXWgtEfumQGBdVeM6c71McLixYXQP5Bk6kKXuoY4Bmr"
+      ]
+    },
+    "lib/openzeppelin-contracts/contracts/token/ERC20/extensions/draft-IERC20Permit.sol": {
+      "keccak256": "0xf41ca991f30855bf80ffd11e9347856a517b977f0a6c2d52e6421a99b7840329",
+      "license": "MIT",
+      "urls": [
+        "bzz-raw://b2717fd2bdac99daa960a6de500754ea1b932093c946388c381da48658234b95",
+        "dweb:/ipfs/QmP6QVMn6UeA3ByahyJbYQr5M6coHKBKsf3ySZSfbyA8R7"
+      ]
+    },
+    "lib/openzeppelin-contracts/contracts/token/ERC20/utils/SafeERC20.sol": {
+      "keccak256": "0x9b72f93be69ca894d8492c244259615c4a742afc8d63720dbc8bb81087d9b238",
+      "license": "MIT",
+      "urls": [
+        "bzz-raw://f5a7b96e511be78d5cdf635c784e6ab8cdd38625bb8cafb8a80914a1c89cf0f6",
+        "dweb:/ipfs/QmVzTCwJxQAkjRQHboT5QrvsVJGWQHgfEjeTbvyxoKBrds"
+      ]
+    },
+    "lib/openzeppelin-contracts/contracts/token/ERC721/IERC721.sol": {
+      "keccak256": "0xab28a56179c1db258c9bf5235b382698cb650debecb51b23d12be9e241374b68",
+      "license": "MIT",
+      "urls": [
+        "bzz-raw://daae589a9d6fa7e55f99f86c0a16796ca490f243fb3693632c3711c0646c1d56",
+        "dweb:/ipfs/QmR3zpd7wNw3rcUdekwiv6FYHJqksuTCXLVioTxu6Fbxk3"
+      ]
+    },
+    "lib/openzeppelin-contracts/contracts/utils/Address.sol": {
+      "keccak256": "0xf96f969e24029d43d0df89e59d365f277021dac62b48e1c1e3ebe0acdd7f1ca1",
+      "license": "MIT",
+      "urls": [
+        "bzz-raw://ec772b45a624be516f1c81970caa8a2e144301e9d0921cbc1a2789fef39a1269",
+        "dweb:/ipfs/QmNyjwxCrGhQMyzLD93oUobJXVe9ceJvRvfXwbEtuxPiEj"
+      ]
+    },
+    "lib/openzeppelin-contracts/contracts/utils/introspection/IERC165.sol": {
+      "keccak256": "0x447a5f3ddc18419d41ff92b3773fb86471b1db25773e07f877f548918a185bf1",
+      "license": "MIT",
+      "urls": [
+        "bzz-raw://be161e54f24e5c6fae81a12db1a8ae87bc5ae1b0ddc805d82a1440a68455088f",
+        "dweb:/ipfs/QmP7C3CHdY9urF4dEMb9wmsp1wMxHF6nhA2yQE5SKiPAdy"
+      ]
+    },
+    "lib/openzeppelin-contracts/contracts/utils/structs/EnumerableSet.sol": {
+      "keccak256": "0xc3ff3f5c4584e1d9a483ad7ced51ab64523201f4e3d3c65293e4ca8aeb77a961",
+      "license": "MIT",
+      "urls": [
+        "bzz-raw://d7d3dd6067a994690471b5fc71b6f81fac3847798b37d404f74db00b4d3c3d0e",
+        "dweb:/ipfs/QmRHF1RarifjNi93RttouNPkYZGyu6CD926PgRDzD5iL35"
+      ]
+    }
+  },
+  "version": 1
+}

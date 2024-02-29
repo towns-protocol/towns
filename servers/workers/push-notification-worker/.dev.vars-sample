@@ -1,0 +1,20 @@
+# for local development: make a copy of this file, and rename it .dev.vars
+#
+# add your secret variables here for local development
+AUTH_SECRET=foo
+
+# create the VAPID public and private keys by running this script:
+# cd servers/workers/push-notification-worker
+# ./scripts/create-vapid-keys.sh
+# 
+# the keys are gnearated in .keys/vapid-keys.json
+# set the public and private keys in your .dev.vars
+#
+VAPID_PUBLIC_KEY=""
+VAPID_PRIVATE_KEY=""
+
+# for public variables, add them in wrangler.toml
+#
+# for cloud deployment: 
+# npx wrangler secret put <NAME> --env test
+# npx wrangler secret put <NAME> --env production

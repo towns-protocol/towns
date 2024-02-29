@@ -1,0 +1,38 @@
+{
+  "editor.codeActionsOnSave": {
+    "source.fixAll.eslint": "explicit"
+  },
+  "eslint.workingDirectories": [
+    "./casablanca/proto",
+    "./casablanca/debug-app",
+    "./casablanca/waterproof",
+    "./casablanca/sdk",
+    "./casablanca/web3",
+    "./clients/web/app",
+    "./clients/web/lib",
+    "./clients/web/sample-app",
+    "./servers/notification-service",
+    "./servers/workers/worker-common",
+    "./servers/workers/token-worker",
+    "./servers/workers/gateway-worker",
+    "./servers/workers/siwe-worker",
+    "./servers/workers/unfurl-worker",
+    "./servers/workers/push-notification-worker",
+    "./servers/workers/stackup-worker",
+  ],
+  "[solidity]": {
+    "editor.defaultFormatter": "esbenp.prettier-vscode"
+  },
+  "solidity.formatter": "prettier",
+  "go.lintTool": "golangci-lint",
+  "go.lintFlags": [
+    "--fast"
+  ],
+  "solidity.defaultCompiler": "remote",
+  "solidity.packageDefaultDependenciesContractsDirectory": "contracts/src",
+  "solidity.packageDefaultDependenciesDirectory": "lib",
+  "solidity.compileUsingRemoteVersion": "v0.8.23+commit.f704f362",
+  "[makefile]": {
+    "editor.renderWhitespace": "all"
+  }
+}

@@ -1,0 +1,24 @@
+syntax = "proto3";
+package river;
+
+import "protocol.proto";
+
+message PersistedEvent {
+    StreamEvent event = 1;
+    bytes hash = 2;
+    string prev_miniblock_hash_str = 3;
+    string creator_user_id = 4;
+}
+
+message PersistedMiniblock {
+    bytes hash = 1;
+    MiniblockHeader header = 2;
+    repeated PersistedEvent events = 3;
+}
+
+message PersistedSyncedStream {
+    SyncCookie sync_cookie = 1;
+    uint64 last_snapshot_miniblock_num = 2;
+    uint64 last_miniblock_num = 3;
+    repeated PersistedEvent minipoolEvents = 4;
+}

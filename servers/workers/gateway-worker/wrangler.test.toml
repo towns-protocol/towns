@@ -1,0 +1,7 @@
+# this is for tests, so it gets used even though wrangler CLI says otherwise
+[miniflare]
+cache_persist = false
+
+[vars]
+AUTH_SECRET="foo"
+IMAGE_HASH="bar"

@@ -1,0 +1,15 @@
+{
+  "networks": {
+    "dev": {
+      "entryPoints": [
+        "0x1F470e62B947Eb5e289B4573E4c6EeE090CbC379"
+      ],
+      "relayers": [
+        "test test test test test test test test test test test junk",
+        "0x0101010101010101010101010101010101010101010101010101010101010101"
+      ],
+      "rpcEndpoint": "http://host.docker.internal:8545"
+    }
+  },
+  "unsafeMode": true
+}

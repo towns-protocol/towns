@@ -1,0 +1,8 @@
+# add your secret variables here for local development
+# for public variables, add them in wrangler.toml
+AUTH_SECRET=foo
+IMAGE_HASH= cloudflare images account hash
+API_TOKEN= images api token
+# Omit SKIP_SIWE entirely (don't just set to false) to bypass siwe verification, otherwise it requires local siwe-worker for auth
+SKIP_SIWE=true
+LINEAR_API_KEY=

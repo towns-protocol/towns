@@ -1,0 +1,15 @@
+version: '3'
+services:
+  forked-chain-service:
+    build:
+      context: .
+      dockerfile: ./Dockerfile
+    ports:
+      - "8545:8545"
+    environment:
+      # - FORK_URL=fill your own
+      - CHAIN_ID=85432
+      - FORK_BLOCK_NUMBER=latest
+      - BLOCK_TIME=2
+      - PORT=8545
+      - FUNDING_WALLETS_CSV=0xbf2fe1d28887a0000a1541291c895a26bd7b1ddd,0x43eace8e799497f8206e579f7ccd1ec41770d099

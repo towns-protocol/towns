@@ -1,0 +1,48 @@
+{
+  "name": "@prb/math",
+  "description": "Solidity library for advanced fixed-point math",
+  "version": "4.0.1",
+  "author": {
+    "name": "Paul Razvan Berg",
+    "url": "https://github.com/PaulRBerg"
+  },
+  "bugs": {
+    "url": "https://github.com/PaulRBerg/prb-math/issues"
+  },
+  "devDependencies": {
+    "prettier": "^2.8.7",
+    "solhint": "^3.4.1"
+  },
+  "files": [
+    "src",
+    "CHANGELOG.md"
+  ],
+  "homepage": "https://github.com/PaulRBerg/prb-math#readme",
+  "keywords": [
+    "arithmetic",
+    "blockchain",
+    "ethereum",
+    "fixed-point",
+    "fixed-point-math",
+    "library",
+    "math",
+    "smart-contracts",
+    "solidity"
+  ],
+  "license": "MIT",
+  "publishConfig": {
+    "access": "public"
+  },
+  "repository": {
+    "type": "git",
+    "url": "https://github.com/PaulRBerg/prb-math"
+  },
+  "scripts": {
+    "build": "forge build",
+    "clean": "rm -rf cache out",
+    "lint": "pnpm lint:sol && pnpm prettier:check",
+    "lint:sol": "forge fmt --check && pnpm solhint \"{src,test}/**/*.sol\"",
+    "prettier:check": "prettier --check \"**/*.{json,md,yml}\"",
+    "prettier:write": "prettier --write \"**/*.{json,md,yml}\""
+  }
+}

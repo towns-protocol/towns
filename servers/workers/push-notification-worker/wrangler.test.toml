@@ -1,0 +1,4 @@
+[vars]
+AUTH_SECRET="foo"
+ENVIRONMENT="development"
+VAPID_SUBJECT="mailto:test@towns.com"

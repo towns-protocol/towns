@@ -1,0 +1,56 @@
+main = "./src/index.ts"
+name = "siwe-worker"
+compatibility_date = "2023-01-18"
+account_id = "9840f8a36a817b103e00e29a0e2bad6f"
+minify = true
+node_compat = true
+logpush = true
+
+[dev]
+ip = "localhost"
+port = 8005
+local_protocol = "http"
+
+[vars]
+ENVIRONMENT = "development"
+VERIFY = "true"
+
+# The necessary secrets are:
+# AUTH_SECRET
+# INFURA_API_KEY
+# ALCHEMY_APY_KEY
+#
+# for local development, you can add these in .dev.vars
+#
+# For production, you can add these in the Cloudflare dashboard or run
+# `echo <VALUE> | wrangler secret put <NAME>` for each of these
+# for production, the secrets must be deployed behind the production flag
+# `echo <VALUE> | wrangler secret put <NAME> --env production`
+# OR
+# Run `echo <VALUE> | wrangler secret put <NAME>` for each of these
+
+# production routes
+# yarn publish:prod
+[env.production]
+routes = [{ pattern = "siwe-worker.towns.com", custom_domain = true }]
+vars = { ENVIRONMENT = "production", VERIFY = "true" }
+
+# beta routes
+# yarn publish:prod-beta
+[env.production-beta]
+routes = [{ pattern = "siwe-worker-beta.towns.com", custom_domain = true }]
+vars = { ENVIRONMENT = "production-beta", VERIFY = "true" }
+
+# test routes
+# yarn publish:test-beta
+[env.test-beta]
+routes = [{ pattern = "siwe-worker-test-beta.towns.com", custom_domain = true }]
+vars = { ENVIRONMENT = "test-beta", VERIFY = "true" }
+
+# staging routes
+# yarn publish:staging-beta
+[env.staging-beta]
+routes = [
+    { pattern = "siwe-worker-staging-beta.towns.com", custom_domain = true },
+]
+vars = { ENVIRONMENT = "staging-beta", VERIFY = "true" }

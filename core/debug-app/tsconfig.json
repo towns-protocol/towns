@@ -1,0 +1,12 @@
+{
+    "extends": "./../tsconfig.base.json",
+    "compilerOptions": {
+        "rootDir": "./src" /* Specify the root folder within your source files. */,
+        "outDir": "./dist" /* Specify an output folder for all emitted files. */,
+        "noEmit": true,
+        "jsx": "react",
+        "lib": ["dom", "dom.iterable", "esnext"],
+        "types": ["vite/client"]
+    },
+    "include": ["./src/**/*"]
+}

@@ -1,0 +1,9 @@
+{
+    "name": "@harmony/prettier-config",
+    "version": "workspace:^",
+    "license": "MIT",
+    "main": "config.js",
+    "peerDependencies": {
+        "prettier": "^2.8.8"
+    }
+}

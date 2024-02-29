@@ -1,0 +1,8 @@
+# this is for tests, so it gets used even though wrangler CLI says otherwise
+[miniflare]
+cache_persist = false
+
+[vars]
+AUTH_SECRET="foo"
+INFURA_API_KEY="fake_key"
+INFURA_API_SECRET="fake_secret"

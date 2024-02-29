@@ -1,0 +1,4 @@
+# ignore local debugging files
+dev-entitlements.yaml
+wallet/
+node/__debug_bin*

@@ -1,0 +1,29 @@
+# Full reference https://github.com/foundry-rs/foundry/tree/master/config
+
+[profile.default]
+  auto_detect_solc = false
+  bytecode_hash = "none"
+  cbor_metadata = false
+  evm_version = "paris"
+  fuzz = { runs = 256 }
+  libs = ["lib"]
+  optimizer = true
+  optimizer_runs = 10_000
+  out = "out"
+  solc = "0.8.19"
+  src = "src"
+  test = "test"
+
+[profile.ci]
+  fuzz = { runs = 10_000 }
+  verbosity = 4
+
+[fmt]
+  bracket_spacing = true
+  int_types = "long"
+  line_length = 132
+  multiline_func_header = "all"
+  number_underscore = "preserve"
+  quote_style = "double"
+  tab_width = 4
+  wrap_comments = true

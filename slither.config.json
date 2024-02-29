@@ -1,0 +1,15 @@
+{
+    "filter_paths": "(lib/|test/)",
+    "solc_remaps": [
+        "@harmony/=node_modules/@harmony/",
+        "@opengsn/=node_modules/@opengsn/",
+        "@openzeppelin/=node_modules/@openzeppelin/",
+        "ds-test/=lib/ds-test/src/",
+        "forge-std/=lib/forge-std/src/",
+        "murky/=lib/murky/src/",
+        "openzeppelin-contracts-upgradeable/=lib/openzeppelin-contracts-upgradeable/contracts/",
+        "openzeppelin-contracts/=lib/openzeppelin-contracts/",
+        "solidity-json-writer/=lib/solidity-json-writer/",
+        "solmate/=lib/solmate/src/"
+    ]
+}

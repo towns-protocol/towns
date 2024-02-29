@@ -1,0 +1,21 @@
+main = "./src/index.ts"
+name = "worker-typescript-template"
+compatibility_date = "2022-07-26"
+logpush = true
+
+# this is for tests, so it gets used even though wrangler CLI says otherwise
+[miniflare]
+cache_persist = false
+
+[env.test-beta]
+[env.production-beta]
+[env.production]
+
+[vars]
+# VAR_NAME = "some_value"
+
+# The necessary secrets are:
+# for local development, you can add these in .dev.vars
+# OR
+# Run `echo <VALUE> | wrangler secret put <NAME>` for each of these
+# add your secret property names here

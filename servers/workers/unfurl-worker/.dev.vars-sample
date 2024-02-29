@@ -1,0 +1,6 @@
+# add your secret variables here for local development
+# for public variables, add them in wrangler.toml
+AUTH_SECRET=foo
+
+# get from https://www.notion.so/herenottherelabs/Credentials-4f284469da01425a9f7f936b9e3ed8aa
+TWITTER_BEARER=

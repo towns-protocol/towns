@@ -1,0 +1,36 @@
+{
+    "name": "token-worker",
+    "description": "Worker for token interaction",
+    "version": "1.0.0",
+    "author": "author",
+    "license": "MIT OR Apache-2.0",
+    "type": "module",
+    "scripts": {
+        "dev:local": "wrangler dev",
+        "dev:remote": "wrangler dev --remote",
+        "lint": "yarn eslint --format unix ./src",
+        "publish": "wrangler deploy --env $CF_ENV",
+        "test": "yarn test:unit",
+        "test:unit": "yarn node --experimental-vm-modules $(yarn bin jest)"
+    },
+    "dependencies": {
+        "@towns/generated": "workspace:^",
+        "alchemy-sdk": "^2.2.4",
+        "itty-router": "^2.6.6",
+        "worker-common": "workspace:^"
+    },
+    "devDependencies": {
+        "@cloudflare/workers-types": "^4.20230710.1",
+        "@types/jest": "^29.5.3",
+        "@typescript-eslint/eslint-plugin": "^6.10.0",
+        "@typescript-eslint/parser": "^6.10.0",
+        "eslint": "^8.53.0",
+        "jest": "^29.6.2",
+        "jest-environment-miniflare": "^2.14.0",
+        "miniflare": "^3.20230710.0",
+        "prettier": "^2.8.8",
+        "ts-jest": "^29.1.1",
+        "typescript": "^5.1.6",
+        "wrangler": "^3.2.0"
+    }
+}

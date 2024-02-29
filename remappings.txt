@@ -1,0 +1,15 @@
+
+@openzeppelin/=lib/openzeppelin-contracts/
+@prb/math/=lib/prb-math/src/
+@prb/test/=lib/prb-test/src/
+ERC721A/=lib/ERC721A/contracts/
+account-abstraction/=lib/account-abstraction/contracts/
+base64-sol/=lib/base64
+council/=lib/council/contracts/
+ds-test/=lib/ds-test/src/
+erc4626-tests/=lib/operator-filter-registry/lib/openzeppelin-contracts/lib/erc4626-tests/
+forge-std/=lib/forge-std/src/
+openzeppelin-contracts-upgradeable/=lib/openzeppelin-contracts-upgradeable/contracts
+openzeppelin-contracts/=lib/openzeppelin-contracts/
+operator-filter-registry/=lib/operator-filter-registry/
+@eth-optimism/contracts-bedrock/=node_modules/@eth-optimism/contracts-bedrock

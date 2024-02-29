@@ -1,0 +1,152 @@
+package auth
+
+import (
+	"context"
+	"time"
+
+	. "github.com/river-build/river/core/node/base"
+	"github.com/river-build/river/core/node/contracts"
+	"github.com/river-build/river/core/node/contracts/dev"
+	v3 "github.com/river-build/river/core/node/contracts/v3"
+	"github.com/river-build/river/core/node/dlog"
+	"github.com/river-build/river/core/node/infra"
+	. "github.com/river-build/river/core/node/protocol"
+
+	"github.com/ethereum/go-ethereum/accounts/abi/bind"
+	"github.com/ethereum/go-ethereum/common"
+)
+
+type TownsEntitlements interface {
+	IsEntitledToChannel(opts *bind.CallOpts, channelNetworkId string, user common.Address, permission string) (bool, error)
+	IsEntitledToSpace(opts *bind.CallOpts, user common.Address, permission string) (bool, error)
+}
+
+type townsEntitlementsProxy struct {
+	contract TownsEntitlements
+	address  common.Address
+	ctx      context.Context
+}
+
+var (
+	isEntitledToChannelCalls = infra.NewSuccessMetrics("is_entitled_to_channel_calls", contractCalls)
+	isEntitledToTownCalls    = infra.NewSuccessMetrics("is_entitled_to_town_calls", contractCalls)
+)
+
+func NewTownsEntitlements(ctx context.Context, version string, address common.Address, backend bind.ContractBackend) (TownsEntitlements, error) {
+	var c TownsEntitlements
+	var err error
+	switch version {
+	case contracts.DEV:
+		c, err = dev.NewEntitlementsManager(address, backend)
+	case contracts.V3:
+		c, err = v3.NewEntitlementsManager(address, backend)
+	}
+	if err != nil {
+		return nil, WrapRiverError(
+			Err_CANNOT_CONNECT,
+			err,
+		).Tags("address", address, "version", version).
+			Func("NewTownsEntitlements").
+			Message("Failed to initialize contract")
+	}
+	if c == nil {
+		return nil, RiverError(
+			Err_CANNOT_CONNECT,
+			"Unsupported version",
+			"address",
+			address,
+			"version",
+			version,
+		).Func("NewTownsEntitlements")
+	}
+	return &townsEntitlementsProxy{
+		contract: c,
+		address:  address,
+		ctx:      ctx,
+	}, nil
+}
+
+func (proxy *townsEntitlementsProxy) IsEntitledToChannel(
+	opts *bind.CallOpts,
+	channelNetworkId string,
+	user common.Address,
+	permission string,
+) (bool, error) {
+	log := dlog.FromCtx(proxy.ctx)
+	start := time.Now()
+	defer infra.StoreExecutionTimeMetrics("IsEntitledToChannel", infra.CONTRACT_CALLS_CATEGORY, start)
+	log.Debug(
+		"IsEntitledToChannel",
+		"channelNetworkId",
+		channelNetworkId,
+		"user",
+		user,
+		"permission",
+		permission,
+		"address",
+		proxy.address,
+	)
+	result, err := proxy.contract.IsEntitledToChannel(opts, channelNetworkId, user, permission)
+	if err != nil {
+		isEntitledToChannelCalls.FailInc()
+		log.Error(
+			"IsEntitledToChannel",
+			"channelNetworkId",
+			channelNetworkId,
+			"user",
+			user,
+			"permission",
+			permission,
+			"address",
+			proxy.address,
+			"error",
+			err,
+		)
+		return false, WrapRiverError(Err_CANNOT_CALL_CONTRACT, err)
+	}
+	isEntitledToChannelCalls.PassInc()
+	log.Debug(
+		"IsEntitledToChannel",
+		"channelNetworkId",
+		channelNetworkId,
+		"user",
+		user,
+		"permission",
+		permission,
+		"address",
+		proxy.address,
+		"result",
+		result,
+		"duration",
+		time.Since(start).Milliseconds(),
+	)
+	return result, nil
+}
+
+func (proxy *townsEntitlementsProxy) IsEntitledToSpace(opts *bind.CallOpts, user common.Address, permission string) (bool, error) {
+	log := dlog.FromCtx(proxy.ctx)
+	start := time.Now()
+	defer infra.StoreExecutionTimeMetrics("IsEntitledToSpace", infra.CONTRACT_CALLS_CATEGORY, start)
+	log.Debug("IsEntitledToSpace", "user", user, "permission", permission, "address", proxy.address)
+	result, err := proxy.contract.IsEntitledToSpace(opts, user, permission)
+	if err != nil {
+		isEntitledToTownCalls.FailInc()
+		log.Error("IsEntitledToSpace", "user", user, "permission", permission, "address", proxy.address, "error", err)
+		return false, WrapRiverError(Err_CANNOT_CALL_CONTRACT, err)
+	}
+	isEntitledToTownCalls.PassInc()
+	log.Debug(
+		"IsEntitledToSpace",
+		"user",
+		user,
+		"permission",
+		permission,
+		"address",
+		proxy.address,
+		"result",
+		result,
+		"duration",
+		time.Since(start).Milliseconds(),
+	)
+	return result, nil
+}

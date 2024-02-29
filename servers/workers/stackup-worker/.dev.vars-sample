@@ -1,0 +1,16 @@
+# add your secret variables here for local development
+# for public variables, add them in wrangler.toml
+PAYMASTER_ADDRESS=
+STACKUP_API_TOKEN=
+SKIP_TOWNID_VERIFICATION=
+AUTH_SECRET=
+ADMIN_AUTH_SECRET=
+SKIP_LIMIT_VERIFICATION=
+
+# these are required if SKIP_TOWNID_VERIFICATION is not true
+PRIVY_APP_KEY=
+PRIVY_APP_ID=
+ALCHEMY_API_KEY=
+
+# should be test-beta if you are running against base sepolia
+ENVIRONMENT=development

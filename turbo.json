@@ -1,0 +1,22 @@
+{
+    "$schema": "https://turborepo.org/schema.json",
+    "pipeline": {
+        "test": {
+            "dependsOn": ["build"]
+        },
+        "test:ci": {
+            "dependsOn": ["build"]
+        },
+        "test:unit": {
+            "dependsOn": ["build"]
+        },
+        "build": {
+            // note: output globs are relative to each package's `package.json`
+            // (and not the monorepo root
+            "outputs": ["dist/**", "build/**", "out/**"],
+            "cache": true,
+            "dependsOn": ["^build"]
+        },
+        "lint": {}
+    }
+}
