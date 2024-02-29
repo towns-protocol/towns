@@ -555,5 +555,32 @@
         "panel": "shared",
       }
     },
+    {
+      "label": "Restart Local Dev",
+      "dependsOn": [
+        "KillAllLocalDev",
+        "~Start Local Dev~",
+      ],
+      // Mark as the default build task so cmd/ctrl+shift+b will create them
+      "group": {
+        "kind": "build",
+        "isDefault": true
+      },
+      "dependsOrder": "sequence"
+    },
+    {
+      "label": "Kill All, Clean and Start Local Dev",
+      "dependsOn": [
+        "KillAllLocalDev",
+        "YarnClean & Cleanup",
+        "~Start Local Dev~",
+      ],
+      // Mark as the default build task so cmd/ctrl+shift+b will create them
+      "group": {
+        "kind": "build",
+        "isDefault": true
+      },
+      "dependsOrder": "sequence"
+    },
   ]
 }
