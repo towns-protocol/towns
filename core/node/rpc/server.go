@@ -22,6 +22,7 @@ import (
 	. "github.com/river-build/river/core/node/protocol"
 	"github.com/river-build/river/core/node/protocol/protocolconnect"
 	"github.com/river-build/river/core/node/registries"
+	"github.com/river-build/river/core/node/rpc/render"
 	"github.com/river-build/river/core/node/storage"
 
 	"log/slog"
@@ -261,16 +262,7 @@ func StartServer(
 	log.Info("Registering NodeToNodeHandler", "pattern", nodeServicePattern)
 	mux.Handle(nodeServicePattern, nodeServiceHandler)
 
-	mux.HandleFunc("/info", func(w http.ResponseWriter, r *http.Request) {
-		// TODO: reply with graffiti from config and with node version
-		log.Debug("Got request for /info", "URL", *r.URL)
-		w.Header().Set("Content-Type", "text/plain")
-		w.WriteHeader(http.StatusOK)
-		_, err := w.Write([]byte("All good in the Towns land!\n"))
-		if err != nil {
-			log.Warn("Failed to write response", "error", err, "request", *r)
-		}
-	})
+	mux.HandleFunc("/info", InfoIndexHandler)
 
 	registerDebugHandlers(ctx, cfg, mux, cache, streamService)
 
@@ -393,6 +385,27 @@ func StartServer(
 	}
 	log.Info("Available on port", "port", port)
 	return streamService, nil
+}
+
+func InfoIndexHandler(w http.ResponseWriter, r *http.Request) {
+	// TODO: reply with graffiti from config and with node version
+	var (
+		ctx   = r.Context()
+		reply = render.InfoIndexData{
+			NodeVersion: "TODO",
+		}
+	)
+
+	output, err := render.Execute(&reply)
+	if err != nil {
+		dlog.FromCtx(ctx).Error("unable to prepare info index response", "err", err)
+		http.Error(w, "Internal Server Error", http.StatusInternalServerError)
+		return
+	}
+
+	w.Header().Set("Content-Type", "text/html")
+	w.WriteHeader(http.StatusOK)
+	_, _ = w.Write(output.Bytes())
 }
 
 func createServerFromStrings(ctx context.Context, address string, handler http.Handler, certString, keyString string) (*http.Server, error) {

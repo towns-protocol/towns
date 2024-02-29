@@ -1,0 +1,49 @@
+<!DOCTYPE html>
+<html>
+  <head>
+    <title>Cache information</title>
+    <meta charset="utf-8" />
+  </head>
+  <body>
+    <h3>Stream cache</h3>
+    <p>Streams: {{(len .Streams)}}</p>
+    <p>
+      Miniblocks: {{.MiniBlocksCount}}, {{safeDivide .MiniBlocksCount
+      (intToInt64 (len .Streams))}} per stream
+    </p>
+    <p>
+      Events in miniblocks: {{.EventsInMiniblocks}}, {{safeDivide
+      .EventsInMiniblocks (intToInt64 (len .Streams))}} per stream, {{safeDivide
+      .EventsInMiniblocks .MiniBlocksCount}} per miniblock
+    </p>
+    <p>
+      Snapshots in miniblocks: {{.SnapshotsInMiniblocks}}, {{safeDivide
+      .SnapshotsInMiniblocks (intToInt64 (len .Streams))}} per stream,
+      {{safeDivide .SnapshotsInMiniblocks .MiniBlocksCount}} per miniblock
+    </p>
+    <p>
+      Events in minipools: {{.EventsInMinipools}}, {{safeDivide
+      .EventsInMinipools (intToInt64 (len .Streams))}} per stream
+    </p>
+    <p>
+      Trimmed streams: {{.TrimmedStreams}}, {{safeDivide .TrimmedStreams
+      (intToInt64 (len .Streams))}} per stream
+    </p>
+    <p>
+      Total events ever: {{.TotalEventsEver}}, {{safeDivide .TotalEventsEver
+      (intToInt64 (len .Streams))}} per stream
+    </p>
+    {{if .ShowStreams }}
+    <p><a href="cache">Hide streams</a></p>
+    {{else}}
+    <p><a href="cache?streams=1">Show streams</a></p>
+    {{end}} {{if .Streams }}
+    <pre>
+        <table border="1">
+            <tr><th>#</th><th>Stream</th><th>First MB</th><th>Last MB</th><th>Miniblocks</th><th>Events in MB</th><th>Snapshots</th><th>Events in MP</th><th>Events Ever</th></tr>
+            {{ range $i, $stream := .Streams }}<tr><td>{{$i}}</td><td>{{$stream.StreamID}}</td><td>{{$stream.FirstMiniblockNum}}</td><td>{{$stream.LastMiniblockNum}}</td><td>{{$stream.MiniBlocks}}</td><td>{{$stream.EventsInMiniblocks}}</td><td>{{$stream.SnapshotsInMiniblocks}}</td><td>{{$stream.EventsInMinipool}}</td><td>{{$stream.TotalEventsEver}}</td></tr>{{end}}
+        </table>
+    </pre>
+    {{end}}
+  </body>
+</html>
