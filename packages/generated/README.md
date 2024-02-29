@@ -5,7 +5,7 @@
 From the root of the repo, run:
 
 ```bash
-./scripts/build-town-types.sh
+./scripts/build-river-types.sh
 ```
 
 ## How to install this package in a workspace?
