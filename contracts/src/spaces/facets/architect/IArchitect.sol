@@ -4,9 +4,9 @@ pragma solidity ^0.8.23;
 // interfaces
 
 // libraries
-import {ITokenEntitlement} from "contracts/src/spaces/entitlements/token/ITokenEntitlement.sol";
 import {IMembershipBase} from "contracts/src/spaces/facets/membership/IMembership.sol";
-import {IEntitlementRule} from "contracts/src/crosschain/IEntitlementRule.sol";
+import {IUserEntitlement} from "contracts/src/spaces/entitlements/user/IUserEntitlement.sol";
+import {IRuleEntitlement} from "contracts/src/crosschain/IRuleEntitlement.sol";
 
 // contracts
 interface IArchitectBase {
@@ -15,9 +15,8 @@ interface IArchitectBase {
   // =============================================================
   struct MembershipRequirements {
     bool everyone;
-    ITokenEntitlement.ExternalToken[] tokens;
     address[] users;
-    IEntitlementRule rule;
+    IRuleEntitlement.RuleData ruleData;
   }
 
   struct Membership {
@@ -87,8 +86,8 @@ interface IArchitect is IArchitectBase {
 
   function setSpaceArchitectImplementations(
     address ownerTokenImplementation,
-    address userEntitlementImplementation,
-    address tokenEntitlementImplementation
+    IUserEntitlement userEntitlementImplementation,
+    IRuleEntitlement ruleEntitlementImplementation
   ) external;
 
   function getSpaceArchitectImplementations()
@@ -96,7 +95,7 @@ interface IArchitect is IArchitectBase {
     view
     returns (
       address ownerTokenImplementation,
-      address userEntitlementImplementation,
-      address tokenEntitlementImplementation
+      IUserEntitlement userEntitlementImplementation,
+      IRuleEntitlement ruleEntitlementImplementation
     );
 }

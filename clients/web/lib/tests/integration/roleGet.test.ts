@@ -9,17 +9,9 @@ import {
     registerAndStartClients,
 } from 'use-zion-client/tests/integration/helpers/TestUtils'
 
-import { BigNumber } from 'ethers'
 import { RoleIdentifier } from '../../src/types/web3-types'
 import { TestConstants } from './helpers/TestConstants'
-import {
-    createExternalTokenStruct,
-    getTestGatingNftAddress,
-    Permission,
-    RoleDetails,
-    TokenEntitlementDataTypes,
-    getContractsInfo,
-} from '@river/web3'
+import { getTestGatingNftAddress, Permission, RoleDetails, NoopRuleData } from '@river/web3'
 
 describe('get role details', () => {
     test('get details of a role that no channel uses', async () => {
@@ -32,15 +24,14 @@ describe('get role details', () => {
         }
         // create new role in space
         const permissions = [Permission.Ban, Permission.Read, Permission.Write, Permission.Redact]
-        const tokens: TokenEntitlementDataTypes.ExternalTokenStruct[] = []
         const users: string[] = []
         const roleName = 'newRole1'
         const roleId: RoleIdentifier | undefined = await alice.createRole(
             roomId,
             roleName,
             permissions,
-            tokens,
             users,
+            NoopRuleData,
         )
         if (!roleId) {
             throw new Error('roleId is undefined')
@@ -56,7 +47,6 @@ describe('get role details', () => {
             expect(roleDetails.name).toEqual(roleName)
             expect(roleDetails.permissions).toEqual(expect.arrayContaining(permissions))
             expect(roleDetails.permissions.length).toEqual(permissions.length)
-            expect(roleDetails.tokens.length).toEqual(0)
             expect(roleDetails.users.length).toEqual(0)
             expect(roleDetails.channels.length).toEqual(0)
         }
@@ -72,15 +62,14 @@ describe('get role details', () => {
         }
         // create new role in space
         const permissions = [Permission.Ban, Permission.Read, Permission.Write, Permission.Redact]
-        const tokens: TokenEntitlementDataTypes.ExternalTokenStruct[] = []
         const users: string[] = []
         const roleName = 'newRole1'
         const roleIdentifier: RoleIdentifier | undefined = await alice.createRole(
             roomId,
             roleName,
             permissions,
-            tokens,
             users,
+            NoopRuleData,
         )
         if (!roleIdentifier) {
             throw new Error('roleId is undefined')
@@ -109,7 +98,6 @@ describe('get role details', () => {
             expect(roleDetails.name).toEqual(roleName)
             expect(roleDetails.permissions).toEqual(expect.arrayContaining(permissions))
             expect(roleDetails.permissions.length).toEqual(permissions.length)
-            expect(roleDetails.tokens.length).toEqual(0)
             expect(roleDetails.users.length).toEqual(0)
             expect(roleDetails.channels.length).toEqual(1)
             expect(roleDetails.channels[0].channelNetworkId).toEqual(channel)
@@ -135,26 +123,23 @@ describe('get role details', () => {
         const memberRole = await findRoleByName(alice, spaceId, 'Member')
 
         /** Assert */
-        const membershipTokenAddress = await alice.spaceDapp.getTownMembershipTokenAddress(spaceId)
         const councilNftAddress = await getTestGatingNftAddress(alice.chainId)
         if (!councilNftAddress) {
             throw new Error('councilNftAddress is undefined')
         }
-        const expectedMinterTokens = createExternalTokenStruct([councilNftAddress])[0]
-        const expectedMemberToken = createExternalTokenStruct([membershipTokenAddress])[0]
         const expectedMinterRole: RoleDetails = {
             id: 1,
             name: 'Minter',
-            tokens: [expectedMinterTokens],
-            users: [],
+            users: ['0x0000000000000000000000000000000000000001'],
+            ruleData: NoopRuleData,
             permissions: [Permission.JoinSpace],
             channels: [],
         }
         const expectedMemberRole: RoleDetails = {
             id: 2,
             name: 'Member',
-            tokens: [expectedMemberToken],
             users: [],
+            ruleData: NoopRuleData,
             permissions,
             channels: [],
         }
@@ -191,22 +176,20 @@ describe('get role details', () => {
         if (!everyoneRole) {
             throw new Error('everyoneRole is undefined')
         }
-        const membershipTokenAddress = await alice.spaceDapp.getTownMembershipTokenAddress(spaceId)
-        const expectedMemberToken = createExternalTokenStruct([membershipTokenAddress])[0]
 
         const expectedMinterRole: RoleDetails = {
             id: 1,
             name: 'Minter',
-            tokens: [],
             users: [TestConstants.EveryoneAddress],
+            ruleData: NoopRuleData,
             permissions: [Permission.JoinSpace],
             channels: [],
         }
         const expectedEveryoneRole: RoleDetails = {
             id: 2,
             name: 'Everyone',
-            tokens: [expectedMemberToken],
             users: [],
+            ruleData: NoopRuleData,
             permissions,
             channels: [],
         }
@@ -228,18 +211,15 @@ describe('get role details', () => {
         if (!councilNftAddress) {
             throw new Error('councilNftAddress is undefined')
         }
-        const mockNFTAddress = getContractsInfo(alice.chainId).mockErc721aAddress
-        const tokens = createExternalTokenStruct([councilNftAddress, mockNFTAddress])
-        const expectedCouncilToken = tokens[0]
-        const expectedZioneerToken = tokens[1]
+
         const users: string[] = []
         const roleName = 'newRole1'
         const roleId: RoleIdentifier | undefined = await alice.createRole(
             roomId,
             roleName,
             permissions,
-            tokens,
             users,
+            NoopRuleData,
         )
         if (!roleId) {
             throw new Error('roleId is undefined')
@@ -252,21 +232,6 @@ describe('get role details', () => {
         expect(roleDetails).toBeDefined()
         if (roleDetails) {
             expect(roleDetails.id).toEqual(roleId.roleId)
-            expect(roleDetails.tokens.length).toEqual(2)
-            expect(roleDetails.tokens[0].contractAddress).toEqual(
-                await expectedCouncilToken.contractAddress,
-            )
-            expect(roleDetails.tokens[0].isSingleToken).toEqual(expectedCouncilToken.isSingleToken)
-            expect(roleDetails.tokens[0].tokenIds).toEqual(expectedCouncilToken.tokenIds)
-            let quantity = roleDetails.tokens[0].quantity as BigNumber
-            expect(quantity.toNumber()).toEqual(expectedCouncilToken.quantity)
-            expect(roleDetails.tokens[1].contractAddress).toEqual(
-                expectedZioneerToken.contractAddress,
-            )
-            expect(roleDetails.tokens[1].isSingleToken).toEqual(expectedZioneerToken.isSingleToken)
-            quantity = roleDetails.tokens[1].quantity as BigNumber
-            expect(quantity.toNumber()).toEqual(expectedZioneerToken.quantity)
-            expect(roleDetails.tokens[1].tokenIds).toEqual(expectedZioneerToken.tokenIds)
         }
     })
 
@@ -280,7 +245,6 @@ describe('get role details', () => {
         }
         // create new role in space
         const permissions = [Permission.Read, Permission.Write]
-        const tokens: TokenEntitlementDataTypes.ExternalTokenStruct[] = []
 
         const mod1 = await TestConstants.getWalletWithTestGatingNft()
         const mod2 = await TestConstants.getWalletWithTestGatingNft()
@@ -290,8 +254,8 @@ describe('get role details', () => {
             roomId,
             roleName,
             permissions,
-            tokens,
             users,
+            NoopRuleData,
         )
         if (!roleId) {
             throw new Error('roleId is undefined')

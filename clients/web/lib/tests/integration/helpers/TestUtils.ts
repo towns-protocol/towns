@@ -9,10 +9,9 @@ import { RoleDetails } from '../../../src/types/web3-types'
 import {
     BasicRoleInfo,
     Permission,
-    createExternalTokenStruct,
     getFilteredRolesFromSpace,
-    getTestGatingNftAddress,
     IArchitectBase,
+    NoopRuleData,
 } from '@river/web3'
 
 // eslint-disable-next-line @typescript-eslint/no-explicit-any
@@ -120,11 +119,6 @@ export async function createTestSpaceGatedByTownAndZionNfts(
         throw new Error('client.walletAddress is undefined')
     }
 
-    const testGatingNftAddress = await getTestGatingNftAddress(client.chainId)
-    const tokens = createExternalTokenStruct([testGatingNftAddress ?? ''])
-
-    console.log('createTestSpaceGatedByTownAndZionNfts tokens', tokens)
-
     const membershipInfo: IArchitectBase.MembershipStruct = {
         settings: {
             name: 'Member',
@@ -139,10 +133,9 @@ export async function createTestSpaceGatedByTownAndZionNfts(
         },
         permissions: rolePermissions,
         requirements: {
-            everyone: false,
-            tokens,
+            everyone: true,
             users: [],
-            rule: ethers.constants.AddressZero,
+            ruleData: NoopRuleData,
         },
     }
 
@@ -196,9 +189,8 @@ export async function createTestSpaceGatedByTownNft(
         permissions: rolePermissions,
         requirements: {
             everyone: true,
-            tokens: [],
             users: [],
-            rule: ethers.constants.AddressZero,
+            ruleData: NoopRuleData,
         },
     }
 
@@ -244,27 +236,32 @@ export async function findRoleByName(
     roleName: string,
     roles?: BasicRoleInfo[],
 ): Promise<RoleDetails | null> {
-    let role: RoleDetails | null = null
     roles = roles ?? (await getFilteredRolesFromSpace(client.spaceDapp, spaceId))
+    console.log('findRoleByName roles', roles)
     for (const r of roles) {
         if (r.name === roleName) {
-            // found
-            // get the role details
-            role = await client.spaceDapp.getRole(spaceId, BigNumber.from(r.roleId).toNumber())
-            break
+            const result = await client.spaceDapp.getRole(
+                spaceId,
+                BigNumber.from(r.roleId).toNumber(),
+            )
+            console.log('findRoleByName result', result)
+            return result
         }
     }
-    return role
+    console.log('findRoleByName not found', roleName)
+    return null
 }
 
 export function assertRoleEquals(actual: RoleDetails, expected: RoleDetails) {
     expect(actual.name).toEqual(expected.name)
     expect(actual.permissions.length).toEqual(expected.permissions.length)
     expect(actual.permissions).toEqual(expect.arrayContaining(expected.permissions))
-    expect(actual.tokens.length).toEqual(expected.tokens.length)
+    /*
+    expect(actual.ruleData).toEqual(expected.ruleData)
     const actualTokenAddresses = actual.tokens.map((t) => t.contractAddress)
     const expectedTokenAddresses = expected.tokens.map((t) => t.contractAddress)
     expect(actualTokenAddresses).toEqual(expect.arrayContaining(expectedTokenAddresses))
+    */
     expect(actual.users.length).toEqual(expected.users.length)
     expect(actual.users).toEqual(expect.arrayContaining(expected.users))
 }

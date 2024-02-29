@@ -2,7 +2,6 @@ import { blockchainKeys } from '../query/query-keys'
 import { useCallback } from 'react'
 import { useQuery } from '../query/queryClient'
 import { useZionClient } from './use-zion-client'
-import { Permission } from '@river/web3'
 
 export function useChannelSettings(spaceId: string, channelId: string) {
     const { spaceDapp } = useZionClient()
@@ -12,12 +11,6 @@ export function useChannelSettings(spaceId: string, channelId: string) {
         async function () {
             if (spaceDapp) {
                 const channelDetails = await spaceDapp.getChannelDetails(spaceId, channelId)
-                if (channelDetails) {
-                    // hide the owner role from the UI
-                    channelDetails.roles = channelDetails.roles.filter(
-                        (role) => role.name.toLowerCase() !== Permission.Owner.toLowerCase(),
-                    )
-                }
                 return channelDetails
             }
             return null

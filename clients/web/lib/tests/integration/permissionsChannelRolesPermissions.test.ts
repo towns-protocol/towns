@@ -87,13 +87,14 @@ describe('channel with roles and permissions', () => {
         if (!testGatingNftAddress) {
             throw new Error('testGatingNftAddress is undefined')
         }
-        const testGatingNftToken = createExternalTokenStruct([testGatingNftAddress])[0]
+        const ruleData = createExternalTokenStruct([testGatingNftAddress])
+
         const roleIdentifier: RoleIdentifier | undefined = await alice.createRole(
             spaceId,
             'newRoleName',
             [Permission.Read, Permission.Write],
-            [testGatingNftToken],
             [],
+            ruleData,
         )
         if (!roleIdentifier) {
             throw new Error('roleIdentifier is undefined')

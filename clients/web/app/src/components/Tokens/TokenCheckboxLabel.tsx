@@ -1,13 +1,8 @@
 import React from 'react'
-import { RoleDetails } from 'use-zion-client'
-import { BigNumber } from 'ethers'
 import { Box } from '@ui'
-import { FetchedTokenAvatar } from './FetchedTokenAvatar'
-
-type Tokens = RoleDetails['tokens']
 
 export function TokenCheckboxLabel(props: {
-    tokens: Tokens | undefined
+    tokens: string[] // needs to be parsed from ruleData
     label: string
 }): JSX.Element {
     return (
@@ -15,17 +10,7 @@ export function TokenCheckboxLabel(props: {
             <Box>{props.label}</Box>
             {props.tokens && props.tokens.length > 0 && (
                 <Box horizontal gap="lg" paddingTop="md">
-                    {props.tokens?.map((t) => {
-                        const address = t.contractAddress as string
-                        const tokenIds = t.tokenIds.map((t) => (t as BigNumber).toNumber())
-                        return (
-                            <FetchedTokenAvatar
-                                key={address}
-                                address={address}
-                                tokenIds={tokenIds}
-                            />
-                        )
-                    })}
+                    {props.tokens?.map((t) => t)}
                 </Box>
             )}
         </Box>

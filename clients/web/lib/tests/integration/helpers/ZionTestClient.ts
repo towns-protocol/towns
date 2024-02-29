@@ -20,7 +20,7 @@ import { ethers } from 'ethers'
 import { makeUniqueName } from './TestUtils'
 import { toEvent } from '../../../src/hooks/ZionContext/useCasablancaTimelines'
 import { Client as CasablancaClient } from '@river/sdk'
-import { TokenEntitlementDataTypes, Permission, IArchitectBase } from '@river/web3'
+import { Permission, IArchitectBase, IRuleEntitlement } from '@river/web3'
 
 export interface ZionTestClientProps {
     eventHandlers?: ZionClientEventHandlers
@@ -122,15 +122,15 @@ export class ZionTestClient extends ZionClient {
         spaceNetworkId: string,
         roleName: string,
         permissions: Permission[],
-        tokens: TokenEntitlementDataTypes.ExternalTokenStruct[],
         users: string[],
+        ruleData: IRuleEntitlement.RuleDataStruct,
     ): Promise<RoleIdentifier | undefined> {
         const txContext = await this.createRoleTransaction(
             spaceNetworkId,
             roleName,
             permissions,
-            tokens,
             users,
+            ruleData,
             this.provider.wallet,
         )
         if (txContext.error) {

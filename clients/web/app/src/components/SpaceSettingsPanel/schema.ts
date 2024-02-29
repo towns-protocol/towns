@@ -38,6 +38,10 @@ export const formSchema = z
     })
 
 export const tokenIdSchema = z.object({
+    chainId: z.number({
+        required_error: 'Please enter a number',
+        invalid_type_error: 'Please enter a number',
+    }),
     tokenId: z.number({
         required_error: 'Please enter a number',
         invalid_type_error: 'Please enter a number',

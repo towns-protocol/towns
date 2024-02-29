@@ -1,11 +1,6 @@
 import { UseFormReturn } from 'react-hook-form'
-import {
-    CreateSpaceInfo,
-    MembershipStruct,
-    Permission,
-    useCreateSpaceTransaction,
-    useZionClient,
-} from 'use-zion-client'
+import { MembershipStruct, NoopRuleData, Permission } from '@river/web3'
+import { CreateSpaceInfo, useCreateSpaceTransaction, useZionClient } from 'use-zion-client'
 import { useNavigate } from 'react-router'
 import React, { useCallback, useEffect, useMemo } from 'react'
 import { ethers } from 'ethers'
@@ -133,14 +128,8 @@ export function CreateTownSubmit({
                     },
                     requirements: {
                         everyone: tokensGatingMembership.length === 0,
-                        tokens: tokensGatingMembership.map((token) => ({
-                            contractAddress: token.contractAddress,
-                            tokenIds: token.tokenIds,
-                            quantity: 1,
-                            isSingleToken: false,
-                        })),
                         users: [],
-                        rule: ethers.constants.AddressZero,
+                        ruleData: NoopRuleData,
                     },
                     permissions: [Permission.Read, Permission.Write],
                 }

@@ -1,14 +1,15 @@
 import React from 'react'
 import { BigNumber } from 'ethers'
 import { Link } from 'react-router-dom'
-import { TokenGatingMembership } from 'hooks/useTokensGatingMembership'
 import { Icon, Stack, Text, Tooltip } from '@ui'
 import { FetchedTokenAvatar } from '@components/Tokens/FetchedTokenAvatar'
 import { shortAddress } from 'ui/utils/utils'
 import { ArrayElement } from 'types'
 import { baseScanUrl, openSeaBaseAssetUrl } from '../utils'
 import { useWatchLinkedWalletsForToken } from './tokenStatus'
+import { TokenGatingMembership } from './TokenGatingMembership'
 
+// TODO ruleDatas
 export function TokenBox({
     token,
     tokensLength,
@@ -18,11 +19,8 @@ export function TokenBox({
     tokensLength: number
     chainId: number
 }) {
-    const tokenAddress = token.contractAddress as string
-    const { data } = useWatchLinkedWalletsForToken({
-        token,
-        chainId,
-    })
+    const tokenAddress = token.contractAddress
+    const { data } = useWatchLinkedWalletsForToken({ chainId, token })
 
     const tokenStatus = data?.status
 

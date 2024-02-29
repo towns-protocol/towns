@@ -11,13 +11,7 @@ import {
 import { ContractReceipt } from 'ethers'
 import { TestConstants } from './helpers/TestConstants'
 import { RoleDetails } from '../../src/types/web3-types'
-import {
-    getFilteredRolesFromSpace,
-    Permission,
-    TokenEntitlementDataTypes,
-    createExternalTokenStruct,
-    getContractsInfo,
-} from '@river/web3'
+import { getFilteredRolesFromSpace, Permission, UpdateRoleParams, NoopRuleData } from '@river/web3'
 
 describe('update role', () => {
     test('Update Everyone role with multicall', async () => {
@@ -46,8 +40,8 @@ describe('update role', () => {
                 roleId: roleDetails.id,
                 roleName: newRoleName,
                 permissions: newPermissions,
-                tokens: roleDetails.tokens,
                 users: roleDetails.users,
+                ruleData: NoopRuleData,
             },
             alice.provider.wallet,
         )
@@ -84,17 +78,15 @@ describe('update role', () => {
         // change the role details
         const newRoleName = 'newRoleName'
         const newPermissions = [Permission.Read, Permission.Write, Permission.Redact]
-        const mockNFTAddress = getContractsInfo(alice.chainId).mockErc721aAddress
-        // test space was created with council token. replace with zioneer token
-        const newTokens = createExternalTokenStruct([mockNFTAddress])
+
         const transaction = await alice.spaceDapp.updateRole(
             {
                 spaceNetworkId: spaceNetworkId,
                 roleId: roleDetails.id,
                 roleName: newRoleName,
                 permissions: newPermissions,
-                tokens: newTokens,
                 users: roleDetails.users,
+                ruleData: NoopRuleData,
             },
             alice.provider.wallet,
         )
@@ -115,10 +107,6 @@ describe('update role', () => {
             expect(actual.name).toEqual(newRoleName)
             expect(actual.permissions.length).toEqual(newPermissions.length)
             expect(actual.permissions).toEqual(expect.arrayContaining(newPermissions))
-            expect(actual.tokens.length).toEqual(newTokens.length)
-            const actualTokenAddresses = actual.tokens.map((t) => t.contractAddress)
-            const expectedTokenAddresses = newTokens.map((t) => t.contractAddress)
-            expect(actualTokenAddresses).toEqual(expect.arrayContaining(expectedTokenAddresses))
         }
     })
 
@@ -135,7 +123,6 @@ describe('update role', () => {
         }
         // create a new role
         const moderatorPermissions = [Permission.Read, Permission.Write, Permission.Ban]
-        const moderatorTokens: TokenEntitlementDataTypes.ExternalTokenStruct[] = []
         // replace the current moderator with this user
         const mod1 = await TestConstants.getWalletWithTestGatingNft()
         const moderatorUsers: string[] = [mod1.address]
@@ -144,8 +131,8 @@ describe('update role', () => {
             roomId,
             moderatorRoleName,
             moderatorPermissions,
-            moderatorTokens,
             moderatorUsers,
+            NoopRuleData,
         )
         if (!moderatorRoleId) {
             throw new Error('moderatorRoleId is undefined')
@@ -166,8 +153,8 @@ describe('update role', () => {
             id: moderatorRoleId.roleId,
             name: moderatorRoleName,
             permissions: moderatorPermissions,
-            tokens: moderatorTokens,
             users: newModeratorUsers,
+            ruleData: NoopRuleData,
             channels: [],
         }
         let receipt: ContractReceipt | undefined
@@ -178,8 +165,8 @@ describe('update role', () => {
                     roleId: newModeratorRole.id,
                     roleName: newModeratorRole.name,
                     permissions: newModeratorRole.permissions,
-                    tokens: newModeratorRole.tokens,
                     users: newModeratorRole.users,
+                    ruleData: NoopRuleData,
                 },
                 alice.provider.wallet,
             )
@@ -228,9 +215,9 @@ describe('update role', () => {
         if (!roomId) {
             throw new Error('roomId is undefined')
         }
+        console.log('roomId', roomId)
         // create a new role
         const moderatorPermissions = [Permission.Read, Permission.Write, Permission.Ban]
-        const moderatorTokens: TokenEntitlementDataTypes.ExternalTokenStruct[] = []
         // replace the current moderator with this user
         const mod1 = await TestConstants.getWalletWithTestGatingNft()
         const moderatorUsers: string[] = [mod1.address]
@@ -239,12 +226,13 @@ describe('update role', () => {
             roomId,
             moderatorRoleName,
             moderatorPermissions,
-            moderatorTokens,
             moderatorUsers,
+            NoopRuleData,
         )
         if (!moderatorRoleId) {
             throw new Error('moderatorRoleId is undefined')
         }
+        console.log('createRole created', moderatorRoleId)
         // get current role details for the Moderator role and the Member role
         const spaceNetworkId = roomId
         let roles = await getFilteredRolesFromSpace(alice.spaceDapp, spaceNetworkId)
@@ -261,28 +249,27 @@ describe('update role', () => {
             id: moderatorRoleId.roleId,
             name: moderatorRoleName,
             permissions: moderatorPermissions,
-            tokens: moderatorTokens,
             users: newModeratorUsers,
+            ruleData: NoopRuleData,
             channels: [],
         }
         let receipt: ContractReceipt | undefined
         try {
-            const transaction = await alice.spaceDapp.updateRole(
-                {
-                    spaceNetworkId: spaceNetworkId,
-                    roleId: newModeratorRole.id,
-                    roleName: newModeratorRole.name,
-                    permissions: newModeratorRole.permissions,
-                    tokens: newModeratorRole.tokens,
-                    users: newModeratorRole.users,
-                },
-                alice.provider.wallet,
-            )
+            const props: UpdateRoleParams = {
+                spaceNetworkId: spaceNetworkId,
+                roleId: newModeratorRole.id,
+                roleName: newModeratorRole.name,
+                permissions: newModeratorRole.permissions,
+                users: newModeratorRole.users,
+                ruleData: NoopRuleData,
+            }
+            console.log('updateRole props', props)
+            const transaction = await alice.spaceDapp.updateRole(props, alice.provider.wallet)
 
             receipt = await transaction.wait()
         } catch (e) {
             const error = await alice.spaceDapp.parseSpaceError(spaceNetworkId, e)
-            console.error(error)
+            console.error(e, error)
             // fail the test.
             throw e
         }

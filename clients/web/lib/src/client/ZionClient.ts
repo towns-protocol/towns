@@ -8,6 +8,7 @@ import {
     EntitlementsDelegate,
     DecryptionStatus,
 } from '@river/sdk'
+import { CreateSpaceParams, IRuleEntitlement } from '@river/web3'
 import { bin_fromHexString } from '@river/dlog'
 import { makeOldTownsDelegateSig } from '@river/encryption'
 import { FullyReadMarker } from '@river/proto'
@@ -52,14 +53,7 @@ import {
     TransactionOrUserOperation,
     Address,
 } from '../types/web3-types'
-import {
-    createSpaceDapp,
-    IArchitectBase,
-    Permission,
-    TokenEntitlementDataTypes,
-    SpaceInfo,
-    ISpaceDapp,
-} from '@river/web3'
+import { createSpaceDapp, IArchitectBase, Permission, SpaceInfo, ISpaceDapp } from '@river/web3'
 import { BlockchainTransactionStore } from './BlockchainTransactionStore'
 import { UserOps, getTransactionHashOrUserOpHash, isUserOpResponse } from '@towns/userops'
 import AnalyticsService, { AnalyticsEvents } from '../utils/analyticsService'
@@ -330,7 +324,7 @@ export class ZionClient implements EntitlementsDelegate {
             },
         })
 
-        const args = {
+        const args: CreateSpaceParams = {
             spaceId,
             spaceName: createSpaceInfo.name,
             spaceMetadata: createSpaceInfo.name,
@@ -665,6 +659,23 @@ export class ZionClient implements EntitlementsDelegate {
     }
 
     /************************************************
+     * isOwner
+     *************************************************/
+    public async isOwner(spaceId: string, user: string): Promise<boolean> {
+        const spaceInfo = await this.spaceDapp.getSpaceInfo(spaceId)
+
+        if (spaceInfo) {
+            if (spaceInfo.owner === user) {
+                return true
+            } else {
+                const wallets = await this.getLinkedWallets(user)
+                return wallets.includes(spaceInfo.owner)
+            }
+        }
+        return false
+    }
+
+    /************************************************
      * isEntitled
      *************************************************/
 
@@ -762,8 +773,8 @@ export class ZionClient implements EntitlementsDelegate {
         spaceNetworkId: string,
         roleName: string,
         permissions: Permission[],
-        tokens: TokenEntitlementDataTypes.ExternalTokenStruct[],
         users: string[],
+        ruleData: IRuleEntitlement.RuleDataStruct,
         signer: ethers.Signer | undefined,
     ): Promise<RoleTransactionContext> {
         if (!signer) {
@@ -779,7 +790,7 @@ export class ZionClient implements EntitlementsDelegate {
             },
         })
 
-        const args = [spaceNetworkId, roleName, permissions, tokens, users, signer] as const
+        const args = [spaceNetworkId, roleName, permissions, users, ruleData, signer] as const
 
         try {
             if (this.isAccountAbstractionEnabled()) {
@@ -927,8 +938,8 @@ export class ZionClient implements EntitlementsDelegate {
         roleId: number,
         roleName: string,
         permissions: Permission[],
-        tokens: TokenEntitlementDataTypes.ExternalTokenStruct[],
         users: string[],
+        ruleData: IRuleEntitlement.RuleDataStruct,
         signer: ethers.Signer | undefined,
     ): Promise<TransactionContext<void>> {
         if (!signer) {
@@ -949,8 +960,8 @@ export class ZionClient implements EntitlementsDelegate {
             roleId,
             roleName,
             permissions,
-            tokens,
             users,
+            ruleData,
         }
         try {
             if (this.isAccountAbstractionEnabled()) {

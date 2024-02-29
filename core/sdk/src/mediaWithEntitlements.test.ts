@@ -8,7 +8,7 @@ import { makeUniqueChannelStreamId, makeUniqueSpaceStreamId } from './id'
 import { ethers, Wallet } from 'ethers'
 import { Client } from './client'
 import { jest } from '@jest/globals'
-import { MembershipStruct } from '@river/web3'
+import { MembershipStruct, NoopRuleData } from '@river/web3'
 
 // This is a temporary hack because importing viem via SpaceDapp causes a jest error
 // specifically the code in ConvertersEntitlements.ts - decodeAbiParameters and encodeAbiParameters functions have an import that can't be found
@@ -83,9 +83,8 @@ describe('mediaWithEntitlementsTests', () => {
             permissions: [Permission.Read, Permission.Write],
             requirements: {
                 everyone: true,
-                tokens: [],
                 users: [],
-                rule: ethers.constants.AddressZero,
+                ruleData: NoopRuleData,
             },
         }
 

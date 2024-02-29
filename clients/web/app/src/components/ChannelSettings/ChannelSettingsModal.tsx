@@ -56,7 +56,7 @@ export function ChannelSettingsForm({
                 return {
                     ...role,
                     channelHasRole,
-                    tokenAddresses: role.tokens.map((token) => token.contractAddress as string),
+                    tokenAddresses: [], // TODO role.ruleData.map((token) => token.contractAddress as string),
                 }
             })
     }, [data, channelId, isLoading])

@@ -4,7 +4,6 @@
 import React, { useCallback, useEffect, useMemo } from 'react'
 import { fireEvent, render, screen, waitFor } from '@testing-library/react'
 
-import { BigNumber } from 'ethers'
 import { RegisterWallet, TransactionInfo } from './helpers/TestComponents'
 import { SpaceContextProvider } from '../../src/components/SpaceContextProvider'
 import { ZionTestApp } from './helpers/ZionTestApp'
@@ -21,6 +20,9 @@ import {
     BasicRoleInfo,
     Permission,
     createMembershipStruct,
+    NoopRuleData,
+    ruleDataToOperations,
+    OperationType,
 } from '@river/web3'
 import { useZionClient } from '../../src/hooks/use-zion-client'
 import { TSigner } from '../../src/types/web3-types'
@@ -156,7 +158,11 @@ function TestComponentMultiple(args: {
                 createMembershipStruct({
                     name: args.roleName[0],
                     permissions: args.permissions[0],
-                    tokenAddresses: [args.councilNftAddress],
+                    requirements: {
+                        everyone: true,
+                        users: [],
+                        ruleData: NoopRuleData,
+                    },
                 }),
                 args.signer,
             )
@@ -168,7 +174,11 @@ function TestComponentMultiple(args: {
                 createMembershipStruct({
                     name: args.roleName[1],
                     permissions: args.permissions[1],
-                    tokenAddresses: [args.councilNftAddress],
+                    requirements: {
+                        everyone: true,
+                        users: [],
+                        ruleData: NoopRuleData,
+                    },
                 }),
                 args.signer,
             )
@@ -176,7 +186,6 @@ function TestComponentMultiple(args: {
 
         void handleClick()
     }, [
-        args.councilNftAddress,
         args.permissions,
         args.roleName,
         args.spaceNames,
@@ -261,20 +270,23 @@ function MultipleRoleDetailsComponent(props: { spaceId: string; roleIds: number[
                         </div>
                         <div>
                             {' '}
-                            {role?.tokens.map((token) => {
-                                const nftAddress = token.contractAddress as string
-                                const quantity = (token.quantity as BigNumber).toNumber()
-                                return (
-                                    <div key={nftAddress}>
-                                        <div>
-                                            {role?.name}:nftAddress:{nftAddress}
-                                        </div>
-                                        <div>
-                                            {role?.name}:{nftAddress}:quantity:{quantity}
-                                        </div>
-                                    </div>
-                                )
-                            })}
+                            {ruleDataToOperations(role?.ruleData ? [role.ruleData] : []).map(
+                                (operation) => {
+                                    switch (operation.opType) {
+                                        case OperationType.CHECK:
+                                            return (
+                                                <div key={operation.opType}>
+                                                    <div>
+                                                        {role?.name}:{operation.contractAddress}
+                                                        :quantity:{operation.threshold.toString()}
+                                                    </div>
+                                                </div>
+                                            )
+                                        default:
+                                            return <div key={operation.opType}></div>
+                                    }
+                                },
+                            )}
                         </div>
                     </div>
                 )

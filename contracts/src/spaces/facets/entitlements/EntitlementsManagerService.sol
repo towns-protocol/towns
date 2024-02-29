@@ -27,29 +27,35 @@ library EntitlementsManagerService {
     EntitlementsManagerStorage.Layout storage ds = EntitlementsManagerStorage
       .layout();
 
-    if (ds.entitlementByAddress[entitlement].entitlement == address(0)) {
+    if (!ds.entitlements.contains(entitlement)) {
       revert EntitlementsService__EntitlementDoesNotExist();
     }
   }
 
+  // TODO define what isImmutable means
   function addEntitlement(address entitlement, bool isImmutable) internal {
+    IEntitlement ie = IEntitlement(entitlement);
     EntitlementsManagerStorage.Layout storage ds = EntitlementsManagerStorage
       .layout();
 
-    if (ds.entitlementByAddress[entitlement].entitlement != address(0)) {
+    if (ds.entitlements.contains(entitlement)) {
       revert EntitlementsService__EntitlementAlreadyExists();
     }
 
     ds.entitlements.add(entitlement);
     ds.entitlementByAddress[entitlement] = EntitlementsManagerStorage
-      .Entitlement({entitlement: entitlement, isImmutable: isImmutable});
+      .Entitlement({
+        entitlement: IEntitlement(entitlement),
+        isImmutable: isImmutable,
+        isCrosschain: ie.isCrosschain()
+      });
   }
 
   function removeEntitlement(address entitlement) internal {
     EntitlementsManagerStorage.Layout storage ds = EntitlementsManagerStorage
       .layout();
 
-    if (ds.entitlementByAddress[entitlement].entitlement == address(0)) {
+    if (!ds.entitlements.contains(entitlement)) {
       revert EntitlementsService__EntitlementDoesNotExist();
     }
 
@@ -76,16 +82,17 @@ library EntitlementsManagerService {
     EntitlementsManagerStorage.Layout storage ds = EntitlementsManagerStorage
       .layout();
 
-    if (ds.entitlementByAddress[entitlement].entitlement == address(0)) {
+    if (!ds.entitlements.contains(entitlement)) {
       revert EntitlementsService__EntitlementDoesNotExist();
     }
 
-    return (
-      IEntitlement(entitlement).name(),
-      ds.entitlementByAddress[entitlement].entitlement,
-      IEntitlement(entitlement).moduleType(),
-      ds.entitlementByAddress[entitlement].isImmutable
-    );
+    IEntitlement ie = IEntitlement(entitlement);
+    string memory temp1 = ie.name();
+    address temp2 = address(ds.entitlementByAddress[entitlement].entitlement);
+    string memory temp3 = ie.moduleType();
+    bool temp4 = ds.entitlementByAddress[entitlement].isImmutable;
+
+    return (temp1, temp2, temp3, temp4);
   }
 
   function getEntitlements()
@@ -122,7 +129,7 @@ library EntitlementsManagerService {
   function proxyGetEntitlementDataByRole(
     address entitlement,
     uint256 role
-  ) internal view returns (bytes[] memory) {
+  ) internal view returns (bytes memory) {
     checkEntitlement(entitlement);
     return IEntitlement(entitlement).getEntitlementDataByRoleId(role);
   }
@@ -138,10 +145,9 @@ library EntitlementsManagerService {
 
   function proxyRemoveRoleFromEntitlement(
     address entitlement,
-    uint256 role,
-    bytes memory entitlementData
+    uint256 role
   ) internal {
     checkEntitlement(entitlement);
-    IEntitlement(entitlement).removeEntitlement(role, entitlementData);
+    IEntitlement(entitlement).removeEntitlement(role);
   }
 }

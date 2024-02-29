@@ -38,8 +38,12 @@ describe('write messages', () => {
         if (!councilNftAddress) {
             throw new Error('councilNftAddress is undefined')
         }
-        const councilToken = createExternalTokenStruct([councilNftAddress])[0]
-        const membershipToken = createExternalTokenStruct([membershipTokenAddress])[0]
+        const councilToken = createExternalTokenStruct([councilNftAddress])
+        const bothToken = createExternalTokenStruct([
+            councilNftAddress,
+            membershipTokenAddress as `0x${string}`,
+        ])
+        const membershipToken = createExternalTokenStruct([membershipTokenAddress as `0x${string}`])
 
         // update the member role so only council nft holders can write
         const tx1 = await bob.updateRoleTransaction(
@@ -47,8 +51,8 @@ describe('write messages', () => {
             2,
             'Read only',
             [Permission.Read],
-            [membershipToken],
             [],
+            membershipToken,
             bob.wallet,
         )
         await bob.waitForUpdateRoleTransaction(tx1)
@@ -58,12 +62,23 @@ describe('write messages', () => {
             spaceId,
             'Member',
             [Permission.Read, Permission.Write],
-            [councilToken, membershipToken],
             [],
+            bothToken,
             bob.wallet,
         )
 
-        await bob.waitForCreateRoleTransaction(tx2)
+        await tx2.transaction?.wait()
+
+        // create read only role
+        const tx3 = await bob.createRoleTransaction(
+            spaceId,
+            'Read only',
+            [Permission.Read],
+            [],
+            councilToken,
+            bob.wallet,
+        )
+        await tx3.transaction?.wait()
 
         if (!spaceId) {
             throw new Error('Failed to create room')

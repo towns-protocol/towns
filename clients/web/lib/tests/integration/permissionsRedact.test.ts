@@ -13,7 +13,7 @@ import {
 
 import { ZTEvent } from '../../src/types/timeline-types'
 import { waitFor } from '@testing-library/dom'
-import { Permission } from '@river/web3'
+import { NoopRuleData, Permission } from '@river/web3'
 
 const EveryoneRoleName = 'Everyone'
 const MemberRoleName = 'Member'
@@ -156,7 +156,14 @@ describe('redact messages', () => {
             throw new Error('Failed to get bob wallet address')
         }
         const users: string[] = [bob.walletAddress]
-        const moderatorRoleId = await alice.createRole(spaceId, 'moderator', permissions, [], users)
+        const moderatorRoleId = await alice.createRole(
+            spaceId,
+            'moderator',
+            permissions,
+            [],
+            users,
+            NoopRuleData,
+        )
         if (!moderatorRoleId) {
             throw new Error('Failed to create moderator role')
         }

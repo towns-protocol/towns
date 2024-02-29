@@ -1,5 +1,4 @@
 import {
-    TokenEntitlementDataTypes,
     RoleEntitlements as R_RoleEntitlements,
     RoleDetails as R_RoleDetails,
     ISpaceDapp as R_ISpaceDapp,
@@ -52,9 +51,6 @@ export type BlockchainTransaction = {
     }
     type: BlockchainTransactionType
 }
-
-// aliasing this type b/c we might change to viem and it's unclear if we're going to be removing typechain generated types
-export type TokenEntitlementStruct = TokenEntitlementDataTypes.ExternalTokenStruct
 
 // versioned types for easier reference/upgrade
 export type RoleEntitlements = R_RoleEntitlements

@@ -1,5 +1,5 @@
 import React, { useEffect } from 'react'
-import { Permission, useHasPermission, useSpaceData } from 'use-zion-client'
+import { useIsSpaceOwner, useSpaceData } from 'use-zion-client'
 import { useNavigate } from 'react-router'
 import { Stack } from '@ui'
 import { SpaceOwnerLanding } from '@components/SpaceOwnerLanding'
@@ -10,11 +10,7 @@ import { CentralPanelLayout } from './layouts/CentralPanelLayout'
 export const SpaceGettingStarted = () => {
     const space = useSpaceData()
     const { loggedInWalletAddress } = useAuth()
-    const { hasPermission: owner, isLoading } = useHasPermission({
-        spaceId: space?.id ?? '',
-        walletAddress: loggedInWalletAddress ?? '',
-        permission: Permission.Owner,
-    })
+    const { isOwner, isLoading } = useIsSpaceOwner(space?.id, loggedInWalletAddress)
     const navigate = useNavigate()
 
     //  temporary auth hack
@@ -22,10 +18,10 @@ export const SpaceGettingStarted = () => {
         if (isLoading) {
             return
         }
-        if (!owner) {
+        if (!isOwner) {
             navigate(`/${PATHS.SPACES}/${space?.id}/${PATHS.THREADS}`)
         }
-    }, [owner, isLoading, navigate, space?.id])
+    }, [isOwner, isLoading, navigate, space?.id])
 
     return (
         <CentralPanelLayout>

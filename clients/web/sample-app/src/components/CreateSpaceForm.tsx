@@ -12,6 +12,7 @@ import {
 } from 'use-zion-client'
 import {
     MembershipStruct,
+    NoopRuleData,
     Permission,
     getTestGatingNFTContractAddress,
     mintMockNFT,
@@ -21,7 +22,6 @@ import { ethers } from 'ethers'
 import { useGetEmbeddedSigner } from '@towns/privy'
 import { MembershipRequirement, SpaceRoleSettings } from 'routes/SpaceRoleSettings'
 import { useEnvironment } from 'hooks/use-environment'
-import { createTokenEntitlmentStruct } from 'utils/contractHelpers'
 import { ChainSwitchingButton } from './Buttons/ChainSwitchingButton'
 
 interface Props {
@@ -114,7 +114,6 @@ export const CreateSpaceForm = (props: Props) => {
     }, [])
 
     const onClickCreateSpace = useCallback(async () => {
-        let tokenAddresses: string[] = []
         const memberPermissions: Permission[] = [Permission.Read, Permission.Write]
         // let everyonePermissions: Permission[] = []
         switch (formValue.membershipRequirement) {
@@ -125,7 +124,6 @@ export const CreateSpaceForm = (props: Props) => {
                     console.error('Cannot create space. No council NFT address.')
                     return undefined
                 }
-                tokenAddresses = [councilNftAddress]
                 break
             default:
                 throw new Error('Unhandled membership requirement')
@@ -154,12 +152,9 @@ export const CreateSpaceForm = (props: Props) => {
             },
             permissions: memberPermissions,
             requirements: {
-                everyone: tokenAddresses.length === 0,
-                tokens: tokenAddresses.map((addr) =>
-                    createTokenEntitlmentStruct({ contractAddress: addr }),
-                ),
+                everyone: true,
                 users: [],
-                rule: ethers.constants.AddressZero,
+                ruleData: NoopRuleData,
             },
         }
 

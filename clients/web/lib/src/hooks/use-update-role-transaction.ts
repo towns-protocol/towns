@@ -10,7 +10,7 @@ import { TSigner } from '../types/web3-types'
 import { blockchainKeys } from '../query/query-keys'
 import { useQueryClient } from '../query/queryClient'
 import { useZionClient } from './use-zion-client'
-import { TokenEntitlementDataTypes, Permission } from '@river/web3'
+import { Permission, NoopRuleData, IRuleEntitlement } from '@river/web3'
 import { getTransactionHashOrUserOpHash } from '@towns/userops'
 
 /**
@@ -41,8 +41,8 @@ export function useUpdateRoleTransaction() {
             roleId: number,
             roleName: string,
             permissions: Permission[],
-            tokens: TokenEntitlementDataTypes.ExternalTokenStruct[],
             users: string[],
+            ruleData: IRuleEntitlement.RuleDataStruct,
             signer: TSigner,
         ): Promise<TransactionContext<void> | undefined> {
             if (isTransacting.current) {
@@ -71,8 +71,8 @@ export function useUpdateRoleTransaction() {
                     roleId,
                     roleName,
                     permissions,
-                    tokens,
                     users,
+                    NoopRuleData,
                     signer,
                 )
                 setTransactionContext(transactionResult)

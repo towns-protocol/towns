@@ -15,12 +15,7 @@ import { ContractReceipt } from 'ethers'
 import { RoleIdentifier } from '../../src/types/web3-types'
 import { TestConstants } from './helpers/TestConstants'
 import { waitFor } from '@testing-library/react'
-import {
-    createExternalTokenStruct,
-    getTestGatingNftAddress,
-    Permission,
-    TokenEntitlementDataTypes,
-} from '@river/web3'
+import { getTestGatingNftAddress, NoopRuleData, Permission } from '@river/web3'
 
 describe('delete role', () => {
     test.skip('delete token-gated role with a channel using it', async () => {
@@ -46,7 +41,6 @@ describe('delete role', () => {
         if (!newNftAddress) {
             throw new Error('councilNftAddress is undefined')
         }
-        const newTokens = createExternalTokenStruct([newNftAddress])
         const newUsers: string[] = []
         // create a new test space
         await alice.fundWallet()
@@ -63,8 +57,8 @@ describe('delete role', () => {
             spaceId,
             newRoleName,
             newPermissions,
-            newTokens,
             newUsers,
+            NoopRuleData,
         )
         if (!roleIdentifier) {
             throw new Error('roleIdentifier is undefined')
@@ -174,7 +168,6 @@ describe('delete role', () => {
         }
         const newRoleName = 'newRole1'
         const newPermissions = [Permission.Read, Permission.Write]
-        const newTokens: TokenEntitlementDataTypes.ExternalTokenStruct[] = []
         // add bob to the users list
         const newUsers: string[] = [bob.getUserId()!, carol.getUserId()!]
         // create a new test space
@@ -192,8 +185,8 @@ describe('delete role', () => {
             spaceId,
             newRoleName,
             newPermissions,
-            newTokens,
             newUsers,
+            NoopRuleData,
         )
         if (!roleIdentifier) {
             throw new Error('roleIdentifier is undefined')
@@ -298,7 +291,6 @@ describe('delete role', () => {
         }
         const newRoleName = 'newRole1'
         const newPermissions = [Permission.Read, Permission.Write]
-        const newTokens: TokenEntitlementDataTypes.ExternalTokenStruct[] = []
         // add bob to the users list
         const newUsers: string[] = [bob.getUserId()!]
         // create a new test space
@@ -316,8 +308,8 @@ describe('delete role', () => {
             spaceId,
             newRoleName,
             newPermissions,
-            newTokens,
             newUsers,
+            NoopRuleData,
         )
         if (!roleIdentifier) {
             throw new Error('roleIdentifier is undefined')

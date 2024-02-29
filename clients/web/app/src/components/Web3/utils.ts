@@ -1,6 +1,5 @@
 import {
     SignerUndefinedError,
-    TokenEntitlementStruct,
     WalletDoesNotMatchSignedInAccountError,
     useCasablancaStore,
 } from 'use-zion-client'
@@ -15,23 +14,6 @@ import {
     ERROR_NAME_LENGTH_INVALID,
     ERROR_SPACE_ALREADY_REGISTERED,
 } from '@components/Web3/constants'
-
-// Evan TODO: pass tokenIds too
-// TBD if we need other params, they can be added one at a time
-export function createTokenEntitlementStruct({
-    contractAddress,
-    tokenIds,
-}: {
-    contractAddress: string
-    tokenIds?: number[]
-}): TokenEntitlementStruct {
-    return {
-        contractAddress,
-        isSingleToken: false,
-        quantity: 1,
-        tokenIds: tokenIds ?? [],
-    }
-}
 
 export const EVERYONE_ADDRESS = '0x0000000000000000000000000000000000000001'
 export const ETH_ADDRESS = '0xEeeeeEeeeEeEeeEeEeEeeEEEeeeeEeeeeeeeEEeE'

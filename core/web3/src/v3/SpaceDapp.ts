@@ -8,20 +8,16 @@ import {
 } from '../ContractTypes'
 import { BytesLike, ContractTransaction, ethers } from 'ethers'
 import { CreateSpaceParams, ISpaceDapp, UpdateChannelParams, UpdateRoleParams } from '../ISpaceDapp'
-import {
-    createTokenEntitlementStruct,
-    createUserEntitlementStruct,
-} from '../ConvertersEntitlements'
+import { createRuleEntitlementStruct, createUserEntitlementStruct } from '../ConvertersEntitlements'
 
 import { IRolesBase } from './IRolesShim'
-import { IArchitectBase } from './ITownArchitectShim'
 import { Town } from './Town'
 import { TownRegistrar } from './TownRegistrar'
 import { createEntitlementStruct } from '../ConvertersRoles'
 import { getContractsInfo } from '../IStaticContractsInfo'
-import { TokenEntitlementDataTypes } from './TokenEntitlementShim'
 import { WalletLink } from './WalletLink'
 import { SpaceDappConfig, SpaceInfo } from '../SpaceDappTypes'
+import { IRuleEntitlement } from './index'
 
 export class SpaceDapp implements ISpaceDapp {
     public readonly chainId: number
@@ -55,17 +51,17 @@ export class SpaceDapp implements ISpaceDapp {
         params: CreateSpaceParams,
         signer: ethers.Signer,
     ): Promise<ContractTransaction> {
-        const townInfo: IArchitectBase.SpaceInfoStruct = {
+        const spaceInfo = {
             id: params.spaceId,
             name: params.spaceName,
             uri: params.spaceMetadata,
-            membership: params.membership,
+            membership: params.membership as any,
             channel: {
                 id: params.channelId,
                 metadata: params.channelName || '',
             },
         }
-        return this.townRegistrar.TownArchitect.write(signer).createSpace(townInfo)
+        return this.townRegistrar.TownArchitect.write(signer).createSpace(spaceInfo)
     }
 
     public async createChannel(
@@ -86,15 +82,15 @@ export class SpaceDapp implements ISpaceDapp {
         spaceId: string,
         roleName: string,
         permissions: Permission[],
-        tokens: TokenEntitlementDataTypes.ExternalTokenStruct[],
         users: string[],
+        ruleData: IRuleEntitlement.RuleDataStruct,
         signer: ethers.Signer,
     ): Promise<ContractTransaction> {
         const town = await this.getTown(spaceId)
         if (!town) {
             throw new Error(`Town with spaceId "${spaceId}" is not found.`)
         }
-        const entitlements = await createEntitlementStruct(town, tokens, users)
+        const entitlements = await createEntitlementStruct(town, users, ruleData)
         return town.Roles.write(signer).createRole(roleName, permissions, entitlements)
     }
 
@@ -471,21 +467,21 @@ export class SpaceDapp implements ISpaceDapp {
         params: UpdateRoleParams,
     ): Promise<IRolesBase.CreateEntitlementStruct[]> {
         const updatedEntitlements: IRolesBase.CreateEntitlementStruct[] = []
-        const [tokenEntitlement, userEntitlement] = await Promise.all([
-            town.findEntitlementByType(EntitlementModuleType.TokenEntitlement),
+        const [userEntitlement, ruleEntitlement] = await Promise.all([
             town.findEntitlementByType(EntitlementModuleType.UserEntitlement),
+            town.findEntitlementByType(EntitlementModuleType.RuleEntitlement),
         ])
-        if (params.tokens.length > 0 && tokenEntitlement?.address) {
-            const entitlementData = createTokenEntitlementStruct(
-                tokenEntitlement.address,
-                params.tokens,
-            )
-            updatedEntitlements.push(entitlementData)
-        }
         if (params.users.length > 0 && userEntitlement?.address) {
             const entitlementData = createUserEntitlementStruct(
                 userEntitlement.address,
                 params.users,
+            )
+            updatedEntitlements.push(entitlementData)
+        }
+        if (params.ruleData && ruleEntitlement?.address) {
+            const entitlementData = createRuleEntitlementStruct(
+                ruleEntitlement.address as `0x${string}`,
+                params.ruleData,
             )
             updatedEntitlements.push(entitlementData)
         }

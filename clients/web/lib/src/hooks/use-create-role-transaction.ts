@@ -10,7 +10,7 @@ import { TSigner } from '../types/web3-types'
 import { blockchainKeys } from '../query/query-keys'
 import { useQueryClient } from '../query/queryClient'
 import { useZionClient } from './use-zion-client'
-import { TokenEntitlementDataTypes, Permission } from '@river/web3'
+import { Permission, IRuleEntitlement } from '@river/web3'
 import { getTransactionHashOrUserOpHash } from '@towns/userops'
 
 /**
@@ -40,8 +40,8 @@ export function useCreateRoleTransaction() {
             spaceNetworkId: string,
             roleName: string,
             permissions: Permission[],
-            tokens: TokenEntitlementDataTypes.ExternalTokenStruct[],
             users: string[],
+            ruleData: IRuleEntitlement.RuleDataStruct,
             signer: TSigner,
         ): Promise<RoleTransactionContext | undefined> {
             if (isTransacting.current) {
@@ -69,8 +69,8 @@ export function useCreateRoleTransaction() {
                     spaceNetworkId,
                     roleName,
                     permissions,
-                    tokens,
                     users,
+                    ruleData,
                     signer,
                 )
                 setTransactionContext(transactionResult)

@@ -1,5 +1,4 @@
 import {
-	verifySiweMessage,
 	isAuthedRequest,
 	isOptionsRequest,
 	getOptionsResponse,
@@ -7,6 +6,8 @@ import {
 	AuthEnv,
 	withCorsHeaders,
 } from 'worker-common'
+
+import { Permission, createSpaceDapp } from '@river/web3'
 
 // These initial Types are based on bindings that don't exist in the project yet,
 // you can follow the links to learn how to implement them.
@@ -34,6 +35,7 @@ export default {
 
 export const worker = {
 	async fetch(request: FetchEvent['request'], env: Env): Promise<Response> {
+		const dapp = createSpaceDapp({ chainId: 1, provider: undefined })
 		if (isOptionsRequest(request)) {
 			return getOptionsResponse(request, env.ENVIRONMENT)
 		}
@@ -58,15 +60,17 @@ export const worker = {
 				spaceId?: string
 				userId?: string
 			}
+			if (await dapp.isEntitledToSpace('space', 'user', Permission.Read)) {
+				return new Response('OK', {
+					status: 200,
+					headers: withCorsHeaders(request, env.ENVIRONMENT),
+				})
+			}
 			console.log(`spaceId: ${spaceId ?? ''}, userId: ${userId ?? ''}`)
 			if (!!spaceId && !!userId) {
-				return new Response('Can only provide one of spaceId or userId', { status: 400 })
-			} else if (spaceId !== undefined) {
-				return await verifySiweMessage(request, env)
-			} else if (userId !== undefined) {
-				return await verifySiweMessage(request, env, true)
+				return new Response('Unauthorized', { status: 401 })
 			} else {
-				return new Response('Must provide spaceId or userId', { status: 400 })
+				return new Response('Unauthorized', { status: 401 })
 			}
 		} catch (e) {
 			console.log(`error: `, e)

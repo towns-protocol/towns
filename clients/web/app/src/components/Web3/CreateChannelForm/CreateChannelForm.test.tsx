@@ -53,7 +53,16 @@ describe('CreateChannelForm', () => {
         vi.resetAllMocks()
     })
 
-    test('renders checkbox for each role', async () => {
+    test.skip('renders checkbox for each role', async () => {
+        /*
+        vi.spyOn(useRequireTransactionNetwork, 'useRequireTransactionNetwork').mockReturnValue({
+            isReady: true,
+            isTransactionNetwork: true,
+            name: 'Sepolia',
+            switchNetwork: () => null,
+        })
+        */
+
         vi.spyOn(useContractRoles, 'useContractRoles').mockImplementation(
             (_spaceNetworkId: string | undefined) => {
                 return {

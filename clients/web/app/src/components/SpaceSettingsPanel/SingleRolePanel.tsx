@@ -3,6 +3,7 @@ import { useSearchParams } from 'react-router-dom'
 import {
     Address,
     BlockchainTransactionType,
+    NoopRuleData,
     Permission,
     useCreateRoleTransaction,
     useDeleteRoleTransaction,
@@ -39,7 +40,6 @@ import {
 } from '@components/SpaceSettingsPanel/rolePermissions.const'
 import { RoleRow } from '@components/SpaceSettingsPanel/RoleSettingsPermissions'
 import { ModalContainer } from '@components/Modals/ModalContainer'
-import { createTokenEntitlementStruct } from '@components/Web3/utils'
 import { FullPanelOverlay } from '@components/Web3/WalletLinkingPanel'
 import { UserOpTxModal } from '@components/Web3/UserOpTxModal/UserOpTxModal'
 import {
@@ -51,7 +51,6 @@ import { formSchema } from './schema'
 import { TokenPillSelector } from './TokenPillSelector'
 import { UserPillSelector } from './UserPillSelector'
 import { SearchInputHeightAdjuster } from './SearchInputHeightAdjuster'
-import { TokenPill } from './TokenPill'
 
 export type RoleFormSchemaType = z.infer<typeof formSchema>
 
@@ -106,11 +105,7 @@ export function SingleRolePanel() {
                         defaultValues={{
                             // roleDetails is undefined when creating a new role
                             name: roleDetails?.name ?? '',
-                            tokens:
-                                roleDetails?.tokens?.map((t) => ({
-                                    contractAddress: t.contractAddress as string,
-                                    tokenIds: t.tokenIds as number[],
-                                })) ?? [],
+                            ruleData: roleDetails?.ruleData,
                             permissions: isCreateRole ? ['Read'] : roleDetails?.permissions ?? [],
                             users: roleDetails?.users ?? [],
                         }}
@@ -180,18 +175,7 @@ export function SingleRolePanel() {
                                                     <Stack gap>
                                                         <Text>Digital Asset Requirement</Text>
                                                         <Stack alignSelf="start">
-                                                            {roleDetails?.tokens.length === 1 && (
-                                                                <TokenPill
-                                                                    disableDelete
-                                                                    contractAddressIn={
-                                                                        roleDetails.tokens[0]
-                                                                            .contractAddress as string
-                                                                    }
-                                                                    selectionId={undefined}
-                                                                    selection={undefined}
-                                                                    onDelete={undefined}
-                                                                />
-                                                            )}
+                                                            {'//roleDetails?.ruleData'}
                                                         </Stack>
                                                     </Stack>
                                                 ) : (
@@ -384,13 +368,8 @@ function SubmitButton({
                 spaceId,
                 data.name,
                 data.permissions,
-                data.tokens.map((t) =>
-                    createTokenEntitlementStruct({
-                        contractAddress: t.contractAddress,
-                        tokenIds: t.tokenIds,
-                    }),
-                ),
                 data.users,
+                NoopRuleData,
                 signer,
             )
         } else {
@@ -403,13 +382,8 @@ function SubmitButton({
                 roleId,
                 data.name,
                 data.permissions,
-                data.tokens.map((t) =>
-                    createTokenEntitlementStruct({
-                        contractAddress: t.contractAddress,
-                        tokenIds: t.tokenIds,
-                    }),
-                ),
                 data.users,
+                NoopRuleData,
                 signer,
             )
         }
@@ -674,3 +648,8 @@ function ErrorsNotification() {
         </AnimatePresence>
     )
 }
+/*
+function createTokenEntitlementStruct(arg0: { contractAddress: string; tokenIds: number[] }) {
+    throw new Error('Function not implemented.')
+}
+*/

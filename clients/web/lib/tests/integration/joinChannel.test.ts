@@ -31,13 +31,13 @@ test('create a public space and a public room, and have user join', async () => 
     if (!testGatingNftAddress) {
         throw new Error('testGatingNftAddress is undefined')
     }
-    const testGatingNftToken = createExternalTokenStruct([testGatingNftAddress])[0]
+    const ruleData = createExternalTokenStruct([testGatingNftAddress])
     const roleIdentifier: RoleIdentifier | undefined = await bob.createRole(
         spaceId,
         'newRoleName',
         [Permission.Read, Permission.Write],
-        [testGatingNftToken],
         [],
+        ruleData,
     )
 
     if (!roleIdentifier) {

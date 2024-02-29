@@ -3,12 +3,14 @@ pragma solidity ^0.8.23;
 
 // interfaces
 import {IEntitlementsManager} from "./IEntitlementsManager.sol";
+import {IRuleEntitlement} from "contracts/src/crosschain/IRuleEntitlement.sol";
 
 // libraries
 
 // contracts
 import {EntitlementsManagerBase} from "./EntitlementsManagerBase.sol";
 import {Entitled} from "../Entitled.sol";
+import {IEntitlement} from "contracts/src/spaces/entitlements/IEntitlement.sol";
 
 contract EntitlementsManager is
   IEntitlementsManager,
@@ -46,11 +48,24 @@ contract EntitlementsManager is
     return _isEntitledToSpace(user, permission);
   }
 
+  function getTownEntitlements(
+    string calldata permission
+  ) external view returns (IRuleEntitlement.RuleData memory) {
+    return _getTownEntitlements(permission);
+  }
+
   function isEntitledToChannel(
     string calldata channelId,
     address user,
     string calldata permission
   ) external view returns (bool) {
     return _isEntitledToChannel(channelId, user, permission);
+  }
+
+  function getChannelEntitlements(
+    string calldata channelId,
+    string calldata permission
+  ) external view returns (IRuleEntitlement.RuleData memory) {
+    return _getChannelEntitlements(channelId, permission);
   }
 }

@@ -136,7 +136,6 @@
         "packages/*",
         "servers/workers/*",
         "servers/notification-service",
-        "contracts",
-        "common/*"
+        "contracts"
     ]
 }

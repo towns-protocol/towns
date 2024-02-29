@@ -1,10 +1,11 @@
 import { TestSpaceDapp } from '@river/web3/tests/TestSpaceDapp'
 import { TestWeb3Provider } from '@river/web3/tests/TestWeb3Provider'
 import { Permission, CreateSpaceParams, ISpaceDapp } from '@river/web3'
-import { paymasterProxyMiddleware } from '../paymasterProxyMiddleware'
+import { paymasterProxyMiddleware } from '../src/paymasterProxyMiddleware'
 import { ethers } from 'ethers'
 import { nanoid } from 'nanoid'
 import { TestUserOps } from './TestUserOps'
+import { NoopRuleData } from '@river/web3/src'
 
 // FOR NOW these tests only work against stackup bundler/paymaster
 describe('UserOpSpaceDapp tests', () => {
@@ -36,7 +37,7 @@ describe('UserOpSpaceDapp tests', () => {
         })
 
         const abstractAccount = await userOps.getAbstractAccountAddress({
-            signer: bob.wallet,
+            rootKeyAddress: bob.wallet.address as `0x${string}`,
         })
 
         // ANVIL
@@ -95,9 +96,8 @@ function createSpaceParams({ feeRecipient }: { feeRecipient: string }): CreateSp
             permissions: [Permission.Read, Permission.Write],
             requirements: {
                 everyone: true,
-                tokens: [],
                 users: [],
-                rule: ethers.constants.AddressZero,
+                ruleData: NoopRuleData,
             },
         },
     }

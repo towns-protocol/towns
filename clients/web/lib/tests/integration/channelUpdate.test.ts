@@ -2,7 +2,7 @@
  * @group dendrite
  */
 import { ErrorWithCode, NoThrownError, getError } from './helpers/ErrorUtils'
-import { Room } from '../../src/types/zion-types'
+import { StreamView } from '../../src/types/zion-types'
 import {
     createTestSpaceGatedByTownAndZionNfts,
     findRoleByName,
@@ -12,7 +12,7 @@ import {
 
 import { ContractReceipt } from 'ethers'
 import { RoleIdentifier } from '../../src/types/web3-types'
-import { createExternalTokenStruct, getContractsInfo, Permission } from '@river/web3'
+import { Permission, createExternalTokenStruct, getContractsInfo } from '@river/web3'
 import { Err } from '@river/proto'
 
 describe('channel update', () => {
@@ -60,8 +60,8 @@ describe('channel update', () => {
             spaceId,
             roleName,
             permissions,
-            roleDetails.tokens,
             [bob.walletAddress],
+            roleDetails.ruleData,
         )
         if (!newRoleId) {
             throw new Error('newRoleId is undefined')
@@ -86,7 +86,9 @@ describe('channel update', () => {
             throw e
         }
         // bob tries to join the space and succeeds because he is a member of the new role
-        const bobJoinedRoom = await waitForWithRetries<Room>(() => bob.joinRoom(channelId, spaceId))
+        const bobJoinedRoom = await waitForWithRetries<StreamView>(() =>
+            bob.joinRoom(channelId, spaceId),
+        )
 
         /** Assert */
         // verify the transaction succeeded
@@ -138,14 +140,14 @@ describe('channel update', () => {
         const newPermissions = [Permission.Read, Permission.Write, Permission.Redact]
         const mockNFTAddress = getContractsInfo(alice.chainId).mockErc721aAddress
         // test space was created with council token. replace with zioneer token
-        const newTokens = createExternalTokenStruct([mockNFTAddress])
+        const ruleData = createExternalTokenStruct([mockNFTAddress])
         const users: string[] = []
         const newRoleId: RoleIdentifier | undefined = await alice.createRole(
             spaceId,
             newRoleName,
             newPermissions,
-            newTokens,
             users,
+            ruleData,
         )
         if (!newRoleId) {
             throw new Error('newRoleId is undefined')

@@ -9,12 +9,7 @@ import {
 } from './helpers/TestUtils'
 import { waitFor } from '@testing-library/dom'
 import { sleep } from '../../src/utils/zion-utils'
-import {
-    createExternalTokenStruct,
-    getTestGatingNftAddress,
-    IArchitectBase,
-    Permission,
-} from '@river/web3'
+import { getTestGatingNftAddress, IArchitectBase, NoopRuleData, Permission } from '@river/web3'
 import { ethers } from 'ethers'
 
 describe('Zion event handlers test', () => {
@@ -44,7 +39,6 @@ describe('Zion event handlers test', () => {
         }
         expect(testGatingNftAddress).toBeDefined()
         expect(testGatingNftAddress).not.toBe('')
-        const tokens = createExternalTokenStruct([testGatingNftAddress])
         const membership: IArchitectBase.MembershipStruct = {
             settings: {
                 name: 'Member',
@@ -60,9 +54,8 @@ describe('Zion event handlers test', () => {
             permissions: [Permission.Read, Permission.Write],
             requirements: {
                 everyone: false,
-                tokens,
-                users: [],
-                rule: ethers.constants.AddressZero,
+                users: [alice.wallet.address],
+                ruleData: NoopRuleData,
             },
         }
         // createSpace is gated by the mock NFT. Mint one for yourself before proceeding.

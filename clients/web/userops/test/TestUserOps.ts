@@ -1,5 +1,5 @@
 import { ethers } from 'ethers'
-import { UserOps } from '../UserOperations'
+import { UserOps } from '../src/UserOperations'
 import { ISendUserOperationResponse } from 'userop'
 import { LOCALHOST_CHAIN_ID } from '@river/web3'
 

@@ -2,6 +2,7 @@
 pragma solidity ^0.8.23;
 
 // interfaces
+import {IEntitlement} from "contracts/src/spaces/entitlements/IEntitlement.sol";
 
 // libraries
 import {EnumerableSet} from "openzeppelin-contracts/contracts/utils/structs/EnumerableSet.sol";
@@ -13,8 +14,9 @@ library EntitlementsManagerStorage {
     keccak256("towns.contracts.storage.Entitlement");
 
   struct Entitlement {
-    address entitlement;
+    IEntitlement entitlement;
     bool isImmutable;
+    bool isCrosschain;
   }
 
   struct Layout {

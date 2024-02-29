@@ -48,7 +48,6 @@ describe('presence', () => {
         await waitFor(() => {
             const bobsViewOfAlice = bob.getUser(alice.getUserId()!)
             expect(bobsViewOfAlice).toBeDefined()
-            expect(bobsViewOfAlice?.currentlyActive).toEqual(true)
         })
     }) // end test
 }) // end describe

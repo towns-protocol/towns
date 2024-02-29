@@ -1,40 +1,34 @@
-import {
-    TokenEntitlementDataTypes as TokenEntitlementDataTypesV3,
-    TokenEntitlementShim as TokenEntitlementShimV3,
-} from './v3/TokenEntitlementShim'
 import { UserEntitlementShim as UserEntitlementShimV3 } from './v3/UserEntitlementShim'
 import {
     IMembershipBase as IMembershipBaseV3,
     IArchitectBase as ITownArchitectBaseV3,
 } from './v3/ITownArchitectShim'
 import { IRolesBase as IRolesBaseV3 } from './v3/IRolesShim'
+import { RuleEntitlementShim } from './v3/RuleEntitlementShim'
+import { IRuleEntitlement } from './v3'
 
-export enum Permission {
-    Read = 'Read',
-    Write = 'Write',
-    Invite = 'Invite',
-    Redact = 'Redact',
-    Ban = 'Ban',
-    Ping = 'Ping',
-    PinMessage = 'PinMessage',
-    AddRemoveChannels = 'AddRemoveChannels',
-    ModifySpaceSettings = 'ModifySpaceSettings',
-    Owner = 'Owner',
-    Upgrade = 'Upgrade',
-    JoinSpace = 'JoinSpace',
-}
+export const Permission = {
+    Undefined: 'Undefined', // No permission required
+    Read: 'Read',
+    Write: 'Write',
+    Invite: 'Invite',
+    JoinSpace: 'JoinSpace',
+    Redact: 'Redact',
+    Ban: 'Ban',
+    PinMessage: 'PinMessage',
+    AddRemoveChannels: 'AddRemoveChannels',
+    ModifySpaceSettings: 'ModifySpaceSettings',
+} as const
+
+export type Permission = (typeof Permission)[keyof typeof Permission]
 
 export type Versions = 'v3'
 export const defaultVersion: Versions = 'v3'
 export type TDefaultVersion = typeof defaultVersion
 
-export type EntitlementShim = TokenEntitlementShimV3 | UserEntitlementShimV3
-
-export type ExternalTokenStruct = TokenEntitlementDataTypesV3.ExternalTokenStruct
+export type EntitlementShim = UserEntitlementShimV3 | RuleEntitlementShim
 
 export type EntitlementStruct = IRolesBaseV3.CreateEntitlementStruct
-
-type TokenEntitlementShim = TokenEntitlementShimV3
 
 type UserEntitlementShim = UserEntitlementShimV3
 
@@ -50,8 +44,8 @@ export type TownInfoStruct = ITownArchitectBaseV3.SpaceInfoStruct
  * Supported entitlement modules
  */
 export enum EntitlementModuleType {
-    TokenEntitlement = 'TokenEntitlement',
     UserEntitlement = 'UserEntitlement',
+    RuleEntitlement = 'RuleEntitlement',
 }
 
 /**
@@ -61,8 +55,8 @@ export interface RoleDetails {
     id: number
     name: string
     permissions: Permission[]
-    tokens: ExternalTokenStruct[]
     users: string[]
+    ruleData: IRuleEntitlement.RuleDataStruct
     channels: ChannelMetadata[]
 }
 
@@ -94,16 +88,16 @@ export interface RoleEntitlements {
     roleId: number
     name: string
     permissions: Permission[]
-    tokens: ExternalTokenStruct[]
     users: string[]
+    ruleData: IRuleEntitlement.RuleDataStruct
 }
 
 /*
     Decoded Token and User entitlenment details
 */
 export interface EntitlementDetails {
-    tokens: ExternalTokenStruct[]
     users: string[]
+    ruleData: IRuleEntitlement.RuleDataStruct
 }
 
 export interface BasicRoleInfo {
@@ -115,39 +109,16 @@ export interface EntitlementModule {
     moduleType: EntitlementModuleType
 }
 
-export function isTokenEntitlement(
-    entitlement: EntitlementModule,
-): entitlement is TokenEntitlementShim {
-    return entitlement.moduleType === EntitlementModuleType.TokenEntitlement
-}
-
 export function isUserEntitlement(
     entitlement: EntitlementModule,
 ): entitlement is UserEntitlementShim {
     return entitlement.moduleType === EntitlementModuleType.UserEntitlement
 }
 
-export function isExternalTokenStruct(
-    // eslint-disable-next-line @typescript-eslint/no-explicit-any
-    args: any,
-): args is ExternalTokenStruct {
-    return (
-        // eslint-disable-next-line @typescript-eslint/no-unsafe-member-access
-        typeof args.contractAddress === 'string' &&
-        // eslint-disable-next-line @typescript-eslint/no-unsafe-member-access
-        typeof args.isSingleToken === 'boolean' &&
-        // eslint-disable-next-line @typescript-eslint/no-unsafe-member-access
-        args.quantity !== undefined &&
-        // eslint-disable-next-line @typescript-eslint/no-unsafe-member-access
-        args.tokenIds !== undefined
-    )
-}
-
-export function isExternalTokenStructArray(
-    // eslint-disable-next-line @typescript-eslint/no-explicit-any
-    args: any,
-): args is ExternalTokenStruct[] {
-    return Array.isArray(args) && args.length > 0 && args.every(isExternalTokenStruct)
+export function isRuleEntitlement(
+    entitlement: EntitlementModule,
+): entitlement is RuleEntitlementShim {
+    return entitlement.moduleType === EntitlementModuleType.RuleEntitlement
 }
 
 export function isStringArray(

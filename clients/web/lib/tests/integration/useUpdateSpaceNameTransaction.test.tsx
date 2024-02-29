@@ -17,7 +17,7 @@ import { useUpdateSpaceNameTransaction } from '../../src/hooks/use-update-space-
 import { useCreateSpaceTransactionWithRetries } from '../../src/hooks/use-create-space-transaction'
 import { TestConstants } from './helpers/TestConstants'
 import { TransactionStatus } from '../../src/client/ZionClientTypes'
-import { createMembershipStruct, getTestGatingNftAddress } from '@river/web3'
+import { NoopRuleData, createMembershipStruct, getTestGatingNftAddress } from '@river/web3'
 import { useContractSpaceInfo } from '../../src/hooks/use-space-data'
 import { TSigner } from '../../src/types/web3-types'
 
@@ -118,7 +118,11 @@ function TestComponent(args: {
                 createMembershipStruct({
                     name: 'Test Role',
                     permissions: [],
-                    tokenAddresses: [],
+                    requirements: {
+                        everyone: true,
+                        users: [],
+                        ruleData: NoopRuleData,
+                    },
                 }),
                 args.signer,
             )

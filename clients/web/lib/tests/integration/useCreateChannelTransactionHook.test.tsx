@@ -21,7 +21,12 @@ import { useRoles } from '../../src/hooks/use-roles'
 import { useSpacesFromContract } from '../../src/hooks/use-spaces-from-contract'
 import { useTransactionStore } from '../../src/store/use-transactions-store'
 import { useSpaceData } from '../../src/hooks/use-space-data'
-import { createMembershipStruct, getTestGatingNftAddress, Permission } from '@river/web3'
+import {
+    createMembershipStruct,
+    getTestGatingNftAddress,
+    NoopRuleData,
+    Permission,
+} from '@river/web3'
 import { TSigner } from '../../src/types/web3-types'
 
 describe('useCreateChannelTransactionHook', () => {
@@ -115,7 +120,11 @@ describe('useCreateChannelTransactionHook', () => {
                                 Permission.Write,
                                 Permission.AddRemoveChannels,
                             ],
-                            tokenAddresses: [testGatingNftAddress],
+                            requirements: {
+                                everyone: true,
+                                users: [],
+                                ruleData: NoopRuleData,
+                            },
                         }),
                         signer,
                     )

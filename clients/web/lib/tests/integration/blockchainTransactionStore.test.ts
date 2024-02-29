@@ -4,7 +4,7 @@
 import { jest } from '@jest/globals'
 import { registerAndStartClients, createTestSpaceGatedByTownAndZionNfts } from './helpers/TestUtils'
 
-import { IArchitectBase, Permission } from '@river/web3'
+import { IArchitectBase, NoopRuleData, Permission } from '@river/web3'
 import { waitFor } from '@testing-library/dom'
 import { ethers } from 'ethers'
 
@@ -70,9 +70,8 @@ test('should clear all promises when client stops', async () => {
         },
         permissions: [],
         requirements: {
-            rule: ethers.constants.AddressZero,
+            ruleData: NoopRuleData,
             everyone: false,
-            tokens: [],
             users: [],
         },
     }

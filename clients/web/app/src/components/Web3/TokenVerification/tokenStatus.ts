@@ -4,11 +4,11 @@ import { useLinkedWallets } from 'use-zion-client'
 import { useQuery, useQueryClient } from '@tanstack/react-query'
 import { useEffect, useMemo, useState } from 'react'
 import { create } from 'zustand'
-import { TokenGatingMembership } from 'hooks/useTokensGatingMembership'
 import { TokenType } from '@components/Tokens/types'
 import { useAuth } from 'hooks/useAuth'
 import { ArrayElement } from 'types'
 import { balanceOfErc1155, balanceOfErc20, balanceOfErc721, getTokenType } from '../checkTokenType'
+import { TokenGatingMembership } from './TokenGatingMembership'
 
 export type TokenStatus = {
     tokenAddress: Address

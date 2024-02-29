@@ -15,7 +15,7 @@ import { useCreateChannelTransaction } from '../../src/hooks/use-create-channel-
 import { CreateChannelInfo } from '../../src/types/zion-types'
 import { SpaceContextProvider } from '../../src/components/SpaceContextProvider'
 import { TestConstants } from './helpers/TestConstants'
-import { createMembershipStruct } from '@river/web3'
+import { NoopRuleData, createMembershipStruct } from '@river/web3'
 import { useZionClient } from '../../src/hooks/use-zion-client'
 
 /// regression, channels weren't showing in sidebar after they were created
@@ -49,7 +49,11 @@ describe('createSpaceChannelHooks', () => {
                         createMembershipStruct({
                             name: 'Test Role',
                             permissions: [],
-                            tokenAddresses: [],
+                            requirements: {
+                                everyone: true,
+                                users: [],
+                                ruleData: NoopRuleData,
+                            },
                         }),
                         aliceProvider.wallet,
                     )

@@ -38,17 +38,17 @@ import {MultiInit} from "contracts/src/diamond/initializers/MultiInit.sol";
 
 // deployments
 import {DeployUserEntitlement} from "contracts/scripts/deployments/DeployUserEntitlement.s.sol";
-import {DeployTokenEntitlement} from "contracts/scripts/deployments/DeployTokenEntitlement.s.sol";
 import {DeployMultiInit} from "contracts/scripts/deployments/DeployMultiInit.s.sol";
 import {DeploySpace} from "contracts/scripts/deployments/DeploySpace.s.sol";
 import {DeploySpaceOwner} from "contracts/scripts/deployments/DeploySpaceOwner.s.sol";
+import {DeployRuleEntitlement} from "contracts/scripts/deployments/DeployRuleEntitlement.s.sol";
 
 contract DeploySpaceFactory is DiamondDeployer {
   DeployMultiInit deployMultiInit = new DeployMultiInit();
   DeploySpace deploySpace = new DeploySpace();
   DeploySpaceOwner deploySpaceOwner = new DeploySpaceOwner();
   DeployUserEntitlement deployUserEntitlement = new DeployUserEntitlement();
-  DeployTokenEntitlement deployTokenEntitlement = new DeployTokenEntitlement();
+  DeployRuleEntitlement deployRuleEntitlement = new DeployRuleEntitlement();
 
   // diamond helpers
   DiamondCutHelper cutHelper = new DiamondCutHelper();
@@ -86,7 +86,7 @@ contract DeploySpaceFactory is DiamondDeployer {
   address prepay;
 
   address public userEntitlement;
-  address public tokenEntitlement;
+  address public ruleEntitlement;
   address public spaceOwner;
 
   function versionName() public pure override returns (string memory) {
@@ -102,7 +102,7 @@ contract DeploySpaceFactory is DiamondDeployer {
     address space = deploySpace.deploy();
     spaceOwner = deploySpaceOwner.deploy();
     userEntitlement = deployUserEntitlement.deploy();
-    tokenEntitlement = deployTokenEntitlement.deploy();
+    ruleEntitlement = deployRuleEntitlement.deploy();
 
     vm.startBroadcast(deployerPK);
     diamondCut = address(new DiamondCutFacet());
@@ -170,7 +170,7 @@ contract DeploySpaceFactory is DiamondDeployer {
       architectHelper.initializer(),
       spaceOwner,
       userEntitlement, // userEntitlement
-      tokenEntitlement // tokenEntitlement
+      ruleEntitlement
     );
     initDatas[index++] = proxyManagerHelper.makeInitData(space);
 

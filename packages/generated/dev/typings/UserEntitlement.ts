@@ -30,15 +30,16 @@ import type {
 
 export interface UserEntitlementInterface extends utils.Interface {
   functions: {
-    "TOWN_ADDRESS()": FunctionFragment;
+    "SPACE_ADDRESS()": FunctionFragment;
     "description()": FunctionFragment;
     "getEntitlementDataByRoleId(uint256)": FunctionFragment;
     "initialize(address)": FunctionFragment;
-    "isEntitled(string,address,bytes32)": FunctionFragment;
+    "isCrosschain()": FunctionFragment;
+    "isEntitled(string,address[],bytes32)": FunctionFragment;
     "moduleType()": FunctionFragment;
     "name()": FunctionFragment;
     "proxiableUUID()": FunctionFragment;
-    "removeEntitlement(uint256,bytes)": FunctionFragment;
+    "removeEntitlement(uint256)": FunctionFragment;
     "setEntitlement(uint256,bytes)": FunctionFragment;
     "supportsInterface(bytes4)": FunctionFragment;
     "upgradeTo(address)": FunctionFragment;
@@ -47,10 +48,11 @@ export interface UserEntitlementInterface extends utils.Interface {
 
   getFunction(
     nameOrSignatureOrTopic:
-      | "TOWN_ADDRESS"
+      | "SPACE_ADDRESS"
       | "description"
       | "getEntitlementDataByRoleId"
       | "initialize"
+      | "isCrosschain"
       | "isEntitled"
       | "moduleType"
       | "name"
@@ -63,7 +65,7 @@ export interface UserEntitlementInterface extends utils.Interface {
   ): FunctionFragment;
 
   encodeFunctionData(
-    functionFragment: "TOWN_ADDRESS",
+    functionFragment: "SPACE_ADDRESS",
     values?: undefined
   ): string;
   encodeFunctionData(
@@ -79,10 +81,14 @@ export interface UserEntitlementInterface extends utils.Interface {
     values: [PromiseOrValue<string>]
   ): string;
   encodeFunctionData(
+    functionFragment: "isCrosschain",
+    values?: undefined
+  ): string;
+  encodeFunctionData(
     functionFragment: "isEntitled",
     values: [
       PromiseOrValue<string>,
-      PromiseOrValue<string>,
+      PromiseOrValue<string>[],
       PromiseOrValue<BytesLike>
     ]
   ): string;
@@ -97,7 +103,7 @@ export interface UserEntitlementInterface extends utils.Interface {
   ): string;
   encodeFunctionData(
     functionFragment: "removeEntitlement",
-    values: [PromiseOrValue<BigNumberish>, PromiseOrValue<BytesLike>]
+    values: [PromiseOrValue<BigNumberish>]
   ): string;
   encodeFunctionData(
     functionFragment: "setEntitlement",
@@ -117,7 +123,7 @@ export interface UserEntitlementInterface extends utils.Interface {
   ): string;
 
   decodeFunctionResult(
-    functionFragment: "TOWN_ADDRESS",
+    functionFragment: "SPACE_ADDRESS",
     data: BytesLike
   ): Result;
   decodeFunctionResult(
@@ -129,6 +135,10 @@ export interface UserEntitlementInterface extends utils.Interface {
     data: BytesLike
   ): Result;
   decodeFunctionResult(functionFragment: "initialize", data: BytesLike): Result;
+  decodeFunctionResult(
+    functionFragment: "isCrosschain",
+    data: BytesLike
+  ): Result;
   decodeFunctionResult(functionFragment: "isEntitled", data: BytesLike): Result;
   decodeFunctionResult(functionFragment: "moduleType", data: BytesLike): Result;
   decodeFunctionResult(functionFragment: "name", data: BytesLike): Result;
@@ -229,23 +239,25 @@ export interface UserEntitlement extends BaseContract {
   removeListener: OnEvent<this>;
 
   functions: {
-    TOWN_ADDRESS(overrides?: CallOverrides): Promise<[string]>;
+    SPACE_ADDRESS(overrides?: CallOverrides): Promise<[string]>;
 
     description(overrides?: CallOverrides): Promise<[string]>;
 
     getEntitlementDataByRoleId(
       roleId: PromiseOrValue<BigNumberish>,
       overrides?: CallOverrides
-    ): Promise<[string[]]>;
+    ): Promise<[string]>;
 
     initialize(
       _space: PromiseOrValue<string>,
       overrides?: Overrides & { from?: PromiseOrValue<string> }
     ): Promise<ContractTransaction>;
 
+    isCrosschain(overrides?: CallOverrides): Promise<[boolean]>;
+
     isEntitled(
       channelId: PromiseOrValue<string>,
-      user: PromiseOrValue<string>,
+      wallets: PromiseOrValue<string>[],
       permission: PromiseOrValue<BytesLike>,
       overrides?: CallOverrides
     ): Promise<[boolean]>;
@@ -258,7 +270,6 @@ export interface UserEntitlement extends BaseContract {
 
     removeEntitlement(
       roleId: PromiseOrValue<BigNumberish>,
-      entitlementData: PromiseOrValue<BytesLike>,
       overrides?: Overrides & { from?: PromiseOrValue<string> }
     ): Promise<ContractTransaction>;
 
@@ -285,23 +296,25 @@ export interface UserEntitlement extends BaseContract {
     ): Promise<ContractTransaction>;
   };
 
-  TOWN_ADDRESS(overrides?: CallOverrides): Promise<string>;
+  SPACE_ADDRESS(overrides?: CallOverrides): Promise<string>;
 
   description(overrides?: CallOverrides): Promise<string>;
 
   getEntitlementDataByRoleId(
     roleId: PromiseOrValue<BigNumberish>,
     overrides?: CallOverrides
-  ): Promise<string[]>;
+  ): Promise<string>;
 
   initialize(
     _space: PromiseOrValue<string>,
     overrides?: Overrides & { from?: PromiseOrValue<string> }
   ): Promise<ContractTransaction>;
 
+  isCrosschain(overrides?: CallOverrides): Promise<boolean>;
+
   isEntitled(
     channelId: PromiseOrValue<string>,
-    user: PromiseOrValue<string>,
+    wallets: PromiseOrValue<string>[],
     permission: PromiseOrValue<BytesLike>,
     overrides?: CallOverrides
   ): Promise<boolean>;
@@ -314,7 +327,6 @@ export interface UserEntitlement extends BaseContract {
 
   removeEntitlement(
     roleId: PromiseOrValue<BigNumberish>,
-    entitlementData: PromiseOrValue<BytesLike>,
     overrides?: Overrides & { from?: PromiseOrValue<string> }
   ): Promise<ContractTransaction>;
 
@@ -341,23 +353,25 @@ export interface UserEntitlement extends BaseContract {
   ): Promise<ContractTransaction>;
 
   callStatic: {
-    TOWN_ADDRESS(overrides?: CallOverrides): Promise<string>;
+    SPACE_ADDRESS(overrides?: CallOverrides): Promise<string>;
 
     description(overrides?: CallOverrides): Promise<string>;
 
     getEntitlementDataByRoleId(
       roleId: PromiseOrValue<BigNumberish>,
       overrides?: CallOverrides
-    ): Promise<string[]>;
+    ): Promise<string>;
 
     initialize(
       _space: PromiseOrValue<string>,
       overrides?: CallOverrides
     ): Promise<void>;
 
+    isCrosschain(overrides?: CallOverrides): Promise<boolean>;
+
     isEntitled(
       channelId: PromiseOrValue<string>,
-      user: PromiseOrValue<string>,
+      wallets: PromiseOrValue<string>[],
       permission: PromiseOrValue<BytesLike>,
       overrides?: CallOverrides
     ): Promise<boolean>;
@@ -370,15 +384,14 @@ export interface UserEntitlement extends BaseContract {
 
     removeEntitlement(
       roleId: PromiseOrValue<BigNumberish>,
-      entitlementData: PromiseOrValue<BytesLike>,
       overrides?: CallOverrides
-    ): Promise<string>;
+    ): Promise<void>;
 
     setEntitlement(
       roleId: PromiseOrValue<BigNumberish>,
       entitlementData: PromiseOrValue<BytesLike>,
       overrides?: CallOverrides
-    ): Promise<string>;
+    ): Promise<void>;
 
     supportsInterface(
       interfaceId: PromiseOrValue<BytesLike>,
@@ -426,7 +439,7 @@ export interface UserEntitlement extends BaseContract {
   };
 
   estimateGas: {
-    TOWN_ADDRESS(overrides?: CallOverrides): Promise<BigNumber>;
+    SPACE_ADDRESS(overrides?: CallOverrides): Promise<BigNumber>;
 
     description(overrides?: CallOverrides): Promise<BigNumber>;
 
@@ -440,9 +453,11 @@ export interface UserEntitlement extends BaseContract {
       overrides?: Overrides & { from?: PromiseOrValue<string> }
     ): Promise<BigNumber>;
 
+    isCrosschain(overrides?: CallOverrides): Promise<BigNumber>;
+
     isEntitled(
       channelId: PromiseOrValue<string>,
-      user: PromiseOrValue<string>,
+      wallets: PromiseOrValue<string>[],
       permission: PromiseOrValue<BytesLike>,
       overrides?: CallOverrides
     ): Promise<BigNumber>;
@@ -455,7 +470,6 @@ export interface UserEntitlement extends BaseContract {
 
     removeEntitlement(
       roleId: PromiseOrValue<BigNumberish>,
-      entitlementData: PromiseOrValue<BytesLike>,
       overrides?: Overrides & { from?: PromiseOrValue<string> }
     ): Promise<BigNumber>;
 
@@ -483,7 +497,7 @@ export interface UserEntitlement extends BaseContract {
   };
 
   populateTransaction: {
-    TOWN_ADDRESS(overrides?: CallOverrides): Promise<PopulatedTransaction>;
+    SPACE_ADDRESS(overrides?: CallOverrides): Promise<PopulatedTransaction>;
 
     description(overrides?: CallOverrides): Promise<PopulatedTransaction>;
 
@@ -497,9 +511,11 @@ export interface UserEntitlement extends BaseContract {
       overrides?: Overrides & { from?: PromiseOrValue<string> }
     ): Promise<PopulatedTransaction>;
 
+    isCrosschain(overrides?: CallOverrides): Promise<PopulatedTransaction>;
+
     isEntitled(
       channelId: PromiseOrValue<string>,
-      user: PromiseOrValue<string>,
+      wallets: PromiseOrValue<string>[],
       permission: PromiseOrValue<BytesLike>,
       overrides?: CallOverrides
     ): Promise<PopulatedTransaction>;
@@ -512,7 +528,6 @@ export interface UserEntitlement extends BaseContract {
 
     removeEntitlement(
       roleId: PromiseOrValue<BigNumberish>,
-      entitlementData: PromiseOrValue<BytesLike>,
       overrides?: Overrides & { from?: PromiseOrValue<string> }
     ): Promise<PopulatedTransaction>;
 

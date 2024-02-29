@@ -5,7 +5,6 @@
 import React, { useCallback, useEffect, useMemo, useState } from 'react'
 import { fireEvent, render, screen, waitFor } from '@testing-library/react'
 
-import { BigNumber } from 'ethers'
 import { ChannelContextProvider } from '../../src/components/ChannelContextProvider'
 import { RegisterWallet, TransactionInfo } from './helpers/TestComponents'
 import { SpaceContextProvider } from '../../src/components/SpaceContextProvider'
@@ -27,6 +26,9 @@ import {
     BasicRoleInfo,
     Permission,
     createMembershipStruct,
+    NoopRuleData,
+    ruleDataToOperations,
+    OperationType,
 } from '@river/web3'
 import { TSigner } from '../../src/types/web3-types'
 
@@ -60,6 +62,7 @@ describe('useAddRolesToChannel', () => {
                         roleName={roleName}
                         permissions={permissions}
                         councilNftAddress={testGatingNftAddress ?? ''}
+                        signer={provider.wallet}
                     />
                 </>
             </ZionTestApp>,
@@ -193,14 +196,17 @@ function TestComponent(args: {
                 createMembershipStruct({
                     name: args.roleName,
                     permissions: args.permissions,
-                    tokenAddresses: [args.councilNftAddress],
+                    requirements: {
+                        everyone: true,
+                        users: [],
+                        ruleData: NoopRuleData,
+                    },
                 }),
                 args.signer,
             )
         }
         void handleClick()
     }, [
-        args.councilNftAddress,
         args.permissions,
         args.roleName,
         args.spaceName,
@@ -356,19 +362,22 @@ function RoleDetailsComponent({
                     </div>
                     <div>
                         {/* tokens in the role */}
-                        {roleDetails?.tokens.map((token) => {
-                            const nftAddress = token.contractAddress as string
-                            const quantity = (token.quantity as BigNumber).toNumber()
-                            return (
-                                <div key={nftAddress}>
-                                    <div>
-                                        {roleDetails?.name}:nftAddress:{nftAddress}
-                                    </div>
-                                    <div>
-                                        {roleDetails?.name}:{nftAddress}:quantity:{quantity}
-                                    </div>
-                                </div>
-                            )
+                        {ruleDataToOperations(
+                            roleDetails?.ruleData ? [roleDetails.ruleData] : [],
+                        ).map((operation) => {
+                            switch (operation.opType) {
+                                case OperationType.CHECK:
+                                    return (
+                                        <div key={operation.opType}>
+                                            <div>
+                                                {roleDetails?.name}:{operation.contractAddress}
+                                                :quantity:{operation.threshold.toString()}
+                                            </div>
+                                        </div>
+                                    )
+                                default:
+                                    return <div key={operation.opType}></div>
+                            }
                         })}
                     </div>
                     <div>

@@ -38,6 +38,7 @@ export { useDMData } from './hooks/use-dm-data'
 export { useFavIconBadge, useAppBadge } from './hooks/ZionContext/useFavIconBadge'
 export { useFullyReadMarker } from './hooks/use-fully-read-marker'
 export { useMembershipInfo } from './hooks/use-membership-info'
+export { useIsSpaceOwner } from './hooks/use-is-space-owner'
 export { useHasPermission } from './hooks/use-has-permission'
 export { useMembers } from './hooks/use-members'
 export { useMembership } from './hooks/use-membership'
@@ -96,7 +97,6 @@ export {
     WalletStatus,
     BlockchainTransactionType,
     isNullAddress,
-    type TokenEntitlementStruct,
     type TSigner,
 } from './types/web3-types'
 export { getAccountAddress } from './types/user-identifier'

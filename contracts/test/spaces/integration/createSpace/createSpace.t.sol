@@ -6,7 +6,6 @@ import {IERC173} from "contracts/src/diamond/facets/ownable/IERC173.sol";
 import {IChannel} from "contracts/src/spaces/facets/channels/IChannel.sol";
 import {IChannel} from "contracts/src/spaces/facets/channels/IChannel.sol";
 import {IEntitlementsManager} from "contracts/src/spaces/facets/entitlements/IEntitlementsManager.sol";
-import {ITokenEntitlement} from "contracts/src/spaces/entitlements/token/ITokenEntitlement.sol";
 import {IRoles} from "contracts/src/spaces/facets/roles/IRoles.sol";
 import {IRolesBase} from "contracts/src/spaces/facets/roles/IRoles.sol";
 import {IArchitect} from "contracts/src/spaces/facets/architect/IArchitect.sol";
@@ -14,10 +13,10 @@ import {IArchitectBase} from "contracts/src/spaces/facets/architect/IArchitect.s
 import {IMembership} from "contracts/src/spaces/facets/membership/IMembership.sol";
 import {IERC721A} from "contracts/src/diamond/facets/token/ERC721A/IERC721A.sol";
 import {IMembershipBase} from "contracts/src/spaces/facets/membership/IMembership.sol";
-import {IEntitlementRule} from "contracts/src/crosschain/IEntitlementRule.sol";
 
 // libraries
 import {Permissions} from "contracts/src/spaces/facets/Permissions.sol";
+import {RuleEntitlementUtil} from "contracts/src/crosschain/RuleEntitlementUtil.sol";
 
 // contracts
 import {BaseSetup} from "contracts/test/spaces/BaseSetup.sol";
@@ -57,6 +56,8 @@ contract Integration_CreateSpace is BaseSetup, IRolesBase, IArchitectBase {
 
     vm.prank(founder);
     address newSpace = _createSimpleSpace(spaceId);
+
+    IMembership(newSpace).joinTown(member);
 
     // look for user entitlement
     IEntitlementsManager.Entitlement[]
@@ -131,14 +132,10 @@ contract Integration_CreateSpace is BaseSetup, IRolesBase, IArchitectBase {
     vm.prank(founder);
     IChannel(newSpace).addRoleToChannel({channelId: "test2", roleId: roleId});
 
+    bool isEntitledToChannelAfter = IEntitlementsManager(newSpace)
+      .isEntitledToChannel("test2", member, "Write");
     // members can access the channel now
-    assertTrue(
-      IEntitlementsManager(newSpace).isEntitledToChannel(
-        "test2",
-        member,
-        "Write"
-      )
-    );
+    assertTrue(isEntitledToChannelAfter);
   }
 
   // =============================================================
@@ -149,6 +146,9 @@ contract Integration_CreateSpace is BaseSetup, IRolesBase, IArchitectBase {
 
     address founder = _randomAddress();
     address bob = _randomAddress();
+
+    address[] memory users = new address[](1);
+    users[0] = bob;
 
     SpaceInfo memory spaceInfo = SpaceInfo({
       id: spaceId,
@@ -168,9 +168,8 @@ contract Integration_CreateSpace is BaseSetup, IRolesBase, IArchitectBase {
         }),
         requirements: MembershipRequirements({
           everyone: false,
-          tokens: new ITokenEntitlement.ExternalToken[](0),
-          users: new address[](1),
-          rule: IEntitlementRule(address(0))
+          users: users,
+          ruleData: RuleEntitlementUtil.getNoopRuleData()
         }),
         permissions: new string[](1)
       }),
@@ -178,13 +177,15 @@ contract Integration_CreateSpace is BaseSetup, IRolesBase, IArchitectBase {
     });
 
     spaceInfo.membership.permissions[0] = "Read";
-    spaceInfo.membership.requirements.users[0] = bob;
 
     vm.prank(founder);
     address newSpace = IArchitect(spaceFactory).createSpace(spaceInfo);
 
     assertTrue(
-      IEntitlementsManager(newSpace).isEntitledToSpace(bob, "JoinSpace"),
+      IEntitlementsManager(newSpace).isEntitledToSpace(
+        bob,
+        Permissions.JoinSpace
+      ),
       "Bob should be entitled to mint membership"
     );
 
@@ -198,7 +199,7 @@ contract Integration_CreateSpace is BaseSetup, IRolesBase, IArchitectBase {
     );
 
     assertTrue(
-      IEntitlementsManager(newSpace).isEntitledToSpace(bob, "Read"),
+      IEntitlementsManager(newSpace).isEntitledToSpace(bob, Permissions.Read),
       "Bob should be entitled to read"
     );
   }
@@ -226,10 +227,9 @@ contract Integration_CreateSpace is BaseSetup, IRolesBase, IArchitectBase {
           pricingModule: address(0)
         }),
         requirements: IArchitectBase.MembershipRequirements({
-          everyone: false,
-          tokens: new ITokenEntitlement.ExternalToken[](0),
+          everyone: true,
           users: new address[](0),
-          rule: IEntitlementRule(address(0))
+          ruleData: RuleEntitlementUtil.getNoopRuleData()
         }),
         permissions: new string[](0)
       }),

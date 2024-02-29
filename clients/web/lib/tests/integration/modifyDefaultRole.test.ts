@@ -3,7 +3,7 @@
  */
 import { TestConstants } from './helpers/TestConstants'
 import { createTestSpaceGatedByTownNft, registerAndStartClients } from './helpers/TestUtils'
-import { Permission } from '@river/web3'
+import { NoopRuleData, Permission } from '@river/web3'
 
 // TODO: https://linear.app/hnt-labs/issue/HNT-5071/cannot-create-a-channel-when-the-default-member-role-has-the-addremove
 describe('modifyDefaultRole', () => {
@@ -31,8 +31,8 @@ describe('modifyDefaultRole', () => {
             _r.id,
             _r.name,
             _r.permissions.concat([Permission.AddRemoveChannels]),
-            _r.tokens,
             _r.users,
+            _r.ruleData,
             alice.wallet,
         )
         const updateRoleResult = await alice.waitForUpdateRoleTransaction(updatedRoleTx)
@@ -77,8 +77,8 @@ describe('modifyDefaultRole', () => {
             spaceId!,
             'new_role',
             [Permission.AddRemoveChannels],
-            [],
             [TestConstants.EveryoneAddress],
+            NoopRuleData,
         )
         expect(createRoleTx).toBeDefined()
         const createdRole = await alice.spaceDapp.getRole(spaceId!, 3)

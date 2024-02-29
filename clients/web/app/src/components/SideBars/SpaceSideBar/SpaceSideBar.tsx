@@ -6,6 +6,7 @@ import {
     Permission,
     SpaceData,
     useHasPermission,
+    useIsSpaceOwner,
     useMyMembership,
     useSpaceThreadRootsUnreadCount,
     useSpaceUnreadThreadMentions,
@@ -48,11 +49,7 @@ export const SpaceSideBar = (props: Props) => {
 
     const unreadThreadsCount = useSpaceThreadRootsUnreadCount()
     const membership = useMyMembership(space?.id)
-    const { hasPermission: isOwner } = useHasPermission({
-        spaceId: space.id,
-        walletAddress: loggedInWalletAddress ?? '',
-        permission: Permission.Owner,
-    })
+    const { isOwner } = useIsSpaceOwner(space.id, loggedInWalletAddress)
     const setDismissedGettingStarted = useStore((state) => state.setDismissedGettingStarted)
     const dismissedGettingStartedMap = useStore((state) => state.dismissedGettingStartedMap)
 

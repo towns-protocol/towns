@@ -20,7 +20,12 @@ import { useRoles } from '../../src/hooks/use-roles'
 import { useSpacesFromContract } from '../../src/hooks/use-spaces-from-contract'
 import { useUpdateChannelTransaction } from '../../src/hooks/use-update-channel-transaction'
 import { useSpaceData } from '../../src/hooks/use-space-data'
-import { createMembershipStruct, getTestGatingNftAddress, Permission } from '@river/web3'
+import {
+    createMembershipStruct,
+    getTestGatingNftAddress,
+    NoopRuleData,
+    Permission,
+} from '@river/web3'
 import { TSigner } from '../../src/types/web3-types'
 /**
  * This test suite tests the useRoles hook.
@@ -189,14 +194,17 @@ function TestComponent(args: {
                 createMembershipStruct({
                     name: args.spaceRoleName,
                     permissions: args.permissions,
-                    tokenAddresses: [args.nftAddress],
+                    requirements: {
+                        everyone: true,
+                        users: [],
+                        ruleData: NoopRuleData,
+                    },
                 }),
                 args.signer,
             )
         }
         void handleClick()
     }, [
-        args.nftAddress,
         args.permissions,
         args.spaceName,
         args.spaceRoleName,

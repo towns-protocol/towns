@@ -8,7 +8,7 @@ import {
 } from 'use-zion-client/tests/integration/helpers/TestUtils'
 
 import { RoleIdentifier, RoleEntitlements } from '../../src/types/web3-types'
-import { createExternalTokenStruct, Permission } from '@river/web3'
+import { NoopRuleData, Permission } from '@river/web3'
 
 describe('channel settings', () => {
     test('get channel settings', async () => {
@@ -29,20 +29,19 @@ describe('channel settings', () => {
             throw new Error('spaceId is undefined')
         }
 
-        const membershipTokenAddress = await alice.spaceDapp.getTownMembershipTokenAddress(spaceId)
         // const testGatingNftAddress = getTestGatingNftAddress(alice.chainId)
         const memberRole: RoleEntitlements = {
             roleId: 3, // dummy
             name: 'Member',
             permissions: memberPermissions,
-            tokens: createExternalTokenStruct([membershipTokenAddress]),
             users: [],
+            ruleData: NoopRuleData,
         }
         const moderatorRole: RoleEntitlements = {
             roleId: 4, // dummy
             name: 'moderator',
             permissions: [Permission.Read, Permission.Write, Permission.Ban],
-            tokens: [],
+            ruleData: NoopRuleData,
             users: [bob.walletAddress],
         }
         if (!spaceId) {
@@ -57,8 +56,8 @@ describe('channel settings', () => {
             spaceId,
             moderatorRole.name,
             moderatorRole.permissions,
-            moderatorRole.tokens,
             moderatorRole.users,
+            NoopRuleData,
         )
         if (!moderatorRoleIdentifier) {
             throw new Error('moderatorRoleIdentifier is undefined')
@@ -111,13 +110,4 @@ function assertRole(actualRole: RoleEntitlements, expectedRole: RoleEntitlements
     expect(actualRole.permissions).toEqual(expect.arrayContaining(expectedRole.permissions))
     expect(actualRole.users.length).toEqual(expectedRole.users.length)
     expect(actualRole.users).toEqual(expect.arrayContaining(expectedRole.users))
-    expect(actualRole.tokens.length).toEqual(expectedRole.tokens.length)
-    for (const token of actualRole.tokens) {
-        const expectedToken = expectedRole.tokens.find(
-            (t) => t.contractAddress === token.contractAddress,
-        )
-        if (!expectedToken) {
-            throw new Error(`Expected token not found: ${token.contractAddress as string}`)
-        }
-    }
 }

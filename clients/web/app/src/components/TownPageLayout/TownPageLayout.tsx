@@ -6,7 +6,6 @@ import { InteractiveTownsToken } from '@components/TownsToken/InteractiveTownsTo
 import { ImageVariants, useImageSource } from '@components/UploadImage/useImageSource'
 import { Box, Heading, Paragraph, Stack, Text } from '@ui'
 import { useDevice } from 'hooks/useDevice'
-import { checkAnyoneCanJoin, useTokensGatingMembership } from 'hooks/useTokensGatingMembership'
 import { AvatarTextHorizontal } from '@components/Avatar/AvatarTextHorizontal'
 import { FadeInBox } from '@components/Transitions'
 import { useEnvironment } from 'hooks/useEnvironmnet'
@@ -32,12 +31,18 @@ export const TownPageLayout = (props: TownPageLayoutProps) => {
 
     const { data: membershipInfo } = useReadableMembershipInfo(networkId)
 
-    const { data: tokensGatingMembership, isLoading: isTokensGatingMembershipLoading } =
-        useTokensGatingMembership(networkId)
+    const isTokensGatingMembershipLoading = false // TODO get from join role data
 
-    const anyoneCanJoin = checkAnyoneCanJoin(tokensGatingMembership)
+    const anyoneCanJoin = true // TODO get from join role data
 
     const { imageSrc } = useImageSource(networkId, ImageVariants.thumbnail600)
+
+    const tokens = [
+        {
+            contractAddress: '0x123',
+            tokenIds: [1, 2],
+        },
+    ] // TODO get from join role data
 
     return (
         <>
@@ -115,30 +120,28 @@ export const TownPageLayout = (props: TownPageLayoutProps) => {
                                                             display="inline-flex"
                                                             gap="sm"
                                                         >
-                                                            {tokensGatingMembership.tokens.map(
-                                                                (token) => (
-                                                                    <FetchedTokenAvatar
-                                                                        noLabel
-                                                                        key={
-                                                                            token.contractAddress as string
-                                                                        }
-                                                                        address={
-                                                                            token.contractAddress as string
-                                                                        }
-                                                                        tokenIds={
-                                                                            token.tokenIds as number[]
-                                                                        }
-                                                                        size="avatar_x4"
-                                                                        labelProps={{
-                                                                            size: 'md',
-                                                                        }}
-                                                                        layoutProps={{
-                                                                            horizontal: true,
-                                                                            maxWidth: 'auto',
-                                                                        }}
-                                                                    />
-                                                                ),
-                                                            )}
+                                                            {tokens.map((token) => (
+                                                                <FetchedTokenAvatar
+                                                                    noLabel
+                                                                    key={
+                                                                        token.contractAddress as string
+                                                                    }
+                                                                    address={
+                                                                        token.contractAddress as string
+                                                                    }
+                                                                    tokenIds={
+                                                                        token.tokenIds as number[]
+                                                                    }
+                                                                    size="avatar_x4"
+                                                                    labelProps={{
+                                                                        size: 'md',
+                                                                    }}
+                                                                    layoutProps={{
+                                                                        horizontal: true,
+                                                                        maxWidth: 'auto',
+                                                                    }}
+                                                                />
+                                                            ))}
                                                         </Box>
                                                     </FadeInBox>
                                                 )}

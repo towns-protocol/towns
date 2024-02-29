@@ -14,8 +14,8 @@ import { getAccountAddress } from '../../src/types/user-identifier'
 import {
     createExternalTokenStruct,
     getTestGatingNftAddress,
+    NoopRuleData,
     Permission,
-    TokenEntitlementDataTypes,
 } from '@river/web3'
 import { ZionTestWeb3Provider } from './helpers/ZionTestWeb3Provider'
 import { getTransactionHashFromTransactionOrUserOp } from '@towns/userops'
@@ -99,7 +99,7 @@ describe('isEntitledToSpace and isEntitledToChannel tests', () => {
             throw new Error('testGatingNftAddress is undefined')
         }
 
-        const tokens = createExternalTokenStruct([testGatingNftAddress])
+        const ruleData = createExternalTokenStruct([testGatingNftAddress])
         const users: string[] = []
         await alice.fundWallet()
         const spaceId = (await createTestSpaceGatedByTownAndZionNfts(alice, permissions)) as string
@@ -108,8 +108,8 @@ describe('isEntitledToSpace and isEntitledToChannel tests', () => {
             spaceId,
             `newRole${Date.now()}`,
             permissions,
-            tokens,
             users,
+            ruleData,
         )) as RoleIdentifier
         const channelId = (await alice.createChannel(
             {
@@ -137,7 +137,7 @@ describe('isEntitledToSpace and isEntitledToChannel tests', () => {
             throw new Error('testGatingNftAddress is undefined')
         }
 
-        const tokens = createExternalTokenStruct([testGatingNftAddress])
+        const ruleData = createExternalTokenStruct([testGatingNftAddress])
         const users: string[] = []
         await alice.fundWallet()
         const spaceId = (await createTestSpaceGatedByTownAndZionNfts(alice, permissions)) as string
@@ -146,8 +146,8 @@ describe('isEntitledToSpace and isEntitledToChannel tests', () => {
             spaceId,
             `newRole${Date.now()}`,
             permissions,
-            tokens,
             users,
+            ruleData,
         )) as RoleIdentifier
         const channelId = (await alice.createChannel(
             {
@@ -353,7 +353,7 @@ describe('isEntitledToSpace and isEntitledToChannel tests', () => {
             throw new Error('testGatingNftAddress is undefined')
         }
 
-        const tokens = createExternalTokenStruct([testGatingNftAddress])
+        const ruleData = createExternalTokenStruct([testGatingNftAddress])
         const users: string[] = []
         await alice.fundWallet()
         const spaceId = (await createTestSpaceGatedByTownAndZionNfts(alice, permissions)) as string
@@ -362,8 +362,8 @@ describe('isEntitledToSpace and isEntitledToChannel tests', () => {
             spaceId,
             `newRole${Date.now()}`,
             permissions,
-            tokens,
             users,
+            ruleData,
         )) as RoleIdentifier
         const channelId = (await alice.createChannel(
             {
@@ -400,7 +400,7 @@ describe('isEntitledToSpace and isEntitledToChannel tests', () => {
         if (!testGatingNftAddress) {
             throw new Error('testGatingNftAddress is undefined')
         }
-        const tokens = createExternalTokenStruct([testGatingNftAddress])
+        const ruleData = createExternalTokenStruct([testGatingNftAddress])
         const users: string[] = []
         await alice.fundWallet()
         const spaceId = (await createTestSpaceGatedByTownAndZionNfts(alice, permissions)) as string
@@ -409,8 +409,8 @@ describe('isEntitledToSpace and isEntitledToChannel tests', () => {
             spaceId,
             `newRole${Date.now()}`,
             permissions,
-            tokens,
             users,
+            ruleData,
         )) as RoleIdentifier
         const channelId = (await alice.createChannel(
             {
@@ -447,13 +447,12 @@ describe('isEntitledToSpace and isEntitledToChannel tests', () => {
         const bobAccountAddress = getAccountAddress(bobUserId as string) ?? ''
         // create a space with token entitlement to read & write
         const permissions = [Permission.Read, Permission.Write]
-        const tokens: TokenEntitlementDataTypes.ExternalTokenStruct[] = [] // createExternalTokenStruct([testGatingNftAddress!])
         const users: string[] = []
         await alice.fundWallet()
         const spaceId = (await createTestSpaceGatedByTownAndZionNfts(alice, permissions)) as string
         const roleName = `newRole${Date.now()}`
         // create a channel with token entitlement to read & write
-        const roleId = await alice.createRole(spaceId, roleName, permissions, tokens, users)
+        const roleId = await alice.createRole(spaceId, roleName, permissions, users, NoopRuleData)
 
         expect(roleId).toBeDefined()
         const channelId = await alice.createChannel(
@@ -484,8 +483,8 @@ describe('isEntitledToSpace and isEntitledToChannel tests', () => {
             roleId!.roleId,
             roleName,
             permissions,
-            tokens,
             [bobAccountAddress],
+            NoopRuleData,
             alice.provider.wallet,
         )
 

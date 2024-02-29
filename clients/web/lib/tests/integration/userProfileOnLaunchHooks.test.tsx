@@ -18,7 +18,7 @@ describe('userProfileOnLaunchHooks', () => {
         // save off the provider
         const aliceProvider = alice.provider
         // set display name and avatar
-        await alice.setDisplayName("Alice's your aunt")
+        await alice.setDisplayName("Alice's your aunt", 'Displayname')
         await alice.setAvatarUrl('alice.png')
         // stop alice
         await alice.stopClients()

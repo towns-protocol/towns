@@ -229,10 +229,8 @@ export const CreateChannelForm = (props: Props) => {
                                             width="100%"
                                             name={FormStateKeys.roleIds}
                                             label={
-                                                <TokenCheckboxLabel
-                                                    label={role.name}
-                                                    tokens={role.tokens}
-                                                />
+                                                // parse tokens from TODO ruleData
+                                                <TokenCheckboxLabel label={role.name} tokens={[]} />
                                             }
                                             value={role.id.toString()}
                                             register={register}

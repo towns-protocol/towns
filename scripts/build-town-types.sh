@@ -14,11 +14,11 @@ ABI_DIR="packages/generated/${VERSION}/abis"
 
 forge build
 
-CONTRACT_INTERFACES="(IDiamond|IDiamondCut|IArchitect|IProxyManager|IPausable|IEntitlementsManager|IChannel|IRoles|IMulticall|TokenEntitlement|IWalletLink|IRiverRegistry|OwnableFacet|TokenPausableFacet|UserEntitlement|ISpaceOwner|MockERC721A|MembershipFacet|Member)"
+CONTRACT_INTERFACES="(IDiamond|IDiamondCut|IArchitect|IProxyManager|IPausable|IEntitlementsManager|IChannel|IRoles|IMulticall|IRuleEntitlement|IWalletLink|IRiverRegistry|OwnableFacet|TokenPausableFacet|UserEntitlement|ISpaceOwner|MockERC721A|MembershipFacet|Member)"
 
 yarn typechain --target=ethers-v5 "contracts/out/**/?${CONTRACT_INTERFACES}.json" --out-dir "packages/generated/${VERSION}/typings"
 
-mkdir -p $ABI_DIR && cp -a contracts/out/{Diamond,DiamondCutFacet,Architect,ProxyManager,Pausable,EntitlementsManager,Channels,Roles,Multicall,OwnableFacet,TokenEntitlement,WalletLink,RiverRegistry,TokenPausableFacet,UserEntitlement,SpaceOwner,MockERC721A,MembershipFacet,Member,IEntitlementRule,MockRiverRegistry}.sol/* "$ABI_DIR"
+mkdir -p $ABI_DIR && cp -a contracts/out/{Diamond,DiamondCutFacet,Architect,ProxyManager,Pausable,EntitlementsManager,Channels,Roles,Multicall,OwnableFacet,WalletLink,RiverRegistry,TokenPausableFacet,IRuleEntitlement,UserEntitlement,SpaceOwner,MockERC721A,MembershipFacet,Member,MockRiverRegistry}.sol/* "$ABI_DIR"
 
 # Copy the json abis to TS files for type inference
 for file in $ABI_DIR/*.abi.json; do

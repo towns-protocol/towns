@@ -9,7 +9,7 @@ import {
 } from 'use-zion-client/tests/integration/helpers/TestUtils'
 
 import { RoleIdentifier } from '../../src/types/web3-types'
-import { TokenEntitlementDataTypes, Permission } from '@river/web3'
+import { Permission, NoopRuleData } from '@river/web3'
 
 import { TestConstants } from './helpers/TestConstants'
 
@@ -26,15 +26,14 @@ describe('create role', () => {
         /** Act */
         // create new role in space
         const permissions = [Permission.Ban]
-        const tokens: TokenEntitlementDataTypes.ExternalTokenStruct[] = []
         const users: string[] = []
 
         const roleIdentifier: RoleIdentifier | undefined = await alice.createRole(
             roomId,
             'newRole1',
             permissions,
-            tokens,
             users,
+            NoopRuleData,
         )
 
         /** Assert */
@@ -58,10 +57,9 @@ describe('create role', () => {
         /** Act & Assert */
         // Try to create new role in space without permission
         const permissions = [Permission.Ban]
-        const tokens: TokenEntitlementDataTypes.ExternalTokenStruct[] = []
         const users: string[] = []
         const error = await getError<Error>(async function () {
-            await tokenGrantedUser.createRole(roomId, 'newRole1', permissions, tokens, users)
+            await tokenGrantedUser.createRole(roomId, 'newRole1', permissions, users, NoopRuleData)
         })
 
         /* Assert */
@@ -95,14 +93,13 @@ describe('create role', () => {
         /** Act */
         // create new role in space
         const permissions = [Permission.Ban]
-        const tokens: TokenEntitlementDataTypes.ExternalTokenStruct[] = []
         const users: string[] = []
         const roleIdentifier: RoleIdentifier | undefined = await tokenGrantedUser.createRole(
             roomId,
             'newRole1',
             permissions,
-            tokens,
             users,
+            NoopRuleData,
         )
 
         /** Assert */
@@ -119,21 +116,20 @@ describe('create role', () => {
         /** Act */
         // create new role in space
         const permissions = [Permission.Ban]
-        const tokens: TokenEntitlementDataTypes.ExternalTokenStruct[] = []
         const users: string[] = []
         const roleIdentifier: RoleIdentifier | undefined = await alice.createRole(
             roomId as string,
             'newRole1',
             permissions,
-            tokens,
             users,
+            NoopRuleData,
         )
         const roleIdentifier2: RoleIdentifier | undefined = await alice.createRole(
             roomId as string,
             'newRole2',
             permissions,
-            tokens,
             users,
+            NoopRuleData,
         )
 
         /** Assert */

@@ -1,10 +1,8 @@
 import { BigNumber } from 'ethers'
 // eslint-disable-next-line no-restricted-imports
 import * as zionClient from 'use-zion-client'
-import { Permission } from '@river/web3'
+import { NoopRuleData, Permission } from '@river/web3'
 import { EVERYONE_ADDRESS } from 'utils'
-import { createTokenEntitlementStruct } from '@components/Web3/utils'
-import { MOCK_CONTRACT_METADATA_ADDRESSES } from '../../mocks/token-collections'
 import { getWalletAddress } from './testUtils'
 
 const CHANNEL_ID = 'channel1'
@@ -44,26 +42,17 @@ export const roleDataWithBothRolesAssignedToChannel: zionClient.RoleDetails[] = 
         id: 7,
         name: 'Everyone',
         permissions: [Permission.Read],
-        tokens: [],
         users: [EVERYONE_ADDRESS],
         channels: [channelDataForRole],
+        ruleData: NoopRuleData,
     },
     {
         id: 8,
         name: 'Member',
         permissions: [Permission.Read, Permission.Write],
-        tokens: [
-            createTokenEntitlementStruct({
-                contractAddress: MOCK_CONTRACT_METADATA_ADDRESSES[0],
-                tokenIds: [],
-            }),
-            createTokenEntitlementStruct({
-                contractAddress: MOCK_CONTRACT_METADATA_ADDRESSES[1],
-                tokenIds: [],
-            }),
-        ],
         users: [],
         channels: [channelDataForRole],
+        ruleData: NoopRuleData,
     },
 ]
 

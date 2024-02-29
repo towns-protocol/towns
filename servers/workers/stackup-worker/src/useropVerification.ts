@@ -175,12 +175,12 @@ export async function verifyJoinTown(params: ITownTransactionParams): Promise<IV
 		const isRootEntitled = await spaceDapp.isEntitledToSpace(
 			params.townId,
 			params.rootKeyAddress,
-			Permission.JoinTown,
+			Permission.JoinSpace,
 		)
 		const walletLink = spaceDapp.getWalletLink()
 		const linkedWallets = await walletLink.getLinkedWallets(params.rootKeyAddress)
 		const linkedEntitlements = linkedWallets.map((linkedWallet) => {
-			return spaceDapp.isEntitledToSpace(params.townId, linkedWallet, Permission.JoinTown)
+			return spaceDapp.isEntitledToSpace(params.townId, linkedWallet, Permission.JoinSpace)
 		})
 		const anyLinkedWalletEntitled = await Promise.any(linkedEntitlements)
 		if (!isRootEntitled && !anyLinkedWalletEntitled) {

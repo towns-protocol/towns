@@ -24,6 +24,14 @@ import {Validator__InvalidStringLength, Validator__InvalidByteLength} from "cont
 import {MockUserEntitlement} from "contracts/test/mocks/MockUserEntitlement.sol";
 
 contract RolesTest is BaseSetup, IRolesBase, IEntitlementBase {
+  function getRandomAddresses(uint N) internal view returns (address[] memory) {
+    address[] memory data = new address[](N);
+    for (uint i = 0; i < N; i++) {
+      data[i] = _randomAddress();
+    }
+    return data;
+  }
+
   MockUserEntitlement internal mockEntitlement;
   Roles internal roles;
 
@@ -36,12 +44,10 @@ contract RolesTest is BaseSetup, IRolesBase, IEntitlementBase {
     roles = Roles(everyoneSpace);
   }
 
-  function test_createRole_only(
-    string memory roleName,
-    bytes memory data
-  ) external {
+  function test_createRole_only(string memory roleName) external {
     vm.assume(bytes(roleName).length > 2);
-    vm.assume(data.length > 2);
+
+    address[] memory data = getRandomAddresses(4);
 
     string[] memory permissions = new string[](1);
     permissions[0] = "Read";
@@ -56,7 +62,7 @@ contract RolesTest is BaseSetup, IRolesBase, IEntitlementBase {
 
     entitlements[0] = CreateEntitlement({
       module: address(mockEntitlement),
-      data: data
+      data: abi.encode(data)
     });
 
     vm.prank(founder);
@@ -297,6 +303,9 @@ contract RolesTest is BaseSetup, IRolesBase, IEntitlementBase {
     string memory roleName,
     string memory newRoleName
   ) external {
+    address[] memory users = new address[](1);
+    users[0] = _randomAddress();
+
     vm.assume(bytes(roleName).length > 2);
     vm.assume(bytes(newRoleName).length > 2);
 
@@ -328,7 +337,7 @@ contract RolesTest is BaseSetup, IRolesBase, IEntitlementBase {
       memory entitlements = new IRoles.CreateEntitlement[](1);
     entitlements[0] = CreateEntitlement({
       module: address(mockEntitlement),
-      data: abi.encodePacked("test")
+      data: abi.encode(users)
     });
 
     // create a new set of entitlements to update to
@@ -336,7 +345,7 @@ contract RolesTest is BaseSetup, IRolesBase, IEntitlementBase {
       memory newEntitlements = new IRoles.CreateEntitlement[](1);
     newEntitlements[0] = CreateEntitlement({
       module: address(newMockEntitlement),
-      data: abi.encodePacked("test")
+      data: abi.encode(users)
     });
 
     // create the roles with the initial permissions and entitlements
@@ -602,9 +611,11 @@ contract RolesTest is BaseSetup, IRolesBase, IEntitlementBase {
     IRoles.CreateEntitlement[]
       memory entitlements = new IRoles.CreateEntitlement[](1);
 
+    address[] memory users = new address[](1);
+    users[0] = _randomAddress();
     entitlements[0] = CreateEntitlement({
       module: address(mockEntitlement),
-      data: abi.encode("test")
+      data: abi.encode(users)
     });
 
     // create a roles
@@ -788,9 +799,15 @@ contract RolesTest is BaseSetup, IRolesBase, IEntitlementBase {
       new IRoles.CreateEntitlement[](0)
     );
 
+    address[] memory users = new address[](4);
+    users[0] = _randomAddress();
+    users[1] = _randomAddress();
+    users[2] = _randomAddress();
+    users[3] = _randomAddress();
+
     IRoles.CreateEntitlement memory entitlement = CreateEntitlement({
       module: address(mockEntitlement),
-      data: abi.encode("test")
+      data: abi.encode(users)
     });
 
     // add roles to entitlement
@@ -861,9 +878,12 @@ contract RolesTest is BaseSetup, IRolesBase, IEntitlementBase {
       new IRoles.CreateEntitlement[](0)
     );
 
+    address[] memory users = new address[](1);
+    users[0] = _randomAddress();
+
     IRoles.CreateEntitlement memory entitlement = CreateEntitlement({
       module: address(mockEntitlement),
-      data: abi.encode("test")
+      data: abi.encode(users)
     });
 
     // add roles to entitlement
@@ -896,9 +916,14 @@ contract RolesTest is BaseSetup, IRolesBase, IEntitlementBase {
       new IRoles.CreateEntitlement[](0)
     );
 
+    address[] memory users = new address[](4);
+    users[0] = _randomAddress();
+    users[1] = _randomAddress();
+    users[2] = _randomAddress();
+    users[3] = _randomAddress();
     IRoles.CreateEntitlement memory entitlement = CreateEntitlement({
       module: address(mockEntitlement),
-      data: abi.encode("test")
+      data: abi.encode(users)
     });
 
     // add roles to entitlement
@@ -925,9 +950,12 @@ contract RolesTest is BaseSetup, IRolesBase, IEntitlementBase {
       address(mockEntitlement)
     );
 
+    address[] memory users = new address[](1);
+    users[0] = _randomAddress();
+
     IRoles.CreateEntitlement memory entitlement = CreateEntitlement({
       module: address(mockEntitlement),
-      data: abi.encode("test")
+      data: abi.encode(users)
     });
 
     // remove roles from entitlement
@@ -947,9 +975,11 @@ contract RolesTest is BaseSetup, IRolesBase, IEntitlementBase {
       new IRoles.CreateEntitlement[](0)
     );
 
+    address[] memory users = new address[](1);
+    users[0] = _randomAddress();
     IRoles.CreateEntitlement memory entitlement = CreateEntitlement({
       module: address(mockEntitlement),
-      data: abi.encode("test")
+      data: abi.encode(users)
     });
 
     // remove roles from entitlement
@@ -976,9 +1006,11 @@ contract RolesTest is BaseSetup, IRolesBase, IEntitlementBase {
       new IRoles.CreateEntitlement[](0)
     );
 
+    address[] memory users = new address[](1);
+    users[0] = _randomAddress();
     IRoles.CreateEntitlement memory entitlement = CreateEntitlement({
       module: address(mockEntitlement),
-      data: abi.encode("test")
+      data: abi.encode(users)
     });
 
     // remove roles from entitlement

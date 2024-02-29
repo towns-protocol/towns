@@ -22,12 +22,18 @@ describe.skip('userProfileOnAcceptInviteHooks', () => {
     test('user sees own info after accepting an invite', async () => {
         // create clients
         const { alice, bob } = await registerAndStartClients(['alice', 'bob'])
+
         // save off the wallet
         const aliceProvider = alice.provider
+        // set display name and avatar
+        await alice.setDisplayName("Alice's your aunt", 'Displayname')
         const aliceUserId = alice.getUserId()
         if (!aliceUserId) {
             throw new Error('aliceUserId is undefined')
         }
+        await alice.setAvatarUrl('alice.p ng')
+        // stop alice
+        await alice.stopClients()
         // create a veiw for alice
         const TestUserProfileOnAcceptInvite = () => {
             const myProfile = useMyProfile()

@@ -10,7 +10,6 @@ import { useGetEmbeddedSigner } from '@towns/privy'
 import { Button, Grid, Icon, IconButton, MotionBox, Stack, Text } from '@ui'
 import { useErrorToast } from 'hooks/useErrorToast'
 import { useAuth } from 'hooks/useAuth'
-import { TokenGatingMembership, useTokensGatingMembership } from 'hooks/useTokensGatingMembership'
 import { useEnvironment } from 'hooks/useEnvironmnet'
 import { isTouch } from 'hooks/useDevice'
 import { ButtonSpinner } from 'ui/components/Spinner/ButtonSpinner'
@@ -21,11 +20,12 @@ import { mapToErrorMessage } from '../utils'
 import { currentWalletLinkingStore, useTokenBalances } from './tokenStatus'
 import { CopyWalletAddressButton, OpenSeaButton } from './Buttons'
 import { TokenBox } from './TokenBox'
+import { TokenGatingMembership } from './TokenGatingMembership'
 
 export function TokenVerification({ onHide, spaceId }: { spaceId: string; onHide: () => void }) {
     const { data: linkedWallets } = useLinkedWallets()
     const { loggedInWalletAddress } = useAuth()
-    const { data: tokensGatingMembership } = useTokensGatingMembership(spaceId)
+    const { data: tokensGatingMembership } = { data: { tokens: [] } }
     const tokensLength = tokensGatingMembership?.tokens.length ?? 0
     const maxWidth = tokensLength > 2 ? 'auto' : '400'
     const getSigner = useGetEmbeddedSigner()

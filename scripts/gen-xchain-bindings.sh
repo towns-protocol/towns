@@ -15,20 +15,22 @@ if [ -z ${ABIGEN_VERSION+x} ]; then
 fi
 
 XCHAIN_DIR="servers/xchain/contracts"
-XCHAIN_PACKAGE="_xchain"
 
-mkdir -p "${XCHAIN_DIR}"
+mkdir -p "${XCHAIN_DIR}/${VERSION}"
 
 generate_go() {
-    local NAME=$1
+    local CONTRACT=$1
+    local GO_NAME=$2
 
     go run github.com/ethereum/go-ethereum/cmd/abigen@${ABIGEN_VERSION} \
-        --abi contracts/out/${NAME}.sol/${NAME}.abi.json \
-        --pkg "${VERSION}${XCHAIN_PACKAGE}" \
-        --type "${VERSION}${NAME}" \
-        --out "${XCHAIN_DIR}/${VERSION}_xchain_${NAME}.go"
+        --abi contracts/out/${CONTRACT}.sol/${CONTRACT}.abi.json \
+        --bin contracts/out/${CONTRACT}.sol/${CONTRACT}.bin \
+        --pkg "${VERSION}" \
+        --type "${GO_NAME}" \
+        --out "${XCHAIN_DIR}/${VERSION}/${GO_NAME}.go"
 }
 
-generate_go IEntitlementChecker
-generate_go IEntitlementGated
-generate_go IEntitlementRule
+generate_go IEntitlementChecker i_entitlement_checker
+generate_go IEntitlementGated i_entitlement_gated
+generate_go IRuleEntitlement i_rule_entitlement
+generate_go IEntitlement i_entitlment

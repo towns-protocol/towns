@@ -18,7 +18,12 @@ import { ZionTestWeb3Provider } from 'use-zion-client/tests/integration/helpers/
 import { makeUniqueName } from 'use-zion-client/tests/integration/helpers/TestUtils'
 import { useCreateSpaceTransactionWithRetries } from 'use-zion-client/src/hooks/use-create-space-transaction'
 import { useSpacesFromContract } from 'use-zion-client/src/hooks/use-spaces-from-contract'
-import { createMembershipStruct, getTestGatingNftAddress, Permission } from '@river/web3'
+import {
+    createMembershipStruct,
+    getTestGatingNftAddress,
+    NoopRuleData,
+    Permission,
+} from '@river/web3'
 import { TSigner } from '../../src/types/web3-types'
 
 // TODO Zustand https://docs.pmnd.rs/zustand/testing
@@ -54,7 +59,11 @@ describe('spaceManagerContractHooks', () => {
                         createMembershipStruct({
                             name: 'Test Role',
                             permissions: [],
-                            tokenAddresses: [],
+                            requirements: {
+                                everyone: true,
+                                users: [],
+                                ruleData: NoopRuleData,
+                            },
                         }),
                         signer,
                     )
@@ -80,7 +89,11 @@ describe('spaceManagerContractHooks', () => {
                         createMembershipStruct({
                             name: 'Zion Role',
                             permissions: [Permission.Read, Permission.Write],
-                            tokenAddresses: [zionTokenAddress],
+                            requirements: {
+                                everyone: true,
+                                users: [],
+                                ruleData: NoopRuleData,
+                            },
                         }),
                         signer,
                     )

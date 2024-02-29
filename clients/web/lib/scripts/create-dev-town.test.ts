@@ -1,6 +1,6 @@
 /* eslint-disable @typescript-eslint/no-non-null-assertion */
 
-import { IArchitectBase, Permission } from '@river/web3'
+import { IArchitectBase, NoopOperation, Permission } from '@river/web3'
 import ethers from 'ethers'
 import { ZionTestClient } from '../tests/integration/helpers/ZionTestClient'
 import { Wallet } from 'ethers'
@@ -75,9 +75,8 @@ export async function createDevTown(client: ZionTestClient): Promise<string | un
         permissions: [Permission.Read, Permission.Write, Permission.AddRemoveChannels],
         requirements: {
             everyone: true,
-            tokens: [],
             users: [],
-            rule: ethers.constants.AddressZero,
+            entitlementData: NoopOperation,
         },
     }
 
