@@ -211,6 +211,7 @@ export function LinkedWallet({
                         </>
                     )}
                 </Paragraph>
+                {/* TODO: we should retain this for development against anvil */}
                 {isTownsWallet && (
                     <Paragraph size="sm" color="error">
                         Deprecated

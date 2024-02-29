@@ -91,6 +91,7 @@ describe('<SpaceHome />', () => {
             // @ts-ignore
             client: {
                 getUser: () => ownerUser,
+                isAccountAbstractionEnabled: () => true,
             },
             useSpaceData: spaceData,
             chainId: 5,
@@ -125,6 +126,7 @@ describe('<SpaceHome />', () => {
             // @ts-ignore
             client: {
                 getUser: () => ownerUser,
+                isAccountAbstractionEnabled: () => true,
             },
             chainId: 5,
         })
@@ -154,6 +156,7 @@ describe('<SpaceHome />', () => {
             // @ts-ignore
             client: {
                 getUser: () => ownerUser,
+                isAccountAbstractionEnabled: () => true,
             },
             chainId: 5,
         })
@@ -182,6 +185,7 @@ describe('<SpaceHome />', () => {
             // @ts-ignore
             client: {
                 getUser: () => ownerUser,
+                isAccountAbstractionEnabled: () => true,
             },
             chainId: 5,
         })
@@ -209,6 +213,7 @@ describe('<SpaceHome />', () => {
             // @ts-ignore
             client: {
                 getUser: () => ownerUser,
+                isAccountAbstractionEnabled: () => true,
             },
             chainId: 5,
         })
@@ -235,6 +240,7 @@ describe('<SpaceHome />', () => {
             // @ts-ignore
             client: {
                 getUser: () => ownerUser,
+                isAccountAbstractionEnabled: () => true,
             },
             chainId: 5,
         })

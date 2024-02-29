@@ -41,13 +41,25 @@ export const SpaceProfilePanel = (props: { children?: React.ReactNode }) => {
 }
 
 export const SpaceProfile = (props: { children?: React.ReactNode }) => {
+    const { client } = useZionClient()
+    const isAccountAbstractionEnabled = client?.isAccountAbstractionEnabled()
     const [search] = useSearchParams()
     const cameFromSpaceInfoPanel = search.get('spaceInfo') !== null
     const { profileId: profileIdFromPath = 'me' } = useParams()
     const { data: rootKeyAddress, isLoading: isLoadingRootKey } = useGetRootKeyFromLinkedWallet({
         walletAddress: profileIdFromPath,
     })
-    const userId = profileIdFromPath === 'me' ? profileIdFromPath : rootKeyAddress
+    // when account abstraction is off (Developing against anvil), we can use the profileIdFromPath directly
+    // the profileIdFromPath is the userId
+    // when account abstraction is on, profileIdFromPath is the abstract account address
+    // so we need to use the derived rootKeyAddress to get the userId
+    const userId = useMemo(() => {
+        if (!isAccountAbstractionEnabled) {
+            return profileIdFromPath
+        }
+        return profileIdFromPath === 'me' ? profileIdFromPath : rootKeyAddress
+    }, [isAccountAbstractionEnabled, profileIdFromPath, rootKeyAddress])
+
     const { createDMChannel } = useZionClient()
     const [modal, setModal] = useState<'wallets' | undefined>(undefined)
 

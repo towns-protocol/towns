@@ -17,17 +17,23 @@ function querySetup({
     client: ReturnType<typeof useZionClient>['client']
     rootKeyAddress: Address | undefined
 }) {
+    const isAccountAbstractionEnabled = client?.isAccountAbstractionEnabled()
     return {
-        queryKey: [queryKey, rootKeyAddress],
+        queryKey: [queryKey, { isAccountAbstractionEnabled, rootKeyAddress }],
         queryFn: async () => {
             if (!client || !rootKeyAddress) {
                 return undefined
             }
+
+            if (!client.isAccountAbstractionEnabled()) {
+                return rootKeyAddress
+            }
+
             return client.getAbstractAccountAddress({
                 rootKeyAddress: rootKeyAddress,
             })
         },
-        enabled: !!client && !!rootKeyAddress,
+        enabled: !!client && client.isAccountAbstractionEnabled !== undefined && !!rootKeyAddress,
         refetchOnWindowFocus: false,
         refetchOnMount: false,
         refetchOnReconnect: false,

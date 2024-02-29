@@ -92,6 +92,7 @@ vi.mock('use-zion-client', async () => {
                     getAbstractAccountAddress: () => {
                         return EVERYONE_ADDRESS
                     },
+                    isAccountAbstractionEnabled: () => true,
                 },
             }
         },
