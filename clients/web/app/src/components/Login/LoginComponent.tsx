@@ -1,11 +1,13 @@
 import React from 'react'
 import { LoginStatus } from 'use-zion-client'
+import { usePrivy } from '@privy-io/react-auth'
 import { useAuth } from 'hooks/useAuth'
 import { Box, FancyButton } from '@ui'
 import { useErrorToast } from 'hooks/useErrorToast'
 import { mapToErrorMessage } from '@components/Web3/utils'
 
 export function LoginComponent() {
+    const { ready: privyReady } = usePrivy()
     const {
         login,
         loginError,
@@ -28,7 +30,7 @@ export function LoginComponent() {
     return (
         <Box centerContent gap="lg">
             <Box width="100%">
-                <FancyButton cta disabled={isBusy} spinner={isBusy} onClick={login}>
+                <FancyButton cta disabled={!privyReady || isBusy} spinner={isBusy} onClick={login}>
                     {isBusy ? 'Logging In...' : 'Login'}
                 </FancyButton>
             </Box>

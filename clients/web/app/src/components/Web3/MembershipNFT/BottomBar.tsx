@@ -1,12 +1,8 @@
 import React from 'react'
-import { RequireTransactionNetworkMessage } from '@components/RequireTransactionNetworkMessage/RequireTransactionNetworkMessage'
 import { TransactionButton } from '@components/TransactionButton'
 import { Box, BoxProps, Button, MotionStack, Stack } from '@ui'
 import { TransactionUIState } from 'hooks/TransactionUIState'
-import { useRequireTransactionNetwork } from 'hooks/useRequireTransactionNetwork'
-import { ErrorMessageText } from 'ui/components/ErrorMessage/ErrorMessage'
 import { useDevice } from 'hooks/useDevice'
-import { useCurrentWalletEqualsSignedInAccount } from 'hooks/useCurrentWalletEqualsSignedInAccount'
 
 type Props = {
     onClick?: () => void
@@ -29,30 +25,11 @@ export function BottomBar({
     successText,
     idleText,
 }: Props) {
-    const { isTransactionNetwork, switchNetwork } = useRequireTransactionNetwork()
-    const currentWalletEqualsSignedInAccount = useCurrentWalletEqualsSignedInAccount()
-    const isDisabled = !isTransactionNetwork || !currentWalletEqualsSignedInAccount || disabled
+    const isDisabled = disabled
 
     return (
         <>
             <BottomBarLayout
-                messageContent={
-                    <>
-                        {!isTransactionNetwork && (
-                            <Box paddingTop="md" flexDirection="row" justifyContent="end">
-                                <RequireTransactionNetworkMessage
-                                    postCta="to create a town."
-                                    switchNetwork={switchNetwork}
-                                />
-                            </Box>
-                        )}
-                        {isTransactionNetwork && !currentWalletEqualsSignedInAccount && (
-                            <Box paddingTop="md" flexDirection="row" justifyContent="end">
-                                <ErrorMessageText message="Wallet is not connected, or is not the same as the signed in account." />
-                            </Box>
-                        )}
-                    </>
-                }
                 buttonContent={
                     <>
                         {panelStatus && transactionUIState ? (

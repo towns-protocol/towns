@@ -13,11 +13,8 @@ import { Box, Button, ErrorMessage, FormRender, Heading, Stack, TextField } from
 import { TransactionButton } from '@components/TransactionButton'
 import { ModalContainer } from '@components/Modals/ModalContainer'
 import { TransactionUIState, toTransactionUIStates } from 'hooks/TransactionUIState'
-import { useRequireTransactionNetwork } from 'hooks/useRequireTransactionNetwork'
 import { isForbiddenError, isRejectionError } from 'ui/utils/utils'
 import { ErrorMessageText } from 'ui/components/ErrorMessage/ErrorMessage'
-import { RequireTransactionNetworkMessage } from '@components/RequireTransactionNetworkMessage/RequireTransactionNetworkMessage'
-import { useCurrentWalletEqualsSignedInAccount } from 'hooks/useCurrentWalletEqualsSignedInAccount'
 import { UserOpTxModal } from '@components/Web3/UserOpTxModal/UserOpTxModal'
 
 type Props = {
@@ -40,10 +37,6 @@ export const SpaceNameModal = (props: Props) => {
     const { onHide } = props
     const space = useSpaceData()
     const { data } = useContractSpaceInfo(space?.id)
-
-    const { isTransactionNetwork, switchNetwork } = useRequireTransactionNetwork()
-    const currentWalletEqualsSignedInAccount = useCurrentWalletEqualsSignedInAccount()
-    const isDisabled = !isTransactionNetwork || !currentWalletEqualsSignedInAccount
 
     const {
         error: transactionError,
@@ -157,7 +150,6 @@ export const SpaceNameModal = (props: Props) => {
                                                 tone="level2"
                                                 value="Cancel"
                                                 disabled={
-                                                    isDisabled ||
                                                     transactionUIState != TransactionUIState.None
                                                 }
                                                 onClick={onHide}
@@ -166,7 +158,6 @@ export const SpaceNameModal = (props: Props) => {
                                             </Button>
 
                                             <TransactionButton
-                                                disabled={isDisabled}
                                                 transactionState={transactionUIState}
                                                 transactingText="Updating town"
                                                 successText="Town updated"
@@ -179,19 +170,6 @@ export const SpaceNameModal = (props: Props) => {
                             )
                         }}
                     </FormRender>
-                    {!isTransactionNetwork && (
-                        <Box paddingTop="md" flexDirection="row" justifyContent="end">
-                            <RequireTransactionNetworkMessage
-                                postCta="to update a town."
-                                switchNetwork={switchNetwork}
-                            />
-                        </Box>
-                    )}
-                    {isTransactionNetwork && !currentWalletEqualsSignedInAccount && (
-                        <Box paddingTop="md" flexDirection="row" justifyContent="end">
-                            <ErrorMessageText message="Wallet is not connected, or is not the same as the signed in account." />
-                        </Box>
-                    )}
                 </Stack>
             </ModalContainer>
             <UserOpTxModal />

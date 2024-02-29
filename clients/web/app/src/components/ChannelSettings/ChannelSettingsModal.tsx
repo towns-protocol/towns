@@ -17,11 +17,8 @@ import { TransactionUIState, toTransactionUIStates } from 'hooks/TransactionUISt
 
 import { ButtonSpinner } from '@components/Login/LoginButton/Spinner/ButtonSpinner'
 import { ErrorMessageText } from 'ui/components/ErrorMessage/ErrorMessage'
-import { RequireTransactionNetworkMessage } from '@components/RequireTransactionNetworkMessage/RequireTransactionNetworkMessage'
 import { TransactionButton } from '@components/TransactionButton'
 import { useAllRoleDetails } from 'hooks/useAllRoleDetails'
-import { useRequireTransactionNetwork } from 'hooks/useRequireTransactionNetwork'
-import { useCurrentWalletEqualsSignedInAccount } from 'hooks/useCurrentWalletEqualsSignedInAccount'
 import { UserOpTxModal } from '@components/Web3/UserOpTxModal/UserOpTxModal'
 import { mapToErrorMessage } from '@components/Web3/utils'
 import { FormState, FormStateKeys, emptyDefaultValues, schema } from './formConfig'
@@ -85,10 +82,6 @@ export function ChannelSettingsForm({
     } = useUpdateChannelTransaction()
 
     const transactionUIState = toTransactionUIStates(transactionStatus, Boolean(channelId))
-
-    const { isTransactionNetwork, switchNetwork } = useRequireTransactionNetwork()
-    const currentWalletEqualsSignedInAccount = useCurrentWalletEqualsSignedInAccount()
-    const isDisabled = !isTransactionNetwork || !currentWalletEqualsSignedInAccount
 
     const { hasTransactionError, hasServerError } = useMemo(() => {
         return {
@@ -288,17 +281,13 @@ export function ChannelSettingsForm({
                                     <Button
                                         tone="level2"
                                         value="Cancel"
-                                        disabled={
-                                            isDisabled ||
-                                            transactionUIState != TransactionUIState.None
-                                        }
+                                        disabled={transactionUIState != TransactionUIState.None}
                                         onClick={onHide}
                                     >
                                         Cancel
                                     </Button>
 
                                     <TransactionButton
-                                        disabled={isDisabled}
                                         transactionState={transactionUIState}
                                         transactingText="Updating channel"
                                         successText="Channel updated"
@@ -313,20 +302,6 @@ export function ChannelSettingsForm({
                                         color="negative"
                                         message={preventCloseMessage}
                                     />
-                                </Box>
-                            )}
-
-                            {!isTransactionNetwork && (
-                                <Box paddingTop="md" flexDirection="row" justifyContent="end">
-                                    <RequireTransactionNetworkMessage
-                                        postCta="to update a channel."
-                                        switchNetwork={switchNetwork}
-                                    />
-                                </Box>
-                            )}
-                            {isTransactionNetwork && !currentWalletEqualsSignedInAccount && (
-                                <Box paddingTop="md" flexDirection="row" justifyContent="end">
-                                    <ErrorMessageText message="Wallet is not connected, or is not the same as the signed in account." />
                                 </Box>
                             )}
                         </Stack>

@@ -6,7 +6,6 @@ import * as zionClient from 'use-zion-client'
 import { TestApp } from 'test/testUtils'
 import * as useContractRoles from 'hooks/useContractRoles'
 import { UseMockCreateChannelReturn, mockCreateTransactionWithSpy } from 'test/transactionHookMock'
-import * as useRequireTransactionNetwork from 'hooks/useRequireTransactionNetwork'
 import { everyoneRole, memberRole, roleDataWithBothRolesAssignedToChannel } from 'test/testMocks'
 import { CreateChannelForm } from '.'
 
@@ -49,25 +48,12 @@ vi.mock('use-zion-client', async () => {
     }
 })
 
-vi.mock('hooks/useCurrentWalletEqualsSignedInAccount', () => {
-    return {
-        useCurrentWalletEqualsSignedInAccount: () => true,
-    }
-})
-
 describe('CreateChannelForm', () => {
     beforeEach(() => {
         vi.resetAllMocks()
     })
 
     test('renders checkbox for each role', async () => {
-        vi.spyOn(useRequireTransactionNetwork, 'useRequireTransactionNetwork').mockReturnValue({
-            isReady: true,
-            isTransactionNetwork: true,
-            name: 'Sepolia',
-            switchNetwork: () => null,
-        })
-
         vi.spyOn(useContractRoles, 'useContractRoles').mockImplementation(
             (_spaceNetworkId: string | undefined) => {
                 return {
@@ -103,13 +89,6 @@ describe('CreateChannelForm', () => {
     })
 
     test('requires name and role for submission', async () => {
-        vi.spyOn(useRequireTransactionNetwork, 'useRequireTransactionNetwork').mockReturnValue({
-            isReady: true,
-
-            isTransactionNetwork: true,
-            name: 'Sepolia',
-            switchNetwork: () => null,
-        })
         vi.spyOn(useContractRoles, 'useContractRoles').mockImplementation(
             (_spaceNetworkId: string | undefined) => {
                 return {
@@ -141,43 +120,7 @@ describe('CreateChannelForm', () => {
         })
     })
 
-    test('cannot perform create channel action if on the wrong network', async () => {
-        vi.spyOn(useRequireTransactionNetwork, 'useRequireTransactionNetwork').mockReturnValue({
-            isReady: true,
-
-            isTransactionNetwork: false,
-            name: 'Sepolia',
-            switchNetwork: () => null,
-        })
-        vi.spyOn(useContractRoles, 'useContractRoles').mockImplementation(
-            (_spaceNetworkId: string | undefined) => {
-                return {
-                    data: [
-                        {
-                            ...everyoneRole,
-                        },
-                    ],
-                } as unknown as ReturnType<typeof useContractRoles.useContractRoles>
-            },
-        )
-
-        render(<Wrapper />)
-        const submitButton = screen.getAllByRole('button', { name: /create/i })[1]
-        fireEvent.click(submitButton)
-
-        expect(submitButton).toBeDisabled()
-        expect(screen.getByText(/switch to/gi)).toBeInTheDocument()
-    })
-
     test('the `Everyone` role is preselected', async () => {
-        vi.spyOn(useRequireTransactionNetwork, 'useRequireTransactionNetwork').mockReturnValue({
-            isReady: true,
-
-            isTransactionNetwork: true,
-            name: 'Sepolia',
-
-            switchNetwork: () => null,
-        })
         vi.spyOn(zionClient, 'useCreateChannelTransaction').mockImplementation(
             useMockedCreateChannelTransaction,
         )
@@ -204,14 +147,6 @@ describe('CreateChannelForm', () => {
     })
 
     test('submits with the correct values', async () => {
-        vi.spyOn(useRequireTransactionNetwork, 'useRequireTransactionNetwork').mockReturnValue({
-            isReady: true,
-
-            isTransactionNetwork: true,
-            name: 'Sepolia',
-
-            switchNetwork: () => null,
-        })
         vi.spyOn(zionClient, 'useCreateChannelTransaction').mockImplementation(
             useMockedCreateChannelTransaction,
         )
@@ -260,14 +195,6 @@ describe('CreateChannelForm', () => {
     })
 
     test('shows transaction error message if there was an transaction error', async () => {
-        vi.spyOn(useRequireTransactionNetwork, 'useRequireTransactionNetwork').mockReturnValue({
-            isReady: true,
-
-            isTransactionNetwork: true,
-            name: 'Sepolia',
-            switchNetwork: () => null,
-        })
-
         vi.spyOn(zionClient, 'useCreateChannelTransaction').mockImplementation(() =>
             useMockedCreateChannelTransaction('failedWithTransactionContext'),
         )
@@ -309,13 +236,6 @@ describe('CreateChannelForm', () => {
     })
 
     test('shows permission error message if there was an error with permissions', async () => {
-        vi.spyOn(useRequireTransactionNetwork, 'useRequireTransactionNetwork').mockReturnValue({
-            isReady: true,
-            isTransactionNetwork: true,
-            name: 'Sepolia',
-            switchNetwork: () => null,
-        })
-
         vi.spyOn(zionClient, 'useCreateChannelTransaction').mockImplementation(() =>
             useMockedCreateChannelTransaction('failedWithPermissionContext'),
         )

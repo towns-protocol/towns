@@ -17,16 +17,13 @@ import { TransactionUIState, toTransactionUIStates } from 'hooks/TransactionUISt
 
 import { ErrorMessageText } from 'ui/components/ErrorMessage/ErrorMessage'
 import { PATHS } from 'routes'
-import { RequireTransactionNetworkMessage } from '@components/RequireTransactionNetworkMessage/RequireTransactionNetworkMessage'
 import { Spinner } from '@components/Spinner'
 import { ButtonSpinner } from '@components/Login/LoginButton/Spinner/ButtonSpinner'
 import { TokenCheckboxLabel } from '@components/Tokens/TokenCheckboxLabel'
 import { TransactionButton } from '@components/TransactionButton'
 import { env } from 'utils'
-import { useRequireTransactionNetwork } from 'hooks/useRequireTransactionNetwork'
 import { useContractRoles } from 'hooks/useContractRoles'
 import { ModalContainer } from '@components/Modals/ModalContainer'
-import { useCurrentWalletEqualsSignedInAccount } from 'hooks/useCurrentWalletEqualsSignedInAccount'
 import { UserOpTxModal } from '@components/Web3/UserOpTxModal/UserOpTxModal'
 import { mapToErrorMessage } from '../utils'
 
@@ -81,9 +78,6 @@ export const CreateChannelForm = (props: Props) => {
 
     const transactionUIState = toTransactionUIStates(transactionStatus, Boolean(channelId))
     const isAbleToInteract = transactionUIState === TransactionUIState.None
-    const { isTransactionNetwork, switchNetwork } = useRequireTransactionNetwork()
-    const currentWalletEqualsSignedInAccount = useCurrentWalletEqualsSignedInAccount()
-    const isDisabled = !isTransactionNetwork || !currentWalletEqualsSignedInAccount
 
     const { hasTransactionError, hasServerError } = useMemo(() => {
         return {
@@ -280,27 +274,12 @@ export const CreateChannelForm = (props: Props) => {
                             </Button>
 
                             <TransactionButton
-                                disabled={isDisabled}
                                 transactionState={transactionUIState}
                                 transactingText="Creating channel"
                                 successText="Channel created"
                                 idleText="Create"
                             />
                         </Box>
-
-                        {!isTransactionNetwork && (
-                            <Box paddingTop="md" flexDirection="row" justifyContent="end">
-                                <RequireTransactionNetworkMessage
-                                    postCta="to create a channel."
-                                    switchNetwork={switchNetwork}
-                                />
-                            </Box>
-                        )}
-                        {isTransactionNetwork && !currentWalletEqualsSignedInAccount && (
-                            <Box paddingTop="md" flexDirection="row" justifyContent="end">
-                                <ErrorMessageText message="Wallet is not connected, or is not the same as the signed in account." />
-                            </Box>
-                        )}
                     </Stack>
                 )
             }}

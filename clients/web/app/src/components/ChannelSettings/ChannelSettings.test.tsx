@@ -6,7 +6,6 @@ import * as zionClient from 'use-zion-client'
 import { TestApp } from 'test/testUtils'
 import * as useContractRoles from 'hooks/useContractRoles'
 import { UseMockUpdateChannelReturn, mockCreateTransactionWithSpy } from 'test/transactionHookMock'
-import * as useRequireTransactionNetwork from 'hooks/useRequireTransactionNetwork'
 import {
     everyoneRole,
     memberRole,
@@ -84,12 +83,6 @@ vi.mock('use-zion-client', async () => {
     }
 })
 
-vi.mock('hooks/useCurrentWalletEqualsSignedInAccount', () => {
-    return {
-        useCurrentWalletEqualsSignedInAccount: () => true,
-    }
-})
-
 // TODO: flaky in CI
 // https://linear.app/hnt-labs/issue/HNT-5116/investigate-flaky-test
 describe.skip('CreateChannelForm', () => {
@@ -100,13 +93,6 @@ describe.skip('CreateChannelForm', () => {
     test.skip(
         'renders correct prefilled values',
         async () => {
-            vi.spyOn(useRequireTransactionNetwork, 'useRequireTransactionNetwork').mockReturnValue({
-                isReady: true,
-                isTransactionNetwork: true,
-                name: 'Sepolia',
-                switchNetwork: () => null,
-            })
-
             vi.spyOn(useContractRoles, 'useContractRoles').mockImplementation(
                 (_spaceNetworkId: string | undefined) => {
                     return {
@@ -163,13 +149,6 @@ describe.skip('CreateChannelForm', () => {
     )
 
     test('submits correct values', async () => {
-        vi.spyOn(useRequireTransactionNetwork, 'useRequireTransactionNetwork').mockReturnValue({
-            isReady: true,
-            isTransactionNetwork: true,
-            name: 'Sepolia',
-            switchNetwork: () => null,
-        })
-
         vi.spyOn(zionClient, 'useUpdateChannelTransaction').mockImplementation(
             useMockedUpdateChannelTransaction,
         )
@@ -221,13 +200,6 @@ describe.skip('CreateChannelForm', () => {
     test(
         'when role details change on load, correct roles are checked and submitted',
         async () => {
-            vi.spyOn(useRequireTransactionNetwork, 'useRequireTransactionNetwork').mockReturnValue({
-                isReady: true,
-                isTransactionNetwork: true,
-                name: 'Sepolia',
-                switchNetwork: () => null,
-            })
-
             vi.spyOn(zionClient, 'useUpdateChannelTransaction').mockImplementation(
                 useMockedUpdateChannelTransaction,
             )

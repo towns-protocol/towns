@@ -1,6 +1,7 @@
 import React from 'react'
 import { AnimatePresence } from 'framer-motion'
 import { clsx } from 'clsx'
+import { usePrivy } from '@privy-io/react-auth'
 import { Button, MotionBox, Text } from '@ui'
 import { ButtonSpinner } from '@components/Login/LoginButton/Spinner/ButtonSpinner'
 import { buttonStyle } from 'ui/components/Button'
@@ -33,6 +34,8 @@ export const TransactionButton = (props: Props) => {
         idleText,
         onClick,
     } = props
+
+    const { ready: privyReady } = usePrivy()
 
     const progressBarVisible = transactionState != TransactionUIState.None
     const width: string = (() => {
@@ -89,12 +92,16 @@ export const TransactionButton = (props: Props) => {
                                 buttonStyle(),
                                 styles.relativePositionButton,
                             ])}
-                            disabled={disabled || transactionState != TransactionUIState.None}
+                            disabled={
+                                !privyReady ||
+                                disabled ||
+                                transactionState != TransactionUIState.None
+                            }
                             style={{
                                 opacity:
                                     transactionState !== TransactionUIState.None
                                         ? 1
-                                        : disabled
+                                        : !privyReady || disabled
                                         ? 0.5
                                         : 1,
                                 zIndex: 1,
