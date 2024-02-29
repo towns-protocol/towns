@@ -1,5 +1,3 @@
-// eslint-disable-next-line @typescript-eslint/ban-ts-comment
-// @ts-nocheck
 import { withProps } from '@udecode/cn'
 import { Channel } from 'use-zion-client'
 import { PlateLeaf, createPlugins } from '@udecode/plate-common'
@@ -40,19 +38,19 @@ import { createExitBreakPlugin, createSoftBreakPlugin } from '@udecode/plate-bre
 import { createDeserializeMdPlugin } from '@udecode/plate-serializer-md'
 import { createAutoformatPlugin } from '@udecode/plate-autoformat'
 
-import { BlockquoteElement } from '../ui/blockquote-element'
-import { CodeBlockElement } from '../ui/code-block-element'
-import { CodeLineElement } from '../ui/code-line-element'
-import { CodeSyntaxLeaf } from '../ui/code-syntax-leaf'
-import { LinkElement } from '../ui/link-element'
-import { ListElement } from '../ui/list-element'
-import { ChannelMentionElement } from '../ui/ChannelMentionElement'
-import { MentionElement } from '../ui/mention-element'
-import { MentionInputElement } from '../ui/mention-input-element'
-import { ParagraphElement } from '../ui/paragraph-element'
-import { CodeLeaf } from '../ui/code-leaf'
+import { BlockquoteElement } from '../components/plate-ui/BlockquoteElement'
+import { CodeBlockElement } from '../components/plate-ui/CodeBlockElement'
+import { CodeLeaf } from '../components/plate-ui/CodeLeaf'
+import { CodeLineElement } from '../components/plate-ui/CodeLineElement'
+import { CodeSyntaxLeaf } from '../components/plate-ui/CodeSyntaxLeaf'
+import { LinkElement } from '../components/plate-ui/LinkElement'
+import { ListElement } from '../components/plate-ui/ListElement'
+import { ChannelMentionElement } from '../components/plate-ui/ChannelMentionElement'
+import { MentionElement } from '../components/plate-ui/MentionElement'
+import { MentionInputElement } from '../components/plate-ui/MentionInputElement'
+import { ParagraphElement } from '../components/plate-ui/ParagraphElement'
 import { autoformatRules } from './autoformat'
-import { nodeResetRules } from './node-reset'
+import { nodeResetRules } from './nodeReset'
 import { createShiftEnterListPlugin } from './shiftEnterListPlugin'
 import { ELEMENT_MENTION_CHANNEL, createChannelPlugin } from './createChannelPlugin'
 
@@ -79,6 +77,8 @@ const PlatePlugins = createPlugins(
                 trigger: '#',
                 insertSpaceAfterMention: true,
                 triggerPreviousCharPattern: /^$|^[\s"']$/,
+                // eslint-disable-next-line @typescript-eslint/ban-ts-comment
+                // @ts-ignore
                 createMentionNode: (item: TComboboxItemWithData<Channel>) => ({
                     value: '#' + item.text,
                     channel: item.data,

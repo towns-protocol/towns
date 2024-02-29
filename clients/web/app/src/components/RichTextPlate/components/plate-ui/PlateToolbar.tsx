@@ -12,8 +12,8 @@ import { useDevice } from 'hooks/useDevice'
 import { ShortcutTooltip } from '@components/Shortcuts/ShortcutTooltip'
 import { ListToolbarButton } from './ListToolbarButton'
 import { AddLinkModal } from './LinkModal'
-import { MarkToolbarButton } from './mark-toolbar-button'
-import { LinkToolbarButton } from './link-toolbar-button'
+import { MarkToolbarButton } from './MarkToolbarButton'
+import { LinkToolbarButton } from './LinkToolbarButton'
 
 type Props = {
     editing?: boolean

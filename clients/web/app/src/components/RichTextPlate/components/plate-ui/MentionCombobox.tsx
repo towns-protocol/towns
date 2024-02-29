@@ -3,7 +3,7 @@ import { ComboboxProps } from '@udecode/plate-combobox'
 import { getPluginOptions, useEditorRef } from '@udecode/plate-common'
 import { ELEMENT_MENTION, MentionPlugin, getMentionOnSelectItem } from '@udecode/plate-mention'
 import { Channel, RoomMember } from 'use-zion-client'
-import { Combobox } from './combobox'
+import { Combobox } from './Combobox'
 
 export const MentionCombobox = <T extends RoomMember | Channel>({
     pluginKey = ELEMENT_MENTION,

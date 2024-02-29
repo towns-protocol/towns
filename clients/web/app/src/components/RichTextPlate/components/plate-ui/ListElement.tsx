@@ -2,7 +2,7 @@ import React from 'react'
 import { PlateElement } from '@udecode/plate-common'
 import { withRef } from '@udecode/cn'
 import { Box } from '@ui'
-import { listitem, ol, ul } from '../RichTextEditor.css'
+import { listitem, ol, ul } from '../../RichTextEditor.css'
 
 const classNameMap = {
     ul,

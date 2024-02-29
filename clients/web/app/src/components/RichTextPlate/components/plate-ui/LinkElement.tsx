@@ -3,7 +3,7 @@ import { withRef } from '@udecode/cn'
 import { PlateElement, useElement } from '@udecode/plate-common'
 import { TLinkElement, useLink } from '@udecode/plate-link'
 import { Box } from '@ui'
-import { link } from '../RichTextEditor.css'
+import { link } from '../../RichTextEditor.css'
 
 export const LinkElement = withRef<typeof PlateElement>(
     ({ className, children, ...props }, ref) => {

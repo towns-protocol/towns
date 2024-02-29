@@ -4,7 +4,7 @@ import { PlateElement, getHandler, useElement } from '@udecode/plate-common'
 import { TMentionElement } from '@udecode/plate-mention'
 import { Channel } from 'use-zion-client'
 import { ChannelLink } from '@components/RichTextPlate/components/ChannelLink'
-import { mentionChannelInput } from '../RichTextEditor.css'
+import { mentionChannelInput } from '../../RichTextEditor.css'
 
 type TChannelMentionElement = TMentionElement & { channel: Channel }
 
@@ -29,7 +29,6 @@ export const ChannelMentionElement = withRef<
         >
             {prefix}
             <ChannelLink channel={element.channel} />
-            {/*{children}*/}
         </PlateElement>
     )
 })

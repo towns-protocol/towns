@@ -5,7 +5,7 @@ import { clsx } from 'clsx'
 import { useEditorSelector } from '@udecode/plate-core'
 import { isListRoot } from '@udecode/plate-list'
 import * as fieldStyles from 'ui/components/_internal/Field/Field.css'
-import * as styles from '../RichTextEditor.css'
+import * as styles from '../../RichTextEditor.css'
 
 const inputClassName = clsx([fieldStyles.field, styles.richText, styles.contentEditable])
 

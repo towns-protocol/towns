@@ -2,7 +2,7 @@ import React from 'react'
 import { withRef } from '@udecode/cn'
 import { PlateElement, getHandler, useElement } from '@udecode/plate-common'
 import { TMentionElement } from '@udecode/plate-mention'
-import { mentionInput } from '../RichTextEditor.css'
+import { mentionInput } from '../../RichTextEditor.css'
 
 export const MentionElement = withRef<
     typeof PlateElement,
