@@ -16,6 +16,7 @@ export const SpacesIndex = () => {
     const space = useSpaceData()
     const membership = useMyMembership(space?.id)
     const { timeline } = useSpaceTimeline()
+
     const { leaveRoom, joinRoom, resetFullyReadMarkers } = useZionClient()
     const [joinFailed, setJoinFailed] = useState(false)
     const [clipboarded, setClipboarded] = useState(false)

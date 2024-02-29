@@ -143,39 +143,43 @@ export function ChatMessages(props: Props): JSX.Element {
                 <div ref={messagesEndRef} />
             </Box>
             <Box display="flex" flexDirection="row" flexGrow={1} />
-            {membership === Membership.Join && sendMessage !== undefined ? (
+            {membership === Membership.Join ? (
                 <>
                     <Divider />
-
-                    <Box sx={messageStyle}>
-                        <TextField
-                            fullWidth
-                            id="filled-basic"
-                            label="Type message here"
-                            variant="filled"
-                            value={currentMessage}
-                            onChange={onTextChanged}
-                            onKeyDown={onKeyDown}
-                        />
-                    </Box>
+                    {sendMessage !== undefined ? (
+                        <>
+                            <Box sx={messageStyle}>
+                                <TextField
+                                    fullWidth
+                                    id="filled-basic"
+                                    label="Type message here"
+                                    variant="filled"
+                                    value={currentMessage}
+                                    onChange={onTextChanged}
+                                    onKeyDown={onKeyDown}
+                                />
+                            </Box>
+                            <Box>
+                                <CheckyBox
+                                    label="Auto Post"
+                                    checked={autoPost}
+                                    onChange={() => setAutoPost(!autoPost)}
+                                />
+                                <CheckyBox
+                                    label="Extreme Mode"
+                                    checked={extremeMode}
+                                    onChange={() => setExtremeMode(!extremeMode)}
+                                />
+                            </Box>
+                        </>
+                    ) : null}
                     <Box>
-                        <CheckyBox
-                            label="Auto Post"
-                            checked={autoPost}
-                            onChange={() => setAutoPost(!autoPost)}
-                        />
-                        <CheckyBox
-                            label="Extreme Mode"
-                            checked={extremeMode}
-                            onChange={() => setExtremeMode(!extremeMode)}
-                        />
                         <CheckyBox
                             label="Scroll To Bottom"
                             checked={scrollToBottom}
                             onChange={() => setScrollToBottom(!scrollToBottom)}
                         />
                     </Box>
-
                     <Box>
                         {canLoadMore && (
                             <Typography
@@ -226,7 +230,7 @@ export function ChatMessages(props: Props): JSX.Element {
     )
 }
 
-const CheckyBox = (props: { label: string; checked: boolean; onChange: () => void }) => (
+export const CheckyBox = (props: { label: string; checked: boolean; onChange: () => void }) => (
     <>
         <input
             key={props.label}

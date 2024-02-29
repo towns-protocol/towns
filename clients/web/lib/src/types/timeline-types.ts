@@ -440,7 +440,7 @@ export function getFallbackContent(
             }`
         case ZTEvent.Fulfillment:
             return `Fulfillment sessionIds: ${
-                content.sessionIds.length ? content.sessionIds.join(',') : '[]'
+                content.sessionIds.length ? content.sessionIds.join(',') : 'forNewDevice: true'
             }, from: ${content.from} to: ${content.deviceKey}`
         case ZTEvent.KeySolicitation:
             if (content.isNewDevice) {
