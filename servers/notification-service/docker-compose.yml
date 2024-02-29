@@ -6,7 +6,7 @@ services:
             context: ../../
             dockerfile: ./servers/notification-service/Dockerfile
         ports:
-            - '3030:3030'
+            - '8787:8787'
         env_file:
             - ./.env.local
         depends_on:

@@ -40,21 +40,32 @@ function mount_notification_dabase_url() {
 function main() {
     echo "Running notification-service"
     export NODE_ENV="production"
+    check_env
  
     mount_notification_dabase_url
     yarn db:migrate
     yarn start
 }
 
-function dev() {
-    echo "Running notification-service dev"
-
-    mount_notification_dabase_url
-    
-    yarn tsc --watch & yarn start
+function load_env_local() {
+    if [ -f ".env.local" ]; then
+        echo "Loading .env.local"
+        source .env.local
+    else
+        echo ".env.local does not exist"
+    fi
 }
 
-check_env
+function dev() {
+    echo "Running notification-service dev"
+    export NODE_ENV="development"
+    load_env_local
+    check_env
+    
+    mount_notification_dabase_url
+    yarn db:migrate:local
+    yarn tsc --watch & yarn start
+}
 
 if [ "$1" == "dev" ]; then
     dev

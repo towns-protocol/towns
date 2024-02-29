@@ -20,7 +20,7 @@ Keys are in `.keys/vapid-keys.json`, set the `VAPID_PUBLIC_KEY` and `VAPID_PRIVA
 
 ### Yarn
 
-- `$ docker compose up -d db` - first run the database with Docker
+- `$ docker compose up db` - first run the database with Docker
 - `$ yarn dev` - then run the server with Yarn
 
 ### VS Code

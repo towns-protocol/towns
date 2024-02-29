@@ -7,14 +7,16 @@
     "type": "module",
     "scripts": {
         "build": "prisma generate && tsc",
-        "dev": "prisma generate && tsc --watch & node --env-file .env.local --experimental-specifier-resolution=node --watch --loader ts-node/esm dist/server.js",
+        "my-node": "node --experimental-specifier-resolution=node --loader ts-node/esm",
+        "dev": "yarn db:local && tsc --watch & yarn my-node --env-file .env.local --watch dist/server.js",
         "start": "node --experimental-specifier-resolution=node --loader ts-node/esm dist/server.js",
+        "start:local": "yarn my-node --env-file .env.local dist/server.js",
         "watch": "tsc --watch",
         "test": "jest",
         "db:generate": "prisma generate",
         "db:migrate": "prisma migrate deploy",
-        "start:migrate": "prisma migrate deploy && node --experimental-specifier-resolution=node --watch --loader ts-node/esm dist/server.js",
-        "dev:migrate": "prisma migrate deploy && tsc --watch & node --env-file .env.local --experimental-specifier-resolution=node --watch --loader ts-node/esm dist/server.js"
+        "db:migrate:local": "dotenv -e .env.local -- npx prisma migrate deploy",
+        "db:local": "yarn db:generate & yarn db:migrate:local"
     },
     "dependencies": {
         "@prisma/client": "^5.10.0",
@@ -36,6 +38,7 @@
         "@types/node": "^20.5.0",
         "@typescript-eslint/eslint-plugin": "^6.10.0",
         "@typescript-eslint/parser": "^6.10.0",
+        "dotenv-cli": "^7.3.0",
         "eslint": "^8.53.0",
         "eslint-config-prettier": "^8.8.0",
         "eslint-config-standard-with-typescript": "^35.0.0",
