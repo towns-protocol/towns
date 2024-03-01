@@ -19,8 +19,8 @@
         "watch": "tsc --watch"
     },
     "dependencies": {
+        "@river/generated": "workspace:^",
         "@river/web3": "workspace:^",
-        "@towns/generated": "workspace:^",
         "ethers": "^5.7.2",
         "siwe": "^2.1.3"
     },

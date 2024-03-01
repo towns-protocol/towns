@@ -1,14 +1,14 @@
 import {
     IRiverRegistry as DevContract,
     IRiverRegistryInterface as DevInterface,
-} from '@towns/generated/dev/typings/IRiverRegistry'
+} from '@river/generated/dev/typings/IRiverRegistry'
 import {
     IRiverRegistry as V3Contract,
     IRiverRegistryInterface as V3Interface,
-} from '@towns/generated/v3/typings/IRiverRegistry'
+} from '@river/generated/v3/typings/IRiverRegistry'
 
-import DevAbi from '@towns/generated/dev/abis/RiverRegistry.abi.json' assert { type: 'json' }
-import V3Abi from '@towns/generated/v3/abis/RiverRegistry.abi.json' assert { type: 'json' }
+import DevAbi from '@river/generated/dev/abis/RiverRegistry.abi.json' assert { type: 'json' }
+import V3Abi from '@river/generated/v3/abis/RiverRegistry.abi.json' assert { type: 'json' }
 
 import { BaseContractShim } from './BaseContractShim'
 import { ethers } from 'ethers'

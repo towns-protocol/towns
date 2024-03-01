@@ -29,11 +29,11 @@
         "watch": "tsc --watch"
     },
     "dependencies": {
+        "@river/generated": "workspace:^",
         "@river/proto": "workspace:^",
         "@river/sdk": "workspace:^",
         "@river/web3": "workspace:^",
         "@tanstack/react-query": "^5.20.1",
-        "@towns/generated": "workspace:^",
         "@towns/userops": "workspace:^",
         "@types/node-emoji": "^1.8.2",
         "debug": "^4.3.4",

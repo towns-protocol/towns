@@ -1,12 +1,12 @@
 import {
     IRuleEntitlement as LocalhostContract,
     IRuleEntitlementInterface as LocalhostInterface,
-} from '@towns/generated/dev/typings/IRuleEntitlement'
+} from '@river/generated/dev/typings/IRuleEntitlement'
 
 type BaseSepoliaContract = LocalhostContract
 type BaseSepoliaInterface = LocalhostInterface
-import LocalhostAbi from '@towns/generated/dev/abis/UserEntitlement.abi.json' assert { type: 'json' }
-import BaseSepoliaAbi from '@towns/generated/v3/abis/UserEntitlement.abi.json' assert { type: 'json' }
+import LocalhostAbi from '@river/generated/dev/abis/UserEntitlement.abi.json' assert { type: 'json' }
+import BaseSepoliaAbi from '@river/generated/v3/abis/UserEntitlement.abi.json' assert { type: 'json' }
 
 import { BaseContractShim } from './BaseContractShim'
 import { BigNumberish, ethers } from 'ethers'

@@ -16,8 +16,8 @@
 		"test:unit": "yarn node --experimental-vm-modules $(yarn bin jest)"
 	},
 	"dependencies": {
+		"@river/generated": "workspace:^",
 		"@river/web3": "workspace:^",
-		"@towns/generated": "workspace:^",
 		"siwe": "^2.1.3",
 		"ts-loader": "^9.4.2",
 		"worker-common": "workspace:^"

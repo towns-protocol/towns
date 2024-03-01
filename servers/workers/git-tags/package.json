@@ -10,7 +10,7 @@
         "test": "vitest"
     },
     "dependencies": {
-        "@towns/generated": "workspace:^",
+        "@river/generated": "workspace:^",
         "zod": "^3.21.4"
     },
     "devDependencies": {

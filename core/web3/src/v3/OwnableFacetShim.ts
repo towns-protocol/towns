@@ -1,14 +1,14 @@
 import {
     OwnableFacet as LocalhostContract,
     OwnableFacetInterface as LocalhostInterface,
-} from '@towns/generated/dev/typings/OwnableFacet'
+} from '@river/generated/dev/typings/OwnableFacet'
 import {
     OwnableFacet as BaseSepoliaContract,
     OwnableFacetInterface as BaseSepoliaInterface,
-} from '@towns/generated/v3/typings/OwnableFacet'
+} from '@river/generated/v3/typings/OwnableFacet'
 
-import LocalhostAbi from '@towns/generated/dev/abis/OwnableFacet.abi.json' assert { type: 'json' }
-import BaseSepoliaAbi from '@towns/generated/v3/abis/OwnableFacet.abi.json' assert { type: 'json' }
+import LocalhostAbi from '@river/generated/dev/abis/OwnableFacet.abi.json' assert { type: 'json' }
+import BaseSepoliaAbi from '@river/generated/v3/abis/OwnableFacet.abi.json' assert { type: 'json' }
 
 import { BaseContractShim } from './BaseContractShim'
 import { ethers } from 'ethers'
