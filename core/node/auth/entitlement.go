@@ -27,7 +27,7 @@ type entitlementsProxy struct {
 
 var (
 	isEntitledToChannelCalls = infra.NewSuccessMetrics("is_entitled_to_channel_calls", contractCalls)
-	isEntitledToTownCalls    = infra.NewSuccessMetrics("is_entitled_to_town_calls", contractCalls)
+	isEntitledToSpaceCalls    = infra.NewSuccessMetrics("is_entitled_to_space_calls", contractCalls)
 )
 
 func NewEntitlements(ctx context.Context, version string, address common.Address, backend bind.ContractBackend) (Entitlements, error) {
@@ -113,11 +113,11 @@ func (proxy *entitlementsProxy) IsEntitledToSpace(opts *bind.CallOpts, user comm
 	log.Debug("IsEntitledToSpace", "user", user, "permission", permission, "address", proxy.address)
 	result, err := proxy.contract.IsEntitledToSpace(opts, user, permission)
 	if err != nil {
-		isEntitledToTownCalls.FailInc()
+		isEntitledToSpaceCalls.FailInc()
 		log.Error("IsEntitledToSpace", "user", user, "permission", permission, "address", proxy.address, "error", err)
 		return false, WrapRiverError(Err_CANNOT_CALL_CONTRACT, err)
 	}
-	isEntitledToTownCalls.PassInc()
+	isEntitledToSpaceCalls.PassInc()
 	log.Debug(
 		"IsEntitledToSpace",
 		"user",

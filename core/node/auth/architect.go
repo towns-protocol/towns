@@ -18,7 +18,7 @@ import (
 )
 
 type Architect interface {
-	GetSpaceById(opts *bind.CallOpts, townId string) (common.Address, error)
+	GetSpaceById(opts *bind.CallOpts, spaceId string) (common.Address, error)
 }
 
 type architectProxy struct {
@@ -27,7 +27,7 @@ type architectProxy struct {
 	ctx      context.Context
 }
 
-var getTownByIdCalls = infra.NewSuccessMetrics("architect_calls", contractCalls)
+var getSpaceByIdCalls = infra.NewSuccessMetrics("architect_calls", contractCalls)
 
 func NewArchitect(ctx context.Context, cfg *config.ContractConfig, backend bind.ContractBackend) (Architect, error) {
 	address, err := crypto.ParseOrLoadAddress(cfg.Address)
@@ -51,24 +51,24 @@ func NewArchitect(ctx context.Context, cfg *config.ContractConfig, backend bind.
 	}, nil
 }
 
-func (proxy *architectProxy) GetSpaceById(opts *bind.CallOpts, townId string) (common.Address, error) {
+func (proxy *architectProxy) GetSpaceById(opts *bind.CallOpts, spaceId string) (common.Address, error) {
 	log := dlog.FromCtx(proxy.ctx)
 	start := time.Now()
 	defer infra.StoreExecutionTimeMetrics("GetSpaceById", infra.CONTRACT_CALLS_CATEGORY, start)
-	log.Debug("GetSpaceById", "address", proxy.address, "networkId", townId)
-	result, err := proxy.contract.GetSpaceById(opts, townId)
+	log.Debug("GetSpaceById", "address", proxy.address, "networkId", spaceId)
+	result, err := proxy.contract.GetSpaceById(opts, spaceId)
 	if err != nil {
-		log.Error("GetSpaceById", "address", proxy.address, "networkId", townId, "error", err)
-		getTownByIdCalls.FailInc()
+		log.Error("GetSpaceById", "address", proxy.address, "networkId", spaceId, "error", err)
+		getSpaceByIdCalls.FailInc()
 		return common.Address{}, WrapRiverError(Err_CANNOT_CALL_CONTRACT, err)
 	}
-	getTownByIdCalls.PassInc()
+	getSpaceByIdCalls.PassInc()
 	log.Debug(
 		"GetSpaceById",
 		"address",
 		proxy.address,
 		"networkId",
-		townId,
+		spaceId,
 		"result",
 		result,
 		"duration",
