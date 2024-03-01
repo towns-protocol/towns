@@ -21,7 +21,8 @@ var recencyConstraintsConfig_t = config.RecencyConstraintsConfig{
 	Generations: 5,
 	AgeSeconds:  11,
 }
-var minEventsPerSnapshot = 2
+var minEventsPerSnapshotDefault = 20
+var minEventsPerSnapshotUserStream = 2
 
 var streamConfig_t = config.StreamConfig{
 	Media: config.MediaStreamConfig{
@@ -32,7 +33,7 @@ var streamConfig_t = config.StreamConfig{
 		AgeSeconds:  11,
 		Generations: 5,
 	},
-	DefaultMinEventsPerSnapshot: minEventsPerSnapshot,
+	DefaultMinEventsPerSnapshot: minEventsPerSnapshotDefault,
 	MinEventsPerSnapshot:        map[string]int{},
 }
 
@@ -47,7 +48,6 @@ func TestLoad(t *testing.T) {
 	userWallet, _ := crypto.NewWallet(ctx)
 	nodeWallet, _ := crypto.NewWallet(ctx)
 	var streamId = testutils.UserStreamIdFromAddress(userWallet.Address)
-	streamConfig_t.MinEventsPerSnapshot[streamId] = minEventsPerSnapshot
 
 	userAddress := userWallet.Address[:]
 
@@ -131,7 +131,13 @@ func TestLoad(t *testing.T) {
 
 	// check snapshot generation
 	num = view.getMinEventsPerSnapshot(&streamConfig_t)
-	assert.Equal(t, minEventsPerSnapshot, num)
+	assert.Equal(t, minEventsPerSnapshotDefault, num)
+	assert.Equal(t, false, view.shouldSnapshot(&streamConfig_t))
+
+	// check per stream snapshot generation
+	streamConfig_t.MinEventsPerSnapshot[shared.STREAM_USER_PREFIX] = 2
+	num = view.getMinEventsPerSnapshot(&streamConfig_t)
+	assert.Equal(t, minEventsPerSnapshotUserStream, num)
 	assert.Equal(t, false, view.shouldSnapshot(&streamConfig_t))
 
 	blockHash := view.LastBlock().Hash
