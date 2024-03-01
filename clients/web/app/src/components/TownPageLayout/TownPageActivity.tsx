@@ -1,10 +1,5 @@
 import { MembershipOp } from '@river/proto'
-import {
-    RemoteTimelineEvent,
-    UnauthenticatedClient,
-    isRemoteEvent,
-    makeStreamRpcClient,
-} from '@river/sdk'
+import { UnauthenticatedClient, isRemoteEvent, makeStreamRpcClient } from '@river/sdk'
 import { AnimatePresence, animate } from 'framer-motion'
 import React, { useEffect, useMemo, useRef, useState } from 'react'
 import { Spinner } from '@components/Spinner'
@@ -150,34 +145,31 @@ const useFetchUnauthenticatedActivity = (townId: string) => {
                 const streamId = townId
                 const rpcClient = makeStreamRpcClient(rpcUrl)
                 const client = new UnauthenticatedClient(rpcClient)
+
                 const stream = await client.getStream(streamId)
 
-                const { spaceContent, timeline: spaceTimeline } = stream
-
                 setMembers(Array.from(stream.getMembers().membership.joinedUsers))
-                const remoteEvents: RemoteTimelineEvent[] = spaceTimeline
+
+                await client.scrollbackToDate(stream, WEEK_MS)
+
+                const numJoinedUsers = stream.timeline
                     .flatMap((e) => (isRemoteEvent(e) ? e : undefined))
                     .filter(notUndefined)
-
-                const numJoinedUsers = remoteEvents
-                    .filter((s) => isWithin(s.createdAtEpocMs, WEEK_MS))
                     .filter(
                         (s) =>
-                            s.remoteEvent.event.payload.value?.content.case === 'membership' &&
+                            s?.remoteEvent.event.payload.value?.content.case === 'membership' &&
                             s.remoteEvent.event.payload.value?.content.value?.op ===
                                 MembershipOp.SO_JOIN,
                     )
-
-                    .reduce((acc, s) => acc.add(s!.creatorUserId), new Set())
-
                 setTownStats({
                     numJoinedUsers: Array.from(numJoinedUsers).length,
                 })
 
-                const channelsIds = Array.from(spaceContent.spaceChannelsMetadata.keys())
+                const channelsIds = Array.from(stream.spaceContent.spaceChannelsMetadata.keys())
 
                 for (const channelId of channelsIds) {
                     const streamView = await client.getStream(channelId)
+                    await client.scrollbackToDate(streamView, WEEK_MS)
                     const channelMessages = streamView.timeline.filter(
                         (x) =>
                             isRemoteEvent(x) &&
