@@ -2,11 +2,8 @@ name: 'Run Userops Tests'
 env:
     FOUNDRY_VERSION: nightly
 
-on:
-    workflow_dispatch:
-    schedule:
-        # Once per hour between 8 - 4 PST
-        - cron: '0 16-23,0 * * *'
+# TODO: Reinstate once userop tests are updated to work w/ xchain entitlements
+on: {}
 
 jobs:
     user_ops_tests:
