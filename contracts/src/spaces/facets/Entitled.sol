@@ -173,7 +173,7 @@ abstract contract Entitled is
   }
 
   function _getSpaceEntitlements(
-    string calldata permission
+    string calldata
   ) internal pure returns (IRuleEntitlement.RuleData memory data) {
     // TODO return correct rules to be validated by apps
     data = RuleEntitlementUtil.getNoopRuleData();
@@ -188,9 +188,9 @@ abstract contract Entitled is
   }
 
   function _getChannelEntitlements(
-    string memory channelId,
-    string calldata permission
-  ) internal view returns (IRuleEntitlement.RuleData memory data) {
+    string memory,
+    string calldata
+  ) internal pure returns (IRuleEntitlement.RuleData memory data) {
     // TODO return correct rules to be validated by apps
     data = RuleEntitlementUtil.getNoopRuleData();
   }

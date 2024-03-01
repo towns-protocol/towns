@@ -10,7 +10,6 @@ import {IRuleEntitlement} from "contracts/src/crosschain/IRuleEntitlement.sol";
 // contracts
 import {EntitlementsManagerBase} from "./EntitlementsManagerBase.sol";
 import {Entitled} from "../Entitled.sol";
-import {IEntitlement} from "contracts/src/spaces/entitlements/IEntitlement.sol";
 
 contract EntitlementsManager is
   IEntitlementsManager,
@@ -50,7 +49,7 @@ contract EntitlementsManager is
 
   function getSpaceEntitlements(
     string calldata permission
-  ) external view returns (IRuleEntitlement.RuleData memory) {
+  ) external pure returns (IRuleEntitlement.RuleData memory) {
     return _getSpaceEntitlements(permission);
   }
 
@@ -65,7 +64,7 @@ contract EntitlementsManager is
   function getChannelEntitlements(
     string calldata channelId,
     string calldata permission
-  ) external view returns (IRuleEntitlement.RuleData memory) {
+  ) external pure returns (IRuleEntitlement.RuleData memory) {
     return _getChannelEntitlements(channelId, permission);
   }
 }

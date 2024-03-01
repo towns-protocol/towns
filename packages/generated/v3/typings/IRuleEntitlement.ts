@@ -9,16 +9,11 @@ import type {
   CallOverrides,
   ContractTransaction,
   Overrides,
-  PayableOverrides,
   PopulatedTransaction,
   Signer,
   utils,
 } from "ethers";
-import type {
-  FunctionFragment,
-  Result,
-  EventFragment,
-} from "@ethersproject/abi";
+import type { FunctionFragment, Result } from "@ethersproject/abi";
 import type { Listener, Provider } from "@ethersproject/providers";
 import type {
   TypedEventFilter,
@@ -28,52 +23,123 @@ import type {
   PromiseOrValue,
 } from "./common";
 
-export interface UserEntitlementInterface extends utils.Interface {
+export declare namespace IRuleEntitlement {
+  export type CheckOperationStruct = {
+    opType: PromiseOrValue<BigNumberish>;
+    chainId: PromiseOrValue<BigNumberish>;
+    contractAddress: PromiseOrValue<string>;
+    threshold: PromiseOrValue<BigNumberish>;
+  };
+
+  export type CheckOperationStructOutput = [
+    number,
+    BigNumber,
+    string,
+    BigNumber
+  ] & {
+    opType: number;
+    chainId: BigNumber;
+    contractAddress: string;
+    threshold: BigNumber;
+  };
+
+  export type LogicalOperationStruct = {
+    logOpType: PromiseOrValue<BigNumberish>;
+    leftOperationIndex: PromiseOrValue<BigNumberish>;
+    rightOperationIndex: PromiseOrValue<BigNumberish>;
+  };
+
+  export type LogicalOperationStructOutput = [number, number, number] & {
+    logOpType: number;
+    leftOperationIndex: number;
+    rightOperationIndex: number;
+  };
+
+  export type OperationStruct = {
+    opType: PromiseOrValue<BigNumberish>;
+    index: PromiseOrValue<BigNumberish>;
+  };
+
+  export type OperationStructOutput = [number, number] & {
+    opType: number;
+    index: number;
+  };
+
+  export type RuleDataStruct = {
+    operations: IRuleEntitlement.OperationStruct[];
+    checkOperations: IRuleEntitlement.CheckOperationStruct[];
+    logicalOperations: IRuleEntitlement.LogicalOperationStruct[];
+  };
+
+  export type RuleDataStructOutput = [
+    IRuleEntitlement.OperationStructOutput[],
+    IRuleEntitlement.CheckOperationStructOutput[],
+    IRuleEntitlement.LogicalOperationStructOutput[]
+  ] & {
+    operations: IRuleEntitlement.OperationStructOutput[];
+    checkOperations: IRuleEntitlement.CheckOperationStructOutput[];
+    logicalOperations: IRuleEntitlement.LogicalOperationStructOutput[];
+  };
+}
+
+export interface IRuleEntitlementInterface extends utils.Interface {
   functions: {
-    "SPACE_ADDRESS()": FunctionFragment;
     "description()": FunctionFragment;
+    "getCheckOperations(uint256)": FunctionFragment;
     "getEntitlementDataByRoleId(uint256)": FunctionFragment;
+    "getLogicalOperations(uint256)": FunctionFragment;
+    "getOperations(uint256)": FunctionFragment;
+    "getRuleData(uint256)": FunctionFragment;
     "initialize(address)": FunctionFragment;
     "isCrosschain()": FunctionFragment;
     "isEntitled(string,address[],bytes32)": FunctionFragment;
     "moduleType()": FunctionFragment;
     "name()": FunctionFragment;
-    "proxiableUUID()": FunctionFragment;
     "removeEntitlement(uint256)": FunctionFragment;
     "setEntitlement(uint256,bytes)": FunctionFragment;
-    "supportsInterface(bytes4)": FunctionFragment;
-    "upgradeTo(address)": FunctionFragment;
-    "upgradeToAndCall(address,bytes)": FunctionFragment;
+    "setRuleData(((uint8,uint8)[],(uint8,uint256,address,uint256)[],(uint8,uint8,uint8)[]))": FunctionFragment;
   };
 
   getFunction(
     nameOrSignatureOrTopic:
-      | "SPACE_ADDRESS"
       | "description"
+      | "getCheckOperations"
       | "getEntitlementDataByRoleId"
+      | "getLogicalOperations"
+      | "getOperations"
+      | "getRuleData"
       | "initialize"
       | "isCrosschain"
       | "isEntitled"
       | "moduleType"
       | "name"
-      | "proxiableUUID"
       | "removeEntitlement"
       | "setEntitlement"
-      | "supportsInterface"
-      | "upgradeTo"
-      | "upgradeToAndCall"
+      | "setRuleData"
   ): FunctionFragment;
 
-  encodeFunctionData(
-    functionFragment: "SPACE_ADDRESS",
-    values?: undefined
-  ): string;
   encodeFunctionData(
     functionFragment: "description",
     values?: undefined
   ): string;
   encodeFunctionData(
+    functionFragment: "getCheckOperations",
+    values: [PromiseOrValue<BigNumberish>]
+  ): string;
+  encodeFunctionData(
     functionFragment: "getEntitlementDataByRoleId",
+    values: [PromiseOrValue<BigNumberish>]
+  ): string;
+  encodeFunctionData(
+    functionFragment: "getLogicalOperations",
+    values: [PromiseOrValue<BigNumberish>]
+  ): string;
+  encodeFunctionData(
+    functionFragment: "getOperations",
+    values: [PromiseOrValue<BigNumberish>]
+  ): string;
+  encodeFunctionData(
+    functionFragment: "getRuleData",
     values: [PromiseOrValue<BigNumberish>]
   ): string;
   encodeFunctionData(
@@ -98,10 +164,6 @@ export interface UserEntitlementInterface extends utils.Interface {
   ): string;
   encodeFunctionData(functionFragment: "name", values?: undefined): string;
   encodeFunctionData(
-    functionFragment: "proxiableUUID",
-    values?: undefined
-  ): string;
-  encodeFunctionData(
     functionFragment: "removeEntitlement",
     values: [PromiseOrValue<BigNumberish>]
   ): string;
@@ -110,28 +172,32 @@ export interface UserEntitlementInterface extends utils.Interface {
     values: [PromiseOrValue<BigNumberish>, PromiseOrValue<BytesLike>]
   ): string;
   encodeFunctionData(
-    functionFragment: "supportsInterface",
-    values: [PromiseOrValue<BytesLike>]
-  ): string;
-  encodeFunctionData(
-    functionFragment: "upgradeTo",
-    values: [PromiseOrValue<string>]
-  ): string;
-  encodeFunctionData(
-    functionFragment: "upgradeToAndCall",
-    values: [PromiseOrValue<string>, PromiseOrValue<BytesLike>]
+    functionFragment: "setRuleData",
+    values: [IRuleEntitlement.RuleDataStruct]
   ): string;
 
-  decodeFunctionResult(
-    functionFragment: "SPACE_ADDRESS",
-    data: BytesLike
-  ): Result;
   decodeFunctionResult(
     functionFragment: "description",
     data: BytesLike
   ): Result;
   decodeFunctionResult(
+    functionFragment: "getCheckOperations",
+    data: BytesLike
+  ): Result;
+  decodeFunctionResult(
     functionFragment: "getEntitlementDataByRoleId",
+    data: BytesLike
+  ): Result;
+  decodeFunctionResult(
+    functionFragment: "getLogicalOperations",
+    data: BytesLike
+  ): Result;
+  decodeFunctionResult(
+    functionFragment: "getOperations",
+    data: BytesLike
+  ): Result;
+  decodeFunctionResult(
+    functionFragment: "getRuleData",
     data: BytesLike
   ): Result;
   decodeFunctionResult(functionFragment: "initialize", data: BytesLike): Result;
@@ -143,10 +209,6 @@ export interface UserEntitlementInterface extends utils.Interface {
   decodeFunctionResult(functionFragment: "moduleType", data: BytesLike): Result;
   decodeFunctionResult(functionFragment: "name", data: BytesLike): Result;
   decodeFunctionResult(
-    functionFragment: "proxiableUUID",
-    data: BytesLike
-  ): Result;
-  decodeFunctionResult(
     functionFragment: "removeEntitlement",
     data: BytesLike
   ): Result;
@@ -155,69 +217,19 @@ export interface UserEntitlementInterface extends utils.Interface {
     data: BytesLike
   ): Result;
   decodeFunctionResult(
-    functionFragment: "supportsInterface",
-    data: BytesLike
-  ): Result;
-  decodeFunctionResult(functionFragment: "upgradeTo", data: BytesLike): Result;
-  decodeFunctionResult(
-    functionFragment: "upgradeToAndCall",
+    functionFragment: "setRuleData",
     data: BytesLike
   ): Result;
 
-  events: {
-    "AdminChanged(address,address)": EventFragment;
-    "BeaconUpgraded(address)": EventFragment;
-    "Initialized(uint8)": EventFragment;
-    "Upgraded(address)": EventFragment;
-  };
-
-  getEvent(nameOrSignatureOrTopic: "AdminChanged"): EventFragment;
-  getEvent(nameOrSignatureOrTopic: "BeaconUpgraded"): EventFragment;
-  getEvent(nameOrSignatureOrTopic: "Initialized"): EventFragment;
-  getEvent(nameOrSignatureOrTopic: "Upgraded"): EventFragment;
+  events: {};
 }
 
-export interface AdminChangedEventObject {
-  previousAdmin: string;
-  newAdmin: string;
-}
-export type AdminChangedEvent = TypedEvent<
-  [string, string],
-  AdminChangedEventObject
->;
-
-export type AdminChangedEventFilter = TypedEventFilter<AdminChangedEvent>;
-
-export interface BeaconUpgradedEventObject {
-  beacon: string;
-}
-export type BeaconUpgradedEvent = TypedEvent<
-  [string],
-  BeaconUpgradedEventObject
->;
-
-export type BeaconUpgradedEventFilter = TypedEventFilter<BeaconUpgradedEvent>;
-
-export interface InitializedEventObject {
-  version: number;
-}
-export type InitializedEvent = TypedEvent<[number], InitializedEventObject>;
-
-export type InitializedEventFilter = TypedEventFilter<InitializedEvent>;
-
-export interface UpgradedEventObject {
-  implementation: string;
-}
-export type UpgradedEvent = TypedEvent<[string], UpgradedEventObject>;
-
-export type UpgradedEventFilter = TypedEventFilter<UpgradedEvent>;
-
-export interface UserEntitlement extends BaseContract {
+export interface IRuleEntitlement extends BaseContract {
   connect(signerOrProvider: Signer | Provider | string): this;
   attach(addressOrName: string): this;
   deployed(): Promise<this>;
 
-  interface: UserEntitlementInterface;
+  interface: IRuleEntitlementInterface;
 
   queryFilter<TEvent extends TypedEvent>(
     event: TypedEventFilter<TEvent>,
@@ -239,17 +251,39 @@ export interface UserEntitlement extends BaseContract {
   removeListener: OnEvent<this>;
 
   functions: {
-    SPACE_ADDRESS(overrides?: CallOverrides): Promise<[string]>;
-
     description(overrides?: CallOverrides): Promise<[string]>;
+
+    getCheckOperations(
+      roleId: PromiseOrValue<BigNumberish>,
+      overrides?: CallOverrides
+    ): Promise<[IRuleEntitlement.CheckOperationStructOutput[]]>;
 
     getEntitlementDataByRoleId(
       roleId: PromiseOrValue<BigNumberish>,
       overrides?: CallOverrides
     ): Promise<[string]>;
 
+    getLogicalOperations(
+      roleId: PromiseOrValue<BigNumberish>,
+      overrides?: CallOverrides
+    ): Promise<[IRuleEntitlement.LogicalOperationStructOutput[]]>;
+
+    getOperations(
+      roleId: PromiseOrValue<BigNumberish>,
+      overrides?: CallOverrides
+    ): Promise<[IRuleEntitlement.OperationStructOutput[]]>;
+
+    getRuleData(
+      roleId: PromiseOrValue<BigNumberish>,
+      overrides?: CallOverrides
+    ): Promise<
+      [IRuleEntitlement.RuleDataStructOutput] & {
+        data: IRuleEntitlement.RuleDataStructOutput;
+      }
+    >;
+
     initialize(
-      _space: PromiseOrValue<string>,
+      space: PromiseOrValue<string>,
       overrides?: Overrides & { from?: PromiseOrValue<string> }
     ): Promise<ContractTransaction>;
 
@@ -257,7 +291,7 @@ export interface UserEntitlement extends BaseContract {
 
     isEntitled(
       channelId: PromiseOrValue<string>,
-      wallets: PromiseOrValue<string>[],
+      user: PromiseOrValue<string>[],
       permission: PromiseOrValue<BytesLike>,
       overrides?: CallOverrides
     ): Promise<[boolean]>;
@@ -265,8 +299,6 @@ export interface UserEntitlement extends BaseContract {
     moduleType(overrides?: CallOverrides): Promise<[string]>;
 
     name(overrides?: CallOverrides): Promise<[string]>;
-
-    proxiableUUID(overrides?: CallOverrides): Promise<[string]>;
 
     removeEntitlement(
       roleId: PromiseOrValue<BigNumberish>,
@@ -279,34 +311,41 @@ export interface UserEntitlement extends BaseContract {
       overrides?: Overrides & { from?: PromiseOrValue<string> }
     ): Promise<ContractTransaction>;
 
-    supportsInterface(
-      interfaceId: PromiseOrValue<BytesLike>,
+    setRuleData(
+      data: IRuleEntitlement.RuleDataStruct,
       overrides?: CallOverrides
-    ): Promise<[boolean]>;
-
-    upgradeTo(
-      newImplementation: PromiseOrValue<string>,
-      overrides?: Overrides & { from?: PromiseOrValue<string> }
-    ): Promise<ContractTransaction>;
-
-    upgradeToAndCall(
-      newImplementation: PromiseOrValue<string>,
-      data: PromiseOrValue<BytesLike>,
-      overrides?: PayableOverrides & { from?: PromiseOrValue<string> }
-    ): Promise<ContractTransaction>;
+    ): Promise<[string]>;
   };
 
-  SPACE_ADDRESS(overrides?: CallOverrides): Promise<string>;
-
   description(overrides?: CallOverrides): Promise<string>;
+
+  getCheckOperations(
+    roleId: PromiseOrValue<BigNumberish>,
+    overrides?: CallOverrides
+  ): Promise<IRuleEntitlement.CheckOperationStructOutput[]>;
 
   getEntitlementDataByRoleId(
     roleId: PromiseOrValue<BigNumberish>,
     overrides?: CallOverrides
   ): Promise<string>;
 
+  getLogicalOperations(
+    roleId: PromiseOrValue<BigNumberish>,
+    overrides?: CallOverrides
+  ): Promise<IRuleEntitlement.LogicalOperationStructOutput[]>;
+
+  getOperations(
+    roleId: PromiseOrValue<BigNumberish>,
+    overrides?: CallOverrides
+  ): Promise<IRuleEntitlement.OperationStructOutput[]>;
+
+  getRuleData(
+    roleId: PromiseOrValue<BigNumberish>,
+    overrides?: CallOverrides
+  ): Promise<IRuleEntitlement.RuleDataStructOutput>;
+
   initialize(
-    _space: PromiseOrValue<string>,
+    space: PromiseOrValue<string>,
     overrides?: Overrides & { from?: PromiseOrValue<string> }
   ): Promise<ContractTransaction>;
 
@@ -314,7 +353,7 @@ export interface UserEntitlement extends BaseContract {
 
   isEntitled(
     channelId: PromiseOrValue<string>,
-    wallets: PromiseOrValue<string>[],
+    user: PromiseOrValue<string>[],
     permission: PromiseOrValue<BytesLike>,
     overrides?: CallOverrides
   ): Promise<boolean>;
@@ -322,8 +361,6 @@ export interface UserEntitlement extends BaseContract {
   moduleType(overrides?: CallOverrides): Promise<string>;
 
   name(overrides?: CallOverrides): Promise<string>;
-
-  proxiableUUID(overrides?: CallOverrides): Promise<string>;
 
   removeEntitlement(
     roleId: PromiseOrValue<BigNumberish>,
@@ -336,34 +373,41 @@ export interface UserEntitlement extends BaseContract {
     overrides?: Overrides & { from?: PromiseOrValue<string> }
   ): Promise<ContractTransaction>;
 
-  supportsInterface(
-    interfaceId: PromiseOrValue<BytesLike>,
+  setRuleData(
+    data: IRuleEntitlement.RuleDataStruct,
     overrides?: CallOverrides
-  ): Promise<boolean>;
-
-  upgradeTo(
-    newImplementation: PromiseOrValue<string>,
-    overrides?: Overrides & { from?: PromiseOrValue<string> }
-  ): Promise<ContractTransaction>;
-
-  upgradeToAndCall(
-    newImplementation: PromiseOrValue<string>,
-    data: PromiseOrValue<BytesLike>,
-    overrides?: PayableOverrides & { from?: PromiseOrValue<string> }
-  ): Promise<ContractTransaction>;
+  ): Promise<string>;
 
   callStatic: {
-    SPACE_ADDRESS(overrides?: CallOverrides): Promise<string>;
-
     description(overrides?: CallOverrides): Promise<string>;
+
+    getCheckOperations(
+      roleId: PromiseOrValue<BigNumberish>,
+      overrides?: CallOverrides
+    ): Promise<IRuleEntitlement.CheckOperationStructOutput[]>;
 
     getEntitlementDataByRoleId(
       roleId: PromiseOrValue<BigNumberish>,
       overrides?: CallOverrides
     ): Promise<string>;
 
+    getLogicalOperations(
+      roleId: PromiseOrValue<BigNumberish>,
+      overrides?: CallOverrides
+    ): Promise<IRuleEntitlement.LogicalOperationStructOutput[]>;
+
+    getOperations(
+      roleId: PromiseOrValue<BigNumberish>,
+      overrides?: CallOverrides
+    ): Promise<IRuleEntitlement.OperationStructOutput[]>;
+
+    getRuleData(
+      roleId: PromiseOrValue<BigNumberish>,
+      overrides?: CallOverrides
+    ): Promise<IRuleEntitlement.RuleDataStructOutput>;
+
     initialize(
-      _space: PromiseOrValue<string>,
+      space: PromiseOrValue<string>,
       overrides?: CallOverrides
     ): Promise<void>;
 
@@ -371,7 +415,7 @@ export interface UserEntitlement extends BaseContract {
 
     isEntitled(
       channelId: PromiseOrValue<string>,
-      wallets: PromiseOrValue<string>[],
+      user: PromiseOrValue<string>[],
       permission: PromiseOrValue<BytesLike>,
       overrides?: CallOverrides
     ): Promise<boolean>;
@@ -380,8 +424,6 @@ export interface UserEntitlement extends BaseContract {
 
     name(overrides?: CallOverrides): Promise<string>;
 
-    proxiableUUID(overrides?: CallOverrides): Promise<string>;
-
     removeEntitlement(
       roleId: PromiseOrValue<BigNumberish>,
       overrides?: CallOverrides
@@ -393,63 +435,44 @@ export interface UserEntitlement extends BaseContract {
       overrides?: CallOverrides
     ): Promise<void>;
 
-    supportsInterface(
-      interfaceId: PromiseOrValue<BytesLike>,
+    setRuleData(
+      data: IRuleEntitlement.RuleDataStruct,
       overrides?: CallOverrides
-    ): Promise<boolean>;
-
-    upgradeTo(
-      newImplementation: PromiseOrValue<string>,
-      overrides?: CallOverrides
-    ): Promise<void>;
-
-    upgradeToAndCall(
-      newImplementation: PromiseOrValue<string>,
-      data: PromiseOrValue<BytesLike>,
-      overrides?: CallOverrides
-    ): Promise<void>;
+    ): Promise<string>;
   };
 
-  filters: {
-    "AdminChanged(address,address)"(
-      previousAdmin?: null,
-      newAdmin?: null
-    ): AdminChangedEventFilter;
-    AdminChanged(
-      previousAdmin?: null,
-      newAdmin?: null
-    ): AdminChangedEventFilter;
-
-    "BeaconUpgraded(address)"(
-      beacon?: PromiseOrValue<string> | null
-    ): BeaconUpgradedEventFilter;
-    BeaconUpgraded(
-      beacon?: PromiseOrValue<string> | null
-    ): BeaconUpgradedEventFilter;
-
-    "Initialized(uint8)"(version?: null): InitializedEventFilter;
-    Initialized(version?: null): InitializedEventFilter;
-
-    "Upgraded(address)"(
-      implementation?: PromiseOrValue<string> | null
-    ): UpgradedEventFilter;
-    Upgraded(
-      implementation?: PromiseOrValue<string> | null
-    ): UpgradedEventFilter;
-  };
+  filters: {};
 
   estimateGas: {
-    SPACE_ADDRESS(overrides?: CallOverrides): Promise<BigNumber>;
-
     description(overrides?: CallOverrides): Promise<BigNumber>;
+
+    getCheckOperations(
+      roleId: PromiseOrValue<BigNumberish>,
+      overrides?: CallOverrides
+    ): Promise<BigNumber>;
 
     getEntitlementDataByRoleId(
       roleId: PromiseOrValue<BigNumberish>,
       overrides?: CallOverrides
     ): Promise<BigNumber>;
 
+    getLogicalOperations(
+      roleId: PromiseOrValue<BigNumberish>,
+      overrides?: CallOverrides
+    ): Promise<BigNumber>;
+
+    getOperations(
+      roleId: PromiseOrValue<BigNumberish>,
+      overrides?: CallOverrides
+    ): Promise<BigNumber>;
+
+    getRuleData(
+      roleId: PromiseOrValue<BigNumberish>,
+      overrides?: CallOverrides
+    ): Promise<BigNumber>;
+
     initialize(
-      _space: PromiseOrValue<string>,
+      space: PromiseOrValue<string>,
       overrides?: Overrides & { from?: PromiseOrValue<string> }
     ): Promise<BigNumber>;
 
@@ -457,7 +480,7 @@ export interface UserEntitlement extends BaseContract {
 
     isEntitled(
       channelId: PromiseOrValue<string>,
-      wallets: PromiseOrValue<string>[],
+      user: PromiseOrValue<string>[],
       permission: PromiseOrValue<BytesLike>,
       overrides?: CallOverrides
     ): Promise<BigNumber>;
@@ -466,8 +489,6 @@ export interface UserEntitlement extends BaseContract {
 
     name(overrides?: CallOverrides): Promise<BigNumber>;
 
-    proxiableUUID(overrides?: CallOverrides): Promise<BigNumber>;
-
     removeEntitlement(
       roleId: PromiseOrValue<BigNumberish>,
       overrides?: Overrides & { from?: PromiseOrValue<string> }
@@ -479,35 +500,42 @@ export interface UserEntitlement extends BaseContract {
       overrides?: Overrides & { from?: PromiseOrValue<string> }
     ): Promise<BigNumber>;
 
-    supportsInterface(
-      interfaceId: PromiseOrValue<BytesLike>,
+    setRuleData(
+      data: IRuleEntitlement.RuleDataStruct,
       overrides?: CallOverrides
-    ): Promise<BigNumber>;
-
-    upgradeTo(
-      newImplementation: PromiseOrValue<string>,
-      overrides?: Overrides & { from?: PromiseOrValue<string> }
-    ): Promise<BigNumber>;
-
-    upgradeToAndCall(
-      newImplementation: PromiseOrValue<string>,
-      data: PromiseOrValue<BytesLike>,
-      overrides?: PayableOverrides & { from?: PromiseOrValue<string> }
     ): Promise<BigNumber>;
   };
 
   populateTransaction: {
-    SPACE_ADDRESS(overrides?: CallOverrides): Promise<PopulatedTransaction>;
-
     description(overrides?: CallOverrides): Promise<PopulatedTransaction>;
+
+    getCheckOperations(
+      roleId: PromiseOrValue<BigNumberish>,
+      overrides?: CallOverrides
+    ): Promise<PopulatedTransaction>;
 
     getEntitlementDataByRoleId(
       roleId: PromiseOrValue<BigNumberish>,
       overrides?: CallOverrides
     ): Promise<PopulatedTransaction>;
 
+    getLogicalOperations(
+      roleId: PromiseOrValue<BigNumberish>,
+      overrides?: CallOverrides
+    ): Promise<PopulatedTransaction>;
+
+    getOperations(
+      roleId: PromiseOrValue<BigNumberish>,
+      overrides?: CallOverrides
+    ): Promise<PopulatedTransaction>;
+
+    getRuleData(
+      roleId: PromiseOrValue<BigNumberish>,
+      overrides?: CallOverrides
+    ): Promise<PopulatedTransaction>;
+
     initialize(
-      _space: PromiseOrValue<string>,
+      space: PromiseOrValue<string>,
       overrides?: Overrides & { from?: PromiseOrValue<string> }
     ): Promise<PopulatedTransaction>;
 
@@ -515,7 +543,7 @@ export interface UserEntitlement extends BaseContract {
 
     isEntitled(
       channelId: PromiseOrValue<string>,
-      wallets: PromiseOrValue<string>[],
+      user: PromiseOrValue<string>[],
       permission: PromiseOrValue<BytesLike>,
       overrides?: CallOverrides
     ): Promise<PopulatedTransaction>;
@@ -524,8 +552,6 @@ export interface UserEntitlement extends BaseContract {
 
     name(overrides?: CallOverrides): Promise<PopulatedTransaction>;
 
-    proxiableUUID(overrides?: CallOverrides): Promise<PopulatedTransaction>;
-
     removeEntitlement(
       roleId: PromiseOrValue<BigNumberish>,
       overrides?: Overrides & { from?: PromiseOrValue<string> }
@@ -537,20 +563,9 @@ export interface UserEntitlement extends BaseContract {
       overrides?: Overrides & { from?: PromiseOrValue<string> }
     ): Promise<PopulatedTransaction>;
 
-    supportsInterface(
-      interfaceId: PromiseOrValue<BytesLike>,
+    setRuleData(
+      data: IRuleEntitlement.RuleDataStruct,
       overrides?: CallOverrides
-    ): Promise<PopulatedTransaction>;
-
-    upgradeTo(
-      newImplementation: PromiseOrValue<string>,
-      overrides?: Overrides & { from?: PromiseOrValue<string> }
-    ): Promise<PopulatedTransaction>;
-
-    upgradeToAndCall(
-      newImplementation: PromiseOrValue<string>,
-      data: PromiseOrValue<BytesLike>,
-      overrides?: PayableOverrides & { from?: PromiseOrValue<string> }
     ): Promise<PopulatedTransaction>;
   };
 }
