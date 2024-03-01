@@ -128,7 +128,7 @@ done
 
 # xchain nodes
 # disabled: https://linear.app/hnt-labs/issue/HNT-4317/create-multish-call-in-the-start-devsh-fails
-# ./servers/xchain/create_multi.sh
+./servers/xchain/create_multi.sh
 
 # Continue with rest of the script
 echo "Continuing with the rest of the script..."
