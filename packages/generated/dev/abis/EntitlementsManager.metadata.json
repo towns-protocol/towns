@@ -370,6 +370,98 @@
       {
         "inputs": [
           {
+            "internalType": "string",
+            "name": "channelId",
+            "type": "string"
+          },
+          {
+            "internalType": "string",
+            "name": "permission",
+            "type": "string"
+          }
+        ],
+        "name": "getChannelEntitlements",
+        "outputs": [
+          {
+            "components": [
+              {
+                "components": [
+                  {
+                    "internalType": "enum IRuleEntitlement.CombinedOperationType",
+                    "name": "opType",
+                    "type": "uint8"
+                  },
+                  {
+                    "internalType": "uint8",
+                    "name": "index",
+                    "type": "uint8"
+                  }
+                ],
+                "internalType": "struct IRuleEntitlement.Operation[]",
+                "name": "operations",
+                "type": "tuple[]"
+              },
+              {
+                "components": [
+                  {
+                    "internalType": "enum IRuleEntitlement.CheckOperationType",
+                    "name": "opType",
+                    "type": "uint8"
+                  },
+                  {
+                    "internalType": "uint256",
+                    "name": "chainId",
+                    "type": "uint256"
+                  },
+                  {
+                    "internalType": "address",
+                    "name": "contractAddress",
+                    "type": "address"
+                  },
+                  {
+                    "internalType": "uint256",
+                    "name": "threshold",
+                    "type": "uint256"
+                  }
+                ],
+                "internalType": "struct IRuleEntitlement.CheckOperation[]",
+                "name": "checkOperations",
+                "type": "tuple[]"
+              },
+              {
+                "components": [
+                  {
+                    "internalType": "enum IRuleEntitlement.LogicalOperationType",
+                    "name": "logOpType",
+                    "type": "uint8"
+                  },
+                  {
+                    "internalType": "uint8",
+                    "name": "leftOperationIndex",
+                    "type": "uint8"
+                  },
+                  {
+                    "internalType": "uint8",
+                    "name": "rightOperationIndex",
+                    "type": "uint8"
+                  }
+                ],
+                "internalType": "struct IRuleEntitlement.LogicalOperation[]",
+                "name": "logicalOperations",
+                "type": "tuple[]"
+              }
+            ],
+            "internalType": "struct IRuleEntitlement.RuleData",
+            "name": "",
+            "type": "tuple"
+          }
+        ],
+        "stateMutability": "view",
+        "type": "function"
+      },
+      {
+        "inputs": [
+          {
             "internalType": "address",
             "name": "entitlement",
             "type": "address"
@@ -438,6 +530,93 @@
             "internalType": "struct IEntitlementsManagerBase.Entitlement[]",
             "name": "",
             "type": "tuple[]"
+          }
+        ],
+        "stateMutability": "view",
+        "type": "function"
+      },
+      {
+        "inputs": [
+          {
+            "internalType": "string",
+            "name": "permission",
+            "type": "string"
+          }
+        ],
+        "name": "getTownEntitlements",
+        "outputs": [
+          {
+            "components": [
+              {
+                "components": [
+                  {
+                    "internalType": "enum IRuleEntitlement.CombinedOperationType",
+                    "name": "opType",
+                    "type": "uint8"
+                  },
+                  {
+                    "internalType": "uint8",
+                    "name": "index",
+                    "type": "uint8"
+                  }
+                ],
+                "internalType": "struct IRuleEntitlement.Operation[]",
+                "name": "operations",
+                "type": "tuple[]"
+              },
+              {
+                "components": [
+                  {
+                    "internalType": "enum IRuleEntitlement.CheckOperationType",
+                    "name": "opType",
+                    "type": "uint8"
+                  },
+                  {
+                    "internalType": "uint256",
+                    "name": "chainId",
+                    "type": "uint256"
+                  },
+                  {
+                    "internalType": "address",
+                    "name": "contractAddress",
+                    "type": "address"
+                  },
+                  {
+                    "internalType": "uint256",
+                    "name": "threshold",
+                    "type": "uint256"
+                  }
+                ],
+                "internalType": "struct IRuleEntitlement.CheckOperation[]",
+                "name": "checkOperations",
+                "type": "tuple[]"
+              },
+              {
+                "components": [
+                  {
+                    "internalType": "enum IRuleEntitlement.LogicalOperationType",
+                    "name": "logOpType",
+                    "type": "uint8"
+                  },
+                  {
+                    "internalType": "uint8",
+                    "name": "leftOperationIndex",
+                    "type": "uint8"
+                  },
+                  {
+                    "internalType": "uint8",
+                    "name": "rightOperationIndex",
+                    "type": "uint8"
+                  }
+                ],
+                "internalType": "struct IRuleEntitlement.LogicalOperation[]",
+                "name": "logicalOperations",
+                "type": "tuple[]"
+              }
+            ],
+            "internalType": "struct IRuleEntitlement.RuleData",
+            "name": "",
+            "type": "tuple"
           }
         ],
         "stateMutability": "view",
@@ -540,6 +719,14 @@
             "entitlements": "The entitlements to add"
           }
         },
+        "getChannelEntitlements(string,string)": {
+          "params": {
+            "permission": "The permission to check"
+          },
+          "returns": {
+            "_0": "RuleData describing the tests that must pass for the permission"
+          }
+        },
         "getEntitlement(address)": {
           "params": {
             "entitlement": "The entitlement to get"
@@ -551,6 +738,14 @@
         "getEntitlements()": {
           "returns": {
             "_0": "The entitlement modules"
+          }
+        },
+        "getTownEntitlements(string)": {
+          "params": {
+            "permission": "The permission to check"
+          },
+          "returns": {
+            "_0": "RuleData describing the tests that must pass for the permission"
           }
         },
         "isEntitledToChannel(string,address,string)": {
@@ -656,11 +851,17 @@
         "addImmutableEntitlements(address[])": {
           "notice": "Allows the town owner to add immutable entitlements to the town"
         },
+        "getChannelEntitlements(string,string)": {
+          "notice": "Returns the EntitlementData that qualifies for a permission"
+        },
         "getEntitlement(address)": {
           "notice": "Gets an entitlement from the town"
         },
         "getEntitlements()": {
           "notice": "Gets all entitlements from the town"
+        },
+        "getTownEntitlements(string)": {
+          "notice": "Returns the EntitlementData that qualifies for a permission"
         },
         "isEntitledToChannel(string,address,string)": {
           "notice": "Checks if a user is entitled to a permission in a channel"
@@ -710,6 +911,22 @@
     ]
   },
   "sources": {
+    "contracts/src/crosschain/IRuleEntitlement.sol": {
+      "keccak256": "0x3da336bbe54d6a62cb521d47af057095a307042d5741e08d7cf190552f4616b0",
+      "license": "MIT",
+      "urls": [
+        "bzz-raw://2139ec62b79becb583e95f8d8d7ba941769ff26efdea56ff3f2322a5ad2a55a7",
+        "dweb:/ipfs/QmSsZXgEEALmakJT5a2QfuE2EoMJ27o7UFQYP3DA2fm4EU"
+      ]
+    },
+    "contracts/src/crosschain/RuleEntitlementUtil.sol": {
+      "keccak256": "0xa64295d54d0af042601e56650a852b3b053e407da0c13bc8fcd17766936b6443",
+      "license": "MIT",
+      "urls": [
+        "bzz-raw://226a0d8e915e8525fde25914c7e69b016775cdd2a4fba2362ea13dfd4ed705c3",
+        "dweb:/ipfs/QmcqC9USu4Fk1TX8zg399zboyShdGyxfMcLdtbcAJJvLvz"
+      ]
+    },
     "contracts/src/diamond/facets/introspection/IERC165.sol": {
       "keccak256": "0x243cfeefa64ba07bee887b0b03704147f9bd2f25571272a6ebca3ba684af1b00",
       "license": "Apache-2.0",
@@ -798,20 +1015,36 @@
         "dweb:/ipfs/QmUFD83GFhupZo2d3PafyK5fjqrzFRDnJHEsTGYhHakzUM"
       ]
     },
-    "contracts/src/spaces/entitlements/IEntitlement.sol": {
-      "keccak256": "0x35f1b94c8192c2716c487b49c62c35821dc3b34da9d5deb50e756772407c955f",
+    "contracts/src/river/wallet-link/WalletLinkStorage.sol": {
+      "keccak256": "0xfeff774f848982235ee5544cc01c30c8a0eb9e0d5c1a37fe91baeb21522b57c1",
       "license": "Apache-2.0",
       "urls": [
-        "bzz-raw://ec3a05d15e524da284aa417da3f09b6b34f7732f6ee02d650f26f9c04eb4d336",
-        "dweb:/ipfs/Qme1bgU56x9drrefb6BUkgGQ61ipBK5zoo4ZstRmGXhzkL"
+        "bzz-raw://8de445d54b131a4391ec2ed9158114047618e8b80a6dca76900ce5ded765687d",
+        "dweb:/ipfs/QmYptKYMVxjWx8RNJZZehTEjAnJSriaTKQ6u27q1yH7NCk"
+      ]
+    },
+    "contracts/src/spaces/entitlements/IEntitlement.sol": {
+      "keccak256": "0x712add71e128251b8e0b4112ce76cd46f6679715df6c793f687dce612e9d9852",
+      "license": "Apache-2.0",
+      "urls": [
+        "bzz-raw://ff5c19f00858661b2f493902650dddaa29fa0dc2d3ed1ad3b2f1f0d7c6a9127d",
+        "dweb:/ipfs/QmdH8pn1iKkPrPTyZB4eBeiJKJR92L42Zn1xmsWGFJuxZp"
       ]
     },
     "contracts/src/spaces/facets/Entitled.sol": {
-      "keccak256": "0xc2f2195a5dbab66fcd59d2b3dbb9e37f5da79b199209df519f078cfbf837aeff",
+      "keccak256": "0xa2cf916fc2e8541b92a7a595fc5c912164752c97668625dc64a5b19aa43b0f03",
       "license": "Apache-2.0",
       "urls": [
-        "bzz-raw://c95a13835720a9f097332e71a647aad94ba38df63898d41c9a6170743204addf",
-        "dweb:/ipfs/QmR54jS53PNaBDWZjnW4k5t6vKejNbiaFnkzZXaiBirsaA"
+        "bzz-raw://a222d8a873850f02ff228847f084314b1a252f2dc0c2e702ca0b64c523094b09",
+        "dweb:/ipfs/QmRjWqFShfFyobTEYE2WDfgyQWXVzpSrFguSucC9acZQGP"
+      ]
+    },
+    "contracts/src/spaces/facets/Permissions.sol": {
+      "keccak256": "0x9ec12f93daf62e46af526c0c44cde0df8c4b848da6a5f0909854cce126d1e365",
+      "license": "Apache-2.0",
+      "urls": [
+        "bzz-raw://2c22749f53f52f76ab40a6d49260af16b6f80cb4304f4d68c04c0dfbd1001bc3",
+        "dweb:/ipfs/QmcZJJWVntsNgo85QZke3q4dBwXjzrrza7omrtNhemibNa"
       ]
     },
     "contracts/src/spaces/facets/banning/BanningBase.sol": {
@@ -839,43 +1072,43 @@
       ]
     },
     "contracts/src/spaces/facets/entitlements/EntitlementsManager.sol": {
-      "keccak256": "0x1a3b16ed512e8eb638bea1a814c52862619bc9f6f4c32fd89ddb6586d9aaf930",
+      "keccak256": "0x82355f4c15abbdb45596b78609cb569a50bb6f4235cd8a7a0d798a90c8b52452",
       "license": "Apache-2.0",
       "urls": [
-        "bzz-raw://cf6b46620900bd7b553737adfbe899295f1ac1de4e0b7b831f8522778459a063",
-        "dweb:/ipfs/QmSERXp7gSy7aNugKrwKdi9vBhKx5eAXzM6vvrMCY2mMBm"
+        "bzz-raw://e6409182fb5299f9f3497692c49c8db182b3c4fb717038630a86646426e7c2c8",
+        "dweb:/ipfs/QmcVhjT8ZBqLwoQ9ub2EKcwSKkmrANFM3psLS219G8QECS"
       ]
     },
     "contracts/src/spaces/facets/entitlements/EntitlementsManagerBase.sol": {
-      "keccak256": "0x043ba820a71407d23bb2f14f4809f8c6024c90de44e403130a0e3c2998b53cd6",
+      "keccak256": "0x6759d8b8c39b109ef3f93ecf7f100c0d25988c4d36a3929accc163dc36993fea",
       "license": "Apache-2.0",
       "urls": [
-        "bzz-raw://a161f6aea0bf6796f5b87abe51192796fe4926515ffa927aa3bd3c01d657b951",
-        "dweb:/ipfs/QmTZF7rCKaCQ4YRdGSsm1f6T8HCSX2KPzcEFqpvkF3riMi"
+        "bzz-raw://6a459984bb4518523d2c17d1691585da68750595b37f623984bebdc7e9d65fed",
+        "dweb:/ipfs/QmVjKs34Q2M2bwe31furdJ7C2FEWPNP3p9KYnigo9BZJ5s"
       ]
     },
     "contracts/src/spaces/facets/entitlements/EntitlementsManagerService.sol": {
-      "keccak256": "0x7dcc45bda6bac176571fa8b326529939fb90a9668af4dec00f64d59ad4f87416",
+      "keccak256": "0x2b4586093e6c05f9d1f036096995e1f4f0356af9bd8e88bba2526eb0828f60c5",
       "license": "Apache-2.0",
       "urls": [
-        "bzz-raw://1cc14a2341fa43a5a8a1ac8d7482b8bb14dd89b5fb74acec6d6619a6199efe69",
-        "dweb:/ipfs/QmVzrfaXSzAjqx8CBfckPKUgaQHApCtp6yQiKohYu4CVZd"
+        "bzz-raw://0e9cdeafee03ba2ee0f1ec3da0da3b568cc0b873a94cda08a7e4393f86638cc6",
+        "dweb:/ipfs/QmQAvhdU3wCrkyDMA5HxWhChBCCm6pX8o9B7SuUJmLrNK3"
       ]
     },
     "contracts/src/spaces/facets/entitlements/EntitlementsManagerStorage.sol": {
-      "keccak256": "0x25d81d0f45e65e8c035ed41ac078ace43672a00829f5334b21c2ef23fc4f73ba",
+      "keccak256": "0x4deaca265b50ebb5d8eb7fb7c4635179380f3d307c827db1c38a5892d8c313c0",
       "license": "Apache-2.0",
       "urls": [
-        "bzz-raw://8f621544a327bd541d20e9df4d73179123a96f7f11456b50ecf2f30409073e49",
-        "dweb:/ipfs/Qmf5o4Gt9w1ySMi1bHveoaQ4aTQ4MHa6SoxGWTNgWDBpGw"
+        "bzz-raw://8be609d370939fa23c0a6174981cbdaf6a79b9798f0a879dd52ae9f94188e755",
+        "dweb:/ipfs/QmXCaSGGYTGtWFLYELyLiBDAPYz2HBbN7es49M9Qa7Mivh"
       ]
     },
     "contracts/src/spaces/facets/entitlements/IEntitlementsManager.sol": {
-      "keccak256": "0x957ccbd631d005dcfc689a41d3b24afaea6a912d79486ff4a5a1e8274b10697e",
+      "keccak256": "0x4e62913698ebd5aea10737ec09d2466cf2bba10d42cfa2577eed236c46c97d98",
       "license": "Apache-2.0",
       "urls": [
-        "bzz-raw://0934c12809c6f62e106073c6aa2548e44ae968e6a02013d3ead0bf75f7fffacc",
-        "dweb:/ipfs/QmZcZZh4CGJsrmAQSZXcWjM8wVk8cyKrEnTZEQzJf3uZRf"
+        "bzz-raw://d4c0d0d0c2841c09fda94472202c7cc169a93e11765b89f74fbd51ce65397021",
+        "dweb:/ipfs/QmcYLgnXinj9UGfJ7zWNbhvuoXHzR9rB6o7nbxY5CBJQGF"
       ]
     },
     "contracts/src/spaces/facets/membership/MembershipStorage.sol": {

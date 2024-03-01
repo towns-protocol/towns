@@ -90,7 +90,7 @@
       },
       {
         "inputs": [],
-        "name": "TOWN_ADDRESS",
+        "name": "SPACE_ADDRESS",
         "outputs": [
           {
             "internalType": "address",
@@ -125,9 +125,9 @@
         "name": "getEntitlementDataByRoleId",
         "outputs": [
           {
-            "internalType": "bytes[]",
+            "internalType": "bytes",
             "name": "",
-            "type": "bytes[]"
+            "type": "bytes"
           }
         ],
         "stateMutability": "view",
@@ -147,6 +147,19 @@
         "type": "function"
       },
       {
+        "inputs": [],
+        "name": "isCrosschain",
+        "outputs": [
+          {
+            "internalType": "bool",
+            "name": "",
+            "type": "bool"
+          }
+        ],
+        "stateMutability": "pure",
+        "type": "function"
+      },
+      {
         "inputs": [
           {
             "internalType": "string",
@@ -154,9 +167,9 @@
             "type": "string"
           },
           {
-            "internalType": "address",
-            "name": "user",
-            "type": "address"
+            "internalType": "address[]",
+            "name": "wallets",
+            "type": "address[]"
           },
           {
             "internalType": "bytes32",
@@ -220,21 +233,10 @@
             "internalType": "uint256",
             "name": "roleId",
             "type": "uint256"
-          },
-          {
-            "internalType": "bytes",
-            "name": "entitlementData",
-            "type": "bytes"
           }
         ],
         "name": "removeEntitlement",
-        "outputs": [
-          {
-            "internalType": "bytes32",
-            "name": "entitlementId",
-            "type": "bytes32"
-          }
-        ],
+        "outputs": [],
         "stateMutability": "nonpayable",
         "type": "function"
       },
@@ -252,13 +254,7 @@
           }
         ],
         "name": "setEntitlement",
-        "outputs": [
-          {
-            "internalType": "bytes32",
-            "name": "entitlementId",
-            "type": "bytes32"
-          }
-        ],
+        "outputs": [],
         "stateMutability": "nonpayable",
         "type": "function"
       },
@@ -341,35 +337,23 @@
             "_0": "entitlementData array for the role"
           }
         },
-        "isEntitled(string,address,bytes32)": {
-          "params": {
-            "channelId": "id of the channel to check, if empty string, checks space",
-            "permission": "the permission to check",
-            "user": "address of the user to check"
-          },
+        "isCrosschain()": {
           "returns": {
-            "_0": "whether the user is entitled to the permission"
+            "_0": "whether this entitlement will require crosschain evaluation"
           }
         },
         "proxiableUUID()": {
           "details": "Implementation of the ERC1822 {proxiableUUID} function. This returns the storage slot used by the implementation. It is used to validate the implementation's compatibility when performing an upgrade. IMPORTANT: A proxy pointing at a proxiable contract should not be considered proxiable itself, because this risks bricking a proxy that upgrades to it, by delegating to itself until out of gas. Thus it is critical that this function revert if invoked through a proxy. This is guaranteed by the `notDelegated` modifier."
         },
-        "removeEntitlement(uint256,bytes)": {
+        "removeEntitlement(uint256)": {
           "params": {
-            "entitlementData": "abi encoded array of the data associated with that entitlement",
             "roleId": "id of the role to remove"
-          },
-          "returns": {
-            "entitlementId": "the id that was removed"
           }
         },
         "setEntitlement(uint256,bytes)": {
           "params": {
             "entitlementData": "abi encoded array of data necessary to set the entitlement",
             "roleId": "id of the role to gate"
-          },
-          "returns": {
-            "entitlementId": "the id that was set"
           }
         },
         "supportsInterface(bytes4)": {
@@ -398,8 +382,8 @@
         "getEntitlementDataByRoleId(uint256)": {
           "notice": "fetches the entitlement data for a roleId"
         },
-        "isEntitled(string,address,bytes32)": {
-          "notice": "checks whether a user is has a given permission for a channel or a space"
+        "isCrosschain()": {
+          "notice": "some entitlements require cross chain evaluation and may not be executed directly from other contracts"
         },
         "moduleType()": {
           "notice": "The type of the entitlement module"
@@ -407,7 +391,7 @@
         "name()": {
           "notice": "The name of the entitlement module"
         },
-        "removeEntitlement(uint256,bytes)": {
+        "removeEntitlement(uint256)": {
           "notice": "removes an entitlement"
         },
         "setEntitlement(uint256,bytes)": {
@@ -453,19 +437,27 @@
   },
   "sources": {
     "contracts/src/spaces/entitlements/IEntitlement.sol": {
-      "keccak256": "0x35f1b94c8192c2716c487b49c62c35821dc3b34da9d5deb50e756772407c955f",
+      "keccak256": "0x712add71e128251b8e0b4112ce76cd46f6679715df6c793f687dce612e9d9852",
       "license": "Apache-2.0",
       "urls": [
-        "bzz-raw://ec3a05d15e524da284aa417da3f09b6b34f7732f6ee02d650f26f9c04eb4d336",
-        "dweb:/ipfs/Qme1bgU56x9drrefb6BUkgGQ61ipBK5zoo4ZstRmGXhzkL"
+        "bzz-raw://ff5c19f00858661b2f493902650dddaa29fa0dc2d3ed1ad3b2f1f0d7c6a9127d",
+        "dweb:/ipfs/QmdH8pn1iKkPrPTyZB4eBeiJKJR92L42Zn1xmsWGFJuxZp"
+      ]
+    },
+    "contracts/src/spaces/entitlements/user/IUserEntitlement.sol": {
+      "keccak256": "0x1ea0f455edebe83dc97f71c6086115751cdf4b95d0a262040ffefe4ebe400c77",
+      "license": "Apache-2.0",
+      "urls": [
+        "bzz-raw://001e9dc21e0378b7cba87d999deaf0ddc08e875a12c4479a6321d4103e3961ed",
+        "dweb:/ipfs/QmbcmPzyqn4X7iSfJFqhMBgVbKqtREExnQG2WM3drdNSzY"
       ]
     },
     "contracts/src/spaces/entitlements/user/UserEntitlement.sol": {
-      "keccak256": "0xf06994da3b670832ce7dfa0ffe1d8905606e3789faea1d476a63a39c72c4cd0b",
+      "keccak256": "0x9e9e1aa93e2991737810597fd1a54dca066d8977b57b7ed064829e6b79d37775",
       "license": "Apache-2.0",
       "urls": [
-        "bzz-raw://8d5afa7bddf723735a4e1cad324104c340e84a0f5b4e60c512d0e1c3f0624e87",
-        "dweb:/ipfs/QmXScabWFAgVeV1VTqBLzFoY29G75QAVsqsJ3M5n3x32pV"
+        "bzz-raw://28ea21cc466d422ba7de5d3a1820d65ed9285c62ff679e1bedf6e471ee524545",
+        "dweb:/ipfs/QmehCJPg9cdqAyxQbzUiCbJ8pmUH9QJP2Pxk978NfeBuAp"
       ]
     },
     "contracts/src/spaces/facets/channels/IChannel.sol": {
