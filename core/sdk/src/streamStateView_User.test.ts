@@ -20,20 +20,20 @@ describe('streamStateView_User', () => {
 
         await expect(bob.inviteUser(spaceId, alice.userId)).toResolve()
         const aliceUserStream = await alice.waitForStream(alice.userStreamId!)
-        waitFor(
+        await waitFor(
             () =>
                 aliceUserStream.view.userContent.streamMemberships[spaceId].op ===
                 MembershipOp.SO_INVITE,
         )
         await expect(alice.joinStream(spaceId)).toResolve()
-        waitFor(
+        await waitFor(
             () =>
                 aliceUserStream.view.userContent.streamMemberships[spaceId].op ===
                 MembershipOp.SO_JOIN,
         )
 
         await expect(alice.leaveStream(spaceId)).toResolve()
-        waitFor(
+        await waitFor(
             () =>
                 aliceUserStream.view.userContent.streamMemberships[spaceId].op ===
                 MembershipOp.SO_LEAVE,

@@ -235,7 +235,7 @@ describe('gdmsTests', () => {
         await expect(charliesClient.waitForStream(streamId)).toResolve()
         await expect(alicesClient.removeUser(streamId, charliesClient.userId)).toResolve()
         const stream = await alicesClient.waitForStream(streamId)
-        stream.waitForMembership(MembershipOp.SO_LEAVE, charliesClient.userId)
+        await stream.waitForMembership(MembershipOp.SO_LEAVE, charliesClient.userId)
     })
 
     test('nonMembersCannotRemoveMembers', async () => {

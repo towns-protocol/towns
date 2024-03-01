@@ -3,7 +3,6 @@ go 1.21
 toolchain go1.21.5
 
 use (
-	./common/xchain
 	./core/node
-	./servers/xchain
+	./core/xchain
 )

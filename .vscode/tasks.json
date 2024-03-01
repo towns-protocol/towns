@@ -225,7 +225,7 @@
     {
       "label": "Casablanca-No-Entitlements",
       "type": "shell",
-      "command": "./scripts/wait-for-casablanca.sh && yarn run --top-level csb:start:no-entitlements",
+      "command": "./scripts/wait-for-core.sh && yarn run --top-level csb:start:no-entitlements",
       "isBackground": true,
       "problemMatcher": [],
       "presentation": {
@@ -235,7 +235,7 @@
     {
       "label": "Stop Casablanca",
       "type": "shell",
-      "command": "./casablanca/scripts/stop_node.sh",
+      "command": "./core/scripts/stop_node.sh",
       "isBackground": true,
       "problemMatcher": [],
       "presentation": {
@@ -362,7 +362,7 @@
     {
       "label": "WatchCasablancaSdk",
       "type": "shell",
-      "command": "cd casablanca/sdk && yarn watch",
+      "command": "cd core/sdk && yarn watch",
       "isBackground": true,
       "problemMatcher": [],
       "presentation": {
@@ -372,7 +372,7 @@
     {
       "label": "WatchCasablancaEncryption",
       "type": "shell",
-      "command": "cd casablanca/encryption && yarn watch",
+      "command": "cd core/encryption && yarn watch",
       "isBackground": true,
       "problemMatcher": [],
       "presentation": {
@@ -382,7 +382,7 @@
     {
       "label": "WatchCasablancaDlog",
       "type": "shell",
-      "command": "cd casablanca/dlog && yarn watch",
+      "command": "cd core/dlog && yarn watch",
       "isBackground": true,
       "problemMatcher": [],
       "presentation": {
@@ -402,7 +402,7 @@
     {
       "label": "WatchCasablancaProto",
       "type": "shell",
-      "command": "cd casablanca/proto && yarn watch",
+      "command": "cd core/proto && yarn watch",
       "isBackground": true,
       "problemMatcher": [],
       "presentation": {
@@ -412,7 +412,7 @@
     {
       "label": "WatchCasablancaWeb3",
       "type": "shell",
-      "command": "cd casablanca/web3 && yarn watch",
+      "command": "cd core/web3 && yarn watch",
       "isBackground": true,
       "problemMatcher": [],
       "presentation": {
@@ -422,7 +422,7 @@
     {
       "label": "WatchCasablancaProto_Go",
       "type": "shell",
-      "command": "cd casablanca/proto && yarn watch:go",
+      "command": "cd core/proto && yarn watch:go",
       "isBackground": true,
       "problemMatcher": [],
       "presentation": {
@@ -452,7 +452,7 @@
     {
       "label": "Casablanca DebugApp",
       "type": "shell",
-      "command": "./scripts/wait-for-casablanca.sh && cd casablanca/debug-app && yarn dev",
+      "command": "./scripts/wait-for-core.sh && cd core/debug-app && yarn dev",
       "isBackground": true,
       "problemMatcher": [],
       "presentation": {
@@ -554,6 +554,33 @@
         "focus": true,
         "panel": "shared",
       }
+    },
+    {
+      "label": "Restart Local Dev",
+      "dependsOn": [
+        "KillAllLocalDev",
+        "~Start Local Dev~",
+      ],
+      // Mark as the default build task so cmd/ctrl+shift+b will create them
+      "group": {
+        "kind": "build",
+        "isDefault": true
+      },
+      "dependsOrder": "sequence"
+    },
+    {
+      "label": "Kill All, Clean and Start Local Dev",
+      "dependsOn": [
+        "KillAllLocalDev",
+        "YarnClean & Cleanup",
+        "~Start Local Dev~",
+      ],
+      // Mark as the default build task so cmd/ctrl+shift+b will create them
+      "group": {
+        "kind": "build",
+        "isDefault": true
+      },
+      "dependsOrder": "sequence"
     },
   ]
 }

@@ -121,7 +121,7 @@ jobs:
               with:
                   version: latest
                   working-directory: core/node
-                  skip-cache: true
+                  skip-pkg-cache: true
                   args: --timeout=10m
 
             - name: Linting River Node W/ Custom Rules
@@ -708,7 +708,7 @@ jobs:
                   for i in {5170..5179}; do yarn wait-on https://localhost:$i/debug/multi --timeout=400000 --i=5000 --verbose; done
 
             - name: Build & Test (with entitlements)
-              run: SERVER_URL=https://localhost:5170,https://localhost:5171,https://localhost:5172,https://localhost:5173,https://localhost:5174,https://localhost:5175,https://localhost:5176,https://localhost:5177,https://localhost:5178,https://localhost:5179 yarn csb:turbo-no-sdk
+              run: CASABLANCA_SERVER_URL=https://localhost:5170,https://localhost:5171,https://localhost:5172,https://localhost:5173,https://localhost:5174,https://localhost:5175,https://localhost:5176,https://localhost:5177,https://localhost:5178,https://localhost:5179 yarn csb:turbo-no-sdk
 
             - name: Run River Tests (with entitlements)
               run: yarn workspace @river/sdk run test:ci:multi:ent
@@ -881,15 +881,15 @@ jobs:
 
             - name: Run xchain node tests
               run: go test --race ./...
-              working-directory: servers/xchain
+              working-directory: core/xchain
 
             - name: Build node
               run: go build --race ./...
-              working-directory: servers/xchain
+              working-directory: core/xchain
 
             - name: Run xchain common go tests
               run: go test --race ./...
-              working-directory: common/xchain
+              working-directory: core/xchain
 
               # If CI failed, we send a slack notification
             - name: Slack notification

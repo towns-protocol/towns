@@ -64,11 +64,11 @@ servers/workers/siwe-worker/worker/bundle.js
 **/coverage
 **/.turbo
 servers/workers/*/dist/*
-servers/xchain/bin/*
-servers/xchain/instance_*/*
+core/xchain/bin/*
+core/xchain/instance_*/*
 
 .envrc
-servers/xchain/run_files/*
+core/xchain/run_files/*
 bin/gen-bindings-remove-struct
 core/node/river_node
 core/node/run_files/*
