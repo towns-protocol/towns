@@ -63,7 +63,7 @@ func RunServer(ctx context.Context, workerID int, shutdown <-chan struct{}) {
 
 	defer unregisterNode(ctx, workerID, fromAddress, privateKey)
 
-	events := make(chan *e.DevIEntitlementCheckerEntitlementCheckRequested)
+	events := make(chan *e.IEntitlementCheckerEntitlementCheckRequested)
 
 	// Event loop
 	for !isClosed(shutdown) {
@@ -106,7 +106,7 @@ func registerNode(ctx context.Context, workerID int, fromAddress common.Address,
 	auth.GasLimit = uint64(300000)
 	auth.GasPrice = gasPrice
 
-	checker, err := e.NewDevIEntitlementChecker(*xc.GetCheckerContractAddress(), client)
+	checker, err := e.NewIEntitlementChecker(*xc.GetCheckerContractAddress(), client)
 	if err != nil {
 		log.Error("Failed to parse contract ABI", "err", err)
 		return nil, err
@@ -163,7 +163,7 @@ func unregisterNode(ctx context.Context, workerID int, fromAddress common.Addres
 	auth.GasLimit = uint64(300000)
 	auth.GasPrice = gasPrice
 
-	checker, err := e.NewDevIEntitlementChecker(*xc.GetCheckerContractAddress(), client)
+	checker, err := e.NewIEntitlementChecker(*xc.GetCheckerContractAddress(), client)
 	if err != nil {
 		log.Error("Failed to parse contract ABI", "err", err)
 		return
@@ -179,7 +179,7 @@ func unregisterNode(ctx context.Context, workerID int, fromAddress common.Addres
 	log.Info("Unregistered node", "block_num", blockNumber)
 }
 
-func eventLoop(ctx context.Context, workerID int, blockNumber *uint64, events chan *e.DevIEntitlementCheckerEntitlementCheckRequested, shutdown <-chan struct{}, fromAddress common.Address, privateKey *ecdsa.PrivateKey) bool {
+func eventLoop(ctx context.Context, workerID int, blockNumber *uint64, events chan *e.IEntitlementCheckerEntitlementCheckRequested, shutdown <-chan struct{}, fromAddress common.Address, privateKey *ecdsa.PrivateKey) bool {
 	log := dlog.FromCtx(ctx)
 	chainId := big.NewInt(int64(config.GetConfig().EntitlementContract.ChainId))
 
@@ -212,7 +212,7 @@ func eventLoop(ctx context.Context, workerID int, blockNumber *uint64, events ch
 	auth.GasLimit = uint64(300000)
 	auth.GasPrice = gasPrice
 
-	nodeCheckerFilterer, err := e.NewDevIEntitlementCheckerFilterer(*xc.GetCheckerContractAddress(), client)
+	nodeCheckerFilterer, err := e.NewIEntitlementChecker(*xc.GetCheckerContractAddress(), client)
 	if err != nil {
 		log.Error("Failed to parse contract ABI", "err", err)
 	}
@@ -256,7 +256,7 @@ func eventLoop(ctx context.Context, workerID int, blockNumber *uint64, events ch
 
 }
 
-func postCheckResult(ctx context.Context, workerID int, event *e.DevIEntitlementCheckerEntitlementCheckRequested, client *ethclient.Client, fromAddress common.Address, auth *bind.TransactOpts) {
+func postCheckResult(ctx context.Context, workerID int, event *e.IEntitlementCheckerEntitlementCheckRequested, client *ethclient.Client, fromAddress common.Address, auth *bind.TransactOpts) {
 	log := dlog.FromCtx(ctx)
 	log.Info("EntitlementCheckRequested being handeled")
 
@@ -268,7 +268,7 @@ func postCheckResult(ctx context.Context, workerID int, event *e.DevIEntitlement
 
 	gatedContractAdress := event.ContractAddress
 
-	gater, err := e.NewDevIEntitlementGated(gatedContractAdress, client)
+	gater, err := e.NewIEntitlementGated(gatedContractAdress, client)
 	if err != nil {
 		log.Error("Failed to NewEntitlementGated watch", "err", err)
 		return
