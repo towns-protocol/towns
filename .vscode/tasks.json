@@ -340,7 +340,7 @@
     {
       "label": "BuildContractTypes",
       "type": "shell",
-      "command": "./scripts/build-town-types.sh localhost",
+      "command": "./scripts/build-contract-types.sh localhost",
       "isBackground": true,
       "problemMatcher": [],
       "presentation": {
