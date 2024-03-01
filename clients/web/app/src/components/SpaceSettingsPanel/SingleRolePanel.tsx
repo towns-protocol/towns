@@ -42,6 +42,7 @@ import { RoleRow } from '@components/SpaceSettingsPanel/RoleSettingsPermissions'
 import { ModalContainer } from '@components/Modals/ModalContainer'
 import { FullPanelOverlay } from '@components/Web3/WalletLinkingPanel'
 import { UserOpTxModal } from '@components/Web3/UserOpTxModal/UserOpTxModal'
+import { createPrivyNotAuthenticatedNotification } from '@components/Notifications/utils'
 import {
     convertToNumber,
     mapTokenDataStructToTokenPillSelectorSelection,
@@ -282,7 +283,7 @@ function DeleteRoleModal({
         }
         const signer = await getSigner()
         if (!signer) {
-            console.error('No signer for delete role.')
+            createPrivyNotAuthenticatedNotification()
             return
         }
         hideDeleteModal()
@@ -356,7 +357,7 @@ function SubmitButton({
         const signer = await getSigner()
 
         if (!signer) {
-            console.error('No signer for create or edit role.')
+            createPrivyNotAuthenticatedNotification()
             return
         }
         if (!spaceId) {

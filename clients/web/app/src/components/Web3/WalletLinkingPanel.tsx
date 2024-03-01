@@ -21,6 +21,7 @@ import {
     isAbstractAccountAddress,
     useAbstractAccountAddress,
 } from 'hooks/useAbstractAccountAddress'
+import { createPrivyNotAuthenticatedNotification } from '@components/Notifications/utils'
 import { formatEthDisplay } from './utils'
 
 export function WalletLinkingPanel() {
@@ -56,6 +57,7 @@ export function WalletLinkingPanel() {
     async function onUnlinkClick(addressToUnlink: Address) {
         const signer = await getSigner()
         if (!signer || !connectedWallets) {
+            createPrivyNotAuthenticatedNotification()
             return
         }
         unlinkWalletTransaction(signer, addressToUnlink)

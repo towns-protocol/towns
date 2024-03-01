@@ -16,6 +16,7 @@ import { useUploadImage } from 'api/lib/uploadImage'
 import { useSetSpaceTopic } from 'hooks/useSpaceTopic'
 import { FailedUploadAfterSpaceCreation } from '@components/Notifications/FailedUploadAfterSpaceCreation'
 import { UserOpTxModal } from '@components/Web3/UserOpTxModal/UserOpTxModal'
+import { createPrivyNotAuthenticatedNotification } from '@components/Notifications/utils'
 import { BottomBar } from '../BottomBar'
 import { PanelType, TransactionDetails } from './types'
 import { CreateSpaceFormV2SchemaType } from './CreateSpaceFormV2.schema'
@@ -110,8 +111,8 @@ export function CreateTownSubmit({
                 }
                 const signer = await getSigner()
                 if (!signer) {
-                    console.error('Cannot create space. No signer.')
-                    return undefined
+                    createPrivyNotAuthenticatedNotification()
+                    return
                 }
 
                 const requirements: MembershipStruct = {

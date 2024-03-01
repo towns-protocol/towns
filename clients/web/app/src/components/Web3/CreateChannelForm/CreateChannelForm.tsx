@@ -25,6 +25,7 @@ import { env } from 'utils'
 import { useContractRoles } from 'hooks/useContractRoles'
 import { ModalContainer } from '@components/Modals/ModalContainer'
 import { UserOpTxModal } from '@components/Web3/UserOpTxModal/UserOpTxModal'
+import { createPrivyNotAuthenticatedNotification } from '@components/Notifications/utils'
 import { mapToErrorMessage } from '../utils'
 
 type Props = {
@@ -167,7 +168,8 @@ export const CreateChannelForm = (props: Props) => {
                     roleIds: roleIds.map((roleId) => Number(roleId)),
                 }
                 if (!signer) {
-                    throw new SignerUndefinedError()
+                    createPrivyNotAuthenticatedNotification()
+                    return
                 }
                 const txResult = await createChannelTransaction(channelInfo, signer)
                 console.log('[CreateChannelForm]', 'createChannelTransaction result', txResult)

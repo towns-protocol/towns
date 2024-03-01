@@ -6,6 +6,7 @@ import { ethers, providers } from 'ethers'
 import { mintMockNFT, useConnectivity, useWeb3Context } from 'use-zion-client'
 import { debug } from 'debug'
 import { isAddress } from 'ethers/lib/utils'
+import { usePrivy } from '@privy-io/react-auth'
 import { Box, Button, Divider, Icon, Stack, Text, TextField } from '@ui'
 import { ModalContainer } from '@components/Modals/ModalContainer'
 import { shortAddress } from 'ui/utils/utils'
@@ -161,6 +162,7 @@ const DebugModal = ({
     const { chain: walletChain } = useNetwork()
     const { logout: libLogout } = useConnectivity()
     const { logout: fullLogout, loggedInWalletAddress } = useAuth()
+    const { logout: privyLogout } = usePrivy()
     return (
         <ModalContainer onHide={onHide}>
             <Stack gap="lg">
@@ -238,6 +240,16 @@ const DebugModal = ({
                                     }}
                                 >
                                     Logout from River
+                                </Button>
+
+                                <Button
+                                    size="button_xs"
+                                    onClick={async () => {
+                                        await privyLogout()
+                                        onHide()
+                                    }}
+                                >
+                                    Logout from Privy
                                 </Button>
 
                                 <Button

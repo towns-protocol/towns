@@ -21,6 +21,7 @@ import { TransactionButton } from '@components/TransactionButton'
 import { useAllRoleDetails } from 'hooks/useAllRoleDetails'
 import { UserOpTxModal } from '@components/Web3/UserOpTxModal/UserOpTxModal'
 import { mapToErrorMessage } from '@components/Web3/utils'
+import { createPrivyNotAuthenticatedNotification } from '@components/Notifications/utils'
 import { FormState, FormStateKeys, emptyDefaultValues, schema } from './formConfig'
 import { ModalContainer } from '../Modals/ModalContainer'
 import { RoleCheckboxProps, RolesSection, getCheckedValuesForRoleIdsField } from './RolesSection'
@@ -100,7 +101,8 @@ export function ChannelSettingsForm({
         async (changes: FormState) => {
             const signer = await getSigner()
             if (!signer) {
-                throw new SignerUndefinedError()
+                createPrivyNotAuthenticatedNotification()
+                return
             }
             if (transactionUIState === TransactionUIState.None) {
                 const name = changes[FormStateKeys.name]

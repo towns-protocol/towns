@@ -16,6 +16,7 @@ import { TransactionUIState, toTransactionUIStates } from 'hooks/TransactionUISt
 import { isForbiddenError, isRejectionError } from 'ui/utils/utils'
 import { ErrorMessageText } from 'ui/components/ErrorMessage/ErrorMessage'
 import { UserOpTxModal } from '@components/Web3/UserOpTxModal/UserOpTxModal'
+import { createPrivyNotAuthenticatedNotification } from '@components/Notifications/utils'
 
 type Props = {
     onHide: () => void
@@ -53,7 +54,8 @@ export const SpaceNameModal = (props: Props) => {
         async (changes: FormState) => {
             const signer = await getSigner()
             if (!signer) {
-                throw new SignerUndefinedError()
+                createPrivyNotAuthenticatedNotification()
+                return
             }
             if (!data?.networkId) {
                 return

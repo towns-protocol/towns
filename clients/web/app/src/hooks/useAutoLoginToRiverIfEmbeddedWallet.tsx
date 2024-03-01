@@ -63,6 +63,7 @@ export function useAutoLoginToRiverIfEmbeddedWallet({
             },
             loggingInToRiver: {
                 on: {
+                    LOGGED_IN_TO_RIVER: 'loggedInBoth',
                     NO_SIGNER: 'noSigner',
                 },
                 effect({ setContext }) {
@@ -87,6 +88,7 @@ export function useAutoLoginToRiverIfEmbeddedWallet({
                             return
                         }
                         riverLogin(signer)
+                        send('LOGGED_IN_TO_RIVER')
                     }
                     _login()
                     return () => {

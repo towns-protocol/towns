@@ -15,6 +15,7 @@ import { isTouch } from 'hooks/useDevice'
 import { ButtonSpinner } from 'ui/components/Spinner/ButtonSpinner'
 import { useJoinTown } from 'hooks/useJoinTown'
 import { useSpaceIdFromPathname } from 'hooks/useSpaceInfoFromPathname'
+import { createPrivyNotAuthenticatedNotification } from '@components/Notifications/utils'
 import { FullPanelOverlay, LinkedWallet, useConnectThenLink } from '../WalletLinkingPanel'
 import { mapToErrorMessage } from '../utils'
 import { currentWalletLinkingStore, useTokenBalances } from './tokenStatus'
@@ -45,6 +46,7 @@ export function TokenVerification({ onHide, spaceId }: { spaceId: string; onHide
     async function onUnlinkClick(addressToUnlink: Address) {
         const signer = await getSigner()
         if (!signer || !connectedWallets) {
+            createPrivyNotAuthenticatedNotification()
             return
         }
         unlinkWalletTransaction(signer, addressToUnlink)

@@ -21,22 +21,26 @@ export function EmbeddedSignerContextProvider({
 
 function useGetEmbeddedSignerContext(chainId: number) {
     const embeddedWallet = useEmbeddedWallet()
-    const { ready: privyReady, login } = usePrivy()
-    const { setActiveWallet, ready } = usePrivyWagmi()
+    const { ready: privyReady, authenticated } = usePrivy()
+    const { setActiveWallet, ready: wagmiReady } = usePrivyWagmi()
 
     // make sure the embedded wallet is always active + on the right network
     // more of a sanity check than anything
     useEffect(() => {
-        if (!embeddedWallet || !ready) {
+        if (!embeddedWallet || !wagmiReady) {
             return
         }
         setActiveWallet(embeddedWallet)
-    }, [chainId, embeddedWallet, ready, setActiveWallet])
+    }, [chainId, embeddedWallet, wagmiReady, setActiveWallet])
 
     // always get the embedded signer on the correct chain
     const getSigner = useCallback(async () => {
         if (!privyReady) {
             console.warn('[useGetEmbeddedSignerContext] Privy not ready')
+            return
+        }
+        if (!authenticated) {
+            console.warn('[useGetEmbeddedSignerContext] not authenticated')
             return
         }
         if (!embeddedWallet) {
@@ -46,7 +50,7 @@ function useGetEmbeddedSignerContext(chainId: number) {
         await embeddedWallet?.switchChain(chainId)
         const provider = await embeddedWallet.getEthersProvider()
         return provider.getSigner()
-    }, [chainId, embeddedWallet, login, privyReady])
+    }, [authenticated, chainId, embeddedWallet, privyReady])
 
     return getSigner
 }

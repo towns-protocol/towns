@@ -2,6 +2,7 @@ import { useCallback, useState } from 'react'
 import { useZionClient } from 'use-zion-client'
 import { useGetEmbeddedSigner } from '@towns/privy'
 import { isLimitReachedError, isMaybeFundsError, mapToErrorMessage } from '@components/Web3/utils'
+import { createPrivyNotAuthenticatedNotification } from '@components/Notifications/utils'
 
 export const useJoinTown = (spaceId: string | undefined, onSuccessfulJoin?: () => void) => {
     const { client } = useZionClient()
@@ -28,6 +29,10 @@ export const useJoinTown = (spaceId: string | undefined, onSuccessfulJoin?: () =
     const joinSpace = useCallback(async () => {
         clearErrors()
         const signer = await getSigner()
+        if (!signer) {
+            createPrivyNotAuthenticatedNotification()
+            return
+        }
         if (client && spaceId && signer) {
             const roomIdentifier = spaceId
             try {
