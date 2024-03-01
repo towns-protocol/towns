@@ -5,6 +5,7 @@ import { StreamRpcClientType } from './makeStreamRpcClient'
 import { unpackMiniblock, unpackStream } from './sign'
 import { StreamStateView } from './streamStateView'
 import { ParsedMiniblock, StreamTimelineEvent } from './types'
+import { streamIdAsString, streamIdAsBytes } from './id'
 
 const SCROLLBACK_MAX_COUNT = 20
 export class UnauthenticatedClient {
@@ -33,10 +34,10 @@ export class UnauthenticatedClient {
         this.logCall('new UnauthenticatedClient')
     }
 
-    async getStream(streamId: string): Promise<StreamStateView> {
+    async getStream(streamId: string | Uint8Array): Promise<StreamStateView> {
         try {
             this.logCall('getStream', streamId)
-            const response = await this.rpcClient.getStream({ streamId })
+            const response = await this.rpcClient.getStream({ streamId: streamIdAsBytes(streamId) })
             this.logCall('getStream', response.stream)
             check(
                 isDefined(response.stream) && hasElements(response.stream.miniblocks),
@@ -45,7 +46,7 @@ export class UnauthenticatedClient {
             const { streamAndCookie, snapshot, prevSnapshotMiniblockNum } = await unpackStream(
                 response.stream,
             )
-            const streamView = new StreamStateView(this.userId, streamId)
+            const streamView = new StreamStateView(this.userId, streamIdAsString(streamId))
 
             streamView.initialize(
                 streamAndCookie.nextSyncCookie,
@@ -140,7 +141,7 @@ export class UnauthenticatedClient {
     }
 
     private async getMiniblocks(
-        streamId: string,
+        streamId: string | Uint8Array,
         fromInclusive: bigint,
         toExclusive: bigint,
     ): Promise<{ miniblocks: ParsedMiniblock[]; terminus: boolean }> {
@@ -152,7 +153,7 @@ export class UnauthenticatedClient {
         }
 
         const response = await this.rpcClient.getMiniblocks({
-            streamId,
+            streamId: streamIdAsBytes(streamId),
             fromInclusive,
             toExclusive,
         })

@@ -9,7 +9,7 @@ import {
     publicKeyToAddress,
     publicKeyToUint8Array,
 } from '@river/encryption'
-import { genIdBlob, userIdFromAddress } from './id'
+import { genIdBlob, streamIdAsBytes, streamIdAsString, userIdFromAddress } from './id'
 import { ParsedEvent, ParsedMiniblock, ParsedStreamAndCookie, ParsedStreamResponse } from './types'
 import { ecrecover, fromRpcSig, hashPersonalMessage } from '@ethereumjs/util'
 
@@ -144,14 +144,16 @@ export const unpackStream = async (stream?: StreamAndCookie): Promise<ParsedStre
     const streamAndCookie = await unpackStreamAndCookie(stream)
     assert(
         stream.miniblocks.length > 0,
-        `bad stream: no blocks ${streamAndCookie.nextSyncCookie.streamId}`,
+        `bad stream: no blocks ${streamIdAsString(streamAndCookie.nextSyncCookie.streamId)}`,
     )
 
     const snapshot = streamAndCookie.miniblocks[0].header.snapshot
     const prevSnapshotMiniblockNum = streamAndCookie.miniblocks[0].header.prevSnapshotMiniblockNum
     assert(
         snapshot !== undefined,
-        `bad block: snapshot is undefined ${streamAndCookie.nextSyncCookie.streamId}`,
+        `bad block: snapshot is undefined ${streamIdAsString(
+            streamAndCookie.nextSyncCookie.streamId,
+        )}`,
     )
     const eventIds = [
         ...streamAndCookie.miniblocks.flatMap(
@@ -265,9 +267,9 @@ export const unpackStreamEnvelopes = async (stream: StreamAndCookie): Promise<Pa
     return ret
 }
 
-export const makeEventRef = (streamId: string, event: Envelope): EventRef => {
+export const makeEventRef = (streamId: string | Uint8Array, event: Envelope): EventRef => {
     return new EventRef({
-        streamId,
+        streamId: streamIdAsBytes(streamId),
         hash: event.hash,
         signature: event.signature,
     })

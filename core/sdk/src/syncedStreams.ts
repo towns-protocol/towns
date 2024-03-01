@@ -8,6 +8,7 @@ import TypedEmitter from 'typed-emitter'
 import { isDefined } from './check'
 import { nanoid } from 'nanoid'
 import { isMobileSafari } from './utils'
+import { streamIdAsBytes, streamIdAsString } from './id'
 
 export enum SyncState {
     Canceling = 'Canceling', // syncLoop, maybe syncId if was syncing, not is was starting or retrying
@@ -123,20 +124,21 @@ export class SyncedStreams {
         this.logError = dlogError('csb:cl:sync:stream').extend(shortId)
     }
 
-    public has(streamId: string): boolean {
-        return this.streams.get(streamId) !== undefined
+    public has(streamId: string | Uint8Array): boolean {
+        return this.streams.get(streamIdAsString(streamId)) !== undefined
     }
 
-    public get(streamId: string): SyncedStream | undefined {
-        return this.streams.get(streamId)
+    public get(streamId: string | Uint8Array): SyncedStream | undefined {
+        return this.streams.get(streamIdAsString(streamId))
     }
 
-    public set(streamId: string, stream: SyncedStream): void {
+    public set(streamId: string | Uint8Array, stream: SyncedStream): void {
         this.log('stream set', streamId)
-        this.streams.set(streamId, stream)
+        this.streams.set(streamIdAsString(streamId), stream)
     }
 
-    public delete(streamId: string) {
+    public delete(inStreamId: string | Uint8Array): void {
+        const streamId = streamIdAsString(inStreamId)
         this.streams.get(streamId)?.stop()
         this.streams.delete(streamId)
     }
@@ -282,7 +284,8 @@ export class SyncedStreams {
     }
 
     // remove stream from the sync subsbscription
-    public async removeStreamFromSync(streamId: string): Promise<void> {
+    public async removeStreamFromSync(inStreamId: string | Uint8Array): Promise<void> {
+        const streamId = streamIdAsString(inStreamId)
         const stream = this.streams.get(streamId)
         if (!stream) {
             this.log('removeStreamFromSync streamId not found', streamId)
@@ -293,7 +296,7 @@ export class SyncedStreams {
             try {
                 await this.rpcClient.removeStreamFromSync({
                     syncId: this.syncId,
-                    streamId: streamId,
+                    streamId: streamIdAsBytes(streamId),
                 })
             } catch (err) {
                 // Trigger restart of sync loop
@@ -302,7 +305,7 @@ export class SyncedStreams {
             stream.stop()
             this.streams.delete(streamId)
             this.log('removed stream from sync', streamId)
-            this.clientEmitter.emit('streamRemovedFromSync', streamId)
+            this.clientEmitter.emit('streamRemovedFromSync', streamIdAsString(inStreamId))
         } else {
             this.log(
                 'removeStreamFromSync: not in "syncing" state; let main sync loop handle this with its streams map',
@@ -588,7 +591,8 @@ export class SyncedStreams {
                         streamAndCookie.startSyncCookie,
                     )
                     */
-                    const streamId = syncStream.nextSyncCookie?.streamId ?? ''
+                    const streamIdBytes = syncStream.nextSyncCookie?.streamId ?? Uint8Array.from([])
+                    const streamId = streamIdAsString(streamIdBytes)
                     const stream = this.streams.get(streamId)
                     if (stream === undefined) {
                         this.log('sync got stream', streamId, 'NOT FOUND')

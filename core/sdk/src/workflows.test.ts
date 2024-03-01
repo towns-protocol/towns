@@ -10,6 +10,7 @@ import {
     makeUniqueChannelStreamId,
     makeUniqueSpaceStreamId,
     makeUserStreamId,
+    streamIdToBytes,
     userIdFromAddress,
 } from './id'
 import {
@@ -37,7 +38,8 @@ describe('workflows', () => {
 
         const bob = makeTestRpcClient()
         const bobsUserId = userIdFromAddress(bobsContext.creatorAddress)
-        const bobsUserStreamId = makeUserStreamId(bobsUserId)
+        const bobsUserStreamIdStr = makeUserStreamId(bobsUserId)
+        const bobsUserStreamId = streamIdToBytes(bobsUserStreamIdStr)
         await bob.createStream({
             events: [
                 await makeEvent(
@@ -51,7 +53,8 @@ describe('workflows', () => {
         })
 
         log('Bob created user, about to create space')
-        const spacedStreamId = makeUniqueSpaceStreamId()
+        const spacedStreamIdStr = makeUniqueSpaceStreamId()
+        const spacedStreamId = streamIdToBytes(spacedStreamIdStr)
         const spaceInceptionEvent = await makeEvent(
             bobsContext,
             make_SpacePayload_Inception({
@@ -85,7 +88,8 @@ describe('workflows', () => {
         expect(joinPayload?.streamId).toEqual(spacedStreamId)
 
         log('Bob created space, about to create channel')
-        const channelId = makeUniqueChannelStreamId()
+        const channelIdStr = makeUniqueChannelStreamId()
+        const channelId = streamIdToBytes(channelIdStr)
         const channelProperties = 'Bobs channel properties'
 
         const channelInceptionEvent = await makeEvent(

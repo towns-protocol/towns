@@ -12,7 +12,7 @@ import {
     publicKeyToAddress,
 } from '@river/encryption'
 import { PlainMessage } from '@bufbuild/protobuf'
-import { makeUserStreamId } from './id'
+import { makeUserStreamId, streamIdToBytes } from './id'
 import { getPublicKey } from 'ethereum-cryptography/secp256k1'
 import { ethers } from 'ethers'
 import { EncryptedData, StreamEvent } from '@river/proto'
@@ -169,12 +169,13 @@ describe('sign', () => {
     test.each(testParams)(
         'validate-prev-events-%s',
         async (method: string, c: () => Promise<SignerContext>) => {
+            const userStreamId = makeUserStreamId('0xaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa')
             const context = await c()
             expect(
                 await makeEvent(
                     context,
                     make_UserPayload_Inception({
-                        streamId: makeUserStreamId('0xaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa'),
+                        streamId: streamIdToBytes(userStreamId),
                     }),
                 ),
             ).toBeDefined()
