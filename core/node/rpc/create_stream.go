@@ -4,6 +4,7 @@ import (
 	"context"
 	"sync"
 
+	"github.com/ethereum/go-ethereum/common"
 	. "github.com/river-build/river/core/node/base"
 	"github.com/river-build/river/core/node/dlog"
 	. "github.com/river-build/river/core/node/events"
@@ -140,7 +141,7 @@ func (s *Service) createReplicatedStream(
 		return nil, err
 	}
 
-	nodes := NewStreamNodes(nodesList, s.wallet.AddressStr)
+	nodes := NewStreamNodes(nodesList, s.wallet.Address)
 	sender := newQuorumPool(nodes.NumRemotes())
 
 	var localSyncCookie *SyncCookie
@@ -150,7 +151,7 @@ func (s *Service) createReplicatedStream(
 			if err != nil {
 				return err
 			}
-			localSyncCookie = sv.SyncCookie(s.wallet.AddressStr)
+			localSyncCookie = sv.SyncCookie(s.wallet.Address)
 			return nil
 		})
 	}
@@ -161,7 +162,7 @@ func (s *Service) createReplicatedStream(
 		for _, n := range nodes.GetRemotes() {
 			sender.GoRemote(
 				n,
-				func(node string) error {
+				func(node common.Address) error {
 					stub, err := s.nodeRegistry.GetNodeToNodeClientForAddress(node)
 					if err != nil {
 						return err

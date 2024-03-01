@@ -47,7 +47,7 @@ func (s *Service) getStream(
 		return connect.NewResponse(&GetStreamResponse{
 			Stream: &StreamAndCookie{
 				Events:         streamView.MinipoolEnvelopes(),
-				NextSyncCookie: streamView.SyncCookie(s.wallet.AddressStr),
+				NextSyncCookie: streamView.SyncCookie(s.wallet.Address),
 				Miniblocks:     streamView.MiniblocksFromLastSnapshot(),
 			},
 		}), nil

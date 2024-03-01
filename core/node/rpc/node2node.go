@@ -32,7 +32,7 @@ func (s *Service) allocateStream(ctx context.Context, req *AllocateStreamRequest
 		return nil, err
 	}
 	return &AllocateStreamResponse{
-		SyncCookie: view.SyncCookie(s.wallet.AddressStr),
+		SyncCookie: view.SyncCookie(s.wallet.Address),
 	}, nil
 }
 

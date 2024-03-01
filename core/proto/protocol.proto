@@ -529,7 +529,7 @@ message WrappedEncryptedData {
 }
 
 message SyncCookie  {
-    string node_address = 1;
+    bytes node_address = 1;
     string stream_id = 2;
     int64 minipool_gen = 3;
     int64 minipool_slot = 4;

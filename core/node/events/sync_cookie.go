@@ -11,7 +11,7 @@ func SyncCookieEqual(a, b *SyncCookie) bool {
 	if a == nil || b == nil {
 		return a == b
 	}
-	return a.NodeAddress == b.NodeAddress &&
+	return bytes.Equal(a.NodeAddress[:], b.NodeAddress[:]) &&
 		a.StreamId == b.StreamId &&
 		a.MinipoolGen == b.MinipoolGen &&
 		a.MinipoolSlot == b.MinipoolSlot &&
@@ -33,7 +33,7 @@ func SyncCookieCopy(a *SyncCookie) *SyncCookie {
 
 func SyncCookieValidate(cookie *SyncCookie) error {
 	if cookie == nil ||
-		cookie.NodeAddress == "" ||
+		len(cookie.NodeAddress) == 0 ||
 		cookie.StreamId == "" ||
 		cookie.MinipoolGen <= 0 ||
 		cookie.MinipoolSlot < 0 ||

@@ -2,18 +2,20 @@ package nodes
 
 import (
 	"context"
+
+	"github.com/ethereum/go-ethereum/common"
 )
 
 // Temp implementation that hashed the streamId and returns the node that is responsible for it.
 type fakeStreamRegistryImpl struct {
-	localNodeAddress string
+	localNodeAddress common.Address
 	nodeRegistry     NodeRegistry
 	replFactor       int
 }
 
 var _ StreamRegistry = (*fakeStreamRegistryImpl)(nil)
 
-func NewFakeStreamRegistry(localNodeAddress string, nodeRegistry NodeRegistry, replFactor int) *fakeStreamRegistryImpl {
+func NewFakeStreamRegistry(localNodeAddress common.Address, nodeRegistry NodeRegistry, replFactor int) *fakeStreamRegistryImpl {
 	return &fakeStreamRegistryImpl{
 		localNodeAddress: localNodeAddress,
 		nodeRegistry:     nodeRegistry,
@@ -31,6 +33,6 @@ func (sr *fakeStreamRegistryImpl) AllocateStream(
 	streamId string,
 	genesisMiniblockHash []byte,
 	genesisMiniblock []byte,
-) ([]string, error) {
+) ([]common.Address, error) {
 	return chooseStreamNodes(ctx, streamId, sr.nodeRegistry, sr.replFactor)
 }

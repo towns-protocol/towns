@@ -3,6 +3,7 @@ package rpc
 import (
 	"context"
 
+	"github.com/ethereum/go-ethereum/common"
 	. "github.com/river-build/river/core/node/events"
 	. "github.com/river-build/river/core/node/nodes"
 	. "github.com/river-build/river/core/node/protocol"
@@ -36,7 +37,7 @@ func (r *replicatedStream) AddEvent(ctx context.Context, event *ParsedEvent) err
 		for _, n := range r.nodes.GetRemotes() {
 			sender.GoRemote(
 				n,
-				func(node string) error {
+				func(node common.Address) error {
 					stub, err := r.service.nodeRegistry.GetNodeToNodeClientForAddress(node)
 					if err != nil {
 						return err

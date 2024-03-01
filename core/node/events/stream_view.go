@@ -35,7 +35,7 @@ type StreamView interface {
 	LastEvent() *ParsedEvent
 	MinipoolEnvelopes() []*Envelope
 	MiniblocksFromLastSnapshot() []*Miniblock
-	SyncCookie(localNodeAddress string) *SyncCookie
+	SyncCookie(localNodeAddress common.Address) *SyncCookie
 	LastBlock() *miniblockInfo
 	ValidateNextEvent(ctx context.Context, cfg *config.RecencyConstraintsConfig, parsedEvent *ParsedEvent, currentTime time.Time) error
 	GetStats() StreamViewStats
@@ -452,9 +452,9 @@ func (r *streamViewImpl) MiniblocksFromLastSnapshot() []*Miniblock {
 	return miniblocks
 }
 
-func (r *streamViewImpl) SyncCookie(localNodeAddress string) *SyncCookie {
+func (r *streamViewImpl) SyncCookie(localNodeAddress common.Address) *SyncCookie {
 	return &SyncCookie{
-		NodeAddress:       localNodeAddress,
+		NodeAddress:       localNodeAddress.Bytes(),
 		StreamId:          r.streamId,
 		MinipoolGen:       r.minipool.generation,
 		MinipoolSlot:      int64(r.minipool.events.Len()),

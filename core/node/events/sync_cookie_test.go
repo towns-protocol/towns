@@ -1,17 +1,22 @@
 package events
 
 import (
+	"context"
 	"testing"
 
+	"github.com/river-build/river/core/node/crypto"
 	. "github.com/river-build/river/core/node/protocol"
 
 	"github.com/stretchr/testify/require"
 )
 
 func TestEqualAndCopy(t *testing.T) {
+	ctx := context.Background()
+	nodeWallet1, _ := crypto.NewWallet(ctx)
+	nodeWallet2, _ := crypto.NewWallet(ctx)
 	require.True(t, SyncCookieEqual(nil, nil))
 	a := &SyncCookie{
-		NodeAddress:       "nodeAddress$1",
+		NodeAddress:       nodeWallet1.Address[:],
 		StreamId:          "streamid$1",
 		MinipoolGen:       5,
 		MinipoolSlot:      10,
@@ -31,7 +36,7 @@ func TestEqualAndCopy(t *testing.T) {
 	b.PrevMiniblockHash = []byte{0, 1, 2, 5}
 	require.False(t, SyncCookieEqual(a, b))
 	b = SyncCookieCopy(a)
-	b.NodeAddress = "nodeAddress$2"
+	b.NodeAddress = nodeWallet2.Address[:]
 	require.False(t, SyncCookieEqual(a, b))
 	b = SyncCookieCopy(a)
 	b.MinipoolSlot = 11

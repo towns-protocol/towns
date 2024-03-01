@@ -68,16 +68,11 @@ func NewRiverRegistryContract(
 func (sr *RiverRegistryContract) AllocateStream(
 	ctx context.Context,
 	streamId string,
-	addresses []string,
+	addresses []common.Address,
 	genesisMiniblockHash []byte,
 	genesisMiniblock []byte,
 ) error {
 	id, err := StreamIdFromString(streamId)
-	if err != nil {
-		return AsRiverError(err).Func("AllocateStream")
-	}
-
-	addrs, err := AddressStrsToEthAddresses(addresses)
 	if err != nil {
 		return AsRiverError(err).Func("AllocateStream")
 	}
@@ -90,7 +85,7 @@ func (sr *RiverRegistryContract) AllocateStream(
 	_, _, err = sr.Blockchain.TxRunner.SubmitAndWait(
 		ctx,
 		func(opts *bind.TransactOpts) (*types.Transaction, error) {
-			return sr.Contract.AllocateStream(opts, id, addrs, hash, genesisMiniblock)
+			return sr.Contract.AllocateStream(opts, id, addresses, hash, genesisMiniblock)
 		},
 	)
 	if err != nil {
@@ -102,7 +97,7 @@ func (sr *RiverRegistryContract) AllocateStream(
 
 type GetStreamResult struct {
 	StreamId          string
-	Nodes             []string
+	Nodes             []common.Address
 	LastMiniblockHash []byte
 	LastMiniblockNum  uint64
 	IsSealed          bool
@@ -115,7 +110,7 @@ func getStreamResultFromContractStream(streamId StreamId, stream *contracts.IRiv
 	}
 	return &GetStreamResult{
 		StreamId:          id,
-		Nodes:             EthAddressesToAddressStrs(stream.Nodes),
+		Nodes:             stream.Nodes,
 		LastMiniblockHash: stream.LastMiniblockHash[:],
 		LastMiniblockNum:  stream.LastMiniblockNum,
 		IsSealed:          stream.Flags&1 != 0, // TODO: constants for flags

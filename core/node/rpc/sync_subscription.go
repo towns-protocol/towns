@@ -5,6 +5,7 @@ import (
 	"sync"
 
 	"connectrpc.com/connect"
+	"github.com/ethereum/go-ethereum/common"
 	"github.com/river-build/river/core/node/base"
 	"github.com/river-build/river/core/node/dlog"
 	"github.com/river-build/river/core/node/events"
@@ -39,7 +40,7 @@ type syncSubscriptionImpl struct {
 	firstError     error
 	localStreams   map[string]*events.SyncStream // mapping of streamId to local stream
 	remoteStreams  map[string]*syncNode          // mapping of streamId to remote node
-	remoteNodes    map[string]*syncNode          // mapping of node address to remote node
+	remoteNodes    map[common.Address]*syncNode  // mapping of node address to remote node
 	mu             sync.Mutex
 }
 
@@ -135,7 +136,7 @@ func (s *syncSubscriptionImpl) addSyncNode(
 }
 
 func (s *syncSubscriptionImpl) addRemoteNode(
-	address string,
+	address common.Address,
 	node *syncNode,
 ) bool {
 	s.mu.Lock()
@@ -157,7 +158,7 @@ func (s *syncSubscriptionImpl) getLocalStream(
 }
 
 func (s *syncSubscriptionImpl) getRemoteNode(
-	address string,
+	address common.Address,
 ) *syncNode {
 	s.mu.Lock()
 	defer s.mu.Unlock()
@@ -179,7 +180,8 @@ func (s *syncSubscriptionImpl) addRemoteStream(
 ) {
 	s.mu.Lock()
 	defer s.mu.Unlock()
-	if remote := s.remoteNodes[cookie.NodeAddress]; remote != nil {
+	nodeAddress := common.BytesToAddress(cookie.NodeAddress)
+	if remote := s.remoteNodes[nodeAddress]; remote != nil {
 		s.remoteStreams[cookie.StreamId] = remote
 	}
 }

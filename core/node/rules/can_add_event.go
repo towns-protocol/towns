@@ -7,6 +7,7 @@ import (
 
 	"log/slog"
 
+	"github.com/ethereum/go-ethereum/common"
 	"github.com/river-build/river/core/node/auth"
 	. "github.com/river-build/river/core/node/base"
 	"github.com/river-build/river/core/node/config"
@@ -19,7 +20,7 @@ import (
 type aeParams struct {
 	ctx                context.Context
 	cfg                *config.StreamConfig
-	validNodeAddresses []string
+	validNodeAddresses []common.Address
 	currentTime        time.Time
 	streamView         events.StreamView
 	parsedEvent        *events.ParsedEvent
@@ -72,7 +73,7 @@ type aeMediaPayloadChunkRules struct {
 * (true, chainAuthArgs, nil, nil) // event can be added if chainAuthArgs are satisfied
 * (true, chainAuthArgs, &IsStreamEvent_Payload, nil) // event can be added if chainAuthArgs are satisfied and parent event is added or verified
 */
-func CanAddEvent(ctx context.Context, cfg *config.StreamConfig, validNodeAddresses []string, currentTime time.Time, parsedEvent *events.ParsedEvent, streamView events.StreamView) (bool, *auth.ChainAuthArgs, *RequiredParentEvent, error) {
+func CanAddEvent(ctx context.Context, cfg *config.StreamConfig, validNodeAddresses []common.Address, currentTime time.Time, parsedEvent *events.ParsedEvent, streamView events.StreamView) (bool, *auth.ChainAuthArgs, *RequiredParentEvent, error) {
 
 	// validate that event has required properties
 	if parsedEvent.Event.PrevMiniblockHash == nil {
@@ -466,14 +467,9 @@ func (ru *aeMembershipRules) validMembershipTransistionForDM() (bool, error) {
 	userAddress := ru.membership.UserAddress
 	initiatorAddress := ru.membership.InitiatorAddress
 
-	initiatorId, err := shared.AddressHex(initiatorAddress)
-	if err != nil {
-		return false, err
-	}
-
-	if !ru.params.isValidNode(initiatorId) {
+	if !ru.params.isValidNode(initiatorAddress) {
 		if !bytes.Equal(initiatorAddress, fp) && !bytes.Equal(initiatorAddress, sp) {
-			return false, RiverError(Err_PERMISSION_DENIED, "initiator is not a member of DM", "initiator", initiatorId)
+			return false, RiverError(Err_PERMISSION_DENIED, "initiator is not a member of DM", "initiator", initiatorAddress)
 		}
 	}
 
@@ -622,10 +618,6 @@ func (ru *aeUserMembershipRules) parentEventForUserMembership() (*RequiredParent
 	}
 	userMembership := ru.userMembership
 	creatorAddress := ru.params.parsedEvent.Event.CreatorAddress
-	creatorId, err := shared.AddressHex(creatorAddress)
-	if err != nil {
-		return nil, err
-	}
 
 	userAddress, err := shared.GetUserAddressFromStreamId(ru.params.streamView.StreamId())
 	if err != nil {
@@ -634,7 +626,7 @@ func (ru *aeUserMembershipRules) parentEventForUserMembership() (*RequiredParent
 
 	toStreamId := userMembership.StreamId
 	var initiatorAddress []byte
-	if userMembership.Inviter != nil && ru.params.isValidNode(creatorId) {
+	if userMembership.Inviter != nil && ru.params.isValidNode(creatorAddress) {
 		// the initiator will need permissions to do specific things
 		// if the creator of this payload was a valid node, trust that the inviter was the initiator
 		initiatorAddress, err = shared.AddressFromUserId(*userMembership.Inviter)
@@ -740,12 +732,9 @@ func (params *aeParams) channelMessageEntitlements() (*auth.ChainAuthArgs, error
 }
 
 func (params *aeParams) creatorIsValidNode() (bool, error) {
-	creatorAddressStr, err := shared.AddressHex(params.parsedEvent.Event.CreatorAddress)
-	if err != nil {
-		return false, err
-	}
-	if !params.isValidNode(creatorAddressStr) {
-		return false, RiverError(Err_UNKNOWN_NODE, "No record for node in validNodeAddresses", "address", creatorAddressStr, "nodes", params.validNodeAddresses).Func("CheckNodeIsValid")
+	creatorAddress := params.parsedEvent.Event.CreatorAddress
+	if !params.isValidNode(creatorAddress) {
+		return false, RiverError(Err_UNKNOWN_NODE, "No record for node in validNodeAddresses", "address", creatorAddress, "nodes", params.validNodeAddresses).Func("CheckNodeIsValid")
 	}
 	return true, nil
 }
@@ -864,9 +853,9 @@ func (ru *aeMediaPayloadChunkRules) canAddMediaChunk() (bool, error) {
 	return true, nil
 }
 
-func (params *aeParams) isValidNode(addressOrId string) bool {
+func (params *aeParams) isValidNode(addressOrId []byte) bool {
 	for _, item := range params.validNodeAddresses {
-		if item == addressOrId {
+		if bytes.Equal(item[:], addressOrId) {
 			return true
 		}
 	}

@@ -43,20 +43,21 @@ func parsedEvent(t *testing.T, envelope *Envelope) *ParsedEvent {
 
 func TestLoad(t *testing.T) {
 	ctx := context.Background()
-	wallet, _ := crypto.NewWallet(ctx)
-	var streamId = testutils.UserStreamIdFromAddress(wallet.Address)
+	userWallet, _ := crypto.NewWallet(ctx)
+	nodeWallet, _ := crypto.NewWallet(ctx)
+	var streamId = testutils.UserStreamIdFromAddress(userWallet.Address)
 	streamConfig_t.MinEventsPerSnapshot[streamId] = minEventsPerSnapshot
 
-	userAddress := wallet.Address.Bytes()
+	userAddress := userWallet.Address[:]
 
 	inception, err := MakeEnvelopeWithPayload(
-		wallet,
+		userWallet,
 		Make_UserPayload_Inception(streamId, nil),
 		nil,
 	)
 	assert.NoError(t, err)
 	join, err := MakeEnvelopeWithPayload(
-		wallet,
+		userWallet,
 		Make_UserPayload_Membership(MembershipOp_SO_JOIN, streamId, nil),
 		nil,
 	)
@@ -64,7 +65,7 @@ func TestLoad(t *testing.T) {
 	miniblockHeader, err := Make_GenesisMiniblockHeader([]*ParsedEvent{parsedEvent(t, inception), parsedEvent(t, join)})
 	assert.NoError(t, err)
 	miniblockHeaderProto, err := MakeEnvelopeWithPayload(
-		wallet,
+		userWallet,
 		Make_MiniblockHeader(miniblockHeader),
 		nil,
 	)
@@ -110,7 +111,7 @@ func TestLoad(t *testing.T) {
 	assert.Equal(t, 3, len(newEnvelopesHashes))
 	assert.Equal(t, []common.Hash{common.BytesToHash(inception.Hash), common.BytesToHash(join.Hash), common.BytesToHash(miniblockHeaderProto.Hash)}, newEnvelopesHashes)
 
-	cookie := view.SyncCookie("nodeAddress$1")
+	cookie := view.SyncCookie(nodeWallet.Address)
 	assert.NotNil(t, cookie)
 	assert.Equal(t, streamId, cookie.StreamId)
 	assert.Equal(t, int64(1), cookie.MinipoolGen)
@@ -132,7 +133,7 @@ func TestLoad(t *testing.T) {
 
 	// add one more event (just join again)
 	join2, err := MakeEnvelopeWithPayload(
-		wallet,
+		userWallet,
 		Make_UserPayload_Membership(MembershipOp_SO_JOIN, streamId, nil),
 		blockHash[:],
 	)
@@ -153,7 +154,7 @@ func TestLoad(t *testing.T) {
 
 	// add another join event
 	join3, err := MakeEnvelopeWithPayload(
-		wallet,
+		userWallet,
 		Make_UserPayload_Membership(MembershipOp_SO_JOIN, streamId, nil),
 		view.LastBlock().Hash[:],
 	)
@@ -187,7 +188,7 @@ func TestLoad(t *testing.T) {
 	// how many blocks do we currently have?
 	assert.Equal(t, len(view.blocks), 1)
 	// create a new block
-	miniblockHeaderEvent, err := MakeParsedEventWithPayload(wallet, Make_MiniblockHeader(miniblockHeader), view.LastBlock().Hash[:])
+	miniblockHeaderEvent, err := MakeParsedEventWithPayload(userWallet, Make_MiniblockHeader(miniblockHeader), view.LastBlock().Hash[:])
 	assert.NoError(t, err)
 	miniblock, err := NewMiniblockInfoFromParsed(miniblockHeaderEvent, envelopes)
 	assert.NoError(t, err)
@@ -211,7 +212,7 @@ func TestLoad(t *testing.T) {
 	assert.Equal(t, len(newSV2.blocks), 1) // we should only have the latest block in memory
 	// add an event with an old hash
 	join4, err := MakeEnvelopeWithPayload(
-		wallet,
+		userWallet,
 		Make_UserPayload_Membership(MembershipOp_SO_LEAVE, streamId, nil),
 		newSV1.blocks[0].Hash[:],
 	)

@@ -70,12 +70,12 @@ func makeTestStreamParams(p testParams) (context.Context, *testContext) {
 		panic(err)
 	}
 
-	nr, err := LoadNodeRegistry(ctx, registry, bc.Wallet.AddressStr)
+	nr, err := LoadNodeRegistry(ctx, registry, bc.Wallet.Address)
 	if err != nil {
 		panic(err)
 	}
 
-	sr := NewStreamRegistry(bc.Wallet.AddressStr, nr, registry, p.replFactor)
+	sr := NewStreamRegistry(bc.Wallet.Address, nr, registry, p.replFactor)
 
 	params := &StreamCacheParams{
 		Storage:      streamStorage,
