@@ -1,7 +1,7 @@
 // Code generated - DO NOT EDIT.
 // This file is a generated binding and any manual changes will be lost.
 
-package dev
+package base
 
 import (
 	"errors"
@@ -71,113 +71,113 @@ type IMembershipBaseMembership struct {
 	PricingModule	common.Address
 }
 
-// TownArchitectMetaData contains all meta data concerning the TownArchitect contract.
-var TownArchitectMetaData = &bind.MetaData{
+// ArchitectMetaData contains all meta data concerning the Architect contract.
+var ArchitectMetaData = &bind.MetaData{
 	ABI: "[{\"type\":\"function\",\"name\":\"createSpace\",\"inputs\":[{\"name\":\"SpaceInfo\",\"type\":\"tuple\",\"internalType\":\"structIArchitectBase.SpaceInfo\",\"components\":[{\"name\":\"id\",\"type\":\"string\",\"internalType\":\"string\"},{\"name\":\"name\",\"type\":\"string\",\"internalType\":\"string\"},{\"name\":\"uri\",\"type\":\"string\",\"internalType\":\"string\"},{\"name\":\"membership\",\"type\":\"tuple\",\"internalType\":\"structIArchitectBase.Membership\",\"components\":[{\"name\":\"settings\",\"type\":\"tuple\",\"internalType\":\"structIMembershipBase.Membership\",\"components\":[{\"name\":\"name\",\"type\":\"string\",\"internalType\":\"string\"},{\"name\":\"symbol\",\"type\":\"string\",\"internalType\":\"string\"},{\"name\":\"price\",\"type\":\"uint256\",\"internalType\":\"uint256\"},{\"name\":\"maxSupply\",\"type\":\"uint256\",\"internalType\":\"uint256\"},{\"name\":\"duration\",\"type\":\"uint64\",\"internalType\":\"uint64\"},{\"name\":\"currency\",\"type\":\"address\",\"internalType\":\"address\"},{\"name\":\"feeRecipient\",\"type\":\"address\",\"internalType\":\"address\"},{\"name\":\"freeAllocation\",\"type\":\"uint256\",\"internalType\":\"uint256\"},{\"name\":\"pricingModule\",\"type\":\"address\",\"internalType\":\"address\"}]},{\"name\":\"requirements\",\"type\":\"tuple\",\"internalType\":\"structIArchitectBase.MembershipRequirements\",\"components\":[{\"name\":\"everyone\",\"type\":\"bool\",\"internalType\":\"bool\"},{\"name\":\"users\",\"type\":\"address[]\",\"internalType\":\"address[]\"},{\"name\":\"ruleData\",\"type\":\"tuple\",\"internalType\":\"structIRuleEntitlement.RuleData\",\"components\":[{\"name\":\"operations\",\"type\":\"tuple[]\",\"internalType\":\"structIRuleEntitlement.Operation[]\",\"components\":[{\"name\":\"opType\",\"type\":\"uint8\",\"internalType\":\"enumIRuleEntitlement.CombinedOperationType\"},{\"name\":\"index\",\"type\":\"uint8\",\"internalType\":\"uint8\"}]},{\"name\":\"checkOperations\",\"type\":\"tuple[]\",\"internalType\":\"structIRuleEntitlement.CheckOperation[]\",\"components\":[{\"name\":\"opType\",\"type\":\"uint8\",\"internalType\":\"enumIRuleEntitlement.CheckOperationType\"},{\"name\":\"chainId\",\"type\":\"uint256\",\"internalType\":\"uint256\"},{\"name\":\"contractAddress\",\"type\":\"address\",\"internalType\":\"address\"},{\"name\":\"threshold\",\"type\":\"uint256\",\"internalType\":\"uint256\"}]},{\"name\":\"logicalOperations\",\"type\":\"tuple[]\",\"internalType\":\"structIRuleEntitlement.LogicalOperation[]\",\"components\":[{\"name\":\"logOpType\",\"type\":\"uint8\",\"internalType\":\"enumIRuleEntitlement.LogicalOperationType\"},{\"name\":\"leftOperationIndex\",\"type\":\"uint8\",\"internalType\":\"uint8\"},{\"name\":\"rightOperationIndex\",\"type\":\"uint8\",\"internalType\":\"uint8\"}]}]}]},{\"name\":\"permissions\",\"type\":\"string[]\",\"internalType\":\"string[]\"}]},{\"name\":\"channel\",\"type\":\"tuple\",\"internalType\":\"structIArchitectBase.ChannelInfo\",\"components\":[{\"name\":\"id\",\"type\":\"string\",\"internalType\":\"string\"},{\"name\":\"metadata\",\"type\":\"string\",\"internalType\":\"string\"}]}]}],\"outputs\":[{\"name\":\"\",\"type\":\"address\",\"internalType\":\"address\"}],\"stateMutability\":\"nonpayable\"},{\"type\":\"function\",\"name\":\"getSpaceArchitectImplementations\",\"inputs\":[],\"outputs\":[{\"name\":\"ownerTokenImplementation\",\"type\":\"address\",\"internalType\":\"address\"},{\"name\":\"userEntitlementImplementation\",\"type\":\"address\",\"internalType\":\"contractIUserEntitlement\"},{\"name\":\"ruleEntitlementImplementation\",\"type\":\"address\",\"internalType\":\"contractIRuleEntitlement\"}],\"stateMutability\":\"view\"},{\"type\":\"function\",\"name\":\"getSpaceById\",\"inputs\":[{\"name\":\"spaceId\",\"type\":\"string\",\"internalType\":\"string\"}],\"outputs\":[{\"name\":\"\",\"type\":\"address\",\"internalType\":\"address\"}],\"stateMutability\":\"view\"},{\"type\":\"function\",\"name\":\"getTokenIdBySpace\",\"inputs\":[{\"name\":\"space\",\"type\":\"address\",\"internalType\":\"address\"}],\"outputs\":[{\"name\":\"\",\"type\":\"uint256\",\"internalType\":\"uint256\"}],\"stateMutability\":\"view\"},{\"type\":\"function\",\"name\":\"getTokenIdBySpaceId\",\"inputs\":[{\"name\":\"spaceId\",\"type\":\"string\",\"internalType\":\"string\"}],\"outputs\":[{\"name\":\"\",\"type\":\"uint256\",\"internalType\":\"uint256\"}],\"stateMutability\":\"view\"},{\"type\":\"function\",\"name\":\"isSpace\",\"inputs\":[{\"name\":\"space\",\"type\":\"address\",\"internalType\":\"address\"}],\"outputs\":[{\"name\":\"\",\"type\":\"bool\",\"internalType\":\"bool\"}],\"stateMutability\":\"view\"},{\"type\":\"function\",\"name\":\"setSpaceArchitectImplementations\",\"inputs\":[{\"name\":\"ownerTokenImplementation\",\"type\":\"address\",\"internalType\":\"address\"},{\"name\":\"userEntitlementImplementation\",\"type\":\"address\",\"internalType\":\"contractIUserEntitlement\"},{\"name\":\"ruleEntitlementImplementation\",\"type\":\"address\",\"internalType\":\"contractIRuleEntitlement\"}],\"outputs\":[],\"stateMutability\":\"nonpayable\"},{\"type\":\"event\",\"name\":\"SpaceCreated\",\"inputs\":[{\"name\":\"owner\",\"type\":\"address\",\"indexed\":true,\"internalType\":\"address\"},{\"name\":\"spaceId\",\"type\":\"uint256\",\"indexed\":true,\"internalType\":\"uint256\"},{\"name\":\"space\",\"type\":\"address\",\"indexed\":false,\"internalType\":\"address\"}],\"anonymous\":false},{\"type\":\"error\",\"name\":\"Architect__InvalidAddress\",\"inputs\":[]},{\"type\":\"error\",\"name\":\"Architect__InvalidNetworkId\",\"inputs\":[]},{\"type\":\"error\",\"name\":\"Architect__InvalidStringLength\",\"inputs\":[]},{\"type\":\"error\",\"name\":\"Architect__NotContract\",\"inputs\":[]}]",
 }
 
-// TownArchitectABI is the input ABI used to generate the binding from.
-// Deprecated: Use TownArchitectMetaData.ABI instead.
-var TownArchitectABI = TownArchitectMetaData.ABI
+// ArchitectABI is the input ABI used to generate the binding from.
+// Deprecated: Use ArchitectMetaData.ABI instead.
+var ArchitectABI = ArchitectMetaData.ABI
 
-// TownArchitect is an auto generated Go binding around an Ethereum contract.
-type TownArchitect struct {
-	TownArchitectCaller	// Read-only binding to the contract
-	TownArchitectTransactor	// Write-only binding to the contract
-	TownArchitectFilterer	// Log filterer for contract events
+// Architect is an auto generated Go binding around an Ethereum contract.
+type Architect struct {
+	ArchitectCaller		// Read-only binding to the contract
+	ArchitectTransactor	// Write-only binding to the contract
+	ArchitectFilterer	// Log filterer for contract events
 }
 
-// TownArchitectCaller is an auto generated read-only Go binding around an Ethereum contract.
-type TownArchitectCaller struct {
+// ArchitectCaller is an auto generated read-only Go binding around an Ethereum contract.
+type ArchitectCaller struct {
 	contract *bind.BoundContract	// Generic contract wrapper for the low level calls
 }
 
-// TownArchitectTransactor is an auto generated write-only Go binding around an Ethereum contract.
-type TownArchitectTransactor struct {
+// ArchitectTransactor is an auto generated write-only Go binding around an Ethereum contract.
+type ArchitectTransactor struct {
 	contract *bind.BoundContract	// Generic contract wrapper for the low level calls
 }
 
-// TownArchitectFilterer is an auto generated log filtering Go binding around an Ethereum contract events.
-type TownArchitectFilterer struct {
+// ArchitectFilterer is an auto generated log filtering Go binding around an Ethereum contract events.
+type ArchitectFilterer struct {
 	contract *bind.BoundContract	// Generic contract wrapper for the low level calls
 }
 
-// TownArchitectSession is an auto generated Go binding around an Ethereum contract,
+// ArchitectSession is an auto generated Go binding around an Ethereum contract,
 // with pre-set call and transact options.
-type TownArchitectSession struct {
-	Contract	*TownArchitect		// Generic contract binding to set the session for
+type ArchitectSession struct {
+	Contract	*Architect		// Generic contract binding to set the session for
 	CallOpts	bind.CallOpts		// Call options to use throughout this session
 	TransactOpts	bind.TransactOpts	// Transaction auth options to use throughout this session
 }
 
-// TownArchitectCallerSession is an auto generated read-only Go binding around an Ethereum contract,
+// ArchitectCallerSession is an auto generated read-only Go binding around an Ethereum contract,
 // with pre-set call options.
-type TownArchitectCallerSession struct {
-	Contract	*TownArchitectCaller	// Generic contract caller binding to set the session for
+type ArchitectCallerSession struct {
+	Contract	*ArchitectCaller	// Generic contract caller binding to set the session for
 	CallOpts	bind.CallOpts		// Call options to use throughout this session
 }
 
-// TownArchitectTransactorSession is an auto generated write-only Go binding around an Ethereum contract,
+// ArchitectTransactorSession is an auto generated write-only Go binding around an Ethereum contract,
 // with pre-set transact options.
-type TownArchitectTransactorSession struct {
-	Contract	*TownArchitectTransactor	// Generic contract transactor binding to set the session for
-	TransactOpts	bind.TransactOpts		// Transaction auth options to use throughout this session
+type ArchitectTransactorSession struct {
+	Contract	*ArchitectTransactor	// Generic contract transactor binding to set the session for
+	TransactOpts	bind.TransactOpts	// Transaction auth options to use throughout this session
 }
 
-// TownArchitectRaw is an auto generated low-level Go binding around an Ethereum contract.
-type TownArchitectRaw struct {
-	Contract *TownArchitect	// Generic contract binding to access the raw methods on
+// ArchitectRaw is an auto generated low-level Go binding around an Ethereum contract.
+type ArchitectRaw struct {
+	Contract *Architect	// Generic contract binding to access the raw methods on
 }
 
-// TownArchitectCallerRaw is an auto generated low-level read-only Go binding around an Ethereum contract.
-type TownArchitectCallerRaw struct {
-	Contract *TownArchitectCaller	// Generic read-only contract binding to access the raw methods on
+// ArchitectCallerRaw is an auto generated low-level read-only Go binding around an Ethereum contract.
+type ArchitectCallerRaw struct {
+	Contract *ArchitectCaller	// Generic read-only contract binding to access the raw methods on
 }
 
-// TownArchitectTransactorRaw is an auto generated low-level write-only Go binding around an Ethereum contract.
-type TownArchitectTransactorRaw struct {
-	Contract *TownArchitectTransactor	// Generic write-only contract binding to access the raw methods on
+// ArchitectTransactorRaw is an auto generated low-level write-only Go binding around an Ethereum contract.
+type ArchitectTransactorRaw struct {
+	Contract *ArchitectTransactor	// Generic write-only contract binding to access the raw methods on
 }
 
-// NewTownArchitect creates a new instance of TownArchitect, bound to a specific deployed contract.
-func NewTownArchitect(address common.Address, backend bind.ContractBackend) (*TownArchitect, error) {
-	contract, err := bindTownArchitect(address, backend, backend, backend)
+// NewArchitect creates a new instance of Architect, bound to a specific deployed contract.
+func NewArchitect(address common.Address, backend bind.ContractBackend) (*Architect, error) {
+	contract, err := bindArchitect(address, backend, backend, backend)
 	if err != nil {
 		return nil, err
 	}
-	return &TownArchitect{TownArchitectCaller: TownArchitectCaller{contract: contract}, TownArchitectTransactor: TownArchitectTransactor{contract: contract}, TownArchitectFilterer: TownArchitectFilterer{contract: contract}}, nil
+	return &Architect{ArchitectCaller: ArchitectCaller{contract: contract}, ArchitectTransactor: ArchitectTransactor{contract: contract}, ArchitectFilterer: ArchitectFilterer{contract: contract}}, nil
 }
 
-// NewTownArchitectCaller creates a new read-only instance of TownArchitect, bound to a specific deployed contract.
-func NewTownArchitectCaller(address common.Address, caller bind.ContractCaller) (*TownArchitectCaller, error) {
-	contract, err := bindTownArchitect(address, caller, nil, nil)
+// NewArchitectCaller creates a new read-only instance of Architect, bound to a specific deployed contract.
+func NewArchitectCaller(address common.Address, caller bind.ContractCaller) (*ArchitectCaller, error) {
+	contract, err := bindArchitect(address, caller, nil, nil)
 	if err != nil {
 		return nil, err
 	}
-	return &TownArchitectCaller{contract: contract}, nil
+	return &ArchitectCaller{contract: contract}, nil
 }
 
-// NewTownArchitectTransactor creates a new write-only instance of TownArchitect, bound to a specific deployed contract.
-func NewTownArchitectTransactor(address common.Address, transactor bind.ContractTransactor) (*TownArchitectTransactor, error) {
-	contract, err := bindTownArchitect(address, nil, transactor, nil)
+// NewArchitectTransactor creates a new write-only instance of Architect, bound to a specific deployed contract.
+func NewArchitectTransactor(address common.Address, transactor bind.ContractTransactor) (*ArchitectTransactor, error) {
+	contract, err := bindArchitect(address, nil, transactor, nil)
 	if err != nil {
 		return nil, err
 	}
-	return &TownArchitectTransactor{contract: contract}, nil
+	return &ArchitectTransactor{contract: contract}, nil
 }
 
-// NewTownArchitectFilterer creates a new log filterer instance of TownArchitect, bound to a specific deployed contract.
-func NewTownArchitectFilterer(address common.Address, filterer bind.ContractFilterer) (*TownArchitectFilterer, error) {
-	contract, err := bindTownArchitect(address, nil, nil, filterer)
+// NewArchitectFilterer creates a new log filterer instance of Architect, bound to a specific deployed contract.
+func NewArchitectFilterer(address common.Address, filterer bind.ContractFilterer) (*ArchitectFilterer, error) {
+	contract, err := bindArchitect(address, nil, nil, filterer)
 	if err != nil {
 		return nil, err
 	}
-	return &TownArchitectFilterer{contract: contract}, nil
+	return &ArchitectFilterer{contract: contract}, nil
 }
 
-// bindTownArchitect binds a generic wrapper to an already deployed contract.
-func bindTownArchitect(address common.Address, caller bind.ContractCaller, transactor bind.ContractTransactor, filterer bind.ContractFilterer) (*bind.BoundContract, error) {
-	parsed, err := TownArchitectMetaData.GetAbi()
+// bindArchitect binds a generic wrapper to an already deployed contract.
+func bindArchitect(address common.Address, caller bind.ContractCaller, transactor bind.ContractTransactor, filterer bind.ContractFilterer) (*bind.BoundContract, error) {
+	parsed, err := ArchitectMetaData.GetAbi()
 	if err != nil {
 		return nil, err
 	}
@@ -188,50 +188,50 @@ func bindTownArchitect(address common.Address, caller bind.ContractCaller, trans
 // sets the output to result. The result type might be a single field for simple
 // returns, a slice of interfaces for anonymous returns and a struct for named
 // returns.
-func (_TownArchitect *TownArchitectRaw) Call(opts *bind.CallOpts, result *[]interface{}, method string, params ...interface{}) error {
-	return _TownArchitect.Contract.TownArchitectCaller.contract.Call(opts, result, method, params...)
+func (_Architect *ArchitectRaw) Call(opts *bind.CallOpts, result *[]interface{}, method string, params ...interface{}) error {
+	return _Architect.Contract.ArchitectCaller.contract.Call(opts, result, method, params...)
 }
 
 // Transfer initiates a plain transaction to move funds to the contract, calling
 // its default method if one is available.
-func (_TownArchitect *TownArchitectRaw) Transfer(opts *bind.TransactOpts) (*types.Transaction, error) {
-	return _TownArchitect.Contract.TownArchitectTransactor.contract.Transfer(opts)
+func (_Architect *ArchitectRaw) Transfer(opts *bind.TransactOpts) (*types.Transaction, error) {
+	return _Architect.Contract.ArchitectTransactor.contract.Transfer(opts)
 }
 
 // Transact invokes the (paid) contract method with params as input values.
-func (_TownArchitect *TownArchitectRaw) Transact(opts *bind.TransactOpts, method string, params ...interface{}) (*types.Transaction, error) {
-	return _TownArchitect.Contract.TownArchitectTransactor.contract.Transact(opts, method, params...)
+func (_Architect *ArchitectRaw) Transact(opts *bind.TransactOpts, method string, params ...interface{}) (*types.Transaction, error) {
+	return _Architect.Contract.ArchitectTransactor.contract.Transact(opts, method, params...)
 }
 
 // Call invokes the (constant) contract method with params as input values and
 // sets the output to result. The result type might be a single field for simple
 // returns, a slice of interfaces for anonymous returns and a struct for named
 // returns.
-func (_TownArchitect *TownArchitectCallerRaw) Call(opts *bind.CallOpts, result *[]interface{}, method string, params ...interface{}) error {
-	return _TownArchitect.Contract.contract.Call(opts, result, method, params...)
+func (_Architect *ArchitectCallerRaw) Call(opts *bind.CallOpts, result *[]interface{}, method string, params ...interface{}) error {
+	return _Architect.Contract.contract.Call(opts, result, method, params...)
 }
 
 // Transfer initiates a plain transaction to move funds to the contract, calling
 // its default method if one is available.
-func (_TownArchitect *TownArchitectTransactorRaw) Transfer(opts *bind.TransactOpts) (*types.Transaction, error) {
-	return _TownArchitect.Contract.contract.Transfer(opts)
+func (_Architect *ArchitectTransactorRaw) Transfer(opts *bind.TransactOpts) (*types.Transaction, error) {
+	return _Architect.Contract.contract.Transfer(opts)
 }
 
 // Transact invokes the (paid) contract method with params as input values.
-func (_TownArchitect *TownArchitectTransactorRaw) Transact(opts *bind.TransactOpts, method string, params ...interface{}) (*types.Transaction, error) {
-	return _TownArchitect.Contract.contract.Transact(opts, method, params...)
+func (_Architect *ArchitectTransactorRaw) Transact(opts *bind.TransactOpts, method string, params ...interface{}) (*types.Transaction, error) {
+	return _Architect.Contract.contract.Transact(opts, method, params...)
 }
 
 // GetSpaceArchitectImplementations is a free data retrieval call binding the contract method 0x545efb2d.
 //
 // Solidity: function getSpaceArchitectImplementations() view returns(address ownerTokenImplementation, address userEntitlementImplementation, address ruleEntitlementImplementation)
-func (_TownArchitect *TownArchitectCaller) GetSpaceArchitectImplementations(opts *bind.CallOpts) (struct {
+func (_Architect *ArchitectCaller) GetSpaceArchitectImplementations(opts *bind.CallOpts) (struct {
 	OwnerTokenImplementation	common.Address
 	UserEntitlementImplementation	common.Address
 	RuleEntitlementImplementation	common.Address
 }, error) {
 	var out []interface{}
-	err := _TownArchitect.contract.Call(opts, &out, "getSpaceArchitectImplementations")
+	err := _Architect.contract.Call(opts, &out, "getSpaceArchitectImplementations")
 
 	outstruct := new(struct {
 		OwnerTokenImplementation	common.Address
@@ -253,31 +253,31 @@ func (_TownArchitect *TownArchitectCaller) GetSpaceArchitectImplementations(opts
 // GetSpaceArchitectImplementations is a free data retrieval call binding the contract method 0x545efb2d.
 //
 // Solidity: function getSpaceArchitectImplementations() view returns(address ownerTokenImplementation, address userEntitlementImplementation, address ruleEntitlementImplementation)
-func (_TownArchitect *TownArchitectSession) GetSpaceArchitectImplementations() (struct {
+func (_Architect *ArchitectSession) GetSpaceArchitectImplementations() (struct {
 	OwnerTokenImplementation	common.Address
 	UserEntitlementImplementation	common.Address
 	RuleEntitlementImplementation	common.Address
 }, error) {
-	return _TownArchitect.Contract.GetSpaceArchitectImplementations(&_TownArchitect.CallOpts)
+	return _Architect.Contract.GetSpaceArchitectImplementations(&_Architect.CallOpts)
 }
 
 // GetSpaceArchitectImplementations is a free data retrieval call binding the contract method 0x545efb2d.
 //
 // Solidity: function getSpaceArchitectImplementations() view returns(address ownerTokenImplementation, address userEntitlementImplementation, address ruleEntitlementImplementation)
-func (_TownArchitect *TownArchitectCallerSession) GetSpaceArchitectImplementations() (struct {
+func (_Architect *ArchitectCallerSession) GetSpaceArchitectImplementations() (struct {
 	OwnerTokenImplementation	common.Address
 	UserEntitlementImplementation	common.Address
 	RuleEntitlementImplementation	common.Address
 }, error) {
-	return _TownArchitect.Contract.GetSpaceArchitectImplementations(&_TownArchitect.CallOpts)
+	return _Architect.Contract.GetSpaceArchitectImplementations(&_Architect.CallOpts)
 }
 
 // GetSpaceById is a free data retrieval call binding the contract method 0xf181942a.
 //
 // Solidity: function getSpaceById(string spaceId) view returns(address)
-func (_TownArchitect *TownArchitectCaller) GetSpaceById(opts *bind.CallOpts, spaceId string) (common.Address, error) {
+func (_Architect *ArchitectCaller) GetSpaceById(opts *bind.CallOpts, spaceId string) (common.Address, error) {
 	var out []interface{}
-	err := _TownArchitect.contract.Call(opts, &out, "getSpaceById", spaceId)
+	err := _Architect.contract.Call(opts, &out, "getSpaceById", spaceId)
 
 	if err != nil {
 		return *new(common.Address), err
@@ -292,23 +292,23 @@ func (_TownArchitect *TownArchitectCaller) GetSpaceById(opts *bind.CallOpts, spa
 // GetSpaceById is a free data retrieval call binding the contract method 0xf181942a.
 //
 // Solidity: function getSpaceById(string spaceId) view returns(address)
-func (_TownArchitect *TownArchitectSession) GetSpaceById(spaceId string) (common.Address, error) {
-	return _TownArchitect.Contract.GetSpaceById(&_TownArchitect.CallOpts, spaceId)
+func (_Architect *ArchitectSession) GetSpaceById(spaceId string) (common.Address, error) {
+	return _Architect.Contract.GetSpaceById(&_Architect.CallOpts, spaceId)
 }
 
 // GetSpaceById is a free data retrieval call binding the contract method 0xf181942a.
 //
 // Solidity: function getSpaceById(string spaceId) view returns(address)
-func (_TownArchitect *TownArchitectCallerSession) GetSpaceById(spaceId string) (common.Address, error) {
-	return _TownArchitect.Contract.GetSpaceById(&_TownArchitect.CallOpts, spaceId)
+func (_Architect *ArchitectCallerSession) GetSpaceById(spaceId string) (common.Address, error) {
+	return _Architect.Contract.GetSpaceById(&_Architect.CallOpts, spaceId)
 }
 
 // GetTokenIdBySpace is a free data retrieval call binding the contract method 0xc0bc6796.
 //
 // Solidity: function getTokenIdBySpace(address space) view returns(uint256)
-func (_TownArchitect *TownArchitectCaller) GetTokenIdBySpace(opts *bind.CallOpts, space common.Address) (*big.Int, error) {
+func (_Architect *ArchitectCaller) GetTokenIdBySpace(opts *bind.CallOpts, space common.Address) (*big.Int, error) {
 	var out []interface{}
-	err := _TownArchitect.contract.Call(opts, &out, "getTokenIdBySpace", space)
+	err := _Architect.contract.Call(opts, &out, "getTokenIdBySpace", space)
 
 	if err != nil {
 		return *new(*big.Int), err
@@ -323,23 +323,23 @@ func (_TownArchitect *TownArchitectCaller) GetTokenIdBySpace(opts *bind.CallOpts
 // GetTokenIdBySpace is a free data retrieval call binding the contract method 0xc0bc6796.
 //
 // Solidity: function getTokenIdBySpace(address space) view returns(uint256)
-func (_TownArchitect *TownArchitectSession) GetTokenIdBySpace(space common.Address) (*big.Int, error) {
-	return _TownArchitect.Contract.GetTokenIdBySpace(&_TownArchitect.CallOpts, space)
+func (_Architect *ArchitectSession) GetTokenIdBySpace(space common.Address) (*big.Int, error) {
+	return _Architect.Contract.GetTokenIdBySpace(&_Architect.CallOpts, space)
 }
 
 // GetTokenIdBySpace is a free data retrieval call binding the contract method 0xc0bc6796.
 //
 // Solidity: function getTokenIdBySpace(address space) view returns(uint256)
-func (_TownArchitect *TownArchitectCallerSession) GetTokenIdBySpace(space common.Address) (*big.Int, error) {
-	return _TownArchitect.Contract.GetTokenIdBySpace(&_TownArchitect.CallOpts, space)
+func (_Architect *ArchitectCallerSession) GetTokenIdBySpace(space common.Address) (*big.Int, error) {
+	return _Architect.Contract.GetTokenIdBySpace(&_Architect.CallOpts, space)
 }
 
 // GetTokenIdBySpaceId is a free data retrieval call binding the contract method 0xbed8f27c.
 //
 // Solidity: function getTokenIdBySpaceId(string spaceId) view returns(uint256)
-func (_TownArchitect *TownArchitectCaller) GetTokenIdBySpaceId(opts *bind.CallOpts, spaceId string) (*big.Int, error) {
+func (_Architect *ArchitectCaller) GetTokenIdBySpaceId(opts *bind.CallOpts, spaceId string) (*big.Int, error) {
 	var out []interface{}
-	err := _TownArchitect.contract.Call(opts, &out, "getTokenIdBySpaceId", spaceId)
+	err := _Architect.contract.Call(opts, &out, "getTokenIdBySpaceId", spaceId)
 
 	if err != nil {
 		return *new(*big.Int), err
@@ -354,23 +354,23 @@ func (_TownArchitect *TownArchitectCaller) GetTokenIdBySpaceId(opts *bind.CallOp
 // GetTokenIdBySpaceId is a free data retrieval call binding the contract method 0xbed8f27c.
 //
 // Solidity: function getTokenIdBySpaceId(string spaceId) view returns(uint256)
-func (_TownArchitect *TownArchitectSession) GetTokenIdBySpaceId(spaceId string) (*big.Int, error) {
-	return _TownArchitect.Contract.GetTokenIdBySpaceId(&_TownArchitect.CallOpts, spaceId)
+func (_Architect *ArchitectSession) GetTokenIdBySpaceId(spaceId string) (*big.Int, error) {
+	return _Architect.Contract.GetTokenIdBySpaceId(&_Architect.CallOpts, spaceId)
 }
 
 // GetTokenIdBySpaceId is a free data retrieval call binding the contract method 0xbed8f27c.
 //
 // Solidity: function getTokenIdBySpaceId(string spaceId) view returns(uint256)
-func (_TownArchitect *TownArchitectCallerSession) GetTokenIdBySpaceId(spaceId string) (*big.Int, error) {
-	return _TownArchitect.Contract.GetTokenIdBySpaceId(&_TownArchitect.CallOpts, spaceId)
+func (_Architect *ArchitectCallerSession) GetTokenIdBySpaceId(spaceId string) (*big.Int, error) {
+	return _Architect.Contract.GetTokenIdBySpaceId(&_Architect.CallOpts, spaceId)
 }
 
 // IsSpace is a free data retrieval call binding the contract method 0x33518c80.
 //
 // Solidity: function isSpace(address space) view returns(bool)
-func (_TownArchitect *TownArchitectCaller) IsSpace(opts *bind.CallOpts, space common.Address) (bool, error) {
+func (_Architect *ArchitectCaller) IsSpace(opts *bind.CallOpts, space common.Address) (bool, error) {
 	var out []interface{}
-	err := _TownArchitect.contract.Call(opts, &out, "isSpace", space)
+	err := _Architect.contract.Call(opts, &out, "isSpace", space)
 
 	if err != nil {
 		return *new(bool), err
@@ -385,62 +385,62 @@ func (_TownArchitect *TownArchitectCaller) IsSpace(opts *bind.CallOpts, space co
 // IsSpace is a free data retrieval call binding the contract method 0x33518c80.
 //
 // Solidity: function isSpace(address space) view returns(bool)
-func (_TownArchitect *TownArchitectSession) IsSpace(space common.Address) (bool, error) {
-	return _TownArchitect.Contract.IsSpace(&_TownArchitect.CallOpts, space)
+func (_Architect *ArchitectSession) IsSpace(space common.Address) (bool, error) {
+	return _Architect.Contract.IsSpace(&_Architect.CallOpts, space)
 }
 
 // IsSpace is a free data retrieval call binding the contract method 0x33518c80.
 //
 // Solidity: function isSpace(address space) view returns(bool)
-func (_TownArchitect *TownArchitectCallerSession) IsSpace(space common.Address) (bool, error) {
-	return _TownArchitect.Contract.IsSpace(&_TownArchitect.CallOpts, space)
+func (_Architect *ArchitectCallerSession) IsSpace(space common.Address) (bool, error) {
+	return _Architect.Contract.IsSpace(&_Architect.CallOpts, space)
 }
 
 // CreateSpace is a paid mutator transaction binding the contract method 0xe530ee5c.
 //
 // Solidity: function createSpace((string,string,string,((string,string,uint256,uint256,uint64,address,address,uint256,address),(bool,address[],((uint8,uint8)[],(uint8,uint256,address,uint256)[],(uint8,uint8,uint8)[])),string[]),(string,string)) SpaceInfo) returns(address)
-func (_TownArchitect *TownArchitectTransactor) CreateSpace(opts *bind.TransactOpts, SpaceInfo IArchitectBaseSpaceInfo) (*types.Transaction, error) {
-	return _TownArchitect.contract.Transact(opts, "createSpace", SpaceInfo)
+func (_Architect *ArchitectTransactor) CreateSpace(opts *bind.TransactOpts, SpaceInfo IArchitectBaseSpaceInfo) (*types.Transaction, error) {
+	return _Architect.contract.Transact(opts, "createSpace", SpaceInfo)
 }
 
 // CreateSpace is a paid mutator transaction binding the contract method 0xe530ee5c.
 //
 // Solidity: function createSpace((string,string,string,((string,string,uint256,uint256,uint64,address,address,uint256,address),(bool,address[],((uint8,uint8)[],(uint8,uint256,address,uint256)[],(uint8,uint8,uint8)[])),string[]),(string,string)) SpaceInfo) returns(address)
-func (_TownArchitect *TownArchitectSession) CreateSpace(SpaceInfo IArchitectBaseSpaceInfo) (*types.Transaction, error) {
-	return _TownArchitect.Contract.CreateSpace(&_TownArchitect.TransactOpts, SpaceInfo)
+func (_Architect *ArchitectSession) CreateSpace(SpaceInfo IArchitectBaseSpaceInfo) (*types.Transaction, error) {
+	return _Architect.Contract.CreateSpace(&_Architect.TransactOpts, SpaceInfo)
 }
 
 // CreateSpace is a paid mutator transaction binding the contract method 0xe530ee5c.
 //
 // Solidity: function createSpace((string,string,string,((string,string,uint256,uint256,uint64,address,address,uint256,address),(bool,address[],((uint8,uint8)[],(uint8,uint256,address,uint256)[],(uint8,uint8,uint8)[])),string[]),(string,string)) SpaceInfo) returns(address)
-func (_TownArchitect *TownArchitectTransactorSession) CreateSpace(SpaceInfo IArchitectBaseSpaceInfo) (*types.Transaction, error) {
-	return _TownArchitect.Contract.CreateSpace(&_TownArchitect.TransactOpts, SpaceInfo)
+func (_Architect *ArchitectTransactorSession) CreateSpace(SpaceInfo IArchitectBaseSpaceInfo) (*types.Transaction, error) {
+	return _Architect.Contract.CreateSpace(&_Architect.TransactOpts, SpaceInfo)
 }
 
 // SetSpaceArchitectImplementations is a paid mutator transaction binding the contract method 0x8bfc94b9.
 //
 // Solidity: function setSpaceArchitectImplementations(address ownerTokenImplementation, address userEntitlementImplementation, address ruleEntitlementImplementation) returns()
-func (_TownArchitect *TownArchitectTransactor) SetSpaceArchitectImplementations(opts *bind.TransactOpts, ownerTokenImplementation common.Address, userEntitlementImplementation common.Address, ruleEntitlementImplementation common.Address) (*types.Transaction, error) {
-	return _TownArchitect.contract.Transact(opts, "setSpaceArchitectImplementations", ownerTokenImplementation, userEntitlementImplementation, ruleEntitlementImplementation)
+func (_Architect *ArchitectTransactor) SetSpaceArchitectImplementations(opts *bind.TransactOpts, ownerTokenImplementation common.Address, userEntitlementImplementation common.Address, ruleEntitlementImplementation common.Address) (*types.Transaction, error) {
+	return _Architect.contract.Transact(opts, "setSpaceArchitectImplementations", ownerTokenImplementation, userEntitlementImplementation, ruleEntitlementImplementation)
 }
 
 // SetSpaceArchitectImplementations is a paid mutator transaction binding the contract method 0x8bfc94b9.
 //
 // Solidity: function setSpaceArchitectImplementations(address ownerTokenImplementation, address userEntitlementImplementation, address ruleEntitlementImplementation) returns()
-func (_TownArchitect *TownArchitectSession) SetSpaceArchitectImplementations(ownerTokenImplementation common.Address, userEntitlementImplementation common.Address, ruleEntitlementImplementation common.Address) (*types.Transaction, error) {
-	return _TownArchitect.Contract.SetSpaceArchitectImplementations(&_TownArchitect.TransactOpts, ownerTokenImplementation, userEntitlementImplementation, ruleEntitlementImplementation)
+func (_Architect *ArchitectSession) SetSpaceArchitectImplementations(ownerTokenImplementation common.Address, userEntitlementImplementation common.Address, ruleEntitlementImplementation common.Address) (*types.Transaction, error) {
+	return _Architect.Contract.SetSpaceArchitectImplementations(&_Architect.TransactOpts, ownerTokenImplementation, userEntitlementImplementation, ruleEntitlementImplementation)
 }
 
 // SetSpaceArchitectImplementations is a paid mutator transaction binding the contract method 0x8bfc94b9.
 //
 // Solidity: function setSpaceArchitectImplementations(address ownerTokenImplementation, address userEntitlementImplementation, address ruleEntitlementImplementation) returns()
-func (_TownArchitect *TownArchitectTransactorSession) SetSpaceArchitectImplementations(ownerTokenImplementation common.Address, userEntitlementImplementation common.Address, ruleEntitlementImplementation common.Address) (*types.Transaction, error) {
-	return _TownArchitect.Contract.SetSpaceArchitectImplementations(&_TownArchitect.TransactOpts, ownerTokenImplementation, userEntitlementImplementation, ruleEntitlementImplementation)
+func (_Architect *ArchitectTransactorSession) SetSpaceArchitectImplementations(ownerTokenImplementation common.Address, userEntitlementImplementation common.Address, ruleEntitlementImplementation common.Address) (*types.Transaction, error) {
+	return _Architect.Contract.SetSpaceArchitectImplementations(&_Architect.TransactOpts, ownerTokenImplementation, userEntitlementImplementation, ruleEntitlementImplementation)
 }
 
-// TownArchitectSpaceCreatedIterator is returned from FilterSpaceCreated and is used to iterate over the raw logs and unpacked data for SpaceCreated events raised by the TownArchitect contract.
-type TownArchitectSpaceCreatedIterator struct {
-	Event	*TownArchitectSpaceCreated	// Event containing the contract specifics and raw log
+// ArchitectSpaceCreatedIterator is returned from FilterSpaceCreated and is used to iterate over the raw logs and unpacked data for SpaceCreated events raised by the Architect contract.
+type ArchitectSpaceCreatedIterator struct {
+	Event	*ArchitectSpaceCreated	// Event containing the contract specifics and raw log
 
 	contract	*bind.BoundContract	// Generic contract to use for unpacking event data
 	event		string			// Event name to use for unpacking event data
@@ -454,7 +454,7 @@ type TownArchitectSpaceCreatedIterator struct {
 // Next advances the iterator to the subsequent event, returning whether there
 // are any more events found. In case of a retrieval or parsing error, false is
 // returned and Error() can be queried for the exact failure.
-func (it *TownArchitectSpaceCreatedIterator) Next() bool {
+func (it *ArchitectSpaceCreatedIterator) Next() bool {
 	// If the iterator failed, stop iterating
 	if it.fail != nil {
 		return false
@@ -463,7 +463,7 @@ func (it *TownArchitectSpaceCreatedIterator) Next() bool {
 	if it.done {
 		select {
 		case log := <-it.logs:
-			it.Event = new(TownArchitectSpaceCreated)
+			it.Event = new(ArchitectSpaceCreated)
 			if err := it.contract.UnpackLog(it.Event, it.event, log); err != nil {
 				it.fail = err
 				return false
@@ -478,7 +478,7 @@ func (it *TownArchitectSpaceCreatedIterator) Next() bool {
 	// Iterator still in progress, wait for either a data or an error event
 	select {
 	case log := <-it.logs:
-		it.Event = new(TownArchitectSpaceCreated)
+		it.Event = new(ArchitectSpaceCreated)
 		if err := it.contract.UnpackLog(it.Event, it.event, log); err != nil {
 			it.fail = err
 			return false
@@ -494,19 +494,19 @@ func (it *TownArchitectSpaceCreatedIterator) Next() bool {
 }
 
 // Error returns any retrieval or parsing error occurred during filtering.
-func (it *TownArchitectSpaceCreatedIterator) Error() error {
+func (it *ArchitectSpaceCreatedIterator) Error() error {
 	return it.fail
 }
 
 // Close terminates the iteration process, releasing any pending underlying
 // resources.
-func (it *TownArchitectSpaceCreatedIterator) Close() error {
+func (it *ArchitectSpaceCreatedIterator) Close() error {
 	it.sub.Unsubscribe()
 	return nil
 }
 
-// TownArchitectSpaceCreated represents a SpaceCreated event raised by the TownArchitect contract.
-type TownArchitectSpaceCreated struct {
+// ArchitectSpaceCreated represents a SpaceCreated event raised by the Architect contract.
+type ArchitectSpaceCreated struct {
 	Owner	common.Address
 	SpaceId	*big.Int
 	Space	common.Address
@@ -516,7 +516,7 @@ type TownArchitectSpaceCreated struct {
 // FilterSpaceCreated is a free log retrieval operation binding the contract event 0xe50fc3942f8a2d7e5a7c8fb9488499eba5255b41e18bc3f1b4791402976d1d0b.
 //
 // Solidity: event SpaceCreated(address indexed owner, uint256 indexed spaceId, address space)
-func (_TownArchitect *TownArchitectFilterer) FilterSpaceCreated(opts *bind.FilterOpts, owner []common.Address, spaceId []*big.Int) (*TownArchitectSpaceCreatedIterator, error) {
+func (_Architect *ArchitectFilterer) FilterSpaceCreated(opts *bind.FilterOpts, owner []common.Address, spaceId []*big.Int) (*ArchitectSpaceCreatedIterator, error) {
 
 	var ownerRule []interface{}
 	for _, ownerItem := range owner {
@@ -527,17 +527,17 @@ func (_TownArchitect *TownArchitectFilterer) FilterSpaceCreated(opts *bind.Filte
 		spaceIdRule = append(spaceIdRule, spaceIdItem)
 	}
 
-	logs, sub, err := _TownArchitect.contract.FilterLogs(opts, "SpaceCreated", ownerRule, spaceIdRule)
+	logs, sub, err := _Architect.contract.FilterLogs(opts, "SpaceCreated", ownerRule, spaceIdRule)
 	if err != nil {
 		return nil, err
 	}
-	return &TownArchitectSpaceCreatedIterator{contract: _TownArchitect.contract, event: "SpaceCreated", logs: logs, sub: sub}, nil
+	return &ArchitectSpaceCreatedIterator{contract: _Architect.contract, event: "SpaceCreated", logs: logs, sub: sub}, nil
 }
 
 // WatchSpaceCreated is a free log subscription operation binding the contract event 0xe50fc3942f8a2d7e5a7c8fb9488499eba5255b41e18bc3f1b4791402976d1d0b.
 //
 // Solidity: event SpaceCreated(address indexed owner, uint256 indexed spaceId, address space)
-func (_TownArchitect *TownArchitectFilterer) WatchSpaceCreated(opts *bind.WatchOpts, sink chan<- *TownArchitectSpaceCreated, owner []common.Address, spaceId []*big.Int) (event.Subscription, error) {
+func (_Architect *ArchitectFilterer) WatchSpaceCreated(opts *bind.WatchOpts, sink chan<- *ArchitectSpaceCreated, owner []common.Address, spaceId []*big.Int) (event.Subscription, error) {
 
 	var ownerRule []interface{}
 	for _, ownerItem := range owner {
@@ -548,7 +548,7 @@ func (_TownArchitect *TownArchitectFilterer) WatchSpaceCreated(opts *bind.WatchO
 		spaceIdRule = append(spaceIdRule, spaceIdItem)
 	}
 
-	logs, sub, err := _TownArchitect.contract.WatchLogs(opts, "SpaceCreated", ownerRule, spaceIdRule)
+	logs, sub, err := _Architect.contract.WatchLogs(opts, "SpaceCreated", ownerRule, spaceIdRule)
 	if err != nil {
 		return nil, err
 	}
@@ -558,8 +558,8 @@ func (_TownArchitect *TownArchitectFilterer) WatchSpaceCreated(opts *bind.WatchO
 			select {
 			case log := <-logs:
 				// New log arrived, parse the event and forward to the user
-				event := new(TownArchitectSpaceCreated)
-				if err := _TownArchitect.contract.UnpackLog(event, "SpaceCreated", log); err != nil {
+				event := new(ArchitectSpaceCreated)
+				if err := _Architect.contract.UnpackLog(event, "SpaceCreated", log); err != nil {
 					return err
 				}
 				event.Raw = log
@@ -583,9 +583,9 @@ func (_TownArchitect *TownArchitectFilterer) WatchSpaceCreated(opts *bind.WatchO
 // ParseSpaceCreated is a log parse operation binding the contract event 0xe50fc3942f8a2d7e5a7c8fb9488499eba5255b41e18bc3f1b4791402976d1d0b.
 //
 // Solidity: event SpaceCreated(address indexed owner, uint256 indexed spaceId, address space)
-func (_TownArchitect *TownArchitectFilterer) ParseSpaceCreated(log types.Log) (*TownArchitectSpaceCreated, error) {
-	event := new(TownArchitectSpaceCreated)
-	if err := _TownArchitect.contract.UnpackLog(event, "SpaceCreated", log); err != nil {
+func (_Architect *ArchitectFilterer) ParseSpaceCreated(log types.Log) (*ArchitectSpaceCreated, error) {
+	event := new(ArchitectSpaceCreated)
+	if err := _Architect.contract.UnpackLog(event, "SpaceCreated", log); err != nil {
 		return nil, err
 	}
 	event.Raw = log

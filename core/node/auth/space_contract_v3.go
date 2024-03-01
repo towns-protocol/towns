@@ -11,21 +11,21 @@ import (
 	"github.com/ethereum/go-ethereum/common"
 )
 
-type Town struct {
+type Space struct {
 	address      common.Address
-	entitlements TownsEntitlements
-	pausable     TownsPausable
-	channels     map[string]TownsChannels
+	entitlements Entitlements
+	pausable     Pausable
+	channels     map[string]Channels
 	channelsLock sync.Mutex
 }
 
 type SpaceContractV3 struct {
-	townsArchitect TownsArchitect
-	version        string
-	backend        bind.ContractBackend
+	architect Architect
+	version   string
+	backend   bind.ContractBackend
 
-	towns     map[string]*Town
-	townsLock sync.Mutex
+	spaces     map[string]*Space
+	spacesLock sync.Mutex
 }
 
 var contractCalls = infra.NewSuccessMetrics("contract_calls", nil)
@@ -34,20 +34,20 @@ var EMPTY_ADDRESS = common.Address{}
 
 func NewSpaceContractV3(
 	ctx context.Context,
-	townsArchitectCfg *config.ContractConfig,
+	architectCfg *config.ContractConfig,
 	backend bind.ContractBackend,
 	// walletLinkingCfg *config.ContractConfig,
 ) (SpaceContract, error) {
-	townsArchitect, err := NewTownsArchitect(ctx, townsArchitectCfg, backend)
+	architect, err := NewArchitect(ctx, architectCfg, backend)
 	if err != nil {
 		return nil, err
 	}
 
 	spaceContract := &SpaceContractV3{
-		townsArchitect: townsArchitect,
-		version:        townsArchitectCfg.Version,
-		backend:        backend,
-		towns:          make(map[string]*Town),
+		architect: architect,
+		version:   architectCfg.Version,
+		backend:   backend,
+		spaces:    make(map[string]*Space),
 	}
 
 	return spaceContract, nil
@@ -113,35 +113,35 @@ func (sc *SpaceContractV3) IsChannelDisabled(ctx context.Context, spaceNetworkId
 	return isDisabled, err
 }
 
-func (sc *SpaceContractV3) getTown(ctx context.Context, townId string) (*Town, error) {
-	sc.townsLock.Lock()
-	defer sc.townsLock.Unlock()
-	if sc.towns[townId] == nil {
+func (sc *SpaceContractV3) getTown(ctx context.Context, townId string) (*Space, error) {
+	sc.spacesLock.Lock()
+	defer sc.spacesLock.Unlock()
+	if sc.spaces[townId] == nil {
 		// use the networkId to fetch the town's contract address
-		townAddress, err := sc.townsArchitect.GetSpaceById(nil, townId)
-		if err != nil || townAddress == EMPTY_ADDRESS {
+		address, err := sc.architect.GetSpaceById(nil, townId)
+		if err != nil || address == EMPTY_ADDRESS {
 			return nil, err
 		}
-		entitlements, err := NewTownsEntitlements(ctx, sc.version, townAddress, sc.backend)
+		entitlements, err := NewEntitlements(ctx, sc.version, address, sc.backend)
 		if err != nil {
 			return nil, err
 		}
-		pausable, err := NewTownsPausable(ctx, sc.version, townAddress, sc.backend)
+		pausable, err := NewPausable(ctx, sc.version, address, sc.backend)
 		if err != nil {
 			return nil, err
 		}
 		// cache the town
-		sc.towns[townId] = &Town{
-			address:      townAddress,
+		sc.spaces[townId] = &Space{
+			address:      address,
 			entitlements: entitlements,
 			pausable:     pausable,
-			channels:     make(map[string]TownsChannels),
+			channels:     make(map[string]Channels),
 		}
 	}
-	return sc.towns[townId], nil
+	return sc.spaces[townId], nil
 }
 
-func (sc *SpaceContractV3) getChannel(ctx context.Context, spaceNetworkId string, channelNetworkId string) (TownsChannels, error) {
+func (sc *SpaceContractV3) getChannel(ctx context.Context, spaceNetworkId string, channelNetworkId string) (Channels, error) {
 	town, err := sc.getTown(ctx, spaceNetworkId)
 	if err != nil || town == nil {
 		return nil, err
@@ -149,7 +149,7 @@ func (sc *SpaceContractV3) getChannel(ctx context.Context, spaceNetworkId string
 	town.channelsLock.Lock()
 	defer town.channelsLock.Unlock()
 	if town.channels[channelNetworkId] == nil {
-		channel, err := NewTownsChannels(ctx, sc.version, town.address, sc.backend)
+		channel, err := NewChannels(ctx, sc.version, town.address, sc.backend)
 		if err != nil {
 			return nil, err
 		}

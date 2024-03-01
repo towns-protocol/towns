@@ -153,7 +153,7 @@ func StartServer(
 		chainAuth, err = auth.NewChainAuth(
 			ctx,
 			baseChain,
-			&cfg.TownsArchitectContract,
+			&cfg.ArchitectContract,
 			&cfg.WalletLinkContract,
 			cfg.BaseChain.LinkedWalletsLimit,
 			cfg.BaseChain.ContractCallsTimeoutMs,

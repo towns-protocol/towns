@@ -505,11 +505,11 @@ resource "aws_ecs_task_definition" "river-fargate" {
         value = "?sslmode=disable&pool_max_conns=1000"
       },
       {
-        name  = "TOWNSARCHITECTCONTRACT__ADDRESS"
+        name  = "ARCHITECTCONTRACT__ADDRESS"
         value = "0x628C9c9745eD088BB3888a1C4C2636Fb64585044"
       },
       {
-        name  = "TOWNSARCHITECTCONTRACT__VERSION"
+        name  = "ARCHITECTCONTRACT__VERSION"
         value = "v3"
       },
       {

@@ -7,7 +7,6 @@ import (
 	"github.com/river-build/river/core/node/config"
 	"github.com/river-build/river/core/node/crypto"
 	"github.com/river-build/river/core/node/protocol"
-	"github.com/river-build/river/core/node/shared"
 	. "github.com/river-build/river/core/node/shared"
 	"github.com/river-build/river/core/node/storage"
 	"github.com/river-build/river/core/node/testutils"
@@ -225,9 +224,9 @@ func TestSpaceViewState(t *testing.T) {
 
 	// create a stream
 	spaceStreamId := testutils.FakeStreamId(STREAM_SPACE_PREFIX)
-	user2Id, err := shared.AddressHex(user2Wallet.Address.Bytes())
+	user2Id, err := AddressHex(user2Wallet.Address.Bytes())
 	require.NoError(t, err)
-	user3Id, err := shared.AddressHex(user3Wallet.Address.Bytes())
+	user3Id, err := AddressHex(user3Wallet.Address.Bytes())
 	require.NoError(t, err)
 
 	_, mb := makeTestSpaceStream(t, user1Wallet, spaceStreamId, nil)
@@ -302,11 +301,11 @@ func TestChannelViewState_JoinedMembers(t *testing.T) {
 	aliceWallet, _ := crypto.NewWallet(ctx)
 	bobWallet, _ := crypto.NewWallet(ctx)
 	carolWallet, _ := crypto.NewWallet(ctx)
-	alice, err := shared.AddressHex(aliceWallet.Address.Bytes())
+	alice, err := AddressHex(aliceWallet.Address.Bytes())
 	require.NoError(t, err)
-	bob, err := shared.AddressHex(bobWallet.Address.Bytes())
+	bob, err := AddressHex(bobWallet.Address.Bytes())
 	require.NoError(t, err)
-	carol, err := shared.AddressHex(carolWallet.Address.Bytes())
+	carol, err := AddressHex(carolWallet.Address.Bytes())
 	require.NoError(t, err)
 	spaceStreamId := testutils.FakeStreamId(STREAM_SPACE_PREFIX)
 	channelStreamId := testutils.FakeStreamId(STREAM_CHANNEL_PREFIX)
@@ -358,11 +357,11 @@ func TestChannelViewState_RemainingMembers(t *testing.T) {
 	aliceWallet, _ := crypto.NewWallet(ctx)
 	bobWallet, _ := crypto.NewWallet(ctx)
 	carolWallet, _ := crypto.NewWallet(ctx)
-	alice, err := shared.AddressHex(aliceWallet.Address.Bytes())
+	alice, err := AddressHex(aliceWallet.Address.Bytes())
 	require.NoError(t, err)
-	bob, err := shared.AddressHex(bobWallet.Address.Bytes())
+	bob, err := AddressHex(bobWallet.Address.Bytes())
 	require.NoError(t, err)
-	carol, err := shared.AddressHex(carolWallet.Address.Bytes())
+	carol, err := AddressHex(carolWallet.Address.Bytes())
 	require.NoError(t, err)
 	spaceStreamId := testutils.FakeStreamId(STREAM_SPACE_PREFIX)
 	channelStreamId := testutils.FakeStreamId(STREAM_CHANNEL_PREFIX)

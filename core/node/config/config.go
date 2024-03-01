@@ -30,8 +30,8 @@ type Config struct {
 	RiverChain ChainConfig
 
 	// Base chain contract configuration
-	TownsArchitectContract ContractConfig
-	WalletLinkContract     ContractConfig
+	ArchitectContract  ContractConfig
+	WalletLinkContract ContractConfig
 
 	// Contract configuration
 	RegistryContract ContractConfig

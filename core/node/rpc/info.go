@@ -124,7 +124,7 @@ func (s *Service) info(
 	// TODO: set graffiti in config
 	// TODO: return version
 	return connect.NewResponse(&InfoResponse{
-		Graffiti: "Towns.com node welcomes you!",
+		Graffiti: "River Node welcomes you!",
 	}), nil
 }
 

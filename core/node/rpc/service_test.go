@@ -348,7 +348,7 @@ func TestMethods(t *testing.T) {
 	if err != nil {
 		t.Errorf("error calling Info: %v", err)
 	}
-	require.Equal(t, "Towns.com node welcomes you!", response.Msg.Graffiti)
+	require.Equal(t, "River Node welcomes you!", response.Msg.Graffiti)
 
 	_, err = client.CreateStream(ctx, connect.NewRequest(&protocol.CreateStreamRequest{}))
 	if err == nil {
