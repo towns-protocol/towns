@@ -28,7 +28,10 @@ abi/
 
 /docs
 
+clients/web/app/storybook-static
+
 core/**/dist/
+core/proto/src/gen/*
 
 contracts/deployments/localhost/
 contracts/cache
@@ -53,9 +56,7 @@ out/
 turbo-*.log
 
 # siwe-worker bundle
-core/proto/src/gen/*
-/core/node/node/__debug_bin
-core/node/dev.log
+servers/workers/siwe-worker/worker/bundle.js
 
 # profiling files
 *.prof
@@ -65,14 +66,13 @@ core/node/dev.log
 servers/workers/*/dist/*
 servers/xchain/bin/*
 servers/xchain/instance_*/*
-servers/xchain/common/localhost_entitlementChecker.json
-servers/xchain/common/localhost_entitlementGatedExample.json
-servers/xchain/contracts/*.go
-common/xchain/dist/*
 
 .envrc
 servers/xchain/run_files/*
+bin/gen-bindings-remove-struct
 core/node/river_node
 core/node/run_files/*
 
 go.work.sum
+packages/generated/addresses/base_anvil/entitlementGatedExample.json
+packages/generated/addresses/base_anvil/entitlementChecker.json
