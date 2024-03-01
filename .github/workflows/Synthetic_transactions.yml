@@ -54,7 +54,7 @@ jobs:
               run: yarn install --immutable
 
             - name: Build town types
-              run: ./scripts/build-town-types.sh localhost --frozen
+              run: ./scripts/build-contract-types.sh localhost --frozen
 
             - name: Setup River CA for testing certificates
               run: ./scripts/register-ca.sh

@@ -46,7 +46,7 @@ jobs:
               run: yarn install --immutable
 
             - name: Build town types
-              run: ./scripts/build-town-types.sh localhost --frozen
+              run: ./scripts/build-contract-types.sh localhost --frozen
 
             - name: Run Wallet Management Tests
               run: yarn test:ci:wallet-management-tests
