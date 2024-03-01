@@ -10,7 +10,7 @@ import {OwnableBase} from "contracts/src/diamond/facets/ownable/OwnableBase.sol"
 import {Facet} from "contracts/src/diamond/facets/Facet.sol";
 
 // Deploy: ./scripts/deploy-river-registry.sh
-// Generate TS bindings: ./scripts/build-town-types.sh
+// Generate TS bindings: ./scripts/build-river-types.sh
 // Generate go bindings: ./scripts/gen-river-node-bindings.sh
 contract RiverRegistry is IRiverRegistry, OwnableBase, Facet {
   using EnumerableSet for EnumerableSet.AddressSet;

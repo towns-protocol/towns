@@ -139,7 +139,7 @@ jobs:
             #   working-directory: ./infra
 
             - name: Build town types
-              run: ./scripts/build-town-types.sh localhost --frozen
+              run: ./scripts/build-river-types.sh localhost --frozen
 
             - name: Unit Tests
               run: yarn test:unit
@@ -869,7 +869,7 @@ jobs:
               run: yarn install --immutable
 
             - name: Generate xchain contract bindings
-              run: ./scripts/build-town-types.sh localhost
+              run: ./scripts/build-river-types.sh localhost
 
             - name: Maintain Turbo cache
               uses: actions/cache@v4

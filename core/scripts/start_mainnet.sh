@@ -6,6 +6,6 @@ anvil --port 8545 &
 PID_ANVIL=$!
 
 cd ../..
-./scripts/wait-for-basechain.sh && ./scripts/deploy-towns-contracts.sh
+./scripts/wait-for-basechain.sh && ./scripts/deploy-river-contracts.sh
 
 wait $PID_ANVIL
