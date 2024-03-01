@@ -63,6 +63,9 @@ const retryInterceptor: (retryParams: RetryParams) => Interceptor = (retryParams
                         attempt,
                         'of',
                         retryParams.maxAttempts,
+                        'retryDelay:',
+                        retryDelay,
+                        'error:',
                         e,
                     )
                     await new Promise((resolve) => setTimeout(resolve, retryDelay))

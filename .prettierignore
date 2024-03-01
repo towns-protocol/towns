@@ -29,7 +29,7 @@ contracts/**/types/*
 contracts/docgen/*
 packages/contract/out
 contracts/coverage/*
-common/xchain/src/gen/*
+core/xchain/src/gen/*
 
 broadcast/*
 cache/*

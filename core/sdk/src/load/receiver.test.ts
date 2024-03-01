@@ -103,7 +103,7 @@ describe('loadTestsScenario2', () => {
                     const content = event.decryptedContent.content
                     expect(content).toBeDefined()
                     log('eventDecrypted', 'Bob', channelId)
-                    aliceGetsMessage.runAsync(async () => {
+                    void (async () => {
                         const clearEvent = event.decryptedContent
                         check(clearEvent?.kind === 'channelMessage')
                         expect(clearEvent.content.payload).toBeDefined()
@@ -119,7 +119,7 @@ describe('loadTestsScenario2', () => {
                                 aliceGetsMessage.done()
                             }
                         }
-                    })
+                    })()
                 },
             )
 
@@ -163,7 +163,7 @@ describe('loadTestsScenario2', () => {
             // assume 0.1s for sending a message, it will be roughly 10s for 100 and 1000s 10000
             expect(endTime - startTime).toBeLessThan(1050_000)
 
-            alice.stopSync()
+            await alice.stopSync()
             log('Done', {
                 spaceId: chainSpaceChannelData.spaceId,
                 channelId: chainSpaceChannelData.channelId,

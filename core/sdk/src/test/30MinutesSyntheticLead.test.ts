@@ -3,7 +3,7 @@
  */
 
 import { check, dlog } from '@river/dlog'
-import { makeUserContextFromWallet, makeDonePromise, waitFor } from '../util.test'
+import { makeUserContextFromWallet, waitFor, makeDonePromise } from '../util.test'
 import { ethers } from 'ethers'
 import { jest } from '@jest/globals'
 import { makeStreamRpcClient } from '../makeStreamRpcClient'
@@ -113,6 +113,7 @@ describe('mirrorMessages', () => {
 
             //Step 2 - login to Towns
             const messagesSet: Set<string> = new Set()
+            const replyRecieved = makeDonePromise()
             log('start')
             // set up the web3 provider and spacedap
             const leaderWallet = new ethers.Wallet(leaderKey)
@@ -227,7 +228,6 @@ describe('mirrorMessages', () => {
             )
 
             //Step 4 - send message
-            const done = makeDonePromise()
             client.on(
                 'eventDecrypted',
                 (
@@ -235,20 +235,18 @@ describe('mirrorMessages', () => {
                     contentKind: SnapshotCaseType,
                     event: DecryptedTimelineEvent,
                 ): void => {
-                    done.runAndDoneAsync(async () => {
-                        // await client.decryptEventIfNeeded(event)
-                        const clearEvent = event.decryptedContent
-                        check(clearEvent.kind === 'channelMessage')
-                        expect(clearEvent.content?.payload).toBeDefined()
-                        if (
-                            clearEvent.content?.payload?.case === 'post' &&
-                            clearEvent.content?.payload?.value?.content?.case === 'text'
-                        ) {
-                            const body = clearEvent.content?.payload?.value?.content.value?.body
-                            messagesSet.add(body)
-                            log('Added message', body)
-                        }
-                    })
+                    const clearEvent = event.decryptedContent
+                    check(clearEvent.kind === 'channelMessage')
+                    expect(clearEvent.content?.payload).toBeDefined()
+                    if (
+                        clearEvent.content?.payload?.case === 'post' &&
+                        clearEvent.content?.payload?.value?.content?.case === 'text'
+                    ) {
+                        const body = clearEvent.content?.payload?.value?.content.value?.body
+                        messagesSet.add(body)
+                        replyRecieved.done()
+                        log('Added message', body)
+                    }
                 },
             )
 
@@ -263,14 +261,8 @@ describe('mirrorMessages', () => {
             })
             log('First message sent')
             //Step 5 - wait for follower to be logged in
-            await waitFor(
-                () => {
-                    expect(messagesSet.has('Mirror from Bot 2: ' + messageText)).toBe(true)
-                },
-                {
-                    timeoutMS: loginWaitTime,
-                },
-            )
+            await replyRecieved.expectToSucceed()
+            expect(messagesSet.has('Mirror from Bot 2: ' + messageText)).toBe(true)
             log('Reply recieved')
             await client.stopSync()
             log('Done')

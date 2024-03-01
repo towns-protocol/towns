@@ -3,11 +3,11 @@
     "source.fixAll.eslint": "explicit"
   },
   "eslint.workingDirectories": [
-    "./casablanca/proto",
-    "./casablanca/debug-app",
-    "./casablanca/waterproof",
-    "./casablanca/sdk",
-    "./casablanca/web3",
+    "./core/proto",
+    "./core/debug-app",
+    "./core/waterproof",
+    "./core/sdk",
+    "./core/web3",
     "./clients/web/app",
     "./clients/web/lib",
     "./clients/web/sample-app",

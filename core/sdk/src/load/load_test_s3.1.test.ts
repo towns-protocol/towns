@@ -268,7 +268,7 @@ describe('loadTestsScenario: Main focus of this scenario is testing of DMs and G
         log('Stop clients')
         // kill the clients
         for (const client of allClients) {
-            client.stopSync()
+            await client.stopSync()
         }
         const loadTestEndTime = Date.now()
         loadTestMetadata['loadTestS3Duration'] = loadTestEndTime - loadTestStartTime
