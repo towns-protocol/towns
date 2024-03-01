@@ -1,4 +1,0 @@
-# add your secret variables here for local development
-# for public variables, add them in wrangler.toml
-AUTH_SECRET=foo
-INFURA_API_KEY=bar
