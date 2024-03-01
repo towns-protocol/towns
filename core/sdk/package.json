@@ -51,10 +51,13 @@
         "lodash": "^4.17.21",
         "nanoid": "^4.0.0",
         "p-limit": "^5.0.0",
-        "supports-color": "^9.2.3"
+        "supports-color": "^9.2.3",
+        "wagmi": "^1.4.12"
     },
     "devDependencies": {
         "@jest/globals": "^29.6.2",
+        "@testing-library/jest-dom": "^5.16.5",
+        "@testing-library/react": "^14.0.0",
         "@types/debug": "^4.1.8",
         "@types/jest": "^29.5.3",
         "@types/lodash": "^4.14.186",
