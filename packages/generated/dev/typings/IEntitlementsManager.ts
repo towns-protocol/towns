@@ -4,7 +4,6 @@
 import type {
   BaseContract,
   BigNumber,
-  BigNumberish,
   BytesLike,
   CallOverrides,
   ContractTransaction,
@@ -27,65 +26,6 @@ import type {
   PromiseOrValue,
 } from "./common";
 
-export declare namespace IRuleEntitlement {
-  export type OperationStruct = {
-    opType: PromiseOrValue<BigNumberish>;
-    index: PromiseOrValue<BigNumberish>;
-  };
-
-  export type OperationStructOutput = [number, number] & {
-    opType: number;
-    index: number;
-  };
-
-  export type CheckOperationStruct = {
-    opType: PromiseOrValue<BigNumberish>;
-    chainId: PromiseOrValue<BigNumberish>;
-    contractAddress: PromiseOrValue<string>;
-    threshold: PromiseOrValue<BigNumberish>;
-  };
-
-  export type CheckOperationStructOutput = [
-    number,
-    BigNumber,
-    string,
-    BigNumber
-  ] & {
-    opType: number;
-    chainId: BigNumber;
-    contractAddress: string;
-    threshold: BigNumber;
-  };
-
-  export type LogicalOperationStruct = {
-    logOpType: PromiseOrValue<BigNumberish>;
-    leftOperationIndex: PromiseOrValue<BigNumberish>;
-    rightOperationIndex: PromiseOrValue<BigNumberish>;
-  };
-
-  export type LogicalOperationStructOutput = [number, number, number] & {
-    logOpType: number;
-    leftOperationIndex: number;
-    rightOperationIndex: number;
-  };
-
-  export type RuleDataStruct = {
-    operations: IRuleEntitlement.OperationStruct[];
-    checkOperations: IRuleEntitlement.CheckOperationStruct[];
-    logicalOperations: IRuleEntitlement.LogicalOperationStruct[];
-  };
-
-  export type RuleDataStructOutput = [
-    IRuleEntitlement.OperationStructOutput[],
-    IRuleEntitlement.CheckOperationStructOutput[],
-    IRuleEntitlement.LogicalOperationStructOutput[]
-  ] & {
-    operations: IRuleEntitlement.OperationStructOutput[];
-    checkOperations: IRuleEntitlement.CheckOperationStructOutput[];
-    logicalOperations: IRuleEntitlement.LogicalOperationStructOutput[];
-  };
-}
-
 export declare namespace IEntitlementsManagerBase {
   export type EntitlementStruct = {
     name: PromiseOrValue<string>;
@@ -106,10 +46,8 @@ export interface IEntitlementsManagerInterface extends utils.Interface {
   functions: {
     "addEntitlementModule(address)": FunctionFragment;
     "addImmutableEntitlements(address[])": FunctionFragment;
-    "getChannelEntitlements(string,string)": FunctionFragment;
     "getEntitlement(address)": FunctionFragment;
     "getEntitlements()": FunctionFragment;
-    "getTownEntitlements(string)": FunctionFragment;
     "isEntitledToChannel(string,address,string)": FunctionFragment;
     "isEntitledToSpace(address,string)": FunctionFragment;
     "removeEntitlementModule(address)": FunctionFragment;
@@ -119,10 +57,8 @@ export interface IEntitlementsManagerInterface extends utils.Interface {
     nameOrSignatureOrTopic:
       | "addEntitlementModule"
       | "addImmutableEntitlements"
-      | "getChannelEntitlements"
       | "getEntitlement"
       | "getEntitlements"
-      | "getTownEntitlements"
       | "isEntitledToChannel"
       | "isEntitledToSpace"
       | "removeEntitlementModule"
@@ -137,20 +73,12 @@ export interface IEntitlementsManagerInterface extends utils.Interface {
     values: [PromiseOrValue<string>[]]
   ): string;
   encodeFunctionData(
-    functionFragment: "getChannelEntitlements",
-    values: [PromiseOrValue<string>, PromiseOrValue<string>]
-  ): string;
-  encodeFunctionData(
     functionFragment: "getEntitlement",
     values: [PromiseOrValue<string>]
   ): string;
   encodeFunctionData(
     functionFragment: "getEntitlements",
     values?: undefined
-  ): string;
-  encodeFunctionData(
-    functionFragment: "getTownEntitlements",
-    values: [PromiseOrValue<string>]
   ): string;
   encodeFunctionData(
     functionFragment: "isEntitledToChannel",
@@ -178,19 +106,11 @@ export interface IEntitlementsManagerInterface extends utils.Interface {
     data: BytesLike
   ): Result;
   decodeFunctionResult(
-    functionFragment: "getChannelEntitlements",
-    data: BytesLike
-  ): Result;
-  decodeFunctionResult(
     functionFragment: "getEntitlement",
     data: BytesLike
   ): Result;
   decodeFunctionResult(
     functionFragment: "getEntitlements",
-    data: BytesLike
-  ): Result;
-  decodeFunctionResult(
-    functionFragment: "getTownEntitlements",
     data: BytesLike
   ): Result;
   decodeFunctionResult(
@@ -276,12 +196,6 @@ export interface IEntitlementsManager extends BaseContract {
       overrides?: Overrides & { from?: PromiseOrValue<string> }
     ): Promise<ContractTransaction>;
 
-    getChannelEntitlements(
-      channelId: PromiseOrValue<string>,
-      permission: PromiseOrValue<string>,
-      overrides?: CallOverrides
-    ): Promise<[IRuleEntitlement.RuleDataStructOutput]>;
-
     getEntitlement(
       entitlement: PromiseOrValue<string>,
       overrides?: CallOverrides
@@ -298,11 +212,6 @@ export interface IEntitlementsManager extends BaseContract {
         entitlements: IEntitlementsManagerBase.EntitlementStructOutput[];
       }
     >;
-
-    getTownEntitlements(
-      permission: PromiseOrValue<string>,
-      overrides?: CallOverrides
-    ): Promise<[IRuleEntitlement.RuleDataStructOutput]>;
 
     isEntitledToChannel(
       channelId: PromiseOrValue<string>,
@@ -333,12 +242,6 @@ export interface IEntitlementsManager extends BaseContract {
     overrides?: Overrides & { from?: PromiseOrValue<string> }
   ): Promise<ContractTransaction>;
 
-  getChannelEntitlements(
-    channelId: PromiseOrValue<string>,
-    permission: PromiseOrValue<string>,
-    overrides?: CallOverrides
-  ): Promise<IRuleEntitlement.RuleDataStructOutput>;
-
   getEntitlement(
     entitlement: PromiseOrValue<string>,
     overrides?: CallOverrides
@@ -347,11 +250,6 @@ export interface IEntitlementsManager extends BaseContract {
   getEntitlements(
     overrides?: CallOverrides
   ): Promise<IEntitlementsManagerBase.EntitlementStructOutput[]>;
-
-  getTownEntitlements(
-    permission: PromiseOrValue<string>,
-    overrides?: CallOverrides
-  ): Promise<IRuleEntitlement.RuleDataStructOutput>;
 
   isEntitledToChannel(
     channelId: PromiseOrValue<string>,
@@ -382,12 +280,6 @@ export interface IEntitlementsManager extends BaseContract {
       overrides?: CallOverrides
     ): Promise<void>;
 
-    getChannelEntitlements(
-      channelId: PromiseOrValue<string>,
-      permission: PromiseOrValue<string>,
-      overrides?: CallOverrides
-    ): Promise<IRuleEntitlement.RuleDataStructOutput>;
-
     getEntitlement(
       entitlement: PromiseOrValue<string>,
       overrides?: CallOverrides
@@ -396,11 +288,6 @@ export interface IEntitlementsManager extends BaseContract {
     getEntitlements(
       overrides?: CallOverrides
     ): Promise<IEntitlementsManagerBase.EntitlementStructOutput[]>;
-
-    getTownEntitlements(
-      permission: PromiseOrValue<string>,
-      overrides?: CallOverrides
-    ): Promise<IRuleEntitlement.RuleDataStructOutput>;
 
     isEntitledToChannel(
       channelId: PromiseOrValue<string>,
@@ -452,23 +339,12 @@ export interface IEntitlementsManager extends BaseContract {
       overrides?: Overrides & { from?: PromiseOrValue<string> }
     ): Promise<BigNumber>;
 
-    getChannelEntitlements(
-      channelId: PromiseOrValue<string>,
-      permission: PromiseOrValue<string>,
-      overrides?: CallOverrides
-    ): Promise<BigNumber>;
-
     getEntitlement(
       entitlement: PromiseOrValue<string>,
       overrides?: CallOverrides
     ): Promise<BigNumber>;
 
     getEntitlements(overrides?: CallOverrides): Promise<BigNumber>;
-
-    getTownEntitlements(
-      permission: PromiseOrValue<string>,
-      overrides?: CallOverrides
-    ): Promise<BigNumber>;
 
     isEntitledToChannel(
       channelId: PromiseOrValue<string>,
@@ -500,23 +376,12 @@ export interface IEntitlementsManager extends BaseContract {
       overrides?: Overrides & { from?: PromiseOrValue<string> }
     ): Promise<PopulatedTransaction>;
 
-    getChannelEntitlements(
-      channelId: PromiseOrValue<string>,
-      permission: PromiseOrValue<string>,
-      overrides?: CallOverrides
-    ): Promise<PopulatedTransaction>;
-
     getEntitlement(
       entitlement: PromiseOrValue<string>,
       overrides?: CallOverrides
     ): Promise<PopulatedTransaction>;
 
     getEntitlements(overrides?: CallOverrides): Promise<PopulatedTransaction>;
-
-    getTownEntitlements(
-      permission: PromiseOrValue<string>,
-      overrides?: CallOverrides
-    ): Promise<PopulatedTransaction>;
 
     isEntitledToChannel(
       channelId: PromiseOrValue<string>,

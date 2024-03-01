@@ -63,80 +63,45 @@ export declare namespace IMembershipBase {
   };
 }
 
-export declare namespace IRuleEntitlement {
-  export type OperationStruct = {
-    opType: PromiseOrValue<BigNumberish>;
-    index: PromiseOrValue<BigNumberish>;
-  };
-
-  export type OperationStructOutput = [number, number] & {
-    opType: number;
-    index: number;
-  };
-
-  export type CheckOperationStruct = {
-    opType: PromiseOrValue<BigNumberish>;
-    chainId: PromiseOrValue<BigNumberish>;
+export declare namespace ITokenEntitlement {
+  export type ExternalTokenStruct = {
     contractAddress: PromiseOrValue<string>;
-    threshold: PromiseOrValue<BigNumberish>;
+    quantity: PromiseOrValue<BigNumberish>;
+    isSingleToken: PromiseOrValue<boolean>;
+    tokenIds: PromiseOrValue<BigNumberish>[];
   };
 
-  export type CheckOperationStructOutput = [
-    number,
-    BigNumber,
+  export type ExternalTokenStructOutput = [
     string,
-    BigNumber
+    BigNumber,
+    boolean,
+    BigNumber[]
   ] & {
-    opType: number;
-    chainId: BigNumber;
     contractAddress: string;
-    threshold: BigNumber;
-  };
-
-  export type LogicalOperationStruct = {
-    logOpType: PromiseOrValue<BigNumberish>;
-    leftOperationIndex: PromiseOrValue<BigNumberish>;
-    rightOperationIndex: PromiseOrValue<BigNumberish>;
-  };
-
-  export type LogicalOperationStructOutput = [number, number, number] & {
-    logOpType: number;
-    leftOperationIndex: number;
-    rightOperationIndex: number;
-  };
-
-  export type RuleDataStruct = {
-    operations: IRuleEntitlement.OperationStruct[];
-    checkOperations: IRuleEntitlement.CheckOperationStruct[];
-    logicalOperations: IRuleEntitlement.LogicalOperationStruct[];
-  };
-
-  export type RuleDataStructOutput = [
-    IRuleEntitlement.OperationStructOutput[],
-    IRuleEntitlement.CheckOperationStructOutput[],
-    IRuleEntitlement.LogicalOperationStructOutput[]
-  ] & {
-    operations: IRuleEntitlement.OperationStructOutput[];
-    checkOperations: IRuleEntitlement.CheckOperationStructOutput[];
-    logicalOperations: IRuleEntitlement.LogicalOperationStructOutput[];
+    quantity: BigNumber;
+    isSingleToken: boolean;
+    tokenIds: BigNumber[];
   };
 }
 
 export declare namespace IArchitectBase {
   export type MembershipRequirementsStruct = {
     everyone: PromiseOrValue<boolean>;
+    tokens: ITokenEntitlement.ExternalTokenStruct[];
     users: PromiseOrValue<string>[];
-    ruleData: IRuleEntitlement.RuleDataStruct;
+    rule: PromiseOrValue<string>;
   };
 
   export type MembershipRequirementsStructOutput = [
     boolean,
+    ITokenEntitlement.ExternalTokenStructOutput[],
     string[],
-    IRuleEntitlement.RuleDataStructOutput
+    string
   ] & {
     everyone: boolean;
+    tokens: ITokenEntitlement.ExternalTokenStructOutput[];
     users: string[];
-    ruleData: IRuleEntitlement.RuleDataStructOutput;
+    rule: string;
   };
 
   export type MembershipStruct = {
@@ -190,7 +155,7 @@ export declare namespace IArchitectBase {
 
 export interface IArchitectInterface extends utils.Interface {
   functions: {
-    "createSpace((string,string,string,((string,string,uint256,uint256,uint64,address,address,uint256,address),(bool,address[],((uint8,uint8)[],(uint8,uint256,address,uint256)[],(uint8,uint8,uint8)[])),string[]),(string,string)))": FunctionFragment;
+    "createSpace((string,string,string,((string,string,uint256,uint256,uint64,address,address,uint256,address),(bool,(address,uint256,bool,uint256[])[],address[],address),string[]),(string,string)))": FunctionFragment;
     "getSpaceArchitectImplementations()": FunctionFragment;
     "getSpaceById(string)": FunctionFragment;
     "getTokenIdBySpace(address)": FunctionFragment;
@@ -326,7 +291,7 @@ export interface IArchitect extends BaseContract {
       [string, string, string] & {
         ownerTokenImplementation: string;
         userEntitlementImplementation: string;
-        ruleEntitlementImplementation: string;
+        tokenEntitlementImplementation: string;
       }
     >;
 
@@ -353,7 +318,7 @@ export interface IArchitect extends BaseContract {
     setSpaceArchitectImplementations(
       ownerTokenImplementation: PromiseOrValue<string>,
       userEntitlementImplementation: PromiseOrValue<string>,
-      ruleEntitlementImplementation: PromiseOrValue<string>,
+      tokenEntitlementImplementation: PromiseOrValue<string>,
       overrides?: Overrides & { from?: PromiseOrValue<string> }
     ): Promise<ContractTransaction>;
   };
@@ -369,7 +334,7 @@ export interface IArchitect extends BaseContract {
     [string, string, string] & {
       ownerTokenImplementation: string;
       userEntitlementImplementation: string;
-      ruleEntitlementImplementation: string;
+      tokenEntitlementImplementation: string;
     }
   >;
 
@@ -396,7 +361,7 @@ export interface IArchitect extends BaseContract {
   setSpaceArchitectImplementations(
     ownerTokenImplementation: PromiseOrValue<string>,
     userEntitlementImplementation: PromiseOrValue<string>,
-    ruleEntitlementImplementation: PromiseOrValue<string>,
+    tokenEntitlementImplementation: PromiseOrValue<string>,
     overrides?: Overrides & { from?: PromiseOrValue<string> }
   ): Promise<ContractTransaction>;
 
@@ -412,7 +377,7 @@ export interface IArchitect extends BaseContract {
       [string, string, string] & {
         ownerTokenImplementation: string;
         userEntitlementImplementation: string;
-        ruleEntitlementImplementation: string;
+        tokenEntitlementImplementation: string;
       }
     >;
 
@@ -439,7 +404,7 @@ export interface IArchitect extends BaseContract {
     setSpaceArchitectImplementations(
       ownerTokenImplementation: PromiseOrValue<string>,
       userEntitlementImplementation: PromiseOrValue<string>,
-      ruleEntitlementImplementation: PromiseOrValue<string>,
+      tokenEntitlementImplementation: PromiseOrValue<string>,
       overrides?: CallOverrides
     ): Promise<void>;
   };
@@ -490,7 +455,7 @@ export interface IArchitect extends BaseContract {
     setSpaceArchitectImplementations(
       ownerTokenImplementation: PromiseOrValue<string>,
       userEntitlementImplementation: PromiseOrValue<string>,
-      ruleEntitlementImplementation: PromiseOrValue<string>,
+      tokenEntitlementImplementation: PromiseOrValue<string>,
       overrides?: Overrides & { from?: PromiseOrValue<string> }
     ): Promise<BigNumber>;
   };
@@ -528,7 +493,7 @@ export interface IArchitect extends BaseContract {
     setSpaceArchitectImplementations(
       ownerTokenImplementation: PromiseOrValue<string>,
       userEntitlementImplementation: PromiseOrValue<string>,
-      ruleEntitlementImplementation: PromiseOrValue<string>,
+      tokenEntitlementImplementation: PromiseOrValue<string>,
       overrides?: Overrides & { from?: PromiseOrValue<string> }
     ): Promise<PopulatedTransaction>;
   };

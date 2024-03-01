@@ -951,11 +951,11 @@
       ]
     },
     "contracts/src/river/registry/RiverRegistry.sol": {
-      "keccak256": "0xf807cbc76908dd75764fe20de7f847f52a0ea15bc5ee81296506a15024a72f6f",
+      "keccak256": "0xaf846e5dc785e4ec93e0de2afe9f29eece6bbc3d6ee628844c789569ab10383a",
       "license": "MIT",
       "urls": [
-        "bzz-raw://c2253cf94b2d2e24f579f70f9f99aa95727c70fe5f61661bbf04af90531f175f",
-        "dweb:/ipfs/QmZ1MdF7VKVBPaUTZdnVhi8PVKhpzgc21qBKPAuck7nB8r"
+        "bzz-raw://20d93dac06ee65d9f9986cd7616b4748f4470548a0d09d02011886cfeeda27fb",
+        "dweb:/ipfs/QmcdZ2PcmQKxqRwMBwTiG3sPYYwopuV4BUsDwyhP2kFUKm"
       ]
     },
     "contracts/src/river/registry/RiverRegistryStorage.sol": {

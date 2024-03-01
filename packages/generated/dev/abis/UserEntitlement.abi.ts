@@ -6,7 +6,7 @@ export default [
   },
   {
     "type": "function",
-    "name": "SPACE_ADDRESS",
+    "name": "TOWN_ADDRESS",
     "inputs": [],
     "outputs": [
       {
@@ -43,8 +43,8 @@ export default [
     "outputs": [
       {
         "name": "",
-        "type": "bytes",
-        "internalType": "bytes"
+        "type": "bytes[]",
+        "internalType": "bytes[]"
       }
     ],
     "stateMutability": "view"
@@ -64,19 +64,6 @@ export default [
   },
   {
     "type": "function",
-    "name": "isCrosschain",
-    "inputs": [],
-    "outputs": [
-      {
-        "name": "",
-        "type": "bool",
-        "internalType": "bool"
-      }
-    ],
-    "stateMutability": "pure"
-  },
-  {
-    "type": "function",
     "name": "isEntitled",
     "inputs": [
       {
@@ -85,9 +72,9 @@ export default [
         "internalType": "string"
       },
       {
-        "name": "wallets",
-        "type": "address[]",
-        "internalType": "address[]"
+        "name": "user",
+        "type": "address",
+        "internalType": "address"
       },
       {
         "name": "permission",
@@ -151,9 +138,20 @@ export default [
         "name": "roleId",
         "type": "uint256",
         "internalType": "uint256"
+      },
+      {
+        "name": "entitlementData",
+        "type": "bytes",
+        "internalType": "bytes"
       }
     ],
-    "outputs": [],
+    "outputs": [
+      {
+        "name": "entitlementId",
+        "type": "bytes32",
+        "internalType": "bytes32"
+      }
+    ],
     "stateMutability": "nonpayable"
   },
   {
@@ -171,7 +169,13 @@ export default [
         "internalType": "bytes"
       }
     ],
-    "outputs": [],
+    "outputs": [
+      {
+        "name": "entitlementId",
+        "type": "bytes32",
+        "internalType": "bytes32"
+      }
+    ],
     "stateMutability": "nonpayable"
   },
   {
