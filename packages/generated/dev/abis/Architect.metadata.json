@@ -1034,11 +1034,11 @@
       ]
     },
     "contracts/src/spaces/facets/entitlements/IEntitlementsManager.sol": {
-      "keccak256": "0x4e62913698ebd5aea10737ec09d2466cf2bba10d42cfa2577eed236c46c97d98",
+      "keccak256": "0x0e5cfd4a4e7196f4487167767ebf89415f775dff918001c06f759b6a975f8c0c",
       "license": "Apache-2.0",
       "urls": [
-        "bzz-raw://d4c0d0d0c2841c09fda94472202c7cc169a93e11765b89f74fbd51ce65397021",
-        "dweb:/ipfs/QmcYLgnXinj9UGfJ7zWNbhvuoXHzR9rB6o7nbxY5CBJQGF"
+        "bzz-raw://e9cc6e70e2a1d4f6beb4b5c93677f6ad9603a8dafb3e26393d6d25a7ac6d61b9",
+        "dweb:/ipfs/QmQXgtUT49MCjZPmjUHdVxkJuA7yWjmD7qHcN8U2PygBWY"
       ]
     },
     "contracts/src/spaces/facets/guardian/GuardianBase.sol": {

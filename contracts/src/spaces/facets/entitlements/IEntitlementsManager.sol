@@ -39,7 +39,7 @@ interface IEntitlementsManager is IEntitlementsManagerBase {
   /// @notice Returns the EntitlementData that qualifies for a permission
   /// @param permission The permission to check
   /// @return RuleData describing the tests that must pass for the permission
-  function getTownEntitlements(
+  function getSpaceEntitlements(
     string calldata permission
   ) external view returns (IRuleEntitlement.RuleData memory);
 

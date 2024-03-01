@@ -195,7 +195,7 @@ export default [
   },
   {
     "type": "function",
-    "name": "getTownEntitlements",
+    "name": "getSpaceEntitlements",
     "inputs": [
       {
         "name": "permission",

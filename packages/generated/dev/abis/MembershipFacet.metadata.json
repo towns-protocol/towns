@@ -2012,11 +2012,11 @@
       ]
     },
     "contracts/src/spaces/facets/Entitled.sol": {
-      "keccak256": "0xa2cf916fc2e8541b92a7a595fc5c912164752c97668625dc64a5b19aa43b0f03",
+      "keccak256": "0x95302e368bf2f118d9704e16c77c533a681b9a7c72aedbea0b52a5c614e354c5",
       "license": "Apache-2.0",
       "urls": [
-        "bzz-raw://a222d8a873850f02ff228847f084314b1a252f2dc0c2e702ca0b64c523094b09",
-        "dweb:/ipfs/QmRjWqFShfFyobTEYE2WDfgyQWXVzpSrFguSucC9acZQGP"
+        "bzz-raw://de242be530d421f3c17f0ceafbba3edae090009be18022b5448f08269421ffb7",
+        "dweb:/ipfs/QmbSGZZA5MihN3TiNi8tJv9KYU2W6Z1FSTz9qofho7xbPw"
       ]
     },
     "contracts/src/spaces/facets/Permissions.sol": {

@@ -48,10 +48,10 @@ contract EntitlementsManager is
     return _isEntitledToSpace(user, permission);
   }
 
-  function getTownEntitlements(
+  function getSpaceEntitlements(
     string calldata permission
   ) external view returns (IRuleEntitlement.RuleData memory) {
-    return _getTownEntitlements(permission);
+    return _getSpaceEntitlements(permission);
   }
 
   function isEntitledToChannel(

@@ -109,7 +109,7 @@ export interface IEntitlementsManagerInterface extends utils.Interface {
     "getChannelEntitlements(string,string)": FunctionFragment;
     "getEntitlement(address)": FunctionFragment;
     "getEntitlements()": FunctionFragment;
-    "getTownEntitlements(string)": FunctionFragment;
+    "getSpaceEntitlements(string)": FunctionFragment;
     "isEntitledToChannel(string,address,string)": FunctionFragment;
     "isEntitledToSpace(address,string)": FunctionFragment;
     "removeEntitlementModule(address)": FunctionFragment;
@@ -122,7 +122,7 @@ export interface IEntitlementsManagerInterface extends utils.Interface {
       | "getChannelEntitlements"
       | "getEntitlement"
       | "getEntitlements"
-      | "getTownEntitlements"
+      | "getSpaceEntitlements"
       | "isEntitledToChannel"
       | "isEntitledToSpace"
       | "removeEntitlementModule"
@@ -149,7 +149,7 @@ export interface IEntitlementsManagerInterface extends utils.Interface {
     values?: undefined
   ): string;
   encodeFunctionData(
-    functionFragment: "getTownEntitlements",
+    functionFragment: "getSpaceEntitlements",
     values: [PromiseOrValue<string>]
   ): string;
   encodeFunctionData(
@@ -190,7 +190,7 @@ export interface IEntitlementsManagerInterface extends utils.Interface {
     data: BytesLike
   ): Result;
   decodeFunctionResult(
-    functionFragment: "getTownEntitlements",
+    functionFragment: "getSpaceEntitlements",
     data: BytesLike
   ): Result;
   decodeFunctionResult(
@@ -299,7 +299,7 @@ export interface IEntitlementsManager extends BaseContract {
       }
     >;
 
-    getTownEntitlements(
+    getSpaceEntitlements(
       permission: PromiseOrValue<string>,
       overrides?: CallOverrides
     ): Promise<[IRuleEntitlement.RuleDataStructOutput]>;
@@ -348,7 +348,7 @@ export interface IEntitlementsManager extends BaseContract {
     overrides?: CallOverrides
   ): Promise<IEntitlementsManagerBase.EntitlementStructOutput[]>;
 
-  getTownEntitlements(
+  getSpaceEntitlements(
     permission: PromiseOrValue<string>,
     overrides?: CallOverrides
   ): Promise<IRuleEntitlement.RuleDataStructOutput>;
@@ -397,7 +397,7 @@ export interface IEntitlementsManager extends BaseContract {
       overrides?: CallOverrides
     ): Promise<IEntitlementsManagerBase.EntitlementStructOutput[]>;
 
-    getTownEntitlements(
+    getSpaceEntitlements(
       permission: PromiseOrValue<string>,
       overrides?: CallOverrides
     ): Promise<IRuleEntitlement.RuleDataStructOutput>;
@@ -465,7 +465,7 @@ export interface IEntitlementsManager extends BaseContract {
 
     getEntitlements(overrides?: CallOverrides): Promise<BigNumber>;
 
-    getTownEntitlements(
+    getSpaceEntitlements(
       permission: PromiseOrValue<string>,
       overrides?: CallOverrides
     ): Promise<BigNumber>;
@@ -513,7 +513,7 @@ export interface IEntitlementsManager extends BaseContract {
 
     getEntitlements(overrides?: CallOverrides): Promise<PopulatedTransaction>;
 
-    getTownEntitlements(
+    getSpaceEntitlements(
       permission: PromiseOrValue<string>,
       overrides?: CallOverrides
     ): Promise<PopulatedTransaction>;

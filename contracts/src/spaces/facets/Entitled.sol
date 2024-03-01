@@ -172,7 +172,7 @@ abstract contract Entitled is
     return _isEntitled(IN_TOWN, user, bytes32(abi.encodePacked(permission)));
   }
 
-  function _getTownEntitlements(
+  function _getSpaceEntitlements(
     string calldata permission
   ) internal pure returns (IRuleEntitlement.RuleData memory data) {
     // TODO return correct rules to be validated by apps

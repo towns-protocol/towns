@@ -543,7 +543,7 @@
             "type": "string"
           }
         ],
-        "name": "getTownEntitlements",
+        "name": "getSpaceEntitlements",
         "outputs": [
           {
             "components": [
@@ -740,7 +740,7 @@
             "_0": "The entitlement modules"
           }
         },
-        "getTownEntitlements(string)": {
+        "getSpaceEntitlements(string)": {
           "params": {
             "permission": "The permission to check"
           },
@@ -860,7 +860,7 @@
         "getEntitlements()": {
           "notice": "Gets all entitlements from the town"
         },
-        "getTownEntitlements(string)": {
+        "getSpaceEntitlements(string)": {
           "notice": "Returns the EntitlementData that qualifies for a permission"
         },
         "isEntitledToChannel(string,address,string)": {
@@ -1032,11 +1032,11 @@
       ]
     },
     "contracts/src/spaces/facets/Entitled.sol": {
-      "keccak256": "0xa2cf916fc2e8541b92a7a595fc5c912164752c97668625dc64a5b19aa43b0f03",
+      "keccak256": "0x95302e368bf2f118d9704e16c77c533a681b9a7c72aedbea0b52a5c614e354c5",
       "license": "Apache-2.0",
       "urls": [
-        "bzz-raw://a222d8a873850f02ff228847f084314b1a252f2dc0c2e702ca0b64c523094b09",
-        "dweb:/ipfs/QmRjWqFShfFyobTEYE2WDfgyQWXVzpSrFguSucC9acZQGP"
+        "bzz-raw://de242be530d421f3c17f0ceafbba3edae090009be18022b5448f08269421ffb7",
+        "dweb:/ipfs/QmbSGZZA5MihN3TiNi8tJv9KYU2W6Z1FSTz9qofho7xbPw"
       ]
     },
     "contracts/src/spaces/facets/Permissions.sol": {
@@ -1072,11 +1072,11 @@
       ]
     },
     "contracts/src/spaces/facets/entitlements/EntitlementsManager.sol": {
-      "keccak256": "0x82355f4c15abbdb45596b78609cb569a50bb6f4235cd8a7a0d798a90c8b52452",
+      "keccak256": "0x803d532e70030be6b29c8a03e9e06cb4daa2898f7ba543a3c01a60bd74b57525",
       "license": "Apache-2.0",
       "urls": [
-        "bzz-raw://e6409182fb5299f9f3497692c49c8db182b3c4fb717038630a86646426e7c2c8",
-        "dweb:/ipfs/QmcVhjT8ZBqLwoQ9ub2EKcwSKkmrANFM3psLS219G8QECS"
+        "bzz-raw://728cef7dfc7672227d6558069af644b65628790c021dbd61258333460f34a234",
+        "dweb:/ipfs/QmYbUcgJhg4LgrLSQGGPh8zZPBuxQqHE3PiUaA76Y79Rhr"
       ]
     },
     "contracts/src/spaces/facets/entitlements/EntitlementsManagerBase.sol": {
@@ -1104,11 +1104,11 @@
       ]
     },
     "contracts/src/spaces/facets/entitlements/IEntitlementsManager.sol": {
-      "keccak256": "0x4e62913698ebd5aea10737ec09d2466cf2bba10d42cfa2577eed236c46c97d98",
+      "keccak256": "0x0e5cfd4a4e7196f4487167767ebf89415f775dff918001c06f759b6a975f8c0c",
       "license": "Apache-2.0",
       "urls": [
-        "bzz-raw://d4c0d0d0c2841c09fda94472202c7cc169a93e11765b89f74fbd51ce65397021",
-        "dweb:/ipfs/QmcYLgnXinj9UGfJ7zWNbhvuoXHzR9rB6o7nbxY5CBJQGF"
+        "bzz-raw://e9cc6e70e2a1d4f6beb4b5c93677f6ad9603a8dafb3e26393d6d25a7ac6d61b9",
+        "dweb:/ipfs/QmQXgtUT49MCjZPmjUHdVxkJuA7yWjmD7qHcN8U2PygBWY"
       ]
     },
     "contracts/src/spaces/facets/membership/MembershipStorage.sol": {
