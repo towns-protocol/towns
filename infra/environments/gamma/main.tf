@@ -112,7 +112,7 @@ resource "aws_secretsmanager_secret" "notification_vapid_key" {
 
 locals {
   num_nodes                       = 10
-  river_registry_contract_address = "0x9280690672d78B005f0E630FE7b99E44839c9D8B"
+  river_registry_contract_address = "0xFeba0657451756b0Dac2cB5014f5A0BdD15D8A2a"
 }
 
 module "river_node" {

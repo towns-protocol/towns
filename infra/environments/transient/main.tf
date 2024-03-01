@@ -99,9 +99,9 @@ locals {
   base_earliest_fork_block_number = "latest"
 
   # This is when the Stream Registry was first deployed
-  river_clean_fork_block_number = "3893509"
+  river_clean_fork_block_number = "3971249"
 
-  river_registry_contract_address = "0x48000bB01F2066F8dfdfA8299Fc996b4b1BaB3DD"
+  river_registry_contract_address = "0xFeba0657451756b0Dac2cB5014f5A0BdD15D8A2a"
 }
 
 module "base_forked_chain_service" {
