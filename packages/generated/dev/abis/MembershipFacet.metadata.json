@@ -1795,6 +1795,22 @@
     ]
   },
   "sources": {
+    "contracts/src/crosschain/IRuleEntitlement.sol": {
+      "keccak256": "0x3da336bbe54d6a62cb521d47af057095a307042d5741e08d7cf190552f4616b0",
+      "license": "MIT",
+      "urls": [
+        "bzz-raw://2139ec62b79becb583e95f8d8d7ba941769ff26efdea56ff3f2322a5ad2a55a7",
+        "dweb:/ipfs/QmSsZXgEEALmakJT5a2QfuE2EoMJ27o7UFQYP3DA2fm4EU"
+      ]
+    },
+    "contracts/src/crosschain/RuleEntitlementUtil.sol": {
+      "keccak256": "0xa64295d54d0af042601e56650a852b3b053e407da0c13bc8fcd17766936b6443",
+      "license": "MIT",
+      "urls": [
+        "bzz-raw://226a0d8e915e8525fde25914c7e69b016775cdd2a4fba2362ea13dfd4ed705c3",
+        "dweb:/ipfs/QmcqC9USu4Fk1TX8zg399zboyShdGyxfMcLdtbcAJJvLvz"
+      ]
+    },
     "contracts/src/diamond/facets/Facet.sol": {
       "keccak256": "0xecbb7e8de0dae5bdbcbda879436335abac6808bcc2e14f1f4e9efbdc77c4e8be",
       "license": "Apache-2.0",
@@ -1979,28 +1995,36 @@
         "dweb:/ipfs/QmUFD83GFhupZo2d3PafyK5fjqrzFRDnJHEsTGYhHakzUM"
       ]
     },
-    "contracts/src/spaces/entitlements/IEntitlement.sol": {
-      "keccak256": "0x35f1b94c8192c2716c487b49c62c35821dc3b34da9d5deb50e756772407c955f",
+    "contracts/src/river/wallet-link/WalletLinkStorage.sol": {
+      "keccak256": "0xfeff774f848982235ee5544cc01c30c8a0eb9e0d5c1a37fe91baeb21522b57c1",
       "license": "Apache-2.0",
       "urls": [
-        "bzz-raw://ec3a05d15e524da284aa417da3f09b6b34f7732f6ee02d650f26f9c04eb4d336",
-        "dweb:/ipfs/Qme1bgU56x9drrefb6BUkgGQ61ipBK5zoo4ZstRmGXhzkL"
+        "bzz-raw://8de445d54b131a4391ec2ed9158114047618e8b80a6dca76900ce5ded765687d",
+        "dweb:/ipfs/QmYptKYMVxjWx8RNJZZehTEjAnJSriaTKQ6u27q1yH7NCk"
+      ]
+    },
+    "contracts/src/spaces/entitlements/IEntitlement.sol": {
+      "keccak256": "0x712add71e128251b8e0b4112ce76cd46f6679715df6c793f687dce612e9d9852",
+      "license": "Apache-2.0",
+      "urls": [
+        "bzz-raw://ff5c19f00858661b2f493902650dddaa29fa0dc2d3ed1ad3b2f1f0d7c6a9127d",
+        "dweb:/ipfs/QmdH8pn1iKkPrPTyZB4eBeiJKJR92L42Zn1xmsWGFJuxZp"
       ]
     },
     "contracts/src/spaces/facets/Entitled.sol": {
-      "keccak256": "0xc2f2195a5dbab66fcd59d2b3dbb9e37f5da79b199209df519f078cfbf837aeff",
+      "keccak256": "0x95302e368bf2f118d9704e16c77c533a681b9a7c72aedbea0b52a5c614e354c5",
       "license": "Apache-2.0",
       "urls": [
-        "bzz-raw://c95a13835720a9f097332e71a647aad94ba38df63898d41c9a6170743204addf",
-        "dweb:/ipfs/QmR54jS53PNaBDWZjnW4k5t6vKejNbiaFnkzZXaiBirsaA"
+        "bzz-raw://de242be530d421f3c17f0ceafbba3edae090009be18022b5448f08269421ffb7",
+        "dweb:/ipfs/QmbSGZZA5MihN3TiNi8tJv9KYU2W6Z1FSTz9qofho7xbPw"
       ]
     },
     "contracts/src/spaces/facets/Permissions.sol": {
-      "keccak256": "0x17fb085f09a3c1cdeebaf6b7719da47ac6fe088d479305cd80be73bed180a3ad",
+      "keccak256": "0x9ec12f93daf62e46af526c0c44cde0df8c4b848da6a5f0909854cce126d1e365",
       "license": "Apache-2.0",
       "urls": [
-        "bzz-raw://543fcf44331abab721a7389bf89ae3c47224770e23b5da1368ab0a2faf1b7e23",
-        "dweb:/ipfs/QmYPgksHbYHsxwSd3S5Jz9Wgue6Pabo6vBVdMqyxc1fQzn"
+        "bzz-raw://2c22749f53f52f76ab40a6d49260af16b6f80cb4304f4d68c04c0dfbd1001bc3",
+        "dweb:/ipfs/QmcZJJWVntsNgo85QZke3q4dBwXjzrrza7omrtNhemibNa"
       ]
     },
     "contracts/src/spaces/facets/banning/BanningBase.sol": {
@@ -2028,11 +2052,11 @@
       ]
     },
     "contracts/src/spaces/facets/entitlements/EntitlementsManagerStorage.sol": {
-      "keccak256": "0x25d81d0f45e65e8c035ed41ac078ace43672a00829f5334b21c2ef23fc4f73ba",
+      "keccak256": "0x4deaca265b50ebb5d8eb7fb7c4635179380f3d307c827db1c38a5892d8c313c0",
       "license": "Apache-2.0",
       "urls": [
-        "bzz-raw://8f621544a327bd541d20e9df4d73179123a96f7f11456b50ecf2f30409073e49",
-        "dweb:/ipfs/Qmf5o4Gt9w1ySMi1bHveoaQ4aTQ4MHa6SoxGWTNgWDBpGw"
+        "bzz-raw://8be609d370939fa23c0a6174981cbdaf6a79b9798f0a879dd52ae9f94188e755",
+        "dweb:/ipfs/QmXCaSGGYTGtWFLYELyLiBDAPYz2HBbN7es49M9Qa7Mivh"
       ]
     },
     "contracts/src/spaces/facets/membership/IMembership.sol": {
