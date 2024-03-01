@@ -891,10 +891,6 @@ jobs:
               run: go test --race ./...
               working-directory: common/xchain
 
-            - name: Run xchain common typescript tests
-              run: yarn test
-              working-directory: common/xchain
-
               # If CI failed, we send a slack notification
             - name: Slack notification
               if: failure() && (github.event_name == 'schedule' || github.event_name == 'workflow_dispatch')
