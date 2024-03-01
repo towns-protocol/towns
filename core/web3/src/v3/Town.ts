@@ -8,15 +8,13 @@ import {
     Permission,
     RoleDetails,
     RoleEntitlements,
-    isExternalTokenStructArray,
+    isRuleEntitlement,
     isStringArray,
-    isTokenEntitlement,
     isUserEntitlement,
 } from '../ContractTypes'
 import { IChannelBase, IChannelShim } from './IChannelShim'
 import { IRolesBase, IRolesShim } from './IRolesShim'
 import { ISpaceOwnerBase, ITownOwnerShim } from './ITownOwnerShim'
-import { TokenEntitlementDataTypes, TokenEntitlementShim } from './TokenEntitlementShim'
 
 import { IEntitlementsShim } from './IEntitlementsShim'
 import { IMulticallShim } from './IMulticallShim'
@@ -27,6 +25,9 @@ import { UserEntitlementShim } from './UserEntitlementShim'
 import { isRoleIdInArray } from '../ContractHelpers'
 import { toPermissions } from '../ConvertersRoles'
 import { IMembershipShim } from './IMembershipShim'
+import { NoopRuleData } from '../entitlement'
+import { RuleEntitlementShim } from './RuleEntitlementShim'
+import { IRuleEntitlement } from './'
 
 interface AddressToEntitlement {
     [address: string]: EntitlementShim
@@ -131,8 +132,8 @@ export class Town {
             name: roleEntitlements.name,
             permissions: roleEntitlements.permissions,
             channels,
-            tokens: roleEntitlements.tokens,
             users: roleEntitlements.users,
+            ruleData: roleEntitlements.ruleData,
         }
     }
 
@@ -249,15 +250,15 @@ export class Town {
         if (!this.addressToEntitlement[address]) {
             const entitlement = await this.entitlements.read.getEntitlement(address)
             switch (entitlement.moduleType) {
-                case EntitlementModuleType.TokenEntitlement:
-                    this.addressToEntitlement[address] = new TokenEntitlementShim(
+                case EntitlementModuleType.UserEntitlement:
+                    this.addressToEntitlement[address] = new UserEntitlementShim(
                         address,
                         this.chainId,
                         this.provider,
                     )
                     break
-                case EntitlementModuleType.UserEntitlement:
-                    this.addressToEntitlement[address] = new UserEntitlementShim(
+                case EntitlementModuleType.RuleEntitlement:
+                    this.addressToEntitlement[address] = new RuleEntitlementShim(
                         address,
                         this.chainId,
                         this.provider,
@@ -297,29 +298,37 @@ export class Town {
         entitlementShims: EntitlementShim[],
         roleId: BigNumberish,
     ): Promise<EntitlementDetails> {
-        let tokens: TokenEntitlementDataTypes.ExternalTokenStruct[] = []
         let users: string[] = []
+        let ruleData
         // with the shims, get the role details for each entitlement
-        const getEntitlements: Promise<
-            TokenEntitlementDataTypes.ExternalTokenStruct[] | string[]
-        >[] = []
-        for (const entitlement of entitlementShims) {
-            if (isTokenEntitlement(entitlement)) {
-                getEntitlements.push(entitlement.getRoleEntitlement(roleId))
-            } else if (isUserEntitlement(entitlement)) {
-                getEntitlements.push(entitlement.getRoleEntitlement(roleId))
-            }
+        const entitlements = await Promise.all(
+            entitlementShims.map(async (entitlement) => {
+                if (isUserEntitlement(entitlement)) {
+                    return await entitlement.getRoleEntitlement(roleId)
+                } else if (isRuleEntitlement(entitlement)) {
+                    return await entitlement.getRoleEntitlement(roleId)
+                }
+                return undefined
+            }),
+        )
+
+        function isRuleDataStruct(
+            ruleData: IRuleEntitlement.RuleDataStruct | undefined,
+        ): ruleData is IRuleEntitlement.RuleDataStruct {
+            return ruleData !== undefined
         }
-        const entitlements = await Promise.all(getEntitlements)
+
         for (const entitlment of entitlements) {
-            if (isExternalTokenStructArray(entitlment)) {
-                tokens = tokens.concat(entitlment)
-            } else if (isStringArray(entitlment)) {
-                users = users.concat(entitlment)
+            if (entitlment) {
+                if (isStringArray(entitlment)) {
+                    users = users.concat(entitlment)
+                } else if (isRuleDataStruct(entitlment)) {
+                    ruleData = entitlment
+                }
             }
         }
 
-        return { tokens, users }
+        return { users, ruleData: ruleData ?? NoopRuleData }
     }
 
     private async getChannelsWithRole(roleId: BigNumberish): Promise<ChannelMetadata[]> {
@@ -370,8 +379,8 @@ export class Town {
             roleId: roleInfo.id.toNumber(),
             name: roleInfo.name,
             permissions: toPermissions(roleInfo.permissions),
-            tokens: entitlementDetails.tokens,
             users: entitlementDetails.users,
+            ruleData: entitlementDetails.ruleData,
         }
     }
 }

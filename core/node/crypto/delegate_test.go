@@ -19,7 +19,7 @@ func TestDelegate(t *testing.T) {
 	assert.NoError(t, err)
 	devicePubKey := crypto.FromECDSAPub(&deviceWallet.PrivateKeyStruct.PublicKey)
 
-	delegatSig, err := primaryWallet.SignHash(TownsHash(devicePubKey).Bytes())
+	delegatSig, err := primaryWallet.SignHash(RiverHash(devicePubKey).Bytes())
 	assert.NoError(t, err)
 
 	err = CheckDelegateSig(primaryWallet.Address.Bytes(), devicePubKey, delegatSig)

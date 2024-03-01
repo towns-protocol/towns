@@ -17,10 +17,11 @@
         "watch": "tsc --watch"
     },
     "dependencies": {
-        "@towns/generated": "workspace:^",
+        "@river/generated": "workspace:^",
         "abitype": "^0.9.10",
         "debug": "^4.3.4",
         "ethers": "^5.7.2",
+        "lodash": "^4.17.21",
         "nanoid": "^4.0.0",
         "viem": "^1.18.2",
         "zod": "^3.21.4"

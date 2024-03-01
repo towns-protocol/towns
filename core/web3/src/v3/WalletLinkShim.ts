@@ -1,14 +1,14 @@
 import {
     IWalletLink as LocalhostContract,
     IWalletLinkInterface as LocalhostInterface,
-} from '@towns/generated/dev/typings/IWalletLink'
+} from '@river/generated/dev/typings/IWalletLink'
 import {
     IWalletLink as BaseSepoliaContract,
     IWalletLinkInterface as BaseSepoliaInterface,
-} from '@towns/generated/v3/typings/IWalletLink'
+} from '@river/generated/v3/typings/IWalletLink'
 
-import LocalhostAbi from '@towns/generated/dev/abis/WalletLink.abi.json' assert { type: 'json' }
-import BaseSepoliaAbi from '@towns/generated/v3/abis/WalletLink.abi.json' assert { type: 'json' }
+import LocalhostAbi from '@river/generated/dev/abis/WalletLink.abi.json' assert { type: 'json' }
+import BaseSepoliaAbi from '@river/generated/v3/abis/WalletLink.abi.json' assert { type: 'json' }
 
 import { BaseContractShim } from './BaseContractShim'
 import { ethers } from 'ethers'

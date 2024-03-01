@@ -1,10 +1,11 @@
 package rpc
 
 import (
+	"bufio"
+	"bytes"
 	"cmp"
 	"context"
 	"fmt"
-	"html"
 	"net/http"
 	"net/http/pprof"
 	"runtime"
@@ -12,158 +13,10 @@ import (
 	"strings"
 
 	"github.com/river-build/river/core/node/config"
+	"github.com/river-build/river/core/node/dlog"
 	. "github.com/river-build/river/core/node/events"
+	"github.com/river-build/river/core/node/rpc/render"
 )
-
-// GenerateStackHTML generates an HTML table from runtime.Stack
-func generateStackHTML() string {
-	buf := make([]byte, 1024*1024)
-	stackSize := runtime.Stack(buf, true)
-	stacks := string(buf[:stackSize])
-
-	// Escape HTML-specific characters for safety
-	stacks = html.EscapeString(stacks)
-
-	lines := strings.Split(stacks, "\n")
-	var sb strings.Builder
-	sb.WriteString("<table border='1'>")
-	sb.WriteString("<tr><th>Goroutine</th><th>Stack</th></tr>")
-	var goroutine, stack string
-	for _, line := range lines {
-		if strings.HasPrefix(line, "goroutine ") {
-			if goroutine != "" {
-				sb.WriteString(fmt.Sprintf("<tr><td>%s</td><td><pre>%s</pre></td></tr>", goroutine, stack))
-			}
-			goroutine = line
-			stack = ""
-		} else if strings.HasPrefix(line, "\t") || line == "" {
-			stack += line + "\n"
-		} else {
-			stack += "\t" + line + "\n"
-		}
-	}
-	if goroutine != "" {
-		sb.WriteString(fmt.Sprintf("<tr><td>%s</td><td><pre>%s</pre></td></tr>", goroutine, stack))
-	}
-	sb.WriteString("</table>")
-	return sb.String()
-}
-
-func handleStacks(w http.ResponseWriter, r *http.Request) {
-	w.Header().Set("Content-Type", "text/html")
-	w.WriteHeader(http.StatusOK)
-	_, _ = w.Write([]byte(generateStackHTML()))
-}
-
-type cacheHandler struct {
-	cache StreamCache
-}
-
-func safeDivStr(a, b int) string {
-	if b == 0 {
-		return "NA"
-	}
-	return fmt.Sprintf("%.2f", float64(a)/float64(b))
-}
-
-func (h *cacheHandler) ServeHTTP(w http.ResponseWriter, r *http.Request) {
-	ctx := r.Context()
-
-	w.Header().Set("Content-Type", "text/html")
-	w.WriteHeader(http.StatusOK)
-
-	printStreams := r.URL.Query().Get("streams") == "1"
-
-	streams := h.cache.GetLoadedViews(ctx)
-	slices.SortFunc(
-		streams,
-		func(a, b StreamView) int {
-			return cmp.Compare(a.StreamId(), b.StreamId())
-		},
-	)
-
-	var miniblocks, eventsInMiniblocks, snapshotsInMiniblocks, eventsInMinipools, trimmedStreams, totalEventsEver int
-
-	var streamTable strings.Builder
-	for i, view := range streams {
-		stats := view.GetStats()
-		miniblocks += int(stats.LastMiniblockNum - stats.FirstMiniblockNum + 1)
-		eventsInMiniblocks += stats.EventsInMiniblocks
-		snapshotsInMiniblocks += stats.SnapshotsInMiniblocks
-		eventsInMinipools += stats.EventsInMinipool
-		if stats.FirstMiniblockNum != 0 {
-			trimmedStreams++
-		}
-		totalEventsEver += stats.TotalEventsEver
-
-		if printStreams && i < 10000 {
-			fmt.Fprintf(
-				&streamTable,
-				"<tr><td>%d</td><td>%s</td><td>%d</td><td>%d</td><td>%d</td><td>%d</td><td>%d</td><td>%d</td><td>%d</td></tr>",
-				i,
-				view.StreamId(),
-				stats.FirstMiniblockNum,
-				stats.LastMiniblockNum,
-				stats.LastMiniblockNum-stats.FirstMiniblockNum+1,
-				stats.EventsInMiniblocks,
-				stats.SnapshotsInMiniblocks,
-				stats.EventsInMinipool,
-				stats.TotalEventsEver,
-			)
-		}
-	}
-
-	numStreams := len(streams)
-	_, _ = w.Write([]byte("<html><body>"))
-	fmt.Fprintf(w, "<h3>Stream cache</h3>")
-	fmt.Fprintf(w, "<p>Streams: %d</p>", numStreams)
-	fmt.Fprintf(w, "<p>Miniblocks: %d, %s per stream</p>", miniblocks, safeDivStr(miniblocks, numStreams))
-	fmt.Fprintf(
-		w,
-		"<p>Events in miniblocks: %d, %s per stream, %s per miniblock</p>",
-		eventsInMiniblocks,
-		safeDivStr(eventsInMiniblocks, numStreams),
-		safeDivStr(eventsInMiniblocks, miniblocks),
-	)
-	fmt.Fprintf(
-		w,
-		"<p>Snapshots in miniblocks: %d, %s per stream, %s per miniblock</p>",
-		snapshotsInMiniblocks,
-		safeDivStr(snapshotsInMiniblocks, numStreams),
-		safeDivStr(snapshotsInMiniblocks, miniblocks),
-	)
-	fmt.Fprintf(
-		w,
-		"<p>Events in minipools: %d, %s per stream</p>",
-		eventsInMinipools,
-		safeDivStr(eventsInMinipools, numStreams),
-	)
-	fmt.Fprintf(
-		w,
-		"<p>Trimmed streams: %d, %s per stream</p>",
-		trimmedStreams,
-		safeDivStr(trimmedStreams, numStreams),
-	)
-	fmt.Fprintf(
-		w,
-		"<p>Total events ever: %d, %s per stream</p>",
-		totalEventsEver,
-		safeDivStr(totalEventsEver, numStreams),
-	)
-
-	if !printStreams {
-		fmt.Fprintf(w, "<p><a href=\"cache?streams=1\">Print streams</a></p>")
-	} else {
-		fmt.Fprintf(w, "<p><a href=\"cache\">Hide streams</a></p>")
-		fmt.Fprintf(w, "<pre><table border=\"1\">")
-		fmt.Fprintf(w, "<tr><th>#</th><th>Stream</th><th>First MB</th><th>Last MB</th><th>Miniblocks</th>"+
-			"<th>Events in MB</th><th>Snapshots</th><th>Events in MP</th><th>Events Ever</th></tr>")
-		_, _ = w.Write([]byte(streamTable.String()))
-		fmt.Fprintf(w, "</table></pre>")
-	}
-
-	_, _ = w.Write([]byte("</body></html>"))
-}
 
 type debugHandler struct {
 	patterns []string
@@ -180,15 +33,23 @@ func (h *debugHandler) Handle(mux httpMux, pattern string, handler http.Handler)
 }
 
 func (h *debugHandler) ServeHTTP(w http.ResponseWriter, r *http.Request) {
-	fmt.Fprintln(w, "<html><body>")
-	fmt.Fprintln(w, "<h3>Available debug handlers:</h3>")
-	fmt.Fprintln(w, "<ul>")
-	for _, pattern := range h.patterns {
-		fmt.Fprintf(w, "<li><a href=\"%s\">%s</a></li>", pattern, pattern)
+	var (
+		ctx   = r.Context()
+		reply = render.AvailableDebugHandlersData{
+			Handlers: h.patterns,
+		}
+	)
+
+	output, err := render.Execute(&reply)
+	if err != nil {
+		dlog.FromCtx(ctx).Error("unable to read memory stats", "err", err)
+		http.Error(w, "Internal Server Error", http.StatusInternalServerError)
+		return
 	}
-	fmt.Fprintf(w, "<li><a href=\"/debug/pprof/heap?debug=1&gc=1\">/debug/pprof/heap with GC</a></li>")
-	fmt.Fprintln(w, "</ul>")
-	fmt.Fprintln(w, "</body></html>")
+
+	w.Header().Set("Content-Type", "text/html")
+	w.WriteHeader(http.StatusOK)
+	_, _ = w.Write(output.Bytes())
 }
 
 type httpMux interface {
@@ -201,12 +62,132 @@ func registerDebugHandlers(ctx context.Context, cfg *config.Config, mux httpMux,
 	mux.HandleFunc("/debug", handler.ServeHTTP)
 
 	handler.Handle(mux, "/debug/cache", &cacheHandler{cache: cache})
-	handler.Handle(mux, "/debug/memory", MemoryHandler())
+	handler.HandleFunc(mux, "/debug/memory", MemoryHandler)
 	handler.Handle(mux, "/debug/multi", MultiHandler(ctx, cfg, streamService))
 	handler.HandleFunc(mux, "/debug/pprof/", pprof.Index)
 	mux.HandleFunc("/debug/pprof/cmdline", pprof.Cmdline)
 	mux.HandleFunc("/debug/pprof/profile", pprof.Profile)
 	mux.HandleFunc("/debug/pprof/symbol", pprof.Symbol)
 	mux.HandleFunc("/debug/pprof/trace", pprof.Trace)
-	handler.HandleFunc(mux, "/debug/stacks", handleStacks)
+	handler.HandleFunc(mux, "/debug/stacks", HandleStacksHandler)
+}
+
+func HandleStacksHandler(w http.ResponseWriter, r *http.Request) {
+	var (
+		ctx          = r.Context()
+		buf          = make([]byte, 1024*1024)
+		stackSize    = runtime.Stack(buf, true)
+		traceScanner = bufio.NewScanner(bytes.NewReader((buf[:stackSize])))
+		reply        render.GoRoutineData
+	)
+
+	traceScanner.Split(bufio.ScanLines)
+
+	for traceScanner.Scan() {
+		stack, err := readGoRoutineStackFrame(traceScanner)
+		if err != nil {
+			dlog.FromCtx(ctx).Error("unable to read stack frame", "err", err)
+			http.Error(w, http.StatusText(http.StatusInternalServerError), http.StatusInternalServerError)
+			return
+		}
+		reply.Stacks = append(reply.Stacks, stack)
+	}
+
+	output, err := render.Execute(&reply)
+	if err != nil {
+		dlog.FromCtx(ctx).Error("unable to render stack data", "err", err)
+		http.Error(w, http.StatusText(http.StatusInternalServerError), http.StatusInternalServerError)
+		return
+	}
+
+	w.Header().Set("Content-Type", "text/html")
+	w.WriteHeader(http.StatusOK)
+	_, _ = w.Write(output.Bytes())
+}
+
+type cacheHandler struct {
+	cache StreamCache
+}
+
+func (h *cacheHandler) ServeHTTP(w http.ResponseWriter, r *http.Request) {
+	var (
+		ctx         = r.Context()
+		streams     = h.cache.GetLoadedViews(ctx)
+		streamCount = len(streams)
+		reply       = render.CacheData{
+			ShowStreams: r.URL.Query().Get("streams") == "1",
+		}
+	)
+
+	if streamCount > 10000 {
+		streamCount = 10000
+	}
+
+	if reply.ShowStreams {
+		reply.Streams = make([]*render.CacheDataStream, streamCount)
+	}
+
+	slices.SortFunc(streams, func(a, b StreamView) int {
+		return cmp.Compare(a.StreamId(), b.StreamId())
+	})
+
+	for i, view := range streams {
+		stats := view.GetStats()
+
+		reply.TotalEventsEver += int64(stats.TotalEventsEver)
+		reply.MiniBlocksCount += stats.LastMiniblockNum - stats.FirstMiniblockNum + 1
+		reply.EventsInMiniblocks += int64(stats.EventsInMiniblocks)
+		reply.SnapshotsInMiniblocks += int64(stats.SnapshotsInMiniblocks)
+		reply.EventsInMinipools += int64(stats.EventsInMinipool)
+
+		if stats.FirstMiniblockNum != 0 {
+			reply.TrimmedStreams += 1
+		}
+
+		if reply.ShowStreams && i < streamCount {
+			reply.Streams[i] = &render.CacheDataStream{
+				StreamID:              view.StreamId(),
+				MiniBlocks:            stats.LastMiniblockNum - stats.FirstMiniblockNum + 1,
+				FirstMiniblockNum:     stats.FirstMiniblockNum,
+				LastMiniblockNum:      stats.LastMiniblockNum,
+				EventsInMiniblocks:    int64(stats.EventsInMiniblocks),
+				SnapshotsInMiniblocks: int64(stats.SnapshotsInMiniblocks),
+				EventsInMinipool:      int64(stats.EventsInMinipool),
+				TotalEventsEver:       int64(stats.TotalEventsEver),
+			}
+		}
+	}
+
+	output, err := render.Execute(&reply)
+	if err != nil {
+		dlog.FromCtx(ctx).Error("unable to render cache data", "err", err)
+		http.Error(w, http.StatusText(http.StatusInternalServerError), http.StatusInternalServerError)
+		return
+	}
+
+	w.Header().Set("Content-Type", "text/html")
+	w.WriteHeader(http.StatusOK)
+	_, _ = w.Write(output.Bytes())
+}
+
+func readGoRoutineStackFrame(trace *bufio.Scanner) (*render.GoRoutineStack, error) {
+	var (
+		head = trace.Text()
+		data render.GoRoutineStack
+	)
+
+	if !strings.HasPrefix(head, "goroutine ") {
+		return nil, fmt.Errorf("expected goroutine header, got %q", head)
+	}
+
+	data.Description = head
+
+	for trace.Scan() {
+		line := trace.Text()
+		if line == "" { // marks end of the frame
+			return &data, nil
+		}
+		data.Lines = append(data.Lines, line)
+	}
+	return &data, nil
 }

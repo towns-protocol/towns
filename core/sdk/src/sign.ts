@@ -3,9 +3,9 @@ import { bin_equal, bin_fromHexString, bin_toHexString, check } from '@river/dlo
 import { isDefined, assert, hasElements } from './check'
 import { Envelope, EventRef, StreamEvent, Err, Miniblock, StreamAndCookie } from '@river/proto'
 import {
-    townsHash,
-    townsRecoverPubKey,
-    townsSign,
+    riverHash,
+    riverRecoverPubKey,
+    riverSign,
     publicKeyToAddress,
     publicKeyToUint8Array,
 } from '@river/encryption'
@@ -55,8 +55,8 @@ export const _impl_makeEvent_impl_ = async (
     }
 
     const event = streamEvent.toBinary()
-    const hash = townsHash(event)
-    const signature = await townsSign(hash, context.signerPrivateKey())
+    const hash = riverHash(event)
+    const signature = await riverSign(hash, context.signerPrivateKey())
 
     return new Envelope({ hash, signature, event })
 }
@@ -127,9 +127,9 @@ export const checkDelegateSig = (
         return
     }
 
-    const hash = townsHash(devicePubKey)
+    const hash = riverHash(devicePubKey)
 
-    const recoveredKey = townsRecoverPubKey(hash, delegateSig)
+    const recoveredKey = riverRecoverPubKey(hash, delegateSig)
     const recoveredAddress = publicKeyToAddress(recoveredKey)
 
     check(
@@ -203,10 +203,10 @@ export const unpackEnvelope = async (envelope: Envelope): Promise<ParsedEvent> =
     check(hasElements(envelope.hash), 'Event hash is not set', Err.BAD_EVENT)
     check(hasElements(envelope.signature), 'Event signature is not set', Err.BAD_EVENT)
 
-    const hash = townsHash(envelope.event)
+    const hash = riverHash(envelope.event)
     check(bin_equal(hash, envelope.hash), 'Event id is not valid', Err.BAD_EVENT_ID)
 
-    const recoveredPubKey = townsRecoverPubKey(hash, envelope.signature)
+    const recoveredPubKey = riverRecoverPubKey(hash, envelope.signature)
 
     const event = StreamEvent.fromBinary(envelope.event)
     if (!hasElements(event.delegateSig)) {

@@ -1,14 +1,14 @@
 import {
     IMulticall as LocalhostContract,
     IMulticallInterface as LocalhostInterface,
-} from '@towns/generated/dev/typings/IMulticall'
+} from '@river/generated/dev/typings/IMulticall'
 import {
     IMulticall as BaseSepoliaContract,
     IMulticallInterface as BaseSepoliaInterface,
-} from '@towns/generated/v3/typings/IMulticall'
+} from '@river/generated/v3/typings/IMulticall'
 
-import LocalhostAbi from '@towns/generated/dev/abis/Multicall.abi.json' assert { type: 'json' }
-import BaseSepoliaAbi from '@towns/generated/v3/abis/Multicall.abi.json' assert { type: 'json' }
+import LocalhostAbi from '@river/generated/dev/abis/Multicall.abi.json' assert { type: 'json' }
+import BaseSepoliaAbi from '@river/generated/v3/abis/Multicall.abi.json' assert { type: 'json' }
 
 import { ethers } from 'ethers'
 import { BaseContractShim } from './BaseContractShim'

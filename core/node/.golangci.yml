@@ -3,10 +3,5 @@ linters-settings:
         check-switch: true
 
 linters:
-    disable-all: true
     enable:
-        - errcheck
-        - gosimple
-        - govet
-        - ineffassign
-        - unused
+        - exhaustive

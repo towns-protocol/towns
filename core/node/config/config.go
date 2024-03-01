@@ -30,8 +30,8 @@ type Config struct {
 	RiverChain ChainConfig
 
 	// Base chain contract configuration
-	TownsArchitectContract ContractConfig
-	WalletLinkContract     ContractConfig
+	ArchitectContract  ContractConfig
+	WalletLinkContract ContractConfig
 
 	// Contract configuration
 	RegistryContract ContractConfig
@@ -42,10 +42,6 @@ type Config struct {
 	// Metrics
 	Metrics             infra.MetricsConfig
 	PerformanceTracking PerformanceTrackingConfig
-
-	// Push notifications
-	// Will be removed for push notifications V2 which will sync streams from outside process.
-	PushNotification PushNotificationConfig
 
 	// Stream configuration
 	Stream StreamConfig
@@ -87,11 +83,6 @@ type ChainConfig struct {
 type PerformanceTrackingConfig struct {
 	ProfilingEnabled bool
 	TracingEnabled   bool
-}
-
-type PushNotificationConfig struct {
-	AuthToken string
-	Url       string
 }
 
 type StreamConfig struct {

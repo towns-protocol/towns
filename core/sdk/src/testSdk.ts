@@ -1,7 +1,12 @@
 import { Client } from './client'
-import { ISpaceDapp, MembershipStruct, Permission } from '@river/web3'
+import {
+    ISpaceDapp,
+    MembershipStruct,
+    Permission,
+    NoopRuleData,
+    getFilteredRolesFromSpace,
+} from '@river/web3'
 import { makeUniqueChannelStreamId, makeUniqueSpaceStreamId } from './id'
-import { getFilteredRolesFromSpace } from '@river/web3/dist/ContractHelpers'
 import { BigNumber, ethers } from 'ethers'
 import { dlog } from '@river/dlog'
 
@@ -63,17 +68,11 @@ export class RiverSDK {
                 freeAllocation: 0,
                 pricingModule: ethers.constants.AddressZero,
             },
-            permissions: [
-                Permission.Read,
-                Permission.Write,
-                Permission.AddRemoveChannels,
-                Permission.ModifySpaceSettings,
-            ],
+            permissions: [Permission.Read, Permission.Write, Permission.AddRemoveChannels],
             requirements: {
                 everyone: true,
-                tokens: [],
                 users: [],
-                rule: ethers.constants.AddressZero,
+                ruleData: NoopRuleData,
             },
         }
 
@@ -123,17 +122,11 @@ export class RiverSDK {
                 freeAllocation: 0,
                 pricingModule: ethers.constants.AddressZero,
             },
-            permissions: [
-                Permission.Read,
-                Permission.Write,
-                Permission.AddRemoveChannels,
-                Permission.ModifySpaceSettings,
-            ],
+            permissions: [Permission.Read, Permission.Write, Permission.AddRemoveChannels],
             requirements: {
                 everyone: true,
-                tokens: [],
                 users: [],
-                rule: ethers.constants.AddressZero,
+                ruleData: NoopRuleData,
             },
         }
 

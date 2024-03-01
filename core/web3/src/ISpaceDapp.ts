@@ -2,7 +2,6 @@ import {
     BasicRoleInfo,
     ChannelDetails,
     ChannelMetadata,
-    ExternalTokenStruct,
     MembershipInfo,
     MembershipStruct,
     Permission,
@@ -13,7 +12,7 @@ import {
 import { WalletLink as WalletLinkV3 } from './v3/WalletLink'
 import { BytesLike, ContractTransaction, ethers } from 'ethers'
 import { SpaceInfo } from './SpaceDappTypes'
-import { IRolesBase, Town, TownRegistrar } from './v3'
+import { IRolesBase, Town, TownRegistrar, IRuleEntitlement } from './v3'
 
 export type SignerType = ethers.Signer
 export interface EventsContractInfo {
@@ -43,8 +42,8 @@ export interface UpdateRoleParams {
     roleId: number
     roleName: string
     permissions: Permission[]
-    tokens: ExternalTokenStruct[]
     users: string[]
+    ruleData: IRuleEntitlement.RuleDataStruct
 }
 
 type TransactionType = ContractTransaction
@@ -72,8 +71,8 @@ export interface ISpaceDapp {
         spaceId: string,
         roleName: string,
         permissions: Permission[],
-        tokens: ExternalTokenStruct[],
         users: string[],
+        ruleData: IRuleEntitlement.RuleDataStruct,
         signer: SignerType,
     ): Promise<TransactionType>
     createUpdatedEntitlements(

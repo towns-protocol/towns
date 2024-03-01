@@ -6,9 +6,14 @@ import { dlog } from '@river/dlog'
 import { makeUserContextFromWallet, makeTestClient, makeDonePromise } from './util.test'
 import { makeUniqueChannelStreamId, makeUniqueSpaceStreamId, makeUserStreamId } from './id'
 import { ethers } from 'ethers'
-import { MembershipStruct } from '@river/web3'
+import {
+    LocalhostWeb3Provider,
+    createSpaceDapp,
+    Permission,
+    MembershipStruct,
+    NoopRuleData,
+} from '@river/web3'
 import { MembershipOp } from '@river/proto'
-const { LocalhostWeb3Provider, createSpaceDapp, Permission } = await import('@river/web3')
 
 const base_log = dlog('csb:test:withEntitlements')
 const ETH_ADDRESS = '0xEeeeeEeeeEeEeeEeEeEeeEEEeeeeEeeeeeeeEEeE'
@@ -55,9 +60,8 @@ describe('withEntitlements', () => {
             permissions: [Permission.Read, Permission.Write],
             requirements: {
                 everyone: true,
-                tokens: [],
                 users: [],
-                rule: ethers.constants.AddressZero,
+                ruleData: NoopRuleData,
             },
         }
         const transaction = await spaceDapp.createSpace(

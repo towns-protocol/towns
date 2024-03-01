@@ -108,17 +108,17 @@ var _ ChainAuth = (*chainAuth)(nil)
 func NewChainAuth(
 	ctx context.Context,
 	blockchain *crypto.Blockchain,
-	townsArchitectCfg *config.ContractConfig,
+	architectCfg *config.ContractConfig,
 	walletLinkCfg *config.ContractConfig,
 	linkedWalletsLimit int,
 	contractCallsTimeoutMs int,
 ) (*chainAuth, error) {
-	spaceContract, err := NewSpaceContractV3(ctx, townsArchitectCfg, blockchain.Client)
+	spaceContract, err := NewSpaceContractV3(ctx, architectCfg, blockchain.Client)
 	if err != nil {
 		return nil, err
 	}
 
-	walletLinkContract, err := NewTownsWalletLink(ctx, walletLinkCfg, blockchain.Client)
+	walletLinkContract, err := NewWalletLink(ctx, walletLinkCfg, blockchain.Client)
 	if err != nil {
 		return nil, err
 	}
@@ -189,7 +189,6 @@ func (ca *chainAuth) isSpaceEnabledUncached(ctx context.Context, args *ChainAuth
 }
 
 func (ca *chainAuth) checkSpaceEnabled(ctx context.Context, spaceId string) error {
-	// TODO: right now this check happens for every wallet, but it needs to be done only once.
 	isEnabled, cacheHit, err := ca.entitlementCache.executeUsingCache(
 		ctx,
 		newArgsForEnabledSpace(spaceId),
@@ -253,12 +252,6 @@ func (ca *chainAuth) isEntitledToSpace(ctx context.Context, args *ChainAuthArgs)
 		return false, RiverError(Err_INTERNAL, "Wrong chain auth kind")
 	}
 
-	// TODO: right now this check happens for every wallet, but it needs to be done only once.
-	err := ca.checkSpaceEnabled(ctx, args.spaceId)
-	if err != nil {
-		return false, err
-	}
-
 	isEntitled, cacheHit, err := ca.entitlementCache.executeUsingCache(ctx, args, ca.isEntitledToSpaceUncached)
 	if err != nil {
 		return false, err
@@ -285,12 +278,6 @@ func (ca *chainAuth) isEntitledToChannelUncached(ctx context.Context, args *Chai
 func (ca *chainAuth) isEntitledToChannel(ctx context.Context, args *ChainAuthArgs) (bool, error) {
 	if args.kind != chainAuthKindChannel {
 		return false, RiverError(Err_INTERNAL, "Wrong chain auth kind")
-	}
-
-	// TODO: right now this check happens for every wallet, but it needs to be done only once.
-	err := ca.checkChannelEnabled(ctx, args.spaceId, args.channelId)
-	if err != nil {
-		return false, err
 	}
 
 	isEntitled, cacheHit, err := ca.entitlementCache.executeUsingCache(ctx, args, ca.isEntitledToChannelUncached)
@@ -341,6 +328,20 @@ func (ca *chainAuth) checkEntitiement(ctx context.Context, args *ChainAuthArgs) 
 
 	ctx, cancel := context.WithTimeout(ctx, time.Millisecond*time.Duration(ca.contractCallsTimeoutMs))
 	defer cancel()
+
+	if args.kind == chainAuthKindSpace {
+		err := ca.checkSpaceEnabled(ctx, args.spaceId)
+		if err != nil {
+			return false, err
+		}
+	} else if args.kind == chainAuthKindChannel {
+		err := ca.checkChannelEnabled(ctx, args.spaceId, args.channelId)
+		if err != nil {
+			return false, err
+		}
+	} else {
+		return false, RiverError(Err_INTERNAL, "Unknown chain auth kind").Func("isWalletEntitled")
+	}
 
 	// We need to check the root key and all linked wallets.
 	resultsChan := make(chan entitlementCheckResult, ca.linkedWalletsLimit+1)

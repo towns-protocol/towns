@@ -50,7 +50,7 @@ export function checkHash(hash: Uint8Array) {
     assertBytes(hash, 32)
 }
 
-export function townsHash(data: Uint8Array): Uint8Array {
+export function riverHash(data: Uint8Array): Uint8Array {
     assertBytes(data)
     const hasher = keccak256.create()
     hasher.update(HASH_HEADER)
@@ -61,7 +61,7 @@ export function townsHash(data: Uint8Array): Uint8Array {
     return hasher.digest()
 }
 
-export async function townsSign(
+export async function riverSign(
     hash: Uint8Array,
     privateKey: Uint8Array | string,
 ): Promise<Uint8Array> {
@@ -71,7 +71,7 @@ export async function townsSign(
     return pushByteToUint8Array(sig, recovery)
 }
 
-export function townsVerifySignature(
+export function riverVerifySignature(
     hash: Uint8Array,
     signature: Uint8Array,
     publicKey: Uint8Array | string,
@@ -81,7 +81,7 @@ export function townsVerifySignature(
     return verify(signature.slice(0, 64), hash, publicKey)
 }
 
-export function townsRecoverPubKey(hash: Uint8Array, signature: Uint8Array): Uint8Array {
+export function riverRecoverPubKey(hash: Uint8Array, signature: Uint8Array): Uint8Array {
     checkHash(hash)
     checkSignature(signature)
     return recoverPublicKey(hash, signature.slice(0, 64), signature[64])
@@ -105,17 +105,17 @@ export function publicKeyToUint8Array(publicKey: string): Uint8Array {
     return bin_fromHexString(publicKey)
 }
 
-export async function makeTownsDelegateSig(
+export async function makeRiverDelegateSig(
     userPrivateKey: () => Uint8Array | string,
     devicePubKey: Uint8Array,
 ): Promise<Uint8Array> {
-    const hash = townsHash(devicePubKey)
+    const hash = riverHash(devicePubKey)
     check(devicePubKey.length === 65, 'Bad public key', Err.BAD_PUBLIC_KEY)
-    return townsSign(hash, userPrivateKey())
+    return riverSign(hash, userPrivateKey())
 }
 
 // TODO(HNT-1380): once we switch to the new signing model, remove this function
-export async function makeOldTownsDelegateSig(
+export async function makeOldRiverDelegateSig(
     primaryWallet: ethers.Signer,
     devicePubKey: Uint8Array | string,
 ): Promise<Uint8Array> {

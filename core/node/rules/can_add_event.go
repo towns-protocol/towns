@@ -791,8 +791,7 @@ func (ru *aeMembershipRules) getPermissionForMembershipOp() (auth.Permission, st
 			return auth.PermissionUndefined, "", RiverError(Err_FAILED_PRECONDITION, "user is not a member of the channel", "user", userId, "initiator", initiatorId)
 		}
 		if userId != initiatorId {
-			// if the user is not the creator, then the user must be an admin
-			return auth.PermissionOwner, initiatorId, nil
+			return auth.PermissionUndefined, "", RiverError(Err_FAILED_PRECONDITION, "user may only add leave event for themself", "user", userId, "initiator", initiatorId)
 		} else {
 			return auth.PermissionUndefined, userId, nil
 		}

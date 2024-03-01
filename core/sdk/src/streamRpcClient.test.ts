@@ -297,7 +297,7 @@ describe('streamRpcClient', () => {
         expect(client).toBeDefined()
         const result = await client.info({ debug: ['graffiti'] })
         expect(result).toBeDefined()
-        expect(result.graffiti).toEqual('Towns.com node welcomes you!')
+        expect(result.graffiti).toEqual('River Node welcomes you!')
     })
 
     test('error', async () => {

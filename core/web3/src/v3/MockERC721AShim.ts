@@ -1,14 +1,14 @@
 import {
     MockERC721A as LocalhostContract,
     MockERC721AInterface as LocalhostInterface,
-} from '@towns/generated/dev/typings/MockERC721A'
+} from '@river/generated/dev/typings/MockERC721A'
 import {
     MockERC721A as BaseSepoliaContract,
     MockERC721AInterface as BaseSepoliaInterface,
-} from '@towns/generated/v3/typings/MockERC721A'
+} from '@river/generated/v3/typings/MockERC721A'
 
-import LocalhostAbi from '@towns/generated/dev/abis/MockERC721A.abi.json' assert { type: 'json' }
-import BaseSepoliaAbi from '@towns/generated/v3/abis/MockERC721A.abi.json' assert { type: 'json' }
+import LocalhostAbi from '@river/generated/dev/abis/MockERC721A.abi.json' assert { type: 'json' }
+import BaseSepoliaAbi from '@river/generated/v3/abis/MockERC721A.abi.json' assert { type: 'json' }
 
 import { BaseContractShim } from './BaseContractShim'
 import { ethers } from 'ethers'

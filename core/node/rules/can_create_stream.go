@@ -151,14 +151,14 @@ func (ru *csParams) log() *slog.Logger {
 	return dlog.FromCtx(ru.ctx)
 }
 
-func (params *csParams) canCreateStream() ruleBuilderCS {
-	builder := csBuilder(params.creatorUserStreamId)
+func (ru *csParams) canCreateStream() ruleBuilderCS {
+	builder := csBuilder(ru.creatorUserStreamId)
 
-	switch inception := params.inceptionPayload.(type) {
+	switch inception := ru.inceptionPayload.(type) {
 
 	case *SpacePayload_Inception:
 		ru := &csSpaceRules{
-			params:    params,
+			params:    ru,
 			inception: inception,
 		}
 		return builder.
@@ -173,7 +173,7 @@ func (params *csParams) canCreateStream() ruleBuilderCS {
 
 	case *ChannelPayload_Inception:
 		ru := &csChannelRules{
-			params:    params,
+			params:    ru,
 			inception: inception,
 		}
 		return builder.
@@ -194,7 +194,7 @@ func (params *csParams) canCreateStream() ruleBuilderCS {
 
 	case *MediaPayload_Inception:
 		ru := &csMediaRules{
-			params:    params,
+			params:    ru,
 			inception: inception,
 		}
 		return builder.
@@ -211,7 +211,7 @@ func (params *csParams) canCreateStream() ruleBuilderCS {
 
 	case *DmChannelPayload_Inception:
 		ru := &csDmChannelRules{
-			params:    params,
+			params:    ru,
 			inception: inception,
 		}
 		return builder.
@@ -226,7 +226,7 @@ func (params *csParams) canCreateStream() ruleBuilderCS {
 
 	case *GdmChannelPayload_Inception:
 		ru := &csGdmChannelRules{
-			params:    params,
+			params:    ru,
 			inception: inception,
 		}
 		return builder.
@@ -241,7 +241,7 @@ func (params *csParams) canCreateStream() ruleBuilderCS {
 
 	case *UserPayload_Inception:
 		ru := &csUserRules{
-			params:    params,
+			params:    ru,
 			inception: inception,
 		}
 		return builder.
@@ -254,7 +254,7 @@ func (params *csParams) canCreateStream() ruleBuilderCS {
 
 	case *UserDeviceKeyPayload_Inception:
 		ru := &csUserDeviceKeyRules{
-			params:    params,
+			params:    ru,
 			inception: inception,
 		}
 		return builder.
@@ -267,7 +267,7 @@ func (params *csParams) canCreateStream() ruleBuilderCS {
 
 	case *UserSettingsPayload_Inception:
 		ru := &csUserSettingsRules{
-			params:    params,
+			params:    ru,
 			inception: inception,
 		}
 		return builder.
@@ -280,7 +280,7 @@ func (params *csParams) canCreateStream() ruleBuilderCS {
 
 	case *UserInboxPayload_Inception:
 		ru := &csUserInboxRules{
-			params:    params,
+			params:    ru,
 			inception: inception,
 		}
 		return builder.

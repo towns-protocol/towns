@@ -89,7 +89,7 @@ func createUserDeviceKeyStream(
 func makeDelegateSig(primaryWallet *crypto.Wallet, deviceWallet *crypto.Wallet) ([]byte, error) {
 	devicePubKey := eth_crypto.FromECDSAPub(&deviceWallet.PrivateKeyStruct.PublicKey)
 
-	delegatSig, err := primaryWallet.SignHash(crypto.TownsHash(devicePubKey).Bytes())
+	delegatSig, err := primaryWallet.SignHash(crypto.RiverHash(devicePubKey).Bytes())
 	return delegatSig, err
 }
 
@@ -348,7 +348,7 @@ func TestMethods(t *testing.T) {
 	if err != nil {
 		t.Errorf("error calling Info: %v", err)
 	}
-	require.Equal(t, "Towns.com node welcomes you!", response.Msg.Graffiti)
+	require.Equal(t, "River Node welcomes you!", response.Msg.Graffiti)
 
 	_, err = client.CreateStream(ctx, connect.NewRequest(&protocol.CreateStreamRequest{}))
 	if err == nil {

@@ -1,14 +1,14 @@
 import {
     UserEntitlement as LocalhostContract,
     UserEntitlementInterface as LocalhostInterface,
-} from '@towns/generated/dev/typings/UserEntitlement'
+} from '@river/generated/dev/typings/UserEntitlement'
 import {
     UserEntitlement as BaseSepoliaContract,
     UserEntitlementInterface as BaseSepoliaInterface,
-} from '@towns/generated/v3/typings/UserEntitlement'
+} from '@river/generated/v3/typings/UserEntitlement'
 
-import LocalhostAbi from '@towns/generated/dev/abis/UserEntitlement.abi.json' assert { type: 'json' }
-import BaseSepoliaAbi from '@towns/generated/v3/abis/UserEntitlement.abi.json' assert { type: 'json' }
+import LocalhostAbi from '@river/generated/dev/abis/UserEntitlement.abi.json' assert { type: 'json' }
+import BaseSepoliaAbi from '@river/generated/v3/abis/UserEntitlement.abi.json' assert { type: 'json' }
 
 import { BaseContractShim } from './BaseContractShim'
 import { BigNumberish, ethers } from 'ethers'
@@ -36,30 +36,16 @@ export class UserEntitlementShim
     }
 
     public async getRoleEntitlement(roleId: BigNumberish): Promise<string[]> {
-        // a user-gated entitlement has multiple user arrays OR together or AND together.
-        // the first dimensions are the ORs; the second dimensions are the ANDs.
-        const rawUserDetails: string[][] = []
-        let encodedUsers: string[] = []
         try {
-            encodedUsers = await this.read.getEntitlementDataByRoleId(roleId)
+            const users = await this.read.getEntitlementDataByRoleId(roleId)
+            if (typeof users === 'string') {
+                return decodeUsers(users)
+            } else {
+                return []
+            }
         } catch (e) {
             console.log('Error getting role entitlement:', e)
+            throw e
         }
-        for (const u of encodedUsers) {
-            const users = decodeUsers(u)
-            rawUserDetails.push(users)
-        }
-        // verify that we have only one user entitlement.
-        // the app only requires one at the moment.
-        // in the future we might want to support more.
-        if (rawUserDetails.length > 1) {
-            console.error(
-                'More than one user entitlement not supported at the moment.',
-                rawUserDetails,
-            )
-            throw new Error('More than one user entitlement not supported at the moment.')
-        }
-        const users: string[] = rawUserDetails.length ? rawUserDetails[0] : []
-        return users
     }
 }

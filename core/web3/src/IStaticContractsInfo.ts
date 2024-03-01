@@ -1,12 +1,12 @@
-import LocalhostTownFactoryAddress from '@towns/generated/addresses/base_anvil/spaceFactory.json' assert { type: 'json' }
-import LocalhostTownOwnerAddress from '@towns/generated/addresses/base_anvil/spaceOwner.json' assert { type: 'json' }
-import LocalhostMockNFTAddress from '@towns/generated/addresses/base_anvil/mockNFT.json' assert { type: 'json' }
-import LocalhostMemberAddress from '@towns/generated/addresses/base_anvil/member.json' assert { type: 'json' }
-import LocalhostWalletLinkAddress from '@towns/generated/addresses/base_anvil/walletLink.json' assert { type: 'json' }
+import LocalhostTownFactoryAddress from '@river/generated/addresses/base_anvil/spaceFactory.json' assert { type: 'json' }
+import LocalhostTownOwnerAddress from '@river/generated/addresses/base_anvil/spaceOwner.json' assert { type: 'json' }
+import LocalhostMockNFTAddress from '@river/generated/addresses/base_anvil/mockNFT.json' assert { type: 'json' }
+import LocalhostMemberAddress from '@river/generated/addresses/base_anvil/member.json' assert { type: 'json' }
+import LocalhostWalletLinkAddress from '@river/generated/addresses/base_anvil/walletLink.json' assert { type: 'json' }
 
-import BaseSepoliaTownFactoryAddress from '@towns/generated/addresses/base_sepolia/spaceFactory.json' assert { type: 'json' }
-import BaseSepoliaTownOwnerAddress from '@towns/generated/addresses/base_sepolia/spaceOwner.json' assert { type: 'json' }
-import BaseSepoliaWalletLinkAddress from '@towns/generated/addresses/base_sepolia/walletLink.json' assert { type: 'json' }
+import BaseSepoliaTownFactoryAddress from '@river/generated/addresses/base_sepolia/spaceFactory.json' assert { type: 'json' }
+import BaseSepoliaTownOwnerAddress from '@river/generated/addresses/base_sepolia/spaceOwner.json' assert { type: 'json' }
+import BaseSepoliaWalletLinkAddress from '@river/generated/addresses/base_sepolia/walletLink.json' assert { type: 'json' }
 
 import { Address } from './ContractTypes'
 export interface IStaticContractsInfo {

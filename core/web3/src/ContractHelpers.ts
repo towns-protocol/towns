@@ -6,7 +6,6 @@ import { ISpaceDapp } from './ISpaceDapp'
 import {
     IArchitectBase as ITownArchitectBaseV3,
     MockERC721AShim as MockERC721AShimV3,
-    TokenEntitlementDataTypes,
     IMembershipBase as IMembershipBaseV3,
 } from './v3'
 
@@ -39,7 +38,7 @@ export function balanceOfMockNFT(
     throw new Error(`Unsupported chainId ${chainId}, only 31337 is supported.`)
 }
 
-export async function getTestGatingNftAddress(_chainId: number): Promise<string> {
+export async function getTestGatingNftAddress(_chainId: number): Promise<`0x${string}`> {
     return await getTestGatingNFTContractAddress()
 }
 
@@ -94,7 +93,7 @@ function isMembershipStructV3(
 type CreateMembershipStructArgs = {
     name: string
     permissions: Permission[]
-    tokenAddresses: string[]
+    requirements: ITownArchitectBaseV3.MembershipRequirementsStruct
     version?: Versions
 } & Omit<
     IMembershipBaseV3.MembershipStruct,
@@ -110,7 +109,7 @@ type CreateMembershipStructArgs = {
 function _createMembershipStruct({
     name,
     permissions,
-    tokenAddresses,
+    requirements,
     version = defaultVersion,
 }: CreateMembershipStructArgs): ITownArchitectBaseV3.MembershipStruct {
     if (version === 'v3') {
@@ -127,12 +126,7 @@ function _createMembershipStruct({
                 pricingModule: ethers.constants.AddressZero,
             },
             permissions,
-            requirements: {
-                everyone: tokenAddresses.length === 0,
-                tokens: createExternalTokenStruct(tokenAddresses),
-                users: [],
-                rule: ethers.constants.AddressZero,
-            },
+            requirements,
         }
     } else {
         return {
@@ -148,12 +142,7 @@ function _createMembershipStruct({
                 pricingModule: ethers.constants.AddressZero,
             },
             permissions,
-            requirements: {
-                everyone: tokenAddresses.length === 0,
-                tokens: createExternalTokenStruct(tokenAddresses),
-                users: [],
-                rule: ethers.constants.AddressZero,
-            },
+            requirements,
         }
     }
 }
@@ -165,18 +154,4 @@ export function createMembershipStruct(args: CreateMembershipStructArgs) {
     } else {
         throw new Error("createMembershipStruct: version is not 'v3'")
     }
-}
-
-export function createExternalTokenStruct(
-    tokenAddresses: string[],
-): TokenEntitlementDataTypes.ExternalTokenStruct[] {
-    const tokenStruct: TokenEntitlementDataTypes.ExternalTokenStruct[] = tokenAddresses.map(
-        (address) => ({
-            contractAddress: address,
-            isSingleToken: false,
-            quantity: 1,
-            tokenIds: [],
-        }),
-    )
-    return tokenStruct
 }
