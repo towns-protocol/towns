@@ -88,13 +88,6 @@ func (s *Service) addParsedEvent(ctx context.Context, streamId string, parsedEve
 		return err
 	}
 
-	if s.notification != nil {
-		sendsPush, senderId := rules.SendsPushNotification(parsedEvent)
-		if sendsPush {
-			s.notification.SendPushNotification(s.serverCtx, streamView, senderId, parsedEvent.Event)
-		}
-	}
-
 	return nil
 }
 

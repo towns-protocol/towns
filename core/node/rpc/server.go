@@ -167,11 +167,6 @@ func StartServer(
 		chainAuth = auth.NewFakeChainAuth()
 	}
 
-	notification := MakePushNotification(
-		ctx,
-		&cfg.PushNotification,
-	)
-
 	var nodeRegistry nodes.NodeRegistry
 	var streamRegistry nodes.StreamRegistry
 	var registryContract *registries.RiverRegistryContract
@@ -240,7 +235,6 @@ func StartServer(
 		nodeRegistry:   nodeRegistry,
 		streamRegistry: streamRegistry,
 		streamConfig:   &cfg.Stream,
-		notification:   notification,
 		syncHandler:    syncHandler,
 		serverCtx:      ctx,
 	}
