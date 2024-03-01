@@ -1037,11 +1037,11 @@
       ]
     },
     "contracts/src/spaces/facets/Entitled.sol": {
-      "keccak256": "0x95302e368bf2f118d9704e16c77c533a681b9a7c72aedbea0b52a5c614e354c5",
+      "keccak256": "0x7113e4a4b32bb219f57c93999c989450910ff2ae85e713ba1c0ee00bc4bdebc1",
       "license": "Apache-2.0",
       "urls": [
-        "bzz-raw://de242be530d421f3c17f0ceafbba3edae090009be18022b5448f08269421ffb7",
-        "dweb:/ipfs/QmbSGZZA5MihN3TiNi8tJv9KYU2W6Z1FSTz9qofho7xbPw"
+        "bzz-raw://1ac74460ca5500807f30633acfd507bd0a2dbfe8e84019102166ef7fd2fb632d",
+        "dweb:/ipfs/QmY5C5RFo3G3z91CnVu2P8TCrquf4ng5SR4kgiNxUQwKBH"
       ]
     },
     "contracts/src/spaces/facets/Permissions.sol": {
