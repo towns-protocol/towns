@@ -1,22 +1,18 @@
 package auth
 
-type Permission int64
+type Permission int
 
 const (
-	// since iota starts with 0, the first value
-	// defined here will be the default
-	PermissionUndefined Permission = iota
+	PermissionUndefined Permission = iota // No permission required
 	PermissionRead
 	PermissionWrite
-	PermissionPing
 	PermissionInvite
+	PermissionJoin
 	PermissionRedact
 	PermissionBan
-	PermissionModifyChannelProfile
 	PermissionPinMessages
 	PermissionAddRemoveChannels
 	PermissionModifySpaceSettings
-	PermissionOwner
 )
 
 func (p Permission) String() string {
@@ -27,24 +23,21 @@ func (p Permission) String() string {
 		return "Read"
 	case PermissionWrite:
 		return "Write"
-	case PermissionPing:
-		return "Ping"
 	case PermissionInvite:
 		return "Invite"
+	case PermissionJoin:
+		return "Join"
 	case PermissionRedact:
 		return "Redact"
 	case PermissionBan:
 		return "Ban"
-	case PermissionModifyChannelProfile:
-		return "ModifyChannelProfile"
 	case PermissionPinMessages:
 		return "PinMessages"
 	case PermissionAddRemoveChannels:
 		return "AddRemoveChannels"
 	case PermissionModifySpaceSettings:
 		return "ModifySpaceSettings"
-	case PermissionOwner:
-		return "Owner"
+	default:
+		return "Unknown"
 	}
-	return "Unknown"
 }

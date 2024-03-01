@@ -46,7 +46,7 @@ message Envelope {
 message StreamEvent {
     /**
      * Address of the creator of the event.
-     * For user - address of the user's Towns wallet.
+     * For user - address of the user's wallet.
      * For server - address of the server's keypair in staking smart contract.
      *
      * For the event to be valid:
@@ -57,10 +57,10 @@ message StreamEvent {
 
      /**
       * delegate_sig allows event to be signed by device keypair 
-      * which is linked to the user's Towns wallet.
+      * which is linked to the user's wallet.
       *
       * delegate_sig constains signature of the public key of the device keypair.
-      * User's Towns wallet is used to produce this signature.
+      * User's wallet is used to produce this signature.
       * 
       * If present, for the event to be valid:
       * 1. creator_address must match delegate_sig's signer public key

@@ -1,5 +1,0 @@
-*.js
-
-node_modules
-.yarn
-dist

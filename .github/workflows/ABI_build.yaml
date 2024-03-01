@@ -63,4 +63,4 @@ jobs:
               working-directory: lib/forge-std/src
               run: cp console.sol Console.sol
             - name: Build Types
-              run: bash scripts/build-river-types.sh
+              run: bash scripts/build-contract-types.sh

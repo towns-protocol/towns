@@ -12,6 +12,8 @@ import {OwnableBase} from "contracts/src/diamond/facets/ownable/OwnableBase.sol"
 import {ReentrancyGuard} from "contracts/src/diamond/facets/reentrancy/ReentrancyGuard.sol";
 import {PausableBase} from "contracts/src/diamond/facets/pausable/PausableBase.sol";
 import {Facet} from "contracts/src/diamond/facets/Facet.sol";
+import {IUserEntitlement} from "contracts/src/spaces/entitlements/user/IUserEntitlement.sol";
+import {IRuleEntitlement} from "contracts/src/crosschain/IRuleEntitlement.sol";
 
 contract Architect is
   IArchitect,
@@ -23,13 +25,13 @@ contract Architect is
 {
   function __Architect_init(
     address ownerImplementation,
-    address userEntitlementImplementation,
-    address tokenEntitlementImplementation
+    IUserEntitlement userEntitlementImplementation,
+    IRuleEntitlement ruleEntitlementImplementation
   ) external onlyInitializing {
     _setImplementations(
       ownerImplementation,
       userEntitlementImplementation,
-      tokenEntitlementImplementation
+      ruleEntitlementImplementation
     );
   }
 
@@ -67,13 +69,13 @@ contract Architect is
 
   function setSpaceArchitectImplementations(
     address spaceToken,
-    address userEntitlementImplementation,
-    address tokenEntitlementImplementation
+    IUserEntitlement userEntitlementImplementation,
+    IRuleEntitlement ruleEntitlementImplementation
   ) external onlyOwner {
     _setImplementations(
       spaceToken,
       userEntitlementImplementation,
-      tokenEntitlementImplementation
+      ruleEntitlementImplementation
     );
   }
 
@@ -82,8 +84,8 @@ contract Architect is
     view
     returns (
       address spaceToken,
-      address userEntitlementImplementation,
-      address tokenEntitlementImplementation
+      IUserEntitlement userEntitlementImplementation,
+      IRuleEntitlement ruleEntitlementImplementation
     )
   {
     return _getImplementations();

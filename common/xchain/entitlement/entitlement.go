@@ -136,9 +136,9 @@ func getOperationTree(address string) (Operation, error) {
 	var wg sync.WaitGroup
 	wg.Add(3)
 
-	var operations []er.IEntitlementRuleOperation
-	var logicalOperations []er.IEntitlementRuleLogicalOperation
-	var checkOperations []er.IEntitlementRuleCheckOperation
+	var operations []er.IRuleEntitlementOperation
+	var logicalOperations []er.IRuleEntitlementLogicalOperation
+	var checkOperations []er.IRuleEntitlementCheckOperation
 
 	go func() {
 		// Simulate publicClient.readContract for 'getOperations'

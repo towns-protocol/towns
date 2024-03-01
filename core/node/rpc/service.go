@@ -25,7 +25,6 @@ type Service struct {
 	nodeRegistry   nodes.NodeRegistry
 	streamRegistry nodes.StreamRegistry
 	streamConfig   *config.StreamConfig
-	notification   PushNotification
 	syncHandler    SyncHandler
 	serverCtx      context.Context
 	httpServer     *http.Server

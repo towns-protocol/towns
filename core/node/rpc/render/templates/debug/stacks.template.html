@@ -1,0 +1,27 @@
+<!DOCTYPE html>
+<html>
+  <head>
+    <title>Stacktrace</title>
+    <meta charset="utf-8" />
+  </head>
+  <body>
+    <table border="1">
+      <thead>
+        <tr>
+          <th>#</th>
+          <th>GoRoutine</th>
+          <th>Stack</th>
+        </tr>
+      </thead>
+      <tbody>
+        {{ range $i, $stack := .Stacks }}
+        <tr>
+          <td>{{$i}}</td>
+          <td>{{$stack.Description}}</td>
+          <td>{{ range $j, $line := $stack.Lines }}{{$line}}<br />{{end}}</td>
+        </tr>
+        {{end}}
+      </tbody>
+    </table>
+  </body>
+</html>

@@ -27,7 +27,7 @@ riverChain:
     fakeBlockTimeMs: 100
 
 # Base contracts
-townsArchitectContract:
+architectContract:
     address: '../addresses/spaceFactory.json'
     version: 'dev'
 walletLinkContract:

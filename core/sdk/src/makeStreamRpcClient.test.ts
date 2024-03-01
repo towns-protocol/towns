@@ -15,7 +15,7 @@ describe('protocol', () => {
             timeoutMs: 10000,
         })
         expect(response).toBeDefined()
-        expect(response.graffiti).toEqual('Towns.com node welcomes you!')
+        expect(response.graffiti).toEqual('River Node welcomes you!')
     })
 
     test('info-error', async () => {

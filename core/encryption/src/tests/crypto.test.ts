@@ -6,10 +6,10 @@ import { bin_fromHexString, bin_toHexString, dlog } from '@river/dlog'
 import { getPublicKey, utils } from 'ethereum-cryptography/secp256k1'
 import { readFileSync, writeFileSync } from 'fs'
 import {
-    townsHash,
-    townsRecoverPubKey,
-    townsSign,
-    townsVerifySignature,
+    riverHash,
+    riverRecoverPubKey,
+    riverSign,
+    riverVerifySignature,
 } from '../groupEncryptionCrypto'
 
 const log = dlog('test:encryption')
@@ -36,10 +36,10 @@ describe('crypto', () => {
         writeFileSync(KEYS_FILE, csv, 'utf8')
 
         const genDataLine = async (d: Uint8Array) => {
-            const hash = townsHash(d)
+            const hash = riverHash(d)
             const ret = [d, hash]
             for (const [pr] of keys) {
-                ret.push(await townsSign(hash, pr))
+                ret.push(await riverSign(hash, pr))
             }
             return ret
         }
@@ -106,19 +106,19 @@ describe('crypto', () => {
                     const line = data[i]
                     log_shard('Checking line %d', i)
                     const [d, h, ...sigs] = line.split(',').map(bin_fromHexString)
-                    const hash = townsHash(d)
+                    const hash = riverHash(d)
                     expect(h).toEqual(hash)
                     for (let i = 0; i < keys.length; ++i) {
                         const [pr, pu] = keys[i]
                         const sig = sigs[i]
-                        expect(await townsSign(hash, pr)).toEqual(sig)
-                        expect(await townsSign(badHash, pr)).not.toEqual(sig)
-                        expect(townsRecoverPubKey(hash, sig)).toEqual(pu)
-                        expect(townsRecoverPubKey(badHash, sig)).not.toEqual(pu)
-                        expect(townsRecoverPubKey(hash, badSig)).not.toEqual(pu)
-                        expect(townsVerifySignature(hash, sig, pu)).toEqual(true)
-                        expect(townsVerifySignature(badHash, sig, pu)).toEqual(false)
-                        expect(townsVerifySignature(hash, badSig, pu)).toEqual(false)
+                        expect(await riverSign(hash, pr)).toEqual(sig)
+                        expect(await riverSign(badHash, pr)).not.toEqual(sig)
+                        expect(riverRecoverPubKey(hash, sig)).toEqual(pu)
+                        expect(riverRecoverPubKey(badHash, sig)).not.toEqual(pu)
+                        expect(riverRecoverPubKey(hash, badSig)).not.toEqual(pu)
+                        expect(riverVerifySignature(hash, sig, pu)).toEqual(true)
+                        expect(riverVerifySignature(badHash, sig, pu)).toEqual(false)
+                        expect(riverVerifySignature(hash, badSig, pu)).toEqual(false)
                         badSig = sig
                     }
                     badHash = hash

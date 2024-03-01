@@ -4,6 +4,13 @@ import (
 	infra "github.com/river-build/river/core/node/infra/config"
 )
 
+type ContractVersion string
+
+const (
+	VersionDev ContractVersion = "dev"
+	VersionV3  ContractVersion = "v3"
+)
+
 // Viper uses mapstructure module to marshal settings into config struct.
 type Config struct {
 	Metrics             infra.MetricsConfig `mapstructure:"metrics"`
@@ -11,6 +18,7 @@ type Config struct {
 	Chain               []ChainConfig       `mapstructure:"chain"`
 	EntitlementContract ContractConfig      `mapstructure:"entitlement_contract"`
 	TestingContract     ContractConfig      `mapstructure:"test_contract"`
+	contractVersion     ContractVersion     `mapstructure:"contract_version"`
 }
 type ChainConfig struct {
 	NetworkUrl string
@@ -31,4 +39,12 @@ func GetConfig() *Config {
 
 func SetConfig(config *Config) {
 	cmdConfig = config
+}
+
+func (c *Config) GetContractVersion() ContractVersion {
+	if c.contractVersion == VersionV3 {
+		return VersionV3
+	} else {
+		return VersionDev
+	}
 }

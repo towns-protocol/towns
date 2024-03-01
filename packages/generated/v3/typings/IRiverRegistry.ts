@@ -32,12 +32,14 @@ export declare namespace IRiverRegistryBase {
     nodeAddress: PromiseOrValue<string>;
     url: PromiseOrValue<string>;
     status: PromiseOrValue<BigNumberish>;
+    operator: PromiseOrValue<string>;
   };
 
-  export type NodeStructOutput = [string, string, number] & {
+  export type NodeStructOutput = [string, string, number, string] & {
     nodeAddress: string;
     url: string;
     status: number;
+    operator: string;
   };
 
   export type StreamStruct = {
@@ -89,12 +91,16 @@ export interface IRiverRegistryInterface extends utils.Interface {
     "getStream(bytes32)": FunctionFragment;
     "getStreamCount()": FunctionFragment;
     "getStreamWithGenesis(bytes32)": FunctionFragment;
+    "getStreamsOnNode(address)": FunctionFragment;
     "isOperator(address)": FunctionFragment;
     "placeStreamOnNode(bytes32,address)": FunctionFragment;
-    "registerNode(address,string)": FunctionFragment;
+    "registerNode(address,string,uint8)": FunctionFragment;
+    "removeNode(address)": FunctionFragment;
     "removeOperator(address)": FunctionFragment;
     "removeStreamFromNode(bytes32,address)": FunctionFragment;
     "setStreamLastMiniblock(bytes32,bytes32,uint64,bool)": FunctionFragment;
+    "updateNodeStatus(address,uint8)": FunctionFragment;
+    "updateNodeUrl(address,string)": FunctionFragment;
   };
 
   getFunction(
@@ -110,12 +116,16 @@ export interface IRiverRegistryInterface extends utils.Interface {
       | "getStream"
       | "getStreamCount"
       | "getStreamWithGenesis"
+      | "getStreamsOnNode"
       | "isOperator"
       | "placeStreamOnNode"
       | "registerNode"
+      | "removeNode"
       | "removeOperator"
       | "removeStreamFromNode"
       | "setStreamLastMiniblock"
+      | "updateNodeStatus"
+      | "updateNodeUrl"
   ): FunctionFragment;
 
   encodeFunctionData(
@@ -168,6 +178,10 @@ export interface IRiverRegistryInterface extends utils.Interface {
     values: [PromiseOrValue<BytesLike>]
   ): string;
   encodeFunctionData(
+    functionFragment: "getStreamsOnNode",
+    values: [PromiseOrValue<string>]
+  ): string;
+  encodeFunctionData(
     functionFragment: "isOperator",
     values: [PromiseOrValue<string>]
   ): string;
@@ -177,7 +191,15 @@ export interface IRiverRegistryInterface extends utils.Interface {
   ): string;
   encodeFunctionData(
     functionFragment: "registerNode",
-    values: [PromiseOrValue<string>, PromiseOrValue<string>]
+    values: [
+      PromiseOrValue<string>,
+      PromiseOrValue<string>,
+      PromiseOrValue<BigNumberish>
+    ]
+  ): string;
+  encodeFunctionData(
+    functionFragment: "removeNode",
+    values: [PromiseOrValue<string>]
   ): string;
   encodeFunctionData(
     functionFragment: "removeOperator",
@@ -195,6 +217,14 @@ export interface IRiverRegistryInterface extends utils.Interface {
       PromiseOrValue<BigNumberish>,
       PromiseOrValue<boolean>
     ]
+  ): string;
+  encodeFunctionData(
+    functionFragment: "updateNodeStatus",
+    values: [PromiseOrValue<string>, PromiseOrValue<BigNumberish>]
+  ): string;
+  encodeFunctionData(
+    functionFragment: "updateNodeUrl",
+    values: [PromiseOrValue<string>, PromiseOrValue<string>]
   ): string;
 
   decodeFunctionResult(
@@ -235,6 +265,10 @@ export interface IRiverRegistryInterface extends utils.Interface {
     functionFragment: "getStreamWithGenesis",
     data: BytesLike
   ): Result;
+  decodeFunctionResult(
+    functionFragment: "getStreamsOnNode",
+    data: BytesLike
+  ): Result;
   decodeFunctionResult(functionFragment: "isOperator", data: BytesLike): Result;
   decodeFunctionResult(
     functionFragment: "placeStreamOnNode",
@@ -244,6 +278,7 @@ export interface IRiverRegistryInterface extends utils.Interface {
     functionFragment: "registerNode",
     data: BytesLike
   ): Result;
+  decodeFunctionResult(functionFragment: "removeNode", data: BytesLike): Result;
   decodeFunctionResult(
     functionFragment: "removeOperator",
     data: BytesLike
@@ -256,19 +291,29 @@ export interface IRiverRegistryInterface extends utils.Interface {
     functionFragment: "setStreamLastMiniblock",
     data: BytesLike
   ): Result;
+  decodeFunctionResult(
+    functionFragment: "updateNodeStatus",
+    data: BytesLike
+  ): Result;
+  decodeFunctionResult(
+    functionFragment: "updateNodeUrl",
+    data: BytesLike
+  ): Result;
 
   events: {
     "NodeAdded(address,string,uint8)": EventFragment;
+    "NodeRemoved(address)": EventFragment;
     "NodeStatusUpdated(address,uint8)": EventFragment;
     "NodeUrlUpdated(address,string)": EventFragment;
     "OperatorAdded(address)": EventFragment;
     "OperatorRemoved(address)": EventFragment;
-    "StreamAllocated(bytes32,address[],bytes32)": EventFragment;
+    "StreamAllocated(bytes32,address[],bytes32,bytes)": EventFragment;
     "StreamLastMiniblockUpdated(bytes32,bytes32,uint64,bool)": EventFragment;
     "StreamPlacementUpdated(bytes32,address,bool)": EventFragment;
   };
 
   getEvent(nameOrSignatureOrTopic: "NodeAdded"): EventFragment;
+  getEvent(nameOrSignatureOrTopic: "NodeRemoved"): EventFragment;
   getEvent(nameOrSignatureOrTopic: "NodeStatusUpdated"): EventFragment;
   getEvent(nameOrSignatureOrTopic: "NodeUrlUpdated"): EventFragment;
   getEvent(nameOrSignatureOrTopic: "OperatorAdded"): EventFragment;
@@ -289,6 +334,13 @@ export type NodeAddedEvent = TypedEvent<
 >;
 
 export type NodeAddedEventFilter = TypedEventFilter<NodeAddedEvent>;
+
+export interface NodeRemovedEventObject {
+  nodeAddress: string;
+}
+export type NodeRemovedEvent = TypedEvent<[string], NodeRemovedEventObject>;
+
+export type NodeRemovedEventFilter = TypedEventFilter<NodeRemovedEvent>;
 
 export interface NodeStatusUpdatedEventObject {
   nodeAddress: string;
@@ -334,9 +386,10 @@ export interface StreamAllocatedEventObject {
   streamId: string;
   nodes: string[];
   genesisMiniblockHash: string;
+  genesisMiniblock: string;
 }
 export type StreamAllocatedEvent = TypedEvent<
-  [string, string[], string],
+  [string, string[], string, string],
   StreamAllocatedEventObject
 >;
 
@@ -440,6 +493,11 @@ export interface IRiverRegistry extends BaseContract {
       overrides?: CallOverrides
     ): Promise<[IRiverRegistryBase.StreamStructOutput, string, string]>;
 
+    getStreamsOnNode(
+      nodeAddress: PromiseOrValue<string>,
+      overrides?: CallOverrides
+    ): Promise<[IRiverRegistryBase.StreamWithIdStructOutput[]]>;
+
     isOperator(
       operator: PromiseOrValue<string>,
       overrides?: CallOverrides
@@ -454,6 +512,12 @@ export interface IRiverRegistry extends BaseContract {
     registerNode(
       nodeAddress: PromiseOrValue<string>,
       url: PromiseOrValue<string>,
+      status: PromiseOrValue<BigNumberish>,
+      overrides?: Overrides & { from?: PromiseOrValue<string> }
+    ): Promise<ContractTransaction>;
+
+    removeNode(
+      nodeAddress: PromiseOrValue<string>,
       overrides?: Overrides & { from?: PromiseOrValue<string> }
     ): Promise<ContractTransaction>;
 
@@ -473,6 +537,18 @@ export interface IRiverRegistry extends BaseContract {
       lastMiniblockHash: PromiseOrValue<BytesLike>,
       lastMiniblockNum: PromiseOrValue<BigNumberish>,
       isSealed: PromiseOrValue<boolean>,
+      overrides?: Overrides & { from?: PromiseOrValue<string> }
+    ): Promise<ContractTransaction>;
+
+    updateNodeStatus(
+      nodeAddress: PromiseOrValue<string>,
+      status: PromiseOrValue<BigNumberish>,
+      overrides?: Overrides & { from?: PromiseOrValue<string> }
+    ): Promise<ContractTransaction>;
+
+    updateNodeUrl(
+      nodeAddress: PromiseOrValue<string>,
+      url: PromiseOrValue<string>,
       overrides?: Overrides & { from?: PromiseOrValue<string> }
     ): Promise<ContractTransaction>;
   };
@@ -521,6 +597,11 @@ export interface IRiverRegistry extends BaseContract {
     overrides?: CallOverrides
   ): Promise<[IRiverRegistryBase.StreamStructOutput, string, string]>;
 
+  getStreamsOnNode(
+    nodeAddress: PromiseOrValue<string>,
+    overrides?: CallOverrides
+  ): Promise<IRiverRegistryBase.StreamWithIdStructOutput[]>;
+
   isOperator(
     operator: PromiseOrValue<string>,
     overrides?: CallOverrides
@@ -535,6 +616,12 @@ export interface IRiverRegistry extends BaseContract {
   registerNode(
     nodeAddress: PromiseOrValue<string>,
     url: PromiseOrValue<string>,
+    status: PromiseOrValue<BigNumberish>,
+    overrides?: Overrides & { from?: PromiseOrValue<string> }
+  ): Promise<ContractTransaction>;
+
+  removeNode(
+    nodeAddress: PromiseOrValue<string>,
     overrides?: Overrides & { from?: PromiseOrValue<string> }
   ): Promise<ContractTransaction>;
 
@@ -554,6 +641,18 @@ export interface IRiverRegistry extends BaseContract {
     lastMiniblockHash: PromiseOrValue<BytesLike>,
     lastMiniblockNum: PromiseOrValue<BigNumberish>,
     isSealed: PromiseOrValue<boolean>,
+    overrides?: Overrides & { from?: PromiseOrValue<string> }
+  ): Promise<ContractTransaction>;
+
+  updateNodeStatus(
+    nodeAddress: PromiseOrValue<string>,
+    status: PromiseOrValue<BigNumberish>,
+    overrides?: Overrides & { from?: PromiseOrValue<string> }
+  ): Promise<ContractTransaction>;
+
+  updateNodeUrl(
+    nodeAddress: PromiseOrValue<string>,
+    url: PromiseOrValue<string>,
     overrides?: Overrides & { from?: PromiseOrValue<string> }
   ): Promise<ContractTransaction>;
 
@@ -602,6 +701,11 @@ export interface IRiverRegistry extends BaseContract {
       overrides?: CallOverrides
     ): Promise<[IRiverRegistryBase.StreamStructOutput, string, string]>;
 
+    getStreamsOnNode(
+      nodeAddress: PromiseOrValue<string>,
+      overrides?: CallOverrides
+    ): Promise<IRiverRegistryBase.StreamWithIdStructOutput[]>;
+
     isOperator(
       operator: PromiseOrValue<string>,
       overrides?: CallOverrides
@@ -616,6 +720,12 @@ export interface IRiverRegistry extends BaseContract {
     registerNode(
       nodeAddress: PromiseOrValue<string>,
       url: PromiseOrValue<string>,
+      status: PromiseOrValue<BigNumberish>,
+      overrides?: CallOverrides
+    ): Promise<void>;
+
+    removeNode(
+      nodeAddress: PromiseOrValue<string>,
       overrides?: CallOverrides
     ): Promise<void>;
 
@@ -637,6 +747,18 @@ export interface IRiverRegistry extends BaseContract {
       isSealed: PromiseOrValue<boolean>,
       overrides?: CallOverrides
     ): Promise<void>;
+
+    updateNodeStatus(
+      nodeAddress: PromiseOrValue<string>,
+      status: PromiseOrValue<BigNumberish>,
+      overrides?: CallOverrides
+    ): Promise<void>;
+
+    updateNodeUrl(
+      nodeAddress: PromiseOrValue<string>,
+      url: PromiseOrValue<string>,
+      overrides?: CallOverrides
+    ): Promise<void>;
   };
 
   filters: {
@@ -650,6 +772,13 @@ export interface IRiverRegistry extends BaseContract {
       url?: null,
       status?: null
     ): NodeAddedEventFilter;
+
+    "NodeRemoved(address)"(
+      nodeAddress?: PromiseOrValue<string> | null
+    ): NodeRemovedEventFilter;
+    NodeRemoved(
+      nodeAddress?: PromiseOrValue<string> | null
+    ): NodeRemovedEventFilter;
 
     "NodeStatusUpdated(address,uint8)"(
       nodeAddress?: PromiseOrValue<string> | null,
@@ -683,15 +812,17 @@ export interface IRiverRegistry extends BaseContract {
       operatorAddress?: PromiseOrValue<string> | null
     ): OperatorRemovedEventFilter;
 
-    "StreamAllocated(bytes32,address[],bytes32)"(
+    "StreamAllocated(bytes32,address[],bytes32,bytes)"(
       streamId?: null,
       nodes?: null,
-      genesisMiniblockHash?: null
+      genesisMiniblockHash?: null,
+      genesisMiniblock?: null
     ): StreamAllocatedEventFilter;
     StreamAllocated(
       streamId?: null,
       nodes?: null,
-      genesisMiniblockHash?: null
+      genesisMiniblockHash?: null,
+      genesisMiniblock?: null
     ): StreamAllocatedEventFilter;
 
     "StreamLastMiniblockUpdated(bytes32,bytes32,uint64,bool)"(
@@ -760,6 +891,11 @@ export interface IRiverRegistry extends BaseContract {
       overrides?: CallOverrides
     ): Promise<BigNumber>;
 
+    getStreamsOnNode(
+      nodeAddress: PromiseOrValue<string>,
+      overrides?: CallOverrides
+    ): Promise<BigNumber>;
+
     isOperator(
       operator: PromiseOrValue<string>,
       overrides?: CallOverrides
@@ -774,6 +910,12 @@ export interface IRiverRegistry extends BaseContract {
     registerNode(
       nodeAddress: PromiseOrValue<string>,
       url: PromiseOrValue<string>,
+      status: PromiseOrValue<BigNumberish>,
+      overrides?: Overrides & { from?: PromiseOrValue<string> }
+    ): Promise<BigNumber>;
+
+    removeNode(
+      nodeAddress: PromiseOrValue<string>,
       overrides?: Overrides & { from?: PromiseOrValue<string> }
     ): Promise<BigNumber>;
 
@@ -793,6 +935,18 @@ export interface IRiverRegistry extends BaseContract {
       lastMiniblockHash: PromiseOrValue<BytesLike>,
       lastMiniblockNum: PromiseOrValue<BigNumberish>,
       isSealed: PromiseOrValue<boolean>,
+      overrides?: Overrides & { from?: PromiseOrValue<string> }
+    ): Promise<BigNumber>;
+
+    updateNodeStatus(
+      nodeAddress: PromiseOrValue<string>,
+      status: PromiseOrValue<BigNumberish>,
+      overrides?: Overrides & { from?: PromiseOrValue<string> }
+    ): Promise<BigNumber>;
+
+    updateNodeUrl(
+      nodeAddress: PromiseOrValue<string>,
+      url: PromiseOrValue<string>,
       overrides?: Overrides & { from?: PromiseOrValue<string> }
     ): Promise<BigNumber>;
   };
@@ -840,6 +994,11 @@ export interface IRiverRegistry extends BaseContract {
       overrides?: CallOverrides
     ): Promise<PopulatedTransaction>;
 
+    getStreamsOnNode(
+      nodeAddress: PromiseOrValue<string>,
+      overrides?: CallOverrides
+    ): Promise<PopulatedTransaction>;
+
     isOperator(
       operator: PromiseOrValue<string>,
       overrides?: CallOverrides
@@ -854,6 +1013,12 @@ export interface IRiverRegistry extends BaseContract {
     registerNode(
       nodeAddress: PromiseOrValue<string>,
       url: PromiseOrValue<string>,
+      status: PromiseOrValue<BigNumberish>,
+      overrides?: Overrides & { from?: PromiseOrValue<string> }
+    ): Promise<PopulatedTransaction>;
+
+    removeNode(
+      nodeAddress: PromiseOrValue<string>,
       overrides?: Overrides & { from?: PromiseOrValue<string> }
     ): Promise<PopulatedTransaction>;
 
@@ -873,6 +1038,18 @@ export interface IRiverRegistry extends BaseContract {
       lastMiniblockHash: PromiseOrValue<BytesLike>,
       lastMiniblockNum: PromiseOrValue<BigNumberish>,
       isSealed: PromiseOrValue<boolean>,
+      overrides?: Overrides & { from?: PromiseOrValue<string> }
+    ): Promise<PopulatedTransaction>;
+
+    updateNodeStatus(
+      nodeAddress: PromiseOrValue<string>,
+      status: PromiseOrValue<BigNumberish>,
+      overrides?: Overrides & { from?: PromiseOrValue<string> }
+    ): Promise<PopulatedTransaction>;
+
+    updateNodeUrl(
+      nodeAddress: PromiseOrValue<string>,
+      url: PromiseOrValue<string>,
       overrides?: Overrides & { from?: PromiseOrValue<string> }
     ): Promise<PopulatedTransaction>;
   };

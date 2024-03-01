@@ -124,6 +124,19 @@
             "internalType": "address",
             "name": "nodeAddress",
             "type": "address"
+          }
+        ],
+        "name": "NodeRemoved",
+        "type": "event"
+      },
+      {
+        "anonymous": false,
+        "inputs": [
+          {
+            "indexed": true,
+            "internalType": "address",
+            "name": "nodeAddress",
+            "type": "address"
           },
           {
             "indexed": false,
@@ -219,6 +232,12 @@
             "internalType": "bytes32",
             "name": "genesisMiniblockHash",
             "type": "bytes32"
+          },
+          {
+            "indexed": false,
+            "internalType": "bytes",
+            "name": "genesisMiniblock",
+            "type": "bytes"
           }
         ],
         "name": "StreamAllocated",
@@ -367,6 +386,11 @@
                 "internalType": "enum IRiverRegistryBase.NodeStatus",
                 "name": "status",
                 "type": "uint8"
+              },
+              {
+                "internalType": "address",
+                "name": "operator",
+                "type": "address"
               }
             ],
             "internalType": "struct IRiverRegistryBase.Node[]",
@@ -473,6 +497,11 @@
                 "internalType": "enum IRiverRegistryBase.NodeStatus",
                 "name": "status",
                 "type": "uint8"
+              },
+              {
+                "internalType": "address",
+                "name": "operator",
+                "type": "address"
               }
             ],
             "internalType": "struct IRiverRegistryBase.Node",
@@ -625,6 +654,69 @@
         "inputs": [
           {
             "internalType": "address",
+            "name": "nodeAddress",
+            "type": "address"
+          }
+        ],
+        "name": "getStreamsOnNode",
+        "outputs": [
+          {
+            "components": [
+              {
+                "internalType": "bytes32",
+                "name": "id",
+                "type": "bytes32"
+              },
+              {
+                "components": [
+                  {
+                    "internalType": "bytes32",
+                    "name": "lastMiniblockHash",
+                    "type": "bytes32"
+                  },
+                  {
+                    "internalType": "uint64",
+                    "name": "lastMiniblockNum",
+                    "type": "uint64"
+                  },
+                  {
+                    "internalType": "uint64",
+                    "name": "flags",
+                    "type": "uint64"
+                  },
+                  {
+                    "internalType": "uint64",
+                    "name": "reserved0",
+                    "type": "uint64"
+                  },
+                  {
+                    "internalType": "uint64",
+                    "name": "reserved1",
+                    "type": "uint64"
+                  },
+                  {
+                    "internalType": "address[]",
+                    "name": "nodes",
+                    "type": "address[]"
+                  }
+                ],
+                "internalType": "struct IRiverRegistryBase.Stream",
+                "name": "stream",
+                "type": "tuple"
+              }
+            ],
+            "internalType": "struct IRiverRegistryBase.StreamWithId[]",
+            "name": "",
+            "type": "tuple[]"
+          }
+        ],
+        "stateMutability": "view",
+        "type": "function"
+      },
+      {
+        "inputs": [
+          {
+            "internalType": "address",
             "name": "operator",
             "type": "address"
           }
@@ -669,9 +761,27 @@
             "internalType": "string",
             "name": "url",
             "type": "string"
+          },
+          {
+            "internalType": "enum IRiverRegistryBase.NodeStatus",
+            "name": "status",
+            "type": "uint8"
           }
         ],
         "name": "registerNode",
+        "outputs": [],
+        "stateMutability": "nonpayable",
+        "type": "function"
+      },
+      {
+        "inputs": [
+          {
+            "internalType": "address",
+            "name": "nodeAddress",
+            "type": "address"
+          }
+        ],
+        "name": "removeNode",
         "outputs": [],
         "stateMutability": "nonpayable",
         "type": "function"
@@ -738,25 +848,17 @@
       {
         "inputs": [
           {
+            "internalType": "address",
+            "name": "nodeAddress",
+            "type": "address"
+          },
+          {
             "internalType": "enum IRiverRegistryBase.NodeStatus",
             "name": "status",
             "type": "uint8"
           }
         ],
         "name": "updateNodeStatus",
-        "outputs": [],
-        "stateMutability": "nonpayable",
-        "type": "function"
-      },
-      {
-        "inputs": [
-          {
-            "internalType": "string",
-            "name": "url",
-            "type": "string"
-          }
-        ],
-        "name": "updateNodeUrl",
         "outputs": [],
         "stateMutability": "nonpayable",
         "type": "function"
@@ -774,7 +876,7 @@
             "type": "string"
           }
         ],
-        "name": "updateNodeUrlByOperator",
+        "name": "updateNodeUrl",
         "outputs": [],
         "stateMutability": "nonpayable",
         "type": "function"
@@ -943,27 +1045,27 @@
       ]
     },
     "contracts/src/river/registry/IRiverRegistry.sol": {
-      "keccak256": "0x01c842edf619f2164dc35ce21cb98811a70ce36cc23b3473cce19aa67d7b1196",
+      "keccak256": "0xd00faba2c70e7519d0fa9ff78f976aba511647dd7efe8854c14b1a15a9c664c4",
       "license": "Apache-2.0",
       "urls": [
-        "bzz-raw://a20b30e4fa4fb13c8670ec4c9b654130d475f23ff7f3f4adb9d45bc2638fc34d",
-        "dweb:/ipfs/QmTn47JjjtKzXhw6asqjXwhCEVUo5E8qxkg3V98VP9u69a"
+        "bzz-raw://850c8329f55f26184fad0e93d5f18c15a08f7681d7517c8fbaa9d8cdc7e5bb42",
+        "dweb:/ipfs/QmbtsvjRZPDTPayj9DcqmRsKqbGxHXtrdigeKviFsgv4sV"
       ]
     },
     "contracts/src/river/registry/RiverRegistry.sol": {
-      "keccak256": "0xf807cbc76908dd75764fe20de7f847f52a0ea15bc5ee81296506a15024a72f6f",
+      "keccak256": "0xe744b61dd420dc6635348738a512e1ccbc92b5ecddd4be35cb2f64948292ca16",
       "license": "MIT",
       "urls": [
-        "bzz-raw://c2253cf94b2d2e24f579f70f9f99aa95727c70fe5f61661bbf04af90531f175f",
-        "dweb:/ipfs/QmZ1MdF7VKVBPaUTZdnVhi8PVKhpzgc21qBKPAuck7nB8r"
+        "bzz-raw://e8e3c98731d92a51b988a4af123185e645b3493ee30d3d33453c79fb1d737020",
+        "dweb:/ipfs/QmXZcyjgU1NHeyT5Au32oiTRqTCQ2tQS9q2yBUC6oxFadA"
       ]
     },
     "contracts/src/river/registry/RiverRegistryStorage.sol": {
-      "keccak256": "0xd2fc5437db58cd00b38b817bffd5e2703be4c2b6f9241f914df848fa7af35e08",
+      "keccak256": "0x168a6d05573fff4bf9b140650743a4a9d1338baf6c7d3be490357e03b6512fb4",
       "license": "Apache-2.0",
       "urls": [
-        "bzz-raw://74e757be655603f73c2de77eca6db2d2e881aefc1077d33b0ee41a5c47842c14",
-        "dweb:/ipfs/QmayjCKrVBP9DnPKgP1T5ZHuh4R1icVVw6Cu9E1kgukJgq"
+        "bzz-raw://6dbb50243df7c7b0d84bb76c3074d57e8e410d922ef2d2d9f060b8e352e304ec",
+        "dweb:/ipfs/QmWHwtNaqVyqsD7UfQmaYRqaHTRKLJoJE5BX1PnnktKtqr"
       ]
     },
     "contracts/test/mocks/MockRiverRegistry.sol": {

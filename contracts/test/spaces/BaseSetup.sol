@@ -11,6 +11,7 @@ import {TestUtils} from "contracts/test/utils/TestUtils.sol";
 // deployments
 import {Architect} from "contracts/src/spaces/facets/architect/Architect.sol";
 import {SpaceHelper} from "contracts/test/spaces/SpaceHelper.sol";
+import {RuleEntitlement} from "contracts/src/crosschain/RuleEntitlement.sol";
 
 import {SpaceOwner} from "contracts/src/spaces/facets/owner/SpaceOwner.sol";
 import {NodeOperatorFacet} from "contracts/src/node/operator/NodeOperatorFacet.sol";
@@ -19,6 +20,7 @@ import {NodeOperatorFacet} from "contracts/src/node/operator/NodeOperatorFacet.s
 import {DeploySpaceFactory} from "contracts/scripts/deployments/DeploySpaceFactory.s.sol";
 import {DeployNodeOperator} from "contracts/scripts/deployments/DeployNodeOperator.s.sol";
 import {DeployRiverBase} from "contracts/scripts/deployments/DeployRiverBase.s.sol";
+
 import {DeployMainnetDelegation} from "contracts/scripts/deployments/DeployMainnetDelegation.s.sol";
 
 /*
@@ -39,7 +41,7 @@ contract BaseSetup is TestUtils, SpaceHelper {
   address internal spaceFactory;
 
   address internal userEntitlement;
-  address internal tokenEntitlement;
+  address internal ruleEntitlement;
   address internal spaceOwner;
 
   address internal nodeOperator;
@@ -63,7 +65,7 @@ contract BaseSetup is TestUtils, SpaceHelper {
     // deploy space factory
     spaceFactory = deploySpaceFactory.deploy();
     userEntitlement = deploySpaceFactory.userEntitlement();
-    tokenEntitlement = deploySpaceFactory.tokenEntitlement();
+    ruleEntitlement = deploySpaceFactory.ruleEntitlement();
     spaceOwner = deploySpaceFactory.spaceOwner();
     deploySpaceFactory.postDeploy(deployer, spaceFactory);
 

@@ -49,17 +49,17 @@ func ClientSimulator() {
 		return
 	}
 
-	gatedContract, err := e.NewDevIEntitlementGated(*xc.GetTestContractAddress(), client)
+	gatedContract, err := e.NewIEntitlementGated(*xc.GetTestContractAddress(), client)
 	if err != nil {
 		log.Error("Failed to parse contract ABI", "err", err)
 		return
 	}
 
-	resultPosted := make(chan *e.DevIEntitlementGatedEntitlementCheckResultPosted)
+	resultPosted := make(chan *e.IEntitlementGatedEntitlementCheckResultPosted)
 
-	checkRequestedResults := make(chan *e.DevIEntitlementCheckerEntitlementCheckRequested)
+	checkRequestedResults := make(chan *e.IEntitlementCheckerEntitlementCheckRequested)
 
-	checkerFilterer, err := e.NewDevIEntitlementCheckerFilterer(*xc.GetCheckerContractAddress(), client)
+	checkerFilterer, err := e.NewIEntitlementChecker(*xc.GetCheckerContractAddress(), client)
 
 	if err != nil {
 		log.Error("Failed call NewEntitlementCheckerEventsFilterer", "err", err)
@@ -80,7 +80,7 @@ func ClientSimulator() {
 		checkRequestedSubCh = checkRequestedSub.Err()
 	}
 
-	gatedFilter, err := e.NewDevIEntitlementGatedFilterer(*xc.GetTestContractAddress(), client)
+	gated, err := e.NewIEntitlementGated(*xc.GetTestContractAddress(), client)
 	if err != nil {
 		log.Error("Failed to parse contract ABI", "err", err)
 		return
@@ -138,7 +138,7 @@ func ClientSimulator() {
 
 			gatedOpts := &bind.WatchOpts{Start: &requestBlockNumber, Context: bc} // Replace with appropriate context and filter query if needed
 
-			resultSub, err = gatedFilter.WatchEntitlementCheckResultPosted(gatedOpts, resultPosted, [][32]byte{transactionId})
+			resultSub, err = gated.WatchEntitlementCheckResultPosted(gatedOpts, resultPosted, [][32]byte{transactionId})
 			if err != nil {
 				log.Error("Failed call WatchEntitlementCheckResultPosted", "err", err)
 				return

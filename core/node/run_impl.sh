@@ -75,9 +75,10 @@ if [ "$CONFIG" == "true" ]; then
                 --rpc-url http://127.0.0.1:8546 \
                 --private-key $LOCAL_PRIVATE_KEY \
                 $RIVER_REGISTRY_ADDRESS \
-                "registerNode(address,string)" \
+                "registerNode(address,string,uint8)" \
                 $NODE_ADDRESS \
-                https://localhost:$I_RPC_PORT > /dev/null
+                https://localhost:$I_RPC_PORT \
+                2 > /dev/null
         fi
     done
 
@@ -86,7 +87,7 @@ if [ "$CONFIG" == "true" ]; then
         cast call \
             --rpc-url http://127.0.0.1:8546 \
             $RIVER_REGISTRY_ADDRESS \
-            "getAllNodes()((address,string)[])" | sed 's/),/),\n/g'
+            "getAllNodes()((address,string,uint8,address)[])" | sed 's/),/),\n/g'
         echo "<<<<<<<<<<<<<<<<<<<<<<<<<"
     fi
 fi

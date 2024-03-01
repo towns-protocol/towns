@@ -27,8 +27,6 @@ library RiverRegistryStorage {
     mapping(address => IRiverRegistryBase.Node) nodeByAddress;
     // Set of addresses of all operators in the system
     EnumerableSet.AddressSet operators;
-    // Map of operator address to nodes they operate
-    mapping(address => EnumerableSet.AddressSet) nodesByOperator;
   }
 
   function layout() internal pure returns (Layout storage l) {

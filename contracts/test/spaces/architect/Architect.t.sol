@@ -10,6 +10,9 @@ import {IERC173} from "contracts/src/diamond/facets/ownable/IERC173.sol";
 import {IPausableBase, IPausable} from "contracts/src/diamond/facets/pausable/IPausable.sol";
 import {IGuardian} from "contracts/src/spaces/facets/guardian/IGuardian.sol";
 import {IERC721ABase} from "contracts/src/diamond/facets/token/ERC721A/IERC721A.sol";
+import {IUserEntitlement} from "contracts/src/spaces/entitlements/user/IUserEntitlement.sol";
+import {IRuleEntitlement} from "contracts/src/crosschain/IRuleEntitlement.sol";
+import {RuleEntitlement} from "contracts/src/crosschain/RuleEntitlement.sol";
 
 // libraries
 
@@ -17,6 +20,7 @@ import {IERC721ABase} from "contracts/src/diamond/facets/token/ERC721A/IERC721A.
 import {BaseSetup} from "contracts/test/spaces/BaseSetup.sol";
 import {Architect} from "contracts/src/spaces/facets/architect/Architect.sol";
 import {MockERC721} from "contracts/test/mocks/MockERC721.sol";
+import {UserEntitlement} from "contracts/src/spaces/entitlements/user/UserEntitlement.sol";
 
 // errors
 import {Validator__InvalidStringLength} from "contracts/src/utils/Validator.sol";
@@ -64,19 +68,19 @@ contract ArchitectTest is
   function test_getImplementations() external {
     (
       address spaceTokenAddress,
-      address userEntitlementAddress,
-      address tokenEntitlementAddress
+      IUserEntitlement userEntitlementAddress,
+      IRuleEntitlement ruleEntitlementAddress
     ) = spaceArchitect.getSpaceArchitectImplementations();
 
     assertEq(spaceOwner, spaceTokenAddress);
-    assertEq(userEntitlement, userEntitlementAddress);
-    assertEq(tokenEntitlement, tokenEntitlementAddress);
+    assertEq(userEntitlement, address(userEntitlementAddress));
+    assertEq(ruleEntitlement, address(ruleEntitlementAddress));
   }
 
   function test_setImplementations() external {
     address newSpaceToken = address(new MockERC721());
-    address newUserEntitlement = address(new MockERC721());
-    address newTokenEntitlement = address(new MockERC721());
+    IUserEntitlement newUserEntitlement = new UserEntitlement();
+    IRuleEntitlement newRuleEntitlement = new RuleEntitlement();
 
     address user = _randomAddress();
 
@@ -85,25 +89,25 @@ contract ArchitectTest is
     spaceArchitect.setSpaceArchitectImplementations(
       newSpaceToken,
       newUserEntitlement,
-      newTokenEntitlement
+      newRuleEntitlement
     );
 
     vm.prank(deployer);
     spaceArchitect.setSpaceArchitectImplementations(
       newSpaceToken,
       newUserEntitlement,
-      newTokenEntitlement
+      newRuleEntitlement
     );
 
     (
       address spaceTokenAddress,
-      address userEntitlementAddress,
-      address tokenEntitlementAddress
+      IUserEntitlement userEntitlementAddress,
+      IRuleEntitlement tokenEntitlementAddress
     ) = spaceArchitect.getSpaceArchitectImplementations();
 
     assertEq(newSpaceToken, spaceTokenAddress);
-    assertEq(newUserEntitlement, userEntitlementAddress);
-    assertEq(newTokenEntitlement, tokenEntitlementAddress);
+    assertEq(address(newUserEntitlement), address(userEntitlementAddress));
+    assertEq(address(newRuleEntitlement), address(tokenEntitlementAddress));
   }
 
   function test_transfer_space_ownership(string memory spaceId) external {

@@ -4,8 +4,7 @@ pragma solidity ^0.8.23;
 // interfaces
 import {IArchitectBase} from "contracts/src/spaces/facets/architect/IArchitect.sol";
 import {IMembershipBase} from "contracts/src/spaces/facets/membership/IMembership.sol";
-import {ITokenEntitlement} from "contracts/src/spaces/entitlements/token/ITokenEntitlement.sol";
-import {IEntitlementRule} from "contracts/src/crosschain/IEntitlementRule.sol";
+import {RuleEntitlementUtil} from "contracts/src/crosschain/RuleEntitlementUtil.sol";
 
 // libraries
 
@@ -35,9 +34,8 @@ abstract contract SpaceHelper {
           }),
           requirements: IArchitectBase.MembershipRequirements({
             everyone: false,
-            tokens: new ITokenEntitlement.ExternalToken[](0),
             users: users,
-            rule: IEntitlementRule(address(0))
+            ruleData: RuleEntitlementUtil.getNoopRuleData()
           }),
           permissions: new string[](0)
         }),
@@ -70,9 +68,8 @@ abstract contract SpaceHelper {
           }),
           requirements: IArchitectBase.MembershipRequirements({
             everyone: false,
-            tokens: new ITokenEntitlement.ExternalToken[](0),
             users: new address[](0),
-            rule: IEntitlementRule(address(0))
+            ruleData: RuleEntitlementUtil.getNoopRuleData()
           }),
           permissions: new string[](0)
         }),
@@ -109,9 +106,8 @@ abstract contract SpaceHelper {
           }),
           requirements: IArchitectBase.MembershipRequirements({
             everyone: true,
-            tokens: new ITokenEntitlement.ExternalToken[](0),
             users: new address[](0),
-            rule: IEntitlementRule(address(0))
+            ruleData: RuleEntitlementUtil.getNoopRuleData()
           }),
           permissions: permissions
         }),

@@ -12,4 +12,5 @@ library Permissions {
   string public constant ModifyRoles = "ModifySpaceSettings";
   string public constant JoinSpace = "JoinSpace";
   string public constant ModifyBanning = "ModifyBanning";
+  string public constant Read = "Read";
 }

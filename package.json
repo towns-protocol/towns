@@ -5,9 +5,9 @@
     "private": true,
     "packageManager": "yarn@3.8.0",
     "scripts": {
-        "anvil": "yarn workspace @towns/contracts exec anvil",
+        "anvil": "yarn workspace @river/contracts exec anvil",
         "build": "turbo build",
-        "cast": "yarn workspace @towns/contracts exec cast",
+        "cast": "yarn workspace @river/contracts exec cast",
         "csb:build": "yarn workspace @river/proto run build && yarn workspace @river/dlog run build && yarn workspace @river/encryption run build && yarn workspace @river/web3 run build && yarn workspace @river/sdk run build && echo BUILD DONE || (echo BUILD ERROR; exit 1)",
         "csb:cb": "yarn csb:clean && yarn csb:build",
         "csb:clean": "yarn csb:command run clean",
@@ -39,7 +39,8 @@
         "csb:wait:entitlements": "wait-on https://localhost:5157/info --timeout=400000 --i=5000 --verbose",
         "csb:wait:no-entitlements": "wait-on https://localhost:5158/info --timeout=400000 --i=5000 --verbose",
         "drt:wait": "wait-on tcp:8008 --timeout=400000 --i=5000 --verbose",
-        "forge": "yarn workspace @towns/contracts exec forge",
+        "forge": "yarn workspace @river/contracts exec forge",
+        "harmonyweb:build": "turbo build --filter harmonyweb",
         "install:foundry": "./scripts/foundry-up.sh && yarn forge install",
         "lint": "turbo lint",
         "postinstall": "husky install",
@@ -51,7 +52,9 @@
         "syncpack:check": "syncpack list-mismatches",
         "syncpack:fix": "syncpack fix-mismatches && syncpack format",
         "test": "turbo test  $(yarn csb:list:exclude:filter) --filter=!@towns/userops  --filter=!notification-service --filter=!use-zion-client && yarn csb:turbo",
-        "test:unit": "turbo test:unit -- --silent"
+        "test:unit": "turbo test:unit -- --silent",
+        "worker:wait:stackup": "wait-on tcp:127.0.0.1:${PORT:-8686} --timeout=400000 --i=5000 --verbose",
+        "workers:build": "turbo build --filter gateway-worker --filter siwe-worker --filter token-worker --filter unfurl-worker --filter push-notification-worker --filter jwt-worker"
     },
     "devDependencies": {
         "@typechain/ethers-v5": "^10.1.1",
@@ -129,7 +132,6 @@
     "workspaces": [
         "core/*",
         "packages/*",
-        "contracts",
-        "common/*"
+        "contracts"
     ]
 }

@@ -51,24 +51,31 @@ contract RiverRegistryTest is TestUtils, IRiverRegistryBase, IOwnableBase {
     vm.prank(nodeOperator);
     vm.expectEmit();
     emit NodeAdded(node, url, NodeStatus.NotInitialized);
-    riverRegistry.registerNode(node, url);
+    riverRegistry.registerNode(node, url, NodeStatus.NotInitialized);
     _;
   }
 
   // =============================================================
-  //                     updateNodeUrlByOperator
+  //                     updateNodeUrl
   // =============================================================
-  function test_updateNodeUrlByOperator(
+  function test_updateNodeUrl(
     address nodeOperator,
-    address node,
-    string memory url
+    address node
   )
     external
     givenNodeOperatorIsApproved(nodeOperator)
-    givenNodeIsRegistered(nodeOperator, node, url)
+    givenNodeIsRegistered(nodeOperator, node, "old")
   {
+    Node memory previous = riverRegistry.getNode(node);
+    assertEq(previous.url, "old");
+
     vm.prank(nodeOperator);
-    riverRegistry.updateNodeUrlByOperator(node, url);
+    vm.expectEmit();
+    emit NodeUrlUpdated(node, "new");
+    riverRegistry.updateNodeUrl(node, "new");
+
+    Node memory updated = riverRegistry.getNode(node);
+    assertEq(updated.url, "new");
   }
 
   // =============================================================

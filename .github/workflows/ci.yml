@@ -139,7 +139,7 @@ jobs:
             #   working-directory: ./infra
 
             - name: Build town types
-              run: ./scripts/build-river-types.sh localhost --frozen
+              run: ./scripts/build-contract-types.sh localhost --frozen
 
             - name: Unit Tests
               run: yarn test:unit
@@ -869,7 +869,7 @@ jobs:
               run: yarn install --immutable
 
             - name: Generate xchain contract bindings
-              run: ./scripts/build-river-types.sh localhost
+              run: ./scripts/build-contract-types.sh localhost
 
             - name: Maintain Turbo cache
               uses: actions/cache@v4
@@ -889,10 +889,6 @@ jobs:
 
             - name: Run xchain common go tests
               run: go test --race ./...
-              working-directory: common/xchain
-
-            - name: Run xchain common typescript tests
-              run: yarn test
               working-directory: common/xchain
 
               # If CI failed, we send a slack notification

@@ -1,0 +1,17 @@
+<!DOCTYPE html>
+<html>
+  <head>
+    <title>Available debug handlers</title>
+  </head>
+  <body>
+    <h3>Available debug handlers:</h3>
+    <ul>
+      {{ range $i, $handler := .Handlers }}
+      <li><a href="{{$handler}}">{{$handler}}</a></li>
+      {{end}}
+      <li>
+        <a href="/debug/pprof/heap?debug=1&gc=1">/debug/pprof/heap with GC</a>
+      </li>
+    </ul>
+  </body>
+</html>

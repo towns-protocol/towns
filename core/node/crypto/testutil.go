@@ -219,7 +219,7 @@ func (c *BlockchainTestContext) InitNodeRecord(ctx context.Context, index int, u
 	tx, err := owner.TxRunner.Submit(
 		ctx,
 		func(opts *bind.TransactOpts) (*types.Transaction, error) {
-			return c.RiverRegistry.RegisterNode(opts, c.Wallets[index].Address, url)
+			return c.RiverRegistry.RegisterNode(opts, c.Wallets[index].Address, url, 2)
 		},
 	)
 	if err != nil {
