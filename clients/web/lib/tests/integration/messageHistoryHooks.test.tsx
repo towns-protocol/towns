@@ -1,6 +1,6 @@
 /* eslint-disable @typescript-eslint/no-non-null-assertion, @typescript-eslint/no-explicit-any */
 /**
- * @group casablanca
+ * @group core
  */
 import { Membership } from '../../src/types/zion-types'
 import React, { useCallback } from 'react'

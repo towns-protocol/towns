@@ -1,5 +1,5 @@
 /**
- * @group casablanca
+ * @group core
  */
 import { TestConstants } from './helpers/TestConstants'
 import { createTestSpaceGatedByTownNft, registerAndStartClients } from './helpers/TestUtils'

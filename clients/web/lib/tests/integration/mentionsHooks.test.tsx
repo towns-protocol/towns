@@ -2,7 +2,7 @@
 /* eslint-disable @typescript-eslint/await-thenable */
 /* eslint-disable @typescript-eslint/no-non-null-assertion, @typescript-eslint/no-explicit-any */
 /**
- * @group casablanca
+ * @group core
  */
 import React, { useCallback } from 'react'
 import {

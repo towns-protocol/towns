@@ -1,5 +1,5 @@
 /**
- * @group casablanca
+ * @group core
  */
 
 export {}

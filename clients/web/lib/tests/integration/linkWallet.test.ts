@@ -1,5 +1,5 @@
 /**
- * @group casablanca
+ * @group core
  */
 import { Wallet } from 'ethers'
 import { createTestSpaceGatedByTownAndZionNfts, registerAndStartClients } from './helpers/TestUtils'

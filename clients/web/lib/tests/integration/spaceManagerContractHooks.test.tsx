@@ -2,7 +2,7 @@
  * spaceManagerContractHooks.test.tsx
  *
  * // https://www.npmjs.com/package/jest-runner-groups
- * @group casablanca
+ * @group core
  *
  */
 import React, { useCallback, useEffect, useState } from 'react'

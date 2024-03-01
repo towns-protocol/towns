@@ -1,5 +1,5 @@
 /**
- * @group casablanca
+ * @group core
  */
 import { jest } from '@jest/globals'
 import { registerAndStartClients, createTestSpaceGatedByTownAndZionNfts } from './helpers/TestUtils'

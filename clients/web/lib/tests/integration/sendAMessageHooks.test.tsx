@@ -2,7 +2,7 @@
  * sendAMessageHooks
  *
  * // https://www.npmjs.com/package/jest-runner-groups
- * @group casablanca
+ * @group core
  *
  */
 /* eslint-disable @typescript-eslint/no-non-null-assertion, @typescript-eslint/no-explicit-any */

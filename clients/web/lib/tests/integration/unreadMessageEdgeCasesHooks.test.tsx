@@ -1,6 +1,6 @@
 /* eslint-disable @typescript-eslint/no-non-null-assertion, @typescript-eslint/no-explicit-any */
 /**
- * @group casablanca
+ * @group core
  */
 import React, { useCallback, useEffect } from 'react'
 import { RoomMessageEvent, TimelineEvent, ZTEvent } from '../../src/types/timeline-types'

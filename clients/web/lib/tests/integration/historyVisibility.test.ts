@@ -1,7 +1,7 @@
 /* eslint-disable @typescript-eslint/restrict-template-expressions */
 /* eslint-disable @typescript-eslint/no-non-null-assertion */
 /**
- * @group casablanca
+ * @group core
  */
 import { waitFor } from '@testing-library/react'
 import { Permission } from '@river/web3'

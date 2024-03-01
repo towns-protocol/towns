@@ -1,6 +1,6 @@
 /* eslint-disable @typescript-eslint/no-non-null-assertion */
 /**
- * @group casablanca
+ * @group core
  */
 // group dendrite TODO: https://linear.app/hnt-labs/issue/HNT-1604/testsintegrationsendthreadedmessagetestts
 import {

@@ -1,6 +1,6 @@
 /* eslint-disable @typescript-eslint/no-non-null-assertion */
 /**
- * @group casablanca
+ * @group core
  */
 import { waitFor } from '@testing-library/dom'
 import {

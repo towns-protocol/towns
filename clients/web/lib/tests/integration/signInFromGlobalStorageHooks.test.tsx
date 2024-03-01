@@ -4,7 +4,7 @@
 /* eslint-disable @typescript-eslint/no-unsafe-member-access */
 /* eslint-disable @typescript-eslint/no-unsafe-assignment */
 /**
- * @group casablanca
+ * @group core
  */
 import React from 'react'
 import { LoginWithWallet } from './helpers/TestComponents'

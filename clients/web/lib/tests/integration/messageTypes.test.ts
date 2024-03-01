@@ -1,6 +1,6 @@
 /* eslint-disable @typescript-eslint/no-non-null-assertion */
 /**
- * @group casablanca
+ * @group core
  */
 import { MessageType, SendImageMessageOptions } from '../../src/types/zion-types'
 import {
