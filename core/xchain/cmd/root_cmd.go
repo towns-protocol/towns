@@ -1,7 +1,7 @@
 package cmd
 
 import (
-	"servers/xchain/config"
+	"core/xchain/config"
 	"strings"
 
 	"github.com/river-build/river/core/node/infra"

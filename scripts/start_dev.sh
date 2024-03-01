@@ -128,7 +128,7 @@ done
 
 # xchain nodes
 # disabled: https://linear.app/hnt-labs/issue/HNT-4317/create-multish-call-in-the-start-devsh-fails
-./servers/xchain/create_multi.sh
+./core/xchain/create_multi.sh
 
 # Continue with rest of the script
 echo "Continuing with the rest of the script..."
@@ -156,7 +156,7 @@ commands=(
     "core_single:sleep 3 && ./core/node/run_single.sh -sc"
     "core_single_ne:./scripts/wait-for-core.sh && ./core/node/run_single.sh -sc --de"
     "core:./core/node/run_multi.sh -r"
-    "xchain:./servers/xchain/launch_multi.sh"
+    "xchain:./core/xchain/launch_multi.sh"
 )
 
 # Create a Tmux window for each command

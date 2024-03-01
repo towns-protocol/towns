@@ -1,4 +1,4 @@
-module servers/xchain
+module core/xchain
 
 go 1.21
 

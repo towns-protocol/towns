@@ -9,9 +9,9 @@ import (
 
 	"github.com/river-build/river/core/node/dlog"
 
-	xc "servers/xchain/common"
-	"servers/xchain/config"
-	e "servers/xchain/contracts"
+	xc "core/xchain/common"
+	"core/xchain/config"
+	e "core/xchain/contracts"
 
 	"github.com/ethereum/go-ethereum/accounts/abi/bind"
 	"github.com/ethereum/go-ethereum/common"

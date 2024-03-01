@@ -3,11 +3,11 @@ package main
 import (
 	"bufio"
 	"context"
+	xc "core/xchain/client_simulator"
+	"core/xchain/server"
 	"log"
 	"os"
 	"os/signal"
-	xc "servers/xchain/client_simulator"
-	"servers/xchain/server"
 	"sync"
 	"syscall"
 

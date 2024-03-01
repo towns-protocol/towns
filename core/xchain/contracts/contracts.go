@@ -1,10 +1,10 @@
 package contracts
 
 import (
+	"core/xchain/config"
+	"core/xchain/contracts/dev"
+	v3 "core/xchain/contracts/v3"
 	"math/big"
-	"servers/xchain/config"
-	"servers/xchain/contracts/dev"
-	v3 "servers/xchain/contracts/v3"
 
 	"github.com/ethereum/go-ethereum/accounts/abi/bind"
 	"github.com/ethereum/go-ethereum/common"

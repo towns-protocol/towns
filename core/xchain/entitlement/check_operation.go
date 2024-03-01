@@ -6,7 +6,7 @@ import (
 	"log"
 	"time"
 
-	"common/xchain/bindings/erc20"
+	"core/xchain/bindings/erc20"
 
 	"github.com/ethereum/go-ethereum/accounts/abi/bind"
 	"github.com/ethereum/go-ethereum/common"

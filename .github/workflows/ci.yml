@@ -881,15 +881,15 @@ jobs:
 
             - name: Run xchain node tests
               run: go test --race ./...
-              working-directory: servers/xchain
+              working-directory: core/xchain
 
             - name: Build node
               run: go build --race ./...
-              working-directory: servers/xchain
+              working-directory: core/xchain
 
             - name: Run xchain common go tests
               run: go test --race ./...
-              working-directory: common/xchain
+              working-directory: core/xchain
 
               # If CI failed, we send a slack notification
             - name: Slack notification

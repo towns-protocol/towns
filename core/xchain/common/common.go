@@ -2,10 +2,10 @@ package common
 
 import (
 	"context"
+	"core/xchain/config"
 	_ "embed"
 	"encoding/json"
 	"math/big"
-	"servers/xchain/config"
 	"strings"
 	"sync"
 	"time"

@@ -33,7 +33,7 @@ This XChain Node resides in a monorepo and interfaces with the `EntitlementCheck
 ## Monorepo Structure
 
 - Root
-  - `/servers/xchain`: This Node
+  - `/core/xchain`: This Node
   - `/contracts`: Smart Contracts
   - `/scripts`: Smart Contract Deployment scripts
 
@@ -60,10 +60,10 @@ This XChain Node resides in a monorepo and interfaces with the `EntitlementCheck
 
 ## Building and Running Using Makefile
 
-1. **Navigate to `./servers/xchain`:**
+1. **Navigate to `./core/xchain`:**
 
    ```bash
-   cd ./servers/xchain
+   cd ./core/xchain
    ```
 
 2. **Build:**
@@ -97,7 +97,7 @@ This XChain Node resides in a monorepo and interfaces with the `EntitlementCheck
    ./create_multi.sh
    ```
 
-   This will create five instance configurations in `./servers/xchain/instance_1-5` using the template in `./servers/xchain/config-template.yaml`.
+   This will create five instance configurations in `./core/xchain/instance_1-5` using the template in `./core/xchain/config-template.yaml`.
 
 2. **Launch Multiple Instances:**
    ```bash

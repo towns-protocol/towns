@@ -1,8 +1,8 @@
 package cmd
 
 import (
+	"core/xchain/config"
 	"fmt"
-	"servers/xchain/config"
 
 	"github.com/mitchellh/mapstructure"
 	"github.com/spf13/cobra"

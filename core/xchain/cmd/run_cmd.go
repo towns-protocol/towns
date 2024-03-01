@@ -2,10 +2,10 @@ package cmd
 
 import (
 	"context"
+	"core/xchain/config"
+	"core/xchain/server"
 	"os"
 	"os/signal"
-	"servers/xchain/config"
-	"servers/xchain/server"
 	"sync"
 	"syscall"
 

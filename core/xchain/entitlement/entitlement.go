@@ -7,7 +7,7 @@ import (
 	"math/big"
 	"sync"
 
-	er "servers/xchain/contracts"
+	er "core/xchain/contracts"
 
 	"github.com/ethereum/go-ethereum/common"
 )
