@@ -11,7 +11,7 @@ import {
     SignerContext,
 } from '@river/sdk'
 import { bin_fromHexString } from '@river/dlog'
-import { makeOldTownsDelegateSig } from '@river/encryption'
+import { makeOldRiverDelegateSig } from '@river/encryption'
 import { ethers } from 'ethers'
 import { RoomMessageEvent, ZTEvent } from '../../src/types/timeline-types'
 import {
@@ -29,7 +29,7 @@ describe('casablanca', () => {
         const primaryWallet = ethers.Wallet.createRandom()
         const delegateWallet = ethers.Wallet.createRandom()
         const creatorAddress = bin_fromHexString(primaryWallet.address)
-        const delegateSig = await makeOldTownsDelegateSig(primaryWallet, delegateWallet.publicKey)
+        const delegateSig = await makeOldRiverDelegateSig(primaryWallet, delegateWallet.publicKey)
         const pk = delegateWallet.privateKey.slice(2)
         const context: SignerContext = {
             signerPrivateKey: () => pk,

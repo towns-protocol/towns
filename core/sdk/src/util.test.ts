@@ -15,8 +15,8 @@ import { userIdFromAddress } from './id'
 import { ParsedEvent, DecryptedTimelineEvent } from './types'
 import { getPublicKey, utils } from 'ethereum-cryptography/secp256k1'
 import {
-    makeTownsDelegateSig,
-    makeOldTownsDelegateSig,
+    makeRiverDelegateSig,
+    makeOldRiverDelegateSig,
     publicKeyToAddress,
 } from '@river/encryption'
 import { bin_fromHexString, bin_toHexString, check, dlog } from '@river/dlog'
@@ -122,7 +122,7 @@ export const makeRandomUserContext = async (): Promise<SignerContext> => {
     const ret: SignerContext = {
         signerPrivateKey: () => devicePrivateKeyStr,
         creatorAddress,
-        delegateSig: await makeTownsDelegateSig(
+        delegateSig: await makeRiverDelegateSig(
             () => userPrivateKey,
             getPublicKey(devicePrivateKeyStr, false),
         ),
@@ -145,7 +145,7 @@ export const makeUserContextFromWallet = async (wallet: ethers.Wallet): Promise<
     return {
         signerPrivateKey: () => devicePrivateKeyStr,
         creatorAddress,
-        delegateSig: await makeOldTownsDelegateSig(
+        delegateSig: await makeOldRiverDelegateSig(
             userPrimaryWallet,
             getPublicKey(devicePrivateKeyStr, false),
         ),

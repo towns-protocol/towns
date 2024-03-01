@@ -10,7 +10,7 @@ import {
 } from '@river/sdk'
 import { CreateSpaceParams, IRuleEntitlement } from '@river/web3'
 import { bin_fromHexString } from '@river/dlog'
-import { makeOldTownsDelegateSig } from '@river/encryption'
+import { makeOldRiverDelegateSig } from '@river/encryption'
 import { FullyReadMarker } from '@river/proto'
 import {
     ChannelTransactionContext,
@@ -180,7 +180,7 @@ export class ZionClient implements EntitlementsDelegate {
             throw new SignerUndefinedError("can't sign without a web3 signer")
         }
         const creatorAddress = bin_fromHexString(await signer.getAddress())
-        const delegateSig = await makeOldTownsDelegateSig(signer, delegateWallet.publicKey)
+        const delegateSig = await makeOldRiverDelegateSig(signer, delegateWallet.publicKey)
         const pk = delegateWallet.privateKey.slice(2)
         const context: SignerContext = {
             signerPrivateKey: () => pk,

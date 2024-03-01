@@ -7,8 +7,8 @@ import { checkDelegateSig, unpackEnvelope, makeEvent, SignerContext } from './si
 import { make_UserPayload_Inception } from './types'
 import { dlog, bin_fromHexString, bin_toHexString } from '@river/dlog'
 import {
-    makeTownsDelegateSig,
-    makeOldTownsDelegateSig,
+    makeRiverDelegateSig,
+    makeOldRiverDelegateSig,
     publicKeyToAddress,
 } from '@river/encryption'
 import { PlainMessage } from '@bufbuild/protobuf'
@@ -52,9 +52,9 @@ describe('sign', () => {
         const device2 = keys[1]
         const user = keys[2]
 
-        const sig1 = await makeTownsDelegateSig(() => user.privateKey, device1.publicKey)
+        const sig1 = await makeRiverDelegateSig(() => user.privateKey, device1.publicKey)
         log('sig1', bin_toHexString(sig1))
-        const sig2 = await makeTownsDelegateSig(() => user.privateKey, device2.publicKey)
+        const sig2 = await makeRiverDelegateSig(() => user.privateKey, device2.publicKey)
         log('sig2', bin_toHexString(sig2))
         expect(sig1).not.toEqual(sig2)
 
@@ -72,7 +72,7 @@ describe('sign', () => {
 
         const device = keys[1]
         log('device PublicKey', bin_toHexString(device.publicKey))
-        const delegateSig = await makeOldTownsDelegateSig(primaryWallet, device.publicKey)
+        const delegateSig = await makeOldRiverDelegateSig(primaryWallet, device.publicKey)
         log('OLD delegateSig', bin_toHexString(delegateSig))
 
         expect(() => checkDelegateSig(device.publicKey, primary.address, delegateSig)).not.toThrow()
@@ -92,7 +92,7 @@ describe('sign', () => {
             return {
                 signerPrivateKey: () => devicePrivateKey,
                 creatorAddress,
-                delegateSig: await makeTownsDelegateSig(
+                delegateSig: await makeRiverDelegateSig(
                     () => userPrivateKey,
                     getPublicKey(devicePrivateKey, false),
                 ),

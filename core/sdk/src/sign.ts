@@ -4,8 +4,8 @@ import { isDefined, assert, hasElements } from './check'
 import { Envelope, EventRef, StreamEvent, Err, Miniblock, StreamAndCookie } from '@river/proto'
 import {
     riverHash,
-    townsRecoverPubKey,
-    townsSign,
+    riverRecoverPubKey,
+    riverSign,
     publicKeyToAddress,
     publicKeyToUint8Array,
 } from '@river/encryption'
@@ -56,7 +56,7 @@ export const _impl_makeEvent_impl_ = async (
 
     const event = streamEvent.toBinary()
     const hash = riverHash(event)
-    const signature = await townsSign(hash, context.signerPrivateKey())
+    const signature = await riverSign(hash, context.signerPrivateKey())
 
     return new Envelope({ hash, signature, event })
 }
@@ -129,7 +129,7 @@ export const checkDelegateSig = (
 
     const hash = riverHash(devicePubKey)
 
-    const recoveredKey = townsRecoverPubKey(hash, delegateSig)
+    const recoveredKey = riverRecoverPubKey(hash, delegateSig)
     const recoveredAddress = publicKeyToAddress(recoveredKey)
 
     check(
@@ -206,7 +206,7 @@ export const unpackEnvelope = async (envelope: Envelope): Promise<ParsedEvent> =
     const hash = riverHash(envelope.event)
     check(bin_equal(hash, envelope.hash), 'Event id is not valid', Err.BAD_EVENT_ID)
 
-    const recoveredPubKey = townsRecoverPubKey(hash, envelope.signature)
+    const recoveredPubKey = riverRecoverPubKey(hash, envelope.signature)
 
     const event = StreamEvent.fromBinary(envelope.event)
     if (!hasElements(event.delegateSig)) {
