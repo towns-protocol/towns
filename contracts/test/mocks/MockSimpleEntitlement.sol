@@ -18,6 +18,7 @@ contract MockSimpleEntitlement is
   IEntitlement
 {
   mapping(address => bool) internal entitledToTown;
+  mapping(uint256 => address) internal nameMap;
 
   string public constant name = "Mock Entitlement";
   string public constant description = "Entitlement for kicks";
@@ -52,35 +53,39 @@ contract MockSimpleEntitlement is
       super.supportsInterface(interfaceId);
   }
 
+  function isCrosschain() external pure returns (bool) {
+    return false;
+  }
+
   function isEntitled(
     string calldata,
-    address user,
+    address[] memory wallets,
     bytes32
   ) external view returns (bool) {
-    return entitledToTown[user];
+    for (uint256 i = 0; i < wallets.length; i++) {
+      if (entitledToTown[wallets[i]]) {
+        return true;
+      }
+    }
+    return false;
   }
 
   function setEntitlement(
     uint256 roleId,
     bytes memory entitlementData
-  ) external onlyTown returns (bytes32) {
+  ) external onlyTown {
     address user = abi.decode(entitlementData, (address));
     entitledToTown[user] = true;
-    return keccak256(abi.encodePacked(roleId, entitlementData));
+    nameMap[roleId] = user;
   }
 
-  function removeEntitlement(
-    uint256 roleId,
-    bytes calldata entitlementData
-  ) external onlyTown returns (bytes32 entitlementId) {
-    address user = abi.decode(entitlementData, (address));
-    entitledToTown[user] = false;
-    entitlementId = keccak256(abi.encodePacked(roleId, entitlementData));
+  function removeEntitlement(uint256 roleId) external onlyTown {
+    entitledToTown[nameMap[roleId]] = false;
   }
 
   function getEntitlementDataByRoleId(
     uint256
-  ) external pure returns (bytes[] memory) {
-    return new bytes[](0);
+  ) external pure returns (bytes memory) {
+    return new bytes(0);
   }
 }

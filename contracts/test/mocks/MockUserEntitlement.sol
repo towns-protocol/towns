@@ -56,52 +56,71 @@ contract MockUserEntitlement is
       super.supportsInterface(interfaceId);
   }
 
+  function isCrosschain() external pure returns (bool) {
+    return false;
+  }
+
   function isEntitled(
     string calldata,
-    address,
+    address[] memory,
     bytes32
   ) external pure returns (bool) {
     return true;
   }
 
-  function getEntitlementDataByEntitlementId(
-    bytes32 entitlementId
-  ) external view returns (bytes memory) {
-    MockUserEntitlementStorage.Layout storage ds = MockUserEntitlementStorage
-      .layout();
-
-    return ds.entitlementsById[entitlementId].data;
-  }
-
   function setEntitlement(
     uint256 roleId,
     bytes memory entitlementData
-  ) external onlyTown returns (bytes32 entitlementId) {
-    entitlementId = keccak256(abi.encodePacked(roleId, entitlementData));
-
+  ) external onlyTown {
     MockUserEntitlementStorage.Layout storage ds = MockUserEntitlementStorage
       .layout();
 
-    ds.entitlementIds.add(entitlementId);
-    ds.entitlementIdsByRoleId[roleId].add(entitlementId);
-    ds.entitlementsById[entitlementId] = MockUserEntitlementStorage
-      .Entitlement({roleId: roleId, data: entitlementData});
+    address[] memory users = abi.decode(entitlementData, (address[]));
+
+    if (users.length == 0) {
+      // use remove entitlement instead
+      revert Entitlement__InvalidValue();
+    }
+
+    for (uint256 i = 0; i < users.length; i++) {
+      address user = users[i];
+      if (user == address(0)) {
+        revert Entitlement__InvalidValue();
+      }
+    }
+
+    // First remove any prior values
+    while (ds.entitlementsByRoleId[roleId].users.length > 0) {
+      address user = ds.entitlementsByRoleId[roleId].users[
+        ds.entitlementsByRoleId[roleId].users.length - 1
+      ];
+      _removeRoleIdFromUser(user, roleId);
+      ds.entitlementsByRoleId[roleId].users.pop();
+    }
+    delete ds.entitlementsByRoleId[roleId];
+    ds.entitlementsByRoleId[roleId] = MockUserEntitlementStorage.Entitlement({
+      roleId: roleId,
+      data: entitlementData,
+      users: users
+    });
+    for (uint256 i = 0; i < users.length; i++) {
+      ds.roleIdsByUser[users[i]].push(roleId);
+    }
   }
 
-  function removeEntitlement(
-    uint256 roleId,
-    bytes calldata entitlementData
-  ) external onlyTown returns (bytes32 entitlementId) {
-    entitlementId = keccak256(abi.encodePacked(roleId, entitlementData));
-
+  function removeEntitlement(uint256 roleId) external onlyTown {
     MockUserEntitlementStorage.Layout storage ds = MockUserEntitlementStorage
       .layout();
 
-    ds.entitlementIds.remove(entitlementId);
-    ds.entitlementIdsByRoleId[roleId].remove(entitlementId);
-    delete ds.entitlementsById[entitlementId];
-
-    return entitlementId;
+    // First remove any prior values
+    while (ds.entitlementsByRoleId[roleId].users.length > 0) {
+      address user = ds.entitlementsByRoleId[roleId].users[
+        ds.entitlementsByRoleId[roleId].users.length - 1
+      ];
+      _removeRoleIdFromUser(user, roleId);
+      ds.entitlementsByRoleId[roleId].users.pop();
+    }
+    delete ds.entitlementsByRoleId[roleId];
   }
 
   function addRoleIdToChannel(
@@ -135,25 +154,32 @@ contract MockUserEntitlement is
 
   function getEntitlementDataByRoleId(
     uint256 roleId
-  ) external view returns (bytes[] memory) {
+  ) external view returns (bytes memory) {
     MockUserEntitlementStorage.Layout storage ds = MockUserEntitlementStorage
       .layout();
 
-    uint256 length = ds.entitlementIdsByRoleId[roleId].length();
-
-    bytes[] memory entitlementData = new bytes[](length);
-
-    for (uint256 i = 0; i < length; i++) {
-      entitlementData[i] = ds
-        .entitlementsById[ds.entitlementIdsByRoleId[roleId].at(i)]
-        .data;
-    }
-
-    return entitlementData;
+    return abi.encode(ds.entitlementsByRoleId[roleId].users);
   }
 
   function getUserRoles(address) external pure returns (IRoles.Role[] memory) {
     IRoles.Role[] memory roles = new IRoles.Role[](0);
     return roles;
+  }
+
+  function _removeRoleIdFromUser(address user, uint256 roleId) internal {
+    MockUserEntitlementStorage.Layout storage ds = MockUserEntitlementStorage
+      .layout();
+
+    uint256[] storage roles = ds.roleIdsByUser[user];
+    for (uint256 i = 0; i < roles.length; i++) {
+      if (roles[i] == roleId) {
+        roles[i] = roles[roles.length - 1];
+        roles.pop();
+        return;
+      }
+    }
+
+    // Optional: Revert if the roleId is not found
+    revert("Role ID not found for the user");
   }
 }

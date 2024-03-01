@@ -15,13 +15,14 @@ library MockUserEntitlementStorage {
   struct Entitlement {
     uint256 roleId;
     bytes data;
+    address[] users;
   }
 
   struct Layout {
-    mapping(bytes32 entitlementId => Entitlement) entitlementsById;
-    mapping(uint256 roleId => EnumerableSet.Bytes32Set) entitlementIdsByRoleId;
+    mapping(uint256 => Entitlement) entitlementsByRoleId;
+    mapping(address => uint256[]) roleIdsByUser;
+    EnumerableSet.UintSet allEntitlementRoleIds;
     mapping(string channelId => EnumerableSet.UintSet) roleIdsByChannelId;
-    EnumerableSet.Bytes32Set entitlementIds;
   }
 
   function layout() internal pure returns (Layout storage ds) {

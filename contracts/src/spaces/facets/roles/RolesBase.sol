@@ -13,6 +13,7 @@ import {Validator} from "contracts/src/utils/Validator.sol";
 import {EntitlementsManagerService} from "contracts/src/spaces/facets/entitlements/EntitlementsManagerService.sol";
 import {ChannelService} from "contracts/src/spaces/facets/channels/ChannelService.sol";
 import {RolesStorage} from "./RolesStorage.sol";
+import "forge-std/console2.sol";
 
 abstract contract RolesBase is IRolesBase {
   using StringSet for StringSet.Set;
@@ -39,6 +40,8 @@ abstract contract RolesBase is IRolesBase {
     for (uint256 i = 0; i < entitlementsLen; ) {
       EntitlementsManagerService.validateEntitlement(entitlements[i].module);
       entitlementAddresses[i] = entitlements[i].module;
+
+      console2.log("entitlements[i].data", i);
 
       // check for empty address or data
       Validator.checkByteLength(entitlements[i].data);
@@ -175,21 +178,10 @@ abstract contract RolesBase is IRolesBase {
 
     // loop through old entitlements and remove them
     for (uint256 i = 0; i < currentEntitlementsLen; ) {
-      bytes[] memory entitlementData = EntitlementsManagerService
-        .proxyGetEntitlementDataByRole(currentEntitlements[i], roleId);
-      uint256 entitlementDataLen = entitlementData.length;
-
-      for (uint256 j = 0; j < entitlementDataLen; ) {
-        EntitlementsManagerService.proxyRemoveRoleFromEntitlement(
-          currentEntitlements[i],
-          roleId,
-          entitlementData[j]
-        );
-
-        unchecked {
-          j++;
-        }
-      }
+      EntitlementsManagerService.proxyRemoveRoleFromEntitlement(
+        currentEntitlements[i],
+        roleId
+      );
 
       unchecked {
         i++;
@@ -197,14 +189,16 @@ abstract contract RolesBase is IRolesBase {
     }
 
     for (uint256 i = 0; i < entitlementsLen; ) {
-      // check for empty address or data
-      Validator.checkByteLength(entitlements[i].data);
+      if (entitlements[i].data.length > 0) {
+        // check for empty address or data
+        Validator.checkByteLength(entitlements[i].data);
 
-      EntitlementsManagerService.proxyAddRoleToEntitlement(
-        entitlements[i].module,
-        roleId,
-        entitlements[i].data
-      );
+        EntitlementsManagerService.proxyAddRoleToEntitlement(
+          entitlements[i].module,
+          roleId,
+          entitlements[i].data
+        );
+      }
 
       unchecked {
         i++;
@@ -261,17 +255,10 @@ abstract contract RolesBase is IRolesBase {
 
     // remove role from entitlements
     for (uint256 i = 0; i < currentEntitlementsLen; ) {
-      bytes[] memory entitlementData = EntitlementsManagerService
-        .proxyGetEntitlementDataByRole(currentEntitlements[i], roleId);
-      uint256 entitlementDataLen = entitlementData.length;
-
-      for (uint256 j = 0; j < entitlementDataLen; j++) {
-        EntitlementsManagerService.proxyRemoveRoleFromEntitlement(
-          currentEntitlements[i],
-          roleId,
-          entitlementData[j]
-        );
-      }
+      EntitlementsManagerService.proxyRemoveRoleFromEntitlement(
+        currentEntitlements[i],
+        roleId
+      );
 
       unchecked {
         i++;
@@ -449,8 +436,7 @@ abstract contract RolesBase is IRolesBase {
     // set entitlement to role
     EntitlementsManagerService.proxyRemoveRoleFromEntitlement(
       entitlement.module,
-      roleId,
-      entitlement.data
+      roleId
     );
   }
 

@@ -31,20 +31,25 @@ interface IEntitlement is IEntitlementBase {
   /// @notice sets a new entitlement
   /// @param roleId id of the role to gate
   /// @param entitlementData abi encoded array of data necessary to set the entitlement
-  /// @return entitlementId the id that was set
   function setEntitlement(
     uint256 roleId,
     bytes calldata entitlementData
-  ) external returns (bytes32);
+  ) external;
 
   /// @notice removes an entitlement
   /// @param roleId id of the role to remove
-  /// @param entitlementData abi encoded array of the data associated with that entitlement
-  /// @return entitlementId the id that was removed
-  function removeEntitlement(
-    uint256 roleId,
-    bytes calldata entitlementData
-  ) external returns (bytes32);
+  function removeEntitlement(uint256 roleId) external;
+
+  /// @notice fetches the entitlement data for a roleId
+  /// @param roleId the roleId to fetch the entitlement data for
+  /// @return entitlementData array for the role
+  function getEntitlementDataByRoleId(
+    uint256 roleId
+  ) external view returns (bytes memory);
+
+  /// @notice some entitlements require cross chain evaluation and may not be executed directly from other contracts
+  /// @return whether this entitlement will require crosschain evaluation
+  function isCrosschain() external view returns (bool);
 
   /// @notice checks whether a user is has a given permission for a channel or a space
   /// @param channelId id of the channel to check, if empty string, checks space
@@ -53,14 +58,7 @@ interface IEntitlement is IEntitlementBase {
   /// @return whether the user is entitled to the permission
   function isEntitled(
     string calldata channelId,
-    address user,
+    address[] memory user,
     bytes32 permission
   ) external view returns (bool);
-
-  /// @notice fetches the entitlement data for a roleId
-  /// @param roleId the roleId to fetch the entitlement data for
-  /// @return entitlementData array for the role
-  function getEntitlementDataByRoleId(
-    uint256 roleId
-  ) external view returns (bytes[] memory);
 }

@@ -6,6 +6,8 @@ pragma solidity ^0.8.23;
 // libraries
 import {StringSet} from "contracts/src/utils/StringSet.sol";
 import {EnumerableSet} from "@openzeppelin/contracts/utils/structs/EnumerableSet.sol";
+import {IRuleEntitlement} from "contracts/src/crosschain/IRuleEntitlement.sol";
+import {IUserEntitlement} from "contracts/src/spaces/entitlements/user/IUserEntitlement.sol";
 
 // contracts
 
@@ -25,8 +27,8 @@ library ArchitectStorage {
     mapping(string spaceId => Space) spaceById;
     mapping(address spaceAddress => uint256 tokenId) tokenIdBySpace;
     address spaceToken;
-    address userEntitlement;
-    address tokenEntitlement;
+    IUserEntitlement userEntitlement;
+    IRuleEntitlement ruleEntitlement;
   }
 
   function layout() internal pure returns (Layout storage ds) {

@@ -4,11 +4,12 @@ pragma solidity ^0.8.23;
 // interfaces
 import {IArchitectBase} from "./IArchitect.sol";
 import {IEntitlement} from "contracts/src/spaces/entitlements/IEntitlement.sol";
+import {IUserEntitlement} from "./../../entitlements/user/IUserEntitlement.sol";
+import {IRuleEntitlement} from "../../../crosschain/IRuleEntitlement.sol";
 import {IRoles, IRolesBase} from "contracts/src/spaces/facets/roles/IRoles.sol";
 import {IChannel} from "contracts/src/spaces/facets/channels/IChannel.sol";
 import {IEntitlementsManager} from "contracts/src/spaces/facets/entitlements/IEntitlementsManager.sol";
 import {IProxyManager} from "contracts/src/diamond/proxy/manager/IProxyManager.sol";
-import {ITokenEntitlement} from "contracts/src/spaces/entitlements/token/ITokenEntitlement.sol";
 import {ITokenOwnableBase} from "contracts/src/diamond/facets/ownable/token/ITokenOwnable.sol";
 import {IManagedProxyBase} from "contracts/src/diamond/proxy/managed/IManagedProxy.sol";
 import {IMembershipBase} from "contracts/src/spaces/facets/membership/IMembership.sol";
@@ -94,20 +95,24 @@ abstract contract ArchitectBase is Factory, IArchitectBase {
     );
 
     // deploy user entitlement
-    address userEntitlement = _deployEntitlement(
-      ArchitectStorage.layout().userEntitlement,
-      spaceAddress
+    IUserEntitlement userEntitlement = IUserEntitlement(
+      _deployEntitlement(
+        ArchitectStorage.layout().userEntitlement,
+        spaceAddress
+      )
     );
 
     // deploy token entitlement
-    address tokenEntitlement = _deployEntitlement(
-      ArchitectStorage.layout().tokenEntitlement,
-      spaceAddress
+    IRuleEntitlement ruleEntitlement = IRuleEntitlement(
+      _deployEntitlement(
+        ArchitectStorage.layout().ruleEntitlement,
+        spaceAddress
+      )
     );
 
     address[] memory entitlements = new address[](2);
-    entitlements[0] = userEntitlement;
-    entitlements[1] = tokenEntitlement;
+    entitlements[0] = address(userEntitlement);
+    entitlements[1] = address(ruleEntitlement);
 
     // set entitlements as immutable
     IEntitlementsManager(spaceAddress).addImmutableEntitlements(entitlements);
@@ -116,16 +121,16 @@ abstract contract ArchitectBase is Factory, IArchitectBase {
     _createMinterEntitlement(
       spaceAddress,
       userEntitlement,
-      tokenEntitlement,
+      ruleEntitlement,
       spaceInfo.membership.requirements
     );
 
     // create member role with membership as the requirement
     uint256 memberRoleId = _createMemberEntitlement(
       spaceAddress,
-      tokenEntitlement,
       spaceInfo.membership.settings.name,
-      spaceInfo.membership.permissions
+      spaceInfo.membership.permissions,
+      userEntitlement
     );
 
     // create channels
@@ -148,17 +153,19 @@ abstract contract ArchitectBase is Factory, IArchitectBase {
 
   function _setImplementations(
     address spaceToken,
-    address userEntitlement,
-    address tokenEntitlement
+    IUserEntitlement userEntitlement,
+    IRuleEntitlement ruleEntitlement
   ) internal {
     if (!Address.isContract(spaceToken)) revert Architect__NotContract();
-    if (!Address.isContract(userEntitlement)) revert Architect__NotContract();
-    if (!Address.isContract(tokenEntitlement)) revert Architect__NotContract();
+    if (!Address.isContract(address(userEntitlement)))
+      revert Architect__NotContract();
+    if (!Address.isContract(address(ruleEntitlement)))
+      revert Architect__NotContract();
 
     ArchitectStorage.Layout storage ds = ArchitectStorage.layout();
     ds.spaceToken = spaceToken;
     ds.userEntitlement = userEntitlement;
-    ds.tokenEntitlement = tokenEntitlement;
+    ds.ruleEntitlement = ruleEntitlement;
   }
 
   function _getImplementations()
@@ -166,14 +173,14 @@ abstract contract ArchitectBase is Factory, IArchitectBase {
     view
     returns (
       address spaceToken,
-      address userEntitlementImplementation,
-      address tokenEntitlementImplementation
+      IUserEntitlement userEntitlementImplementation,
+      IRuleEntitlement ruleEntitlementImplementation
     )
   {
     return (
       ArchitectStorage.layout().spaceToken,
       ArchitectStorage.layout().userEntitlement,
-      ArchitectStorage.layout().tokenEntitlement
+      ArchitectStorage.layout().ruleEntitlement
     );
   }
 
@@ -201,8 +208,8 @@ abstract contract ArchitectBase is Factory, IArchitectBase {
 
   function _createMinterEntitlement(
     address spaceAddress,
-    address userEntitlement,
-    address tokenEntitlement,
+    IUserEntitlement userEntitlement,
+    IRuleEntitlement ruleEntitlement,
     MembershipRequirements memory requirements
   ) internal returns (uint256 roleId) {
     string[] memory joinPermissions = new string[](1);
@@ -221,15 +228,11 @@ abstract contract ArchitectBase is Factory, IArchitectBase {
       IRoles(spaceAddress).addRoleToEntitlement(
         roleId,
         IRolesBase.CreateEntitlement({
-          module: userEntitlement,
+          module: address(userEntitlement),
           data: abi.encode(users)
         })
       );
-
-      return roleId;
-    }
-
-    if (requirements.users.length != 0) {
+    } else if (requirements.users.length != 0) {
       // validate users
       for (uint256 i = 0; i < requirements.users.length; ) {
         Validator.checkAddress(requirements.users[i]);
@@ -241,44 +244,35 @@ abstract contract ArchitectBase is Factory, IArchitectBase {
       IRoles(spaceAddress).addRoleToEntitlement(
         roleId,
         IRolesBase.CreateEntitlement({
-          module: userEntitlement,
+          module: address(userEntitlement),
           data: abi.encode(requirements.users)
         })
       );
+
+      IRoles(spaceAddress).addRoleToEntitlement(
+        roleId,
+        IRolesBase.CreateEntitlement({
+          module: address(ruleEntitlement),
+          data: abi.encode(requirements.ruleData)
+        })
+      );
     }
-
-    if (requirements.tokens.length == 0) return roleId;
-
-    IRoles(spaceAddress).addRoleToEntitlement(
-      roleId,
-      IRolesBase.CreateEntitlement({
-        module: tokenEntitlement,
-        data: abi.encode(requirements.tokens)
-      })
-    );
+    return roleId;
   }
 
   function _createMemberEntitlement(
     address spaceAddress,
-    address tokenEntitlement,
     string memory memberName,
-    string[] memory memberPermissions
+    string[] memory memberPermissions,
+    IUserEntitlement userEntitlement
   ) internal returns (uint256 roleId) {
-    // create external token requirement for the member nft
-    ITokenEntitlement.ExternalToken[]
-      memory tokens = new ITokenEntitlement.ExternalToken[](1);
-
-    tokens[0] = ITokenEntitlement.ExternalToken({
-      contractAddress: spaceAddress,
-      quantity: 1,
-      isSingleToken: false,
-      tokenIds: new uint256[](0)
-    });
+    address[] memory users = new address[](1);
+    users[0] = EVERYONE_ADDRESS;
 
     IRolesBase.CreateEntitlement[]
       memory entitlements = new IRolesBase.CreateEntitlement[](1);
-    entitlements[0].module = tokenEntitlement;
-    entitlements[0].data = abi.encode(tokens);
+    entitlements[0].module = address(userEntitlement);
+    entitlements[0].data = abi.encode(users);
 
     roleId = IRoles(spaceAddress).createRole(
       memberName,
@@ -326,7 +320,7 @@ abstract contract ArchitectBase is Factory, IArchitectBase {
   }
 
   function _deployEntitlement(
-    address entitlement,
+    IEntitlement entitlement,
     address spaceAddress
   ) internal returns (address) {
     // calculate init code
