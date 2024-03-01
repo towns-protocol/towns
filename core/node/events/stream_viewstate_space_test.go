@@ -11,6 +11,7 @@ import (
 	"github.com/river-build/river/core/node/storage"
 	"github.com/river-build/river/core/node/testutils"
 
+	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
 	"google.golang.org/protobuf/proto"
 )
@@ -402,8 +403,8 @@ func TestChannelViewState_RemainingMembers(t *testing.T) {
 
 	/* Assert */
 	require.NoError(t, err)
-	require.Equal(t, (*allJoinedMembers).Cardinality(), 2)
-	require.Equal(t, (*allJoinedMembers).Contains(alice), true)
-	require.Equal(t, (*allJoinedMembers).Contains(bob), false)
-	require.Equal(t, (*allJoinedMembers).Contains(carol), true)
+	assert.Equal(t, 2, (*allJoinedMembers).Cardinality())
+	assert.Equal(t, true, (*allJoinedMembers).Contains(alice))
+	assert.Equal(t, false, (*allJoinedMembers).Contains(bob))
+	assert.Equal(t, true, (*allJoinedMembers).Contains(carol))
 }

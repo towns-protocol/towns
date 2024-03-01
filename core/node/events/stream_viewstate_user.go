@@ -51,7 +51,12 @@ func (r *streamViewImpl) GetUserMembership(streamId string) (MembershipOp, error
 	if err != nil {
 		return retValue, err
 	}
-	if membership, ok := snap.Memberships[streamId]; ok {
+	membership, _ := findUserMembership(
+		snap.Memberships,
+		streamId,
+	)
+	
+	if membership != nil {
 		retValue = membership.Op
 	}
 

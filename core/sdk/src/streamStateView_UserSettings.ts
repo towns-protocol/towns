@@ -30,7 +30,7 @@ export class StreamStateView_UserSettings extends StreamStateView_AbstractConten
 
     applySnapshot(snapshot: Snapshot, content: UserSettingsPayload_Snapshot): void {
         // iterate over content.fullyReadMarkers
-        for (const [_, payload] of Object.entries(content.fullyReadMarkers)) {
+        for (const payload of content.fullyReadMarkers) {
             this.fullyReadMarkerUpdate(payload)
         }
     }
@@ -87,16 +87,12 @@ export class StreamStateView_UserSettings extends StreamStateView_AbstractConten
             log('$ Content with FullyReadMarkers is undefined')
             return
         }
-        this.fullyReadMarkersSrc.set(payload.channelStreamId, content)
+        this.fullyReadMarkersSrc.set(payload.streamId, content)
         const fullyReadMarkersContent = toPlainMessage(
             FullyReadMarkers.fromJsonString(content.ciphertext),
         )
 
-        this.fullyReadMarkers.set(payload.channelStreamId, fullyReadMarkersContent.markers)
-        emitter?.emit(
-            'fullyReadMarkersUpdated',
-            payload.channelStreamId,
-            fullyReadMarkersContent.markers,
-        )
+        this.fullyReadMarkers.set(payload.streamId, fullyReadMarkersContent.markers)
+        emitter?.emit('fullyReadMarkersUpdated', payload.streamId, fullyReadMarkersContent.markers)
     }
 }

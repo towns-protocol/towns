@@ -714,7 +714,7 @@ export class Client
         return this.makeEventAndAddToStream(
             this.userSettingsStreamId,
             make_UserSettingsPayload_FullyReadMarkers({
-                channelStreamId: channelId,
+                streamId: channelId,
                 content: make_fake_encryptedData(fullyReadMarkersContent.toJsonString()),
             }),
             { method: 'sendFullyReadMarker' },

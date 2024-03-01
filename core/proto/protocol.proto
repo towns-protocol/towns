@@ -194,8 +194,8 @@ message SpacePayload {
     message Snapshot {
         // inception
         Inception inception = 1;
-        // streamId: Channel
-        map<string, Channel> channels = 2;
+        // channels: sorted by channel_id
+        repeated Channel channels = 2;
     }
     
     message Inception {
@@ -294,8 +294,8 @@ message UserPayload {
     message Snapshot {
         // inception
         Inception inception = 1;
-        // streamId: UserMembership
-        map<string, UserMembership> memberships = 2;
+        // memberships, sorted by stream_id
+        repeated UserMembership memberships = 2;
     }
 
     message Inception {
@@ -379,8 +379,8 @@ message UserSettingsPayload {
     message Snapshot {
         // inception
         Inception inception = 1;
-        // channelStreamId: FullyReadMarker
-        map<string, FullyReadMarkers> fully_read_markers = 2;
+        // fullyReadMarkers: sorted by stream_id
+        repeated FullyReadMarkers fully_read_markers = 2;
     }
 
     message Inception {
@@ -389,7 +389,7 @@ message UserSettingsPayload {
     }
 
     message FullyReadMarkers {
-        string channel_stream_id = 1;
+        string stream_id = 1;
         EncryptedData content = 2;
     }
 

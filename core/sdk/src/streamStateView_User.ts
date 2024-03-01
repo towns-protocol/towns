@@ -27,7 +27,7 @@ export class StreamStateView_User extends StreamStateView_AbstractContent {
         encryptionEmitter: TypedEmitter<StreamEncryptionEvents> | undefined,
     ): void {
         // initialize memberships
-        for (const [_, payload] of Object.entries(content.memberships)) {
+        for (const payload of content.memberships) {
             this.addUserPayload_userMembership(payload, encryptionEmitter)
         }
     }

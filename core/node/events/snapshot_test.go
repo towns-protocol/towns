@@ -140,10 +140,15 @@ func TestUpdateSnapshot(t *testing.T) {
 	membership := make_User_Membership(wallet, MembershipOp_SO_JOIN, streamId, nil, t)
 	err = Update_Snapshot(snapshot, membership, 0, 1)
 	assert.NoError(t, err)
+	foundUserMembership, err := findUserMembership(
+		snapshot.Content.(*Snapshot_UserContent).UserContent.Memberships,
+		streamId,
+	)
+	assert.NoError(t, err)
 	assert.Equal(
 		t,
 		MembershipOp_SO_JOIN,
-		snapshot.Content.(*Snapshot_UserContent).UserContent.Memberships[streamId].Op,
+		foundUserMembership.Op,
 	)
 }
 
@@ -159,10 +164,15 @@ func TestCloneAndUpdateUserSnapshot(t *testing.T) {
 	membership := make_User_Membership(wallet, MembershipOp_SO_JOIN, streamId, nil, t)
 	err = Update_Snapshot(snapshot, membership, 0, 1)
 	assert.NoError(t, err)
+	foundUserMembership, err := findUserMembership(
+		snapshot.Content.(*Snapshot_UserContent).UserContent.Memberships,
+		streamId,
+	)
+	assert.NoError(t, err)
 	assert.Equal(
 		t,
 		MembershipOp_SO_JOIN,
-		snapshot.Content.(*Snapshot_UserContent).UserContent.Memberships[streamId].Op,
+		foundUserMembership.Op,
 	)
 }
 

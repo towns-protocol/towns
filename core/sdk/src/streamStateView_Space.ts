@@ -38,7 +38,7 @@ export class StreamStateView_Space extends StreamStateView_AbstractContent {
         _encryptionEmitter: TypedEmitter<StreamEncryptionEvents> | undefined,
     ): void {
         // loop over content.channels, update space channels metadata
-        for (const [_, payload] of Object.entries(content.channels)) {
+        for (const payload of content.channels) {
             this.addSpacePayload_Channel(payload, undefined)
         }
     }
