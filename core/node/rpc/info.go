@@ -13,6 +13,7 @@ import (
 	"github.com/river-build/river/core/node/events"
 	"github.com/river-build/river/core/node/infra"
 	. "github.com/river-build/river/core/node/protocol"
+	"github.com/river-build/river/core/node/shared"
 )
 
 var infoRequests = infra.NewSuccessMetrics("info_requests", serviceRequests)
@@ -65,7 +66,10 @@ func (s *Service) info(
 			if len(request.Msg.Debug) < 2 {
 				return nil, RiverError(Err_DEBUG_ERROR, "make_miniblock requires a stream id and bool")
 			}
-			streamId := request.Msg.Debug[1]
+			streamId, err := shared.StreamIdFromString(request.Msg.Debug[1])
+			if err != nil {
+				return nil, err
+			}
 			forceSnapshot := "false"
 			if len(request.Msg.Debug) > 2 {
 				forceSnapshot = request.Msg.Debug[2]
@@ -90,7 +94,10 @@ func (s *Service) info(
 			if len(request.Msg.Debug) < 3 {
 				return nil, RiverError(Err_DEBUG_ERROR, "add_event requires a stream id and event")
 			}
-			streamId := request.Msg.Debug[1]
+			streamId, err := shared.StreamIdFromString(request.Msg.Debug[1])
+			if err != nil {
+				return nil, err
+			}
 			log.Info("Info Debug request to add event", "stream_id", streamId)
 			stub, _, err := s.getStubForStream(ctx, streamId)
 			if err != nil {
@@ -98,11 +105,11 @@ func (s *Service) info(
 			}
 			if stub != nil {
 				_, err := stub.Info(ctx, connect.NewRequest(&InfoRequest{
-					Debug: []string{"add_event", streamId},
+					Debug: []string{"add_event", streamId.String()},
 				}))
 				return nil, err
 			}
-			stream, _, err := s.cache.GetStream(ctx, streamId)
+			stream, _, err := s.cache.GetStream(ctx, streamId.String())
 			if err != nil {
 				return nil, err
 			}
@@ -128,7 +135,7 @@ func (s *Service) info(
 	}), nil
 }
 
-func (s *Service) debugMakeMiniblock(ctx context.Context, streamId string, forceSnapshot string) error {
+func (s *Service) debugMakeMiniblock(ctx context.Context, streamId shared.StreamId, forceSnapshot string) error {
 	stub, _, err := s.getStubForStream(ctx, streamId)
 	if err != nil {
 		return err
@@ -136,11 +143,11 @@ func (s *Service) debugMakeMiniblock(ctx context.Context, streamId string, force
 
 	if stub != nil {
 		_, err := stub.Info(ctx, connect.NewRequest(&InfoRequest{
-			Debug: []string{"make_miniblock", streamId, forceSnapshot},
+			Debug: []string{"make_miniblock", streamId.String(), forceSnapshot},
 		}))
 		return err
 	} else {
-		stream, _, err := s.cache.GetStream(ctx, streamId)
+		stream, _, err := s.cache.GetStream(ctx, streamId.String())
 		if err != nil {
 			return err
 		}

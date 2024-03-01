@@ -121,7 +121,7 @@ func genInceptionPayloadImpl(inceptionTypes []string, outputFile *FileHelper) {
 		return `
 type IsInceptionPayload interface {
 	isInceptionPayload()
-	GetStreamId() string
+	GetStreamId() []byte
 	GetSettings() *StreamSettings
 }`
 	}

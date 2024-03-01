@@ -13,7 +13,7 @@ message MiniblockProposal {
 
 message AllocateStreamRequest {
     Miniblock miniblock = 1;
-    string stream_id = 2; // stream_id should match the stream_id in the inception payload of the first event
+    bytes stream_id = 2; // stream_id should match the stream_id in the inception payload of the first event
 }
 
 message AllocateStreamResponse {
@@ -21,7 +21,7 @@ message AllocateStreamResponse {
 }
 
 message NewEventReceivedRequest {
-    string stream_id = 1;
+    bytes stream_id = 1;
     Envelope event = 2;
 
     // event.hash signed by node private key.

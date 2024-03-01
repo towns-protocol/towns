@@ -75,10 +75,10 @@ stream:
     defaultMinEventsPerSnapshot: 100
     minEventsPerSnapshot:
         # stream prefixes should be lower case because go is lower casing them anyway
-        user: 10
-        udev: 10
-        udks: 10
-        uset: 10
+        a8: 10 # USER
+        ad: 10 # USER_DEVICE_KEY
+        a1: 10 # USER_INBOX
+        a5: 10 # USER_SETTINGS
 
 # Debug feature flags.
 disableRiverChain: <DISABLE_RIVER_CHAIN>

@@ -3,9 +3,11 @@ package rpc
 import (
 	"context"
 
+	"github.com/ethereum/go-ethereum/common"
 	. "github.com/river-build/river/core/node/events"
 	. "github.com/river-build/river/core/node/nodes"
 	. "github.com/river-build/river/core/node/protocol"
+	"github.com/river-build/river/core/node/shared"
 
 	"connectrpc.com/connect"
 )
@@ -33,10 +35,14 @@ func (r *replicatedStream) AddEvent(ctx context.Context, event *ParsedEvent) err
 	})
 
 	if numRemotes > 0 {
+		streamId, err := shared.StreamIdFromString(r.streamId)
+		if err != nil {
+			return err
+		}
 		for _, n := range r.nodes.GetRemotes() {
 			sender.GoRemote(
 				n,
-				func(node string) error {
+				func(node common.Address) error {
 					stub, err := r.service.nodeRegistry.GetNodeToNodeClientForAddress(node)
 					if err != nil {
 						return err
@@ -45,7 +51,7 @@ func (r *replicatedStream) AddEvent(ctx context.Context, event *ParsedEvent) err
 						ctx,
 						connect.NewRequest[NewEventReceivedRequest](
 							&NewEventReceivedRequest{
-								StreamId: r.streamId,
+								StreamId: streamId.Bytes(),
 								Event:    event.Envelope,
 							},
 						),

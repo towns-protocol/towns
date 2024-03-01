@@ -1,11 +1,13 @@
 package rpc
 
 import (
+	"bytes"
 	"context"
 	"errors"
 	"sync"
 
 	"connectrpc.com/connect"
+	"github.com/ethereum/go-ethereum/common"
 	"github.com/river-build/river/core/node/base"
 	"github.com/river-build/river/core/node/crypto"
 	"github.com/river-build/river/core/node/dlog"
@@ -13,6 +15,7 @@ import (
 	"github.com/river-build/river/core/node/nodes"
 	"github.com/river-build/river/core/node/protocol"
 	"github.com/river-build/river/core/node/protocol/protocolconnect"
+	"github.com/river-build/river/core/node/shared"
 
 	"github.com/google/uuid"
 )
@@ -79,7 +82,7 @@ type syncHandlerImpl struct {
 }
 
 type syncNode struct {
-	address         string
+	address         common.Address
 	remoteSyncId    string // the syncId to the remote node's sync subscription
 	forwarderSyncId string // the forwarding node's sync Id
 	stub            protocolconnect.StreamServiceClient
@@ -186,7 +189,7 @@ func (s *syncHandlerImpl) handleSyncRequest(
 		s.removeSubscription(sub.ctx, sub.syncId)
 	}()
 
-	localCookies, remoteCookies := getLocalAndRemoteCookies(s.wallet.AddressStr, req.Msg.SyncPos)
+	localCookies, remoteCookies := getLocalAndRemoteCookies(s.wallet.Address, req.Msg.SyncPos)
 
 	for nodeAddr, remoteCookie := range remoteCookies {
 		var r *syncNode
@@ -286,19 +289,20 @@ func (s *syncHandlerImpl) PingSync(
 }
 
 func getLocalAndRemoteCookies(
-	localWalletAddr string,
+	localWalletAddr common.Address,
 	syncCookies []*protocol.SyncCookie,
-) (localCookies []*protocol.SyncCookie, remoteCookies map[string][]*protocol.SyncCookie) {
+) (localCookies []*protocol.SyncCookie, remoteCookies map[common.Address][]*protocol.SyncCookie) {
 	localCookies = make([]*protocol.SyncCookie, 0, 8)
-	remoteCookies = make(map[string][]*protocol.SyncCookie)
+	remoteCookies = make(map[common.Address][]*protocol.SyncCookie)
 	for _, cookie := range syncCookies {
-		if cookie.NodeAddress == localWalletAddr {
+		if bytes.Equal(cookie.NodeAddress[:], localWalletAddr[:]) {
 			localCookies = append(localCookies, cookie)
 		} else {
-			if remoteCookies[cookie.NodeAddress] == nil {
-				remoteCookies[cookie.NodeAddress] = make([]*protocol.SyncCookie, 0, 8)
+			remoteAddr := common.BytesToAddress(cookie.NodeAddress[:])
+			if remoteCookies[remoteAddr] == nil {
+				remoteCookies[remoteAddr] = make([]*protocol.SyncCookie, 0, 8)
 			}
-			remoteCookies[cookie.NodeAddress] = append(remoteCookies[cookie.NodeAddress], cookie)
+			remoteCookies[remoteAddr] = append(remoteCookies[remoteAddr], cookie)
 		}
 	}
 	return
@@ -378,15 +382,20 @@ func (s *syncHandlerImpl) addLocalStreamToSync(
 		return nil
 	}
 
-	if s := subs.getLocalStream(cookie.StreamId); s != nil {
+	cookieStreamId, err := shared.StreamIdFromBytes(cookie.StreamId)
+	if err != nil {
+		return err
+	}
+
+	if s := subs.getLocalStream(cookieStreamId); s != nil {
 		// stream is already subscribed. no need to re-subscribe.
-		log.Debug("SyncStreams:SyncHandlerV2.addLocalStreamToSync: stream already subscribed", "streamId", cookie.StreamId)
+		log.Debug("SyncStreams:SyncHandlerV2.addLocalStreamToSync: stream already subscribed", "streamId", cookieStreamId)
 		return nil
 	}
 
-	streamSub, _, err := s.cache.GetStream(ctx, cookie.StreamId)
+	streamSub, _, err := s.cache.GetStream(ctx, cookieStreamId.String())
 	if err != nil {
-		log.Info("SyncStreams:SyncHandlerV2.addLocalStreamToSync: failed to get stream", "streamId", cookie.StreamId, "err", err)
+		log.Info("SyncStreams:SyncHandlerV2.addLocalStreamToSync: failed to get stream", "streamId", cookieStreamId, "err", err)
 		return err
 	}
 
@@ -425,7 +434,7 @@ func (s *syncHandlerImpl) AddStreamToSync(
 	log.Debug("SyncStreams:SyncHandlerV2.AddStreamToSync: got sub", "syncId", syncId)
 
 	// Two cases to handle. Either local cookie or remote cookie.
-	if cookie.NodeAddress == s.wallet.AddressStr {
+	if bytes.Equal(cookie.NodeAddress[:], s.wallet.Address[:]) {
 		// Case 1: local cookie
 		if err := s.addLocalStreamToSync(ctx, cookie, sub); err != nil {
 			log.Info("SyncStreams:SyncHandlerV2.AddStreamToSync LEAVE: failed to add local streams", "syncId", syncId, "err", err)
@@ -438,12 +447,13 @@ func (s *syncHandlerImpl) AddStreamToSync(
 
 	// Case 2: remote cookie
 	log.Debug("SyncStreams:SyncHandlerV2.AddStreamToSync: adding remote streams", "syncId", syncId)
-	remoteNode := sub.getRemoteNode(cookie.NodeAddress)
+	nodeAddress := common.BytesToAddress(cookie.NodeAddress[:])
+	remoteNode := sub.getRemoteNode(nodeAddress)
 	isNewRemoteNode := remoteNode == nil
 	log.Debug("SyncStreams:SyncHandlerV2.AddStreamToSync: remote node", "syncId", syncId, "isNewRemoteNode", isNewRemoteNode)
 	if isNewRemoteNode {
 		// the remote node does not exist in the subscription. add it.
-		stub, err := s.nodeRegistry.GetStreamServiceClientForAddress(cookie.NodeAddress)
+		stub, err := s.nodeRegistry.GetStreamServiceClientForAddress(nodeAddress)
 		if err != nil {
 			log.Info(
 				"SyncStreams:SyncHandlerV2.AddStreamToSync: failed to get stream service client",
@@ -460,14 +470,18 @@ func (s *syncHandlerImpl) AddStreamToSync(
 		}
 
 		remoteNode = &syncNode{
-			address:         cookie.NodeAddress,
+			address:         nodeAddress,
 			forwarderSyncId: sub.syncId,
 			stub:            stub,
 		}
-		sub.addRemoteNode(cookie.NodeAddress, remoteNode)
+		sub.addRemoteNode(nodeAddress, remoteNode)
 		log.Info("SyncStreams:SyncHandlerV2.AddStreamToSync: added remote node", "syncId", req.Msg.SyncId)
 	}
-	sub.addRemoteStream(cookie)
+	err := sub.addRemoteStream(cookie)
+	if err != nil {
+		log.Info("SyncStreams:SyncHandlerV2.AddStreamToSync LEAVE: failed to add remote streams", "syncId", req.Msg.SyncId, "err", err)
+		return nil, err
+	}
 	log.Info("SyncStreams:SyncHandlerV2.AddStreamToSync: added remote stream", "syncId", req.Msg.SyncId)
 
 	if isNewRemoteNode {
@@ -494,7 +508,11 @@ func (s *syncHandlerImpl) RemoveStreamFromSync(
 	log.Info("SyncStreams:SyncHandlerV2.RemoveStreamFromSync ENTER", "syncId", req.Msg.SyncId, "streamId", req.Msg.StreamId)
 
 	syncId := req.Msg.SyncId
-	streamId := req.Msg.StreamId
+	streamId, err := shared.StreamIdFromBytes(req.Msg.StreamId)
+	if err != nil {
+		log.Info("SyncStreams:SyncHandlerV2.RemoveStreamFromSync LEAVE: failed to parse streamId", "syncId", syncId, "err", err)
+		return nil, err
+	}
 
 	sub := s.getSub(syncId)
 	if sub == nil {
@@ -553,7 +571,7 @@ func (s *syncHandlerImpl) addSubscription(
 		ctx:            syncCtx,
 		cancel:         cancelSync,
 		localStreams:   make(map[string]*events.SyncStream),
-		remoteNodes:    make(map[string]*syncNode),
+		remoteNodes:    make(map[common.Address]*syncNode),
 		remoteStreams:  make(map[string]*syncNode),
 		dataChannel:    make(chan *protocol.StreamAndCookie, 256),
 		controlChannel: make(chan syncOp, 64),
@@ -718,7 +736,7 @@ func (n *syncNode) addStreamToSync(
 
 func (n *syncNode) removeStreamFromSync(
 	ctx context.Context,
-	streamId string,
+	streamId shared.StreamId,
 	receiver events.SyncResultReceiver,
 ) error {
 	log := dlog.FromCtx(ctx)
@@ -740,7 +758,7 @@ func (n *syncNode) removeStreamFromSync(
 		&connect.Request[protocol.RemoveStreamFromSyncRequest]{
 			Msg: &protocol.RemoveStreamFromSyncRequest{
 				SyncId:   n.remoteSyncId,
-				StreamId: streamId,
+				StreamId: streamId.Bytes(),
 			},
 		},
 	)

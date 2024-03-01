@@ -13,7 +13,7 @@ import { AnyMessage } from '@bufbuild/protobuf'
 import { ConnectTransportOptions, createConnectTransport } from '@connectrpc/connect-web'
 import { Err, StreamService } from '@river/proto'
 import { check, dlog, dlogError } from '@river/dlog'
-import { genShortId } from './id'
+import { genShortId, streamIdAsString } from './id'
 import { getEnvVar, isIConnectError } from './utils'
 
 const logInfo = dlog('csb:rpc:info', { defaultEnabled: true })
@@ -141,7 +141,8 @@ const loggingInterceptor: (transportId: number) => Interceptor = (transportId: n
                     message: logEachRequest(req.method.name, id, req.message),
                 }
             } else {
-                streamId = req.message['streamId']
+                const streamIdBytes = req.message['streamId'] as Uint8Array
+                streamId = streamIdBytes ? streamIdAsString(streamIdBytes) : undefined
                 if (streamId !== undefined) {
                     logCalls(req.method.name, streamId, id)
                 } else {

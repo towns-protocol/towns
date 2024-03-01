@@ -13,6 +13,7 @@ import {
     make_MemberPayload_KeySolicitation,
 } from './types'
 import { isMobileSafari } from './utils'
+import { streamIdFromBytes } from './id'
 
 export interface EntitlementsDelegate {
     isEntitled(
@@ -391,11 +392,12 @@ export class DecryptionExtensions {
             this.log.debug('skipping, no session for our device')
             return
         }
+        const streamId = streamIdFromBytes(session.streamId)
         // check if it contains any keys we need
         const neededKeyIndexs = []
         for (let i = 0; i < session.sessionIds.length; i++) {
             const sessionId = session.sessionIds[i]
-            const hasKeys = await this.client.hasInboundSessionKeys(session.streamId, sessionId)
+            const hasKeys = await this.client.hasInboundSessionKeys(streamId, sessionId)
             if (!hasKeys) {
                 neededKeyIndexs.push(i)
             }
@@ -409,12 +411,15 @@ export class DecryptionExtensions {
         const sessionKeys = SessionKeys.fromJsonString(cleartext)
         check(sessionKeys.keys.length === session.sessionIds.length, 'bad sessionKeys')
         // make group sessions
-        const sessions = neededKeyIndexs.map((i) => ({
-            streamId: session.streamId,
-            sessionId: session.sessionIds[i],
-            sessionKey: sessionKeys.keys[i],
-            algorithm: GROUP_ENCRYPTION_ALGORITHM,
-        }))
+        const sessions = neededKeyIndexs.map(
+            (i) =>
+                ({
+                    streamId: streamId,
+                    sessionId: session.sessionIds[i],
+                    sessionKey: sessionKeys.keys[i],
+                    algorithm: GROUP_ENCRYPTION_ALGORITHM,
+                } satisfies GroupEncryptionSession),
+        )
         // import the sessions
         this.log.info(
             'importing group sessions streamId:',
@@ -422,14 +427,14 @@ export class DecryptionExtensions {
             'count: ',
             sessions.length,
         )
-        await this.client.importSessionKeys(session.streamId, sessions)
+        await this.client.importSessionKeys(streamId, sessions)
         // re-enqueue any decryption failures with these ids
         for (const session of sessions) {
-            if (this.decryptionFailures[session.streamId]?.[session.sessionId]) {
+            if (this.decryptionFailures[streamId]?.[session.sessionId]) {
                 this.queues.encryptedContent.push(
-                    ...this.decryptionFailures[session.streamId][session.sessionId],
+                    ...this.decryptionFailures[streamId][session.sessionId],
                 )
-                delete this.decryptionFailures[session.streamId][session.sessionId]
+                delete this.decryptionFailures[streamId][session.sessionId]
             }
         }
         // if we processed them all, ack the stream

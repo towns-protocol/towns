@@ -1,18 +1,27 @@
 package nodes
 
-import "slices"
+import (
+	"bytes"
+	"slices"
+
+	"github.com/ethereum/go-ethereum/common"
+)
 
 // Contains sorted stream node addresses,
 // if local node is present,
 // returns addresses of all nodes or only remote nodes.
 type StreamNodes struct {
-	nodes          []string
+	nodes          []common.Address
 	localNodeIndex int
 }
 
-func NewStreamNodes(nodes []string, localNode string) *StreamNodes {
-	slices.Sort(nodes)
-	localNodeIndex := slices.Index(nodes, localNode)
+func NewStreamNodes(nodes []common.Address, localNode common.Address) *StreamNodes {
+	slices.SortFunc(nodes, func(i, j common.Address) int {
+		return bytes.Compare(i[:], j[:])
+	})
+	localNodeIndex := slices.IndexFunc(nodes, func(i common.Address) bool {
+		return bytes.Equal(i[:], localNode[:])
+	})
 	return &StreamNodes{
 		nodes:          nodes,
 		localNodeIndex: localNodeIndex,
@@ -28,11 +37,11 @@ func (s *StreamNodes) LocalAndFirst() bool {
 	return s.localNodeIndex == 0
 }
 
-func (s *StreamNodes) GetNodes() []string {
+func (s *StreamNodes) GetNodes() []common.Address {
 	return s.nodes
 }
 
-func (s *StreamNodes) GetRemotes() []string {
+func (s *StreamNodes) GetRemotes() []common.Address {
 	if s.localNodeIndex >= 0 {
 		return append(s.nodes[:s.localNodeIndex], s.nodes[s.localNodeIndex+1:]...)
 	} else {

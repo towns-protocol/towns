@@ -5,6 +5,7 @@ import { StreamStateView_AbstractContent } from './streamStateView_AbstractConte
 import { check } from '@river/dlog'
 import { logNever } from './check'
 import { StreamEncryptionEvents, StreamStateEvents } from './streamEvents'
+import { streamIdFromBytes } from './id'
 
 export class StreamStateView_Media extends StreamStateView_AbstractContent {
     readonly streamId: string
@@ -31,7 +32,7 @@ export class StreamStateView_Media extends StreamStateView_AbstractContent {
             throw new Error('invalid media snapshot')
         }
         this.info = {
-            channelId: inception.channelId,
+            channelId: streamIdFromBytes(inception.channelId),
             chunkCount: inception.chunkCount,
             chunks: Array<Uint8Array>(inception.chunkCount),
         }

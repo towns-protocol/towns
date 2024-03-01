@@ -1,18 +1,32 @@
 package events
 
 import (
+	"context"
 	"testing"
 
+	"github.com/river-build/river/core/node/crypto"
 	. "github.com/river-build/river/core/node/protocol"
+	"github.com/river-build/river/core/node/shared"
+	"github.com/river-build/river/core/node/testutils"
 
 	"github.com/stretchr/testify/require"
 )
 
 func TestEqualAndCopy(t *testing.T) {
+	ctx := context.Background()
+	nodeWallet1, _ := crypto.NewWallet(ctx)
+	nodeWallet2, _ := crypto.NewWallet(ctx)
 	require.True(t, SyncCookieEqual(nil, nil))
+	stream1IdStr := testutils.FakeStreamId(shared.STREAM_CHANNEL_PREFIX)
+	stream1Id, err := shared.StreamIdFromString(stream1IdStr)
+	require.NoError(t, err)
+	badStreamIdStr := testutils.FakeStreamId(shared.STREAM_CHANNEL_PREFIX)
+	badStreamId, err := shared.StreamIdFromString(badStreamIdStr)
+	require.NoError(t, err)
+
 	a := &SyncCookie{
-		NodeAddress:       "nodeAddress$1",
-		StreamId:          "streamid$1",
+		NodeAddress:       nodeWallet1.Address[:],
+		StreamId:          stream1Id.Bytes(),
 		MinipoolGen:       5,
 		MinipoolSlot:      10,
 		PrevMiniblockHash: []byte{0, 1, 2, 4},
@@ -22,7 +36,7 @@ func TestEqualAndCopy(t *testing.T) {
 	require.False(t, SyncCookieEqual(a, nil))
 	b := SyncCookieCopy(a)
 	require.True(t, SyncCookieEqual(a, b))
-	b.StreamId = "streamid$2"
+	b.StreamId = badStreamId.Bytes()
 	require.False(t, SyncCookieEqual(a, b))
 	b = SyncCookieCopy(a)
 	b.MinipoolGen = 6
@@ -31,7 +45,7 @@ func TestEqualAndCopy(t *testing.T) {
 	b.PrevMiniblockHash = []byte{0, 1, 2, 5}
 	require.False(t, SyncCookieEqual(a, b))
 	b = SyncCookieCopy(a)
-	b.NodeAddress = "nodeAddress$2"
+	b.NodeAddress = nodeWallet2.Address[:]
 	require.False(t, SyncCookieEqual(a, b))
 	b = SyncCookieCopy(a)
 	b.MinipoolSlot = 11

@@ -7,6 +7,7 @@ import (
 	. "github.com/river-build/river/core/node/base"
 	"github.com/river-build/river/core/node/infra"
 	. "github.com/river-build/river/core/node/protocol"
+	"github.com/river-build/river/core/node/shared"
 )
 
 var getStreamRequests = infra.NewSuccessMetrics("get_stream_requests", serviceRequests)
@@ -29,9 +30,12 @@ func (s *Service) getStream(
 	ctx context.Context,
 	req *connect.Request[GetStreamRequest],
 ) (*connect.Response[GetStreamResponse], error) {
-	streamId := req.Msg.StreamId
+	streamId, err := shared.StreamIdFromBytes(req.Msg.StreamId)
+	if err != nil {
+		return nil, err
+	}
 
-	_, streamView, err := s.cache.GetStream(ctx, streamId)
+	_, streamView, err := s.cache.GetStream(ctx, streamId.String())
 
 	if err != nil {
 		if req.Msg.Optional && AsRiverError(err).Code == Err_NOT_FOUND {
@@ -47,7 +51,7 @@ func (s *Service) getStream(
 		return connect.NewResponse(&GetStreamResponse{
 			Stream: &StreamAndCookie{
 				Events:         streamView.MinipoolEnvelopes(),
-				NextSyncCookie: streamView.SyncCookie(s.wallet.AddressStr),
+				NextSyncCookie: streamView.SyncCookie(s.wallet.Address),
 				Miniblocks:     streamView.MiniblocksFromLastSnapshot(),
 			},
 		}), nil

@@ -4,7 +4,7 @@
 
 import { makeEvent, makeEvents, SignerContext, unpackStreamEnvelopes } from './sign'
 import { MembershipOp, SyncStreamsResponse, SyncCookie, SyncOp } from '@river/proto'
-import { dlog } from '@river/dlog'
+import { bin_equal, dlog } from '@river/dlog'
 import {
     makeEvent_test,
     makeRandomUserContext,
@@ -15,9 +15,12 @@ import {
     waitForSyncStreams,
 } from './util.test'
 import {
+    addressFromUserId,
     makeUniqueChannelStreamId,
     makeUniqueSpaceStreamId,
     makeUserStreamId,
+    streamIdAsString,
+    streamIdToBytes,
     userIdFromAddress,
 } from './id'
 import {
@@ -63,7 +66,8 @@ describe('streamRpcClient using v2 sync', () => {
         /** Arrange */
         const alice = makeTestRpcClient()
         const alicesUserId = userIdFromAddress(alicesContext.creatorAddress)
-        const alicesUserStreamId = makeUserStreamId(alicesUserId)
+        const alicesUserStreamIdStr = makeUserStreamId(alicesUserId)
+        const alicesUserStreamId = streamIdToBytes(alicesUserStreamIdStr)
         // create account for alice
         await alice.createStream({
             events: [
@@ -77,7 +81,8 @@ describe('streamRpcClient using v2 sync', () => {
             streamId: alicesUserStreamId,
         })
         // alice creates a space
-        const spaceId = makeUniqueSpaceStreamId()
+        const spaceIdStr = makeUniqueSpaceStreamId()
+        const spaceId = streamIdToBytes(spaceIdStr)
         const inceptionEvent = await makeEvent(
             alicesContext,
             make_SpacePayload_Inception({
@@ -97,7 +102,8 @@ describe('streamRpcClient using v2 sync', () => {
             streamId: spaceId,
         })
         // alice creates a channel
-        const channelId = makeUniqueChannelStreamId()
+        const channelIdStr = makeUniqueChannelStreamId()
+        const channelId = streamIdToBytes(channelIdStr)
         const channelProperties = 'Alices channel properties'
         const channelInceptionEvent = await makeEvent(
             alicesContext,
@@ -146,10 +152,12 @@ describe('streamRpcClient using v2 sync', () => {
         /** Arrange */
         const alice = makeTestRpcClient()
         const alicesUserId = userIdFromAddress(alicesContext.creatorAddress)
-        const alicesUserStreamId = makeUserStreamId(alicesUserId)
+        const alicesUserStreamIdStr = makeUserStreamId(alicesUserId)
+        const alicesUserStreamId = streamIdToBytes(alicesUserStreamIdStr)
         const bob = makeTestRpcClient()
         const bobsUserId = userIdFromAddress(bobsContext.creatorAddress)
-        const bobsUserStreamId = makeUserStreamId(bobsUserId)
+        const bobsUserStreamIdStr = makeUserStreamId(bobsUserId)
+        const bobsUserStreamId = streamIdToBytes(bobsUserStreamIdStr)
         // create accounts for alice and bob
         await alice.createStream({
             events: [
@@ -174,7 +182,8 @@ describe('streamRpcClient using v2 sync', () => {
             streamId: bobsUserStreamId,
         })
         // alice creates a space
-        const spaceId = makeUniqueSpaceStreamId()
+        const spaceIdStr = makeUniqueSpaceStreamId()
+        const spaceId = streamIdToBytes(spaceIdStr)
         const inceptionEvent = await makeEvent(
             alicesContext,
             make_SpacePayload_Inception({
@@ -194,7 +203,8 @@ describe('streamRpcClient using v2 sync', () => {
             streamId: spaceId,
         })
         // alice creates a channel
-        const channelId = makeUniqueChannelStreamId()
+        const channelIdStr = makeUniqueChannelStreamId()
+        const channelId = streamIdToBytes(channelIdStr)
         const channelProperties = 'Alices channel properties'
         const channelInceptionEvent = await makeEvent(
             alicesContext,
@@ -348,7 +358,8 @@ describe('streamRpcClient', () => {
 
         const charlie = makeTestRpcClient()
         const userId = userIdFromAddress(charliesContext.creatorAddress)
-        const streamId = makeUserStreamId(userId)
+        const streamIdStr = makeUserStreamId(userId)
+        const streamId = streamIdToBytes(streamIdStr)
         await charlie.createStream({
             events: [
                 await makeEvent(
@@ -366,7 +377,8 @@ describe('streamRpcClient', () => {
         log('bobSendsMismatchedPayloadCase', 'start')
         const bob = makeTestRpcClient()
         const bobsUserId = userIdFromAddress(bobsContext.creatorAddress)
-        const bobsUserStreamId = makeUserStreamId(bobsUserId)
+        const bobsUserStreamIdStr = makeUserStreamId(bobsUserId)
+        const bobsUserStreamId = streamIdToBytes(bobsUserStreamIdStr)
         const inceptionEvent = await makeEvent(
             bobsContext,
             make_UserPayload_Inception({
@@ -414,11 +426,13 @@ describe('streamRpcClient', () => {
 
         const bob = makeTestRpcClient()
         const bobsUserId = userIdFromAddress(bobsContext.creatorAddress)
-        const bobsUserStreamId = makeUserStreamId(bobsUserId)
+        const bobsUserStreamIdStr = makeUserStreamId(bobsUserId)
+        const bobsUserStreamId = streamIdToBytes(bobsUserStreamIdStr)
 
         const alice = makeTestRpcClient()
         const alicesUserId = userIdFromAddress(alicesContext.creatorAddress)
-        const alicesUserStreamId = makeUserStreamId(alicesUserId)
+        const alicesUserStreamIdStr = makeUserStreamId(alicesUserId)
+        const alicesUserStreamId = streamIdToBytes(alicesUserStreamIdStr)
 
         // Create accounts for Bob and Alice
         const bobsStream = await bob.createStream({
@@ -446,7 +460,8 @@ describe('streamRpcClient', () => {
         })
 
         // Bob creates space
-        const spaceId = makeUniqueSpaceStreamId()
+        const spaceIdStr = makeUniqueSpaceStreamId()
+        const spaceId = streamIdToBytes(spaceIdStr)
         const inceptionEvent = await makeEvent(
             bobsContext,
             make_SpacePayload_Inception({
@@ -467,7 +482,8 @@ describe('streamRpcClient', () => {
         })
 
         // Bob creates channel
-        const channelId = makeUniqueChannelStreamId()
+        const channelIdStr = makeUniqueChannelStreamId()
+        const channelId = streamIdToBytes(channelIdStr)
         const channelProperties = 'Bobs channel properties'
 
         const channelInceptionEvent = await makeEvent(
@@ -507,6 +523,7 @@ describe('streamRpcClient', () => {
         })
 
         // Alice fails to post a message if she hasn't joined the channel
+        log("Alice fails to post a message if she hasn't joined the channel")
         await expect(
             alice.addEvent({
                 streamId: channelId,
@@ -537,6 +554,7 @@ describe('streamRpcClient', () => {
 
         let syncId
 
+        log("Alice waits for Bob's channel creation event")
         await expect(
             waitForSyncStreams(aliceSyncStreams, async (res) => {
                 syncId = res.syncId
@@ -545,11 +563,12 @@ describe('streamRpcClient', () => {
         ).toResolve()
 
         // Bob invites Alice to the channel
+        log('Bob invites Alice to the channel')
         event = await makeEvent(
             bobsContext,
             make_UserPayload_UserMembershipAction({
                 op: MembershipOp.SO_INVITE,
-                userId: alicesUserId,
+                userId: addressFromUserId(alicesUserId),
                 streamId: channelId,
             }),
             bobsStream.stream?.miniblocks.at(-1)?.header?.hash,
@@ -559,16 +578,45 @@ describe('streamRpcClient', () => {
             event,
         })
 
-        aliceSyncCookie = await waitForEvent(
-            aliceSyncStreams,
-            alicesUserStreamId,
-            (e) =>
+        log("Alice waits for Bob's invite event")
+        aliceSyncCookie = await waitForEvent(aliceSyncStreams, alicesUserStreamIdStr, (e) => {
+            if (
                 e.event.payload?.case === 'userPayload' &&
-                e.event.payload?.value.content.case === 'userMembership' &&
-                e.event.payload?.value.content.value.op === MembershipOp.SO_INVITE &&
-                e.event.payload?.value.content.value.streamId === channelId &&
-                e.event.payload?.value.content.value.inviter === bobsUserId,
-        )
+                e.event.payload?.value.content.case === 'userMembership'
+            ) {
+                log("Alice's received over sync:", {
+                    op: e.event.payload?.value.content.value.op,
+                    streamId: streamIdAsString(e.event.payload?.value.content.value.streamId),
+                    inviter: e.event.payload?.value.content.value.inviter,
+                    inviterId: e.event.payload?.value.content.value.inviter
+                        ? userIdFromAddress(e.event.payload?.value.content.value.inviter)
+                        : undefined,
+                    bob: bobsUserId,
+                    bobAddress: addressFromUserId(bobsUserId),
+                    bobAddress2: bobsContext.creatorAddress,
+                    bobAddress3: userIdFromAddress(bobsContext.creatorAddress),
+                    inviterEquals: bin_equal(
+                        e.event.payload?.value.content.value.inviter,
+                        bobsContext.creatorAddress,
+                    ),
+                    channelIdEquals: bin_equal(
+                        e.event.payload?.value.content.value.streamId,
+                        channelId,
+                    ),
+                    inviteEquals:
+                        e.event.payload?.value.content.value.op === MembershipOp.SO_INVITE,
+                })
+                return (
+                    e.event.payload?.value.content.value.op === MembershipOp.SO_INVITE &&
+                    bin_equal(e.event.payload?.value.content.value.streamId, channelId) &&
+                    bin_equal(
+                        e.event.payload?.value.content.value.inviter,
+                        bobsContext.creatorAddress,
+                    )
+                )
+            }
+            return false
+        })
 
         // Alice joins the channel
         event = await makeEvent(
@@ -584,15 +632,16 @@ describe('streamRpcClient', () => {
             event,
         })
 
+        log('Alice waits for join event in her user stream')
         // Alice sees derived join event in her user stream
         aliceSyncCookie = await waitForEvent(
             aliceSyncStreams,
-            alicesUserStreamId,
+            alicesUserStreamIdStr,
             (e) =>
                 e.event.payload?.case === 'userPayload' &&
                 e.event.payload?.value.content.case === 'userMembership' &&
                 e.event.payload?.value.content.value.op === MembershipOp.SO_JOIN &&
-                e.event.payload?.value.content.value.streamId === channelId,
+                bin_equal(e.event.payload?.value.content.value.streamId, channelId),
         )
 
         // Alice reads previouse messages from the channel
@@ -628,11 +677,12 @@ describe('streamRpcClient', () => {
             event,
         })
 
+        log('Alice waits for Bob to post another message')
         // Alice sees the message in the channel stream
         await expect(
             waitForEvent(
                 aliceSyncStreams,
-                channelId,
+                channelIdStr,
                 (e) =>
                     e.event.payload?.case === 'channelPayload' &&
                     e.event.payload?.value.content.case === 'message' &&
@@ -646,7 +696,8 @@ describe('streamRpcClient', () => {
     test('cantAddWithBadHash', async () => {
         const bob = makeTestRpcClient()
         const bobsUserId = userIdFromAddress(bobsContext.creatorAddress)
-        const bobsUserStreamId = makeUserStreamId(bobsUserId)
+        const bobsUserStreamIdStr = makeUserStreamId(bobsUserId)
+        const bobsUserStreamId = streamIdToBytes(bobsUserStreamIdStr)
         await expect(
             bob.createStream({
                 events: [
@@ -663,7 +714,8 @@ describe('streamRpcClient', () => {
         log('Bob created user, about to create space')
 
         // Bob creates space and channel
-        const spacedStreamId = makeUniqueSpaceStreamId()
+        const spacedStreamIdStr = makeUniqueSpaceStreamId()
+        const spacedStreamId = streamIdToBytes(spacedStreamIdStr)
         const spaceEvents = await makeEvents(bobsContext, [
             make_SpacePayload_Inception({
                 streamId: spacedStreamId,
@@ -680,7 +732,8 @@ describe('streamRpcClient', () => {
         })
         log('Bob created space, about to create channel')
 
-        const channelId = makeUniqueChannelStreamId()
+        const channelIdStr = makeUniqueChannelStreamId()
+        const channelId = streamIdToBytes(channelIdStr)
         const channelProperties = 'Bobs channel properties'
 
         const channelEvents = await makeEvents(bobsContext, [
@@ -703,7 +756,8 @@ describe('streamRpcClient', () => {
         log('Bob created channel')
 
         log('Bob fails to create channel with badly chained initial events, hash empty')
-        const channelId2 = makeUniqueChannelStreamId()
+        const channelId2Str = makeUniqueChannelStreamId()
+        const channelId2 = streamIdToBytes(channelId2Str)
         const channelProperties2 = 'Bobs channel properties 2'
         const channelEvent2_0 = await makeEvent(
             bobsContext,
@@ -776,7 +830,9 @@ describe('streamRpcClient', () => {
     test('cantAddWithBadSignature', async () => {
         const bob = makeTestRpcClient()
         const bobsUserId = userIdFromAddress(bobsContext.creatorAddress)
-        const bobsUserStreamId = makeUserStreamId(bobsUserId)
+        const bobsUserStreamIdStr = makeUserStreamId(bobsUserId)
+        const bobsUserStreamId = streamIdToBytes(bobsUserStreamIdStr)
+
         await expect(
             bob.createStream({
                 events: [
@@ -793,7 +849,8 @@ describe('streamRpcClient', () => {
         log('Bob created user, about to create space')
 
         // Bob creates space and channel
-        const spacedStreamId = makeUniqueSpaceStreamId()
+        const spacedStreamIdStr = makeUniqueSpaceStreamId()
+        const spacedStreamId = streamIdToBytes(spacedStreamIdStr)
         const spaceEvents = await makeEvents(bobsContext, [
             make_SpacePayload_Inception({
                 streamId: spacedStreamId,
@@ -810,7 +867,8 @@ describe('streamRpcClient', () => {
         })
         log('Bob created space, about to create channel')
 
-        const channelId = makeUniqueChannelStreamId()
+        const channelIdStr = makeUniqueChannelStreamId()
+        const channelId = streamIdToBytes(channelIdStr)
         const channelProperties = 'Bobs channel properties'
 
         const channelEvents = await makeEvents(bobsContext, [
@@ -904,7 +962,10 @@ const waitForEvent = async (
 ): Promise<SyncCookie> => {
     for await (const res of iterableWrapper(syncStream)) {
         const stream = res.stream
-        if (stream?.nextSyncCookie?.streamId === streamId) {
+        if (
+            stream?.nextSyncCookie?.streamId &&
+            bin_equal(stream.nextSyncCookie.streamId, streamIdToBytes(streamId))
+        ) {
             const events = await unpackStreamEnvelopes(stream)
             for (const e of events) {
                 if (matcher(e)) {

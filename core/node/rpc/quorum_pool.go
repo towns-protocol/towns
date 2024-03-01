@@ -1,5 +1,7 @@
 package rpc
 
+import "github.com/ethereum/go-ethereum/common"
+
 type quorumPool struct {
 	localErrChannel  chan error
 	remotes          int
@@ -24,9 +26,9 @@ func (q *quorumPool) GoLocal(f func() error) {
 	}()
 }
 
-func (q *quorumPool) GoRemote(node string, f func(node string) error) {
+func (q *quorumPool) GoRemote(node common.Address, f func(node common.Address) error) {
 	q.remotes++
-	go func(node string) {
+	go func(node common.Address) {
 		err := f(node)
 		q.remoteErrChannel <- err
 	}(node)

@@ -7,6 +7,7 @@ import (
 
 	"log/slog"
 
+	"github.com/ethereum/go-ethereum/common"
 	"github.com/river-build/river/core/node/auth"
 	. "github.com/river-build/river/core/node/base"
 	"github.com/river-build/river/core/node/config"
@@ -19,7 +20,7 @@ import (
 type aeParams struct {
 	ctx                context.Context
 	cfg                *config.StreamConfig
-	validNodeAddresses []string
+	validNodeAddresses []common.Address
 	currentTime        time.Time
 	streamView         events.StreamView
 	parsedEvent        *events.ParsedEvent
@@ -72,7 +73,7 @@ type aeMediaPayloadChunkRules struct {
 * (true, chainAuthArgs, nil, nil) // event can be added if chainAuthArgs are satisfied
 * (true, chainAuthArgs, &IsStreamEvent_Payload, nil) // event can be added if chainAuthArgs are satisfied and parent event is added or verified
 */
-func CanAddEvent(ctx context.Context, cfg *config.StreamConfig, validNodeAddresses []string, currentTime time.Time, parsedEvent *events.ParsedEvent, streamView events.StreamView) (bool, *auth.ChainAuthArgs, *RequiredParentEvent, error) {
+func CanAddEvent(ctx context.Context, cfg *config.StreamConfig, validNodeAddresses []common.Address, currentTime time.Time, parsedEvent *events.ParsedEvent, streamView events.StreamView) (bool, *auth.ChainAuthArgs, *RequiredParentEvent, error) {
 
 	// validate that event has required properties
 	if parsedEvent.Event.PrevMiniblockHash == nil {
@@ -352,7 +353,7 @@ func (params *aeParams) creatorIsMember() (bool, error) {
 		return false, err
 	}
 	if !isMember {
-		return false, RiverError(Err_PERMISSION_DENIED, "creator is not a member of the stream", "creatorAddress", creatorAddress)
+		return false, RiverError(Err_PERMISSION_DENIED, "event creator is not a member of the stream", "creatorAddress", creatorAddress, "streamId", params.streamView.StreamId())
 	}
 	return true, nil
 }
@@ -466,14 +467,9 @@ func (ru *aeMembershipRules) validMembershipTransistionForDM() (bool, error) {
 	userAddress := ru.membership.UserAddress
 	initiatorAddress := ru.membership.InitiatorAddress
 
-	initiatorId, err := shared.AddressHex(initiatorAddress)
-	if err != nil {
-		return false, err
-	}
-
-	if !ru.params.isValidNode(initiatorId) {
+	if !ru.params.isValidNode(initiatorAddress) {
 		if !bytes.Equal(initiatorAddress, fp) && !bytes.Equal(initiatorAddress, sp) {
-			return false, RiverError(Err_PERMISSION_DENIED, "initiator is not a member of DM", "initiator", initiatorId)
+			return false, RiverError(Err_PERMISSION_DENIED, "initiator is not a member of DM", "initiator", initiatorAddress)
 		}
 	}
 
@@ -552,15 +548,22 @@ func (ru *aeMembershipRules) requireStreamParentMembership() (*RequiredParentEve
 	if ru.membership.Op == MembershipOp_SO_LEAVE {
 		return nil, nil
 	}
+	if ru.membership.Op == MembershipOp_SO_INVITE {
+		return nil, nil
+	}
 	streamParentId := ru.params.streamView.StreamParentId()
 	if streamParentId == nil {
 		return nil, nil
 	}
-	userStreamId, err := shared.UserStreamIdFromBytes(ru.membership.UserAddress)
+	userStreamIdStr, err := shared.UserStreamIdFromBytes(ru.membership.UserAddress)
 	if err != nil {
 		return nil, err
 	}
 	// todo aellis - don't need these conversions
+	userStreamId, err := shared.StreamIdFromString(userStreamIdStr)
+	if err != nil {
+		return nil, err
+	}
 	initiatorId, err := shared.AddressHex(ru.membership.InitiatorAddress)
 	if err != nil {
 		return nil, err
@@ -579,7 +582,11 @@ func (ru *aeUserMembershipRules) validUserMembershipTransistion() (bool, error) 
 	if ru.userMembership.Op == MembershipOp_SO_UNSPECIFIED {
 		return false, RiverError(Err_INVALID_ARGUMENT, "membership op is unspecified")
 	}
-	currentMembershipOp, err := ru.params.streamView.(events.UserStreamView).GetUserMembership(ru.userMembership.StreamId)
+	streamId, err := shared.StreamIdFromBytes(ru.userMembership.StreamId)
+	if err != nil {
+		return false, err
+	}
+	currentMembershipOp, err := ru.params.streamView.(events.UserStreamView).GetUserMembership(streamId)
 	if err != nil {
 		return false, err
 	}
@@ -622,25 +629,21 @@ func (ru *aeUserMembershipRules) parentEventForUserMembership() (*RequiredParent
 	}
 	userMembership := ru.userMembership
 	creatorAddress := ru.params.parsedEvent.Event.CreatorAddress
-	creatorId, err := shared.AddressHex(creatorAddress)
-	if err != nil {
-		return nil, err
-	}
 
 	userAddress, err := shared.GetUserAddressFromStreamId(ru.params.streamView.StreamId())
 	if err != nil {
 		return nil, err
 	}
 
-	toStreamId := userMembership.StreamId
+	toStreamId, err := shared.StreamIdFromBytes(userMembership.StreamId)
+	if err != nil {
+		return nil, err
+	}
 	var initiatorAddress []byte
-	if userMembership.Inviter != nil && ru.params.isValidNode(creatorId) {
+	if userMembership.Inviter != nil && ru.params.isValidNode(creatorAddress) {
 		// the initiator will need permissions to do specific things
 		// if the creator of this payload was a valid node, trust that the inviter was the initiator
-		initiatorAddress, err = shared.AddressFromUserId(*userMembership.Inviter)
-		if err != nil {
-			return nil, err
-		}
+		initiatorAddress = userMembership.Inviter
 	} else {
 		// otherwise the initiator is the creator of the event
 		initiatorAddress = creatorAddress
@@ -662,14 +665,26 @@ func (ru *aeUserMembershipActionRules) parentEventForUserMembershipAction() (*Re
 	if err != nil {
 		return nil, err
 	}
-	payload := events.Make_UserPayload_Membership(action.Op, action.StreamId, &inviterId)
-	streamId, err := shared.UserStreamIdFromId(action.UserId)
+	userId, err := shared.AddressHex(action.UserId)
+	if err != nil {
+		return nil, err
+	}
+	actionStreamId, err := shared.StreamIdFromBytes(action.StreamId)
+	if err != nil {
+		return nil, err
+	}
+	payload := events.Make_UserPayload_Membership(action.Op, actionStreamId.String(), &inviterId)
+	toUserStreamIdStr, err := shared.UserStreamIdFromId(userId)
+	if err != nil {
+		return nil, err
+	}
+	toUserStreamId, err := shared.StreamIdFromString(toUserStreamIdStr)
 	if err != nil {
 		return nil, err
 	}
 	return &RequiredParentEvent{
 		Payload:  payload,
-		StreamId: streamId,
+		StreamId: toUserStreamId,
 	}, nil
 }
 
@@ -708,8 +723,13 @@ func (ru *aeMembershipRules) channelMembershipEntitlements() (*auth.ChainAuthArg
 		return nil, nil
 	}
 
+	spaceId, err := shared.StreamIdFromBytes(inception.SpaceId)
+	if err != nil {
+		return nil, err
+	}
+
 	chainAuthArgs := auth.NewChainAuthArgsForChannel(
-		inception.SpaceId,
+		spaceId.String(),
 		ru.params.streamView.StreamId(),
 		permissionUser,
 		permission,
@@ -729,8 +749,13 @@ func (params *aeParams) channelMessageEntitlements() (*auth.ChainAuthArgs, error
 		return nil, err
 	}
 
+	spaceId, err := shared.StreamIdFromBytes(inception.SpaceId)
+	if err != nil {
+		return nil, err
+	}
+
 	chainAuthArgs := auth.NewChainAuthArgsForChannel(
-		inception.SpaceId,
+		spaceId.String(),
 		params.streamView.StreamId(),
 		userId,
 		auth.PermissionWrite,
@@ -740,12 +765,9 @@ func (params *aeParams) channelMessageEntitlements() (*auth.ChainAuthArgs, error
 }
 
 func (params *aeParams) creatorIsValidNode() (bool, error) {
-	creatorAddressStr, err := shared.AddressHex(params.parsedEvent.Event.CreatorAddress)
-	if err != nil {
-		return false, err
-	}
-	if !params.isValidNode(creatorAddressStr) {
-		return false, RiverError(Err_UNKNOWN_NODE, "No record for node in validNodeAddresses", "address", creatorAddressStr, "nodes", params.validNodeAddresses).Func("CheckNodeIsValid")
+	creatorAddress := params.parsedEvent.Event.CreatorAddress
+	if !params.isValidNode(creatorAddress) {
+		return false, RiverError(Err_UNKNOWN_NODE, "No record for node in validNodeAddresses", "address", creatorAddress, "nodes", params.validNodeAddresses).Func("CheckNodeIsValid")
 	}
 	return true, nil
 }
@@ -811,7 +833,11 @@ func (ru *aeSpaceChannelRules) validSpaceChannelOp() (bool, error) {
 
 	next := ru.channelUpdate
 	view := ru.params.streamView.(events.SpaceStreamView)
-	current, err := view.GetChannelInfo(next.ChannelId)
+	channelId, err := shared.StreamIdFromBytes(next.ChannelId)
+	if err != nil {
+		return false, err
+	}
+	current, err := view.GetChannelInfo(channelId)
 	if err != nil {
 		return false, err
 	}
@@ -821,7 +847,7 @@ func (ru *aeSpaceChannelRules) validSpaceChannelOp() (bool, error) {
 	}
 
 	if current.Op == ChannelOp_CO_DELETED {
-		return false, RiverError(Err_PERMISSION_DENIED, "channel is deleted", "channelId", next.ChannelId)
+		return false, RiverError(Err_PERMISSION_DENIED, "channel is deleted", "channelId", channelId)
 	}
 
 	if next.Op == ChannelOp_CO_CREATED {
@@ -864,9 +890,9 @@ func (ru *aeMediaPayloadChunkRules) canAddMediaChunk() (bool, error) {
 	return true, nil
 }
 
-func (params *aeParams) isValidNode(addressOrId string) bool {
+func (params *aeParams) isValidNode(addressOrId []byte) bool {
 	for _, item := range params.validNodeAddresses {
-		if item == addressOrId {
+		if bytes.Equal(item[:], addressOrId) {
 			return true
 		}
 	}

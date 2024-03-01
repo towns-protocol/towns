@@ -1,10 +1,12 @@
 package nodes
 
 import (
+	"bytes"
 	"context"
 	"net/http"
 	"sync"
 
+	"github.com/ethereum/go-ethereum/common"
 	. "github.com/river-build/river/core/node/base"
 	"github.com/river-build/river/core/node/dlog"
 	"github.com/river-build/river/core/node/http_client"
@@ -17,20 +19,20 @@ import (
 
 type NodeRegistry interface {
 	// Returns error for local node.
-	GetStreamServiceClientForAddress(address string) (StreamServiceClient, error)
-	GetNodeToNodeClientForAddress(address string) (NodeToNodeClient, error)
+	GetStreamServiceClientForAddress(address common.Address) (StreamServiceClient, error)
+	GetNodeToNodeClientForAddress(address common.Address) (NodeToNodeClient, error)
 
-	CheckNodeIsValid(address string) error
+	CheckNodeIsValid(address common.Address) error
 
 	// Next two methods are required for hash-based stream placement, they will be removed once on-chain registry is implemented.
 	NumNodes() int
-	GetValidNodeAddresses() []string
-	GetNodeAddressByIndex(index int) (string, error)
+	GetValidNodeAddresses() []common.Address
+	GetNodeAddressByIndex(index int) (common.Address, error)
 	GetNodeRecordByIndex(index int) (*NodeRecord, error)
 }
 
 type NodeRecord struct {
-	address string
+	address common.Address
 	url     string
 	local   bool
 
@@ -51,7 +53,7 @@ func (nr *NodeRecord) IsLocal() bool {
 
 // Currently node registry is immutable, so there is no need for locking yet.
 type nodeRegistryImpl struct {
-	nodes     map[string]*NodeRecord
+	nodes     map[common.Address]*NodeRecord
 	nodesFlat []*NodeRecord
 
 	httpClient *http.Client
@@ -59,7 +61,7 @@ type nodeRegistryImpl struct {
 
 var _ NodeRegistry = (*nodeRegistryImpl)(nil)
 
-func LoadNodeRegistry(ctx context.Context, contract *registries.RiverRegistryContract, localNodeAddress string) (*nodeRegistryImpl, error) {
+func LoadNodeRegistry(ctx context.Context, contract *registries.RiverRegistryContract, localNodeAddress common.Address) (*nodeRegistryImpl, error) {
 	log := dlog.FromCtx(ctx)
 
 	nodes, err := contract.GetAllNodes(ctx)
@@ -76,24 +78,23 @@ func LoadNodeRegistry(ctx context.Context, contract *registries.RiverRegistryCon
 	}
 
 	n := &nodeRegistryImpl{
-		nodes:      make(map[string]*NodeRecord),
+		nodes:      make(map[common.Address]*NodeRecord),
 		nodesFlat:  make([]*NodeRecord, 0, len(nodes)),
 		httpClient: client,
 	}
 	localFound := false
 	for _, node := range nodes {
 		local := false
-		addr := EthAddressToAddressStr(node.NodeAddress)
-		if addr == localNodeAddress {
+		if bytes.Equal(node.NodeAddress[:], localNodeAddress[:]) {
 			local = true
 			localFound = true
 		}
 		nn := &NodeRecord{
-			address: addr,
+			address: node.NodeAddress,
 			url:     node.Url,
 			local:   local,
 		}
-		n.nodes[addr] = nn
+		n.nodes[node.NodeAddress] = nn
 		n.nodesFlat = append(n.nodesFlat, nn)
 	}
 	if !localFound {
@@ -102,7 +103,7 @@ func LoadNodeRegistry(ctx context.Context, contract *registries.RiverRegistryCon
 	return n, nil
 }
 
-func MakeSingleNodeRegistry(ctx context.Context, localNodeAddress string) *nodeRegistryImpl {
+func MakeSingleNodeRegistry(ctx context.Context, localNodeAddress common.Address) *nodeRegistryImpl {
 	log := dlog.FromCtx(ctx)
 	nn := &NodeRecord{
 		address: localNodeAddress,
@@ -116,14 +117,14 @@ func MakeSingleNodeRegistry(ctx context.Context, localNodeAddress string) *nodeR
 	}
 
 	return &nodeRegistryImpl{
-		nodes:      map[string]*NodeRecord{localNodeAddress: nn},
+		nodes:      map[common.Address]*NodeRecord{localNodeAddress: nn},
 		nodesFlat:  []*NodeRecord{nn},
 		httpClient: client,
 	}
 }
 
 // Returns error for local node.
-func (n *nodeRegistryImpl) GetStreamServiceClientForAddress(address string) (StreamServiceClient, error) {
+func (n *nodeRegistryImpl) GetStreamServiceClientForAddress(address common.Address) (StreamServiceClient, error) {
 	node := n.nodes[address]
 	if node == nil {
 		return nil, RiverError(Err_UNKNOWN_NODE, "No record for node", "address", address, "nodes", n.nodes).Func("GetStreamServiceClientForAddress")
@@ -140,7 +141,7 @@ func (n *nodeRegistryImpl) GetStreamServiceClientForAddress(address string) (Str
 }
 
 // Returns error for local node.
-func (n *nodeRegistryImpl) GetNodeToNodeClientForAddress(address string) (NodeToNodeClient, error) {
+func (n *nodeRegistryImpl) GetNodeToNodeClientForAddress(address common.Address) (NodeToNodeClient, error) {
 	node := n.nodes[address]
 	if node == nil {
 		return nil, RiverError(Err_UNKNOWN_NODE, "No record for node", "address", address, "nodes", n.nodes).Func(
@@ -158,7 +159,7 @@ func (n *nodeRegistryImpl) GetNodeToNodeClientForAddress(address string) (NodeTo
 	return node.nodeToNodeClient, nil
 }
 
-func (n *nodeRegistryImpl) CheckNodeIsValid(address string) error {
+func (n *nodeRegistryImpl) CheckNodeIsValid(address common.Address) error {
 	node, ok := n.nodes[address]
 	if !ok || node == nil {
 		return RiverError(Err_UNKNOWN_NODE, "No record for node", "address", address, "nodes", n.nodes).Func("CheckNodeIsValid")
@@ -170,17 +171,17 @@ func (n *nodeRegistryImpl) NumNodes() int {
 	return len(n.nodesFlat)
 }
 
-func (n *nodeRegistryImpl) GetValidNodeAddresses() []string {
-	ret := make([]string, 0, len(n.nodesFlat))
+func (n *nodeRegistryImpl) GetValidNodeAddresses() []common.Address {
+	ret := make([]common.Address, 0, len(n.nodesFlat))
 	for key := range n.nodes {
 		ret = append(ret, key)
 	}
 	return ret
 }
 
-func (n *nodeRegistryImpl) GetNodeAddressByIndex(index int) (string, error) {
+func (n *nodeRegistryImpl) GetNodeAddressByIndex(index int) (common.Address, error) {
 	if index < 0 || index >= len(n.nodesFlat) {
-		return "", RiverError(Err_INTERNAL, "Invalid node index", "index", index)
+		return common.Address{}, RiverError(Err_INTERNAL, "Invalid node index", "index", index)
 	}
 	return n.nodesFlat[index].address, nil
 }

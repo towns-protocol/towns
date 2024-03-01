@@ -8,6 +8,7 @@ import {
     makeUniqueChannelStreamId,
     makeUniqueSpaceStreamId,
     makeUserStreamId,
+    streamIdToBytes,
     userIdFromAddress,
 } from './id'
 import { StreamRpcClientType } from './makeStreamRpcClient'
@@ -45,7 +46,8 @@ describe('nodeRestart', () => {
         const bob = makeTestRpcClient()
 
         const bobsUserId = userIdFromAddress(bobsContext.creatorAddress)
-        const bobsUserStreamId = makeUserStreamId(bobsUserId)
+        const bobsUserStreamIdStr = makeUserStreamId(bobsUserId)
+        const bobsUserStreamId = streamIdToBytes(bobsUserStreamIdStr)
         await bob.createStream({
             events: [
                 await makeEvent(
@@ -60,7 +62,8 @@ describe('nodeRestart', () => {
         log('Bob created user, about to create space')
 
         // Bob creates space and channel
-        const spacedStreamId = makeUniqueSpaceStreamId()
+        const spacedStreamIdStr = makeUniqueSpaceStreamId()
+        const spacedStreamId = streamIdToBytes(spacedStreamIdStr)
         const spaceInceptionEvent = await makeEvent(
             bobsContext,
             make_SpacePayload_Inception({
@@ -130,11 +133,12 @@ describe('nodeRestart', () => {
 
 const createNewChannelAndPostHello = async (
     bobsContext: SignerContext,
-    spacedStreamId: string,
+    spacedStreamId: Uint8Array,
     bobsUserId: string,
     bob: StreamRpcClientType,
 ) => {
-    const channelId = makeUniqueChannelStreamId()
+    const channelIdStr = makeUniqueChannelStreamId()
+    const channelId = streamIdToBytes(channelIdStr)
     const channelProperties = 'Bobs channel properties'
 
     const channelInceptionEvent = await makeEvent(
@@ -217,7 +221,7 @@ const createNewChannelAndPostHello = async (
     return { channelId, lastHash }
 }
 
-const getStreamAndExpectHello = async (bob: StreamRpcClientType, channelId: string) => {
+const getStreamAndExpectHello = async (bob: StreamRpcClientType, channelId: Uint8Array) => {
     const channel2 = await bob.getStream({ streamId: channelId })
     expect(channel2).toBeDefined()
     expect(channel2.stream).toBeDefined()
@@ -231,7 +235,7 @@ const getStreamAndExpectHello = async (bob: StreamRpcClientType, channelId: stri
     expect(hello?.ciphertext).toEqual('hello')
 }
 
-const countStreamBlocksAndSnapshots = async (bob: StreamRpcClientType, streamId: string) => {
+const countStreamBlocksAndSnapshots = async (bob: StreamRpcClientType, streamId: Uint8Array) => {
     const response = await bob.getStream({ streamId: streamId })
     expect(response).toBeDefined()
     expect(response.stream).toBeDefined()

@@ -5,6 +5,7 @@ import { StreamStateView_AbstractContent } from './streamStateView_AbstractConte
 import { check } from '@river/dlog'
 import { logNever } from './check'
 import { StreamEncryptionEvents, StreamStateEvents } from './streamEvents'
+import { streamIdFromBytes } from './id'
 
 export class StreamStateView_Channel extends StreamStateView_AbstractContent {
     readonly streamId: string
@@ -25,7 +26,7 @@ export class StreamStateView_Channel extends StreamStateView_AbstractContent {
         content: ChannelPayload_Snapshot,
         _encryptionEmitter: TypedEmitter<StreamEncryptionEvents> | undefined,
     ): void {
-        this.spaceId = content.inception?.spaceId ?? ''
+        this.spaceId = streamIdFromBytes(content.inception?.spaceId ?? Uint8Array.from([]))
     }
 
     prependEvent(

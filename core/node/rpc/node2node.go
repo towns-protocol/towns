@@ -8,6 +8,7 @@ import (
 	. "github.com/river-build/river/core/node/base"
 	. "github.com/river-build/river/core/node/events"
 	. "github.com/river-build/river/core/node/protocol"
+	"github.com/river-build/river/core/node/shared"
 )
 
 func (s *Service) AllocateStream(
@@ -25,14 +26,19 @@ func (s *Service) AllocateStream(
 }
 
 func (s *Service) allocateStream(ctx context.Context, req *AllocateStreamRequest) (*AllocateStreamResponse, error) {
+	streamId, err := shared.StreamIdFromBytes(req.StreamId)
+	if err != nil {
+		return nil, err
+	}
+
 	// TODO: check request is signed by correct node
 	// TODO: all checks that should be done on create?
-	_, view, err := s.cache.CreateStream(ctx, req.StreamId)
+	_, view, err := s.cache.CreateStream(ctx, streamId.String())
 	if err != nil {
 		return nil, err
 	}
 	return &AllocateStreamResponse{
-		SyncCookie: view.SyncCookie(s.wallet.AddressStr),
+		SyncCookie: view.SyncCookie(s.wallet.Address),
 	}, nil
 }
 
@@ -51,13 +57,18 @@ func (s *Service) NewEventReceived(
 }
 
 func (s *Service) newEventReceived(ctx context.Context, req *NewEventReceivedRequest) (*NewEventReceivedResponse, error) {
+	streamId, err := shared.StreamIdFromBytes(req.StreamId)
+	if err != nil {
+		return nil, err
+	}
+
 	// TODO: check request is signed by correct node
 	parsedEvent, err := ParseEvent(req.Event)
 	if err != nil {
 		return nil, err
 	}
 
-	stream, _, err := s.cache.GetStream(ctx, req.StreamId)
+	stream, _, err := s.cache.GetStream(ctx, streamId.String())
 	if err != nil {
 		return nil, err
 	}

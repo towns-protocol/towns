@@ -11,8 +11,8 @@ func SyncCookieEqual(a, b *SyncCookie) bool {
 	if a == nil || b == nil {
 		return a == b
 	}
-	return a.NodeAddress == b.NodeAddress &&
-		a.StreamId == b.StreamId &&
+	return bytes.Equal(a.NodeAddress[:], b.NodeAddress[:]) &&
+		bytes.Equal(a.StreamId, b.StreamId) &&
 		a.MinipoolGen == b.MinipoolGen &&
 		a.MinipoolSlot == b.MinipoolSlot &&
 		bytes.Equal(a.PrevMiniblockHash, b.PrevMiniblockHash)
@@ -33,8 +33,8 @@ func SyncCookieCopy(a *SyncCookie) *SyncCookie {
 
 func SyncCookieValidate(cookie *SyncCookie) error {
 	if cookie == nil ||
-		cookie.NodeAddress == "" ||
-		cookie.StreamId == "" ||
+		len(cookie.NodeAddress) == 0 ||
+		len(cookie.StreamId) == 0 ||
 		cookie.MinipoolGen <= 0 ||
 		cookie.MinipoolSlot < 0 ||
 		cookie.PrevMiniblockHash == nil ||

@@ -6,12 +6,13 @@ import (
 	. "github.com/river-build/river/core/node/events"
 	. "github.com/river-build/river/core/node/protocol"
 	. "github.com/river-build/river/core/node/protocol/protocolconnect"
+	"github.com/river-build/river/core/node/shared"
 
 	"connectrpc.com/connect"
 )
 
 type remoteStream struct {
-	streamID string
+	streamId string
 	stub     StreamServiceClient
 }
 
@@ -33,8 +34,13 @@ func (s *Service) loadStream(ctx context.Context, streamId string) (Stream, Stre
 		return nil, nil, err
 	}
 
+	streamIdTyped, err := shared.StreamIdFromString(streamId)
+	if err != nil {
+		return nil, nil, err
+	}
+
 	resp, err := stub.GetStream(ctx, connect.NewRequest(&GetStreamRequest{
-		StreamId: streamId,
+		StreamId: streamIdTyped.Bytes(),
 	}))
 	if err != nil {
 		return nil, nil, err
@@ -46,14 +52,19 @@ func (s *Service) loadStream(ctx context.Context, streamId string) (Stream, Stre
 	}
 
 	return &remoteStream{
-		streamID: streamId,
+		streamId: streamId,
 		stub:     stub,
 	}, streamView, nil
 }
 
 func (s *remoteStream) GetMiniblocks(ctx context.Context, fromInclusive int64, toExclusive int64) ([]*Miniblock, bool, error) {
+	streamId, err := shared.StreamIdFromString(s.streamId)
+	if err != nil {
+		return nil, false, err
+	}
+
 	res, err := s.stub.GetMiniblocks(ctx, connect.NewRequest(&GetMiniblocksRequest{
-		StreamId:      s.streamID,
+		StreamId:      streamId.Bytes(),
 		FromInclusive: fromInclusive,
 		ToExclusive:   toExclusive,
 	}))
@@ -65,12 +76,17 @@ func (s *remoteStream) GetMiniblocks(ctx context.Context, fromInclusive int64, t
 }
 
 func (s *remoteStream) AddEvent(ctx context.Context, event *ParsedEvent) error {
+	streamId, err := shared.StreamIdFromString(s.streamId)
+	if err != nil {
+		return err
+	}
+
 	req := &AddEventRequest{
-		StreamId: s.streamID,
+		StreamId: streamId.Bytes(),
 		Event:    event.Envelope,
 	}
 
-	_, err := s.stub.AddEvent(ctx, connect.NewRequest(req))
+	_, err = s.stub.AddEvent(ctx, connect.NewRequest(req))
 	if err != nil {
 		return err
 	}

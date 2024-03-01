@@ -6,7 +6,7 @@
 import { makeEvent, unpackStream } from './sign'
 import { SyncedStreams } from './syncedStreams'
 import { makeDonePromise, makeRandomUserContext, makeTestRpcClient } from './util.test'
-import { makeUserStreamId, userIdFromAddress } from './id'
+import { makeUserStreamId, streamIdToBytes, userIdFromAddress } from './id'
 import { make_UserPayload_Inception } from './types'
 import { dlog } from '@river/dlog'
 import TypedEmitter from 'typed-emitter'
@@ -32,7 +32,8 @@ describe('syncStreams', () => {
         const alicesContext = await makeRandomUserContext()
 
         const alicesUserId = userIdFromAddress(alicesContext.creatorAddress)
-        const alicesUserStreamId = makeUserStreamId(alicesUserId)
+        const alicesUserStreamIdStr = makeUserStreamId(alicesUserId)
+        const alicesUserStreamId = streamIdToBytes(alicesUserStreamIdStr)
         // create account for alice
         const aliceUserStream = await alice.createStream({
             events: [

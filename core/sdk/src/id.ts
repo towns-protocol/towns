@@ -17,6 +17,16 @@ export const addressFromUserId = (userId: string): Uint8Array => {
     return addressAsBytes
 }
 
+export const streamIdToBytes = (streamId: string): Uint8Array => bin_fromHexString(streamId)
+
+export const streamIdFromBytes = (bytes: Uint8Array): string => bin_toHexString(bytes)
+
+export const streamIdAsString = (streamId: string | Uint8Array): string =>
+    typeof streamId === 'string' ? streamId : streamIdFromBytes(streamId)
+
+export const streamIdAsBytes = (streamId: string | Uint8Array): Uint8Array =>
+    typeof streamId === 'string' ? streamIdToBytes(streamId) : streamId
+
 // User id is an Ethereum address.
 // In string form it is 42 characters long, should start with 0x and TODO: have ERC-55 checksum.
 // In binary form it is 20 bytes long.
@@ -117,22 +127,22 @@ export const makeDMStreamId = (userIdA: string, userIdB: string): string => {
 }
 
 export const isUserStreamId = (streamId: string): boolean => streamId.startsWith(StreamPrefix.User)
-export const isSpaceStreamId = (streamId: string): boolean =>
-    streamId.startsWith(StreamPrefix.Space)
-export const isChannelStreamId = (streamId: string): boolean =>
-    streamId.startsWith(StreamPrefix.Channel)
-export const isDMChannelStreamId = (streamId: string): boolean =>
-    streamId.startsWith(StreamPrefix.DM)
-export const isUserDeviceStreamId = (streamId: string): boolean =>
-    streamId.startsWith(StreamPrefix.UserDevice)
-export const isUserSettingsStreamId = (streamId: string): boolean =>
-    streamId.startsWith(StreamPrefix.UserSettings)
-export const isMediaStreamId = (streamId: string): boolean =>
-    streamId.startsWith(StreamPrefix.Media)
-export const isGDMChannelStreamId = (streamId: string): boolean =>
-    streamId.startsWith(StreamPrefix.GDM)
-export const isUserInboxStreamId = (streamId: string): boolean =>
-    streamId.startsWith(StreamPrefix.UserInbox)
+export const isSpaceStreamId = (streamId: string | Uint8Array): boolean =>
+    streamIdAsString(streamId).startsWith(StreamPrefix.Space)
+export const isChannelStreamId = (streamId: string | Uint8Array): boolean =>
+    streamIdAsString(streamId).startsWith(StreamPrefix.Channel)
+export const isDMChannelStreamId = (streamId: string | Uint8Array): boolean =>
+    streamIdAsString(streamId).startsWith(StreamPrefix.DM)
+export const isUserDeviceStreamId = (streamId: string | Uint8Array): boolean =>
+    streamIdAsString(streamId).startsWith(StreamPrefix.UserDevice)
+export const isUserSettingsStreamId = (streamId: string | Uint8Array): boolean =>
+    streamIdAsString(streamId).startsWith(StreamPrefix.UserSettings)
+export const isMediaStreamId = (streamId: string | Uint8Array): boolean =>
+    streamIdAsString(streamId).startsWith(StreamPrefix.Media)
+export const isGDMChannelStreamId = (streamId: string | Uint8Array): boolean =>
+    streamIdAsString(streamId).startsWith(StreamPrefix.GDM)
+export const isUserInboxStreamId = (streamId: string | Uint8Array): boolean =>
+    streamIdAsString(streamId).startsWith(StreamPrefix.UserInbox)
 
 export const getUserAddressFromStreamId = (streamId: string): Uint8Array => {
     const prefix = streamId.slice(0, 2) as StreamPrefix
