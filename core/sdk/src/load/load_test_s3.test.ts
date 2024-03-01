@@ -217,7 +217,7 @@ describe('loadTestsScenario3', () => {
         log('Stop clients')
         // kill the clients
         for (const client of allClients) {
-            client.stopSync()
+            await client.stopSync()
         }
         const loadTestEndTime = Date.now()
         loadTestMetadata['loadTestS3Duration'] = loadTestEndTime - loadTestStartTime

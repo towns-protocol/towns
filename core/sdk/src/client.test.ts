@@ -133,7 +133,7 @@ describe('clientTest', () => {
         ).toResolve()
 
         const stream = await bobsClient.waitForStream(channelId)
-        bobsClient.sendMessage(channelId, 'Hello, world!')
+        await bobsClient.sendMessage(channelId, 'Hello, world!')
 
         await waitFor(() => {
             const event = stream.view.timeline.find(
@@ -353,18 +353,20 @@ describe('clientTest', () => {
 
     const bobCanReconnect = async (signer: SignerContext) => {
         const bobsAnotherClient = await makeTestClient({ context: signer })
+        const bobsOneMoreAnotherClient = await makeTestClient({ context: signer })
 
-        const done = makeDonePromise()
+        const eventDecryptedPromise = makeDonePromise()
+        const streamInitializedPromise = makeDonePromise()
 
-        const onChannelNewMessage = (
-            channelId: string,
-            streamKind: SnapshotCaseType,
+        let channelWithContentId: string | undefined
+
+        const onEventDecrypted = (
+            streamId: string,
+            contentKind: SnapshotCaseType,
             event: DecryptedTimelineEvent,
         ): void => {
-            log('onChannelNewMessage', channelId)
-            log(event)
-
-            done.runAndDoneAsync(async () => {
+            try {
+                log(event)
                 const clearEvent = event.decryptedContent
                 check(clearEvent.kind === 'channelMessage')
                 if (
@@ -374,17 +376,22 @@ describe('clientTest', () => {
                     expect(clearEvent?.content.payload?.value?.content.value?.body).toContain(
                         'Hello, again!',
                     )
+                    expect(streamId).toBe(channelWithContentId)
+                    //This done should be inside of the if statement to be sure that check happened.
+                    eventDecryptedPromise.done()
                 }
-            })
+            } catch (e) {
+                log('onEventDecrypted error', e)
+                eventDecryptedPromise.reject(e)
+            }
         }
 
-        let channelWithContentId: string | undefined
         const channelWithContentIdPromise = makeDonePromise()
         const onStreamInitialized = (streamId: string, streamKind: SnapshotCaseType) => {
             log('streamInitialized', streamId, streamKind)
-            channelWithContentId = streamId
-            channelWithContentIdPromise.done()
-            done.runAndDoneAsync(async () => {
+            try {
+                channelWithContentId = streamId
+                channelWithContentIdPromise.done()
                 if (streamKind === 'channelContent') {
                     const channel = bobsAnotherClient.stream(streamId)!
                     log('channel content')
@@ -395,19 +402,28 @@ describe('clientTest', () => {
                             x.remoteEvent?.event.payload.value.content.case === 'message',
                     )
                     expect(messages).toHaveLength(1)
-                    channel.on('eventDecrypted', onChannelNewMessage)
+                    //This done should be inside of the if statement to be sure that check happened.
+                    streamInitializedPromise.done()
                 }
-            })
+            } catch (e) {
+                log('onStreamInitialized error', e)
+                streamInitializedPromise.reject(e)
+            }
         }
         bobsAnotherClient.on('streamInitialized', onStreamInitialized)
-
         await expect(bobsAnotherClient.initializeUser()).toResolve()
         bobsAnotherClient.startSync()
+
+        bobsOneMoreAnotherClient.on('eventDecrypted', onEventDecrypted)
+        await expect(bobsOneMoreAnotherClient.initializeUser()).toResolve()
+        bobsOneMoreAnotherClient.startSync()
+
         await channelWithContentIdPromise.expectToSucceed()
         expect(channelWithContentId).toBeDefined()
         await bobsAnotherClient.sendMessage(channelWithContentId!, 'Hello, again!')
 
-        await done.expectToSucceed()
+        await streamInitializedPromise.expectToSucceed()
+        await eventDecryptedPromise.expectToSucceed()
 
         await bobsAnotherClient.stopSync()
 
@@ -482,11 +498,15 @@ describe('clientTest', () => {
         // Alice waits for invite to Bob's channel.
         const aliceJoined = makeDonePromise()
         alicesClient.on('userInvitedToStream', (streamId: string) => {
-            log('userInvitedToStream', 'Alice', streamId)
-            aliceJoined.runAndDoneAsync(async () => {
-                expect(streamId).toBe(bobsChannelId)
-                await expect(alicesClient.joinStream(streamId)).toResolve()
-            })
+            void (async () => {
+                try {
+                    expect(streamId).toBe(bobsChannelId)
+                    await expect(alicesClient.joinStream(streamId)).toResolve()
+                    aliceJoined.done()
+                } catch (e) {
+                    aliceJoined.reject(e)
+                }
+            })()
         })
 
         // Bob invites Alice to his channel.
@@ -517,27 +537,32 @@ describe('clientTest', () => {
                 const content = event.decryptedContent.content
                 expect(content).toBeDefined()
                 log('eventDecrypted', 'Alice', channelId)
-                aliceGetsMessage.runAsync(async () => {
-                    expect(channelId).toBe(bobsChannelId)
-                    const clearEvent = event.decryptedContent
-                    check(clearEvent.kind === 'channelMessage')
-                    if (
-                        clearEvent.content.payload?.case === 'post' &&
-                        clearEvent.content.payload?.value?.content?.case === 'text'
-                    ) {
-                        const body = clearEvent.content.payload?.value?.content.value?.body
-                        // @ts-ignore
-                        expect(body).toBeOneOf(conversation)
-                        if (body === 'Hello, Alice!') {
-                            alicesClient.sendMessage(channelId, 'Hello, Bob!')
-                        } else if (body === 'Weather nice?') {
-                            alicesClient.sendMessage(channelId, 'Sun and rain!')
-                        } else if (body === 'Coffee or tea?') {
-                            alicesClient.sendMessage(channelId, 'Both!')
-                            aliceGetsMessage.done()
+                void (async () => {
+                    try {
+                        expect(channelId).toBe(bobsChannelId)
+                        const clearEvent = event.decryptedContent
+                        check(clearEvent.kind === 'channelMessage')
+                        if (
+                            clearEvent.content.payload?.case === 'post' &&
+                            clearEvent.content.payload?.value?.content?.case === 'text'
+                        ) {
+                            const body = clearEvent.content.payload?.value?.content.value?.body
+                            // @ts-ignore
+                            expect(body).toBeOneOf(conversation)
+                            if (body === 'Hello, Alice!') {
+                                await alicesClient.sendMessage(channelId, 'Hello, Bob!')
+                            } else if (body === 'Weather nice?') {
+                                await alicesClient.sendMessage(channelId, 'Sun and rain!')
+                            } else if (body === 'Coffee or tea?') {
+                                await alicesClient.sendMessage(channelId, 'Both!')
+                                aliceGetsMessage.done()
+                            }
                         }
+                    } catch (e) {
+                        log('streamInitialized error', e)
+                        aliceGetsMessage.reject(e)
                     }
-                })
+                })()
             },
         )
 
@@ -552,26 +577,32 @@ describe('clientTest', () => {
                 const content = event.decryptedContent.content
                 expect(content).toBeDefined()
                 log('eventDecrypted', 'Bob', channelId)
-                bobGetsMessage.runAsync(async () => {
-                    expect(channelId).toBe(bobsChannelId)
-                    const clearEvent = event.decryptedContent
-                    check(clearEvent.kind === 'channelMessage')
-                    if (
-                        clearEvent.content?.payload?.case === 'post' &&
-                        clearEvent.content?.payload?.value?.content?.case === 'text'
-                    ) {
-                        const body = clearEvent.content?.payload?.value?.content.value?.body
-                        // @ts-ignore
-                        expect(body).toBeOneOf(conversation)
-                        if (body === 'Hello, Bob!') {
-                            bobsClient.sendMessage(channelId, 'Weather nice?')
-                        } else if (body === 'Sun and rain!') {
-                            bobsClient.sendMessage(channelId, 'Coffee or tea?')
-                        } else if (body === 'Both!') {
-                            bobGetsMessage.done()
+
+                void (async () => {
+                    try {
+                        expect(channelId).toBe(bobsChannelId)
+                        const clearEvent = event.decryptedContent
+                        check(clearEvent.kind === 'channelMessage')
+                        if (
+                            clearEvent.content?.payload?.case === 'post' &&
+                            clearEvent.content?.payload?.value?.content?.case === 'text'
+                        ) {
+                            const body = clearEvent.content?.payload?.value?.content.value?.body
+                            // @ts-ignore
+                            expect(body).toBeOneOf(conversation)
+                            if (body === 'Hello, Bob!') {
+                                await bobsClient.sendMessage(channelId, 'Weather nice?')
+                            } else if (body === 'Sun and rain!') {
+                                await bobsClient.sendMessage(channelId, 'Coffee or tea?')
+                            } else if (body === 'Both!') {
+                                bobGetsMessage.done()
+                            }
                         }
+                    } catch (e) {
+                        log('streamInitialized error', e)
+                        bobGetsMessage.reject(e)
                     }
-                })
+                })()
             },
         )
 

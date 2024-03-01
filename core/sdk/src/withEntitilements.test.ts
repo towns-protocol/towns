@@ -142,8 +142,8 @@ describe('withEntitlements', () => {
         await expect(alice.leaveStream(channelId)).toResolve()
 
         // kill the clients
-        bob.stopSync()
-        alice.stopSync()
+        await bob.stopSync()
+        await alice.stopSync()
         log('Done')
     })
 })

@@ -208,26 +208,9 @@ class DonePromise {
         }
     }
 
-    async runAsync(fn: () => Promise<any>): Promise<void> {
-        try {
-            await fn()
-        } catch (err) {
-            this.reject(err)
-        }
-    }
-
     runAndDone(fn: () => void): void {
         try {
             fn()
-            this.done()
-        } catch (err) {
-            this.reject(err)
-        }
-    }
-
-    async runAndDoneAsync(fn: () => Promise<any>): Promise<void> {
-        try {
-            await fn()
             this.done()
         } catch (err) {
             this.reject(err)

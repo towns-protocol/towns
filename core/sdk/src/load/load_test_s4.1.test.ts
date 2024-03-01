@@ -215,7 +215,7 @@ describe('loadTestsScenario: Test application stability during long period of ti
         log('Stop clients')
         // kill the clients
         for (const client of allClients) {
-            client.stopSync()
+            await client.stopSync()
         }
         const loadTestEndTime = Date.now()
         loadTestMetadata['loadTestS4.1Duration'] = loadTestEndTime - loadTestStartTime

@@ -17,7 +17,6 @@ import {
     connectionOptions,
     loginWaitTime,
     followerKey,
-    replySentTime,
     jsonRpcProviderUrl,
     fromFollowerQueueName,
     fromLeaderQueueName,
@@ -58,7 +57,7 @@ describe('mirrorMessages', () => {
             let commChannelId: string
 
             let leaderLoggedIn = false
-            let replySent = false
+            const replyWasSent = makeDonePromise()
 
             //Step 1 - Initialize worker to track follower status
             // eslint-disable-next-line
@@ -103,7 +102,7 @@ describe('mirrorMessages', () => {
                                 'Reply message sent with text: ',
                                 'Mirror from Bot 2: ' + commandData.command,
                             )
-                            replySent = true
+                            replyWasSent.done()
                         }
                     }
                     if (commandData.commandType === 'joinTown') {
@@ -184,7 +183,6 @@ describe('mirrorMessages', () => {
                 },
             )
             log('Leader logged in notification recieved')
-            const done = makeDonePromise()
             client.on(
                 'eventDecrypted',
                 (
@@ -192,32 +190,22 @@ describe('mirrorMessages', () => {
                     contentKind: SnapshotCaseType,
                     event: DecryptedTimelineEvent,
                 ): void => {
-                    done.runAndDoneAsync(async () => {
-                        // await client.decryptEventIfNeeded(event)
-                        const clearEvent = event.decryptedContent
-                        check(clearEvent.kind === 'channelMessage')
-                        expect(clearEvent.content?.payload).toBeDefined()
-                        if (
-                            clearEvent.content?.payload?.case === 'post' &&
-                            clearEvent.content?.payload?.value?.content?.case === 'text'
-                        ) {
-                            const body = clearEvent.content?.payload?.value?.content.value?.body
-                            log('Event decrypted with text:', body)
-                            messagesSet.add(body)
-                            messagesMap.set(body, clearEvent)
-                        }
-                    })
+                    const clearEvent = event.decryptedContent
+                    check(clearEvent.kind === 'channelMessage')
+                    expect(clearEvent.content?.payload).toBeDefined()
+                    if (
+                        clearEvent.content?.payload?.case === 'post' &&
+                        clearEvent.content?.payload?.value?.content?.case === 'text'
+                    ) {
+                        const body = clearEvent.content?.payload?.value?.content.value?.body
+                        log('Event decrypted with text:', body)
+                        messagesSet.add(body)
+                        messagesMap.set(body, clearEvent)
+                    }
                 },
             )
 
-            await waitFor(
-                () => {
-                    expect(replySent).toBe(true)
-                },
-                {
-                    timeoutMS: replySentTime,
-                },
-            )
+            await replyWasSent.expectToSucceed()
             await client.stopSync()
             log('Successfully done')
         },

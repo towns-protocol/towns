@@ -60,7 +60,6 @@
                 "jest/no-conditional-expect": "off",
                 "jest/no-disabled-tests": "off",
                 "@typescript-eslint/no-unsafe-call": "off",
-                "@typescript-eslint/no-floating-promises": "off",
                 "@typescript-eslint/no-non-null-assertion": "off",
                 "@typescript-eslint/no-unsafe-argument": "off"
             }

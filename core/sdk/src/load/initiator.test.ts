@@ -159,7 +159,7 @@ describe('loadTestsScenario2', () => {
 
         // kill the clients
         for (const client of allClients) {
-            client.stopSync()
+            await client.stopSync()
         }
         const loadTestEndTime = Date.now()
         log('Done', {
