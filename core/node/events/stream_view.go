@@ -11,6 +11,7 @@ import (
 	"github.com/river-build/river/core/node/config"
 	"github.com/river-build/river/core/node/dlog"
 	. "github.com/river-build/river/core/node/protocol"
+	"github.com/river-build/river/core/node/shared"
 	. "github.com/river-build/river/core/node/shared"
 	"github.com/river-build/river/core/node/storage"
 	. "github.com/river-build/river/core/node/utils"
@@ -71,9 +72,9 @@ func MakeStreamView(streamData *storage.ReadStreamFromLastSnapshotResult) (*stre
 	if snapshot == nil {
 		return nil, RiverError(Err_STREAM_BAD_EVENT, "no snapshot").Func("MakeStreamView")
 	}
-	streamId := snapshot.GetInceptionPayload().GetStreamId()
-	if streamId == "" {
-		return nil, RiverError(Err_STREAM_BAD_EVENT, "no streamId").Func("MakeStreamView")
+	streamId, err := StreamIdFromBytes(snapshot.GetInceptionPayload().GetStreamId())
+	if err != nil {
+		return nil, RiverError(Err_STREAM_BAD_EVENT, "bad streamId").Func("MakeStreamView")
 	}
 
 	minipoolEvents := NewOrderedMap[common.Hash, *ParsedEvent](len(streamData.MinipoolEnvelopes))
@@ -91,7 +92,7 @@ func MakeStreamView(streamData *storage.ReadStreamFromLastSnapshotResult) (*stre
 	}
 
 	return &streamViewImpl{
-		streamId:      streamId,
+		streamId:      streamId.String(),
 		blocks:        miniblocks,
 		minipool:      newMiniPoolInstance(minipoolEvents, miniblocks[len(miniblocks)-1].header().MiniblockNum+1),
 		snapshot:      snapshot,
@@ -124,10 +125,9 @@ func MakeRemoteStreamView(resp *GetStreamResponse) (*streamViewImpl, error) {
 	if snapshot == nil {
 		return nil, RiverError(Err_STREAM_BAD_EVENT, "no snapshot").Func("MakeStreamView")
 	}
-	streamId := snapshot.GetInceptionPayload().GetStreamId()
-	// TODO: also should check here or at the call site if streamId matches the one that was requested.
-	if streamId == "" {
-		return nil, RiverError(Err_STREAM_BAD_EVENT, "no streamId").Func("MakeStreamView")
+	streamId, err := StreamIdFromBytes(snapshot.GetInceptionPayload().GetStreamId())
+	if err != nil {
+		return nil, RiverError(Err_STREAM_BAD_EVENT, "bad streamId").Func("MakeStreamView")
 	}
 
 	minipoolEvents := NewOrderedMap[common.Hash, *ParsedEvent](len(resp.Stream.Events))
@@ -140,7 +140,7 @@ func MakeRemoteStreamView(resp *GetStreamResponse) (*streamViewImpl, error) {
 	}
 
 	return &streamViewImpl{
-		streamId:      streamId,
+		streamId:      streamId.String(),
 		blocks:        miniblocks,
 		minipool:      newMiniPoolInstance(minipoolEvents, lastMiniblockNumber+1),
 		snapshot:      snapshot,
@@ -453,9 +453,14 @@ func (r *streamViewImpl) MiniblocksFromLastSnapshot() []*Miniblock {
 }
 
 func (r *streamViewImpl) SyncCookie(localNodeAddress common.Address) *SyncCookie {
+	streamId, err := shared.StreamIdFromString(r.streamId)
+	if err != nil {
+		panic(err)
+	}
+
 	return &SyncCookie{
 		NodeAddress:       localNodeAddress.Bytes(),
-		StreamId:          r.streamId,
+		StreamId:          streamId.Bytes(),
 		MinipoolGen:       r.minipool.generation,
 		MinipoolSlot:      int64(r.minipool.events.Len()),
 		PrevMiniblockHash: r.LastBlock().headerEvent.Hash[:],
@@ -607,7 +612,12 @@ func (r *streamViewImpl) StreamParentId() *string {
 	// aellis this should probably be migrated to the common payload
 	switch snapshotContent := r.snapshot.Content.(type) {
 	case *Snapshot_ChannelContent:
-		return &snapshotContent.ChannelContent.Inception.SpaceId
+		streamId, err := StreamIdFromBytes(snapshotContent.ChannelContent.Inception.SpaceId)
+		if err != nil {
+			panic(err) // todo convert everything to shared.StreamId
+		}
+		streamIdStr := streamId.String()
+		return &streamIdStr
 	default:
 		return nil
 	}

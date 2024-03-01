@@ -15,6 +15,7 @@ import { StreamStateView_AbstractContent } from './streamStateView_AbstractConte
 import { DecryptedContent } from './encryptedContentTypes'
 import { check, throwWithCode } from '@river/dlog'
 import { isDefined, logNever } from './check'
+import { streamIdAsString } from './id'
 
 export type ParsedChannelProperties = {
     name?: string
@@ -96,7 +97,8 @@ export class StreamStateView_Space extends StreamStateView_AbstractContent {
         payload: SpacePayload_Channel,
         stateEmitter?: TypedEmitter<StreamStateEvents>,
     ): void {
-        const { op, channelId, channelProperties } = payload
+        const { op, channelId: channelIdBytes, channelProperties } = payload
+        const channelId = streamIdAsString(channelIdBytes)
         switch (op) {
             case ChannelOp.CO_CREATED: {
                 const props = this.decryptChannelProps(channelProperties)

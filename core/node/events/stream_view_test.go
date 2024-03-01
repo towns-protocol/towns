@@ -9,6 +9,7 @@ import (
 	"github.com/river-build/river/core/node/config"
 	"github.com/river-build/river/core/node/crypto"
 	. "github.com/river-build/river/core/node/protocol"
+	"github.com/river-build/river/core/node/shared"
 	"github.com/river-build/river/core/node/storage"
 	"github.com/river-build/river/core/node/testutils"
 
@@ -87,9 +88,11 @@ func TestLoad(t *testing.T) {
 	assert.Equal(t, streamId, view.StreamId())
 
 	ip := view.InceptionPayload()
+	ipStreamId, err := shared.StreamIdFromBytes(ip.GetStreamId())
+	assert.NoError(t, err)
 	assert.NotNil(t, ip)
 	assert.Equal(t, parsedEvent(t, inception).Event.GetInceptionPayload().GetStreamId(), ip.GetStreamId())
-	assert.Equal(t, streamId, ip.GetStreamId())
+	assert.Equal(t, streamId, ipStreamId.String())
 
 	joined, err := view.IsMember(userAddress) // joined is only valid on user, space and channel views
 	assert.NoError(t, err)
@@ -112,8 +115,10 @@ func TestLoad(t *testing.T) {
 	assert.Equal(t, []common.Hash{common.BytesToHash(inception.Hash), common.BytesToHash(join.Hash), common.BytesToHash(miniblockHeaderProto.Hash)}, newEnvelopesHashes)
 
 	cookie := view.SyncCookie(nodeWallet.Address)
+	cookieStreamId, err := shared.StreamIdFromBytes(cookie.StreamId)
+	assert.NoError(t, err)
 	assert.NotNil(t, cookie)
-	assert.Equal(t, streamId, cookie.StreamId)
+	assert.Equal(t, streamId, cookieStreamId.String())
 	assert.Equal(t, int64(1), cookie.MinipoolGen)
 	assert.Equal(t, int64(0), cookie.MinipoolSlot)
 

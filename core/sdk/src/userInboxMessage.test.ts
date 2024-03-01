@@ -7,6 +7,7 @@ import { makeDonePromise, makeTestClient } from './util.test'
 import { dlog } from '@river/dlog'
 import { UserDeviceCollection } from '@river/encryption'
 import { UserInboxPayload_GroupEncryptionSessions } from '@river/proto'
+import { makeUniqueChannelStreamId, streamIdAsString } from './id'
 
 const log = dlog('test:inboxMessage')
 
@@ -35,6 +36,7 @@ describe('inboxMessageTest', () => {
         log('aliceUserStreamId', aliceUserStreamId)
         alicesClient.startSync()
 
+        const fakeStreamId = makeUniqueChannelStreamId()
         const aliceSelfInbox = makeDonePromise()
         alicesClient.once(
             'newGroupSessions',
@@ -42,7 +44,7 @@ describe('inboxMessageTest', () => {
                 log('inboxMessage for Alice', sessions, senderUserId)
                 aliceSelfInbox.runAndDone(() => {
                     expect(senderUserId).toEqual(bobsClient.userId)
-                    expect(sessions.streamId).toEqual('200')
+                    expect(streamIdAsString(sessions.streamId)).toEqual(fakeStreamId)
                     expect(sessions.sessionIds).toEqual(['300'])
                     expect(
                         sessions.ciphertexts[alicesClient.userDeviceKey().deviceKey],
@@ -57,10 +59,10 @@ describe('inboxMessageTest', () => {
         // bob sends a message to Alice's device.
         await expect(
             bobsClient.encryptAndShareGroupSessions(
-                '200',
+                fakeStreamId,
                 [
                     {
-                        streamId: '200',
+                        streamId: fakeStreamId,
                         sessionId: '300',
                         sessionKey: '400',
                         algorithm: '',

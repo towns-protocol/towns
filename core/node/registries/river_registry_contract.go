@@ -85,7 +85,7 @@ func (sr *RiverRegistryContract) AllocateStream(
 	_, _, err = sr.Blockchain.TxRunner.SubmitAndWait(
 		ctx,
 		func(opts *bind.TransactOpts) (*types.Transaction, error) {
-			return sr.Contract.AllocateStream(opts, id, addresses, hash, genesisMiniblock)
+			return sr.Contract.AllocateStream(opts, id.ByteArray(), addresses, hash, genesisMiniblock)
 		},
 	)
 	if err != nil {
@@ -103,18 +103,14 @@ type GetStreamResult struct {
 	IsSealed          bool
 }
 
-func getStreamResultFromContractStream(streamId StreamId, stream *contracts.IRiverRegistryBaseStream) (*GetStreamResult, error) {
-	id, err := StreamIdToString(streamId)
-	if err != nil {
-		return nil, err
-	}
+func makeGetStreamResult(streamId StreamId, stream *contracts.IRiverRegistryBaseStream) *GetStreamResult {
 	return &GetStreamResult{
-		StreamId:          id,
+		StreamId:          streamId.String(),
 		Nodes:             stream.Nodes,
 		LastMiniblockHash: stream.LastMiniblockHash[:],
 		LastMiniblockNum:  stream.LastMiniblockNum,
 		IsSealed:          stream.Flags&1 != 0, // TODO: constants for flags
-	}, nil
+	}
 }
 
 func (sr *RiverRegistryContract) GetStream(ctx context.Context, streamId string) (*GetStreamResult, error) {
@@ -122,11 +118,11 @@ func (sr *RiverRegistryContract) GetStream(ctx context.Context, streamId string)
 	if err != nil {
 		return nil, AsRiverError(err).Func("GetStream")
 	}
-	stream, err := sr.Contract.GetStream(sr.callOpts(ctx), id)
+	stream, err := sr.Contract.GetStream(sr.callOpts(ctx), id.ByteArray())
 	if err != nil {
 		return nil, WrapRiverError(Err_CANNOT_CALL_CONTRACT, err).Func("GetStream").Message("Call failed")
 	}
-	return getStreamResultFromContractStream(id, &stream)
+	return makeGetStreamResult(id, &stream), nil
 }
 
 // Returns stream, genesis miniblock hash, genesis miniblock, error
@@ -138,14 +134,11 @@ func (sr *RiverRegistryContract) GetStreamWithGenesis(
 	if err != nil {
 		return nil, common.Hash{}, nil, AsRiverError(err).Func("GetStreamWithGenesis")
 	}
-	stream, mbHash, mb, err := sr.Contract.GetStreamWithGenesis(sr.callOpts(ctx), id)
+	stream, mbHash, mb, err := sr.Contract.GetStreamWithGenesis(sr.callOpts(ctx), id.ByteArray())
 	if err != nil {
 		return nil, common.Hash{}, nil, WrapRiverError(Err_CANNOT_CALL_CONTRACT, err).Func("GetStream").Message("Call failed")
 	}
-	ret, err := getStreamResultFromContractStream(id, &stream)
-	if err != nil {
-		return nil, common.Hash{}, nil, err
-	}
+	ret := makeGetStreamResult(id, &stream)
 	return ret, mbHash, mb, nil
 }
 
@@ -175,10 +168,11 @@ func (sr *RiverRegistryContract) GetAllStreams(ctx context.Context, blockNum uin
 	}
 	ret := make([]*GetStreamResult, len(streams))
 	for i, stream := range streams {
-		ret[i], err = getStreamResultFromContractStream(stream.Id, &stream.Stream)
+		streamId, err := StreamIdFromBytes(stream.Id[:])
 		if err != nil {
 			return nil, err
 		}
+		ret[i] = makeGetStreamResult(streamId, &stream.Stream)
 	}
 	return ret, nil
 }

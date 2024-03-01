@@ -11,6 +11,7 @@ import { StreamEncryptionEvents, StreamEvents, StreamStateEvents } from './strea
 import { StreamStateView_AbstractContent } from './streamStateView_AbstractContent'
 import { check } from '@river/dlog'
 import { logNever } from './check'
+import { streamIdFromBytes } from './id'
 
 export class StreamStateView_User extends StreamStateView_AbstractContent {
     readonly streamId: string
@@ -82,7 +83,8 @@ export class StreamStateView_User extends StreamStateView_AbstractContent {
         payload: UserPayload_UserMembership,
         emitter: TypedEmitter<StreamEvents> | undefined,
     ): void {
-        const { op, streamId } = payload
+        const { op, streamId: inStreamId } = payload
+        const streamId = streamIdFromBytes(inStreamId)
         const wasInvited = this.streamMemberships[streamId]?.op === MembershipOp.SO_INVITE
         const wasJoined = this.streamMemberships[streamId]?.op === MembershipOp.SO_JOIN
         this.streamMemberships[streamId] = payload

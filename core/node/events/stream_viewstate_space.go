@@ -3,13 +3,14 @@ package events
 import (
 	. "github.com/river-build/river/core/node/base"
 	. "github.com/river-build/river/core/node/protocol"
+	"github.com/river-build/river/core/node/shared"
 )
 
 type SpaceStreamView interface {
 	JoinableStreamView
 	GetSpaceInception() (*SpacePayload_Inception, error)
 	GetSpaceSnapshotContent() (*SpacePayload_Snapshot, error)
-	GetChannelInfo(channelId string) (*SpacePayload_Channel, error)
+	GetChannelInfo(channelId shared.StreamId) (*SpacePayload_Channel, error)
 }
 
 var _ SpaceStreamView = (*streamViewImpl)(nil)
@@ -34,19 +35,19 @@ func (r *streamViewImpl) GetSpaceSnapshotContent() (*SpacePayload_Snapshot, erro
 	}
 }
 
-func (r *streamViewImpl) GetChannelInfo(channelId string) (*SpacePayload_Channel, error) {
+func (r *streamViewImpl) GetChannelInfo(channelId shared.StreamId) (*SpacePayload_Channel, error) {
 	snap, err := r.GetSpaceSnapshotContent()
 	if err != nil {
 		return nil, err
 	}
-	channel, _ := findChannel(snap.Channels, channelId)
+	channel, _ := findChannel(snap.Channels, channelId.Bytes())
 
 	updateFn := func(e *ParsedEvent) (bool, error) {
 		switch payload := e.Event.Payload.(type) {
 		case *StreamEvent_SpacePayload:
 			switch spacePayload := payload.SpacePayload.Content.(type) {
 			case *SpacePayload_Channel_:
-				if spacePayload.Channel.ChannelId == channelId {
+				if channelId.EqualsBytes(spacePayload.Channel.ChannelId) {
 					channel = spacePayload.Channel
 				}
 			default:

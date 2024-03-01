@@ -3,12 +3,13 @@ package events
 import (
 	. "github.com/river-build/river/core/node/base"
 	. "github.com/river-build/river/core/node/protocol"
+	"github.com/river-build/river/core/node/shared"
 )
 
 type UserStreamView interface {
 	GetUserInception() (*UserPayload_Inception, error)
-	GetUserMembership(streamId string) (MembershipOp, error)
-	IsMemberOf(streamId string) bool
+	GetUserMembership(streamId shared.StreamId) (MembershipOp, error)
+	IsMemberOf(streamId shared.StreamId) bool
 }
 
 var _ UserStreamView = (*streamViewImpl)(nil)
@@ -33,10 +34,12 @@ func (r *streamViewImpl) GetUserSnapshotContent() (*UserPayload_Snapshot, error)
 	}
 }
 
-func (r *streamViewImpl) IsMemberOf(streamId string) bool {
-	if streamId == r.streamId {
+func (r *streamViewImpl) IsMemberOf(streamId shared.StreamId) bool {
+
+	if streamId.String() == r.streamId {
 		return true
 	}
+
 	userMembershipOp, err := r.GetUserMembership(streamId)
 	if err != nil {
 		return false
@@ -44,7 +47,7 @@ func (r *streamViewImpl) IsMemberOf(streamId string) bool {
 	return userMembershipOp == MembershipOp_SO_JOIN
 }
 
-func (r *streamViewImpl) GetUserMembership(streamId string) (MembershipOp, error) {
+func (r *streamViewImpl) GetUserMembership(streamId shared.StreamId) (MembershipOp, error) {
 	retValue := MembershipOp_SO_UNSPECIFIED
 
 	snap, err := r.GetUserSnapshotContent()
@@ -53,9 +56,9 @@ func (r *streamViewImpl) GetUserMembership(streamId string) (MembershipOp, error
 	}
 	membership, _ := findUserMembership(
 		snap.Memberships,
-		streamId,
+		streamId.Bytes(),
 	)
-	
+
 	if membership != nil {
 		retValue = membership.Op
 	}
@@ -65,7 +68,7 @@ func (r *streamViewImpl) GetUserMembership(streamId string) (MembershipOp, error
 		case *StreamEvent_UserPayload:
 			switch payload := payload.UserPayload.Content.(type) {
 			case *UserPayload_UserMembership_:
-				if payload.UserMembership.StreamId == streamId {
+				if streamId.EqualsBytes(payload.UserMembership.StreamId) {
 					retValue = payload.UserMembership.Op
 				}
 			default:

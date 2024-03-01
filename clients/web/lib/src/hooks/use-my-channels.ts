@@ -2,7 +2,7 @@ import { useCallback, useEffect, useMemo, useState } from 'react'
 import { useZionContext } from '../components/ZionContextProvider'
 import { Channel, SpaceData } from '../types/zion-types'
 import isEqual from 'lodash/isEqual'
-import { isUserStreamId } from '@river/sdk'
+import { isUserStreamId, streamIdAsString } from '@river/sdk'
 import { MembershipOp } from '@river/proto'
 import { useCasablancaStream } from './CasablancClient/useCasablancaStream'
 
@@ -49,7 +49,7 @@ function useMyMembershipsCasablanca() {
             const memberships = new Set(
                 Object.values(userStream.view.userContent.streamMemberships)
                     .filter((membership) => membership.op === MembershipOp.SO_JOIN)
-                    .map((membership) => membership.streamId),
+                    .map((membership) => streamIdAsString(membership.streamId)),
             )
             setMyMemberships((prev) => {
                 if (isEqual(prev, memberships)) {

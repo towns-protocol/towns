@@ -14,6 +14,9 @@ import {
     DecryptedTimelineEvent,
     RemoteTimelineEvent,
     userIdFromAddress,
+    streamIdFromBytes,
+    getUserIdFromStreamId,
+    streamIdAsString,
 } from '@river/sdk'
 import {
     ChannelMessage_Post,
@@ -480,15 +483,16 @@ function toTownsContent_UserPayload(
         }
         case 'userMembership': {
             const payload = value.content.value
+            const streamId = streamIdFromBytes(payload.streamId)
             return {
                 content: {
                     kind: ZTEvent.RoomMember,
-                    userId: payload.streamId.split('-').at(1) ?? '??', // this is just the current user
+                    userId: getUserIdFromStreamId(streamId), // this is just the current user
                     avatarUrl: undefined, // todo avatarUrl
                     displayName: '---TODO---', // todo displayName
                     isDirect: undefined, // todo is this needed?
                     membership: toMembership(payload.op),
-                    streamId: payload.streamId,
+                    streamId: streamId,
                 } satisfies RoomMemberEvent,
             }
         }
@@ -498,9 +502,9 @@ function toTownsContent_UserPayload(
             return {
                 content: {
                     kind: ZTEvent.RoomMember,
-                    userId: payload.userId,
+                    userId: userIdFromAddress(payload.userId),
                     avatarUrl: undefined, // todo avatarUrl
-                    displayName: payload.userId, // todo displayName
+                    displayName: userIdFromAddress(payload.userId), // todo displayName
                     isDirect: undefined, // todo is this needed?
                     membership: toMembership(payload.op),
                 } satisfies RoomMemberEvent,
@@ -732,7 +736,7 @@ function toTownsContent_SpacePayload(
         }
         case 'channel': {
             const payload = value.content.value
-            const childId = payload.channelId
+            const childId = streamIdAsString(payload.channelId)
             return {
                 content: {
                     kind: ZTEvent.SpaceChild,

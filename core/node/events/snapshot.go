@@ -4,7 +4,6 @@ import (
 	"bytes"
 	"slices"
 	"sort"
-	"strings"
 
 	. "github.com/river-build/river/core/node/base"
 	. "github.com/river-build/river/core/node/protocol"
@@ -123,7 +122,7 @@ func make_SnapshotMembers(iInception IsInceptionPayload, creatorAddress []byte) 
 	switch inception := iInception.(type) {
 	case *UserPayload_Inception, *UserSettingsPayload_Inception, *UserInboxPayload_Inception, *UserDeviceKeyPayload_Inception:
 		// for all user streams, get the address from the stream id
-		userAddress, err := shared.GetUserAddressFromStreamId(iInception.GetStreamId())
+		userAddress, err := shared.GetUserAddressFromStreamIdBytes(iInception.GetStreamId())
 		if err != nil {
 			return nil, err
 		}
@@ -525,12 +524,12 @@ func removeSorted[T any, K any](elements []*T, key K, cmp func(K, K) int, keyFn 
 	return elements
 }
 
-func findChannel(channels []*SpacePayload_Channel, channelId string) (*SpacePayload_Channel, error) {
+func findChannel(channels []*SpacePayload_Channel, channelId []byte) (*SpacePayload_Channel, error) {
 	return findSorted(
 		channels,
 		channelId,
-		strings.Compare,
-		func(channel *SpacePayload_Channel) string {
+		bytes.Compare,
+		func(channel *SpacePayload_Channel) []byte {
 			return channel.ChannelId
 		},
 	)
@@ -541,8 +540,8 @@ func insertChannel(channels []*SpacePayload_Channel, newChannels ...*SpacePayloa
 		channels = insertSorted(
 			channels,
 			channel,
-			strings.Compare,
-			func(channel *SpacePayload_Channel) string {
+			bytes.Compare,
+			func(channel *SpacePayload_Channel) []byte {
 				return channel.ChannelId
 			},
 		)
@@ -586,12 +585,12 @@ func insertMember(members []*MemberPayload_Snapshot_Member, newMembers ...*Membe
 	return members
 }
 
-func findUserMembership(memberships []*UserPayload_UserMembership, streamId string) (*UserPayload_UserMembership, error) {
+func findUserMembership(memberships []*UserPayload_UserMembership, streamId []byte) (*UserPayload_UserMembership, error) {
 	return findSorted(
 		memberships,
 		streamId,
-		strings.Compare,
-		func(membership *UserPayload_UserMembership) string {
+		bytes.Compare,
+		func(membership *UserPayload_UserMembership) []byte {
 			return membership.StreamId
 		},
 	)
@@ -602,8 +601,8 @@ func insertUserMembership(memberships []*UserPayload_UserMembership, newMembersh
 		memberships = insertSorted(
 			memberships,
 			membership,
-			strings.Compare,
-			func(membership *UserPayload_UserMembership) string {
+			bytes.Compare,
+			func(membership *UserPayload_UserMembership) []byte {
 				return membership.StreamId
 			},
 		)
@@ -615,8 +614,8 @@ func insertFullyReadMarker(markers []*UserSettingsPayload_FullyReadMarkers, newM
 	return insertSorted(
 		markers,
 		newMarker,
-		strings.Compare,
-		func(marker *UserSettingsPayload_FullyReadMarkers) string {
+		bytes.Compare,
+		func(marker *UserSettingsPayload_FullyReadMarkers) []byte {
 			return marker.StreamId
 		},
 	)

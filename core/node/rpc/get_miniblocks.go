@@ -6,6 +6,7 @@ import (
 	"connectrpc.com/connect"
 	"github.com/river-build/river/core/node/infra"
 	. "github.com/river-build/river/core/node/protocol"
+	"github.com/river-build/river/core/node/shared"
 )
 
 var getMiniblocksRequests = infra.NewSuccessMetrics("get_miniblocks_requests", serviceRequests)
@@ -28,9 +29,12 @@ func (s *Service) getMiniblocks(
 	ctx context.Context,
 	req *connect.Request[GetMiniblocksRequest],
 ) (*connect.Response[GetMiniblocksResponse], error) {
-	streamId := req.Msg.StreamId
+	streamId, err := shared.StreamIdFromBytes(req.Msg.StreamId)
+	if err != nil {
+		return nil, err
+	}
 
-	stream, _, err := s.cache.GetStream(ctx, streamId)
+	stream, _, err := s.cache.GetStream(ctx, streamId.String())
 	if err != nil {
 		return nil, err
 	}

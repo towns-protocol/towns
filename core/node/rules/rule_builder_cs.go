@@ -4,20 +4,21 @@ import (
 	"github.com/river-build/river/core/node/auth"
 	. "github.com/river-build/river/core/node/base"
 	. "github.com/river-build/river/core/node/protocol"
+	"github.com/river-build/river/core/node/shared"
 )
 
 type CreateStreamRules struct {
-	CreatorStreamId     string
+	CreatorStreamId     shared.StreamId
 	RequiredUserAddrs   [][]byte
 	RequiredUsers       []string
-	RequiredMemberships []string
+	RequiredMemberships [][]byte
 	ChainAuth           *auth.ChainAuthArgs
 	DerivedEvents       []*DerivedEvent
 }
 
 type DerivedEvent struct {
 	Payload  IsStreamEvent_Payload
-	StreamId string
+	StreamId shared.StreamId
 }
 
 type ruleBuilderCS interface {
@@ -25,7 +26,7 @@ type ruleBuilderCS interface {
 	checkOneOf(fns ...func() error) ruleBuilderCS
 	requireUser(userIds ...string) ruleBuilderCS
 	requireUserAddr(userAddresses ...[]byte) ruleBuilderCS
-	requireMembership(streamIds ...string) ruleBuilderCS
+	requireMembership(streamIds ...[]byte) ruleBuilderCS
 	requireChainAuth(f func() (*auth.ChainAuthArgs, error)) ruleBuilderCS
 	requireDerivedEvent(f ...func() (*DerivedEvent, error)) ruleBuilderCS
 	requireDerivedEvents(f func() ([]*DerivedEvent, error)) ruleBuilderCS
@@ -35,17 +36,17 @@ type ruleBuilderCS interface {
 
 type ruleBuilderCSImpl struct {
 	failErr             error
-	creatorStreamId     string
+	creatorStreamId     shared.StreamId
 	requiredUsers       []string
 	requiredUserAddrs   [][]byte
-	requiredMemberships []string
+	requiredMemberships [][]byte
 	checks              [][]func() error
 	chainAuth           func() (*auth.ChainAuthArgs, error)
 	derivedEvents       []func() (*DerivedEvent, error)
 	derivedEventSlices  []func() ([]*DerivedEvent, error)
 }
 
-func csBuilder(creatorStreamId string) ruleBuilderCS {
+func csBuilder(creatorStreamId shared.StreamId) ruleBuilderCS {
 	return &ruleBuilderCSImpl{
 		creatorStreamId:     creatorStreamId,
 		failErr:             nil,
@@ -82,7 +83,7 @@ func (re *ruleBuilderCSImpl) requireUserAddr(userAddresses ...[]byte) ruleBuilde
 	return re
 }
 
-func (re *ruleBuilderCSImpl) requireMembership(streamIds ...string) ruleBuilderCS {
+func (re *ruleBuilderCSImpl) requireMembership(streamIds ...[]byte) ruleBuilderCS {
 	re.requiredMemberships = append(re.requiredMemberships, streamIds...)
 	return re
 }

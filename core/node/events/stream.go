@@ -6,6 +6,7 @@ import (
 	"sync"
 
 	"github.com/river-build/river/core/node/dlog"
+	"github.com/river-build/river/core/node/shared"
 	"github.com/river-build/river/core/node/storage"
 
 	. "github.com/river-build/river/core/node/base"
@@ -376,7 +377,11 @@ func (s *streamImpl) Sub(ctx context.Context, cookie *SyncCookie, receiver SyncR
 			s.params.Wallet.AddressStr,
 		)
 	}
-	if cookie.StreamId != s.streamId {
+	streamId, err := shared.StreamIdFromString(s.streamId)
+	if err != nil {
+		return RiverError(Err_INTERNAL, "Stream.Sub: failed to convert streamId to bytes", "streamId", s.streamId, "error", err)
+	}
+	if !streamId.EqualsBytes(cookie.StreamId) {
 		return RiverError(Err_BAD_SYNC_COOKIE, "bad stream id", "cookie.StreamId", cookie.StreamId, "s.streamId", s.streamId)
 	}
 	slot := cookie.MinipoolSlot
@@ -386,7 +391,7 @@ func (s *streamImpl) Sub(ctx context.Context, cookie *SyncCookie, receiver SyncR
 
 	s.mu.Lock()
 	defer s.mu.Unlock()
-	err := s.loadInternal(ctx)
+	err = s.loadInternal(ctx)
 	if err != nil {
 		return err
 	}

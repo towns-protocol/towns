@@ -14,6 +14,7 @@ import { check, dlog } from '@river/dlog'
 import { logNever } from './check'
 import { StreamStateView_AbstractContent } from './streamStateView_AbstractContent'
 import { toPlainMessage } from '@bufbuild/protobuf'
+import { streamIdFromBytes } from './id'
 
 const log = dlog('csb:stream')
 
@@ -87,12 +88,13 @@ export class StreamStateView_UserSettings extends StreamStateView_AbstractConten
             log('$ Content with FullyReadMarkers is undefined')
             return
         }
-        this.fullyReadMarkersSrc.set(payload.streamId, content)
+        const streamId = streamIdFromBytes(payload.streamId)
+        this.fullyReadMarkersSrc.set(streamId, content)
         const fullyReadMarkersContent = toPlainMessage(
             FullyReadMarkers.fromJsonString(content.ciphertext),
         )
 
-        this.fullyReadMarkers.set(payload.streamId, fullyReadMarkersContent.markers)
-        emitter?.emit('fullyReadMarkersUpdated', payload.streamId, fullyReadMarkersContent.markers)
+        this.fullyReadMarkers.set(streamId, fullyReadMarkersContent.markers)
+        emitter?.emit('fullyReadMarkersUpdated', streamId, fullyReadMarkersContent.markers)
     }
 }

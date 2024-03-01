@@ -15,6 +15,7 @@ import (
 	"github.com/river-build/river/core/node/nodes"
 	"github.com/river-build/river/core/node/protocol"
 	"github.com/river-build/river/core/node/protocol/protocolconnect"
+	"github.com/river-build/river/core/node/shared"
 
 	"github.com/google/uuid"
 )
@@ -381,15 +382,20 @@ func (s *syncHandlerImpl) addLocalStreamToSync(
 		return nil
 	}
 
-	if s := subs.getLocalStream(cookie.StreamId); s != nil {
+	cookieStreamId, err := shared.StreamIdFromBytes(cookie.StreamId)
+	if err != nil {
+		return err
+	}
+
+	if s := subs.getLocalStream(cookieStreamId); s != nil {
 		// stream is already subscribed. no need to re-subscribe.
-		log.Debug("SyncStreams:SyncHandlerV2.addLocalStreamToSync: stream already subscribed", "streamId", cookie.StreamId)
+		log.Debug("SyncStreams:SyncHandlerV2.addLocalStreamToSync: stream already subscribed", "streamId", cookieStreamId)
 		return nil
 	}
 
-	streamSub, _, err := s.cache.GetStream(ctx, cookie.StreamId)
+	streamSub, _, err := s.cache.GetStream(ctx, cookieStreamId.String())
 	if err != nil {
-		log.Info("SyncStreams:SyncHandlerV2.addLocalStreamToSync: failed to get stream", "streamId", cookie.StreamId, "err", err)
+		log.Info("SyncStreams:SyncHandlerV2.addLocalStreamToSync: failed to get stream", "streamId", cookieStreamId, "err", err)
 		return err
 	}
 
@@ -471,7 +477,11 @@ func (s *syncHandlerImpl) AddStreamToSync(
 		sub.addRemoteNode(nodeAddress, remoteNode)
 		log.Info("SyncStreams:SyncHandlerV2.AddStreamToSync: added remote node", "syncId", req.Msg.SyncId)
 	}
-	sub.addRemoteStream(cookie)
+	err := sub.addRemoteStream(cookie)
+	if err != nil {
+		log.Info("SyncStreams:SyncHandlerV2.AddStreamToSync LEAVE: failed to add remote streams", "syncId", req.Msg.SyncId, "err", err)
+		return nil, err
+	}
 	log.Info("SyncStreams:SyncHandlerV2.AddStreamToSync: added remote stream", "syncId", req.Msg.SyncId)
 
 	if isNewRemoteNode {
@@ -498,7 +508,11 @@ func (s *syncHandlerImpl) RemoveStreamFromSync(
 	log.Info("SyncStreams:SyncHandlerV2.RemoveStreamFromSync ENTER", "syncId", req.Msg.SyncId, "streamId", req.Msg.StreamId)
 
 	syncId := req.Msg.SyncId
-	streamId := req.Msg.StreamId
+	streamId, err := shared.StreamIdFromBytes(req.Msg.StreamId)
+	if err != nil {
+		log.Info("SyncStreams:SyncHandlerV2.RemoveStreamFromSync LEAVE: failed to parse streamId", "syncId", syncId, "err", err)
+		return nil, err
+	}
 
 	sub := s.getSub(syncId)
 	if sub == nil {
@@ -722,7 +736,7 @@ func (n *syncNode) addStreamToSync(
 
 func (n *syncNode) removeStreamFromSync(
 	ctx context.Context,
-	streamId string,
+	streamId shared.StreamId,
 	receiver events.SyncResultReceiver,
 ) error {
 	log := dlog.FromCtx(ctx)
@@ -744,7 +758,7 @@ func (n *syncNode) removeStreamFromSync(
 		&connect.Request[protocol.RemoveStreamFromSyncRequest]{
 			Msg: &protocol.RemoveStreamFromSyncRequest{
 				SyncId:   n.remoteSyncId,
-				StreamId: streamId,
+				StreamId: streamId.Bytes(),
 			},
 		},
 	)

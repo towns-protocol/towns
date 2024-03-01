@@ -199,13 +199,13 @@ message SpacePayload {
     }
     
     message Inception {
-        string stream_id = 1;
+        bytes stream_id = 1;
         StreamSettings settings = 2;
     }
 
     message Channel {
         ChannelOp op = 1;
-        string channel_id = 2;
+        bytes channel_id = 2;
         EventRef origin_event = 3;
         EncryptedData channel_properties = 4;
         bool is_default = 5;
@@ -227,8 +227,8 @@ message ChannelPayload {
     }
     
     message Inception {
-        string stream_id = 1;
-        string space_id = 3;
+        bytes stream_id = 1;
+        bytes space_id = 3;
         /**
         * channel_properties and is_default be used to 
         * create associated with that channel in the space stream
@@ -253,7 +253,7 @@ message DmChannelPayload {
     }
 
     message Inception {
-        string stream_id = 1;
+        bytes stream_id = 1;
         bytes first_party_address = 2;
         bytes second_party_address = 3;
         StreamSettings settings = 4;
@@ -275,7 +275,7 @@ message GdmChannelPayload {
     }
 
     message Inception {
-        string stream_id = 1;
+        bytes stream_id = 1;
         EncryptedData channel_properties = 2;
         StreamSettings settings = 3;
     }
@@ -299,21 +299,21 @@ message UserPayload {
     }
 
     message Inception {
-        string stream_id = 1;
+        bytes stream_id = 1;
         StreamSettings settings = 2;
     }
     
     // update own membership
     message UserMembership {
-        string stream_id = 1;
+        bytes stream_id = 1;
         MembershipOp op = 2;
-        optional string inviter = 3;
+        optional bytes inviter = 3;
     }
 
     // update someone else's membership
     message UserMembershipAction {
-        string stream_id = 1;
-        string user_id = 2;
+        bytes stream_id = 1;
+        bytes user_id = 2; 
         MembershipOp op = 3;
     }
 
@@ -347,12 +347,12 @@ message UserInboxPayload {
     }
 
     message Inception {
-        string stream_id = 1;
+        bytes stream_id = 1;
         StreamSettings settings = 2;
     }
 
     message GroupEncryptionSessions {
-        string stream_id = 1;
+        bytes stream_id = 1;
         string sender_key = 2;
         repeated string session_ids = 3;
         // deviceKey: per device ciphertext of encrypted session keys that match session_ids 
@@ -384,12 +384,12 @@ message UserSettingsPayload {
     }
 
     message Inception {
-        string stream_id = 1;
+        bytes stream_id = 1;
         StreamSettings settings = 2;
     }
 
     message FullyReadMarkers {
-        string stream_id = 1;
+        bytes stream_id = 1;
         EncryptedData content = 2;
     }
 
@@ -411,7 +411,7 @@ message UserDeviceKeyPayload {
     }
 
     message Inception {
-        string stream_id = 1;
+        bytes stream_id = 1;
         StreamSettings settings = 2;
     }
 
@@ -435,11 +435,11 @@ message MediaPayload {
     }
     
     message Inception {
-        string stream_id = 1;
-        string channel_id = 2;
+        bytes stream_id = 1;
+        bytes channel_id = 2;
         int32 chunk_count = 3;
         StreamSettings settings = 4;
-        optional string space_id = 5;
+        optional bytes space_id = 5;
     }
 
     message Chunk {
@@ -482,7 +482,7 @@ message Snapshot {
  * EventRef is used to reference the event that caused the derived event to be produced.
  */
 message EventRef {
-    string stream_id = 1;
+    bytes stream_id = 1;
     bytes hash = 2;
     bytes signature = 3;
 }
@@ -530,7 +530,7 @@ message WrappedEncryptedData {
 
 message SyncCookie  {
     bytes node_address = 1;
-    string stream_id = 2;
+    bytes stream_id = 2;
     int64 minipool_gen = 3;
     int64 minipool_slot = 4;
     bytes prev_miniblock_hash = 5;
@@ -546,7 +546,7 @@ message StreamAndCookie {
 
 message CreateStreamRequest {
     repeated Envelope events = 1;
-    string stream_id = 2; // stream_id should match the stream_id in the inception payload of the first event
+    bytes stream_id = 2; // stream_id should match the stream_id in the inception payload of the first event
  }
 
 message CreateStreamResponse {
@@ -555,7 +555,7 @@ message CreateStreamResponse {
 }
 
 message GetStreamRequest {
-    string stream_id = 1;
+    bytes stream_id = 1;
     // if optional is true and stream doesn't exist, response will be a nil stream instead of ERROR NOT_FOUND
     bool optional = 2;
 }
@@ -566,7 +566,7 @@ message GetStreamResponse {
 }
 
 message GetMiniblocksRequest {
-    string stream_id = 1;
+    bytes stream_id = 1;
     int64 fromInclusive = 2;
     int64 toExclusive = 3;
 }
@@ -578,7 +578,7 @@ message GetMiniblocksResponse {
 }
 
 message GetLastMiniblockHashRequest {
-    string stream_id = 1;
+    bytes stream_id = 1;
 }
 
 message GetLastMiniblockHashResponse {
@@ -587,7 +587,7 @@ message GetLastMiniblockHashResponse {
 }
 
 message AddEventRequest {
-    string stream_id = 1;
+    bytes stream_id = 1;
     Envelope event = 2;
 }
 
@@ -613,7 +613,7 @@ message AddStreamToSyncResponse {}
 
 message RemoveStreamFromSyncRequest {
     string sync_id = 1;
-    string stream_id = 2;
+    bytes stream_id = 2;
 }
 
 message RemoveStreamFromSyncResponse {}
