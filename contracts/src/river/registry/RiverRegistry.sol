@@ -77,8 +77,10 @@ contract RiverRegistry is IRiverRegistry, OwnableBase, Facet {
       revert(RiverRegistryErrors.OperatorNotFound);
 
     // verify that the operator has no nodes attached
-    if (ds.nodesByOperator[operator].length() > 0)
-      revert(RiverRegistryErrors.OutOfBounds);
+    for (uint256 i = 0; i < ds.nodes.length(); ++i) {
+      if (ds.nodeByAddress[ds.nodes.at(i)].operator == operator)
+        revert(RiverRegistryErrors.OutOfBounds);
+    }
 
     ds.operators.remove(operator);
 
@@ -90,7 +92,8 @@ contract RiverRegistry is IRiverRegistry, OwnableBase, Facet {
   // =============================================================
   function registerNode(
     address nodeAddress,
-    string memory url
+    string memory url,
+    NodeStatus status
   ) external onlyOperator {
     RiverRegistryStorage.Layout storage ds = RiverRegistryStorage.layout();
 
@@ -101,29 +104,42 @@ contract RiverRegistry is IRiverRegistry, OwnableBase, Facet {
     Node memory newNode = Node({
       nodeAddress: nodeAddress,
       url: url,
-      status: NodeStatus.NotInitialized
+      status: status,
+      operator: msg.sender
     });
 
-    ds.nodesByOperator[msg.sender].add(nodeAddress);
     ds.nodes.add(nodeAddress);
     ds.nodeByAddress[nodeAddress] = newNode;
 
     emit NodeAdded(nodeAddress, url, NodeStatus.NotInitialized);
   }
 
-  function updateNodeStatus(NodeStatus status) external onlyNode {
+  function removeNode(address nodeAddress) external onlyOperator {}
+
+  function updateNodeStatus(
+    address nodeAddress,
+    NodeStatus status
+  ) external onlyOperator {
     RiverRegistryStorage.Layout storage ds = RiverRegistryStorage.layout();
-    ds.nodeByAddress[msg.sender].status = status;
+
+    // validate that the node is in the registry
+    if (!ds.nodes.contains(nodeAddress))
+      revert(RiverRegistryErrors.NodeNotFound);
+
+    // validate that the operator is the owner of the node
+    if (ds.nodeByAddress[nodeAddress].operator != msg.sender)
+      revert(RiverRegistryErrors.BadAuth);
+
+    _checkNodeStatusTransiontAllowed(
+      ds.nodeByAddress[nodeAddress].status,
+      status
+    );
+
+    ds.nodeByAddress[nodeAddress].status = status;
     emit NodeStatusUpdated(msg.sender, status);
   }
 
-  function updateNodeUrl(string memory url) external onlyNode {
-    RiverRegistryStorage.Layout storage ds = RiverRegistryStorage.layout();
-    ds.nodeByAddress[msg.sender].url = url;
-    emit NodeUrlUpdated(msg.sender, url);
-  }
-
-  function updateNodeUrlByOperator(
+  function updateNodeUrl(
     address nodeAddress,
     string memory url
   ) external onlyOperator {
@@ -133,12 +149,17 @@ contract RiverRegistry is IRiverRegistry, OwnableBase, Facet {
     if (!ds.nodes.contains(nodeAddress))
       revert(RiverRegistryErrors.NodeNotFound);
 
-    // validate that the operator is the owner of the node
-    if (!ds.nodesByOperator[msg.sender].contains(nodeAddress))
-      revert(RiverRegistryErrors.BadAuth);
+    Node storage node = ds.nodeByAddress[nodeAddress];
 
-    ds.nodeByAddress[nodeAddress].url = url;
-    emit NodeUrlUpdated(nodeAddress, url);
+    // validate that the operator is the owner of the node
+    if (node.operator != msg.sender) revert(RiverRegistryErrors.BadAuth);
+
+    if (
+      keccak256(abi.encodePacked(node.url)) == keccak256(abi.encodePacked(url))
+    ) revert(RiverRegistryErrors.BadArg);
+
+    node.url = url;
+    emit NodeUrlUpdated(node.nodeAddress, url);
   }
 
   function getNode(address nodeAddress) external view returns (Node memory) {
@@ -209,7 +230,12 @@ contract RiverRegistry is IRiverRegistry, OwnableBase, Facet {
     ds.genesisMiniblockByStreamId[streamId] = genesisMiniblock;
     ds.genesisMiniblockHashByStreamId[streamId] = genesisMiniblockHash;
 
-    emit StreamAllocated(streamId, nodes, genesisMiniblockHash);
+    emit StreamAllocated(
+      streamId,
+      nodes,
+      genesisMiniblockHash,
+      genesisMiniblock
+    );
   }
 
   function getStream(bytes32 streamId) external view returns (Stream memory) {
@@ -351,6 +377,36 @@ contract RiverRegistry is IRiverRegistry, OwnableBase, Facet {
     return streams;
   }
 
+  function getStreamsOnNode(
+    address nodeAddress
+  ) external view returns (StreamWithId[] memory) {
+    RiverRegistryStorage.Layout storage ds = RiverRegistryStorage.layout();
+
+    // TODO: very naive implementation, can be optimized
+    bytes32[] memory allStreamIds = new bytes32[](ds.streams.length());
+    uint32 streamCount;
+    for (uint256 i = 0; i < ds.streams.length(); ++i) {
+      bytes32 id = ds.streams.at(i);
+      Stream storage stream = ds.streamById[id];
+      for (uint256 j = 0; j < stream.nodes.length; ++j) {
+        if (stream.nodes[j] == nodeAddress) {
+          allStreamIds[streamCount++] = id;
+          break;
+        }
+      }
+    }
+
+    StreamWithId[] memory streams = new StreamWithId[](streamCount);
+    for (uint256 i = 0; i < streamCount; ++i) {
+      streams[i] = StreamWithId({
+        id: allStreamIds[i],
+        stream: ds.streamById[allStreamIds[i]]
+      });
+    }
+
+    return streams;
+  }
+
   // =============================================================
   //                           Internal
   // =============================================================
@@ -360,5 +416,22 @@ contract RiverRegistry is IRiverRegistry, OwnableBase, Facet {
     for (uint256 i = 0; i < approvedOperators.length; ++i) {
       ds.operators.add(approvedOperators[i]);
     }
+  }
+
+  function _checkNodeStatusTransiontAllowed(
+    NodeStatus from,
+    NodeStatus to
+  ) internal pure {
+    if (
+      from == NodeStatus.NotInitialized ||
+      (from == NodeStatus.RemoteOnly &&
+        (to == NodeStatus.Failed || to == NodeStatus.Departing)) ||
+      (from == NodeStatus.Operational &&
+        (to == NodeStatus.Failed || to == NodeStatus.Departing)) ||
+      (from == NodeStatus.Departing && to == NodeStatus.Failed)
+    ) {
+      return;
+    }
+    revert(RiverRegistryErrors.NodeStateTransitionNotAllowed);
   }
 }

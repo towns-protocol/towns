@@ -28,6 +28,7 @@ interface IRiverRegistryBase {
     address nodeAddress;
     string url;
     NodeStatus status;
+    address operator;
   }
 
   // =============================================================
@@ -46,11 +47,14 @@ interface IRiverRegistryBase {
 
   event NodeUrlUpdated(address indexed nodeAddress, string url);
 
+  event NodeRemoved(address indexed nodeAddress);
+
   // Stream events
   event StreamAllocated(
     bytes32 streamId,
     address[] nodes,
-    bytes32 genesisMiniblockHash
+    bytes32 genesisMiniblockHash,
+    bytes genesisMiniblock
   );
 
   event StreamLastMiniblockUpdated(
@@ -84,6 +88,8 @@ library RiverRegistryErrors {
   string public constant BadAuth = "BAD_AUTH";
   string public constant InvalidStreamId = "INVALID_STREAM_ID";
   string public constant StreamSealed = "STREAM_SEALED";
+  string public constant NodeStateTransitionNotAllowed =
+    "NODE_STATE_NOT_ALLOWED";
 }
 
 interface IRiverRegistry is IRiverRegistryBase {
@@ -135,10 +141,24 @@ interface IRiverRegistry is IRiverRegistryBase {
    */
   function getAllStreams() external view returns (StreamWithId[] memory);
 
+  function getStreamsOnNode(
+    address nodeAddress
+  ) external view returns (StreamWithId[] memory);
+
   // =============================================================
   //                           Nodes
   // =============================================================
-  function registerNode(address nodeAddress, string memory url) external;
+  function registerNode(
+    address nodeAddress,
+    string memory url,
+    NodeStatus status
+  ) external;
+
+  function removeNode(address nodeAddress) external;
+
+  function updateNodeStatus(address nodeAddress, NodeStatus status) external;
+
+  function updateNodeUrl(address nodeAddress, string memory url) external;
 
   function getNode(address nodeAddress) external view returns (Node memory);
 

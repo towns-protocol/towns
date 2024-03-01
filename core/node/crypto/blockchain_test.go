@@ -38,7 +38,7 @@ func TestBlockchain(t *testing.T) {
 	tx1, err := owner.TxRunner.Submit(
 		ctx,
 		func(opts *bind.TransactOpts) (*types.Transaction, error) {
-			return tc.RiverRegistry.RegisterNode(opts, nodeAddr1, nodeUrl1)
+			return tc.RiverRegistry.RegisterNode(opts, nodeAddr1, nodeUrl1, 2)
 		},
 	)
 	require.NoError(err)
@@ -46,7 +46,7 @@ func TestBlockchain(t *testing.T) {
 	tx2, err := owner.TxRunner.Submit(
 		ctx,
 		func(opts *bind.TransactOpts) (*types.Transaction, error) {
-			return tc.RiverRegistry.RegisterNode(opts, nodeAddr2, nodeUrl2)
+			return tc.RiverRegistry.RegisterNode(opts, nodeAddr2, nodeUrl2, 2)
 		},
 	)
 	require.NoError(err)
@@ -79,7 +79,7 @@ func TestBlockchain(t *testing.T) {
 	tx1, err = owner.TxRunner.Submit(
 		ctx,
 		func(opts *bind.TransactOpts) (*types.Transaction, error) {
-			return tc.RiverRegistry.RegisterNode(opts, nodeAddr1, nodeUrl1)
+			return tc.RiverRegistry.RegisterNode(opts, nodeAddr1, nodeUrl1, 2)
 		},
 	)
 	// Looks like this is a difference for simulated backend:

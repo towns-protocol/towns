@@ -89,6 +89,11 @@ const _abi = [
             type: "uint8",
             internalType: "enum IRiverRegistryBase.NodeStatus",
           },
+          {
+            name: "operator",
+            type: "address",
+            internalType: "address",
+          },
         ],
       },
     ],
@@ -194,6 +199,11 @@ const _abi = [
             name: "status",
             type: "uint8",
             internalType: "enum IRiverRegistryBase.NodeStatus",
+          },
+          {
+            name: "operator",
+            type: "address",
+            internalType: "address",
           },
         ],
       },
@@ -340,6 +350,69 @@ const _abi = [
   },
   {
     type: "function",
+    name: "getStreamsOnNode",
+    inputs: [
+      {
+        name: "nodeAddress",
+        type: "address",
+        internalType: "address",
+      },
+    ],
+    outputs: [
+      {
+        name: "",
+        type: "tuple[]",
+        internalType: "struct IRiverRegistryBase.StreamWithId[]",
+        components: [
+          {
+            name: "id",
+            type: "bytes32",
+            internalType: "bytes32",
+          },
+          {
+            name: "stream",
+            type: "tuple",
+            internalType: "struct IRiverRegistryBase.Stream",
+            components: [
+              {
+                name: "lastMiniblockHash",
+                type: "bytes32",
+                internalType: "bytes32",
+              },
+              {
+                name: "lastMiniblockNum",
+                type: "uint64",
+                internalType: "uint64",
+              },
+              {
+                name: "flags",
+                type: "uint64",
+                internalType: "uint64",
+              },
+              {
+                name: "reserved0",
+                type: "uint64",
+                internalType: "uint64",
+              },
+              {
+                name: "reserved1",
+                type: "uint64",
+                internalType: "uint64",
+              },
+              {
+                name: "nodes",
+                type: "address[]",
+                internalType: "address[]",
+              },
+            ],
+          },
+        ],
+      },
+    ],
+    stateMutability: "view",
+  },
+  {
+    type: "function",
     name: "isOperator",
     inputs: [
       {
@@ -388,6 +461,24 @@ const _abi = [
         name: "url",
         type: "string",
         internalType: "string",
+      },
+      {
+        name: "status",
+        type: "uint8",
+        internalType: "enum IRiverRegistryBase.NodeStatus",
+      },
+    ],
+    outputs: [],
+    stateMutability: "nonpayable",
+  },
+  {
+    type: "function",
+    name: "removeNode",
+    inputs: [
+      {
+        name: "nodeAddress",
+        type: "address",
+        internalType: "address",
       },
     ],
     outputs: [],
@@ -453,6 +544,42 @@ const _abi = [
     stateMutability: "nonpayable",
   },
   {
+    type: "function",
+    name: "updateNodeStatus",
+    inputs: [
+      {
+        name: "nodeAddress",
+        type: "address",
+        internalType: "address",
+      },
+      {
+        name: "status",
+        type: "uint8",
+        internalType: "enum IRiverRegistryBase.NodeStatus",
+      },
+    ],
+    outputs: [],
+    stateMutability: "nonpayable",
+  },
+  {
+    type: "function",
+    name: "updateNodeUrl",
+    inputs: [
+      {
+        name: "nodeAddress",
+        type: "address",
+        internalType: "address",
+      },
+      {
+        name: "url",
+        type: "string",
+        internalType: "string",
+      },
+    ],
+    outputs: [],
+    stateMutability: "nonpayable",
+  },
+  {
     type: "event",
     name: "NodeAdded",
     inputs: [
@@ -473,6 +600,19 @@ const _abi = [
         type: "uint8",
         indexed: false,
         internalType: "enum IRiverRegistryBase.NodeStatus",
+      },
+    ],
+    anonymous: false,
+  },
+  {
+    type: "event",
+    name: "NodeRemoved",
+    inputs: [
+      {
+        name: "nodeAddress",
+        type: "address",
+        indexed: true,
+        internalType: "address",
       },
     ],
     anonymous: false,
@@ -562,6 +702,12 @@ const _abi = [
         type: "bytes32",
         indexed: false,
         internalType: "bytes32",
+      },
+      {
+        name: "genesisMiniblock",
+        type: "bytes",
+        indexed: false,
+        internalType: "bytes",
       },
     ],
     anonymous: false,

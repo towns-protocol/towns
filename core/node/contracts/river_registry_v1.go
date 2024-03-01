@@ -34,6 +34,7 @@ type IRiverRegistryBaseNode struct {
 	NodeAddress common.Address
 	Url         string
 	Status      uint8
+	Operator    common.Address
 }
 
 // IRiverRegistryBaseStream is an auto generated low-level Go binding around an user-defined struct.
@@ -54,7 +55,7 @@ type IRiverRegistryBaseStreamWithId struct {
 
 // RiverRegistryV1MetaData contains all meta data concerning the RiverRegistryV1 contract.
 var RiverRegistryV1MetaData = &bind.MetaData{
-	ABI: "[{\"type\":\"function\",\"name\":\"allocateStream\",\"inputs\":[{\"name\":\"streamId\",\"type\":\"bytes32\",\"internalType\":\"bytes32\"},{\"name\":\"nodes\",\"type\":\"address[]\",\"internalType\":\"address[]\"},{\"name\":\"genesisMiniblockHash\",\"type\":\"bytes32\",\"internalType\":\"bytes32\"},{\"name\":\"genesisMiniblock\",\"type\":\"bytes\",\"internalType\":\"bytes\"}],\"outputs\":[],\"stateMutability\":\"nonpayable\"},{\"type\":\"function\",\"name\":\"approveOperator\",\"inputs\":[{\"name\":\"operator\",\"type\":\"address\",\"internalType\":\"address\"}],\"outputs\":[],\"stateMutability\":\"nonpayable\"},{\"type\":\"function\",\"name\":\"getAllNodeAddresses\",\"inputs\":[],\"outputs\":[{\"name\":\"\",\"type\":\"address[]\",\"internalType\":\"address[]\"}],\"stateMutability\":\"view\"},{\"type\":\"function\",\"name\":\"getAllNodes\",\"inputs\":[],\"outputs\":[{\"name\":\"\",\"type\":\"tuple[]\",\"internalType\":\"structIRiverRegistryBase.Node[]\",\"components\":[{\"name\":\"nodeAddress\",\"type\":\"address\",\"internalType\":\"address\"},{\"name\":\"url\",\"type\":\"string\",\"internalType\":\"string\"},{\"name\":\"status\",\"type\":\"uint8\",\"internalType\":\"enumIRiverRegistryBase.NodeStatus\"}]}],\"stateMutability\":\"view\"},{\"type\":\"function\",\"name\":\"getAllStreamIds\",\"inputs\":[],\"outputs\":[{\"name\":\"\",\"type\":\"bytes32[]\",\"internalType\":\"bytes32[]\"}],\"stateMutability\":\"view\"},{\"type\":\"function\",\"name\":\"getAllStreams\",\"inputs\":[],\"outputs\":[{\"name\":\"\",\"type\":\"tuple[]\",\"internalType\":\"structIRiverRegistryBase.StreamWithId[]\",\"components\":[{\"name\":\"id\",\"type\":\"bytes32\",\"internalType\":\"bytes32\"},{\"name\":\"stream\",\"type\":\"tuple\",\"internalType\":\"structIRiverRegistryBase.Stream\",\"components\":[{\"name\":\"lastMiniblockHash\",\"type\":\"bytes32\",\"internalType\":\"bytes32\"},{\"name\":\"lastMiniblockNum\",\"type\":\"uint64\",\"internalType\":\"uint64\"},{\"name\":\"flags\",\"type\":\"uint64\",\"internalType\":\"uint64\"},{\"name\":\"reserved0\",\"type\":\"uint64\",\"internalType\":\"uint64\"},{\"name\":\"reserved1\",\"type\":\"uint64\",\"internalType\":\"uint64\"},{\"name\":\"nodes\",\"type\":\"address[]\",\"internalType\":\"address[]\"}]}]}],\"stateMutability\":\"view\"},{\"type\":\"function\",\"name\":\"getNode\",\"inputs\":[{\"name\":\"nodeAddress\",\"type\":\"address\",\"internalType\":\"address\"}],\"outputs\":[{\"name\":\"\",\"type\":\"tuple\",\"internalType\":\"structIRiverRegistryBase.Node\",\"components\":[{\"name\":\"nodeAddress\",\"type\":\"address\",\"internalType\":\"address\"},{\"name\":\"url\",\"type\":\"string\",\"internalType\":\"string\"},{\"name\":\"status\",\"type\":\"uint8\",\"internalType\":\"enumIRiverRegistryBase.NodeStatus\"}]}],\"stateMutability\":\"view\"},{\"type\":\"function\",\"name\":\"getNodeCount\",\"inputs\":[],\"outputs\":[{\"name\":\"\",\"type\":\"uint256\",\"internalType\":\"uint256\"}],\"stateMutability\":\"view\"},{\"type\":\"function\",\"name\":\"getStream\",\"inputs\":[{\"name\":\"streamId\",\"type\":\"bytes32\",\"internalType\":\"bytes32\"}],\"outputs\":[{\"name\":\"\",\"type\":\"tuple\",\"internalType\":\"structIRiverRegistryBase.Stream\",\"components\":[{\"name\":\"lastMiniblockHash\",\"type\":\"bytes32\",\"internalType\":\"bytes32\"},{\"name\":\"lastMiniblockNum\",\"type\":\"uint64\",\"internalType\":\"uint64\"},{\"name\":\"flags\",\"type\":\"uint64\",\"internalType\":\"uint64\"},{\"name\":\"reserved0\",\"type\":\"uint64\",\"internalType\":\"uint64\"},{\"name\":\"reserved1\",\"type\":\"uint64\",\"internalType\":\"uint64\"},{\"name\":\"nodes\",\"type\":\"address[]\",\"internalType\":\"address[]\"}]}],\"stateMutability\":\"view\"},{\"type\":\"function\",\"name\":\"getStreamCount\",\"inputs\":[],\"outputs\":[{\"name\":\"\",\"type\":\"uint256\",\"internalType\":\"uint256\"}],\"stateMutability\":\"view\"},{\"type\":\"function\",\"name\":\"getStreamWithGenesis\",\"inputs\":[{\"name\":\"streamId\",\"type\":\"bytes32\",\"internalType\":\"bytes32\"}],\"outputs\":[{\"name\":\"\",\"type\":\"tuple\",\"internalType\":\"structIRiverRegistryBase.Stream\",\"components\":[{\"name\":\"lastMiniblockHash\",\"type\":\"bytes32\",\"internalType\":\"bytes32\"},{\"name\":\"lastMiniblockNum\",\"type\":\"uint64\",\"internalType\":\"uint64\"},{\"name\":\"flags\",\"type\":\"uint64\",\"internalType\":\"uint64\"},{\"name\":\"reserved0\",\"type\":\"uint64\",\"internalType\":\"uint64\"},{\"name\":\"reserved1\",\"type\":\"uint64\",\"internalType\":\"uint64\"},{\"name\":\"nodes\",\"type\":\"address[]\",\"internalType\":\"address[]\"}]},{\"name\":\"\",\"type\":\"bytes32\",\"internalType\":\"bytes32\"},{\"name\":\"\",\"type\":\"bytes\",\"internalType\":\"bytes\"}],\"stateMutability\":\"view\"},{\"type\":\"function\",\"name\":\"isOperator\",\"inputs\":[{\"name\":\"operator\",\"type\":\"address\",\"internalType\":\"address\"}],\"outputs\":[{\"name\":\"\",\"type\":\"bool\",\"internalType\":\"bool\"}],\"stateMutability\":\"view\"},{\"type\":\"function\",\"name\":\"placeStreamOnNode\",\"inputs\":[{\"name\":\"streamId\",\"type\":\"bytes32\",\"internalType\":\"bytes32\"},{\"name\":\"nodeAddress\",\"type\":\"address\",\"internalType\":\"address\"}],\"outputs\":[],\"stateMutability\":\"nonpayable\"},{\"type\":\"function\",\"name\":\"registerNode\",\"inputs\":[{\"name\":\"nodeAddress\",\"type\":\"address\",\"internalType\":\"address\"},{\"name\":\"url\",\"type\":\"string\",\"internalType\":\"string\"}],\"outputs\":[],\"stateMutability\":\"nonpayable\"},{\"type\":\"function\",\"name\":\"removeOperator\",\"inputs\":[{\"name\":\"operator\",\"type\":\"address\",\"internalType\":\"address\"}],\"outputs\":[],\"stateMutability\":\"nonpayable\"},{\"type\":\"function\",\"name\":\"removeStreamFromNode\",\"inputs\":[{\"name\":\"streamId\",\"type\":\"bytes32\",\"internalType\":\"bytes32\"},{\"name\":\"nodeAddress\",\"type\":\"address\",\"internalType\":\"address\"}],\"outputs\":[],\"stateMutability\":\"nonpayable\"},{\"type\":\"function\",\"name\":\"setStreamLastMiniblock\",\"inputs\":[{\"name\":\"streamId\",\"type\":\"bytes32\",\"internalType\":\"bytes32\"},{\"name\":\"lastMiniblockHash\",\"type\":\"bytes32\",\"internalType\":\"bytes32\"},{\"name\":\"lastMiniblockNum\",\"type\":\"uint64\",\"internalType\":\"uint64\"},{\"name\":\"isSealed\",\"type\":\"bool\",\"internalType\":\"bool\"}],\"outputs\":[],\"stateMutability\":\"nonpayable\"},{\"type\":\"event\",\"name\":\"NodeAdded\",\"inputs\":[{\"name\":\"nodeAddress\",\"type\":\"address\",\"indexed\":true,\"internalType\":\"address\"},{\"name\":\"url\",\"type\":\"string\",\"indexed\":false,\"internalType\":\"string\"},{\"name\":\"status\",\"type\":\"uint8\",\"indexed\":false,\"internalType\":\"enumIRiverRegistryBase.NodeStatus\"}],\"anonymous\":false},{\"type\":\"event\",\"name\":\"NodeStatusUpdated\",\"inputs\":[{\"name\":\"nodeAddress\",\"type\":\"address\",\"indexed\":true,\"internalType\":\"address\"},{\"name\":\"status\",\"type\":\"uint8\",\"indexed\":false,\"internalType\":\"enumIRiverRegistryBase.NodeStatus\"}],\"anonymous\":false},{\"type\":\"event\",\"name\":\"NodeUrlUpdated\",\"inputs\":[{\"name\":\"nodeAddress\",\"type\":\"address\",\"indexed\":true,\"internalType\":\"address\"},{\"name\":\"url\",\"type\":\"string\",\"indexed\":false,\"internalType\":\"string\"}],\"anonymous\":false},{\"type\":\"event\",\"name\":\"OperatorAdded\",\"inputs\":[{\"name\":\"operatorAddress\",\"type\":\"address\",\"indexed\":true,\"internalType\":\"address\"}],\"anonymous\":false},{\"type\":\"event\",\"name\":\"OperatorRemoved\",\"inputs\":[{\"name\":\"operatorAddress\",\"type\":\"address\",\"indexed\":true,\"internalType\":\"address\"}],\"anonymous\":false},{\"type\":\"event\",\"name\":\"StreamAllocated\",\"inputs\":[{\"name\":\"streamId\",\"type\":\"bytes32\",\"indexed\":false,\"internalType\":\"bytes32\"},{\"name\":\"nodes\",\"type\":\"address[]\",\"indexed\":false,\"internalType\":\"address[]\"},{\"name\":\"genesisMiniblockHash\",\"type\":\"bytes32\",\"indexed\":false,\"internalType\":\"bytes32\"}],\"anonymous\":false},{\"type\":\"event\",\"name\":\"StreamLastMiniblockUpdated\",\"inputs\":[{\"name\":\"streamId\",\"type\":\"bytes32\",\"indexed\":false,\"internalType\":\"bytes32\"},{\"name\":\"lastMiniblockHash\",\"type\":\"bytes32\",\"indexed\":false,\"internalType\":\"bytes32\"},{\"name\":\"lastMiniblockNum\",\"type\":\"uint64\",\"indexed\":false,\"internalType\":\"uint64\"},{\"name\":\"isSealed\",\"type\":\"bool\",\"indexed\":false,\"internalType\":\"bool\"}],\"anonymous\":false},{\"type\":\"event\",\"name\":\"StreamPlacementUpdated\",\"inputs\":[{\"name\":\"streamId\",\"type\":\"bytes32\",\"indexed\":false,\"internalType\":\"bytes32\"},{\"name\":\"nodeAddress\",\"type\":\"address\",\"indexed\":false,\"internalType\":\"address\"},{\"name\":\"isAdded\",\"type\":\"bool\",\"indexed\":false,\"internalType\":\"bool\"}],\"anonymous\":false}]",
+	ABI: "[{\"type\":\"function\",\"name\":\"allocateStream\",\"inputs\":[{\"name\":\"streamId\",\"type\":\"bytes32\",\"internalType\":\"bytes32\"},{\"name\":\"nodes\",\"type\":\"address[]\",\"internalType\":\"address[]\"},{\"name\":\"genesisMiniblockHash\",\"type\":\"bytes32\",\"internalType\":\"bytes32\"},{\"name\":\"genesisMiniblock\",\"type\":\"bytes\",\"internalType\":\"bytes\"}],\"outputs\":[],\"stateMutability\":\"nonpayable\"},{\"type\":\"function\",\"name\":\"approveOperator\",\"inputs\":[{\"name\":\"operator\",\"type\":\"address\",\"internalType\":\"address\"}],\"outputs\":[],\"stateMutability\":\"nonpayable\"},{\"type\":\"function\",\"name\":\"getAllNodeAddresses\",\"inputs\":[],\"outputs\":[{\"name\":\"\",\"type\":\"address[]\",\"internalType\":\"address[]\"}],\"stateMutability\":\"view\"},{\"type\":\"function\",\"name\":\"getAllNodes\",\"inputs\":[],\"outputs\":[{\"name\":\"\",\"type\":\"tuple[]\",\"internalType\":\"structIRiverRegistryBase.Node[]\",\"components\":[{\"name\":\"nodeAddress\",\"type\":\"address\",\"internalType\":\"address\"},{\"name\":\"url\",\"type\":\"string\",\"internalType\":\"string\"},{\"name\":\"status\",\"type\":\"uint8\",\"internalType\":\"enumIRiverRegistryBase.NodeStatus\"},{\"name\":\"operator\",\"type\":\"address\",\"internalType\":\"address\"}]}],\"stateMutability\":\"view\"},{\"type\":\"function\",\"name\":\"getAllStreamIds\",\"inputs\":[],\"outputs\":[{\"name\":\"\",\"type\":\"bytes32[]\",\"internalType\":\"bytes32[]\"}],\"stateMutability\":\"view\"},{\"type\":\"function\",\"name\":\"getAllStreams\",\"inputs\":[],\"outputs\":[{\"name\":\"\",\"type\":\"tuple[]\",\"internalType\":\"structIRiverRegistryBase.StreamWithId[]\",\"components\":[{\"name\":\"id\",\"type\":\"bytes32\",\"internalType\":\"bytes32\"},{\"name\":\"stream\",\"type\":\"tuple\",\"internalType\":\"structIRiverRegistryBase.Stream\",\"components\":[{\"name\":\"lastMiniblockHash\",\"type\":\"bytes32\",\"internalType\":\"bytes32\"},{\"name\":\"lastMiniblockNum\",\"type\":\"uint64\",\"internalType\":\"uint64\"},{\"name\":\"flags\",\"type\":\"uint64\",\"internalType\":\"uint64\"},{\"name\":\"reserved0\",\"type\":\"uint64\",\"internalType\":\"uint64\"},{\"name\":\"reserved1\",\"type\":\"uint64\",\"internalType\":\"uint64\"},{\"name\":\"nodes\",\"type\":\"address[]\",\"internalType\":\"address[]\"}]}]}],\"stateMutability\":\"view\"},{\"type\":\"function\",\"name\":\"getNode\",\"inputs\":[{\"name\":\"nodeAddress\",\"type\":\"address\",\"internalType\":\"address\"}],\"outputs\":[{\"name\":\"\",\"type\":\"tuple\",\"internalType\":\"structIRiverRegistryBase.Node\",\"components\":[{\"name\":\"nodeAddress\",\"type\":\"address\",\"internalType\":\"address\"},{\"name\":\"url\",\"type\":\"string\",\"internalType\":\"string\"},{\"name\":\"status\",\"type\":\"uint8\",\"internalType\":\"enumIRiverRegistryBase.NodeStatus\"},{\"name\":\"operator\",\"type\":\"address\",\"internalType\":\"address\"}]}],\"stateMutability\":\"view\"},{\"type\":\"function\",\"name\":\"getNodeCount\",\"inputs\":[],\"outputs\":[{\"name\":\"\",\"type\":\"uint256\",\"internalType\":\"uint256\"}],\"stateMutability\":\"view\"},{\"type\":\"function\",\"name\":\"getStream\",\"inputs\":[{\"name\":\"streamId\",\"type\":\"bytes32\",\"internalType\":\"bytes32\"}],\"outputs\":[{\"name\":\"\",\"type\":\"tuple\",\"internalType\":\"structIRiverRegistryBase.Stream\",\"components\":[{\"name\":\"lastMiniblockHash\",\"type\":\"bytes32\",\"internalType\":\"bytes32\"},{\"name\":\"lastMiniblockNum\",\"type\":\"uint64\",\"internalType\":\"uint64\"},{\"name\":\"flags\",\"type\":\"uint64\",\"internalType\":\"uint64\"},{\"name\":\"reserved0\",\"type\":\"uint64\",\"internalType\":\"uint64\"},{\"name\":\"reserved1\",\"type\":\"uint64\",\"internalType\":\"uint64\"},{\"name\":\"nodes\",\"type\":\"address[]\",\"internalType\":\"address[]\"}]}],\"stateMutability\":\"view\"},{\"type\":\"function\",\"name\":\"getStreamCount\",\"inputs\":[],\"outputs\":[{\"name\":\"\",\"type\":\"uint256\",\"internalType\":\"uint256\"}],\"stateMutability\":\"view\"},{\"type\":\"function\",\"name\":\"getStreamWithGenesis\",\"inputs\":[{\"name\":\"streamId\",\"type\":\"bytes32\",\"internalType\":\"bytes32\"}],\"outputs\":[{\"name\":\"\",\"type\":\"tuple\",\"internalType\":\"structIRiverRegistryBase.Stream\",\"components\":[{\"name\":\"lastMiniblockHash\",\"type\":\"bytes32\",\"internalType\":\"bytes32\"},{\"name\":\"lastMiniblockNum\",\"type\":\"uint64\",\"internalType\":\"uint64\"},{\"name\":\"flags\",\"type\":\"uint64\",\"internalType\":\"uint64\"},{\"name\":\"reserved0\",\"type\":\"uint64\",\"internalType\":\"uint64\"},{\"name\":\"reserved1\",\"type\":\"uint64\",\"internalType\":\"uint64\"},{\"name\":\"nodes\",\"type\":\"address[]\",\"internalType\":\"address[]\"}]},{\"name\":\"\",\"type\":\"bytes32\",\"internalType\":\"bytes32\"},{\"name\":\"\",\"type\":\"bytes\",\"internalType\":\"bytes\"}],\"stateMutability\":\"view\"},{\"type\":\"function\",\"name\":\"getStreamsOnNode\",\"inputs\":[{\"name\":\"nodeAddress\",\"type\":\"address\",\"internalType\":\"address\"}],\"outputs\":[{\"name\":\"\",\"type\":\"tuple[]\",\"internalType\":\"structIRiverRegistryBase.StreamWithId[]\",\"components\":[{\"name\":\"id\",\"type\":\"bytes32\",\"internalType\":\"bytes32\"},{\"name\":\"stream\",\"type\":\"tuple\",\"internalType\":\"structIRiverRegistryBase.Stream\",\"components\":[{\"name\":\"lastMiniblockHash\",\"type\":\"bytes32\",\"internalType\":\"bytes32\"},{\"name\":\"lastMiniblockNum\",\"type\":\"uint64\",\"internalType\":\"uint64\"},{\"name\":\"flags\",\"type\":\"uint64\",\"internalType\":\"uint64\"},{\"name\":\"reserved0\",\"type\":\"uint64\",\"internalType\":\"uint64\"},{\"name\":\"reserved1\",\"type\":\"uint64\",\"internalType\":\"uint64\"},{\"name\":\"nodes\",\"type\":\"address[]\",\"internalType\":\"address[]\"}]}]}],\"stateMutability\":\"view\"},{\"type\":\"function\",\"name\":\"isOperator\",\"inputs\":[{\"name\":\"operator\",\"type\":\"address\",\"internalType\":\"address\"}],\"outputs\":[{\"name\":\"\",\"type\":\"bool\",\"internalType\":\"bool\"}],\"stateMutability\":\"view\"},{\"type\":\"function\",\"name\":\"placeStreamOnNode\",\"inputs\":[{\"name\":\"streamId\",\"type\":\"bytes32\",\"internalType\":\"bytes32\"},{\"name\":\"nodeAddress\",\"type\":\"address\",\"internalType\":\"address\"}],\"outputs\":[],\"stateMutability\":\"nonpayable\"},{\"type\":\"function\",\"name\":\"registerNode\",\"inputs\":[{\"name\":\"nodeAddress\",\"type\":\"address\",\"internalType\":\"address\"},{\"name\":\"url\",\"type\":\"string\",\"internalType\":\"string\"},{\"name\":\"status\",\"type\":\"uint8\",\"internalType\":\"enumIRiverRegistryBase.NodeStatus\"}],\"outputs\":[],\"stateMutability\":\"nonpayable\"},{\"type\":\"function\",\"name\":\"removeNode\",\"inputs\":[{\"name\":\"nodeAddress\",\"type\":\"address\",\"internalType\":\"address\"}],\"outputs\":[],\"stateMutability\":\"nonpayable\"},{\"type\":\"function\",\"name\":\"removeOperator\",\"inputs\":[{\"name\":\"operator\",\"type\":\"address\",\"internalType\":\"address\"}],\"outputs\":[],\"stateMutability\":\"nonpayable\"},{\"type\":\"function\",\"name\":\"removeStreamFromNode\",\"inputs\":[{\"name\":\"streamId\",\"type\":\"bytes32\",\"internalType\":\"bytes32\"},{\"name\":\"nodeAddress\",\"type\":\"address\",\"internalType\":\"address\"}],\"outputs\":[],\"stateMutability\":\"nonpayable\"},{\"type\":\"function\",\"name\":\"setStreamLastMiniblock\",\"inputs\":[{\"name\":\"streamId\",\"type\":\"bytes32\",\"internalType\":\"bytes32\"},{\"name\":\"lastMiniblockHash\",\"type\":\"bytes32\",\"internalType\":\"bytes32\"},{\"name\":\"lastMiniblockNum\",\"type\":\"uint64\",\"internalType\":\"uint64\"},{\"name\":\"isSealed\",\"type\":\"bool\",\"internalType\":\"bool\"}],\"outputs\":[],\"stateMutability\":\"nonpayable\"},{\"type\":\"function\",\"name\":\"updateNodeStatus\",\"inputs\":[{\"name\":\"nodeAddress\",\"type\":\"address\",\"internalType\":\"address\"},{\"name\":\"status\",\"type\":\"uint8\",\"internalType\":\"enumIRiverRegistryBase.NodeStatus\"}],\"outputs\":[],\"stateMutability\":\"nonpayable\"},{\"type\":\"function\",\"name\":\"updateNodeUrl\",\"inputs\":[{\"name\":\"nodeAddress\",\"type\":\"address\",\"internalType\":\"address\"},{\"name\":\"url\",\"type\":\"string\",\"internalType\":\"string\"}],\"outputs\":[],\"stateMutability\":\"nonpayable\"},{\"type\":\"event\",\"name\":\"NodeAdded\",\"inputs\":[{\"name\":\"nodeAddress\",\"type\":\"address\",\"indexed\":true,\"internalType\":\"address\"},{\"name\":\"url\",\"type\":\"string\",\"indexed\":false,\"internalType\":\"string\"},{\"name\":\"status\",\"type\":\"uint8\",\"indexed\":false,\"internalType\":\"enumIRiverRegistryBase.NodeStatus\"}],\"anonymous\":false},{\"type\":\"event\",\"name\":\"NodeRemoved\",\"inputs\":[{\"name\":\"nodeAddress\",\"type\":\"address\",\"indexed\":true,\"internalType\":\"address\"}],\"anonymous\":false},{\"type\":\"event\",\"name\":\"NodeStatusUpdated\",\"inputs\":[{\"name\":\"nodeAddress\",\"type\":\"address\",\"indexed\":true,\"internalType\":\"address\"},{\"name\":\"status\",\"type\":\"uint8\",\"indexed\":false,\"internalType\":\"enumIRiverRegistryBase.NodeStatus\"}],\"anonymous\":false},{\"type\":\"event\",\"name\":\"NodeUrlUpdated\",\"inputs\":[{\"name\":\"nodeAddress\",\"type\":\"address\",\"indexed\":true,\"internalType\":\"address\"},{\"name\":\"url\",\"type\":\"string\",\"indexed\":false,\"internalType\":\"string\"}],\"anonymous\":false},{\"type\":\"event\",\"name\":\"OperatorAdded\",\"inputs\":[{\"name\":\"operatorAddress\",\"type\":\"address\",\"indexed\":true,\"internalType\":\"address\"}],\"anonymous\":false},{\"type\":\"event\",\"name\":\"OperatorRemoved\",\"inputs\":[{\"name\":\"operatorAddress\",\"type\":\"address\",\"indexed\":true,\"internalType\":\"address\"}],\"anonymous\":false},{\"type\":\"event\",\"name\":\"StreamAllocated\",\"inputs\":[{\"name\":\"streamId\",\"type\":\"bytes32\",\"indexed\":false,\"internalType\":\"bytes32\"},{\"name\":\"nodes\",\"type\":\"address[]\",\"indexed\":false,\"internalType\":\"address[]\"},{\"name\":\"genesisMiniblockHash\",\"type\":\"bytes32\",\"indexed\":false,\"internalType\":\"bytes32\"},{\"name\":\"genesisMiniblock\",\"type\":\"bytes\",\"indexed\":false,\"internalType\":\"bytes\"}],\"anonymous\":false},{\"type\":\"event\",\"name\":\"StreamLastMiniblockUpdated\",\"inputs\":[{\"name\":\"streamId\",\"type\":\"bytes32\",\"indexed\":false,\"internalType\":\"bytes32\"},{\"name\":\"lastMiniblockHash\",\"type\":\"bytes32\",\"indexed\":false,\"internalType\":\"bytes32\"},{\"name\":\"lastMiniblockNum\",\"type\":\"uint64\",\"indexed\":false,\"internalType\":\"uint64\"},{\"name\":\"isSealed\",\"type\":\"bool\",\"indexed\":false,\"internalType\":\"bool\"}],\"anonymous\":false},{\"type\":\"event\",\"name\":\"StreamPlacementUpdated\",\"inputs\":[{\"name\":\"streamId\",\"type\":\"bytes32\",\"indexed\":false,\"internalType\":\"bytes32\"},{\"name\":\"nodeAddress\",\"type\":\"address\",\"indexed\":false,\"internalType\":\"address\"},{\"name\":\"isAdded\",\"type\":\"bool\",\"indexed\":false,\"internalType\":\"bool\"}],\"anonymous\":false}]",
 }
 
 // RiverRegistryV1ABI is the input ABI used to generate the binding from.
@@ -236,7 +237,7 @@ func (_RiverRegistryV1 *RiverRegistryV1CallerSession) GetAllNodeAddresses() ([]c
 
 // GetAllNodes is a free data retrieval call binding the contract method 0xa1174e7d.
 //
-// Solidity: function getAllNodes() view returns((address,string,uint8)[])
+// Solidity: function getAllNodes() view returns((address,string,uint8,address)[])
 func (_RiverRegistryV1 *RiverRegistryV1Caller) GetAllNodes(opts *bind.CallOpts) ([]IRiverRegistryBaseNode, error) {
 	var out []interface{}
 	err := _RiverRegistryV1.contract.Call(opts, &out, "getAllNodes")
@@ -253,14 +254,14 @@ func (_RiverRegistryV1 *RiverRegistryV1Caller) GetAllNodes(opts *bind.CallOpts) 
 
 // GetAllNodes is a free data retrieval call binding the contract method 0xa1174e7d.
 //
-// Solidity: function getAllNodes() view returns((address,string,uint8)[])
+// Solidity: function getAllNodes() view returns((address,string,uint8,address)[])
 func (_RiverRegistryV1 *RiverRegistryV1Session) GetAllNodes() ([]IRiverRegistryBaseNode, error) {
 	return _RiverRegistryV1.Contract.GetAllNodes(&_RiverRegistryV1.CallOpts)
 }
 
 // GetAllNodes is a free data retrieval call binding the contract method 0xa1174e7d.
 //
-// Solidity: function getAllNodes() view returns((address,string,uint8)[])
+// Solidity: function getAllNodes() view returns((address,string,uint8,address)[])
 func (_RiverRegistryV1 *RiverRegistryV1CallerSession) GetAllNodes() ([]IRiverRegistryBaseNode, error) {
 	return _RiverRegistryV1.Contract.GetAllNodes(&_RiverRegistryV1.CallOpts)
 }
@@ -329,7 +330,7 @@ func (_RiverRegistryV1 *RiverRegistryV1CallerSession) GetAllStreams() ([]IRiverR
 
 // GetNode is a free data retrieval call binding the contract method 0x9d209048.
 //
-// Solidity: function getNode(address nodeAddress) view returns((address,string,uint8))
+// Solidity: function getNode(address nodeAddress) view returns((address,string,uint8,address))
 func (_RiverRegistryV1 *RiverRegistryV1Caller) GetNode(opts *bind.CallOpts, nodeAddress common.Address) (IRiverRegistryBaseNode, error) {
 	var out []interface{}
 	err := _RiverRegistryV1.contract.Call(opts, &out, "getNode", nodeAddress)
@@ -346,14 +347,14 @@ func (_RiverRegistryV1 *RiverRegistryV1Caller) GetNode(opts *bind.CallOpts, node
 
 // GetNode is a free data retrieval call binding the contract method 0x9d209048.
 //
-// Solidity: function getNode(address nodeAddress) view returns((address,string,uint8))
+// Solidity: function getNode(address nodeAddress) view returns((address,string,uint8,address))
 func (_RiverRegistryV1 *RiverRegistryV1Session) GetNode(nodeAddress common.Address) (IRiverRegistryBaseNode, error) {
 	return _RiverRegistryV1.Contract.GetNode(&_RiverRegistryV1.CallOpts, nodeAddress)
 }
 
 // GetNode is a free data retrieval call binding the contract method 0x9d209048.
 //
-// Solidity: function getNode(address nodeAddress) view returns((address,string,uint8))
+// Solidity: function getNode(address nodeAddress) view returns((address,string,uint8,address))
 func (_RiverRegistryV1 *RiverRegistryV1CallerSession) GetNode(nodeAddress common.Address) (IRiverRegistryBaseNode, error) {
 	return _RiverRegistryV1.Contract.GetNode(&_RiverRegistryV1.CallOpts, nodeAddress)
 }
@@ -484,6 +485,37 @@ func (_RiverRegistryV1 *RiverRegistryV1CallerSession) GetStreamWithGenesis(strea
 	return _RiverRegistryV1.Contract.GetStreamWithGenesis(&_RiverRegistryV1.CallOpts, streamId)
 }
 
+// GetStreamsOnNode is a free data retrieval call binding the contract method 0x32705ac4.
+//
+// Solidity: function getStreamsOnNode(address nodeAddress) view returns((bytes32,(bytes32,uint64,uint64,uint64,uint64,address[]))[])
+func (_RiverRegistryV1 *RiverRegistryV1Caller) GetStreamsOnNode(opts *bind.CallOpts, nodeAddress common.Address) ([]IRiverRegistryBaseStreamWithId, error) {
+	var out []interface{}
+	err := _RiverRegistryV1.contract.Call(opts, &out, "getStreamsOnNode", nodeAddress)
+
+	if err != nil {
+		return *new([]IRiverRegistryBaseStreamWithId), err
+	}
+
+	out0 := *abi.ConvertType(out[0], new([]IRiverRegistryBaseStreamWithId)).(*[]IRiverRegistryBaseStreamWithId)
+
+	return out0, err
+
+}
+
+// GetStreamsOnNode is a free data retrieval call binding the contract method 0x32705ac4.
+//
+// Solidity: function getStreamsOnNode(address nodeAddress) view returns((bytes32,(bytes32,uint64,uint64,uint64,uint64,address[]))[])
+func (_RiverRegistryV1 *RiverRegistryV1Session) GetStreamsOnNode(nodeAddress common.Address) ([]IRiverRegistryBaseStreamWithId, error) {
+	return _RiverRegistryV1.Contract.GetStreamsOnNode(&_RiverRegistryV1.CallOpts, nodeAddress)
+}
+
+// GetStreamsOnNode is a free data retrieval call binding the contract method 0x32705ac4.
+//
+// Solidity: function getStreamsOnNode(address nodeAddress) view returns((bytes32,(bytes32,uint64,uint64,uint64,uint64,address[]))[])
+func (_RiverRegistryV1 *RiverRegistryV1CallerSession) GetStreamsOnNode(nodeAddress common.Address) ([]IRiverRegistryBaseStreamWithId, error) {
+	return _RiverRegistryV1.Contract.GetStreamsOnNode(&_RiverRegistryV1.CallOpts, nodeAddress)
+}
+
 // IsOperator is a free data retrieval call binding the contract method 0x6d70f7ae.
 //
 // Solidity: function isOperator(address operator) view returns(bool)
@@ -578,25 +610,46 @@ func (_RiverRegistryV1 *RiverRegistryV1TransactorSession) PlaceStreamOnNode(stre
 	return _RiverRegistryV1.Contract.PlaceStreamOnNode(&_RiverRegistryV1.TransactOpts, streamId, nodeAddress)
 }
 
-// RegisterNode is a paid mutator transaction binding the contract method 0xbb9b342d.
+// RegisterNode is a paid mutator transaction binding the contract method 0xeecc66f4.
 //
-// Solidity: function registerNode(address nodeAddress, string url) returns()
-func (_RiverRegistryV1 *RiverRegistryV1Transactor) RegisterNode(opts *bind.TransactOpts, nodeAddress common.Address, url string) (*types.Transaction, error) {
-	return _RiverRegistryV1.contract.Transact(opts, "registerNode", nodeAddress, url)
+// Solidity: function registerNode(address nodeAddress, string url, uint8 status) returns()
+func (_RiverRegistryV1 *RiverRegistryV1Transactor) RegisterNode(opts *bind.TransactOpts, nodeAddress common.Address, url string, status uint8) (*types.Transaction, error) {
+	return _RiverRegistryV1.contract.Transact(opts, "registerNode", nodeAddress, url, status)
 }
 
-// RegisterNode is a paid mutator transaction binding the contract method 0xbb9b342d.
+// RegisterNode is a paid mutator transaction binding the contract method 0xeecc66f4.
 //
-// Solidity: function registerNode(address nodeAddress, string url) returns()
-func (_RiverRegistryV1 *RiverRegistryV1Session) RegisterNode(nodeAddress common.Address, url string) (*types.Transaction, error) {
-	return _RiverRegistryV1.Contract.RegisterNode(&_RiverRegistryV1.TransactOpts, nodeAddress, url)
+// Solidity: function registerNode(address nodeAddress, string url, uint8 status) returns()
+func (_RiverRegistryV1 *RiverRegistryV1Session) RegisterNode(nodeAddress common.Address, url string, status uint8) (*types.Transaction, error) {
+	return _RiverRegistryV1.Contract.RegisterNode(&_RiverRegistryV1.TransactOpts, nodeAddress, url, status)
 }
 
-// RegisterNode is a paid mutator transaction binding the contract method 0xbb9b342d.
+// RegisterNode is a paid mutator transaction binding the contract method 0xeecc66f4.
 //
-// Solidity: function registerNode(address nodeAddress, string url) returns()
-func (_RiverRegistryV1 *RiverRegistryV1TransactorSession) RegisterNode(nodeAddress common.Address, url string) (*types.Transaction, error) {
-	return _RiverRegistryV1.Contract.RegisterNode(&_RiverRegistryV1.TransactOpts, nodeAddress, url)
+// Solidity: function registerNode(address nodeAddress, string url, uint8 status) returns()
+func (_RiverRegistryV1 *RiverRegistryV1TransactorSession) RegisterNode(nodeAddress common.Address, url string, status uint8) (*types.Transaction, error) {
+	return _RiverRegistryV1.Contract.RegisterNode(&_RiverRegistryV1.TransactOpts, nodeAddress, url, status)
+}
+
+// RemoveNode is a paid mutator transaction binding the contract method 0xb2b99ec9.
+//
+// Solidity: function removeNode(address nodeAddress) returns()
+func (_RiverRegistryV1 *RiverRegistryV1Transactor) RemoveNode(opts *bind.TransactOpts, nodeAddress common.Address) (*types.Transaction, error) {
+	return _RiverRegistryV1.contract.Transact(opts, "removeNode", nodeAddress)
+}
+
+// RemoveNode is a paid mutator transaction binding the contract method 0xb2b99ec9.
+//
+// Solidity: function removeNode(address nodeAddress) returns()
+func (_RiverRegistryV1 *RiverRegistryV1Session) RemoveNode(nodeAddress common.Address) (*types.Transaction, error) {
+	return _RiverRegistryV1.Contract.RemoveNode(&_RiverRegistryV1.TransactOpts, nodeAddress)
+}
+
+// RemoveNode is a paid mutator transaction binding the contract method 0xb2b99ec9.
+//
+// Solidity: function removeNode(address nodeAddress) returns()
+func (_RiverRegistryV1 *RiverRegistryV1TransactorSession) RemoveNode(nodeAddress common.Address) (*types.Transaction, error) {
+	return _RiverRegistryV1.Contract.RemoveNode(&_RiverRegistryV1.TransactOpts, nodeAddress)
 }
 
 // RemoveOperator is a paid mutator transaction binding the contract method 0xac8a584a.
@@ -660,6 +713,48 @@ func (_RiverRegistryV1 *RiverRegistryV1Session) SetStreamLastMiniblock(streamId 
 // Solidity: function setStreamLastMiniblock(bytes32 streamId, bytes32 lastMiniblockHash, uint64 lastMiniblockNum, bool isSealed) returns()
 func (_RiverRegistryV1 *RiverRegistryV1TransactorSession) SetStreamLastMiniblock(streamId [32]byte, lastMiniblockHash [32]byte, lastMiniblockNum uint64, isSealed bool) (*types.Transaction, error) {
 	return _RiverRegistryV1.Contract.SetStreamLastMiniblock(&_RiverRegistryV1.TransactOpts, streamId, lastMiniblockHash, lastMiniblockNum, isSealed)
+}
+
+// UpdateNodeStatus is a paid mutator transaction binding the contract method 0x581f8b9b.
+//
+// Solidity: function updateNodeStatus(address nodeAddress, uint8 status) returns()
+func (_RiverRegistryV1 *RiverRegistryV1Transactor) UpdateNodeStatus(opts *bind.TransactOpts, nodeAddress common.Address, status uint8) (*types.Transaction, error) {
+	return _RiverRegistryV1.contract.Transact(opts, "updateNodeStatus", nodeAddress, status)
+}
+
+// UpdateNodeStatus is a paid mutator transaction binding the contract method 0x581f8b9b.
+//
+// Solidity: function updateNodeStatus(address nodeAddress, uint8 status) returns()
+func (_RiverRegistryV1 *RiverRegistryV1Session) UpdateNodeStatus(nodeAddress common.Address, status uint8) (*types.Transaction, error) {
+	return _RiverRegistryV1.Contract.UpdateNodeStatus(&_RiverRegistryV1.TransactOpts, nodeAddress, status)
+}
+
+// UpdateNodeStatus is a paid mutator transaction binding the contract method 0x581f8b9b.
+//
+// Solidity: function updateNodeStatus(address nodeAddress, uint8 status) returns()
+func (_RiverRegistryV1 *RiverRegistryV1TransactorSession) UpdateNodeStatus(nodeAddress common.Address, status uint8) (*types.Transaction, error) {
+	return _RiverRegistryV1.Contract.UpdateNodeStatus(&_RiverRegistryV1.TransactOpts, nodeAddress, status)
+}
+
+// UpdateNodeUrl is a paid mutator transaction binding the contract method 0x7e4465e7.
+//
+// Solidity: function updateNodeUrl(address nodeAddress, string url) returns()
+func (_RiverRegistryV1 *RiverRegistryV1Transactor) UpdateNodeUrl(opts *bind.TransactOpts, nodeAddress common.Address, url string) (*types.Transaction, error) {
+	return _RiverRegistryV1.contract.Transact(opts, "updateNodeUrl", nodeAddress, url)
+}
+
+// UpdateNodeUrl is a paid mutator transaction binding the contract method 0x7e4465e7.
+//
+// Solidity: function updateNodeUrl(address nodeAddress, string url) returns()
+func (_RiverRegistryV1 *RiverRegistryV1Session) UpdateNodeUrl(nodeAddress common.Address, url string) (*types.Transaction, error) {
+	return _RiverRegistryV1.Contract.UpdateNodeUrl(&_RiverRegistryV1.TransactOpts, nodeAddress, url)
+}
+
+// UpdateNodeUrl is a paid mutator transaction binding the contract method 0x7e4465e7.
+//
+// Solidity: function updateNodeUrl(address nodeAddress, string url) returns()
+func (_RiverRegistryV1 *RiverRegistryV1TransactorSession) UpdateNodeUrl(nodeAddress common.Address, url string) (*types.Transaction, error) {
+	return _RiverRegistryV1.Contract.UpdateNodeUrl(&_RiverRegistryV1.TransactOpts, nodeAddress, url)
 }
 
 // RiverRegistryV1NodeAddedIterator is returned from FilterNodeAdded and is used to iterate over the raw logs and unpacked data for NodeAdded events raised by the RiverRegistryV1 contract.
@@ -802,6 +897,150 @@ func (_RiverRegistryV1 *RiverRegistryV1Filterer) WatchNodeAdded(opts *bind.Watch
 func (_RiverRegistryV1 *RiverRegistryV1Filterer) ParseNodeAdded(log types.Log) (*RiverRegistryV1NodeAdded, error) {
 	event := new(RiverRegistryV1NodeAdded)
 	if err := _RiverRegistryV1.contract.UnpackLog(event, "NodeAdded", log); err != nil {
+		return nil, err
+	}
+	event.Raw = log
+	return event, nil
+}
+
+// RiverRegistryV1NodeRemovedIterator is returned from FilterNodeRemoved and is used to iterate over the raw logs and unpacked data for NodeRemoved events raised by the RiverRegistryV1 contract.
+type RiverRegistryV1NodeRemovedIterator struct {
+	Event *RiverRegistryV1NodeRemoved // Event containing the contract specifics and raw log
+
+	contract *bind.BoundContract // Generic contract to use for unpacking event data
+	event    string              // Event name to use for unpacking event data
+
+	logs chan types.Log        // Log channel receiving the found contract events
+	sub  ethereum.Subscription // Subscription for errors, completion and termination
+	done bool                  // Whether the subscription completed delivering logs
+	fail error                 // Occurred error to stop iteration
+}
+
+// Next advances the iterator to the subsequent event, returning whether there
+// are any more events found. In case of a retrieval or parsing error, false is
+// returned and Error() can be queried for the exact failure.
+func (it *RiverRegistryV1NodeRemovedIterator) Next() bool {
+	// If the iterator failed, stop iterating
+	if it.fail != nil {
+		return false
+	}
+	// If the iterator completed, deliver directly whatever's available
+	if it.done {
+		select {
+		case log := <-it.logs:
+			it.Event = new(RiverRegistryV1NodeRemoved)
+			if err := it.contract.UnpackLog(it.Event, it.event, log); err != nil {
+				it.fail = err
+				return false
+			}
+			it.Event.Raw = log
+			return true
+
+		default:
+			return false
+		}
+	}
+	// Iterator still in progress, wait for either a data or an error event
+	select {
+	case log := <-it.logs:
+		it.Event = new(RiverRegistryV1NodeRemoved)
+		if err := it.contract.UnpackLog(it.Event, it.event, log); err != nil {
+			it.fail = err
+			return false
+		}
+		it.Event.Raw = log
+		return true
+
+	case err := <-it.sub.Err():
+		it.done = true
+		it.fail = err
+		return it.Next()
+	}
+}
+
+// Error returns any retrieval or parsing error occurred during filtering.
+func (it *RiverRegistryV1NodeRemovedIterator) Error() error {
+	return it.fail
+}
+
+// Close terminates the iteration process, releasing any pending underlying
+// resources.
+func (it *RiverRegistryV1NodeRemovedIterator) Close() error {
+	it.sub.Unsubscribe()
+	return nil
+}
+
+// RiverRegistryV1NodeRemoved represents a NodeRemoved event raised by the RiverRegistryV1 contract.
+type RiverRegistryV1NodeRemoved struct {
+	NodeAddress common.Address
+	Raw         types.Log // Blockchain specific contextual infos
+}
+
+// FilterNodeRemoved is a free log retrieval operation binding the contract event 0xcfc24166db4bb677e857cacabd1541fb2b30645021b27c5130419589b84db52b.
+//
+// Solidity: event NodeRemoved(address indexed nodeAddress)
+func (_RiverRegistryV1 *RiverRegistryV1Filterer) FilterNodeRemoved(opts *bind.FilterOpts, nodeAddress []common.Address) (*RiverRegistryV1NodeRemovedIterator, error) {
+
+	var nodeAddressRule []interface{}
+	for _, nodeAddressItem := range nodeAddress {
+		nodeAddressRule = append(nodeAddressRule, nodeAddressItem)
+	}
+
+	logs, sub, err := _RiverRegistryV1.contract.FilterLogs(opts, "NodeRemoved", nodeAddressRule)
+	if err != nil {
+		return nil, err
+	}
+	return &RiverRegistryV1NodeRemovedIterator{contract: _RiverRegistryV1.contract, event: "NodeRemoved", logs: logs, sub: sub}, nil
+}
+
+// WatchNodeRemoved is a free log subscription operation binding the contract event 0xcfc24166db4bb677e857cacabd1541fb2b30645021b27c5130419589b84db52b.
+//
+// Solidity: event NodeRemoved(address indexed nodeAddress)
+func (_RiverRegistryV1 *RiverRegistryV1Filterer) WatchNodeRemoved(opts *bind.WatchOpts, sink chan<- *RiverRegistryV1NodeRemoved, nodeAddress []common.Address) (event.Subscription, error) {
+
+	var nodeAddressRule []interface{}
+	for _, nodeAddressItem := range nodeAddress {
+		nodeAddressRule = append(nodeAddressRule, nodeAddressItem)
+	}
+
+	logs, sub, err := _RiverRegistryV1.contract.WatchLogs(opts, "NodeRemoved", nodeAddressRule)
+	if err != nil {
+		return nil, err
+	}
+	return event.NewSubscription(func(quit <-chan struct{}) error {
+		defer sub.Unsubscribe()
+		for {
+			select {
+			case log := <-logs:
+				// New log arrived, parse the event and forward to the user
+				event := new(RiverRegistryV1NodeRemoved)
+				if err := _RiverRegistryV1.contract.UnpackLog(event, "NodeRemoved", log); err != nil {
+					return err
+				}
+				event.Raw = log
+
+				select {
+				case sink <- event:
+				case err := <-sub.Err():
+					return err
+				case <-quit:
+					return nil
+				}
+			case err := <-sub.Err():
+				return err
+			case <-quit:
+				return nil
+			}
+		}
+	}), nil
+}
+
+// ParseNodeRemoved is a log parse operation binding the contract event 0xcfc24166db4bb677e857cacabd1541fb2b30645021b27c5130419589b84db52b.
+//
+// Solidity: event NodeRemoved(address indexed nodeAddress)
+func (_RiverRegistryV1 *RiverRegistryV1Filterer) ParseNodeRemoved(log types.Log) (*RiverRegistryV1NodeRemoved, error) {
+	event := new(RiverRegistryV1NodeRemoved)
+	if err := _RiverRegistryV1.contract.UnpackLog(event, "NodeRemoved", log); err != nil {
 		return nil, err
 	}
 	event.Raw = log
@@ -1458,12 +1697,13 @@ type RiverRegistryV1StreamAllocated struct {
 	StreamId             [32]byte
 	Nodes                []common.Address
 	GenesisMiniblockHash [32]byte
+	GenesisMiniblock     []byte
 	Raw                  types.Log // Blockchain specific contextual infos
 }
 
-// FilterStreamAllocated is a free log retrieval operation binding the contract event 0xd79158fa478ef0af48ae6b32b29d29b2a37ee7b0dfcce6005880fd071623b5fb.
+// FilterStreamAllocated is a free log retrieval operation binding the contract event 0x55ef7efc60ef99743e54209752c9a8e047e013917ec91572db75875069dd65bb.
 //
-// Solidity: event StreamAllocated(bytes32 streamId, address[] nodes, bytes32 genesisMiniblockHash)
+// Solidity: event StreamAllocated(bytes32 streamId, address[] nodes, bytes32 genesisMiniblockHash, bytes genesisMiniblock)
 func (_RiverRegistryV1 *RiverRegistryV1Filterer) FilterStreamAllocated(opts *bind.FilterOpts) (*RiverRegistryV1StreamAllocatedIterator, error) {
 
 	logs, sub, err := _RiverRegistryV1.contract.FilterLogs(opts, "StreamAllocated")
@@ -1473,9 +1713,9 @@ func (_RiverRegistryV1 *RiverRegistryV1Filterer) FilterStreamAllocated(opts *bin
 	return &RiverRegistryV1StreamAllocatedIterator{contract: _RiverRegistryV1.contract, event: "StreamAllocated", logs: logs, sub: sub}, nil
 }
 
-// WatchStreamAllocated is a free log subscription operation binding the contract event 0xd79158fa478ef0af48ae6b32b29d29b2a37ee7b0dfcce6005880fd071623b5fb.
+// WatchStreamAllocated is a free log subscription operation binding the contract event 0x55ef7efc60ef99743e54209752c9a8e047e013917ec91572db75875069dd65bb.
 //
-// Solidity: event StreamAllocated(bytes32 streamId, address[] nodes, bytes32 genesisMiniblockHash)
+// Solidity: event StreamAllocated(bytes32 streamId, address[] nodes, bytes32 genesisMiniblockHash, bytes genesisMiniblock)
 func (_RiverRegistryV1 *RiverRegistryV1Filterer) WatchStreamAllocated(opts *bind.WatchOpts, sink chan<- *RiverRegistryV1StreamAllocated) (event.Subscription, error) {
 
 	logs, sub, err := _RiverRegistryV1.contract.WatchLogs(opts, "StreamAllocated")
@@ -1510,9 +1750,9 @@ func (_RiverRegistryV1 *RiverRegistryV1Filterer) WatchStreamAllocated(opts *bind
 	}), nil
 }
 
-// ParseStreamAllocated is a log parse operation binding the contract event 0xd79158fa478ef0af48ae6b32b29d29b2a37ee7b0dfcce6005880fd071623b5fb.
+// ParseStreamAllocated is a log parse operation binding the contract event 0x55ef7efc60ef99743e54209752c9a8e047e013917ec91572db75875069dd65bb.
 //
-// Solidity: event StreamAllocated(bytes32 streamId, address[] nodes, bytes32 genesisMiniblockHash)
+// Solidity: event StreamAllocated(bytes32 streamId, address[] nodes, bytes32 genesisMiniblockHash, bytes genesisMiniblock)
 func (_RiverRegistryV1 *RiverRegistryV1Filterer) ParseStreamAllocated(log types.Log) (*RiverRegistryV1StreamAllocated, error) {
 	event := new(RiverRegistryV1StreamAllocated)
 	if err := _RiverRegistryV1.contract.UnpackLog(event, "StreamAllocated", log); err != nil {

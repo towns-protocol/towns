@@ -17,27 +17,28 @@ contract RiverRegistryHelper is FacetHelper {
   constructor() {
     registry = new RiverRegistry();
 
-    bytes4[] memory selectors_ = new bytes4[](20);
+    bytes4[] memory selectors_ = new bytes4[](21);
+    selectors_[_index++] = RiverRegistry.allocateStream.selector;
     selectors_[_index++] = RiverRegistry.approveOperator.selector;
-    selectors_[_index++] = RiverRegistry.isOperator.selector;
-    selectors_[_index++] = RiverRegistry.removeOperator.selector;
-    selectors_[_index++] = RiverRegistry.registerNode.selector;
-    selectors_[_index++] = RiverRegistry.updateNodeStatus.selector;
-    selectors_[_index++] = RiverRegistry.updateNodeUrl.selector;
-    selectors_[_index++] = RiverRegistry.updateNodeUrlByOperator.selector;
-    selectors_[_index++] = RiverRegistry.getNode.selector;
-    selectors_[_index++] = RiverRegistry.getNodeCount.selector;
     selectors_[_index++] = RiverRegistry.getAllNodeAddresses.selector;
     selectors_[_index++] = RiverRegistry.getAllNodes.selector;
-    selectors_[_index++] = RiverRegistry.allocateStream.selector;
-    selectors_[_index++] = RiverRegistry.getStream.selector;
-    selectors_[_index++] = RiverRegistry.getStreamWithGenesis.selector;
-    selectors_[_index++] = RiverRegistry.setStreamLastMiniblock.selector;
-    selectors_[_index++] = RiverRegistry.placeStreamOnNode.selector;
-    selectors_[_index++] = RiverRegistry.removeStreamFromNode.selector;
-    selectors_[_index++] = RiverRegistry.getStreamCount.selector;
     selectors_[_index++] = RiverRegistry.getAllStreamIds.selector;
     selectors_[_index++] = RiverRegistry.getAllStreams.selector;
+    selectors_[_index++] = RiverRegistry.getNode.selector;
+    selectors_[_index++] = RiverRegistry.getNodeCount.selector;
+    selectors_[_index++] = RiverRegistry.getStream.selector;
+    selectors_[_index++] = RiverRegistry.getStreamCount.selector;
+    selectors_[_index++] = RiverRegistry.getStreamWithGenesis.selector;
+    selectors_[_index++] = RiverRegistry.getStreamsOnNode.selector;
+    selectors_[_index++] = RiverRegistry.isOperator.selector;
+    selectors_[_index++] = RiverRegistry.placeStreamOnNode.selector;
+    selectors_[_index++] = RiverRegistry.registerNode.selector;
+    selectors_[_index++] = RiverRegistry.removeNode.selector;
+    selectors_[_index++] = RiverRegistry.removeOperator.selector;
+    selectors_[_index++] = RiverRegistry.removeStreamFromNode.selector;
+    selectors_[_index++] = RiverRegistry.setStreamLastMiniblock.selector;
+    selectors_[_index++] = RiverRegistry.updateNodeStatus.selector;
+    selectors_[_index++] = RiverRegistry.updateNodeUrl.selector;
 
     addSelectors(selectors_);
   }
