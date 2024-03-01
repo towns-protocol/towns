@@ -91,7 +91,8 @@ func TestBlockchain(t *testing.T) {
 	require.NoError(err)
 	assert.Equal(secondBlockNum, currentBlockNum)
 
-	streamId := StreamId{0x01, 0x02, 0x03}
+	streamId, err := StreamIdFromBytes([]byte{0xa1, 0x02, 0x03})
+	require.NoError(err)
 	addrs := []common.Address{nodeAddr1, nodeAddr2}
 
 	genesisHash := common.HexToHash("0x123")
@@ -100,7 +101,7 @@ func TestBlockchain(t *testing.T) {
 	tx1, err = bc1.TxRunner.Submit(
 		ctx,
 		func(opts *bind.TransactOpts) (*types.Transaction, error) {
-			return tc.RiverRegistry.AllocateStream(opts, streamId, addrs, genesisHash, genesisMiniblock)
+			return tc.RiverRegistry.AllocateStream(opts, streamId.ByteArray(), addrs, genesisHash, genesisMiniblock)
 		},
 	)
 	require.NoError(err)
@@ -110,7 +111,7 @@ func TestBlockchain(t *testing.T) {
 	_, err = WaitMined(ctx, bc1.Client, tx1.Hash(), time.Millisecond, time.Second*10)
 	require.NoError(err)
 
-	stream, mbHash, mb, err := tc.RiverRegistry.GetStreamWithGenesis(nil, streamId)
+	stream, mbHash, mb, err := tc.RiverRegistry.GetStreamWithGenesis(nil, streamId.ByteArray())
 	require.NoError(err)
 	assert.Equal(addrs, stream.Nodes)
 	assert.Equal(genesisHash, common.Hash(mbHash))
@@ -122,7 +123,7 @@ func TestBlockchain(t *testing.T) {
 	tx1, err = bc1.TxRunner.Submit(
 		ctx,
 		func(opts *bind.TransactOpts) (*types.Transaction, error) {
-			return tc.RiverRegistry.AllocateStream(opts, streamId, addrs, genesisHash, genesisMiniblock)
+			return tc.RiverRegistry.AllocateStream(opts, streamId.ByteArray(), addrs, genesisHash, genesisMiniblock)
 		},
 	)
 	require.Nil(tx1)
@@ -132,7 +133,9 @@ func TestBlockchain(t *testing.T) {
 	tx1, err = bc1.TxRunner.Submit(
 		ctx,
 		func(opts *bind.TransactOpts) (*types.Transaction, error) {
-			return tc.RiverRegistry.AllocateStream(opts, StreamId{0x11, 0x22}, []common.Address{common.HexToAddress("0x123")}, genesisHash, genesisMiniblock)
+			streamId, err := StreamIdFromBytes([]byte{0x10, 0x22, 0x33})
+			require.NoError(err)
+			return tc.RiverRegistry.AllocateStream(opts, streamId.ByteArray(), []common.Address{common.HexToAddress("0x123")}, genesisHash, genesisMiniblock)
 		},
 	)
 	require.Nil(tx1)

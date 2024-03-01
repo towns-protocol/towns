@@ -2,6 +2,7 @@ package events
 
 import (
 	"bytes"
+	"slices"
 	"sort"
 
 	. "github.com/river-build/river/core/node/base"
@@ -121,18 +122,18 @@ func make_SnapshotMembers(iInception IsInceptionPayload, creatorAddress []byte) 
 	switch inception := iInception.(type) {
 	case *UserPayload_Inception, *UserSettingsPayload_Inception, *UserInboxPayload_Inception, *UserDeviceKeyPayload_Inception:
 		// for all user streams, get the address from the stream id
-		userAddress, err := shared.GetUserAddressFromStreamId(iInception.GetStreamId())
+		userAddress, err := shared.GetUserAddressFromStreamIdBytes(iInception.GetStreamId())
 		if err != nil {
 			return nil, err
 		}
 		return &MemberPayload_Snapshot{
-			Joined: addMember(nil, &MemberPayload_Snapshot_Member{
+			Joined: insertMember(nil, &MemberPayload_Snapshot_Member{
 				UserAddress: userAddress.Bytes(),
 			}),
 		}, nil
 	case *DmChannelPayload_Inception:
 		return &MemberPayload_Snapshot{
-			Joined: addMember(nil, &MemberPayload_Snapshot_Member{
+			Joined: insertMember(nil, &MemberPayload_Snapshot_Member{
 				UserAddress: inception.FirstPartyAddress,
 			}, &MemberPayload_Snapshot_Member{
 				UserAddress: inception.SecondPartyAddress,
@@ -140,7 +141,7 @@ func make_SnapshotMembers(iInception IsInceptionPayload, creatorAddress []byte) 
 		}, nil
 	case *MediaPayload_Inception:
 		return &MemberPayload_Snapshot{
-			Joined: addMember(nil, &MemberPayload_Snapshot_Member{
+			Joined: insertMember(nil, &MemberPayload_Snapshot_Member{
 				UserAddress: creatorAddress,
 			}),
 		}, nil
@@ -186,10 +187,7 @@ func update_Snapshot_Space(iSnapshot *Snapshot, spacePayload *SpacePayload, even
 	case *SpacePayload_Inception_:
 		return RiverError(Err_INVALID_ARGUMENT, "cannot update blockheader with inception event")
 	case *SpacePayload_Channel_:
-		if snapshot.SpaceContent.Channels == nil {
-			snapshot.SpaceContent.Channels = make(map[string]*SpacePayload_Channel)
-		}
-		snapshot.SpaceContent.Channels[content.Channel.ChannelId] = content.Channel
+		snapshot.SpaceContent.Channels = insertChannel(snapshot.SpaceContent.Channels, content.Channel)
 		return nil
 	default:
 		return RiverError(Err_INVALID_ARGUMENT, "unknown space payload type %T", spacePayload.Content)
@@ -265,10 +263,7 @@ func update_Snapshot_User(iSnapshot *Snapshot, userPayload *UserPayload) error {
 	case *UserPayload_Inception_:
 		return RiverError(Err_INVALID_ARGUMENT, "cannot update blockheader with inception event")
 	case *UserPayload_UserMembership_:
-		if snapshot.UserContent.Memberships == nil {
-			snapshot.UserContent.Memberships = make(map[string]*UserPayload_UserMembership)
-		}
-		snapshot.UserContent.Memberships[content.UserMembership.StreamId] = content.UserMembership
+		snapshot.UserContent.Memberships = insertUserMembership(snapshot.UserContent.Memberships, content.UserMembership)
 		return nil
 	case *UserPayload_UserMembershipAction_:
 		return nil
@@ -286,10 +281,7 @@ func update_Snapshot_UserSettings(iSnapshot *Snapshot, userSettingsPayload *User
 	case *UserSettingsPayload_Inception_:
 		return RiverError(Err_INVALID_ARGUMENT, "cannot update blockheader with inception event")
 	case *UserSettingsPayload_FullyReadMarkers_:
-		if snapshot.UserSettingsContent.FullyReadMarkers == nil {
-			snapshot.UserSettingsContent.FullyReadMarkers = make(map[string]*UserSettingsPayload_FullyReadMarkers)
-		}
-		snapshot.UserSettingsContent.FullyReadMarkers[content.FullyReadMarkers.ChannelStreamId] = content.FullyReadMarkers
+		snapshot.UserSettingsContent.FullyReadMarkers = insertFullyReadMarker(snapshot.UserSettingsContent.FullyReadMarkers, content.FullyReadMarkers)
 		return nil
 	default:
 		return RiverError(Err_INVALID_ARGUMENT, "unknown user settings payload type %T", userSettingsPayload.Content)
@@ -402,7 +394,7 @@ func update_Snapshot_Member(iSnapshot *Snapshot, memberPayload *MemberPayload, c
 	case *MemberPayload_Membership_:
 		switch content.Membership.Op {
 		case MembershipOp_SO_JOIN:
-			snapshot.Joined = addMember(snapshot.Joined, &MemberPayload_Snapshot_Member{
+			snapshot.Joined = insertMember(snapshot.Joined, &MemberPayload_Snapshot_Member{
 				UserAddress:  content.Membership.UserAddress,
 				MiniblockNum: miniblockNum,
 				EventNum:     eventNum,
@@ -497,48 +489,134 @@ func removeCommon(x, y []string) []string {
 	return result
 }
 
-func findMember(members []*MemberPayload_Snapshot_Member, memberAddress []byte) (*MemberPayload_Snapshot_Member, error) {
-	index := sort.Search(len(members), func(i int) bool {
-		return bytes.Compare(members[i].UserAddress, memberAddress) >= 0
+type SnapshotElement interface{}
+
+func findSorted[T any, K any](elements []*T, key K, cmp func(K, K) int, keyFn func(*T) K) (*T, error) {
+	index, found := slices.BinarySearchFunc(elements, key, func(a *T, b K) int {
+		return cmp(keyFn(a), b)
 	})
-
-	if index < len(members) && bytes.Equal(members[index].UserAddress, memberAddress) {
-		return members[index], nil
+	if found {
+		return elements[index], nil
 	}
+	return nil, RiverError(Err_INVALID_ARGUMENT, "element not found")
+}
 
-	return nil, RiverError(Err_INVALID_ARGUMENT, "member not found")
+func insertSorted[T any, K any](elements []*T, element *T, cmp func(K, K) int, keyFn func(*T) K) []*T {
+	index, found := slices.BinarySearchFunc(elements, keyFn(element), func(a *T, b K) int {
+		return cmp(keyFn(a), b)
+	})
+	if found {
+		elements[index] = element
+	}
+	elements = append(elements, nil)
+	copy(elements[index+1:], elements[index:])
+	elements[index] = element
+	return elements
+}
+
+func removeSorted[T any, K any](elements []*T, key K, cmp func(K, K) int, keyFn func(*T) K) []*T {
+	index, found := slices.BinarySearchFunc(elements, key, func(a *T, b K) int {
+		return cmp(keyFn(a), b)
+	})
+	if found {
+		return append(elements[:index], elements[index+1:]...)
+	}
+	return elements
+}
+
+func findChannel(channels []*SpacePayload_Channel, channelId []byte) (*SpacePayload_Channel, error) {
+	return findSorted(
+		channels,
+		channelId,
+		bytes.Compare,
+		func(channel *SpacePayload_Channel) []byte {
+			return channel.ChannelId
+		},
+	)
+}
+
+func insertChannel(channels []*SpacePayload_Channel, newChannels ...*SpacePayload_Channel) []*SpacePayload_Channel {
+	for _, channel := range newChannels {
+		channels = insertSorted(
+			channels,
+			channel,
+			bytes.Compare,
+			func(channel *SpacePayload_Channel) []byte {
+				return channel.ChannelId
+			},
+		)
+	}
+	return channels
+}
+
+func findMember(members []*MemberPayload_Snapshot_Member, memberAddress []byte) (*MemberPayload_Snapshot_Member, error) {
+	return findSorted(
+		members,
+		memberAddress,
+		bytes.Compare,
+		func(member *MemberPayload_Snapshot_Member) []byte {
+			return member.UserAddress
+		},
+	)
 }
 
 func removeMember(members []*MemberPayload_Snapshot_Member, memberAddress []byte) []*MemberPayload_Snapshot_Member {
-	index := sort.Search(len(members), func(i int) bool {
-		return bytes.Compare(members[i].UserAddress, memberAddress) >= 0
-	})
+	return removeSorted(
+		members,
+		memberAddress,
+		bytes.Compare,
+		func(member *MemberPayload_Snapshot_Member) []byte {
+			return member.UserAddress
+		},
+	)
+}
 
-	// Check if the element is found at the index.
-	if index < len(members) && bytes.Equal(members[index].UserAddress, memberAddress) {
-		// Remove the element by slicing.
-		return append(members[:index], members[index+1:]...)
+func insertMember(members []*MemberPayload_Snapshot_Member, newMembers ...*MemberPayload_Snapshot_Member) []*MemberPayload_Snapshot_Member {
+	for _, member := range newMembers {
+		members = insertSorted(
+			members,
+			member,
+			bytes.Compare,
+			func(member *MemberPayload_Snapshot_Member) []byte {
+				return member.UserAddress
+			},
+		)
 	}
-
-	// Element not found, return the original slice.
 	return members
 }
 
-func addMember(members []*MemberPayload_Snapshot_Member, newMembers ...*MemberPayload_Snapshot_Member) []*MemberPayload_Snapshot_Member {
-	for _, member := range newMembers {
-		index := sort.Search(len(members), func(i int) bool {
-			return bytes.Compare(members[i].UserAddress, member.UserAddress) >= 0
-		})
+func findUserMembership(memberships []*UserPayload_UserMembership, streamId []byte) (*UserPayload_UserMembership, error) {
+	return findSorted(
+		memberships,
+		streamId,
+		bytes.Compare,
+		func(membership *UserPayload_UserMembership) []byte {
+			return membership.StreamId
+		},
+	)
+}
 
-		// Check if the element is found at the index.
-		if index < len(members) && bytes.Equal(members[index].UserAddress, member.UserAddress) {
-			return members
-		}
-
-		// Insert the element by slicing.
-		members = append(members, nil)
-		copy(members[index+1:], members[index:])
-		members[index] = member
+func insertUserMembership(memberships []*UserPayload_UserMembership, newMemberships ...*UserPayload_UserMembership) []*UserPayload_UserMembership {
+	for _, membership := range newMemberships {
+		memberships = insertSorted(
+			memberships,
+			membership,
+			bytes.Compare,
+			func(membership *UserPayload_UserMembership) []byte {
+				return membership.StreamId
+			},
+		)
 	}
-	return members
+	return memberships
+}
+
+func insertFullyReadMarker(markers []*UserSettingsPayload_FullyReadMarkers, newMarker *UserSettingsPayload_FullyReadMarkers) []*UserSettingsPayload_FullyReadMarkers {
+	return insertSorted(
+		markers,
+		newMarker,
+		bytes.Compare,
+		func(marker *UserSettingsPayload_FullyReadMarkers) []byte {
+			return marker.StreamId
+		},
+	)
 }

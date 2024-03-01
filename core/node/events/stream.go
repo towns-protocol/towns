@@ -1,10 +1,12 @@
 package events
 
 import (
+	"bytes"
 	"context"
 	"sync"
 
 	"github.com/river-build/river/core/node/dlog"
+	"github.com/river-build/river/core/node/shared"
 	"github.com/river-build/river/core/node/storage"
 
 	. "github.com/river-build/river/core/node/base"
@@ -181,9 +183,9 @@ func (s *streamImpl) ApplyMiniblock(ctx context.Context, miniblockHeader *Minibl
 		return err
 	}
 
-	prevSyncCookie := s.view.SyncCookie(s.params.Wallet.AddressStr)
+	prevSyncCookie := s.view.SyncCookie(s.params.Wallet.Address)
 	s.view = newSV
-	newSyncCookie := s.view.SyncCookie(s.params.Wallet.AddressStr)
+	newSyncCookie := s.view.SyncCookie(s.params.Wallet.Address)
 
 	s.notifySubscribers([]*Envelope{miniblockHeaderEvent.Envelope}, newSyncCookie, prevSyncCookie)
 	return nil
@@ -225,7 +227,7 @@ func (s *streamImpl) initFromBlockchain(ctx context.Context) error {
 		return err
 	}
 
-	nodes := NewStreamNodes(record.Nodes, s.params.Wallet.AddressStr)
+	nodes := NewStreamNodes(record.Nodes, s.params.Wallet.Address)
 	if !nodes.IsLocal() {
 		return RiverError(
 			Err_INTERNAL,
@@ -354,9 +356,9 @@ func (s *streamImpl) addEventImpl(ctx context.Context, event *ParsedEvent) error
 	if err != nil {
 		return err
 	}
-	prevSyncCookie := s.view.SyncCookie(s.params.Wallet.AddressStr)
+	prevSyncCookie := s.view.SyncCookie(s.params.Wallet.Address)
 	s.view = newSV
-	newSyncCookie := s.view.SyncCookie(s.params.Wallet.AddressStr)
+	newSyncCookie := s.view.SyncCookie(s.params.Wallet.Address)
 
 	s.notifySubscribers([]*Envelope{event.Envelope}, newSyncCookie, prevSyncCookie)
 
@@ -365,7 +367,7 @@ func (s *streamImpl) addEventImpl(ctx context.Context, event *ParsedEvent) error
 
 func (s *streamImpl) Sub(ctx context.Context, cookie *SyncCookie, receiver SyncResultReceiver) error {
 	log := dlog.FromCtx(ctx)
-	if cookie.NodeAddress != s.params.Wallet.AddressStr {
+	if !bytes.Equal(cookie.NodeAddress, s.params.Wallet.Address.Bytes()) {
 		return RiverError(
 			Err_BAD_SYNC_COOKIE,
 			"cookies is not for this node",
@@ -375,7 +377,11 @@ func (s *streamImpl) Sub(ctx context.Context, cookie *SyncCookie, receiver SyncR
 			s.params.Wallet.AddressStr,
 		)
 	}
-	if cookie.StreamId != s.streamId {
+	streamId, err := shared.StreamIdFromString(s.streamId)
+	if err != nil {
+		return RiverError(Err_INTERNAL, "Stream.Sub: failed to convert streamId to bytes", "streamId", s.streamId, "error", err)
+	}
+	if !streamId.EqualsBytes(cookie.StreamId) {
 		return RiverError(Err_BAD_SYNC_COOKIE, "bad stream id", "cookie.StreamId", cookie.StreamId, "s.streamId", s.streamId)
 	}
 	slot := cookie.MinipoolSlot
@@ -385,7 +391,7 @@ func (s *streamImpl) Sub(ctx context.Context, cookie *SyncCookie, receiver SyncR
 
 	s.mu.Lock()
 	defer s.mu.Unlock()
-	err := s.loadInternal(ctx)
+	err = s.loadInternal(ctx)
 	if err != nil {
 		return err
 	}
@@ -410,7 +416,7 @@ func (s *streamImpl) Sub(ctx context.Context, cookie *SyncCookie, receiver SyncR
 		receiver.OnUpdate(
 			&StreamAndCookie{
 				Events:         envelopes,
-				NextSyncCookie: s.view.SyncCookie(s.params.Wallet.AddressStr),
+				NextSyncCookie: s.view.SyncCookie(s.params.Wallet.Address),
 			},
 		)
 		return nil
@@ -427,7 +433,7 @@ func (s *streamImpl) Sub(ctx context.Context, cookie *SyncCookie, receiver SyncR
 			receiver.OnUpdate(
 				&StreamAndCookie{
 					Events:         s.view.MinipoolEnvelopes(),
-					NextSyncCookie: s.view.SyncCookie(s.params.Wallet.AddressStr),
+					NextSyncCookie: s.view.SyncCookie(s.params.Wallet.Address),
 					Miniblocks:     s.view.MiniblocksFromLastSnapshot(),
 					SyncReset:      true,
 				},
@@ -449,7 +455,7 @@ func (s *streamImpl) Sub(ctx context.Context, cookie *SyncCookie, receiver SyncR
 		receiver.OnUpdate(
 			&StreamAndCookie{
 				Events:         envelopes,
-				NextSyncCookie: s.view.SyncCookie(s.params.Wallet.AddressStr),
+				NextSyncCookie: s.view.SyncCookie(s.params.Wallet.Address),
 			},
 		)
 		return nil

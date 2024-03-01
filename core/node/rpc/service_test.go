@@ -1,6 +1,7 @@
 package rpc_test
 
 import (
+	"bytes"
 	"context"
 	"crypto/tls"
 	"fmt"
@@ -64,11 +65,15 @@ func createUserDeviceKeyStream(
 	wallet *crypto.Wallet,
 	client protocolconnect.StreamServiceClient,
 ) (*protocol.SyncCookie, []byte, error) {
-	userDeviceKeyStreamId := shared.UserDeviceKeyStreamIdFromAddress(wallet.Address)
+	userDeviceKeyStreamIdStr := shared.UserDeviceKeyStreamIdFromAddress(wallet.Address)
+	userDeviceKeyStreamId, err := shared.StreamIdFromString(userDeviceKeyStreamIdStr)
+	if err != nil {
+		return nil, nil, err
+	}
 	inception, err := events.MakeEnvelopeWithPayload(
 		wallet,
 		events.Make_UserDeviceKeyPayload_Inception(
-			userDeviceKeyStreamId,
+			userDeviceKeyStreamId.String(),
 			nil,
 		),
 		nil,
@@ -78,7 +83,7 @@ func createUserDeviceKeyStream(
 	}
 	res, err := client.CreateStream(ctx, connect.NewRequest(&protocol.CreateStreamRequest{
 		Events:   []*protocol.Envelope{inception},
-		StreamId: userDeviceKeyStreamId,
+		StreamId: userDeviceKeyStreamId.Bytes(),
 	}))
 	if err != nil {
 		return nil, nil, err
@@ -113,9 +118,10 @@ func createUserWithMismatchedId(
 	if err != nil {
 		return nil, nil, err
 	}
+	badId := testutils.StreamIdFromString(shared.STREAM_CHANNEL_PREFIX + "baad1d")
 	res, err := client.CreateStream(ctx, connect.NewRequest(&protocol.CreateStreamRequest{
 		Events:   []*protocol.Envelope{inception},
-		StreamId: "BAD_ID",
+		StreamId: badId.Bytes(),
 	}))
 	if err != nil {
 		return nil, nil, err
@@ -128,14 +134,15 @@ func createUser(
 	wallet *crypto.Wallet,
 	client protocolconnect.StreamServiceClient,
 ) (*protocol.SyncCookie, []byte, error) {
-	userStreamId, err := shared.UserStreamIdFromAddress(wallet.Address)
+	userStreamIdStr, err := shared.UserStreamIdFromAddress(wallet.Address)
 	if err != nil {
 		return nil, nil, err
 	}
+	userStreamId := testutils.StreamIdFromString(userStreamIdStr)
 	inception, err := events.MakeEnvelopeWithPayload(
 		wallet,
 		events.Make_UserPayload_Inception(
-			userStreamId,
+			userStreamId.String(),
 			nil,
 		),
 		nil,
@@ -145,7 +152,7 @@ func createUser(
 	}
 	res, err := client.CreateStream(ctx, connect.NewRequest(&protocol.CreateStreamRequest{
 		Events:   []*protocol.Envelope{inception},
-		StreamId: userStreamId,
+		StreamId: userStreamId.Bytes(),
 	}))
 	if err != nil {
 		return nil, nil, err
@@ -189,7 +196,7 @@ func createSpace(
 
 	resspace, err := client.CreateStream(ctx, connect.NewRequest(&protocol.CreateStreamRequest{
 		Events:   []*protocol.Envelope{space, joinSpace},
-		StreamId: spaceStreamId,
+		StreamId: testutils.StreamIdStringToBytes(spaceStreamId),
 	},
 	))
 	if err != nil {
@@ -240,7 +247,7 @@ func createChannel(
 	}
 	reschannel, err := client.CreateStream(ctx, connect.NewRequest(&protocol.CreateStreamRequest{
 		Events:   []*protocol.Envelope{channel, joinChannel},
-		StreamId: channelStreamId,
+		StreamId: testutils.StreamIdStringToBytes(channelStreamId),
 	},
 	))
 	if err != nil {
@@ -363,7 +370,7 @@ func TestMethods(t *testing.T) {
 
 	// if optional is true, stream should be nil instead of throwing an error
 	resp, err := client.GetStream(ctx, connect.NewRequest(&protocol.GetStreamRequest{
-		StreamId: userStreamId,
+		StreamId: testutils.StreamIdStringToBytes(userStreamId),
 		Optional: true,
 	}))
 	require.NoError(t, err)
@@ -371,7 +378,7 @@ func TestMethods(t *testing.T) {
 
 	// if optional is false, error should be thrown
 	_, err = client.GetStream(ctx, connect.NewRequest(&protocol.GetStreamRequest{
-		StreamId: userStreamId,
+		StreamId: testutils.StreamIdStringToBytes(userStreamId),
 	}))
 	require.Error(t, err)
 
@@ -385,7 +392,7 @@ func TestMethods(t *testing.T) {
 
 	// get stream optional should now return not nil
 	resp, err = client.GetStream(ctx, connect.NewRequest(&protocol.GetStreamRequest{
-		StreamId: userStreamId,
+		StreamId: testutils.StreamIdStringToBytes(userStreamId),
 		Optional: true,
 	}))
 	require.NoError(t, err)
@@ -464,7 +471,7 @@ func TestMethods(t *testing.T) {
 		ctx,
 		connect.NewRequest(
 			&protocol.AddEventRequest{
-				StreamId: channelId,
+				StreamId: testutils.StreamIdStringToBytes(channelId),
 				Event:    message,
 			},
 		),
@@ -480,7 +487,7 @@ func TestMethods(t *testing.T) {
 	require.NoError(t, err)
 
 	_, err = client.GetMiniblocks(ctx, connect.NewRequest(&protocol.GetMiniblocksRequest{
-		StreamId:      channelId,
+		StreamId:      testutils.StreamIdStringToBytes(channelId),
 		FromInclusive: 0,
 		ToExclusive:   1,
 	}))
@@ -588,7 +595,7 @@ func TestRiverDeviceId(t *testing.T) {
 		ctx,
 		connect.NewRequest(
 			&protocol.AddEventRequest{
-				StreamId: channelId,
+				StreamId: testutils.StreamIdStringToBytes(channelId),
 				Event:    msg,
 			},
 		),
@@ -599,7 +606,7 @@ func TestRiverDeviceId(t *testing.T) {
 		ctx,
 		connect.NewRequest(
 			&protocol.AddEventRequest{
-				StreamId: channelId,
+				StreamId: testutils.StreamIdStringToBytes(channelId),
 				Event:    msg,
 			},
 		),
@@ -662,7 +669,7 @@ func TestSyncStreams(t *testing.T) {
 		ctx,
 		connect.NewRequest(
 			&protocol.AddEventRequest{
-				StreamId: channelId,
+				StreamId: testutils.StreamIdStringToBytes(channelId),
 				Event:    message,
 			},
 		),
@@ -767,7 +774,7 @@ func TestAddStreamsToSync(t *testing.T) {
 		ctx,
 		connect.NewRequest(
 			&protocol.AddEventRequest{
-				StreamId: channelId,
+				StreamId: testutils.StreamIdStringToBytes(channelId),
 				Event:    message,
 			},
 		),
@@ -874,7 +881,7 @@ func TestRemoveStreamsFromSync(t *testing.T) {
 		ctx,
 		connect.NewRequest(
 			&protocol.AddEventRequest{
-				StreamId: channelId,
+				StreamId: testutils.StreamIdStringToBytes(channelId),
 				Event:    message1,
 			},
 		),
@@ -926,7 +933,7 @@ OuterLoop:
 		connect.NewRequest(
 			&protocol.RemoveStreamFromSyncRequest{
 				SyncId:   syncId,
-				StreamId: channelId,
+				StreamId: testutils.StreamIdStringToBytes(channelId),
 			},
 		),
 	)
@@ -943,7 +950,7 @@ OuterLoop:
 		ctx,
 		connect.NewRequest(
 			&protocol.AddEventRequest{
-				StreamId: channelId,
+				StreamId: testutils.StreamIdStringToBytes(channelId),
 				Event:    message2,
 			},
 		),
@@ -1026,7 +1033,7 @@ func DisableTestManyUsers(t *testing.T) {
 			require.NoError(t, err)
 
 			userBlockHash, err := client.GetLastMiniblockHash(ctx, connect.NewRequest(&protocol.GetLastMiniblockHashRequest{
-				StreamId: userStreamId,
+				StreamId: testutils.StreamIdStringToBytes(userStreamId),
 			}))
 			require.NoError(t, err)
 
@@ -1042,7 +1049,7 @@ func DisableTestManyUsers(t *testing.T) {
 
 			require.NoError(t, err)
 			_, err = client.AddEvent(ctx, connect.NewRequest(&protocol.AddEventRequest{
-				StreamId: userStreamId,
+				StreamId: testutils.StreamIdStringToBytes(userStreamId),
 				Event:    userJoin,
 			},
 			))
@@ -1056,7 +1063,7 @@ func DisableTestManyUsers(t *testing.T) {
 			require.NoError(t, err)
 
 			_, err = client.AddEvent(ctx, connect.NewRequest(&protocol.AddEventRequest{
-				StreamId: fmt.Sprintf("channel-%d", j),
+				StreamId: testutils.StreamIdStringToBytes(fmt.Sprintf("channel-%d", j)),
 				Event:    message,
 			},
 			))
@@ -1087,7 +1094,7 @@ func DisableTestManyUsers(t *testing.T) {
 			require.Equal(t, len(streams[i].Events), (totalUsers-1)*2)
 
 			for syncPosIdx := range channels {
-				if channels[syncPosIdx].StreamId == streams[i].NextSyncCookie.StreamId {
+				if bytes.Equal(channels[syncPosIdx].StreamId, streams[i].NextSyncCookie.StreamId) {
 					channels[syncPosIdx] = streams[i].NextSyncCookie
 				}
 			}
@@ -1124,7 +1131,7 @@ func DisableTestManyUsers(t *testing.T) {
 					require.NoError(t, err)
 
 					_, err = client.AddEvent(ctx, connect.NewRequest(&protocol.AddEventRequest{
-						StreamId: fmt.Sprintf("channel-%d", channel),
+						StreamId: testutils.StreamIdStringToBytes(fmt.Sprintf("channel-%d", channel)),
 						Event:    message,
 					},
 					))
@@ -1157,7 +1164,7 @@ func DisableTestManyUsers(t *testing.T) {
 			if msg.Stream != nil {
 				for syncPosStrem := range channels {
 					if channels[syncPosStrem] != nil {
-						if channels[syncPosStrem].StreamId == msg.Stream.NextSyncCookie.StreamId {
+						if bytes.Equal(channels[syncPosStrem].StreamId, msg.Stream.NextSyncCookie.StreamId) {
 							channels[syncPosStrem] = msg.Stream.NextSyncCookie
 						}
 					}

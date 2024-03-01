@@ -4,6 +4,7 @@ import (
 	"context"
 	"hash/fnv"
 
+	"github.com/ethereum/go-ethereum/common"
 	. "github.com/river-build/river/core/node/base"
 	. "github.com/river-build/river/core/node/protocol"
 	"github.com/river-build/river/core/node/registries"
@@ -13,11 +14,11 @@ type StreamRegistry interface {
 	// GetStreamInfo: returns nodes, error
 	GetStreamInfo(ctx context.Context, streamId string) (*StreamNodes, error)
 	// GetStreamInfo: returns nodes, error
-	AllocateStream(ctx context.Context, streamId string, genesisMiniblockHash []byte, genesisMiniblock []byte) ([]string, error)
+	AllocateStream(ctx context.Context, streamId string, genesisMiniblockHash []byte, genesisMiniblock []byte) ([]common.Address, error)
 }
 
 type streamRegistryImpl struct {
-	localNodeAddress string
+	localNodeAddress common.Address
 	nodeRegistry     NodeRegistry
 	replFactor       int
 	contract         *registries.RiverRegistryContract
@@ -25,7 +26,7 @@ type streamRegistryImpl struct {
 
 var _ StreamRegistry = (*streamRegistryImpl)(nil)
 
-func NewStreamRegistry(localNodeAddress string, nodeRegistry NodeRegistry, contract *registries.RiverRegistryContract, replFactor int) *streamRegistryImpl {
+func NewStreamRegistry(localNodeAddress common.Address, nodeRegistry NodeRegistry, contract *registries.RiverRegistryContract, replFactor int) *streamRegistryImpl {
 	if replFactor < 1 {
 		replFactor = 1
 	}
@@ -45,7 +46,7 @@ func (sr *streamRegistryImpl) GetStreamInfo(ctx context.Context, streamId string
 	return NewStreamNodes(ret.Nodes, sr.localNodeAddress), nil
 }
 
-func (sr *streamRegistryImpl) AllocateStream(ctx context.Context, streamId string, genesisMiniblockHash []byte, genesisMiniblock []byte) ([]string, error) {
+func (sr *streamRegistryImpl) AllocateStream(ctx context.Context, streamId string, genesisMiniblockHash []byte, genesisMiniblock []byte) ([]common.Address, error) {
 	addrs, err := chooseStreamNodes(ctx, streamId, sr.nodeRegistry, sr.replFactor)
 	if err != nil {
 		return nil, err
@@ -59,7 +60,7 @@ func (sr *streamRegistryImpl) AllocateStream(ctx context.Context, streamId strin
 	return addrs, nil
 }
 
-func chooseStreamNodes(ctx context.Context, streamId string, nr NodeRegistry, replFactor int) ([]string, error) {
+func chooseStreamNodes(ctx context.Context, streamId string, nr NodeRegistry, replFactor int) ([]common.Address, error) {
 	if replFactor < 1 {
 		replFactor = 1
 	}
@@ -93,7 +94,7 @@ func chooseStreamNodes(ctx context.Context, streamId string, nr NodeRegistry, re
 		indexes = append(indexes, index)
 	}
 
-	addrs := make([]string, 0, len(indexes))
+	addrs := make([]common.Address, 0, len(indexes))
 	for _, i := range indexes {
 		addr, err := nr.GetNodeAddressByIndex(i)
 		if err != nil {

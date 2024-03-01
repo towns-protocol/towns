@@ -18,7 +18,7 @@ type IsSnapshot_Content = isSnapshot_Content
 
 type IsInceptionPayload interface {
 	isInceptionPayload()
-	GetStreamId() string
+	GetStreamId() []byte
 	GetSettings() *StreamSettings
 }
 func (*SpacePayload_Inception) isInceptionPayload() {}

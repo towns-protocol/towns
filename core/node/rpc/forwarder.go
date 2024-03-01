@@ -9,10 +9,11 @@ import (
 	. "github.com/river-build/river/core/node/nodes"
 	. "github.com/river-build/river/core/node/protocol"
 	. "github.com/river-build/river/core/node/protocol/protocolconnect"
+	"github.com/river-build/river/core/node/shared"
 )
 
-func (s *Service) getStubForStream(ctx context.Context, streamId string) (StreamServiceClient, *StreamNodes, error) {
-	nodes, err := s.streamRegistry.GetStreamInfo(ctx, streamId)
+func (s *Service) getStubForStream(ctx context.Context, streamId shared.StreamId) (StreamServiceClient, *StreamNodes, error) {
+	nodes, err := s.streamRegistry.GetStreamInfo(ctx, streamId.String())
 	if err != nil {
 		return nil, nil, err
 	}
@@ -61,7 +62,12 @@ func (s *Service) getStreamImpl(
 	ctx context.Context,
 	req *connect.Request[GetStreamRequest],
 ) (*connect.Response[GetStreamResponse], error) {
-	stub, _, err := s.getStubForStream(ctx, req.Msg.StreamId)
+	streamId, err := shared.StreamIdFromBytes(req.Msg.StreamId)
+	if err != nil {
+		return nil, err
+	}
+
+	stub, _, err := s.getStubForStream(ctx, streamId)
 
 	if err != nil && req.Msg.Optional && AsRiverError(err).Code == Err_NOT_FOUND {
 		return connect.NewResponse(&GetStreamResponse{}), nil
@@ -98,7 +104,12 @@ func (s *Service) getMiniblocksImpl(
 	ctx context.Context,
 	req *connect.Request[GetMiniblocksRequest],
 ) (*connect.Response[GetMiniblocksResponse], error) {
-	stub, _, err := s.getStubForStream(ctx, req.Msg.StreamId)
+	streamId, err := shared.StreamIdFromBytes(req.Msg.StreamId)
+	if err != nil {
+		return nil, err
+	}
+
+	stub, _, err := s.getStubForStream(ctx, streamId)
 	if err != nil {
 		return nil, err
 	}
@@ -132,7 +143,12 @@ func (s *Service) getLastMiniblockHashImpl(
 	ctx context.Context,
 	req *connect.Request[GetLastMiniblockHashRequest],
 ) (*connect.Response[GetLastMiniblockHashResponse], error) {
-	stub, _, err := s.getStubForStream(ctx, req.Msg.StreamId)
+	streamId, err := shared.StreamIdFromBytes(req.Msg.StreamId)
+	if err != nil {
+		return nil, err
+	}
+
+	stub, _, err := s.getStubForStream(ctx, streamId)
 	if err != nil {
 		return nil, err
 	}
@@ -166,9 +182,12 @@ func (s *Service) addEventImpl(
 	ctx context.Context,
 	req *connect.Request[AddEventRequest],
 ) (*connect.Response[AddEventResponse], error) {
-	streamId := req.Msg.StreamId
+	streamId, err := shared.StreamIdFromBytes(req.Msg.StreamId)
+	if err != nil {
+		return nil, err
+	}
 
-	nodes, err := s.streamRegistry.GetStreamInfo(ctx, streamId)
+	nodes, err := s.streamRegistry.GetStreamInfo(ctx, streamId.String())
 	if err != nil {
 		return nil, err
 	}

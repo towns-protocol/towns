@@ -1,10 +1,15 @@
 package shared
 
 import (
+	"fmt"
+	"reflect"
 	"testing"
 
 	"github.com/ethereum/go-ethereum/common"
+	"github.com/river-build/river/core/node/dlog"
+
 	"github.com/stretchr/testify/assert"
+	"github.com/stretchr/testify/require"
 )
 
 func TestValidDMStreamId(t *testing.T) {
@@ -36,10 +41,44 @@ func TestStreamIdFromString(t *testing.T) {
 	assert.NoError(t, err)
 	assert.Equal(t, "a8376ec15fa24a76a18eb980629093cffd559333bb", a)
 
-	var expectedId StreamId
-	expectedId[0] = STREAM_USER_BIN
-	copy(expectedId[1:], addr.Bytes())
-	id, err := StreamIdFromString(a)
-	assert.NoError(t, err)
-	assert.Equal(t, expectedId, id)
+	length, err := streamIdLengthForType(STREAM_USER_BIN)
+	require.NoError(t, err)
+
+	var bytes [21]byte
+	require.Equal(t, length, 21) // hard coded value is 21
+	bytes[0] = STREAM_USER_BIN
+	copy(bytes[1:], addr.Bytes())
+
+	streamIdFromBytes, err := StreamIdFromBytes(bytes[:])
+	require.NoError(t, err)
+	streamIdFromStr, err := StreamIdFromString(a)
+	require.NoError(t, err)
+	assert.Equal(t, a, streamIdFromBytes.String())
+	assert.Equal(t, a, streamIdFromStr.String())
+	assert.Equal(t, streamIdFromBytes, streamIdFromStr)
+}
+
+func TestLogStreamId(t *testing.T) {
+	log := dlog.Log()
+
+	streamId1, err := StreamIdFromString(STREAM_SPACE_PREFIX + "a00000")
+	require.NoError(t, err)
+	log.Info("streamId", "streamId1", streamId1)
+
+	streamId2, err := StreamIdFromBytes([]byte{STREAM_SPACE_BIN, 0x22, 0x33})
+	require.NoError(t, err)
+	log.Info("streamId", "streamId2", streamId2)
+}
+
+func TestReflectStreamId(t *testing.T) {
+	streamId, err := StreamIdFromString(STREAM_SPACE_PREFIX + "a00000")
+	require.NoError(t, err)
+	goStringerType := reflect.TypeOf((*fmt.GoStringer)(nil)).Elem()
+	v := reflect.ValueOf(streamId)
+	assert.True(t, v.IsValid())
+	assert.True(t, v.CanInterface())
+	assert.True(t, v.Type().Implements(goStringerType))
+	i := v.Interface()
+	_, ok := i.(fmt.GoStringer)
+	assert.True(t, ok)
 }

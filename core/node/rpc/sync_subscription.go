@@ -5,10 +5,12 @@ import (
 	"sync"
 
 	"connectrpc.com/connect"
+	"github.com/ethereum/go-ethereum/common"
 	"github.com/river-build/river/core/node/base"
 	"github.com/river-build/river/core/node/dlog"
 	"github.com/river-build/river/core/node/events"
 	"github.com/river-build/river/core/node/protocol"
+	"github.com/river-build/river/core/node/shared"
 
 	"log/slog"
 )
@@ -39,7 +41,7 @@ type syncSubscriptionImpl struct {
 	firstError     error
 	localStreams   map[string]*events.SyncStream // mapping of streamId to local stream
 	remoteStreams  map[string]*syncNode          // mapping of streamId to remote node
-	remoteNodes    map[string]*syncNode          // mapping of node address to remote node
+	remoteNodes    map[common.Address]*syncNode  // mapping of node address to remote node
 	mu             sync.Mutex
 }
 
@@ -60,13 +62,18 @@ func (s *syncSubscriptionImpl) addLocalStream(
 		"streamId",
 		syncCookie.StreamId,
 	)
+	streamId, err := shared.StreamIdFromBytes(syncCookie.StreamId)
+	if err != nil {
+		return err
+	}
 
 	var exists bool
 
 	s.mu.Lock()
+
 	// only add the stream if it doesn't already exist in the subscription
-	if _, exists = s.localStreams[syncCookie.StreamId]; !exists {
-		s.localStreams[syncCookie.StreamId] = stream
+	if _, exists = s.localStreams[streamId.String()]; !exists {
+		s.localStreams[streamId.String()] = stream
 	}
 	s.mu.Unlock()
 
@@ -92,14 +99,14 @@ func (s *syncSubscriptionImpl) addLocalStream(
 }
 
 func (s *syncSubscriptionImpl) removeLocalStream(
-	streamId string,
+	streamId shared.StreamId,
 ) {
 	var stream *events.SyncStream
 
 	s.mu.Lock()
-	if st := s.localStreams[streamId]; st != nil {
+	if st := s.localStreams[streamId.String()]; st != nil {
 		stream = st
-		delete(s.localStreams, streamId)
+		delete(s.localStreams, streamId.String())
 	}
 	s.mu.Unlock()
 
@@ -124,18 +131,23 @@ func (s *syncSubscriptionImpl) addSyncNode(
 ) {
 	s.mu.Lock()
 	defer s.mu.Unlock()
+
 	if _, exists := s.remoteNodes[node.address]; !exists {
 		s.remoteNodes[node.address] = node
 	} else {
 		node = s.remoteNodes[node.address]
 	}
 	for _, cookie := range cookies {
-		s.remoteStreams[cookie.StreamId] = node
+		streamId, err := shared.StreamIdFromBytes(cookie.StreamId)
+		if err != nil {
+			panic(err)
+		}
+		s.remoteStreams[streamId.String()] = node
 	}
 }
 
 func (s *syncSubscriptionImpl) addRemoteNode(
-	address string,
+	address common.Address,
 	node *syncNode,
 ) bool {
 	s.mu.Lock()
@@ -149,15 +161,15 @@ func (s *syncSubscriptionImpl) addRemoteNode(
 }
 
 func (s *syncSubscriptionImpl) getLocalStream(
-	streamId string,
+	streamId shared.StreamId,
 ) *events.SyncStream {
 	s.mu.Lock()
 	defer s.mu.Unlock()
-	return s.localStreams[streamId]
+	return s.localStreams[streamId.String()]
 }
 
 func (s *syncSubscriptionImpl) getRemoteNode(
-	address string,
+	address common.Address,
 ) *syncNode {
 	s.mu.Lock()
 	defer s.mu.Unlock()
@@ -176,21 +188,27 @@ func (s *syncSubscriptionImpl) getRemoteNodes() []*syncNode {
 
 func (s *syncSubscriptionImpl) addRemoteStream(
 	cookie *protocol.SyncCookie,
-) {
+) error {
 	s.mu.Lock()
 	defer s.mu.Unlock()
-	if remote := s.remoteNodes[cookie.NodeAddress]; remote != nil {
-		s.remoteStreams[cookie.StreamId] = remote
+	nodeAddress := common.BytesToAddress(cookie.NodeAddress)
+	if remote := s.remoteNodes[nodeAddress]; remote != nil {
+		streamId, err := shared.StreamIdFromBytes(cookie.StreamId)
+		if err != nil {
+			return err
+		}
+		s.remoteStreams[streamId.String()] = remote
 	}
+	return nil
 }
 
 func (s *syncSubscriptionImpl) removeRemoteStream(
-	streamId string,
+	streamId shared.StreamId,
 ) *syncNode {
 	s.mu.Lock()
 	defer s.mu.Unlock()
-	if remote := s.remoteStreams[streamId]; remote != nil {
-		delete(s.remoteStreams, streamId)
+	if remote := s.remoteStreams[streamId.String()]; remote != nil {
+		delete(s.remoteStreams, streamId.String())
 		return remote
 	}
 	return nil

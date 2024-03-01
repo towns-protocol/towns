@@ -24,3 +24,28 @@ func UserStreamIdFromAddress(address common.Address) string {
 	}
 	return streamId
 }
+
+func StreamIdFromString(s string) shared.StreamId {
+	streamId, err := shared.StreamIdFromString(s)
+	if err != nil {
+		panic(err)
+	}
+	return streamId
+}
+
+func StreamIdFromBytes(b []byte) shared.StreamId {
+	streamId, err := shared.StreamIdFromBytes(b)
+	if err != nil {
+		panic(err)
+	}
+	return streamId
+}
+
+
+func StreamIdStringToBytes(s string) []byte {
+	b, err := shared.StreamIdFromString(s)
+	if err != nil {
+		panic(err)
+	}
+	return b.Bytes()
+}

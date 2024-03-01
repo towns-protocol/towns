@@ -61,7 +61,7 @@ func NewStreamCache(ctx context.Context, params *StreamCacheParams) (*streamCach
 	// TODO: read stream state from storage and schedule required reconciliations.
 
 	for _, stream := range streams {
-		nodes := NewStreamNodes(stream.Nodes, params.Wallet.AddressStr)
+		nodes := NewStreamNodes(stream.Nodes, params.Wallet.Address)
 		if nodes.IsLocal() {
 			s.cache.Store(stream.StreamId, &streamImpl{
 				params:   params,
@@ -91,7 +91,7 @@ func (s *streamCacheImpl) tryLoadStreamRecord(ctx context.Context, streamId stri
 		return nil, nil, RiverError(Err_INTERNAL, "Stream record mismatch", "streamId", streamId, "record", record.StreamId)
 	}
 
-	nodes := NewStreamNodes(record.Nodes, s.params.Wallet.AddressStr)
+	nodes := NewStreamNodes(record.Nodes, s.params.Wallet.Address)
 	if !nodes.IsLocal() {
 		return nil, nil, RiverError(
 			Err_INTERNAL,

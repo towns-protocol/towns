@@ -185,18 +185,18 @@ func StartServer(
 			return nil, err
 		}
 
-		nodeRegistry, err = nodes.LoadNodeRegistry(ctx, registryContract, wallet.AddressStr)
+		nodeRegistry, err = nodes.LoadNodeRegistry(ctx, registryContract, wallet.Address)
 		if err != nil {
 			log.Error("Failed to load node registry", "error", err)
 			return nil, err
 		}
 
-		streamRegistry = nodes.NewStreamRegistry(wallet.AddressStr, nodeRegistry, registryContract, cfg.Stream.ReplicationFactor)
+		streamRegistry = nodes.NewStreamRegistry(wallet.Address, nodeRegistry, registryContract, cfg.Stream.ReplicationFactor)
 
 		log.Info("Using blockchain river registry")
 	} else {
-		nodeRegistry = nodes.MakeSingleNodeRegistry(ctx, wallet.AddressStr)
-		streamRegistry = nodes.NewFakeStreamRegistry(wallet.AddressStr, nodeRegistry, cfg.Stream.ReplicationFactor)
+		nodeRegistry = nodes.MakeSingleNodeRegistry(ctx, wallet.Address)
+		streamRegistry = nodes.NewFakeStreamRegistry(wallet.Address, nodeRegistry, cfg.Stream.ReplicationFactor)
 		riverchain = &crypto.Blockchain{
 			Wallet:       wallet,
 			BlockMonitor: crypto.NewFakeBlockMonitor(ctx, cfg.RiverChain.FakeBlockTimeMs),
