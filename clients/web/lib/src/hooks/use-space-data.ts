@@ -11,6 +11,7 @@ import { useWeb3Context } from '../components/Web3ContextProvider'
 import { useQuery, useQueries, UseQueryResult } from '../query/queryClient'
 import { blockchainKeys } from '../query/query-keys'
 import { isDefined } from '../utils/isDefined'
+import { useSpaceNamesStore } from '../store/use-space-name-store'
 
 const EMPTY_SPACE_INFOS: SpaceInfo[] = []
 
@@ -109,8 +110,21 @@ export function useContractSpaceInfos(client?: CasablancaClient) {
         },
     })
 
+    const spaceInfos = queryData.data.length > 0 ? queryData.data : EMPTY_SPACE_INFOS
+    const { setSpaceNames: setSpaceNamesInLocalStore } = useSpaceNamesStore()
+
+    useEffect(() => {
+        spaceInfos.forEach((spaceInfo) => {
+            const contractSpaceName = spaceInfo?.name ?? ''
+            if (contractSpaceName !== '') {
+                console.log(`setSpaceNamesInLocalStore`, contractSpaceName, spaceInfo)
+                setSpaceNamesInLocalStore(spaceInfo.address, contractSpaceName)
+            }
+        })
+    }, [spaceInfos, queryData.isLoading, setSpaceNamesInLocalStore])
+
     return {
-        data: queryData.data.length > 0 ? queryData.data : EMPTY_SPACE_INFOS,
+        data: spaceInfos,
         isLoading: queryData.isLoading,
     }
 }
@@ -153,6 +167,18 @@ function useSpaceRollup(streamId: string | undefined): SpaceData | undefined {
     const { isLoading, data: spaceInfo, error } = useContractSpaceInfo(streamId ?? '')
     const [space, setSpace] = useState<SpaceData | undefined>(undefined)
     const userStream = useCasablancaStream(casablancaClient?.userStreamId)
+    const { spaceNames: spaceNamesInLocalStore, setSpaceNames: setSpaceNamesInLocalStore } =
+        useSpaceNamesStore()
+
+    useEffect(() => {
+        if (!streamId) {
+            return
+        }
+        const contractSpaceName = spaceInfo?.name ?? ''
+        if (contractSpaceName !== '') {
+            setSpaceNamesInLocalStore(streamId, contractSpaceName)
+        }
+    }, [isLoading, spaceInfo, error, streamId, setSpaceNamesInLocalStore])
 
     useEffect(() => {
         if (!stream || !casablancaClient || !userStream) {
@@ -166,16 +192,15 @@ function useSpaceRollup(streamId: string | undefined): SpaceData | undefined {
         // wrap the update op, we get the channel ids and
         // rollup the space channels into a space
         const update = () => {
+            const spaceName: string = spaceNamesInLocalStore[stream.streamId] ?? ''
             const membership = toMembership(
                 userStream.view.userContent.getMembership(stream.streamId)?.op,
             )
             const channelIds = Array.from(stream.view.spaceContent.spaceChannelsMetadata.keys())
             console.log(
-                `useSpaceRollup: updating space ${stream.streamId} with spaceName ${
-                    spaceInfo?.name ?? ''
-                }`,
+                `useSpaceRollup: updating space ${stream.streamId} with spaceName ${spaceName}`,
             )
-            const newSpace = rollupSpace(stream, membership, channelIds, spaceInfo?.name)
+            const newSpace = rollupSpace(stream, membership, channelIds, spaceName)
             setSpace((prev) => {
                 if (isEqual(prev, newSpace)) {
                     return prev
@@ -208,7 +233,7 @@ function useSpaceRollup(streamId: string | undefined): SpaceData | undefined {
             casablancaClient.off('userStreamMembershipChanged', onStreamUpdated)
             setSpace(undefined)
         }
-    }, [casablancaClient, stream, isLoading, spaceInfo?.name, error, userStream])
+    }, [casablancaClient, stream, userStream, spaceNamesInLocalStore])
     return space
 }
 
