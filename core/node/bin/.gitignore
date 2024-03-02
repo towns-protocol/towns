@@ -1,4 +1,0 @@
-# Contains build artifacts and other files that should not be committed.
-# Ignore all files and subdirectories in this directory.
-*
-!.gitignore

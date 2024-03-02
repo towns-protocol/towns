@@ -55,14 +55,14 @@ fi
 tmux new-session -d -s $SESSION_NAME
 
 # Start contract build in background
-pushd contracts
+pushd river/contracts
 set -a
 . .env.localhost
 set +a
 make build & BUILD_PID=$!
 popd
 
-./core/scripts/launch_storage.sh &
+./river/core/scripts/launch_storage.sh &
 
 # Set the block chains to run with 2 second block times
 # referenced by the start-local scripts
@@ -70,9 +70,9 @@ export RIVER_BLOCK_TIME=2
 
 # Start chains and Postgres in separate panes of the same window
 tmux new-window -t $SESSION_NAME -n 'BlockChains'
-tmux send-keys -t $SESSION_NAME:1 "./scripts/start-local-basechain.sh" C-m
+tmux send-keys -t $SESSION_NAME:1 "./river/scripts/start-local-basechain.sh" C-m
 tmux split-window -v
-tmux send-keys -t $SESSION_NAME:1 "./scripts/start-local-riverchain.sh" C-m
+tmux send-keys -t $SESSION_NAME:1 "./river/scripts/start-local-riverchain.sh" C-m
 
 # Function to wait for a specific port
 wait_for_port() {
@@ -100,8 +100,8 @@ echo "Both Anvil chains and Postgres are now running, deploying contracts"
 wait_for_process "$BUILD_PID" "build"
 
 # In your tmux session, start the deployments in background panes/windows
-tmux new-window -t $SESSION_NAME -n deploy-base './scripts/deploy-base.sh nobuild; tmux wait-for -S deploy-base-done'
-tmux new-window -t $SESSION_NAME -n deploy-river './scripts/deploy-river.sh nobuild; tmux wait-for -S deploy-river-done'
+tmux new-window -t $SESSION_NAME -n deploy-base './river/scripts/deploy-base.sh nobuild; tmux wait-for -S deploy-base-done'
+tmux new-window -t $SESSION_NAME -n deploy-river './river/scripts/deploy-river.sh nobuild; tmux wait-for -S deploy-river-done'
 
 # Now, in your original pane or window, block until the deployments signal they are done
 tmux wait-for deploy-base-done
@@ -111,12 +111,12 @@ echo "STARTED ALL CHAINS AND DEPLOYED ALL CONTRACTS"
 
 
 # Now generate the core server config
-./core/node/run_multi.sh -c -n 10
-./core/node/run_single.sh -c
-./core/node/run_single.sh -c --de
+./river/core/node/run_multi.sh -c -n 10
+./river/core/node/run_single.sh -c
+./river/core/node/run_single.sh -c --de
 
 # Define the base directory for easier reference
-CONFIGS_DIR="./core/node/run_files/"
+CONFIGS_DIR="./river/core/node/run_files/"
 PNW_URL="http://localhost:8787"
 PNW_AUTH_TOKEN="Zm9v"
 
@@ -128,7 +128,7 @@ done
 
 # xchain nodes
 # disabled: https://linear.app/hnt-labs/issue/HNT-4317/create-multish-call-in-the-start-devsh-fails
-./core/xchain/create_multi.sh
+./river/core/xchain/create_multi.sh
 
 # Continue with rest of the script
 echo "Continuing with the rest of the script..."
@@ -138,25 +138,25 @@ yarn install
 # Array of commands from the VS Code tasks
 commands=(
     "watch_lib:cd clients/web/lib && yarn watch"
-    "watch_sdk:cd core/sdk && yarn watch"
-    "watch_encryption:cd core/encryption && yarn watch"
-    "watch_dlog:cd core/dlog && yarn watch"
+    "watch_sdk:cd river/core/sdk && yarn watch"
+    "watch_encryption:cd river/core/encryption && yarn watch"
+    "watch_dlog:cd river/core/dlog && yarn watch"
     "watch_worker:cd servers/workers/worker-common && yarn watch"
-    "watch_proto:cd core/proto && yarn watch"
-    "watch_web3:cd core/web3 && yarn watch"
-    "watch_go:cd core/proto && yarn watch:go"
+    "watch_proto:cd river/core/proto && yarn watch"
+    "watch_web3:cd river/core/web3 && yarn watch"
+    "watch_go:cd river/core/proto && yarn watch:go"
     "app:cd clients/web/app && yarn dev"
     "sample_app:cd clients/web/sample-app && yarn dev"
-    "debug_app:cd core/debug-app && yarn dev"
+    "debug_app:cd river/core/debug-app && yarn dev"
     "worker_unfurl:cd servers/workers/unfurl-worker && yarn dev:local"
     "worker_token:cd servers/workers/token-worker && yarn dev:local"
     "worker_gateway:cd servers/workers/gateway-worker && yarn dev:local"
     "worker_push:cd servers/workers/push-notification-worker && ./scripts/start-local-push-worker.sh"
     "worker_stackup:cd servers/workers/stackup-worker && yarn dev:local"
-    "core_single:sleep 3 && ./core/node/run_single.sh -sc"
-    "core_single_ne:./scripts/wait-for-core.sh && ./core/node/run_single.sh -sc --de"
-    "core:./core/node/run_multi.sh -r"
-    "xchain:./core/xchain/launch_multi.sh"
+    "core_single:sleep 3 && ./river/core/node/run_single.sh -sc"
+    "core_single_ne:./scripts/wait-for-core.sh && ./river/core/node/run_single.sh -sc --de"
+    "core:./river/core/node/run_multi.sh -r"
+    "xchain:./river/core/xchain/launch_multi.sh"
 )
 
 # Create a Tmux window for each command
@@ -179,5 +179,5 @@ is_closed() {
 # Wait for the session to close
 if is_closed ; then
     echo "Session $SESSION_NAME has closed; delete core postgres container and volume"
-    ./core/scripts/stop_storage.sh
+    ./river/core/scripts/stop_storage.sh
 fi

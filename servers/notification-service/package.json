@@ -7,16 +7,16 @@
     "type": "module",
     "scripts": {
         "build": "prisma generate && tsc",
-        "my-node": "node --experimental-specifier-resolution=node --loader ts-node/esm",
-        "dev": "yarn db:local && tsc --watch & yarn my-node --env-file .env.local --watch dist/server.js",
-        "start": "node --experimental-specifier-resolution=node --loader ts-node/esm dist/server.js",
-        "start:local": "yarn my-node --env-file .env.local dist/server.js",
-        "watch": "tsc --watch",
-        "test": "jest",
         "db:generate": "prisma generate",
+        "db:local": "yarn db:generate & yarn db:migrate:local",
         "db:migrate": "prisma migrate deploy",
         "db:migrate:local": "dotenv -e .env.local -- npx prisma migrate deploy",
-        "db:local": "yarn db:generate & yarn db:migrate:local"
+        "dev": "yarn db:local && tsc --watch & yarn my-node --env-file .env.local --watch dist/server.js",
+        "my-node": "node --experimental-specifier-resolution=node --loader ts-node/esm",
+        "start": "node --experimental-specifier-resolution=node --loader ts-node/esm dist/server.js",
+        "start:local": "yarn my-node --env-file .env.local dist/server.js",
+        "test": "jest",
+        "watch": "tsc --watch"
     },
     "dependencies": {
         "@prisma/client": "^5.10.0",

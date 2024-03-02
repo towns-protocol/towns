@@ -1,6 +1,6 @@
 import { vanillaExtractPlugin } from '@vanilla-extract/vite-plugin'
 import react from '@vitejs/plugin-react'
-import { defineConfig } from 'vite'
+import { PluginOption, defineConfig } from 'vite'
 import checker from 'vite-plugin-checker'
 import tsconfigPaths from 'vite-tsconfig-paths'
 import eslintPlugin from 'vite-plugin-eslint'
@@ -8,46 +8,47 @@ import { visualizer } from 'rollup-plugin-visualizer'
 import polyfillNode from 'rollup-plugin-polyfill-node'
 import path from 'path'
 
+const devPlugins: PluginOption[] = [
+    checker({
+        typescript: true,
+        eslint: {
+            lintCommand: 'eslint "./src/**/*.{ts,tsx}"',
+        },
+    }) as PluginOption,
+    visualizer({ filename: 'dist/stats.html', template: 'treemap' }) as PluginOption,
+]
+const prodPlugins: PluginOption[] = []
 // https://vitejs.dev/config/
-export default defineConfig({
-    build: {
-        target: 'esnext',
-        sourcemap: true,
-        rollupOptions: {
-            output: {
-                manualChunks: (id) => {
-                    // This works around a circular dependency issue with the @wagmi package
-                    if (id.includes('@wagmi')) {
-                        return 'wagmi'
-                    } else if (id.includes('lodash')) {
-                        return 'lodash'
-                    }
-                },
-                sourcemapIgnoreList: (relativeSourcePath) => {
-                    // avoid spending memory and cpu cycles on source-mapping node_modules
-                    const normalizedPath = path.normalize(relativeSourcePath)
-                    return normalizedPath.includes('node_modules')
+export default ({ mode }: { mode: string }) =>
+    defineConfig({
+        build: {
+            target: 'esnext',
+            sourcemap: true,
+            rollupOptions: {
+                output: {
+                    manualChunks: (id) => {
+                        // This works around a circular dependency issue with the @wagmi package
+                        if (id.includes('@wagmi')) {
+                            return 'wagmi'
+                        } else if (id.includes('lodash')) {
+                            return 'lodash'
+                        }
+                    },
                 },
             },
+            minify: false, // Ensure esbuild is used for minification
         },
-    },
-    define: {
-        APP_VERSION: JSON.stringify(process.env.npm_package_version),
-    },
-    assetsInclude: ['**/*.png', '**/*.svg'],
-    plugins: [
-        polyfillNode(),
-        react(),
-        tsconfigPaths(),
-        checker({ typescript: true }),
-        eslintPlugin(),
-        vanillaExtractPlugin(),
-        visualizer({ filename: 'dist/stats.html' }),
-    ],
-    server: {
-        port: 3001,
-        hmr: {
-            overlay: false,
+        define: {
+            APP_VERSION: JSON.stringify(process.env.npm_package_version),
         },
-    },
-})
+        assetsInclude: ['**/*.png', '**/*.svg'],
+        plugins: [polyfillNode(), react(), tsconfigPaths(), vanillaExtractPlugin()].concat(
+            mode === 'development' ? devPlugins : prodPlugins,
+        ) as PluginOption[],
+        server: {
+            port: 3001,
+            hmr: {
+                overlay: false,
+            },
+        },
+    })
