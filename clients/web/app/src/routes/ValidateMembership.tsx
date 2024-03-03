@@ -53,7 +53,7 @@ export const ValidateMembership = () => {
     }
 
     // TODO: if we persist react-query data, this will pass even if node provider is down
-    if (!chainSpace) {
+    if (!riverSpace && !chainSpace) {
         return (
             <Box absoluteFill centerContent>
                 <TownNotFoundBox />
