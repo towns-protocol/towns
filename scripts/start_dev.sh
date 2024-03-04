@@ -137,22 +137,13 @@ yarn install
 
 # Array of commands from the VS Code tasks
 commands=(
-    "watch_lib:cd clients/web/lib && yarn watch"
     "watch_sdk:cd core/sdk && yarn watch"
     "watch_encryption:cd core/encryption && yarn watch"
     "watch_dlog:cd core/dlog && yarn watch"
-    "watch_worker:cd servers/workers/worker-common && yarn watch"
     "watch_proto:cd core/proto && yarn watch"
     "watch_web3:cd core/web3 && yarn watch"
     "watch_go:cd core/proto && yarn watch:go"
-    "app:cd clients/web/app && yarn dev"
-    "sample_app:cd clients/web/sample-app && yarn dev"
     "debug_app:cd core/debug-app && yarn dev"
-    "worker_unfurl:cd servers/workers/unfurl-worker && yarn dev:local"
-    "worker_token:cd servers/workers/token-worker && yarn dev:local"
-    "worker_gateway:cd servers/workers/gateway-worker && yarn dev:local"
-    "worker_push:cd servers/workers/push-notification-worker && ./scripts/start-local-push-worker.sh"
-    "worker_stackup:cd servers/workers/stackup-worker && yarn dev:local"
     "core_single:sleep 3 && ./core/node/run_single.sh -sc"
     "core_single_ne:./scripts/wait-for-core.sh && ./core/node/run_single.sh -sc --de"
     "core:./core/node/run_multi.sh -r"
