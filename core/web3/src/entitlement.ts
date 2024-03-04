@@ -205,15 +205,9 @@ export function decodeEntitlementData(
     ) as IRuleEntitlement.RuleDataStruct[]
 }
 export function ruleDataToOperations(data: IRuleEntitlement.RuleDataStruct[]): Operation[] {
-    if (data.length === 0) {
-        return []
-    }
     const decodedOperations: Operation[] = []
 
     const firstData: RuleData = data[0] as RuleData
-    if (firstData.operations === undefined) {
-        return []
-    }
     firstData.operations.forEach((operation) => {
         // eslint-disable-next-line @typescript-eslint/no-unsafe-enum-comparison
         if (operation.opType === OperationType.CHECK) {
@@ -238,11 +232,8 @@ export function ruleDataToOperations(data: IRuleEntitlement.RuleDataStruct[]): O
                 leftOperation: decodedOperations[logicalOperation.leftOperationIndex],
                 rightOperation: decodedOperations[logicalOperation.rightOperationIndex],
             })
-            // eslint-disable-next-line @typescript-eslint/no-unsafe-enum-comparison
-        } else if (operation.opType === OperationType.NONE) {
-            decodedOperations.push(NoopOperation)
         } else {
-            throw new Error(`Unknown logical operation type ${operation.opType}`)
+            throw new Error('Unknown logical operation type')
         }
     })
     return decodedOperations
@@ -474,9 +465,6 @@ export async function evaluateTree(
 }
 
 export function createExternalTokenStruct(addresses: `0x${string}`[]) {
-    if (addresses.length === 0) {
-        return NoopRuleData
-    }
     const defaultChain = addresses.map((address) => ({
         chainId: 1n,
         address: address,
