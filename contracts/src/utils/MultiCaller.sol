@@ -1,5 +1,5 @@
 // SPDX-License-Identifier: Apache-2.0
-pragma solidity 0.8.23;
+pragma solidity ^0.8.24;
 
 /// @title MultiCaller
 /// @notice Enables calling multiple methods in a single call to the contract

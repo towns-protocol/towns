@@ -177,8 +177,11 @@ abstract contract VotesBase is IERC5805, Context, EIP712, Nonces {
 
     address oldDelegate = _delegates(account);
     VotesStorage.layout()._delegation[account] = delegatee;
+
     emit DelegateChanged(account, oldDelegate, delegatee);
     _moveDelegateVotes(oldDelegate, delegatee, _getVotingUnits(account));
+
+    _afterDelegate(account, delegatee);
   }
 
   /**
@@ -258,6 +261,16 @@ abstract contract VotesBase is IERC5805, Context, EIP712, Nonces {
    */
   function _beforeDelegate(
     address signer,
+    address delegatee
+  ) internal virtual {}
+
+  /**
+   * @dev Hook that is called after any delegate operation. This includes {delegate} and {delegateBySig}.
+   * @param account The account that has been delegated.
+   * @param delegatee The account that has been delegated to.
+   */
+  function _afterDelegate(
+    address account,
     address delegatee
   ) internal virtual {}
 }

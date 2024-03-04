@@ -6,7 +6,6 @@ import {IERC20} from "@openzeppelin/contracts/token/ERC20/IERC20.sol";
 import {IERC20Permit} from "@openzeppelin/contracts/token/ERC20/extensions/draft-IERC20Permit.sol";
 import {IERC20Metadata} from "@openzeppelin/contracts/token/ERC20/extensions/IERC20Metadata.sol";
 import {ILockBase} from "contracts/src/tokens/lock/ILock.sol";
-import {IRiverBase} from "contracts/src/tokens/interfaces/IRiverBase.sol";
 import {IOwnableBase} from "contracts/src/diamond/facets/ownable/IERC173.sol";
 
 //libraries
@@ -15,7 +14,7 @@ import {IOwnableBase} from "contracts/src/diamond/facets/ownable/IERC173.sol";
 import {BaseSetup} from "contracts/test/spaces/BaseSetup.sol";
 import {River} from "contracts/src/tokens/river/base/River.sol";
 
-contract RiverBaseTest is BaseSetup, IRiverBase, ILockBase, IOwnableBase {
+contract RiverBaseTest is BaseSetup, ILockBase, IOwnableBase {
   /// @dev `keccak256("Permit(address owner,address spender,uint256 value,uint256 nonce,uint256 deadline)")`.
   bytes32 private constant _PERMIT_TYPEHASH =
     0x6e71edae12b1b97f4d1f60370fef10105fa2faae0126114a169c64845d6126c9;
@@ -100,7 +99,7 @@ contract RiverBaseTest is BaseSetup, IRiverBase, ILockBase, IOwnableBase {
     uint256 amount
   ) external givenCallerHasBridgedTokens(alice, amount) {
     vm.prank(alice);
-    vm.expectRevert(River__DelegateeSameAsCurrent.selector);
+    vm.expectRevert(River.River__DelegateeSameAsCurrent.selector);
     riverFacet.delegate(address(0));
     assertEq(riverFacet.delegates(alice), address(0));
   }
@@ -138,7 +137,7 @@ contract RiverBaseTest is BaseSetup, IRiverBase, ILockBase, IOwnableBase {
     whenCallerDelegatesToASpace(alice)
   {
     vm.prank(alice);
-    vm.expectRevert(River__TransferLockEnabled.selector);
+    vm.expectRevert(River.River__TransferLockEnabled.selector);
     riverFacet.transfer(bob, amount);
   }
 

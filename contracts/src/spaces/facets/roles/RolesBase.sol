@@ -13,7 +13,6 @@ import {Validator} from "contracts/src/utils/Validator.sol";
 import {EntitlementsManagerService} from "contracts/src/spaces/facets/entitlements/EntitlementsManagerService.sol";
 import {ChannelService} from "contracts/src/spaces/facets/channels/ChannelService.sol";
 import {RolesStorage} from "./RolesStorage.sol";
-import "forge-std/console2.sol";
 
 abstract contract RolesBase is IRolesBase {
   using StringSet for StringSet.Set;
@@ -40,8 +39,6 @@ abstract contract RolesBase is IRolesBase {
     for (uint256 i = 0; i < entitlementsLen; ) {
       EntitlementsManagerService.validateEntitlement(entitlements[i].module);
       entitlementAddresses[i] = entitlements[i].module;
-
-      console2.log("entitlements[i].data", i);
 
       // check for empty address or data
       Validator.checkByteLength(entitlements[i].data);

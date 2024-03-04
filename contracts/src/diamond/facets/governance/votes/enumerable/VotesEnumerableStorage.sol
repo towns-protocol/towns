@@ -4,19 +4,16 @@ pragma solidity ^0.8.23;
 // interfaces
 
 // libraries
-
-import {Checkpoints} from "./Checkpoints.sol";
+import {EnumerableSet} from "@openzeppelin/contracts/utils/structs/EnumerableSet.sol";
 
 // contracts
 
-library VotesStorage {
+library VotesEnumerableStorage {
   bytes32 internal constant STORAGE_SLOT =
-    keccak256("diamond.facets.governance.votes.storage");
+    keccak256("diamond.facets.governance.votes.enumerable.storage");
 
   struct Layout {
-    mapping(address => address) _delegation;
-    mapping(address => Checkpoints.Trace224) _delegateCheckpoints;
-    Checkpoints.Trace224 _totalCheckpoints;
+    EnumerableSet.AddressSet delegators;
   }
 
   function layout() internal pure returns (Layout storage l) {

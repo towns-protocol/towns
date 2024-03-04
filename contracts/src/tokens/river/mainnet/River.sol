@@ -11,17 +11,15 @@ import {IRiver} from "./IRiver.sol";
 import {ERC20} from "contracts/src/diamond/facets/token/ERC20/ERC20.sol";
 import {IntrospectionFacet} from "contracts/src/diamond/facets/introspection/IntrospectionFacet.sol";
 import {OwnableFacet} from "contracts/src/diamond/facets/ownable/OwnableFacet.sol";
-import {Votes} from "contracts/src/diamond/facets/governance/votes/Votes.sol";
+import {VotesEnumerable} from "contracts/src/diamond/facets/governance/votes/enumerable/VotesEnumerable.sol";
 import {LockFacet} from "contracts/src/tokens/lock/LockFacet.sol";
-import {ReentrancyGuard} from "contracts/src/diamond/facets/reentrancy/ReentrancyGuard.sol";
 
 contract River is
   IRiver,
   ERC20,
-  Votes,
+  VotesEnumerable,
   OwnableFacet,
   LockFacet,
-  ReentrancyGuard,
   IntrospectionFacet
 {
   /// @dev initial supply is 10 billion tokens
@@ -30,27 +28,56 @@ contract River is
   /// @dev deployment time
   uint256 public immutable deployedAt = block.timestamp;
 
+  /// @dev initialInflationRate is the initial inflation rate in basis points (0-10000)
+  uint256 public immutable initialInflationRate;
+
+  /// @dev finalInflationRate is the final inflation rate in basis points (0-10000)
+  uint256 public immutable finalInflationRate;
+
+  /// @dev inflationDecreaseRate is the rate at which the inflation rate decreases in basis points (0-10000)
+  uint256 public immutable inflationDecreaseRate;
+
+  /// @dev inflationDecreaseInterval is the interval at which the inflation rate decreases in years
+  uint256 public immutable inflationDecreaseInterval;
+
   /// @dev last mint time
   uint256 public lastMintTime;
 
-  constructor(address vault, address owner) {
+  /// @dev inflation rate override
+  bool public overrideInflation;
+  uint256 public overrideInflationRate;
+
+  constructor(RiverConfig memory config) {
     __IntrospectionBase_init();
-    __LockFacet_init_unchained(60 days);
+    __LockFacet_init_unchained(0 days);
     __ERC20_init_unchained("River", "RVR", 18);
 
+    // add interface
+    _addInterface(type(IRiver).interfaceId);
+
     // mint to vault
-    _mint(vault, INITIAL_SUPPLY);
+    _mint(config.vault, INITIAL_SUPPLY);
 
     // set last mint time for inflation
     lastMintTime = block.timestamp;
 
+    // set inflation values
+    initialInflationRate = config.inflationConfig.initialInflationRate;
+    finalInflationRate = config.inflationConfig.finalInflationRate;
+    inflationDecreaseRate = config.inflationConfig.inflationDecreaseRate;
+    inflationDecreaseInterval = config
+      .inflationConfig
+      .inflationDecreaseInterval;
+
     // transfer ownership to the association
-    _transferOwnership(owner);
+    _transferOwnership(config.owner);
   }
 
   // =============================================================
-  //                          Minting
+  //                          Inflation
   // =============================================================
+
+  /// @inheritdoc IRiver
   function createInflation(address to) external onlyOwner {
     if (to == address(0)) revert River__InvalidAddress();
 
@@ -60,13 +87,25 @@ contract River is
     if (timeSinceLastMint < 365 days) revert River__MintingTooSoon();
 
     // calculate the amount to mint
-    uint256 inflationRate = _getCurrentInflationRate();
-    uint256 inflationAmount = (totalSupply() * inflationRate) / 100;
+    uint256 inflationRateBPS = _getCurrentInflationRateBPS();
+    uint256 inflationAmount = (totalSupply() * inflationRateBPS) / 10000;
 
     _mint(to, inflationAmount);
 
     // update last mint time
     lastMintTime = block.timestamp;
+  }
+
+  /// @inheritdoc IRiver
+  function setOverrideInflation(
+    bool _overrideInflation,
+    uint256 _overrideInflationRate
+  ) external onlyOwner {
+    if (_overrideInflationRate > finalInflationRate)
+      revert River__InvalidInflationRate();
+
+    overrideInflation = _overrideInflation;
+    overrideInflationRate = _overrideInflationRate;
   }
 
   // =============================================================
@@ -129,11 +168,19 @@ contract River is
 
   /**
    * @dev Returns the current inflation rate.
-   * @return inflation rate in percentage points (0-100)
+   * @return inflation rate in basis points (0-100)
    */
-  function _getCurrentInflationRate() internal view returns (uint256) {
+  function _getCurrentInflationRateBPS() internal view returns (uint256) {
     uint256 yearsSinceDeployment = (block.timestamp - deployedAt) / 365 days;
-    if (yearsSinceDeployment >= 20) return 2; // 2% final inflation rate
-    return 8 - ((yearsSinceDeployment * 6) / 20); // linear decrease from 8% to 2% over 20 years
+
+    if (overrideInflation) return overrideInflationRate; // override inflation rate
+
+    // return final inflation rate if yearsSinceDeployment is greater than or equal to inflationDecreaseInterval
+    if (yearsSinceDeployment >= inflationDecreaseInterval)
+      return finalInflationRate;
+
+    // linear decrease from initialInflationRate to finalInflationRate over the inflationDecreateInterval
+    uint256 decreasePerYear = inflationDecreaseRate / inflationDecreaseInterval;
+    return initialInflationRate - (yearsSinceDeployment * decreasePerYear);
   }
 }

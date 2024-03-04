@@ -11,7 +11,7 @@
   optimizer_runs = 200 # The amount of optimizer runs to perform.
   out = "contracts/out" # The path to put contract artifacts in, relative to the root of the project.
   script = "contracts/scripts" # The path to the contract scripts relative to the root of the project.
-  solc_version = "0.8.23" # Uses a single Solidity compiler version for the project
+  solc_version = "0.8.24" # Uses a single Solidity compiler version for the project
   src = "contracts" # The path to the contract sources relative to the root of the project.
   test = "contracts/test" # The path to the test contract sources relative to the root of the project.
   cache_path = "contracts/cache" # The path to the cache, relative to the root of the project.
