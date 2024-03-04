@@ -25,6 +25,8 @@ import { ModalContainer } from '@components/Modals/ModalContainer'
 import { WalletLinkingPanel } from '@components/Web3/WalletLinkingPanel'
 import { useAbstractAccountAddress } from 'hooks/useAbstractAccountAddress'
 import { ButtonSpinner } from 'ui/components/Spinner/ButtonSpinner'
+import { ClipboardCopy } from '@components/ClipboardCopy/ClipboardCopy'
+import { shortAddress } from 'workers/utils'
 
 export const SpaceProfilePanel = (props: { children?: React.ReactNode }) => {
     const navigate = useNavigate()
@@ -170,7 +172,27 @@ export const SpaceProfile = (props: { children?: React.ReactNode }) => {
                 />
             ) : (
                 <Stack padding>
-                    <Paragraph>Profile not found</Paragraph>
+                    <Box padding border="negative" rounded="xs">
+                        <Paragraph color="error">Profile not found</Paragraph>
+                        <Paragraph color="gray2" size="xs">
+                            {profileIdFromPath && (
+                                <>
+                                    <ClipboardCopy
+                                        label={shortAddress(profileIdFromPath)}
+                                        clipboardContent={profileIdFromPath}
+                                        fontSize="sm"
+                                    />
+                                    {userId && (
+                                        <ClipboardCopy
+                                            label={`resolved: ${shortAddress(userId)}`}
+                                            clipboardContent={userId}
+                                            fontSize="sm"
+                                        />
+                                    )}
+                                </>
+                            )}
+                        </Paragraph>
+                    </Box>
                 </Stack>
             )}
 
@@ -265,7 +287,7 @@ export const SpaceProfile = (props: { children?: React.ReactNode }) => {
                 </ModalContainer>
             )}
 
-            {!isCurrentUser && !search.has('message') && (
+            {!isCurrentUser && !search.has('message') && user && (
                 <Stack padding gap>
                     <PanelButton onClick={onMessageClick}>
                         <Icon type="message" size="square_sm" color="gray2" />

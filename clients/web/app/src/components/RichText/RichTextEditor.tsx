@@ -334,7 +334,7 @@ const CaptureTownsLinkPlugin = (props: {
     const { onUpdate } = props
     const [editor] = useLexicalComposerContext()
     const [_messageBody, setMessageBody] = useState('')
-    const messageBody = useThrottledValue(_messageBody, SECOND_MS)
+    const messageBody = useThrottledValue(_messageBody, SECOND_MS * 0.3)
 
     useEffect(() => {
         return editor.registerUpdateListener(({ editorState }) => {

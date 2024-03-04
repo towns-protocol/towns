@@ -1,13 +1,12 @@
 import { isDMChannelStreamId, isGDMChannelStreamId } from '@river/sdk'
-import React from 'react'
-import { Link } from 'react-router-dom'
+import React, { useCallback } from 'react'
+import { Link, useNavigate } from 'react-router-dom'
 import {
     EmbeddedMessageAttachment,
     MessageType,
     useRoom,
     useUserLookupContext,
 } from 'use-zion-client'
-import { AvatarWithoutDot } from '@components/Avatar/Avatar'
 import { MessageAttachmentsContext } from '@components/MessageAttachments/MessageAttachmentsContext'
 import { RichTextPreview } from '@components/RichText/RichTextPreview'
 import { Box, Paragraph, Stack, Text } from '@ui'
@@ -15,6 +14,8 @@ import { PATHS } from 'routes'
 import { shortAddress } from 'ui/utils/utils'
 import { formatDate } from 'utils/formatDates'
 import { getPrettyDisplayName } from 'utils/getPrettyDisplayName'
+import { ProfileHoverCard } from '@components/ProfileHoverCard/ProfileHoverCard'
+import { useCreateLink } from 'hooks/useCreateLink'
 
 export const EmbeddedMessage = (props: {
     attachment: EmbeddedMessageAttachment
@@ -30,6 +31,19 @@ export const EmbeddedMessage = (props: {
     const { usersMap } = useUserLookupContext()
     const user = usersMap[attachment.info.userId]
 
+    const { createLink } = useCreateLink()
+    const userTooltip = user ? <ProfileHoverCard userId={attachment.info.userId} /> : undefined
+    const navigate = useNavigate()
+
+    const onUserClick = useCallback(() => {
+        if (user) {
+            const link = createLink({ profileId: user.userId })
+            if (link) {
+                navigate(link)
+            }
+        }
+    }, [createLink, navigate, user])
+
     if (!attachedMessage) {
         return null
     }
@@ -40,13 +54,21 @@ export const EmbeddedMessage = (props: {
             : `Private Channel`
 
     const isKnownChannel = !!channel?.id
-    const channelName = isKnownChannel ? `#${channel?.name}` : `From a ${channelType}`
+    const channelName =
+        isKnownChannel && !!channel?.name ? `#${channel?.name}` : `From a ${channelType}`
 
     return (
         <MessageAttachmentsContext.Provider value={{ isMessageAttachementContext: true }}>
             <Box gap padding background="level2" rounded="sm">
-                <Stack horizontal gap="sm" alignItems="center">
-                    <AvatarWithoutDot userId={attachment.info.userId} size="avatar_xs" />
+                <Stack
+                    horizontal
+                    gap="sm"
+                    alignItems="center"
+                    tooltip={userTooltip}
+                    width="min-content"
+                    cursor={userTooltip ? 'pointer' : 'default'}
+                    onClick={onUserClick}
+                >
                     {user ? (
                         <>
                             <Paragraph strong color="gray1" size="sm">
