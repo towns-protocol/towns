@@ -1,5 +1,5 @@
 // SPDX-License-Identifier: Apache-2.0
-pragma solidity 0.8.23;
+pragma solidity ^0.8.24;
 
 // interface
 import {IDiamond, Diamond} from "contracts/src/diamond/Diamond.sol";
