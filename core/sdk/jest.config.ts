@@ -6,6 +6,17 @@ import type { JestConfigWithTsJest } from 'ts-jest'
 
 const localRiverCA = path.join(os.homedir(), 'river-ca-cert.pem')
 
+const findNodeModules = () => {
+    // go up until we find node_modules
+    let dir = __dirname
+    while (!existsSync(path.join(dir, 'node_modules'))) {
+        dir = path.dirname(dir)
+    }
+    return `${dir}/node_modules`
+}
+
+const NODE_MODULES_DIR = findNodeModules()
+
 if (!existsSync(localRiverCA)) {
     console.log('CA does not exist, did you forget to run ../scripts/register-ca.sh')
 }
@@ -41,7 +52,7 @@ const config: JestConfigWithTsJest = {
         '(.+)\\.js': '$1',
         // need for encryption
         '\\.(wasm)$': require.resolve('../encryption/src/mock-wasm-file.js'),
-        msgpackr: '<rootDir>/../../node_modules/msgpackr/dist/node.cjs',
+        msgpackr: `${NODE_MODULES_DIR}/msgpackr/dist/node.cjs`,
     },
     collectCoverage: true,
     coverageProvider: 'v8',
