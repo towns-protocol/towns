@@ -6,21 +6,21 @@ import type { JestConfigWithTsJest } from 'ts-jest'
 
 const localRiverCA = path.join(os.homedir(), 'river-ca-cert.pem')
 
+const findNodeModules = () => {
+    // go up until we find node_modules
+    let dir = __dirname
+    while (!existsSync(path.join(dir, 'node_modules'))) {
+        dir = path.dirname(dir)
+    }
+    return `${dir}/node_modules`
+}
+
+const NODE_MODULES_DIR = findNodeModules()
+
 if (!existsSync(localRiverCA)) {
     console.log('CA does not exist, did you forget to run ../scripts/register-ca.sh')
 }
 process.env.NODE_EXTRA_CA_CERTS = localRiverCA
-
-const findMonorepoRoot = () => {
-    // go up until we find yarn.lock
-    let dir = __dirname
-    while (!existsSync(path.join(dir, 'yarn.lock'))) {
-        dir = path.join(dir, '..')
-        return dir
-    }
-}
-
-const MONOREPO_ROOT = findMonorepoRoot()
 
 const config: JestConfigWithTsJest = {
     preset: 'ts-jest/presets/default-esm',
@@ -52,7 +52,7 @@ const config: JestConfigWithTsJest = {
         '(.+)\\.js': '$1',
         // need for encryption
         '\\.(wasm)$': require.resolve('../encryption/src/mock-wasm-file.js'),
-        msgpackr: `${MONOREPO_ROOT}/node_modules/msgpackr/dist/node.cjs`,
+        msgpackr: `${NODE_MODULES_DIR}/msgpackr/dist/node.cjs`,
     },
     collectCoverage: true,
     coverageProvider: 'v8',
