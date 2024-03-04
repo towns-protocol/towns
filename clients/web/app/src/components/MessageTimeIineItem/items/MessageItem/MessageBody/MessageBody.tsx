@@ -62,13 +62,7 @@ export const MessageBody = ({
 
     const { isTouch } = useDevice()
 
-    body = useMemo(() => {
-        const textWithoutLinks = attachedLinks.reduce((text, link) => {
-            return text.replace(link, '')
-        }, body)
-
-        return !textWithoutLinks.trim() ? '' : body
-    }, [attachedLinks, body])
+    body = useHideAttachementLinks(body, attachedLinks)
 
     const { data: unfurledContent, isError } = useUnfurlContent({
         urlsArray: urls,
@@ -130,4 +124,22 @@ export const MessageBody = ({
             )}
         </>
     )
+}
+
+/**
+ * hide links to attachments if they are not interwined with the message body
+ */
+const useHideAttachementLinks = (body: string, attachedLinks: string[]) => {
+    return useMemo(() => {
+        if (!attachedLinks?.length) {
+            return body
+        }
+        if (attachedLinks.length === 1) {
+            const link = attachedLinks[0]
+            return body.trim().startsWith(link) || body.trim().endsWith(link)
+                ? body.replace(link, '')
+                : body
+        }
+        return body
+    }, [attachedLinks, body])
 }
