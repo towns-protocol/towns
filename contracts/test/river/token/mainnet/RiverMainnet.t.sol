@@ -6,7 +6,7 @@ import {IERC20} from "@openzeppelin/contracts/token/ERC20/IERC20.sol";
 import {IERC20Permit} from "@openzeppelin/contracts/token/ERC20/extensions/IERC20Permit.sol";
 import {IERC20Metadata} from "@openzeppelin/contracts/token/ERC20/extensions/IERC20Metadata.sol";
 import {ILockBase} from "contracts/src/tokens/lock/ILock.sol";
-import {IRiverBase} from "contracts/src/tokens/interfaces/IRiverBase.sol";
+import {IRiverBase} from "contracts/src/tokens/river/mainnet/IRiver.sol";
 import {IOwnableBase} from "contracts/src/diamond/facets/ownable/IERC173.sol";
 
 //libraries
@@ -30,11 +30,13 @@ contract RiverMainnetTest is TestUtils, IRiverBase, ILockBase, IOwnableBase {
   address vault;
 
   River river;
+  InflationConfig internal inflation;
 
   function setUp() public {
     river = River(deployRiverMainnet.deploy());
     association = deployRiverMainnet.association();
     vault = deployRiverMainnet.vault();
+    (, , inflation) = deployRiverMainnet.config();
   }
 
   function test_init() external {
@@ -122,6 +124,25 @@ contract RiverMainnetTest is TestUtils, IRiverBase, ILockBase, IOwnableBase {
   {
     assertEq(river.delegates(delegator), delegatee);
     assertTrue(river.isLockEnabled(delegator));
+
+    address[] memory delegators = river.getDelegators();
+    assertEq(delegators.length, 1);
+
+    address found;
+    for (uint256 i = 0; i < delegators.length; i++) {
+      if (delegators[i] == delegator) {
+        found = delegators[i];
+        break;
+      }
+    }
+
+    assertEq(found, delegator);
+  }
+
+  modifier givenAssociationUpdatedCooldown() {
+    vm.prank(association);
+    river.setLockCooldown(2 days);
+    _;
   }
 
   // Locking
@@ -132,6 +153,7 @@ contract RiverMainnetTest is TestUtils, IRiverBase, ILockBase, IOwnableBase {
     external
     givenCallerHasTokens(delegator)
     givenCallerHasDelegated(delegator, delegatee)
+    givenAssociationUpdatedCooldown
   {
     vm.assume(delegatee != address(0));
 
@@ -153,8 +175,27 @@ contract RiverMainnetTest is TestUtils, IRiverBase, ILockBase, IOwnableBase {
     external
     givenCallerHasTokens(delegator)
     givenCallerHasDelegated(delegator, delegatee)
+    givenAssociationUpdatedCooldown
   {
     uint256 amount = 100;
+
+    vm.prank(delegator);
+    vm.expectRevert(River__TransferLockEnabled.selector);
+    river.transfer(delegatee, amount);
+  }
+
+  function test_revertWhen_disableLockOverrideToNotDisable(
+    address delegator,
+    address delegatee
+  )
+    external
+    givenCallerHasTokens(delegator)
+    givenCallerHasDelegated(delegator, delegatee)
+  {
+    uint256 amount = 100;
+
+    vm.prank(association);
+    river.disableLock(delegator);
 
     vm.prank(delegator);
     vm.expectRevert(River__TransferLockEnabled.selector);
@@ -175,13 +216,15 @@ contract RiverMainnetTest is TestUtils, IRiverBase, ILockBase, IOwnableBase {
   }
 
   function test_createInflation_isCalledByOwnerAfterOneYear() external {
-    uint256 inflationAmount = _getCurrentInflationAmount(
-      block.timestamp,
-      river.totalSupply()
-    );
+    uint256 deployedAt = block.timestamp;
 
     // wait 365 days
     vm.warp(block.timestamp + 365 days);
+
+    uint256 inflationAmount = _getCurrentInflationAmount(
+      deployedAt,
+      river.totalSupply()
+    );
 
     uint256 expectedSupply = river.totalSupply() + inflationAmount;
 
@@ -231,21 +274,97 @@ contract RiverMainnetTest is TestUtils, IRiverBase, ILockBase, IOwnableBase {
     river.createInflation(address(0));
   }
 
-  // // =============================================================?
+  // =============================================================
+  //                       Override Inflation
+  // =============================================================
+  function test_overrideInflation() external {
+    // set to 1.5%
+    uint256 overrideInflationRateBPS = 130;
+
+    vm.prank(deployRiverMainnet.association());
+    river.setOverrideInflation(true, overrideInflationRateBPS);
+
+    assertEq(river.overrideInflationRate(), overrideInflationRateBPS);
+
+    uint256 deployedAt = block.timestamp;
+
+    // wait 365 days
+    vm.warp(deployedAt + 365 days);
+
+    uint256 inflationAmount = (river.totalSupply() * overrideInflationRateBPS) /
+      10000;
+
+    uint256 expectedSupply = river.totalSupply() + inflationAmount;
+
+    vm.prank(deployRiverMainnet.association());
+    river.createInflation(vault);
+
+    assertEq(river.totalSupply(), expectedSupply);
+  }
+
+  function test_revertWhen_overrideInflationRateIsGreaterThanFinalInflationRate()
+    external
+  {
+    vm.prank(deployRiverMainnet.association());
+    vm.expectRevert(River__InvalidInflationRate.selector);
+    river.setOverrideInflation(true, inflation.finalInflationRate + 1);
+  }
+
+  function test_revertWhen_overrideInflationIsCalledByNotOwner(
+    address notOwner
+  ) external {
+    vm.assume(notOwner != association);
+
+    vm.prank(notOwner);
+    vm.expectRevert(
+      abi.encodeWithSelector(Ownable__NotOwner.selector, notOwner)
+    );
+    river.setOverrideInflation(true, 100);
+  }
+
+  function test_setOverrideInflation_isSetToFalse() external {
+    uint256 deployedAt = block.timestamp;
+
+    vm.prank(association);
+    river.setOverrideInflation(true, 100);
+
+    vm.prank(association);
+    river.setOverrideInflation(false, 0);
+
+    // wait 365 days
+    vm.warp(deployedAt + 365 days);
+
+    uint256 inflationAmount = _getCurrentInflationAmount(
+      deployedAt,
+      river.totalSupply()
+    );
+
+    uint256 expectedSupply = river.totalSupply() + inflationAmount;
+
+    vm.prank(association);
+    river.createInflation(vault);
+
+    assertEq(river.totalSupply(), expectedSupply);
+  }
+
   function _getCurrentInflationAmount(
     uint256 deployedAt,
     uint256 totalSupply
   ) internal view returns (uint256) {
     uint256 inflationRate = _getCurrentInflationRate(deployedAt);
-    return (totalSupply * inflationRate) / 100;
+    return (totalSupply * inflationRate) / 10000;
   }
 
   function _getCurrentInflationRate(
     uint256 deployedAt
   ) internal view returns (uint256) {
     uint256 yearsSinceDeployment = (block.timestamp - deployedAt) / 365 days;
-    if (yearsSinceDeployment >= 20) return 2; // 2% final inflation rate
-    return 8 - ((yearsSinceDeployment * 6) / 20); // linear decrease from 8% to 2% over 20 years
+    if (yearsSinceDeployment >= inflation.inflationDecreaseInterval)
+      return inflation.finalInflationRate; // 2% final inflation rate
+    uint256 decreatePerYear = inflation.inflationDecreaseRate /
+      inflation.inflationDecreaseInterval;
+    return
+      inflation.initialInflationRate - (yearsSinceDeployment * decreatePerYear);
   }
 
   function _signPermit(

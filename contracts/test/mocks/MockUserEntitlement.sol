@@ -1,5 +1,5 @@
 // SPDX-License-Identifier: Apache-2.0
-pragma solidity 0.8.23;
+pragma solidity ^0.8.24;
 
 import {IEntitlement} from "contracts/src/spaces/entitlements/IEntitlement.sol";
 import {IRoles} from "contracts/src/spaces/facets/roles/IRoles.sol";

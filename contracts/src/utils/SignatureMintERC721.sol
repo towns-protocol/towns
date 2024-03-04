@@ -1,5 +1,5 @@
 // SPDX-License-Identifier: Apache-2.0
-pragma solidity 0.8.23;
+pragma solidity ^0.8.24;
 
 // interfaces
 import {ISignatureMintERC721} from "contracts/src/utils/interfaces/ISignatureMintERC721.sol";

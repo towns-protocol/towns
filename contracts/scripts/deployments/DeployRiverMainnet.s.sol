@@ -2,6 +2,7 @@
 pragma solidity ^0.8.19;
 
 //interfaces
+import {IRiverBase} from "contracts/src/tokens/river/mainnet/IRiver.sol";
 
 //libraries
 
@@ -9,10 +10,29 @@ pragma solidity ^0.8.19;
 import {Deployer} from "../common/Deployer.s.sol";
 import {River} from "contracts/src/tokens/river/mainnet/River.sol";
 
-contract DeployRiverMainnet is Deployer {
-  address public vault;
+contract DeployRiverMainnet is Deployer, IRiverBase {
+  address public constant association = address(0xdeadbeef);
+  address public constant vault = address(0xdadbeef);
+
   address internal river;
-  address public association;
+
+  RiverConfig public config =
+    RiverConfig({
+      /// @dev owner of the tokens
+      vault: vault,
+      /// @dev owner of the contract
+      owner: association,
+      inflationConfig: InflationConfig({
+        /// @dev initialInflationRate is the initial inflation rate in basis points (0-10000)
+        initialInflationRate: 800,
+        /// @dev finalInflationRate is the final inflation rate in basis points (0-10000)
+        finalInflationRate: 200,
+        /// @dev inflationDecreaseRate is the rate at which the inflation rate decreases in basis points (0-10000)
+        inflationDecreaseRate: 600,
+        /// @dev inflationDecreaseInterval is the interval at which the inflation rate decreases in years
+        inflationDecreaseInterval: 20
+      })
+    });
 
   function versionName() public pure override returns (string memory) {
     return "river";
@@ -22,10 +42,7 @@ contract DeployRiverMainnet is Deployer {
     uint256 deployerPK,
     address
   ) public override returns (address) {
-    association = address(1);
-    vault = address(2);
-
     vm.broadcast(deployerPK);
-    return address(new River({vault: vault, owner: association}));
+    return address(new River(config));
   }
 }

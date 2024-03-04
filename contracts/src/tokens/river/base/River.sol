@@ -4,34 +4,46 @@ pragma solidity ^0.8.23;
 // interfaces
 import {IOptimismMintableERC20, ILegacyMintableERC20} from "contracts/src/tokens/river/base/IOptimismMintableERC20.sol";
 import {ISemver} from "contracts/src/tokens/river/base/ISemver.sol";
-import {IRiverBase} from "contracts/src/tokens/interfaces/IRiverBase.sol";
 
 // libraries
 
 // contracts
 import {ERC20} from "contracts/src/diamond/facets/token/ERC20/ERC20.sol";
 import {IntrospectionFacet} from "contracts/src/diamond/facets/introspection/IntrospectionFacet.sol";
-import {Votes} from "contracts/src/diamond/facets/governance/votes/Votes.sol";
+import {VotesEnumerable} from "contracts/src/diamond/facets/governance/votes/enumerable/VotesEnumerable.sol";
 import {LockFacet} from "contracts/src/tokens/lock/LockFacet.sol";
 
 contract River is
-  IRiverBase,
   IOptimismMintableERC20,
   ILegacyMintableERC20,
   ISemver,
   ERC20,
-  Votes,
+  VotesEnumerable,
   LockFacet,
   IntrospectionFacet
 {
+  // =============================================================
+  //                           Errors
+  // =============================================================
+  error River__TransferLockEnabled();
+  error River__DelegateeSameAsCurrent();
+
+  // =============================================================
+  //                           Constants
+  // =============================================================
+
+  /// @notice Semantic version.
+  string public constant version = "1.3.0";
+
   ///@notice Address of the corresponding version of this token on the remote chain
   address public immutable REMOTE_TOKEN;
 
   /// @notice Address of the StandardBridge on this network.
   address public immutable BRIDGE;
 
-  /// @notice Semantic version.
-  string public constant version = "1.3.0";
+  // =============================================================
+  //                           Modifiers
+  // =============================================================
 
   /// @notice A modifier that only allows the bridge to call
   modifier onlyBridge() {
@@ -109,7 +121,7 @@ contract River is
     address to,
     uint256 amount
   ) internal override {
-    if (from != address(0) && _lockEnabled(from)) {
+    if (msg.sender != BRIDGE && from != address(0) && _lockEnabled(from)) {
       // allow transfering at minting time
       revert River__TransferLockEnabled();
     }
