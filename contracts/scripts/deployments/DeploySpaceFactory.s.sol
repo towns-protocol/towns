@@ -16,7 +16,6 @@ import {IntrospectionFacet} from "contracts/src/diamond/facets/introspection/Int
 
 import {Architect} from "contracts/src/spaces/facets/architect/Architect.sol";
 import {ProxyManager} from "contracts/src/diamond/proxy/manager/ProxyManager.sol";
-import {ERC721Holder} from "openzeppelin-contracts/contracts/token/ERC721/utils/ERC721Holder.sol";
 import {OwnableFacet} from "contracts/src/diamond/facets/ownable/OwnableFacet.sol";
 import {PausableFacet} from "contracts/src/diamond/facets/pausable/PausableFacet.sol";
 import {PlatformRequirementsFacet} from "contracts/src/spaces/facets/platform/requirements/PlatformRequirementsFacet.sol";
@@ -79,7 +78,6 @@ contract DeploySpaceFactory is DiamondDeployer {
   // space addresses
   address architect;
   address proxyManager;
-  address holder;
   address ownable;
   address pausable;
   address platformReqs;
@@ -111,7 +109,6 @@ contract DeploySpaceFactory is DiamondDeployer {
 
     architect = address(new Architect());
     proxyManager = address(new ProxyManager());
-    holder = address(new ERC721Holder());
     ownable = address(new OwnableFacet());
     pausable = address(new PausableFacet());
     platformReqs = address(new PlatformRequirementsFacet());

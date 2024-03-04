@@ -17,7 +17,7 @@ abstract contract Proxy is IProxy {
   function _fallback() internal {
     address facet = _getImplementation();
 
-    if (!Address.isContract(facet)) revert Proxy__ImplementationIsNotContract();
+    if (facet.code.length == 0) revert Proxy__ImplementationIsNotContract();
 
     // solhint-disable-next-line no-inline-assembly
     assembly {

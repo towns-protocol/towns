@@ -5,7 +5,6 @@ pragma solidity 0.8.23;
 import {IMember} from "contracts/src/tokens/interfaces/IMember.sol";
 
 //libraries
-import {Counters} from "openzeppelin-contracts/contracts/utils/Counters.sol";
 import {MerkleProof} from "openzeppelin-contracts/contracts/utils/cryptography/MerkleProof.sol";
 
 //contracts
@@ -17,8 +16,6 @@ import {Ownable} from "openzeppelin-contracts/contracts/access/Ownable.sol";
  * @dev Member contract
  */
 contract Member is IMember, ERC721, Ownable {
-  using Counters for Counters.Counter;
-
   // =============================================================
   //                           CONSTANTS
   // =============================================================
@@ -46,7 +43,7 @@ contract Member is IMember, ERC721, Ownable {
   MintState internal _mintState;
 
   // @notice the counter token id for the next mint
-  Counters.Counter public currentTokenId;
+  uint256 public currentTokenId;
 
   // =============================================================
   //                          CONSTRUCTOR
@@ -57,7 +54,7 @@ contract Member is IMember, ERC721, Ownable {
     string memory symbol_,
     string memory baseURI_,
     bytes32 merkleRoot_
-  ) ERC721(name_, symbol_) {
+  ) ERC721(name_, symbol_) Ownable(msg.sender) {
     baseURI = baseURI_;
     _merkleRoot = merkleRoot_;
     _mintState = MintState.Allowlist;
@@ -155,8 +152,8 @@ contract Member is IMember, ERC721, Ownable {
   // =============================================================
   function _mintTo(address recipient) internal returns (uint256) {
     _hasMinted[recipient] = true;
-    uint256 tokenId = currentTokenId.current();
-    currentTokenId.increment();
+    uint256 tokenId = currentTokenId;
+    currentTokenId++;
     _safeMint(recipient, tokenId);
     emit Minted(recipient, tokenId, block.timestamp);
     return tokenId;
@@ -175,7 +172,7 @@ contract Member is IMember, ERC721, Ownable {
   }
 
   function _validateMaxSupply() internal view {
-    if (currentTokenId.current() >= TOTAL_SUPPLY) {
+    if (currentTokenId >= TOTAL_SUPPLY) {
       revert MaxSupplyReached();
     }
   }

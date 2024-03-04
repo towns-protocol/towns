@@ -10,6 +10,7 @@ import {IMockFacet} from "contracts/test/mocks/MockFacet.sol";
 import {IOwnableBase} from "contracts/src/diamond/facets/ownable/IERC173.sol";
 
 // libraries
+import {Address} from "openzeppelin-contracts/contracts/utils/Address.sol";
 
 // contracts
 import {DiamondCutSetup} from "contracts/test/diamond/cut/DiamondCutSetup.sol";
@@ -126,7 +127,7 @@ contract DiamondCutTest is DiamondCutSetup, IDiamondCutBase, IOwnableBase {
     diamondCut.diamondCut(facetCuts, address(0), "");
   }
 
-  function test_reverts_when_initializeDiamondCut() external {
+  function test_revertWhen_initializeDiamondCut() external {
     // create facet selectors
     bytes4[] memory facetSelectors = new bytes4[](1);
     facetSelectors[0] = mockFacet.mockFunction.selector;
@@ -139,9 +140,7 @@ contract DiamondCutTest is DiamondCutSetup, IDiamondCutBase, IOwnableBase {
     });
 
     // cut diamond
-    vm.expectRevert(
-      "DiamondCutBase: Failed to initialize cut, check init or payload"
-    );
+    vm.expectRevert(Address.FailedInnerCall.selector);
     diamondCut.diamondCut(
       cuts,
       address(this),

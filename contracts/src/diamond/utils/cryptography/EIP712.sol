@@ -5,6 +5,7 @@ pragma solidity ^0.8.23;
 import {IERC5267} from "./IERC5267.sol";
 
 // libraries
+import {MessageHashUtils} from "@openzeppelin/contracts/utils/cryptography/MessageHashUtils.sol";
 import {ECDSA} from "@openzeppelin/contracts/utils/cryptography/ECDSA.sol";
 
 // contracts
@@ -112,7 +113,7 @@ abstract contract EIP712 is Initializable, IERC5267 {
   function _hashTypedDataV4(
     bytes32 structHash
   ) internal view virtual returns (bytes32) {
-    return ECDSA.toTypedDataHash(_domainSeparatorV4(), structHash);
+    return MessageHashUtils.toTypedDataHash(_domainSeparatorV4(), structHash);
   }
 
   /**

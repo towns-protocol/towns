@@ -3,7 +3,7 @@ pragma solidity ^0.8.23;
 
 //interfaces
 import {IERC20} from "@openzeppelin/contracts/token/ERC20/IERC20.sol";
-import {IERC20Permit} from "@openzeppelin/contracts/token/ERC20/extensions/draft-IERC20Permit.sol";
+import {IERC20Permit} from "@openzeppelin/contracts/token/ERC20/extensions/IERC20Permit.sol";
 import {IERC20Metadata} from "@openzeppelin/contracts/token/ERC20/extensions/IERC20Metadata.sol";
 import {ILockBase} from "contracts/src/tokens/lock/ILock.sol";
 import {IRiverBase} from "contracts/src/tokens/interfaces/IRiverBase.sol";

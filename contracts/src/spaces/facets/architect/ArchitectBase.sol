@@ -156,10 +156,10 @@ abstract contract ArchitectBase is Factory, IArchitectBase {
     IUserEntitlement userEntitlement,
     IRuleEntitlement ruleEntitlement
   ) internal {
-    if (!Address.isContract(spaceToken)) revert Architect__NotContract();
-    if (!Address.isContract(address(userEntitlement)))
+    if (spaceToken.code.length == 0) revert Architect__NotContract();
+    if (address(userEntitlement).code.length == 0)
       revert Architect__NotContract();
-    if (!Address.isContract(address(ruleEntitlement)))
+    if (address(ruleEntitlement).code.length == 0)
       revert Architect__NotContract();
 
     ArchitectStorage.Layout storage ds = ArchitectStorage.layout();

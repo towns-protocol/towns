@@ -121,7 +121,7 @@ contract DeployBase is DeployHelpers, Script {
     return block.chainid == 31337 || block.chainid == 31338;
   }
 
-  function isTesting() internal returns (bool) {
+  function isTesting() internal view returns (bool) {
     return vm.envOr("IN_TESTING", false);
   }
 }

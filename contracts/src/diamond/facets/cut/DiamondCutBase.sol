@@ -161,7 +161,7 @@ abstract contract DiamondCutBase is IDiamondCutBase {
 
     if (
       facetCut.facetAddress != address(this) &&
-      !Address.isContract(facetCut.facetAddress)
+      facetCut.facetAddress.code.length == 0
     ) {
       revert DiamondCut_InvalidFacet(facetCut.facetAddress);
     }
@@ -181,14 +181,10 @@ abstract contract DiamondCutBase is IDiamondCutBase {
   ) internal {
     if (init == address(0)) return;
 
-    if (!Address.isContract(init)) {
+    if (init.code.length == 0) {
       revert DiamondCut_InvalidContract(init);
     }
 
-    Address.functionDelegateCall(
-      init,
-      initPayload,
-      "DiamondCutBase: Failed to initialize cut, check init or payload"
-    );
+    Address.functionDelegateCall(init, initPayload);
   }
 }

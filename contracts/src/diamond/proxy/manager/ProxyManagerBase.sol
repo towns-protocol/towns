@@ -23,7 +23,7 @@ abstract contract ProxyManagerBase is IProxyManagerBase {
   }
 
   function _setImplementation(address implementation) internal {
-    if (!Address.isContract(implementation)) {
+    if (implementation.code.length == 0) {
       revert ProxyManager__NotContract(implementation);
     }
 
