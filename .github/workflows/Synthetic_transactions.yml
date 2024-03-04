@@ -54,11 +54,13 @@ jobs:
               run: yarn install --immutable
 
             - name: Build town types
+              working-directory: river
               run: ./scripts/build-contract-types.sh localhost --frozen
+
 
             - name: Setup River CA for testing certificates
               run: ./scripts/register-ca.sh
-              working-directory: core
+              working-directory: river/core
 
             - name: Set up Custom CA Certificate for Node.js
               run: |
@@ -66,6 +68,7 @@ jobs:
 
             - name: Run Synthetic Test
               run: yarn test:ci:synthetic:all
+              working-directory: river
               env:
                   ENVIRONMENT_NAME: ${{inputs.environment_name || 'gamma' }}
                   DEBUG: csb:test:synthetic
