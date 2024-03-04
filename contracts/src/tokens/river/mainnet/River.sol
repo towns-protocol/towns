@@ -163,6 +163,16 @@ contract River is
   }
 
   // =============================================================
+  //                           Override
+  // =============================================================
+
+  /// @dev Do not allow enabling lock without delegating
+  function enableLock(address account) external override onlyAllowed {}
+
+  /// @dev Do not allow disabling lock without delegating
+  function disableLock(address account) external override onlyAllowed {}
+
+  // =============================================================
   //                           Internal
   // =============================================================
 

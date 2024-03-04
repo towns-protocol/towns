@@ -23,14 +23,11 @@ abstract contract VotesEnumerable is Votes {
   ) internal virtual override {
     VotesEnumerableStorage.Layout storage ds = VotesEnumerableStorage.layout();
 
-    // if the delegatee is address(0) then remove the account
-    if (delegatee == address(0)) {
-      ds.delegators.remove(account);
-    } else {
-      // if the delegatee is not address(0) then add the account and is not already a delegator then add it
-      if (!ds.delegators.contains(account)) {
-        ds.delegators.add(account);
-      }
+    ds.delegators.remove(account);
+
+    // if the delegatee is not address(0) then add the account and is not already a delegator then add it
+    if (delegatee != address(0)) {
+      ds.delegators.add(account);
     }
   }
 }

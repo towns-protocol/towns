@@ -184,6 +184,24 @@ contract RiverMainnetTest is TestUtils, IRiverBase, ILockBase, IOwnableBase {
     river.transfer(delegatee, amount);
   }
 
+  function test_revertWhen_disableLockOverrideToNotDisable(
+    address delegator,
+    address delegatee
+  )
+    external
+    givenCallerHasTokens(delegator)
+    givenCallerHasDelegated(delegator, delegatee)
+  {
+    uint256 amount = 100;
+
+    vm.prank(association);
+    river.disableLock(delegator);
+
+    vm.prank(delegator);
+    vm.expectRevert(River__TransferLockEnabled.selector);
+    river.transfer(delegatee, amount);
+  }
+
   // =============================================================
   //                        createInflation
   // =============================================================
@@ -329,7 +347,6 @@ contract RiverMainnetTest is TestUtils, IRiverBase, ILockBase, IOwnableBase {
     assertEq(river.totalSupply(), expectedSupply);
   }
 
-  // // =============================================================?
   function _getCurrentInflationAmount(
     uint256 deployedAt,
     uint256 totalSupply
