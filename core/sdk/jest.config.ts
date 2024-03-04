@@ -11,6 +11,17 @@ if (!existsSync(localRiverCA)) {
 }
 process.env.NODE_EXTRA_CA_CERTS = localRiverCA
 
+const findMonorepoRoot = () => {
+    // go up until we find yarn.lock
+    let dir = __dirname
+    while (!existsSync(path.join(dir, 'yarn.lock'))) {
+        dir = path.join(dir, '..')
+        return dir
+    }
+}
+
+const MONOREPO_ROOT = findMonorepoRoot()
+
 const config: JestConfigWithTsJest = {
     preset: 'ts-jest/presets/default-esm',
     testEnvironment: './../jest.env.ts',
@@ -41,7 +52,7 @@ const config: JestConfigWithTsJest = {
         '(.+)\\.js': '$1',
         // need for encryption
         '\\.(wasm)$': require.resolve('../encryption/src/mock-wasm-file.js'),
-        msgpackr: '<rootDir>/../../node_modules/msgpackr/dist/node.cjs',
+        msgpackr: `${MONOREPO_ROOT}/node_modules/msgpackr/dist/node.cjs`,
     },
     collectCoverage: true,
     coverageProvider: 'v8',
