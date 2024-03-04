@@ -135,6 +135,17 @@ export default [
   },
   {
     "type": "error",
+    "name": "AddressEmptyCode",
+    "inputs": [
+      {
+        "name": "target",
+        "type": "address",
+        "internalType": "address"
+      }
+    ]
+  },
+  {
+    "type": "error",
     "name": "DiamondCut_FunctionAlreadyExists",
     "inputs": [
       {
@@ -238,6 +249,11 @@ export default [
   {
     "type": "error",
     "name": "Diamond_UnsupportedFunction",
+    "inputs": []
+  },
+  {
+    "type": "error",
+    "name": "FailedInnerCall",
     "inputs": []
   },
   {

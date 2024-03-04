@@ -37,6 +37,109 @@
         "type": "error"
       },
       {
+        "inputs": [
+          {
+            "internalType": "address",
+            "name": "sender",
+            "type": "address"
+          },
+          {
+            "internalType": "uint256",
+            "name": "tokenId",
+            "type": "uint256"
+          },
+          {
+            "internalType": "address",
+            "name": "owner",
+            "type": "address"
+          }
+        ],
+        "name": "ERC721IncorrectOwner",
+        "type": "error"
+      },
+      {
+        "inputs": [
+          {
+            "internalType": "address",
+            "name": "operator",
+            "type": "address"
+          },
+          {
+            "internalType": "uint256",
+            "name": "tokenId",
+            "type": "uint256"
+          }
+        ],
+        "name": "ERC721InsufficientApproval",
+        "type": "error"
+      },
+      {
+        "inputs": [
+          {
+            "internalType": "address",
+            "name": "approver",
+            "type": "address"
+          }
+        ],
+        "name": "ERC721InvalidApprover",
+        "type": "error"
+      },
+      {
+        "inputs": [
+          {
+            "internalType": "address",
+            "name": "operator",
+            "type": "address"
+          }
+        ],
+        "name": "ERC721InvalidOperator",
+        "type": "error"
+      },
+      {
+        "inputs": [
+          {
+            "internalType": "address",
+            "name": "owner",
+            "type": "address"
+          }
+        ],
+        "name": "ERC721InvalidOwner",
+        "type": "error"
+      },
+      {
+        "inputs": [
+          {
+            "internalType": "address",
+            "name": "receiver",
+            "type": "address"
+          }
+        ],
+        "name": "ERC721InvalidReceiver",
+        "type": "error"
+      },
+      {
+        "inputs": [
+          {
+            "internalType": "address",
+            "name": "sender",
+            "type": "address"
+          }
+        ],
+        "name": "ERC721InvalidSender",
+        "type": "error"
+      },
+      {
+        "inputs": [
+          {
+            "internalType": "uint256",
+            "name": "tokenId",
+            "type": "uint256"
+          }
+        ],
+        "name": "ERC721NonexistentToken",
+        "type": "error"
+      },
+      {
         "inputs": [],
         "name": "InvalidAddress",
         "type": "error"
@@ -69,6 +172,28 @@
       {
         "inputs": [],
         "name": "NotAllowed",
+        "type": "error"
+      },
+      {
+        "inputs": [
+          {
+            "internalType": "address",
+            "name": "owner",
+            "type": "address"
+          }
+        ],
+        "name": "OwnableInvalidOwner",
+        "type": "error"
+      },
+      {
+        "inputs": [
+          {
+            "internalType": "address",
+            "name": "account",
+            "type": "address"
+          }
+        ],
+        "name": "OwnableUnauthorizedAccount",
         "type": "error"
       },
       {
@@ -327,7 +452,7 @@
         "outputs": [
           {
             "internalType": "uint256",
-            "name": "_value",
+            "name": "",
             "type": "uint256"
           }
         ],
@@ -676,6 +801,85 @@
     ],
     "devdoc": {
       "details": "Member contract",
+      "errors": {
+        "ERC721IncorrectOwner(address,uint256,address)": [
+          {
+            "details": "Indicates an error related to the ownership over a particular token. Used in transfers.",
+            "params": {
+              "owner": "Address of the current owner of a token.",
+              "sender": "Address whose tokens are being transferred.",
+              "tokenId": "Identifier number of a token."
+            }
+          }
+        ],
+        "ERC721InsufficientApproval(address,uint256)": [
+          {
+            "details": "Indicates a failure with the `operator`’s approval. Used in transfers.",
+            "params": {
+              "operator": "Address that may be allowed to operate on tokens without being their owner.",
+              "tokenId": "Identifier number of a token."
+            }
+          }
+        ],
+        "ERC721InvalidApprover(address)": [
+          {
+            "details": "Indicates a failure with the `approver` of a token to be approved. Used in approvals.",
+            "params": {
+              "approver": "Address initiating an approval operation."
+            }
+          }
+        ],
+        "ERC721InvalidOperator(address)": [
+          {
+            "details": "Indicates a failure with the `operator` to be approved. Used in approvals.",
+            "params": {
+              "operator": "Address that may be allowed to operate on tokens without being their owner."
+            }
+          }
+        ],
+        "ERC721InvalidOwner(address)": [
+          {
+            "details": "Indicates that an address can't be an owner. For example, `address(0)` is a forbidden owner in EIP-20. Used in balance queries.",
+            "params": {
+              "owner": "Address of the current owner of a token."
+            }
+          }
+        ],
+        "ERC721InvalidReceiver(address)": [
+          {
+            "details": "Indicates a failure with the token `receiver`. Used in transfers.",
+            "params": {
+              "receiver": "Address to which tokens are being transferred."
+            }
+          }
+        ],
+        "ERC721InvalidSender(address)": [
+          {
+            "details": "Indicates a failure with the token `sender`. Used in transfers.",
+            "params": {
+              "sender": "Address whose tokens are being transferred."
+            }
+          }
+        ],
+        "ERC721NonexistentToken(uint256)": [
+          {
+            "details": "Indicates a `tokenId` whose `owner` is the zero address.",
+            "params": {
+              "tokenId": "Identifier number of a token."
+            }
+          }
+        ],
+        "OwnableInvalidOwner(address)": [
+          {
+            "details": "The owner is not a valid owner account. (eg. `address(0)`)"
+          }
+        ],
+        "OwnableUnauthorizedAccount(address)": [
+          {
+            "details": "The caller account is not authorized to perform an operation."
+          }
+        ]
+      },
       "events": {
         "Approval(address,address,uint256)": {
           "details": "Emitted when `owner` enables `approved` to manage the `tokenId` token."
@@ -724,7 +928,7 @@
           "details": "See {IERC721-ownerOf}."
         },
         "renounceOwnership()": {
-          "details": "Leaves the contract without owner. It will not be possible to call `onlyOwner` functions anymore. Can only be called by the current owner. NOTE: Renouncing ownership will leave the contract without an owner, thereby removing any functionality that is only available to the owner."
+          "details": "Leaves the contract without owner. It will not be possible to call `onlyOwner` functions. Can only be called by the current owner. NOTE: Renouncing ownership will leave the contract without an owner, thereby disabling any functionality that is only available to the owner."
         },
         "safeTransferFrom(address,address,uint256)": {
           "details": "See {IERC721-safeTransferFrom}."
@@ -861,6 +1065,8 @@
     "remappings": [
       ":@eth-optimism/contracts-bedrock/=node_modules/@eth-optimism/contracts-bedrock/",
       ":@openzeppelin/=lib/openzeppelin-contracts/",
+      ":@openzeppelin/contracts-upgradeable/=lib/openzeppelin-contracts-upgradeable/contracts/",
+      ":@openzeppelin/contracts/=lib/openzeppelin-contracts/contracts/",
       ":@prb/math/=lib/prb-math/src/",
       ":@prb/test/=lib/prb-test/src/",
       ":ERC721A/=lib/ERC721A/contracts/",
@@ -880,11 +1086,11 @@
   },
   "sources": {
     "contracts/src/tokens/Member.sol": {
-      "keccak256": "0x3c5505dc1639b627f0b643b08d8a4a84b137ba1085c9483654446edc58e28c47",
+      "keccak256": "0xd47f5989b16291dbca81a53c79b7ec71c52d333ece31111ce4e3053f6ed426db",
       "license": "Apache-2.0",
       "urls": [
-        "bzz-raw://5b7e33baf91af34a6e63f93338fc79db777e7d84074697e8bbb89a4be95d0afc",
-        "dweb:/ipfs/QmZrNG5mNNCPPh8KhZKYLPHzCFQ6JawQ6qV6ghjpTUAEBa"
+        "bzz-raw://a327deba29e620ae8217156b9d5d52d0fc05e0fdebc9dbb13cbc10c123ad31c6",
+        "dweb:/ipfs/QmfCfRDRBVd5r1EfPwb2Y8GcM276Q4ixSt77kS8ASLjjLa"
       ]
     },
     "contracts/src/tokens/interfaces/IMember.sol": {
@@ -896,107 +1102,107 @@
       ]
     },
     "lib/openzeppelin-contracts/contracts/access/Ownable.sol": {
-      "keccak256": "0xa94b34880e3c1b0b931662cb1c09e5dfa6662f31cba80e07c5ee71cd135c9673",
+      "keccak256": "0xff6d0bb2e285473e5311d9d3caacb525ae3538a80758c10649a4d61029b017bb",
       "license": "MIT",
       "urls": [
-        "bzz-raw://40fb1b5102468f783961d0af743f91b9980cf66b50d1d12009f6bb1869cea4d2",
-        "dweb:/ipfs/QmYqEbJML4jB1GHbzD4cUZDtJg5wVwNm3vDJq1GbyDus8y"
+        "bzz-raw://8ed324d3920bb545059d66ab97d43e43ee85fd3bd52e03e401f020afb0b120f6",
+        "dweb:/ipfs/QmfEckWLmZkDDcoWrkEvMWhms66xwTLff9DDhegYpvHo1a"
+      ]
+    },
+    "lib/openzeppelin-contracts/contracts/interfaces/draft-IERC6093.sol": {
+      "keccak256": "0x60c65f701957fdd6faea1acb0bb45825791d473693ed9ecb34726fdfaa849dd7",
+      "license": "MIT",
+      "urls": [
+        "bzz-raw://ea290300e0efc4d901244949dc4d877fd46e6c5e43dc2b26620e8efab3ab803f",
+        "dweb:/ipfs/QmcLLJppxKeJWqHxE2CUkcfhuRTgHSn8J4kijcLa5MYhSt"
       ]
     },
     "lib/openzeppelin-contracts/contracts/token/ERC721/ERC721.sol": {
-      "keccak256": "0x1e854874c68bec05be100dc0092cb5fbbc71253d370ae98ddef248bbfc3fe118",
+      "keccak256": "0x13dd061770956c8489b80cfc89d9cdfc8ea2783d953691ea037a380731d52784",
       "license": "MIT",
       "urls": [
-        "bzz-raw://ef0fb6e809779426dc2ac201149bbad4aecdc5810874f2843b050e8b5fef8d30",
-        "dweb:/ipfs/QmPDRjaNxmcyxLUKvv8Fxk5eWcf7xvC5S9JpbtqvE7Cadu"
+        "bzz-raw://ed37f0f86e7fe31659e48c3a2a5920a92dd7f13c85cf8991fb79fe5f01e08efd",
+        "dweb:/ipfs/QmUtm9bQGvjr9hHGwkPWrbgFmVqzaJcxjkaYDex2oGsonS"
       ]
     },
     "lib/openzeppelin-contracts/contracts/token/ERC721/IERC721.sol": {
-      "keccak256": "0xab28a56179c1db258c9bf5235b382698cb650debecb51b23d12be9e241374b68",
+      "keccak256": "0x5ef46daa3b58ef2702279d514780316efaa952915ee1aa3396f041ee2982b0b4",
       "license": "MIT",
       "urls": [
-        "bzz-raw://daae589a9d6fa7e55f99f86c0a16796ca490f243fb3693632c3711c0646c1d56",
-        "dweb:/ipfs/QmR3zpd7wNw3rcUdekwiv6FYHJqksuTCXLVioTxu6Fbxk3"
+        "bzz-raw://2f8f2a76e23b02fc69e8cd24c3cb47da6c7af3a2d6c3a382f8ac25c6e094ade7",
+        "dweb:/ipfs/QmPV4ZS4tPVv4mTCf9ejyZ1ai57EEibDRj7mN2ARDCLV5n"
       ]
     },
     "lib/openzeppelin-contracts/contracts/token/ERC721/IERC721Receiver.sol": {
-      "keccak256": "0xa82b58eca1ee256be466e536706850163d2ec7821945abd6b4778cfb3bee37da",
+      "keccak256": "0x7f7a26306c79a65fb8b3b6c757cd74660c532cd8a02e165488e30027dd34ca49",
       "license": "MIT",
       "urls": [
-        "bzz-raw://6e75cf83beb757b8855791088546b8337e9d4684e169400c20d44a515353b708",
-        "dweb:/ipfs/QmYvPafLfoquiDMEj7CKHtvbgHu7TJNPSVPSCjrtjV8HjV"
+        "bzz-raw://d01e0b2b837ee2f628545e54d8715b49c7ef2befd08356c2e7f6c50dde8a1c22",
+        "dweb:/ipfs/QmWBAn6y2D1xgftci97Z3qR9tQnkvwQpYwFwkTvDMvqU4i"
       ]
     },
     "lib/openzeppelin-contracts/contracts/token/ERC721/extensions/IERC721Metadata.sol": {
-      "keccak256": "0x75b829ff2f26c14355d1cba20e16fe7b29ca58eb5fef665ede48bc0f9c6c74b9",
+      "keccak256": "0x37d1aaaa5a2908a09e9dcf56a26ddf762ecf295afb5964695937344fc6802ce1",
       "license": "MIT",
       "urls": [
-        "bzz-raw://a0a107160525724f9e1bbbab031defc2f298296dd9e331f16a6f7130cec32146",
-        "dweb:/ipfs/QmemujxSd7gX8A9M8UwmNbz4Ms3U9FG9QfudUgxwvTmPWf"
-      ]
-    },
-    "lib/openzeppelin-contracts/contracts/utils/Address.sol": {
-      "keccak256": "0xf96f969e24029d43d0df89e59d365f277021dac62b48e1c1e3ebe0acdd7f1ca1",
-      "license": "MIT",
-      "urls": [
-        "bzz-raw://ec772b45a624be516f1c81970caa8a2e144301e9d0921cbc1a2789fef39a1269",
-        "dweb:/ipfs/QmNyjwxCrGhQMyzLD93oUobJXVe9ceJvRvfXwbEtuxPiEj"
+        "bzz-raw://ed0bfc1b92153c5000e50f4021367b931bbe96372ac6facec3c4961b72053d02",
+        "dweb:/ipfs/Qmbwp8VDerjS5SV1quwHH1oMXxPQ93fzfLVqJ2RCqbowGE"
       ]
     },
     "lib/openzeppelin-contracts/contracts/utils/Context.sol": {
-      "keccak256": "0xe2e337e6dde9ef6b680e07338c493ebea1b5fd09b43424112868e9cc1706bca7",
+      "keccak256": "0x493033a8d1b176a037b2cc6a04dad01a5c157722049bbecf632ca876224dd4b2",
       "license": "MIT",
       "urls": [
-        "bzz-raw://6df0ddf21ce9f58271bdfaa85cde98b200ef242a05a3f85c2bc10a8294800a92",
-        "dweb:/ipfs/QmRK2Y5Yc6BK7tGKkgsgn3aJEQGi5aakeSPZvS65PV8Xp3"
-      ]
-    },
-    "lib/openzeppelin-contracts/contracts/utils/Counters.sol": {
-      "keccak256": "0xf0018c2440fbe238dd3a8732fa8e17a0f9dce84d31451dc8a32f6d62b349c9f1",
-      "license": "MIT",
-      "urls": [
-        "bzz-raw://59e1c62884d55b70f3ae5432b44bb3166ad71ae3acd19c57ab6ddc3c87c325ee",
-        "dweb:/ipfs/QmezuXg5GK5oeA4F91EZhozBFekhq5TD966bHPH18cCqhu"
+        "bzz-raw://6a708e8a5bdb1011c2c381c9a5cfd8a9a956d7d0a9dc1bd8bcdaf52f76ef2f12",
+        "dweb:/ipfs/Qmax9WHBnVsZP46ZxEMNRQpLQnrdE4dK8LehML1Py8FowF"
       ]
     },
     "lib/openzeppelin-contracts/contracts/utils/Strings.sol": {
-      "keccak256": "0xa4d1d62251f8574deb032a35fc948386a9b4de74b812d4f545a1ac120486b48a",
+      "keccak256": "0x55f102ea785d8399c0e58d1108e2d289506dde18abc6db1b7f68c1f9f9bc5792",
       "license": "MIT",
       "urls": [
-        "bzz-raw://8c969013129ba9e651a20735ef659fef6d8a1139ea3607bd4b26ddea2d645634",
-        "dweb:/ipfs/QmVhVa6LGuzAcB8qgDtVHRkucn4ihj5UZr8xBLcJkP6ucb"
+        "bzz-raw://6e52e0a7765c943ef14e5bcf11e46e6139fa044be564881378349236bf2e3453",
+        "dweb:/ipfs/QmZEeeXoFPW47amyP35gfzomF9DixqqTEPwzBakv6cZw6i"
       ]
     },
     "lib/openzeppelin-contracts/contracts/utils/cryptography/MerkleProof.sol": {
-      "keccak256": "0xd466e8b07f4c6220eac16da5127f3ff142e65f0c15c03c7d38f257b02c8585e1",
+      "keccak256": "0x6400c4bee15052e043e5d10315135972529bd1c8012f43da494dc6b4f4661058",
       "license": "MIT",
       "urls": [
-        "bzz-raw://e6b3cab69f655e40117bbdd8e68d7423f26d1b24248fb189c295f08de8940616",
-        "dweb:/ipfs/QmWoyRthsBDMa7gJpH5UCjpa8uNUQfyaGbSgY3uvhBH9F3"
+        "bzz-raw://da5d3d47d35af4373743a559ea4b9b7ecfe4bab6f0703f410c1e59959b7966ac",
+        "dweb:/ipfs/QmTHdoghh4WLu4yURjGEgRk162pcwwdsG52MPGa12GqnGR"
       ]
     },
     "lib/openzeppelin-contracts/contracts/utils/introspection/ERC165.sol": {
-      "keccak256": "0xd10975de010d89fd1c78dc5e8a9a7e7f496198085c151648f20cba166b32582b",
+      "keccak256": "0x9e8778b14317ba9e256c30a76fd6c32b960af621987f56069e1e819c77c6a133",
       "license": "MIT",
       "urls": [
-        "bzz-raw://fb0048dee081f6fffa5f74afc3fb328483c2a30504e94a0ddd2a5114d731ec4d",
-        "dweb:/ipfs/QmZptt1nmYoA5SgjwnSgWqgUSDgm4q52Yos3xhnMv3MV43"
+        "bzz-raw://1777404f1dcd0fac188e55a288724ec3c67b45288e49cc64723e95e702b49ab8",
+        "dweb:/ipfs/QmZFdC626GButBApwDUvvTnUzdinevC3B24d7yyh57XkiA"
       ]
     },
     "lib/openzeppelin-contracts/contracts/utils/introspection/IERC165.sol": {
-      "keccak256": "0x447a5f3ddc18419d41ff92b3773fb86471b1db25773e07f877f548918a185bf1",
+      "keccak256": "0x4296879f55019b23e135000eb36896057e7101fb7fb859c5ef690cf14643757b",
       "license": "MIT",
       "urls": [
-        "bzz-raw://be161e54f24e5c6fae81a12db1a8ae87bc5ae1b0ddc805d82a1440a68455088f",
-        "dweb:/ipfs/QmP7C3CHdY9urF4dEMb9wmsp1wMxHF6nhA2yQE5SKiPAdy"
+        "bzz-raw://87b3541437c8c443ccd36795e56a338ed12855eec17f8da624511b8d1a7e14df",
+        "dweb:/ipfs/QmeJQCtZrQjtJLr6u7ZHWeH3pBnjtLWzvRrKViAi7UZqxL"
       ]
     },
     "lib/openzeppelin-contracts/contracts/utils/math/Math.sol": {
-      "keccak256": "0xa1e8e83cd0087785df04ac79fb395d9f3684caeaf973d9e2c71caef723a3a5d6",
+      "keccak256": "0x005ec64c6313f0555d59e278f9a7a5ab2db5bdc72a027f255a37c327af1ec02d",
       "license": "MIT",
       "urls": [
-        "bzz-raw://33bbf48cc069be677705037ba7520c22b1b622c23b33e1a71495f2d36549d40b",
-        "dweb:/ipfs/Qmct36zWXv3j7LZB83uwbg7TXwnZSN1fqHNDZ93GG98bGz"
+        "bzz-raw://4ece9f0b9c8daca08c76b6b5405a6446b6f73b3a15fab7ff56e296cbd4a2c875",
+        "dweb:/ipfs/QmQyRpyPRL5SQuAgj6SHmbir3foX65FJjbVTTQrA2EFg6L"
+      ]
+    },
+    "lib/openzeppelin-contracts/contracts/utils/math/SignedMath.sol": {
+      "keccak256": "0x5f7e4076e175393767754387c962926577f1660dd9b810187b9002407656be72",
+      "license": "MIT",
+      "urls": [
+        "bzz-raw://7d533a1c97cd43a57cd9c465f7ee8dd0e39ae93a8fb8ff8e5303a356b081cdcc",
+        "dweb:/ipfs/QmVBEei6aTnvYNZp2CHYVNKyZS4q1KkjANfY39WVXZXVoT"
       ]
     }
   },

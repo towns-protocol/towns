@@ -651,6 +651,8 @@
     "remappings": [
       ":@eth-optimism/contracts-bedrock/=node_modules/@eth-optimism/contracts-bedrock/",
       ":@openzeppelin/=lib/openzeppelin-contracts/",
+      ":@openzeppelin/contracts-upgradeable/=lib/openzeppelin-contracts-upgradeable/contracts/",
+      ":@openzeppelin/contracts/=lib/openzeppelin-contracts/contracts/",
       ":@prb/math/=lib/prb-math/src/",
       ":@prb/test/=lib/prb-test/src/",
       ":ERC721A/=lib/ERC721A/contracts/",

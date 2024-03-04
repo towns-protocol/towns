@@ -10,7 +10,7 @@ import {GuardianStorage} from "./GuardianStorage.sol";
 
 abstract contract GuardianBase is IGuardianBase {
   modifier onlyEOA() {
-    if (Address.isContract(msg.sender)) {
+    if (msg.sender.code.length > 0) {
       revert NotExternalAccount();
     }
     _;
@@ -73,7 +73,7 @@ abstract contract GuardianBase is IGuardianBase {
     // - it has no cooldown or
     // - it has a cooldown but it has not passed yet
     return
-      !Address.isContract(guardian) &&
+      guardian.code.length == 0 &&
       (ds.cooldownByAddress[guardian] == 0 ||
         block.timestamp < ds.cooldownByAddress[guardian]);
   }

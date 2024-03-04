@@ -72,6 +72,6 @@ abstract contract Initializable {
   }
 
   function _isNotConstructor() private view returns (bool) {
-    return Address.isContract(address(this));
+    return address(this).code.length != 0;
   }
 }

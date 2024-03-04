@@ -7,6 +7,7 @@ import {IWalletLinkBase} from "./IWalletLink.sol";
 // libraries
 import {EnumerableSet} from "@openzeppelin/contracts/utils/structs/EnumerableSet.sol";
 import {ECDSA} from "@openzeppelin/contracts/utils/cryptography/ECDSA.sol";
+import {MessageHashUtils} from "@openzeppelin/contracts/utils/cryptography/MessageHashUtils.sol";
 import {WalletLinkStorage} from "./WalletLinkStorage.sol";
 
 // contracts
@@ -35,8 +36,9 @@ abstract contract WalletLinkBase is IWalletLinkBase, Nonces {
     }
 
     //Verify that the root key signature contains the correct nonce and the correct wallet
-    bytes32 rootKeyMessageHash = keccak256(abi.encode(linkingWallet, nonce))
-      .toEthSignedMessageHash();
+    bytes32 rootKeyMessageHash = MessageHashUtils.toEthSignedMessageHash(
+      keccak256(abi.encode(linkingWallet, nonce))
+    );
 
     if (_recoverSigner(rootKeyMessageHash, rootKeySignature) != rootKey) {
       revert WalletLink__InvalidSignature();

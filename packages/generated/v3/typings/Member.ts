@@ -417,9 +417,7 @@ export interface Member extends BaseContract {
 
     baseURI(overrides?: CallOverrides): Promise<[string]>;
 
-    currentTokenId(
-      overrides?: CallOverrides
-    ): Promise<[BigNumber] & { _value: BigNumber }>;
+    currentTokenId(overrides?: CallOverrides): Promise<[BigNumber]>;
 
     getApproved(
       tokenId: PromiseOrValue<BigNumberish>,

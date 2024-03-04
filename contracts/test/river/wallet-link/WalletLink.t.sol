@@ -4,6 +4,7 @@ pragma solidity ^0.8.23;
 // interfaces
 import {IWalletLinkBase} from "contracts/src/river/wallet-link/IWalletLink.sol";
 import {ECDSA} from "@openzeppelin/contracts/utils/cryptography/ECDSA.sol";
+import {MessageHashUtils} from "@openzeppelin/contracts/utils/cryptography/MessageHashUtils.sol";
 
 // libraries
 
@@ -222,7 +223,7 @@ contract WalletLinkTest is IWalletLinkBase, WalletLinkSetup {
     vm.startPrank(signingWallet.addr);
     (uint8 v, bytes32 r, bytes32 s) = vm.sign(
       signingWallet.privateKey,
-      ECDSA.toEthSignedMessageHash(messageHash)
+      MessageHashUtils.toEthSignedMessageHash(messageHash)
     );
     vm.stopPrank();
 

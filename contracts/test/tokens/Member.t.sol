@@ -259,11 +259,12 @@ contract MemberTest is TestUtils {
     // Mint an NFT, sending eth to the contract
     Receiver receiver = new Receiver();
     _nft.publicMint{value: _NFT_PRICE}(address(receiver));
+
     // Check that the balance of the contract is correct
     assertEq(address(_nft).balance, _NFT_PRICE);
 
     // Confirm that a non-owner cannot withdraw
-    vm.expectRevert("Ownable: caller is not the owner");
+    vm.expectRevert();
     vm.prank(address(0x55));
     _nft.withdrawPayments(payable(address(0x55)));
   }
