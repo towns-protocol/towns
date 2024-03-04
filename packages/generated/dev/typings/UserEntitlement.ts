@@ -31,6 +31,7 @@ import type {
 export interface UserEntitlementInterface extends utils.Interface {
   functions: {
     "SPACE_ADDRESS()": FunctionFragment;
+    "UPGRADE_INTERFACE_VERSION()": FunctionFragment;
     "description()": FunctionFragment;
     "getEntitlementDataByRoleId(uint256)": FunctionFragment;
     "initialize(address)": FunctionFragment;
@@ -42,13 +43,13 @@ export interface UserEntitlementInterface extends utils.Interface {
     "removeEntitlement(uint256)": FunctionFragment;
     "setEntitlement(uint256,bytes)": FunctionFragment;
     "supportsInterface(bytes4)": FunctionFragment;
-    "upgradeTo(address)": FunctionFragment;
     "upgradeToAndCall(address,bytes)": FunctionFragment;
   };
 
   getFunction(
     nameOrSignatureOrTopic:
       | "SPACE_ADDRESS"
+      | "UPGRADE_INTERFACE_VERSION"
       | "description"
       | "getEntitlementDataByRoleId"
       | "initialize"
@@ -60,12 +61,15 @@ export interface UserEntitlementInterface extends utils.Interface {
       | "removeEntitlement"
       | "setEntitlement"
       | "supportsInterface"
-      | "upgradeTo"
       | "upgradeToAndCall"
   ): FunctionFragment;
 
   encodeFunctionData(
     functionFragment: "SPACE_ADDRESS",
+    values?: undefined
+  ): string;
+  encodeFunctionData(
+    functionFragment: "UPGRADE_INTERFACE_VERSION",
     values?: undefined
   ): string;
   encodeFunctionData(
@@ -114,16 +118,16 @@ export interface UserEntitlementInterface extends utils.Interface {
     values: [PromiseOrValue<BytesLike>]
   ): string;
   encodeFunctionData(
-    functionFragment: "upgradeTo",
-    values: [PromiseOrValue<string>]
-  ): string;
-  encodeFunctionData(
     functionFragment: "upgradeToAndCall",
     values: [PromiseOrValue<string>, PromiseOrValue<BytesLike>]
   ): string;
 
   decodeFunctionResult(
     functionFragment: "SPACE_ADDRESS",
+    data: BytesLike
+  ): Result;
+  decodeFunctionResult(
+    functionFragment: "UPGRADE_INTERFACE_VERSION",
     data: BytesLike
   ): Result;
   decodeFunctionResult(
@@ -158,50 +162,24 @@ export interface UserEntitlementInterface extends utils.Interface {
     functionFragment: "supportsInterface",
     data: BytesLike
   ): Result;
-  decodeFunctionResult(functionFragment: "upgradeTo", data: BytesLike): Result;
   decodeFunctionResult(
     functionFragment: "upgradeToAndCall",
     data: BytesLike
   ): Result;
 
   events: {
-    "AdminChanged(address,address)": EventFragment;
-    "BeaconUpgraded(address)": EventFragment;
-    "Initialized(uint8)": EventFragment;
+    "Initialized(uint64)": EventFragment;
     "Upgraded(address)": EventFragment;
   };
 
-  getEvent(nameOrSignatureOrTopic: "AdminChanged"): EventFragment;
-  getEvent(nameOrSignatureOrTopic: "BeaconUpgraded"): EventFragment;
   getEvent(nameOrSignatureOrTopic: "Initialized"): EventFragment;
   getEvent(nameOrSignatureOrTopic: "Upgraded"): EventFragment;
 }
 
-export interface AdminChangedEventObject {
-  previousAdmin: string;
-  newAdmin: string;
-}
-export type AdminChangedEvent = TypedEvent<
-  [string, string],
-  AdminChangedEventObject
->;
-
-export type AdminChangedEventFilter = TypedEventFilter<AdminChangedEvent>;
-
-export interface BeaconUpgradedEventObject {
-  beacon: string;
-}
-export type BeaconUpgradedEvent = TypedEvent<
-  [string],
-  BeaconUpgradedEventObject
->;
-
-export type BeaconUpgradedEventFilter = TypedEventFilter<BeaconUpgradedEvent>;
-
 export interface InitializedEventObject {
-  version: number;
+  version: BigNumber;
 }
-export type InitializedEvent = TypedEvent<[number], InitializedEventObject>;
+export type InitializedEvent = TypedEvent<[BigNumber], InitializedEventObject>;
 
 export type InitializedEventFilter = TypedEventFilter<InitializedEvent>;
 
@@ -240,6 +218,8 @@ export interface UserEntitlement extends BaseContract {
 
   functions: {
     SPACE_ADDRESS(overrides?: CallOverrides): Promise<[string]>;
+
+    UPGRADE_INTERFACE_VERSION(overrides?: CallOverrides): Promise<[string]>;
 
     description(overrides?: CallOverrides): Promise<[string]>;
 
@@ -284,11 +264,6 @@ export interface UserEntitlement extends BaseContract {
       overrides?: CallOverrides
     ): Promise<[boolean]>;
 
-    upgradeTo(
-      newImplementation: PromiseOrValue<string>,
-      overrides?: Overrides & { from?: PromiseOrValue<string> }
-    ): Promise<ContractTransaction>;
-
     upgradeToAndCall(
       newImplementation: PromiseOrValue<string>,
       data: PromiseOrValue<BytesLike>,
@@ -297,6 +272,8 @@ export interface UserEntitlement extends BaseContract {
   };
 
   SPACE_ADDRESS(overrides?: CallOverrides): Promise<string>;
+
+  UPGRADE_INTERFACE_VERSION(overrides?: CallOverrides): Promise<string>;
 
   description(overrides?: CallOverrides): Promise<string>;
 
@@ -341,11 +318,6 @@ export interface UserEntitlement extends BaseContract {
     overrides?: CallOverrides
   ): Promise<boolean>;
 
-  upgradeTo(
-    newImplementation: PromiseOrValue<string>,
-    overrides?: Overrides & { from?: PromiseOrValue<string> }
-  ): Promise<ContractTransaction>;
-
   upgradeToAndCall(
     newImplementation: PromiseOrValue<string>,
     data: PromiseOrValue<BytesLike>,
@@ -354,6 +326,8 @@ export interface UserEntitlement extends BaseContract {
 
   callStatic: {
     SPACE_ADDRESS(overrides?: CallOverrides): Promise<string>;
+
+    UPGRADE_INTERFACE_VERSION(overrides?: CallOverrides): Promise<string>;
 
     description(overrides?: CallOverrides): Promise<string>;
 
@@ -398,11 +372,6 @@ export interface UserEntitlement extends BaseContract {
       overrides?: CallOverrides
     ): Promise<boolean>;
 
-    upgradeTo(
-      newImplementation: PromiseOrValue<string>,
-      overrides?: CallOverrides
-    ): Promise<void>;
-
     upgradeToAndCall(
       newImplementation: PromiseOrValue<string>,
       data: PromiseOrValue<BytesLike>,
@@ -411,23 +380,7 @@ export interface UserEntitlement extends BaseContract {
   };
 
   filters: {
-    "AdminChanged(address,address)"(
-      previousAdmin?: null,
-      newAdmin?: null
-    ): AdminChangedEventFilter;
-    AdminChanged(
-      previousAdmin?: null,
-      newAdmin?: null
-    ): AdminChangedEventFilter;
-
-    "BeaconUpgraded(address)"(
-      beacon?: PromiseOrValue<string> | null
-    ): BeaconUpgradedEventFilter;
-    BeaconUpgraded(
-      beacon?: PromiseOrValue<string> | null
-    ): BeaconUpgradedEventFilter;
-
-    "Initialized(uint8)"(version?: null): InitializedEventFilter;
+    "Initialized(uint64)"(version?: null): InitializedEventFilter;
     Initialized(version?: null): InitializedEventFilter;
 
     "Upgraded(address)"(
@@ -440,6 +393,8 @@ export interface UserEntitlement extends BaseContract {
 
   estimateGas: {
     SPACE_ADDRESS(overrides?: CallOverrides): Promise<BigNumber>;
+
+    UPGRADE_INTERFACE_VERSION(overrides?: CallOverrides): Promise<BigNumber>;
 
     description(overrides?: CallOverrides): Promise<BigNumber>;
 
@@ -484,11 +439,6 @@ export interface UserEntitlement extends BaseContract {
       overrides?: CallOverrides
     ): Promise<BigNumber>;
 
-    upgradeTo(
-      newImplementation: PromiseOrValue<string>,
-      overrides?: Overrides & { from?: PromiseOrValue<string> }
-    ): Promise<BigNumber>;
-
     upgradeToAndCall(
       newImplementation: PromiseOrValue<string>,
       data: PromiseOrValue<BytesLike>,
@@ -498,6 +448,10 @@ export interface UserEntitlement extends BaseContract {
 
   populateTransaction: {
     SPACE_ADDRESS(overrides?: CallOverrides): Promise<PopulatedTransaction>;
+
+    UPGRADE_INTERFACE_VERSION(
+      overrides?: CallOverrides
+    ): Promise<PopulatedTransaction>;
 
     description(overrides?: CallOverrides): Promise<PopulatedTransaction>;
 
@@ -540,11 +494,6 @@ export interface UserEntitlement extends BaseContract {
     supportsInterface(
       interfaceId: PromiseOrValue<BytesLike>,
       overrides?: CallOverrides
-    ): Promise<PopulatedTransaction>;
-
-    upgradeTo(
-      newImplementation: PromiseOrValue<string>,
-      overrides?: Overrides & { from?: PromiseOrValue<string> }
     ): Promise<PopulatedTransaction>;
 
     upgradeToAndCall(

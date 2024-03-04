@@ -18,7 +18,7 @@ CONTRACT_INTERFACES="(IDiamond|IDiamondCut|IArchitect|IProxyManager|IPausable|IE
 
 yarn typechain --target=ethers-v5 "contracts/out/**/?${CONTRACT_INTERFACES}.json" --out-dir "packages/generated/${VERSION}/typings"
 
-mkdir -p $ABI_DIR && cp -a contracts/out/{Diamond,DiamondCutFacet,Architect,ProxyManager,Pausable,EntitlementsManager,Channels,Roles,Multicall,OwnableFacet,WalletLink,RiverRegistry,TokenPausableFacet,IRuleEntitlement,UserEntitlement,SpaceOwner,MockERC721A,MembershipFacet,Member,MockRiverRegistry}.sol/* "$ABI_DIR"
+mkdir -p $ABI_DIR && cp -a contracts/out/{Diamond,DiamondCutFacet,Architect,ProxyManager,IPausable,EntitlementsManager,Channels,Roles,IMulticall,OwnableFacet,WalletLink,RiverRegistry,TokenPausableFacet,IRuleEntitlement,UserEntitlement,SpaceOwner,MockERC721A,MembershipFacet,Member,MockRiverRegistry}.sol/* "$ABI_DIR"
 
 # Copy the json abis to TS files for type inference
 for file in $ABI_DIR/*.abi.json; do
