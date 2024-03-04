@@ -15,12 +15,14 @@ export const formSchema = z
                 },
             })
             .min(1),
-        tokens: z.array(
-            z.object({
-                contractAddress: z.string(),
-                tokenIds: z.array(z.number()),
-            }),
-        ),
+        tokens: z
+            .array(
+                z.object({
+                    contractAddress: z.string(),
+                    tokenIds: z.array(z.number()),
+                }),
+            )
+            .optional(),
         permissions: z.array(z.nativeEnum(Permission)),
         users: z.array(z.string()),
     })
@@ -28,13 +30,13 @@ export const formSchema = z
     // this custom check does not run on hookForm "onChange" mode (or else I'm doing it wrong)
     // so within the form, hookForm.trigger('tokens') is called to trigger the check
     .superRefine((data, ctx) => {
-        if (data['tokens'].length === 0 && data['users'].length === 0) {
-            ctx.addIssue({
-                code: z.ZodIssueCode.custom,
-                path: ['tokens'],
-                message: 'Select at least one token or user',
-            })
-        }
+        // if (data['tokens'].length === 0 && data['users'].length === 0) {
+        //     ctx.addIssue({
+        //         code: z.ZodIssueCode.custom,
+        //         path: ['tokens'],
+        //         message: 'Select at least one token or user',
+        //     })
+        // }
     })
 
 export const tokenIdSchema = z.object({

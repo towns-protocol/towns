@@ -1,4 +1,4 @@
-import React, { useCallback, useMemo, useRef, useState } from 'react'
+import React, { useMemo, useRef, useState } from 'react'
 import { useSearchParams } from 'react-router-dom'
 import {
     Address,
@@ -31,7 +31,7 @@ import {
     Text,
     TextField,
 } from '@ui'
-import { useCollectionsForLoggedInUser } from 'api/lib/tokenContracts'
+// import { useCollectionsForLoggedInUser } from 'api/lib/tokenContracts'
 import { TokenDataStruct } from '@components/Web3/CreateSpaceForm/types'
 import { ButtonSpinner } from 'ui/components/Spinner/ButtonSpinner'
 import {
@@ -45,11 +45,11 @@ import { UserOpTxModal } from '@components/Web3/UserOpTxModal/UserOpTxModal'
 import { createPrivyNotAuthenticatedNotification } from '@components/Notifications/utils'
 import {
     convertToNumber,
-    mapTokenDataStructToTokenPillSelectorSelection,
-    mapTokenPillSelectorSelectionToTokenDataStruct,
+    // mapTokenDataStructToTokenPillSelectorSelection,
+    // mapTokenPillSelectorSelectionToTokenDataStruct,
 } from './utils'
 import { formSchema } from './schema'
-import { TokenPillSelector } from './TokenPillSelector'
+// import { TokenPillSelector } from './TokenPillSelector'
 import { UserPillSelector } from './UserPillSelector'
 import { SearchInputHeightAdjuster } from './SearchInputHeightAdjuster'
 
@@ -184,7 +184,7 @@ export function SingleRolePanel() {
                                                         position="relative"
                                                         zIndex="tooltipsAbove"
                                                     >
-                                                        <TokenSearch isCreateRole={isCreateRole} />
+                                                        {/* <TokenSearch isCreateRole={isCreateRole} /> */}
                                                     </Stack>
                                                 )}
 
@@ -350,7 +350,7 @@ function SubmitButton({
         formState.isSubmitting ||
         isUnchanged ||
         Object.keys(formState.errors).length > 0 ||
-        (isCreateRole && !watchAllFields.tokens.length && !watchAllFields.users.length) ||
+        (isCreateRole && !watchAllFields.tokens?.length && !watchAllFields.users.length) ||
         transactionIsPending
 
     const onValid = useEvent(async (data: RoleFormSchemaType) => {
@@ -465,87 +465,88 @@ function UserSearch({ isCreateRole }: { isCreateRole: boolean }) {
     )
 }
 
-function TokenSearch({ isCreateRole }: { isCreateRole: boolean }) {
-    const { getValues, setValue, trigger, watch, formState } = useFormContext<RoleFormSchemaType>()
-    const valueRef = useRef(false)
-    const tokenWatch = watch('tokens')
-    const hadAValueAtSomePoint = useMemo(() => {
-        if (tokenWatch.length) {
-            valueRef.current = true
-        }
-        return valueRef.current
-    }, [tokenWatch])
+// TokenSearch
+// function TokenSearch({ isCreateRole }: { isCreateRole: boolean }) {
+//     const { getValues, setValue, trigger, watch, formState } = useFormContext<RoleFormSchemaType>()
+//     const valueRef = useRef(false)
+//     const tokenWatch = watch('tokens')
+//     const hadAValueAtSomePoint = useMemo(() => {
+//         if (tokenWatch.length) {
+//             valueRef.current = true
+//         }
+//         return valueRef.current
+//     }, [tokenWatch])
 
-    const { data: nftApiData, isLoading, isError } = useCollectionsForLoggedInUser()
+//     const { data: nftApiData, isLoading, isError } = useCollectionsForLoggedInUser()
 
-    const initialSelection = useMemo(() => {
-        if (isLoading) {
-            return new Set<string>()
-        }
-        const tokens = getValues('tokens')
-        return mapTokenDataStructToTokenPillSelectorSelection(tokens)
-    }, [getValues, isLoading])
+//     const initialSelection = useMemo(() => {
+//         if (isLoading) {
+//             return new Set<string>()
+//         }
+//         const tokens = getValues('tokens')
+//         return mapTokenDataStructToTokenPillSelectorSelection(tokens)
+//     }, [getValues, isLoading])
 
-    const onSelectionChange = useCallback(
-        (tokens: Set<string>) => {
-            const tokenDataArray = mapTokenPillSelectorSelectionToTokenDataStruct(tokens)
-            setValue('tokens', tokenDataArray)
-            // trigger validation
-            setTimeout(() => {
-                if (isCreateRole) {
-                    if (hadAValueAtSomePoint || formState.isSubmitted) {
-                        trigger('tokens')
-                    }
-                } else {
-                    trigger('tokens')
-                }
-            })
-        },
-        [setValue, isCreateRole, hadAValueAtSomePoint, formState.isSubmitted, trigger],
-    )
+//     const onSelectionChange = useCallback(
+//         (tokens: Set<string>) => {
+//             const tokenDataArray = mapTokenPillSelectorSelectionToTokenDataStruct(tokens)
+//             setValue('tokens', tokenDataArray)
+//             // trigger validation
+//             setTimeout(() => {
+//                 if (isCreateRole) {
+//                     if (hadAValueAtSomePoint || formState.isSubmitted) {
+//                         trigger('tokens')
+//                     }
+//                 } else {
+//                     trigger('tokens')
+//                 }
+//             })
+//         },
+//         [setValue, isCreateRole, hadAValueAtSomePoint, formState.isSubmitted, trigger],
+//     )
 
-    return (
-        <Stack gap data-testid="token-search">
-            <Text>Digital Asset Requirement</Text>
-            {isLoading ? (
-                <Stack height="x4">
-                    <ButtonSpinner />
-                </Stack>
-            ) : (
-                <>
-                    {isCreateRole && (
-                        <Stack
-                            horizontal
-                            background="level2"
-                            padding="md"
-                            gap="sm"
-                            rounded="sm"
-                            alignItems="center"
-                        >
-                            <Icon type="info" color="gray2" size="square_sm" />
-                            <Text size="sm">
-                                Select at least one digital asset or wallet address for gating this
-                                role.
-                            </Text>
-                        </Stack>
-                    )}
-                    <SearchInputHeightAdjuster>
-                        {(inputContainerRef) => (
-                            <TokenPillSelector
-                                isValidationError={formState.errors.tokens !== undefined}
-                                initialSelection={initialSelection}
-                                inputContainerRef={inputContainerRef}
-                                nftApiData={nftApiData}
-                                isNftApiError={isError}
-                                onSelectionChange={onSelectionChange}
-                            />
-                        )}
-                    </SearchInputHeightAdjuster>
-                </>
-            )}
-        </Stack>
-    )
-}
+//     return (
+//         <Stack gap data-testid="token-search">
+//             <Text>Digital Asset Requirement</Text>
+//             {isLoading ? (
+//                 <Stack height="x4">
+//                     <ButtonSpinner />
+//                 </Stack>
+//             ) : (
+//                 <>
+//                     {isCreateRole && (
+//                         <Stack
+//                             horizontal
+//                             background="level2"
+//                             padding="md"
+//                             gap="sm"
+//                             rounded="sm"
+//                             alignItems="center"
+//                         >
+//                             <Icon type="info" color="gray2" size="square_sm" />
+//                             <Text size="sm">
+//                                 Select at least one digital asset or wallet address for gating this
+//                                 role.
+//                             </Text>
+//                         </Stack>
+//                     )}
+//                     <SearchInputHeightAdjuster>
+//                         {(inputContainerRef) => (
+//                             <TokenPillSelector
+//                                 isValidationError={formState.errors.tokens !== undefined}
+//                                 initialSelection={initialSelection}
+//                                 inputContainerRef={inputContainerRef}
+//                                 nftApiData={nftApiData}
+//                                 isNftApiError={isError}
+//                                 onSelectionChange={onSelectionChange}
+//                             />
+//                         )}
+//                     </SearchInputHeightAdjuster>
+//                 </>
+//             )}
+//         </Stack>
+//     )
+// }
 
 function PermissionsToggles({
     roleDetails,
