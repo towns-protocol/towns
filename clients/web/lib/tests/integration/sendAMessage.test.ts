@@ -63,6 +63,11 @@ describe('sendAMessage', () => {
             await waitForWithRetries(() => client.joinRoom(channelId))
         }
 
+        const members = bob.getRoomData(spaceId)?.members
+
+        expect(members).toBeDefined()
+        expect(members?.length).toBe(numClients)
+
         const clientEvents: DecryptedTimelineEvent[] = []
         const bobRecievedEvents: DecryptedTimelineEvent[] = []
         // everyone should receive the message

@@ -4,7 +4,7 @@ import { Membership, RoomMember, StreamView } from '../../types/zion-types'
 export function toStreamView(stream: Stream, membership: Membership): StreamView {
     const metadata = stream.view.getUserMetadata()
 
-    const members: RoomMember[] = Object.values(stream.view.getMembers().joined).map(
+    const members: RoomMember[] = Array.from(stream.view.getMembers().joined.values()).map(
         (streamMember: StreamMember) => {
             const info = metadata.userInfo(streamMember.userId)
             return {
