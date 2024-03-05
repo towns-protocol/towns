@@ -11,8 +11,10 @@ import {Deployer} from "../common/Deployer.s.sol";
 import {River} from "contracts/src/tokens/river/mainnet/River.sol";
 
 contract DeployRiverMainnet is Deployer, IRiverBase {
-  address public constant association = address(0xdeadbeef);
-  address public constant vault = address(0xdadbeef);
+  address public constant association =
+    address(0x6C373dB26926a0575f70369aAE2cBfC0E88218DC);
+  address public constant vault =
+    address(0xD6ab6aA22D7cD09e18A923192a20F9c82331d1CB);
 
   address internal river;
 
@@ -35,7 +37,7 @@ contract DeployRiverMainnet is Deployer, IRiverBase {
     });
 
   function versionName() public pure override returns (string memory) {
-    return "river";
+    return "riverMainnet";
   }
 
   function __deploy(

@@ -61,6 +61,8 @@ contract RiverMainnetTest is TestUtils, IRiverBase, ILockBase {
     address alice,
     address bob
   ) external givenCallerHasTokens(alice) {
+    vm.assume(bob != address(0));
+
     assertEq(river.allowance(alice, bob), 0);
 
     vm.prank(alice);
@@ -70,6 +72,8 @@ contract RiverMainnetTest is TestUtils, IRiverBase, ILockBase {
   }
 
   function test_permit(address bob) external {
+    vm.assume(bob != address(0));
+
     uint256 alicePrivateKey = _randomUint256();
     address alice = vm.addr(alicePrivateKey);
 

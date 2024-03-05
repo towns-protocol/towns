@@ -50,6 +50,8 @@ contract RiverBaseTest is BaseSetup, ILockBase, IOwnableBase {
     uint256 amount,
     address bob
   ) external givenCallerHasBridgedTokens(alice, amount) {
+    vm.assume(bob != address(0));
+
     assertEq(riverFacet.allowance(alice, bob), 0);
 
     vm.prank(alice);
