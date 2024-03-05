@@ -1,4 +1,3 @@
-import { useLexicalComposerContext } from '@lexical/react/LexicalComposerContext'
 import React, { useCallback, useRef, useState } from 'react'
 import { Box, BoxProps, CardOpener, Icon, IconButton, IconProps, Pill } from '@ui'
 import { useDevice } from 'hooks/useDevice'
@@ -90,12 +89,10 @@ export const EmojiPickerButtonTouch = (props: {
 }) => {
     const { showButton, onSelectEmoji } = props
     const [sheetVisible, setSheetVisible] = useState<boolean>(false)
-    const [editor] = useLexicalComposerContext()
 
     const onCloseSheet = useCallback(() => {
         setSheetVisible(false)
-        editor.focus()
-    }, [setSheetVisible, editor])
+    }, [setSheetVisible])
 
     return (
         <>
