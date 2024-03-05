@@ -200,7 +200,7 @@ const PlateEditorWithoutBoundary = ({
 
     const handleSendOnEnter: React.KeyboardEventHandler = useCallback(
         async (event) => {
-            if (!editorRef.current) {
+            if (!editorRef.current || isTouch) {
                 return
             }
 
@@ -213,7 +213,7 @@ const PlateEditorWithoutBoundary = ({
                 }
             }
         },
-        [onSendCb],
+        [onSendCb, isTouch],
     )
 
     const fileCount = files.length
