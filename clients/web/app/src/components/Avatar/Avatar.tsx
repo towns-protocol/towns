@@ -84,7 +84,7 @@ export const AvatarWithoutDot = forwardRef<HTMLElement, Props & { dot?: boolean 
     return (
         <_Avatar
             key={imageSrc}
-            resourceId={resourceId + '_' + _imageVariant}
+            resourceId={resourceId ? resourceId + '_' + _imageVariant : undefined}
             src={src ?? imageSrc}
             {...rest}
             ref={ref}
@@ -95,7 +95,7 @@ export const AvatarWithoutDot = forwardRef<HTMLElement, Props & { dot?: boolean 
 const _Avatar = forwardRef<
     HTMLElement,
     Omit<Props & { dot?: boolean }, 'userId'> & {
-        resourceId: string
+        resourceId: string | undefined
     }
 >((props, ref) => {
     const {
@@ -106,7 +106,7 @@ const _Avatar = forwardRef<
         stacked = false,
         border,
         src,
-        resourceId,
+        resourceId = '',
         icon,
         dot: _dot,
         tooltip,
@@ -125,7 +125,7 @@ const _Avatar = forwardRef<
     }, [resourceId])
 
     const onLoad = useCallback(() => {
-        if (src) {
+        if (resourceId && src) {
             useImageStore.getState().setLoadedResource(resourceId, {
                 imageUrl: src,
             })
