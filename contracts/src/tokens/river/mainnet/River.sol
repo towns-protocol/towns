@@ -5,20 +5,25 @@ pragma solidity ^0.8.23;
 import {IRiver} from "./IRiver.sol";
 
 // libraries
+import {Nonces} from "openzeppelin-contracts/contracts/utils/Nonces.sol";
 
 // contracts
 
-import {ERC20} from "contracts/src/diamond/facets/token/ERC20/ERC20.sol";
-import {IntrospectionFacet} from "contracts/src/diamond/facets/introspection/IntrospectionFacet.sol";
-import {OwnableFacet} from "contracts/src/diamond/facets/ownable/OwnableFacet.sol";
+import {ERC20} from "openzeppelin-contracts/contracts/token/ERC20/ERC20.sol";
+import {ERC20Permit} from "openzeppelin-contracts/contracts/token/ERC20/extensions/ERC20Permit.sol";
+import {Votes} from "openzeppelin-contracts/contracts/governance/utils/Votes.sol";
+import {Ownable} from "openzeppelin-contracts/contracts/access/Ownable.sol";
+
 import {VotesEnumerable} from "contracts/src/diamond/facets/governance/votes/enumerable/VotesEnumerable.sol";
+import {IntrospectionFacet} from "contracts/src/diamond/facets/introspection/IntrospectionFacet.sol";
 import {LockFacet} from "contracts/src/tokens/lock/LockFacet.sol";
 
 contract River is
   IRiver,
-  ERC20,
+  Ownable,
+  ERC20Permit,
+  Votes,
   VotesEnumerable,
-  OwnableFacet,
   LockFacet,
   IntrospectionFacet
 {
@@ -47,10 +52,11 @@ contract River is
   bool public overrideInflation;
   uint256 public overrideInflationRate;
 
-  constructor(RiverConfig memory config) {
+  constructor(
+    RiverConfig memory config
+  ) ERC20Permit("River") Ownable(config.owner) ERC20("River", "RVR") {
     __IntrospectionBase_init();
-    __LockFacet_init_unchained(0 days);
-    __ERC20_init_unchained("River", "RVR", 18);
+    // __LockFacet_init_unchained(0 days);
 
     // add interface
     _addInterface(type(IRiver).interfaceId);
@@ -68,9 +74,6 @@ contract River is
     inflationDecreaseInterval = config
       .inflationConfig
       .inflationDecreaseInterval;
-
-    // transfer ownership to the association
-    _transferOwnership(config.owner);
   }
 
   // =============================================================
@@ -111,46 +114,38 @@ contract River is
   // =============================================================
   //                           Hooks
   // =============================================================
-  function _beforeTokenTransfer(
+  function _update(
     address from,
     address to,
-    uint256 amount
-  ) internal override {
+    uint256 value
+  ) internal virtual override {
     if (from != address(0) && _lockEnabled(from)) {
       // allow transfering at minting time
       revert River__TransferLockEnabled();
     }
-    super._beforeTokenTransfer(from, to, amount);
-  }
 
-  function _afterTokenTransfer(
-    address from,
-    address to,
-    uint256 amount
-  ) internal virtual override {
-    _transferVotingUnits(from, to, amount);
-    super._afterTokenTransfer(from, to, amount);
+    super._update(from, to, value);
+
+    _transferVotingUnits(from, to, value);
   }
 
   function _getVotingUnits(
     address account
   ) internal view override returns (uint256) {
-    return _balanceOf(account);
+    return balanceOf(account);
   }
 
   /// @dev Hook that gets called before any external enable and disable lock function
   function _canLock() internal view override returns (bool) {
-    return msg.sender == _owner();
+    return msg.sender == owner();
   }
 
-  /// @dev Hook that gets called before any external delegate functions
-  function _beforeDelegate(
+  function _delegate(
     address account,
     address delegatee
   ) internal virtual override {
     // revert if the delegatee is the same as the current delegatee
-    if (_delegates(account) == delegatee)
-      revert River__DelegateeSameAsCurrent();
+    if (delegates(account) == delegatee) revert River__DelegateeSameAsCurrent();
 
     // if the delegatee is the zero address, initialize disable lock
     if (delegatee == address(0)) {
@@ -159,7 +154,9 @@ contract River is
       if (!_lockEnabled(account)) _enableLock(account);
     }
 
-    super._beforeDelegate(account, delegatee);
+    super._delegate(account, delegatee);
+
+    _setDelegators(account, delegatee);
   }
 
   // =============================================================
@@ -171,6 +168,12 @@ contract River is
 
   /// @dev Do not allow disabling lock without delegating
   function disableLock(address account) external override onlyAllowed {}
+
+  function nonces(
+    address owner
+  ) public view virtual override(ERC20Permit, Nonces) returns (uint256) {
+    return super.nonces(owner);
+  }
 
   // =============================================================
   //                           Internal

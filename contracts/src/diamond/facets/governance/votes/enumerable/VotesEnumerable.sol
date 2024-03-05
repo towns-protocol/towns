@@ -8,19 +8,14 @@ import {EnumerableSet} from "@openzeppelin/contracts/utils/structs/EnumerableSet
 import {VotesEnumerableStorage} from "./VotesEnumerableStorage.sol";
 
 // contracts
-import {Votes} from "../Votes.sol";
-
-abstract contract VotesEnumerable is Votes {
+abstract contract VotesEnumerable {
   using EnumerableSet for EnumerableSet.AddressSet;
 
   function getDelegators() external view returns (address[] memory) {
     return VotesEnumerableStorage.layout().delegators.values();
   }
 
-  function _afterDelegate(
-    address account,
-    address delegatee
-  ) internal virtual override {
+  function _setDelegators(address account, address delegatee) internal virtual {
     VotesEnumerableStorage.Layout storage ds = VotesEnumerableStorage.layout();
 
     ds.delegators.remove(account);

@@ -10,6 +10,7 @@ import {ISemver} from "contracts/src/tokens/river/base/ISemver.sol";
 // contracts
 import {ERC20} from "contracts/src/diamond/facets/token/ERC20/ERC20.sol";
 import {IntrospectionFacet} from "contracts/src/diamond/facets/introspection/IntrospectionFacet.sol";
+import {Votes} from "contracts/src/diamond/facets/governance/votes/Votes.sol";
 import {VotesEnumerable} from "contracts/src/diamond/facets/governance/votes/enumerable/VotesEnumerable.sol";
 import {LockFacet} from "contracts/src/tokens/lock/LockFacet.sol";
 
@@ -18,6 +19,7 @@ contract River is
   ILegacyMintableERC20,
   ISemver,
   ERC20,
+  Votes,
   VotesEnumerable,
   LockFacet,
   IntrospectionFacet
