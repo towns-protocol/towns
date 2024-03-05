@@ -13,6 +13,7 @@ import {IOwnableBase} from "contracts/src/diamond/facets/ownable/IERC173.sol";
 //contracts
 import {BaseSetup} from "contracts/test/spaces/BaseSetup.sol";
 import {River} from "contracts/src/tokens/river/base/River.sol";
+import {ERC20Permit} from "@openzeppelin/contracts/token/ERC20/extensions/ERC20Permit.sol";
 
 contract RiverBaseTest is BaseSetup, ILockBase, IOwnableBase {
   /// @dev `keccak256("Permit(address owner,address spender,uint256 value,uint256 nonce,uint256 deadline)")`.
@@ -87,6 +88,40 @@ contract RiverBaseTest is BaseSetup, ILockBase, IOwnableBase {
     riverFacet.permit(alice, bob, amount, deadline, v, r, s);
 
     assertEq(riverFacet.allowance(alice, bob), amount);
+  }
+
+  function test_revertWhen_permitDeadlineExpired(
+    uint256 amount,
+    address bob
+  ) external {
+    vm.assume(bob != address(0));
+    vm.assume(amount > 0 && amount <= 1000);
+
+    uint256 alicePrivateKey = _randomUint256();
+    address alice = vm.addr(alicePrivateKey);
+
+    vm.prank(bridge);
+    riverFacet.mint(alice, amount);
+
+    uint256 deadline = block.timestamp + 100;
+    (uint8 v, bytes32 r, bytes32 s) = _signPermit(
+      alicePrivateKey,
+      alice,
+      bob,
+      amount,
+      deadline
+    );
+
+    vm.warp(deadline + 1);
+
+    vm.prank(bob);
+    vm.expectRevert(
+      abi.encodeWithSelector(
+        ERC20Permit.ERC2612ExpiredSignature.selector,
+        deadline
+      )
+    );
+    riverFacet.permit(alice, bob, amount, deadline, v, r, s);
   }
 
   // =============================================================
