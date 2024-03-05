@@ -7,7 +7,7 @@ import {IERC20Permit} from "@openzeppelin/contracts/token/ERC20/extensions/IERC2
 import {IERC20Metadata} from "@openzeppelin/contracts/token/ERC20/extensions/IERC20Metadata.sol";
 import {ILockBase} from "contracts/src/tokens/lock/ILock.sol";
 import {IRiverBase} from "contracts/src/tokens/river/mainnet/IRiver.sol";
-import {IOwnableBase} from "contracts/src/diamond/facets/ownable/IERC173.sol";
+import {Ownable} from "@openzeppelin/contracts/access/Ownable.sol";
 
 //libraries
 
@@ -16,7 +16,7 @@ import {TestUtils} from "contracts/test/utils/TestUtils.sol";
 import {DeployRiverMainnet} from "contracts/scripts/deployments/DeployRiverMainnet.s.sol";
 import {River} from "contracts/src/tokens/river/mainnet/River.sol";
 
-contract RiverMainnetTest is TestUtils, IRiverBase, ILockBase, IOwnableBase {
+contract RiverMainnetTest is TestUtils, IRiverBase, ILockBase {
   DeployRiverMainnet internal deployRiverMainnet = new DeployRiverMainnet();
 
   /// @dev `keccak256("Permit(address owner,address spender,uint256 value,uint256 nonce,uint256 deadline)")`.
@@ -61,6 +61,8 @@ contract RiverMainnetTest is TestUtils, IRiverBase, ILockBase, IOwnableBase {
     address alice,
     address bob
   ) external givenCallerHasTokens(alice) {
+    vm.assume(bob != address(0));
+
     assertEq(river.allowance(alice, bob), 0);
 
     vm.prank(alice);
@@ -70,8 +72,13 @@ contract RiverMainnetTest is TestUtils, IRiverBase, ILockBase, IOwnableBase {
   }
 
   function test_permit(address bob) external {
+    vm.assume(bob != address(0));
+
     uint256 alicePrivateKey = _randomUint256();
     address alice = vm.addr(alicePrivateKey);
+
+    vm.prank(deployRiverMainnet.vault());
+    river.transfer(alice, 100);
 
     vm.warp(block.timestamp + 100);
 
@@ -263,7 +270,10 @@ contract RiverMainnetTest is TestUtils, IRiverBase, ILockBase, IOwnableBase {
 
     vm.prank(notOwner);
     vm.expectRevert(
-      abi.encodeWithSelector(Ownable__NotOwner.selector, notOwner)
+      abi.encodeWithSelector(
+        Ownable.OwnableUnauthorizedAccount.selector,
+        notOwner
+      )
     );
     river.createInflation(vault);
   }
@@ -317,7 +327,10 @@ contract RiverMainnetTest is TestUtils, IRiverBase, ILockBase, IOwnableBase {
 
     vm.prank(notOwner);
     vm.expectRevert(
-      abi.encodeWithSelector(Ownable__NotOwner.selector, notOwner)
+      abi.encodeWithSelector(
+        Ownable.OwnableUnauthorizedAccount.selector,
+        notOwner
+      )
     );
     river.setOverrideInflation(true, 100);
   }
