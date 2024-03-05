@@ -2,10 +2,10 @@ import React from 'react'
 import { ComboboxProps } from '@udecode/plate-combobox'
 import { getPluginOptions, useEditorRef } from '@udecode/plate-common'
 import { ELEMENT_MENTION, MentionPlugin, getMentionOnSelectItem } from '@udecode/plate-mention'
-import { Channel, RoomMember } from 'use-zion-client'
 import { Combobox } from './Combobox'
+import { TMentionComboboxTypes } from '../../utils/ComboboxTypes'
 
-export const MentionCombobox = <T extends RoomMember | Channel>({
+export const MentionCombobox = <T extends TMentionComboboxTypes>({
     pluginKey = ELEMENT_MENTION,
     id = pluginKey,
     ...props

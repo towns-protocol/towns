@@ -12,6 +12,7 @@ import { useCallback, useEffect, useMemo, useState } from 'react'
 import * as ReactDOM from 'react-dom'
 import fuzzysort from 'fuzzysort'
 import { Text, TypeaheadMenu, TypeaheadMenuItem } from '@ui'
+import { TMentionEmoji } from '@components/RichTextPlate/utils/ComboboxTypes'
 import { $createEmojiNode } from '../nodes/EmojiNode'
 
 // At most, 5 suggestions are shown in the popup.
@@ -196,8 +197,8 @@ const search = async function (string: string) {
         }))
 }
 
-function useEmojiLockupService(mentionString: string | null) {
-    const [results, setResults] = useState<Array<{ name: string; emoji: string }>>([])
+export function useEmojiLockupService(mentionString: string | null) {
+    const [results, setResults] = useState<TMentionEmoji[]>([])
 
     useEffect(() => {
         const cachedResults = mentionsCache.get(mentionString)

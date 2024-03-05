@@ -15978,7 +15978,7 @@ __metadata:
     slate: ^0.102.0
     slate-history: ^0.100.0
     slate-hyperscript: ^0.100.0
-    slate-mark: "https://github.com/abhi-bc/slate-mark.git#f6fac80ea975f42dcf833774f0c218ea49391abf"
+    slate-mark: "https://github.com/abhi-bc/slate-mark.git#4831a186a608439ec6e5a2e179f5ecf6706c64c0"
     slate-react: ^0.102.0
     tailwind-merge: ^2.2.1
     thenby: ^1.3.4
@@ -22988,12 +22988,12 @@ __metadata:
   languageName: node
   linkType: hard
 
-"slate-mark@https://github.com/abhi-bc/slate-mark.git#f6fac80ea975f42dcf833774f0c218ea49391abf":
+"slate-mark@https://github.com/abhi-bc/slate-mark.git#4831a186a608439ec6e5a2e179f5ecf6706c64c0":
   version: 0.0.6
-  resolution: "slate-mark@https://github.com/abhi-bc/slate-mark.git#commit=f6fac80ea975f42dcf833774f0c218ea49391abf"
+  resolution: "slate-mark@https://github.com/abhi-bc/slate-mark.git#commit=4831a186a608439ec6e5a2e179f5ecf6706c64c0"
   peerDependencies:
     "@udecode/plate-core": ^1.0.0
-  checksum: 58193fa6203e6b1e0665a02dcb98aa43762f56f7d6359f7d580ac3aa755b0989a473c4338dd527a9d526484444f300ed400317405ff4f88ba7fc943c67cfac87
+  checksum: 6a3817e59945ee4d5c940e01cff67744f72343e495653eff79f3f078d17f21b04b72151138cca24f0a72bf1836d0421256a60fe0b5622a21efa43f58e49a2c9f
   languageName: node
   linkType: hard
 

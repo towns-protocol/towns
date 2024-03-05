@@ -31,6 +31,7 @@ import { RichTextPlaceholder } from './components/RichTextEditorPlaceholder'
 import { SendMarkdownPlugin } from './components/SendMarkdownPlugin'
 import PlatePlugins from './plugins'
 import { ELEMENT_MENTION_CHANNEL } from './plugins/createChannelPlugin'
+import { EmojiPlugin } from './plugins/emoji/EmojiPlugin'
 import { PasteFilePlugin } from './components/PasteFilePlugin'
 import { CaptureTownsLinkPlugin } from './components/CaptureTownsLinkPlugin'
 
@@ -271,6 +272,7 @@ const PlateEditorWithoutBoundary = ({
                             </Box>
 
                             <CaptureTownsLinkPlugin onUpdate={onMessageLinksUpdated} />
+                            <EmojiPlugin />
                             <MentionCombobox<RoomMember> id="users" items={userMentions} />
                             <MentionCombobox<Channel>
                                 pluginKey={ELEMENT_MENTION_CHANNEL}

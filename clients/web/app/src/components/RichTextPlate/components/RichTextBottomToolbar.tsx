@@ -2,12 +2,14 @@ import React, { useCallback } from 'react'
 import { focusEditor } from '@udecode/slate-react'
 import { useEditorRef } from '@udecode/plate-common'
 import { GiphyEntryDesktop, GiphyEntryTouch } from '@components/Giphy/GiphyEntry'
-import { EmojiPickerButton } from '@components/EmojiPickerButton'
+import { EmojiPickerButton, EmojiPickerButtonTouch } from '@components/EmojiPickerButton'
 import { useDevice } from 'hooks/useDevice'
 import { Box, IconButton, Stack } from '@ui'
 import { MotionIcon, MotionIconButton } from 'ui/components/Motion/MotionComponents'
 import { useMediaDropContext } from '@components/MediaDropContext/MediaDropContext'
 import { SpaceProtocol, useEnvironment } from 'hooks/useEnvironmnet'
+import { ELEMENT_MENTION_EMOJI } from '../plugins/emoji/createEmojiPlugin'
+import { TEmojiMentionElement } from '../utils/ComboboxTypes'
 
 type Props = {
     threadId?: string
@@ -35,13 +37,12 @@ export const RichTextBottomToolbar = (props: Props) => {
     const onSelectEmoji = useCallback(
         (data: EmojiPickerSelection) => {
             focusEditor(editor)
-            /*editor.update(() => {
-                const selection = $getSelection()
-                const emojiNode = $createEmojiNode('', data.native)
-                if ($isRangeSelection(selection)) {
-                    selection.insertNodes([emojiNode])
-                }
-            })*/
+            editor.insertNode({
+                type: ELEMENT_MENTION_EMOJI,
+                children: [{ text: '' }],
+                emoji: { name: data.name, emoji: data.native },
+                value: data.native,
+            } as TEmojiMentionElement)
         },
         [editor],
     )
@@ -94,11 +95,11 @@ export const RichTextBottomToolbar = (props: Props) => {
                             showButton={props.visible}
                         />
                     )}
-                    {/* <EmojiPickerButtonTouch
+                    <EmojiPickerButtonTouch
                         key="emoji"
                         showButton={props.visible}
                         onSelectEmoji={onSelectEmoji}
-                    /> */}
+                    />
                 </>
             ) : (
                 <>

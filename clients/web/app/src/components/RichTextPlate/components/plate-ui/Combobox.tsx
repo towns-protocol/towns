@@ -1,4 +1,4 @@
-import React, { useCallback, useEffect } from 'react'
+import React, { PropsWithChildren, useCallback, useEffect } from 'react'
 import { withRef } from '@udecode/cn'
 import {
     ComboboxContentItemProps,
@@ -19,19 +19,32 @@ import {
     useEventEditorSelectors,
     usePlateSelectors,
 } from '@udecode/plate-common'
-import { Channel, RoomMember } from 'use-zion-client'
+import { RoomMember } from 'use-zion-client'
 import { TypeaheadMenu, TypeaheadMenuItem } from '@ui'
 import { Avatar } from '@components/Avatar/Avatar'
+import { TMentionComboboxTypes, TMentionEmoji } from '../../utils/ComboboxTypes'
+
+export const ComboboxIcon = <T extends TMentionComboboxTypes>({
+    item,
+}: PropsWithChildren<{ item: T }>) => {
+    if ((item as RoomMember).userId) {
+        return <Avatar size="avatar_sm" userId={(item as RoomMember).userId} />
+    } else if ((item as TMentionEmoji).emoji) {
+        return <span>{(item as TMentionEmoji).emoji}</span>
+    } else {
+        return <>#</>
+    }
+}
 
 export const ComboboxItem = withRef<
     'div',
-    ComboboxContentItemProps<RoomMember | Channel> & {
+    ComboboxContentItemProps<TMentionComboboxTypes> & {
         isHighlighted: boolean
         isLast: boolean
         editor: PlateEditor
         onSelectItem:
             | null
-            | ((editor: PlateEditor, item: TComboboxItemWithData<RoomMember | Channel>) => void)
+            | ((editor: PlateEditor, item: TComboboxItemWithData<TMentionComboboxTypes>) => void)
     }
 >(
     (
@@ -49,7 +62,7 @@ export const ComboboxItem = withRef<
         },
         ref,
     ) => {
-        const { props } = useComboboxItem<RoomMember | Channel>({
+        const { props } = useComboboxItem<TMentionComboboxTypes>({
             item,
             index,
             combobox,
@@ -78,13 +91,7 @@ export const ComboboxItem = withRef<
                     setRefElement: () => ref,
                 }}
                 name={item.text}
-                Icon={
-                    (item.data as RoomMember).userId ? (
-                        <Avatar size="avatar_sm" userId={(item.data as RoomMember).userId} />
-                    ) : (
-                        <>#</>
-                    )
-                }
+                Icon={<ComboboxIcon item={item.data} />}
                 onClick={onClick}
                 onMouseEnter={onMouseEnter}
             />
@@ -92,7 +99,7 @@ export const ComboboxItem = withRef<
     },
 )
 
-export const ComboboxContent = <T extends RoomMember | Channel>(
+export const ComboboxContent = <T extends TMentionComboboxTypes>(
     props: ComboboxContentProps<T> & { editor: PlateEditor },
 ) => {
     const { component: Component, editor, items, combobox, onRenderItem } = props
@@ -123,7 +130,7 @@ export const ComboboxContent = <T extends RoomMember | Channel>(
     )
 }
 
-export const Combobox = <T extends RoomMember | Channel>({
+export const Combobox = <T extends TMentionComboboxTypes>({
     id,
     trigger,
     searchPattern,

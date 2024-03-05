@@ -49,10 +49,12 @@ import { ChannelMentionElement } from '../components/plate-ui/ChannelMentionElem
 import { MentionElement } from '../components/plate-ui/MentionElement'
 import { MentionInputElement } from '../components/plate-ui/MentionInputElement'
 import { ParagraphElement } from '../components/plate-ui/ParagraphElement'
+import { EmojiMentionElement } from '../components/plate-ui/EmojilMentionElement'
 import { autoformatRules } from './autoformat'
 import { nodeResetRules } from './nodeReset'
 import { createShiftEnterListPlugin } from './shiftEnterListPlugin'
 import { ELEMENT_MENTION_CHANNEL, createChannelPlugin } from './createChannelPlugin'
+import { ELEMENT_MENTION_EMOJI, createEmojiPlugin } from './emoji/createEmojiPlugin'
 
 const PlatePlugins = createPlugins(
     [
@@ -70,7 +72,11 @@ const PlatePlugins = createPlugins(
         createLinkPlugin(),
         createListPlugin(),
         createComboboxPlugin(),
-
+        createEmojiPlugin({
+            options: {
+                id: 'emojis',
+            },
+        }),
         createChannelPlugin({
             options: {
                 id: 'channels',
@@ -161,6 +167,7 @@ const PlatePlugins = createPlugins(
             [ELEMENT_LI]: withProps(ListElement, { variant: 'li' }),
             [ELEMENT_LIC]: withProps(ListElement, { variant: 'span' }),
             [ELEMENT_MENTION]: MentionElement,
+            [ELEMENT_MENTION_EMOJI]: EmojiMentionElement,
             [ELEMENT_MENTION_CHANNEL]: ChannelMentionElement,
             [ELEMENT_MENTION_INPUT]: MentionInputElement,
             [ELEMENT_PARAGRAPH]: ParagraphElement,
