@@ -39,7 +39,6 @@
         "csb:wait:entitlements": "wait-on https://localhost:5157/info --timeout=400000 --i=5000 --verbose",
         "csb:wait:no-entitlements": "wait-on https://localhost:5158/info --timeout=400000 --i=5000 --verbose",
         "drt:wait": "wait-on tcp:8008 --timeout=400000 --i=5000 --verbose",
-        "forge": "yarn workspace @river/contracts exec forge",
         "harmonyweb:build": "turbo build --filter harmonyweb",
         "install:foundry": "./scripts/foundry-up.sh && yarn forge install",
         "lint": "turbo lint",

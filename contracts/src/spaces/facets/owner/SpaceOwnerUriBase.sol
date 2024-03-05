@@ -5,7 +5,7 @@ pragma solidity ^0.8.23;
 import {ISpaceOwnerBase} from "contracts/src/spaces/facets/owner/ISpaceOwner.sol";
 
 // libraries
-import {Base64} from "base64-sol/base64.sol";
+import {Base64} from "base64/base64.sol";
 import {Strings} from "@openzeppelin/contracts/utils/Strings.sol";
 
 // contracts

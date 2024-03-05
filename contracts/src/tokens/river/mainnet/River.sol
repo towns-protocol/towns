@@ -3,20 +3,20 @@ pragma solidity ^0.8.23;
 
 // interfaces
 import {IRiver} from "./IRiver.sol";
-import {IERC5805} from "openzeppelin-contracts/contracts/interfaces/IERC5805.sol";
+import {IERC5805} from "@openzeppelin/contracts/interfaces/IERC5805.sol";
 import {IERC20} from "@openzeppelin/contracts/token/ERC20/IERC20.sol";
 import {IERC20Permit} from "@openzeppelin/contracts/token/ERC20/extensions/IERC20Permit.sol";
 import {IERC20Metadata} from "@openzeppelin/contracts/token/ERC20/extensions/IERC20Metadata.sol";
 
 // libraries
-import {Nonces} from "openzeppelin-contracts/contracts/utils/Nonces.sol";
+import {Nonces} from "@openzeppelin/contracts/utils/Nonces.sol";
 
 // contracts
 
-import {ERC20} from "openzeppelin-contracts/contracts/token/ERC20/ERC20.sol";
-import {ERC20Permit} from "openzeppelin-contracts/contracts/token/ERC20/extensions/ERC20Permit.sol";
-import {Votes} from "openzeppelin-contracts/contracts/governance/utils/Votes.sol";
-import {Ownable} from "openzeppelin-contracts/contracts/access/Ownable.sol";
+import {ERC20} from "@openzeppelin/contracts/token/ERC20/ERC20.sol";
+import {ERC20Permit} from "@openzeppelin/contracts/token/ERC20/extensions/ERC20Permit.sol";
+import {Votes} from "@openzeppelin/contracts/governance/utils/Votes.sol";
+import {Ownable} from "@openzeppelin/contracts/access/Ownable.sol";
 
 import {VotesEnumerable} from "contracts/src/diamond/facets/governance/votes/enumerable/VotesEnumerable.sol";
 import {IntrospectionFacet} from "contracts/src/diamond/facets/introspection/IntrospectionFacet.sol";

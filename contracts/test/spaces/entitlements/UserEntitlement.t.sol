@@ -11,7 +11,7 @@ import {IEntitlement, IEntitlementBase} from "contracts/src/spaces/entitlements/
 
 //contracts
 import {UserEntitlement} from "contracts/src/spaces/entitlements/user/UserEntitlement.sol";
-import {ERC1967Proxy} from "openzeppelin-contracts/contracts/proxy/ERC1967/ERC1967Proxy.sol";
+import {ERC1967Proxy} from "@openzeppelin/contracts/proxy/ERC1967/ERC1967Proxy.sol";
 
 contract UserEntitlementTest is TestUtils, IEntitlementBase {
   UserEntitlement internal implementation;

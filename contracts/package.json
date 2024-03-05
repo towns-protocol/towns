@@ -15,6 +15,16 @@
         "test": "yarn test:unit",
         "test:unit": "make test"
     },
+    "dependencies": {
+        "@openzeppelin/contracts": "^5.0.2",
+        "@openzeppelin/contracts-upgradeable": "^5.0.2",
+        "@prb/math": "^4.0.2",
+        "@prb/test": "^0.6.4",
+        "account-abstraction": "github:eth-infinitism/account-abstraction",
+        "base64": "github:Brechtpd/base64",
+        "ds-test": "github:dapphub/ds-test",
+        "forge-std": "github:foundry-rs/forge-std#v1"
+    },
     "devDependencies": {
         "@harmony/eslint-config": "1.0.0",
         "@harmony/prettier-config": "workspace:^",

@@ -818,8 +818,8 @@
     "remappings": [
       ":@eth-optimism/contracts-bedrock/=node_modules/@eth-optimism/contracts-bedrock/",
       ":@openzeppelin/=lib/openzeppelin-contracts/",
-      ":@openzeppelin/contracts-upgradeable/=lib/openzeppelin-contracts-upgradeable/contracts/",
-      ":@openzeppelin/contracts/=lib/openzeppelin-contracts/contracts/",
+      ":@openzeppelin/contracts-upgradeable/=lib/@openzeppelin/contracts-upgradeable/contracts/",
+      ":@openzeppelin/contracts/=lib/@openzeppelin/contracts/",
       ":@prb/math/=lib/prb-math/src/",
       ":@prb/test/=lib/prb-test/src/",
       ":ERC721A/=lib/ERC721A/contracts/",
@@ -830,7 +830,7 @@
       ":ds-test/=lib/ds-test/src/",
       ":erc4626-tests/=lib/operator-filter-registry/lib/openzeppelin-contracts/lib/erc4626-tests/",
       ":forge-std/=lib/forge-std/src/",
-      ":openzeppelin-contracts-upgradeable/=lib/openzeppelin-contracts-upgradeable/contracts/",
+      ":@openzeppelin/contracts-upgradeable/=lib/@openzeppelin/contracts-upgradeable/contracts/",
       ":openzeppelin-contracts/=lib/openzeppelin-contracts/",
       ":operator-filter-registry/=lib/operator-filter-registry/",
       ":prb-math/=lib/prb-math/src/",
@@ -1094,7 +1094,7 @@
         "dweb:/ipfs/QmdixAyMJefx7qePChgdxcBH5MxhmN7vsqPuPLx3CgrVmF"
       ]
     },
-    "lib/openzeppelin-contracts/contracts/token/ERC721/IERC721.sol": {
+    "lib/@openzeppelin/contracts/token/ERC721/IERC721.sol": {
       "keccak256": "0x5ef46daa3b58ef2702279d514780316efaa952915ee1aa3396f041ee2982b0b4",
       "license": "MIT",
       "urls": [
@@ -1102,7 +1102,7 @@
         "dweb:/ipfs/QmPV4ZS4tPVv4mTCf9ejyZ1ai57EEibDRj7mN2ARDCLV5n"
       ]
     },
-    "lib/openzeppelin-contracts/contracts/utils/introspection/IERC165.sol": {
+    "lib/@openzeppelin/contracts/utils/introspection/IERC165.sol": {
       "keccak256": "0x4296879f55019b23e135000eb36896057e7101fb7fb859c5ef690cf14643757b",
       "license": "MIT",
       "urls": [
@@ -1110,7 +1110,7 @@
         "dweb:/ipfs/QmeJQCtZrQjtJLr6u7ZHWeH3pBnjtLWzvRrKViAi7UZqxL"
       ]
     },
-    "lib/openzeppelin-contracts/contracts/utils/structs/EnumerableSet.sol": {
+    "lib/@openzeppelin/contracts/utils/structs/EnumerableSet.sol": {
       "keccak256": "0x86c1470cbfd878491e5de030072b647352d36bd27122cffb928970b1945282aa",
       "license": "MIT",
       "urls": [

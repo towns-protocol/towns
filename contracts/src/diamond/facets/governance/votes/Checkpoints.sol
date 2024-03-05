@@ -4,8 +4,8 @@
 
 pragma solidity ^0.8.0;
 
-import {Math} from "openzeppelin-contracts/contracts/utils/math/Math.sol";
-import {SafeCast} from "openzeppelin-contracts/contracts/utils/math/SafeCast.sol";
+import {Math} from "@openzeppelin/contracts/utils/math/Math.sol";
+import {SafeCast} from "@openzeppelin/contracts/utils/math/SafeCast.sol";
 
 /**
  * @dev This library defines the `History` struct, for checkpointing values as they change at different points in

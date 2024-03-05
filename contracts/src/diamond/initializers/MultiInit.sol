@@ -4,7 +4,7 @@ pragma solidity ^0.8.24;
 // interfaces
 
 // libraries
-import {Address} from "openzeppelin-contracts/contracts/utils/Address.sol";
+import {Address} from "@openzeppelin/contracts/utils/Address.sol";
 
 // contracts
 

@@ -6,7 +6,7 @@ import {IEntitlement} from "contracts/src/spaces/entitlements/IEntitlement.sol";
 import {IERC165} from "contracts/src/diamond/facets/introspection/IERC165.sol";
 
 // libraries
-import {EnumerableSet} from "openzeppelin-contracts/contracts/utils/structs/EnumerableSet.sol";
+import {EnumerableSet} from "@openzeppelin/contracts/utils/structs/EnumerableSet.sol";
 import {EntitlementsManagerStorage} from "./EntitlementsManagerStorage.sol";
 
 // contracts

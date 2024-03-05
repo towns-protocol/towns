@@ -3,7 +3,7 @@ pragma solidity ^0.8.23;
 
 //interfaces
 import {IERC165} from "contracts/src/diamond/facets/introspection/IERC165.sol";
-import {IERC721} from "openzeppelin-contracts/contracts/token/ERC721/IERC721.sol";
+import {IERC721} from "@openzeppelin/contracts/token/ERC721/IERC721.sol";
 
 //libraries
 
