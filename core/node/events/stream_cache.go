@@ -65,7 +65,7 @@ func NewStreamCache(ctx context.Context, params *StreamCacheParams) (*streamCach
 		if nodes.IsLocal() {
 			s.cache.Store(stream.StreamId, &streamImpl{
 				params:   params,
-				streamId: stream.StreamId,
+				streamId: stream.StreamId.String(),
 				nodes:    nodes,
 			})
 		}
@@ -86,9 +86,6 @@ func (s *streamCacheImpl) tryLoadStreamRecord(ctx context.Context, streamId stri
 	record, _, mb, err := s.params.Registry.GetStreamWithGenesis(ctx, streamId)
 	if err != nil {
 		return nil, nil, err
-	}
-	if record.StreamId != streamId {
-		return nil, nil, RiverError(Err_INTERNAL, "Stream record mismatch", "streamId", streamId, "record", record.StreamId)
 	}
 
 	nodes := NewStreamNodes(record.Nodes, s.params.Wallet.Address)

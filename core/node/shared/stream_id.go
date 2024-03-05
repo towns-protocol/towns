@@ -4,6 +4,7 @@ import (
 	"bytes"
 	"encoding/hex"
 
+	"github.com/ethereum/go-ethereum/common"
 	. "github.com/river-build/river/core/node/base"
 	. "github.com/river-build/river/core/node/protocol"
 )
@@ -42,7 +43,6 @@ func StreamIdFromString(s string) (StreamId, error) {
 }
 
 func StreamIdFromBytes(b []byte) (StreamId, error) {
-	var id StreamId
 	if len(b) < 3 {
 		return StreamId{}, RiverError(Err_BAD_STREAM_ID, "invalid length", "streamId", b)
 	}
@@ -53,8 +53,23 @@ func StreamIdFromBytes(b []byte) (StreamId, error) {
 	if len(b) > expectedLen {
 		return StreamId{}, RiverError(Err_BAD_STREAM_ID, "invalid length", "streamId", b, "expectedLen", expectedLen, "actualLen", len(b))
 	}
+	var id StreamId
 	copy(id.bytes[:], b)
 	return id, nil
+}
+
+func StreamIdFromHash(b common.Hash) (StreamId, error) {
+	expectedLen, err := streamIdLengthForType(b[0])
+	if err != nil {
+		return StreamId{}, err
+	}
+	// all bytes after expectedLen should be 0
+	for i := expectedLen; i < len(b); i++ {
+		if b[i] != 0 {
+			return StreamId{}, RiverError(Err_BAD_STREAM_ID, "zero suffix exptected for id type", "streamId", b, "expectedLen", expectedLen)
+		}
+	}
+	return StreamId{bytes: b}, nil
 }
 
 // Returns truncated bytes of the stream id, use with protobufs

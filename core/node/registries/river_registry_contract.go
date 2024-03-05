@@ -96,18 +96,18 @@ func (sr *RiverRegistryContract) AllocateStream(
 }
 
 type GetStreamResult struct {
-	StreamId          string
+	StreamId          StreamId
 	Nodes             []common.Address
-	LastMiniblockHash []byte
+	LastMiniblockHash common.Hash
 	LastMiniblockNum  uint64
 	IsSealed          bool
 }
 
 func makeGetStreamResult(streamId StreamId, stream *contracts.IRiverRegistryBaseStream) *GetStreamResult {
 	return &GetStreamResult{
-		StreamId:          streamId.String(),
+		StreamId:          streamId,
 		Nodes:             stream.Nodes,
-		LastMiniblockHash: stream.LastMiniblockHash[:],
+		LastMiniblockHash: stream.LastMiniblockHash,
 		LastMiniblockNum:  stream.LastMiniblockNum,
 		IsSealed:          stream.Flags&1 != 0, // TODO: constants for flags
 	}
@@ -168,7 +168,7 @@ func (sr *RiverRegistryContract) GetAllStreams(ctx context.Context, blockNum uin
 	}
 	ret := make([]*GetStreamResult, len(streams))
 	for i, stream := range streams {
-		streamId, err := StreamIdFromBytes(stream.Id[:])
+		streamId, err := StreamIdFromHash(stream.Id)
 		if err != nil {
 			return nil, err
 		}
