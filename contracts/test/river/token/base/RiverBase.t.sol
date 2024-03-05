@@ -35,8 +35,21 @@ contract RiverBaseTest is BaseSetup, ILockBase, IOwnableBase {
     assertTrue(riverFacet.supportsInterface(type(IERC20Metadata).interfaceId));
   }
 
+  modifier givenCallerHasBridgedTokens(address caller, uint256 amount) {
+    vm.assume(caller != address(0));
+    vm.assume(amount > 0 && amount <= 1000);
+
+    vm.prank(bridge);
+    riverFacet.mint(caller, amount);
+    _;
+  }
+
   // Permit and Permit with Signature
-  function test_allowance(address alice, uint256 amount, address bob) external {
+  function test_allowance(
+    address alice,
+    uint256 amount,
+    address bob
+  ) external givenCallerHasBridgedTokens(alice, amount) {
     assertEq(riverFacet.allowance(alice, bob), 0);
 
     vm.prank(alice);
@@ -46,8 +59,14 @@ contract RiverBaseTest is BaseSetup, ILockBase, IOwnableBase {
   }
 
   function test_permit(uint256 amount, address bob) external {
+    vm.assume(bob != address(0));
+    vm.assume(amount > 0 && amount <= 1000);
+
     uint256 alicePrivateKey = _randomUint256();
     address alice = vm.addr(alicePrivateKey);
+
+    vm.prank(bridge);
+    riverFacet.mint(alice, amount);
 
     vm.warp(block.timestamp + 100);
 
@@ -71,15 +90,6 @@ contract RiverBaseTest is BaseSetup, ILockBase, IOwnableBase {
   // =============================================================
   //                           Delegation
   // =============================================================
-
-  modifier givenCallerHasBridgedTokens(address caller, uint256 amount) {
-    vm.assume(caller != address(0));
-    vm.assume(amount > 0 && amount <= 1000);
-
-    vm.prank(bridge);
-    riverFacet.mint(caller, amount);
-    _;
-  }
 
   modifier whenCallerDelegatesToASpace(address caller) {
     vm.prank(caller);

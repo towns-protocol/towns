@@ -73,6 +73,9 @@ contract RiverMainnetTest is TestUtils, IRiverBase, ILockBase {
     uint256 alicePrivateKey = _randomUint256();
     address alice = vm.addr(alicePrivateKey);
 
+    vm.prank(deployRiverMainnet.vault());
+    river.transfer(alice, 100);
+
     vm.warp(block.timestamp + 100);
 
     uint256 deadline = block.timestamp + 100;
