@@ -256,13 +256,17 @@ function register_node() {
     local node_address=$1
     local node_url=$2
 
+    # uint8 is the NodeStatus enum
+    # and 2 corresponds to Operational
+
     cast send \
         --rpc-url $LOCAL_ANVIL_RPC_URL \
         --private-key $PRIVATE_KEY \
         $RIVER_REGISTRY_ADDRESS \
-        "registerNode(address,string)" \
+        "registerNode(address,string,uint8)" \
         $node_address \
-        $node_url > /dev/null
+        $node_url \
+        2 > /dev/null
 }
 
 function update_node() {
@@ -273,7 +277,7 @@ function update_node() {
         --rpc-url $LOCAL_ANVIL_RPC_URL \
         --private-key $PRIVATE_KEY \
         $RIVER_REGISTRY_ADDRESS \
-        "updateNodeUrlByOperator(address nodeAddress, string url)" \
+        "updateNodeUrl(address nodeAddress, string url)" \
         $node_address \
         $node_url > /dev/null
 }
