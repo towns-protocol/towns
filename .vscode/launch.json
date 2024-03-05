@@ -62,36 +62,6 @@
       "console": "integratedTerminal",
     },
     {
-      "name": "Jest: current file in 'web/lib/' (multi)",
-      "type": "node",
-      "request": "launch",
-      "env": { "NODE_ENV": "development", "NODE_TLS_REJECT_UNAUTHORIZED": "0", "RIVER_TEST_CONNECT": "multi", "CASABLANCA_SERVER_URL": "https://localhost:5170,https://localhost:5171,https://localhost:5172,https://localhost:5173,https://localhost:5174", "DEBUG": "csb:*,test:*", "DEBUG_DEPTH":"10" },
-      "program": "${workspaceFolder}/node_modules/.bin/jest",
-      "runtimeArgs": ["--experimental-vm-modules", "--experimental-wasm-modules"],
-      "args": ["${fileBasenameNoExtension}", "--config", "${workspaceFolder}/clients/web/lib/jest.config.ts", "-i", "--no-cache", "--forceExit"],
-      "console": "integratedTerminal",
-    },
-    {
-      "name": "Jest: current file in 'web/lib/' (single)",
-      "type": "node",
-      "request": "launch",
-      "env": { "NODE_ENV": "development", "NODE_TLS_REJECT_UNAUTHORIZED": "0", "RIVER_TEST_CONNECT": "single", "CASABLANCA_SERVER_URL": "https://localhost:5157", "DEBUG": "", "DEBUG_DEPTH":"10" },
-      "program": "${workspaceFolder}/node_modules/.bin/jest",
-      "runtimeArgs": ["--experimental-vm-modules", "--experimental-wasm-modules"],
-      "args": ["${fileBasenameNoExtension}", "--config", "${workspaceFolder}/clients/web/lib/jest.config.ts", "-i", "--no-cache", "--forceExit"],
-      "console": "integratedTerminal",
-    },
-    {
-      "name": "Jest: current file in 'web/lib/' DEBUG=csb:*",
-      "type": "node",
-      "request": "launch",
-      "env": { "NODE_ENV": "development", "NODE_TLS_REJECT_UNAUTHORIZED": "0", "DEBUG": "csb:*", "DEBUG_DEPTH":"10" },
-      "program": "${workspaceFolder}/node_modules/.bin/jest",
-      "runtimeArgs": ["--experimental-vm-modules", "--experimental-wasm-modules"],
-      "args": ["${file}", "--config", "${workspaceFolder}/clients/web/lib/jest.config.ts", "-i", "--no-cache", "--forceExit"],
-      "console": "integratedTerminal",
-    },
-    {
       "name": "Casablanca Core Jest Tests Jsdom",
       "type": "node",
       "request": "launch",
@@ -105,15 +75,6 @@
       ],
       "console": "integratedTerminal",
       "internalConsoleOptions": "neverOpen"
-    },
-    {
-      "name": "Launch App to Chrome",
-      "url": "http://localhost:3000",
-      "request": "launch",
-      "type": "chrome",
-      "preLaunchTask": "App",
-      "webRoot": "${workspaceFolder}/clients/web/app",
-      "userDataDir": "${workspaceFolder}/.vscode/vscode-chrome-debug-userdatadir"
     },
   ]
 }

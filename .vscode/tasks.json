@@ -84,8 +84,6 @@
         "WatchCasablancaDlog",
         "WatchCasablancaEncryption",
         "WatchCasablancaProto",
-        "WatchWorkersCommon",
-        "WatchSharedLib",
         "WatchCasablancaWeb3",
         "WatchCasablancaSdk",
       ],
@@ -120,14 +118,6 @@
         "WatchCasablancaEncryption",
         "WatchCasablancaDlog",
       ],
-      "problemMatcher": [],
-    },
-    {
-      // Optional worker that's only required if testing the gateway worker with siwe verification
-      "label": "Start SIWE worker",
-      "type": "shell",
-      "command": "cd servers/workers/siwe-worker && yarn dev:local",
-      "isBackground": true,
       "problemMatcher": [],
     },
     {
@@ -350,16 +340,6 @@
       }
     },
     {
-      "label": "WatchSharedLib",
-      "type": "shell",
-      "command": "cd clients/web/lib && yarn watch",
-      "isBackground": true,
-      "problemMatcher": [],
-      "presentation": {
-        "group": "local-watch"
-      }
-    },
-    {
       "label": "WatchCasablancaSdk",
       "type": "shell",
       "command": "cd core/sdk && yarn watch",
@@ -383,16 +363,6 @@
       "label": "WatchCasablancaDlog",
       "type": "shell",
       "command": "cd core/dlog && yarn watch",
-      "isBackground": true,
-      "problemMatcher": [],
-      "presentation": {
-        "group": "local-watch"
-      }
-    },
-    {
-      "label": "WatchWorkersCommon",
-      "type": "shell",
-      "command": "cd servers/workers/worker-common && yarn watch",
       "isBackground": true,
       "problemMatcher": [],
       "presentation": {
@@ -430,26 +400,6 @@
       }
     },
     {
-      "label": "App",
-      "type": "shell",
-      "command": "cd clients/web/app && yarn dev",
-      "isBackground": true,
-      "problemMatcher": [],
-      "presentation": {
-        "group": "local-clients"
-      }
-    },
-    {
-      "label": "SampleApp",
-      "type": "shell",
-      "command": "cd clients/web/sample-app && yarn dev",
-      "isBackground": true,
-      "problemMatcher": [],
-      "presentation": {
-        "group": "local-clients"
-      }
-    },
-    {
       "label": "Casablanca DebugApp",
       "type": "shell",
       "command": "./scripts/wait-for-core.sh && cd core/debug-app && yarn dev",
@@ -467,56 +417,6 @@
       "problemMatcher": [],
       "presentation": {
         "group": "local-mitm"
-      }
-    },
-    {
-      "label": "UnfurlWorker",
-      "type": "shell",
-      "command": "sleep 1 && cd servers/workers/unfurl-worker && yarn dev:local",
-      "isBackground": true,
-      "problemMatcher": [],
-      "presentation": {
-        "group": "local-workers"
-      }
-    },
-    {
-      "label": "TokenWorker",
-      "type": "shell",
-      "command": "sleep 2 && cd servers/workers/token-worker && yarn dev:local",
-      "isBackground": true,
-      "problemMatcher": [],
-      "presentation": {
-        "group": "local-workers"
-      }
-    },
-    {
-      "label": "GatewayWorker",
-      "type": "shell",
-      "command": "sleep 3 && cd servers/workers/gateway-worker && yarn dev:local",
-      "isBackground": true,
-      "problemMatcher": [],
-      "presentation": {
-        "group": "local-workers"
-      }
-    },
-    {
-      "label": "PushNotificationsWorker",
-      "type": "shell",
-      "command": "sleep 4 && cd servers/workers/push-notification-worker && ./scripts/start-local-push-worker.sh",
-      "isBackground": true,
-      "problemMatcher": [],
-      "presentation": {
-        "group": "local-workers"
-      }
-    },
-    {
-      "label": "StackupWorker",
-      "type": "shell",
-      "command": "sleep 5 && cd servers/workers/stackup-worker && yarn dev:local",
-      "isBackground": true,
-      "problemMatcher": [],
-      "presentation": {
-        "group": "local-workers"
       }
     },
     {

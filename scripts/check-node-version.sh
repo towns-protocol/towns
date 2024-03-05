@@ -1,5 +1,5 @@
 #!/bin/bash
-
+cd "$(git rev-parse --show-toplevel)"
 
 # Check for the presence of a .nvmrc file
 if [ -f .nvmrc ]; then
