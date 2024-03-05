@@ -5,7 +5,7 @@ pragma solidity ^0.8.23;
 import {IProxy} from "./IProxy.sol";
 
 // libraries
-import {Address} from "openzeppelin-contracts/contracts/utils/Address.sol";
+import {Address} from "@openzeppelin/contracts/utils/Address.sol";
 
 // contracts
 

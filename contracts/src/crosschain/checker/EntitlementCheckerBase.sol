@@ -5,7 +5,7 @@ pragma solidity ^0.8.23;
 import {IEntitlementCheckerBase} from "./IEntitlementChecker.sol";
 
 // libraries
-import {EnumerableSet} from "openzeppelin-contracts/contracts/utils/structs/EnumerableSet.sol";
+import {EnumerableSet} from "@openzeppelin/contracts/utils/structs/EnumerableSet.sol";
 import {EntitlementCheckerStorage} from "./EntitlementCheckerStorage.sol";
 
 // contracts

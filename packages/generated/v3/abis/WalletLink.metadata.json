@@ -387,8 +387,8 @@
     "remappings": [
       ":@eth-optimism/contracts-bedrock/=node_modules/@eth-optimism/contracts-bedrock/",
       ":@openzeppelin/=lib/openzeppelin-contracts/",
-      ":@openzeppelin/contracts-upgradeable/=lib/openzeppelin-contracts-upgradeable/contracts/",
-      ":@openzeppelin/contracts/=lib/openzeppelin-contracts/contracts/",
+      ":@openzeppelin/contracts-upgradeable/=lib/@openzeppelin/contracts-upgradeable/contracts/",
+      ":@openzeppelin/contracts/=lib/@openzeppelin/contracts/",
       ":@prb/math/=lib/prb-math/src/",
       ":@prb/test/=lib/prb-test/src/",
       ":ERC721A/=lib/ERC721A/contracts/",
@@ -399,7 +399,7 @@
       ":ds-test/=lib/ds-test/src/",
       ":erc4626-tests/=lib/operator-filter-registry/lib/openzeppelin-contracts/lib/erc4626-tests/",
       ":forge-std/=lib/forge-std/src/",
-      ":openzeppelin-contracts-upgradeable/=lib/openzeppelin-contracts-upgradeable/contracts/",
+      ":@openzeppelin/contracts-upgradeable/=lib/@openzeppelin/contracts-upgradeable/contracts/",
       ":openzeppelin-contracts/=lib/openzeppelin-contracts/",
       ":operator-filter-registry/=lib/operator-filter-registry/",
       ":prb-math/=lib/prb-math/src/",
@@ -495,7 +495,7 @@
         "dweb:/ipfs/QmYptKYMVxjWx8RNJZZehTEjAnJSriaTKQ6u27q1yH7NCk"
       ]
     },
-    "lib/openzeppelin-contracts/contracts/utils/Address.sol": {
+    "lib/@openzeppelin/contracts/utils/Address.sol": {
       "keccak256": "0xaf28a975a78550e45f65e559a3ad6a5ad43b9b8a37366999abd1b7084eb70721",
       "license": "MIT",
       "urls": [
@@ -503,7 +503,7 @@
         "dweb:/ipfs/QmRaydGr8BTHs1kvaZfsNU69pKzUAGFrvABn1KiRSbE51y"
       ]
     },
-    "lib/openzeppelin-contracts/contracts/utils/Strings.sol": {
+    "lib/@openzeppelin/contracts/utils/Strings.sol": {
       "keccak256": "0x55f102ea785d8399c0e58d1108e2d289506dde18abc6db1b7f68c1f9f9bc5792",
       "license": "MIT",
       "urls": [
@@ -511,7 +511,7 @@
         "dweb:/ipfs/QmZEeeXoFPW47amyP35gfzomF9DixqqTEPwzBakv6cZw6i"
       ]
     },
-    "lib/openzeppelin-contracts/contracts/utils/cryptography/ECDSA.sol": {
+    "lib/@openzeppelin/contracts/utils/cryptography/ECDSA.sol": {
       "keccak256": "0xeed0a08b0b091f528356cbc7245891a4c748682d4f6a18055e8e6ca77d12a6cf",
       "license": "MIT",
       "urls": [
@@ -519,7 +519,7 @@
         "dweb:/ipfs/QmXRJDv3xHLVQCVXg1ZvR35QS9sij5y9NDWYzMfUfAdTHF"
       ]
     },
-    "lib/openzeppelin-contracts/contracts/utils/cryptography/MessageHashUtils.sol": {
+    "lib/@openzeppelin/contracts/utils/cryptography/MessageHashUtils.sol": {
       "keccak256": "0xba333517a3add42cd35fe877656fc3dfcc9de53baa4f3aabbd6d12a92e4ea435",
       "license": "MIT",
       "urls": [
@@ -527,7 +527,7 @@
         "dweb:/ipfs/QmRUo1muMRAewxrKQ7TkXUtknyRoR57AyEkoPpiuZQ8FzX"
       ]
     },
-    "lib/openzeppelin-contracts/contracts/utils/introspection/IERC165.sol": {
+    "lib/@openzeppelin/contracts/utils/introspection/IERC165.sol": {
       "keccak256": "0x4296879f55019b23e135000eb36896057e7101fb7fb859c5ef690cf14643757b",
       "license": "MIT",
       "urls": [
@@ -535,7 +535,7 @@
         "dweb:/ipfs/QmeJQCtZrQjtJLr6u7ZHWeH3pBnjtLWzvRrKViAi7UZqxL"
       ]
     },
-    "lib/openzeppelin-contracts/contracts/utils/math/Math.sol": {
+    "lib/@openzeppelin/contracts/utils/math/Math.sol": {
       "keccak256": "0x005ec64c6313f0555d59e278f9a7a5ab2db5bdc72a027f255a37c327af1ec02d",
       "license": "MIT",
       "urls": [
@@ -543,7 +543,7 @@
         "dweb:/ipfs/QmQyRpyPRL5SQuAgj6SHmbir3foX65FJjbVTTQrA2EFg6L"
       ]
     },
-    "lib/openzeppelin-contracts/contracts/utils/math/SignedMath.sol": {
+    "lib/@openzeppelin/contracts/utils/math/SignedMath.sol": {
       "keccak256": "0x5f7e4076e175393767754387c962926577f1660dd9b810187b9002407656be72",
       "license": "MIT",
       "urls": [
@@ -551,7 +551,7 @@
         "dweb:/ipfs/QmVBEei6aTnvYNZp2CHYVNKyZS4q1KkjANfY39WVXZXVoT"
       ]
     },
-    "lib/openzeppelin-contracts/contracts/utils/structs/EnumerableSet.sol": {
+    "lib/@openzeppelin/contracts/utils/structs/EnumerableSet.sol": {
       "keccak256": "0x86c1470cbfd878491e5de030072b647352d36bd27122cffb928970b1945282aa",
       "license": "MIT",
       "urls": [

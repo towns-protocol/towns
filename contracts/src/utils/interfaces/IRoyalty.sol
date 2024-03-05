@@ -6,7 +6,7 @@ pragma solidity ^0.8.24;
 // libraries
 
 // contracts
-import {IERC2981} from "openzeppelin-contracts/contracts/interfaces/IERC2981.sol";
+import {IERC2981} from "@openzeppelin/contracts/interfaces/IERC2981.sol";
 
 interface IRoyalty is IERC2981 {
   struct RoyaltyInfo {

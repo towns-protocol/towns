@@ -7,7 +7,7 @@ import {IEntitlementBase} from "contracts/src/spaces/entitlements/IEntitlement.s
 import {IRuleEntitlement} from "contracts/src/crosschain/IRuleEntitlement.sol";
 
 // libraries
-import {EnumerableSet} from "openzeppelin-contracts/contracts/utils/structs/EnumerableSet.sol";
+import {EnumerableSet} from "@openzeppelin/contracts/utils/structs/EnumerableSet.sol";
 import {EntitlementsManagerStorage} from "contracts/src/spaces/facets/entitlements/EntitlementsManagerStorage.sol";
 import {MembershipStorage} from "contracts/src/spaces/facets/membership/MembershipStorage.sol";
 import {ERC721ABase} from "contracts/src/diamond/facets/token/ERC721A/ERC721ABase.sol";

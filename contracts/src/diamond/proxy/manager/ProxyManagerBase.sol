@@ -7,7 +7,7 @@ import {IProxyManagerBase} from "./IProxyManager.sol";
 
 // libraries
 import {ProxyManagerStorage} from "./ProxyManagerStorage.sol";
-import {Address} from "openzeppelin-contracts/contracts/utils/Address.sol";
+import {Address} from "@openzeppelin/contracts/utils/Address.sol";
 
 // contracts
 

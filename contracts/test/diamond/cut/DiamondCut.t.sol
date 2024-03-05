@@ -5,12 +5,12 @@ pragma solidity ^0.8.23;
 import {IDiamondCutBase} from "contracts/src/diamond/facets/cut/IDiamondCut.sol";
 import {IDiamond} from "contracts/src/diamond/Diamond.sol";
 import {IDiamondCut, IDiamondCutBase} from "contracts/src/diamond/facets/cut/IDiamondCut.sol";
-import {IERC165} from "openzeppelin-contracts/contracts/utils/introspection/IERC165.sol";
+import {IERC165} from "@openzeppelin/contracts/utils/introspection/IERC165.sol";
 import {IMockFacet} from "contracts/test/mocks/MockFacet.sol";
 import {IOwnableBase} from "contracts/src/diamond/facets/ownable/IERC173.sol";
 
 // libraries
-import {Address} from "openzeppelin-contracts/contracts/utils/Address.sol";
+import {Address} from "@openzeppelin/contracts/utils/Address.sol";
 
 // contracts
 import {DiamondCutSetup} from "contracts/test/diamond/cut/DiamondCutSetup.sol";

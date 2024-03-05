@@ -4,7 +4,7 @@ pragma solidity ^0.8.23;
 // interfaces
 
 // libraries
-import {EnumerableSet} from "openzeppelin-contracts/contracts/utils/structs/EnumerableSet.sol";
+import {EnumerableSet} from "@openzeppelin/contracts/utils/structs/EnumerableSet.sol";
 
 // contracts
 

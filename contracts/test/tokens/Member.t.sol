@@ -8,7 +8,7 @@ pragma solidity ^0.8.0;
 //contracts
 import {TestUtils} from "contracts/test/utils/TestUtils.sol";
 import {MerkleTree} from "contracts/test/utils/MerkleTree.sol";
-import {IERC721Receiver} from "openzeppelin-contracts/contracts/token/ERC721/IERC721Receiver.sol";
+import {IERC721Receiver} from "@openzeppelin/contracts/token/ERC721/IERC721Receiver.sol";
 import {Member} from "contracts/src/tokens/Member.sol";
 import {IMember} from "contracts/src/tokens/interfaces/IMember.sol";
 import {StdStorage, stdStorage} from "forge-std/StdStorage.sol";

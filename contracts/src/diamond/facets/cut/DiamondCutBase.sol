@@ -7,8 +7,8 @@ import {IDiamond} from "contracts/src/diamond/IDiamond.sol";
 
 // libraries
 import {DiamondCutStorage} from "./DiamondCutStorage.sol";
-import {EnumerableSet} from "openzeppelin-contracts/contracts/utils/structs/EnumerableSet.sol";
-import {Address} from "openzeppelin-contracts/contracts/utils/Address.sol";
+import {EnumerableSet} from "@openzeppelin/contracts/utils/structs/EnumerableSet.sol";
+import {Address} from "@openzeppelin/contracts/utils/Address.sol";
 
 abstract contract DiamondCutBase is IDiamondCutBase {
   using EnumerableSet for EnumerableSet.AddressSet;

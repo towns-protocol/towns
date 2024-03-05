@@ -1,6 +1,6 @@
 {
   "compiler": {
-    "version": "0.8.23+commit.f704f362"
+    "version": "0.8.24+commit.e11b9ed9"
   },
   "language": "Solidity",
   "output": {
@@ -649,25 +649,14 @@
       "runs": 200
     },
     "remappings": [
-      ":@eth-optimism/contracts-bedrock/=node_modules/@eth-optimism/contracts-bedrock/",
-      ":@openzeppelin/=lib/openzeppelin-contracts/",
-      ":@openzeppelin/contracts-upgradeable/=lib/openzeppelin-contracts-upgradeable/contracts/",
-      ":@openzeppelin/contracts/=lib/openzeppelin-contracts/contracts/",
-      ":@prb/math/=lib/prb-math/src/",
-      ":@prb/test/=lib/prb-test/src/",
-      ":ERC721A/=lib/ERC721A/contracts/",
-      ":account-abstraction/=lib/account-abstraction/contracts/",
-      ":base64-sol/=lib/base64/",
-      ":base64/=lib/base64/",
-      ":council/=lib/council/contracts/",
-      ":ds-test/=lib/ds-test/src/",
-      ":erc4626-tests/=lib/operator-filter-registry/lib/openzeppelin-contracts/lib/erc4626-tests/",
-      ":forge-std/=lib/forge-std/src/",
-      ":openzeppelin-contracts-upgradeable/=lib/openzeppelin-contracts-upgradeable/contracts/",
-      ":openzeppelin-contracts/=lib/openzeppelin-contracts/",
-      ":operator-filter-registry/=lib/operator-filter-registry/",
-      ":prb-math/=lib/prb-math/src/",
-      ":prb-test/=lib/prb-test/src/"
+      ":@openzeppelin/=node_modules/@openzeppelin/",
+      ":@prb/math/=node_modules/@prb/math/src/",
+      ":@prb/test/=node_modules/@prb/test/src/",
+      ":account-abstraction/=node_modules/account-abstraction/contracts/",
+      ":base64/=node_modules/base64/",
+      ":ds-test/=node_modules/ds-test/",
+      ":forge-std/=node_modules/forge-std/src/",
+      ":hardhat-deploy/=node_modules/hardhat-deploy/"
     ]
   },
   "sources": {
@@ -680,11 +669,11 @@
       ]
     },
     "contracts/src/spaces/entitlements/IEntitlement.sol": {
-      "keccak256": "0x712add71e128251b8e0b4112ce76cd46f6679715df6c793f687dce612e9d9852",
+      "keccak256": "0x6f8aab97a4fae69e2ee5dd1820e34dd742d634751d41d833b21fcce47c3df0bf",
       "license": "Apache-2.0",
       "urls": [
-        "bzz-raw://ff5c19f00858661b2f493902650dddaa29fa0dc2d3ed1ad3b2f1f0d7c6a9127d",
-        "dweb:/ipfs/QmdH8pn1iKkPrPTyZB4eBeiJKJR92L42Zn1xmsWGFJuxZp"
+        "bzz-raw://2d1501e3e3cebaeb556720bbf336233af28e9b76394302a1d97d555496ffd324",
+        "dweb:/ipfs/QmPhggvuU2uHwVnqYXjATiCNrLFXdN2KbF5tgNeo8s3Pui"
       ]
     }
   },

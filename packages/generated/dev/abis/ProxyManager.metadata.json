@@ -1,6 +1,6 @@
 {
   "compiler": {
-    "version": "0.8.23+commit.f704f362"
+    "version": "0.8.24+commit.e11b9ed9"
   },
   "language": "Solidity",
   "output": {
@@ -229,25 +229,14 @@
       "runs": 200
     },
     "remappings": [
-      ":@eth-optimism/contracts-bedrock/=node_modules/@eth-optimism/contracts-bedrock/",
-      ":@openzeppelin/=lib/openzeppelin-contracts/",
-      ":@openzeppelin/contracts-upgradeable/=lib/openzeppelin-contracts-upgradeable/contracts/",
-      ":@openzeppelin/contracts/=lib/openzeppelin-contracts/contracts/",
-      ":@prb/math/=lib/prb-math/src/",
-      ":@prb/test/=lib/prb-test/src/",
-      ":ERC721A/=lib/ERC721A/contracts/",
-      ":account-abstraction/=lib/account-abstraction/contracts/",
-      ":base64-sol/=lib/base64/",
-      ":base64/=lib/base64/",
-      ":council/=lib/council/contracts/",
-      ":ds-test/=lib/ds-test/src/",
-      ":erc4626-tests/=lib/operator-filter-registry/lib/openzeppelin-contracts/lib/erc4626-tests/",
-      ":forge-std/=lib/forge-std/src/",
-      ":openzeppelin-contracts-upgradeable/=lib/openzeppelin-contracts-upgradeable/contracts/",
-      ":openzeppelin-contracts/=lib/openzeppelin-contracts/",
-      ":operator-filter-registry/=lib/operator-filter-registry/",
-      ":prb-math/=lib/prb-math/src/",
-      ":prb-test/=lib/prb-test/src/"
+      ":@openzeppelin/=node_modules/@openzeppelin/",
+      ":@prb/math/=node_modules/@prb/math/src/",
+      ":@prb/test/=node_modules/@prb/test/src/",
+      ":account-abstraction/=node_modules/account-abstraction/contracts/",
+      ":base64/=node_modules/base64/",
+      ":ds-test/=node_modules/ds-test/",
+      ":forge-std/=node_modules/forge-std/src/",
+      ":hardhat-deploy/=node_modules/hardhat-deploy/"
     ]
   },
   "sources": {
@@ -284,11 +273,11 @@
       ]
     },
     "contracts/src/diamond/facets/introspection/IntrospectionBase.sol": {
-      "keccak256": "0x5379ee00fe8945cb6820e9f3692c1f141ab2bacb286ac39f096857bd530f91ca",
+      "keccak256": "0x5f458cf292b4b7b9d9c1efd110b3b65905c7bd7e47a48090af5eb9fb7d620ddf",
       "license": "Apache-2.0",
       "urls": [
-        "bzz-raw://90c08f3e8e8fc64264ac94bc8005286e881760b0c776a9b0a2e679e4cff0237a",
-        "dweb:/ipfs/QmXcpnF9hcUH7jGvEySkNBRybYYrcGyUjkUHXuTex886cJ"
+        "bzz-raw://84995121aafc9124ba3a1148835dcccc1061c25a5b074b4579a83c0dd213d613",
+        "dweb:/ipfs/QmPYSKEqYWasPxVRzv4TCpXVfpkahfFDEPkTLp7UAT9fKq"
       ]
     },
     "contracts/src/diamond/facets/introspection/IntrospectionStorage.sol": {
@@ -348,11 +337,11 @@
       ]
     },
     "contracts/src/diamond/proxy/manager/ProxyManagerBase.sol": {
-      "keccak256": "0xe25a898aed4b3c11a7b2e18b5d7c87ef531d8bdfe7208d9c554fd5c2d34bec26",
+      "keccak256": "0xac5ab92217043d81e01353a8f60242880d18292ed90493161461ab3fd9b0c0c5",
       "license": "Apache-2.0",
       "urls": [
-        "bzz-raw://6da27638b89c43a3544ae8052d5f4148061218cadc9798c2f37277e7f27314b6",
-        "dweb:/ipfs/Qme1CqMCFVtHCPffc6mQtakzvn2Me6pts7yQL1g4kGJcQn"
+        "bzz-raw://2e8933873ed8549a6568129bee694b9213fbb8c8ffa0fed50491f2d1a8f9ca0d",
+        "dweb:/ipfs/QmSBUHdcCemYyk9L5WJduW4WvvMPjDS5FCzfbbhydJnGi7"
       ]
     },
     "contracts/src/diamond/proxy/manager/ProxyManagerStorage.sol": {
@@ -363,7 +352,7 @@
         "dweb:/ipfs/QmV995SC2hmz65udfH1genZY8Dxgpd29FBVuND4QwqRizu"
       ]
     },
-    "lib/openzeppelin-contracts/contracts/utils/Address.sol": {
+    "node_modules/@openzeppelin/contracts/utils/Address.sol": {
       "keccak256": "0xaf28a975a78550e45f65e559a3ad6a5ad43b9b8a37366999abd1b7084eb70721",
       "license": "MIT",
       "urls": [
@@ -371,7 +360,7 @@
         "dweb:/ipfs/QmRaydGr8BTHs1kvaZfsNU69pKzUAGFrvABn1KiRSbE51y"
       ]
     },
-    "lib/openzeppelin-contracts/contracts/utils/introspection/IERC165.sol": {
+    "node_modules/@openzeppelin/contracts/utils/introspection/IERC165.sol": {
       "keccak256": "0x4296879f55019b23e135000eb36896057e7101fb7fb859c5ef690cf14643757b",
       "license": "MIT",
       "urls": [

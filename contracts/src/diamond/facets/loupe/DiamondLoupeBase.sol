@@ -5,7 +5,7 @@ pragma solidity ^0.8.23;
 import {IDiamondLoupeBase} from "./IDiamondLoupe.sol";
 
 // libraries
-import {EnumerableSet} from "openzeppelin-contracts/contracts/utils/structs/EnumerableSet.sol";
+import {EnumerableSet} from "@openzeppelin/contracts/utils/structs/EnumerableSet.sol";
 import {DiamondCutStorage} from "../cut/DiamondCutStorage.sol";
 
 // contracts

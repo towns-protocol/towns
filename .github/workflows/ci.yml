@@ -65,9 +65,6 @@ jobs:
             - name: Checkout code
               uses: actions/checkout@v4
 
-            - name: Git submodules
-              run: git submodule update --init --recursive
-
             - name: Setup Go
               uses: actions/setup-go@v5
               with:
@@ -79,22 +76,19 @@ jobs:
               with:
                   version: ${{ env.FOUNDRY_VERSION }}
 
-            - name: Install Forge modules
-              run: ./scripts/install-deps.sh
-
             - uses: actions/setup-node@v4
               with:
                   node-version: '20'
                   cache: 'yarn'
 
-            - name: Print versions
-              run: ./scripts/print-versions.sh
-              
-            - name: Start and configure blockchains
-              run: ./scripts/bc-all-start.sh
-
             - name: Install node dependencies
               run: yarn install --immutable
+
+            - name: Print versions
+              run: ./scripts/print-versions.sh
+
+            - name: Start and configure blockchains
+              run: ./scripts/bc-all-start.sh
 
             - name: Maintain Turbo cache
               uses: actions/cache@v4
@@ -222,22 +216,21 @@ jobs:
               with:
                   version: ${{ env.FOUNDRY_VERSION }}
 
-            - name: Install Forge modules
-              run: ./scripts/install-deps.sh
+
 
             - uses: actions/setup-node@v4
               with:
                   node-version: '20'
                   cache: 'yarn'
 
+            - name: Install node dependencies
+              run: yarn install --immutable
+
             - name: Print versions
               run: ./scripts/print-versions.sh
 
             - name: Start and configure blockchains
               run: ./scripts/bc-all-start.sh
-
-            - name: Install node dependencies
-              run: yarn install --immutable
 
             - name: Print Yarn package versions
               run: yarn info --name-only --all
@@ -377,22 +370,19 @@ jobs:
               with:
                   version: ${{ env.FOUNDRY_VERSION }}
 
-            - name: Install Forge modules
-              run: ./scripts/install-deps.sh
-
             - uses: actions/setup-node@v4
               with:
                   node-version: '20'
                   cache: 'yarn'
+
+            - name: Install node dependencies
+              run: yarn install --immutable
 
             - name: Print versions
               run: ./scripts/print-versions.sh
 
             - name: Start and configure blockchains
               run: ./scripts/bc-all-start.sh
-
-            - name: Install node dependencies
-              run: yarn install --immutable
 
             - name: Print Yarn package versions
               run: yarn info --name-only --all
@@ -519,22 +509,21 @@ jobs:
               with:
                   version: ${{ env.FOUNDRY_VERSION }}
 
-            - name: Install Forge modules
-              run: ./scripts/install-deps.sh
+
 
             - uses: actions/setup-node@v4
               with:
                   node-version: '20'
                   cache: 'yarn'
 
+            - name: Install node dependencies
+              run: yarn install --immutable
+
             - name: Print versions
               run: ./scripts/print-versions.sh
 
             - name: Start and configure blockchains
               run: ./scripts/bc-all-start.sh
-
-            - name: Install node dependencies
-              run: yarn install --immutable
 
             - name: Print Yarn package versions
               run: yarn info --name-only --all
@@ -657,22 +646,19 @@ jobs:
               with:
                   version: ${{ env.FOUNDRY_VERSION }}
 
-            - name: Install Forge modules
-              run: ./scripts/install-deps.sh
-
             - uses: actions/setup-node@v4
               with:
                   node-version: '20'
                   cache: 'yarn'
+
+            - name: Install node dependencies
+              run: yarn install --immutable
 
             - name: Print versions
               run: ./scripts/print-versions.sh
 
             - name: Start and configure blockchains
               run: ./scripts/bc-all-start.sh
-
-            - name: Install node dependencies
-              run: yarn install --immutable
 
             - name: Print Yarn package versions
               run: yarn info --name-only --all
@@ -778,22 +764,21 @@ jobs:
               with:
                   version: ${{ env.FOUNDRY_VERSION }}
 
-            - name: Install Forge modules
-              run: ./scripts/install-deps.sh
+
 
             - uses: actions/setup-node@v4
               with:
                   node-version: '20'
                   cache: 'yarn'
 
+            - name: Install node dependencies
+              run: yarn install --immutable
+
             - name: Print versions
               run: ./scripts/print-versions.sh
 
             - name: Start and configure blockchains
               run: ./scripts/bc-all-start.sh
-
-            - name: Install node dependencies
-              run: yarn install --immutable
 
             - name: create db
               run: psql -h localhost -p 5433 -U postgres -f scripts/sql/create_db.sql
@@ -856,17 +841,14 @@ jobs:
               with:
                   version: ${{ env.FOUNDRY_VERSION }}
 
-            - name: Install Forge modules
-              run: ./scripts/install-deps.sh
+            - name: Install node dependencies
+              run: yarn install --immutable
 
             - name: Print versions
               run: ./scripts/print-versions.sh
 
             - name: Start and configure blockchains
               run: ./scripts/bc-all-start.sh
-
-            - name: Install node dependencies
-              run: yarn install --immutable
 
             - name: Generate xchain contract bindings
               run: ./scripts/build-contract-types.sh localhost

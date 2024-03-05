@@ -6,7 +6,7 @@
   evm_version="paris" # The EVM version to use during tests.
   fuzz = { runs = 256 } # The amount of fuzz runs to perform for each fuzz test case.
   gas_reports = ["*"] # The contracts to print gas reports for.
-  libs = ["node_modules", "lib"] # An array of paths that contain libraries, relative to the root of the project.
+  libs = ["node_modules", "lib"]
   optimizer = true # Whether or not to enable the Solidity optimizer.
   optimizer_runs = 200 # The amount of optimizer runs to perform.
   out = "contracts/out" # The path to put contract artifacts in, relative to the root of the project.
@@ -21,6 +21,7 @@
   ] # Configures permissions for cheatcodes that touch the filesystem
   extra_output = ["metadata", "abi", "bin"]
   extra_output_files = ["metadata", "abi", "bin"]
+
 [profile.ci]
   fuzz = { runs = 10_000 }
   verbosity = 4

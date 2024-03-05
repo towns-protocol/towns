@@ -6,7 +6,7 @@ import {TestUtils} from "contracts/test/utils/TestUtils.sol";
 
 import {RuleEntitlement} from "contracts/src/crosschain/RuleEntitlement.sol";
 import {IRuleEntitlement} from "contracts/src/crosschain/IRuleEntitlement.sol";
-import {ERC1967Proxy} from "openzeppelin-contracts/contracts/proxy/ERC1967/ERC1967Proxy.sol";
+import {ERC1967Proxy} from "@openzeppelin/contracts/proxy/ERC1967/ERC1967Proxy.sol";
 
 contract EntitlementGatedTest is TestUtils {
   RuleEntitlement internal implementation;

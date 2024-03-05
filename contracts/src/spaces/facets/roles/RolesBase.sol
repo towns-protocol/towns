@@ -6,7 +6,7 @@ import {IRolesBase} from "./IRoles.sol";
 
 // libraries
 import {StringSet} from "contracts/src/utils/StringSet.sol";
-import {EnumerableSet} from "openzeppelin-contracts/contracts/utils/structs/EnumerableSet.sol";
+import {EnumerableSet} from "@openzeppelin/contracts/utils/structs/EnumerableSet.sol";
 import {Validator} from "contracts/src/utils/Validator.sol";
 
 // services

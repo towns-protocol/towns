@@ -7,7 +7,7 @@ pragma solidity ^0.8.23;
 
 // contracts
 import {IRoyalty, IERC2981} from "contracts/src/utils/interfaces/IRoyalty.sol";
-import {ERC165, IERC165} from "openzeppelin-contracts/contracts/utils/introspection/ERC165.sol";
+import {ERC165, IERC165} from "@openzeppelin/contracts/utils/introspection/ERC165.sol";
 
 abstract contract Royalty is IRoyalty, ERC165 {
   RoyaltyInfo private _defaultRoyaltyInfo;

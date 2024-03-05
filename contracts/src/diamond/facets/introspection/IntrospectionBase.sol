@@ -3,7 +3,7 @@ pragma solidity ^0.8.23;
 
 // interfaces
 import {IIntrospectionBase} from "./IERC165.sol";
-import {IERC165} from "openzeppelin-contracts/contracts/utils/introspection/IERC165.sol";
+import {IERC165} from "@openzeppelin/contracts/utils/introspection/IERC165.sol";
 
 // libraries
 import {IntrospectionStorage} from "./IntrospectionStorage.sol";
