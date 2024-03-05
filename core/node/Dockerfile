@@ -20,6 +20,7 @@ RUN go build -trimpath -o bin/ ./node/
 
 # TODO: we should also simplify this config script so
 # that we don't have to pass "Null" to values we don't need.
+# TODO: I don't think this instance is still used.
 RUN SKIP_GENKEY=true \
     RUN_BASE=./run_files \
     INSTANCE=docker-single-node \
@@ -31,7 +32,6 @@ RUN SKIP_GENKEY=true \
     LOG_NOCOLOR=true \
     LOG_LEVEL=info \
     REPL_FACTOR=1 \
-    DISABLE_RIVER_CHAIN=true \
     ./config_instance.sh
 
 RUN SKIP_GENKEY=true \
@@ -45,7 +45,6 @@ RUN SKIP_GENKEY=true \
     LOG_NOCOLOR=true \
     LOG_LEVEL=info \
     REPL_FACTOR=1 \
-    DISABLE_RIVER_CHAIN=false \
     ./config_instance.sh
 
 FROM alpine:latest

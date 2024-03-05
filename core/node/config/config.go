@@ -51,9 +51,6 @@ type Config struct {
 
 	// Disable base chain contract usage.
 	DisableBaseChain bool
-
-	// Disable river chain contract usage.
-	DisableRiverChain bool
 }
 
 type DatabaseConfig struct {

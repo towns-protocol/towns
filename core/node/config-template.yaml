@@ -81,5 +81,4 @@ stream:
         a5: 10 # USER_SETTINGS
 
 # Debug feature flags.
-disableRiverChain: <DISABLE_RIVER_CHAIN>
 disableBaseChain: <DISABLE_BASE_CHAIN>

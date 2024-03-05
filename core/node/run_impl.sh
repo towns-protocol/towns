@@ -12,7 +12,6 @@ export METRICS_PORT="${METRICS_PORT:-8010}"
 export NUM_INSTANCES="${NUM_INSTANCES:-10}"
 export REPL_FACTOR="${REPL_FACTOR:-1}"
 export RPC_PORT="${RPC_PORT:-5170}"
-export DISABLE_RIVER_CHAIN="${DISABLE_RIVER_CHAIN:-false}"
 export DISABLE_BASE_CHAIN="${DISABLE_BASE_CHAIN:-false}"
 
 CONFIG=false
@@ -53,10 +52,8 @@ if [ "$CONFIG" == "true" ]; then
     ../../scripts/deploy-river-registry.sh
     cp -r ./run_files/addresses/ ${RUN_BASE}/addresses
 
-    if [ "$DISABLE_RIVER_CHAIN" != "true" ]; then
-        source ../../contracts/.env.localhost
-        RIVER_REGISTRY_ADDRESS=$(jq -r .address ${RUN_BASE}/addresses/riverRegistry.json)
-    fi
+    source ../../contracts/.env.localhost
+    RIVER_REGISTRY_ADDRESS=$(jq -r .address ${RUN_BASE}/addresses/riverRegistry.json)
 
     for ((i=0; i<NUM_INSTANCES; i++)); do
         printf -v INSTANCE "%02d" $i
@@ -69,27 +66,23 @@ if [ "$CONFIG" == "true" ]; then
         ./config_instance.sh
 
         NODE_ADDRESS=$(cat ${RUN_BASE}/$INSTANCE/wallet/node_address)
-        if [ "$DISABLE_RIVER_CHAIN" != "true" ]; then
-            echo "Adding node record to blockchain river registry at address ${RIVER_REGISTRY_ADDRESS}"
-            cast send \
-                --rpc-url http://127.0.0.1:8546 \
-                --private-key $LOCAL_PRIVATE_KEY \
-                $RIVER_REGISTRY_ADDRESS \
-                "registerNode(address,string,uint8)" \
-                $NODE_ADDRESS \
-                https://localhost:$I_RPC_PORT \
-                2 > /dev/null
-        fi
+        echo "Adding node record to blockchain river registry at address ${RIVER_REGISTRY_ADDRESS}"
+        cast send \
+            --rpc-url http://127.0.0.1:8546 \
+            --private-key $LOCAL_PRIVATE_KEY \
+            $RIVER_REGISTRY_ADDRESS \
+            "registerNode(address,string,uint8)" \
+            $NODE_ADDRESS \
+            https://localhost:$I_RPC_PORT \
+            2 > /dev/null
     done
 
-    if [ "$DISABLE_RIVER_CHAIN" != "true" ]; then
-        echo "Node records in contract:"
-        cast call \
-            --rpc-url http://127.0.0.1:8546 \
-            $RIVER_REGISTRY_ADDRESS \
-            "getAllNodes()((address,string,uint8,address)[])" | sed 's/),/),\n/g'
-        echo "<<<<<<<<<<<<<<<<<<<<<<<<<"
-    fi
+    echo "Node records in contract:"
+    cast call \
+        --rpc-url http://127.0.0.1:8546 \
+        $RIVER_REGISTRY_ADDRESS \
+        "getAllNodes()((address,string,uint8,address)[])" | sed 's/),/),\n/g'
+    echo "<<<<<<<<<<<<<<<<<<<<<<<<<"
 fi
 
 if [ "$BUILD" == "true" ]; then
@@ -110,10 +103,7 @@ if [ "$RUN" == "true" ]; then
 
         pushd $INSTANCE
         echo "Running instance '$INSTANCE' with extra aguments: '${args[@]:-}'"
-        if [ "$DISABLE_RIVER_CHAIN" != "true" ]; then
-            echo "And funding it with 1 ETH"
-            cast rpc -r http://127.0.0.1:8546 anvil_setBalance `cat ./wallet/node_address` 10000000000000000000
-        fi
+        cast rpc -r http://127.0.0.1:8546 anvil_setBalance `cat ./wallet/node_address` 10000000000000000000
 
         # if NUM_INSTANCES in not one, run in background, otherwise run with optional restart
         if [ "$NUM_INSTANCES" -ne 1 ]; then

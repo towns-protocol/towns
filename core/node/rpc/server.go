@@ -167,42 +167,29 @@ func StartServer(
 		chainAuth = auth.NewFakeChainAuth()
 	}
 
-	var nodeRegistry nodes.NodeRegistry
-	var streamRegistry nodes.StreamRegistry
-	var registryContract *registries.RiverRegistryContract
-	if !cfg.DisableRiverChain {
-		if riverchain == nil {
-			riverchain, err = crypto.NewReadWriteBlockchain(ctx, &cfg.RiverChain, wallet)
-			if err != nil {
-				log.Error("Failed to initialize blockchain for river", "error", err, "chain_config", cfg.RiverChain)
-				return nil, err
-			}
-		}
-
-		registryContract, err = registries.NewRiverRegistryContract(ctx, riverchain, &cfg.RegistryContract)
+	if riverchain == nil {
+		riverchain, err = crypto.NewReadWriteBlockchain(ctx, &cfg.RiverChain, wallet)
 		if err != nil {
-			log.Error("NewRiverRegistryContract", "error", err)
+			log.Error("Failed to initialize blockchain for river", "error", err, "chain_config", cfg.RiverChain)
 			return nil, err
 		}
-
-		nodeRegistry, err = nodes.LoadNodeRegistry(ctx, registryContract, wallet.Address)
-		if err != nil {
-			log.Error("Failed to load node registry", "error", err)
-			return nil, err
-		}
-
-		streamRegistry = nodes.NewStreamRegistry(wallet.Address, nodeRegistry, registryContract, cfg.Stream.ReplicationFactor)
-
-		log.Info("Using blockchain river registry")
-	} else {
-		nodeRegistry = nodes.MakeSingleNodeRegistry(ctx, wallet.Address)
-		streamRegistry = nodes.NewFakeStreamRegistry(wallet.Address, nodeRegistry, cfg.Stream.ReplicationFactor)
-		riverchain = &crypto.Blockchain{
-			Wallet:       wallet,
-			BlockMonitor: crypto.NewFakeBlockMonitor(ctx, cfg.RiverChain.FakeBlockTimeMs),
-		}
-		log.Warn("Using fake river registry")
 	}
+
+	registryContract, err := registries.NewRiverRegistryContract(ctx, riverchain, &cfg.RegistryContract)
+	if err != nil {
+		log.Error("NewRiverRegistryContract", "error", err)
+		return nil, err
+	}
+
+	nodeRegistry, err := nodes.LoadNodeRegistry(ctx, registryContract, wallet.Address)
+	if err != nil {
+		log.Error("Failed to load node registry", "error", err)
+		return nil, err
+	}
+
+	streamRegistry := nodes.NewStreamRegistry(wallet.Address, nodeRegistry, registryContract, cfg.Stream.ReplicationFactor)
+
+	log.Info("Using blockchain river registry")
 
 	cache, err := events.NewStreamCache(
 		ctx,

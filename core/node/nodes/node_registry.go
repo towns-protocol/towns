@@ -103,26 +103,6 @@ func LoadNodeRegistry(ctx context.Context, contract *registries.RiverRegistryCon
 	return n, nil
 }
 
-func MakeSingleNodeRegistry(ctx context.Context, localNodeAddress common.Address) *nodeRegistryImpl {
-	log := dlog.FromCtx(ctx)
-	nn := &NodeRecord{
-		address: localNodeAddress,
-		local:   true,
-	}
-
-	client, err := http_client.GetHttpClient(ctx)
-	if err != nil {
-		log.Error("Error getting http client", "err", err)
-		return nil
-	}
-
-	return &nodeRegistryImpl{
-		nodes:      map[common.Address]*NodeRecord{localNodeAddress: nn},
-		nodesFlat:  []*NodeRecord{nn},
-		httpClient: client,
-	}
-}
-
 // Returns error for local node.
 func (n *nodeRegistryImpl) GetStreamServiceClientForAddress(address common.Address) (StreamServiceClient, error) {
 	node := n.nodes[address]
