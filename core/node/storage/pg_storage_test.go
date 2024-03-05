@@ -63,9 +63,9 @@ func TestPostgresEventStore(t *testing.T) {
 		t.Fatal("Expected to find zero streams, found different number")
 	}
 
-	streamId1 := testutils.FakeStreamId(STREAM_CHANNEL_PREFIX)
-	streamId2 := testutils.FakeStreamId(STREAM_CHANNEL_PREFIX)
-	streamId3 := testutils.FakeStreamId(STREAM_CHANNEL_PREFIX)
+	streamId1 := testutils.FakeStreamId(STREAM_CHANNEL_BIN)
+	streamId2 := testutils.FakeStreamId(STREAM_CHANNEL_BIN)
+	streamId3 := testutils.FakeStreamId(STREAM_CHANNEL_BIN)
 
 	// Test that created stream will have proper genesis miniblock
 	genesisMiniblock := []byte("genesisMinoblock")
@@ -112,7 +112,7 @@ func TestPostgresEventStore(t *testing.T) {
 
 	streams, err := pgEventStore.GetStreams(ctx)
 	require.NoError(err)
-	require.ElementsMatch(streams, []string{streamId1, streamId2})
+	require.ElementsMatch(streams, []StreamId{streamId1, streamId2})
 
 	// Test that we can delete stream and proper stream will be deleted
 	genesisMiniblock3 := []byte("genesisMinoblock3")
@@ -129,7 +129,7 @@ func TestPostgresEventStore(t *testing.T) {
 
 	streams, err = pgEventStore.GetStreams(ctx)
 	require.NoError(err)
-	require.ElementsMatch(streams, []string{streamId1, streamId3})
+	require.ElementsMatch(streams, []StreamId{streamId1, streamId3})
 
 	// Test that we can add event to stream and then retrieve it
 	addEventError := pgEventStore.WriteEvent(ctx, streamId1, 1, 0, []byte("event1"))
@@ -168,13 +168,12 @@ func TestPostgresEventStore(t *testing.T) {
 	}
 }
 
-func prepareTestDataForAddEventConsistencyCheck(ctx context.Context, s *PostgresEventStore, streamId string) string {
+func prepareTestDataForAddEventConsistencyCheck(ctx context.Context, s *PostgresEventStore, streamId StreamId) {
 	genesisMiniblock := []byte("genesisMinoblock")
 	_ = s.CreateStreamStorage(ctx, streamId, genesisMiniblock)
 	_ = s.WriteEvent(ctx, streamId, 1, 0, []byte("event1"))
 	_ = s.WriteEvent(ctx, streamId, 1, 1, []byte("event2"))
 	_ = s.WriteEvent(ctx, streamId, 1, 2, []byte("event3"))
-	return streamId
 }
 
 // Test that if there is an event with wrong generation in minipool, we will get error
@@ -184,7 +183,7 @@ func TestAddEventConsistencyChecksImproperGeneration(t *testing.T) {
 	defer pgEventStore.Close(ctx)
 	require := require.New(t)
 
-	streamId := STREAM_CHANNEL_PREFIX + "0sfdsf_sdfds14"
+	streamId := testutils.FakeStreamId(STREAM_CHANNEL_BIN)
 
 	prepareTestDataForAddEventConsistencyCheck(ctx, pgEventStore, streamId)
 
@@ -206,7 +205,7 @@ func TestAddEventConsistencyChecksGaps(t *testing.T) {
 	defer pgEventStore.Close(ctx)
 	require := require.New(t)
 
-	streamId := testutils.FakeStreamId(STREAM_CHANNEL_PREFIX)
+	streamId := testutils.FakeStreamId(STREAM_CHANNEL_BIN)
 
 	prepareTestDataForAddEventConsistencyCheck(ctx, pgEventStore, streamId)
 
@@ -227,7 +226,7 @@ func TestAddEventConsistencyChecksEventsNumberMismatch(t *testing.T) {
 	defer pgEventStore.Close(ctx)
 	require := require.New(t)
 
-	streamId := testutils.FakeStreamId(STREAM_CHANNEL_PREFIX)
+	streamId := testutils.FakeStreamId(STREAM_CHANNEL_BIN)
 
 	prepareTestDataForAddEventConsistencyCheck(ctx, pgEventStore, streamId)
 
@@ -246,7 +245,7 @@ func TestNoStream(t *testing.T) {
 	pgEventStore := setupTest(ctx)
 	defer pgEventStore.Close(ctx)
 
-	res, err := pgEventStore.ReadStreamFromLastSnapshot(context.Background(), "noStream", 0)
+	res, err := pgEventStore.ReadStreamFromLastSnapshot(context.Background(), testutils.FakeStreamId(STREAM_CHANNEL_BIN), 0)
 	require.Nil(t, res)
 	require.Error(t, err)
 	require.Contains(t, err.Error(), "NOT_FOUND")
@@ -259,7 +258,7 @@ func TestCreateBlockConsistencyChecksProperNewMinipoolGeneration(t *testing.T) {
 
 	require := require.New(t)
 
-	streamId := testutils.FakeStreamId(STREAM_CHANNEL_PREFIX)
+	streamId := testutils.FakeStreamId(STREAM_CHANNEL_BIN)
 	genesisMiniblock := []byte("genesisMinoblock")
 	_ = pgEventStore.CreateStreamStorage(ctx, streamId, genesisMiniblock)
 
@@ -290,7 +289,7 @@ func TestCreateBlockNoSuchStreamError(t *testing.T) {
 
 	require := require.New(t)
 
-	streamId := testutils.FakeStreamId(STREAM_CHANNEL_PREFIX)
+	streamId := testutils.FakeStreamId(STREAM_CHANNEL_BIN)
 	genesisMiniblock := []byte("genesisMinoblock")
 	_ = pgEventStore.CreateStreamStorage(ctx, streamId, genesisMiniblock)
 
@@ -316,7 +315,7 @@ func TestExitIfSecondStorageCreated(t *testing.T) {
 		t.Fatal("Error creating new storage instance", err)
 	}
 	genesisMiniblock := []byte("genesisMinoblock")
-	streamId := STREAM_CHANNEL_PREFIX + "0sfdsf_sdfds1zzz"
+	streamId := testutils.FakeStreamId(STREAM_CHANNEL_BIN)
 	err = pgEventStore.CreateStreamStorage(ctx, streamId, genesisMiniblock)
 	require.NotNil(t, err)
 	require.Contains(t, err.Error(), "Node number mismatch")
@@ -330,7 +329,7 @@ func TestGetStreamFromLastSnapshotConsistencyChecksMissingBlockFailure(t *testin
 
 	require := require.New(t)
 
-	streamId := testutils.FakeStreamId(STREAM_CHANNEL_PREFIX)
+	streamId := testutils.FakeStreamId(STREAM_CHANNEL_BIN)
 	genesisMiniblock := []byte("genesisMinoblock")
 	_ = pgEventStore.CreateStreamStorage(ctx, streamId, genesisMiniblock)
 	var testEnvelopes1 [][]byte
@@ -361,7 +360,7 @@ func TestGetStreamFromLastSnapshotConsistencyCheckWrongEnvelopeGeneration(t *tes
 
 	require := require.New(t)
 
-	streamId := testutils.FakeStreamId(STREAM_CHANNEL_PREFIX)
+	streamId := testutils.FakeStreamId(STREAM_CHANNEL_BIN)
 	genesisMiniblock := []byte("genesisMinoblock")
 	_ = pgEventStore.CreateStreamStorage(ctx, streamId, genesisMiniblock)
 
@@ -392,7 +391,7 @@ func TestGetStreamFromLastSnapshotConsistencyCheckNoZeroIndexEnvelope(t *testing
 
 	require := require.New(t)
 
-	streamId := testutils.FakeStreamId(STREAM_CHANNEL_PREFIX)
+	streamId := testutils.FakeStreamId(STREAM_CHANNEL_BIN)
 	genesisMiniblock := []byte("genesisMinoblock")
 	_ = pgEventStore.CreateStreamStorage(ctx, streamId, genesisMiniblock)
 
@@ -424,7 +423,7 @@ func TestGetStreamFromLastSnapshotConsistencyCheckGapInEnvelopesIndexes(t *testi
 
 	require := require.New(t)
 
-	streamId := testutils.FakeStreamId(STREAM_CHANNEL_PREFIX)
+	streamId := testutils.FakeStreamId(STREAM_CHANNEL_BIN)
 	genesisMiniblock := []byte("genesisMinoblock")
 	_ = pgEventStore.CreateStreamStorage(ctx, streamId, genesisMiniblock)
 
@@ -457,7 +456,7 @@ func TestGetMiniblocksConsistencyChecks(t *testing.T) {
 
 	require := require.New(t)
 
-	streamId := testutils.FakeStreamId(STREAM_CHANNEL_PREFIX)
+	streamId := testutils.FakeStreamId(STREAM_CHANNEL_BIN)
 	genesisMiniblock := []byte("genesisMinoblock")
 	_ = pgEventStore.CreateStreamStorage(ctx, streamId, genesisMiniblock)
 
@@ -488,7 +487,7 @@ func TestAlreadyExists(t *testing.T) {
 	defer pgEventStore.Close(ctx)
 	require := require.New(t)
 
-	streamId := GenNanoid()
+	streamId := testutils.FakeStreamId(STREAM_CHANNEL_BIN)
 	genesisMiniblock := []byte("genesisMinoblock")
 	err := pgEventStore.CreateStreamStorage(ctx, streamId, genesisMiniblock)
 	require.NoError(err)
@@ -503,7 +502,7 @@ func TestNotFound(t *testing.T) {
 	defer pgEventStore.Close(ctx)
 	require := require.New(t)
 
-	streamId := GenNanoid()
+	streamId := testutils.FakeStreamId(STREAM_CHANNEL_BIN)
 	result, err := pgEventStore.ReadStreamFromLastSnapshot(ctx, streamId, 0)
 	require.Nil(result)
 	require.Equal(Err_NOT_FOUND, AsRiverError(err).Code)

@@ -6,7 +6,7 @@ import (
 
 	"github.com/river-build/river/core/node/crypto"
 	. "github.com/river-build/river/core/node/protocol"
-	"github.com/river-build/river/core/node/shared"
+	. "github.com/river-build/river/core/node/shared"
 	"github.com/river-build/river/core/node/testutils"
 
 	"github.com/stretchr/testify/require"
@@ -17,12 +17,8 @@ func TestEqualAndCopy(t *testing.T) {
 	nodeWallet1, _ := crypto.NewWallet(ctx)
 	nodeWallet2, _ := crypto.NewWallet(ctx)
 	require.True(t, SyncCookieEqual(nil, nil))
-	stream1IdStr := testutils.FakeStreamId(shared.STREAM_CHANNEL_PREFIX)
-	stream1Id, err := shared.StreamIdFromString(stream1IdStr)
-	require.NoError(t, err)
-	badStreamIdStr := testutils.FakeStreamId(shared.STREAM_CHANNEL_PREFIX)
-	badStreamId, err := shared.StreamIdFromString(badStreamIdStr)
-	require.NoError(t, err)
+	stream1Id := testutils.FakeStreamId(STREAM_CHANNEL_BIN)
+	badStreamId := testutils.FakeStreamId(STREAM_CHANNEL_BIN)
 
 	a := &SyncCookie{
 		NodeAddress:       nodeWallet1.Address[:],

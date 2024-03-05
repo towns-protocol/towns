@@ -109,7 +109,7 @@ func (s *Service) info(
 				}))
 				return nil, err
 			}
-			stream, _, err := s.cache.GetStream(ctx, streamId.String())
+			stream, _, err := s.cache.GetStream(ctx, streamId)
 			if err != nil {
 				return nil, err
 			}
@@ -147,7 +147,7 @@ func (s *Service) debugMakeMiniblock(ctx context.Context, streamId shared.Stream
 		}))
 		return err
 	} else {
-		stream, _, err := s.cache.GetStream(ctx, streamId.String())
+		stream, _, err := s.cache.GetStream(ctx, streamId)
 		if err != nil {
 			return err
 		}

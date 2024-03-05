@@ -8,13 +8,14 @@ import (
 	. "github.com/river-build/river/core/node/base"
 	. "github.com/river-build/river/core/node/protocol"
 	"github.com/river-build/river/core/node/registries"
+	. "github.com/river-build/river/core/node/shared"
 )
 
 type StreamRegistry interface {
 	// GetStreamInfo: returns nodes, error
-	GetStreamInfo(ctx context.Context, streamId string) (*StreamNodes, error)
+	GetStreamInfo(ctx context.Context, streamId StreamId) (*StreamNodes, error)
 	// GetStreamInfo: returns nodes, error
-	AllocateStream(ctx context.Context, streamId string, genesisMiniblockHash []byte, genesisMiniblock []byte) ([]common.Address, error)
+	AllocateStream(ctx context.Context, streamId StreamId, genesisMiniblockHash common.Hash, genesisMiniblock []byte) ([]common.Address, error)
 }
 
 type streamRegistryImpl struct {
@@ -38,7 +39,7 @@ func NewStreamRegistry(localNodeAddress common.Address, nodeRegistry NodeRegistr
 	}
 }
 
-func (sr *streamRegistryImpl) GetStreamInfo(ctx context.Context, streamId string) (*StreamNodes, error) {
+func (sr *streamRegistryImpl) GetStreamInfo(ctx context.Context, streamId StreamId) (*StreamNodes, error) {
 	ret, err := sr.contract.GetStream(ctx, streamId)
 	if err != nil {
 		return nil, err
@@ -46,7 +47,7 @@ func (sr *streamRegistryImpl) GetStreamInfo(ctx context.Context, streamId string
 	return NewStreamNodes(ret.Nodes, sr.localNodeAddress), nil
 }
 
-func (sr *streamRegistryImpl) AllocateStream(ctx context.Context, streamId string, genesisMiniblockHash []byte, genesisMiniblock []byte) ([]common.Address, error) {
+func (sr *streamRegistryImpl) AllocateStream(ctx context.Context, streamId StreamId, genesisMiniblockHash common.Hash, genesisMiniblock []byte) ([]common.Address, error) {
 	addrs, err := chooseStreamNodes(ctx, streamId, sr.nodeRegistry, sr.replFactor)
 	if err != nil {
 		return nil, err
@@ -60,7 +61,7 @@ func (sr *streamRegistryImpl) AllocateStream(ctx context.Context, streamId strin
 	return addrs, nil
 }
 
-func chooseStreamNodes(ctx context.Context, streamId string, nr NodeRegistry, replFactor int) ([]common.Address, error) {
+func chooseStreamNodes(ctx context.Context, streamId StreamId, nr NodeRegistry, replFactor int) ([]common.Address, error) {
 	if replFactor < 1 {
 		replFactor = 1
 	}
@@ -79,7 +80,7 @@ func chooseStreamNodes(ctx context.Context, streamId string, nr NodeRegistry, re
 	h := fnv.New64a()
 	numNodes := uint64(nr.NumNodes())
 	for len(indexes) < replFactor {
-		h.Write([]byte(streamId))
+		h.Write(streamId.Bytes())
 		index := int(h.Sum64() % numNodes)
 	outerLoop:
 		for {

@@ -8,7 +8,7 @@ import (
 
 	"github.com/ethereum/go-ethereum/common"
 	"github.com/river-build/river/core/node/crypto"
-	"github.com/river-build/river/core/node/shared"
+	. "github.com/river-build/river/core/node/shared"
 
 	. "github.com/river-build/river/core/node/protocol"
 )
@@ -155,20 +155,11 @@ func Make_MemberPayload_DisplayName(displayName *EncryptedData) *StreamEvent_Mem
 }
 
 func Make_ChannelPayload_Inception(
-	inStreamId string,
-	inSpaceId string,
+	streamId StreamId,
+	spaceId StreamId,
 	channelProperties *EncryptedData,
 	settings *StreamSettings,
 ) *StreamEvent_ChannelPayload {
-	streamId, err := shared.StreamIdFromString(inStreamId)
-	if err != nil {
-		panic(err) // todo convert everything to shared.StreamId
-	}
-	spaceId, err := shared.StreamIdFromString(inSpaceId)
-	if err != nil {
-		panic(err) // todo convert everything to shared.StreamId
-	}
-
 	return &StreamEvent_ChannelPayload{
 		ChannelPayload: &ChannelPayload{
 			Content: &ChannelPayload_Inception_{
@@ -185,13 +176,13 @@ func Make_ChannelPayload_Inception(
 
 // todo delete and replace with Make_MemberPayload_Membership
 func Make_ChannelPayload_Membership(op MembershipOp, userId string, initiatorId string) *StreamEvent_MemberPayload {
-	userAddress, err := shared.AddressFromUserId(userId)
+	userAddress, err := AddressFromUserId(userId)
 	if err != nil {
-		panic(err) // todo convert everything to shared.StreamId
+		panic(err) // todo convert everything to StreamId
 	}
 	var initiatorAddress []byte
 	if initiatorId != "" {
-		initiatorAddress, err = shared.AddressFromUserId(initiatorId)
+		initiatorAddress, err = AddressFromUserId(initiatorId)
 		if err != nil {
 			panic(err) // todo convert everything to common.Address
 		}
@@ -213,13 +204,13 @@ func Make_ChannelPayload_Message(content string) *StreamEvent_ChannelPayload {
 
 // todo delete and replace with Make_MemberPayload_Membership
 func Make_DmChannelPayload_Membership(op MembershipOp, userId string, initiatorId string) *StreamEvent_MemberPayload {
-	userAddress, err := shared.AddressFromUserId(userId)
+	userAddress, err := AddressFromUserId(userId)
 	if err != nil {
-		panic(err) // todo convert everything to shared.StreamId
+		panic(err) // todo convert everything to StreamId
 	}
 	var initiatorAddress []byte
 	if initiatorId != "" {
-		initiatorAddress, err = shared.AddressFromUserId(initiatorId)
+		initiatorAddress, err = AddressFromUserId(initiatorId)
 		if err != nil {
 			panic(err) // todo convert everything to common.Address
 		}
@@ -229,13 +220,13 @@ func Make_DmChannelPayload_Membership(op MembershipOp, userId string, initiatorI
 
 // todo delete and replace with Make_MemberPayload_Membership
 func Make_GdmChannelPayload_Membership(op MembershipOp, userId string, initiatorId string) *StreamEvent_MemberPayload {
-	userAddress, err := shared.AddressFromUserId(userId)
+	userAddress, err := AddressFromUserId(userId)
 	if err != nil {
-		panic(err) // todo convert everything to shared.StreamId
+		panic(err) // todo convert everything to StreamId
 	}
 	var initiatorAddress []byte
 	if initiatorId != "" {
-		initiatorAddress, err = shared.AddressFromUserId(initiatorId)
+		initiatorAddress, err = AddressFromUserId(initiatorId)
 		if err != nil {
 			panic(err) // todo convert everything to common.Address
 		}
@@ -243,12 +234,7 @@ func Make_GdmChannelPayload_Membership(op MembershipOp, userId string, initiator
 	return Make_MemberPayload_Membership(op, userAddress, initiatorAddress)
 }
 
-func Make_SpacePayload_Inception(inStreamId string, settings *StreamSettings) *StreamEvent_SpacePayload {
-	streamId, err := shared.StreamIdFromString(inStreamId)
-	if err != nil {
-		panic(err) // todo convert everything to shared.StreamId
-	}
-
+func Make_SpacePayload_Inception(streamId StreamId, settings *StreamSettings) *StreamEvent_SpacePayload {
 	return &StreamEvent_SpacePayload{
 		SpacePayload: &SpacePayload{
 			Content: &SpacePayload_Inception_{
@@ -263,13 +249,13 @@ func Make_SpacePayload_Inception(inStreamId string, settings *StreamSettings) *S
 
 // todo delete and replace with Make_MemberPayload_Membership
 func Make_SpacePayload_Membership(op MembershipOp, userId string, initiatorId string) *StreamEvent_MemberPayload {
-	userAddress, err := shared.AddressFromUserId(userId)
+	userAddress, err := AddressFromUserId(userId)
 	if err != nil {
-		panic(err) // todo convert everything to shared.StreamId
+		panic(err) // todo convert everything to StreamId
 	}
 	var initiatorAddress []byte
 	if initiatorId != "" {
-		initiatorAddress, err = shared.AddressFromUserId(initiatorId)
+		initiatorAddress, err = AddressFromUserId(initiatorId)
 		if err != nil {
 			panic(err) // todo convert everything to common.Address
 		}
@@ -284,9 +270,9 @@ func Make_SpacePayload_Channel(
 	originEvent *EventRef,
 	isDefault bool,
 ) *StreamEvent_SpacePayload {
-	channelId, err := shared.StreamIdFromString(inChannelId)
+	channelId, err := StreamIdFromString(inChannelId)
 	if err != nil {
-		panic(err) // todo convert everything to shared.StreamId
+		panic(err) // todo convert everything to StreamId
 	}
 	return &StreamEvent_SpacePayload{
 		SpacePayload: &SpacePayload{
@@ -303,12 +289,7 @@ func Make_SpacePayload_Channel(
 	}
 }
 
-func Make_UserPayload_Inception(inStreamId string, settings *StreamSettings) *StreamEvent_UserPayload {
-	streamId, err := shared.StreamIdFromString(inStreamId)
-	if err != nil {
-		panic(err) // todo convert everything to shared.StreamId
-	}
-
+func Make_UserPayload_Inception(streamId StreamId, settings *StreamSettings) *StreamEvent_UserPayload {
 	return &StreamEvent_UserPayload{
 		UserPayload: &UserPayload{
 			Content: &UserPayload_Inception_{
@@ -325,9 +306,9 @@ func Make_UserDeviceKeyPayload_Inception(
 	inStreamId string,
 	settings *StreamSettings,
 ) *StreamEvent_UserDeviceKeyPayload {
-	streamId, err := shared.StreamIdFromString(inStreamId)
+	streamId, err := StreamIdFromString(inStreamId)
 	if err != nil {
-		panic(err) // todo convert everything to shared.StreamId
+		panic(err) // todo convert everything to StreamId
 	}
 
 	return &StreamEvent_UserDeviceKeyPayload{
@@ -344,19 +325,15 @@ func Make_UserDeviceKeyPayload_Inception(
 
 func Make_UserPayload_Membership(
 	op MembershipOp,
-	inStreamId string,
+	streamId StreamId,
 	inInviter *string,
 ) *StreamEvent_UserPayload {
-	streamId, err := shared.StreamIdFromString(inStreamId)
-	if err != nil {
-		panic(err) // todo convert everything to shared.StreamId
-	}
-
 	var inviter []byte
 	if inInviter != nil {
-		inviter, err = shared.AddressFromUserId(*inInviter)
+		var err error
+		inviter, err = AddressFromUserId(*inInviter)
 		if err != nil {
-			panic(err) // todo convert everything to shared.StreamId
+			panic(err) // todo convert everything to StreamId
 		}
 	}
 
@@ -374,9 +351,9 @@ func Make_UserPayload_Membership(
 }
 
 func Make_UserSettingsPayload_Inception(inStreamId string, settings *StreamSettings) *StreamEvent_UserSettingsPayload {
-	streamId, err := shared.StreamIdFromString(inStreamId)
+	streamId, err := StreamIdFromString(inStreamId)
 	if err != nil {
-		panic(err) // todo convert everything to shared.StreamId
+		panic(err) // todo convert everything to StreamId
 	}
 
 	return &StreamEvent_UserSettingsPayload{

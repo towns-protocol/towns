@@ -49,7 +49,7 @@ func makeEnvelopeWithPayload_T(
 func makeTestSpaceStream(
 	t *testing.T,
 	userWallet *crypto.Wallet,
-	spaceId string,
+	spaceId StreamId,
 	streamSettings *protocol.StreamSettings,
 ) ([]*ParsedEvent, *protocol.Miniblock) {
 	userAddess := userWallet.Address.Bytes()
@@ -87,8 +87,8 @@ func makeTestChannelStream(
 	t *testing.T,
 	wallet *crypto.Wallet,
 	userId string,
-	channelStreamId string,
-	spaceSpaceId string,
+	channelStreamId StreamId,
+	spaceSpaceId StreamId,
 	channelProperties *protocol.EncryptedData,
 	streamSettings *protocol.StreamSettings,
 ) ([]*ParsedEvent, *protocol.Miniblock) {
@@ -224,7 +224,7 @@ func TestSpaceViewState(t *testing.T) {
 	user3Wallet, _ := crypto.NewWallet(ctx)
 
 	// create a stream
-	spaceStreamId := testutils.FakeStreamId(STREAM_SPACE_PREFIX)
+	spaceStreamId := testutils.FakeStreamId(STREAM_SPACE_BIN)
 	user2Id, err := AddressHex(user2Wallet.Address.Bytes())
 	require.NoError(t, err)
 	user3Id, err := AddressHex(user3Wallet.Address.Bytes())
@@ -308,8 +308,8 @@ func TestChannelViewState_JoinedMembers(t *testing.T) {
 	require.NoError(t, err)
 	carol, err := AddressHex(carolWallet.Address.Bytes())
 	require.NoError(t, err)
-	spaceStreamId := testutils.FakeStreamId(STREAM_SPACE_PREFIX)
-	channelStreamId := testutils.FakeStreamId(STREAM_CHANNEL_PREFIX)
+	spaceStreamId := testutils.FakeStreamId(STREAM_SPACE_BIN)
+	channelStreamId := testutils.FakeStreamId(STREAM_CHANNEL_BIN)
 
 	// create a space stream and add the members
 	_, mb := makeTestSpaceStream(t, userWallet, spaceStreamId, nil)
@@ -364,8 +364,8 @@ func TestChannelViewState_RemainingMembers(t *testing.T) {
 	require.NoError(t, err)
 	carol, err := AddressHex(carolWallet.Address.Bytes())
 	require.NoError(t, err)
-	spaceStreamId := testutils.FakeStreamId(STREAM_SPACE_PREFIX)
-	channelStreamId := testutils.FakeStreamId(STREAM_CHANNEL_PREFIX)
+	spaceStreamId := testutils.FakeStreamId(STREAM_SPACE_BIN)
+	channelStreamId := testutils.FakeStreamId(STREAM_CHANNEL_BIN)
 
 	// create a space stream and add the members
 	_, mb := makeTestSpaceStream(t, userWallet, spaceStreamId, nil)

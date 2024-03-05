@@ -6,6 +6,7 @@ import (
 
 	. "github.com/river-build/river/core/node/base"
 	. "github.com/river-build/river/core/node/protocol"
+	. "github.com/river-build/river/core/node/shared"
 )
 
 type memStream struct {
@@ -15,13 +16,13 @@ type memStream struct {
 }
 
 type memStorage struct {
-	streams map[string]*memStream
+	streams map[StreamId]*memStream
 	mutex   sync.Mutex
 }
 
 var _ StreamStorage = (*memStorage)(nil)
 
-func (m *memStorage) CreateStreamStorage(ctx context.Context, streamId string, genesisMiniblock []byte) error {
+func (m *memStorage) CreateStreamStorage(ctx context.Context, streamId StreamId, genesisMiniblock []byte) error {
 	m.mutex.Lock()
 	defer m.mutex.Unlock()
 
@@ -38,7 +39,7 @@ func (m *memStorage) CreateStreamStorage(ctx context.Context, streamId string, g
 
 func (m *memStorage) ReadStreamFromLastSnapshot(
 	ctx context.Context,
-	streamId string,
+	streamId StreamId,
 	precedingBlockCount int,
 ) (*ReadStreamFromLastSnapshotResult, error) {
 	m.mutex.Lock()
@@ -56,7 +57,7 @@ func (m *memStorage) ReadStreamFromLastSnapshot(
 	}, nil
 }
 
-func (m *memStorage) ReadMiniblocks(ctx context.Context, streamId string, fromInclusive int64, toExclusive int64) ([][]byte, error) {
+func (m *memStorage) ReadMiniblocks(ctx context.Context, streamId StreamId, fromInclusive int64, toExclusive int64) ([][]byte, error) {
 	m.mutex.Lock()
 	defer m.mutex.Unlock()
 
@@ -73,7 +74,7 @@ func (m *memStorage) ReadMiniblocks(ctx context.Context, streamId string, fromIn
 
 func (m *memStorage) WriteEvent(
 	ctx context.Context,
-	streamId string,
+	streamId StreamId,
 	minipoolGeneration int64,
 	minipoolSlot int,
 	envelope []byte,
@@ -97,7 +98,7 @@ func (m *memStorage) WriteEvent(
 
 func (m *memStorage) WriteBlock(
 	ctx context.Context,
-	streamId string,
+	streamId StreamId,
 	minipoolGeneration int64,
 	minipoolSize int,
 	miniblock []byte,
@@ -130,6 +131,6 @@ func (m *memStorage) Close(ctx context.Context) {
 
 func NewMemStorage() *memStorage {
 	return &memStorage{
-		streams: map[string]*memStream{},
+		streams: map[StreamId]*memStream{},
 	}
 }

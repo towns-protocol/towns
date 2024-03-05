@@ -35,7 +35,7 @@ func (s *Service) getStream(
 		return nil, err
 	}
 
-	_, streamView, err := s.cache.GetStream(ctx, streamId.String())
+	_, streamView, err := s.cache.GetStream(ctx, streamId)
 
 	if err != nil {
 		if req.Msg.Optional && AsRiverError(err).Code == Err_NOT_FOUND {

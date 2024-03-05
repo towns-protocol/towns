@@ -3,7 +3,7 @@ package events
 import (
 	"bytes"
 	"context"
-	"strings"
+	"encoding/hex"
 	"time"
 
 	"github.com/ethereum/go-ethereum/common"
@@ -11,7 +11,6 @@ import (
 	"github.com/river-build/river/core/node/config"
 	"github.com/river-build/river/core/node/dlog"
 	. "github.com/river-build/river/core/node/protocol"
-	"github.com/river-build/river/core/node/shared"
 	. "github.com/river-build/river/core/node/shared"
 	"github.com/river-build/river/core/node/storage"
 	. "github.com/river-build/river/core/node/utils"
@@ -30,8 +29,8 @@ type StreamViewStats struct {
 }
 
 type StreamView interface {
-	StreamId() string
-	StreamParentId() *string
+	StreamId() *StreamId
+	StreamParentId() *StreamId
 	InceptionPayload() IsInceptionPayload
 	LastEvent() *ParsedEvent
 	MinipoolEnvelopes() []*Envelope
@@ -92,7 +91,7 @@ func MakeStreamView(streamData *storage.ReadStreamFromLastSnapshotResult) (*stre
 	}
 
 	return &streamViewImpl{
-		streamId:      streamId.String(),
+		streamId:      streamId,
 		blocks:        miniblocks,
 		minipool:      newMiniPoolInstance(minipoolEvents, miniblocks[len(miniblocks)-1].header().MiniblockNum+1),
 		snapshot:      snapshot,
@@ -140,7 +139,7 @@ func MakeRemoteStreamView(resp *GetStreamResponse) (*streamViewImpl, error) {
 	}
 
 	return &streamViewImpl{
-		streamId:      streamId.String(),
+		streamId:      streamId,
 		blocks:        miniblocks,
 		minipool:      newMiniPoolInstance(minipoolEvents, lastMiniblockNumber+1),
 		snapshot:      snapshot,
@@ -149,7 +148,7 @@ func MakeRemoteStreamView(resp *GetStreamResponse) (*streamViewImpl, error) {
 }
 
 type streamViewImpl struct {
-	streamId      string
+	streamId      StreamId
 	blocks        []*miniblockInfo
 	minipool      *minipoolInstance
 	snapshot      *Snapshot
@@ -358,8 +357,8 @@ func (r *streamViewImpl) copyAndApplyBlock(miniblock *miniblockInfo, cfg *config
 	}, nil
 }
 
-func (r *streamViewImpl) StreamId() string {
-	return r.streamId
+func (r *streamViewImpl) StreamId() *StreamId {
+	return &r.streamId
 }
 
 func (r *streamViewImpl) InceptionPayload() IsInceptionPayload {
@@ -453,14 +452,9 @@ func (r *streamViewImpl) MiniblocksFromLastSnapshot() []*Miniblock {
 }
 
 func (r *streamViewImpl) SyncCookie(localNodeAddress common.Address) *SyncCookie {
-	streamId, err := shared.StreamIdFromString(r.streamId)
-	if err != nil {
-		panic(err)
-	}
-
 	return &SyncCookie{
 		NodeAddress:       localNodeAddress.Bytes(),
-		StreamId:          streamId.Bytes(),
+		StreamId:          r.streamId.Bytes(),
 		MinipoolGen:       r.minipool.generation,
 		MinipoolSlot:      int64(r.minipool.events.Len()),
 		PrevMiniblockHash: r.LastBlock().headerEvent.Hash[:],
@@ -470,7 +464,7 @@ func (r *streamViewImpl) SyncCookie(localNodeAddress common.Address) *SyncCookie
 func (r *streamViewImpl) getMinEventsPerSnapshot(cfg *config.StreamConfig) int {
 	// does this stream have a custom value for it's prefix?
 	if cfg.MinEventsPerSnapshot != nil {
-		streamPrefix := strings.ToLower(GetStreamIdPrefix(r.streamId))
+		streamPrefix := hex.EncodeToString(r.streamId.Bytes()[:1])
 		if value, ok := cfg.MinEventsPerSnapshot[streamPrefix]; ok {
 			return value
 		}
@@ -608,7 +602,7 @@ func (r *streamViewImpl) IsMember(userAddress []byte) (bool, error) {
 	return membership == MembershipOp_SO_JOIN, nil
 }
 
-func (r *streamViewImpl) StreamParentId() *string {
+func (r *streamViewImpl) StreamParentId() *StreamId {
 	// aellis this should probably be migrated to the common payload
 	switch snapshotContent := r.snapshot.Content.(type) {
 	case *Snapshot_ChannelContent:
@@ -616,8 +610,7 @@ func (r *streamViewImpl) StreamParentId() *string {
 		if err != nil {
 			panic(err) // todo convert everything to shared.StreamId
 		}
-		streamIdStr := streamId.String()
-		return &streamIdStr
+		return &streamId
 	default:
 		return nil
 	}

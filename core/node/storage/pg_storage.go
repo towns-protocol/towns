@@ -11,6 +11,7 @@ import (
 
 	. "github.com/river-build/river/core/node/base"
 	. "github.com/river-build/river/core/node/protocol"
+	. "github.com/river-build/river/core/node/shared"
 
 	_ "embed"
 
@@ -40,7 +41,7 @@ const (
 
 var dbCalls = infra.NewSuccessMetrics(infra.DB_CALLS_CATEGORY, nil)
 
-func (s *PostgresEventStore) CreateStreamStorage(ctx context.Context, streamId string, genesisMiniblock []byte) error {
+func (s *PostgresEventStore) CreateStreamStorage(ctx context.Context, streamId StreamId, genesisMiniblock []byte) error {
 	err := s.createStream(ctx, streamId, genesisMiniblock)
 	if err != nil {
 		dbCalls.FailIncForChild("CreateStream")
@@ -50,7 +51,7 @@ func (s *PostgresEventStore) CreateStreamStorage(ctx context.Context, streamId s
 	return nil
 }
 
-func (s *PostgresEventStore) createStream(ctx context.Context, streamId string, genesisMiniblock []byte) error {
+func (s *PostgresEventStore) createStream(ctx context.Context, streamId StreamId, genesisMiniblock []byte) error {
 	defer infra.StoreExecutionTimeMetrics("CreateStream", infra.DB_CALLS_CATEGORY, time.Now())
 
 	tx, err := startTx(ctx, s.pool)
@@ -89,7 +90,7 @@ func (s *PostgresEventStore) createStream(ctx context.Context, streamId string, 
 
 func (s *PostgresEventStore) ReadStreamFromLastSnapshot(
 	ctx context.Context,
-	streamId string,
+	streamId StreamId,
 	precedingBlockCount int,
 ) (*ReadStreamFromLastSnapshotResult, error) {
 	streamFromLastSnaphot, err := s.getStreamFromLastSnapshot(ctx, streamId, precedingBlockCount)
@@ -107,7 +108,7 @@ func (s *PostgresEventStore) ReadStreamFromLastSnapshot(
 // 3. For envelopes all generations are the same and equals to "max generation seq_num in miniblocks" + 1
 func (s *PostgresEventStore) getStreamFromLastSnapshot(
 	ctx context.Context,
-	streamId string,
+	streamId StreamId,
 	precedingBlockCount int,
 ) (*ReadStreamFromLastSnapshotResult, error) {
 	defer infra.StoreExecutionTimeMetrics("GetStreamFromLastSnapshot", infra.DB_CALLS_CATEGORY, time.Now())
@@ -245,7 +246,7 @@ func (s *PostgresEventStore) getStreamFromLastSnapshot(
 // and there should be exactly minipoolSlot events in the minipool.
 func (s *PostgresEventStore) WriteEvent(
 	ctx context.Context,
-	streamId string,
+	streamId StreamId,
 	minipoolGeneration int64,
 	minipoolSlot int,
 	envelope []byte,
@@ -272,7 +273,7 @@ func (s *PostgresEventStore) WriteEvent(
 // 3. All events in minipool have proper generation
 func (s *PostgresEventStore) addEvent(
 	ctx context.Context,
-	streamId string,
+	streamId StreamId,
 	minipoolGeneration int64,
 	minipoolSlot int,
 	envelope []byte,
@@ -362,7 +363,7 @@ func (s *PostgresEventStore) addEvent(
 // This functional is not transactional as it consists of only one SELECT query
 func (s *PostgresEventStore) ReadMiniblocks(
 	ctx context.Context,
-	streamId string,
+	streamId StreamId,
 	fromInclusive int64,
 	toExclusive int64,
 ) ([][]byte, error) {
@@ -374,9 +375,9 @@ func (s *PostgresEventStore) ReadMiniblocks(
 		streamId,
 	)
 	if err != nil {
-		dbCalls.FailIncForChild("GetMiniblocks")
+		dbCalls.FailIncForChild("ReadMiniblocks")
 		return nil, s.enrichErrorWithNodeInfo(WrapRiverError(Err_DB_OPERATION_FAILURE, err).
-			Func("pg.GetMiniblocks").Message("Error reading blocks").Tag("streamId", streamId))
+			Func("pg.ReadMiniblocks").Message("Error reading blocks").Tag("streamId", streamId))
 	}
 	defer miniblocksRow.Close()
 
@@ -390,18 +391,18 @@ func (s *PostgresEventStore) ReadMiniblocks(
 
 		err = miniblocksRow.Scan(&blockdata, &seq_num)
 		if err != nil {
-			dbCalls.FailIncForChild("GetMiniblocks")
+			dbCalls.FailIncForChild("ReadMiniblocks")
 			return nil, WrapRiverError(
 				Err_DB_OPERATION_FAILURE,
 				err,
-			).Func("pg.GetMiniblocks").
+			).Func("pg.ReadMiniblocks").
 				Tag("streamId", streamId).
 				Message("Error scanning blocks")
 		}
 
 		if (prevSeqNum != -1) && (seq_num != prevSeqNum+1) {
 			// There is a gap in sequence numbers
-			return nil, WrapRiverError(Err_MINIBLOCKS_STORAGE_FAILURE, err).Func("pg.GetMiniblocks").
+			return nil, WrapRiverError(Err_MINIBLOCKS_STORAGE_FAILURE, err).Func("pg.ReadMiniblocks").
 				Message("Miniblocks consistency violation").
 				Tag("ActualBlockNumber", seq_num).Tag("ExpectedBlockNumber", prevSeqNum+1).Tag("streamId", streamId)
 		}
@@ -410,13 +411,13 @@ func (s *PostgresEventStore) ReadMiniblocks(
 		miniblocks = append(miniblocks, blockdata)
 	}
 
-	dbCalls.PassIncForChild("GetMiniblocks")
+	dbCalls.PassIncForChild("ReadMiniblocks")
 	return miniblocks, nil
 }
 
 func (s *PostgresEventStore) WriteBlock(
 	ctx context.Context,
-	streamId string,
+	streamId StreamId,
 	minipoolGeneration int64,
 	minipoolSize int,
 	miniblock []byte,
@@ -445,7 +446,7 @@ func (s *PostgresEventStore) WriteBlock(
 // 1. Stream has minipoolGeneration-1 miniblocks
 func (s *PostgresEventStore) createBlock(
 	ctx context.Context,
-	streamId string,
+	streamId StreamId,
 	minipoolGeneration int64,
 	minipoolSize int,
 	miniblock []byte,
@@ -703,7 +704,7 @@ func (s *PostgresEventStore) enrichErrorWithNodeInfo(err *RiverErrorImpl) *River
 }
 
 // GetStreams returns a list of all event streams
-func (s *PostgresEventStore) GetStreams(ctx context.Context) ([]string, error) {
+func (s *PostgresEventStore) GetStreams(ctx context.Context) ([]StreamId, error) {
 	defer infra.StoreExecutionTimeMetrics("GetStreams", infra.DB_CALLS_CATEGORY, time.Now())
 
 	streams := []string{}
@@ -727,7 +728,15 @@ func (s *PostgresEventStore) GetStreams(ctx context.Context) ([]string, error) {
 		streams = append(streams, streamName)
 	}
 	dbCalls.PassIncForChild("GetStreams")
-	return streams, nil
+
+	ret := make([]StreamId, len(streams))
+	for i, stream := range streams {
+		ret[i], err = StreamIdFromString(stream)
+		if err != nil {
+			return nil, err
+		}
+	}
+	return ret, nil
 }
 
 /*
@@ -735,7 +744,7 @@ func (s *PostgresEventStore) GetStreams(ctx context.Context) ([]string, error) {
 *
 * Delete minipool and miniblock tables associated with the stream and stream record from streams table
  */
-func (s *PostgresEventStore) DeleteStream(ctx context.Context, streamId string) error {
+func (s *PostgresEventStore) DeleteStream(ctx context.Context, streamId StreamId) error {
 	err := s.deleteStream(ctx, streamId)
 	if err != nil {
 		dbCalls.FailIncForChild("DeleteStream")
@@ -746,7 +755,7 @@ func (s *PostgresEventStore) DeleteStream(ctx context.Context, streamId string) 
 	return nil
 }
 
-func (s *PostgresEventStore) deleteStream(ctx context.Context, streamId string) error {
+func (s *PostgresEventStore) deleteStream(ctx context.Context, streamId StreamId) error {
 	defer infra.StoreExecutionTimeMetrics("DeleteStream", infra.DB_CALLS_CATEGORY, time.Now())
 
 	tx, err := startTx(ctx, s.pool)
@@ -1002,8 +1011,8 @@ func (s *PostgresEventStore) rollbackTx(tx pgx.Tx, funcName string) {
 	}
 }
 
-func createTableSuffix(streamId string) string {
-	sum := sha3.Sum224([]byte(streamId))
+func createTableSuffix(streamId StreamId) string {
+	sum := sha3.Sum224([]byte(streamId.String()))
 	return hex.EncodeToString(sum[:])
 }
 

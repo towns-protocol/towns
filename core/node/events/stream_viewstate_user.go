@@ -35,8 +35,7 @@ func (r *streamViewImpl) GetUserSnapshotContent() (*UserPayload_Snapshot, error)
 }
 
 func (r *streamViewImpl) IsMemberOf(streamId shared.StreamId) bool {
-
-	if streamId.String() == r.streamId {
+	if streamId == r.streamId {
 		return true
 	}
 

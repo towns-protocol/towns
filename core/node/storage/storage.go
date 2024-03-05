@@ -1,6 +1,10 @@
 package storage
 
-import "context"
+import (
+	"context"
+
+	. "github.com/river-build/river/core/node/shared"
+)
 
 type ReadStreamFromLastSnapshotResult struct {
 	StartMiniblockNumber int64
@@ -12,22 +16,22 @@ type StreamStorage interface {
 	// CreateStreamStorage creates a new stream with the given genesis miniblock at index 0.
 	// Last snapshot minblock index is set to 0.
 	// Minipool is set to generation number 1 (i.e. number of miniblock that is going to be produced next) and is empty.
-	CreateStreamStorage(ctx context.Context, streamId string, genesisMiniblock []byte) error
+	CreateStreamStorage(ctx context.Context, streamId StreamId, genesisMiniblock []byte) error
 
 	// Returns all stream blocks starting from last snapshot miniblock index and all envelopes in the given minipool.
 	ReadStreamFromLastSnapshot(
 		ctx context.Context,
-		streamId string,
+		streamId StreamId,
 		precedingBlockCount int,
 	) (*ReadStreamFromLastSnapshotResult, error)
 
 	// Returns miniblocks with miniblockNum or "generation" from fromInclusive, to toExlusive.
-	ReadMiniblocks(ctx context.Context, streamId string, fromInclusive int64, toExclusive int64) ([][]byte, error)
+	ReadMiniblocks(ctx context.Context, streamId StreamId, fromInclusive int64, toExclusive int64) ([][]byte, error)
 
 	// Adds event to the given minipool.
 	// Current generation of minipool should match minipoolGeneration,
 	// and there should be exactly minipoolSlot events in the minipool.
-	WriteEvent(ctx context.Context, streamId string, minipoolGeneration int64, minipoolSlot int, envelope []byte) error
+	WriteEvent(ctx context.Context, streamId StreamId, minipoolGeneration int64, minipoolSlot int, envelope []byte) error
 
 	// Current minipool generation must be minipoolGeneration and size must be minipoolSize,
 	// stream must have minipoolGeneration miniblocks.
@@ -38,7 +42,7 @@ type StreamStorage interface {
 	// stores envelopes in the new minipool in slots starting with 0.
 	WriteBlock(
 		ctx context.Context,
-		streamId string,
+		streamId StreamId,
 		minipoolGeneration int64,
 		minipoolSize int,
 		miniblock []byte,

@@ -11,6 +11,7 @@ import (
 	. "github.com/river-build/river/core/node/nodes"
 	. "github.com/river-build/river/core/node/protocol"
 	"github.com/river-build/river/core/node/registries"
+	. "github.com/river-build/river/core/node/shared"
 	"github.com/river-build/river/core/node/storage"
 )
 
@@ -23,8 +24,8 @@ type StreamCacheParams struct {
 }
 
 type StreamCache interface {
-	GetStream(ctx context.Context, streamId string) (SyncStream, StreamView, error)
-	CreateStream(ctx context.Context, streamId string) (SyncStream, StreamView, error)
+	GetStream(ctx context.Context, streamId StreamId) (SyncStream, StreamView, error)
+	CreateStream(ctx context.Context, streamId StreamId) (SyncStream, StreamView, error)
 	ForceFlushAll(ctx context.Context)
 	GetLoadedViews(ctx context.Context) []StreamView
 }
@@ -65,7 +66,7 @@ func NewStreamCache(ctx context.Context, params *StreamCacheParams) (*streamCach
 		if nodes.IsLocal() {
 			s.cache.Store(stream.StreamId, &streamImpl{
 				params:   params,
-				streamId: stream.StreamId.String(),
+				streamId: stream.StreamId,
 				nodes:    nodes,
 			})
 		}
@@ -77,7 +78,7 @@ func NewStreamCache(ctx context.Context, params *StreamCacheParams) (*streamCach
 	return s, nil
 }
 
-func (s *streamCacheImpl) tryLoadStreamRecord(ctx context.Context, streamId string) (SyncStream, StreamView, error) {
+func (s *streamCacheImpl) tryLoadStreamRecord(ctx context.Context, streamId StreamId) (SyncStream, StreamView, error) {
 	// Same code is called for GetStream and CreateStream.
 	// For GetStream the fact that record is not in cache means that there is race to get it during creation:
 	// Blockchain record is already created, but this fact is not reflected yet in local storage.
@@ -153,7 +154,7 @@ func (s *streamCacheImpl) tryLoadStreamRecord(ctx context.Context, streamId stri
 	}
 }
 
-func (s *streamCacheImpl) GetStream(ctx context.Context, streamId string) (SyncStream, StreamView, error) {
+func (s *streamCacheImpl) GetStream(ctx context.Context, streamId StreamId) (SyncStream, StreamView, error) {
 	entry, _ := s.cache.Load(streamId)
 	if entry == nil {
 		return s.tryLoadStreamRecord(ctx, streamId)
@@ -172,7 +173,7 @@ func (s *streamCacheImpl) GetStream(ctx context.Context, streamId string) (SyncS
 
 func (s *streamCacheImpl) CreateStream(
 	ctx context.Context,
-	streamId string,
+	streamId StreamId,
 ) (SyncStream, StreamView, error) {
 	// Same logic as in GetStream: read from blockchain, create if present.
 	return s.GetStream(ctx, streamId)

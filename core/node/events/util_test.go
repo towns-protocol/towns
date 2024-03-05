@@ -3,12 +3,14 @@ package events
 import (
 	"context"
 
+	"github.com/ethereum/go-ethereum/common"
 	. "github.com/river-build/river/core/node/base"
 	"github.com/river-build/river/core/node/base/test"
 	"github.com/river-build/river/core/node/crypto"
 	. "github.com/river-build/river/core/node/nodes"
 	. "github.com/river-build/river/core/node/protocol"
 	"github.com/river-build/river/core/node/registries"
+	. "github.com/river-build/river/core/node/shared"
 	"github.com/river-build/river/core/node/storage"
 	"github.com/river-build/river/core/node/testutils/dbtestutils"
 	"google.golang.org/protobuf/proto"
@@ -121,7 +123,7 @@ func makeTestStreamCache(p testParams) (context.Context, *testContext) {
 
 func (tt *testContext) createStream(
 	ctx context.Context,
-	streamId string,
+	streamId StreamId,
 	genesisMiniblock *Miniblock,
 ) (SyncStream, StreamView, error) {
 	mbBytes, err := proto.Marshal(genesisMiniblock)
@@ -129,7 +131,8 @@ func (tt *testContext) createStream(
 		return nil, nil, err
 	}
 
-	_, err = tt.streamRegistry.AllocateStream(ctx, streamId, genesisMiniblock.Header.Hash, mbBytes)
+	_, err = tt.streamRegistry.AllocateStream(ctx, streamId, common.BytesToHash(
+		genesisMiniblock.Header.Hash), mbBytes)
 	if err != nil {
 		return nil, nil, err
 	}

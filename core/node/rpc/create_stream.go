@@ -12,7 +12,6 @@ import (
 	. "github.com/river-build/river/core/node/nodes"
 	. "github.com/river-build/river/core/node/protocol"
 	"github.com/river-build/river/core/node/rules"
-	"github.com/river-build/river/core/node/shared"
 	. "github.com/river-build/river/core/node/shared"
 	"google.golang.org/protobuf/proto"
 
@@ -65,7 +64,7 @@ func (s *Service) createStream(ctx context.Context, req *CreateStreamRequest) (*
 	// check that the creator satisfies the required memberships reqirements
 	if csRules.RequiredMemberships != nil {
 		// load the creator's user stream
-		_, creatorStreamView, err := s.loadStream(ctx, csRules.CreatorStreamId.String())
+		_, creatorStreamView, err := s.loadStream(ctx, csRules.CreatorStreamId)
 		if err != nil {
 			return nil, RiverError(Err_PERMISSION_DENIED, "failed to load creator stream", "err", err)
 		}
@@ -82,10 +81,11 @@ func (s *Service) createStream(ctx context.Context, req *CreateStreamRequest) (*
 
 	// DEPRECATED check that all required users exist in the system
 	for _, userId := range csRules.RequiredUsers {
-		userStreamId, err := UserStreamIdFromId(userId)
+		addr, err := AddressStrToEthAddress(userId)
 		if err != nil {
 			return nil, RiverError(Err_PERMISSION_DENIED, "invalid user id", "requiredUserId", userId)
 		}
+		userStreamId := UserStreamIdFromAddr(addr)
 		_, err = s.streamRegistry.GetStreamInfo(ctx, userStreamId)
 		if err != nil {
 			return nil, RiverError(Err_PERMISSION_DENIED, "user does not exist", "requiredUserId", userId)
@@ -94,10 +94,11 @@ func (s *Service) createStream(ctx context.Context, req *CreateStreamRequest) (*
 
 	// check that all required users exist in the system
 	for _, userAddress := range csRules.RequiredUserAddrs {
-		userStreamId, err := UserStreamIdFromBytes(userAddress)
+		addr, err := BytesToEthAddress(userAddress)
 		if err != nil {
 			return nil, RiverError(Err_PERMISSION_DENIED, "invalid user id", "requiredUser", userAddress)
 		}
+		userStreamId := UserStreamIdFromAddr(addr)
 		_, err = s.streamRegistry.GetStreamInfo(ctx, userStreamId)
 		if err != nil {
 			return nil, RiverError(Err_PERMISSION_DENIED, "user does not exist", "requiredUser", userAddress)
@@ -133,7 +134,7 @@ func (s *Service) createStream(ctx context.Context, req *CreateStreamRequest) (*
 
 func (s *Service) createReplicatedStream(
 	ctx context.Context,
-	streamId shared.StreamId,
+	streamId StreamId,
 	parsedEvents []*ParsedEvent,
 ) (*StreamAndCookie, error) {
 	mb, err := MakeGenesisMiniblock(s.wallet, parsedEvents)
@@ -146,7 +147,7 @@ func (s *Service) createReplicatedStream(
 		return nil, err
 	}
 
-	nodesList, err := s.streamRegistry.AllocateStream(ctx, streamId.String(), mb.Header.Hash, mbBytes)
+	nodesList, err := s.streamRegistry.AllocateStream(ctx, streamId, common.BytesToHash(mb.Header.Hash), mbBytes)
 	if err != nil {
 		return nil, err
 	}
@@ -157,7 +158,7 @@ func (s *Service) createReplicatedStream(
 	var localSyncCookie *SyncCookie
 	if nodes.IsLocal() {
 		sender.GoLocal(func() error {
-			_, sv, err := s.cache.CreateStream(ctx, streamId.String())
+			_, sv, err := s.cache.CreateStream(ctx, streamId)
 			if err != nil {
 				return err
 			}

@@ -67,25 +67,15 @@ func NewRiverRegistryContract(
 
 func (sr *RiverRegistryContract) AllocateStream(
 	ctx context.Context,
-	streamId string,
+	streamId StreamId,
 	addresses []common.Address,
-	genesisMiniblockHash []byte,
+	genesisMiniblockHash common.Hash,
 	genesisMiniblock []byte,
 ) error {
-	id, err := StreamIdFromString(streamId)
-	if err != nil {
-		return AsRiverError(err).Func("AllocateStream")
-	}
-
-	hash, err := BytesToEthHash(genesisMiniblockHash)
-	if err != nil {
-		return AsRiverError(err).Func("AllocateStream")
-	}
-
-	_, _, err = sr.Blockchain.TxRunner.SubmitAndWait(
+	_, _, err := sr.Blockchain.TxRunner.SubmitAndWait(
 		ctx,
 		func(opts *bind.TransactOpts) (*types.Transaction, error) {
-			return sr.Contract.AllocateStream(opts, id.ByteArray(), addresses, hash, genesisMiniblock)
+			return sr.Contract.AllocateStream(opts, streamId.ByteArray(), addresses, genesisMiniblockHash, genesisMiniblock)
 		},
 	)
 	if err != nil {
@@ -113,32 +103,24 @@ func makeGetStreamResult(streamId StreamId, stream *contracts.IRiverRegistryBase
 	}
 }
 
-func (sr *RiverRegistryContract) GetStream(ctx context.Context, streamId string) (*GetStreamResult, error) {
-	id, err := StreamIdFromString(streamId)
-	if err != nil {
-		return nil, AsRiverError(err).Func("GetStream")
-	}
-	stream, err := sr.Contract.GetStream(sr.callOpts(ctx), id.ByteArray())
+func (sr *RiverRegistryContract) GetStream(ctx context.Context, streamId StreamId) (*GetStreamResult, error) {
+	stream, err := sr.Contract.GetStream(sr.callOpts(ctx), streamId.ByteArray())
 	if err != nil {
 		return nil, WrapRiverError(Err_CANNOT_CALL_CONTRACT, err).Func("GetStream").Message("Call failed")
 	}
-	return makeGetStreamResult(id, &stream), nil
+	return makeGetStreamResult(streamId, &stream), nil
 }
 
 // Returns stream, genesis miniblock hash, genesis miniblock, error
 func (sr *RiverRegistryContract) GetStreamWithGenesis(
 	ctx context.Context,
-	streamId string,
+	streamId StreamId,
 ) (*GetStreamResult, common.Hash, []byte, error) {
-	id, err := StreamIdFromString(streamId)
-	if err != nil {
-		return nil, common.Hash{}, nil, AsRiverError(err).Func("GetStreamWithGenesis")
-	}
-	stream, mbHash, mb, err := sr.Contract.GetStreamWithGenesis(sr.callOpts(ctx), id.ByteArray())
+	stream, mbHash, mb, err := sr.Contract.GetStreamWithGenesis(sr.callOpts(ctx), streamId.ByteArray())
 	if err != nil {
 		return nil, common.Hash{}, nil, WrapRiverError(Err_CANNOT_CALL_CONTRACT, err).Func("GetStream").Message("Call failed")
 	}
-	ret := makeGetStreamResult(id, &stream)
+	ret := makeGetStreamResult(streamId, &stream)
 	return ret, mbHash, mb, nil
 }
 

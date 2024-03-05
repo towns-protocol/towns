@@ -6,19 +6,19 @@ import (
 	. "github.com/river-build/river/core/node/events"
 	. "github.com/river-build/river/core/node/protocol"
 	. "github.com/river-build/river/core/node/protocol/protocolconnect"
-	"github.com/river-build/river/core/node/shared"
+	. "github.com/river-build/river/core/node/shared"
 
 	"connectrpc.com/connect"
 )
 
 type remoteStream struct {
-	streamId string
+	streamId StreamId
 	stub     StreamServiceClient
 }
 
 var _ Stream = (*remoteStream)(nil)
 
-func (s *Service) loadStream(ctx context.Context, streamId string) (Stream, StreamView, error) {
+func (s *Service) loadStream(ctx context.Context, streamId StreamId) (Stream, StreamView, error) {
 	nodes, err := s.streamRegistry.GetStreamInfo(ctx, streamId)
 	if err != nil {
 		return nil, nil, err
@@ -34,13 +34,8 @@ func (s *Service) loadStream(ctx context.Context, streamId string) (Stream, Stre
 		return nil, nil, err
 	}
 
-	streamIdTyped, err := shared.StreamIdFromString(streamId)
-	if err != nil {
-		return nil, nil, err
-	}
-
 	resp, err := stub.GetStream(ctx, connect.NewRequest(&GetStreamRequest{
-		StreamId: streamIdTyped.Bytes(),
+		StreamId: streamId.Bytes(),
 	}))
 	if err != nil {
 		return nil, nil, err
@@ -58,13 +53,8 @@ func (s *Service) loadStream(ctx context.Context, streamId string) (Stream, Stre
 }
 
 func (s *remoteStream) GetMiniblocks(ctx context.Context, fromInclusive int64, toExclusive int64) ([]*Miniblock, bool, error) {
-	streamId, err := shared.StreamIdFromString(s.streamId)
-	if err != nil {
-		return nil, false, err
-	}
-
 	res, err := s.stub.GetMiniblocks(ctx, connect.NewRequest(&GetMiniblocksRequest{
-		StreamId:      streamId.Bytes(),
+		StreamId:      s.streamId.Bytes(),
 		FromInclusive: fromInclusive,
 		ToExclusive:   toExclusive,
 	}))
@@ -76,17 +66,12 @@ func (s *remoteStream) GetMiniblocks(ctx context.Context, fromInclusive int64, t
 }
 
 func (s *remoteStream) AddEvent(ctx context.Context, event *ParsedEvent) error {
-	streamId, err := shared.StreamIdFromString(s.streamId)
-	if err != nil {
-		return err
-	}
-
 	req := &AddEventRequest{
-		StreamId: streamId.Bytes(),
+		StreamId: s.streamId.Bytes(),
 		Event:    event.Envelope,
 	}
 
-	_, err = s.stub.AddEvent(ctx, connect.NewRequest(req))
+	_, err := s.stub.AddEvent(ctx, connect.NewRequest(req))
 	if err != nil {
 		return err
 	}

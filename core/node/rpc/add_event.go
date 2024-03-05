@@ -13,7 +13,7 @@ import (
 	. "github.com/river-build/river/core/node/nodes"
 	. "github.com/river-build/river/core/node/protocol"
 	"github.com/river-build/river/core/node/rules"
-	"github.com/river-build/river/core/node/shared"
+	. "github.com/river-build/river/core/node/shared"
 )
 
 var addEventRequests = infra.NewSuccessMetrics("add_event_requests", serviceRequests)
@@ -25,7 +25,7 @@ func (s *Service) localAddEvent(
 ) (*connect.Response[AddEventResponse], error) {
 	log := dlog.FromCtx(ctx)
 
-	streamId, err := shared.StreamIdFromBytes(req.Msg.StreamId)
+	streamId, err := StreamIdFromBytes(req.Msg.StreamId)
 	if err != nil {
 		addEventRequests.FailInc()
 		return nil, AsRiverError(err).Func("localAddEvent")
@@ -49,9 +49,8 @@ func (s *Service) localAddEvent(
 	}
 }
 
-func (s *Service) addParsedEvent(ctx context.Context, streamId shared.StreamId, parsedEvent *ParsedEvent, nodes *StreamNodes) error {
-
-	localStream, streamView, err := s.cache.GetStream(ctx, streamId.String())
+func (s *Service) addParsedEvent(ctx context.Context, streamId StreamId, parsedEvent *ParsedEvent, nodes *StreamNodes) error {
+	localStream, streamView, err := s.cache.GetStream(ctx, streamId)
 	if err != nil {
 		return err
 	}
@@ -98,7 +97,7 @@ func (s *Service) addParsedEvent(ctx context.Context, streamId shared.StreamId, 
 	return nil
 }
 
-func (s *Service) addEventPayload(ctx context.Context, streamId shared.StreamId, payload IsStreamEvent_Payload) error {
+func (s *Service) addEventPayload(ctx context.Context, streamId StreamId, payload IsStreamEvent_Payload) error {
 	hashRequest := &GetLastMiniblockHashRequest{
 		StreamId: streamId.Bytes(),
 	}

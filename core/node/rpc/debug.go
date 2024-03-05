@@ -3,7 +3,6 @@ package rpc
 import (
 	"bufio"
 	"bytes"
-	"cmp"
 	"context"
 	"fmt"
 	"net/http"
@@ -128,7 +127,7 @@ func (h *cacheHandler) ServeHTTP(w http.ResponseWriter, r *http.Request) {
 	}
 
 	slices.SortFunc(streams, func(a, b StreamView) int {
-		return cmp.Compare(a.StreamId(), b.StreamId())
+		return bytes.Compare(a.StreamId().Bytes(), b.StreamId().Bytes())
 	})
 
 	for i, view := range streams {
@@ -146,7 +145,7 @@ func (h *cacheHandler) ServeHTTP(w http.ResponseWriter, r *http.Request) {
 
 		if reply.ShowStreams && i < streamCount {
 			reply.Streams[i] = &render.CacheDataStream{
-				StreamID:              view.StreamId(),
+				StreamID:              view.StreamId().String(),
 				MiniBlocks:            stats.LastMiniblockNum - stats.FirstMiniblockNum + 1,
 				FirstMiniblockNum:     stats.FirstMiniblockNum,
 				LastMiniblockNum:      stats.LastMiniblockNum,

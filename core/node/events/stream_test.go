@@ -16,7 +16,7 @@ import (
 func MakeGenesisMiniblockForSpaceStream(
 	t *testing.T,
 	wallet *crypto.Wallet,
-	spaceStreamId string,
+	spaceStreamId StreamId,
 ) *Miniblock {
 	inception, err := MakeEnvelopeWithPayload(
 		wallet,
@@ -75,7 +75,7 @@ func mbTest(
 	defer tt.closer()
 	assert := assert.New(t)
 
-	spaceStreamId := testutils.FakeStreamId(STREAM_SPACE_PREFIX)
+	spaceStreamId := testutils.FakeStreamId(STREAM_SPACE_BIN)
 	miniblockProto := MakeGenesisMiniblockForSpaceStream(t, tt.params.Wallet, spaceStreamId)
 
 	stream, view, err := tt.createStream(ctx, spaceStreamId, miniblockProto)

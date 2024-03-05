@@ -13,7 +13,7 @@ import (
 )
 
 func (s *Service) getStubForStream(ctx context.Context, streamId shared.StreamId) (StreamServiceClient, *StreamNodes, error) {
-	nodes, err := s.streamRegistry.GetStreamInfo(ctx, streamId.String())
+	nodes, err := s.streamRegistry.GetStreamInfo(ctx, streamId)
 	if err != nil {
 		return nil, nil, err
 	}
@@ -187,7 +187,7 @@ func (s *Service) addEventImpl(
 		return nil, err
 	}
 
-	nodes, err := s.streamRegistry.GetStreamInfo(ctx, streamId.String())
+	nodes, err := s.streamRegistry.GetStreamInfo(ctx, streamId)
 	if err != nil {
 		return nil, err
 	}

@@ -167,7 +167,7 @@ func (ru *csParams) canCreateStream() ruleBuilderCS {
 		}
 		return builder.
 			check(
-				ru.params.streamIdFormatIsValid(shared.STREAM_SPACE_PREFIX),
+				ru.params.streamIdTypeIsCorrect(shared.STREAM_SPACE_BIN),
 				ru.params.eventCountMatches(2),
 				ru.validateSpaceJoinEvent,
 			).
@@ -181,7 +181,7 @@ func (ru *csParams) canCreateStream() ruleBuilderCS {
 		}
 		return builder.
 			check(
-				ru.params.streamIdFormatIsValid(shared.STREAM_CHANNEL_PREFIX),
+				ru.params.streamIdTypeIsCorrect(shared.STREAM_CHANNEL_BIN),
 				ru.params.eventCountMatches(2),
 				ru.validateChannelJoinEvent,
 			).
@@ -201,7 +201,7 @@ func (ru *csParams) canCreateStream() ruleBuilderCS {
 		}
 		return builder.
 			check(
-				ru.params.streamIdFormatIsValid(shared.STREAM_MEDIA_PREFIX),
+				ru.params.streamIdTypeIsCorrect(shared.STREAM_MEDIA_BIN),
 				ru.params.eventCountMatches(1),
 				ru.checkMediaInceptionPayload,
 			).
@@ -217,7 +217,7 @@ func (ru *csParams) canCreateStream() ruleBuilderCS {
 		}
 		return builder.
 			check(
-				ru.params.streamIdFormatIsValid(shared.STREAM_DM_CHANNEL_PREFIX),
+				ru.params.streamIdTypeIsCorrect(shared.STREAM_DM_CHANNEL_BIN),
 				ru.params.eventCountMatches(3),
 				ru.checkDMInceptionPayload,
 			).
@@ -231,7 +231,7 @@ func (ru *csParams) canCreateStream() ruleBuilderCS {
 		}
 		return builder.
 			check(
-				ru.params.streamIdFormatIsValid(shared.STREAM_GDM_CHANNEL_PREFIX),
+				ru.params.streamIdTypeIsCorrect(shared.STREAM_GDM_CHANNEL_BIN),
 				ru.params.eventCountGreaterThanOrEqualTo(4),
 				ru.checkGDMPayloads,
 			).
@@ -245,7 +245,7 @@ func (ru *csParams) canCreateStream() ruleBuilderCS {
 		}
 		return builder.
 			check(
-				ru.params.streamIdFormatIsValid(shared.STREAM_USER_PREFIX),
+				ru.params.streamIdTypeIsCorrect(shared.STREAM_USER_BIN),
 				ru.params.eventCountMatches(1),
 				ru.params.isUserStreamId,
 			)
@@ -258,7 +258,7 @@ func (ru *csParams) canCreateStream() ruleBuilderCS {
 		}
 		return builder.
 			check(
-				ru.params.streamIdFormatIsValid(shared.STREAM_USER_DEVICE_KEY_PREFIX),
+				ru.params.streamIdTypeIsCorrect(shared.STREAM_USER_DEVICE_KEY_BIN),
 				ru.params.eventCountMatches(1),
 				ru.params.isUserStreamId,
 			)
@@ -271,7 +271,7 @@ func (ru *csParams) canCreateStream() ruleBuilderCS {
 		}
 		return builder.
 			check(
-				ru.params.streamIdFormatIsValid(shared.STREAM_USER_SETTINGS_PREFIX),
+				ru.params.streamIdTypeIsCorrect(shared.STREAM_USER_SETTINGS_BIN),
 				ru.params.eventCountMatches(1),
 				ru.params.isUserStreamId,
 			)
@@ -284,7 +284,7 @@ func (ru *csParams) canCreateStream() ruleBuilderCS {
 		}
 		return builder.
 			check(
-				ru.params.streamIdFormatIsValid(shared.STREAM_USER_INBOX_PREFIX),
+				ru.params.streamIdTypeIsCorrect(shared.STREAM_USER_INBOX_BIN),
 				ru.params.eventCountMatches(1),
 				ru.params.isUserStreamId,
 			)
@@ -295,12 +295,12 @@ func (ru *csParams) canCreateStream() ruleBuilderCS {
 	}
 }
 
-func (ru *csParams) streamIdFormatIsValid(expectedPrefix string) func() error {
+func (ru *csParams) streamIdTypeIsCorrect(expectedType byte) func() error {
 	return func() error {
-		if shared.IsValidIdForPrefix(ru.streamId.String(), expectedPrefix) {
+		if ru.streamId.Type() == expectedType {
 			return nil
 		} else {
-			return RiverError(Err_BAD_STREAM_CREATION_PARAMS, "invalid stream id", "streamId", ru.streamId)
+			return RiverError(Err_BAD_STREAM_CREATION_PARAMS, "invalid stream id type", "streamId", ru.streamId, "expectedType", expectedType)
 		}
 	}
 }
@@ -438,21 +438,16 @@ func (ru *csChannelRules) derivedChannelSpaceParentEvent() (*DerivedEvent, error
 }
 
 func (ru *csParams) derivedMembershipEvent() (*DerivedEvent, error) {
-	creatorAddress := common.BytesToAddress(ru.parsedEvents[0].Event.GetCreatorAddress())
-
-	creatorUserStreamIdStr, err := shared.UserStreamIdFromAddress(creatorAddress)
+	creatorAddress, err := BytesToEthAddress(ru.parsedEvents[0].Event.GetCreatorAddress())
 	if err != nil {
 		return nil, err
 	}
-	creatorUserStreamId, err := shared.StreamIdFromString(creatorUserStreamIdStr)
-	if err != nil {
-		return nil, err
-	}
+	creatorUserStreamId := shared.UserStreamIdFromAddr(creatorAddress)
 	inviterId := creatorAddress.Hex()
 
 	payload := events.Make_UserPayload_Membership(
 		MembershipOp_SO_JOIN,
-		ru.streamId.String(),
+		ru.streamId,
 		&inviterId,
 	)
 
@@ -538,21 +533,12 @@ func (ru *csDmChannelRules) checkDMInceptionPayload() error {
 }
 
 func (ru *csDmChannelRules) derivedDMMembershipEvents() ([]*DerivedEvent, error) {
-
-	firstPartyStreamStr, err := shared.UserStreamIdFromBytes(ru.inception.FirstPartyAddress)
-	if err != nil {
-		return nil, err
-	}
-	firstPartyStream, err := shared.StreamIdFromString(firstPartyStreamStr)
+	firstPartyStream, err := shared.UserStreamIdFromBytes(ru.inception.FirstPartyAddress)
 	if err != nil {
 		return nil, err
 	}
 
-	secondPartyStreamStr, err := shared.UserStreamIdFromBytes(ru.inception.SecondPartyAddress)
-	if err != nil {
-		return nil, err
-	}
-	secondPartyStream, err := shared.StreamIdFromString(secondPartyStreamStr)
+	secondPartyStream, err := shared.UserStreamIdFromBytes(ru.inception.SecondPartyAddress)
 	if err != nil {
 		return nil, err
 	}
@@ -560,14 +546,14 @@ func (ru *csDmChannelRules) derivedDMMembershipEvents() ([]*DerivedEvent, error)
 	// first party
 	firstPartyPayload := events.Make_UserPayload_Membership(
 		MembershipOp_SO_JOIN,
-		ru.params.streamId.String(),
+		ru.params.streamId,
 		&ru.params.creatorUserId,
 	)
 
 	// second party
 	secondPartyPayload := events.Make_UserPayload_Membership(
 		MembershipOp_SO_JOIN,
-		ru.params.streamId.String(),
+		ru.params.streamId,
 		&ru.params.creatorUserId,
 	)
 
@@ -686,7 +672,7 @@ func (ru *csGdmChannelRules) derivedGDMMembershipEvents() ([]*DerivedEvent, erro
 		}
 		payload := events.Make_UserPayload_Membership(
 			MembershipOp_SO_JOIN,
-			ru.params.streamId.String(),
+			ru.params.streamId,
 			&ru.params.creatorUserId,
 		)
 		derivedEvents = append(derivedEvents, &DerivedEvent{

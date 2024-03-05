@@ -393,7 +393,7 @@ func (s *syncHandlerImpl) addLocalStreamToSync(
 		return nil
 	}
 
-	streamSub, _, err := s.cache.GetStream(ctx, cookieStreamId.String())
+	streamSub, _, err := s.cache.GetStream(ctx, cookieStreamId)
 	if err != nil {
 		log.Info("SyncStreams:SyncHandlerV2.addLocalStreamToSync: failed to get stream", "streamId", cookieStreamId, "err", err)
 		return err

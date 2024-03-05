@@ -9,9 +9,8 @@ import (
 	"github.com/river-build/river/core/node/config"
 	"github.com/river-build/river/core/node/crypto"
 	. "github.com/river-build/river/core/node/protocol"
-	"github.com/river-build/river/core/node/shared"
+	. "github.com/river-build/river/core/node/shared"
 	"github.com/river-build/river/core/node/storage"
-	"github.com/river-build/river/core/node/testutils"
 
 	"github.com/stretchr/testify/assert"
 	"google.golang.org/protobuf/proto"
@@ -47,7 +46,7 @@ func TestLoad(t *testing.T) {
 	ctx := context.Background()
 	userWallet, _ := crypto.NewWallet(ctx)
 	nodeWallet, _ := crypto.NewWallet(ctx)
-	var streamId = testutils.UserStreamIdFromAddress(userWallet.Address)
+	streamId := UserStreamIdFromAddr(userWallet.Address)
 
 	userAddress := userWallet.Address[:]
 
@@ -85,14 +84,14 @@ func TestLoad(t *testing.T) {
 
 	assert.NoError(t, err)
 
-	assert.Equal(t, streamId, view.StreamId())
+	assert.Equal(t, streamId, *view.StreamId())
 
 	ip := view.InceptionPayload()
-	ipStreamId, err := shared.StreamIdFromBytes(ip.GetStreamId())
+	ipStreamId, err := StreamIdFromBytes(ip.GetStreamId())
 	assert.NoError(t, err)
 	assert.NotNil(t, ip)
 	assert.Equal(t, parsedEvent(t, inception).Event.GetInceptionPayload().GetStreamId(), ip.GetStreamId())
-	assert.Equal(t, streamId, ipStreamId.String())
+	assert.Equal(t, streamId, ipStreamId)
 
 	joined, err := view.IsMember(userAddress) // joined is only valid on user, space and channel views
 	assert.NoError(t, err)
@@ -115,10 +114,10 @@ func TestLoad(t *testing.T) {
 	assert.Equal(t, []common.Hash{common.BytesToHash(inception.Hash), common.BytesToHash(join.Hash), common.BytesToHash(miniblockHeaderProto.Hash)}, newEnvelopesHashes)
 
 	cookie := view.SyncCookie(nodeWallet.Address)
-	cookieStreamId, err := shared.StreamIdFromBytes(cookie.StreamId)
+	cookieStreamId, err := StreamIdFromBytes(cookie.StreamId)
 	assert.NoError(t, err)
 	assert.NotNil(t, cookie)
-	assert.Equal(t, streamId, cookieStreamId.String())
+	assert.Equal(t, streamId, cookieStreamId)
 	assert.Equal(t, int64(1), cookie.MinipoolGen)
 	assert.Equal(t, int64(0), cookie.MinipoolSlot)
 
@@ -135,7 +134,7 @@ func TestLoad(t *testing.T) {
 	assert.Equal(t, false, view.shouldSnapshot(&streamConfig_t))
 
 	// check per stream snapshot generation
-	streamConfig_t.MinEventsPerSnapshot[shared.STREAM_USER_PREFIX] = 2
+	streamConfig_t.MinEventsPerSnapshot[STREAM_USER_PREFIX] = 2
 	num = view.getMinEventsPerSnapshot(&streamConfig_t)
 	assert.Equal(t, minEventsPerSnapshotUserStream, num)
 	assert.Equal(t, false, view.shouldSnapshot(&streamConfig_t))

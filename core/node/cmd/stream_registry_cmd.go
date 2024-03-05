@@ -7,6 +7,7 @@ import (
 	"github.com/river-build/river/core/node/config"
 	"github.com/river-build/river/core/node/crypto"
 	"github.com/river-build/river/core/node/registries"
+	. "github.com/river-build/river/core/node/shared"
 
 	"github.com/spf13/cobra"
 )
@@ -60,7 +61,12 @@ func srstream(cfg *config.Config, streamId string) error {
 		return err
 	}
 
-	stream, err := registryContract.GetStream(ctx, streamId)
+	id, err := StreamIdFromString(streamId)
+	if err != nil {
+		return err
+	}
+
+	stream, err := registryContract.GetStream(ctx, id)
 	if err != nil {
 		return err
 	}

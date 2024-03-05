@@ -34,7 +34,7 @@ func (s *Service) getLastMiniblockHash(
 		return nil, err
 	}
 
-	_, streamView, err := s.cache.GetStream(ctx, streamId.String())
+	_, streamView, err := s.cache.GetStream(ctx, streamId)
 	if err != nil {
 		return nil, err
 	}

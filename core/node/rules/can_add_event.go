@@ -555,12 +555,7 @@ func (ru *aeMembershipRules) requireStreamParentMembership() (*RequiredParentEve
 	if streamParentId == nil {
 		return nil, nil
 	}
-	userStreamIdStr, err := shared.UserStreamIdFromBytes(ru.membership.UserAddress)
-	if err != nil {
-		return nil, err
-	}
-	// todo aellis - don't need these conversions
-	userStreamId, err := shared.StreamIdFromString(userStreamIdStr)
+	userStreamId, err := shared.UserStreamIdFromBytes(ru.membership.UserAddress)
 	if err != nil {
 		return nil, err
 	}
@@ -630,7 +625,7 @@ func (ru *aeUserMembershipRules) parentEventForUserMembership() (*RequiredParent
 	userMembership := ru.userMembership
 	creatorAddress := ru.params.parsedEvent.Event.CreatorAddress
 
-	userAddress, err := shared.GetUserAddressFromStreamId(ru.params.streamView.StreamId())
+	userAddress, err := shared.GetUserAddrFromStreamId(*ru.params.streamView.StreamId())
 	if err != nil {
 		return nil, err
 	}
@@ -673,7 +668,7 @@ func (ru *aeUserMembershipActionRules) parentEventForUserMembershipAction() (*Re
 	if err != nil {
 		return nil, err
 	}
-	payload := events.Make_UserPayload_Membership(action.Op, actionStreamId.String(), &inviterId)
+	payload := events.Make_UserPayload_Membership(action.Op, actionStreamId, &inviterId)
 	toUserStreamIdStr, err := shared.UserStreamIdFromId(userId)
 	if err != nil {
 		return nil, err
@@ -701,7 +696,7 @@ func (ru *aeMembershipRules) spaceMembershipEntitlements() (*auth.ChainAuthArgs,
 	}
 
 	chainAuthArgs := auth.NewChainAuthArgsForSpace(
-		streamId,
+		streamId.String(),
 		permissionUser,
 		permission,
 	)
@@ -730,7 +725,7 @@ func (ru *aeMembershipRules) channelMembershipEntitlements() (*auth.ChainAuthArg
 
 	chainAuthArgs := auth.NewChainAuthArgsForChannel(
 		spaceId.String(),
-		ru.params.streamView.StreamId(),
+		ru.params.streamView.StreamId().String(),
 		permissionUser,
 		permission,
 	)
@@ -756,7 +751,7 @@ func (params *aeParams) channelMessageEntitlements() (*auth.ChainAuthArgs, error
 
 	chainAuthArgs := auth.NewChainAuthArgsForChannel(
 		spaceId.String(),
-		params.streamView.StreamId(),
+		params.streamView.StreamId().String(),
 		userId,
 		auth.PermissionWrite,
 	)

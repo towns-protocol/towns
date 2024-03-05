@@ -34,7 +34,7 @@ func (s *Service) getMiniblocks(
 		return nil, err
 	}
 
-	stream, _, err := s.cache.GetStream(ctx, streamId.String())
+	stream, _, err := s.cache.GetStream(ctx, streamId)
 	if err != nil {
 		return nil, err
 	}

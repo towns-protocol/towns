@@ -5,29 +5,30 @@ import (
 	"encoding/hex"
 
 	"github.com/ethereum/go-ethereum/common"
+	"github.com/jackc/pgx/v5/pgtype"
 	. "github.com/river-build/river/core/node/base"
 	. "github.com/river-build/river/core/node/protocol"
 )
 
 const (
-	STREAM_CHANNEL_BIN            uint8 = 0x20
-	STREAM_CHANNEL_PREFIX               = "20"
-	STREAM_DM_CHANNEL_BIN         uint8 = 0x88
-	STREAM_DM_CHANNEL_PREFIX            = "88"
-	STREAM_GDM_CHANNEL_BIN        uint8 = 0x77
-	STREAM_GDM_CHANNEL_PREFIX           = "77"
-	STREAM_MEDIA_BIN              uint8 = 0xff
-	STREAM_MEDIA_PREFIX                 = "ff"
-	STREAM_SPACE_BIN              uint8 = 0x10
-	STREAM_SPACE_PREFIX                 = "10"
-	STREAM_USER_DEVICE_KEY_BIN    uint8 = 0xad
-	STREAM_USER_DEVICE_KEY_PREFIX       = "ad"
-	STREAM_USER_INBOX_BIN         uint8 = 0xa1
-	STREAM_USER_INBOX_PREFIX            = "a1"
-	STREAM_USER_BIN               uint8 = 0xa8
-	STREAM_USER_PREFIX                  = "a8"
-	STREAM_USER_SETTINGS_BIN      uint8 = 0xa5
-	STREAM_USER_SETTINGS_PREFIX         = "a5"
+	STREAM_CHANNEL_BIN            byte = 0x20
+	STREAM_CHANNEL_PREFIX              = "20"
+	STREAM_DM_CHANNEL_BIN         byte = 0x88
+	STREAM_DM_CHANNEL_PREFIX           = "88"
+	STREAM_GDM_CHANNEL_BIN        byte = 0x77
+	STREAM_GDM_CHANNEL_PREFIX          = "77"
+	STREAM_MEDIA_BIN              byte = 0xff
+	STREAM_MEDIA_PREFIX                = "ff"
+	STREAM_SPACE_BIN              byte = 0x10
+	STREAM_SPACE_PREFIX                = "10"
+	STREAM_USER_DEVICE_KEY_BIN    byte = 0xad
+	STREAM_USER_DEVICE_KEY_PREFIX      = "ad"
+	STREAM_USER_INBOX_BIN         byte = 0xa1
+	STREAM_USER_INBOX_PREFIX           = "a1"
+	STREAM_USER_BIN               byte = 0xa8
+	STREAM_USER_PREFIX                 = "a8"
+	STREAM_USER_SETTINGS_BIN      byte = 0xa5
+	STREAM_USER_SETTINGS_PREFIX        = "a5"
 )
 
 type StreamId struct {
@@ -46,7 +47,7 @@ func StreamIdFromBytes(b []byte) (StreamId, error) {
 	if len(b) < 3 {
 		return StreamId{}, RiverError(Err_BAD_STREAM_ID, "invalid length", "streamId", b)
 	}
-	expectedLen, err := streamIdLengthForType(b[0])
+	expectedLen, err := StreamIdLengthForType(b[0])
 	if err != nil {
 		return StreamId{}, err
 	}
@@ -59,7 +60,7 @@ func StreamIdFromBytes(b []byte) (StreamId, error) {
 }
 
 func StreamIdFromHash(b common.Hash) (StreamId, error) {
-	expectedLen, err := streamIdLengthForType(b[0])
+	expectedLen, err := StreamIdLengthForType(b[0])
 	if err != nil {
 		return StreamId{}, err
 	}
@@ -74,7 +75,7 @@ func StreamIdFromHash(b common.Hash) (StreamId, error) {
 
 // Returns truncated bytes of the stream id, use with protobufs
 func (id *StreamId) Bytes() []byte {
-	n, err := streamIdLengthForType(id.bytes[0])
+	n, err := StreamIdLengthForType(id.bytes[0])
 	if err != nil {
 		panic(err)
 	}
@@ -87,7 +88,7 @@ func (id *StreamId) ByteArray() [32]byte {
 }
 
 func (id *StreamId) String() string {
-	n, err := streamIdLengthForType(id.bytes[0])
+	n, err := StreamIdLengthForType(id.bytes[0])
 	if err != nil {
 		panic(err)
 	}
@@ -106,7 +107,11 @@ func (id *StreamId) EqualsBytes(other []byte) bool {
 	return bytes.Equal(id.Bytes(), other)
 }
 
-func streamIdLengthForType(t uint8) (int, error) {
+func (id *StreamId) Type() byte {
+	return id.bytes[0]
+}
+
+func StreamIdLengthForType(t byte) (int, error) {
 	switch t {
 	case STREAM_USER_DEVICE_KEY_BIN:
 		return 21, nil
@@ -129,4 +134,26 @@ func streamIdLengthForType(t uint8) (int, error) {
 	default:
 		return 0, RiverError(Err_BAD_STREAM_ID, "invalid stream prefix", "prefix", t)
 	}
+}
+
+// Here abstraction leaks to implement marshalling for pgx.
+// TODO: This can be avoided by registering a custom type with pgx.
+func (id StreamId) TextValue() (pgtype.Text, error) {
+	return pgtype.Text{
+		String: id.String(),
+		Valid:  true,
+	}, nil
+}
+
+func (id *StreamId) ScanText(v pgtype.Text) error {
+	if !v.Valid {
+		*id = StreamId{}
+		return nil
+	}
+	var err error
+	*id, err = StreamIdFromString(v.String)
+	if err != nil {
+		return err
+	}
+	return nil
 }

@@ -37,11 +37,10 @@ func TestInvalidDMStreamId(t *testing.T) {
 
 func TestStreamIdFromString(t *testing.T) {
 	addr := common.HexToAddress("0x376eC15Fa24A76A18EB980629093cFFd559333Bb")
-	a, err := UserStreamIdFromAddress(addr)
-	assert.NoError(t, err)
-	assert.Equal(t, "a8376ec15fa24a76a18eb980629093cffd559333bb", a)
+	a := UserStreamIdFromAddr(addr)
+	assert.Equal(t, "a8376ec15fa24a76a18eb980629093cffd559333bb", a.String())
 
-	length, err := streamIdLengthForType(STREAM_USER_BIN)
+	length, err := StreamIdLengthForType(STREAM_USER_BIN)
 	require.NoError(t, err)
 
 	var bytes [21]byte
@@ -51,10 +50,10 @@ func TestStreamIdFromString(t *testing.T) {
 
 	streamIdFromBytes, err := StreamIdFromBytes(bytes[:])
 	require.NoError(t, err)
-	streamIdFromStr, err := StreamIdFromString(a)
+	streamIdFromStr, err := StreamIdFromString(a.String())
 	require.NoError(t, err)
-	assert.Equal(t, a, streamIdFromBytes.String())
-	assert.Equal(t, a, streamIdFromStr.String())
+	assert.Equal(t, a.String(), streamIdFromBytes.String())
+	assert.Equal(t, a.String(), streamIdFromStr.String())
 	assert.Equal(t, streamIdFromBytes, streamIdFromStr)
 }
 

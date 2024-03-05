@@ -33,7 +33,7 @@ func (s *Service) allocateStream(ctx context.Context, req *AllocateStreamRequest
 
 	// TODO: check request is signed by correct node
 	// TODO: all checks that should be done on create?
-	_, view, err := s.cache.CreateStream(ctx, streamId.String())
+	_, view, err := s.cache.CreateStream(ctx, streamId)
 	if err != nil {
 		return nil, err
 	}
@@ -68,7 +68,7 @@ func (s *Service) newEventReceived(ctx context.Context, req *NewEventReceivedReq
 		return nil, err
 	}
 
-	stream, _, err := s.cache.GetStream(ctx, streamId.String())
+	stream, _, err := s.cache.GetStream(ctx, streamId)
 	if err != nil {
 		return nil, err
 	}
