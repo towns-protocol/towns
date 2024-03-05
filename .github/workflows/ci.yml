@@ -88,7 +88,7 @@ jobs:
                   cache: 'yarn'
 
             - name: Print versions
-              run: ./scripts/print-versions.sh
+              run: ./river/scripts/print-versions.sh
               
             - name: Start and configure blockchains
               run: ./river/scripts/bc-all-start.sh
@@ -206,7 +206,7 @@ jobs:
                   cache: 'yarn'
 
             - name: Print versions
-              run: ./scripts/print-versions.sh
+              run: ./river/scripts/print-versions.sh
 
             - name: Start and configure blockchains
               run: ./river/scripts/bc-all-start.sh

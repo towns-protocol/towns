@@ -96,7 +96,7 @@ fi
 echo ""
 if prompt 'Remove Casbablanca Docker Containers?:y/n '
 then
-    ./core/scripts/stop_storage.sh 
+    ./river/core/scripts/stop_storage.sh 
 fi
 
 
