@@ -3,6 +3,10 @@ pragma solidity ^0.8.23;
 
 // interfaces
 import {IRiver} from "./IRiver.sol";
+import {IERC5805} from "openzeppelin-contracts/contracts/interfaces/IERC5805.sol";
+import {IERC20} from "@openzeppelin/contracts/token/ERC20/IERC20.sol";
+import {IERC20Permit} from "@openzeppelin/contracts/token/ERC20/extensions/IERC20Permit.sol";
+import {IERC20Metadata} from "@openzeppelin/contracts/token/ERC20/extensions/IERC20Metadata.sol";
 
 // libraries
 import {Nonces} from "openzeppelin-contracts/contracts/utils/Nonces.sol";
@@ -56,10 +60,14 @@ contract River is
     RiverConfig memory config
   ) ERC20Permit("River") Ownable(config.owner) ERC20("River", "RVR") {
     __IntrospectionBase_init();
-    // __LockFacet_init_unchained(0 days);
+    __LockFacet_init_unchained(0 days);
 
     // add interface
     _addInterface(type(IRiver).interfaceId);
+    _addInterface(type(IERC5805).interfaceId);
+    _addInterface(type(IERC20).interfaceId);
+    _addInterface(type(IERC20Metadata).interfaceId);
+    _addInterface(type(IERC20Permit).interfaceId);
 
     // mint to vault
     _mint(config.vault, INITIAL_SUPPLY);
