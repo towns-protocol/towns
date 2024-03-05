@@ -2,7 +2,6 @@ package cmd
 
 import (
 	"context"
-	"encoding/hex"
 	"fmt"
 
 	"github.com/river-build/river/core/node/config"
@@ -38,10 +37,10 @@ func srdump(cfg *config.Config) error {
 	}
 
 	for i, strm := range streams {
-		s := fmt.Sprintf("%4d %s", i, strm.StreamId)
-		fmt.Printf("%-54s %4d, %s\n", s, strm.LastMiniblockNum, hex.EncodeToString(strm.LastMiniblockHash))
+		s := fmt.Sprintf("%4d %s", i, strm.StreamId.String())
+		fmt.Printf("%-69s %4d, %s\n", s, strm.LastMiniblockNum, strm.LastMiniblockHash.Hex())
 		for _, node := range strm.Nodes {
-			fmt.Printf("        %s\n", node)
+			fmt.Printf("        %s\n", node.Hex())
 		}
 	}
 
@@ -66,7 +65,7 @@ func srstream(cfg *config.Config, streamId string) error {
 		return err
 	}
 
-	fmt.Printf("%d %s\n", stream.LastMiniblockNum, hex.EncodeToString(stream.LastMiniblockHash))
+	fmt.Printf("%d %s\n", stream.LastMiniblockNum, stream.LastMiniblockHash.Hex())
 	for _, node := range stream.Nodes {
 		fmt.Printf("%s\n", node)
 	}
