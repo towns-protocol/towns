@@ -10,7 +10,7 @@ import { TokenVerification } from '@components/Web3/TokenVerification/TokenVerif
 import { Avatar } from '@components/Avatar/Avatar'
 import { ClipboardCopy } from '@components/ClipboardCopy/ClipboardCopy'
 
-import { PageLogo } from '@components/Logo/Logo'
+import { LogoSingleLetter } from '@components/Logo/Logo'
 import { ModalContainer } from '@components/Modals/ModalContainer'
 import { BlurredBackground } from '@components/TouchLayoutHeader/BlurredBackground'
 import { Activity } from '@components/TownPageLayout/TownPageActivity'
@@ -28,6 +28,7 @@ import { shortAddress } from 'ui/utils/utils'
 import { MainSideBar } from '@components/SideBars'
 import { UserOpTxModal } from '@components/Web3/UserOpTxModal/UserOpTxModal'
 import { useAbstractAccountAddress } from 'hooks/useAbstractAccountAddress'
+import { ErrorReportForm } from '@components/ErrorReport/ErrorReport'
 import { WelcomeLayout } from './layouts/WelcomeLayout'
 
 const log = debug('app:public-town')
@@ -74,19 +75,7 @@ export const PublicTownPage = () => {
             <AbsoluteBackground networkId={spaceInfo.networkId} />
             <Box height="100dvh" paddingTop="safeAreaInsetTop">
                 <TownPageLayout
-                    headerContent={
-                        <Box horizontal centerContent width="100%" padding="lg">
-                            <Box
-                                horizontal
-                                width="wide"
-                                justifyContent="spaceBetween"
-                                paddingY="md"
-                            >
-                                <PageLogo />
-                                <LoggedUserAvatar />
-                            </Box>
-                        </Box>
-                    }
+                    headerContent={<Header isConnected={isConnected} />}
                     activityContent={<Activity townId={spaceInfo.networkId} />}
                     bottomContent={
                         <BottomBarLayout
@@ -159,6 +148,61 @@ export const PublicTownPage = () => {
         <MessageBox>
             <TownNotFoundBox />
         </MessageBox>
+    )
+}
+
+const Header = (props: { isConnected: boolean }) => {
+    const { isConnected } = props
+    const [isShowingBugReport, setIsShowingBugReport] = useState(false)
+    const onShowBugReport = useCallback(() => {
+        setIsShowingBugReport(true)
+    }, [setIsShowingBugReport])
+
+    const onHideBugReport = useCallback(() => {
+        setIsShowingBugReport(false)
+    }, [setIsShowingBugReport])
+    const { login } = useAuth()
+
+    return (
+        <Box horizontal centerContent width="100%">
+            <Stack horizontal width="100%" paddingY="md" gap="md" paddingRight="md">
+                <Link to="/">
+                    <Box centerContent width="x8">
+                        <LogoSingleLetter />
+                    </Box>
+                </Link>
+                <Box grow />
+
+                <Box
+                    hoverable
+                    centerContent
+                    cursor="pointer"
+                    tooltip="Report a bug"
+                    tooltipOptions={{ placement: 'horizontal' }}
+                    padding="line"
+                    background="level2"
+                    rounded="sm"
+                    height="x4"
+                    width="x4"
+                    onClick={onShowBugReport}
+                >
+                    <Icon size="square_sm" type="bug" color="default" />
+                </Box>
+
+                {isConnected ? (
+                    <LoggedUserAvatar />
+                ) : (
+                    <Button tone="level2" color="default" size="button_sm" onClick={login}>
+                        Log In
+                    </Button>
+                )}
+            </Stack>
+            {isShowingBugReport && (
+                <ModalContainer onHide={onHideBugReport}>
+                    <ErrorReportForm />
+                </ModalContainer>
+            )}
+        </Box>
     )
 }
 
