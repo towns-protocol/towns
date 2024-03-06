@@ -61,14 +61,7 @@
       "label": "Stage 3",
       "dependsOn": [
         "Start Watches",
-        "App",
-        "SampleApp",
         "Casablanca DebugApp",
-        "UnfurlWorker",
-        "TokenWorker",
-        "GatewayWorker",
-        "StackupWorker",
-        "PushNotificationsWorker",
         "Casablanca",
         "Casablanca-No-Entitlements"
       ],
