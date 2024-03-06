@@ -32,12 +32,12 @@ if ! command -v jq &> /dev/null; then
     echo "jq installed successfully."
 fi
 
-ENTITLMENT_CHECKER_ADDRESS=$(jq -r '.address' ./packages/generated/addresses/base_anvil/entitlementChecker.json)
-ENTITLMENT_TEST_ADDRESS=$(jq -r '.address' ./packages/generated/addresses/base_anvil/entitlementGatedExample.json)
-RIVER_CHAIN_ID=31338
-
 # Change the current working directory to the directory of the script
 cd "$(dirname "$0")"
+
+ENTITLMENT_CHECKER_ADDRESS=$(jq -r '.address' ../../packages/generated/addresses/base_anvil/entitlementChecker.json)
+ENTITLMENT_TEST_ADDRESS=$(jq -r '.address' ../../packages/generated/addresses/base_anvil/entitlementGatedExample.json)
+RIVER_CHAIN_ID=31338
 
 make
 
