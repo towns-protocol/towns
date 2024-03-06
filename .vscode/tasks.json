@@ -22,7 +22,6 @@
       "dependsOn": [
         "CheckVersions",
         "FoundryUp",
-        "ForgeModules",
         "Stage 1",
       ],
       // Mark as the default build task so cmd/ctrl+shift+b will create them
@@ -143,18 +142,6 @@
       }
     },
     {
-      "label": "ForgeModules",
-      "type": "shell",
-      "command": "./river/scripts/install-deps.sh",
-      "isBackground": true,
-      "problemMatcher": [],
-      "presentation": {
-        "group": "ephemeral",
-        "focus": true,
-        "panel": "shared",
-      }
-    },
-    {
       "label": "CheckVersions",
       "type": "shell",
       "command": "./river/scripts/check-node-version.sh && ./river/scripts/check-go-version.sh",
@@ -193,7 +180,7 @@
     {
       "label": "YarnClean & Cleanup",
       "type": "shell",
-      "command": "./river/scripts/yarn-clean.sh",
+      "command": "./scripts/yarn-clean.sh",
       "isBackground": true,
       "problemMatcher": [],
       "presentation": {
@@ -442,7 +429,7 @@
     {
       "label": "Casablanca DebugApp",
       "type": "shell",
-      "command": "./river/scripts/wait-for-core.sh && cd core/debug-app && yarn dev",
+      "command": "./river/scripts/wait-for-core.sh && cd river/core/debug-app && yarn dev",
       "isBackground": true,
       "problemMatcher": [],
       "presentation": {

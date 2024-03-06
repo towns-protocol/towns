@@ -43,7 +43,7 @@
         "harmonyweb:build": "turbo build --filter harmonyweb",
         "install:foundry": "./river/scripts/foundry-up.sh && yarn forge install",
         "lint": "turbo lint",
-        "postinstall": "husky install",
+        "postinstall": "husky install && node scripts/copyLibs.js",
         "preinstall": "rm -f river/yarn.lock",
         "prepare": "husky install",
         "prettier:check": "prettier --check .",
@@ -127,6 +127,28 @@
                     "dev",
                     "peer"
                 ]
+            },
+            {
+                "label": "Different versions in river/* and client",
+                "dependencies": [
+                    "@testing-library/react",
+                    "@vanilla-extract/vite-plugin",
+                    "@vitejs/plugin-react",
+                    "rollup-plugin-polyfill-node",
+                    "rollup-plugin-visualizer",
+                    "vite-plugin-checker",
+                    "vite-tsconfig-paths"
+                ],
+                "packages": [
+                    "@river/sdk",
+                    "@river/debug-app"
+                ],
+                "dependencyTypes": [
+                    "prod",
+                    "dev",
+                    "peer"
+                ],
+                "isIgnored": true
             }
         ]
     },
@@ -134,7 +156,7 @@
         "clients/web/*",
         "clients/governance-ui",
         "river/core/*",
-        "river/contracts/*",
+        "river/contracts",
         "river/packages/*",
         "servers/workers/*",
         "servers/notification-service"

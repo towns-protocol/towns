@@ -65,9 +65,6 @@ jobs:
             - name: Checkout code
               uses: actions/checkout@v4
 
-            - name: Git submodules
-              run: git submodule update --init --recursive
-
             - name: Setup Go
               uses: actions/setup-go@v5
               with:
@@ -79,22 +76,19 @@ jobs:
               with:
                   version: ${{ env.FOUNDRY_VERSION }}
 
-            - name: Install Forge modules
-              run: ./river/scripts/install-deps.sh
-
             - uses: actions/setup-node@v4
               with:
                   node-version: '20'
                   cache: 'yarn'
 
+            - name: Install node dependencies
+              run: yarn install --immutable
+
             - name: Print versions
               run: ./river/scripts/print-versions.sh
               
             - name: Start and configure blockchains
-              run: ./river/scripts/bc-all-start.sh
-
-            - name: Install node dependencies
-              run: yarn install --immutable
+              run: ./scripts/bc-all-start-local.sh
 
             - name: Maintain Turbo cache
               uses: actions/cache@v4
@@ -183,9 +177,6 @@ jobs:
             - name: Checkout code
               uses: actions/checkout@v4
 
-            - name: Git submodules
-              run: git submodule update --init --recursive
-
             - name: Setup Go
               uses: actions/setup-go@v5
               with:
@@ -197,22 +188,19 @@ jobs:
               with:
                   version: ${{ env.FOUNDRY_VERSION }}
 
-            - name: Install Forge modules
-              run: ./river/scripts/install-deps.sh
-
             - uses: actions/setup-node@v4
               with:
                   node-version: '20'
                   cache: 'yarn'
 
+            - name: Install node dependencies
+              run: yarn install --immutable
+
             - name: Print versions
               run: ./river/scripts/print-versions.sh
 
             - name: Start and configure blockchains
-              run: ./river/scripts/bc-all-start.sh
-
-            - name: Install node dependencies
-              run: yarn install --immutable
+              run: ./scripts/bc-all-start-local.sh
 
             - name: Print Yarn package versions
               run: yarn info --name-only --all

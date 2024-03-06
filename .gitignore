@@ -78,3 +78,4 @@ core/node/run_files/*
 go.work.sum
 packages/generated/addresses/base_anvil/entitlementGatedExample.json
 packages/generated/addresses/base_anvil/entitlementChecker.json
+river/packages/generated/addresses/
