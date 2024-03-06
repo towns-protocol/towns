@@ -154,7 +154,7 @@ commands=(
     "worker_push:cd servers/workers/push-notification-worker && ./scripts/start-local-push-worker.sh"
     "worker_stackup:cd servers/workers/stackup-worker && yarn dev:local"
     "core_single:sleep 3 && ./river/core/node/run_single.sh -sc"
-    "core_single_ne:./scripts/wait-for-core.sh && ./river/core/node/run_single.sh -sc --de"
+    "core_single_ne:./river/scripts/wait-for-core.sh && ./river/core/node/run_single.sh -sc --de"
     "core:./river/core/node/run_multi.sh -r"
     "xchain:./river/core/xchain/launch_multi.sh"
 )
