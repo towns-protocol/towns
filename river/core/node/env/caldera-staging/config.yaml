@@ -1,0 +1,17 @@
+# Blockchain configuration
+baseChain:
+    chainId: 84532
+    networkUrl: 'https://nexus-rpc-worker-test-beta.towns.com/84532?key=NOT_SET'
+riverChain:
+    chainId: 6524490
+    networkUrl: 'https://towns-devnet.rpc.caldera.xyz/http'
+
+# Base contracts
+architectContract:
+    address: '0xDa5e27A017a8BbDFf86f61a9B8B030379022adfE'
+walletLinkContract:
+    address: '0x4B53e313773df56d8f8b96942c5Cf7a49cFc9774'
+
+# River contracts
+registryContract:
+    address: '0x62Ff4C3c0a2CC99263cC3bFfcc1B0832c1A7d6B6'

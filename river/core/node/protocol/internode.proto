@@ -1,0 +1,46 @@
+syntax = "proto3";
+package river;
+option go_package = "github.com/river-build/river/core/node/protocol";
+
+import "protocol.proto";
+
+message MiniblockProposal {
+    repeated bytes hashes = 1;
+    int64 new_miniblock_num = 2;
+    bytes prev_miniblock_hash = 3;
+    bool should_snapshot = 4;
+}
+
+message AllocateStreamRequest {
+    Miniblock miniblock = 1;
+    bytes stream_id = 2; // stream_id should match the stream_id in the inception payload of the first event
+}
+
+message AllocateStreamResponse {
+    SyncCookie sync_cookie = 1;
+}
+
+message NewEventReceivedRequest {
+    bytes stream_id = 1;
+    Envelope event = 2;
+
+    // event.hash signed by node private key.
+    bytes node_sig = 3;
+}
+
+message NewEventReceivedResponse {
+}
+
+message NewEventInPoolRequest {
+    bytes hash = 1;
+}
+
+message NewEventInPoolResponse {
+}
+
+service NodeToNode {
+    rpc AllocateStream(AllocateStreamRequest) returns (AllocateStreamResponse);
+    rpc NewEventReceived(NewEventReceivedRequest) returns (NewEventReceivedResponse);
+    rpc NewEventInPool(NewEventInPoolRequest) returns (NewEventInPoolResponse);
+}
+

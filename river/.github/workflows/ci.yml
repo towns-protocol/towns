@@ -1,0 +1,886 @@
+name: Continuous Integration
+env:
+    FOUNDRY_VERSION: nightly
+    RIVER_BLOCK_TIME: 1
+on:
+    schedule:
+        # run during working hours
+        - cron: '0 15-23 * * *'
+    pull_request:
+    workflow_dispatch: # Allow manual trigger in GitHub UI
+        inputs:
+            skip_common_ci:
+                description: Skip Common CI checks (i.e linting, prettier, etc)
+                required: false
+                default: false
+                type: boolean
+            skip_client_noentitlements:
+                description: Skip Client Tests without entitlements
+                required: false
+                default: false
+                type: boolean
+            skip_multinode:
+                description: Skip Multi-node Tests
+                required: false
+                default: false
+                type: boolean
+            skip_client_entitlements:
+                description: Skip Client Tests with entitlements
+                required: false
+                default: false
+                type: boolean
+            skip_multinode_ent:
+                description: Skip Multi-node Ent Tests
+                required: false
+                default: false
+                type: boolean
+            skip_node:
+                description: Skip Node Tests
+                required: false
+                default: false
+                type: boolean
+            skip_xchain_node:
+                description: Skip XChain Node Tests
+                required: false
+                default: false
+                type: boolean
+
+jobs:
+    Common_CI:
+        permissions: write-all
+        if: github.event_name != 'workflow_dispatch' || !inputs.skip_common_ci
+        runs-on: ubuntu-latest-8-cores
+        timeout-minutes: 30
+
+        steps:
+            - name: Print bash environment
+              run: env
+
+            - name: Cancel previous runs
+              if: github.event_name != 'schedule'
+              uses: styfle/cancel-workflow-action@0.11.0
+              with:
+                  access_token: ${{ github.token }}
+
+            - name: Checkout code
+              uses: actions/checkout@v4
+
+            - name: Setup Go
+              uses: actions/setup-go@v5
+              with:
+                  go-version-file: 'go.work'
+                  cache-dependency-path: '**/*.sum'
+
+            - name: Install Foundry
+              uses: foundry-rs/foundry-toolchain@v1
+              with:
+                  version: ${{ env.FOUNDRY_VERSION }}
+
+            - uses: actions/setup-node@v4
+              with:
+                  node-version: '20'
+                  cache: 'yarn'
+
+            - name: Install node dependencies
+              run: yarn install --immutable
+
+            - name: Print versions
+              run: ./scripts/print-versions.sh
+
+            - name: Start and configure blockchains
+              run: ./scripts/bc-all-start.sh
+
+            - name: Maintain Turbo cache
+              uses: actions/cache@v4
+              with:
+                  path: node_modules/.cache/turbo
+                  key: ${{ runner.os }}-turbo-${{ github.run_id }}
+                  restore-keys: |
+                      ${{ runner.os }}-turbo-
+
+            - name: Syncpack
+              run: yarn syncpack:check
+
+            - name: Build
+              run: yarn build
+
+            - name: Prettier
+              run: yarn prettier:check
+
+            - name: Lint
+              run: yarn lint
+
+            - name: Linting River Node
+              uses: golangci/golangci-lint-action@v3
+              with:
+                  version: latest
+                  working-directory: core/node
+                  skip-pkg-cache: true
+                  args: --timeout=10m
+
+            - name: Linting River Node W/ Custom Rules
+              run: |
+                  cd core/node
+                  ./lint_extensions.sh > river_lint_extensions.txt
+                  if [ -s river_lint_extensions.txt ]; then
+                    echo "Linter found issues:"
+                    cat river_lint_extensions.txt
+                    exit 1
+                  fi
+
+            # - name: Terraform Lint
+            #   run: make lint
+            #   working-directory: ./infra
+
+            - name: Build town types
+              run: ./scripts/build-contract-types.sh localhost --frozen
+
+            - name: Unit Tests
+              run: yarn test:unit
+
+            # If CI failed, we send a slack notification
+            - name: Slack notification
+              if: failure() && (github.event_name == 'schedule' || github.event_name == 'workflow_dispatch')
+              uses: rtCamp/action-slack-notify@v2
+              env:
+                  SLACK_WEBHOOK: ${{ secrets.SLACK_CI_CHANNEL_WEBHOOK_URL }}
+                  SLACK_TITLE: 'Failure'
+                  SLACK_USERNAME: 'CI'
+                  SLACK_ICON_EMOJI: ':boom:'
+                  SLACK_COLOR: '#FF0000'
+                  SLACK_MESSAGE: 'CI Failure on ${{ github.repository }}'
+
+    Client_NoEntitlements:
+        permissions: write-all
+        if: github.event_name != 'workflow_dispatch' || !inputs.skip_client_noentitlements
+        runs-on: ubuntu-latest-8-cores
+        timeout-minutes: 30
+        services:
+            postgres-core:
+                image: postgres:latest
+                env:
+                    POSTGRES_USER: postgres
+                    POSTGRES_PASSWORD: postgres
+                ports:
+                    # Maps tcp port 5433 on service container to the host
+                    - 5433:5432
+                options: >-
+                    --health-cmd pg_isready
+                    --health-interval 10s
+                    --health-timeout 5s
+                    --health-retries 5
+                    --name river_postgres_container
+
+        steps:
+            - name: Cancel previous runs
+              if: github.event_name != 'schedule'
+              uses: styfle/cancel-workflow-action@0.11.0
+              with:
+                  access_token: ${{ github.token }}
+
+            - name: Show PostgreSQL max_connections
+              run: psql -h localhost -p 5433 -U postgres -c 'SHOW max_connections;'
+              env:
+                  POSTGRES_PASSWORD: postgres
+                  PGPASSWORD: postgres
+
+            - name: Increase max_connections in Postgres
+              run: |
+                  docker exec -i river_postgres_container bash << EOF
+                    echo 'max_connections = 1000' >> /var/lib/postgresql/data/postgresql.conf
+                    echo 'shared_buffers = 2GB' >> /var/lib/postgresql/data/postgresql.conf
+                  EOF
+                  docker restart --time 0 river_postgres_container
+                  sleep 5
+
+            - name: Show PostgreSQL max_connections
+              run: psql -h localhost -p 5433 -U postgres -c 'SHOW max_connections;'
+              env:
+                  POSTGRES_PASSWORD: postgres
+                  PGPASSWORD: postgres
+
+            - name: Checkout code
+              uses: actions/checkout@v4
+
+            - name: Git submodules
+              run: git submodule update --init --recursive
+
+            - name: Setup Go
+              uses: actions/setup-go@v5
+              with:
+                  go-version-file: 'go.work'
+                  cache-dependency-path: '**/*.sum'
+
+            - name: Install Foundry
+              uses: foundry-rs/foundry-toolchain@v1
+              with:
+                  version: ${{ env.FOUNDRY_VERSION }}
+
+
+
+            - uses: actions/setup-node@v4
+              with:
+                  node-version: '20'
+                  cache: 'yarn'
+
+            - name: Install node dependencies
+              run: yarn install --immutable
+
+            - name: Print versions
+              run: ./scripts/print-versions.sh
+
+            - name: Start and configure blockchains
+              run: ./scripts/bc-all-start.sh
+
+            - name: Print Yarn package versions
+              run: yarn info --name-only --all
+
+            - name: Maintain Turbo cache
+              uses: actions/cache@v4
+              with:
+                  path: node_modules/.cache/turbo
+                  key: ${{ runner.os }}-turbo-${{ github.run_id }}
+                  restore-keys: |
+                      ${{ runner.os }}-turbo-
+
+            - name: create db
+              run: psql -h localhost -p 5433 -U postgres -f scripts/sql/create_db.sql
+              working-directory: core
+              env:
+                  POSTGRES_PASSWORD: postgres
+                  PGPASSWORD: postgres
+
+            - name: Setup River CA for testing certificates
+              run: ./scripts/register-ca.sh
+              working-directory: core
+
+            - name: Check SSL directories and environment variables
+              run: |
+                echo "Listing /etc/ssl/certs..."
+                ls -l /etc/ssl/certs || echo "/etc/ssl/certs not found"
+
+                echo "Listing /system/etc/security/cacerts..."
+                ls -l /system/etc/security/cacerts || echo "/system/etc/security/cacerts not found"
+
+                echo "Checking SSL_CERT_FILE environment variable..."
+                echo "SSL_CERT_FILE=$SSL_CERT_FILE"
+
+                echo "Checking SSL_CERT_DIR environment variable..."
+                echo "SSL_CERT_DIR=$SSL_CERT_DIR"
+
+            - name: Run node (without entitlements)
+              run: ./core/node/run_single.sh --de &
+
+            - name: Wait for (without entitlements) node to be up
+              run: yarn csb:wait:no-entitlements
+
+            - name: Run SDK Tests (without entitlements)
+              run: yarn run turbo run build test:ci --filter=@river/sdk
+
+            - name: Run Node Restart Tests (without entitlements)
+              run: yarn workspace @river/sdk run test:restart
+
+            - name: Run Node Flush Tests (without entitlements)
+              run: yarn workspace @river/sdk run test:node-minipool-flush
+
+            - name: Archive River Node Logs and Settings
+              if: always()
+              uses: actions/upload-artifact@v3
+              with:
+                  name: 'river-node-${{ github.job }}'
+                  path: |
+                      ./core/node/run_files/
+                      !./core/node/run_files/**/bin/**
+
+            # If CI failed, we send a slack notification
+            - name: Slack notification
+              if: failure() && (github.event_name == 'schedule' || github.event_name == 'workflow_dispatch')
+              uses: rtCamp/action-slack-notify@v2
+              env:
+                  SLACK_WEBHOOK: ${{ secrets.SLACK_CI_CHANNEL_WEBHOOK_URL }}
+                  SLACK_TITLE: 'Failure'
+                  SLACK_USERNAME: 'CI'
+                  SLACK_ICON_EMOJI: ':boom:'
+                  SLACK_COLOR: '#FF0000'
+                  SLACK_MESSAGE: 'CI Failure on ${{ github.repository }}'
+
+    Multinode:
+        permissions: write-all
+        if: github.event_name != 'workflow_dispatch' || !inputs.skip_multinode
+        runs-on: ubuntu-latest-8-cores
+        timeout-minutes: 30
+        services:
+            postgres-core:
+                image: postgres:latest
+                env:
+                    POSTGRES_USER: postgres
+                    POSTGRES_PASSWORD: postgres
+                ports:
+                    # Maps tcp port 5433 on service container to the host
+                    - 5433:5432
+                options: >-
+                    --health-cmd pg_isready
+                    --health-interval 10s
+                    --health-timeout 5s
+                    --health-retries 5
+                    --name river_postgres_container
+
+        steps:
+            - name: Cancel previous runs
+              if: github.event_name != 'schedule'
+              uses: styfle/cancel-workflow-action@0.11.0
+              with:
+                  access_token: ${{ github.token }}
+
+            - name: Show PostgreSQL max_connections
+              run: psql -h localhost -p 5433 -U postgres -c 'SHOW max_connections;'
+              env:
+                  POSTGRES_PASSWORD: postgres
+                  PGPASSWORD: postgres
+
+            - name: Increase max_connections in Postgres
+              run: |
+                  docker exec -i river_postgres_container bash << EOF
+                    echo 'max_connections = 1000' >> /var/lib/postgresql/data/postgresql.conf
+                    echo 'shared_buffers = 2GB' >> /var/lib/postgresql/data/postgresql.conf
+                  EOF
+                  docker restart --time 0 river_postgres_container
+                  sleep 5
+
+            - name: Show PostgreSQL max_connections
+              run: psql -h localhost -p 5433 -U postgres -c 'SHOW max_connections;'
+              env:
+                  POSTGRES_PASSWORD: postgres
+                  PGPASSWORD: postgres
+
+            - name: Checkout code
+              uses: actions/checkout@v4
+
+            - name: Git submodules
+              run: git submodule update --init --recursive
+
+            - name: Setup Go
+              uses: actions/setup-go@v5
+              with:
+                  go-version-file: 'go.work'
+                  cache-dependency-path: '**/*.sum'
+
+            - name: Install Foundry
+              uses: foundry-rs/foundry-toolchain@v1
+              with:
+                  version: ${{ env.FOUNDRY_VERSION }}
+
+            - uses: actions/setup-node@v4
+              with:
+                  node-version: '20'
+                  cache: 'yarn'
+
+            - name: Install node dependencies
+              run: yarn install --immutable
+
+            - name: Print versions
+              run: ./scripts/print-versions.sh
+
+            - name: Start and configure blockchains
+              run: ./scripts/bc-all-start.sh
+
+            - name: Print Yarn package versions
+              run: yarn info --name-only --all
+
+            - name: Maintain Turbo cache
+              uses: actions/cache@v4
+              with:
+                  path: node_modules/.cache/turbo
+                  key: ${{ runner.os }}-turbo-${{ github.run_id }}
+                  restore-keys: |
+                      ${{ runner.os }}-turbo-
+
+            - name: create db
+              run: psql -h localhost -p 5433 -U postgres -f scripts/sql/create_db.sql
+              working-directory: core
+              env:
+                  POSTGRES_PASSWORD: postgres
+                  PGPASSWORD: postgres
+
+            - name: Setup River CA for testing certificates
+              run: ./scripts/register-ca.sh
+              working-directory: core
+
+            - name: Set up Custom CA Certificate for Node.js
+              run: |
+                echo "NODE_EXTRA_CA_CERTS=$HOME/river-ca-cert.pem" >> $GITHUB_ENV
+
+            - name: Run multiple nodes
+              run: |
+                  cd ./core/node
+                  ./run_multi.sh --de -c -r &
+                  for i in {5170..5179}; do yarn wait-on https://localhost:$i/debug/multi --timeout=400000 --i=5000 --verbose; done
+
+            - name: Run SDK Tests (without entitlements)
+              run: |
+                  yarn run turbo run build
+                  cd core/sdk
+                  yarn test:ci:multi
+
+            - name: Archive River Node Logs and Settings
+              if: always()
+              uses: actions/upload-artifact@v3
+              with:
+                  name: 'river-node-${{ github.job }}'
+                  path: |
+                      ./core/node/run_files/
+                      !./core/node/run_files/**/bin/**
+
+            # If CI failed, we send a slack notification
+            - name: Slack notification
+              if: failure() && (github.event_name == 'schedule' || github.event_name == 'workflow_dispatch')
+              uses: rtCamp/action-slack-notify@v2
+              env:
+                  SLACK_WEBHOOK: ${{ secrets.SLACK_CI_CHANNEL_WEBHOOK_URL }}
+                  SLACK_TITLE: 'Failure'
+                  SLACK_USERNAME: 'CI'
+                  SLACK_ICON_EMOJI: ':boom:'
+                  SLACK_COLOR: '#FF0000'
+                  SLACK_MESSAGE: 'CI Failure on ${{ github.repository }}'
+
+    Client_Entitlements:
+        permissions: write-all
+        if: github.event_name != 'workflow_dispatch' || !inputs.skip_client_entitlements
+        runs-on: ubuntu-latest-8-cores
+        timeout-minutes: 30
+        services:
+            postgres-core:
+                image: postgres:latest
+                env:
+                    POSTGRES_USER: postgres
+                    POSTGRES_PASSWORD: postgres
+                ports:
+                    # Maps tcp port 5433 on service container to the host
+                    - 5433:5432
+                options: >-
+                    --health-cmd pg_isready
+                    --health-interval 10s
+                    --health-timeout 5s
+                    --health-retries 5
+                    --name river_postgres_container
+
+        steps:
+            - name: Cancel previous runs
+              if: github.event_name != 'schedule'
+              uses: styfle/cancel-workflow-action@0.11.0
+              with:
+                  access_token: ${{ github.token }}
+
+            - name: Show PostgreSQL max_connections
+              run: psql -h localhost -p 5433 -U postgres -c 'SHOW max_connections;'
+              env:
+                  POSTGRES_PASSWORD: postgres
+                  PGPASSWORD: postgres
+
+            - name: Increase max_connections in Postgres
+              run: |
+                  docker exec -i river_postgres_container bash << EOF
+                    echo 'max_connections = 1000' >> /var/lib/postgresql/data/postgresql.conf
+                    echo 'shared_buffers = 2GB' >> /var/lib/postgresql/data/postgresql.conf
+                  EOF
+                  docker restart --time 0 river_postgres_container
+                  sleep 5
+
+            - name: Show PostgreSQL max_connections
+              run: psql -h localhost -p 5433 -U postgres -c 'SHOW max_connections;'
+              env:
+                  POSTGRES_PASSWORD: postgres
+                  PGPASSWORD: postgres
+
+            - name: Checkout code
+              uses: actions/checkout@v4
+
+            - name: Git submodules
+              run: git submodule update --init --recursive
+
+            - name: Setup Go
+              uses: actions/setup-go@v5
+              with:
+                  go-version-file: 'go.work'
+                  cache-dependency-path: '**/*.sum'
+
+            - name: Install Foundry
+              uses: foundry-rs/foundry-toolchain@v1
+              with:
+                  version: ${{ env.FOUNDRY_VERSION }}
+
+
+
+            - uses: actions/setup-node@v4
+              with:
+                  node-version: '20'
+                  cache: 'yarn'
+
+            - name: Install node dependencies
+              run: yarn install --immutable
+
+            - name: Print versions
+              run: ./scripts/print-versions.sh
+
+            - name: Start and configure blockchains
+              run: ./scripts/bc-all-start.sh
+
+            - name: Print Yarn package versions
+              run: yarn info --name-only --all
+
+            - name: Maintain Turbo cache
+              uses: actions/cache@v4
+              with:
+                  path: node_modules/.cache/turbo
+                  key: ${{ runner.os }}-turbo-${{ github.run_id }}
+                  restore-keys: |
+                      ${{ runner.os }}-turbo-
+
+            - name: create db
+              run: psql -h localhost -p 5433 -U postgres -f scripts/sql/create_db.sql
+              working-directory: core
+              env:
+                  POSTGRES_PASSWORD: postgres
+                  PGPASSWORD: postgres
+
+            - name: Setup River CA for testing certificates
+              run: ./scripts/register-ca.sh
+              working-directory: core
+
+            - name: Start node with entitlements
+              run: ./core/node/run_single.sh &
+
+            - name: Wait for (with entitlements) node to be up
+              run: yarn csb:wait:entitlements
+
+            - name: Build & Test (with entitlements)
+              run: yarn csb:turbo-no-sdk
+
+            - name: Run River Tests (with entitlements)
+              run: yarn workspace @river/sdk run test:ci:with-entitlements
+
+            - name: Archive River Node Logs and Settings
+              if: always()
+              uses: actions/upload-artifact@v3
+              with:
+                  name: 'river-node-${{ github.job }}'
+                  path: |
+                      ./core/node/run_files/
+                      !./core/node/run_files/**/bin/**
+
+            # If CI failed, we send a slack notification
+            - name: Slack notification
+              if: failure() && (github.event_name == 'schedule' || github.event_name == 'workflow_dispatch')
+              uses: rtCamp/action-slack-notify@v2
+              env:
+                  SLACK_WEBHOOK: ${{ secrets.SLACK_CI_CHANNEL_WEBHOOK_URL }}
+                  SLACK_TITLE: 'Failure'
+                  SLACK_USERNAME: 'CI'
+                  SLACK_ICON_EMOJI: ':boom:'
+                  SLACK_COLOR: '#FF0000'
+                  SLACK_MESSAGE: 'CI Failure on ${{ github.repository }}'
+
+    Multinode_Ent:
+        permissions: write-all
+        if: github.event_name != 'workflow_dispatch' || !inputs.skip_multinode_ent
+        runs-on: ubuntu-latest-8-cores
+        timeout-minutes: 30
+        services:
+            postgres-core:
+                image: postgres:latest
+                env:
+                    POSTGRES_USER: postgres
+                    POSTGRES_PASSWORD: postgres
+                ports:
+                    # Maps tcp port 5433 on service container to the host
+                    - 5433:5432
+                options: >-
+                    --health-cmd pg_isready
+                    --health-interval 10s
+                    --health-timeout 5s
+                    --health-retries 5
+                    --name river_postgres_container
+
+        steps:
+            - name: Cancel previous runs
+              if: github.event_name != 'schedule'
+              uses: styfle/cancel-workflow-action@0.11.0
+              with:
+                  access_token: ${{ github.token }}
+
+            - name: Show PostgreSQL max_connections
+              run: psql -h localhost -p 5433 -U postgres -c 'SHOW max_connections;'
+              env:
+                  POSTGRES_PASSWORD: postgres
+                  PGPASSWORD: postgres
+
+            - name: Increase max_connections in Postgres
+              run: |
+                  docker exec -i river_postgres_container bash << EOF
+                    echo 'max_connections = 1000' >> /var/lib/postgresql/data/postgresql.conf
+                    echo 'shared_buffers = 2GB' >> /var/lib/postgresql/data/postgresql.conf
+                  EOF
+                  docker restart --time 0 river_postgres_container
+                  sleep 5
+
+            - name: Show PostgreSQL max_connections
+              run: psql -h localhost -p 5433 -U postgres -c 'SHOW max_connections;'
+              env:
+                  POSTGRES_PASSWORD: postgres
+                  PGPASSWORD: postgres
+
+            - name: Checkout code
+              uses: actions/checkout@v4
+
+            - name: Git submodules
+              run: git submodule update --init --recursive
+
+            - name: Setup Go
+              uses: actions/setup-go@v5
+              with:
+                  go-version-file: 'go.work'
+                  cache-dependency-path: '**/*.sum'
+
+            - name: Install Foundry
+              uses: foundry-rs/foundry-toolchain@v1
+              with:
+                  version: ${{ env.FOUNDRY_VERSION }}
+
+            - uses: actions/setup-node@v4
+              with:
+                  node-version: '20'
+                  cache: 'yarn'
+
+            - name: Install node dependencies
+              run: yarn install --immutable
+
+            - name: Print versions
+              run: ./scripts/print-versions.sh
+
+            - name: Start and configure blockchains
+              run: ./scripts/bc-all-start.sh
+
+            - name: Print Yarn package versions
+              run: yarn info --name-only --all
+
+            - name: Maintain Turbo cache
+              uses: actions/cache@v4
+              with:
+                  path: node_modules/.cache/turbo
+                  key: ${{ runner.os }}-turbo-${{ github.run_id }}
+                  restore-keys: |
+                      ${{ runner.os }}-turbo-
+
+            - name: create db
+              run: psql -h localhost -p 5433 -U postgres -f scripts/sql/create_db.sql
+              working-directory: core
+              env:
+                  POSTGRES_PASSWORD: postgres
+                  PGPASSWORD: postgres
+
+
+            - name: Setup River CA for testing certificates
+              run: ./scripts/register-ca.sh
+              working-directory: core
+
+            - name: Set up Custom CA Certificate for Node.js
+              run: |
+                echo "NODE_EXTRA_CA_CERTS=$HOME/river-ca-cert.pem" >> $GITHUB_ENV
+
+            - name: Run multiple nodes
+              run: |
+                  cd ./core/node
+                  ./run_multi.sh -c -r &
+                  for i in {5170..5179}; do yarn wait-on https://localhost:$i/debug/multi --timeout=400000 --i=5000 --verbose; done
+
+            - name: Build & Test (with entitlements)
+              run: CASABLANCA_SERVER_URL=https://localhost:5170,https://localhost:5171,https://localhost:5172,https://localhost:5173,https://localhost:5174,https://localhost:5175,https://localhost:5176,https://localhost:5177,https://localhost:5178,https://localhost:5179 yarn csb:turbo-no-sdk
+
+            - name: Run River Tests (with entitlements)
+              run: yarn workspace @river/sdk run test:ci:multi:ent
+
+            - name: Archive River Node Logs and Settings
+              if: always()
+              uses: actions/upload-artifact@v3
+              with:
+                  name: 'river-node-${{ github.job }}'
+                  path: |
+                      ./core/node/run_files/
+                      !./core/node/run_files/**/bin/**
+
+            # If CI failed, we send a slack notification
+            - name: Slack notification
+              if: failure() && (github.event_name == 'schedule' || github.event_name == 'workflow_dispatch')
+              uses: rtCamp/action-slack-notify@v2
+              env:
+                  SLACK_WEBHOOK: ${{ secrets.SLACK_CI_CHANNEL_WEBHOOK_URL }}
+                  SLACK_TITLE: 'Failure'
+                  SLACK_USERNAME: 'CI'
+                  SLACK_ICON_EMOJI: ':boom:'
+                  SLACK_COLOR: '#FF0000'
+                  SLACK_MESSAGE: 'CI Failure on ${{ github.repository }}'
+
+    Node:
+        permissions: write-all
+        if: github.event_name != 'workflow_dispatch' || !inputs.skip_node
+        runs-on: ubuntu-latest-8-cores
+        timeout-minutes: 30
+        services:
+            postgres-core:
+                image: postgres:latest
+                env:
+                    POSTGRES_USER: postgres
+                    POSTGRES_PASSWORD: postgres
+                ports:
+                    # Maps tcp port 5433 on service container to the host
+                    - 5433:5432
+                options: >-
+                    --health-cmd pg_isready
+                    --health-interval 10s
+                    --health-timeout 5s
+                    --health-retries 5
+
+        steps:
+            - name: Cancel previous runs
+              if: github.event_name != 'schedule'
+              uses: styfle/cancel-workflow-action@0.11.0
+              with:
+                  access_token: ${{ github.token }}
+
+            - name: Checkout code
+              uses: actions/checkout@v4
+
+            - name: Git submodules
+              run: git submodule update --init --recursive
+
+            - name: Setup Go
+              uses: actions/setup-go@v5
+              with:
+                  go-version-file: 'go.work'
+                  cache-dependency-path: '**/*.sum'
+
+            - name: Install Foundry
+              uses: foundry-rs/foundry-toolchain@v1
+              with:
+                  version: ${{ env.FOUNDRY_VERSION }}
+
+
+
+            - uses: actions/setup-node@v4
+              with:
+                  node-version: '20'
+                  cache: 'yarn'
+
+            - name: Install node dependencies
+              run: yarn install --immutable
+
+            - name: Print versions
+              run: ./scripts/print-versions.sh
+
+            - name: Start and configure blockchains
+              run: ./scripts/bc-all-start.sh
+
+            - name: create db
+              run: psql -h localhost -p 5433 -U postgres -f scripts/sql/create_db.sql
+              working-directory: core
+              env:
+                  POSTGRES_PASSWORD: postgres
+                  PGPASSWORD: postgres
+
+            - name: Setup River CA for testing certificates
+              run: ./scripts/register-ca.sh
+              working-directory: core
+
+            - name: Run node tests
+              run: go test --race ./...
+              working-directory: core/node
+
+            # If CI failed, we send a slack notification
+            - name: Slack notification
+              if: failure() && (github.event_name == 'schedule' || github.event_name == 'workflow_dispatch')
+              uses: rtCamp/action-slack-notify@v2
+              env:
+                  SLACK_WEBHOOK: ${{ secrets.SLACK_CI_CHANNEL_WEBHOOK_URL }}
+                  SLACK_TITLE: 'Failure'
+                  SLACK_USERNAME: 'CI'
+                  SLACK_ICON_EMOJI: ':boom:'
+                  SLACK_COLOR: '#FF0000'
+                  SLACK_MESSAGE: 'CI Failure on ${{ github.repository }}'
+
+    XChain_Node:
+        permissions: write-all
+        if: ( github.event_name != 'workflow_dispatch' || !inputs.skip_xchain_node )
+        runs-on: ubuntu-latest-8-cores
+        timeout-minutes: 30
+        steps:
+            - name: Cancel previous runs
+              if: github.event_name != 'schedule'
+              uses: styfle/cancel-workflow-action@0.11.0
+              with:
+                  access_token: ${{ github.token }}
+
+            - name: Checkout code
+              uses: actions/checkout@v4
+
+            - name: Git submodules
+              run: git submodule update --init --recursive
+
+            - name: Setup Go
+              uses: actions/setup-go@v5
+              with:
+                  go-version-file: 'go.work'
+                  cache-dependency-path: '**/*.sum'
+
+            - uses: actions/setup-node@v4
+              with:
+                  node-version: '20'
+                  cache: 'yarn'
+
+            - name: Install Foundry
+              uses: foundry-rs/foundry-toolchain@v1
+              with:
+                  version: ${{ env.FOUNDRY_VERSION }}
+
+            - name: Install node dependencies
+              run: yarn install --immutable
+
+            - name: Print versions
+              run: ./scripts/print-versions.sh
+
+            - name: Start and configure blockchains
+              run: ./scripts/bc-all-start.sh
+
+            - name: Generate xchain contract bindings
+              run: ./scripts/build-contract-types.sh localhost
+
+            - name: Maintain Turbo cache
+              uses: actions/cache@v4
+              with:
+                  path: node_modules/.cache/turbo
+                  key: ${{ runner.os }}-turbo-${{ github.run_id }}
+                  restore-keys: |
+                      ${{ runner.os }}-turbo-
+
+            - name: Run xchain node tests
+              run: go test --race ./...
+              working-directory: core/xchain
+
+            - name: Build node
+              run: go build --race ./...
+              working-directory: core/xchain
+
+            - name: Run xchain common go tests
+              run: go test --race ./...
+              working-directory: core/xchain
+
+              # If CI failed, we send a slack notification
+            - name: Slack notification
+              if: failure() && (github.event_name == 'schedule' || github.event_name == 'workflow_dispatch')
+              uses: rtCamp/action-slack-notify@v2
+              env:
+                  SLACK_WEBHOOK: ${{ secrets.SLACK_CI_CHANNEL_WEBHOOK_URL }}
+                  SLACK_TITLE: 'Failure'
+                  SLACK_USERNAME: 'CI'
+                  SLACK_ICON_EMOJI: ':boom:'
+                  SLACK_COLOR: '#FF0000'
+                  SLACK_MESSAGE: 'CI Failure on ${{ github.repository }}'

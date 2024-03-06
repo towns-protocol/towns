@@ -1,0 +1,94 @@
+<!DOCTYPE html>
+<html lang="en">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>TypeScript Node.js Client</title>
+  </head>
+
+  <body>
+    <h1>TypeScript Node.js Client</h1>
+    <input type="text" id="urlInput" placeholder="Enter URL" value="/info" />
+    <p>For GetStream use /river.StreamService/GetStream</p>
+    <p>Response from the Go server:</p>
+    <pre id="response"></pre>
+    <p>Received headers:</p>
+    <pre id="headers"></pre>
+    <p>Error info:</p>
+    <pre id="errorInfo"></pre>
+    <button id="fetchButton">Fetch Data</button>
+
+    <button id="callButton">Call Info on RPC service</button>
+
+    <br />
+
+    <script type="module">
+      import { fetchData, fetchRpcInfo } from "/fetcher.ts";
+      import { logInfo, logError, testLogError } from "/log.ts";
+
+      const fetchButton = document.getElementById("fetchButton");
+      const callButton = document.getElementById("callButton");
+      const responseElement = document.getElementById("response");
+      const errorInfoElement = document.getElementById("errorInfo");
+
+      async function fetchButtonPressed() {
+        try {
+          // Set the URL to the Go server's /info path
+          const text = await fetchData(
+            "https://localhost:5157" +
+              document.getElementById("urlInput").value,
+          );
+          responseElement.textContent = "Response: " + text;
+          errorInfoElement.textContent = "";
+        } catch (error) {
+          console.error("Error fetching data from the Go server:", error);
+          errorInfoElement.textContent =
+            "Error: " + JSON.stringify(error, null, 2);
+        }
+      }
+
+      fetchButton.addEventListener("click", fetchButtonPressed);
+
+      async function callButtonPressed() {
+        try {
+          // Set the URL to the Go server's /info path
+          const text = await fetchRpcInfo("https://localhost:5157");
+          responseElement.textContent = "Response: " + text;
+          errorInfoElement.textContent = "";
+        } catch (error) {
+          console.error("Error fetching data from the Go server:", error);
+          errorInfoElement.textContent =
+            "Error: " + JSON.stringify(error, null, 2);
+        }
+      }
+
+      callButton.addEventListener("click", callButtonPressed);
+
+      function funcThatThrows() {
+        throw new Error("Hello from the browser");
+      }
+
+      function throwAndCatch() {
+        try {
+          funcThatThrows();
+        } catch (error) {
+          testLogError(error);
+        }
+      }
+
+      window.addEventListener("load", () => {
+        window.logInfo = logInfo;
+        window.logError = logError;
+        window.throwAndCatch = throwAndCatch;
+      });
+    </script>
+
+    <button onclick="logInfo.enabled = true">Enable Info</button>
+    <button onclick="logInfo.enabled = false">Disable Info</button>
+    <button onclick="logInfo('Hello from the browser')">Log Info</button>
+    <br />
+    <button onclick="logError.enabled = true">Enable Error</button>
+    <button onclick="logError.enabled = false">Disable Error</button>
+    <button onclick="throwAndCatch()">Log Error</button>
+  </body>
+</html>

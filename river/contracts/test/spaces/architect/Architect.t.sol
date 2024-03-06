@@ -1,0 +1,194 @@
+// SPDX-License-Identifier: Apache-2.0
+pragma solidity ^0.8.23;
+
+// interfaces
+import {IArchitectBase} from "contracts/src/spaces/facets/architect/IArchitect.sol";
+import {IEntitlementsManager} from "contracts/src/spaces/facets/entitlements/IEntitlementsManager.sol";
+import {IOwnableBase} from "contracts/src/diamond/facets/ownable/IERC173.sol";
+import {IERC721} from "@openzeppelin/contracts/token/ERC721/IERC721.sol";
+import {IERC173} from "contracts/src/diamond/facets/ownable/IERC173.sol";
+import {IPausableBase, IPausable} from "contracts/src/diamond/facets/pausable/IPausable.sol";
+import {IGuardian} from "contracts/src/spaces/facets/guardian/IGuardian.sol";
+import {IERC721ABase} from "contracts/src/diamond/facets/token/ERC721A/IERC721A.sol";
+import {IUserEntitlement} from "contracts/src/spaces/entitlements/user/IUserEntitlement.sol";
+import {IRuleEntitlement} from "contracts/src/crosschain/IRuleEntitlement.sol";
+import {RuleEntitlement} from "contracts/src/crosschain/RuleEntitlement.sol";
+
+// libraries
+
+// contracts
+import {BaseSetup} from "contracts/test/spaces/BaseSetup.sol";
+import {Architect} from "contracts/src/spaces/facets/architect/Architect.sol";
+import {MockERC721} from "contracts/test/mocks/MockERC721.sol";
+import {UserEntitlement} from "contracts/src/spaces/entitlements/user/UserEntitlement.sol";
+
+// errors
+import {Validator__InvalidStringLength} from "contracts/src/utils/Validator.sol";
+
+contract ArchitectTest is
+  BaseSetup,
+  IArchitectBase,
+  IOwnableBase,
+  IPausableBase
+{
+  Architect public spaceArchitect;
+
+  function setUp() public override {
+    super.setUp();
+    spaceArchitect = Architect(spaceFactory);
+  }
+
+  function test_createSpace_only() external {
+    string memory name = "Test";
+
+    address founder = _randomAddress();
+
+    vm.prank(founder);
+    address spaceInstance = spaceArchitect.createSpace(_createSpaceInfo(name));
+    address spaceAddress = spaceArchitect.getSpaceById(name);
+
+    assertEq(spaceAddress, spaceInstance, "Space address mismatch");
+
+    assertTrue(spaceArchitect.isSpace(spaceAddress), "Space not registered");
+
+    // expect owner to be founder
+    assertTrue(
+      IEntitlementsManager(spaceAddress).isEntitledToSpace(founder, "Read")
+    );
+
+    // expect no one to be entitled
+    assertFalse(
+      IEntitlementsManager(spaceAddress).isEntitledToSpace(
+        _randomAddress(),
+        "Read"
+      )
+    );
+  }
+
+  function test_getImplementations() external {
+    (
+      address spaceTokenAddress,
+      IUserEntitlement userEntitlementAddress,
+      IRuleEntitlement ruleEntitlementAddress
+    ) = spaceArchitect.getSpaceArchitectImplementations();
+
+    assertEq(spaceOwner, spaceTokenAddress);
+    assertEq(userEntitlement, address(userEntitlementAddress));
+    assertEq(ruleEntitlement, address(ruleEntitlementAddress));
+  }
+
+  function test_setImplementations() external {
+    address newSpaceToken = address(new MockERC721());
+    IUserEntitlement newUserEntitlement = new UserEntitlement();
+    IRuleEntitlement newRuleEntitlement = new RuleEntitlement();
+
+    address user = _randomAddress();
+
+    vm.prank(user);
+    vm.expectRevert(abi.encodeWithSelector(Ownable__NotOwner.selector, user));
+    spaceArchitect.setSpaceArchitectImplementations(
+      newSpaceToken,
+      newUserEntitlement,
+      newRuleEntitlement
+    );
+
+    vm.prank(deployer);
+    spaceArchitect.setSpaceArchitectImplementations(
+      newSpaceToken,
+      newUserEntitlement,
+      newRuleEntitlement
+    );
+
+    (
+      address spaceTokenAddress,
+      IUserEntitlement userEntitlementAddress,
+      IRuleEntitlement tokenEntitlementAddress
+    ) = spaceArchitect.getSpaceArchitectImplementations();
+
+    assertEq(newSpaceToken, spaceTokenAddress);
+    assertEq(address(newUserEntitlement), address(userEntitlementAddress));
+    assertEq(address(newRuleEntitlement), address(tokenEntitlementAddress));
+  }
+
+  function test_transfer_space_ownership(string memory spaceId) external {
+    vm.assume(bytes(spaceId).length > 0);
+
+    address founder = _randomAddress();
+    address buyer = _randomAddress();
+
+    vm.prank(founder);
+    address newSpace = spaceArchitect.createSpace(_createSpaceInfo(spaceId));
+
+    assertTrue(
+      IEntitlementsManager(newSpace).isEntitledToSpace(founder, "Read")
+    );
+
+    (address spaceOwner, , ) = spaceArchitect
+      .getSpaceArchitectImplementations();
+    uint256 tokenId = spaceArchitect.getTokenIdBySpaceId(spaceId);
+
+    vm.prank(founder);
+    IGuardian(spaceOwner).disableGuardian();
+
+    vm.warp(IGuardian(spaceOwner).guardianCooldown(founder));
+
+    vm.prank(founder);
+    IERC721(spaceOwner).transferFrom(founder, buyer, tokenId);
+
+    assertFalse(
+      IEntitlementsManager(newSpace).isEntitledToSpace(founder, "Read")
+    );
+
+    assertTrue(IEntitlementsManager(newSpace).isEntitledToSpace(buyer, "Read"));
+  }
+
+  function test_createSpace_revert_when_paused(string memory name) external {
+    vm.assume(bytes(name).length > 0);
+
+    vm.prank(deployer);
+    IPausable(address(spaceArchitect)).pause();
+
+    address founder = _randomAddress();
+
+    vm.prank(founder);
+    vm.expectRevert(Pausable__Paused.selector);
+    spaceArchitect.createSpace(_createSpaceInfo(name));
+
+    vm.prank(deployer);
+    IPausable(address(spaceArchitect)).unpause();
+
+    vm.prank(founder);
+    spaceArchitect.createSpace(_createSpaceInfo(name));
+  }
+
+  function test_revertIfInvalidSpaceId() external {
+    address founder = _randomAddress();
+
+    vm.expectRevert(Validator__InvalidStringLength.selector);
+
+    vm.prank(founder);
+    spaceArchitect.createSpace(_createSpaceInfo(""));
+  }
+
+  function test_revertIfNetworkIdTaken(string memory networkId) external {
+    vm.assume(bytes(networkId).length > 0);
+
+    address founder = _randomAddress();
+
+    vm.prank(founder);
+    spaceArchitect.createSpace(_createSpaceInfo(networkId));
+
+    vm.expectRevert(Architect__InvalidNetworkId.selector);
+    vm.prank(_randomAddress());
+    spaceArchitect.createSpace(_createSpaceInfo(networkId));
+  }
+
+  function test_revertIfNotERC721Receiver(string memory networkId) external {
+    vm.assume(bytes(networkId).length > 0);
+
+    vm.expectRevert(
+      IERC721ABase.TransferToNonERC721ReceiverImplementer.selector
+    );
+    spaceArchitect.createSpace(_createSpaceInfo(networkId));
+  }
+}

@@ -1,0 +1,792 @@
+syntax = "proto3";
+package river;
+option go_package = "github.com/river-build/river/core/node/protocol";
+
+import "google/protobuf/timestamp.proto";
+import "google/protobuf/empty.proto";
+
+
+/** 
+* Miniblock contains a list of events and the header event.
+* Events must be in the same order as in the header, which is of type MiniblockHeader.
+* Only signed data (Envelopes) should exist in this data structure.
+*/
+message Miniblock {
+    repeated Envelope events = 1;
+    Envelope header = 2;
+}
+
+/**
+ * Envelope contains serialized event, and its hash and signature.
+ * hash is used as event id. Subsequent events reference this event by hash.
+ * event is a serialized StreamEvent
+ */
+message Envelope {
+    /**
+     * Hash of event.
+     * While hash can be recalculated from the event, having it here explicitely
+     * makes it easier to work with event.
+     * For the event to be valid, must match hash of event field. 
+     */
+    bytes hash = 1;
+
+    /**
+     * Signature.
+     * For the event to be valid, signature must match event.creator_address
+     * or be signed by the address from evant.delegate_sig.
+     */
+    bytes signature = 2;
+
+    bytes event = 3;
+}
+
+/**
+* StreamEvent is a single event in the stream.
+*/
+message StreamEvent {
+    /**
+     * Address of the creator of the event.
+     * For user - address of the user's wallet.
+     * For server - address of the server's keypair in staking smart contract.
+     *
+     * For the event to be valid:
+     * If delegate_sig is present, creator_address must match delegate_sig.
+     * If delegate_sig is not present, creator_address must match event signature in the Envelope.
+     */
+    bytes creator_address = 1;
+
+     /**
+      * delegate_sig allows event to be signed by device keypair 
+      * which is linked to the user's wallet.
+      *
+      * delegate_sig constains signature of the public key of the device keypair.
+      * User's wallet is used to produce this signature.
+      * 
+      * If present, for the event to be valid:
+      * 1. creator_address must match delegate_sig's signer public key
+      * 2. delegate_sig should be the signature of Envelope.signature's public key.
+      *
+      * Server nodes sign node-produced events with their own keypair and do not
+      * need to use delegate_sig.
+      */
+    bytes delegate_sig = 2;
+ 
+    /** Salt ensures that similar messages are not hashed to the same value. genId() from id.ts may be used. */
+    bytes salt = 3;
+ 
+    /** Hash of a preceding miniblock. Null for the inception event. Must be a recent miniblock */
+    optional bytes prev_miniblock_hash = 4;
+ 
+    /** CreatedAt is the time when the event was created.
+    NOTE: this value is set by clients and is not reliable for anything other than displaying
+    the value to the user. Never use this value to sort events from different users.  */
+    int64 created_at_epoc_ms = 5;
+    
+    /** Variable-type payload. 
+      * Payloads should obey the following rules:
+      * - payloads should have their own unique type
+      * - each payload should have a oneof content field
+      * - each payload, with the exception of miniblock header and member payloads
+      *     should have an inception field inside the content oneof
+      * - each payload should have a unique Inception type
+      * - payloads can't violate previous type recursively to inception payload
+    */
+    oneof payload {
+        MiniblockHeader miniblock_header = 100;
+        MemberPayload member_payload = 101;
+        SpacePayload space_payload = 102;
+        ChannelPayload channel_payload = 103;
+        UserPayload user_payload = 104;
+        UserSettingsPayload user_settings_payload = 105;
+        UserDeviceKeyPayload user_device_key_payload = 106;
+        UserInboxPayload user_inbox_payload = 107;
+        MediaPayload media_payload = 108;
+        DmChannelPayload dm_channel_payload = 109;
+        GdmChannelPayload gdm_channel_payload = 110;
+    }
+}
+
+/** 
+* MiniblockHeader is a special event that forms a block from set of the stream events.
+* Hash of the serialized StreamEvent containing MiniblockHeader is used as a block hash.
+*/
+message MiniblockHeader {
+    // Miniblock number.
+    // 0 for genesis block.
+    // Must be 1 greater than the previous block number.
+    int64 miniblock_num = 1;
+
+    // Hash of the previous block.
+    bytes prev_miniblock_hash = 2;
+
+    // Timestamp of the block.
+    // Must be greater than the previous block timestamp.
+    google.protobuf.Timestamp timestamp = 3;
+
+    // Hashes of the events included in the block.
+    repeated bytes event_hashes = 4;
+
+    // Snapshot of the state at the end of the block.
+    optional Snapshot snapshot = 5;
+
+    // count of all events in the stream before this block
+    int64 event_num_offset = 6;
+
+    // pointer to block with previous snapshot
+    int64 prev_snapshot_miniblock_num = 7;
+
+    // stream payloads are required to have a content field
+    oneof content {
+        google.protobuf.Empty none = 100;
+    }
+}
+
+/**
+* MemberPayload
+* can appear in any stream
+*/
+message MemberPayload {
+    message Snapshot {
+        message Member {
+            bytes user_address = 1;
+            int64 miniblock_num = 2;
+            int64 event_num = 3;
+            repeated KeySolicitation solicitations = 4;
+            WrappedEncryptedData username = 5;
+            WrappedEncryptedData display_name = 6;
+        }
+        
+        repeated Member joined = 1;
+    }
+
+    message Membership {
+        MembershipOp op = 1;
+        bytes user_address = 2;
+        bytes initiator_address = 3;
+    }
+    
+    message KeySolicitation {
+        string device_key = 1; // requesters device_key
+        string fallback_key = 2; // requesters fallback_key
+        bool is_new_device = 3; // true if this is a new device, session_ids will be empty
+        repeated string session_ids = 4; 
+    }
+
+    message KeyFulfillment {
+        bytes user_address = 1;
+        string device_key = 2;
+        repeated string session_ids = 3; 
+    }
+
+    oneof content {
+        Membership membership = 1;
+        KeySolicitation key_solicitation = 2;
+        KeyFulfillment key_fulfillment = 3;
+        EncryptedData username = 4;
+        EncryptedData display_name = 5;
+    }
+}
+
+/**
+* SpacePayload
+*/
+message SpacePayload {
+    message Snapshot {
+        // inception
+        Inception inception = 1;
+        // channels: sorted by channel_id
+        repeated Channel channels = 2;
+    }
+    
+    message Inception {
+        bytes stream_id = 1;
+        StreamSettings settings = 2;
+    }
+
+    message Channel {
+        ChannelOp op = 1;
+        bytes channel_id = 2;
+        EventRef origin_event = 3;
+        EncryptedData channel_properties = 4;
+        bool is_default = 5;
+    }
+
+    oneof content {
+        Inception inception = 1;
+        Channel channel = 2;
+    }
+}
+
+/**
+* ChannelPayload
+*/
+message ChannelPayload {
+    message Snapshot {
+        // inception
+        Inception inception = 1;
+    }
+    
+    message Inception {
+        bytes stream_id = 1;
+        bytes space_id = 3;
+        /**
+        * channel_properties and is_default be used to 
+        * create associated with that channel in the space stream
+        */
+        EncryptedData channel_properties = 4;
+        StreamSettings settings = 5;
+        bool is_default = 6;
+    }
+
+    oneof content {
+        Inception inception = 1;
+        EncryptedData message = 2;
+    }
+}
+
+/**
+* DmChannelPayload
+*/
+message DmChannelPayload {
+    message Snapshot {
+        Inception inception = 1;
+    }
+
+    message Inception {
+        bytes stream_id = 1;
+        bytes first_party_address = 2;
+        bytes second_party_address = 3;
+        StreamSettings settings = 4;
+    }
+
+    oneof content {
+        Inception inception = 1;
+        EncryptedData message = 3;
+    }
+}
+
+/**
+* GdmChannelPayload
+*/
+message GdmChannelPayload {
+    message Snapshot {
+        Inception inception = 1;
+        WrappedEncryptedData channel_properties = 2;
+    }
+
+    message Inception {
+        bytes stream_id = 1;
+        EncryptedData channel_properties = 2;
+        StreamSettings settings = 3;
+    }
+
+    oneof content {
+        Inception inception = 1;
+        EncryptedData message = 2;
+        EncryptedData channel_properties = 3;
+    }
+}
+
+/**
+* UserPayload
+*/
+message UserPayload {
+    message Snapshot {
+        // inception
+        Inception inception = 1;
+        // memberships, sorted by stream_id
+        repeated UserMembership memberships = 2;
+    }
+
+    message Inception {
+        bytes stream_id = 1;
+        StreamSettings settings = 2;
+    }
+    
+    // update own membership
+    message UserMembership {
+        bytes stream_id = 1;
+        MembershipOp op = 2;
+        optional bytes inviter = 3;
+    }
+
+    // update someone else's membership
+    message UserMembershipAction {
+        bytes stream_id = 1;
+        bytes user_id = 2; 
+        MembershipOp op = 3;
+    }
+
+    oneof content {
+        Inception inception = 1;
+        UserMembership user_membership = 2;
+        UserMembershipAction user_membership_action = 3;
+    }
+}
+
+/**
+* UserInboxPayload
+* messages to a user encrypted per deviceId
+*/
+message UserInboxPayload {
+    message Snapshot {
+        message DeviceSummary {
+            /**
+            * UpperBound = latest to device event sent from other client per deviceKey
+            * LowerBound = latest ack sent by stream owner per deviceKey
+            * on ack, if UpperBound <= LowerBound then delete this deviceKey entry from the record
+            * on ack or new session, if any device’s lower bound < N generations ago, delete the deviceKey entry from the record
+            */
+            int64 lower_bound = 1;
+            int64 upper_bound = 2;
+        }
+
+        Inception inception = 1;
+        // deviceKey: miniblockNum that the ack was snapshotted
+        map<string, DeviceSummary> device_summary = 2;
+    }
+
+    message Inception {
+        bytes stream_id = 1;
+        StreamSettings settings = 2;
+    }
+
+    message GroupEncryptionSessions {
+        bytes stream_id = 1;
+        string sender_key = 2;
+        repeated string session_ids = 3;
+        // deviceKey: per device ciphertext of encrypted session keys that match session_ids 
+        map<string, string> ciphertexts = 4;
+    }
+
+    message Ack {
+        string device_key = 1;
+        int64 miniblock_num = 2;
+    }
+
+    oneof content {
+        Inception inception = 1;
+        Ack ack = 2;
+        GroupEncryptionSessions group_encryption_sessions = 3;
+        
+    }
+}
+
+/**
+* UserSettingsPayload
+*/
+message UserSettingsPayload {
+    message Snapshot {
+        // inception
+        Inception inception = 1;
+        // fullyReadMarkers: sorted by stream_id
+        repeated FullyReadMarkers fully_read_markers = 2;
+    }
+
+    message Inception {
+        bytes stream_id = 1;
+        StreamSettings settings = 2;
+    }
+
+    message FullyReadMarkers {
+        bytes stream_id = 1;
+        EncryptedData content = 2;
+    }
+
+    oneof content {
+        Inception inception = 1;
+        FullyReadMarkers fully_read_markers = 2;
+    }
+}
+
+/**
+* UserDeviceKeyPayload
+*/
+message UserDeviceKeyPayload {
+    message Snapshot {
+        // inception
+        Inception inception = 1;
+        // device keys for this user, unique by device_key, capped at N, most recent last
+        repeated EncryptionDevice encryption_devices = 2;
+    }
+
+    message Inception {
+        bytes stream_id = 1;
+        StreamSettings settings = 2;
+    }
+
+    message EncryptionDevice {
+        string device_key = 1;
+        string fallback_key = 2;
+    }
+
+    oneof content {
+        Inception inception = 1;
+        EncryptionDevice encryption_device = 2;
+    }
+}
+
+/**
+* MediaPayload
+*/
+message MediaPayload {
+    message Snapshot {
+        Inception inception = 1;
+    }
+    
+    message Inception {
+        bytes stream_id = 1;
+        bytes channel_id = 2;
+        int32 chunk_count = 3;
+        StreamSettings settings = 4;
+        optional bytes space_id = 5;
+    }
+
+    message Chunk {
+        bytes data = 1;
+        int32 chunk_index = 2;
+    }
+
+    oneof content {
+        Inception inception = 1;
+        Chunk chunk = 2;
+    }
+}
+
+/**
+* Snapshot contains a summary of all state events up to the most recent miniblock
+*/
+message Snapshot {
+    
+    MemberPayload.Snapshot members = 1;
+    
+    // Snapshot data specific for each stream type.
+    oneof content {
+        SpacePayload.Snapshot space_content = 101;
+        ChannelPayload.Snapshot channel_content = 102;
+        UserPayload.Snapshot user_content = 103;
+        UserSettingsPayload.Snapshot user_settings_content = 104;
+        UserDeviceKeyPayload.Snapshot user_device_key_content = 105;
+        MediaPayload.Snapshot media_content = 106;
+        DmChannelPayload.Snapshot dm_channel_content = 107;
+        GdmChannelPayload.Snapshot gdm_channel_content = 108;
+        UserInboxPayload.Snapshot user_inbox_content = 109;
+    }
+}
+
+/**
+ * Derived event is produces by server when there should be additional event to compliment
+ * received event. For example, when user joins a space through event in the space stream, server will produce a derived event
+ * in a user stream to indicate that user joined a particual space.
+ *
+ * EventRef is used to reference the event that caused the derived event to be produced.
+ */
+message EventRef {
+    bytes stream_id = 1;
+    bytes hash = 2;
+    bytes signature = 3;
+}
+
+/**
+ * StreamSettings is a part of inception payload for each stream type.
+ */
+message StreamSettings {
+    // Test setting for testing with manual miniblock creation through Info debug request. 
+    bool disable_miniblock_creation = 1;
+}
+
+/**
+ * EncryptedData
+ */
+message EncryptedData {
+    /**
+    * Ciphertext of the encryption envelope.
+    */
+    string ciphertext = 1;
+    /**
+    * Encryption algorithm  used to encrypt this event.
+    */
+    string algorithm = 2;
+    /**
+    * Sender device public key identifying the sender's device.
+    */
+    string sender_key = 3;
+    /**
+    * The ID of the session used to encrypt the message.
+    */
+    string session_id = 4;
+
+    /**
+    * Optional checksum of the cleartext data.
+    */
+    optional string checksum = 5;
+}
+
+message WrappedEncryptedData {
+    EncryptedData data = 1;
+    int64 event_num = 2;
+    bytes event_hash = 3;
+}
+
+message SyncCookie  {
+    bytes node_address = 1;
+    bytes stream_id = 2;
+    int64 minipool_gen = 3;
+    int64 minipool_slot = 4;
+    bytes prev_miniblock_hash = 5;
+}
+
+message StreamAndCookie {
+    repeated Envelope events = 1;
+    SyncCookie next_sync_cookie = 2;
+    // if non-empty, contains all blocks since the latest snapshot, miniblocks[0].header is the latest snapshot
+    repeated Miniblock miniblocks = 3;
+    bool sync_reset = 4;
+}
+
+message CreateStreamRequest {
+    repeated Envelope events = 1;
+    bytes stream_id = 2; // stream_id should match the stream_id in the inception payload of the first event
+ }
+
+message CreateStreamResponse {
+    // all events in current minipool and cookie allowing to sync from the end of the stream
+    StreamAndCookie stream = 1;
+}
+
+message GetStreamRequest {
+    bytes stream_id = 1;
+    // if optional is true and stream doesn't exist, response will be a nil stream instead of ERROR NOT_FOUND
+    bool optional = 2;
+}
+
+message GetStreamResponse {
+    // all events in current minipool and cookie allowing to sync from the end of the stream
+    StreamAndCookie stream = 1;
+}
+
+message GetMiniblocksRequest {
+    bytes stream_id = 1;
+    int64 fromInclusive = 2;
+    int64 toExclusive = 3;
+}
+
+message GetMiniblocksResponse {
+    repeated Miniblock miniblocks = 1;
+    // terminus: true if there are no more blocks to fetch because they've been garbage collected, or you've reached block 0
+    bool terminus = 2;
+}
+
+message GetLastMiniblockHashRequest {
+    bytes stream_id = 1;
+}
+
+message GetLastMiniblockHashResponse {
+    bytes hash = 1;
+    int64 miniblock_num = 2;
+}
+
+message AddEventRequest {
+    bytes stream_id = 1;
+    Envelope event = 2;
+}
+
+message AddEventResponse {}
+
+message SyncStreamsRequest {
+    repeated SyncCookie sync_pos = 1;
+}
+
+message SyncStreamsResponse {
+    string sync_id = 1;
+    SyncOp sync_op = 2;
+    StreamAndCookie stream = 3;
+    string pong_nonce = 4;
+}
+
+message AddStreamToSyncRequest {
+    string sync_id = 1;
+    SyncCookie sync_pos = 2;
+}
+
+message AddStreamToSyncResponse {}
+
+message RemoveStreamFromSyncRequest {
+    string sync_id = 1;
+    bytes stream_id = 2;
+}
+
+message RemoveStreamFromSyncResponse {}
+
+message CancelSyncRequest {
+    string sync_id = 1;
+}
+
+message CancelSyncResponse {}
+
+message PingSyncRequest {
+    string sync_id = 1;
+    string nonce = 2;
+}
+
+message PingSyncResponse {}
+
+message InfoRequest {
+    repeated string debug = 1;
+}
+
+message InfoResponse {
+    string graffiti = 1;
+}
+
+service StreamService {
+    rpc CreateStream(CreateStreamRequest) returns (CreateStreamResponse);
+    rpc GetStream(GetStreamRequest) returns (GetStreamResponse);
+    rpc GetMiniblocks(GetMiniblocksRequest) returns (GetMiniblocksResponse);
+    rpc GetLastMiniblockHash(GetLastMiniblockHashRequest) returns (GetLastMiniblockHashResponse);
+    rpc AddEvent(AddEventRequest) returns (AddEventResponse);
+    rpc SyncStreams(SyncStreamsRequest) returns (stream SyncStreamsResponse);
+    rpc AddStreamToSync(AddStreamToSyncRequest) returns (AddStreamToSyncResponse);
+    rpc CancelSync(CancelSyncRequest) returns (CancelSyncResponse);
+    rpc RemoveStreamFromSync(RemoveStreamFromSyncRequest) returns (RemoveStreamFromSyncResponse);
+    rpc Info(InfoRequest) returns (InfoResponse);
+    rpc PingSync(PingSyncRequest) returns (PingSyncResponse);
+}
+
+enum SyncOp {
+    SYNC_UNSPECIFIED = 0;
+    SYNC_NEW = 1; // new sync
+    SYNC_CLOSE = 2; // close the sync
+    SYNC_UPDATE = 3; // update from server
+    SYNC_PONG = 4; // respond to the ping message from the client.
+}
+
+enum MembershipOp {
+    SO_UNSPECIFIED = 0;
+    SO_INVITE = 1;
+    SO_JOIN = 2;
+    SO_LEAVE = 3;
+}
+
+enum ChannelOp {
+    CO_UNSPECIFIED = 0;
+    CO_CREATED = 1;
+    CO_DELETED = 2;
+    CO_UPDATED = 4;
+}
+
+// Codes from 1 to 16 match gRPC/Connect codes.
+enum Err {
+    ERR_UNSPECIFIED = 0;
+
+    // Canceled indicates that the operation was canceled, typically by the
+	// caller.
+    CANCELED = 1;
+
+	// Unknown indicates that the operation failed for an unknown reason.
+	UNKNOWN = 2;
+
+	// InvalidArgument indicates that client supplied an invalid argument.
+	INVALID_ARGUMENT  = 3;
+
+	// DeadlineExceeded indicates that deadline expired before the operation
+	// could complete.
+	DEADLINE_EXCEEDED  = 4;
+
+	// NotFound indicates that some requested entity (for example, a file or
+	// directory) was not found.
+	NOT_FOUND  = 5;
+
+	// AlreadyExists indicates that client attempted to create an entity (for
+	// example, a file or directory) that already exists.
+	ALREADY_EXISTS  = 6;
+
+	// PermissionDenied indicates that the caller doesn't have permission to
+	// execute the specified operation.
+	PERMISSION_DENIED  = 7;
+
+	// ResourceExhausted indicates that some resource has been exhausted. For
+	// example, a per-user quota may be exhausted or the entire file system may
+	// be full.
+	RESOURCE_EXHAUSTED  = 8;
+
+	// FailedPrecondition indicates that the system is not in a state
+	// required for the operation's execution.
+	FAILED_PRECONDITION  = 9;
+
+	// Aborted indicates that operation was aborted by the system, usually
+	// because of a concurrency issue such as a sequencer check failure or
+	// transaction abort.
+	ABORTED  = 10;
+
+	// OutOfRange indicates that the operation was attempted past the valid
+	// range (for example, seeking past end-of-file).
+	OUT_OF_RANGE = 11;
+
+	// Unimplemented indicates that the operation isn't implemented,
+	// supported, or enabled in this service.
+	UNIMPLEMENTED = 12;
+
+	// Internal indicates that some invariants expected by the underlying
+	// system have been broken. This code is reserved for serious errors.
+	INTERNAL = 13;
+
+	// Unavailable indicates that the service is currently unavailable. This
+	// is usually temporary, so clients can back off and retry idempotent
+	// operations.
+	UNAVAILABLE = 14;
+
+	// DataLoss indicates that the operation has resulted in unrecoverable
+	// data loss or corruption.
+	DATA_LOSS = 15;
+
+	// Unauthenticated indicates that the request does not have valid
+	// authentication credentials for the operation.
+	UNAUTHENTICATED = 16;
+
+    DEBUG_ERROR = 17;
+    BAD_STREAM_ID = 18;
+    BAD_STREAM_CREATION_PARAMS = 19;
+    INTERNAL_ERROR_SWITCH = 20;
+    BAD_EVENT_ID = 21;
+    BAD_EVENT_SIGNATURE = 22;
+    BAD_HASH_FORMAT = 23;
+    BAD_PREV_MINIBLOCK_HASH = 24;
+    NO_EVENT_SPECIFIED = 25;
+    BAD_EVENT = 26;
+    USER_CANT_POST = 27;
+    STREAM_BAD_HASHES = 28;
+    STREAM_EMPTY = 29;
+    STREAM_BAD_EVENT = 30;
+    BAD_DELEGATE_SIG = 31;
+    BAD_PUBLIC_KEY = 32;
+    BAD_PAYLOAD = 33;
+    BAD_HEX_STRING = 34;
+    BAD_EVENT_HASH = 35;
+    BAD_SYNC_COOKIE = 36;
+    DUPLICATE_EVENT = 37;
+    BAD_BLOCK = 38;
+    STREAM_NO_INCEPTION_EVENT = 39;
+    BAD_BLOCK_NUMBER = 40;
+    BAD_MINIPOOL_SLOT = 41;
+    BAD_CREATOR_ADDRESS = 42;
+    STALE_DELEGATE = 43;
+    BAD_LINK_WALLET_BAD_SIGNATURE = 44;
+    BAD_ROOT_KEY_ID = 45;
+    UNKNOWN_NODE = 46;
+    DB_OPERATION_FAILURE = 47;
+    MINIBLOCKS_STORAGE_FAILURE = 48;
+    BAD_ADDRESS = 49;
+    BUFFER_FULL = 50;
+    BAD_CONFIG = 51;
+    BAD_CONTRACT = 52;
+    CANNOT_CONNECT = 53;
+    CANNOT_GET_LINKED_WALLETS = 54;
+    CANNOT_CHECK_ENTITLEMENTS = 55;
+    CANNOT_CALL_CONTRACT = 56;
+    SPACE_DISABLED = 57;
+    CHANNEL_DISABLED = 58;
+    WRONG_STREAM_TYPE = 59;
+    MINIPOOL_MISSING_EVENTS = 60;
+    STREAM_LAST_BLOCK_MISMATCH = 61;
+}

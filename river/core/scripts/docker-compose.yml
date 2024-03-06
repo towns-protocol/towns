@@ -1,0 +1,23 @@
+services:
+    postgres:
+        image: postgres:latest
+        restart: always
+        environment:
+            - PGDATA=/var/lib/postgresql/data
+            - POSTGRES_USER=postgres
+            - POSTGRES_PASSWORD=postgres
+            - PGUSER=postgres
+        command: postgres -c max_connections=1000
+        logging:
+            options:
+                max-size: 10m
+                max-file: '3'
+        ports:
+            - '5433:5432'
+        volumes:
+            - postgres-data:/var/lib/postgresql/data
+            # copy the sql script to create tables
+            - ./sql/create_db.sql:/docker-entrypoint-initdb.d/create_db.sql
+
+volumes:
+    postgres-data: {}

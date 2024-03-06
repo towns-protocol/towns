@@ -1,0 +1,78 @@
+/.yarn/*
+!/.yarn/patches
+!/.yarn/plugins
+!/.yarn/releases
+!/.yarn/sdks
+
+# Swap the comments on the following lines if you don't wish to use zero-installs
+# Documentation here: https://yarnpkg.com/features/zero-installs
+#/.yarn/cache
+#/.pnp.*
+lcov.info
+/**/yarn.lock
+
+/node_modules
+/**/node_modules
+/typechain-types
+/cache
+/artifacts
+.DS_Store
+coverage.json
+
+# Contracts
+contracts/.openzeppelin/unknown-*.json
+contracts/docs/coverage
+contracts/.env
+contracts/deployments
+abi/
+
+/docs
+
+clients/web/app/storybook-static
+
+core/**/dist/
+core/proto/src/gen/*
+
+contracts/deployments/localhost/
+contracts/cache
+.eslintcache
+cache_hardhat
+artifacts_*
+tsconfig.tsbuildinfo
+broadcast/
+
+*.pem
+
+# Local .terraform directories
+**/.terraform/*
+
+# .tfstate files
+*.tfstate
+*.tfstate.*
+
+# Local .terraform directories
+**/.terraform/*
+out/
+turbo-*.log
+
+# siwe-worker bundle
+servers/workers/siwe-worker/worker/bundle.js
+
+# profiling files
+*.prof
+
+**/coverage
+**/.turbo
+servers/workers/*/dist/*
+core/xchain/bin/*
+core/xchain/instance_*/*
+
+.envrc
+core/xchain/run_files/*
+bin/gen-bindings-remove-struct
+core/node/river_node
+core/node/run_files/*
+
+go.work.sum
+packages/generated/addresses/base_anvil/entitlementGatedExample.json
+packages/generated/addresses/base_anvil/entitlementChecker.json

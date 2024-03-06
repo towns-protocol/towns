@@ -1,0 +1,119 @@
+{
+  "compiler": {
+    "version": "0.8.24+commit.e11b9ed9"
+  },
+  "language": "Solidity",
+  "output": {
+    "abi": [
+      {
+        "inputs": [],
+        "name": "Pausable__NotPaused",
+        "type": "error"
+      },
+      {
+        "inputs": [],
+        "name": "Pausable__Paused",
+        "type": "error"
+      },
+      {
+        "anonymous": false,
+        "inputs": [
+          {
+            "indexed": false,
+            "internalType": "address",
+            "name": "account",
+            "type": "address"
+          }
+        ],
+        "name": "Paused",
+        "type": "event"
+      },
+      {
+        "anonymous": false,
+        "inputs": [
+          {
+            "indexed": false,
+            "internalType": "address",
+            "name": "account",
+            "type": "address"
+          }
+        ],
+        "name": "Unpaused",
+        "type": "event"
+      },
+      {
+        "inputs": [],
+        "name": "pause",
+        "outputs": [],
+        "stateMutability": "nonpayable",
+        "type": "function"
+      },
+      {
+        "inputs": [],
+        "name": "paused",
+        "outputs": [
+          {
+            "internalType": "bool",
+            "name": "",
+            "type": "bool"
+          }
+        ],
+        "stateMutability": "view",
+        "type": "function"
+      },
+      {
+        "inputs": [],
+        "name": "unpause",
+        "outputs": [],
+        "stateMutability": "nonpayable",
+        "type": "function"
+      }
+    ],
+    "devdoc": {
+      "kind": "dev",
+      "methods": {},
+      "version": 1
+    },
+    "userdoc": {
+      "kind": "user",
+      "methods": {},
+      "version": 1
+    }
+  },
+  "settings": {
+    "compilationTarget": {
+      "contracts/src/diamond/facets/pausable/IPausable.sol": "IPausable"
+    },
+    "evmVersion": "paris",
+    "libraries": {},
+    "metadata": {
+      "appendCBOR": false,
+      "bytecodeHash": "none"
+    },
+    "optimizer": {
+      "enabled": true,
+      "runs": 200
+    },
+    "remappings": [
+      ":@openzeppelin/=node_modules/@openzeppelin/",
+      ":@prb/math/=node_modules/@prb/math/src/",
+      ":@prb/test/=node_modules/@prb/test/src/",
+      ":account-abstraction/=node_modules/account-abstraction/contracts/",
+      ":base64/=node_modules/base64/",
+      ":ds-test/=node_modules/ds-test/",
+      ":forge-std/=node_modules/forge-std/src/",
+      ":hardhat-deploy/=node_modules/hardhat-deploy/"
+    ]
+  },
+  "sources": {
+    "contracts/src/diamond/facets/pausable/IPausable.sol": {
+      "keccak256": "0xd5cc8d743bd12bbd23526178c11808634527c87e2f6da29dfb6aec75dab56261",
+      "license": "Apache-2.0",
+      "urls": [
+        "bzz-raw://c893da163481570ae2e00e5deae732404261cc0e7143fdc0448145810448c6b6",
+        "dweb:/ipfs/QmbyUkcew8vmUXPVLDJ7GjvxMkmTqjhKZWLDYtWEPzZ2SM"
+      ]
+    }
+  },
+  "version": 1
+}

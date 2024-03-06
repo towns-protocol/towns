@@ -1,0 +1,33 @@
+# https://docs.github.com/en/repositories/managing-your-repositorys-settings-and-features/customizing-your-repository/about-code-owners
+##
+## "Code Owners" is an unfortunate name, as we do not encourage "ownership"
+## of code per se.
+##
+## Please add your name here if you would like to be notified any time
+## a change is made in a particular file or folder.
+##
+## We do this to help individuals keep their mental model of the codebase
+## up to date, and to make sure everyone who wants to be part of the conversation
+## is automagically added to the it.
+##
+## We do not do this to create dictators, benevolent or otherwise.
+##
+## IMPORTANT - If you add yourself as a code owner, please take it upon yourself
+## to review code at minimum, at the beginning, and end, of each work day.
+## Please either comment, approve, request changes, or remove yourself as a reviewer.
+## The SLA on reviews is 24 hours. After 24 hours a PR without comments will be
+## considered defacto approved and can be committed. However feedback can come
+## at any time! We are an asynchronous team of imperfect humans. If anyone, code
+## owner or otherwise, comments on your code at any time, please assume the best
+## intentions and respond with care and consideration.
+##
+## To see reviews that are waiting for your attention,
+## please visit: https://github.com/HereNotThere/harmony/pulls?q=is%3Apr+is%3Aopen+user-review-requested%3A%40me
+##
+
+/core/ @sergekh2
+/.github/ @mechanical-turk
+/infra @mechanical-turk
+turbo.json @mechanical-turk
+/contracts/src/node-network @mechanical-turk
+/core/sdk/src/stream* @erikolsson

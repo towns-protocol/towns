@@ -1,0 +1,14 @@
+diff --git a/build/base/BaseWorkerPool.js b/build/base/BaseWorkerPool.js
+index 1be8b5637450ee3ffa289f322a6bcb332227eef7..389493652d559b39f653235cdc4abb8520204a8c 100644
+--- a/build/base/BaseWorkerPool.js
++++ b/build/base/BaseWorkerPool.js
+@@ -24,7 +24,8 @@ function _interopRequireDefault(obj) {
+ 
+ // How long to wait for the child process to terminate
+ // after CHILD_MESSAGE_END before sending force exiting.
+-const FORCE_EXIT_DELAY = 500;
++// HNT Labs increased to allow tests to complete when logging levels are high
++const FORCE_EXIT_DELAY = 180000;
+ 
+ /* istanbul ignore next */
+ // eslint-disable-next-line @typescript-eslint/no-empty-function

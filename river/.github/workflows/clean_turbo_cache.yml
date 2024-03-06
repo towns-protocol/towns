@@ -1,0 +1,33 @@
+name: 'Clean Turbo Cache'
+
+on:
+    schedule:
+        # Daily cleanup of turbo cache
+        - cron: 0 0 * * *
+
+jobs:
+    cleanup:
+        runs-on: ubuntu-latest
+        steps:
+            - name: Check out code
+              uses: actions/checkout@v4
+
+            - name: Cleanup Turbo Cache
+              run: |
+                  gh extension install actions/gh-actions-cache
+
+                  REPO=${{ github.repository }}
+
+                  echo "Fetching list of turbo cache key"
+                  cacheKeys=$(gh actions-cache list -R $REPO --key Linux-turbo | cut -f 1 )
+
+                  ## Setting this to not fail the workflow while deleting cache keys. 
+                  set +e
+                  echo "Deleting turbo caches..."
+                  for cacheKey in $cacheKeys
+                  do
+                      gh actions-cache delete $cacheKey -R $REPO --confirm
+                  done
+                  echo "Done"
+              env:
+                  GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}

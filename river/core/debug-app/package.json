@@ -1,0 +1,23 @@
+{
+    "name": "@river/debug-app",
+    "packageManager": "yarn@3.8.0",
+    "type": "module",
+    "scripts": {
+        "build": "tsc",
+        "dev": "vite --config vite.config.js"
+    },
+    "dependencies": {
+        "@river/sdk": "workspace:^"
+    },
+    "devDependencies": {
+        "@vanilla-extract/vite-plugin": "^4.0.4",
+        "@vitejs/plugin-react": "^4.2.1",
+        "rollup-plugin-polyfill-node": "^0.13.0",
+        "rollup-plugin-visualizer": "^5.12.0",
+        "ts-node": "^10.9.1",
+        "typescript": "^5.1.6",
+        "vite": "^5.0.10",
+        "vite-plugin-checker": "^0.6.4",
+        "vite-tsconfig-paths": "^4.3.1"
+    }
+}

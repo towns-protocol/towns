@@ -1,0 +1,38 @@
+{
+    "name": "@river/contracts",
+    "version": "0.1.0",
+    "private": true,
+    "packageManager": "yarn@3.8.0",
+    "scripts": {
+        "all": "make all",
+        "build": "make all",
+        "clean": "make clean",
+        "format": "make format",
+        "lint": "make lint",
+        "setup": "make clean && make build",
+        "snapshot": "make snapshot",
+        "sync": "make update",
+        "test": "yarn test:unit",
+        "test:unit": "make test"
+    },
+    "dependencies": {
+        "@openzeppelin/contracts": "^5.0.2",
+        "@openzeppelin/contracts-upgradeable": "^5.0.2",
+        "@prb/math": "^4.0.2",
+        "@prb/test": "^0.6.4",
+        "account-abstraction": "github:eth-infinitism/account-abstraction",
+        "base64": "github:Brechtpd/base64",
+        "ds-test": "github:dapphub/ds-test",
+        "forge-std": "github:foundry-rs/forge-std#v1"
+    },
+    "devDependencies": {
+        "@harmony/eslint-config": "1.0.0",
+        "@harmony/prettier-config": "workspace:^",
+        "keccak256": "^1.0.6",
+        "merkletreejs": "^0.3.11",
+        "prettier": "^2.8.8",
+        "prettier-plugin-solidity": "^1.1.3",
+        "solhint": "^3.4.1",
+        "solhint-plugin-prettier": "^0.0.5"
+    }
+}

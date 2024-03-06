@@ -1,0 +1,66 @@
+name: 'ABI_build'
+
+on:
+    push:
+        branches:
+            - 'workflow/**'
+    pull_request:
+        branches:
+            - 'workflow/**'
+        paths:
+            - 'contracts/**.sol'
+
+concurrency:
+    group: ${{ github.workflow }}-${{ github.ref }}
+    cancel-in-progress: true
+
+jobs:
+    # generate contract types
+    generate-types:
+        timeout-minutes: 10
+        runs-on: ubuntu-latest
+        name: Generate Types
+        permissions:
+            contents: read
+        strategy:
+            fail-fast: false
+            matrix:
+                go: ['1.21']
+        steps:
+            # install yarn and go
+            - name: Checkout Code
+              uses: actions/checkout@v4
+              with:
+                  submodules: recursive
+
+            - name: Install Go
+              uses: actions/setup-go@v5
+              with:
+                  go-version: ${{ matrix.go }}
+
+            - name: Install Foundry
+              uses: foundry-rs/foundry-toolchain@v1
+              with:
+                  version: nightly
+
+            - name: Cache node modules
+              uses: actions/cache@v4
+              env:
+                  cache-name: cache-node-modules
+              with:
+                  path: |
+                      node_modules
+                  key: yarn-lock-${{ hashFiles('yarn.lock') }}
+
+            - name: Setup Node
+              uses: actions/setup-node@v4
+              with:
+                  node-version: '20'
+                  cache: 'yarn'
+            - run: yarn install --immutable
+            # need this since forge is case-insensitive
+            - name: Rename console.sol
+              working-directory: lib/forge-std/src
+              run: cp console.sol Console.sol
+            - name: Build Types
+              run: bash scripts/build-contract-types.sh

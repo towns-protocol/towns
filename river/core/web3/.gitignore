@@ -1,0 +1,4 @@
+test-config.json
+.env
+.env.*
+!.env.test-sample
