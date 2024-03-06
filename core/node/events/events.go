@@ -7,10 +7,10 @@ import (
 	"google.golang.org/protobuf/proto"
 
 	"github.com/ethereum/go-ethereum/common"
+	. "github.com/river-build/river/core/node/base"
 	"github.com/river-build/river/core/node/crypto"
-	. "github.com/river-build/river/core/node/shared"
-
 	. "github.com/river-build/river/core/node/protocol"
+	. "github.com/river-build/river/core/node/shared"
 )
 
 func MakeStreamEvent(
@@ -21,7 +21,9 @@ func MakeStreamEvent(
 	salt := make([]byte, 32)
 	_, err := rand.Read(salt)
 	if err != nil {
-		return nil, err
+		return nil, AsRiverError(err, Err_INTERNAL).
+			Message("Failed to create random salt").
+			Func("MakeStreamEvent")
 	}
 	epocMillis := time.Now().UnixNano() / int64(time.Millisecond)
 
@@ -45,7 +47,9 @@ func MakeDelegatedStreamEvent(
 	salt := make([]byte, 32)
 	_, err := rand.Read(salt)
 	if err != nil {
-		return nil, err
+		return nil, AsRiverError(err, Err_INTERNAL).
+			Message("Failed to create random salt").
+			Func("MakeDelegatedStreamEvent")
 	}
 	epocMillis := time.Now().UnixNano() / int64(time.Millisecond)
 
@@ -64,7 +68,9 @@ func MakeDelegatedStreamEvent(
 func MakeEnvelopeWithEvent(wallet *crypto.Wallet, streamEvent *StreamEvent) (*Envelope, error) {
 	eventBytes, err := proto.Marshal(streamEvent)
 	if err != nil {
-		return nil, err
+		return nil, AsRiverError(err, Err_INTERNAL).
+			Message("Failed to serialize stream event to bytes").
+			Func("MakeEnvelopeWithEvent")
 	}
 
 	hash := crypto.RiverHash(eventBytes)

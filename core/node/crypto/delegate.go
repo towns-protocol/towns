@@ -56,7 +56,9 @@ func RecoverEthereumMessageSignerAddress(content, signature []byte) (*common.Add
 	hash := accounts.TextHash(content)
 	recoveredKey, err := secp256k1.RecoverPubkey(hash, signature)
 	if err != nil {
-		return nil, err
+		return nil, AsRiverError(err).
+			Message("Unable to recover public key").
+			Func("RecoverEthereumMessageSignerAddress")
 	}
 	address := PublicKeyToAddress(recoveredKey)
 	return &address, nil

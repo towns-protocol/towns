@@ -74,7 +74,9 @@ func LoadNodeRegistry(ctx context.Context, contract *registries.RiverRegistryCon
 	client, err := http_client.GetHttpClient(ctx)
 	if err != nil {
 		log.Error("Error getting http client", "err", err)
-		return nil, err
+		return nil, AsRiverError(err, Err_BAD_CONFIG).
+			Message("Unable to get http client").
+			Func("LoadNodeRegistry")
 	}
 
 	n := &nodeRegistryImpl{

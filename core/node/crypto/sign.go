@@ -9,13 +9,13 @@ import (
 	"math/big"
 	"os"
 
-	"github.com/river-build/river/core/node/dlog"
-
 	"github.com/ethereum/go-ethereum/accounts/abi"
 	"github.com/ethereum/go-ethereum/common"
 	"github.com/ethereum/go-ethereum/crypto"
 	"github.com/ethereum/go-ethereum/crypto/secp256k1"
-
+	. "github.com/river-build/river/core/node/base"
+	"github.com/river-build/river/core/node/dlog"
+	. "github.com/river-build/river/core/node/protocol"
 	"golang.org/x/crypto/sha3"
 )
 
@@ -72,7 +72,9 @@ func NewWallet(ctx context.Context) (*Wallet, error) {
 
 	key, err := crypto.GenerateKey()
 	if err != nil {
-		return nil, err
+		return nil, AsRiverError(err, Err_INTERNAL).
+			Message("Failed to generate wallet private key").
+			Func("NewWallet")
 	}
 	address := crypto.PubkeyToAddress(key.PublicKey)
 
@@ -91,7 +93,9 @@ func NewWalletFromPrivKey(ctx context.Context, privKey string) (*Wallet, error) 
 	// create key pair from private key bytes
 	k, err := crypto.HexToECDSA(privKey)
 	if err != nil {
-		return nil, err
+		return nil, AsRiverError(err, Err_INVALID_ARGUMENT).
+			Message("Failed to decode private key from hex").
+			Func("NewWalletFromPrivKey")
 	}
 	address := crypto.PubkeyToAddress(k.PublicKey)
 
@@ -111,7 +115,10 @@ func LoadWallet(ctx context.Context, filename string) (*Wallet, error) {
 	key, err := crypto.LoadECDSA(filename)
 	if err != nil {
 		log.Error("Failed to load wallet.", "error", err)
-		return nil, err
+		return nil, AsRiverError(err, Err_BAD_CONFIG).
+			Message("Failed to load wallet from file").
+			Tag("filename", filename).
+			Func("LoadWallet")
 	}
 	address := crypto.PubkeyToAddress(key.PublicKey)
 
@@ -141,52 +148,79 @@ func (w *Wallet) SaveWalletFromEnv(
 
 	fAddr, err := os.OpenFile(addressFilename, openFlags, KEY_FILE_PERMISSIONS)
 	if err != nil {
-		return err
+		return AsRiverError(err, Err_BAD_CONFIG).
+			Message("Failed to open address file").
+			Tag("filename", addressFilename).
+			Func("SaveWalletFromEnv")
 	}
 	defer fAddr.Close()
 
 	_, err = fAddr.WriteString(w.AddressStr)
 	if err != nil {
-		return err
+		return AsRiverError(err, Err_INTERNAL).
+			Message("Failed to write address to file").
+			Tag("filename", addressFilename).
+			Func("SaveWalletFromEnv")
 	}
 
 	err = fAddr.Close()
 	if err != nil {
-		return err
+		return AsRiverError(err, Err_INTERNAL).
+			Message("Failed to close address file").
+			Tag("filename", addressFilename).
+			Func("SaveWalletFromEnv")
 	}
 
 	fPriv, err := os.OpenFile(privateKeyFilename, os.O_WRONLY|os.O_CREATE|os.O_TRUNC, KEY_FILE_PERMISSIONS)
 	if err != nil {
-		return err
+		return AsRiverError(err, Err_BAD_CONFIG).
+			Message("Failed to open private key file").
+			Tag("filename", privateKeyFilename).
+			Func("SaveWalletFromEnv")
 	}
 	defer fPriv.Close()
 
 	fPub, err := os.OpenFile(publicKeyFilename, os.O_WRONLY|os.O_CREATE|os.O_TRUNC, KEY_FILE_PERMISSIONS)
 	if err != nil {
-		return err
+		return AsRiverError(err, Err_BAD_CONFIG).
+			Message("Failed to open public key file").
+			Tag("filename", publicKeyFilename).
+			Func("SaveWalletFromEnv")
 	}
 	defer fPub.Close()
 
 	k := hex.EncodeToString(w.PrivateKey)
 	_, err = fPriv.WriteString(k)
 	if err != nil {
-		return err
+		return AsRiverError(err, Err_INTERNAL).
+			Message("Failed to write private key to file").
+			Tag("filename", privateKeyFilename).
+			Func("SaveWalletFromEnv")
 	}
 
 	err = fPriv.Close()
 	if err != nil {
-		return err
+		return AsRiverError(err, Err_INTERNAL).
+			Message("Failed to close private key file").
+			Tag("filename", privateKeyFilename).
+			Func("SaveWalletFromEnv")
 	}
 
 	k = hex.EncodeToString(crypto.FromECDSAPub(&w.PrivateKeyStruct.PublicKey))
 	_, err = fPub.WriteString(k)
 	if err != nil {
-		return err
+		return AsRiverError(err, Err_INTERNAL).
+			Message("Failed to write public key to file").
+			Tag("filename", publicKeyFilename).
+			Func("SaveWalletFromEnv")
 	}
 
 	err = fPub.Close()
 	if err != nil {
-		return err
+		return AsRiverError(err, Err_INTERNAL).
+			Message("Failed to close public key file").
+			Tag("filename", publicKeyFilename).
+			Func("SaveWalletFromEnv")
 	}
 
 	log.Info("Wallet saved from env.", "address", w.Address.Hex(), "publicKey", crypto.FromECDSAPub(&w.PrivateKeyStruct.PublicKey))
@@ -209,52 +243,79 @@ func (w *Wallet) SaveWallet(
 
 	fPriv, err := os.OpenFile(privateKeyFilename, openFlags, KEY_FILE_PERMISSIONS)
 	if err != nil {
-		return err
+		return AsRiverError(err, Err_BAD_CONFIG).
+			Message("Failed to open private key file").
+			Tag("filename", privateKeyFilename).
+			Func("SaveWallet")
 	}
 	defer fPriv.Close()
 
 	fPub, err := os.OpenFile(publicKeyFilename, openFlags, KEY_FILE_PERMISSIONS)
 	if err != nil {
-		return err
+		return AsRiverError(err, Err_BAD_CONFIG).
+			Message("Failed to open public key file").
+			Tag("filename", publicKeyFilename).
+			Func("SaveWallet")
 	}
 	defer fPub.Close()
 
 	fAddr, err := os.OpenFile(addressFilename, openFlags, KEY_FILE_PERMISSIONS)
 	if err != nil {
-		return err
+		return AsRiverError(err, Err_BAD_CONFIG).
+			Message("Failed to open address file").
+			Tag("filename", addressFilename).
+			Func("SaveWallet")
 	}
 	defer fAddr.Close()
 
 	k := hex.EncodeToString(w.PrivateKey)
 	_, err = fPriv.WriteString(k)
 	if err != nil {
-		return err
+		return AsRiverError(err, Err_INTERNAL).
+			Message("Failed to write private key to file").
+			Tag("filename", privateKeyFilename).
+			Func("SaveWallet")
 	}
 
 	err = fPriv.Close()
 	if err != nil {
-		return err
+		return AsRiverError(err, Err_INTERNAL).
+			Message("Failed to close private key file").
+			Tag("filename", privateKeyFilename).
+			Func("SaveWallet")
 	}
 
 	k = hex.EncodeToString(crypto.FromECDSAPub(&w.PrivateKeyStruct.PublicKey))
 	_, err = fPub.WriteString(k)
 	if err != nil {
-		return err
+		return AsRiverError(err, Err_INTERNAL).
+			Message("Failed to write public key to file").
+			Tag("filename", publicKeyFilename).
+			Func("SaveWallet")
 	}
 
 	err = fPub.Close()
 	if err != nil {
-		return err
+		return AsRiverError(err, Err_INTERNAL).
+			Message("Failed to close public key file").
+			Tag("filename", publicKeyFilename).
+			Func("SaveWallet")
 	}
 
 	_, err = fAddr.WriteString(w.AddressStr)
 	if err != nil {
-		return err
+		return AsRiverError(err, Err_INTERNAL).
+			Message("Failed to write address to file").
+			Tag("filename", addressFilename).
+			Func("SaveWallet")
 	}
 
 	err = fAddr.Close()
 	if err != nil {
-		return err
+		return AsRiverError(err, Err_INTERNAL).
+			Message("Failed to close address file").
+			Tag("filename", addressFilename).
+			Func("SaveWallet")
 	}
 
 	log.Info(
@@ -274,7 +335,13 @@ func (w *Wallet) SignHash(hash []byte) ([]byte, error) {
 }
 
 func RecoverSignerPublicKey(hash []byte, signature []byte) ([]byte, error) {
-	return secp256k1.RecoverPubkey(hash, signature)
+	pubKey, err := secp256k1.RecoverPubkey(hash, signature)
+	if err == nil {
+		return pubKey, nil
+	}
+	return nil, AsRiverError(err, Err_INVALID_ARGUMENT).
+		Message("Could not recover public key from signature").
+		Func("RecoverSignerPublicKey")
 }
 
 func PublicKeyToAddress(publicKey []byte) common.Address {
@@ -284,12 +351,16 @@ func PublicKeyToAddress(publicKey []byte) common.Address {
 func PackWithNonce(address common.Address, nonce uint64) ([]byte, error) {
 	addressTy, err := abi.NewType("address", "address", nil)
 	if err != nil {
-		return nil, err
+		return nil, AsRiverError(err, Err_INTERNAL).
+			Message("Invalid abi type definition").
+			Func("PackWithNonce")
 	}
 
 	uint256Ty, _ := abi.NewType("uint256", "uint256", nil)
 	if err != nil {
-		return nil, err
+		return nil, AsRiverError(err, Err_INTERNAL).
+			Message("Invalid abi type definition").
+			Func("PackWithNonce")
 	}
 	arguments := abi.Arguments{
 		{
@@ -301,7 +372,9 @@ func PackWithNonce(address common.Address, nonce uint64) ([]byte, error) {
 	}
 	bytes, err := arguments.Pack(address, big.NewInt(int64(nonce)))
 	if err != nil {
-		return nil, err
+		return nil, AsRiverError(err, Err_INTERNAL).
+			Message("Failed to pack arguments").
+			Func("PackWithNonce")
 	}
 
 	hasher := sha3.NewLegacyKeccak256()

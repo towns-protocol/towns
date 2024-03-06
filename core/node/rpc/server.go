@@ -256,7 +256,7 @@ func StartServer(
 		listener, err = net.Listen("tcp", address)
 		if err != nil {
 			log.Error("failed to listen", "error", err)
-			return nil, err
+			return nil, AsRiverError(err, Err_INTERNAL).Func("StartServer")
 		}
 		log.Info("Listening", "addr", address+streamServicePattern)
 	} else {
@@ -395,7 +395,9 @@ func createServerFromStrings(ctx context.Context, address string, handler http.H
 	cert, err := tls.X509KeyPair([]byte(certString), []byte(keyString))
 	if err != nil {
 		log.Error("Failed to create X509KeyPair from strings", "error", err)
-		return nil, err
+		return nil, AsRiverError(err, Err_BAD_CONFIG).
+			Message("Invalid TLS certs").
+			Func("createServerFromStrings")
 	}
 	log.Info("Loaded certificate and key from strings")
 
@@ -417,7 +419,9 @@ func createServerFromFile(ctx context.Context, address string, handler http.Hand
 	cert, err := tls.LoadX509KeyPair(certFile, keyFile)
 	if err != nil {
 		log.Error("Failed to LoadX509KeyPair from files", "error", err)
-		return nil, err
+		return nil, AsRiverError(err, Err_BAD_CONFIG).
+			Message("Invalid TLS certificate files").
+			Func("createServerFromFile")
 	} else {
 		log.Info("Loaded certificate and key from files", "certFile", certFile, "keyFile", keyFile)
 	}

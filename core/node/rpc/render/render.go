@@ -8,6 +8,9 @@ import (
 	"io"
 	"io/fs"
 	"strings"
+
+	. "github.com/river-build/river/core/node/base"
+	. "github.com/river-build/river/core/node/protocol"
 )
 
 // Execute renders the given data using its associated template
@@ -23,7 +26,9 @@ func Execute[RD RenderableData](data RD) (*bytes.Buffer, error) {
 func ExecuteAndWrite[RD RenderableData](data RD, into io.Writer) error {
 	tmpl := templates[data.TemplateName()]
 	if err := tmpl.Execute(into, data); err != nil {
-		return fmt.Errorf("unable to execute template %s: %v", tmpl.Name(), err)
+		return AsRiverError(err, Err_INTERNAL).Message("unable to execute template").
+			Tag("template", data.TemplateName()).
+			Func("ExecuteAndWrite")
 	}
 	return nil
 }

@@ -48,12 +48,17 @@ type Blockchain struct {
 func NewReadOnlyBlockchain(ctx context.Context, cfg *config.ChainConfig) (*Blockchain, error) {
 	client, err := ethclient.DialContext(ctx, cfg.NetworkUrl)
 	if err != nil {
-		return nil, err
+		return nil, AsRiverError(err, Err_CANNOT_CONNECT).
+			Message("Cannot connect to chain RPC node").
+			Tag("chainId", cfg.ChainId).
+			Func("NewReadOnlyBlockchain")
 	}
 
 	chainId, err := client.ChainID(ctx)
 	if err != nil {
-		return nil, err
+		return nil, AsRiverError(err).
+			Message("Cannot retrieve chain id").
+			Func("NewReadOnlyBlockchain")
 	}
 
 	if chainId.Uint64() != uint64(cfg.ChainId) {

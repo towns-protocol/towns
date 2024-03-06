@@ -23,7 +23,13 @@ type ParsedEvent struct {
 }
 
 func (e *ParsedEvent) GetEnvelopeBytes() ([]byte, error) {
-	return proto.Marshal(e.Envelope)
+	b, err := proto.Marshal(e.Envelope)
+	if err == nil {
+		return b, nil
+	}
+	return nil, AsRiverError(err, Err_INTERNAL).
+		Message("Failed to marshal parsed event envelope to bytes").
+		Func("GetEnvelopeBytes")
 }
 
 func ParseEvent(envelope *Envelope) (*ParsedEvent, error) {
@@ -40,7 +46,9 @@ func ParseEvent(envelope *Envelope) (*ParsedEvent, error) {
 	var streamEvent StreamEvent
 	err = proto.Unmarshal(envelope.Event, &streamEvent)
 	if err != nil {
-		return nil, err
+		return nil, AsRiverError(err, Err_INVALID_ARGUMENT).
+			Message("Failed to decode stream event from bytes").
+			Func("ParseEvent")
 	}
 
 	if len(streamEvent.DelegateSig) > 0 {

@@ -126,7 +126,9 @@ func NewMiniblockInfoFromBytes(bytes []byte, expectedBlockNumber int64) (*minibl
 	var pb Miniblock
 	err := proto.Unmarshal(bytes, &pb)
 	if err != nil {
-		return nil, err
+		return nil, AsRiverError(err, Err_INVALID_ARGUMENT).
+			Message("Failed to decode miniblock from bytes").
+			Func("NewMiniblockInfoFromBytes")
 	}
 
 	return NewMiniblockInfoFromProto(&pb, expectedBlockNumber)
@@ -192,5 +194,11 @@ func NewMiniblockInfoFromParsed(headerEvent *ParsedEvent, events []*ParsedEvent)
 }
 
 func (b *miniblockInfo) ToBytes() ([]byte, error) {
-	return proto.Marshal(b.proto)
+	serialized, err := proto.Marshal(b.proto)
+	if err == nil {
+		return serialized, nil
+	}
+	return nil, AsRiverError(err, Err_INTERNAL).
+		Message("Failed to serialize miniblockinfo to bytes").
+		Func("ToBytes")
 }
