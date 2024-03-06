@@ -9,7 +9,7 @@ import { DAY_MS, WEEK_MS } from 'data/constants'
 import { useEnvironment } from 'hooks/useEnvironmnet'
 import { useDevice } from 'hooks/useDevice'
 import { notUndefined } from 'ui/utils/utils'
-import { Avatar } from '@components/Avatar/Avatar'
+import { AvatarWithoutDot } from '@components/Avatar/Avatar'
 
 export const Activity = (props: { townId: string }) => {
     const { members, townStats, channelStats, isLoading } = useFetchUnauthenticatedActivity(
@@ -66,7 +66,7 @@ export const Activity = (props: { townId: string }) => {
                     key="members"
                 >
                     {members.map((m) => (
-                        <Avatar key={m} userId={m} size="avatar_x4" />
+                        <AvatarWithoutDot key={m} userId={m} size="avatar_x4" />
                     ))}
                 </FadeInBox>
             )}
