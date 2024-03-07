@@ -5,8 +5,8 @@ import {
 
 type BaseSepoliaContract = LocalhostContract
 type BaseSepoliaInterface = LocalhostInterface
-import LocalhostAbi from '@river/generated/dev/abis/UserEntitlement.abi.json' assert { type: 'json' }
-import BaseSepoliaAbi from '@river/generated/v3/abis/UserEntitlement.abi.json' assert { type: 'json' }
+import LocalhostAbi from '@river/generated/dev/abis/IRuleEntitlement.abi.json' assert { type: 'json' }
+import BaseSepoliaAbi from '@river/generated/v3/abis/IRuleEntitlement.abi.json' assert { type: 'json' }
 
 import { BaseContractShim } from './BaseContractShim'
 import { BigNumberish, ethers } from 'ethers'
@@ -42,6 +42,6 @@ export class RuleEntitlementShim
                 logicalOperations: [],
             }
         }
-        return null
+        return this.read.getRuleData(roleId)
     }
 }
