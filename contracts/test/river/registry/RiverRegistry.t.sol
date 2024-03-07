@@ -2,41 +2,50 @@
 pragma solidity ^0.8.23;
 
 // interfaces
-import {IRiverRegistryBase, RiverRegistryErrors} from "contracts/src/river/registry/IRiverRegistry.sol";
 import {IOwnableBase} from "contracts/src/diamond/facets/ownable/IERC173.sol";
+import {INodeRegistry} from "contracts/src/river/registry/facets/node/INodeRegistry.sol";
+import {IOperatorRegistry} from "contracts/src/river/registry/facets/operator/IOperatorRegistry.sol";
+import {IStreamRegistry} from "contracts/src/river/registry/facets/stream/IStreamRegistry.sol";
+
+// structs
+import {NodeStatus, Node} from "contracts/src/river/registry/libraries/RegistryStorage.sol";
 
 // libraries
+import {RiverRegistryErrors} from "contracts/src/river/registry/libraries/RegistryErrors.sol";
 
 // contracts
 import {TestUtils} from "contracts/test/utils/TestUtils.sol";
-import {RiverRegistry} from "contracts/src/river/registry/RiverRegistry.sol";
 
 // deployments
 import {DeployRiverRegistry} from "contracts/scripts/deployments/DeployRiverRegistry.s.sol";
 
-contract RiverRegistryTest is TestUtils, IRiverRegistryBase, IOwnableBase {
+contract RiverRegistryTest is TestUtils, IOwnableBase {
   DeployRiverRegistry internal deployRiverRegistry = new DeployRiverRegistry();
 
   address deployer;
   address diamond;
 
-  RiverRegistry internal riverRegistry;
+  INodeRegistry internal nodeRegistry;
+  IStreamRegistry internal streamRegistry;
+  IOperatorRegistry internal operatorRegistry;
 
   function setUp() public virtual {
     deployer = getDeployer();
     diamond = deployRiverRegistry.deploy();
 
-    riverRegistry = RiverRegistry(diamond);
+    nodeRegistry = INodeRegistry(diamond);
+    streamRegistry = IStreamRegistry(diamond);
+    operatorRegistry = IOperatorRegistry(diamond);
   }
 
   modifier givenNodeOperatorIsApproved(address nodeOperator) {
     vm.assume(nodeOperator != address(0));
-    vm.assume(riverRegistry.isOperator(nodeOperator) == false);
+    vm.assume(operatorRegistry.isOperator(nodeOperator) == false);
 
     vm.prank(deployer);
     vm.expectEmit();
-    emit OperatorAdded(nodeOperator);
-    riverRegistry.approveOperator(nodeOperator);
+    emit IOperatorRegistry.OperatorAdded(nodeOperator);
+    operatorRegistry.approveOperator(nodeOperator);
     _;
   }
 
@@ -50,8 +59,8 @@ contract RiverRegistryTest is TestUtils, IRiverRegistryBase, IOwnableBase {
 
     vm.prank(nodeOperator);
     vm.expectEmit();
-    emit NodeAdded(node, url, NodeStatus.NotInitialized);
-    riverRegistry.registerNode(node, url, NodeStatus.NotInitialized);
+    emit INodeRegistry.NodeAdded(node, url, NodeStatus.NotInitialized);
+    nodeRegistry.registerNode(node, url, NodeStatus.NotInitialized);
     _;
   }
 
@@ -66,15 +75,15 @@ contract RiverRegistryTest is TestUtils, IRiverRegistryBase, IOwnableBase {
     givenNodeOperatorIsApproved(nodeOperator)
     givenNodeIsRegistered(nodeOperator, node, "old")
   {
-    Node memory previous = riverRegistry.getNode(node);
+    Node memory previous = nodeRegistry.getNode(node);
     assertEq(previous.url, "old");
 
     vm.prank(nodeOperator);
     vm.expectEmit();
-    emit NodeUrlUpdated(node, "new");
-    riverRegistry.updateNodeUrl(node, "new");
+    emit INodeRegistry.NodeUrlUpdated(node, "new");
+    nodeRegistry.updateNodeUrl(node, "new");
 
-    Node memory updated = riverRegistry.getNode(node);
+    Node memory updated = nodeRegistry.getNode(node);
     assertEq(updated.url, "new");
   }
 
@@ -85,34 +94,37 @@ contract RiverRegistryTest is TestUtils, IRiverRegistryBase, IOwnableBase {
   function test_approveOperator(
     address nodeOperator
   ) external givenNodeOperatorIsApproved(nodeOperator) {
-    assertTrue(riverRegistry.isOperator(nodeOperator));
+    assertTrue(operatorRegistry.isOperator(nodeOperator));
   }
 
   function test_revertWhen_approveOperatorWithZeroAddress() external {
     vm.prank(deployer);
-    vm.expectRevert(bytes(RiverRegistryErrors.BadArg));
-    riverRegistry.approveOperator(address(0));
+    vm.expectRevert(bytes(RiverRegistryErrors.BAD_ARG));
+    operatorRegistry.approveOperator(address(0));
   }
 
   function test_revertWhen_approveOperatorWithAlreadyApprovedOperator(
     address nodeOperator
   ) external givenNodeOperatorIsApproved(nodeOperator) {
     vm.prank(deployer);
-    vm.expectRevert(bytes(RiverRegistryErrors.AlreadyExists));
-    riverRegistry.approveOperator(nodeOperator);
+    vm.expectRevert(bytes(RiverRegistryErrors.ALREADY_EXISTS));
+    operatorRegistry.approveOperator(nodeOperator);
   }
 
   function test_revertWhen_approveOperatorWithNonOwner(
     address nonOwner,
     address nodeOperator
   ) external {
+    vm.assume(nonOwner != address(0));
+    vm.assume(nodeOperator != address(0));
     vm.assume(nonOwner != deployer);
+    vm.assume(nonOwner != nodeOperator);
 
     vm.prank(nonOwner);
     vm.expectRevert(
       abi.encodeWithSelector(Ownable__NotOwner.selector, nonOwner)
     );
-    riverRegistry.approveOperator(nodeOperator);
+    operatorRegistry.approveOperator(nodeOperator);
   }
 
   // =============================================================
@@ -121,22 +133,22 @@ contract RiverRegistryTest is TestUtils, IRiverRegistryBase, IOwnableBase {
   function test_removeOperator(
     address nodeOperator
   ) external givenNodeOperatorIsApproved(nodeOperator) {
-    assertTrue(riverRegistry.isOperator(nodeOperator));
+    assertTrue(operatorRegistry.isOperator(nodeOperator));
 
     vm.prank(deployer);
     vm.expectEmit();
-    emit OperatorRemoved(nodeOperator);
-    riverRegistry.removeOperator(nodeOperator);
+    emit IOperatorRegistry.OperatorRemoved(nodeOperator);
+    operatorRegistry.removeOperator(nodeOperator);
 
-    assertFalse(riverRegistry.isOperator(nodeOperator));
+    assertFalse(operatorRegistry.isOperator(nodeOperator));
   }
 
   function test_revertWhen_removeOperatorWhenOperatorNotFound(
     address nodeOperator
   ) external {
-    vm.assume(riverRegistry.isOperator(nodeOperator) == false);
+    vm.assume(operatorRegistry.isOperator(nodeOperator) == false);
     vm.prank(deployer);
-    vm.expectRevert(bytes(RiverRegistryErrors.OperatorNotFound));
-    riverRegistry.removeOperator(nodeOperator);
+    vm.expectRevert(bytes(RiverRegistryErrors.OPERATOR_NOT_FOUND));
+    operatorRegistry.removeOperator(nodeOperator);
   }
 }

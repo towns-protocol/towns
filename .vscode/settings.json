@@ -30,7 +30,7 @@
   ],
   "solidity.defaultCompiler": "remote",
   "solidity.packageDefaultDependenciesContractsDirectory": "contracts/src",
-  "solidity.packageDefaultDependenciesDirectory": "lib",
+  "solidity.packageDefaultDependenciesDirectory": "lib,node_modules",
   "solidity.compileUsingRemoteVersion": "v0.8.23+commit.f704f362",
   "[makefile]": {
     "editor.renderWhitespace": "all"

@@ -38,7 +38,7 @@ func TestBlockchain(t *testing.T) {
 	tx1, err := owner.TxRunner.Submit(
 		ctx,
 		func(opts *bind.TransactOpts) (*types.Transaction, error) {
-			return tc.RiverRegistry.RegisterNode(opts, nodeAddr1, nodeUrl1, 2)
+			return tc.NodeRegistry.RegisterNode(opts, nodeAddr1, nodeUrl1, 2)
 		},
 	)
 	require.NoError(err)
@@ -46,7 +46,7 @@ func TestBlockchain(t *testing.T) {
 	tx2, err := owner.TxRunner.Submit(
 		ctx,
 		func(opts *bind.TransactOpts) (*types.Transaction, error) {
-			return tc.RiverRegistry.RegisterNode(opts, nodeAddr2, nodeUrl2, 2)
+			return tc.NodeRegistry.RegisterNode(opts, nodeAddr2, nodeUrl2, 2)
 		},
 	)
 	require.NoError(err)
@@ -67,7 +67,7 @@ func TestBlockchain(t *testing.T) {
 	_, err = WaitMined(ctx, owner.Client, tx2.Hash(), time.Millisecond, time.Second*10)
 	require.NoError(err)
 
-	nodes, err := tc.RiverRegistry.GetAllNodes(nil)
+	nodes, err := tc.NodeRegistry.GetAllNodes(nil)
 	require.NoError(err)
 	assert.Len(nodes, 2)
 	assert.Equal(nodeAddr1, nodes[0].NodeAddress)
@@ -79,7 +79,7 @@ func TestBlockchain(t *testing.T) {
 	tx1, err = owner.TxRunner.Submit(
 		ctx,
 		func(opts *bind.TransactOpts) (*types.Transaction, error) {
-			return tc.RiverRegistry.RegisterNode(opts, nodeAddr1, nodeUrl1, 2)
+			return tc.NodeRegistry.RegisterNode(opts, nodeAddr1, nodeUrl1, 2)
 		},
 	)
 	// Looks like this is a difference for simulated backend:
@@ -101,7 +101,7 @@ func TestBlockchain(t *testing.T) {
 	tx1, err = bc1.TxRunner.Submit(
 		ctx,
 		func(opts *bind.TransactOpts) (*types.Transaction, error) {
-			return tc.RiverRegistry.AllocateStream(opts, streamId.ByteArray(), addrs, genesisHash, genesisMiniblock)
+			return tc.StreamRegistry.AllocateStream(opts, streamId.ByteArray(), addrs, genesisHash, genesisMiniblock)
 		},
 	)
 	require.NoError(err)
@@ -111,7 +111,7 @@ func TestBlockchain(t *testing.T) {
 	_, err = WaitMined(ctx, bc1.Client, tx1.Hash(), time.Millisecond, time.Second*10)
 	require.NoError(err)
 
-	stream, mbHash, mb, err := tc.RiverRegistry.GetStreamWithGenesis(nil, streamId.ByteArray())
+	stream, mbHash, mb, err := tc.StreamRegistry.GetStreamWithGenesis(nil, streamId.ByteArray())
 	require.NoError(err)
 	assert.Equal(addrs, stream.Nodes)
 	assert.Equal(genesisHash, common.Hash(mbHash))
@@ -123,7 +123,7 @@ func TestBlockchain(t *testing.T) {
 	tx1, err = bc1.TxRunner.Submit(
 		ctx,
 		func(opts *bind.TransactOpts) (*types.Transaction, error) {
-			return tc.RiverRegistry.AllocateStream(opts, streamId.ByteArray(), addrs, genesisHash, genesisMiniblock)
+			return tc.StreamRegistry.AllocateStream(opts, streamId.ByteArray(), addrs, genesisHash, genesisMiniblock)
 		},
 	)
 	require.Nil(tx1)
@@ -135,7 +135,7 @@ func TestBlockchain(t *testing.T) {
 		func(opts *bind.TransactOpts) (*types.Transaction, error) {
 			streamId, err := StreamIdFromBytes([]byte{0x10, 0x22, 0x33})
 			require.NoError(err)
-			return tc.RiverRegistry.AllocateStream(opts, streamId.ByteArray(), []common.Address{common.HexToAddress("0x123")}, genesisHash, genesisMiniblock)
+			return tc.StreamRegistry.AllocateStream(opts, streamId.ByteArray(), []common.Address{common.HexToAddress("0x123")}, genesisHash, genesisMiniblock)
 		},
 	)
 	require.Nil(tx1)

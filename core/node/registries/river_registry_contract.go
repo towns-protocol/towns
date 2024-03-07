@@ -20,7 +20,9 @@ import (
 
 // Convinience wrapper for the IRiverRegistryV1 interface (abigen exports it as RiverRegistryV1)
 type RiverRegistryContract struct {
-	Contract   *contracts.RiverRegistryV1
+	OperatorRegistry *contracts.OperatorRegistryV1
+	NodeRegistry *contracts.NodeRegistryV1
+	StreamRegistry *contracts.StreamRegistryV1
 	Blockchain *crypto.Blockchain
 }
 
@@ -49,7 +51,27 @@ func NewRiverRegistryContract(
 			Func("NewRiverRegistryContract")
 	}
 
-	registry, err := contracts.NewRiverRegistryV1(address, blockchain.Client)
+	streamRegistry, err := contracts.NewStreamRegistryV1(address, blockchain.Client)
+	if err != nil {
+		return nil,
+			AsRiverError(err, Err_BAD_CONFIG).
+				Message("Failed to initialize registry contract").
+				Tags("address", cfg.Address, "version", cfg.Version).
+				Func("NewRiverRegistryContract").
+				LogError(log)
+	}
+
+	operatorRegistry, err := contracts.NewOperatorRegistryV1(address, blockchain.Client)
+	if err != nil {
+		return nil,
+			AsRiverError(err, Err_BAD_CONFIG).
+				Message("Failed to initialize registry contract").
+				Tags("address", cfg.Address, "version", cfg.Version).
+				Func("NewRiverRegistryContract").
+				LogError(log)
+	}
+
+	nodeRegistry, err := contracts.NewNodeRegistryV1(address, blockchain.Client)
 	if err != nil {
 		return nil,
 			AsRiverError(err, Err_BAD_CONFIG).
@@ -60,7 +82,9 @@ func NewRiverRegistryContract(
 	}
 
 	return &RiverRegistryContract{
-		Contract:   registry,
+		OperatorRegistry: operatorRegistry,
+		NodeRegistry: nodeRegistry,
+		StreamRegistry: streamRegistry,
 		Blockchain: blockchain,
 	}, nil
 }
@@ -75,7 +99,7 @@ func (sr *RiverRegistryContract) AllocateStream(
 	_, _, err := sr.Blockchain.TxRunner.SubmitAndWait(
 		ctx,
 		func(opts *bind.TransactOpts) (*types.Transaction, error) {
-			return sr.Contract.AllocateStream(opts, streamId.ByteArray(), addresses, genesisMiniblockHash, genesisMiniblock)
+			return sr.StreamRegistry.AllocateStream(opts, streamId.ByteArray(), addresses, genesisMiniblockHash, genesisMiniblock)
 		},
 	)
 	if err != nil {
@@ -93,7 +117,7 @@ type GetStreamResult struct {
 	IsSealed          bool
 }
 
-func makeGetStreamResult(streamId StreamId, stream *contracts.IRiverRegistryBaseStream) *GetStreamResult {
+func makeGetStreamResult(streamId StreamId, stream *contracts.Stream) *GetStreamResult {
 	return &GetStreamResult{
 		StreamId:          streamId,
 		Nodes:             stream.Nodes,
@@ -104,7 +128,7 @@ func makeGetStreamResult(streamId StreamId, stream *contracts.IRiverRegistryBase
 }
 
 func (sr *RiverRegistryContract) GetStream(ctx context.Context, streamId StreamId) (*GetStreamResult, error) {
-	stream, err := sr.Contract.GetStream(sr.callOpts(ctx), streamId.ByteArray())
+	stream, err := sr.StreamRegistry.GetStream(sr.callOpts(ctx), streamId.ByteArray())
 	if err != nil {
 		return nil, WrapRiverError(Err_CANNOT_CALL_CONTRACT, err).Func("GetStream").Message("Call failed")
 	}
@@ -116,7 +140,7 @@ func (sr *RiverRegistryContract) GetStreamWithGenesis(
 	ctx context.Context,
 	streamId StreamId,
 ) (*GetStreamResult, common.Hash, []byte, error) {
-	stream, mbHash, mb, err := sr.Contract.GetStreamWithGenesis(sr.callOpts(ctx), streamId.ByteArray())
+	stream, mbHash, mb, err := sr.StreamRegistry.GetStreamWithGenesis(sr.callOpts(ctx), streamId.ByteArray())
 	if err != nil {
 		return nil, common.Hash{}, nil, WrapRiverError(Err_CANNOT_CALL_CONTRACT, err).Func("GetStream").Message("Call failed")
 	}
@@ -125,7 +149,7 @@ func (sr *RiverRegistryContract) GetStreamWithGenesis(
 }
 
 func (sr *RiverRegistryContract) GetStreamCount(ctx context.Context) (int64, error) {
-	num, err := sr.Contract.GetStreamCount(sr.callOpts(ctx))
+	num, err := sr.StreamRegistry.GetStreamCount(sr.callOpts(ctx))
 	if err != nil {
 		return 0, WrapRiverError(Err_CANNOT_CALL_CONTRACT, err).Func("GetStreamNum").Message("Call failed")
 	}
@@ -140,7 +164,7 @@ func (sr *RiverRegistryContract) GetAllStreams(ctx context.Context, blockNum uin
 	if blockNum != 0 {
 		callOpts.BlockNumber = new(big.Int).SetUint64(blockNum)
 	}
-	streams, err := sr.Contract.GetAllStreams(callOpts)
+	streams, err := sr.StreamRegistry.GetAllStreams(callOpts)
 	if err != nil {
 		return nil, WrapRiverError(
 			Err_CANNOT_CALL_CONTRACT,
@@ -159,10 +183,10 @@ func (sr *RiverRegistryContract) GetAllStreams(ctx context.Context, blockNum uin
 	return ret, nil
 }
 
-type NodeRecord = contracts.IRiverRegistryBaseNode
+type NodeRecord = contracts.Node
 
 func (sr *RiverRegistryContract) GetAllNodes(ctx context.Context) ([]NodeRecord, error) {
-	nodes, err := sr.Contract.GetAllNodes(sr.callOpts(ctx))
+	nodes, err := sr.NodeRegistry.GetAllNodes(sr.callOpts(ctx))
 	if err != nil {
 		return nil, WrapRiverError(Err_CANNOT_CALL_CONTRACT, err).Func("GetAllNodes").Message("Call failed")
 	}

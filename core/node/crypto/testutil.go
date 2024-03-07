@@ -29,7 +29,8 @@ type BlockchainTestContext struct {
 	EthClient            *ethclient.Client
 	Wallets              []*Wallet
 	RiverRegistryAddress common.Address
-	RiverRegistry        *contracts.RiverRegistryV1
+	NodeRegistry        *contracts.NodeRegistryV1
+	StreamRegistry      *contracts.StreamRegistryV1
 	ChainId              *big.Int
 	DeployerBlockchain   *Blockchain
 }
@@ -126,8 +127,13 @@ func NewBlockchainTestContext(ctx context.Context, numKeys int) (*BlockchainTest
 		return nil, err
 	}
 
-	river_registry, err := contracts.NewRiverRegistryV1(addr, client)
+	node_registry, err := contracts.NewNodeRegistryV1(addr, client)
 	if err != nil {
+		return nil, err
+	}
+
+	stream_registry, err := contracts.NewStreamRegistryV1(addr, client)
+	if (err != nil) {
 		return nil, err
 	}
 
@@ -139,7 +145,8 @@ func NewBlockchainTestContext(ctx context.Context, numKeys int) (*BlockchainTest
 		EthClient:            ethClient,
 		Wallets:              wallets,
 		RiverRegistryAddress: addr,
-		RiverRegistry:        river_registry,
+		NodeRegistry:        node_registry,
+		StreamRegistry: 		 stream_registry,
 		ChainId:              chainId,
 		DeployerBlockchain:   deployerBC,
 	}, nil
@@ -219,7 +226,7 @@ func (c *BlockchainTestContext) InitNodeRecord(ctx context.Context, index int, u
 	tx, err := owner.TxRunner.Submit(
 		ctx,
 		func(opts *bind.TransactOpts) (*types.Transaction, error) {
-			return c.RiverRegistry.RegisterNode(opts, c.Wallets[index].Address, url, 2)
+			return c.NodeRegistry.RegisterNode(opts, c.Wallets[index].Address, url, 2)
 		},
 	)
 	if err != nil {
