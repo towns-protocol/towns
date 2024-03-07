@@ -193,3 +193,13 @@ write-anvil :; @cast send ${contractAddress} "${functionName}" --rpc-url http://
 
 startLocalWaitlist :; make write-anvil contractAddress=${contractAddress} functionName="startWaitlistMint()"
 
+# ===========================
+# 				  Mainnet
+# ===========================
+
+deploy-mainnet :;
+	@forge build
+	@SAVE_DEPLOYMENTS=1 forge script scripts/deployments/${contract}.s.sol:${contract} --ffi --rpc-url mainnet --private-key ${PRIVATE_KEY} --broadcast --verify -vvvv
+
+verify-mainnet :;
+	@forge verify-contract ${address} ${contract} --chain mainnet

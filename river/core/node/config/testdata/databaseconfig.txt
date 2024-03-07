@@ -1,0 +1,3 @@
+INFO 14:18:36.990 test message
+    databaseConfig = 
+        {Host:"localhost", Port:5432, User:"user", Database:"testdb", Extra:"extra"}

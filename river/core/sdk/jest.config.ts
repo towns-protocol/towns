@@ -1,26 +1,36 @@
 import path from 'path'
 import os from 'os'
-import { existsSync } from 'fs'
+import fs from 'fs'
 
 import type { JestConfigWithTsJest } from 'ts-jest'
 
 const localRiverCA = path.join(os.homedir(), 'river-ca-cert.pem')
 
-const findNodeModules = () => {
-    // go up until we find node_modules
-    let dir = __dirname
-    while (!existsSync(path.join(dir, 'node_modules'))) {
-        dir = path.dirname(dir)
-    }
-    return `${dir}/node_modules`
-}
-
-const NODE_MODULES_DIR = findNodeModules()
-
-if (!existsSync(localRiverCA)) {
+if (!fs.existsSync(localRiverCA)) {
     console.log('CA does not exist, did you forget to run ../scripts/register-ca.sh')
 }
 process.env.NODE_EXTRA_CA_CERTS = localRiverCA
+
+const findMsgpackrFolder = () => {
+    let currentDir = __dirname
+
+    //Iterate up until we either no find a folder node_modules folder that contains msgpackr folder or we reach the root
+    //If we reach the root path.dirname(currentDir) will return currenDir, we break the loop and return null
+    while (currentDir !== path.dirname(currentDir)) {
+        const nodeModulesPath = path.join(currentDir, 'node_modules')
+        if (fs.existsSync(nodeModulesPath)) {
+            const msgpackerPath = path.join(nodeModulesPath, 'msgpackr')
+            if (fs.existsSync(msgpackerPath) && fs.lstatSync(msgpackerPath).isDirectory()) {
+                return msgpackerPath
+            }
+        }
+        currentDir = path.dirname(currentDir) // Move one directory up
+    }
+
+    return null // Folder not found
+}
+
+const MSGPACKR_FOLDER = findMsgpackrFolder()
 
 const config: JestConfigWithTsJest = {
     preset: 'ts-jest/presets/default-esm',
@@ -52,7 +62,7 @@ const config: JestConfigWithTsJest = {
         '(.+)\\.js': '$1',
         // need for encryption
         '\\.(wasm)$': require.resolve('../encryption/src/mock-wasm-file.js'),
-        msgpackr: `${NODE_MODULES_DIR}/msgpackr/dist/node.cjs`,
+        msgpackr: `${MSGPACKR_FOLDER}/dist/node.cjs`,
     },
     collectCoverage: true,
     coverageProvider: 'v8',

@@ -2,6 +2,7 @@
  * @group main
  */
 
+import { assert } from './check'
 import { Client } from './client'
 import { makeTestClient } from './util.test'
 import { dlog } from '@river/dlog'
@@ -39,12 +40,12 @@ describe('clientCrypto', () => {
         ])
         expect(envelope[bobsClient.userDeviceKey().deviceKey]).toBeDefined()
         // ensure decrypting with bob's device key works
-        const clear = await bobsClient.decryptWithDeviceKey(
+        const clear = await bobsClient.cryptoBackend?.decryptWithDeviceKey(
             envelope[bobsClient.userDeviceKey().deviceKey],
             alicesClient.userDeviceKey().deviceKey,
         )
-        expect(clear).toBeDefined()
         log('clear', clear)
+        assert(clear !== undefined, 'clear should not be undefined')
         const keys2 = SessionKeys.fromJsonString(clear)
         expect(keys2.keys[0]).toEqual('hi!')
     })
@@ -67,11 +68,11 @@ describe('clientCrypto', () => {
             ])
             expect(envelope[bobsClient.userDeviceKey().deviceKey]).toBeDefined()
             // ensure decrypting with bob device key works
-            const clear = await bobsClient.decryptWithDeviceKey(
+            const clear = await bobsClient.cryptoBackend?.decryptWithDeviceKey(
                 envelope[bobsClient.userDeviceKey().deviceKey],
                 alicesClient.userDeviceKey().deviceKey,
             )
-            expect(clear).toBeDefined()
+            assert(clear !== undefined, 'clear should not be undefined')
             log('clear', clear)
             const keys2 = SessionKeys.fromJsonString(clear)
             expect(keys2.keys[0]).toEqual(message)

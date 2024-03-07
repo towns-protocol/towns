@@ -1,0 +1,352 @@
+{
+  "compiler": {
+    "version": "0.8.24+commit.e11b9ed9"
+  },
+  "language": "Solidity",
+  "output": {
+    "abi": [
+      {
+        "anonymous": false,
+        "inputs": [
+          {
+            "indexed": true,
+            "internalType": "address",
+            "name": "nodeAddress",
+            "type": "address"
+          },
+          {
+            "indexed": false,
+            "internalType": "string",
+            "name": "url",
+            "type": "string"
+          },
+          {
+            "indexed": false,
+            "internalType": "enum NodeStatus",
+            "name": "status",
+            "type": "uint8"
+          }
+        ],
+        "name": "NodeAdded",
+        "type": "event"
+      },
+      {
+        "anonymous": false,
+        "inputs": [
+          {
+            "indexed": true,
+            "internalType": "address",
+            "name": "nodeAddress",
+            "type": "address"
+          }
+        ],
+        "name": "NodeRemoved",
+        "type": "event"
+      },
+      {
+        "anonymous": false,
+        "inputs": [
+          {
+            "indexed": true,
+            "internalType": "address",
+            "name": "nodeAddress",
+            "type": "address"
+          },
+          {
+            "indexed": false,
+            "internalType": "enum NodeStatus",
+            "name": "status",
+            "type": "uint8"
+          }
+        ],
+        "name": "NodeStatusUpdated",
+        "type": "event"
+      },
+      {
+        "anonymous": false,
+        "inputs": [
+          {
+            "indexed": true,
+            "internalType": "address",
+            "name": "nodeAddress",
+            "type": "address"
+          },
+          {
+            "indexed": false,
+            "internalType": "string",
+            "name": "url",
+            "type": "string"
+          }
+        ],
+        "name": "NodeUrlUpdated",
+        "type": "event"
+      },
+      {
+        "inputs": [],
+        "name": "getAllNodeAddresses",
+        "outputs": [
+          {
+            "internalType": "address[]",
+            "name": "",
+            "type": "address[]"
+          }
+        ],
+        "stateMutability": "view",
+        "type": "function"
+      },
+      {
+        "inputs": [],
+        "name": "getAllNodes",
+        "outputs": [
+          {
+            "components": [
+              {
+                "internalType": "enum NodeStatus",
+                "name": "status",
+                "type": "uint8"
+              },
+              {
+                "internalType": "string",
+                "name": "url",
+                "type": "string"
+              },
+              {
+                "internalType": "address",
+                "name": "nodeAddress",
+                "type": "address"
+              },
+              {
+                "internalType": "address",
+                "name": "operator",
+                "type": "address"
+              }
+            ],
+            "internalType": "struct Node[]",
+            "name": "",
+            "type": "tuple[]"
+          }
+        ],
+        "stateMutability": "view",
+        "type": "function"
+      },
+      {
+        "inputs": [
+          {
+            "internalType": "address",
+            "name": "nodeAddress",
+            "type": "address"
+          }
+        ],
+        "name": "getNode",
+        "outputs": [
+          {
+            "components": [
+              {
+                "internalType": "enum NodeStatus",
+                "name": "status",
+                "type": "uint8"
+              },
+              {
+                "internalType": "string",
+                "name": "url",
+                "type": "string"
+              },
+              {
+                "internalType": "address",
+                "name": "nodeAddress",
+                "type": "address"
+              },
+              {
+                "internalType": "address",
+                "name": "operator",
+                "type": "address"
+              }
+            ],
+            "internalType": "struct Node",
+            "name": "",
+            "type": "tuple"
+          }
+        ],
+        "stateMutability": "view",
+        "type": "function"
+      },
+      {
+        "inputs": [],
+        "name": "getNodeCount",
+        "outputs": [
+          {
+            "internalType": "uint256",
+            "name": "",
+            "type": "uint256"
+          }
+        ],
+        "stateMutability": "view",
+        "type": "function"
+      },
+      {
+        "inputs": [
+          {
+            "internalType": "address",
+            "name": "nodeAddress",
+            "type": "address"
+          },
+          {
+            "internalType": "string",
+            "name": "url",
+            "type": "string"
+          },
+          {
+            "internalType": "enum NodeStatus",
+            "name": "status",
+            "type": "uint8"
+          }
+        ],
+        "name": "registerNode",
+        "outputs": [],
+        "stateMutability": "nonpayable",
+        "type": "function"
+      },
+      {
+        "inputs": [
+          {
+            "internalType": "address",
+            "name": "nodeAddress",
+            "type": "address"
+          }
+        ],
+        "name": "removeNode",
+        "outputs": [],
+        "stateMutability": "nonpayable",
+        "type": "function"
+      },
+      {
+        "inputs": [
+          {
+            "internalType": "address",
+            "name": "nodeAddress",
+            "type": "address"
+          },
+          {
+            "internalType": "enum NodeStatus",
+            "name": "status",
+            "type": "uint8"
+          }
+        ],
+        "name": "updateNodeStatus",
+        "outputs": [],
+        "stateMutability": "nonpayable",
+        "type": "function"
+      },
+      {
+        "inputs": [
+          {
+            "internalType": "address",
+            "name": "nodeAddress",
+            "type": "address"
+          },
+          {
+            "internalType": "string",
+            "name": "url",
+            "type": "string"
+          }
+        ],
+        "name": "updateNodeUrl",
+        "outputs": [],
+        "stateMutability": "nonpayable",
+        "type": "function"
+      }
+    ],
+    "devdoc": {
+      "kind": "dev",
+      "methods": {
+        "getAllNodeAddresses()": {
+          "details": "WARNING: This operation will copy the entire storage to memory, which can be quite expensive. This is designed to mostly be used by view accessors that are queried without any gas fees. Developers should keep in mind that this function has an unbounded cost, and using it as part of a state-changing function may render the function uncallable if the map grows to a point where copying to memory consumes too much gas to fit in a block."
+        },
+        "getAllNodes()": {
+          "details": "WARNING: This operation will copy the entire storage to memory, which can be quite expensive. This is designed to mostly be used by view accessors that are queried without any gas fees. Developers should keep in mind that this function has an unbounded cost, and using it as part of a state-changing function may render the function uncallable if the map grows to a point where copying to memory consumes too much gas to fit in a block."
+        }
+      },
+      "version": 1
+    },
+    "userdoc": {
+      "kind": "user",
+      "methods": {
+        "getAllNodeAddresses()": {
+          "notice": "Return array containing all node addresses"
+        },
+        "getAllNodes()": {
+          "notice": "Return array containing all nodes"
+        }
+      },
+      "version": 1
+    }
+  },
+  "settings": {
+    "compilationTarget": {
+      "contracts/src/river/registry/facets/node/NodeRegistry.sol": "NodeRegistry"
+    },
+    "evmVersion": "paris",
+    "libraries": {},
+    "metadata": {
+      "appendCBOR": false,
+      "bytecodeHash": "none"
+    },
+    "optimizer": {
+      "enabled": true,
+      "runs": 200
+    },
+    "remappings": [
+      ":@openzeppelin/=node_modules/@openzeppelin/",
+      ":@prb/math/=node_modules/@prb/math/src/",
+      ":@prb/test/=node_modules/@prb/test/src/",
+      ":account-abstraction/=node_modules/account-abstraction/contracts/",
+      ":base64/=node_modules/base64/",
+      ":ds-test/=node_modules/ds-test/",
+      ":forge-std/=node_modules/forge-std/src/",
+      ":hardhat-deploy/=node_modules/hardhat-deploy/"
+    ]
+  },
+  "sources": {
+    "contracts/src/river/registry/facets/node/INodeRegistry.sol": {
+      "keccak256": "0x1d245155a913d92f004313e576841284a48b800ca147b5e87a4aeea94c539bbe",
+      "license": "Apache-2.0",
+      "urls": [
+        "bzz-raw://5ea7ed779d74fb2dab8cc5d25da8ca473b3db2e1af2b34af088a8556ea490960",
+        "dweb:/ipfs/QmYtDEF7Mx387qUM7sbURPEsodbDD1acJNP2D9GjoC2cCR"
+      ]
+    },
+    "contracts/src/river/registry/facets/node/NodeRegistry.sol": {
+      "keccak256": "0x8370b72f4c01b64fc9327716b5c48a3e693f63917a5a0b5e6b68a6d47a0be299",
+      "license": "Apache-2.0",
+      "urls": [
+        "bzz-raw://5d32c00a8b552ab762af5366ca62be58f37bd754376a47d024ca4220ab113fba",
+        "dweb:/ipfs/QmUa786v23AQt5Q6LPv3fy3SNg3krxNKJEcTCdhQrjYY11"
+      ]
+    },
+    "contracts/src/river/registry/libraries/RegistryErrors.sol": {
+      "keccak256": "0x073c3ff0f1206824f3722e2ba22fd7174f9ded4a6111e48e0641e21ed90aabfc",
+      "license": "Apache-2.0",
+      "urls": [
+        "bzz-raw://62d60cd3958fdb3762972e41aefa899e6b6ac0dac7c94689025f6ba5dc241be3",
+        "dweb:/ipfs/QmRRhiC1KXDh5aPPNBEgwbg8wZ9BKWYLJ7jGD9vFzm1kWy"
+      ]
+    },
+    "contracts/src/river/registry/libraries/RegistryStorage.sol": {
+      "keccak256": "0x97f0d92d485bb2bf11fc5a2a39bc1e9dba3865ba90a4dd2ca980f9e19c69602d",
+      "license": "Apache-2.0",
+      "urls": [
+        "bzz-raw://565685a7de523e1c19e1c038a9003ef6b99d18b87dd10f6759e9df6e2717eaeb",
+        "dweb:/ipfs/QmSuamKP178nam4VbCZyCo8C7p8AHy54T7WSdeCU3rPZZN"
+      ]
+    },
+    "node_modules/@openzeppelin/contracts/utils/structs/EnumerableSet.sol": {
+      "keccak256": "0x86c1470cbfd878491e5de030072b647352d36bd27122cffb928970b1945282aa",
+      "license": "MIT",
+      "urls": [
+        "bzz-raw://ad85dd393ee0a1917c57046abc5155f51f77844b2c6a42c05c1b8dd26d6ff3c1",
+        "dweb:/ipfs/QmNqYc8To2NdnpP6E1tGz7t6A7beuENde5yovwov5pW1fA"
+      ]
+    }
+  },
+  "version": 1
+}

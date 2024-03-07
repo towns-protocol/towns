@@ -11,6 +11,7 @@ import (
 	"errors"
 	"fmt"
 	"io"
+	"reflect"
 	"strconv"
 	"time"
 	"unicode/utf8"
@@ -167,6 +168,18 @@ func appendJSONValue(s *handleState, v slog.Value) error {
 }
 
 func appendJSONMarshal(buf *buffer.Buffer, v any) error {
+	// Use json unmarshalling for structs to take advantage of json struct tags in order to omit sensitive data.
+	valueType := reflect.ValueOf(v)
+	if valueType.Kind() == reflect.Struct {
+		var b []byte
+		var err error
+		if b, err = json.Marshal(v); err != nil {
+			return err
+		}
+		_, _ = buf.Write(b)
+		return nil
+	}
+
 	// Use a json.Encoder to avoid escaping HTML.
 	var bb bytes.Buffer
 	enc := json.NewEncoder(&bb)

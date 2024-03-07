@@ -13,7 +13,7 @@ generate_go() {
 
     local OUT_DIR="core/node/contracts/${DIR}"
     mkdir -p "${OUT_DIR}"
-    
+
         go run github.com/ethereum/go-ethereum/cmd/abigen@${ABIGEN_VERSION} \
             --abi contracts/out/${CONTRACT}.sol/${CONTRACT}.abi.json \
             --bin contracts/out/${CONTRACT}.sol/${CONTRACT}.bin \
@@ -43,7 +43,7 @@ generate_go_deploy() {
 
     local OUT_DIR="core/node/contracts/deploy"
     mkdir -p "${OUT_DIR}"
-    
+
     go run github.com/ethereum/go-ethereum/cmd/abigen@${ABIGEN_VERSION} \
         --abi contracts/out/${CONTRACT}.sol/${CONTRACT}.abi.json \
         --bin contracts/out/${CONTRACT}.sol/${CONTRACT}.bin \
@@ -73,5 +73,7 @@ go build -o bin/gen-bindings-remove-struct scripts/gen-bindings-remove-struct.go
 ./bin/gen-bindings-remove-struct core/node/contracts/base/architect.go IRuleEntitlementCheckOperation,IRuleEntitlementLogicalOperation,IRuleEntitlementOperation,IRuleEntitlementRuleData
 ./bin/gen-bindings-remove-struct core/node/contracts/base/entitlements_manager.go IRuleEntitlementCheckOperation,IRuleEntitlementLogicalOperation,IRuleEntitlementOperation,IRuleEntitlementRuleData
 
-generate_go_nover IRiverRegistry river_registry_v1
+generate_go_nover INodeRegistry node_registry_v1
+generate_go_nover IStreamRegistry stream_registry_v1
+generate_go_nover IOperatorRegistry operator_registry_v1
 generate_go_deploy MockRiverRegistry mock_river_registry

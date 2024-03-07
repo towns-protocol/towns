@@ -1,0 +1,1 @@
+{"time":"[TIMESTAMP]","level":"INFO","msg":"test message","tlsConfig":{"Cert":"certvalue","TestCA":""}}

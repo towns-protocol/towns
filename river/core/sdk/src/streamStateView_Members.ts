@@ -1,7 +1,7 @@
 import { MembershipOp, MemberPayload, Snapshot, WrappedEncryptedData } from '@river/proto'
 import TypedEmitter from 'typed-emitter'
 import { StreamEncryptionEvents, StreamStateEvents } from './streamEvents'
-import { ConfirmedTimelineEvent, KeySolicitationContent, RemoteTimelineEvent } from './types'
+import { ConfirmedTimelineEvent, RemoteTimelineEvent } from './types'
 import { isDefined, logNever } from './check'
 import { userIdFromAddress } from './id'
 import { StreamStateView_Members_Membership } from './streamStateView_Members_Membership'
@@ -9,6 +9,7 @@ import { StreamStateView_Members_Solicitations } from './streamStateView_Members
 import { check } from '@river/dlog'
 import { DecryptedContent } from './encryptedContentTypes'
 import { StreamStateView_UserMetadata } from './streamStateView_UserMetadata'
+import { KeySolicitationContent } from './decryptionExtensions'
 
 export type StreamMember = {
     userId: string

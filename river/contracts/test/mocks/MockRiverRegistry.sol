@@ -6,9 +6,17 @@ pragma solidity ^0.8.23;
 // libraries
 
 // contracts
-import {RiverRegistry} from "contracts/src/river/registry/RiverRegistry.sol";
+import {NodeRegistry} from "contracts/src/river/registry/facets/node/NodeRegistry.sol";
+import {OperatorRegistry} from "contracts/src/river/registry/facets/operator/OperatorRegistry.sol";
+import {StreamRegistry} from "contracts/src/river/registry/facets/stream/StreamRegistry.sol";
+import {OwnableBase} from "contracts/src/diamond/facets/ownable/OwnableBase.sol";
 
-contract MockRiverRegistry is RiverRegistry {
+contract MockRiverRegistry is
+  OwnableBase,
+  NodeRegistry,
+  OperatorRegistry,
+  StreamRegistry
+{
   // =============================================================
   //                           Constructor
   // =============================================================
@@ -16,7 +24,9 @@ contract MockRiverRegistry is RiverRegistry {
   // since owner is not set in this case.
   // Regular deployment scripts pass empty array to the constructor.
   constructor(address[] memory approvedOperators) {
-    _initImpl(approvedOperators);
     _transferOwnership(msg.sender);
+    for (uint256 i = 0; i < approvedOperators.length; ++i) {
+      _approveOperator(approvedOperators[i]);
+    }
   }
 }

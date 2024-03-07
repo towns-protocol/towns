@@ -183,6 +183,7 @@ contract RiverBaseTest is BaseSetup, ILockBase, IOwnableBase {
     givenCallerHasBridgedTokens(alice, amount)
     whenCallerDelegatesToASpace(alice)
   {
+    vm.assume(bob != address(0));
     vm.prank(alice);
     vm.expectRevert(River.River__TransferLockEnabled.selector);
     riverFacet.transfer(bob, amount);
