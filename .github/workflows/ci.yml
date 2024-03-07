@@ -58,7 +58,7 @@ jobs:
 
             - name: Cancel previous runs
               if: github.event_name != 'schedule'
-              uses: styfle/cancel-workflow-action@0.11.0
+              uses: styfle/cancel-workflow-action@0.12.1
               with:
                   access_token: ${{ github.token }}
 
@@ -149,7 +149,7 @@ jobs:
         steps:
             - name: Cancel previous runs
               if: github.event_name != 'schedule'
-              uses: styfle/cancel-workflow-action@0.11.0
+              uses: styfle/cancel-workflow-action@0.12.1
               with:
                   access_token: ${{ github.token }}
 
@@ -239,7 +239,7 @@ jobs:
 
             - name: Archive River Node Logs and Settings
               if: always()
-              uses: actions/upload-artifact@v3
+              uses: actions/upload-artifact@v4
               with:
                   name: 'river-node-${{ github.job }}'
                   path: |
