@@ -714,6 +714,13 @@ export class DecryptionExtensions {
     }
 }
 
+export function makeSessionKeys(sessions: GroupEncryptionSession[]): SessionKeys {
+    const sessionKeys = sessions.map((s) => s.sessionKey)
+    return new SessionKeys({
+        keys: sessionKeys,
+    })
+}
+
 // Insert an item into a sorted array
 // maintain the sort order
 // optimize for the case where the new item is the largest

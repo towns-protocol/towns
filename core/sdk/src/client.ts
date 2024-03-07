@@ -18,7 +18,6 @@ import {
     FullyReadMarker,
     Envelope,
     Err,
-    SessionKeys,
     ChannelMessage_Post_Attachment,
 } from '@river/proto'
 import {
@@ -107,6 +106,7 @@ import {
     DecryptionEvents,
     DecryptionExtensions,
     EntitlementsDelegate,
+    makeSessionKeys,
 } from './decryptionExtensions'
 import { PersistenceStore, IPersistenceStore, StubPersistenceStore } from './persistenceStore'
 import { SyncState, SyncedStreams } from './syncedStreams'
@@ -1732,10 +1732,7 @@ export class Client
         const userDevice = this.userDeviceKey()
 
         const sessionIds = sessions.map((session) => session.sessionId)
-        const sessionKeys = sessions.map((session) => session.sessionKey)
-        const payload = new SessionKeys({
-            keys: sessionKeys,
-        })
+        const payload = makeSessionKeys(sessions)
         const promises = Object.entries(toDevices).map(async ([userId, deviceKeys]) => {
             try {
                 const ciphertext = await this.encryptWithDeviceKeys(payload, deviceKeys)
