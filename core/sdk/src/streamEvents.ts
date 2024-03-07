@@ -8,13 +8,13 @@ import {
     ClientInitStatus,
     ConfirmedTimelineEvent,
     DecryptedTimelineEvent,
-    KeySolicitationContent,
     LocalTimelineEvent,
     RemoteTimelineEvent,
     StreamTimelineEvent,
 } from './types'
 import { UserDevice } from '@river/encryption'
 import { EncryptedContent } from './encryptedContentTypes'
+import { KeySolicitationContent } from './decryptionExtensions'
 
 export type StreamChange = {
     prepended?: RemoteTimelineEvent[]

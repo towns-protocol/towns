@@ -12,11 +12,7 @@ import {
     UserDevice,
 } from '@river/encryption'
 import { SessionKeys, UserInboxPayload_GroupEncryptionSessions } from '@river/proto'
-import {
-    KeySolicitationContent,
-    make_MemberPayload_KeyFulfillment,
-    make_MemberPayload_KeySolicitation,
-} from './types'
+import { make_MemberPayload_KeyFulfillment, make_MemberPayload_KeySolicitation } from './types'
 import { isMobileSafari } from './utils'
 import { streamIdFromBytes } from './id'
 
@@ -54,6 +50,13 @@ interface DecryptionRetryItem {
     streamId: string
     event: EncryptedContentItem
     retryAt: Date
+}
+
+export interface KeySolicitationContent {
+    deviceKey: string
+    fallbackKey: string
+    isNewDevice: boolean
+    sessionIds: string[]
 }
 
 interface KeySolicitationItem {
