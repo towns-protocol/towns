@@ -92,6 +92,7 @@ const PlateEditorWithoutBoundary = ({
     ...props
 }: Props) => {
     const editorRef = useRef<PlateEditor<TElement[]>>(null)
+    const editableContainerRef = useRef<HTMLDivElement>(null)
 
     const { protocol } = useEnvironment()
     const { isTouch } = useDevice()
@@ -261,7 +262,7 @@ const PlateEditorWithoutBoundary = ({
                                 key="editor"
                             />
 
-                            <Box paddingX="md">
+                            <Box paddingX="md" ref={editableContainerRef}>
                                 <Editor
                                     tabIndex={tabIndex}
                                     placeholder={placeholder}
@@ -302,7 +303,9 @@ const PlateEditorWithoutBoundary = ({
                         paddingBottom="sm"
                         pointerEvents={editable ? 'auto' : 'none'}
                     >
-                        {protocol === SpaceProtocol.Casablanca && <PasteFilePlugin />}
+                        {protocol === SpaceProtocol.Casablanca && (
+                            <PasteFilePlugin editableContainerRef={editableContainerRef} />
+                        )}
                         <RichTextBottomToolbar
                             editing={isEditing}
                             focused={focused}

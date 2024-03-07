@@ -5,10 +5,35 @@ import { FileUpload, useMediaDropContext } from '@components/MediaDropContext/Me
 import { isMediaMimeType } from 'utils/isMediaMimeType'
 import { ButtonSpinner } from 'ui/components/Spinner/ButtonSpinner'
 
-export const PasteFilePlugin = () => {
-    const { files, removeFile, isUploadingFiles } = useMediaDropContext()
+export const PasteFilePlugin = ({
+    editableContainerRef,
+}: {
+    editableContainerRef: React.RefObject<HTMLDivElement>
+}) => {
+    const { files, addFiles, removeFile, isUploadingFiles } = useMediaDropContext()
 
-    // #TODO: add drag and drop functionality
+    useEffect(() => {
+        if (!editableContainerRef.current || !addFiles) {
+            return
+        }
+
+        // Make a local copy of the ref object to use during unmount, otherwise the ref object may be null
+        const _editableRef = editableContainerRef.current
+        const onPasteEvent = async (e: ClipboardEvent) => {
+            if (!e.clipboardData || !addFiles) {
+                return
+            }
+            const files = Array.from(e.clipboardData.files)
+            if (files.length > 0) {
+                addFiles(files)
+            }
+        }
+
+        _editableRef.addEventListener('paste', onPasteEvent)
+        return () => {
+            _editableRef.removeEventListener('paste', onPasteEvent)
+        }
+    }, [editableContainerRef, addFiles])
 
     if (files.length === 0) {
         return <></>
