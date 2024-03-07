@@ -225,10 +225,8 @@ export class ZionClient implements EntitlementsDelegate {
             userId: this.casablancaClient.userId,
         })
 
-        this.casablancaClient.on('decryptionExtStatusChanged', (status: number) => {
-            AnalyticsService.getInstance().trackEventOnce(
-                `decryptionExtStatus[${DecryptionStatus[status]}]`,
-            )
+        this.casablancaClient.on('decryptionExtStatusChanged', (status: DecryptionStatus) => {
+            AnalyticsService.getInstance().trackEventOnce(`decryptionExtStatus[${status}]`)
         })
 
         this.casablancaClient.startSync()
