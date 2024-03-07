@@ -123,8 +123,8 @@ const PlatePlugins = createPlugins(
                     {
                         hotkey: 'shift+enter',
                         query: {
-                            exclude: [ELEMENT_LIC],
-                            allow: [ELEMENT_CODE_BLOCK, ELEMENT_BLOCKQUOTE],
+                            exclude: [ELEMENT_LIC, ELEMENT_CODE_BLOCK],
+                            allow: [ELEMENT_BLOCKQUOTE],
                         },
                     },
                 ],
@@ -138,17 +138,8 @@ const PlatePlugins = createPlugins(
                         hotkey: 'shift+enter',
                         query: {
                             exclude: [ELEMENT_LIC],
+                            allow: [ELEMENT_CODE_BLOCK],
                         },
-                    },
-                    {
-                        hotkey: 'enter',
-                        query: {
-                            start: true,
-                            end: true,
-                            allow: [ELEMENT_CODE_BLOCK, ELEMENT_BLOCKQUOTE],
-                        },
-                        relative: true,
-                        level: 1,
                     },
                 ],
             },

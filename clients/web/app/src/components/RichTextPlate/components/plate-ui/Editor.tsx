@@ -4,6 +4,7 @@ import { PlateContent } from '@udecode/plate-common'
 import { clsx } from 'clsx'
 import { useEditorSelector } from '@udecode/plate-core'
 import { isListRoot } from '@udecode/plate-list'
+import { isSelectionAtCodeBlockStart } from '@udecode/plate-code-block'
 import * as fieldStyles from 'ui/components/_internal/Field/Field.css'
 import * as styles from '../../RichTextEditor.css'
 
@@ -13,8 +14,8 @@ export type EditorProps = PlateContentProps
 
 const Editor = React.forwardRef<HTMLDivElement, PlateContentProps>(
     ({ className, disabled, readOnly, ...props }, ref) => {
-        const isList = useEditorSelector((editor) => {
-            return isListRoot(editor, editor.children[0])
+        const disablePlaceholder = useEditorSelector((editor) => {
+            return isListRoot(editor, editor.children[0]) || isSelectionAtCodeBlockStart(editor)
         }, [])
 
         return (
@@ -24,7 +25,7 @@ const Editor = React.forwardRef<HTMLDivElement, PlateContentProps>(
                 readOnly={disabled ?? readOnly}
                 aria-disabled={disabled}
                 {...props}
-                placeholder={isList ? '' : props.placeholder}
+                placeholder={disablePlaceholder ? '' : props.placeholder}
             />
         )
     },

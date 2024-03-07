@@ -14,6 +14,7 @@ import { ListToolbarButton } from './ListToolbarButton'
 import { AddLinkModal } from './LinkModal'
 import { MarkToolbarButton } from './MarkToolbarButton'
 import { LinkToolbarButton } from './LinkToolbarButton'
+import { CodeBlockToolbarButton } from './CodeBlockToolbarButton'
 
 type Props = {
     editing?: boolean
@@ -112,6 +113,7 @@ export const PlateToolbar = ({ showFormattingToolbar, focused }: Props) => {
                                     icon="code"
                                     tooltip="Code"
                                 />
+                                <CodeBlockToolbarButton />
                             </Stack>
                         </Box>
                     </MotionBox>

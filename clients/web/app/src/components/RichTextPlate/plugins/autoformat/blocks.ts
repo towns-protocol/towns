@@ -1,9 +1,8 @@
 import { AutoformatRule } from '@udecode/plate-autoformat'
 import { ELEMENT_BLOCKQUOTE } from '@udecode/plate-block-quote'
-import { ELEMENT_CODE_BLOCK, insertEmptyCodeBlock } from '@udecode/plate-code-block'
-import { ELEMENT_DEFAULT } from '@udecode/plate-common'
+import { ELEMENT_CODE_BLOCK } from '@udecode/plate-code-block'
 
-import { preFormat } from './utils'
+import { formatCodeBlock, preFormat } from './utils'
 
 export const autoformatBlocks: AutoformatRule[] = [
     {
@@ -18,11 +17,6 @@ export const autoformatBlocks: AutoformatRule[] = [
         match: '```',
         triggerAtBlockStart: false,
         preFormat,
-        format: (editor) => {
-            insertEmptyCodeBlock(editor, {
-                defaultType: ELEMENT_DEFAULT,
-                insertNodesOptions: { select: true },
-            })
-        },
+        format: formatCodeBlock,
     },
 ]

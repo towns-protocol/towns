@@ -30,6 +30,7 @@ export const link = style([
         color: 'cta2',
     }),
 ])
+
 export const mentionInput = style([
     atoms({
         display: 'inline-block',
@@ -150,6 +151,21 @@ export const code = style([
     },
 ])
 
+export const codeBlock = style([
+    atoms({
+        padding: 'sm',
+        display: 'block',
+        borderRadius: 'xs',
+        background: 'level2',
+        border: 'level4',
+    }),
+    {
+        marginTop: vars.space.sm,
+        marginBottom: vars.space.sm,
+    },
+    code,
+])
+
 export const quote = style({
     marginTop: vars.space.md,
     marginBottom: vars.space.md,
@@ -219,4 +235,8 @@ globalStyle(`${richText} ${ol} ${ol} ${ol}`, {
 
 globalStyle(`${richText} ${ol} ${ol} ${ol} ${ol}`, {
     listStyleType: 'decimal',
+})
+
+globalStyle(`${codeBlock} strong`, {
+    fontWeight: 'bold',
 })

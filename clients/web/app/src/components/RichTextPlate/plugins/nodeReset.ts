@@ -1,10 +1,11 @@
 import { isBlockAboveEmpty, isSelectionAtBlockStart } from '@udecode/plate-common'
 import { ELEMENT_BLOCKQUOTE } from '@udecode/plate-block-quote'
 import { ELEMENT_PARAGRAPH } from '@udecode/plate-paragraph'
+import { ResetNodePluginRule } from '@udecode/plate-reset-node'
 import { ELEMENT_LI, ELEMENT_LIC, ELEMENT_OL, ELEMENT_UL, unwrapList } from '@udecode/plate-list'
+import { exitBreak } from '@udecode/plate-break'
 import {
     ELEMENT_CODE_BLOCK,
-    isCodeBlockEmpty,
     isSelectionAtCodeBlockStart,
     unwrapCodeBlock,
 } from '@udecode/plate-code-block'
@@ -26,7 +27,7 @@ const resetListBlockRule = {
     onReset: unwrapList,
 }
 
-export const nodeResetRules = [
+export const nodeResetRules: ResetNodePluginRule[] = [
     {
         ...resetBlockTypesCommonRule,
         hotkey: 'Enter',
@@ -39,8 +40,18 @@ export const nodeResetRules = [
     },
     {
         ...resetBlockTypesCodeBlockRule,
-        hotkey: 'Enter',
-        predicate: isCodeBlockEmpty,
+        hotkey: ['down', 'shift+enter'],
+        predicate: isBlockAboveEmpty,
+        onReset: (editor) => {
+            editor.deleteBackward('block')
+            exitBreak(editor, {})
+        },
+    },
+    {
+        ...resetBlockTypesCodeBlockRule,
+        hotkey: 'up',
+        predicate: isSelectionAtCodeBlockStart,
+        onReset: (editor) => exitBreak(editor, { before: true }),
     },
     {
         ...resetBlockTypesCodeBlockRule,
