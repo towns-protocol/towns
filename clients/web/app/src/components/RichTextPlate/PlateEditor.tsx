@@ -326,5 +326,3 @@ const PlateEditorWithoutBoundary = ({
         </>
     )
 }
-
-export default RichTextEditor

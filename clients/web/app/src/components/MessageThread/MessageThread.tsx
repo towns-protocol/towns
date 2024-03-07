@@ -16,7 +16,7 @@ import { Link } from 'react-router-dom'
 import { isDefined } from '@river/sdk'
 import { MessageTimeline } from '@components/MessageTimeline/MessageTimeline'
 import { MessageTimelineWrapper } from '@components/MessageTimeline/MessageTimelineContext'
-import { RichTextEditor } from '@components/RichText/RichTextEditor'
+import { RichTextEditor } from '@components/RichTextPlate/PlateEditor'
 import { Box, Paragraph, Stack } from '@ui'
 import { useIsChannelWritable } from 'hooks/useIsChannelWritable'
 import { useSendReply } from 'hooks/useSendReply'
@@ -27,8 +27,6 @@ import { useThrottledValue } from 'hooks/useThrottledValue'
 import { FullScreenMedia } from '@components/FullScreenMedia/FullScreenMedia'
 import { QUERY_PARAMS } from 'routes'
 import { useCreateLink } from 'hooks/useCreateLink'
-import PlateEditor from '@components/RichTextPlate/PlateEditor'
-import { env } from '../../utils'
 
 export const MessageThread = (props: {
     userId: string
@@ -124,8 +122,6 @@ export const MessageThread = (props: {
 
     const { createLink } = useCreateLink()
 
-    const MessageEditor = env.VITE_ENABLE_SLATE_EDITOR || isTouch ? PlateEditor : RichTextEditor
-
     return parentMessage ? (
         <MessageTimelineWrapper
             events={messagesWithParent}
@@ -158,7 +154,7 @@ export const MessageThread = (props: {
                             paddingBottom="md"
                             paddingX={{ default: 'md', touch: 'none' }}
                         >
-                            <MessageEditor
+                            <RichTextEditor
                                 key={`${parentId}-${isChannelWritable ? '' : '-readonly'}`}
                                 editable={!!isChannelWritable}
                                 threadId={parentId}

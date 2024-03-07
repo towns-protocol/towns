@@ -9,7 +9,7 @@ import {
 } from 'use-zion-client'
 import { MessageTimeline } from '@components/MessageTimeline/MessageTimeline'
 import { MessageTimelineWrapper } from '@components/MessageTimeline/MessageTimelineContext'
-import { RichTextEditor } from '@components/RichText/RichTextEditor'
+import { RichTextEditor } from '@components/RichTextPlate/PlateEditor'
 import { Box, Paragraph, Stack } from '@ui'
 import { useIsChannelWritable } from 'hooks/useIsChannelWritable'
 import { useSendReply } from 'hooks/useSendReply'
@@ -19,8 +19,6 @@ import { useDevice } from 'hooks/useDevice'
 import { useAuth } from 'hooks/useAuth'
 import { Panel } from '@components/Panel/Panel'
 import { MediaDropContextProvider } from '@components/MediaDropContext/MediaDropContext'
-import PlateEditor from '@components/RichTextPlate/PlateEditor'
-import { env } from '../../utils'
 
 type Props = {
     messageId: string
@@ -70,8 +68,6 @@ export const MessageThreadPanel = (props: Props) => {
         ? `You don't have permission to send media to this channel`
         : `Loading permissions`
 
-    const MessageEditor = env.VITE_ENABLE_SLATE_EDITOR || isTouch ? PlateEditor : RichTextEditor
-
     return (
         <Panel label={panelLabel} onClose={props.onClose}>
             <MediaDropContextProvider
@@ -110,7 +106,7 @@ export const MessageThreadPanel = (props: Props) => {
                         paddingTop={{ default: 'none', touch: 'none' }}
                         bottom={isTouch ? 'sm' : 'none'}
                     >
-                        <MessageEditor
+                        <RichTextEditor
                             isFullWidthOnTouch
                             key={`${messageId}-${isChannelWritable ? '' : '-readonly'}`}
                             autoFocus={!isTouch}

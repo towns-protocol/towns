@@ -23,7 +23,7 @@ import { FullScreenMedia } from '@components/FullScreenMedia/FullScreenMedia'
 import { MediaDropContextProvider } from '@components/MediaDropContext/MediaDropContext'
 import { MessageTimeline } from '@components/MessageTimeline/MessageTimeline'
 import { MessageTimelineWrapper } from '@components/MessageTimeline/MessageTimelineContext'
-import { RichTextEditor } from '@components/RichText/RichTextEditor'
+import { RichTextEditor } from '@components/RichTextPlate/PlateEditor'
 import { RegisterChannelShortcuts } from '@components/Shortcuts/RegisterChannelShortcuts'
 import { useUserList } from '@components/UserList/UserList'
 import { Box, Button, Stack, Text } from '@ui'
@@ -34,9 +34,7 @@ import { useSpaceChannels } from 'hooks/useSpaceChannels'
 import { QUERY_PARAMS } from 'routes'
 import { notUndefined } from 'ui/utils/utils'
 import { SECOND_MS } from 'data/constants'
-import PlateEditor from '@components/RichTextPlate/PlateEditor'
 import { CentralPanelLayout } from './layouts/CentralPanelLayout'
-import { env } from '../utils'
 
 type Props = {
     onTouchClose?: () => void
@@ -180,10 +178,6 @@ export const SpacesChannelComponent = (props: Props) => {
     const showJoinChannel = myMembership && myMembership !== Membership.Join && !isDmOrGDM
     const showDMAcceptInvitation = myMembership === Membership.Invite && isDmOrGDM
 
-    const MessageEditor =
-        env.VITE_ENABLE_SLATE_EDITOR || isTouch || channel?.label.match(/(spam|slate)$/)
-            ? PlateEditor
-            : RichTextEditor
     return (
         <CentralPanelLayout>
             {!isTouch && <RegisterChannelShortcuts />}
@@ -246,7 +240,7 @@ export const SpacesChannelComponent = (props: Props) => {
                         paddingX={isTouch ? 'none' : 'md'}
                     >
                         {!showDMAcceptInvitation && channel && (
-                            <MessageEditor
+                            <RichTextEditor
                                 isFullWidthOnTouch
                                 editable={!!isChannelWritable}
                                 background={isChannelWritable ? 'level2' : 'level1'}

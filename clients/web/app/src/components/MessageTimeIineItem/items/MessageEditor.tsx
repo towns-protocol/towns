@@ -8,7 +8,7 @@ import {
 } from 'use-zion-client'
 import { createPortal } from 'react-dom'
 import { Box, Stack, useZLayerContext } from '@ui'
-import { RichTextEditor } from '@components/RichText/RichTextEditor'
+import { RichTextEditor } from '@components/RichTextPlate/PlateEditor'
 import { useEditMessage } from 'hooks/useEditMessage'
 import { MessageTimelineContext } from '@components/MessageTimeline/MessageTimelineContext'
 import { useSpaceChannels } from 'hooks/useSpaceChannels'
