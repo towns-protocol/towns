@@ -5,7 +5,12 @@ import { Client } from './client'
 import { EncryptedContent } from './encryptedContentTypes'
 import { shortenHexString, dlog, dlogError, DLogger, check } from '@river/dlog'
 import { isDefined } from './check'
-import { GROUP_ENCRYPTION_ALGORITHM, GroupEncryptionSession, UserDevice } from '@river/encryption'
+import {
+    GROUP_ENCRYPTION_ALGORITHM,
+    GroupEncryptionCrypto,
+    GroupEncryptionSession,
+    UserDevice,
+} from '@river/encryption'
 import { SessionKeys, UserInboxPayload_GroupEncryptionSessions } from '@river/proto'
 import {
     KeySolicitationContent,
@@ -110,6 +115,7 @@ export class DecryptionExtensions {
 
     constructor(
         private client: Client,
+        private crypto: GroupEncryptionCrypto,
         private delegate: EntitlementsDelegate,
         private emitter: TypedEmitter<DecryptionEvents>,
         private userId: string,
@@ -397,7 +403,10 @@ export class DecryptionExtensions {
         const neededKeyIndexs = []
         for (let i = 0; i < session.sessionIds.length; i++) {
             const sessionId = session.sessionIds[i]
-            const hasKeys = await this.client.hasInboundSessionKeys(streamId, sessionId)
+            const hasKeys = await this.crypto.encryptionDevice.hasInboundSessionKeys(
+                streamId,
+                sessionId,
+            )
             if (!hasKeys) {
                 neededKeyIndexs.push(i)
             }
@@ -407,7 +416,7 @@ export class DecryptionExtensions {
             return
         }
         // decrypt the message
-        const cleartext = await this.client.decryptWithDeviceKey(ciphertext, session.senderKey)
+        const cleartext = await this.crypto.decryptWithDeviceKey(ciphertext, session.senderKey)
         const sessionKeys = SessionKeys.fromJsonString(cleartext)
         check(sessionKeys.keys.length === session.sessionIds.length, 'bad sessionKeys')
         // make group sessions
@@ -427,7 +436,7 @@ export class DecryptionExtensions {
             'count: ',
             sessions.length,
         )
-        await this.client.importSessionKeys(streamId, sessions)
+        await this.crypto.importSessionKeys(streamId, sessions)
         // re-enqueue any decryption failures with these ids
         for (const session of sessions) {
             if (this.decryptionFailures[streamId]?.[session.sessionId]) {
@@ -590,9 +599,7 @@ export class DecryptionExtensions {
             return
         }
         const knownSessionIds =
-            (await this.client.cryptoBackend?.encryptionDevice?.getInboundGroupSessionIds(
-                streamId,
-            )) ?? []
+            (await this.crypto.encryptionDevice.getInboundGroupSessionIds(streamId)) ?? []
 
         const isNewDevice = knownSessionIds.length === 0
 
@@ -623,9 +630,7 @@ export class DecryptionExtensions {
         const stream = this.client.stream(streamId)
         check(isDefined(stream), 'stream not found')
         const knownSessionIds =
-            (await this.client.cryptoBackend?.encryptionDevice.getInboundGroupSessionIds(
-                streamId,
-            )) ?? []
+            (await this.crypto.encryptionDevice.getInboundGroupSessionIds(streamId)) ?? []
 
         knownSessionIds.sort()
         const requestedSessionIds = new Set(item.solicitation.sessionIds.sort())
@@ -658,7 +663,7 @@ export class DecryptionExtensions {
         }
         const sessions: GroupEncryptionSession[] = []
         for (const sessionId of replySessionIds) {
-            const groupSession = await this.client.encryptionDevice.exportInboundGroupSession(
+            const groupSession = await this.crypto.encryptionDevice.exportInboundGroupSession(
                 streamId,
                 sessionId,
             )

@@ -1576,6 +1576,7 @@ export class Client
         this.cryptoBackend = crypto
         this.decryptionExtensions = new DecryptionExtensions(
             this,
+            crypto,
             this.entitlementsDelegate,
             this,
             this.userId,
@@ -1647,19 +1648,6 @@ export class Client
     }
 
     /**
-     * Decrypt a Inbox message using river's decryption algorithm.
-     *
-     */
-    public async decryptWithDeviceKey(
-        ciphertext: string,
-        senderDeviceKey: string,
-    ): Promise<string> {
-        if (!this.cryptoBackend) {
-            throw new Error('crypto backend not initialized')
-        }
-        return this.cryptoBackend.decryptWithDeviceKey(ciphertext, senderDeviceKey)
-    }
-    /**
      * decrypts and updates the decrypted event
      */
     public async decryptGroupEvent(
@@ -1697,20 +1685,6 @@ export class Client
 
         await this.persistenceStore.saveCleartext(eventId, cleartext)
         return cleartext
-    }
-
-    public hasInboundSessionKeys(streamId: string, sessionId: string): Promise<boolean> {
-        return this.cryptoBackend?.encryptionDevice?.hasInboundSessionKeys(
-            streamId,
-            sessionId,
-        ) as Promise<boolean>
-    }
-
-    public async importSessionKeys(
-        streamId: string,
-        keys: GroupEncryptionSession[],
-    ): Promise<void> {
-        return this.cryptoBackend?.importSessionKeys(streamId, keys)
     }
 
     public async encryptAndShareGroupSessions(

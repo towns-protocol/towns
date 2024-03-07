@@ -93,7 +93,10 @@ describe('outboundSessionTests', () => {
         expect(encryptedChannel1_1.sessionId).toEqual(encryptedChannel1_2.sessionId)
         expect(encryptedChannel1_1.sessionId).not.toEqual(encryptedChannel2_1.sessionId)
 
-        const x = bobsClient.hasInboundSessionKeys(channelId1, encryptedChannel1_1.sessionId)
+        const x = bobsClient.cryptoBackend?.encryptionDevice.hasInboundSessionKeys(
+            channelId1,
+            encryptedChannel1_1.sessionId,
+        )
         expect(x).toBeDefined()
     })
 })
