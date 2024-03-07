@@ -17,11 +17,11 @@ import { useDevice } from 'hooks/useDevice'
 import { Box, BoxProps, Stack } from '@ui'
 import { ErrorBoundary } from '@components/ErrorBoundary/ErrorBoundary'
 import { useMediaDropContext } from '@components/MediaDropContext/MediaDropContext'
-import { toMD } from '@components/RichTextPlate/utils/toMD'
 import { EmbeddedMessagePreview } from '@components/EmbeddedMessageAttachement/EmbeddedMessagePreview'
 import { notUndefined } from 'ui/utils/utils'
 import { SpaceProtocol, useEnvironment } from 'hooks/useEnvironmnet'
 import { getPrettyDisplayName } from 'utils/getPrettyDisplayName'
+import { toMD } from './utils/toMD'
 import { EditorFallback } from './components/EditorFallback'
 import { MentionCombobox } from './components/plate-ui/MentionCombobox'
 import { Editor } from './components/plate-ui/Editor'
@@ -32,6 +32,7 @@ import { SendMarkdownPlugin } from './components/SendMarkdownPlugin'
 import PlatePlugins from './plugins'
 import { ELEMENT_MENTION_CHANNEL } from './plugins/createChannelPlugin'
 import { EmojiPlugin } from './plugins/emoji/EmojiPlugin'
+import { OnFocusPlugin } from './plugins/OnFocusPlugin'
 import { PasteFilePlugin } from './components/PasteFilePlugin'
 import { CaptureTownsLinkPlugin } from './components/CaptureTownsLinkPlugin'
 
@@ -129,7 +130,6 @@ const PlateEditorWithoutBoundary = ({
             .filter(notUndefined)
     }, [props.channels])
 
-    // eslint-disable-next-line @typescript-eslint/no-unused-vars
     const onFocusChange = useCallback(
         (focus: boolean) => {
             setFocused(focus)
@@ -146,7 +146,6 @@ const PlateEditorWithoutBoundary = ({
         [embeddedMessageAttachments],
     )
 
-    // eslint-disable-next-line @typescript-eslint/no-unused-vars
     const onMessageLinksUpdated = useCallback((links: EmbeddedMessageAttachment[]) => {
         setEmbeddedMessageAttachments(links)
     }, [])
@@ -264,6 +263,7 @@ const PlateEditorWithoutBoundary = ({
 
                             <Box paddingX="md" ref={editableContainerRef}>
                                 <Editor
+                                    autoFocus={props.autoFocus}
                                     tabIndex={tabIndex}
                                     placeholder={placeholder}
                                     renderPlaceholder={RichTextPlaceholder}
@@ -272,6 +272,10 @@ const PlateEditorWithoutBoundary = ({
                                 />
                             </Box>
 
+                            <OnFocusPlugin
+                                autoFocus={props.autoFocus}
+                                onFocusChange={onFocusChange}
+                            />
                             <CaptureTownsLinkPlugin onUpdate={onMessageLinksUpdated} />
                             <EmojiPlugin />
                             <MentionCombobox<RoomMember> id="users" items={userMentions} />
