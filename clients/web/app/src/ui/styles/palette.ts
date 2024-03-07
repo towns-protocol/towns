@@ -16,8 +16,8 @@ export const Figma = {
         Readability: 'hsl(255, 33%, 98.5%)',
         ReadabilityHover: 'hsl(255, 33%, 95%)',
 
-        // Hover1: 'hsla(264, 6%, 17%,0.04)',
         TransparentHover: 'hsla(264, 6%, 17%,0.20)',
+        LightTransparentHover: 'hsla(255, 100%, 17% , 4%)',
 
         Primary: 'hsl(260, 5%, 8%)',
         Secondary: 'hsl(264, 5%, 18%)',
@@ -39,9 +39,10 @@ export const Figma = {
 
         Readability: 'hsl(255 9% 11%)',
         ReadabilityHover: 'hsl(255 9% 13%)',
-        // Hover1: 'hsla(255, 100%, 94% , 0.1)',
+
         TransparentHover: 'hsla(255, 100%, 94% , 0.2)',
-        //
+        LightTransparentHover: 'hsla(255, 100%, 94% , 4%)',
+
         Primary: 'hsla(0, 0%, 92%, 1)',
         Secondary: 'hsla(254, 14%, 82%, 1)',
         Tertiary: 'hsla(258, 4%, 55%, 1)',

@@ -1,14 +1,17 @@
-import React from 'react'
-import { AnimatePresence } from 'framer-motion'
+import React, { useCallback, useEffect, useMemo, useState } from 'react'
 import { Address, useGetRootKeyFromLinkedWallet } from 'use-zion-client'
-import { FetchedTokenAvatar } from '@components/Tokens/FetchedTokenAvatar'
+import { useEvent } from 'react-use-event-hook'
 import { InteractiveTownsToken } from '@components/TownsToken/InteractiveTownsToken'
 import { ImageVariants, useImageSource } from '@components/UploadImage/useImageSource'
-import { Box, Heading, Paragraph, Stack, Text } from '@ui'
+import { Box, Button, Heading, Icon, IconButton, MotionStack, Paragraph, Stack, Text } from '@ui'
 import { useDevice } from 'hooks/useDevice'
 import { AvatarTextHorizontal } from '@components/Avatar/AvatarTextHorizontal'
-import { FadeInBox } from '@components/Transitions'
 import { useEnvironment } from 'hooks/useEnvironmnet'
+import { baseScanUrl } from '@components/Web3/utils'
+import { vars } from 'ui/styles/vars.css'
+import { ToneName } from 'ui/styles/themes'
+import { getInviteUrl } from 'ui/utils/utils'
+import useCopyToClipboard from 'hooks/useCopyToClipboard'
 import { useReadableMembershipInfo } from './useReadableMembershipInfo'
 
 type TownPageLayoutProps = {
@@ -26,6 +29,33 @@ export const TownPageLayout = (props: TownPageLayoutProps) => {
     const { address, bio, name, networkId, owner } = props
     const { chainId } = useEnvironment()
     const { data: userId } = useGetRootKeyFromLinkedWallet({ walletAddress: owner, chainId })
+    const [copiedLink, setCopiedLink] = useState(false)
+    const [, copy] = useCopyToClipboard()
+
+    useEffect(() => {
+        if (copiedLink) {
+            const timeout = setTimeout(() => {
+                setCopiedLink(false)
+            }, 1000)
+            return () => {
+                clearTimeout(timeout)
+            }
+        }
+    }, [copiedLink])
+
+    const onCopyInviteLink = useCallback(
+        (e: React.MouseEvent) => {
+            e.preventDefault()
+
+            const inviteUrl = getInviteUrl(networkId)
+            const asyncCopy = async () => {
+                const copied = await copy(inviteUrl)
+                setCopiedLink(copied)
+            }
+            asyncCopy()
+        },
+        [networkId, copy],
+    )
 
     const { isTouch } = useDevice()
 
@@ -46,183 +76,284 @@ export const TownPageLayout = (props: TownPageLayoutProps) => {
 
     return (
         <>
-            <Box scroll overflowY="scroll" height="100vh">
+            <Stack alignItems="center">
                 {props.headerContent}
-                <Stack grow alignItems="center">
-                    <Stack centerContent height="100%">
-                        <Stack
-                            minHeight="600"
-                            paddingX="lg"
-                            paddingTop="x8"
-                            paddingBottom="x4"
-                            width="100vw"
-                            gap="x4"
-                            direction={{ mobile: 'columnReverse', default: 'row' }}
-                            position="relative"
-                            maxWidth="1200"
-                            pointerEvents="all"
-                        >
-                            <Stack grow>
-                                <Stack gap="x8">
-                                    {/* header */}
-                                    <Stack gap="lg">
-                                        <Heading level={1}>{name}</Heading>
-                                        <Box>
-                                            {userId && (
-                                                <AvatarTextHorizontal
-                                                    userId={userId}
-                                                    abstractAccountaddress={owner as Address}
-                                                    prepend={<Text>By </Text>}
-                                                />
-                                            )}
-                                        </Box>
-                                    </Stack>
-
-                                    <Stack gap="lg">
-                                        {/* requirements */}
-                                        <Box
-                                            gap="lg"
-                                            direction={{ default: 'row', mobile: 'column' }}
-                                        >
-                                            <AnimatePresence mode="popLayout">
-                                                {/* requirements */}
-                                                {isTokensGatingMembershipLoading ? (
-                                                    <FadeInBox
-                                                        horizontal
-                                                        centerContent
-                                                        gap="sm"
-                                                        key="requirements-loading"
-                                                    >
-                                                        <Text>loading</Text>
-                                                    </FadeInBox>
-                                                ) : anyoneCanJoin ? (
-                                                    <FadeInBox
-                                                        horizontal
-                                                        centerContent
-                                                        gap="sm"
-                                                        key="requirements-anoyone"
-                                                    >
-                                                        <Text>For</Text>
-                                                        <Text strong display="inline">
-                                                            Anyone
-                                                        </Text>
-                                                    </FadeInBox>
-                                                ) : (
-                                                    <FadeInBox
-                                                        horizontal
-                                                        centerContent
-                                                        gap="sm"
-                                                        key="requirements-token"
-                                                    >
-                                                        <Text>You will Need</Text>
-                                                        <Box
-                                                            horizontal
-                                                            display="inline-flex"
-                                                            gap="sm"
-                                                        >
-                                                            {tokens.map((token) => (
-                                                                <FetchedTokenAvatar
-                                                                    noLabel
-                                                                    key={
-                                                                        token.contractAddress as string
-                                                                    }
-                                                                    address={
-                                                                        token.contractAddress as string
-                                                                    }
-                                                                    tokenIds={
-                                                                        token.tokenIds as number[]
-                                                                    }
-                                                                    size="avatar_x4"
-                                                                    labelProps={{
-                                                                        size: 'md',
-                                                                    }}
-                                                                    layoutProps={{
-                                                                        horizontal: true,
-                                                                        maxWidth: 'auto',
-                                                                    }}
-                                                                />
-                                                            ))}
-                                                        </Box>
-                                                    </FadeInBox>
-                                                )}
-                                            </AnimatePresence>
-
-                                            {/* dot */}
-                                            <Box
-                                                rounded="full"
-                                                display={{ default: 'block', mobile: 'none' }}
-                                                alignSelf="center"
-                                                width="x1"
-                                                height="x1"
-                                                background="inverted"
-                                            />
-
-                                            {/* cost */}
-                                            <Box horizontal centerContent gap="md">
-                                                <Text>Cost</Text>
-                                                <Text strong display="inline">
-                                                    {membershipInfo?.price}
-                                                </Text>
-                                            </Box>
-                                        </Box>
-                                        <Box gap="x8">
-                                            {bio && (
-                                                <Box>
-                                                    <Paragraph size="lg">{bio}</Paragraph>
-                                                </Box>
-                                            )}
-                                            {props.activityContent}
-                                        </Box>
-                                    </Stack>
-                                </Stack>
-                            </Stack>
-                            {/* right column */}
-                            <Stack>
-                                <Box
-                                    justifyContent={{ default: 'start', mobile: 'center' }}
-                                    insetRight={{ default: 'xs', mobile: 'none' }}
-                                    insetTop={{ default: 'none', mobile: 'lg' }}
-                                >
-                                    <InteractiveTownsToken
-                                        key={imageSrc}
-                                        size={isTouch ? 'lg' : 'xl'}
-                                        address={address}
-                                        imageSrc={imageSrc ?? undefined}
-                                        spaceName={name}
-                                    />
-                                </Box>
-                            </Stack>
+                <Stack
+                    minHeight="600"
+                    paddingX="lg"
+                    paddingBottom="x4"
+                    width="100vw"
+                    position="relative"
+                    maxWidth={isTouch ? '100%' : '1200'}
+                    direction={{ mobile: isTouch ? undefined : 'columnReverse', default: 'row' }}
+                    pointerEvents="all"
+                    gap="md"
+                    overflowX="hidden"
+                    paddingTop="lg"
+                >
+                    <Stack gap="lg" width="100%">
+                        <Stack horizontal alignContent="start" gap="sm">
+                            {isTouch && (
+                                <InteractiveTownsToken
+                                    key={imageSrc}
+                                    size="sm"
+                                    address={address}
+                                    imageSrc={imageSrc ?? undefined}
+                                    spaceName={name}
+                                />
+                            )}
+                            <Header name={name} owner={owner} userId={userId} spaceId={networkId} />
+                        </Stack>
+                        <InformationBoxes
+                            imageSrc={imageSrc}
+                            price={membershipInfo?.price}
+                            duration={0}
+                            address={address}
+                            chainId={chainId}
+                            anyoneCanJoin={anyoneCanJoin}
+                            isTokensGatingMembershipLoading={isTokensGatingMembershipLoading}
+                            tokens={tokens}
+                        />
+                        <Bio bio={bio} />
+                        <Stack gap="lg">
+                            <Box gap="x8">{props.activityContent}</Box>
                         </Stack>
                     </Stack>
+                    {/* right column */}
+                    {!isTouch && (
+                        <Stack gap="lg" alignItems="center">
+                            <InteractiveTownsToken
+                                key={imageSrc}
+                                size={isTouch ? 'lg' : 'xl'}
+                                address={address}
+                                imageSrc={imageSrc ?? undefined}
+                                spaceName={name}
+                            />
+
+                            <Box tooltip="Copy link">
+                                <Button
+                                    size="button_md"
+                                    width="300"
+                                    tone="lightHover"
+                                    color="default"
+                                    onClick={onCopyInviteLink}
+                                >
+                                    {copiedLink ? (
+                                        'Link copied'
+                                    ) : (
+                                        <>
+                                            <Icon type="share" />
+                                            Share Link
+                                        </>
+                                    )}
+                                </Button>
+                            </Box>
+                        </Stack>
+                    )}
+
                     <Box height="x12" />
                 </Stack>
-            </Box>
+            </Stack>
             {props.bottomContent && (
                 <Stack horizontal centerContent>
                     {props.bottomContent}
                 </Stack>
             )}
-            {/* 
-            // Note: I don't think we will need a sheet - but I'm leaving this here to quickly add when we have real content
-            <Sheet
-                className={modalSheetClass}
-                isOpen={isSheetOpen}
-                detent="content-height"
-                mountPoint={mountPoint}
-                onClose={() => setIsSheetOpen(false)}
-            >
-                <Sheet.Container>
-                    <Sheet.Header />
-                    <Sheet.Content>
-                        <Box padding>
-                            <Heading level={3} textAlign="center">
-                                About
-                            </Heading>
-                            <Paragraph>{bio}</Paragraph>
-                        </Box>
-                    </Sheet.Content>
-                </Sheet.Container>
-            </Sheet> */}
         </>
+    )
+}
+
+const Header = (props: { spaceId?: string; name?: string; owner?: string; userId?: string }) => {
+    const { name, owner, userId, spaceId } = props
+    const { isTouch } = useDevice()
+
+    const onTouchSharePressed = useEvent(async () => {
+        if (!spaceId) {
+            return
+        }
+        const url = getInviteUrl(spaceId)
+        try {
+            await navigator.share({ title: name, url: url })
+        } catch (_) {} // eslint-disable-line no-empty
+    })
+
+    return (
+        <Stack gap="lg" paddingY="lg" width="100%">
+            <Heading level={2} style={{ textTransform: 'none' }}>
+                {name}
+            </Heading>
+            {/* <Box grow /> */}
+            <Stack horizontal>
+                {userId && (
+                    <AvatarTextHorizontal
+                        userId={userId}
+                        abstractAccountaddress={owner as Address}
+                        prepend={<Text color="gray1">By </Text>}
+                    />
+                )}
+                {isTouch && (
+                    <>
+                        <Box grow />
+                        <IconButton
+                            centerContent
+                            icon="share"
+                            background="lightHover"
+                            color="default"
+                            aspectRatio="1/1"
+                            onClick={onTouchSharePressed}
+                        />
+                    </>
+                )}
+            </Stack>
+        </Stack>
+    )
+}
+
+const InformationBoxes = (props: {
+    imageSrc?: string
+    price?: string | number
+    duration?: number
+    address?: `0x${string}`
+    openSeaLink?: string
+    chainId: number
+    anyoneCanJoin: boolean
+    isTokensGatingMembershipLoading: boolean
+    tokens?: { contractAddress: string; tokenIds: number[] }[]
+}) => {
+    const { openSeaLink, price, address, chainId } = props
+    const onAddressClick = useEvent(() => {
+        window.open(`${baseScanUrl(chainId)}/address/${address}`, '_blank', 'noopener,noreferrer')
+    })
+
+    const onOpenSeaClick = useEvent(() => {
+        if (!openSeaLink) {
+            return
+        }
+        window.open(openSeaLink, '_blank', 'noopener,noreferrer')
+    })
+
+    return (
+        <MotionStack
+            horizontal
+            gap="sm"
+            height="x12"
+            minHeight="x12"
+            alignItems="center"
+            shrink={false}
+        >
+            {price && (
+                <InformationBox
+                    key="a"
+                    title="Cost"
+                    centerContent={
+                        <Text style={{ fontSize: '24px' }} fontWeight="strong">
+                            {price}
+                        </Text>
+                    }
+                    subtitle="ETH"
+                />
+            )}
+
+            {address && (
+                <InformationBox
+                    key="c"
+                    title="Explore"
+                    centerContent={<Icon type="etherscan" />}
+                    subtitle="Etherscan"
+                    onClick={onAddressClick}
+                />
+            )}
+
+            {openSeaLink && (
+                <InformationBox
+                    key="d"
+                    title="View"
+                    centerContent={<Icon type="openSeaPlain" />}
+                    subtitle="OpenSea"
+                    onClick={onOpenSeaClick}
+                />
+            )}
+
+            <Box width="x2" shrink={false} />
+        </MotionStack>
+    )
+}
+
+const InformationBox = (props: {
+    title: string
+    centerContent: React.ReactNode
+    subtitle: string
+    onClick?: () => void
+}) => {
+    const [isHovered, setIsHovered] = useState(false)
+    const onPointerEnter = useEvent(() => {
+        setIsHovered(true)
+    })
+    const onPointerLeave = useEvent(() => {
+        setIsHovered(false)
+    })
+    return (
+        <MotionStack
+            centerContent
+            rounded="md"
+            height="x12"
+            width="x12"
+            shrink={false}
+            background={isHovered ? 'hover' : 'lightHover'}
+            cursor={props.onClick ? 'pointer' : undefined}
+            layout="position"
+            onPointerEnter={onPointerEnter}
+            onPointerLeave={onPointerLeave}
+            onClick={props.onClick}
+        >
+            <Box centerContent height="x4">
+                <Text size="sm" color="gray2">
+                    {props.title}
+                </Text>
+            </Box>
+            <Box centerContent height="x3">
+                {props.centerContent}
+            </Box>
+            <Box centerContent height="x4">
+                <Text size="sm" color="gray2">
+                    {props.subtitle}
+                </Text>
+            </Box>
+        </MotionStack>
+    )
+}
+
+const MAX_LENGTH = 100
+const Bio = (props: { bio?: string }) => {
+    const { bio = '' } = props
+    const { isTouch } = useDevice()
+    const [isExpanded, setIsExpanded] = useState<boolean>(false)
+    const shortenedBio = useMemo(() => {
+        if (isExpanded) {
+            return bio
+        }
+
+        return bio.slice(0, MAX_LENGTH) + '…'
+    }, [bio, isExpanded])
+
+    const canExpand = bio && bio.length > MAX_LENGTH && !isExpanded
+
+    return bio ? (
+        <Box maxWidth={isTouch ? undefined : '75%'}>
+            <Paragraph size="lg">
+                {shortenedBio}
+                {canExpand && (
+                    <span
+                        style={{ color: vars.color.tone[ToneName.Accent], cursor: 'pointer' }}
+                        onClick={() => setIsExpanded(true)}
+                    >
+                        {' '}
+                        more
+                    </span>
+                )}
+            </Paragraph>
+        </Box>
+    ) : (
+        <></>
     )
 }

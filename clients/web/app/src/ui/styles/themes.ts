@@ -53,6 +53,7 @@ const light = (() => {
         readability: Figma.LightMode.Readability,
         readabilityHover: Figma.LightMode.ReadabilityHover,
         hover: Figma.LightMode.TransparentHover,
+        lightHover: Figma.LightMode.LightTransparentHover,
         inverted: Figma.LightMode.Primary,
     } as const
 
@@ -98,6 +99,7 @@ const dark = (() => {
         readability: Figma.DarkMode.Readability,
         readabilityHover: Figma.DarkMode.ReadabilityHover,
         hover: Figma.DarkMode.TransparentHover,
+        lightHover: Figma.DarkMode.LightTransparentHover,
         inverted: Figma.DarkMode.Primary,
     } as const
 

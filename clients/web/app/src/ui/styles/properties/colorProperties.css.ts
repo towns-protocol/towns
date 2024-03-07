@@ -179,6 +179,12 @@ export const colorProperties = defineProperties({
                     '--background': vars.color.background.hover,
                 },
             },
+            lightHover: {
+                background: vars.color.background.lightHover,
+                vars: {
+                    '--background': vars.color.background.lightHover,
+                },
+            },
             inverted: {
                 background: vars.color.background.inverted,
                 color: vars.color.text.inverted,

@@ -15,17 +15,27 @@ export function AvatarTextHorizontal({ abstractAccountaddress, name, prepend, us
     return (
         <Stack horizontal gap="sm" alignItems="center">
             {prepend}
-            <Avatar userId={userId} size="avatar_sm" insetY="xs" />
-            {name && (
-                <Text strong size="lg">
-                    {name}
-                </Text>
-            )}
-            {abstractAccountaddress && (
-                <Text size="lg" color="gray2">
-                    {shortAddress(abstractAccountaddress)}
-                </Text>
-            )}
+            <Stack
+                horizontal
+                alignItems="center"
+                gap="sm"
+                padding="xs"
+                rounded="full"
+                paddingRight="sm"
+                background="lightHover"
+            >
+                <Avatar userId={userId} size="avatar_sm" />
+                {name && (
+                    <Text strong size="md">
+                        {name}
+                    </Text>
+                )}
+                {abstractAccountaddress && (
+                    <Text size="md" color="default" fontWeight="medium">
+                        {shortAddress(abstractAccountaddress)}
+                    </Text>
+                )}
+            </Stack>
         </Stack>
     )
 }

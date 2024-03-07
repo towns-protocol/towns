@@ -54,20 +54,40 @@ export const Activity = (props: { townId: string }) => {
     }, [channelStats, townStats])
 
     const { isTouch } = useDevice()
+    const maxMembers = isTouch ? 7 : 10
 
     return (
         <AnimatePresence>
-            {!!members && (
+            {!!members && members.length > 0 && (
                 <FadeInBox
                     horizontal
-                    gap="sm"
-                    style={{ flexWrap: 'wrap' }}
+                    gap="md"
                     maxWidth={{ mobile: '100%', default: '600' }}
                     key="members"
                 >
-                    {members.map((m) => (
-                        <AvatarWithoutDot key={m} userId={m} size="avatar_x4" />
-                    ))}
+                    <Stack gap="md">
+                        <Text strong size="lg">
+                            {members.length} {members.length === 1 ? 'Member' : 'Members'}
+                        </Text>
+                        <Stack horizontal gap="sm">
+                            {members.slice(0, maxMembers).map((m) => (
+                                <AvatarWithoutDot key={m} userId={m} size="avatar_x4" />
+                            ))}
+                            {members.length > maxMembers && (
+                                <Box
+                                    centerContent
+                                    width="x4"
+                                    height="x4"
+                                    background="hover"
+                                    rounded="full"
+                                >
+                                    <Text strong size="xs" color="default">
+                                        +{members.length - maxMembers}
+                                    </Text>
+                                </Box>
+                            )}
+                        </Stack>
+                    </Stack>
                 </FadeInBox>
             )}
 
