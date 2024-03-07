@@ -30,14 +30,14 @@ export interface EntitlementsDelegate {
 }
 
 export enum DecryptionStatus {
-    initializing,
-    updating,
-    processingNewGroupSessions,
-    decryptingEvents,
-    retryingDecryption,
-    requestingKeys,
-    respondingToKeyRequests,
-    idle,
+    initializing = 'initializing',
+    updating = 'updating',
+    processingNewGroupSessions = 'processingNewGroupSessions',
+    decryptingEvents = 'decryptingEvents',
+    retryingDecryption = 'retryingDecryption',
+    requestingKeys = 'requestingKeys',
+    respondingToKeyRequests = 'respondingToKeyRequests',
+    idle = 'idle',
 }
 
 export type DecryptionEvents = {
@@ -261,7 +261,7 @@ export class DecryptionExtensions {
 
     private setStatus(status: DecryptionStatus) {
         if (this.status !== status) {
-            this.log.info(`status changed ${DecryptionStatus[status]}`)
+            this.log.info(`status changed ${status}`)
             this.status = status
             this.emitter.emit('decryptionExtStatusChanged', status)
         }
