@@ -1,68 +1,50 @@
 import { EncryptedData } from '@river/proto'
 
 interface ChannelPayload {
-    Payload: {
-        ChannelPayload: {
-            Content: {
-                Message: Message
-            }
-        }
+    channelPayload: {
+        message: Message
     }
 }
 
 interface DmChannelPayload {
-    Payload: {
-        DmChannelPayload: {
-            Content: {
-                Message: Message
-            }
-        }
+    dmChannelPayload: {
+        message: Message
     }
 }
 
 interface GdmChannelPayload {
-    Payload: {
-        GdmChannelPayload: {
-            Content: {
-                Message: Message
-            }
-        }
+    gdmChannelPayload: {
+        message: Message
     }
 }
 
 interface Message {
     algorithm?: string
     ciphertext?: string
-    sender_key?: string
-    session_id?: string
+    senderKey?: string
+    sessionId?: string
 }
 
 export function getEncryptedData(data: unknown): EncryptedData {
     let message: Message | undefined
 
     if (hasChannelPayloadData(data)) {
-        console.log('sw:push hasChannelPayloadData', data.Payload.ChannelPayload.Content.Message)
-        message = data.Payload.ChannelPayload.Content.Message
+        console.log('sw:push hasChannelPayloadData', data.channelPayload.message)
+        message = data.channelPayload.message
     } else if (hasDmChannelPayloadData(data)) {
-        console.log(
-            'sw:push hasDmChannelPayloadData',
-            data.Payload.DmChannelPayload.Content.Message,
-        )
-        message = data.Payload.DmChannelPayload.Content.Message
+        console.log('sw:push hasDmChannelPayloadData', data.dmChannelPayload.message)
+        message = data.dmChannelPayload.message
     } else if (hasGdmChannelPayloadData(data)) {
-        console.log(
-            'sw:push hasGdmChannelPayloadData',
-            data.Payload.GdmChannelPayload.Content.Message,
-        )
-        message = data.Payload.GdmChannelPayload.Content.Message
+        console.log('sw:push hasGdmChannelPayloadData', data.gdmChannelPayload.message)
+        message = data.gdmChannelPayload.message
     }
 
     if (hasEncryptedData(message)) {
         return new EncryptedData({
             algorithm: message.algorithm,
-            senderKey: message.sender_key,
+            senderKey: message.senderKey,
             ciphertext: message.ciphertext,
-            sessionId: message.session_id,
+            sessionId: message.sessionId,
         })
     }
 
@@ -74,14 +56,14 @@ export function hasEncryptedData(data: unknown): data is Message {
         const encryptedData = data as {
             algorithm?: unknown
             ciphertext?: unknown
-            sender_key?: unknown
-            session_id?: unknown
+            senderKey?: unknown
+            sessionId?: unknown
         }
         return (
             typeof encryptedData.algorithm === 'string' &&
             typeof encryptedData.ciphertext === 'string' &&
-            typeof encryptedData.sender_key === 'string' &&
-            typeof encryptedData.session_id === 'string'
+            typeof encryptedData.senderKey === 'string' &&
+            typeof encryptedData.sessionId === 'string'
         )
     }
     return false
@@ -92,20 +74,20 @@ export function hasChannelPayloadData(data: unknown): data is ChannelPayload {
         data !== undefined &&
         typeof data === 'object' &&
         typeof (data as ChannelPayload) === 'object' &&
-        hasEncryptedData((data as ChannelPayload).Payload?.ChannelPayload?.Content?.Message)
+        hasEncryptedData((data as ChannelPayload).channelPayload?.message)
     )
 }
 
 export function hasDmChannelPayloadData(data: unknown): data is DmChannelPayload {
     console.log(
         'sw:push hasDmChannelPayloadData.hasEncryptedData',
-        hasEncryptedData((data as DmChannelPayload).Payload?.DmChannelPayload?.Content?.Message),
+        hasEncryptedData((data as DmChannelPayload).dmChannelPayload?.message),
     )
     return (
         data !== undefined &&
         typeof data === 'object' &&
-        typeof (data as DmChannelPayload).Payload?.DmChannelPayload?.Content === 'object' &&
-        hasEncryptedData((data as DmChannelPayload).Payload?.DmChannelPayload?.Content?.Message)
+        typeof (data as DmChannelPayload).dmChannelPayload?.message === 'object' &&
+        hasEncryptedData((data as DmChannelPayload).dmChannelPayload?.message)
     )
 }
 
@@ -113,7 +95,7 @@ export function hasGdmChannelPayloadData(data: unknown): data is GdmChannelPaylo
     return (
         data !== undefined &&
         typeof data === 'object' &&
-        typeof (data as GdmChannelPayload).Payload?.GdmChannelPayload?.Content === 'object' &&
-        hasEncryptedData((data as GdmChannelPayload).Payload?.GdmChannelPayload?.Content?.Message)
+        typeof (data as GdmChannelPayload).gdmChannelPayload?.message === 'object' &&
+        hasEncryptedData((data as GdmChannelPayload).gdmChannelPayload?.message)
     )
 }
