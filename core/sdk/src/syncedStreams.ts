@@ -645,7 +645,7 @@ export class SyncedStreams {
 
     private sendKeepAlivePings() {
         // periodically ping the server to keep the connection alive
-        this.pingInfo.pingInterval = setInterval(() => {
+        this.pingInfo.pingInterval = setTimeout(() => {
             const ping = async () => {
                 if (this.syncState === SyncState.Syncing && this.syncId) {
                     const n = nanoid()
@@ -667,7 +667,7 @@ export class SyncedStreams {
             ping().catch((err) => {
                 this.interruptSync?.(err)
             })
-        }, 8 * 1000 * 60) // every 8 minutes
+        }, 5 * 1000 * 60) // every 5 minutes
     }
 
     private stopPing() {
