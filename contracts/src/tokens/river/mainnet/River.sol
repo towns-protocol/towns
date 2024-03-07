@@ -15,7 +15,7 @@ import {Nonces} from "@openzeppelin/contracts/utils/Nonces.sol";
 
 import {ERC20} from "@openzeppelin/contracts/token/ERC20/ERC20.sol";
 import {ERC20Permit} from "@openzeppelin/contracts/token/ERC20/extensions/ERC20Permit.sol";
-import {Votes} from "@openzeppelin/contracts/governance/utils/Votes.sol";
+import {ERC20Votes} from "@openzeppelin/contracts/token/ERC20/extensions/ERC20Votes.sol";
 import {Ownable} from "@openzeppelin/contracts/access/Ownable.sol";
 
 import {VotesEnumerable} from "contracts/src/diamond/facets/governance/votes/enumerable/VotesEnumerable.sol";
@@ -26,7 +26,7 @@ contract River is
   IRiver,
   Ownable,
   ERC20Permit,
-  Votes,
+  ERC20Votes,
   VotesEnumerable,
   LockFacet,
   IntrospectionFacet
@@ -126,21 +126,12 @@ contract River is
     address from,
     address to,
     uint256 value
-  ) internal virtual override {
+  ) internal virtual override(ERC20, ERC20Votes) {
     if (from != address(0) && _lockEnabled(from)) {
       // allow transfering at minting time
       revert River__TransferLockEnabled();
     }
-
     super._update(from, to, value);
-
-    _transferVotingUnits(from, to, value);
-  }
-
-  function _getVotingUnits(
-    address account
-  ) internal view override returns (uint256) {
-    return balanceOf(account);
   }
 
   /// @dev Hook that gets called before any external enable and disable lock function
@@ -177,6 +168,20 @@ contract River is
   /// @dev Do not allow disabling lock without delegating
   function disableLock(address account) external override onlyAllowed {}
 
+  /// @notice Clock used for flagging checkpoints, overriden to implement timestamp based
+  /// checkpoints (and voting).
+  function clock() public view override returns (uint48) {
+    return uint48(block.timestamp);
+  }
+
+  /// @notice Machine-readable description of the clock as specified in EIP-6372.
+  function CLOCK_MODE() public pure override returns (string memory) {
+    return "mode=timestamp";
+  }
+
+  /// @notice Returns the current nonce for `owner`. This value must be
+  /// included whenever a signature is generated for {permit}.
+  /// @param owner The account to query the nonce for.
   function nonces(
     address owner
   ) public view virtual override(ERC20Permit, Nonces) returns (uint256) {
