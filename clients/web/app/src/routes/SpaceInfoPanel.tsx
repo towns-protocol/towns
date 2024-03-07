@@ -160,7 +160,7 @@ export const SpaceInfoPanel = () => {
         if (!space) {
             return
         }
-        const url = getInviteUrl(space.id)
+        const url = getInviteUrl({ spaceId: space.id })
         try {
             await navigator.share({ title: space.name, url: url })
         } catch (_) {} // eslint-disable-line no-empty

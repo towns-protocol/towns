@@ -112,7 +112,7 @@ export const PublicTownPage = () => {
                             }
                         />
                     }
-                    networkId={spaceInfo.networkId}
+                    spaceId={spaceInfo.networkId}
                     address={isAddress(spaceInfo.address) ? spaceInfo.address : undefined}
                     name={spaceInfo.name}
                     owner={isAddress(spaceInfo.owner) ? spaceInfo.owner : undefined}

@@ -16,7 +16,7 @@ export const SpaceOwnerLanding = () => {
     const space = useSpaceData()
     const [, copy] = useCopyToClipboard()
     const [copyWasClicked, setCopyWasClicked] = React.useState(false)
-    const inviteUrl = getInviteUrl(space?.id)
+    const inviteUrl = getInviteUrl({ spaceId: space?.id })
     const [modal, setModal] = useState(false)
 
     const onHide = useEvent(() => {

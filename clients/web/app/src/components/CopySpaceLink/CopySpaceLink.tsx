@@ -1,19 +1,24 @@
 import React, { useCallback, useEffect, useRef, useState } from 'react'
 import { Box, BoxProps, Icon, Paragraph, Tooltip } from '@ui'
 import useCopyToClipboard from 'hooks/useCopyToClipboard'
-import { getInviteUrl } from 'ui/utils/utils'
+import { getAbsoluteChannelUrl, getInviteUrl } from 'ui/utils/utils'
 import { TooltipBoxVariants } from './CopySpaceLink.css'
 
 export const CopySpaceLink = (
     props: {
         spaceId: string
+        channelId?: string
         color?: BoxProps['color']
         background?: BoxProps['background']
     } & TooltipBoxVariants,
 ) => {
-    const { spaceId, color } = props
+    const { spaceId, channelId, color } = props
     const [, copy] = useCopyToClipboard()
-    const inviteUrl = getInviteUrl(spaceId)
+
+    const inviteUrl = channelId
+        ? getAbsoluteChannelUrl({ spaceId, channelId })
+        : getInviteUrl({ spaceId })
+
     const [copyDisplay, setCopyDisplay] = useState(false)
 
     const onCopyClick = useCallback(() => {

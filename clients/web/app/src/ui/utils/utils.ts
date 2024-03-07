@@ -28,8 +28,16 @@ export const isForbiddenError = (error: Error): boolean => {
     return error.name === 'M_FORBIDDEN'
 }
 
-export const getInviteUrl = (spaceId: string | undefined) =>
-    `${window.location.protocol}//${window.location.host}/${PATHS.SPACES}/${spaceId}/?invite`
+export const getAppUrl = () => `${window.location.protocol}//${window.location.host}`
+
+export const getInviteUrl = ({ spaceId }: { spaceId: string | undefined }) =>
+    `${getAbsoluteSpaceUrl({ spaceId })}/?invite`
+
+export const getAbsoluteSpaceUrl = ({ spaceId }: { spaceId: string | undefined }) =>
+    spaceId ? `${getAppUrl()}/${PATHS.SPACES}/${spaceId}` : undefined
+
+export const getAbsoluteChannelUrl = (params: { spaceId: string; channelId: string }) =>
+    `${getAbsoluteSpaceUrl(params)}/${PATHS.CHANNELS}/${params.channelId}`
 
 type Entries<T> = {
     [K in keyof T]: [K, T[K]]

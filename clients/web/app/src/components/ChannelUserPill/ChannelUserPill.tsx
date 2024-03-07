@@ -8,7 +8,7 @@ import { MessageTimelineContext } from '@components/MessageTimeline/MessageTimel
 import { Avatar } from '@components/Avatar/Avatar'
 
 export const ChannelUsersPill = (props: { spaceId: string | undefined; channelId: string }) => {
-    const { spaceId } = props
+    const { spaceId, channelId } = props
     const { memberIds } = useChannelMembers()
     const timelineContext = useContext(MessageTimelineContext)
 
@@ -59,7 +59,12 @@ export const ChannelUsersPill = (props: { spaceId: string | undefined; channelId
 
             {spaceId && (
                 <Box centerContent borderLeft hoverable paddingX="xs" background="level2">
-                    <CopySpaceLink spaceId={spaceId} align="right" offsetTop="md" />
+                    <CopySpaceLink
+                        spaceId={spaceId}
+                        channelId={channelId}
+                        align="right"
+                        offsetTop="md"
+                    />
                 </Box>
             )}
         </Stack>

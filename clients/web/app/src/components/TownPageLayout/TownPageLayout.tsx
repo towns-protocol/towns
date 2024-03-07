@@ -18,7 +18,7 @@ type TownPageLayoutProps = {
     headerContent?: React.ReactNode
     activityContent?: React.ReactNode
     bottomContent?: React.ReactNode
-    networkId: string
+    spaceId: string
     address?: `0x${string}`
     name?: string
     owner?: `0x${string}`
@@ -26,7 +26,7 @@ type TownPageLayoutProps = {
 }
 
 export const TownPageLayout = (props: TownPageLayoutProps) => {
-    const { address, bio, name, networkId, owner } = props
+    const { address, bio, name, spaceId, owner } = props
     const { chainId } = useEnvironment()
     const { data: userId } = useGetRootKeyFromLinkedWallet({ walletAddress: owner, chainId })
     const [copiedLink, setCopiedLink] = useState(false)
@@ -47,25 +47,25 @@ export const TownPageLayout = (props: TownPageLayoutProps) => {
         (e: React.MouseEvent) => {
             e.preventDefault()
 
-            const inviteUrl = getInviteUrl(networkId)
+            const inviteUrl = getInviteUrl({ spaceId })
             const asyncCopy = async () => {
                 const copied = await copy(inviteUrl)
                 setCopiedLink(copied)
             }
             asyncCopy()
         },
-        [networkId, copy],
+        [spaceId, copy],
     )
 
     const { isTouch } = useDevice()
 
-    const { data: membershipInfo } = useReadableMembershipInfo(networkId)
+    const { data: membershipInfo } = useReadableMembershipInfo(spaceId)
 
     const isTokensGatingMembershipLoading = false // TODO get from join role data
 
     const anyoneCanJoin = true // TODO get from join role data
 
-    const { imageSrc } = useImageSource(networkId, ImageVariants.thumbnail600)
+    const { imageSrc } = useImageSource(spaceId, ImageVariants.thumbnail600)
 
     const tokens = [
         {
@@ -102,7 +102,7 @@ export const TownPageLayout = (props: TownPageLayoutProps) => {
                                     spaceName={name}
                                 />
                             )}
-                            <Header name={name} owner={owner} userId={userId} spaceId={networkId} />
+                            <Header name={name} owner={owner} userId={userId} spaceId={spaceId} />
                         </Stack>
                         <InformationBoxes
                             imageSrc={imageSrc}
@@ -171,7 +171,7 @@ const Header = (props: { spaceId?: string; name?: string; owner?: string; userId
         if (!spaceId) {
             return
         }
-        const url = getInviteUrl(spaceId)
+        const url = getInviteUrl({ spaceId })
         try {
             await navigator.share({ title: name, url: url })
         } catch (_) {} // eslint-disable-line no-empty

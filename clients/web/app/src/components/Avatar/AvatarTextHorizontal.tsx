@@ -24,7 +24,7 @@ export function AvatarTextHorizontal({ abstractAccountaddress, name, prepend, us
                 paddingRight="sm"
                 background="lightHover"
             >
-                <Avatar userId={userId} size="avatar_sm" />
+                <Avatar userId={userId} size="avatar_xs" />
                 {name && (
                     <Text strong size="md">
                         {name}
