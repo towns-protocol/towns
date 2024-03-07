@@ -164,10 +164,17 @@ export const makeTestClient = async (opts?: TestClientOpts): Promise<Client> => 
     const deviceId = opts?.deviceId ? `-${opts.deviceId}` : ''
     const userId = userIdFromAddress(context.creatorAddress)
     const dbName = `database-${userId}${deviceId}`
+    const persistenceDbName = `persistence-${userId}${deviceId}`
 
     // create a new client with store(s)
     const cryptoStore = RiverDbManager.getCryptoDb(userId, dbName)
-    return new Client(context, makeTestRpcClient(), cryptoStore, entitlementsDelegate, undefined)
+    return new Client(
+        context,
+        makeTestRpcClient(),
+        cryptoStore,
+        entitlementsDelegate,
+        persistenceDbName,
+    )
 }
 
 class DonePromise {
