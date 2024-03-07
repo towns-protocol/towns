@@ -62,7 +62,7 @@ interface Nonces {
 interface PingInfo {
     nonces: Nonces // the nonce that the server should echo back
     currentSequence: number // the current sequence number
-    pingInterval?: NodeJS.Timeout // for cancelling the next ping
+    pingTimeout?: NodeJS.Timeout // for cancelling the next ping
 }
 
 export class SyncedStreams {
@@ -645,7 +645,7 @@ export class SyncedStreams {
 
     private sendKeepAlivePings() {
         // periodically ping the server to keep the connection alive
-        this.pingInfo.pingInterval = setInterval(() => {
+        this.pingInfo.pingTimeout = setTimeout(() => {
             const ping = async () => {
                 if (this.syncState === SyncState.Syncing && this.syncId) {
                     const n = nanoid()
@@ -667,12 +667,12 @@ export class SyncedStreams {
             ping().catch((err) => {
                 this.interruptSync?.(err)
             })
-        }, 8 * 1000 * 60) // every 8 minutes
+        }, 5 * 1000 * 60) // every 5 minutes
     }
 
     private stopPing() {
-        clearInterval(this.pingInfo.pingInterval)
-        this.pingInfo.pingInterval = undefined
+        clearTimeout(this.pingInfo.pingTimeout)
+        this.pingInfo.pingTimeout = undefined
         // print out the nonce stats
         this.printNonces()
         // reset the nonce stats

@@ -18,7 +18,6 @@ import {
     FullyReadMarker,
     Envelope,
     Err,
-    SessionKeys,
     ChannelMessage_Post_Attachment,
 } from '@river/proto'
 import {
@@ -107,6 +106,7 @@ import {
     DecryptionEvents,
     DecryptionExtensions,
     EntitlementsDelegate,
+    makeSessionKeys,
 } from './decryptionExtensions'
 import { PersistenceStore, IPersistenceStore, StubPersistenceStore } from './persistenceStore'
 import { SyncState, SyncedStreams } from './syncedStreams'
@@ -1576,6 +1576,7 @@ export class Client
         this.cryptoBackend = crypto
         this.decryptionExtensions = new DecryptionExtensions(
             this,
+            crypto,
             this.entitlementsDelegate,
             this,
             this.userId,
@@ -1647,19 +1648,6 @@ export class Client
     }
 
     /**
-     * Decrypt a Inbox message using river's decryption algorithm.
-     *
-     */
-    public async decryptWithDeviceKey(
-        ciphertext: string,
-        senderDeviceKey: string,
-    ): Promise<string> {
-        if (!this.cryptoBackend) {
-            throw new Error('crypto backend not initialized')
-        }
-        return this.cryptoBackend.decryptWithDeviceKey(ciphertext, senderDeviceKey)
-    }
-    /**
      * decrypts and updates the decrypted event
      */
     public async decryptGroupEvent(
@@ -1699,20 +1687,6 @@ export class Client
         return cleartext
     }
 
-    public hasInboundSessionKeys(streamId: string, sessionId: string): Promise<boolean> {
-        return this.cryptoBackend?.encryptionDevice?.hasInboundSessionKeys(
-            streamId,
-            sessionId,
-        ) as Promise<boolean>
-    }
-
-    public async importSessionKeys(
-        streamId: string,
-        keys: GroupEncryptionSession[],
-    ): Promise<void> {
-        return this.cryptoBackend?.importSessionKeys(streamId, keys)
-    }
-
     public async encryptAndShareGroupSessions(
         inStreamId: string | Uint8Array,
         sessions: GroupEncryptionSession[],
@@ -1732,10 +1706,7 @@ export class Client
         const userDevice = this.userDeviceKey()
 
         const sessionIds = sessions.map((session) => session.sessionId)
-        const sessionKeys = sessions.map((session) => session.sessionKey)
-        const payload = new SessionKeys({
-            keys: sessionKeys,
-        })
+        const payload = makeSessionKeys(sessions)
         const promises = Object.entries(toDevices).map(async ([userId, deviceKeys]) => {
             try {
                 const ciphertext = await this.encryptWithDeviceKeys(payload, deviceKeys)

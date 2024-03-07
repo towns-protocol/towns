@@ -41,7 +41,23 @@ const (
 
 var dbCalls = infra.NewSuccessMetrics(infra.DB_CALLS_CATEGORY, nil)
 
+// persistentContextWithRequestMetadata returns a context that maintains original context metadata for logging purposes,
+// but will not be cancelled if a client connection drops. Cancellations due to lost client connections can cause
+// operations on the PostgresEventStore to fail even if transactions commit, leading to a corruption in cache
+// state.
+//
+// Every write entrypoint into the StreamStorage interface should call this method to create a non-cancellable copy
+// of the request context. This does not prevent the issue of caches getting out of sync, as the driver may still
+// return a failure even if the transaction has committed. However, it will prevent corruption of cache state if
+// the client disconnects when the transaction successfully commits.
+//
+// For read methods, we don't need to ignore cancellations, as it's fine cancel a read if the client disconnects.
+func persistentContextWithRequestMetadata(parent context.Context) context.Context {
+	return context.WithoutCancel(parent)
+}
+
 func (s *PostgresEventStore) CreateStreamStorage(ctx context.Context, streamId StreamId, genesisMiniblock []byte) error {
+	ctx = persistentContextWithRequestMetadata(ctx)
 	err := s.createStream(ctx, streamId, genesisMiniblock)
 	if err != nil {
 		dbCalls.FailIncForChild("CreateStream")
@@ -251,6 +267,7 @@ func (s *PostgresEventStore) WriteEvent(
 	minipoolSlot int,
 	envelope []byte,
 ) error {
+	ctx = persistentContextWithRequestMetadata(ctx)
 	err := s.addEvent(ctx, streamId, minipoolGeneration, minipoolSlot, envelope)
 	if err != nil {
 		dbCalls.FailIncForChild("AddEvent")
@@ -424,6 +441,7 @@ func (s *PostgresEventStore) WriteBlock(
 	snapshotMiniblock bool,
 	envelopes [][]byte,
 ) error {
+	ctx = persistentContextWithRequestMetadata(ctx)
 	err := s.createBlock(ctx, streamId, minipoolGeneration, minipoolSize, miniblock, snapshotMiniblock, envelopes)
 	if err != nil {
 		dbCalls.FailIncForChild("CreateBlock")

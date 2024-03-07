@@ -6,7 +6,7 @@ import (
 
 type TLSConfig struct {
 	Cert   string // Path to certificate file or BASE64 encoded certificate
-	Key    string // Path to key file or BASE64 encoded key
+	Key    string `dlog:"omit" json:"-"` // Path to key file or BASE64 encoded key. Sensitive data, omitted from logging.
 	TestCA string // Path to CA certificate file or BASE64 encoded CA certificate
 }
 
@@ -54,11 +54,11 @@ type Config struct {
 }
 
 type DatabaseConfig struct {
-	Url      string
+	Url      string `dlog:"omit" json:"-"` // Sensitive data, omitted from logging.
 	Host     string
 	Port     int
 	User     string
-	Password string
+	Password string `dlog:"omit" json:"-"` // Sensitive data, omitted from logging.
 	Database string
 	Extra    string
 }

@@ -8,6 +8,7 @@ import { isDefined } from './check'
 import { DecryptedContentError } from './encryptedContentTypes'
 import { makeUniqueSpaceStreamId } from './id'
 import { TestClientOpts, makeTestClient, waitFor } from './util.test'
+import { Stream } from './stream'
 
 const log = dlog('csb:test:decryptionExtensions')
 
@@ -27,11 +28,7 @@ describe('DecryptionExtensions', () => {
         await client.sendMessage(streamId, body)
     }
 
-    const getDecryptedChannelMessages = async (
-        client: Client,
-        streamId: string,
-    ): Promise<string[]> => {
-        const stream = client.stream(streamId) ?? (await client.waitForStream(streamId))
+    const getDecryptedChannelMessages = (stream: Stream): string[] => {
         return stream.view.timeline
             .map((e) => {
                 // for tests, return decrypted content
@@ -56,9 +53,10 @@ describe('DecryptionExtensions', () => {
 
     const waitForMessages = async (client: Client, streamId: string, bodys: string[]) => {
         log('waitForMessages', client.userId, streamId, bodys)
+        const stream = await client.waitForStream(streamId)
         return waitFor(
-            async () => {
-                const messages = await getDecryptedChannelMessages(client, streamId)
+            () => {
+                const messages = getDecryptedChannelMessages(stream)
                 expect(messages).toEqual(bodys)
             },
             { timeoutMS: 10000 },

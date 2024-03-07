@@ -352,8 +352,8 @@ describe('clientTest', () => {
     })
 
     const bobCanReconnect = async (signer: SignerContext) => {
-        const bobsAnotherClient = await makeTestClient({ context: signer })
-        const bobsOneMoreAnotherClient = await makeTestClient({ context: signer })
+        const bobsAnotherClient = await makeTestClient({ context: signer, deviceId: 'd2' })
+        const bobsOneMoreAnotherClient = await makeTestClient({ context: signer, deviceId: 'd3' })
 
         const eventDecryptedPromise = makeDonePromise()
         const streamInitializedPromise = makeDonePromise()
@@ -390,12 +390,20 @@ describe('clientTest', () => {
         const onStreamInitialized = (streamId: string, streamKind: SnapshotCaseType) => {
             log('streamInitialized', streamId, streamKind)
             try {
-                channelWithContentId = streamId
-                channelWithContentIdPromise.done()
                 if (streamKind === 'channelContent') {
+                    channelWithContentId = streamId
+                    channelWithContentIdPromise.done()
                     const channel = bobsAnotherClient.stream(streamId)!
-                    log('channel content')
+                    log('!!!channel content')
                     log(channel.view)
+                    channel.view.timeline.forEach((x) => {
+                        log('@@@', {
+                            c1: x.remoteEvent?.event.payload.case,
+                            v1: x.remoteEvent?.event.payload.value,
+                            c2: x.remoteEvent?.event.payload.value?.content.case,
+                            b2: x.remoteEvent?.event.payload.value?.content.value,
+                        })
+                    })
                     const messages = channel.view.timeline.filter(
                         (x) =>
                             x.remoteEvent?.event.payload.case === 'channelPayload' &&

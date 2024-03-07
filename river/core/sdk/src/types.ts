@@ -148,13 +148,6 @@ export interface ParsedStreamResponse {
     eventIds: string[]
 }
 
-export interface KeySolicitationContent {
-    deviceKey: string
-    fallbackKey: string
-    isNewDevice: boolean
-    sessionIds: string[]
-}
-
 export type ClientInitStatus = {
     isLocalDataLoaded: boolean
     isRemoteDataLoaded: boolean
