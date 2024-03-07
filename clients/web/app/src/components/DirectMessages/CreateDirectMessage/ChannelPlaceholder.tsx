@@ -13,6 +13,7 @@ export const ChannelPlaceholder = (props: { userIds: string[] }) => {
         <Box padding grow justifyContent="end" gap="lg">
             <DMChannelIntro userIds={userIds} />
             <RichTextEditor
+                editable={false}
                 channels={[]}
                 users={[]}
                 placeholder={`Send a message to ${userList}`}
