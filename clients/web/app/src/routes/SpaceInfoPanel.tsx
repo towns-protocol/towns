@@ -474,11 +474,12 @@ export const SpaceInfoPanel = () => {
                 <ModalContainer padding="none" border="none" onHide={onHideTownPreview}>
                     <Box
                         position="relative"
-                        style={{ height: 'calc(100vh - 100px)' }}
-                        pointerEvents="none"
-                        onPointerDown={onHideTownPreview}
+                        style={{
+                            height: 'calc(100vh - 100px)',
+                            width: isTouch ? '100%' : 'calc(100vw - 100px)',
+                        }}
                     >
-                        <PublicTownPage />
+                        <PublicTownPage isPreview onClosePreview={onHideTownPreview} />
                     </Box>
                 </ModalContainer>
             )}

@@ -18,7 +18,19 @@ import { TownPageLayout } from '@components/TownPageLayout/TownPageLayout'
 import { FadeInBox } from '@components/Transitions'
 import { ImageVariants, useImageSource } from '@components/UploadImage/useImageSource'
 import { BottomBarLayout } from '@components/Web3/MembershipNFT/BottomBar'
-import { Box, BoxProps, Button, Card, Heading, Icon, IconProps, Paragraph, Stack, Text } from '@ui'
+import {
+    Box,
+    BoxProps,
+    Button,
+    Card,
+    Heading,
+    Icon,
+    IconButton,
+    IconProps,
+    Paragraph,
+    Stack,
+    Text,
+} from '@ui'
 import { useAuth } from 'hooks/useAuth'
 import { useErrorToast } from 'hooks/useErrorToast'
 import { useJoinTown } from 'hooks/useJoinTown'
@@ -36,7 +48,8 @@ log.enabled = true
 
 const LoginComponent = React.lazy(() => import('@components/Login/LoginComponent'))
 
-export const PublicTownPage = () => {
+export const PublicTownPage = (props: { isPreview?: boolean; onClosePreview?: () => void }) => {
+    const { isPreview = false, onClosePreview } = props
     const { spaceSlug } = useParams()
     // TEMPORARY joining state until hook is built for minting
     const [isJoining, setIsJoining] = useState(false)
@@ -75,40 +88,51 @@ export const PublicTownPage = () => {
             <AbsoluteBackground networkId={spaceInfo.networkId} />
             <Box height="100dvh" paddingTop="safeAreaInsetTop">
                 <TownPageLayout
-                    headerContent={<Header isConnected={isConnected} />}
+                    headerContent={
+                        <Header
+                            isConnected={isConnected}
+                            isPreview={isPreview}
+                            onClosePreview={onClosePreview}
+                        />
+                    }
                     activityContent={<Activity townId={spaceInfo.networkId} />}
+                    isPreview={isPreview}
                     bottomContent={
                         <BottomBarLayout
-                            position="fixed"
+                            position="absolute"
                             bottom="none"
                             zIndex="above"
                             buttonContent={
-                                <Box grow>
-                                    {isAuthenticatedAndConnected ? (
-                                        isLoadingMeetsMembership ? (
-                                            <MembershipStatusMessage
-                                                spinner
-                                                background="level3"
-                                                message="Checking requirements"
-                                            />
+                                !isPreview ? (
+                                    <Box grow>
+                                        {isAuthenticatedAndConnected ? (
+                                            isLoadingMeetsMembership ? (
+                                                <MembershipStatusMessage
+                                                    spinner
+                                                    background="level3"
+                                                    message="Checking requirements"
+                                                />
+                                            ) : (
+                                                <Button
+                                                    tone="cta1"
+                                                    width="100%"
+                                                    type="button"
+                                                    disabled={isJoining}
+                                                    onClick={onJoinClick}
+                                                >
+                                                    {isJoining && <ButtonSpinner />}
+                                                    Join {spaceInfo.name}
+                                                </Button>
+                                            )
                                         ) : (
-                                            <Button
-                                                tone="cta1"
-                                                width="100%"
-                                                type="button"
-                                                disabled={isJoining}
-                                                onClick={onJoinClick}
-                                            >
-                                                {isJoining && <ButtonSpinner />}
-                                                Join {spaceInfo.name}
-                                            </Button>
-                                        )
-                                    ) : (
-                                        <Suspense>
-                                            <LoginComponent />
-                                        </Suspense>
-                                    )}
-                                </Box>
+                                            <Suspense>
+                                                <LoginComponent />
+                                            </Suspense>
+                                        )}
+                                    </Box>
+                                ) : (
+                                    <></>
+                                )
                             }
                         />
                     }
@@ -151,8 +175,12 @@ export const PublicTownPage = () => {
     )
 }
 
-const Header = (props: { isConnected: boolean }) => {
-    const { isConnected } = props
+const Header = (props: {
+    isConnected: boolean
+    isPreview: boolean
+    onClosePreview?: () => void
+}) => {
+    const { isConnected, isPreview, onClosePreview } = props
     const [isShowingBugReport, setIsShowingBugReport] = useState(false)
     const onShowBugReport = useCallback(() => {
         setIsShowingBugReport(true)
@@ -172,29 +200,34 @@ const Header = (props: { isConnected: boolean }) => {
                     </Box>
                 </Link>
                 <Box grow />
-
-                <Box
-                    hoverable
-                    centerContent
-                    cursor="pointer"
-                    tooltip="Report a bug"
-                    tooltipOptions={{ placement: 'horizontal' }}
-                    padding="line"
-                    background="level2"
-                    rounded="sm"
-                    height="x4"
-                    width="x4"
-                    onClick={onShowBugReport}
-                >
-                    <Icon size="square_sm" type="bug" color="default" />
-                </Box>
-
-                {isConnected ? (
-                    <LoggedUserAvatar />
+                {isPreview ? (
+                    <IconButton hoverable icon="close" color="default" onClick={onClosePreview} />
                 ) : (
-                    <Button tone="level2" color="default" size="button_sm" onClick={login}>
-                        Log In
-                    </Button>
+                    <>
+                        <Box
+                            hoverable
+                            centerContent
+                            cursor="pointer"
+                            tooltip="Report a bug"
+                            tooltipOptions={{ placement: 'horizontal' }}
+                            padding="line"
+                            background="level2"
+                            rounded="sm"
+                            height="x4"
+                            width="x4"
+                            onClick={onShowBugReport}
+                        >
+                            <Icon size="square_sm" type="bug" color="default" />
+                        </Box>
+
+                        {isConnected ? (
+                            <LoggedUserAvatar />
+                        ) : (
+                            <Button tone="level2" color="default" size="button_sm" onClick={login}>
+                                Log In
+                            </Button>
+                        )}
+                    </>
                 )}
             </Stack>
             {isShowingBugReport && (

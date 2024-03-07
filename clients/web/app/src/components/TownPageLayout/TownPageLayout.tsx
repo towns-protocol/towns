@@ -18,6 +18,7 @@ type TownPageLayoutProps = {
     headerContent?: React.ReactNode
     activityContent?: React.ReactNode
     bottomContent?: React.ReactNode
+    isPreview: boolean
     spaceId: string
     address?: `0x${string}`
     name?: string
@@ -26,7 +27,7 @@ type TownPageLayoutProps = {
 }
 
 export const TownPageLayout = (props: TownPageLayoutProps) => {
-    const { address, bio, name, spaceId, owner } = props
+    const { address, bio, name, spaceId, owner, isPreview } = props
     const { chainId } = useEnvironment()
     const { data: userId } = useGetRootKeyFromLinkedWallet({ walletAddress: owner, chainId })
     const [copiedLink, setCopiedLink] = useState(false)
@@ -82,7 +83,7 @@ export const TownPageLayout = (props: TownPageLayoutProps) => {
                     minHeight="600"
                     paddingX="lg"
                     paddingBottom="x4"
-                    width="100vw"
+                    width="100%"
                     position="relative"
                     maxWidth={isTouch ? '100%' : '1200'}
                     direction={{ mobile: isTouch ? undefined : 'columnReverse', default: 'row' }}
@@ -102,7 +103,13 @@ export const TownPageLayout = (props: TownPageLayoutProps) => {
                                     spaceName={name}
                                 />
                             )}
-                            <Header name={name} owner={owner} userId={userId} spaceId={spaceId} />
+                            <Header
+                                name={name}
+                                owner={owner}
+                                userId={userId}
+                                spaceId={spaceId}
+                                isPreview={isPreview}
+                            />
                         </Stack>
                         <InformationBoxes
                             imageSrc={imageSrc}
@@ -130,41 +137,49 @@ export const TownPageLayout = (props: TownPageLayoutProps) => {
                                 spaceName={name}
                             />
 
-                            <Box tooltip="Copy link">
-                                <Button
-                                    size="button_md"
-                                    width="300"
-                                    tone="lightHover"
-                                    color="default"
-                                    onClick={onCopyInviteLink}
-                                >
-                                    {copiedLink ? (
-                                        'Link copied'
-                                    ) : (
-                                        <>
-                                            <Icon type="share" />
-                                            Share Link
-                                        </>
-                                    )}
-                                </Button>
-                            </Box>
+                            {!isPreview && (
+                                <Box tooltip="Copy link">
+                                    <Button
+                                        size="button_md"
+                                        width="300"
+                                        tone="lightHover"
+                                        color="default"
+                                        onClick={onCopyInviteLink}
+                                    >
+                                        {copiedLink ? (
+                                            'Link copied'
+                                        ) : (
+                                            <>
+                                                <Icon type="share" />
+                                                Share Link
+                                            </>
+                                        )}
+                                    </Button>
+                                </Box>
+                            )}
                         </Stack>
                     )}
 
                     <Box height="x12" />
                 </Stack>
+                {props.bottomContent && (
+                    <Stack horizontal centerContent>
+                        {props.bottomContent}
+                    </Stack>
+                )}
             </Stack>
-            {props.bottomContent && (
-                <Stack horizontal centerContent>
-                    {props.bottomContent}
-                </Stack>
-            )}
         </>
     )
 }
 
-const Header = (props: { spaceId?: string; name?: string; owner?: string; userId?: string }) => {
-    const { name, owner, userId, spaceId } = props
+const Header = (props: {
+    spaceId?: string
+    name?: string
+    owner?: string
+    userId?: string
+    isPreview: boolean
+}) => {
+    const { name, owner, userId, spaceId, isPreview } = props
     const { isTouch } = useDevice()
 
     const onTouchSharePressed = useEvent(async () => {
@@ -191,7 +206,7 @@ const Header = (props: { spaceId?: string; name?: string; owner?: string; userId
                         prepend={<Text color="gray1">By </Text>}
                     />
                 )}
-                {isTouch && (
+                {isTouch && !isPreview && (
                     <>
                         <Box grow />
                         <IconButton
