@@ -17,7 +17,7 @@ import {
     getRandomInt,
     ChannelTrackingInfo,
     pauseForXMiliseconds,
-} from '../testSdk'
+} from '../testSdk.test_util'
 import crypto from 'crypto'
 import Redis from 'ioredis'
 import {
