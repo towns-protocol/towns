@@ -95,6 +95,35 @@ const channelPaths: Path[] = [
     },
 ]
 
+const createChannelPaths: Path[] = [
+    { path: `/${PATHS.SPACES}/:spaceId/:path/info?create-channel` },
+    {
+        path: `/${PATHS.SPACES}/:spaceId/:path/info`,
+        replace: `/${PATHS.SPACES}/:spaceId/:path/info?create-channel`,
+    },
+    {
+        path: `/${PATHS.SPACES}/:spaceId/${PATHS.CHANNELS}/:channelId/info`,
+        replace: `/${PATHS.SPACES}/:spaceId/${PATHS.CHANNELS}/:channelId/info?create-channel`,
+    },
+    {
+        path: `/${PATHS.SPACES}/:spaceId/:path/:panelPath/:panelPathId`,
+        replace: `/${PATHS.SPACES}/:spaceId/:path/info?create-channel`,
+    },
+    {
+        path: `/${PATHS.SPACES}/:spaceId/:path`,
+        replace: `/${PATHS.SPACES}/:spaceId/:path/info?create-channel`,
+    },
+    {
+        path: `/${PATHS.SPACES}/:spaceId/:path/:channelId`,
+        replace: `/${PATHS.SPACES}/:spaceId/:path/:channelId/info?create-channel`,
+    },
+    { path: `/${PATHS.SPACES}/:spaceId/${PATHS.CHANNELS}/:channelId/info?create-channel` },
+    {
+        path: `/${PATHS.SPACES}/:spaceId/${PATHS.CHANNELS}/:channelId/:channelPanel/:channelPanelParam`,
+        replace: `/${PATHS.SPACES}/:spaceId/${PATHS.CHANNELS}/:channelId/info?create-channel`,
+    },
+]
+
 const channelDirectoryPaths: Path[] = [
     {
         path: `/${PATHS.SPACES}/:spaceId/${PATHS.CHANNELS}/:channelId/:channelPanel?/:channelPanelParam?`,
@@ -209,6 +238,12 @@ const linkParams = {
             channelId: 'spaceId' as string | undefined,
         },
     },
+    createChannel: {
+        params: {
+            spaceId: 'spaceId' as string | undefined,
+            panel: 'create-channel',
+        },
+    },
     channelInfo: {
         params: {
             spaceId: 'spaceId' as string | undefined,
@@ -304,6 +339,11 @@ const getSearchPathsForParams = (linkParams: LinkParams) => {
     if ('spaceId' in linkParams && 'panel' in linkParams && linkParams.panel === 'townInfo') {
         return townInfoPaths
     }
+
+    if ('spaceId' in linkParams && 'panel' in linkParams && linkParams.panel === 'create-channel') {
+        return createChannelPaths
+    }
+
     if ('initial' in linkParams) {
         return initialTouchChannelPaths
     }

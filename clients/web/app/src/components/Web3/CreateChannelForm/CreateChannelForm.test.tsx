@@ -111,7 +111,7 @@ describe('CreateChannelForm', () => {
         )
 
         render(<Wrapper />)
-        const submitButton = await screen.getAllByRole('button', { name: /create/i })[1]
+        const submitButton = screen.getByTestId('create-space-next-button')
         fireEvent.click(submitButton)
 
         await waitFor(() => {
@@ -177,7 +177,7 @@ describe('CreateChannelForm', () => {
 
         render(<Wrapper />)
 
-        const submitButton = screen.getAllByRole('button', { name: /create/i })[1]
+        const submitButton = screen.getByTestId('create-space-next-button')
 
         const nameInput = screen.getByRole('textbox', { name: /name/i })
         const memberCheckbox = screen.getByRole('checkbox', { name: /member/i })
@@ -226,7 +226,7 @@ describe('CreateChannelForm', () => {
 
         render(<Wrapper />)
 
-        const submitButton = screen.getAllByRole('button', { name: /create/i })[1]
+        const submitButton = screen.getByTestId('create-space-next-button')
 
         const nameInput = screen.getByRole('textbox', { name: /name/i })
         const everyoneCheckbox = screen.getByRole('checkbox', { name: /everyone/i })
@@ -239,7 +239,7 @@ describe('CreateChannelForm', () => {
         fireEvent.click(submitButton)
 
         await waitFor(() => {
-            return screen.getByText('Create')
+            return screen.getByText('Save Channel')
         })
 
         await screen.findByText('There was an error with the transaction. Please try again')
@@ -267,7 +267,7 @@ describe('CreateChannelForm', () => {
 
         render(<Wrapper />)
 
-        const submitButton = screen.getAllByRole('button', { name: /create/i })[1]
+        const submitButton = screen.getByTestId('create-space-next-button')
 
         const nameInput = screen.getByRole('textbox', { name: /name/i })
         const everyoneCheckbox = screen.getByRole('checkbox', { name: /everyone/i })
@@ -280,7 +280,7 @@ describe('CreateChannelForm', () => {
         fireEvent.click(submitButton)
 
         await waitFor(() => {
-            return screen.getByText('Create')
+            return screen.getByText('Save Channel')
         })
 
         await screen.findByText("You don't have permission to create a channel in this town")

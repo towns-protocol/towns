@@ -26,6 +26,7 @@ import { useContractRoles } from 'hooks/useContractRoles'
 import { ModalContainer } from '@components/Modals/ModalContainer'
 import { UserOpTxModal } from '@components/Web3/UserOpTxModal/UserOpTxModal'
 import { createPrivyNotAuthenticatedNotification } from '@components/Notifications/utils'
+import { useDevice } from 'hooks/useDevice'
 import { mapToErrorMessage } from '../utils'
 
 type Props = {
@@ -60,6 +61,7 @@ export const CreateChannelForm = (props: Props) => {
     const rolesWithDetails = useMemo(() => {
         return _rolesDetails?.filter((role) => role.permissions.includes(Permission.Read))
     }, [_rolesDetails])
+    const { isTouch } = useDevice()
 
     const {
         createChannelTransaction,
@@ -293,18 +295,29 @@ export const CreateChannelForm = (props: Props) => {
                             {errorBox}
                         </Stack>
 
-                        <Box flexDirection="row" justifyContent="end" gap="sm" paddingTop="lg">
-                            <Button type="button" disabled={!isAbleToInteract} onClick={onHide}>
-                                Cancel
-                            </Button>
+                        {isTouch ? (
+                            <Box flexDirection="row" justifyContent="end" gap="sm" paddingTop="lg">
+                                <Button type="button" disabled={!isAbleToInteract} onClick={onHide}>
+                                    Cancel
+                                </Button>
 
-                            <TransactionButton
-                                transactionState={transactionUIState}
-                                transactingText="Creating channel"
-                                successText="Channel created"
-                                idleText="Create"
-                            />
-                        </Box>
+                                <TransactionButton
+                                    transactionState={transactionUIState}
+                                    transactingText="Creating channel"
+                                    successText="Channel created"
+                                    idleText="Create"
+                                />
+                            </Box>
+                        ) : (
+                            <Box padding position="absolute" bottom="none" left="none" right="none">
+                                <TransactionButton
+                                    transactionState={transactionUIState}
+                                    transactingText="Creating channel"
+                                    successText="Channel created"
+                                    idleText="Save Channel"
+                                />
+                            </Box>
+                        )}
                     </Stack>
                 )
             }}

@@ -49,8 +49,8 @@ export const SpaceSideBar = (props: Props) => {
     const { space } = props
     const { isTouch } = useDevice()
     const { loggedInWalletAddress } = useAuth()
-
     const { createLink } = useCreateLink()
+
     const unreadThreadsCount = useSpaceThreadRootsUnreadCount()
     const membership = useMyMembership(space?.id)
     const { isOwner } = useIsSpaceOwner(space.id, loggedInWalletAddress)
@@ -59,7 +59,16 @@ export const SpaceSideBar = (props: Props) => {
 
     const [isCreateChannelModalVisible, setCreateChannelModalVisible] = useState(false)
     const onHideCreateChannel = useEvent(() => setCreateChannelModalVisible(false))
-    const onShowCreateChannel = useEvent(() => setCreateChannelModalVisible(true))
+    const onShowCreateChannel = useEvent(() => {
+        const path = createLink({
+            spaceId: space.id,
+            panel: 'create-channel',
+        })
+
+        if (path) {
+            navigate(path)
+        }
+    })
 
     const onShowBrowseChannels = useEvent(() => {
         const path = createLink({

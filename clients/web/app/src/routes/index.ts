@@ -24,6 +24,7 @@ export const QUERY_PARAMS = {
 export const CHANNEL_INFO_PARAMS = {
     INFO: 'info',
     CHANNEL: 'channel',
+    CREATE_CHANNEL: 'create-channel',
     DM_CHANNEL: 'dm',
     GDM_CHANNEL: 'gdm',
     PERMISSIONS: 'permissions',
