@@ -13,8 +13,11 @@ import {IERC721ABase} from "contracts/src/diamond/facets/token/ERC721A/IERC721A.
 import {IUserEntitlement} from "contracts/src/spaces/entitlements/user/IUserEntitlement.sol";
 import {IRuleEntitlement} from "contracts/src/crosschain/IRuleEntitlement.sol";
 import {RuleEntitlement} from "contracts/src/crosschain/RuleEntitlement.sol";
+import {IRoles} from "contracts/src/spaces/facets/roles/IRoles.sol";
+import {IMembership} from "contracts/src/spaces/facets/membership/IMembership.sol";
 
 // libraries
+import {Permissions} from "contracts/src/spaces/facets/Permissions.sol";
 
 // contracts
 import {BaseSetup} from "contracts/test/spaces/BaseSetup.sol";
@@ -170,25 +173,89 @@ contract ArchitectTest is
     spaceArchitect.createSpace(_createSpaceInfo(""));
   }
 
-  function test_revertIfNetworkIdTaken(string memory networkId) external {
-    vm.assume(bytes(networkId).length > 0);
+  function test_revertIfNetworkIdTaken(string memory spaceId) external {
+    vm.assume(bytes(spaceId).length > 0);
 
     address founder = _randomAddress();
 
     vm.prank(founder);
-    spaceArchitect.createSpace(_createSpaceInfo(networkId));
+    spaceArchitect.createSpace(_createSpaceInfo(spaceId));
 
     vm.expectRevert(Architect__InvalidNetworkId.selector);
     vm.prank(_randomAddress());
-    spaceArchitect.createSpace(_createSpaceInfo(networkId));
+    spaceArchitect.createSpace(_createSpaceInfo(spaceId));
   }
 
-  function test_revertIfNotERC721Receiver(string memory networkId) external {
-    vm.assume(bytes(networkId).length > 0);
+  function test_revertIfNotERC721Receiver(string memory spaceId) external {
+    vm.assume(bytes(spaceId).length > 0);
 
     vm.expectRevert(
       IERC721ABase.TransferToNonERC721ReceiverImplementer.selector
     );
-    spaceArchitect.createSpace(_createSpaceInfo(networkId));
+    spaceArchitect.createSpace(_createSpaceInfo(spaceId));
+  }
+
+  function test_createSpace_updateMemberPermissions(
+    string memory spaceId
+  ) external {
+    vm.assume(bytes(spaceId).length > 0);
+
+    address founder = _randomAddress();
+    address user = _randomAddress();
+
+    vm.prank(founder);
+    address spaceInstance = spaceArchitect.createSpace(
+      _createEveryoneSpaceInfo(spaceId)
+    );
+
+    // have another user join the space
+    IMembership(spaceInstance).joinTown(user);
+
+    // assert that he cannot modify channels
+    assertFalse(
+      IEntitlementsManager(spaceInstance).isEntitledToSpace(
+        user,
+        Permissions.ModifyChannels
+      )
+    );
+
+    // get the current member role
+    IRoles.Role[] memory roles = IRoles(spaceInstance).getRoles();
+    IRoles.Role memory memberRole;
+
+    for (uint256 i = 0; i < roles.length; i++) {
+      if (keccak256(abi.encodePacked(roles[i].name)) == keccak256("Member")) {
+        memberRole = roles[i];
+        break;
+      }
+    }
+
+    // update the permissions of the member role
+    // string[] memory permissions = new string[](3);
+    // permissions[0] = Permissions.Read;
+    // permissions[1] = "Write";
+    // permissions[2] = Permissions.ModifyChannels;
+    // IRoles.CreateEntitlement[]
+    //   memory entitlements = new IRoles.CreateEntitlement[](0);
+    // vm.prank(founder);
+    // IRoles(spaceInstance).updateRole(
+    //   memberRole.id,
+    //   memberRole.name,
+    //   permissions,
+    //   entitlements
+    // );
+
+    string[] memory permissions = new string[](1);
+    permissions[0] = Permissions.ModifyChannels;
+
+    vm.prank(founder);
+    IRoles(spaceInstance).addPermissionsToRole(memberRole.id, permissions);
+
+    assertTrue(
+      IEntitlementsManager(spaceInstance).isEntitledToSpace(
+        user,
+        Permissions.ModifyChannels
+      )
+    );
   }
 }

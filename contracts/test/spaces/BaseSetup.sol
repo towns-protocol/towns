@@ -90,7 +90,7 @@ contract BaseSetup is TestUtils, SpaceHelper {
       _createSpaceInfo("BaseSetupTown")
     );
     everyoneSpace = Architect(spaceFactory).createSpace(
-      _createEveryoneTownInfo("BaseSetupEveryoneTown")
+      _createEveryoneSpaceInfo("BaseSetupEveryoneTown")
     );
     vm.stopPrank();
   }
