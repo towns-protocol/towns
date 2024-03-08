@@ -48,7 +48,7 @@ jobs:
                 REGISTRY_ALIAS: h5v6m2x1
                 ECR_REPOSITORY: river-stress-test-node
               run: |
-                docker build -t $ECR_REGISTRY/$REGISTRY_ALIAS/$ECR_REPOSITORY:latest . -f ./servers/load-testing/Dockerfile
+                docker build -t $ECR_REGISTRY/$REGISTRY_ALIAS/$ECR_REPOSITORY:latest . -f ./packages/load-testing/Dockerfile
                 docker push $ECR_REGISTRY/$REGISTRY_ALIAS/$ECR_REPOSITORY:latest
 
             # If action failed, we send a slack notification
