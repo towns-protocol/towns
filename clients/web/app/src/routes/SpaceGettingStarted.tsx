@@ -18,7 +18,7 @@ export const SpaceGettingStarted = () => {
         if (isLoading) {
             return
         }
-        if (!isOwner) {
+        if (space?.id && !isOwner) {
             navigate(`/${PATHS.SPACES}/${space?.id}/${PATHS.THREADS}`)
         }
     }, [isOwner, isLoading, navigate, space?.id])
