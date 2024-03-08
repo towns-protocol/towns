@@ -1,6 +1,6 @@
 {
   "compiler": {
-    "version": "0.8.23+commit.f704f362"
+    "version": "0.8.24+commit.e11b9ed9"
   },
   "language": "Solidity",
   "output": {
@@ -108,7 +108,7 @@
           },
           {
             "indexed": false,
-            "internalType": "enum IRiverRegistryBase.NodeStatus",
+            "internalType": "enum NodeStatus",
             "name": "status",
             "type": "uint8"
           }
@@ -140,7 +140,7 @@
           },
           {
             "indexed": false,
-            "internalType": "enum IRiverRegistryBase.NodeStatus",
+            "internalType": "enum NodeStatus",
             "name": "status",
             "type": "uint8"
           }
@@ -303,11 +303,11 @@
         "inputs": [
           {
             "internalType": "address[]",
-            "name": "approvedOperators",
+            "name": "initialOperators",
             "type": "address[]"
           }
         ],
-        "name": "__RiverRegistry_init",
+        "name": "__OperatorRegistry_init",
         "outputs": [],
         "stateMutability": "nonpayable",
         "type": "function"
@@ -373,9 +373,9 @@
           {
             "components": [
               {
-                "internalType": "address",
-                "name": "nodeAddress",
-                "type": "address"
+                "internalType": "enum NodeStatus",
+                "name": "status",
+                "type": "uint8"
               },
               {
                 "internalType": "string",
@@ -383,9 +383,9 @@
                 "type": "string"
               },
               {
-                "internalType": "enum IRiverRegistryBase.NodeStatus",
-                "name": "status",
-                "type": "uint8"
+                "internalType": "address",
+                "name": "nodeAddress",
+                "type": "address"
               },
               {
                 "internalType": "address",
@@ -393,7 +393,7 @@
                 "type": "address"
               }
             ],
-            "internalType": "struct IRiverRegistryBase.Node[]",
+            "internalType": "struct Node[]",
             "name": "",
             "type": "tuple[]"
           }
@@ -439,17 +439,12 @@
                   },
                   {
                     "internalType": "uint64",
-                    "name": "flags",
-                    "type": "uint64"
-                  },
-                  {
-                    "internalType": "uint64",
                     "name": "reserved0",
                     "type": "uint64"
                   },
                   {
                     "internalType": "uint64",
-                    "name": "reserved1",
+                    "name": "flags",
                     "type": "uint64"
                   },
                   {
@@ -458,12 +453,12 @@
                     "type": "address[]"
                   }
                 ],
-                "internalType": "struct IRiverRegistryBase.Stream",
+                "internalType": "struct Stream",
                 "name": "stream",
                 "type": "tuple"
               }
             ],
-            "internalType": "struct IRiverRegistryBase.StreamWithId[]",
+            "internalType": "struct StreamWithId[]",
             "name": "",
             "type": "tuple[]"
           }
@@ -484,9 +479,9 @@
           {
             "components": [
               {
-                "internalType": "address",
-                "name": "nodeAddress",
-                "type": "address"
+                "internalType": "enum NodeStatus",
+                "name": "status",
+                "type": "uint8"
               },
               {
                 "internalType": "string",
@@ -494,9 +489,9 @@
                 "type": "string"
               },
               {
-                "internalType": "enum IRiverRegistryBase.NodeStatus",
-                "name": "status",
-                "type": "uint8"
+                "internalType": "address",
+                "name": "nodeAddress",
+                "type": "address"
               },
               {
                 "internalType": "address",
@@ -504,7 +499,7 @@
                 "type": "address"
               }
             ],
-            "internalType": "struct IRiverRegistryBase.Node",
+            "internalType": "struct Node",
             "name": "",
             "type": "tuple"
           }
@@ -549,17 +544,12 @@
               },
               {
                 "internalType": "uint64",
-                "name": "flags",
-                "type": "uint64"
-              },
-              {
-                "internalType": "uint64",
                 "name": "reserved0",
                 "type": "uint64"
               },
               {
                 "internalType": "uint64",
-                "name": "reserved1",
+                "name": "flags",
                 "type": "uint64"
               },
               {
@@ -568,7 +558,7 @@
                 "type": "address[]"
               }
             ],
-            "internalType": "struct IRiverRegistryBase.Stream",
+            "internalType": "struct Stream",
             "name": "",
             "type": "tuple"
           }
@@ -613,17 +603,12 @@
               },
               {
                 "internalType": "uint64",
-                "name": "flags",
-                "type": "uint64"
-              },
-              {
-                "internalType": "uint64",
                 "name": "reserved0",
                 "type": "uint64"
               },
               {
                 "internalType": "uint64",
-                "name": "reserved1",
+                "name": "flags",
                 "type": "uint64"
               },
               {
@@ -632,7 +617,7 @@
                 "type": "address[]"
               }
             ],
-            "internalType": "struct IRiverRegistryBase.Stream",
+            "internalType": "struct Stream",
             "name": "",
             "type": "tuple"
           },
@@ -681,17 +666,12 @@
                   },
                   {
                     "internalType": "uint64",
-                    "name": "flags",
-                    "type": "uint64"
-                  },
-                  {
-                    "internalType": "uint64",
                     "name": "reserved0",
                     "type": "uint64"
                   },
                   {
                     "internalType": "uint64",
-                    "name": "reserved1",
+                    "name": "flags",
                     "type": "uint64"
                   },
                   {
@@ -700,12 +680,12 @@
                     "type": "address[]"
                   }
                 ],
-                "internalType": "struct IRiverRegistryBase.Stream",
+                "internalType": "struct Stream",
                 "name": "stream",
                 "type": "tuple"
               }
             ],
-            "internalType": "struct IRiverRegistryBase.StreamWithId[]",
+            "internalType": "struct StreamWithId[]",
             "name": "",
             "type": "tuple[]"
           }
@@ -763,7 +743,7 @@
             "type": "string"
           },
           {
-            "internalType": "enum IRiverRegistryBase.NodeStatus",
+            "internalType": "enum NodeStatus",
             "name": "status",
             "type": "uint8"
           }
@@ -853,7 +833,7 @@
             "type": "address"
           },
           {
-            "internalType": "enum IRiverRegistryBase.NodeStatus",
+            "internalType": "enum NodeStatus",
             "name": "status",
             "type": "uint8"
           }
@@ -952,25 +932,14 @@
       "runs": 200
     },
     "remappings": [
-      ":@eth-optimism/contracts-bedrock/=node_modules/@eth-optimism/contracts-bedrock/",
-      ":@openzeppelin/=lib/openzeppelin-contracts/",
-      ":@openzeppelin/contracts-upgradeable/=lib/@openzeppelin/contracts-upgradeable/contracts/",
-      ":@openzeppelin/contracts/=lib/@openzeppelin/contracts/",
-      ":@prb/math/=lib/prb-math/src/",
-      ":@prb/test/=lib/prb-test/src/",
-      ":ERC721A/=lib/ERC721A/contracts/",
+      ":@openzeppelin/=lib/@openzeppelin/",
+      ":@prb/math/=lib/@prb/math/src/",
+      ":@prb/test/=lib/@prb/test/src/",
       ":account-abstraction/=lib/account-abstraction/contracts/",
-      ":base64-sol/=lib/base64/",
       ":base64/=lib/base64/",
-      ":council/=lib/council/contracts/",
       ":ds-test/=lib/ds-test/src/",
-      ":erc4626-tests/=lib/operator-filter-registry/lib/openzeppelin-contracts/lib/erc4626-tests/",
       ":forge-std/=lib/forge-std/src/",
-      ":@openzeppelin/contracts-upgradeable/=lib/@openzeppelin/contracts-upgradeable/contracts/",
-      ":openzeppelin-contracts/=lib/openzeppelin-contracts/",
-      ":operator-filter-registry/=lib/operator-filter-registry/",
-      ":prb-math/=lib/prb-math/src/",
-      ":prb-test/=lib/prb-test/src/"
+      ":hardhat-deploy/=lib/hardhat-deploy/"
     ]
   },
   "sources": {
@@ -1007,11 +976,11 @@
       ]
     },
     "contracts/src/diamond/facets/introspection/IntrospectionBase.sol": {
-      "keccak256": "0x5379ee00fe8945cb6820e9f3692c1f141ab2bacb286ac39f096857bd530f91ca",
+      "keccak256": "0x5f458cf292b4b7b9d9c1efd110b3b65905c7bd7e47a48090af5eb9fb7d620ddf",
       "license": "Apache-2.0",
       "urls": [
-        "bzz-raw://90c08f3e8e8fc64264ac94bc8005286e881760b0c776a9b0a2e679e4cff0237a",
-        "dweb:/ipfs/QmXcpnF9hcUH7jGvEySkNBRybYYrcGyUjkUHXuTex886cJ"
+        "bzz-raw://84995121aafc9124ba3a1148835dcccc1061c25a5b074b4579a83c0dd213d613",
+        "dweb:/ipfs/QmPYSKEqYWasPxVRzv4TCpXVfpkahfFDEPkTLp7UAT9fKq"
       ]
     },
     "contracts/src/diamond/facets/introspection/IntrospectionStorage.sol": {
@@ -1046,36 +1015,76 @@
         "dweb:/ipfs/QmNSuLTojYzf5BD8oWkdn3Vavqhw6zR6Vugkb1toGopBoB"
       ]
     },
-    "contracts/src/river/registry/IRiverRegistry.sol": {
-      "keccak256": "0xd00faba2c70e7519d0fa9ff78f976aba511647dd7efe8854c14b1a15a9c664c4",
+    "contracts/src/river/registry/facets/node/INodeRegistry.sol": {
+      "keccak256": "0x1d245155a913d92f004313e576841284a48b800ca147b5e87a4aeea94c539bbe",
       "license": "Apache-2.0",
       "urls": [
-        "bzz-raw://850c8329f55f26184fad0e93d5f18c15a08f7681d7517c8fbaa9d8cdc7e5bb42",
-        "dweb:/ipfs/QmbtsvjRZPDTPayj9DcqmRsKqbGxHXtrdigeKviFsgv4sV"
+        "bzz-raw://5ea7ed779d74fb2dab8cc5d25da8ca473b3db2e1af2b34af088a8556ea490960",
+        "dweb:/ipfs/QmYtDEF7Mx387qUM7sbURPEsodbDD1acJNP2D9GjoC2cCR"
       ]
     },
-    "contracts/src/river/registry/RiverRegistry.sol": {
-      "keccak256": "0xe744b61dd420dc6635348738a512e1ccbc92b5ecddd4be35cb2f64948292ca16",
-      "license": "MIT",
-      "urls": [
-        "bzz-raw://e8e3c98731d92a51b988a4af123185e645b3493ee30d3d33453c79fb1d737020",
-        "dweb:/ipfs/QmXZcyjgU1NHeyT5Au32oiTRqTCQ2tQS9q2yBUC6oxFadA"
-      ]
-    },
-    "contracts/src/river/registry/RiverRegistryStorage.sol": {
-      "keccak256": "0x168a6d05573fff4bf9b140650743a4a9d1338baf6c7d3be490357e03b6512fb4",
+    "contracts/src/river/registry/facets/node/NodeRegistry.sol": {
+      "keccak256": "0x834944b910f775f18dd9cf57cd2bbb5e981da3124cc9699bc2ecb0193a84258c",
       "license": "Apache-2.0",
       "urls": [
-        "bzz-raw://6dbb50243df7c7b0d84bb76c3074d57e8e410d922ef2d2d9f060b8e352e304ec",
-        "dweb:/ipfs/QmWHwtNaqVyqsD7UfQmaYRqaHTRKLJoJE5BX1PnnktKtqr"
+        "bzz-raw://9251ea33139dd17e8107ed370dcb58918fafa1bb6b0e44cbb20425e7ebb8d849",
+        "dweb:/ipfs/QmQ4iMrXvSUbZxcyi1c86aZGQGcSJhrqWRzvzz6rs2UfAv"
+      ]
+    },
+    "contracts/src/river/registry/facets/operator/IOperatorRegistry.sol": {
+      "keccak256": "0xf0dbf037e3ebc65945ce4e24e16ff8126e96dbc30174059b693a75e9b8213672",
+      "license": "Apache-2.0",
+      "urls": [
+        "bzz-raw://44c0fa0d32854421ba0d1a9041b0124504d3c9cb4da4d8c4bb77a69645350b10",
+        "dweb:/ipfs/QmNUtMBujetyWHo87mSAvkgLRBjEgQwsrpoMdST8LPm6Zb"
+      ]
+    },
+    "contracts/src/river/registry/facets/operator/OperatorRegistry.sol": {
+      "keccak256": "0xe4b80ab4faaaf470a46907bbbe9a02783eff94492c4ba9a9d5f681af54bbadff",
+      "license": "Apache-2.0",
+      "urls": [
+        "bzz-raw://1b9aa3f826f53fdb824e9f686486efdbcdc9231ca67da5954a33bdbf0f1bc123",
+        "dweb:/ipfs/QmaLSPnRmeJPaNSd8RdTA5uyxUfxa8owNnRe2cZvw4W5YP"
+      ]
+    },
+    "contracts/src/river/registry/facets/stream/IStreamRegistry.sol": {
+      "keccak256": "0xe01ced0797f56cd745d2bee87fcef9381ec8307713bc1ece6e6212e51adb706f",
+      "license": "Apache-2.0",
+      "urls": [
+        "bzz-raw://efdd9a8c5f70913406866dfdd9f5d446c5d5e20a5cb39a20d5ee75c6ebca54af",
+        "dweb:/ipfs/Qmd68co8obqzAvmhufq2ErdCerM3NPKjXgjxD9KugFZCBf"
+      ]
+    },
+    "contracts/src/river/registry/facets/stream/StreamRegistry.sol": {
+      "keccak256": "0xc04fcf552ab676fce969440de3ba10bc47c3e7493aa777d14cb465c3bf27d0ce",
+      "license": "Apache-2.0",
+      "urls": [
+        "bzz-raw://1874de0909601c555894f0e14adf9328aed5c561ad4050364a0931785dca7bbb",
+        "dweb:/ipfs/QmP8p4nV97CgSJC79W4ufTggDDCj77TnRKPNPwms6dSYcp"
+      ]
+    },
+    "contracts/src/river/registry/libraries/RegistryErrors.sol": {
+      "keccak256": "0x073c3ff0f1206824f3722e2ba22fd7174f9ded4a6111e48e0641e21ed90aabfc",
+      "license": "Apache-2.0",
+      "urls": [
+        "bzz-raw://62d60cd3958fdb3762972e41aefa899e6b6ac0dac7c94689025f6ba5dc241be3",
+        "dweb:/ipfs/QmRRhiC1KXDh5aPPNBEgwbg8wZ9BKWYLJ7jGD9vFzm1kWy"
+      ]
+    },
+    "contracts/src/river/registry/libraries/RegistryStorage.sol": {
+      "keccak256": "0x97f0d92d485bb2bf11fc5a2a39bc1e9dba3865ba90a4dd2ca980f9e19c69602d",
+      "license": "Apache-2.0",
+      "urls": [
+        "bzz-raw://565685a7de523e1c19e1c038a9003ef6b99d18b87dd10f6759e9df6e2717eaeb",
+        "dweb:/ipfs/QmSuamKP178nam4VbCZyCo8C7p8AHy54T7WSdeCU3rPZZN"
       ]
     },
     "contracts/test/mocks/MockRiverRegistry.sol": {
-      "keccak256": "0xb25f1d551c687db0072f42b9f04d4e108b1966621f5a9e72d256b86b44589735",
+      "keccak256": "0x7fec3cabfd72f01f54277df5f9f9c129ee09195a6006ba6053709a90f7602d17",
       "license": "Apache-2.0",
       "urls": [
-        "bzz-raw://81e4ed544c713bf497a097d14c0cdab94e18637d233c36e24c755884a8d801dc",
-        "dweb:/ipfs/QmfAxy8Gg6GYzWHEa4vvcXyuBcfftf5MwekNpYYmyJmHuL"
+        "bzz-raw://8572357f1ccb397e6719dfd9993052ff29c0a8eb13e0b300ef8c4599df0a49f5",
+        "dweb:/ipfs/QmWg69XtPkhcgXiBz2JwRrzD5DNYzPDPpeGGuNpe7Qqsd3"
       ]
     },
     "lib/@openzeppelin/contracts/utils/Address.sol": {
