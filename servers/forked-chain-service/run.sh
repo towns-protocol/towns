@@ -371,6 +371,12 @@ function nodes_from_solidity_to_csv() {
 
     csv_output=$(echo $nodes | sed 's/[(\[]//g' | sed 's/[)\]]//g' | sed 's/), /, /g' | sed 's/, /,/g' | sed 's/"//g')
 
+    # now, break the csv into chunks of 3, where first item is the node status, second is the node url, and third is the node address
+    # and then return a new chunk of csvs where we have (node address, node url), and drop the node status
+
+    csv_output=$(echo $csv_output | tr ',' '\n' | awk 'ORS=NR%3?",":"\n"' | awk -F, '{print $3","$2}' | tr '\n' ',' | sed 's/,$//')
+
+
     echo $csv_output
 }
 
@@ -394,7 +400,7 @@ function get_all_nodes() {
     cast call \
         --rpc-url $LOCAL_ANVIL_RPC_URL \
         $RIVER_REGISTRY_ADDRESS \
-        "getAllNodes()((address,string)[])"
+        "getAllNodes()((uint8,string,address)[])"
 }
 
 function main() {
