@@ -26,7 +26,16 @@ const NODE_MODULES_DIR = findNodeModules()
 const riverDirectory = path.join(path.dirname(__dirname), 'river')
 for (const lib of CONTRACT_LIBS) {
     const source = path.join(NODE_MODULES_DIR, lib)
-    const destination = path.join(riverDirectory, 'node_modules', lib)
+    // todo: remove the old destination after river/remappings.txt point
+    // to the new destination prefix at lib/
+    const destinationOld = path.join(riverDirectory, 'node_modules', lib)
+    fs.copy(source, destinationOld, function (err) {
+        if (err) {
+            return console.error(err)
+        }
+        console.log(`Copy completed from ${source} to ${destinationOld}`)
+    })
+    const destination = path.join(riverDirectory, 'lib', lib)
     fs.copy(source, destination, function (err) {
         if (err) {
             return console.error(err)
