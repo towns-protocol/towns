@@ -15,6 +15,7 @@ import {IRuleEntitlement} from "contracts/src/crosschain/IRuleEntitlement.sol";
 import {RuleEntitlement} from "contracts/src/crosschain/RuleEntitlement.sol";
 import {IRoles} from "contracts/src/spaces/facets/roles/IRoles.sol";
 import {IMembership} from "contracts/src/spaces/facets/membership/IMembership.sol";
+import {IWalletLink} from "contracts/src/river/wallet-link/IWalletLink.sol";
 
 // libraries
 import {Permissions} from "contracts/src/spaces/facets/Permissions.sol";
@@ -24,6 +25,7 @@ import {BaseSetup} from "contracts/test/spaces/BaseSetup.sol";
 import {Architect} from "contracts/src/spaces/facets/architect/Architect.sol";
 import {MockERC721} from "contracts/test/mocks/MockERC721.sol";
 import {UserEntitlement} from "contracts/src/spaces/entitlements/user/UserEntitlement.sol";
+import {WalletLink} from "contracts/src/river/wallet-link/WalletLink.sol";
 
 // errors
 import {Validator__InvalidStringLength} from "contracts/src/utils/Validator.sol";
@@ -41,9 +43,8 @@ contract ArchitectTest is
     spaceArchitect = Architect(spaceFactory);
   }
 
-  function test_createSpace_only() external {
+  function test_createSpace() external {
     string memory name = "Test";
-
     address founder = _randomAddress();
 
     vm.prank(founder);
@@ -72,18 +73,21 @@ contract ArchitectTest is
     (
       address spaceTokenAddress,
       IUserEntitlement userEntitlementAddress,
-      IRuleEntitlement ruleEntitlementAddress
+      IRuleEntitlement ruleEntitlementAddress,
+      IWalletLink walletLinkAddress
     ) = spaceArchitect.getSpaceArchitectImplementations();
 
     assertEq(spaceOwner, spaceTokenAddress);
     assertEq(userEntitlement, address(userEntitlementAddress));
     assertEq(ruleEntitlement, address(ruleEntitlementAddress));
+    assertEq(walletLink, address(walletLinkAddress));
   }
 
   function test_setImplementations() external {
     address newSpaceToken = address(new MockERC721());
     IUserEntitlement newUserEntitlement = new UserEntitlement();
     IRuleEntitlement newRuleEntitlement = new RuleEntitlement();
+    IWalletLink newWalletLink = new WalletLink();
 
     address user = _randomAddress();
 
@@ -92,25 +96,29 @@ contract ArchitectTest is
     spaceArchitect.setSpaceArchitectImplementations(
       newSpaceToken,
       newUserEntitlement,
-      newRuleEntitlement
+      newRuleEntitlement,
+      newWalletLink
     );
 
     vm.prank(deployer);
     spaceArchitect.setSpaceArchitectImplementations(
       newSpaceToken,
       newUserEntitlement,
-      newRuleEntitlement
+      newRuleEntitlement,
+      newWalletLink
     );
 
     (
       address spaceTokenAddress,
       IUserEntitlement userEntitlementAddress,
-      IRuleEntitlement tokenEntitlementAddress
+      IRuleEntitlement tokenEntitlementAddress,
+      IWalletLink walletLink
     ) = spaceArchitect.getSpaceArchitectImplementations();
 
     assertEq(newSpaceToken, spaceTokenAddress);
     assertEq(address(newUserEntitlement), address(userEntitlementAddress));
     assertEq(address(newRuleEntitlement), address(tokenEntitlementAddress));
+    assertEq(address(newWalletLink), address(walletLink));
   }
 
   function test_transfer_space_ownership(string memory spaceId) external {
@@ -126,7 +134,7 @@ contract ArchitectTest is
       IEntitlementsManager(newSpace).isEntitledToSpace(founder, "Read")
     );
 
-    (address spaceOwner, , ) = spaceArchitect
+    (address spaceOwner, , , ) = spaceArchitect
       .getSpaceArchitectImplementations();
     uint256 tokenId = spaceArchitect.getTokenIdBySpaceId(spaceId);
 
@@ -145,7 +153,7 @@ contract ArchitectTest is
     assertTrue(IEntitlementsManager(newSpace).isEntitledToSpace(buyer, "Read"));
   }
 
-  function test_createSpace_revert_when_paused(string memory name) external {
+  function test_revertWhen_createSpaceAndPaused(string memory name) external {
     vm.assume(bytes(name).length > 0);
 
     vm.prank(deployer);
