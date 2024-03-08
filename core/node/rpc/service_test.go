@@ -6,7 +6,6 @@ import (
 	"fmt"
 	"net"
 	"net/http"
-	"os"
 	"testing"
 
 	"github.com/river-build/river/core/node/base/test"
@@ -19,6 +18,7 @@ import (
 	"github.com/river-build/river/core/node/protocol/protocolconnect"
 	"github.com/river-build/river/core/node/rpc"
 	. "github.com/river-build/river/core/node/shared"
+	"github.com/river-build/river/core/node/storage"
 	"github.com/river-build/river/core/node/testutils"
 	"github.com/river-build/river/core/node/testutils/dbtestutils"
 	"golang.org/x/net/http2"
@@ -28,30 +28,6 @@ import (
 	"github.com/stretchr/testify/require"
 	"google.golang.org/protobuf/proto"
 )
-
-var (
-	testDatabaseUrl string
-	testSchemaName  string
-)
-
-func testMainImpl(m *testing.M) int {
-	ctx := test.NewTestContext()
-	db, schemaName, closer, err := dbtestutils.StartDB(ctx)
-	if err != nil {
-		fmt.Printf("Failed to start test database: %v\n", err)
-		return 1
-	}
-	defer closer()
-	testDatabaseUrl = db
-	testSchemaName = schemaName
-
-	return m.Run()
-}
-
-func TestMain(m *testing.M) {
-	// Second function allows deferes to run before os.Exit
-	os.Exit(testMainImpl(m))
-}
 
 func createUserDeviceKeyStream(
 	ctx context.Context,
@@ -269,9 +245,10 @@ func testClient(url string) protocolconnect.StreamServiceClient {
 
 func testServerAndClient(
 	ctx context.Context,
-	dbUrl string,
 	require *require.Assertions,
 ) (protocolconnect.StreamServiceClient, string, func()) {
+	dbUrl := dbtestutils.GetTestDbUrl()
+
 	cfg := &config.Config{
 		DisableBaseChain: true,
 		Database:         config.DatabaseConfig{Url: dbUrl},
@@ -312,16 +289,19 @@ func testServerAndClient(
 	service, err := rpc.StartServer(ctx, cfg, bc, listener)
 	require.NoError(err)
 
+	address := bc.Wallet.AddressStr
+
 	return testClient(url), url, func() {
 		service.Close()
 		btc.Close()
+		_ = dbtestutils.DeleteTestSchema(ctx, dbUrl, storage.DbSchemaNameFromAddress(address))
 	}
 }
 
 func TestMethods(t *testing.T) {
 	require := require.New(t)
 	ctx := test.NewTestContext()
-	client, _, closer := testServerAndClient(ctx, testDatabaseUrl, require)
+	client, _, closer := testServerAndClient(ctx, require)
 	defer closer()
 
 	wallet1, _ := crypto.NewWallet(ctx)
@@ -509,7 +489,7 @@ func TestMethods(t *testing.T) {
 func TestRiverDeviceId(t *testing.T) {
 	require := require.New(t)
 	ctx := test.NewTestContext()
-	client, _, closer := testServerAndClient(ctx, testDatabaseUrl, require)
+	client, _, closer := testServerAndClient(ctx, require)
 	defer closer()
 
 	wallet, _ := crypto.NewWallet(ctx)
@@ -580,7 +560,7 @@ func TestSyncStreams(t *testing.T) {
 	*/
 	// create the test client and server
 	ctx := test.NewTestContext()
-	client, _, closer := testServerAndClient(ctx, testDatabaseUrl, require)
+	client, _, closer := testServerAndClient(ctx, require)
 	defer closer()
 
 
@@ -658,7 +638,7 @@ func TestAddStreamsToSync(t *testing.T) {
 	*/
 	// create the test client and server
 	ctx := test.NewTestContext()
-	aliceClient, url, closer := testServerAndClient(ctx, testDatabaseUrl, require)
+	aliceClient, url, closer := testServerAndClient(ctx, require)
 	defer closer()
 
 
@@ -778,7 +758,7 @@ func TestRemoveStreamsFromSync(t *testing.T) {
 	// create the test client and server
 	ctx := test.NewTestContext()
 	log := dlog.FromCtx(ctx)
-	aliceClient, url, closer := testServerAndClient(ctx, testDatabaseUrl, require)
+	aliceClient, url, closer := testServerAndClient(ctx, require)
 	defer closer()
 
 
