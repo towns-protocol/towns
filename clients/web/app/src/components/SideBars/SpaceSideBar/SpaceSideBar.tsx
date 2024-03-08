@@ -26,6 +26,9 @@ import { useSortedChannels } from 'hooks/useSortedChannels'
 import { PATHS } from 'routes'
 import { AllChannelsList } from 'routes/AllChannelsList/AllChannelsList'
 import { useStore } from 'store/store'
+import { ReloadPrompt } from '@components/ReloadPrompt/ReloadPrompt'
+import { env } from 'utils'
+import { useDevice } from 'hooks/useDevice'
 import { SideBar } from '../_SideBar'
 import { SidebarListLayout } from './SidebarListLayout'
 import * as styles from './SpaceSideBar.css'
@@ -45,6 +48,7 @@ enum LayoutMode {
 
 export const SpaceSideBar = (props: Props) => {
     const { space } = props
+    const { isTouch } = useDevice()
     const { loggedInWalletAddress } = useAuth()
 
     const unreadThreadsCount = useSpaceThreadRootsUnreadCount()
@@ -134,157 +138,164 @@ export const SpaceSideBar = (props: Props) => {
     )
 
     return (
-        <SideBar data-testid="space-sidebar" height="100%" onScroll={onScroll}>
-            <FadeInBox grow elevateReadability className={props.className}>
-                <Stack
-                    position="absolute"
-                    className={styles.gradientBackground}
-                    width="100%"
-                    height="200"
-                />
-                <SpaceSideBarHeader
-                    scrollOffset={scrollOffset}
-                    space={space}
-                    opaqueHeaderBar={hasScrolldedPastHeader}
-                    headerRef={headerRef}
-                />
+        <Box absoluteFill>
+            <SideBar data-testid="space-sidebar" height="100%" onScroll={onScroll}>
+                <FadeInBox grow elevateReadability className={props.className}>
+                    <Stack
+                        position="absolute"
+                        className={styles.gradientBackground}
+                        width="100%"
+                        height="200"
+                    />
+                    <SpaceSideBarHeader
+                        scrollOffset={scrollOffset}
+                        space={space}
+                        opaqueHeaderBar={hasScrolldedPastHeader}
+                        headerRef={headerRef}
+                    />
 
-                <Stack grow paddingY="md">
-                    {membership === Membership.Join && (
-                        <>
-                            {isOwner && !dismissedGettingStartedMap[space.id] && (
-                                <Box className={styles.buttonTextParent}>
-                                    <ActionNavItem
-                                        icon="wand"
-                                        id="getting-started"
-                                        label="Getting Started"
-                                        link={`/${PATHS.SPACES}/${space.id}/${PATHS.GETTING_STARTED}`}
-                                        minHeight="x5"
-                                    >
-                                        <Button
-                                            className={styles.buttonText}
-                                            onClick={onRemoveGettingStarted}
+                    <Stack grow paddingY="md">
+                        {membership === Membership.Join && (
+                            <>
+                                {isOwner && !dismissedGettingStartedMap[space.id] && (
+                                    <Box className={styles.buttonTextParent}>
+                                        <ActionNavItem
+                                            icon="wand"
+                                            id="getting-started"
+                                            label="Getting Started"
+                                            link={`/${PATHS.SPACES}/${space.id}/${PATHS.GETTING_STARTED}`}
+                                            minHeight="x5"
                                         >
-                                            <Icon type="close" />
-                                        </Button>
-                                    </ActionNavItem>
-                                </Box>
-                            )}
-                        </>
-                    )}
-                    {space.isLoadingChannels ? (
-                        <SidebarLoadingAnimation />
-                    ) : layoutMode === 'create-message' ? (
-                        <Box grow color="gray2">
-                            <ChannelNavGroup label="New Message">
-                                <IconButton
-                                    icon="close"
-                                    color="gray2"
-                                    size="square_sm"
-                                    cursor="pointer"
-                                    onClick={onDisplayDefault}
-                                />
-                            </ChannelNavGroup>
-                            <CreateDirectMessage onDirectMessageCreated={onDisplayDefault} />
-                        </Box>
-                    ) : (
-                        <FadeIn>
-                            {/* threads */}
-                            <ActionNavItem
-                                highlight={unreadThreadsCount > 0}
-                                icon="threads"
-                                link={`/${PATHS.SPACES}/${space.id}/threads`}
-                                id="threads"
-                                label="Threads"
-                                badge={
-                                    unreadThreadMentions > 0 && (
-                                        <Badge value={unreadThreadMentions} />
-                                    )
-                                }
-                                minHeight="x5"
-                            />
-                            {/* mentions */}
-                            <ActionNavItem
-                                icon="at"
-                                id="mentions"
-                                label="Mentions"
-                                link={`/${PATHS.SPACES}/${space.id}/mentions`}
-                                minHeight="x5"
-                            />
-                            <SidebarListLayout
-                                label="Unreads"
-                                channels={unreadChannels}
-                                itemRenderer={itemRenderer}
-                            />
-
-                            <SidebarListLayout
-                                label="Channels"
-                                channels={readChannels}
-                                headerContent={
-                                    canCreateChannel && (
-                                        <IconButton
-                                            icon="plus"
-                                            tooltip="New channel"
-                                            tooltipOptions={{ immediate: true }}
-                                            onClick={onShowCreateChannel}
-                                        />
-                                    )
-                                }
-                                itemRenderer={itemRenderer}
-                            />
-
-                            <ActionNavItem
-                                icon="search"
-                                id="browseChannels"
-                                label="Browse channels"
-                                minHeight="x5"
-                                onClick={onShowBrowseChannels}
-                            />
-
-                            {canCreateChannel && (
-                                <ActionNavItem
-                                    icon="plus"
-                                    id="newChannel"
-                                    label="Create channel"
-                                    onClick={onShowCreateChannel}
-                                />
-                            )}
-                            <SidebarListLayout
-                                label="Direct Messages"
-                                channels={readDms}
-                                headerContent={
+                                            <Button
+                                                className={styles.buttonText}
+                                                onClick={onRemoveGettingStarted}
+                                            >
+                                                <Icon type="close" />
+                                            </Button>
+                                        </ActionNavItem>
+                                    </Box>
+                                )}
+                            </>
+                        )}
+                        {space.isLoadingChannels ? (
+                            <SidebarLoadingAnimation />
+                        ) : layoutMode === 'create-message' ? (
+                            <Box grow color="gray2">
+                                <ChannelNavGroup label="New Message">
                                     <IconButton
-                                        size="square_sm"
-                                        icon="compose"
+                                        icon="close"
                                         color="gray2"
+                                        size="square_sm"
                                         cursor="pointer"
-                                        tooltip="New message"
-                                        onClick={onDisplayCreate}
+                                        onClick={onDisplayDefault}
                                     />
-                                }
-                                itemRenderer={itemRenderer}
-                            />
-                        </FadeIn>
-                    )}
-                </Stack>
+                                </ChannelNavGroup>
+                                <CreateDirectMessage onDirectMessageCreated={onDisplayDefault} />
+                            </Box>
+                        ) : (
+                            <FadeIn>
+                                {/* threads */}
+                                <ActionNavItem
+                                    highlight={unreadThreadsCount > 0}
+                                    icon="threads"
+                                    link={`/${PATHS.SPACES}/${space.id}/threads`}
+                                    id="threads"
+                                    label="Threads"
+                                    badge={
+                                        unreadThreadMentions > 0 && (
+                                            <Badge value={unreadThreadMentions} />
+                                        )
+                                    }
+                                    minHeight="x5"
+                                />
+                                {/* mentions */}
+                                <ActionNavItem
+                                    icon="at"
+                                    id="mentions"
+                                    label="Mentions"
+                                    link={`/${PATHS.SPACES}/${space.id}/mentions`}
+                                    minHeight="x5"
+                                />
+                                <SidebarListLayout
+                                    label="Unreads"
+                                    channels={unreadChannels}
+                                    itemRenderer={itemRenderer}
+                                />
 
-                <Box gap paddingTop="md" paddingX="sm" paddingBottom="lg">
-                    <Text textAlign="center" color="gray2" fontSize="sm">
-                        Towns {APP_VERSION} ({APP_COMMIT_HASH})
-                    </Text>
-                </Box>
-            </FadeInBox>
-            {isBrowseChannelsModalVisible ? (
-                <ModalContainer minWidth="500" onHide={onHideBrowseChannels}>
-                    <AllChannelsList onHideBrowseChannels={onHideBrowseChannels} />
-                </ModalContainer>
-            ) : isCreateChannelModalVisible ? (
-                <ModalContainer onHide={onHideCreateChannel}>
-                    <CreateChannelFormContainer spaceId={space.id} onHide={onHideCreateChannel} />
-                </ModalContainer>
-            ) : (
-                <></>
-            )}
-        </SideBar>
+                                <SidebarListLayout
+                                    label="Channels"
+                                    channels={readChannels}
+                                    headerContent={
+                                        canCreateChannel && (
+                                            <IconButton
+                                                icon="plus"
+                                                tooltip="New channel"
+                                                tooltipOptions={{ immediate: true }}
+                                                onClick={onShowCreateChannel}
+                                            />
+                                        )
+                                    }
+                                    itemRenderer={itemRenderer}
+                                />
+
+                                <ActionNavItem
+                                    icon="search"
+                                    id="browseChannels"
+                                    label="Browse channels"
+                                    minHeight="x5"
+                                    onClick={onShowBrowseChannels}
+                                />
+
+                                {canCreateChannel && (
+                                    <ActionNavItem
+                                        icon="plus"
+                                        id="newChannel"
+                                        label="Create channel"
+                                        onClick={onShowCreateChannel}
+                                    />
+                                )}
+                                <SidebarListLayout
+                                    label="Direct Messages"
+                                    channels={readDms}
+                                    headerContent={
+                                        <IconButton
+                                            size="square_sm"
+                                            icon="compose"
+                                            color="gray2"
+                                            cursor="pointer"
+                                            tooltip="New message"
+                                            onClick={onDisplayCreate}
+                                        />
+                                    }
+                                    itemRenderer={itemRenderer}
+                                />
+                            </FadeIn>
+                        )}
+                    </Stack>
+
+                    <Box gap paddingTop="md" paddingX="sm" paddingBottom="lg">
+                        <Text textAlign="center" color="gray2" fontSize="sm">
+                            Towns {APP_VERSION} ({APP_COMMIT_HASH})
+                        </Text>
+                    </Box>
+                </FadeInBox>
+                {isBrowseChannelsModalVisible ? (
+                    <ModalContainer minWidth="500" onHide={onHideBrowseChannels}>
+                        <AllChannelsList onHideBrowseChannels={onHideBrowseChannels} />
+                    </ModalContainer>
+                ) : isCreateChannelModalVisible ? (
+                    <ModalContainer onHide={onHideCreateChannel}>
+                        <CreateChannelFormContainer
+                            spaceId={space.id}
+                            onHide={onHideCreateChannel}
+                        />
+                    </ModalContainer>
+                ) : (
+                    <></>
+                )}
+            </SideBar>
+            {/* the service worker won't exist in dev-mode and there's not need to check for updates */}
+            {(!env.DEV || env.VITE_PUSH_NOTIFICATION_ENABLED) && !isTouch && <ReloadPrompt />}
+        </Box>
     )
 }

@@ -61,6 +61,8 @@ import { notUndefined } from 'ui/utils/utils'
 import { BugReportPanel } from 'routes/BugReportPanel'
 import { ShakeToReport } from '@components/BugReportButton/ShakeToReport'
 import { useAbstractAccountAddress } from 'hooks/useAbstractAccountAddress'
+import { ReloadPrompt } from '@components/ReloadPrompt/ReloadPrompt'
+import { env } from 'utils'
 import { AllChannelsList, ChannelItem } from '../AllChannelsList/AllChannelsList'
 import { TouchTabBarLayout } from '../layouts/TouchTabBarLayout'
 
@@ -343,9 +345,13 @@ export const TouchHome = () => {
                                         )}
                                     </Box>
                                 )}
+                                {(!env.DEV || env.VITE_PUSH_NOTIFICATION_ENABLED) && (
+                                    <ReloadPrompt />
+                                )}
                             </MotionBox>
                         </MotionStack>
                     </AnimatePresence>
+
                     <OutletOrPanel outlet={outlet} />
                 </TouchTabBarLayout>
                 <AnimatePresence>

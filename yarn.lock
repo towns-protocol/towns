@@ -17277,7 +17277,7 @@ __metadata:
     vite-plugin-checker: ^0.6.2
     vite-plugin-eslint: ^1.8.1
     vite-plugin-mkcert: ^1.17.1
-    vite-plugin-pwa: ^0.17.4
+    vite-plugin-pwa: ^0.18.2
     vite-tsconfig-paths: ^4.2.3
     vitest: ^1.1.1
     vitest-canvas-mock: ^0.3.3
@@ -27711,9 +27711,9 @@ __metadata:
   languageName: node
   linkType: hard
 
-"vite-plugin-pwa@npm:^0.17.4":
-  version: 0.17.4
-  resolution: "vite-plugin-pwa@npm:0.17.4"
+"vite-plugin-pwa@npm:^0.18.2":
+  version: 0.18.2
+  resolution: "vite-plugin-pwa@npm:0.18.2"
   dependencies:
     debug: ^4.3.4
     fast-glob: ^3.3.2
@@ -27724,7 +27724,7 @@ __metadata:
     vite: ^3.1.0 || ^4.0.0 || ^5.0.0
     workbox-build: ^7.0.0
     workbox-window: ^7.0.0
-  checksum: aaa0247a435d0621b0c3078938156fde1a1abbd2cb0608968d79beec85f5348e50a2cc8e1bd75bee85f7b5385e20eaf388d4a710466252050f1d660b64245bec
+  checksum: 6dded6aff4ea7ce5aeef2041f277cf59a64fe6ae085821b501cd405c2640d10980e93761d5429f946f9f79a7c574d19fec2e1f1ab716d5bcda418b4fd76ede2f
   languageName: node
   linkType: hard
 

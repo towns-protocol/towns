@@ -28,6 +28,7 @@ export function vitePWAOptions(
                 // this combo of options allows for auto removing any dev-only service workers
                 devOptions: {
                     enabled: true,
+                    type: 'module',
                 },
                 selfDestroying: true,
             }

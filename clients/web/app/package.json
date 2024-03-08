@@ -167,7 +167,7 @@
         "vite-plugin-checker": "^0.6.2",
         "vite-plugin-eslint": "^1.8.1",
         "vite-plugin-mkcert": "^1.17.1",
-        "vite-plugin-pwa": "^0.17.4",
+        "vite-plugin-pwa": "^0.18.2",
         "vite-tsconfig-paths": "^4.2.3",
         "vitest": "^1.1.1",
         "vitest-canvas-mock": "^0.3.3",

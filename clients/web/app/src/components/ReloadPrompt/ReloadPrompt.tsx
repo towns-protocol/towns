@@ -2,85 +2,19 @@ import React, { useCallback, useEffect, useState } from 'react'
 import { useRegisterSW } from 'virtual:pwa-register/react'
 import { AnimatePresence } from 'framer-motion'
 import { debug } from 'debug'
-import { Box, Button, Card, Paragraph } from '@ui'
+import { Box, FancyButton } from '@ui'
 import { FadeInBox } from '@components/Transitions'
-import { Spinner } from '@components/Spinner'
-import { env } from 'utils'
-import { MINUTE_MS, SECOND_MS } from 'data/constants'
-
-const UPDATE_INTERVAL_MS = 1 * MINUTE_MS
+import { SECOND_MS } from 'data/constants'
+import { clearAllWorkers } from 'hooks/usePeriodicUpdates'
 
 const log = debug('app:ReloadPrompt')
 log.enabled = true
 
 export const ReloadPrompt = () => {
     const {
-        offlineReady: [offlineReady, setOfflineReady],
-        needRefresh: [needRefresh, setNeedRefresh],
+        needRefresh: [needRefresh],
         updateServiceWorker,
-    } = useRegisterSW({
-        onRegisteredSW(swUrl, r) {
-            log('registered:' + r)
-            if (env.DEV) {
-                if (env.VITE_PUSH_NOTIFICATION_ENABLED) {
-                    // doesn't seem to update the service worker in dev mode without this
-                    updateServiceWorker()
-                }
-                return
-            }
-            if (r) {
-                const checkInterval = () => {
-                    log('checking for updates...')
-                    if (!(!r.installing && navigator)) {
-                        log('already installing')
-                        return
-                    }
-                    if ('connection' in navigator && !navigator.onLine) {
-                        return
-                    }
-                    const asyncUpdate = async () => {
-                        log('asyncUpdate...')
-                        try {
-                            const resp = await fetch(swUrl, {
-                                cache: 'no-store',
-                                headers: {
-                                    cache: 'no-store',
-                                    'cache-control': 'no-cache',
-                                },
-                            })
-                            if (resp?.status === 200) {
-                                log('status 200, updating...')
-                                await r.update()
-                            } else {
-                                log('skip updating', resp?.status)
-                            }
-                        } catch (error) {
-                            console.error('sw: reload prompt, error checking for update', error)
-                        }
-                    }
-                    asyncUpdate()
-                }
-                setInterval(checkInterval, UPDATE_INTERVAL_MS)
-            }
-        },
-
-        onNeedRefresh() {
-            log('need update')
-        },
-
-        onOfflineReady() {
-            log('offline ready:', offlineReady)
-        },
-
-        onRegisterError(error) {
-            log('registration error', error)
-        },
-    })
-
-    const close = () => {
-        setOfflineReady(false)
-        setNeedRefresh(false)
-    }
+    } = useRegisterSW()
 
     const [isVersionHidden, setIsVersionHidden] = useState(false)
     const [isUpdating, setIsUpdating] = useState(false)
@@ -94,8 +28,6 @@ export const ReloadPrompt = () => {
         }
     }, [])
 
-    const [isFailed, setIsFailed] = useState(false)
-
     const onUpdateClick = useCallback(() => {
         const asyncUpdate = async () => {
             // start a timer to clear all workers and force a reload if the vite-pwa update somehow fails
@@ -103,10 +35,9 @@ export const ReloadPrompt = () => {
             // and updateServiceWorker() doesn't throw an error if it doesn't work, so we don't want to clear the timeout immediately
             setTimeout(async () => {
                 log('update failed, clearing workers and reloading...')
-                setIsFailed(true)
                 await clearAllWorkers()
                 window.location.reload()
-            }, SECOND_MS * 20)
+            }, SECOND_MS * 10)
 
             // for safety, currently some of our URLs only work in SPA mode but
             // fail upon hard-refresh because of invalid chars
@@ -123,7 +54,6 @@ export const ReloadPrompt = () => {
             try {
                 await updateServiceWorker()
             } catch (error) {
-                setIsFailed(true)
                 log('sw: reload prompt, error updating service worker', error)
             }
 
@@ -134,11 +64,7 @@ export const ReloadPrompt = () => {
             return
         }
         setIsUpdating(true)
-
-        setTimeout(() => {
-            // let the animation settle before requesting the update
-            asyncUpdate()
-        }, 1 * SECOND_MS)
+        asyncUpdate()
     }, [isUpdating, updateServiceWorker])
 
     return (
@@ -147,90 +73,38 @@ export const ReloadPrompt = () => {
             position="fixed"
             bottom="none"
             right="none"
+            left="none"
             zIndex="tooltipsAbove"
             color="gray1"
             pointerEvents="none"
         >
-            <AnimatePresence>
-                {!isVersionHidden ? (
-                    <FadeInBox
-                        padding
-                        key="version"
-                        preset="fadeup"
-                        borderRadius="md"
-                        background="level2"
-                        rounded="sm"
-                    >
-                        <Paragraph>
-                            version {APP_VERSION} ({APP_COMMIT_HASH})
-                        </Paragraph>
-                    </FadeInBox>
-                ) : needRefresh ? (
-                    <FadeInBox layout preset="fadeup" key="card">
-                        <Card
-                            border
-                            centerContent
-                            padding="lg"
-                            gap="lg"
-                            borderRadius="sm"
-                            pointerEvents="auto"
-                        >
-                            {!isUpdating ? (
-                                <>
-                                    <Box maxWidth="250">
-                                        <Paragraph textAlign="center">
-                                            An update is available. For the best experience, please
-                                            update now.
-                                        </Paragraph>
-                                    </Box>
-                                    <Box gap horizontal alignSelf="center">
-                                        <Button
-                                            size="button_sm"
-                                            tone="cta1"
-                                            onClick={onUpdateClick}
-                                        >
-                                            Update
-                                        </Button>
-
-                                        <Button size="button_sm" onClick={() => close()}>
-                                            Dismiss
-                                        </Button>
-                                    </Box>
-                                </>
-                            ) : (
-                                <FadeInBox horizontal centerContent gap layout="position">
-                                    {isFailed ? (
-                                        <Paragraph color="error">
-                                            An error occurred while updating. Reloading...
-                                        </Paragraph>
-                                    ) : (
-                                        <>
-                                            <Paragraph>Updating</Paragraph>
-                                            <Spinner height="x2" />
-                                        </>
-                                    )}
-                                </FadeInBox>
-                            )}
-                        </Card>
-                    </FadeInBox>
-                ) : (
-                    <></>
-                )}
+            <AnimatePresence mode="sync">
+                <FadeInBox centerContent preset="fadeup" pointerEvents="auto" width="100%">
+                    <Box>
+                        {!isVersionHidden ? (
+                            <FancyButton
+                                borderRadius="lg"
+                                spinner={isUpdating}
+                                boxShadow="card"
+                                onClick={!isUpdating ? onUpdateClick : undefined}
+                            >
+                                {APP_COMMIT_HASH}
+                            </FancyButton>
+                        ) : needRefresh ? (
+                            <FancyButton
+                                cta
+                                compact
+                                borderRadius="lg"
+                                spinner={isUpdating}
+                                boxShadow="card"
+                                onClick={!isUpdating ? onUpdateClick : undefined}
+                            >
+                                {isUpdating ? 'Updating' : 'Update Towns'}
+                            </FancyButton>
+                        ) : null}
+                    </Box>
+                </FadeInBox>
             </AnimatePresence>
         </Box>
     )
-}
-
-async function clearAllWorkers() {
-    const registrations = await navigator.serviceWorker.getRegistrations()
-    for (const registration of registrations) {
-        const result = await registration.unregister()
-        log(result ? 'successfully unregistered' : 'failed to unregister')
-    }
-}
-
-if (env.DEV) {
-    // eslint-disable-next-line @typescript-eslint/ban-ts-comment
-    // @ts-ignore
-    window.clearAllWorkers = () => clearAllWorkers().then(window.location.reload)
 }

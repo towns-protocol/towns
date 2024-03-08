@@ -9,17 +9,20 @@ import * as fancyButtonStyle from './FancyButton.css'
 type FancyButtonProps = {
     children?: string
     cta?: boolean
+    compact?: boolean
     spinner?: boolean
     disabled?: boolean
     icon?: IconName
     onClick?: () => void
+    borderRadius?: BoxProps['borderRadius']
+    boxShadow?: BoxProps['boxShadow']
 }
 
 /**
  * Convulted button that enables background transitions
  */
 export const FancyButton = (props: FancyButtonProps) => {
-    const { icon, spinner, disabled } = props
+    const { icon, compact, spinner, disabled, borderRadius = 'sm' } = props
     const background = props.cta ? 'cta1' : 'level3'
 
     const before = spinner ? (
@@ -57,15 +60,15 @@ export const FancyButton = (props: FancyButtonProps) => {
             horizontal
             centerContent
             whileTap="tap"
-            paddingY="md"
             as="button"
-            borderRadius="sm"
+            borderRadius={borderRadius}
             initial="hide"
             animate="show"
             exit="hide"
             background={background}
-            height="x6"
+            height={compact ? 'x5' : 'x6'}
             paddingX="lg"
+            boxShadow={props.boxShadow}
             style={
                 {
                     background: 'transparent',
@@ -84,14 +87,16 @@ export const FancyButton = (props: FancyButtonProps) => {
             onPointerDown={onTap}
             onClick={!disabled ? props.onClick : undefined}
         >
-            <AnimatePresence>{<Background tone={background} key={background} />}</AnimatePresence>
+            <AnimatePresence>
+                {<Background tone={background} borderRadius={borderRadius} key={background} />}
+            </AnimatePresence>
 
             <AnimatePresence>
                 {/* AnimatePresence allows multiple ripples to appear simulaneously until the last one times-out */}
                 {ripple && (
                     <MotionBox
                         absoluteFill
-                        borderRadius="sm"
+                        borderRadius={borderRadius}
                         key={`ripple-${ripple.key}`}
                         initial={{ scale: 0.97 }}
                         overflow="hidden"
@@ -169,12 +174,15 @@ export const FancyButton = (props: FancyButtonProps) => {
     )
 }
 
-const Background = (props: { tone: BoxProps['background'] }) => {
-    const { tone } = props
+const Background = (props: {
+    tone: BoxProps['background']
+    borderRadius: BoxProps['borderRadius']
+}) => {
+    const { tone, borderRadius } = props
     return (
         <MotionBox
             absoluteFill
-            borderRadius="sm"
+            borderRadius={borderRadius}
             background={tone}
             transition={{
                 duration: 0.6,
@@ -186,7 +194,7 @@ const Background = (props: { tone: BoxProps['background'] }) => {
                     scale: 0.97,
                     opacity: 1,
                     transition: {
-                        duration: 0.2,
+                        duration: 0.01,
                     },
                 },
             }}
