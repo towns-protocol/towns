@@ -370,7 +370,7 @@ resource "aws_ecs_task_definition" "river-fargate" {
 
   container_definitions = jsonencode([{
     name  = "river-node"
-    image = "${local.global_remote_state.public_ecr.repository_url_map["river-node"]}:latest"
+    image = "public.ecr.aws/h5v6m2x1/river:latest"
 
     essential = true
     portMappings = [{
@@ -506,7 +506,7 @@ resource "aws_ecs_task_definition" "river-fargate" {
       },
       {
         name  = "ARCHITECTCONTRACT__ADDRESS"
-        value = "0xDa5e27A017a8BbDFf86f61a9B8B030379022adfE"
+        value = "0xF8891849b6091E744cf6E82E12E036F2AA74FEA4"
       },
       {
         name  = "ARCHITECTCONTRACT__VERSION"
