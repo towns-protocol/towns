@@ -166,11 +166,18 @@ export const codeBlock = style([
     code,
 ])
 
-export const quote = style({
-    marginTop: vars.space.md,
-    marginBottom: vars.space.md,
-    marginLeft: vars.space.md,
-})
+export const blockquote = style([
+    atoms({
+        paddingLeft: 'sm',
+        borderLeft: 'strong',
+        fontStyle: 'italic',
+    }),
+    {
+        marginTop: vars.space.md,
+        marginBottom: vars.space.md,
+        marginLeft: vars.space.md,
+    },
+])
 
 export const singleEmojiMessage = style({})
 globalStyle(`${richText}${singleEmojiMessage} p`, {

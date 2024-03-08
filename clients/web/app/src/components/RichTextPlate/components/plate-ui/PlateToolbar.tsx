@@ -15,6 +15,7 @@ import { AddLinkModal } from './LinkModal'
 import { MarkToolbarButton } from './MarkToolbarButton'
 import { LinkToolbarButton } from './LinkToolbarButton'
 import { CodeBlockToolbarButton } from './CodeBlockToolbarButton'
+import { BlockQuoteToolbarButton } from './BlockQuoteToolbarButton'
 
 type Props = {
     editing?: boolean
@@ -107,6 +108,8 @@ export const PlateToolbar = ({ showFormattingToolbar, focused }: Props) => {
                                     icon="bulletedlist"
                                     tooltip="Bulleted list"
                                 />
+                                <DividerEditorToolbar />
+                                <BlockQuoteToolbarButton />
                                 <DividerEditorToolbar />
                                 <MarkToolbarButton
                                     nodeType={MARK_CODE}

@@ -1,15 +1,14 @@
 import React, { useCallback } from 'react'
 import { useEditorRef, useEditorSelector } from '@udecode/plate-core'
-import { getBlockAbove } from '@udecode/plate-common'
-import { ELEMENT_CODE_LINE, toggleCodeBlock } from '@udecode/plate-code-block'
-import { isType } from '@udecode/plate-utils'
+import { toggleCodeBlock } from '@udecode/plate-code-block'
 import { IconButton } from '@ui'
+import { isCodeBlockElement } from '../../utils/helpers'
 
 export const CodeBlockToolbarButton = () => {
     const editor = useEditorRef()
 
     const isCodeBlockActive = useEditorSelector((_editor) => {
-        return isType(editor, getBlockAbove(editor)?.[0], ELEMENT_CODE_LINE)
+        return isCodeBlockElement(editor)
     }, [])
 
     const onClick = useCallback(() => {

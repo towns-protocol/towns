@@ -1,4 +1,4 @@
-import { isBlockAboveEmpty, isSelectionAtBlockStart } from '@udecode/plate-common'
+import { getNodeString, isBlockAboveEmpty, isSelectionAtBlockStart } from '@udecode/plate-common'
 import { ELEMENT_BLOCKQUOTE } from '@udecode/plate-block-quote'
 import { ELEMENT_PARAGRAPH } from '@udecode/plate-paragraph'
 import { ResetNodePluginRule } from '@udecode/plate-reset-node'
@@ -9,6 +9,7 @@ import {
     isSelectionAtCodeBlockStart,
     unwrapCodeBlock,
 } from '@udecode/plate-code-block'
+import { getLowestBlockquoteNode } from '../utils/helpers'
 
 const resetBlockTypesCommonRule = {
     types: [ELEMENT_BLOCKQUOTE],
@@ -30,11 +31,6 @@ const resetListBlockRule = {
 export const nodeResetRules: ResetNodePluginRule[] = [
     {
         ...resetBlockTypesCommonRule,
-        hotkey: 'Enter',
-        predicate: isBlockAboveEmpty,
-    },
-    {
-        ...resetBlockTypesCommonRule,
         hotkey: 'Backspace',
         predicate: isSelectionAtBlockStart,
     },
@@ -48,7 +44,25 @@ export const nodeResetRules: ResetNodePluginRule[] = [
         },
     },
     {
-        ...resetBlockTypesCodeBlockRule,
+        types: [ELEMENT_BLOCKQUOTE],
+        hotkey: 'shift+enter',
+        predicate: (editor) => {
+            const blockQuoteNode = getLowestBlockquoteNode(editor)
+            if (!blockQuoteNode) {
+                return false
+            }
+            const hasTwoNewLines = getNodeString(blockQuoteNode).endsWith('\n\n')
+            if (hasTwoNewLines) {
+                editor.deleteBackward('character')
+                editor.deleteBackward('character')
+                editor.insertNode({ type: ELEMENT_PARAGRAPH, children: [{ text: '' }] })
+                return true
+            }
+            return false
+        },
+    },
+    {
+        types: [ELEMENT_CODE_BLOCK],
         hotkey: 'up',
         predicate: isSelectionAtCodeBlockStart,
         onReset: (editor) => exitBreak(editor, { before: true }),

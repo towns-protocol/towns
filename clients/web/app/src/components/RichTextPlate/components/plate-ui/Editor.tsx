@@ -7,15 +7,18 @@ import { isListRoot } from '@udecode/plate-list'
 import { isSelectionAtCodeBlockStart } from '@udecode/plate-code-block'
 import * as fieldStyles from 'ui/components/_internal/Field/Field.css'
 import * as styles from '../../RichTextEditor.css'
+import { isBlockquoteElement } from '../../utils/helpers'
 
 const inputClassName = clsx([fieldStyles.field, styles.richText, styles.contentEditable])
-
-export type EditorProps = PlateContentProps
 
 const Editor = React.forwardRef<HTMLDivElement, PlateContentProps>(
     ({ className, disabled, readOnly, ...props }, ref) => {
         const disablePlaceholder = useEditorSelector((editor) => {
-            return isListRoot(editor, editor.children[0]) || isSelectionAtCodeBlockStart(editor)
+            return (
+                isListRoot(editor, editor.children[0]) ||
+                isSelectionAtCodeBlockStart(editor) ||
+                isBlockquoteElement(editor)
+            )
         }, [])
 
         return (
