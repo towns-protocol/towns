@@ -11,13 +11,13 @@ import {RuleEntitlementUtil} from "contracts/src/crosschain/RuleEntitlementUtil.
 // contracts
 
 abstract contract SpaceHelper {
-  function _createUserSpace(
-    string memory townId,
+  function _createUserSpaceInfo(
+    string memory spaceId,
     address[] memory users
   ) internal pure returns (IArchitectBase.SpaceInfo memory) {
     return
       IArchitectBase.SpaceInfo({
-        id: townId,
+        id: spaceId,
         name: "test",
         uri: "ipfs://test",
         membership: IArchitectBase.Membership({
@@ -47,11 +47,11 @@ abstract contract SpaceHelper {
   }
 
   function _createSpaceInfo(
-    string memory townId
+    string memory spaceId
   ) internal pure returns (IArchitectBase.SpaceInfo memory) {
     return
       IArchitectBase.SpaceInfo({
-        id: townId,
+        id: spaceId,
         name: "test",
         uri: "ipfs://test",
         membership: IArchitectBase.Membership({
@@ -80,8 +80,8 @@ abstract contract SpaceHelper {
       });
   }
 
-  function _createEveryoneTownInfo(
-    string memory townId
+  function _createEveryoneSpaceInfo(
+    string memory spaceId
   ) internal pure returns (IArchitectBase.SpaceInfo memory) {
     string[] memory permissions = new string[](2);
     permissions[0] = "Read";
@@ -89,7 +89,7 @@ abstract contract SpaceHelper {
 
     return
       IArchitectBase.SpaceInfo({
-        id: townId,
+        id: spaceId,
         name: "test",
         uri: "ipfs://test",
         membership: IArchitectBase.Membership({

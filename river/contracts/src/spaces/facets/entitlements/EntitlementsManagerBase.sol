@@ -3,7 +3,7 @@ pragma solidity ^0.8.23;
 
 // interfaces
 import {IEntitlementsManagerBase} from "./IEntitlementsManager.sol";
-import {IEntitlement} from "contracts/src/spaces/entitlements/IEntitlement.sol";
+
 // libraries
 import {EntitlementsManagerService} from "contracts/src/spaces/facets/entitlements/EntitlementsManagerService.sol";
 

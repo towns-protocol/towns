@@ -3,6 +3,8 @@ pragma solidity ^0.8.23;
 
 // interfaces
 import {IArchitect} from "contracts/src/spaces/facets/architect/IArchitect.sol";
+import {IRuleEntitlement} from "contracts/src/crosschain/IRuleEntitlement.sol";
+import {IWalletLink} from "contracts/src/river/wallet-link/IWalletLink.sol";
 
 // libraries
 
@@ -13,7 +15,6 @@ import {ReentrancyGuard} from "contracts/src/diamond/facets/reentrancy/Reentranc
 import {PausableBase} from "contracts/src/diamond/facets/pausable/PausableBase.sol";
 import {Facet} from "contracts/src/diamond/facets/Facet.sol";
 import {IUserEntitlement} from "contracts/src/spaces/entitlements/user/IUserEntitlement.sol";
-import {IRuleEntitlement} from "contracts/src/crosschain/IRuleEntitlement.sol";
 
 contract Architect is
   IArchitect,
@@ -26,12 +27,14 @@ contract Architect is
   function __Architect_init(
     address ownerImplementation,
     IUserEntitlement userEntitlementImplementation,
-    IRuleEntitlement ruleEntitlementImplementation
+    IRuleEntitlement ruleEntitlementImplementation,
+    IWalletLink walletLink
   ) external onlyInitializing {
     _setImplementations(
       ownerImplementation,
       userEntitlementImplementation,
-      ruleEntitlementImplementation
+      ruleEntitlementImplementation,
+      walletLink
     );
   }
 
@@ -70,12 +73,14 @@ contract Architect is
   function setSpaceArchitectImplementations(
     address spaceToken,
     IUserEntitlement userEntitlementImplementation,
-    IRuleEntitlement ruleEntitlementImplementation
+    IRuleEntitlement ruleEntitlementImplementation,
+    IWalletLink walletLink
   ) external onlyOwner {
     _setImplementations(
       spaceToken,
       userEntitlementImplementation,
-      ruleEntitlementImplementation
+      ruleEntitlementImplementation,
+      walletLink
     );
   }
 
@@ -85,7 +90,8 @@ contract Architect is
     returns (
       address spaceToken,
       IUserEntitlement userEntitlementImplementation,
-      IRuleEntitlement ruleEntitlementImplementation
+      IRuleEntitlement ruleEntitlementImplementation,
+      IWalletLink walletLink
     )
   {
     return _getImplementations();

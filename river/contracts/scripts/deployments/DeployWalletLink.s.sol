@@ -19,10 +19,15 @@ import {WalletLinkHelper} from "contracts/test/river/wallet-link/WalletLinkSetup
 
 import {MultiInit} from "contracts/src/diamond/initializers/MultiInit.sol";
 
+import {DeployMultiInit} from "contracts/scripts/deployments/DeployMultiInit.s.sol";
+
 contract DeployWalletLink is DiamondDeployer {
   DiamondLoupeHelper diamondLoupeHelper = new DiamondLoupeHelper();
   IntrospectionHelper introspectionHelper = new IntrospectionHelper();
   WalletLinkHelper walletLinkHelper = new WalletLinkHelper();
+
+  // deployments
+  DeployMultiInit deployMultiInit = new DeployMultiInit();
 
   address diamondLoupe;
   address introspection;
@@ -36,6 +41,8 @@ contract DeployWalletLink is DiamondDeployer {
     uint256 pk,
     address
   ) public override returns (Diamond.InitParams memory) {
+    address multiInit = deployMultiInit.deploy();
+
     vm.startBroadcast(pk);
     diamondLoupe = address(new DiamondLoupeFacet());
     introspection = address(new IntrospectionFacet());
@@ -77,7 +84,7 @@ contract DeployWalletLink is DiamondDeployer {
     return
       Diamond.InitParams({
         baseFacets: cuts,
-        init: getDeployment("multiInit"),
+        init: multiInit,
         initData: abi.encodeWithSelector(
           MultiInit.multiInit.selector,
           addresses,

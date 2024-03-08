@@ -7,6 +7,7 @@ import {IERC173} from "contracts/src/diamond/facets/ownable/IERC173.sol";
 import {IMembership, IMembershipBase} from "contracts/src/spaces/facets/membership/IMembership.sol";
 import {IManagedProxyBase} from "contracts/src/diamond/proxy/managed/IManagedProxy.sol";
 import {ITokenOwnableBase} from "contracts/src/diamond/facets/ownable/token/ITokenOwnable.sol";
+import {IWalletLink} from "contracts/src/river/wallet-link/IWalletLink.sol";
 
 // libraries
 
@@ -17,6 +18,7 @@ import {MembershipBase} from "contracts/src/spaces/facets/membership/MembershipB
 import {MembershipReferralBase} from "contracts/src/spaces/facets/membership/referral/MembershipReferralBase.sol";
 import {ERC721ABase} from "contracts/src/diamond/facets/token/ERC721A/ERC721ABase.sol";
 import {IntrospectionBase} from "contracts/src/diamond/facets/introspection/IntrospectionBase.sol";
+import {WalletLinkProxyBase} from "contracts/src/spaces/facets/delegation/WalletLinkProxyBase.sol";
 
 import {Multicall} from "contracts/src/diamond/utils/multicall/Multicall.sol";
 
@@ -27,9 +29,11 @@ contract SpaceProxy is
   ERC721ABase,
   MembershipBase,
   MembershipReferralBase,
+  WalletLinkProxyBase,
   Multicall
 {
   constructor(
+    IWalletLink walletLink,
     IManagedProxyBase.ManagedProxy memory managedProxy,
     ITokenOwnableBase.TokenOwnable memory tokenOwnable,
     IMembershipBase.Membership memory membership
@@ -40,6 +44,7 @@ contract SpaceProxy is
     __ERC721ABase_init(membership.name, membership.symbol);
     __MembershipBase_init(membership, managedProxy.manager);
     __MembershipReferralBase_init();
+    _setWalletLinkProxy(walletLink);
     _setInterfaceIds();
   }
 

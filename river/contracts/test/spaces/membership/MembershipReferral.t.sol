@@ -10,9 +10,6 @@ import {BasisPoints} from "contracts/src/utils/libraries/BasisPoints.sol";
 // contracts
 import {MembershipReferralSetup} from "./MembershipReferralSetup.sol";
 
-// debugging
-import {console} from "forge-std/console.sol";
-
 contract MembershipReferralFacetTest is
   IMembershipReferralBase,
   MembershipReferralSetup

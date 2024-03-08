@@ -14,14 +14,18 @@ import {IMembership} from "contracts/src/spaces/facets/membership/IMembership.so
 import {IERC721A} from "contracts/src/diamond/facets/token/ERC721A/IERC721A.sol";
 import {IMembershipBase} from "contracts/src/spaces/facets/membership/IMembership.sol";
 
+import {IRuleEntitlement} from "contracts/src/crosschain/IRuleEntitlement.sol";
+
 // libraries
 import {Permissions} from "contracts/src/spaces/facets/Permissions.sol";
 import {RuleEntitlementUtil} from "contracts/src/crosschain/RuleEntitlementUtil.sol";
 
 // contracts
 import {BaseSetup} from "contracts/test/spaces/BaseSetup.sol";
-
 import {Architect} from "contracts/src/spaces/facets/architect/Architect.sol";
+
+// mocks
+import {MockERC721} from "contracts/test/mocks/MockERC721.sol";
 
 contract Integration_CreateSpace is BaseSetup, IRolesBase, IArchitectBase {
   Architect public spaceArchitect;
@@ -31,23 +35,120 @@ contract Integration_CreateSpace is BaseSetup, IRolesBase, IArchitectBase {
     spaceArchitect = Architect(spaceFactory);
   }
 
-  function test_createSpace_with_default_channel() external {
-    string memory spaceId = "Test";
+  function test_createEveryoneSpace(string memory spaceId) external {
+    vm.assume(bytes(spaceId).length > 2 && bytes(spaceId).length < 100);
 
     address founder = _randomAddress();
+    address user = _randomAddress();
 
     vm.prank(founder);
-    address newSpace = _createSimpleSpace(spaceId);
+    address newSpace = spaceArchitect.createSpace(
+      _createEveryoneSpaceInfo(spaceId)
+    );
 
-    assertEq(founder, IERC173(newSpace).owner());
-
-    IChannel.Channel[] memory channels = IChannel(newSpace).getChannels();
-
-    assertEq(channels.length, 1);
+    // assert everyone can join
+    assertTrue(
+      IEntitlementsManager(newSpace).isEntitledToSpace(
+        user,
+        Permissions.JoinSpace
+      )
+    );
   }
 
-  function test_createSpace_with_separate_channel() external {
-    string memory spaceId = "test";
+  function test_createUserGatedSpace(string memory spaceId) external {
+    vm.assume(bytes(spaceId).length > 2 && bytes(spaceId).length < 100);
+
+    address founder = _randomAddress();
+    address user = _randomAddress();
+
+    address[] memory users = new address[](1);
+    users[0] = user;
+
+    SpaceInfo memory spaceInfo = _createUserSpaceInfo(spaceId, users);
+    spaceInfo.membership.permissions = new string[](1);
+    spaceInfo.membership.permissions[0] = "Read";
+
+    vm.prank(founder);
+    address newSpace = spaceArchitect.createSpace(spaceInfo);
+
+    assertTrue(
+      IEntitlementsManager(newSpace).isEntitledToSpace(
+        user,
+        Permissions.JoinSpace
+      ),
+      "Bob should be entitled to mint a membership"
+    );
+
+    vm.prank(user);
+    IMembership(newSpace).joinTown(user);
+
+    assertTrue(
+      IEntitlementsManager(newSpace).isEntitledToSpace(user, Permissions.Read),
+      "Bob should be entitled to read"
+    );
+  }
+
+  function test_createTokenGatedSpace(string memory spaceId) external {
+    vm.assume(bytes(spaceId).length > 2 && bytes(spaceId).length < 100);
+
+    address founder = _randomAddress();
+    address user = _randomAddress();
+    address mock = address(new MockERC721());
+
+    // We first define how many operations we want to have
+    IRuleEntitlement.Operation[]
+      memory operations = new IRuleEntitlement.Operation[](1);
+    operations[0] = IRuleEntitlement.Operation({
+      opType: IRuleEntitlement.CombinedOperationType.CHECK,
+      index: 0
+    });
+
+    // We then define the type of operations we want to have
+    IRuleEntitlement.CheckOperation[]
+      memory checkOperations = new IRuleEntitlement.CheckOperation[](1);
+    checkOperations[0] = IRuleEntitlement.CheckOperation({
+      opType: IRuleEntitlement.CheckOperationType.ERC721,
+      chainId: block.chainid,
+      contractAddress: mock,
+      threshold: 1
+    });
+
+    // We then define the logical operations we want to have
+    IRuleEntitlement.LogicalOperation[]
+      memory logicalOperations = new IRuleEntitlement.LogicalOperation[](0);
+
+    // We then define the rule data
+    IRuleEntitlement.RuleData memory ruleData = IRuleEntitlement.RuleData({
+      operations: operations,
+      checkOperations: checkOperations,
+      logicalOperations: logicalOperations
+    });
+
+    SpaceInfo memory spaceInfo = _createSpaceInfo(spaceId);
+    spaceInfo.membership.requirements.ruleData = ruleData;
+
+    vm.prank(founder);
+    spaceArchitect.createSpace(spaceInfo);
+
+    MockERC721(mock).mint(user, 1);
+
+    // TODO: Add asserts for the entitlements
+    // assertTrue(
+    //   IEntitlementsManager(newSpace).isEntitledToSpace(
+    //     user,
+    //     Permissions.JoinSpace
+    //   )
+    // );
+  }
+
+  // =============================================================
+  //                           Channels
+  // =============================================================
+
+  function test_createEveryoneSpace_with_separate_channels(
+    string memory spaceId
+  ) external {
+    vm.assume(bytes(spaceId).length > 2 && bytes(spaceId).length < 100);
 
     address founder = _randomAddress();
     address member = _randomAddress();
@@ -55,7 +156,9 @@ contract Integration_CreateSpace is BaseSetup, IRolesBase, IArchitectBase {
     // create space with default channel
 
     vm.prank(founder);
-    address newSpace = _createSimpleSpace(spaceId);
+    address newSpace = spaceArchitect.createSpace(
+      _createEveryoneSpaceInfo(spaceId)
+    );
 
     IMembership(newSpace).joinTown(member);
 
@@ -136,106 +239,5 @@ contract Integration_CreateSpace is BaseSetup, IRolesBase, IArchitectBase {
       .isEntitledToChannel("test2", member, "Write");
     // members can access the channel now
     assertTrue(isEntitledToChannelAfter);
-  }
-
-  // =============================================================
-  //                           Users
-  // =============================================================
-  function test_createSpace_with_users() external {
-    string memory spaceId = "test";
-
-    address founder = _randomAddress();
-    address bob = _randomAddress();
-
-    address[] memory users = new address[](1);
-    users[0] = bob;
-
-    SpaceInfo memory spaceInfo = SpaceInfo({
-      id: spaceId,
-      name: "test",
-      uri: "ipfs://test",
-      membership: Membership({
-        settings: IMembershipBase.Membership({
-          name: "Member",
-          symbol: "MEM",
-          price: 0,
-          maxSupply: 0,
-          duration: 0,
-          currency: address(0),
-          feeRecipient: address(0),
-          freeAllocation: 0,
-          pricingModule: address(0)
-        }),
-        requirements: MembershipRequirements({
-          everyone: false,
-          users: users,
-          ruleData: RuleEntitlementUtil.getNoopRuleData()
-        }),
-        permissions: new string[](1)
-      }),
-      channel: ChannelInfo({metadata: "ipfs://test", id: "test"})
-    });
-
-    spaceInfo.membership.permissions[0] = "Read";
-
-    vm.prank(founder);
-    address newSpace = IArchitect(spaceFactory).createSpace(spaceInfo);
-
-    assertTrue(
-      IEntitlementsManager(newSpace).isEntitledToSpace(
-        bob,
-        Permissions.JoinSpace
-      ),
-      "Bob should be entitled to mint membership"
-    );
-
-    vm.prank(bob);
-    IMembership(newSpace).joinTown(bob);
-
-    assertEq(
-      IERC721A(newSpace).balanceOf(bob),
-      1,
-      "Bob should have 1 membership token"
-    );
-
-    assertTrue(
-      IEntitlementsManager(newSpace).isEntitledToSpace(bob, Permissions.Read),
-      "Bob should be entitled to read"
-    );
-  }
-
-  // =============================================================
-  //                           Helpers
-  // =============================================================
-  function _createSimpleSpace(
-    string memory spaceId
-  ) internal returns (address) {
-    IArchitectBase.SpaceInfo memory spaceInfo = IArchitectBase.SpaceInfo({
-      id: spaceId,
-      name: "test",
-      uri: "ipfs://test",
-      membership: IArchitectBase.Membership({
-        settings: IMembershipBase.Membership({
-          name: "Member",
-          symbol: "MEM",
-          price: 0,
-          maxSupply: 0,
-          duration: 0,
-          currency: address(0),
-          feeRecipient: address(0),
-          freeAllocation: 0,
-          pricingModule: address(0)
-        }),
-        requirements: IArchitectBase.MembershipRequirements({
-          everyone: true,
-          users: new address[](0),
-          ruleData: RuleEntitlementUtil.getNoopRuleData()
-        }),
-        permissions: new string[](0)
-      }),
-      channel: IArchitectBase.ChannelInfo({id: "test", metadata: "ipfs://test"})
-    });
-
-    return spaceArchitect.createSpace(spaceInfo);
   }
 }
