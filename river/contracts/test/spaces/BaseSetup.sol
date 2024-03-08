@@ -42,6 +42,7 @@ contract BaseSetup is TestUtils, SpaceHelper {
 
   address internal userEntitlement;
   address internal ruleEntitlement;
+  address internal walletLink;
   address internal spaceOwner;
 
   address internal nodeOperator;
@@ -66,6 +67,7 @@ contract BaseSetup is TestUtils, SpaceHelper {
     spaceFactory = deploySpaceFactory.deploy();
     userEntitlement = deploySpaceFactory.userEntitlement();
     ruleEntitlement = deploySpaceFactory.ruleEntitlement();
+    walletLink = deploySpaceFactory.walletLink();
     spaceOwner = deploySpaceFactory.spaceOwner();
     deploySpaceFactory.postDeploy(deployer, spaceFactory);
 
@@ -90,7 +92,7 @@ contract BaseSetup is TestUtils, SpaceHelper {
       _createSpaceInfo("BaseSetupTown")
     );
     everyoneSpace = Architect(spaceFactory).createSpace(
-      _createEveryoneTownInfo("BaseSetupEveryoneTown")
+      _createEveryoneSpaceInfo("BaseSetupEveryoneTown")
     );
     vm.stopPrank();
   }

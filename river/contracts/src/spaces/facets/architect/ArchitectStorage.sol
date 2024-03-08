@@ -2,12 +2,13 @@
 pragma solidity ^0.8.23;
 
 // interfaces
+import {IRuleEntitlement} from "contracts/src/crosschain/IRuleEntitlement.sol";
+import {IUserEntitlement} from "contracts/src/spaces/entitlements/user/IUserEntitlement.sol";
+import {IWalletLink} from "contracts/src/river/wallet-link/IWalletLink.sol";
 
 // libraries
 import {StringSet} from "contracts/src/utils/StringSet.sol";
 import {EnumerableSet} from "@openzeppelin/contracts/utils/structs/EnumerableSet.sol";
-import {IRuleEntitlement} from "contracts/src/crosschain/IRuleEntitlement.sol";
-import {IUserEntitlement} from "contracts/src/spaces/entitlements/user/IUserEntitlement.sol";
 
 // contracts
 
@@ -29,6 +30,7 @@ library ArchitectStorage {
     address spaceToken;
     IUserEntitlement userEntitlement;
     IRuleEntitlement ruleEntitlement;
+    IWalletLink walletLink;
   }
 
   function layout() internal pure returns (Layout storage ds) {

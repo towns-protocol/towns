@@ -5,6 +5,7 @@ pragma solidity ^0.8.23;
 import {IEntitlement} from "contracts/src/spaces/entitlements/IEntitlement.sol";
 import {IEntitlementBase} from "contracts/src/spaces/entitlements/IEntitlement.sol";
 import {IRuleEntitlement} from "contracts/src/crosschain/IRuleEntitlement.sol";
+import {IWalletLink} from "contracts/src/river/wallet-link/IWalletLink.sol";
 
 // libraries
 import {EnumerableSet} from "@openzeppelin/contracts/utils/structs/EnumerableSet.sol";
@@ -12,7 +13,7 @@ import {EntitlementsManagerStorage} from "contracts/src/spaces/facets/entitlemen
 import {MembershipStorage} from "contracts/src/spaces/facets/membership/MembershipStorage.sol";
 import {ERC721ABase} from "contracts/src/diamond/facets/token/ERC721A/ERC721ABase.sol";
 import {RuleEntitlementUtil} from "contracts/src/crosschain/RuleEntitlementUtil.sol";
-import {WalletLinkStorage} from "contracts/src/river/wallet-link/WalletLinkStorage.sol";
+import {WalletLinkProxyBase} from "contracts/src/spaces/facets/delegation/WalletLinkProxyBase.sol";
 
 // contracts
 import {TokenOwnableBase} from "contracts/src/diamond/facets/ownable/token/TokenOwnableBase.sol";
@@ -26,7 +27,8 @@ abstract contract Entitled is
   TokenOwnableBase,
   PausableBase,
   BanningBase,
-  ERC721ABase
+  ERC721ABase,
+  WalletLinkProxyBase
 {
   using EnumerableSet for EnumerableSet.AddressSet;
 
@@ -36,40 +38,48 @@ abstract contract Entitled is
     member = _balanceOf(user) > 0;
   }
 
-  // Joining is a special case of entitlement as it requires the user to not be a member
-  function _isEntitledToJoinTown(
+  function _isEntitled(
     string memory channelId,
-    address user
+    address user,
+    bytes32 permission
   ) internal view returns (bool) {
-    address owner = _owner();
-
-    // Initialize WalletLink and Membership storage
-    WalletLinkStorage.Layout storage wl = WalletLinkStorage.layout();
-    address[] memory linkedWallets = wl.rootKeysToWallets[user].values();
-    address[] memory wallets = new address[](linkedWallets.length + 1);
-    wallets[0] = user;
-    for (uint256 i = 0; i < linkedWallets.length; i++) {
-      wallets[i + 1] = linkedWallets[i];
-    }
+    address[] memory wallets = _getLinkedWalletsWithUser(user);
+    uint256 linkedWalletsLength = wallets.length;
 
     bool isMember = false;
-    for (uint256 i = 0; i < wallets.length && !isMember; i++) {
+    uint256 tokenId;
+
+    for (uint256 i = 0; i < linkedWalletsLength && !isMember; i++) {
       address wallet = wallets[i];
       if (_isMember(wallet)) {
         isMember = true;
+        tokenId = MembershipStorage.layout().tokenIdByMember[wallet];
       }
     }
 
-    // Can't join if already a member
-    if (isMember) {
+    // if you're already a member and trying to join, return false
+    if (
+      isMember && permission == bytes32(abi.encodePacked(Permissions.JoinSpace))
+    ) {
       return false;
     }
 
-    // If a linked wallet is owner, return true
+    address owner = _owner();
     for (uint256 i = 0; i < wallets.length; i++) {
       if (wallets[i] == owner) {
         return true;
       }
+    }
+
+    if (tokenId == 0) {
+      // tokenId 0 should be assigned the owner, and the owner should have early exited.
+      // however it is legal for the owner to have transfered their NFT to another
+      // and that adddress is now a member. Putting this comment here as a reminder
+    }
+
+    // Check for ban conditions
+    if (_isBanned(tokenId) || _isBannedByChannel(channelId, tokenId)) {
+      return false;
     }
 
     // Entitlement checks for members
@@ -81,88 +91,13 @@ abstract contract Entitled is
       ];
       if (
         !e.isCrosschain &&
-        e.entitlement.isEntitled(
-          channelId,
-          wallets,
-          bytes32(abi.encodePacked(Permissions.JoinSpace))
-        )
+        e.entitlement.isEntitled(channelId, wallets, permission)
       ) {
         return true;
       }
     }
 
     return false;
-  }
-
-  function _isEntitled(
-    string memory channelId,
-    address user,
-    bytes32 permission
-  ) internal view returns (bool) {
-    // If permission is JoinTown, return true without further entitlement checks
-    if (permission == bytes32(abi.encodePacked(Permissions.JoinSpace))) {
-      return _isEntitledToJoinTown(channelId, user);
-    } else {
-      address owner = _owner();
-
-      // Initialize WalletLink and Membership storage
-      WalletLinkStorage.Layout storage wl = WalletLinkStorage.layout();
-      address[] memory linkedWallets = wl.rootKeysToWallets[user].values();
-      address[] memory wallets = new address[](linkedWallets.length + 1);
-      wallets[0] = user;
-      for (uint256 i = 0; i < linkedWallets.length; i++) {
-        wallets[i + 1] = linkedWallets[i];
-      }
-
-      // If a linked wallet is owner, return true
-      for (uint256 i = 0; i < wallets.length; i++) {
-        if (wallets[i] == owner) {
-          return true;
-        }
-      }
-
-      bool isMember = false;
-      uint256 tokenId;
-      for (uint256 i = 0; i < wallets.length && !isMember; i++) {
-        address wallet = wallets[i];
-        if (_isMember(wallet)) {
-          isMember = true;
-          MembershipStorage.Layout storage ms = MembershipStorage.layout();
-          tokenId = ms.tokenIdByMember[wallet];
-        }
-      }
-
-      if (!isMember) {
-        return false;
-      }
-
-      if (tokenId == 0) {
-        // tokenId 0 should be assigned the owner, and the owner should have early exited.
-        // however it is legal for the owner to have transfered their NFT to another
-        // and that adddress is now a member. Putting this comment here as a reminder
-      }
-
-      // Check for ban conditions
-      if (_isBanned(tokenId) || _isBannedByChannel(channelId, tokenId)) {
-        return false;
-      }
-
-      // Entitlement checks for members
-      EntitlementsManagerStorage.Layout storage ds = EntitlementsManagerStorage
-        .layout();
-      for (uint256 i = 0; i < ds.entitlements.length(); i++) {
-        EntitlementsManagerStorage.Entitlement memory e = ds
-          .entitlementByAddress[ds.entitlements.at(i)];
-        if (
-          !e.isCrosschain &&
-          e.entitlement.isEntitled(channelId, wallets, permission)
-        ) {
-          return true;
-        }
-      }
-
-      return false;
-    }
   }
 
   function _isEntitledToSpace(
@@ -246,5 +181,20 @@ abstract contract Entitled is
     if (!_isAllowed(channelId, permission)) {
       revert Entitlement__NotAllowed();
     }
+  }
+
+  function _getLinkedWalletsWithUser(
+    address user
+  ) internal view returns (address[] memory) {
+    IWalletLink wl = _getWalletLinkProxy();
+    address[] memory linkedWallets = wl.getWalletsByRootKey(user);
+    uint256 linkedWalletsLength = linkedWallets.length;
+
+    address[] memory wallets = new address[](linkedWalletsLength + 1);
+    for (uint256 i = 0; i < linkedWalletsLength; i++) {
+      wallets[i] = linkedWallets[i];
+    }
+    wallets[linkedWalletsLength] = user;
+    return wallets;
   }
 }

@@ -316,11 +316,11 @@
       ]
     },
     "contracts/src/river/registry/facets/node/NodeRegistry.sol": {
-      "keccak256": "0x8370b72f4c01b64fc9327716b5c48a3e693f63917a5a0b5e6b68a6d47a0be299",
+      "keccak256": "0x834944b910f775f18dd9cf57cd2bbb5e981da3124cc9699bc2ecb0193a84258c",
       "license": "Apache-2.0",
       "urls": [
-        "bzz-raw://5d32c00a8b552ab762af5366ca62be58f37bd754376a47d024ca4220ab113fba",
-        "dweb:/ipfs/QmUa786v23AQt5Q6LPv3fy3SNg3krxNKJEcTCdhQrjYY11"
+        "bzz-raw://9251ea33139dd17e8107ed370dcb58918fafa1bb6b0e44cbb20425e7ebb8d849",
+        "dweb:/ipfs/QmQ4iMrXvSUbZxcyi1c86aZGQGcSJhrqWRzvzz6rs2UfAv"
       ]
     },
     "contracts/src/river/registry/libraries/RegistryErrors.sol": {

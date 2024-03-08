@@ -57,7 +57,7 @@ contract MembershipTest is
 
     vm.startPrank(founder);
     address userSpace = Architect(spaceFactory).createSpace(
-      _createUserSpace("MembershipSpace", allowedUsers)
+      _createUserSpaceInfo("MembershipSpace", allowedUsers)
     );
     vm.stopPrank();
 

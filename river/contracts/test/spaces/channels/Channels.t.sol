@@ -21,11 +21,8 @@ import {Validator__InvalidStringLength} from "contracts/src/utils/Validator.sol"
 import {ChannelService__ChannelAlreadyExists, ChannelService__RoleAlreadyExists, ChannelService__RoleDoesNotExist, ChannelService__ChannelDoesNotExist} from "contracts/src/spaces/facets/channels/ChannelService.sol";
 
 contract ChannelsTest is BaseSetup, IEntitlementBase {
-  IChannel internal channels;
-
   function setUp() public override {
     super.setUp();
-    channels = IChannel(everyoneSpace);
   }
 
   function test_createChannel(
@@ -36,7 +33,11 @@ contract ChannelsTest is BaseSetup, IEntitlementBase {
     vm.assume(bytes(channelId).length > 2);
 
     vm.prank(founder);
-    channels.createChannel(channelId, channelMetadata, new uint256[](0));
+    IChannel(everyoneSpace).createChannel(
+      channelId,
+      channelMetadata,
+      new uint256[](0)
+    );
   }
 
   function test_revert_createChannel_with_duplicate_role(
@@ -62,29 +63,26 @@ contract ChannelsTest is BaseSetup, IEntitlementBase {
 
     vm.prank(founder);
     vm.expectRevert(ChannelService__RoleAlreadyExists.selector);
-    channels.createChannel(channelId, channelMetadata, roleIds);
+    IChannel(everyoneSpace).createChannel(channelId, channelMetadata, roleIds);
   }
 
-  function test_createChannel_with_multiple_roles(
-    string memory channelMetadata,
-    string memory channelId
-  ) public {
-    vm.assume(bytes(channelMetadata).length > 2);
-    vm.assume(bytes(channelId).length > 2);
+  function test_createChannel_with_multiple_roles() public {
+    string memory channelId = "my-cool-channel";
+    string memory channelMetadata = "Metadata";
 
     string[] memory permissions = new string[](1);
     permissions[0] = "Write";
 
     vm.prank(founder);
-    uint256 roleId = IRoles(everyoneSpace).createRole(
-      "Member",
+    uint256 roleId = IRoles(space).createRole(
+      "MemberTwo",
       permissions,
       new IRoles.CreateEntitlement[](0)
     );
 
     vm.prank(founder);
-    uint256 roleId2 = IRoles(everyoneSpace).createRole(
-      "AnotherMember",
+    uint256 roleId2 = IRoles(space).createRole(
+      "MemberThree",
       permissions,
       new IRoles.CreateEntitlement[](0)
     );
@@ -94,20 +92,17 @@ contract ChannelsTest is BaseSetup, IEntitlementBase {
     roleIds[1] = roleId2;
 
     vm.prank(founder);
-    channels.createChannel(channelId, channelMetadata, roleIds);
+    IChannel(space).createChannel(channelId, channelMetadata, roleIds);
 
-    IChannel.Channel memory _channel = channels.getChannel(channelId);
+    IChannel.Channel memory _channel = IChannel(space).getChannel(channelId);
     assertEq(_channel.roleIds.length, roleIds.length);
 
     assertFalse(
-      IEntitlementsManager(everyoneSpace).isEntitledToSpace(
-        _randomAddress(),
-        "Write"
-      )
+      IEntitlementsManager(space).isEntitledToSpace(_randomAddress(), "Write")
     );
 
     assertFalse(
-      IEntitlementsManager(everyoneSpace).isEntitledToChannel(
+      IEntitlementsManager(space).isEntitledToChannel(
         channelId,
         _randomAddress(),
         "Write"
@@ -123,9 +118,15 @@ contract ChannelsTest is BaseSetup, IEntitlementBase {
     vm.assume(bytes(channelId).length > 2);
 
     vm.prank(founder);
-    channels.createChannel(channelId, channelMetadata, new uint256[](0));
+    IChannel(everyoneSpace).createChannel(
+      channelId,
+      channelMetadata,
+      new uint256[](0)
+    );
 
-    IChannel.Channel memory _channel = channels.getChannel(channelId);
+    IChannel.Channel memory _channel = IChannel(everyoneSpace).getChannel(
+      channelId
+    );
 
     assertEq(_channel.id, channelId);
     assertEq(_channel.disabled, false);
@@ -151,9 +152,11 @@ contract ChannelsTest is BaseSetup, IEntitlementBase {
     roleIds[0] = roleId;
 
     vm.prank(founder);
-    channels.createChannel(channelId, channelMetadata, roleIds);
+    IChannel(everyoneSpace).createChannel(channelId, channelMetadata, roleIds);
 
-    IChannel.Channel memory _channel = channels.getChannel(channelId);
+    IChannel.Channel memory _channel = IChannel(everyoneSpace).getChannel(
+      channelId
+    );
     assertEq(_channel.roleIds.length, roleIds.length);
   }
 
@@ -165,9 +168,13 @@ contract ChannelsTest is BaseSetup, IEntitlementBase {
     vm.assume(bytes(channelId).length > 2);
 
     vm.prank(founder);
-    channels.createChannel(channelId, channelMetadata, new uint256[](0));
+    IChannel(everyoneSpace).createChannel(
+      channelId,
+      channelMetadata,
+      new uint256[](0)
+    );
 
-    IChannel.Channel[] memory _channels = channels.getChannels();
+    IChannel.Channel[] memory _channels = IChannel(everyoneSpace).getChannels();
     string[] memory channelIds = new string[](_channels.length);
 
     for (uint256 i = 0; i < _channels.length; i++) {
@@ -185,11 +192,19 @@ contract ChannelsTest is BaseSetup, IEntitlementBase {
     string memory channelName2 = "Channel2";
 
     vm.startPrank(founder);
-    channels.createChannel(channelId1, channelName1, new uint256[](0));
-    channels.createChannel(channelId2, channelName2, new uint256[](0));
+    IChannel(everyoneSpace).createChannel(
+      channelId1,
+      channelName1,
+      new uint256[](0)
+    );
+    IChannel(everyoneSpace).createChannel(
+      channelId2,
+      channelName2,
+      new uint256[](0)
+    );
     vm.stopPrank();
 
-    IChannel.Channel[] memory _channels = channels.getChannels();
+    IChannel.Channel[] memory _channels = IChannel(everyoneSpace).getChannels();
     string[] memory channelIds = new string[](_channels.length);
     for (uint256 i = 0; i < _channels.length; i++) {
       channelIds[i] = _channels[i].id;
@@ -209,11 +224,17 @@ contract ChannelsTest is BaseSetup, IEntitlementBase {
     vm.assume(bytes(newMetadata).length > 2);
 
     vm.startPrank(founder);
-    channels.createChannel(channelId, channelMetadata, new uint256[](0));
-    channels.updateChannel(channelId, newMetadata, false);
+    IChannel(everyoneSpace).createChannel(
+      channelId,
+      channelMetadata,
+      new uint256[](0)
+    );
+    IChannel(everyoneSpace).updateChannel(channelId, newMetadata, false);
     vm.stopPrank();
 
-    IChannel.Channel memory _channel = channels.getChannel(channelId);
+    IChannel.Channel memory _channel = IChannel(everyoneSpace).getChannel(
+      channelId
+    );
 
     assertEq(_channel.metadata, newMetadata);
     assertEq(_channel.id, channelId);
@@ -228,11 +249,17 @@ contract ChannelsTest is BaseSetup, IEntitlementBase {
     vm.assume(bytes(channelId).length > 2);
 
     vm.startPrank(founder);
-    channels.createChannel(channelId, channelMetadata, new uint256[](0));
-    channels.updateChannel(channelId, channelMetadata, true);
+    IChannel(everyoneSpace).createChannel(
+      channelId,
+      channelMetadata,
+      new uint256[](0)
+    );
+    IChannel(everyoneSpace).updateChannel(channelId, channelMetadata, true);
     vm.stopPrank();
 
-    IChannel.Channel memory _channel = channels.getChannel(channelId);
+    IChannel.Channel memory _channel = IChannel(everyoneSpace).getChannel(
+      channelId
+    );
     assertTrue(_channel.disabled);
   }
 
@@ -244,12 +271,16 @@ contract ChannelsTest is BaseSetup, IEntitlementBase {
     vm.assume(bytes(channelId).length > 2);
 
     vm.startPrank(founder);
-    channels.createChannel(channelId, channelMetadata, new uint256[](0));
-    channels.removeChannel(channelId);
+    IChannel(everyoneSpace).createChannel(
+      channelId,
+      channelMetadata,
+      new uint256[](0)
+    );
+    IChannel(everyoneSpace).removeChannel(channelId);
     vm.stopPrank();
 
     vm.expectRevert(ChannelService__ChannelDoesNotExist.selector);
-    channels.getChannel(channelId);
+    IChannel(everyoneSpace).getChannel(channelId);
   }
 
   function test_addRoleToChannel(
@@ -261,11 +292,17 @@ contract ChannelsTest is BaseSetup, IEntitlementBase {
     vm.assume(bytes(channelId).length > 2);
 
     vm.startPrank(founder);
-    channels.createChannel(channelId, channelMetadata, new uint256[](0));
-    channels.addRoleToChannel(channelId, roleId);
+    IChannel(everyoneSpace).createChannel(
+      channelId,
+      channelMetadata,
+      new uint256[](0)
+    );
+    IChannel(everyoneSpace).addRoleToChannel(channelId, roleId);
     vm.stopPrank();
 
-    IChannel.Channel memory _channel = channels.getChannel(channelId);
+    IChannel.Channel memory _channel = IChannel(everyoneSpace).getChannel(
+      channelId
+    );
 
     assertEq(_channel.roleIds.length, 1);
     assertEq(_channel.roleIds[0], roleId);
@@ -280,13 +317,17 @@ contract ChannelsTest is BaseSetup, IEntitlementBase {
     vm.assume(bytes(channelId).length > 2);
 
     vm.startPrank(founder);
-    channels.createChannel(channelId, channelMetadata, new uint256[](0));
-    channels.addRoleToChannel(channelId, roleId);
+    IChannel(everyoneSpace).createChannel(
+      channelId,
+      channelMetadata,
+      new uint256[](0)
+    );
+    IChannel(everyoneSpace).addRoleToChannel(channelId, roleId);
     vm.stopPrank();
 
     vm.prank(founder);
     vm.expectRevert(ChannelService__RoleAlreadyExists.selector);
-    channels.addRoleToChannel(channelId, roleId);
+    IChannel(everyoneSpace).addRoleToChannel(channelId, roleId);
   }
 
   function test_removeRoleFromChannel(
@@ -298,12 +339,18 @@ contract ChannelsTest is BaseSetup, IEntitlementBase {
     vm.assume(bytes(channelId).length > 2);
 
     vm.startPrank(founder);
-    channels.createChannel(channelId, channelMetadata, new uint256[](0));
-    channels.addRoleToChannel(channelId, roleId);
-    channels.removeRoleFromChannel(channelId, roleId);
+    IChannel(everyoneSpace).createChannel(
+      channelId,
+      channelMetadata,
+      new uint256[](0)
+    );
+    IChannel(everyoneSpace).addRoleToChannel(channelId, roleId);
+    IChannel(everyoneSpace).removeRoleFromChannel(channelId, roleId);
     vm.stopPrank();
 
-    IChannel.Channel memory _channel = channels.getChannel(channelId);
+    IChannel.Channel memory _channel = IChannel(everyoneSpace).getChannel(
+      channelId
+    );
 
     assertEq(_channel.roleIds.length, 0);
   }
@@ -318,12 +365,16 @@ contract ChannelsTest is BaseSetup, IEntitlementBase {
     uint256 nonexistentRoleId = 12345; // An ID that doesn't belong to any role
 
     vm.startPrank(founder);
-    channels.createChannel(channelId, channelMetadata, new uint256[](0));
+    IChannel(everyoneSpace).createChannel(
+      channelId,
+      channelMetadata,
+      new uint256[](0)
+    );
     vm.stopPrank();
 
     vm.prank(founder);
     vm.expectRevert(ChannelService__RoleDoesNotExist.selector);
-    channels.removeRoleFromChannel(channelId, nonexistentRoleId);
+    IChannel(everyoneSpace).removeRoleFromChannel(channelId, nonexistentRoleId);
   }
 
   // =============================================================
@@ -340,7 +391,11 @@ contract ChannelsTest is BaseSetup, IEntitlementBase {
     vm.expectRevert(Entitlement__NotAllowed.selector);
 
     vm.prank(_randomAddress());
-    channels.createChannel(channelId, channelMetadata, new uint256[](0));
+    IChannel(everyoneSpace).createChannel(
+      channelId,
+      channelMetadata,
+      new uint256[](0)
+    );
   }
 
   function test_createChannel_reverts_when_channelId_too_short(
@@ -352,7 +407,11 @@ contract ChannelsTest is BaseSetup, IEntitlementBase {
 
     vm.expectRevert(Validator__InvalidStringLength.selector);
     vm.prank(founder);
-    channels.createChannel(channelId, channelMetadata, new uint256[](0));
+    IChannel(everyoneSpace).createChannel(
+      channelId,
+      channelMetadata,
+      new uint256[](0)
+    );
   }
 
   function test_createChannel_reverts_when_channel_exists(
@@ -363,11 +422,19 @@ contract ChannelsTest is BaseSetup, IEntitlementBase {
     vm.assume(bytes(channelId).length > 2);
 
     vm.prank(founder);
-    channels.createChannel(channelId, channelMetadata, new uint256[](0));
+    IChannel(everyoneSpace).createChannel(
+      channelId,
+      channelMetadata,
+      new uint256[](0)
+    );
 
     vm.expectRevert(ChannelService__ChannelAlreadyExists.selector);
 
     vm.prank(founder);
-    channels.createChannel(channelId, channelMetadata, new uint256[](0));
+    IChannel(everyoneSpace).createChannel(
+      channelId,
+      channelMetadata,
+      new uint256[](0)
+    );
   }
 }

@@ -13,6 +13,7 @@ import {IProxyManager} from "contracts/src/diamond/proxy/manager/IProxyManager.s
 import {ITokenOwnableBase} from "contracts/src/diamond/facets/ownable/token/ITokenOwnable.sol";
 import {IManagedProxyBase} from "contracts/src/diamond/proxy/managed/IManagedProxy.sol";
 import {IMembershipBase} from "contracts/src/spaces/facets/membership/IMembership.sol";
+import {IWalletLink} from "contracts/src/river/wallet-link/IWalletLink.sol";
 
 // libraries
 import {EnumerableSet} from "@openzeppelin/contracts/utils/structs/EnumerableSet.sol";
@@ -96,18 +97,12 @@ abstract contract ArchitectBase is Factory, IArchitectBase {
 
     // deploy user entitlement
     IUserEntitlement userEntitlement = IUserEntitlement(
-      _deployEntitlement(
-        ArchitectStorage.layout().userEntitlement,
-        spaceAddress
-      )
+      _deployEntitlement(ds.userEntitlement, spaceAddress)
     );
 
     // deploy token entitlement
     IRuleEntitlement ruleEntitlement = IRuleEntitlement(
-      _deployEntitlement(
-        ArchitectStorage.layout().ruleEntitlement,
-        spaceAddress
-      )
+      _deployEntitlement(ds.ruleEntitlement, spaceAddress)
     );
 
     address[] memory entitlements = new address[](2);
@@ -154,7 +149,8 @@ abstract contract ArchitectBase is Factory, IArchitectBase {
   function _setImplementations(
     address spaceToken,
     IUserEntitlement userEntitlement,
-    IRuleEntitlement ruleEntitlement
+    IRuleEntitlement ruleEntitlement,
+    IWalletLink walletLink
   ) internal {
     if (spaceToken.code.length == 0) revert Architect__NotContract();
     if (address(userEntitlement).code.length == 0)
@@ -166,6 +162,7 @@ abstract contract ArchitectBase is Factory, IArchitectBase {
     ds.spaceToken = spaceToken;
     ds.userEntitlement = userEntitlement;
     ds.ruleEntitlement = ruleEntitlement;
+    ds.walletLink = walletLink;
   }
 
   function _getImplementations()
@@ -174,13 +171,17 @@ abstract contract ArchitectBase is Factory, IArchitectBase {
     returns (
       address spaceToken,
       IUserEntitlement userEntitlementImplementation,
-      IRuleEntitlement ruleEntitlementImplementation
+      IRuleEntitlement ruleEntitlementImplementation,
+      IWalletLink walletLink
     )
   {
+    ArchitectStorage.Layout storage ds = ArchitectStorage.layout();
+
     return (
-      ArchitectStorage.layout().spaceToken,
-      ArchitectStorage.layout().userEntitlement,
-      ArchitectStorage.layout().ruleEntitlement
+      ds.spaceToken,
+      ds.userEntitlement,
+      ds.ruleEntitlement,
+      ds.walletLink
     );
   }
 
@@ -290,12 +291,9 @@ abstract contract ArchitectBase is Factory, IArchitectBase {
     uint256 tokenId,
     Membership memory membership
   ) internal view returns (address space) {
-    ArchitectStorage.Layout storage ds = ArchitectStorage.layout();
-
     // get deployment info
     (bytes memory initCode, bytes32 salt) = _getSpaceDeploymentInfo(
       spaceId,
-      ds.spaceToken,
       tokenId,
       membership
     );
@@ -307,12 +305,9 @@ abstract contract ArchitectBase is Factory, IArchitectBase {
     uint256 tokenId,
     Membership memory membership
   ) internal returns (address space) {
-    ArchitectStorage.Layout storage ds = ArchitectStorage.layout();
-
     // get deployment info
     (bytes memory initCode, bytes32 salt) = _getSpaceDeploymentInfo(
       spaceId,
-      ds.spaceToken,
       tokenId,
       membership
     );
@@ -337,23 +332,25 @@ abstract contract ArchitectBase is Factory, IArchitectBase {
 
   function _getSpaceDeploymentInfo(
     string memory spaceId,
-    address townOwnerCollection,
     uint256 tokenId,
     Membership memory membership
   ) internal view returns (bytes memory initCode, bytes32 salt) {
+    ArchitectStorage.Layout storage ds = ArchitectStorage.layout();
+
     // calculate salt
-    salt = keccak256(abi.encode(spaceId, townOwnerCollection, tokenId));
+    salt = keccak256(abi.encode(spaceId, ds.spaceToken, tokenId));
 
     // calculate init code
     initCode = abi.encodePacked(
       type(SpaceProxy).creationCode,
       abi.encode(
+        ds.walletLink,
         IManagedProxyBase.ManagedProxy({
           managerSelector: IProxyManager.getImplementation.selector,
           manager: address(this)
         }),
         ITokenOwnableBase.TokenOwnable({
-          collection: townOwnerCollection,
+          collection: ds.spaceToken,
           tokenId: tokenId
         }),
         IMembershipBase.Membership({

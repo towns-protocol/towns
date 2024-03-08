@@ -42,14 +42,16 @@ contract ArchitectHelper is FacetHelper {
   function makeInitData(
     address _spaceOwnerToken,
     address _userEntitlement,
-    address _tokenEntitlement
+    address _ruleEntitlement,
+    address _walletLink
   ) public pure returns (bytes memory) {
     return
       abi.encodeWithSelector(
-        Architect.__Architect_init.selector,
+        initializer(),
         _spaceOwnerToken,
         _userEntitlement,
-        _tokenEntitlement
+        _ruleEntitlement,
+        _walletLink
       );
   }
 }

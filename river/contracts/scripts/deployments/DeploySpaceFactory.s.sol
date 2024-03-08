@@ -41,6 +41,7 @@ import {DeployMultiInit} from "contracts/scripts/deployments/DeployMultiInit.s.s
 import {DeploySpace} from "contracts/scripts/deployments/DeploySpace.s.sol";
 import {DeploySpaceOwner} from "contracts/scripts/deployments/DeploySpaceOwner.s.sol";
 import {DeployRuleEntitlement} from "contracts/scripts/deployments/DeployRuleEntitlement.s.sol";
+import {DeployWalletLink} from "./../../scripts/deployments/DeployWalletLink.s.sol";
 
 contract DeploySpaceFactory is DiamondDeployer {
   DeployMultiInit deployMultiInit = new DeployMultiInit();
@@ -48,6 +49,7 @@ contract DeploySpaceFactory is DiamondDeployer {
   DeploySpaceOwner deploySpaceOwner = new DeploySpaceOwner();
   DeployUserEntitlement deployUserEntitlement = new DeployUserEntitlement();
   DeployRuleEntitlement deployRuleEntitlement = new DeployRuleEntitlement();
+  DeployWalletLink deployWalletLink = new DeployWalletLink();
 
   // diamond helpers
   DiamondCutHelper cutHelper = new DiamondCutHelper();
@@ -85,6 +87,7 @@ contract DeploySpaceFactory is DiamondDeployer {
 
   address public userEntitlement;
   address public ruleEntitlement;
+  address public walletLink;
   address public spaceOwner;
 
   function versionName() public pure override returns (string memory) {
@@ -101,6 +104,7 @@ contract DeploySpaceFactory is DiamondDeployer {
     spaceOwner = deploySpaceOwner.deploy();
     userEntitlement = deployUserEntitlement.deploy();
     ruleEntitlement = deployRuleEntitlement.deploy();
+    walletLink = deployWalletLink.deploy();
 
     vm.startBroadcast(deployerPK);
     diamondCut = address(new DiamondCutFacet());
@@ -167,7 +171,8 @@ contract DeploySpaceFactory is DiamondDeployer {
       architectHelper.initializer(),
       spaceOwner,
       userEntitlement, // userEntitlement
-      ruleEntitlement
+      ruleEntitlement, // ruleEntitlement
+      walletLink // walletLink
     );
     initDatas[index++] = proxyManagerHelper.makeInitData(space);
 
