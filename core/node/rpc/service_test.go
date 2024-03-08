@@ -6,6 +6,7 @@ import (
 	"fmt"
 	"net"
 	"net/http"
+	"os"
 	"testing"
 
 	"github.com/river-build/river/core/node/base/test"
@@ -14,6 +15,7 @@ import (
 	"github.com/river-build/river/core/node/dlog"
 	"github.com/river-build/river/core/node/events"
 	"github.com/river-build/river/core/node/infra"
+	"github.com/river-build/river/core/node/nodes"
 	"github.com/river-build/river/core/node/protocol"
 	"github.com/river-build/river/core/node/protocol/protocolconnect"
 	"github.com/river-build/river/core/node/rpc"
@@ -28,6 +30,27 @@ import (
 	"github.com/stretchr/testify/require"
 	"google.golang.org/protobuf/proto"
 )
+
+func setupTestHttpClient() {
+	nodes.TestHttpClientMaker = func() *http.Client {
+		return &http.Client{
+			Transport: &http2.Transport{
+				// So http2.Transport doesn't complain the URL scheme isn't 'https'
+				AllowHTTP: true,
+				// Pretend we are dialing a TLS endpoint. (Note, we ignore the passed tls.Config)
+				DialTLSContext: func(ctx context.Context, network, addr string, cfg *tls.Config) (net.Conn, error) {
+					var d net.Dialer
+					return d.DialContext(ctx, network, addr)
+				},
+			},
+		}
+	}
+}
+
+func TestMain(m *testing.M) {
+	setupTestHttpClient()
+	os.Exit(m.Run())
+}
 
 func createUserDeviceKeyStream(
 	ctx context.Context,
@@ -223,85 +246,82 @@ func createChannel(
 }
 
 func testClient(url string) protocolconnect.StreamServiceClient {
-	// Allow insecure TLS connections to HTTP/2 server using HTTP/1.1 and don't validate the certificate
-	http.DefaultTransport.(*http.Transport).TLSClientConfig = &tls.Config{InsecureSkipVerify: true}
-
-	httpClient := &http.Client{
-		Transport: &http2.Transport{
-			// So http2.Transport doesn't complain the URL scheme isn't 'https'
-			AllowHTTP: true,
-			// Pretend we are dialing a TLS endpoint. (Note, we ignore the passed tls.Config)
-			DialTLSContext: func(ctx context.Context, network, addr string, cfg *tls.Config) (net.Conn, error) {
-				var d net.Dialer
-				return d.DialContext(ctx, network, addr)
-			},
-		},
-	}
-
-	return protocolconnect.NewStreamServiceClient(
-		httpClient,
-		url)
+	return protocolconnect.NewStreamServiceClient(nodes.TestHttpClientMaker(), url, connect.WithGRPCWeb())
 }
 
-func testServerAndClient(
+func createTestServerAndClient(
 	ctx context.Context,
+	numNodes int,
 	require *require.Assertions,
 ) (protocolconnect.StreamServiceClient, string, func()) {
-	dbUrl := dbtestutils.GetTestDbUrl()
+	btc, err := crypto.NewBlockchainTestContext(ctx, numNodes)
+	require.NoError(err)
 
-	cfg := &config.Config{
-		DisableBaseChain: true,
-		Database:         config.DatabaseConfig{Url: dbUrl},
-		StorageType:      "postgres",
-		Stream: config.StreamConfig{
-			Media: config.MediaStreamConfig{
-				MaxChunkCount: 100,
-				MaxChunkSize:  1000000,
-			},
-			RecencyConstraints: config.RecencyConstraintsConfig{
-				AgeSeconds:  11,
-				Generations: 5,
-			},
-		},
+	type nodeRecord struct {
+		listener   net.Listener
+		url        string
+		service    *rpc.Service
+		addressStr string
+	}
+	nodes := make([]nodeRecord, numNodes)
+
+	for i := 0; i < numNodes; i++ {
+		// This is a hack to get the port number of the listener
+		// so we can register it in the contract before starting
+		// the server
+		listener, err := net.Listen("tcp", "localhost:0")
+		require.NoError(err)
+		nodes[i].listener = listener
+
+		port := listener.Addr().(*net.TCPAddr).Port
+
+		nodes[i].url = fmt.Sprintf("http://localhost:%d", port)
+
+		err = btc.InitNodeRecord(ctx, i, nodes[i].url)
+		require.NoError(err)
 	}
 
-	infra.InitLogFromConfig(&cfg.Log)
+	dbUrl := dbtestutils.GetTestDbUrl()
+	for i := 0; i < numNodes; i++ {
+		cfg := &config.Config{
+			DisableBaseChain: true,
+			RegistryContract: btc.RegistryConfig(),
+			Database:         config.DatabaseConfig{Url: dbUrl},
+			StorageType:      "postgres",
+			Stream: config.StreamConfig{
+				Media: config.MediaStreamConfig{
+					MaxChunkCount: 100,
+					MaxChunkSize:  1000000,
+				},
+				RecencyConstraints: config.RecencyConstraintsConfig{
+					AgeSeconds:  11,
+					Generations: 5,
+				},
+			},
+		}
 
-	btc, err := crypto.NewBlockchainTestContext(ctx, 1)
-	require.NoError(err)
-	cfg.RegistryContract = btc.RegistryConfig()
+		infra.InitLogFromConfig(&cfg.Log)
 
-	bc := btc.GetBlockchain(ctx, 0, true)
+		bc := btc.GetBlockchain(ctx, i, true)
+		service, err := rpc.StartServer(ctx, cfg, bc, nodes[i].listener)
+		require.NoError(err)
+		nodes[i].service = service
+		nodes[i].addressStr = bc.Wallet.AddressStr
+	}
 
-	// This is a hack to get the port number of the listener
-	// so we can register it in the contract before starting
-	// the server
-	listener, err := net.Listen("tcp", "localhost:0")
-	require.NoError(err)
-
-	port := listener.Addr().(*net.TCPAddr).Port
-
-	url := fmt.Sprintf("http://localhost:%d", port)
-
-	err = btc.InitNodeRecord(ctx, 0, url)
-	require.NoError(err)
-
-	service, err := rpc.StartServer(ctx, cfg, bc, listener)
-	require.NoError(err)
-
-	address := bc.Wallet.AddressStr
-
+	url := nodes[0].url
 	return testClient(url), url, func() {
-		service.Close()
+		for _, node := range nodes {
+			node.service.Close()
+			_ = dbtestutils.DeleteTestSchema(ctx, dbUrl, storage.DbSchemaNameFromAddress(node.addressStr))
+		}
 		btc.Close()
-		_ = dbtestutils.DeleteTestSchema(ctx, dbUrl, storage.DbSchemaNameFromAddress(address))
 	}
 }
 
-func TestMethods(t *testing.T) {
+func testMethods(t *testing.T, client protocolconnect.StreamServiceClient, url string, closer func()) {
 	require := require.New(t)
 	ctx := test.NewTestContext()
-	client, _, closer := testServerAndClient(ctx, require)
 	defer closer()
 
 	wallet1, _ := crypto.NewWallet(ctx)
@@ -486,10 +506,9 @@ func TestMethods(t *testing.T) {
 	}
 }
 
-func TestRiverDeviceId(t *testing.T) {
+func testRiverDeviceId(t *testing.T, client protocolconnect.StreamServiceClient, url string, closer func()) {
 	require := require.New(t)
 	ctx := test.NewTestContext()
-	client, _, closer := testServerAndClient(ctx, require)
 	defer closer()
 
 	wallet, _ := crypto.NewWallet(ctx)
@@ -553,16 +572,14 @@ func TestRiverDeviceId(t *testing.T) {
 	require.Error(err) // expected error when calling AddEvent
 }
 
-func TestSyncStreams(t *testing.T) {
+func testSyncStreams(t *testing.T, client protocolconnect.StreamServiceClient, url string, closer func()) {
 	require := require.New(t)
 	/**
 	Arrange
 	*/
 	// create the test client and server
 	ctx := test.NewTestContext()
-	client, _, closer := testServerAndClient(ctx, require)
 	defer closer()
-
 
 	// create the streams for a user
 	wallet, _ := crypto.NewWallet(ctx)
@@ -631,16 +648,15 @@ func TestSyncStreams(t *testing.T) {
 	require.Equal(syncId, msg.SyncId, "expected sync id to match")
 }
 
-func TestAddStreamsToSync(t *testing.T) {
+func testAddStreamsToSync(t *testing.T, client protocolconnect.StreamServiceClient, url string, closer func()) {
 	require := require.New(t)
 	/**
 	Arrange
 	*/
 	// create the test client and server
 	ctx := test.NewTestContext()
-	aliceClient, url, closer := testServerAndClient(ctx, require)
+	aliceClient := client
 	defer closer()
-
 
 	// create alice's wallet and streams
 	aliceWallet, _ := crypto.NewWallet(ctx)
@@ -650,23 +666,8 @@ func TestAddStreamsToSync(t *testing.T) {
 	_, _, err = createUserDeviceKeyStream(ctx, aliceWallet, aliceClient)
 	require.Nilf(err, "error calling createUserDeviceKeyStream: %v", err)
 
-	httpClient := &http.Client{
-		Transport: &http2.Transport{
-			// So http2.Transport doesn't complain the URL scheme isn't 'https'
-			AllowHTTP: true,
-			// Pretend we are dialing a TLS endpoint. (Note, we ignore the passed tls.Config)
-			DialTLSContext: func(ctx context.Context, network, addr string, cfg *tls.Config) (net.Conn, error) {
-				var d net.Dialer
-				return d.DialContext(ctx, network, addr)
-			},
-		},
-	}
-
 	// create bob's client, wallet, and streams
-	bobClient := protocolconnect.NewStreamServiceClient(
-		httpClient,
-		url,
-	)
+	bobClient := testClient(url)
 	bobWallet, _ := crypto.NewWallet(ctx)
 	bob, _, err := createUser(ctx, bobWallet, bobClient)
 	require.Nilf(err, "error calling createUser: %v", err)
@@ -750,7 +751,7 @@ func TestAddStreamsToSync(t *testing.T) {
 	require.Equal(syncId, msg.SyncId, "expected sync id to match")
 }
 
-func TestRemoveStreamsFromSync(t *testing.T) {
+func testRemoveStreamsFromSync(t *testing.T, client protocolconnect.StreamServiceClient, url string, closer func()) {
 	require := require.New(t)
 	/**
 	Arrange
@@ -758,9 +759,8 @@ func TestRemoveStreamsFromSync(t *testing.T) {
 	// create the test client and server
 	ctx := test.NewTestContext()
 	log := dlog.FromCtx(ctx)
-	aliceClient, url, closer := testServerAndClient(ctx, require)
+	aliceClient := client
 	defer closer()
-
 
 	// create alice's wallet and streams
 	aliceWallet, _ := crypto.NewWallet(ctx)
@@ -770,23 +770,8 @@ func TestRemoveStreamsFromSync(t *testing.T) {
 	_, _, err = createUserDeviceKeyStream(ctx, aliceWallet, aliceClient)
 	require.NoError(err)
 
-	httpClient := &http.Client{
-		Transport: &http2.Transport{
-			// So http2.Transport doesn't complain the URL scheme isn't 'https'
-			AllowHTTP: true,
-			// Pretend we are dialing a TLS endpoint. (Note, we ignore the passed tls.Config)
-			DialTLSContext: func(ctx context.Context, network, addr string, cfg *tls.Config) (net.Conn, error) {
-				var d net.Dialer
-				return d.DialContext(ctx, network, addr)
-			},
-		},
-	}
-
 	// create bob's client, wallet, and streams
-	bobClient := protocolconnect.NewStreamServiceClient(
-		httpClient,
-		url,
-	)
+	bobClient := testClient(url)
 	bobWallet, _ := crypto.NewWallet(ctx)
 	bob, _, err := createUser(ctx, bobWallet, bobClient)
 	require.Nilf(err, "error calling createUser: %v", err)
@@ -919,4 +904,39 @@ OuterLoop:
 	*/
 	require.NotEmpty(syncId, "expected non-empty sync id")
 	require.NotNil(removeRes.Msg, "expected non-nil remove response")
+}
+
+type testFunc func(*testing.T, protocolconnect.StreamServiceClient, string, func())
+
+func run(t *testing.T, numNodes int, tf testFunc) {
+	client, url, closer := createTestServerAndClient(test.NewTestContext(), numNodes, require.New(t))
+	tf(t, client, url, closer)
+}
+
+func TestSingleAndMulti(t *testing.T) {
+	tests := []struct {
+		name string
+		test testFunc
+	}{
+		{"testMethods", testMethods},
+		{"testRiverDeviceId", testRiverDeviceId},
+		{"testSyncStreams", testSyncStreams},
+		{"testAddStreamsToSync", testAddStreamsToSync},
+		{"testRemoveStreamsFromSync", testRemoveStreamsFromSync},
+	}
+
+	t.Run("single", func(t *testing.T) {
+		for _, tt := range tests {
+			t.Run(tt.name, func(t *testing.T) {
+				run(t, 1, tt.test)
+			})
+		}
+	})
+	t.Run("multi", func(t *testing.T) {
+		for _, tt := range tests {
+			t.Run(tt.name, func(t *testing.T) {
+				run(t, 10, tt.test)
+			})
+		}
+	})
 }

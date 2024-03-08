@@ -102,7 +102,6 @@ func InitLogFromConfig(c *config.LogConfig) {
 		slogHandler = slogHandlers[0]
 	} else {
 		slogHandler = &dlog.NullHandler{}
-		fmt.Println("No log handlers configured")
 	}
 
 	slog.SetDefault(slog.New(slogHandler))

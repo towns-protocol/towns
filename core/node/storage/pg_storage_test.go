@@ -318,7 +318,7 @@ func TestExitIfSecondStorageCreated(t *testing.T) {
 	streamId := testutils.FakeStreamId(STREAM_CHANNEL_BIN)
 	err = pgEventStore.CreateStreamStorage(ctx, streamId, genesisMiniblock)
 	require.NotNil(t, err)
-	require.Contains(t, err.Error(), "Node number mismatch")
+	require.Contains(t, err.Error(), "No longer a current node")
 }
 
 // Test that if there is a gap in miniblocks sequence, we will get error

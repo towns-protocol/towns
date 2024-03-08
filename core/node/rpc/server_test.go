@@ -15,7 +15,7 @@ func TestServerShutdown(t *testing.T) {
 	require := require.New(t)
 	ctx := test.NewTestContext()
 
-	stub, url, closer := testServerAndClient(ctx, require)
+	stub, url, closer := createTestServerAndClient(ctx, 1, require)
 	defer func() {
 		if closer != nil {
 			closer()

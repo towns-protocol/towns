@@ -17,6 +17,8 @@ import (
 	"connectrpc.com/connect"
 )
 
+var TestHttpClientMaker func() *http.Client
+
 type NodeRegistry interface {
 	// Returns error for local node.
 	GetStreamServiceClientForAddress(address common.Address) (StreamServiceClient, error)
@@ -71,12 +73,18 @@ func LoadNodeRegistry(ctx context.Context, contract *registries.RiverRegistryCon
 
 	log.Info("Node Registry Loaded from contract", "Nodes", nodes, "localAddress", localNodeAddress)
 
-	client, err := http_client.GetHttpClient(ctx)
-	if err != nil {
-		log.Error("Error getting http client", "err", err)
-		return nil, AsRiverError(err, Err_BAD_CONFIG).
-			Message("Unable to get http client").
-			Func("LoadNodeRegistry")
+	var client *http.Client
+	if TestHttpClientMaker != nil {
+		client = TestHttpClientMaker()
+		log.Warn("Using test http client")
+	} else {
+		client, err = http_client.GetHttpClient(ctx)
+		if err != nil {
+			log.Error("Error getting http client", "err", err)
+			return nil, AsRiverError(err, Err_BAD_CONFIG).
+				Message("Unable to get http client").
+				Func("LoadNodeRegistry")
+		}
 	}
 
 	n := &nodeRegistryImpl{
