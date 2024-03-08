@@ -24,6 +24,7 @@ contracts/.openzeppelin/unknown-*.json
 contracts/docs/coverage
 contracts/.env
 contracts/deployments
+lib/
 abi/
 
 /docs
