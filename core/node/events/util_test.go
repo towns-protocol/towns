@@ -37,6 +37,7 @@ func makeTestStreamParams(p testParams) (context.Context, *testContext) {
 	}
 
 	bc := btc.GetBlockchain(ctx, 0, true)
+	defer bc.Close()
 
 	var streamStorage storage.StreamStorage
 	var schemaDeleter func()

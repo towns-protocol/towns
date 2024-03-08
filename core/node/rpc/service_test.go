@@ -332,10 +332,10 @@ func testServerAndClient(
 func TestMethods(t *testing.T) {
 	ctx := test.NewTestContext()
 	client, _, closer := testServerAndClient(t, ctx, testDatabaseUrl, testSchemaName)
+	defer closer()
+
 	wallet1, _ := crypto.NewWallet(ctx)
 	wallet2, _ := crypto.NewWallet(ctx)
-
-	defer closer()
 
 	response, err := client.Info(ctx, connect.NewRequest(&protocol.InfoRequest{}))
 	if err != nil {
@@ -529,9 +529,10 @@ func TestMethods(t *testing.T) {
 func TestRiverDeviceId(t *testing.T) {
 	ctx := test.NewTestContext()
 	client, _, closer := testServerAndClient(t, ctx, testDatabaseUrl, testSchemaName)
+	defer closer()
+
 	wallet, _ := crypto.NewWallet(ctx)
 	deviceWallet, _ := crypto.NewWallet(ctx)
-	defer closer()
 
 	resuser, _, err := createUser(ctx, wallet, client)
 	require.NoError(t, err)
@@ -607,6 +608,7 @@ func TestSyncStreams(t *testing.T) {
 	ctx := test.NewTestContext()
 	client, _, closer := testServerAndClient(t, ctx, testDatabaseUrl, testSchemaName)
 	defer closer()
+
 	// create the streams for a user
 	wallet, _ := crypto.NewWallet(ctx)
 	_, _, err := createUser(ctx, wallet, client)
@@ -682,6 +684,7 @@ func TestAddStreamsToSync(t *testing.T) {
 	ctx := test.NewTestContext()
 	aliceClient, url, closer := testServerAndClient(t, ctx, testDatabaseUrl, testSchemaName)
 	defer closer()
+
 	// create alice's wallet and streams
 	aliceWallet, _ := crypto.NewWallet(ctx)
 	alice, _, err := createUser(ctx, aliceWallet, aliceClient)
@@ -799,6 +802,7 @@ func TestRemoveStreamsFromSync(t *testing.T) {
 	log := dlog.FromCtx(ctx)
 	aliceClient, url, closer := testServerAndClient(t, ctx, testDatabaseUrl, testSchemaName)
 	defer closer()
+
 	// create alice's wallet and streams
 	aliceWallet, _ := crypto.NewWallet(ctx)
 	alice, _, err := createUser(ctx, aliceWallet, aliceClient)

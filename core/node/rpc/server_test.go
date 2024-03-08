@@ -1,6 +1,7 @@
 package rpc_test
 
 import (
+	"fmt"
 	"testing"
 
 	"github.com/river-build/river/core/node/base/test"
@@ -28,8 +29,10 @@ func TestServerShutdown(t *testing.T) {
 	_, err = stub.Info(ctx, connect.NewRequest(&protocol.InfoRequest{}))
 	require.NoError(err)
 
+	fmt.Println("Shutting down server")
 	closer()
 	closer = nil
+	fmt.Println("Server shut down")
 
 	stub2 := testClient(url)
 	_, err = stub2.Info(ctx, connect.NewRequest(&protocol.InfoRequest{}))

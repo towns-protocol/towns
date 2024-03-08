@@ -17,6 +17,8 @@ import (
 var serviceRequests = infra.NewSuccessMetrics(infra.RPC_CATEGORY, nil)
 
 type Service struct {
+	riverChain     *crypto.Blockchain
+	baseChain      *crypto.Blockchain
 	storage        storage.StreamStorage
 	cache          events.StreamCache
 	chainAuth      auth.ChainAuth
