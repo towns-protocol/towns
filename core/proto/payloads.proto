@@ -112,6 +112,8 @@ message ChannelMessage {
         
         optional string thread_id = 1;
         optional string thread_preview = 2;
+        optional string reply_id = 3;
+        optional string reply_preview = 4;
     
         oneof content {
             Content.Text text = 101;
