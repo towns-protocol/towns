@@ -213,29 +213,16 @@ func (s *streamCacheImpl) onNewBlock(ctx context.Context) {
 	}
 	defer s.onNewBlockMutex.Unlock()
 
-	var total, errors, produced int
 	s.cache.Range(func(key, value interface{}) bool {
 		stream := value.(*streamImpl)
-
-		if stream.mbCreationEnabled() {
-			// TODO: replace with vote
-			// For now: only first assigned node produces blocks.
-			if stream.nodes.LocalAndFirst() {
-				total++
-				// Nothing to do on error, MakeMiniblock logs on error level if there is an error.
-				ok, err := stream.MakeMiniblock(ctx, false)
-				if err != nil {
-					errors++
-				} else if ok {
-					produced++
-				}
-			}
+		if stream.canCreateMiniblock() {
+			go func() { _, _ = stream.MakeMiniblock(ctx, false) }()
 		}
 		return true
 	})
 
 	// Log at level below debug, otherwise it's too chatty.
-	log.Log(ctx, -8, "onNewBlock: EXIT produced new miniblocks", "total", total, "errors", errors, "produced", produced)
+	log.Log(ctx, -8, "onNewBlock: EXIT produced new miniblocks")
 }
 
 func (s *streamCacheImpl) newBlockReader(ctx context.Context, c crypto.BlockNumberChannel) {
