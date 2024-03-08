@@ -192,10 +192,16 @@ describe('mirrorMessages', () => {
                 if (!match) {
                     throw new Error('Redirect location is not valid')
                 }
-                testTownId = match[1]
+                //TODO: Switch back when channel creation in Gamma will be fixed.
+                //TownID 107d4db9ba0fa2078d3669fb03cf5fa1ca3ae3cb3d42d2d2bbc58ed27283ca13 below is temorary one programmaticaly created in Gamma
+                //It is intentionally hardcoded.
+                //testTownId = match[1]
+                testTownId = '107d4db9ba0fa2078d3669fb03cf5fa1ca3ae3cb3d42d2d2bbc58ed27283ca13'
                 await riverSDK.joinTown(testTownId)
                 const availableChannels = await riverSDK.getAvailableChannels(testTownId)
+
                 availableChannels.forEach((channelName, channelId) => {
+                    log('channelName', channelName, 'channelId', channelId)
                     if (channelName === testSpamChannelName) {
                         testChannelId = channelId
                     }

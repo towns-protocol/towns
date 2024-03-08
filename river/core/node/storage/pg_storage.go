@@ -580,127 +580,38 @@ func (s *PostgresEventStore) GetStreamsNumber(ctx context.Context) (int, error) 
 
 func (s *PostgresEventStore) compareUUID(ctx context.Context, tx pgx.Tx) error {
 	log := dlog.FromCtx(ctx)
-	// First we select UUID only assuming happy path
+
 	rows, err := tx.Query(ctx, "SELECT uuid FROM singlenodekey")
 	if err != nil {
-		// TODO: We don't know exactly what goes wrong here. Should we kill the node or just throw error?
-		return WrapRiverError(Err_DB_OPERATION_FAILURE, err).Message("Error getting UUIDs during UUID compare at happy path")
+		return WrapRiverError(Err_DB_OPERATION_FAILURE, err).Message("query failed").Func("pg.compareUUID").LogError(log)
 	}
 	defer rows.Close()
 
-	counter := 0
-	var wrongNodeRecordsFlag bool = false
-
+	allIds := []string{}
 	for rows.Next() {
-		if counter > 0 {
-			// Something goes wrong as there is more than one record in the table and we swtich to error processing flow
-			wrongNodeRecordsFlag = true
-			break
-		}
-		counter++
-
-		var storedUUID string
-
-		err = rows.Scan(&storedUUID)
+		var id string
+		err = rows.Scan(&id)
 		if err != nil {
-			// TODO: We don't know exactly what goes wrong here. Should we kill the node or just throw error?
-			return WrapRiverError(
-				Err_DB_OPERATION_FAILURE,
-				err,
-			).Message("Error getting UUID during UUID compare scan at happy path")
+			return WrapRiverError(Err_DB_OPERATION_FAILURE, err).Message("scan failed").Func("pg.compareUUID").LogError(log)
 		}
-
-		if storedUUID != s.nodeUUID {
-			// Means that there is at least one more wrong node instance that running against DB
-			wrongNodeRecordsFlag = true
-			break
-		}
+		allIds = append(allIds, id)
 	}
 
-	if !wrongNodeRecordsFlag {
+	if len(allIds) == 1 && allIds[0] == s.nodeUUID {
 		return nil
 	}
 
-	// If we get here happy path failed - let's process error flow
-	detailedRows, err := tx.Query(ctx, "SELECT uuid, storage_connection_time, info FROM singlenodekey")
-	if err != nil {
-		// We know that there are issues with number of nodes so we kill the node here
-		riverError := s.enrichErrorWithNodeInfo(
-			WrapRiverError(
-				Err_DB_OPERATION_FAILURE,
-				err,
-			).Message("Node number mismatch - error getting UUIDs during UUID compare at error flow"),
-		)
-		log.Error(
-			"compareUUID: Node number mismatch - error getting UUIDs during UUID compare at error flow",
-			"error",
-			riverError.Error(),
-			"currentUUID",
-			s.nodeUUID,
-			"currentInfo",
-			getCurrentNodeProcessInfo(s.schemaName),
-		)
-		s.exitSignal <- riverError
-		return riverError
-	}
-	defer detailedRows.Close()
-
-	// Required for better error tracking
-	var errorFlowUUID string
-	var errorFlowTimestamp time.Time
-	var errorFlowStoredInfo string
-
-	var logRecordBuilder strings.Builder
-
-	for detailedRows.Next() {
-		err = rows.Scan(&errorFlowUUID, &errorFlowTimestamp, &errorFlowStoredInfo)
-		if err != nil {
-			// We know that there are issues with number of nodes so we kill the node here
-			riverError := s.enrichErrorWithNodeInfo(
-				WrapRiverError(
-					Err_DB_OPERATION_FAILURE,
-					err,
-				).Message("Node number mismatch - error getting UUIDs during compare scan at error flow"),
-			)
-			log.Error(
-				"compareUUID: Node number mismatch - error getting UUIDs during UUIDs compare scan at error flow",
-				"error",
-				riverError.Error(),
-				"currentUUID",
-				s.nodeUUID,
-				"currentInfo",
-				getCurrentNodeProcessInfo(s.schemaName),
-			)
-			s.exitSignal <- riverError
-			return riverError
-		}
-		logRecordBuilder.WriteString("Node UUID: ")
-		logRecordBuilder.WriteString(errorFlowUUID)
-		logRecordBuilder.WriteString("Node DB connection timestamp: ")
-		logRecordBuilder.WriteString(errorFlowTimestamp.Format(time.RFC3339))
-		logRecordBuilder.WriteString("Node info: ")
-		logRecordBuilder.WriteString(errorFlowStoredInfo)
-		logRecordBuilder.WriteString(";")
-	}
-
-	// We know that there are issues with number of nodes so we kill the node here
-	multipleNodesError := s.enrichErrorWithNodeInfo(RiverError(Err_MINIBLOCKS_STORAGE_FAILURE, "Node number mismatch"))
-	log.Error(
-		"compareUUID: Node number mismatch",
-		"error",
-		multipleNodesError.Error(),
-		"currentUUID",
-		s.nodeUUID,
-		"currentInfo",
-		getCurrentNodeProcessInfo(s.schemaName),
-		"detailedInfo",
-		logRecordBuilder.String(),
-	)
-	s.exitSignal <- multipleNodesError
-	return multipleNodesError
+	return RiverError(Err_RESOURCE_EXHAUSTED, "No longer a current node, shutting down").
+		Func("pg.compareUUID").
+		Tag("currentUUID", s.nodeUUID).
+		Tag("schema", s.schemaName).
+		Tag("newUUIDs", allIds).
+		LogError(log)
 }
 
 func (s *PostgresEventStore) CleanupStorage(ctx context.Context) error {
+	log := dlog.FromCtx(ctx)
+	log.Info("pg.CleanupStorage: Deleting node record from single node key table")
 	_, err := s.pool.Exec(ctx, "DELETE FROM singlenodekey WHERE uuid = $1", s.nodeUUID)
 	if err != nil {
 		dbCalls.FailIncForChild("CleanupStorage")

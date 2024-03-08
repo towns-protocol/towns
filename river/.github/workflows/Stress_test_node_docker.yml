@@ -1,19 +1,17 @@
 # Based on https://github.com/docker/build-push-action
 
-name: 'Build River Docker Image'
+name: 'Build River Stress Test Node Docker Image'
 
 on:
     push:
         branches:
             - main
         paths:
-            - 'infra/**'
+            - 'packages/stress-testing/**'
+            - 'core/**'
     workflow_dispatch:
 
 env:
-    DOCKER_NAMESPACE: riverbuild
-    GHCR_NAMESPACE: riverbuild
-    PLATFORMS: linux/amd64,linux/arm64
     SLACK_WEBHOOK_URL: ${{ secrets.SLACK_CD_WORKFLOW_WEBHOOK_URL }}
 
 jobs:
@@ -43,15 +41,14 @@ jobs:
               with:
                 registry-type: 'public'
 
-            - name: Build and push infra image to Amazon ECR
+            - name: Build and push docker image to Amazon ECR
               env:
                 ECR_REGISTRY: ${{ steps.login-aws-ecr.outputs.registry }}
                 #This can be custom alias once requested to aws and approved for public repo
-                REGISTRY_ALIAS: l8h0l2e6
-                ECR_REPOSITORY: hnt-infra
+                REGISTRY_ALIAS: h5v6m2x1
+                ECR_REPOSITORY: river-stress-test-node
               run: |
-                cd ./infra
-                docker build -t $ECR_REGISTRY/$REGISTRY_ALIAS/$ECR_REPOSITORY:latest .
+                docker build -t $ECR_REGISTRY/$REGISTRY_ALIAS/$ECR_REPOSITORY:latest . -f ./packages/load-testing/Dockerfile
                 docker push $ECR_REGISTRY/$REGISTRY_ALIAS/$ECR_REPOSITORY:latest
 
             # If action failed, we send a slack notification
@@ -61,7 +58,7 @@ jobs:
               with:
                   payload: |
                       {
-                          "step": "Build Infra Docker Image",
+                          "step": "Build Stress Test Node Docker Image",
                           "environment": "N/",
                           "branch": "${{ github.ref }}",
                           "url": "https://github.com/${{ github.repository }}/actions/runs/${{ github.run_id }}",

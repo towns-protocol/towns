@@ -1,5 +1,5 @@
-export const leaderKey = '53c240b5f9645196e090e5b99b32d5a451f62de39d165cc38cd0f82b31422c81'
-export const leaderId = '0x7cab8F39f7FF0CDceB18881526caA33613C1Bc1E' //Artem Privy through AppleId
+export const leaderKey = '20921e50975c1df7515ec55ad66dd16d7cea24bc7fec7f84d58ccc509136ff17' //HNTTest1
+export const leaderId = '0x29B4bd8DbEA61949164E125dBe3C400aDC65a7de'
 export const leaderUserName = 'Artem (AppleId)'
 
 export const followerKey = '61cb187a9413019e97aee61ba84d3761f66eda8a05c00834b903360d0a32ecef'

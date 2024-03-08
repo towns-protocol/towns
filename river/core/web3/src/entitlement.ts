@@ -45,13 +45,6 @@ export type ContractOperation = {
     index: number
 }
 
-export type ContractCheckOperation = {
-    opType: CheckOperationType
-    chainId: bigint
-    contractAddress: `0x${string}`
-    threshold: bigint
-}
-
 export type ContractLogicalOperation = {
     logOpType: LogicalOperationType
     leftOperationIndex: number
@@ -482,17 +475,24 @@ export function createExternalTokenStruct(addresses: `0x${string}`[]) {
     const defaultChain = addresses.map((address) => ({
         chainId: 1n,
         address: address,
+        type: CheckOperationType.ERC20 as const,
     }))
     return createOperationsTree(defaultChain)
 }
 
-export type AddressChainIdPair = {
-    address: `0x${string}`
+export type ContractCheckOperation = {
+    type: CheckOperationType
     chainId: bigint
+    address: `0x${string}`
+    threshold: bigint
 }
 
-export function createOperationsTree(pairs: AddressChainIdPair[]): IRuleEntitlement.RuleDataStruct {
-    if (pairs.length === 0) {
+export function createOperationsTree(
+    checkOp: (Omit<ContractCheckOperation, 'threshold'> & {
+        threshold?: bigint
+    })[],
+): IRuleEntitlement.RuleDataStruct {
+    if (checkOp.length === 0) {
         return {
             operations: [NoopOperation],
             checkOperations: [],
@@ -500,12 +500,12 @@ export function createOperationsTree(pairs: AddressChainIdPair[]): IRuleEntitlem
         }
     }
 
-    let operations: Operation[] = pairs.map((pair) => ({
+    let operations: Operation[] = checkOp.map((op) => ({
         opType: OperationType.CHECK,
-        checkType: CheckOperationType.ERC20, // Assuming we're checking ERC20 contracts, adjust as needed
-        chainId: pair.chainId,
-        contractAddress: pair.address,
-        threshold: BigInt(1), // Example threshold, adjust as needed
+        checkType: op.type,
+        chainId: op.chainId,
+        contractAddress: op.address,
+        threshold: op.threshold ?? BigInt(1), // Example threshold, adjust as needed
     }))
 
     while (operations.length > 1) {
@@ -526,4 +526,22 @@ export function createOperationsTree(pairs: AddressChainIdPair[]): IRuleEntitlem
     }
 
     return treeToRuleData(operations[0])
+}
+
+export function createContractCheckOperationFromTree(
+    entitlementData: IRuleEntitlement.RuleDataStruct,
+): ContractCheckOperation[] {
+    const operations = ruleDataToOperations([entitlementData])
+    const checkOpSubsets: ContractCheckOperation[] = []
+    operations.forEach((operation) => {
+        if (isCheckOperation(operation)) {
+            checkOpSubsets.push({
+                address: operation.contractAddress,
+                chainId: operation.chainId,
+                type: operation.checkType,
+                threshold: operation.threshold,
+            })
+        }
+    })
+    return checkOpSubsets
 }

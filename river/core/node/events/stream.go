@@ -44,7 +44,7 @@ type SyncStream interface {
 	MakeMiniblock(ctx context.Context, forceSnapshot bool) (bool, error) // TODO: doesn't seem pertinent to SyncStream
 	ProposeNextMiniblock(ctx context.Context, forceSnapshot bool) (*MiniblockProposal, error)
 	MakeMiniblockHeader(ctx context.Context, proposal *MiniblockProposal) (*MiniblockHeader, []*ParsedEvent, error)
-	ApplyMiniblock(ctx context.Context, miniblockHeader *MiniblockHeader, envelopes []*ParsedEvent) error
+	ApplyMiniblock(ctx context.Context, miniblockHeader *ParsedEvent, envelopes []*ParsedEvent) error
 	GetView(ctx context.Context) (StreamView, error)
 }
 
@@ -73,6 +73,9 @@ type streamImpl struct {
 
 	// TODO: perf optimization: support subs on unloaded streams.
 	receivers mapset.Set[SyncResultReceiver]
+
+	// This mutex is used to ensure that only one MakeMiniblock is running at a time.
+	makeMiniblockMutex sync.Mutex
 }
 
 var _ SyncStream = (*streamImpl)(nil)
@@ -132,18 +135,9 @@ func (s *streamImpl) MakeMiniblockHeader(
 	return s.view.makeMiniblockHeader(ctx, proposal)
 }
 
-func (s *streamImpl) ApplyMiniblock(ctx context.Context, miniblockHeader *MiniblockHeader, envelopes []*ParsedEvent) error {
+func (s *streamImpl) ApplyMiniblock(ctx context.Context, miniblockHeaderEvent *ParsedEvent, envelopes []*ParsedEvent) error {
 	s.mu.Lock()
 	defer s.mu.Unlock()
-
-	miniblockHeaderEvent, err := MakeParsedEventWithPayload(
-		s.params.Wallet,
-		Make_MiniblockHeader(miniblockHeader),
-		miniblockHeader.PrevMiniblockHash,
-	)
-	if err != nil {
-		return err
-	}
 
 	miniblock, err := NewMiniblockInfoFromParsed(miniblockHeaderEvent, envelopes)
 	if err != nil {
@@ -176,7 +170,7 @@ func (s *streamImpl) ApplyMiniblock(ctx context.Context, miniblockHeader *Minibl
 		s.view.minipool.generation,
 		s.view.minipool.nextSlotNumber(),
 		miniblockBytes,
-		miniblockHeader.GetSnapshot() != nil,
+		miniblockHeaderEvent.Event.GetMiniblockHeader().GetSnapshot() != nil,
 		newMinipool,
 	)
 	if err != nil {
@@ -193,6 +187,11 @@ func (s *streamImpl) ApplyMiniblock(ctx context.Context, miniblockHeader *Minibl
 
 // Returns true if miniblock was created, false if not.
 func (s *streamImpl) MakeMiniblock(ctx context.Context, forceSnapshot bool) (bool, error) {
+	if !s.makeMiniblockMutex.TryLock() {
+		return false, nil
+	}
+	defer s.makeMiniblockMutex.Unlock()
+
 	log := dlog.FromCtx(ctx)
 
 	proposal, err := s.ProposeNextMiniblock(ctx, forceSnapshot)
@@ -213,7 +212,23 @@ func (s *streamImpl) MakeMiniblock(ctx context.Context, forceSnapshot bool) (boo
 		return false, nil
 	}
 
-	err = s.ApplyMiniblock(ctx, miniblockHeader, envelopes)
+	miniblockHeaderEvent, err := MakeParsedEventWithPayload(
+		s.params.Wallet,
+		Make_MiniblockHeader(miniblockHeader),
+		miniblockHeader.PrevMiniblockHash,
+	)
+	if err != nil {
+		log.Error("Stream.MakeMiniblock: MakeParsedEventWithPayload failed", "error", err, "streamId", s.streamId)
+		return false, err
+	}
+
+	err = s.params.Registry.SetStreamLastMiniblock(ctx, s.streamId, miniblockHeaderEvent.Hash, uint64(miniblockHeader.MiniblockNum), false)
+	if err != nil {
+		log.Error("Stream.MakeMiniblock: SetStreamLastMiniblock failed", "error", err, "streamId", s.streamId)
+		return false, err
+	}
+
+	err = s.ApplyMiniblock(ctx, miniblockHeaderEvent, envelopes)
 	if err != nil {
 		log.Error("Stream.MakeMiniblock: ApplyMiniblock failed", "error", err, "streamId", s.streamId)
 		return false, err
@@ -484,9 +499,12 @@ func (s *streamImpl) ForceFlush(ctx context.Context) {
 	s.receivers = nil
 }
 
-// Periodic miniblock creation maybe disabled in tests.
-func (s *streamImpl) mbCreationEnabled() bool {
+func (s *streamImpl) canCreateMiniblock() bool {
 	s.mu.RLock()
 	defer s.mu.RUnlock()
-	return s.view != nil && !s.view.snapshot.GetInceptionPayload().GetSettings().GetDisableMiniblockCreation()
+	// Loaded, has events in minipool, fake leader and periodic miniblock creation is not disabled in test settings.
+	return s.view != nil &&
+		s.view.minipool.events.Len() > 0 &&
+		s.nodes.LocalAndFirst() &&
+		!s.view.snapshot.GetInceptionPayload().GetSettings().GetDisableMiniblockCreation()
 }

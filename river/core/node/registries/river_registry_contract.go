@@ -21,9 +21,9 @@ import (
 // Convinience wrapper for the IRiverRegistryV1 interface (abigen exports it as RiverRegistryV1)
 type RiverRegistryContract struct {
 	OperatorRegistry *contracts.OperatorRegistryV1
-	NodeRegistry *contracts.NodeRegistryV1
-	StreamRegistry *contracts.StreamRegistryV1
-	Blockchain *crypto.Blockchain
+	NodeRegistry     *contracts.NodeRegistryV1
+	StreamRegistry   *contracts.StreamRegistryV1
+	Blockchain       *crypto.Blockchain
 }
 
 func NewRiverRegistryContract(
@@ -83,9 +83,9 @@ func NewRiverRegistryContract(
 
 	return &RiverRegistryContract{
 		OperatorRegistry: operatorRegistry,
-		NodeRegistry: nodeRegistry,
-		StreamRegistry: streamRegistry,
-		Blockchain: blockchain,
+		NodeRegistry:     nodeRegistry,
+		StreamRegistry:   streamRegistry,
+		Blockchain:       blockchain,
 	}, nil
 }
 
@@ -181,6 +181,16 @@ func (sr *RiverRegistryContract) GetAllStreams(ctx context.Context, blockNum uin
 		ret[i] = makeGetStreamResult(streamId, &stream.Stream)
 	}
 	return ret, nil
+}
+
+func (sr *RiverRegistryContract) SetStreamLastMiniblock(ctx context.Context, streamId StreamId, lastMiniblockHash common.Hash, lastMiniblockNum uint64, isSealed bool) error {
+	_, _, err := sr.Blockchain.TxRunner.SubmitAndWait(
+		ctx,
+		func(opts *bind.TransactOpts) (*types.Transaction, error) {
+			return sr.StreamRegistry.SetStreamLastMiniblock(opts, streamId.ByteArray(), lastMiniblockHash, lastMiniblockNum, isSealed)
+		},
+	)
+	return err
 }
 
 type NodeRecord = contracts.Node

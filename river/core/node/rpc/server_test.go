@@ -6,7 +6,6 @@ import (
 
 	"github.com/river-build/river/core/node/base/test"
 	"github.com/river-build/river/core/node/protocol"
-	"github.com/river-build/river/core/node/testutils/dbtestutils"
 
 	"connectrpc.com/connect"
 	"github.com/stretchr/testify/require"
@@ -15,18 +14,15 @@ import (
 func TestServerShutdown(t *testing.T) {
 	require := require.New(t)
 	ctx := test.NewTestContext()
-	dbUrl, _, dbCloser, err := dbtestutils.StartDB(ctx)
-	require.NoError(err)
-	defer dbCloser()
 
-	stub, url, closer := testServerAndClient(ctx, dbUrl, require)
+	stub, url, closer := createTestServerAndClient(ctx, 1, require)
 	defer func() {
 		if closer != nil {
 			closer()
 		}
 	}()
 
-	_, err = stub.Info(ctx, connect.NewRequest(&protocol.InfoRequest{}))
+	_, err := stub.Info(ctx, connect.NewRequest(&protocol.InfoRequest{}))
 	require.NoError(err)
 
 	fmt.Println("Shutting down server")
