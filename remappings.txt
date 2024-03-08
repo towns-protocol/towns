@@ -1,9 +1,9 @@
-@openzeppelin/=node_modules/@openzeppelin/
-account-abstraction/=node_modules/account-abstraction/contracts
-base64/=node_modules/base64/
-ds-test/=node_modules/ds-test/
-forge-std/=node_modules/forge-std/src
-hardhat-deploy/=node_modules/hardhat-deploy/
-@prb/math/=node_modules/@prb/math/src
-@prb/test/=node_modules/@prb/test/src
+@openzeppelin/=lib/@openzeppelin/
+account-abstraction/=lib/account-abstraction/contracts/
+base64/=lib/base64/
+ds-test/=lib/ds-test/src
+forge-std/=lib/forge-std/src
+hardhat-deploy/=lib/hardhat-deploy/
+@prb/math/=lib/@prb/math/src
+@prb/test/=lib/@prb/test/src
 
