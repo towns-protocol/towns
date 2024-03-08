@@ -3,6 +3,8 @@
 # This script assumes you have the hg github cli installed, setup for auth, and you are an admin on the main repo
 set -e
 
+# Main repository details
+MAINTREE_REPO="herenotthere/harmony"
 # Subtree details
 SUBTREE_PREFIX="river"
 SUBTREE_REPO="https://github.com/river-build/river-stage"
