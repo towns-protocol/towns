@@ -68,6 +68,7 @@ export const AllChannelsList = ({
                                     <ChannelItem
                                         space={space}
                                         name={channel.label}
+                                        topic={channel.topic}
                                         channelNetworkId={channel.id}
                                     />
                                 </Stack>
@@ -87,10 +88,12 @@ export const AllChannelsList = ({
 
 export const ChannelItem = ({
     name,
+    topic,
     channelNetworkId,
     space,
 }: {
     name: string
+    topic?: string
     channelNetworkId: string
     space: SpaceData
 }) => {
@@ -180,12 +183,20 @@ export const ChannelItem = ({
     return (
         <Stack>
             <Stack horizontal justifyContent="spaceBetween">
-                <Stack horizontal centerContent gap="sm" overflowX="hidden">
+                <Stack horizontal centerContent gap="sm">
                     <Icon type="tag" padding="line" background="level2" size="square_lg" />
-                    <Text truncate color="gray1" textAlign="left">
-                        {name}
-                    </Text>
+                    <Stack gap="sm">
+                        <Text truncate color="gray1" textAlign="left">
+                            {name}
+                        </Text>
+                        {topic && (
+                            <Text color="gray2" size="sm">
+                                {topic}
+                            </Text>
+                        )}
+                    </Stack>
                 </Stack>
+
                 <Button
                     disabled={syncingSpace}
                     minWidth="100"

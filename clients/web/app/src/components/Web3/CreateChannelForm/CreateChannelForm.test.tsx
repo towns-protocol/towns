@@ -196,6 +196,7 @@ describe('CreateChannelForm', () => {
                 {
                     name: 'test-channel',
                     parentSpaceId: '',
+                    topic: '',
                     roleIds: [7, 8],
                 },
                 {},

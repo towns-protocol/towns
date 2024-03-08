@@ -36,16 +36,19 @@ type Props = {
 
 const FormStateKeys = {
     name: 'name',
+    topic: 'topic',
     roleIds: 'roleIds',
 } as const
 
 type FormState = {
     [FormStateKeys.name]: string
+    [FormStateKeys.topic]: string
     [FormStateKeys.roleIds]: string[]
 }
 
 const schema = z.object({
     [FormStateKeys.name]: z.string().min(2, 'Channel names must have at least 2 characters'),
+    [FormStateKeys.topic]: z.string(),
     [FormStateKeys.roleIds]: z.string().array().nonempty('Please select at least one role'),
 })
 
@@ -160,10 +163,11 @@ export const CreateChannelForm = (props: Props) => {
             schema={schema}
             defaultValues={defaultValues}
             mode="onChange"
-            onSubmit={async ({ name, roleIds }) => {
+            onSubmit={async ({ name, topic, roleIds }) => {
                 const signer = await getSigner()
                 const channelInfo = {
                     name: name,
+                    topic: topic,
                     parentSpaceId: props.spaceId,
                     roleIds: roleIds.map((roleId) => Number(roleId)),
                 }
@@ -184,6 +188,9 @@ export const CreateChannelForm = (props: Props) => {
         >
             {({ register, formState, setValue, getValues }) => {
                 const { onChange: onNameChange, ...restOfNameProps } = register(FormStateKeys.name)
+                const { onChange: onTopicChange, ...restOfTopicProps } = register(
+                    FormStateKeys.topic,
+                )
                 return !rolesWithDetails ? (
                     <Stack centerContent height="250">
                         <Spinner />
@@ -212,6 +219,24 @@ export const CreateChannelForm = (props: Props) => {
                                     )
                                 }}
                                 {...restOfNameProps}
+                            />
+
+                            <TextField
+                                background="level2"
+                                label="Description"
+                                placeholder="Edit channel description"
+                                maxLength={30}
+                                message={
+                                    <ErrorMessage
+                                        errors={formState.errors}
+                                        fieldName={FormStateKeys.topic}
+                                    />
+                                }
+                                onChange={(event: React.ChangeEvent<HTMLInputElement>) => {
+                                    onTopicChange(event)
+                                    setValue(FormStateKeys.topic, event.target.value.slice(0, 30))
+                                }}
+                                {...restOfTopicProps}
                             />
                         </Stack>
                         <Stack gap="sm" maxHeight="50vh" overflow="auto">
