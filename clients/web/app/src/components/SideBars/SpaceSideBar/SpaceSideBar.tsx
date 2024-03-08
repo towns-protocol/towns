@@ -24,7 +24,6 @@ import { useCreateLink } from 'hooks/useCreateLink'
 import { useShortcut } from 'hooks/useShortcut'
 import { useSortedChannels } from 'hooks/useSortedChannels'
 import { PATHS } from 'routes'
-import { AllChannelsList } from 'routes/AllChannelsList/AllChannelsList'
 import { useStore } from 'store/store'
 import { ReloadPrompt } from '@components/ReloadPrompt/ReloadPrompt'
 import { env } from 'utils'
@@ -51,6 +50,7 @@ export const SpaceSideBar = (props: Props) => {
     const { isTouch } = useDevice()
     const { loggedInWalletAddress } = useAuth()
 
+    const { createLink } = useCreateLink()
     const unreadThreadsCount = useSpaceThreadRootsUnreadCount()
     const membership = useMyMembership(space?.id)
     const { isOwner } = useIsSpaceOwner(space.id, loggedInWalletAddress)
@@ -61,9 +61,16 @@ export const SpaceSideBar = (props: Props) => {
     const onHideCreateChannel = useEvent(() => setCreateChannelModalVisible(false))
     const onShowCreateChannel = useEvent(() => setCreateChannelModalVisible(true))
 
-    const [isBrowseChannelsModalVisible, setBrowseChannelsModalVisible] = useState(false)
-    const onHideBrowseChannels = useEvent(() => setBrowseChannelsModalVisible(false))
-    const onShowBrowseChannels = useEvent(() => setBrowseChannelsModalVisible(true))
+    const onShowBrowseChannels = useEvent(() => {
+        const path = createLink({
+            spaceId: space.id,
+            panel: 'browse-channels',
+        })
+
+        if (path) {
+            navigate(path)
+        }
+    })
 
     const unreadThreadMentions = useSpaceUnreadThreadMentions()
 
@@ -95,7 +102,6 @@ export const SpaceSideBar = (props: Props) => {
     const [layoutMode, setLayoutMode] = useState<LayoutMode>(LayoutMode.Default)
 
     const navigate = useNavigate()
-    const { createLink } = useCreateLink()
 
     const onDisplayCreate = useCallback(() => {
         const link = createLink({ messageId: 'new' })
@@ -279,11 +285,7 @@ export const SpaceSideBar = (props: Props) => {
                         </Text>
                     </Box>
                 </FadeInBox>
-                {isBrowseChannelsModalVisible ? (
-                    <ModalContainer minWidth="500" onHide={onHideBrowseChannels}>
-                        <AllChannelsList onHideBrowseChannels={onHideBrowseChannels} />
-                    </ModalContainer>
-                ) : isCreateChannelModalVisible ? (
+                {isCreateChannelModalVisible ? (
                     <ModalContainer onHide={onHideCreateChannel}>
                         <CreateChannelFormContainer
                             spaceId={space.id}

@@ -29,6 +29,7 @@ export const CHANNEL_INFO_PARAMS = {
     PERMISSIONS: 'permissions',
     DIRECTORY: 'directory',
     INVITE: 'invite',
+    BROWSE_CHANNELS: 'browse-channels',
 } as const
 
 export type CHANNEL_INFO_PARAMS_VALUES =

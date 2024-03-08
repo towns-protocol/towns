@@ -70,6 +70,7 @@ export const SpaceInfoPanel = () => {
     const [searchParams, setSearchParams] = useSearchParams()
     // touch handles roles panel with modals
     const isRolesPanel = !isTouch && searchParams.get('roles') != null
+    const { createLink } = useCreateLink()
 
     const { leaveRoom } = useZionClient()
     const channels = useSpaceChannels()
@@ -110,7 +111,14 @@ export const SpaceInfoPanel = () => {
     >(undefined)
 
     const onHideBrowseChannels = useEvent(() => setActiveModal(undefined))
-    const onShowBrowseChannels = useEvent(() => setActiveModal('browse-channels'))
+    const onShowBrowseChannels = useEvent(() => {
+        if (isTouch) {
+            setActiveModal('browse-channels')
+        } else {
+            searchParams.set('browse-channels', '')
+            setSearchParams(searchParams)
+        }
+    })
 
     const onHideTownPreview = useEvent(() => setActiveModal(undefined))
     const onShowTownPreview = useEvent(() => setActiveModal('preview'))
@@ -220,9 +228,7 @@ export const SpaceInfoPanel = () => {
         setActiveModal('settings')
     }, [setActiveModal])
 
-    const { createLink: createProfileLink } = useCreateLink()
-
-    const ownerProfileLink = spaceOwner && createProfileLink({ profileId: spaceOwner.userId })
+    const ownerProfileLink = spaceOwner && createLink({ profileId: spaceOwner.userId })
 
     return (
         <Panel modalPresentable label="Town Info" onClose={onClose}>

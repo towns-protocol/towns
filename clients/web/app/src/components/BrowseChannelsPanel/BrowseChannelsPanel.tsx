@@ -1,0 +1,72 @@
+import React, { useCallback, useMemo } from 'react'
+import { useEvent } from 'react-use-event-hook'
+import { useSearchParams } from 'react-router-dom'
+import { ChannelContextProvider, useSpaceData } from 'use-zion-client'
+import fuzzysort from 'fuzzysort'
+import { IconButton, Stack, Text, TextField } from '@ui'
+import { Panel } from '@components/Panel/Panel'
+import { useSpaceChannels } from 'hooks/useSpaceChannels'
+import { ChannelItem } from 'routes/AllChannelsList/AllChannelsList'
+import { ButtonSpinner } from 'ui/components/Spinner/ButtonSpinner'
+
+export const BrowseChannelsPanel = () => {
+    const space = useSpaceData()
+    const channels = useSpaceChannels()
+    const [searchParams, setSearchParams] = useSearchParams()
+    const [searchText, setSearchText] = React.useState('')
+
+    const onTextFieldChanged = useCallback(
+        (event: React.ChangeEvent<HTMLInputElement>) => {
+            setSearchText(event.target.value)
+        },
+        [setSearchText],
+    )
+
+    const onCloseClick = useEvent(() => {
+        searchParams.delete('browse-channels')
+        setSearchParams(searchParams)
+    })
+
+    const filteredChannels = useMemo(() => {
+        return fuzzysort
+            .go(searchText, channels, { keys: ['label', 'search'], all: true })
+            .map((m) => m.obj)
+    }, [channels, searchText])
+
+    return (
+        <Panel
+            label="Channels"
+            leftBarButton={<IconButton icon="arrowLeft" onClick={onCloseClick} />}
+            onClose={onCloseClick}
+        >
+            <Stack padding gap>
+                <TextField
+                    background="level2"
+                    placeholder="Search channels"
+                    onChange={onTextFieldChanged}
+                />
+                {space && !space?.isLoadingChannels && channels.length > 0 ? (
+                    <Stack scroll scrollbars gap>
+                        {filteredChannels.map((channel) => (
+                            <ChannelContextProvider key={channel.id} channelId={channel.id}>
+                                <Stack>
+                                    <ChannelItem
+                                        space={space}
+                                        name={channel.label}
+                                        topic={channel.topic}
+                                        channelNetworkId={channel.id}
+                                    />
+                                </Stack>
+                            </ChannelContextProvider>
+                        ))}
+                    </Stack>
+                ) : (
+                    <Stack centerContent padding gap="md">
+                        <Text>Loading channels</Text>
+                        <ButtonSpinner />
+                    </Stack>
+                )}
+            </Stack>
+        </Panel>
+    )
+}

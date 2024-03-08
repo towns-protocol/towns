@@ -3,6 +3,7 @@ import {
     ChannelContextProvider,
     Membership,
     SpaceData,
+    useMyMembership,
     useSpaceData,
     useZionClient,
 } from 'use-zion-client'
@@ -16,7 +17,6 @@ import { useChannelIdFromPathname } from 'hooks/useChannelIdFromPathname'
 import { useDevice } from 'hooks/useDevice'
 import { useStore } from 'store/store'
 import { useSpaceChannels } from 'hooks/useSpaceChannels'
-import { useChannelMembership } from 'hooks/useChannelMembership'
 
 export const AllChannelsList = ({
     onHideBrowseChannels,
@@ -101,7 +101,7 @@ export const ChannelItem = ({
     const { client, leaveRoom } = useZionClient()
     const channelIdentifier = channelNetworkId
     const currentChannelId = useChannelIdFromPathname()
-    const isJoined = useChannelMembership() === Membership.Join
+    const isJoined = useMyMembership(channelNetworkId) === Membership.Join
 
     useEffect(() => {
         // quick fix, leave events result in a faster rerender than the join event

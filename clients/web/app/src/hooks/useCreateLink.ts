@@ -40,6 +40,34 @@ const profilePaths = [
     { path: `/${PATHS.SPACES}/:spaceId/profile?/:profileId?` },
 ] satisfies Path[]
 
+const browseChannelsPaths: Path[] = [
+    {
+        path: `/${PATHS.SPACES}/:spaceId/${PATHS.CHANNELS}/:channelId/info`,
+        replace: `/${PATHS.SPACES}/:spaceId/${PATHS.CHANNELS}/:channelId/info?browse-channels`,
+    },
+    {
+        path: `/${PATHS.SPACES}/:spaceId/:path/info`,
+        replace: `/${PATHS.SPACES}/:spaceId/:path/info?browse-channels`,
+    },
+    {
+        path: `/${PATHS.SPACES}/:spaceId/:path/:panelPath/:panelPathId`,
+        replace: `/${PATHS.SPACES}/:spaceId/:path/info?browse-channels`,
+    },
+    {
+        path: `/${PATHS.SPACES}/:spaceId/:path`,
+        replace: `/${PATHS.SPACES}/:spaceId/:path/info?browse-channels`,
+    },
+    {
+        path: `/${PATHS.SPACES}/:spaceId/:path/:channelId`,
+        replace: `/${PATHS.SPACES}/:spaceId/:path/:channelId/info?browse-channels`,
+    },
+
+    {
+        path: `/${PATHS.SPACES}/:spaceId/${PATHS.CHANNELS}/:channelId/:channelPanel/:channelPanelParam`,
+        replace: `/${PATHS.SPACES}/:spaceId/${PATHS.CHANNELS}/:channelId/info?browse-channels`,
+    },
+]
+
 const townInfoPaths: Path[] = [
     { path: `/${PATHS.SPACES}/:spaceId/:path/info?` },
     {
@@ -170,6 +198,12 @@ const linkParams = {
             panel: 'townInfo',
         },
     },
+    browseChannels: {
+        params: {
+            spaceId: 'spaceId' as string | undefined,
+            panel: 'browse-channels',
+        },
+    },
     channel: {
         params: {
             channelId: 'spaceId' as string | undefined,
@@ -258,6 +292,15 @@ const getSearchPathsForParams = (linkParams: LinkParams) => {
     if ('profileId' in linkParams) {
         return profilePaths
     }
+
+    if (
+        'spaceId' in linkParams &&
+        'panel' in linkParams &&
+        linkParams.panel === 'browse-channels'
+    ) {
+        return browseChannelsPaths
+    }
+
     if ('spaceId' in linkParams && 'panel' in linkParams && linkParams.panel === 'townInfo') {
         return townInfoPaths
     }
