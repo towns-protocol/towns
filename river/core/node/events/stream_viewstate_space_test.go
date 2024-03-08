@@ -33,7 +33,8 @@ type noopBlockMonitor struct{}
 
 var _ crypto.BlockMonitor = (*noopBlockMonitor)(nil)
 
-func (b *noopBlockMonitor) AddListener(listener crypto.OnNewBlock) {}
+func (b *noopBlockMonitor) AddListener(c crypto.BlockNumberChannel) {}
+func (b *noopBlockMonitor) Close()                                  {}
 
 func makeEnvelopeWithPayload_T(
 	t *testing.T,

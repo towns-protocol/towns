@@ -6,6 +6,8 @@ cd -P -- "$(dirname -- "${BASH_SOURCE[0]}")"
 : ${RUN_BASE:?}
 : ${INSTANCE:?}
 
+BLOCK_TIME_MS=${BLOCK_TIME_MS:-2000}
+
 INSTANCE_DIR="${RUN_BASE}/${INSTANCE}"
 TEMPLATE_FILE="./config-template.yaml"
 OUTPUT_FILE="${INSTANCE_DIR}/config/config.yaml"
@@ -20,7 +22,7 @@ cp "$TEMPLATE_FILE" "$OUTPUT_FILE"
 
 SKIP_GENKEY=${SKIP_GENKEY:-false}
 
-grep -o '<.*>' "$TEMPLATE_FILE" | while read -r KEY; do
+grep -o '<.*>' "$TEMPLATE_FILE" | sort | uniq | while read -r KEY; do
     key=$(echo "$KEY" | sed 's/^.\(.*\).$/\1/')
     value=${!key:?$key is not set}
 
@@ -43,10 +45,7 @@ grep -o '<.*>' "$TEMPLATE_FILE" | while read -r KEY; do
     fi
 done
 
-
-
 # Generate a new wallet if one doesn't exist and SKIP_GENKEY is not set
-
 if [ "$SKIP_GENKEY" = true ]; then
     echo "Skipping wallet generation for instance '${INSTANCE}'"
 elif [ ! -f "${INSTANCE_DIR}/wallet/private_key" ]; then

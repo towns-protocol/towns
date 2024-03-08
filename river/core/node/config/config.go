@@ -64,9 +64,9 @@ type DatabaseConfig struct {
 }
 
 type ChainConfig struct {
-	NetworkUrl      string
-	ChainId         uint64
-	FakeBlockTimeMs int64
+	NetworkUrl  string
+	ChainId     uint64
+	BlockTimeMs uint64
 
 	// TODO: these need to be removed from here
 	LinkedWalletsLimit                 int

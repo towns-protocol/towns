@@ -29,8 +29,8 @@ type BlockchainTestContext struct {
 	EthClient            *ethclient.Client
 	Wallets              []*Wallet
 	RiverRegistryAddress common.Address
-	NodeRegistry        *contracts.NodeRegistryV1
-	StreamRegistry      *contracts.StreamRegistryV1
+	NodeRegistry         *contracts.NodeRegistryV1
+	StreamRegistry       *contracts.StreamRegistryV1
 	ChainId              *big.Int
 	DeployerBlockchain   *Blockchain
 }
@@ -133,7 +133,7 @@ func NewBlockchainTestContext(ctx context.Context, numKeys int) (*BlockchainTest
 	}
 
 	stream_registry, err := contracts.NewStreamRegistryV1(addr, client)
-	if (err != nil) {
+	if err != nil {
 		return nil, err
 	}
 
@@ -145,17 +145,21 @@ func NewBlockchainTestContext(ctx context.Context, numKeys int) (*BlockchainTest
 		EthClient:            ethClient,
 		Wallets:              wallets,
 		RiverRegistryAddress: addr,
-		NodeRegistry:        node_registry,
-		StreamRegistry: 		 stream_registry,
+		NodeRegistry:         node_registry,
+		StreamRegistry:       stream_registry,
 		ChainId:              chainId,
 		DeployerBlockchain:   deployerBC,
 	}, nil
 }
 
 func (c *BlockchainTestContext) Close() {
+	if c.DeployerBlockchain != nil {
+		c.DeployerBlockchain.Close()
+	}
 	if c.Backend != nil {
-		c.Backend.Close()
-	} else if c.EthClient != nil {
+		_ = c.Backend.Close()
+	}
+	if c.EthClient != nil {
 		c.EthClient.Close()
 	}
 }
@@ -190,19 +194,21 @@ func (c *BlockchainTestContext) GetDeployerWallet() *Wallet {
 }
 
 func makeTestBlockchain(ctx context.Context, wallet *Wallet, client BlockchainClient, chainId *big.Int, onSubmit func()) *Blockchain {
-	return &Blockchain{
-		ChainId: chainId,
-		Wallet:  wallet,
-		Client:  client,
-		TxRunner: NewTxRunner(ctx, &TxRunnerParams{
-			Wallet:   wallet,
-			Client:   client,
-			ChainId:  chainId,
-			OnSubmit: onSubmit,
-		}),
-		Config:       &config.ChainConfig{ChainId: chainId.Uint64()},
-		BlockMonitor: NewFakeBlockMonitor(ctx, 100),
+	bc, err := NewBlockchainWithClient(
+		ctx,
+		&config.ChainConfig{
+			ChainId:     chainId.Uint64(),
+			BlockTimeMs: 100,
+		},
+		wallet,
+		client,
+		nil,
+	)
+	if err != nil {
+		panic(err)
 	}
+	bc.TxRunner.SetOnSubmit(onSubmit)
+	return bc
 }
 
 func (c *BlockchainTestContext) GetBlockchain(ctx context.Context, index int, autoMine bool) *Blockchain {

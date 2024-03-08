@@ -268,10 +268,9 @@ func testClient(url string) protocolconnect.StreamServiceClient {
 }
 
 func testServerAndClient(
-	t *testing.T,
 	ctx context.Context,
 	dbUrl string,
-	dbSchemaName string,
+	require *require.Assertions,
 ) (protocolconnect.StreamServiceClient, string, func()) {
 	cfg := &config.Config{
 		DisableBaseChain: true,
@@ -292,9 +291,7 @@ func testServerAndClient(
 	infra.InitLogFromConfig(&cfg.Log)
 
 	btc, err := crypto.NewBlockchainTestContext(ctx, 1)
-	if err != nil {
-		panic(err)
-	}
+	require.NoError(err)
 	cfg.RegistryContract = btc.RegistryConfig()
 
 	bc := btc.GetBlockchain(ctx, 0, true)
@@ -303,25 +300,17 @@ func testServerAndClient(
 	// so we can register it in the contract before starting
 	// the server
 	listener, err := net.Listen("tcp", "localhost:0")
-
-	if err != nil {
-		panic(err)
-	}
+	require.NoError(err)
 
 	port := listener.Addr().(*net.TCPAddr).Port
 
 	url := fmt.Sprintf("http://localhost:%d", port)
 
 	err = btc.InitNodeRecord(ctx, 0, url)
-
-	if err != nil {
-		panic(err)
-	}
+	require.NoError(err)
 
 	service, err := rpc.StartServer(ctx, cfg, bc, listener)
-	if err != nil {
-		panic(err)
-	}
+	require.NoError(err)
 
 	return testClient(url), url, func() {
 		service.Close()
@@ -330,26 +319,23 @@ func testServerAndClient(
 }
 
 func TestMethods(t *testing.T) {
+	require := require.New(t)
 	ctx := test.NewTestContext()
-	client, _, closer := testServerAndClient(t, ctx, testDatabaseUrl, testSchemaName)
+	client, _, closer := testServerAndClient(ctx, testDatabaseUrl, require)
+	defer closer()
+
 	wallet1, _ := crypto.NewWallet(ctx)
 	wallet2, _ := crypto.NewWallet(ctx)
 
-	defer closer()
-
 	response, err := client.Info(ctx, connect.NewRequest(&protocol.InfoRequest{}))
-	if err != nil {
-		t.Errorf("error calling Info: %v", err)
-	}
-	require.Equal(t, "River Node welcomes you!", response.Msg.Graffiti)
+	require.NoError(err)
+	require.Equal("River Node welcomes you!", response.Msg.Graffiti)
 
 	_, err = client.CreateStream(ctx, connect.NewRequest(&protocol.CreateStreamRequest{}))
-	if err == nil {
-		t.Errorf("expected error calling CreateStream with no events")
-	}
+	require.Error(err)
 
 	_, _, err = createUserWithMismatchedId(ctx, wallet1, client)
-	require.Error(t, err) // expected Error when calling CreateStream with mismatched id
+	require.Error(err) // expected Error when calling CreateStream with mismatched id
 
 	userStreamId := UserStreamIdFromAddr(wallet1.Address)
 
@@ -358,44 +344,44 @@ func TestMethods(t *testing.T) {
 		StreamId: userStreamId.Bytes(),
 		Optional: true,
 	}))
-	require.NoError(t, err)
-	require.Nil(t, resp.Msg.Stream, "expected user stream to not exist")
+	require.NoError(err)
+	require.Nil(resp.Msg.Stream, "expected user stream to not exist")
 
 	// if optional is false, error should be thrown
 	_, err = client.GetStream(ctx, connect.NewRequest(&protocol.GetStreamRequest{
 		StreamId: userStreamId.Bytes(),
 	}))
-	require.Error(t, err)
+	require.Error(err)
 
 	// create user stream for user 1
 	res, _, err := createUser(ctx, wallet1, client)
-	require.NoError(t, err)
-	require.NotNil(t, res, "nil sync cookie")
+	require.NoError(err)
+	require.NotNil(res, "nil sync cookie")
 
 	_, _, err = createUserDeviceKeyStream(ctx, wallet1, client)
-	require.NoError(t, err)
+	require.NoError(err)
 
 	// get stream optional should now return not nil
 	resp, err = client.GetStream(ctx, connect.NewRequest(&protocol.GetStreamRequest{
 		StreamId: userStreamId.Bytes(),
 		Optional: true,
 	}))
-	require.NoError(t, err)
-	require.NotNil(t, resp.Msg, "expected user stream to not exist")
+	require.NoError(err)
+	require.NotNil(resp.Msg, "expected user stream to not exist")
 
 	// create user stream for user 2
 	resuser, _, err := createUser(ctx, wallet2, client)
-	require.NoError(t, err)
-	require.NotNil(t, resuser, "nil sync cookie")
+	require.NoError(err)
+	require.NotNil(resuser, "nil sync cookie")
 
 	_, _, err = createUserDeviceKeyStream(ctx, wallet2, client)
-	require.NoError(t, err)
+	require.NoError(err)
 
 	// create space
 	spaceId := testutils.FakeStreamId(STREAM_SPACE_BIN)
 	resspace, _, err := createSpace(ctx, wallet1, client, spaceId)
-	require.NoError(t, err)
-	require.NotNil(t, resspace, "nil sync cookie")
+	require.NoError(err)
+	require.NotNil(resspace, "nil sync cookie")
 
 	// create channel
 	channelId := testutils.FakeStreamId(STREAM_CHANNEL_BIN)
@@ -409,8 +395,8 @@ func TestMethods(t *testing.T) {
 			DisableMiniblockCreation: true,
 		},
 	)
-	require.NoError(t, err)
-	require.NotNil(t, channel, "nil sync cookie")
+	require.NoError(err)
+	require.NotNil(channel, "nil sync cookie")
 
 	// user2 joins channel
 	userJoin, err := events.MakeEnvelopeWithPayload(
@@ -422,7 +408,7 @@ func TestMethods(t *testing.T) {
 		),
 		resuser.PrevMiniblockHash,
 	)
-	require.NoError(t, err)
+	require.NoError(err)
 
 	_, err = client.AddEvent(
 		ctx,
@@ -433,24 +419,22 @@ func TestMethods(t *testing.T) {
 			},
 		),
 	)
-	require.NoError(t, err)
+	require.NoError(err)
 
 	_, err = client.Info(ctx, connect.NewRequest(&protocol.InfoRequest{Debug: []string{"make_miniblock", channelId.String(), "false"}}))
-	require.NoError(t, err)
+	require.NoError(err)
 
 	_, err = client.Info(ctx, connect.NewRequest(&protocol.InfoRequest{
 		Debug: []string{"make_miniblock", channelId.String(), "false"},
 	}))
-	require.NoError(t, err)
+	require.NoError(err)
 
 	message, err := events.MakeEnvelopeWithPayload(
 		wallet2,
 		events.Make_ChannelPayload_Message("hello"),
 		channelHash,
 	)
-	if err != nil {
-		t.Errorf("error creating message event: %v", err)
-	}
+	require.NoError(err)
 
 	_, err = client.AddEvent(
 		ctx,
@@ -461,22 +445,22 @@ func TestMethods(t *testing.T) {
 			},
 		),
 	)
-	require.NoError(t, err)
+	require.NoError(err)
 
 	_, err = client.Info(ctx, connect.NewRequest(&protocol.InfoRequest{Debug: []string{"make_miniblock", channelId.String(), "false"}}))
-	require.NoError(t, err)
+	require.NoError(err)
 
 	_, err = client.Info(ctx, connect.NewRequest(&protocol.InfoRequest{
 		Debug: []string{"make_miniblock", channelId.String(), "false"},
 	}))
-	require.NoError(t, err)
+	require.NoError(err)
 
 	_, err = client.GetMiniblocks(ctx, connect.NewRequest(&protocol.GetMiniblocksRequest{
 		StreamId:      channelId.Bytes(),
 		FromInclusive: 0,
 		ToExclusive:   1,
 	}))
-	require.NoError(t, err)
+	require.NoError(err)
 
 	syncCtx, syncCancel := context.WithCancel(ctx)
 	syncRes, err := client.SyncStreams(
@@ -489,29 +473,25 @@ func TestMethods(t *testing.T) {
 			},
 		),
 	)
-	require.NoError(t, err)
+	require.NoError(err)
 
 	syncRes.Receive()
 	// verify the first message is new a sync
 	syncRes.Receive()
 	msg := syncRes.Msg()
-	require.NotNil(t, msg.SyncId, "expected non-nil sync id")
-	require.True(t, len(msg.SyncId) > 0, "expected non-empty sync id")
+	require.NotNil(msg.SyncId, "expected non-nil sync id")
+	require.True(len(msg.SyncId) > 0, "expected non-empty sync id")
 	msg = syncRes.Msg()
 	syncCancel()
 
-	require.NotNil(t, msg.Stream, "expected non-nil stream")
+	require.NotNil(msg.Stream, "expected non-nil stream")
 
 	// join, miniblock, message, miniblock
-	if len(msg.Stream.Events) != 4 {
-		t.Errorf("expected 4 events, got %d", len(msg.Stream.Events))
-	}
+	require.Equal(4, len(msg.Stream.Events), "expected 4 events")
 
 	var payload protocol.StreamEvent
 	err = proto.Unmarshal(msg.Stream.Events[len(msg.Stream.Events)-2].Event, &payload)
-	if err != nil {
-		t.Errorf("error unmarshaling event: %v", err)
-	}
+	require.NoError(err)
 	switch p := payload.Payload.(type) {
 	case *protocol.StreamEvent_ChannelPayload:
 		// ok
@@ -527,37 +507,33 @@ func TestMethods(t *testing.T) {
 }
 
 func TestRiverDeviceId(t *testing.T) {
+	require := require.New(t)
 	ctx := test.NewTestContext()
-	client, _, closer := testServerAndClient(t, ctx, testDatabaseUrl, testSchemaName)
-	wallet, _ := crypto.NewWallet(ctx)
-	deviceWallet, _ := crypto.NewWallet(ctx)
+	client, _, closer := testServerAndClient(ctx, testDatabaseUrl, require)
 	defer closer()
 
+	wallet, _ := crypto.NewWallet(ctx)
+	deviceWallet, _ := crypto.NewWallet(ctx)
+
 	resuser, _, err := createUser(ctx, wallet, client)
-	require.NoError(t, err)
-	if resuser == nil {
-		t.Errorf("nil sync cookie")
-	}
+	require.NoError(err)
+	require.NotNil(resuser)
 
 	_, _, err = createUserDeviceKeyStream(ctx, wallet, client)
-	require.NoError(t, err)
+	require.NoError(err)
 
 	spaceId := testutils.FakeStreamId(STREAM_SPACE_BIN)
 	space, _, err := createSpace(ctx, wallet, client, spaceId)
-	require.NoError(t, err)
-	if space == nil {
-		t.Errorf("nil sync cookie")
-	}
+	require.NoError(err)
+	require.NotNil(space)
 
 	channelId := testutils.FakeStreamId(STREAM_CHANNEL_BIN)
 	channel, channelHash, err := createChannel(ctx, wallet, client, spaceId, channelId, nil)
-	require.NoError(t, err)
-	if channel == nil {
-		t.Errorf("nil sync cookie")
-	}
+	require.NoError(err)
+	require.NotNil(channel)
 
 	delegateSig, err := makeDelegateSig(wallet, deviceWallet)
-	require.NoError(t, err)
+	require.NoError(err)
 
 	event, err := events.MakeDelegatedStreamEvent(
 		wallet,
@@ -567,14 +543,12 @@ func TestRiverDeviceId(t *testing.T) {
 		channelHash,
 		delegateSig,
 	)
-	require.NoError(t, err)
+	require.NoError(err)
 	msg, err := events.MakeEnvelopeWithEvent(
 		deviceWallet,
 		event,
 	)
-	if err != nil {
-		t.Errorf("error creating message event: %v", err)
-	}
+	require.NoError(err)
 
 	_, err = client.AddEvent(
 		ctx,
@@ -585,7 +559,7 @@ func TestRiverDeviceId(t *testing.T) {
 			},
 		),
 	)
-	require.NoError(t, err)
+	require.NoError(err)
 
 	_, err = client.AddEvent(
 		ctx,
@@ -596,33 +570,36 @@ func TestRiverDeviceId(t *testing.T) {
 			},
 		),
 	)
-	require.Error(t, err) // expected error when calling AddEvent
+	require.Error(err) // expected error when calling AddEvent
 }
 
 func TestSyncStreams(t *testing.T) {
+	require := require.New(t)
 	/**
 	Arrange
 	*/
 	// create the test client and server
 	ctx := test.NewTestContext()
-	client, _, closer := testServerAndClient(t, ctx, testDatabaseUrl, testSchemaName)
+	client, _, closer := testServerAndClient(ctx, testDatabaseUrl, require)
 	defer closer()
+
+
 	// create the streams for a user
 	wallet, _ := crypto.NewWallet(ctx)
 	_, _, err := createUser(ctx, wallet, client)
-	require.Nilf(t, err, "error calling createUser: %v", err)
+	require.Nilf(err, "error calling createUser: %v", err)
 	_, _, err = createUserDeviceKeyStream(ctx, wallet, client)
-	require.Nilf(t, err, "error calling createUserDeviceKeyStream: %v", err)
+	require.Nilf(err, "error calling createUserDeviceKeyStream: %v", err)
 	// create space
 	spaceId := testutils.FakeStreamId(STREAM_SPACE_BIN)
 	space1, _, err := createSpace(ctx, wallet, client, spaceId)
-	require.Nilf(t, err, "error calling createSpace: %v", err)
-	require.NotNil(t, space1, "nil sync cookie")
+	require.Nilf(err, "error calling createSpace: %v", err)
+	require.NotNil(space1, "nil sync cookie")
 	// create channel
 	channelId := testutils.FakeStreamId(STREAM_CHANNEL_BIN)
 	channel1, channelHash, err := createChannel(ctx, wallet, client, spaceId, channelId, nil)
-	require.Nilf(t, err, "error calling createChannel: %v", err)
-	require.NotNil(t, channel1, "nil sync cookie")
+	require.Nilf(err, "error calling createChannel: %v", err)
+	require.NotNil(channel1, "nil sync cookie")
 
 	/**
 	Act
@@ -639,7 +616,7 @@ func TestSyncStreams(t *testing.T) {
 			},
 		),
 	)
-	require.Nilf(t, err, "error calling SyncStreams: %v", err)
+	require.Nilf(err, "error calling SyncStreams: %v", err)
 	// get the syncId for requires later
 	syncRes.Receive()
 	syncId := syncRes.Msg().SyncId
@@ -649,7 +626,7 @@ func TestSyncStreams(t *testing.T) {
 		events.Make_ChannelPayload_Message("hello"),
 		channelHash,
 	)
-	require.Nilf(t, err, "error creating message event: %v", err)
+	require.Nilf(err, "error creating message event: %v", err)
 	_, err = client.AddEvent(
 		ctx,
 		connect.NewRequest(
@@ -659,7 +636,7 @@ func TestSyncStreams(t *testing.T) {
 			},
 		),
 	)
-	require.Nilf(t, err, "error calling AddEvent: %v", err)
+	require.Nilf(err, "error calling AddEvent: %v", err)
 	// wait for the sync
 	syncRes.Receive()
 	msg := syncRes.Msg()
@@ -669,26 +646,29 @@ func TestSyncStreams(t *testing.T) {
 	/**
 	requires
 	*/
-	require.NotEmpty(t, syncId, "expected non-empty sync id")
-	require.NotNil(t, msg.Stream, "expected 1 stream")
-	require.Equal(t, syncId, msg.SyncId, "expected sync id to match")
+	require.NotEmpty(syncId, "expected non-empty sync id")
+	require.NotNil(msg.Stream, "expected 1 stream")
+	require.Equal(syncId, msg.SyncId, "expected sync id to match")
 }
 
 func TestAddStreamsToSync(t *testing.T) {
+	require := require.New(t)
 	/**
 	Arrange
 	*/
 	// create the test client and server
 	ctx := test.NewTestContext()
-	aliceClient, url, closer := testServerAndClient(t, ctx, testDatabaseUrl, testSchemaName)
+	aliceClient, url, closer := testServerAndClient(ctx, testDatabaseUrl, require)
 	defer closer()
+
+
 	// create alice's wallet and streams
 	aliceWallet, _ := crypto.NewWallet(ctx)
 	alice, _, err := createUser(ctx, aliceWallet, aliceClient)
-	require.Nilf(t, err, "error calling createUser: %v", err)
-	require.NotNil(t, alice, "nil sync cookie for alice")
+	require.Nilf(err, "error calling createUser: %v", err)
+	require.NotNil(alice, "nil sync cookie for alice")
 	_, _, err = createUserDeviceKeyStream(ctx, aliceWallet, aliceClient)
-	require.Nilf(t, err, "error calling createUserDeviceKeyStream: %v", err)
+	require.Nilf(err, "error calling createUserDeviceKeyStream: %v", err)
 
 	httpClient := &http.Client{
 		Transport: &http2.Transport{
@@ -709,15 +689,15 @@ func TestAddStreamsToSync(t *testing.T) {
 	)
 	bobWallet, _ := crypto.NewWallet(ctx)
 	bob, _, err := createUser(ctx, bobWallet, bobClient)
-	require.Nilf(t, err, "error calling createUser: %v", err)
-	require.NotNil(t, bob, "nil sync cookie for bob")
+	require.Nilf(err, "error calling createUser: %v", err)
+	require.NotNil(bob, "nil sync cookie for bob")
 	_, _, err = createUserDeviceKeyStream(ctx, bobWallet, bobClient)
-	require.Nilf(t, err, "error calling createUserDeviceKeyStream: %v", err)
+	require.Nilf(err, "error calling createUserDeviceKeyStream: %v", err)
 	// alice creates a space
 	spaceId := testutils.FakeStreamId(STREAM_SPACE_BIN)
 	space1, _, err := createSpace(ctx, aliceWallet, aliceClient, spaceId)
-	require.Nilf(t, err, "error calling createSpace: %v", err)
-	require.NotNil(t, space1, "nil sync cookie")
+	require.Nilf(err, "error calling createSpace: %v", err)
+	require.NotNil(space1, "nil sync cookie")
 	// alice creates a channel
 	channelId := testutils.FakeStreamId(STREAM_CHANNEL_BIN)
 	channel1, channelHash, err := createChannel(
@@ -728,8 +708,8 @@ func TestAddStreamsToSync(t *testing.T) {
 		channelId,
 		nil,
 	)
-	require.Nilf(t, err, "error calling createChannel: %v", err)
-	require.NotNil(t, channel1, "nil sync cookie")
+	require.Nilf(err, "error calling createChannel: %v", err)
+	require.NotNil(channel1, "nil sync cookie")
 
 	/**
 	Act
@@ -744,7 +724,7 @@ func TestAddStreamsToSync(t *testing.T) {
 			},
 		),
 	)
-	require.Nilf(t, err, "error calling SyncStreams: %v", err)
+	require.Nilf(err, "error calling SyncStreams: %v", err)
 	// get the syncId for requires later
 	syncRes.Receive()
 	syncId := syncRes.Msg().SyncId
@@ -754,7 +734,7 @@ func TestAddStreamsToSync(t *testing.T) {
 		events.Make_ChannelPayload_Message("hello"),
 		channelHash,
 	)
-	require.Nilf(t, err, "error creating message event: %v", err)
+	require.Nilf(err, "error creating message event: %v", err)
 	_, err = aliceClient.AddEvent(
 		ctx,
 		connect.NewRequest(
@@ -764,7 +744,7 @@ func TestAddStreamsToSync(t *testing.T) {
 			},
 		),
 	)
-	require.Nilf(t, err, "error calling AddEvent: %v", err)
+	require.Nilf(err, "error calling AddEvent: %v", err)
 	// bob adds alice's stream to sync
 	_, err = bobClient.AddStreamToSync(
 		ctx,
@@ -775,7 +755,7 @@ func TestAddStreamsToSync(t *testing.T) {
 			},
 		),
 	)
-	require.Nilf(t, err, "error calling AddStreamsToSync: %v", err)
+	require.Nilf(err, "error calling AddStreamsToSync: %v", err)
 	// wait for the sync
 	syncRes.Receive()
 	msg := syncRes.Msg()
@@ -785,27 +765,30 @@ func TestAddStreamsToSync(t *testing.T) {
 	/**
 	requires
 	*/
-	require.NotEmpty(t, syncId, "expected non-empty sync id")
-	require.NotNil(t, msg.Stream, "expected 1 stream")
-	require.Equal(t, syncId, msg.SyncId, "expected sync id to match")
+	require.NotEmpty(syncId, "expected non-empty sync id")
+	require.NotNil(msg.Stream, "expected 1 stream")
+	require.Equal(syncId, msg.SyncId, "expected sync id to match")
 }
 
 func TestRemoveStreamsFromSync(t *testing.T) {
+	require := require.New(t)
 	/**
 	Arrange
 	*/
 	// create the test client and server
 	ctx := test.NewTestContext()
 	log := dlog.FromCtx(ctx)
-	aliceClient, url, closer := testServerAndClient(t, ctx, testDatabaseUrl, testSchemaName)
+	aliceClient, url, closer := testServerAndClient(ctx, testDatabaseUrl, require)
 	defer closer()
+
+
 	// create alice's wallet and streams
 	aliceWallet, _ := crypto.NewWallet(ctx)
 	alice, _, err := createUser(ctx, aliceWallet, aliceClient)
-	require.Nilf(t, err, "error calling createUser: %v", err)
-	require.NotNil(t, alice, "nil sync cookie for alice")
+	require.Nilf(err, "error calling createUser: %v", err)
+	require.NotNil(alice, "nil sync cookie for alice")
 	_, _, err = createUserDeviceKeyStream(ctx, aliceWallet, aliceClient)
-	require.NoError(t, err)
+	require.NoError(err)
 
 	httpClient := &http.Client{
 		Transport: &http2.Transport{
@@ -826,20 +809,20 @@ func TestRemoveStreamsFromSync(t *testing.T) {
 	)
 	bobWallet, _ := crypto.NewWallet(ctx)
 	bob, _, err := createUser(ctx, bobWallet, bobClient)
-	require.Nilf(t, err, "error calling createUser: %v", err)
-	require.NotNil(t, bob, "nil sync cookie for bob")
+	require.Nilf(err, "error calling createUser: %v", err)
+	require.NotNil(bob, "nil sync cookie for bob")
 	_, _, err = createUserDeviceKeyStream(ctx, bobWallet, bobClient)
-	require.Nilf(t, err, "error calling createUserDeviceKeyStream: %v", err)
+	require.Nilf(err, "error calling createUserDeviceKeyStream: %v", err)
 	// alice creates a space
 	spaceId := testutils.FakeStreamId(STREAM_SPACE_BIN)
 	space1, _, err := createSpace(ctx, aliceWallet, aliceClient, spaceId)
-	require.Nilf(t, err, "error calling createSpace: %v", err)
-	require.NotNil(t, space1, "nil sync cookie")
+	require.Nilf(err, "error calling createSpace: %v", err)
+	require.NotNil(space1, "nil sync cookie")
 	// alice creates a channel
 	channelId := testutils.FakeStreamId(STREAM_CHANNEL_BIN)
 	channel1, channelHash, err := createChannel(ctx, aliceWallet, aliceClient, spaceId, channelId, nil)
-	require.Nilf(t, err, "error calling createChannel: %v", err)
-	require.NotNil(t, channel1, "nil sync cookie")
+	require.Nilf(err, "error calling createChannel: %v", err)
+	require.NotNil(channel1, "nil sync cookie")
 	// bob sync streams
 	syncCtx, syncCancel := context.WithCancel(ctx)
 	syncRes, err := bobClient.SyncStreams(
@@ -850,7 +833,7 @@ func TestRemoveStreamsFromSync(t *testing.T) {
 			},
 		),
 	)
-	require.Nilf(t, err, "error calling SyncStreams: %v", err)
+	require.Nilf(err, "error calling SyncStreams: %v", err)
 	// get the syncId for requires later
 	syncRes.Receive()
 	syncId := syncRes.Msg().SyncId
@@ -861,7 +844,7 @@ func TestRemoveStreamsFromSync(t *testing.T) {
 		events.Make_ChannelPayload_Message("hello"),
 		channelHash,
 	)
-	require.Nilf(t, err, "error creating message event: %v", err)
+	require.Nilf(err, "error creating message event: %v", err)
 	_, err = aliceClient.AddEvent(
 		ctx,
 		connect.NewRequest(
@@ -871,7 +854,7 @@ func TestRemoveStreamsFromSync(t *testing.T) {
 			},
 		),
 	)
-	require.Nilf(t, err, "error calling AddEvent: %v", err)
+	require.Nilf(err, "error calling AddEvent: %v", err)
 
 	// bob adds alice's stream to sync
 	resp, err := bobClient.AddStreamToSync(
@@ -883,7 +866,7 @@ func TestRemoveStreamsFromSync(t *testing.T) {
 			},
 		),
 	)
-	require.Nilf(t, err, "error calling AddStreamsToSync: %v", err)
+	require.Nilf(err, "error calling AddStreamsToSync: %v", err)
 	log.Info("AddStreamToSync", "resp", resp)
 	// When AddEvent is called, node calls streamImpl.notifyToSubscribers() twice
 	// for different events. 	See hnt-3683 for explanation. First event is for
@@ -908,7 +891,7 @@ OuterLoop:
 		}
 	}
 
-	require.Equal(t, 2, receivedCount, "expected 2 events")
+	require.Equal(2, receivedCount, "expected 2 events")
 	/**
 	Act
 	*/
@@ -922,7 +905,7 @@ OuterLoop:
 			},
 		),
 	)
-	require.Nilf(t, err, "error calling RemoveStreamsFromSync: %v", err)
+	require.Nilf(err, "error calling RemoveStreamsFromSync: %v", err)
 
 	// alice sends another message
 	message2, err := events.MakeEnvelopeWithPayload(
@@ -930,7 +913,7 @@ OuterLoop:
 		events.Make_ChannelPayload_Message("world"),
 		channelHash,
 	)
-	require.Nilf(t, err, "error creating message event: %v", err)
+	require.Nilf(err, "error creating message event: %v", err)
 	_, err = aliceClient.AddEvent(
 		ctx,
 		connect.NewRequest(
@@ -940,7 +923,7 @@ OuterLoop:
 			},
 		),
 	)
-	require.Nilf(t, err, "error calling AddEvent: %v", err)
+	require.Nilf(err, "error calling AddEvent: %v", err)
 
 	/**
 	For debugging only. Uncomment to see syncRes.Receive() block.
@@ -954,6 +937,6 @@ OuterLoop:
 	/**
 	requires
 	*/
-	require.NotEmpty(t, syncId, "expected non-empty sync id")
-	require.NotNil(t, removeRes.Msg, "expected non-nil remove response")
+	require.NotEmpty(syncId, "expected non-empty sync id")
+	require.NotNil(removeRes.Msg, "expected non-nil remove response")
 }

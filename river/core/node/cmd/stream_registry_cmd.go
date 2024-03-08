@@ -15,7 +15,7 @@ import (
 func srdump(cfg *config.Config) error {
 	ctx := context.Background() // lint:ignore context.Background() is fine here
 
-	blockchain, err := crypto.NewReadOnlyBlockchain(ctx, &cfg.RiverChain)
+	blockchain, err := crypto.NewBlockchain(ctx, &cfg.RiverChain, nil)
 	if err != nil {
 		return err
 	}
@@ -51,7 +51,7 @@ func srdump(cfg *config.Config) error {
 func srstream(cfg *config.Config, streamId string) error {
 	ctx := context.Background() // lint:ignore context.Background() is fine here
 
-	blockchain, err := crypto.NewReadOnlyBlockchain(ctx, &cfg.RiverChain)
+	blockchain, err := crypto.NewBlockchain(ctx, &cfg.RiverChain, nil)
 	if err != nil {
 		return err
 	}

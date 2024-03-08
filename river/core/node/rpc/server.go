@@ -81,12 +81,24 @@ func createStore(
 }
 
 func (s *Service) Close() {
-	err := s.httpServer.Shutdown(s.serverCtx)
-	if err != nil {
-		dlog.FromCtx(s.serverCtx).Error("failed to shutdown http server", "error", err)
+	if s.httpServer != nil {
+		err := s.httpServer.Shutdown(s.serverCtx)
+		if err != nil {
+			dlog.FromCtx(s.serverCtx).Error("failed to shutdown http server", "error", err)
+		}
 	}
 
-	s.storage.Close(s.serverCtx)
+	if s.storage != nil {
+		s.storage.Close(s.serverCtx)
+	}
+
+	if s.riverChain != nil {
+		s.riverChain.Close()
+	}
+
+	if s.baseChain != nil {
+		s.baseChain.Close()
+	}
 }
 
 // StartServer starts the server with the given configuration.
@@ -98,7 +110,7 @@ func (s *Service) Close() {
 func StartServer(
 	ctx context.Context,
 	cfg *config.Config,
-	riverchain *crypto.Blockchain,
+	riverChain *crypto.Blockchain,
 	listener net.Listener,
 ) (*Service, error) {
 	log := dlog.FromCtx(ctx)
@@ -107,7 +119,7 @@ func StartServer(
 
 	var err error
 	var wallet *crypto.Wallet
-	if riverchain == nil {
+	if riverChain == nil {
 		// Read env var WALLETPRIVATEKEY or PRIVATE_KEY
 		privKey := os.Getenv("WALLETPRIVATEKEY")
 		if privKey == "" {
@@ -122,7 +134,7 @@ func StartServer(
 			return nil, err
 		}
 	} else {
-		wallet = riverchain.Wallet
+		wallet = riverChain.Wallet
 	}
 
 	instanceId := GenShortNanoid()
@@ -142,8 +154,9 @@ func StartServer(
 	}
 
 	var chainAuth auth.ChainAuth
+	var baseChain *crypto.Blockchain
 	if !cfg.DisableBaseChain {
-		baseChain, err := crypto.NewReadOnlyBlockchain(ctx, &cfg.BaseChain)
+		baseChain, err = crypto.NewBlockchain(ctx, &cfg.BaseChain, nil)
 		if err != nil {
 			log.Error("Failed to initialize blockchain for base", "error", err, "chain_config", cfg.BaseChain)
 			return nil, err
@@ -167,15 +180,15 @@ func StartServer(
 		chainAuth = auth.NewFakeChainAuth()
 	}
 
-	if riverchain == nil {
-		riverchain, err = crypto.NewReadWriteBlockchain(ctx, &cfg.RiverChain, wallet)
+	if riverChain == nil {
+		riverChain, err = crypto.NewBlockchain(ctx, &cfg.RiverChain, wallet)
 		if err != nil {
 			log.Error("Failed to initialize blockchain for river", "error", err, "chain_config", cfg.RiverChain)
 			return nil, err
 		}
 	}
 
-	registryContract, err := registries.NewRiverRegistryContract(ctx, riverchain, &cfg.RegistryContract)
+	registryContract, err := registries.NewRiverRegistryContract(ctx, riverChain, &cfg.RegistryContract)
 	if err != nil {
 		log.Error("NewRiverRegistryContract", "error", err)
 		return nil, err
@@ -196,7 +209,7 @@ func StartServer(
 		&events.StreamCacheParams{
 			Storage:      store,
 			Wallet:       wallet,
-			Riverchain:   riverchain,
+			Riverchain:   riverChain,
 			Registry:     registryContract,
 			StreamConfig: &cfg.Stream,
 		},
@@ -214,6 +227,8 @@ func StartServer(
 	)
 
 	streamService := &Service{
+		riverChain:     riverChain,
+		baseChain:      baseChain,
 		storage:        store,
 		cache:          cache,
 		chainAuth:      chainAuth,

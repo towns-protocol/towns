@@ -28,7 +28,9 @@ func TestBlockchain(t *testing.T) {
 	owner := tc.DeployerBlockchain
 
 	bc1 := tc.GetBlockchain(ctx, 0, false)
+	defer bc1.Close()
 	bc2 := tc.GetBlockchain(ctx, 1, false)
+	defer bc2.Close()
 
 	nodeAddr1 := bc1.Wallet.Address
 	nodeUrl1 := "http://node1.node"

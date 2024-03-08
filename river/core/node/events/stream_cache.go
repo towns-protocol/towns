@@ -74,7 +74,9 @@ func NewStreamCache(ctx context.Context, params *StreamCacheParams) (*streamCach
 
 	// TODO: setup monitor for stream updates and update records accordingly.
 
-	params.Riverchain.BlockMonitor.AddListener(s.onNewBlock)
+	c := crypto.MakeBlockNumberChannel()
+	params.Riverchain.BlockMonitor.AddListener(c)
+	go s.newBlockReader(ctx, c)
 	return s, nil
 }
 
@@ -200,10 +202,10 @@ func (s *streamCacheImpl) GetLoadedViews(ctx context.Context) []StreamView {
 	return result
 }
 
-func (s *streamCacheImpl) onNewBlock(ctx context.Context, blockNum int64, blockHash []byte) {
+func (s *streamCacheImpl) onNewBlock(ctx context.Context) {
 	log := dlog.FromCtx(ctx)
 	// Log at level below debug, otherwise it's too chatty.
-	log.Log(ctx, -8, "onNewBlock: ENTER producing new miniblocks", "blockNum", blockNum, "blockHash", blockHash)
+	log.Log(ctx, -8, "onNewBlock: ENTER producing new miniblocks")
 
 	// Try lock to have only one invocation at a time. Previous onNewBlock may still be running.
 	if !s.onNewBlockMutex.TryLock() {
@@ -233,5 +235,19 @@ func (s *streamCacheImpl) onNewBlock(ctx context.Context, blockNum int64, blockH
 	})
 
 	// Log at level below debug, otherwise it's too chatty.
-	log.Log(ctx, -8, "onNewBlock: EXIT produced new miniblocks", "blockNum", blockNum, "total", total, "errors", errors, "produced", produced)
+	log.Log(ctx, -8, "onNewBlock: EXIT produced new miniblocks", "total", total, "errors", errors, "produced", produced)
+}
+
+func (s *streamCacheImpl) newBlockReader(ctx context.Context, c crypto.BlockNumberChannel) {
+	for {
+		select {
+		case _, ok := <-c:
+			if !ok {
+				return
+			}
+			go s.onNewBlock(ctx)
+		case <-ctx.Done():
+			return
+		}
+	}
 }
