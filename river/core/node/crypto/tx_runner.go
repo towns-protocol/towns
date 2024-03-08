@@ -126,3 +126,7 @@ func (tr *TxRunner) SubmitAndWait(
 	}
 	return tx, receipt, nil
 }
+
+func (tr *TxRunner) SetOnSubmit(onSubmit func()) {
+	tr.p.OnSubmit = onSubmit
+}

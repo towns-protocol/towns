@@ -14,6 +14,9 @@ export REPL_FACTOR="${REPL_FACTOR:-1}"
 export RPC_PORT="${RPC_PORT:-5170}"
 export DISABLE_BASE_CHAIN="${DISABLE_BASE_CHAIN:-false}"
 
+[ -z "${BLOCK_TIME_MS+x}" ] && BLOCK_TIME_MS=$(( ${RIVER_BLOCK_TIME:-1} * 1000 ))
+export BLOCK_TIME_MS
+
 CONFIG=false
 RUN=false
 BUILD=false

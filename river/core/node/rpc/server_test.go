@@ -1,6 +1,7 @@
 package rpc_test
 
 import (
+	"fmt"
 	"testing"
 
 	"github.com/river-build/river/core/node/base/test"
@@ -14,11 +15,11 @@ import (
 func TestServerShutdown(t *testing.T) {
 	require := require.New(t)
 	ctx := test.NewTestContext()
-	dbUrl, schemaName, dbCloser, err := dbtestutils.StartDB(ctx)
+	dbUrl, _, dbCloser, err := dbtestutils.StartDB(ctx)
 	require.NoError(err)
 	defer dbCloser()
 
-	stub, url, closer := testServerAndClient(t, ctx, dbUrl, schemaName)
+	stub, url, closer := testServerAndClient(ctx, dbUrl, require)
 	defer func() {
 		if closer != nil {
 			closer()
@@ -28,8 +29,10 @@ func TestServerShutdown(t *testing.T) {
 	_, err = stub.Info(ctx, connect.NewRequest(&protocol.InfoRequest{}))
 	require.NoError(err)
 
+	fmt.Println("Shutting down server")
 	closer()
 	closer = nil
+	fmt.Println("Server shut down")
 
 	stub2 := testClient(url)
 	_, err = stub2.Info(ctx, connect.NewRequest(&protocol.InfoRequest{}))

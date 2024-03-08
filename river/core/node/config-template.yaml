@@ -20,11 +20,11 @@ UseHttps: true
 baseChain:
     chainId: 31337
     networkUrl: 'http://127.0.0.1:8545'
-    fakeBlockTimeMs: 100
+    blockTimeMs: <BLOCK_TIME_MS>
 riverChain:
     chainId: 31338
     networkUrl: 'http://127.0.0.1:8546'
-    fakeBlockTimeMs: 100
+    blockTimeMs: <BLOCK_TIME_MS>
 
 # Base contracts
 architectContract:
