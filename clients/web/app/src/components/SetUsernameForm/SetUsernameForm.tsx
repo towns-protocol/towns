@@ -76,6 +76,7 @@ export const SetUsernameForm = (props: Props) => {
                     placeholder="Enter your username"
                     background="level2"
                     value={value}
+                    autoComplete="off"
                     onChange={onTextFieldChange}
                 />
                 <AnimatePresence>
