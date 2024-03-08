@@ -107,7 +107,7 @@ resource "aws_ecs_task_definition" "task_definition" {
 
   container_definitions = jsonencode([{
     name  = local.container_name
-    image = "${local.global_remote_state.public_ecr.repository_url_map["hnt-load-test-node"]}:latest"
+    image = "public.ecr.aws/h5v6m2x1/river-stress-test-node:latest"
 
     essential = true
     portMappings = [{

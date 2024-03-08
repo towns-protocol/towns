@@ -39,9 +39,9 @@ module "redis_sg" {
 
 locals {
   # TODO: we should allow this to be configured at runtime, not infra time.
-  num_follower_containers     = 5
+  num_follower_containers     = 20
   num_processes_per_container = 2
-  num_clients_per_process     = 2
+  num_clients_per_process     = 1
   num_followers               = local.num_follower_containers * local.num_processes_per_container * local.num_clients_per_process
   loadtest_duration           = 600000
 }
