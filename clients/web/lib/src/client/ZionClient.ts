@@ -1161,7 +1161,9 @@ export class ZionClient implements EntitlementsDelegate {
                 typeof error === 'object' &&
                 'name' in error &&
                 typeof error.name === 'string' &&
-                error.name.match('Membership__AlreadyMember')
+                (error.name.match('Membership__AlreadyMember') ||
+                    // TODO: is this correct revert? https://linear.app/hnt-labs/issue/HNT-5147/trying-to-mint-membership-nft-when-you-already-own-it-reverts-with
+                    error.name.match('Entitlement__NotAllowed'))
             ) {
                 console.log('[joinTown] already member')
             } else {
