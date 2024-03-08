@@ -60,12 +60,12 @@ const RegularChannelIntro = (props: Props) => {
     )
 }
 
-export const DMChannelIntro = (props: { userIds: string[] | undefined }) => {
+export const DMChannelIntro = (props: { userIds: string[] }) => {
     const { userIds } = props
-    if (userIds?.length === 1) {
-        return <ChannelDMIntro userIds={userIds} />
-    } else {
+    if (userIds.length > 1) {
         return <ChannelGDMIntro userIds={userIds} />
+    } else if (userIds) {
+        return <ChannelDMIntro userIds={userIds} />
     }
 }
 
@@ -74,17 +74,17 @@ const ChannelDMIntro = (props: { userIds: string[] }) => {
     const myUserId = useMyUserId()
 
     return (
-        <Stack gap="md" paddingX="md" paddingY="sm">
+        <Stack padding="md" gap="md">
             <Stack horizontal gap="lg">
                 <Box centerContent rounded="sm" aspectRatio="1/1" width="x5">
                     <Avatar key={userIds[0]} userId={userIds[0] || myUserId} size="avatar_md" />
                 </Box>
 
-                <Stack justifyContent="start" paddingTop="xs" overflow="hidden">
+                <Stack justifyContent="start" paddingTop="xs">
                     <Paragraph color="gray1">Direct Message</Paragraph>
                     {userIds.length === 0 ? (
-                        <Paragraph color="gray2" size="lg">
-                            <Text strong display="inline" as="span" color="default" size="lg">
+                        <Paragraph color="gray2">
+                            <Text display="inline" as="span" color="default">
                                 This is your space.
                             </Text>{' '}
                             Draft messages, list your to-dos, or keep links and files handy. You can

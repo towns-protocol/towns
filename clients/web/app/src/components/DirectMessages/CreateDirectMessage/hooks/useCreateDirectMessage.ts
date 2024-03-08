@@ -36,12 +36,13 @@ export const useCreateDirectMessage = (params: Params) => {
     }, [search])
 
     const onSubmit = useCallback(async () => {
-        console.log('create dm/gm: submit', selectedIdsArray.join())
+        const userIds = Array.from(new Set(selectedIdsArray))
+        console.log('create dm/gm: submit', userIds.join())
         if (isSubmittingRef.current) {
             console.warn('create dm/gm: submit - already submitting')
             return
         }
-        if (selectedIdsArray.length === 1 && matchingChannel) {
+        if (userIds.length === 1 && matchingChannel) {
             console.log('create dm/gm: existingChannel', matchingChannel)
             const link = createLink({ messageId: matchingChannel.id })
             if (link) {

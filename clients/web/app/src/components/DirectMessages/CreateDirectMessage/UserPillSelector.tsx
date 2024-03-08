@@ -20,14 +20,6 @@ type Props = {
 export const UserPillSelector = (props: Props) => {
     const { users: _users, usersMap } = useUserLookupContext()
     const recentUsers = useRecentUsers()
-    const userId = useMyUserId()
-    const users = useMemo(() => {
-        return _users
-            .filter((u) => u.userId !== userId)
-            .map((user: LookupUser) => {
-                return { ...user, search: lookupUserNameSearchString(user) }
-            }) as LookupUser[]
-    }, [_users, userId])
 
     // -------------------------------------------------------------------------
 
@@ -42,6 +34,20 @@ export const UserPillSelector = (props: Props) => {
         },
         [props],
     )
+
+    // -------------------------------------------------------------------------
+
+    const userId = useMyUserId()
+    const users = useMemo(() => {
+        return (
+            _users
+                // only allow selecting self if selection is empty
+                .filter((u) => numSelected === 0 || u.userId !== userId)
+                .map((user: LookupUser) => {
+                    return { ...user, search: lookupUserNameSearchString(user) }
+                }) as LookupUser[]
+        )
+    }, [_users, numSelected, userId])
 
     // -------------------------------------------------------------------------
 

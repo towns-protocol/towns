@@ -9,17 +9,17 @@ export const ChannelPlaceholder = (props: { userIds: string[] }) => {
     const myUserId = useMyUserId()
     const userIds = props.userIds.filter((u) => u !== myUserId)
     const userList = useUserList({ excludeSelf: true, userIds }).join('')
-    return userIds.length ? (
-        <Box padding grow justifyContent="end" gap="lg">
+    return (
+        <Box paddingY grow justifyContent="end" gap="lg">
             <DMChannelIntro userIds={userIds} />
-            <RichTextEditor
-                editable={false}
-                channels={[]}
-                users={[]}
-                placeholder={`Send a message to ${userList}`}
-            />
+            <Box paddingX="md">
+                <RichTextEditor
+                    editable={false}
+                    channels={[]}
+                    users={[]}
+                    placeholder={`Send a message to ${userList}`}
+                />
+            </Box>
         </Box>
-    ) : (
-        <></>
     )
 }
