@@ -25,6 +25,8 @@ interface AppState {
     setSidePanel: (sidePanel: string | null) => void
     setBugReportCredentials: (value: Partial<{ name: string; email: string }>) => void
     bugReportCredentials: { name: string; email: string }
+    recentlyMintedSpaceIds: string[]
+    setRecentlyMintedSpaceIds: (spaceIds: string[]) => void
 }
 
 export const GLOBAL_STORE_NAME = 'towns/global'
@@ -102,6 +104,10 @@ export const useStore = create(
                         ...bugReportCredentials,
                     },
                 }))
+            },
+            recentlyMintedSpaceIds: [],
+            setRecentlyMintedSpaceIds: (spaceIds) => {
+                set(() => ({ recentlyMintedSpaceIds: spaceIds }))
             },
         }),
         {

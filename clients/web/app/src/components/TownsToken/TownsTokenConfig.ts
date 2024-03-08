@@ -1,5 +1,15 @@
 export const TownsTokenConfig = {
     sizes: {
+        xxs: {
+            containerSize: 60,
+            addressSize: 36,
+            addressRadius: 6,
+            badgeSize: 36,
+            badgeRadius: 2,
+            fontSize: 4,
+            maxTextHeight: 10,
+            borderRadius: 'xs',
+        },
         sm: {
             containerSize: 130,
             addressSize: 105,
@@ -8,6 +18,7 @@ export const TownsTokenConfig = {
             badgeRadius: 16,
             fontSize: 8,
             maxTextHeight: 42,
+            borderRadius: 'md',
         },
         lg: {
             containerSize: 200,
@@ -17,6 +28,7 @@ export const TownsTokenConfig = {
             badgeRadius: 16,
             fontSize: 12,
             maxTextHeight: 80,
+            borderRadius: 'md',
         },
         xl: {
             containerSize: 270,
@@ -26,6 +38,7 @@ export const TownsTokenConfig = {
             badgeRadius: 16,
             fontSize: 15,
             maxTextHeight: 120,
+            borderRadius: 'md',
         },
     },
 } as const

@@ -1,4 +1,4 @@
-import React, { useCallback, useMemo } from 'react'
+import React, { forwardRef, useCallback, useMemo, useRef } from 'react'
 import { useMyProfile, useSpaceData, useZionContext } from 'use-zion-client'
 import { matchRoutes, useLocation, useNavigate, useResolvedPath } from 'react-router'
 import { Box, Dot, Icon, IconButton, Stack, Text, Tooltip } from '@ui'
@@ -9,7 +9,8 @@ import { useShowHasUnreadBadgeForCurrentSpace } from 'hooks/useSpaceUnreadsIgnor
 import { useInstallPWAPrompt } from 'hooks/useInstallPWAPrompt'
 import { useCreateLink } from 'hooks/useCreateLink'
 import { Avatar } from '@components/Avatar/Avatar'
-
+import { MintAnimation } from '@components/MintAnimation/MintAnimation'
+import { useShouldDisplayMintAnimation } from 'hooks/useShouldDisplayMintAnimation'
 import { TouchScrollToTopScrollId } from './TouchScrollToTopScrollId'
 
 export const TouchTabBar = () => {
@@ -17,6 +18,9 @@ export const TouchTabBar = () => {
     const userId = useMyProfile()?.userId
     const { showHasUnreadBadgeForCurrentSpace } = useShowHasUnreadBadgeForCurrentSpace()
     const { dmUnreadChannelIds } = useZionContext()
+    const { shouldDisplayMintAnimation } = useShouldDisplayMintAnimation()
+
+    const targetRef = useRef<HTMLElement>(null)
     const hasUnreadDMs = dmUnreadChannelIds.size > 0
 
     const { shouldDisplayPWAPrompt, closePWAPrompt } = useInstallPWAPrompt()
@@ -33,6 +37,7 @@ export const TouchTabBar = () => {
 
     return (
         <Box borderTop background="level2" paddingBottom="safeAreaInsetBottom">
+            {shouldDisplayMintAnimation && <MintAnimation targetRef={targetRef} />}
             <Stack horizontal width="100%" background="level2" display="flex" paddingY="sm">
                 <TabBarItem
                     title="Home"
@@ -96,6 +101,7 @@ export const TouchTabBar = () => {
                     )}
                     scrollToTopId={TouchScrollToTopScrollId.ProfileTabScrollId}
                     to={`/${PATHS.SPACES}/${space.id}/${PATHS.PROFILE}/me`}
+                    ref={targetRef}
                 />
             </Stack>
             {shouldDisplayPWAPrompt && <PWATooltip onClose={closePWAPrompt} />}
@@ -112,7 +118,7 @@ type TabBarItemProps = {
     onPressTwice?: () => void
 }
 
-const TabBarItem = (props: TabBarItemProps) => {
+const TabBarItem = forwardRef<HTMLElement, TabBarItemProps>((props, ref) => {
     const { title, icon, to, scrollToTopId, onPressTwice } = props
     const location = useLocation()
 
@@ -153,7 +159,7 @@ const TabBarItem = (props: TabBarItemProps) => {
             gap="xs"
             onClick={onClick}
         >
-            <Box centerContent height="height_md" width="height_md" position="relative">
+            <Box centerContent height="height_md" width="height_md" position="relative" ref={ref}>
                 {icon(isHighlighted)}
             </Box>
             <Text fontSize="xs" fontWeight="strong">
@@ -161,7 +167,7 @@ const TabBarItem = (props: TabBarItemProps) => {
             </Text>
         </Stack>
     )
-}
+})
 
 const PWATooltip = (props: { onClose: () => void }) => {
     const { onClose } = props

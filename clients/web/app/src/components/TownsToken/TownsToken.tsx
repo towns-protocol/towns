@@ -37,6 +37,8 @@ export const TownsToken = (props: Props) => {
             style={{
                 width: config.containerSize,
                 height: config.containerSize,
+                minWidth: config.containerSize,
+                minHeight: config.containerSize,
                 perspective: `${config.containerSize}px`,
                 perspectiveOrigin: `center`,
                 transformStyle: `preserve-3d`,
@@ -51,7 +53,7 @@ export const TownsToken = (props: Props) => {
                     radius={config.addressRadius}
                 />
                 <Box
-                    borderRadius="md"
+                    borderRadius={config.borderRadius}
                     className={styles.absoluteCenterTransform}
                     style={{
                         width: config.badgeSize,
