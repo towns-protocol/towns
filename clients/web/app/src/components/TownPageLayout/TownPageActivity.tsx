@@ -1,20 +1,30 @@
 import { MembershipOp } from '@river/proto'
-import { UnauthenticatedClient, isRemoteEvent, makeStreamRpcClient } from '@river/sdk'
+import {
+    StreamTimelineEvent,
+    UnauthenticatedClient,
+    isRemoteEvent,
+    makeStreamRpcClient,
+    userIdFromAddress,
+} from '@river/sdk'
 import { AnimatePresence, animate } from 'framer-motion'
 import React, { useEffect, useMemo, useRef, useState } from 'react'
+import { useContractSpaceInfo } from 'use-zion-client'
+import { useParams } from 'react-router'
 import { Spinner } from '@components/Spinner'
 import { FadeInBox } from '@components/Transitions'
 import { Box, Heading, Icon, IconName, MotionBox, Paragraph, Stack, Text } from '@ui'
 import { DAY_MS, WEEK_MS } from 'data/constants'
 import { useEnvironment } from 'hooks/useEnvironmnet'
 import { useDevice } from 'hooks/useDevice'
-import { notUndefined } from 'ui/utils/utils'
+import { notUndefined, shortAddress } from 'ui/utils/utils'
 import { AvatarWithoutDot } from '@components/Avatar/Avatar'
 
 export const Activity = (props: { townId: string }) => {
     const { members, townStats, channelStats, isLoading } = useFetchUnauthenticatedActivity(
         props.townId,
     )
+    const { spaceSlug } = useParams()
+    const { data: spaceInfo } = useContractSpaceInfo(spaceSlug)
 
     const activities = useMemo(() => {
         const activities: {
@@ -49,9 +59,29 @@ export const Activity = (props: { townId: string }) => {
                 value: townStats?.numJoinedUsers,
                 body: `new member${townStats?.numJoinedUsers > 1 ? 's' : ''} joined`,
             })
-
+        !!townStats?.lastJoinedUserId &&
+            activities.push({
+                icon: 'member',
+                title: `${shortAddress(townStats?.lastJoinedUserId)} 1w`,
+                value: undefined,
+                body: `Purchased membership and joined`,
+            })
+        !!townStats?.lastCreatedChannelInfo &&
+            activities.push({
+                icon: 'tag',
+                title: `${shortAddress(townStats?.lastCreatedChannelInfo?.creatorUserId ?? '')} 1w`,
+                value: undefined,
+                body: `Created a new channel`,
+            })
+        !!townStats?.spaceCreatedAt &&
+            activities.push({
+                icon: 'key',
+                title: `${shortAddress(spaceInfo?.owner ?? '')} 1w`,
+                value: undefined,
+                body: `Founded ${spaceInfo?.name}`,
+            })
         return activities
-    }, [channelStats, townStats])
+    }, [channelStats, townStats, spaceInfo?.name, spaceInfo?.owner])
 
     const { isTouch } = useDevice()
     const maxMembers = isTouch ? 7 : 10
@@ -107,7 +137,7 @@ export const Activity = (props: { townId: string }) => {
                                 {a.title}
                             </Paragraph>
                             <Text fontSize={isTouch ? 'md' : 'lg'} color="gray1">
-                                <Counter value={a.value ?? 0} /> {a.body}
+                                {a.value !== undefined && <Counter value={a.value} />} {a.body}
                             </Text>
                         </Box>
                     </Stack>
@@ -145,7 +175,17 @@ const useFetchUnauthenticatedActivity = (townId: string) => {
         numActiveUsers: 0,
         activeUsers: new Set<string>(),
     })
-    const [townStats, setTownStats] = useState<{ numJoinedUsers: number }>()
+    const [townStats, setTownStats] = useState<{
+        numJoinedUsers: number
+        lastJoinedUserId: string | undefined
+        spaceCreatedAt: number | undefined
+        lastCreatedChannelInfo:
+            | {
+                  creatorUserId: string
+                  createdAt: number
+              }
+            | undefined
+    }>()
     const rpcUrl = useEnvironment().casablancaUrl
     useEffect(() => {
         if (!rpcUrl) {
@@ -181,11 +221,48 @@ const useFetchUnauthenticatedActivity = (townId: string) => {
                             s.remoteEvent.event.payload.value?.content.value?.op ===
                                 MembershipOp.SO_JOIN,
                     )
+                numJoinedUsers.sort((a, b) => Number(a.createdAtEpocMs) - Number(b.createdAtEpocMs))
+
+                // last joined user
+                const lastJoinedUser = numJoinedUsers.at(-1)
+                let lastJoinedUserId = undefined
+
+                if (
+                    lastJoinedUser?.remoteEvent.event.payload.value?.content.case === 'membership'
+                ) {
+                    lastJoinedUserId = userIdFromAddress(
+                        lastJoinedUser.remoteEvent.event.payload.value.content.value.userAddress,
+                    )
+                }
+
+                // space creation event
+                const spaceInception = stream.timeline
+                    .filter(
+                        (x) =>
+                            isRemoteEvent(x) &&
+                            x.remoteEvent.event.payload.case === 'spacePayload' &&
+                            x.remoteEvent.event.payload.value?.content.case === 'inception',
+                    )
+                    .at(0)
+
+                let spaceCreatedAt = undefined
+
+                if (
+                    spaceInception?.remoteEvent?.event.payload.value?.content.case === 'inception'
+                ) {
+                    spaceCreatedAt = Number(spaceInception.createdAtEpocMs)
+                }
+
+                console.log('TownPageActivity numJoinedUsers last week', numJoinedUsers)
                 setTownStats({
                     numJoinedUsers: Array.from(numJoinedUsers).length,
+                    lastJoinedUserId: lastJoinedUserId,
+                    spaceCreatedAt: spaceCreatedAt,
+                    lastCreatedChannelInfo: undefined,
                 })
 
                 const channelsIds = Array.from(stream.spaceContent.spaceChannelsMetadata.keys())
+                const channelCreatedEvents: StreamTimelineEvent[] = []
 
                 for (const channelId of channelsIds) {
                     const streamView = await client.getStream(channelId)
@@ -196,6 +273,14 @@ const useFetchUnauthenticatedActivity = (townId: string) => {
                             x.remoteEvent.event.payload.case === 'channelPayload' &&
                             x.remoteEvent.event.payload.value?.content.case === 'message',
                     )
+
+                    const channelInception = streamView.timeline.filter(
+                        (x) =>
+                            isRemoteEvent(x) &&
+                            x.remoteEvent.event.payload.case === 'channelPayload' &&
+                            x.remoteEvent.event.payload.value?.content.case === 'inception',
+                    )
+                    channelCreatedEvents.push(...channelInception)
 
                     const messages = channelMessages.filter((f) =>
                         isWithin(f.createdAtEpocMs, DAY_MS),
@@ -213,6 +298,26 @@ const useFetchUnauthenticatedActivity = (townId: string) => {
                             numMessages: s.numMessages + messages.length,
                             numActiveUsers: Array.from(activeUsers).length,
                             activeUsers,
+                        }
+                    })
+                }
+
+                channelCreatedEvents.sort(
+                    (a, b) => Number(a.createdAtEpocMs) - Number(b.createdAtEpocMs),
+                )
+                const lastCreatedChannel = channelCreatedEvents.at(-1)
+                if (lastCreatedChannel) {
+                    setTownStats((currentStats) => {
+                        if (!currentStats) {
+                            return currentStats
+                        }
+
+                        return {
+                            ...currentStats,
+                            lastCreatedChannelInfo: {
+                                creatorUserId: lastCreatedChannel.creatorUserId,
+                                createdAt: Number(lastCreatedChannel.createdAtEpocMs),
+                            },
                         }
                     })
                 }
