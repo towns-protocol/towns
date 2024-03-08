@@ -15,11 +15,11 @@ import (
 func TestServerShutdown(t *testing.T) {
 	require := require.New(t)
 	ctx := test.NewTestContext()
-	dbUrl, schemaName, dbCloser, err := dbtestutils.StartDB(ctx)
+	dbUrl, _, dbCloser, err := dbtestutils.StartDB(ctx)
 	require.NoError(err)
 	defer dbCloser()
 
-	stub, url, closer := testServerAndClient(t, ctx, dbUrl, schemaName)
+	stub, url, closer := testServerAndClient(ctx, dbUrl, require)
 	defer func() {
 		if closer != nil {
 			closer()
