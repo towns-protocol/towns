@@ -1,6 +1,6 @@
 import React from 'react'
 import { NavLink } from 'react-router-dom'
-import { Channel, useSpaceData } from 'use-zion-client'
+import { Channel, useSpaceData } from 'use-towns-client'
 import { atoms } from 'ui/styles/atoms.css'
 import { PATHS } from 'routes'
 

@@ -1,6 +1,6 @@
 import { useCallback, useMemo } from 'react'
 import { firstBy } from 'thenby'
-import { LookupUser, useUserLookupContext } from 'use-zion-client'
+import { LookupUser, useUserLookupContext } from 'use-towns-client'
 import {
     ActionEventDocument,
     ChannelEventDocument,

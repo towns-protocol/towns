@@ -1,6 +1,6 @@
 import React, { useCallback, useContext, useEffect, useState } from 'react'
 import Sheet from 'react-modal-sheet'
-import { useZionClient } from 'use-zion-client'
+import { useTownsClient } from 'use-towns-client'
 import { modalSheetClass } from 'ui/styles/globals/sheet.css'
 import { Button, Divider, Icon, Stack, useZLayerContext } from '@ui'
 import { MessageTimelineContext } from '@components/MessageTimeline/MessageTimelineContext'
@@ -34,7 +34,7 @@ export const MessageModalSheet = (props: Props) => {
 
     const { onClose, eventId, spaceId, channelId, canReply, canEdit, canReact, messageBody } = props
     const [isHidden, setIsHidden] = React.useState(false)
-    const { redactEvent, sendReaction } = useZionClient()
+    const { redactEvent, sendReaction } = useTownsClient()
 
     const [isOpen, setIsOpen] = useState(false)
     useEffect(() => {

@@ -1,5 +1,5 @@
 import React, { RefObject, useCallback, useEffect, useMemo, useRef } from 'react'
-import { useSpaceData, useSpaceId } from 'use-zion-client'
+import { useSpaceData, useSpaceId } from 'use-towns-client'
 // import { cubicBezier } from 'framer-motion'
 import { Link } from 'react-router-dom'
 import { Box, IconButton, MotionBox, Paragraph, Stack, Text } from '@ui'

@@ -3,10 +3,10 @@
  */
 import { CONTRACT_ERROR, NoThrownError, getError } from './helpers/ErrorUtils'
 import {
-    createTestSpaceGatedByTownAndZionNfts,
+    createTestSpaceGatedByTownsNfts,
     registerAndStartClients,
     registerAndStartClient,
-} from 'use-zion-client/tests/integration/helpers/TestUtils'
+} from 'use-towns-client/tests/integration/helpers/TestUtils'
 
 import { RoleIdentifier } from '../../src/types/web3-types'
 import { Permission, NoopRuleData } from '@river/web3'
@@ -18,7 +18,7 @@ describe('create role', () => {
         /** Arrange */
         const { alice } = await registerAndStartClients(['alice'])
         await alice.fundWallet()
-        const roomId = await createTestSpaceGatedByTownAndZionNfts(alice, [Permission.Read])
+        const roomId = await createTestSpaceGatedByTownsNfts(alice, [Permission.Read])
         if (!roomId) {
             throw new Error('roomId is undefined')
         }
@@ -49,7 +49,7 @@ describe('create role', () => {
         const { bob } = await registerAndStartClients(['bob'])
         await bob.fundWallet()
 
-        const roomId = await createTestSpaceGatedByTownAndZionNfts(bob, [Permission.Read])
+        const roomId = await createTestSpaceGatedByTownsNfts(bob, [Permission.Read])
         if (!roomId) {
             throw new Error('roomId is undefined')
         }
@@ -80,7 +80,7 @@ describe('create role', () => {
         const { bob } = await registerAndStartClients(['bob'])
         await bob.fundWallet()
 
-        const roomId = await createTestSpaceGatedByTownAndZionNfts(bob, [
+        const roomId = await createTestSpaceGatedByTownsNfts(bob, [
             Permission.Read,
             Permission.ModifySpaceSettings,
         ])
@@ -112,7 +112,7 @@ describe('create role', () => {
         const { alice } = await registerAndStartClients(['alice'])
         await alice.fundWallet()
 
-        const roomId = await createTestSpaceGatedByTownAndZionNfts(alice, [Permission.Read])
+        const roomId = await createTestSpaceGatedByTownsNfts(alice, [Permission.Read])
         /** Act */
         // create new role in space
         const permissions = [Permission.Ban]

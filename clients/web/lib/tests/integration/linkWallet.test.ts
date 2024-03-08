@@ -2,8 +2,8 @@
  * @group core
  */
 import { Wallet } from 'ethers'
-import { createTestSpaceGatedByTownAndZionNfts, registerAndStartClients } from './helpers/TestUtils'
-import { ZionTestWeb3Provider } from './helpers/ZionTestWeb3Provider'
+import { createTestSpaceGatedByTownsNfts, registerAndStartClients } from './helpers/TestUtils'
+import { TownsTestWeb3Provider } from './helpers/TownsTestWeb3Provider'
 import { Permission } from '@river/web3'
 import { TestConstants } from './helpers/TestConstants'
 import { getTransactionHashFromTransactionOrUserOp } from '@towns/userops'
@@ -97,7 +97,7 @@ describe('Link Wallet', () => {
         const wallets = await bob.getLinkedWallets(bobAddress!)
         expect(wallets).toContain(await metamaskWallet.getAddress())
 
-        const spaceId = await createTestSpaceGatedByTownAndZionNfts(alice, [
+        const spaceId = await createTestSpaceGatedByTownsNfts(alice, [
             Permission.Read,
             Permission.Write,
         ])
@@ -128,7 +128,7 @@ describe('Link Wallet', () => {
 })
 
 async function generateNewWallet(): Promise<Wallet> {
-    const provider = new ZionTestWeb3Provider()
+    const provider = new TownsTestWeb3Provider()
     await provider.fundWallet()
     return provider.wallet
 }

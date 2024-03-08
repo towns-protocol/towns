@@ -1,6 +1,6 @@
 import React, { useCallback, useState } from 'react'
 import headlessToast, { Toast } from 'react-hot-toast/headless'
-import { sleep } from 'use-zion-client'
+import { sleep } from 'use-towns-client'
 import { Box, Button, Icon, IconButton, Text } from '@ui'
 import { useAuth } from 'hooks/useAuth'
 import { ButtonSpinner } from 'ui/components/Spinner/ButtonSpinner'

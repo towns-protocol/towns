@@ -4,9 +4,9 @@
  */
 import { CONTRACT_ERROR, NoThrownError, getError } from './helpers/ErrorUtils'
 import {
-    createTestSpaceGatedByTownAndZionNfts,
+    createTestSpaceGatedByTownsNfts,
     registerAndStartClients,
-} from 'use-zion-client/tests/integration/helpers/TestUtils'
+} from 'use-towns-client/tests/integration/helpers/TestUtils'
 
 import { Permission } from '@river/web3'
 
@@ -18,10 +18,10 @@ describe.skip('disable channel', () => {
         const { alice } = await registerAndStartClients(['alice'])
         await alice.fundWallet()
 
-        const roomId = await createTestSpaceGatedByTownAndZionNfts(alice, [Permission.Read])
+        const roomId = await createTestSpaceGatedByTownsNfts(alice, [Permission.Read])
         const spaceNetworkId: string | undefined = roomId
         /** Act */
-        // set space access off, disabling space in ZionSpaceManager
+        // set space access off, disabling space in TownsSpaceManager
         const success: boolean | undefined = await alice.setSpaceAccess(
             spaceNetworkId as string,
             true,
@@ -42,19 +42,19 @@ describe.skip('disable channel', () => {
         const { alice } = await registerAndStartClients(['alice'])
         await alice.fundWallet()
 
-        const roomId = await createTestSpaceGatedByTownAndZionNfts(alice, [Permission.Read])
+        const roomId = await createTestSpaceGatedByTownsNfts(alice, [Permission.Read])
         if (!roomId) {
             throw new Error('roomId should be defined')
         }
         const spaceNetworkId = roomId
         /** Act */
-        // set space access off, disabling space in ZionSpaceManager
+        // set space access off, disabling space in TownsSpaceManager
         const disabled: boolean | undefined = await alice.setSpaceAccess(
             spaceNetworkId,
             true,
             alice.provider.wallet,
         )
-        // set space access on, re-enabling space in ZionSpaceManager
+        // set space access on, re-enabling space in TownsSpaceManager
         const enabled: boolean | undefined = await alice.setSpaceAccess(
             spaceNetworkId,
             false,
@@ -76,10 +76,10 @@ describe.skip('disable channel', () => {
         await alice.fundWallet()
         await bob.fundWallet()
 
-        const roomId = await createTestSpaceGatedByTownAndZionNfts(alice, [Permission.Read])
+        const roomId = await createTestSpaceGatedByTownsNfts(alice, [Permission.Read])
         const spaceNetworkId: string | undefined = roomId
         /** Act */
-        // set space access off, disabling space in ZionSpaceManager
+        // set space access off, disabling space in TownsSpaceManager
         const error = await getError<Error>(async function () {
             await bob.setSpaceAccess(spaceNetworkId as string, true, bob.provider.wallet)
         })

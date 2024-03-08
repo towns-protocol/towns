@@ -8,8 +8,8 @@ import { Permission } from '@river/web3'
 import { ChannelContextProvider } from '../../src/components/ChannelContextProvider'
 import { SpaceContextProvider } from '../../src/components/SpaceContextProvider'
 import { useChannelTimeline } from '../../src/hooks/use-channel-timeline'
-import { useZionClient } from '../../src/hooks/use-zion-client'
-import { Membership } from '../../src/types/zion-types'
+import { useTownsClient } from '../../src/hooks/use-towns-client'
+import { Membership } from '../../src/types/towns-types'
 import { TimelineEvent } from '../../src/types/timeline-types'
 import { LoginWithWallet, RegisterAndJoinSpace } from './helpers/TestComponents'
 import {
@@ -18,8 +18,8 @@ import {
     makeUniqueName,
     registerAndStartClients,
 } from './helpers/TestUtils'
-import { ZionTestApp } from './helpers/ZionTestApp'
-import { ZionTestWeb3Provider } from './helpers/ZionTestWeb3Provider'
+import { TownsTestApp } from './helpers/TownsTestApp'
+import { TownsTestWeb3Provider } from './helpers/TownsTestWeb3Provider'
 import { TestConstants } from './helpers/TestConstants'
 
 describe('encryptionDecrypt', () => {
@@ -28,7 +28,7 @@ describe('encryptionDecrypt', () => {
         const { jane } = await registerAndStartClients(['jane'])
         await jane.fundWallet()
         // create a wallet for bob
-        const bobProvider = new ZionTestWeb3Provider()
+        const bobProvider = new TownsTestWeb3Provider()
 
         // create a space
         const janesSpaceId = (await createTestSpaceGatedByTownNft(
@@ -47,7 +47,7 @@ describe('encryptionDecrypt', () => {
 
         // create a veiw for bob
         const TestRoomMessages = () => {
-            const { sendMessage, logout } = useZionClient()
+            const { sendMessage, logout } = useTownsClient()
 
             const [isRegistration, setIsRegistration] = useState(true)
             const [isLoggingBackIn, setIsLoggingBackIn] = useState(false)
@@ -100,13 +100,13 @@ describe('encryptionDecrypt', () => {
         }
         // render it
         render(
-            <ZionTestApp provider={bobProvider}>
+            <TownsTestApp provider={bobProvider}>
                 <SpaceContextProvider spaceId={janesSpaceId}>
                     <ChannelContextProvider channelId={janesChannelId}>
                         <TestRoomMessages />
                     </ChannelContextProvider>
                 </SpaceContextProvider>
-            </ZionTestApp>,
+            </TownsTestApp>,
         )
         // get our test elements
         const clientRunning = screen.getByTestId('clientRunning')

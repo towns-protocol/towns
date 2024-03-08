@@ -7,9 +7,9 @@ import {
     DMChannelContextUserLookupProvider,
     DMChannelIdentifier,
     LookupUser,
+    useTownsContext,
     useUserLookupContext,
-    useZionContext,
-} from 'use-zion-client'
+} from 'use-towns-client'
 import { Panel } from '@components/Panel/Panel'
 import { FadeInBox } from '@components/Transitions'
 import { UserList } from '@components/UserList/UserList'
@@ -76,7 +76,7 @@ export const CreateDirectMessage = (props: Props) => {
     const { createLink } = useCreateLink()
     const { usersMap } = useUserLookupContext()
 
-    const { dmChannels } = useZionContext()
+    const { dmChannels } = useTownsContext()
 
     const [selectedUsers, setSelectedIds] = useState(() => new Set<string>())
     const selectedUserArray = useMemo(() => Array.from(selectedUsers), [selectedUsers])

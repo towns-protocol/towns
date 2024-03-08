@@ -1,6 +1,6 @@
 import React, { useCallback, useState } from 'react'
 import { useParams } from 'react-router'
-import { Channel, SpaceData, useZionContext } from 'use-zion-client'
+import { Channel, SpaceData, useTownsContext } from 'use-towns-client'
 import { useEvent } from 'react-use-event-hook'
 import { PATHS } from 'routes'
 import { Badge, ButtonText, Icon, Stack } from '@ui'
@@ -41,7 +41,7 @@ export const ChannelNavItem = (props: Props) => {
 
     const isMuted = channelIsMuted || spaceIsMuted
 
-    const { spaceUnreadChannelIds } = useZionContext()
+    const { spaceUnreadChannelIds } = useTownsContext()
     const showUnread = spaceUnreadChannelIds[space.id]?.has(channel.id)
 
     return (

@@ -1,6 +1,6 @@
 import React, { useCallback, useMemo, useState } from 'react'
 import { firstBy } from 'thenby'
-import { Address, useUserLookupContext } from 'use-zion-client'
+import { Address, useUserLookupContext } from 'use-towns-client'
 import { isAddress } from 'ethers/lib/utils'
 import { Avatar } from '@components/Avatar/Avatar'
 import { Box, Icon, IconButton, Paragraph, Text } from '@ui'

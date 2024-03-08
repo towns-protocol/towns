@@ -1,5 +1,5 @@
 import React, { forwardRef, useCallback, useMemo, useRef } from 'react'
-import { useMyProfile, useSpaceData, useZionContext } from 'use-zion-client'
+import { useMyProfile, useSpaceData, useTownsContext } from 'use-towns-client'
 import { matchRoutes, useLocation, useNavigate, useResolvedPath } from 'react-router'
 import { Box, Dot, Icon, IconButton, Stack, Text, Tooltip } from '@ui'
 import { SpaceIcon } from '@components/SpaceIcon'
@@ -17,7 +17,8 @@ export const TouchTabBar = () => {
     const space = useSpaceData()
     const userId = useMyProfile()?.userId
     const { showHasUnreadBadgeForCurrentSpace } = useShowHasUnreadBadgeForCurrentSpace()
-    const { dmUnreadChannelIds } = useZionContext()
+
+    const { dmUnreadChannelIds } = useTownsContext()
     const { shouldDisplayMintAnimation } = useShouldDisplayMintAnimation()
 
     const targetRef = useRef<HTMLElement>(null)

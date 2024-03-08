@@ -78,7 +78,7 @@ jobs:
               # Start anvil in the background, and wait for it to be ready
               run: anvil & ./scripts/wait-for-basechain.sh
 
-            - name: Deploy local zion governance contracts
+            - name: Deploy local Towns governance contracts
               run: ./scripts/deploy-contracts.sh
 
             - name: Wait for postgres to be ready

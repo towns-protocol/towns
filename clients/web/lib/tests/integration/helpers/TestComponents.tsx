@@ -1,7 +1,7 @@
 import React, { useCallback, useEffect, useRef, useState } from 'react'
 import { useCasablancaCredentials } from '../../../src/hooks/use-casablanca-credentials'
 import { useMyMembership } from '../../../src/hooks/use-my-membership'
-import { useZionClient } from '../../../src/hooks/use-zion-client'
+import { useTownsClient } from '../../../src/hooks/use-towns-client'
 import { TSigner } from '../../../src/types/web3-types'
 import { useCreateSpaceTransactionWithRetries } from '../../../src/hooks/use-create-space-transaction'
 import { useCreateChannelTransaction } from '../../../src/hooks/use-create-channel-transaction'
@@ -18,7 +18,7 @@ export const RegisterWallet = ({ signer }: { signer: TSigner }) => {
     const loginError = riverCridentials.loginError
     const userId = riverCridentials.userId
 
-    const { clientRunning, registerWalletWithCasablanca } = useZionClient()
+    const { clientRunning, registerWalletWithCasablanca } = useTownsClient()
     const registeringWallet = useRef(false)
     const [registeredWallet, setRegisteredWallet] = useState(false)
     const isConnected = Boolean(signer.provider)
@@ -48,7 +48,7 @@ export const LoginWithWallet = ({ signer }: { signer: TSigner }) => {
     const riverCridentials = useCasablancaCredentials()
     const loginStatus = riverCridentials.loginStatus
     const loginError = riverCridentials.loginError
-    const { clientRunning, loginWithWalletToCasablanca } = useZionClient()
+    const { clientRunning, loginWithWalletToCasablanca } = useTownsClient()
     const logingInWithWallet = useRef(false)
     const isConnected = Boolean(signer.provider)
 
@@ -79,7 +79,7 @@ interface RegisterAndJoinSpaceProps {
 
 export const RegisterAndJoinSpace = (props: RegisterAndJoinSpaceProps) => {
     const { spaceId, channelId } = props
-    const { clientRunning, joinRoom, joinTown } = useZionClient()
+    const { clientRunning, joinRoom, joinTown } = useTownsClient()
     const mySpaceMembership = useMyMembership(spaceId)
     const myChannelMembership = useMyMembership(channelId)
     const [joinComplete, setJoinComplete] = React.useState(false)
@@ -112,7 +112,7 @@ export const RegisterAndJoin = (props: {
 }) => {
     const { spaceId, channelIds } = props
     const didExecute = useRef(false)
-    const { clientRunning, joinTown, joinRoom } = useZionClient()
+    const { clientRunning, joinTown, joinRoom } = useTownsClient()
     const [joinStatus, setJoinStatus] = useState<Record<string, boolean>>({})
     const [joinComplete, setJoinComplete] = React.useState(false)
 

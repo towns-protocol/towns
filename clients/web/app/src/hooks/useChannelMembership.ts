@@ -1,4 +1,4 @@
-import { useChannelId, useMembership, useMyProfile, useRoom } from 'use-zion-client'
+import { useChannelId, useMembership, useMyProfile, useRoom } from 'use-towns-client'
 
 export function useChannelMembership() {
     const id = useMyProfile()?.userId

@@ -1,11 +1,11 @@
-import { useCasablancaCredentials, useZionClient } from 'use-zion-client'
+import { useCasablancaCredentials, useTownsClient } from 'use-towns-client'
 
 import { Button } from '@mui/material'
 import React, { useCallback } from 'react'
 
 export function Logout(): JSX.Element | null {
     const { isAuthenticated } = useCasablancaCredentials()
-    const { logout } = useZionClient()
+    const { logout } = useTownsClient()
 
     const onLogout = useCallback(
         async function () {

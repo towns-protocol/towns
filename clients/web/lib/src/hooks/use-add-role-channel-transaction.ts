@@ -2,13 +2,13 @@ import {
     TransactionContext,
     TransactionStatus,
     createTransactionContext,
-} from '../client/ZionClientTypes'
+} from '../client/TownsClientTypes'
 import { useCallback, useEffect, useMemo, useRef, useState } from 'react'
 
 import { blockchainKeys } from '../query/query-keys'
 import { toError } from '../types/error-types'
 import { useQueryClient } from '../query/queryClient'
-import { useZionClient } from './use-zion-client'
+import { useTownsClient } from './use-towns-client'
 import { TSigner } from '../types/web3-types'
 import { getTransactionHashOrUserOpHash } from '@towns/userops'
 
@@ -20,7 +20,7 @@ export function useAddRoleToChannelTransaction() {
         TransactionContext<void> | undefined
     >(undefined)
     const isTransacting = useRef<boolean>(false)
-    const { addRoleToChannelTransaction, waitForAddRoleToChannelTransaction } = useZionClient()
+    const { addRoleToChannelTransaction, waitForAddRoleToChannelTransaction } = useTownsClient()
     const queryClient = useQueryClient()
 
     const { data, isLoading, transactionHash, transactionStatus, error } = useMemo(() => {

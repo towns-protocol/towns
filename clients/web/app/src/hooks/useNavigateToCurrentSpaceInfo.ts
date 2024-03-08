@@ -1,6 +1,6 @@
 import { useCallback } from 'react'
 import { matchPath, useLocation, useNavigate } from 'react-router'
-import { useSpaceData } from 'use-zion-client'
+import { useSpaceData } from 'use-towns-client'
 import { PATHS } from 'routes'
 import { useChannelIdFromPathname } from './useChannelIdFromPathname'
 import { useDevice } from './useDevice'

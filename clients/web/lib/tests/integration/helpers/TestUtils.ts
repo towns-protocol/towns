@@ -1,9 +1,9 @@
-import { CreateChannelInfo, CreateSpaceInfo } from 'use-zion-client/src/types/zion-types'
+import { CreateChannelInfo, CreateSpaceInfo } from 'use-towns-client/src/types/towns-types'
 import { BigNumber, Wallet, ethers } from 'ethers'
-import { ZionTestClient, ZionTestClientProps } from './ZionTestClient'
+import { TownsTestClient, TownsTestClientProps } from './TownsTestClient'
 
-import { ZionTestWeb3Provider } from './ZionTestWeb3Provider'
-import { ZionClient } from '../../../src/client/ZionClient'
+import { TownsTestWeb3Provider } from './TownsTestWeb3Provider'
+import { TownsClient } from '../../../src/client/TownsClient'
 import { waitFor } from '@testing-library/dom'
 import { RoleDetails } from '../../../src/types/web3-types'
 import {
@@ -39,7 +39,7 @@ export function parseOptInt(value?: string): number | undefined {
 }
 
 export async function getChainId(): Promise<number> {
-    const dummyProvider = new ZionTestWeb3Provider()
+    const dummyProvider = new TownsTestWeb3Provider()
     return (await dummyProvider.getNetwork()).chainId
 }
 
@@ -49,18 +49,18 @@ export async function getChainId(): Promise<number> {
  */
 export async function registerAndStartClients(
     clientNames: string[],
-    props?: ZionTestClientProps,
-): Promise<Record<string, ZionTestClient>> {
+    props?: TownsTestClientProps,
+): Promise<Record<string, TownsTestClient>> {
     // get the chain id for the test network
     const chainId = await getChainId()
     // create new test clients
-    const clients = clientNames.map((name) => new ZionTestClient(chainId, name, props))
+    const clients = clientNames.map((name) => new TownsTestClient(chainId, name, props))
     // start them up
     await Promise.all(clients.map((client) => client.registerWalletAndStartClient()))
     // all clients need funds to create or join a space
     await Promise.all(clients.map((client) => client.fundWallet()))
     // return a dictionary of clients
-    return clients.reduce((records: Record<string, ZionTestClient>, client: ZionTestClient) => {
+    return clients.reduce((records: Record<string, TownsTestClient>, client: TownsTestClient) => {
         records[client.name] = client
         return records
     }, {})
@@ -74,12 +74,12 @@ export async function registerAndStartClients(
 export async function registerAndStartClient(
     name: string,
     walletPromise: Promise<Wallet>,
-    props?: ZionTestClientProps,
-): Promise<ZionTestClient> {
+    props?: TownsTestClientProps,
+): Promise<TownsTestClient> {
     const chainId = await getChainId()
     try {
         const wallet = await walletPromise
-        const client = new ZionTestClient(chainId, name, props, wallet)
+        const client = new TownsTestClient(chainId, name, props, wallet)
 
         if (await client.isUserRegistered()) {
             await client.loginWalletAndStartClient()
@@ -108,10 +108,10 @@ export async function fundWallet(walletToFund: ethers.Wallet) {
 }
 
 /**
- * Create a town with an "Member" role that is gated by a membership token + zion token
+ * Create a town with an "Member" role that is gated by a membership token + towns token
  */
-export async function createTestSpaceGatedByTownAndZionNfts(
-    client: ZionTestClient,
+export async function createTestSpaceGatedByTownsNfts(
+    client: TownsTestClient,
     rolePermissions: Permission[],
     createSpaceInfo?: CreateSpaceInfo,
 ): Promise<string | undefined> {
@@ -159,7 +159,7 @@ export async function createTestSpaceGatedByTownAndZionNfts(
  * Create a town with an "Everyone" role that is gated only by a membership token
  */
 export async function createTestSpaceGatedByTownNft(
-    client: ZionTestClient,
+    client: TownsTestClient,
     rolePermissions: Permission[],
     createSpaceInfo?: CreateSpaceInfo,
 ): Promise<string | undefined> {
@@ -211,7 +211,7 @@ export async function createTestSpaceGatedByTownNft(
 }
 
 export async function createTestChannelWithSpaceRoles(
-    client: ZionTestClient,
+    client: TownsTestClient,
     createChannelInfo: CreateChannelInfo,
 ): Promise<string | undefined> {
     if (createChannelInfo.roleIds.length === 0) {
@@ -231,7 +231,7 @@ export async function createTestChannelWithSpaceRoles(
 }
 
 export async function findRoleByName(
-    client: ZionClient,
+    client: TownsClient,
     spaceId: string,
     roleName: string,
     roles?: BasicRoleInfo[],

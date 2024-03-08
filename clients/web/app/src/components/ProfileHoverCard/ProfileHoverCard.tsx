@@ -1,5 +1,5 @@
 import React from 'react'
-import { Address, useUserLookupContext } from 'use-zion-client'
+import { Address, useUserLookupContext } from 'use-towns-client'
 import { Avatar } from '@components/Avatar/Avatar'
 import { useGetUserBio } from 'hooks/useUserBio'
 import { Stack } from 'ui/components/Stack/Stack'

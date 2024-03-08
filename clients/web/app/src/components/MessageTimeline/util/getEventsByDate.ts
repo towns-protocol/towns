@@ -12,7 +12,7 @@ import {
     ThreadStats,
     TimelineEvent,
     ZTEvent,
-} from 'use-zion-client'
+} from 'use-towns-client'
 import { ExperimentsState } from 'store/experimentsStore'
 import { HOUR_MS } from 'data/constants'
 

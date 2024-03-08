@@ -1,7 +1,7 @@
 import React from 'react'
 import { useEvent } from 'react-use-event-hook'
 import { useSearchParams } from 'react-router-dom'
-import { useSpaceId } from 'use-zion-client'
+import { useSpaceId } from 'use-towns-client'
 import { Panel } from '@components/Panel/Panel'
 import { IconButton, Stack } from '@ui'
 import { CreateChannelFormContainer } from '@components/Web3/CreateChannelForm'

@@ -1,12 +1,12 @@
 import React, { useCallback } from 'react'
 import { useNavigate, useParams } from 'react-router'
-import { useInviteData, useZionClient } from 'use-zion-client'
+import { useInviteData, useTownsClient } from 'use-towns-client'
 import { PATHS } from 'routes'
 import { SpaceJoin } from '@components/Web3/SpaceJoin'
 
 export const InvitesIndex = () => {
     const { inviteSlug } = useParams()
-    const { leaveRoom } = useZionClient()
+    const { leaveRoom } = useTownsClient()
     const navigate = useNavigate()
     const invite = useInviteData(inviteSlug)
 

@@ -1,5 +1,5 @@
 import { useQuery } from '@tanstack/react-query'
-import { ISpaceDapp, useSpaceDapp, useWeb3Context } from 'use-zion-client'
+import { ISpaceDapp, useSpaceDapp, useWeb3Context } from 'use-towns-client'
 import { useEnvironment } from './useEnvironmnet'
 
 async function getChannels(spaceId: string | undefined, spaceDapp: ISpaceDapp | undefined) {

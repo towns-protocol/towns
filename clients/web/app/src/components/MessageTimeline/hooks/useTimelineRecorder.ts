@@ -1,5 +1,5 @@
 import { useEffect, useRef, useState } from 'react'
-import { TimelineEvent } from 'use-zion-client'
+import { TimelineEvent } from 'use-towns-client'
 import { useHotkeys } from 'react-hotkeys-hook'
 import debug from 'debug'
 

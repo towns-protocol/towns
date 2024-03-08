@@ -5,7 +5,7 @@ import {
     TransactionStatus,
     useCreateChannelTransaction,
     useRoles,
-} from 'use-zion-client'
+} from 'use-towns-client'
 import React, { useCallback, useEffect, useMemo, useState } from 'react'
 import { BigNumber } from 'ethers'
 import { useGetEmbeddedSigner } from '@towns/privy'

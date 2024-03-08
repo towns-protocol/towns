@@ -181,7 +181,7 @@ export function TokensList({
                 {env.DEV && chainId === 31337 && (
                     <FadeInBox key="dev-message" maxWidth="400">
                         <Paragraph size="sm" color="error">
-                            DEV message: Localhost will only return the zion token for anvil
+                            DEV message: Localhost will only return the towns token for anvil
                             accounts. To test a long list, add ?mainnet to url. To test your sepolia
                             tokens, add ?sepolia. Please note that if you use these query params,
                             you may get unexpected behavior in other parts of the app, if you are

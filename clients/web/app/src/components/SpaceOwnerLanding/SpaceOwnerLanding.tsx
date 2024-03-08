@@ -1,5 +1,5 @@
 import React, { useState } from 'react'
-import { useSpaceData } from 'use-zion-client'
+import { useSpaceData } from 'use-towns-client'
 import { Link } from 'react-router-dom'
 import { AnimatePresence } from 'framer-motion'
 import { useEvent } from 'react-use-event-hook'

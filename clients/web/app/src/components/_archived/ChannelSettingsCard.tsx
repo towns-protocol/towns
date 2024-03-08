@@ -1,4 +1,4 @@
-import { useHasPermission, useZionClient } from 'use-zion-client'
+import { useHasPermission, useTownsClient } from 'use-towns-client'
 import { Permission } from '@river/web3'
 import React from 'react'
 import { useEvent } from 'react-use-event-hook'
@@ -30,7 +30,7 @@ export const ChannelSettingsCard = (props: Props) => {
     const setTownRouteBookmark = useStore((s) => s.setTownRouteBookmark)
     const { closeCard } = useCardOpenerContext()
 
-    const { leaveRoom } = useZionClient()
+    const { leaveRoom } = useTownsClient()
 
     const onLeaveClick = useEvent(async () => {
         setTownRouteBookmark(spaceId, '')

@@ -1,4 +1,4 @@
-import { useSpaceId } from 'use-zion-client'
+import { useSpaceId } from 'use-towns-client'
 import { useStore } from 'store/store'
 
 export const useShouldDisplayMintAnimation = () => {

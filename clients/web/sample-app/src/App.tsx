@@ -1,7 +1,7 @@
 import React from 'react'
 import { Route, Routes } from 'react-router-dom'
 import { Container } from '@mui/material'
-import { ZionContextProvider } from 'use-zion-client'
+import { TownsContextProvider } from 'use-towns-client'
 import { ThemeProvider } from '@mui/material/styles'
 import { EmbeddedSignerContextProvider } from '@towns/privy'
 import { WagmiConfig, createConfig } from 'wagmi'
@@ -58,7 +58,7 @@ const AppContent = () => {
     return (
         <ThemeProvider theme={theme}>
             <Container maxWidth="md">
-                <ZionContextProvider
+                <TownsContextProvider
                     enableSpaceRootUnreads
                     casablancaServerUrl={casablancaUrl}
                     chain={chain}
@@ -91,7 +91,7 @@ const AppContent = () => {
                             </Route>
                         </Routes>
                     </EmbeddedSignerContextProvider>
-                </ZionContextProvider>
+                </TownsContextProvider>
             </Container>
         </ThemeProvider>
     )

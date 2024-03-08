@@ -6,7 +6,7 @@ import {
     useMyProfile,
     useSpaceId,
     useSpaceThreadRoots,
-} from 'use-zion-client'
+} from 'use-towns-client'
 import { useNavigate } from 'react-router'
 import { MessageThread } from '@components/MessageThread/MessageThread'
 import { Box, Divider, Heading, Icon, IconButton, Paragraph, Stack } from '@ui'

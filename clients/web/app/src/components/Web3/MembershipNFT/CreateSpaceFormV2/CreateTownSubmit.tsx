@@ -1,6 +1,6 @@
 import { UseFormReturn } from 'react-hook-form'
 import { MembershipStruct, NoopRuleData, Permission } from '@river/web3'
-import { CreateSpaceInfo, useCreateSpaceTransaction, useZionClient } from 'use-zion-client'
+import { CreateSpaceInfo, useCreateSpaceTransaction, useTownsClient } from 'use-towns-client'
 import { useNavigate } from 'react-router'
 import React, { useCallback, useEffect, useMemo } from 'react'
 import { ethers } from 'ethers'
@@ -34,7 +34,7 @@ export function CreateTownSubmit({
     setTransactionDetails: ({ isTransacting }: TransactionDetails) => void
 }) {
     const getSigner = useGetEmbeddedSigner()
-    const { spaceDapp } = useZionClient()
+    const { spaceDapp } = useTownsClient()
 
     const { data, isLoading, error, createSpaceTransactionWithRole, transactionStatus } =
         useCreateSpaceTransaction()

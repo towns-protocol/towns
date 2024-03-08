@@ -1,5 +1,5 @@
 import React from 'react'
-import { useRoles } from 'use-zion-client'
+import { useRoles } from 'use-towns-client'
 import { useEvent } from 'react-use-event-hook'
 import { useSearchParams } from 'react-router-dom'
 import { Panel, PanelButton } from '@components/Panel/Panel'

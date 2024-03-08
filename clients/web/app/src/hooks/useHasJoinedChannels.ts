@@ -1,5 +1,5 @@
 import { useMemo } from 'react'
-import { useSpaceData } from 'use-zion-client'
+import { useSpaceData } from 'use-towns-client'
 
 export const useHasJoinedChannels = () => {
     const spaceData = useSpaceData()

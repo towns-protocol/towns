@@ -1,7 +1,7 @@
 import { useQuery } from '@tanstack/react-query'
 import { balanceOfMockNFT } from '@river/web3'
 import { Address } from 'wagmi'
-import { useWeb3Context } from 'use-zion-client'
+import { useWeb3Context } from 'use-towns-client'
 import { useEnvironment } from './useEnvironmnet'
 
 const QUERY_KEY = 'balanceOfMockNFT'

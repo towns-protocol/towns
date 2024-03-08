@@ -1,6 +1,6 @@
 import { BigNumber } from 'ethers'
 // eslint-disable-next-line no-restricted-imports
-import * as zionClient from 'use-zion-client'
+import * as townsClient from 'use-towns-client'
 import { NoopRuleData, Permission } from '@river/web3'
 import { EVERYONE_ADDRESS } from 'utils'
 import { getWalletAddress } from './testUtils'
@@ -37,7 +37,7 @@ export const channelDataForRole: {
     disabled: false,
 }
 
-export const roleDataWithBothRolesAssignedToChannel: zionClient.RoleDetails[] = [
+export const roleDataWithBothRolesAssignedToChannel: townsClient.RoleDetails[] = [
     {
         id: 7,
         name: 'Everyone',
@@ -70,7 +70,7 @@ export const roleDataWithMemberAssignedToChannel = [
 const address1 = getWalletAddress()
 const address2 = getWalletAddress()
 
-export const mockMembers: zionClient.RoomMember[] = [
+export const mockMembers: townsClient.RoomMember[] = [
     {
         userId: address1,
         username: 'User 1',
@@ -94,4 +94,4 @@ export const mockMemberIds = mockMembers.map((m) => m.userId)
 export const mockUsersMap = mockMembers.reduce((acc, curr) => {
     acc[curr.userId] = curr
     return acc
-}, {} as { [key: string]: zionClient.RoomMember })
+}, {} as { [key: string]: townsClient.RoomMember })

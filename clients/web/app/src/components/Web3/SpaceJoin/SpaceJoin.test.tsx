@@ -2,27 +2,27 @@ import React from 'react'
 import { fireEvent, render, screen, waitFor } from '@testing-library/react'
 import { describe, expect, test, vi } from 'vitest'
 // eslint-disable-next-line no-restricted-imports
-import * as Lib from 'use-zion-client'
+import * as Lib from 'use-towns-client'
 import { TestApp } from 'test/testUtils'
 import { Props, SpaceJoin } from './SpaceJoin'
 
 const joinRoomSpy = vi.fn()
 
-vi.mock('use-zion-client', async () => {
-    const actual = (await vi.importActual('use-zion-client')) as typeof Lib
+vi.mock('use-towns-client', async () => {
+    const actual = (await vi.importActual('use-towns-client')) as typeof Lib
     return {
         ...actual,
-        useZionClient: () => {
+        useTownsClient: () => {
             return {
-                ...actual.useZionClient(),
+                ...actual.useTownsClient(),
                 client: {
                     joinRoom: joinRoomSpy,
                 },
             }
         },
-        useZionContext: () => {
+        useTownsContext: () => {
             return {
-                ...actual.useZionContext(),
+                ...actual.useTownsContext(),
             }
         },
     }

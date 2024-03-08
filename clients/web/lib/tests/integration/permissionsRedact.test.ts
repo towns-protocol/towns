@@ -4,12 +4,12 @@
 import { NoThrownError, getError } from './helpers/ErrorUtils'
 import {
     createTestSpaceGatedByTownNft,
-    createTestSpaceGatedByTownAndZionNfts,
+    createTestSpaceGatedByTownsNfts,
     registerAndStartClients,
     waitForWithRetries,
     findRoleByName,
     createTestChannelWithSpaceRoles,
-} from 'use-zion-client/tests/integration/helpers/TestUtils'
+} from 'use-towns-client/tests/integration/helpers/TestUtils'
 
 import { ZTEvent } from '../../src/types/timeline-types'
 import { waitFor } from '@testing-library/dom'
@@ -25,7 +25,7 @@ describe('redact messages', () => {
         const { alice } = await registerAndStartClients(['alice'])
         await alice.fundWallet()
         // create a space
-        const spaceId = await createTestSpaceGatedByTownAndZionNfts(alice, [
+        const spaceId = await createTestSpaceGatedByTownsNfts(alice, [
             Permission.Read,
             Permission.Write,
         ])

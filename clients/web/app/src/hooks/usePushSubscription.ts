@@ -1,5 +1,5 @@
 import { useEffect } from 'react'
-import { useMyProfile } from 'use-zion-client'
+import { useMyProfile } from 'use-towns-client'
 import { axiosClient } from 'api/apiClient'
 import { env } from 'utils/environment'
 import { notificationsSupported } from './usePushNotifications'

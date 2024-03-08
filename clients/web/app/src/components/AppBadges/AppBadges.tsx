@@ -1,5 +1,5 @@
 import React from 'react'
-import { useAppBadge, useFavIconBadge } from 'use-zion-client'
+import { useAppBadge, useFavIconBadge } from 'use-towns-client'
 
 export const AppBadge = () => {
     useAppBadge()

@@ -2,19 +2,19 @@
 /**
  * @group dendrite
  */
-import { Membership } from '../../src/types/zion-types'
+import { Membership } from '../../src/types/towns-types'
 import { createTestSpaceGatedByTownNft, registerAndStartClients } from './helpers/TestUtils'
 import { fireEvent, render, screen, waitFor } from '@testing-library/react'
 
 import { LoginWithWallet } from './helpers/TestComponents'
 import { Permission } from '@river/web3'
 import React from 'react'
-import { ZionTestApp } from './helpers/ZionTestApp'
+import { TownsTestApp } from './helpers/TownsTestApp'
 import { useInvites } from '../../src/hooks/use-space-data'
 import { useMyMembership } from '../../src/hooks/use-my-membership'
 import { useMyProfile } from '../../src/hooks/use-my-profile'
-import { useZionClient } from '../../src/hooks/use-zion-client'
-import { useZionContext } from '../../src/components/ZionContextProvider'
+import { useTownsClient } from '../../src/hooks/use-towns-client'
+import { useTownsContext } from '../../src/components/TownsContextProvider'
 
 // TODO Zustand https://docs.pmnd.rs/zustand/testing
 // https://linear.app/hnt-labs/issue/HNT-4574/testsintegrationuserprofileonacceptinvitehookstesttsx
@@ -37,8 +37,8 @@ describe.skip('userProfileOnAcceptInviteHooks', () => {
         // create a veiw for alice
         const TestUserProfileOnAcceptInvite = () => {
             const myProfile = useMyProfile()
-            const { spaces } = useZionContext()
-            const { joinTown } = useZionClient()
+            const { spaces } = useTownsContext()
+            const { joinTown } = useTownsClient()
             const invites = useInvites()
             const roomId = invites[0]?.id ?? spaces[0]?.id
             const myMembership = useMyMembership(roomId)
@@ -59,9 +59,9 @@ describe.skip('userProfileOnAcceptInviteHooks', () => {
         }
         // render it
         render(
-            <ZionTestApp provider={aliceProvider}>
+            <TownsTestApp provider={aliceProvider}>
                 <TestUserProfileOnAcceptInvite />
-            </ZionTestApp>,
+            </TownsTestApp>,
         )
         // get our test elements
         const myProfileName = screen.getByTestId('myProfileName')

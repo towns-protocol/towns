@@ -1,6 +1,6 @@
 import isEqual from 'lodash/isEqual'
 import { useMemo, useState } from 'react'
-import { RoleDetails, useMultipleRoleDetails, useRoles } from 'use-zion-client'
+import { RoleDetails, useMultipleRoleDetails, useRoles } from 'use-towns-client'
 
 export function useAllRoleDetails(spaceId: string) {
     const { spaceRoles: _roles, isLoading: rolesLoading } = useRoles(decodeURIComponent(spaceId))

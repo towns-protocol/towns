@@ -4,8 +4,8 @@ import {
     useMyMembership,
     useSpaceData,
     useSpaceTimeline,
-    useZionClient,
-} from 'use-zion-client'
+    useTownsClient,
+} from 'use-towns-client'
 import { useNavigate } from 'react-router-dom'
 import { LargeToast } from '@components/LargeToast'
 import { ChatMessages } from '../components/ChatMessages'
@@ -17,7 +17,7 @@ export const SpacesIndex = () => {
     const membership = useMyMembership(space?.id)
     const { timeline } = useSpaceTimeline()
 
-    const { leaveRoom, joinRoom, resetFullyReadMarkers } = useZionClient()
+    const { leaveRoom, joinRoom, resetFullyReadMarkers } = useTownsClient()
     const [joinFailed, setJoinFailed] = useState(false)
     const [clipboarded, setClipboarded] = useState(false)
 

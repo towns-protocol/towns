@@ -1,7 +1,7 @@
 import React, { useEffect, useRef } from 'react'
 import { Outlet, useNavigate, useOutlet, useParams } from 'react-router'
 import { useSearchParams } from 'react-router-dom'
-import { useZionContext } from 'use-zion-client'
+import { useTownsContext } from 'use-towns-client'
 import { DirectMessagesPanel } from '@components/DirectMessages/DirectMessages'
 import { ZLayerBox } from '@components/ZLayer/ZLayerContext'
 import { Box, Heading, Icon, Paragraph, Stack } from '@ui'
@@ -68,7 +68,7 @@ const useTouchRedirect = ({ isTouch }: { isTouch: boolean }) => {
 
     const isDesktopRoute = !spaceId
     const hasRedirectedRef = useRef(false)
-    const { spaces } = useZionContext()
+    const { spaces } = useTownsContext()
     const storeState = useStore.getState()
     const spaceStreamId = storeState.spaceIdBookmark ?? spaces[0]?.id
 

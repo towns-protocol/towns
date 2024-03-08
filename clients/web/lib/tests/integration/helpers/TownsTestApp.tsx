@@ -1,22 +1,22 @@
 import React from 'react'
-import { ZionOnboardingOpts } from '../../../src/client/ZionClientTypes'
+import { TownsOnboardingOpts } from '../../../src/client/TownsClientTypes'
 
 import { TestQueryClientProvider } from './TestQueryClientProvider'
-import { ZionContextProvider } from '../../../src/components/ZionContextProvider'
-import { ZionTestWeb3Provider } from './ZionTestWeb3Provider'
+import { TownsContextProvider } from '../../../src/components/TownsContextProvider'
+import { TownsTestWeb3Provider } from './TownsTestWeb3Provider'
 import { foundry } from 'viem/chains'
-import { useZionErrorStore } from '../../../src/hooks/use-zion-client'
+import { useTownsErrorStore } from '../../../src/hooks/use-towns-client'
 
 interface Props {
-    provider: ZionTestWeb3Provider
-    onboardingOpts?: ZionOnboardingOpts
+    provider: TownsTestWeb3Provider
+    onboardingOpts?: TownsOnboardingOpts
     initialSyncLimit?: number
     pollTimeoutMs?: number
     chainId?: number
     children: JSX.Element
 }
 
-export const ZionTestApp = (props: Props) => {
+export const TownsTestApp = (props: Props) => {
     const { provider, children } = props
     // pull environment variables from the process
     const casablancaServerUrl = process.env.CASABLANCA_SERVER_URL!
@@ -26,21 +26,21 @@ export const ZionTestApp = (props: Props) => {
     })
 
     return (
-        <ZionContextProvider
+        <TownsContextProvider
             casablancaServerUrl={casablancaServerUrl}
             chain={foundry}
             QueryClientProvider={TestQueryClientProvider}
         >
             <>
                 {children}
-                <ZionErrors />
+                <TownsErrors />
             </>
-        </ZionContextProvider>
+        </TownsContextProvider>
     )
 }
 
-const ZionErrors = () => {
-    const { errors } = useZionErrorStore()
+const TownsErrors = () => {
+    const { errors } = useTownsErrorStore()
     return (
         <div data-testid="captured-errors">
             {errors.map((e, i) => (

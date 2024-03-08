@@ -1,33 +1,33 @@
 import React, { createContext, useContext, useEffect, useRef } from 'react'
-import { ZionClient } from '../client/ZionClient'
-import { useContentAwareTimelineDiffCasablanca } from '../hooks/ZionContext/useContentAwareTimelineDiff'
-import { useSpacesIds } from '../hooks/ZionContext/useSpaceIds'
-import { useSpaceUnreads } from '../hooks/ZionContext/useSpaceUnreads'
-import { useSpaces } from '../hooks/ZionContext/useSpaces'
-import { useCasablancaSpaceHierarchies } from '../hooks/ZionContext/useCasablancaSpaceHierarchies'
-import { useZionClientListener } from '../hooks/use-zion-client-listener'
-import { Room, SpaceHierarchies, SpaceItem } from '../types/zion-types'
+import { TownsClient } from '../client/TownsClient'
+import { useContentAwareTimelineDiffCasablanca } from '../hooks/TownsContext/useContentAwareTimelineDiff'
+import { useSpacesIds } from '../hooks/TownsContext/useSpaceIds'
+import { useSpaceUnreads } from '../hooks/TownsContext/useSpaceUnreads'
+import { useSpaces } from '../hooks/TownsContext/useSpaces'
+import { useCasablancaSpaceHierarchies } from '../hooks/TownsContext/useCasablancaSpaceHierarchies'
+import { useTownsClientListener } from '../hooks/use-towns-client-listener'
+import { Room, SpaceHierarchies, SpaceItem } from '../types/towns-types'
 import { Web3ContextProvider } from './Web3ContextProvider'
 import { QueryProvider } from './QueryProvider'
 import { Client as CasablancaClient, ClientInitStatus } from '@river/sdk'
-import { useCasablancaTimelines } from '../hooks/ZionContext/useCasablancaTimelines'
-import { useCasablancaRooms } from '../hooks/ZionContext/useCasablancaRooms'
+import { useCasablancaTimelines } from '../hooks/TownsContext/useCasablancaTimelines'
+import { useCasablancaRooms } from '../hooks/TownsContext/useCasablancaRooms'
 import { useCasablancaDMs } from '../hooks/CasablancClient/useCasablancaDMs'
 import { DMChannelIdentifier } from '../types/dm-channel-identifier'
-import { useDMUnreads } from '../hooks/ZionContext/useDMUnreads'
+import { useDMUnreads } from '../hooks/TownsContext/useDMUnreads'
 import { useTimelineFilter } from '../store/use-timeline-filter'
 import { ZTEvent } from '../types/timeline-types'
-import { useClientInitStatus } from '../hooks/ZionContext/useClientInitStatus'
+import { useClientInitStatus } from '../hooks/TownsContext/useClientInitStatus'
 import { GlobalContextUserLookupProvider } from './UserLookupContextProviders'
-import { ZionOpts } from '../client/ZionClientTypes'
+import { TownsOpts } from '../client/TownsClientTypes'
 import { Chain } from 'viem/chains'
 
 export type InitialSyncSortPredicate = (a: string, b: string) => number
 
-export interface IZionContext {
-    casablancaServerUrl?: ZionOpts['casablancaServerUrl']
-    client?: ZionClient /// only set when user is authenticated
-    clientSingleton?: ZionClient /// always set, can be use for , this duplication can be removed once we transition to casablanca
+export interface ITownsContext {
+    casablancaServerUrl?: TownsOpts['casablancaServerUrl']
+    client?: TownsClient /// only set when user is authenticated
+    clientSingleton?: TownsClient /// always set, can be use for , this duplication can be removed once we transition to casablanca
     casablancaClient?: CasablancaClient /// set if we're logged in and casablanca client is started
     rooms: Record<string, Room | undefined>
     spaceUnreads: Record<string, boolean> // spaceId -> aggregated hasUnread
@@ -40,20 +40,20 @@ export interface IZionContext {
     clientStatus: ClientInitStatus & { streamSyncActive: boolean }
 }
 
-export const ZionContext = createContext<IZionContext | undefined>(undefined)
+export const TownsContext = createContext<ITownsContext | undefined>(undefined)
 
 /**
  * use instead of React.useContext, throws if not in a Provider
  */
-export function useZionContext(): IZionContext {
-    const context = useContext(ZionContext)
+export function useTownsContext(): ITownsContext {
+    const context = useContext(TownsContext)
     if (!context) {
-        throw new Error('useZionContext must be used in a ZionContextProvider')
+        throw new Error('useTownsContext must be used in a TownsContextProvider')
     }
     return context
 }
 
-interface ZionContextProviderProps {
+interface TownsContextProviderProps {
     chain: Chain
     casablancaServerUrl?: string | undefined
     enableSpaceRootUnreads?: boolean
@@ -63,24 +63,24 @@ interface ZionContextProviderProps {
     QueryClientProvider?: React.ElementType<{ children: JSX.Element }>
     pushNotificationAuthToken?: string
     pushNotificationWorkerUrl?: string
-    accountAbstractionConfig?: ZionOpts['accountAbstractionConfig']
+    accountAbstractionConfig?: TownsOpts['accountAbstractionConfig']
     highPriorityStreamIds?: string[]
 }
 
-export function ZionContextProvider({
+export function TownsContextProvider({
     QueryClientProvider = QueryProvider,
     ...props
-}: ZionContextProviderProps): JSX.Element {
+}: TownsContextProviderProps): JSX.Element {
     return (
         <QueryClientProvider>
             <Web3ContextProvider chain={props.chain}>
-                <ZionContextImplMemo {...props}></ZionContextImplMemo>
+                <TownsContextImplMemo {...props}></TownsContextImplMemo>
             </Web3ContextProvider>
         </QueryClientProvider>
     )
 }
 
-const ZionContextImpl = (props: ZionContextProviderProps): JSX.Element => {
+const TownsContextImpl = (props: TownsContextProviderProps): JSX.Element => {
     const { mutedChannelIds } = props
 
     let hookCounter = 0
@@ -96,14 +96,14 @@ const ZionContextImpl = (props: ZionContextProviderProps): JSX.Element => {
 
     const { casablancaServerUrl, enableSpaceRootUnreads = false, timelineFilter } = props
 
-    const previousProps = useRef<ZionContextProviderProps>()
+    const previousProps = useRef<TownsContextProviderProps>()
 
     useEffect(() => {
         if (previousProps.current) {
             Object.keys(previousProps.current).forEach((key, i) => {
                 // eslint-disable-next-line @typescript-eslint/no-unsafe-member-access, @typescript-eslint/no-explicit-any
                 if ((previousProps.current as any)[key] !== (props as any)[key]) {
-                    console.log('ZionContextImpl: props changed', i, key)
+                    console.log('TownsContextImpl: props changed', i, key)
                 }
             })
         }
@@ -111,7 +111,7 @@ const ZionContextImpl = (props: ZionContextProviderProps): JSX.Element => {
 
     previousProps.current = props
 
-    const { client, clientSingleton, casablancaClient } = useZionClientListener({
+    const { client, clientSingleton, casablancaClient } = useTownsClientListener({
         chainId: props.chain.id,
         casablancaServerUrl: props.casablancaServerUrl,
         pushNotificationAuthToken: props.pushNotificationAuthToken,
@@ -142,7 +142,7 @@ const ZionContextImpl = (props: ZionContextProviderProps): JSX.Element => {
     useHookLogger()
 
     return (
-        <ZionContext.Provider
+        <TownsContext.Provider
             value={{
                 client,
                 clientSingleton,
@@ -160,23 +160,23 @@ const ZionContextImpl = (props: ZionContextProviderProps): JSX.Element => {
             }}
         >
             <GlobalContextUserLookupProvider>{props.children}</GlobalContextUserLookupProvider>
-        </ZionContext.Provider>
+        </TownsContext.Provider>
     )
 }
 
-/// the zion client needs to be nested inside a Web3 provider, hence the need for this component
-const ZionContextImplMemo = React.memo(
-    ZionContextImpl,
+/// the towns client needs to be nested inside a Web3 provider, hence the need for this component
+const TownsContextImplMemo = React.memo(
+    TownsContextImpl,
 
     (
-        prevProps: Readonly<ZionContextProviderProps>,
-        nextProps: Readonly<ZionContextProviderProps>,
+        prevProps: Readonly<TownsContextProviderProps>,
+        nextProps: Readonly<TownsContextProviderProps>,
     ) => {
         let result = true
         Object.keys(prevProps).forEach((key, i) => {
             // eslint-disable-next-line @typescript-eslint/no-unsafe-member-access, @typescript-eslint/no-explicit-any
             if ((prevProps as any)[key] !== (nextProps as any)[key]) {
-                console.log('ZionContextProvider: props changed', i, key)
+                console.log('TownsContextProvider: props changed', i, key)
                 result = false
             }
         })

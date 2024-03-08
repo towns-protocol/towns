@@ -1,15 +1,15 @@
-import { useZionContext } from '../components/ZionContextProvider'
+import { useTownsContext } from '../components/TownsContextProvider'
 import { useCallback } from 'react'
 import { useCredentialStore } from '../store/use-credential-store'
 import { useCasablancaStore } from '../store/use-casablanca-store'
 import { LoginStatus } from './login'
 
 export const useLogout = () => {
-    const { casablancaServerUrl } = useZionContext()
+    const { casablancaServerUrl } = useTownsContext()
     const { setLoginStatus } = useCasablancaStore()
     const { setCasablancaCredentials } = useCredentialStore()
 
-    const { client } = useZionContext()
+    const { client } = useTownsContext()
 
     return useCallback(
         async function (): Promise<void> {

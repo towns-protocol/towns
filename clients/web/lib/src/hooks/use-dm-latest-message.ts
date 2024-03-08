@@ -6,7 +6,7 @@ import {
     ZTEvent,
 } from '../types/timeline-types'
 
-import { MessageType } from '../types/zion-types'
+import { MessageType } from '../types/towns-types'
 import { useFullyReadMarkerStore } from '../store/use-fully-read-marker-store'
 import { useEffect, useMemo, useState } from 'react'
 

@@ -5,7 +5,7 @@ import {
     useFullyReadMarker,
     useSpaceId,
     useUserLookupContext,
-} from 'use-zion-client'
+} from 'use-towns-client'
 import { truncate } from 'lodash'
 import { Box, Paragraph, Stack } from '@ui'
 import { useHover } from 'hooks/useHover'

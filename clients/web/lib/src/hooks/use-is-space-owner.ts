@@ -1,11 +1,11 @@
 import { useCallback } from 'react'
 
 import { useQuery } from '../query/queryClient'
-import { useZionClient } from './use-zion-client'
+import { useTownsClient } from './use-towns-client'
 import { isAddress } from 'ethers/lib/utils'
 
 export function useIsSpaceOwner(spaceId?: string, walletAddress?: string) {
-    const { client } = useZionClient()
+    const { client } = useTownsClient()
 
     const getIsOwner = useCallback(async () => {
         if (client && walletAddress && spaceId) {

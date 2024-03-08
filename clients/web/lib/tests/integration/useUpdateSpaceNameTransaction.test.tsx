@@ -10,13 +10,13 @@ import { fireEvent, render, screen, waitFor } from '@testing-library/react'
 
 import { RegisterWallet, TransactionInfo } from './helpers/TestComponents'
 import { SpaceContextProvider } from '../../src/components/SpaceContextProvider'
-import { ZionTestApp } from './helpers/ZionTestApp'
-import { ZionTestWeb3Provider } from './helpers/ZionTestWeb3Provider'
+import { TownsTestApp } from './helpers/TownsTestApp'
+import { TownsTestWeb3Provider } from './helpers/TownsTestWeb3Provider'
 import { makeUniqueName } from './helpers/TestUtils'
 import { useUpdateSpaceNameTransaction } from '../../src/hooks/use-update-space-name-transaction'
 import { useCreateSpaceTransactionWithRetries } from '../../src/hooks/use-create-space-transaction'
 import { TestConstants } from './helpers/TestConstants'
-import { TransactionStatus } from '../../src/client/ZionClientTypes'
+import { TransactionStatus } from '../../src/client/TownsClientTypes'
 import { NoopRuleData, createMembershipStruct, getTestGatingNftAddress } from '@river/web3'
 import { useContractSpaceInfo } from '../../src/hooks/use-space-data'
 import { TSigner } from '../../src/types/web3-types'
@@ -27,7 +27,7 @@ import { TSigner } from '../../src/types/web3-types'
 describe('useUpdateSpaceNameTransaction', () => {
     test('create a new space, and then update its name', async () => {
         /* Arrange */
-        const provider = new ZionTestWeb3Provider()
+        const provider = new TownsTestWeb3Provider()
         const spaceName = makeUniqueName('alice')
         const newSpaceName = makeUniqueName('bob')
         const chainId = (await provider.getNetwork()).chainId
@@ -41,7 +41,7 @@ describe('useUpdateSpaceNameTransaction', () => {
         await provider.mintMockNFT()
 
         render(
-            <ZionTestApp provider={provider}>
+            <TownsTestApp provider={provider}>
                 <>
                     <RegisterWallet signer={provider.wallet} />
                     <TestComponent
@@ -50,7 +50,7 @@ describe('useUpdateSpaceNameTransaction', () => {
                         signer={provider.wallet}
                     />
                 </>
-            </ZionTestApp>,
+            </TownsTestApp>,
         )
         const clientRunning = screen.getByTestId('clientRunning')
         // wait for the client to be running

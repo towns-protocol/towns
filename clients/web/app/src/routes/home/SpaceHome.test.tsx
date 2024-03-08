@@ -2,7 +2,7 @@ import React from 'react'
 import { render, waitFor } from '@testing-library/react'
 import { describe, expect, test, vi } from 'vitest'
 // eslint-disable-next-line no-restricted-imports
-import * as Lib from 'use-zion-client'
+import * as Lib from 'use-towns-client'
 import * as Router from 'react-router'
 import { PATHS } from 'routes'
 import { TestApp } from 'test/testUtils'

@@ -10,7 +10,7 @@ import {
     useIsTransactionPending,
     useRoleDetails,
     useUpdateRoleTransaction,
-} from 'use-zion-client'
+} from 'use-towns-client'
 import { useEvent } from 'react-use-event-hook'
 import { z } from 'zod'
 import { FormProvider, SubmitErrorHandler, UseFormReturn, useFormContext } from 'react-hook-form'

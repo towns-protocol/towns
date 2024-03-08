@@ -8,7 +8,7 @@ import { useUserLookupContext } from '../hooks/use-user-lookup-context'
 import { LookupUser, LookupUserMap, UserLookupContextType } from '../types/user-lookup'
 
 /**
- * utility provider added to topmost zion context
+ * utility provider added to topmost towns context
  */
 export const GlobalContextUserLookupProvider = (props: { children: React.ReactNode }) => {
     const allUsers = useAllKnownUsers()

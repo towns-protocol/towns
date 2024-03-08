@@ -6,8 +6,8 @@ import {
     useChannelThread,
     useMyMembership,
     useSpaceData,
-    useZionClient,
-} from 'use-zion-client'
+    useTownsClient,
+} from 'use-towns-client'
 import { ChatMessages } from '@components/ChatMessages'
 
 export function Thread(): JSX.Element {
@@ -35,7 +35,7 @@ export function Thread(): JSX.Element {
 
 function ThreadContent(props: { threadParentId: string }): JSX.Element {
     const { threadParentId } = props
-    const { sendMessage } = useZionClient()
+    const { sendMessage } = useTownsClient()
     const channelId = useChannelId()
     const membership = useMyMembership(channelId)
     const { messages, parent } = useChannelThread(threadParentId)

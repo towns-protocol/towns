@@ -1,5 +1,5 @@
 import { useMemo } from 'react'
-import { useChannelId, useMyChannels, useSpaceData } from 'use-zion-client'
+import { useChannelId, useMyChannels, useSpaceData } from 'use-towns-client'
 import { useNavigate } from 'react-router'
 import { useShortcut } from 'hooks/useShortcut'
 import { PATHS } from 'routes'

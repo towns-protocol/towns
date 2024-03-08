@@ -9,9 +9,9 @@ import { ChannelContextProvider } from '../../src/components/ChannelContextProvi
 import { RegisterWallet, TransactionInfo } from './helpers/TestComponents'
 import { SpaceContextProvider } from '../../src/components/SpaceContextProvider'
 import { TestConstants } from './helpers/TestConstants'
-import { TransactionStatus } from '../../src/client/ZionClientTypes'
-import { ZionTestApp } from './helpers/ZionTestApp'
-import { ZionTestWeb3Provider } from './helpers/ZionTestWeb3Provider'
+import { TransactionStatus } from '../../src/client/TownsClientTypes'
+import { TownsTestApp } from './helpers/TownsTestApp'
+import { TownsTestWeb3Provider } from './helpers/TownsTestWeb3Provider'
 import { makeUniqueName } from './helpers/TestUtils'
 import { useAddRoleToChannelTransaction } from '../../src/hooks/use-add-role-channel-transaction'
 import { useChannelData } from '../../src/hooks/use-channel-data'
@@ -39,7 +39,7 @@ describe('useAddRolesToChannel', () => {
     // TODO: https://linear.app/hnt-labs/issue/HNT-1581/testsintegrationuseaddrolechanneltesttsx
     test.skip('add a role to a channel', async () => {
         /* Arrange */
-        const provider = new ZionTestWeb3Provider()
+        const provider = new TownsTestWeb3Provider()
         const spaceName = makeUniqueName('alice')
         const channelName = 'foochannel'
         const roleName = 'Test Role'
@@ -53,7 +53,7 @@ describe('useAddRolesToChannel', () => {
         // make sure alice has some funds
         await provider.fundWallet()
         render(
-            <ZionTestApp provider={provider}>
+            <TownsTestApp provider={provider}>
                 <>
                     <RegisterWallet signer={provider.wallet} />
                     <TestComponent
@@ -65,7 +65,7 @@ describe('useAddRolesToChannel', () => {
                         signer={provider.wallet}
                     />
                 </>
-            </ZionTestApp>,
+            </TownsTestApp>,
         )
         const clientRunning = screen.getByTestId('clientRunning')
         // wait for the client to be running

@@ -9,7 +9,7 @@ import {
     useMyProfile,
     useTimelineThread,
     useUserLookupContext,
-} from 'use-zion-client'
+} from 'use-towns-client'
 import { firstBy } from 'thenby'
 import { useLocation } from 'react-router'
 import { Link } from 'react-router-dom'

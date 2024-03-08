@@ -2,7 +2,7 @@ import EventEmitter from 'events'
 import TypedEmitter from 'typed-emitter'
 import { BlockchainTransaction, BlockchainTransactionType } from '../types/web3-types'
 import { ethers } from 'ethers'
-import { ZionClient } from './ZionClient'
+import { TownsClient } from './TownsClient'
 import { isUserOpResponse } from '@towns/userops'
 
 type Events = {
@@ -20,11 +20,11 @@ export type BlockchainStoreTransactions = Record<string, BlockchainStoreTx>
 
 export class BlockchainTransactionStore extends (EventEmitter as new () => TypedEmitter<Events>) {
     transactions: BlockchainStoreTransactions = {}
-    spaceDapp: ZionClient['spaceDapp']
+    spaceDapp: TownsClient['spaceDapp']
     promiseQueue: Promise<void>[] = []
     abortController = new AbortController()
 
-    constructor(spaceDapp: ZionClient['spaceDapp']) {
+    constructor(spaceDapp: TownsClient['spaceDapp']) {
         super()
         this.spaceDapp = spaceDapp
     }
@@ -118,7 +118,7 @@ export class BlockchainTransactionStore extends (EventEmitter as new () => Typed
                         hashToWaitFor = userOpEvent.transactionHash as `0x${string}`
                     }
 
-                    // this should be the same wait time as zionClient.waitForTransaction
+                    // this should be the same wait time as townsClient.waitForTransaction
                     // only waiting for tx.wait() can resolve quicker than provider.waitForTransaction
                     await this.spaceDapp.provider?.waitForTransaction(hashToWaitFor)
 

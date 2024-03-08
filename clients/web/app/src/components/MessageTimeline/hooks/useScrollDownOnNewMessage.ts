@@ -1,5 +1,5 @@
 import { RefObject, useLayoutEffect, useMemo } from 'react'
-import { TimelineEvent, useMyProfile } from 'use-zion-client'
+import { TimelineEvent, useMyProfile } from 'use-towns-client'
 import { getIsRoomMessageContent } from 'utils/ztevent_util'
 
 export const useScrollDownOnNewMessage = (

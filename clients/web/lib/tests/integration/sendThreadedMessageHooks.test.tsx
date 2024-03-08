@@ -22,15 +22,15 @@ import {
 import { ChannelContextProvider } from '../../src/components/ChannelContextProvider'
 import { RegisterAndJoin } from './helpers/TestComponents'
 import { SpaceContextProvider } from '../../src/components/SpaceContextProvider'
-import { ZionTestApp } from './helpers/ZionTestApp'
-import { ZionTestWeb3Provider } from './helpers/ZionTestWeb3Provider'
+import { TownsTestApp } from './helpers/TownsTestApp'
+import { TownsTestWeb3Provider } from './helpers/TownsTestWeb3Provider'
 import { useChannelThreadStats } from '../../src/hooks/use-channel-thread-stats'
 import { useChannelTimeline } from '../../src/hooks/use-channel-timeline'
 import { useFullyReadMarker } from '../../src/hooks/use-fully-read-marker'
 import { useSpaceNotificationCounts } from '../../src/hooks/use-space-notification-counts'
 import { useSpaceThreadRoots } from '../../src/hooks/use-space-thread-roots'
 import { useTimelineThread } from '../../src/hooks/use-timeline-thread'
-import { useZionClient } from '../../src/hooks/use-zion-client'
+import { useTownsClient } from '../../src/hooks/use-towns-client'
 import { useTimeline } from '../../src/hooks/use-timeline'
 import { TestConstants } from './helpers/TestConstants'
 import { TSigner } from '../../src/types/web3-types'
@@ -58,7 +58,7 @@ describe('sendThreadedMessageHooks', () => {
         // create clients
         const { jane } = await registerAndStartClients(['jane'])
         // create a wallet for bob
-        const bobProvider = new ZionTestWeb3Provider()
+        const bobProvider = new TownsTestWeb3Provider()
         await bobProvider.fundWallet()
 
         // jane needs funds to create a spaceß
@@ -91,7 +91,7 @@ describe('sendThreadedMessageHooks', () => {
 
         // render bob's app
         const TestChannelComponent = ({ signer }: { signer: TSigner }) => {
-            const { sendMessage, editMessage, sendReadReceipt } = useZionClient()
+            const { sendMessage, editMessage, sendReadReceipt } = useTownsClient()
             const threadRoots = useSpaceThreadRoots()
             const { timeline: channelTimeline } = useChannelTimeline()
             const { timeline: channel_2_timeline } = useTimeline(channel_2)
@@ -310,13 +310,13 @@ describe('sendThreadedMessageHooks', () => {
             )
         }
         render(
-            <ZionTestApp provider={bobProvider}>
+            <TownsTestApp provider={bobProvider}>
                 <SpaceContextProvider spaceId={spaceId}>
                     <ChannelContextProvider channelId={channel_1}>
                         <TestChannelComponent signer={bobProvider.wallet} />
                     </ChannelContextProvider>
                 </SpaceContextProvider>
-            </ZionTestApp>,
+            </TownsTestApp>,
         )
 
         const bobUserId = screen.getByTestId('userId')

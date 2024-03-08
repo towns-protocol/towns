@@ -5,7 +5,7 @@
 import {
     registerAndStartClients,
     registerAndStartClient,
-    createTestSpaceGatedByTownAndZionNfts,
+    createTestSpaceGatedByTownsNfts,
     waitForWithRetries,
 } from './helpers/TestUtils'
 
@@ -31,7 +31,7 @@ test('create space, and have user join', async () => {
     // bob needs funds to create a space
     await bob.fundWallet()
     // bob creates a space
-    const spaceId = (await createTestSpaceGatedByTownAndZionNfts(bob, [
+    const spaceId = (await createTestSpaceGatedByTownsNfts(bob, [
         Permission.Read,
         Permission.Write,
     ])) as string
@@ -72,12 +72,9 @@ test('create space, and have user that already has membership NFT join ', async 
     // bob needs funds to create a space
     await bob.fundWallet()
     // bob creates a space
-    const spaceId = await createTestSpaceGatedByTownAndZionNfts(bob, [
-        Permission.Read,
-        Permission.Write,
-    ])
+    const spaceId = await createTestSpaceGatedByTownsNfts(bob, [Permission.Read, Permission.Write])
 
-    assert(spaceId !== undefined, 'createTestSpaceGatedByTownAndZionNfts failed')
+    assert(spaceId !== undefined, 'createTestSpaceGatedByTownsNfts failed')
 
     await alice.mintMembershipTransaction(spaceId, alice.wallet)
     // alice joins the space

@@ -2,7 +2,7 @@
 import '@testing-library/jest-dom'
 import '@testing-library/jest-dom/extend-expect'
 import { TestConstants } from './tests/integration/helpers/TestConstants'
-import { ZionTestClient } from './tests/integration/helpers/ZionTestClient'
+import { TownsTestClient } from './tests/integration/helpers/TownsTestClient'
 import { configure } from '@testing-library/dom'
 import 'jest-canvas-mock'
 import { queryClient } from './src/query/queryClient'
@@ -53,7 +53,7 @@ afterEach(() => {
     // stop all test clients
     return Promise.all([
         queryClient.cancelQueries().then(() => queryClient.resetQueries()),
-        ZionTestClient.cleanup(),
+        TownsTestClient.cleanup(),
     ])
 }, 5000)
 

@@ -1,5 +1,5 @@
 {
-    "name": "use-zion-client",
+    "name": "use-towns-client",
     "description": "Bundles common react hooks for the client app",
     "version": "workspace:^",
     "license": "MIT",

@@ -1,5 +1,5 @@
 import React from 'react'
-import AnalyticsService, { AnalyticsEvents } from 'use-zion-client/dist/utils/analyticsService'
+import AnalyticsService, { AnalyticsEvents } from 'use-towns-client/dist/utils/analyticsService'
 import { TransitionLogo } from '@components/Logo/Logo'
 import { Box, MotionBox, Paragraph, Stack, Text } from '@ui'
 import { useDevice } from 'hooks/useDevice'

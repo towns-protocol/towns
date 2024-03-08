@@ -1,9 +1,9 @@
 import { Stream } from '@river/sdk'
-import { useZionContext } from '../../components/ZionContextProvider'
+import { useTownsContext } from '../../components/TownsContextProvider'
 import { useEffect, useState } from 'react'
 
 export function useCasablancaStream(streamId?: string): Stream | undefined {
-    const { casablancaClient } = useZionContext()
+    const { casablancaClient } = useTownsContext()
     const [stream, setStream] = useState<Stream | undefined>(() =>
         streamId ? casablancaClient?.stream(streamId) : undefined,
     )

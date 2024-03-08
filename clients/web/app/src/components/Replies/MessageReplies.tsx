@@ -5,7 +5,7 @@ import {
     useFullyReadMarker,
     useSpaceId,
     useUserLookupContext,
-} from 'use-zion-client'
+} from 'use-towns-client'
 import { useOpenMessageThread } from 'hooks/useOpenThread'
 import { Box, Paragraph, Pill, Stack } from '@ui'
 import { notUndefined } from 'ui/utils/utils'

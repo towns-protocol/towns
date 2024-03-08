@@ -1,6 +1,6 @@
 import { motion } from 'framer-motion'
 import React, { forwardRef } from 'react'
-import { useInvites, useSpaceContext, useZionContext } from 'use-zion-client'
+import { useInvites, useSpaceContext, useTownsContext } from 'use-towns-client'
 import { ActionNavItem } from '@components/NavItem/ActionNavItem'
 import { SpaceNavItem } from '@components/NavItem/SpaceNavItem'
 import { RegisterMainShortcuts } from '@components/Shortcuts/RegisterMainShortcuts'
@@ -12,10 +12,10 @@ import { NavItem } from '@components/NavItem/_NavItem'
 
 export const MainSideBar = () => {
     const { isTouch } = useDevice()
-    const { spaces } = useZionContext()
+    const { spaces } = useTownsContext()
     const { spaceId } = useSpaceContext()
     const invites = useInvites()
-    const { dmUnreadChannelIds } = useZionContext()
+    const { dmUnreadChannelIds } = useTownsContext()
 
     return (
         <SideBar elevateReadability paddingY="sm" height="100%">

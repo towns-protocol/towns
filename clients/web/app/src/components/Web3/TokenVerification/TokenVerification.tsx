@@ -3,7 +3,7 @@ import {
     useLinkWalletTransaction,
     useLinkedWallets,
     useUnlinkWalletTransaction,
-} from 'use-zion-client'
+} from 'use-towns-client'
 import { Address } from 'wagmi'
 import { useWallets } from '@privy-io/react-auth'
 import { useGetEmbeddedSigner } from '@towns/privy'

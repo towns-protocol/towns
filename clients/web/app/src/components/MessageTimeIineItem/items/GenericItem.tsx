@@ -1,5 +1,5 @@
 import React from 'react'
-import { TimelineEvent } from 'use-zion-client'
+import { TimelineEvent } from 'use-towns-client'
 import { RichTextPreview } from '@components/RichText/RichTextPreview'
 import { Box } from '@ui'
 

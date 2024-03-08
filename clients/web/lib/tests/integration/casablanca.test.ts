@@ -84,7 +84,7 @@ describe('casablanca', () => {
         log('Bob received the message, test done')
     })
 
-    test('test creating a casablanca space with the zion client and send encrypted messages', async () => {
+    test('test creating a casablanca space with the Towns client and send encrypted messages', async () => {
         log("Test starting, registering and starting clients 'bob' and 'alice'")
         const { bob, alice } = await registerAndStartClients(['bob', 'alice'])
 

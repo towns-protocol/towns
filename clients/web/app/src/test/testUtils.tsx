@@ -1,7 +1,7 @@
 import React from 'react'
 import { QueryClient, QueryClientProvider } from '@tanstack/react-query'
 // eslint-disable-next-line no-restricted-imports
-import * as Lib from 'use-zion-client'
+import * as Lib from 'use-towns-client'
 import { afterEach, vi } from 'vitest'
 import { MemoryRouter } from 'react-router'
 import { BrowserRouter } from 'react-router-dom'
@@ -16,7 +16,7 @@ import { foundryClone } from 'customChains'
 
 type TestAppProps = {
     children: JSX.Element
-    zionContextProviderProps?: React.ComponentProps<typeof Lib.ZionContextProvider>
+    townsContextProviderProps?: React.ComponentProps<typeof Lib.TownsContextProvider>
     Router?: typeof MemoryRouter | typeof BrowserRouter
     initialEntries?: string[]
 }
@@ -46,17 +46,17 @@ export const TestApp = (props: TestAppProps) => {
         // Using WagmiConfig instead of Privy/PrivyWagmi b/c needs a lot of mocking and we don't actually need a wallet for any of our unit tests
         <WagmiConfig config={wagmiConfig}>
             <ZLayerProvider>
-                <Lib.ZionContextProvider
+                <Lib.TownsContextProvider
                     casablancaServerUrl={env.VITE_CASABLANCA_HOMESERVER_URL}
                     chain={foundryClone}
-                    {...props.zionContextProviderProps}
+                    {...props.townsContextProviderProps}
                 >
                     <AuthContextProvider>
                         <QueryClientProvider client={queryClient}>
                             <Router initialEntries={props.initialEntries}>{props.children}</Router>
                         </QueryClientProvider>
                     </AuthContextProvider>
-                </Lib.ZionContextProvider>
+                </Lib.TownsContextProvider>
             </ZLayerProvider>
         </WagmiConfig>
     )

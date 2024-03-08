@@ -1,12 +1,12 @@
 import React, { useCallback } from 'react'
 import { useNavigate } from 'react-router'
-import { useChannelData, useSpaceData, useZionClient } from 'use-zion-client'
+import { useChannelData, useSpaceData, useTownsClient } from 'use-towns-client'
 import { PATHS } from 'routes'
 import { Stack } from '@ui'
 import { InviteUserToRoomForm } from '@components/Web3'
 
 export const ChannelSettings = () => {
-    const { inviteUser } = useZionClient()
+    const { inviteUser } = useTownsClient()
     const navigate = useNavigate()
     const space = useSpaceData()
     const { spaceId, channelId, channel } = useChannelData()

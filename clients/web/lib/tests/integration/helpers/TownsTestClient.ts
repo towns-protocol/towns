@@ -8,41 +8,41 @@ import {
 } from '../../../src/types/timeline-types'
 import {
     TransactionStatus,
-    ZionClientEventHandlers,
-    ZionOpts,
-} from '../../../src/client/ZionClientTypes'
+    TownsClientEventHandlers,
+    TownsOpts,
+} from '../../../src/client/TownsClientTypes'
 
-import { CreateSpaceInfo } from '../../../src/types/zion-types'
+import { CreateSpaceInfo } from '../../../src/types/towns-types'
 import { RoleIdentifier } from '../../../src/types/web3-types'
-import { ZionClient } from '../../../src/client/ZionClient'
-import { ZionTestWeb3Provider } from './ZionTestWeb3Provider'
+import { TownsClient } from '../../../src/client/TownsClient'
+import { TownsTestWeb3Provider } from './TownsTestWeb3Provider'
 import { ethers } from 'ethers'
 import { makeUniqueName } from './TestUtils'
-import { toEvent } from '../../../src/hooks/ZionContext/useCasablancaTimelines'
+import { toEvent } from '../../../src/hooks/TownsContext/useCasablancaTimelines'
 import { Client as CasablancaClient } from '@river/sdk'
 import { Permission, IArchitectBase, IRuleEntitlement } from '@river/web3'
 
-export interface ZionTestClientProps {
-    eventHandlers?: ZionClientEventHandlers
-    accountAbstractionConfig?: ZionOpts['accountAbstractionConfig']
+export interface TownsTestClientProps {
+    eventHandlers?: TownsClientEventHandlers
+    accountAbstractionConfig?: TownsOpts['accountAbstractionConfig']
 }
 
-export class ZionTestClient extends ZionClient {
-    static allClients: ZionTestClient[] = []
+export class TownsTestClient extends TownsClient {
+    static allClients: TownsTestClient[] = []
     static async cleanup() {
         console.log(
-            '========= ZionTestClient: cleanup =========',
+            '========= TownsTestClient: cleanup =========',
             this.allClients.map((x) => x.getLoggingIdentifier()),
         )
         await Promise.all(this.allClients.map((client) => client.stopClients()))
         this.allClients = []
-        console.log('========= ZionTestClient: cleanup done =========')
+        console.log('========= TownsTestClient: cleanup done =========')
     }
 
     public casablancaClient?: CasablancaClient = undefined // override base class to be public for tests
 
-    public props?: ZionTestClientProps
-    public provider: ZionTestWeb3Provider
+    public props?: TownsTestClientProps
+    public provider: TownsTestWeb3Provider
     public get wallet(): ethers.Wallet {
         return this.provider.wallet
     }
@@ -54,10 +54,10 @@ export class ZionTestClient extends ZionClient {
     constructor(
         chainId: number,
         name: string,
-        props?: ZionTestClientProps,
+        props?: TownsTestClientProps,
         wallet?: ethers.Wallet,
     ) {
-        const provider = new ZionTestWeb3Provider(wallet)
+        const provider = new TownsTestWeb3Provider(wallet)
         console.log('CASABLANCA_SERVER_URL', process.env.CASABLANCA_SERVER_URL)
         // super
         super(
@@ -79,7 +79,7 @@ export class ZionTestClient extends ZionClient {
         this.delegateWallet = ethers.Wallet.createRandom()
 
         // add ourselves to the list of all clients
-        ZionTestClient.allClients.push(this)
+        TownsTestClient.allClients.push(this)
     }
 
     /************************************************

@@ -8,7 +8,7 @@ import {
 } from '@river/sdk'
 import { useEffect, useState } from 'react'
 import { SpaceInfo } from '@river/web3'
-import { RoomMember, Membership, Room, toMembership } from '../../types/zion-types'
+import { RoomMember, Membership, Room, toMembership } from '../../types/towns-types'
 import isEqual from 'lodash/isEqual'
 import { useContractSpaceInfos } from '../use-space-data'
 
@@ -24,9 +24,7 @@ export function useCasablancaRooms(client?: CasablancaClient): Record<string, Ro
 
         // helpers
         const updateState = (streamId: string) => {
-            const newRoom = streamId
-                ? toZionCasablancaRoom(streamId, client, spaceInfos)
-                : undefined
+            const newRoom = streamId ? toCasablancaRoom(streamId, client, spaceInfos) : undefined
             setRooms((prev) => {
                 const prevRoom = prev[streamId]
                 const prevMember = prevRoom?.membership === Membership.Join
@@ -53,7 +51,7 @@ export function useCasablancaRooms(client?: CasablancaClient): Record<string, Ro
                     )
                 })
                 .reduce((acc: Record<string, Room | undefined>, stream: string) => {
-                    acc[stream] = toZionCasablancaRoom(stream, client, spaceInfos)
+                    acc[stream] = toCasablancaRoom(stream, client, spaceInfos)
                     return acc
                 }, {})
             setRooms(allChannelsAndSpaces)
@@ -103,7 +101,7 @@ export function useCasablancaRooms(client?: CasablancaClient): Record<string, Ro
  * @param client - The Casablanca client.
  * @returns Room entity filled with data for specific stream. Throw error if membership is not valid or streamId is not associated with a channel or space.
  */
-function toZionCasablancaRoom(
+function toCasablancaRoom(
     streamId: string,
     client: CasablancaClient,
     spaceInfos?: SpaceInfo[],
@@ -137,7 +135,7 @@ function toZionCasablancaRoom(
     if (!stream) {
         throw new Error('Stream not found')
     }
-    const { members, membersMap } = toZionMembers(stream)
+    const { members, membersMap } = toTownsMembers(stream)
 
     //Room topic is available only for channels
     let topic: string | undefined = undefined
@@ -177,7 +175,7 @@ function toZionCasablancaRoom(
  * @param client - The Casablanca client.
  * @returns A list of members joined space or channel. Throw error if membership is not valid or streamId is not associated with a channel or space.
  */
-function toZionMembers(stream: Stream): {
+function toTownsMembers(stream: Stream): {
     members: RoomMember[]
     membersMap: { [userId: string]: RoomMember }
 } {

@@ -1,5 +1,5 @@
 import React from 'react'
-import { LoginStatus } from 'use-zion-client'
+import { LoginStatus } from 'use-towns-client'
 import { usePrivy } from '@privy-io/react-auth'
 import { useAuth } from 'hooks/useAuth'
 import { Box, FancyButton } from '@ui'

@@ -2,13 +2,13 @@
  * @group dendrite
  */
 import { ErrorWithCode, NoThrownError, getError } from './helpers/ErrorUtils'
-import { StreamView } from '../../src/types/zion-types'
+import { StreamView } from '../../src/types/towns-types'
 import {
-    createTestSpaceGatedByTownAndZionNfts,
+    createTestSpaceGatedByTownsNfts,
     findRoleByName,
     registerAndStartClients,
     waitForWithRetries,
-} from 'use-zion-client/tests/integration/helpers/TestUtils'
+} from 'use-towns-client/tests/integration/helpers/TestUtils'
 
 import { ContractReceipt } from 'ethers'
 import { RoleIdentifier } from '../../src/types/web3-types'
@@ -24,7 +24,7 @@ describe('channel update', () => {
         const permissions = [Permission.Read, Permission.Write]
         // create a token-gated space
         await alice.fundWallet()
-        const spaceId = await createTestSpaceGatedByTownAndZionNfts(alice, permissions)
+        const spaceId = await createTestSpaceGatedByTownsNfts(alice, permissions)
         if (!spaceId) {
             throw new Error('spaceId is undefined')
         }
@@ -114,7 +114,7 @@ describe('channel update', () => {
         const permissions = [Permission.Read, Permission.Write]
         // create a token-gated space
         await alice.fundWallet()
-        const spaceId = await createTestSpaceGatedByTownAndZionNfts(alice, permissions)
+        const spaceId = await createTestSpaceGatedByTownsNfts(alice, permissions)
         if (!spaceId) {
             throw new Error('spaceId is undefined')
         }
@@ -139,7 +139,7 @@ describe('channel update', () => {
         const newRoleName = `role${Date.now()}`
         const newPermissions = [Permission.Read, Permission.Write, Permission.Redact]
         const mockNFTAddress = getContractsInfo(alice.chainId).mockErc721aAddress
-        // test space was created with council token. replace with zioneer token
+        // test space was created with council token. replace with Towns token
         const ruleData = createExternalTokenStruct([mockNFTAddress])
         const users: string[] = []
         const newRoleId: RoleIdentifier | undefined = await alice.createRole(

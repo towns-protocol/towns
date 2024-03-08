@@ -1,8 +1,8 @@
 import { useMemo } from 'react'
-import { Channel, useZionContext } from 'use-zion-client'
+import { Channel, useTownsContext } from 'use-towns-client'
 
 export const useDmChannels = (): Channel[] => {
-    const { dmChannels } = useZionContext()
+    const { dmChannels } = useTownsContext()
     const channels = useMemo(
         () =>
             dmChannels.map((c) => {

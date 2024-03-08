@@ -9,7 +9,7 @@ import {
     useConnectivity,
     useCreateSpaceTransaction,
     useWeb3Context,
-} from 'use-zion-client'
+} from 'use-towns-client'
 import {
     MembershipStruct,
     NoopRuleData,

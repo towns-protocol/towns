@@ -1,7 +1,7 @@
 import { useCallback } from 'react'
 
 import { useQuery } from '../query/queryClient'
-import { useZionClient } from './use-zion-client'
+import { useTownsClient } from './use-towns-client'
 import { blockchainKeys } from '../query/query-keys'
 import { Permission } from '@river/web3'
 import { isAddress } from 'ethers/lib/utils'
@@ -14,7 +14,7 @@ interface Props {
 }
 
 export function useHasPermission(props: Props) {
-    const { client } = useZionClient()
+    const { client } = useTownsClient()
     const { spaceId, channelId, walletAddress, permission } = props
 
     const getHasPermission = useCallback(async () => {

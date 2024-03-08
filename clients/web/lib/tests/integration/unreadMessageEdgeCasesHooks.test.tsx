@@ -15,11 +15,11 @@ import { ChannelContextProvider } from '../../src/components/ChannelContextProvi
 import { Permission } from '@river/web3'
 import { RegisterAndJoinSpace } from './helpers/TestComponents'
 import { SpaceContextProvider } from '../../src/components/SpaceContextProvider'
-import { ZionTestApp } from './helpers/ZionTestApp'
+import { TownsTestApp } from './helpers/TownsTestApp'
 import { useChannelTimeline } from '../../src/hooks/use-channel-timeline'
 import { useFullyReadMarker } from '../../src/hooks/use-fully-read-marker'
-import { useZionClient } from '../../src/hooks/use-zion-client'
-import { useZionContext } from '../../src/components/ZionContextProvider'
+import { useTownsClient } from '../../src/hooks/use-towns-client'
+import { useTownsContext } from '../../src/components/TownsContextProvider'
 import { TestConstants } from './helpers/TestConstants'
 import { TSigner } from '../../src/types/web3-types'
 
@@ -47,8 +47,8 @@ describe('unreadMessageCountEdgeCases', () => {
 
         // create a veiw for bob
         const TestComponent = ({ signer }: { signer: TSigner }) => {
-            const { sendReadReceipt } = useZionClient()
-            const { spaceUnreads, casablancaClient } = useZionContext()
+            const { sendReadReceipt } = useTownsClient()
+            const { spaceUnreads, casablancaClient } = useTownsContext()
             const channelFullyReadMarker = useFullyReadMarker(channelId)
             const { timeline } = useChannelTimeline()
             const spaceHasUnread = spaceUnreads[spaceId]
@@ -108,13 +108,13 @@ describe('unreadMessageCountEdgeCases', () => {
         }
         // render it
         render(
-            <ZionTestApp provider={bob.provider}>
+            <TownsTestApp provider={bob.provider}>
                 <SpaceContextProvider spaceId={spaceId}>
                     <ChannelContextProvider channelId={channelId}>
                         <TestComponent signer={bob.provider.wallet} />
                     </ChannelContextProvider>
                 </SpaceContextProvider>
-            </ZionTestApp>,
+            </TownsTestApp>,
         )
 
         // get our test elements

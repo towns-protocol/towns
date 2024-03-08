@@ -8,7 +8,7 @@ import {
     ZTEvent,
     getFallbackContent,
 } from '../../../src/types/timeline-types'
-import { MessageType } from '../../../src/types/zion-types'
+import { MessageType } from '../../../src/types/towns-types'
 import {
     getIsMentioned,
     getReactionParentId,

@@ -7,9 +7,9 @@ import {
     LookupUser,
     useGetRootKeyFromLinkedWallet,
     useMyProfile,
+    useTownsClient,
     useUserLookupContext,
-    useZionClient,
-} from 'use-zion-client'
+} from 'use-towns-client'
 import { useGetUserBio } from 'hooks/useUserBio'
 import { Box, Button, Icon, Paragraph, Stack, Text } from '@ui'
 import { UserProfile } from '@components/UserProfile/UserProfile'
@@ -43,7 +43,7 @@ export const SpaceProfilePanel = (props: { children?: React.ReactNode }) => {
 }
 
 export const SpaceProfile = (props: { children?: React.ReactNode }) => {
-    const { client } = useZionClient()
+    const { client } = useTownsClient()
     const isAccountAbstractionEnabled = client?.isAccountAbstractionEnabled()
     const [search] = useSearchParams()
     const cameFromSpaceInfoPanel = search.get('spaceInfo') !== null
@@ -62,7 +62,7 @@ export const SpaceProfile = (props: { children?: React.ReactNode }) => {
         return profileIdFromPath === 'me' ? profileIdFromPath : rootKeyAddress
     }, [isAccountAbstractionEnabled, profileIdFromPath, rootKeyAddress])
 
-    const { createDMChannel } = useZionClient()
+    const { createDMChannel } = useTownsClient()
     const [modal, setModal] = useState<'wallets' | undefined>(undefined)
 
     const { requestPushPermission, simplifiedPermissionState } = usePushNotifications()

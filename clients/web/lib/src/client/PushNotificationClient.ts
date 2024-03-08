@@ -3,7 +3,7 @@ import {
     SendMessageOptions,
     isMentionedTextMessageOptions,
     isThreadIdOptions,
-} from '../types/zion-types'
+} from '../types/towns-types'
 
 import { MentionUsersRequestParams, ReplyToUsersRequestParams } from '../types/notification-types'
 

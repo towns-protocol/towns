@@ -6,15 +6,15 @@ import { fireEvent, render, screen, waitFor } from '@testing-library/react'
 
 import { RegisterWallet, TransactionInfo } from './helpers/TestComponents'
 import { SpaceContextProvider } from '../../src/components/SpaceContextProvider'
-import { ZionTestApp } from './helpers/ZionTestApp'
-import { ZionTestWeb3Provider } from './helpers/ZionTestWeb3Provider'
+import { TownsTestApp } from './helpers/TownsTestApp'
+import { TownsTestWeb3Provider } from './helpers/TownsTestWeb3Provider'
 import { makeUniqueName } from './helpers/TestUtils'
 import { useCreateSpaceTransactionWithRetries } from '../../src/hooks/use-create-space-transaction'
 import { useMultipleRoleDetails } from '../../src/hooks/use-role-details'
 import { useRoles } from '../../src/hooks/use-roles'
 import { useSpacesFromContract } from '../../src/hooks/use-spaces-from-contract'
 import { TestConstants } from './helpers/TestConstants'
-import { TransactionStatus } from '../../src/client/ZionClientTypes'
+import { TransactionStatus } from '../../src/client/TownsClientTypes'
 import {
     getTestGatingNftAddress,
     BasicRoleInfo,
@@ -24,7 +24,7 @@ import {
     ruleDataToOperations,
     OperationType,
 } from '@river/web3'
-import { useZionClient } from '../../src/hooks/use-zion-client'
+import { useTownsClient } from '../../src/hooks/use-towns-client'
 import { TSigner } from '../../src/types/web3-types'
 
 /**
@@ -33,7 +33,7 @@ import { TSigner } from '../../src/types/web3-types'
 describe('useMultipleRoleDetails', () => {
     test('create a space and get multiple role details', async () => {
         /* Arrange */
-        const provider = new ZionTestWeb3Provider()
+        const provider = new TownsTestWeb3Provider()
         const spaceNameA = makeUniqueName('alice')
         const spaceNameB = makeUniqueName('alice')
         const roleNameA = 'Role A'
@@ -56,7 +56,7 @@ describe('useMultipleRoleDetails', () => {
         await provider.mintMockNFT()
 
         render(
-            <ZionTestApp provider={provider}>
+            <TownsTestApp provider={provider}>
                 <>
                     <RegisterWallet signer={provider.wallet} />
                     <TestComponentMultiple
@@ -67,7 +67,7 @@ describe('useMultipleRoleDetails', () => {
                         signer={provider.wallet}
                     />
                 </>
-            </ZionTestApp>,
+            </TownsTestApp>,
         )
         const clientRunning = screen.getByTestId('clientRunning')
         // wait for the client to be running
@@ -227,7 +227,7 @@ function SpacesComponent(): JSX.Element {
 function MultipleRoleDetailsComponent(props: { spaceId: string; roleIds: number[] }) {
     const { data } = useMultipleRoleDetails(props.spaceId, props.roleIds)
     const [membershipTokenAddress, setMembershipTokenAddress] = React.useState<string | undefined>()
-    const { spaceDapp } = useZionClient()
+    const { spaceDapp } = useTownsClient()
 
     useEffect(() => {
         let cancel = false

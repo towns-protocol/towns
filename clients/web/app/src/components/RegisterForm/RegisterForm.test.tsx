@@ -19,9 +19,9 @@ vi.mock('react-router', async () => {
 })
 
 // useAuth deps
-vi.mock('use-zion-client', async () => {
+vi.mock('use-towns-client', async () => {
     return {
-        ...((await vi.importActual('use-zion-client')) as any),
+        ...((await vi.importActual('use-towns-client')) as any),
         useConnectivity: () => mockUseConnectivity(),
     }
 })

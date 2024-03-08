@@ -4,8 +4,8 @@ import {
     GlobalContextUserLookupProvider,
     useChannelId,
     useChannelMembers,
-    useZionClient,
-} from 'use-zion-client'
+    useTownsClient,
+} from 'use-towns-client'
 import { Panel } from '@components/Panel/Panel'
 import { Box, Button, Stack } from '@ui'
 import { InviteUserList } from '@components/InviteUserList/InviteUserList'
@@ -14,7 +14,7 @@ import { ModalContainer } from '@components/Modals/ModalContainer'
 const ChannelInvite = (props: { onClose: () => void }) => {
     const { onClose } = props
     const channel = useChannelId()
-    const { inviteUser } = useZionClient()
+    const { inviteUser } = useTownsClient()
 
     const { memberIds } = useChannelMembers()
     const currentMemberIds = useMemo(() => new Set<string>(memberIds), [memberIds])

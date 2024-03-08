@@ -76,7 +76,7 @@
       {
         "paths": [
           {
-            "name": "use-zion-client",
+            "name": "use-towns-client",
             "importNames": ["useCasablancaCredentials"],
             "message": "Please use useAuth for credentials or useMyProfile for userId."
           },
@@ -100,7 +100,7 @@
               "useWebSocketProvider",
               "useSwitchNetwork"
             ],
-            "message": "Privy does not currently support these hooks. https://docs.privy.io/guide/guides/wagmi#supported-hooks. If you need these hooks in a test then you can disable this rule in the test because ZionTestApp does not use Privy."
+            "message": "Privy does not currently support these hooks. https://docs.privy.io/guide/guides/wagmi#supported-hooks. If you need these hooks in a test then you can disable this rule in the test because TownsTestApp does not use Privy."
           }
         ]
       }

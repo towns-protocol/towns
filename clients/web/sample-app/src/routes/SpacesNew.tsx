@@ -1,6 +1,6 @@
 import React from 'react'
 import { useNavigate } from 'react-router-dom'
-import { Membership } from 'use-zion-client'
+import { Membership } from 'use-towns-client'
 import { CreateSpaceForm } from '../components/CreateSpaceForm'
 
 export const SpacesNew = () => {

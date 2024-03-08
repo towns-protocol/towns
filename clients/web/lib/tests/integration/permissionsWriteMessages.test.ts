@@ -3,13 +3,13 @@
  * @group casablanca
  */
 import {
-    createTestSpaceGatedByTownAndZionNfts,
+    createTestSpaceGatedByTownsNfts,
     registerAndStartClients,
     registerAndStartClient,
     createTestChannelWithSpaceRoles,
     waitForWithRetries,
     createTestSpaceGatedByTownNft,
-} from 'use-zion-client/tests/integration/helpers/TestUtils'
+} from 'use-towns-client/tests/integration/helpers/TestUtils'
 
 import { Permission, createExternalTokenStruct, getTestGatingNftAddress } from '@river/web3'
 import { TestConstants } from './helpers/TestConstants'
@@ -143,7 +143,7 @@ describe('write messages', () => {
         await bob.fundWallet()
 
         // create a space with token entitlement to write
-        const spaceId = await createTestSpaceGatedByTownAndZionNfts(bob, [
+        const spaceId = await createTestSpaceGatedByTownsNfts(bob, [
             Permission.Read,
             Permission.Write,
         ])
@@ -196,7 +196,7 @@ describe('write messages', () => {
         await bob.fundWallet()
 
         // create a space with token entitlement to write
-        const spaceId = await createTestSpaceGatedByTownAndZionNfts(bob, [
+        const spaceId = await createTestSpaceGatedByTownsNfts(bob, [
             Permission.Read,
             Permission.Write,
         ])

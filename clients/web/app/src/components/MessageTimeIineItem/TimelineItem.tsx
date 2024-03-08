@@ -1,5 +1,5 @@
 import React from 'react'
-import { staticAssertNever } from 'use-zion-client'
+import { staticAssertNever } from 'use-towns-client'
 import { AccumulatedRoomMemberEvent } from './items/AccumulatedMembers'
 import { TimelineChannelCreateEvent } from './items/ChannelCreated'
 import { TimelineGenericEvent } from './items/GenericItem'

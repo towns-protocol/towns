@@ -1,6 +1,6 @@
 import React, { useEffect } from 'react'
 import { useNavigate } from 'react-router'
-import { Membership, useZionClient, useZionContext } from 'use-zion-client'
+import { Membership, useTownsClient, useTownsContext } from 'use-towns-client'
 import { Box, Button, Heading, Stack, Text } from '@ui'
 import { PATHS } from 'routes'
 import { env } from 'utils'
@@ -13,8 +13,8 @@ import { WelcomeLayout } from './layouts/WelcomeLayout'
 
 export const NoJoinedSpacesFallback = () => {
     const navigate = useNavigate()
-    const { spaces } = useZionContext()
-    const { client } = useZionClient()
+    const { spaces } = useTownsContext()
+    const { client } = useTownsClient()
     const { logout } = useAuth()
 
     const spaceIdBookmark = useStore((s) => {

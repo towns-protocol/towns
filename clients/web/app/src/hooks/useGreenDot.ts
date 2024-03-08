@@ -1,4 +1,4 @@
-import { useTimelineStore } from 'use-zion-client'
+import { useTimelineStore } from 'use-towns-client'
 import { useEffect, useState } from 'react'
 import { MINUTE_MS } from 'data/constants'
 

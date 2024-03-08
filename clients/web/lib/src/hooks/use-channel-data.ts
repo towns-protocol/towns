@@ -1,4 +1,4 @@
-import { Channel, ChannelData } from '../types/zion-types'
+import { Channel, ChannelData } from '../types/towns-types'
 import { useChannelContext } from '../components/ChannelContextProvider'
 import { useMemo } from 'react'
 import { useSpaceData } from './use-space-data'

@@ -5,7 +5,7 @@ import {
     SendTextMessageOptions,
     useMyProfile,
     useUserLookupContext,
-} from 'use-zion-client'
+} from 'use-towns-client'
 import { createPortal } from 'react-dom'
 import { Box, Stack, useZLayerContext } from '@ui'
 import { RichTextEditor } from '@components/RichTextPlate/PlateEditor'

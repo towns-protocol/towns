@@ -4,7 +4,7 @@ import {
     useMyChannels,
     useSpaceData,
     useSpaceMentions,
-} from 'use-zion-client'
+} from 'use-towns-client'
 import { Mute } from '@push-notification-worker/types'
 import { useGetNotificationSettings } from 'api/lib/notificationSettings'
 

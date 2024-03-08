@@ -1,5 +1,5 @@
 import React, { useEffect, useState } from 'react'
-import { useNetworkStatus, useZionContext } from 'use-zion-client'
+import { useNetworkStatus, useTownsContext } from 'use-towns-client'
 import { usePrivyWagmi } from '@privy-io/wagmi-connector'
 import { useEmbeddedWallet } from '@towns/privy'
 import { Box, Button, Paragraph, Stack, Text, TextButton } from '@ui'
@@ -14,7 +14,7 @@ export function BetaDebugger() {
     const show = () => setIsVisible(true)
     const hide = () => setIsVisible(false)
     const { errorMessage, clearSiteData } = useClearSiteData()
-    const { clientStatus } = useZionContext()
+    const { clientStatus } = useTownsContext()
     const [mismatchedActiveWallet, setMismatchedActiveWallet] = useState(false)
     const { isOffline } = useNetworkStatus()
 

@@ -2,7 +2,7 @@
 /**
  * @group dendrite
  */
-import { Membership, RoomMember } from '../../src/types/zion-types'
+import { Membership, RoomMember } from '../../src/types/towns-types'
 import React, { useCallback } from 'react'
 import {
     createTestChannelWithSpaceRoles,
@@ -17,11 +17,11 @@ import { Permission } from '@river/web3'
 import { RegisterAndJoinSpace } from './helpers/TestComponents'
 import { SpaceContextProvider } from '../../src/components/SpaceContextProvider'
 import { ZTEvent } from '../../src/types/timeline-types'
-import { ZionTestApp } from './helpers/ZionTestApp'
-import { ZionTestWeb3Provider } from './helpers/ZionTestWeb3Provider'
+import { TownsTestApp } from './helpers/TownsTestApp'
+import { TownsTestWeb3Provider } from './helpers/TownsTestWeb3Provider'
 import { useChannelTimeline } from '../../src/hooks/use-channel-timeline'
 import { useMyProfile } from '../../src/hooks/use-my-profile'
-import { useZionClient } from '../../src/hooks/use-zion-client'
+import { useTownsClient } from '../../src/hooks/use-towns-client'
 import { TSigner } from '../../src/types/web3-types'
 import { useUserLookupContext } from '../../src/hooks/use-user-lookup-context'
 
@@ -34,7 +34,7 @@ describe('userProfileHooks', () => {
         const { alice } = await registerAndStartClients(['alice'])
 
         // create a wallet for bob
-        const bobProvider = new ZionTestWeb3Provider()
+        const bobProvider = new TownsTestWeb3Provider()
         // alice needs funds to create a space
         await alice.fundWallet()
         // create a space
@@ -58,7 +58,7 @@ describe('userProfileHooks', () => {
         })) as string
         // create a veiw for bob
         const TestUserProfile = ({ signer }: { signer: TSigner }) => {
-            const { setDisplayName, setAvatarUrl } = useZionClient()
+            const { setDisplayName, setAvatarUrl } = useTownsClient()
             const myProfile = useMyProfile()
             const { usersMap } = useUserLookupContext()
             const userId = alice.getUserId()
@@ -100,13 +100,13 @@ describe('userProfileHooks', () => {
         }
         // render it
         render(
-            <ZionTestApp provider={bobProvider}>
+            <TownsTestApp provider={bobProvider}>
                 <SpaceContextProvider spaceId={alicesSpaceId}>
                     <ChannelContextProvider channelId={alicesChannelId}>
                         <TestUserProfile signer={alice.provider.wallet} />
                     </ChannelContextProvider>
                 </SpaceContextProvider>
-            </ZionTestApp>,
+            </TownsTestApp>,
         )
         // get our test elements
         const clientRunning = screen.getByTestId('clientRunning')

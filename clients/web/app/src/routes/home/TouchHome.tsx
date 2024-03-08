@@ -15,7 +15,7 @@ import {
     useSpaceThreadRootsUnreadCount,
     useSpaceUnreadThreadMentions,
     useUserLookupContext,
-} from 'use-zion-client'
+} from 'use-towns-client'
 import { Address } from 'wagmi'
 import { Avatar } from '@components/Avatar/Avatar'
 import {

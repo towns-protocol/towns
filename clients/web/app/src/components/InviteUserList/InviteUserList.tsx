@@ -2,7 +2,7 @@ import { AnimatePresence } from 'framer-motion'
 import fuzzysort from 'fuzzysort'
 import React, { useCallback, useEffect, useState } from 'react'
 import { firstBy } from 'thenby'
-import { useMyUserId, useUser, useUserLookupContext } from 'use-zion-client'
+import { useMyUserId, useUser, useUserLookupContext } from 'use-towns-client'
 import { Avatar } from '@components/Avatar/Avatar'
 import { FadeInBox } from '@components/Transitions'
 import {

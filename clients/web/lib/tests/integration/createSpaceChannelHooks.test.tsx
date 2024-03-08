@@ -4,32 +4,32 @@
  */
 import React, { useCallback, useState } from 'react'
 import { fireEvent, render, screen, waitFor } from '@testing-library/react'
-import { ZionTestApp } from './helpers/ZionTestApp'
+import { TownsTestApp } from './helpers/TownsTestApp'
 import { RegisterWallet, TransactionInfo } from './helpers/TestComponents'
-import { ZionTestWeb3Provider } from './helpers/ZionTestWeb3Provider'
+import { TownsTestWeb3Provider } from './helpers/TownsTestWeb3Provider'
 import { makeUniqueName } from './helpers/TestUtils'
 import { useSpaceData } from '../../src/hooks/use-space-data'
 import { useMyChannels } from '../../src/hooks/use-my-channels'
 import { useCreateSpaceTransactionWithRetries } from '../../src/hooks/use-create-space-transaction'
 import { useCreateChannelTransaction } from '../../src/hooks/use-create-channel-transaction'
-import { CreateChannelInfo } from '../../src/types/zion-types'
+import { CreateChannelInfo } from '../../src/types/towns-types'
 import { SpaceContextProvider } from '../../src/components/SpaceContextProvider'
 import { TestConstants } from './helpers/TestConstants'
 import { NoopRuleData, createMembershipStruct } from '@river/web3'
-import { useZionClient } from '../../src/hooks/use-zion-client'
+import { useTownsClient } from '../../src/hooks/use-towns-client'
 
 /// regression, channels weren't showing in sidebar after they were created
 describe('createSpaceChannelHooks', () => {
     test('test that channels render after creation', async () => {
         // create a wallet for bob
-        const aliceProvider = new ZionTestWeb3Provider()
+        const aliceProvider = new TownsTestWeb3Provider()
         // add funds
         await aliceProvider.fundWallet()
         await aliceProvider.mintMockNFT()
 
         // create a veiw for bob
         const TestComponent = () => {
-            const { leaveRoom } = useZionClient()
+            const { leaveRoom } = useTownsClient()
             const spaceTransaction = useCreateSpaceTransactionWithRetries()
             const { createSpaceTransactionWithRetries } = spaceTransaction
             const channelTransaction = useCreateChannelTransaction()
@@ -107,11 +107,11 @@ describe('createSpaceChannelHooks', () => {
         }
         // render it
         render(
-            <ZionTestApp provider={aliceProvider}>
+            <TownsTestApp provider={aliceProvider}>
                 <SpaceContextProvider spaceId={undefined}>
                     <TestComponent />
                 </SpaceContextProvider>
-            </ZionTestApp>,
+            </TownsTestApp>,
         )
         // get our test elements
         const clientRunning = screen.getByTestId('clientRunning')

@@ -1,4 +1,4 @@
-import { SpaceData } from '../../src/types/zion-types'
+import { SpaceData } from '../../src/types/towns-types'
 
 export const mockSpaceData: SpaceData = {
     id: 'mockSpaceId',

@@ -2,7 +2,7 @@
 
 import { IArchitectBase, NoopOperation, Permission } from '@river/web3'
 import ethers from 'ethers'
-import { ZionTestClient } from '../tests/integration/helpers/ZionTestClient'
+import { TownsTestClient } from '../tests/integration/helpers/TownsTestClient'
 import { Wallet } from 'ethers'
 import fs from 'fs'
 
@@ -13,7 +13,7 @@ import fs from 'fs'
  * - WARNING: Make sure ETHERS_NETWORK, CASABLANCA_SERVER_URL, WALLET_PRIVATE_KEY and CHAIN_ID env vars are set before running this jest script
  *
  * Workflow:
- * 1) Creates a zion test client with the provided private key from the environment
+ * 1) Creates a Towns test client with the provided private key from the environment
  * 2) Checks if the user is registered, if not, registers the user
  * 3) Creates a public dev town with the current month and day in the name (i.e Dev Town - October 27th)
  * 4) Writes the invite link to a file in the root of the project (inviteLink.txt)
@@ -35,7 +35,7 @@ test('create dev town', async () => {
         throw new Error('CHAIN_ID env var is not set')
     }
 
-    const harmonyHotWallet = new ZionTestClient(
+    const harmonyHotWallet = new TownsTestClient(
         parseInt(CHAIN_ID, 10),
         'harmonyHotWallet',
         undefined,
@@ -55,7 +55,7 @@ test('create dev town', async () => {
     fs.writeFileSync('inviteLink.txt', inviteLink)
 }) // end test
 
-export async function createDevTown(client: ZionTestClient): Promise<string | undefined> {
+export async function createDevTown(client: TownsTestClient): Promise<string | undefined> {
     if (!client.walletAddress) {
         throw new Error('client.walletAddress is undefined')
     }

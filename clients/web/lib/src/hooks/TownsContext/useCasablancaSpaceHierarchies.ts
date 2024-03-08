@@ -1,6 +1,6 @@
 import { useEffect, useState } from 'react'
 import { Client as CasablancaClient } from '@river/sdk'
-import { SpaceHierarchies, SpaceHierarchy } from 'types/zion-types'
+import { SpaceHierarchies, SpaceHierarchy } from 'types/towns-types'
 import { isSpaceStreamId } from '@river/sdk'
 
 export function useCasablancaSpaceHierarchies(

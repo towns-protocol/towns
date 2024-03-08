@@ -1,14 +1,14 @@
 import { render, screen } from '@testing-library/react'
 import React from 'react'
-import { SpaceContext, ZionContext } from 'use-zion-client'
-import { UserLookupContext } from 'use-zion-client/dist/components/UserLookupContext'
+import { SpaceContext, TownsContext } from 'use-towns-client'
+import { UserLookupContext } from 'use-towns-client/dist/components/UserLookupContext'
 import { describe, expect, test } from 'vitest'
 import { RichTextEditor } from './RichTextEditor'
 
 const Wrapper = (props: { children?: React.ReactNode }) => {
     const spaceId = ''
     return (
-        <ZionContext.Provider
+        <TownsContext.Provider
             value={{
                 rooms: {},
                 spaceUnreads: {},
@@ -31,7 +31,7 @@ const Wrapper = (props: { children?: React.ReactNode }) => {
             >
                 <SpaceContext.Provider value={{ spaceId }}>{props.children}</SpaceContext.Provider>
             </UserLookupContext.Provider>
-        </ZionContext.Provider>
+        </TownsContext.Provider>
     )
 }
 

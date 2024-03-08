@@ -2,9 +2,9 @@ import {
     LookupUser,
     ZTEvent,
     useTimelineStore,
+    useTownsContext,
     useUserLookupContext,
-    useZionContext,
-} from 'use-zion-client'
+} from 'use-towns-client'
 import { isEqual } from 'lodash'
 import { useCallback } from 'react'
 import { notUndefined } from 'ui/utils/utils'
@@ -56,7 +56,7 @@ export const useExtractMessageAttachments = (params: { text: string }) => {
 
 const useCreateStaticInfo = () => {
     const { usersMap } = useUserLookupContext()
-    const { spaces } = useZionContext()
+    const { spaces } = useTownsContext()
 
     const createStaticInfo = useCallback(
         ({ spaceId, userId }: { spaceId: string; channelId: string; userId: string }) => {

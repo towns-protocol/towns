@@ -6,7 +6,7 @@ import {
     useMyProfile,
     useTimelineThread,
     useUserLookupContext,
-} from 'use-zion-client'
+} from 'use-towns-client'
 import { MessageTimeline } from '@components/MessageTimeline/MessageTimeline'
 import { MessageTimelineWrapper } from '@components/MessageTimeline/MessageTimelineContext'
 import { RichTextEditor } from '@components/RichTextPlate/PlateEditor'

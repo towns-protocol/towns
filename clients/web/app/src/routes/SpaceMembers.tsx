@@ -1,5 +1,5 @@
 import React from 'react'
-import { useSpaceMembers } from 'use-zion-client'
+import { useSpaceMembers } from 'use-towns-client'
 import { MembersPage } from '@components/MembersPage/MembersPage'
 
 export const SpaceMembers = () => {

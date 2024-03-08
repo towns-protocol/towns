@@ -13,8 +13,8 @@ import {
     PayloadCaseType,
 } from '@river/proto'
 import { PlainMessage } from '@bufbuild/protobuf'
-import { Channel, Membership, Mention, MessageType } from './zion-types'
-import { staticAssertNever } from '../utils/zion-utils'
+import { Channel, Membership, Mention, MessageType } from './towns-types'
+import { staticAssertNever } from '../utils/towns-utils'
 import { DecryptedContentError, isDefined } from '@river/sdk'
 
 /**************************************************************************
@@ -40,7 +40,7 @@ export enum EventStatus {
     CANCELLED = 'cancelled',
 }
 
-// Zion Timeline Event
+// Towns Timeline Event
 export enum ZTEvent {
     BlockchainTransaction = 'blockchain.transaction',
     MiniblockHeader = 'm.miniblockheader',

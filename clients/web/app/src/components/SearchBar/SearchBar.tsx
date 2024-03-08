@@ -4,9 +4,9 @@ import {
     useSpaceData,
     useSpaceId,
     useTimelineStore,
+    useTownsContext,
     useUserLookupContext,
-    useZionContext,
-} from 'use-zion-client'
+} from 'use-towns-client'
 import { AnimatePresence } from 'framer-motion'
 import { Box, Divider, Icon, Paragraph, Stack, TextField } from '@ui'
 import { useSearch } from 'hooks/useSearch'
@@ -144,7 +144,7 @@ const SearchResults = (props: { onHide: () => void; searchResults: CombinedResul
     const spaceId = useSpaceId()
     const channels = useSpaceChannels()
     const dmChannels = useDmChannels()
-    const { dmChannels: dmChannelIds } = useZionContext()
+    const { dmChannels: dmChannelIds } = useTownsContext()
 
     const { users: members } = useUserLookupContext()
     const { threadsStats } = useTimelineStore(({ threadsStats }) => ({

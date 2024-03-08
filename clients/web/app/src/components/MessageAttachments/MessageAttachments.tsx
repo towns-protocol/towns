@@ -4,7 +4,7 @@ import {
     ChunkedMediaAttachment,
     EmbeddedMessageAttachment,
     MessageType,
-} from 'use-zion-client'
+} from 'use-towns-client'
 import { ChunkedFile } from '@components/ChunkedFile/ChunkedFile'
 import { EmbeddedMessage } from '@components/EmbeddedMessageAttachement/EmbeddedMessage'
 import { Stack } from '@ui'

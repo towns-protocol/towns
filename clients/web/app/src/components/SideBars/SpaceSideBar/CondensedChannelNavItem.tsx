@@ -4,7 +4,7 @@ import {
     DMChannelIdentifier,
     useDMLatestMessage,
     useMyUserId,
-} from 'use-zion-client'
+} from 'use-towns-client'
 import {
     DirectMessageIcon,
     DirectMessageName,

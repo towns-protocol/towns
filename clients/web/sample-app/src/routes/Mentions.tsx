@@ -1,5 +1,5 @@
 import { Divider, List, ListItem } from '@mui/material'
-import { MentionResult, ZTEvent, useSpaceId, useSpaceMentions } from 'use-zion-client'
+import { MentionResult, ZTEvent, useSpaceId, useSpaceMentions } from 'use-towns-client'
 import React, { useCallback } from 'react'
 
 import { useNavigate } from 'react-router-dom'

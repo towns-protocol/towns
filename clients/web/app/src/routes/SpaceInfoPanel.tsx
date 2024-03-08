@@ -12,9 +12,9 @@ import {
     useSpaceData,
     useSpaceId,
     useSpaceMembers,
+    useTownsClient,
     useUser,
-    useZionClient,
-} from 'use-zion-client'
+} from 'use-towns-client'
 import { ClipboardCopy } from '@components/ClipboardCopy/ClipboardCopy'
 import { ButtonSpinner } from '@components/Login/LoginButton/Spinner/ButtonSpinner'
 import { MembersPageTouchModal } from '@components/MembersPage/MembersPage'
@@ -72,7 +72,7 @@ export const SpaceInfoPanel = () => {
     const isRolesPanel = !isTouch && searchParams.get('roles') != null
     const { createLink } = useCreateLink()
 
-    const { leaveRoom } = useZionClient()
+    const { leaveRoom } = useTownsClient()
     const channels = useSpaceChannels()
     const { loggedInWalletAddress } = useAuth()
 

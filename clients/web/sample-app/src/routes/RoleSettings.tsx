@@ -2,7 +2,7 @@ import React, { useCallback, useState } from 'react'
 
 export enum MembershipRequirement {
     Everyone = 'Everyone',
-    ZionToken = 'ZionNFT',
+    TownsToken = 'TownsNFT',
 }
 
 interface Props {
@@ -21,9 +21,9 @@ export function RoleSettings(props: Props): JSX.Element {
                     setMembershipRequirement(MembershipRequirement.Everyone)
                     props.onChangeValue(MembershipRequirement.Everyone)
                     break
-                case MembershipRequirement.ZionToken:
-                    setMembershipRequirement(MembershipRequirement.ZionToken)
-                    props.onChangeValue(MembershipRequirement.ZionToken)
+                case MembershipRequirement.TownsToken:
+                    setMembershipRequirement(MembershipRequirement.TownsToken)
+                    props.onChangeValue(MembershipRequirement.TownsToken)
                     break
                 default:
                     console.error('Unknown membership requirement')
@@ -48,11 +48,11 @@ export function RoleSettings(props: Props): JSX.Element {
                 <input
                     readOnly
                     type="radio"
-                    value={MembershipRequirement.ZionToken}
+                    value={MembershipRequirement.TownsToken}
                     name="membershipRequirement"
-                    checked={membershipRequirement === MembershipRequirement.ZionToken}
+                    checked={membershipRequirement === MembershipRequirement.TownsToken}
                 />{' '}
-                Zion NFT
+                Towns NFT
             </fieldset>
         </div>
     )

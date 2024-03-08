@@ -1,6 +1,6 @@
 import React, { useCallback } from 'react'
 import { useNavigate } from 'react-router'
-import { useZionClient } from 'use-zion-client'
+import { useTownsClient } from 'use-towns-client'
 import { PATHS } from 'routes'
 import { Box, Card } from '@ui'
 import { useCardOpenerContext } from 'ui/components/Overlay/CardOpenerContext'
@@ -15,10 +15,10 @@ export const SpaceSettingsCard = (props: Props) => {
 
     const { closeCard } = useCardOpenerContext()
 
-    const { leaveRoom } = useZionClient()
+    const { leaveRoom } = useTownsClient()
     const onLeaveClick = useCallback(async () => {
         await leaveRoom(spaceId)
-        // TODO: this is a hack to wait for leave to propogate and update useZionContext().spaces
+        // TODO: this is a hack to wait for leave to propogate and update useTownsContext().spaces
         // if you leave a space and navigate back to NoJoinedSpacesFallback, this space you are leaving still shows up
         setTimeout(() => {
             navigate('/')

@@ -1,4 +1,4 @@
-import { RoomMember } from './zion-types'
+import { RoomMember } from './towns-types'
 
 export type LookupUserMap = { [key: string]: LookupUser }
 

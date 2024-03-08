@@ -3,11 +3,11 @@ import {
     BlockchainStoreTransactions,
     BlockchainStoreTx,
 } from '../client/BlockchainTransactionStore'
-import { useZionClient } from '../hooks/use-zion-client'
+import { useTownsClient } from '../hooks/use-towns-client'
 
 export const useTransactionStore = () => {
     const [transactions, setTransactions] = useState<BlockchainStoreTransactions>({})
-    const { client } = useZionClient()
+    const { client } = useTownsClient()
     useEffect(() => {
         const handleChange = (transactions: BlockchainStoreTransactions) => {
             setTransactions(transactions)
@@ -24,7 +24,7 @@ export const useTransactionStore = () => {
 }
 
 export const useOnTransactionUpdated = (callback: (args: BlockchainStoreTx) => void) => {
-    const { client } = useZionClient()
+    const { client } = useTownsClient()
     const cbRef = useRef(callback)
     cbRef.current = callback
 

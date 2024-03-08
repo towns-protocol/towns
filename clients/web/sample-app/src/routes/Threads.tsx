@@ -1,7 +1,7 @@
 import { Divider, List, ListItem } from '@mui/material'
 import React, { useCallback } from 'react'
 import { useNavigate } from 'react-router-dom'
-import { ThreadResult, useSpaceId, useSpaceThreadRoots } from 'use-zion-client'
+import { ThreadResult, useSpaceId, useSpaceThreadRoots } from 'use-towns-client'
 
 export function Threads(): JSX.Element {
     const spaceId = useSpaceId()

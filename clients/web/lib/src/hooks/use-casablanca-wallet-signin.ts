@@ -1,7 +1,7 @@
 import { ethers } from 'ethers'
 import { useCallback } from 'react'
 import { useCredentialStore } from '../store/use-credential-store'
-import { useZionContext } from '../components/ZionContextProvider'
+import { useTownsContext } from '../components/TownsContextProvider'
 import { useCasablancaStore } from '../store/use-casablanca-store'
 import { LoginStatus } from './login'
 import { bin_toHexString } from '@river/dlog'
@@ -9,7 +9,7 @@ import { TSigner, Address } from '../types/web3-types'
 import { SignerUndefinedError } from '../types/error-types'
 
 export function useCasablancaWalletSignIn() {
-    const { clientSingleton } = useZionContext()
+    const { clientSingleton } = useTownsContext()
     const { setCasablancaCredentials } = useCredentialStore()
     const { setLoginError, setLoginStatus } = useCasablancaStore()
 
@@ -21,7 +21,7 @@ export function useCasablancaWalletSignIn() {
     const loginWithWalletToCasablanca = useCallback(
         async (_statement: string, signer: TSigner) => {
             if (!clientSingleton) {
-                throw new Error('Zion client not initialized')
+                throw new Error('Towns client not initialized')
             }
             if (!signer) {
                 throw new SignerUndefinedError()

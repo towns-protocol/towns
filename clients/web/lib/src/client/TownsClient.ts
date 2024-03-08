@@ -16,16 +16,16 @@ import {
     ChannelTransactionContext,
     ChannelUpdateTransactionContext,
     CreateSpaceTransactionContext,
-    IZionServerVersions,
+    ITownsServerVersions,
     RoleTransactionContext,
     TransactionContext,
     TransactionStatus,
     WalletLinkTransactionContext,
-    ZionClientEventHandlers,
-    ZionOpts,
+    TownsClientEventHandlers,
+    TownsOpts,
     createTransactionContext,
     logTxnResult,
-} from './ZionClientTypes'
+} from './TownsClientTypes'
 import {
     CreateChannelInfo,
     CreateSpaceInfo,
@@ -37,13 +37,13 @@ import {
     StreamView,
     UpdateChannelInfo,
     toMembership,
-} from '../types/zion-types'
+} from '../types/towns-types'
 import { SignerContext } from '@river/sdk'
 import { PushNotificationClient } from './PushNotificationClient'
 import { SignerUndefinedError } from '../types/error-types'
 import { makeUniqueChannelStreamId } from '@river/sdk'
 import { makeUniqueSpaceStreamId } from '@river/sdk'
-import { staticAssertNever } from '../utils/zion-utils'
+import { staticAssertNever } from '../utils/towns-utils'
 import { toUtf8String } from 'ethers/lib/utils.js'
 import { toStreamView } from './casablanca/CasablancaUtils'
 import {
@@ -59,34 +59,34 @@ import { UserOps, getTransactionHashOrUserOpHash, isUserOpResponse } from '@town
 import AnalyticsService, { AnalyticsEvents } from '../utils/analyticsService'
 
 /***
- * Zion Client
+ * Towns Client
  * for calls that originate from a roomIdentifier, or for createing new rooms
- * the zion client will:
+ * the Towns client will:
  * - always encrypt
  * - enforce space / channel relationships
  * - get user wallet info
  * - go to the blockchain when creating a space
  * - go to the blockchain when updating power levels
  * - etc
- * the zion client will wrap the underlying river client and
+ * the Towns client will wrap the underlying river client and
  * ensure correct protocol business logic
  */
 
-export class ZionClient implements EntitlementsDelegate {
-    public readonly opts: ZionOpts
+export class TownsClient implements EntitlementsDelegate {
+    public readonly opts: TownsOpts
     public readonly name: string
     public spaceDapp: ISpaceDapp
     public blockchainTransactionStore: BlockchainTransactionStore
     protected casablancaClient?: CasablancaClient
     private _signerContext?: SignerContext
-    protected _eventHandlers?: ZionClientEventHandlers
+    protected _eventHandlers?: TownsClientEventHandlers
     private pushNotificationClient?: PushNotificationClient
     private userOps: UserOps | undefined = undefined
 
-    constructor(opts: ZionOpts, name?: string) {
+    constructor(opts: TownsOpts, name?: string) {
         this.opts = opts
         this.name = name || Math.random().toString(36).substring(7)
-        console.log('~~~ new ZionClient ~~~', this.name, this.opts)
+        console.log('~~~ new TownsClient ~~~', this.name, this.opts)
         AnalyticsService.getInstance().trackEventOnce(AnalyticsEvents.ClientWrapperCreated)
         this.spaceDapp = createSpaceDapp({
             chainId: opts.chainId,
@@ -139,7 +139,7 @@ export class ZionClient implements EntitlementsDelegate {
             versions: [],
             unstable_features: {},
             release_version: '0.0.0',
-        } satisfies IZionServerVersions
+        } satisfies ITownsServerVersions
     }
 
     /************************************************
@@ -1790,7 +1790,7 @@ export class ZionClient implements EntitlementsDelegate {
         }
     }
 
-    public setEventHandlers(eventHandlers: ZionClientEventHandlers | undefined) {
+    public setEventHandlers(eventHandlers: TownsClientEventHandlers | undefined) {
         this._eventHandlers = eventHandlers
     }
 

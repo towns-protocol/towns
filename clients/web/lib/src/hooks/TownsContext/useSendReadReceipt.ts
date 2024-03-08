@@ -1,9 +1,9 @@
 import { useCallback } from 'react'
 import { FullyReadMarker } from '@river/proto'
 import { useFullyReadMarkerStore } from '../../store/use-fully-read-marker-store'
-import { ZionClient } from '../../client/ZionClient'
+import { TownsClient } from '../../client/TownsClient'
 
-export function useSendReadReceipt(client: ZionClient | undefined) {
+export function useSendReadReceipt(client: TownsClient | undefined) {
     return useCallback(
         async (marker: FullyReadMarker, isUnread = false) => {
             if (!client) {

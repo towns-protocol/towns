@@ -1,6 +1,6 @@
 import { useEffect, useMemo } from 'react'
 import { Badger } from '../../utils/Badger'
-import { useZionContext } from '../../components/ZionContextProvider'
+import { useTownsContext } from '../../components/TownsContextProvider'
 
 declare const navigator: Navigator & {
     setAppBadge?: (count?: number) => void
@@ -28,7 +28,7 @@ const getBadgeCount = (
 }
 
 export function useBadgeStatus() {
-    const { spaceUnreads, spaceMentions, dmUnreadChannelIds } = useZionContext()
+    const { spaceUnreads, spaceMentions, dmUnreadChannelIds } = useTownsContext()
     return useMemo(
         () => getBadgeCount([], spaceUnreads, spaceMentions, dmUnreadChannelIds),
         [spaceMentions, spaceUnreads, dmUnreadChannelIds],

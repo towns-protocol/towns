@@ -7,9 +7,9 @@ import {
     useChannelData,
     useChannelMembers,
     useMyUserId,
+    useTownsClient,
     useUserLookupContext,
-    useZionClient,
-} from 'use-zion-client'
+} from 'use-towns-client'
 import { isGDMChannelStreamId } from '@river/sdk'
 import Sheet from 'react-modal-sheet'
 import { ClipboardCopy } from '@components/ClipboardCopy/ClipboardCopy'
@@ -32,7 +32,7 @@ import { ChannelInviteModal } from './ChannelInvitePanel'
 export const ChannelDirectoryPanel = () => {
     const { channel } = useChannelData()
     const navigate = useNavigate()
-    const { client } = useZionClient()
+    const { client } = useTownsClient()
 
     const [pendingRemovalUserId, setPendingRemovalUserId] = React.useState<string | undefined>(
         undefined,
@@ -121,7 +121,7 @@ const ChannelMembers = (props: {
 
 export const ChannelMembersModal = (props: { onHide: () => void }) => {
     const { channel } = useChannelData()
-    const { client } = useZionClient()
+    const { client } = useTownsClient()
 
     const canAddMembers = channel?.id ? isGDMChannelStreamId(channel.id) : false
     const canRemoveMembers = channel?.id ? isGDMChannelStreamId(channel.id) : false

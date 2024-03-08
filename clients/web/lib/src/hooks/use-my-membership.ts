@@ -1,6 +1,6 @@
 import { useEffect, useState } from 'react'
-import { useZionContext } from '../components/ZionContextProvider'
-import { Membership, toMembership } from '../types/zion-types'
+import { useTownsContext } from '../components/TownsContextProvider'
+import { Membership, toMembership } from '../types/towns-types'
 import { useCasablancaStream } from './CasablancClient/useCasablancaStream'
 
 /**
@@ -11,7 +11,7 @@ import { useCasablancaStream } from './CasablancClient/useCasablancaStream'
  * @returns Membership
  */
 export function useMyMembership(streamId?: string): Membership {
-    const { casablancaClient } = useZionContext()
+    const { casablancaClient } = useTownsContext()
     const userStream = useCasablancaStream(casablancaClient?.userStreamId)
     const [membership, setMembership] = useState<Membership>(Membership.None)
 

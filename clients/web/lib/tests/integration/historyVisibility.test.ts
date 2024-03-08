@@ -13,7 +13,7 @@ import {
     registerAndStartClients,
     waitForWithRetries,
 } from './helpers/TestUtils'
-import { ZionTestClient } from './helpers/ZionTestClient'
+import { TownsTestClient } from './helpers/TownsTestClient'
 
 describe('historyVisibility', () => {
     test('create public room, send message, join second user, read message', async () => {
@@ -99,7 +99,7 @@ describe('historyVisibility', () => {
         })
 
         // create a new client with same wallet, but different deviceId/auth
-        const alice2 = new ZionTestClient(alice.chainId, 'alice2', alice.props, alice.wallet)
+        const alice2 = new TownsTestClient(alice.chainId, 'alice2', alice.props, alice.wallet)
 
         await alice2.loginWalletAndStartClient()
 
@@ -119,7 +119,7 @@ describe('historyVisibility', () => {
         await john.logout()
 
         // have alice log into yet another client, see if she will share keys with herself
-        const alice3 = new ZionTestClient(alice.chainId, 'alice3', alice.props, alice.wallet)
+        const alice3 = new TownsTestClient(alice.chainId, 'alice3', alice.props, alice.wallet)
 
         await alice3.loginWalletAndStartClient()
 

@@ -1,5 +1,5 @@
 import React, { useCallback } from 'react'
-import { useSpaceData, useZionClient } from 'use-zion-client'
+import { useSpaceData, useTownsClient } from 'use-towns-client'
 import { useNavigate } from 'react-router-dom'
 
 import { InviteForm } from '../components/InviteForm'
@@ -7,7 +7,7 @@ import { InviteForm } from '../components/InviteForm'
 export function SpaceInvite() {
     const space = useSpaceData()
     const navigate = useNavigate()
-    const { inviteUser } = useZionClient()
+    const { inviteUser } = useTownsClient()
 
     const onClickSendInvite = useCallback(
         async (spaceId: string, inviteeId: string) => {

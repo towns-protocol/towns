@@ -1,6 +1,6 @@
 import React, { useEffect, useState } from 'react'
 import { firstBy } from 'thenby'
-import { DMChannelIdentifier } from 'use-zion-client'
+import { DMChannelIdentifier } from 'use-towns-client'
 import { Box, BoxProps, Paragraph, Stack } from '@ui'
 import { useDevice } from 'hooks/useDevice'
 import { DirectMessageRowContent } from '../DirectMessageListItem'

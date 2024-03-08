@@ -1,6 +1,6 @@
 import { TDescendant } from '@udecode/plate-common'
 import { ELEMENT_MENTION, TMentionElement } from '@udecode/plate-mention'
-import { Mention } from 'use-zion-client'
+import { Mention } from 'use-towns-client'
 
 export type MyMentionElement = TDescendant &
     TMentionElement & { userId: string; children: MyMentionElement }

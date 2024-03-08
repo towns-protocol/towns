@@ -1,20 +1,20 @@
 import { useEffect, useMemo, useRef, useState } from 'react'
-import { useZionContext } from '../components/ZionContextProvider'
-import { Room } from '../types/zion-types'
+import { useTownsContext } from '../components/TownsContextProvider'
+import { Room } from '../types/towns-types'
 import isEqual from 'lodash/isEqual'
 
 export function useRoom(roomId?: string): Room | undefined {
-    const { rooms } = useZionContext()
+    const { rooms } = useTownsContext()
     return useMemo(() => (roomId ? rooms[roomId] : undefined), [roomId, rooms])
 }
 
 export function useRoomWithStreamId(streamId?: string): Room | undefined {
-    const { rooms } = useZionContext()
+    const { rooms } = useTownsContext()
     return useMemo(() => (streamId ? rooms[streamId] : undefined), [streamId, rooms])
 }
 
 export function useRoomNames(roomIds: string[]): Record<string, string> {
-    const { rooms } = useZionContext()
+    const { rooms } = useTownsContext()
     const roomIdsRef = useRef<string[]>([])
     const [stableRooms, setStableRooms] = useState<Record<string, string>>(() =>
         updateRoomNames(roomIds, rooms),

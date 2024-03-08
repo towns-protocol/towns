@@ -2,7 +2,7 @@ import {
     SignerUndefinedError,
     WalletDoesNotMatchSignedInAccountError,
     useCasablancaStore,
-} from 'use-zion-client'
+} from 'use-towns-client'
 
 import { WalletAlreadyLinkedError, WalletNotLinkedError } from '@river/web3'
 

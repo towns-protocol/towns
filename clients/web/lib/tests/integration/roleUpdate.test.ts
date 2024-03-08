@@ -4,10 +4,10 @@
 import {
     assertRoleEquals,
     createTestSpaceGatedByTownNft,
-    createTestSpaceGatedByTownAndZionNfts,
+    createTestSpaceGatedByTownsNfts,
     findRoleByName,
     registerAndStartClients,
-} from 'use-zion-client/tests/integration/helpers/TestUtils'
+} from 'use-towns-client/tests/integration/helpers/TestUtils'
 import { ContractReceipt } from 'ethers'
 import { TestConstants } from './helpers/TestConstants'
 import { RoleDetails } from '../../src/types/web3-types'
@@ -62,7 +62,7 @@ describe('update role', () => {
         /** Arrange */
         const { alice } = await registerAndStartClients(['alice'])
         await alice.fundWallet()
-        const roomId = await createTestSpaceGatedByTownAndZionNfts(alice, [Permission.Ban])
+        const roomId = await createTestSpaceGatedByTownsNfts(alice, [Permission.Ban])
         if (!roomId) {
             throw new Error('roomId is undefined')
         }
@@ -114,7 +114,7 @@ describe('update role', () => {
         /** Arrange */
         const { alice } = await registerAndStartClients(['alice'])
         await alice.fundWallet()
-        const roomId = await createTestSpaceGatedByTownAndZionNfts(alice, [
+        const roomId = await createTestSpaceGatedByTownsNfts(alice, [
             Permission.Read,
             Permission.Write,
         ])
@@ -208,7 +208,7 @@ describe('update role', () => {
         /** Arrange */
         const { alice } = await registerAndStartClients(['alice'])
         await alice.fundWallet()
-        const roomId = await createTestSpaceGatedByTownAndZionNfts(alice, [
+        const roomId = await createTestSpaceGatedByTownsNfts(alice, [
             Permission.Read,
             Permission.Write,
         ])

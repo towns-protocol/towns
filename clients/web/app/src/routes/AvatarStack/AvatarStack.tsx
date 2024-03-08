@@ -1,7 +1,7 @@
 import React from 'react'
 import { Link } from 'react-router-dom'
 import { AnimatePresence, LayoutGroup } from 'framer-motion'
-import { Address } from 'use-zion-client'
+import { Address } from 'use-towns-client'
 import { useCreateLink } from 'hooks/useCreateLink'
 import { useDevice } from 'hooks/useDevice'
 import { avatarSizes } from 'components/Avatar/avatarProperties.css'

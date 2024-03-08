@@ -9,7 +9,7 @@ import type {
 
 import { DecoratorNode } from 'lexical'
 import React from 'react'
-import { Channel } from 'use-zion-client'
+import { Channel } from 'use-towns-client'
 import { ChannelLink } from '@components/RichTextPlate/components/ChannelLink'
 
 export type SerializedChannelMentionNode = Spread<

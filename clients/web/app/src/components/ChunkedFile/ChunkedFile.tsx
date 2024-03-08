@@ -1,6 +1,6 @@
 import React, { useCallback, useEffect, useMemo, useState } from 'react'
-import { useChunkedMedia } from 'use-zion-client'
-import { useDownloadFile } from 'use-zion-client/dist/hooks/use-chunked-media'
+import { useChunkedMedia } from 'use-towns-client'
+import { useDownloadFile } from 'use-towns-client/dist/hooks/use-chunked-media'
 import { Box, Button, Icon, IconButton, Stack, Text } from '@ui'
 import { isMediaMimeType } from 'utils/isMediaMimeType'
 import { useDevice } from 'hooks/useDevice'

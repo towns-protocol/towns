@@ -1,7 +1,7 @@
 import { ReactQueryDevtools } from '@tanstack/react-query-devtools'
 import React, { useEffect, useRef, useState } from 'react'
 import { matchPath, useNavigate } from 'react-router'
-import { ZTEvent, ZionContextProvider } from 'use-zion-client'
+import { TownsContextProvider, ZTEvent } from 'use-towns-client'
 import { Helmet } from 'react-helmet'
 import { EmbeddedSignerContextProvider } from '@towns/privy'
 import { isDefined } from '@river/sdk'
@@ -82,7 +82,7 @@ export const App = () => {
     const accountAbstractionConfig = useAccountAbstractionConfig(environment.chainId)
 
     return (
-        <ZionContextProvider
+        <TownsContextProvider
             mutedChannelIds={mutedChannelIds}
             casablancaServerUrl={environment.casablancaUrl}
             chain={environment.chain}
@@ -125,7 +125,7 @@ export const App = () => {
                     <ServiceWorkerMetadataSyncer />
                 </AuthContextProvider>
             </EmbeddedSignerContextProvider>
-        </ZionContextProvider>
+        </TownsContextProvider>
     )
 }
 

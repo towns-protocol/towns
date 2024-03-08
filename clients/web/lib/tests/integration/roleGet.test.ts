@@ -4,10 +4,10 @@
 import {
     assertRoleEquals,
     createTestSpaceGatedByTownNft,
-    createTestSpaceGatedByTownAndZionNfts,
+    createTestSpaceGatedByTownsNfts,
     findRoleByName,
     registerAndStartClients,
-} from 'use-zion-client/tests/integration/helpers/TestUtils'
+} from 'use-towns-client/tests/integration/helpers/TestUtils'
 
 import { RoleIdentifier } from '../../src/types/web3-types'
 import { TestConstants } from './helpers/TestConstants'
@@ -18,7 +18,7 @@ describe('get role details', () => {
         /** Arrange */
         const { alice } = await registerAndStartClients(['alice'])
         await alice.fundWallet()
-        const roomId = await createTestSpaceGatedByTownAndZionNfts(alice, [Permission.Read])
+        const roomId = await createTestSpaceGatedByTownsNfts(alice, [Permission.Read])
         if (!roomId) {
             throw new Error('roomId is undefined')
         }
@@ -56,7 +56,7 @@ describe('get role details', () => {
         /** Arrange */
         const { alice } = await registerAndStartClients(['alice'])
         await alice.fundWallet()
-        const roomId = await createTestSpaceGatedByTownAndZionNfts(alice, [Permission.Read])
+        const roomId = await createTestSpaceGatedByTownsNfts(alice, [Permission.Read])
         if (!roomId) {
             throw new Error('roomId is undefined')
         }
@@ -111,15 +111,15 @@ describe('get role details', () => {
         const { alice } = await registerAndStartClients(['alice'])
         await alice.fundWallet()
         const permissions = [Permission.Read, Permission.Write]
-        const spaceId = await createTestSpaceGatedByTownAndZionNfts(alice, permissions)
+        const spaceId = await createTestSpaceGatedByTownsNfts(alice, permissions)
         if (!spaceId) {
             throw new Error('roomId is undefined')
         }
 
         /** Act */
-        // minter role is created with a JoinTown permission, and is gated by any tokens passed in the createTestSpaceGatedByTownAndZionNfts requirements config
+        // minter role is created with a JoinTown permission, and is gated by any tokens passed in the createTestSpaceGatedByTownsNfts requirements config
         const minterRole = await findRoleByName(alice, spaceId, 'Minter')
-        // member role is created with the permissions passed in to createTestSpaceGatedByTownAndZionNfts, and is gated by the membership token
+        // member role is created with the permissions passed in to createTestSpaceGatedByTownsNfts, and is gated by the membership token
         const memberRole = await findRoleByName(alice, spaceId, 'Member')
 
         /** Assert */
@@ -201,7 +201,7 @@ describe('get role details', () => {
         /** Arrange */
         const { alice } = await registerAndStartClients(['alice'])
         await alice.fundWallet()
-        const roomId = await createTestSpaceGatedByTownAndZionNfts(alice, [Permission.Read])
+        const roomId = await createTestSpaceGatedByTownsNfts(alice, [Permission.Read])
         if (!roomId) {
             throw new Error('roomId is undefined')
         }
@@ -239,7 +239,7 @@ describe('get role details', () => {
         /** Arrange */
         const { alice } = await registerAndStartClients(['alice'])
         await alice.fundWallet()
-        const roomId = await createTestSpaceGatedByTownAndZionNfts(alice, [Permission.Read])
+        const roomId = await createTestSpaceGatedByTownsNfts(alice, [Permission.Read])
         if (!roomId) {
             throw new Error('roomId is undefined')
         }

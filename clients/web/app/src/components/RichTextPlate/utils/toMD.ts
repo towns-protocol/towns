@@ -1,6 +1,6 @@
 import { PlateEditor } from '@udecode/plate-common'
 import { plateToMarkdownAsync } from 'slate-mark'
-import { Mention } from 'use-zion-client'
+import { Mention } from 'use-towns-client'
 import { MyMentionElement, getMentions } from './mentions'
 
 export const toMD = (editor: PlateEditor): Promise<{ message: string; mentions: Mention[] }> => {

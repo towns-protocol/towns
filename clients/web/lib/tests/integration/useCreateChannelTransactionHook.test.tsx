@@ -2,7 +2,7 @@
 /**
  * @group core
  */
-import { CreateChannelInfo } from 'use-zion-client/src/types/zion-types'
+import { CreateChannelInfo } from 'use-towns-client/src/types/towns-types'
 import React, { useCallback, useEffect, useMemo } from 'react'
 import { fireEvent, render, screen, waitFor } from '@testing-library/react'
 
@@ -10,9 +10,9 @@ import { ChannelContextProvider } from '../../src/components/ChannelContextProvi
 import { RegisterWallet, TransactionInfo } from './helpers/TestComponents'
 import { SpaceContextProvider } from '../../src/components/SpaceContextProvider'
 import { TestConstants } from './helpers/TestConstants'
-import { TransactionStatus } from '../../src/client/ZionClientTypes'
-import { ZionTestApp } from './helpers/ZionTestApp'
-import { ZionTestWeb3Provider } from './helpers/ZionTestWeb3Provider'
+import { TransactionStatus } from '../../src/client/TownsClientTypes'
+import { TownsTestApp } from './helpers/TownsTestApp'
+import { TownsTestWeb3Provider } from './helpers/TownsTestWeb3Provider'
 import { makeUniqueName } from './helpers/TestUtils'
 import { useChannelData } from '../../src/hooks/use-channel-data'
 import { useCreateChannelTransaction } from '../../src/hooks/use-create-channel-transaction'
@@ -32,7 +32,7 @@ import { TSigner } from '../../src/types/web3-types'
 describe('useCreateChannelTransactionHook', () => {
     test('user can create channel', async () => {
         /* Arrange */
-        const provider = new ZionTestWeb3Provider()
+        const provider = new TownsTestWeb3Provider()
         const chainId = (await provider.getNetwork()).chainId
         if (!chainId) {
             throw new Error('chainId is undefined')
@@ -133,7 +133,7 @@ describe('useCreateChannelTransactionHook', () => {
                 void handleClick()
             }, [createSpaceTransactionWithRetries, signer])
 
-            // callback to create a channel with zion token entitlement
+            // callback to create a channel with towns token entitlement
             const onClickCreateChannel = useCallback(() => {
                 const handleClick = async (parentSpaceId: string) => {
                     const createRoomInfo: CreateChannelInfo = {
@@ -205,12 +205,12 @@ describe('useCreateChannelTransactionHook', () => {
         }
         // render it
         render(
-            <ZionTestApp provider={provider}>
+            <TownsTestApp provider={provider}>
                 <>
                     <RegisterWallet signer={provider.wallet} />
                     <TestComponent signer={provider.wallet} />
                 </>
-            </ZionTestApp>,
+            </TownsTestApp>,
         )
         // get our test elements
         const clientRunning = screen.getByTestId('clientRunning')

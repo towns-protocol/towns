@@ -14,7 +14,7 @@ export default defineConfig({
             fallbackCJS: true,
             inline: [
                 '@matrix-org/olm', // wasm error :(
-                // workaround to allow tests to work with `use-zion-client`
+                // workaround to allow tests to work with `use-towns-client`
                 // "Vite will process inlined modules. This could be helpful to handle packages that ship .js in ESM format (that Node can't handle)."
                 /..\/lib\/dist\/(.*\.js)$/,
                 /.*.\/core\/proto\/dist\/(.*\.js)$/,

@@ -1,5 +1,5 @@
 import { useMemo } from 'react'
-import { DMChannelIdentifier, useMyUserId } from 'use-zion-client'
+import { DMChannelIdentifier, useMyUserId } from 'use-towns-client'
 
 export const useMatchingMessages = (params: {
     dmChannels: DMChannelIdentifier[]

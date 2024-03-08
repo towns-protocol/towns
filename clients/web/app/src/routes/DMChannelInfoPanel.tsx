@@ -7,9 +7,9 @@ import {
     useDMData,
     useMembers,
     useMyUserId,
+    useTownsClient,
     useUserLookupContext,
-    useZionClient,
-} from 'use-zion-client'
+} from 'use-towns-client'
 import { Box, Icon, Stack, Text, TextButton, TextField } from '@ui'
 import { Panel, PanelButton } from '@components/Panel/Panel'
 import { ConfirmLeaveModal } from '@components/ConfirmLeaveModal/ConfirmLeaveModal'
@@ -29,7 +29,7 @@ export const DMChannelInfoPanel = () => {
     const [activeModal, setActiveModal] = useState<
         'members' | 'permissions' | 'confirm-leave' | undefined
     >(undefined)
-    const { leaveRoom } = useZionClient()
+    const { leaveRoom } = useTownsClient()
     const { isTouch } = useDevice()
     const { channel } = useChannelData()
     const { data } = useDMData(channel?.id)
@@ -172,7 +172,7 @@ export const DMChannelInfoPanel = () => {
 
 const RoomPropertiesInputField = (props: { defaultTitle: string; data?: DMChannelIdentifier }) => {
     const { data, defaultTitle } = props
-    const { setRoomProperties } = useZionClient()
+    const { setRoomProperties } = useTownsClient()
     const [isEditing, setIsEditing] = useState(false)
     const [value, setValue] = useState('hello world')
 

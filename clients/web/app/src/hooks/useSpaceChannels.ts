@@ -1,5 +1,5 @@
 import { useMemo } from 'react'
-import { Channel, useSpaceData } from 'use-zion-client'
+import { Channel, useSpaceData } from 'use-towns-client'
 
 /**
  * includes all channels for a space

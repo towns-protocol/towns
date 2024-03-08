@@ -1,5 +1,5 @@
 import React, { useCallback } from 'react'
-import { useMyProfile, useSpaceMentions } from 'use-zion-client'
+import { useMyProfile, useSpaceMentions } from 'use-towns-client'
 import { useNavigate } from 'react-router'
 import { ButtonSpinner } from '@components/Login/LoginButton/Spinner/ButtonSpinner'
 import { IsolatedMessageItem } from '@components/ResultItem/IsolatedMessageItem'

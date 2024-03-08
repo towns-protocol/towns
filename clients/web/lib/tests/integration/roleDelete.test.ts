@@ -3,13 +3,13 @@
  * @group core
  */
 import { NoThrownError, getError } from './helpers/ErrorUtils'
-import { StreamView } from '../../src/types/zion-types'
+import { StreamView } from '../../src/types/towns-types'
 import {
-    createTestSpaceGatedByTownAndZionNfts,
+    createTestSpaceGatedByTownsNfts,
     registerAndStartClient,
     registerAndStartClients,
     waitForWithRetries,
-} from 'use-zion-client/tests/integration/helpers/TestUtils'
+} from 'use-towns-client/tests/integration/helpers/TestUtils'
 
 import { ContractReceipt } from 'ethers'
 import { RoleIdentifier } from '../../src/types/web3-types'
@@ -44,7 +44,7 @@ describe('delete role', () => {
         const newUsers: string[] = []
         // create a new test space
         await alice.fundWallet()
-        const roomId = await createTestSpaceGatedByTownAndZionNfts(alice, [
+        const roomId = await createTestSpaceGatedByTownsNfts(alice, [
             Permission.Read,
             Permission.Write,
         ])
@@ -172,7 +172,7 @@ describe('delete role', () => {
         const newUsers: string[] = [bob.getUserId()!, carol.getUserId()!]
         // create a new test space
         await alice.fundWallet()
-        const roomId = await createTestSpaceGatedByTownAndZionNfts(alice, [
+        const roomId = await createTestSpaceGatedByTownsNfts(alice, [
             Permission.Read,
             Permission.Write,
         ])
@@ -295,7 +295,7 @@ describe('delete role', () => {
         const newUsers: string[] = [bob.getUserId()!]
         // create a new test space
         await alice.fundWallet()
-        const roomId = await createTestSpaceGatedByTownAndZionNfts(alice, [
+        const roomId = await createTestSpaceGatedByTownsNfts(alice, [
             Permission.Read,
             Permission.Write,
         ])

@@ -1,7 +1,7 @@
 /**
  * @group dendrite
  */
-import { CreateChannelInfo, UpdateChannelInfo } from 'use-zion-client/src/types/zion-types'
+import { CreateChannelInfo, UpdateChannelInfo } from 'use-towns-client/src/types/towns-types'
 import React, { useCallback, useMemo } from 'react'
 import { RegisterWallet, TransactionInfo } from './helpers/TestComponents'
 import { fireEvent, render, screen, waitFor } from '@testing-library/react'
@@ -9,9 +9,9 @@ import { fireEvent, render, screen, waitFor } from '@testing-library/react'
 import { ChannelContextProvider } from '../../src/components/ChannelContextProvider'
 import { SpaceContextProvider } from '../../src/components/SpaceContextProvider'
 import { TestConstants } from './helpers/TestConstants'
-import { TransactionStatus } from '../../src/client/ZionClientTypes'
-import { ZionTestApp } from './helpers/ZionTestApp'
-import { ZionTestWeb3Provider } from './helpers/ZionTestWeb3Provider'
+import { TransactionStatus } from '../../src/client/TownsClientTypes'
+import { TownsTestApp } from './helpers/TownsTestApp'
+import { TownsTestWeb3Provider } from './helpers/TownsTestWeb3Provider'
 import { makeUniqueName } from './helpers/TestUtils'
 import { useChannelData } from '../../src/hooks/use-channel-data'
 import { useCreateChannelTransaction } from '../../src/hooks/use-create-channel-transaction'
@@ -33,7 +33,7 @@ import { TSigner } from '../../src/types/web3-types'
 describe('useUpdateChannelTransaction', () => {
     test('create a new space, a new channel, and update the channel name', async () => {
         /* Arrange */
-        const provider = new ZionTestWeb3Provider()
+        const provider = new TownsTestWeb3Provider()
         const spaceName = makeUniqueName('alice')
         const spaceRoleName = 'test_role'
         const channelName = 'channel_name'
@@ -53,7 +53,7 @@ describe('useUpdateChannelTransaction', () => {
         await provider.mintMockNFT()
 
         render(
-            <ZionTestApp provider={provider}>
+            <TownsTestApp provider={provider}>
                 <>
                     <RegisterWallet signer={provider.wallet} />
                     <TestComponent
@@ -68,7 +68,7 @@ describe('useUpdateChannelTransaction', () => {
                         signer={provider.wallet}
                     />
                 </>
-            </ZionTestApp>,
+            </TownsTestApp>,
         )
         const clientRunning = screen.getByTestId('clientRunning')
         // wait for the client to be running

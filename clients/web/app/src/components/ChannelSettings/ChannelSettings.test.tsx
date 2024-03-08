@@ -2,7 +2,7 @@ import React from 'react'
 import { fireEvent, render, screen, waitFor } from '@testing-library/react'
 import { beforeEach, describe, expect, test, vi } from 'vitest'
 // eslint-disable-next-line no-restricted-imports
-import * as zionClient from 'use-zion-client'
+import * as townsClient from 'use-towns-client'
 import { TestApp } from 'test/testUtils'
 import * as useContractRoles from 'hooks/useContractRoles'
 import { UseMockUpdateChannelReturn, mockCreateTransactionWithSpy } from 'test/transactionHookMock'
@@ -51,13 +51,13 @@ const { createTransactionSpy: updateChannelTransactionSpy, useMockedCreateTransa
     mockCreateTransactionWithSpy('updateChannelTransaction')
 
 const useMockedUpdateChannelTransaction = (
-    ...args: (typeof zionClient.useCreateChannelTransaction)['arguments']
+    ...args: (typeof townsClient.useCreateChannelTransaction)['arguments']
 ) => useMockedCreateTransaction(...args) as UseMockUpdateChannelReturn
 
 let mockDataForUseMultipleRoleDetails = roleDataWithBothRolesAssignedToChannel
 
-vi.mock('use-zion-client', async () => {
-    const actual = (await vi.importActual('use-zion-client')) as typeof zionClient
+vi.mock('use-towns-client', async () => {
+    const actual = (await vi.importActual('use-towns-client')) as typeof townsClient
     return {
         ...actual,
         useRoom: () => {
@@ -72,7 +72,7 @@ vi.mock('use-zion-client', async () => {
             }
         },
         useMultipleRoleDetails: (): {
-            data: zionClient.RoleDetails[]
+            data: townsClient.RoleDetails[]
             invalidateQuery: () => void
         } => {
             return {
@@ -149,7 +149,7 @@ describe.skip('CreateChannelForm', () => {
     )
 
     test('submits correct values', async () => {
-        vi.spyOn(zionClient, 'useUpdateChannelTransaction').mockImplementation(
+        vi.spyOn(townsClient, 'useUpdateChannelTransaction').mockImplementation(
             useMockedUpdateChannelTransaction,
         )
 
@@ -200,7 +200,7 @@ describe.skip('CreateChannelForm', () => {
     test(
         'when role details change on load, correct roles are checked and submitted',
         async () => {
-            vi.spyOn(zionClient, 'useUpdateChannelTransaction').mockImplementation(
+            vi.spyOn(townsClient, 'useUpdateChannelTransaction').mockImplementation(
                 useMockedUpdateChannelTransaction,
             )
 

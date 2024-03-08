@@ -3,7 +3,7 @@
  */
 import {
     createTestChannelWithSpaceRoles,
-    createTestSpaceGatedByTownAndZionNfts,
+    createTestSpaceGatedByTownsNfts,
     makeUniqueName,
     registerAndStartClients,
     registerAndStartClient,
@@ -16,11 +16,11 @@ import { Permission } from '@river/web3'
 import React, { useCallback, useEffect } from 'react'
 import { SpaceContextProvider } from '../../src/components/SpaceContextProvider'
 import { TestConstants } from './helpers/TestConstants'
-import { ZionTestApp } from './helpers/ZionTestApp'
+import { TownsTestApp } from './helpers/TownsTestApp'
 import { useSpaceData } from '../../src/hooks/use-space-data'
 import { LoginWithWallet } from './helpers/TestComponents'
-import { useZionClient } from '../../src/hooks/use-zion-client'
-import { sleep } from '../../src/utils/zion-utils'
+import { useTownsClient } from '../../src/hooks/use-towns-client'
+import { sleep } from '../../src/utils/towns-utils'
 
 describe('useSpaceDataHook', () => {
     test('a user that joins an existing space should get space info from useSpaceData', async () => {
@@ -34,7 +34,7 @@ describe('useSpaceDataHook', () => {
         // bob needs funds to create a space
         await bob.fundWallet()
         // bob creates a space
-        const spaceId = (await createTestSpaceGatedByTownAndZionNfts(
+        const spaceId = (await createTestSpaceGatedByTownsNfts(
             bob,
             // For alice to create a channel, the role must include the AddRemoveChannels permission.
             [Permission.Read, Permission.Write, Permission.AddRemoveChannels],
@@ -57,7 +57,7 @@ describe('useSpaceDataHook', () => {
         await alice.stopClients()
 
         const LoginAndJoin = () => {
-            const { client } = useZionClient()
+            const { client } = useTownsClient()
             const profile = useMyProfile()
 
             const onJoinClick = useCallback(async () => {
@@ -115,14 +115,14 @@ describe('useSpaceDataHook', () => {
 
         // render it
         render(
-            <ZionTestApp provider={alice.provider}>
+            <TownsTestApp provider={alice.provider}>
                 <SpaceContextProvider spaceId={spaceId}>
                     <>
                         <LoginAndJoin />
                         <SpaceData />
                     </>
                 </SpaceContextProvider>
-            </ZionTestApp>,
+            </TownsTestApp>,
         )
         // gather our test elements
         const loginStatus = screen.getByTestId('loginStatus')

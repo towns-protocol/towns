@@ -1,5 +1,5 @@
 import React from 'react'
-import { useMyProfile, useUserLookupContext } from 'use-zion-client'
+import { useMyProfile, useUserLookupContext } from 'use-towns-client'
 import { Paragraph, Stack } from '@ui'
 import { getPrettyDisplayName } from 'utils/getPrettyDisplayName'
 import { ZRoomCreateEvent } from '../../MessageTimeline/util/getEventsByDate'

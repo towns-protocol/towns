@@ -2,7 +2,7 @@
 /**
  * @group core
  */
-import { Membership } from '../../src/types/zion-types'
+import { Membership } from '../../src/types/towns-types'
 import React, { useCallback } from 'react'
 import {
     createTestChannelWithSpaceRoles,
@@ -14,10 +14,10 @@ import { fireEvent, render, screen, waitFor } from '@testing-library/react'
 import { ChannelContextProvider } from '../../src/components/ChannelContextProvider'
 import { RegisterAndJoinSpace } from './helpers/TestComponents'
 import { SpaceContextProvider } from '../../src/components/SpaceContextProvider'
-import { ZionTestApp } from './helpers/ZionTestApp'
-import { ZionTestWeb3Provider } from './helpers/ZionTestWeb3Provider'
+import { TownsTestApp } from './helpers/TownsTestApp'
+import { TownsTestWeb3Provider } from './helpers/TownsTestWeb3Provider'
 import { useChannelTimeline } from '../../src/hooks/use-channel-timeline'
-import { useZionClient } from '../../src/hooks/use-zion-client'
+import { useTownsClient } from '../../src/hooks/use-towns-client'
 import { TestConstants } from './helpers/TestConstants'
 import { Permission } from '@river/web3'
 import { ZTEvent } from '../../src/types/timeline-types'
@@ -31,7 +31,7 @@ describe('messageHistoryHooks', () => {
         async () => {
             // create client
             // create alice provider
-            const aliceProvider = new ZionTestWeb3Provider()
+            const aliceProvider = new TownsTestWeb3Provider()
             await aliceProvider.fundWallet()
             const { bob } = await registerAndStartClients(['bob'])
             // bob needs funds to create a space
@@ -61,7 +61,7 @@ describe('messageHistoryHooks', () => {
 
             // create a veiw for alice
             const TestComponent = ({ signer }: { signer: TSigner }) => {
-                const { scrollback } = useZionClient()
+                const { scrollback } = useTownsClient()
                 const { timeline } = useChannelTimeline()
                 const messages = timeline.filter((x) => x.content?.kind === ZTEvent.RoomMessage)
                 const onClickScrollback = useCallback(() => {
@@ -94,13 +94,13 @@ describe('messageHistoryHooks', () => {
             }
             // render it
             render(
-                <ZionTestApp provider={aliceProvider}>
+                <TownsTestApp provider={aliceProvider}>
                     <SpaceContextProvider spaceId={spaceId}>
                         <ChannelContextProvider channelId={channelId}>
                             <TestComponent signer={aliceProvider.wallet} />
                         </ChannelContextProvider>
                     </SpaceContextProvider>
-                </ZionTestApp>,
+                </TownsTestApp>,
             )
             // get our test elements
             const spaceMembership = screen.getByTestId('spaceMembership')

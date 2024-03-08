@@ -1,9 +1,9 @@
 import { useSpaceId } from './use-space-id'
-import { useZionContext } from '../components/ZionContextProvider'
+import { useTownsContext } from '../components/TownsContextProvider'
 
 export function useSpaceUnread(): boolean {
     const spaceId = useSpaceId()
-    const { spaceUnreads } = useZionContext()
+    const { spaceUnreads } = useTownsContext()
     if (!spaceId) {
         return false
     }

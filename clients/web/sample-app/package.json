@@ -39,7 +39,7 @@
         "react-router-dom": "^6.4.2",
         "siwe": "^1.1.6",
         "typescript": "^5.1.6",
-        "use-zion-client": "workspace:^",
+        "use-towns-client": "workspace:^",
         "wagmi": "^1.4.12",
         "zustand": "^4.3.3"
     },

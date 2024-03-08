@@ -2,7 +2,7 @@ import debug from 'debug'
 import React, { Suspense, useCallback, useState } from 'react'
 import { useNavigate, useParams } from 'react-router'
 import { Link } from 'react-router-dom'
-import { Permission, useContractSpaceInfo, useHasPermission, useMyProfile } from 'use-zion-client'
+import { Permission, useContractSpaceInfo, useHasPermission, useMyProfile } from 'use-towns-client'
 import { isAddress } from 'viem'
 
 import { Allotment } from 'allotment'

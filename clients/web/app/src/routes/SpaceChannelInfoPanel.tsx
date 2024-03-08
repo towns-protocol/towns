@@ -8,8 +8,8 @@ import {
     useHasPermission,
     useRoom,
     useSpaceData,
-    useZionClient,
-} from 'use-zion-client'
+    useTownsClient,
+} from 'use-towns-client'
 
 import { ChannelSettingsModal } from '@components/ChannelSettings/ChannelSettingsModal'
 import { ClipboardCopy } from '@components/ClipboardCopy/ClipboardCopy'
@@ -38,7 +38,7 @@ export const ChannelInfoPanel = () => {
         permission: Permission.ModifySpaceSettings,
     })
     const navigate = useNavigate()
-    const { leaveRoom } = useZionClient()
+    const { leaveRoom } = useTownsClient()
 
     const isEncrypted = channel !== undefined
     const room = useRoom(channel?.id)

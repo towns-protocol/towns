@@ -1,10 +1,10 @@
 import { blockchainKeys } from '../query/query-keys'
 import { useCallback } from 'react'
 import { useQuery } from '../query/queryClient'
-import { useZionClient } from './use-zion-client'
+import { useTownsClient } from './use-towns-client'
 
 export function useChannelSettings(spaceId: string, channelId: string) {
-    const { spaceDapp } = useZionClient()
+    const { spaceDapp } = useTownsClient()
     const isEnabled = spaceId.length > 0 && channelId.length > 0
 
     const getChannelSettings = useCallback(

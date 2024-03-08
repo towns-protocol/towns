@@ -1,8 +1,8 @@
 import { useEffect, useState } from 'react'
-import { useZionContext } from '../components/ZionContextProvider'
+import { useTownsContext } from '../components/TownsContextProvider'
 
 export const useStreamUpToDate = (streamId?: string) => {
-    const { casablancaClient } = useZionContext()
+    const { casablancaClient } = useTownsContext()
     const [upToDate, setUpToDate] = useState(true)
 
     useEffect(() => {

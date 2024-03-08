@@ -1,12 +1,12 @@
 import { Box, Button, TextField, Theme, Typography } from '@mui/material'
-import { useSpaceContext, useZionClient } from 'use-zion-client'
+import { useSpaceContext, useTownsClient } from 'use-towns-client'
 import React, { useCallback, useMemo, useState } from 'react'
 
 import { useAsyncButtonCallback } from '../hooks/use-async-button-callback'
 
 export function UserDisplayNameForm(): JSX.Element {
     const [displayNameEdit, setDisplayNameEdit] = useState<string>('')
-    const { setDisplayName } = useZionClient()
+    const { setDisplayName } = useTownsClient()
     const { spaceId } = useSpaceContext()
     const disableButton = useMemo(() => displayNameEdit.length < 3, [displayNameEdit.length])
 

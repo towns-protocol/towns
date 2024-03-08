@@ -1,4 +1,4 @@
-import { Attachment, MediaInfo, encryptAESGCM, useZionClient } from 'use-zion-client'
+import { Attachment, MediaInfo, encryptAESGCM, useTownsClient } from 'use-towns-client'
 import { useCallback } from 'react'
 import imageCompression from 'browser-image-compression'
 import { isMediaMimeType } from 'utils/isMediaMimeType'
@@ -8,7 +8,7 @@ const MAX_THUMBNAIL_WIDTH = 30 // pixels
 const MAX_THUMBNAIL_SIZE = 0.003 // mb
 
 export const useUploadAttachment = () => {
-    const { createMediaStream, sendMediaPayload } = useZionClient()
+    const { createMediaStream, sendMediaPayload } = useTownsClient()
     function shouldCompressFile(file: File): boolean {
         return file.type !== 'image/gif' && isMediaMimeType(file.type)
     }

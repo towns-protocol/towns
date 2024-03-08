@@ -11,13 +11,13 @@ import { fireEvent, prettyDOM, render, screen, waitFor } from '@testing-library/
 import {
     RegisterWallet,
     TransactionInfo,
-} from 'use-zion-client/tests/integration/helpers/TestComponents'
+} from 'use-towns-client/tests/integration/helpers/TestComponents'
 import { TestConstants } from './helpers/TestConstants'
-import { ZionTestApp } from 'use-zion-client/tests/integration/helpers/ZionTestApp'
-import { ZionTestWeb3Provider } from 'use-zion-client/tests/integration/helpers/ZionTestWeb3Provider'
-import { makeUniqueName } from 'use-zion-client/tests/integration/helpers/TestUtils'
-import { useCreateSpaceTransactionWithRetries } from 'use-zion-client/src/hooks/use-create-space-transaction'
-import { useSpacesFromContract } from 'use-zion-client/src/hooks/use-spaces-from-contract'
+import { TownsTestApp } from 'use-towns-client/tests/integration/helpers/TownsTestApp'
+import { TownsTestWeb3Provider } from 'use-towns-client/tests/integration/helpers/TownsTestWeb3Provider'
+import { makeUniqueName } from 'use-towns-client/tests/integration/helpers/TestUtils'
+import { useCreateSpaceTransactionWithRetries } from 'use-towns-client/src/hooks/use-create-space-transaction'
+import { useSpacesFromContract } from 'use-towns-client/src/hooks/use-spaces-from-contract'
 import {
     createMembershipStruct,
     getTestGatingNftAddress,
@@ -30,7 +30,7 @@ import { TSigner } from '../../src/types/web3-types'
 
 describe('spaceManagerContractHooks', () => {
     test('user can create and list web3 spaces', async () => {
-        const provider = new ZionTestWeb3Provider()
+        const provider = new TownsTestWeb3Provider()
         // add funds
         await provider.fundWallet()
         await provider.mintMockNFT()
@@ -39,7 +39,7 @@ describe('spaceManagerContractHooks', () => {
         const spaceName = makeUniqueName('alice')
         const tokenGatedSpaceName = makeUniqueName('alice')
         // create a veiw for alice
-        const zionTokenAddress = await getTestGatingNftAddress(0)
+        const nftAddress = await getTestGatingNftAddress(0)
 
         const TestComponent = ({ signer }: { signer: TSigner }) => {
             // basic space
@@ -73,21 +73,21 @@ describe('spaceManagerContractHooks', () => {
                 }
                 void handleClick()
             }, [createSpaceTransactionWithRetries, signer])
-            const [createSpaceWithZionMemberRole, setCreateSpaceWithZionMemberRole] =
+            const [createSpaceWithMemberRole, setCreateSpaceWithMemberRole] =
                 useState<boolean>(false)
 
-            // callback to create a space with zion token entitlement
-            const onClickCreateSpaceWithZionMemberRole = useCallback(() => {
+            // callback to create a space with towns token entitlement
+            const onClickCreateSpaceWithMemberRole = useCallback(() => {
                 const handleClick = async () => {
-                    if (!zionTokenAddress) {
-                        throw new Error('No zion token address')
+                    if (!nftAddress) {
+                        throw new Error('No towns token address')
                     }
                     await createSpaceTransactionWithRetries(
                         {
                             name: tokenGatedSpaceName,
                         },
                         createMembershipStruct({
-                            name: 'Zion Role',
+                            name: 'Member Role',
                             permissions: [Permission.Read, Permission.Write],
                             requirements: {
                                 everyone: true,
@@ -101,7 +101,7 @@ describe('spaceManagerContractHooks', () => {
                         'spaceManagerContractHooks createSpaceTransactionWithRetries',
                         tokenGatedSpaceName,
                     )
-                    setCreateSpaceWithZionMemberRole(true)
+                    setCreateSpaceWithMemberRole(true)
                 }
                 void handleClick()
             }, [createSpaceTransactionWithRetries, signer])
@@ -115,13 +115,13 @@ describe('spaceManagerContractHooks', () => {
                 <>
                     <RegisterWallet signer={signer} />
                     <button onClick={onClickCreateSpace}>Create Space</button>
-                    <button onClick={onClickCreateSpaceWithZionMemberRole}>
+                    <button onClick={onClickCreateSpaceWithMemberRole}>
                         Create Token-Gated Space
                     </button>
                     <TransactionInfo for={spaceTransaction} label="spaceTransaction" />
                     <div data-testid="createdSpace">{createdSpace ? 'true' : 'false'}</div>
-                    <div data-testid="spaceWithZionMemberRole">
-                        {createSpaceWithZionMemberRole ? 'true' : 'false'}
+                    <div data-testid="spaceWithTownsMemberRole">
+                        {createSpaceWithMemberRole ? 'true' : 'false'}
                     </div>
                     <div data-testid="spaces">{spaces.map((x) => x.name).join(', ')}</div>
                 </>
@@ -129,9 +129,9 @@ describe('spaceManagerContractHooks', () => {
         }
         // render it
         render(
-            <ZionTestApp provider={provider}>
+            <TownsTestApp provider={provider}>
                 <TestComponent signer={provider.wallet} />
-            </ZionTestApp>,
+            </TownsTestApp>,
         )
         // get our test elements
         const clientRunning = screen.getByTestId('clientRunning')
@@ -142,7 +142,7 @@ describe('spaceManagerContractHooks', () => {
             name: 'Create Token-Gated Space',
         })
         const createdSpace = screen.getByTestId('createdSpace')
-        const spaceWithZionMemberRole = screen.getByTestId('spaceWithZionMemberRole')
+        const spaceWithTownsMemberRole = screen.getByTestId('spaceWithTownsMemberRole')
         const spaceElement = screen.getByTestId('spaces')
         // verify alice name is rendering
         await waitFor(() => expect(clientRunning).toHaveTextContent('true'))
@@ -163,7 +163,7 @@ describe('spaceManagerContractHooks', () => {
         fireEvent.click(createTokenGatedSpaceButton)
         // did the button complete
         await waitFor(
-            () => expect(spaceWithZionMemberRole).toHaveTextContent('true'),
+            () => expect(spaceWithTownsMemberRole).toHaveTextContent('true'),
             TestConstants.DecaDefaultWaitForTimeout,
         )
 

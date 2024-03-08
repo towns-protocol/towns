@@ -2,10 +2,10 @@ import React from 'react'
 import { render, screen, waitFor, within } from '@testing-library/react'
 import { describe, expect, test, vi } from 'vitest'
 // eslint-disable-next-line no-restricted-imports
-import * as Lib from 'use-zion-client'
+import * as Lib from 'use-towns-client'
 import * as RouterDom from 'react-router-dom'
 import userEvent from '@testing-library/user-event'
-import { RoleDetails } from 'use-zion-client/dist/types/web3-types'
+import { RoleDetails } from 'use-towns-client/dist/types/web3-types'
 import { useCollectionsForLoggedInUser } from 'api/lib/tokenContracts'
 import {
     everyoneRole,
@@ -78,13 +78,13 @@ vi.mock('api/lib/tokenContracts', async () => {
 
 let roleDetailsMockData: RoleDetails | undefined = undefined
 
-vi.mock('use-zion-client', async () => {
-    const actual = (await vi.importActual('use-zion-client')) as typeof Lib
+vi.mock('use-towns-client', async () => {
+    const actual = (await vi.importActual('use-towns-client')) as typeof Lib
     return {
         ...actual,
-        useZionClient: () => {
+        useTownsClient: () => {
             return {
-                ...actual.useZionClient(),
+                ...actual.useTownsClient(),
                 client: {
                     isEntitled: () => true,
                     getUser: () => null,

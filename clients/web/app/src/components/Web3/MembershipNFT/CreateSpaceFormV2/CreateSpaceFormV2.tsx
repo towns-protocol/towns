@@ -1,6 +1,6 @@
 import React, { ReactNode, useCallback, useEffect, useRef, useState } from 'react'
 import { FormProvider, UseFormReturn, useFormContext } from 'react-hook-form'
-import { useMyProfile } from 'use-zion-client'
+import { useMyProfile } from 'use-towns-client'
 import { ethers } from 'ethers'
 import { useNavigate } from 'react-router'
 import {

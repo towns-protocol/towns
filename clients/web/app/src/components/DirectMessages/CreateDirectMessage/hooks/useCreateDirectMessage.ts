@@ -1,7 +1,7 @@
 import { useCallback, useMemo, useRef, useState } from 'react'
 import { useNavigate } from 'react-router'
 import { useSearchParams } from 'react-router-dom'
-import { DMChannelIdentifier, useZionClient } from 'use-zion-client'
+import { DMChannelIdentifier, useTownsClient } from 'use-towns-client'
 import { useErrorToast } from 'hooks/useErrorToast'
 import { useCreateLink } from 'hooks/useCreateLink'
 
@@ -18,7 +18,7 @@ export const useCreateDirectMessage = (params: Params) => {
     const isSubmittingRef = useRef(isSubmitting)
     isSubmittingRef.current = isSubmitting
 
-    const { createDMChannel, createGDMChannel } = useZionClient()
+    const { createDMChannel, createGDMChannel } = useTownsClient()
     const [errorMessage, setErrorMessage] = useState<string | undefined>(undefined)
     const { createLink } = useCreateLink()
     const navigate = useNavigate()

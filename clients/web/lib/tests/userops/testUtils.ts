@@ -1,8 +1,8 @@
 import { IArchitectBase, Permission } from '@river/web3'
-import { ZionTestClient } from '../integration/helpers/ZionTestClient'
-import { CreateSpaceInfo } from '../../src/types/zion-types'
+import { TownsTestClient } from '../integration/helpers/TownsTestClient'
+import { CreateSpaceInfo } from '../../src/types/towns-types'
 import { ethers } from 'ethers'
-import { ZionOpts } from '../../src/client/ZionClientTypes'
+import { TownsOpts } from '../../src/client/TownsClientTypes'
 import { paymasterProxyMiddleware } from '@towns/userops'
 import { TestConstants } from '../integration/helpers/TestConstants'
 
@@ -13,7 +13,7 @@ import { TestConstants } from '../integration/helpers/TestConstants'
  * b/c it's used against deployed testsnets/stackup and logic may differ
  */
 export async function createUngatedSpace(
-    client: ZionTestClient,
+    client: TownsTestClient,
     rolePermissions: Permission[],
     createSpaceInfo?: CreateSpaceInfo,
 ): Promise<string | undefined> {
@@ -72,7 +72,7 @@ export function getAccountAbstractionConfig() {
         )
     }
 
-    const accountAbstractionConfig: ZionOpts['accountAbstractionConfig'] = {
+    const accountAbstractionConfig: TownsOpts['accountAbstractionConfig'] = {
         bundlerUrl: process.env.AA_BUNDLER_URL,
         paymasterProxyUrl: process.env.AA_PAYMASTER_PROXY_URL,
         aaRpcUrl: process.env.AA_RPC_URL,

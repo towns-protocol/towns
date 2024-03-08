@@ -8,7 +8,7 @@ import {
 } from '@river/sdk'
 import { AnimatePresence, animate } from 'framer-motion'
 import React, { useEffect, useMemo, useRef, useState } from 'react'
-import { useContractSpaceInfo } from 'use-zion-client'
+import { useContractSpaceInfo } from 'use-towns-client'
 import { useParams } from 'react-router'
 import { Spinner } from '@components/Spinner'
 import { FadeInBox } from '@components/Transitions'

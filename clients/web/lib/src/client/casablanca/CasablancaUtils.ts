@@ -1,5 +1,5 @@
 import { Stream, StreamMember } from '@river/sdk'
-import { Membership, RoomMember, StreamView } from '../../types/zion-types'
+import { Membership, RoomMember, StreamView } from '../../types/towns-types'
 
 export function toStreamView(stream: Stream, membership: Membership): StreamView {
     const metadata = stream.view.getUserMetadata()

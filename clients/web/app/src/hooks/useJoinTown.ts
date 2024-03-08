@@ -1,14 +1,13 @@
 import { useCallback, useState } from 'react'
-import { useZionClient } from 'use-zion-client'
+import { useTownsClient } from 'use-towns-client'
 import { useGetEmbeddedSigner } from '@towns/privy'
 import { isLimitReachedError, isMaybeFundsError, mapToErrorMessage } from '@components/Web3/utils'
 import { createPrivyNotAuthenticatedNotification } from '@components/Notifications/utils'
 import { useStore } from 'store/store'
 
 export const useJoinTown = (spaceId: string | undefined, onSuccessfulJoin?: () => void) => {
-    const { client } = useZionClient()
+    const { client } = useTownsClient()
     const { recentlyMintedSpaceIds, setRecentlyMintedSpaceIds } = useStore()
-
     const getSigner = useGetEmbeddedSigner()
     const [errorDetails, setErrorDetails] = useState<{
         maxLimitReached: boolean

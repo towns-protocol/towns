@@ -1,6 +1,6 @@
 import React from 'react'
 import { clsx } from 'clsx'
-import { Channel, RoomMember } from 'use-zion-client'
+import { Channel, RoomMember } from 'use-towns-client'
 import { LinkNode } from '@lexical/link'
 import { LexicalComposer } from '@lexical/react/LexicalComposer'
 import { RichTextPlugin } from '@lexical/react/LexicalRichTextPlugin'

@@ -4,16 +4,16 @@ import React, { useCallback, useEffect, useState } from 'react'
 import { Link } from 'react-router-dom'
 import {
     useLinkWalletTransaction,
+    useTownsClient,
     useUnlinkWalletTransaction,
-    useZionClient,
-} from 'use-zion-client'
+} from 'use-towns-client'
 import { useAccount } from 'wagmi'
 
 export const WalletLinking = () => {
     const { authenticated: privyAuthenticated, connectWallet } = usePrivy()
     const { wallets } = useWallets()
     const { address: currentWalletAddress } = useAccount()
-    const { getLinkedWallets } = useZionClient()
+    const { getLinkedWallets } = useTownsClient()
     const [linkedWallets, setLinkedWallets] = useState<string[]>([])
 
     const checkWallets = useCallback(async () => {
@@ -86,7 +86,7 @@ const WalletLinkButton = (props: { wallet: ConnectedWallet }) => {
     const { wallets } = useWallets()
     const { isLoading, linkWalletTransaction } = useLinkWalletTransaction()
     const { unlinkWalletTransaction } = useUnlinkWalletTransaction()
-    const { getLinkedWallets } = useZionClient()
+    const { getLinkedWallets } = useTownsClient()
 
     const [linkedWallets, setLinkedWallets] = useState<string[]>([])
     const wallet = props.wallet

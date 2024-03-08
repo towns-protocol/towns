@@ -1,5 +1,5 @@
 import { useCallback, useEffect, useRef, useState } from 'react'
-import { useFullyReadMarker, useZionClient } from 'use-zion-client'
+import { useFullyReadMarker, useTownsClient } from 'use-towns-client'
 import { FullyReadMarker } from '@river/proto'
 import { useStore } from 'store/store'
 
@@ -46,7 +46,7 @@ export const usePersistedUnreadMarkers = ({
         }
     }, [fullyReadMarker?.isUnread, isManualUnreadMarker])
 
-    const { sendReadReceipt } = useZionClient()
+    const { sendReadReceipt } = useTownsClient()
 
     const hasUnreadMarker = !!fullreadMarkerPersisted
     const [isUnreadMarkerFaded, setIsUnreadMarkerFaded] = useState(false)

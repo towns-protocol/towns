@@ -5,7 +5,7 @@ import {
     Membership,
     useMyMembership,
     useOnTransactionUpdated,
-} from 'use-zion-client'
+} from 'use-towns-client'
 
 import headlessToast, { Toast, toast } from 'react-hot-toast/headless'
 import { useSearchParams } from 'react-router-dom'

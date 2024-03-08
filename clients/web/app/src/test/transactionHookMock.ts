@@ -3,21 +3,21 @@ import { getTransactionHashOrUserOpHash } from '@towns/userops'
 import { ContractReceipt, ContractTransaction } from 'ethers'
 import { useCallback, useMemo, useState } from 'react'
 // eslint-disable-next-line no-restricted-imports
-import * as zionClient from 'use-zion-client'
+import * as townsClient from 'use-towns-client'
 import { Mock, vi } from 'vitest'
 
-const loadingContext: zionClient.TransactionContext<undefined> = {
-    status: zionClient.TransactionStatus.Pending,
+const loadingContext: townsClient.TransactionContext<undefined> = {
+    status: townsClient.TransactionStatus.Pending,
     transaction: undefined,
     receipt: undefined,
     data: undefined,
 }
 
-const pendingContext: zionClient.TransactionContext<{
+const pendingContext: townsClient.TransactionContext<{
     slug: string
     networkId: string
 }> = {
-    status: zionClient.TransactionStatus.Pending,
+    status: townsClient.TransactionStatus.Pending,
     transaction: { hash: '0xhash', status: 0 } as unknown as ContractTransaction,
     receipt: undefined,
     data: {
@@ -25,11 +25,11 @@ const pendingContext: zionClient.TransactionContext<{
         networkId: 'some-room-id',
     },
 }
-const successContext: zionClient.TransactionContext<{
+const successContext: townsClient.TransactionContext<{
     slug: string
     networkId: string
 }> = {
-    status: zionClient.TransactionStatus.Success,
+    status: townsClient.TransactionStatus.Success,
     transaction: { hash: '0xhash', status: 1 } as unknown as ContractTransaction,
     receipt: {} as ContractReceipt,
     data: {
@@ -38,11 +38,11 @@ const successContext: zionClient.TransactionContext<{
     },
 }
 
-const failedWithTransactionContext: zionClient.TransactionContext<{
+const failedWithTransactionContext: townsClient.TransactionContext<{
     slug: string
     networkId: string
 }> = {
-    status: zionClient.TransactionStatus.Failed,
+    status: townsClient.TransactionStatus.Failed,
     transaction: { hash: '0xhash', status: 0 } as unknown as ContractTransaction,
     receipt: undefined,
     data: {
@@ -52,8 +52,8 @@ const failedWithTransactionContext: zionClient.TransactionContext<{
     error: { name: 'whatever', message: 'some error' },
 }
 
-const failedWithPermissionContext: zionClient.TransactionContext<undefined> = {
-    status: zionClient.TransactionStatus.Failed,
+const failedWithPermissionContext: townsClient.TransactionContext<undefined> = {
+    status: townsClient.TransactionStatus.Failed,
     transaction: undefined,
     receipt: undefined,
     data: undefined,
@@ -75,7 +75,7 @@ type UseMockTransactionReturn = {
     data: any | undefined
     error: Error | undefined
     transactionHash: `0x${string}` | undefined
-    transactionStatus: zionClient.TransactionStatus
+    transactionStatus: townsClient.TransactionStatus
 }
 
 export type UseMockCreateSpaceReturn = UseMockTransactionReturn & {
@@ -121,16 +121,16 @@ export const mockCreateTransactionWithSpy = (transactionFunctionName: Transactio
         outcome: 'success' | 'failWithTransaction' | 'failedWithPermissionContext' = 'success',
     ): UseMockHookReturn | undefined => {
         const [transactionContext, setTransactionContext] = useState<
-            zionClient.TransactionContext<unknown> | undefined
+            townsClient.TransactionContext<unknown> | undefined
         >(undefined)
 
         const { data, isLoading, transactionHash, transactionStatus, error } = useMemo(() => {
             const hash = getTransactionHashOrUserOpHash(transactionContext?.transaction)
             return {
                 data: transactionContext?.data,
-                isLoading: transactionContext?.status === zionClient.TransactionStatus.Pending,
+                isLoading: transactionContext?.status === townsClient.TransactionStatus.Pending,
                 transactionHash: hash,
-                transactionStatus: transactionContext?.status ?? zionClient.TransactionStatus.None,
+                transactionStatus: transactionContext?.status ?? townsClient.TransactionStatus.None,
                 error: transactionContext?.error,
             }
         }, [transactionContext])

@@ -34,7 +34,7 @@ import {
     MemberPayload,
 } from '@river/proto'
 import { useEffect } from 'react'
-import { MessageType, toMembership } from '../../types/zion-types'
+import { MessageType, toMembership } from '../../types/towns-types'
 import {
     getIsMentioned,
     getReactionParentId,

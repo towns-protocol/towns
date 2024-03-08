@@ -1,5 +1,5 @@
 import React, { useCallback, useEffect, useMemo, useState } from 'react'
-import { Address, useGetRootKeyFromLinkedWallet } from 'use-zion-client'
+import { Address, useGetRootKeyFromLinkedWallet } from 'use-towns-client'
 import { useEvent } from 'react-use-event-hook'
 import { InteractiveTownsToken } from '@components/TownsToken/InteractiveTownsToken'
 import { ImageVariants, useImageSource } from '@components/UploadImage/useImageSource'

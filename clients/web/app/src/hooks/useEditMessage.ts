@@ -1,8 +1,8 @@
 import { useCallback } from 'react'
-import { RoomMessageEvent, SendTextMessageOptions, useZionClient } from 'use-zion-client'
+import { RoomMessageEvent, SendTextMessageOptions, useTownsClient } from 'use-towns-client'
 
 export const useEditMessage = (channelId?: string) => {
-    const { editMessage } = useZionClient()
+    const { editMessage } = useTownsClient()
 
     const editChannelEvent = useCallback(
         (

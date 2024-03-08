@@ -2,11 +2,16 @@ import { Button, Divider, Theme, Typography } from '@mui/material'
 import { useGetEmbeddedSigner } from '@towns/privy'
 import React, { useCallback } from 'react'
 import { Outlet, useParams } from 'react-router-dom'
-import { useSpaceContext, useSpaceData, useSpaceFromContract, useZionClient } from 'use-zion-client'
+import {
+    useSpaceContext,
+    useSpaceData,
+    useSpaceFromContract,
+    useTownsClient,
+} from 'use-towns-client'
 
 export const Spaces = () => {
     const { channelSlug } = useParams()
-    const { joinTown } = useZionClient()
+    const { joinTown } = useTownsClient()
     const { spaceId } = useSpaceContext()
     const space = useSpaceData()
     const getSigner = useGetEmbeddedSigner()

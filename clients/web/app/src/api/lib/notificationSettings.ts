@@ -1,6 +1,6 @@
 import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query'
 import { z } from 'zod'
-import { useMyProfile } from 'use-zion-client'
+import { useMyProfile } from 'use-towns-client'
 import {
     GetSettingsRequestParams,
     SaveSettingsRequestParams,

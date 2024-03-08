@@ -1,11 +1,11 @@
 import { useNavigate } from 'react-router'
-import { useSpaceContext, useZionClient, useZionContext } from 'use-zion-client'
+import { useSpaceContext, useTownsClient, useTownsContext } from 'use-towns-client'
 import { useShortcut } from 'hooks/useShortcut'
 import { PATHS } from 'routes'
 import { useCreateLink } from 'hooks/useCreateLink'
 
 export const RegisterMainShortcuts = () => {
-    const { spaces } = useZionContext()
+    const { spaces } = useTownsContext()
     const { spaceId } = useSpaceContext()
 
     const currentSpaceIndex = spaces.findIndex((s) => s.id === spaceId)
@@ -40,7 +40,7 @@ export const RegisterMainShortcuts = () => {
         navigate(`/${PATHS.SPACES}/new`)
     })
 
-    const { resetFullyReadMarkers } = useZionClient()
+    const { resetFullyReadMarkers } = useTownsClient()
 
     useShortcut('ClearAllUnreads', () => {
         resetFullyReadMarkers()

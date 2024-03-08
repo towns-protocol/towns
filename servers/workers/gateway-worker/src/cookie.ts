@@ -1,7 +1,7 @@
 import { parse } from 'cookie'
 import { Env } from '.'
 
-const COOKIE_NAME = 'zion_siwe'
+const COOKIE_NAME = 'towns_siwe'
 
 export const handleCookie = async (request: Request): Promise<string> => {
     const cookie = parse(request.clone().headers.get('Cookie') || '')

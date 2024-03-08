@@ -4,7 +4,7 @@
  */
 import {
     createTestChannelWithSpaceRoles,
-    createTestSpaceGatedByTownAndZionNfts,
+    createTestSpaceGatedByTownsNfts,
     makeUniqueName,
     registerAndStartClients,
     registerAndStartClient,
@@ -14,7 +14,7 @@ import {
 import { Permission } from '@river/web3'
 import { TestConstants } from './helpers/TestConstants'
 import { waitFor } from '@testing-library/dom'
-import { toSpaceHierarchy } from '../../src/hooks/ZionContext/useCasablancaSpaceHierarchies'
+import { toSpaceHierarchy } from '../../src/hooks/TownsContext/useCasablancaSpaceHierarchies'
 
 describe('spaceHierarchy', () => {
     // TODO: https://linear.app/hnt-labs/issue/HNT-1614/testsintegrationspacehierarchytestts
@@ -29,7 +29,7 @@ describe('spaceHierarchy', () => {
         // bob needs funds to create a space
         await bob.fundWallet()
         // bob creates a space
-        const spaceId = (await createTestSpaceGatedByTownAndZionNfts(bob, [
+        const spaceId = (await createTestSpaceGatedByTownsNfts(bob, [
             Permission.Read,
             Permission.Write,
         ])) as string
@@ -71,7 +71,7 @@ describe('spaceHierarchy', () => {
         // bob needs funds to create a space
         await bob.fundWallet()
         // bob creates a space
-        const spaceId = (await createTestSpaceGatedByTownAndZionNfts(
+        const spaceId = (await createTestSpaceGatedByTownsNfts(
             bob,
             [Permission.Read, Permission.Write],
             {

@@ -5,7 +5,7 @@ import {
     MentionResult as MessageResult,
     useSpaceId,
     useUserLookupContext,
-} from 'use-zion-client'
+} from 'use-towns-client'
 import { isDMChannelStreamId, isGDMChannelStreamId } from '@river/sdk'
 import { MessageLayout } from '@components/MessageLayout'
 import { RichTextPreview } from '@components/RichText/RichTextPreview'

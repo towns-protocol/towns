@@ -1,6 +1,6 @@
 import React, { createContext, useCallback, useContext, useEffect } from 'react'
 import { useEmbeddedWallet } from './useEmbeddedWallet'
-import { TSigner } from 'use-zion-client'
+import { TSigner } from 'use-towns-client'
 import { usePrivyWagmi } from '@privy-io/wagmi-connector'
 import { usePrivy } from '@privy-io/react-auth'
 

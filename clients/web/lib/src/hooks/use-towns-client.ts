@@ -6,11 +6,11 @@ import {
     ChannelTransactionContext,
     ChannelUpdateTransactionContext,
     CreateSpaceTransactionContext,
-    IZionServerVersions,
+    ITownsServerVersions,
     RoleTransactionContext,
     TransactionContext,
     WalletLinkTransactionContext,
-} from '../client/ZionClientTypes'
+} from '../client/TownsClientTypes'
 import {
     CreateChannelInfo,
     CreateSpaceInfo,
@@ -18,24 +18,24 @@ import {
     SendTextMessageOptions,
     StreamView,
     UpdateChannelInfo,
-} from '../types/zion-types'
+} from '../types/towns-types'
 import { RoomMessageEvent } from '../types/timeline-types'
-import { ZionClient } from '../client/ZionClient'
-import { useLogout } from '../hooks/use-logout'
-import { useResetFullyReadMarkers } from './ZionContext/useResetFullyReadMarkers'
-import { useSendReadReceipt } from './ZionContext/useSendReadReceipt'
-import { useZionContext } from '../components/ZionContextProvider'
+import { TownsClient } from '../client/TownsClient'
+import { useLogout } from './use-logout'
+import { useResetFullyReadMarkers } from './TownsContext/useResetFullyReadMarkers'
+import { useSendReadReceipt } from './TownsContext/useSendReadReceipt'
+import { useTownsContext } from '../components/TownsContextProvider'
 import { useCasablancaWalletSignIn } from './use-casablanca-wallet-signin'
 import { create } from 'zustand'
 import { IArchitectBase, Permission, IRuleEntitlement } from '@river/web3'
 import { TSigner } from 'types/web3-types'
 
-export type ZionErrorStoreState = {
+export type TownsErrorStoreState = {
     errors: string[]
     appendError: (error: string) => void
 }
 
-export const useZionErrorStore = create<ZionErrorStoreState>((set) => ({
+export const useTownsErrorStore = create<TownsErrorStoreState>((set) => ({
     errors: [],
     appendError: (error: string) =>
         set((state) => ({
@@ -46,11 +46,11 @@ export const useZionErrorStore = create<ZionErrorStoreState>((set) => ({
 /**
  * client API to interact with the river server.
  */
-interface ZionClientImpl {
+interface TownsClientImpl {
     chainId: number | undefined
-    client: ZionClient | undefined
+    client: TownsClient | undefined
     clientRunning: boolean
-    spaceDapp: ZionClient['spaceDapp'] | undefined
+    spaceDapp: TownsClient['spaceDapp'] | undefined
     createSpaceTransaction: (
         createSpaceInfo: CreateSpaceInfo,
         membership: IArchitectBase.MembershipStruct,
@@ -133,7 +133,7 @@ interface ZionClientImpl {
     ) => Promise<void>
     getIsUsernameAvailable: (streamId: string, username: string) => Promise<boolean | undefined>
     getIsWalletRegisteredWithCasablanca: () => Promise<boolean>
-    getServerVersions: () => Promise<IZionServerVersions | undefined>
+    getServerVersions: () => Promise<ITownsServerVersions | undefined>
     inviteUser: (roomId: string, userId: string) => Promise<void>
     joinRoom: (roomId: string, parentNetworkId?: string) => Promise<StreamView | undefined>
     leaveRoom: (roomId: string, parentNetworkId?: string) => Promise<void>
@@ -191,13 +191,13 @@ interface ZionClientImpl {
     ) => Promise<WalletLinkTransactionContext | undefined>
 }
 
-export function useZionClient(): ZionClientImpl {
+export function useTownsClient(): TownsClientImpl {
     const {
         getIsWalletRegisteredWithCasablanca,
         loginWithWalletToCasablanca,
         registerWalletWithCasablanca,
     } = useCasablancaWalletSignIn()
-    const { client } = useZionContext()
+    const { client } = useTownsContext()
     const clientRunning = useMemo(() => client !== undefined, [client])
     const logout = useLogout()
     const sendReadReceipt = useSendReadReceipt(client)
@@ -265,7 +265,7 @@ export function useZionClient(): ZionClientImpl {
 const useWithCatch = <T extends Array<unknown>, U>(
     fn?: (...args: T) => Promise<U | undefined>,
 ): ((...args: T) => Promise<U | undefined>) => {
-    const client = useZionContext().client
+    const client = useTownsContext().client
     return useMemo(
         () =>
             async (...args: T): Promise<U | undefined> => {

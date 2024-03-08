@@ -1,6 +1,6 @@
 import React, { useCallback } from 'react'
 import { useNavigate } from 'react-router'
-import { GlobalContextUserLookupProvider } from 'use-zion-client'
+import { GlobalContextUserLookupProvider } from 'use-towns-client'
 import { TouchPanelNavigationBar } from '@components/TouchPanelNavigationBar/TouchPanelNavigationBar'
 import { Box, BoxProps, IconButton, IconName, Stack, Text } from '@ui'
 import { useDevice } from 'hooks/useDevice'

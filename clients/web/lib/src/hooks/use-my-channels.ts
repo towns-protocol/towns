@@ -1,6 +1,6 @@
 import { useCallback, useEffect, useMemo, useState } from 'react'
-import { useZionContext } from '../components/ZionContextProvider'
-import { Channel, SpaceData } from '../types/zion-types'
+import { useTownsContext } from '../components/TownsContextProvider'
+import { Channel, SpaceData } from '../types/towns-types'
 import isEqual from 'lodash/isEqual'
 import { isUserStreamId, streamIdAsString } from '@river/sdk'
 import { MembershipOp } from '@river/proto'
@@ -33,7 +33,7 @@ export function useMyChannels(space?: SpaceData) {
 }
 
 function useMyMembershipsCasablanca() {
-    const { casablancaClient } = useZionContext()
+    const { casablancaClient } = useTownsContext()
     const [myMemberships, setMyMemberships] = useState<Set<string>>(new Set())
     const userStream = useCasablancaStream(casablancaClient?.userStreamId)
 

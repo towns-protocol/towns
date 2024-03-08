@@ -1,4 +1,4 @@
-import { Membership } from '../../types/zion-types'
+import { Membership } from '../../types/towns-types'
 import { Stream } from '@river/sdk'
 import { useEffect, useState } from 'react'
 import { useCasablancaStream } from './useCasablancaStream'

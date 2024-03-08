@@ -1,16 +1,16 @@
 import { BigNumberish, ContractReceipt } from 'ethers'
-import { SendMessageOptions, UpdateChannelInfo } from '../types/zion-types'
+import { SendMessageOptions, UpdateChannelInfo } from '../types/towns-types'
 import { RoleIdentifier, TProvider, TransactionOrUserOperation } from '../types/web3-types'
 import { UserOpsConfig } from '@towns/userops'
 
-export interface ZionOpts {
+export interface TownsOpts {
     casablancaServerUrl?: string
     chainId: number
     initialSyncLimit?: number
     pollTimeoutMs?: number
-    onboardingOpts?: ZionOnboardingOpts
+    onboardingOpts?: TownsOnboardingOpts
     web3Provider?: TProvider
-    eventHandlers?: ZionClientEventHandlers
+    eventHandlers?: TownsClientEventHandlers
     logNamespaceFilter?: string
     pushNotificationWorkerUrl?: string
     pushNotificationAuthToken?: string
@@ -19,7 +19,7 @@ export interface ZionOpts {
     highPriorityStreamIds?: string[]
 }
 
-export interface ZionOnboardingOpts {
+export interface TownsOnboardingOpts {
     skipUsername?: boolean
     skipAvatar?: boolean
     showWelcomeSpash?: boolean
@@ -41,12 +41,12 @@ export interface Space {
     ownerAddress: string
 }
 
-export enum ZionAccountDataType {
+export enum TownsAccountDataType {
     FullyRead = 'zion.fullyRead',
     Membership = 'zion.membership',
 }
 
-export interface IZionServerVersions {
+export interface ITownsServerVersions {
     versions: string[]
     unstable_features: Record<string, boolean>
     release_version: string
@@ -95,7 +95,7 @@ export type WalletLinkTransactionContext = TransactionContext<{
     walletAddress: string
 }>
 
-export type ZionClientEventHandlers = {
+export type TownsClientEventHandlers = {
     onCreateSpace?: (roomId: string) => void
     onJoinRoom?: (roomId: string, spaceId: string) => void
     onSendMessage?: (roomId: string, body: string, sendMessageOptions?: SendMessageOptions) => void

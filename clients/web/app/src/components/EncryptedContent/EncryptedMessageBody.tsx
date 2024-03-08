@@ -1,5 +1,5 @@
 import React from 'react'
-import { RoomMessageEncryptedEvent } from 'use-zion-client'
+import { RoomMessageEncryptedEvent } from 'use-towns-client'
 import { Box, Icon, Stack, Tooltip } from '@ui'
 import * as styles from './EncryptedMessageBody.css'
 

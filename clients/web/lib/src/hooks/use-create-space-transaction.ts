@@ -3,12 +3,12 @@ import {
     CreateSpaceTransactionContext,
     TransactionStatus,
     createTransactionContext,
-} from '../client/ZionClientTypes'
+} from '../client/TownsClientTypes'
 import { useCallback, useMemo, useRef, useState } from 'react'
 
 import { TSigner } from '../types/web3-types'
-import { CreateSpaceInfo } from '../types/zion-types'
-import { useZionClient } from './use-zion-client'
+import { CreateSpaceInfo } from '../types/towns-types'
+import { useTownsClient } from './use-towns-client'
 import { IArchitectBase } from '@river/web3'
 import { getTransactionHashOrUserOpHash } from '@towns/userops'
 /**
@@ -16,7 +16,7 @@ import { getTransactionHashOrUserOpHash } from '@towns/userops'
  * creation into one hook.
  */
 export function useCreateSpaceTransaction() {
-    const { createSpaceTransaction, waitForCreateSpaceTransaction } = useZionClient()
+    const { createSpaceTransaction, waitForCreateSpaceTransaction } = useTownsClient()
     const [transactionContext, setTransactionContext] = useState<
         CreateSpaceTransactionContext | undefined
     >(undefined)

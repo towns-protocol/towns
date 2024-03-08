@@ -6,7 +6,7 @@ import {
     useDMData,
     useSpaceId,
     useUserLookupContext,
-} from 'use-zion-client'
+} from 'use-towns-client'
 import { formatDistance } from 'date-fns'
 import { isDMChannelStreamId, isGDMChannelStreamId } from '@river/sdk'
 import { RichTextPreview } from '@components/RichText/RichTextPreview'

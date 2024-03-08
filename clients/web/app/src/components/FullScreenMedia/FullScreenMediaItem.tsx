@@ -1,5 +1,5 @@
 import React, { useEffect, useState } from 'react'
-import { Attachment, useChunkedMedia, useUser } from 'use-zion-client'
+import { Attachment, useChunkedMedia, useUser } from 'use-towns-client'
 import { formatDistance } from 'date-fns'
 import { Box, Stack, Text } from '@ui'
 import { darkTheme } from 'ui/styles/vars.css'

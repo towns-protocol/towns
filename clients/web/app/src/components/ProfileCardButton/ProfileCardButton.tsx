@@ -1,6 +1,6 @@
 import { default as React, useCallback } from 'react'
 import { useLocation, useMatch, useNavigate } from 'react-router'
-import { useMyProfile } from 'use-zion-client'
+import { useMyProfile } from 'use-towns-client'
 import { Box } from '@ui'
 import { useAuth } from 'hooks/useAuth'
 import { useCreateLink } from 'hooks/useCreateLink'

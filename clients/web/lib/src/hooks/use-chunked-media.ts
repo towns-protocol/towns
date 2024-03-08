@@ -1,5 +1,5 @@
 import { useCallback, useEffect, useState } from 'react'
-import { useZionContext } from '../components/ZionContextProvider'
+import { useTownsContext } from '../components/TownsContextProvider'
 import { decryptAESGCM } from '../utils/crypto-utils'
 import { Client } from '@river/sdk'
 
@@ -48,7 +48,7 @@ async function getObjectURL(
 
 export function useChunkedMedia(props: Props) {
     const { streamId } = props
-    const { casablancaClient } = useZionContext()
+    const { casablancaClient } = useTownsContext()
     const [objectURL, setObjectURL] = useState<string | undefined>(undefined)
 
     useEffect(() => {
@@ -71,7 +71,7 @@ export function useChunkedMedia(props: Props) {
 
 export function useDownloadFile(props: Props) {
     const { streamId } = props
-    const { casablancaClient } = useZionContext()
+    const { casablancaClient } = useTownsContext()
 
     const downloadFile = useCallback(async () => {
         if (!casablancaClient) {

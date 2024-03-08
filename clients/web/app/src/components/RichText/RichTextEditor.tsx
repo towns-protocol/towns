@@ -19,11 +19,11 @@ import {
     RoomMember,
     SendTextMessageOptions,
     useNetworkStatus,
-} from 'use-zion-client'
+} from 'use-towns-client'
 import { datadogRum } from '@datadog/browser-rum'
 import { useLexicalComposerContext } from '@lexical/react/LexicalComposerContext'
 import { $getRoot } from 'lexical'
-import AnalyticsService, { AnalyticsEvents } from 'use-zion-client/dist/utils/analyticsService'
+import AnalyticsService, { AnalyticsEvents } from 'use-towns-client/dist/utils/analyticsService'
 import { ErrorBoundary } from '@components/ErrorBoundary/ErrorBoundary'
 import * as fieldStyles from 'ui/components/_internal/Field/Field.css'
 import { useInputStore } from 'store/store'

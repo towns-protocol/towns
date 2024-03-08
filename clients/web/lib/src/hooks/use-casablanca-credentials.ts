@@ -1,4 +1,4 @@
-import { useZionContext } from '../components/ZionContextProvider'
+import { useTownsContext } from '../components/TownsContextProvider'
 import { useCasablancaStore } from '../store/use-casablanca-store'
 import { useCredentialStore } from '../store/use-credential-store'
 import { ethers } from 'ethers'
@@ -7,7 +7,7 @@ import { ethers } from 'ethers'
 /// credentials and login status are stored in local storage, and is
 /// used to show the login screen
 export function useCasablancaCredentials() {
-    const { casablancaServerUrl } = useZionContext()
+    const { casablancaServerUrl } = useTownsContext()
     const credentials = useCredentialStore(
         (state) => state.casablancaCredentialsMap[casablancaServerUrl ?? ''] ?? undefined,
     )

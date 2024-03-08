@@ -1,4 +1,4 @@
-import { Permission } from 'use-zion-client'
+import { Permission } from 'use-towns-client'
 import { z } from 'zod'
 
 export const formSchema = z

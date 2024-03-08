@@ -2,7 +2,7 @@ import React from 'react'
 import { render, screen, waitFor } from '@testing-library/react'
 import { beforeAll, describe, expect, test, vi } from 'vitest'
 // eslint-disable-next-line no-restricted-imports
-import * as Lib from 'use-zion-client'
+import * as Lib from 'use-towns-client'
 import { TestApp } from 'test/testUtils'
 import { AllRoutes } from 'AllRoutes'
 const Wrapper = () => {
@@ -17,13 +17,13 @@ beforeAll(() => {
     globalThis.ResizeObserver = ResizeObserver
 })
 
-vi.mock('use-zion-client', async () => {
-    const actual = (await vi.importActual('use-zion-client')) as typeof import('use-zion-client')
+vi.mock('use-towns-client', async () => {
+    const actual = (await vi.importActual('use-towns-client')) as typeof import('use-towns-client')
 
     return {
         ...actual,
-        useZionContext: () => ({
-            ...actual.useZionContext(),
+        useTownsContext: () => ({
+            ...actual.useTownsContext(),
         }),
     }
 })
@@ -43,9 +43,9 @@ vi.mock('hooks/useAuth', async () => {
 
 describe.skip('<AllRoutes />', () => {
     test('renders register form when user needs onboarding', async () => {
-        vi.spyOn(Lib, 'useZionContext').mockImplementationOnce(() => {
+        vi.spyOn(Lib, 'useTownsContext').mockImplementationOnce(() => {
             return {
-                ...Lib.useZionContext(),
+                ...Lib.useTownsContext(),
             }
         })
         render(<Wrapper />)

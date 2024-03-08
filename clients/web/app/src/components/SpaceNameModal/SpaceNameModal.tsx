@@ -6,7 +6,7 @@ import {
     useContractSpaceInfo,
     useSpaceData,
     useUpdateSpaceNameTransaction,
-} from 'use-zion-client'
+} from 'use-towns-client'
 import { z } from 'zod'
 import { useGetEmbeddedSigner } from '@towns/privy'
 import { Box, Button, ErrorMessage, FormRender, Heading, Stack, TextField } from '@ui'

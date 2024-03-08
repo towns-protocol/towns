@@ -1,6 +1,6 @@
 import { useMemo } from 'react'
 import { useSpaceData } from './use-space-data'
-import { Channel } from '../types/zion-types'
+import { Channel } from '../types/towns-types'
 
 export function useChannels() {
     const data = useSpaceData()

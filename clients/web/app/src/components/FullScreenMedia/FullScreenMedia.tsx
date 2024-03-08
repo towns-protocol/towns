@@ -1,6 +1,6 @@
 import React, { useCallback, useMemo } from 'react'
 import { useSearchParams } from 'react-router-dom'
-import { Attachment, TimelineEvent, ZTEvent } from 'use-zion-client'
+import { Attachment, TimelineEvent, ZTEvent } from 'use-towns-client'
 import { Lightbox, ViewCallbackProps } from 'yet-another-react-lightbox'
 import { isDefined } from '@river/sdk'
 import { QUERY_PARAMS } from 'routes'

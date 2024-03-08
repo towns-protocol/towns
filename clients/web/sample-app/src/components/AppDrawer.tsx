@@ -1,5 +1,5 @@
 import { Box, CssBaseline, Divider, Drawer, Toolbar } from '@mui/material'
-import { InviteData } from 'use-zion-client'
+import { InviteData } from 'use-towns-client'
 import { Outlet, useNavigate } from 'react-router-dom'
 import React, { useCallback, useState } from 'react'
 

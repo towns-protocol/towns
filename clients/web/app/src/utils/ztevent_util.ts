@@ -5,7 +5,7 @@ import {
     RoomMessageEvent,
     TimelineEvent,
     ZTEvent,
-} from 'use-zion-client'
+} from 'use-towns-client'
 
 export const getIsRoomMessageContent = (e?: TimelineEvent): RoomMessageEvent | undefined => {
     if (e?.content?.kind === ZTEvent.RoomMessage) {

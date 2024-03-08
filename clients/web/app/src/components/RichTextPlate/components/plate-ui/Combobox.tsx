@@ -19,7 +19,7 @@ import {
     useEventEditorSelectors,
     usePlateSelectors,
 } from '@udecode/plate-common'
-import { RoomMember } from 'use-zion-client'
+import { RoomMember } from 'use-towns-client'
 import { TypeaheadMenu, TypeaheadMenuItem } from '@ui'
 import { Avatar } from '@components/Avatar/Avatar'
 import { TMentionComboboxTypes, TMentionEmoji } from '../../utils/ComboboxTypes'

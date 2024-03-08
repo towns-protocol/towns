@@ -4,7 +4,7 @@
  */
 import React from 'react'
 import { render, screen, waitFor } from '@testing-library/react'
-import { ZionTestApp } from './helpers/ZionTestApp'
+import { TownsTestApp } from './helpers/TownsTestApp'
 import { useMyProfile } from '../../src/hooks/use-my-profile'
 import { registerAndStartClients } from './helpers/TestUtils'
 import { LoginWithWallet } from './helpers/TestComponents'
@@ -35,9 +35,9 @@ describe('userProfileOnLaunchHooks', () => {
         }
         // render it
         render(
-            <ZionTestApp provider={aliceProvider}>
+            <TownsTestApp provider={aliceProvider}>
                 <TestUserProfileOnLaunch />
-            </ZionTestApp>,
+            </TownsTestApp>,
         )
         // get our test elements
         const myProfileName = screen.getByTestId('myProfileName')

@@ -1,6 +1,6 @@
 import { useMemo, useRef } from 'react'
-import { useZionContext } from '../components/ZionContextProvider'
-import { RoomMember } from 'types/zion-types'
+import { useTownsContext } from '../components/TownsContextProvider'
+import { RoomMember } from 'types/towns-types'
 import isEqual from 'lodash/isEqual'
 import { KnownUser, MemberOf } from '../types/user-lookup'
 
@@ -9,7 +9,7 @@ import { KnownUser, MemberOf } from '../types/user-lookup'
  */
 
 export function useAllKnownUsers() {
-    const { spaces, rooms } = useZionContext()
+    const { spaces, rooms } = useTownsContext()
     const knownUsersRef = useRef<{ [userId: string]: KnownUser }>({})
 
     const users = useMemo(() => {

@@ -2,14 +2,14 @@ import {
     TransactionContext,
     TransactionStatus,
     createTransactionContext,
-} from '../client/ZionClientTypes'
+} from '../client/TownsClientTypes'
 import { SignerUndefinedError, toError } from '../types/error-types'
 import { useCallback, useEffect, useMemo, useRef, useState } from 'react'
 
 import { TSigner } from '../types/web3-types'
 import { blockchainKeys } from '../query/query-keys'
 import { useQueryClient } from '../query/queryClient'
-import { useZionClient } from './use-zion-client'
+import { useTownsClient } from './use-towns-client'
 import { getTransactionHashOrUserOpHash } from '@towns/userops'
 
 /**
@@ -20,7 +20,7 @@ export function useUpdateSpaceNameTransaction() {
         TransactionContext<void> | undefined
     >(undefined)
     const isTransacting = useRef<boolean>(false)
-    const { updateSpaceNameTransaction, waitForUpdateSpaceNameTransaction } = useZionClient()
+    const { updateSpaceNameTransaction, waitForUpdateSpaceNameTransaction } = useTownsClient()
     const queryClient = useQueryClient()
 
     const { data, isLoading, transactionHash, transactionStatus, error } = useMemo(() => {

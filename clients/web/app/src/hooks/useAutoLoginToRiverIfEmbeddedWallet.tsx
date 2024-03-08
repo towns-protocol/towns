@@ -1,5 +1,5 @@
 import React, { useCallback, useEffect } from 'react'
-import { useConnectivity } from 'use-zion-client'
+import { useConnectivity } from 'use-towns-client'
 import { useGetEmbeddedSigner } from '@towns/privy'
 import useStateMachine from '@cassiozen/usestatemachine'
 import { usePrivy } from '@privy-io/react-auth'

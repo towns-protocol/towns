@@ -4,7 +4,7 @@
  */
 import {
     createTestChannelWithSpaceRoles,
-    createTestSpaceGatedByTownAndZionNfts,
+    createTestSpaceGatedByTownsNfts,
     makeUniqueName,
     registerAndStartClients,
     registerAndStartClient,
@@ -16,7 +16,7 @@ import { Permission } from '@river/web3'
 import React from 'react'
 import { SpaceContextProvider } from '../../src/components/SpaceContextProvider'
 import { TestConstants } from './helpers/TestConstants'
-import { ZionTestApp } from './helpers/ZionTestApp'
+import { TownsTestApp } from './helpers/TownsTestApp'
 import { useSpaceData } from '../../src/hooks/use-space-data'
 import { LoginWithWallet } from './helpers/TestComponents'
 import { TSigner } from '../../src/types/web3-types'
@@ -34,7 +34,7 @@ describe('spaceHierarchyHooks', () => {
         // bob needs funds to create a space
         await bob.fundWallet()
         // bob creates a space
-        const spaceId = (await createTestSpaceGatedByTownAndZionNfts(
+        const spaceId = (await createTestSpaceGatedByTownsNfts(
             bob,
             // For alice to create a channel, the role must include the AddRemoveChannels permission.
             [Permission.Read, Permission.Write, Permission.AddRemoveChannels],
@@ -81,11 +81,11 @@ describe('spaceHierarchyHooks', () => {
         }
         // render it
         render(
-            <ZionTestApp provider={bob.provider}>
+            <TownsTestApp provider={bob.provider}>
                 <SpaceContextProvider spaceId={spaceId}>
                     <SpaceChannelsContent signer={bob.provider.wallet} />
                 </SpaceContextProvider>
-            </ZionTestApp>,
+            </TownsTestApp>,
         )
         // gather our test elements
         const loginStatus = screen.getByTestId('loginStatus')

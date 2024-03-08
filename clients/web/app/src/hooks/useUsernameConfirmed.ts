@@ -1,4 +1,4 @@
-import { useMyUserId, useUserLookupContext } from 'use-zion-client'
+import { useMyUserId, useUserLookupContext } from 'use-towns-client'
 import { useMemo } from 'react'
 
 export const useUsernameConfirmed = () => {

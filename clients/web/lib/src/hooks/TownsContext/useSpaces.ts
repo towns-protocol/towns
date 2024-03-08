@@ -1,4 +1,4 @@
-import { SpaceItem } from '../../types/zion-types'
+import { SpaceItem } from '../../types/towns-types'
 import { useCasablancaSpaces } from '../CasablancClient/useCasablancaSpaces'
 import { Client as CasablancaClient } from '@river/sdk'
 

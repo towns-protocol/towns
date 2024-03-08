@@ -1,5 +1,5 @@
 import React from 'react'
-import { useUserLookupContext } from 'use-zion-client'
+import { useUserLookupContext } from 'use-towns-client'
 import { Link } from 'react-router-dom'
 import { Box, Paragraph, Stack, Text } from '@ui'
 import { ZRoomPropertiesEvent } from '@components/MessageTimeline/util/getEventsByDate'

@@ -1,7 +1,12 @@
 import { IGif } from '@giphy/js-types'
 import { Grid } from '@giphy/react-components'
 import React from 'react'
-import { MessageType, SendImageMessageOptions, useChannelId, useZionClient } from 'use-zion-client'
+import {
+    MessageType,
+    SendImageMessageOptions,
+    useChannelId,
+    useTownsClient,
+} from 'use-towns-client'
 import { Spinner } from '@components/Spinner'
 import { Box } from '@ui'
 import { useStore } from 'store/store'
@@ -44,7 +49,7 @@ export const GiphyPickerCard = (props: GiphyPickerCardProps) => {
     const { closeCard, threadId, threadPreview } = props
 
     const { fetchGifs, query, isFetching } = useGiphySearchContext()
-    const { sendMessage } = useZionClient()
+    const { sendMessage } = useTownsClient()
 
     const isInReplyThread = !!props.threadId
     const channelId = useChannelId()

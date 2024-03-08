@@ -1,5 +1,5 @@
 import React, { useCallback } from 'react'
-import { Membership, useMyMembership, useSpaceData, useSpaceMembers } from 'use-zion-client'
+import { Membership, useMyMembership, useSpaceData, useSpaceMembers } from 'use-towns-client'
 import { Box, Dot, Icon, IconButton, Paragraph, Stack, Text } from '@ui'
 import { useNavigateToCurrentSpaceInfo } from 'hooks/useNavigateToCurrentSpaceInfo'
 import { useGetSpaceTopic } from 'hooks/useSpaceTopic'

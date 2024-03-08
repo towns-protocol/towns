@@ -1,4 +1,4 @@
-import { useSpaceData, useUserLookupContext } from 'use-zion-client'
+import { useSpaceData, useUserLookupContext } from 'use-towns-client'
 import React, { useEffect, useMemo, useState } from 'react'
 import { useEvent } from 'react-use-event-hook'
 import { toast } from 'react-hot-toast/headless'

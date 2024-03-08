@@ -2,11 +2,11 @@
  * @group casablanca
  */
 import {
-    createTestSpaceGatedByTownAndZionNfts,
+    createTestSpaceGatedByTownsNfts,
     registerAndStartClient,
     registerAndStartClients,
     waitForWithRetries,
-} from 'use-zion-client/tests/integration/helpers/TestUtils'
+} from 'use-towns-client/tests/integration/helpers/TestUtils'
 
 import { RoleIdentifier } from '../../src/types/web3-types'
 import { TestConstants } from './helpers/TestConstants'
@@ -17,7 +17,7 @@ import {
     NoopRuleData,
     Permission,
 } from '@river/web3'
-import { ZionTestWeb3Provider } from './helpers/ZionTestWeb3Provider'
+import { TownsTestWeb3Provider } from './helpers/TownsTestWeb3Provider'
 import { getTransactionHashFromTransactionOrUserOp } from '@towns/userops'
 
 describe('isEntitledToSpace and isEntitledToChannel tests', () => {
@@ -32,7 +32,7 @@ describe('isEntitledToSpace and isEntitledToChannel tests', () => {
         const { alice } = await registerAndStartClients(['alice'])
         // create a space with token entitlement to read & write
         await alice.fundWallet()
-        const spaceId = (await createTestSpaceGatedByTownAndZionNfts(alice, [
+        const spaceId = (await createTestSpaceGatedByTownsNfts(alice, [
             Permission.Read,
             Permission.Write,
         ])) as string
@@ -58,13 +58,13 @@ describe('isEntitledToSpace and isEntitledToChannel tests', () => {
         console.time('fundWallet')
         await Promise.all([alice.fundWallet(), bob.fundWallet()])
         console.timeLog('fundWallet')
-        console.time('createTestSpaceGatedByTownAndZionNfts')
-        const spaceId = await createTestSpaceGatedByTownAndZionNfts(alice, [
+        console.time('createTestSpaceGatedByTownsNfts')
+        const spaceId = await createTestSpaceGatedByTownsNfts(alice, [
             Permission.Read,
             Permission.Write,
         ])
         expect(spaceId).toBeDefined()
-        console.timeLog('createTestSpaceGatedByTownAndZionNfts')
+        console.timeLog('createTestSpaceGatedByTownsNfts')
 
         console.time('inviteUser')
         // invite user to join the town
@@ -102,7 +102,7 @@ describe('isEntitledToSpace and isEntitledToChannel tests', () => {
         const ruleData = createExternalTokenStruct([testGatingNftAddress])
         const users: string[] = []
         await alice.fundWallet()
-        const spaceId = (await createTestSpaceGatedByTownAndZionNfts(alice, permissions)) as string
+        const spaceId = (await createTestSpaceGatedByTownsNfts(alice, permissions)) as string
         // create a channel with token entitlement to read & write
         const roleId: RoleIdentifier | undefined = (await alice.createRole(
             spaceId,
@@ -140,7 +140,7 @@ describe('isEntitledToSpace and isEntitledToChannel tests', () => {
         const ruleData = createExternalTokenStruct([testGatingNftAddress])
         const users: string[] = []
         await alice.fundWallet()
-        const spaceId = (await createTestSpaceGatedByTownAndZionNfts(alice, permissions)) as string
+        const spaceId = (await createTestSpaceGatedByTownsNfts(alice, permissions)) as string
         // create a channel with token entitlement to read & write
         const roleId: RoleIdentifier | undefined = (await alice.createRole(
             spaceId,
@@ -176,7 +176,7 @@ describe('isEntitledToSpace and isEntitledToChannel tests', () => {
         )
         // create a space with token entitlement to read & write
         await alice.fundWallet()
-        const spaceId = await createTestSpaceGatedByTownAndZionNfts(alice, [
+        const spaceId = await createTestSpaceGatedByTownsNfts(alice, [
             Permission.Read,
             Permission.Write,
         ])
@@ -233,7 +233,7 @@ describe('isEntitledToSpace and isEntitledToChannel tests', () => {
 
         // create a space with token entitlement to read & write
         await alice.fundWallet()
-        const spaceId = await createTestSpaceGatedByTownAndZionNfts(alice, [
+        const spaceId = await createTestSpaceGatedByTownsNfts(alice, [
             Permission.Read,
             Permission.Write,
         ])
@@ -266,7 +266,7 @@ describe('isEntitledToSpace and isEntitledToChannel tests', () => {
         /** Arrange */
         // create all the users for the test
         const { alice, bob } = await registerAndStartClients(['alice', 'bob'])
-        const metamaskWalletWithoutGatingNft = await new ZionTestWeb3Provider().fundWallet()
+        const metamaskWalletWithoutGatingNft = await new TownsTestWeb3Provider().fundWallet()
 
         const tx_link = await bob.linkWallet(bob.provider.wallet, metamaskWalletWithoutGatingNft)
         const txHash = await getTransactionHashFromTransactionOrUserOp(tx_link.transaction)
@@ -279,7 +279,7 @@ describe('isEntitledToSpace and isEntitledToChannel tests', () => {
 
         // create a space with token entitlement to read & write
         await alice.fundWallet()
-        const spaceId = await createTestSpaceGatedByTownAndZionNfts(alice, [
+        const spaceId = await createTestSpaceGatedByTownsNfts(alice, [
             Permission.Read,
             Permission.Write,
         ])
@@ -317,7 +317,7 @@ describe('isEntitledToSpace and isEntitledToChannel tests', () => {
         const bobAccountAddress = getAccountAddress(bobUserId as string) ?? ''
         // create a space with token entitlement to read & write
         await alice.fundWallet()
-        const spaceId = (await createTestSpaceGatedByTownAndZionNfts(alice, [
+        const spaceId = (await createTestSpaceGatedByTownsNfts(alice, [
             Permission.Read,
             Permission.Write,
         ])) as string
@@ -356,7 +356,7 @@ describe('isEntitledToSpace and isEntitledToChannel tests', () => {
         const ruleData = createExternalTokenStruct([testGatingNftAddress])
         const users: string[] = []
         await alice.fundWallet()
-        const spaceId = (await createTestSpaceGatedByTownAndZionNfts(alice, permissions)) as string
+        const spaceId = (await createTestSpaceGatedByTownsNfts(alice, permissions)) as string
         // create a channel with token entitlement to read & write
         const roleId: RoleIdentifier | undefined = (await alice.createRole(
             spaceId,
@@ -403,7 +403,7 @@ describe('isEntitledToSpace and isEntitledToChannel tests', () => {
         const ruleData = createExternalTokenStruct([testGatingNftAddress])
         const users: string[] = []
         await alice.fundWallet()
-        const spaceId = (await createTestSpaceGatedByTownAndZionNfts(alice, permissions)) as string
+        const spaceId = (await createTestSpaceGatedByTownsNfts(alice, permissions)) as string
         // create a channel with token entitlement to read & write
         const roleId: RoleIdentifier | undefined = (await alice.createRole(
             spaceId,
@@ -449,7 +449,7 @@ describe('isEntitledToSpace and isEntitledToChannel tests', () => {
         const permissions = [Permission.Read, Permission.Write]
         const users: string[] = []
         await alice.fundWallet()
-        const spaceId = (await createTestSpaceGatedByTownAndZionNfts(alice, permissions)) as string
+        const spaceId = (await createTestSpaceGatedByTownsNfts(alice, permissions)) as string
         const roleName = `newRole${Date.now()}`
         // create a channel with token entitlement to read & write
         const roleId = await alice.createRole(spaceId, roleName, permissions, users, NoopRuleData)
@@ -459,7 +459,7 @@ describe('isEntitledToSpace and isEntitledToChannel tests', () => {
             {
                 name: `aliceChannel${Date.now()}`,
                 parentSpaceId: spaceId,
-                roleIds: [roleId!.roleId],
+                roleIds: [roleId.roleId],
             },
             alice.provider.wallet,
         )
@@ -480,7 +480,7 @@ describe('isEntitledToSpace and isEntitledToChannel tests', () => {
 
         const transaction = await alice.updateRoleTransaction(
             spaceId,
-            roleId!.roleId,
+            roleId.roleId,
             roleName,
             permissions,
             [bobAccountAddress],

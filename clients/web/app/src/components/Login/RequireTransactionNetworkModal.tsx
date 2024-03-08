@@ -1,5 +1,5 @@
 import React, { useCallback, useEffect, useRef, useState } from 'react'
-import { signMessageAbortController } from 'use-zion-client'
+import { signMessageAbortController } from 'use-towns-client'
 import { useEnvironment } from 'hooks/useEnvironmnet'
 import { ModalContainer } from '@components/Modals/ModalContainer'
 import { Box, FancyButton, Icon, Paragraph, Stack, Text } from '@ui'

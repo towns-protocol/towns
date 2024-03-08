@@ -3,8 +3,8 @@ import { useMatch, useNavigate } from 'react-router'
 import {
     DMChannelContextUserLookupProvider,
     DMChannelIdentifier,
-    useZionContext,
-} from 'use-zion-client'
+    useTownsContext,
+} from 'use-towns-client'
 import { Box, Icon, Paragraph, Stack } from '@ui'
 import { useCreateLink } from 'hooks/useCreateLink'
 import { useDevice } from 'hooks/useDevice'
@@ -18,7 +18,7 @@ export const DirectMessageList = () => {
 
     const channelId = routeMatch?.params?.channelId
 
-    const { dmUnreadChannelIds } = useZionContext()
+    const { dmUnreadChannelIds } = useTownsContext()
 
     const { selectMessage } = useSelectMessage(dmChannelIds, channelId)
 
@@ -71,7 +71,7 @@ export const DirectMessageList = () => {
 }
 
 const useFilteredDirectMessages = () => {
-    const { dmChannels: _dmChannels } = useZionContext()
+    const { dmChannels: _dmChannels } = useTownsContext()
     const channels = useMemo(() => _dmChannels.filter((c) => !c.left), [_dmChannels])
     return { channels }
 }

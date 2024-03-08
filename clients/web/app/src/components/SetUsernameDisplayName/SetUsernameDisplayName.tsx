@@ -1,5 +1,5 @@
 import React, { useCallback, useEffect, useMemo, useState } from 'react'
-import { LookupUser, useMyUserId, useUserLookupContext, useZionClient } from 'use-zion-client'
+import { LookupUser, useMyUserId, useTownsClient, useUserLookupContext } from 'use-towns-client'
 import { useParams } from 'react-router'
 import { isDMChannelStreamId, isGDMChannelStreamId } from '@river/sdk'
 import { Box, Button, Stack, Text, TextButton, TextField } from '@ui'
@@ -47,11 +47,11 @@ export const SetUsernameDisplayName = (props: { titleProperties: TitleProperties
     const user = myUserId ? usersMap[myUserId] : undefined
 
     const { setUsername } = useSetUsername()
-    const { setDisplayName } = useZionClient()
+    const { setDisplayName } = useTownsClient()
     const [dirtyUsername, setDirtyUsername] = React.useState<string>(user?.username ?? '')
     const [usernameAvailable, setUsernameAvailable] = React.useState<boolean>(true)
     const [dirtyDisplayName, setDirtyDisplayName] = React.useState<string>(user?.displayName ?? '')
-    const { getIsUsernameAvailable } = useZionClient()
+    const { getIsUsernameAvailable } = useTownsClient()
 
     const onUsernameChange = useCallback(
         async (e: React.ChangeEvent<HTMLInputElement | HTMLTextAreaElement>) => {

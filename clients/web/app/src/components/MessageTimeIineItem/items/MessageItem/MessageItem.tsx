@@ -5,8 +5,8 @@ import {
     TimelineEvent,
     ZTEvent,
     staticAssertNever,
-    useZionClient,
-} from 'use-zion-client'
+    useTownsClient,
+} from 'use-towns-client'
 import { useNavigate } from 'react-router'
 import {
     MessageLayout,
@@ -49,7 +49,7 @@ type Props = {
 export const MessageItem = (props: Props) => {
     const { itemData, isHighlight } = props
     const event = itemData.event
-    const { client } = useZionClient()
+    const { client } = useTownsClient()
 
     const { isTouch } = useDevice()
     const messageTooltipRef = useRef<HTMLElement | null>(null)

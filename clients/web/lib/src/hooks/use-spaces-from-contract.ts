@@ -1,8 +1,8 @@
-import { SpaceIdentifier } from '../client/ZionClientTypes'
+import { SpaceIdentifier } from '../client/TownsClientTypes'
 import { useEffect, useMemo, useState } from 'react'
-import { SpaceItem } from '../types/zion-types'
-import { useZionClient } from './use-zion-client'
-import { useZionContext } from '../components/ZionContextProvider'
+import { SpaceItem } from '../types/towns-types'
+import { useTownsClient } from './use-towns-client'
+import { useTownsContext } from '../components/TownsContextProvider'
 import { useCasablancaCredentials } from './use-casablanca-credentials'
 import { Permission } from '@river/web3'
 import uniqBy from 'lodash/uniqBy'
@@ -34,8 +34,8 @@ export function useCasablancaSpacesFromContract(): UseSpaceFromContractReturn {
 }
 
 function useSpacesFromContractWithAddress(myWalletAddress?: string): UseSpaceFromContractReturn {
-    const { spaceDapp } = useZionClient()
-    const { spaces: spaceRooms } = useZionContext()
+    const { spaceDapp } = useTownsClient()
+    const { spaces: spaceRooms } = useTownsContext()
     const [{ isLoading, spaces, isError }, setSpaceIdentifiers] =
         useState<UseSpaceFromContractReturn>({
             isError: false,

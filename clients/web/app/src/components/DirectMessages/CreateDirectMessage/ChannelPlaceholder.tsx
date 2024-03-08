@@ -1,5 +1,5 @@
 import React from 'react'
-import { useMyUserId } from 'use-zion-client'
+import { useMyUserId } from 'use-towns-client'
 import { DMChannelIntro } from '@components/ChannelIntro'
 import { RichTextEditor } from '@components/RichTextPlate/PlateEditor'
 import { useUserList } from '@components/UserList/UserList'

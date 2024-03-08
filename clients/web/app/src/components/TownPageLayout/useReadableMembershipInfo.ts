@@ -1,5 +1,5 @@
 import { useMemo } from 'react'
-import { useMembershipInfo } from 'use-zion-client'
+import { useMembershipInfo } from 'use-towns-client'
 import { ETH_ADDRESS } from '@components/Web3/utils'
 
 export function useReadableMembershipInfo(networkId: string) {

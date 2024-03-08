@@ -1,9 +1,9 @@
 import { useQuery } from '@tanstack/react-query'
-import { useZionContext } from 'use-zion-client'
+import { useTownsContext } from 'use-towns-client'
 import { getFilteredRolesFromSpace } from '@river/web3'
 
 export const useContractRoles = (spaceNetworkId?: string) => {
-    const { client } = useZionContext()
+    const { client } = useTownsContext()
 
     return useQuery({
         queryKey: ['spaceRoles', spaceNetworkId],

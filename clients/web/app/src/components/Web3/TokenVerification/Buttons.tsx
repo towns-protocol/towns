@@ -1,6 +1,6 @@
 import React, { useCallback, useEffect, useState } from 'react'
 import { Link } from 'react-router-dom'
-import { Address } from 'use-zion-client'
+import { Address } from 'use-towns-client'
 import { BoxProps, Icon, MotionBox, Stack, Text } from '@ui'
 import { useAuth } from 'hooks/useAuth'
 import useCopyToClipboard from 'hooks/useCopyToClipboard'

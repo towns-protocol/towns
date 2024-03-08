@@ -2,7 +2,7 @@ import React from 'react'
 import { render, screen, waitFor } from '@testing-library/react'
 import { describe, expect, test, vi } from 'vitest'
 // eslint-disable-next-line no-restricted-imports
-import * as Lib from 'use-zion-client'
+import * as Lib from 'use-towns-client'
 import { Route, Routes } from 'react-router'
 import { TestApp } from 'test/testUtils'
 import * as useContractAndServerSpaceDataHook from 'hooks/useContractAndServerSpaceData'
@@ -12,13 +12,13 @@ import { ValidateMembership } from './ValidateMembership'
 
 const ValidSpaceContent = () => <>Valid space content</>
 
-vi.mock('use-zion-client', async () => {
-    const actual = (await vi.importActual('use-zion-client')) as typeof Lib
+vi.mock('use-towns-client', async () => {
+    const actual = (await vi.importActual('use-towns-client')) as typeof Lib
 
     return {
         ...actual,
-        useZionContext: () => ({
-            ...actual.useZionContext(),
+        useTownsContext: () => ({
+            ...actual.useTownsContext(),
             clientStatus: {
                 isRemoteDataLoaded: true,
                 isLocalDataLoaded: true,

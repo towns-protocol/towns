@@ -1,8 +1,8 @@
 import { useMemo } from 'react'
-import { useUser, useZionClient } from 'use-zion-client'
+import { useTownsClient, useUser } from 'use-towns-client'
 
 export function useGetUserFromAddress(address: string | undefined) {
-    const { client, chainId } = useZionClient()
+    const { client, chainId } = useTownsClient()
     // if we have a userId from the owner address, it's a river user
     const riverUser = useUser(address)
 

@@ -1,6 +1,6 @@
 import React from 'react'
 import { List, ListItem, ListItemText, Typography } from '@mui/material'
-import { InviteData, useInvites } from 'use-zion-client'
+import { InviteData, useInvites } from 'use-towns-client'
 import { Theme } from '@mui/system'
 
 interface Props {

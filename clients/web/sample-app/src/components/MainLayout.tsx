@@ -1,5 +1,5 @@
 import React from 'react'
-import { WalletStatus, useCasablancaCredentials } from 'use-zion-client'
+import { WalletStatus, useCasablancaCredentials } from 'use-towns-client'
 import { Outlet } from 'react-router-dom'
 import { useAccount } from 'wagmi'
 import { Login } from './Login'

@@ -1,5 +1,5 @@
 import React from 'react'
-import { useSpaceNotificationCounts } from 'use-zion-client'
+import { useSpaceNotificationCounts } from 'use-towns-client'
 import { PATHS } from 'routes'
 import { Badge, Box, ButtonText, Dot, Icon } from '@ui'
 import { IconName } from 'ui/components/Icon'

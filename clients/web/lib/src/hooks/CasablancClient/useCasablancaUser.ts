@@ -1,5 +1,5 @@
 import { Client as CasablancaClient } from '@river/sdk'
-import { RoomMember } from '../../types/zion-types'
+import { RoomMember } from '../../types/towns-types'
 
 export function useCasablancaUser(
     userId?: string,

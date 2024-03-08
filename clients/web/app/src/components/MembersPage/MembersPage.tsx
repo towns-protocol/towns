@@ -1,6 +1,6 @@
 import React, { useMemo } from 'react'
 import { Link } from 'react-router-dom'
-import { Address, RoomMember, useSpaceMembers, useUserLookupContext } from 'use-zion-client'
+import { Address, RoomMember, useSpaceMembers, useUserLookupContext } from 'use-towns-client'
 import { CentralPanelLayout } from 'routes/layouts/CentralPanelLayout'
 import { shortAddress } from 'ui/utils/utils'
 import { Box, Grid, Paragraph, Stack } from '@ui'

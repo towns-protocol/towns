@@ -4,7 +4,7 @@ import {
     PersistQueryClientProvider,
     persistQueryClient,
 } from '@tanstack/react-query-persist-client'
-import { queryClient } from 'use-zion-client'
+import { queryClient } from 'use-towns-client'
 import { createAsyncStoragePersister } from '@tanstack/query-async-storage-persister'
 import { del, get, set } from 'idb-keyval'
 

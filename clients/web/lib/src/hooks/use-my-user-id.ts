@@ -1,6 +1,6 @@
-import { useZionContext } from '../components/ZionContextProvider'
+import { useTownsContext } from '../components/TownsContextProvider'
 
 export const useMyUserId = () => {
-    const context = useZionContext()
+    const context = useTownsContext()
     return context.casablancaClient?.userId
 }

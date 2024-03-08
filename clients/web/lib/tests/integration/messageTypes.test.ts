@@ -2,9 +2,9 @@
 /**
  * @group core
  */
-import { MessageType, SendImageMessageOptions } from '../../src/types/zion-types'
+import { MessageType, SendImageMessageOptions } from '../../src/types/towns-types'
 import {
-    createTestSpaceGatedByTownAndZionNfts,
+    createTestSpaceGatedByTownsNfts,
     makeUniqueName,
     registerAndStartClients,
     registerAndStartClient,
@@ -29,7 +29,7 @@ describe('messageTypes', () => {
         // bob needs funds to create a space
         await bob.fundWallet()
         // bob creates a public room
-        const spaceId = (await createTestSpaceGatedByTownAndZionNfts(
+        const spaceId = (await createTestSpaceGatedByTownsNfts(
             bob,
             [Permission.Read, Permission.Write],
             {
@@ -90,7 +90,7 @@ describe('messageTypes', () => {
         // bob needs funds to create a space
         await bob.fundWallet()
         // bob creates a public room
-        const spaceId = (await createTestSpaceGatedByTownAndZionNfts(
+        const spaceId = (await createTestSpaceGatedByTownsNfts(
             bob,
             [Permission.Read, Permission.Write],
             {

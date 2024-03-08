@@ -8,7 +8,7 @@ import {
     useIsTransactionPending,
     useRoom,
     useUpdateChannelTransaction,
-} from 'use-zion-client'
+} from 'use-towns-client'
 import React, { useCallback, useMemo, useState } from 'react'
 import { useGetEmbeddedSigner } from '@towns/privy'
 import { ChannelNameRegExp, isForbiddenError, isRejectionError } from 'ui/utils/utils'

@@ -3,7 +3,7 @@
  * @group dendrite
  */
 import {
-    createTestSpaceGatedByTownAndZionNfts,
+    createTestSpaceGatedByTownsNfts,
     registerAndStartClients,
     registerAndStartClient,
 } from './helpers/TestUtils'
@@ -24,7 +24,7 @@ describe('messageScrollback', () => {
         // bob needs funds to create a space
         await bob.fundWallet()
         // bob creates a public room
-        const spaceId = (await createTestSpaceGatedByTownAndZionNfts(bob, [
+        const spaceId = (await createTestSpaceGatedByTownsNfts(bob, [
             Permission.Read,
             Permission.Write,
         ])) as string

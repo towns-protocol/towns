@@ -10,7 +10,7 @@ import {
     KEY_ENTER_COMMAND,
 } from 'lexical'
 import React, { useCallback, useEffect, useRef, useState } from 'react'
-import { Mention } from 'use-zion-client'
+import { Mention } from 'use-towns-client'
 import { AnimatePresence } from 'framer-motion'
 import { Button, Icon, MotionBox, Stack } from '@ui'
 import { notUndefined } from 'ui/utils/utils'

@@ -1,7 +1,7 @@
 import React, { ChangeEvent, PropsWithChildren, useCallback, useMemo, useRef } from 'react'
 import { UseFormReturn, useFormContext } from 'react-hook-form'
 import { ethers } from 'ethers'
-import { getContractsInfo } from 'use-zion-client'
+import { getContractsInfo } from 'use-towns-client'
 import { Box, Dropdown, ErrorMessage, IconButton, RadioCard, Stack, Text, TextField } from '@ui'
 import { FadeInBox } from '@components/Transitions'
 import { useAuth } from 'hooks/useAuth'

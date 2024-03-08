@@ -1,5 +1,5 @@
 import { withProps } from '@udecode/cn'
-import { Channel } from 'use-zion-client'
+import { Channel } from 'use-towns-client'
 import { PlateLeaf, createPlugins } from '@udecode/plate-common'
 import { ELEMENT_PARAGRAPH, createParagraphPlugin } from '@udecode/plate-paragraph'
 import { ELEMENT_BLOCKQUOTE, createBlockquotePlugin } from '@udecode/plate-block-quote'

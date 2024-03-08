@@ -1,5 +1,5 @@
 import React, { useCallback } from 'react'
-import { useSpaceContext, useZionContext } from 'use-zion-client'
+import { useSpaceContext, useTownsContext } from 'use-towns-client'
 import { useNavigate } from 'react-router'
 import { useAuth } from 'hooks/useAuth'
 import { shortAddress } from 'ui/utils/utils'
@@ -16,7 +16,7 @@ export const TouchHomeOverlay = (props: Props) => {
     const { onClose } = props
 
     const { loggedInWalletAddress } = useAuth()
-    const { spaces } = useZionContext()
+    const { spaces } = useTownsContext()
     const { spaceId } = useSpaceContext()
     const navigate = useNavigate()
 

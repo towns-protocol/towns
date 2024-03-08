@@ -1,5 +1,5 @@
 import React, { useCallback, useEffect, useRef, useState } from 'react'
-import { useZionClient } from 'use-zion-client'
+import { useTownsClient } from 'use-towns-client'
 import { useInView } from 'react-intersection-observer'
 import { Box, Button, Stack, Text } from '@ui'
 import { useTimelineContext } from '@components/MessageTimeline/MessageTimelineContext'
@@ -7,7 +7,7 @@ import { useTimelineContext } from '@components/MessageTimeline/MessageTimelineC
 const SCROLLBACK_COUNT = 5
 export const MissingMessageItem = () => {
     const timelineContext = useTimelineContext()
-    const { scrollbackToEvent } = useZionClient()
+    const { scrollbackToEvent } = useTownsClient()
     const fetchingRef = useRef(false)
     const [isFetching, setIsFetching] = useState(false)
     const performScrollbacks = useCallback(() => {

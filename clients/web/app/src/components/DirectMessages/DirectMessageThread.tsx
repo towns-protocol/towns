@@ -1,6 +1,6 @@
 import React from 'react'
 import { useParams } from 'react-router'
-import { DMChannelContextUserLookupProvider, SpaceContextProvider } from 'use-zion-client'
+import { DMChannelContextUserLookupProvider, SpaceContextProvider } from 'use-towns-client'
 import { Stack } from '@ui'
 import { useDevice } from 'hooks/useDevice'
 import { SpacesChannel } from 'routes/SpacesChannel'

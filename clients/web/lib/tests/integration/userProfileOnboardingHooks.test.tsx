@@ -4,18 +4,18 @@
  */
 import React from 'react'
 import { render, screen, waitFor } from '@testing-library/react'
-import { ZionTestApp } from './helpers/ZionTestApp'
+import { TownsTestApp } from './helpers/TownsTestApp'
 import { useMyProfile } from '../../src/hooks/use-my-profile'
 import { RegisterWallet } from './helpers/TestComponents'
 import { LoginStatus } from '../../src/hooks/login'
-import { ZionTestWeb3Provider } from './helpers/ZionTestWeb3Provider'
+import { TownsTestWeb3Provider } from './helpers/TownsTestWeb3Provider'
 import { TestConstants } from './helpers/TestConstants'
 
 describe('userProfileOnboardingHooks', () => {
     /// make sure that we load a user profile on launch
     test('user sees own non-null profile on first launch', async () => {
         // create provider
-        const aliceProvider = new ZionTestWeb3Provider()
+        const aliceProvider = new TownsTestWeb3Provider()
 
         // create a veiw for alice
         const TestUserProfileOnLaunch = () => {
@@ -29,9 +29,9 @@ describe('userProfileOnboardingHooks', () => {
         }
         // render it
         render(
-            <ZionTestApp provider={aliceProvider}>
+            <TownsTestApp provider={aliceProvider}>
                 <TestUserProfileOnLaunch />
-            </ZionTestApp>,
+            </TownsTestApp>,
         )
         // get our test elements
         await waitFor(

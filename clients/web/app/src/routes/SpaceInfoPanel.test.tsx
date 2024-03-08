@@ -4,9 +4,9 @@ import React from 'react'
 import { fireEvent, render, screen } from '@testing-library/react'
 import { beforeEach, describe, expect, test, vi } from 'vitest'
 // eslint-disable-next-line no-restricted-imports
-import * as Lib from 'use-zion-client'
+import * as Lib from 'use-towns-client'
 import * as Router from 'react-router'
-// import { useContractSpaceInfo } from 'use-zion-client'
+// import { useContractSpaceInfo } from 'use-towns-client'
 import { TestApp, getWalletAddress } from 'test/testUtils'
 import { getPrettyDisplayName } from 'utils/getPrettyDisplayName'
 import { SpaceInfoPanel } from './SpaceInfoPanel'
@@ -55,8 +55,8 @@ vi.mock('react-router', async () => {
     }
 })
 
-vi.mock('use-zion-client', async () => {
-    const actual = (await vi.importActual('use-zion-client')) as typeof Lib
+vi.mock('use-towns-client', async () => {
+    const actual = (await vi.importActual('use-towns-client')) as typeof Lib
     return {
         ...actual,
         useSpaceMembers: () => ({ memberIds: [ownerUser.userId] }),
@@ -88,7 +88,7 @@ describe('<SpaceHome />', () => {
     test('renders correct basic details', async () => {
         const { roomIdentifier, spaceData, onChainSpaceInfo } = generateSpaceData('abcd')
 
-        vi.spyOn(Lib, 'useZionClient').mockReturnValue({
+        vi.spyOn(Lib, 'useTownsClient').mockReturnValue({
             // @ts-ignore
             client: {
                 getUser: () => ownerUser,
@@ -123,7 +123,7 @@ describe('<SpaceHome />', () => {
             hasPermission: false,
             error: undefined,
         })
-        vi.spyOn(Lib, 'useZionClient').mockReturnValue({
+        vi.spyOn(Lib, 'useTownsClient').mockReturnValue({
             // @ts-ignore
             client: {
                 getUser: () => ownerUser,
@@ -153,7 +153,7 @@ describe('<SpaceHome />', () => {
             hasPermission: true,
             error: undefined,
         })
-        vi.spyOn(Lib, 'useZionClient').mockReturnValue({
+        vi.spyOn(Lib, 'useTownsClient').mockReturnValue({
             // @ts-ignore
             client: {
                 getUser: () => ownerUser,
@@ -182,7 +182,7 @@ describe('<SpaceHome />', () => {
             hasPermission: false,
             error: undefined,
         })
-        vi.spyOn(Lib, 'useZionClient').mockReturnValue({
+        vi.spyOn(Lib, 'useTownsClient').mockReturnValue({
             // @ts-ignore
             client: {
                 getUser: () => ownerUser,
@@ -210,7 +210,7 @@ describe('<SpaceHome />', () => {
             hasPermission: true,
             error: undefined,
         })
-        vi.spyOn(Lib, 'useZionClient').mockReturnValue({
+        vi.spyOn(Lib, 'useTownsClient').mockReturnValue({
             // @ts-ignore
             client: {
                 getUser: () => ownerUser,
@@ -237,7 +237,7 @@ describe('<SpaceHome />', () => {
             error: undefined,
         })
 
-        vi.spyOn(Lib, 'useZionClient').mockReturnValue({
+        vi.spyOn(Lib, 'useTownsClient').mockReturnValue({
             // @ts-ignore
             client: {
                 getUser: () => ownerUser,

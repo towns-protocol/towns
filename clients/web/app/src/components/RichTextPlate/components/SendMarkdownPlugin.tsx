@@ -1,5 +1,5 @@
 import React, { useCallback } from 'react'
-import { Mention } from 'use-zion-client'
+import { Mention } from 'use-towns-client'
 import { AnimatePresence } from 'framer-motion'
 import { useEditorRef } from '@udecode/plate-common'
 import { MotionBox } from '@ui'

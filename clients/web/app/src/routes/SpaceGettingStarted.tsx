@@ -1,5 +1,5 @@
 import React, { useEffect } from 'react'
-import { useIsSpaceOwner, useSpaceData } from 'use-zion-client'
+import { useIsSpaceOwner, useSpaceData } from 'use-towns-client'
 import { useNavigate } from 'react-router'
 import { Stack } from '@ui'
 import { SpaceOwnerLanding } from '@components/SpaceOwnerLanding'

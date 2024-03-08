@@ -1,5 +1,5 @@
 import React, { useEffect } from 'react'
-import { EmbeddedMessageAttachment } from 'use-zion-client'
+import { EmbeddedMessageAttachment } from 'use-towns-client'
 import { useEditorSelector } from '@udecode/plate-core'
 import { useExtractMessageAttachments } from 'hooks/useExtractMessageAttachments'
 import { useThrottledValue } from 'hooks/useThrottledValue'

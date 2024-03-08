@@ -1,7 +1,7 @@
 import { useEffect, useState } from 'react'
 import { FullyReadMarker } from '@river/proto'
-import { ZionClient } from '../../client/ZionClient'
-import { SpaceHierarchies } from '../../types/zion-types'
+import { TownsClient } from '../../client/TownsClient'
+import { SpaceHierarchies } from '../../types/towns-types'
 import { useFullyReadMarkerStore } from '../../store/use-fully-read-marker-store'
 import { ThreadStatsMap, useTimelineStore } from '../../store/use-timeline-store'
 import { useSpaceIdStore } from './useSpaceIds'
@@ -13,7 +13,7 @@ export function useSpaceUnreads({
     enableSpaceRootUnreads: bShowSpaceRootUnreads,
     mutedChannelIds,
 }: {
-    client: ZionClient | undefined
+    client: TownsClient | undefined
     spaceHierarchies: SpaceHierarchies
     enableSpaceRootUnreads: boolean
     mutedChannelIds?: string[]

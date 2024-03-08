@@ -1,5 +1,5 @@
 import React, { useCallback, useMemo, useState } from 'react'
-import { SpaceData, useZionClient } from 'use-zion-client'
+import { SpaceData, useTownsClient } from 'use-towns-client'
 import { AnimatePresence } from 'framer-motion'
 import { ModalContainer } from '@components/Modals/ModalContainer'
 import { Box, Button, MotionText, Stack, Text, TextField } from '@ui'
@@ -12,7 +12,7 @@ export type Props = {
 
 export const SetUsernameForm = (props: Props) => {
     const { spaceData } = props
-    const { getIsUsernameAvailable } = useZionClient()
+    const { getIsUsernameAvailable } = useTownsClient()
     const { setUsername } = useSetUsername()
     const [requestInFlight, setRequestInFlight] = useState<boolean>(false)
 

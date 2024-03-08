@@ -1,4 +1,4 @@
-import { EmbeddedMessageAttachment, useUserLookupContext } from 'use-zion-client'
+import { EmbeddedMessageAttachment, useUserLookupContext } from 'use-towns-client'
 import React, { useCallback } from 'react'
 import { Box, IconButton, Paragraph } from '@ui'
 import { RichTextPreview } from '@components/RichText/RichTextPreview'

@@ -1,7 +1,7 @@
 import React, { useEffect, useMemo } from 'react'
 
 import { matchPath, useNavigate } from 'react-router'
-import { Membership, useSpaceData } from 'use-zion-client'
+import { Membership, useSpaceData } from 'use-towns-client'
 import { PATHS } from 'routes'
 import { useStore } from 'store/store'
 

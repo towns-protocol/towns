@@ -1,5 +1,5 @@
 import React, { useMemo } from 'react'
-import { useDMData } from 'use-zion-client'
+import { useDMData } from 'use-towns-client'
 import { Box, Paragraph } from '@ui'
 import { notUndefined } from 'ui/utils/utils'
 import { Avatar } from '@components/Avatar/Avatar'

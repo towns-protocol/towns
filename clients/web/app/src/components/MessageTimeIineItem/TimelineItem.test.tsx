@@ -5,7 +5,7 @@ import {
     RoomMessageEvent,
     RoomMessageEventContentOneOf,
     ZTEvent,
-} from 'use-zion-client'
+} from 'use-towns-client'
 import { describe, expect, test, vi } from 'vitest'
 import { TestApp } from 'test/testUtils'
 import { image, normal, twitter } from '../../../mocks/unfurl/data'
@@ -22,10 +22,10 @@ interface MessageContent {
     body: string
 }
 
-vi.mock('use-zion-client', async () => {
+vi.mock('use-towns-client', async () => {
     return {
         // eslint-disable-next-line @typescript-eslint/no-explicit-any
-        ...((await vi.importActual('use-zion-client')) as any),
+        ...((await vi.importActual('use-towns-client')) as any),
         useSpaceMembers: () => ({ members: [] }),
         useSpaceData: () => ({ channelGroups: [] }),
     }

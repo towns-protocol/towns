@@ -8,7 +8,7 @@ import {
     RoomMember,
     SendTextMessageOptions,
     useNetworkStatus,
-} from 'use-zion-client'
+} from 'use-towns-client'
 import { datadogRum } from '@datadog/browser-rum'
 import { isEditorEmpty as PlateIsEditorEmpty } from '@udecode/slate-utils'
 import { focusEditor } from '@udecode/slate-react'

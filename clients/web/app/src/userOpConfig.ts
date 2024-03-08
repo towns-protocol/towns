@@ -1,5 +1,5 @@
 import { useMemo } from 'react'
-import { LOCALHOST_CHAIN_ID } from 'use-zion-client'
+import { LOCALHOST_CHAIN_ID } from 'use-towns-client'
 import { paymasterProxyMiddleware } from '@towns/userops'
 import { env } from 'utils'
 

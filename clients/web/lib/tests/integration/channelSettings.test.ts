@@ -2,10 +2,10 @@
  * @group casablanca
  */
 import {
-    createTestSpaceGatedByTownAndZionNfts,
+    createTestSpaceGatedByTownsNfts,
     findRoleByName,
     registerAndStartClients,
-} from 'use-zion-client/tests/integration/helpers/TestUtils'
+} from 'use-towns-client/tests/integration/helpers/TestUtils'
 
 import { RoleIdentifier, RoleEntitlements } from '../../src/types/web3-types'
 import { NoopRuleData, Permission } from '@river/web3'
@@ -24,7 +24,7 @@ describe('channel settings', () => {
 
         // create a new test space
         await alice.fundWallet()
-        const spaceId = await createTestSpaceGatedByTownAndZionNfts(alice, memberPermissions)
+        const spaceId = await createTestSpaceGatedByTownsNfts(alice, memberPermissions)
         if (!spaceId) {
             throw new Error('spaceId is undefined')
         }

@@ -1,7 +1,7 @@
 import { Allotment, AllotmentHandle } from 'allotment'
 import React, { useRef } from 'react'
 import { Outlet, useMatch } from 'react-router'
-import { useSpaceData } from 'use-zion-client'
+import { useSpaceData } from 'use-towns-client'
 import { DirectMessagesPanel } from '@components/DirectMessages/DirectMessages'
 import { PotentiallyUnusedSuspenseLoader } from '@components/Loaders/SuspenseLoader'
 import { ShortcutModal } from '@components/Shortcuts/ShortcutModal'

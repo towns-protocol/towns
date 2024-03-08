@@ -13,13 +13,13 @@ import { useChannelTimeline } from '../../src/hooks/use-channel-timeline'
 import { TimelineEvent, ZTEvent } from '../../src/types/timeline-types'
 import { useCallback, useMemo } from 'react'
 import { LoginWithWallet } from './helpers/TestComponents'
-import { ZionTestApp } from './helpers/ZionTestApp'
+import { TownsTestApp } from './helpers/TownsTestApp'
 import { SpaceContextProvider } from '../../src/components/SpaceContextProvider'
 import { ChannelContextProvider } from '../../src/components/ChannelContextProvider'
 import React from 'react'
 import { render, screen, waitFor } from '@testing-library/react'
 import { TestConstants } from './helpers/TestConstants'
-import { Membership } from '../../src/types/zion-types'
+import { Membership } from '../../src/types/towns-types'
 import { useMyMembership } from '../../src/hooks/use-my-membership'
 import { TSigner } from '../../src/types/web3-types'
 
@@ -95,13 +95,13 @@ describe('sendAMessageThenRefresh.hooks', () => {
         }
         // render it
         render(
-            <ZionTestApp provider={janesProvider}>
+            <TownsTestApp provider={janesProvider}>
                 <SpaceContextProvider spaceId={janesSpaceId}>
                     <ChannelContextProvider channelId={janesChannelId}>
                         <TestRoomMessages signer={janesProvider.wallet} />
                     </ChannelContextProvider>
                 </SpaceContextProvider>
-            </ZionTestApp>,
+            </TownsTestApp>,
         )
         // get our test elements
         const clientRunning = screen.getByTestId('clientRunning')

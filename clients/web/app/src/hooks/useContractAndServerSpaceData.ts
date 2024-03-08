@@ -1,5 +1,5 @@
 import { useMemo } from 'react'
-import { useContractSpaceInfo, useSpaceData } from 'use-zion-client'
+import { useContractSpaceInfo, useSpaceData } from 'use-towns-client'
 import { useSpaceIdFromPathname } from './useSpaceInfoFromPathname'
 
 export type ChainSpaceData = ReturnType<typeof useContractAndServerSpaceData>['chainSpace']

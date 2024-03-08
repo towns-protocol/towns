@@ -1,6 +1,6 @@
 import React, { useCallback } from 'react'
 import { useNavigate } from 'react-router-dom'
-import { useChannelId, useMyMembership } from 'use-zion-client'
+import { useChannelId, useMyMembership } from 'use-towns-client'
 import { Chat } from '../components/Chat'
 
 export const ChannelsIndex = () => {

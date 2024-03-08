@@ -5,7 +5,7 @@
 import { Permission } from '@river/web3'
 import {
     createTestSpaceGatedByTownNft,
-    createTestSpaceGatedByTownAndZionNfts,
+    createTestSpaceGatedByTownsNfts,
     registerAndStartClients,
 } from './helpers/TestUtils'
 
@@ -32,7 +32,7 @@ describe('ITownArchitect tests', () => {
         await alice.fundWallet()
 
         /* Act */
-        const townId = await createTestSpaceGatedByTownAndZionNfts(alice, permissions)
+        const townId = await createTestSpaceGatedByTownsNfts(alice, permissions)
 
         /* Assert */
         expect(townId).toBeDefined()

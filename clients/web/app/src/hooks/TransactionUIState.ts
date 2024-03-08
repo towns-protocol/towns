@@ -1,4 +1,4 @@
-import { TransactionStatus } from 'use-zion-client'
+import { TransactionStatus } from 'use-towns-client'
 
 export enum TransactionUIState {
     None = 'None',

@@ -1,5 +1,5 @@
 import { useQuery } from '@tanstack/react-query'
-import { useZionClient } from 'use-zion-client'
+import { useTownsClient } from 'use-towns-client'
 import { Address } from 'wagmi'
 
 export function useIsMembershipNftAddress({
@@ -9,7 +9,7 @@ export function useIsMembershipNftAddress({
     address: Address
     spaceId: string | undefined
 }) {
-    const { spaceDapp } = useZionClient()
+    const { spaceDapp } = useTownsClient()
 
     return useQuery({
         queryKey: ['useIsMembershipNftAddress', spaceId, address],

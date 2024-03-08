@@ -2,23 +2,23 @@ import { MutableRefObject, useEffect, useRef, useState } from 'react'
 import { Client as CasablancaClient, SignerContext } from '@river/sdk'
 import { bin_fromHexString, check } from '@river/dlog'
 import { LoginStatus } from './login'
-import { ZionClient } from '../client/ZionClient'
-import { ZionOpts } from '../client/ZionClientTypes'
+import { TownsClient } from '../client/TownsClient'
+import { TownsOpts } from '../client/TownsClientTypes'
 import { CasablancaCredentials, useCredentialStore } from '../store/use-credential-store'
 import { useWeb3Context } from '../components/Web3ContextProvider'
 import { useCasablancaStore } from '../store/use-casablanca-store'
 import EventEmitter from 'events'
 import TypedEmitter from 'typed-emitter'
-import { staticAssertNever } from '../utils/zion-utils'
+import { staticAssertNever } from '../utils/towns-utils'
 import AnalyticsService, { AnalyticsEvents } from '../utils/analyticsService'
 import { useNetworkStatus } from './use-network-status'
 
-export const useZionClientListener = (opts: {
+export const useTownsClientListener = (opts: {
     chainId: number
     casablancaServerUrl?: string
     pushNotificationWorkerUrl?: string
     pushNotificationAuthToken?: string
-    accountAbstractionConfig: ZionOpts['accountAbstractionConfig']
+    accountAbstractionConfig: TownsOpts['accountAbstractionConfig']
     highPriorityStreamIds?: string[]
 }) => {
     const { provider } = useWeb3Context()
@@ -31,11 +31,11 @@ export const useZionClientListener = (opts: {
     const { isOffline } = useNetworkStatus()
 
     if (!clientSingleton.current) {
-        const zionClient = new ZionClient({
+        const townsClient = new TownsClient({
             ...opts,
             web3Provider: provider,
         })
-        clientSingleton.current = new ClientStateMachine(zionClient)
+        clientSingleton.current = new ClientStateMachine(townsClient)
     }
 
     logServerUrlMismatch(opts, clientSingleton)
@@ -151,10 +151,10 @@ type ClientStateMachineEvents = {
 
 class ClientStateMachine extends (EventEmitter as new () => TypedEmitter<ClientStateMachineEvents>) {
     state: States = new LoggedOut()
-    client: ZionClient
+    client: TownsClient
     private next: Next = {}
 
-    constructor(client: ZionClient) {
+    constructor(client: TownsClient) {
         super()
         this.client = client
     }
@@ -246,7 +246,7 @@ function getTransition(current: Situations, next: Next): Transitions | undefined
     return undefined
 }
 
-function logTick(client: ZionClient, situation: Situations, transition?: Transitions) {
+function logTick(client: TownsClient, situation: Situations, transition?: Transitions) {
     console.log('$$$ tick update', {
         client: client.name,
         current: situation.loginStatus,
@@ -255,13 +255,13 @@ function logTick(client: ZionClient, situation: Situations, transition?: Transit
 }
 
 function logServerUrlMismatch(
-    opts: ZionOpts,
+    opts: TownsOpts,
     clientSingleton: MutableRefObject<ClientStateMachine | undefined>,
 ) {
     if (opts.casablancaServerUrl !== clientSingleton.current?.client.opts.casablancaServerUrl) {
         // aellis there is an assumption in this code that the casablanca server url never changes
         // if it does change, we need to refresh the page to recreate the client
-        console.error("$$$ use zion client listener: casablancaServerUrl doesn't match", {
+        console.error("$$$ use towns client listener: casablancaServerUrl doesn't match", {
             opts: opts.casablancaServerUrl,
             client: clientSingleton.current?.client.opts.casablancaServerUrl,
         })

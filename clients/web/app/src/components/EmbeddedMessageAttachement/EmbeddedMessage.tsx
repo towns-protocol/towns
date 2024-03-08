@@ -6,7 +6,7 @@ import {
     MessageType,
     useRoom,
     useUserLookupContext,
-} from 'use-zion-client'
+} from 'use-towns-client'
 import { MessageAttachmentsContext } from '@components/MessageAttachments/MessageAttachmentsContext'
 import { RichTextPreview } from '@components/RichText/RichTextPreview'
 import { Box, Paragraph, Stack, Text } from '@ui'

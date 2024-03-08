@@ -1,6 +1,6 @@
 import React, { useMemo } from 'react'
 import { Link } from 'react-router-dom'
-import { useDMData, useMyUserId } from 'use-zion-client'
+import { useDMData, useMyUserId } from 'use-towns-client'
 import { AvatarGroup } from '@components/DirectMessages/GroupDMIcon'
 import { ProfileHoverCard } from '@components/ProfileHoverCard/ProfileHoverCard'
 import { UserList } from '@components/UserList/UserList'

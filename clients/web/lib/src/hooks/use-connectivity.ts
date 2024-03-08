@@ -1,5 +1,5 @@
 import { useCallback } from 'react'
-import { useZionClient } from './use-zion-client'
+import { useTownsClient } from './use-towns-client'
 import { useCasablancaCredentials } from './use-casablanca-credentials'
 import { TSigner } from 'types/web3-types'
 
@@ -19,7 +19,7 @@ export function useConnectivity() {
         registerWalletWithCasablanca,
         getIsWalletRegisteredWithCasablanca,
         logout: _logout,
-    } = useZionClient()
+    } = useTownsClient()
 
     const login = useCallback(
         async (signer: TSigner) => {

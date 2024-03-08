@@ -1,5 +1,5 @@
 import React, { useMemo } from 'react'
-import { LookupUser, useMyUserId, useZionContext } from 'use-zion-client'
+import { LookupUser, useMyUserId, useTownsContext } from 'use-towns-client'
 import { Box, Stack, Text } from '@ui'
 import { notUndefined } from 'ui/utils/utils'
 import { SpaceIcon } from '@components/SpaceIcon'
@@ -8,7 +8,7 @@ import { ImageVariants } from '@components/UploadImage/useImageSource'
 export const MutualTowns = (props: { user: LookupUser }) => {
     const myUserId = useMyUserId()
     const { user } = props
-    const { spaces } = useZionContext()
+    const { spaces } = useTownsContext()
     const memberOf = useMemo(() => {
         const memberOfIds = Object.keys(user?.memberOf ?? [])
         return memberOfIds?.length

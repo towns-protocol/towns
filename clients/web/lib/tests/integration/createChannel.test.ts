@@ -2,7 +2,7 @@
  * @group core
  */
 import { CONTRACT_ERROR, NoThrownError, getError } from './helpers/ErrorUtils'
-import { createTestSpaceGatedByTownAndZionNfts, registerAndStartClients } from './helpers/TestUtils'
+import { createTestSpaceGatedByTownsNfts, registerAndStartClients } from './helpers/TestUtils'
 import { getFilteredRolesFromSpace, Permission } from '@river/web3'
 
 describe('On-chain channel creation tests', () => {
@@ -12,7 +12,7 @@ describe('On-chain channel creation tests', () => {
         await alice.fundWallet()
 
         // create a space with token entitlement to write
-        const roomId = await createTestSpaceGatedByTownAndZionNfts(alice, [
+        const roomId = await createTestSpaceGatedByTownsNfts(alice, [
             Permission.Read,
             Permission.Write,
         ])
@@ -41,7 +41,7 @@ describe('On-chain channel creation tests', () => {
         await alice.fundWallet()
 
         // create a space with token entitlement to write
-        const roomId = (await createTestSpaceGatedByTownAndZionNfts(alice, [
+        const roomId = (await createTestSpaceGatedByTownsNfts(alice, [
             Permission.Read,
             Permission.Write,
         ])) as string
@@ -72,7 +72,7 @@ describe('On-chain channel creation tests', () => {
         await alice.fundWallet()
 
         // create a space with token entitlement to write
-        const roomId = (await createTestSpaceGatedByTownAndZionNfts(alice, [
+        const roomId = (await createTestSpaceGatedByTownsNfts(alice, [
             Permission.Read,
             Permission.Write,
         ])) as string

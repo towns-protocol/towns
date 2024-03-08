@@ -1,5 +1,5 @@
 import React, { useCallback, useContext, useRef } from 'react'
-import { TimelineEvent, useFullyReadMarker, useMyUserId, useZionClient } from 'use-zion-client'
+import { TimelineEvent, useFullyReadMarker, useMyUserId, useTownsClient } from 'use-towns-client'
 import { isDMChannelStreamId, isGDMChannelStreamId } from '@river/sdk'
 import { EmojiPickerButton } from '@components/EmojiPickerButton'
 import { Box, IconButton, MotionStack, Stack } from '@ui'
@@ -31,7 +31,7 @@ const style = {
 export const MessageContextMenu = (props: Props) => {
     const { eventId, channelId, spaceId, threadParentId } = props
 
-    const { redactEvent, sendReaction, sendReadReceipt } = useZionClient()
+    const { redactEvent, sendReaction, sendReadReceipt } = useTownsClient()
     const timelineContext = useContext(MessageTimelineContext)
 
     const { onOpenMessageThread } = useOpenMessageThread(spaceId, channelId)

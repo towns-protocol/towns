@@ -1,5 +1,5 @@
 import { Box, Grid, Theme, Typography } from '@mui/material'
-import { useChannelData, useChannelTimeline, useZionClient } from 'use-zion-client'
+import { useChannelData, useChannelTimeline, useTownsClient } from 'use-towns-client'
 import React, { useCallback, useState } from 'react'
 
 import { useNavigate } from 'react-router-dom'
@@ -17,7 +17,7 @@ interface Props {
 
 export function Chat(props: Props): JSX.Element {
     const { spaceId, channelId, channel } = useChannelData()
-    const { leaveRoom, joinRoom, sendMessage } = useZionClient()
+    const { leaveRoom, joinRoom, sendMessage } = useTownsClient()
     const navigate = useNavigate()
     const { timeline } = useChannelTimeline()
     const [joinFailed, setJoinFailed] = useState(false)

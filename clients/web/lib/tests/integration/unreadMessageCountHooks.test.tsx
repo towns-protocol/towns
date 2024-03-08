@@ -2,7 +2,7 @@
 /**
  * @group core
  */
-import { Membership } from '../../src/types/zion-types'
+import { Membership } from '../../src/types/towns-types'
 import React, { useCallback } from 'react'
 import { TimelineEvent, ZTEvent } from '../../src/types/timeline-types'
 import {
@@ -16,13 +16,13 @@ import { ChannelContextProvider } from '../../src/components/ChannelContextProvi
 import { Permission } from '@river/web3'
 import { RegisterWallet } from './helpers/TestComponents'
 import { SpaceContextProvider } from '../../src/components/SpaceContextProvider'
-import { ZionTestApp } from './helpers/ZionTestApp'
-import { ZionTestWeb3Provider } from './helpers/ZionTestWeb3Provider'
+import { TownsTestApp } from './helpers/TownsTestApp'
+import { TownsTestWeb3Provider } from './helpers/TownsTestWeb3Provider'
 import { useChannelTimeline } from '../../src/hooks/use-channel-timeline'
 import { useFullyReadMarker } from '../../src/hooks/use-fully-read-marker'
 import { useMyMembership } from '../../src/hooks/use-my-membership'
-import { useZionClient } from '../../src/hooks/use-zion-client'
-import { useZionContext } from '../../src/components/ZionContextProvider'
+import { useTownsClient } from '../../src/hooks/use-towns-client'
+import { useTownsContext } from '../../src/components/TownsContextProvider'
 import { TSigner } from '../../src/types/web3-types'
 import { TestConstants } from './helpers/TestConstants'
 
@@ -31,7 +31,7 @@ describe('unreadMessageCountHooks', () => {
         // create clients
         const { jane } = await registerAndStartClients(['jane'])
         // create a wallet for bob
-        const bobProvider = new ZionTestWeb3Provider()
+        const bobProvider = new TownsTestWeb3Provider()
         // bob needs funds to mint membership
         await bobProvider.fundWallet()
         // jane needs funds to create a space
@@ -56,8 +56,8 @@ describe('unreadMessageCountHooks', () => {
 
         // create a veiw for bob
         const TestComponent = ({ signer }: { signer: TSigner }) => {
-            const { joinRoom, joinTown, sendMessage, sendReadReceipt } = useZionClient()
-            const { spaceUnreads, spaceUnreadChannelIds } = useZionContext()
+            const { joinRoom, joinTown, sendMessage, sendReadReceipt } = useTownsClient()
+            const { spaceUnreads, spaceUnreadChannelIds } = useTownsContext()
             const spaceFullyReadmarker = useFullyReadMarker(janesSpaceId)
             const channelFullyReadMarker = useFullyReadMarker(janesChannelId)
             const spaceHasUnread = spaceUnreads[janesSpaceId]
@@ -135,13 +135,13 @@ describe('unreadMessageCountHooks', () => {
         }
         // render it
         render(
-            <ZionTestApp provider={bobProvider}>
+            <TownsTestApp provider={bobProvider}>
                 <SpaceContextProvider spaceId={janesSpaceId}>
                     <ChannelContextProvider channelId={janesChannelId}>
                         <TestComponent signer={bobProvider.wallet} />
                     </ChannelContextProvider>
                 </SpaceContextProvider>
-            </ZionTestApp>,
+            </TownsTestApp>,
         )
 
         // get our test elements

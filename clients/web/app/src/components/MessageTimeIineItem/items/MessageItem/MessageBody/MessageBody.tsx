@@ -1,5 +1,5 @@
 import React, { useCallback, useMemo } from 'react'
-import { Channel, EventStatus, RoomMember, RoomMessageEvent, TimelineEvent } from 'use-zion-client'
+import { Channel, EventStatus, RoomMember, RoomMessageEvent, TimelineEvent } from 'use-towns-client'
 import { UnfurlData } from '@unfurl-worker/types'
 import { ErrorBoundary, FallbackProps } from '@components/ErrorBoundary/ErrorBoundary'
 import { RichTextPreview } from '@components/RichText/RichTextPreview'

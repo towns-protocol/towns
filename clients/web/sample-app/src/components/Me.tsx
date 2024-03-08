@@ -1,6 +1,6 @@
 import { Stack } from '@mui/material'
 import React from 'react'
-import { useCasablancaCredentials, useMyProfile } from 'use-zion-client'
+import { useCasablancaCredentials, useMyProfile } from 'use-towns-client'
 import { Logout } from './Logout'
 
 export const Me = () => {

@@ -1,7 +1,7 @@
 import React, { useCallback, useMemo } from 'react'
 import { useForm } from 'react-hook-form'
 import { matchPath, useNavigate } from 'react-router'
-import { LoginStatus, useMyProfile } from 'use-zion-client'
+import { LoginStatus, useMyProfile } from 'use-towns-client'
 import { useGetEmbeddedSigner } from '@towns/privy'
 import { Button, ErrorMessage, Icon, MotionBox, Paragraph, Stack, TextField } from '@ui'
 import { useAuth } from 'hooks/useAuth'
@@ -24,7 +24,7 @@ export const RegisterForm = () => {
         register: registerWallet,
         riverLoginStatus: loginStatus,
     } = useAuth()
-    // const { setDisplayName } = useZionClient()
+    // const { setDisplayName } = useTownsClient()
     const navigate = useNavigate()
     const myProfile = useMyProfile()
 

@@ -17,10 +17,10 @@ import { ChannelContextProvider } from '../../src/components/ChannelContextProvi
 import { Permission } from '@river/web3'
 import { LoginWithWallet } from './helpers/TestComponents'
 import { SpaceContextProvider } from '../../src/components/SpaceContextProvider'
-import { ZionTestApp } from './helpers/ZionTestApp'
+import { TownsTestApp } from './helpers/TownsTestApp'
 import { useChannelTimeline } from '../../src/hooks/use-channel-timeline'
 import { useChannelNotificationCounts } from '../../src/hooks/use-channel-notification-counts'
-import { useZionClient } from '../../src/hooks/use-zion-client'
+import { useTownsClient } from '../../src/hooks/use-towns-client'
 import { useFullyReadMarker } from '../../src/hooks/use-fully-read-marker'
 import { TestConstants } from './helpers/TestConstants'
 import { TSigner } from '../../src/types/web3-types'
@@ -61,7 +61,7 @@ describe('mentionsHooks', () => {
             const channelNotis = useChannelNotificationCounts(channelId)
             const { timeline } = useChannelTimeline()
             const marker = useFullyReadMarker(channelId)
-            const { sendReadReceipt } = useZionClient()
+            const { sendReadReceipt } = useTownsClient()
             const onClickMarkAsRead = useCallback(() => {
                 if (marker) {
                     void sendReadReceipt(marker)
@@ -91,13 +91,13 @@ describe('mentionsHooks', () => {
         }
         // render it
         render(
-            <ZionTestApp provider={alice.provider}>
+            <TownsTestApp provider={alice.provider}>
                 <SpaceContextProvider spaceId={spaceId}>
                     <ChannelContextProvider channelId={channelId}>
                         <TestComponent signer={alice.provider.wallet} />
                     </ChannelContextProvider>
                 </SpaceContextProvider>
-            </ZionTestApp>,
+            </TownsTestApp>,
         )
         // get our test elements
         const clientRunning = screen.getByTestId('clientRunning')

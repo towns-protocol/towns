@@ -3,18 +3,18 @@
  * @group core
  */
 import {
-    createTestSpaceGatedByTownAndZionNfts,
+    createTestSpaceGatedByTownsNfts,
     registerAndStartClients,
     registerAndStartClient,
     createTestSpaceGatedByTownNft,
     createTestChannelWithSpaceRoles,
-} from 'use-zion-client/tests/integration/helpers/TestUtils'
+} from 'use-towns-client/tests/integration/helpers/TestUtils'
 
 import { Permission } from '@river/web3'
-import { StreamView } from 'use-zion-client/src/types/zion-types'
+import { StreamView } from 'use-towns-client/src/types/towns-types'
 import { TestConstants } from './helpers/TestConstants'
-import { ZionTestClient } from './helpers/ZionTestClient'
-import { sleep } from '../../src/utils/zion-utils'
+import { TownsTestClient } from './helpers/TownsTestClient'
+import { sleep } from '../../src/utils/towns-utils'
 import { check } from '@river/dlog'
 import { isDefined } from '@river/sdk'
 
@@ -27,7 +27,7 @@ describe('space invite', () => {
         await bob.fundWallet()
 
         // create a space with token entitlement
-        const roomId = await createTestSpaceGatedByTownAndZionNfts(bob, [Permission.Read])
+        const roomId = await createTestSpaceGatedByTownsNfts(bob, [Permission.Read])
 
         /** Act */
         // invite users to join the space.
@@ -55,7 +55,7 @@ describe('space invite', () => {
         await bob.fundWallet()
 
         // create a space with token entitlement to write
-        const roomId = await createTestSpaceGatedByTownAndZionNfts(bob, [
+        const roomId = await createTestSpaceGatedByTownsNfts(bob, [
             Permission.Read,
             Permission.Write,
         ])
@@ -99,7 +99,7 @@ describe('space invite', () => {
         // default Read which invariably allows all invitees regardless of
         // token gating
 
-        const roomId = (await createTestSpaceGatedByTownAndZionNfts(bob, [
+        const roomId = (await createTestSpaceGatedByTownsNfts(bob, [
             Permission.Read,
             Permission.Write,
         ])) as string
@@ -141,7 +141,7 @@ describe('space invite', () => {
         await bob.fundWallet()
 
         // create a space with token entitlement
-        const spaceId = await createTestSpaceGatedByTownAndZionNfts(bob, [Permission.Read])
+        const spaceId = await createTestSpaceGatedByTownsNfts(bob, [Permission.Read])
 
         // invite users to join the space.
         if (spaceId) {
@@ -169,7 +169,7 @@ describe('space invite', () => {
         await bob.fundWallet()
 
         // create a space with token entitlement for minting
-        const spaceId = await createTestSpaceGatedByTownAndZionNfts(bob, [Permission.Read])
+        const spaceId = await createTestSpaceGatedByTownsNfts(bob, [Permission.Read])
 
         check(isDefined(spaceId), 'spaceId')
 
@@ -203,8 +203,8 @@ describe('space invite', () => {
         // create all the users for the test
         // maxUsers should exceed the default quota
         const maxUsers = 11
-        const joiners: ZionTestClient[] = []
-        const registerClients: Promise<Record<string, ZionTestClient>>[] = []
+        const joiners: TownsTestClient[] = []
+        const registerClients: Promise<Record<string, TownsTestClient>>[] = []
         for (let i = 0; i < maxUsers; i++) {
             registerClients.push(registerAndStartClients([`tokenGrantedUser_${i}`]))
         }
@@ -259,8 +259,8 @@ describe('space invite', () => {
         // sese member_cap in dendrite config for
         // maxUsers allowed in space
         const maxUsers = 11
-        const joiners: ZionTestClient[] = []
-        const registerClients: Promise<Record<string, ZionTestClient>>[] = []
+        const joiners: TownsTestClient[] = []
+        const registerClients: Promise<Record<string, TownsTestClient>>[] = []
         for (let i = 0; i < maxUsers; i++) {
             registerClients.push(registerAndStartClients([`tokenGrantedUser_${i}`]))
         }

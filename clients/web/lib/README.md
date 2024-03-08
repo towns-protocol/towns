@@ -23,7 +23,7 @@ We've implemented integration tests that run against a live server. See Start Lo
 ## Architecture
 
 ```html
-<ZionContextProvider {...props}>
+<TownsContextProvider {...props}>
   <SpaceContextProvider spaceId="{...}">
     <ChannelContextProvider channelId="{...}">
       <!--
@@ -47,7 +47,7 @@ We've implemented integration tests that run against a live server. See Start Lo
         -->
     </ChannelContextProvider>
   </SpaceContextProvider>
-</ZionContextProvider>
+</TownsContextProvider>
 ```
 
 ## Tips and Tricks

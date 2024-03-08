@@ -1,7 +1,7 @@
 import React from 'react'
 import { Button, List, ListItem, ListItemText } from '@mui/material'
 
-import { SpaceIdentifier, useSpacesFromContract } from 'use-zion-client'
+import { SpaceIdentifier, useSpacesFromContract } from 'use-towns-client'
 import { useNavigate } from 'react-router-dom'
 
 export function Web3Spaces(): JSX.Element {

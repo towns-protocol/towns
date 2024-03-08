@@ -1,5 +1,5 @@
 import { useMemo } from 'react'
-import { Channel, RoomMember } from 'use-zion-client'
+import { Channel, RoomMember } from 'use-towns-client'
 import isEqual from 'lodash/isEqual'
 import { CHECK_LIST, HEADING, LINK, TRANSFORMERS } from '@lexical/markdown'
 import { createMentionTransformer } from '@components/RichText/nodes/MentionNode'

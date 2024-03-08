@@ -1,4 +1,4 @@
-import { useMyProfile, useUserLookupContext } from 'use-zion-client'
+import { useMyProfile, useUserLookupContext } from 'use-towns-client'
 import { firstBy } from 'thenby'
 import { useMemo } from 'react'
 import { notUndefined } from 'ui/utils/utils'

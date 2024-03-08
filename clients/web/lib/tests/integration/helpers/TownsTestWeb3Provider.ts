@@ -5,7 +5,7 @@ import { Wallet, ethers } from 'ethers'
 import { fundWallet } from './TestUtils'
 import { getContractsInfo, MockERC721AShim } from '@river/web3'
 
-export class ZionTestWeb3Provider extends ethers.providers.JsonRpcProvider {
+export class TownsTestWeb3Provider extends ethers.providers.JsonRpcProvider {
     // note to self, the wallet contains a reference to a provider, which is a circular ref back this class
     public wallet: ethers.Wallet
 

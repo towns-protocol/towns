@@ -1,6 +1,6 @@
 import { Address } from 'wagmi'
 import { BigNumber } from 'ethers'
-import { useLinkedWallets } from 'use-zion-client'
+import { useLinkedWallets } from 'use-towns-client'
 import { useQuery, useQueryClient } from '@tanstack/react-query'
 import { useEffect, useMemo, useState } from 'react'
 import { create } from 'zustand'

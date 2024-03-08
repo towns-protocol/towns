@@ -7,7 +7,7 @@
  */
 /* eslint-disable @typescript-eslint/no-non-null-assertion, @typescript-eslint/no-explicit-any */
 
-import { Membership } from '../../src/types/zion-types'
+import { Membership } from '../../src/types/towns-types'
 import React, { useCallback } from 'react'
 import { TimelineEvent, ZTEvent } from '../../src/types/timeline-types'
 import {
@@ -22,12 +22,12 @@ import { ChannelContextProvider } from '../../src/components/ChannelContextProvi
 import { Permission } from '@river/web3'
 import { RegisterAndJoinSpace } from './helpers/TestComponents'
 import { SpaceContextProvider } from '../../src/components/SpaceContextProvider'
-import { ZionTestApp } from './helpers/ZionTestApp'
-import { ZionTestWeb3Provider } from './helpers/ZionTestWeb3Provider'
+import { TownsTestApp } from './helpers/TownsTestApp'
+import { TownsTestWeb3Provider } from './helpers/TownsTestWeb3Provider'
 import { useChannelId } from '../../src/hooks/use-channel-id'
 import { useChannelReactions } from '../../src/hooks/use-channel-reactions'
 import { useChannelTimeline } from '../../src/hooks/use-channel-timeline'
-import { useZionClient } from '../../src/hooks/use-zion-client'
+import { useTownsClient } from '../../src/hooks/use-towns-client'
 import { TestConstants } from './helpers/TestConstants'
 import { TSigner } from '../../src/types/web3-types'
 
@@ -38,7 +38,7 @@ describe('sendReactionHooks', () => {
         // create clients
         const { jane } = await registerAndStartClients(['jane'])
         // create a wallet for bob
-        const bobProvider = new ZionTestWeb3Provider()
+        const bobProvider = new TownsTestWeb3Provider()
         // bob needs funds to mint
         await bobProvider.fundWallet()
         // jane needs funds to create a space
@@ -59,7 +59,7 @@ describe('sendReactionHooks', () => {
         })) as string
         // create a veiw for bob
         const TestRoomMessages = ({ signer }: { signer: TSigner }) => {
-            const { sendReaction } = useZionClient()
+            const { sendReaction } = useTownsClient()
             const channelId = useChannelId()
             const { timeline } = useChannelTimeline()
             const reactions = useChannelReactions()
@@ -103,13 +103,13 @@ describe('sendReactionHooks', () => {
         }
         // render it
         render(
-            <ZionTestApp provider={bobProvider}>
+            <TownsTestApp provider={bobProvider}>
                 <SpaceContextProvider spaceId={janesSpaceId}>
                     <ChannelContextProvider channelId={janesChannelId}>
                         <TestRoomMessages signer={bobProvider.wallet} />
                     </ChannelContextProvider>
                 </SpaceContextProvider>
-            </ZionTestApp>,
+            </TownsTestApp>,
         )
         // get our test elements
         const clientRunning = screen.getByTestId('clientRunning')

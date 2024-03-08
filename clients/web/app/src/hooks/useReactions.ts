@@ -1,8 +1,8 @@
 import { useEvent } from 'react-use-event-hook'
-import { useZionClient } from 'use-zion-client'
+import { useTownsClient } from 'use-towns-client'
 
 export const useHandleReaction = (channelId: string) => {
-    const { sendReaction, redactEvent } = useZionClient()
+    const { sendReaction, redactEvent } = useTownsClient()
     const handleReaction = useEvent(
         (
             action:

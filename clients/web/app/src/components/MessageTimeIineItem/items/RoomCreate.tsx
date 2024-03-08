@@ -1,6 +1,6 @@
 import React from 'react'
 import { Link } from 'react-router-dom'
-import { useUserLookupContext } from 'use-zion-client'
+import { useUserLookupContext } from 'use-towns-client'
 import { Avatar } from '@components/Avatar/Avatar'
 import { Box, Paragraph, Stack } from '@ui'
 import { getPrettyDisplayName } from 'utils/getPrettyDisplayName'

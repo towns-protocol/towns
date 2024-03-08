@@ -1,10 +1,10 @@
 import { useState, useCallback, useRef, useMemo } from 'react'
-import { useZionClient } from './use-zion-client'
+import { useTownsClient } from './use-towns-client'
 import {
     TransactionStatus,
     WalletLinkTransactionContext,
     createTransactionContext,
-} from '../client/ZionClientTypes'
+} from '../client/TownsClientTypes'
 import { ethers } from 'ethers'
 import { SignerUndefinedError, toError } from '../types/error-types'
 import { queryClient, useQuery } from '../query/queryClient'
@@ -17,7 +17,7 @@ import { useWeb3Context } from '../components/Web3ContextProvider'
 
 export function useLinkWalletTransaction() {
     const { traceTransaction, ...rest } = useLinkTransactionBuilder()
-    const { linkWallet } = useZionClient()
+    const { linkWallet } = useTownsClient()
     return {
         ...rest,
         linkWalletTransaction: useCallback(
@@ -44,7 +44,7 @@ export function useLinkWalletTransaction() {
 
 export function useUnlinkWalletTransaction() {
     const { traceTransaction, ...rest } = useLinkTransactionBuilder()
-    const { removeLink } = useZionClient()
+    const { removeLink } = useTownsClient()
     return {
         ...rest,
         unlinkWalletTransaction: useCallback(
@@ -70,7 +70,7 @@ export function useUnlinkWalletTransaction() {
 }
 
 function useLinkTransactionBuilder() {
-    const { waitWalletLinkTransaction } = useZionClient()
+    const { waitWalletLinkTransaction } = useTownsClient()
     const { loggedInWalletAddress } = useConnectivity()
     const [transactionContext, setTransactionContext] = useState<
         WalletLinkTransactionContext | undefined
@@ -142,7 +142,7 @@ function useLinkTransactionBuilder() {
 
 export function useLinkedWallets() {
     const { loggedInWalletAddress } = useConnectivity()
-    const { client } = useZionClient()
+    const { client } = useTownsClient()
     return useQuery(
         blockchainKeys.linkedWallets(loggedInWalletAddress ?? 'waitingForLoggedUser'),
         () => {
@@ -163,7 +163,7 @@ export function useLinkedWallets() {
 /**
  * grab the root key for a linked wallet
  * this hook might be used in a context where the user is logged out and a client doen't exist
- * the chainId parameter is optional and should be used when the chainId is not available from useZionClient
+ * the chainId parameter is optional and should be used when the chainId is not available from useTownsClient
  */
 export function useGetRootKeyFromLinkedWallet({
     walletAddress,
@@ -172,7 +172,7 @@ export function useGetRootKeyFromLinkedWallet({
     walletAddress: string | undefined
     chainId?: number | undefined
 }) {
-    const { chainId: clientChainId } = useZionClient()
+    const { chainId: clientChainId } = useTownsClient()
     const _chainId = chainId ?? clientChainId
     const { provider } = useWeb3Context()
     const spaceDapp = useSpaceDapp({

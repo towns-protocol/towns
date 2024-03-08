@@ -5,11 +5,11 @@
 import {
     createTestChannelWithSpaceRoles,
     createTestSpaceGatedByTownNft,
-    createTestSpaceGatedByTownAndZionNfts,
+    createTestSpaceGatedByTownsNfts,
     registerAndStartClients,
     registerAndStartClient,
     waitForWithRetries,
-} from 'use-zion-client/tests/integration/helpers/TestUtils'
+} from 'use-towns-client/tests/integration/helpers/TestUtils'
 
 import { TestConstants } from './helpers/TestConstants'
 import { Permission, createExternalTokenStruct, getTestGatingNftAddress } from '@river/web3'
@@ -27,7 +27,7 @@ describe('channel with roles and permissions', () => {
         const { alice } = await registerAndStartClients(['alice'])
         // create a space with token entitlement to read & write
         await alice.fundWallet()
-        const spaceId = (await createTestSpaceGatedByTownAndZionNfts(alice, [
+        const spaceId = (await createTestSpaceGatedByTownsNfts(alice, [
             Permission.Read,
             Permission.Write,
         ])) as string

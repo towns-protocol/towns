@@ -1,6 +1,6 @@
 import { clsx } from 'clsx'
 import React, { forwardRef, useCallback, useEffect, useMemo } from 'react'
-import { Address } from 'use-zion-client'
+import { Address } from 'use-towns-client'
 import { AnimatePresence } from 'framer-motion'
 import { ImageVariant, useImageSource } from '@components/UploadImage/useImageSource'
 import { useImageStore } from '@components/UploadImage/useImageStore'

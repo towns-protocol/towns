@@ -9,19 +9,19 @@
 import React from 'react'
 import { LoginWithWallet } from './helpers/TestComponents'
 import { fireEvent, render, screen, waitFor, act } from '@testing-library/react'
-import { ZionTestApp } from './helpers/ZionTestApp'
+import { TownsTestApp } from './helpers/TownsTestApp'
 import { registerAndStartClients } from './helpers/TestUtils'
 import { LoginStatus } from '../../src/hooks/login'
-import { ZionTestWeb3Provider } from './helpers/ZionTestWeb3Provider'
-import { useZionClient } from '../../src/hooks/use-zion-client'
-import { sleep } from '../../src/utils/zion-utils'
+import { TownsTestWeb3Provider } from './helpers/TownsTestWeb3Provider'
+import { useTownsClient } from '../../src/hooks/use-towns-client'
+import { sleep } from '../../src/utils/towns-utils'
 import { CREDENTIAL_STORE_NAME, useCredentialStore } from '../../src/store/use-credential-store'
 import { useCasablancaStore } from '../../src/store/use-casablanca-store'
-import { useZionContext } from '../../src/components/ZionContextProvider'
+import { useTownsContext } from '../../src/components/TownsContextProvider'
 
 const initialCasablanacStoreState = useCasablancaStore.getState()
 console.log('$$$$ ', { initialCasablanacStoreState })
-let provider: ZionTestWeb3Provider
+let provider: TownsTestWeb3Provider
 /*
 Note: Jest runs tests serially within the collection,
 which is important because subsequent tests depend
@@ -59,9 +59,9 @@ describe('signInFromGlobalStorageHooks', () => {
 
         // render it
         render(
-            <ZionTestApp provider={alice.provider}>
+            <TownsTestApp provider={alice.provider}>
                 <TestComponent />
-            </ZionTestApp>,
+            </TownsTestApp>,
         )
         // get our test elements
         const isConnected = screen.getByTestId('isConnected')
@@ -98,16 +98,16 @@ describe('signInFromGlobalStorageHooks', () => {
             global.localStorage.getItem(CREDENTIAL_STORE_NAME) || '{}',
         )
         expect(Object.keys(credentialStore.state).length).toBeGreaterThan(0)
-        const dummyProvider = new ZionTestWeb3Provider()
+        const dummyProvider = new TownsTestWeb3Provider()
 
         // build a view for alice to render
         const TestComponent = () => {
-            const { casablancaServerUrl } = useZionContext()
+            const { casablancaServerUrl } = useTownsContext()
             const isConnected = Boolean(dummyProvider.wallet.provider)
             const { delegateSig } =
                 useCredentialStore().casablancaCredentialsMap[casablancaServerUrl ?? ''] ?? {}
             const { loginStatus, loginError } = useCasablancaStore()
-            const { logout } = useZionClient()
+            const { logout } = useTownsClient()
 
             return (
                 <>
@@ -124,9 +124,9 @@ describe('signInFromGlobalStorageHooks', () => {
 
         // render it
         render(
-            <ZionTestApp provider={dummyProvider}>
+            <TownsTestApp provider={dummyProvider}>
                 <TestComponent />
-            </ZionTestApp>,
+            </TownsTestApp>,
         )
         const isConnected = screen.getByTestId('isConnected')
         const loginStatus = screen.getByTestId('loginStatus')
@@ -153,7 +153,7 @@ describe('signInFromGlobalStorageHooks', () => {
             global.localStorage.getItem(CREDENTIAL_STORE_NAME) || '{}',
         )
         expect(credentialStore.state.casablancaCredentialsMap[casablancaUrl]).toBeNull()
-        const dummyProvider = new ZionTestWeb3Provider()
+        const dummyProvider = new TownsTestWeb3Provider()
 
         // build a view for alice to render
         const TestComponent = () => {
@@ -175,9 +175,9 @@ describe('signInFromGlobalStorageHooks', () => {
 
         // render it
         render(
-            <ZionTestApp provider={dummyProvider}>
+            <TownsTestApp provider={dummyProvider}>
                 <TestComponent />
-            </ZionTestApp>,
+            </TownsTestApp>,
         )
         const isConnected = screen.getByTestId('isConnected')
         const loginStatus = screen.getByTestId('loginStatus')
@@ -192,9 +192,9 @@ describe('signInFromGlobalStorageHooks', () => {
     test('Stage 5 test logging back in after logout should have a different deviceId', async () => {
         console.log('$$$$ #5 test logging back in after logout should have the same deviceId')
         render(
-            <ZionTestApp provider={provider}>
+            <TownsTestApp provider={provider}>
                 <LoginWithWallet signer={provider.wallet} />
-            </ZionTestApp>,
+            </TownsTestApp>,
         )
         // get our test elements
         const isConnected = screen.getByTestId('isConnected')

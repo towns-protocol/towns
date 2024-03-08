@@ -2,7 +2,7 @@ import React from 'react'
 import { withRef } from '@udecode/cn'
 import { PlateElement, getHandler, useElement } from '@udecode/plate-common'
 import { TMentionElement } from '@udecode/plate-mention'
-import { Channel } from 'use-zion-client'
+import { Channel } from 'use-towns-client'
 import { ChannelLink } from '@components/RichTextPlate/components/ChannelLink'
 import { mentionChannelInput } from '../../RichTextEditor.css'
 

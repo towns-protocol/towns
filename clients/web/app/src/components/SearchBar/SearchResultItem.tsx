@@ -5,9 +5,9 @@ import {
     DMChannelIdentifier,
     RoomMember,
     useMyProfile,
-    useZionClient,
-} from 'use-zion-client'
-import { ThreadStatsMap } from 'use-zion-client/dist/store/use-timeline-store'
+    useTownsClient,
+} from 'use-towns-client'
+import { ThreadStatsMap } from 'use-towns-client/dist/store/use-timeline-store'
 import { useCreateLink } from 'hooks/useCreateLink'
 import { Box, BoxProps, Icon, Paragraph } from '@ui'
 import { ZRoomMessageEvent } from '@components/MessageTimeline/util/getEventsByDate'
@@ -245,7 +245,7 @@ const useCreateUserDM = () => {
     const navigate = useNavigate()
     const { createLink } = useCreateLink()
 
-    const { createDMChannel } = useZionClient()
+    const { createDMChannel } = useTownsClient()
 
     const createDirectMessage = useCallback(
         async (userId: string, dmChannelIds: DMChannelIdentifier[]) => {

@@ -5,8 +5,8 @@ import {
     SpaceData,
     useMyMembership,
     useSpaceData,
-    useZionClient,
-} from 'use-zion-client'
+    useTownsClient,
+} from 'use-towns-client'
 import { useEvent } from 'react-use-event-hook'
 import { useNavigate } from 'react-router'
 
@@ -98,7 +98,7 @@ export const ChannelItem = ({
     space: SpaceData
 }) => {
     const navigate = useNavigate()
-    const { client, leaveRoom } = useZionClient()
+    const { client, leaveRoom } = useTownsClient()
     const channelIdentifier = channelNetworkId
     const currentChannelId = useChannelIdFromPathname()
     const isJoined = useMyMembership(channelNetworkId) === Membership.Join

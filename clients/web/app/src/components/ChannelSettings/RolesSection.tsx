@@ -1,6 +1,6 @@
 import React, { useEffect } from 'react'
 import { FieldValues, UseFormRegister, UseFormReturn } from 'react-hook-form'
-import { RoleDetails } from 'use-zion-client'
+import { RoleDetails } from 'use-towns-client'
 import { Box, Checkbox, Text } from '@ui'
 import { TokenCheckboxLabel } from '@components/Tokens/TokenCheckboxLabel'
 import { FormStateKeys } from './formConfig'

@@ -1,15 +1,15 @@
-export type { Space, SpaceIdentifier, TransactionContext } from './client/ZionClientTypes'
-export { TransactionStatus } from './client/ZionClientTypes'
+export type { Space, SpaceIdentifier, TransactionContext } from './client/TownsClientTypes'
+export { TransactionStatus } from './client/TownsClientTypes'
 
 export { ChannelContextProvider, useChannelContext } from './components/ChannelContextProvider'
 export { QueryProvider } from './components/QueryProvider'
 export * from './components/SpaceContextProvider'
 export {
-    ZionContextProvider,
-    useZionContext,
-    ZionContext,
+    TownsContextProvider,
+    useTownsContext,
+    TownsContext,
     type InitialSyncSortPredicate,
-} from './components/ZionContextProvider'
+} from './components/TownsContextProvider'
 export { useWeb3Context } from './components/Web3ContextProvider'
 export type { DMChannelIdentifier } from './types/dm-channel-identifier'
 export * from './components/UserLookupContextProviders'
@@ -35,7 +35,7 @@ export { useConnectivity } from './hooks/use-connectivity'
 export { useDeleteRoleTransaction } from './hooks/use-delete-role-transaction'
 export { useDMLatestMessage } from './hooks/use-dm-latest-message'
 export { useDMData } from './hooks/use-dm-data'
-export { useFavIconBadge, useAppBadge } from './hooks/ZionContext/useFavIconBadge'
+export { useFavIconBadge, useAppBadge } from './hooks/TownsContext/useFavIconBadge'
 export { useFullyReadMarker } from './hooks/use-fully-read-marker'
 export { useMembershipInfo } from './hooks/use-membership-info'
 export { useIsSpaceOwner } from './hooks/use-is-space-owner'
@@ -73,7 +73,7 @@ export { useUpdateChannelTransaction } from './hooks/use-update-channel-transact
 export { useUpdateRoleTransaction } from './hooks/use-update-role-transaction'
 export { useUpdateSpaceNameTransaction } from './hooks/use-update-space-name-transaction'
 export { useUser } from './hooks/use-user'
-export { useZionClient } from './hooks/use-zion-client'
+export { useTownsClient } from './hooks/use-towns-client'
 export {
     useLinkWalletTransaction,
     useUnlinkWalletTransaction,
@@ -89,8 +89,8 @@ export * from './store/use-transactions-store'
 export type { BlockchainStoreTx } from './client/BlockchainTransactionStore'
 export { queryClient } from './query/queryClient'
 
-export * from './types/zion-types'
-export { Membership, MessageType } from './types/zion-types'
+export * from './types/towns-types'
+export { Membership, MessageType } from './types/towns-types'
 export { toRoomIdentifier } from './types/room-identifier'
 export * from './types/timeline-types'
 export {
@@ -107,7 +107,7 @@ export {
 } from './client/SignMessageAbortController'
 
 export * from './types/error-types'
-export * from './utils/zion-utils'
+export * from './utils/towns-utils'
 export * from './utils/crypto-utils'
 export * from './utils/analyticsService'
 

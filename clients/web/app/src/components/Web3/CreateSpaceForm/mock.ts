@@ -74,7 +74,7 @@ export const MOCK_TOKENS = Array(5)
 export const StoreMockForManualSubmissionsNotToBeUsedInTests: CreateSpaceFormState = {
     step1: {
         membershipType: 'tokenHolders',
-        // just for easier development, this is the zion token address from council.json, which may change so check it sometimes
+        // just for easier development, this is the towns token address from council.json, which may change so check it sometimes
         tokens: [{ contractAddress: '0x9a676e781a523b5d0c0e43731313a708cb607508', tokenIds: [] }],
     },
     step2: {

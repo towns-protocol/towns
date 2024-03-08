@@ -1,7 +1,7 @@
-import { useSpaceId, useZionContext } from 'use-zion-client'
+import { useSpaceId, useTownsContext } from 'use-towns-client'
 
 export const useShowHasUnreadBadgeForSpaceId = (spaceId?: string) => {
-    const { spaceUnreads } = useZionContext()
+    const { spaceUnreads } = useTownsContext()
     return spaceUnreads[spaceId ?? ''] ?? false
 }
 
@@ -10,7 +10,7 @@ export const useShowHasUnreadBadgeForSpaceId = (spaceId?: string) => {
  * useful for displaying a badge for "do i have unreads in any spaces except this one?"
  */
 export const useShowHasUnreadBadgeForOtherSpaces = (ignoredSpaceId?: string) => {
-    const { spaceUnreads } = useZionContext()
+    const { spaceUnreads } = useTownsContext()
 
     return Object.entries(spaceUnreads).some(([spaceId, hasUnread]) => {
         return spaceId !== ignoredSpaceId && hasUnread
@@ -21,7 +21,7 @@ export const useShowHasUnreadBadgeForOtherSpaces = (ignoredSpaceId?: string) => 
 // space's channels in order to pluck out the correct channels from the fullyReadMarkers.
 export const useShowHasUnreadBadgeForCurrentSpace = () => {
     const spaceId = useSpaceId()
-    const { spaceUnreads } = useZionContext()
+    const { spaceUnreads } = useTownsContext()
     const showHasUnreadBadgeForCurrentSpace = spaceUnreads[spaceId ?? ''] ?? false
     return { showHasUnreadBadgeForCurrentSpace }
 }

@@ -10,14 +10,14 @@ import { fireEvent, render, screen, waitFor } from '@testing-library/react'
 
 import { SpaceContextProvider } from '../../src/components/SpaceContextProvider'
 import { TestConstants } from './helpers/TestConstants'
-import { ZionTestApp } from './helpers/ZionTestApp'
-import { ZionTestWeb3Provider } from './helpers/ZionTestWeb3Provider'
+import { TownsTestApp } from './helpers/TownsTestApp'
+import { TownsTestWeb3Provider } from './helpers/TownsTestWeb3Provider'
 import { makeUniqueName } from './helpers/TestUtils'
 import { useCreateSpaceTransactionWithRetries } from '../../src/hooks/use-create-space-transaction'
 import { useRoleDetails } from '../../src/hooks/use-role-details'
 import { useRoles } from '../../src/hooks/use-roles'
 import { useSpacesFromContract } from '../../src/hooks/use-spaces-from-contract'
-import { TransactionStatus } from '../../src/client/ZionClientTypes'
+import { TransactionStatus } from '../../src/client/TownsClientTypes'
 import {
     getTestGatingNftAddress,
     BasicRoleInfo,
@@ -27,7 +27,7 @@ import {
     ruleDataToOperations,
     OperationType,
 } from '@river/web3'
-import { useZionClient } from '../../src/hooks/use-zion-client'
+import { useTownsClient } from '../../src/hooks/use-towns-client'
 import { TSigner } from '../../src/types/web3-types'
 /**
  * This test suite tests the useRoles hook.
@@ -35,7 +35,7 @@ import { TSigner } from '../../src/types/web3-types'
 describe('useRoleDetails', () => {
     test('create a space and get its role details', async () => {
         /* Arrange */
-        const provider = new ZionTestWeb3Provider()
+        const provider = new TownsTestWeb3Provider()
         const spaceName = makeUniqueName('alice')
         const roleName = 'Test Role'
         const permissions = [Permission.Read, Permission.Write]
@@ -53,7 +53,7 @@ describe('useRoleDetails', () => {
         await provider.mintMockNFT()
 
         render(
-            <ZionTestApp provider={provider}>
+            <TownsTestApp provider={provider}>
                 <>
                     <RegisterWallet signer={provider.wallet} />
                     <TestComponent
@@ -64,7 +64,7 @@ describe('useRoleDetails', () => {
                         signer={provider.wallet}
                     />
                 </>
-            </ZionTestApp>,
+            </TownsTestApp>,
         )
         const clientRunning = screen.getByTestId('clientRunning')
         // wait for the client to be running
@@ -246,7 +246,7 @@ function RoleDetailsComponent({
 function RolesComponent({ spaceNetworkId }: { spaceNetworkId: string | undefined }): JSX.Element {
     const { isLoading, spaceRoles, error } = useRoles(spaceNetworkId)
     const [membershipTokenAddress, setMembershipTokenAddress] = React.useState<string | undefined>()
-    const { spaceDapp } = useZionClient()
+    const { spaceDapp } = useTownsClient()
 
     useEffect(() => {
         let cancel = false

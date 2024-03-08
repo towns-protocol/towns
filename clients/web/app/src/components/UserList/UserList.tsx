@@ -1,6 +1,6 @@
 import React, { useMemo, useRef } from 'react'
 import { firstBy } from 'thenby'
-import { RoomMember, useUserLookupContext } from 'use-zion-client'
+import { RoomMember, useUserLookupContext } from 'use-towns-client'
 import { getPrettyDisplayName } from 'utils/getPrettyDisplayName'
 
 type UserName = {

@@ -1,4 +1,4 @@
-import { Permission, useHasPermission } from 'use-zion-client'
+import { Permission, useHasPermission } from 'use-towns-client'
 
 export const useIsChannelWritable = (
     spaceId: string | undefined,

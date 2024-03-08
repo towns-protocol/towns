@@ -7,8 +7,8 @@ import {
     useMyUserId,
     useRoom,
     useStreamUpToDate,
-    useZionContext,
-} from 'use-zion-client'
+    useTownsContext,
+} from 'use-towns-client'
 import { AnimatePresence } from 'framer-motion'
 import { ChannelUsersPill } from '@components/ChannelUserPill/ChannelUserPill'
 import { TouchNavBar } from '@components/TouchNavBar/TouchNavBar'
@@ -33,7 +33,7 @@ type Props = {
 export const ChannelHeader = (props: Props) => {
     const { isTouch } = useDevice()
     const { upToDate } = useStreamUpToDate(props.channel.id)
-    const { clientStatus } = useZionContext()
+    const { clientStatus } = useTownsContext()
     const showLoadingIndicator = !upToDate || !clientStatus.streamSyncActive
     return isTouch ? (
         <TouchChannelHeader {...props} showLoadingIndicator={showLoadingIndicator} />

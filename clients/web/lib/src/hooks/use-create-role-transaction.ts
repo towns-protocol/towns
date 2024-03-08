@@ -2,14 +2,14 @@ import {
     RoleTransactionContext,
     TransactionStatus,
     createTransactionContext,
-} from '../client/ZionClientTypes'
+} from '../client/TownsClientTypes'
 import { SignerUndefinedError, toError } from '../types/error-types'
 import { useCallback, useEffect, useMemo, useRef, useState } from 'react'
 
 import { TSigner } from '../types/web3-types'
 import { blockchainKeys } from '../query/query-keys'
 import { useQueryClient } from '../query/queryClient'
-import { useZionClient } from './use-zion-client'
+import { useTownsClient } from './use-towns-client'
 import { Permission, IRuleEntitlement } from '@river/web3'
 import { getTransactionHashOrUserOpHash } from '@towns/userops'
 
@@ -21,7 +21,7 @@ export function useCreateRoleTransaction() {
         RoleTransactionContext | undefined
     >(undefined)
     const isTransacting = useRef<boolean>(false)
-    const { createRoleTransaction, waitForCreateRoleTransaction } = useZionClient()
+    const { createRoleTransaction, waitForCreateRoleTransaction } = useTownsClient()
     const queryClient = useQueryClient()
 
     const { data, isLoading, transactionHash, transactionStatus, error } = useMemo(() => {

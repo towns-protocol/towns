@@ -2,7 +2,7 @@
  * @group core
  */
 import { jest } from '@jest/globals'
-import { registerAndStartClients, createTestSpaceGatedByTownAndZionNfts } from './helpers/TestUtils'
+import { registerAndStartClients, createTestSpaceGatedByTownsNfts } from './helpers/TestUtils'
 
 import { IArchitectBase, NoopRuleData, Permission } from '@river/web3'
 import { waitFor } from '@testing-library/dom'
@@ -15,7 +15,7 @@ test('should clear promise from promise queue after transaction resolves', async
     // bob needs funds to create a space
     await bob.fundWallet()
     // bob creates a space
-    await createTestSpaceGatedByTownAndZionNfts(bob, [Permission.Read, Permission.Write])
+    await createTestSpaceGatedByTownsNfts(bob, [Permission.Read, Permission.Write])
 
     await waitFor(() =>
         // we retry createSpace in tests, so this could be more than 0

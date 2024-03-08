@@ -1,6 +1,6 @@
 import { Client as CasablancaClient, Stream, isSpaceStreamId, isUserStreamId } from '@river/sdk'
 import { useEffect, useState } from 'react'
-import { SpaceItem } from '../../types/zion-types'
+import { SpaceItem } from '../../types/towns-types'
 import isEqual from 'lodash/isEqual'
 import { useContractSpaceInfos } from '../../hooks/use-space-data'
 

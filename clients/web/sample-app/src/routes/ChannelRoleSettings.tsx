@@ -1,5 +1,5 @@
 import React, { useCallback, useEffect, useMemo, useState } from 'react'
-import { useRoles } from 'use-zion-client'
+import { useRoles } from 'use-towns-client'
 
 interface Role {
     name: string

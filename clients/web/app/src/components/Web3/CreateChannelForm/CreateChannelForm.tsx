@@ -5,7 +5,7 @@ import {
     WalletDoesNotMatchSignedInAccountError,
     useCreateChannelTransaction,
     useMultipleRoleDetails,
-} from 'use-zion-client'
+} from 'use-towns-client'
 import React, { useCallback, useEffect, useMemo } from 'react'
 import { Link } from 'react-router-dom'
 import { useNavigate } from 'react-router'

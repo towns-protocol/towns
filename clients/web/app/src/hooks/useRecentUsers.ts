@@ -1,8 +1,8 @@
 import { useMemo } from 'react'
-import { useZionContext } from 'use-zion-client'
+import { useTownsContext } from 'use-towns-client'
 
 export const useRecentUsers = (userId?: string) => {
-    const { dmChannels } = useZionContext()
+    const { dmChannels } = useTownsContext()
     return useMemo(() => {
         return dmChannels.reduce((acc, channel) => {
             if (acc.length >= 10) {

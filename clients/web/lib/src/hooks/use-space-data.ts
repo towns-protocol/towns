@@ -1,6 +1,6 @@
 import { useCallback, useEffect, useMemo, useState } from 'react'
-import { InviteData, Membership, SpaceData, toMembership } from '../types/zion-types'
-import { useZionContext } from '../components/ZionContextProvider'
+import { InviteData, Membership, SpaceData, toMembership } from '../types/towns-types'
+import { useTownsContext } from '../components/TownsContextProvider'
 import { useSpaceContext } from '../components/SpaceContextProvider'
 import { useCasablancaStream } from './CasablancClient/useCasablancaStream'
 import { Client as CasablancaClient, Stream, isSpaceStreamId } from '@river/sdk'
@@ -162,7 +162,7 @@ export const useContractSpaceInfo = (
 }
 
 function useSpaceRollup(streamId: string | undefined): SpaceData | undefined {
-    const { casablancaClient } = useZionContext()
+    const { casablancaClient } = useTownsContext()
     const stream = useCasablancaStream(streamId)
     const { isLoading, data: spaceInfo, error } = useContractSpaceInfo(streamId ?? '')
     const [space, setSpace] = useState<SpaceData | undefined>(undefined)

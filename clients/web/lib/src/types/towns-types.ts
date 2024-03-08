@@ -1,7 +1,7 @@
 import { PlainMessage } from '@bufbuild/protobuf'
 import { MembershipOp, StreamSettings } from '@river/proto'
 import { Attachment } from './timeline-types'
-import { staticAssertNever } from '../utils/zion-utils'
+import { staticAssertNever } from '../utils/towns-utils'
 
 export enum Membership {
     Join = 'join',
@@ -181,7 +181,7 @@ export type SendImageMessageOptions = ThreadIdOptions & {
     }
 }
 
-export interface SendZionReactionOptions {
+export interface SendTownsReactionOptions {
     targetEventId: string
 }
 

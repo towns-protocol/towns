@@ -1,6 +1,6 @@
 import { format, formatDistance } from 'date-fns'
 import React, { useCallback, useEffect, useRef, useState } from 'react'
-import { LookupUser, MessageReactions, ThreadStats } from 'use-zion-client'
+import { LookupUser, MessageReactions, ThreadStats } from 'use-towns-client'
 import { Link } from 'react-router-dom'
 import debug from 'debug'
 import { Address } from 'wagmi'

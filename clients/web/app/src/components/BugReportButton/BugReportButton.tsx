@@ -1,10 +1,10 @@
 import React, { useCallback } from 'react'
-import { useZionContext } from 'use-zion-client'
+import { useTownsContext } from 'use-towns-client'
 import { Box, Icon } from '@ui'
 import { useStore } from 'store/store'
 
 export const BugReportButton = () => {
-    const { clientStatus } = useZionContext()
+    const { clientStatus } = useTownsContext()
 
     const { sidePanel, setSidePanel } = useStore(({ sidePanel, setSidePanel }) => ({
         sidePanel,

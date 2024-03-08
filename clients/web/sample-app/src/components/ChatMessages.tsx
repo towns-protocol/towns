@@ -5,8 +5,8 @@ import {
     ZTEvent,
     useFullyReadMarker,
     useTimelineFilter,
-    useZionClient,
-} from 'use-zion-client'
+    useTownsClient,
+} from 'use-towns-client'
 import React, { useCallback, useEffect, useMemo, useRef, useState } from 'react'
 import { AcceptInvitation } from './AcceptInvitation'
 
@@ -21,7 +21,7 @@ interface Props {
 
 export function ChatMessages(props: Props): JSX.Element {
     const { timeline, membership, roomId, threadParentId, sendMessage, joinRoom } = props
-    const { sendReadReceipt, scrollback } = useZionClient()
+    const { sendReadReceipt, scrollback } = useTownsClient()
     const unreadMarker = useFullyReadMarker(roomId, threadParentId)
     const [currentMessage, setCurrentMessage] = useState<string>('')
     const hasUnread = membership === Membership.Join && unreadMarker?.isUnread === true

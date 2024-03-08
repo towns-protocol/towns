@@ -3,9 +3,9 @@ import {
     useSpaceData,
     useSpaceId,
     useTimelineStore,
+    useTownsContext,
     useUserLookupContext,
-    useZionContext,
-} from 'use-zion-client'
+} from 'use-towns-client'
 import { ResultItem } from '@components/SearchBar/SearchResultItem'
 import { TouchScrollToTopScrollId } from '@components/TouchTabBar/TouchScrollToTopScrollId'
 import { Box, Icon, IconButton, Paragraph, Stack, TextField } from '@ui'
@@ -60,7 +60,7 @@ export const TouchSearchTab = () => {
     const spaceId = useSpaceId()
     const channels = useSpaceChannels()
     const dmChannels = useDmChannels()
-    const { dmChannels: dmChannelIds } = useZionContext()
+    const { dmChannels: dmChannelIds } = useTownsContext()
 
     const { users: members } = useUserLookupContext()
 

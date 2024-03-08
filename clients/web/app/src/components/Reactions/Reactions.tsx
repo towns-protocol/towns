@@ -1,5 +1,5 @@
 import React, { Suspense, useCallback } from 'react'
-import { MessageReactions } from 'use-zion-client'
+import { MessageReactions } from 'use-towns-client'
 import { TooltipBox as Box } from 'ui/components/Box/TooltipBox'
 import { Text } from 'ui/components/Text/Text'
 import { EmojiPickerButton } from '@components/EmojiPickerButton'

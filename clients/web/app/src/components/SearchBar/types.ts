@@ -1,4 +1,4 @@
-import { RoomMember } from 'use-zion-client'
+import { RoomMember } from 'use-towns-client'
 import { SearchResult } from 'minisearch'
 import { ZRoomMessageEvent } from '@components/MessageTimeline/util/getEventsByDate'
 import { IconName } from '@ui'

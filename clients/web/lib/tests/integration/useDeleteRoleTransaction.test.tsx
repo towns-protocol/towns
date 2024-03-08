@@ -9,8 +9,8 @@ import { fireEvent, render, screen, waitFor, within } from '@testing-library/rea
 
 import { RegisterWallet, TransactionInfo } from './helpers/TestComponents'
 import { SpaceContextProvider } from '../../src/components/SpaceContextProvider'
-import { ZionTestApp } from './helpers/ZionTestApp'
-import { ZionTestWeb3Provider } from './helpers/ZionTestWeb3Provider'
+import { TownsTestApp } from './helpers/TownsTestApp'
+import { TownsTestWeb3Provider } from './helpers/TownsTestWeb3Provider'
 import { makeUniqueName } from './helpers/TestUtils'
 import { useCreateRoleTransaction } from '../../src/hooks/use-create-role-transaction'
 import { useCreateSpaceTransactionWithRetries } from '../../src/hooks/use-create-space-transaction'
@@ -19,7 +19,7 @@ import { useRoleDetails } from '../../src/hooks/use-role-details'
 import { useRoles } from '../../src/hooks/use-roles'
 import { useSpacesFromContract } from '../../src/hooks/use-spaces-from-contract'
 import { TestConstants } from './helpers/TestConstants'
-import { TransactionStatus } from '../../src/client/ZionClientTypes'
+import { TransactionStatus } from '../../src/client/TownsClientTypes'
 import {
     createExternalTokenStruct,
     getTestGatingNftAddress,
@@ -38,7 +38,7 @@ import { TSigner } from '../../src/types/web3-types'
 describe('useDeleteRoleTransaction', () => {
     test('delete a role', async () => {
         /* Arrange */
-        const provider = new ZionTestWeb3Provider()
+        const provider = new TownsTestWeb3Provider()
         const spaceName = makeUniqueName('alice')
         const roleName = 'Test Role'
         const permissions = [Permission.Read, Permission.Write]
@@ -61,7 +61,7 @@ describe('useDeleteRoleTransaction', () => {
         await provider.mintMockNFT()
 
         render(
-            <ZionTestApp provider={provider}>
+            <TownsTestApp provider={provider}>
                 <>
                     <RegisterWallet signer={provider.wallet} />
                     <TestComponent
@@ -76,7 +76,7 @@ describe('useDeleteRoleTransaction', () => {
                         newRoleUsers={toBeDeletedUsers}
                     />
                 </>
-            </ZionTestApp>,
+            </TownsTestApp>,
         )
         const clientRunning = screen.getByTestId('clientRunning')
         // wait for the client to be running

@@ -5,9 +5,9 @@ import {
     useMyProfile,
     useTimelineReactions,
     useTimelineThreadStats,
+    useTownsClient,
     useUserLookupContext,
-    useZionClient,
-} from 'use-zion-client'
+} from 'use-towns-client'
 import { useNavigate } from 'react-router-dom'
 import { toast } from 'react-hot-toast/headless'
 import { ErrorBoundary } from '@components/ErrorBoundary/ErrorBoundary'
@@ -41,7 +41,7 @@ export const MessageTimelineContext = createContext<{
     messageReactionsMap: ReturnType<typeof useTimelineReactions>
     timelineActions: ReturnType<typeof useTimelineMessageEditing>
     handleReaction: ReturnType<typeof useHandleReaction>
-    sendReadReceipt: ReturnType<typeof useZionClient>['sendReadReceipt']
+    sendReadReceipt: ReturnType<typeof useTownsClient>['sendReadReceipt']
     membersMap: ReturnType<typeof useUserLookupContext>['usersMap']
     members: ReturnType<typeof useUserLookupContext>['users']
     onMentionClick?: (mentionName: string) => void
@@ -68,7 +68,7 @@ export const MessageTimelineWrapper = (props: {
     const events = useTimelineRecorder(_events)
 
     const userId = useMyProfile()?.userId
-    const { sendReadReceipt } = useZionClient()
+    const { sendReadReceipt } = useTownsClient()
     const type = threadParentId ? MessageTimelineType.Thread : MessageTimelineType.Channel
     const channels = useSpaceChannels()
     const messageRepliesMap = useTimelineThreadStats(channelId)

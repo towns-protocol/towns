@@ -7,8 +7,8 @@ import {
     useSpaceData,
     useSpaceNotificationCounts,
     useSpaceThreadRootsUnreadCount,
-    useZionContext,
-} from 'use-zion-client'
+    useTownsContext,
+} from 'use-towns-client'
 
 import React, { useCallback, useMemo } from 'react'
 import { useParams } from 'react-router-dom'
@@ -23,7 +23,7 @@ interface Props {
 export function AppDrawerSpaces(props: Props): JSX.Element {
     const { spaceSlug, channelSlug } = useParams()
     const { onClickSpace, onClickChannel, onClickThreads, onClickMentions } = props
-    const { spaces } = useZionContext()
+    const { spaces } = useTownsContext()
 
     const selectedSpaceId = useMemo(() => toRoomIdentifier(spaceSlug), [spaceSlug])
     const selectedChannelId = useMemo(() => toRoomIdentifier(channelSlug), [channelSlug])

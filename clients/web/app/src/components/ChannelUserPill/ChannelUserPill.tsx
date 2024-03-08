@@ -1,5 +1,5 @@
 import React, { useContext, useMemo } from 'react'
-import { ZTEvent, useChannelMembers } from 'use-zion-client'
+import { ZTEvent, useChannelMembers } from 'use-towns-client'
 import { Link } from 'react-router-dom'
 import { uniq } from 'lodash'
 import { Box, Paragraph, Stack } from '@ui'

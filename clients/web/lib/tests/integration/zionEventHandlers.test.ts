@@ -8,11 +8,11 @@ import {
     waitForWithRetries,
 } from './helpers/TestUtils'
 import { waitFor } from '@testing-library/dom'
-import { sleep } from '../../src/utils/zion-utils'
+import { sleep } from '../../src/utils/towns-utils'
 import { getTestGatingNftAddress, IArchitectBase, NoopRuleData, Permission } from '@river/web3'
 import { ethers } from 'ethers'
 
-describe('Zion event handlers test', () => {
+describe('Towns event handlers test', () => {
     test('onCreateSpace', async () => {
         let eventHandlerResult:
             | {

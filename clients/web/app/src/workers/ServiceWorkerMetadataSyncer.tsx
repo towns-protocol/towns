@@ -4,9 +4,9 @@ import {
     SpaceData,
     useMyProfile,
     useSpaceData,
+    useTownsContext,
     useUserLookupContext,
-    useZionContext,
-} from 'use-zion-client'
+} from 'use-towns-client'
 import React, { useCallback, useEffect, useState } from 'react'
 
 import debug from 'debug'
@@ -23,7 +23,7 @@ function createInitialCurrentUser() {
 
 export function ServiceWorkerMetadataSyncer() {
     const myProfile = useMyProfile()
-    const { spaceHierarchies } = useZionContext()
+    const { spaceHierarchies } = useTownsContext()
     const [store, setStore] = useState<NotificationStore | null>(null)
     const [currentUser] = useState<NotificationCurrentUser>(createInitialCurrentUser)
 
@@ -107,7 +107,7 @@ function UsersMetadata({ store }: { store: NotificationStore }) {
 }
 
 function DmMetadata({ store }: { store: NotificationStore }) {
-    const { dmChannels } = useZionContext()
+    const { dmChannels } = useTownsContext()
 
     const setDmChannels = useCallback(
         async (parentSpaceId?: string) => {

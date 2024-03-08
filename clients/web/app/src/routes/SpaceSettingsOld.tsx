@@ -1,5 +1,5 @@
 import React, { useCallback } from 'react'
-import { useZionClient } from 'use-zion-client'
+import { useTownsClient } from 'use-towns-client'
 import { Box, Button, Divider, Heading, Paragraph, Stack, Toggle } from '@ui'
 import { useExperimentsStore } from 'store/experimentsStore'
 
@@ -11,7 +11,7 @@ interface ExperimentView {
 }
 
 export const SpacesSettingsOld = () => {
-    const { resetFullyReadMarkers } = useZionClient()
+    const { resetFullyReadMarkers } = useTownsClient()
 
     const experimentsState = useExperimentsStore()
     //const [experimentsState, setExperimentsState] = React.useState<Record<string, boolean>>({})

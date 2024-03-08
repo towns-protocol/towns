@@ -7,7 +7,7 @@ import {
     useContractSpaceInfo,
     useMyMembership,
     useSpaceMembers,
-} from 'use-zion-client'
+} from 'use-towns-client'
 import { AnimatePresence } from 'framer-motion'
 import { useEnvironment } from 'hooks/useEnvironmnet'
 import { PATHS } from 'routes'

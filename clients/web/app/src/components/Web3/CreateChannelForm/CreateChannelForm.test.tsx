@@ -2,7 +2,7 @@ import React from 'react'
 import { fireEvent, render, screen, waitFor } from '@testing-library/react'
 import { beforeEach, describe, expect, test, vi } from 'vitest'
 // eslint-disable-next-line no-restricted-imports
-import * as zionClient from 'use-zion-client'
+import * as townsClient from 'use-towns-client'
 import { TestApp } from 'test/testUtils'
 import * as useContractRoles from 'hooks/useContractRoles'
 import { UseMockCreateChannelReturn, mockCreateTransactionWithSpy } from 'test/transactionHookMock'
@@ -27,17 +27,17 @@ const { createTransactionSpy: createChannelSpy, useMockedCreateTransaction } =
     mockCreateTransactionWithSpy('createChannelTransaction')
 
 const useMockedCreateChannelTransaction = (
-    ...args: (typeof zionClient.useCreateChannelTransaction)['arguments']
+    ...args: (typeof townsClient.useCreateChannelTransaction)['arguments']
 ) => useMockedCreateTransaction(...args) as UseMockCreateChannelReturn
 
 const mockDataForUseMultipleRoleDetails = roleDataWithBothRolesAssignedToChannel
 
-vi.mock('use-zion-client', async () => {
-    const actual = (await vi.importActual('use-zion-client')) as typeof zionClient
+vi.mock('use-towns-client', async () => {
+    const actual = (await vi.importActual('use-towns-client')) as typeof townsClient
     return {
         ...actual,
         useMultipleRoleDetails: (): {
-            data: zionClient.RoleDetails[]
+            data: townsClient.RoleDetails[]
             invalidateQuery: () => void
         } => {
             return {
@@ -130,7 +130,7 @@ describe('CreateChannelForm', () => {
     })
 
     test('the `Everyone` role is preselected', async () => {
-        vi.spyOn(zionClient, 'useCreateChannelTransaction').mockImplementation(
+        vi.spyOn(townsClient, 'useCreateChannelTransaction').mockImplementation(
             useMockedCreateChannelTransaction,
         )
 
@@ -156,7 +156,7 @@ describe('CreateChannelForm', () => {
     })
 
     test('submits with the correct values', async () => {
-        vi.spyOn(zionClient, 'useCreateChannelTransaction').mockImplementation(
+        vi.spyOn(townsClient, 'useCreateChannelTransaction').mockImplementation(
             useMockedCreateChannelTransaction,
         )
 
@@ -205,7 +205,7 @@ describe('CreateChannelForm', () => {
     })
 
     test('shows transaction error message if there was an transaction error', async () => {
-        vi.spyOn(zionClient, 'useCreateChannelTransaction').mockImplementation(() =>
+        vi.spyOn(townsClient, 'useCreateChannelTransaction').mockImplementation(() =>
             useMockedCreateChannelTransaction('failedWithTransactionContext'),
         )
 
@@ -246,7 +246,7 @@ describe('CreateChannelForm', () => {
     })
 
     test('shows permission error message if there was an error with permissions', async () => {
-        vi.spyOn(zionClient, 'useCreateChannelTransaction').mockImplementation(() =>
+        vi.spyOn(townsClient, 'useCreateChannelTransaction').mockImplementation(() =>
             useMockedCreateChannelTransaction('failedWithPermissionContext'),
         )
 

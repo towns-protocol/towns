@@ -1,7 +1,7 @@
 import React, { useEffect, useMemo } from 'react'
 import { Outlet } from 'react-router'
-import { Membership, useZionContext } from 'use-zion-client'
-import AnalyticsService, { AnalyticsEvents } from 'use-zion-client/dist/utils/analyticsService'
+import { Membership, useTownsContext } from 'use-towns-client'
+import AnalyticsService, { AnalyticsEvents } from 'use-towns-client/dist/utils/analyticsService'
 import { Box } from '@ui'
 import { useContractAndServerSpaceData } from 'hooks/useContractAndServerSpaceData'
 import { useSpaceIdFromPathname } from 'hooks/useSpaceInfoFromPathname'
@@ -12,7 +12,7 @@ import { AppSkeletonView, WelcomeLayout } from './layouts/WelcomeLayout'
 
 export const ValidateMembership = () => {
     const { serverSpace: space, chainSpace, chainSpaceLoading } = useContractAndServerSpaceData()
-    const { spaces, clientStatus } = useZionContext()
+    const { spaces, clientStatus } = useTownsContext()
     const spaceIdFromPathname = useSpaceIdFromPathname()
     const { confirmed: usernameConfirmed } = useUsernameConfirmed()
     const riverSpace = useMemo(

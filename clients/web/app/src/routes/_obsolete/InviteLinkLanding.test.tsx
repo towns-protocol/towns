@@ -3,7 +3,7 @@ import React from 'react'
 import { render, screen, waitFor } from '@testing-library/react'
 import { describe, expect, test, vi } from 'vitest'
 // eslint-disable-next-line no-restricted-imports
-import * as Lib from 'use-zion-client'
+import * as Lib from 'use-towns-client'
 import * as RouterDom from 'react-router-dom'
 import { TestApp } from 'test/testUtils'
 import InviteLinkLanding from './InviteLinkLanding'
@@ -35,9 +35,9 @@ vi.mock('react-router-dom', async () => {
     }
 })
 
-vi.mock('use-zion-client', async () => {
+vi.mock('use-towns-client', async () => {
     return {
-        ...((await vi.importActual('use-zion-client')) as typeof Lib),
+        ...((await vi.importActual('use-towns-client')) as typeof Lib),
     }
 })
 

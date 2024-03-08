@@ -9,7 +9,7 @@ import {
     Theme,
     Typography,
 } from '@mui/material'
-import { LoginStatus, useCasablancaStore, useConnectivity, useZionClient } from 'use-zion-client'
+import { LoginStatus, useCasablancaStore, useConnectivity, useTownsClient } from 'use-towns-client'
 import React, { useCallback, useEffect, useMemo, useState } from 'react'
 
 import { makeStyles } from '@mui/styles'
@@ -60,7 +60,7 @@ export function Login(): JSX.Element {
 }
 
 function NetworkInfo() {
-    const { loginWithWalletToCasablanca } = useZionClient()
+    const { loginWithWalletToCasablanca } = useTownsClient()
     const { loginStatus: casablancaLoginStatus } = useCasablancaStore()
     const { casablancaUrl } = useEnvironment()
     const getSigner = useGetEmbeddedSigner()

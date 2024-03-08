@@ -1,7 +1,7 @@
 import React, { useCallback, useMemo } from 'react'
 import { useEvent } from 'react-use-event-hook'
 import { useSearchParams } from 'react-router-dom'
-import { ChannelContextProvider, useSpaceData } from 'use-zion-client'
+import { ChannelContextProvider, useSpaceData } from 'use-towns-client'
 import fuzzysort from 'fuzzysort'
 import { IconButton, Stack, Text, TextField } from '@ui'
 import { Panel } from '@components/Panel/Panel'

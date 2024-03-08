@@ -8,7 +8,7 @@ import {
     useSpaceDapp,
     useUserLookupContext,
     useWeb3Context,
-} from 'use-zion-client'
+} from 'use-towns-client'
 import { UserOps } from '@towns/userops'
 import { useAccountAbstractionConfig } from 'userOpConfig'
 import { useEnvironment } from './useEnvironmnet'
@@ -24,7 +24,7 @@ function querySetup({
     userOpsInstance: UserOps | undefined
     chainId: number | undefined
 }) {
-    // checking chainId instead of zionClient.isAccountAbstractionEnabled b/c we might not have a zionClient if logged out
+    // checking chainId instead of townsClient.isAccountAbstractionEnabled b/c we might not have a townsClient if logged out
     const isAccountAbstractionEnabled = chainId !== LOCALHOST_CHAIN_ID
     return {
         queryKey: [queryKey, { isAccountAbstractionEnabled, rootKeyAddress }],
@@ -125,7 +125,7 @@ export function isAbstractAccountAddress({
 }
 
 // we need to get abstract account address even while logged out
-// so we use a userOps instance instead of zionClient.getAbstractAccountAddress
+// so we use a userOps instance instead of townsClient.getAbstractAccountAddress
 // b/c the latter requires a client, which requires a logged in user
 function useUserOpsInstance() {
     const { provider } = useWeb3Context()

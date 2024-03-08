@@ -8,7 +8,7 @@ import {
     useLinkWalletTransaction,
     useLinkedWallets,
     useUnlinkWalletTransaction,
-} from 'use-zion-client'
+} from 'use-towns-client'
 import { usePrivyWagmi } from '@privy-io/wagmi-connector'
 import { Box, BoxProps, Button, Icon, IconButton, Paragraph, Stack, Text } from '@ui'
 import { PanelButton } from '@components/Panel/Panel'

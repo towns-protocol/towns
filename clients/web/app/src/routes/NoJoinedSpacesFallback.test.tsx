@@ -2,9 +2,9 @@ import React from 'react'
 import { render, screen, waitFor } from '@testing-library/react'
 import { describe, expect, test, vi } from 'vitest'
 // eslint-disable-next-line no-restricted-imports
-import * as Lib from 'use-zion-client'
+import * as Lib from 'use-towns-client'
 import * as Router from 'react-router'
-import { SpaceItem } from 'use-zion-client'
+import { SpaceItem } from 'use-towns-client'
 import { PATHS } from 'routes'
 import { TestApp } from 'test/testUtils'
 import { NoJoinedSpacesFallback } from './NoJoinedSpacesFallback'
@@ -18,21 +18,21 @@ vi.mock('react-router', async () => {
 const getRoomDataSpy = vi.fn()
 let spacesMock: SpaceItem[] = []
 
-vi.mock('use-zion-client', async () => {
-    const actual = (await vi.importActual('use-zion-client')) as typeof Lib
+vi.mock('use-towns-client', async () => {
+    const actual = (await vi.importActual('use-towns-client')) as typeof Lib
     return {
         ...actual,
-        useZionClient: () => {
+        useTownsClient: () => {
             return {
-                ...actual.useZionClient(),
+                ...actual.useTownsClient(),
                 client: {
                     getRoomData: getRoomDataSpy,
                 },
             }
         },
-        useZionContext: () => {
+        useTownsContext: () => {
             return {
-                ...actual.useZionContext(),
+                ...actual.useTownsContext(),
                 casablancaClient: {},
                 spaces: spacesMock,
             }

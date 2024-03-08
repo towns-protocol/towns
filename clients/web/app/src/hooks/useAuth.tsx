@@ -1,4 +1,4 @@
-import { useConnectivity } from 'use-zion-client'
+import { useConnectivity } from 'use-towns-client'
 import React, { createContext, useCallback, useContext, useMemo } from 'react'
 import { toast } from 'react-hot-toast/headless'
 import { useLogin, usePrivy } from '@privy-io/react-auth'

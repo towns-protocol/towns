@@ -1,6 +1,6 @@
 import React, { CSSProperties, useCallback, useMemo, useState } from 'react'
 import { firstBy } from 'thenby'
-import { LookupUser, useMyUserId, useUserLookupContext } from 'use-zion-client'
+import { LookupUser, useMyUserId, useUserLookupContext } from 'use-towns-client'
 import { Avatar } from '@components/Avatar/Avatar'
 import { Box, Button, IconButton, Paragraph, Stack, Text } from '@ui'
 import { useRecentUsers } from 'hooks/useRecentUsers'

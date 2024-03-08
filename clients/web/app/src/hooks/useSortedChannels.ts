@@ -8,9 +8,9 @@ import {
     useSpaceData,
     useSpaceMembers,
     useSpaceMentions,
+    useTownsContext,
     useUserLookupContext,
-    useZionContext,
-} from 'use-zion-client'
+} from 'use-towns-client'
 import { isEqual } from 'lodash'
 import { notUndefined } from 'ui/utils/utils'
 import { useSpaceChannels } from './useSpaceChannels'
@@ -46,7 +46,7 @@ export type MixedChannelMenuItem = ChannelMenuItem | DMChannelMenuItem
  * maps channel and dm data to a unified format for use in the channel menu
  */
 export const useSortedChannels = ({ spaceId, currentRouteId }: Params) => {
-    const { spaceUnreadChannelIds, dmUnreadChannelIds, dmChannels, rooms } = useZionContext()
+    const { spaceUnreadChannelIds, dmUnreadChannelIds, dmChannels, rooms } = useTownsContext()
     const mentions = useSpaceMentions()
     const channels = useSpaceChannels()
     const { memberIds } = useSpaceMembers()

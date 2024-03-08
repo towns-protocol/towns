@@ -6,8 +6,8 @@ import {
     useDMLatestMessage,
     useMyUserId,
     useUser,
-} from 'use-zion-client'
-import { MostRecentMessageInfo_OneOf } from 'use-zion-client/dist/hooks/use-dm-latest-message'
+} from 'use-towns-client'
+import { MostRecentMessageInfo_OneOf } from 'use-towns-client/dist/hooks/use-dm-latest-message'
 import { Avatar } from '@components/Avatar/Avatar'
 import { TimelineEncryptedContent } from '@components/EncryptedContent/EncryptedMessageBody'
 import { UserList } from '@components/UserList/UserList'
