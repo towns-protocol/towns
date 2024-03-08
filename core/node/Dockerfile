@@ -51,7 +51,7 @@ FROM alpine:latest
 
 LABEL org.opencontainers.image.title="River Node"
 LABEL org.opencontainers.image.description="River Node reference implementation, written in Go"
-LABEL org.opencontainers.image.source="https://github.com/HereNotThere/harmony"
+LABEL org.opencontainers.image.source="https://github.com/river-build/river-stage"
 LABEL org.opencontainers.image.licenses="Apache-2.0"
 
 COPY --from=base /build/bin/* /usr/bin/

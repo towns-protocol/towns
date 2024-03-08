@@ -1,6 +1,6 @@
 # Based on https://github.com/docker/build-push-action
 
-name: 'River_node_docker'
+name: 'Build River Docker Image'
 
 on:
     push:
@@ -10,42 +10,6 @@ on:
             - 'core/node/**'
 
     workflow_dispatch: # A build was manually requested
-        inputs:
-            environment_name:
-                description: 'Environment Name'
-                type: string
-                default: 'gamma'
-            docker_image_tag:
-                description: 'Docker image tag'
-                required: true
-                default: 'latest'
-            auto_deploy_node_numbers_json:
-                description: 'JSON array of node numbers to deploy to'
-                type: string
-                default: '[-1]'
-
-    workflow_call:
-        secrets:
-            AWS_ACCESS_KEY_ID:
-                description: 'AWS access key id'
-                required: true
-            AWS_SECRET_ACCESS_KEY:
-                description: 'AWS secret access key'
-                required: true
-            SLACK_WEBHOOK_URL: { required: true }
-        inputs:
-            environment_name:
-                description: 'Environment Name'
-                type: string
-                required: true
-            docker_image_tag:
-                description: 'Docker image tag'
-                type: string
-                required: true
-            auto_deploy_node_numbers_json:
-                description: 'JSON array of node numbers to deploy to'
-                type: string
-                default: '[-1]'
 
 env:
     DOCKER_NAMESPACE: herenotthere
@@ -64,10 +28,7 @@ jobs:
             packages: write
 
         outputs:
-            environment_name: ${{ steps.compute_env_name_and_latest_tag.outputs.environment_name }}
-            latest_tag_name: ${{ steps.compute_env_name_and_latest_tag.outputs.latest_tag_name }}
             release_version: ${{ steps.set_release_version.outputs.release_version }}
-            auto_deploy_node_numbers_json: ${{ steps.compute_env_name_and_latest_tag.outputs.auto_deploy_node_numbers_json }}
 
         steps:
             - name: Checkout
@@ -78,25 +39,6 @@ jobs:
               run: |
                   COMMIT_HASH=$(git log -1 --pretty=%h)
                   echo "::set-output name=release_version::${COMMIT_HASH}"
-
-            - name: Compute the environment name and latest tag
-              id: compute_env_name_and_latest_tag
-              env:
-                  IS_PUSH: ${{ github.event_name == 'push' }}
-                  IS_INPUT_DRIVEN: ${{ inputs.environment_name != '' }}
-              run: |
-                  if [ "${{ env.IS_PUSH }}" == "true" ]; then
-                      echo "::set-output name=environment_name::gamma"
-                      echo "::set-output name=latest_tag_name::latest"
-                      echo "::set-output name=auto_deploy_node_numbers_json::[1,2,3,4,5,6,7,8,9,10]"
-                  elif [ "${{ env.IS_INPUT_DRIVEN }}" == "true" ]; then
-                      echo "::set-output name=environment_name::${{ inputs.environment_name }}"
-                      echo "::set-output name=latest_tag_name::${{ inputs.docker_image_tag }}"
-                      echo "::set-output name=auto_deploy_node_numbers_json::${{ inputs.auto_deploy_node_numbers_json }}"
-                  else
-                      echo "::error::Unhandled event type"
-                      exit 1
-                  fi
 
             - name: Setup AWS Credentials
               uses: aws-actions/configure-aws-credentials@v4
@@ -115,15 +57,14 @@ jobs:
               env:
                 ECR_REGISTRY: ${{ steps.login-aws-ecr.outputs.registry }}
                 #This can be custom alias once requested to aws and approved for public repo
-                REGISTRY_ALIAS: l8h0l2e6
-                ECR_REPOSITORY: river-node
-                LATEST_TAG: ${{ steps.compute_env_name_and_latest_tag.outputs.latest_tag_name }}
+                REGISTRY_ALIAS: h5v6m2x1
+                ECR_REPOSITORY: river
                 RELEASE_VERSION: ${{ steps.set_release_version.outputs.release_version }}
               working-directory: ./core/node
               run: |
-                docker build --build-arg GIT_SHA=${{ github.sha }} --build-arg RELEASE_VERSION=$RELEASE_VERSION -t $ECR_REGISTRY/$REGISTRY_ALIAS/$ECR_REPOSITORY:$LATEST_TAG .
-                docker tag $ECR_REGISTRY/$REGISTRY_ALIAS/$ECR_REPOSITORY:$LATEST_TAG $ECR_REGISTRY/$REGISTRY_ALIAS/$ECR_REPOSITORY:$RELEASE_VERSION
-                docker push $ECR_REGISTRY/$REGISTRY_ALIAS/$ECR_REPOSITORY:$LATEST_TAG
+                docker build --build-arg GIT_SHA=${{ github.sha }} --build-arg RELEASE_VERSION=$RELEASE_VERSION -t $ECR_REGISTRY/$REGISTRY_ALIAS/$ECR_REPOSITORY:latest .
+                docker tag $ECR_REGISTRY/$REGISTRY_ALIAS/$ECR_REPOSITORY:latest $ECR_REGISTRY/$REGISTRY_ALIAS/$ECR_REPOSITORY:$RELEASE_VERSION
+                docker push $ECR_REGISTRY/$REGISTRY_ALIAS/$ECR_REPOSITORY:latest
                 docker push $ECR_REGISTRY/$REGISTRY_ALIAS/$ECR_REPOSITORY:$RELEASE_VERSION
 
             # If action failed, we send a slack notification
@@ -140,27 +81,3 @@ jobs:
                           "commit": "${{ github.sha }}",
                           "actor": "${{ github.actor }}"
                       }
-                  # env: # Computed via the root env block
-
-    deploy:
-        # if this is a push to main, we deploy to AWS. otherwise we check if the user wants to deploy
-        uses: './.github/workflows/River_deploy.yml'
-        needs: build
-        permissions:
-            contents: write
-            packages: write
-        secrets:
-            AWS_ACCESS_KEY_ID: ${{ secrets.AWS_ACCESS_KEY_ID }}
-            AWS_SECRET_ACCESS_KEY: ${{ secrets.AWS_SECRET_ACCESS_KEY }}
-            SLACK_WEBHOOK_URL: ${{ secrets.SLACK_WEBHOOK_URL || secrets.SLACK_CD_WORKFLOW_WEBHOOK_URL }}
-        # TODO: only run if a change in /core/node is detected
-        # TODO: only deploy if the new docker image is different than what's currently active
-        if: ${{ needs.build.outputs.auto_deploy_node_numbers_json != '[-1]' }}
-        strategy:
-            matrix:
-                iteration: ${{ fromJson(needs.build.outputs.auto_deploy_node_numbers_json) }}
-            fail-fast: false
-        with:
-            environment_name: ${{ needs.build.outputs.environment_name }}
-            docker_image_tag: ${{ needs.build.outputs.release_version }}
-            node_number: ${{ matrix.iteration }}
