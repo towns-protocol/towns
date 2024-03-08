@@ -1,6 +1,6 @@
 #!/bin/bash
 
-# This script assumes you have the hg github cli installed, setup for auth, and you are an admin on the main repo
+# This script assumes you have the gh github cli installed, setup for auth, and you are an admin on the main repo
 set -e
 
 # Main repository details
