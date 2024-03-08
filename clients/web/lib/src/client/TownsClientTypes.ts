@@ -8,7 +8,6 @@ export interface TownsOpts {
     chainId: number
     initialSyncLimit?: number
     pollTimeoutMs?: number
-    onboardingOpts?: TownsOnboardingOpts
     web3Provider?: TProvider
     eventHandlers?: TownsClientEventHandlers
     logNamespaceFilter?: string
@@ -17,12 +16,6 @@ export interface TownsOpts {
     verbose?: boolean
     accountAbstractionConfig?: Omit<UserOpsConfig, 'chainId' | 'provider'>
     highPriorityStreamIds?: string[]
-}
-
-export interface TownsOnboardingOpts {
-    skipUsername?: boolean
-    skipAvatar?: boolean
-    showWelcomeSpash?: boolean
 }
 
 export interface SpaceIdentifier {
@@ -39,11 +32,6 @@ export interface Space {
     createdAt: Date
     creatorAddress: string
     ownerAddress: string
-}
-
-export enum TownsAccountDataType {
-    FullyRead = 'zion.fullyRead',
-    Membership = 'zion.membership',
 }
 
 export interface ITownsServerVersions {

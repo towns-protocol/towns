@@ -1,5 +1,4 @@
 import React from 'react'
-import { TownsOnboardingOpts } from '../../../src/client/TownsClientTypes'
 
 import { TestQueryClientProvider } from './TestQueryClientProvider'
 import { TownsContextProvider } from '../../../src/components/TownsContextProvider'
@@ -9,7 +8,6 @@ import { useTownsErrorStore } from '../../../src/hooks/use-towns-client'
 
 interface Props {
     provider: TownsTestWeb3Provider
-    onboardingOpts?: TownsOnboardingOpts
     initialSyncLimit?: number
     pollTimeoutMs?: number
     chainId?: number
