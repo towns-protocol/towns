@@ -14,11 +14,7 @@ import { Client } from './client'
 import { userIdFromAddress } from './id'
 import { ParsedEvent, DecryptedTimelineEvent } from './types'
 import { getPublicKey, utils } from 'ethereum-cryptography/secp256k1'
-import {
-    makeRiverDelegateSig,
-    makeOldRiverDelegateSig,
-    publicKeyToAddress,
-} from '@river/encryption'
+import { makeRiverDelegateSig, publicKeyToAddress } from '@river/encryption'
 import { bin_fromHexString, bin_toHexString, check, dlog } from '@river/dlog'
 import { ethers } from 'ethers'
 import { RiverDbManager } from './riverDbManager'
@@ -27,6 +23,7 @@ import assert from 'assert'
 import _ from 'lodash'
 import { MockEntitlementsDelegate } from './utils'
 import { EntitlementsDelegate } from './decryptionExtensions'
+import { makeSignerContext } from './signerContext'
 
 const log = dlog('csb:test:util')
 
@@ -137,19 +134,10 @@ export const makeRandomUserAddress = (): Uint8Array => {
 
 export const makeUserContextFromWallet = async (wallet: ethers.Wallet): Promise<SignerContext> => {
     const userPrimaryWallet = wallet
-    const devicePrivateKey = utils.randomPrivateKey()
-    const devicePrivateKeyStr = bin_toHexString(devicePrivateKey)
-
+    const delegateWallet = ethers.Wallet.createRandom()
     const creatorAddress = publicKeyToAddress(bin_fromHexString(userPrimaryWallet.publicKey))
     log('makeRandomUserContext', userIdFromAddress(creatorAddress))
-    return {
-        signerPrivateKey: () => devicePrivateKeyStr,
-        creatorAddress,
-        delegateSig: await makeOldRiverDelegateSig(
-            userPrimaryWallet,
-            getPublicKey(devicePrivateKeyStr, false),
-        ),
-    }
+    return makeSignerContext(userPrimaryWallet, delegateWallet)
 }
 
 export interface TestClientOpts {
