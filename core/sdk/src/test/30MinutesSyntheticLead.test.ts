@@ -30,7 +30,7 @@ import {
     leaderId,
     leaderUserName,
     replySentTime,
-} from './30MinutesSyntheticConfig'
+} from './30MinutesSyntheticConfig.test_util'
 import { DecryptedTimelineEvent } from '../types'
 import { SnapshotCaseType } from '@river/proto'
 import { createSpaceDapp } from '@river/web3'

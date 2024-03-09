@@ -32,7 +32,7 @@ import {
     defaultHeapDumpFirstSnapshoMs,
     defaultHeapDumpIntervalMs,
     defaultNumberOfClientsPerProcess,
-} from './stressconfig'
+} from './stressconfig.test_util'
 
 //import * as fs from 'fs'
 import * as path from 'path'

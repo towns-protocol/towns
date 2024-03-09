@@ -4,7 +4,7 @@
 
 import { check, dlog } from '@river/dlog'
 import { waitFor } from '../util.test'
-import { bobsAccount, accounts, jsonRpcProviderUrl, nodeRpcURL } from './loadconfig'
+import { bobsAccount, accounts, jsonRpcProviderUrl, nodeRpcURL } from './loadconfig.test_util'
 import { Client } from '../client'
 import {
     createAndStartClients,
@@ -16,7 +16,7 @@ import {
     multipleClientsJoinSpaceAndChannel,
     sendMessageAfterRandomDelay,
     wait,
-} from './load_tests_util'
+} from './load.test_util'
 
 const base_log = dlog('csb:test:loadTestsS4.1')
 

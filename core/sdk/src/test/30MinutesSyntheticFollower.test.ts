@@ -21,7 +21,7 @@ import {
     fromFollowerQueueName,
     fromLeaderQueueName,
     riverNodeRpcUrl,
-} from './30MinutesSyntheticConfig'
+} from './30MinutesSyntheticConfig.test_util'
 import { DecryptedContent } from '../encryptedContentTypes'
 import { SnapshotCaseType } from '@river/proto'
 import { DecryptedTimelineEvent } from '../types'
