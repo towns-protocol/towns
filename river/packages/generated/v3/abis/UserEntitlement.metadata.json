@@ -1,6 +1,6 @@
 {
   "compiler": {
-    "version": "0.8.23+commit.f704f362"
+    "version": "0.8.24+commit.e11b9ed9"
   },
   "language": "Solidity",
   "output": {
@@ -476,50 +476,39 @@
       "runs": 200
     },
     "remappings": [
-      ":@eth-optimism/contracts-bedrock/=node_modules/@eth-optimism/contracts-bedrock/",
-      ":@openzeppelin/=lib/openzeppelin-contracts/",
-      ":@openzeppelin/contracts-upgradeable/=lib/@openzeppelin/contracts-upgradeable/contracts/",
-      ":@openzeppelin/contracts/=lib/@openzeppelin/contracts/",
-      ":@prb/math/=lib/prb-math/src/",
-      ":@prb/test/=lib/prb-test/src/",
-      ":ERC721A/=lib/ERC721A/contracts/",
+      ":@openzeppelin/=lib/@openzeppelin/",
+      ":@prb/math/=lib/@prb/math/src/",
+      ":@prb/test/=lib/@prb/test/src/",
       ":account-abstraction/=lib/account-abstraction/contracts/",
-      ":base64-sol/=lib/base64/",
       ":base64/=lib/base64/",
-      ":council/=lib/council/contracts/",
       ":ds-test/=lib/ds-test/src/",
-      ":erc4626-tests/=lib/operator-filter-registry/lib/openzeppelin-contracts/lib/erc4626-tests/",
       ":forge-std/=lib/forge-std/src/",
-      ":@openzeppelin/contracts-upgradeable/=lib/@openzeppelin/contracts-upgradeable/contracts/",
-      ":openzeppelin-contracts/=lib/openzeppelin-contracts/",
-      ":operator-filter-registry/=lib/operator-filter-registry/",
-      ":prb-math/=lib/prb-math/src/",
-      ":prb-test/=lib/prb-test/src/"
+      ":hardhat-deploy/=lib/hardhat-deploy/"
     ]
   },
   "sources": {
     "contracts/src/spaces/entitlements/IEntitlement.sol": {
-      "keccak256": "0x712add71e128251b8e0b4112ce76cd46f6679715df6c793f687dce612e9d9852",
+      "keccak256": "0x6f8aab97a4fae69e2ee5dd1820e34dd742d634751d41d833b21fcce47c3df0bf",
       "license": "Apache-2.0",
       "urls": [
-        "bzz-raw://ff5c19f00858661b2f493902650dddaa29fa0dc2d3ed1ad3b2f1f0d7c6a9127d",
-        "dweb:/ipfs/QmdH8pn1iKkPrPTyZB4eBeiJKJR92L42Zn1xmsWGFJuxZp"
+        "bzz-raw://2d1501e3e3cebaeb556720bbf336233af28e9b76394302a1d97d555496ffd324",
+        "dweb:/ipfs/QmPhggvuU2uHwVnqYXjATiCNrLFXdN2KbF5tgNeo8s3Pui"
       ]
     },
     "contracts/src/spaces/entitlements/user/IUserEntitlement.sol": {
-      "keccak256": "0x1ea0f455edebe83dc97f71c6086115751cdf4b95d0a262040ffefe4ebe400c77",
+      "keccak256": "0xb55431f11e1facb489e520fe9227ddcadcb3da3d96bae99c48fdf756a0a15f93",
       "license": "Apache-2.0",
       "urls": [
-        "bzz-raw://001e9dc21e0378b7cba87d999deaf0ddc08e875a12c4479a6321d4103e3961ed",
-        "dweb:/ipfs/QmbcmPzyqn4X7iSfJFqhMBgVbKqtREExnQG2WM3drdNSzY"
+        "bzz-raw://d17d92d64c366bf87e0a35322ff9dc787c282185a524bb395c2667dac65db25f",
+        "dweb:/ipfs/QmWKiSeZw8vB6bWjEwzKKrjop17xgAf5xUKnCRJ2ka2YYX"
       ]
     },
     "contracts/src/spaces/entitlements/user/UserEntitlement.sol": {
-      "keccak256": "0x9e9e1aa93e2991737810597fd1a54dca066d8977b57b7ed064829e6b79d37775",
+      "keccak256": "0x9df4c8fa93a21ee4f341345f8ae0ed7190385602622bf887af5ff035b3c1c79d",
       "license": "Apache-2.0",
       "urls": [
-        "bzz-raw://28ea21cc466d422ba7de5d3a1820d65ed9285c62ff679e1bedf6e471ee524545",
-        "dweb:/ipfs/QmehCJPg9cdqAyxQbzUiCbJ8pmUH9QJP2Pxk978NfeBuAp"
+        "bzz-raw://848c1fbe3f69b30fd01eae52980de26af96425d4d863de8c8db1cb5e8074b5ce",
+        "dweb:/ipfs/QmQHcTzKgrusxzMLxLpMd9WD8oqt92QUW1VT1hcoQD2pXr"
       ]
     },
     "contracts/src/spaces/facets/channels/IChannel.sol": {
@@ -538,7 +527,7 @@
         "dweb:/ipfs/QmeQNoribmDQ7S2PiQ3qNLCL1w6puAnuxWK3hz1w3ue2z9"
       ]
     },
-    "lib/@openzeppelin/contracts-upgradeable/contracts/proxy/utils/Initializable.sol": {
+    "lib/@openzeppelin/contracts-upgradeable/proxy/utils/Initializable.sol": {
       "keccak256": "0x631188737069917d2f909d29ce62c4d48611d326686ba6683e26b72a23bfac0b",
       "license": "MIT",
       "urls": [
@@ -546,7 +535,7 @@
         "dweb:/ipfs/QmUvtdp7X1mRVyC3CsHrtPbgoqWaXHp3S1ZR24tpAQYJWM"
       ]
     },
-    "lib/@openzeppelin/contracts-upgradeable/contracts/proxy/utils/UUPSUpgradeable.sol": {
+    "lib/@openzeppelin/contracts-upgradeable/proxy/utils/UUPSUpgradeable.sol": {
       "keccak256": "0x3f13b947637c4969c0644cab4ef399cdc4b67f101463b8775c5a43b118558e53",
       "license": "MIT",
       "urls": [
@@ -554,7 +543,7 @@
         "dweb:/ipfs/QmdBE8T1BTddZxpdECMsb3KiCFyjNWmxcCddYrWFTXmWPj"
       ]
     },
-    "lib/@openzeppelin/contracts-upgradeable/contracts/utils/ContextUpgradeable.sol": {
+    "lib/@openzeppelin/contracts-upgradeable/utils/ContextUpgradeable.sol": {
       "keccak256": "0xdbef5f0c787055227243a7318ef74c8a5a1108ca3a07f2b3a00ef67769e1e397",
       "license": "MIT",
       "urls": [
@@ -562,7 +551,7 @@
         "dweb:/ipfs/QmPKn6EYDgpga7KtpkA8wV2yJCYGMtc9K4LkJfhKX2RVSV"
       ]
     },
-    "lib/@openzeppelin/contracts-upgradeable/contracts/utils/introspection/ERC165Upgradeable.sol": {
+    "lib/@openzeppelin/contracts-upgradeable/utils/introspection/ERC165Upgradeable.sol": {
       "keccak256": "0xdaba3f7c42c55b2896353f32bd27d4d5f8bae741b3b05d4c53f67abc4dc47ce8",
       "license": "MIT",
       "urls": [

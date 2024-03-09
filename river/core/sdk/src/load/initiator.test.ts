@@ -27,7 +27,7 @@ import {
     loadTestSignalCheckInterval,
     loadTestTimeout,
 } from './loadconfig'
-import { RiverSDK } from '../testSdk'
+import { RiverSDK } from '../testSdk.test_util'
 
 const { createSpaceDapp } = await import('@river/web3')
 

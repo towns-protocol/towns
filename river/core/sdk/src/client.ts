@@ -104,10 +104,11 @@ import { usernameChecksum, isIConnectError, genPersistenceStoreName } from './ut
 import { EncryptedContent, toDecryptedContent } from './encryptedContentTypes'
 import {
     DecryptionEvents,
-    DecryptionExtensions,
+    BaseDecryptionExtensions,
     EntitlementsDelegate,
     makeSessionKeys,
 } from './decryptionExtensions'
+import { ClientDecryptionExtensions } from './clientDecryptionExtensions'
 import { PersistenceStore, IPersistenceStore, StubPersistenceStore } from './persistenceStore'
 import { SyncState, SyncedStreams } from './syncedStreams'
 import { SyncedStream } from './syncedStream'
@@ -145,7 +146,7 @@ export class Client
     private getStreamRequests: Map<string, Promise<StreamStateView>> = new Map()
     private getScrollbackRequests: Map<string, ReturnType<typeof this.scrollback>> = new Map()
     private entitlementsDelegate: EntitlementsDelegate
-    private decryptionExtensions?: DecryptionExtensions
+    private decryptionExtensions?: BaseDecryptionExtensions
     private syncedStreamsExtensions?: SyncedStreamsExtension
     private persistenceStore: IPersistenceStore
 
@@ -1574,11 +1575,10 @@ export class Client
         const crypto = new GroupEncryptionCrypto(this, this.cryptoStore)
         await crypto.init()
         this.cryptoBackend = crypto
-        this.decryptionExtensions = new DecryptionExtensions(
+        this.decryptionExtensions = new ClientDecryptionExtensions(
             this,
             crypto,
             this.entitlementsDelegate,
-            this,
             this.userId,
             this.userDeviceKey(),
         )

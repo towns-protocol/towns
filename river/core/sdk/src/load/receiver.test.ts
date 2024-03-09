@@ -25,7 +25,7 @@ import fs from 'fs'
 import { SnapshotCaseType } from '@river/proto'
 import { DecryptedTimelineEvent } from '../types'
 import { createAndStartClient } from './load_tests_util'
-import { RiverSDK } from '../testSdk'
+import { RiverSDK } from '../testSdk.test_util'
 
 const { createSpaceDapp } = await import('@river/web3')
 
