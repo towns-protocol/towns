@@ -444,11 +444,12 @@ func (ru *csParams) derivedMembershipEvent() (*DerivedEvent, error) {
 	}
 	creatorUserStreamId := shared.UserStreamIdFromAddr(creatorAddress)
 	inviterId := creatorAddress.Hex()
-
+	streamParentId := events.GetStreamParentId(ru.inceptionPayload)
 	payload := events.Make_UserPayload_Membership(
 		MembershipOp_SO_JOIN,
 		ru.streamId,
 		&inviterId,
+		streamParentId,
 	)
 
 	return &DerivedEvent{
@@ -548,6 +549,7 @@ func (ru *csDmChannelRules) derivedDMMembershipEvents() ([]*DerivedEvent, error)
 		MembershipOp_SO_JOIN,
 		ru.params.streamId,
 		&ru.params.creatorUserId,
+		nil,
 	)
 
 	// second party
@@ -555,6 +557,7 @@ func (ru *csDmChannelRules) derivedDMMembershipEvents() ([]*DerivedEvent, error)
 		MembershipOp_SO_JOIN,
 		ru.params.streamId,
 		&ru.params.creatorUserId,
+		nil,
 	)
 
 	// send the first party payload last, so that any failure will be retired by the client
@@ -674,6 +677,7 @@ func (ru *csGdmChannelRules) derivedGDMMembershipEvents() ([]*DerivedEvent, erro
 			MembershipOp_SO_JOIN,
 			ru.params.streamId,
 			&ru.params.creatorUserId,
+			nil,
 		)
 		derivedEvents = append(derivedEvents, &DerivedEvent{
 			StreamId: userStreamId,

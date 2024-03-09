@@ -1199,11 +1199,13 @@ export class Client
             this.logError('joinStream: user already a member', streamId)
             return stream
         }
+        const streamParentId = stream.view.getContent().getStreamParentId()
         await this.makeEventAndAddToStream(
             this.userStreamId,
             make_UserPayload_UserMembership({
                 op: MembershipOp.SO_JOIN,
                 streamId: streamIdAsBytes(streamId),
+                streamParentId: streamParentId ? streamIdAsBytes(streamParentId) : undefined,
             }),
             { method: 'joinStream' },
         )

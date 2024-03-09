@@ -163,6 +163,7 @@ message MemberPayload {
         MembershipOp op = 1;
         bytes user_address = 2;
         bytes initiator_address = 3;
+        optional bytes stream_parent_id = 4;
     }
     
     message KeySolicitation {
@@ -308,6 +309,7 @@ message UserPayload {
         bytes stream_id = 1;
         MembershipOp op = 2;
         optional bytes inviter = 3;
+        optional bytes stream_parent_id = 4;
     }
 
     // update someone else's membership
@@ -315,6 +317,7 @@ message UserPayload {
         bytes stream_id = 1;
         bytes user_id = 2; 
         MembershipOp op = 3;
+        optional bytes stream_parent_id = 4;
     }
 
     oneof content {

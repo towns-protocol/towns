@@ -303,21 +303,25 @@ func (params *aeParams) canAddMemberPayload(payload *StreamEvent_MemberPayload) 
 		}
 		if shared.ValidSpaceStreamId(ru.params.streamView.StreamId()) {
 			return aeBuilder().
+				check(ru.validMembershipPayload).
 				check(ru.validMembershipTransistionForSpace).
 				requireChainAuth(ru.spaceMembershipEntitlements)
 
 		} else if shared.ValidChannelStreamId(ru.params.streamView.StreamId()) {
 			return aeBuilder().
+				check(ru.validMembershipPayload).
 				check(ru.validMembershipTransistionForChannel).
 				requireChainAuth(ru.channelMembershipEntitlements).
 				requireParentEvent(ru.requireStreamParentMembership)
 
 		} else if shared.ValidDMChannelStreamId(ru.params.streamView.StreamId()) {
 			return aeBuilder().
+				check(ru.validMembershipPayload).
 				check(ru.validMembershipTransistionForDM)
 
 		} else if shared.ValidGDMChannelStreamId(ru.params.streamView.StreamId()) {
 			return aeBuilder().
+				check(ru.validMembershipPayload).
 				check(ru.validMembershipTransistionForGDM)
 		} else {
 			return aeBuilder().
@@ -366,6 +370,26 @@ func (params *aeParams) creatorIsInvited() (bool, error) {
 	}
 	if membership != MembershipOp_SO_INVITE {
 		return false, nil
+	}
+	return true, nil
+}
+
+func (ru *aeMembershipRules) validMembershipPayload() (bool, error) {
+	if ru.membership == nil {
+		return false, RiverError(Err_INVALID_ARGUMENT, "membership is nil")
+	}
+	// for join events require a parent stream id if the stream has a parent
+	if ru.membership.Op == MembershipOp_SO_JOIN {
+		streamParentId := ru.params.streamView.StreamParentId()
+
+		if streamParentId != nil {
+			if ru.membership.StreamParentId == nil {
+				return false, RiverError(Err_INVALID_ARGUMENT, "membership parent stream id is nil", "streamParentId", streamParentId)
+			}
+			if !streamParentId.EqualsBytes(ru.membership.StreamParentId) {
+				return false, RiverError(Err_INVALID_ARGUMENT, "membership parent stream id does not match parent stream id", "membershipParentStreamId", FormatFullHashFromBytes(ru.membership.StreamParentId), "streamParentId", streamParentId)
+			}
+		}
 	}
 	return true, nil
 }
@@ -437,6 +461,7 @@ func (ru *aeMembershipRules) validMembershipTransistionForChannel() (bool, error
 	if !canAdd || err != nil {
 		return canAdd, err
 	}
+
 	return true, nil
 }
 
@@ -555,6 +580,7 @@ func (ru *aeMembershipRules) requireStreamParentMembership() (*RequiredParentEve
 	if streamParentId == nil {
 		return nil, nil
 	}
+
 	userStreamId, err := shared.UserStreamIdFromBytes(ru.membership.UserAddress)
 	if err != nil {
 		return nil, err
@@ -565,7 +591,7 @@ func (ru *aeMembershipRules) requireStreamParentMembership() (*RequiredParentEve
 	}
 	// for joins and invites, require space membership
 	return &RequiredParentEvent{
-		Payload:  events.Make_UserPayload_Membership(MembershipOp_SO_JOIN, *streamParentId, &initiatorId),
+		Payload:  events.Make_UserPayload_Membership(MembershipOp_SO_JOIN, *streamParentId, &initiatorId, nil),
 		StreamId: userStreamId,
 	}, nil
 }
@@ -645,7 +671,7 @@ func (ru *aeUserMembershipRules) parentEventForUserMembership() (*RequiredParent
 	}
 
 	return &RequiredParentEvent{
-		Payload:  events.Make_MemberPayload_Membership(userMembership.Op, userAddress.Bytes(), initiatorAddress),
+		Payload:  events.Make_MemberPayload_Membership(userMembership.Op, userAddress.Bytes(), initiatorAddress, userMembership.StreamParentId),
 		StreamId: toStreamId,
 	}, nil
 }
@@ -668,7 +694,7 @@ func (ru *aeUserMembershipActionRules) parentEventForUserMembershipAction() (*Re
 	if err != nil {
 		return nil, err
 	}
-	payload := events.Make_UserPayload_Membership(action.Op, actionStreamId, &inviterId)
+	payload := events.Make_UserPayload_Membership(action.Op, actionStreamId, &inviterId, action.StreamParentId)
 	toUserStreamIdStr, err := shared.UserStreamIdFromId(userId)
 	if err != nil {
 		return nil, err
