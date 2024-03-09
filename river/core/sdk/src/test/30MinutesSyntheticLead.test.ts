@@ -34,7 +34,7 @@ import {
 import { DecryptedTimelineEvent } from '../types'
 import { SnapshotCaseType } from '@river/proto'
 import { createSpaceDapp } from '@river/web3'
-import { RiverSDK } from '../testSdk'
+import { RiverSDK } from '../testSdk.test_util'
 
 // This is a temporary hack because importing viem via SpaceDapp causes a jest error
 // specifically the code in ConvertersEntitlements.ts - decodeAbiParameters and encodeAbiParameters functions have an import that can't be found

@@ -1,7 +1,21 @@
 #!/bin/bash
 
-# This script assumes you have the gh github cli installed, setup for auth, and you are an admin on the main repo
-set -e
+# To use this script you need to 1) be an admin of the main repo, 2) have gh github cli installed, 3) run `gh auth login` && `gh repo set-default`
+set -x
+
+function parse_git_branch() {
+    git branch 2> /dev/null | sed -e '/^[^*]/d' -e 's/* \(.*\)/\1/'
+}
+
+if [[ "$(git status --porcelain)" != "" ]]; then
+  echo "There are uncommitted changes. Please commit or stash them before running this script."
+  exit 1
+fi
+
+if [[ "$(parse_git_branch)" != "main" ]]; then
+  echo "You must be on the main branch to run this script."
+  exit 1
+fi
 
 # Main repository details
 MAINTREE_REPO="herenotthere/harmony"
@@ -37,7 +51,7 @@ if git ls-files -u | grep -q '^[^ ]'; then
 fi
 
 # Commit the changes if there are any
-if ! git diff --quiet --cached; then
+if ! git diff main --quiet --cached; then
     RIVER_ALLOW_COMMIT=true git commit -m "Merge ${SUBTREE_PREFIX} at ${SHORT_HASH}"
     echo "Changes committed."
     

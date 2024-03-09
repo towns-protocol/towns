@@ -1,10 +1,7 @@
 import TypedEmitter from 'typed-emitter'
-import chunk from 'lodash/chunk'
 import { Permission } from '@river/web3'
-import { Client } from './client'
-import { EncryptedContent } from './encryptedContentTypes'
+import { DecryptedContentError, EncryptedContent } from './encryptedContentTypes'
 import { shortenHexString, dlog, dlogError, DLogger, check } from '@river/dlog'
-import { isDefined } from './check'
 import {
     GROUP_ENCRYPTION_ALGORITHM,
     GroupEncryptionCrypto,
@@ -12,7 +9,6 @@ import {
     UserDevice,
 } from '@river/encryption'
 import { SessionKeys, UserInboxPayload_GroupEncryptionSessions } from '@river/proto'
-import { make_MemberPayload_KeyFulfillment, make_MemberPayload_KeySolicitation } from './types'
 import { isMobileSafari } from './utils'
 import { streamIdFromBytes } from './id'
 
@@ -40,7 +36,7 @@ export type DecryptionEvents = {
     decryptionExtStatusChanged: (status: DecryptionStatus) => void
 }
 
-interface EncryptedContentItem {
+export interface EncryptedContentItem {
     streamId: string
     eventId: string
     encryptedContent: EncryptedContent
@@ -59,7 +55,7 @@ export interface KeySolicitationContent {
     sessionIds: string[]
 }
 
-interface KeySolicitationItem {
+export interface KeySolicitationItem {
     streamId: string
     fromUserId: string
     fromUserAddress: Uint8Array
@@ -70,6 +66,25 @@ interface KeySolicitationItem {
 interface MissingKeysItem {
     streamId: string
     waitUntil: Date
+}
+
+export interface KeySolicitationData {
+    streamId: string
+    isNewDevice: boolean
+    missingSessionIds: string[]
+}
+
+export interface KeyFulfilmentData {
+    streamId: string
+    userAddress: Uint8Array
+    deviceKey: string
+    sessionIds: string[]
+}
+
+export interface GroupSessionsData {
+    streamId: string
+    item: KeySolicitationItem
+    sessions: GroupEncryptionSession[]
 }
 
 /**
@@ -91,14 +106,8 @@ interface MissingKeysItem {
  *
  * We need code to purge bad sessions (if someones sends us the wrong key, or a key that doesn't decrypt the message)
  */
-export class DecryptionExtensions {
-    public status: DecryptionStatus = DecryptionStatus.initializing
-    private log: {
-        debug: DLogger
-        info: DLogger
-        error: DLogger
-    }
-    private onStopFn?: () => void
+export abstract class BaseDecryptionExtensions {
+    private _status: DecryptionStatus = DecryptionStatus.initializing
     private queues = {
         priorityTasks: new Array<() => Promise<void>>(),
         newGroupSession: new Array<UserInboxPayload_GroupEncryptionSessions>(),
@@ -115,157 +124,179 @@ export class DecryptionExtensions {
     private delayMs: number = 15
     private started: boolean = false
     private isMobileSafariBackgrounded = false
+    private emitter: TypedEmitter<DecryptionEvents>
 
-    constructor(
-        private client: Client,
-        private crypto: GroupEncryptionCrypto,
-        private delegate: EntitlementsDelegate,
-        private emitter: TypedEmitter<DecryptionEvents>,
-        private userId: string,
-        private userDevice: UserDevice,
+    protected _onStopFn?: () => void
+    protected log: {
+        debug: DLogger
+        info: DLogger
+        error: DLogger
+    }
+
+    public readonly crypto: GroupEncryptionCrypto
+    public readonly entitlementDelegate: EntitlementsDelegate
+    public readonly userDevice: UserDevice
+    public readonly userId: string
+
+    public constructor(
+        emitter: TypedEmitter<DecryptionEvents>,
+        crypto: GroupEncryptionCrypto,
+        entitlementDelegate: EntitlementsDelegate,
+        userDevice: UserDevice,
+        userId: string,
+        upToDateStreams: Set<string>,
     ) {
-        const shortId = shortenHexString(
-            this.userId.startsWith('0x') ? this.userId.slice(2) : this.userId,
-        )
-        const shortKey = shortenHexString(userDevice.deviceKey)
-        const logId = `${shortId}:${shortKey}`
+        this.emitter = emitter
+        this.crypto = crypto
+        this.entitlementDelegate = entitlementDelegate
+        this.userDevice = userDevice
+        this.userId = userId
+        // initialize with a set of up-to-date streams
+        // ready for processing
+        this.upToDateStreams = upToDateStreams
+
+        const logId = generateLogId(userId, userDevice.deviceKey)
         this.log = {
             debug: dlog('csb:decryption:debug', { defaultEnabled: false }).extend(logId),
             info: dlog('csb:decryption', { defaultEnabled: true }).extend(logId),
             error: dlogError('csb:decryption:error').extend(logId),
         }
-
         this.log.debug('new DecryptionExtensions', { userDevice })
+    }
+    // todo: document these abstract methods
+    public abstract ackNewGroupSession(
+        session: UserInboxPayload_GroupEncryptionSessions,
+    ): Promise<void>
+    public abstract decryptGroupEvent(
+        streamId: string,
+        eventId: string,
+        encryptedContent: EncryptedContent,
+    ): Promise<void>
+    public abstract downloadNewMessages(): Promise<void>
+    public abstract getKeySolicitations(streamId: string): KeySolicitationContent[]
+    public abstract hasStream(streamId: string): boolean
+    public abstract hasUnprocessedSession(item: EncryptedContentItem): boolean
+    public abstract isUserEntitledToKeyExchange(streamId: string, userId: string): Promise<boolean>
+    public abstract isUserInboxStreamUpToDate(upToDateStreams: Set<string>): boolean
+    public abstract onDecryptionError(item: EncryptedContentItem, err: DecryptedContentError): void
+    public abstract sendKeySolicitation(args: KeySolicitationData): Promise<void>
+    public abstract sendKeyFulfillment(args: KeyFulfilmentData): Promise<void>
+    public abstract encryptAndShareGroupSessions(args: GroupSessionsData): Promise<void>
+    /**
+     * uploadDeviceKeys
+     * upload device keys to the server
+     */
+    public abstract uploadDeviceKeys(): Promise<void>
 
-        const onNewGroupSessions = (
-            sessions: UserInboxPayload_GroupEncryptionSessions,
-            _senderId: string,
-        ) => {
-            this.queues.newGroupSession.push(sessions)
-            this.checkStartTicking()
-        }
+    public enqueueNewGroupSessions(
+        sessions: UserInboxPayload_GroupEncryptionSessions,
+        _senderId: string,
+    ): void {
+        this.queues.newGroupSession.push(sessions)
+        this.checkStartTicking()
+    }
 
-        const onNewEncryptedContent = (
-            streamId: string,
-            eventId: string,
-            encryptedContent: EncryptedContent,
-        ) => {
-            this.queues.encryptedContent.push({
-                streamId,
-                eventId,
-                encryptedContent,
-            })
-            this.checkStartTicking()
-        }
-
-        const onKeySolicitation = (
-            streamId: string,
-            fromUserId: string,
-            fromUserAddress: Uint8Array,
-            keySolicitation: KeySolicitationContent,
-        ) => {
-            if (keySolicitation.deviceKey === this.userDevice.deviceKey) {
-                this.log.debug('ignoring key solicitation for our own device')
-                return
-            }
-            const index = this.queues.keySolicitations.findIndex(
-                (x) =>
-                    x.streamId === streamId &&
-                    x.solicitation.deviceKey === keySolicitation.deviceKey,
-            )
-            if (index > -1) {
-                this.queues.keySolicitations.splice(index, 1)
-            }
-            if (keySolicitation.sessionIds.length > 0 || keySolicitation.isNewDevice) {
-                this.log.debug('new key solicitation', keySolicitation)
-                insertSorted(
-                    this.queues.keySolicitations,
-                    {
-                        streamId,
-                        fromUserId,
-                        fromUserAddress,
-                        solicitation: keySolicitation,
-                        respondAfter: new Date(
-                            Date.now() +
-                                this.getRespondDelayMSForKeySolicitation(streamId, fromUserId),
-                        ),
-                    } satisfies KeySolicitationItem,
-                    (x) => x.respondAfter,
-                )
-                this.checkStartTicking()
-            } else if (index > -1) {
-                this.log.debug('cleared key solicitation', keySolicitation)
-            }
-        }
-
-        const onStreamUpToDate = (streamId: string) => {
-            this.log.debug('streamUpToDate', streamId)
-            this.upToDateStreams.add(streamId)
-            this.checkStartTicking()
-        }
-
-        const mobileSafariPageVisibilityChanged = () => {
-            this.log.debug('onMobileSafariBackgrounded', this.isMobileSafariBackgrounded)
-            this.isMobileSafariBackgrounded = document.visibilityState === 'hidden'
-            if (!this.isMobileSafariBackgrounded) {
-                this.checkStartTicking()
-            }
-        }
-
-        client.streams.getStreams().forEach((stream) => {
-            if (stream.isUpToDate) {
-                this.upToDateStreams.add(stream.streamId)
-            }
+    public enqueueNewEncryptedContent(
+        streamId: string,
+        eventId: string,
+        encryptedContent: EncryptedContent,
+    ): void {
+        this.queues.encryptedContent.push({
+            streamId,
+            eventId,
+            encryptedContent,
         })
+        this.checkStartTicking()
+    }
 
-        client.on('streamUpToDate', onStreamUpToDate)
-        client.on('newGroupSessions', onNewGroupSessions)
-        client.on('newEncryptedContent', onNewEncryptedContent)
-        client.on('newKeySolicitation', onKeySolicitation)
-        client.on('updatedKeySolicitation', onKeySolicitation)
-
-        if (isMobileSafari()) {
-            document.addEventListener('visibilitychange', mobileSafariPageVisibilityChanged)
+    public enqueueKeySolicitation(
+        streamId: string,
+        fromUserId: string,
+        fromUserAddress: Uint8Array,
+        keySolicitation: KeySolicitationContent,
+    ): void {
+        if (keySolicitation.deviceKey === this.userDevice.deviceKey) {
+            this.log.debug('ignoring key solicitation for our own device')
+            return
         }
-
-        this.onStopFn = () => {
-            client.off('streamUpToDate', onStreamUpToDate)
-            client.off('newGroupSessions', onNewGroupSessions)
-            client.off('newEncryptedContent', onNewEncryptedContent)
-            client.off('newKeySolicitation', onKeySolicitation)
-            client.off('updatedKeySolicitation', onKeySolicitation)
-            if (isMobileSafari()) {
-                document.removeEventListener('visibilitychange', mobileSafariPageVisibilityChanged)
-            }
+        const index = this.queues.keySolicitations.findIndex(
+            (x) =>
+                x.streamId === streamId && x.solicitation.deviceKey === keySolicitation.deviceKey,
+        )
+        if (index > -1) {
+            this.queues.keySolicitations.splice(index, 1)
+        }
+        if (keySolicitation.sessionIds.length > 0 || keySolicitation.isNewDevice) {
+            this.log.debug('new key solicitation', keySolicitation)
+            insertSorted(
+                this.queues.keySolicitations,
+                {
+                    streamId,
+                    fromUserId,
+                    fromUserAddress,
+                    solicitation: keySolicitation,
+                    respondAfter: new Date(
+                        Date.now() + this.getRespondDelayMSForKeySolicitation(streamId, fromUserId),
+                    ),
+                } satisfies KeySolicitationItem,
+                (x) => x.respondAfter,
+            )
+            this.checkStartTicking()
+        } else if (index > -1) {
+            this.log.debug('cleared key solicitation', keySolicitation)
         }
     }
 
-    start() {
+    public setStreamUpToDate(streamId: string): void {
+        this.log.debug('streamUpToDate', streamId)
+        this.upToDateStreams.add(streamId)
+        this.checkStartTicking()
+    }
+
+    private mobileSafariPageVisibilityChanged = () => {
+        this.log.debug('onMobileSafariBackgrounded', this.isMobileSafariBackgrounded)
+        this.isMobileSafariBackgrounded = document.visibilityState === 'hidden'
+        if (!this.isMobileSafariBackgrounded) {
+            this.checkStartTicking()
+        }
+    }
+
+    public start(): void {
         check(!this.started, 'start() called twice, please re-instantiate instead')
         this.log.debug('starting')
         this.started = true
+        if (isMobileSafari()) {
+            document.addEventListener('visibilitychange', this.mobileSafariPageVisibilityChanged)
+        }
         // enqueue a task to upload device keys
-        this.queues.priorityTasks.push(() => this.client.uploadDeviceKeys())
+        this.queues.priorityTasks.push(() => this.uploadDeviceKeys())
         // enqueue a task to download new to-device messages
-        this.queues.priorityTasks.push(() => this.client.downloadNewInboxMessages())
+        this.queues.priorityTasks.push(() => this.downloadNewMessages())
         // start the tick loop
         this.checkStartTicking()
     }
 
-    async stop() {
-        this.onStopFn?.()
-        this.onStopFn = undefined
+    public async stop(): Promise<void> {
+        this._onStopFn?.()
+        this._onStopFn = undefined
+        if (isMobileSafari()) {
+            document.removeEventListener('visibilitychange', this.mobileSafariPageVisibilityChanged)
+        }
         await this.stopTicking()
     }
 
-    getSizeOfEncryptedСontentQueue() {
+    public getSizeOfEncryptedСontentQueue() {
         return this.queues.encryptedContent.length
     }
 
+    public get status(): DecryptionStatus {
+        return this._status
+    }
+
     private setStatus(status: DecryptionStatus) {
-        if (this.status !== status) {
+        if (this._status !== status) {
             this.log.info(`status changed ${status}`)
-            this.status = status
+            this._status = status
             this.emitter.emit('decryptionExtStatusChanged', status)
         }
     }
@@ -274,9 +305,8 @@ export class DecryptionExtensions {
         if (
             !this.started ||
             this.timeoutId ||
-            !this.onStopFn ||
-            this.client.userInboxStreamId === undefined ||
-            !this.upToDateStreams.has(this.client.userInboxStreamId)
+            !this._onStopFn ||
+            !this.isUserInboxStreamUpToDate(this.upToDateStreams)
         ) {
             return
         }
@@ -451,7 +481,7 @@ export class DecryptionExtensions {
         }
         // if we processed them all, ack the stream
         if (this.queues.newGroupSession.length === 0) {
-            await this.client.ackInboxStream()
+            await this.ackNewGroupSession(session)
         }
     }
 
@@ -462,15 +492,7 @@ export class DecryptionExtensions {
     private async processEncryptedContentItem(item: EncryptedContentItem): Promise<void> {
         this.log.debug('processEncryptedContentItem', item)
         try {
-            check(isDefined(this.client.userInboxStreamId), 'userInboxStreamId not found')
-            const inboxStream = this.client.stream(this.client.userInboxStreamId)
-            check(isDefined(inboxStream), 'inboxStream not found')
-            if (
-                inboxStream.view.userInboxContent.hasPendingSessionId(
-                    this.userDevice.deviceKey,
-                    item.encryptedContent.content.sessionId,
-                )
-            ) {
+            if (this.hasUnprocessedSession(item)) {
                 this.log.debug('skipping, session is pending in to device stream')
                 // if we have a pending session for this key, waiting for confirmation then we can't decrypt it yet
                 insertSorted(
@@ -485,11 +507,7 @@ export class DecryptionExtensions {
             } else {
                 // do the work to decrypt the event
                 this.log.debug('decrypting content')
-                await this.client.decryptGroupEvent(
-                    item.streamId,
-                    item.eventId,
-                    item.encryptedContent,
-                )
+                await this.decryptGroupEvent(item.streamId, item.eventId, item.encryptedContent)
             }
         } catch (err: unknown) {
             const sessionNotFound = isSessionNotFoundError(err)
@@ -500,15 +518,11 @@ export class DecryptionExtensions {
                 this.log.error('failed to decrypt', err, 'streamId', item.streamId)
             }
 
-            this.client.stream(item.streamId)?.view.updateDecryptedContentError(
-                item.eventId,
-                {
-                    missingSession: sessionNotFound,
-                    encryptedContent: item.encryptedContent,
-                    error: err,
-                },
-                this.client,
-            )
+            this.onDecryptionError(item, {
+                missingSession: sessionNotFound,
+                encryptedContent: item.encryptedContent,
+                error: err,
+            })
 
             insertSorted(
                 this.queues.decryptionRetries,
@@ -530,20 +544,16 @@ export class DecryptionExtensions {
         const item = retryItem.event
         try {
             this.log.debug('retrying decryption', item)
-            await this.client.decryptGroupEvent(item.streamId, item.eventId, item.encryptedContent)
+            await this.decryptGroupEvent(item.streamId, item.eventId, item.encryptedContent)
         } catch (err) {
             const sessionNotFound = isSessionNotFoundError(err)
 
             this.log.error('failed to decrypt on retry', err, 'sessionNotFound', sessionNotFound)
-            this.client.stream(item.streamId)?.view.updateDecryptedContentError(
-                item.eventId,
-                {
-                    missingSession: sessionNotFound,
-                    encryptedContent: item.encryptedContent,
-                    error: err,
-                },
-                this.client,
-            )
+            this.onDecryptionError(item, {
+                missingSession: sessionNotFound,
+                encryptedContent: item.encryptedContent,
+                error: err,
+            })
             if (sessionNotFound) {
                 const streamId = item.streamId
                 const sessionId = item.encryptedContent.content.sessionId
@@ -581,13 +591,11 @@ export class DecryptionExtensions {
             this.log.debug('processing missing keys', item.streamId, 'no missing keys')
             return
         }
-        const stream = this.client.stream(streamId)
-        if (!stream) {
+        if (!this.hasStream(streamId)) {
             this.log.debug('processing missing keys', item.streamId, 'stream not found')
             return
         }
-        const solicitedEvents =
-            stream.view.getMembers().joined.get(this.userId)?.solicitations ?? []
+        const solicitedEvents = this.getKeySolicitations(streamId)
         const existingKeyRequest = solicitedEvents.find(
             (x) => x.deviceKey === this.userDevice.deviceKey,
         )
@@ -606,12 +614,6 @@ export class DecryptionExtensions {
 
         const isNewDevice = knownSessionIds.length === 0
 
-        const keySolicitation = make_MemberPayload_KeySolicitation({
-            deviceKey: this.userDevice.deviceKey,
-            fallbackKey: this.userDevice.fallbackKey,
-            isNewDevice,
-            sessionIds: isNewDevice ? [] : missingSessionIds,
-        })
         this.log.info(
             'requesting keys',
             item.streamId,
@@ -620,7 +622,11 @@ export class DecryptionExtensions {
             'sessionIds:',
             missingSessionIds.length,
         )
-        await this.client.makeEventAndAddToStream(streamId, keySolicitation)
+        await this.sendKeySolicitation({
+            streamId,
+            isNewDevice,
+            missingSessionIds,
+        })
     }
 
     /**
@@ -630,8 +636,8 @@ export class DecryptionExtensions {
     private async processKeySolicitation(item: KeySolicitationItem): Promise<void> {
         this.log.debug('processing key solicitation', item.streamId, item)
         const streamId = item.streamId
-        const stream = this.client.stream(streamId)
-        check(isDefined(stream), 'stream not found')
+
+        check(this.hasStream(streamId), 'stream not found')
         const knownSessionIds =
             (await this.crypto.encryptionDevice.getInboundGroupSessionIds(streamId)) ?? []
 
@@ -645,25 +651,14 @@ export class DecryptionExtensions {
             return
         }
 
-        if (!stream.view.userIsEntitledToKeyExchange(item.fromUserId)) {
-            this.log.info(
-                `user ${item.fromUserId} is not a member of stream ${item.streamId} and cannot request keys`,
-            )
+        const isUserEntitledToKeyExchange = await this.isUserEntitledToKeyExchange(
+            streamId,
+            item.fromUserId,
+        )
+        if (!isUserEntitledToKeyExchange) {
             return
         }
-        if (stream.view.contentKind === 'channelContent') {
-            const channel = stream.view.channelContent
-            const entitlements = await this.delegate.isEntitled(
-                channel.spaceId,
-                streamId,
-                item.fromUserId,
-                Permission.Read,
-            )
-            if (!entitlements) {
-                this.log.info('user is not entitled to key exchange')
-                return
-            }
-        }
+
         const sessions: GroupEncryptionSession[] = []
         for (const sessionId of replySessionIds) {
             const groupSession = await this.crypto.encryptionDevice.exportInboundGroupSession(
@@ -685,39 +680,28 @@ export class DecryptionExtensions {
             return
         }
 
-        const fulfillment = make_MemberPayload_KeyFulfillment({
+        await this.sendKeyFulfillment({
+            streamId,
             userAddress: item.fromUserAddress,
             deviceKey: item.solicitation.deviceKey,
             sessionIds: item.solicitation.isNewDevice ? [] : sessions.map((x) => x.sessionId),
         })
 
-        await this.client.makeEventAndAddToStream(streamId, fulfillment)
-
-        const chunked = chunk(sessions, 100)
-        for (const chunk of chunked) {
-            await this.client.encryptAndShareGroupSessions(streamId, chunk, {
-                [item.fromUserId]: [
-                    {
-                        deviceKey: item.solicitation.deviceKey,
-                        fallbackKey: item.solicitation.fallbackKey,
-                    },
-                ],
-            })
-        }
+        await this.encryptAndShareGroupSessions({
+            streamId,
+            item,
+            sessions,
+        })
     }
 
-    private getRespondDelayMSForKeySolicitation(streamId: string, userId: string): number {
-        const multiplier = userId === this.userId ? 0.5 : 1
-        const stream = this.client.stream(streamId)
-        check(isDefined(stream), 'stream not found')
-        const numMembers = stream.view.getMembers().participants().size
-        const maxWaitTimeSeconds = Math.max(5, Math.min(30, numMembers))
-        const waitTime = maxWaitTimeSeconds * 1000 * Math.random() // this could be much better
-        this.log.debug('getRespondDelayMSForKeySolicitation', { streamId, userId, waitTime })
-        return waitTime * multiplier
+    /**
+     * can be overridden to add a delay to the key solicitation response
+     */
+    public getRespondDelayMSForKeySolicitation(_streamId: string, _userId: string): number {
+        return 0
     }
 
-    setHighPriorityStreams(streamIds: string[]) {
+    public setHighPriorityStreams(streamIds: string[]) {
         this.highPriorityStreams = new Set(streamIds)
     }
 }
@@ -811,4 +795,11 @@ function isSessionNotFoundError(err: unknown): boolean {
         return (err.message as string).includes('Session not found')
     }
     return false
+}
+
+function generateLogId(userId: string, deviceKey: string): string {
+    const shortId = shortenHexString(userId.startsWith('0x') ? userId.slice(2) : userId)
+    const shortKey = shortenHexString(deviceKey)
+    const logId = `${shortId}:${shortKey}`
+    return logId
 }

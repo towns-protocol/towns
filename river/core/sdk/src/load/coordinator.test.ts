@@ -18,7 +18,7 @@ import {
     ChannelTrackingInfo,
     pauseForXMiliseconds,
     getRandomInt,
-} from '../testSdk'
+} from '../testSdk.test_util'
 import { dlog } from '@river/dlog'
 import {
     townsToCreate,

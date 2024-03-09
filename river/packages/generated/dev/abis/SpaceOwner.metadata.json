@@ -1427,14 +1427,14 @@
       "runs": 200
     },
     "remappings": [
-      ":@openzeppelin/=node_modules/@openzeppelin/",
-      ":@prb/math/=node_modules/@prb/math/src/",
-      ":@prb/test/=node_modules/@prb/test/src/",
-      ":account-abstraction/=node_modules/account-abstraction/contracts/",
-      ":base64/=node_modules/base64/",
-      ":ds-test/=node_modules/ds-test/",
-      ":forge-std/=node_modules/forge-std/src/",
-      ":hardhat-deploy/=node_modules/hardhat-deploy/"
+      ":@openzeppelin/=lib/@openzeppelin/",
+      ":@prb/math/=lib/@prb/math/src/",
+      ":@prb/test/=lib/@prb/test/src/",
+      ":account-abstraction/=lib/account-abstraction/contracts/",
+      ":base64/=lib/base64/",
+      ":ds-test/=lib/ds-test/src/",
+      ":forge-std/=lib/forge-std/src/",
+      ":hardhat-deploy/=lib/hardhat-deploy/"
     ]
   },
   "sources": {
@@ -1702,7 +1702,7 @@
         "dweb:/ipfs/QmazGzxM9owCyKTV1cY46PiMHXdApYJR221Lm9YMcn7J72"
       ]
     },
-    "node_modules/@openzeppelin/contracts/utils/Address.sol": {
+    "lib/@openzeppelin/contracts/utils/Address.sol": {
       "keccak256": "0xaf28a975a78550e45f65e559a3ad6a5ad43b9b8a37366999abd1b7084eb70721",
       "license": "MIT",
       "urls": [
@@ -1710,7 +1710,7 @@
         "dweb:/ipfs/QmRaydGr8BTHs1kvaZfsNU69pKzUAGFrvABn1KiRSbE51y"
       ]
     },
-    "node_modules/@openzeppelin/contracts/utils/Strings.sol": {
+    "lib/@openzeppelin/contracts/utils/Strings.sol": {
       "keccak256": "0x55f102ea785d8399c0e58d1108e2d289506dde18abc6db1b7f68c1f9f9bc5792",
       "license": "MIT",
       "urls": [
@@ -1718,7 +1718,7 @@
         "dweb:/ipfs/QmZEeeXoFPW47amyP35gfzomF9DixqqTEPwzBakv6cZw6i"
       ]
     },
-    "node_modules/@openzeppelin/contracts/utils/cryptography/ECDSA.sol": {
+    "lib/@openzeppelin/contracts/utils/cryptography/ECDSA.sol": {
       "keccak256": "0xeed0a08b0b091f528356cbc7245891a4c748682d4f6a18055e8e6ca77d12a6cf",
       "license": "MIT",
       "urls": [
@@ -1726,7 +1726,7 @@
         "dweb:/ipfs/QmXRJDv3xHLVQCVXg1ZvR35QS9sij5y9NDWYzMfUfAdTHF"
       ]
     },
-    "node_modules/@openzeppelin/contracts/utils/cryptography/MessageHashUtils.sol": {
+    "lib/@openzeppelin/contracts/utils/cryptography/MessageHashUtils.sol": {
       "keccak256": "0xba333517a3add42cd35fe877656fc3dfcc9de53baa4f3aabbd6d12a92e4ea435",
       "license": "MIT",
       "urls": [
@@ -1734,7 +1734,7 @@
         "dweb:/ipfs/QmRUo1muMRAewxrKQ7TkXUtknyRoR57AyEkoPpiuZQ8FzX"
       ]
     },
-    "node_modules/@openzeppelin/contracts/utils/introspection/IERC165.sol": {
+    "lib/@openzeppelin/contracts/utils/introspection/IERC165.sol": {
       "keccak256": "0x4296879f55019b23e135000eb36896057e7101fb7fb859c5ef690cf14643757b",
       "license": "MIT",
       "urls": [
@@ -1742,7 +1742,7 @@
         "dweb:/ipfs/QmeJQCtZrQjtJLr6u7ZHWeH3pBnjtLWzvRrKViAi7UZqxL"
       ]
     },
-    "node_modules/@openzeppelin/contracts/utils/math/Math.sol": {
+    "lib/@openzeppelin/contracts/utils/math/Math.sol": {
       "keccak256": "0x005ec64c6313f0555d59e278f9a7a5ab2db5bdc72a027f255a37c327af1ec02d",
       "license": "MIT",
       "urls": [
@@ -1750,7 +1750,7 @@
         "dweb:/ipfs/QmQyRpyPRL5SQuAgj6SHmbir3foX65FJjbVTTQrA2EFg6L"
       ]
     },
-    "node_modules/@openzeppelin/contracts/utils/math/SafeCast.sol": {
+    "lib/@openzeppelin/contracts/utils/math/SafeCast.sol": {
       "keccak256": "0xe19a4d5f31d2861e7344e8e535e2feafb913d806d3e2b5fe7782741a2a7094fe",
       "license": "MIT",
       "urls": [
@@ -1758,7 +1758,7 @@
         "dweb:/ipfs/QmWqVz6UAVqmnWU5pqYPt1o6iDEZyPaBraAA3rKfTTSfYj"
       ]
     },
-    "node_modules/@openzeppelin/contracts/utils/math/SignedMath.sol": {
+    "lib/@openzeppelin/contracts/utils/math/SignedMath.sol": {
       "keccak256": "0x5f7e4076e175393767754387c962926577f1660dd9b810187b9002407656be72",
       "license": "MIT",
       "urls": [
@@ -1766,7 +1766,7 @@
         "dweb:/ipfs/QmVBEei6aTnvYNZp2CHYVNKyZS4q1KkjANfY39WVXZXVoT"
       ]
     },
-    "node_modules/base64/base64.sol": {
+    "lib/base64/base64.sol": {
       "keccak256": "0xa73959e6ef0b693e4423a562e612370160b934a75e618361ddd8c9c4b8ddbaaf",
       "license": "MIT",
       "urls": [

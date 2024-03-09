@@ -12,10 +12,10 @@
   },
   {
     "type": "function",
-    "name": "__RiverRegistry_init",
+    "name": "__OperatorRegistry_init",
     "inputs": [
       {
-        "name": "approvedOperators",
+        "name": "initialOperators",
         "type": "address[]",
         "internalType": "address[]"
       }
@@ -85,12 +85,12 @@
       {
         "name": "",
         "type": "tuple[]",
-        "internalType": "struct IRiverRegistryBase.Node[]",
+        "internalType": "struct Node[]",
         "components": [
           {
-            "name": "nodeAddress",
-            "type": "address",
-            "internalType": "address"
+            "name": "status",
+            "type": "uint8",
+            "internalType": "enum NodeStatus"
           },
           {
             "name": "url",
@@ -98,9 +98,9 @@
             "internalType": "string"
           },
           {
-            "name": "status",
-            "type": "uint8",
-            "internalType": "enum IRiverRegistryBase.NodeStatus"
+            "name": "nodeAddress",
+            "type": "address",
+            "internalType": "address"
           },
           {
             "name": "operator",
@@ -133,7 +133,7 @@
       {
         "name": "",
         "type": "tuple[]",
-        "internalType": "struct IRiverRegistryBase.StreamWithId[]",
+        "internalType": "struct StreamWithId[]",
         "components": [
           {
             "name": "id",
@@ -143,7 +143,7 @@
           {
             "name": "stream",
             "type": "tuple",
-            "internalType": "struct IRiverRegistryBase.Stream",
+            "internalType": "struct Stream",
             "components": [
               {
                 "name": "lastMiniblockHash",
@@ -156,17 +156,12 @@
                 "internalType": "uint64"
               },
               {
-                "name": "flags",
-                "type": "uint64",
-                "internalType": "uint64"
-              },
-              {
                 "name": "reserved0",
                 "type": "uint64",
                 "internalType": "uint64"
               },
               {
-                "name": "reserved1",
+                "name": "flags",
                 "type": "uint64",
                 "internalType": "uint64"
               },
@@ -196,12 +191,12 @@
       {
         "name": "",
         "type": "tuple",
-        "internalType": "struct IRiverRegistryBase.Node",
+        "internalType": "struct Node",
         "components": [
           {
-            "name": "nodeAddress",
-            "type": "address",
-            "internalType": "address"
+            "name": "status",
+            "type": "uint8",
+            "internalType": "enum NodeStatus"
           },
           {
             "name": "url",
@@ -209,9 +204,9 @@
             "internalType": "string"
           },
           {
-            "name": "status",
-            "type": "uint8",
-            "internalType": "enum IRiverRegistryBase.NodeStatus"
+            "name": "nodeAddress",
+            "type": "address",
+            "internalType": "address"
           },
           {
             "name": "operator",
@@ -250,7 +245,7 @@
       {
         "name": "",
         "type": "tuple",
-        "internalType": "struct IRiverRegistryBase.Stream",
+        "internalType": "struct Stream",
         "components": [
           {
             "name": "lastMiniblockHash",
@@ -263,17 +258,12 @@
             "internalType": "uint64"
           },
           {
-            "name": "flags",
-            "type": "uint64",
-            "internalType": "uint64"
-          },
-          {
             "name": "reserved0",
             "type": "uint64",
             "internalType": "uint64"
           },
           {
-            "name": "reserved1",
+            "name": "flags",
             "type": "uint64",
             "internalType": "uint64"
           },
@@ -314,7 +304,7 @@
       {
         "name": "",
         "type": "tuple",
-        "internalType": "struct IRiverRegistryBase.Stream",
+        "internalType": "struct Stream",
         "components": [
           {
             "name": "lastMiniblockHash",
@@ -327,17 +317,12 @@
             "internalType": "uint64"
           },
           {
-            "name": "flags",
-            "type": "uint64",
-            "internalType": "uint64"
-          },
-          {
             "name": "reserved0",
             "type": "uint64",
             "internalType": "uint64"
           },
           {
-            "name": "reserved1",
+            "name": "flags",
             "type": "uint64",
             "internalType": "uint64"
           },
@@ -375,7 +360,7 @@
       {
         "name": "",
         "type": "tuple[]",
-        "internalType": "struct IRiverRegistryBase.StreamWithId[]",
+        "internalType": "struct StreamWithId[]",
         "components": [
           {
             "name": "id",
@@ -385,7 +370,7 @@
           {
             "name": "stream",
             "type": "tuple",
-            "internalType": "struct IRiverRegistryBase.Stream",
+            "internalType": "struct Stream",
             "components": [
               {
                 "name": "lastMiniblockHash",
@@ -398,17 +383,12 @@
                 "internalType": "uint64"
               },
               {
-                "name": "flags",
-                "type": "uint64",
-                "internalType": "uint64"
-              },
-              {
                 "name": "reserved0",
                 "type": "uint64",
                 "internalType": "uint64"
               },
               {
-                "name": "reserved1",
+                "name": "flags",
                 "type": "uint64",
                 "internalType": "uint64"
               },
@@ -478,7 +458,7 @@
       {
         "name": "status",
         "type": "uint8",
-        "internalType": "enum IRiverRegistryBase.NodeStatus"
+        "internalType": "enum NodeStatus"
       }
     ],
     "outputs": [],
@@ -568,7 +548,7 @@
       {
         "name": "status",
         "type": "uint8",
-        "internalType": "enum IRiverRegistryBase.NodeStatus"
+        "internalType": "enum NodeStatus"
       }
     ],
     "outputs": [],
@@ -651,7 +631,7 @@
         "name": "status",
         "type": "uint8",
         "indexed": false,
-        "internalType": "enum IRiverRegistryBase.NodeStatus"
+        "internalType": "enum NodeStatus"
       }
     ],
     "anonymous": false
@@ -683,7 +663,7 @@
         "name": "status",
         "type": "uint8",
         "indexed": false,
-        "internalType": "enum IRiverRegistryBase.NodeStatus"
+        "internalType": "enum NodeStatus"
       }
     ],
     "anonymous": false

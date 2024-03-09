@@ -1,6 +1,6 @@
 {
   "compiler": {
-    "version": "0.8.23+commit.f704f362"
+    "version": "0.8.24+commit.e11b9ed9"
   },
   "language": "Solidity",
   "output": {
@@ -1835,25 +1835,14 @@
       "runs": 200
     },
     "remappings": [
-      ":@eth-optimism/contracts-bedrock/=node_modules/@eth-optimism/contracts-bedrock/",
-      ":@openzeppelin/=lib/openzeppelin-contracts/",
-      ":@openzeppelin/contracts-upgradeable/=lib/@openzeppelin/contracts-upgradeable/contracts/",
-      ":@openzeppelin/contracts/=lib/@openzeppelin/contracts/",
-      ":@prb/math/=lib/prb-math/src/",
-      ":@prb/test/=lib/prb-test/src/",
-      ":ERC721A/=lib/ERC721A/contracts/",
+      ":@openzeppelin/=lib/@openzeppelin/",
+      ":@prb/math/=lib/@prb/math/src/",
+      ":@prb/test/=lib/@prb/test/src/",
       ":account-abstraction/=lib/account-abstraction/contracts/",
-      ":base64-sol/=lib/base64/",
       ":base64/=lib/base64/",
-      ":council/=lib/council/contracts/",
       ":ds-test/=lib/ds-test/src/",
-      ":erc4626-tests/=lib/operator-filter-registry/lib/openzeppelin-contracts/lib/erc4626-tests/",
       ":forge-std/=lib/forge-std/src/",
-      ":@openzeppelin/contracts-upgradeable/=lib/@openzeppelin/contracts-upgradeable/contracts/",
-      ":openzeppelin-contracts/=lib/openzeppelin-contracts/",
-      ":operator-filter-registry/=lib/operator-filter-registry/",
-      ":prb-math/=lib/prb-math/src/",
-      ":prb-test/=lib/prb-test/src/"
+      ":hardhat-deploy/=lib/hardhat-deploy/"
     ]
   },
   "sources": {
@@ -1906,11 +1895,11 @@
       ]
     },
     "contracts/src/diamond/facets/introspection/IntrospectionBase.sol": {
-      "keccak256": "0x5379ee00fe8945cb6820e9f3692c1f141ab2bacb286ac39f096857bd530f91ca",
+      "keccak256": "0x5f458cf292b4b7b9d9c1efd110b3b65905c7bd7e47a48090af5eb9fb7d620ddf",
       "license": "Apache-2.0",
       "urls": [
-        "bzz-raw://90c08f3e8e8fc64264ac94bc8005286e881760b0c776a9b0a2e679e4cff0237a",
-        "dweb:/ipfs/QmXcpnF9hcUH7jGvEySkNBRybYYrcGyUjkUHXuTex886cJ"
+        "bzz-raw://84995121aafc9124ba3a1148835dcccc1061c25a5b074b4579a83c0dd213d613",
+        "dweb:/ipfs/QmPYSKEqYWasPxVRzv4TCpXVfpkahfFDEPkTLp7UAT9fKq"
       ]
     },
     "contracts/src/diamond/facets/introspection/IntrospectionStorage.sol": {
@@ -1986,11 +1975,11 @@
       ]
     },
     "contracts/src/diamond/facets/reentrancy/ReentrancyGuard.sol": {
-      "keccak256": "0xf711ce29e4914dfbaf97bbe6296f75992ec28ff550cee80878d82e7da282f610",
+      "keccak256": "0x96999935d243afdc7370154431fef7de13cd74b892949070d8488d5ad83dfa4f",
       "license": "Apache-2.0",
       "urls": [
-        "bzz-raw://928cec674ae3e313754266f08422c9b6841d7119101ea125aaf0e066efbda4e2",
-        "dweb:/ipfs/QmXgyhAKZ47MemMcDRZSgyEqNmsbipucZGh9uh9VvXbu6s"
+        "bzz-raw://e5978c51e1bab72ec8d3a8e5bb80c7e2bcac60c08d04b3406b6863efb585100c",
+        "dweb:/ipfs/QmUDtXQHEx1kgQeEQ5Sui9xdDQgf931ts2ZCKpwfH88U4T"
       ]
     },
     "contracts/src/diamond/facets/reentrancy/ReentrancyGuardStorage.sol": {
@@ -2057,28 +2046,28 @@
         "dweb:/ipfs/QmUFD83GFhupZo2d3PafyK5fjqrzFRDnJHEsTGYhHakzUM"
       ]
     },
-    "contracts/src/river/wallet-link/WalletLinkStorage.sol": {
-      "keccak256": "0xfeff774f848982235ee5544cc01c30c8a0eb9e0d5c1a37fe91baeb21522b57c1",
+    "contracts/src/river/wallet-link/IWalletLink.sol": {
+      "keccak256": "0x0d6f4b0d6ba2cca41f652356d895c411c0bcb83325349dd5a2839c7e84833e4f",
       "license": "Apache-2.0",
       "urls": [
-        "bzz-raw://8de445d54b131a4391ec2ed9158114047618e8b80a6dca76900ce5ded765687d",
-        "dweb:/ipfs/QmYptKYMVxjWx8RNJZZehTEjAnJSriaTKQ6u27q1yH7NCk"
+        "bzz-raw://6bab70c4eb1bbce65f3346c75f403e995d40412c12b5f7e19c196240ba184a73",
+        "dweb:/ipfs/QmakgkJykNfCDWBVfiiXtSKKhopTrerWFFY7kYadQtYSit"
       ]
     },
     "contracts/src/spaces/entitlements/IEntitlement.sol": {
-      "keccak256": "0x712add71e128251b8e0b4112ce76cd46f6679715df6c793f687dce612e9d9852",
+      "keccak256": "0x6f8aab97a4fae69e2ee5dd1820e34dd742d634751d41d833b21fcce47c3df0bf",
       "license": "Apache-2.0",
       "urls": [
-        "bzz-raw://ff5c19f00858661b2f493902650dddaa29fa0dc2d3ed1ad3b2f1f0d7c6a9127d",
-        "dweb:/ipfs/QmdH8pn1iKkPrPTyZB4eBeiJKJR92L42Zn1xmsWGFJuxZp"
+        "bzz-raw://2d1501e3e3cebaeb556720bbf336233af28e9b76394302a1d97d555496ffd324",
+        "dweb:/ipfs/QmPhggvuU2uHwVnqYXjATiCNrLFXdN2KbF5tgNeo8s3Pui"
       ]
     },
     "contracts/src/spaces/facets/Entitled.sol": {
-      "keccak256": "0x7113e4a4b32bb219f57c93999c989450910ff2ae85e713ba1c0ee00bc4bdebc1",
+      "keccak256": "0xadad39f3edf1774d117b88e003fad157a72560a9ca1b4bac47e9c0e6ffd32554",
       "license": "Apache-2.0",
       "urls": [
-        "bzz-raw://1ac74460ca5500807f30633acfd507bd0a2dbfe8e84019102166ef7fd2fb632d",
-        "dweb:/ipfs/QmY5C5RFo3G3z91CnVu2P8TCrquf4ng5SR4kgiNxUQwKBH"
+        "bzz-raw://d0099278e17be44e93ddf815cb05befdb075492d27f7f2a35b3d88f5ec48b509",
+        "dweb:/ipfs/QmX9gmyPe9WVxYcvdPpPKtmz8ShFJGZmHnyxiqNaLTWbqo"
       ]
     },
     "contracts/src/spaces/facets/Permissions.sol": {
@@ -2113,12 +2102,28 @@
         "dweb:/ipfs/QmU78f5sJYKkCdkoHLvq2tT3kvS5eURcdmev2imc8siXFD"
       ]
     },
-    "contracts/src/spaces/facets/entitlements/EntitlementsManagerStorage.sol": {
-      "keccak256": "0x4deaca265b50ebb5d8eb7fb7c4635179380f3d307c827db1c38a5892d8c313c0",
+    "contracts/src/spaces/facets/delegation/WalletLinkProxyBase.sol": {
+      "keccak256": "0x2d800fabc6eaec00c2b25d72dda50cb612eca2ad08700ba537e1dcabf771efdc",
       "license": "Apache-2.0",
       "urls": [
-        "bzz-raw://8be609d370939fa23c0a6174981cbdaf6a79b9798f0a879dd52ae9f94188e755",
-        "dweb:/ipfs/QmXCaSGGYTGtWFLYELyLiBDAPYz2HBbN7es49M9Qa7Mivh"
+        "bzz-raw://3d5346877c8dd48f84b4dc2b9958736fdded102211a8368e83ae82564f0f2334",
+        "dweb:/ipfs/Qmdfq725QN1vdtZd7xC2PSEUbt7ChWh3HEwCcFg7QiqNMd"
+      ]
+    },
+    "contracts/src/spaces/facets/delegation/WalletLinkProxyStorage.sol": {
+      "keccak256": "0x53bc0beb753473e7e927cede43c68006d27a30c212451ffd03b5b3d710713599",
+      "license": "Apache-2.0",
+      "urls": [
+        "bzz-raw://055bbca7d475e12d1d0344389803684ffe50fa04bbcc1755dc947f5c3fee5658",
+        "dweb:/ipfs/QmT3RDDQ8qvkRM91FxMixLfgsSvf77idAbA1AJL7aKxVMa"
+      ]
+    },
+    "contracts/src/spaces/facets/entitlements/EntitlementsManagerStorage.sol": {
+      "keccak256": "0x43bbf8d47d27533e61fe4bcd4d48afd3ce950dfb29a7b6db26ca2b1196ab258c",
+      "license": "Apache-2.0",
+      "urls": [
+        "bzz-raw://916420acc93939f1fc0648355a0f7b048d7a848ea0574af21057da2b2aa8d5b7",
+        "dweb:/ipfs/Qmakd7rxVWkzkaTch7fXyTadKdQb7caHehPssoxo73PWsQ"
       ]
     },
     "contracts/src/spaces/facets/membership/IMembership.sol": {
@@ -2218,11 +2223,11 @@
       ]
     },
     "contracts/src/utils/libraries/CurrencyTransfer.sol": {
-      "keccak256": "0x3cab081011060ac80adb86d14e72c1d866a1fbcd0aad680c718e10aa40c71ddf",
+      "keccak256": "0x1c6b5b33831f8c5c02c49dff5ceac3ad1a6cdb74c988ebba72c36329ca704750",
       "license": "Apache-2.0",
       "urls": [
-        "bzz-raw://deb21eeeb8cd8facd67ed2f5c4798de53cc84c301e451652005d97486db8d15b",
-        "dweb:/ipfs/QmW9wZpntsb7uZZ9zMw1sd15AVxAsDapTHrxXLxskc7DTf"
+        "bzz-raw://78122f27b67a5d3ebe95c4260dc972ab7be5c04b277cbd71a833dd74fbd23fa4",
+        "dweb:/ipfs/QmU78EApEim92KMVtW69coFPZdhvbkhmYn6dW2zwqJKPBp"
       ]
     },
     "lib/@openzeppelin/contracts/token/ERC20/IERC20.sol": {
