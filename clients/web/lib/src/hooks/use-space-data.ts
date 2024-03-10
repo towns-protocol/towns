@@ -8,7 +8,7 @@ import isEqual from 'lodash/isEqual'
 import { useSpaceDapp } from './use-space-dapp'
 import { SpaceInfo } from '@river/web3'
 import { useWeb3Context } from '../components/Web3ContextProvider'
-import { useQuery, useQueries, UseQueryResult } from '../query/queryClient'
+import { useQuery, useQueries, UseQueryResult, defaultStaleTime } from '../query/queryClient'
 import { blockchainKeys } from '../query/query-keys'
 import { isDefined } from '../utils/isDefined'
 import { useSpaceNamesStore } from '../store/use-space-name-store'
@@ -100,6 +100,8 @@ export function useContractSpaceInfos(client?: CasablancaClient) {
                 queryFn: () => getSpaceInfo(id),
                 enabled: isEnabled,
                 refetchOnMount: true,
+                gcTime: defaultStaleTime,
+                staleTime: defaultStaleTime,
             }
         }),
         combine: (results) => {
@@ -115,10 +117,9 @@ export function useContractSpaceInfos(client?: CasablancaClient) {
 
     useEffect(() => {
         spaceInfos.forEach((spaceInfo) => {
-            const contractSpaceName = spaceInfo?.name ?? ''
-            if (contractSpaceName !== '') {
-                console.log(`setSpaceNamesInLocalStore`, contractSpaceName, spaceInfo)
-                setSpaceNamesInLocalStore(spaceInfo.address, contractSpaceName)
+            const { name: contractSpaceName = '', address } = spaceInfo ?? {}
+            if (contractSpaceName) {
+                setSpaceNamesInLocalStore(address, contractSpaceName)
             }
         })
     }, [spaceInfos, queryData.isLoading, setSpaceNamesInLocalStore])
@@ -143,7 +144,7 @@ export const useContractSpaceInfo = (
         async () => {
             if (spaceId && spaceDapp) {
                 const spaceInfo: SpaceInfo | undefined = await spaceDapp.getSpaceInfo(spaceId)
-                console.log('useContractSpaceInfo', { spaceInfo })
+                console.log(`useContractSpaceInfo: ${spaceInfo?.networkId}`, { spaceInfo })
                 // Query data cannot be undefined. Return a value other than undefined from query function.
                 return spaceInfo ?? null
             } else {
@@ -153,10 +154,11 @@ export const useContractSpaceInfo = (
         },
         {
             enabled: !!spaceId && !!spaceDapp,
-            staleTime: 1000 * 15,
             refetchOnMount: false,
             refetchOnWindowFocus: false,
             refetchOnReconnect: false,
+            gcTime: defaultStaleTime,
+            staleTime: defaultStaleTime,
         },
     )
 }
@@ -197,14 +199,15 @@ function useSpaceRollup(streamId: string | undefined): SpaceData | undefined {
                 userStream.view.userContent.getMembership(stream.streamId)?.op,
             )
             const channelIds = Array.from(stream.view.spaceContent.spaceChannelsMetadata.keys())
-            console.log(
-                `useSpaceRollup: updating space ${stream.streamId} with spaceName ${spaceName}`,
-            )
             const newSpace = rollupSpace(stream, membership, channelIds, spaceName)
             setSpace((prev) => {
                 if (isEqual(prev, newSpace)) {
                     return prev
                 }
+                console.log(`useSpaceRollup: updating space ${stream.streamId} ${spaceName}`, {
+                    prev,
+                    newSpace,
+                })
                 return newSpace
             })
         }

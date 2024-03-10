@@ -87,7 +87,7 @@ export { useTimelineStore } from './store/use-timeline-store'
 export * from './store/use-timeline-filter'
 export * from './store/use-transactions-store'
 export type { BlockchainStoreTx } from './client/BlockchainTransactionStore'
-export { queryClient } from './query/queryClient'
+export { staleTime24Hours, queryClient } from './query/queryClient'
 
 export * from './types/towns-types'
 export { Membership, MessageType } from './types/towns-types'

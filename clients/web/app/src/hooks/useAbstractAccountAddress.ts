@@ -5,6 +5,7 @@ import {
     LOCALHOST_CHAIN_ID,
     LookupUser,
     queryClient,
+    staleTime24Hours,
     useSpaceDapp,
     useUserLookupContext,
     useWeb3Context,
@@ -44,8 +45,8 @@ function querySetup({
         refetchOnWindowFocus: false,
         refetchOnMount: false,
         refetchOnReconnect: false,
-        gcTime: 1000 * 60 * 60 * 24,
-        staleTime: 1000 * 60 * 60 * 24,
+        gcTime: staleTime24Hours,
+        staleTime: staleTime24Hours,
     }
 }
 

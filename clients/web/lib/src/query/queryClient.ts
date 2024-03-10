@@ -13,6 +13,9 @@ import {
     UseQueryResult,
 } from '@tanstack/react-query'
 
+const defaultStaleTime = 1_000 * 15
+const staleTime24Hours = 1000 * 60 * 60 * 24
+
 // queryClient is imported in non React contexts (where we would normally useQueryClient)
 // test query client should be the same instance as the queryClient used in lib code, hence we export it here
 let config: QueryClientConfig | undefined
@@ -48,7 +51,7 @@ function useQuery<
     return useBaseQuery({
         queryKey: key,
         queryFn,
-        staleTime: 1_000 * 15,
+        staleTime: defaultStaleTime,
         refetchOnWindowFocus: false,
         refetchOnReconnect: false,
         refetchOnMount: false,
@@ -57,6 +60,14 @@ function useQuery<
 }
 
 // [re]exporting from here so other files can import from this file for all their needs
-export { useQuery, queryClient, useQueries, useQueryClient, QueryClientProvider }
+export {
+    useQuery,
+    queryClient,
+    useQueries,
+    useQueryClient,
+    QueryClientProvider,
+    defaultStaleTime,
+    staleTime24Hours,
+}
 
 export type { UseQueryResult }

@@ -1,6 +1,7 @@
 import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query'
 import { useCallback } from 'react'
 import { z } from 'zod'
+import { staleTime24Hours } from 'use-towns-client'
 import { env } from 'utils'
 import { axiosClient } from '../api/apiClient'
 
@@ -49,7 +50,7 @@ export const useGetSpaceTopic = (networkId: string | undefined) => {
         refetchOnMount: false,
         refetchOnWindowFocus: false,
         refetchOnReconnect: false,
-        staleTime: 1000 * 60 * 60 * 24,
+        staleTime: staleTime24Hours,
     })
 }
 

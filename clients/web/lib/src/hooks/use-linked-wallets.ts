@@ -7,7 +7,7 @@ import {
 } from '../client/TownsClientTypes'
 import { ethers } from 'ethers'
 import { SignerUndefinedError, toError } from '../types/error-types'
-import { queryClient, useQuery } from '../query/queryClient'
+import { queryClient, staleTime24Hours, useQuery } from '../query/queryClient'
 import { blockchainKeys } from '../query/query-keys'
 import { useConnectivity } from './use-connectivity'
 import { getTransactionHashOrUserOpHash } from '@towns/userops'
@@ -191,8 +191,8 @@ export function useGetRootKeyFromLinkedWallet({
         },
         {
             enabled: !!walletAddress && isAddress(walletAddress) && !!spaceDapp,
-            staleTime: 1000 * 60 * 60 * 24,
-            gcTime: 1000 * 60 * 60 * 24,
+            gcTime: staleTime24Hours,
+            staleTime: staleTime24Hours,
         },
     )
 }
