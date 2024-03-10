@@ -3,10 +3,12 @@ import { useEffect, useState } from 'react'
 import { SpaceItem } from '../../types/towns-types'
 import isEqual from 'lodash/isEqual'
 import { useContractSpaceInfos } from '../../hooks/use-space-data'
+import { useSpaceNamesStore } from '../../store/use-space-name-store'
 
 export function useCasablancaSpaces(casablancaClient?: CasablancaClient): SpaceItem[] {
     const [spaces, setSpaces] = useState<SpaceItem[]>([])
     const { data: spaceInfos } = useContractSpaceInfos(casablancaClient)
+    const { spaceNames: spaceNamesInLocalStore } = useSpaceNamesStore()
     const userStreamId = casablancaClient?.userStreamId
     useEffect(() => {
         if (!casablancaClient || !userStreamId) {
@@ -26,15 +28,18 @@ export function useCasablancaSpaces(casablancaClient?: CasablancaClient): SpaceI
                     return userStream.view.userContent.isJoined(stream.view.streamId)
                 })
                 .sort((a: Stream, b: Stream) => a.view.streamId.localeCompare(b.view.streamId))
-                .map(
-                    (stream: Stream) =>
-                        ({
-                            id: stream.view.streamId,
-                            name:
-                                spaceInfos?.find((i) => i.networkId == stream.streamId)?.name ?? '',
-                            avatarSrc: '',
-                        } satisfies SpaceItem),
-                )
+                .map((stream: Stream) => {
+                    const spaceName =
+                        spaceInfos?.find((i) => i.networkId == stream.streamId)?.name ??
+                        spaceNamesInLocalStore[stream.streamId] ??
+                        ''
+
+                    return {
+                        id: stream.view.streamId,
+                        name: spaceName,
+                        avatarSrc: '',
+                    } satisfies SpaceItem
+                })
 
             setSpaces((prev) => {
                 if (isEqual(prev, streams)) {
@@ -58,6 +63,6 @@ export function useCasablancaSpaces(casablancaClient?: CasablancaClient): SpaceI
             casablancaClient.off('streamInitialized', onStreamChange)
             casablancaClient.off('userStreamMembershipChanged', onStreamChange)
         }
-    }, [casablancaClient, spaceInfos, userStreamId])
+    }, [casablancaClient, spaceInfos, spaceNamesInLocalStore, userStreamId])
     return spaces
 }
