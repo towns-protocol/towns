@@ -16,7 +16,7 @@ export const ListElement = withRef<typeof PlateElement, { variant: 'ul' | 'ol' |
         return (
             <PlateElement asChild ref={ref} {...props}>
                 {variant === 'span' ? (
-                    <Box as="span" display="inline-block">
+                    <Box as="span" display="inline-block" paddingLeft="xxs">
                         {children}
                     </Box>
                 ) : (

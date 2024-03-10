@@ -70,10 +70,6 @@ export const listitem = style({
     margin: `${vars.space.none} ${vars.space.none}`,
 })
 
-export const nestedListItem = style({
-    listStyleType: 'none',
-})
-
 const listitemCheckedShared = style({
     position: 'relative',
     marginLeft: `${vars.space.sm}`,
