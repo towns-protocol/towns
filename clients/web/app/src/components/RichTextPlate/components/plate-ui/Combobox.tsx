@@ -109,6 +109,10 @@ export const ComboboxContent = <T extends TMentionComboboxTypes>(
     const activeComboboxStore = useActiveComboboxStore()!
     useComboboxContentState({ items, combobox })
 
+    if (Array.isArray(filteredItems) && filteredItems.length === 0) {
+        return null
+    }
+
     return (
         <TypeaheadMenu zIndex="tooltips" outerBorder={false}>
             {Component ? Component({ store: activeComboboxStore }) : null}

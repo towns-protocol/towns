@@ -175,7 +175,7 @@ let emojiCache: Array<{
     keyword: string
 }>
 
-const search = async function (string: string) {
+export const search = async function (string: string) {
     const { emojis } = await import('data/emojis')
 
     // prepare the data once, search on []keywords and name.

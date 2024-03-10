@@ -1,21 +1,25 @@
 import React, { useEffect, useState } from 'react'
-import { useComboboxSelectors } from '@udecode/plate-combobox'
-import { useEmojiLockupService } from '@components/RichText/plugins/EmojiShortcutPlugin'
+import { TComboboxItemWithData, useComboboxSelectors } from '@udecode/plate-combobox'
+import { search } from '@components/RichText/plugins/EmojiShortcutPlugin'
 import { MentionCombobox } from '../../components/plate-ui/MentionCombobox'
 import { TMentionEmoji } from '../../utils/ComboboxTypes'
 import { ELEMENT_MENTION_EMOJI } from './createEmojiPlugin'
 
 export const EmojiPlugin = () => {
-    const [queryString, setQueryString] = useState<string | null>(null)
-    const results = useEmojiLockupService(queryString).map((result) => ({
-        text: result.name,
-        key: result.emoji,
-        data: result,
-    }))
+    const [results, setResults] = useState<TComboboxItemWithData<TMentionEmoji>[]>([])
+
     const query = useComboboxSelectors.text()
 
     useEffect(() => {
-        setQueryString(query)
+        if (typeof query === 'string' && query.length > 0) {
+            search(query).then((emojis) => {
+                setResults(
+                    emojis.map((emoji) => ({ data: emoji, text: emoji.name, key: emoji.emoji })),
+                )
+            })
+        } else {
+            setResults([])
+        }
     }, [query])
 
     return (
