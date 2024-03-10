@@ -24,9 +24,10 @@ import (
 
 // Constants are not exported when go bindings are generated from solidity, so there is duplication here.
 const (
-	ContractErrorNotFound      = "NOT_FOUND"
-	ContractErrorAlreadyExists = "ALREADY_EXISTS"
-	ContractErrorOutOfBounds   = "OUT_OF_BOUNDS"
+	ContractErrorStreamNotFound = "NOT_FOUND"
+	ContractErrorNodeNotFound   = "NODE_NOT_FOUND"
+	ContractErrorAlreadyExists  = "ALREADY_EXISTS"
+	ContractErrorOutOfBounds    = "OUT_OF_BOUNDS"
 )
 
 // Without this limit, go's http reader fails and replaces actual
@@ -220,6 +221,7 @@ func AsRiverError(err error, defaulCode ...protocol.Err) *RiverErrorImpl {
 
 	// Map contract errors to river errors
 	if de, ok := err.(rpc.DataError); ok {
+		var tags []RiverErrorTag
 		if de.ErrorData() != nil {
 			hexStr := de.ErrorData().(string)
 			hexStr = strings.TrimPrefix(hexStr, "0x")
@@ -227,8 +229,11 @@ func AsRiverError(err error, defaulCode ...protocol.Err) *RiverErrorImpl {
 			if e == nil {
 				reason, e := abi.UnpackRevert(revert)
 				if e == nil {
-					if reason == ContractErrorNotFound {
+					tags = []RiverErrorTag{{"revert_reason", reason}}
+					if reason == ContractErrorStreamNotFound {
 						code = protocol.Err_NOT_FOUND
+					} else if reason == ContractErrorNodeNotFound {
+						code = protocol.Err_UNKNOWN_NODE
 					} else if reason == ContractErrorAlreadyExists {
 						code = protocol.Err_ALREADY_EXISTS
 					} else if reason == ContractErrorOutOfBounds {
@@ -238,8 +243,10 @@ func AsRiverError(err error, defaulCode ...protocol.Err) *RiverErrorImpl {
 			}
 		}
 		return &RiverErrorImpl{
-			Code: code,
-			Base: err,
+			Code:      code,
+			Base:      err,
+			Msg:       "Contract Returned Error",
+			NamedTags: tags,
 		}
 	}
 

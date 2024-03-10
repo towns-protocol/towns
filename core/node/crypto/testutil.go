@@ -2,6 +2,7 @@ package crypto
 
 import (
 	"context"
+	"crypto/rand"
 	"math/big"
 	"os"
 	"sync"
@@ -266,4 +267,14 @@ func (c *BlockchainTestContext) RegistryConfig() config.ContractConfig {
 	return config.ContractConfig{
 		Address: c.RiverRegistryAddress.Hex(),
 	}
+}
+
+// GetTestAddress returns a random common.Address that can be used in tests.
+func GetTestAddress() common.Address {
+	var address common.Address
+	_, err := rand.Read(address[:])
+	if err != nil {
+		panic(err)
+	}
+	return address
 }

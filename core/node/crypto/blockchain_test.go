@@ -141,5 +141,5 @@ func TestBlockchain(t *testing.T) {
 		},
 	)
 	require.Nil(tx1)
-	require.Equal(Err_CANNOT_CALL_CONTRACT, AsRiverError(err).Code)
+	require.Equal(Err_UNKNOWN_NODE, AsRiverError(err).Code, "Error: %v", err)
 }
