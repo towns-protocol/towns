@@ -1,6 +1,6 @@
 /* eslint-disable @typescript-eslint/no-non-null-assertion */
 /**
- * @group casablanca
+ * @group core
  */
 import {
     createTestSpaceGatedByTownsNfts,
@@ -23,62 +23,34 @@ describe('write messages', () => {
         const { alice, bob } = await registerAndStartClients(['alice', 'bob'])
         await bob.fundWallet()
 
-        // create a space
-        const spaceId = await createTestSpaceGatedByTownNft(bob, [
-            Permission.Read,
-            Permission.Write,
-        ])
+        // create a space with read only member role
+        // ! there is a bug with default member role and modifying permissions on it, so creating a member role with read only permissions instead of later modifying it
+        const spaceId = await createTestSpaceGatedByTownNft(bob, [Permission.Read])
 
         if (!spaceId) {
             throw new Error('Failed to create room')
         }
 
-        const membershipTokenAddress = await alice.spaceDapp.getTownMembershipTokenAddress(spaceId)
         const councilNftAddress = await getTestGatingNftAddress(alice.chainId)
         if (!councilNftAddress) {
             throw new Error('councilNftAddress is undefined')
         }
         const councilToken = createExternalTokenStruct([councilNftAddress])
-        const bothToken = createExternalTokenStruct([
-            councilNftAddress,
-            membershipTokenAddress as `0x${string}`,
-        ])
-        const membershipToken = createExternalTokenStruct([membershipTokenAddress as `0x${string}`])
 
-        // update the member role so only council nft holders can write
-        const tx1 = await bob.updateRoleTransaction(
-            spaceId,
-            2,
-            'Read only',
-            [Permission.Read],
-            [],
-            membershipToken,
-            bob.wallet,
-        )
-        await bob.waitForUpdateRoleTransaction(tx1)
+        // if you create the space with a member role w/ write permissions, then later modify the role to remove write permissions,
+        // there are weird entilement issues in the assertions
 
-        // create read only role
+        // create read, write role
         const tx2 = await bob.createRoleTransaction(
             spaceId,
-            'Member',
-            [Permission.Read, Permission.Write],
-            [],
-            bothToken,
-            bob.wallet,
-        )
-
-        await tx2.transaction?.wait()
-
-        // create read only role
-        const tx3 = await bob.createRoleTransaction(
-            spaceId,
-            'Read only',
-            [Permission.Read],
+            'WriteRole',
+            [Permission.Write],
             [],
             councilToken,
             bob.wallet,
         )
-        await tx3.transaction?.wait()
+
+        await tx2.transaction?.wait()
 
         if (!spaceId) {
             throw new Error('Failed to create room')

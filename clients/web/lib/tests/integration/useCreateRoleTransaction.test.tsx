@@ -2,7 +2,7 @@
  * useCreateRoleTransaction.test.tsx
  *
  * // https://www.npmjs.com/package/jest-runner-groups
- * @group casablanca
+ * @group core
  */
 import React, { useCallback, useEffect } from 'react'
 import { fireEvent, render, screen, waitFor, within } from '@testing-library/react'
@@ -25,9 +25,11 @@ import {
     BasicRoleInfo,
     Permission,
     createMembershipStruct,
-    NoopRuleData,
     ruleDataToOperations,
     OperationType,
+    createOperationsTree,
+    LOCALHOST_CHAIN_ID,
+    CheckOperationType,
 } from '@river/web3'
 import { TSigner } from '../../src/types/web3-types'
 
@@ -154,9 +156,15 @@ function TestComponent(args: {
                     name: args.roleName,
                     permissions: args.permissions,
                     requirements: {
-                        everyone: true,
+                        everyone: true, // TODO: change to false when xchain is ready
                         users: [],
-                        ruleData: NoopRuleData,
+                        ruleData: createOperationsTree([
+                            {
+                                address: args.councilNftAddress as `0x${string}`,
+                                chainId: BigInt(LOCALHOST_CHAIN_ID),
+                                type: CheckOperationType.ERC721,
+                            },
+                        ]),
                     },
                 }),
                 args.signer,
@@ -165,11 +173,12 @@ function TestComponent(args: {
 
         void handleClick()
     }, [
-        args.permissions,
-        args.roleName,
-        args.spaceName,
-        args.signer,
         createSpaceTransactionWithRetries,
+        args.spaceName,
+        args.roleName,
+        args.permissions,
+        args.councilNftAddress,
+        args.signer,
     ])
     // handle click to create a role
     const onClickCreateRole = useCallback(() => {
@@ -231,7 +240,7 @@ function RoleDetailsComponent({
 }: {
     spaceId: string
     roleId: number
-}): JSX.Element {
+}): JSX.Element | null {
     const { isLoading, roleDetails, error } = useRoleDetails(spaceId, roleId)
     useEffect(() => {
         console.log({
@@ -240,7 +249,7 @@ function RoleDetailsComponent({
             roleDetails,
         })
     }, [error, isLoading, roleDetails])
-    return (
+    return roleDetails ? (
         <div key={`${spaceId}_${roleId}`}>
             <div>roleId:{roleDetails?.id}</div>
             <div>roleName:{roleDetails?.name}</div>
@@ -285,7 +294,7 @@ function RoleDetailsComponent({
                 })}
             </div>
         </div>
-    )
+    ) : null
 }
 
 function RolesComponent({ spaceNetworkId }: { spaceNetworkId: string | undefined }): JSX.Element {

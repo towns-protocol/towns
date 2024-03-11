@@ -14,6 +14,8 @@ import {
     NoopRuleData,
 } from '@river/web3'
 
+export const EVERYONE_ADDRESS = '0x0000000000000000000000000000000000000001'
+
 // eslint-disable-next-line @typescript-eslint/no-explicit-any
 export function assert(condition: any, msg?: string): asserts condition {
     if (!condition) {
@@ -119,6 +121,8 @@ export async function createTestSpaceGatedByTownsNfts(
         throw new Error('client.walletAddress is undefined')
     }
 
+    // const testGatingNftAddress = await getTestGatingNftAddress(client.chainId)
+
     const membershipInfo: IArchitectBase.MembershipStruct = {
         settings: {
             name: 'Member',
@@ -132,6 +136,17 @@ export async function createTestSpaceGatedByTownsNfts(
             pricingModule: ethers.constants.AddressZero,
         },
         permissions: rolePermissions,
+        // TODO: THIS SHOULD BE USED ONCE THE XCHAIN WORK IS DONE
+        // requirements: {
+        //     everyone: true,
+        //     users: [],
+        //     ruleData: createOperationsTree([
+        //         {
+        //             address: testGatingNftAddress,
+        //             chainId: BigInt(client.chainId),
+        //         },
+        //     ]),
+        // },
         requirements: {
             everyone: true,
             users: [],

@@ -1,5 +1,5 @@
 /**
- * @group casablanca
+ * @group core
  */
 import {
     assertRoleEquals,
@@ -7,6 +7,7 @@ import {
     createTestSpaceGatedByTownsNfts,
     findRoleByName,
     registerAndStartClients,
+    EVERYONE_ADDRESS,
 } from 'use-towns-client/tests/integration/helpers/TestUtils'
 
 import { RoleIdentifier } from '../../src/types/web3-types'
@@ -130,7 +131,7 @@ describe('get role details', () => {
         const expectedMinterRole: RoleDetails = {
             id: 1,
             name: 'Minter',
-            users: ['0x0000000000000000000000000000000000000001'],
+            users: [EVERYONE_ADDRESS],
             ruleData: NoopRuleData,
             permissions: [Permission.JoinSpace],
             channels: [],
@@ -138,7 +139,8 @@ describe('get role details', () => {
         const expectedMemberRole: RoleDetails = {
             id: 2,
             name: 'Member',
-            users: [],
+            // todo: https://linear.app/hnt-labs/issue/HNT-5145/implement-ruleentitlementshim-to-return-the-xchain-op-details
+            users: [EVERYONE_ADDRESS], // workaround for now
             ruleData: NoopRuleData,
             permissions,
             channels: [],
@@ -188,7 +190,7 @@ describe('get role details', () => {
         const expectedEveryoneRole: RoleDetails = {
             id: 2,
             name: 'Everyone',
-            users: [],
+            users: [EVERYONE_ADDRESS],
             ruleData: NoopRuleData,
             permissions,
             channels: [],

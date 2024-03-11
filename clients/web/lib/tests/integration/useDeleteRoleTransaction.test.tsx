@@ -2,7 +2,7 @@
  * useDeleteRoleTransaction.test.tsx
  *
  * // https://www.npmjs.com/package/jest-runner-groups
- * @group casablanca
+ * @group core
  */
 import React, { useCallback, useEffect, useMemo } from 'react'
 import { fireEvent, render, screen, waitFor, within } from '@testing-library/react'

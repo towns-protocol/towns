@@ -1,5 +1,5 @@
 /**
- * @group casablanca
+ * @group core
  */
 
 import {
@@ -7,12 +7,14 @@ import {
     registerAndStartClient,
     waitForWithRetries,
     createTestSpaceGatedByTownsNfts,
+    EVERYONE_ADDRESS,
 } from './helpers/TestUtils'
 
-import { Permission, createExternalTokenStruct, getTestGatingNftAddress } from '@river/web3'
+import { NoopRuleData, Permission, getTestGatingNftAddress } from '@river/web3'
 import { TestConstants } from './helpers/TestConstants'
 import { RoleIdentifier } from '../../src/types/web3-types'
 
+// https://linear.app/hnt-labs/issue/HNT-5149/fix-channelsettingstest-and-joinchanneltest
 test('create a public space and a public room, and have user join', async () => {
     // create clients
     // alice needs to have a valid nft in order to join bob's space / channel
@@ -31,13 +33,19 @@ test('create a public space and a public room, and have user join', async () => 
     if (!testGatingNftAddress) {
         throw new Error('testGatingNftAddress is undefined')
     }
-    const ruleData = createExternalTokenStruct([testGatingNftAddress])
+    // TODO: this should be the rule data for the role that is created once xchain work is completed
+    // const ruleData = createOperationsTree([
+    //     {
+    //         address: testGatingNftAddress,
+    //         chainId: BigInt(bob.chainId),
+    //     },
+    // ])
     const roleIdentifier: RoleIdentifier | undefined = await bob.createRole(
         spaceId,
         'newRoleName',
         [Permission.Read, Permission.Write],
-        [],
-        ruleData,
+        [EVERYONE_ADDRESS], // TODO: remove EVERYONE_ADDRESS once xchain work is completed
+        NoopRuleData,
     )
 
     if (!roleIdentifier) {

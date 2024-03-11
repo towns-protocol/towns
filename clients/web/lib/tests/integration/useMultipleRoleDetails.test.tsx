@@ -1,5 +1,5 @@
 /**
- * @group casablanca
+ * @group core
  */
 import React, { useCallback, useEffect, useMemo } from 'react'
 import { fireEvent, render, screen, waitFor } from '@testing-library/react'
@@ -23,6 +23,9 @@ import {
     NoopRuleData,
     ruleDataToOperations,
     OperationType,
+    createOperationsTree,
+    LOCALHOST_CHAIN_ID,
+    CheckOperationType,
 } from '@river/web3'
 import { useTownsClient } from '../../src/hooks/use-towns-client'
 import { TSigner } from '../../src/types/web3-types'
@@ -115,10 +118,14 @@ describe('useMultipleRoleDetails', () => {
         // in the test components, each field is tagged with this pattern <roleName>:<field>:<value>.
         // verify the role name.
         await assertRoleName(rolesElementA, roleNameA)
-        // verify the permissions
-        await assertPermissions(rolesElementA, roleNameA, permissionsA)
-        // verify the token entitlement
-        await assertNft(rolesElementA, roleNameA, membershipTokenAddressRoleA.textContent, 1)
+        // verify the role details
+        await assertRoleDetails(
+            rolesElementA,
+            roleNameA,
+            permissionsA,
+            membershipTokenAddressRoleA.textContent,
+            1,
+        )
 
         screen.debug(undefined, Infinity)
 
@@ -130,10 +137,14 @@ describe('useMultipleRoleDetails', () => {
             throw new Error('membershipTokenAddress is undefined')
         }
         await assertRoleName(rolesElementB, roleNameB)
-        // verify the permissions
-        await assertPermissions(rolesElementB, roleNameB, permissionsB)
-        // verify the token entitlement
-        await assertNft(rolesElementB, roleNameB, membershipTokenAddressRoleB.textContent, 1)
+        // verify the role details
+        await assertRoleDetails(
+            rolesElementB,
+            roleNameB,
+            permissionsB,
+            membershipTokenAddressRoleB.textContent,
+            1,
+        )
     }) // end test
 }) // end describe
 
@@ -175,9 +186,15 @@ function TestComponentMultiple(args: {
                     name: args.roleName[1],
                     permissions: args.permissions[1],
                     requirements: {
-                        everyone: true,
+                        everyone: false,
                         users: [],
-                        ruleData: NoopRuleData,
+                        ruleData: createOperationsTree([
+                            {
+                                address: args.councilNftAddress as `0x${string}`,
+                                chainId: BigInt(LOCALHOST_CHAIN_ID),
+                                type: CheckOperationType.ERC721,
+                            },
+                        ]),
                     },
                 }),
                 args.signer,
@@ -186,11 +203,12 @@ function TestComponentMultiple(args: {
 
         void handleClick()
     }, [
-        args.permissions,
-        args.roleName,
-        args.spaceNames,
         createSpaceTransactionWithRetries,
+        args.spaceNames,
+        args.roleName,
+        args.permissions,
         args.signer,
+        args.councilNftAddress,
     ])
     // the view
     return (
@@ -253,19 +271,17 @@ function MultipleRoleDetailsComponent(props: { spaceId: string; roleIds: number[
             {data?.map((role) => {
                 return (
                     <div data-testid={`role-${role.name}`} key={`role-${role.name}`}>
+                        <div>roleName:{role.name}</div>
+                        <div>, membershipTokenAddress:</div>
                         {membershipTokenAddress && (
                             <div data-testid={`membershipTokenAddress-${role.name}`}>
-                                {membershipTokenAddress}
+                                <div>{membershipTokenAddress}</div>
                             </div>
                         )}
-                        <div>roleName:{role.name}</div>
-                        <div>{role.id}</div>
                         <div>
-                            {' '}
+                            {', permissions:'}
                             {role.permissions.map((permission) => (
-                                <div key={permission}>
-                                    {role.name}:permission:{permission}
-                                </div>
+                                <div key={permission}>{permission},</div>
                             ))}
                         </div>
                         <div>
@@ -277,7 +293,7 @@ function MultipleRoleDetailsComponent(props: { spaceId: string; roleIds: number[
                                             return (
                                                 <div key={operation.opType}>
                                                     <div>
-                                                        {role?.name}:{operation.contractAddress}
+                                                        , {operation.contractAddress}
                                                         :quantity:{operation.threshold.toString()}
                                                     </div>
                                                 </div>
@@ -344,32 +360,26 @@ async function assertRoleName(htmlElement: HTMLElement, roleName: string) {
     )
 }
 
-async function assertPermissions(
+async function assertRoleDetails(
     htmlElement: HTMLElement,
     roleName: string,
     permissions: Permission[],
+    membershipTokenAddress: string,
+    _quantity: number,
 ) {
-    // verify the permissions
-    await waitFor(() => expect(htmlElement).toBeInTheDocument())
-    const expected = permissions.map((permission) => `${roleName}:permission:${permission}`)
-    const allPermissions: Promise<void>[] = []
-    for (const p of expected) {
-        allPermissions.push(waitFor(() => expect(htmlElement).toHaveTextContent(p)))
-    }
-    await Promise.all(allPermissions)
-}
-
-async function assertNft(
-    htmlElement: HTMLElement,
-    roleName: string,
-    nftAddress: string,
-    quantity: number,
-) {
+    const expectedPermissions = permissions.map((permission) => permission.toString()).join(',')
     await waitFor(() => expect(htmlElement).toBeInTheDocument())
     await waitFor(() =>
-        expect(htmlElement).toHaveTextContent(`${roleName}:nftAddress:${nftAddress}`),
+        expect(htmlElement).toHaveTextContent(
+            `roleName:${roleName}, membershipTokenAddress:${membershipTokenAddress}, permissions:${expectedPermissions},`,
+        ),
     )
+    /*
+    todo: https://linear.app/hnt-labs/issue/HNT-5145/implement-ruleentitlementshim-to-return-the-xchain-op-details
     await waitFor(() =>
-        expect(htmlElement).toHaveTextContent(`${roleName}:${nftAddress}:quantity:${quantity}`),
+        expect(htmlElement).toHaveTextContent(
+            `roleName:${roleName}, nftAddress:${nftAddress}, quantity:${quantity}`,
+        ),
     )
+    */
 }

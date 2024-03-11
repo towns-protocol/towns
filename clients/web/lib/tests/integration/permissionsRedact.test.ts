@@ -1,5 +1,5 @@
 /**
- * @group casablanca
+ * @group core
  */
 import { NoThrownError, getError } from './helpers/ErrorUtils'
 import {
@@ -160,7 +160,6 @@ describe('redact messages', () => {
             spaceId,
             'moderator',
             permissions,
-            [],
             users,
             NoopRuleData,
         )

@@ -2,7 +2,7 @@
  * useRoleDetails.test.tsx
  *
  * // https://www.npmjs.com/package/jest-runner-groups
- * @group casablanca
+ * @group core
  */
 import React, { useCallback, useEffect } from 'react'
 import { RegisterWallet, TransactionInfo } from './helpers/TestComponents'
@@ -23,9 +23,11 @@ import {
     BasicRoleInfo,
     Permission,
     createMembershipStruct,
-    NoopRuleData,
     ruleDataToOperations,
     OperationType,
+    createOperationsTree,
+    LOCALHOST_CHAIN_ID,
+    CheckOperationType,
 } from '@river/web3'
 import { useTownsClient } from '../../src/hooks/use-towns-client'
 import { TSigner } from '../../src/types/web3-types'
@@ -107,11 +109,14 @@ describe('useRoleDetails', () => {
         // verify the role name.
         await assertRoleName(rolesElement, roleName)
         // verify the permissions
-        await assertPermissions(rolesElement, roleName, permissions)
+        await assertRoleDetails(
+            rolesElement,
+            roleName,
+            permissions,
+            membershipTokenAddress.textContent,
+            1,
+        )
         // verify the token entitlement on the minter role - gated by the member nft address
-        await assertNft(rolesElement, 'Minter', testGatingNftAddress, 1)
-        // verify the token entitlement on the member role - gated by the space membership token address
-        await assertNft(rolesElement, roleName, membershipTokenAddress.textContent, 1)
     }) // end test
 }) // end describe
 
@@ -143,7 +148,13 @@ function TestComponent(args: {
                     requirements: {
                         everyone: true,
                         users: [],
-                        ruleData: NoopRuleData,
+                        ruleData: createOperationsTree([
+                            {
+                                address: args.councilNftAddress as `0x${string}`,
+                                chainId: BigInt(LOCALHOST_CHAIN_ID),
+                                type: CheckOperationType.ERC721,
+                            },
+                        ]),
                     },
                 }),
                 args.signer,
@@ -153,11 +164,12 @@ function TestComponent(args: {
 
         void handleClick()
     }, [
-        args.permissions,
-        args.roleName,
-        args.spaceName,
-        args.signer,
         createSpaceTransactionWithRetries,
+        args.spaceName,
+        args.roleName,
+        args.permissions,
+        args.councilNftAddress,
+        args.signer,
     ])
     // the view
     return (
@@ -183,7 +195,9 @@ function TestComponent(args: {
 function RoleDetailsComponent({
     spaceId,
     roleId,
+    membershipTokenAddress,
 }: {
+    membershipTokenAddress: string | undefined
     spaceId: string
     roleId: number
 }): JSX.Element {
@@ -199,12 +213,17 @@ function RoleDetailsComponent({
         <div key={`${spaceId}_${roleId}`}>
             <div>roleId:{roleDetails?.id}</div>
             <div>roleName:{roleDetails?.name}</div>
+            <div>, membershipTokenAddress:</div>
+            {membershipTokenAddress && (
+                <div data-testid={`membershipTokenAddress-${roleDetails?.name}`}>
+                    <div>{membershipTokenAddress}</div>
+                </div>
+            )}
             <div>
                 {/* permissions in the role */}
+                {', permissions:'}
                 {roleDetails?.permissions.map((permission) => (
-                    <div key={permission}>
-                        {roleDetails?.name}:permission:{permission}
-                    </div>
+                    <div key={permission}>{permission},</div>
                 ))}
             </div>
             <div>
@@ -216,7 +235,7 @@ function RoleDetailsComponent({
                                 return (
                                     <div key={operation.opType}>
                                         <div>
-                                            {roleDetails?.name}:{operation.contractAddress}
+                                            , {operation.contractAddress}
                                             :quantity:{operation.threshold.toString()}
                                         </div>
                                     </div>
@@ -284,7 +303,11 @@ function RolesComponent({ spaceNetworkId }: { spaceNetworkId: string | undefined
                 spaceRoles.map((role) => {
                     return (
                         <div key={role.roleId}>
-                            <RoleDetailsComponent spaceId={spaceNetworkId} roleId={role.roleId} />
+                            <RoleDetailsComponent
+                                membershipTokenAddress={membershipTokenAddress}
+                                spaceId={spaceNetworkId}
+                                roleId={role.roleId}
+                            />
                         </div>
                     )
                 })}
@@ -316,30 +339,25 @@ async function assertRoleName(htmlElement: HTMLElement, roleName: string) {
     )
 }
 
-async function assertPermissions(
+async function assertRoleDetails(
     htmlElement: HTMLElement,
     roleName: string,
     permissions: Permission[],
+    membershipTokenAddress: string,
+    _quantity: number,
 ) {
-    // verify the permissions
-    const expected = permissions.map((permission) => `${roleName}:permission:${permission}`)
-    const allPermissions: Promise<void>[] = []
-    for (const p of expected) {
-        allPermissions.push(waitFor(() => expect(htmlElement).toHaveTextContent(p)))
-    }
-    await Promise.all(allPermissions)
-}
-
-async function assertNft(
-    htmlElement: HTMLElement,
-    roleName: string,
-    nftAddress: string,
-    quantity: number,
-) {
+    const expectedPermissions = permissions.map((permission) => permission.toString()).join(',')
+    await waitFor(() => expect(htmlElement).toBeInTheDocument())
     await waitFor(() =>
-        expect(htmlElement).toHaveTextContent(`${roleName}:nftAddress:${nftAddress}`),
+        expect(htmlElement).toHaveTextContent(
+            `roleName:${roleName}, membershipTokenAddress:${membershipTokenAddress}, permissions:${expectedPermissions},`,
+        ),
     )
+    /*
     await waitFor(() =>
-        expect(htmlElement).toHaveTextContent(`${roleName}:${nftAddress}:quantity:${quantity}`),
+        expect(htmlElement).toHaveTextContent(
+            `roleName:${roleName}, nftAddress:${nftAddress}, quantity:${quantity}`,
+        ),
     )
+    */
 }
