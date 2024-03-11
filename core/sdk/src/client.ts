@@ -1259,6 +1259,21 @@ export class Client
         check(isDefined(this.userStreamId))
         this.logCall('removeUser', streamId, userId)
 
+        if (isSpaceStreamId(streamId)) {
+            const channelIds =
+                this.stream(streamId)?.view.spaceContent.spaceChannelsMetadata.keys() ?? []
+            const userStreamId = makeUserStreamId(userId)
+            const userStream = await this.getStream(userStreamId)
+
+            for (const channelId of channelIds) {
+                if (
+                    userStream.userContent.streamMemberships[channelId]?.op === MembershipOp.SO_JOIN
+                ) {
+                    await this.removeUser(channelId, userId)
+                }
+            }
+        }
+
         return this.makeEventAndAddToStream(
             this.userStreamId,
             make_UserPayload_UserMembershipAction({
