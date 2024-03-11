@@ -1,4 +1,4 @@
-import { Permission } from '@river/web3'
+import { NoopRuleData, Permission } from '@river/web3'
 import { registerAndStartClient } from '../integration/helpers/TestUtils'
 import {
     createUngatedSpace,
@@ -50,10 +50,10 @@ test('can create and update channel with user ops', async () => {
         NEW_ROLE_NAME,
         // permissions
         [Permission.Read],
-        // tokens
-        [],
         // users
         [],
+        // tokens
+        NoopRuleData,
     )
 
     expect(newRoleId).toBeDefined()
@@ -119,8 +119,8 @@ test("can create a channel when role is gated by user's smart account", async ()
         spaceId!,
         'new_role',
         [Permission.Read, Permission.Write, Permission.AddRemoveChannels],
-        [],
         [bobsSmartAccount],
+        NoopRuleData,
     )
 
     expect(createRoleTx).toBeDefined()

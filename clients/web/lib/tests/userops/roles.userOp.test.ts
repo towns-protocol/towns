@@ -1,4 +1,4 @@
-import { Permission } from '@river/web3'
+import { NoopRuleData, Permission } from '@river/web3'
 import { registerAndStartClient } from '../integration/helpers/TestUtils'
 import {
     createUngatedSpace,
@@ -35,10 +35,10 @@ test('can create, update, and delete a role with user ops', async () => {
         ROLE_NAME,
         // permissions
         [],
-        // tokens
-        [],
         // users
         [],
+        // tokens
+        NoopRuleData,
     )
 
     expect(roleId).toBeDefined()
@@ -53,10 +53,10 @@ test('can create, update, and delete a role with user ops', async () => {
         NEW_ROLE_NAME,
         // permissions
         [Permission.Read, Permission.Write],
-        // tokens
-        [],
         // users
         [],
+        // tokens
+        NoopRuleData,
         alice.provider.wallet,
     )
 
