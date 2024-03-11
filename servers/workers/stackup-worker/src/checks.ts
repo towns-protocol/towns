@@ -109,7 +109,7 @@ export async function checkUseTownKVOverrides(
 }
 
 // check for restrictive rule on join town
-export async function checkJoinTownKVOverrides(
+export async function checkjoinTownKVOverrides(
     townId: string,
     env: Env,
 ): Promise<IVerificationResult | null> {
@@ -186,7 +186,7 @@ export async function checkMintKVOverrides(
                         )
                         return {
                             verified: true,
-                            maxActionsPerDay: TRANSACTION_LIMIT_DEFAULTS_PER_DAY.createTown,
+                            maxActionsPerDay: TRANSACTION_LIMIT_DEFAULTS_PER_DAY.createSpace,
                         }
                     }
                 }

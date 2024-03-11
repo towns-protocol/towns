@@ -16,7 +16,7 @@ export type TownsUserOperation = IUserOperation & {
 
 export type TransactionLimitRequest = {
     environment: string
-    operation: string // createTown || joinTown || linkWallet || useTown
+    operation: string // createSpace || joinTown || linkWallet || useTown
     rootAddress: string
     blockLookbackNum?: number
 }
@@ -27,7 +27,7 @@ export function isTransactionLimitRequest(obj: any): obj is TransactionLimitRequ
         typeof obj === 'object' &&
         typeof obj.environment === 'string' &&
         typeof obj.operation === 'string' &&
-        (obj.operation === 'createTown' ||
+        (obj.operation === 'createSpace' ||
             obj.operation === 'joinTown' ||
             obj.operation === 'linkWallet' ||
             obj.operation === 'useTown') &&

@@ -1,5 +1,5 @@
 import { Env, worker } from '../src/index'
-import { createTownFakeRequest, joinTownFakeRequest, linkWalletFakeRequest } from './test_utils'
+import { createSpaceFakeRequest, joinTownFakeRequest, linkWalletFakeRequest } from './test_utils'
 import { STACKUP_API_URL } from '../src/router'
 
 const FAKE_SERVER_URL = 'http://fakeserver.com'
@@ -30,7 +30,7 @@ describe('http router', () => {
         expect(text).toBe('Not Found')
     })
 
-    test('verify createTown', async () => {
+    test('verify createSpace', async () => {
         const result = await worker.fetch(
             ...generateRequest(
                 'api/sponsor-userop',
@@ -38,7 +38,7 @@ describe('http router', () => {
                 {
                     Authorization: `Bearer ${AUTH_TOKEN}`,
                 },
-                createTownFakeRequest as BodyInit,
+                createSpaceFakeRequest as BodyInit,
             ),
         )
         expect(result.status).toBe(404)
@@ -50,7 +50,7 @@ describe('http router', () => {
 
     // TODO: this test should mock/intercept anvil RPC calls
     // if anvil not running, you get  KV returned error: could not detect network (event="noNetwork", code=NETWORK_ERROR, version=providers/5.7.2)
-    test.skip('verify createTown without skip townId verification', async () => {
+    test.skip('verify createSpace without skip townId verification', async () => {
         const env = getMiniflareBindings()
         env.SKIP_TOWNID_VERIFICATION = 'false'
         const result = await worker.fetch(
@@ -60,7 +60,7 @@ describe('http router', () => {
                 {
                     Authorization: `Bearer ${AUTH_TOKEN}`,
                 },
-                createTownFakeRequest as BodyInit,
+                createSpaceFakeRequest as BodyInit,
                 env,
             ),
         )
@@ -70,7 +70,7 @@ describe('http router', () => {
         expect(text).toContain('Unauthorized')
     })
 
-    test('verify createTown with mocked fetch to Stackup api', async () => {
+    test('verify createSpace with mocked fetch to Stackup api', async () => {
         const fetchMock = getMiniflareFetchMock()
         fetchMock.disableNetConnect()
         const url = new URL(STACKUP_API_URL)
@@ -96,7 +96,7 @@ describe('http router', () => {
                 {
                     Authorization: `Bearer ${AUTH_TOKEN}`,
                 },
-                createTownFakeRequest as BodyInit,
+                createSpaceFakeRequest as BodyInit,
                 env,
             ),
         )

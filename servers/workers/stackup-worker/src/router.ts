@@ -12,7 +12,7 @@ import {
 } from './types'
 import {
     TRANSACTION_LIMIT_DEFAULTS_PER_DAY,
-    verifyCreateTown,
+    verifyCreateSpace,
     verifyJoinTown,
     verifyLinkWallet,
     verifyUpdateTown,
@@ -36,7 +36,7 @@ const router = Router()
 /* Check transaction limits for a wallet
  *  Arguments:
  * - environment: Environment
- * - operation: "createTown" | "joinTown" | "linkWallet" ...
+ * - operation: "createSpace" | "joinTown" | "linkWallet" ...
  * - rootAddress: string
  * - blockLookbackNum (optional)
  *
@@ -51,7 +51,7 @@ router.post('/api/transaction-limits', async (request: WorkerRequest, env: Env) 
 
     try {
         switch (operation) {
-            case 'createTown': {
+            case 'createSpace': {
                 // default: any wallet that exists in HNT Privy DB can make: 3 towns / day with no gas costs
                 // more restrictive: only wallets created by email addresses on HNT Labs curated whitelist can mint 3 towns / day with no gas costs
                 const network = networkMap.get(environment)
@@ -64,7 +64,7 @@ router.post('/api/transaction-limits', async (request: WorkerRequest, env: Env) 
                     environment as Environment,
                     network,
                     env,
-                    'TownOwner', // contract name
+                    'SpaceOwner', // contract name
                     'Transfer', // event name
                     [townFactoryAddress, rootAddress], // event args
                     createFilterWrapper,
@@ -79,7 +79,7 @@ router.post('/api/transaction-limits', async (request: WorkerRequest, env: Env) 
                 return new Response(
                     toJson({
                         ...queryResult,
-                        maxActionsPerDay: TRANSACTION_LIMIT_DEFAULTS_PER_DAY.createTown,
+                        maxActionsPerDay: TRANSACTION_LIMIT_DEFAULTS_PER_DAY.createSpace,
                         restricted: !restricted?.verified,
                     }),
                     { status: 200 },
@@ -114,7 +114,7 @@ router.post('/api/transaction-limits', async (request: WorkerRequest, env: Env) 
                 // more restrictive: only Towns on HNT Labs curated whitelist can perform these 3 actions
                 break
             }
-            case 'updateTownInfo': {
+            case 'updateSpaceInfo': {
                 // todo:
                 break
             }
@@ -142,7 +142,7 @@ router.post('/api/sponsor-userop', async (request: WorkerRequest, env: Env) => {
     const { townId, functionHash, rootKeyAddress, ...userOperation } = content
     // depending on the function hash, validate the content
     try {
-        /* createTown (TownArchitect.sol)
+        /* createSpace (TownArchitect.sol)
 		/* joinTown (MembershipFacet.sol)
         */
         /* linkWalletToRootKey (WalletLink.sol)
@@ -154,7 +154,7 @@ router.post('/api/sponsor-userop', async (request: WorkerRequest, env: Env) => {
         // todo: all other on-chain write functions exposed in app (see @river/web3 for list)
         switch (functionHash) {
             // todo: functionHash should be a keccak hash of the function signature
-            case 'createTown': {
+            case 'createSpace': {
                 if (!isHexString(rootKeyAddress)) {
                     return new Response(
                         toJson({ error: `rootKeyAddress ${rootKeyAddress} not valid` }),
@@ -180,7 +180,7 @@ router.post('/api/sponsor-userop', async (request: WorkerRequest, env: Env) => {
                     )
                 }
                 if (env.SKIP_TOWNID_VERIFICATION !== 'true') {
-                    const verification = await verifyCreateTown({
+                    const verification = await verifyCreateSpace({
                         rootKeyAddress: rootKeyAddress,
                         senderAddress: userOperation.sender,
                         townId: townId,
@@ -319,7 +319,7 @@ router.post('/api/sponsor-userop', async (request: WorkerRequest, env: Env) => {
                 }
                 break
             }
-            case 'updateTownInfo': {
+            case 'updateSpaceInfo': {
                 if (!isHexString(rootKeyAddress)) {
                     return new Response(
                         toJson({ error: `rootKeyAddress ${rootKeyAddress} not valid` }),
@@ -361,7 +361,7 @@ router.post('/api/sponsor-userop', async (request: WorkerRequest, env: Env) => {
                 }
                 break
             }
-            case 'createTown_linkWallet': {
+            case 'createSpace_linkWallet': {
                 if (!isHexString(rootKeyAddress)) {
                     return new Response(
                         toJson({ error: `rootKeyAddress ${rootKeyAddress} not valid` }),
@@ -392,7 +392,7 @@ router.post('/api/sponsor-userop', async (request: WorkerRequest, env: Env) => {
                         senderAddress: userOperation.sender,
                         env,
                     })
-                    const verificationCreate = await verifyCreateTown({
+                    const verificationCreate = await verifyCreateSpace({
                         rootKeyAddress: rootKeyAddress,
                         townId: townId,
                         senderAddress: userOperation.sender,

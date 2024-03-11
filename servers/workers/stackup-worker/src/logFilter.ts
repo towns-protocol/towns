@@ -63,8 +63,8 @@ export const EventByMethod = new Map<string, string>([
     // EntitlementsManagerBase.sol
     ['removeEntitlementModule', 'EntitlementModuleRemoved'],
     ['addEntitlementModule', 'EntitlementModuleAdded'],
-    // TownOwnerBase.soL
-    ['updateTownInfo', 'TownOwner__UpdateTown'],
+    // SpaceOwnerBase.soL
+    ['updateSpaceInfo', 'SpaceOwner__UpdateSpace'],
     // WalletLink.sol
     ['linkWalletToRootKey', 'LinkWalletToRootKey'],
 ])

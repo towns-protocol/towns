@@ -210,13 +210,6 @@ export class UserOps {
                 functionName,
             )
 
-            // TODO: determine if this simulation causes an additional signature in UX
-            // try {
-            //     await this.townRegistrar.TownArchitect.write(signer).callStatic.createTown(townInfo)
-            // } catch (error) {
-            //     throw this.parseSpaceError(createSpaceParams.spaceId, error)
-            // }
-
             return this.sendUserOp({
                 toAddress: this.spaceDapp.townRegistrar.TownArchitect.address,
                 callData: callDataCreateSpace,
@@ -227,7 +220,7 @@ export class UserOps {
         }
 
         // wallet isn't linked, create a user op that both links and creates the town
-        const functionName = 'createTown_linkWallet'
+        const functionName = 'createSpace_linkWallet'
 
         // TODO: this needs to accept an array of names/interfaces
         const functionHashForPaymasterProxy = this.getFunctionSigHash(
@@ -298,7 +291,7 @@ export class UserOps {
                 toAddress: town.Address,
                 callData: callDataJoinTown,
                 signer,
-                townId: (await town.getTownInfo()).networkId as string,
+                townId: town.SpaceId,
                 functionHashForPaymasterProxy,
             })
         }
@@ -321,7 +314,7 @@ export class UserOps {
             toAddress: [this.spaceDapp.walletLink.address, town.Address],
             callData: [callDataLinkWallet, callDataJoinTown],
             signer,
-            townId: (await town.getTownInfo()).networkId as string,
+            townId: town.SpaceId,
             functionHashForPaymasterProxy,
         })
     }
@@ -421,9 +414,9 @@ export class UserOps {
         }
         const townInfo = await town.getTownInfo()
 
-        // the function name in the contract is updateTownInfo
-        // in space dapp we update the space name only using updateSpaceName which calls updateTownInfo
-        const functionName = 'updateTownInfo'
+        // the function name in the contract is updateSpaceInfo
+        // in space dapp we update the space name only using updateSpaceName which calls updateSpaceInfo
+        const functionName = 'updateSpaceInfo'
 
         const functionHashForPaymasterProxy = this.getFunctionSigHash(
             town.TownOwner.interface,

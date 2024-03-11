@@ -11,7 +11,7 @@ import {
 } from './logFilter'
 import {
     IVerificationResult,
-    checkJoinTownKVOverrides,
+    checkjoinTownKVOverrides,
     checkLinkKVOverrides,
     checkMintKVOverrides,
     checkUseTownKVOverrides,
@@ -30,12 +30,12 @@ interface ITownTransactionParams {
 // note: joining a town has no limits by default
 // see: https://linear.app/hnt-labs/issue/HNT-2477/deploy-paymaster-backend
 export const TRANSACTION_LIMIT_DEFAULTS_PER_DAY = {
-    createTown: 3,
+    createSpace: 3,
     roleSet: 20,
     entitlementSet: 20,
     channelCreate: 10,
     linkWallet: 10,
-    updateTownInfo: 10,
+    updateSpaceInfo: 10,
 }
 
 /* Verifies if a user can create a town
@@ -48,7 +48,7 @@ export const TRANSACTION_LIMIT_DEFAULTS_PER_DAY = {
    3. if more restrictive rule not enabled, default rule; any wallet in
       HNT Labs Privy DB can mint 3 towns/day with no gas
 */
-export async function verifyCreateTown(
+export async function verifyCreateSpace(
     params: ITownTransactionParams,
 ): Promise<IVerificationResult> {
     const spaceDapp = await createSpaceDappForNetwork(params.env)
@@ -83,7 +83,7 @@ export async function verifyCreateTown(
             params.env.ENVIRONMENT,
             network,
             params.env,
-            'TownOwner',
+            'SpaceOwner',
             'Transfer',
             [townFactoryAddress, params.senderAddress],
             createFilterWrapper,
@@ -97,10 +97,10 @@ export async function verifyCreateTown(
             return { verified: true, maxActionsPerDay: 1_000_000 }
         }
 
-        if (queryResult.events.length >= TRANSACTION_LIMIT_DEFAULTS_PER_DAY.createTown) {
+        if (queryResult.events.length >= TRANSACTION_LIMIT_DEFAULTS_PER_DAY.createSpace) {
             return { verified: false, error: 'user has reached max mints' }
         }
-        return { verified: true, maxActionsPerDay: TRANSACTION_LIMIT_DEFAULTS_PER_DAY.createTown }
+        return { verified: true, maxActionsPerDay: TRANSACTION_LIMIT_DEFAULTS_PER_DAY.createSpace }
     } catch (error) {
         return {
             verified: false,
@@ -129,6 +129,7 @@ export async function verifyJoinTown(params: ITownTransactionParams): Promise<IV
     }
     try {
         // check if town does not already exist
+        console.log(spaceDapp.chainId, params, await spaceDapp.provider?.getNetwork())
         const spaceInfo = await spaceDapp.getSpaceInfo(params.townId)
         if (!spaceInfo) {
             return { verified: false, error: `Town ${params.townId} does not exist` }
@@ -144,7 +145,7 @@ export async function verifyJoinTown(params: ITownTransactionParams): Promise<IV
             return { verified: false, error: 'user not in privy db' }
         }
         // check for more restrictive rule and if town is on whitelist if so
-        const override = await checkJoinTownKVOverrides(params.townId, params.env)
+        const override = await checkjoinTownKVOverrides(params.townId, params.env)
         if (override?.verified === false) {
             return { verified: false, error: 'townId not on whitelist and restriction is set' }
         }
@@ -361,13 +362,13 @@ export async function verifyUpdateTown(
             params.env,
             mapTransactionNameToContractName(params.transactionName),
             eventName,
-            // TODO: should be spaceInfo.address but TownOwner__UpdateTown(town_address) says its indexed but its not? This only passes with null
+            // TODO: should be spaceInfo.address but SpaceOwner__UpdateSpace(town_address) says its indexed but its not? This only passes with null
             [null],
             createFilterWrapper,
             NetworkBlocksPerDay.get(params.env.ENVIRONMENT) ?? undefined,
         )
         if (!queryResult || !queryResult.events) {
-            return { verified: false, error: 'Unable to queryFilter for use town' }
+            return { verified: false, error: 'Unable to queryFilter for update space' }
         }
 
         if (params.env.SKIP_LIMIT_VERIFICATION === 'true') {
@@ -395,8 +396,8 @@ export async function verifyUpdateTown(
             case 'addEntitlementModule':
                 maxActionsPerDay = TRANSACTION_LIMIT_DEFAULTS_PER_DAY.entitlementSet
                 break
-            case 'updateTownInfo':
-                maxActionsPerDay = TRANSACTION_LIMIT_DEFAULTS_PER_DAY.updateTownInfo
+            case 'updateSpaceInfo':
+                maxActionsPerDay = TRANSACTION_LIMIT_DEFAULTS_PER_DAY.updateSpaceInfo
                 break
             default:
                 maxActionsPerDay = null
@@ -422,8 +423,8 @@ export async function verifyUpdateTown(
 
 function mapTransactionNameToContractName(transactionName: string): string {
     switch (transactionName) {
-        case 'updateTownInfo':
-            return 'TownOwner'
+        case 'updateSpaceInfo':
+            return 'SpaceOwner'
         case 'createChannel':
         case 'updateChannel':
         case 'removeChannel':

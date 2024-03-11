@@ -16,8 +16,8 @@ export interface Env extends AuthEnv {
     ENVIRONMENT: Environment
     PAYMASTER_ADDRESS: string
     SKIP_TOWNID_VERIFICATION: string
-    CREATE_TOWN: KVNamespace // KV Namespace for createTowns transactions
-    OVERRIDES: KVNamespace // KV Namespace for createTowns transactions
+    CREATE_TOWN: KVNamespace // KV Namespace for createSpaces transactions
+    OVERRIDES: KVNamespace // KV Namespace for createSpaces transactions
     EMAIL_WHITELIST: KVNamespace
     TOWN_WHITELIST: KVNamespace
     ADDRESS_WHITELIST: KVNamespace
