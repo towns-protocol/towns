@@ -6,6 +6,6 @@ export type DMChannelIdentifier = {
     left: boolean
     userIds: string[]
     properties?: ChannelProperties
-    lastEventcreatedAtEpochMs: bigint
+    lastEventCreatedAtEpochMs: bigint
     isGroup: boolean
 }

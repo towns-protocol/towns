@@ -39,8 +39,8 @@ export function useCasablancaDMs(casablancaClient?: CasablancaClient): {
                             userIds: Array.from(stream.view.dmChannelContent.participants())
                                 .filter((memberUserId) => memberUserId !== userId)
                                 .sort((a, b) => a.localeCompare(b)),
-                            lastEventcreatedAtEpochMs:
-                                stream.view.dmChannelContent.lastEventcreatedAtEpochMs,
+                            lastEventCreatedAtEpochMs:
+                                stream.view.dmChannelContent.lastEventCreatedAtEpochMs,
                             isGroup: false,
                         } satisfies DMChannelIdentifier),
                 )
@@ -64,18 +64,18 @@ export function useCasablancaDMs(casablancaClient?: CasablancaClient): {
                                 .filter((memberUserId) => memberUserId !== userId)
                                 .sort((a, b) => a.localeCompare(b)),
                             properties: stream.view.getChannelMetadata()?.channelProperties,
-                            lastEventcreatedAtEpochMs:
-                                stream.view.gdmChannelContent.lastEventcreatedAtEpochMs,
+                            lastEventCreatedAtEpochMs:
+                                stream.view.gdmChannelContent.lastEventCreatedAtEpochMs,
                             isGroup: true,
                         } satisfies DMChannelIdentifier),
                 )
             const channels = [...dmChannels, ...gdmChannels].sort((a, b) => {
-                if (a.lastEventcreatedAtEpochMs === b.lastEventcreatedAtEpochMs) {
-                    // If lastEventcreatedAtEpochMs is equal, sort by id
+                if (a.lastEventCreatedAtEpochMs === b.lastEventCreatedAtEpochMs) {
+                    // If lastEventCreatedAtEpochMs is equal, sort by id
                     return a.id < b.id ? -1 : a.id > b.id ? 1 : 0
                 }
-                // Otherwise, sort by lastEventcreatedAtEpochMs
-                return a.lastEventcreatedAtEpochMs > b.lastEventcreatedAtEpochMs ? -1 : 1
+                // Otherwise, sort by lastEventCreatedAtEpochMs
+                return a.lastEventCreatedAtEpochMs > b.lastEventCreatedAtEpochMs ? -1 : 1
             })
 
             function isSorted(array: string[]) {
