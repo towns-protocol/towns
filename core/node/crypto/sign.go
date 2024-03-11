@@ -78,7 +78,7 @@ func NewWallet(ctx context.Context) (*Wallet, error) {
 	}
 	address := crypto.PubkeyToAddress(key.PublicKey)
 
-	log.Info("New wallet generated.", "address", address.Hex(), "publicKey", crypto.FromECDSAPub(&key.PublicKey))
+	log.Info("New wallet generated.", "address", address.Hex(), "publicKey", FormatFullHashFromBytes(crypto.FromECDSAPub(&key.PublicKey)))
 	return &Wallet{
 			PrivateKeyStruct: key,
 			PrivateKey:       crypto.FromECDSA(key),
