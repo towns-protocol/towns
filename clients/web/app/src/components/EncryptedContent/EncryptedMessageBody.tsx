@@ -4,11 +4,11 @@ import { Box, Icon, Stack, Tooltip } from '@ui'
 import * as styles from './EncryptedMessageBody.css'
 
 export const TimelineEncryptedContent = React.memo(
-    (props: { event: { createdAtEpocMs: number }; content: RoomMessageEncryptedEvent }) => {
+    (props: { event: { createdAtEpochMs: number }; content: RoomMessageEncryptedEvent }) => {
         const { event, content } = props
 
         const width = Math.min(
-            (Math.floor((Math.cos(event.createdAtEpocMs / 1000) * 0.5 + 0.5) * 4) / 4) * 250 + 200,
+            (Math.floor((Math.cos(event.createdAtEpochMs / 1000) * 0.5 + 0.5) * 4) / 4) * 250 + 200,
             window.innerWidth - 100,
         )
 

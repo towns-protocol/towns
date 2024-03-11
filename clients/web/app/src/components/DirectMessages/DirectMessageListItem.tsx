@@ -74,7 +74,7 @@ export const DirectMessageRowContent = (props: {
                                 style={{ whiteSpace: 'nowrap' }}
                                 color={unread ? 'accent' : 'gray2'}
                             >
-                                {formatShortDate(latest.createdAtEpocMs)}
+                                {formatShortDate(latest.createdAtEpochMs)}
                             </Paragraph>
                         ) : (
                             <></>
@@ -209,7 +209,7 @@ const LastDirectMessageContent = (props: {
             return (
                 <Box grow horizontal paddingY="xs" width="200" shrink={false}>
                     <TimelineEncryptedContent
-                        event={{ createdAtEpocMs: 0 }}
+                        event={{ createdAtEpochMs: 0 }}
                         content={info.content}
                     />
                 </Box>

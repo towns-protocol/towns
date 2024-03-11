@@ -30,7 +30,7 @@ export interface MostRecentMessageEncrypted {
 }
 
 type LatestMessageInfo = {
-    createdAtEpocMs: number
+    createdAtEpochMs: number
     info: ReturnType<typeof toMostRecentMessageInfo> | undefined
     sender: TimelineEvent['sender']
 }
@@ -56,7 +56,7 @@ export function useDMLatestMessage(roomId: string, ignoreThreads = true) {
             }
             if (!latest && info && (!ignoreThreads || !message.threadParentId)) {
                 latest = {
-                    createdAtEpocMs: message.createdAtEpocMs,
+                    createdAtEpochMs: message.createdAtEpochMs,
                     info: info,
                     sender: message.sender,
                 }
@@ -78,7 +78,7 @@ export function useDMLatestMessage(roomId: string, ignoreThreads = true) {
                 // keep previous message until a fresh encrypted message gets
                 // decrypted (unless its slow to decrypt and timeouts)
                 latestMessage.latest?.info?.kind !== 'encrypted' ||
-                latestMessage.latest.createdAtEpocMs < Date.now() - TIMEOUT
+                latestMessage.latest.createdAtEpochMs < Date.now() - TIMEOUT
                     ? latestMessage
                     : prev,
             )

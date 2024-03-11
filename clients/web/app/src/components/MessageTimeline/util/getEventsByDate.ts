@@ -240,7 +240,7 @@ export const getEventsByDate = (
 
             let group = dateGroups[dateGroups.length - 1]
             const prevDate = group?.date.humanDate
-            const date = new Date(event.createdAtEpocMs)
+            const date = new Date(event.createdAtEpochMs)
             const humanDate = getRelativeDays(date)
 
             if (humanDate !== prevDate) {
@@ -432,7 +432,7 @@ function canGroupWithPrevMessage(
     // only group messages that are not redacted
     p = p && !prevMessage.isRedacted
     // only group messages that are close enough in time
-    p = p && event.createdAtEpocMs - prevMessage.createdAtEpocMs < HOUR_MS
+    p = p && event.createdAtEpochMs - prevMessage.createdAtEpochMs < HOUR_MS
 
     return p
 }

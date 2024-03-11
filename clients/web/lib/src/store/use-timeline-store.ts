@@ -354,7 +354,7 @@ function makeTimelineStoreInterface(
         }
 
         const prevLatestEvent = state.lastestEventByUser[event.sender.id]
-        if ((prevLatestEvent?.createdAtEpocMs ?? 0) < event.createdAtEpocMs) {
+        if ((prevLatestEvent?.createdAtEpochMs ?? 0) < event.createdAtEpochMs) {
             state = {
                 ...state,
                 lastestEventByUser: {
@@ -448,8 +448,8 @@ function toReplacedMessageEvent(prev: TimelineEvent, next: TimelineEvent): Timel
             eventNum: prev.eventNum,
             confirmedEventNum: prev.confirmedEventNum ?? next.confirmedEventNum,
             confirmedInBlockNum: prev.confirmedInBlockNum ?? next.confirmedInBlockNum,
-            createdAtEpocMs: prev.createdAtEpocMs,
-            updatedAtEpocMs: next.createdAtEpocMs,
+            createdAtEpochMs: prev.createdAtEpochMs,
+            updatedAtEpochMs: next.createdAtEpochMs,
             content: {
                 ...next.content,
                 threadId: prev.content.threadId,
@@ -467,8 +467,8 @@ function toReplacedMessageEvent(prev: TimelineEvent, next: TimelineEvent): Timel
             eventNum: prev.eventNum,
             confirmedEventNum: prev.confirmedEventNum ?? next.confirmedEventNum,
             confirmedInBlockNum: prev.confirmedInBlockNum ?? next.confirmedInBlockNum,
-            createdAtEpocMs: prev.createdAtEpocMs,
-            updatedAtEpocMs: next.createdAtEpocMs,
+            createdAtEpochMs: prev.createdAtEpochMs,
+            updatedAtEpochMs: next.createdAtEpochMs,
             threadParentId: prev.threadParentId,
             reactionParentId: prev.reactionParentId,
         }
@@ -480,7 +480,7 @@ function toReplacedMessageEvent(prev: TimelineEvent, next: TimelineEvent): Timel
             confirmedInBlockNum: prev.confirmedInBlockNum ?? next.confirmedInBlockNum,
         }
     } else {
-        // make sure we carry the createdAtEpocMs of the previous event
+        // make sure we carry the createdAtEpochMs of the previous event
         // so we don't end up with a timeline that has events out of order.
         return {
             ...next,
@@ -488,8 +488,8 @@ function toReplacedMessageEvent(prev: TimelineEvent, next: TimelineEvent): Timel
             eventNum: prev.eventNum,
             confirmedEventNum: prev.confirmedEventNum ?? next.confirmedEventNum,
             confirmedInBlockNum: prev.confirmedInBlockNum ?? next.confirmedInBlockNum,
-            createdAtEpocMs: prev.createdAtEpocMs,
-            updatedAtEpocMs: next.createdAtEpocMs,
+            createdAtEpochMs: prev.createdAtEpochMs,
+            updatedAtEpochMs: next.createdAtEpochMs,
         }
     }
 }
@@ -602,7 +602,7 @@ function makeNewThreadStats(
     return {
         replyCount: 0,
         userIds: new Set<string>(),
-        latestTs: event.createdAtEpocMs,
+        latestTs: event.createdAtEpochMs,
         parentId,
         parentEvent: parent,
         parentMessageContent: getRoomMessageContent(parent),
@@ -622,7 +622,7 @@ function addThreadStat(
         return updated
     }
     updated.replyCount++
-    updated.latestTs = Math.max(updated.latestTs, event.createdAtEpocMs)
+    updated.latestTs = Math.max(updated.latestTs, event.createdAtEpochMs)
     const senderId = getMessageSenderId(event)
     if (senderId) {
         updated.userIds.add(senderId)

@@ -104,7 +104,7 @@ export const SearchMessagesResultItem = (
             ''
         )
 
-    const timestamp = result.event.createdAtEpocMs
+    const timestamp = result.event.createdAtEpochMs
 
     const date = timestamp
         ? `${formatDistance(timestamp, Date.now(), {

@@ -35,7 +35,7 @@ export function useSpaceMentions(): MentionResult[] {
                             fullyReadMarker?.isUnread === true &&
                             event.eventNum >= fullyReadMarker.eventNum,
                         channel,
-                        timestamp: event.createdAtEpocMs,
+                        timestamp: event.createdAtEpochMs,
                         event,
                         thread: threadStat?.parentEvent,
                     }

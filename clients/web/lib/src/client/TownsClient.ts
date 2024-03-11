@@ -1538,7 +1538,7 @@ export class TownsClient implements EntitlementsDelegate {
             eventCount: this.casablancaClient?.stream(roomId)?.view?.timeline.length ?? 0,
             firstEventId: result.firstEvent?.hashStr,
             firstEventTimestamp: result.firstEvent
-                ? Number(result.firstEvent.createdAtEpocMs)
+                ? Number(result.firstEvent.createdAtEpochMs)
                 : undefined,
         }
     }

@@ -264,8 +264,8 @@ export interface TimelineEvent {
     localEventId?: string // if this event was created locally and appended before addEvent, this will be set
     eventNum: bigint
     status?: EventStatus
-    createdAtEpocMs: number // created at times are generated client side, do not trust them
-    updatedAtEpocMs?: number // updated at times are generated client side, do not trust them
+    createdAtEpochMs: number // created at times are generated client side, do not trust them
+    updatedAtEpochMs?: number // updated at times are generated client side, do not trust them
     content?: TimelineEvent_OneOf
     fallbackContent: string
     isEncrypting: boolean // local only, isLocalPending should also be true

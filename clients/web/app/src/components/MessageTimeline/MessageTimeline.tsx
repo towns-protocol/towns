@@ -77,7 +77,7 @@ export const MessageTimeline = (props: Props) => {
             (e, index) =>
                 e.content?.kind !== ZTEvent.RoomMessageEncrypted ||
                 index < lastDecryptedIndex ||
-                e.createdAtEpocMs < Date.now() - SECOND_MS * 10,
+                e.createdAtEpochMs < Date.now() - SECOND_MS * 10,
         )
         // remove duplicates - NOTE: this shouldn't happen - but it does
         const result = uniqBy(filtered ?? emptyTimeline, (t) => t.eventId)
@@ -327,7 +327,7 @@ export const MessageTimeline = (props: Props) => {
                     if (groupByUser) {
                         const userId = curr.item.event.sender.id
                         const date = Math.floor(
-                            curr.item.event.createdAtEpocMs / (1000 * 60 * 60 * 24),
+                            curr.item.event.createdAtEpochMs / (1000 * 60 * 60 * 24),
                         )
                         if (
                             // count first chunk

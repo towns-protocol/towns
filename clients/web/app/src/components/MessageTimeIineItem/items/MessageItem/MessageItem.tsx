@@ -141,7 +141,7 @@ export const MessageItem = (props: Props) => {
             selectable={!isEditing && isSelectable}
             displayContext={displayContext}
             replies={replies}
-            key={`${event.eventId}${event.updatedAtEpocMs ?? event.createdAtEpocMs}${msgTypeKey}`}
+            key={`${event.eventId}${event.updatedAtEpochMs ?? event.createdAtEpochMs}${msgTypeKey}`}
             onMediaClick={onMediaClick}
         >
             {canReplyInline && event.replyParentId && (
@@ -289,7 +289,7 @@ const MessageWrapper = React.memo((props: MessageWrapperProps) => {
             userId={userId}
             senderId={sender.id}
             canReply={!event.isLocalPending && type !== MessageTimelineType.Thread}
-            timestamp={event.createdAtEpocMs}
+            timestamp={event.createdAtEpochMs}
             channelId={channelId}
             editable={isOwn && !event.isLocalPending}
             eventId={event.eventId}

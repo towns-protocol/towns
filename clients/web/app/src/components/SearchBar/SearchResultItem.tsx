@@ -221,7 +221,7 @@ const MessageResultItem = (props: {
                       unread: false,
                       event,
                       channel,
-                      timestamp: event.createdAtEpocMs,
+                      timestamp: event.createdAtEpochMs,
                       thread: threadStat?.parentEvent,
                   }
                 : undefined,
