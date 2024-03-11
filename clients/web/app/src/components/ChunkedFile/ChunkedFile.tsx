@@ -4,7 +4,7 @@ import { useDownloadFile } from 'use-towns-client/dist/hooks/use-chunked-media'
 import { Box, Button, Icon, IconButton, Stack, Text } from '@ui'
 import { isMediaMimeType } from 'utils/isMediaMimeType'
 import { useDevice } from 'hooks/useDevice'
-import { useIsMessageAttachementContext } from '@components/MessageAttachments/useIsMessageAttachementContext'
+import { useIsMessageAttachementContext } from '@components/MessageAttachments/hooks/useIsMessageAttachementContext'
 
 type Props = {
     streamId: string
@@ -15,7 +15,7 @@ type Props = {
     iv: Uint8Array
     secretKey: Uint8Array
     thumbnail?: Uint8Array
-    onClick: (event: React.MouseEvent<HTMLElement>) => void
+    onClick?: (event: React.MouseEvent<HTMLElement>) => void
 }
 
 export const ChunkedFile = (props: Props) => {
@@ -149,11 +149,11 @@ const ChunkedMedia = (
 
     return isMessageAttachementContext ? (
         <Box
-            width="100"
-            height="100"
-            rounded="sm"
+            width="x8"
+            height="x8"
+            rounded="md"
             overflow="hidden"
-            cursor="zoom-in"
+            cursor={onClick ? 'zoom-in' : undefined}
             onClick={isTouch ? undefined : onClick}
         >
             <Box fit="full" as="img" src={src} objectFit="cover" />
@@ -162,7 +162,7 @@ const ChunkedMedia = (
     ) : (
         <Box
             position="relative"
-            cursor="zoom-in"
+            cursor={onClick ? 'zoom-in' : undefined}
             style={{
                 height: calculatedHeight,
                 maxWidth: '75%',

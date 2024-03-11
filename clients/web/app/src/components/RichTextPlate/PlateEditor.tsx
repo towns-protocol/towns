@@ -13,15 +13,19 @@ import { datadogRum } from '@datadog/browser-rum'
 import { isEditorEmpty as PlateIsEditorEmpty } from '@udecode/slate-utils'
 import { focusEditor } from '@udecode/slate-react'
 import { TComboboxItemWithData } from '@udecode/plate-combobox'
-import { useDevice } from 'hooks/useDevice'
-import { Box, BoxProps, Stack } from '@ui'
-import { ErrorBoundary } from '@components/ErrorBoundary/ErrorBoundary'
 import { useMediaDropContext } from '@components/MediaDropContext/MediaDropContext'
-import { EmbeddedMessagePreview } from '@components/EmbeddedMessageAttachement/EmbeddedMessagePreview'
+import { ErrorBoundary } from '@components/ErrorBoundary/ErrorBoundary'
+import { Box, BoxProps, Stack } from '@ui'
+import { useDevice } from 'hooks/useDevice'
 import { notUndefined } from 'ui/utils/utils'
 import { SpaceProtocol, useEnvironment } from 'hooks/useEnvironmnet'
 import { getPrettyDisplayName } from 'utils/getPrettyDisplayName'
-import { toMD } from './utils/toMD'
+import { toMD } from '@components/RichTextPlate/utils/toMD'
+import {
+    EditorAttachmentPreview,
+    MessageAttachmentPreview,
+} from '@components/EmbeddedMessageAttachement/EditorAttachmentPreview'
+import { useInlineReplyAttchmentPreview } from '@components/EmbeddedMessageAttachement/hooks/useInlineReplyAttchmentPreview'
 import { EditorFallback } from './components/EditorFallback'
 import { MentionCombobox } from './components/plate-ui/MentionCombobox'
 import { Editor } from './components/plate-ui/Editor'
@@ -219,17 +223,33 @@ const PlateEditorWithoutBoundary = ({
     const fileCount = files.length
     const background = isEditing && !isTouch ? 'level1' : 'level2'
 
+    const { inlineReplyPreview, onCancelInlineReply } = useInlineReplyAttchmentPreview({
+        onNewInlineReply: () => {
+            // focus the editor when a new inline reply is set
+        },
+    })
+
     return (
         <>
             <Box position="relative">
                 <Box gap grow position="absolute" bottom="none" width="100%">
                     {embeddedMessageAttachments.map((attachment) => (
-                        <EmbeddedMessagePreview
+                        <MessageAttachmentPreview
                             key={attachment.id}
                             attachment={attachment}
                             onRemove={onRemoveAttachment}
                         />
                     ))}
+                    {inlineReplyPreview ? (
+                        <EditorAttachmentPreview
+                            type="reply"
+                            displayName={inlineReplyPreview.displayName}
+                            body={inlineReplyPreview.eventContent.body}
+                            onRemoveClick={onCancelInlineReply}
+                        />
+                    ) : (
+                        <></>
+                    )}
                 </Box>
             </Box>
             <Stack

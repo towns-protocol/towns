@@ -50,11 +50,15 @@ export const MessageAttachments = (props: {
                             iv={attachment.encryption.iv}
                             secretKey={attachment.encryption.secretKey}
                             thumbnail={attachment.thumbnail?.content}
-                            onClick={(e) => {
-                                e.preventDefault()
-                                e.stopPropagation()
-                                onAttachmentClick?.(attachment.id)
-                            }}
+                            onClick={
+                                onAttachmentClick
+                                    ? (e) => {
+                                          e.preventDefault()
+                                          e.stopPropagation()
+                                          onAttachmentClick?.(attachment.id)
+                                      }
+                                    : undefined
+                            }
                         />
                     ))}
                 </Stack>
@@ -71,11 +75,15 @@ export const MessageAttachments = (props: {
                             streamId={attachment.streamId}
                             iv={attachment.encryption.iv}
                             secretKey={attachment.encryption.secretKey}
-                            onClick={(e) => {
-                                e.preventDefault()
-                                e.stopPropagation()
-                                onAttachmentClick?.(attachment.id)
-                            }}
+                            onClick={
+                                onAttachmentClick
+                                    ? (e) => {
+                                          e.preventDefault()
+                                          e.stopPropagation()
+                                          onAttachmentClick?.(attachment.id)
+                                      }
+                                    : undefined
+                            }
                         />
                     ))}
                 </Stack>

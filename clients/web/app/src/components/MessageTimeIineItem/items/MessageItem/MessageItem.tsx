@@ -34,10 +34,13 @@ import {
     RedactedMessageRenderEvent,
     RenderEventType,
     isRedactedRoomMessage,
+    isRoomMessage,
 } from '@components/MessageTimeline/util/getEventsByDate'
 import { TimelineEncryptedContent } from '@components/EncryptedContent/EncryptedMessageBody'
+import { ReplyToMessageContext } from '@components/ReplyToMessageContext/ReplyToMessageContext'
 import { TimelineMessageEditor } from '../MessageEditor'
 import { MessageBody } from './MessageBody/MessageBody'
+import { QuotedMessage } from './QuotedMessage'
 
 type ItemDataType = MessageRenderEvent | EncryptedMessageRenderEvent | RedactedMessageRenderEvent
 
@@ -57,6 +60,8 @@ export const MessageItem = (props: Props) => {
     const navigate = useNavigate()
 
     const timelineContext = useContext(MessageTimelineContext)
+
+    const { canReplyInline } = useContext(ReplyToMessageContext)
 
     const onMediaClick = useCallback(
         (e: React.MouseEvent) => {
@@ -114,7 +119,7 @@ export const MessageItem = (props: Props) => {
 
     // replies are only shown for channel messages (two levels only)
     const replies =
-        timelineContext.type === MessageTimelineType.Channel
+        !canReplyInline && timelineContext.type === MessageTimelineType.Channel
             ? messageRepliesMap?.[event.eventId]
             : undefined
 
@@ -139,6 +144,10 @@ export const MessageItem = (props: Props) => {
             key={`${event.eventId}${event.updatedAtEpocMs ?? event.createdAtEpocMs}${msgTypeKey}`}
             onMediaClick={onMediaClick}
         >
+            {canReplyInline && event.replyParentId && (
+                <QuotedMessage eventId={event.replyParentId} />
+            )}
+
             {isEncryptedMessage ? (
                 <TimelineEncryptedContent event={event} content={itemData.event.content} />
             ) : event.content.kind === ZTEvent.RoomMessage ? (
@@ -255,8 +264,7 @@ const MessageWrapper = React.memo((props: MessageWrapperProps) => {
         [event.isEncrypting, event.isLocalPending, event.isSendFailed, event.localEventId],
     )
 
-    const attachments =
-        event.content?.kind === ZTEvent.RoomMessage ? event.content.attachments : undefined
+    const attachments = isRoomMessage(event) ? event.content.attachments : undefined
 
     const onAttachmentClick = useCallback(
         (attachmentId: string) => {

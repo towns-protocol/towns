@@ -145,6 +145,8 @@ export enum MessageType {
 export interface ThreadIdOptions {
     threadId?: string
     threadPreview?: string
+    replyId?: string
+    replyPreview?: string
     threadParticipants?: Set<string>
 }
 

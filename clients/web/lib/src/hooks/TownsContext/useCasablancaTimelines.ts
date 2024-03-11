@@ -39,6 +39,7 @@ import {
     getIsMentioned,
     getReactionParentId,
     getThreadParentId,
+    getReplyParentId,
     useTimelineStore,
 } from '../../store/use-timeline-store'
 import {
@@ -231,6 +232,7 @@ export function toEvent(timelineEvent: StreamTimelineEvent, userId: string): Tim
         confirmedEventNum: timelineEvent.confirmedEventNum,
         confirmedInBlockNum: timelineEvent.miniblockNum,
         threadParentId: getThreadParentId(content),
+        replyParentId: getReplyParentId(content),
         reactionParentId: getReactionParentId(content),
         isMentioned: getIsMentioned(content, userId),
         isRedacted: false, // redacted is handled in use timeline store when the redaction event is received
@@ -667,8 +669,10 @@ function toTownsContent_ChannelPayload_Message_Post(
                 content: {
                     kind: ZTEvent.RoomMessage,
                     body: value.content.value.body,
-                    inReplyTo: value.threadId,
+                    threadId: value.threadId,
                     threadPreview: value.threadPreview,
+                    replyId: value.replyId,
+                    replyPreview: value.replyPreview,
                     mentions: value.content.value.mentions,
                     editsEventId: editsEventId,
                     content: {
@@ -682,7 +686,7 @@ function toTownsContent_ChannelPayload_Message_Post(
                 content: {
                     kind: ZTEvent.RoomMessage,
                     body: value.content.value.title,
-                    inReplyTo: value.threadId,
+                    threadId: value.threadId,
                     threadPreview: value.threadPreview,
                     mentions: [],
                     editsEventId: editsEventId,
@@ -699,7 +703,7 @@ function toTownsContent_ChannelPayload_Message_Post(
                 content: {
                     kind: ZTEvent.RoomMessage,
                     body: value.content.value.typeUrl,
-                    inReplyTo: value.threadId,
+                    threadId: value.threadId,
                     threadPreview: value.threadPreview,
                     mentions: [],
                     editsEventId: editsEventId,

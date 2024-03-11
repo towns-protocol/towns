@@ -19,6 +19,7 @@ export type ListItem =
     | {
           key: string
           type: 'message'
+          replyEventId?: string
           item:
               | MessageRenderEvent
               | EncryptedMessageRenderEvent

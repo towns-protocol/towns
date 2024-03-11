@@ -1,12 +1,11 @@
 import { render, screen } from '@testing-library/react'
 import React from 'react'
-import { SpaceContext, TownsContext } from 'use-towns-client'
 import { UserLookupContext } from 'use-towns-client/dist/components/UserLookupContext'
+import { ChannelContextProvider, SpaceContextProvider, TownsContext } from 'use-towns-client'
 import { describe, expect, test } from 'vitest'
 import { RichTextEditor } from './RichTextEditor'
 
-const Wrapper = (props: { children?: React.ReactNode }) => {
-    const spaceId = ''
+const Wrapper = (props: { children: React.ReactElement }) => {
     return (
         <TownsContext.Provider
             value={{
@@ -29,7 +28,9 @@ const Wrapper = (props: { children?: React.ReactNode }) => {
             <UserLookupContext.Provider
                 value={{ streamId: '', spaceId: '', users: [], usersMap: {} }}
             >
-                <SpaceContext.Provider value={{ spaceId }}>{props.children}</SpaceContext.Provider>
+                <SpaceContextProvider spaceId="">
+                    <ChannelContextProvider channelId="">{props.children}</ChannelContextProvider>
+                </SpaceContextProvider>
             </UserLookupContext.Provider>
         </TownsContext.Provider>
     )

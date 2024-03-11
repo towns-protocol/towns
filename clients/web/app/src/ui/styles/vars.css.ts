@@ -187,6 +187,7 @@ const root = createGlobalTheme(':root', {
             // for testing !
             'min-content': `min-content`,
             'max-content': `max-content`,
+            'fit-content': `fit-content`,
             '5vw': `5vw`,
             '10vw': `10vw`,
             '25vw': `25vw`,
@@ -207,6 +208,7 @@ const root = createGlobalTheme(':root', {
             '100%': `100%`,
             '1': '1px',
             '2': '2px',
+            paragraph: '12px',
             '100': `100px`,
             '150': `150px`,
             '200': `200px`,
@@ -279,6 +281,9 @@ const root = createGlobalTheme(':root', {
 
     insetTop: {
         none: { marginTop: '0' },
+        '2': {
+            marginTop: `${baseline * -0.25}px`,
+        },
         xxs: {
             marginTop: `${baseline * -0.5}px`,
         },

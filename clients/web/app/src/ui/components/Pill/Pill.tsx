@@ -8,12 +8,7 @@ type Pill = {
 
 export const Pill = forwardRef((props: Pill, ref: Ref<HTMLElement> | undefined) => {
     const { isTouch } = useDevice()
-    const {
-        children,
-        border = isTouch ? 'level4' : 'level3',
-        background = isTouch ? 'level2' : 'level2',
-        ...boxProps
-    } = props
+    const { children, border, background = isTouch ? 'level2' : 'level2', ...boxProps } = props
     return (
         <TooltipBox
             centerContent

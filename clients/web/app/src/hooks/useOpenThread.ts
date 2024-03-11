@@ -10,7 +10,6 @@ export const useOpenMessageThread = (spaceId?: string, channelId?: string) => {
         (eventId: string) => {
             const link = createLink({
                 threadId: eventId,
-                spaceId: spaceId,
                 channelId: channelId,
             })
 
@@ -18,7 +17,7 @@ export const useOpenMessageThread = (spaceId?: string, channelId?: string) => {
                 navigate(link)
             }
         },
-        [channelId, navigate, spaceId, createLink],
+        [channelId, navigate, createLink],
     )
     return {
         onOpenMessageThread,

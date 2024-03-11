@@ -16,6 +16,7 @@ import { formatDate } from 'utils/formatDates'
 import { getPrettyDisplayName } from 'utils/getPrettyDisplayName'
 import { ProfileHoverCard } from '@components/ProfileHoverCard/ProfileHoverCard'
 import { useCreateLink } from 'hooks/useCreateLink'
+import { AvatarWithoutDot } from '@components/Avatar/Avatar'
 
 export const EmbeddedMessage = (props: {
     attachment: EmbeddedMessageAttachment
@@ -69,6 +70,8 @@ export const EmbeddedMessage = (props: {
                     cursor={userTooltip ? 'pointer' : 'default'}
                     onClick={onUserClick}
                 >
+                    <AvatarWithoutDot userId={attachment.info.userId} size="avatar_xs" />
+
                     {user ? (
                         <>
                             <Paragraph strong color="gray1" size="sm">

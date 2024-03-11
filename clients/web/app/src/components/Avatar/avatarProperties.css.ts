@@ -3,6 +3,12 @@ import { vars } from 'ui/styles/vars.css'
 import { responsivePropertiesMixin } from 'ui/styles/breakpoints'
 
 export const avatarSizes = {
+    avatar_paragraph: {
+        width: vars.space.paragraph,
+        height: vars.space.paragraph,
+        '--size': vars.space.paragraph,
+        '--dot-border-width': `0px`,
+    },
     avatar_xs: {
         width: vars.dims.baseline.x2,
         height: vars.dims.baseline.x2,

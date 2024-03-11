@@ -7,27 +7,30 @@ export const useSendReply = (threadId?: string, threadPreview?: string) => {
 
     const sendReply = useCallback(
         (
-            value: string,
+            message: string,
             channelId: string,
             options: SendMessageOptions | undefined,
             threadParticipants?: Set<string>,
         ) => {
             const valid =
-                value.length > 0 ||
+                message.length > 0 ||
                 (options?.messageType === MessageType.Text && options.attachments?.length)
 
-            if (valid && spaceId) {
-                sendMessage(channelId, value, {
+            if (!valid) {
+                return
+            }
+
+            if (spaceId) {
+                sendMessage(channelId, message, {
                     ...options,
                     parentSpaceId: spaceId,
                     threadId,
                     threadPreview,
                     threadParticipants,
                 })
-            } else if (valid) {
-                sendMessage(channelId, value, { ...options, threadId, threadPreview })
+            } else {
+                sendMessage(channelId, message, { ...options, threadId, threadPreview })
             }
-            return sendReply
         },
         [spaceId, sendMessage, threadId, threadPreview],
     )

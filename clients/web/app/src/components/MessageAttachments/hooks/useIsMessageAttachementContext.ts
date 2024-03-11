@@ -1,5 +1,5 @@
 import { useContext } from 'react'
-import { MessageAttachmentsContext } from './MessageAttachmentsContext'
+import { MessageAttachmentsContext } from '../MessageAttachmentsContext'
 
 export const useIsMessageAttachementContext = () => {
     return {

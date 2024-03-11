@@ -1,5 +1,13 @@
 import { isDMChannelStreamId, isGDMChannelStreamId } from '@river/sdk'
-import React, { MutableRefObject, useCallback, useEffect, useMemo, useRef, useState } from 'react'
+import React, {
+    MutableRefObject,
+    useCallback,
+    useContext,
+    useEffect,
+    useMemo,
+    useRef,
+    useState,
+} from 'react'
 import { useInView } from 'react-intersection-observer'
 import { Outlet, useLocation, useParams } from 'react-router'
 import {
@@ -34,6 +42,8 @@ import { useSpaceChannels } from 'hooks/useSpaceChannels'
 import { QUERY_PARAMS } from 'routes'
 import { notUndefined } from 'ui/utils/utils'
 import { SECOND_MS } from 'data/constants'
+import { ReplyContextProvider } from '@components/ReplyToMessageContext/ReplyToMessageProvider'
+import { ReplyToMessageContext } from '@components/ReplyToMessageContext/ReplyToMessageContext'
 import { CentralPanelLayout } from './layouts/CentralPanelLayout'
 
 type Props = {
@@ -62,15 +72,27 @@ export const SpacesChannelRoute = () => {
 const SpaceChannelWrapper = (props: { children: React.ReactElement } & { channelId?: string }) => {
     const { channelSlug } = useParams()
     const channelId = props.channelId ?? channelSlug
+    const isDmOrGDM =
+        channelId && (isDMChannelStreamId(channelId) || isGDMChannelStreamId(channelId))
+
     if (!channelId) {
         return <>SpacesChannel Route expects a channelSlug</>
     }
-    return <ChannelContextProvider channelId={channelId}>{props.children}</ChannelContextProvider>
+    return (
+        <ChannelContextProvider channelId={channelId}>
+            <CentralPanelLayout>
+                <ReplyContextProvider key={channelId} canReplyInline={!!isDmOrGDM}>
+                    {props.children}
+                </ReplyContextProvider>
+            </CentralPanelLayout>
+        </ChannelContextProvider>
+    )
 }
 
 export const SpacesChannelComponent = (props: Props) => {
     const { messageId: threadId } = useParams()
     const { isTouch } = useDevice()
+    const { replyToEventId, setReplyToEventId } = useContext(ReplyToMessageContext)
     const { joinRoom, leaveRoom, scrollback, sendMessage, setHighPriorityStreams } =
         useTownsClient()
 
@@ -87,16 +109,33 @@ export const SpacesChannelComponent = (props: Props) => {
     const onSend = useCallback(
         (value: string, options: SendMessageOptions | undefined) => {
             const valid =
-                value.length > 0 ||
-                (options?.messageType === MessageType.Text && options.attachments?.length)
+                channelId &&
+                (value.length > 0 ||
+                    (options?.messageType === MessageType.Text && options.attachments?.length))
 
-            if (valid && channelId && spaceId) {
-                sendMessage(channelId, value, { parentSpaceId: spaceId, ...options })
-            } else if (valid && channelId) {
-                sendMessage(channelId, value, options)
+            if (!valid) {
+                return
+            }
+
+            // TODO: need to pass participants to sendReply in case of thread ?
+            const optionsWithThreadId = replyToEventId
+                ? { ...(options ?? {}), replyId: replyToEventId }
+                : options
+
+            if (spaceId) {
+                sendMessage(channelId, value, {
+                    parentSpaceId: spaceId,
+                    ...optionsWithThreadId,
+                })
+            } else {
+                sendMessage(channelId, value, optionsWithThreadId)
+            }
+
+            if (replyToEventId) {
+                setReplyToEventId?.(null)
             }
         },
-        [channelId, spaceId, sendMessage],
+        [channelId, replyToEventId, spaceId, sendMessage, setReplyToEventId],
     )
 
     useEffect(() => {
@@ -180,7 +219,7 @@ export const SpacesChannelComponent = (props: Props) => {
     const showDMAcceptInvitation = myMembership === Membership.Invite && isDmOrGDM
 
     return (
-        <CentralPanelLayout>
+        <>
             {!isTouch && <RegisterChannelShortcuts />}
             {channel && showJoinChannel ? (
                 <Box absoluteFill centerContent padding="lg">
@@ -277,7 +316,7 @@ export const SpacesChannelComponent = (props: Props) => {
                     </Stack>
                 </Stack>
             )}
-        </CentralPanelLayout>
+        </>
     )
 }
 

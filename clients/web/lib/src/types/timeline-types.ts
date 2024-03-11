@@ -216,8 +216,10 @@ export type RoomMessageEventContentOneOf =
 
 export interface RoomMessageEvent {
     kind: ZTEvent.RoomMessage
-    inReplyTo?: string
+    threadId?: string
     threadPreview?: string
+    replyId?: string
+    replyPreview?: string
     body: string
     mentions: OTWMention[]
     editsEventId?: string
@@ -272,6 +274,7 @@ export interface TimelineEvent {
     confirmedEventNum?: bigint
     confirmedInBlockNum?: bigint
     threadParentId?: string
+    replyParentId?: string
     reactionParentId?: string
     isMentioned: boolean
     isRedacted: boolean
@@ -509,7 +512,7 @@ export function transformAttachments(attachments?: Attachment[]): ChannelMessage
                         return
                     }
                     const post = new ChannelMessage_Post({
-                        threadId: roomMessageEvent.inReplyTo,
+                        threadId: roomMessageEvent.threadId,
                         threadPreview: roomMessageEvent.threadPreview,
                         content: {
                             case: 'text' as const,

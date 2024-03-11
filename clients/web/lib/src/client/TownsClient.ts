@@ -1288,6 +1288,8 @@ export class TownsClient implements EntitlementsDelegate {
                     await this.casablancaClient.sendChannelMessage_Text(roomId, {
                         threadId: options?.threadId,
                         threadPreview: options?.threadPreview,
+                        replyId: options?.replyId,
+                        replyPreview: options?.replyPreview,
                         content: {
                             body: message,
                             mentions: options?.mentions ?? [],
@@ -1300,6 +1302,8 @@ export class TownsClient implements EntitlementsDelegate {
                 await this.casablancaClient.sendChannelMessage_Image(roomId, {
                     threadId: options?.threadId,
                     threadPreview: options?.threadPreview,
+                    replyId: options?.replyId,
+                    replyPreview: options?.replyPreview,
                     content: {
                         title: message,
                         info: options?.info,
@@ -1311,6 +1315,8 @@ export class TownsClient implements EntitlementsDelegate {
                 await this.casablancaClient.sendChannelMessage_GM(roomId, {
                     threadId: options?.threadId,
                     threadPreview: options?.threadPreview,
+                    replyId: options?.replyId,
+                    replyPreview: options?.replyPreview,
                     content: {
                         typeUrl: message,
                     },
@@ -1381,7 +1387,7 @@ export class TownsClient implements EntitlementsDelegate {
             throw new Error('casablanca client is undefined')
         }
         return await this.casablancaClient.sendChannelMessage_Edit_Text(roomId, eventId, {
-            threadId: originalEventContent.inReplyTo,
+            threadId: originalEventContent.threadId,
             threadPreview: originalEventContent.threadPreview,
             content: {
                 body: message,

@@ -10,6 +10,7 @@ import { useShortcut } from 'hooks/useShortcut'
 import { ShortcutTooltip } from '@components/Shortcuts/ShortcutTooltip'
 import useCopyToClipboard from 'hooks/useCopyToClipboard'
 import { PATHS } from 'routes'
+import { ReplyToMessageContext } from '@components/ReplyToMessageContext/ReplyToMessageContext'
 import { DeleteMessagePrompt } from './DeleteMessagePrompt'
 
 type Props = {
@@ -34,6 +35,7 @@ export const MessageContextMenu = (props: Props) => {
     const { redactEvent, sendReaction, sendReadReceipt } = useTownsClient()
     const timelineContext = useContext(MessageTimelineContext)
 
+    const { canReplyInline, setReplyToEventId } = useContext(ReplyToMessageContext)
     const { onOpenMessageThread } = useOpenMessageThread(spaceId, channelId)
 
     const [copiedText, copy] = useCopyToClipboard()
@@ -86,13 +88,17 @@ export const MessageContextMenu = (props: Props) => {
         { enableOnContentEditable: false },
         [],
     )
-    const onThreadClick = useShortcut(
+    const onReply = useShortcut(
         'ReplyToMessage',
         useCallback(() => {
             if (props.canReply) {
-                onOpenMessageThread(eventId)
+                if (canReplyInline && setReplyToEventId) {
+                    setReplyToEventId(eventId)
+                } else {
+                    onOpenMessageThread(eventId)
+                }
             }
-        }, [eventId, onOpenMessageThread, props.canReply]),
+        }, [canReplyInline, eventId, onOpenMessageThread, setReplyToEventId, props.canReply]),
         { enableOnContentEditable: false },
         [],
     )
@@ -167,10 +173,10 @@ export const MessageContextMenu = (props: Props) => {
 
                     {props.canReply && (
                         <IconButton
-                            icon="threads"
+                            icon={canReplyInline ? 'reply' : 'threads'}
                             size="square_sm"
                             tooltip={<ShortcutTooltip action="ReplyToMessage" />}
-                            onClick={onThreadClick}
+                            onClick={onReply}
                         />
                     )}
                     {props.canReact && (

@@ -156,7 +156,7 @@ export const MessageLayout = (props: Props) => {
                     senderId ? (
                         <AvatarComponent
                             size={avatarSize}
-                            insetTop="xxs"
+                            insetTop="2"
                             insetBottom="lg"
                             userId={senderId}
                             link={profileLink}
@@ -184,7 +184,7 @@ export const MessageLayout = (props: Props) => {
             </Box>
 
             {/* right / main content */}
-            <Stack grow gap="md" position="relative">
+            <Stack grow gap="paragraph" position="relative">
                 {/* name & date top row */}
                 {(displayContext === 'head' || displayContext === 'single') && (
                     <Stack
@@ -237,7 +237,7 @@ export const MessageLayout = (props: Props) => {
                         grow
                         fontSize="md"
                         color="gray1"
-                        gap="md"
+                        gap="paragraph"
                         onClick={isTouch && isSelectable ? onClick : undefined}
                     >
                         {children}

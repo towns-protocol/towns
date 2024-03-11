@@ -10,7 +10,7 @@ import { MarkdownShortcutPlugin } from '@lexical/react/LexicalMarkdownShortcutPl
 import { RichTextPlugin } from '@lexical/react/LexicalRichTextPlugin'
 import LexicalErrorBoundary from '@lexical/react/LexicalErrorBoundary'
 import { clsx } from 'clsx'
-import React, { useCallback, useEffect, useState } from 'react'
+import React, { MutableRefObject, useCallback, useEffect, useRef, useState } from 'react'
 import {
     Channel,
     EmbeddedMessageAttachment,
@@ -24,6 +24,7 @@ import { datadogRum } from '@datadog/browser-rum'
 import { useLexicalComposerContext } from '@lexical/react/LexicalComposerContext'
 import { $getRoot } from 'lexical'
 import AnalyticsService, { AnalyticsEvents } from 'use-towns-client/dist/utils/analyticsService'
+import { AnimatePresence } from 'framer-motion'
 import { ErrorBoundary } from '@components/ErrorBoundary/ErrorBoundary'
 import * as fieldStyles from 'ui/components/_internal/Field/Field.css'
 import { useInputStore } from 'store/store'
@@ -35,7 +36,11 @@ import { useMediaDropContext } from '@components/MediaDropContext/MediaDropConte
 import { useThrottledValue } from 'hooks/useThrottledValue'
 import { SECOND_MS } from 'data/constants'
 import { useExtractMessageAttachments } from 'hooks/useExtractMessageAttachments'
-import { EmbeddedMessagePreview } from '@components/EmbeddedMessageAttachement/EmbeddedMessagePreview'
+import {
+    EditorAttachmentPreview,
+    MessageAttachmentPreview,
+} from '@components/EmbeddedMessageAttachement/EditorAttachmentPreview'
+import { useInlineReplyAttchmentPreview } from '@components/EmbeddedMessageAttachement/hooks/useInlineReplyAttchmentPreview'
 import { useInitialConfig } from './hooks/useInitialConfig'
 import { AutoLinkMatcherPlugin } from './plugins/AutoLinkMatcherPlugin'
 import { ChannelMentionPlugin } from './plugins/ChannelMentionPlugin'
@@ -203,19 +208,40 @@ const RichTextEditorWithoutBoundary = React.memo((props: Props) => {
 
     const background = isEditing && !isTouch ? 'level1' : 'level2'
 
+    const editorRef = useRef<HTMLElement>()
+
+    const { inlineReplyPreview, onCancelInlineReply } = useInlineReplyAttchmentPreview({
+        onNewInlineReply: () => {
+            editorRef.current?.focus()
+        },
+    })
+
     return (
         <>
             <Box position="relative">
                 <Box gap grow position="absolute" bottom="none" width="100%">
-                    {embeddedMessageAttachements.map((attachment) => (
-                        <EmbeddedMessagePreview
-                            key={attachment.id}
-                            attachment={attachment}
-                            onRemove={onRemoveAttachment}
-                        />
-                    ))}
+                    <AnimatePresence>
+                        {embeddedMessageAttachements.map((attachment) => (
+                            <MessageAttachmentPreview
+                                key={attachment.id}
+                                attachment={attachment}
+                                onRemove={onRemoveAttachment}
+                            />
+                        ))}
+                        {inlineReplyPreview ? (
+                            <EditorAttachmentPreview
+                                type="reply"
+                                displayName={inlineReplyPreview.displayName}
+                                body={inlineReplyPreview.eventContent.body}
+                                onRemoveClick={onCancelInlineReply}
+                            />
+                        ) : (
+                            <></>
+                        )}
+                    </AnimatePresence>
                 </Box>
             </Box>
+
             <Stack
                 background={background}
                 rounded={{ default: 'sm', touch: 'none' }}
@@ -307,6 +333,7 @@ const RichTextEditorWithoutBoundary = React.memo((props: Props) => {
                     <RememberInputPlugin storageId={props.storageId} />
                     <CodeHighlightPlugin />
                     <TabIndentationPlugin />
+                    <RefPlugin editorRef={editorRef} />
                 </LexicalComposer>
             </Stack>
         </>
@@ -352,4 +379,17 @@ const CaptureTownsLinkPlugin = (props: {
     }, [attachments, onUpdate])
 
     return <></>
+}
+
+const RefPlugin = (props: { editorRef: MutableRefObject<HTMLElement | undefined> }) => {
+    const [editor] = useLexicalComposerContext()
+    useEffect(() => {
+        if (props.editorRef) {
+            const root = editor.getRootElement()
+            if (root) {
+                props.editorRef.current = root
+            }
+        }
+    }, [editor, props.editorRef])
+    return null
 }

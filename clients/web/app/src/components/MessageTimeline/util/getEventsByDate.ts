@@ -230,6 +230,7 @@ export const getEventsByDate = (
     replyMap?: Record<string, ThreadStats>,
     experiments?: ExperimentsState,
     groupByUser: boolean = DEBUG_NO_GROUP_BY_USER,
+    inlinedReplies: boolean = true,
 ) => {
     const { getRelativeDays } = createRelativeDateUtil()
 
@@ -266,6 +267,14 @@ export const getEventsByDate = (
              * accumulate messages by the same user
              */
             if (isRoomMessage(event) || isEncryptedRoomMessage(event) || isMissingMessage(event)) {
+                if (!isThread && event.threadParentId) {
+                    // skip messages from threads if not applicable
+                    return result
+                }
+                if (!inlinedReplies && event.replyParentId) {
+                    // skip inline replies if not applicable
+                    return result
+                }
                 if (fullyReadMarkerEventId === event.eventId) {
                     if (
                         // TODO: if we add readmarkers to more events than
@@ -289,39 +298,21 @@ export const getEventsByDate = (
 
                 const prevEvent = renderEvents[renderEvents.length - 1]
 
-                // inline thread updates
-                if (!isThread && event.threadParentId && isRoomMessage(event)) {
-                    // experimental feature to show thread updates inline
-                    if (!experiments?.enableInlineThreadUpdates) {
-                        // serge mode is disabled
-                    } else {
-                        if (prevEvent && prevEvent.type === RenderEventType.ThreadUpdate) {
-                            prevEvent.events.push(event)
-                        } else {
-                            renderEvents.push({
-                                type: RenderEventType.ThreadUpdate,
-                                key: `thread-update-${event.eventId}`,
-                                events: [event],
-                            })
-                        }
-                    }
-                } else {
-                    const p =
-                        groupByUser &&
-                        (!isThread || index > 1) &&
-                        canGroupWithPrevMessage(prevEvent, event)
+                const userGroup =
+                    groupByUser &&
+                    (!isThread || index > 1) &&
+                    canGroupWithPrevMessage(prevEvent, event, inlinedReplies)
 
-                    if (p) {
-                        // add event to previous group
-                        prevEvent?.events?.push(event)
-                    } else {
-                        // create new group
-                        renderEvents.push({
-                            type: RenderEventType.UserMessages,
-                            key: event.eventId,
-                            events: [event],
-                        })
-                    }
+                if (userGroup) {
+                    // add event to previous group
+                    prevEvent?.events?.push(event)
+                } else {
+                    // create new group
+                    renderEvents.push({
+                        type: RenderEventType.UserMessages,
+                        key: event.eventId,
+                        events: [event],
+                    })
                 }
             } else if (isRoomMember(event) && channelType !== 'dm') {
                 if (channelType === 'gdm' && event.content.membership === Membership.Join) {
@@ -422,12 +413,17 @@ export const getEventsByDate = (
 function canGroupWithPrevMessage(
     prevEvent: RenderEvent,
     event: TimelineEvent,
+    inlinedReplies: boolean,
 ): prevEvent is UserMessagesRenderEvent {
     const prevMessage =
         prevEvent?.type === RenderEventType.UserMessages &&
         prevEvent?.events?.at(prevEvent.events.length - 1)
 
     if (!prevMessage) {
+        return false
+    }
+    if (inlinedReplies && event.replyParentId) {
+        // isolate replies containing the quoted parent message
         return false
     }
 

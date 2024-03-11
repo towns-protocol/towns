@@ -452,7 +452,7 @@ function toReplacedMessageEvent(prev: TimelineEvent, next: TimelineEvent): Timel
             updatedAtEpocMs: next.createdAtEpocMs,
             content: {
                 ...next.content,
-                inReplyTo: prev.content.inReplyTo,
+                threadId: prev.content.threadId,
             },
             threadParentId: prev.threadParentId,
             reactionParentId: prev.reactionParentId,
@@ -842,7 +842,11 @@ export function getRedactsId(content: TimelineEvent_OneOf | undefined): string |
 }
 
 export function getThreadParentId(content: TimelineEvent_OneOf | undefined): string | undefined {
-    return content?.kind === ZTEvent.RoomMessage ? content.inReplyTo : undefined
+    return content?.kind === ZTEvent.RoomMessage ? content.threadId : undefined
+}
+
+export function getReplyParentId(content: TimelineEvent_OneOf | undefined): string | undefined {
+    return content?.kind === ZTEvent.RoomMessage ? content.replyId : undefined
 }
 
 export function getReactionParentId(content: TimelineEvent_OneOf | undefined): string | undefined {

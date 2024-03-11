@@ -283,6 +283,7 @@ export const MessageTimeline = (props: Props) => {
                         })
                         .filter(notUndefined)
                 }
+
                 return e.type === 'group' && groupByDate
                     ? ({ key: e.key, type: 'group', date: e.date, isNew: e.isNew } as const)
                     : e.type === RenderEventType.NewDivider

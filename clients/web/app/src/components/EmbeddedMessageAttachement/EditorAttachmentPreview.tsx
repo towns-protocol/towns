@@ -1,16 +1,18 @@
-import { EmbeddedMessageAttachment, useUserLookupContext } from 'use-towns-client'
+import { Attachment, EmbeddedMessageAttachment, useUserLookupContext } from 'use-towns-client'
 import React, { useCallback } from 'react'
 import { Box, IconButton, Paragraph } from '@ui'
 import { RichTextPreview } from '@components/RichText/RichTextPreview'
 import { getPrettyDisplayName } from 'utils/getPrettyDisplayName'
 import { MessageAttachments } from '@components/MessageAttachments/MessageAttachments'
 import { MessageAttachmentsContext } from '@components/MessageAttachments/MessageAttachmentsContext'
+import { FadeInBox } from '@components/Transitions'
 
 type Props = {
     attachment: EmbeddedMessageAttachment
     onRemove: (attachmentId: string) => void
 }
-export const EmbeddedMessagePreview = (props: Props) => {
+
+export const MessageAttachmentPreview = (props: Props) => {
     const { attachment, onRemove } = props
     const roomMessageEvent = attachment.roomMessageEvent
 
@@ -24,30 +26,57 @@ export const EmbeddedMessagePreview = (props: Props) => {
         return
     }
 
-    const messageAbstract = getShortTextFromMarkdown(roomMessageEvent.body)
+    const displayName = getPrettyDisplayName(usersMap[attachment.info.userId])
 
     return (
         <MessageAttachmentsContext.Provider value={{ isMessageAttachementContext: true }}>
-            <Box horizontal padding grow background="level3" rounded="sm" boxShadow="panel">
-                <Box grow gap>
-                    <Paragraph strong color="gray2">
-                        Forward {getPrettyDisplayName(usersMap[attachment.info.userId])}
-                        &#39;s message:
-                    </Paragraph>
-                    {messageAbstract && <RichTextPreview content={messageAbstract} />}
-                    {roomMessageEvent?.attachments?.length ? (
-                        <Box>
-                            <MessageAttachments attachments={roomMessageEvent.attachments} />
-                        </Box>
-                    ) : (
-                        <></>
-                    )}
-                </Box>
-                <Box>
-                    <IconButton icon="close" onClick={onRemoveClick} />
-                </Box>
-            </Box>
+            <EditorAttachmentPreview
+                type="forward"
+                attachments={roomMessageEvent.attachments}
+                displayName={displayName}
+                body={roomMessageEvent.body}
+                onRemoveClick={onRemoveClick}
+            />
         </MessageAttachmentsContext.Provider>
+    )
+}
+
+export const EditorAttachmentPreview = (props: {
+    type: 'forward' | 'reply'
+    displayName: string
+    body: string
+    attachments?: Attachment[]
+    onRemoveClick: () => void
+}) => {
+    const messageAbstract = getShortTextFromMarkdown(props.body)
+    return (
+        <FadeInBox
+            horizontal
+            grow
+            padding="md"
+            background="level3"
+            rounded="sm"
+            boxShadow="panel"
+            preset="fadeup"
+        >
+            <Box grow gap="paragraph">
+                <Paragraph strong color="gray1">
+                    {props.type === 'forward' ? 'Forward' : 'Reply to'} {props.displayName}
+                    &#39;s message:
+                </Paragraph>
+                {messageAbstract && <RichTextPreview content={messageAbstract} />}
+                {props.attachments?.length ? (
+                    <Box>
+                        <MessageAttachments attachments={props.attachments} />
+                    </Box>
+                ) : (
+                    <></>
+                )}
+            </Box>
+            <Box>
+                <IconButton icon="close" color="default" onClick={props.onRemoveClick} />
+            </Box>
+        </FadeInBox>
     )
 }
 
