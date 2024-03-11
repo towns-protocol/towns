@@ -68,12 +68,12 @@ export const TownPageLayout = (props: TownPageLayoutProps) => {
 
     const { imageSrc } = useImageSource(spaceId, ImageVariants.thumbnail600)
 
-    const tokens = [
-        {
-            contractAddress: '0x123',
-            tokenIds: [1, 2],
-        },
-    ] // TODO get from join role data
+    // const tokens = [
+    //     {
+    //         contractAddress: '0x123',
+    //         tokenIds: [1, 2],
+    //     },
+    // ] // TODO get from join role data
 
     return (
         <>
@@ -119,7 +119,7 @@ export const TownPageLayout = (props: TownPageLayoutProps) => {
                             chainId={chainId}
                             anyoneCanJoin={anyoneCanJoin}
                             isTokensGatingMembershipLoading={isTokensGatingMembershipLoading}
-                            tokens={tokens}
+                            tokens={[]}
                         />
                         <Bio bio={bio} />
                         <Stack gap="lg">

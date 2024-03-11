@@ -1,15 +1,18 @@
 import React, { useCallback, useRef, useState } from 'react'
 import { isAddress } from 'ethers/lib/utils'
-import { TokenProps, TokenType } from '@components/Tokens/types'
+import { TokenData, TokenType } from '@components/Tokens/types'
 import { useCollectionsForOwner } from 'api/lib/tokenContracts'
 import { Box, Icon, IconButton, Paragraph, Text } from '@ui'
 import { shortAddress } from 'workers/utils'
 import { Field } from 'ui/components/_internal/Field'
 import { ErrorMessageText } from 'ui/components/ErrorMessage/ErrorMessage'
 import { PillSelector } from '@components/DirectMessages/CreateDirectMessage/PillSelector'
-import { FetchedTokenAvatar } from '@components/Tokens/FetchedTokenAvatar'
-import { generateTokenIdKey, splitKeyToContractAddressAndTokenId } from './utils'
-import { tokenIdSchema } from './schema'
+import { TokenImage } from '@components/Tokens/TokenSelector/TokenImage'
+import { tokenIdSchema } from '@components/Tokens/TokenSelector/tokenSchemas'
+import {
+    generateTokenIdKey,
+    splitKeyToContractAddressAndTokenId,
+} from '@components/SpaceSettingsPanel/utils'
 import { TokenPill } from './TokenPill'
 
 type Props = {
@@ -22,6 +25,9 @@ type Props = {
     fieldRefOverride?: React.RefObject<HTMLInputElement>
 }
 
+/**
+ * @deprecated
+ */
 export function TokenPillSelector(props: Props) {
     const {
         nftApiData,
@@ -40,11 +46,17 @@ export function TokenPillSelector(props: Props) {
             selected,
             onAddItem,
         }: {
-            option: TokenProps
+            option: TokenData
             selected: boolean
             onAddItem: () => void
         }) => {
-            return <TokenOption option={option} selected={selected} onAddItem={onAddItem} />
+            return (
+                <TokenOption
+                    option={{ ...option, contractAddress: option.address }}
+                    selected={selected}
+                    onAddItem={onAddItem}
+                />
+            )
         },
         [],
     )
@@ -77,9 +89,7 @@ export function TokenPillSelector(props: Props) {
 
     const onSelectionChange = useCallback(
         (tokenContractAddresses: Set<string>) => {
-            const tokens = nftApiData?.tokens.filter((t) =>
-                tokenContractAddresses.has(t.contractAddress),
-            )
+            const tokens = nftApiData?.tokens.filter((t) => tokenContractAddresses.has(t.address))
             if (tokens) {
                 onSelectionChangeProp(tokenContractAddresses)
                 setSelectedTokens(tokenContractAddresses)
@@ -123,7 +133,7 @@ export function TokenPillSelector(props: Props) {
                 optionRenderer={optionRenderer}
                 pillRenderer={pillRenderer}
                 optionSorter={(t) => t}
-                getOptionKey={(o) => o.contractAddress}
+                getOptionKey={(o) => o.address}
                 emptySelectionElement={emptySelectionElement}
                 transformSelectionForPillRendering={transformSelectionForPillRendering}
                 isError={isValidationError}
@@ -208,7 +218,7 @@ export function TokenOption({
     onAddItem,
     selected,
 }: {
-    option: Partial<TokenProps> & { contractAddress: string }
+    option: Partial<TokenData> & { contractAddress: string }
     onAddItem: (specialKey?: string) => void
     selected: boolean
 }) {
@@ -400,21 +410,5 @@ export function TokenOption({
 }
 
 function TAvatarComponent({ contractAddress }: { contractAddress: string }) {
-    return (
-        <FetchedTokenAvatar
-            noLabel
-            key={contractAddress}
-            avatarToggleClasses={{
-                square: true,
-                noBg: true,
-            }}
-            layoutProps={{
-                rounded: 'sm',
-                padding: 'none',
-            }}
-            address={contractAddress}
-            tokenIds={[]}
-            size="avatar_x4"
-        />
-    )
+    return <TokenImage imgSrc="" />
 }

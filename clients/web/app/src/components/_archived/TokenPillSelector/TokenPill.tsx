@@ -1,9 +1,9 @@
 import React from 'react'
 import { Box, IconButton, Text } from '@ui'
 import { shortAddress } from 'ui/utils/utils'
-import { FetchedTokenAvatar } from '@components/Tokens/FetchedTokenAvatar'
-import { useTokenMetadata } from 'api/lib/collectionMetadata'
-import { splitKeyToContractAddressAndTokenId } from './utils'
+import { useTokenMetadataForChainId } from 'api/lib/collectionMetadata'
+import { TokenImage } from '@components/Tokens/TokenSelector/TokenImage'
+import { splitKeyToContractAddressAndTokenId } from '@components/SpaceSettingsPanel/utils'
 
 type Props = {
     selectionId: string | undefined
@@ -13,16 +13,19 @@ type Props = {
     disableDelete?: boolean
 }
 
+/**
+ * @deprecated
+ */
 export function TokenPill(props: Props) {
     const [contractAddress] = props.contractAddressIn
         ? [props.contractAddressIn]
         : splitKeyToContractAddressAndTokenId(props.selectionId ?? '')
-    const { data: token } = useTokenMetadata(contractAddress)
+    const { data: token } = useTokenMetadataForChainId(contractAddress, 1)
 
     const tokenIds: number[] = []
     props.selection?.forEach((k) => {
         const [contractAddress, tokenId] = splitKeyToContractAddressAndTokenId(k)
-        if (tokenId && token?.contractAddress === contractAddress) {
+        if (tokenId && token?.data.address === contractAddress) {
             tokenIds.push(+tokenId)
         }
     })
@@ -30,7 +33,7 @@ export function TokenPill(props: Props) {
     const deleteAll = () => {
         props.selection?.forEach((k) => {
             const [contractAddress] = splitKeyToContractAddressAndTokenId(k)
-            if (token?.contractAddress === contractAddress) {
+            if (token?.data.address === contractAddress) {
                 props.onDelete?.(k)
             }
         })
@@ -47,22 +50,7 @@ export function TokenPill(props: Props) {
             alignItems="center"
             data-testid={`token-pill-selector-pill-${contractAddress}`}
         >
-            <FetchedTokenAvatar
-                noLabel
-                address={contractAddress}
-                size="avatar_xs"
-                layoutProps={{
-                    rounded: 'xs',
-                    background: 'negative',
-                    padding: 'none',
-                    // background: 'none',
-                }}
-                avatarToggleClasses={{
-                    square: true,
-                    noBg: true,
-                }}
-                tokenIds={[]}
-            />
+            <TokenImage imgSrc="" />
             <>
                 <Box
                     display="block"
@@ -73,7 +61,7 @@ export function TokenPill(props: Props) {
                     }}
                     maxWidth="x12"
                 >
-                    {token?.label}
+                    {token?.data.label}
                 </Box>
                 {contractAddress && (
                     <Box color="gray2" tooltip={contractAddress}>

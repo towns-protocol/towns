@@ -1,8 +1,6 @@
 import React from 'react'
-import { BigNumber } from 'ethers'
 import { Link } from 'react-router-dom'
 import { Icon, Stack, Text, Tooltip } from '@ui'
-import { FetchedTokenAvatar } from '@components/Tokens/FetchedTokenAvatar'
 import { shortAddress } from 'ui/utils/utils'
 import { ArrayElement } from 'types'
 import { baseScanUrl, openSeaBaseAssetUrl } from '../utils'
@@ -43,21 +41,7 @@ export function TokenBox({
                         size="square_xs"
                     />
                 </Stack>
-                <FetchedTokenAvatar
-                    showUnknownLabel
-                    address={tokenAddress}
-                    tokenIds={token.tokenIds.map((t) => (t as BigNumber).toNumber())}
-                    layoutProps={{
-                        rounded: 'sm',
-                    }}
-                    labelProps={{
-                        whiteSpace: 'nowrap',
-                    }}
-                    avatarToggleClasses={{
-                        circle: false,
-                    }}
-                    size="avatar_lg"
-                />
+                {`TODO: update to TokenImage`}
                 <Stack horizontal centerContent gap="sm">
                     <Link
                         to={`${baseScanUrl(chainId)}/address/${tokenAddress}`}

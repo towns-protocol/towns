@@ -6,7 +6,6 @@ import * as Lib from 'use-towns-client'
 import * as RouterDom from 'react-router-dom'
 import userEvent from '@testing-library/user-event'
 import { RoleDetails } from 'use-towns-client/dist/types/web3-types'
-import { useCollectionsForLoggedInUser } from 'api/lib/tokenContracts'
 import {
     everyoneRole,
     memberRole,
@@ -24,7 +23,10 @@ import {
     mockCreateTransactionWithSpy,
 } from 'test/transactionHookMock'
 import { EVERYONE_ADDRESS } from 'utils'
+import { TokenType } from '@components/Tokens/types'
+import { convertTokenTypeToOperationType } from '@components/Tokens/utils'
 import { SingleRolePanel } from './SingleRolePanel'
+import { SUDOLETS_MOCK } from '../../../mocks/token-collections'
 
 const [roleWithEveryone, roleWithMemberMNft] = roleDataWithBothRolesAssignedToChannel
 
@@ -50,31 +52,32 @@ vi.mock('react-router-dom', async () => {
     }
 })
 
-const mockCollectionsForOwner: ReturnType<typeof useCollectionsForLoggedInUser>['data'] = {
-    tokens: [
-        {
-            contractAddress: '0x134',
-            label: 'Test token',
-            imgSrc: 'test.png',
-        },
-    ],
-    nextPageKey: undefined,
-}
+// const mockCollectionsForOwner: ReturnType<typeof useCollectionsForLoggedInUser>['data'] = {
+//     tokens: [
+//         {
+//             address: '0x134',
+//             label: 'Test token',
+//             imgSrc: 'test.png',
+//             type: TokenType.ERC1155,
+//         },
+//     ],
+//     nextPageKey: undefined,
+// }
 
-vi.mock('api/lib/tokenContracts', async () => {
-    const actual = (await vi.importActual(
-        'api/lib/tokenContracts',
-    )) as typeof import('api/lib/tokenContracts')
-    return {
-        ...actual,
-        useCollectionsForLoggedInUser: () => {
-            return {
-                data: mockCollectionsForOwner,
-                isLoading: false,
-            }
-        },
-    }
-})
+// vi.mock('api/lib/tokenContracts', async () => {
+//     const actual = (await vi.importActual(
+//         'api/lib/tokenContracts',
+//     )) as typeof import('api/lib/tokenContracts')
+//     return {
+//         ...actual,
+//         useCollectionsForLoggedInUser: () => {
+//             return {
+//                 data: mockCollectionsForOwner,
+//                 isLoading: false,
+//             }
+//         },
+//     }
+// })
 
 let roleDetailsMockData: RoleDetails | undefined = undefined
 
@@ -169,7 +172,7 @@ afterEach(() => {
     vi.clearAllMocks()
 })
 
-describe.skip('SingleRolePanel', () => {
+describe('SingleRolePanel', () => {
     test('should render empty fields when creating a new role', async () => {
         mockUseSearchParams.mockReturnValue([new URLSearchParams('roles=new'), vi.fn()])
         render(<Wrapper />)
@@ -208,13 +211,13 @@ describe.skip('SingleRolePanel', () => {
 
         await openUserSearch()
         const option = await getEveryoneOption()
-        userEvent.click(option)
+        await userEvent.click(option)
         const userSearch = screen.getByTestId('user-search')
         const userPills = await within(userSearch).findAllByTestId(/^user-pill-selector-pill/i)
         await waitFor(() => expect(userPills).toHaveLength(1))
 
         expect(submitButton).not.toBeDisabled()
-        userEvent.click(submitButton)
+        await userEvent.click(submitButton)
         await screen.findByText(/role name is required/gi)
     })
 
@@ -225,7 +228,7 @@ describe.skip('SingleRolePanel', () => {
         expect(submitButton).toBeDisabled()
 
         const roleName = await getNameInput()
-        userEvent.type(roleName, 'test role')
+        await userEvent.type(roleName, 'test role')
         await waitFor(() => {
             expect(screen.getAllByDisplayValue(/test role/gi).length).toBe(1)
         })
@@ -242,28 +245,25 @@ describe.skip('SingleRolePanel', () => {
         expect(submitButton).toBeDisabled()
 
         const roleName = await getNameInput()
-        userEvent.type(roleName, 'new role 1')
+        await userEvent.type(roleName, 'new role 1')
         await waitFor(() => {
             expect(screen.getAllByDisplayValue(/new role 1/gi).length).toBe(1)
         })
 
-        const option = await getFirstTokenOption()
-        userEvent.click(option)
+        const option = await searchForToken()
+        await userEvent.click(option)
         await waitFor(() => expect(submitButton).not.toBeDisabled())
-        userEvent.click(submitButton)
+        await userEvent.click(submitButton)
 
         await waitFor(() => {
             expect(createRoleTransactionSpy).toHaveBeenCalledWith(
                 spaceRoomIdentifier,
                 'new role 1',
                 [Lib.Permission.Read],
-                mockCollectionsForOwner?.tokens.map((t) =>
-                    createTokenEntitlementStruct({
-                        contractAddress: t.contractAddress,
-                        tokenIds: [],
-                    }),
-                ),
+                // users
                 [],
+                // ruleData
+                createOperationsTreeForERC721(),
                 {},
             )
         })
@@ -278,24 +278,24 @@ describe.skip('SingleRolePanel', () => {
         expect(submitButton).toBeDisabled()
 
         const roleName = await getNameInput()
-        userEvent.type(roleName, 'new role 2')
+        await userEvent.type(roleName, 'new role 2')
         await waitFor(() => {
             expect(screen.getAllByDisplayValue(/new role 2/gi).length).toBe(1)
         })
 
         await openUserSearch()
         const option = await getEveryoneOption()
-        userEvent.click(option)
+        await userEvent.click(option)
         await waitFor(() => expect(submitButton).not.toBeDisabled())
-        userEvent.click(submitButton)
+        await userEvent.click(submitButton)
 
         await waitFor(() => {
             expect(createRoleTransactionSpy).toHaveBeenCalledWith(
                 spaceRoomIdentifier,
                 'new role 2',
                 [Lib.Permission.Read],
-                [],
                 [EVERYONE_ADDRESS],
+                Lib.NoopRuleData,
                 {},
             )
         })
@@ -309,36 +309,31 @@ describe.skip('SingleRolePanel', () => {
         expect(submitButton).toBeDisabled()
 
         const roleName = await getNameInput()
-        userEvent.type(roleName, 'new role 3')
+        await userEvent.type(roleName, 'new role 3')
         await waitFor(() => {
             expect(screen.getAllByDisplayValue(/new role 3/gi).length).toBe(1)
         })
 
         const tokenSearch = screen.getByTestId('token-search')
-        const tokenInput = within(tokenSearch).getByTestId(/pill-selector-input/i)
-        userEvent.click(tokenInput)
-        const tokenOption = await getFirstTokenOption()
-        userEvent.click(tokenOption)
+        const tokenInput = within(tokenSearch).getByTestId(/token-selector-input/i)
+        await userEvent.click(tokenInput)
+        const tokenOption = await searchForToken()
+        await userEvent.click(tokenOption)
 
         await openUserSearch()
         const everyoneOption = await getEveryoneOption()
-        userEvent.click(everyoneOption)
+        await userEvent.click(everyoneOption)
 
         await waitFor(() => expect(submitButton).not.toBeDisabled())
-        userEvent.click(submitButton)
+        await userEvent.click(submitButton)
 
         await waitFor(() => {
             expect(createRoleTransactionSpy).toHaveBeenCalledWith(
                 spaceRoomIdentifier,
                 'new role 3',
                 [Lib.Permission.Read],
-                mockCollectionsForOwner?.tokens.map((t) =>
-                    createTokenEntitlementStruct({
-                        contractAddress: t.contractAddress,
-                        tokenIds: [],
-                    }),
-                ),
                 [EVERYONE_ADDRESS],
+                createOperationsTreeForERC721(),
                 {},
             )
         })
@@ -352,29 +347,29 @@ describe.skip('SingleRolePanel', () => {
         expect(submitButton).toBeDisabled()
 
         const roleName = await getNameInput()
-        userEvent.type(roleName, 'new role 4')
+        await userEvent.type(roleName, 'new role 4')
         await waitFor(() => {
             expect(screen.getAllByDisplayValue(/new role 4/gi).length).toBe(1)
         })
 
         await openUserSearch()
         const everyoneOption = await getEveryoneOption()
-        userEvent.click(everyoneOption)
+        await userEvent.click(everyoneOption)
 
         const readCheckbox = screen.getAllByTestId('toggle')
         // click the write checkbox
-        userEvent.click(readCheckbox[1])
+        await userEvent.click(readCheckbox[1])
 
         await waitFor(() => expect(submitButton).not.toBeDisabled())
-        userEvent.click(submitButton)
+        await userEvent.click(submitButton)
 
         await waitFor(() => {
             expect(createRoleTransactionSpy).toHaveBeenCalledWith(
                 spaceRoomIdentifier,
                 'new role 4',
                 [Lib.Permission.Read, Lib.Permission.Write],
-                [],
                 [EVERYONE_ADDRESS],
+                Lib.NoopRuleData,
                 {},
             )
         })
@@ -421,7 +416,7 @@ describe.skip('SingleRolePanel', () => {
         )
         const deletePillButton = within(userSearch).getByTestId(/^user-pill-delete/i)
 
-        userEvent.click(deletePillButton)
+        await userEvent.click(deletePillButton)
         await waitFor(() =>
             expect(
                 within(userSearch).queryAllByTestId(/^user-pill-selector-pill/i),
@@ -443,7 +438,7 @@ describe.skip('SingleRolePanel', () => {
         )
         const deletePillButton = within(userSearch).getByTestId(/^user-pill-delete/i)
 
-        userEvent.click(deletePillButton)
+        await userEvent.click(deletePillButton)
         await waitFor(() =>
             expect(
                 within(userSearch).queryAllByTestId(/^user-pill-selector-pill/i),
@@ -451,7 +446,7 @@ describe.skip('SingleRolePanel', () => {
         )
         await screen.findByText(/Select at least one token or user/gi)
         const everyoneOption = await getEveryoneOption()
-        userEvent.click(everyoneOption)
+        await userEvent.click(everyoneOption)
         await waitFor(() =>
             expect(within(userSearch).getAllByTestId(/^user-pill-selector-pill/i)).toHaveLength(1),
         )
@@ -473,7 +468,7 @@ describe.skip('SingleRolePanel', () => {
         )
         const deletePillButtons = within(tokenSearch).getAllByTestId(/^token-pill-delete/i)
 
-        deletePillButtons.forEach((button) => userEvent.click(button))
+        await Promise.all(deletePillButtons.map(async (button) => await userEvent.click(button)))
 
         await waitFor(() =>
             expect(
@@ -498,7 +493,7 @@ describe.skip('SingleRolePanel', () => {
         )
         const deletePillButtons = within(tokenSearch).getAllByTestId(/^token-pill-delete/i)
 
-        deletePillButtons.forEach((button) => userEvent.click(button))
+        await Promise.all(deletePillButtons.map(async (button) => await userEvent.click(button)))
 
         await waitFor(() =>
             expect(
@@ -506,8 +501,8 @@ describe.skip('SingleRolePanel', () => {
             ).to.toHaveLength(0),
         )
         await screen.findByText(/Select at least one token or user/gi)
-        const option = await getFirstTokenOption()
-        userEvent.click(option)
+        const option = await searchForToken()
+        await userEvent.click(option)
         await waitFor(() =>
             expect(within(tokenSearch).getAllByTestId(/^token-pill-selector-pill/i)).toHaveLength(
                 1,
@@ -530,7 +525,7 @@ describe.skip('SingleRolePanel', () => {
             ),
         )
         expect(screen.getByTestId('submit-button')).toBeDisabled()
-        userEvent.type(roleName, 'new name')
+        await userEvent.type(roleName, 'new name')
         await waitFor(() => expect(screen.getByTestId('submit-button')).not.toBeDisabled())
     })
 
@@ -539,7 +534,7 @@ describe.skip('SingleRolePanel', () => {
         mockUseSearchParams.mockReturnValue([new URLSearchParams('roles=8'), vi.fn()])
         roleDetailsMockData = roleWithMemberMNft
         render(<Wrapper />)
-        const roleName = await getNameInput()
+        const roleName = await screen.findByPlaceholderText(/Enter a name for the role/gi)
         await waitFor(() => expect(roleName).toHaveValue('Member'))
         const tokenSearch = screen.getByTestId('token-search')
         await waitFor(() =>
@@ -549,7 +544,7 @@ describe.skip('SingleRolePanel', () => {
         )
         expect(screen.getByTestId('submit-button')).toBeDisabled()
         const checkboxes = screen.getAllByTestId('toggle')
-        userEvent.click(checkboxes[2])
+        await userEvent.click(checkboxes[2])
         await waitFor(() => expect(screen.getByTestId('submit-button')).not.toBeDisabled())
     })
 
@@ -570,7 +565,7 @@ describe.skip('SingleRolePanel', () => {
 
         const deletePillButtons = within(tokenSearch).getAllByTestId(/^token-pill-delete/i)
 
-        userEvent.click(deletePillButtons[0])
+        await userEvent.click(deletePillButtons[0])
 
         await waitFor(() =>
             expect(
@@ -598,11 +593,11 @@ describe.skip('SingleRolePanel', () => {
         )
         expect(screen.getByTestId('submit-button')).toBeDisabled()
         const everyoneOption = await getEveryoneOption()
-        userEvent.click(everyoneOption)
+        await userEvent.click(everyoneOption)
 
         await waitFor(() => expect(screen.getByTestId('submit-button')).not.toBeDisabled())
 
-        userEvent.click(screen.getByTestId('submit-button'))
+        await userEvent.click(screen.getByTestId('submit-button'))
 
         await waitFor(() => {
             expect(updateRoleTransactionSpy).toHaveBeenCalledWith(
@@ -610,8 +605,8 @@ describe.skip('SingleRolePanel', () => {
                 roleWithMemberMNft.id,
                 roleWithMemberMNft.name,
                 roleWithMemberMNft.permissions,
-                roleWithMemberMNft.ruleData,
                 [EVERYONE_ADDRESS],
+                roleWithMemberMNft.ruleData,
                 {},
             )
         })
@@ -630,9 +625,9 @@ describe.skip('SingleRolePanel', () => {
         mockUseSearchParams.mockReturnValue([new URLSearchParams('roles=7'), vi.fn()])
         render(<Wrapper />)
         const deleteRoleButton = screen.getByTestId('delete-role-button')
-        userEvent.click(deleteRoleButton)
+        await userEvent.click(deleteRoleButton)
         const confirmButton = await screen.findByTestId('confirm-delete-role-button')
-        userEvent.click(confirmButton)
+        await userEvent.click(confirmButton)
 
         await waitFor(() => {
             expect(deleteRoleTransactionSpy).toHaveBeenCalledWith(
@@ -644,26 +639,28 @@ describe.skip('SingleRolePanel', () => {
     })
 })
 
-async function getFirstTokenOption() {
+async function searchForToken() {
     const tokenSearch = screen.getByTestId('token-search')
-    const tokenInput = within(tokenSearch).getByTestId(/pill-selector-input/i)
-    userEvent.click(tokenInput)
-    const option = await waitFor(() =>
-        within(tokenSearch).getAllByTestId(/^token-pill-selector-option/i),
-    )
+    const tokenInput = await within(tokenSearch).findByTestId(/token-selector-input/i)
+    await userEvent.click(tokenInput)
+    // erc1155 ui not set up yet, this is an ERC721 token
+    await userEvent.type(tokenInput, SUDOLETS_MOCK.address)
+    const option = await waitFor(() => {
+        return within(tokenSearch).getAllByTestId(/^token-selector-option/i)
+    })
     return option[0]
 }
 
 async function openUserSearch() {
     const userSearch = screen.getByTestId('user-search')
     const userInput = within(userSearch).getByTestId(/pill-selector-input/i)
-    userEvent.click(userInput)
+    await userEvent.click(userInput)
 }
 
 async function getEveryoneOption() {
     const userSearch = screen.getByTestId('user-search')
     const userInput = within(userSearch).getByTestId(/pill-selector-input/i)
-    userEvent.click(userInput)
+    await userEvent.click(userInput)
     const option = await waitFor(() =>
         within(userSearch).getAllByTestId(/^user-pill-selector-option/i),
     )
@@ -673,6 +670,13 @@ async function getEveryoneOption() {
 function getNameInput() {
     return screen.findByPlaceholderText(/Enter a name for the role/gi)
 }
-function createTokenEntitlementStruct(arg0: { contractAddress: string; tokenIds: never[] }) {
-    throw new Error('Function not implemented.')
+
+function createOperationsTreeForERC721() {
+    return Lib.createOperationsTree([
+        {
+            address: SUDOLETS_MOCK.address as Lib.Address,
+            chainId: BigInt(1),
+            type: convertTokenTypeToOperationType(TokenType.ERC721),
+        },
+    ])
 }

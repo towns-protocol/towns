@@ -3,7 +3,10 @@ import { BigNumber } from 'ethers'
 import * as townsClient from 'use-towns-client'
 import { NoopRuleData, Permission } from '@river/web3'
 import { EVERYONE_ADDRESS } from 'utils'
+import { convertTokenTypeToOperationType } from '@components/Tokens/utils'
+import { TokenType } from '@components/Tokens/types'
 import { getWalletAddress } from './testUtils'
+import { TEST_NFT_COLLECTION_METADATA_ADDRESSES } from '../../mocks/token-collections'
 
 const CHANNEL_ID = 'channel1'
 const SPACE_ID = 'town1'
@@ -52,7 +55,18 @@ export const roleDataWithBothRolesAssignedToChannel: townsClient.RoleDetails[] =
         permissions: [Permission.Read, Permission.Write],
         users: [],
         channels: [channelDataForRole],
-        ruleData: NoopRuleData,
+        ruleData: townsClient.createOperationsTree([
+            {
+                address: TEST_NFT_COLLECTION_METADATA_ADDRESSES[0] as townsClient.Address,
+                chainId: BigInt(1),
+                type: convertTokenTypeToOperationType(TokenType.ERC1155),
+            },
+            {
+                address: TEST_NFT_COLLECTION_METADATA_ADDRESSES[1] as townsClient.Address,
+                chainId: BigInt(1),
+                type: convertTokenTypeToOperationType(TokenType.ERC721),
+            },
+        ]),
     },
 ]
 

@@ -1,10 +1,11 @@
-import React, { useMemo, useRef, useState } from 'react'
+import React, { useCallback, useEffect, useMemo, useRef, useState } from 'react'
 import { useSearchParams } from 'react-router-dom'
 import {
     Address,
     BlockchainTransactionType,
     NoopRuleData,
     Permission,
+    createOperationsTree,
     useCreateRoleTransaction,
     useDeleteRoleTransaction,
     useIsTransactionPending,
@@ -31,8 +32,6 @@ import {
     Text,
     TextField,
 } from '@ui'
-// import { useCollectionsForLoggedInUser } from 'api/lib/tokenContracts'
-import { TokenDataStruct } from '@components/Web3/CreateSpaceForm/types'
 import { ButtonSpinner } from 'ui/components/Spinner/ButtonSpinner'
 import {
     enabledRolePermissions,
@@ -43,13 +42,15 @@ import { ModalContainer } from '@components/Modals/ModalContainer'
 import { FullPanelOverlay } from '@components/Web3/WalletLinkingPanel'
 import { UserOpTxModal } from '@components/Web3/UserOpTxModal/UserOpTxModal'
 import { createPrivyNotAuthenticatedNotification } from '@components/Notifications/utils'
+import { TokenSelector } from '@components/Tokens/TokenSelector/TokenSelector'
+import { TokenDataWithChainId } from '@components/Tokens/types'
+import { useMultipleTokenMetadatasForChainIds } from 'api/lib/collectionMetadata'
 import {
-    convertToNumber,
-    // mapTokenDataStructToTokenPillSelectorSelection,
-    // mapTokenPillSelectorSelectionToTokenDataStruct,
-} from './utils'
+    convertRuleDataToTokenFormSchema,
+    convertTokenTypeToOperationType,
+} from '@components/Tokens/utils'
+import { convertToNumber, mapTokenOptionsToTokenDataStruct } from './utils'
 import { formSchema } from './schema'
-// import { TokenPillSelector } from './TokenPillSelector'
 import { UserPillSelector } from './UserPillSelector'
 import { SearchInputHeightAdjuster } from './SearchInputHeightAdjuster'
 
@@ -106,9 +107,11 @@ export function SingleRolePanel() {
                         defaultValues={{
                             // roleDetails is undefined when creating a new role
                             name: roleDetails?.name ?? '',
-                            ruleData: roleDetails?.ruleData,
                             permissions: isCreateRole ? ['Read'] : roleDetails?.permissions ?? [],
                             users: roleDetails?.users ?? [],
+                            tokens: roleDetails?.ruleData
+                                ? convertRuleDataToTokenFormSchema(roleDetails.ruleData)
+                                : [],
                         }}
                     >
                         {(hookForm) => {
@@ -172,19 +175,19 @@ export function SingleRolePanel() {
                                                     {..._form.register('name')}
                                                 />
 
-                                                {isDefaultMembershipRole ? (
-                                                    <Stack gap>
-                                                        <Text>Digital Asset Requirement</Text>
-                                                        <Stack alignSelf="start">
-                                                            {'//roleDetails?.ruleData'}
-                                                        </Stack>
-                                                    </Stack>
-                                                ) : (
+                                                {isDefaultMembershipRole ? null : (
+                                                    // TODO: there are no tokens for the default membership role, what should we do?
+                                                    // <Stack gap>
+                                                    //     <Text>Digital Asset Requirement</Text>
+                                                    //     <Stack alignSelf="start">
+                                                    //         {'//roleDetails?.ruleData'}
+                                                    //     </Stack>
+                                                    // </Stack>
                                                     <Stack
                                                         position="relative"
                                                         zIndex="tooltipsAbove"
                                                     >
-                                                        {/* <TokenSearch isCreateRole={isCreateRole} /> */}
+                                                        <TokenSearch isCreateRole={isCreateRole} />
                                                     </Stack>
                                                 )}
 
@@ -364,13 +367,24 @@ function SubmitButton({
             return
         }
 
+        const ruleData =
+            data.tokens.length > 0
+                ? createOperationsTree(
+                      data.tokens.map((t) => ({
+                          address: t.address as Address,
+                          chainId: BigInt(t.chainId),
+                          type: convertTokenTypeToOperationType(t.type),
+                      })),
+                  )
+                : NoopRuleData
+
         if (isCreateRole) {
             await createRoleTransaction(
                 spaceId,
                 data.name,
                 data.permissions,
                 data.users,
-                NoopRuleData,
+                ruleData,
                 signer,
             )
         } else {
@@ -384,7 +398,7 @@ function SubmitButton({
                 data.name,
                 data.permissions,
                 data.users,
-                NoopRuleData,
+                ruleData,
                 signer,
             )
         }
@@ -410,29 +424,10 @@ function SubmitButton({
 }
 
 function UserSearch({ isCreateRole }: { isCreateRole: boolean }) {
-    const { getValues, setValue, trigger, formState, watch } = useFormContext<RoleFormSchemaType>()
-    const valueRef = useRef(false)
-    const usersWatch = watch('users')
-    const hadAValueAtSomePoint = useMemo(() => {
-        if (usersWatch.length) {
-            valueRef.current = true
-        }
-        return valueRef.current
-    }, [usersWatch])
+    const { getValues, setValue, formState } = useFormContext<RoleFormSchemaType>()
 
     const onSelectionChange = useEvent((addresses: Set<Address>) => {
         setValue('users', Array.from(addresses))
-        // trigger tokens validation b/c the schema contains a custom validation that requires at least one token or user
-        // and this timeout is a hack to make sure the tokens validation runs after the users are updated
-        setTimeout(() => {
-            if (isCreateRole) {
-                if (hadAValueAtSomePoint || formState.isSubmitted) {
-                    trigger('tokens')
-                }
-            } else {
-                trigger('tokens')
-            }
-        })
     })
 
     const initialSelection = useMemo(() => {
@@ -465,88 +460,98 @@ function UserSearch({ isCreateRole }: { isCreateRole: boolean }) {
     )
 }
 
-// TokenSearch
-// function TokenSearch({ isCreateRole }: { isCreateRole: boolean }) {
-//     const { getValues, setValue, trigger, watch, formState } = useFormContext<RoleFormSchemaType>()
-//     const valueRef = useRef(false)
-//     const tokenWatch = watch('tokens')
-//     const hadAValueAtSomePoint = useMemo(() => {
-//         if (tokenWatch.length) {
-//             valueRef.current = true
-//         }
-//         return valueRef.current
-//     }, [tokenWatch])
+function TokenSearch({ isCreateRole }: { isCreateRole: boolean }) {
+    const { getValues, setValue, trigger, watch, formState } = useFormContext<RoleFormSchemaType>()
+    const valueRef = useRef(false)
+    const tokenWatch = watch('tokens')
+    const usersWatch = watch('users')
+    const hadAValueAtSomePoint = useMemo(() => {
+        if (tokenWatch.length) {
+            valueRef.current = true
+        }
+        return valueRef.current
+    }, [tokenWatch])
 
-//     const { data: nftApiData, isLoading, isError } = useCollectionsForLoggedInUser()
+    const initialTokenValues = useMemo(() => {
+        const tokens = getValues('tokens')
+        if (tokens.length) {
+            return tokens
+        }
+        return []
+    }, [getValues])
 
-//     const initialSelection = useMemo(() => {
-//         if (isLoading) {
-//             return new Set<string>()
-//         }
-//         const tokens = getValues('tokens')
-//         return mapTokenDataStructToTokenPillSelectorSelection(tokens)
-//     }, [getValues, isLoading])
+    const { data: initialTokensData, isLoading: isLoadingInitialTokens } =
+        useMultipleTokenMetadatasForChainIds(initialTokenValues)
 
-//     const onSelectionChange = useCallback(
-//         (tokens: Set<string>) => {
-//             const tokenDataArray = mapTokenPillSelectorSelectionToTokenDataStruct(tokens)
-//             setValue('tokens', tokenDataArray)
-//             // trigger validation
-//             setTimeout(() => {
-//                 if (isCreateRole) {
-//                     if (hadAValueAtSomePoint || formState.isSubmitted) {
-//                         trigger('tokens')
-//                     }
-//                 } else {
-//                     trigger('tokens')
-//                 }
-//             })
-//         },
-//         [setValue, isCreateRole, hadAValueAtSomePoint, formState.isSubmitted, trigger],
-//     )
+    useEffect(() => {
+        // trigger token validation on either one of these values changes
+        // see ./schema.ts for the custom validation via superRefine
+        // which doesn't run when the form normally validates in "onChange" mode
+        usersWatch
+        tokenWatch
+        if (isLoadingInitialTokens) {
+            return
+        }
+        if (isCreateRole) {
+            if (hadAValueAtSomePoint || formState.isSubmitted) {
+                trigger('tokens')
+            }
+        } else {
+            trigger('tokens')
+        }
+    }, [
+        usersWatch,
+        tokenWatch,
+        isCreateRole,
+        hadAValueAtSomePoint,
+        formState.isSubmitted,
+        trigger,
+        isLoadingInitialTokens,
+    ])
 
-//     return (
-//         <Stack gap data-testid="token-search">
-//             <Text>Digital Asset Requirement</Text>
-//             {isLoading ? (
-//                 <Stack height="x4">
-//                     <ButtonSpinner />
-//                 </Stack>
-//             ) : (
-//                 <>
-//                     {isCreateRole && (
-//                         <Stack
-//                             horizontal
-//                             background="level2"
-//                             padding="md"
-//                             gap="sm"
-//                             rounded="sm"
-//                             alignItems="center"
-//                         >
-//                             <Icon type="info" color="gray2" size="square_sm" />
-//                             <Text size="sm">
-//                                 Select at least one digital asset or wallet address for gating this
-//                                 role.
-//                             </Text>
-//                         </Stack>
-//                     )}
-//                     <SearchInputHeightAdjuster>
-//                         {(inputContainerRef) => (
-//                             <TokenPillSelector
-//                                 isValidationError={formState.errors.tokens !== undefined}
-//                                 initialSelection={initialSelection}
-//                                 inputContainerRef={inputContainerRef}
-//                                 nftApiData={nftApiData}
-//                                 isNftApiError={isError}
-//                                 onSelectionChange={onSelectionChange}
-//                             />
-//                         )}
-//                     </SearchInputHeightAdjuster>
-//                 </>
-//             )}
-//         </Stack>
-//     )
-// }
+    const onSelectionChange = useCallback(
+        (args: { tokens: TokenDataWithChainId[] }) => {
+            const tokenDataArray = mapTokenOptionsToTokenDataStruct(args.tokens)
+            setValue('tokens', tokenDataArray)
+        },
+        [setValue],
+    )
+
+    return (
+        <Stack gap data-testid="token-search">
+            <Text>Digital Asset Requirement</Text>
+            {isLoadingInitialTokens ? (
+                <Stack centerContent padding>
+                    <ButtonSpinner />
+                </Stack>
+            ) : (
+                <>
+                    {isCreateRole && (
+                        <Stack
+                            horizontal
+                            background="level2"
+                            padding="md"
+                            gap="sm"
+                            rounded="sm"
+                            alignItems="center"
+                        >
+                            <Icon type="info" color="gray2" size="square_sm" />
+                            <Text size="sm">
+                                Select at least one digital asset or wallet address for gating this
+                                role.
+                            </Text>
+                        </Stack>
+                    )}
+                    <TokenSelector
+                        initialSelection={initialTokensData}
+                        isValidationError={formState.errors.tokens !== undefined}
+                        onSelectionChange={onSelectionChange}
+                    />
+                </>
+            )}
+        </Stack>
+    )
+}
 
 function PermissionsToggles({
     roleDetails,
@@ -566,7 +571,7 @@ function PermissionsToggles({
             id: roleDetails?.id.toString() ?? '',
             name: formValues.name,
             permissions: formValues.permissions ?? [],
-            tokens: (formValues.tokens as TokenDataStruct[]) ?? [],
+            tokens: formValues.tokens ?? [],
             users: (formValues.users as Address[]) ?? [],
         }
     })
@@ -650,8 +655,3 @@ function ErrorsNotification() {
         </AnimatePresence>
     )
 }
-/*
-function createTokenEntitlementStruct(arg0: { contractAddress: string; tokenIds: number[] }) {
-    throw new Error('Function not implemented.')
-}
-*/

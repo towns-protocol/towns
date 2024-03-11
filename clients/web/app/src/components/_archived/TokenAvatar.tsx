@@ -12,13 +12,13 @@ import { shortAddress } from 'ui/utils/utils'
 import { ClipboardCopy } from '@components/ClipboardCopy/ClipboardCopy'
 import { ButtonSpinner } from '@components/Login/LoginButton/Spinner/ButtonSpinner'
 import { TriggerProps } from 'ui/components/Tooltip/TooltipRenderer'
-import { TokenProps } from './types'
+import { TokenData } from '@components/Tokens/types'
 
 const tokenAvatarImageSourceMap = new Map<string, string>()
 
 const FALLBACK = 'fallback'
 
-export type TokenAvatarProps = Partial<TokenProps> & {
+export type TokenAvatarProps = Partial<TokenData> & {
     contractAddress: string
     tokenIds: number[]
     size: AvatarProps['size']
@@ -34,7 +34,23 @@ export type TokenAvatarProps = Partial<TokenProps> & {
     avatarToggleClasses?: Partial<typeof avatarToggleClasses>
 }
 
-export const TokenAvatar = (props: TokenAvatarProps) => {
+/**
+ * @deprecated
+ */
+export const TokenAvatar = (
+    props: TokenAvatarProps & {
+        onClick?: (
+            {
+                contractAddress,
+                tokenIds,
+            }: {
+                contractAddress: string
+                tokenIds: number[]
+            },
+            e: React.MouseEvent<HTMLElement, MouseEvent>,
+        ) => void
+    },
+) => {
     const {
         imgSrc,
         label,

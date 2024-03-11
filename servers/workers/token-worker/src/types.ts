@@ -95,16 +95,16 @@ export type GetContractMetadataResponse = ContractMetadata
 
 // This is a type for the client to work with. Reponses to the client should include this type, whether the payload is from Alchemy or Infura
 export type ContractMetadata = {
-    address?: string
-    name?: string
-    symbol?: string
+    address?: string | null
+    name?: string | null
+    symbol?: string | null
     tokenType?: string
     imageUrl?: string | null // from OpenSea data if available
 }
 
 export type GetCollectionMetadataAcrossNetworksResponse = {
     chainId: number
-    data: ContractMetadata | undefined
+    data: ContractMetadata
 }
 
 // TODO: remove? we probably won't use this endpoint

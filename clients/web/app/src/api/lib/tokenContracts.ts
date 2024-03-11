@@ -3,7 +3,7 @@ import { z } from 'zod'
 import { ContractMetadata, GetCollectionsForOwnerResponse } from '@token-worker/types'
 import { Address } from 'wagmi'
 import { useMemo } from 'react'
-import { TokenProps, TokenType } from '@components/Tokens/types'
+import { TokenData, TokenType } from '@components/Tokens/types'
 import { env } from 'utils'
 import {
     fetchBaseSepolia,
@@ -21,7 +21,7 @@ export const queryKey = 'tokenContractsForAddress'
 type CachedData = {
     previousPageKey?: string
     nextPageKey?: string
-    tokens: TokenProps[]
+    tokens: TokenData[]
 }
 
 type UseTokenContractsForAdress = {
@@ -96,8 +96,8 @@ async function getLocalHostTokens(wallet: string, nftNetwork: number) {
         return getTokenContractsForAddress(wallet, nftNetwork)
     }
 
-    // on local, just return the towns token, if it exists (must be anvil account)
-    const tokens: TokenProps[] = []
+    // on local, just return the zion token, if it exists (must be anvil account)
+    const tokens: TokenData[] = []
     return {
         tokens,
         nextPageKey: undefined,
@@ -122,7 +122,7 @@ async function getTokenContractsForAddress(wallet: string, nftNetwork: number) {
     return { tokens, nextPageKey }
 }
 
-export async function mapToTokenProps(token: ContractMetadata): Promise<TokenProps> {
+export async function mapToTokenProps(token: ContractMetadata): Promise<TokenData> {
     let type: TokenType | undefined
     try {
         type = token.address ? await getTokenType({ address: token.address as Address }) : undefined
@@ -133,7 +133,7 @@ export async function mapToTokenProps(token: ContractMetadata): Promise<TokenPro
     return {
         imgSrc: token.imageUrl || '',
         label: token.name || '',
-        contractAddress: token.address || '',
-        type,
+        address: (token.address || '') as Address,
+        type: type || TokenType.UNKNOWN,
     }
 }

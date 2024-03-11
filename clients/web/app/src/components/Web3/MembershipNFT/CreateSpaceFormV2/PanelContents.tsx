@@ -1,20 +1,14 @@
 import React, { ChangeEvent, PropsWithChildren, useCallback, useMemo, useRef } from 'react'
 import { UseFormReturn, useFormContext } from 'react-hook-form'
 import { ethers } from 'ethers'
-import { getContractsInfo } from 'use-towns-client'
 import { Box, Dropdown, ErrorMessage, IconButton, RadioCard, Stack, Text, TextField } from '@ui'
 import { FadeInBox } from '@components/Transitions'
 import { useAuth } from 'hooks/useAuth'
-import { ClipboardCopy } from '@components/ClipboardCopy/ClipboardCopy'
-import { env } from 'utils'
-import { useEnvironment } from 'hooks/useEnvironmnet'
-import { shortAddress } from 'ui/utils/utils'
-import { TokenPillSelector } from '@components/SpaceSettingsPanel/TokenPillSelector'
-import { useCollectionsForLoggedInUser } from 'api/lib/tokenContracts'
-import {
-    mapTokenDataStructToTokenPillSelectorSelection,
-    mapTokenPillSelectorSelectionToTokenDataStruct,
-} from '@components/SpaceSettingsPanel/utils'
+import { mapTokenOptionsToTokenDataStruct } from '@components/SpaceSettingsPanel/utils'
+import { TokenDataWithChainId } from '@components/Tokens/types'
+import { TokenSelector } from '@components/Tokens/TokenSelector/TokenSelector'
+import { useMultipleTokenMetadatasForChainIds } from 'api/lib/collectionMetadata'
+import { ButtonSpinner } from 'ui/components/Spinner/ButtonSpinner'
 import { PanelContentProps, PanelType } from './types'
 import { CreateSpaceFormV2SchemaType, membershipCostError } from './CreateSpaceFormV2.schema'
 
@@ -90,28 +84,30 @@ function GatingContent() {
         [],
     )
 
-    const intialTokenSelection = useMemo(() => {
+    const initialTokenValues = useMemo(() => {
         // if the everyone card was clicked while the panel was open, the token field is reset and shouldn't be prepopulated
         if (tokenFieldKey > 0) {
-            return new Set<string>()
+            return []
         }
         const tokens = getValues('tokensGatingMembership')
-        return mapTokenDataStructToTokenPillSelectorSelection(tokens)
+        if (tokens.length) {
+            return tokens
+        }
+        return []
     }, [getValues, tokenFieldKey])
 
+    const { data: initialTokensData, isLoading: isLoadingInitialTokens } =
+        useMultipleTokenMetadatasForChainIds(initialTokenValues)
+
     const onSelectedTokensChange = useCallback(
-        (tokens: Set<string>) => {
-            const tokenDataArray = mapTokenPillSelectorSelectionToTokenDataStruct(tokens)
+        (args: { tokens: TokenDataWithChainId[] }) => {
+            const tokenDataArray = mapTokenOptionsToTokenDataStruct(args.tokens)
             setValue?.('tokensGatingMembership', tokenDataArray, {
                 shouldValidate: true,
             })
         },
         [setValue],
     )
-
-    const { data: nftApiData, isError } = useCollectionsForLoggedInUser()
-
-    const chainId = useEnvironment().chainId
 
     if (!wallet) {
         return null
@@ -140,26 +136,20 @@ function GatingContent() {
                     {...formProps}
                 >
                     {() => {
-                        return (
+                        return isLoadingInitialTokens ? (
+                            <Stack centerContent padding>
+                                <ButtonSpinner />
+                            </Stack>
+                        ) : (
                             <>
-                                {env.DEV && chainId === 31337 && (
-                                    <ClipboardCopy
-                                        label={`Mock NFT ${shortAddress(
-                                            getContractsInfo(31337).mockErc721aAddress,
-                                        )} (local wallet linking)`}
-                                        clipboardContent={
-                                            getContractsInfo(31337).mockErc721aAddress
-                                        }
-                                    />
-                                )}
                                 <Box key={'tokens' + tokenFieldKey}>
-                                    <TokenPillSelector
+                                    <TokenSelector
                                         key={'tokens' + tokenFieldKey}
-                                        isValidationError={false}
-                                        initialSelection={intialTokenSelection}
-                                        nftApiData={nftApiData}
-                                        isNftApiError={isError}
-                                        fieldRefOverride={fieldRefOverride}
+                                        isValidationError={
+                                            formProps.formState.errors.tokensGatingMembership !==
+                                            undefined
+                                        }
+                                        initialSelection={initialTokensData}
                                         onSelectionChange={onSelectedTokensChange}
                                     />
                                 </Box>

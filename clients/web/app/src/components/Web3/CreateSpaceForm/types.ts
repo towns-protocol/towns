@@ -1,15 +1,16 @@
 import { UploadImageRequestConfig } from 'api/lib/uploadImage'
-import { MEMBERSHIP_TYPE, SPACE_NAME, TOKENS } from '../constants'
+import { MEMBERSHIP_TYPE, SPACE_NAME } from '../constants'
 
-export type TokenDataStruct = {
-    contractAddress: string
-    tokenIds: number[]
-}
+// export type TokenDataStruct = {
+//     address: string
+//     chainId: number
+//     tokenIds: number[]
+// }
 
 export interface CreateSpaceFormState {
     step1: {
         [MEMBERSHIP_TYPE]: 'everyone' | 'tokenHolders' | null
-        [TOKENS]: TokenDataStruct[]
+        // [TOKENS]: TokenDataStruct[]
     }
     step2: {
         [SPACE_NAME]: string | null

@@ -26,9 +26,10 @@ import { AvatarTextHorizontal } from '@components/Avatar/AvatarTextHorizontal'
 import { shortAddress } from 'ui/utils/utils'
 import { FadeInBox } from '@components/Transitions'
 import { TEMPORARY_SPACE_ICON_URL } from '@components/Web3/constants'
-import { FetchedTokenAvatar } from '@components/Tokens/FetchedTokenAvatar'
 import { AutoGrowTextArea } from 'ui/components/TextArea/AutoGrowTextArea'
 import { useAbstractAccountAddress } from 'hooks/useAbstractAccountAddress'
+import { useTokenMetadataForChainId } from 'api/lib/collectionMetadata'
+import { TokenImage } from '@components/Tokens/TokenSelector/TokenImage'
 import { CreateSpaceFormV2SchemaType, schema } from './CreateSpaceFormV2.schema'
 import { AvatarPlaceholder } from '../AvatarPlaceholder'
 import { PanelType, TransactionDetails } from './types'
@@ -189,25 +190,15 @@ export function CreateSpaceFormV2() {
                                                             ) : (
                                                                 tokensGatingMembership.map(
                                                                     (token) => (
-                                                                        <FetchedTokenAvatar
-                                                                            noLabel
+                                                                        <SelectedToken
                                                                             key={
-                                                                                token.contractAddress as string
+                                                                                token.address +
+                                                                                token.chainId
                                                                             }
-                                                                            address={
-                                                                                token.contractAddress as string
+                                                                            contractAddress={
+                                                                                token.address
                                                                             }
-                                                                            tokenIds={
-                                                                                token.tokenIds as number[]
-                                                                            }
-                                                                            size="avatar_x4"
-                                                                            labelProps={{
-                                                                                size: 'md',
-                                                                            }}
-                                                                            layoutProps={{
-                                                                                horizontal: true,
-                                                                                maxWidth: 'auto',
-                                                                            }}
+                                                                            chainId={token.chainId}
                                                                         />
                                                                     ),
                                                                 )
@@ -473,4 +464,10 @@ function SpaceNameField({
             />
         </>
     )
+}
+
+function SelectedToken({ contractAddress, chainId }: { contractAddress: string; chainId: number }) {
+    const { data: tokenDataWithChainId } = useTokenMetadataForChainId(contractAddress, chainId)
+
+    return <TokenImage imgSrc={tokenDataWithChainId?.data.imgSrc} width="x4" />
 }

@@ -1,7 +1,6 @@
 import React, { useEffect } from 'react'
 import { Permission } from '@river/web3'
 import { Paragraph, Stack, Toggle } from '@ui'
-import { TokenDataStruct } from '@components/Web3/CreateSpaceForm/types'
 import { rolePermissionDescriptions } from './rolePermissions.const'
 
 type PermissionMeta = (typeof rolePermissionDescriptions)[keyof typeof rolePermissionDescriptions]
@@ -9,9 +8,7 @@ type PermissionMeta = (typeof rolePermissionDescriptions)[keyof typeof rolePermi
 export type Role = {
     id: string
     name: string
-    color?: string
     permissions: Permission[]
-    tokens: TokenDataStruct[]
     users: string[]
 }
 

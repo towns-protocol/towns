@@ -1,4 +1,5 @@
 import { z } from 'zod'
+import { tokenEntitlementSchema } from '@components/Tokens/TokenSelector/tokenSchemas'
 
 // enum MembershipGasFeePayer {
 //     Member = 'member',
@@ -79,12 +80,7 @@ export const schema = z
                 },
             }),
         ]),
-        tokensGatingMembership: z.array(
-            z.object({
-                contractAddress: z.string(),
-                tokenIds: z.array(z.number()),
-            }),
-        ),
+        tokensGatingMembership: z.array(tokenEntitlementSchema),
     })
     .superRefine((data, ctx) => {
         if (data['membershipLimit'] > 1000 && data['membershipCost'] < 1) {

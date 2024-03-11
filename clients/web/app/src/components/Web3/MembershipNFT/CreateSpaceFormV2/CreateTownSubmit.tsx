@@ -1,5 +1,5 @@
 import { UseFormReturn } from 'react-hook-form'
-import { MembershipStruct, NoopRuleData, Permission } from '@river/web3'
+import { MembershipStruct, NoopRuleData, Permission, createOperationsTree } from '@river/web3'
 import { CreateSpaceInfo, useCreateSpaceTransaction, useTownsClient } from 'use-towns-client'
 import { useNavigate } from 'react-router'
 import React, { useCallback, useEffect, useMemo } from 'react'
@@ -17,6 +17,7 @@ import { useSetSpaceTopic } from 'hooks/useSpaceTopic'
 import { FailedUploadAfterSpaceCreation } from '@components/Notifications/FailedUploadAfterSpaceCreation'
 import { UserOpTxModal } from '@components/Web3/UserOpTxModal/UserOpTxModal'
 import { createPrivyNotAuthenticatedNotification } from '@components/Notifications/utils'
+import { convertTokenTypeToOperationType } from '@components/Tokens/utils'
 import { BottomBar } from '../BottomBar'
 import { PanelType, TransactionDetails } from './types'
 import { CreateSpaceFormV2SchemaType } from './CreateSpaceFormV2.schema'
@@ -128,9 +129,19 @@ export function CreateTownSubmit({
                         pricingModule: ethers.constants.AddressZero,
                     },
                     requirements: {
+                        // TODO: make sure token gating works after xchain updated
                         everyone: tokensGatingMembership.length === 0,
                         users: [],
-                        ruleData: NoopRuleData,
+                        ruleData:
+                            tokensGatingMembership.length === 0
+                                ? NoopRuleData
+                                : createOperationsTree(
+                                      tokensGatingMembership.map((t) => ({
+                                          address: t.address as Address,
+                                          chainId: BigInt(t.chainId),
+                                          type: convertTokenTypeToOperationType(t.type),
+                                      })),
+                                  ),
                     },
                     permissions: [Permission.Read, Permission.Write],
                 }

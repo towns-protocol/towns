@@ -1,6 +1,10 @@
 import { rest } from 'msw'
 import { unfurl } from './unfurl'
-import { getContractMetadataMock, tokenCollections } from './token-collections'
+import {
+    getContractMetadataAcrossNetworksMock,
+    getContractMetadataMock,
+    tokenCollections,
+} from './token-collections'
 import { env } from '../src/utils'
 
 export const browserHandlers = [
@@ -32,6 +36,18 @@ export const testHandlers = [
         const data = getContractMetadataMock[address]
         return res(ctx.status(200), ctx.json(data))
     }),
+
+    rest.get(
+        `${env.VITE_TOKEN_SERVER_URL || ''}/api/getCollectionMetadataAcrossNetworks/*`,
+        (req, res, ctx) => {
+            const address = req.url.searchParams.get('contractAddress')
+            if (!address) {
+                throw new Error('no address provided')
+            }
+            const data = getContractMetadataAcrossNetworksMock[address]
+            return res(ctx.status(200), ctx.json([data]))
+        },
+    ),
     // END TOKEN WORKER ///////////////
 
     // GATEWAY WORKER ///////////////

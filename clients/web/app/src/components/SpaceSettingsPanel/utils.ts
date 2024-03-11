@@ -1,4 +1,10 @@
-import { TokenDataStruct } from '@components/Web3/CreateSpaceForm/types'
+import { TokenDataWithChainId } from '@components/Tokens/types'
+
+type TokenDataStruct = {
+    contractAddress: string
+    chainId: number
+    tokenIds: number[]
+}
 
 export function convertToNumber(val: string) {
     if (isNumeric(val)) {
@@ -23,7 +29,8 @@ export function splitKeyToContractAddressAndTokenId(key: string) {
     return key.split(TOKEN_SPLITTER)
 }
 
-export function mapTokenDataStructToTokenPillSelectorSelection(
+// Probably not needed w/ new xchain ux
+export function mapTokenDataStructToTokenPillSelectorSelectionString(
     tokens: TokenDataStruct[],
 ): Set<string> {
     const selectedTokens = new Set<string>()
@@ -40,7 +47,8 @@ export function mapTokenDataStructToTokenPillSelectorSelection(
     return selectedTokens
 }
 
-export function mapTokenPillSelectorSelectionToTokenDataStruct(tokenSelection: Set<string>) {
+// Probably not needed w/ new xchain ux
+export function mapTokenPillSelectorSelectionStringToTokenDataStruct(tokenSelection: Set<string>) {
     // tokens is a set of strings like <address>__TOKEN_ID__<token_id> "0x1234__TOKEN_ID__1"
     // token_id is needed for ERC1155 tokens
     const tokenDataArray: TokenDataStruct[] = []
@@ -58,6 +66,7 @@ export function mapTokenPillSelectorSelectionToTokenDataStruct(tokenSelection: S
         } else {
             tokenDataArray.push({
                 contractAddress,
+                chainId: 1,
                 tokenIds: tokenId !== undefined ? [+tokenId] : [],
             })
         }
@@ -67,4 +76,16 @@ export function mapTokenPillSelectorSelectionToTokenDataStruct(tokenSelection: S
         }
     })
     return tokenDataArray
+}
+
+export function mapTokenOptionsToTokenDataStruct(tokens: TokenDataWithChainId[]) {
+    return tokens.map((t) => {
+        return {
+            address: t.data.address,
+            chainId: t.chainId,
+            type: t.data.type,
+            tokenIds: [],
+            threshold: 1, // TODO: add count/threshold
+        }
+    })
 }
