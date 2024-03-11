@@ -56,7 +56,7 @@ describe('messageThreads', () => {
             expect(
                 alice
                     .getEvents_TypedRoomMessage(channelId)
-                    .find((event) => event.content && event.content.inReplyTo === messageId),
+                    .find((event) => event.content && event.content.threadId === messageId),
             ).toBeDefined(),
         )
     }) // end test - send a threaded message

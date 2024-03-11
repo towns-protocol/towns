@@ -63,7 +63,7 @@ describe('sendThreadedMessage', () => {
         await waitFor(async () => {
             const e = await bob.getLatestEvent<RoomMessageEvent>(channelId)
             expect(e?.content?.body).toEqual('Hello Bob!')
-            expect(e?.content?.inReplyTo).toEqual(event?.eventId)
+            expect(e?.content?.threadId).toEqual(event?.eventId)
         })
         await alice.logout()
         await bob.logout()

@@ -148,7 +148,7 @@ function makeMessage(params: {
     return {
         kind: ZTEvent.RoomMessage,
         body: params.body,
-        inReplyTo: params.threadId,
+        threadId: params.threadId,
         threadPreview: undefined,
         mentions: [],
         editsEventId: params.editsEventId,
