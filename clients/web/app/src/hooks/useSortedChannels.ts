@@ -198,7 +198,7 @@ export const useSortedChannels = ({ spaceId, currentRouteId }: Params) => {
     }
 }
 
-const useJoinedChannels = (spaceId?: string) => {
+export const useJoinedChannels = (spaceId?: string) => {
     const space = useSpaceData(spaceId)
     const myChannelGroups = useMyChannels(space)
     const joinedChannels = useMemo(

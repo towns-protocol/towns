@@ -27,6 +27,8 @@ interface AppState {
     bugReportCredentials: { name: string; email: string }
     recentlyMintedSpaceIds: string[]
     setRecentlyMintedSpaceIds: (spaceIds: string[]) => void
+    seenChannelIds: string[]
+    setSeenChannelIds: (seenChannelIds: string[]) => void
 }
 
 export const GLOBAL_STORE_NAME = 'towns/global'
@@ -108,6 +110,10 @@ export const useStore = create(
             recentlyMintedSpaceIds: [],
             setRecentlyMintedSpaceIds: (spaceIds) => {
                 set(() => ({ recentlyMintedSpaceIds: spaceIds }))
+            },
+            seenChannelIds: [],
+            setSeenChannelIds: (seenChannelIds) => {
+                set(() => ({ seenChannelIds }))
             },
         }),
         {

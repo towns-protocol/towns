@@ -17,6 +17,7 @@ import { useChannelIdFromPathname } from 'hooks/useChannelIdFromPathname'
 import { useDevice } from 'hooks/useDevice'
 import { useStore } from 'store/store'
 import { useSpaceChannels } from 'hooks/useSpaceChannels'
+import { useUnseenChannelIds } from 'hooks/useUnseenChannelIdsCount'
 
 export const AllChannelsList = ({
     onHideBrowseChannels,
@@ -26,6 +27,7 @@ export const AllChannelsList = ({
     const space = useSpaceData()
     const { isTouch } = useDevice()
     const channels = useSpaceChannels()
+    const { unseenChannelIds } = useUnseenChannelIds()
 
     return (
         <Stack height="100%">
@@ -70,6 +72,7 @@ export const AllChannelsList = ({
                                         name={channel.label}
                                         topic={channel.topic}
                                         channelNetworkId={channel.id}
+                                        showDot={unseenChannelIds.has(channel.id)}
                                     />
                                 </Stack>
                             </ChannelContextProvider>
@@ -91,11 +94,13 @@ export const ChannelItem = ({
     topic,
     channelNetworkId,
     space,
+    showDot,
 }: {
     name: string
     topic?: string
     channelNetworkId: string
     space: SpaceData
+    showDot?: boolean
 }) => {
     const navigate = useNavigate()
     const { client, leaveRoom } = useTownsClient()
@@ -183,12 +188,23 @@ export const ChannelItem = ({
     return (
         <Stack>
             <Stack horizontal justifyContent="spaceBetween">
-                <Stack horizontal centerContent gap="sm">
+                <Stack horizontal centerContent gap="sm" overflow="hidden">
                     <Icon type="tag" padding="line" background="level2" size="square_lg" />
-                    <Stack gap="sm">
-                        <Text truncate color="gray1" textAlign="left">
-                            {name}
-                        </Text>
+                    <Stack gap="sm" overflow="hidden" padding="sm">
+                        <Stack horizontal shrink={false} gap="sm" alignItems="center">
+                            <Text truncate color="gray1" textAlign="left">
+                                {name}
+                            </Text>
+                            {showDot && (
+                                <Box
+                                    shrink={false}
+                                    width="x1"
+                                    height="x1"
+                                    background="accent"
+                                    rounded="full"
+                                />
+                            )}
+                        </Stack>
                         {topic && (
                             <Text color="gray2" size="sm">
                                 {topic}

@@ -28,6 +28,7 @@ import { useStore } from 'store/store'
 import { ReloadPrompt } from '@components/ReloadPrompt/ReloadPrompt'
 import { env } from 'utils'
 import { useDevice } from 'hooks/useDevice'
+import { useUnseenChannelIds } from 'hooks/useUnseenChannelIdsCount'
 import { SideBar } from '../_SideBar'
 import { SidebarListLayout } from './SidebarListLayout'
 import * as styles from './SpaceSideBar.css'
@@ -50,6 +51,7 @@ export const SpaceSideBar = (props: Props) => {
     const { isTouch } = useDevice()
     const { loggedInWalletAddress } = useAuth()
     const { createLink } = useCreateLink()
+    const { unseenChannelIds } = useUnseenChannelIds()
 
     const unreadThreadsCount = useSpaceThreadRootsUnreadCount()
     const membership = useMyMembership(space?.id)
@@ -258,6 +260,7 @@ export const SpaceSideBar = (props: Props) => {
                                     id="browseChannels"
                                     label="Browse channels"
                                     minHeight="x5"
+                                    badge={<Badge value={unseenChannelIds.size} />}
                                     onClick={onShowBrowseChannels}
                                 />
 

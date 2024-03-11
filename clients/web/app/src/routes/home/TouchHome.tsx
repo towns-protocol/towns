@@ -63,7 +63,9 @@ import { ShakeToReport } from '@components/BugReportButton/ShakeToReport'
 import { useAbstractAccountAddress } from 'hooks/useAbstractAccountAddress'
 import { ReloadPrompt } from '@components/ReloadPrompt/ReloadPrompt'
 import { env } from 'utils'
-import { AllChannelsList, ChannelItem } from '../AllChannelsList/AllChannelsList'
+import { BrowseChannelsPanel } from '@components/BrowseChannelsPanel/BrowseChannelsPanel'
+import { useUnseenChannelIds } from 'hooks/useUnseenChannelIdsCount'
+import { ChannelItem } from '../AllChannelsList/AllChannelsList'
 import { TouchTabBarLayout } from '../layouts/TouchTabBarLayout'
 
 const transition = {
@@ -90,6 +92,8 @@ export const TouchHome = () => {
     const members = useMemo(() => {
         return memberIds.map((userId) => usersMap[userId])
     }, [memberIds, usersMap])
+
+    const { unseenChannelIds, markChannelsAsSeen } = useUnseenChannelIds()
 
     const { hasPermission: canCreateChannel } = useHasPermission({
         spaceId: space?.id,
@@ -166,6 +170,11 @@ export const TouchHome = () => {
     const onDisplayMainPanel = useCallback(() => {
         setActiveOverlay('main-panel')
     }, [])
+
+    const onHideBrowseChannels = useCallback(() => {
+        markChannelsAsSeen()
+        onHideOverlay()
+    }, [onHideOverlay, markChannelsAsSeen])
 
     const { imageSrc } = useImageSource(space?.id ?? '', ImageVariants.thumbnail300)
 
@@ -309,6 +318,7 @@ export const TouchHome = () => {
                                                     space={space}
                                                 />
                                                 <BrowseChannelRow
+                                                    badgeCount={unseenChannelIds.size}
                                                     onClick={() =>
                                                         setActiveOverlay('browse-channels')
                                                     }
@@ -360,8 +370,8 @@ export const TouchHome = () => {
                         <CreateChannelFormModal spaceId={space.id} onHide={onHideOverlay} />
                     )}
                     {activeOverlay === 'browse-channels' && (
-                        <ModalContainer touchTitle="Browse channels" onHide={onHideOverlay}>
-                            <AllChannelsList onHideBrowseChannels={onHideOverlay} />
+                        <ModalContainer touchTitle="Browse channels" onHide={onHideBrowseChannels}>
+                            <BrowseChannelsPanel />
                         </ModalContainer>
                     )}
                 </AnimatePresence>
@@ -655,12 +665,18 @@ const CreateChannelRow = (props: { onClick: () => void }) => {
     )
 }
 
-const BrowseChannelRow = (props: { onClick: () => void }) => {
+const BrowseChannelRow = (props: { onClick: () => void; badgeCount?: number }) => {
+    console.log(props.badgeCount, 'props.badgeCount')
     return (
         <NavItem padding="none" onClick={props.onClick}>
             <NavItemContent>
                 <SearchResultItemIcon type="search" color="default" />
                 <Text color="gray1">Browse channels</Text>
+                {props.badgeCount && props.badgeCount > 0 ? (
+                    <Badge value={props.badgeCount} />
+                ) : (
+                    <></>
+                )}
             </NavItemContent>
         </NavItem>
     )

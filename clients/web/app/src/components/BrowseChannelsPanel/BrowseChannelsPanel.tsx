@@ -8,12 +8,14 @@ import { Panel } from '@components/Panel/Panel'
 import { useSpaceChannels } from 'hooks/useSpaceChannels'
 import { ChannelItem } from 'routes/AllChannelsList/AllChannelsList'
 import { ButtonSpinner } from 'ui/components/Spinner/ButtonSpinner'
+import { useUnseenChannelIds } from 'hooks/useUnseenChannelIdsCount'
 
 export const BrowseChannelsPanel = () => {
     const space = useSpaceData()
     const channels = useSpaceChannels()
     const [searchParams, setSearchParams] = useSearchParams()
     const [searchText, setSearchText] = React.useState('')
+    const { unseenChannelIds, markChannelsAsSeen } = useUnseenChannelIds()
 
     const onTextFieldChanged = useCallback(
         (event: React.ChangeEvent<HTMLInputElement>) => {
@@ -23,6 +25,7 @@ export const BrowseChannelsPanel = () => {
     )
 
     const onCloseClick = useEvent(() => {
+        markChannelsAsSeen()
         searchParams.delete('browse-channels')
         setSearchParams(searchParams)
     })
@@ -55,6 +58,7 @@ export const BrowseChannelsPanel = () => {
                                         name={channel.label}
                                         topic={channel.topic}
                                         channelNetworkId={channel.id}
+                                        showDot={unseenChannelIds.has(channel.id)}
                                     />
                                 </Stack>
                             </ChannelContextProvider>
