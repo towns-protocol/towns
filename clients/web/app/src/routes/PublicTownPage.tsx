@@ -232,7 +232,7 @@ const Header = (props: {
             </Stack>
             {isShowingBugReport && (
                 <ModalContainer onHide={onHideBugReport}>
-                    <ErrorReportForm />
+                    <ErrorReportForm onHide={onHideBugReport} />
                 </ModalContainer>
             )}
         </Box>

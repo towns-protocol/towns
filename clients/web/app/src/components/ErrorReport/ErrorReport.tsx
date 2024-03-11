@@ -138,7 +138,8 @@ export const ErrorReportModal = (props: { minimal?: boolean }) => {
     )
 }
 
-export const ErrorReportForm = () => {
+export const ErrorReportForm = (props: { onHide?: () => void }) => {
+    const { onHide } = props
     const [success, setSuccess] = useState(false)
     const [errorMessage, setErrorMessage] = useState('')
     const { mutate: doCustomError, isLoading } = useMutation(postCustomError)
@@ -154,7 +155,8 @@ export const ErrorReportForm = () => {
 
     const onCancel = useCallback(() => {
         setSidePanel(null)
-    }, [setSidePanel])
+        onHide?.()
+    }, [setSidePanel, onHide])
 
     const { requestPermission, revokePermission, permissionStatus } = useRequestShakePermissions()
     const onActivateShake = useCallback(() => {
