@@ -8,10 +8,8 @@ import {
     RiverDbManager,
     makeStreamRpcClient,
     MockEntitlementsDelegate,
-    SignerContext,
+    makeSignerContext,
 } from '@river/sdk'
-import { bin_fromHexString } from '@river/dlog'
-import { makeOldRiverDelegateSig } from '@river/encryption'
 import { ethers } from 'ethers'
 import { RoomMessageEvent, ZTEvent } from '../../src/types/timeline-types'
 import {
@@ -28,14 +26,7 @@ describe('casablanca', () => {
     test('test instantiating a casablanca client', async () => {
         const primaryWallet = ethers.Wallet.createRandom()
         const delegateWallet = ethers.Wallet.createRandom()
-        const creatorAddress = bin_fromHexString(primaryWallet.address)
-        const delegateSig = await makeOldRiverDelegateSig(primaryWallet, delegateWallet.publicKey)
-        const pk = delegateWallet.privateKey.slice(2)
-        const context: SignerContext = {
-            signerPrivateKey: () => pk,
-            creatorAddress,
-            delegateSig,
-        }
+        const context = await makeSignerContext(primaryWallet, delegateWallet)
         const csurl: string = process.env.CASABLANCA_SERVER_URL!
         log('new CasablancaClient', csurl)
         const rpcClient = makeStreamRpcClient(csurl)

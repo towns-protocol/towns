@@ -7,10 +7,9 @@ import {
     userIdFromAddress,
     EntitlementsDelegate,
     DecryptionStatus,
+    makeSignerContext,
 } from '@river/sdk'
 import { CreateSpaceParams, IRuleEntitlement } from '@river/web3'
-import { bin_fromHexString } from '@river/dlog'
-import { makeOldRiverDelegateSig } from '@river/encryption'
 import { FullyReadMarker } from '@river/proto'
 import {
     ChannelTransactionContext,
@@ -179,14 +178,7 @@ export class TownsClient implements EntitlementsDelegate {
         if (!signer) {
             throw new SignerUndefinedError("can't sign without a web3 signer")
         }
-        const creatorAddress = bin_fromHexString(await signer.getAddress())
-        const delegateSig = await makeOldRiverDelegateSig(signer, delegateWallet.publicKey)
-        const pk = delegateWallet.privateKey.slice(2)
-        const context: SignerContext = {
-            signerPrivateKey: () => pk,
-            creatorAddress,
-            delegateSig,
-        }
+        const context = await makeSignerContext(signer, delegateWallet)
         return context
     }
 
