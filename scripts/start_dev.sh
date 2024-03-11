@@ -136,7 +136,7 @@ echo "Continuing with the rest of the script..."
 yarn install
 
 # build protobufs
-./river/scripts/build-protobufs.sh
+yarn csb:build
 
 # Array of commands from the VS Code tasks
 commands=(

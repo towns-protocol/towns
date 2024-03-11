@@ -330,7 +330,7 @@
     {
       "label": "BuildProtobufs",
       "type": "shell",
-      "command": "./river/scripts/build-protobufs.sh",
+      "command": "yarn csb:build",
       "isBackground": true,
       "problemMatcher": [],
       "presentation": {
