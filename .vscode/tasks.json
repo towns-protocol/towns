@@ -48,6 +48,7 @@
       "dependsOn": [
         "Deploy Smart Contracts",
         "YarnInstall",
+        "BuildProtobufs",
         "Stage 3"
       ],
       "group": {
@@ -318,6 +319,18 @@
       "label": "BuildContractTypes",
       "type": "shell",
       "command": "./river/scripts/build-contract-types.sh localhost",
+      "isBackground": true,
+      "problemMatcher": [],
+      "presentation": {
+        "group": "ephemeral",
+        "focus": true,
+        "panel": "shared",
+      }
+    },
+    {
+      "label": "BuildProtobufs",
+      "type": "shell",
+      "command": "./river/scripts/build-protobufs.sh",
       "isBackground": true,
       "problemMatcher": [],
       "presentation": {
