@@ -44,8 +44,7 @@ export const QuotedMessage = (props: Props) => {
                     shrink
                     hoverable
                     background="level2"
-                    minWidth={isTouch ? '100%' : undefined}
-                    maxWidth={isTouch ? '100%' : '500'}
+                    maxWidth={isTouch ? '300' : '500'}
                     padding="paragraph"
                     rounded="md"
                     width="fit-content"

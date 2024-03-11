@@ -225,7 +225,10 @@ const PlateEditorWithoutBoundary = ({
 
     const { inlineReplyPreview, onCancelInlineReply } = useInlineReplyAttchmentPreview({
         onNewInlineReply: () => {
-            // focus the editor when a new inline reply is set
+            const e = editorRef.current
+            if (e) {
+                focusEditor(e)
+            }
         },
     })
 
