@@ -224,6 +224,7 @@ func createChannel(
 			protocol.MembershipOp_SO_JOIN,
 			userId,
 			userId,
+			&spaceId,
 		),
 		nil,
 	)
@@ -405,6 +406,7 @@ func testMethods(t *testing.T, client protocolconnect.StreamServiceClient, url s
 			protocol.MembershipOp_SO_JOIN,
 			channelId,
 			nil,
+			spaceId.Bytes(),
 		),
 		resuser.PrevMiniblockHash,
 	)

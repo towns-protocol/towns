@@ -1199,11 +1199,13 @@ export class Client
             this.logError('joinStream: user already a member', streamId)
             return stream
         }
+        const streamParentId = stream.view.getContent().getStreamParentId()
         await this.makeEventAndAddToStream(
             this.userStreamId,
             make_UserPayload_UserMembership({
                 op: MembershipOp.SO_JOIN,
                 streamId: streamIdAsBytes(streamId),
+                streamParentId: streamParentId ? streamIdAsBytes(streamParentId) : undefined,
             }),
             { method: 'joinStream' },
         )
@@ -1256,6 +1258,21 @@ export class Client
     async removeUser(streamId: string | Uint8Array, userId: string): Promise<void> {
         check(isDefined(this.userStreamId))
         this.logCall('removeUser', streamId, userId)
+
+        if (isSpaceStreamId(streamId)) {
+            const channelIds =
+                this.stream(streamId)?.view.spaceContent.spaceChannelsMetadata.keys() ?? []
+            const userStreamId = makeUserStreamId(userId)
+            const userStream = await this.getStream(userStreamId)
+
+            for (const channelId of channelIds) {
+                if (
+                    userStream.userContent.streamMemberships[channelId]?.op === MembershipOp.SO_JOIN
+                ) {
+                    await this.removeUser(channelId, userId)
+                }
+            }
+        }
 
         return this.makeEventAndAddToStream(
             this.userStreamId,

@@ -13,6 +13,8 @@ import (
 
 	"github.com/river-build/river/core/node/crypto"
 
+	"github.com/ethereum/go-ethereum"
+	"github.com/ethereum/go-ethereum/accounts/abi"
 	"github.com/ethereum/go-ethereum/accounts/abi/bind"
 	"github.com/ethereum/go-ethereum/common"
 	"github.com/ethereum/go-ethereum/core/types"
@@ -24,6 +26,16 @@ type RiverRegistryContract struct {
 	NodeRegistry     *contracts.NodeRegistryV1
 	StreamRegistry   *contracts.StreamRegistryV1
 	Blockchain       *crypto.Blockchain
+	Address          common.Address
+	Addresses        []common.Address
+	Abi              *abi.ABI
+	NodeEventTopics  [][]common.Hash
+	EventInfo        map[common.Hash]*EventInfo
+}
+
+type EventInfo struct {
+	Name  string
+	Maker func() any
 }
 
 func NewRiverRegistryContract(
@@ -49,6 +61,30 @@ func NewRiverRegistryContract(
 			Err_BAD_CONFIG,
 		).Message("Failed to parse contract address").
 			Func("NewRiverRegistryContract")
+	}
+
+	abi, err := contracts.NodeRegistryV1MetaData.GetAbi()
+	if err != nil {
+		return nil,
+			AsRiverError(err, Err_INTERNAL).
+				Message("Failed to parse ABI").
+				Func("NewRiverRegistryContract")
+	}
+	var nodeEventSigs []common.Hash
+	eventInfo := make(map[common.Hash]*EventInfo)
+	for _, e := range []*EventInfo{
+		{"NodeAdded", func() any { return new(contracts.NodeRegistryV1NodeAdded) }},
+		{"NodeRemoved", func() any { return new(contracts.NodeRegistryV1NodeRemoved) }},
+		{"NodeStatusUpdated", func() any { return new(contracts.NodeRegistryV1NodeStatusUpdated) }},
+		{"NodeUrlUpdated", func() any { return new(contracts.NodeRegistryV1NodeUrlUpdated) }},
+	} {
+		ev, ok := abi.Events[e.Name]
+		if !ok {
+			return nil,
+				RiverError(Err_INTERNAL, "Event not found in ABI", "event", e).Func("NewRiverRegistryContract")
+		}
+		nodeEventSigs = append(nodeEventSigs, ev.ID)
+		eventInfo[ev.ID] = e
 	}
 
 	streamRegistry, err := contracts.NewStreamRegistryV1(address, blockchain.Client)
@@ -86,20 +122,25 @@ func NewRiverRegistryContract(
 		NodeRegistry:     nodeRegistry,
 		StreamRegistry:   streamRegistry,
 		Blockchain:       blockchain,
+		Address:          address,
+		Addresses:        []common.Address{address},
+		Abi:              abi,
+		NodeEventTopics:  [][]common.Hash{nodeEventSigs},
+		EventInfo:        eventInfo,
 	}, nil
 }
 
-func (sr *RiverRegistryContract) AllocateStream(
+func (c *RiverRegistryContract) AllocateStream(
 	ctx context.Context,
 	streamId StreamId,
 	addresses []common.Address,
 	genesisMiniblockHash common.Hash,
 	genesisMiniblock []byte,
 ) error {
-	_, _, err := sr.Blockchain.TxRunner.SubmitAndWait(
+	_, _, err := c.Blockchain.TxRunner.SubmitAndWait(
 		ctx,
 		func(opts *bind.TransactOpts) (*types.Transaction, error) {
-			return sr.StreamRegistry.AllocateStream(opts, streamId.ByteArray(), addresses, genesisMiniblockHash, genesisMiniblock)
+			return c.StreamRegistry.AllocateStream(opts, streamId.ByteArray(), addresses, genesisMiniblockHash, genesisMiniblock)
 		},
 	)
 	if err != nil {
@@ -127,8 +168,8 @@ func makeGetStreamResult(streamId StreamId, stream *contracts.Stream) *GetStream
 	}
 }
 
-func (sr *RiverRegistryContract) GetStream(ctx context.Context, streamId StreamId) (*GetStreamResult, error) {
-	stream, err := sr.StreamRegistry.GetStream(sr.callOpts(ctx), streamId.ByteArray())
+func (c *RiverRegistryContract) GetStream(ctx context.Context, streamId StreamId) (*GetStreamResult, error) {
+	stream, err := c.StreamRegistry.GetStream(c.callOpts(ctx), streamId.ByteArray())
 	if err != nil {
 		return nil, WrapRiverError(Err_CANNOT_CALL_CONTRACT, err).Func("GetStream").Message("Call failed")
 	}
@@ -136,11 +177,11 @@ func (sr *RiverRegistryContract) GetStream(ctx context.Context, streamId StreamI
 }
 
 // Returns stream, genesis miniblock hash, genesis miniblock, error
-func (sr *RiverRegistryContract) GetStreamWithGenesis(
+func (c *RiverRegistryContract) GetStreamWithGenesis(
 	ctx context.Context,
 	streamId StreamId,
 ) (*GetStreamResult, common.Hash, []byte, error) {
-	stream, mbHash, mb, err := sr.StreamRegistry.GetStreamWithGenesis(sr.callOpts(ctx), streamId.ByteArray())
+	stream, mbHash, mb, err := c.StreamRegistry.GetStreamWithGenesis(c.callOpts(ctx), streamId.ByteArray())
 	if err != nil {
 		return nil, common.Hash{}, nil, WrapRiverError(Err_CANNOT_CALL_CONTRACT, err).Func("GetStream").Message("Call failed")
 	}
@@ -148,8 +189,8 @@ func (sr *RiverRegistryContract) GetStreamWithGenesis(
 	return ret, mbHash, mb, nil
 }
 
-func (sr *RiverRegistryContract) GetStreamCount(ctx context.Context) (int64, error) {
-	num, err := sr.StreamRegistry.GetStreamCount(sr.callOpts(ctx))
+func (c *RiverRegistryContract) GetStreamCount(ctx context.Context) (int64, error) {
+	num, err := c.StreamRegistry.GetStreamCount(c.callOpts(ctx))
 	if err != nil {
 		return 0, WrapRiverError(Err_CANNOT_CALL_CONTRACT, err).Func("GetStreamNum").Message("Call failed")
 	}
@@ -159,12 +200,12 @@ func (sr *RiverRegistryContract) GetStreamCount(ctx context.Context) (int64, err
 	return num.Int64(), nil
 }
 
-func (sr *RiverRegistryContract) GetAllStreams(ctx context.Context, blockNum uint64) ([]*GetStreamResult, error) {
-	callOpts := sr.callOpts(ctx)
+func (c *RiverRegistryContract) GetAllStreams(ctx context.Context, blockNum uint64) ([]*GetStreamResult, error) {
+	callOpts := c.callOpts(ctx)
 	if blockNum != 0 {
 		callOpts.BlockNumber = new(big.Int).SetUint64(blockNum)
 	}
-	streams, err := sr.StreamRegistry.GetAllStreams(callOpts)
+	streams, err := c.StreamRegistry.GetAllStreams(callOpts)
 	if err != nil {
 		return nil, WrapRiverError(
 			Err_CANNOT_CALL_CONTRACT,
@@ -183,11 +224,11 @@ func (sr *RiverRegistryContract) GetAllStreams(ctx context.Context, blockNum uin
 	return ret, nil
 }
 
-func (sr *RiverRegistryContract) SetStreamLastMiniblock(ctx context.Context, streamId StreamId, lastMiniblockHash common.Hash, lastMiniblockNum uint64, isSealed bool) error {
-	_, _, err := sr.Blockchain.TxRunner.SubmitAndWait(
+func (c *RiverRegistryContract) SetStreamLastMiniblock(ctx context.Context, streamId StreamId, lastMiniblockHash common.Hash, lastMiniblockNum uint64, isSealed bool) error {
+	_, _, err := c.Blockchain.TxRunner.SubmitAndWait(
 		ctx,
 		func(opts *bind.TransactOpts) (*types.Transaction, error) {
-			return sr.StreamRegistry.SetStreamLastMiniblock(opts, streamId.ByteArray(), lastMiniblockHash, lastMiniblockNum, isSealed)
+			return c.StreamRegistry.SetStreamLastMiniblock(opts, streamId.ByteArray(), lastMiniblockHash, lastMiniblockNum, isSealed)
 		},
 	)
 	return err
@@ -195,16 +236,53 @@ func (sr *RiverRegistryContract) SetStreamLastMiniblock(ctx context.Context, str
 
 type NodeRecord = contracts.Node
 
-func (sr *RiverRegistryContract) GetAllNodes(ctx context.Context) ([]NodeRecord, error) {
-	nodes, err := sr.NodeRegistry.GetAllNodes(sr.callOpts(ctx))
+func (c *RiverRegistryContract) GetAllNodes(ctx context.Context) ([]NodeRecord, error) {
+	nodes, err := c.NodeRegistry.GetAllNodes(c.callOpts(ctx))
 	if err != nil {
 		return nil, WrapRiverError(Err_CANNOT_CALL_CONTRACT, err).Func("GetAllNodes").Message("Call failed")
 	}
 	return nodes, nil
 }
 
-func (sr *RiverRegistryContract) callOpts(ctx context.Context) *bind.CallOpts {
+func (c *RiverRegistryContract) callOpts(ctx context.Context) *bind.CallOpts {
 	return &bind.CallOpts{
 		Context: ctx,
 	}
+}
+
+type NodeEvents interface {
+	contracts.NodeRegistryV1NodeAdded |
+		contracts.NodeRegistryV1NodeRemoved |
+		contracts.NodeRegistryV1NodeStatusUpdated |
+		contracts.NodeRegistryV1NodeUrlUpdated
+}
+
+func (c *RiverRegistryContract) GetNodeEventsForBlock(ctx context.Context, blockNum crypto.BlockNumber) ([]any, error) {
+	num := blockNum.AsBigInt()
+	logs, err := c.Blockchain.Client.FilterLogs(ctx, ethereum.FilterQuery{
+		FromBlock: num,
+		ToBlock:   num,
+		Addresses: c.Addresses,
+		Topics:    c.NodeEventTopics,
+	})
+	if err != nil {
+		return nil, WrapRiverError(Err_CANNOT_CALL_CONTRACT, err).Func("GetNodeEventsForBlock").Message("FilterLogs failed")
+	}
+	var ret []any
+	for _, log := range logs {
+		if len(log.Topics) == 0 {
+			return nil, RiverError(Err_INTERNAL, "Empty topics in log", "log", log).Func("GetNodeEventsForBlock")
+		}
+		eventInfo, ok := c.EventInfo[log.Topics[0]]
+		if !ok {
+			return nil, RiverError(Err_INTERNAL, "Event not found", "id", log.Topics[0]).Func("GetNodeEventsForBlock")
+		}
+		ee := eventInfo.Maker()
+		err = c.NodeRegistry.BoundContract().UnpackLog(ee, eventInfo.Name, log)
+		if err != nil {
+			return nil, WrapRiverError(Err_CANNOT_CALL_CONTRACT, err).Func("GetNodeEventsForBlock").Message("UnpackLog failed")
+		}
+		ret = append(ret, ee)
+	}
+	return ret, nil
 }

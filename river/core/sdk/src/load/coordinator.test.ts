@@ -30,7 +30,7 @@ import {
     defaultCoordinatorLeaveChannelsFlag,
     defaultRedisHost,
     defaultRedisPort,
-} from './stressconfig'
+} from './stressconfig.test_util'
 
 const baseChainRpcUrl = process.env.BASE_CHAIN_RPC_URL
     ? process.env.BASE_CHAIN_RPC_URL

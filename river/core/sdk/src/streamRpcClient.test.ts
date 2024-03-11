@@ -221,6 +221,7 @@ describe('streamRpcClient using v2 sync', () => {
                 userId: alicesUserId,
                 op: MembershipOp.SO_JOIN,
                 initiatorId: alicesUserId,
+                streamParentId: spaceIdStr,
             }),
         )
         const alicesChannel = await alice.createStream({
@@ -247,6 +248,7 @@ describe('streamRpcClient using v2 sync', () => {
             make_UserPayload_UserMembership({
                 op: MembershipOp.SO_JOIN,
                 streamId: channelId,
+                streamParentId: spaceId,
             }),
             bobsUserStream.stream?.miniblocks.at(-1)?.header?.hash,
         )
@@ -501,6 +503,7 @@ describe('streamRpcClient', () => {
                 userId: bobsUserId,
                 op: MembershipOp.SO_JOIN,
                 initiatorId: bobsUserId,
+                streamParentId: spaceIdStr,
             }),
         )
         const createChannelResponse = await bob.createStream({
@@ -570,6 +573,7 @@ describe('streamRpcClient', () => {
                 op: MembershipOp.SO_INVITE,
                 userId: addressFromUserId(alicesUserId),
                 streamId: channelId,
+                streamParentId: spaceId,
             }),
             bobsStream.stream?.miniblocks.at(-1)?.header?.hash,
         )
@@ -624,6 +628,7 @@ describe('streamRpcClient', () => {
             make_UserPayload_UserMembership({
                 op: MembershipOp.SO_JOIN,
                 streamId: channelId,
+                streamParentId: spaceId,
             }),
             alicesStream.stream?.miniblocks.at(-1)?.header?.hash,
         )
@@ -747,6 +752,7 @@ describe('streamRpcClient', () => {
                 userId: bobsUserId,
                 op: MembershipOp.SO_JOIN,
                 initiatorId: bobsUserId,
+                streamParentId: spacedStreamIdStr,
             }),
         ])
         await bob.createStream({

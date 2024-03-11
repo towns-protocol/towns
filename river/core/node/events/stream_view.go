@@ -603,14 +603,21 @@ func (r *streamViewImpl) IsMember(userAddress []byte) (bool, error) {
 }
 
 func (r *streamViewImpl) StreamParentId() *StreamId {
-	// aellis this should probably be migrated to the common payload
-	switch snapshotContent := r.snapshot.Content.(type) {
-	case *Snapshot_ChannelContent:
-		streamId, err := StreamIdFromBytes(snapshotContent.ChannelContent.Inception.SpaceId)
-		if err != nil {
-			panic(err) // todo convert everything to shared.StreamId
-		}
-		return &streamId
+	streamIdBytes := GetStreamParentId(r.InceptionPayload())
+	if streamIdBytes == nil {
+		return nil
+	}
+	streamId, err := StreamIdFromBytes(streamIdBytes)
+	if err != nil {
+		panic(err) // todo convert everything to shared.StreamId
+	}
+	return &streamId
+}
+
+func GetStreamParentId(inception IsInceptionPayload) []byte {
+	switch inceptionContent := inception.(type) {
+	case *ChannelPayload_Inception:
+		return inceptionContent.SpaceId
 	default:
 		return nil
 	}

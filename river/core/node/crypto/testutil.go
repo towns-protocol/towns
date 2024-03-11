@@ -2,8 +2,10 @@ package crypto
 
 import (
 	"context"
+	"crypto/rand"
 	"math/big"
 	"os"
+	"sync"
 	"time"
 
 	"github.com/river-build/river/core/node/config"
@@ -25,6 +27,7 @@ var (
 )
 
 type BlockchainTestContext struct {
+	backendMutex         sync.RWMutex
 	Backend              *simulated.Backend
 	EthClient            *ethclient.Client
 	Wallets              []*Wallet
@@ -73,17 +76,6 @@ func initAnvil(ctx context.Context, url string, numKeys int) ([]*Wallet, *ethcli
 	return wallets, client, nil
 }
 
-func mineBlock(backend *simulated.Backend, client *ethclient.Client) error {
-	if backend != nil {
-		backend.Commit()
-		return nil
-	} else if client != nil {
-		return client.Client().Call(nil, "evm_mine")
-	} else {
-		panic("no backend or client")
-	}
-}
-
 func NewBlockchainTestContext(ctx context.Context, numKeys int) (*BlockchainTestContext, error) {
 	// Add one for deployer
 	numKeys += 1
@@ -122,10 +114,6 @@ func NewBlockchainTestContext(ctx context.Context, numKeys int) (*BlockchainTest
 	if err != nil {
 		return nil, err
 	}
-	err = mineBlock(backend, ethClient)
-	if err != nil {
-		return nil, err
-	}
 
 	node_registry, err := contracts.NewNodeRegistryV1(addr, client)
 	if err != nil {
@@ -140,7 +128,7 @@ func NewBlockchainTestContext(ctx context.Context, numKeys int) (*BlockchainTest
 	// Add deployer as operator so it can register nodes
 	deployerBC := makeTestBlockchain(ctx, wallets[len(wallets)-1], client, chainId, nil)
 
-	return &BlockchainTestContext{
+	btc := &BlockchainTestContext{
 		Backend:              backend,
 		EthClient:            ethClient,
 		Wallets:              wallets,
@@ -149,10 +137,34 @@ func NewBlockchainTestContext(ctx context.Context, numKeys int) (*BlockchainTest
 		StreamRegistry:       stream_registry,
 		ChainId:              chainId,
 		DeployerBlockchain:   deployerBC,
-	}, nil
+	}
+
+	err = btc.mineBlock()
+	if err != nil {
+		return nil, err
+	}
+
+	return btc, nil
+}
+
+func (c *BlockchainTestContext) mineBlock() error {
+	c.backendMutex.Lock()
+	defer c.backendMutex.Unlock()
+
+	if c.Backend != nil {
+		c.Backend.Commit()
+		return nil
+	} else if c.EthClient != nil {
+		return c.EthClient.Client().Call(nil, "evm_mine")
+	} else {
+		panic("no backend or client")
+	}
 }
 
 func (c *BlockchainTestContext) Close() {
+	c.backendMutex.Lock()
+	defer c.backendMutex.Unlock()
+
 	if c.DeployerBlockchain != nil {
 		c.DeployerBlockchain.Close()
 	}
@@ -165,13 +177,16 @@ func (c *BlockchainTestContext) Close() {
 }
 
 func (c *BlockchainTestContext) Commit() {
-	err := mineBlock(c.Backend, c.EthClient)
+	err := c.mineBlock()
 	if err != nil {
 		panic(err)
 	}
 }
 
 func (c *BlockchainTestContext) Client() BlockchainClient {
+	c.backendMutex.Lock()
+	defer c.backendMutex.Unlock()
+	
 	if c.Backend != nil {
 		return c.Backend.Client()
 	} else if c.EthClient != nil {
@@ -239,7 +254,7 @@ func (c *BlockchainTestContext) InitNodeRecord(ctx context.Context, index int, u
 		return err
 	}
 
-	err = mineBlock(c.Backend, c.EthClient)
+	err = c.mineBlock()
 	if err != nil {
 		return err
 	}
@@ -252,4 +267,14 @@ func (c *BlockchainTestContext) RegistryConfig() config.ContractConfig {
 	return config.ContractConfig{
 		Address: c.RiverRegistryAddress.Hex(),
 	}
+}
+
+// GetTestAddress returns a random common.Address that can be used in tests.
+func GetTestAddress() common.Address {
+	var address common.Address
+	_, err := rand.Read(address[:])
+	if err != nil {
+		panic(err)
+	}
+	return address
 }

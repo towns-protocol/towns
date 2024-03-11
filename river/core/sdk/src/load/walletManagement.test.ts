@@ -2,9 +2,9 @@
  * @group wallet-management-tests
  */
 
-import { allAccounts, minimalBalance, senderAccount } from './loadconfig'
+import { allAccounts, minimalBalance, senderAccount } from './loadconfig.test_util'
 import { ethers } from 'ethers'
-import { deposit, getBalance } from './walletManagement'
+import { deposit, getBalance } from './walletManagement.test_util'
 import { dlog } from '@river/dlog'
 
 const log = dlog('csb:test:walletManagement')

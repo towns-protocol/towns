@@ -655,7 +655,7 @@ export class StreamStateView {
             creatorUserId: this.userId,
             eventNum: this.lastEventNum++,
             localEvent: { localId, channelMessage, status },
-            createdAtEpocMs: BigInt(Date.now()),
+            createdAtEpochMs: BigInt(Date.now()),
         } satisfies StreamTimelineEvent
         this.events.set(localId, timelineEvent)
         this.timeline.push(timelineEvent)

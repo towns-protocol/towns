@@ -4,7 +4,7 @@
 
 import { check, dlog } from '@river/dlog'
 import { waitFor } from '../util.test'
-import { bobsAccount, accounts, jsonRpcProviderUrl, nodeRpcURL } from './loadconfig'
+import { bobsAccount, accounts, jsonRpcProviderUrl, nodeRpcURL } from './loadconfig.test_util'
 import { Client } from '../client'
 import {
     createAndStartClients,
@@ -16,7 +16,7 @@ import {
     multipleClientsJoinSpaceAndChannel,
     sendMessageAfterRandomDelay,
     wait,
-} from './load_tests_util'
+} from './load.test_util'
 
 const base_log = dlog('csb:test:loadTestsS4.1')
 
@@ -83,10 +83,10 @@ describe('loadTestsScenario: Test application stability during long period of ti
         function handleEventDecrypted(eventName: string, client: Client) {
             // eslint-disable-next-line
             client.on('eventDecrypted', async (streamId, contentKind, event) => {
-                const createdAtEpocMs = Number(event.createdAtEpocMs)
+                const createdAtEpochMs = Number(event.createdAtEpochMs)
 
                 // if it's an existing DM, previous message will also be loaded, skip those messages
-                if (createdAtEpocMs > loadTestStartTime) {
+                if (createdAtEpochMs > loadTestStartTime) {
                     log('handleEventDecrypted new', {
                         streamId: streamId,
                         contentKind: contentKind,

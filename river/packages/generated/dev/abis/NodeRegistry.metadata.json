@@ -316,11 +316,11 @@
       ]
     },
     "contracts/src/river/registry/facets/node/NodeRegistry.sol": {
-      "keccak256": "0x834944b910f775f18dd9cf57cd2bbb5e981da3124cc9699bc2ecb0193a84258c",
+      "keccak256": "0x93dea7980175adb8cd6b0893787c4bafdbce8b8cc51cc688906285bdf20aa195",
       "license": "Apache-2.0",
       "urls": [
-        "bzz-raw://9251ea33139dd17e8107ed370dcb58918fafa1bb6b0e44cbb20425e7ebb8d849",
-        "dweb:/ipfs/QmQ4iMrXvSUbZxcyi1c86aZGQGcSJhrqWRzvzz6rs2UfAv"
+        "bzz-raw://80d8d90b106608d13d16b5ad560d1763c5dd3447d6e36db9765d2e36f6171f70",
+        "dweb:/ipfs/QmNysr62BjrM2tPHSXdiAESBZHjyMRvW52ADsvrxXcrciL"
       ]
     },
     "contracts/src/river/registry/libraries/RegistryErrors.sol": {
@@ -332,11 +332,11 @@
       ]
     },
     "contracts/src/river/registry/libraries/RegistryStorage.sol": {
-      "keccak256": "0x97f0d92d485bb2bf11fc5a2a39bc1e9dba3865ba90a4dd2ca980f9e19c69602d",
+      "keccak256": "0xfbcf41b4c4b1544daa4747d9ea9c1a6fdb01cf413fdc30c9a7b3d920ce552058",
       "license": "Apache-2.0",
       "urls": [
-        "bzz-raw://565685a7de523e1c19e1c038a9003ef6b99d18b87dd10f6759e9df6e2717eaeb",
-        "dweb:/ipfs/QmSuamKP178nam4VbCZyCo8C7p8AHy54T7WSdeCU3rPZZN"
+        "bzz-raw://0a64065c598fc295fcdd5dee549e0d7859fb34b1724b20317483cd896bb6e821",
+        "dweb:/ipfs/QmSVV9jXD73QKhG4ry4BZta3PcEAL5D9C3m6BQMWH1JQJy"
       ]
     },
     "lib/@openzeppelin/contracts/utils/structs/EnumerableSet.sol": {
