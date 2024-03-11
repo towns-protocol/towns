@@ -1,6 +1,24 @@
 #!/bin/bash
 
 # To use this script you need to 1) be an admin of the main repo, 2) have gh github cli installed, 3) run `gh auth login` && `gh repo set-default`
+
+while getopts "hi" arg; do
+  case $arg in
+    h)
+        echo "Usage: ./pull_river.sh -i"
+        echo "  -i: Interactive mode. Will prompt for confirmation before creating a pull request."
+        exit 0
+        ;;
+    i)
+        INTERACTIVE=1
+        ;;
+    *)
+      echo "Invalid argument"
+      exit 1
+      ;;
+  esac
+done
+
 set -x
 
 function parse_git_branch() {
@@ -31,6 +49,7 @@ SHORT_HASH="${COMMIT_HASH:0:7}"
 # Use the commit hash in the branch name
 BRANCH_NAME="river_subtree_merge_${SHORT_HASH}"
 git fetch --all
+git pull
 
 # Checkout a new branch for the merge
 git checkout -b "${BRANCH_NAME}"
@@ -55,6 +74,15 @@ if ! git diff main --quiet --cached; then
     RIVER_ALLOW_COMMIT=true git commit -m "Merge ${SUBTREE_PREFIX} at ${SHORT_HASH}"
     echo "Changes committed."
     
+    if [[ $INTERACTIVE -eq 1 ]]; then
+        read -p "Do you want to continue and create a pull request? (y/n) " -n 1 -r
+        echo
+        if [[ ! $REPLY =~ ^[Yy]$ ]]; then
+            echo "Pull request creation aborted."
+            exit 0
+        fi
+    fi
+
     # Push the branch to origin
     git push origin "${BRANCH_NAME}"
 
