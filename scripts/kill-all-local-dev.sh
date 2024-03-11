@@ -76,6 +76,11 @@ then
     ./core/node/stop_multi.sh
 fi
 
+if prompt 'Stop XChain?:y/n '
+then
+    ./core/xchain/stop_multi.sh
+fi
+
 do_killl yarn "$1"
 do_killl anvil "$1"
 do_killl wrangler "$1"
