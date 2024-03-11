@@ -72,8 +72,13 @@ function do_killl() {
 echo ""
 if prompt 'Stop Casbablanca?:y/n '
 then
-    ./core/scripts/stop_node.sh 
-    ./core/node/stop_multi.sh
+    ./river/core/scripts/stop_node.sh 
+    ./river/core/node/stop_multi.sh
+fi
+
+if prompt 'Stop XChain?:y/n '
+then
+    ./river/core/xchain/stop_multi.sh 
 fi
 
 do_killl yarn "$1"
