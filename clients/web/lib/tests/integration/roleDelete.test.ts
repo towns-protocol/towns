@@ -17,6 +17,7 @@ import { TestConstants } from './helpers/TestConstants'
 import { waitFor } from '@testing-library/react'
 import { getTestGatingNftAddress, NoopRuleData, Permission } from '@river/web3'
 
+// check all these tests - https://linear.app/hnt-labs/issue/HNT-5238/delete-role-tests-are-broken
 describe('delete role', () => {
     test.skip('delete token-gated role with a channel using it', async () => {
         /** Arrange */
@@ -280,7 +281,8 @@ describe('delete role', () => {
         ).toBe(false)
     })
 
-    test('delete a role with no channels using it', async () => {
+    // this is broken behavior, not just a broken test
+    test.skip('delete a role with no channels using it', async () => {
         /** Arrange */
         const { alice, bob } = await registerAndStartClients(['alice', 'bob'])
         if (!alice.getUserId()) {

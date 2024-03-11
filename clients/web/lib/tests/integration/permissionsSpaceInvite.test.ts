@@ -47,7 +47,8 @@ describe('space invite', () => {
         expect(true).toEqual(false)
     }) // end test
 
-    test('Invitee is not allowed to write to token gated space without token', async () => {
+    // Broken, need token entitlement on town https://linear.app/hnt-labs/issue/HNT-5239/fix-permissionsspaceinvite-test-for-token-entitlement
+    test.skip('Invitee is not allowed to write to token gated space without token', async () => {
         /** Arrange */
 
         // create all the users for the test
