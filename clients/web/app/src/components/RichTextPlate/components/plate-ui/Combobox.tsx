@@ -42,6 +42,7 @@ export const ComboboxItem = withRef<
         isHighlighted: boolean
         isLast: boolean
         editor: PlateEditor
+        currentUser?: string
         onSelectItem:
             | null
             | ((editor: PlateEditor, item: TComboboxItemWithData<TMentionComboboxTypes>) => void)
@@ -58,6 +59,7 @@ export const ComboboxItem = withRef<
             isHighlighted,
             onRenderItem,
             className,
+            currentUser,
             ...rest
         },
         ref,
@@ -90,7 +92,7 @@ export const ComboboxItem = withRef<
                     ...item.data,
                     setRefElement: () => ref,
                 }}
-                name={item.text}
+                name={item.text + (currentUser === item.key ? ` (you)` : '')}
                 Icon={<ComboboxIcon item={item.data} />}
                 onClick={onClick}
                 onMouseEnter={onMouseEnter}
@@ -100,7 +102,7 @@ export const ComboboxItem = withRef<
 )
 
 export const ComboboxContent = <T extends TMentionComboboxTypes>(
-    props: ComboboxContentProps<T> & { editor: PlateEditor },
+    props: ComboboxContentProps<T> & { editor: PlateEditor; currentUser?: string },
 ) => {
     const { component: Component, editor, items, combobox, onRenderItem } = props
 
@@ -126,6 +128,7 @@ export const ComboboxContent = <T extends TMentionComboboxTypes>(
                     isHighlighted={index === highlightedIndex}
                     isLast={index === (filteredItems || []).length - 1}
                     editor={editor}
+                    currentUser={props.currentUser}
                     onSelectItem={activeComboboxStore.get.onSelectItem()}
                     onRenderItem={onRenderItem}
                 />
@@ -145,7 +148,7 @@ export const Combobox = <T extends TMentionComboboxTypes>({
     sort,
     disabled: _disabled,
     ...props
-}: ComboboxProps<T>) => {
+}: ComboboxProps<T> & { currentUser?: string }) => {
     const storeItems = useComboboxSelectors.items()
     const disabled = _disabled ?? (storeItems.length === 0 && !props.items?.length)
 

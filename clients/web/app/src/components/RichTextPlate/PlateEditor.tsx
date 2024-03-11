@@ -298,7 +298,11 @@ const PlateEditorWithoutBoundary = ({
                             />
                             <CaptureTownsLinkPlugin onUpdate={onMessageLinksUpdated} />
                             <EmojiPlugin />
-                            <MentionCombobox<RoomMember> id="users" items={userMentions} />
+                            <MentionCombobox<RoomMember>
+                                id="users"
+                                items={userMentions}
+                                currentUser={props.userId}
+                            />
                             <MentionCombobox<Channel>
                                 pluginKey={ELEMENT_MENTION_CHANNEL}
                                 id="channels"

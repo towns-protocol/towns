@@ -8,9 +8,11 @@ import { TMentionComboboxTypes } from '../../utils/ComboboxTypes'
 export const MentionCombobox = <T extends TMentionComboboxTypes>({
     pluginKey = ELEMENT_MENTION,
     id = pluginKey,
+    currentUser,
     ...props
 }: Partial<ComboboxProps<T>> & {
     pluginKey?: string
+    currentUser?: string
 }) => {
     const editor = useEditorRef()
 
@@ -22,6 +24,7 @@ export const MentionCombobox = <T extends TMentionComboboxTypes>({
                 controlled
                 id={id}
                 trigger={trigger!}
+                currentUser={currentUser}
                 onSelectItem={getMentionOnSelectItem({
                     key: pluginKey,
                 })}
