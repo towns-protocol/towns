@@ -123,11 +123,13 @@ export function useCasablancaDMs(casablancaClient?: CasablancaClient): {
         casablancaClient.on('streamLatestTimestampUpdated', onStreamChange)
         casablancaClient.on('userStreamMembershipChanged', onStreamChange)
         casablancaClient.on('streamRemovedFromSync', onStreamChange)
+        casablancaClient.on('streamChannelPropertiesUpdated', onStreamChange)
         return () => {
             casablancaClient.off('streamInitialized', onStreamChange)
             casablancaClient.off('streamLatestTimestampUpdated', onStreamChange)
             casablancaClient.off('userStreamMembershipChanged', onStreamChange)
             casablancaClient.off('streamRemovedFromSync', onStreamChange)
+            casablancaClient.off('streamChannelPropertiesUpdated', onStreamChange)
         }
     }, [casablancaClient, userId, userStreamId])
     return { channels }
