@@ -9,24 +9,7 @@ import (
 	"github.com/stretchr/testify/assert"
 )
 
-func TestDelegate(t *testing.T) {
-	ctx := test.NewTestContext()
-
-	primaryWallet, err := NewWallet(ctx)
-	assert.NoError(t, err)
-
-	deviceWallet, err := NewWallet(ctx)
-	assert.NoError(t, err)
-	devicePubKey := crypto.FromECDSAPub(&deviceWallet.PrivateKeyStruct.PublicKey)
-
-	delegatSig, err := primaryWallet.SignHash(RiverHash(devicePubKey).Bytes())
-	assert.NoError(t, err)
-
-	err = CheckDelegateSig(primaryWallet.Address.Bytes(), devicePubKey, delegatSig)
-	assert.NoError(t, err)
-}
-
-func TestDelegateOld(t *testing.T) {
+func TestDelegateEth(t *testing.T) {
 	ctx := test.NewTestContext()
 
 	primaryWallet, err := NewWallet(ctx)
@@ -41,6 +24,6 @@ func TestDelegateOld(t *testing.T) {
 	assert.NoError(t, err)
 	delegatSig[64] += 27
 
-	err = CheckEthereumMessageSignature(primaryWallet.Address.Bytes(), devicePubKey, delegatSig)
+	err = CheckDelegateSig(primaryWallet.Address.Bytes(), devicePubKey, delegatSig)
 	assert.NoError(t, err)
 }

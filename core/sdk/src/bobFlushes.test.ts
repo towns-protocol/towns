@@ -4,8 +4,8 @@
 
 import { bobTalksToHimself } from './bob.test_util'
 import { dlog } from '@river/dlog'
-import { SignerContext } from './sign'
 import { makeRandomUserContext } from './util.test'
+import { SignerContext } from './signerContext'
 
 const baseLog = dlog('csb:test:bobFlushes')
 

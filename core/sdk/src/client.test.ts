@@ -35,13 +35,13 @@ import { CallOptions } from '@connectrpc/connect'
 // This is needed to get the jest itnerface for using in spyOn
 // eslint-disable-next-line import/no-extraneous-dependencies
 import { jest } from '@jest/globals'
-import { SignerContext } from './sign'
 import {
     DecryptedTimelineEvent,
     make_ChannelPayload_Message,
     make_MemberPayload_KeyFulfillment,
 } from './types'
 import { DecryptionStatus } from './decryptionExtensions'
+import { SignerContext } from './signerContext'
 
 const log = dlog('csb:test')
 

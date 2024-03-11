@@ -11,61 +11,36 @@ import (
 	. "github.com/river-build/river/core/node/protocol"
 )
 
-func RecoverDelegateSigAddress(devicePubKey, delegateSig []byte) (*common.Address, error) {
-	hash := RiverHash(devicePubKey)
-	recoveredKey, err := RecoverSignerPublicKey(hash.Bytes(), delegateSig)
-	if err != nil {
-		return nil, err
+func recoverEthereumMessageSignerAddress(hashSrc []byte, inSignature []byte) (*common.Address, error) {
+	if len(inSignature) != 65 {
+		return nil, RiverError(Err_BAD_EVENT_SIGNATURE, "Bad signature provided, expected 65 bytes", "len", len(inSignature))
 	}
-	address := PublicKeyToAddress(recoveredKey)
-	return &address, nil
-}
 
-func CheckDelegateSig(expectedAddress []byte, devicePubKey, delegateSig []byte) error {
-	recoveredAddress, err := RecoverDelegateSigAddress(devicePubKey, delegateSig)
-	if err != nil {
-		return err
+	var signature []byte
+	// Ethereum signatures are in the [R || S || V] format where V is 27 or 28
+	// Support both the Ethereum and directly signed formats
+	if inSignature[64] == 27 || inSignature[64] == 28 {
+		// copy the signature to avoid modifying the original
+		signature = bytes.Clone(inSignature)
+		signature[64] -= 27
+	} else {
+		signature = inSignature
 	}
-	if !bytes.Equal(expectedAddress, recoveredAddress.Bytes()) {
-		return RiverError(
-			Err_BAD_EVENT_SIGNATURE,
-			"Bad signature provided",
-			"computed_address",
-			recoveredAddress,
-			"event_creatorAddress",
-			expectedAddress,
-		)
-	}
-	return nil
-}
 
-func RecoverEthereumMessageSignerAddress(content, signature []byte) (*common.Address, error) {
-	if len(signature) != 65 {
-		return nil, RiverError(Err_BAD_EVENT_SIGNATURE, "Bad signature provided, expected 65 bytes", "len", len(signature))
-	}
-	if signature[64] != 27 && signature[64] != 28 {
-		return nil, RiverError(
-			Err_BAD_EVENT_SIGNATURE,
-			"Bad signature provided, expected recovery id 27 or 28",
-			"id",
-			signature[64],
-		)
-	}
-	signature[64] -= 27
-
-	hash := accounts.TextHash(content)
+	hash := accounts.TextHash(hashSrc)
+	
 	recoveredKey, err := secp256k1.RecoverPubkey(hash, signature)
 	if err != nil {
 		return nil, AsRiverError(err).
 			Message("Unable to recover public key").
-			Func("RecoverEthereumMessageSignerAddress")
+			Func("recoverEthereumMessageSignerAddress")
 	}
 	address := PublicKeyToAddress(recoveredKey)
 	return &address, nil
 }
 
-func CheckEthereumMessageSignature(expectedAddress []byte, devicePubKey, delegateSig []byte) error {
-	recoveredAddress, err := RecoverEthereumMessageSignerAddress(devicePubKey, delegateSig)
+func CheckDelegateSig(expectedAddress []byte, devicePubKey []byte, delegateSig []byte) error {
+	recoveredAddress, err := recoverEthereumMessageSignerAddress(devicePubKey, delegateSig)
 	if err != nil {
 		return err
 	}

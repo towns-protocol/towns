@@ -593,15 +593,14 @@ type StreamEvent struct {
 	// If delegate_sig is not present, creator_address must match event signature in the Envelope.
 	CreatorAddress []byte `protobuf:"bytes,1,opt,name=creator_address,json=creatorAddress,proto3" json:"creator_address,omitempty"`
 	// *
-	// delegate_sig allows event to be signed by device keypair
-	// which is linked to the user's wallet.
+	// delegate_sig allows event to be signed by a delegate keypair
 	//
-	// delegate_sig constains signature of the public key of the device keypair.
+	// delegate_sig constains signature of the public key of the delegate keypair.
 	// User's wallet is used to produce this signature.
 	//
 	// If present, for the event to be valid:
 	// 1. creator_address must match delegate_sig's signer public key
-	// 2. delegate_sig should be the signature of Envelope.signature's public key.
+	// 2. delegate_sig should be signed as an Ethereum Signed Message (eip-191)
 	//
 	// Server nodes sign node-produced events with their own keypair and do not
 	// need to use delegate_sig.

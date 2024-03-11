@@ -2,7 +2,7 @@
  * @group main
  */
 
-import { makeEvent, makeEvents, SignerContext, unpackStreamEnvelopes } from './sign'
+import { makeEvent, makeEvents, unpackStreamEnvelopes } from './sign'
 import { MembershipOp, SyncStreamsResponse, SyncCookie, SyncOp } from '@river/proto'
 import { bin_equal, dlog } from '@river/dlog'
 import {
@@ -36,6 +36,7 @@ import {
 } from './types'
 import { bobTalksToHimself } from './bob.test_util'
 import { ethers } from 'ethers'
+import { SignerContext } from './signerContext'
 
 const log = dlog('csb:test:streamRpcClient')
 

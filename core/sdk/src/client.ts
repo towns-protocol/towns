@@ -61,7 +61,7 @@ import {
     streamIdAsBytes,
     streamIdAsString,
 } from './id'
-import { SignerContext, makeEvent, unpackMiniblock, unpackStream } from './sign'
+import { makeEvent, unpackMiniblock, unpackStream } from './sign'
 import { StreamEvents } from './streamEvents'
 import { StreamStateView } from './streamStateView'
 import {
@@ -113,6 +113,7 @@ import { PersistenceStore, IPersistenceStore, StubPersistenceStore } from './per
 import { SyncState, SyncedStreams } from './syncedStreams'
 import { SyncedStream } from './syncedStream'
 import { SyncedStreamsExtension } from './syncedStreamsExtension'
+import { SignerContext } from './signerContext'
 
 type ClientEvents = StreamEvents & DecryptionEvents
 

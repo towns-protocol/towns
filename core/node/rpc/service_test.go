@@ -26,6 +26,7 @@ import (
 	"golang.org/x/net/http2"
 
 	"connectrpc.com/connect"
+	"github.com/ethereum/go-ethereum/accounts"
 	eth_crypto "github.com/ethereum/go-ethereum/crypto"
 	"github.com/stretchr/testify/require"
 	"google.golang.org/protobuf/proto"
@@ -85,8 +86,8 @@ func createUserDeviceKeyStream(
 
 func makeDelegateSig(primaryWallet *crypto.Wallet, deviceWallet *crypto.Wallet) ([]byte, error) {
 	devicePubKey := eth_crypto.FromECDSAPub(&deviceWallet.PrivateKeyStruct.PublicKey)
-
-	delegatSig, err := primaryWallet.SignHash(crypto.RiverHash(devicePubKey).Bytes())
+	hash := accounts.TextHash(devicePubKey)
+	delegatSig, err := primaryWallet.SignHash(hash)
 	return delegatSig, err
 }
 

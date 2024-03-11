@@ -1,4 +1,4 @@
-import { makeEvent, SignerContext, unpackStreamEnvelopes } from './sign'
+import { makeEvent, unpackStreamEnvelopes } from './sign'
 import { MembershipOp, SyncStreamsResponse, Envelope, SyncOp } from '@river/proto'
 import { DLogger } from '@river/dlog'
 import {
@@ -25,6 +25,7 @@ import {
     make_SpacePayload_Inception,
     make_UserPayload_Inception,
 } from './types'
+import { SignerContext } from './signerContext'
 
 export const bobTalksToHimself = async (
     log: DLogger,

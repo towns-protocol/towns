@@ -1,4 +1,4 @@
-import { SignerContext, _impl_makeEvent_impl_, unpackStreamEnvelopes } from './sign'
+import { _impl_makeEvent_impl_, publicKeyToAddress, unpackStreamEnvelopes } from './sign'
 
 import {
     EncryptedData,
@@ -14,8 +14,7 @@ import { Client } from './client'
 import { userIdFromAddress } from './id'
 import { ParsedEvent, DecryptedTimelineEvent } from './types'
 import { getPublicKey, utils } from 'ethereum-cryptography/secp256k1'
-import { makeRiverDelegateSig, publicKeyToAddress } from '@river/encryption'
-import { bin_fromHexString, bin_toHexString, check, dlog } from '@river/dlog'
+import { bin_fromHexString, check, dlog } from '@river/dlog'
 import { ethers } from 'ethers'
 import { RiverDbManager } from './riverDbManager'
 import { StreamRpcClientType, makeStreamRpcClient } from './makeStreamRpcClient'
@@ -23,7 +22,7 @@ import assert from 'assert'
 import _ from 'lodash'
 import { MockEntitlementsDelegate } from './utils'
 import { EntitlementsDelegate } from './decryptionExtensions'
-import { makeSignerContext } from './signerContext'
+import { SignerContext, makeSignerContext } from './signerContext'
 
 const log = dlog('csb:test:util')
 
@@ -111,21 +110,9 @@ export const TEST_ENCRYPTED_MESSAGE_PROPS: PlainMessage<EncryptedData> = {
  * Done using a worker thread to avoid blocking the main thread
  */
 export const makeRandomUserContext = async (): Promise<SignerContext> => {
-    const userPrivateKey = utils.randomPrivateKey()
-    const devicePrivateKey = utils.randomPrivateKey()
-    const devicePrivateKeyStr = bin_toHexString(devicePrivateKey)
-
-    const creatorAddress = publicKeyToAddress(getPublicKey(userPrivateKey, false))
-    const ret: SignerContext = {
-        signerPrivateKey: () => devicePrivateKeyStr,
-        creatorAddress,
-        delegateSig: await makeRiverDelegateSig(
-            () => userPrivateKey,
-            getPublicKey(devicePrivateKeyStr, false),
-        ),
-    }
-    log('makeRandomUserContext', creatorAddress)
-    return ret
+    const wallet = ethers.Wallet.createRandom()
+    log('makeRandomUserContext', wallet.address)
+    return makeUserContextFromWallet(wallet)
 }
 
 export const makeRandomUserAddress = (): Uint8Array => {

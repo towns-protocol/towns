@@ -52,19 +52,13 @@ func ParseEvent(envelope *Envelope) (*ParsedEvent, error) {
 	}
 
 	if len(streamEvent.DelegateSig) > 0 {
-		err = CheckDelegateSig(streamEvent.CreatorAddress, signerPubKey, streamEvent.DelegateSig)
+		err := CheckDelegateSig(streamEvent.CreatorAddress, signerPubKey, streamEvent.DelegateSig)
 		if err != nil {
-			// The old style signature is a standard ethereum message signature.
-			// TODO(HNT-1380): once we switch to the new signing model, remove this call
-			err2 := CheckEthereumMessageSignature(streamEvent.CreatorAddress, signerPubKey, streamEvent.DelegateSig)
-			if err2 != nil {
-				return nil, WrapRiverError(
-					Err_BAD_EVENT_SIGNATURE,
-					err,
-				).Message("Bad signature").
-					Func("ParseEvent").
-					Tag("error2", err2)
-			}
+			return nil, WrapRiverError(
+				Err_BAD_EVENT_SIGNATURE,
+				err,
+			).Message("Bad signature").
+				Func("ParseEvent")
 		}
 	} else {
 		address := PublicKeyToAddress(signerPubKey)
