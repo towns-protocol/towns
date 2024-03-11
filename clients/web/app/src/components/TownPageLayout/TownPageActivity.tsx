@@ -221,7 +221,9 @@ const useFetchUnauthenticatedActivity = (townId: string) => {
                             s.remoteEvent.event.payload.value?.content.value?.op ===
                                 MembershipOp.SO_JOIN,
                     )
-                numJoinedUsers.sort((a, b) => Number(a.createdAtEpocMs) - Number(b.createdAtEpocMs))
+                numJoinedUsers.sort(
+                    (a, b) => Number(a.createdAtEpochMs) - Number(b.createdAtEpochMs),
+                )
 
                 // last joined user
                 const lastJoinedUser = numJoinedUsers.at(-1)
@@ -250,7 +252,7 @@ const useFetchUnauthenticatedActivity = (townId: string) => {
                 if (
                     spaceInception?.remoteEvent?.event.payload.value?.content.case === 'inception'
                 ) {
-                    spaceCreatedAt = Number(spaceInception.createdAtEpocMs)
+                    spaceCreatedAt = Number(spaceInception.createdAtEpochMs)
                 }
 
                 console.log('TownPageActivity numJoinedUsers last week', numJoinedUsers)
@@ -283,12 +285,12 @@ const useFetchUnauthenticatedActivity = (townId: string) => {
                     channelCreatedEvents.push(...channelInception)
 
                     const messages = channelMessages.filter((f) =>
-                        isWithin(f.createdAtEpocMs, DAY_MS),
+                        isWithin(f.createdAtEpochMs, DAY_MS),
                     )
 
                     setChannelStats((s) => {
                         const activeUsers = channelMessages
-                            .filter((f) => isWithin(f.createdAtEpocMs, DAY_MS))
+                            .filter((f) => isWithin(f.createdAtEpochMs, DAY_MS))
                             .reduce((acc, curr) => {
                                 acc.add(curr.creatorUserId)
                                 return acc
@@ -303,7 +305,7 @@ const useFetchUnauthenticatedActivity = (townId: string) => {
                 }
 
                 channelCreatedEvents.sort(
-                    (a, b) => Number(a.createdAtEpocMs) - Number(b.createdAtEpocMs),
+                    (a, b) => Number(a.createdAtEpochMs) - Number(b.createdAtEpochMs),
                 )
                 const lastCreatedChannel = channelCreatedEvents.at(-1)
                 if (lastCreatedChannel) {
@@ -316,7 +318,7 @@ const useFetchUnauthenticatedActivity = (townId: string) => {
                             ...currentStats,
                             lastCreatedChannelInfo: {
                                 creatorUserId: lastCreatedChannel.creatorUserId,
-                                createdAt: Number(lastCreatedChannel.createdAtEpocMs),
+                                createdAt: Number(lastCreatedChannel.createdAtEpochMs),
                             },
                         }
                     })

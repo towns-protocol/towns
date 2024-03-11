@@ -37,7 +37,7 @@ export const useExtractMessageAttachments = (params: { text: string }) => {
                             ...event.content,
                         },
                         info: {
-                            createdAtEpocMs: BigInt(event.createdAtEpocMs),
+                            createdAtEpochMs: BigInt(event.createdAtEpochMs),
                             userId,
                             spaceId,
                             channelId,

@@ -125,3 +125,11 @@ func (b *Blockchain) Close() {
 		b.ClientCloser.Close()
 	}
 }
+
+func (b *Blockchain) GetBlockNumber(ctx context.Context) (BlockNumber, error) {
+	n, err := b.Client.BlockNumber(ctx)
+	if err != nil {
+		return 0, AsRiverError(err, Err_CANNOT_CONNECT).Message("Cannot retrieve block number").Func("GetBlockNumber")
+	}
+	return BlockNumber(n), nil
+}

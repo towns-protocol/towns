@@ -29,10 +29,10 @@ function cleanup() {
 function start_node() {
     echo "starting node"
     if [ "$MODE" == "leader" ]; then
-        start_leader_script=${MONOREPO_ROOT}/servers/load-testing/scripts/start-leader.sh
+        start_leader_script=${MONOREPO_ROOT}/packages/stress-testing/scripts/start-leader.sh
         ${start_leader_script}
     else
-        start_follower_script=${MONOREPO_ROOT}/servers/load-testing/scripts/start-follower.sh
+        start_follower_script=${MONOREPO_ROOT}/packages/stress-testing/scripts/start-follower.sh
         ${start_follower_script}
     fi
 }

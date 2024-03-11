@@ -105,7 +105,7 @@ export const useSortedChannels = ({ spaceId, currentRouteId }: Params) => {
                           channel,
                           unread: dmUnreadChannelIds.has(channel.id),
                           isGroup: channel.isGroup,
-                          latestMs: Number(channel?.lastEventCreatedAtEpocMs ?? 0),
+                          latestMs: Number(channel?.lastEventcreatedAtEpochMs ?? 0),
                       } satisfies DMChannelMenuItem)
                     : undefined
             })

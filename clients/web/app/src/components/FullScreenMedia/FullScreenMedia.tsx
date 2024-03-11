@@ -33,7 +33,7 @@ export const FullScreenMedia = (props: Props) => {
                 ) {
                     return e.content.attachments.map((a) => ({
                         attachment: a,
-                        createdAtEpocMs: e.createdAtEpocMs,
+                        createdAtEpochMs: e.createdAtEpochMs,
                         userId: e.sender.id,
                     }))
                 }
@@ -72,7 +72,7 @@ export const FullScreenMedia = (props: Props) => {
                 type: 'image' as const,
                 attachment: e.attachment,
                 userId: e.userId,
-                createdAtEpocMs: e.createdAtEpocMs,
+                createdAtEpochMs: e.createdAtEpochMs,
                 src: '',
             }
         })
@@ -107,7 +107,7 @@ export const FullScreenMedia = (props: Props) => {
                         <FullScreenMediaItem
                             attachment={info.slide.attachment}
                             userId={info.slide.userId}
-                            timestamp={info.slide.createdAtEpocMs}
+                            timestamp={info.slide.createdAtEpochMs}
                         />
                     )
                 },
@@ -123,7 +123,7 @@ export const FullScreenMedia = (props: Props) => {
 
 function hasAttachment(
     obj: unknown,
-): obj is { attachment: Attachment; userId: string; createdAtEpocMs: number } {
+): obj is { attachment: Attachment; userId: string; createdAtEpochMs: number } {
     return (
         obj !== null &&
         typeof obj === 'object' &&
@@ -131,7 +131,7 @@ function hasAttachment(
         typeof obj.attachment !== 'undefined' &&
         'userId' in obj &&
         typeof obj.userId !== 'undefined' &&
-        'createdAtEpocMs' in obj &&
-        typeof obj.createdAtEpocMs !== 'undefined'
+        'createdAtEpochMs' in obj &&
+        typeof obj.createdAtEpochMs !== 'undefined'
     )
 }

@@ -34,7 +34,7 @@ import {
     MemberPayload,
 } from '@river/proto'
 import { keccak256 } from 'ethereum-cryptography/keccak'
-import { bin_toHexString } from '@river/dlog'
+import { bin_fromHexString, bin_toHexString } from '@river/dlog'
 import { isDefined } from './check'
 import { DecryptedContent, DecryptedContentError } from './encryptedContentTypes'
 import { addressFromUserId } from './id'
@@ -58,7 +58,7 @@ export interface StreamTimelineEvent {
     hashStr: string
     creatorUserId: string
     eventNum: bigint
-    createdAtEpocMs: bigint
+    createdAtEpochMs: bigint
     localEvent?: LocalEvent
     remoteEvent?: ParsedEvent
     decryptedContent?: DecryptedContent
@@ -122,7 +122,7 @@ export function makeRemoteTimelineEvent(params: {
         hashStr: params.parsedEvent.hashStr,
         creatorUserId: params.parsedEvent.creatorUserId,
         eventNum: params.eventNum,
-        createdAtEpocMs: params.parsedEvent.event.createdAtEpocMs,
+        createdAtEpochMs: params.parsedEvent.event.createdAtEpochMs,
         remoteEvent: params.parsedEvent,
         miniblockNum: params.miniblockNum,
         confirmedEventNum: params.confirmedEventNum,
@@ -400,6 +400,7 @@ type DeprecatedMembership = {
     userId: string
     op: MembershipOp
     initiatorId: string
+    streamParentId?: string
 }
 
 export const make_MemberPayload_Membership2 = (
@@ -409,6 +410,7 @@ export const make_MemberPayload_Membership2 = (
         userAddress: addressFromUserId(value.userId),
         op: value.op,
         initiatorAddress: addressFromUserId(value.initiatorId),
+        streamParentId: value.streamParentId ? bin_fromHexString(value.streamParentId) : undefined,
     })
 }
 

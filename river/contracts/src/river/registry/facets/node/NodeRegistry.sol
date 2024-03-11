@@ -39,7 +39,20 @@ contract NodeRegistry is INodeRegistry, RegistryModifiers {
 
   function removeNode(
     address nodeAddress
-  ) external onlyNodeOperator(nodeAddress, msg.sender) {}
+  ) external onlyNodeOperator(nodeAddress, msg.sender) {
+    if (!ds.nodes.contains(nodeAddress))
+      revert(RiverRegistryErrors.NODE_NOT_FOUND);
+
+    require(
+      ds.nodeByAddress[nodeAddress].status == NodeStatus.Deleted,
+      RiverRegistryErrors.NODE_STATE_NOT_ALLOWED
+    );
+
+    ds.nodes.remove(nodeAddress);
+    delete ds.nodeByAddress[nodeAddress];
+
+    emit NodeRemoved(nodeAddress);
+  }
 
   function updateNodeStatus(
     address nodeAddress,
@@ -50,13 +63,15 @@ contract NodeRegistry is INodeRegistry, RegistryModifiers {
     onlyOperator(msg.sender)
     onlyNodeOperator(nodeAddress, msg.sender)
   {
-    _checkNodeStatusTransionAllowed(
-      ds.nodeByAddress[nodeAddress].status,
-      status
-    );
+    if (!ds.nodes.contains(nodeAddress))
+      revert(RiverRegistryErrors.NODE_NOT_FOUND);
 
-    ds.nodeByAddress[nodeAddress].status = status;
-    emit NodeStatusUpdated(msg.sender, status);
+    Node storage node = ds.nodeByAddress[nodeAddress];
+
+    _checkNodeStatusTransionAllowed(node.status, status);
+
+    node.status = status;
+    emit NodeStatusUpdated(node.nodeAddress, status);
   }
 
   function updateNodeUrl(
@@ -68,6 +83,9 @@ contract NodeRegistry is INodeRegistry, RegistryModifiers {
     onlyNode(nodeAddress)
     onlyNodeOperator(nodeAddress, msg.sender)
   {
+    if (!ds.nodes.contains(nodeAddress))
+      revert(RiverRegistryErrors.NODE_NOT_FOUND);
+
     Node storage node = ds.nodeByAddress[nodeAddress];
 
     if (
@@ -114,7 +132,9 @@ contract NodeRegistry is INodeRegistry, RegistryModifiers {
         (to == NodeStatus.Failed || to == NodeStatus.Departing)) ||
       (from == NodeStatus.Operational &&
         (to == NodeStatus.Failed || to == NodeStatus.Departing)) ||
-      (from == NodeStatus.Departing && to == NodeStatus.Failed)
+      (from == NodeStatus.Departing &&
+        (to == NodeStatus.Failed || to == NodeStatus.Deleted)) ||
+      (from == NodeStatus.Failed && to == NodeStatus.Deleted)
     ) {
       return;
     }

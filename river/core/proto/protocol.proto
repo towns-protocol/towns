@@ -80,7 +80,7 @@ message StreamEvent {
     /** CreatedAt is the time when the event was created.
     NOTE: this value is set by clients and is not reliable for anything other than displaying
     the value to the user. Never use this value to sort events from different users.  */
-    int64 created_at_epoc_ms = 5;
+    int64 created_at_epoch_ms = 5;
     
     /** Variable-type payload. 
       * Payloads should obey the following rules:
@@ -163,6 +163,7 @@ message MemberPayload {
         MembershipOp op = 1;
         bytes user_address = 2;
         bytes initiator_address = 3;
+        optional bytes stream_parent_id = 4;
     }
     
     message KeySolicitation {
@@ -308,6 +309,7 @@ message UserPayload {
         bytes stream_id = 1;
         MembershipOp op = 2;
         optional bytes inviter = 3;
+        optional bytes stream_parent_id = 4;
     }
 
     // update someone else's membership
@@ -315,6 +317,7 @@ message UserPayload {
         bytes stream_id = 1;
         bytes user_id = 2; 
         MembershipOp op = 3;
+        optional bytes stream_parent_id = 4;
     }
 
     oneof content {

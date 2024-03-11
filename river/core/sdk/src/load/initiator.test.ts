@@ -7,7 +7,7 @@ import {
     createAndStartClient,
     createAndStartClients,
     multipleClientsJoinSpaceAndChannel,
-} from './load_tests_util'
+} from './load.test_util'
 import { ethers } from 'ethers'
 import { Queue, Worker } from 'bullmq'
 // eslint-disable-next-line import/no-extraneous-dependencies
@@ -26,7 +26,7 @@ import {
     loadTestShutdownQueueName,
     loadTestSignalCheckInterval,
     loadTestTimeout,
-} from './loadconfig'
+} from './loadconfig.test_util'
 import { RiverSDK } from '../testSdk.test_util'
 
 const { createSpaceDapp } = await import('@river/web3')

@@ -17,6 +17,10 @@ export class StreamStateView_Channel extends StreamStateView_AbstractContent {
         this.streamId = streamId
     }
 
+    getStreamParentId(): string | undefined {
+        return this.spaceId
+    }
+
     needsScrollback(): boolean {
         return !this.reachedRenderableContent
     }

@@ -40,7 +40,7 @@ function generateMessageRenderEvent(messageContent: MessageContent): MessageRend
         event: {
             eventId: 'event-id',
             eventNum: 0n,
-            createdAtEpocMs: 0,
+            createdAtEpochMs: 0,
             fallbackContent: '',
             isLocalPending: false,
             isEncrypting: false,

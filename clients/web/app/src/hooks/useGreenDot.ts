@@ -8,7 +8,7 @@ const getGreen = (ms: number) => Date.now() - ms < GREEN_TIME
 
 export const useGreenDot = (userId: string | undefined) => {
     const lastEventMs = useTimelineStore((state) => {
-        return userId ? state.lastestEventByUser[userId]?.createdAtEpocMs ?? 0 : 0
+        return userId ? state.lastestEventByUser[userId]?.createdAtEpochMs ?? 0 : 0
     })
 
     const [isGreen, setIsGreen] = useState(getGreen(lastEventMs))

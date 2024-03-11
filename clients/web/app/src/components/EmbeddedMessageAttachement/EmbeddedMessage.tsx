@@ -106,7 +106,7 @@ export const EmbeddedMessage = (props: {
                         <></>
                     )}
 
-                    <Text size="sm">{formatDate(Number(attachment.info.createdAtEpocMs))}</Text>
+                    <Text size="sm">{formatDate(Number(attachment.info.createdAtEpochMs))}</Text>
                     {isKnownChannel && (
                         <>
                             <Text>&bull;</Text>

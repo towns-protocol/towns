@@ -63,6 +63,10 @@ export abstract class StreamStateView_AbstractContent {
         return undefined
     }
 
+    getStreamParentId(): string | undefined {
+        return undefined
+    }
+
     needsScrollback(): boolean {
         return false
     }

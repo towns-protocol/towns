@@ -262,7 +262,7 @@ const MissingMembershipInfo = (props: { onJoinRoom: () => void }) => (
 
 function ChatMessage(props: { event: TimelineEvent }) {
     const { event } = props
-    const date = new Date(event.createdAtEpocMs)
+    const date = new Date(event.createdAtEpochMs)
     return (
         <Typography display="block" variant="body1" component="span" sx={messageStyle}>
             <p style={dateStyle}>
