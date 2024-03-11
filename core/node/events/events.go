@@ -25,14 +25,14 @@ func MakeStreamEvent(
 			Message("Failed to create random salt").
 			Func("MakeStreamEvent")
 	}
-	epocMillis := time.Now().UnixNano() / int64(time.Millisecond)
+	epochMillis := time.Now().UnixNano() / int64(time.Millisecond)
 
 	event := &StreamEvent{
 		CreatorAddress:    wallet.Address.Bytes(),
 		Salt:              salt,
 		PrevMiniblockHash: prevMiniblockHash,
 		Payload:           payload,
-		CreatedAtEpocMs:   epocMillis,
+		CreatedAtEpochMs:   epochMillis,
 	}
 
 	return event, nil
@@ -51,7 +51,7 @@ func MakeDelegatedStreamEvent(
 			Message("Failed to create random salt").
 			Func("MakeDelegatedStreamEvent")
 	}
-	epocMillis := time.Now().UnixNano() / int64(time.Millisecond)
+	epochMillis := time.Now().UnixNano() / int64(time.Millisecond)
 
 	event := &StreamEvent{
 		CreatorAddress:    wallet.Address.Bytes(),
@@ -59,7 +59,7 @@ func MakeDelegatedStreamEvent(
 		PrevMiniblockHash: prevMiniblockHash,
 		Payload:           payload,
 		DelegateSig:       delegateSig,
-		CreatedAtEpocMs:   epocMillis,
+		CreatedAtEpochMs:   epochMillis,
 	}
 
 	return event, nil

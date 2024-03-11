@@ -80,7 +80,7 @@ message StreamEvent {
     /** CreatedAt is the time when the event was created.
     NOTE: this value is set by clients and is not reliable for anything other than displaying
     the value to the user. Never use this value to sort events from different users.  */
-    int64 created_at_epoc_ms = 5;
+    int64 created_at_epoch_ms = 5;
     
     /** Variable-type payload. 
       * Payloads should obey the following rules:

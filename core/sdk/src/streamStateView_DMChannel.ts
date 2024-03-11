@@ -17,7 +17,7 @@ export class StreamStateView_DMChannel extends StreamStateView_AbstractContent {
     readonly streamId: string
     firstPartyId?: string
     secondPartyId?: string
-    lastEventCreatedAtEpocMs = 0n
+    lastEventCreatedAtEpochMs = 0n
 
     constructor(streamId: string) {
         super()
@@ -114,7 +114,7 @@ export class StreamStateView_DMChannel extends StreamStateView_AbstractContent {
         event: StreamTimelineEvent,
         stateEmitter: TypedEmitter<StreamStateEvents> | undefined,
     ): void {
-        this.lastEventCreatedAtEpocMs = event.createdAtEpocMs
+        this.lastEventCreatedAtEpochMs = event.createdAtEpochMs
         stateEmitter?.emit('streamLatestTimestampUpdated', this.streamId)
     }
 
@@ -122,9 +122,9 @@ export class StreamStateView_DMChannel extends StreamStateView_AbstractContent {
         event: ParsedEvent,
         stateEmitter: TypedEmitter<StreamStateEvents> | undefined,
     ) {
-        const createdAtEpocMs = event.event.createdAtEpocMs
-        if (createdAtEpocMs > this.lastEventCreatedAtEpocMs) {
-            this.lastEventCreatedAtEpocMs = createdAtEpocMs
+        const createdAtEpochMs = event.event.createdAtEpochMs
+        if (createdAtEpochMs > this.lastEventCreatedAtEpochMs) {
+            this.lastEventCreatedAtEpochMs = createdAtEpochMs
             stateEmitter?.emit('streamLatestTimestampUpdated', this.streamId)
         }
     }

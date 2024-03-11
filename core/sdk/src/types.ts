@@ -58,7 +58,7 @@ export interface StreamTimelineEvent {
     hashStr: string
     creatorUserId: string
     eventNum: bigint
-    createdAtEpocMs: bigint
+    createdAtEpochMs: bigint
     localEvent?: LocalEvent
     remoteEvent?: ParsedEvent
     decryptedContent?: DecryptedContent
@@ -122,7 +122,7 @@ export function makeRemoteTimelineEvent(params: {
         hashStr: params.parsedEvent.hashStr,
         creatorUserId: params.parsedEvent.creatorUserId,
         eventNum: params.eventNum,
-        createdAtEpocMs: params.parsedEvent.event.createdAtEpocMs,
+        createdAtEpochMs: params.parsedEvent.event.createdAtEpochMs,
         remoteEvent: params.parsedEvent,
         miniblockNum: params.miniblockNum,
         confirmedEventNum: params.confirmedEventNum,

@@ -75,7 +75,7 @@ export class UnauthenticatedClient {
 
             const currentOldestEvent = result.firstEvent
             if (currentOldestEvent) {
-                if (!this.isWithin(currentOldestEvent.createdAtEpocMs, toDate)) {
+                if (!this.isWithin(currentOldestEvent.createdAtEpochMs, toDate)) {
                     break
                 }
             }
