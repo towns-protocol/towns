@@ -65,12 +65,12 @@ func RiverHash(buffer []byte) common.Hash {
 }
 
 // RiverDelegateHashSrc computes the hash of the given buffer using the River delegate hashing algorithm.
-func RiverDelegateHashSrc(delegatePublicKey []byte, expiryEpochMs int64) []byte {
-	if expiryEpochMs == 0 {
-		panic("Expiry must be non-zero")
+func RiverDelegateHashSrc(delegatePublicKey []byte, expiryEpochMs int64) ([]byte, error) {
+	if expiryEpochMs < 0 {
+		return nil, RiverError(Err_INVALID_ARGUMENT, "expiryEpochMs must be non-negative")
 	}
 	if len(delegatePublicKey) != 64 && len(delegatePublicKey) != 65 {
-		panic("delegatePublicKey must be 64 or 65 bytes")
+		return nil, RiverError(Err_INVALID_ARGUMENT, "delegatePublicKey must be 64 or 65 bytes")
 	}
 	writer := bytes.Buffer{}
 	writeOrPanic(&writer, DELEGATE_HASH_HEADER)
@@ -80,7 +80,7 @@ func RiverDelegateHashSrc(delegatePublicKey []byte, expiryEpochMs int64) []byte 
 	if err != nil {
 		panic(err)
 	}
-	return writer.Bytes()
+	return writer.Bytes(), nil
 }
 
 type Wallet struct {

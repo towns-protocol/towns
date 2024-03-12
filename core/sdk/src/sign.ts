@@ -266,7 +266,7 @@ export function riverDelegateHashSrc(
     expiryEpochMs: bigint,
 ): Uint8Array {
     assertBytes(devicePublicKey)
-    check(expiryEpochMs > 0, 'Expiry should be positive')
+    check(expiryEpochMs >= 0, 'Expiry should be positive')
     check(devicePublicKey.length === 64 || devicePublicKey.length === 65, 'Bad public key')
     const expiryBytes = bigintToUint8Array64LE(expiryEpochMs)
     const retVal = new Uint8Array(
