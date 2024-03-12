@@ -224,11 +224,11 @@ func (c *RiverRegistryContract) GetAllStreams(ctx context.Context, blockNum uint
 	return ret, nil
 }
 
-func (c *RiverRegistryContract) SetStreamLastMiniblock(ctx context.Context, streamId StreamId, lastMiniblockHash common.Hash, lastMiniblockNum uint64, isSealed bool) error {
+func (c *RiverRegistryContract) SetStreamLastMiniblock(ctx context.Context, streamId StreamId, prevMiniblockHash common.Hash, lastMiniblockHash common.Hash, lastMiniblockNum uint64, isSealed bool) error {
 	_, _, err := c.Blockchain.TxRunner.SubmitAndWait(
 		ctx,
 		func(opts *bind.TransactOpts) (*types.Transaction, error) {
-			return c.StreamRegistry.SetStreamLastMiniblock(opts, streamId.ByteArray(), lastMiniblockHash, lastMiniblockNum, isSealed)
+			return c.StreamRegistry.SetStreamLastMiniblock(opts, streamId.ByteArray(), prevMiniblockHash, lastMiniblockHash, lastMiniblockNum, isSealed)
 		},
 	)
 	return err

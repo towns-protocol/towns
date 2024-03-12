@@ -5,6 +5,7 @@ import (
 	"context"
 	"sync"
 
+	"github.com/ethereum/go-ethereum/common"
 	"github.com/river-build/river/core/node/dlog"
 	"github.com/river-build/river/core/node/storage"
 
@@ -222,7 +223,7 @@ func (s *streamImpl) MakeMiniblock(ctx context.Context, forceSnapshot bool) (boo
 		return false, err
 	}
 
-	err = s.params.Registry.SetStreamLastMiniblock(ctx, s.streamId, miniblockHeaderEvent.Hash, uint64(miniblockHeader.MiniblockNum), false)
+	err = s.params.Registry.SetStreamLastMiniblock(ctx, s.streamId, common.BytesToHash(miniblockHeader.PrevMiniblockHash), miniblockHeaderEvent.Hash, uint64(miniblockHeader.MiniblockNum), false)
 	if err != nil {
 		log.Error("Stream.MakeMiniblock: SetStreamLastMiniblock failed", "error", err, "streamId", s.streamId)
 		return false, err

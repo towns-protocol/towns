@@ -70,7 +70,7 @@ export interface IStreamRegistryInterface extends utils.Interface {
     "getStreamsOnNode(address)": FunctionFragment;
     "placeStreamOnNode(bytes32,address)": FunctionFragment;
     "removeStreamFromNode(bytes32,address)": FunctionFragment;
-    "setStreamLastMiniblock(bytes32,bytes32,uint64,bool)": FunctionFragment;
+    "setStreamLastMiniblock(bytes32,bytes32,bytes32,uint64,bool)": FunctionFragment;
   };
 
   getFunction(
@@ -131,6 +131,7 @@ export interface IStreamRegistryInterface extends utils.Interface {
   encodeFunctionData(
     functionFragment: "setStreamLastMiniblock",
     values: [
+      PromiseOrValue<BytesLike>,
       PromiseOrValue<BytesLike>,
       PromiseOrValue<BytesLike>,
       PromiseOrValue<BigNumberish>,
@@ -299,6 +300,7 @@ export interface IStreamRegistry extends BaseContract {
 
     setStreamLastMiniblock(
       streamId: PromiseOrValue<BytesLike>,
+      prevMiniBlockHash: PromiseOrValue<BytesLike>,
       lastMiniblockHash: PromiseOrValue<BytesLike>,
       lastMiniblockNum: PromiseOrValue<BigNumberish>,
       isSealed: PromiseOrValue<boolean>,
@@ -349,6 +351,7 @@ export interface IStreamRegistry extends BaseContract {
 
   setStreamLastMiniblock(
     streamId: PromiseOrValue<BytesLike>,
+    prevMiniBlockHash: PromiseOrValue<BytesLike>,
     lastMiniblockHash: PromiseOrValue<BytesLike>,
     lastMiniblockNum: PromiseOrValue<BigNumberish>,
     isSealed: PromiseOrValue<boolean>,
@@ -401,6 +404,7 @@ export interface IStreamRegistry extends BaseContract {
 
     setStreamLastMiniblock(
       streamId: PromiseOrValue<BytesLike>,
+      prevMiniBlockHash: PromiseOrValue<BytesLike>,
       lastMiniblockHash: PromiseOrValue<BytesLike>,
       lastMiniblockNum: PromiseOrValue<BigNumberish>,
       isSealed: PromiseOrValue<boolean>,
@@ -491,6 +495,7 @@ export interface IStreamRegistry extends BaseContract {
 
     setStreamLastMiniblock(
       streamId: PromiseOrValue<BytesLike>,
+      prevMiniBlockHash: PromiseOrValue<BytesLike>,
       lastMiniblockHash: PromiseOrValue<BytesLike>,
       lastMiniblockNum: PromiseOrValue<BigNumberish>,
       isSealed: PromiseOrValue<boolean>,
@@ -542,6 +547,7 @@ export interface IStreamRegistry extends BaseContract {
 
     setStreamLastMiniblock(
       streamId: PromiseOrValue<BytesLike>,
+      prevMiniBlockHash: PromiseOrValue<BytesLike>,
       lastMiniblockHash: PromiseOrValue<BytesLike>,
       lastMiniblockNum: PromiseOrValue<BigNumberish>,
       isSealed: PromiseOrValue<boolean>,

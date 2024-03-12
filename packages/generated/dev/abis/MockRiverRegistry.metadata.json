@@ -806,6 +806,11 @@
           },
           {
             "internalType": "bytes32",
+            "name": "prevMiniBlockHash",
+            "type": "bytes32"
+          },
+          {
+            "internalType": "bytes32",
             "name": "lastMiniblockHash",
             "type": "bytes32"
           },
@@ -1048,19 +1053,19 @@
       ]
     },
     "contracts/src/river/registry/facets/stream/IStreamRegistry.sol": {
-      "keccak256": "0xe01ced0797f56cd745d2bee87fcef9381ec8307713bc1ece6e6212e51adb706f",
+      "keccak256": "0x19dbdaa4c4a2dedde230aabd42338e02158570da0268eaf98def42604bc43ce4",
       "license": "Apache-2.0",
       "urls": [
-        "bzz-raw://efdd9a8c5f70913406866dfdd9f5d446c5d5e20a5cb39a20d5ee75c6ebca54af",
-        "dweb:/ipfs/Qmd68co8obqzAvmhufq2ErdCerM3NPKjXgjxD9KugFZCBf"
+        "bzz-raw://b35375b1086e487a7f0939de9fe4a926c66687630ff302d15dca19607b6d9b98",
+        "dweb:/ipfs/QmYwsVPrk77dJwnkc2hwTALrhx7qBeCFKkevjBYvm5PUsq"
       ]
     },
     "contracts/src/river/registry/facets/stream/StreamRegistry.sol": {
-      "keccak256": "0xc04fcf552ab676fce969440de3ba10bc47c3e7493aa777d14cb465c3bf27d0ce",
+      "keccak256": "0xc4ceb616e707914fe36fa2b3c15206f6a1af5d3bf453cb51b6c585696485086a",
       "license": "Apache-2.0",
       "urls": [
-        "bzz-raw://1874de0909601c555894f0e14adf9328aed5c561ad4050364a0931785dca7bbb",
-        "dweb:/ipfs/QmP8p4nV97CgSJC79W4ufTggDDCj77TnRKPNPwms6dSYcp"
+        "bzz-raw://0628886698f98e6576dff5b3c1b5708c0737ce2590a54a76bbaf0085a475032d",
+        "dweb:/ipfs/QmWQ5bvQzZZdbBXdcfHyeUwgxNXz2H3bChS9k84KbeGARe"
       ]
     },
     "contracts/src/river/registry/libraries/RegistryErrors.sol": {

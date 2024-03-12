@@ -79,6 +79,7 @@ contract StreamRegistry is IStreamRegistry, RegistryModifiers {
 
   function setStreamLastMiniblock(
     bytes32 streamId,
+    bytes32 prevMiniBlockHash,
     bytes32 lastMiniblockHash,
     uint64 lastMiniblockNum,
     bool isSealed
@@ -96,7 +97,10 @@ contract StreamRegistry is IStreamRegistry, RegistryModifiers {
     }
 
     // Validate that the lastMiniblockNum is the next expected miniblock
-    if (stream.lastMiniblockNum + 1 != lastMiniblockNum) {
+    if (
+      stream.lastMiniblockNum + 1 != lastMiniblockNum ||
+      stream.lastMiniblockHash != prevMiniBlockHash
+    ) {
       revert(RiverRegistryErrors.BAD_ARG);
     }
 
