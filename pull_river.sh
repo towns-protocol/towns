@@ -126,7 +126,7 @@ if ! git diff main --quiet --cached; then
       while true; do
         OUTPUT=$(gh pr checks "${BRANCH_NAME}" 2>&1)
         if [[ "$OUTPUT" == *"no checks reported on the '${BRANCH_NAME}' branch"* ]]; then
-          echo "Checks for '$branch_name' haven't started yet. Waiting for $WAIT_TIME seconds..."
+          echo "Checks for '${BRANCH_NAME}' haven't started yet. Waiting for $WAIT_TIME seconds..."
           sleep $WAIT_TIME
         else
           break
