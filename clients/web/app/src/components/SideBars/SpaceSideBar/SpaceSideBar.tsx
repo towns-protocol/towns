@@ -217,7 +217,7 @@ export const SpaceSideBar = (props: Props) => {
                                     icon="threads"
                                     link={`/${PATHS.SPACES}/${space.id}/threads`}
                                     id="threads"
-                                    label="message"
+                                    label="Threads"
                                     badge={
                                         unreadThreadMentions > 0 && (
                                             <Badge value={unreadThreadMentions} />
