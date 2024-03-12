@@ -32,7 +32,7 @@ func MakeStreamEvent(
 		Salt:              salt,
 		PrevMiniblockHash: prevMiniblockHash,
 		Payload:           payload,
-		CreatedAtEpochMs:   epochMillis,
+		CreatedAtEpochMs:  epochMillis,
 	}
 
 	return event, nil
@@ -59,7 +59,7 @@ func MakeDelegatedStreamEvent(
 		PrevMiniblockHash: prevMiniblockHash,
 		Payload:           payload,
 		DelegateSig:       delegateSig,
-		CreatedAtEpochMs:   epochMillis,
+		CreatedAtEpochMs:  epochMillis,
 	}
 
 	return event, nil
@@ -279,15 +279,11 @@ func Make_SpacePayload_Membership(op MembershipOp, userId string, initiatorId st
 
 func Make_SpacePayload_Channel(
 	op ChannelOp,
-	inChannelId string,
+	channelId StreamId,
 	channelProperties *EncryptedData,
 	originEvent *EventRef,
 	isDefault bool,
 ) *StreamEvent_SpacePayload {
-	channelId, err := StreamIdFromString(inChannelId)
-	if err != nil {
-		panic(err) // todo convert everything to StreamId
-	}
 	return &StreamEvent_SpacePayload{
 		SpacePayload: &SpacePayload{
 			Content: &SpacePayload_Channel_{
@@ -317,14 +313,9 @@ func Make_UserPayload_Inception(streamId StreamId, settings *StreamSettings) *St
 }
 
 func Make_UserDeviceKeyPayload_Inception(
-	inStreamId string,
+	streamId StreamId,
 	settings *StreamSettings,
 ) *StreamEvent_UserDeviceKeyPayload {
-	streamId, err := StreamIdFromString(inStreamId)
-	if err != nil {
-		panic(err) // todo convert everything to StreamId
-	}
-
 	return &StreamEvent_UserDeviceKeyPayload{
 		UserDeviceKeyPayload: &UserDeviceKeyPayload{
 			Content: &UserDeviceKeyPayload_Inception_{
@@ -366,12 +357,7 @@ func Make_UserPayload_Membership(
 	}
 }
 
-func Make_UserSettingsPayload_Inception(inStreamId string, settings *StreamSettings) *StreamEvent_UserSettingsPayload {
-	streamId, err := StreamIdFromString(inStreamId)
-	if err != nil {
-		panic(err) // todo convert everything to StreamId
-	}
-
+func Make_UserSettingsPayload_Inception(streamId StreamId, settings *StreamSettings) *StreamEvent_UserSettingsPayload {
 	return &StreamEvent_UserSettingsPayload{
 		UserSettingsPayload: &UserSettingsPayload{
 			Content: &UserSettingsPayload_Inception_{

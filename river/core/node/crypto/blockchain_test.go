@@ -13,7 +13,7 @@ import (
 	. "github.com/river-build/river/core/node/base"
 	"github.com/river-build/river/core/node/base/test"
 	. "github.com/river-build/river/core/node/protocol"
-	. "github.com/river-build/river/core/node/shared"
+	"github.com/river-build/river/core/node/testutils"
 )
 
 func TestBlockchain(t *testing.T) {
@@ -93,8 +93,7 @@ func TestBlockchain(t *testing.T) {
 	require.NoError(err)
 	assert.Equal(secondBlockNum, currentBlockNum)
 
-	streamId, err := StreamIdFromBytes([]byte{0xa1, 0x02, 0x03})
-	require.NoError(err)
+	streamId := testutils.StreamIdFromBytes([]byte{0xa1, 0x02, 0x03})
 	addrs := []common.Address{nodeAddr1, nodeAddr2}
 
 	genesisHash := common.HexToHash("0x123")
@@ -135,8 +134,7 @@ func TestBlockchain(t *testing.T) {
 	tx1, err = bc1.TxRunner.Submit(
 		ctx,
 		func(opts *bind.TransactOpts) (*types.Transaction, error) {
-			streamId, err := StreamIdFromBytes([]byte{0x10, 0x22, 0x33})
-			require.NoError(err)
+			streamId := testutils.StreamIdFromBytes([]byte{0x10, 0x22, 0x33})
 			return tc.StreamRegistry.AllocateStream(opts, streamId.ByteArray(), []common.Address{common.HexToAddress("0x123")}, genesisHash, genesisMiniblock)
 		},
 	)

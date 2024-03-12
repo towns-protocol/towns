@@ -655,7 +655,7 @@ func (ru *aeUserMembershipRules) parentEventForUserMembership() (*RequiredParent
 	userMembership := ru.userMembership
 	creatorAddress := ru.params.parsedEvent.Event.CreatorAddress
 
-	userAddress, err := shared.GetUserAddrFromStreamId(*ru.params.streamView.StreamId())
+	userAddress, err := shared.GetUserAddressFromStreamId(*ru.params.streamView.StreamId())
 	if err != nil {
 		return nil, err
 	}
@@ -690,20 +690,12 @@ func (ru *aeUserMembershipActionRules) parentEventForUserMembershipAction() (*Re
 	if err != nil {
 		return nil, err
 	}
-	userId, err := shared.AddressHex(action.UserId)
-	if err != nil {
-		return nil, err
-	}
 	actionStreamId, err := shared.StreamIdFromBytes(action.StreamId)
 	if err != nil {
 		return nil, err
 	}
 	payload := events.Make_UserPayload_Membership(action.Op, actionStreamId, &inviterId, action.StreamParentId)
-	toUserStreamIdStr, err := shared.UserStreamIdFromId(userId)
-	if err != nil {
-		return nil, err
-	}
-	toUserStreamId, err := shared.StreamIdFromString(toUserStreamIdStr)
+	toUserStreamId, err := shared.UserStreamIdFromBytes(action.UserId)
 	if err != nil {
 		return nil, err
 	}

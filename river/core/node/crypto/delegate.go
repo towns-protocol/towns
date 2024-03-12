@@ -28,7 +28,7 @@ func recoverEthereumMessageSignerAddress(hashSrc []byte, inSignature []byte) (*c
 	}
 
 	hash := accounts.TextHash(hashSrc)
-	
+
 	recoveredKey, err := secp256k1.RecoverPubkey(hash, signature)
 	if err != nil {
 		return nil, AsRiverError(err).
@@ -40,13 +40,10 @@ func recoverEthereumMessageSignerAddress(hashSrc []byte, inSignature []byte) (*c
 }
 
 func CheckDelegateSig(expectedAddress []byte, devicePubKey []byte, delegateSig []byte, expiryEpochMs int64) error {
-	var hashSrc []byte
-	if expiryEpochMs == 0 {
-		hashSrc = devicePubKey
-	} else {
-		hashSrc = RiverDelegateHashSrc(devicePubKey, expiryEpochMs)
+	hashSrc, err := RiverDelegateHashSrc(devicePubKey, expiryEpochMs)
+	if err != nil {
+		return err
 	}
-
 	recoveredAddress, err := recoverEthereumMessageSignerAddress(hashSrc, delegateSig)
 	if err != nil {
 		return err

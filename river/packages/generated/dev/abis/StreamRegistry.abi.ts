@@ -311,6 +311,11 @@ export default [
         "internalType": "bytes32"
       },
       {
+        "name": "prevMiniBlockHash",
+        "type": "bytes32",
+        "internalType": "bytes32"
+      },
+      {
         "name": "lastMiniblockHash",
         "type": "bytes32",
         "internalType": "bytes32"

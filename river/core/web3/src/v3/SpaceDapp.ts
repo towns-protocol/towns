@@ -372,12 +372,13 @@ export class SpaceDapp implements ISpaceDapp {
         if (!town) {
             throw new Error(`Town with spaceId "${spaceId}" is not found.`)
         }
-        const [price, limit, currency, feeRecipient, duration] = await Promise.all([
+        const [price, limit, currency, feeRecipient, duration, totalSupply] = await Promise.all([
             town.Membership.read.getMembershipPrice(),
             town.Membership.read.getMembershipLimit(),
             town.Membership.read.getMembershipCurrency(),
             town.Membership.read.getMembershipFeeRecipient(),
             town.Membership.read.getMembershipDuration(),
+            town.Membership.read.totalSupply(),
         ])
 
         return {
@@ -386,6 +387,7 @@ export class SpaceDapp implements ISpaceDapp {
             currency: currency,
             feeRecipient: feeRecipient,
             duration: duration.toNumber(),
+            totalSupply: totalSupply.toNumber(),
         }
     }
 

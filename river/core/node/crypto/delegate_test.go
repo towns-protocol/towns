@@ -19,7 +19,9 @@ func TestDelegateEth(t *testing.T) {
 	assert.NoError(t, err)
 	devicePubKey := crypto.FromECDSAPub(&deviceWallet.PrivateKeyStruct.PublicKey)
 
-	hash := accounts.TextHash(devicePubKey)
+	hashSrc, err := RiverDelegateHashSrc(devicePubKey, 0)
+	assert.NoError(t, err)
+	hash := accounts.TextHash(hashSrc)
 	delegatSig, err := crypto.Sign(hash, primaryWallet.PrivateKeyStruct)
 	assert.NoError(t, err)
 	delegatSig[64] += 27
@@ -40,7 +42,8 @@ func TestDelegateEthWithExpiry(t *testing.T) {
 
 	expiry := int64(1234567890)
 
-	hashSrc := RiverDelegateHashSrc(devicePubKey, expiry)
+	hashSrc, err := RiverDelegateHashSrc(devicePubKey, expiry)
+	assert.NoError(t, err)
 
 	hash := accounts.TextHash(hashSrc)
 	delegatSig, err := crypto.Sign(hash, primaryWallet.PrivateKeyStruct)

@@ -58,15 +58,11 @@ func createUserDeviceKeyStream(
 	wallet *crypto.Wallet,
 	client protocolconnect.StreamServiceClient,
 ) (*protocol.SyncCookie, []byte, error) {
-	userDeviceKeyStreamIdStr := UserDeviceKeyStreamIdFromAddress(wallet.Address)
-	userDeviceKeyStreamId, err := StreamIdFromString(userDeviceKeyStreamIdStr)
-	if err != nil {
-		return nil, nil, err
-	}
+	userDeviceKeyStreamId := UserDeviceKeyStreamIdFromAddress(wallet.Address)
 	inception, err := events.MakeEnvelopeWithPayload(
 		wallet,
 		events.Make_UserDeviceKeyPayload_Inception(
-			userDeviceKeyStreamId.String(),
+			userDeviceKeyStreamId,
 			nil,
 		),
 		nil,
@@ -84,9 +80,13 @@ func createUserDeviceKeyStream(
 	return res.Msg.Stream.NextSyncCookie, inception.Hash, nil
 }
 
-func makeDelegateSig(primaryWallet *crypto.Wallet, deviceWallet *crypto.Wallet) ([]byte, error) {
+func makeDelegateSig(primaryWallet *crypto.Wallet, deviceWallet *crypto.Wallet, expiryEpochMs int64) ([]byte, error) {
 	devicePubKey := eth_crypto.FromECDSAPub(&deviceWallet.PrivateKeyStruct.PublicKey)
-	hash := accounts.TextHash(devicePubKey)
+	hashSrc, err := crypto.RiverDelegateHashSrc(devicePubKey, expiryEpochMs)
+	if err != nil {
+		return nil, err
+	}
+	hash := accounts.TextHash(hashSrc)
 	delegatSig, err := primaryWallet.SignHash(hash)
 	return delegatSig, err
 }
@@ -534,7 +534,7 @@ func testRiverDeviceId(t *testing.T, client protocolconnect.StreamServiceClient,
 	require.NoError(err)
 	require.NotNil(channel)
 
-	delegateSig, err := makeDelegateSig(wallet, deviceWallet)
+	delegateSig, err := makeDelegateSig(wallet, deviceWallet, 0)
 	require.NoError(err)
 
 	event, err := events.MakeDelegatedStreamEvent(
