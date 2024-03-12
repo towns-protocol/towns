@@ -131,7 +131,8 @@ export function isStringArray(
 export type MembershipInfo = Pick<
     MembershipInfoStruct,
     'maxSupply' | 'currency' | 'feeRecipient' | 'price' | 'duration'
->
+> &
+    TotalSupplyInfo
 
 export type TotalSupplyInfo = Pick<TotalSupplyOutputStruct, 'totalSupply'>
 
