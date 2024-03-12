@@ -61,7 +61,7 @@ import {
     streamIdAsBytes,
     streamIdAsString,
 } from './id'
-import { SignerContext, makeEvent, unpackMiniblock, unpackStream } from './sign'
+import { makeEvent, unpackMiniblock, unpackStream } from './sign'
 import { StreamEvents } from './streamEvents'
 import { StreamStateView } from './streamStateView'
 import {
@@ -113,6 +113,7 @@ import { PersistenceStore, IPersistenceStore, StubPersistenceStore } from './per
 import { SyncState, SyncedStreams } from './syncedStreams'
 import { SyncedStream } from './syncedStream'
 import { SyncedStreamsExtension } from './syncedStreamsExtension'
+import { SignerContext } from './signerContext'
 
 type ClientEvents = StreamEvents & DecryptionEvents
 
@@ -1194,35 +1195,40 @@ export class Client
     ): Promise<Stream> {
         this.logCall('joinStream', streamId)
         check(isDefined(this.userStreamId))
+        const userStream = this.stream(this.userStreamId)
+        check(isDefined(userStream), 'userStream not found')
+        const streamIdStr = streamIdAsString(streamId)
         const stream = await this.initStream(streamId)
-        if (stream.view.getMembers().isMemberJoined(this.userId)) {
+        // check your user stream for membership as that's the final source of truth
+        if (userStream.view.userContent.isJoined(streamIdStr)) {
             this.logError('joinStream: user already a member', streamId)
             return stream
         }
-        const streamParentId = stream.view.getContent().getStreamParentId()
+        // add event to user stream, this triggers events in the target stream
         await this.makeEventAndAddToStream(
             this.userStreamId,
             make_UserPayload_UserMembership({
                 op: MembershipOp.SO_JOIN,
                 streamId: streamIdAsBytes(streamId),
-                streamParentId: streamParentId ? streamIdAsBytes(streamParentId) : undefined,
+                streamParentId: stream.view.getContent().getStreamParentIdAsBytes(),
             }),
             { method: 'joinStream' },
         )
 
+        if (opts?.skipWaitForMiniblockConfirmation !== true) {
+            await stream.waitForMembership(MembershipOp.SO_JOIN)
+        }
+
         if (opts?.skipWaitForUserStreamUpdate !== true) {
             const userStream = this.streams.get(this.userStreamId)
             check(isDefined(userStream), 'userStream not found')
-            if (!userStream.view.userContent.isJoined(streamIdAsString(streamId))) {
+            if (!userStream.view.userContent.isJoined(streamIdStr)) {
                 await userStream.waitFor('userStreamMembershipChanged', (streamId) =>
                     userStream.view.userContent.isJoined(streamId),
                 )
             }
         }
 
-        if (opts?.skipWaitForMiniblockConfirmation !== true) {
-            await stream.waitForMembership(MembershipOp.SO_JOIN)
-        }
         return stream
     }
 

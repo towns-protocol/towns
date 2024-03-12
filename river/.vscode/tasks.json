@@ -49,6 +49,8 @@
       "dependsOn": [
         "Deploy Smart Contracts",
         "YarnInstall",
+        "BuildProtobufs",
+        "XChainCreateMulti",
         "Stage 3"
       ],
       "group": {
@@ -63,7 +65,8 @@
         "Start Watches",
         "Casablanca DebugApp",
         "Casablanca",
-        "Casablanca-No-Entitlements"
+        "Casablanca-No-Entitlements",
+        "XChainLaunchMulti",
       ],
       "group": {
         "kind": "build",
@@ -252,6 +255,26 @@
       "problemMatcher": [],
     },
     {
+      "label": "XChainCreateMulti",
+      "type": "shell",
+      "command": "sleep 1 && ./core/xchain/create_multi.sh",
+      "isBackground": true,
+      "problemMatcher": [],
+      "presentation": {
+        "group": "xchain"
+      }
+    },
+    {
+      "label": "XChainLaunchMulti",
+      "type": "shell",
+      "command": "sleep 1 && ./core/xchain/launch_multi.sh",
+      "isBackground": true,
+      "problemMatcher": [],
+      "presentation": {
+        "group": "xchain"
+      }
+    },
+    {
       "label": "BaseChain",
       "type": "shell",
       "command": "RIVER_BLOCK_TIME=1 ./scripts/start-local-basechain.sh",
@@ -324,6 +347,18 @@
       "label": "BuildContractTypes",
       "type": "shell",
       "command": "./scripts/build-contract-types.sh localhost",
+      "isBackground": true,
+      "problemMatcher": [],
+      "presentation": {
+        "group": "ephemeral",
+        "focus": true,
+        "panel": "shared",
+      }
+    },
+    {
+      "label": "BuildProtobufs",
+      "type": "shell",
+      "command": "yarn csb:build",
       "isBackground": true,
       "problemMatcher": [],
       "presentation": {

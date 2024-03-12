@@ -75,6 +75,10 @@ type aeMediaPayloadChunkRules struct {
 */
 func CanAddEvent(ctx context.Context, cfg *config.StreamConfig, validNodeAddresses []common.Address, currentTime time.Time, parsedEvent *events.ParsedEvent, streamView events.StreamView) (bool, *auth.ChainAuthArgs, *RequiredParentEvent, error) {
 
+	if parsedEvent.Event.DelegateExpiryEpochMs > 0 && isPastExpiry(currentTime, parsedEvent.Event.DelegateExpiryEpochMs) {
+		return false, nil, nil, RiverError(Err_PERMISSION_DENIED, "event delegate has expired", "currentTime", currentTime, "expiryTime", parsedEvent.Event.DelegateExpiryEpochMs)
+	}
+
 	// validate that event has required properties
 	if parsedEvent.Event.PrevMiniblockHash == nil {
 		return false, nil, nil, RiverError(Err_INVALID_ARGUMENT, "event has no prevMiniblockHash")
@@ -788,7 +792,7 @@ func (params *aeParams) channelMessageEntitlements() (*auth.ChainAuthArgs, error
 func (params *aeParams) creatorIsValidNode() (bool, error) {
 	creatorAddress := params.parsedEvent.Event.CreatorAddress
 	if !params.isValidNode(creatorAddress) {
-		return false, RiverError(Err_UNKNOWN_NODE, "No record for node in validNodeAddresses", "address", creatorAddress, "nodes", params.validNodeAddresses).Func("CheckNodeIsValid")
+		return false, RiverError(Err_UNKNOWN_NODE, "Event creator must be a valid node", "address", creatorAddress, "nodes", params.validNodeAddresses).Func("CheckNodeIsValid")
 	}
 	return true, nil
 }

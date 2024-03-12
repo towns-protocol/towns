@@ -135,6 +135,8 @@ echo "Continuing with the rest of the script..."
 
 yarn install
 
+yarn csb:build
+
 # Array of commands from the VS Code tasks
 commands=(
     "watch_sdk:cd core/sdk && yarn watch"

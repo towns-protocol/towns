@@ -10,7 +10,7 @@ import {
     streamIdToBytes,
     userIdFromAddress,
 } from './id'
-import { SignerContext, makeEvent, unpackStream, unpackStreamEnvelopes } from './sign'
+import { makeEvent, unpackStream, unpackStreamEnvelopes } from './sign'
 import {
     getMessagePayload,
     getMiniblockHeader,
@@ -27,6 +27,7 @@ import {
     makeTestRpcClient,
     iterableWrapper,
 } from './util.test'
+import { SignerContext } from './signerContext'
 
 const log = dlog('csb:test:syncWithBlocks')
 
