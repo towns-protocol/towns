@@ -58,7 +58,8 @@ message StreamEvent {
      /**
       * delegate_sig allows event to be signed by a delegate keypair 
       *
-      * delegate_sig constains signature of the public key of the delegate keypair.
+      * delegate_sig constains signature of the 
+      * public key of the delegate keypair + the delegate_expirary_epoch_ms.
       * User's wallet is used to produce this signature.
       * 
       * If present, for the event to be valid:
@@ -81,6 +82,9 @@ message StreamEvent {
     the value to the user. Never use this value to sort events from different users.  */
     int64 created_at_epoch_ms = 5;
     
+    /** DelegateExpiry is the time when the delegate signature expires. */
+    int64 delegate_expiry_epoch_ms = 6;
+
     /** Variable-type payload. 
       * Payloads should obey the following rules:
       * - payloads should have their own unique type

@@ -36,7 +36,7 @@ import {
 } from './types'
 import { bobTalksToHimself } from './bob.test_util'
 import { ethers } from 'ethers'
-import { SignerContext } from './signerContext'
+import { SignerContext, makeSignerContext } from './signerContext'
 
 const log = dlog('csb:test:streamRpcClient')
 
@@ -697,6 +697,95 @@ describe('streamRpcClient', () => {
         ).toResolve()
 
         await alice.cancelSync({ syncId })
+    })
+
+    test.each([
+        [0n, 'never'],
+        [{ days: 2 }, 'in two days'],
+    ])('cantAddOrCreateWithExpiredDelegateSig expiry: %o expires %s', async (goodExpiry, desc) => {
+        log('testing with good expiry of', goodExpiry, 'which expires', desc)
+        const jimmy = makeTestRpcClient()
+
+        const jimmysWallet = ethers.Wallet.createRandom()
+        const jimmysDelegateWallet = ethers.Wallet.createRandom()
+
+        const jimmysGoodContext = await makeSignerContext(
+            jimmysWallet,
+            jimmysDelegateWallet,
+            goodExpiry,
+        )
+        const jimmysExpiredContext = await makeSignerContext(jimmysWallet, jimmysDelegateWallet, {
+            days: -2,
+        })
+
+        const jimmysUserId = userIdFromAddress(jimmysGoodContext.creatorAddress)
+        const jimmysUserStreamId = streamIdToBytes(makeUserStreamId(jimmysUserId))
+
+        const makeUserStreamWith = async (context: SignerContext) => {
+            return jimmy.createStream({
+                events: [
+                    await makeEvent(
+                        context,
+                        make_UserPayload_Inception({
+                            streamId: jimmysUserStreamId,
+                        }),
+                    ),
+                ],
+                streamId: jimmysUserStreamId,
+            })
+        }
+
+        // test create stream
+        await expect(makeUserStreamWith(jimmysExpiredContext)).rejects.toThrow(
+            expect.objectContaining({
+                message: expect.stringContaining('7:PERMISSION_DENIED'),
+            }),
+        )
+        await expect(makeUserStreamWith(jimmysGoodContext)).toResolve()
+
+        // create a space
+        const spacedStreamId = streamIdToBytes(makeUniqueSpaceStreamId())
+        const spaceEvents = await makeEvents(jimmysGoodContext, [
+            make_SpacePayload_Inception({
+                streamId: spacedStreamId,
+            }),
+            make_MemberPayload_Membership2({
+                userId: jimmysUserId,
+                op: MembershipOp.SO_JOIN,
+                initiatorId: jimmysUserId,
+            }),
+        ])
+        await jimmy.createStream({
+            events: spaceEvents,
+            streamId: spacedStreamId,
+        })
+
+        // try to leave, first with expired context, then with good context
+        const addEventWith = async (context: SignerContext) => {
+            const lastMiniblockHash = (
+                await jimmy.getLastMiniblockHash({ streamId: jimmysUserStreamId })
+            ).hash
+            const messageEvent = await makeEvent(
+                context,
+                make_UserPayload_UserMembership({
+                    streamId: spacedStreamId,
+                    op: MembershipOp.SO_LEAVE,
+                }),
+                lastMiniblockHash,
+            )
+            return jimmy.addEvent({
+                streamId: jimmysUserStreamId,
+                event: messageEvent,
+            })
+        }
+
+        // test add event
+        await expect(addEventWith(jimmysExpiredContext)).rejects.toThrow(
+            expect.objectContaining({
+                message: expect.stringContaining('7:PERMISSION_DENIED'),
+            }),
+        )
+        await expect(addEventWith(jimmysGoodContext)).toResolve()
     })
 
     test('cantAddWithBadHash', async () => {

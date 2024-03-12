@@ -44,27 +44,96 @@ describe('sign', () => {
     })
 
     test('delegate-sig', async () => {
-        const delegate1 = keys[0]
-        const delegate2 = keys[1]
-        const user = keys[2]
+        // one user has two delegates (two devices, A and B)
+        const user = keys[0]
+        const delegateA = keys[1]
+        const delegateB = keys[2]
+
         const userWallet = new ethers.Wallet(user.privateKey)
-        const delegateWallet1 = new ethers.Wallet(delegate1.privateKey)
-        const delegateWallet2 = new ethers.Wallet(delegate2.privateKey)
-        const context1 = await makeSignerContext(userWallet, delegateWallet1)
-        const context2 = await makeSignerContext(userWallet, delegateWallet2)
+        const delegateA_wallet = new ethers.Wallet(delegateA.privateKey)
+        const delegateB_wallet = new ethers.Wallet(delegateB.privateKey)
+        const expiryA_none = 0n
+        const expiryB_valid = BigInt(Date.now() + 10000)
+        const expiry_WRONG = BigInt(Date.now() + 99999)
+        const delegateA_context = await makeSignerContext(
+            userWallet,
+            delegateA_wallet,
+            expiryA_none,
+        )
+        const delegateB_context = await makeSignerContext(
+            userWallet,
+            delegateB_wallet,
+            expiryB_valid,
+        )
 
-        const sig1 = context1.delegateSig!
-        log('sig1', bin_toHexString(sig1))
-        const sig2 = context2.delegateSig!
-        log('sig2', bin_toHexString(sig2))
-        expect(sig1).not.toEqual(sig2)
+        const sigA = delegateA_context.delegateSig!
+        log('sigA', bin_toHexString(sigA))
+        const sigB = delegateB_context.delegateSig!
+        log('sigB', bin_toHexString(sigB))
+        expect(sigA).not.toEqual(sigB)
 
-        expect(() => checkDelegateSig(delegate1.publicKey, user.address, sig1)).not.toThrow()
-        expect(() => checkDelegateSig(delegate2.publicKey, user.address, sig2)).not.toThrow()
+        expect(() =>
+            checkDelegateSig({
+                delegatePubKey: delegateA.publicKey,
+                creatorAddress: user.address,
+                delegateSig: sigA,
+                expiryEpochMs: expiryA_none,
+            }),
+        ).not.toThrow()
+        expect(() =>
+            checkDelegateSig({
+                delegatePubKey: delegateB.publicKey,
+                creatorAddress: user.address,
+                delegateSig: sigB,
+                expiryEpochMs: expiryB_valid,
+            }),
+        ).not.toThrow()
 
-        expect(() => checkDelegateSig(delegate2.publicKey, user.address, sig1)).toThrow()
-        expect(() => checkDelegateSig(delegate1.publicKey, delegate2.address, sig1)).toThrow()
-        expect(() => checkDelegateSig(delegate1.publicKey, user.address, sig2)).toThrow()
+        // expect wrong sig (B instead of A) to throw
+        expect(() =>
+            checkDelegateSig({
+                delegatePubKey: delegateB.publicKey,
+                creatorAddress: user.address,
+                delegateSig: sigB,
+                expiryEpochMs: expiryA_none,
+            }),
+        ).toThrow()
+        // expect wrong creator address (delegate B instead of user) to throw
+        expect(() =>
+            checkDelegateSig({
+                delegatePubKey: delegateA.publicKey,
+                creatorAddress: delegateB.address,
+                delegateSig: sigA,
+                expiryEpochMs: expiryA_none,
+            }),
+        ).toThrow()
+        // expect wrong sig and wrong expiry (B instead of A) to throw
+        expect(() =>
+            checkDelegateSig({
+                delegatePubKey: delegateA.publicKey,
+                creatorAddress: user.address,
+                delegateSig: sigB,
+                expiryEpochMs: expiryB_valid,
+            }),
+        ).toThrow()
+        // expict wrong expiry (expiry_WRONG instead of expiryA_none) to throw
+        expect(() =>
+            checkDelegateSig({
+                delegatePubKey: delegateA.publicKey,
+                creatorAddress: user.address,
+                delegateSig: sigA,
+                expiryEpochMs: expiry_WRONG,
+            }),
+        ).toThrow()
+        // expict wrong expiry (expiry_WRONG instead of expiryB_valid) to throw
+        expect(() =>
+            checkDelegateSig({
+                delegatePubKey: delegateB.publicKey,
+                creatorAddress: user.address,
+                delegateSig: sigB,
+                expiryEpochMs: expiry_WRONG,
+            }),
+        ).toThrow()
     })
 
     test('delegate-sig-2', async () => {
@@ -74,13 +143,18 @@ describe('sign', () => {
         const delegate = keys[1]
         const delegateWallet = new ethers.Wallet(delegate.privateKey)
         log('delegate PublicKey', bin_toHexString(delegate.publicKey))
-        const context = await makeSignerContext(primaryWallet, delegateWallet)
+        const context = await makeSignerContext(primaryWallet, delegateWallet, 0n)
         const delegateSig = context.delegateSig
         expect(delegateSig).toBeDefined()
         log('OLD delegateSig', bin_toHexString(delegateSig!))
 
         expect(() =>
-            checkDelegateSig(delegate.publicKey, primary.address, delegateSig!),
+            checkDelegateSig({
+                delegatePubKey: delegate.publicKey,
+                creatorAddress: primary.address,
+                delegateSig: delegateSig!,
+                expiryEpochMs: 0n,
+            }),
         ).not.toThrow()
     })
 
@@ -97,7 +171,7 @@ describe('sign', () => {
             }
         } else {
             const delegateWallet = new ethers.Wallet(delegatePrivateKey)
-            return await makeSignerContext(userWallet, delegateWallet)
+            return await makeSignerContext(userWallet, delegateWallet, { days: 1 })
         }
     }
 

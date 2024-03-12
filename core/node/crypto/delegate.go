@@ -39,8 +39,15 @@ func recoverEthereumMessageSignerAddress(hashSrc []byte, inSignature []byte) (*c
 	return &address, nil
 }
 
-func CheckDelegateSig(expectedAddress []byte, devicePubKey []byte, delegateSig []byte) error {
-	recoveredAddress, err := recoverEthereumMessageSignerAddress(devicePubKey, delegateSig)
+func CheckDelegateSig(expectedAddress []byte, devicePubKey []byte, delegateSig []byte, expiryEpochMs int64) error {
+	var hashSrc []byte
+	if expiryEpochMs == 0 {
+		hashSrc = devicePubKey
+	} else {
+		hashSrc = RiverDelegateHashSrc(devicePubKey, expiryEpochMs)
+	}
+
+	recoveredAddress, err := recoverEthereumMessageSignerAddress(hashSrc, delegateSig)
 	if err != nil {
 		return err
 	}

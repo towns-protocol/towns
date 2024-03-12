@@ -1,6 +1,7 @@
 package crypto
 
 import (
+	"bytes"
 	"context"
 	"crypto/ecdsa"
 	"encoding/binary"
@@ -36,6 +37,9 @@ var HASH_SEPARATOR = []byte{65, 66, 67, 68, 69, 70, 71, 62}
 // String '<GFEDCBA' as bytes.
 var HASH_FOOTER = []byte{60, 71, 70, 69, 68, 67, 66, 65}
 
+// String 'RIVERSIG' as bytes.
+var DELEGATE_HASH_HEADER = []byte{82, 73, 86, 69, 82, 83, 73, 71}
+
 func writeOrPanic(w io.Writer, buf []byte) {
 	_, err := w.Write(buf)
 	if err != nil {
@@ -58,6 +62,25 @@ func RiverHash(buffer []byte) common.Hash {
 	writeOrPanic(hash, buffer)
 	writeOrPanic(hash, HASH_FOOTER)
 	return common.BytesToHash(hash.Sum(nil))
+}
+
+// RiverDelegateHashSrc computes the hash of the given buffer using the River delegate hashing algorithm.
+func RiverDelegateHashSrc(delegatePublicKey []byte, expiryEpochMs int64) []byte {
+	if expiryEpochMs == 0 {
+		panic("Expiry must be non-zero")
+	}
+	if len(delegatePublicKey) != 64 && len(delegatePublicKey) != 65 {
+		panic("delegatePublicKey must be 64 or 65 bytes")
+	}
+	writer := bytes.Buffer{}
+	writeOrPanic(&writer, DELEGATE_HASH_HEADER)
+	writeOrPanic(&writer, delegatePublicKey)
+	// Write expiry as 64-bit little endian uint.
+	err := binary.Write(&writer, binary.LittleEndian, expiryEpochMs)
+	if err != nil {
+		panic(err)
+	}
+	return writer.Bytes()
 }
 
 type Wallet struct {

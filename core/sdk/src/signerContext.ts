@@ -1,7 +1,7 @@
 import { ecrecover, fromRpcSig, hashPersonalMessage } from '@ethereumjs/util'
 import { ethers } from 'ethers'
 import { bin_equal, bin_fromHexString, bin_toHexString, check } from '@river/dlog'
-import { publicKeyToAddress, publicKeyToUint8Array } from './sign'
+import { publicKeyToAddress, publicKeyToUint8Array, riverDelegateHashSrc } from './sign'
 import { Err } from '@river/proto'
 
 /**
@@ -26,21 +26,29 @@ export interface SignerContext {
     signerPrivateKey: () => string
     creatorAddress: Uint8Array
     delegateSig?: Uint8Array
+    delegateExpiryEpochMs?: bigint
 }
 
-export const checkDelegateSig = (
-    devicePubKey: Uint8Array | string,
-    creatorAddress: Uint8Array | string,
-    delegateSig: Uint8Array,
-): void => {
-    if (typeof devicePubKey === 'string') {
-        devicePubKey = publicKeyToUint8Array(devicePubKey)
-    }
-    if (typeof creatorAddress === 'string') {
-        creatorAddress = bin_fromHexString(creatorAddress)
-    }
+export const checkDelegateSig = (params: {
+    delegatePubKey: Uint8Array | string
+    creatorAddress: Uint8Array | string
+    delegateSig: Uint8Array
+    expiryEpochMs: bigint
+}): void => {
+    const { delegateSig, expiryEpochMs } = params
+    const delegatePubKey =
+        typeof params.delegatePubKey === 'string'
+            ? publicKeyToUint8Array(params.delegatePubKey)
+            : params.delegatePubKey
+    const creatorAddress =
+        typeof params.creatorAddress === 'string'
+            ? publicKeyToUint8Array(params.creatorAddress)
+            : params.creatorAddress
 
-    const hashSource = devicePubKey
+    const hashSource =
+        expiryEpochMs && expiryEpochMs > 0n
+            ? riverDelegateHashSrc(delegatePubKey, expiryEpochMs)
+            : delegatePubKey
 
     const hash = hashPersonalMessage(Buffer.from(hashSource))
     const { v, r, s } = fromRpcSig('0x' + bin_toHexString(delegateSig))
@@ -57,12 +65,14 @@ export const checkDelegateSig = (
 async function makeRiverDelegateSig(
     primaryWallet: ethers.Signer,
     devicePubKey: Uint8Array | string,
+    expiryEpochMs: bigint,
 ): Promise<Uint8Array> {
     if (typeof devicePubKey === 'string') {
         devicePubKey = publicKeyToUint8Array(devicePubKey)
     }
     check(devicePubKey.length === 65, 'Bad public key', Err.BAD_PUBLIC_KEY)
-    const hashSrc = devicePubKey
+    const hashSrc =
+        expiryEpochMs > 0 ? riverDelegateHashSrc(devicePubKey, expiryEpochMs) : devicePubKey
     const delegateSig = bin_fromHexString(await primaryWallet.signMessage(hashSrc))
     return delegateSig
 }
@@ -70,12 +80,61 @@ async function makeRiverDelegateSig(
 export async function makeSignerContext(
     primaryWallet: ethers.Signer,
     delegateWallet: ethers.Wallet,
+    inExpiryEpochMs?:
+        | bigint
+        | {
+              days?: number
+              hours?: number
+              minutes?: number
+              seconds?: number
+          },
 ): Promise<SignerContext> {
-    const delegateSig = await makeRiverDelegateSig(primaryWallet, delegateWallet.publicKey)
+    const expiryEpochMs = inExpiryEpochMs ?? 0n // todo make expiry required param once implemented down stream HNT-5213
+    const delegateExpiryEpochMs =
+        typeof expiryEpochMs === 'bigint' ? expiryEpochMs : makeExpiryEpochMs(expiryEpochMs)
+    const delegateSig = await makeRiverDelegateSig(
+        primaryWallet,
+        delegateWallet.publicKey,
+        delegateExpiryEpochMs,
+    )
     const creatorAddress = await primaryWallet.getAddress()
     return {
         signerPrivateKey: () => delegateWallet.privateKey.slice(2), // remove the 0x prefix
         creatorAddress: bin_fromHexString(creatorAddress),
         delegateSig,
+        delegateExpiryEpochMs,
     }
+}
+
+function makeExpiryEpochMs({
+    days,
+    hours,
+    minutes,
+    seconds,
+}: {
+    days?: number
+    hours?: number
+    minutes?: number
+    seconds?: number
+}): bigint {
+    const MS_PER_SECOND = 1000
+    const MS_PER_MINUTE = MS_PER_SECOND * 60
+    const MS_PER_HOUR = MS_PER_MINUTE * 60
+    const MS_PER_DAY = MS_PER_HOUR * 24
+
+    let delta = 0
+    if (days) {
+        delta += MS_PER_DAY * days
+    }
+    if (hours) {
+        delta += MS_PER_HOUR * hours
+    }
+    if (minutes) {
+        delta += MS_PER_MINUTE * minutes
+    }
+    if (seconds) {
+        delta += MS_PER_SECOND * seconds
+    }
+    check(delta != 0, 'Bad expiration, no values were set')
+    return BigInt(Date.now() + delta)
 }

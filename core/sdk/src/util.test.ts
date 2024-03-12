@@ -124,7 +124,8 @@ export const makeUserContextFromWallet = async (wallet: ethers.Wallet): Promise<
     const delegateWallet = ethers.Wallet.createRandom()
     const creatorAddress = publicKeyToAddress(bin_fromHexString(userPrimaryWallet.publicKey))
     log('makeRandomUserContext', userIdFromAddress(creatorAddress))
-    return makeSignerContext(userPrimaryWallet, delegateWallet)
+
+    return makeSignerContext(userPrimaryWallet, delegateWallet, { days: 1 })
 }
 
 export interface TestClientOpts {

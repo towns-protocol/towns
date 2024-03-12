@@ -23,6 +23,7 @@ export const _impl_makeEvent_impl_ = async (
     })
     if (context.delegateSig !== undefined) {
         streamEvent.delegateSig = context.delegateSig
+        streamEvent.delegateExpiryEpochMs = context.delegateExpiryEpochMs ?? 0n
     }
 
     const event = streamEvent.toBinary()
@@ -149,7 +150,12 @@ export const unpackEnvelope = async (envelope: Envelope): Promise<ParsedEvent> =
             Err.BAD_EVENT_SIGNATURE,
         )
     } else {
-        checkDelegateSig(recoveredPubKey, event.creatorAddress, event.delegateSig)
+        checkDelegateSig({
+            delegatePubKey: recoveredPubKey,
+            creatorAddress: event.creatorAddress,
+            delegateSig: event.delegateSig,
+            expiryEpochMs: event.delegateExpiryEpochMs,
+        })
     }
 
     if (event.prevMiniblockHash) {
@@ -211,6 +217,8 @@ const HASH_HEADER = new Uint8Array([67, 83, 66, 76, 65, 78, 67, 65])
 const HASH_SEPARATOR = new Uint8Array([65, 66, 67, 68, 69, 70, 71, 62])
 // Create hash footer as Uint8Array from string '<GFEDCBA'
 const HASH_FOOTER = new Uint8Array([60, 71, 70, 69, 68, 67, 66, 65])
+// Header for delegate signature 'RIVERSIG'
+const RIVER_SIG_HEADER = new Uint8Array([82, 73, 86, 69, 82, 83, 73, 71])
 
 function numberToUint8Array64LE(num: number): Uint8Array {
     const result = new Uint8Array(8)
@@ -218,6 +226,13 @@ function numberToUint8Array64LE(num: number): Uint8Array {
         result[i] = num & 0xff
     }
     return result
+}
+
+function bigintToUint8Array64LE(num: bigint): Uint8Array {
+    const buffer = new ArrayBuffer(8)
+    const view = new DataView(buffer)
+    view.setBigInt64(0, num, true) // true for little endian
+    return new Uint8Array(buffer)
 }
 
 function pushByteToUint8Array(arr: Uint8Array, byte: number): Uint8Array {
@@ -244,6 +259,23 @@ export function riverHash(data: Uint8Array): Uint8Array {
     hasher.update(data)
     hasher.update(HASH_FOOTER)
     return hasher.digest()
+}
+
+export function riverDelegateHashSrc(
+    devicePublicKey: Uint8Array,
+    expiryEpochMs: bigint,
+): Uint8Array {
+    assertBytes(devicePublicKey)
+    check(expiryEpochMs > 0, 'Expiry should be positive')
+    check(devicePublicKey.length === 64 || devicePublicKey.length === 65, 'Bad public key')
+    const expiryBytes = bigintToUint8Array64LE(expiryEpochMs)
+    const retVal = new Uint8Array(
+        RIVER_SIG_HEADER.length + devicePublicKey.length + expiryBytes.length,
+    )
+    retVal.set(RIVER_SIG_HEADER)
+    retVal.set(devicePublicKey, RIVER_SIG_HEADER.length)
+    retVal.set(expiryBytes, RIVER_SIG_HEADER.length + devicePublicKey.length)
+    return retVal
 }
 
 export async function riverSign(
