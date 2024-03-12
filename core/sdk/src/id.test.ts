@@ -83,7 +83,7 @@ describe('idTest', () => {
 
     test('makeUserStreamId', () => {
         expect(makeUserStreamId('0x376eC15Fa24A76A18EB980629093cFFd559333Bb')).toBe(
-            'a8376ec15fa24a76a18eb980629093cffd559333bb',
+            'a8376ec15fa24a76a18eb980629093cffd559333bb' + '0'.repeat(22),
         )
     })
 

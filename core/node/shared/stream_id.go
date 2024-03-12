@@ -29,10 +29,13 @@ const (
 	STREAM_USER_PREFIX                 = "a8"
 	STREAM_USER_SETTINGS_BIN      byte = 0xa5
 	STREAM_USER_SETTINGS_PREFIX        = "a5"
+
+	STREAM_ID_BYTES_LENGTH  = 32
+	STREAM_ID_STRING_LENGTH = STREAM_ID_BYTES_LENGTH * 2
 )
 
 type StreamId struct {
-	bytes [32]byte
+	bytes [STREAM_ID_BYTES_LENGTH]byte
 }
 
 func StreamIdFromString(s string) (StreamId, error) {
@@ -44,55 +47,53 @@ func StreamIdFromString(s string) (StreamId, error) {
 }
 
 func StreamIdFromBytes(b []byte) (StreamId, error) {
-	if len(b) < 3 {
-		return StreamId{}, RiverError(Err_BAD_STREAM_ID, "invalid length", "streamId", b)
-	}
-	expectedLen, err := StreamIdLengthForType(b[0])
+	err := checkExpectedLength(b[:])
 	if err != nil {
 		return StreamId{}, err
-	}
-	if len(b) > expectedLen {
-		return StreamId{}, RiverError(Err_BAD_STREAM_ID, "invalid length", "streamId", b, "expectedLen", expectedLen, "actualLen", len(b))
 	}
 	var id StreamId
 	copy(id.bytes[:], b)
 	return id, nil
 }
 
+// Hash represents the 32 byte Keccak256 hash of arbitrary data.
 func StreamIdFromHash(b common.Hash) (StreamId, error) {
-	expectedLen, err := StreamIdLengthForType(b[0])
+	err := checkExpectedLength(b[:])
 	if err != nil {
 		return StreamId{}, err
-	}
-	// all bytes after expectedLen should be 0
-	for i := expectedLen; i < len(b); i++ {
-		if b[i] != 0 {
-			return StreamId{}, RiverError(Err_BAD_STREAM_ID, "zero suffix exptected for id type", "streamId", b, "expectedLen", expectedLen)
-		}
 	}
 	return StreamId{bytes: b}, nil
 }
 
-// Returns truncated bytes of the stream id, use with protobufs
-func (id *StreamId) Bytes() []byte {
-	n, err := StreamIdLengthForType(id.bytes[0])
-	if err != nil {
-		panic(err)
+func checkExpectedLength(b []byte) error {
+	if len(b) != STREAM_ID_BYTES_LENGTH {
+		return RiverError(Err_BAD_STREAM_ID, "invalid length", "streamId", b)
 	}
-	return id.bytes[:n]
+	expectedContentLen, err := StreamIdContentLengthForType(b[0])
+	if err != nil {
+		return err
+	}
+	// all bytes after expectedLen should be 0
+	for i := expectedContentLen; i < len(b); i++ {
+		if b[i] != 0 {
+			return RiverError(Err_BAD_STREAM_ID, "zero suffix expected for id type", "streamId", b, "expectedLen", expectedContentLen)
+		}
+	}
+	return nil
 }
 
-// Returns full 32 byte fixed array, use with crypto
-func (id *StreamId) ByteArray() [32]byte {
+// Returns full 32 byte array
+func (id *StreamId) Bytes() []byte {
+	return id.bytes[:]
+}
+
+// Returns full 32 byte fixed array
+func (id *StreamId) ByteArray() [STREAM_ID_BYTES_LENGTH]byte {
 	return id.bytes
 }
 
 func (id *StreamId) String() string {
-	n, err := StreamIdLengthForType(id.bytes[0])
-	if err != nil {
-		panic(err)
-	}
-	return hex.EncodeToString(id.bytes[:n])
+	return hex.EncodeToString(id.bytes[:])
 }
 
 func (id StreamId) GoString() string {
@@ -111,7 +112,8 @@ func (id *StreamId) Type() byte {
 	return id.bytes[0]
 }
 
-func StreamIdLengthForType(t byte) (int, error) {
+// user streams are expected to have 20 bytes of address, so the expected content length is 21 when including the prefix
+func StreamIdContentLengthForType(t byte) (int, error) {
 	switch t {
 	case STREAM_USER_DEVICE_KEY_BIN:
 		return 21, nil

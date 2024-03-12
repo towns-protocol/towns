@@ -8,7 +8,6 @@ import (
 
 	"github.com/ethereum/go-ethereum/common"
 	"github.com/river-build/river/core/node/dlog"
-
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
 )
@@ -38,14 +37,16 @@ func TestInvalidDMStreamId(t *testing.T) {
 }
 
 func TestStreamIdFromString(t *testing.T) {
-	addr := common.HexToAddress("0x376eC15Fa24A76A18EB980629093cFFd559333Bb")
+	addrStr := "0x376eC15Fa24A76A18EB980629093cFFd559333Bb"
+	addr := common.HexToAddress(addrStr)
 	a := UserStreamIdFromAddr(addr)
-	assert.Equal(t, "a8376ec15fa24a76a18eb980629093cffd559333bb", a.String())
+	streamIdStr := padStringId(STREAM_USER_PREFIX + strings.ToLower(addrStr[2:]))
+	assert.Equal(t, streamIdStr, a.String())
 
-	length, err := StreamIdLengthForType(STREAM_USER_BIN)
+	length, err := StreamIdContentLengthForType(STREAM_USER_BIN)
 	require.NoError(t, err)
 
-	var bytes [21]byte
+	var bytes [32]byte
 	require.Equal(t, length, 21) // hard coded value is 21
 	bytes[0] = STREAM_USER_BIN
 	copy(bytes[1:], addr.Bytes())
@@ -62,17 +63,17 @@ func TestStreamIdFromString(t *testing.T) {
 func TestLogStreamId(t *testing.T) {
 	log := dlog.Log()
 
-	streamId1, err := StreamIdFromString(STREAM_SPACE_PREFIX + "a00000")
+	streamId1, err := StreamIdFromString(padStringId(STREAM_SPACE_PREFIX + "a00000"))
 	require.NoError(t, err)
 	log.Info("streamId", "streamId1", streamId1)
 
-	streamId2, err := StreamIdFromBytes([]byte{STREAM_SPACE_BIN, 0x22, 0x33})
+	streamId2, err := StreamIdFromBytes(padBytesId([]byte{STREAM_SPACE_BIN, 0x22, 0x33}))
 	require.NoError(t, err)
 	log.Info("streamId", "streamId2", streamId2)
 }
 
 func TestReflectStreamId(t *testing.T) {
-	streamId, err := StreamIdFromString(STREAM_SPACE_PREFIX + "a00000")
+	streamId, err := StreamIdFromString(padStringId(STREAM_SPACE_PREFIX + "a00000"))
 	require.NoError(t, err)
 	goStringerType := reflect.TypeOf((*fmt.GoStringer)(nil)).Elem()
 	v := reflect.ValueOf(streamId)
@@ -82,4 +83,18 @@ func TestReflectStreamId(t *testing.T) {
 	i := v.Interface()
 	_, ok := i.(fmt.GoStringer)
 	assert.True(t, ok)
+}
+
+func padStringId(s string) string {
+	if len(s) < STREAM_ID_STRING_LENGTH {
+		s += strings.Repeat("0", STREAM_ID_STRING_LENGTH-len(s))
+	}
+	return s
+}
+
+func padBytesId(b []byte) []byte {
+	if len(b) < STREAM_ID_BYTES_LENGTH {
+		b = append(b, make([]byte, STREAM_ID_BYTES_LENGTH-len(b))...)
+	}
+	return b
 }
