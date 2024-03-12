@@ -121,6 +121,10 @@ contract DeployBase is DeployHelpers, Script {
     return block.chainid == 31337 || block.chainid == 31338;
   }
 
+  function isRiver() internal view returns (bool) {
+    return block.chainid == 6524490;
+  }
+
   function isTesting() internal view returns (bool) {
     return vm.envOr("IN_TESTING", false);
   }

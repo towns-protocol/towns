@@ -51,9 +51,9 @@ abstract contract Deployer is Script, DeployBase {
       return existingAddr;
     }
 
-    uint256 pk = isAnvil()
-      ? vm.envUint("LOCAL_PRIVATE_KEY")
-      : vm.envUint("PRIVATE_KEY");
+    uint256 pk = isAnvil() ? vm.envUint("LOCAL_PRIVATE_KEY") : isRiver()
+      ? vm.envUint("RIVER_PRIVATE_KEY")
+      : vm.envUint("BASE_PRIVATE_KEY");
     address deployer = vm.addr(pk);
 
     if (!isTesting()) {

@@ -72,7 +72,7 @@ deploy-river-anvil: build deploy-river-anvil-nb
 
 deploy-river :;
 	@forge build
-	@SAVE_DEPLOYMENTS=1 OVERRIDE_DEPLOYMENTS=1 forge script scripts/deployments/${contract}.s.sol:${contract} --ffi --rpc-url river --private-key ${PRIVATE_KEY} --verifier blockscout --verifier-url ${RIVERSCAN_URL} --broadcast --verify
+	@SAVE_DEPLOYMENTS=1 OVERRIDE_DEPLOYMENTS=1 forge script scripts/deployments/${contract}.s.sol:${contract} --ffi --rpc-url river --private-key ${RIVER_PRIVATE_KEY} --verifier blockscout --verifier-url ${RIVERSCAN_URL} --broadcast --verify
 
 verify-river :;
 	@forge build
@@ -80,47 +80,45 @@ verify-river :;
 
 interact-river :;
 	@forge build
-	@forge script scripts/interactions/${contract}.s.sol:${contract} --ffi --rpc-url river --private-key ${PRIVATE_KEY} --broadcast
+	@forge script scripts/interactions/${contract}.s.sol:${contract} --ffi --rpc-url river --private-key ${RIVER_PRIVATE_KEY} --broadcast
 
 # ===========================
 # 				 Base Sepolia
 # ===========================
 deploy-base-sepolia :;
 	@forge build
-	@SAVE_DEPLOYMENTS=1 OVERRIDE_DEPLOYMENTS=1 forge script scripts/deployments/${contract}.s.sol:${contract} --ffi --rpc-url base_sepolia --private-key ${PRIVATE_KEY} --broadcast --verify --verifier blockscout --verifier-url ${BLOCKSCOUT_SEPOLIA_URL}
+	@SAVE_DEPLOYMENTS=1 forge script scripts/deployments/${contract}.s.sol:${contract} --ffi --rpc-url base_sepolia --private-key ${BASE_PRIVATE_KEY} --broadcast --verify --verifier blockscout --verifier-url ${BLOCKSCOUT_SEPOLIA_URL}
 
 migrate-base-sepolia:;
 	@forge build
-	@SAVE_DEPLOYMENTS=1 forge script scripts/migrations/${contract}.s.sol:${contract} --ffi --rpc-url base_sepolia --private-key ${PRIVATE_KEY} --broadcast --verify --verifier blockscout --verifier-url ${BLOCKSCOUT_SEPOLIA_URL}
+	@SAVE_DEPLOYMENTS=1 forge script scripts/migrations/${contract}.s.sol:${contract} --ffi --rpc-url base_sepolia --private-key ${BASE_PRIVATE_KEY} --broadcast --verify --verifier blockscout --verifier-url ${BLOCKSCOUT_SEPOLIA_URL}
 
 interact-base-sepolia :;
 	@forge build
-	@forge script scripts/interactions/${contract}.s.sol:${contract} --ffi --rpc-url base_sepolia --private-key ${PRIVATE_KEY} --broadcast --watch
+	@forge script scripts/interactions/${contract}.s.sol:${contract} --ffi --rpc-url base_sepolia --private-key ${BASE_PRIVATE_KEY} --broadcast --watch
 
 test-base-sepolia :;
 	@forge build
-	@forge script scripts/migrations/${contract}.s.sol:${contract} --ffi --fork-url base_sepolia --private-key ${PRIVATE_KEY}
+	@forge script scripts/migrations/${contract}.s.sol:${contract} --ffi --fork-url base_sepolia --private-key ${BASE_PRIVATE_KEY}
 
 verify-base-sepolia :;
 	@forge build
 	@forge verify-contract ${address} ${contract} --chain-id 84532
-
-
 
 # ===========================
 # 				 Base Goerli
 # ===========================
 deploy-base-goerli :;
 	@forge build
-	@SAVE_DEPLOYMENTS=1 OVERRIDE_DEPLOYMENTS=1 forge script scripts/deployments/${contract}.s.sol:${contract} --ffi --rpc-url base_goerli --private-key ${PRIVATE_KEY} --broadcast --verify --watch
+	@SAVE_DEPLOYMENTS=1 OVERRIDE_DEPLOYMENTS=1 forge script scripts/deployments/${contract}.s.sol:${contract} --ffi --rpc-url base_goerli --private-key ${BASE_PRIVATE_KEY} --broadcast --verify --watch
 
 interact-base-goerli :;
 	@forge build
-	@forge script scripts/interactions/${contract}.s.sol:${contract} --ffi --rpc-url base_goerli --private-key ${PRIVATE_KEY} --broadcast --watch
+	@forge script scripts/interactions/${contract}.s.sol:${contract} --ffi --rpc-url base_goerli --private-key ${BASE_PRIVATE_KEY} --broadcast --watch
 
 test-base-goerli :;
 	@forge build
-	@forge script scripts/migrations/${contract}.s.sol:${contract} --ffi --fork-url base_goerli --private-key ${PRIVATE_KEY}
+	@forge script scripts/migrations/${contract}.s.sol:${contract} --ffi --fork-url base_goerli --private-key ${BASE_PRIVATE_KEY}
 
 verify-base-goerli :;
 	@forge build
@@ -128,7 +126,7 @@ verify-base-goerli :;
 
 migrate-base-goerli:;
 	@forge build
-	@SAVE_DEPLOYMENTS=1 forge script scripts/migrations/${contract}.s.sol:${contract} --ffi --rpc-url base_goerli --private-key ${PRIVATE_KEY} --broadcast --verify --watch -vvvv
+	@SAVE_DEPLOYMENTS=1 forge script scripts/migrations/${contract}.s.sol:${contract} --ffi --rpc-url base_goerli --private-key ${BASE_PRIVATE_KEY} --broadcast --verify --watch -vvvv
 
 # ===========================
 # 				 		Base
@@ -136,11 +134,11 @@ migrate-base-goerli:;
 
 deploy-base :;
 	@forge build
-	@SAVE_DEPLOYMENTS=1 OVERRIDE_DEPLOYMENTS=1 forge script scripts/deployments/${contract}.s.sol:${contract} --ffi --rpc-url base --private-key ${PRIVATE_KEY} --verifier-url ${BASESCAN_URL} --etherscan-api-key ${BASESCAN_API_KEY} --broadcast --verify -vvvv
+	@SAVE_DEPLOYMENTS=1 OVERRIDE_DEPLOYMENTS=1 forge script scripts/deployments/${contract}.s.sol:${contract} --ffi --rpc-url base --private-key ${BASE_PRIVATE_KEY} --verifier-url ${BASESCAN_URL} --etherscan-api-key ${BASESCAN_API_KEY} --broadcast --verify -vvvv
 
 interact-base :;
 	@forge build
-	@forge script scripts/interactions/${contract}.s.sol:${contract} --ffi --rpc-url base --private-key ${PRIVATE_KEY} --broadcast --watch
+	@forge script scripts/interactions/${contract}.s.sol:${contract} --ffi --rpc-url base --private-key ${BASE_PRIVATE_KEY} --broadcast --watch
 
 verify-base :;
 	@forge build
@@ -148,27 +146,7 @@ verify-base :;
 
 migrate-base:;
 	@forge build
-	@SAVE_DEPLOYMENTS=1 forge script scripts/migrations/${contract}.s.sol:${contract} --ffi --rpc-url base --private-key ${PRIVATE_KEY} --broadcast --verify --watch -vvvv
-
-# ===========================
-# 				  Goerli
-# ===========================
-
-deploy-goerli :;
-	@forge build
-	@SAVE_DEPLOYMENTS=1 forge script scripts/deployments/${contract}.s.sol:${contract} --ffi --rpc-url goerli --private-key ${PRIVATE_KEY} --broadcast --verify --watch -vvvv
-
-verify-goerli :;
-	@forge build
-	@forge verify-contract ${address} ${contract} --chain goerli
-
-upgrade-goerli:;
-	@forge build
-	@forge script scripts/upgrades/${contract}.s.sol:${contract} --ffi --rpc-url goerli --private-key ${PRIVATE_KEY} --broadcast --verify --watch -vvvv
-
-migrate-goerli:;
-	@forge build
-	@forge script scripts/migrations/${contract}.s.sol:${contract} --ffi --rpc-url goerli --private-key ${PRIVATE_KEY} --broadcast --verify --watch -vvvv
+	@SAVE_DEPLOYMENTS=1 forge script scripts/migrations/${contract}.s.sol:${contract} --ffi --rpc-url base --private-key ${BASE_PRIVATE_KEY} --broadcast --verify --watch -vvvv
 
 # ===========================
 # 				  Sepolia
@@ -176,11 +154,11 @@ migrate-goerli:;
 
 deploy-sepolia :;
 	@forge build
-	@SAVE_DEPLOYMENTS=1 forge script scripts/deployments/${contract}.s.sol:${contract} --ffi --rpc-url sepolia --private-key ${PRIVATE_KEY} --broadcast --verify --watch -vvvv
+	@SAVE_DEPLOYMENTS=1 forge script scripts/deployments/${contract}.s.sol:${contract} --ffi --rpc-url sepolia --private-key ${BASE_PRIVATE_KEY} --broadcast --verify --watch -vvvv
 
 upgrade-sepolia:;
 	@forge build
-	@forge script scripts/upgrades/${contract}.s.sol:${contract} --ffi --rpc-url sepolia --private-key ${PRIVATE_KEY} --broadcast --verify --watch -vvvv
+	@forge script scripts/upgrades/${contract}.s.sol:${contract} --ffi --rpc-url sepolia --private-key ${BASE_PRIVATE_KEY} --broadcast --verify --watch -vvvv
 
 verify-sepolia :;
 	@forge build
@@ -199,7 +177,7 @@ startLocalWaitlist :; make write-anvil contractAddress=${contractAddress} functi
 
 deploy-mainnet :;
 	@forge build
-	@SAVE_DEPLOYMENTS=1 forge script scripts/deployments/${contract}.s.sol:${contract} --ffi --rpc-url mainnet --private-key ${PRIVATE_KEY} --broadcast --verify -vvvv
+	@SAVE_DEPLOYMENTS=1 forge script scripts/deployments/${contract}.s.sol:${contract} --ffi --rpc-url mainnet --private-key ${BASE_PRIVATE_KEY} --broadcast --verify -vvvv
 
 verify-mainnet :;
 	@forge verify-contract ${address} ${contract} --chain mainnet
