@@ -223,14 +223,14 @@ const PlateEditorWithoutBoundary = ({
     const fileCount = files.length
     const background = isEditing && !isTouch ? 'level1' : 'level2'
 
-    const { inlineReplyPreview, onCancelInlineReply } = useInlineReplyAttchmentPreview({
-        onNewInlineReply: () => {
-            const e = editorRef.current
-            if (e) {
-                focusEditor(e)
-            }
-        },
-    })
+    const { inlineReplyPreview, onCancelInlineReply } = useInlineReplyAttchmentPreview()
+
+    const hasInlinePreview = !!inlineReplyPreview
+
+    // hack: reset field + apply autoFocus when a new inline reply is opened
+    // using the builting focusEditor won't scroll the field into view on iOS
+    const autoFocus = (isTouch && hasInlinePreview) || props.autoFocus
+    const storageId = inlineReplyPreview?.event.eventId ?? props.storageId ?? 'editor'
 
     return (
         <>
@@ -267,6 +267,7 @@ const PlateEditorWithoutBoundary = ({
                     plugins={PlatePlugins}
                     editorRef={editorRef}
                     initialValue={initialValue}
+                    key={`plate-${storageId}`}
                     onChange={onChange}
                 >
                     <Stack horizontal width="100%" paddingRight="sm" alignItems="end">
@@ -286,7 +287,7 @@ const PlateEditorWithoutBoundary = ({
 
                             <Box paddingX="md" ref={editableContainerRef}>
                                 <Editor
-                                    autoFocus={props.autoFocus}
+                                    autoFocus={autoFocus}
                                     tabIndex={tabIndex}
                                     placeholder={placeholder}
                                     renderPlaceholder={RichTextPlaceholder}
@@ -294,11 +295,7 @@ const PlateEditorWithoutBoundary = ({
                                     onKeyDown={handleSendOnEnter}
                                 />
                             </Box>
-
-                            <OnFocusPlugin
-                                autoFocus={props.autoFocus}
-                                onFocusChange={onFocusChange}
-                            />
+                            <OnFocusPlugin autoFocus={autoFocus} onFocusChange={onFocusChange} />
                             <CaptureTownsLinkPlugin onUpdate={onMessageLinksUpdated} />
                             <EmojiPlugin />
                             <MentionCombobox<RoomMember>

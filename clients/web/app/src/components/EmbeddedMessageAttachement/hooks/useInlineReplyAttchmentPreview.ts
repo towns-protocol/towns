@@ -3,7 +3,7 @@ import { ZTEvent, useChannelId, useTimelineStore, useUserLookupContext } from 'u
 import { ReplyToMessageContext } from '@components/ReplyToMessageContext/ReplyToMessageContext'
 import { getPrettyDisplayName } from 'utils/getPrettyDisplayName'
 
-export const useInlineReplyAttchmentPreview = (params: { onNewInlineReply?: () => void }) => {
+export const useInlineReplyAttchmentPreview = (params?: { onNewInlineReply?: () => void }) => {
     const { replyToEventId, setReplyToEventId } = useContext(ReplyToMessageContext)
 
     const cancelInlineReply = useCallback(() => {
@@ -36,8 +36,8 @@ export const useInlineReplyAttchmentPreview = (params: { onNewInlineReply?: () =
         }
     }, [parentEvent, usersMap])
 
-    const onNewInlineReplyRef = useRef(params.onNewInlineReply)
-    onNewInlineReplyRef.current = params.onNewInlineReply
+    const onNewInlineReplyRef = useRef(params?.onNewInlineReply)
+    onNewInlineReplyRef.current = params?.onNewInlineReply
 
     useEffect(() => {
         if (replyToEventId && onNewInlineReplyRef.current) {

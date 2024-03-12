@@ -7,6 +7,7 @@ import { MessageTimelineContext } from '@components/MessageTimeline/MessageTimel
 import { useOpenMessageThread } from 'hooks/useOpenThread'
 import { EmojiPickerContainerMobile } from '@components/EmojiPickerButton/EmojiPickerContainerMobile'
 import { TableCell } from '@components/TableCell/TableCell'
+import { ReplyToMessageContext } from '@components/ReplyToMessageContext/ReplyToMessageContext'
 import { DeleteMessagePrompt } from './DeleteMessagePrompt'
 
 type Props = {
@@ -54,10 +55,15 @@ export const MessageModalSheet = (props: Props) => {
     }, [eventId, timelineContext, closeSheet])
 
     const { onOpenMessageThread } = useOpenMessageThread(spaceId, channelId)
+    const { canReplyInline, setReplyToEventId } = useContext(ReplyToMessageContext)
     const onThreadClick = useCallback(() => {
         onClose()
-        onOpenMessageThread(eventId)
-    }, [eventId, onClose, onOpenMessageThread])
+        if (canReplyInline && setReplyToEventId) {
+            setReplyToEventId(eventId)
+        } else {
+            onOpenMessageThread(eventId)
+        }
+    }, [canReplyInline, eventId, onClose, onOpenMessageThread, setReplyToEventId])
 
     const [activePrompt, setActivePrompt] = useState<'emoji' | 'delete' | undefined>(undefined)
 
