@@ -3,6 +3,9 @@ import { nanoid, customAlphabet } from 'nanoid'
 import { bin_fromHexString, bin_toHexString, check } from '@river/dlog'
 import { hashString } from './utils'
 
+export const STREAM_ID_BYTES_LENGTH = 32
+export const STREAM_ID_STRING_LENGTH = STREAM_ID_BYTES_LENGTH * 2
+
 export const userIdFromAddress = (address: Uint8Array): string =>
     utils.getAddress(bin_toHexString(address))
 
@@ -58,14 +61,14 @@ export const allowedStreamPrefixes = (): string[] => allowedStreamPrefixesVar
 
 const expectedIdentityLenByPrefix: { [key in StreamPrefix]: number } = {
     [StreamPrefix.User]: 40,
-    [StreamPrefix.Space]: 62,
-    [StreamPrefix.Channel]: 62,
     [StreamPrefix.UserDevice]: 40,
     [StreamPrefix.UserSettings]: 40,
+    [StreamPrefix.UserInbox]: 40,
+    [StreamPrefix.Space]: 62,
+    [StreamPrefix.Channel]: 62,
     [StreamPrefix.Media]: 62,
     [StreamPrefix.DM]: 62,
     [StreamPrefix.GDM]: 62,
-    [StreamPrefix.UserInbox]: 40,
 }
 
 export const makeStreamId = (prefix: StreamPrefix, identity: string): string => {
@@ -77,7 +80,7 @@ export const makeStreamId = (prefix: StreamPrefix, identity: string): string => 
         areValidStreamIdParts(prefix, identity),
         'Invalid stream id parts: ' + prefix + ' ' + identity,
     )
-    return prefix + identity
+    return (prefix + identity).padEnd(STREAM_ID_STRING_LENGTH, '0')
 }
 
 export const makeUserStreamId = (userId: string | Uint8Array): string => {
@@ -126,7 +129,8 @@ export const makeDMStreamId = (userIdA: string, userIdB: string): string => {
     return makeStreamId(StreamPrefix.DM, hashed.slice(0, 62))
 }
 
-export const isUserStreamId = (streamId: string): boolean => streamId.startsWith(StreamPrefix.User)
+export const isUserStreamId = (streamId: string | Uint8Array): boolean =>
+    streamIdAsString(streamId).startsWith(StreamPrefix.User)
 export const isSpaceStreamId = (streamId: string | Uint8Array): boolean =>
     streamIdAsString(streamId).startsWith(StreamPrefix.Space)
 export const isChannelStreamId = (streamId: string | Uint8Array): boolean =>
@@ -154,10 +158,15 @@ export const getUserAddressFromStreamId = (streamId: string): Uint8Array => {
     ) {
         throw new Error('Invalid stream id: ' + streamId)
     }
-    if (streamId.length != 42 || !isLowercaseHex(streamId)) {
+    if (streamId.length != STREAM_ID_STRING_LENGTH || !isLowercaseHex(streamId)) {
         throw new Error('Invalid stream id format: ' + streamId)
     }
-    return addressFromUserId('0x' + streamId.slice(2))
+    const addressPart = streamId.slice(2, 42)
+    const paddingPart = streamId.slice(42)
+    if (paddingPart !== '0'.repeat(22)) {
+        throw new Error('Invalid stream id padding: ' + streamId)
+    }
+    return addressFromUserId('0x' + addressPart)
 }
 
 export const getUserIdFromStreamId = (streamId: string): string => {

@@ -52,6 +52,7 @@ interface IStreamRegistry {
 
   function setStreamLastMiniblock(
     bytes32 streamId,
+    bytes32 prevMiniBlockHash,
     bytes32 lastMiniblockHash,
     uint64 lastMiniblockNum,
     bool isSealed

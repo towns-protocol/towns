@@ -2,6 +2,7 @@ package testutils
 
 import (
 	"crypto/rand"
+	"strings"
 
 	"github.com/river-build/river/core/node/shared"
 )
@@ -9,7 +10,7 @@ import (
 func FakeStreamId(prefix byte) shared.StreamId {
 	var b [32]byte
 	b[0] = prefix
-	n, err := shared.StreamIdLengthForType(prefix)
+	n, err := shared.StreamIdContentLengthForType(prefix)
 	if err != nil {
 		panic(err)
 	}
@@ -24,15 +25,10 @@ func FakeStreamId(prefix byte) shared.StreamId {
 	return id
 }
 
-// func UserStreamIdFromAddress(address common.Address) string {
-// 	streamId, err := shared.UserStreamIdFromAddress(address)
-// 	if err != nil {
-// 		panic(err)
-// 	}
-// 	return streamId
-// }
-
 func StreamIdFromString(s string) shared.StreamId {
+	if len(s) < shared.STREAM_ID_STRING_LENGTH {
+		s += strings.Repeat("0", shared.STREAM_ID_STRING_LENGTH-len(s))
+	}
 	streamId, err := shared.StreamIdFromString(s)
 	if err != nil {
 		panic(err)
@@ -41,17 +37,12 @@ func StreamIdFromString(s string) shared.StreamId {
 }
 
 func StreamIdFromBytes(b []byte) shared.StreamId {
+	if len(b) < shared.STREAM_ID_BYTES_LENGTH {
+		b = append(b, make([]byte, shared.STREAM_ID_BYTES_LENGTH-len(b))...)
+	}
 	streamId, err := shared.StreamIdFromBytes(b)
 	if err != nil {
 		panic(err)
 	}
 	return streamId
 }
-
-// func StreamIdStringToBytes(s string) []byte {
-// 	b, err := shared.StreamIdFromString(s)
-// 	if err != nil {
-// 		panic(err)
-// 	}
-// 	return b.Bytes()
-// }

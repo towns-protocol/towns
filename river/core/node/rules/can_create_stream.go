@@ -112,11 +112,7 @@ func CanCreateStream(ctx context.Context, cfg *config.StreamConfig, currentTime 
 	if err != nil {
 		return nil, err
 	}
-	creatorUserStreamIdStr, err := shared.UserStreamIdFromId(creatorUserId)
-	if err != nil {
-		return nil, err
-	}
-	creatorUserStreamId, err := shared.StreamIdFromString(creatorUserStreamIdStr)
+	creatorUserStreamId, err := shared.UserStreamIdFromBytes(creatorAddress)
 	if err != nil {
 		return nil, RiverError(Err_BAD_STREAM_CREATION_PARAMS, "invalid creator user stream id", "err", err)
 	}
@@ -310,7 +306,7 @@ func (ru *csParams) streamIdTypeIsCorrect(expectedType byte) func() error {
 	}
 }
 func (ru *csParams) isUserStreamId() error {
-	addressInName, err := shared.GetUserAddressFromStreamId(ru.streamId.String())
+	addressInName, err := shared.GetUserAddressFromStreamId(ru.streamId)
 	if err != nil {
 		return err
 	}
@@ -426,7 +422,7 @@ func (ru *csChannelRules) derivedChannelSpaceParentEvent() (*DerivedEvent, error
 
 	payload := events.Make_SpacePayload_Channel(
 		ChannelOp_CO_CREATED,
-		channelId.String(),
+		channelId,
 		ru.inception.ChannelProperties,
 		&EventRef{
 			StreamId:  ru.inception.StreamId,
@@ -532,7 +528,7 @@ func (ru *csDmChannelRules) checkDMInceptionPayload() error {
 	if !bytes.Equal(ru.params.creatorAddress, ru.inception.FirstPartyAddress) {
 		return RiverError(Err_BAD_STREAM_CREATION_PARAMS, "creator must be first party for dm channel")
 	}
-	if !shared.ValidDMChannelStreamIdBetween(ru.params.streamId.String(), ru.inception.FirstPartyAddress, ru.inception.SecondPartyAddress) {
+	if !shared.ValidDMChannelStreamIdBetween(ru.params.streamId, ru.inception.FirstPartyAddress, ru.inception.SecondPartyAddress) {
 		return RiverError(Err_BAD_STREAM_CREATION_PARAMS, "invalid stream id for dm channel")
 	}
 	return nil
@@ -658,23 +654,35 @@ func (ru *csGdmChannelRules) getGDMUserIds() []string {
 	return userIds
 }
 
+func (ru *csGdmChannelRules) getGDMUserAddresses() [][]byte {
+	userAddresses := make([][]byte, 0, len(ru.params.parsedEvents)-1)
+	for _, event := range ru.params.parsedEvents[1:] {
+		payload := event.Event.GetMemberPayload()
+		if payload == nil {
+			continue
+		}
+		membershipPayload := payload.GetMembership()
+		if membershipPayload == nil {
+			continue
+		}
+		userAddresses = append(userAddresses, membershipPayload.UserAddress)
+	}
+	return userAddresses
+}
+
 func (ru *csGdmChannelRules) derivedGDMMembershipEvents() ([]*DerivedEvent, error) {
-	userIds := ru.getGDMUserIds()
+	userAddresses := ru.getGDMUserAddresses()
 	// swap the creator into the last position in the array
 	// send the creator's join event last, so that any failure will be retired by the client
-	if len(userIds) < 1 {
+	if len(userAddresses) < 1 {
 		return nil, RiverError(Err_BAD_STREAM_CREATION_PARAMS, "gdm channel requires 3+ users")
 	}
-	creatorUserId := userIds[0]
-	userIds = append(userIds[1:], creatorUserId)
+	creatorUserAddress := userAddresses[0]
+	userAddresses = append(userAddresses[1:], creatorUserAddress)
 	// create derived events for each user
-	derivedEvents := make([]*DerivedEvent, 0, len(userIds))
-	for _, userId := range userIds {
-		userStreamIdStr, err := shared.UserStreamIdFromId(userId)
-		if err != nil {
-			return nil, err
-		}
-		userStreamId, err := shared.StreamIdFromString(userStreamIdStr)
+	derivedEvents := make([]*DerivedEvent, 0, len(userAddresses))
+	for _, userAddress := range userAddresses {
+		userStreamId, err := shared.UserStreamIdFromBytes(userAddress)
 		if err != nil {
 			return nil, err
 		}

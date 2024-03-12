@@ -45,11 +45,7 @@ export const checkDelegateSig = (params: {
             ? publicKeyToUint8Array(params.creatorAddress)
             : params.creatorAddress
 
-    const hashSource =
-        expiryEpochMs && expiryEpochMs > 0n
-            ? riverDelegateHashSrc(delegatePubKey, expiryEpochMs)
-            : delegatePubKey
-
+    const hashSource = riverDelegateHashSrc(delegatePubKey, expiryEpochMs)
     const hash = hashPersonalMessage(Buffer.from(hashSource))
     const { v, r, s } = fromRpcSig('0x' + bin_toHexString(delegateSig))
     const recoveredCreatorPubKey = ecrecover(hash, v, r, s)
@@ -71,8 +67,7 @@ async function makeRiverDelegateSig(
         devicePubKey = publicKeyToUint8Array(devicePubKey)
     }
     check(devicePubKey.length === 65, 'Bad public key', Err.BAD_PUBLIC_KEY)
-    const hashSrc =
-        expiryEpochMs > 0 ? riverDelegateHashSrc(devicePubKey, expiryEpochMs) : devicePubKey
+    const hashSrc = riverDelegateHashSrc(devicePubKey, expiryEpochMs)
     const delegateSig = bin_fromHexString(await primaryWallet.signMessage(hashSrc))
     return delegateSig
 }
