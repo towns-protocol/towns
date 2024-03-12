@@ -24,14 +24,6 @@ func FakeStreamId(prefix byte) shared.StreamId {
 	return id
 }
 
-// func UserStreamIdFromAddress(address common.Address) string {
-// 	streamId, err := shared.UserStreamIdFromAddress(address)
-// 	if err != nil {
-// 		panic(err)
-// 	}
-// 	return streamId
-// }
-
 func StreamIdFromString(s string) shared.StreamId {
 	streamId, err := shared.StreamIdFromString(s)
 	if err != nil {
@@ -47,11 +39,3 @@ func StreamIdFromBytes(b []byte) shared.StreamId {
 	}
 	return streamId
 }
-
-// func StreamIdStringToBytes(s string) []byte {
-// 	b, err := shared.StreamIdFromString(s)
-// 	if err != nil {
-// 		panic(err)
-// 	}
-// 	return b.Bytes()
-// }

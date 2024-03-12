@@ -3,6 +3,7 @@ package shared
 import (
 	"fmt"
 	"reflect"
+	"strings"
 	"testing"
 
 	"github.com/ethereum/go-ethereum/common"
@@ -19,20 +20,21 @@ func TestValidDMStreamId(t *testing.T) {
 
 	res, err := DMStreamIdForUsers(userIdA, userIdB)
 	assert.NoError(t, err)
-	assert.Equal(t, expected, res)
+	assert.Equal(t, expected, res.String())
 
 	// Test that the order of the user ids doesn't matter
 	res, err = DMStreamIdForUsers(userIdB, userIdA)
 	assert.NoError(t, err)
-	assert.Equal(t, expected, res)
+	assert.Equal(t, expected, res.String())
 }
 
 func TestInvalidDMStreamId(t *testing.T) {
 	userIdA, _ := AddressFromUserId("0x376eC15Fa24A76A18EB980629093cFFd559333Bb")
 	userIdB, _ := AddressFromUserId("0x6d58a6597Eb5F849Fb46604a81Ee31654D6a4B44")
-	expected := "DMDM-invalid-id"
+	notExpected, err := StreamIdFromString(STREAM_DM_CHANNEL_PREFIX + strings.Repeat("0", 62))
+	assert.NoError(t, err)
 
-	assert.False(t, ValidDMChannelStreamIdBetween(expected, userIdA, userIdB))
+	assert.False(t, ValidDMChannelStreamIdBetween(notExpected, userIdA, userIdB))
 }
 
 func TestStreamIdFromString(t *testing.T) {

@@ -58,15 +58,11 @@ func createUserDeviceKeyStream(
 	wallet *crypto.Wallet,
 	client protocolconnect.StreamServiceClient,
 ) (*protocol.SyncCookie, []byte, error) {
-	userDeviceKeyStreamIdStr := UserDeviceKeyStreamIdFromAddress(wallet.Address)
-	userDeviceKeyStreamId, err := StreamIdFromString(userDeviceKeyStreamIdStr)
-	if err != nil {
-		return nil, nil, err
-	}
+	userDeviceKeyStreamId := UserDeviceKeyStreamIdFromAddress(wallet.Address)
 	inception, err := events.MakeEnvelopeWithPayload(
 		wallet,
 		events.Make_UserDeviceKeyPayload_Inception(
-			userDeviceKeyStreamId.String(),
+			userDeviceKeyStreamId,
 			nil,
 		),
 		nil,

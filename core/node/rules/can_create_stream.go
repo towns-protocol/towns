@@ -112,11 +112,7 @@ func CanCreateStream(ctx context.Context, cfg *config.StreamConfig, currentTime 
 	if err != nil {
 		return nil, err
 	}
-	creatorUserStreamIdStr, err := shared.UserStreamIdFromId(creatorUserId)
-	if err != nil {
-		return nil, err
-	}
-	creatorUserStreamId, err := shared.StreamIdFromString(creatorUserStreamIdStr)
+	creatorUserStreamId, err := shared.UserStreamIdFromId(creatorUserId)
 	if err != nil {
 		return nil, RiverError(Err_BAD_STREAM_CREATION_PARAMS, "invalid creator user stream id", "err", err)
 	}
@@ -310,7 +306,7 @@ func (ru *csParams) streamIdTypeIsCorrect(expectedType byte) func() error {
 	}
 }
 func (ru *csParams) isUserStreamId() error {
-	addressInName, err := shared.GetUserAddressFromStreamId(ru.streamId.String())
+	addressInName, err := shared.GetUserAddressFromStreamId(ru.streamId)
 	if err != nil {
 		return err
 	}
@@ -426,7 +422,7 @@ func (ru *csChannelRules) derivedChannelSpaceParentEvent() (*DerivedEvent, error
 
 	payload := events.Make_SpacePayload_Channel(
 		ChannelOp_CO_CREATED,
-		channelId.String(),
+		channelId,
 		ru.inception.ChannelProperties,
 		&EventRef{
 			StreamId:  ru.inception.StreamId,
@@ -532,7 +528,7 @@ func (ru *csDmChannelRules) checkDMInceptionPayload() error {
 	if !bytes.Equal(ru.params.creatorAddress, ru.inception.FirstPartyAddress) {
 		return RiverError(Err_BAD_STREAM_CREATION_PARAMS, "creator must be first party for dm channel")
 	}
-	if !shared.ValidDMChannelStreamIdBetween(ru.params.streamId.String(), ru.inception.FirstPartyAddress, ru.inception.SecondPartyAddress) {
+	if !shared.ValidDMChannelStreamIdBetween(ru.params.streamId, ru.inception.FirstPartyAddress, ru.inception.SecondPartyAddress) {
 		return RiverError(Err_BAD_STREAM_CREATION_PARAMS, "invalid stream id for dm channel")
 	}
 	return nil
@@ -670,11 +666,7 @@ func (ru *csGdmChannelRules) derivedGDMMembershipEvents() ([]*DerivedEvent, erro
 	// create derived events for each user
 	derivedEvents := make([]*DerivedEvent, 0, len(userIds))
 	for _, userId := range userIds {
-		userStreamIdStr, err := shared.UserStreamIdFromId(userId)
-		if err != nil {
-			return nil, err
-		}
-		userStreamId, err := shared.StreamIdFromString(userStreamIdStr)
+		userStreamId, err := shared.UserStreamIdFromId(userId)
 		if err != nil {
 			return nil, err
 		}

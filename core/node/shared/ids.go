@@ -43,8 +43,19 @@ func UserStreamIdFromAddr(addr common.Address) StreamId {
 	return b
 }
 
-func UserDeviceKeyStreamIdFromAddress(addr common.Address) string {
-	return STREAM_USER_DEVICE_KEY_PREFIX + hex.EncodeToString(addr.Bytes())
+func UserStreamIdFromId(id string) (StreamId, error) {
+	if !common.IsHexAddress(id) {
+		return StreamId{}, RiverError(Err_BAD_STREAM_ID, "invalid id", "id", id)
+	}
+	id = strings.TrimPrefix(id, "0x")
+	return StreamIdFromString(STREAM_USER_PREFIX + strings.ToLower(id))
+}
+
+func UserDeviceKeyStreamIdFromAddress(addr common.Address) StreamId {
+	var b StreamId
+	b.bytes[0] = STREAM_USER_DEVICE_KEY_BIN
+	copy(b.bytes[1:], addr.Bytes())
+	return b
 }
 
 func GetUserAddressFromStreamIdBytes(inStreamId []byte) (common.Address, error) {
@@ -52,10 +63,10 @@ func GetUserAddressFromStreamIdBytes(inStreamId []byte) (common.Address, error) 
 	if err != nil {
 		return common.Address{}, err
 	}
-	return GetUserAddrFromStreamId(streamId)
+	return GetUserAddressFromStreamId(streamId)
 }
 
-func GetUserAddrFromStreamId(streamId StreamId) (common.Address, error) {
+func GetUserAddressFromStreamId(streamId StreamId) (common.Address, error) {
 	prefix := streamId.Type()
 	if prefix != STREAM_USER_BIN &&
 		prefix != STREAM_USER_DEVICE_KEY_BIN &&
@@ -64,22 +75,6 @@ func GetUserAddrFromStreamId(streamId StreamId) (common.Address, error) {
 		return common.Address{}, RiverError(Err_BAD_STREAM_ID, "invalid stream type for getting user", "streamId", streamId)
 	}
 	return common.BytesToAddress(streamId.Bytes()[1:21]), nil
-}
-
-func GetUserAddressFromStreamId(s string) (common.Address, error) {
-	streamId, err := StreamIdFromString(s)
-	if err != nil {
-		return common.Address{}, err
-	}
-	return GetUserAddrFromStreamId(streamId)
-}
-
-func GetUserAddressStringFromStreamId(streamId string) (string, error) {
-	addr, err := GetUserAddressFromStreamId(streamId)
-	if err != nil {
-		return "", err
-	}
-	return addr.Hex(), nil
 }
 
 func CheckUserStreamIdForPrefix(streamId string, creatorUserId []byte, expectedPrefix string) error {
@@ -95,29 +90,6 @@ func CheckUserStreamIdForPrefix(streamId string, creatorUserId []byte, expectedP
 		"expected",
 		expected,
 	)
-}
-
-func UserStreamIdFromId(id string) (string, error) {
-	if !common.IsHexAddress(id) {
-		return "", RiverError(Err_BAD_STREAM_ID, "invalid id", "id", id)
-	}
-	id = strings.TrimPrefix(id, "0x")
-	return STREAM_USER_PREFIX + strings.ToLower(id), nil
-}
-
-func ExpectedStreamIdLength(prefix string) int {
-	switch prefix {
-	case STREAM_USER_DEVICE_KEY_PREFIX:
-		return 42
-	case STREAM_USER_INBOX_PREFIX:
-		return 42
-	case STREAM_USER_PREFIX:
-		return 42
-	case STREAM_USER_SETTINGS_PREFIX:
-		return 42
-	default:
-		return 64
-	}
 }
 
 func ValidSpaceStreamId(streamId *StreamId) bool {
@@ -148,25 +120,29 @@ func ValidDMChannelStreamId(streamId *StreamId) bool {
 	return streamId.Type() == STREAM_DM_CHANNEL_BIN
 }
 
-func DMStreamIdForUsers(a []byte, b []byte) (string, error) {
+func DMStreamIdForUsers(a []byte, b []byte) (StreamId, error) {
 	// Lowercase the user ids, sort them and join them with a dash
 	addressUserA, err := AddressHex(a)
 	if err != nil {
-		return "", err
+		return StreamId{}, err
 	}
 	addressUserB, err := AddressHex(b)
 	if err != nil {
-		return "", err
+		return StreamId{}, err
 	}
 
 	ids := []string{strings.ToLower(addressUserA), strings.ToLower(addressUserB)}
 	slices.Sort(ids)
 	joined := strings.Join(ids, "-")
 	hash := crypto.Keccak256([]byte(joined))
-	return STREAM_DM_CHANNEL_PREFIX + hex.EncodeToString(hash[:31]), nil
+
+	var s StreamId
+	s.bytes[0] = STREAM_DM_CHANNEL_BIN
+	copy(s.bytes[1:], hash[:31])
+	return s, nil
 }
 
-func ValidDMChannelStreamIdBetween(id string, userIdA []byte, userIdB []byte) bool {
+func ValidDMChannelStreamIdBetween(id StreamId, userIdA []byte, userIdB []byte) bool {
 	expected, err := DMStreamIdForUsers(userIdA, userIdB)
 	if err != nil {
 		return false
