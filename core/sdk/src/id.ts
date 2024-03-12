@@ -58,14 +58,14 @@ export const allowedStreamPrefixes = (): string[] => allowedStreamPrefixesVar
 
 const expectedIdentityLenByPrefix: { [key in StreamPrefix]: number } = {
     [StreamPrefix.User]: 40,
-    [StreamPrefix.Space]: 62,
-    [StreamPrefix.Channel]: 62,
     [StreamPrefix.UserDevice]: 40,
     [StreamPrefix.UserSettings]: 40,
+    [StreamPrefix.UserInbox]: 40,
+    [StreamPrefix.Space]: 62,
+    [StreamPrefix.Channel]: 62,
     [StreamPrefix.Media]: 62,
     [StreamPrefix.DM]: 62,
     [StreamPrefix.GDM]: 62,
-    [StreamPrefix.UserInbox]: 40,
 }
 
 export const makeStreamId = (prefix: StreamPrefix, identity: string): string => {

@@ -43,14 +43,6 @@ func UserStreamIdFromAddr(addr common.Address) StreamId {
 	return b
 }
 
-func UserStreamIdFromId(id string) (StreamId, error) {
-	if !common.IsHexAddress(id) {
-		return StreamId{}, RiverError(Err_BAD_STREAM_ID, "invalid id", "id", id)
-	}
-	id = strings.TrimPrefix(id, "0x")
-	return StreamIdFromString(STREAM_USER_PREFIX + strings.ToLower(id))
-}
-
 func UserDeviceKeyStreamIdFromAddress(addr common.Address) StreamId {
 	var b StreamId
 	b.bytes[0] = STREAM_USER_DEVICE_KEY_BIN
