@@ -90,7 +90,17 @@ fi
 # Commit the changes if there are any
 if ! git diff main --quiet --cached; then
     RIVER_ALLOW_COMMIT=true git commit -m "Merge ${SUBTREE_PREFIX} at ${SHORT_HASH}"
-    echo "Changes committed."
+    echo "Subtree changes committed."
+
+    # Run yarn to update the lockfile
+    yarn
+
+    # check for changes after running yarn
+    if [[ "$(git status --porcelain)" != "" ]]; then
+        echo "Commiting yarn lockfile."
+        git add yarn.lock
+        git commit -m "Update yarn.lock"
+    fi
     
     if [[ $INTERACTIVE -eq 1 ]]; then
         read -p "Do you want to continue and create a pull request? (y/n) " -n 1 -r
