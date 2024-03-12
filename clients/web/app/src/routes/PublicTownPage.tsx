@@ -22,7 +22,6 @@ import {
     Box,
     BoxProps,
     Button,
-    Card,
     Heading,
     Icon,
     IconButton,
@@ -329,7 +328,7 @@ const LoggedUserMenu = () => {
     }, [navigate])
 
     return (
-        <Card border minWidth="250" pointerEvents="all">
+        <Box rounded="md" minWidth="250" pointerEvents="all" overflow="hidden" boxShadow="card">
             <Stack
                 horizontal
                 gap
@@ -384,7 +383,7 @@ const LoggedUserMenu = () => {
                 />
                 <Paragraph>Log Out</Paragraph>
             </Stack>
-        </Card>
+        </Box>
     )
 }
 

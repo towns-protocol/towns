@@ -3,7 +3,7 @@ import uniqBy from 'lodash/uniqBy'
 import { Link } from 'react-router-dom'
 import { firstBy } from 'thenby'
 import { Membership, useUserLookupContext } from 'use-towns-client'
-import { Box, Card, Paragraph, Stack } from '@ui'
+import { Box, Paragraph, Stack, Tooltip } from '@ui'
 import { notUndefined } from 'ui/utils/utils'
 import { getPrettyDisplayName } from 'utils/getPrettyDisplayName'
 import { AvatarStack } from 'routes/AvatarStack'
@@ -158,7 +158,7 @@ const getNameListFromArray = (names: React.ReactNode[], verb: string, maxLength 
         <>
             {str} along with{' '}
             <Stack
-                tooltip={<UserListTooltip names={originalNames.slice(1)} />}
+                tooltip={<Tooltip>{originalNames.slice(1)}</Tooltip>}
                 display="inline"
                 cursor="pointer"
                 color="default"
@@ -166,13 +166,5 @@ const getNameListFromArray = (names: React.ReactNode[], verb: string, maxLength 
                 {originalNames.length - 1} others
             </Stack>
         </>
-    )
-}
-
-const UserListTooltip = (props: { names: (React.ReactNode | string | undefined)[] }) => {
-    return (
-        <Card padding border gap="xs" background="level2" rounded="sm">
-            {props.names}
-        </Card>
     )
 }
