@@ -50,6 +50,14 @@ jobs:
                 docker build -t $ECR_REGISTRY/$REGISTRY_ALIAS/$ECR_REPOSITORY:latest . -f ./servers/notification-service/Dockerfile
                 docker push $ECR_REGISTRY/$REGISTRY_ALIAS/$ECR_REPOSITORY:latest
 
+            - name: Deploy to ECS
+              run: './scripts/deploy-latest-notification-service.sh'
+              env:
+                AWS_ACCESS_KEY_ID: ${{ secrets.AWS_ACCESS_KEY_ID }}
+                AWS_SECRET_ACCESS_KEY: ${{ secrets.AWS_SECRET_ACCESS_KEY }}
+                AWS_REGION: us-east-1
+                ENVIRONMENT_NAME: gamma
+
             # If action failed, we send a slack notification
             - name: Slack notification
               if: failure()
