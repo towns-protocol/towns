@@ -77,8 +77,9 @@ module "leader" {
 
 module "follower" {
   count                       = local.num_follower_containers
-  follower_id                 = count.index + 1
+  container_id                = count.index + 1
   source                      = "./follower"
+  is_forked_anvil             = var.is_forked_anvil
   vpc_id                      = var.vpc_id
   subnets                     = var.private_subnets
   ecs_cluster                 = aws_ecs_cluster.loadtest_cluster

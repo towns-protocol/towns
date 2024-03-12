@@ -250,3 +250,11 @@ resource "aws_secretsmanager_secret" "cloudflare_api_token" {
 resource "aws_secretsmanager_secret" "datadog_application_key" {
   name = "datadog-application-key-${terraform.workspace}"
 }
+
+resource "aws_secretsmanager_secret" "stress_test_wallet_seed_phrase" {
+  name = "stress-test-wallet-seed-phrase-${terraform.workspace}"
+}
+
+resource "aws_secretsmanager_secret" "stress_test_wallet_private_key" {
+  name = "stress-test-wallet-private-key-${terraform.workspace}"
+}

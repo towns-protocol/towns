@@ -178,6 +178,7 @@ module "loadtest" {
   public_subnets  = module.vpc.public_subnets
   private_subnets = module.vpc.private_subnets
   river_node_url  = module.global_constants.nodes_metadata[0].url
+  is_forked_anvil = false
 }
 
 data "cloudflare_zone" "zone" {

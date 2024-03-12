@@ -222,5 +222,6 @@ module "loadtest" {
   private_subnets             = local.transient_global_remote_state.vpc.private_subnets
   base_chain_rpc_url_override = var.has_stress_test_infra ? module.base_forked_chain_service[0].network_url : null
   river_node_url              = var.has_stress_test_infra ? module.global_constants.nodes_metadata[0].url : null
+  is_forked_anvil             = true
 }
 

@@ -1,13 +1,13 @@
 locals {
   container_name      = "loadtest-follower"
-  name                = "${local.container_name}-${var.follower_id}-${terraform.workspace}"
+  name                = "${local.container_name}-${var.container_id}-${terraform.workspace}"
   global_remote_state = module.global_constants.global_remote_state.outputs
 
   custom_tags = merge(
     var.tags,
     {
-      Service     = local.container_name,
-      Follower_Id = var.follower_id
+      Service      = local.container_name,
+      Container_Id = var.container_id
     }
   )
 
@@ -76,7 +76,9 @@ resource "aws_iam_role_policy" "secrets" {
         ],
         "Effect": "Allow",
         "Resource": [
-          "${local.global_remote_state.base_chain_network_url_secret.arn}"
+          "${local.global_remote_state.base_chain_network_url_secret.arn}",
+          "${local.global_remote_state.stress_test_wallet_seed_phrase_secret.arn}",
+          "${local.global_remote_state.stress_test_wallet_private_key_secret.arn}"
         ]
       }
     ]
@@ -119,7 +121,18 @@ resource "aws_ecs_task_definition" "task_definition" {
     cpu    = 8192
     memory = 16384
 
-    secrets = local.base_chain_default_td_secret_config
+    secrets = concat([
+      {
+        name      = "SEED_PHRASE",
+        valueFrom = local.global_remote_state.stress_test_wallet_seed_phrase_secret.arn
+      },
+      {
+        name      = "PRIVATE_KEY",
+        valueFrom = local.global_remote_state.stress_test_wallet_private_key_secret.arn
+      }
+      ],
+      local.base_chain_default_td_secret_config
+    )
 
     environment = concat([
       {
@@ -169,6 +182,14 @@ resource "aws_ecs_task_definition" "task_definition" {
       {
         name  = "PROCESSES_PER_CONTAINER",
         value = tostring(var.num_processes_per_container)
+      },
+      {
+        name  = "CONTAINER_ID",
+        value = tostring(var.container_id)
+      },
+      {
+        name  = "IS_FORKED_ANVIL",
+        value = var.is_forked_anvil ? "true" : "false"
       }
       ],
       local.base_chain_override_td_env_config

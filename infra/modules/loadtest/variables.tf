@@ -23,3 +23,7 @@ variable "base_chain_rpc_url_override" {
   type        = string
   default     = null
 }
+
+variable "is_forked_anvil" {
+  type = bool
+}

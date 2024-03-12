@@ -43,7 +43,7 @@ variable "loadtest_duration" {
   type        = number
 }
 
-variable "follower_id" {
+variable "container_id" {
   type = number
 }
 
@@ -53,4 +53,8 @@ variable "num_processes_per_container" {
 
 variable "num_clients_per_process" {
   type = number
+}
+
+variable "is_forked_anvil" {
+  type = bool
 }

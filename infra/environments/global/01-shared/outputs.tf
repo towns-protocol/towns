@@ -69,3 +69,11 @@ output "notification_service_db_password_secret" {
 output "datadog_application_key_secret" {
   value = aws_secretsmanager_secret.datadog_application_key
 }
+
+output "stress_test_wallet_seed_phrase_secret" {
+  value = aws_secretsmanager_secret.stress_test_wallet_seed_phrase
+}
+
+output "stress_test_wallet_private_key_secret" {
+  value = aws_secretsmanager_secret.stress_test_wallet_private_key
+}
