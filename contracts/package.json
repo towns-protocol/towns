@@ -30,7 +30,6 @@
         "@harmony/eslint-config": "1.0.0",
         "@harmony/prettier-config": "workspace:^",
         "keccak256": "^1.0.6",
-        "merkletreejs": "^0.3.11",
         "prettier": "^2.8.8",
         "prettier-plugin-solidity": "^1.1.3",
         "solhint": "^3.4.1",

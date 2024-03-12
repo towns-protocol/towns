@@ -2708,7 +2708,6 @@ __metadata:
     ds-test: "github:dapphub/ds-test"
     forge-std: "github:foundry-rs/forge-std#v1"
     keccak256: ^1.0.6
-    merkletreejs: ^0.3.11
     prettier: ^2.8.8
     prettier-plugin-solidity: ^1.1.3
     solhint: ^3.4.1
@@ -5466,13 +5465,6 @@ __metadata:
   languageName: node
   linkType: hard
 
-"buffer-reverse@npm:^1.0.1":
-  version: 1.0.1
-  resolution: "buffer-reverse@npm:1.0.1"
-  checksum: e350872a89b17af0a7e1bd7a73239a535164f3f010b0800add44f2e52bd0511548dc5b96c20309effba969868c385023d2d02a0add6155f6a76da7b3073b77bd
-  languageName: node
-  linkType: hard
-
 "buffer-xor@npm:^1.0.3":
   version: 1.0.3
   resolution: "buffer-xor@npm:1.0.3"
@@ -6118,13 +6110,6 @@ __metadata:
     uWebSockets.js:
       optional: true
   checksum: dcaf730a3af32cf081ab49fdb9c31192a738d7e0585585975e581e71a3d7d14df8d3b42ba183e13e34a1fc26645f695362abf30c40369d12652bcee372a484c3
-  languageName: node
-  linkType: hard
-
-"crypto-js@npm:^4.2.0":
-  version: 4.2.0
-  resolution: "crypto-js@npm:4.2.0"
-  checksum: f051666dbc077c8324777f44fbd3aaea2986f198fe85092535130d17026c7c2ccf2d23ee5b29b36f7a4a07312db2fae23c9094b644cc35f7858b1b4fcaf27774
   languageName: node
   linkType: hard
 
@@ -10474,19 +10459,6 @@ __metadata:
   languageName: node
   linkType: hard
 
-"merkletreejs@npm:^0.3.11":
-  version: 0.3.11
-  resolution: "merkletreejs@npm:0.3.11"
-  dependencies:
-    bignumber.js: ^9.0.1
-    buffer-reverse: ^1.0.1
-    crypto-js: ^4.2.0
-    treeify: ^1.1.0
-    web3-utils: ^1.3.4
-  checksum: 93edb8ec66aa6c9f59aa0902e675590e3791692893bb3e8c1018f758367ded1bf7d6b1057ccde3729b283ca946a316838a631a922960b76889b3be528c43ef4e
-  languageName: node
-  linkType: hard
-
 "micro-ftch@npm:^0.3.1":
   version: 0.3.1
   resolution: "micro-ftch@npm:0.3.1"
@@ -13310,13 +13282,6 @@ __metadata:
   languageName: node
   linkType: hard
 
-"treeify@npm:^1.1.0":
-  version: 1.1.0
-  resolution: "treeify@npm:1.1.0"
-  checksum: aa00dded220c1dd052573bd6fc2c52862f09870851a284f0d3650d72bf913ba9b4f6b824f4f1ab81899bae29375f4266b07fe47cbf82343a1efa13cc09ce87af
-  languageName: node
-  linkType: hard
-
 "ts-api-utils@npm:^1.0.1":
   version: 1.0.3
   resolution: "ts-api-utils@npm:1.0.3"
@@ -14378,22 +14343,6 @@ __metadata:
   dependencies:
     defaults: ^1.0.3
   checksum: 814e9d1ddcc9798f7377ffa448a5a3892232b9275ebb30a41b529607691c0491de47cba426e917a4d08ded3ee7e9ba2f3fe32e62ee3cd9c7d3bafb7754bd553c
-  languageName: node
-  linkType: hard
-
-"web3-utils@npm:^1.3.4":
-  version: 1.10.3
-  resolution: "web3-utils@npm:1.10.3"
-  dependencies:
-    "@ethereumjs/util": ^8.1.0
-    bn.js: ^5.2.1
-    ethereum-bloom-filters: ^1.0.6
-    ethereum-cryptography: ^2.1.2
-    ethjs-unit: 0.1.6
-    number-to-bn: 1.7.0
-    randombytes: ^2.1.0
-    utf8: 3.0.0
-  checksum: 353226710b2089a8e84f2b97cc765093e3018b850d3a6d60c92fe012829fa15a54ad15d432f1927bc185c6ef5100397a32fd4a896da5f514817c3f53583df134
   languageName: node
   linkType: hard
 
