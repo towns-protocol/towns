@@ -178,7 +178,7 @@ function GatingContent() {
 }
 
 function PricingContent() {
-    const { formState, register, setValue, watch, setError, clearErrors } =
+    const { formState, register, setValue, watch, setError, clearErrors, trigger } =
         useFormContext<CreateSpaceFormV2SchemaType>()
 
     const [price] = watch(['membershipCost', 'membershipLimit'])
@@ -187,13 +187,6 @@ function PricingContent() {
         (e: ChangeEvent<HTMLInputElement>) => {
             const { value } = e.target
 
-            if (isNaN(Number(value))) {
-                setError('membershipCost', {
-                    message: 'Please enter a valid number',
-                })
-                return
-            }
-
             if (value.includes('.')) {
                 const priceHasDecimalAlready = price.toString().includes('.')
                 const [, decimal] = value.split('.')
@@ -201,7 +194,7 @@ function PricingContent() {
                 // user deleted the only decimal number
                 if (!decimal && priceHasDecimalAlready) {
                     // strip the "." from the value and set to integer
-                    setValue('membershipCost', Number(value), {
+                    setValue('membershipCost', value, {
                         shouldValidate: true,
                     })
                     return
@@ -212,11 +205,13 @@ function PricingContent() {
                 }
             }
 
-            setValue('membershipCost', Number(value), {
+            setValue('membershipCost', value, {
                 shouldValidate: true,
             })
+
+            trigger('membershipCost') // trigger the superRefine
         },
-        [setValue, setError, price],
+        [setValue, trigger, price],
     )
 
     const onLimitChange = useCallback(

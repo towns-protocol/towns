@@ -53,17 +53,15 @@ export const schema = z
                 }
             },
         }),
-        membershipCost: z.coerce.number({
-            errorMap: (err, ctx) => {
-                if (err.code === 'invalid_type') {
-                    return { message: 'Please enter a number.' }
-                }
-
-                return {
-                    message: 'Please enter a number.',
-                }
-            },
-        }),
+        membershipCost: z
+            .string({
+                errorMap: (err, ctx) => {
+                    return {
+                        message: 'Please enter a valid number',
+                    }
+                },
+            })
+            .min(1),
         // membershipDuration: z.number(), TODO contract updates
         // membershipGasFeePayer: z.nativeEnum(MembershipGasFeePayer), TODO contract updates
         membershipType: z.union([
@@ -83,7 +81,25 @@ export const schema = z
         tokensGatingMembership: z.array(tokenEntitlementSchema),
     })
     .superRefine((data, ctx) => {
-        if (data['membershipLimit'] > 1000 && data['membershipCost'] < 1) {
+        const membershipCost = Number(data['membershipCost'])
+
+        if (membershipCost < 0) {
+            ctx.addIssue({
+                code: z.ZodIssueCode.custom,
+                message: 'Please enter a positive number',
+                path: ['membershipCost'],
+            })
+        }
+
+        if (isNaN(membershipCost)) {
+            ctx.addIssue({
+                code: z.ZodIssueCode.custom,
+                message: 'Please enter a valid number',
+                path: ['membershipCost'],
+            })
+        }
+
+        if (data['membershipLimit'] > 1000 && membershipCost < 1) {
             ctx.addIssue({
                 code: z.ZodIssueCode.custom,
                 message: membershipCostError,

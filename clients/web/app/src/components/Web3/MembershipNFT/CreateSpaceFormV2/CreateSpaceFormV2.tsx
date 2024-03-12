@@ -228,7 +228,7 @@ export function CreateSpaceFormV2() {
                                                         <>
                                                             <Text strong size="lg">
                                                                 {isNaN(limit) ? '--' : limit} *{' '}
-                                                                {isNaN(price) ? '--' : price}
+                                                                {isNaN(+price) ? '--' : price}
                                                             </Text>
                                                         </>
                                                     </FormFieldEdit>

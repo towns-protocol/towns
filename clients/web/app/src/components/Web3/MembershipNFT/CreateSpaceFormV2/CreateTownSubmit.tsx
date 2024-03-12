@@ -116,11 +116,23 @@ export function CreateTownSubmit({
                     return
                 }
 
+                let priceInWei: ethers.BigNumberish
+
+                try {
+                    priceInWei = ethers.utils.parseEther(membershipCost)
+                } catch (error) {
+                    form.setError('membershipCost', {
+                        type: 'manual',
+                        message: 'Please enter a valid eth value.',
+                    })
+                    return
+                }
+
                 const requirements: MembershipStruct = {
                     settings: {
                         name: 'Member',
                         symbol: 'MEMBER',
-                        price: membershipCost,
+                        price: priceInWei,
                         maxSupply: membershipLimit,
                         duration: 0,
                         currency: ethers.constants.AddressZero,
