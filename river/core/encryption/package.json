@@ -24,7 +24,6 @@
         "@river/proto": "workspace:^",
         "debug": "^4.3.4",
         "dexie": "^3.2.4",
-        "ethereum-cryptography": "1.2.0",
         "ethers": "^5.7.2",
         "nanoid": "^4.0.0"
     },

@@ -10,18 +10,8 @@ BASE_DIR="./run_files"
 # PID file for the script, stored in the base directory
 SCRIPT_PID_FILE="${BASE_DIR}/launch_multi.pid"
 
-
-if [[ -f "$SCRIPT_PID_FILE" ]]; then
-  old_pid=$(cat "$SCRIPT_PID_FILE")
-  if [[ -n "$old_pid" && "$old_pid" != "$$" ]]; then
-    echo "Stopping previous script instance with PID $old_pid"
-    kill "$old_pid" || true
-    while ps -p $old_pid > /dev/null 2>&1; do
-        sleep 1  # Wait for 1 second before checking again
-    done
-    echo "Previous script instance stopped."
-  fi
-fi
+# stop previous instances
+./stop_multi.sh
 
 # Record the script's own PID
 echo $$ > "$SCRIPT_PID_FILE"

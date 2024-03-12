@@ -2,7 +2,7 @@
  * @group main
  */
 
-import { makeEvent, SignerContext, unpackStreamEnvelopes } from './sign'
+import { makeEvent, unpackStreamEnvelopes } from './sign'
 import { MembershipOp } from '@river/proto'
 import { dlog } from '@river/dlog'
 import { lastEventFiltered, makeRandomUserContext, makeTestRpcClient } from './util.test'
@@ -22,6 +22,7 @@ import {
     make_SpacePayload_Inception,
     make_UserPayload_Inception,
 } from './types'
+import { SignerContext } from './signerContext'
 
 const base_log = dlog('csb:test:workflows')
 

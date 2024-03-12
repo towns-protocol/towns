@@ -1,25 +1,43 @@
 #!/bin/bash
 
 # To use this script you need to 1) be an admin of the main repo, 2) have gh github cli installed, 3) run `gh auth login` && `gh repo set-default`
+# Define a function to print usage information
+print_usage() {
+    echo "Usage: pull_river.sh [OPTIONS]"
+    echo "  -h: Display this help message."
+    echo "  -i: Interactive mode. Will prompt for confirmation before creating a pull request."
+    echo "  -u: Enable USER_MODE. Will wait if there are ci errors and allow you to fix them."
+    echo "  -c: Enable CI_MODE. Will fail on ci errors and not prompt for user input."
+}
 
-while getopts "hi" arg; do
+# Check if at least one argument is passed
+if [ $# -eq 0 ]; then
+    print_usage
+    exit 1
+fi
+
+while getopts "hiuc" arg; do
   case $arg in
     h)
-        echo "Usage: ./pull_river.sh -i"
-        echo "  -i: Interactive mode. Will prompt for confirmation before creating a pull request."
+        print_usage
         exit 0
         ;;
     i)
         INTERACTIVE=1
+        USER_MODE=1
+        ;;
+    u)
+        USER_MODE=1
+        ;;
+    c)
+        CI_MODE=1
         ;;
     *)
-      echo "Invalid argument"
+      echo "Invalid argument. Use -h for help."
       exit 1
       ;;
   esac
 done
-
-set -x
 
 function parse_git_branch() {
     git branch 2> /dev/null | sed -e '/^[^*]/d' -e 's/* \(.*\)/\1/'
@@ -92,10 +110,49 @@ if ! git diff main --quiet --cached; then
     gh pr create --base main --head "${BRANCH_NAME}" --title "${PR_TITLE}" --body "${PR_BODY}"
     echo "Pull request created."
 
-    echo "Waiting for the pull request checks to start..."
-    sleep 5
+    while true; do
 
-    gh pr checks "${BRANCH_NAME}" --fail-fast  --interval 2 --watch
+      WAIT_TIME=5
+      while true; do
+        OUTPUT=$(gh pr checks "${BRANCH_NAME}" 2>&1)
+        if [[ "$OUTPUT" == *"no checks reported on the '${BRANCH_NAME}' branch"* ]]; then
+          echo "Checks for '$branch_name' haven't started yet. Waiting for $WAIT_TIME seconds..."
+          sleep $WAIT_TIME
+        else
+          break
+        fi
+      done
+
+      gh pr checks "${BRANCH_NAME}" --fail-fast --interval 2 --watch
+      exit_status=$?
+
+      # Check if the command succeeded or failed
+      if [ $exit_status -ne 0 ]; then
+          echo "Failure detected in PR checks."
+          if [[ $USER_MODE -eq 1 ]]; then
+              read -p "Have you fixed the issue and pushed your changes yet? (y/n) " -n 1 -r
+              echo
+              if [[ ! $REPLY =~ ^[Yy]$ ]]; then
+                  echo "Pull request creation aborted."
+                  exit $exit_status
+              fi
+          else
+              exit $exit_status
+          fi
+      else 
+          echo "All checks passed."
+          break
+      fi
+    done
+
+    if [[ $INTERACTIVE -eq 1 ]]; then
+        read -p "Do you want to merge the pull request? (y/n) " -n 1 -r
+        echo
+        if [[ ! $REPLY =~ ^[Yy]$ ]]; then
+            echo "Pull request creation aborted."
+            exit 0
+        fi
+    fi
 
     # Enable merge commits temporarily
     gh api -X PATCH repos/${MAINTREE_REPO} -H "Accept: application/vnd.github.v3+json" -f allow_merge_commit=true

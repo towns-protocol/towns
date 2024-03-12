@@ -3,6 +3,7 @@ package rpc
 import (
 	"context"
 	"sync"
+	"time"
 
 	"github.com/ethereum/go-ethereum/common"
 	. "github.com/river-build/river/core/node/base"
@@ -55,7 +56,7 @@ func (s *Service) createStream(ctx context.Context, req *CreateStreamRequest) (*
 
 	log.Debug("createStream", "parsedEvents", parsedEvents)
 
-	csRules, err := rules.CanCreateStream(ctx, s.streamConfig, streamId, parsedEvents)
+	csRules, err := rules.CanCreateStream(ctx, s.streamConfig, time.Now(), streamId, parsedEvents)
 
 	if err != nil {
 		return nil, err

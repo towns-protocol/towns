@@ -12,7 +12,7 @@ import {
     userIdFromAddress,
 } from './id'
 import { StreamRpcClientType } from './makeStreamRpcClient'
-import { makeEvent, SignerContext, unpackStream, unpackStreamEnvelopes } from './sign'
+import { makeEvent, unpackStream, unpackStreamEnvelopes } from './sign'
 import {
     getChannelPayload,
     getMessagePayload,
@@ -29,6 +29,7 @@ import {
     makeRandomUserContext,
     makeTestRpcClient,
 } from './util.test'
+import { SignerContext } from './signerContext'
 
 const log = dlog('csb:test:nodeRestart')
 

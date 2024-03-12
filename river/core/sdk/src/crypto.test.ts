@@ -5,12 +5,7 @@
 import { bin_fromHexString, bin_toHexString, dlog } from '@river/dlog'
 import { getPublicKey, utils } from 'ethereum-cryptography/secp256k1'
 import { readFileSync, writeFileSync } from 'fs'
-import {
-    riverHash,
-    riverRecoverPubKey,
-    riverSign,
-    riverVerifySignature,
-} from '../groupEncryptionCrypto'
+import { riverHash, riverRecoverPubKey, riverSign, riverVerifySignature } from './sign'
 
 const log = dlog('test:encryption')
 

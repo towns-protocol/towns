@@ -5,6 +5,7 @@ import (
 	"context"
 	"fmt"
 	"log/slog"
+	"time"
 
 	"github.com/ethereum/go-ethereum/common"
 	"github.com/river-build/river/core/node/auth"
@@ -97,9 +98,13 @@ type csUserInboxRules struct {
 * (chainAuthArgs, nil, nil) // stream can be created if chainAuthArgs are satisfied
 * (chainAuthArgs, []*DerivedEvent, nil) // stream can be created if chainAuthArgs are satisfied and derived events should be created after
 */
-func CanCreateStream(ctx context.Context, cfg *config.StreamConfig, streamId shared.StreamId, parsedEvents []*events.ParsedEvent) (*CreateStreamRules, error) {
+func CanCreateStream(ctx context.Context, cfg *config.StreamConfig, currentTime time.Time, streamId shared.StreamId, parsedEvents []*events.ParsedEvent) (*CreateStreamRules, error) {
 	if len(parsedEvents) == 0 {
 		return nil, RiverError(Err_BAD_STREAM_CREATION_PARAMS, "no events")
+	}
+
+	if parsedEvents[0].Event.DelegateExpiryEpochMs > 0 && isPastExpiry(currentTime, parsedEvents[0].Event.DelegateExpiryEpochMs) {
+		return nil, RiverError(Err_PERMISSION_DENIED, "event delegate has expired", "currentTime", currentTime, "expiry", parsedEvents[0].Event.DelegateExpiryEpochMs)
 	}
 
 	creatorAddress := parsedEvents[0].Event.GetCreatorAddress()

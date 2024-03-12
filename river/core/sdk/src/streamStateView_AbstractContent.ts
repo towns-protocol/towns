@@ -4,6 +4,7 @@ import { ConfirmedTimelineEvent, RemoteTimelineEvent, StreamTimelineEvent } from
 import { DecryptedContent, EncryptedContent, toDecryptedContent } from './encryptedContentTypes'
 import { StreamStateView_ChannelMetadata } from './streamStateView_ChannelMetadata'
 import { StreamEncryptionEvents, StreamStateEvents } from './streamEvents'
+import { streamIdToBytes } from './id'
 
 export abstract class StreamStateView_AbstractContent {
     abstract readonly streamId: string
@@ -65,6 +66,14 @@ export abstract class StreamStateView_AbstractContent {
 
     getStreamParentId(): string | undefined {
         return undefined
+    }
+
+    getStreamParentIdAsBytes(): Uint8Array | undefined {
+        const streamParentId = this.getStreamParentId()
+        if (streamParentId === undefined) {
+            return undefined
+        }
+        return streamIdToBytes(streamParentId)
     }
 
     needsScrollback(): boolean {
