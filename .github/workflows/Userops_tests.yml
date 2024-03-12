@@ -25,9 +25,6 @@ jobs:
               with:
                   version: ${{ env.FOUNDRY_VERSION }}
 
-            - name: Install Forge modules
-              run: ./scripts/install-deps.sh
-
             - uses: actions/setup-node@v4
               with:
                   node-version: '20'
@@ -35,9 +32,6 @@ jobs:
 
             - name: Install node dependencies
               run: yarn install --immutable
-
-            - name: Build town types
-              run: ./scripts/build-contract-types.sh localhost --frozen
 
             - name: Spin up stackup worker without verification
               working-directory: ./servers/workers/stackup-worker
