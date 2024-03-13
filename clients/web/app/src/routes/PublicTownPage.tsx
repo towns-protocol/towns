@@ -89,7 +89,7 @@ export const PublicTownPage = (props: { isPreview?: boolean; onClosePreview?: ()
     return spaceInfo ? (
         <>
             <AbsoluteBackground networkId={spaceInfo.networkId} />
-            <Box paddingTop="safeAreaInsetTop" zIndex="above">
+            <Box paddingTop="safeAreaInsetTop">
                 <TownPageLayout
                     headerContent={
                         <Header
