@@ -27,7 +27,7 @@ import {
 import { ChannelNameRegExp, isForbiddenError, isRejectionError } from 'ui/utils/utils'
 import { TransactionUIState, toTransactionUIStates } from 'hooks/TransactionUIState'
 import { ErrorMessageText } from 'ui/components/ErrorMessage/ErrorMessage'
-import { PATHS } from 'routes'
+import { CHANNEL_INFO_PARAMS, PATHS } from 'routes'
 import { Spinner } from '@components/Spinner'
 import { ButtonSpinner } from '@components/Login/LoginButton/Spinner/ButtonSpinner'
 import { TokenCheckboxLabel } from '@components/Tokens/TokenCheckboxLabel'
@@ -356,7 +356,9 @@ export const CreateChannelFormContainer = ({
     const onCreateChannel = useCallback(
         (roomId: string) => {
             console.log('[CreateChannelForm]', 'onCreateChannel', roomId)
-            navigate(`/${PATHS.SPACES}/${spaceId}/${PATHS.CHANNELS}/${roomId}/`)
+            navigate(
+                `/${PATHS.SPACES}/${spaceId}/${PATHS.CHANNELS}/${roomId}/${CHANNEL_INFO_PARAMS.INFO}?${CHANNEL_INFO_PARAMS.CHANNEL}`,
+            )
             if (hideOnCreation) {
                 onHide()
             }

@@ -18,6 +18,7 @@ import { useDevice } from 'hooks/useDevice'
 import { useStore } from 'store/store'
 import { useSpaceChannels } from 'hooks/useSpaceChannels'
 import { useUnseenChannelIds } from 'hooks/useUnseenChannelIdsCount'
+import { useCreateLink } from 'hooks/useCreateLink'
 
 export const AllChannelsList = ({
     onHideBrowseChannels,
@@ -107,6 +108,7 @@ export const ChannelItem = ({
     const channelIdentifier = channelNetworkId
     const currentChannelId = useChannelIdFromPathname()
     const isJoined = useMyMembership(channelNetworkId) === Membership.Join
+    const { createLink } = useCreateLink()
 
     useEffect(() => {
         // quick fix, leave events result in a faster rerender than the join event
@@ -165,6 +167,14 @@ export const ChannelItem = ({
             }
         } else {
             try {
+                const link = createLink({
+                    spaceId: space.id,
+                    channelId: channelIdentifier,
+                    panel: 'browse-channels',
+                })
+                if (link) {
+                    navigate(link)
+                }
                 const room = await client?.joinRoom(channelIdentifier, space.id)
                 if (!room) {
                     console.error('[AllChannelsList]', 'cannot join channel', room)

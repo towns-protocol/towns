@@ -90,6 +90,10 @@ const channelInfoPaths: Path[] = [
 
 const channelPaths: Path[] = [
     {
+        path: `/${PATHS.SPACES}/:spaceId/*/info`,
+        replace: `/${PATHS.SPACES}/:spaceId/${PATHS.CHANNELS}/:channelId/info`,
+    },
+    {
         path: `/${PATHS.SPACES}/:spaceId/*`,
         replace: `/${PATHS.SPACES}/:spaceId/${PATHS.CHANNELS}/:channelId/`,
     },
@@ -230,6 +234,7 @@ const linkParams = {
     browseChannels: {
         params: {
             spaceId: 'spaceId' as string | undefined,
+            channelId: 'channelId' as string | undefined,
             panel: 'browse-channels',
         },
     },

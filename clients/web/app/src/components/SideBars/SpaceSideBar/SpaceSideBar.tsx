@@ -74,6 +74,7 @@ export const SpaceSideBar = (props: Props) => {
 
     const onShowBrowseChannels = useEvent(() => {
         const path = createLink({
+            channelId: undefined,
             spaceId: space.id,
             panel: 'browse-channels',
         })
