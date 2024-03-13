@@ -96,7 +96,7 @@ async function getLocalHostTokens(wallet: string, nftNetwork: number) {
         return getTokenContractsForAddress(wallet, nftNetwork)
     }
 
-    // on local, just return the zion token, if it exists (must be anvil account)
+    // on local, just return empty array
     const tokens: TokenData[] = []
     return {
         tokens,
