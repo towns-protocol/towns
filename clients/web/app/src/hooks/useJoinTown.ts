@@ -7,7 +7,7 @@ import { useStore } from 'store/store'
 
 export const useJoinTown = (spaceId: string | undefined, onSuccessfulJoin?: () => void) => {
     const { client } = useTownsClient()
-    const { recentlyMintedSpaceIds, setRecentlyMintedSpaceIds } = useStore()
+    const { setRecentlyMintedSpaceToken } = useStore()
     const getSigner = useGetEmbeddedSigner()
     const [errorDetails, setErrorDetails] = useState<{
         maxLimitReached: boolean
@@ -50,7 +50,7 @@ export const useJoinTown = (spaceId: string | undefined, onSuccessfulJoin?: () =
                         notEntitled: true,
                     })
                 } else {
-                    setRecentlyMintedSpaceIds([...recentlyMintedSpaceIds, spaceId])
+                    setRecentlyMintedSpaceToken({ spaceId: spaceId, isOwner: false })
                     onSuccessfulJoin?.()
                 }
             } catch (error) {
@@ -79,14 +79,7 @@ export const useJoinTown = (spaceId: string | undefined, onSuccessfulJoin?: () =
                 }
             }
         }
-    }, [
-        client,
-        spaceId,
-        onSuccessfulJoin,
-        getSigner,
-        recentlyMintedSpaceIds,
-        setRecentlyMintedSpaceIds,
-    ])
+    }, [client, spaceId, onSuccessfulJoin, getSigner, setRecentlyMintedSpaceToken])
 
     return { joinSpace, errorMessage, clearErrors, ...errorDetails }
 }

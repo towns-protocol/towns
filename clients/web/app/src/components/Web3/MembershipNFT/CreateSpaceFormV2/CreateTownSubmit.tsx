@@ -18,6 +18,7 @@ import { FailedUploadAfterSpaceCreation } from '@components/Notifications/Failed
 import { UserOpTxModal } from '@components/Web3/UserOpTxModal/UserOpTxModal'
 import { createPrivyNotAuthenticatedNotification } from '@components/Notifications/utils'
 import { convertTokenTypeToOperationType } from '@components/Tokens/utils'
+import { useStore } from 'store/store'
 import { BottomBar } from '../BottomBar'
 import { PanelType, TransactionDetails } from './types'
 import { CreateSpaceFormV2SchemaType } from './CreateSpaceFormV2.schema'
@@ -36,6 +37,7 @@ export function CreateTownSubmit({
 }) {
     const getSigner = useGetEmbeddedSigner()
     const { spaceDapp } = useTownsClient()
+    const { setRecentlyMintedSpaceToken } = useStore()
 
     const { data, isLoading, error, createSpaceTransactionWithRole, transactionStatus } =
         useCreateSpaceTransaction()
@@ -228,6 +230,8 @@ export function CreateTownSubmit({
                         console.log('error getting space info after creating town: ', error)
                     }
 
+                    setRecentlyMintedSpaceToken({ spaceId: networkId, isOwner: true })
+
                     setTimeout(() => {
                         navigate(newPath)
                     }, timeoutDuration)
@@ -255,6 +259,7 @@ export function CreateTownSubmit({
         spaceDapp,
         uploadImage,
         uploadSpaceBio,
+        setRecentlyMintedSpaceToken,
     ])
 
     return (

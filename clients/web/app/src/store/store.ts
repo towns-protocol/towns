@@ -25,8 +25,8 @@ interface AppState {
     setSidePanel: (sidePanel: string | null) => void
     setBugReportCredentials: (value: Partial<{ name: string; email: string }>) => void
     bugReportCredentials: { name: string; email: string }
-    recentlyMintedSpaceIds: string[]
-    setRecentlyMintedSpaceIds: (spaceIds: string[]) => void
+    recentlyMintedSpaceToken: { spaceId: string; isOwner: boolean } | undefined
+    setRecentlyMintedSpaceToken: (value: { spaceId: string; isOwner: boolean } | undefined) => void
     seenChannelIds: string[]
     setSeenChannelIds: (seenChannelIds: string[]) => void
 }
@@ -107,9 +107,9 @@ export const useStore = create(
                     },
                 }))
             },
-            recentlyMintedSpaceIds: [],
-            setRecentlyMintedSpaceIds: (spaceIds) => {
-                set(() => ({ recentlyMintedSpaceIds: spaceIds }))
+            recentlyMintedSpaceToken: undefined,
+            setRecentlyMintedSpaceToken: (recentlyMintedSpaceToken) => {
+                set(() => ({ recentlyMintedSpaceToken }))
             },
             seenChannelIds: [],
             setSeenChannelIds: (seenChannelIds) => {

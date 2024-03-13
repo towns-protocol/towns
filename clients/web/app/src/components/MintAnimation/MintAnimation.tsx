@@ -12,9 +12,12 @@ import { useStore } from 'store/store'
 const PROFILE_BORDER_WIDTH = 2
 const CLOSE_TOAST_TIMEOUT = 5000
 
-export const MintAnimation = (props: { targetRef: RefObject<HTMLElement> }) => {
-    const { targetRef } = props
-    const { recentlyMintedSpaceIds, setRecentlyMintedSpaceIds } = useStore()
+export const MintAnimation = (props: {
+    targetRef: RefObject<HTMLElement>
+    info: { spaceId: string; isOwner: boolean }
+}) => {
+    const { targetRef, info } = props
+    const { setRecentlyMintedSpaceToken } = useStore()
 
     const spaceData = useSpaceData()
     const { createLink: createProfileLink } = useCreateLink()
@@ -51,8 +54,8 @@ export const MintAnimation = (props: { targetRef: RefObject<HTMLElement> }) => {
     const { isTouch } = useDevice()
 
     const onAnimationFinished = useCallback(() => {
-        setRecentlyMintedSpaceIds(recentlyMintedSpaceIds.filter((id) => id !== spaceId))
-    }, [setRecentlyMintedSpaceIds, recentlyMintedSpaceIds, spaceId])
+        setRecentlyMintedSpaceToken(undefined)
+    }, [setRecentlyMintedSpaceToken])
 
     const onClose = useCallback(() => {
         setShouldAnimate(true)
@@ -85,7 +88,13 @@ export const MintAnimation = (props: { targetRef: RefObject<HTMLElement> }) => {
                             <TownsToken size="xxs" imageSrc={imageSrc} />
                         </Box>
                         <Paragraph size="md" color="default" fontWeight="medium">
-                            You&apos;ve minted a membership for {spaceData?.name ?? ''} to your{' '}
+                            {info.isOwner
+                                ? `You've minted a founder token for ${
+                                      spaceData?.name ?? ''
+                                  } to your`
+                                : `You've minted a membership for ${
+                                      spaceData?.name ?? ''
+                                  } to your`}{' '}
                             <Link to={link ?? ''}>
                                 <Text size="md" color="cta2" display="inline-block">
                                     Towns wallet

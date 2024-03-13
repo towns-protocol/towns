@@ -5,10 +5,10 @@ import { SearchBar } from '@components/SearchBar/SearchBar'
 import { Box, Stack } from '@ui'
 import { LogoSingleLetter } from '@components/Logo/Logo'
 import { MintAnimation } from '@components/MintAnimation/MintAnimation'
-import { useShouldDisplayMintAnimation } from 'hooks/useShouldDisplayMintAnimation'
+import { useStore } from 'store/store'
 
 export const TopBar = () => {
-    const { shouldDisplayMintAnimation } = useShouldDisplayMintAnimation()
+    const { recentlyMintedSpaceToken } = useStore()
     const profileButtonRef = useRef<HTMLElement>(null)
 
     return (
@@ -30,7 +30,11 @@ export const TopBar = () => {
                     </Box>
                 </Stack>
             </Stack>
-            {shouldDisplayMintAnimation && <MintAnimation targetRef={profileButtonRef} />}
+            {recentlyMintedSpaceToken ? (
+                <MintAnimation targetRef={profileButtonRef} info={recentlyMintedSpaceToken} />
+            ) : (
+                <></>
+            )}
         </>
     )
 }

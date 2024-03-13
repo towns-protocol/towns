@@ -10,7 +10,7 @@ import { useInstallPWAPrompt } from 'hooks/useInstallPWAPrompt'
 import { useCreateLink } from 'hooks/useCreateLink'
 import { Avatar } from '@components/Avatar/Avatar'
 import { MintAnimation } from '@components/MintAnimation/MintAnimation'
-import { useShouldDisplayMintAnimation } from 'hooks/useShouldDisplayMintAnimation'
+import { useStore } from 'store/store'
 import { TouchScrollToTopScrollId } from './TouchScrollToTopScrollId'
 
 export const TouchTabBar = () => {
@@ -19,7 +19,7 @@ export const TouchTabBar = () => {
     const { showHasUnreadBadgeForCurrentSpace } = useShowHasUnreadBadgeForCurrentSpace()
 
     const { dmUnreadChannelIds } = useTownsContext()
-    const { shouldDisplayMintAnimation } = useShouldDisplayMintAnimation()
+    const { recentlyMintedSpaceToken } = useStore()
 
     const targetRef = useRef<HTMLElement>(null)
     const hasUnreadDMs = dmUnreadChannelIds.size > 0
@@ -38,7 +38,9 @@ export const TouchTabBar = () => {
 
     return (
         <Box borderTop background="level2" paddingBottom="safeAreaInsetBottom">
-            {shouldDisplayMintAnimation && <MintAnimation targetRef={targetRef} />}
+            {recentlyMintedSpaceToken && (
+                <MintAnimation targetRef={targetRef} info={recentlyMintedSpaceToken} />
+            )}
             <Stack horizontal width="100%" background="level2" display="flex" paddingY="sm">
                 <TabBarItem
                     title="Home"
