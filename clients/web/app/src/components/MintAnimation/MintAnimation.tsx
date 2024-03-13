@@ -1,6 +1,5 @@
-import React, { RefObject, useCallback, useEffect, useMemo, useRef } from 'react'
+import React, { RefObject, useCallback, useMemo, useRef } from 'react'
 import { useSpaceData, useSpaceId } from 'use-towns-client'
-// import { cubicBezier } from 'framer-motion'
 import { Link } from 'react-router-dom'
 import { Box, IconButton, MotionBox, Paragraph, Stack, Text } from '@ui'
 import { ImageVariants, useImageSource } from '@components/UploadImage/useImageSource'
@@ -10,7 +9,6 @@ import { useDevice } from 'hooks/useDevice'
 import { useStore } from 'store/store'
 
 const PROFILE_BORDER_WIDTH = 2
-const CLOSE_TOAST_TIMEOUT = 5000
 
 export const MintAnimation = (props: {
     targetRef: RefObject<HTMLElement>
@@ -60,11 +58,6 @@ export const MintAnimation = (props: {
     const onClose = useCallback(() => {
         setShouldAnimate(true)
     }, [setShouldAnimate])
-
-    useEffect(() => {
-        const timer = setTimeout(onClose, CLOSE_TOAST_TIMEOUT)
-        return () => clearTimeout(timer)
-    }, [onClose])
 
     return (
         <Box absoluteFill zIndex="uiAbove" pointerEvents="none">
