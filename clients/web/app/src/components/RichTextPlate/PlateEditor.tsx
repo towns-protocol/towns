@@ -287,6 +287,7 @@ const PlateEditorWithoutBoundary = ({
 
                             <Box paddingX="md" ref={editableContainerRef}>
                                 <Editor
+                                    readOnly={!editable}
                                     autoFocus={autoFocus}
                                     tabIndex={tabIndex}
                                     placeholder={placeholder}

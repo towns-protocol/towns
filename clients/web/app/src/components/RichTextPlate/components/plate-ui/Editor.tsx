@@ -25,7 +25,7 @@ const Editor = React.forwardRef<HTMLDivElement, PlateContentProps>(
             <PlateContent
                 disableDefaultStyles
                 className={inputClassName}
-                readOnly={disabled ?? readOnly}
+                readOnly={disabled || readOnly}
                 aria-disabled={disabled}
                 {...props}
                 placeholder={disablePlaceholder ? '' : props.placeholder}
