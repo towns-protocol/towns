@@ -45,12 +45,13 @@ import {
     isUserInboxStreamId,
 } from './id'
 import { StreamStateView_UserInbox } from './streamStateView_UserInbox'
-import { DecryptedContent, DecryptedContentError } from './encryptedContentTypes'
+import { DecryptedContent } from './encryptedContentTypes'
 import { StreamStateView_UnknownContent } from './streamStateView_UnknownContent'
 import { StreamStateView_UserMetadata } from './streamStateView_UserMetadata'
 import { StreamStateView_ChannelMetadata } from './streamStateView_ChannelMetadata'
 import { StreamEvents, StreamEncryptionEvents, StreamStateEvents } from './streamEvents'
 import isEqual from 'lodash/isEqual'
+import { DecryptionSessionError } from './decryptionExtensions'
 
 const log = dlog('csb:streams')
 const logError = dlogError('csb:streams:error')
@@ -490,7 +491,7 @@ export class StreamStateView {
     // update stream with decryption status
     updateDecryptedContentError(
         eventId: string,
-        content: DecryptedContentError,
+        content: DecryptionSessionError,
         emitter: TypedEmitter<StreamStateEvents>,
     ) {
         const timelineEvent = this.events.get(eventId)

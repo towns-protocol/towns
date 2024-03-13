@@ -17,6 +17,7 @@ import {
     FullyReadMarkers,
     FullyReadMarker,
     Envelope,
+    Miniblock,
     Err,
     ChannelMessage_Post_Attachment,
 } from '@river/proto'
@@ -61,7 +62,7 @@ import {
     streamIdAsBytes,
     streamIdAsString,
 } from './id'
-import { makeEvent, unpackMiniblock, unpackStream } from './sign'
+import { makeEvent, unpackMiniblock, unpackStream, unpackStreamEx } from './sign'
 import { StreamEvents } from './streamEvents'
 import { StreamStateView } from './streamStateView'
 import {
@@ -101,7 +102,7 @@ import debug from 'debug'
 import { Stream } from './stream'
 import { Code } from '@connectrpc/connect'
 import { usernameChecksum, isIConnectError, genPersistenceStoreName } from './utils'
-import { EncryptedContent, toDecryptedContent } from './encryptedContentTypes'
+import { isEncryptedContentKind, toDecryptedContent } from './encryptedContentTypes'
 import {
     DecryptionEvents,
     BaseDecryptionExtensions,
@@ -145,6 +146,7 @@ export class Client
     public cryptoStore: CryptoStore
 
     private getStreamRequests: Map<string, Promise<StreamStateView>> = new Map()
+    private getStreamExRequests: Map<string, Promise<StreamStateView>> = new Map()
     private getScrollbackRequests: Map<string, ReturnType<typeof this.scrollback>> = new Map()
     private entitlementsDelegate: EntitlementsDelegate
     private decryptionExtensions?: BaseDecryptionExtensions
@@ -817,20 +819,61 @@ export class Client
                 streamId: streamIdAsBytes(streamId),
             })
             const unpackedResponse = await unpackStream(response.stream)
-            const streamView = new StreamStateView(this.userId, streamIdAsString(streamId))
-            streamView.initialize(
-                unpackedResponse.streamAndCookie.nextSyncCookie,
-                unpackedResponse.streamAndCookie.events,
-                unpackedResponse.snapshot,
-                unpackedResponse.streamAndCookie.miniblocks,
-                [],
-                unpackedResponse.prevSnapshotMiniblockNum,
-                undefined,
-                undefined,
-            )
-            return streamView
+            return this.streamViewFromUnpackedResponse(streamId, unpackedResponse)
         } catch (err) {
             this.logCall('getStream', streamId, 'ERROR', err)
+            throw err
+        }
+    }
+
+    private streamViewFromUnpackedResponse(
+        streamId: string | Uint8Array,
+        unpackedResponse: ParsedStreamResponse,
+    ): StreamStateView {
+        const streamView = new StreamStateView(this.userId, streamIdAsString(streamId))
+        streamView.initialize(
+            unpackedResponse.streamAndCookie.nextSyncCookie,
+            unpackedResponse.streamAndCookie.events,
+            unpackedResponse.snapshot,
+            unpackedResponse.streamAndCookie.miniblocks,
+            [],
+            unpackedResponse.prevSnapshotMiniblockNum,
+            undefined,
+            undefined,
+        )
+        return streamView
+    }
+
+    async getStreamEx(streamId: string): Promise<StreamStateView> {
+        const existingRequest = this.getStreamRequests.get(streamId)
+        if (existingRequest) {
+            this.logCall(`had existing get request for ${streamId}, returning promise`)
+            return await existingRequest
+        }
+        const request = this._getStreamEx(streamId)
+        this.getStreamExRequests.set(streamId, request)
+        const streamView = await request
+        this.getStreamExRequests.delete(streamId)
+        return streamView
+    }
+
+    private async _getStreamEx(streamId: string | Uint8Array): Promise<StreamStateView> {
+        try {
+            this.logCall('getStreamEx', streamId)
+            const response = this.rpcClient.getStreamEx({
+                streamId: streamIdAsBytes(streamId),
+            })
+
+            const miniblocks: Miniblock[] = []
+            for await (const chunk of response) {
+                assert(chunk.miniblock !== undefined, 'bad miniblock in getStreamEx response')
+                miniblocks.push(chunk.miniblock)
+            }
+
+            const unpackedResponse = await unpackStreamEx(miniblocks)
+            return this.streamViewFromUnpackedResponse(streamId, unpackedResponse)
+        } catch (err) {
+            this.logCall('getStreamEx', streamId, 'ERROR', err)
             throw err
         }
     }
@@ -1676,20 +1719,22 @@ export class Client
     public async decryptGroupEvent(
         streamId: string,
         eventId: string,
-        encryptedContent: EncryptedContent,
+        kind: string, // kind of data
+        encryptedData: EncryptedData,
     ): Promise<void> {
-        this.logCall('decryptGroupEvent', streamId, eventId, encryptedContent)
+        this.logCall('decryptGroupEvent', streamId, eventId, kind, encryptedData)
         const stream = this.stream(streamId)
         check(isDefined(stream), 'stream not found')
-        const cleartext = await this.cleartextForGroupEvent(streamId, eventId, encryptedContent)
-        const decryptedContent = toDecryptedContent(encryptedContent.kind, cleartext)
+        check(isEncryptedContentKind(kind), `invalid kind ${kind}`)
+        const cleartext = await this.cleartextForGroupEvent(streamId, eventId, encryptedData)
+        const decryptedContent = toDecryptedContent(kind, cleartext)
         stream.view.updateDecryptedContent(eventId, decryptedContent, this)
     }
 
     private async cleartextForGroupEvent(
         streamId: string,
         eventId: string,
-        encryptedContent: EncryptedContent,
+        encryptedData: EncryptedData,
     ): Promise<string> {
         const cached = await this.persistenceStore.getCleartext(eventId)
         if (cached) {
@@ -1701,10 +1746,7 @@ export class Client
         if (!this.cryptoBackend) {
             throw new Error('crypto backend not initialized')
         }
-        const cleartext = await this.cryptoBackend.decryptGroupEvent(
-            streamId,
-            encryptedContent.content,
-        )
+        const cleartext = await this.cryptoBackend.decryptGroupEvent(streamId, encryptedData)
 
         await this.persistenceStore.saveCleartext(eventId, cleartext)
         return cleartext

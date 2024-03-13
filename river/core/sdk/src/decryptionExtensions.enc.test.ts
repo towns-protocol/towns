@@ -1,6 +1,7 @@
 import {
     BaseDecryptionExtensions,
     DecryptionEvents,
+    DecryptionSessionError,
     DecryptionStatus,
     EncryptedContentItem,
     EntitlementsDelegate,
@@ -18,13 +19,12 @@ import {
     UserDevice,
     UserDeviceCollection,
 } from '@river/encryption'
-import { DecryptedContentError, EncryptedContent } from './encryptedContentTypes'
 import { bin_fromHexString, bin_toHexString, dlog } from '@river/dlog'
 
 import EventEmitter from 'events'
 import { Permission } from '@river/web3'
 import TypedEmitter from 'typed-emitter'
-import { UserInboxPayload_GroupEncryptionSessions } from '@river/proto'
+import { EncryptedData, UserInboxPayload_GroupEncryptionSessions } from '@river/proto'
 import { customAlphabet } from 'nanoid'
 
 const log = dlog('test:decryptionExtensions:')
@@ -244,7 +244,8 @@ class MockDecryptionExtensions extends BaseDecryptionExtensions {
     public decryptGroupEvent(
         _streamId: string,
         _eventId: string,
-        _encryptedContent: EncryptedContent,
+        _kind: string,
+        _encryptedData: EncryptedData,
     ): Promise<void> {
         log('decryptGroupEvent')
         return Promise.resolve()
@@ -270,7 +271,7 @@ class MockDecryptionExtensions extends BaseDecryptionExtensions {
         return Promise.resolve(true)
     }
 
-    public onDecryptionError(_item: EncryptedContentItem, _err: DecryptedContentError): void {
+    public onDecryptionError(_item: EncryptedContentItem, _err: DecryptionSessionError): void {
         log('onDecryptionError', 'item:', _item, 'err:', _err)
     }
 

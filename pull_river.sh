@@ -43,6 +43,14 @@ function parse_git_branch() {
     git branch 2> /dev/null | sed -e '/^[^*]/d' -e 's/* \(.*\)/\1/'
 }
 
+function make_pr_description() {
+    # Use git log to list commit messages not present on origin/main
+    # Adjust the format as needed. Here, we use '%B' to get the full commit message (title + body)
+    # and delimit commits with a unique string for easier processing.
+    COMMIT_DELIMITER="-----END OF COMMIT-----"
+    git log origin/main..HEAD --format="%B%n$COMMIT_DELIMITER"
+}
+
 if [[ "$(git status --porcelain)" != "" ]]; then
   echo "There are uncommitted changes. Please commit or stash them before running this script."
   exit 1
@@ -69,11 +77,15 @@ BRANCH_NAME="river_subtree_merge_${SHORT_HASH}"
 git fetch --all
 git pull
 
+
+PR_TITLE="Merge ${SUBTREE_PREFIX} at ${SHORT_HASH}"
+PR_BODY_DESC="This merges the latest changes from the ${SUBTREE_PREFIX} repository at commit ${SHORT_HASH}."
+
 # Checkout a new branch for the merge
 git checkout -b "${BRANCH_NAME}"
 
 # Pull the latest changes from the subtree, preserving history
-git subtree pull --prefix="${SUBTREE_PREFIX}" "${SUBTREE_REPO}" "${SUBTREE_BRANCH}" || echo "Subtree pull expected to fail due to conflicts"
+git subtree pull --prefix="${SUBTREE_PREFIX}" "${SUBTREE_REPO}" "${SUBTREE_BRANCH}" --squash || echo "Subtree pull expected to fail due to conflicts"
 
 # Remove specific files that should not be merged
 git rm "${SUBTREE_PREFIX}/package.json" 2>/dev/null || echo "package.json not found, skipping"
@@ -81,15 +93,15 @@ git rm "${SUBTREE_PREFIX}/yarn.lock" 2>/dev/null || echo "yarn.lock not found, s
 
 # Check for unresolved conflicts
 if git ls-files -u | grep -q '^[^ ]'; then
-  echo "Unresolved conflicts detected. Aborting merge."
-  git checkout main
-  git branch -D "${BRANCH_NAME}"
-  exit 1
+  echo "Unresolved conflicts detected. Accepting theirs."
+  git diff --name-only --diff-filter=U | xargs git checkout --theirs
+  git add .
 fi
 
 # Commit the changes if there are any
 if ! git diff main --quiet --cached; then
-    RIVER_ALLOW_COMMIT=true git commit -m "Merge ${SUBTREE_PREFIX} at ${SHORT_HASH}"
+    SUBTREE_MERGE_MESSAGE="$(git commit --dry-run)"
+    RIVER_ALLOW_COMMIT=true git commit -m "git subtree pull --prefix=${SUBTREE_PREFIX} ${SUBTREE_REPO} ${SUBTREE_BRANCH} --squash" -m "$SUBTREE_MERGE_MESSAGE"
     echo "Subtree changes committed."
 
     # Run yarn to update the lockfile
@@ -102,6 +114,7 @@ if ! git diff main --quiet --cached; then
         git commit -m "Update yarn.lock"
     fi
     
+
     if [[ $INTERACTIVE -eq 1 ]]; then
         read -p "Do you want to continue and create a pull request? (y/n) " -n 1 -r
         echo
@@ -115,8 +128,7 @@ if ! git diff main --quiet --cached; then
     git push origin "${BRANCH_NAME}"
 
     # Create a pull request
-    PR_TITLE="Merge ${SUBTREE_PREFIX} at ${SHORT_HASH}"
-    PR_BODY="This merges the latest changes from the ${SUBTREE_PREFIX} repository at commit ${SHORT_HASH}."
+    PR_BODY="${PR_BODY_DESC}"$'\n\n'"$(make_pr_description)"
     gh pr create --base main --head "${BRANCH_NAME}" --title "${PR_TITLE}" --body "${PR_BODY}"
     echo "Pull request created."
 
@@ -145,6 +157,9 @@ if ! git diff main --quiet --cached; then
               if [[ ! $REPLY =~ ^[Yy]$ ]]; then
                   echo "Pull request creation aborted."
                   exit $exit_status
+              else
+                PR_BODY="${PR_BODY_DESC}"$'\n\n'"$(make_pr_description)"
+                gh pr edit --body "${PR_BODY}"
               fi
           else
               exit $exit_status
@@ -163,15 +178,9 @@ if ! git diff main --quiet --cached; then
             exit 0
         fi
     fi
-
-    # Enable merge commits temporarily
-    gh api -X PATCH repos/${MAINTREE_REPO} -H "Accept: application/vnd.github.v3+json" -f allow_merge_commit=true
-
+    
     # Merge the pull request
-    gh pr merge "${BRANCH_NAME}" --merge --delete-branch
-
-    # Disable merge commits as we generally don't want them enabled
-    gh api -X PATCH repos/${MAINTREE_REPO} -H "Accept: application/vnd.github.v3+json" -f allow_merge_commit=false
+    gh pr merge "${BRANCH_NAME}" --squash --delete-branch
 
     echo "Subtree merge completed successfully."
 else

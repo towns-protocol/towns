@@ -1,6 +1,5 @@
 import TypedEmitter from 'typed-emitter'
 import { Permission } from '@river/web3'
-import { DecryptedContentError, EncryptedContent } from './encryptedContentTypes'
 import { shortenHexString, dlog, dlogError, DLogger, check } from '@river/dlog'
 import {
     GROUP_ENCRYPTION_ALGORITHM,
@@ -8,7 +7,7 @@ import {
     GroupEncryptionSession,
     UserDevice,
 } from '@river/encryption'
-import { SessionKeys, UserInboxPayload_GroupEncryptionSessions } from '@river/proto'
+import { EncryptedData, SessionKeys, UserInboxPayload_GroupEncryptionSessions } from '@river/proto'
 import { isMobileSafari } from './utils'
 import { streamIdFromBytes } from './id'
 
@@ -39,7 +38,8 @@ export type DecryptionEvents = {
 export interface EncryptedContentItem {
     streamId: string
     eventId: string
-    encryptedContent: EncryptedContent
+    kind: string // kind of encrypted data
+    encryptedData: EncryptedData
 }
 
 interface DecryptionRetryItem {
@@ -85,6 +85,13 @@ export interface GroupSessionsData {
     streamId: string
     item: KeySolicitationItem
     sessions: GroupEncryptionSession[]
+}
+
+export interface DecryptionSessionError {
+    missingSession: boolean
+    kind: string
+    encryptedData: EncryptedData
+    error?: unknown
 }
 
 /**
@@ -170,7 +177,8 @@ export abstract class BaseDecryptionExtensions {
     public abstract decryptGroupEvent(
         streamId: string,
         eventId: string,
-        encryptedContent: EncryptedContent,
+        kind: string,
+        encryptedData: EncryptedData,
     ): Promise<void>
     public abstract downloadNewMessages(): Promise<void>
     public abstract getKeySolicitations(streamId: string): KeySolicitationContent[]
@@ -178,7 +186,7 @@ export abstract class BaseDecryptionExtensions {
     public abstract hasUnprocessedSession(item: EncryptedContentItem): boolean
     public abstract isUserEntitledToKeyExchange(streamId: string, userId: string): Promise<boolean>
     public abstract isUserInboxStreamUpToDate(upToDateStreams: Set<string>): boolean
-    public abstract onDecryptionError(item: EncryptedContentItem, err: DecryptedContentError): void
+    public abstract onDecryptionError(item: EncryptedContentItem, err: DecryptionSessionError): void
     public abstract sendKeySolicitation(args: KeySolicitationData): Promise<void>
     public abstract sendKeyFulfillment(args: KeyFulfilmentData): Promise<void>
     public abstract encryptAndShareGroupSessions(args: GroupSessionsData): Promise<void>
@@ -199,12 +207,14 @@ export abstract class BaseDecryptionExtensions {
     public enqueueNewEncryptedContent(
         streamId: string,
         eventId: string,
-        encryptedContent: EncryptedContent,
+        kind: string, // kind of encrypted data
+        encryptedData: EncryptedData,
     ): void {
         this.queues.encryptedContent.push({
             streamId,
             eventId,
-            encryptedContent,
+            kind,
+            encryptedData,
         })
         this.checkStartTicking()
     }
@@ -507,7 +517,12 @@ export abstract class BaseDecryptionExtensions {
             } else {
                 // do the work to decrypt the event
                 this.log.debug('decrypting content')
-                await this.decryptGroupEvent(item.streamId, item.eventId, item.encryptedContent)
+                await this.decryptGroupEvent(
+                    item.streamId,
+                    item.eventId,
+                    item.kind,
+                    item.encryptedData,
+                )
             }
         } catch (err: unknown) {
             const sessionNotFound = isSessionNotFoundError(err)
@@ -520,7 +535,8 @@ export abstract class BaseDecryptionExtensions {
 
             this.onDecryptionError(item, {
                 missingSession: sessionNotFound,
-                encryptedContent: item.encryptedContent,
+                kind: item.kind,
+                encryptedData: item.encryptedData,
                 error: err,
             })
 
@@ -544,19 +560,20 @@ export abstract class BaseDecryptionExtensions {
         const item = retryItem.event
         try {
             this.log.debug('retrying decryption', item)
-            await this.decryptGroupEvent(item.streamId, item.eventId, item.encryptedContent)
+            await this.decryptGroupEvent(item.streamId, item.eventId, item.kind, item.encryptedData)
         } catch (err) {
             const sessionNotFound = isSessionNotFoundError(err)
 
             this.log.error('failed to decrypt on retry', err, 'sessionNotFound', sessionNotFound)
             this.onDecryptionError(item, {
                 missingSession: sessionNotFound,
-                encryptedContent: item.encryptedContent,
+                kind: item.kind,
+                encryptedData: item.encryptedData,
                 error: err,
             })
             if (sessionNotFound) {
                 const streamId = item.streamId
-                const sessionId = item.encryptedContent.content.sessionId
+                const sessionId = item.encryptedData.sessionId
                 if (!this.decryptionFailures[streamId]) {
                     this.decryptionFailures[streamId] = { [sessionId]: [item] }
                 } else if (!this.decryptionFailures[streamId][sessionId]) {

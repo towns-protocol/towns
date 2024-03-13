@@ -58,6 +58,21 @@ func (s *Service) GetStream(
 	return r, nil
 }
 
+func (s *Service) GetStreamEx(
+	ctx context.Context,
+	req *connect.Request[GetStreamExRequest],
+	resp *connect.ServerStream[GetStreamExResponse],
+) error {
+	ctx, log := ctxAndLogForRequest(ctx, req)
+	log.Debug("GetStreamEx ENTER")
+	e := s.getStreamExImpl(ctx, req, resp)
+	if e != nil {
+		return AsRiverError(e).Func("GetStreamEx").Tag("req.Msg.StreamId", req.Msg.StreamId).LogWarn(log).AsConnectError()
+	}
+	log.Debug("GetStreamEx LEAVE")
+	return nil
+}
+
 func (s *Service) getStreamImpl(
 	ctx context.Context,
 	req *connect.Request[GetStreamRequest],
@@ -83,6 +98,50 @@ func (s *Service) getStreamImpl(
 		return connect.NewResponse(ret.Msg), nil
 	} else {
 		return s.localGetStream(ctx, req)
+	}
+}
+
+func (s *Service) getStreamExImpl(
+	ctx context.Context,
+	req *connect.Request[GetStreamExRequest],
+	resp *connect.ServerStream[GetStreamExResponse],
+) (err error) {
+	streamId, err := shared.StreamIdFromBytes(req.Msg.StreamId)
+	if err != nil {
+		return err
+	}
+
+	stub, _, err := s.getStubForStream(ctx, streamId)
+	if err != nil {
+		return err
+	}
+
+	if stub != nil {
+		// Get the raw stream from another client and forward packets.
+		clientStream, err := stub.GetStreamEx(ctx, req)
+
+		// Capture close stream error at method return
+		defer func() {
+			err = clientStream.Close()
+		}()
+
+		if err != nil {
+			return err
+		}
+
+		// Forward the stream
+		for clientStream.Receive() {
+			err = resp.Send(clientStream.Msg())
+			if err != nil {
+				return err
+			}
+		}
+		if err = clientStream.Err(); err != nil {
+			return err
+		}
+		return nil
+	} else {
+		return s.localGetStreamEx(ctx, req, resp)
 	}
 }
 

@@ -15,7 +15,7 @@ import {
 import { PlainMessage } from '@bufbuild/protobuf'
 import { Channel, Membership, Mention, MessageType } from './towns-types'
 import { staticAssertNever } from '../utils/towns-utils'
-import { DecryptedContentError, isDefined } from '@river/sdk'
+import { DecryptionSessionError, isDefined } from '@river/sdk'
 
 /**************************************************************************
  * We're using a union type to represent the different types of events that
@@ -156,7 +156,7 @@ export interface RoomEncryptionEvent {
 
 export interface RoomMessageEncryptedEvent {
     kind: ZTEvent.RoomMessageEncrypted
-    error?: DecryptedContentError
+    error?: DecryptionSessionError
 }
 
 export interface RoomMessageMissingEvent {

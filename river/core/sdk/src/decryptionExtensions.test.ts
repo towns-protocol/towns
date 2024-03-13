@@ -5,10 +5,10 @@
 import { Client } from './client'
 import { dlog } from '@river/dlog'
 import { isDefined } from './check'
-import { DecryptedContentError } from './encryptedContentTypes'
 import { makeUniqueSpaceStreamId } from './id'
 import { TestClientOpts, makeTestClient, waitFor } from './util.test'
 import { Stream } from './stream'
+import { DecryptionSessionError } from './decryptionExtensions'
 
 const log = dlog('csb:test:decryptionExtensions')
 
@@ -66,7 +66,7 @@ describe('DecryptionExtensions', () => {
     const getDecryptionErrors = async (
         client: Client,
         streamId: string,
-    ): Promise<DecryptedContentError[]> => {
+    ): Promise<DecryptionSessionError[]> => {
         const stream = client.stream(streamId) ?? (await client.waitForStream(streamId))
         return stream.view.timeline
             .map((e) => {

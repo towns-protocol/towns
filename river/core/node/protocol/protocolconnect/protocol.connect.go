@@ -38,6 +38,9 @@ const (
 	StreamServiceCreateStreamProcedure = "/river.StreamService/CreateStream"
 	// StreamServiceGetStreamProcedure is the fully-qualified name of the StreamService's GetStream RPC.
 	StreamServiceGetStreamProcedure = "/river.StreamService/GetStream"
+	// StreamServiceGetStreamExProcedure is the fully-qualified name of the StreamService's GetStreamEx
+	// RPC.
+	StreamServiceGetStreamExProcedure = "/river.StreamService/GetStreamEx"
 	// StreamServiceGetMiniblocksProcedure is the fully-qualified name of the StreamService's
 	// GetMiniblocks RPC.
 	StreamServiceGetMiniblocksProcedure = "/river.StreamService/GetMiniblocks"
@@ -69,6 +72,7 @@ var (
 	streamServiceServiceDescriptor                    = protocol.File_protocol_proto.Services().ByName("StreamService")
 	streamServiceCreateStreamMethodDescriptor         = streamServiceServiceDescriptor.Methods().ByName("CreateStream")
 	streamServiceGetStreamMethodDescriptor            = streamServiceServiceDescriptor.Methods().ByName("GetStream")
+	streamServiceGetStreamExMethodDescriptor          = streamServiceServiceDescriptor.Methods().ByName("GetStreamEx")
 	streamServiceGetMiniblocksMethodDescriptor        = streamServiceServiceDescriptor.Methods().ByName("GetMiniblocks")
 	streamServiceGetLastMiniblockHashMethodDescriptor = streamServiceServiceDescriptor.Methods().ByName("GetLastMiniblockHash")
 	streamServiceAddEventMethodDescriptor             = streamServiceServiceDescriptor.Methods().ByName("AddEvent")
@@ -84,6 +88,7 @@ var (
 type StreamServiceClient interface {
 	CreateStream(context.Context, *connect.Request[protocol.CreateStreamRequest]) (*connect.Response[protocol.CreateStreamResponse], error)
 	GetStream(context.Context, *connect.Request[protocol.GetStreamRequest]) (*connect.Response[protocol.GetStreamResponse], error)
+	GetStreamEx(context.Context, *connect.Request[protocol.GetStreamExRequest]) (*connect.ServerStreamForClient[protocol.GetStreamExResponse], error)
 	GetMiniblocks(context.Context, *connect.Request[protocol.GetMiniblocksRequest]) (*connect.Response[protocol.GetMiniblocksResponse], error)
 	GetLastMiniblockHash(context.Context, *connect.Request[protocol.GetLastMiniblockHashRequest]) (*connect.Response[protocol.GetLastMiniblockHashResponse], error)
 	AddEvent(context.Context, *connect.Request[protocol.AddEventRequest]) (*connect.Response[protocol.AddEventResponse], error)
@@ -115,6 +120,12 @@ func NewStreamServiceClient(httpClient connect.HTTPClient, baseURL string, opts 
 			httpClient,
 			baseURL+StreamServiceGetStreamProcedure,
 			connect.WithSchema(streamServiceGetStreamMethodDescriptor),
+			connect.WithClientOptions(opts...),
+		),
+		getStreamEx: connect.NewClient[protocol.GetStreamExRequest, protocol.GetStreamExResponse](
+			httpClient,
+			baseURL+StreamServiceGetStreamExProcedure,
+			connect.WithSchema(streamServiceGetStreamExMethodDescriptor),
 			connect.WithClientOptions(opts...),
 		),
 		getMiniblocks: connect.NewClient[protocol.GetMiniblocksRequest, protocol.GetMiniblocksResponse](
@@ -178,6 +189,7 @@ func NewStreamServiceClient(httpClient connect.HTTPClient, baseURL string, opts 
 type streamServiceClient struct {
 	createStream         *connect.Client[protocol.CreateStreamRequest, protocol.CreateStreamResponse]
 	getStream            *connect.Client[protocol.GetStreamRequest, protocol.GetStreamResponse]
+	getStreamEx          *connect.Client[protocol.GetStreamExRequest, protocol.GetStreamExResponse]
 	getMiniblocks        *connect.Client[protocol.GetMiniblocksRequest, protocol.GetMiniblocksResponse]
 	getLastMiniblockHash *connect.Client[protocol.GetLastMiniblockHashRequest, protocol.GetLastMiniblockHashResponse]
 	addEvent             *connect.Client[protocol.AddEventRequest, protocol.AddEventResponse]
@@ -197,6 +209,11 @@ func (c *streamServiceClient) CreateStream(ctx context.Context, req *connect.Req
 // GetStream calls river.StreamService.GetStream.
 func (c *streamServiceClient) GetStream(ctx context.Context, req *connect.Request[protocol.GetStreamRequest]) (*connect.Response[protocol.GetStreamResponse], error) {
 	return c.getStream.CallUnary(ctx, req)
+}
+
+// GetStreamEx calls river.StreamService.GetStreamEx.
+func (c *streamServiceClient) GetStreamEx(ctx context.Context, req *connect.Request[protocol.GetStreamExRequest]) (*connect.ServerStreamForClient[protocol.GetStreamExResponse], error) {
+	return c.getStreamEx.CallServerStream(ctx, req)
 }
 
 // GetMiniblocks calls river.StreamService.GetMiniblocks.
@@ -248,6 +265,7 @@ func (c *streamServiceClient) PingSync(ctx context.Context, req *connect.Request
 type StreamServiceHandler interface {
 	CreateStream(context.Context, *connect.Request[protocol.CreateStreamRequest]) (*connect.Response[protocol.CreateStreamResponse], error)
 	GetStream(context.Context, *connect.Request[protocol.GetStreamRequest]) (*connect.Response[protocol.GetStreamResponse], error)
+	GetStreamEx(context.Context, *connect.Request[protocol.GetStreamExRequest], *connect.ServerStream[protocol.GetStreamExResponse]) error
 	GetMiniblocks(context.Context, *connect.Request[protocol.GetMiniblocksRequest]) (*connect.Response[protocol.GetMiniblocksResponse], error)
 	GetLastMiniblockHash(context.Context, *connect.Request[protocol.GetLastMiniblockHashRequest]) (*connect.Response[protocol.GetLastMiniblockHashResponse], error)
 	AddEvent(context.Context, *connect.Request[protocol.AddEventRequest]) (*connect.Response[protocol.AddEventResponse], error)
@@ -275,6 +293,12 @@ func NewStreamServiceHandler(svc StreamServiceHandler, opts ...connect.HandlerOp
 		StreamServiceGetStreamProcedure,
 		svc.GetStream,
 		connect.WithSchema(streamServiceGetStreamMethodDescriptor),
+		connect.WithHandlerOptions(opts...),
+	)
+	streamServiceGetStreamExHandler := connect.NewServerStreamHandler(
+		StreamServiceGetStreamExProcedure,
+		svc.GetStreamEx,
+		connect.WithSchema(streamServiceGetStreamExMethodDescriptor),
 		connect.WithHandlerOptions(opts...),
 	)
 	streamServiceGetMiniblocksHandler := connect.NewUnaryHandler(
@@ -337,6 +361,8 @@ func NewStreamServiceHandler(svc StreamServiceHandler, opts ...connect.HandlerOp
 			streamServiceCreateStreamHandler.ServeHTTP(w, r)
 		case StreamServiceGetStreamProcedure:
 			streamServiceGetStreamHandler.ServeHTTP(w, r)
+		case StreamServiceGetStreamExProcedure:
+			streamServiceGetStreamExHandler.ServeHTTP(w, r)
 		case StreamServiceGetMiniblocksProcedure:
 			streamServiceGetMiniblocksHandler.ServeHTTP(w, r)
 		case StreamServiceGetLastMiniblockHashProcedure:
@@ -370,6 +396,10 @@ func (UnimplementedStreamServiceHandler) CreateStream(context.Context, *connect.
 
 func (UnimplementedStreamServiceHandler) GetStream(context.Context, *connect.Request[protocol.GetStreamRequest]) (*connect.Response[protocol.GetStreamResponse], error) {
 	return nil, connect.NewError(connect.CodeUnimplemented, errors.New("river.StreamService.GetStream is not implemented"))
+}
+
+func (UnimplementedStreamServiceHandler) GetStreamEx(context.Context, *connect.Request[protocol.GetStreamExRequest], *connect.ServerStream[protocol.GetStreamExResponse]) error {
+	return connect.NewError(connect.CodeUnimplemented, errors.New("river.StreamService.GetStreamEx is not implemented"))
 }
 
 func (UnimplementedStreamServiceHandler) GetMiniblocks(context.Context, *connect.Request[protocol.GetMiniblocksRequest]) (*connect.Response[protocol.GetMiniblocksResponse], error) {

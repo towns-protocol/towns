@@ -5,6 +5,7 @@
 import { makeTestClient } from './util.test'
 import { Client } from './client'
 import { makeUniqueChannelStreamId, makeDMStreamId, makeUniqueSpaceStreamId } from './id'
+import { InfoRequest } from '@river/proto'
 
 describe('mediaTests', () => {
     let bobsClient: Client
@@ -31,23 +32,29 @@ describe('mediaTests', () => {
         return await bobsClient.createMediaStream(channelId, spaceId, chunkCount)
     }
 
+    async function bobSendMediaPayloads(
+        streamId: string,
+        chunks: number,
+        prevMiniblockHash: Uint8Array,
+    ): Promise<Uint8Array> {
+        let prevHash = prevMiniblockHash
+        for (let i = 0; i < chunks; i++) {
+            const chunk = new Uint8Array(100)
+            // Create novel chunk content for testing purposes
+            chunk.fill(i, 0, 100)
+            const result = await bobsClient.sendMediaPayload(streamId, chunk, i, prevHash)
+            prevHash = result.prevMiniblockHash
+        }
+        return prevHash
+    }
+
     test('clientCanCreateMediaStream', async () => {
         await expect(bobCreateMediaStream(10)).toResolve()
     })
 
     test('clientCanSendMediaPayload', async () => {
         const mediaStreamInfo = await bobCreateMediaStream(10)
-
-        const chunk = new Uint8Array(100)
-        for (let i = 0; i < 10; i++) {
-            const result = await bobsClient.sendMediaPayload(
-                mediaStreamInfo.streamId,
-                chunk,
-                i,
-                mediaStreamInfo.prevMiniblockHash,
-            )
-            mediaStreamInfo.prevMiniblockHash = result.prevMiniblockHash
-        }
+        await bobSendMediaPayloads(mediaStreamInfo.streamId, 10, mediaStreamInfo.prevMiniblockHash)
     })
 
     test('chunkIndexNeedsToBeWithinBounds', async () => {
@@ -57,7 +64,7 @@ describe('mediaTests', () => {
             bobsClient.sendMediaPayload(result.streamId, chunk, -1, result.prevMiniblockHash),
         ).toReject()
         await expect(
-            bobsClient.sendMediaPayload(result.streamId, chunk, 10, result.prevMiniblockHash),
+            bobsClient.sendMediaPayload(result.streamId, chunk, 11, result.prevMiniblockHash),
         ).toReject()
     })
 
@@ -156,5 +163,37 @@ describe('mediaTests', () => {
         await expect(charliesClient.createMediaStream(streamId, undefined, 10)).toReject()
         await alicesClient.stop()
         await charliesClient.stop()
+    })
+
+    test('mediaStream getStreamEx result matches getStream result', async () => {
+        const { streamId, prevMiniblockHash } = await bobCreateMediaStream(10)
+        // Send a series of media chunks
+        await bobSendMediaPayloads(streamId, 10, prevMiniblockHash)
+        // Force server to flush minipool events into a block
+        await bobsClient.rpcClient.info(
+            new InfoRequest({
+                debug: ['make_miniblock', streamId],
+            }),
+            { timeoutMs: 10000 },
+        )
+
+        // Grab stream from both endpoints
+        const stream = await bobsClient.getStream(streamId)
+        const streamEx = await bobsClient.getStreamEx(streamId)
+
+        // Assert exact content equality with bobSendMediaPayloads
+        expect(streamEx.mediaContent.info).toBeDefined()
+        expect(streamEx.mediaContent.info?.chunks.length).toEqual(10)
+        for (let i = 0; i < 10; i++) {
+            const chunk = new Uint8Array(100)
+            chunk.fill(i, 0, 100)
+            expect(streamEx.mediaContent.info?.chunks[i]).toBeDefined()
+            expect(streamEx.mediaContent.info?.chunks[i]).toEqual(chunk)
+        }
+
+        // Assert equality of mediaContent between getStream and getStreamEx
+        // use-chunked-media.ts utilizes the tream.mediaContent.info property, so equality here
+        // will result in the same behavior in the client app.
+        expect(stream.mediaContent).toEqual(streamEx.mediaContent)
     })
 })

@@ -9,6 +9,10 @@ export interface EncryptedContent {
     content: EncryptedData
 }
 
+export function isEncryptedContentKind(kind: string): kind is EncryptedContent['kind'] {
+    return kind === 'text' || kind === 'channelMessage' || kind === 'channelProperties'
+}
+
 /*************
  * DecryptedContent
  *************/
@@ -58,10 +62,4 @@ export function toDecryptedContent(
             // we should never have a type we don't know about locally here
             checkNever(kind)
     }
-}
-
-export interface DecryptedContentError {
-    missingSession: boolean
-    encryptedContent: EncryptedContent
-    error?: unknown
 }

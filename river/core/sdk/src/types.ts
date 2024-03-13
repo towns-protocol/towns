@@ -36,7 +36,8 @@ import {
 import { keccak256 } from 'ethereum-cryptography/keccak'
 import { bin_toHexString } from '@river/dlog'
 import { isDefined } from './check'
-import { DecryptedContent, DecryptedContentError } from './encryptedContentTypes'
+import { DecryptedContent } from './encryptedContentTypes'
+import { DecryptionSessionError } from './decryptionExtensions'
 import { addressFromUserId, streamIdAsBytes } from './id'
 
 export type LocalEventStatus = 'sending' | 'sent' | 'failed'
@@ -62,7 +63,7 @@ export interface StreamTimelineEvent {
     localEvent?: LocalEvent
     remoteEvent?: ParsedEvent
     decryptedContent?: DecryptedContent
-    decryptedContentError?: DecryptedContentError
+    decryptedContentError?: DecryptionSessionError
     miniblockNum?: bigint
     confirmedEventNum?: bigint
 }

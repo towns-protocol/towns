@@ -550,6 +550,18 @@ message StreamAndCookie {
     bool sync_reset = 4;
 }
 
+message GetStreamExRequest {
+    bytes stream_id = 1;
+}
+
+// GetStreamExResponse is a stream of raw data that represents the current state of the requested stream.
+// These responses represent streams that are not expected to change once finalized, and have a optimized code path
+// for retrieval. Response may potentially be very large, and are streamed back to the client. The client is expected
+// to martial the raw data back into protobuf messages.
+message GetStreamExResponse {
+    Miniblock miniblock = 1;
+}
+
 message CreateStreamRequest {
     repeated Envelope events = 1;
     bytes stream_id = 2; // stream_id should match the stream_id in the inception payload of the first event
@@ -648,6 +660,7 @@ message InfoResponse {
 service StreamService {
     rpc CreateStream(CreateStreamRequest) returns (CreateStreamResponse);
     rpc GetStream(GetStreamRequest) returns (GetStreamResponse);
+    rpc GetStreamEx(GetStreamExRequest) returns (stream GetStreamExResponse);
     rpc GetMiniblocks(GetMiniblocksRequest) returns (GetMiniblocksResponse);
     rpc GetLastMiniblockHash(GetLastMiniblockHashRequest) returns (GetLastMiniblockHashResponse);
     rpc AddEvent(AddEventRequest) returns (AddEventResponse);

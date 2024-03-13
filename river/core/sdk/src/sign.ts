@@ -1,7 +1,15 @@
 import { PlainMessage } from '@bufbuild/protobuf'
 import { bin_equal, bin_fromHexString, bin_toHexString, check } from '@river/dlog'
 import { isDefined, assert, hasElements } from './check'
-import { Envelope, EventRef, StreamEvent, Err, Miniblock, StreamAndCookie } from '@river/proto'
+import {
+    Envelope,
+    EventRef,
+    StreamEvent,
+    Err,
+    Miniblock,
+    StreamAndCookie,
+    SyncCookie,
+} from '@river/proto'
 import { assertBytes } from 'ethereum-cryptography/utils'
 import { recoverPublicKey, signSync, verify } from 'ethereum-cryptography/secp256k1'
 import { genIdBlob, streamIdAsBytes, streamIdAsString, userIdFromAddress } from './id'
@@ -99,6 +107,18 @@ export const unpackStream = async (stream?: StreamAndCookie): Promise<ParsedStre
         prevSnapshotMiniblockNum,
         eventIds,
     }
+}
+
+export const unpackStreamEx = async (miniblocks: Miniblock[]): Promise<ParsedStreamResponse> => {
+    const streamAndCookie: StreamAndCookie = new StreamAndCookie()
+    streamAndCookie.events = []
+    streamAndCookie.miniblocks = miniblocks
+    // We don't need to set a valid nextSyncCookie here, as we are currently using getStreamEx only
+    // for fetching media streams, and the result does not return a nextSyncCookie. However, it does
+    // need to be non-null to avoid runtime errors when unpacking the stream into a StreamStateView,
+    // which parses content by type.
+    streamAndCookie.nextSyncCookie = new SyncCookie()
+    return unpackStream(streamAndCookie)
 }
 
 export const unpackStreamAndCookie = async (

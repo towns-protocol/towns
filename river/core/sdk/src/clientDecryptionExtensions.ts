@@ -6,15 +6,16 @@ import {
     KeySolicitationData,
     GroupSessionsData,
     KeySolicitationContent,
+    DecryptionSessionError,
 } from './decryptionExtensions'
 import { check } from '@river/dlog'
 import { GroupEncryptionCrypto, UserDevice } from '@river/encryption'
-import { DecryptedContentError, EncryptedContent } from './encryptedContentTypes'
+import { EncryptedContent } from './encryptedContentTypes'
 import { make_MemberPayload_KeyFulfillment, make_MemberPayload_KeySolicitation } from './types'
 
 import { isDefined } from './check'
 import { Client } from './client'
-import { UserInboxPayload_GroupEncryptionSessions } from '@river/proto'
+import { EncryptedData, UserInboxPayload_GroupEncryptionSessions } from '@river/proto'
 import { Permission } from '@river/web3'
 import chunk from 'lodash/chunk'
 
@@ -46,7 +47,7 @@ export class ClientDecryptionExtensions extends BaseDecryptionExtensions {
             streamId: string,
             eventId: string,
             content: EncryptedContent,
-        ) => this.enqueueNewEncryptedContent(streamId, eventId, content)
+        ) => this.enqueueNewEncryptedContent(streamId, eventId, content.kind, content.content)
 
         const onKeySolicitation = (
             streamId: string,
@@ -86,9 +87,10 @@ export class ClientDecryptionExtensions extends BaseDecryptionExtensions {
     public async decryptGroupEvent(
         streamId: string,
         eventId: string,
-        encryptedContent: EncryptedContent,
+        kind: string, // kind of data
+        encryptedData: EncryptedData,
     ): Promise<void> {
-        return this.client.decryptGroupEvent(streamId, eventId, encryptedContent)
+        return this.client.decryptGroupEvent(streamId, eventId, kind, encryptedData)
     }
 
     public downloadNewMessages(): Promise<void> {
@@ -121,7 +123,7 @@ export class ClientDecryptionExtensions extends BaseDecryptionExtensions {
         check(isDefined(inboxStream), 'inboxStream not found')
         return inboxStream.view.userInboxContent.hasPendingSessionId(
             this.userDevice.deviceKey,
-            item.encryptedContent.content.sessionId,
+            item.encryptedData.sessionId,
         )
     }
 
@@ -150,12 +152,13 @@ export class ClientDecryptionExtensions extends BaseDecryptionExtensions {
         return true
     }
 
-    public onDecryptionError(item: EncryptedContentItem, err: DecryptedContentError): void {
+    public onDecryptionError(item: EncryptedContentItem, err: DecryptionSessionError): void {
         this.client.stream(item.streamId)?.view.updateDecryptedContentError(
             item.eventId,
             {
                 missingSession: err.missingSession,
-                encryptedContent: item.encryptedContent,
+                kind: err.kind,
+                encryptedData: item.encryptedData,
                 error: err,
             },
             this.client,
