@@ -80,6 +80,7 @@ export {
     useLinkedWallets,
     useGetRootKeyFromLinkedWallet,
 } from './hooks/use-linked-wallets'
+export { useHasMemberNft } from './hooks/use-has-member-nft'
 
 export { useCasablancaStore } from './store/use-casablanca-store'
 export { useFullyReadMarkerStore } from './store/use-fully-read-marker-store'

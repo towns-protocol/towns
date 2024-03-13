@@ -49,4 +49,5 @@ export const blockchainKeys = {
     membershipInfo: (spaceId: string) => ['membershipInfo', spaceId],
     linkedWallets: (walletAddress: string) => ['linkedWallets', walletAddress],
     rootKeyFromLinkedWallet: (walletAddress: string) => ['rootKeyFromLinkedWallet', walletAddress],
+    hasMemberNft: (spaceId: string | undefined) => ['hasMemberNft', spaceId ?? 'waitingForSpaceId'],
 }

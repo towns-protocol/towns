@@ -1,0 +1,49 @@
+import { useQuery } from '../query/queryClient'
+import { blockchainKeys } from '../query/query-keys'
+import { useTownsClient } from './use-towns-client'
+import { useWeb3Context } from '../components/Web3ContextProvider'
+import { useSpaceDapp } from './use-space-dapp'
+import { useCallback } from 'react'
+import { useLinkedWallets } from './use-linked-wallets'
+import { useMyUserId } from './use-my-user-id'
+
+export function useHasMemberNft({
+    spaceId,
+    enabled = true,
+}: {
+    spaceId: string | undefined
+    enabled?: boolean
+}) {
+    const { chainId } = useTownsClient()
+    const { provider } = useWeb3Context()
+    const spaceDapp = useSpaceDapp({
+        chainId,
+        provider,
+    })
+    const userId = useMyUserId()
+    const { data: linkedWallets } = useLinkedWallets()
+
+    const fetchNftBalance = useCallback(async () => {
+        if (!spaceId || !spaceDapp || !userId || !linkedWallets) {
+            return
+        }
+
+        const allPromises = linkedWallets
+            .map((wallet) => spaceDapp.hasTownMembership(spaceId, wallet))
+            .concat(spaceDapp.hasTownMembership(spaceId, userId))
+
+        try {
+            await Promise.any(allPromises)
+            return true
+        } catch (e) {
+            if (e instanceof AggregateError) {
+                return false
+            }
+        }
+    }, [linkedWallets, spaceDapp, spaceId, userId])
+
+    return useQuery(blockchainKeys.hasMemberNft(spaceId), fetchNftBalance, {
+        enabled: !!linkedWallets && !!spaceDapp && !!userId && !!spaceId && enabled,
+        refetchOnMount: true,
+    })
+}

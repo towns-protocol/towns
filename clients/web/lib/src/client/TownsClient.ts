@@ -1194,7 +1194,7 @@ export class TownsClient implements EntitlementsDelegate {
             // get linked wallets includes the root wallet
             const wallets = await this.getLinkedWallets(rootWallet)
             const allPromises = wallets.map(async (wallet) => {
-                const isEntitled = await this.isEntitled(
+                const isEntitled = await this.isWalletEntitled(
                     spaceId,
                     undefined,
                     wallet,
@@ -1208,7 +1208,7 @@ export class TownsClient implements EntitlementsDelegate {
             })
             allPromises.push(
                 (async () => {
-                    const isEntitled = await this.isEntitled(
+                    const isEntitled = await this.isWalletEntitled(
                         spaceId,
                         undefined,
                         rootWallet,
