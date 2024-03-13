@@ -1,9 +1,9 @@
 #!/bin/bash
 
-# To use this script you need to 1) be an admin of the main repo, 2) have gh github cli installed, 3) run `gh auth login` && `gh repo set-default`
-# Define a function to print usage information
 print_usage() {
     echo "Usage: pull_river.sh [OPTIONS]"
+    echo "Prerequisites: 1) have gh github cli installed, and"
+    echo "               2) run: gh auth login && gh repo set-default"
     echo "  -h: Display this help message."
     echo "  -i: Interactive mode. Will prompt for confirmation before creating a pull request."
     echo "  -u: Enable USER_MODE. Will wait if there are ci errors and allow you to fix them."
@@ -45,10 +45,7 @@ function parse_git_branch() {
 
 function make_pr_description() {
     # Use git log to list commit messages not present on origin/main
-    # Adjust the format as needed. Here, we use '%B' to get the full commit message (title + body)
-    # and delimit commits with a unique string for easier processing.
-    COMMIT_DELIMITER="-----END OF COMMIT-----"
-    git log origin/main..HEAD --format="%B%n$COMMIT_DELIMITER"
+    git log origin/main..HEAD
 }
 
 if [[ "$(git status --porcelain)" != "" ]]; then
