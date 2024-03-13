@@ -3,6 +3,7 @@ import { useSpaceId } from 'use-towns-client'
 import { useStore } from 'store/store'
 import { useSpaceChannels } from './useSpaceChannels'
 import { useJoinedChannels } from './useSortedChannels'
+import { useDebounce } from './useDebounce'
 
 export const useUnseenChannelIds = () => {
     const spaceId = useSpaceId()
@@ -24,5 +25,7 @@ export const useUnseenChannelIds = () => {
         setSeenChannelIds(Array.from(allSeenChannelIds))
     }, [seenChannelIds, setSeenChannelIds, allChannels])
 
-    return { unseenChannelIds, markChannelsAsSeen }
+    // Debounce the value slightly to avoid flickering badges
+    const debouncedUnseenChannelIds = useDebounce<Set<string>>(unseenChannelIds, 500)
+    return { unseenChannelIds: debouncedUnseenChannelIds, markChannelsAsSeen }
 }

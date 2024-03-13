@@ -18,7 +18,7 @@ import { ChannelNavGroup } from '@components/NavItem/ChannelNavGroup'
 import { ChannelNavItem } from '@components/NavItem/ChannelNavItem'
 import { FadeIn, FadeInBox } from '@components/Transitions'
 import { CreateChannelFormContainer } from '@components/Web3/CreateChannelForm'
-import { Badge, Box, Button, Icon, IconButton, Stack, Text } from '@ui'
+import { Badge, Box, Button, Dot, Icon, IconButton, Stack, Text } from '@ui'
 import { useAuth } from 'hooks/useAuth'
 import { useCreateLink } from 'hooks/useCreateLink'
 import { useShortcut } from 'hooks/useShortcut'
@@ -242,26 +242,35 @@ export const SpaceSideBar = (props: Props) => {
                                 <SidebarListLayout
                                     label="Channels"
                                     channels={readChannels}
+                                    badgeValue={unseenChannelIds.size}
                                     headerContent={
-                                        canCreateChannel && (
-                                            <IconButton
-                                                icon="plus"
-                                                tooltip="New channel"
-                                                tooltipOptions={{ immediate: true }}
-                                                onClick={onShowCreateChannel}
-                                            />
-                                        )
+                                        <Stack horizontal alignItems="center">
+                                            <Box position="relative">
+                                                <IconButton
+                                                    icon="search"
+                                                    tooltip="Browse channels"
+                                                    tooltipOptions={{ immediate: true }}
+                                                    onClick={onShowBrowseChannels}
+                                                />
+                                                {unseenChannelIds.size > 0 && (
+                                                    <Dot
+                                                        position="absolute"
+                                                        top="none"
+                                                        right="sm"
+                                                    />
+                                                )}
+                                            </Box>
+                                            {canCreateChannel && (
+                                                <IconButton
+                                                    icon="plus"
+                                                    tooltip="New channel"
+                                                    tooltipOptions={{ immediate: true }}
+                                                    onClick={onShowCreateChannel}
+                                                />
+                                            )}
+                                        </Stack>
                                     }
                                     itemRenderer={itemRenderer}
-                                />
-
-                                <ActionNavItem
-                                    icon="search"
-                                    id="browseChannels"
-                                    label="Browse channels"
-                                    minHeight="x5"
-                                    badge={<Badge value={unseenChannelIds.size} />}
-                                    onClick={onShowBrowseChannels}
                                 />
 
                                 {canCreateChannel && (
