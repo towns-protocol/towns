@@ -11,10 +11,21 @@ import { Link } from 'react-router-dom'
 import { useNavigate } from 'react-router'
 import { z } from 'zod'
 import { useGetEmbeddedSigner } from '@towns/privy'
-import { Box, Button, Checkbox, ErrorMessage, FormRender, Icon, Stack, Text, TextField } from '@ui'
+import { Toast, toast } from 'react-hot-toast/headless'
+import {
+    Box,
+    Button,
+    Checkbox,
+    ErrorMessage,
+    FormRender,
+    Icon,
+    IconButton,
+    Stack,
+    Text,
+    TextField,
+} from '@ui'
 import { ChannelNameRegExp, isForbiddenError, isRejectionError } from 'ui/utils/utils'
 import { TransactionUIState, toTransactionUIStates } from 'hooks/TransactionUIState'
-
 import { ErrorMessageText } from 'ui/components/ErrorMessage/ErrorMessage'
 import { PATHS } from 'routes'
 import { Spinner } from '@components/Spinner'
@@ -183,6 +194,14 @@ export const CreateChannelForm = (props: Props) => {
                     invalidateQuery()
                     const channelId = txResult.data
                     if (channelId) {
+                        toast.custom((t) => {
+                            return (
+                                <ChannelCreatedToast
+                                    toast={t}
+                                    message={`#${name} was created and saved on chain.`}
+                                />
+                            )
+                        })
                         onCreateChannel(channelId)
                     }
                 }
@@ -327,16 +346,22 @@ export const CreateChannelForm = (props: Props) => {
     )
 }
 
-export const CreateChannelFormContainer = ({ spaceId, onHide }: Omit<Props, 'onCreateChannel'>) => {
+export const CreateChannelFormContainer = ({
+    spaceId,
+    onHide,
+    hideOnCreation,
+}: Omit<Props, 'onCreateChannel'> & { hideOnCreation?: boolean }) => {
     const navigate = useNavigate()
 
     const onCreateChannel = useCallback(
         (roomId: string) => {
             console.log('[CreateChannelForm]', 'onCreateChannel', roomId)
             navigate(`/${PATHS.SPACES}/${spaceId}/${PATHS.CHANNELS}/${roomId}/`)
-            onHide()
+            if (hideOnCreation) {
+                onHide()
+            }
         },
-        [navigate, spaceId, onHide],
+        [navigate, spaceId, onHide, hideOnCreation],
     )
 
     return (
@@ -355,8 +380,24 @@ export const CreateChannelFormModal = ({ spaceId, onHide }: Omit<Props, 'onCreat
     return (
         <>
             <ModalContainer onHide={onHide}>
-                <CreateChannelFormContainer spaceId={spaceId} onHide={onHide} />
+                <CreateChannelFormContainer hideOnCreation spaceId={spaceId} onHide={onHide} />
             </ModalContainer>
         </>
+    )
+}
+
+const ChannelCreatedToast = ({ toast: _toast, message }: { toast: Toast; message: string }) => {
+    return (
+        <Stack horizontal gap alignContent="center">
+            <Box centerContent height="x4" width="x4" background="level3" rounded="sm">
+                <Icon color="gray2" type="tag" size="square_sm" />
+            </Box>
+            <Box width="200">
+                <Text size="sm">{message}</Text>
+            </Box>
+            <IconButton icon="close" insetTop="xs" onClick={() => toast.dismiss(_toast.id)}>
+                Dismiss
+            </IconButton>
+        </Stack>
     )
 }
