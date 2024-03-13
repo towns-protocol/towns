@@ -76,8 +76,8 @@ export const SpaceInfoPanel = () => {
     const channels = useSpaceChannels()
     const { loggedInWalletAddress } = useAuth()
 
-    const { data } = useContractSpaceInfo(space?.id)
-    const address = data?.address ?? ''
+    const { data: contractSpaceInfo } = useContractSpaceInfo(space?.id)
+    const address = contractSpaceInfo?.address ?? ''
     const navigate = useNavigate()
     const { hasPermission: canEdit } = useHasPermission({
         spaceId: space?.id ?? '',
@@ -94,7 +94,7 @@ export const SpaceInfoPanel = () => {
 
     // the owner in the contract is the smart account, we need to get the user id
     const { data: spaceOwnerRiverUserId } = useGetRootKeyFromLinkedWallet({
-        walletAddress: data?.owner as Address | undefined,
+        walletAddress: contractSpaceInfo?.owner as Address | undefined,
     })
     const spaceOwner = useUser(spaceOwnerRiverUserId)
 
@@ -228,7 +228,7 @@ export const SpaceInfoPanel = () => {
         setActiveModal('settings')
     }, [setActiveModal])
 
-    const ownerProfileLink = spaceOwner && createLink({ profileId: spaceOwner.userId })
+    const ownerProfileLink = spaceOwner && createLink({ profileId: contractSpaceInfo?.owner })
 
     return (
         <Panel modalPresentable label="Town Info" onClose={onClose}>
@@ -381,9 +381,9 @@ export const SpaceInfoPanel = () => {
                                                 {spaceOwner && getPrettyDisplayName(spaceOwner)}
                                             </Paragraph>
 
-                                            {data?.owner && (
+                                            {contractSpaceInfo?.owner && (
                                                 <ClipboardCopy
-                                                    label={shortAddress(data.owner)}
+                                                    label={shortAddress(contractSpaceInfo.owner)}
                                                     clipboardContent={address}
                                                 />
                                             )}
@@ -394,7 +394,9 @@ export const SpaceInfoPanel = () => {
                         ) : (
                             <>
                                 <Paragraph color="gray2">
-                                    {data?.owner ? shortAddress(data.owner) : ''}
+                                    {contractSpaceInfo?.owner
+                                        ? shortAddress(contractSpaceInfo.owner)
+                                        : ''}
                                 </Paragraph>
                             </>
                         )}
