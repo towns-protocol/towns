@@ -90,24 +90,24 @@ export const BottomBarLayout = ({
             width="100%"
             borderTop="default"
             background="backdropBlur"
-            paddingX={{ default: 'lg', mobile: 'md' }}
+            alignItems="center"
             {...boxProps}
         >
             <Stack
-                direction={{ default: 'row', mobile: 'column' }}
+                horizontal
                 width="100%"
-                maxWidth="1200"
+                maxWidth={isTouch ? '100%' : '1000'}
                 position="relative"
+                paddingX={isTouch ? 'md' : 'lg'}
+                gap="md"
             >
-                {buttonContent && !isTouch && <ButtonContainer>{leftContent}</ButtonContainer>}
-                <Box grow>{messageContent}</Box>
+                <Box width="500">
+                    {messageContent}
+                    {!messageContent && <Box grow />}
+                </Box>
+                <Box grow />
                 {buttonContent && (
-                    <ButtonContainer
-                        horizontal
-                        gap
-                        minWidth={{ desktop: '300', mobile: undefined }}
-                    >
-                        {isTouch && !!leftContent && <Box>{leftContent}</Box>}
+                    <ButtonContainer horizontal gap minWidth={isTouch ? undefined : '300'}>
                         {buttonContent}
                     </ButtonContainer>
                 )}
@@ -117,17 +117,12 @@ export const BottomBarLayout = ({
 }
 
 const ButtonContainer = (boxProps: BoxProps) => (
-    <Stack
-        paddingY={{
-            mobile: 'md',
-            desktop: 'lg',
-        }}
+    <Box
+        shrink
+        centerContent
         height={{
             desktop: 'x12',
             mobile: 'x10',
-        }}
-        paddingX={{
-            mobile: 'sm',
         }}
         {...boxProps}
     />

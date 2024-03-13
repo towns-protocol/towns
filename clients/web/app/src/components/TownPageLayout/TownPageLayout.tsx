@@ -77,96 +77,89 @@ export const TownPageLayout = (props: TownPageLayoutProps) => {
 
     return (
         <>
-            <Stack alignItems="center">
+            <Stack alignItems="center" height="100dvh">
                 {props.headerContent}
-                <Stack
-                    minHeight="600"
-                    paddingX="lg"
-                    paddingBottom="x4"
-                    width="100%"
-                    position="relative"
-                    maxWidth={isTouch ? '100%' : '1200'}
-                    direction={{ mobile: isTouch ? undefined : 'columnReverse', default: 'row' }}
-                    pointerEvents="all"
-                    gap="md"
-                    overflowX="hidden"
-                    paddingTop="lg"
-                >
-                    <Stack gap="lg" width="100%">
-                        <Stack horizontal alignContent="start" gap="sm">
-                            {isTouch && (
+                <Stack scroll width="100%" alignItems="center">
+                    <Stack
+                        horizontal={!isTouch}
+                        paddingX="lg"
+                        paddingBottom="x4"
+                        width="100%"
+                        maxWidth={isTouch ? '100%' : '1000'}
+                        pointerEvents="all"
+                        gap="md"
+                        paddingTop="lg"
+                    >
+                        <Stack gap="lg" width={isTouch ? '500' : '100%'} height="100%">
+                            <Stack horizontal alignContent="start" gap="sm">
+                                {isTouch && (
+                                    <InteractiveTownsToken
+                                        key={imageSrc}
+                                        size="sm"
+                                        address={address}
+                                        imageSrc={imageSrc ?? undefined}
+                                        spaceName={name}
+                                    />
+                                )}
+                                <Header
+                                    name={name}
+                                    owner={owner}
+                                    userId={userId}
+                                    spaceId={spaceId}
+                                    isPreview={isPreview}
+                                />
+                            </Stack>
+                            <InformationBoxes
+                                imageSrc={imageSrc}
+                                price={membershipInfo?.price}
+                                duration={0}
+                                address={address}
+                                chainId={chainId}
+                                anyoneCanJoin={anyoneCanJoin}
+                                isTokensGatingMembershipLoading={isTokensGatingMembershipLoading}
+                                tokens={[]}
+                            />
+                            <Bio bio={bio} />
+
+                            <Box gap="x8">{props.activityContent}</Box>
+                        </Stack>
+                        {/* right column */}
+                        {!isTouch && (
+                            <Stack gap="lg" alignItems="center">
                                 <InteractiveTownsToken
                                     key={imageSrc}
-                                    size="sm"
+                                    size={isTouch ? 'lg' : 'xl'}
                                     address={address}
                                     imageSrc={imageSrc ?? undefined}
                                     spaceName={name}
                                 />
-                            )}
-                            <Header
-                                name={name}
-                                owner={owner}
-                                userId={userId}
-                                spaceId={spaceId}
-                                isPreview={isPreview}
-                            />
-                        </Stack>
-                        <InformationBoxes
-                            imageSrc={imageSrc}
-                            price={membershipInfo?.price}
-                            duration={0}
-                            address={address}
-                            chainId={chainId}
-                            anyoneCanJoin={anyoneCanJoin}
-                            isTokensGatingMembershipLoading={isTokensGatingMembershipLoading}
-                            tokens={[]}
-                        />
-                        <Bio bio={bio} />
-                        <Stack gap="lg">
-                            <Box gap="x8">{props.activityContent}</Box>
-                        </Stack>
+
+                                {!isPreview && (
+                                    <Box tooltip="Copy link">
+                                        <Button
+                                            size="button_md"
+                                            width="300"
+                                            tone="lightHover"
+                                            color="default"
+                                            onClick={onCopyInviteLink}
+                                        >
+                                            {copiedLink ? (
+                                                'Link copied'
+                                            ) : (
+                                                <>
+                                                    <Icon type="share" />
+                                                    Share Link
+                                                </>
+                                            )}
+                                        </Button>
+                                    </Box>
+                                )}
+                            </Stack>
+                        )}
                     </Stack>
-                    {/* right column */}
-                    {!isTouch && (
-                        <Stack gap="lg" alignItems="center">
-                            <InteractiveTownsToken
-                                key={imageSrc}
-                                size={isTouch ? 'lg' : 'xl'}
-                                address={address}
-                                imageSrc={imageSrc ?? undefined}
-                                spaceName={name}
-                            />
-
-                            {!isPreview && (
-                                <Box tooltip="Copy link">
-                                    <Button
-                                        size="button_md"
-                                        width="300"
-                                        tone="lightHover"
-                                        color="default"
-                                        onClick={onCopyInviteLink}
-                                    >
-                                        {copiedLink ? (
-                                            'Link copied'
-                                        ) : (
-                                            <>
-                                                <Icon type="share" />
-                                                Share Link
-                                            </>
-                                        )}
-                                    </Button>
-                                </Box>
-                            )}
-                        </Stack>
-                    )}
-
-                    <Box height="x12" />
+                    <Box height="x12" shrink={false} />
                 </Stack>
-                {props.bottomContent && (
-                    <Stack horizontal centerContent>
-                        {props.bottomContent}
-                    </Stack>
-                )}
+                {!isPreview && <>{props.bottomContent && props.bottomContent}</>}
             </Stack>
         </>
     )

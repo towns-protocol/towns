@@ -21,8 +21,9 @@ function transformData(data: ReturnType<typeof useMembershipInfo>['data']) {
     return {
         ...data,
         price: transformPrice(Number(data.price)),
-        limit: transformLimit(Number(data.maxSupply)),
+        maxSupply: transformLimit(Number(data.maxSupply)),
         currency: transformCurrency(data.currency as string),
+        totalSupply: transformTotalSupply(Number(data.totalSupply)),
     }
 }
 
@@ -37,6 +38,10 @@ function transformPrice(price: number) {
 
 function transformLimit(limit: number) {
     return limit
+}
+
+function transformTotalSupply(totalSupply: number) {
+    return totalSupply
 }
 
 function transformCurrency(currency: string) {

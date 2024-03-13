@@ -1,5 +1,5 @@
 import debug from 'debug'
-import React, { Suspense, useCallback, useState } from 'react'
+import React, { Suspense, useCallback, useMemo, useState } from 'react'
 import { useNavigate, useParams } from 'react-router'
 import { Link } from 'react-router-dom'
 import { Permission, useContractSpaceInfo, useHasPermission, useMyProfile } from 'use-towns-client'
@@ -40,6 +40,8 @@ import { MainSideBar } from '@components/SideBars'
 import { UserOpTxModal } from '@components/Web3/UserOpTxModal/UserOpTxModal'
 import { useAbstractAccountAddress } from 'hooks/useAbstractAccountAddress'
 import { ErrorReportForm } from '@components/ErrorReport/ErrorReport'
+import { useReadableMembershipInfo } from '@components/TownPageLayout/useReadableMembershipInfo'
+import { useDevice } from 'hooks/useDevice'
 import { WelcomeLayout } from './layouts/WelcomeLayout'
 
 const log = debug('app:public-town')
@@ -55,6 +57,8 @@ export const PublicTownPage = (props: { isPreview?: boolean; onClosePreview?: ()
     const { isConnected, loggedInWalletAddress } = useAuth()
     const { data: spaceInfo, isLoading } = useContractSpaceInfo(spaceSlug)
     const { data: townBio } = useGetSpaceTopic(spaceSlug)
+    const { data: membershipInfo } = useReadableMembershipInfo(spaceInfo?.networkId ?? '')
+
     const { isAuthenticatedAndConnected } = useAuth()
     const [assetModal, setAssetModal] = useState(false)
     const showAssetModal = () => setAssetModal(true)
@@ -85,7 +89,7 @@ export const PublicTownPage = (props: { isPreview?: boolean; onClosePreview?: ()
     return spaceInfo ? (
         <>
             <AbsoluteBackground networkId={spaceInfo.networkId} />
-            <Box height="100dvh" paddingTop="safeAreaInsetTop">
+            <Box paddingTop="safeAreaInsetTop">
                 <TownPageLayout
                     headerContent={
                         <Header
@@ -97,42 +101,14 @@ export const PublicTownPage = (props: { isPreview?: boolean; onClosePreview?: ()
                     activityContent={<Activity townId={spaceInfo.networkId} />}
                     isPreview={isPreview}
                     bottomContent={
-                        <BottomBarLayout
-                            position="absolute"
-                            bottom="none"
-                            zIndex="above"
-                            buttonContent={
-                                !isPreview ? (
-                                    <Box grow>
-                                        {isAuthenticatedAndConnected ? (
-                                            isLoadingMeetsMembership ? (
-                                                <MembershipStatusMessage
-                                                    spinner
-                                                    background="level3"
-                                                    message="Checking requirements"
-                                                />
-                                            ) : (
-                                                <Button
-                                                    tone="cta1"
-                                                    width="100%"
-                                                    type="button"
-                                                    disabled={isJoining}
-                                                    onClick={onJoinClick}
-                                                >
-                                                    {isJoining && <ButtonSpinner />}
-                                                    Join {spaceInfo.name}
-                                                </Button>
-                                            )
-                                        ) : (
-                                            <Suspense>
-                                                <LoginComponent />
-                                            </Suspense>
-                                        )}
-                                    </Box>
-                                ) : (
-                                    <></>
-                                )
-                            }
+                        <Footer
+                            isPreview={isPreview}
+                            isJoining={isJoining}
+                            isAuthenticatedAndConnected={isAuthenticatedAndConnected}
+                            isLoadingMeetsMembership={isLoadingMeetsMembership}
+                            totalSupply={membershipInfo?.totalSupply}
+                            maxSupply={membershipInfo?.maxSupply}
+                            onJoinClick={onJoinClick}
                         />
                     }
                     spaceId={spaceInfo.networkId}
@@ -235,6 +211,118 @@ const Header = (props: {
                 </ModalContainer>
             )}
         </Box>
+    )
+}
+
+const Footer = (props: {
+    isPreview?: boolean
+    isAuthenticatedAndConnected: boolean
+    isLoadingMeetsMembership: boolean
+    isJoining: boolean
+    totalSupply?: number
+    maxSupply?: number
+    onJoinClick: () => void
+}) => {
+    const {
+        isPreview,
+        isAuthenticatedAndConnected,
+        isLoadingMeetsMembership,
+        isJoining,
+        onJoinClick,
+        totalSupply,
+        maxSupply,
+    } = props
+
+    const { isTouch } = useDevice()
+    const percentageFilled = useMemo(() => {
+        if (!totalSupply || !maxSupply) {
+            return 0
+        }
+        // always show a tiny bit of the progress bar
+        return Math.max((maxSupply - totalSupply) / maxSupply, 0.02)
+    }, [totalSupply, maxSupply])
+
+    const membershipSupplyText = useMemo(() => {
+        if (!totalSupply || !maxSupply) {
+            return undefined
+        }
+        return `${maxSupply - totalSupply}/${maxSupply}`
+    }, [totalSupply, maxSupply])
+    return (
+        <BottomBarLayout
+            position="fixed"
+            bottom="none"
+            zIndex="above"
+            messageContent={
+                <Stack
+                    grow
+                    centerContent
+                    gap={isTouch ? 'sm' : 'md'}
+                    color="default"
+                    paddingBottom="safeAreaInsetBottom"
+                    paddingTop="sm"
+                >
+                    <Stack horizontal={!isTouch} width="100%" gap="sm">
+                        <Text fontWeight="strong" fontSize={isTouch ? 'sm' : 'lg'}>
+                            Memberships left
+                        </Text>
+                        {!isTouch && <Box grow />}
+                        <Text color="gray2" fontSize={isTouch ? 'sm' : 'lg'}>
+                            {membershipSupplyText && membershipSupplyText}
+                        </Text>
+                    </Stack>
+                    <Box
+                        position="relative"
+                        height="x1"
+                        width="100%"
+                        background="level2"
+                        rounded="full"
+                    >
+                        <Box
+                            position="absolute"
+                            height="x1"
+                            background="cta1"
+                            rounded="full"
+                            style={{ width: `${percentageFilled * 100}%` }}
+                        />
+                    </Box>
+                </Stack>
+            }
+            buttonContent={
+                !isPreview ? (
+                    <>
+                        {isAuthenticatedAndConnected ? (
+                            isLoadingMeetsMembership ? (
+                                <MembershipStatusMessage
+                                    spinner
+                                    background="level3"
+                                    message="Checking requirements"
+                                />
+                            ) : (
+                                <Button
+                                    tone="cta1"
+                                    width={isTouch ? undefined : '300'}
+                                    type="button"
+                                    disabled={isJoining}
+                                    onClick={onJoinClick}
+                                >
+                                    {isJoining && <ButtonSpinner />}
+                                    Join
+                                </Button>
+                            )
+                        ) : (
+                            <Box width={isTouch ? undefined : '300'}>
+                                <Suspense>
+                                    <LoginComponent />
+                                </Suspense>
+                            </Box>
+                        )}
+                    </>
+                ) : (
+                    <></>
+                )
+            }
+        />
     )
 }
 
