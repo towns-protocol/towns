@@ -91,7 +91,6 @@ describe('<SpaceHome />', () => {
         vi.spyOn(Lib, 'useTownsClient').mockReturnValue({
             // @ts-ignore
             client: {
-                getUser: () => ownerUser,
                 isAccountAbstractionEnabled: () => true,
             },
             useSpaceData: spaceData,
@@ -126,7 +125,6 @@ describe('<SpaceHome />', () => {
         vi.spyOn(Lib, 'useTownsClient').mockReturnValue({
             // @ts-ignore
             client: {
-                getUser: () => ownerUser,
                 isAccountAbstractionEnabled: () => true,
             },
             chainId: 5,
@@ -156,7 +154,6 @@ describe('<SpaceHome />', () => {
         vi.spyOn(Lib, 'useTownsClient').mockReturnValue({
             // @ts-ignore
             client: {
-                getUser: () => ownerUser,
                 isAccountAbstractionEnabled: () => true,
             },
             chainId: 5,
@@ -185,7 +182,6 @@ describe('<SpaceHome />', () => {
         vi.spyOn(Lib, 'useTownsClient').mockReturnValue({
             // @ts-ignore
             client: {
-                getUser: () => ownerUser,
                 isAccountAbstractionEnabled: () => true,
             },
             chainId: 5,
@@ -213,7 +209,6 @@ describe('<SpaceHome />', () => {
         vi.spyOn(Lib, 'useTownsClient').mockReturnValue({
             // @ts-ignore
             client: {
-                getUser: () => ownerUser,
                 isAccountAbstractionEnabled: () => true,
             },
             chainId: 5,
@@ -240,7 +235,6 @@ describe('<SpaceHome />', () => {
         vi.spyOn(Lib, 'useTownsClient').mockReturnValue({
             // @ts-ignore
             client: {
-                getUser: () => ownerUser,
                 isAccountAbstractionEnabled: () => true,
             },
             chainId: 5,

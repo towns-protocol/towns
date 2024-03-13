@@ -37,7 +37,7 @@ describe('mentions', () => {
 
         await alice.joinTown(spaceId, alice.wallet)
         await alice.joinRoom(channelId)
-        const bobDisplayName = bob.getUser(bob.getUserId()!)?.displayName ?? 'bob'
+        const bobDisplayName = bob.getUserId() ?? 'bob'
         // alice sends a message
         await alice.sendMessage(channelId, 'Hi @bob', {
             mentions: [

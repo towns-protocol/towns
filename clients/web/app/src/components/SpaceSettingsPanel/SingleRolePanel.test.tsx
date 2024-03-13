@@ -90,7 +90,6 @@ vi.mock('use-towns-client', async () => {
                 ...actual.useTownsClient(),
                 client: {
                     isEntitled: () => true,
-                    getUser: () => null,
                     getAbstractAccountAddress: () => {
                         return EVERYONE_ADDRESS
                     },

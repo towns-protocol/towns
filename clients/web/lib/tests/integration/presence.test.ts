@@ -46,7 +46,7 @@ describe('presence', () => {
         )
         // expect bob to see alice as online
         await waitFor(() => {
-            const bobsViewOfAlice = bob.getUser(alice.getUserId()!)
+            const bobsViewOfAlice = alice.getUserId() ?? 'alice'
             expect(bobsViewOfAlice).toBeDefined()
         })
     }) // end test

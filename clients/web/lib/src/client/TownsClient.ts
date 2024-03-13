@@ -1462,22 +1462,6 @@ export class TownsClient implements EntitlementsDelegate {
     }
 
     /************************************************
-     * getUser
-     ************************************************/
-    public getUser(userId: string): RoomMember | undefined {
-        //TODO: Make real implementation when user profile support will be implemented
-        return {
-            userId: userId ?? '',
-            username: userId ?? '',
-            usernameConfirmed: true,
-            usernameEncrypted: false,
-            displayName: userId ?? '',
-            displayNameEncrypted: false,
-            avatarUrl: userId,
-        }
-    }
-
-    /************************************************
      * setDisplayName
      ************************************************/
     // eslint-disable-next-line @typescript-eslint/require-await
