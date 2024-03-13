@@ -23,7 +23,7 @@ type Props = {
     InputHTMLAttributes<HTMLInputElement>
 
 export const TextField = forwardRef<HTMLInputElement, Props>((props, ref) => {
-    const { type, placeholder, fontSize, ...fieldProps } = props
+    const { type, placeholder, fontSize, autoComplete, ...fieldProps } = props
     return (
         <Field {...fieldProps}>
             {(overlays, { className, ...inputProps }) => (
@@ -36,6 +36,7 @@ export const TextField = forwardRef<HTMLInputElement, Props>((props, ref) => {
                         placeholder={placeholder}
                         className={clsx(className, styles.input)}
                         fontSize={fontSize}
+                        autoComplete={autoComplete || 'off'}
                     />
                     {overlays}
                 </>
