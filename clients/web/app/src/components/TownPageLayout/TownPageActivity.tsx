@@ -12,7 +12,7 @@ import { useContractSpaceInfo } from 'use-towns-client'
 import { useParams } from 'react-router'
 import { Spinner } from '@components/Spinner'
 import { FadeInBox } from '@components/Transitions'
-import { Box, Heading, Icon, IconName, MotionBox, Paragraph, Stack, Text } from '@ui'
+import { Box, Icon, IconName, MotionBox, Paragraph, Stack, Text } from '@ui'
 import { DAY_MS, WEEK_MS } from 'data/constants'
 import { useEnvironment } from 'hooks/useEnvironmnet'
 import { useDevice } from 'hooks/useDevice'
@@ -88,61 +88,71 @@ export const Activity = (props: { townId: string }) => {
 
     return (
         <AnimatePresence>
-            {!!members && members.length > 0 && (
-                <FadeInBox
-                    horizontal
-                    gap="md"
-                    maxWidth={{ mobile: '100%', default: '600' }}
-                    key="members"
-                >
-                    <Stack gap="md">
-                        <Text strong size="lg">
-                            {members.length} {members.length === 1 ? 'Member' : 'Members'}
-                        </Text>
-                        <Stack horizontal gap="sm">
-                            {members.slice(0, maxMembers).map((m) => (
-                                <AvatarWithoutDot key={m} userId={m} size="avatar_x4" />
-                            ))}
-                            {members.length > maxMembers && (
-                                <Box
-                                    centerContent
-                                    width="x4"
-                                    height="x4"
-                                    background="hover"
-                                    rounded="full"
-                                >
-                                    <Text strong size="xs" color="default">
-                                        +{members.length - maxMembers}
-                                    </Text>
-                                </Box>
-                            )}
-                        </Stack>
-                    </Stack>
-                </FadeInBox>
-            )}
-
-            <MotionBox gap="lg" key="activities" layout="position">
-                <Stack horizontal gap alignItems="center">
-                    <Heading level={3}>Activity</Heading>
-                    {isLoading && <Spinner height="height_sm" />}
-                </Stack>
-
-                {activities.map((a) => (
-                    <Stack horizontal gap key={a.title + a.body} alignItems="center">
-                        <Box centerContent width="x6" padding="sm">
-                            {a.icon && <Icon type={a.icon} size="square_md" color="gray2" />}
-                        </Box>
-                        <Box grow gap="paragraph">
-                            <Paragraph size="md" color="gray2">
-                                {a.title}
-                            </Paragraph>
-                            <Text fontSize={isTouch ? 'md' : 'lg'} color="gray1">
-                                {a.value !== undefined && <Counter value={a.value} />} {a.body}
+            <Stack gap="lg" paddingTop="sm">
+                {!!members && members.length > 0 && (
+                    <FadeInBox
+                        horizontal
+                        gap="md"
+                        maxWidth={{ mobile: '100%', default: '600' }}
+                        key="members"
+                    >
+                        <Stack gap="md">
+                            <Text strong size="md">
+                                {members.length} {members.length === 1 ? 'Member' : 'Members'}
                             </Text>
-                        </Box>
+                            <Stack horizontal gap="sm">
+                                {members.slice(0, maxMembers).map((m) => (
+                                    <AvatarWithoutDot key={m} userId={m} size="avatar_x4" />
+                                ))}
+                                {members.length > maxMembers && (
+                                    <Box
+                                        centerContent
+                                        width="x4"
+                                        height="x4"
+                                        background="hover"
+                                        rounded="full"
+                                    >
+                                        <Text strong size="xs" color="default">
+                                            +{members.length - maxMembers}
+                                        </Text>
+                                    </Box>
+                                )}
+                            </Stack>
+                        </Stack>
+                    </FadeInBox>
+                )}
+
+                <MotionBox gap="md" key="activities" layout="position">
+                    <Stack horizontal gap alignItems="center">
+                        <Text strong size="md">
+                            Activity
+                        </Text>
+                        {isLoading && <Spinner height="height_sm" />}
                     </Stack>
-                ))}
-            </MotionBox>
+
+                    {activities.map((a) => (
+                        <Stack
+                            horizontal
+                            gap
+                            key={a.title + a.body}
+                            alignItems="center"
+                            paddingBottom="sm"
+                        >
+                            <Box centerContent width="x6" paddingBottom="sm">
+                                {a.icon && <Icon type={a.icon} size="square_md" color="gray2" />}
+                            </Box>
+                            <Box grow gap="paragraph">
+                                <Paragraph size="md" color="gray2">
+                                    {a.title}
+                                </Paragraph>
+                                <Text fontSize={isTouch ? 'md' : 'lg'} color="gray1">
+                                    {a.value !== undefined && <Counter value={a.value} />} {a.body}
+                                </Text>
+                            </Box>
+                        </Stack>
+                    ))}
+                </MotionBox>
+            </Stack>
         </AnimatePresence>
     )
 }

@@ -89,7 +89,7 @@ export const PublicTownPage = (props: { isPreview?: boolean; onClosePreview?: ()
     return spaceInfo ? (
         <>
             <AbsoluteBackground networkId={spaceInfo.networkId} />
-            <Box paddingTop="safeAreaInsetTop">
+            <Box paddingTop="safeAreaInsetTop" zIndex="above">
                 <TownPageLayout
                     headerContent={
                         <Header
@@ -262,30 +262,34 @@ const Footer = (props: {
                     paddingBottom="safeAreaInsetBottom"
                     paddingTop="sm"
                 >
-                    <Stack horizontal={!isTouch} width="100%" gap="sm">
-                        <Text fontWeight="strong" fontSize={isTouch ? 'sm' : 'lg'}>
-                            Memberships left
-                        </Text>
-                        {!isTouch && <Box grow />}
-                        <Text color="gray2" fontSize={isTouch ? 'sm' : 'lg'}>
-                            {membershipSupplyText && membershipSupplyText}
-                        </Text>
-                    </Stack>
-                    <Box
-                        position="relative"
-                        height="x1"
-                        width="100%"
-                        background="level2"
-                        rounded="full"
-                    >
-                        <Box
-                            position="absolute"
-                            height="x1"
-                            background="cta1"
-                            rounded="full"
-                            style={{ width: `${percentageFilled * 100}%` }}
-                        />
-                    </Box>
+                    {totalSupply && maxSupply && (
+                        <>
+                            <Stack horizontal={!isTouch} width="100%" gap="sm">
+                                <Text fontWeight="strong" fontSize={isTouch ? 'sm' : 'lg'}>
+                                    Memberships left
+                                </Text>
+                                {!isTouch && <Box grow />}
+                                <Text color="gray2" fontSize={isTouch ? 'sm' : 'lg'}>
+                                    {membershipSupplyText && membershipSupplyText}
+                                </Text>
+                            </Stack>
+                            <Box
+                                position="relative"
+                                height="x1"
+                                width="100%"
+                                background="level2"
+                                rounded="full"
+                            >
+                                <Box
+                                    position="absolute"
+                                    height="x1"
+                                    background="cta1"
+                                    rounded="full"
+                                    style={{ width: `${percentageFilled * 100}%` }}
+                                />
+                            </Box>
+                        </>
+                    )}
                 </Stack>
             }
             buttonContent={
@@ -330,7 +334,7 @@ export const AbsoluteBackground = ({ networkId }: { networkId: string }) => {
     const { imageSrc } = useImageSource(networkId, ImageVariants.thumbnail600)
     return (
         <Box absoluteFill pointerEvents="none">
-            <BlurredBackground imageSrc={imageSrc ?? ''} blur={40} />
+            <BlurredBackground imageSrc={imageSrc ?? ''} blur={60} />
         </Box>
     )
 }
