@@ -55,6 +55,20 @@ export function CreateSpaceFormV2() {
 
     const [panelType, setPanelType] = useState<PanelType | undefined>()
 
+    const defaultValues: Omit<CreateSpaceFormV2SchemaType, 'spaceName'> & { spaceName: undefined } =
+        {
+            membershipType: 'everyone',
+            membershipLimit: 1000,
+            membershipCost: '0',
+            spaceName: undefined,
+            tokensGatingMembership: [],
+            spaceIconUrl: null,
+            spaceIconFile: null,
+            spaceBio: null,
+            // TODO: currency defaults to ETH when addressZero
+            membershipCurrency: ethers.constants.AddressZero,
+        }
+
     return (
         <Stack horizontal absoluteFill>
             <Stack position="absolute" top="xs" left="xs" zIndex="above">
@@ -73,18 +87,7 @@ export function CreateSpaceFormV2() {
                 id="CreateSpaceFormV2"
                 schema={schema}
                 // make sure all values from schema are set so the form validates properly
-                defaultValues={{
-                    membershipType: 'everyone',
-                    membershipLimit: 1000,
-                    membershipCost: 0,
-                    spaceName: undefined,
-                    tokensGatingMembership: [],
-                    spaceIconUrl: null,
-                    spaceIconFile: null,
-                    spaceBio: null,
-                    // TODO: currency defaults to ETH when addressZero
-                    membershipCurrency: ethers.constants.AddressZero,
-                }}
+                defaultValues={defaultValues}
                 mode="all"
             >
                 {(hookForm) => {
