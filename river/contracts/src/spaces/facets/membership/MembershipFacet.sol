@@ -29,7 +29,6 @@ contract MembershipFacet is
     address spaceFactory
   ) external onlyInitializing {
     _addInterface(type(IMembership).interfaceId);
-
     __MembershipBase_init(info, spaceFactory);
     __ERC721A_init_unchained(info.name, info.symbol);
   }

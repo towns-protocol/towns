@@ -157,6 +157,7 @@ abstract contract ArchitectBase is Factory, IArchitectBase {
       revert Architect__NotContract();
     if (address(ruleEntitlement).code.length == 0)
       revert Architect__NotContract();
+    if (address(walletLink).code.length == 0) revert Architect__NotContract();
 
     ArchitectStorage.Layout storage ds = ArchitectStorage.layout();
     ds.spaceToken = spaceToken;
@@ -344,6 +345,7 @@ abstract contract ArchitectBase is Factory, IArchitectBase {
     initCode = abi.encodePacked(
       type(SpaceProxy).creationCode,
       abi.encode(
+        _msgSenderArchitect(),
         ds.walletLink,
         IManagedProxyBase.ManagedProxy({
           managerSelector: IProxyManager.getImplementation.selector,

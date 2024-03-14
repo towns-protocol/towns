@@ -9,7 +9,6 @@ import {IERC721} from "@openzeppelin/contracts/token/ERC721/IERC721.sol";
 import {IERC173} from "contracts/src/diamond/facets/ownable/IERC173.sol";
 import {IPausableBase, IPausable} from "contracts/src/diamond/facets/pausable/IPausable.sol";
 import {IGuardian} from "contracts/src/spaces/facets/guardian/IGuardian.sol";
-import {IERC721ABase} from "contracts/src/diamond/facets/token/ERC721A/IERC721A.sol";
 import {IUserEntitlement} from "contracts/src/spaces/entitlements/user/IUserEntitlement.sol";
 import {IRuleEntitlement} from "contracts/src/crosschain/IRuleEntitlement.sol";
 import {RuleEntitlement} from "contracts/src/crosschain/RuleEntitlement.sol";
@@ -26,6 +25,7 @@ import {Architect} from "contracts/src/spaces/facets/architect/Architect.sol";
 import {MockERC721} from "contracts/test/mocks/MockERC721.sol";
 import {UserEntitlement} from "contracts/src/spaces/entitlements/user/UserEntitlement.sol";
 import {WalletLink} from "contracts/src/river/wallet-link/WalletLink.sol";
+import {Factory} from "contracts/src/utils/Factory.sol";
 
 // errors
 import {Validator__InvalidStringLength} from "contracts/src/utils/Validator.sol";
@@ -194,12 +194,12 @@ contract ArchitectTest is
     spaceArchitect.createSpace(_createSpaceInfo(spaceId));
   }
 
-  function test_revertIfNotERC721Receiver(string memory spaceId) external {
+  function test_revertIfNotProperReceiver(string memory spaceId) external {
     vm.assume(bytes(spaceId).length > 0);
 
-    vm.expectRevert(
-      IERC721ABase.TransferToNonERC721ReceiverImplementer.selector
-    );
+    vm.expectRevert(Factory.Factory__FailedDeployment.selector);
+
+    vm.prank(address(this));
     spaceArchitect.createSpace(_createSpaceInfo(spaceId));
   }
 

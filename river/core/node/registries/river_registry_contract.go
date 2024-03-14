@@ -228,7 +228,13 @@ func (c *RiverRegistryContract) SetStreamLastMiniblock(ctx context.Context, stre
 	_, _, err := c.Blockchain.TxRunner.SubmitAndWait(
 		ctx,
 		func(opts *bind.TransactOpts) (*types.Transaction, error) {
-			return c.StreamRegistry.SetStreamLastMiniblock(opts, streamId.ByteArray(), prevMiniblockHash, lastMiniblockHash, lastMiniblockNum, isSealed)
+			tx, err := c.StreamRegistry.SetStreamLastMiniblock(opts, streamId.ByteArray(), prevMiniblockHash, lastMiniblockHash, lastMiniblockNum, isSealed)
+			if err != nil {
+				err = AsRiverError(err, Err_CANNOT_CALL_CONTRACT).Func("SetStreamLastMiniblock").
+					Tags("streamId", streamId, "prevMiniblockHash", prevMiniblockHash, "lastMiniblockHash",
+						lastMiniblockHash, "lastMiniblockNum", lastMiniblockNum, "isSealed", isSealed)
+			}
+			return tx, err
 		},
 	)
 	return err

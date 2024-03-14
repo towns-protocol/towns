@@ -97,7 +97,7 @@ func (tr *TxRunner) Submit(
 	tx, err := submitterFunc(opts)
 	if err != nil {
 		// TODO: on nonce error, reset nonce and retry
-		return nil, AsRiverError(err, Err_CANNOT_CALL_CONTRACT).Func("Submit").Message("Transact failed")
+		return nil, AsRiverError(err, Err_CANNOT_CALL_CONTRACT).Func("Submit").Message("Transaction failed")
 	}
 
 	tr.nonce.Add(tr.nonce, big.NewInt(1))

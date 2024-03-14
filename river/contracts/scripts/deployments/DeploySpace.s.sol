@@ -13,7 +13,7 @@ import {OwnablePendingHelper} from "contracts/test/diamond/ownable/pending/Ownab
 import {TokenOwnableHelper} from "contracts/test/diamond/ownable/token/TokenOwnableSetup.sol";
 import {DiamondCutHelper} from "contracts/test/diamond/cut/DiamondCutSetup.sol";
 import {DiamondLoupeHelper} from "contracts/test/diamond/loupe/DiamondLoupeSetup.sol";
-import {EntitlementsHelper} from "contracts/test/spaces/entitlements/EntitlementsSetup.sol";
+import {EntitlementsManagerHelper} from "contracts/test/spaces/entitlements/EntitlementsManagerHelper.sol";
 import {RolesHelper} from "contracts/test/spaces/roles/RolesHelper.sol";
 import {ChannelsHelper} from "contracts/test/spaces/channels/ChannelsHelper.sol";
 import {TokenPausableHelper} from "contracts/test/diamond/pausable/token/TokenPausableSetup.sol";
@@ -46,7 +46,8 @@ contract DeploySpace is DiamondDeployer {
   OwnablePendingHelper ownableHelper = new OwnablePendingHelper();
   DiamondCutHelper diamondCutHelper = new DiamondCutHelper();
   DiamondLoupeHelper diamondLoupeHelper = new DiamondLoupeHelper();
-  EntitlementsHelper entitlementsHelper = new EntitlementsHelper();
+  EntitlementsManagerHelper entitlementsHelper =
+    new EntitlementsManagerHelper();
   RolesHelper rolesHelper = new RolesHelper();
   ChannelsHelper channelsHelper = new ChannelsHelper();
   TokenPausableHelper tokenPausableHelper = new TokenPausableHelper();

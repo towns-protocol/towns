@@ -31,20 +31,22 @@ anvil :; anvil -m 'test test test test test test test test test test test junk'
 deploy-base-anvil-nb:
 	@SAVE_DEPLOYMENTS=1 OVERRIDE_DEPLOYMENTS=1 forge script scripts/deployments/${contract}.s.sol:${contract} --ffi --rpc-url base_anvil --private-key ${LOCAL_PRIVATE_KEY} --broadcast --slow
 
+deploy-base-anvil-facet:
+	@SAVE_DEPLOYMENTS=1 OVERRIDE_DEPLOYMENTS=1 forge script scripts/deployments/facets/${contract}.s.sol:${contract} --ffi --rpc-url base_anvil --private-key ${LOCAL_PRIVATE_KEY} --broadcast --slow
+
 deploy-base-anvil: build deploy-base-anvil-nb
 
 interact-base-anvil :;
-	@forge build
-	@forge script scripts/interactions/${contract}.s.sol:${contract} --ffi --rpc-url base_anvil --private-key ${LOCAL_PRIVATE_KEY} --broadcast --watch
+	@SAVE_DEPLOYMENTS=1 OVERRIDE_DEPLOYMENTS=1 forge script scripts/interactions/${contract}.s.sol:${contract} --ffi --rpc-url base_anvil --private-key ${LOCAL_PRIVATE_KEY} --broadcast
 
 # EXAMPLE
 deploy-anvil-staging :;
 	@forge build
-	@SAVE_DEPLOYMENTS=1 DEPLOYMENT_CONTEXT=staging forge script scripts/deployments/${contract}.s.sol:${contract} --ffi --rpc-url base_anvil --private-key ${LOCAL_PRIVATE_KEY} --broadcast --watch
+	@SAVE_DEPLOYMENTS=1 DEPLOYMENT_CONTEXT=staging forge script scripts/deployments/${contract}.s.sol:${contract} --ffi --rpc-url base_anvil --private-key ${LOCAL_PRIVATE_KEY} --broadcast
 
 migrate-anvil:;
 	@forge build
-	@SAVE_DEPLOYMENTS=1 forge script scripts/migrations/${contract}.s.sol:${contract} --ffi --rpc-url base_anvil --private-key ${LOCAL_PRIVATE_KEY} --broadcast --watch
+	@SAVE_DEPLOYMENTS=1 forge script scripts/migrations/${contract}.s.sol:${contract} --ffi --rpc-url base_anvil --private-key ${LOCAL_PRIVATE_KEY} --broadcast
 
 # ===========================
 # 				 River
@@ -57,7 +59,7 @@ deploy-river-anvil-nb:
 		--chain-id 31338 \
 		--private-key ${LOCAL_PRIVATE_KEY} \
 		--broadcast \
-		--watch
+
 
 deploy-river-anvil-explicit:
 	@SAVE_DEPLOYMENTS=1 OVERRIDE_DEPLOYMENTS=1 \
@@ -95,7 +97,7 @@ migrate-base-sepolia:;
 
 interact-base-sepolia :;
 	@forge build
-	@forge script scripts/interactions/${contract}.s.sol:${contract} --ffi --rpc-url base_sepolia --private-key ${BASE_PRIVATE_KEY} --broadcast --watch
+	@SAVE_DEPLOYMENTS=1 OVERRIDE_DEPLOYMENTS=1 forge script scripts/interactions/${contract}.s.sol:${contract} --ffi --rpc-url base_sepolia --private-key ${BASE_PRIVATE_KEY} --broadcast  --verify --verifier blockscout --verifier-url ${BLOCKSCOUT_SEPOLIA_URL}
 
 test-base-sepolia :;
 	@forge build

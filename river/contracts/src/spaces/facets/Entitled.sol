@@ -20,8 +20,6 @@ import {TokenOwnableBase} from "contracts/src/diamond/facets/ownable/token/Token
 import {PausableBase} from "contracts/src/diamond/facets/pausable/PausableBase.sol";
 import {BanningBase} from "contracts/src/spaces/facets/banning/BanningBase.sol";
 
-import {Permissions} from "contracts/src/spaces/facets/Permissions.sol";
-
 abstract contract Entitled is
   IEntitlementBase,
   TokenOwnableBase,
@@ -47,34 +45,20 @@ abstract contract Entitled is
     uint256 linkedWalletsLength = wallets.length;
 
     bool isMember = false;
+    address owner = _owner();
     uint256 tokenId;
 
-    for (uint256 i = 0; i < linkedWalletsLength && !isMember; i++) {
+    for (uint256 i = 0; i < linkedWalletsLength; i++) {
       address wallet = wallets[i];
+
+      if (wallets[i] == owner) {
+        return true;
+      }
+
       if (_isMember(wallet)) {
         isMember = true;
         tokenId = MembershipStorage.layout().tokenIdByMember[wallet];
       }
-    }
-
-    // if you're already a member and trying to join, return false
-    if (
-      isMember && permission == bytes32(abi.encodePacked(Permissions.JoinSpace))
-    ) {
-      return false;
-    }
-
-    address owner = _owner();
-    for (uint256 i = 0; i < wallets.length; i++) {
-      if (wallets[i] == owner) {
-        return true;
-      }
-    }
-
-    if (tokenId == 0) {
-      // tokenId 0 should be assigned the owner, and the owner should have early exited.
-      // however it is legal for the owner to have transfered their NFT to another
-      // and that adddress is now a member. Putting this comment here as a reminder
     }
 
     // Check for ban conditions
@@ -85,7 +69,9 @@ abstract contract Entitled is
     // Entitlement checks for members
     EntitlementsManagerStorage.Layout storage ds = EntitlementsManagerStorage
       .layout();
-    for (uint256 i = 0; i < ds.entitlements.length(); i++) {
+    uint256 entitlementsLength = ds.entitlements.length();
+
+    for (uint256 i = 0; i < entitlementsLength; i++) {
       EntitlementsManagerStorage.Entitlement memory e = ds.entitlementByAddress[
         ds.entitlements.at(i)
       ];

@@ -5,7 +5,7 @@ pragma solidity ^0.8.23;
 import {TestUtils} from "contracts/test/utils/TestUtils.sol";
 
 //interfaces
-import {IEntitlement, IEntitlementBase} from "contracts/src/spaces/entitlements/IEntitlement.sol";
+import {IEntitlementBase} from "contracts/src/spaces/entitlements/IEntitlement.sol";
 
 //libraries
 

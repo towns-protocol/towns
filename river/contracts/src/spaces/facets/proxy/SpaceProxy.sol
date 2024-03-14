@@ -33,6 +33,7 @@ contract SpaceProxy is
   Multicall
 {
   constructor(
+    address owner,
     IWalletLink walletLink,
     IManagedProxyBase.ManagedProxy memory managedProxy,
     ITokenOwnableBase.TokenOwnable memory tokenOwnable,
@@ -45,11 +46,12 @@ contract SpaceProxy is
     __MembershipBase_init(membership, managedProxy.manager);
     __MembershipReferralBase_init();
     _setWalletLinkProxy(walletLink);
-    _setInterfaceIds();
-  }
 
-  function _startTokenId() internal pure override returns (uint256) {
-    return 1;
+    uint256 tokenId = _nextTokenId();
+    _safeMint(owner, 1);
+    _setMembershipTokenId(tokenId, owner);
+
+    _setInterfaceIds();
   }
 
   function _setInterfaceIds() internal {

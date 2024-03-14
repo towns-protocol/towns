@@ -132,7 +132,7 @@ contract MembershipTest is
     assertTrue(membership.getMembershipPrice() == 0);
     assertTrue(membership.getMembershipLimit() == 2);
 
-    vm.prank(founder);
+    vm.prank(alice);
     membership.joinTown(alice);
 
     vm.prank(founder);
@@ -141,7 +141,7 @@ contract MembershipTest is
   }
 
   function test_joinTown_revert_already_member() external {
-    vm.prank(founder);
+    vm.prank(alice);
     membership.joinTown(alice);
 
     vm.prank(alice);
@@ -164,10 +164,6 @@ contract MembershipTest is
   function test_joinTownWithReferral_with_price() external {
     uint256 referralCode = 123;
     uint256 membershipPrice = 10 ether;
-
-    // mint membership to founder
-    vm.prank(founder);
-    membership.joinTown(founder);
 
     vm.startPrank(founder);
     membership.setMembershipFreeAllocation(1);
@@ -233,7 +229,7 @@ contract MembershipTest is
 
     vm.deal(founder, 2 ether);
 
-    vm.prank(founder);
+    vm.prank(alice);
     membership.joinTown{value: membershipPrice}(alice);
     assertEq(membership.balanceOf(alice), 1);
   }
@@ -315,7 +311,7 @@ contract MembershipTest is
       .getMembershipDuration();
     uint256 membershipExpirationDate = block.timestamp + membershipDuration;
 
-    vm.prank(founder);
+    vm.prank(alice);
     uint256 tokenId = membership.joinTown(alice);
 
     assertEq(membership.balanceOf(alice), 1);
@@ -415,7 +411,7 @@ contract MembershipTest is
   //                       Cancel Membership
   // =============================================================
   function test_cancelMembership() external {
-    vm.prank(founder);
+    vm.prank(alice);
     uint256 tokenId = membership.joinTown(alice);
 
     assertEq(membership.balanceOf(alice), 1);
@@ -427,7 +423,7 @@ contract MembershipTest is
   }
 
   function test_cancelMembership_revert_NotApprovedOrOwner() external {
-    vm.prank(founder);
+    vm.prank(alice);
     uint256 tokenId = membership.joinTown(alice);
 
     vm.prank(_randomAddress());

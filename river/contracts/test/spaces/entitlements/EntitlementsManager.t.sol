@@ -4,18 +4,44 @@ pragma solidity ^0.8.23;
 // interfaces
 import {IOwnableBase} from "contracts/src/diamond/facets/ownable/IERC173.sol";
 import {IEntitlementsManagerBase} from "contracts/src/spaces/facets/entitlements/IEntitlementsManager.sol";
+import {IMembershipBase} from "contracts/src/spaces/facets/membership/IMembership.sol";
 
 // libraries
+import {Permissions} from "contracts/src/spaces/facets/Permissions.sol";
 
 // contracts
-import {EntitlementsSetup} from "./EntitlementsSetup.sol";
+import {EntitlementsManager} from "contracts/src/spaces/facets/entitlements/EntitlementsManager.sol";
+import {MockUserEntitlement} from "contracts/test/mocks/MockUserEntitlement.sol";
+import {MembershipFacet} from "contracts/src/spaces/facets/membership/MembershipFacet.sol";
 
 // errors
 
 // solhint-disable-next-line max-line-length
 import {EntitlementsService__InvalidEntitlementAddress, EntitlementsService__InvalidEntitlementInterface, EntitlementsService__ImmutableEntitlement, EntitlementsService__EntitlementDoesNotExist, EntitlementsService__EntitlementAlreadyExists} from "contracts/src/spaces/facets/entitlements/EntitlementsManagerService.sol";
 
-contract EntitlementsTest is EntitlementsSetup, IEntitlementsManagerBase {
+import {BaseSetup} from "contracts/test/spaces/BaseSetup.sol";
+
+contract EntitlementsManagerTest is
+  BaseSetup,
+  IEntitlementsManagerBase,
+  IMembershipBase
+{
+  EntitlementsManager internal entitlements;
+  MockUserEntitlement internal mockEntitlement;
+  MockUserEntitlement internal mockImmutableEntitlement;
+  address[] internal immutableEntitlements;
+
+  function setUp() public override {
+    super.setUp();
+
+    entitlements = EntitlementsManager(everyoneSpace);
+
+    mockEntitlement = new MockUserEntitlement();
+
+    mockImmutableEntitlement = new MockUserEntitlement();
+    immutableEntitlements.push(address(mockImmutableEntitlement));
+  }
+
   function test_addImmutableEntitlements() external {
     vm.prank(founder);
     entitlements.addImmutableEntitlements(immutableEntitlements);
@@ -173,19 +199,14 @@ contract EntitlementsTest is EntitlementsSetup, IEntitlementsManagerBase {
     _arrangeInitialEntitlements();
 
     Entitlement[] memory allEntitlements = entitlements.getEntitlements();
-    assertEq(allEntitlements.length, 2);
-  }
-
-  function test_getEntitlements_with_no_entitlements() external {
-    Entitlement[] memory allEntitlements = entitlements.getEntitlements();
-    assertEq(allEntitlements.length, 0);
+    assertEq(allEntitlements.length > 0, true);
   }
 
   // =============================================================
   //                      Get Entitlement
   // =============================================================
 
-  function test_getEntitlement() external {
+  function test_getSingleEntitlement() external {
     _arrangeInitialEntitlements();
 
     Entitlement memory entitlement = entitlements.getEntitlement(
@@ -207,5 +228,32 @@ contract EntitlementsTest is EntitlementsSetup, IEntitlementsManagerBase {
     vm.prank(founder);
     vm.expectRevert(EntitlementsService__EntitlementDoesNotExist.selector);
     entitlements.getEntitlement(address(mockEntitlement));
+  }
+
+  // =============================================================
+  //                      Is Entitled To Space
+  // =============================================================
+
+  function test_isEntitledToSpace() external {
+    address user = _randomAddress();
+
+    assertEq(entitlements.isEntitledToSpace(user, "test"), false);
+
+    assertEq(
+      entitlements.isEntitledToSpace(founder, Permissions.JoinSpace),
+      true
+    );
+
+    vm.prank(user);
+    MembershipFacet(everyoneSpace).joinTown(user);
+
+    assertEq(
+      entitlements.isEntitledToSpace(founder, Permissions.JoinSpace),
+      true
+    );
+
+    vm.prank(user);
+    vm.expectRevert(Membership__AlreadyMember.selector);
+    MembershipFacet(everyoneSpace).joinTown(user);
   }
 }
