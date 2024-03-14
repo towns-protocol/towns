@@ -1,12 +1,7 @@
+import './envs.mock'
+
 describe('environment', () => {
     describe('env filled with all required var', () => {
-        process.env.NODE_ENV = 'test'
-        process.env.NOTIFICATION_DATABASE_URL = 'notification_database_url'
-        process.env.AUTH_SECRET = 'auth_secret'
-        process.env.VAPID_PUBLIC_KEY = 'vapid_public_key'
-        process.env.VAPID_PRIVATE_KEY = 'vapid_private_key'
-        process.env.VAPID_SUBJECT = 'vapid_subject'
-
         // eslint-disable-next-line @typescript-eslint/no-var-requires
         const { env } = require('./environment')
 

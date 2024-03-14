@@ -11,6 +11,7 @@
         "db:local": "yarn db:generate & yarn db:migrate:local",
         "db:migrate": "prisma migrate deploy",
         "db:migrate:local": "dotenv -e .env.local -- npx prisma migrate deploy",
+        "db:create-migration:local": "dotenv -e .env.local -- yarn prisma migrate dev --name",
         "dev": "yarn db:local && tsc --watch & yarn my-node --env-file .env.local --watch dist/server.js",
         "my-node": "node --experimental-specifier-resolution=node --loader ts-node/esm",
         "start": "node --experimental-specifier-resolution=node --loader ts-node/esm dist/server.js",
@@ -19,7 +20,11 @@
         "watch": "tsc --watch"
     },
     "dependencies": {
+        "@bufbuild/protobuf": "^1.4.1",
+        "@connectrpc/connect": "^1.3.0",
+        "@connectrpc/connect-web": "^1.3.0",
         "@prisma/client": "^5.10.0",
+        "@river/proto": "workspace:^",
         "cors": "^2.8.5",
         "express": "^4.18.2",
         "express-async-errors": "^3.1.1",

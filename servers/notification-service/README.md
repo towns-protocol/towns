@@ -38,4 +38,4 @@ Keys are in `.keys/vapid-keys.json`, set the `VAPID_PUBLIC_KEY` and `VAPID_PRIVA
 
 - [Prisma Client](https://www.prisma.io/docs/orm/prisma-client/setup-and-configuration/generating-prisma-client) is an auto-generated database client that's tailored to our database schema, to create run: `$ npx prisma generate`.
 
-- To [generete the migration](https://www.prisma.io/docs/orm/reference/prisma-cli-reference#prisma-migrate) after changing `schema.prisma`, run: `$ npx prisma migrate dev --name $replace_name_here`
+- To [generete the migration](https://www.prisma.io/docs/orm/reference/prisma-cli-reference#prisma-migrate) after changing `schema.prisma`, run: `$ yarn db:create-migration:local "migration_description"`

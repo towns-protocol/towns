@@ -8,6 +8,9 @@ const envSchema = z.object({
     VAPID_PUBLIC_KEY: z.string(),
     VAPID_PRIVATE_KEY: z.string(),
     VAPID_SUBJECT: z.string(),
+    RIVER_NODE_URL: z.string(),
+    RIVER_DEBUG_TRANSPORT: z.string().optional(),
+    NODE_TLS_REJECT_UNAUTHORIZED: z.string().optional(),
 })
 
 const parsed = envSchema.safeParse(process.env)

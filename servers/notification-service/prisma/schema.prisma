@@ -58,3 +58,9 @@ enum Mute {
   unmuted
   muted
 }
+
+model DMStream {
+  streamId     String @id
+  firstUserId  String
+  secondUserId String
+}
