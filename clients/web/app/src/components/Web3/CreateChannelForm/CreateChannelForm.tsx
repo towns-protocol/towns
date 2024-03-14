@@ -17,6 +17,7 @@ import {
     Button,
     Checkbox,
     ErrorMessage,
+    FancyButton,
     FormRender,
     Icon,
     IconButton,
@@ -31,7 +32,6 @@ import { CHANNEL_INFO_PARAMS, PATHS } from 'routes'
 import { Spinner } from '@components/Spinner'
 import { ButtonSpinner } from '@components/Login/LoginButton/Spinner/ButtonSpinner'
 import { TokenCheckboxLabel } from '@components/Tokens/TokenCheckboxLabel'
-import { TransactionButton } from '@components/TransactionButton'
 import { env } from 'utils'
 import { useContractRoles } from 'hooks/useContractRoles'
 import { ModalContainer } from '@components/Modals/ModalContainer'
@@ -320,21 +320,25 @@ export const CreateChannelForm = (props: Props) => {
                                     Cancel
                                 </Button>
 
-                                <TransactionButton
-                                    transactionState={transactionUIState}
-                                    transactingText="Creating channel"
-                                    successText="Channel created"
-                                    idleText="Create"
-                                />
+                                <FancyButton
+                                    cta={isAbleToInteract}
+                                    type="submit"
+                                    disabled={!isAbleToInteract}
+                                    spinner={!isAbleToInteract}
+                                >
+                                    {!isAbleToInteract ? 'Creating' : 'Create Channel'}
+                                </FancyButton>
                             </Box>
                         ) : (
                             <Box padding position="absolute" bottom="none" left="none" right="none">
-                                <TransactionButton
-                                    transactionState={transactionUIState}
-                                    transactingText="Creating channel"
-                                    successText="Channel created"
-                                    idleText="Save Channel"
-                                />
+                                <FancyButton
+                                    cta={isAbleToInteract && formState.isValid}
+                                    type="submit"
+                                    disabled={!isAbleToInteract}
+                                    spinner={!isAbleToInteract}
+                                >
+                                    {isAbleToInteract ? 'Create Channel' : 'Creating'}
+                                </FancyButton>
                             </Box>
                         )}
                     </Stack>

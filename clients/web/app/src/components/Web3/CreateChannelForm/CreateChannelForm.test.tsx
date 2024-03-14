@@ -111,7 +111,7 @@ describe('CreateChannelForm', () => {
         )
 
         render(<Wrapper />)
-        const submitButton = screen.getByTestId('create-space-next-button')
+        const submitButton = screen.getByText(/create channel/i)
         fireEvent.click(submitButton)
 
         await waitFor(() => {
@@ -177,7 +177,7 @@ describe('CreateChannelForm', () => {
 
         render(<Wrapper />)
 
-        const submitButton = screen.getByTestId('create-space-next-button')
+        const submitButton = screen.getByText(/create channel/i)
 
         const nameInput = screen.getByRole('textbox', { name: /name/i })
         const memberCheckbox = screen.getByRole('checkbox', { name: /member/i })
@@ -186,10 +186,6 @@ describe('CreateChannelForm', () => {
         fireEvent.click(memberCheckbox)
 
         fireEvent.click(submitButton)
-
-        await waitFor(async () => {
-            await screen.findByText('Channel created')
-        })
 
         await waitFor(async () => {
             return expect(createChannelSpy).toHaveBeenCalledWith(
@@ -226,7 +222,7 @@ describe('CreateChannelForm', () => {
 
         render(<Wrapper />)
 
-        const submitButton = screen.getByTestId('create-space-next-button')
+        const submitButton = screen.getByText(/create channel/i)
 
         const nameInput = screen.getByRole('textbox', { name: /name/i })
         const everyoneCheckbox = screen.getByRole('checkbox', { name: /everyone/i })
@@ -239,7 +235,7 @@ describe('CreateChannelForm', () => {
         fireEvent.click(submitButton)
 
         await waitFor(() => {
-            return screen.getByText('Save Channel')
+            return screen.getByText('Create Channel')
         })
 
         await screen.findByText('There was an error with the transaction. Please try again')
@@ -267,7 +263,7 @@ describe('CreateChannelForm', () => {
 
         render(<Wrapper />)
 
-        const submitButton = screen.getByTestId('create-space-next-button')
+        const submitButton = screen.getByText(/create channel/i)
 
         const nameInput = screen.getByRole('textbox', { name: /name/i })
         const everyoneCheckbox = screen.getByRole('checkbox', { name: /everyone/i })
@@ -280,7 +276,7 @@ describe('CreateChannelForm', () => {
         fireEvent.click(submitButton)
 
         await waitFor(() => {
-            return screen.getByText('Save Channel')
+            return screen.getByText('Create Channel')
         })
 
         await screen.findByText("You don't have permission to create a channel in this town")
