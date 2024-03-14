@@ -184,6 +184,9 @@ globalStyle(`${richText}${singleEmojiMessage} p`, {
 globalStyle(`${richText} ul ul, ${richText} ul ol`, {
     marginLeft: vars.space.md,
 })
+globalStyle(`${richText} ${listitem} > *`, {
+    verticalAlign: 'text-top',
+})
 globalStyle(`${richText} ol ul, ${richText} ol ol`, {
     marginLeft: vars.space.md,
 })
