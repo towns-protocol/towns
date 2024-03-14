@@ -11,10 +11,10 @@ on:
                 description: 'Docker image tag to deploy'
                 required: true
                 default: 'latest'
-            node_number:
-                description: 'Node number'
-                type: number
-                default: 1
+            auto_deploy_node_numbers_json:
+                description: 'JSON array of node numbers to deploy to'
+                type: string
+                default: '[1,2,3,4,5,6,7,8,9,10]'
 
     workflow_call:
         inputs:
@@ -26,10 +26,14 @@ on:
                 description: 'Docker image tag to deploy'
                 required: true
                 type: string
-            node_number:
-                description: 'Node number'
-                type: number
-                default: 1
+            auto_deploy_node_numbers_json:
+                description: 'JSON array of node numbers to deploy to'
+                type: string
+                default: '[-1]'
+            public_ecr_url:
+                description: 'Public ECR URL'
+                required: false
+                type: string
         secrets:
             AWS_ACCESS_KEY_ID:
                 description: 'AWS access key id'
@@ -42,7 +46,7 @@ on:
                 required: true
 
 concurrency:
-    group: ${{ github.workflow }}-${{ github.ref }}-${{ inputs.node_number }}
+    group: ${{ github.workflow }}-${{ inputs.environment_name }}
     cancel-in-progress: true
 
 env:
@@ -57,6 +61,11 @@ jobs:
             contents: write
             packages: write
 
+        strategy:
+            matrix:
+                iteration: ${{ fromJson(inputs.auto_deploy_node_numbers_json) }}
+            fail-fast: false
+
         steps:
             - name: Checkout
               uses: actions/checkout@v4
@@ -68,20 +77,14 @@ jobs:
                   aws-secret-access-key: ${{ secrets.AWS_SECRET_ACCESS_KEY }}
                   aws-region: us-east-1
 
-            - name: Create new task definition
+            - name: Deploy river node
               env:
                   ENVIRONMENT_NAME: ${{ inputs.environment_name }}
                   DOCKER_IMAGE_TAG: ${{ inputs.docker_image_tag }}
-                  NODE_NUMBER: ${{ inputs.node_number }}
-                  ECR_REPOSITORY: river-node
-              run: ./scripts/create-river-task-definition.sh
-
-            - name: Deploy service
-              env:
-                  ENVIRONMENT_NAME: ${{ inputs.environment_name }}
-                  NODE_NUMBER: ${{ inputs.node_number }}
-              run: ./scripts/deploy-river-task-definition.sh
-
+                  NODE_NUMBER: ${{ matrix.iteration }}
+                  PUBLIC_ECR_URL: ${{ inputs.public_ecr_url }}
+              run: ./scripts/create-and-deploy-river-task-definition.sh
+              
             # If action failed, we send a slack notification
             - name: Slack notification
               if: failure()

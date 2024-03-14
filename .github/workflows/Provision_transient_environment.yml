@@ -154,7 +154,8 @@ jobs:
         with:
             environment_name: ${{ format('transient-{0}', github.event.pull_request.number )}}
             docker_image_tag: ${{ format('transient-{0}-latest', github.event.pull_request.number )}}
-            node_number: ${{ matrix.iteration }}
+            auto_deploy_node_numbers_json: ${{ toJson(needs.provision_transient_environment.outputs.auto_deploy_node_numbers) }}
+            public_ecr_url: public.ecr.aws/l8h0l2e6/river-node
 
     run_synthetic_transactions_test:
         needs: [check_labels, river_node_continuous_deploys]

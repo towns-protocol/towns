@@ -156,11 +156,8 @@ jobs:
         # TODO: only run if a change in /core/node is detected
         # TODO: only deploy if the new docker image is different than what's currently active
         if: ${{ needs.build.outputs.auto_deploy_node_numbers_json != '[-1]' }}
-        strategy:
-            matrix:
-                iteration: ${{ fromJson(needs.build.outputs.auto_deploy_node_numbers_json) }}
-            fail-fast: false
+
         with:
             environment_name: ${{ needs.build.outputs.environment_name }}
             docker_image_tag: ${{ needs.build.outputs.release_version }}
-            node_number: ${{ matrix.iteration }}
+            auto_deploy_node_numbers_json: ${{ needs.build.outputs.auto_deploy_node_numbers_json }}
