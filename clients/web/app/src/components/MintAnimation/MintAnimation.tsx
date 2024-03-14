@@ -78,7 +78,11 @@ export const MintAnimation = (props: {
                 >
                     <Stack horizontal alignItems="center" gap="sm">
                         <Box ref={fromRef}>
-                            <TownsToken size="xxs" imageSrc={imageSrc} />
+                            <TownsToken
+                                size="xxs"
+                                imageSrc={imageSrc}
+                                spaceName={spaceData?.name}
+                            />
                         </Box>
                         <Paragraph size="md" color="default" fontWeight="medium">
                             {info.isOwner

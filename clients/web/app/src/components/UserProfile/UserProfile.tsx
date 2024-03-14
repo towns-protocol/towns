@@ -66,7 +66,7 @@ export const UserProfile = (props: Props) => {
     })
 
     return (
-        <Stack grow padding gap paddingBottom="none" position="relative">
+        <Stack grow gap paddingBottom="none" position="relative">
             <Stack centerContent={center} padding="lg">
                 <FormRender maxWidth="200" width="100%" key={resourceId}>
                     {({ register, formState, setError, clearErrors }) => (

@@ -79,6 +79,7 @@ export const ChannelDirectoryPanel = () => {
                     )}
                 </Stack>
             }
+            padding="none"
             onClose={onClose}
         >
             <ChannelMembers
@@ -106,7 +107,7 @@ const ChannelMembers = (props: {
     const myUserId = useMyUserId()
 
     return (
-        <Stack paddingY="md" minHeight="forceScroll">
+        <Stack minHeight="forceScroll">
             {onAddMembersClick && <AddMemberRow onClick={onAddMembersClick} />}
             {memberIds.map((userId) => (
                 <ChannelMemberRow

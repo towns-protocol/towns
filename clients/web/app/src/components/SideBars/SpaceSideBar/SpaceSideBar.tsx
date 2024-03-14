@@ -18,7 +18,7 @@ import { ChannelNavGroup } from '@components/NavItem/ChannelNavGroup'
 import { ChannelNavItem } from '@components/NavItem/ChannelNavItem'
 import { FadeIn, FadeInBox } from '@components/Transitions'
 import { CreateChannelFormContainer } from '@components/Web3/CreateChannelForm'
-import { Badge, Box, Button, Dot, Icon, IconButton, Stack, Text } from '@ui'
+import { Badge, Box, Button, Card, Dot, Icon, IconButton, Stack, Text } from '@ui'
 import { useAuth } from 'hooks/useAuth'
 import { useCreateLink } from 'hooks/useCreateLink'
 import { useShortcut } from 'hooks/useShortcut'
@@ -29,7 +29,6 @@ import { ReloadPrompt } from '@components/ReloadPrompt/ReloadPrompt'
 import { env } from 'utils'
 import { useDevice } from 'hooks/useDevice'
 import { useUnseenChannelIds } from 'hooks/useUnseenChannelIdsCount'
-import { SideBar } from '../_SideBar'
 import { SidebarListLayout } from './SidebarListLayout'
 import * as styles from './SpaceSideBar.css'
 import { SpaceSideBarHeader } from './SpaceSideBarHeader'
@@ -156,9 +155,9 @@ export const SpaceSideBar = (props: Props) => {
     )
 
     return (
-        <Box absoluteFill>
-            <SideBar data-testid="space-sidebar" height="100%" onScroll={onScroll}>
-                <FadeInBox grow elevateReadability className={props.className}>
+        <>
+            <Card absoluteFill data-testid="space-sidebar" onScroll={onScroll}>
+                <FadeInBox grow elevateReadability className={props.className} position="relative">
                     <Stack
                         position="absolute"
                         className={styles.gradientBackground}
@@ -318,9 +317,9 @@ export const SpaceSideBar = (props: Props) => {
                 ) : (
                     <></>
                 )}
-            </SideBar>
+            </Card>
             {/* the service worker won't exist in dev-mode and there's not need to check for updates */}
             {(!env.DEV || env.VITE_PUSH_NOTIFICATION_ENABLED) && !isTouch && <ReloadPrompt />}
-        </Box>
+        </>
     )
 }

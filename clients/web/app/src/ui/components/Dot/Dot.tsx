@@ -5,5 +5,13 @@ import * as styles from './Dot.css'
 
 type Props = BoxProps
 export const Dot = (props: Props) => (
-    <Box {...props} className={clsx([props.className, styles.Dot])} />
+    <Box
+        {...props}
+        width="x1"
+        height="x1"
+        rounded="full"
+        style={{ boxShadow: `0 0 0px 3px var(--background)` }}
+    >
+        <Box className={clsx([props.className, styles.Dot])} />
+    </Box>
 )

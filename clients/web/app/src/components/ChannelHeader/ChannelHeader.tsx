@@ -13,7 +13,7 @@ import { AnimatePresence } from 'framer-motion'
 import { ChannelUsersPill } from '@components/ChannelUserPill/ChannelUserPill'
 import { TouchNavBar } from '@components/TouchNavBar/TouchNavBar'
 import { useUserList } from '@components/UserList/UserList'
-import { Box, Button, Icon, IconButton, MotionStack, Paragraph, Stack, Text } from '@ui'
+import { Box, Button, CardHeader, Icon, IconButton, MotionStack, Paragraph, Stack, Text } from '@ui'
 import { useMuteSettings } from 'api/lib/notificationSettings'
 import { useChannelType } from 'hooks/useChannelType'
 import { useDevice } from 'hooks/useDevice'
@@ -57,16 +57,44 @@ const DesktopChannelHeader = (props: Props & { showLoadingIndicator: boolean }) 
     const onInfoPressed = useChannelInfoButton(channelType)
 
     return (
-        <Stack gap>
-            {displayNotificationBanner && (
+        <>
+            <CardHeader gap="sm" onClick={onInfoPressed}>
                 <Stack
                     horizontal
-                    gap
-                    paddingY
-                    paddingX="lg"
-                    background="level3"
+                    hoverable
+                    paddingX="sm"
+                    insetX="xs"
+                    gap="sm"
                     alignItems="center"
+                    rounded="sm"
+                    minHeight="x4"
+                    cursor="pointer"
                 >
+                    {channelType === 'channel' ? (
+                        <>
+                            <Icon type="tag" size="square_sm" color="gray2" />
+                            <Paragraph fontWeight="strong" color="default">
+                                {channel.label}
+                            </Paragraph>
+                        </>
+                    ) : channelType === 'dm' ? (
+                        <DMTitleContent roomIdentifier={channel.id} />
+                    ) : channelType === 'gdm' ? (
+                        <GDMTitleContent roomIdentifier={channel.id} />
+                    ) : (
+                        <></>
+                    )}
+                    {isMuted && <Icon type="muteActive" size="square_sm" color="gray2" />}
+                </Stack>
+                {topic && <Paragraph color="gray2">{topic}</Paragraph>}
+                <Stack grow />
+                {channelType === 'channel' && (
+                    <ChannelUsersPill channelId={channel.id} spaceId={spaceId} />
+                )}
+            </CardHeader>
+            <AnimatePresence>{showLoadingIndicator && <AnimatedLoaderGradient />}</AnimatePresence>
+            {displayNotificationBanner && (
+                <Stack horizontal gap padding background="level3" alignItems="center">
                     <Text fontWeight="strong" color="default">
                         Turn on notifications for threads, mentions and DMs?
                     </Text>
@@ -79,58 +107,7 @@ const DesktopChannelHeader = (props: Props & { showLoadingIndicator: boolean }) 
                     </Button>
                 </Stack>
             )}
-            <Stack borderBottom>
-                <Stack
-                    horizontal
-                    gap
-                    paddingX="lg"
-                    height="x8"
-                    alignItems="center"
-                    color="gray1"
-                    overflow="hidden"
-                    shrink={false}
-                >
-                    <Stack
-                        horizontal
-                        border
-                        paddingX
-                        hoverable
-                        gap="sm"
-                        paddingY="sm"
-                        background="level2"
-                        alignItems="center"
-                        rounded="sm"
-                        minHeight="height_lg"
-                        cursor="pointer"
-                        onClick={onInfoPressed}
-                    >
-                        {channelType === 'channel' ? (
-                            <>
-                                <Icon type="tag" size="square_sm" color="gray2" />
-                                <Paragraph fontWeight="strong" color="default">
-                                    {channel.label}
-                                </Paragraph>
-                            </>
-                        ) : channelType === 'dm' ? (
-                            <DMTitleContent roomIdentifier={channel.id} />
-                        ) : channelType === 'gdm' ? (
-                            <GDMTitleContent roomIdentifier={channel.id} />
-                        ) : (
-                            <></>
-                        )}
-                        {isMuted && <Icon type="muteActive" size="square_sm" color="gray2" />}
-                    </Stack>
-                    {topic && <Paragraph color="gray2">{topic}</Paragraph>}
-                    <Stack grow />
-                    {channelType === 'channel' && (
-                        <ChannelUsersPill channelId={channel.id} spaceId={spaceId} />
-                    )}
-                </Stack>
-                <AnimatePresence>
-                    {showLoadingIndicator && <AnimatedLoaderGradient />}
-                </AnimatePresence>
-            </Stack>
-        </Stack>
+        </>
     )
 }
 

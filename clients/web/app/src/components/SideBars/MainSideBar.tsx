@@ -4,10 +4,9 @@ import { useInvites, useSpaceContext, useTownsContext } from 'use-towns-client'
 import { ActionNavItem } from '@components/NavItem/ActionNavItem'
 import { SpaceNavItem } from '@components/NavItem/SpaceNavItem'
 import { RegisterMainShortcuts } from '@components/Shortcuts/RegisterMainShortcuts'
-import { SideBar } from '@components/SideBars/_SideBar'
 import { useDevice } from 'hooks/useDevice'
 import { PATHS } from 'routes'
-import { Box, Dot, Icon } from '@ui'
+import { Box, Card, Dot, Icon } from '@ui'
 import { NavItem } from '@components/NavItem/_NavItem'
 
 export const MainSideBar = () => {
@@ -18,9 +17,8 @@ export const MainSideBar = () => {
     const { dmUnreadChannelIds } = useTownsContext()
 
     return (
-        <SideBar elevateReadability paddingY="sm" height="100%">
+        <Card scroll absoluteFill width="x8">
             {!isTouch && <RegisterMainShortcuts />}
-
             <NavItem
                 centerContent
                 to={`/${PATHS.MESSAGES}`}
@@ -39,7 +37,7 @@ export const MainSideBar = () => {
                         type="dm"
                         background="level2"
                     />
-                    {dmUnreadChannelIds.size > 0 && <Dot position="bottomRight" />}
+                    {dmUnreadChannelIds.size > 0 && <Dot position="topRight" />}
                 </Box>
             </NavItem>
 
@@ -79,7 +77,7 @@ export const MainSideBar = () => {
                     />
                 </TransitionItem>
             ))}
-        </SideBar>
+        </Card>
     )
 }
 

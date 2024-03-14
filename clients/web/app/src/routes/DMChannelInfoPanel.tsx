@@ -116,7 +116,7 @@ export const DMChannelInfoPanel = () => {
                 fallbackToParentContext
                 channelId={channelSlug ?? ''}
             >
-                <Stack gap padding>
+                <Stack gap>
                     {usernameProperties && (
                         <SetUsernameDisplayName titleProperties={usernameProperties} />
                     )}

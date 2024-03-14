@@ -9,7 +9,7 @@ import {
 } from 'use-towns-client'
 import { useNavigate } from 'react-router'
 import { MessageThread } from '@components/MessageThread/MessageThread'
-import { Box, Divider, Heading, Icon, IconButton, Paragraph, Stack } from '@ui'
+import { Box, CardLabel, Divider, Heading, Icon, IconButton, Paragraph, Stack } from '@ui'
 import { usePersistOrder } from 'hooks/usePersistOrder'
 import { useDevice } from 'hooks/useDevice'
 import { useHasJoinedChannels } from 'hooks/useHasJoinedChannels'
@@ -58,7 +58,7 @@ export const SpaceThreads = () => {
 
     return (
         <CentralPanelLayout>
-            {isTouch && (
+            {isTouch ? (
                 <TouchNavBar
                     contentLeft={
                         <IconButton
@@ -71,6 +71,8 @@ export const SpaceThreads = () => {
                 >
                     Threads
                 </TouchNavBar>
+            ) : (
+                <CardLabel label="Threads" />
             )}
             {userId && spaceId && threads.length > 0 ? (
                 <Stack
@@ -80,9 +82,9 @@ export const SpaceThreads = () => {
                     position="relative"
                 >
                     <Stack
+                        paddingY
                         gap="lg"
-                        paddingX={isTouch ? 'none' : 'lg'}
-                        paddingY="lg"
+                        paddingX={isTouch ? 'none' : 'md'}
                         minHeight={{ touch: 'forceScroll', default: 'auto' }}
                     >
                         {threads.map(({ thread, channel }, index) => {

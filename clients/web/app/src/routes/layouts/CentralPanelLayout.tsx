@@ -1,7 +1,7 @@
 import { Allotment } from 'allotment'
 import { useOutlet } from 'react-router'
 import React, { useEffect, useRef } from 'react'
-import { Box, Stack } from '@ui'
+import { Box, Card, Stack } from '@ui'
 import { usePersistPanes } from 'hooks/usePersistPanes'
 import { useDevice } from 'hooks/useDevice'
 import { SomethingWentWrong } from '@components/Errors/SomethingWentWrong'
@@ -44,9 +44,7 @@ export const CentralPanelLayout = (props: { children: React.ReactNode }) => {
             <Allotment onChange={onSizesChange}>
                 <Allotment.Pane minSize={550}>
                     <ErrorBoundary FallbackComponent={ErrorFallbackComponent}>
-                        <Box height="100%" background="level1">
-                            {children}
-                        </Box>
+                        <Card absoluteFill>{children}</Card>
                     </ErrorBoundary>
                 </Allotment.Pane>
                 {panelOrOutlet && (

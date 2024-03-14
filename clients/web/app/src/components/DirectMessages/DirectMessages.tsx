@@ -1,12 +1,11 @@
 import React, { useCallback } from 'react'
 import { useNavigate } from 'react-router'
 import { GlobalContextUserLookupProvider } from 'use-towns-client'
-import { TouchPanelNavigationBar } from '@components/TouchPanelNavigationBar/TouchPanelNavigationBar'
-import { Box, BoxProps, IconButton, IconName, Stack, Text } from '@ui'
-import { useDevice } from 'hooks/useDevice'
+import { BoxProps, IconButton, IconName } from '@ui'
 import { ZLayerBox } from '@components/ZLayer/ZLayerContext'
 import { useShortcut } from 'hooks/useShortcut'
 import { useCreateLink } from 'hooks/useCreateLink'
+import { Panel } from '@components/Panel/Panel'
 import { DirectMessageList } from './DirectMessageList'
 
 type DirectMessagesPanelProps = {
@@ -41,50 +40,28 @@ const MessageListPanel = ({
 }) => {
     return (
         <ZLayerBox height="100%">
-            {!hideNavigation && (
-                <PanelHeader label="Direct Messages" actionIcon="compose" onAction={onNavAction} />
-            )}
-            <GlobalContextUserLookupProvider>
-                <DirectMessageList />
-            </GlobalContextUserLookupProvider>
+            <Panel
+                label="Direct Messages"
+                rightBarButton={<PanelHeaderButton icon="compose" onClick={onNavAction} />}
+                padding="sm"
+            >
+                <GlobalContextUserLookupProvider>
+                    <DirectMessageList />
+                </GlobalContextUserLookupProvider>
+            </Panel>
         </ZLayerBox>
     )
 }
 
-const PanelHeader = (props: {
-    label: string
-    actionIcon?: IconName
-    onClose?: () => void
-    onAction?: () => void
-}) => {
-    const { isTouch } = useDevice()
-    const { label, actionIcon, onClose, onAction } = props
-    return isTouch ? (
-        <TouchPanelNavigationBar
-            rightBarButton={
-                actionIcon && props.onAction ? (
-                    <PanelHeaderButton icon={actionIcon} onClick={onAction} />
-                ) : undefined
-            }
-            title={label}
-            onBack={onClose}
-        />
-    ) : (
-        <Box borderBottom height="x8">
-            <Stack horizontal padding gap="lg" alignItems="center">
-                <Text color="default" fontWeight="strong">
-                    {label}
-                </Text>
-                <Stack grow />
-                {actionIcon && onAction && (
-                    <PanelHeaderButton icon={actionIcon} onClick={onAction} />
-                )}
-                {onClose && <PanelHeaderButton icon="close" onClick={onClose} />}
-            </Stack>
-        </Box>
-    )
-}
-
 const PanelHeaderButton = ({ icon, ...boxProps }: { icon: IconName } & Omit<BoxProps, 'size'>) => {
-    return <IconButton icon={icon} size="square_md" color="gray2" insetRight="xs" {...boxProps} />
+    return (
+        <IconButton
+            icon={icon}
+            size="square_sm"
+            color="default"
+            insetRight="xs"
+            background="level2"
+            {...boxProps}
+        />
+    )
 }

@@ -212,7 +212,7 @@ export const SpaceProfile = (props: { children?: React.ReactNode }) => {
                 </Box>
             )}
             {isCurrentUser && (
-                <Stack gap paddingX paddingBottom="lg" paddingTop="none">
+                <Stack gap paddingBottom="lg" paddingTop="none">
                     {/* wallets */}
                     <PanelButton onClick={onWalletLinkingClick}>
                         <Box width="height_md" alignItems="center">
@@ -288,7 +288,7 @@ export const SpaceProfile = (props: { children?: React.ReactNode }) => {
             )}
 
             {!isCurrentUser && !search.has('message') && user && (
-                <Stack padding gap>
+                <Stack gap>
                     <PanelButton onClick={onMessageClick}>
                         <Icon type="message" size="square_sm" color="gray2" />
                         <Paragraph color="default">Send Message</Paragraph>

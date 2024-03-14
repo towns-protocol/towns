@@ -270,7 +270,7 @@ export const SpaceInfoPanel = () => {
                     </FormRender>
                 </Stack>
             )}
-            <Stack gap padding>
+            <Stack gap>
                 <MdGap>
                     <Stack gap>
                         <Stack horizontal alignItems="center" width="100%">

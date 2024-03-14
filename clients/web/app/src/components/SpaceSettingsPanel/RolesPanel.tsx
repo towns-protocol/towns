@@ -46,7 +46,7 @@ function RolesListPanel(props: Props) {
             leftBarButton={<IconButton icon="arrowLeft" onClick={onCloseClick} />}
             onClose={onCloseClick}
         >
-            <Stack gap padding grow>
+            <Stack gap grow>
                 {isLoading ? (
                     <Stack centerContent grow>
                         <ButtonSpinner />

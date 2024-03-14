@@ -29,7 +29,7 @@ export const DirectMessageList = () => {
     })
 
     return (
-        <Stack scroll padding="sm">
+        <>
             <Stack minHeight="100svh" paddingBottom="safeAreaInsetBottom" gap="sm">
                 {dmChannelIds.length > 0 ? (
                     dmChannelIds.map((channel) => {
@@ -66,7 +66,7 @@ export const DirectMessageList = () => {
                     </Box>
                 )}
             </Stack>
-        </Stack>
+        </>
     )
 }
 

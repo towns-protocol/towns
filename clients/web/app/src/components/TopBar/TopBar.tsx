@@ -2,7 +2,7 @@ import React, { useRef } from 'react'
 import { BugReportButton } from '@components/BugReportButton/BugReportButton'
 import { ProfileCardButton } from '@components/ProfileCardButton/ProfileCardButton'
 import { SearchBar } from '@components/SearchBar/SearchBar'
-import { Box, Stack } from '@ui'
+import { Box, Card, Stack } from '@ui'
 import { LogoSingleLetter } from '@components/Logo/Logo'
 import { MintAnimation } from '@components/MintAnimation/MintAnimation'
 import { useStore } from 'store/store'
@@ -13,12 +13,18 @@ export const TopBar = () => {
 
     return (
         <>
-            <Stack horizontal minHeight="x7">
+            {recentlyMintedSpaceToken ? (
+                <MintAnimation targetRef={profileButtonRef} info={recentlyMintedSpaceToken} />
+            ) : (
+                <></>
+            )}
+            <Card horizontal minHeight="x6">
                 <Box centerContent width="x8">
                     <a href="https://towns.com" rel=", noopener noreferrer" target="_blank">
                         <LogoSingleLetter />
                     </a>
                 </Box>
+                <Box centerContent width="x8" />
                 <Box grow centerContent>
                     <SearchBar />
                 </Box>
@@ -29,12 +35,7 @@ export const TopBar = () => {
                         <ProfileCardButton />
                     </Box>
                 </Stack>
-            </Stack>
-            {recentlyMintedSpaceToken ? (
-                <MintAnimation targetRef={profileButtonRef} info={recentlyMintedSpaceToken} />
-            ) : (
-                <></>
-            )}
+            </Card>
         </>
     )
 }

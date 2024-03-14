@@ -255,14 +255,7 @@ const PlateEditorWithoutBoundary = ({
                     )}
                 </Box>
             </Box>
-            <Stack
-                background={background}
-                rounded={{ default: 'sm', touch: 'none' }}
-                borderLeft={!isTouch ? 'default' : 'none'}
-                borderRight={!isTouch ? 'default' : 'none'}
-                borderTop="default"
-                borderBottom={!isTouch ? 'default' : 'none'}
-            >
+            <Stack background={background} rounded={{ default: 'sm', touch: 'none' }}>
                 <Plate
                     plugins={PlatePlugins}
                     editorRef={editorRef}

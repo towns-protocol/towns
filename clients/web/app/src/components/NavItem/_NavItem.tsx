@@ -43,7 +43,7 @@ export const NavItem = forwardRef<
 
         return (
             <ConditionalNavLink to={to} className={navItemLinkStyle}>
-                <Box hoverable pointerEvents="all">
+                <Box pointerEvents="all">
                     <Stack position="relative" paddingX="sm" paddingY="xs" {...props} ref={ref}>
                         <Stack
                             horizontal
@@ -54,6 +54,7 @@ export const NavItem = forwardRef<
                             alignItems="center"
                             gap="sm"
                             minHeight={minHeight ?? 'x6'}
+                            minWidth="x6"
                             paddingX="sm"
                             color={isHighlight || match ? undefined : 'gray2'}
                             className={navItemBackgroundStyle}

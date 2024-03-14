@@ -7,8 +7,8 @@ import { transitions } from 'ui/transitions/transitions'
 import { useSafeEscapeKeyCancellation } from 'hooks/useSafeEscapeKeyCancellation'
 import { TouchPanelNavigationBar } from '@components/TouchPanelNavigationBar/TouchPanelNavigationBar'
 import { ZLayerBox } from '@components/ZLayer/ZLayerContext'
+import { Card, CardLabel } from '@ui'
 import { Box, BoxProps } from '../../ui/components/Box/Box'
-import { IconButton } from '../../ui/components/IconButton/IconButton'
 import { Stack } from '../../ui/components/Stack/Stack'
 import { useZLayerContext } from '../../ui/components/ZLayer/ZLayer'
 
@@ -21,8 +21,7 @@ type Props = {
     rightBarButton?: React.ReactNode
     onClose?: () => void
     background?: BoxProps['background']
-    position?: BoxProps['position']
-}
+} & Omit<BoxProps, 'label'>
 
 export const Panel = (props: Props) => {
     const { isTouch } = useDevice()
@@ -30,46 +29,25 @@ export const Panel = (props: Props) => {
 }
 
 const DesktopPanel = (props: Props) => {
-    const { paddingX = 'md', background = 'level2', onClose, rightBarButton, leftBarButton } = props
+    const { onClose, rightBarButton, leftBarButton, label, ...boxProps } = props
     useSafeEscapeKeyCancellation({ onEscape: onClose, capture: false })
 
     return (
-        <Stack height="100%" background="level1" position={props.position}>
-            <Stack
-                horizontal
-                hoverable
-                borderBottom
-                shrink={false}
-                paddingX={paddingX}
-                background={background}
-                height="x8"
-                alignItems="center"
-                color="gray1"
-                justifySelf="start"
-            >
-                {leftBarButton && <Stack paddingRight="sm">{leftBarButton}</Stack>}
-                <Stack grow color="gray2" overflow="hidden" paddingY="sm">
-                    {props.label}
-                </Stack>
-                <Stack>
-                    {props.onClose && <IconButton icon="close" onClick={props.onClose} />}
-                </Stack>
-                {rightBarButton && (
-                    <>
-                        <Stack grow />
-                        {rightBarButton}
-                    </>
-                )}
-            </Stack>
-            <Stack grow scroll>
-                {props.children}
-            </Stack>
-        </Stack>
+        <Card absoluteFill>
+            <CardLabel
+                label={label}
+                leftBarButton={leftBarButton}
+                rightBarButton={rightBarButton}
+                onClose={onClose}
+            />
+            <PanelContent {...boxProps} />
+        </Card>
     )
 }
 
 const TouchPanel = (props: Props) => {
-    const { onClose, rightBarButton } = props
+    // eslint-disable-next-line @typescript-eslint/no-unused-vars
+    const { onClose, rightBarButton, leftBarButton, label, ...boxProps } = props
     const mountPoint = useZLayerContext().rootLayerRef?.current ?? undefined
     const [modalPresented, setModalPresented] = useState(false)
     const modalPresentable = props.modalPresentable ?? false
@@ -105,7 +83,12 @@ const TouchPanel = (props: Props) => {
             <Sheet.Container>
                 <Sheet.Header />
                 <Sheet.Content>
-                    <Box maxHeight="100svh" overflow="auto" paddingBottom="safeAreaInsetBottom">
+                    <Box
+                        paddingX
+                        maxHeight="100svh"
+                        overflow="auto"
+                        paddingBottom="safeAreaInsetBottom"
+                    >
                         {props.children}
                     </Box>
                 </Sheet.Content>
@@ -138,14 +121,14 @@ const TouchPanel = (props: Props) => {
                         onBack={closePanel}
                     />
                     {/* note: for vlist this following config would be ideal:  <Box grow overflow="hidden" position="relative"> */}
-                    <Box scroll scrollbars height="100%">
-                        {props.children}
-                    </Box>
+                    <PanelContent {...boxProps}>{props.children}</PanelContent>
                 </ZLayerBox>
             )}
         </AnimatePresence>
     )
 }
+
+const PanelContent = (props: BoxProps) => <Stack grow scroll padding gap {...props} />
 
 export const PanelButton = ({
     tone,

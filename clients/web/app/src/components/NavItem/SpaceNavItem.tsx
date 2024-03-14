@@ -64,7 +64,9 @@ export const SpaceNavItem = (props: Props) => {
                     variant="thumbnail100"
                     firstLetterOfSpaceName={name[0]}
                 />
-                {newMessages && <Dot position="bottomRight" />}
+                {newMessages && (
+                    <Dot position="topRight" style={{ transform: `translate(25%,-25%)` }} />
+                )}
             </Box>
 
             {icon && <Icon type={icon} color="gray2" background="level2" size="square_lg" />}

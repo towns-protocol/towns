@@ -110,7 +110,7 @@ export const ChannelInfoPanel = () => {
 
     return (
         <Panel modalPresentable label="Channel Info" onClose={onClose}>
-            <Stack gap padding="lg">
+            <Stack gap>
                 <Stack gap padding background="level2" rounded="sm">
                     <Paragraph strong size="lg">
                         #{channel?.label}

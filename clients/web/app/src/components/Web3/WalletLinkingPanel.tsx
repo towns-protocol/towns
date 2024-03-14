@@ -70,7 +70,7 @@ export function WalletLinkingPanel() {
     }
 
     return (
-        <Stack padding gap grow position="relative" overflow="auto">
+        <Stack gap grow position="relative" overflow="auto">
             <LinkedWallet
                 address={loggedInWalletAddress}
                 loggedInWalletAddress={loggedInWalletAddress}

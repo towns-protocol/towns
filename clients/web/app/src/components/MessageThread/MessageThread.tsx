@@ -131,8 +131,8 @@ export const MessageThread = (props: {
         >
             <>
                 <Stack gap={{ touch: 'none', default: 'md' }}>
-                    <Box paddingX={{ touch: 'md', default: 'none' }} paddingTop="sm">
-                        <Paragraph size="lg" color="default">
+                    <Box paddingX={{ touch: 'md', default: 'none' }}>
+                        <Paragraph color="default">
                             <Link
                                 to={createLink({ spaceId, channelId, threadId: parentId }) ?? `#`}
                             >

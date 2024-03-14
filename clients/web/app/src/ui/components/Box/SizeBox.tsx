@@ -1,20 +1,29 @@
 import useResizeObserver from '@react-hook/resize-observer'
-import React, { RefObject, useCallback, useLayoutEffect, useRef, useState } from 'react'
+import React, {
+    RefObject,
+    forwardRef,
+    useCallback,
+    useImperativeHandle,
+    useLayoutEffect,
+    useRef,
+    useState,
+} from 'react'
 import { Size, SizeContext } from 'ui/hooks/useSizeContext'
 import { Box, BoxProps } from './Box'
 
 /**
  * Box providing size context
  */
-export const SizeBox = (props: BoxProps) => {
-    const ref = useRef<HTMLDivElement>(null)
-    const size = useSize(ref)
+export const SizeBox = forwardRef<HTMLDivElement, BoxProps>((props, ref) => {
+    const innerRef = useRef<HTMLDivElement>(null)
+    useImperativeHandle(ref, () => innerRef.current!)
+    const size = useSize(innerRef)
     return (
         <SizeContext.Provider value={{ size }}>
-            <Box {...props} ref={ref} />
+            <Box {...props} ref={innerRef} />
         </SizeContext.Provider>
     )
-}
+})
 
 const useSize = (target: RefObject<HTMLDivElement>) => {
     const [size, setSize] = useState<Size>({

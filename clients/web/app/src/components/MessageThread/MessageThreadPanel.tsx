@@ -69,7 +69,7 @@ export const MessageThreadPanel = (props: Props) => {
         : `Loading permissions`
 
     return (
-        <Panel label={panelLabel} onClose={props.onClose}>
+        <Panel label={panelLabel} padding="none" onClose={props.onClose}>
             <MediaDropContextProvider
                 title={imageUploadTitle}
                 channelId={channelId}
@@ -102,7 +102,7 @@ export const MessageThreadPanel = (props: Props) => {
                 {isChannelWritable && (
                     <Box
                         paddingX={{ default: 'md', touch: 'none' }}
-                        paddingBottom={{ default: 'lg', touch: 'none' }}
+                        paddingBottom={{ default: 'md', touch: 'none' }}
                         paddingTop={{ default: 'none', touch: 'none' }}
                         bottom={isTouch ? 'sm' : 'none'}
                     >

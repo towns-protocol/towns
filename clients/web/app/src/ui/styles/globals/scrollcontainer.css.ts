@@ -34,7 +34,7 @@ globalStyle(`${scrollbarsClass}::-webkit-scrollbar-thumb:hover`, {
 })
 
 globalStyle(`${scrollbarsClass}::-webkit-scrollbar-track`, {
-    backgroundColor: vars.color.background.level1,
+    backgroundColor: 'inherit',
 })
 
 globalStyle(`${scrollbarsClass}::-webkit-scrollbar-track:hover`, {

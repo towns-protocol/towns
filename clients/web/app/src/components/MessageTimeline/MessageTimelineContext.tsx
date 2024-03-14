@@ -156,6 +156,7 @@ export const MessageTimelineWrapper = (props: {
         members,
         usersMap,
     ])
+
     return (
         <ErrorBoundary FallbackComponent={MessageTimelineFallbackComponent}>
             <MessageTimelineContext.Provider value={value}>

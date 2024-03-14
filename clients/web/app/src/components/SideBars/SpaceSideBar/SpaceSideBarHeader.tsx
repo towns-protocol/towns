@@ -231,7 +231,6 @@ const SidebarPill = (props: {
         <Stack
             horizontal
             transition
-            border
             hoverable
             background="level2"
             gap="sm"
@@ -244,7 +243,9 @@ const SidebarPill = (props: {
             position="relative"
             onClick={props.onClick}
         >
-            <Icon type={props.icon} size="square_md" padding="xxs" />
+            <Box width="x3">
+                <Icon type={props.icon} size="square_md" padding="xxs" insetLeft="xxs" />
+            </Box>
             <AnimatePresence mode="sync">
                 <Paragraph size="sm">{props.label}</Paragraph>
             </AnimatePresence>

@@ -3,7 +3,7 @@ import { Link } from 'react-router-dom'
 import { Address, RoomMember, useSpaceMembers, useUserLookupContext } from 'use-towns-client'
 import { CentralPanelLayout } from 'routes/layouts/CentralPanelLayout'
 import { shortAddress } from 'ui/utils/utils'
-import { Box, Grid, Paragraph, Stack } from '@ui'
+import { Box, CardLabel, Grid, Paragraph, Stack } from '@ui'
 import { ClipboardCopy } from '@components/ClipboardCopy/ClipboardCopy'
 import { useCreateLink } from 'hooks/useCreateLink'
 import { getPrettyDisplayName } from 'utils/getPrettyDisplayName'
@@ -26,13 +26,10 @@ export const MembersPage = (props: Props) => {
     return members?.length ? (
         <CentralPanelLayout>
             <Stack height="100%">
-                <Stack borderBottom horizontal paddingX="lg" minHeight="x8" alignItems="center">
-                    <Paragraph strong size="lg">
-                        Members
-                    </Paragraph>
-                </Stack>
+                <CardLabel label="Members" />
+
                 <Stack grow overflowY="scroll">
-                    <Grid padding="lg" columnMinSize="180px">
+                    <Grid columnMinSize="180px">
                         {members.map((member) => (
                             <GridProfile member={member} key={member.userId} />
                         ))}
@@ -88,7 +85,7 @@ const GridProfile = ({ member }: { member: RoomMember }) => {
                         />
                     </Box>
 
-                    <Box tooltip={getPrettyDisplayName(member)}>
+                    <Box tooltip={getPrettyDisplayName(member)} maxWidth="100%">
                         <Paragraph truncate textAlign="center">
                             {getPrettyDisplayName(member)}
                         </Paragraph>

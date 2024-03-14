@@ -6,7 +6,7 @@ import { IsolatedMessageItem } from '@components/ResultItem/IsolatedMessageItem'
 import { NoJoinedChannelsFallback } from '@components/NoJoinedChannelsFallback'
 import { TouchNavBar } from '@components/TouchNavBar/TouchNavBar'
 import { TouchScrollToTopScrollId } from '@components/TouchTabBar/TouchScrollToTopScrollId'
-import { Box, Heading, Icon, IconButton, Paragraph, Stack } from '@ui'
+import { Box, CardLabel, Heading, Icon, IconButton, Paragraph, Stack } from '@ui'
 import { useDevice } from 'hooks/useDevice'
 import { useHasJoinedChannels } from 'hooks/useHasJoinedChannels'
 import { useCreateLink } from 'hooks/useCreateLink'
@@ -55,7 +55,7 @@ export const SpaceMentions = () => {
 
     return (
         <CentralPanelLayout>
-            {isTouch && (
+            {isTouch ? (
                 <TouchNavBar
                     contentLeft={
                         <IconButton
@@ -68,6 +68,8 @@ export const SpaceMentions = () => {
                 >
                     Mentions
                 </TouchNavBar>
+            ) : (
+                <CardLabel label="Mentions" />
             )}
             <Stack
                 scroll
@@ -77,23 +79,19 @@ export const SpaceMentions = () => {
             >
                 {mentions.length ? (
                     <Stack minHeight="forceScroll">
-                        <Stack
-                            gap={{ touch: 'none', default: 'md' }}
-                            paddingX={{ touch: 'none', default: 'lg' }}
-                            paddingY={{ touch: 'md', default: 'lg' }}
-                        >
+                        <Stack padding gap={{ touch: 'none', default: 'md' }}>
                             {mentions.map((m) => {
                                 return (
                                     m.type === 'mention' && (
                                         <IsolatedMessageItem
                                             hoverable
-                                            border
+                                            // border
                                             result={m}
                                             key={m.event.eventId}
                                             userId={userId}
                                             padding="md"
                                             borderRadius="md"
-                                            boxShadow="card"
+                                            // boxShadow="card"
                                         />
                                     )
                                 )

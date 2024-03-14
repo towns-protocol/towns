@@ -8,7 +8,7 @@ import {
     useUserLookupContext,
 } from 'use-towns-client'
 import { AnimatePresence } from 'framer-motion'
-import { Box, Divider, Icon, Paragraph, Stack, TextField } from '@ui'
+import { Box, Divider, Paragraph, Stack, TextField } from '@ui'
 import { useSearch } from 'hooks/useSearch'
 import { useShortcut } from 'hooks/useShortcut'
 import { useSpaceChannels } from 'hooks/useSpaceChannels'
@@ -72,8 +72,9 @@ export const SearchBar = () => {
             <Box horizontal width="100%" height="100%" position="relative" justifyContent="center">
                 <AnimatePresence>
                     <Box
-                        border={isSearchActive}
+                        // border={isSearchActive}
                         boxShadow={isSearchActive ? 'search' : undefined}
+                        style={{ transition: 'box-shadow 0.2s ease-in-out' }}
                         position="absolute"
                         background="level2"
                         zIndex="tooltips"
@@ -88,10 +89,9 @@ export const SearchBar = () => {
                             grow
                             background="level2"
                             cursor={isSearchActive ? 'default' : 'pointer'}
-                            height="x5"
+                            height="x4"
                             gap="sm"
                             alignItems="start"
-                            justifyContent="center"
                             maxWidth="100%"
                             borderTopLeftRadius="sm"
                             borderTopRightRadius="sm"
@@ -99,23 +99,21 @@ export const SearchBar = () => {
                             onClick={() => setIsSearchActive(true)}
                         >
                             {isSearchActive ? (
-                                <Box horizontal centerContent height="x5">
+                                <Box horizontal centerContent height="x4">
                                     <TextField
                                         autoFocus
                                         tone="none"
                                         background="level2"
                                         height="100%"
                                         width="700"
-                                        placeholder="Enter terms to search..."
+                                        placeholder={searchLabel}
                                         value={value ?? undefined}
                                         onChange={onChange}
                                     />
                                 </Box>
                             ) : (
-                                <Box horizontal centerContent gap="sm" height="x5">
-                                    <Icon type="search" color="gray2" size="square_xs" />
+                                <Box horizontal paddingX alignItems="center" gap="sm" height="x4">
                                     <Paragraph color="gray2">{searchLabel}</Paragraph>
-                                    {/* <ShortcutKeys keys="Meta+K" size="sm" /> */}
                                 </Box>
                             )}
                         </Box>

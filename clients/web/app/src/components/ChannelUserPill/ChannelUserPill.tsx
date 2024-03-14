@@ -37,7 +37,7 @@ export const ChannelUsersPill = (props: { spaceId: string | undefined; channelId
     }, [timelineContext?.events, memberIds])
 
     return (
-        <Stack horizontal border rounded="sm" height="height_lg" overflow="hidden">
+        <Stack horizontal rounded="sm" height="x4" overflow="hidden" background="level2">
             <Link to="info?directory">
                 <Stack
                     horizontal
@@ -50,7 +50,7 @@ export const ChannelUsersPill = (props: { spaceId: string | undefined; channelId
                 >
                     <Stack horizontal gap="line">
                         {lastInteractedUniqueUserIds.map((userId) => (
-                            <Avatar key={userId} size="avatar_sm" userId={userId} />
+                            <Avatar key={userId} size="avatar_xs" userId={userId} />
                         ))}
                     </Stack>
                     <Paragraph size="sm">{memberIds.length}</Paragraph>
@@ -58,7 +58,7 @@ export const ChannelUsersPill = (props: { spaceId: string | undefined; channelId
             </Link>
 
             {spaceId && (
-                <Box centerContent borderLeft hoverable paddingX="xs" background="level2">
+                <Box centerContent borderLeft hoverable padding="xs" background="level2">
                     <CopySpaceLink
                         spaceId={spaceId}
                         channelId={channelId}

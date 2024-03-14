@@ -1,7 +1,6 @@
 import React, { useCallback } from 'react'
 import { Panel } from '@components/Panel/Panel'
 import { ErrorReportForm } from '@components/ErrorReport/ErrorReport'
-import { Stack } from '@ui'
 import { useStore } from 'store/store'
 
 export const BugReportPanel = () => {
@@ -11,9 +10,7 @@ export const BugReportPanel = () => {
     }, [setSidePanel])
     return (
         <Panel label="Bug Report" onClose={onClose}>
-            <Stack padding grow>
-                <ErrorReportForm />
-            </Stack>
+            <ErrorReportForm />
         </Panel>
     )
 }

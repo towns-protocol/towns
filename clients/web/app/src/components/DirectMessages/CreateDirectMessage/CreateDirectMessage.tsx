@@ -18,7 +18,6 @@ import { Box, Button, Icon, MotionBox, Paragraph, Stack, Text } from '@ui'
 import { useCreateLink } from 'hooks/useCreateLink'
 import { useDevice } from 'hooks/useDevice'
 import { SpacesChannelComponent } from 'routes/SpacesChannel'
-import { CentralPanelLayout } from 'routes/layouts/CentralPanelLayout'
 import { ChannelPlaceholder } from './ChannelPlaceholder'
 import { MessageDropDown } from './MessageDropDown'
 import { UserOption, UserPillSelector } from './UserPillSelector'
@@ -30,7 +29,6 @@ type Props = {
 }
 
 export const CreateMessagePanel = () => {
-    const { isTouch } = useDevice()
     const { createLink } = useCreateLink()
     const navigate = useNavigate()
     const [searchParams] = useSearchParams()
@@ -48,16 +46,7 @@ export const CreateMessagePanel = () => {
 
     const panel = (
         <>
-            <Panel
-                paddingX={isTouch ? undefined : 'lg'}
-                label={
-                    <Text strong color="default" size="lg">
-                        New Message
-                    </Text>
-                }
-                background="level1"
-                onClose={onClose}
-            >
+            <Panel label="New Message" padding="none" onClose={onClose}>
                 <CreateDirectMessage />
             </Panel>
             <Outlet />
@@ -65,7 +54,7 @@ export const CreateMessagePanel = () => {
     )
 
     // TODO: central panel layout includes animation on touch
-    return isTouch ? panel : <CentralPanelLayout>{panel}</CentralPanelLayout>
+    return panel
 }
 
 export const CreateDirectMessage = (props: Props) => {

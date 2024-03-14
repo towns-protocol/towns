@@ -31,32 +31,30 @@ export const GDMChannelPermissions = () => {
     const [allowModifySettings, setAllowModifySettings] = useState(true)
 
     return (
-        <Box padding>
-            <Stack gap paddingX="md" paddingY="lg" background="level2" rounded="sm">
-                <Text color="default" fontWeight="strong" fontSize="md">
-                    What can members of this group do?
-                </Text>
-                <ToggleGroup
-                    label="Send messages"
-                    description="Allows members to send messages."
-                    toggled={allowSendMessages}
-                    onToggle={setAllowSendMessages}
-                />
+        <Stack gap paddingX="md" paddingY="lg" background="level2" rounded="sm">
+            <Text color="default" fontWeight="strong" fontSize="md">
+                What can members of this group do?
+            </Text>
+            <ToggleGroup
+                label="Send messages"
+                description="Allows members to send messages."
+                toggled={allowSendMessages}
+                onToggle={setAllowSendMessages}
+            />
 
-                <ToggleGroup
-                    label="Add/remove people"
-                    description="Allows members to add or remove other people."
-                    toggled={allowInviteRemove}
-                    onToggle={setAllowInviteRemove}
-                />
-                <ToggleGroup
-                    label="Modify group settings"
-                    description="Allows members to change space image, name, topic, and other settings such as permissions."
-                    toggled={allowModifySettings}
-                    onToggle={setAllowModifySettings}
-                />
-            </Stack>
-        </Box>
+            <ToggleGroup
+                label="Add/remove people"
+                description="Allows members to add or remove other people."
+                toggled={allowInviteRemove}
+                onToggle={setAllowInviteRemove}
+            />
+            <ToggleGroup
+                label="Modify group settings"
+                description="Allows members to change space image, name, topic, and other settings such as permissions."
+                toggled={allowModifySettings}
+                onToggle={setAllowModifySettings}
+            />
+        </Stack>
     )
 }
 

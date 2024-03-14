@@ -4,6 +4,6 @@ import { Figma } from 'ui/styles/palette'
 globalStyle(`:root`, {
     vars: {
         ['--focus-border']: Figma.Colors.Blue,
-        ['--separator-border']: `hsla(0, 0%, 50%, 0.2)`,
+        ['--separator-border']: `hsla(0, 0%, 50%, 0)`,
     },
 })

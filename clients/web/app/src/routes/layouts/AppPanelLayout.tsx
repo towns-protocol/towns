@@ -12,7 +12,6 @@ import { usePersistPanes } from 'hooks/usePersistPanes'
 import { useSpaceIdFromPathname } from 'hooks/useSpaceInfoFromPathname'
 import { PATHS } from 'routes'
 import { TopBar, TopBarSkeleton } from '@components/TopBar/TopBar'
-import { atoms } from 'ui/styles/atoms.css'
 import * as styles from './AppPanelLayout.css'
 
 export const AppPanelLayout = () => {
@@ -36,24 +35,27 @@ export const AppPanelLayout = () => {
         hasTownRoute && (!(spacesSettingsRoute || spacesNewRoute || homeRoute) || isMessagesRoute)
 
     return (
-        <Stack horizontal grow borderTop position="relative">
-            <Box absoluteFill>
+        <>
+            <Stack absoluteFill padding="xs">
                 <TopBar />
                 <Allotment
                     // proportionalLayout
                     ref={allotemntRef}
-                    className={atoms({ borderTop: 'default' })}
                     onChange={onSizesChange}
                 >
                     {/* left-side side-bar goes here */}
-                    <Allotment.Pane minSize={65} maxSize={65} preferredSize={sizes[0] || 65}>
+                    <Allotment.Pane
+                        minSize={64 + 8}
+                        maxSize={64 + 8}
+                        preferredSize={sizes[0] || 65}
+                    >
                         <MainSideBar />
                     </Allotment.Pane>
 
                     {/* channel side-bar goes here */}
                     <Allotment.Pane
-                        minSize={180}
-                        maxSize={320}
+                        minSize={250}
+                        maxSize={400}
                         preferredSize={sizes[1] || 320}
                         visible={displaySpacePanel || isMessagesRoute}
                     >
@@ -79,18 +81,18 @@ export const AppPanelLayout = () => {
                         </Box>
                     </Allotment.Pane>
                 </Allotment>
-            </Box>
+            </Stack>
             <ShortcutModal />
-        </Stack>
+        </>
     )
 }
 
 export const AppPanelLayoutSkeleton = () => {
     return (
-        <Stack horizontal grow borderTop position="relative">
+        <Stack horizontal grow position="relative">
             <Box absoluteFill>
                 <TopBarSkeleton />
-                <Allotment className={atoms({ borderTop: 'default' })}>
+                <Allotment>
                     {/* left-side side-bar goes here */}
                     <Allotment.Pane minSize={65} maxSize={65} preferredSize={65}>
                         <></>
