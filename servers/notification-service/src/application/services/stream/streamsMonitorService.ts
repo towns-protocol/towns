@@ -50,6 +50,7 @@ export class StreamsMonitorService {
 
         if (response.stream) {
             this.streams.set(streamId, response.stream!)
+            this.streams.addStreamToSync(response.stream.nextSyncCookie!)
         }
 
         if (unpacked.miniblocks.length === 0) {

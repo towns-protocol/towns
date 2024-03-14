@@ -307,23 +307,6 @@ export class SyncedStreams {
                 console.log('sync loop created')
                 resolve()
 
-                const dmStreams = await database.dMStream.findMany()
-
-                const syncCookies: SyncCookie[] = []
-                for (const dbStream of dmStreams) {
-                    const syncStream = await this.rpcClient.getStream({
-                        streamId: streamIdToBytes(dbStream.streamId),
-                        optional: false,
-                    })
-                    if (syncStream.stream?.nextSyncCookie) {
-                        syncCookies.push(syncStream.stream?.nextSyncCookie)
-                        if (this.get(dbStream.streamId) === undefined) {
-                            this.set(dbStream.streamId, syncStream.stream)
-                            console.log('syncStream added', syncStream.stream)
-                        }
-                    }
-                }
-
                 try {
                     while (
                         this.syncState === SyncState.Starting ||
@@ -343,6 +326,24 @@ export class SyncedStreams {
                             // syncId needs to be reset before starting a new syncStreams
                             // syncStreams() should return a new syncId
                             this.syncId = undefined
+
+                            const dmStreams = await database.dMStream.findMany()
+
+                            const syncCookies: SyncCookie[] = []
+                            for (const dbStream of dmStreams) {
+                                const syncStream = await this.rpcClient.getStream({
+                                    streamId: streamIdToBytes(dbStream.streamId),
+                                    optional: false,
+                                })
+                                if (syncStream.stream?.nextSyncCookie) {
+                                    syncCookies.push(syncStream.stream?.nextSyncCookie)
+                                    if (this.get(dbStream.streamId) === undefined) {
+                                        this.set(dbStream.streamId, syncStream.stream)
+                                        console.log('syncStream added', syncStream.stream)
+                                    }
+                                }
+                            }
+
                             const streams = this.rpcClient.syncStreams({
                                 syncPos: syncCookies,
                             })
