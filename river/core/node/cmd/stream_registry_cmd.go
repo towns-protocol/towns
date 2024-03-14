@@ -71,9 +71,12 @@ func srstream(cfg *config.Config, streamId string) error {
 		return err
 	}
 
-	fmt.Printf("%d %s\n", stream.LastMiniblockNum, stream.LastMiniblockHash.Hex())
-	for _, node := range stream.Nodes {
-		fmt.Printf("%s\n", node)
+	fmt.Printf("StreamId: %s\n", stream.StreamId.String())
+	fmt.Printf("Miniblock: %d %s\n", stream.LastMiniblockNum, stream.LastMiniblockHash.Hex())
+	fmt.Println("IsSealed: ", stream.IsSealed)
+	fmt.Println("Nodes:")
+	for i, node := range stream.Nodes {
+		fmt.Printf("  %d %s\n", i, node)
 	}
 
 	return nil

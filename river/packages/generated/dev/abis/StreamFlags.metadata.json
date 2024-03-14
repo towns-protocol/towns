@@ -17,70 +17,70 @@
     }
   },
   "settings": {
-    "compilationTarget": {
-      "contracts/src/river/registry/facets/stream/StreamRegistry.sol": "StreamFlags"
-    },
-    "evmVersion": "paris",
-    "libraries": {},
-    "metadata": {
-      "appendCBOR": false,
-      "bytecodeHash": "none"
-    },
+    "remappings": [
+      "@openzeppelin/=lib/@openzeppelin/",
+      "@prb/math/=lib/@prb/math/src/",
+      "@prb/test/=lib/@prb/test/src/",
+      "account-abstraction/=lib/account-abstraction/contracts/",
+      "base64/=lib/base64/",
+      "ds-test/=lib/ds-test/src/",
+      "forge-std/=lib/forge-std/src/",
+      "hardhat-deploy/=lib/hardhat-deploy/"
+    ],
     "optimizer": {
       "enabled": true,
       "runs": 200
     },
-    "remappings": [
-      ":@openzeppelin/=lib/@openzeppelin/",
-      ":@prb/math/=lib/@prb/math/src/",
-      ":@prb/test/=lib/@prb/test/src/",
-      ":account-abstraction/=lib/account-abstraction/contracts/",
-      ":base64/=lib/base64/",
-      ":ds-test/=lib/ds-test/src/",
-      ":forge-std/=lib/forge-std/src/",
-      ":hardhat-deploy/=lib/hardhat-deploy/"
-    ]
+    "metadata": {
+      "bytecodeHash": "none",
+      "appendCBOR": false
+    },
+    "compilationTarget": {
+      "contracts/src/river/registry/facets/stream/StreamRegistry.sol": "StreamFlags"
+    },
+    "evmVersion": "paris",
+    "libraries": {}
   },
   "sources": {
     "contracts/src/river/registry/facets/stream/IStreamRegistry.sol": {
       "keccak256": "0x19dbdaa4c4a2dedde230aabd42338e02158570da0268eaf98def42604bc43ce4",
-      "license": "Apache-2.0",
       "urls": [
         "bzz-raw://b35375b1086e487a7f0939de9fe4a926c66687630ff302d15dca19607b6d9b98",
         "dweb:/ipfs/QmYwsVPrk77dJwnkc2hwTALrhx7qBeCFKkevjBYvm5PUsq"
-      ]
+      ],
+      "license": "Apache-2.0"
     },
     "contracts/src/river/registry/facets/stream/StreamRegistry.sol": {
       "keccak256": "0xc4ceb616e707914fe36fa2b3c15206f6a1af5d3bf453cb51b6c585696485086a",
-      "license": "Apache-2.0",
       "urls": [
         "bzz-raw://0628886698f98e6576dff5b3c1b5708c0737ce2590a54a76bbaf0085a475032d",
         "dweb:/ipfs/QmWQ5bvQzZZdbBXdcfHyeUwgxNXz2H3bChS9k84KbeGARe"
-      ]
+      ],
+      "license": "Apache-2.0"
     },
     "contracts/src/river/registry/libraries/RegistryErrors.sol": {
       "keccak256": "0x073c3ff0f1206824f3722e2ba22fd7174f9ded4a6111e48e0641e21ed90aabfc",
-      "license": "Apache-2.0",
       "urls": [
         "bzz-raw://62d60cd3958fdb3762972e41aefa899e6b6ac0dac7c94689025f6ba5dc241be3",
         "dweb:/ipfs/QmRRhiC1KXDh5aPPNBEgwbg8wZ9BKWYLJ7jGD9vFzm1kWy"
-      ]
+      ],
+      "license": "Apache-2.0"
     },
     "contracts/src/river/registry/libraries/RegistryStorage.sol": {
       "keccak256": "0xfbcf41b4c4b1544daa4747d9ea9c1a6fdb01cf413fdc30c9a7b3d920ce552058",
-      "license": "Apache-2.0",
       "urls": [
         "bzz-raw://0a64065c598fc295fcdd5dee549e0d7859fb34b1724b20317483cd896bb6e821",
         "dweb:/ipfs/QmSVV9jXD73QKhG4ry4BZta3PcEAL5D9C3m6BQMWH1JQJy"
-      ]
+      ],
+      "license": "Apache-2.0"
     },
     "lib/@openzeppelin/contracts/utils/structs/EnumerableSet.sol": {
       "keccak256": "0x86c1470cbfd878491e5de030072b647352d36bd27122cffb928970b1945282aa",
-      "license": "MIT",
       "urls": [
         "bzz-raw://ad85dd393ee0a1917c57046abc5155f51f77844b2c6a42c05c1b8dd26d6ff3c1",
         "dweb:/ipfs/QmNqYc8To2NdnpP6E1tGz7t6A7beuENde5yovwov5pW1fA"
-      ]
+      ],
+      "license": "MIT"
     }
   },
   "version": 1

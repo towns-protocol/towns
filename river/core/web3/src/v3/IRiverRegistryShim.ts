@@ -1,14 +1,14 @@
 import {
-    IRiverRegistry as DevContract,
-    IRiverRegistryInterface as DevInterface,
-} from '@river/generated/dev/typings/IRiverRegistry'
+    INodeRegistry as DevContract,
+    INodeRegistryInterface as DevInterface,
+} from '@river/generated/dev/typings/INodeRegistry'
 import {
-    IRiverRegistry as V3Contract,
-    IRiverRegistryInterface as V3Interface,
-} from '@river/generated/v3/typings/IRiverRegistry'
+    INodeRegistry as V3Contract,
+    INodeRegistryInterface as V3Interface,
+} from '@river/generated/v3/typings/INodeRegistry'
 
-import DevAbi from '@river/generated/dev/abis/RiverRegistry.abi.json' assert { type: 'json' }
-import V3Abi from '@river/generated/v3/abis/RiverRegistry.abi.json' assert { type: 'json' }
+import DevAbi from '@river/generated/dev/abis/NodeRegistry.abi.json' assert { type: 'json' }
+import V3Abi from '@river/generated/v3/abis/NodeRegistry.abi.json' assert { type: 'json' }
 
 import { BaseContractShim } from './BaseContractShim'
 import { ethers } from 'ethers'

@@ -95,6 +95,14 @@ interface IMembership is IMembershipBase {
    */
   function expiresAt(uint256 tokenId) external view returns (uint256);
 
+  /**
+   * @notice Return the token id associated to the membership
+   * @param membership The account address that holds the membership
+   */
+  function getTokenIdByMembership(
+    address membership
+  ) external view returns (uint256);
+
   // =============================================================
   //                           Duration
   // =============================================================

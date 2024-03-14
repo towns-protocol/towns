@@ -62,7 +62,7 @@ abstract contract Entitled is
     }
 
     // Check for ban conditions
-    if (_isBanned(tokenId) || _isBannedByChannel(channelId, tokenId)) {
+    if (_isBanned(tokenId)) {
       return false;
     }
 

@@ -160,6 +160,13 @@ contract MembershipFacet is
     return _expiresAt(tokenId);
   }
 
+  /// @inheritdoc IMembership
+  function getTokenIdByMembership(
+    address member
+  ) external view returns (uint256) {
+    return _getTokenIdByMembership(member);
+  }
+
   // =============================================================
   //                           Duration
   // =============================================================

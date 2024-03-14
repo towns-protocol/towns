@@ -64,10 +64,6 @@ popd
 
 ./core/scripts/launch_storage.sh &
 
-# Set the block chains to run with 2 second block times
-# referenced by the start-local scripts
-export RIVER_BLOCK_TIME=2 
-
 # Start chains and Postgres in separate panes of the same window
 tmux new-window -t $SESSION_NAME -n 'BlockChains'
 tmux send-keys -t $SESSION_NAME:1 "./scripts/start-local-basechain.sh" C-m

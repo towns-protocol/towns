@@ -6,91 +6,91 @@
   "output": {
     "abi": [
       {
-        "anonymous": false,
         "inputs": [
           {
-            "indexed": false,
             "internalType": "bytes32",
             "name": "streamId",
-            "type": "bytes32"
+            "type": "bytes32",
+            "indexed": false
           },
           {
-            "indexed": false,
             "internalType": "address[]",
             "name": "nodes",
-            "type": "address[]"
+            "type": "address[]",
+            "indexed": false
           },
           {
-            "indexed": false,
             "internalType": "bytes32",
             "name": "genesisMiniblockHash",
-            "type": "bytes32"
+            "type": "bytes32",
+            "indexed": false
           },
           {
-            "indexed": false,
             "internalType": "bytes",
             "name": "genesisMiniblock",
-            "type": "bytes"
+            "type": "bytes",
+            "indexed": false
           }
         ],
+        "type": "event",
         "name": "StreamAllocated",
-        "type": "event"
+        "anonymous": false
       },
       {
-        "anonymous": false,
         "inputs": [
           {
-            "indexed": false,
             "internalType": "bytes32",
             "name": "streamId",
-            "type": "bytes32"
+            "type": "bytes32",
+            "indexed": false
           },
           {
-            "indexed": false,
             "internalType": "bytes32",
             "name": "lastMiniblockHash",
-            "type": "bytes32"
+            "type": "bytes32",
+            "indexed": false
           },
           {
-            "indexed": false,
             "internalType": "uint64",
             "name": "lastMiniblockNum",
-            "type": "uint64"
+            "type": "uint64",
+            "indexed": false
           },
           {
-            "indexed": false,
             "internalType": "bool",
             "name": "isSealed",
-            "type": "bool"
+            "type": "bool",
+            "indexed": false
           }
         ],
+        "type": "event",
         "name": "StreamLastMiniblockUpdated",
-        "type": "event"
+        "anonymous": false
       },
       {
-        "anonymous": false,
         "inputs": [
           {
-            "indexed": false,
             "internalType": "bytes32",
             "name": "streamId",
-            "type": "bytes32"
+            "type": "bytes32",
+            "indexed": false
           },
           {
-            "indexed": false,
             "internalType": "address",
             "name": "nodeAddress",
-            "type": "address"
+            "type": "address",
+            "indexed": false
           },
           {
-            "indexed": false,
             "internalType": "bool",
             "name": "isAdded",
-            "type": "bool"
+            "type": "bool",
+            "indexed": false
           }
         ],
+        "type": "event",
         "name": "StreamPlacementUpdated",
-        "type": "event"
+        "anonymous": false
       },
       {
         "inputs": [
@@ -115,13 +115,14 @@
             "type": "bytes"
           }
         ],
-        "name": "allocateStream",
-        "outputs": [],
         "stateMutability": "nonpayable",
-        "type": "function"
+        "type": "function",
+        "name": "allocateStream"
       },
       {
         "inputs": [],
+        "stateMutability": "view",
+        "type": "function",
         "name": "getAllStreamIds",
         "outputs": [
           {
@@ -129,15 +130,18 @@
             "name": "",
             "type": "bytes32[]"
           }
-        ],
-        "stateMutability": "view",
-        "type": "function"
+        ]
       },
       {
         "inputs": [],
+        "stateMutability": "view",
+        "type": "function",
         "name": "getAllStreams",
         "outputs": [
           {
+            "internalType": "struct StreamWithId[]",
+            "name": "",
+            "type": "tuple[]",
             "components": [
               {
                 "internalType": "bytes32",
@@ -145,6 +149,9 @@
                 "type": "bytes32"
               },
               {
+                "internalType": "struct Stream",
+                "name": "stream",
+                "type": "tuple",
                 "components": [
                   {
                     "internalType": "bytes32",
@@ -171,19 +178,11 @@
                     "name": "nodes",
                     "type": "address[]"
                   }
-                ],
-                "internalType": "struct Stream",
-                "name": "stream",
-                "type": "tuple"
+                ]
               }
-            ],
-            "internalType": "struct StreamWithId[]",
-            "name": "",
-            "type": "tuple[]"
+            ]
           }
-        ],
-        "stateMutability": "view",
-        "type": "function"
+        ]
       },
       {
         "inputs": [
@@ -193,9 +192,14 @@
             "type": "bytes32"
           }
         ],
+        "stateMutability": "view",
+        "type": "function",
         "name": "getStream",
         "outputs": [
           {
+            "internalType": "struct Stream",
+            "name": "",
+            "type": "tuple",
             "components": [
               {
                 "internalType": "bytes32",
@@ -222,17 +226,14 @@
                 "name": "nodes",
                 "type": "address[]"
               }
-            ],
-            "internalType": "struct Stream",
-            "name": "",
-            "type": "tuple"
+            ]
           }
-        ],
-        "stateMutability": "view",
-        "type": "function"
+        ]
       },
       {
         "inputs": [],
+        "stateMutability": "view",
+        "type": "function",
         "name": "getStreamCount",
         "outputs": [
           {
@@ -240,9 +241,7 @@
             "name": "",
             "type": "uint256"
           }
-        ],
-        "stateMutability": "view",
-        "type": "function"
+        ]
       },
       {
         "inputs": [
@@ -252,9 +251,14 @@
             "type": "bytes32"
           }
         ],
+        "stateMutability": "view",
+        "type": "function",
         "name": "getStreamWithGenesis",
         "outputs": [
           {
+            "internalType": "struct Stream",
+            "name": "",
+            "type": "tuple",
             "components": [
               {
                 "internalType": "bytes32",
@@ -281,10 +285,7 @@
                 "name": "nodes",
                 "type": "address[]"
               }
-            ],
-            "internalType": "struct Stream",
-            "name": "",
-            "type": "tuple"
+            ]
           },
           {
             "internalType": "bytes32",
@@ -296,9 +297,7 @@
             "name": "",
             "type": "bytes"
           }
-        ],
-        "stateMutability": "view",
-        "type": "function"
+        ]
       },
       {
         "inputs": [
@@ -308,9 +307,14 @@
             "type": "address"
           }
         ],
+        "stateMutability": "view",
+        "type": "function",
         "name": "getStreamsOnNode",
         "outputs": [
           {
+            "internalType": "struct StreamWithId[]",
+            "name": "",
+            "type": "tuple[]",
             "components": [
               {
                 "internalType": "bytes32",
@@ -318,6 +322,9 @@
                 "type": "bytes32"
               },
               {
+                "internalType": "struct Stream",
+                "name": "stream",
+                "type": "tuple",
                 "components": [
                   {
                     "internalType": "bytes32",
@@ -344,19 +351,11 @@
                     "name": "nodes",
                     "type": "address[]"
                   }
-                ],
-                "internalType": "struct Stream",
-                "name": "stream",
-                "type": "tuple"
+                ]
               }
-            ],
-            "internalType": "struct StreamWithId[]",
-            "name": "",
-            "type": "tuple[]"
+            ]
           }
-        ],
-        "stateMutability": "view",
-        "type": "function"
+        ]
       },
       {
         "inputs": [
@@ -371,10 +370,9 @@
             "type": "address"
           }
         ],
-        "name": "placeStreamOnNode",
-        "outputs": [],
         "stateMutability": "nonpayable",
-        "type": "function"
+        "type": "function",
+        "name": "placeStreamOnNode"
       },
       {
         "inputs": [
@@ -389,16 +387,20 @@
             "type": "address"
           }
         ],
-        "name": "removeStreamFromNode",
-        "outputs": [],
         "stateMutability": "nonpayable",
-        "type": "function"
+        "type": "function",
+        "name": "removeStreamFromNode"
       },
       {
         "inputs": [
           {
             "internalType": "bytes32",
             "name": "streamId",
+            "type": "bytes32"
+          },
+          {
+            "internalType": "bytes32",
+            "name": "prevMiniBlockHash",
             "type": "bytes32"
           },
           {
@@ -417,10 +419,9 @@
             "type": "bool"
           }
         ],
-        "name": "setStreamLastMiniblock",
-        "outputs": [],
         "stateMutability": "nonpayable",
-        "type": "function"
+        "type": "function",
+        "name": "setStreamLastMiniblock"
       }
     ],
     "devdoc": {
@@ -454,70 +455,70 @@
     }
   },
   "settings": {
-    "compilationTarget": {
-      "contracts/src/river/registry/facets/stream/StreamRegistry.sol": "StreamRegistry"
-    },
-    "evmVersion": "paris",
-    "libraries": {},
-    "metadata": {
-      "appendCBOR": false,
-      "bytecodeHash": "none"
-    },
+    "remappings": [
+      "@openzeppelin/=lib/@openzeppelin/",
+      "@prb/math/=lib/@prb/math/src/",
+      "@prb/test/=lib/@prb/test/src/",
+      "account-abstraction/=lib/account-abstraction/contracts/",
+      "base64/=lib/base64/",
+      "ds-test/=lib/ds-test/src/",
+      "forge-std/=lib/forge-std/src/",
+      "hardhat-deploy/=lib/hardhat-deploy/"
+    ],
     "optimizer": {
       "enabled": true,
       "runs": 200
     },
-    "remappings": [
-      ":@openzeppelin/=lib/@openzeppelin/",
-      ":@prb/math/=lib/@prb/math/src/",
-      ":@prb/test/=lib/@prb/test/src/",
-      ":account-abstraction/=lib/account-abstraction/contracts/",
-      ":base64/=lib/base64/",
-      ":ds-test/=lib/ds-test/src/",
-      ":forge-std/=lib/forge-std/src/",
-      ":hardhat-deploy/=lib/hardhat-deploy/"
-    ]
+    "metadata": {
+      "bytecodeHash": "none",
+      "appendCBOR": false
+    },
+    "compilationTarget": {
+      "contracts/src/river/registry/facets/stream/StreamRegistry.sol": "StreamRegistry"
+    },
+    "evmVersion": "paris",
+    "libraries": {}
   },
   "sources": {
     "contracts/src/river/registry/facets/stream/IStreamRegistry.sol": {
-      "keccak256": "0xe01ced0797f56cd745d2bee87fcef9381ec8307713bc1ece6e6212e51adb706f",
-      "license": "Apache-2.0",
+      "keccak256": "0x19dbdaa4c4a2dedde230aabd42338e02158570da0268eaf98def42604bc43ce4",
       "urls": [
-        "bzz-raw://efdd9a8c5f70913406866dfdd9f5d446c5d5e20a5cb39a20d5ee75c6ebca54af",
-        "dweb:/ipfs/Qmd68co8obqzAvmhufq2ErdCerM3NPKjXgjxD9KugFZCBf"
-      ]
+        "bzz-raw://b35375b1086e487a7f0939de9fe4a926c66687630ff302d15dca19607b6d9b98",
+        "dweb:/ipfs/QmYwsVPrk77dJwnkc2hwTALrhx7qBeCFKkevjBYvm5PUsq"
+      ],
+      "license": "Apache-2.0"
     },
     "contracts/src/river/registry/facets/stream/StreamRegistry.sol": {
-      "keccak256": "0xc04fcf552ab676fce969440de3ba10bc47c3e7493aa777d14cb465c3bf27d0ce",
-      "license": "Apache-2.0",
+      "keccak256": "0xc4ceb616e707914fe36fa2b3c15206f6a1af5d3bf453cb51b6c585696485086a",
       "urls": [
-        "bzz-raw://1874de0909601c555894f0e14adf9328aed5c561ad4050364a0931785dca7bbb",
-        "dweb:/ipfs/QmP8p4nV97CgSJC79W4ufTggDDCj77TnRKPNPwms6dSYcp"
-      ]
+        "bzz-raw://0628886698f98e6576dff5b3c1b5708c0737ce2590a54a76bbaf0085a475032d",
+        "dweb:/ipfs/QmWQ5bvQzZZdbBXdcfHyeUwgxNXz2H3bChS9k84KbeGARe"
+      ],
+      "license": "Apache-2.0"
     },
     "contracts/src/river/registry/libraries/RegistryErrors.sol": {
       "keccak256": "0x073c3ff0f1206824f3722e2ba22fd7174f9ded4a6111e48e0641e21ed90aabfc",
-      "license": "Apache-2.0",
       "urls": [
         "bzz-raw://62d60cd3958fdb3762972e41aefa899e6b6ac0dac7c94689025f6ba5dc241be3",
         "dweb:/ipfs/QmRRhiC1KXDh5aPPNBEgwbg8wZ9BKWYLJ7jGD9vFzm1kWy"
-      ]
+      ],
+      "license": "Apache-2.0"
     },
     "contracts/src/river/registry/libraries/RegistryStorage.sol": {
-      "keccak256": "0x97f0d92d485bb2bf11fc5a2a39bc1e9dba3865ba90a4dd2ca980f9e19c69602d",
-      "license": "Apache-2.0",
+      "keccak256": "0xfbcf41b4c4b1544daa4747d9ea9c1a6fdb01cf413fdc30c9a7b3d920ce552058",
       "urls": [
-        "bzz-raw://565685a7de523e1c19e1c038a9003ef6b99d18b87dd10f6759e9df6e2717eaeb",
-        "dweb:/ipfs/QmSuamKP178nam4VbCZyCo8C7p8AHy54T7WSdeCU3rPZZN"
-      ]
+        "bzz-raw://0a64065c598fc295fcdd5dee549e0d7859fb34b1724b20317483cd896bb6e821",
+        "dweb:/ipfs/QmSVV9jXD73QKhG4ry4BZta3PcEAL5D9C3m6BQMWH1JQJy"
+      ],
+      "license": "Apache-2.0"
     },
     "lib/@openzeppelin/contracts/utils/structs/EnumerableSet.sol": {
       "keccak256": "0x86c1470cbfd878491e5de030072b647352d36bd27122cffb928970b1945282aa",
-      "license": "MIT",
       "urls": [
         "bzz-raw://ad85dd393ee0a1917c57046abc5155f51f77844b2c6a42c05c1b8dd26d6ff3c1",
         "dweb:/ipfs/QmNqYc8To2NdnpP6E1tGz7t6A7beuENde5yovwov5pW1fA"
-      ]
+      ],
+      "license": "MIT"
     }
   },
   "version": 1

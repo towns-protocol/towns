@@ -11,10 +11,11 @@ import {Banning} from "contracts/src/spaces/facets/banning/Banning.sol";
 
 contract BanningHelper is FacetHelper {
   constructor() {
-    bytes4[] memory selectors_ = new bytes4[](3);
-    selectors_[0] = Banning.ban.selector;
-    selectors_[1] = Banning.unban.selector;
-    selectors_[2] = Banning.isBanned.selector;
+    bytes4[] memory selectors_ = new bytes4[](4);
+    selectors_[_index++] = Banning.ban.selector;
+    selectors_[_index++] = Banning.unban.selector;
+    selectors_[_index++] = Banning.isBanned.selector;
+    selectors_[_index++] = Banning.banned.selector;
     addSelectors(selectors_);
   }
 

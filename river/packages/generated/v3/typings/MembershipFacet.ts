@@ -94,6 +94,7 @@ export interface MembershipFacetInterface extends utils.Interface {
     "getMembershipPrice()": FunctionFragment;
     "getMembershipPricingModule()": FunctionFragment;
     "getMembershipRenewalPrice(uint256)": FunctionFragment;
+    "getTokenIdByMembership(address)": FunctionFragment;
     "getTownFactory()": FunctionFragment;
     "isApprovedForAll(address,address)": FunctionFragment;
     "joinTown(address)": FunctionFragment;
@@ -147,6 +148,7 @@ export interface MembershipFacetInterface extends utils.Interface {
       | "getMembershipPrice"
       | "getMembershipPricingModule"
       | "getMembershipRenewalPrice"
+      | "getTokenIdByMembership"
       | "getTownFactory"
       | "isApprovedForAll"
       | "joinTown"
@@ -281,6 +283,10 @@ export interface MembershipFacetInterface extends utils.Interface {
   encodeFunctionData(
     functionFragment: "getMembershipRenewalPrice",
     values: [PromiseOrValue<BigNumberish>]
+  ): string;
+  encodeFunctionData(
+    functionFragment: "getTokenIdByMembership",
+    values: [PromiseOrValue<string>]
   ): string;
   encodeFunctionData(
     functionFragment: "getTownFactory",
@@ -482,6 +488,10 @@ export interface MembershipFacetInterface extends utils.Interface {
     data: BytesLike
   ): Result;
   decodeFunctionResult(
+    functionFragment: "getTokenIdByMembership",
+    data: BytesLike
+  ): Result;
+  decodeFunctionResult(
     functionFragment: "getTownFactory",
     data: BytesLike
   ): Result;
@@ -554,6 +564,7 @@ export interface MembershipFacetInterface extends utils.Interface {
   events: {
     "Approval(address,address,uint256)": EventFragment;
     "ApprovalForAll(address,address,bool)": EventFragment;
+    "Banned(uint256)": EventFragment;
     "ConsecutiveTransfer(uint256,uint256,address,address)": EventFragment;
     "Initialized(uint32)": EventFragment;
     "InterfaceAdded(bytes4)": EventFragment;
@@ -570,11 +581,13 @@ export interface MembershipFacetInterface extends utils.Interface {
     "Paused(address)": EventFragment;
     "SubscriptionUpdate(uint256,uint64)": EventFragment;
     "Transfer(address,address,uint256)": EventFragment;
+    "Unbanned(uint256)": EventFragment;
     "Unpaused(address)": EventFragment;
   };
 
   getEvent(nameOrSignatureOrTopic: "Approval"): EventFragment;
   getEvent(nameOrSignatureOrTopic: "ApprovalForAll"): EventFragment;
+  getEvent(nameOrSignatureOrTopic: "Banned"): EventFragment;
   getEvent(nameOrSignatureOrTopic: "ConsecutiveTransfer"): EventFragment;
   getEvent(nameOrSignatureOrTopic: "Initialized"): EventFragment;
   getEvent(nameOrSignatureOrTopic: "InterfaceAdded"): EventFragment;
@@ -601,6 +614,7 @@ export interface MembershipFacetInterface extends utils.Interface {
   getEvent(nameOrSignatureOrTopic: "Paused"): EventFragment;
   getEvent(nameOrSignatureOrTopic: "SubscriptionUpdate"): EventFragment;
   getEvent(nameOrSignatureOrTopic: "Transfer"): EventFragment;
+  getEvent(nameOrSignatureOrTopic: "Unbanned"): EventFragment;
   getEvent(nameOrSignatureOrTopic: "Unpaused"): EventFragment;
 }
 
@@ -627,6 +641,13 @@ export type ApprovalForAllEvent = TypedEvent<
 >;
 
 export type ApprovalForAllEventFilter = TypedEventFilter<ApprovalForAllEvent>;
+
+export interface BannedEventObject {
+  tokenId: BigNumber;
+}
+export type BannedEvent = TypedEvent<[BigNumber], BannedEventObject>;
+
+export type BannedEventFilter = TypedEventFilter<BannedEvent>;
 
 export interface ConsecutiveTransferEventObject {
   fromTokenId: BigNumber;
@@ -805,6 +826,13 @@ export type TransferEvent = TypedEvent<
 
 export type TransferEventFilter = TypedEventFilter<TransferEvent>;
 
+export interface UnbannedEventObject {
+  tokenId: BigNumber;
+}
+export type UnbannedEvent = TypedEvent<[BigNumber], UnbannedEventObject>;
+
+export type UnbannedEventFilter = TypedEventFilter<UnbannedEvent>;
+
 export interface UnpausedEventObject {
   account: string;
 }
@@ -944,6 +972,11 @@ export interface MembershipFacet extends BaseContract {
 
     getMembershipRenewalPrice(
       tokenId: PromiseOrValue<BigNumberish>,
+      overrides?: CallOverrides
+    ): Promise<[BigNumber]>;
+
+    getTokenIdByMembership(
+      member: PromiseOrValue<string>,
       overrides?: CallOverrides
     ): Promise<[BigNumber]>;
 
@@ -1156,6 +1189,11 @@ export interface MembershipFacet extends BaseContract {
     overrides?: CallOverrides
   ): Promise<BigNumber>;
 
+  getTokenIdByMembership(
+    member: PromiseOrValue<string>,
+    overrides?: CallOverrides
+  ): Promise<BigNumber>;
+
   getTownFactory(overrides?: CallOverrides): Promise<string>;
 
   isApprovedForAll(
@@ -1365,6 +1403,11 @@ export interface MembershipFacet extends BaseContract {
       overrides?: CallOverrides
     ): Promise<BigNumber>;
 
+    getTokenIdByMembership(
+      member: PromiseOrValue<string>,
+      overrides?: CallOverrides
+    ): Promise<BigNumber>;
+
     getTownFactory(overrides?: CallOverrides): Promise<string>;
 
     isApprovedForAll(
@@ -1493,6 +1536,11 @@ export interface MembershipFacet extends BaseContract {
       approved?: null
     ): ApprovalForAllEventFilter;
 
+    "Banned(uint256)"(
+      tokenId?: PromiseOrValue<BigNumberish> | null
+    ): BannedEventFilter;
+    Banned(tokenId?: PromiseOrValue<BigNumberish> | null): BannedEventFilter;
+
     "ConsecutiveTransfer(uint256,uint256,address,address)"(
       fromTokenId?: PromiseOrValue<BigNumberish> | null,
       toTokenId?: null,
@@ -1619,6 +1667,13 @@ export interface MembershipFacet extends BaseContract {
       tokenId?: PromiseOrValue<BigNumberish> | null
     ): TransferEventFilter;
 
+    "Unbanned(uint256)"(
+      tokenId?: PromiseOrValue<BigNumberish> | null
+    ): UnbannedEventFilter;
+    Unbanned(
+      tokenId?: PromiseOrValue<BigNumberish> | null
+    ): UnbannedEventFilter;
+
     "Unpaused(address)"(account?: null): UnpausedEventFilter;
     Unpaused(account?: null): UnpausedEventFilter;
   };
@@ -1725,6 +1780,11 @@ export interface MembershipFacet extends BaseContract {
 
     getMembershipRenewalPrice(
       tokenId: PromiseOrValue<BigNumberish>,
+      overrides?: CallOverrides
+    ): Promise<BigNumber>;
+
+    getTokenIdByMembership(
+      member: PromiseOrValue<string>,
       overrides?: CallOverrides
     ): Promise<BigNumber>;
 
@@ -1957,6 +2017,11 @@ export interface MembershipFacet extends BaseContract {
 
     getMembershipRenewalPrice(
       tokenId: PromiseOrValue<BigNumberish>,
+      overrides?: CallOverrides
+    ): Promise<PopulatedTransaction>;
+
+    getTokenIdByMembership(
+      member: PromiseOrValue<string>,
       overrides?: CallOverrides
     ): Promise<PopulatedTransaction>;
 

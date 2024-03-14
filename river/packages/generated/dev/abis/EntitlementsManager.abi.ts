@@ -398,6 +398,19 @@ export default [
   },
   {
     "type": "event",
+    "name": "Banned",
+    "inputs": [
+      {
+        "name": "tokenId",
+        "type": "uint256",
+        "indexed": true,
+        "internalType": "uint256"
+      }
+    ],
+    "anonymous": false
+  },
+  {
+    "type": "event",
     "name": "ConsecutiveTransfer",
     "inputs": [
       {
@@ -524,6 +537,19 @@ export default [
   },
   {
     "type": "event",
+    "name": "Unbanned",
+    "inputs": [
+      {
+        "name": "tokenId",
+        "type": "uint256",
+        "indexed": true,
+        "internalType": "uint256"
+      }
+    ],
+    "anonymous": false
+  },
+  {
+    "type": "event",
     "name": "Unpaused",
     "inputs": [
       {
@@ -552,7 +578,34 @@ export default [
   },
   {
     "type": "error",
+    "name": "Banning__AlreadyBanned",
+    "inputs": [
+      {
+        "name": "tokenId",
+        "type": "uint256",
+        "internalType": "uint256"
+      }
+    ]
+  },
+  {
+    "type": "error",
+    "name": "Banning__CannotBanSelf",
+    "inputs": []
+  },
+  {
+    "type": "error",
     "name": "Banning__InvalidTokenId",
+    "inputs": [
+      {
+        "name": "tokenId",
+        "type": "uint256",
+        "internalType": "uint256"
+      }
+    ]
+  },
+  {
+    "type": "error",
+    "name": "Banning__NotBanned",
     "inputs": [
       {
         "name": "tokenId",

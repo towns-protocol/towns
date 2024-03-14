@@ -2,6 +2,7 @@
 /* tslint:disable */
 /* eslint-disable */
 export { IArchitect__factory } from "./IArchitect__factory";
+export { IBanning__factory } from "./IBanning__factory";
 export { IChannel__factory } from "./IChannel__factory";
 export { IDiamond__factory } from "./IDiamond__factory";
 export { IDiamondCut__factory } from "./IDiamondCut__factory";

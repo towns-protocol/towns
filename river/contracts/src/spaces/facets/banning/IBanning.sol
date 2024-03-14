@@ -8,7 +8,19 @@ pragma solidity ^0.8.23;
 // contracts
 
 interface IBanningBase {
+  // =============================================================
+  //                           Errors
+  // =============================================================
   error Banning__InvalidTokenId(uint256 tokenId);
+  error Banning__AlreadyBanned(uint256 tokenId);
+  error Banning__NotBanned(uint256 tokenId);
+  error Banning__CannotBanSelf();
+
+  // =============================================================
+  //                           Events
+  // =============================================================
+  event Banned(uint256 indexed tokenId);
+  event Unbanned(uint256 indexed tokenId);
 }
 
 interface IBanning is IBanningBase {
@@ -20,4 +32,6 @@ interface IBanning is IBanningBase {
     string memory channelId,
     uint256 tokenId
   ) external view returns (bool);
+
+  function banned() external view returns (uint256[] memory);
 }

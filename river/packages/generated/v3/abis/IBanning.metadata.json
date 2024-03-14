@@ -1,0 +1,191 @@
+{
+  "compiler": {
+    "version": "0.8.24+commit.e11b9ed9"
+  },
+  "language": "Solidity",
+  "output": {
+    "abi": [
+      {
+        "inputs": [
+          {
+            "internalType": "uint256",
+            "name": "tokenId",
+            "type": "uint256"
+          }
+        ],
+        "type": "error",
+        "name": "Banning__AlreadyBanned"
+      },
+      {
+        "inputs": [],
+        "type": "error",
+        "name": "Banning__CannotBanSelf"
+      },
+      {
+        "inputs": [
+          {
+            "internalType": "uint256",
+            "name": "tokenId",
+            "type": "uint256"
+          }
+        ],
+        "type": "error",
+        "name": "Banning__InvalidTokenId"
+      },
+      {
+        "inputs": [
+          {
+            "internalType": "uint256",
+            "name": "tokenId",
+            "type": "uint256"
+          }
+        ],
+        "type": "error",
+        "name": "Banning__NotBanned"
+      },
+      {
+        "inputs": [
+          {
+            "internalType": "uint256",
+            "name": "tokenId",
+            "type": "uint256",
+            "indexed": true
+          }
+        ],
+        "type": "event",
+        "name": "Banned",
+        "anonymous": false
+      },
+      {
+        "inputs": [
+          {
+            "internalType": "uint256",
+            "name": "tokenId",
+            "type": "uint256",
+            "indexed": true
+          }
+        ],
+        "type": "event",
+        "name": "Unbanned",
+        "anonymous": false
+      },
+      {
+        "inputs": [
+          {
+            "internalType": "string",
+            "name": "channelId",
+            "type": "string"
+          },
+          {
+            "internalType": "uint256",
+            "name": "tokenId",
+            "type": "uint256"
+          }
+        ],
+        "stateMutability": "nonpayable",
+        "type": "function",
+        "name": "ban"
+      },
+      {
+        "inputs": [],
+        "stateMutability": "view",
+        "type": "function",
+        "name": "banned",
+        "outputs": [
+          {
+            "internalType": "uint256[]",
+            "name": "",
+            "type": "uint256[]"
+          }
+        ]
+      },
+      {
+        "inputs": [
+          {
+            "internalType": "string",
+            "name": "channelId",
+            "type": "string"
+          },
+          {
+            "internalType": "uint256",
+            "name": "tokenId",
+            "type": "uint256"
+          }
+        ],
+        "stateMutability": "view",
+        "type": "function",
+        "name": "isBanned",
+        "outputs": [
+          {
+            "internalType": "bool",
+            "name": "",
+            "type": "bool"
+          }
+        ]
+      },
+      {
+        "inputs": [
+          {
+            "internalType": "string",
+            "name": "channelId",
+            "type": "string"
+          },
+          {
+            "internalType": "uint256",
+            "name": "tokenId",
+            "type": "uint256"
+          }
+        ],
+        "stateMutability": "nonpayable",
+        "type": "function",
+        "name": "unban"
+      }
+    ],
+    "devdoc": {
+      "kind": "dev",
+      "methods": {},
+      "version": 1
+    },
+    "userdoc": {
+      "kind": "user",
+      "methods": {},
+      "version": 1
+    }
+  },
+  "settings": {
+    "remappings": [
+      "@openzeppelin/=lib/@openzeppelin/",
+      "@prb/math/=lib/@prb/math/src/",
+      "@prb/test/=lib/@prb/test/src/",
+      "account-abstraction/=lib/account-abstraction/contracts/",
+      "base64/=lib/base64/",
+      "ds-test/=lib/ds-test/src/",
+      "forge-std/=lib/forge-std/src/",
+      "hardhat-deploy/=lib/hardhat-deploy/"
+    ],
+    "optimizer": {
+      "enabled": true,
+      "runs": 200
+    },
+    "metadata": {
+      "bytecodeHash": "none",
+      "appendCBOR": false
+    },
+    "compilationTarget": {
+      "contracts/src/spaces/facets/banning/IBanning.sol": "IBanning"
+    },
+    "evmVersion": "paris",
+    "libraries": {}
+  },
+  "sources": {
+    "contracts/src/spaces/facets/banning/IBanning.sol": {
+      "keccak256": "0xe3103b5dc55339fb620ab3cd7f3f18a5de684624663437387befbd93da756809",
+      "urls": [
+        "bzz-raw://d2aefe6caa3f7891e35ade6c75781c21c40ef1c1228d88db6dccae719101a0a9",
+        "dweb:/ipfs/QmUZ4ezyZ4LnN8xd2VTdzrySwUQybLmoHyY2V4qMNzdC5X"
+      ],
+      "license": "Apache-2.0"
+    }
+  },
+  "version": 1
+}

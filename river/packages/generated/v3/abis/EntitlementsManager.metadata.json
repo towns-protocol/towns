@@ -7,18 +7,18 @@
     "abi": [
       {
         "inputs": [],
-        "name": "ApprovalCallerNotOwnerNorApproved",
-        "type": "error"
+        "type": "error",
+        "name": "ApprovalCallerNotOwnerNorApproved"
       },
       {
         "inputs": [],
-        "name": "ApprovalQueryForNonexistentToken",
-        "type": "error"
+        "type": "error",
+        "name": "ApprovalQueryForNonexistentToken"
       },
       {
         "inputs": [],
-        "name": "BalanceQueryForZeroAddress",
-        "type": "error"
+        "type": "error",
+        "name": "BalanceQueryForZeroAddress"
       },
       {
         "inputs": [
@@ -28,68 +28,95 @@
             "type": "uint256"
           }
         ],
-        "name": "Banning__InvalidTokenId",
-        "type": "error"
+        "type": "error",
+        "name": "Banning__AlreadyBanned"
       },
       {
         "inputs": [],
-        "name": "Entitlement__InvalidValue",
-        "type": "error"
+        "type": "error",
+        "name": "Banning__CannotBanSelf"
+      },
+      {
+        "inputs": [
+          {
+            "internalType": "uint256",
+            "name": "tokenId",
+            "type": "uint256"
+          }
+        ],
+        "type": "error",
+        "name": "Banning__InvalidTokenId"
+      },
+      {
+        "inputs": [
+          {
+            "internalType": "uint256",
+            "name": "tokenId",
+            "type": "uint256"
+          }
+        ],
+        "type": "error",
+        "name": "Banning__NotBanned"
       },
       {
         "inputs": [],
-        "name": "Entitlement__NotAllowed",
-        "type": "error"
+        "type": "error",
+        "name": "Entitlement__InvalidValue"
       },
       {
         "inputs": [],
-        "name": "Entitlement__NotMember",
-        "type": "error"
+        "type": "error",
+        "name": "Entitlement__NotAllowed"
       },
       {
         "inputs": [],
-        "name": "Entitlement__ValueAlreadyExists",
-        "type": "error"
+        "type": "error",
+        "name": "Entitlement__NotMember"
       },
       {
         "inputs": [],
-        "name": "EntitlementsService__EntitlementAlreadyExists",
-        "type": "error"
+        "type": "error",
+        "name": "Entitlement__ValueAlreadyExists"
       },
       {
         "inputs": [],
-        "name": "EntitlementsService__EntitlementDoesNotExist",
-        "type": "error"
+        "type": "error",
+        "name": "EntitlementsService__EntitlementAlreadyExists"
       },
       {
         "inputs": [],
-        "name": "EntitlementsService__ImmutableEntitlement",
-        "type": "error"
+        "type": "error",
+        "name": "EntitlementsService__EntitlementDoesNotExist"
       },
       {
         "inputs": [],
-        "name": "EntitlementsService__InvalidEntitlementAddress",
-        "type": "error"
+        "type": "error",
+        "name": "EntitlementsService__ImmutableEntitlement"
       },
       {
         "inputs": [],
-        "name": "EntitlementsService__InvalidEntitlementInterface",
-        "type": "error"
+        "type": "error",
+        "name": "EntitlementsService__InvalidEntitlementAddress"
       },
       {
         "inputs": [],
-        "name": "MintERC2309QuantityExceedsLimit",
-        "type": "error"
+        "type": "error",
+        "name": "EntitlementsService__InvalidEntitlementInterface"
       },
       {
         "inputs": [],
-        "name": "MintToZeroAddress",
-        "type": "error"
+        "type": "error",
+        "name": "MintERC2309QuantityExceedsLimit"
       },
       {
         "inputs": [],
-        "name": "MintZeroQuantity",
-        "type": "error"
+        "type": "error",
+        "name": "MintToZeroAddress"
+      },
+      {
+        "inputs": [],
+        "type": "error",
+        "name": "MintZeroQuantity"
       },
       {
         "inputs": [
@@ -99,247 +126,273 @@
             "type": "address"
           }
         ],
-        "name": "Ownable__NotOwner",
-        "type": "error"
+        "type": "error",
+        "name": "Ownable__NotOwner"
       },
       {
         "inputs": [],
-        "name": "Ownable__ZeroAddress",
-        "type": "error"
+        "type": "error",
+        "name": "Ownable__ZeroAddress"
       },
       {
         "inputs": [],
-        "name": "OwnerQueryForNonexistentToken",
-        "type": "error"
+        "type": "error",
+        "name": "OwnerQueryForNonexistentToken"
       },
       {
         "inputs": [],
-        "name": "OwnershipNotInitializedForExtraData",
-        "type": "error"
+        "type": "error",
+        "name": "OwnershipNotInitializedForExtraData"
       },
       {
         "inputs": [],
-        "name": "Pausable__NotPaused",
-        "type": "error"
+        "type": "error",
+        "name": "Pausable__NotPaused"
       },
       {
         "inputs": [],
-        "name": "Pausable__Paused",
-        "type": "error"
+        "type": "error",
+        "name": "Pausable__Paused"
       },
       {
         "inputs": [],
-        "name": "TransferCallerNotOwnerNorApproved",
-        "type": "error"
+        "type": "error",
+        "name": "TransferCallerNotOwnerNorApproved"
       },
       {
         "inputs": [],
-        "name": "TransferFromIncorrectOwner",
-        "type": "error"
+        "type": "error",
+        "name": "TransferFromIncorrectOwner"
       },
       {
         "inputs": [],
-        "name": "TransferToNonERC721ReceiverImplementer",
-        "type": "error"
+        "type": "error",
+        "name": "TransferToNonERC721ReceiverImplementer"
       },
       {
         "inputs": [],
-        "name": "TransferToZeroAddress",
-        "type": "error"
+        "type": "error",
+        "name": "TransferToZeroAddress"
       },
       {
         "inputs": [],
-        "name": "URIQueryForNonexistentToken",
-        "type": "error"
+        "type": "error",
+        "name": "URIQueryForNonexistentToken"
       },
       {
-        "anonymous": false,
         "inputs": [
           {
-            "indexed": true,
             "internalType": "address",
             "name": "owner",
-            "type": "address"
+            "type": "address",
+            "indexed": true
           },
           {
-            "indexed": true,
             "internalType": "address",
             "name": "approved",
-            "type": "address"
+            "type": "address",
+            "indexed": true
           },
           {
-            "indexed": true,
             "internalType": "uint256",
             "name": "tokenId",
-            "type": "uint256"
+            "type": "uint256",
+            "indexed": true
           }
         ],
+        "type": "event",
         "name": "Approval",
-        "type": "event"
+        "anonymous": false
       },
       {
-        "anonymous": false,
         "inputs": [
           {
-            "indexed": true,
             "internalType": "address",
             "name": "owner",
-            "type": "address"
+            "type": "address",
+            "indexed": true
           },
           {
-            "indexed": true,
             "internalType": "address",
             "name": "operator",
-            "type": "address"
+            "type": "address",
+            "indexed": true
           },
           {
-            "indexed": false,
             "internalType": "bool",
             "name": "approved",
-            "type": "bool"
+            "type": "bool",
+            "indexed": false
           }
         ],
+        "type": "event",
         "name": "ApprovalForAll",
-        "type": "event"
+        "anonymous": false
       },
       {
-        "anonymous": false,
         "inputs": [
           {
-            "indexed": true,
-            "internalType": "uint256",
-            "name": "fromTokenId",
-            "type": "uint256"
-          },
-          {
-            "indexed": false,
-            "internalType": "uint256",
-            "name": "toTokenId",
-            "type": "uint256"
-          },
-          {
-            "indexed": true,
-            "internalType": "address",
-            "name": "from",
-            "type": "address"
-          },
-          {
-            "indexed": true,
-            "internalType": "address",
-            "name": "to",
-            "type": "address"
-          }
-        ],
-        "name": "ConsecutiveTransfer",
-        "type": "event"
-      },
-      {
-        "anonymous": false,
-        "inputs": [
-          {
-            "indexed": true,
-            "internalType": "address",
-            "name": "caller",
-            "type": "address"
-          },
-          {
-            "indexed": false,
-            "internalType": "address",
-            "name": "entitlement",
-            "type": "address"
-          }
-        ],
-        "name": "EntitlementModuleAdded",
-        "type": "event"
-      },
-      {
-        "anonymous": false,
-        "inputs": [
-          {
-            "indexed": true,
-            "internalType": "address",
-            "name": "caller",
-            "type": "address"
-          },
-          {
-            "indexed": false,
-            "internalType": "address",
-            "name": "entitlement",
-            "type": "address"
-          }
-        ],
-        "name": "EntitlementModuleRemoved",
-        "type": "event"
-      },
-      {
-        "anonymous": false,
-        "inputs": [
-          {
-            "indexed": true,
-            "internalType": "address",
-            "name": "previousOwner",
-            "type": "address"
-          },
-          {
-            "indexed": true,
-            "internalType": "address",
-            "name": "newOwner",
-            "type": "address"
-          }
-        ],
-        "name": "OwnershipTransferred",
-        "type": "event"
-      },
-      {
-        "anonymous": false,
-        "inputs": [
-          {
-            "indexed": false,
-            "internalType": "address",
-            "name": "account",
-            "type": "address"
-          }
-        ],
-        "name": "Paused",
-        "type": "event"
-      },
-      {
-        "anonymous": false,
-        "inputs": [
-          {
-            "indexed": true,
-            "internalType": "address",
-            "name": "from",
-            "type": "address"
-          },
-          {
-            "indexed": true,
-            "internalType": "address",
-            "name": "to",
-            "type": "address"
-          },
-          {
-            "indexed": true,
             "internalType": "uint256",
             "name": "tokenId",
-            "type": "uint256"
+            "type": "uint256",
+            "indexed": true
           }
         ],
-        "name": "Transfer",
-        "type": "event"
+        "type": "event",
+        "name": "Banned",
+        "anonymous": false
       },
       {
-        "anonymous": false,
         "inputs": [
           {
-            "indexed": false,
+            "internalType": "uint256",
+            "name": "fromTokenId",
+            "type": "uint256",
+            "indexed": true
+          },
+          {
+            "internalType": "uint256",
+            "name": "toTokenId",
+            "type": "uint256",
+            "indexed": false
+          },
+          {
             "internalType": "address",
-            "name": "account",
-            "type": "address"
+            "name": "from",
+            "type": "address",
+            "indexed": true
+          },
+          {
+            "internalType": "address",
+            "name": "to",
+            "type": "address",
+            "indexed": true
           }
         ],
+        "type": "event",
+        "name": "ConsecutiveTransfer",
+        "anonymous": false
+      },
+      {
+        "inputs": [
+          {
+            "internalType": "address",
+            "name": "caller",
+            "type": "address",
+            "indexed": true
+          },
+          {
+            "internalType": "address",
+            "name": "entitlement",
+            "type": "address",
+            "indexed": false
+          }
+        ],
+        "type": "event",
+        "name": "EntitlementModuleAdded",
+        "anonymous": false
+      },
+      {
+        "inputs": [
+          {
+            "internalType": "address",
+            "name": "caller",
+            "type": "address",
+            "indexed": true
+          },
+          {
+            "internalType": "address",
+            "name": "entitlement",
+            "type": "address",
+            "indexed": false
+          }
+        ],
+        "type": "event",
+        "name": "EntitlementModuleRemoved",
+        "anonymous": false
+      },
+      {
+        "inputs": [
+          {
+            "internalType": "address",
+            "name": "previousOwner",
+            "type": "address",
+            "indexed": true
+          },
+          {
+            "internalType": "address",
+            "name": "newOwner",
+            "type": "address",
+            "indexed": true
+          }
+        ],
+        "type": "event",
+        "name": "OwnershipTransferred",
+        "anonymous": false
+      },
+      {
+        "inputs": [
+          {
+            "internalType": "address",
+            "name": "account",
+            "type": "address",
+            "indexed": false
+          }
+        ],
+        "type": "event",
+        "name": "Paused",
+        "anonymous": false
+      },
+      {
+        "inputs": [
+          {
+            "internalType": "address",
+            "name": "from",
+            "type": "address",
+            "indexed": true
+          },
+          {
+            "internalType": "address",
+            "name": "to",
+            "type": "address",
+            "indexed": true
+          },
+          {
+            "internalType": "uint256",
+            "name": "tokenId",
+            "type": "uint256",
+            "indexed": true
+          }
+        ],
+        "type": "event",
+        "name": "Transfer",
+        "anonymous": false
+      },
+      {
+        "inputs": [
+          {
+            "internalType": "uint256",
+            "name": "tokenId",
+            "type": "uint256",
+            "indexed": true
+          }
+        ],
+        "type": "event",
+        "name": "Unbanned",
+        "anonymous": false
+      },
+      {
+        "inputs": [
+          {
+            "internalType": "address",
+            "name": "account",
+            "type": "address",
+            "indexed": false
+          }
+        ],
+        "type": "event",
         "name": "Unpaused",
-        "type": "event"
+        "anonymous": false
       },
       {
         "inputs": [
@@ -349,10 +402,9 @@
             "type": "address"
           }
         ],
-        "name": "addEntitlementModule",
-        "outputs": [],
         "stateMutability": "nonpayable",
-        "type": "function"
+        "type": "function",
+        "name": "addEntitlementModule"
       },
       {
         "inputs": [
@@ -362,10 +414,9 @@
             "type": "address[]"
           }
         ],
-        "name": "addImmutableEntitlements",
-        "outputs": [],
         "stateMutability": "nonpayable",
-        "type": "function"
+        "type": "function",
+        "name": "addImmutableEntitlements"
       },
       {
         "inputs": [
@@ -380,11 +431,19 @@
             "type": "string"
           }
         ],
+        "stateMutability": "pure",
+        "type": "function",
         "name": "getChannelEntitlements",
         "outputs": [
           {
+            "internalType": "struct IRuleEntitlement.RuleData",
+            "name": "",
+            "type": "tuple",
             "components": [
               {
+                "internalType": "struct IRuleEntitlement.Operation[]",
+                "name": "operations",
+                "type": "tuple[]",
                 "components": [
                   {
                     "internalType": "enum IRuleEntitlement.CombinedOperationType",
@@ -396,12 +455,12 @@
                     "name": "index",
                     "type": "uint8"
                   }
-                ],
-                "internalType": "struct IRuleEntitlement.Operation[]",
-                "name": "operations",
-                "type": "tuple[]"
+                ]
               },
               {
+                "internalType": "struct IRuleEntitlement.CheckOperation[]",
+                "name": "checkOperations",
+                "type": "tuple[]",
                 "components": [
                   {
                     "internalType": "enum IRuleEntitlement.CheckOperationType",
@@ -423,12 +482,12 @@
                     "name": "threshold",
                     "type": "uint256"
                   }
-                ],
-                "internalType": "struct IRuleEntitlement.CheckOperation[]",
-                "name": "checkOperations",
-                "type": "tuple[]"
+                ]
               },
               {
+                "internalType": "struct IRuleEntitlement.LogicalOperation[]",
+                "name": "logicalOperations",
+                "type": "tuple[]",
                 "components": [
                   {
                     "internalType": "enum IRuleEntitlement.LogicalOperationType",
@@ -445,19 +504,11 @@
                     "name": "rightOperationIndex",
                     "type": "uint8"
                   }
-                ],
-                "internalType": "struct IRuleEntitlement.LogicalOperation[]",
-                "name": "logicalOperations",
-                "type": "tuple[]"
+                ]
               }
-            ],
-            "internalType": "struct IRuleEntitlement.RuleData",
-            "name": "",
-            "type": "tuple"
+            ]
           }
-        ],
-        "stateMutability": "pure",
-        "type": "function"
+        ]
       },
       {
         "inputs": [
@@ -467,9 +518,14 @@
             "type": "address"
           }
         ],
+        "stateMutability": "view",
+        "type": "function",
         "name": "getEntitlement",
         "outputs": [
           {
+            "internalType": "struct IEntitlementsManagerBase.Entitlement",
+            "name": "",
+            "type": "tuple",
             "components": [
               {
                 "internalType": "string",
@@ -491,20 +547,20 @@
                 "name": "isImmutable",
                 "type": "bool"
               }
-            ],
-            "internalType": "struct IEntitlementsManagerBase.Entitlement",
-            "name": "",
-            "type": "tuple"
+            ]
           }
-        ],
-        "stateMutability": "view",
-        "type": "function"
+        ]
       },
       {
         "inputs": [],
+        "stateMutability": "view",
+        "type": "function",
         "name": "getEntitlements",
         "outputs": [
           {
+            "internalType": "struct IEntitlementsManagerBase.Entitlement[]",
+            "name": "",
+            "type": "tuple[]",
             "components": [
               {
                 "internalType": "string",
@@ -526,14 +582,9 @@
                 "name": "isImmutable",
                 "type": "bool"
               }
-            ],
-            "internalType": "struct IEntitlementsManagerBase.Entitlement[]",
-            "name": "",
-            "type": "tuple[]"
+            ]
           }
-        ],
-        "stateMutability": "view",
-        "type": "function"
+        ]
       },
       {
         "inputs": [
@@ -543,11 +594,19 @@
             "type": "string"
           }
         ],
+        "stateMutability": "pure",
+        "type": "function",
         "name": "getSpaceEntitlements",
         "outputs": [
           {
+            "internalType": "struct IRuleEntitlement.RuleData",
+            "name": "",
+            "type": "tuple",
             "components": [
               {
+                "internalType": "struct IRuleEntitlement.Operation[]",
+                "name": "operations",
+                "type": "tuple[]",
                 "components": [
                   {
                     "internalType": "enum IRuleEntitlement.CombinedOperationType",
@@ -559,12 +618,12 @@
                     "name": "index",
                     "type": "uint8"
                   }
-                ],
-                "internalType": "struct IRuleEntitlement.Operation[]",
-                "name": "operations",
-                "type": "tuple[]"
+                ]
               },
               {
+                "internalType": "struct IRuleEntitlement.CheckOperation[]",
+                "name": "checkOperations",
+                "type": "tuple[]",
                 "components": [
                   {
                     "internalType": "enum IRuleEntitlement.CheckOperationType",
@@ -586,12 +645,12 @@
                     "name": "threshold",
                     "type": "uint256"
                   }
-                ],
-                "internalType": "struct IRuleEntitlement.CheckOperation[]",
-                "name": "checkOperations",
-                "type": "tuple[]"
+                ]
               },
               {
+                "internalType": "struct IRuleEntitlement.LogicalOperation[]",
+                "name": "logicalOperations",
+                "type": "tuple[]",
                 "components": [
                   {
                     "internalType": "enum IRuleEntitlement.LogicalOperationType",
@@ -608,19 +667,11 @@
                     "name": "rightOperationIndex",
                     "type": "uint8"
                   }
-                ],
-                "internalType": "struct IRuleEntitlement.LogicalOperation[]",
-                "name": "logicalOperations",
-                "type": "tuple[]"
+                ]
               }
-            ],
-            "internalType": "struct IRuleEntitlement.RuleData",
-            "name": "",
-            "type": "tuple"
+            ]
           }
-        ],
-        "stateMutability": "pure",
-        "type": "function"
+        ]
       },
       {
         "inputs": [
@@ -640,6 +691,8 @@
             "type": "string"
           }
         ],
+        "stateMutability": "view",
+        "type": "function",
         "name": "isEntitledToChannel",
         "outputs": [
           {
@@ -647,9 +700,7 @@
             "name": "",
             "type": "bool"
           }
-        ],
-        "stateMutability": "view",
-        "type": "function"
+        ]
       },
       {
         "inputs": [
@@ -664,6 +715,8 @@
             "type": "string"
           }
         ],
+        "stateMutability": "view",
+        "type": "function",
         "name": "isEntitledToSpace",
         "outputs": [
           {
@@ -671,9 +724,7 @@
             "name": "",
             "type": "bool"
           }
-        ],
-        "stateMutability": "view",
-        "type": "function"
+        ]
       },
       {
         "inputs": [
@@ -683,30 +734,12 @@
             "type": "address"
           }
         ],
-        "name": "removeEntitlementModule",
-        "outputs": [],
         "stateMutability": "nonpayable",
-        "type": "function"
+        "type": "function",
+        "name": "removeEntitlementModule"
       }
     ],
     "devdoc": {
-      "events": {
-        "Approval(address,address,uint256)": {
-          "details": "Emitted when `owner` enables `approved` to manage the `tokenId` token."
-        },
-        "ApprovalForAll(address,address,bool)": {
-          "details": "Emitted when `owner` enables or disables (`approved`) `operator` to manage all of its assets."
-        },
-        "ConsecutiveTransfer(uint256,uint256,address,address)": {
-          "details": "Emitted when tokens in `fromTokenId` to `toTokenId` (inclusive) is transferred from `from` to `to`, as defined in the [ERC2309](https://eips.ethereum.org/EIPS/eip-2309) standard. See {_mintERC2309} for more details."
-        },
-        "OwnershipTransferred(address,address)": {
-          "details": "This emits when ownership of a contract changes."
-        },
-        "Transfer(address,address,uint256)": {
-          "details": "Emitted when `tokenId` token is transferred from `from` to `to`."
-        }
-      },
       "kind": "dev",
       "methods": {
         "addEntitlementModule(address)": {
@@ -776,73 +809,6 @@
       "version": 1
     },
     "userdoc": {
-      "errors": {
-        "ApprovalCallerNotOwnerNorApproved()": [
-          {
-            "notice": "The caller must own the token or be an approved operator."
-          }
-        ],
-        "ApprovalQueryForNonexistentToken()": [
-          {
-            "notice": "The token does not exist."
-          }
-        ],
-        "BalanceQueryForZeroAddress()": [
-          {
-            "notice": "Cannot query the balance for the zero address."
-          }
-        ],
-        "MintERC2309QuantityExceedsLimit()": [
-          {
-            "notice": "The `quantity` minted with ERC2309 exceeds the safety limit."
-          }
-        ],
-        "MintToZeroAddress()": [
-          {
-            "notice": "Cannot mint to the zero address."
-          }
-        ],
-        "MintZeroQuantity()": [
-          {
-            "notice": "The quantity of tokens minted must be more than zero."
-          }
-        ],
-        "OwnerQueryForNonexistentToken()": [
-          {
-            "notice": "The token does not exist."
-          }
-        ],
-        "OwnershipNotInitializedForExtraData()": [
-          {
-            "notice": "The `extraData` cannot be set on an unintialized ownership slot."
-          }
-        ],
-        "TransferCallerNotOwnerNorApproved()": [
-          {
-            "notice": "The caller must own the token or be an approved operator."
-          }
-        ],
-        "TransferFromIncorrectOwner()": [
-          {
-            "notice": "The token must be owned by `from`."
-          }
-        ],
-        "TransferToNonERC721ReceiverImplementer()": [
-          {
-            "notice": "Cannot safely transfer to a contract that does not implement the ERC721Receiver interface."
-          }
-        ],
-        "TransferToZeroAddress()": [
-          {
-            "notice": "Cannot transfer to the zero address."
-          }
-        ],
-        "URIQueryForNonexistentToken()": [
-          {
-            "notice": "The token does not exist."
-          }
-        ]
-      },
       "kind": "user",
       "methods": {
         "addEntitlementModule(address)": {
@@ -877,278 +843,278 @@
     }
   },
   "settings": {
-    "compilationTarget": {
-      "contracts/src/spaces/facets/entitlements/EntitlementsManager.sol": "EntitlementsManager"
-    },
-    "evmVersion": "paris",
-    "libraries": {},
-    "metadata": {
-      "appendCBOR": false,
-      "bytecodeHash": "none"
-    },
+    "remappings": [
+      "@openzeppelin/=lib/@openzeppelin/",
+      "@prb/math/=lib/@prb/math/src/",
+      "@prb/test/=lib/@prb/test/src/",
+      "account-abstraction/=lib/account-abstraction/contracts/",
+      "base64/=lib/base64/",
+      "ds-test/=lib/ds-test/src/",
+      "forge-std/=lib/forge-std/src/",
+      "hardhat-deploy/=lib/hardhat-deploy/"
+    ],
     "optimizer": {
       "enabled": true,
       "runs": 200
     },
-    "remappings": [
-      ":@openzeppelin/=lib/@openzeppelin/",
-      ":@prb/math/=lib/@prb/math/src/",
-      ":@prb/test/=lib/@prb/test/src/",
-      ":account-abstraction/=lib/account-abstraction/contracts/",
-      ":base64/=lib/base64/",
-      ":ds-test/=lib/ds-test/src/",
-      ":forge-std/=lib/forge-std/src/",
-      ":hardhat-deploy/=lib/hardhat-deploy/"
-    ]
+    "metadata": {
+      "bytecodeHash": "none",
+      "appendCBOR": false
+    },
+    "compilationTarget": {
+      "contracts/src/spaces/facets/entitlements/EntitlementsManager.sol": "EntitlementsManager"
+    },
+    "evmVersion": "paris",
+    "libraries": {}
   },
   "sources": {
     "contracts/src/crosschain/IRuleEntitlement.sol": {
       "keccak256": "0x3da336bbe54d6a62cb521d47af057095a307042d5741e08d7cf190552f4616b0",
-      "license": "MIT",
       "urls": [
         "bzz-raw://2139ec62b79becb583e95f8d8d7ba941769ff26efdea56ff3f2322a5ad2a55a7",
         "dweb:/ipfs/QmSsZXgEEALmakJT5a2QfuE2EoMJ27o7UFQYP3DA2fm4EU"
-      ]
+      ],
+      "license": "MIT"
     },
     "contracts/src/crosschain/RuleEntitlementUtil.sol": {
       "keccak256": "0xa64295d54d0af042601e56650a852b3b053e407da0c13bc8fcd17766936b6443",
-      "license": "MIT",
       "urls": [
         "bzz-raw://226a0d8e915e8525fde25914c7e69b016775cdd2a4fba2362ea13dfd4ed705c3",
         "dweb:/ipfs/QmcqC9USu4Fk1TX8zg399zboyShdGyxfMcLdtbcAJJvLvz"
-      ]
+      ],
+      "license": "MIT"
     },
     "contracts/src/diamond/facets/introspection/IERC165.sol": {
       "keccak256": "0x243cfeefa64ba07bee887b0b03704147f9bd2f25571272a6ebca3ba684af1b00",
-      "license": "Apache-2.0",
       "urls": [
         "bzz-raw://1aed67ea7251fad9dbfb58a30f59f7edd81d48d7f6b193b98f957be359653361",
         "dweb:/ipfs/QmQauJL4nFMN3QDutjWezRbBjLX5GsTWt5jeLfkX4JW64T"
-      ]
+      ],
+      "license": "Apache-2.0"
     },
     "contracts/src/diamond/facets/ownable/IERC173.sol": {
       "keccak256": "0xec6475a73e1229430edadb6fd3e32f1599ebb8af78dbbc762d54ded196e534ae",
-      "license": "Apache-2.0",
       "urls": [
         "bzz-raw://46e9fef226666c827f408b5d2c9061600fa5233ddf5fcbc3a2b8956d89e8a872",
         "dweb:/ipfs/Qmd6L6wtehyrD8XwKqFD7gG5hJxsBZ1ja6hGSf2dtN4XEx"
-      ]
+      ],
+      "license": "Apache-2.0"
     },
     "contracts/src/diamond/facets/ownable/token/ITokenOwnable.sol": {
       "keccak256": "0x3035bb5eb69a7c939aa038f27eb216b117727beba7d89aa84657c3f24c98b32d",
-      "license": "Apache-2.0",
       "urls": [
         "bzz-raw://c1a6860c8105dad4d1b193883ecd700c223ea9b81c096ed86b3d25bd6c9eed7f",
         "dweb:/ipfs/QmVEDbbF6eyZfmqcM1FfedAuCQqiUYpagDmZMhHM4Ap7n9"
-      ]
+      ],
+      "license": "Apache-2.0"
     },
     "contracts/src/diamond/facets/ownable/token/TokenOwnableBase.sol": {
       "keccak256": "0xc5ef68652f692a56131badcf0adb92893d822fd5e0d97dda49a4520d1859a00a",
-      "license": "Apache-2.0",
       "urls": [
         "bzz-raw://bf38ee4ec154de7ef7de263241454d98392d6e61caf4582e2145325258bb8fa5",
         "dweb:/ipfs/QmcZGn5KeSPwsTVominE537CDPbTMGoVDgko51onHZoGyW"
-      ]
+      ],
+      "license": "Apache-2.0"
     },
     "contracts/src/diamond/facets/ownable/token/TokenOwnableStorage.sol": {
       "keccak256": "0x86c57b4dfccdc7459dfb4398d71f41152936ba9081ec29a75a3cc29a3be2c324",
-      "license": "Apache-2.0",
       "urls": [
         "bzz-raw://6e3c65245cba71e68a1c5ab9b5298192ad80413643c3afbb61eba1d016472152",
         "dweb:/ipfs/QmdzCeszA4s9x7de1SzJwYpYjJto83sG3yJZ7XUPAn4suD"
-      ]
+      ],
+      "license": "Apache-2.0"
     },
     "contracts/src/diamond/facets/pausable/IPausable.sol": {
       "keccak256": "0xd5cc8d743bd12bbd23526178c11808634527c87e2f6da29dfb6aec75dab56261",
-      "license": "Apache-2.0",
       "urls": [
         "bzz-raw://c893da163481570ae2e00e5deae732404261cc0e7143fdc0448145810448c6b6",
         "dweb:/ipfs/QmbyUkcew8vmUXPVLDJ7GjvxMkmTqjhKZWLDYtWEPzZ2SM"
-      ]
+      ],
+      "license": "Apache-2.0"
     },
     "contracts/src/diamond/facets/pausable/PausableBase.sol": {
       "keccak256": "0xa278c9cdc622351a088d6d96759a51972b1720ef72424f1f98e5822dd9fd6438",
-      "license": "Apache-2.0",
       "urls": [
         "bzz-raw://379dabb0f68319e89d4b7447c31d5a3d0d2b4ecbce92b07f6e096974f2541c6c",
         "dweb:/ipfs/QmPQPKBYtuNiFDNh9nGCJGtLXP2AqPLkZ7BBTKgQZeaVH1"
-      ]
+      ],
+      "license": "Apache-2.0"
     },
     "contracts/src/diamond/facets/pausable/PausableStorage.sol": {
       "keccak256": "0xe0bbe1c804385ae11c7e0d1054637ee12457f014dec5db1bef77dc0fd3eccbaf",
-      "license": "Apache-2.0",
       "urls": [
         "bzz-raw://8f55e470bd7a15f75875ab25705ac584f1184bc289e13e4f0282ba6167c2f5bf",
         "dweb:/ipfs/QmZumkrGnv5ty65vm7srPLGSzBTua5vJsrSuJcgajMH4JR"
-      ]
+      ],
+      "license": "Apache-2.0"
     },
     "contracts/src/diamond/facets/token/ERC721A/ERC721ABase.sol": {
       "keccak256": "0xe1d57f0d29b0e5fa88e1d7e7384dc5c20901dfdfb81adb667c749cba57673b34",
-      "license": "Apache-2.0",
       "urls": [
         "bzz-raw://d2282b33d16f31635acdc951a6e193d88b35d446d81518605006841cd2fcdb25",
         "dweb:/ipfs/QmSBEbcBkYMmZnfaNWGTkbvMMdMFwU9xrBsKLNZPduwFwc"
-      ]
+      ],
+      "license": "Apache-2.0"
     },
     "contracts/src/diamond/facets/token/ERC721A/ERC721AStorage.sol": {
       "keccak256": "0x96b4e1886b3697a44deccbaf25f3d59842adc1d8ccb8cc9953a591f10c41c14a",
-      "license": "Apache-2.0",
       "urls": [
         "bzz-raw://59e1cc6fd674d7a1b912e28623be7ca3488dd0305e9cf9f53645387e97c3feae",
         "dweb:/ipfs/QmUSvBk1MzHBWUPjHYWkGgBbtxZGKpnBAQTqiLNJQNqMsF"
-      ]
+      ],
+      "license": "Apache-2.0"
     },
     "contracts/src/diamond/facets/token/ERC721A/IERC721A.sol": {
       "keccak256": "0xfce3dc8955c337c405c27c7741b7beff81685ed89f2e102fbad517043e20edf9",
-      "license": "Apache-2.0",
       "urls": [
         "bzz-raw://6c0ef999aaa971921ba4a4d2190ce5fae92fe15a34a87aac02fd081773fdbe9e",
         "dweb:/ipfs/QmUFD83GFhupZo2d3PafyK5fjqrzFRDnJHEsTGYhHakzUM"
-      ]
+      ],
+      "license": "Apache-2.0"
     },
     "contracts/src/river/wallet-link/IWalletLink.sol": {
       "keccak256": "0x0d6f4b0d6ba2cca41f652356d895c411c0bcb83325349dd5a2839c7e84833e4f",
-      "license": "Apache-2.0",
       "urls": [
         "bzz-raw://6bab70c4eb1bbce65f3346c75f403e995d40412c12b5f7e19c196240ba184a73",
         "dweb:/ipfs/QmakgkJykNfCDWBVfiiXtSKKhopTrerWFFY7kYadQtYSit"
-      ]
+      ],
+      "license": "Apache-2.0"
     },
     "contracts/src/spaces/entitlements/IEntitlement.sol": {
       "keccak256": "0x6f8aab97a4fae69e2ee5dd1820e34dd742d634751d41d833b21fcce47c3df0bf",
-      "license": "Apache-2.0",
       "urls": [
         "bzz-raw://2d1501e3e3cebaeb556720bbf336233af28e9b76394302a1d97d555496ffd324",
         "dweb:/ipfs/QmPhggvuU2uHwVnqYXjATiCNrLFXdN2KbF5tgNeo8s3Pui"
-      ]
+      ],
+      "license": "Apache-2.0"
     },
     "contracts/src/spaces/facets/Entitled.sol": {
-      "keccak256": "0xadad39f3edf1774d117b88e003fad157a72560a9ca1b4bac47e9c0e6ffd32554",
-      "license": "Apache-2.0",
+      "keccak256": "0x70676a9a06a6b57c2158deeef1d4216649cde27d1e2968f4c703792502594d29",
       "urls": [
-        "bzz-raw://d0099278e17be44e93ddf815cb05befdb075492d27f7f2a35b3d88f5ec48b509",
-        "dweb:/ipfs/QmX9gmyPe9WVxYcvdPpPKtmz8ShFJGZmHnyxiqNaLTWbqo"
-      ]
+        "bzz-raw://666be343d9d68b9ef047b5c6de72a68749b49670f8cf5bb0fa7da07cd152b9c1",
+        "dweb:/ipfs/QmSG622rTgiNSAB8DUEzjHg8oPNCH6C2hkeSMJx1NTNhyp"
+      ],
+      "license": "Apache-2.0"
     },
     "contracts/src/spaces/facets/Permissions.sol": {
       "keccak256": "0x9ec12f93daf62e46af526c0c44cde0df8c4b848da6a5f0909854cce126d1e365",
-      "license": "Apache-2.0",
       "urls": [
         "bzz-raw://2c22749f53f52f76ab40a6d49260af16b6f80cb4304f4d68c04c0dfbd1001bc3",
         "dweb:/ipfs/QmcZJJWVntsNgo85QZke3q4dBwXjzrrza7omrtNhemibNa"
-      ]
+      ],
+      "license": "Apache-2.0"
     },
     "contracts/src/spaces/facets/banning/BanningBase.sol": {
-      "keccak256": "0x0b70a264f43eea6ee33162376a7a5c9aa1c87e6aa7eb96ddffae17a32ce6eb05",
-      "license": "Apache-2.0",
+      "keccak256": "0x081717ddc83bd5c7e1711349b0fd40483d33b883ca0d22233248c6c6acaabd86",
       "urls": [
-        "bzz-raw://1510bc02c009d1d3fd11a22385a3f576c722d786241d12956a443b24f4bed4b4",
-        "dweb:/ipfs/QmVT291o4p175crTiW1gbbzMfMPC5w4GDK7ZYgevg5L8T5"
-      ]
+        "bzz-raw://1bf01486a8cc5da312326bcf408d168f008e56673b8f53a91f2b866b7d7a04c1",
+        "dweb:/ipfs/QmfFfoXRJQ9cd9EMrRa1GHoTuJR7RmBg9Pku5cHbUZ2BnM"
+      ],
+      "license": "Apache-2.0"
     },
     "contracts/src/spaces/facets/banning/BanningStorage.sol": {
-      "keccak256": "0x86f42359a5be03e864ad03af3bcd5986580c02baa8f4b161aeaeb5ce60d550c4",
-      "license": "Apache-2.0",
+      "keccak256": "0xdec88030e326960548fc3fb7049f7f8ae31647f3270b2230364c15572fa63c68",
       "urls": [
-        "bzz-raw://25bfb0f266d9e573f24d00b40db7d938d39924898c968704cccd8aa1cdf0276c",
-        "dweb:/ipfs/QmZoxQghM23Wys5EijVyAqPtPBzugxdFChdSfRHaYeQcy5"
-      ]
+        "bzz-raw://3b181db22747945562ac5a215d72b795fab549074647c35d46fdf0762353bed0",
+        "dweb:/ipfs/QmWm9wSuRZJGE9LdqWwmbAV5FYSKskweCN9Zqycn3aaR6t"
+      ],
+      "license": "Apache-2.0"
     },
     "contracts/src/spaces/facets/banning/IBanning.sol": {
-      "keccak256": "0xf1d823facff2c2c6606177838e5e00c261e462c2542141eb65e51e5fb46d3560",
-      "license": "Apache-2.0",
+      "keccak256": "0xe3103b5dc55339fb620ab3cd7f3f18a5de684624663437387befbd93da756809",
       "urls": [
-        "bzz-raw://f383530d390d6029c21a075a1328e2a1f627965c3c81efb8be1ee47c60a564ac",
-        "dweb:/ipfs/QmU78f5sJYKkCdkoHLvq2tT3kvS5eURcdmev2imc8siXFD"
-      ]
+        "bzz-raw://d2aefe6caa3f7891e35ade6c75781c21c40ef1c1228d88db6dccae719101a0a9",
+        "dweb:/ipfs/QmUZ4ezyZ4LnN8xd2VTdzrySwUQybLmoHyY2V4qMNzdC5X"
+      ],
+      "license": "Apache-2.0"
     },
     "contracts/src/spaces/facets/delegation/WalletLinkProxyBase.sol": {
       "keccak256": "0x2d800fabc6eaec00c2b25d72dda50cb612eca2ad08700ba537e1dcabf771efdc",
-      "license": "Apache-2.0",
       "urls": [
         "bzz-raw://3d5346877c8dd48f84b4dc2b9958736fdded102211a8368e83ae82564f0f2334",
         "dweb:/ipfs/Qmdfq725QN1vdtZd7xC2PSEUbt7ChWh3HEwCcFg7QiqNMd"
-      ]
+      ],
+      "license": "Apache-2.0"
     },
     "contracts/src/spaces/facets/delegation/WalletLinkProxyStorage.sol": {
       "keccak256": "0x53bc0beb753473e7e927cede43c68006d27a30c212451ffd03b5b3d710713599",
-      "license": "Apache-2.0",
       "urls": [
         "bzz-raw://055bbca7d475e12d1d0344389803684ffe50fa04bbcc1755dc947f5c3fee5658",
         "dweb:/ipfs/QmT3RDDQ8qvkRM91FxMixLfgsSvf77idAbA1AJL7aKxVMa"
-      ]
+      ],
+      "license": "Apache-2.0"
     },
     "contracts/src/spaces/facets/entitlements/EntitlementsManager.sol": {
       "keccak256": "0xe5e2e454c89534bb59d17901d7dec034065615a0cc74a4b8dc6b6060c2677b30",
-      "license": "Apache-2.0",
       "urls": [
         "bzz-raw://bc346579f1f0090e0a4f17256b4807c6ac56a8691699d102566fe1c6e6c7857c",
         "dweb:/ipfs/QmcDGLPvUPQLAXpr5UKXYFmxp7QSJZHTMSNeAgjz263ybW"
-      ]
+      ],
+      "license": "Apache-2.0"
     },
     "contracts/src/spaces/facets/entitlements/EntitlementsManagerBase.sol": {
       "keccak256": "0x043ba820a71407d23bb2f14f4809f8c6024c90de44e403130a0e3c2998b53cd6",
-      "license": "Apache-2.0",
       "urls": [
         "bzz-raw://a161f6aea0bf6796f5b87abe51192796fe4926515ffa927aa3bd3c01d657b951",
         "dweb:/ipfs/QmTZF7rCKaCQ4YRdGSsm1f6T8HCSX2KPzcEFqpvkF3riMi"
-      ]
+      ],
+      "license": "Apache-2.0"
     },
     "contracts/src/spaces/facets/entitlements/EntitlementsManagerService.sol": {
       "keccak256": "0x6f40f5b41ad702ea55bf10f987b3e2b6d02ac527a66be523f06f025cead1867d",
-      "license": "Apache-2.0",
       "urls": [
         "bzz-raw://da2012c616b833c5b491735c230be707e4f9b7657b3a71d7bdf52e7c2ba128b9",
         "dweb:/ipfs/Qme4864V46rozVDRWtfYqtpyzE1SzBnqYQQf3iD2rrqiPg"
-      ]
+      ],
+      "license": "Apache-2.0"
     },
     "contracts/src/spaces/facets/entitlements/EntitlementsManagerStorage.sol": {
       "keccak256": "0x43bbf8d47d27533e61fe4bcd4d48afd3ce950dfb29a7b6db26ca2b1196ab258c",
-      "license": "Apache-2.0",
       "urls": [
         "bzz-raw://916420acc93939f1fc0648355a0f7b048d7a848ea0574af21057da2b2aa8d5b7",
         "dweb:/ipfs/Qmakd7rxVWkzkaTch7fXyTadKdQb7caHehPssoxo73PWsQ"
-      ]
+      ],
+      "license": "Apache-2.0"
     },
     "contracts/src/spaces/facets/entitlements/IEntitlementsManager.sol": {
       "keccak256": "0x0e5cfd4a4e7196f4487167767ebf89415f775dff918001c06f759b6a975f8c0c",
-      "license": "Apache-2.0",
       "urls": [
         "bzz-raw://e9cc6e70e2a1d4f6beb4b5c93677f6ad9603a8dafb3e26393d6d25a7ac6d61b9",
         "dweb:/ipfs/QmQXgtUT49MCjZPmjUHdVxkJuA7yWjmD7qHcN8U2PygBWY"
-      ]
+      ],
+      "license": "Apache-2.0"
     },
     "contracts/src/spaces/facets/membership/MembershipStorage.sol": {
       "keccak256": "0x81ded1f28ae642a3304b35f4a141e971bdbef584b00be3813ef93e63fb24849f",
-      "license": "Apache-2.0",
       "urls": [
         "bzz-raw://ee38399098d402954db7b3b57e108e46097a37da0abf1000bef254fce471f7f0",
         "dweb:/ipfs/QmaFn8rbyX3q8JpTs8cYkuJKqE7aQjaPMAaWV4oggJz7xR"
-      ]
+      ],
+      "license": "Apache-2.0"
     },
     "lib/@openzeppelin/contracts/token/ERC721/IERC721.sol": {
       "keccak256": "0x5ef46daa3b58ef2702279d514780316efaa952915ee1aa3396f041ee2982b0b4",
-      "license": "MIT",
       "urls": [
         "bzz-raw://2f8f2a76e23b02fc69e8cd24c3cb47da6c7af3a2d6c3a382f8ac25c6e094ade7",
         "dweb:/ipfs/QmPV4ZS4tPVv4mTCf9ejyZ1ai57EEibDRj7mN2ARDCLV5n"
-      ]
+      ],
+      "license": "MIT"
     },
     "lib/@openzeppelin/contracts/utils/introspection/IERC165.sol": {
       "keccak256": "0x4296879f55019b23e135000eb36896057e7101fb7fb859c5ef690cf14643757b",
-      "license": "MIT",
       "urls": [
         "bzz-raw://87b3541437c8c443ccd36795e56a338ed12855eec17f8da624511b8d1a7e14df",
         "dweb:/ipfs/QmeJQCtZrQjtJLr6u7ZHWeH3pBnjtLWzvRrKViAi7UZqxL"
-      ]
+      ],
+      "license": "MIT"
     },
     "lib/@openzeppelin/contracts/utils/structs/EnumerableSet.sol": {
       "keccak256": "0x86c1470cbfd878491e5de030072b647352d36bd27122cffb928970b1945282aa",
-      "license": "MIT",
       "urls": [
         "bzz-raw://ad85dd393ee0a1917c57046abc5155f51f77844b2c6a42c05c1b8dd26d6ff3c1",
         "dweb:/ipfs/QmNqYc8To2NdnpP6E1tGz7t6A7beuENde5yovwov5pW1fA"
-      ]
+      ],
+      "license": "MIT"
     }
   },
   "version": 1

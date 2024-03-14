@@ -2,6 +2,7 @@
 /* tslint:disable */
 /* eslint-disable */
 export type { IArchitect } from "./IArchitect";
+export type { IBanning } from "./IBanning";
 export type { IChannel } from "./IChannel";
 export type { IDiamond } from "./IDiamond";
 export type { IDiamondCut } from "./IDiamondCut";
@@ -24,6 +25,7 @@ export type { TokenPausableFacet } from "./TokenPausableFacet";
 export type { UserEntitlement } from "./UserEntitlement";
 export * as factories from "./factories";
 export { IArchitect__factory } from "./factories/IArchitect__factory";
+export { IBanning__factory } from "./factories/IBanning__factory";
 export { IChannel__factory } from "./factories/IChannel__factory";
 export { IDiamond__factory } from "./factories/IDiamond__factory";
 export { IDiamondCut__factory } from "./factories/IDiamondCut__factory";
