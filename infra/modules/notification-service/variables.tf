@@ -62,3 +62,7 @@ variable "river_node_db" {
   description = "The river node db module"
   type        = any
 }
+
+variable "river_node_url" {
+  type = string
+}

@@ -251,6 +251,10 @@ resource "aws_ecs_task_definition" "fargate_task_definition" {
       {
         name  = "VAPID_SUBJECT",
         value = var.vapid_subject
+      },
+      {
+        name  = "RIVER_NODE_URL",
+        value = var.river_node_url
       }
     ]
 

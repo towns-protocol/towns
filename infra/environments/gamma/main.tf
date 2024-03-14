@@ -162,7 +162,8 @@ module "notification_service" {
   # TODO: check with brian & team to see who runs this account
   vapid_subject = "mailto:support@towns.com"
 
-  river_node_db = module.river_db_cluster
+  river_node_db  = module.river_db_cluster
+  river_node_url = module.global_constants.nodes_metadata[0].url
 }
 
 module "eth_balance_monitor" {
