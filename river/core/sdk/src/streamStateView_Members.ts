@@ -9,7 +9,7 @@ import { StreamStateView_Members_Solicitations } from './streamStateView_Members
 import { check } from '@river/dlog'
 import { DecryptedContent } from './encryptedContentTypes'
 import { StreamStateView_UserMetadata } from './streamStateView_UserMetadata'
-import { KeySolicitationContent } from './decryptionExtensions'
+import { KeySolicitationContent } from '@river/encryption'
 
 export type StreamMember = {
     userId: string

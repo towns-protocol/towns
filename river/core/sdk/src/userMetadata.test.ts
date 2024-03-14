@@ -222,15 +222,32 @@ describe('userMetadataTests', () => {
             alicePromise.done()
         })
 
-        await bobsClient.setUsername(streamId, 'bob-username')
+        const setUsernamePromise = bobsClient.setUsername(streamId, 'bob-username')
+        const expected = new Map<string, string>([[bobsClient.userId, 'bob-username']])
+        // expect username to get updated immediately
+        expect(
+            bobsClient.streams.get(streamId)!.view.getUserMetadata().usernames.plaintextUsernames,
+        ).toEqual(expected)
 
+        expect(
+            bobsClient.streams
+                .get(streamId)!
+                .view.getUserMetadata()
+                .usernames.info(bobsClient.userId).username,
+        ).toEqual('bob-username')
+
+        // wait for the username request to send
+        await setUsernamePromise
+        // wait for the username to be updated
         await bobPromise.expectToSucceed()
         await alicePromise.expectToSucceed()
 
-        const expected = new Map<string, string>([[bobsClient.userId, 'bob-username']])
         for (const client of [bobsClient, alicesClient]) {
             const streamView = client.streams.get(streamId)!.view
             expect(streamView.getUserMetadata().usernames.plaintextUsernames).toEqual(expected)
+            expect(streamView.getUserMetadata().usernames.info(bobsClient.userId).username).toEqual(
+                'bob-username',
+            )
         }
     })
 

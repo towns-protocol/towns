@@ -8,11 +8,11 @@ import { isDefined } from './check'
 import { makeUniqueSpaceStreamId } from './id'
 import { TestClientOpts, makeTestClient, waitFor } from './util.test'
 import { Stream } from './stream'
-import { DecryptionSessionError } from './decryptionExtensions'
+import { DecryptionSessionError } from '@river/encryption'
 
 const log = dlog('csb:test:decryptionExtensions')
 
-describe('DecryptionExtensions', () => {
+describe('ClientDecryptionExtensions', () => {
     let clients: Client[] = []
     const makeAndStartClient = async (opts?: TestClientOpts) => {
         const client = await makeTestClient(opts)

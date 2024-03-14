@@ -1,5 +1,6 @@
 export * from './base'
 export * from './cryptoStore'
+export * from './decryptionExtensions'
 export * from './encryptionDelegate'
 export * from './encryptionDevice'
 export * from './encryptionTypes'

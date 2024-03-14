@@ -3,7 +3,6 @@
  **************************************************************************/
 export * from './check'
 export * from './client'
-export * from './decryptionExtensions'
 export * from './encryptedContentTypes'
 export * from './id'
 export * from './makeStreamRpcClient'

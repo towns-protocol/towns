@@ -5,10 +5,9 @@ import {
     RiverDbManager,
     makeStreamRpcClient,
     userIdFromAddress,
-    EntitlementsDelegate,
-    DecryptionStatus,
     makeSignerContext,
 } from '@river/sdk'
+import { EntitlementsDelegate, DecryptionStatus } from '@river/encryption'
 import { CreateSpaceParams, IRuleEntitlement } from '@river/web3'
 import { FullyReadMarker } from '@river/proto'
 import {
@@ -1454,11 +1453,11 @@ export class TownsClient implements EntitlementsDelegate {
     /************************************************
      * getIsUsernameAvailable
      ************************************************/
-    public async getIsUsernameAvailable(streamId: string, username: string): Promise<boolean> {
+    public getIsUsernameAvailable(streamId: string, username: string): Promise<boolean> {
         if (!this.casablancaClient) {
             throw new Error('No casablanca client')
         }
-        return await this.casablancaClient.isUsernameAvailable(streamId, username)
+        return Promise.resolve(this.casablancaClient.isUsernameAvailable(streamId, username))
     }
 
     /************************************************

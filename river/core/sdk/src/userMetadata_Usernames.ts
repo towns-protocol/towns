@@ -20,6 +20,16 @@ export class UserMetadata_Usernames {
         this.streamId = streamId
     }
 
+    setLocalUsername(userId: string, username: string, emitter?: TypedEmitter<StreamStateEvents>) {
+        this.plaintextUsernames.set(userId, username)
+        emitter?.emit('streamPendingUsernameUpdated', this.streamId, userId)
+    }
+
+    resetLocalUsername(userId: string, emitter?: TypedEmitter<StreamStateEvents>) {
+        this.plaintextUsernames.delete(userId)
+        emitter?.emit('streamPendingUsernameUpdated', this.streamId, userId)
+    }
+
     addEncryptedData(
         eventId: string,
         encryptedData: EncryptedData,
@@ -181,7 +191,7 @@ export class UserMetadata_Usernames {
         const eventId = this.userIdToEventId.get(userId)
         if (!eventId) {
             return {
-                username: '',
+                username: name,
                 usernameConfirmed: false,
                 usernameEncrypted: false,
             }

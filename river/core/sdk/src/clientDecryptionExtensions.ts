@@ -1,25 +1,29 @@
 import {
     BaseDecryptionExtensions,
+    DecryptionSessionError,
     EncryptedContentItem,
     EntitlementsDelegate,
-    KeyFulfilmentData,
-    KeySolicitationData,
+    GroupEncryptionCrypto,
     GroupSessionsData,
+    KeyFulfilmentData,
     KeySolicitationContent,
-    DecryptionSessionError,
-} from './decryptionExtensions'
-import { check } from '@river/dlog'
-import { GroupEncryptionCrypto, UserDevice } from '@river/encryption'
-import { EncryptedContent } from './encryptedContentTypes'
+    KeySolicitationData,
+    UserDevice,
+} from '@river/encryption'
+import { EncryptedData, UserInboxPayload_GroupEncryptionSessions } from '@river/proto'
 import { make_MemberPayload_KeyFulfillment, make_MemberPayload_KeySolicitation } from './types'
 
-import { isDefined } from './check'
 import { Client } from './client'
-import { EncryptedData, UserInboxPayload_GroupEncryptionSessions } from '@river/proto'
+import { EncryptedContent } from './encryptedContentTypes'
 import { Permission } from '@river/web3'
+import { check } from '@river/dlog'
 import chunk from 'lodash/chunk'
+import { isDefined } from './check'
+import { isMobileSafari } from './utils'
 
 export class ClientDecryptionExtensions extends BaseDecryptionExtensions {
+    private isMobileSafariBackgrounded = false
+
     constructor(
         private readonly client: Client,
         crypto: GroupEncryptionCrypto,
@@ -82,6 +86,10 @@ export class ClientDecryptionExtensions extends BaseDecryptionExtensions {
             this.client.userInboxStreamId !== undefined &&
             upToDateStreams.has(this.client.userInboxStreamId)
         )
+    }
+
+    public shouldPauseTicking(): boolean {
+        return this.isMobileSafariBackgrounded
     }
 
     public async decryptGroupEvent(
@@ -220,5 +228,26 @@ export class ClientDecryptionExtensions extends BaseDecryptionExtensions {
 
     public uploadDeviceKeys(): Promise<void> {
         return this.client.uploadDeviceKeys()
+    }
+
+    public onStart(): void {
+        if (isMobileSafari()) {
+            document.addEventListener('visibilitychange', this.mobileSafariPageVisibilityChanged)
+        }
+    }
+
+    public onStop(): Promise<void> {
+        if (isMobileSafari()) {
+            document.removeEventListener('visibilitychange', this.mobileSafariPageVisibilityChanged)
+        }
+        return Promise.resolve()
+    }
+
+    private mobileSafariPageVisibilityChanged = () => {
+        this.log.debug('onMobileSafariBackgrounded', this.isMobileSafariBackgrounded)
+        this.isMobileSafariBackgrounded = document.visibilityState === 'hidden'
+        if (!this.isMobileSafariBackgrounded) {
+            this.checkStartTicking()
+        }
     }
 }

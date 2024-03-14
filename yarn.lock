@@ -7271,6 +7271,7 @@ __metadata:
     "@matrix-org/olm": ^3.2.15
     "@river/dlog": "workspace:^"
     "@river/proto": "workspace:^"
+    "@river/web3": "workspace:^"
     "@types/jest": ^29.5.3
     "@types/lodash": ^4.14.186
     "@types/node": ^20.5.0

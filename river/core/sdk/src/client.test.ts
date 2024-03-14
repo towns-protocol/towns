@@ -4,7 +4,7 @@
 
 import { dlog, check } from '@river/dlog'
 import { isDefined } from './check'
-import { UserDevice } from '@river/encryption'
+import { DecryptionStatus, UserDevice } from '@river/encryption'
 import { Client } from './client'
 import {
     makeUserStreamId,
@@ -40,7 +40,6 @@ import {
     make_ChannelPayload_Message,
     make_MemberPayload_KeyFulfillment,
 } from './types'
-import { DecryptionStatus } from './decryptionExtensions'
 import { SignerContext } from './signerContext'
 
 const log = dlog('csb:test')

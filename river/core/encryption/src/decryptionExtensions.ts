@@ -1,15 +1,9 @@
 import TypedEmitter from 'typed-emitter'
 import { Permission } from '@river/web3'
-import { shortenHexString, dlog, dlogError, DLogger, check } from '@river/dlog'
-import {
-    GROUP_ENCRYPTION_ALGORITHM,
-    GroupEncryptionCrypto,
-    GroupEncryptionSession,
-    UserDevice,
-} from '@river/encryption'
+import { shortenHexString, dlog, dlogError, DLogger, check, bin_toHexString } from '@river/dlog'
 import { EncryptedData, SessionKeys, UserInboxPayload_GroupEncryptionSessions } from '@river/proto'
-import { isMobileSafari } from './utils'
-import { streamIdFromBytes } from './id'
+import { GROUP_ENCRYPTION_ALGORITHM, GroupEncryptionSession, UserDevice } from './olmLib'
+import { GroupEncryptionCrypto } from './groupEncryptionCrypto'
 
 export interface EntitlementsDelegate {
     isEntitled(
@@ -130,7 +124,6 @@ export abstract class BaseDecryptionExtensions {
     private timeoutId?: NodeJS.Timeout
     private delayMs: number = 15
     private started: boolean = false
-    private isMobileSafariBackgrounded = false
     private emitter: TypedEmitter<DecryptionEvents>
 
     protected _onStopFn?: () => void
@@ -190,6 +183,7 @@ export abstract class BaseDecryptionExtensions {
     public abstract sendKeySolicitation(args: KeySolicitationData): Promise<void>
     public abstract sendKeyFulfillment(args: KeyFulfilmentData): Promise<void>
     public abstract encryptAndShareGroupSessions(args: GroupSessionsData): Promise<void>
+    public abstract shouldPauseTicking(): boolean
     /**
      * uploadDeviceKeys
      * upload device keys to the server
@@ -263,21 +257,13 @@ export abstract class BaseDecryptionExtensions {
         this.checkStartTicking()
     }
 
-    private mobileSafariPageVisibilityChanged = () => {
-        this.log.debug('onMobileSafariBackgrounded', this.isMobileSafariBackgrounded)
-        this.isMobileSafariBackgrounded = document.visibilityState === 'hidden'
-        if (!this.isMobileSafariBackgrounded) {
-            this.checkStartTicking()
-        }
-    }
-
     public start(): void {
         check(!this.started, 'start() called twice, please re-instantiate instead')
         this.log.debug('starting')
         this.started = true
-        if (isMobileSafari()) {
-            document.addEventListener('visibilitychange', this.mobileSafariPageVisibilityChanged)
-        }
+        // let the subclass override and do any custom startup tasks
+        this.onStart()
+
         // enqueue a task to upload device keys
         this.queues.priorityTasks.push(() => this.uploadDeviceKeys())
         // enqueue a task to download new to-device messages
@@ -286,13 +272,21 @@ export abstract class BaseDecryptionExtensions {
         this.checkStartTicking()
     }
 
+    public onStart(): void {
+        // let the subclass override and do any custom startup tasks
+    }
+
     public async stop(): Promise<void> {
         this._onStopFn?.()
         this._onStopFn = undefined
-        if (isMobileSafari()) {
-            document.removeEventListener('visibilitychange', this.mobileSafariPageVisibilityChanged)
-        }
+        // let the subclass override and do any custom shutdown tasks
+        await this.onStop()
         await this.stopTicking()
+    }
+
+    public onStop(): Promise<void> {
+        // let the subclass override and do any custom shutdown tasks
+        return Promise.resolve()
     }
 
     public getSizeOfEncryptedСontentQueue() {
@@ -311,17 +305,14 @@ export abstract class BaseDecryptionExtensions {
         }
     }
 
-    private checkStartTicking() {
+    protected checkStartTicking() {
         if (
             !this.started ||
             this.timeoutId ||
             !this._onStopFn ||
-            !this.isUserInboxStreamUpToDate(this.upToDateStreams)
+            !this.isUserInboxStreamUpToDate(this.upToDateStreams) ||
+            this.shouldPauseTicking()
         ) {
-            return
-        }
-
-        if (this.isMobileSafariBackgrounded) {
             return
         }
 
@@ -441,7 +432,7 @@ export abstract class BaseDecryptionExtensions {
             this.log.debug('skipping, no session for our device')
             return
         }
-        const streamId = streamIdFromBytes(session.streamId)
+        const streamId = bin_toHexString(session.streamId)
         // check if it contains any keys we need
         const neededKeyIndexs = []
         for (let i = 0; i < session.sessionIds.length; i++) {

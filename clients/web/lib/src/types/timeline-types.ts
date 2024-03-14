@@ -15,7 +15,8 @@ import {
 import { PlainMessage } from '@bufbuild/protobuf'
 import { Channel, Membership, Mention, MessageType } from './towns-types'
 import { staticAssertNever } from '../utils/towns-utils'
-import { DecryptionSessionError, isDefined } from '@river/sdk'
+import { DecryptionSessionError } from '@river/encryption'
+import { isDefined } from '@river/sdk'
 
 /**************************************************************************
  * We're using a union type to represent the different types of events that

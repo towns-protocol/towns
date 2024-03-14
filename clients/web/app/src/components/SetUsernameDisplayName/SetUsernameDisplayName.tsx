@@ -62,7 +62,6 @@ export const SetUsernameDisplayName = (props: { titleProperties: TitleProperties
             setUsernameAvailable(true)
             const usernameAvailable =
                 (await getIsUsernameAvailable(streamId, e.target.value)) ?? false
-
             setUsernameAvailable(usernameAvailable)
         },
         [setDirtyUsername, setUsernameAvailable, getIsUsernameAvailable, streamId],

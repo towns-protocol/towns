@@ -10,21 +10,17 @@ import {
     KeySolicitationContent,
     KeySolicitationData,
     makeSessionKeys,
-} from './decryptionExtensions'
-import {
-    CryptoStore,
-    GroupEncryptionCrypto,
-    GroupEncryptionSession,
-    IGroupEncryptionClient,
-    UserDevice,
-    UserDeviceCollection,
-} from '@river/encryption'
+} from '../decryptionExtensions'
+import { EncryptedData, UserInboxPayload_GroupEncryptionSessions } from '@river/proto'
+import { GroupEncryptionSession, UserDevice, UserDeviceCollection } from '../olmLib'
 import { bin_fromHexString, bin_toHexString, dlog } from '@river/dlog'
 
+import { CryptoStore } from '../cryptoStore'
 import EventEmitter from 'events'
+import { GroupEncryptionCrypto } from '../groupEncryptionCrypto'
+import { IGroupEncryptionClient } from '../base'
 import { Permission } from '@river/web3'
 import TypedEmitter from 'typed-emitter'
-import { EncryptedData, UserInboxPayload_GroupEncryptionSessions } from '@river/proto'
 import { customAlphabet } from 'nanoid'
 
 const log = dlog('test:decryptionExtensions:')
@@ -191,6 +187,10 @@ class MockDecryptionExtensions extends BaseDecryptionExtensions {
     }
 
     public readonly seenStates: DecryptionStatus[] = []
+
+    public shouldPauseTicking(): boolean {
+        return false
+    }
 
     public newGroupSessions(
         sessions: UserInboxPayload_GroupEncryptionSessions,

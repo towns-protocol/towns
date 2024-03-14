@@ -253,7 +253,7 @@ func TestSpaceViewState(t *testing.T) {
 	// get a new view
 	view1, err := stream.GetView(ctx)
 	require.NoError(t, err)
-	// users show up as joined imediately, because we need that information to continue to add events
+	// users show up as joined immediately, because we need that information to continue to add events
 	spaceViewStateTest_CheckUserJoined(t, view1.(JoinableStreamView), user1Wallet, true)
 	spaceViewStateTest_CheckUserJoined(t, view1.(JoinableStreamView), user2Wallet, true)
 	spaceViewStateTest_CheckUserJoined(t, view1.(JoinableStreamView), user3Wallet, true)

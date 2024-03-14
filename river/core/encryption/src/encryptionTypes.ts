@@ -1,13 +1,15 @@
 import {
     Account as OlmAccount,
-    PkEncryption as OlmPkEncryption,
+    InboundGroupSession as OlmInboundGroupSession,
+    OutboundGroupSession as OlmOutboundGroupSession,
     PkDecryption as OlmPkDecryption,
+    PkEncryption as OlmPkEncryption,
     PkSigning as OlmPkSigning,
     Session as OlmSession,
     Utility as OlmUtility,
-    OutboundGroupSession as OlmOutboundGroupSession,
-    InboundGroupSession as OlmInboundGroupSession,
 } from '@matrix-org/olm'
+
+import { EncryptedData } from '@river/proto'
 
 export type Account = OlmAccount
 export type PkDecryption = OlmPkDecryption
@@ -21,4 +23,10 @@ export type InboundGroupSession = OlmInboundGroupSession
 export interface IOutboundGroupSessionKey {
     chain_index: number
     key: string
+}
+
+export interface DecryptedContentError {
+    missingSession: boolean
+    encryptedData: EncryptedData
+    error?: unknown
 }

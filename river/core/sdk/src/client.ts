@@ -32,13 +32,17 @@ import {
 } from '@river/dlog'
 import { assert, isDefined } from './check'
 import {
+    BaseDecryptionExtensions,
     CryptoStore,
+    DecryptionEvents,
     EncryptionDevice,
+    EntitlementsDelegate,
     GroupEncryptionCrypto,
     GroupEncryptionSession,
     IGroupEncryptionClient,
     UserDevice,
     UserDeviceCollection,
+    makeSessionKeys,
 } from '@river/encryption'
 import { errorContains, getRpcErrorProperty, StreamRpcClientType } from './makeStreamRpcClient'
 import EventEmitter from 'events'
@@ -103,12 +107,6 @@ import { Stream } from './stream'
 import { Code } from '@connectrpc/connect'
 import { usernameChecksum, isIConnectError, genPersistenceStoreName } from './utils'
 import { isEncryptedContentKind, toDecryptedContent } from './encryptedContentTypes'
-import {
-    DecryptionEvents,
-    BaseDecryptionExtensions,
-    EntitlementsDelegate,
-    makeSessionKeys,
-} from './decryptionExtensions'
 import { ClientDecryptionExtensions } from './clientDecryptionExtensions'
 import { PersistenceStore, IPersistenceStore, StubPersistenceStore } from './persistenceStore'
 import { SyncState, SyncedStreams } from './syncedStreams'
@@ -752,14 +750,26 @@ export class Client
 
     async setUsername(streamId: string, username: string) {
         check(isDefined(this.cryptoBackend))
+        const stream = this.stream(streamId)
+        check(isDefined(stream), 'stream not found')
+        stream.view.getUserMetadata().usernames.setLocalUsername(this.userId, username)
         const encryptedData = await this.cryptoBackend.encryptGroupEvent(streamId, username)
         encryptedData.checksum = usernameChecksum(username, streamId)
-        await this.makeEventAndAddToStream(streamId, make_MemberPayload_Username(encryptedData), {
-            method: 'username',
-        })
+        try {
+            await this.makeEventAndAddToStream(
+                streamId,
+                make_MemberPayload_Username(encryptedData),
+                {
+                    method: 'username',
+                },
+            )
+        } catch (err) {
+            stream.view.getUserMetadata().usernames.resetLocalUsername(this.userId)
+            throw err
+        }
     }
 
-    async isUsernameAvailable(streamId: string, username: string): Promise<boolean> {
+    isUsernameAvailable(streamId: string, username: string): boolean {
         const stream = this.streams.get(streamId)
         check(isDefined(stream), 'stream not found')
         return stream.view.getUserMetadata().usernames.cleartextUsernameAvailable(username) ?? false

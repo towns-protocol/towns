@@ -37,8 +37,8 @@ import { keccak256 } from 'ethereum-cryptography/keccak'
 import { bin_toHexString } from '@river/dlog'
 import { isDefined } from './check'
 import { DecryptedContent } from './encryptedContentTypes'
-import { DecryptionSessionError } from './decryptionExtensions'
 import { addressFromUserId, streamIdAsBytes } from './id'
+import { DecryptionSessionError } from '@river/encryption'
 
 export type LocalEventStatus = 'sending' | 'sent' | 'failed'
 export interface LocalEvent {
