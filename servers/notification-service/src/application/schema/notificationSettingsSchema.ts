@@ -12,7 +12,7 @@ export const saveUserSettingsSchema = z.object({
         ),
         channelSettings: z.array(
             z.object({
-                spaceId: z.string().min(1),
+                spaceId: z.string(),
                 channelId: z.string().min(1),
                 channelMute: z.nativeEnum(Mute),
             }),

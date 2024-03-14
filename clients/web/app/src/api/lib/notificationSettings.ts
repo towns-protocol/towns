@@ -10,7 +10,7 @@ import { env } from 'utils'
 import { axiosClient } from 'api/apiClient'
 
 const PUSH_WORKER_URL = env.VITE_WEB_PUSH_WORKER_URL
-const queryKeys = {
+export const notificationSettingsQueryKeys = {
     getSettings: (userId: string | undefined) => ['getSettings', userId],
 }
 
@@ -101,7 +101,7 @@ export function useMuteSettings({
 export function useGetNotificationSettings() {
     const userId = useMyProfile()?.userId
     return useQuery({
-        queryKey: queryKeys.getSettings(userId),
+        queryKey: notificationSettingsQueryKeys.getSettings(userId),
         queryFn: () => getSettings({ userId }),
         enabled: !!userId,
         refetchOnMount: false,
@@ -111,7 +111,7 @@ export function useGetNotificationSettings() {
     })
 }
 
-async function putSettings({ userSettings }: SaveSettingsRequestParams) {
+export async function putSettings({ userSettings }: SaveSettingsRequestParams) {
     const url = `${PUSH_WORKER_URL}/api/notification-settings`
     const response = await axiosClient.put(url, {
         userSettings,
@@ -142,7 +142,7 @@ export function useSetMuteSettingForChannelOrSpace() {
                 return null
             }
             const notificationSettings = await queryClient.fetchQuery({
-                queryKey: queryKeys.getSettings(userId),
+                queryKey: notificationSettingsQueryKeys.getSettings(userId),
                 queryFn: () => getSettings({ userId }),
             })
 
@@ -181,10 +181,13 @@ export function useSetMuteSettingForChannelOrSpace() {
                 }
             }
 
+            console.log('[useSetNotificationSettings]', 'saving to cloud', notificationSettings)
             return putSettings({ userSettings: notificationSettings })
         },
         onSuccess: async () => {
-            queryClient.invalidateQueries({ queryKey: queryKeys.getSettings(userId) })
+            queryClient.invalidateQueries({
+                queryKey: notificationSettingsQueryKeys.getSettings(userId),
+            })
         },
         onError: (error: unknown) => {
             console.error('[useSetNotificationSettings] error', error)
