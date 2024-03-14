@@ -11,7 +11,8 @@
         "lint:fix": "yarn lint --fix",
         "preview": "vite preview",
         "test": "yarn test:unit",
-        "test:unit": "VITE_PRIVY_ID=imustbe25charslong_______ vitest"
+        "test:unit": "yarn test:unit:watch run",
+        "test:unit:watch": "VITE_PRIVY_ID=imustbe25charslong_______ vitest"
     },
     "dependencies": {
         "@emotion/react": "^11.10.4",
