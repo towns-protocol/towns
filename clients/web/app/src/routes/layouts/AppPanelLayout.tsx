@@ -63,6 +63,7 @@ export const AppPanelLayout = () => {
                             <SpaceSideBar
                                 space={space}
                                 className={styles.allotmentResizeBorderPadding}
+                                key={space.id}
                             />
                         ) : (
                             <SpaceSidebarLoadingPlaceholder />
