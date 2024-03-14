@@ -6,6 +6,7 @@ on:
             - main
         paths:
             - 'servers/workers/**'
+            - 'river/**'
     workflow_dispatch:
 
 concurrency:
