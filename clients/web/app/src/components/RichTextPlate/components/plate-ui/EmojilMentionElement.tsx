@@ -1,6 +1,7 @@
 import React from 'react'
 import { withRef } from '@udecode/cn'
 import { PlateElement, useElement } from '@udecode/plate-common'
+import { Box } from '@ui'
 import { TEmojiMentionElement } from '../../utils/ComboboxTypes'
 
 export const EmojiMentionElement = withRef<
@@ -12,9 +13,15 @@ export const EmojiMentionElement = withRef<
 >(({ children, prefix, className, onClick, ...props }, ref) => {
     const element = useElement<TEmojiMentionElement>()
     return (
-        <span data-slate-value={element.value} title={element.emoji.name}>
+        <Box
+            as="span"
+            display="inline-block"
+            paddingX="xs"
+            data-slate-value={element.value}
+            title={element.emoji.name}
+        >
             {element.emoji.emoji}
             {children}
-        </span>
+        </Box>
     )
 })

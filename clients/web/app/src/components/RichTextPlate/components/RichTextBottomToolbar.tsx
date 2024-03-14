@@ -1,5 +1,6 @@
 import React, { useCallback } from 'react'
 import { focusEditor } from '@udecode/slate-react'
+import { getEndPoint } from '@udecode/slate'
 import { useEditorRef } from '@udecode/plate-common'
 import { GiphyEntryDesktop, GiphyEntryTouch } from '@components/Giphy/GiphyEntry'
 import { EmojiPickerButton, EmojiPickerButtonTouch } from '@components/EmojiPickerButton'
@@ -36,13 +37,13 @@ export const RichTextBottomToolbar = (props: Props) => {
 
     const onSelectEmoji = useCallback(
         (data: EmojiPickerSelection) => {
-            focusEditor(editor)
             editor.insertNode({
                 type: ELEMENT_MENTION_EMOJI,
                 children: [{ text: '' }],
                 emoji: { name: data.name, emoji: data.native },
                 value: data.native,
             } as TEmojiMentionElement)
+            focusEditor(editor, getEndPoint(editor, []))
         },
         [editor],
     )
