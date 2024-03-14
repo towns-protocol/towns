@@ -136,71 +136,73 @@ export const UserProfile = (props: Props) => {
                 </Stack>
             )}
 
-            <Stack grow gap>
-                <EditModeContainer
-                    inputId={InputId.Bio}
-                    initialValue={userBio}
-                    canEdit={canEdit}
-                    onSave={onSaveItem}
-                >
-                    {({
-                        editMenu,
-                        value,
-                        isEditing,
-                        isSaving,
-                        error,
-                        errorComponent,
-                        onChange,
-                        handleEdit,
-                    }) => {
-                        return (
-                            <Stack grow padding gap background="level2" rounded="sm">
-                                <Stack horizontal>
-                                    <Stack
-                                        gap
-                                        grow
-                                        onClick={canEdit && !isEditing ? handleEdit : undefined}
-                                    >
-                                        <Paragraph strong color="default">
-                                            Bio
-                                        </Paragraph>
+            {(canEdit || (userBio && userBio !== '')) && (
+                <Stack grow gap>
+                    <EditModeContainer
+                        inputId={InputId.Bio}
+                        initialValue={userBio}
+                        canEdit={canEdit}
+                        onSave={onSaveItem}
+                    >
+                        {({
+                            editMenu,
+                            value,
+                            isEditing,
+                            isSaving,
+                            error,
+                            errorComponent,
+                            onChange,
+                            handleEdit,
+                        }) => {
+                            return (
+                                <Stack grow padding gap background="level2" rounded="sm">
+                                    <Stack horizontal>
+                                        <Stack
+                                            gap
+                                            grow
+                                            onClick={canEdit && !isEditing ? handleEdit : undefined}
+                                        >
+                                            <Paragraph strong color="default">
+                                                Bio
+                                            </Paragraph>
+                                        </Stack>
+                                        <Box>{editMenu}</Box>
                                     </Stack>
-                                    <Box>{editMenu}</Box>
+                                    <Stack gap="sm">
+                                        {!isEditing ? (
+                                            <Paragraph color="gray2">
+                                                {userBio ?? `no biography just yet`}
+                                            </Paragraph>
+                                        ) : (
+                                            <TextArea
+                                                autoFocus
+                                                key={error ? 'errored' : 'not-errored'}
+                                                tone={error ? 'error' : undefined}
+                                                paddingY="md"
+                                                background="level2"
+                                                defaultValue={value}
+                                                height="100"
+                                                maxLength={160}
+                                                disabled={isSaving}
+                                                onChange={onChange}
+                                            />
+                                        )}
+                                        {errorComponent}
+                                    </Stack>
                                 </Stack>
-                                <Stack gap="sm">
-                                    {!isEditing ? (
-                                        <Paragraph color="gray2">
-                                            {userBio ?? `no biography just yet`}
-                                        </Paragraph>
-                                    ) : (
-                                        <TextArea
-                                            autoFocus
-                                            key={error ? 'errored' : 'not-errored'}
-                                            tone={error ? 'error' : undefined}
-                                            paddingY="md"
-                                            background="level2"
-                                            defaultValue={value}
-                                            height="100"
-                                            maxLength={160}
-                                            disabled={isSaving}
-                                            onChange={onChange}
-                                        />
-                                    )}
-                                    {errorComponent}
-                                </Stack>
-                            </Stack>
-                        )
-                    }}
-                </EditModeContainer>
+                            )
+                        }}
+                    </EditModeContainer>
 
-                {!!info?.length &&
-                    info.map((n) => (
-                        <>
-                            <Paragraph strong>{n.title}</Paragraph>
-                            <Paragraph color="gray2">{n.content}</Paragraph>
-                        </>
-                    ))}
-            </Stack>
+                    {!!info?.length &&
+                        info.map((n) => (
+                            <>
+                                <Paragraph strong>{n.title}</Paragraph>
+                                <Paragraph color="gray2">{n.content}</Paragraph>
+                            </>
+                        ))}
+                </Stack>
+            )}
         </Stack>
     )
 }
