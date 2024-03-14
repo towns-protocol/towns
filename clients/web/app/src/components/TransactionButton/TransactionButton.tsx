@@ -18,6 +18,7 @@ type Props = {
     disabled?: boolean
     className?: string
     type?: 'submit' | 'button'
+    resetToIdleOnSuccess?: boolean
     onClick?: () => void
 }
 

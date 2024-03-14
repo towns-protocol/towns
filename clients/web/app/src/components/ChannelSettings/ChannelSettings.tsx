@@ -5,41 +5,39 @@ import {
     TransactionStatus,
     UpdateChannelInfo,
     WalletDoesNotMatchSignedInAccountError,
+    useChannelId,
     useIsTransactionPending,
     useRoom,
+    useSpaceId,
     useUpdateChannelTransaction,
 } from 'use-towns-client'
-import React, { useCallback, useMemo, useState } from 'react'
+import React, { useCallback, useEffect, useMemo, useState } from 'react'
 import { useGetEmbeddedSigner } from '@towns/privy'
+import { useSearchParams } from 'react-router-dom'
+import { FieldValues, UseFormReset } from 'react-hook-form'
 import { ChannelNameRegExp, isForbiddenError, isRejectionError } from 'ui/utils/utils'
-import { Box, Button, Checkbox, ErrorMessage, FormRender, Heading, Stack, TextField } from '@ui'
-import { TransactionUIState, toTransactionUIStates } from 'hooks/TransactionUIState'
-
+import { Box, Checkbox, ErrorMessage, FancyButton, FormRender, Stack, TextField } from '@ui'
 import { ButtonSpinner } from '@components/Login/LoginButton/Spinner/ButtonSpinner'
 import { ErrorMessageText } from 'ui/components/ErrorMessage/ErrorMessage'
-import { TransactionButton } from '@components/TransactionButton'
 import { useAllRoleDetails } from 'hooks/useAllRoleDetails'
 import { UserOpTxModal } from '@components/Web3/UserOpTxModal/UserOpTxModal'
 import { mapToErrorMessage } from '@components/Web3/utils'
 import { createPrivyNotAuthenticatedNotification } from '@components/Notifications/utils'
+import { Panel } from '@components/Panel/Panel'
+import { CHANNEL_INFO_PARAMS } from 'routes'
 import { FormState, FormStateKeys, emptyDefaultValues, schema } from './formConfig'
-import { ModalContainer } from '../Modals/ModalContainer'
 import { RoleCheckboxProps, RolesSection, getCheckedValuesForRoleIdsField } from './RolesSection'
 
-type ChannelSettingsModalProps = {
+type ChannelSettingsFormProps = {
     spaceId: string
     channelId: string
-    onHide: () => void
-    onUpdatedChannel: () => void
 }
 
 export function ChannelSettingsForm({
     spaceId,
     channelId,
-    onHide,
-    onUpdatedChannel,
     preventCloseMessage,
-}: ChannelSettingsModalProps & {
+}: ChannelSettingsFormProps & {
     preventCloseMessage: string | undefined
 }): JSX.Element {
     const room = useRoom(channelId)
@@ -78,11 +76,10 @@ export function ChannelSettingsForm({
     const {
         updateChannelTransaction,
         error: transactionError,
-        transactionStatus,
         transactionHash,
     } = useUpdateChannelTransaction()
 
-    const transactionUIState = toTransactionUIStates(transactionStatus, Boolean(channelId))
+    const hasPendingTx = useIsTransactionPending(BlockchainTransactionType.EditChannel)
 
     const { hasTransactionError, hasServerError } = useMemo(() => {
         return {
@@ -104,37 +101,30 @@ export function ChannelSettingsForm({
                 createPrivyNotAuthenticatedNotification()
                 return
             }
-            if (transactionUIState === TransactionUIState.None) {
-                const name = changes[FormStateKeys.name]
-                const description = changes[FormStateKeys.description]
-                const roleIds = changes[FormStateKeys.roleIds].map((roleId) => Number(roleId))
-                const isDefault = changes[FormStateKeys.isDefault]
-                const channelInfo: UpdateChannelInfo = {
-                    parentSpaceId: spaceId,
-                    channelId,
-                    updatedChannelName: name,
-                    updatedChannelTopic: description,
-                    updatedRoleIds: roleIds.map((roleId) => Number(roleId)),
-                    isDefault,
-                }
-                console.log('[ChannelSettingsModal] update channel', channelInfo)
-                const txResult = await updateChannelTransaction(channelInfo, signer)
-                console.log('[ChannelSettingsModal] txResult', txResult)
-                if (txResult?.status === TransactionStatus.Success) {
-                    invalidateQuery()
-                    onUpdatedChannel()
-                }
+            if (hasPendingTx) {
+                return
+            }
+
+            const name = changes[FormStateKeys.name]
+            const description = changes[FormStateKeys.description]
+            const roleIds = changes[FormStateKeys.roleIds].map((roleId) => Number(roleId))
+            const isDefault = changes[FormStateKeys.isDefault]
+            const channelInfo: UpdateChannelInfo = {
+                parentSpaceId: spaceId,
+                channelId,
+                updatedChannelName: name,
+                updatedChannelTopic: description,
+                updatedRoleIds: roleIds.map((roleId) => Number(roleId)),
+                isDefault,
+            }
+            console.log('[ChannelSettingsModal] update channel', channelInfo)
+            const txResult = await updateChannelTransaction(channelInfo, signer)
+            console.log('[ChannelSettingsModal] txResult', txResult)
+            if (txResult?.status === TransactionStatus.Success) {
+                invalidateQuery()
             }
         },
-        [
-            channelId,
-            invalidateQuery,
-            onUpdatedChannel,
-            spaceId,
-            transactionUIState,
-            updateChannelTransaction,
-            getSigner,
-        ],
+        [channelId, invalidateQuery, spaceId, hasPendingTx, updateChannelTransaction, getSigner],
     )
 
     const onNameKeyDown = useCallback(async (event: React.KeyboardEvent<HTMLInputElement>) => {
@@ -191,19 +181,23 @@ export function ChannelSettingsForm({
 
     return (
         <Stack gap="lg">
-            <Heading level={3}>Edit channel</Heading>
             <FormRender<FormState>
                 schema={schema}
                 defaultValues={defaultValues}
                 mode="onChange"
                 onSubmit={onSubmit}
             >
-                {({ register, formState, setValue, resetField }) => {
+                {({ register, formState, setValue, resetField, reset }) => {
                     const { onChange: onNameChange, ...restOfNameProps } = register(
                         FormStateKeys.name,
                     )
+
                     return (
                         <Stack>
+                            <AutoResetFormStateComponent
+                                reset={reset}
+                                defaultValues={defaultValues}
+                            />
                             <Stack>
                                 <TextField
                                     autoFocus
@@ -217,6 +211,7 @@ export function ChannelSettingsForm({
                                             fieldName={FormStateKeys.name}
                                         />
                                     }
+                                    disabled={hasPendingTx}
                                     onKeyDown={onNameKeyDown}
                                     onChange={(event: React.ChangeEvent<HTMLInputElement>) => {
                                         onNameChange(event)
@@ -241,6 +236,7 @@ export function ChannelSettingsForm({
                                             fieldName={FormStateKeys.description}
                                         />
                                     }
+                                    disabled={hasPendingTx}
                                     {...register(FormStateKeys.description)}
                                 />
                             </Stack>
@@ -267,35 +263,13 @@ export function ChannelSettingsForm({
                                 {errorBox}
                             </Stack>
 
-                            <Stack paddingTop="sm" paddingRight="md">
-                                <Box padding="sm" background="level2" borderRadius="sm">
-                                    <Checkbox
-                                        width="100%"
-                                        label="Is Default:"
-                                        name={FormStateKeys.isDefault}
-                                        register={register}
-                                    />
-                                </Box>
-                            </Stack>
-
-                            <Box flexDirection="row" justifyContent="end" gap="sm" paddingTop="lg">
-                                <Stack horizontal gap justifyContent="end">
-                                    <Button
-                                        tone="level2"
-                                        value="Cancel"
-                                        disabled={transactionUIState != TransactionUIState.None}
-                                        onClick={onHide}
-                                    >
-                                        Cancel
-                                    </Button>
-
-                                    <TransactionButton
-                                        transactionState={transactionUIState}
-                                        transactingText="Updating channel"
-                                        successText="Channel updated"
-                                        idleText="Save on chain"
-                                    />
-                                </Stack>
+                            <Box padding background="level2" borderRadius="sm">
+                                <Checkbox
+                                    width="100%"
+                                    label="Is Default:"
+                                    name={FormStateKeys.isDefault}
+                                    register={register}
+                                />
                             </Box>
 
                             {preventCloseMessage && (
@@ -306,6 +280,16 @@ export function ChannelSettingsForm({
                                     />
                                 </Box>
                             )}
+                            <Box padding position="bottomLeft" right="none" gap="sm">
+                                <FancyButton
+                                    cta={formState.isDirty}
+                                    type="submit"
+                                    disabled={hasPendingTx || !formState.isDirty}
+                                    spinner={hasPendingTx}
+                                >
+                                    {hasPendingTx ? 'Saving' : 'Save Channel'}
+                                </FancyButton>
+                            </Box>
                         </Stack>
                     )
                 }}
@@ -314,12 +298,21 @@ export function ChannelSettingsForm({
     )
 }
 
-export function ChannelSettingsModal({
-    spaceId,
-    channelId,
-    onHide,
-    onUpdatedChannel,
-}: ChannelSettingsModalProps): JSX.Element {
+const AutoResetFormStateComponent = (props: {
+    reset: UseFormReset<FieldValues>
+    defaultValues: FormState
+}) => {
+    const { reset, defaultValues } = props
+    useEffect(() => {
+        reset(defaultValues)
+    }, [defaultValues, reset])
+    return <></>
+}
+
+export const ChannelSettingsPanel = () => {
+    const spaceId = useSpaceId()
+    const channelId = useChannelId()
+    const [searchParams, setSearchParams] = useSearchParams()
     const [transactionMessage, setTransactionMessage] = useState<string | undefined>()
     const hasPendingTx = useIsTransactionPending(BlockchainTransactionType.EditChannel)
 
@@ -328,25 +321,23 @@ export function ChannelSettingsModal({
             setTransactionMessage('Please wait for the transaction to complete.')
             return
         }
-        onHide()
-    }, [onHide, hasPendingTx])
+        searchParams.delete(CHANNEL_INFO_PARAMS.EDIT_CHANNEL)
+        searchParams.append(CHANNEL_INFO_PARAMS.CHANNEL, '')
+        setSearchParams(searchParams)
+    }, [hasPendingTx, searchParams, setSearchParams])
 
-    return (
-        <>
-            <ModalContainer
-                key={`${spaceId}_${channelId}}`}
-                touchTitle="Edit Channel"
-                onHide={_onHide}
-            >
+    return spaceId && channelId ? (
+        <Panel label="Edit channel" onClose={_onHide}>
+            <Stack padding>
                 <ChannelSettingsForm
                     spaceId={spaceId}
                     preventCloseMessage={transactionMessage}
                     channelId={channelId}
-                    onHide={onHide}
-                    onUpdatedChannel={onUpdatedChannel}
                 />
-            </ModalContainer>
+            </Stack>
             <UserOpTxModal />
-        </>
+        </Panel>
+    ) : (
+        <></>
     )
 }

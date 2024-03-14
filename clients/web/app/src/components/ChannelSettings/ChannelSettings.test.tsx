@@ -12,7 +12,7 @@ import {
     roleDataWithBothRolesAssignedToChannel,
     roleDataWithMemberAssignedToChannel,
 } from 'test/testMocks'
-import { ChannelSettingsForm } from './ChannelSettingsModal'
+import { ChannelSettingsForm } from './ChannelSettings'
 
 const CHANNEL_ID = 'channel1'
 const SPACE_ID = 'town1'
@@ -20,13 +20,7 @@ const spaceRoomIdentifier = SPACE_ID
 
 const channelRoomIdentifier = CHANNEL_ID
 
-const Wrapper = ({
-    onHide = vi.fn(),
-    onUpdatedChannel = vi.fn(),
-}: {
-    onUpdatedChannel?: () => void
-    onHide?: () => void
-}) => {
+const Wrapper = () => {
     const [showForm, setShowForm] = React.useState(true)
 
     return (
@@ -38,8 +32,6 @@ const Wrapper = ({
                         spaceId={spaceRoomIdentifier}
                         channelId={channelRoomIdentifier}
                         preventCloseMessage="Dummy close message"
-                        onHide={onHide}
-                        onUpdatedChannel={onUpdatedChannel}
                     />
                 )}
             </>

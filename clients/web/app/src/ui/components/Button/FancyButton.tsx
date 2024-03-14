@@ -16,13 +16,14 @@ type FancyButtonProps = {
     onClick?: () => void
     borderRadius?: BoxProps['borderRadius']
     boxShadow?: BoxProps['boxShadow']
+    type?: 'button' | 'submit' | 'reset'
 }
 
 /**
  * Convulted button that enables background transitions
  */
 export const FancyButton = (props: FancyButtonProps) => {
-    const { icon, compact, spinner, disabled, borderRadius = 'sm' } = props
+    const { icon, compact, spinner, disabled, borderRadius = 'sm', type } = props
     const background = props.cta ? 'cta1' : 'level3'
 
     const before = spinner ? (
@@ -61,6 +62,8 @@ export const FancyButton = (props: FancyButtonProps) => {
             centerContent
             whileTap="tap"
             as="button"
+            disabled={disabled}
+            type={type}
             borderRadius={borderRadius}
             initial="hide"
             animate="show"

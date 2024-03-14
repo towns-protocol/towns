@@ -11,10 +11,9 @@ import {
     useTownsClient,
 } from 'use-towns-client'
 
-import { ChannelSettingsModal } from '@components/ChannelSettings/ChannelSettingsModal'
 import { ClipboardCopy } from '@components/ClipboardCopy/ClipboardCopy'
 import { Icon, Paragraph, Stack } from '@ui'
-import { PATHS } from 'routes'
+import { CHANNEL_INFO_PARAMS, PATHS } from 'routes'
 import { useAuth } from 'hooks/useAuth'
 import { useDevice } from 'hooks/useDevice'
 import {
@@ -67,16 +66,15 @@ export const ChannelInfoPanel = () => {
     }, [navigate, isTouch, spaceData?.id, channel?.id])
 
     const onShowChannelSettingsPopup = useEvent(() => {
-        setActiveModal('settings')
+        navigate(
+            `/${PATHS.SPACES}/${spaceData?.id}/${PATHS.CHANNELS}/${channel?.id}/info?${CHANNEL_INFO_PARAMS.EDIT_CHANNEL}`,
+        )
     })
 
     const onHideChannelSettingsPopup = useEvent(() => {
         setActiveModal(undefined)
     })
 
-    const onUpdatedChannel = useCallback(() => {
-        onHideChannelSettingsPopup()
-    }, [onHideChannelSettingsPopup])
     const { mutate: mutateNotificationSettings, isPending: isSettingNotification } =
         useSetMuteSettingForChannelOrSpace()
 
@@ -173,15 +171,6 @@ export const ChannelInfoPanel = () => {
                     <Paragraph color="error">Leave #{channel?.label}</Paragraph>
                 </PanelButton>
             </Stack>
-
-            {activeModal === 'settings' && spaceData && channel?.id && (
-                <ChannelSettingsModal
-                    spaceId={spaceData?.id}
-                    channelId={channel?.id}
-                    onHide={onHideChannelSettingsPopup}
-                    onUpdatedChannel={onUpdatedChannel}
-                />
-            )}
 
             {activeModal === 'members' && (
                 <ChannelMembersModal onHide={onHideChannelSettingsPopup} />
