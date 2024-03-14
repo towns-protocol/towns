@@ -4,7 +4,7 @@ WORKDIR /monorepo
 
 COPY . .
 
-RUN apk add --no-cache python3 py3-pip make build-base
+RUN apk add --no-cache python3 py3-pip make build-base git
 
 WORKDIR /monorepo/servers/notification-service
 
