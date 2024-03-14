@@ -1430,6 +1430,7 @@ export class TownsClient implements EntitlementsDelegate {
 
     /************************************************
      * getRoomMember
+     * - This function is primarily intended for testing purposes
      * **********************************************/
     public getRoomMember(roomId: string, userId: string): RoomMember | undefined {
         const roomData = this.getRoomData(roomId)
@@ -1438,6 +1439,7 @@ export class TownsClient implements EntitlementsDelegate {
 
     /************************************************
      * getRoomData
+     * - This function is primarily intended for testing purposes
      ************************************************/
     public getRoomData(roomId: string): StreamView | undefined {
         if (!this.casablancaClient) {

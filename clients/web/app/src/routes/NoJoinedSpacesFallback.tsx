@@ -31,8 +31,7 @@ export const NoJoinedSpacesFallback = () => {
             const firstSpaceId =
                 spaces.find((space) => space.id === spaceIdBookmark)?.id ?? spaces[0].id
 
-            const firstSpace = client.getRoomData(firstSpaceId)
-            if (firstSpace?.membership === Membership.Join) {
+            if (client.getMembership(firstSpaceId) === Membership.Join) {
                 navigate(`/${PATHS.SPACES}/${firstSpaceId}/`)
             }
         }

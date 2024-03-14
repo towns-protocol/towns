@@ -4,7 +4,7 @@ import { describe, expect, test, vi } from 'vitest'
 // eslint-disable-next-line no-restricted-imports
 import * as Lib from 'use-towns-client'
 import * as Router from 'react-router'
-import { SpaceItem } from 'use-towns-client'
+import { Membership, SpaceItem } from 'use-towns-client'
 import { PATHS } from 'routes'
 import { TestApp } from 'test/testUtils'
 import { NoJoinedSpacesFallback } from './NoJoinedSpacesFallback'
@@ -15,7 +15,7 @@ vi.mock('react-router', async () => {
     }
 })
 
-const getRoomDataSpy = vi.fn()
+const getMembershipSpy = vi.fn()
 let spacesMock: SpaceItem[] = []
 
 vi.mock('use-towns-client', async () => {
@@ -26,7 +26,7 @@ vi.mock('use-towns-client', async () => {
             return {
                 ...actual.useTownsClient(),
                 client: {
-                    getRoomData: getRoomDataSpy,
+                    getMembership: getMembershipSpy,
                 },
             }
         },
@@ -68,9 +68,7 @@ describe('<SpaceHome />', () => {
         const navigateSpy = vi.fn()
         vi.spyOn(Router, 'useNavigate').mockReturnValue((args) => navigateSpy(args))
 
-        getRoomDataSpy.mockReturnValue({
-            membership: 'join',
-        })
+        getMembershipSpy.mockReturnValue(Membership.Join)
 
         spacesMock = [
             {

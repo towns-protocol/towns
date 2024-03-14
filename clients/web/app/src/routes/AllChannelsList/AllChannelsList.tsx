@@ -1,8 +1,9 @@
-import React, { useEffect } from 'react'
+import React, { useEffect, useMemo } from 'react'
 import {
     ChannelContextProvider,
     Membership,
     SpaceData,
+    useMyChannels,
     useMyMembership,
     useSpaceData,
     useTownsClient,
@@ -109,6 +110,8 @@ export const ChannelItem = ({
     const currentChannelId = useChannelIdFromPathname()
     const isJoined = useMyMembership(channelNetworkId) === Membership.Join
     const { createLink } = useCreateLink()
+    const groups = useMyChannels(space)
+    const myJoinedChannelsInSpace = useMemo(() => groups.flatMap((c) => c.channels), [groups])
 
     useEffect(() => {
         // quick fix, leave events result in a faster rerender than the join event
@@ -133,10 +136,9 @@ export const ChannelItem = ({
         setJoinFailed(false)
 
         const flatChannels = space.channelGroups.flatMap((g) => g.channels)
-        const joinedChannels = flatChannels.filter((c) => {
-            const roomData = client?.getRoomData(c.id)
-            return roomData ? roomData.membership === Membership.Join : false
-        })
+        const joinedChannels = flatChannels.filter((flatChannel) =>
+            myJoinedChannelsInSpace.some((joinedChannel) => joinedChannel.id === flatChannel.id),
+        )
 
         const indexOfThisChannel = flatChannels.findIndex((c) => c.id === channelIdentifier)
 
