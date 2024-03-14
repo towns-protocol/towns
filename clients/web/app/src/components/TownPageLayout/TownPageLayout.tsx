@@ -79,7 +79,7 @@ export const TownPageLayout = (props: TownPageLayoutProps) => {
         <>
             <Stack alignItems="center" height="100dvh">
                 {props.headerContent}
-                <Stack scroll width="100%" alignItems="center">
+                <Stack width="100%" alignItems="center" height="100%">
                     <Stack
                         horizontal={!isTouch}
                         paddingX="lg"
@@ -88,10 +88,10 @@ export const TownPageLayout = (props: TownPageLayoutProps) => {
                         maxWidth={isTouch ? '100%' : '1000'}
                         pointerEvents="all"
                         gap="md"
-                        paddingTop="lg"
+                        height="100%"
                     >
-                        <Stack gap="lg" width={isTouch ? '500' : '100%'} height="100%">
-                            <Stack horizontal alignContent="start" gap="sm">
+                        <Stack scroll gap="lg" width="100%" paddingTop="x8">
+                            <Stack horizontal gap="sm" alignContent="start" paddingTop="x4">
                                 {isTouch && (
                                     <InteractiveTownsToken
                                         key={imageSrc}
@@ -121,11 +121,13 @@ export const TownPageLayout = (props: TownPageLayoutProps) => {
                             />
                             <Bio bio={bio} />
 
-                            <Box gap="x8">{props.activityContent}</Box>
+                            <Box>{props.activityContent}</Box>
+                            <Box height="x12" shrink={false} />
                         </Stack>
                         {/* right column */}
                         {!isTouch && (
-                            <Stack gap="lg" alignItems="center">
+                            <Stack gap="lg" alignItems="center" paddingTop="x8">
+                                <Box height="x2" shrink={false} />
                                 <InteractiveTownsToken
                                     key={imageSrc}
                                     size={isTouch ? 'lg' : 'xl'}
@@ -157,7 +159,6 @@ export const TownPageLayout = (props: TownPageLayoutProps) => {
                             </Stack>
                         )}
                     </Stack>
-                    <Box height="x12" shrink={false} />
                 </Stack>
                 {!isPreview && <>{props.bottomContent && props.bottomContent}</>}
             </Stack>
@@ -186,7 +187,7 @@ const Header = (props: {
     })
 
     return (
-        <Stack gap="lg" paddingY="lg" width="100%">
+        <Stack gap="lg" width="100%" paddingTop={isTouch ? 'sm' : 'none'}>
             <Heading level={2} style={{ textTransform: 'none' }}>
                 {name}
             </Heading>
@@ -347,7 +348,7 @@ const Bio = (props: { bio?: string }) => {
     const canExpand = bio && bio.length > MAX_LENGTH && !isExpanded
 
     return bio ? (
-        <Box maxWidth={isTouch ? undefined : '75%'}>
+        <Box maxWidth={isTouch ? '100%' : '75%'}>
             <Paragraph size="lg">
                 {shortenedBio}
                 {canExpand && (

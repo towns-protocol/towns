@@ -93,7 +93,7 @@ export const PublicTownPage = (props: { isPreview?: boolean; onClosePreview?: ()
     return spaceInfo ? (
         <>
             <AbsoluteBackground networkId={spaceInfo.networkId} />
-            <Box paddingTop="safeAreaInsetTop">
+            <Box absoluteFill paddingTop="safeAreaInsetTop">
                 <TownPageLayout
                     headerContent={
                         <Header
@@ -207,7 +207,7 @@ const Header = (props: {
     const { login } = useAuth()
 
     return (
-        <Box horizontal centerContent width="100%">
+        <Box horizontal centerContent width="100%" position="absolute" top="none">
             <Stack horizontal width="100%" paddingY="md" gap="md" paddingRight="md">
                 <Link to="/">
                     <Box centerContent width="x8">
@@ -299,7 +299,6 @@ const Footer = (props: {
                     centerContent
                     gap={isTouch ? 'sm' : 'md'}
                     color="default"
-                    paddingBottom="safeAreaInsetBottom"
                     paddingTop="sm"
                 >
                     {totalSupply && maxSupply && (

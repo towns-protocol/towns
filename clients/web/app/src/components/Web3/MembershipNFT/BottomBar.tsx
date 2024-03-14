@@ -92,6 +92,7 @@ export const BottomBarLayout = ({
             background="backdropBlur"
             alignItems="center"
             {...boxProps}
+            paddingBottom="safeAreaInsetBottom"
         >
             <Stack
                 horizontal
