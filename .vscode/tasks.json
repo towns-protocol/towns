@@ -69,7 +69,7 @@
         "TokenWorker",
         "GatewayWorker",
         "StackupWorker",
-        "PushNotificationsWorker",
+        "NotificationService",
         "Casablanca",
         "Casablanca-No-Entitlements",
         "XChainLaunchMulti",
@@ -512,9 +512,9 @@
       }
     },
     {
-      "label": "PushNotificationsWorker",
+      "label": "NotificationService",
       "type": "shell",
-      "command": "sleep 4 && cd servers/workers/push-notification-worker && ./scripts/start-local-push-worker.sh",
+      "command": "sleep 4 && cd servers/notification-service && yarn build && yarn dev",
       "isBackground": true,
       "problemMatcher": [],
       "presentation": {
