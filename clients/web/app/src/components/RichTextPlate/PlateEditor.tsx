@@ -39,6 +39,7 @@ import { EmojiPlugin } from './plugins/emoji/EmojiPlugin'
 import { OnFocusPlugin } from './plugins/OnFocusPlugin'
 import { PasteFilePlugin } from './components/PasteFilePlugin'
 import { CaptureTownsLinkPlugin } from './components/CaptureTownsLinkPlugin'
+import { OfflineIndicator } from './components/OfflineIndicator'
 
 const initialValue: TElement[] = [
     {
@@ -113,6 +114,7 @@ const PlateEditorWithoutBoundary = ({
     const [embeddedMessageAttachments, setEmbeddedMessageAttachments] = useState<
         EmbeddedMessageAttachment[]
     >([])
+    const disabled = isOffline || !editable || isSendingMessage
 
     const userMentions: TComboboxItemWithData<RoomMember>[] = useMemo(() => {
         return props.users
@@ -212,12 +214,12 @@ const PlateEditorWithoutBoundary = ({
             if (key === 'Enter' && !shiftKey) {
                 event.preventDefault()
                 const { message, mentions } = await toMD(editorRef.current)
-                if (message && message.trim().length > 0) {
+                if (!disabled && message && message.trim().length > 0) {
                     await onSendCb(message, mentions)
                 }
             }
         },
-        [onSendCb, isTouch],
+        [onSendCb, isTouch, disabled],
     )
 
     const fileCount = files.length
@@ -302,11 +304,12 @@ const PlateEditorWithoutBoundary = ({
                                 id="channels"
                                 items={channelMentions}
                             />
+                            <OfflineIndicator attemptingToSend={isAttemptingSend} />
                         </Box>
                         <Box paddingY="sm" paddingRight="xs">
                             <SendMarkdownPlugin
                                 displayButtons={displayButtons ?? 'on-focus'}
-                                disabled={isOffline || !editable}
+                                disabled={disabled}
                                 focused={focused}
                                 isEditing={isEditing ?? false}
                                 hasImage={fileCount > 0}

@@ -6,11 +6,10 @@ import { AnimatePresence } from 'framer-motion'
 import { createPortal } from 'react-dom'
 import { $getSelection, COMMAND_PRIORITY_LOW, SELECTION_CHANGE_COMMAND } from 'lexical'
 import { mergeRegister } from '@lexical/utils'
-import { useNetworkStatus } from 'use-towns-client'
-import { Box, BoxProps, Icon, MotionBox, Paragraph, Stack, useZLayerContext } from '@ui'
-import { GiphyEntryDesktop } from '@components/Giphy/GiphyEntry'
-import { FadeInBox } from '@components/Transitions'
 import { useDevice } from 'hooks/useDevice'
+import { Box, BoxProps, MotionBox, Stack, useZLayerContext } from '@ui'
+import { GiphyEntryDesktop } from '@components/Giphy/GiphyEntry'
+import { OfflineIndicator } from '@components/RichTextPlate/components/OfflineIndicator'
 import { RichTextToolbar } from './RichTextToolbar'
 import { AddLinkModal } from './LinkModal'
 import { InlineToolbar } from './InlineToolbar'
@@ -213,29 +212,3 @@ export const RichTextUIContainer = ({
         {children}
     </Stack>
 )
-
-const OfflineIndicator = (props: { attemptingToSend?: boolean }) => {
-    const { isOffline } = useNetworkStatus()
-    let message = 'Your connection appears to be offline.'
-    if (props.attemptingToSend) {
-        message = [message, 'Please try again when back online...'].join(' ')
-    }
-    return (
-        <AnimatePresence>
-            {isOffline ? (
-                <FadeInBox
-                    horizontal
-                    paddingX
-                    paddingBottom="sm"
-                    key={message}
-                    gap="xs"
-                    color="error"
-                    alignItems="center"
-                >
-                    <Icon type="offline" size="square_sm" />
-                    <Paragraph size="sm">{message}</Paragraph>
-                </FadeInBox>
-            ) : null}
-        </AnimatePresence>
-    )
-}
