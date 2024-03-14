@@ -204,18 +204,26 @@ export type RenderEvent =
 const DEBUG_NO_GROUP_BY_USER = false
 
 const createRelativeDateUtil = () => {
-    const today = new Date()
-    const yesterday = new Date()
-    yesterday.setDate(yesterday.getDate() - 1)
+    const isSameDay = (date1: Date, date2: Date) => {
+        return (
+            date1.getFullYear() === date2.getFullYear() &&
+            date1.getMonth() === date2.getMonth() &&
+            date1.getDate() === date2.getDate()
+        )
+    }
 
     const getRelativeDays = (date: Date) => {
-        const str = date.toDateString()
+        const today = new Date()
+        const yesterday = new Date()
+        yesterday.setDate(yesterday.getDate() - 1)
 
-        return today.toDateString() === str
-            ? 'Today'
-            : yesterday.toDateString() === str
-            ? 'Yesterday'
-            : str.replace(/20[0-9]{2}$/, '')
+        if (isSameDay(date, today)) {
+            return 'Today'
+        } else if (isSameDay(date, yesterday)) {
+            return 'Yesterday'
+        } else {
+            return date.toDateString().replace(/20[0-9]{2}$/, '')
+        }
     }
     return {
         getRelativeDays,
