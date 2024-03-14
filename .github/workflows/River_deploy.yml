@@ -7,6 +7,7 @@ on:
                 description: 'Environment name'
                 required: true
                 type: string
+                default: 'gamma'
             docker_image_tag:
                 description: 'Docker image tag to deploy'
                 required: true
