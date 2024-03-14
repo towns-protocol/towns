@@ -8,8 +8,9 @@ export const SidebarListLayout = <T,>(props: {
     badgeValue?: number
     headerContent?: React.ReactNode
     itemRenderer: (channel: T) => React.ReactNode
+    forceDisplay?: boolean
 }) =>
-    props.channels.length ? (
+    props.channels.length || props.forceDisplay ? (
         <MotionStack key={props.label}>
             <ChannelNavGroup label={props.label} badgeValue={props.badgeValue}>
                 {props.headerContent}

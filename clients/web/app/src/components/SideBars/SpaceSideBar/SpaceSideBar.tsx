@@ -241,6 +241,7 @@ export const SpaceSideBar = (props: Props) => {
                                 />
 
                                 <SidebarListLayout
+                                    forceDisplay
                                     label="Channels"
                                     channels={readChannels}
                                     badgeValue={unseenChannelIds.size}
