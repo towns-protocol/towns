@@ -19,7 +19,15 @@ export const TopBar = () => {
                 <></>
             )}
             <Card horizontal minHeight="x6">
-                <Box centerContent width="x8">
+                <Box
+                    centerContent
+                    width="x8"
+                    tooltip="Go to towns.com"
+                    tooltipOptions={{
+                        placement: 'horizontal',
+                        immediate: true,
+                    }}
+                >
                     <a href="https://towns.com" rel=", noopener noreferrer" target="_blank">
                         <LogoSingleLetter />
                     </a>
