@@ -117,14 +117,13 @@ describe('sendMessageHooks', () => {
             }, [channelId, messagesOrRedactions, redactEvent])
             // format for easy reading
             const formatMessage = useCallback((e: TimelineEvent) => {
+                const prefix = `#:${e.eventNum} ✅:${e.confirmedEventNum ?? '??'}`
                 if (e.content?.kind === ZTEvent.RoomMessage) {
-                    return `${e.content.body} eventId: ${e.eventId} isLocalPending: ${
+                    return `${prefix} ${e.content.body} eventId: ${e.eventId} isLocalPending: ${
                         e.isLocalPending ? 'true' : 'false'
                     }`
                 }
-                return `#:${e.eventNum} ✅:${e.confirmedEventNum ?? '??'} ${
-                    e.fallbackContent
-                } eventId: ${e.eventId}`
+                return `${prefix} ${e.fallbackContent} eventId: ${e.eventId}`
             }, [])
             return (
                 <>
@@ -189,12 +188,28 @@ describe('sendMessageHooks', () => {
             () => expect(channelMembership).toHaveTextContent(Membership.Join),
             TestConstants.DecaDefaultWaitForTimeout,
         )
+        // wait for jane to see bob as member
+        await waitFor(
+            () =>
+                expect(
+                    jane.casablancaClient
+                        ?.stream(janesChannelId)
+                        ?.view.getMembers()
+                        .isMemberJoined(bobProvider.userId),
+                ).toBe(true),
+            TestConstants.DoubleDefaultWaitForTimeout,
+        )
+
         // have jane send a message to bob
         await act(async () => {
             await jane.sendMessage(janesChannelId, 'hello bob')
         })
         // expect our message to show
-        await waitFor(() => expect(message0).toHaveTextContent('hello bob'))
+        await waitFor(
+            () => expect(message0).toHaveTextContent('hello bob'),
+            TestConstants.DecaDefaultWaitForTimeout,
+        )
+
         // and for a block confirmation
         await waitFor(() => expect(message0).not.toHaveTextContent('✅:??'))
         // have bob send a message to jane

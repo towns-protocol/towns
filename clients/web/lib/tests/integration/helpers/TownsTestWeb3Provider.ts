@@ -4,10 +4,16 @@ import { Wallet, ethers } from 'ethers'
 
 import { fundWallet } from './TestUtils'
 import { getContractsInfo, MockERC721AShim } from '@river/web3'
+import { userIdFromAddress } from '@river/sdk'
+import { bin_fromHexString } from '@river/dlog'
 
 export class TownsTestWeb3Provider extends ethers.providers.JsonRpcProvider {
     // note to self, the wallet contains a reference to a provider, which is a circular ref back this class
     public wallet: ethers.Wallet
+
+    public get userId() {
+        return userIdFromAddress(bin_fromHexString(this.wallet.address))
+    }
 
     public get isMetaMask() {
         return true
