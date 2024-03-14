@@ -1141,9 +1141,50 @@ export class TownsClient implements EntitlementsDelegate {
      * - joins the space
      *************************************************/
     public async joinTown(spaceId: string, signer: ethers.Signer) {
-        console.log('[joinTown] minting membership')
+        const userId = await signer.getAddress()
+        const linkedWallets = await this.getLinkedWallets(userId)
+
+        const joinRiverRoom = async () => {
+            const room = await this.joinRoom(spaceId)
+            console.log('[joinTown] room', room)
+            // join the default channels
+            const spaceContent = this.casablancaClient?.streams.get(spaceId)?.view.spaceContent
+            if (spaceContent) {
+                for (const [key, value] of spaceContent.spaceChannelsMetadata.entries()) {
+                    if (value.isDefault) {
+                        console.log('[joinTown] joining default channel', key)
+                        await this.joinRoom(key, undefined, {
+                            skipWaitForMiniblockConfirmation: true,
+                            skipWaitForUserStreamUpdate: true,
+                        })
+                    }
+                }
+            }
+            return room
+        }
+
+        // check membership nft first to avoid uncessary mint attempts on rejoins
+        try {
+            const allPromises = linkedWallets
+                .map((wallet) => this.spaceDapp.hasTownMembership(spaceId, wallet))
+                .concat(this.spaceDapp.hasTownMembership(spaceId, userId))
+            await Promise.any(allPromises)
+            console.log('[joinTown] already have member nft')
+            const room = await joinRiverRoom()
+            return room
+        } catch (error) {
+            // skip if no membership nft found
+            if (error instanceof AggregateError) {
+                console.log('[joinTown] no membership nft found, proceeding with mint', error)
+            }
+            // otherwise some other error occurred
+            else {
+                throw error
+            }
+        }
 
         try {
+            console.log('[joinTown] minting membership')
             await this.mintMembershipTransaction(spaceId, signer)
             console.log('[joinTown] minted membership')
         } catch (error: unknown) {
@@ -1162,22 +1203,7 @@ export class TownsClient implements EntitlementsDelegate {
                 throw error
             }
         }
-
-        const room = await this.joinRoom(spaceId)
-        console.log('[joinTown] room', room)
-        // join the default channels
-        const spaceContent = this.casablancaClient?.streams.get(spaceId)?.view.spaceContent
-        if (spaceContent) {
-            for (const [key, value] of spaceContent.spaceChannelsMetadata.entries()) {
-                if (value.isDefault) {
-                    console.log('[joinTown] joining default channel', key)
-                    await this.joinRoom(key, undefined, {
-                        skipWaitForMiniblockConfirmation: true,
-                        skipWaitForUserStreamUpdate: true,
-                    })
-                }
-            }
-        }
+        const room = await joinRiverRoom()
         return room
     }
 

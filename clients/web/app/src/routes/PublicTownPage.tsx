@@ -2,13 +2,7 @@ import debug from 'debug'
 import React, { Suspense, useCallback, useMemo, useState } from 'react'
 import { useNavigate, useParams } from 'react-router'
 import { Link } from 'react-router-dom'
-import {
-    Permission,
-    useContractSpaceInfo,
-    useHasMemberNft,
-    useHasPermission,
-    useMyProfile,
-} from 'use-towns-client'
+import { Permission, useContractSpaceInfo, useHasPermission, useMyProfile } from 'use-towns-client'
 import { isAddress } from 'viem'
 
 import { Allotment } from 'allotment'
@@ -60,7 +54,7 @@ export const PublicTownPage = (props: { isPreview?: boolean; onClosePreview?: ()
     const { spaceSlug } = useParams()
     // TEMPORARY joining state until hook is built for minting
     const [isJoining, setIsJoining] = useState(false)
-    const { isConnected } = useAuth()
+    const { isConnected, loggedInWalletAddress } = useAuth()
     const { data: spaceInfo, isLoading } = useContractSpaceInfo(spaceSlug)
     const { data: townBio } = useGetSpaceTopic(spaceSlug)
     const { data: membershipInfo } = useReadableMembershipInfo(spaceInfo?.networkId ?? '')
@@ -70,11 +64,12 @@ export const PublicTownPage = (props: { isPreview?: boolean; onClosePreview?: ()
     const showAssetModal = () => setAssetModal(true)
     const hideAssetModal = () => setAssetModal(false)
 
-    const { meetsRequirements: meetsMembershipRequirements, isLoading: isLoadingMeetsMembership } =
-        useMeetsMembershipRequirements({
+    const { hasPermission: meetsMembershipRequirements, isLoading: isLoadingMeetsMembership } =
+        useHasPermission({
             spaceId: spaceInfo?.networkId,
+            walletAddress: loggedInWalletAddress,
+            permission: Permission.JoinSpace,
         })
-
     const { joinSpace, errorMessage, isNoFundsError } = useJoinTown(spaceInfo?.networkId)
 
     const onJoinClick = useCallback(async () => {
@@ -152,42 +147,6 @@ export const PublicTownPage = (props: { isPreview?: boolean; onClosePreview?: ()
             <TownNotFoundBox />
         </MessageBox>
     )
-}
-
-function useMeetsMembershipRequirements({ spaceId }: { spaceId: string | undefined }) {
-    const { loggedInWalletAddress } = useAuth()
-    // this is true when you don't have the nft, but false if you do (i.e. already joined)
-    const { hasPermission: hasPermission, isLoading: isLoadingPermission } = useHasPermission({
-        spaceId,
-        walletAddress: loggedInWalletAddress,
-        permission: Permission.JoinSpace,
-    })
-
-    // for users that left and are rejoining
-    const { data: hasMemberNft, isLoading: isLoadingHasMemberNft } = useHasMemberNft({
-        spaceId,
-        // allow the permission check to run first
-        enabled: isLoadingPermission === false && !hasPermission,
-    })
-
-    return useMemo((): {
-        meetsRequirements: boolean
-        isLoading: boolean
-    } => {
-        if (isLoadingPermission) {
-            return { meetsRequirements: false, isLoading: true }
-        }
-        if (!isLoadingPermission && hasPermission) {
-            return { meetsRequirements: true, isLoading: false }
-        }
-        if (isLoadingHasMemberNft) {
-            return { meetsRequirements: false, isLoading: true }
-        }
-        if (!isLoadingHasMemberNft && hasMemberNft) {
-            return { meetsRequirements: true, isLoading: false }
-        }
-        return { meetsRequirements: false, isLoading: false }
-    }, [hasMemberNft, hasPermission, isLoadingHasMemberNft, isLoadingPermission])
 }
 
 const Header = (props: {

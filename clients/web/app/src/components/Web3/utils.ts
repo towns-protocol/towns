@@ -41,6 +41,7 @@ type AuthError = ReturnType<(typeof useCasablancaStore)['getState']>['loginError
 type ErrorTypes = Error | AuthError
 
 export function mapToErrorMessage(error: ErrorTypes | undefined) {
+    console.error('[mapToErrorMessage]: original error', error)
     if (!error) {
         return 'An unknown error occurred. Cannot save transaction.'
     }
@@ -55,6 +56,9 @@ export function mapToErrorMessage(error: ErrorTypes | undefined) {
     }
 
     switch (true) {
+        case isRiverTimeouError(error):
+            errorText = error.message
+            break
         case isNotFoundRiverError(error):
             errorText = 'River stream not found.'
             break
@@ -106,14 +110,21 @@ export function mapToErrorMessage(error: ErrorTypes | undefined) {
             if (errorCode) {
                 errorText = `${errorText} ${errorCode}`
             }
+            if (error.message) {
+                errorText = `${errorText} ${error.message}`
+            }
             if (!errorText) {
-                errorText = 'An unknown error occurred. Cannot save transaction.'
+                errorText = 'An unknown error occurred.'
             }
             break
     }
-    const fullErrorText = `Transaction error: ${errorText}`
+    const fullErrorText = `${errorText}`
 
     return fullErrorText
+}
+
+export function isRiverTimeouError(error: ErrorTypes | undefined) {
+    return error?.message?.toString()?.toLowerCase()?.includes('timed out waiting for event')
 }
 
 export function isNotFoundRiverError(error: ErrorTypes | undefined) {
