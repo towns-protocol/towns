@@ -506,7 +506,7 @@ resource "aws_ecs_task_definition" "river-fargate" {
       },
       {
         name  = "ARCHITECTCONTRACT__ADDRESS"
-        value = "0xF8891849b6091E744cf6E82E12E036F2AA74FEA4"
+        value = "0x877Cd3076d8Bd6C2fBaA60ceFBe41Ddb1C9DC24A"
       },
       {
         name  = "ARCHITECTCONTRACT__VERSION"
