@@ -1,5 +1,5 @@
 import React, { useCallback, useEffect, useMemo, useRef, useState } from 'react'
-import { Plate, PlateEditor, TElement, resetEditor } from '@udecode/plate-common'
+import { Plate, PlateEditor, TElement, createPlateEditor, resetEditor } from '@udecode/plate-common'
 import {
     Channel,
     EmbeddedMessageAttachment,
@@ -11,6 +11,7 @@ import {
 } from 'use-towns-client'
 import { datadogRum } from '@datadog/browser-rum'
 import { isEditorEmpty as PlateIsEditorEmpty } from '@udecode/slate-utils'
+import { deserializeMd } from '@udecode/plate-serializer-md'
 import { focusEditor } from '@udecode/slate-react'
 import { TComboboxItemWithData } from '@udecode/plate-combobox'
 import { useMediaDropContext } from '@components/MediaDropContext/MediaDropContext'
@@ -40,13 +41,6 @@ import { OnFocusPlugin } from './plugins/OnFocusPlugin'
 import { PasteFilePlugin } from './components/PasteFilePlugin'
 import { CaptureTownsLinkPlugin } from './components/CaptureTownsLinkPlugin'
 import { OfflineIndicator } from './components/OfflineIndicator'
-
-const initialValue: TElement[] = [
-    {
-        type: 'p',
-        children: [{ text: '' }],
-    },
-]
 
 type Props = {
     onSend?: (value: string, options: SendTextMessageOptions | undefined) => void
@@ -95,6 +89,7 @@ const PlateEditorWithoutBoundary = ({
     onSend,
     onCancel,
     displayButtons,
+    initialValue: _initialValue,
     ...props
 }: Props) => {
     const editorRef = useRef<PlateEditor<TElement[]>>(null)
@@ -115,6 +110,20 @@ const PlateEditorWithoutBoundary = ({
         EmbeddedMessageAttachment[]
     >([])
     const disabled = isOffline || !editable || isSendingMessage
+
+    const initialValue = useMemo(() => {
+        if (!_initialValue) {
+            return [
+                {
+                    type: 'p',
+                    children: [{ text: '' }],
+                },
+            ]
+        }
+        // #TODO: add support for ~~strikethrough~~, @mention, #channels and :emojis. Preserve new lines
+        const tmpEditor = createPlateEditor({ plugins: PlatePlugins })
+        return deserializeMd(tmpEditor, _initialValue)
+    }, [_initialValue])
 
     const userMentions: TComboboxItemWithData<RoomMember>[] = useMemo(() => {
         return props.users
