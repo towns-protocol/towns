@@ -126,7 +126,7 @@ resource "aws_iam_role_policy" "ecs_task_execution_role_policy" {
         "Effect": "Allow",
         "Resource": [
           "${var.fork_url_secret_arn}",
-          "${local.wallet_private_key_arn}"
+          "${local.node_operator_wallet_private_key}"
         ]
       }
     ]
@@ -176,9 +176,7 @@ resource "aws_lb_listener_rule" "host_rule" {
 }
 
 locals {
-  # take river1's credentials
-  shared_credentials     = local.global_remote_state.river_node_credentials_secret[0]
-  wallet_private_key_arn = local.shared_credentials.wallet_private_key.arn
+  node_operator_wallet_private_key = local.global_remote_state.node_operator_wallet_private_key.arn
 }
 
 resource "aws_ecs_task_definition" "task_definition" {
@@ -216,7 +214,7 @@ resource "aws_ecs_task_definition" "task_definition" {
       },
       {
         name      = "PRIVATE_KEY",
-        valueFrom = local.wallet_private_key_arn
+        valueFrom = local.node_operator_wallet_private_key
       }
     ]
 

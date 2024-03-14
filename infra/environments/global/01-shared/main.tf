@@ -258,3 +258,7 @@ resource "aws_secretsmanager_secret" "stress_test_wallet_seed_phrase" {
 resource "aws_secretsmanager_secret" "stress_test_wallet_private_key" {
   name = "stress-test-wallet-private-key-${terraform.workspace}"
 }
+
+resource "aws_secretsmanager_secret" "node_operator_wallet_private_key" {
+  name = "node-operator-wallet-private-key-${terraform.workspace}"
+}

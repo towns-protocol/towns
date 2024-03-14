@@ -77,3 +77,7 @@ output "stress_test_wallet_seed_phrase_secret" {
 output "stress_test_wallet_private_key_secret" {
   value = aws_secretsmanager_secret.stress_test_wallet_private_key
 }
+
+output "node_operator_wallet_private_key" {
+  value = aws_secretsmanager_secret.node_operator_wallet_private_key
+}
