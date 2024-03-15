@@ -147,7 +147,7 @@ export class Town {
         const roles = await this.getChannelRoleEntitlements(channelInfo)
         return {
             spaceNetworkId: this.spaceId,
-            channelNetworkId: channelId,
+            channelNetworkId,
             name: channelInfo.metadata,
             disabled: channelInfo.disabled,
             roles,
@@ -160,7 +160,7 @@ export class Town {
         for (const o of getOutput) {
             channels.push({
                 name: o.metadata,
-                channelNetworkId: o.id,
+                channelNetworkId: o.id.replace('0x', ''),
                 disabled: o.disabled,
             })
         }

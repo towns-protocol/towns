@@ -57,7 +57,9 @@ function make_pr_description() {
 function remove_river_yarn_files() {
     # these files shouldn't be checked into the harmony repo
     git rm "${SUBTREE_PREFIX}/package.json" 2>/dev/null || echo "${SUBTREE_PREFIX}/package.json not found, skipping"
+    rm "${SUBTREE_PREFIX}/package.json" 2>/dev/null || echo "${SUBTREE_PREFIX}/package.json not found, skipping"
     git rm "${SUBTREE_PREFIX}/yarn.lock" 2>/dev/null || echo "${SUBTREE_PREFIX}/yarn.lock not found, skipping"
+    rm "${SUBTREE_PREFIX}/package.json" 2>/dev/null || echo "${SUBTREE_PREFIX}/package.json not found, skipping"
 }
 
 function yarn_install_and_check() {
@@ -74,12 +76,12 @@ function yarn_install_and_check() {
             if [[ $USER_MODE_X -ne 1 ]]; then
                 break
             else
-                echo "Running yarn lint..."
-                yarn lint
+                echo "Running yarn build..."
+                yarn build
                 exit_status_yarn=$?
                 if [ $exit_status_yarn -eq 0 ]; then
-                    echo "Running yarn build..."
-                    yarn build
+                    echo "Running yarn lint..."
+                    yarn lint
                     exit_status_yarn=$?
                     if [ $exit_status_yarn -eq 0 ]; then
                         echo "Running yarn test:unit..."
