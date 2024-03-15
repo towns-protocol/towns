@@ -25,6 +25,7 @@ import { mapToErrorMessage } from '@components/Web3/utils'
 import { createPrivyNotAuthenticatedNotification } from '@components/Notifications/utils'
 import { Panel } from '@components/Panel/Panel'
 import { CHANNEL_INFO_PARAMS } from 'routes'
+import { useSpaceChannels } from 'hooks/useSpaceChannels'
 import { FormState, FormStateKeys, emptyDefaultValues, schema } from './formConfig'
 import { RoleCheckboxProps, RolesSection, getCheckedValuesForRoleIdsField } from './RolesSection'
 
@@ -78,6 +79,12 @@ export function ChannelSettingsForm({
         error: transactionError,
         transactionHash,
     } = useUpdateChannelTransaction()
+
+    const channels = useSpaceChannels()
+    const channelNames = useMemo(
+        () => new Set(channels?.filter((c) => c.id !== channelId).map((c) => c.label) ?? []),
+        [channels, channelId],
+    )
 
     const hasPendingTx = useIsTransactionPending(BlockchainTransactionType.EditChannel)
 
@@ -179,6 +186,13 @@ export function ChannelSettingsForm({
         return null
     }, [hasServerError, hasTransactionError, transactionError])
 
+    const channelNameAvailable = useCallback(
+        (name: string) => {
+            return !channelNames.has(name)
+        },
+        [channelNames],
+    )
+
     return (
         <Stack gap="lg">
             <FormRender<FormState>
@@ -187,7 +201,7 @@ export function ChannelSettingsForm({
                 mode="onChange"
                 onSubmit={onSubmit}
             >
-                {({ register, formState, setValue, resetField, reset }) => {
+                {({ register, formState, setValue, setError, resetField, reset }) => {
                     const { onChange: onNameChange, ...restOfNameProps } = register(
                         FormStateKeys.name,
                     )
@@ -214,11 +228,17 @@ export function ChannelSettingsForm({
                                     disabled={hasPendingTx}
                                     onKeyDown={onNameKeyDown}
                                     onChange={(event: React.ChangeEvent<HTMLInputElement>) => {
+                                        const name = event.target.value
+                                            .toLowerCase()
+                                            .replaceAll(' ', '-')
+                                        if (!channelNameAvailable(name)) {
+                                            setError(FormStateKeys.name, {
+                                                message: 'This channel name is already taken',
+                                            })
+                                            return
+                                        }
                                         onNameChange(event)
-                                        setValue(
-                                            FormStateKeys.name,
-                                            event.target.value.toLowerCase().replaceAll(' ', '-'),
-                                        )
+                                        setValue(FormStateKeys.name, name)
                                     }}
                                     {...restOfNameProps}
                                 />
@@ -282,9 +302,11 @@ export function ChannelSettingsForm({
                             )}
                             <Box padding position="bottomLeft" right="none" gap="sm">
                                 <FancyButton
-                                    cta={formState.isDirty}
+                                    cta={formState.isDirty && formState.isValid}
                                     type="submit"
-                                    disabled={hasPendingTx || !formState.isDirty}
+                                    disabled={
+                                        hasPendingTx || !formState.isDirty || !formState.isValid
+                                    }
                                     spinner={hasPendingTx}
                                 >
                                     {hasPendingTx ? 'Saving' : 'Save Channel'}

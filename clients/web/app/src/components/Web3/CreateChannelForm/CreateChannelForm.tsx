@@ -38,6 +38,7 @@ import { ModalContainer } from '@components/Modals/ModalContainer'
 import { UserOpTxModal } from '@components/Web3/UserOpTxModal/UserOpTxModal'
 import { createPrivyNotAuthenticatedNotification } from '@components/Notifications/utils'
 import { useDevice } from 'hooks/useDevice'
+import { useSpaceChannels } from 'hooks/useSpaceChannels'
 import { mapToErrorMessage } from '../utils'
 
 type Props = {
@@ -72,6 +73,9 @@ export const CreateChannelForm = (props: Props) => {
     const rolesWithDetails = useMemo(() => {
         return _rolesDetails?.filter((role) => role.permissions.includes(Permission.Read))
     }, [_rolesDetails])
+    const channels = useSpaceChannels()
+    const channelNames = useMemo(() => new Set(channels?.map((c) => c.label) ?? []), [channels])
+
     const { isTouch } = useDevice()
 
     const {
@@ -163,6 +167,13 @@ export const CreateChannelForm = (props: Props) => {
         ?.find((role) => role.permissions.includes(Permission.Read))
         ?.id.toString()
 
+    const channelNameAvailable = useCallback(
+        (name: string) => {
+            return !channelNames.has(name)
+        },
+        [channelNames],
+    )
+
     const defaultValues = {
         [FormStateKeys.name]: '',
         [FormStateKeys.roleIds]: firstRoleIDWithReadPermission
@@ -207,7 +218,7 @@ export const CreateChannelForm = (props: Props) => {
                 }
             }}
         >
-            {({ register, formState, setValue, getValues }) => {
+            {({ register, formState, setValue, getValues, setError }) => {
                 const { onChange: onNameChange, ...restOfNameProps } = register(FormStateKeys.name)
                 const { onChange: onTopicChange, ...restOfTopicProps } = register(
                     FormStateKeys.topic,
@@ -218,7 +229,7 @@ export const CreateChannelForm = (props: Props) => {
                     </Stack>
                 ) : (
                     <Stack>
-                        <Stack>
+                        <Stack gap>
                             <TextField
                                 autoFocus
                                 background="level2"
@@ -227,17 +238,24 @@ export const CreateChannelForm = (props: Props) => {
                                 maxLength={30}
                                 message={
                                     <ErrorMessage
+                                        preventSpace
                                         errors={formState.errors}
                                         fieldName={FormStateKeys.name}
                                     />
                                 }
                                 onKeyDown={onKeyDown}
                                 onChange={(event: React.ChangeEvent<HTMLInputElement>) => {
+                                    const name = event.target.value
+                                        .toLowerCase()
+                                        .replaceAll(' ', '-')
+                                    if (!channelNameAvailable(name)) {
+                                        setError(FormStateKeys.name, {
+                                            message: 'This channel name is already taken',
+                                        })
+                                        return
+                                    }
                                     onNameChange(event)
-                                    setValue(
-                                        FormStateKeys.name,
-                                        event.target.value.toLowerCase().replaceAll(' ', '-'),
-                                    )
+                                    setValue(FormStateKeys.name, name)
                                 }}
                                 {...restOfNameProps}
                             />

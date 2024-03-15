@@ -7,6 +7,7 @@ import { TestApp } from 'test/testUtils'
 import * as useContractRoles from 'hooks/useContractRoles'
 import { UseMockCreateChannelReturn, mockCreateTransactionWithSpy } from 'test/transactionHookMock'
 import { everyoneRole, memberRole, roleDataWithBothRolesAssignedToChannel } from 'test/testMocks'
+import * as useSpaceChannels from 'hooks/useSpaceChannels'
 import { CreateChannelForm } from '.'
 
 const Wrapper = ({
@@ -110,6 +111,10 @@ describe('CreateChannelForm', () => {
             },
         )
 
+        vi.spyOn(useSpaceChannels, 'useSpaceChannels').mockImplementation(() => {
+            return [{ id: '1', name: 'test-channel', label: 'test-channel' }]
+        })
+
         render(<Wrapper />)
         const submitButton = screen.getByText(/create channel/i)
         fireEvent.click(submitButton)
@@ -126,6 +131,13 @@ describe('CreateChannelForm', () => {
 
         await waitFor(() => {
             expect(screen.getByText(/Please select at least one role/i)).toBeInTheDocument()
+        })
+
+        const nameInput = screen.getByRole('textbox', { name: /name/i })
+        fireEvent.change(nameInput, { target: { value: 'test-channel' } })
+
+        await waitFor(() => {
+            expect(screen.getByText(/This channel name is already taken/i)).toBeInTheDocument()
         })
     })
 
