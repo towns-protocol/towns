@@ -58,6 +58,7 @@ function remove_river_yarn_files() {
     # these files shouldn't be checked into the harmony repo
     git rm "${SUBTREE_PREFIX}/package.json" 2>/dev/null || echo "${SUBTREE_PREFIX}/package.json not found, skipping"
     git rm "${SUBTREE_PREFIX}/yarn.lock" 2>/dev/null || echo "${SUBTREE_PREFIX}/yarn.lock not found, skipping"
+    RIVER_ALLOW_COMMIT=true git commit -m "Removing River yarn files" -m "$(git commit --dry-run --short)"
 }
 
 function yarn_install_and_check() {
