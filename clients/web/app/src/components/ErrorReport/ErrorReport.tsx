@@ -1,4 +1,4 @@
-import React, { useCallback, useState } from 'react'
+import React, { useCallback, useEffect, useRef, useState } from 'react'
 import { useEvent } from 'react-use-event-hook'
 import { z } from 'zod'
 import { hexlify, randomBytes } from 'ethers/lib/utils'
@@ -167,6 +167,25 @@ export const ErrorReportForm = (props: { onHide?: () => void }) => {
         }
     }, [permissionStatus, requestPermission, revokePermission])
 
+    const submitButtonRef = useRef<HTMLButtonElement>(null)
+
+    useEffect(() => {
+        const onKeyDown = (e: KeyboardEvent) => {
+            if ((e.metaKey || e.ctrlKey) && e.key === 'Enter') {
+                const activeElement = document.activeElement
+                const isNameFocused = activeElement === document.getElementById('name')
+                const isCommentsFocused = activeElement === document.getElementById('comments')
+                if (!isLoading && (isNameFocused || isCommentsFocused)) {
+                    submitButtonRef.current?.click()
+                }
+            }
+        }
+        window.addEventListener('keydown', onKeyDown)
+        return () => {
+            window.removeEventListener('keydown', onKeyDown)
+        }
+    })
+
     if (success) {
         return (
             <Stack centerContent gap="x4" padding="x4">
@@ -273,7 +292,13 @@ export const ErrorReportForm = (props: { onHide?: () => void }) => {
 
                     <Box grow />
                     <Stack horizontal gap justifyContent="end">
-                        <Button grow tone="cta1" type="submit" disabled={isLoading}>
+                        <Button
+                            grow
+                            tone="cta1"
+                            type="submit"
+                            ref={submitButtonRef}
+                            disabled={isLoading}
+                        >
                             {isLoading && <ButtonSpinner />}
                             Submit
                         </Button>
