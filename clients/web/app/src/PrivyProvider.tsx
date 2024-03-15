@@ -61,7 +61,7 @@ const logo = '/towns_privy.svg'
 
 export function PrivyProvider({ children }: { children: JSX.Element }) {
     const { chainId } = useEnvironment()
-    const theme = useStore((s) => s.theme)
+    const theme = useStore((s) => s.getTheme())
 
     const chain = useMemo(() => {
         return ENVIRONMENTS.find((e) => e.chainId === chainId)?.chain

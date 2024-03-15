@@ -2,8 +2,12 @@ import { create } from 'zustand'
 import { persist } from 'zustand/middleware'
 
 interface AppState {
-    theme?: 'dark' | 'light'
-    setTheme: (theme: 'dark' | 'light') => void
+    getTheme: () => 'dark' | 'light'
+    toggleTheme: () => void
+    userTheme?: 'dark' | 'light' | undefined
+    setUserTheme: (theme: 'dark' | 'light') => void
+    systemTheme?: 'dark' | 'light' | undefined
+    setSystemTheme: (theme: 'dark' | 'light') => void
     paneSizes: { [id: string]: number }
     setPaneSize: (id: string, size: number) => void
     isWindowFocused: boolean
@@ -35,10 +39,20 @@ export const GLOBAL_STORE_NAME = 'towns/global'
 
 export const useStore = create(
     persist<AppState>(
-        (set) => ({
-            theme: undefined,
-            setTheme: (theme) => {
-                set(() => ({ theme }))
+        (set, get) => ({
+            getTheme: () => get().userTheme || get().systemTheme || 'dark',
+            toggleTheme: () => {
+                set((state) => ({
+                    userTheme: state.getTheme() === 'light' ? 'dark' : 'light',
+                }))
+            },
+            userTheme: undefined,
+            setUserTheme: (userTheme) => {
+                set(() => ({ userTheme }))
+            },
+            systemTheme: undefined,
+            setSystemTheme: (systemTheme) => {
+                set(() => ({ systemTheme }))
             },
             setMutedChannelIds: (mutedChannelIds: string[]) => {
                 set(() => ({ mutedChannelIds }))
@@ -122,7 +136,7 @@ export const useStore = create(
             partialize: (state) => {
                 // probably should not save the isWindowFocused state
                 // eslint-disable-next-line @typescript-eslint/no-unused-vars
-                const { isWindowFocused, searchTerms, ...rest } = state
+                const { isWindowFocused, searchTerms, getTheme, ...rest } = state
                 return rest as AppState
             },
         },

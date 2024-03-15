@@ -137,14 +137,7 @@ export const SpaceProfile = (props: { children?: React.ReactNode }) => {
 
     const canEdit = loggedInAbstractAccountAddress === userAbstractAccountAddress
 
-    const { setTheme, theme } = useStore((state) => ({
-        theme: state.theme,
-        setTheme: state.setTheme,
-    }))
-
-    const onThemeClick = () => {
-        setTheme(theme === 'light' ? 'dark' : 'light')
-    }
+    const toggleTheme = useStore(({ toggleTheme }) => toggleTheme)
 
     const isCurrentUser = user?.userId === myUser?.userId
 
@@ -257,7 +250,7 @@ export const SpaceProfile = (props: { children?: React.ReactNode }) => {
                         </PanelButton>
                     )}
 
-                    <PanelButton onClick={onThemeClick}>
+                    <PanelButton onClick={toggleTheme}>
                         <Box
                             border
                             centerContent

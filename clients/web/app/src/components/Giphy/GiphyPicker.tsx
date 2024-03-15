@@ -44,7 +44,8 @@ export const GiphyPicker = (props: Props) => {
 }
 
 export const GiphyPickerCard = (props: GiphyPickerCardProps) => {
-    const { theme } = useStore()
+    const theme = useStore((state) => state.getTheme())
+
     const { isTouch } = useDevice()
     const { closeCard, threadId, threadPreview } = props
 

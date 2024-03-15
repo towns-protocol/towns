@@ -30,7 +30,7 @@ FontLoader.init()
 
 export const App = () => {
     const { theme, mutedChannelIds } = useStore((state) => ({
-        theme: state.theme,
+        theme: state.getTheme(),
         mutedChannelIds: state.mutedChannelIds,
     }))
     const { createLink } = useCreateLink()
