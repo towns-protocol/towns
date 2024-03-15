@@ -23,7 +23,7 @@ type FancyButtonProps = {
  * Convulted button that enables background transitions
  */
 export const FancyButton = (props: FancyButtonProps) => {
-    const { icon, compact, spinner, disabled, borderRadius = 'sm', type } = props
+    const { icon, compact, spinner, disabled, boxShadow, borderRadius = 'sm', type } = props
     const background = props.cta ? 'cta1' : 'level3'
 
     const before = spinner ? (
@@ -71,7 +71,6 @@ export const FancyButton = (props: FancyButtonProps) => {
             background={background}
             height={compact ? 'x5' : 'x6'}
             paddingX="lg"
-            boxShadow={props.boxShadow}
             style={
                 {
                     background: 'transparent',
@@ -91,7 +90,14 @@ export const FancyButton = (props: FancyButtonProps) => {
             onClick={!disabled ? props.onClick : undefined}
         >
             <AnimatePresence>
-                {<Background tone={background} borderRadius={borderRadius} key={background} />}
+                {
+                    <Background
+                        tone={background}
+                        borderRadius={borderRadius}
+                        key={background}
+                        boxShadow={boxShadow}
+                    />
+                }
             </AnimatePresence>
 
             <AnimatePresence>
@@ -180,11 +186,13 @@ export const FancyButton = (props: FancyButtonProps) => {
 const Background = (props: {
     tone: BoxProps['background']
     borderRadius: BoxProps['borderRadius']
+    boxShadow?: BoxProps['boxShadow']
 }) => {
     const { tone, borderRadius } = props
     return (
         <MotionBox
             absoluteFill
+            boxShadow={props.boxShadow}
             borderRadius={borderRadius}
             background={tone}
             transition={{

@@ -5,12 +5,11 @@ import * as gradientStyle from './AnimatedLoaderGradient.css'
 export const AnimatedLoaderGradient = () => {
     return (
         <MotionBox
-            height="2"
+            height="1"
             width="100%"
             position="relative"
             exit={{ opacity: 0 }}
             transition={{ duration: 1 }}
-            style={{ marginBottom: '-2px' }}
         >
             <Box className={gradientStyle.animatedGradient} />
         </MotionBox>

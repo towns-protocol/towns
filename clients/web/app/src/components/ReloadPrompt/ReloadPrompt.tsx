@@ -82,12 +82,7 @@ export const ReloadPrompt = () => {
                 <FadeInBox centerContent preset="fadeup" pointerEvents="auto" width="100%">
                     <Box>
                         {!isVersionHidden ? (
-                            <FancyButton
-                                borderRadius="lg"
-                                spinner={isUpdating}
-                                boxShadow="card"
-                                onClick={!isUpdating ? onUpdateClick : undefined}
-                            >
+                            <FancyButton compact borderRadius="lg" boxShadow="card">
                                 {APP_COMMIT_HASH}
                             </FancyButton>
                         ) : needRefresh ? (

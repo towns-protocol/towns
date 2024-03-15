@@ -317,9 +317,9 @@ export const SpaceSideBar = (props: Props) => {
                 ) : (
                     <></>
                 )}
+                {/* the service worker won't exist in dev-mode and there's not need to check for updates */}
+                {(!env.DEV || env.VITE_PUSH_NOTIFICATION_ENABLED) && !isTouch && <ReloadPrompt />}
             </Card>
-            {/* the service worker won't exist in dev-mode and there's not need to check for updates */}
-            {(!env.DEV || env.VITE_PUSH_NOTIFICATION_ENABLED) && !isTouch && <ReloadPrompt />}
         </>
     )
 }
