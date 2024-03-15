@@ -29,6 +29,9 @@ export const link = style([
     atoms({
         color: 'cta2',
     }),
+    {
+        overflowWrap: 'anywhere',
+    },
 ])
 
 export const mentionInput = style([
@@ -245,4 +248,8 @@ globalStyle(`${richText} ${ol} ${ol} ${ol} ${ol}`, {
 
 globalStyle(`${codeBlock} strong`, {
     fontWeight: 'bold',
+})
+
+globalStyle(`${richText} ${paragraph} span[data-slate-zero-width='z']`, {
+    display: 'none',
 })
