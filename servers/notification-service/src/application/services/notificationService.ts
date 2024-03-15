@@ -1,4 +1,4 @@
-import { NotificationTag, Prisma, PushSubscription } from '@prisma/client'
+import { NotificationTag, PushSubscription } from '@prisma/client'
 import {
     NotificationContentDmSchema,
     NotificationContentMessageSchema,
@@ -11,6 +11,7 @@ import { sendNotificationViaWebPush } from './web-push/send-notification'
 import { SendPushResponse, SendPushStatus } from './web-push/web-push-types'
 import { PushType } from '../schema/subscriptionSchema'
 import { UserSettingsTables } from '../database/userSettingsTables'
+import { database } from '../../infrastructure/database/prisma'
 
 export class NotificationService {
     constructor() {}
@@ -108,7 +109,6 @@ export class NotificationService {
     public async createNotificationAsyncRequests(
         notificationData: NotifyUsersSchema,
         usersToNotify: Set<string>,
-        tx: Prisma.TransactionClient,
     ): Promise<Promise<SendPushResponse>[]> {
         const pushNotificationPromises: Promise<SendPushResponse>[] = []
         const isDMorGDM = notificationData.payload.content.kind === NotificationKind.DirectMessage
@@ -125,7 +125,7 @@ export class NotificationService {
                     notificationData.users.filter((user) => user !== notificationData.sender)
             }
 
-            const pushSubscriptions = await tx.pushSubscription.findMany({
+            const pushSubscriptions = await database.pushSubscription.findMany({
                 where: {
                     UserId: userId,
                 },
@@ -153,7 +153,6 @@ export class NotificationService {
 
     public async dispatchAllPushNotification(
         pushNotificationRequests: Promise<SendPushResponse>[],
-        tx: Prisma.TransactionClient,
     ): Promise<number> {
         let sendResults: PromiseSettledResult<SendPushResponse>[] = []
         sendResults = await Promise.allSettled(pushNotificationRequests)
@@ -173,14 +172,13 @@ export class NotificationService {
             }
 
             console.log('failed to send notification', JSON.stringify(result))
-            await this.deleteFailedSubscription(result, tx)
+            await this.deleteFailedSubscription(result)
         }
         return notificationsSentCount
     }
 
     public async deleteFailedSubscription(
         result: PromiseFulfilledResult<SendPushResponse>,
-        tx: Prisma.TransactionClient,
     ): Promise<void> {
         console.log(
             'deleting subscription from the db',
@@ -190,7 +188,7 @@ export class NotificationService {
             result.value.pushSubscription,
         )
         try {
-            await tx.pushSubscription.delete({
+            await database.pushSubscription.delete({
                 where: {
                     UserId: result.value.userId,
                     PushSubscription: result.value.pushSubscription,

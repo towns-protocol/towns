@@ -6,6 +6,7 @@ import { NotificationKind } from '../schema/tagSchema'
 import { Prisma, PushSubscription } from '@prisma/client'
 import { sendNotificationViaWebPush } from './web-push/send-notification'
 import { UserSettingsTables } from '../database/userSettingsTables'
+import { database } from '../../infrastructure/database/prisma'
 
 jest.mock('../../infrastructure/database/prisma', () => ({
     database: {
@@ -518,13 +519,7 @@ describe('NotificationService', () => {
                     })
                 },
             )
-
-            const tx = {
-                pushSubscription: {
-                    findMany: jest.fn(),
-                },
-            } as unknown as Prisma.TransactionClient
-            ;(tx.pushSubscription.findMany as jest.Mock).mockImplementation(
+            ;(database.pushSubscription.findMany as jest.Mock).mockImplementation(
                 ({ where: { UserId } }) => {
                     const sub = pushSubscriptions.filter((sub) => sub.UserId === UserId)
                     return sub
@@ -534,11 +529,10 @@ describe('NotificationService', () => {
             const result = await notificationService.createNotificationAsyncRequests(
                 notificationData,
                 new Set(usersToNotify),
-                tx,
             )
 
             expect(result).toHaveLength(3)
-            expect(tx.pushSubscription.findMany).toHaveBeenCalledTimes(3)
+            expect(database.pushSubscription.findMany).toHaveBeenCalledTimes(3)
             expect(sendNotificationViaWebPush).toHaveBeenCalledTimes(3)
         })
     })
@@ -565,21 +559,14 @@ describe('NotificationService', () => {
                 }),
             ]
 
-            const tx = {
-                pushSubscription: {
-                    delete: jest.fn(),
-                },
-            } as unknown as Prisma.TransactionClient
-
-            ;(tx.pushSubscription.delete as jest.Mock).mockResolvedValue(undefined)
+            ;(database.pushSubscription.delete as jest.Mock).mockResolvedValue(undefined)
 
             const result = await notificationService.dispatchAllPushNotification(
                 pushNotificationRequests,
-                tx,
             )
 
             expect(result).toBe(1)
-            expect(tx.pushSubscription.delete).toHaveBeenCalledTimes(2)
+            expect(database.pushSubscription.delete).toHaveBeenCalledTimes(2)
         })
     })
 
@@ -595,20 +582,14 @@ describe('NotificationService', () => {
                 status: 'fulfilled',
             }
 
-            const tx = {
-                pushSubscription: {
-                    delete: jest.fn(),
-                },
-            } as unknown as Prisma.TransactionClient
-
-            ;(tx.pushSubscription.delete as jest.Mock).mockResolvedValue(undefined)
+            ;(database.pushSubscription.delete as jest.Mock).mockResolvedValue(undefined)
 
             const consoleLogMock = jest.spyOn(console, 'log')
             consoleLogMock.mockImplementation(() => {})
 
-            await notificationService.deleteFailedSubscription(result, tx)
+            await notificationService.deleteFailedSubscription(result)
 
-            expect(tx.pushSubscription.delete).toHaveBeenCalledWith({
+            expect(database.pushSubscription.delete).toHaveBeenCalledWith({
                 where: {
                     UserId: result.value.userId,
                     PushSubscription: result.value.pushSubscription,

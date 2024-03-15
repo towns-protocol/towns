@@ -666,13 +666,11 @@ export class SyncedStreams {
                         await notificationService.createNotificationAsyncRequests(
                             notificationData,
                             usersToNotify,
-                            tx,
                         )
 
                     const notificationsSentCount =
                         await notificationService.dispatchAllPushNotification(
                             pushNotificationRequests,
-                            tx,
                         )
 
                     console.log('notificationsSentCount', notificationsSentCount)
