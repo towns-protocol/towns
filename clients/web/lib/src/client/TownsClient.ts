@@ -1168,10 +1168,12 @@ export class TownsClient implements EntitlementsDelegate {
             const allPromises = linkedWallets
                 .map((wallet) => this.spaceDapp.hasTownMembership(spaceId, wallet))
                 .concat(this.spaceDapp.hasTownMembership(spaceId, userId))
-            await Promise.any(allPromises)
-            console.log('[joinTown] already have member nft')
-            const room = await joinRiverRoom()
-            return room
+            const results = await Promise.all(allPromises)
+            if (results.some((result) => result)) {
+                console.log('[joinTown] already have member nft')
+                const room = await joinRiverRoom()
+                return room
+            }
         } catch (error) {
             // skip if no membership nft found
             if (error instanceof AggregateError) {
