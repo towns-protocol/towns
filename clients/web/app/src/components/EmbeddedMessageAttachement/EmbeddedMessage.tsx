@@ -74,7 +74,7 @@ export const EmbeddedMessage = (props: {
 
                     {user ? (
                         <>
-                            <Paragraph strong color="gray1" size="sm">
+                            <Paragraph strong color="gray1" size="sm" whiteSpace="nowrap">
                                 {getPrettyDisplayName(user)}{' '}
                             </Paragraph>
                         </>
