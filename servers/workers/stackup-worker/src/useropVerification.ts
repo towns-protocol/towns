@@ -475,8 +475,7 @@ export async function verifyLinkWallet(
             params.env,
             'WalletLink',
             'LinkWalletToRootKey',
-            // neither of these params are indexed so we can't filter on them
-            [null, null],
+            [null, params.rootKeyAddress],
             createFilterWrapper,
             NetworkBlocksPerDay.get(params.env.ENVIRONMENT) ?? undefined,
         )
