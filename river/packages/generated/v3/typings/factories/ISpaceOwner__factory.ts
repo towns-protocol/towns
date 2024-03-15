@@ -52,11 +52,6 @@ const _abi = [
             internalType: "uint256",
           },
           {
-            name: "networkId",
-            type: "string",
-            internalType: "string",
-          },
-          {
             name: "createdAt",
             type: "uint256",
             internalType: "uint256",
@@ -70,11 +65,6 @@ const _abi = [
     type: "function",
     name: "mintSpace",
     inputs: [
-      {
-        name: "networkId",
-        type: "string",
-        internalType: "string",
-      },
       {
         name: "name",
         type: "string",

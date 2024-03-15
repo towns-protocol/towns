@@ -2,8 +2,8 @@ package storage
 
 import (
 	"context"
+	"embed"
 	"encoding/hex"
-	"errors"
 	"fmt"
 	"os"
 	"strings"
@@ -13,8 +13,6 @@ import (
 	. "github.com/river-build/river/core/node/protocol"
 	. "github.com/river-build/river/core/node/shared"
 
-	_ "embed"
-
 	"github.com/river-build/river/core/node/dlog"
 	"github.com/river-build/river/core/node/infra"
 
@@ -23,6 +21,10 @@ import (
 	"github.com/jackc/pgx/v5/pgconn"
 	"github.com/jackc/pgx/v5/pgxpool"
 	"golang.org/x/crypto/sha3"
+
+	"github.com/golang-migrate/migrate/v4"
+	_ "github.com/golang-migrate/migrate/v4/database/postgres"
+	"github.com/golang-migrate/migrate/v4/source/iofs"
 )
 
 type PostgresEventStore struct {
@@ -31,6 +33,7 @@ type PostgresEventStore struct {
 	nodeUUID   string
 	exitSignal chan error
 	serverCtx  context.Context
+	dbUrl      string
 }
 
 var _ StreamStorage = (*PostgresEventStore)(nil)
@@ -41,67 +44,141 @@ const (
 
 var dbCalls = infra.NewSuccessMetrics(infra.DB_CALLS_CATEGORY, nil)
 
-// persistentContextWithRequestMetadata returns a context that maintains original context metadata for logging purposes,
-// but will not be cancelled if a client connection drops. Cancellations due to lost client connections can cause
-// operations on the PostgresEventStore to fail even if transactions commit, leading to a corruption in cache
-// state.
-//
-// Every write entrypoint into the StreamStorage interface should call this method to create a non-cancellable copy
-// of the request context. This does not prevent the issue of caches getting out of sync, as the driver may still
-// return a failure even if the transaction has committed. However, it will prevent corruption of cache state if
-// the client disconnects when the transaction successfully commits.
-//
-// For read methods, we don't need to ignore cancellations, as it's fine cancel a read if the client disconnects.
-func persistentContextWithRequestMetadata(parent context.Context) context.Context {
-	return context.WithoutCancel(parent)
+type txRunnerOpts struct {
+	disableCompareUUID bool
 }
 
-func (s *PostgresEventStore) CreateStreamStorage(ctx context.Context, streamId StreamId, genesisMiniblock []byte) error {
-	ctx = persistentContextWithRequestMetadata(ctx)
-	err := s.createStream(ctx, streamId, genesisMiniblock)
+func rollbackTx(ctx context.Context, tx pgx.Tx) {
+	_ = tx.Rollback(ctx)
+}
+
+func (s *PostgresEventStore) txRunnerInner(
+	ctx context.Context,
+	accessMode pgx.TxAccessMode,
+	txFn func(context.Context, pgx.Tx) error,
+	opts *txRunnerOpts,
+) error {
+	tx, err := s.pool.BeginTx(ctx, pgx.TxOptions{IsoLevel: pgx.Serializable, AccessMode: accessMode})
 	if err != nil {
-		dbCalls.FailIncForChild("CreateStream")
-		return s.enrichErrorWithNodeInfo(AsRiverError(err, Err_DB_OPERATION_FAILURE).Func("pg.CreateStream").Tag("streamId", streamId))
+		return err
 	}
-	dbCalls.PassIncForChild("CreateStream")
+	defer rollbackTx(ctx, tx)
+
+	if opts == nil || !opts.disableCompareUUID {
+		err = s.compareUUID(ctx, tx)
+		if err != nil {
+			return err
+		}
+	}
+
+	err = txFn(ctx, tx)
+	if err != nil {
+		return err
+	}
+
+	err = tx.Commit(ctx)
+	if err != nil {
+		return err
+	}
 	return nil
 }
 
-func (s *PostgresEventStore) createStream(ctx context.Context, streamId StreamId, genesisMiniblock []byte) error {
-	defer infra.StoreExecutionTimeMetrics("CreateStream", infra.DB_CALLS_CATEGORY, time.Now())
+func (s *PostgresEventStore) txRunner(
+	ctx context.Context,
+	name string,
+	accessMode pgx.TxAccessMode,
+	txFn func(context.Context, pgx.Tx) error,
+	opts *txRunnerOpts,
+) error {
+	log := dlog.FromCtx(ctx)
 
-	tx, err := startTx(ctx, s.pool)
-	if err != nil {
-		return err
+	if accessMode == pgx.ReadWrite {
+		// For write transactions context should not be cancelled if a client connection drops. Cancellations due to lost client connections can cause
+		// operations on the PostgresEventStore to fail even if transactions commit, leading to a corruption in cached state.
+		ctx = context.WithoutCancel(ctx)
 	}
-	defer s.rollbackTx(tx, "createStream")
 
-	err = s.compareUUID(ctx, tx)
-	if err != nil {
-		return err
+	for {
+		err := s.txRunnerInner(ctx, accessMode, txFn, opts)
+
+		if err != nil {
+			if pgErr, ok := err.(*pgconn.PgError); ok {
+				if pgErr.Code == pgerrcode.SerializationFailure {
+					log.Warn("pg.txRunner: retrying transaction due to serialization failure", "name", name, "pgErr", pgErr)
+					continue
+				}
+				log.Warn("pg.txRunner: transaction failed", "name", name, "pgErr", pgErr)
+			} else {
+				log.Warn("pg.txRunner: transaction failed", "name", name, "err", err)
+			}
+			return WrapRiverError(Err_DB_OPERATION_FAILURE, err).Func("pg.txRunner").Message("transaction failed").Tag("name", name)
+		}
+		return nil
 	}
+}
 
+func (s *PostgresEventStore) txRunnerWithMetrics(
+	ctx context.Context,
+	name string,
+	accessMode pgx.TxAccessMode,
+	txFn func(context.Context, pgx.Tx) error,
+	opts *txRunnerOpts,
+	tags ...any,
+) error {
+	log := dlog.FromCtx(ctx)
+	logTags := append(tags, "name", name, "currentUUID", s.nodeUUID, "dbSchema", s.schemaName)
+	log.Debug("pg.txRunnerWithMetrics: START", logTags...)
+
+	defer infra.StoreExecutionTimeMetrics(name, infra.DB_CALLS_CATEGORY, time.Now())
+
+	err := s.txRunner(
+		ctx,
+		name,
+		accessMode,
+		txFn,
+		opts,
+	)
+	if err != nil {
+		dbCalls.FailIncForChild(name)
+		return AsRiverError(err, Err_DB_OPERATION_FAILURE).Message("pg.txRunnerWithMetrics: FAILED").Func(name).
+			Tags(tags...).Tag("currentUUID", s.nodeUUID).Tag("dbSchema", s.schemaName).LogDebug(log)
+	}
+	dbCalls.PassIncForChild(name)
+	log.Debug("pg.txRunnerWithMetrics: SUCCESS", logTags...)
+	return nil
+}
+
+func (s *PostgresEventStore) CreateStreamStorage(ctx context.Context, streamId StreamId, genesisMiniblock []byte) error {
+	return s.txRunnerWithMetrics(
+		ctx,
+		"CreateStreamStorage",
+		pgx.ReadWrite,
+		func(ctx context.Context, tx pgx.Tx) error {
+			return s.createStreamStorageTx(ctx, tx, streamId, genesisMiniblock)
+		},
+		nil,
+		"streamId", streamId,
+	)
+}
+
+func (s *PostgresEventStore) createStreamStorageTx(ctx context.Context, tx pgx.Tx, streamId StreamId, genesisMiniblock []byte) error {
 	tableSuffix := createTableSuffix(streamId)
 	sql := fmt.Sprintf(
 		`INSERT INTO es (stream_id, latest_snapshot_miniblock) VALUES ($1, 0);
-		CREATE TABLE miniblocks_%s PARTITION OF miniblocks FOR VALUES IN ($1);
-		CREATE TABLE minipools_%s PARTITION OF minipools FOR VALUES IN ($1);
+		CREATE TABLE miniblocks_%[1]s PARTITION OF miniblocks FOR VALUES IN ($1);
+		CREATE TABLE minipools_%[1]s PARTITION OF minipools FOR VALUES IN ($1);
 		INSERT INTO miniblocks (stream_id, seq_num, blockdata) VALUES ($1, 0, $2);
 		INSERT INTO minipools (stream_id, generation, slot_num) VALUES ($1, 1, -1);`,
 		tableSuffix,
-		tableSuffix,
 	)
-	_, err = tx.Exec(ctx, sql, streamId, genesisMiniblock)
+	_, err := tx.Exec(ctx, sql, streamId, genesisMiniblock)
 	if err != nil {
-		if pgerr, ok := err.(*pgconn.PgError); ok {
-			if pgerr.Code == pgerrcode.UniqueViolation {
-				return WrapRiverError(Err_ALREADY_EXISTS, err).Message("stream already exists")
-			}
+		if pgerr, ok := err.(*pgconn.PgError); ok && pgerr.Code == pgerrcode.UniqueViolation {
+			return WrapRiverError(Err_ALREADY_EXISTS, err).Message("stream already exists")
 		}
 		return err
 	}
-
-	return tx.Commit(ctx)
+	return nil
 }
 
 func (s *PostgresEventStore) ReadStreamFromLastSnapshot(
@@ -109,50 +186,47 @@ func (s *PostgresEventStore) ReadStreamFromLastSnapshot(
 	streamId StreamId,
 	precedingBlockCount int,
 ) (*ReadStreamFromLastSnapshotResult, error) {
-	streamFromLastSnaphot, err := s.getStreamFromLastSnapshot(ctx, streamId, precedingBlockCount)
+	var ret *ReadStreamFromLastSnapshotResult
+	err := s.txRunnerWithMetrics(
+		ctx,
+		"ReadStreamFromLastSnapshot",
+		pgx.ReadOnly,
+		func(ctx context.Context, tx pgx.Tx) error {
+			var err error
+			ret, err = s.readStreamFromLastSnapshotTx(ctx, tx, streamId, precedingBlockCount)
+			return err
+		},
+		nil,
+		"streamId", streamId,
+	)
 	if err != nil {
-		dbCalls.FailIncForChild("GetStreamFromLastSnapshot")
-		return nil, s.enrichErrorWithNodeInfo(AsRiverError(err).Func("pg.GetStreamFromLastSnapshot").Tag("streamId", streamId))
+		return nil, err
 	}
-	dbCalls.PassIncForChild("GetStreamFromLastSnapshot")
-	return streamFromLastSnaphot, nil
+	return ret, nil
 }
 
 // Supported consistency checks:
 // 1. There are no gaps in miniblocks sequence and it starts from latestsnaphot
 // 2. There are no gaps in slot_num for envelopes in minipools and it starts from 0
 // 3. For envelopes all generations are the same and equals to "max generation seq_num in miniblocks" + 1
-func (s *PostgresEventStore) getStreamFromLastSnapshot(
+func (s *PostgresEventStore) readStreamFromLastSnapshotTx(
 	ctx context.Context,
+	tx pgx.Tx,
 	streamId StreamId,
 	precedingBlockCount int,
 ) (*ReadStreamFromLastSnapshotResult, error) {
-	defer infra.StoreExecutionTimeMetrics("GetStreamFromLastSnapshot", infra.DB_CALLS_CATEGORY, time.Now())
-
-	tx, err := startTx(ctx, s.pool)
-	if err != nil {
-		return nil, WrapRiverError(Err_DB_OPERATION_FAILURE, err).Message("error starting transaction")
-	}
-
-	defer s.rollbackTx(tx, "getStreamFromLastSnapshot")
-
-	err = s.compareUUID(ctx, tx)
-	if err != nil {
-		return nil, err
-	}
-
 	var result ReadStreamFromLastSnapshotResult
 
 	// first let's check what is the last block with snapshot
 	var latest_snapshot_miniblock_index int64
-	err = tx.
+	err := tx.
 		QueryRow(ctx, "SELECT latest_snapshot_miniblock FROM es WHERE stream_id = $1", streamId).
 		Scan(&latest_snapshot_miniblock_index)
 	if err != nil {
 		if err == pgx.ErrNoRows {
 			return nil, WrapRiverError(Err_NOT_FOUND, err).Message("stream not found in local storage")
 		} else {
-			return nil, WrapRiverError(Err_DB_OPERATION_FAILURE, err).Message("error retrieving latest snapshot miniblock index")
+			return nil, err
 		}
 	}
 
@@ -165,9 +239,8 @@ func (s *PostgresEventStore) getStreamFromLastSnapshot(
 		streamId,
 	)
 	if err != nil {
-		return nil, WrapRiverError(Err_DB_OPERATION_FAILURE, err).Message("Error reading blocks")
+		return nil, err
 	}
-
 	defer miniblocksRow.Close()
 
 	// Retrieve miniblocks starting from the latest miniblock with snapshot
@@ -182,22 +255,20 @@ func (s *PostgresEventStore) getStreamFromLastSnapshot(
 
 		err = miniblocksRow.Scan(&blockdata, &seqNum)
 		if err != nil {
-			return nil, WrapRiverError(Err_DB_OPERATION_FAILURE, err).Message("Error scanning blocks")
+			return nil, err
 		}
 		if seqNum != latest_snapshot_miniblock_index+counter {
-			return nil, WrapRiverError(
+			return nil, RiverError(
 				Err_MINIBLOCKS_STORAGE_FAILURE,
-				err,
-			).Message("Miniblocks consistency violation - wrong block sequence number").
-				Tag("ActualSeqNum", seqNum).
-				Tag("ExpectedSeqNum", latest_snapshot_miniblock_index+counter)
+				"Miniblocks consistency violation - wrong block sequence number",
+				"ActualSeqNum", seqNum,
+				"ExpectedSeqNum", latest_snapshot_miniblock_index+counter)
 		}
 		miniblocks = append(miniblocks, blockdata)
 		counter++
 	}
 
 	// At this moment seqNum contains max miniblock number in the miniblock storage
-
 	result.Miniblocks = miniblocks
 
 	// Retrieve events from minipool
@@ -207,7 +278,7 @@ func (s *PostgresEventStore) getStreamFromLastSnapshot(
 		streamId,
 	)
 	if err != nil {
-		return nil, WrapRiverError(Err_DB_OPERATION_FAILURE, err).Message("error retrieving minipool events")
+		return nil, err
 	}
 
 	defer rows.Close()
@@ -222,23 +293,17 @@ func (s *PostgresEventStore) getStreamFromLastSnapshot(
 		var slotNum int64
 		err = rows.Scan(&envelope, &generation, &slotNum)
 		if err != nil {
-			return nil, WrapRiverError(Err_DB_OPERATION_FAILURE, err).Message("error scanning minipool events")
+			return nil, err
 		}
 		// Check that we don't have gaps in slot numbers
 		if slotNum != slotNumsCounter {
-			return nil, WrapRiverError(
-				Err_MINIBLOCKS_STORAGE_FAILURE,
-				err,
-			).Message("Minipool consistency violation - slotNums are not sequential").
+			return nil, RiverError(Err_MINIBLOCKS_STORAGE_FAILURE, "Minipool consistency violation - slotNums are not sequential").
 				Tag("ActualSlotNumber", slotNum).
 				Tag("ExpectedSlotNumber", slotNumsCounter)
 		}
 		// Check that all events in minipool have proper generation
 		if generation != seqNum+1 {
-			return nil, WrapRiverError(
-				Err_MINIBLOCKS_STORAGE_FAILURE,
-				err,
-			).Message("Minipool consistency violation - wrong event generation").
+			return nil, RiverError(Err_MINIBLOCKS_STORAGE_FAILURE, "Minipool consistency violation - wrong event generation").
 				Tag("ActualGeneration", generation).
 				Tag("ExpectedGeneration", slotNum)
 		}
@@ -247,13 +312,6 @@ func (s *PostgresEventStore) getStreamFromLastSnapshot(
 	}
 
 	result.MinipoolEnvelopes = envelopes
-
-	// End of new version
-	err = tx.Commit(ctx)
-	if err != nil {
-		return nil, WrapRiverError(Err_DB_OPERATION_FAILURE, err).Message("error committing transaction")
-	}
-
 	return &result, nil
 }
 
@@ -267,59 +325,40 @@ func (s *PostgresEventStore) WriteEvent(
 	minipoolSlot int,
 	envelope []byte,
 ) error {
-	ctx = persistentContextWithRequestMetadata(ctx)
-	err := s.addEvent(ctx, streamId, minipoolGeneration, minipoolSlot, envelope)
-	if err != nil {
-		dbCalls.FailIncForChild("AddEvent")
-		return s.enrichErrorWithNodeInfo(
-			AsRiverError(
-				err,
-			).Func("pg.AddEvent").
-				Tag("streamId", streamId).
-				Tag("minipoolGeneration", minipoolGeneration).
-				Tag("minipoolSlot", minipoolSlot),
-		)
-	}
-	dbCalls.PassIncForChild("AddEvent")
-	return nil
+	return s.txRunnerWithMetrics(
+		ctx,
+		"WriteEvent",
+		pgx.ReadWrite,
+		func(ctx context.Context, tx pgx.Tx) error {
+			return s.writeEventTx(ctx, tx, streamId, minipoolGeneration, minipoolSlot, envelope)
+		},
+		nil,
+		"streamId", streamId,
+		"minipoolGeneration", minipoolGeneration,
+		"minipoolSlot", minipoolSlot,
+	)
 }
 
 // Supported consistency checks:
 // 1. Minipool has proper number of records including service one (equal to minipoolSlot)
 // 2. There are no gaps in seqNums and they start from 0 execpt service record with seqNum = -1
 // 3. All events in minipool have proper generation
-func (s *PostgresEventStore) addEvent(
+func (s *PostgresEventStore) writeEventTx(
 	ctx context.Context,
+	tx pgx.Tx,
 	streamId StreamId,
 	minipoolGeneration int64,
 	minipoolSlot int,
 	envelope []byte,
 ) error {
-	defer infra.StoreExecutionTimeMetrics("AddEvent", infra.DB_CALLS_CATEGORY, time.Now())
-
-	// Start transaction for making checks of minipool generation and slot
-	// If everything is ok we will add event to minipool and commit transaction
-	tx, err := startTx(ctx, s.pool)
-	if err != nil {
-		return WrapRiverError(Err_DB_OPERATION_FAILURE, err).Message("error starting transaction")
-	}
-
-	defer s.rollbackTx(tx, "addEvent")
-
-	err = s.compareUUID(ctx, tx)
-	if err != nil {
-		return err
-	}
-
 	envelopesRow, err := tx.Query(
 		ctx,
 		"SELECT generation, slot_num FROM minipools WHERE stream_id = $1 ORDER BY slot_num",
 		streamId,
 	)
 	if err != nil {
-		return WrapRiverError(Err_DB_OPERATION_FAILURE, err).Message("error retrieving minipool events")
+		return err
 	}
-
 	defer envelopesRow.Close()
 
 	var counter int = -1 // counter is set to -1 as we have service record in the first row of minipool table
@@ -329,15 +368,15 @@ func (s *PostgresEventStore) addEvent(
 		var slotNum int
 		err = envelopesRow.Scan(&generation, &slotNum)
 		if err != nil {
-			return WrapRiverError(Err_DB_OPERATION_FAILURE, err).Message("error scanning minipool events")
+			return err
 		}
 		if generation != minipoolGeneration {
-			return WrapRiverError(Err_DB_OPERATION_FAILURE, err).Message("Wrong event generation in minipool").
+			return RiverError(Err_DB_OPERATION_FAILURE, "Wrong event generation in minipool").
 				Tag("ExpectedGeneration", minipoolGeneration).Tag("ActualGeneration", generation).
 				Tag("SlotNumber", slotNum)
 		}
 		if slotNum != counter {
-			return WrapRiverError(Err_DB_OPERATION_FAILURE, err).Message("Wrong slot number in minipool").
+			return RiverError(Err_DB_OPERATION_FAILURE, "Wrong slot number in minipool").
 				Tag("ExpectedSlotNumber", counter).Tag("ActualSlotNumber", slotNum)
 		}
 		// Slots number for envelopes start from 1, so we skip counter equal to zero
@@ -347,7 +386,7 @@ func (s *PostgresEventStore) addEvent(
 	// At this moment counter should be equal to minipoolSlot otherwise it is discrepancy of actual and expected records in minipool
 	// Keep in mind that there is service record with seqNum equal to -1
 	if counter != minipoolSlot {
-		return WrapRiverError(Err_DB_OPERATION_FAILURE, err).Message("Wrong number of records in minipool").
+		return RiverError(Err_DB_OPERATION_FAILURE, "Wrong number of records in minipool").
 			Tag("ActualRecordsNumber", counter).Tag("ExpectedRecordsNumber", minipoolSlot)
 	}
 
@@ -360,16 +399,9 @@ func (s *PostgresEventStore) addEvent(
 		minipoolGeneration,
 		minipoolSlot,
 	)
-
 	if err != nil {
-		return WrapRiverError(Err_DB_OPERATION_FAILURE, err).Message("Error inserting event into minipool")
+		return err
 	}
-
-	err = tx.Commit(ctx)
-	if err != nil {
-		return WrapRiverError(Err_DB_OPERATION_FAILURE, err).Message("error committing transaction")
-	}
-
 	return nil
 }
 
@@ -384,7 +416,33 @@ func (s *PostgresEventStore) ReadMiniblocks(
 	fromInclusive int64,
 	toExclusive int64,
 ) ([][]byte, error) {
-	miniblocksRow, err := s.pool.Query(
+	var miniblocks [][]byte
+	err := s.txRunnerWithMetrics(
+		ctx,
+		"ReadMiniblocks",
+		pgx.ReadOnly,
+		func(ctx context.Context, tx pgx.Tx) error {
+			var err error
+			miniblocks, err = s.readMiniblocksTx(ctx, tx, streamId, fromInclusive, toExclusive)
+			return err
+		},
+		nil,
+		"streamId", streamId,
+	)
+	if err != nil {
+		return nil, err
+	}
+	return miniblocks, nil
+}
+
+func (s *PostgresEventStore) readMiniblocksTx(
+	ctx context.Context,
+	tx pgx.Tx,
+	streamId StreamId,
+	fromInclusive int64,
+	toExclusive int64,
+) ([][]byte, error) {
+	miniblocksRow, err := tx.Query(
 		ctx,
 		"SELECT blockdata, seq_num FROM miniblocks WHERE seq_num >= $1 AND seq_num < $2 AND stream_id = $3 ORDER BY seq_num",
 		fromInclusive,
@@ -392,9 +450,7 @@ func (s *PostgresEventStore) ReadMiniblocks(
 		streamId,
 	)
 	if err != nil {
-		dbCalls.FailIncForChild("ReadMiniblocks")
-		return nil, s.enrichErrorWithNodeInfo(WrapRiverError(Err_DB_OPERATION_FAILURE, err).
-			Func("pg.ReadMiniblocks").Message("Error reading blocks").Tag("streamId", streamId))
+		return nil, err
 	}
 	defer miniblocksRow.Close()
 
@@ -408,27 +464,18 @@ func (s *PostgresEventStore) ReadMiniblocks(
 
 		err = miniblocksRow.Scan(&blockdata, &seq_num)
 		if err != nil {
-			dbCalls.FailIncForChild("ReadMiniblocks")
-			return nil, WrapRiverError(
-				Err_DB_OPERATION_FAILURE,
-				err,
-			).Func("pg.ReadMiniblocks").
-				Tag("streamId", streamId).
-				Message("Error scanning blocks")
+			return nil, err
 		}
 
 		if (prevSeqNum != -1) && (seq_num != prevSeqNum+1) {
 			// There is a gap in sequence numbers
-			return nil, WrapRiverError(Err_MINIBLOCKS_STORAGE_FAILURE, err).Func("pg.ReadMiniblocks").
-				Message("Miniblocks consistency violation").
+			return nil, RiverError(Err_MINIBLOCKS_STORAGE_FAILURE, "Miniblocks consistency violation").
 				Tag("ActualBlockNumber", seq_num).Tag("ExpectedBlockNumber", prevSeqNum+1).Tag("streamId", streamId)
 		}
 		prevSeqNum = seq_num
 
 		miniblocks = append(miniblocks, blockdata)
 	}
-
-	dbCalls.PassIncForChild("ReadMiniblocks")
 	return miniblocks, nil
 }
 
@@ -441,29 +488,26 @@ func (s *PostgresEventStore) WriteBlock(
 	snapshotMiniblock bool,
 	envelopes [][]byte,
 ) error {
-	ctx = persistentContextWithRequestMetadata(ctx)
-	err := s.createBlock(ctx, streamId, minipoolGeneration, minipoolSize, miniblock, snapshotMiniblock, envelopes)
-	if err != nil {
-		dbCalls.FailIncForChild("CreateBlock")
-		return s.enrichErrorWithNodeInfo(
-			AsRiverError(
-				err,
-			).Func("pg.CreateBlock").
-				Tag("streamId", streamId).
-				Tag("minipoolGeneration", minipoolGeneration).
-				Tag("minipoolSize", minipoolSize).
-				Tag("snapshotMiniblock", snapshotMiniblock),
-		)
-	}
-
-	dbCalls.PassIncForChild("CreateBlock")
-	return nil
+	return s.txRunnerWithMetrics(
+		ctx,
+		"WriteBlock",
+		pgx.ReadWrite,
+		func(ctx context.Context, tx pgx.Tx) error {
+			return s.writeBlockTx(ctx, tx, streamId, minipoolGeneration, minipoolSize, miniblock, snapshotMiniblock, envelopes)
+		},
+		nil,
+		"streamId", streamId,
+		"minipoolGeneration", minipoolGeneration,
+		"minipoolSize", minipoolSize,
+		"snapshotMiniblock", snapshotMiniblock,
+	)
 }
 
 // Supported consistency checks:
 // 1. Stream has minipoolGeneration-1 miniblocks
-func (s *PostgresEventStore) createBlock(
+func (s *PostgresEventStore) writeBlockTx(
 	ctx context.Context,
+	tx pgx.Tx,
 	streamId StreamId,
 	minipoolGeneration int64,
 	minipoolSize int,
@@ -471,32 +515,16 @@ func (s *PostgresEventStore) createBlock(
 	snapshotMiniblock bool,
 	envelopes [][]byte,
 ) error {
-	defer infra.StoreExecutionTimeMetrics("CreateBlock", infra.DB_CALLS_CATEGORY, time.Now())
+	var seqNum *int64
 
-	tx, err := startTx(ctx, s.pool)
-	if err != nil {
-		return WrapRiverError(Err_DB_OPERATION_FAILURE, err).Message("Error starting transaction")
-	}
-
-	defer s.rollbackTx(tx, "createBlock")
-
-	err = s.compareUUID(ctx, tx)
+	err := tx.QueryRow(ctx, "SELECT MAX(seq_num) as latest_blocks_number FROM miniblocks WHERE stream_id = $1", streamId).
+		Scan(&seqNum)
 	if err != nil {
 		return err
 	}
-
-	var seqNum *int64
-
-	err = tx.QueryRow(ctx, "SELECT MAX(seq_num) as latest_blocks_number FROM miniblocks WHERE stream_id = $1", streamId).
-		Scan(&seqNum)
-	if err != nil {
-		return WrapRiverError(Err_DB_OPERATION_FAILURE, err).Message("Error getting seqNum")
-	}
-
 	if seqNum == nil {
-		return WrapRiverError(Err_NOT_FOUND, err).Message("No blocks for the stream found in block storage")
+		return RiverError(Err_NOT_FOUND, "No blocks for the stream found in block storage")
 	}
-
 	if minipoolGeneration != *seqNum+1 {
 		return RiverError(Err_MINIBLOCKS_STORAGE_FAILURE, "Minipool generation missmatch").
 			Tag("ExpectedNewMinipoolGeneration", minipoolGeneration).Tag("ActualNewMinipoolGeneration", *seqNum+1)
@@ -505,7 +533,7 @@ func (s *PostgresEventStore) createBlock(
 	// clean up minipool
 	_, err = tx.Exec(ctx, "DELETE FROM minipools WHERE slot_num > -1 AND stream_id = $1", streamId)
 	if err != nil {
-		return WrapRiverError(Err_DB_OPERATION_FAILURE, err).Message("Minipool clean error")
+		return err
 	}
 
 	// update -1 record of minipools table to minipoolGeneration + 1
@@ -516,14 +544,14 @@ func (s *PostgresEventStore) createBlock(
 		streamId,
 	)
 	if err != nil {
-		return WrapRiverError(Err_DB_OPERATION_FAILURE, err).Message("Minipool generation update error")
+		return err
 	}
 
 	// update stream_snapshots_index if needed
 	if snapshotMiniblock {
 		_, err := tx.Exec(ctx, `UPDATE es SET latest_snapshot_miniblock = $1 WHERE stream_id = $2`, minipoolGeneration, streamId)
 		if err != nil {
-			return WrapRiverError(Err_DB_OPERATION_FAILURE, err).Message("Snapshot index update error")
+			return err
 		}
 	}
 
@@ -538,7 +566,7 @@ func (s *PostgresEventStore) createBlock(
 			envelope,
 		)
 		if err != nil {
-			return WrapRiverError(Err_DB_OPERATION_FAILURE, err).Message("Envelope insertion error")
+			return err
 		}
 	}
 
@@ -551,30 +579,39 @@ func (s *PostgresEventStore) createBlock(
 		miniblock,
 	)
 	if err != nil {
-		return WrapRiverError(Err_DB_OPERATION_FAILURE, err).Message("Miniblock insertion error")
+		return err
 	}
-
-	err = tx.Commit(ctx)
-	if err != nil {
-		return WrapRiverError(Err_DB_OPERATION_FAILURE, err).Message("Error committing transaction")
-	}
-
 	return nil
 }
 
 func (s *PostgresEventStore) GetStreamsNumber(ctx context.Context) (int, error) {
-	defer infra.StoreExecutionTimeMetrics("GetStreamNumbers", infra.DB_CALLS_CATEGORY, time.Now())
+	var count int
+	err := s.txRunnerWithMetrics(
+		ctx,
+		"GetStreamsNumber",
+		pgx.ReadOnly,
+		func(ctx context.Context, tx pgx.Tx) error {
+			var err error
+			count, err = s.getStreamsNumberTx(ctx)
+			return err
+		},
+		nil,
+	)
+	if err != nil {
+		return 0, err
+	}
+	return count, nil
 
+}
+
+func (s *PostgresEventStore) getStreamsNumberTx(ctx context.Context) (int, error) {
 	var count int
 	row := s.pool.QueryRow(ctx, "SELECT COUNT(stream_id) FROM es")
-	if err := row.Scan(&count); err != nil {
-		dbCalls.FailIncForChild("GetStreamsNumber")
-		return 0, s.enrichErrorWithNodeInfo(
-			WrapRiverError(Err_DB_OPERATION_FAILURE, err).Func("GetStreamsNumber").Message("Getting streams number error"),
-		)
+	err := row.Scan(&count)
+	if err != nil {
+		return 0, err
 	}
-
-	dbCalls.PassIncForChild("GetStreamsNumber")
+	dlog.FromCtx(ctx).Debug("GetStreamsNumberTx", "count", count)
 	return count, nil
 }
 
@@ -583,7 +620,7 @@ func (s *PostgresEventStore) compareUUID(ctx context.Context, tx pgx.Tx) error {
 
 	rows, err := tx.Query(ctx, "SELECT uuid FROM singlenodekey")
 	if err != nil {
-		return WrapRiverError(Err_DB_OPERATION_FAILURE, err).Message("query failed").Func("pg.compareUUID").LogError(log)
+		return err
 	}
 	defer rows.Close()
 
@@ -592,7 +629,7 @@ func (s *PostgresEventStore) compareUUID(ctx context.Context, tx pgx.Tx) error {
 		var id string
 		err = rows.Scan(&id)
 		if err != nil {
-			return WrapRiverError(Err_DB_OPERATION_FAILURE, err).Message("scan failed").Func("pg.compareUUID").LogError(log)
+			return err
 		}
 		allIds = append(allIds, id)
 	}
@@ -601,62 +638,66 @@ func (s *PostgresEventStore) compareUUID(ctx context.Context, tx pgx.Tx) error {
 		return nil
 	}
 
-	return RiverError(Err_RESOURCE_EXHAUSTED, "No longer a current node, shutting down").
+	err = RiverError(Err_RESOURCE_EXHAUSTED, "No longer a current node, shutting down").
 		Func("pg.compareUUID").
 		Tag("currentUUID", s.nodeUUID).
 		Tag("schema", s.schemaName).
 		Tag("newUUIDs", allIds).
 		LogError(log)
+	s.exitSignal <- err
+	return err
 }
 
 func (s *PostgresEventStore) CleanupStorage(ctx context.Context) error {
-	log := dlog.FromCtx(ctx)
-	log.Info("pg.CleanupStorage: Deleting node record from single node key table")
-	_, err := s.pool.Exec(ctx, "DELETE FROM singlenodekey WHERE uuid = $1", s.nodeUUID)
-	if err != nil {
-		dbCalls.FailIncForChild("CleanupStorage")
-		return WrapRiverError(
-			Err_DB_OPERATION_FAILURE,
-			err,
-		).Func("pg.CleanupStorage").
-			Message("singlenodekey clean up error").
-			Tag("UUID", s.nodeUUID).LogError(dlog.FromCtx(ctx))
-	}
-	dbCalls.PassIncForChild("CleanupStorage")
-	return nil
+	return s.txRunnerWithMetrics(
+		ctx,
+		"CleanupStorage",
+		pgx.ReadWrite,
+		s.cleanupStorageTx,
+		&txRunnerOpts{disableCompareUUID: true},
+	)
 }
 
-// Non-API helpers
-
-func (s *PostgresEventStore) enrichErrorWithNodeInfo(err *RiverErrorImpl) *RiverErrorImpl {
-	return err.Tag("currentUUID", s.nodeUUID).Tag("currentInfo", getCurrentNodeProcessInfo(s.schemaName))
+func (s *PostgresEventStore) cleanupStorageTx(ctx context.Context, tx pgx.Tx) error {
+	_, err := tx.Exec(ctx, "DELETE FROM singlenodekey WHERE uuid = $1", s.nodeUUID)
+	return err
 }
 
 // GetStreams returns a list of all event streams
 func (s *PostgresEventStore) GetStreams(ctx context.Context) ([]StreamId, error) {
-	defer infra.StoreExecutionTimeMetrics("GetStreams", infra.DB_CALLS_CATEGORY, time.Now())
-
-	streams := []string{}
-	rows, err := s.pool.Query(ctx, "SELECT stream_id FROM es")
+	var streams []StreamId
+	err := s.txRunnerWithMetrics(
+		ctx,
+		"GetStreams",
+		pgx.ReadOnly,
+		func(ctx context.Context, tx pgx.Tx) error {
+			var err error
+			streams, err = s.getStreamsTx(ctx, tx)
+			return err
+		},
+		nil,
+	)
 	if err != nil {
-		dbCalls.FailIncForChild("GetStreams")
-		return nil, WrapRiverError(Err_DB_OPERATION_FAILURE, err).Func("GetStreams").Message("Getting streams error")
+		return nil, err
+	}
+	return streams, nil
+}
+
+func (s *PostgresEventStore) getStreamsTx(ctx context.Context, tx pgx.Tx) ([]StreamId, error) {
+	streams := []string{}
+	rows, err := tx.Query(ctx, "SELECT stream_id FROM es")
+	if err != nil {
+		return nil, err
 	}
 	defer rows.Close()
 	for rows.Next() {
 		var streamName string
 		err = rows.Scan(&streamName)
 		if err != nil {
-			dbCalls.FailIncForChild("GetStreams")
-			return nil, WrapRiverError(
-				Err_DB_OPERATION_FAILURE,
-				err,
-			).Func("GetStreams").
-				Message("Getting streams error (scan phase)")
+			return nil, err
 		}
 		streams = append(streams, streamName)
 	}
-	dbCalls.PassIncForChild("GetStreams")
 
 	ret := make([]StreamId, len(streams))
 	for i, stream := range streams {
@@ -668,87 +709,30 @@ func (s *PostgresEventStore) GetStreams(ctx context.Context) ([]StreamId, error)
 	return ret, nil
 }
 
-/*
-* Delete stream with specified streamId
-*
-* Delete minipool and miniblock tables associated with the stream and stream record from streams table
- */
 func (s *PostgresEventStore) DeleteStream(ctx context.Context, streamId StreamId) error {
-	err := s.deleteStream(ctx, streamId)
-	if err != nil {
-		dbCalls.FailIncForChild("DeleteStream")
-		return AsRiverError(err).Func("pg.DeleteStream").Tag("streamId", streamId)
-	}
-
-	dbCalls.PassIncForChild("DeleteStream")
-	return nil
+	return s.txRunnerWithMetrics(
+		ctx,
+		"DeleteStream",
+		pgx.ReadWrite,
+		func(ctx context.Context, tx pgx.Tx) error {
+			return s.deleteStreamTx(ctx, tx, streamId)
+		},
+		nil,
+		"streamId", streamId,
+	)
 }
 
-func (s *PostgresEventStore) deleteStream(ctx context.Context, streamId StreamId) error {
-	defer infra.StoreExecutionTimeMetrics("DeleteStream", infra.DB_CALLS_CATEGORY, time.Now())
-
-	tx, err := startTx(ctx, s.pool)
-	if err != nil {
-		return WrapRiverError(Err_DB_OPERATION_FAILURE, err).Message("error starting transaction")
-	}
-
-	defer s.rollbackTx(tx, "deleteStream")
-
-	err = s.compareUUID(ctx, tx)
-	if err != nil {
-		return err
-	}
-
-	_, err = tx.Exec(ctx, "DELETE FROM miniblocks WHERE stream_id = $1", streamId)
-	if err != nil {
-		return WrapRiverError(Err_DB_OPERATION_FAILURE, err).Message("Delete miniblocks error")
-	}
-
-	// create related miniblocks table and put there genesis block
-	tableSuffix := createTableSuffix(streamId)
-
-	// Delete partition in miniblocks table for new strea
-	_, err = tx.Exec(ctx, fmt.Sprintf(`DROP TABLE miniblocks_%s`, tableSuffix))
-
-	if err != nil {
-		return WrapRiverError(Err_DB_OPERATION_FAILURE, err).Message("Delete miniblocks partition")
-	}
-
-	_, err = tx.Exec(ctx, "DELETE FROM minipools WHERE stream_id = $1", streamId)
-	if err != nil {
-		return WrapRiverError(Err_DB_OPERATION_FAILURE, err).Message("Delete minipools error")
-	}
-
-	// Delete partition in minipools table for new strea
-	_, err = tx.Exec(ctx, fmt.Sprintf(`DROP TABLE minipools_%s`, tableSuffix))
-
-	if err != nil {
-		return WrapRiverError(Err_DB_OPERATION_FAILURE, err).Message("Delete miniblocks partition")
-	}
-
-	_, err = tx.Exec(ctx, "DELETE FROM es WHERE stream_id = $1", streamId)
-	if err != nil {
-		return WrapRiverError(Err_DB_OPERATION_FAILURE, err).Message("Delete stream error")
-	}
-
-	err = tx.Commit(ctx)
-	if err != nil {
-		return WrapRiverError(Err_DB_OPERATION_FAILURE, err).Message("error committing transaction")
-	}
-
-	return nil
-}
-
-/*
-* Storage infrastructure functions
- */
-
-func startTx(ctx context.Context, pool *pgxpool.Pool) (pgx.Tx, error) {
-	tx, err := pool.BeginTx(ctx, pgx.TxOptions{IsoLevel: pgx.Serializable})
-	if err != nil {
-		return nil, WrapRiverError(Err_DB_OPERATION_FAILURE, err).Func("startTx").Message("error starting transaction")
-	}
-	return tx, nil
+func (s *PostgresEventStore) deleteStreamTx(ctx context.Context, tx pgx.Tx, streamId StreamId) error {
+	_, err := tx.Exec(
+		ctx,
+		fmt.Sprintf(
+			`DROP TABLE miniblocks_%[1]s;
+			DROP TABLE minipools_%[1]s;
+			DELETE FROM es WHERE stream_id = $1`,
+			createTableSuffix(streamId),
+		),
+		streamId)
+	return err
 }
 
 func DbSchemaNameFromAddress(address string) string {
@@ -777,13 +761,11 @@ func newPostgresEventStore(
 	instanceId string,
 	exitSignal chan error,
 ) (*PostgresEventStore, error) {
-	defer infra.StoreExecutionTimeMetrics("NewPostgresEventStore", infra.DB_CALLS_CATEGORY, time.Now())
-
 	log := dlog.FromCtx(ctx)
 
 	pool_conf, err := pgxpool.ParseConfig(database_url)
 	if err != nil {
-		return nil, WrapRiverError(Err_MINIBLOCKS_STORAGE_FAILURE, err).Message("Error parsing config")
+		return nil, WrapRiverError(Err_DB_OPERATION_FAILURE, err).Message("Error parsing config")
 	}
 
 	// In general, it should be possible to add database schema name into database url as a parameter search_path (&search_path=database_schema_name)
@@ -803,11 +785,12 @@ func newPostgresEventStore(
 		nodeUUID:   instanceId,
 		exitSignal: exitSignal,
 		serverCtx:  ctx,
+		dbUrl:      database_url,
 	}
 
 	err = store.InitStorage(ctx)
 	if err != nil {
-		return nil, WrapRiverError(Err_MINIBLOCKS_STORAGE_FAILURE, err).Message("InitStorage error")
+		return nil, err
 	}
 
 	// stats thread
@@ -837,59 +820,70 @@ func (s *PostgresEventStore) Close(ctx context.Context) {
 	s.pool.Close()
 }
 
-//go:embed init_db.sql
-var schema string
+//go:embed migrations/*.sql
+var migrationsDir embed.FS
 
 func (s *PostgresEventStore) InitStorage(ctx context.Context) error {
 	err := s.initStorage(ctx)
 	if err != nil {
-		return AsRiverError(err).Func("InitStorage").Tag("schema", schema).Tag("schemaName", s.schemaName)
+		return AsRiverError(err).Func("InitStorage").Tag("schemaName", s.schemaName)
 	}
 
 	return nil
 }
 
-func (s *PostgresEventStore) initStorage(ctx context.Context) error {
-	defer infra.StoreExecutionTimeMetrics("initStorage", infra.DB_CALLS_CATEGORY, time.Now())
-
+func (s *PostgresEventStore) createSchemaTx(ctx context.Context, tx pgx.Tx) error {
 	log := dlog.FromCtx(ctx)
 
-	tx, err := s.pool.Begin(ctx)
-	if err != nil {
-		return WrapRiverError(Err_DB_OPERATION_FAILURE, err).Message("InitStorage startTx error")
-	}
-
-	defer s.rollbackTx(tx, "initStorage")
-
-	// check if schema exists
+	// Create schema iff not exists
 	var schemaExists bool
-	err = tx.QueryRow(
+	err := tx.QueryRow(
 		ctx,
 		"SELECT EXISTS(SELECT 1 FROM information_schema.schemata WHERE schema_name = $1)",
 		s.schemaName).Scan(&schemaExists)
 	if err != nil {
-		return WrapRiverError(Err_DB_OPERATION_FAILURE, err).Message("Error checking schema existence")
+		return err
 	}
 
 	if !schemaExists {
 		createSchemaQuery := fmt.Sprintf("CREATE SCHEMA \"%s\"", s.schemaName)
 		_, err := tx.Exec(ctx, createSchemaQuery)
 		if err != nil {
-			return WrapRiverError(Err_DB_OPERATION_FAILURE, err).Message("Error creating schema")
+			return err
 		}
 		log.Info("DB Schema created", "schema", s.schemaName)
 	} else {
 		log.Info("DB Schema already exists", "schema", s.schemaName)
 	}
+	return nil
+}
 
-	_, err = tx.Exec(ctx, schema)
+func (s *PostgresEventStore) runMigrations(ctx context.Context) error {
+	// Run migrations
+	iofsMigrationsDir, err := iofs.New(migrationsDir, "migrations")
 	if err != nil {
-		return WrapRiverError(Err_DB_OPERATION_FAILURE, err).Message("InitStorage exec error")
+		return WrapRiverError(Err_DB_OPERATION_FAILURE, err).Message("Error loading migrations")
 	}
+
+	dbUrlWithSchema := strings.Split(s.dbUrl, "?")[0] + fmt.Sprintf("?sslmode=disable&search_path=%v", s.schemaName)
+	migration, err := migrate.NewWithSourceInstance("iofs", iofsMigrationsDir, dbUrlWithSchema)
+	if err != nil {
+		return WrapRiverError(Err_DB_OPERATION_FAILURE, err).Message("Error creating migration instance")
+	}
+
+	if err = migration.Up(); err != nil && err != migrate.ErrNoChange {
+		return WrapRiverError(Err_DB_OPERATION_FAILURE, err).Message("Error running migrations")
+	}
+
+	return nil
+}
+
+func (s *PostgresEventStore) initializeSingleNodeKeyTx(ctx context.Context, tx pgx.Tx) error {
+	log := dlog.FromCtx(ctx)
 
 	rows, err := tx.Query(ctx, "SELECT uuid, storage_connection_time, info FROM singlenodekey")
 	if err != nil {
-		return WrapRiverError(Err_DB_OPERATION_FAILURE, err).Message("Error getting UUIDs during startup")
+		return err
 	}
 	defer rows.Close()
 
@@ -899,45 +893,51 @@ func (s *PostgresEventStore) initStorage(ctx context.Context) error {
 		var storedInfo string
 		err := rows.Scan(&storedUUID, &storedTimestamp, &storedInfo)
 		if err != nil {
-			return WrapRiverError(Err_DB_OPERATION_FAILURE, err).Message("Error iterating over UUIDs during startup")
+			return err
 		}
 		log.Info("Found UUID during startup", "uuid", storedUUID, "timestamp", storedTimestamp, "info", storedInfo)
 	}
 
 	_, err = tx.Exec(ctx, "DELETE FROM singlenodekey")
-
 	if err != nil {
-		return WrapRiverError(Err_DB_OPERATION_FAILURE, err).Message("singlenodekey clean up error")
+		return err
 	}
-
-	timestamp := time.Now()
 
 	_, err = tx.Exec(
 		ctx,
 		"INSERT INTO singlenodekey (uuid, storage_connection_time, info) VALUES ($1, $2, $3)",
 		s.nodeUUID,
-		timestamp,
+		time.Now(),
 		getCurrentNodeProcessInfo(s.schemaName),
 	)
 	if err != nil {
-		return WrapRiverError(Err_DB_OPERATION_FAILURE, err).Message("singlenodekey UUID insert errorr")
+		return err
 	}
-
-	err = tx.Commit(ctx)
-	if err != nil {
-		return WrapRiverError(Err_DB_OPERATION_FAILURE, err).Message("error committing transaction")
-	}
-
 	return nil
 }
 
-func (s *PostgresEventStore) rollbackTx(tx pgx.Tx, funcName string) {
-	err := tx.Rollback(s.serverCtx)
-	if err != nil {
-		if errors.Is(err, pgx.ErrTxClosed) {
-			return
-		}
+func (s *PostgresEventStore) initStorage(ctx context.Context) error {
+	if err := s.txRunnerWithMetrics(
+		ctx,
+		"createSchema",
+		pgx.ReadWrite,
+		s.createSchemaTx,
+		&txRunnerOpts{disableCompareUUID: true},
+	); err != nil {
+		return err
 	}
+
+	if err := s.runMigrations(ctx); err != nil {
+		return err
+	}
+
+	return s.txRunnerWithMetrics(
+		ctx,
+		"initializeSingleNodeKey",
+		pgx.ReadWrite,
+		s.initializeSingleNodeKeyTx,
+		&txRunnerOpts{disableCompareUUID: true},
+	)
 }
 
 func createTableSuffix(streamId StreamId) string {

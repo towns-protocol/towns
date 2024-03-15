@@ -106,11 +106,11 @@ export interface IEntitlementsManagerInterface extends utils.Interface {
   functions: {
     "addEntitlementModule(address)": FunctionFragment;
     "addImmutableEntitlements(address[])": FunctionFragment;
-    "getChannelEntitlements(string,string)": FunctionFragment;
+    "getChannelEntitlements(bytes32,string)": FunctionFragment;
     "getEntitlement(address)": FunctionFragment;
     "getEntitlements()": FunctionFragment;
     "getSpaceEntitlements(string)": FunctionFragment;
-    "isEntitledToChannel(string,address,string)": FunctionFragment;
+    "isEntitledToChannel(bytes32,address,string)": FunctionFragment;
     "isEntitledToSpace(address,string)": FunctionFragment;
     "removeEntitlementModule(address)": FunctionFragment;
   };
@@ -138,7 +138,7 @@ export interface IEntitlementsManagerInterface extends utils.Interface {
   ): string;
   encodeFunctionData(
     functionFragment: "getChannelEntitlements",
-    values: [PromiseOrValue<string>, PromiseOrValue<string>]
+    values: [PromiseOrValue<BytesLike>, PromiseOrValue<string>]
   ): string;
   encodeFunctionData(
     functionFragment: "getEntitlement",
@@ -155,7 +155,7 @@ export interface IEntitlementsManagerInterface extends utils.Interface {
   encodeFunctionData(
     functionFragment: "isEntitledToChannel",
     values: [
-      PromiseOrValue<string>,
+      PromiseOrValue<BytesLike>,
       PromiseOrValue<string>,
       PromiseOrValue<string>
     ]
@@ -277,7 +277,7 @@ export interface IEntitlementsManager extends BaseContract {
     ): Promise<ContractTransaction>;
 
     getChannelEntitlements(
-      channelId: PromiseOrValue<string>,
+      channelId: PromiseOrValue<BytesLike>,
       permission: PromiseOrValue<string>,
       overrides?: CallOverrides
     ): Promise<[IRuleEntitlement.RuleDataStructOutput]>;
@@ -305,7 +305,7 @@ export interface IEntitlementsManager extends BaseContract {
     ): Promise<[IRuleEntitlement.RuleDataStructOutput]>;
 
     isEntitledToChannel(
-      channelId: PromiseOrValue<string>,
+      channelId: PromiseOrValue<BytesLike>,
       user: PromiseOrValue<string>,
       permission: PromiseOrValue<string>,
       overrides?: CallOverrides
@@ -334,7 +334,7 @@ export interface IEntitlementsManager extends BaseContract {
   ): Promise<ContractTransaction>;
 
   getChannelEntitlements(
-    channelId: PromiseOrValue<string>,
+    channelId: PromiseOrValue<BytesLike>,
     permission: PromiseOrValue<string>,
     overrides?: CallOverrides
   ): Promise<IRuleEntitlement.RuleDataStructOutput>;
@@ -354,7 +354,7 @@ export interface IEntitlementsManager extends BaseContract {
   ): Promise<IRuleEntitlement.RuleDataStructOutput>;
 
   isEntitledToChannel(
-    channelId: PromiseOrValue<string>,
+    channelId: PromiseOrValue<BytesLike>,
     user: PromiseOrValue<string>,
     permission: PromiseOrValue<string>,
     overrides?: CallOverrides
@@ -383,7 +383,7 @@ export interface IEntitlementsManager extends BaseContract {
     ): Promise<void>;
 
     getChannelEntitlements(
-      channelId: PromiseOrValue<string>,
+      channelId: PromiseOrValue<BytesLike>,
       permission: PromiseOrValue<string>,
       overrides?: CallOverrides
     ): Promise<IRuleEntitlement.RuleDataStructOutput>;
@@ -403,7 +403,7 @@ export interface IEntitlementsManager extends BaseContract {
     ): Promise<IRuleEntitlement.RuleDataStructOutput>;
 
     isEntitledToChannel(
-      channelId: PromiseOrValue<string>,
+      channelId: PromiseOrValue<BytesLike>,
       user: PromiseOrValue<string>,
       permission: PromiseOrValue<string>,
       overrides?: CallOverrides
@@ -453,7 +453,7 @@ export interface IEntitlementsManager extends BaseContract {
     ): Promise<BigNumber>;
 
     getChannelEntitlements(
-      channelId: PromiseOrValue<string>,
+      channelId: PromiseOrValue<BytesLike>,
       permission: PromiseOrValue<string>,
       overrides?: CallOverrides
     ): Promise<BigNumber>;
@@ -471,7 +471,7 @@ export interface IEntitlementsManager extends BaseContract {
     ): Promise<BigNumber>;
 
     isEntitledToChannel(
-      channelId: PromiseOrValue<string>,
+      channelId: PromiseOrValue<BytesLike>,
       user: PromiseOrValue<string>,
       permission: PromiseOrValue<string>,
       overrides?: CallOverrides
@@ -501,7 +501,7 @@ export interface IEntitlementsManager extends BaseContract {
     ): Promise<PopulatedTransaction>;
 
     getChannelEntitlements(
-      channelId: PromiseOrValue<string>,
+      channelId: PromiseOrValue<BytesLike>,
       permission: PromiseOrValue<string>,
       overrides?: CallOverrides
     ): Promise<PopulatedTransaction>;
@@ -519,7 +519,7 @@ export interface IEntitlementsManager extends BaseContract {
     ): Promise<PopulatedTransaction>;
 
     isEntitledToChannel(
-      channelId: PromiseOrValue<string>,
+      channelId: PromiseOrValue<BytesLike>,
       user: PromiseOrValue<string>,
       permission: PromiseOrValue<string>,
       overrides?: CallOverrides

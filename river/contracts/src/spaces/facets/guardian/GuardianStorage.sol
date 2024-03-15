@@ -8,8 +8,9 @@ pragma solidity ^0.8.23;
 // contracts
 
 library GuardianStorage {
+  // keccak256(abi.encode(uint256(keccak256("spaces.facets.guardian.storage")) - 1)) & ~bytes32(uint256(0xff))
   bytes32 constant STORAGE_POSITION =
-    keccak256("towns.facets.guardian.GuardianStorage");
+    0x0c89d3aad1b583c77a2e9f9fffa651b386c9c29e300bf2a8e2f3de1bb0100a00;
 
   struct Layout {
     uint256 defaultCooldown;

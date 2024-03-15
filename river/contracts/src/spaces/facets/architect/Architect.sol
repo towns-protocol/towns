@@ -5,6 +5,7 @@ pragma solidity ^0.8.23;
 import {IArchitect} from "contracts/src/spaces/facets/architect/IArchitect.sol";
 import {IRuleEntitlement} from "contracts/src/crosschain/IRuleEntitlement.sol";
 import {IWalletLink} from "contracts/src/river/wallet-link/IWalletLink.sol";
+import {ISpaceOwner} from "contracts/src/spaces/facets/owner/ISpaceOwner.sol";
 
 // libraries
 
@@ -25,7 +26,7 @@ contract Architect is
   Facet
 {
   function __Architect_init(
-    address ownerImplementation,
+    ISpaceOwner ownerImplementation,
     IUserEntitlement userEntitlementImplementation,
     IRuleEntitlement ruleEntitlementImplementation,
     IWalletLink walletLink
@@ -41,29 +42,18 @@ contract Architect is
   // =============================================================
   //                            Space
   // =============================================================
-
-  function getSpaceById(string memory spaceId) external view returns (address) {
-    return _getSpaceById(spaceId);
-  }
-
-  function getTokenIdBySpaceId(
-    string memory spaceId
-  ) external view returns (uint256) {
-    return _getTokenIdBySpaceId(spaceId);
-  }
-
-  function getTokenIdBySpace(address space) external view returns (uint256) {
-    return _getTokenIdBySpace(space);
-  }
-
-  function isSpace(address space) external view returns (bool) {
-    return _isValidSpace(space);
-  }
-
   function createSpace(
     SpaceInfo memory spaceInfo
   ) external nonReentrant whenNotPaused returns (address) {
     return _createSpace(spaceInfo);
+  }
+
+  function getSpaceByTokenId(uint256 tokenId) external view returns (address) {
+    return _getSpaceByTokenId(tokenId);
+  }
+
+  function getTokenIdBySpace(address space) external view returns (uint256) {
+    return _getTokenIdBySpace(space);
   }
 
   // =============================================================
@@ -71,7 +61,7 @@ contract Architect is
   // =============================================================
 
   function setSpaceArchitectImplementations(
-    address spaceToken,
+    ISpaceOwner spaceToken,
     IUserEntitlement userEntitlementImplementation,
     IRuleEntitlement ruleEntitlementImplementation,
     IWalletLink walletLink
@@ -88,7 +78,7 @@ contract Architect is
     external
     view
     returns (
-      address spaceToken,
+      ISpaceOwner spaceToken,
       IUserEntitlement userEntitlementImplementation,
       IRuleEntitlement ruleEntitlementImplementation,
       IWalletLink walletLink

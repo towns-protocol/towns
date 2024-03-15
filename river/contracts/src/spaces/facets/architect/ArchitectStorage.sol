@@ -2,35 +2,18 @@
 pragma solidity ^0.8.23;
 
 // interfaces
-import {IRuleEntitlement} from "contracts/src/crosschain/IRuleEntitlement.sol";
-import {IUserEntitlement} from "contracts/src/spaces/entitlements/user/IUserEntitlement.sol";
-import {IWalletLink} from "contracts/src/river/wallet-link/IWalletLink.sol";
-
-// libraries
-import {StringSet} from "contracts/src/utils/StringSet.sol";
-import {EnumerableSet} from "@openzeppelin/contracts/utils/structs/EnumerableSet.sol";
 
 // contracts
 
 library ArchitectStorage {
-  // solhint-disable-next-line private-vars-leading-underscore
+  // keccak256(abi.encode(uint256(keccak256("spaces.facets.architect.storage")) - 1)) & ~bytes32(uint256(0xff))
   bytes32 internal constant SLOT_POSITION =
-    keccak256("river.spaces.facets.architect.storage");
-
-  struct Space {
-    address space;
-    uint256 tokenId;
-  }
+    0x06bd04a817647c31ee485c8a0baab96facd62dbfd4b475796bb17ca2c12f0000;
 
   struct Layout {
-    StringSet.Set spaceIds;
-    EnumerableSet.AddressSet spaces;
-    mapping(string spaceId => Space) spaceById;
+    uint256 spaceCount;
     mapping(address spaceAddress => uint256 tokenId) tokenIdBySpace;
-    address spaceToken;
-    IUserEntitlement userEntitlement;
-    IRuleEntitlement ruleEntitlement;
-    IWalletLink walletLink;
+    mapping(uint256 tokenId => address spaceAddress) spaceByTokenId;
   }
 
   function layout() internal pure returns (Layout storage ds) {

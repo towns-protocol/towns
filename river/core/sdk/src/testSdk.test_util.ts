@@ -1,3 +1,4 @@
+/* eslint-disable @typescript-eslint/no-unnecessary-type-assertion */
 import { Client } from './client'
 import {
     ISpaceDapp,
@@ -6,7 +7,7 @@ import {
     NoopRuleData,
     getFilteredRolesFromSpace,
 } from '@river/web3'
-import { makeUniqueChannelStreamId, makeUniqueSpaceStreamId } from './id'
+import { makeDefaultChannelStreamId, makeSpaceStreamId, makeUniqueChannelStreamId } from './id'
 import { BigNumber, ethers } from 'ethers'
 import { dlog } from '@river/dlog'
 
@@ -28,7 +29,7 @@ export class RiverSDK {
         channelName: string,
         channelTopic: string,
     ): Promise<string> {
-        const channelStreamId = makeUniqueChannelStreamId()
+        const channelStreamId = makeUniqueChannelStreamId(townId)
         const filteredRoles = await getFilteredRolesFromSpace(this.spaceDapp, townId)
         const roleIds = []
         for (const r of filteredRoles) {
@@ -52,9 +53,7 @@ export class RiverSDK {
         townMetadata: string,
         defaultChannelName: string = 'general',
     ): Promise<{ spaceStreamId: string; defaultChannelStreamId: string }> {
-        const spaceId: string = makeUniqueSpaceStreamId()
-        const channelId: string = makeUniqueChannelStreamId()
-        log('Creating space: ', spaceId, ' with channel: ', channelId)
+        log('Creating space: ')
 
         const membershipInfo: MembershipStruct = {
             settings: {
@@ -78,16 +77,18 @@ export class RiverSDK {
 
         const createSpaceTransaction = await this.spaceDapp.createSpace(
             {
-                spaceId: spaceId,
                 spaceName: townName,
                 spaceMetadata: townMetadata,
-                channelId: channelId,
                 channelName: defaultChannelName,
                 membership: membershipInfo,
             },
             this.walletWithProvider,
         )
-        await createSpaceTransaction.wait()
+        const receipt = await createSpaceTransaction.wait()
+        const spaceAddress = this.spaceDapp.getSpaceAddress(receipt)
+        expect(spaceAddress).toBeDefined()
+        const spaceId = makeSpaceStreamId(spaceAddress!)
+        const channelId = makeDefaultChannelStreamId(spaceAddress!)
 
         const spaceStreamId = await this.client.createSpace(spaceId)
         log('Created space by client: ', spaceStreamId)
@@ -102,14 +103,12 @@ export class RiverSDK {
         }
     }
 
-    public async createTownAndChannelWithPresetIDs(
+    public async createTownAndChannel(
         townName: string,
-        townId: string,
         townMetadata: string,
         channelName: string,
-        channelId: string,
     ): Promise<{ spaceStreamId: string; defaultChannelStreamId: string }> {
-        log('Creating space: ', townId, ' with channel: ', channelId)
+        log('Creating space: ', townName, ' with channel: ', channelName)
         const membershipInfo: MembershipStruct = {
             settings: {
                 name: 'Everyone',
@@ -132,16 +131,24 @@ export class RiverSDK {
 
         const createSpaceTransaction = await this.spaceDapp.createSpace(
             {
-                spaceId: townId,
                 spaceName: townName,
                 spaceMetadata: townMetadata,
-                channelId: channelId,
                 channelName: channelName,
                 membership: membershipInfo,
             },
             this.walletWithProvider,
         )
-        await createSpaceTransaction.wait()
+        const receipt = await createSpaceTransaction.wait()
+        log('receipt', receipt)
+        if (receipt.status !== 1) {
+            throw new Error('Failed to create space')
+        }
+        const spaceAddress = this.spaceDapp.getSpaceAddress(receipt)
+        if (!spaceAddress) {
+            throw new Error('Failed to get space address')
+        }
+        const townId = makeSpaceStreamId(spaceAddress)
+        const channelId = makeDefaultChannelStreamId(spaceAddress)
 
         const spaceStreamId = await this.client.createSpace(townId)
         await this.client.joinStream(spaceStreamId.streamId)

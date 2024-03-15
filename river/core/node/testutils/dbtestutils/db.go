@@ -1,11 +1,13 @@
 package dbtestutils
 
 import (
+	"bytes"
 	"context"
 	"crypto/rand"
 	"encoding/hex"
 	"fmt"
 	"os"
+	"os/exec"
 
 	"github.com/jackc/pgx/v5/pgxpool"
 )
@@ -19,6 +21,18 @@ func GetTestDbUrl() string {
 }
 
 func DeleteTestSchema(ctx context.Context, dbUrl string, schemaName string) error {
+	if os.Getenv("RIVER_TEST_DUMP_DB") != "" {
+		cmd := exec.Command("pg_dump", "-Fp", "-d", "postgres://postgres:postgres@localhost:5433/river?sslmode=disable", "-n", schemaName)
+		var out bytes.Buffer
+		cmd.Stdout = &out
+		err := cmd.Run()
+		if err != nil {
+			fmt.Printf("Failed to execute pg_dump: %v\n", err)
+		} else {
+			fmt.Println(out.String())
+		}
+	}
+
 	conn, err := pgxpool.New(ctx, dbUrl)
 	if err != nil {
 		fmt.Printf("Failed to connect to database: %v", err)

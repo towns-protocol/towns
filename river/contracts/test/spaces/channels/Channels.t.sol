@@ -27,10 +27,9 @@ contract ChannelsTest is BaseSetup, IEntitlementBase {
 
   function test_createChannel(
     string memory channelMetadata,
-    string memory channelId
+    bytes32 channelId
   ) public {
     vm.assume(bytes(channelMetadata).length > 2);
-    vm.assume(bytes(channelId).length > 2);
 
     vm.prank(founder);
     IChannel(everyoneSpace).createChannel(
@@ -42,10 +41,9 @@ contract ChannelsTest is BaseSetup, IEntitlementBase {
 
   function test_revert_createChannel_with_duplicate_role(
     string memory channelMetadata,
-    string memory channelId
+    bytes32 channelId
   ) public {
     vm.assume(bytes(channelMetadata).length > 2);
-    vm.assume(bytes(channelId).length > 2);
 
     string[] memory permissions = new string[](1);
     permissions[0] = "Write";
@@ -67,7 +65,7 @@ contract ChannelsTest is BaseSetup, IEntitlementBase {
   }
 
   function test_createChannel_with_multiple_roles() public {
-    string memory channelId = "my-cool-channel";
+    bytes32 channelId = "my-cool-channel";
     string memory channelMetadata = "Metadata";
 
     string[] memory permissions = new string[](1);
@@ -111,11 +109,10 @@ contract ChannelsTest is BaseSetup, IEntitlementBase {
   }
 
   function test_getChannel(
-    string memory channelId,
+    bytes32 channelId,
     string memory channelMetadata
   ) public {
     vm.assume(bytes(channelMetadata).length > 2);
-    vm.assume(bytes(channelId).length > 2);
 
     vm.prank(founder);
     IChannel(everyoneSpace).createChannel(
@@ -135,11 +132,10 @@ contract ChannelsTest is BaseSetup, IEntitlementBase {
   }
 
   function test_getChannel_with_roles(
-    string memory channelId,
+    bytes32 channelId,
     string memory channelMetadata
   ) public {
     vm.assume(bytes(channelMetadata).length > 2);
-    vm.assume(bytes(channelId).length > 2);
 
     vm.prank(founder);
     uint256 roleId = IRoles(everyoneSpace).createRole(
@@ -162,10 +158,9 @@ contract ChannelsTest is BaseSetup, IEntitlementBase {
 
   function test_getChannels(
     string memory channelMetadata,
-    string memory channelId
+    bytes32 channelId
   ) public {
     vm.assume(bytes(channelMetadata).length > 2);
-    vm.assume(bytes(channelId).length > 2);
 
     vm.prank(founder);
     IChannel(everyoneSpace).createChannel(
@@ -175,7 +170,7 @@ contract ChannelsTest is BaseSetup, IEntitlementBase {
     );
 
     IChannel.Channel[] memory _channels = IChannel(everyoneSpace).getChannels();
-    string[] memory channelIds = new string[](_channels.length);
+    bytes32[] memory channelIds = new bytes32[](_channels.length);
 
     for (uint256 i = 0; i < _channels.length; i++) {
       channelIds[i] = _channels[i].id;
@@ -185,10 +180,10 @@ contract ChannelsTest is BaseSetup, IEntitlementBase {
   }
 
   function test_getChannels_with_multiple_channels() public {
-    string memory channelId1 = "Id1";
+    bytes32 channelId1 = "Id1";
     string memory channelName1 = "Channel1";
 
-    string memory channelId2 = "Id2";
+    bytes32 channelId2 = "Id2";
     string memory channelName2 = "Channel2";
 
     vm.startPrank(founder);
@@ -205,7 +200,7 @@ contract ChannelsTest is BaseSetup, IEntitlementBase {
     vm.stopPrank();
 
     IChannel.Channel[] memory _channels = IChannel(everyoneSpace).getChannels();
-    string[] memory channelIds = new string[](_channels.length);
+    bytes32[] memory channelIds = new bytes32[](_channels.length);
     for (uint256 i = 0; i < _channels.length; i++) {
       channelIds[i] = _channels[i].id;
     }
@@ -216,11 +211,11 @@ contract ChannelsTest is BaseSetup, IEntitlementBase {
 
   function test_updateChannel(
     string memory channelMetadata,
-    string memory channelId,
+    bytes32 channelId,
     string memory newMetadata
   ) public {
     vm.assume(bytes(channelMetadata).length > 2);
-    vm.assume(bytes(channelId).length > 2);
+
     vm.assume(bytes(newMetadata).length > 2);
 
     vm.startPrank(founder);
@@ -243,10 +238,9 @@ contract ChannelsTest is BaseSetup, IEntitlementBase {
 
   function test_updateChannel_disable_channel(
     string memory channelMetadata,
-    string memory channelId
+    bytes32 channelId
   ) public {
     vm.assume(bytes(channelMetadata).length > 2);
-    vm.assume(bytes(channelId).length > 2);
 
     vm.startPrank(founder);
     IChannel(everyoneSpace).createChannel(
@@ -265,10 +259,9 @@ contract ChannelsTest is BaseSetup, IEntitlementBase {
 
   function test_removeChannel(
     string memory channelMetadata,
-    string memory channelId
+    bytes32 channelId
   ) public {
     vm.assume(bytes(channelMetadata).length > 2);
-    vm.assume(bytes(channelId).length > 2);
 
     vm.startPrank(founder);
     IChannel(everyoneSpace).createChannel(
@@ -285,11 +278,10 @@ contract ChannelsTest is BaseSetup, IEntitlementBase {
 
   function test_addRoleToChannel(
     string memory channelMetadata,
-    string memory channelId,
+    bytes32 channelId,
     uint256 roleId
   ) public {
     vm.assume(bytes(channelMetadata).length > 2);
-    vm.assume(bytes(channelId).length > 2);
 
     vm.startPrank(founder);
     IChannel(everyoneSpace).createChannel(
@@ -310,11 +302,10 @@ contract ChannelsTest is BaseSetup, IEntitlementBase {
 
   function test_addRoleToChannel_existing_role(
     string memory channelMetadata,
-    string memory channelId,
+    bytes32 channelId,
     uint256 roleId
   ) public {
     vm.assume(bytes(channelMetadata).length > 2);
-    vm.assume(bytes(channelId).length > 2);
 
     vm.startPrank(founder);
     IChannel(everyoneSpace).createChannel(
@@ -332,11 +323,10 @@ contract ChannelsTest is BaseSetup, IEntitlementBase {
 
   function test_removeRoleFromChannel(
     string memory channelMetadata,
-    string memory channelId,
+    bytes32 channelId,
     uint256 roleId
   ) public {
     vm.assume(bytes(channelMetadata).length > 2);
-    vm.assume(bytes(channelId).length > 2);
 
     vm.startPrank(founder);
     IChannel(everyoneSpace).createChannel(
@@ -357,10 +347,9 @@ contract ChannelsTest is BaseSetup, IEntitlementBase {
 
   function test_removeRoleFromChannel_nonexistent_role(
     string memory channelMetadata,
-    string memory channelId
+    bytes32 channelId
   ) public {
     vm.assume(bytes(channelMetadata).length > 2);
-    vm.assume(bytes(channelId).length > 2);
 
     uint256 nonexistentRoleId = 12345; // An ID that doesn't belong to any role
 
@@ -383,10 +372,9 @@ contract ChannelsTest is BaseSetup, IEntitlementBase {
 
   function test_createChannel_reverts_when_not_allowed(
     string memory channelMetadata,
-    string memory channelId
+    bytes32 channelId
   ) public {
     vm.assume(bytes(channelMetadata).length > 2);
-    vm.assume(bytes(channelId).length > 2);
 
     vm.expectRevert(Entitlement__NotAllowed.selector);
 
@@ -398,28 +386,11 @@ contract ChannelsTest is BaseSetup, IEntitlementBase {
     );
   }
 
-  function test_createChannel_reverts_when_channelId_too_short(
-    string memory channelMetadata
-  ) public {
-    vm.assume(bytes(channelMetadata).length > 2);
-
-    string memory channelId = "";
-
-    vm.expectRevert(Validator__InvalidStringLength.selector);
-    vm.prank(founder);
-    IChannel(everyoneSpace).createChannel(
-      channelId,
-      channelMetadata,
-      new uint256[](0)
-    );
-  }
-
   function test_createChannel_reverts_when_channel_exists(
     string memory channelMetadata,
-    string memory channelId
+    bytes32 channelId
   ) public {
     vm.assume(bytes(channelMetadata).length > 2);
-    vm.assume(bytes(channelId).length > 2);
 
     vm.prank(founder);
     IChannel(everyoneSpace).createChannel(

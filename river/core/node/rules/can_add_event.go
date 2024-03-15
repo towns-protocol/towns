@@ -718,7 +718,7 @@ func (ru *aeMembershipRules) spaceMembershipEntitlements() (*auth.ChainAuthArgs,
 	}
 
 	chainAuthArgs := auth.NewChainAuthArgsForSpace(
-		streamId.String(),
+		*streamId,
 		permissionUser,
 		permission,
 	)
@@ -746,8 +746,8 @@ func (ru *aeMembershipRules) channelMembershipEntitlements() (*auth.ChainAuthArg
 	}
 
 	chainAuthArgs := auth.NewChainAuthArgsForChannel(
-		spaceId.String(),
-		ru.params.streamView.StreamId().String(),
+		spaceId,
+		*ru.params.streamView.StreamId(),
 		permissionUser,
 		permission,
 	)
@@ -772,8 +772,8 @@ func (params *aeParams) channelMessageEntitlements() (*auth.ChainAuthArgs, error
 	}
 
 	chainAuthArgs := auth.NewChainAuthArgsForChannel(
-		spaceId.String(),
-		params.streamView.StreamId().String(),
+		spaceId,
+		*params.streamView.StreamId(),
 		userId,
 		auth.PermissionWrite,
 	)

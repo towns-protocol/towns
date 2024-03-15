@@ -9,8 +9,9 @@ import {IMembershipReferralBase} from "./IMembershipReferral.sol";
 // contracts
 
 library MembershipReferralStorage {
+  // keccak256(abi.encode(uint256(keccak256("spaces.facets.membership.referral.storage")) - 1)) & ~bytes32(uint256(0xff))
   bytes32 internal constant STORAGE_SLOT =
-    keccak256("towns.facets.membership.MembershipReferralStorage");
+    0x3c2290b88407133303e904ceb4ee7d0d14164eda8a629372d8406216ceb57e00;
 
   struct Layout {
     mapping(uint256 => uint16) referralCodes;

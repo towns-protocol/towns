@@ -11,7 +11,6 @@ interface ISpaceOwnerBase {
     string name;
     string uri;
     uint256 tokenId;
-    string networkId;
     uint256 createdAt;
   }
 
@@ -36,11 +35,9 @@ interface ISpaceOwner is ISpaceOwnerBase {
   /// @dev Only the factory is allowed to mint spaces
   /// @param name The name of the space
   /// @param uri The URI of the space
-  /// @param networkId The network id of the space
   /// @param space The address of the space
   /// @return tokenId The token id of the minted space
   function mintSpace(
-    string memory networkId,
     string memory name,
     string memory uri,
     address space

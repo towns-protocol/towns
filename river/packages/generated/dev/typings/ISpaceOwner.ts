@@ -32,21 +32,13 @@ export declare namespace ISpaceOwnerBase {
     name: PromiseOrValue<string>;
     uri: PromiseOrValue<string>;
     tokenId: PromiseOrValue<BigNumberish>;
-    networkId: PromiseOrValue<string>;
     createdAt: PromiseOrValue<BigNumberish>;
   };
 
-  export type SpaceStructOutput = [
-    string,
-    string,
-    BigNumber,
-    string,
-    BigNumber
-  ] & {
+  export type SpaceStructOutput = [string, string, BigNumber, BigNumber] & {
     name: string;
     uri: string;
     tokenId: BigNumber;
-    networkId: string;
     createdAt: BigNumber;
   };
 }
@@ -55,7 +47,7 @@ export interface ISpaceOwnerInterface extends utils.Interface {
   functions: {
     "getFactory()": FunctionFragment;
     "getSpaceInfo(address)": FunctionFragment;
-    "mintSpace(string,string,string,address)": FunctionFragment;
+    "mintSpace(string,string,address)": FunctionFragment;
     "nextTokenId()": FunctionFragment;
     "setFactory(address)": FunctionFragment;
     "updateSpaceInfo(address,string,string)": FunctionFragment;
@@ -82,7 +74,6 @@ export interface ISpaceOwnerInterface extends utils.Interface {
   encodeFunctionData(
     functionFragment: "mintSpace",
     values: [
-      PromiseOrValue<string>,
       PromiseOrValue<string>,
       PromiseOrValue<string>,
       PromiseOrValue<string>
@@ -187,7 +178,6 @@ export interface ISpaceOwner extends BaseContract {
     ): Promise<[ISpaceOwnerBase.SpaceStructOutput]>;
 
     mintSpace(
-      networkId: PromiseOrValue<string>,
       name: PromiseOrValue<string>,
       uri: PromiseOrValue<string>,
       space: PromiseOrValue<string>,
@@ -217,7 +207,6 @@ export interface ISpaceOwner extends BaseContract {
   ): Promise<ISpaceOwnerBase.SpaceStructOutput>;
 
   mintSpace(
-    networkId: PromiseOrValue<string>,
     name: PromiseOrValue<string>,
     uri: PromiseOrValue<string>,
     space: PromiseOrValue<string>,
@@ -247,7 +236,6 @@ export interface ISpaceOwner extends BaseContract {
     ): Promise<ISpaceOwnerBase.SpaceStructOutput>;
 
     mintSpace(
-      networkId: PromiseOrValue<string>,
       name: PromiseOrValue<string>,
       uri: PromiseOrValue<string>,
       space: PromiseOrValue<string>,
@@ -292,7 +280,6 @@ export interface ISpaceOwner extends BaseContract {
     ): Promise<BigNumber>;
 
     mintSpace(
-      networkId: PromiseOrValue<string>,
       name: PromiseOrValue<string>,
       uri: PromiseOrValue<string>,
       space: PromiseOrValue<string>,
@@ -323,7 +310,6 @@ export interface ISpaceOwner extends BaseContract {
     ): Promise<PopulatedTransaction>;
 
     mintSpace(
-      networkId: PromiseOrValue<string>,
       name: PromiseOrValue<string>,
       uri: PromiseOrValue<string>,
       space: PromiseOrValue<string>,

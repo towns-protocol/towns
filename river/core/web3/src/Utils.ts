@@ -90,3 +90,9 @@ export function isPublicClient(
         typeof provider.getNetwork !== 'function'
     )
 }
+
+// River space stream ids are 64 characters long, and start with '10'
+// incidentally this should also work if you just pass the space contract address with 0x prefix
+export function SpaceAddressFromSpaceId(spaceId: string): string {
+    return ethers.utils.getAddress(spaceId.slice(2, 42))
+}

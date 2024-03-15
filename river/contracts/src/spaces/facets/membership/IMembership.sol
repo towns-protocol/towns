@@ -58,33 +58,33 @@ interface IMembership is IMembershipBase {
   //                           Minting
   // =============================================================
   /**
-   * @notice Join a town
+   * @notice Join a space
    * @param receiver The address of the receiver
    * @return The token id of the membership
    */
-  function joinTown(address receiver) external payable returns (uint256);
+  function joinSpace(address receiver) external payable returns (uint256);
 
   /**
-   * @notice Join a town with a referral
+   * @notice Join a space with a referral
    * @param receiver The address of the receiver
    * @param referrer The address of the referrer
    * @param referralCode The referral code
    * @return The token id of the membership
    */
-  function joinTownWithReferral(
+  function joinSpaceWithReferral(
     address receiver,
     address referrer,
     uint256 referralCode
   ) external payable returns (uint256);
 
   /**
-   * @notice Renew a town membership
+   * @notice Renew a space membership
    * @param receiver The address of the receiver
    */
   function renewMembership(address receiver) external payable;
 
   /**
-   * @notice Cancel a town membership
+   * @notice Cancel a space membership
    * @param tokenId The token id of the membership
    */
   function cancelMembership(uint256 tokenId) external;
@@ -224,8 +224,8 @@ interface IMembership is IMembershipBase {
   //                           Factory
   // =============================================================
   /**
-   * @notice Get the town factory
-   * @return The town factory
+   * @notice Get the space factory
+   * @return The space factory
    */
-  function getTownFactory() external view returns (address);
+  function getSpaceFactory() external view returns (address);
 }

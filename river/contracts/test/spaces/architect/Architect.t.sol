@@ -15,6 +15,7 @@ import {RuleEntitlement} from "contracts/src/crosschain/RuleEntitlement.sol";
 import {IRoles} from "contracts/src/spaces/facets/roles/IRoles.sol";
 import {IMembership} from "contracts/src/spaces/facets/membership/IMembership.sol";
 import {IWalletLink} from "contracts/src/river/wallet-link/IWalletLink.sol";
+import {ISpaceOwner} from "contracts/src/spaces/facets/owner/ISpaceOwner.sol";
 
 // libraries
 import {Permissions} from "contracts/src/spaces/facets/Permissions.sol";
@@ -48,12 +49,7 @@ contract ArchitectTest is
     address founder = _randomAddress();
 
     vm.prank(founder);
-    address spaceInstance = spaceArchitect.createSpace(_createSpaceInfo(name));
-    address spaceAddress = spaceArchitect.getSpaceById(name);
-
-    assertEq(spaceAddress, spaceInstance, "Space address mismatch");
-
-    assertTrue(spaceArchitect.isSpace(spaceAddress), "Space not registered");
+    address spaceAddress = spaceArchitect.createSpace(_createSpaceInfo(name));
 
     // expect owner to be founder
     assertTrue(
@@ -71,20 +67,20 @@ contract ArchitectTest is
 
   function test_getImplementations() external {
     (
-      address spaceTokenAddress,
+      ISpaceOwner spaceTokenAddress,
       IUserEntitlement userEntitlementAddress,
       IRuleEntitlement ruleEntitlementAddress,
       IWalletLink walletLinkAddress
     ) = spaceArchitect.getSpaceArchitectImplementations();
 
-    assertEq(spaceOwner, spaceTokenAddress);
+    assertEq(spaceOwner, address(spaceTokenAddress));
     assertEq(userEntitlement, address(userEntitlementAddress));
     assertEq(ruleEntitlement, address(ruleEntitlementAddress));
     assertEq(walletLink, address(walletLinkAddress));
   }
 
   function test_setImplementations() external {
-    address newSpaceToken = address(new MockERC721());
+    ISpaceOwner newSpaceToken = ISpaceOwner(address(new MockERC721()));
     IUserEntitlement newUserEntitlement = new UserEntitlement();
     IRuleEntitlement newRuleEntitlement = new RuleEntitlement();
     IWalletLink newWalletLink = new WalletLink();
@@ -109,42 +105,42 @@ contract ArchitectTest is
     );
 
     (
-      address spaceTokenAddress,
+      ISpaceOwner spaceTokenAddress,
       IUserEntitlement userEntitlementAddress,
       IRuleEntitlement tokenEntitlementAddress,
       IWalletLink walletLink
     ) = spaceArchitect.getSpaceArchitectImplementations();
 
-    assertEq(newSpaceToken, spaceTokenAddress);
+    assertEq(address(newSpaceToken), address(spaceTokenAddress));
     assertEq(address(newUserEntitlement), address(userEntitlementAddress));
     assertEq(address(newRuleEntitlement), address(tokenEntitlementAddress));
     assertEq(address(newWalletLink), address(walletLink));
   }
 
-  function test_transfer_space_ownership(string memory spaceId) external {
-    vm.assume(bytes(spaceId).length > 0);
+  function test_transfer_space_ownership(string memory spaceName) external {
+    vm.assume(bytes(spaceName).length > 2);
 
     address founder = _randomAddress();
     address buyer = _randomAddress();
 
     vm.prank(founder);
-    address newSpace = spaceArchitect.createSpace(_createSpaceInfo(spaceId));
+    address newSpace = spaceArchitect.createSpace(_createSpaceInfo(spaceName));
 
     assertTrue(
       IEntitlementsManager(newSpace).isEntitledToSpace(founder, "Read")
     );
 
-    (address spaceOwner, , , ) = spaceArchitect
+    (ISpaceOwner spaceOwner, , , ) = spaceArchitect
       .getSpaceArchitectImplementations();
-    uint256 tokenId = spaceArchitect.getTokenIdBySpaceId(spaceId);
+    uint256 tokenId = spaceArchitect.getTokenIdBySpace(newSpace);
 
     vm.prank(founder);
-    IGuardian(spaceOwner).disableGuardian();
+    IGuardian(address(spaceOwner)).disableGuardian();
 
-    vm.warp(IGuardian(spaceOwner).guardianCooldown(founder));
+    vm.warp(IGuardian(address(spaceOwner)).guardianCooldown(founder));
 
     vm.prank(founder);
-    IERC721(spaceOwner).transferFrom(founder, buyer, tokenId);
+    IERC721(address(spaceOwner)).transferFrom(founder, buyer, tokenId);
 
     assertFalse(
       IEntitlementsManager(newSpace).isEntitledToSpace(founder, "Read")
@@ -153,8 +149,10 @@ contract ArchitectTest is
     assertTrue(IEntitlementsManager(newSpace).isEntitledToSpace(buyer, "Read"));
   }
 
-  function test_revertWhen_createSpaceAndPaused(string memory name) external {
-    vm.assume(bytes(name).length > 0);
+  function test_revertWhen_createSpaceAndPaused(
+    string memory spaceName
+  ) external {
+    vm.assume(bytes(spaceName).length > 2);
 
     vm.prank(deployer);
     IPausable(address(spaceArchitect)).pause();
@@ -163,13 +161,13 @@ contract ArchitectTest is
 
     vm.prank(founder);
     vm.expectRevert(Pausable__Paused.selector);
-    spaceArchitect.createSpace(_createSpaceInfo(name));
+    spaceArchitect.createSpace(_createSpaceInfo(spaceName));
 
     vm.prank(deployer);
     IPausable(address(spaceArchitect)).unpause();
 
     vm.prank(founder);
-    spaceArchitect.createSpace(_createSpaceInfo(name));
+    spaceArchitect.createSpace(_createSpaceInfo(spaceName));
   }
 
   function test_revertIfInvalidSpaceId() external {
@@ -181,43 +179,30 @@ contract ArchitectTest is
     spaceArchitect.createSpace(_createSpaceInfo(""));
   }
 
-  function test_revertIfNetworkIdTaken(string memory spaceId) external {
-    vm.assume(bytes(spaceId).length > 0);
-
-    address founder = _randomAddress();
-
-    vm.prank(founder);
-    spaceArchitect.createSpace(_createSpaceInfo(spaceId));
-
-    vm.expectRevert(Architect__InvalidNetworkId.selector);
-    vm.prank(_randomAddress());
-    spaceArchitect.createSpace(_createSpaceInfo(spaceId));
-  }
-
-  function test_revertIfNotProperReceiver(string memory spaceId) external {
-    vm.assume(bytes(spaceId).length > 0);
+  function test_revertIfNotProperReceiver(string memory spaceName) external {
+    vm.assume(bytes(spaceName).length > 2);
 
     vm.expectRevert(Factory.Factory__FailedDeployment.selector);
 
     vm.prank(address(this));
-    spaceArchitect.createSpace(_createSpaceInfo(spaceId));
+    spaceArchitect.createSpace(_createSpaceInfo(spaceName));
   }
 
   function test_createSpace_updateMemberPermissions(
-    string memory spaceId
+    string memory spaceName
   ) external {
-    vm.assume(bytes(spaceId).length > 0);
+    vm.assume(bytes(spaceName).length > 2);
 
     address founder = _randomAddress();
     address user = _randomAddress();
 
     vm.prank(founder);
     address spaceInstance = spaceArchitect.createSpace(
-      _createEveryoneSpaceInfo(spaceId)
+      _createEveryoneSpaceInfo(spaceName)
     );
 
     // have another user join the space
-    IMembership(spaceInstance).joinTown(user);
+    IMembership(spaceInstance).joinSpace(user);
 
     // assert that he cannot modify channels
     assertFalse(

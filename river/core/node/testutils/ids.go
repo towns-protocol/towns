@@ -25,6 +25,14 @@ func FakeStreamId(prefix byte) shared.StreamId {
 	return id
 }
 
+func MakeChannelId(spaceId shared.StreamId) shared.StreamId {
+	id, err := shared.MakeChannelId(spaceId)
+	if err != nil {
+		panic(err)
+	}
+	return id
+}
+
 func StreamIdFromString(s string) shared.StreamId {
 	if len(s) < shared.STREAM_ID_STRING_LENGTH {
 		s += strings.Repeat("0", shared.STREAM_ID_STRING_LENGTH-len(s))

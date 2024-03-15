@@ -14,12 +14,10 @@ contract ArchitectHelper is FacetHelper {
     architect = new Architect();
 
     uint256 index;
-    bytes4[] memory selectors_ = new bytes4[](7);
+    bytes4[] memory selectors_ = new bytes4[](5);
 
-    selectors_[index++] = Architect.getSpaceById.selector;
-    selectors_[index++] = Architect.getTokenIdBySpaceId.selector;
+    selectors_[index++] = Architect.getSpaceByTokenId.selector;
     selectors_[index++] = Architect.getTokenIdBySpace.selector;
-    selectors_[index++] = Architect.isSpace.selector;
     selectors_[index++] = Architect.createSpace.selector;
     selectors_[index++] = Architect.setSpaceArchitectImplementations.selector;
     selectors_[index++] = Architect.getSpaceArchitectImplementations.selector;

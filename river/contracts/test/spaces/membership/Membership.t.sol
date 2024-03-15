@@ -65,55 +65,55 @@ contract MembershipTest is
   }
 
   // =============================================================
-  //                           Join Town
+  //                           Join Space
   // =============================================================
-  function test_joinTown_only() external {
+  function test_joinSpace_only() external {
     vm.prank(alice);
-    membership.joinTown(alice);
+    membership.joinSpace(alice);
     assertEq(membership.balanceOf(alice), 1);
   }
 
-  function test_joinTown_revert_NotAllowed() external {
+  function test_joinSpace_revert_NotAllowed() external {
     vm.prank(bob);
     vm.expectRevert(Entitlement__NotAllowed.selector);
-    membership.joinTown(bob);
+    membership.joinSpace(bob);
   }
 
-  function test_joinTown_revert_AlreadyMember() external {
+  function test_joinSpace_revert_AlreadyMember() external {
     vm.prank(alice);
-    membership.joinTown(alice);
+    membership.joinSpace(alice);
 
     vm.prank(alice);
     vm.expectRevert(Membership__AlreadyMember.selector);
-    membership.joinTown(alice);
+    membership.joinSpace(alice);
   }
 
-  function test_joinTown_revert_sender_AlreadyMember() external {
+  function test_joinSpace_revert_sender_AlreadyMember() external {
     vm.prank(alice);
-    membership.joinTown(alice);
+    membership.joinSpace(alice);
 
     vm.prank(alice);
     vm.expectRevert(Membership__AlreadyMember.selector);
-    membership.joinTown(bob);
+    membership.joinSpace(bob);
 
     vm.prank(bob);
     vm.expectRevert(Membership__AlreadyMember.selector);
-    membership.joinTown(alice);
+    membership.joinSpace(alice);
   }
 
-  function test_joinTown_revert_InvalidAddress() external {
+  function test_joinSpace_revert_InvalidAddress() external {
     vm.prank(alice);
     vm.expectRevert(Membership__InvalidAddress.selector);
-    membership.joinTown(address(0));
+    membership.joinSpace(address(0));
   }
 
-  function test_joinTown_revert_caller_InvalidAddress() external {
+  function test_joinSpace_revert_caller_InvalidAddress() external {
     vm.prank(address(0));
     vm.expectRevert(BalanceQueryForZeroAddress.selector);
-    membership.joinTown(alice);
+    membership.joinSpace(alice);
   }
 
-  function test_joinTown_revert_LimitReached() external {
+  function test_joinSpace_revert_LimitReached() external {
     vm.prank(founder);
     membership.setMembershipLimit(1);
 
@@ -122,10 +122,10 @@ contract MembershipTest is
 
     vm.prank(alice);
     vm.expectRevert(Membership__MaxSupplyReached.selector);
-    membership.joinTown(alice);
+    membership.joinSpace(alice);
   }
 
-  function test_joinTown_revert_when_updating_maxSupply() external {
+  function test_joinSpace_revert_when_updating_maxSupply() external {
     vm.prank(founder);
     membership.setMembershipLimit(2);
 
@@ -133,35 +133,35 @@ contract MembershipTest is
     assertTrue(membership.getMembershipLimit() == 2);
 
     vm.prank(alice);
-    membership.joinTown(alice);
+    membership.joinSpace(alice);
 
     vm.prank(founder);
     vm.expectRevert(Membership__InvalidMaxSupply.selector);
     membership.setMembershipLimit(1);
   }
 
-  function test_joinTown_revert_already_member() external {
+  function test_joinSpace_revert_already_member() external {
     vm.prank(alice);
-    membership.joinTown(alice);
+    membership.joinSpace(alice);
 
     vm.prank(alice);
     vm.expectRevert(Membership__AlreadyMember.selector);
-    membership.joinTown(bob);
+    membership.joinSpace(bob);
   }
 
   // =============================================================
-  //                       Join Town Referral
+  //                       Join Space Referral
   // =============================================================
-  function test_joinTownWithReferral() external {
+  function test_joinSpaceWithReferral() external {
     uint256 referralCode = 123;
 
     vm.prank(alice);
-    membership.joinTownWithReferral(alice, bob, referralCode);
+    membership.joinSpaceWithReferral(alice, bob, referralCode);
 
     assertEq(membership.balanceOf(alice), 1);
   }
 
-  function test_joinTownWithReferral_with_price() external {
+  function test_joinSpaceWithReferral_with_price() external {
     uint256 referralCode = 123;
     uint256 membershipPrice = 10 ether;
 
@@ -173,7 +173,7 @@ contract MembershipTest is
 
     vm.deal(alice, membershipPrice);
     vm.prank(alice);
-    membership.joinTownWithReferral{value: membershipPrice}(
+    membership.joinSpaceWithReferral{value: membershipPrice}(
       alice,
       bob,
       referralCode
@@ -216,7 +216,7 @@ contract MembershipTest is
   // =============================================================
   //                        Pricing Module
   // =============================================================
-  function test_joinTown_pricingModule() external {
+  function test_joinSpace_pricingModule() external {
     MockAggregatorV3 oracle = _setupOracle();
     IMembershipPricing pricingModule = IMembershipPricing(
       address(new TieredLogPricingOracle(address(oracle)))
@@ -230,7 +230,7 @@ contract MembershipTest is
     vm.deal(founder, 2 ether);
 
     vm.prank(alice);
-    membership.joinTown{value: membershipPrice}(alice);
+    membership.joinSpace{value: membershipPrice}(alice);
     assertEq(membership.balanceOf(alice), 1);
   }
 
@@ -268,7 +268,7 @@ contract MembershipTest is
     assertEq(_getCentsFromWei(price10000), 9690); // $96.90 USD
   }
 
-  function test_joinTown_collectMembershipFee() external {
+  function test_joinSpace_collectMembershipFee() external {
     uint256 membershipPrice = 10 ether;
 
     vm.startPrank(founder);
@@ -277,10 +277,10 @@ contract MembershipTest is
     membership.setMembershipPrice(membershipPrice);
     vm.stopPrank();
 
-    // get paid joinTown
+    // get paid joinSpace
     vm.prank(alice);
     vm.deal(alice, membershipPrice);
-    uint256 tokenId = membership.joinTown{value: membershipPrice}(alice);
+    uint256 tokenId = membership.joinSpace{value: membershipPrice}(alice);
 
     assertEq(membership.balanceOf(alice), 1);
     assertEq(alice.balance, 0 ether);
@@ -312,7 +312,7 @@ contract MembershipTest is
     uint256 membershipExpirationDate = block.timestamp + membershipDuration;
 
     vm.prank(alice);
-    uint256 tokenId = membership.joinTown(alice);
+    uint256 tokenId = membership.joinSpace(alice);
 
     assertEq(membership.balanceOf(alice), 1);
 
@@ -344,10 +344,10 @@ contract MembershipTest is
     membership.setMembershipPrice(membershipPrice);
     vm.stopPrank();
 
-    // join the town
+    // join the space
     vm.prank(alice);
     vm.deal(alice, membershipPrice);
-    uint256 tokenId = membership.joinTown{value: membershipPrice}(alice);
+    uint256 tokenId = membership.joinSpace{value: membershipPrice}(alice);
 
     // calculate membership expiration date
     uint64 membershipDuration = IPlatformRequirements(spaceFactory)
@@ -398,7 +398,7 @@ contract MembershipTest is
 
   function test_renewMembership_revert_NotExpired() external {
     vm.prank(alice);
-    membership.joinTown(alice);
+    membership.joinSpace(alice);
 
     assertEq(membership.balanceOf(alice), 1);
 
@@ -412,7 +412,7 @@ contract MembershipTest is
   // =============================================================
   function test_cancelMembership() external {
     vm.prank(alice);
-    uint256 tokenId = membership.joinTown(alice);
+    uint256 tokenId = membership.joinSpace(alice);
 
     assertEq(membership.balanceOf(alice), 1);
 
@@ -424,7 +424,7 @@ contract MembershipTest is
 
   function test_cancelMembership_revert_NotApprovedOrOwner() external {
     vm.prank(alice);
-    uint256 tokenId = membership.joinTown(alice);
+    uint256 tokenId = membership.joinSpace(alice);
 
     vm.prank(_randomAddress());
     vm.expectRevert(ApprovalCallerNotOwnerNorApproved.selector);

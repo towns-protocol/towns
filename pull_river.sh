@@ -58,17 +58,11 @@ function remove_river_yarn_files() {
     # these files shouldn't be checked into the harmony repo
     git rm "${SUBTREE_PREFIX}/package.json" 2>/dev/null || echo "${SUBTREE_PREFIX}/package.json not found, skipping"
     git rm "${SUBTREE_PREFIX}/yarn.lock" 2>/dev/null || echo "${SUBTREE_PREFIX}/yarn.lock not found, skipping"
-    RIVER_ALLOW_COMMIT=true git commit -m "Removing River yarn files" -m "$(git commit --dry-run --short)"
 }
 
 function yarn_install_and_check() {
     # clean yarn artifacts so we know that yarn link will actually run and tell is if the build is broken
-    rm -rf node_modules/@river
-    rm -rf node_modules/@towns
-    rm -rf node_modules/use-towns-client
-    rm -rf node_modules/harmonyweb
-    rm -rf node_modules/sample-app
-    yarn cache clean
+    ./scripts/yarn-clean.sh
 
     # run yarn, give user a chance to fix issues
     while true; do
@@ -116,7 +110,8 @@ function yarn_install_and_check() {
     if [[ "$(git status --porcelain)" != "" ]]; then
         echo "Commiting yarn changes."
         git add .
-        git commit -m "Yarn Install Fix-Ups" -m "$(git commit --dry-run --short)"
+        YARN_FIXUP_MESSAGE="$(RIVER_ALLOW_COMMIT=true git commit --dry-run)"
+        RIVER_ALLOW_COMMIT=true git commit -m "Yarn Install Fix-Ups" -m "$YARN_FIXUP_MESSAGE"
     fi
 }
 
@@ -153,22 +148,28 @@ PR_BODY_DESC="This merges the latest changes from the ${SUBTREE_PREFIX} reposito
 # Checkout a new branch for the merge
 git checkout -b "${BRANCH_NAME}"
 
+if [[ "$(parse_git_branch)" != "${BRANCH_NAME}" ]]; then
+  echo "Failed to check out ${BRANCH_NAME}."
+  exit 1
+fi
+
+
 # Pull the latest changes from the subtree, preserving history
 git subtree pull --prefix="${SUBTREE_PREFIX}" "${SUBTREE_REPO}" "${SUBTREE_BRANCH}" --squash -m "git subtree pull ${SUBTREE_PREFIX} at ${SHORT_HASH}"
-
-# Remove specific files that should not be merged
-remove_river_yarn_files
 
 # Check for unresolved conflicts
 if git ls-files -u | grep -q '^[^ ]'; then
   echo "Unresolved conflicts detected. Accepting theirs."
   git diff --name-only --diff-filter=U | xargs git checkout --theirs
-  git add .
 fi
+
+# Remove specific files that should not be merged
+remove_river_yarn_files
 
 # Commit the changes if there are any
 if ! git diff main --quiet --cached; then
-    SUBTREE_MERGE_MESSAGE="$(git commit --dry-run)"
+    git add .
+    SUBTREE_MERGE_MESSAGE="$(RIVER_ALLOW_COMMIT=true git commit --dry-run)"
     RIVER_ALLOW_COMMIT=true git commit -m "git subtree pull --prefix=${SUBTREE_PREFIX} ${SUBTREE_REPO} ${SUBTREE_BRANCH} --squash" -m "$SUBTREE_MERGE_MESSAGE"
     echo "Subtree changes committed."
 
@@ -217,9 +218,9 @@ if ! git diff main --quiet --cached; then
       if [ $exit_status -ne 0 ]; then
           echo "Failure detected in PR checks."
           if [[ $USER_MODE -eq 1 ]]; then
-              read -p "Have you fixed the issue and pushed your changes yet? (y/n) " -n 1 -r
+              read -p "Have you fixed the issue and pushed your changes yet? (any key to continue/n) " -n 1 -r
               echo ""
-              if [[ ! $REPLY =~ ^[Yy]$ ]]; then
+              if [[ $REPLY =~ ^[Nn]$ ]]; then
                   echo "Pull request creation aborted."
                   exit $exit_status
               else

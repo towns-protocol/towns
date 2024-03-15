@@ -10,8 +10,9 @@ import {EnumerableSet} from "@openzeppelin/contracts/utils/structs/EnumerableSet
 // contracts
 
 library EntitlementsManagerStorage {
+  // keccak256(abi.encode(uint256(keccak256("spaces.facets.entitlements.manager.storage")) - 1)) & ~bytes32(uint256(0xff))
   bytes32 internal constant STORAGE_SLOT =
-    keccak256("towns.contracts.storage.Entitlement");
+    0xa558e822bd359dacbe30f0da89cbfde5f95895b441e13a4864caec1423c93100;
 
   struct Entitlement {
     IEntitlement entitlement;

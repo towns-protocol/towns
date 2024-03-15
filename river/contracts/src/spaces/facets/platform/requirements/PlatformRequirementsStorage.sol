@@ -8,8 +8,9 @@ pragma solidity ^0.8.23;
 // contracts
 
 library PlatformRequirementsStorage {
+  // keccak256(abi.encode(uint256(keccak256("spaces.facets.platform.requirements.storage")) - 1)) & ~bytes32(uint256(0xff))
   bytes32 internal constant STORAGE_SLOT =
-    keccak256("towns.facets.platform.requirements.PlatformRequirementsStorage");
+    0xb29a817dd0719f30ad87abc8dff26e6354077e5b46bf38f34d5ac48732860d00;
 
   struct Layout {
     uint256 membershipFee;

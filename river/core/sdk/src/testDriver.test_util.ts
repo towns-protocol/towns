@@ -1,7 +1,7 @@
 import { Client } from './client'
 import { DLogger, check, dlog } from '@river/dlog'
-import { makeTestClient } from './util.test'
-import { makeUniqueChannelStreamId, makeUniqueSpaceStreamId } from './id'
+import { makeTestClient, makeUniqueSpaceStreamId } from './util.test'
+import { makeUniqueChannelStreamId } from './id'
 import { MembershipOp, SnapshotCaseType } from '@river/proto'
 import { DecryptedTimelineEvent } from './types'
 
@@ -199,7 +199,7 @@ export const converse = async (conversation: string[][], testName: string): Prom
         )
 
         log(`creating channel`)
-        const channelId = makeUniqueChannelStreamId()
+        const channelId = makeUniqueChannelStreamId(spaceId)
         const channelName = 'Alica channel'
         const channelTopic = 'Alica channel topic'
 

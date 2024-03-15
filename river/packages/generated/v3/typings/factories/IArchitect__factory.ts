@@ -17,11 +17,6 @@ const _abi = [
         internalType: "struct IArchitectBase.SpaceInfo",
         components: [
           {
-            name: "id",
-            type: "string",
-            internalType: "string",
-          },
-          {
             name: "name",
             type: "string",
             internalType: "string",
@@ -196,11 +191,6 @@ const _abi = [
             internalType: "struct IArchitectBase.ChannelInfo",
             components: [
               {
-                name: "id",
-                type: "string",
-                internalType: "string",
-              },
-              {
                 name: "metadata",
                 type: "string",
                 internalType: "string",
@@ -227,7 +217,7 @@ const _abi = [
       {
         name: "ownerTokenImplementation",
         type: "address",
-        internalType: "address",
+        internalType: "contract ISpaceOwner",
       },
       {
         name: "userEntitlementImplementation",
@@ -249,17 +239,17 @@ const _abi = [
   },
   {
     type: "function",
-    name: "getSpaceById",
+    name: "getSpaceByTokenId",
     inputs: [
       {
-        name: "spaceId",
-        type: "string",
-        internalType: "string",
+        name: "tokenId",
+        type: "uint256",
+        internalType: "uint256",
       },
     ],
     outputs: [
       {
-        name: "",
+        name: "space",
         type: "address",
         internalType: "address",
       },
@@ -287,50 +277,12 @@ const _abi = [
   },
   {
     type: "function",
-    name: "getTokenIdBySpaceId",
-    inputs: [
-      {
-        name: "spaceId",
-        type: "string",
-        internalType: "string",
-      },
-    ],
-    outputs: [
-      {
-        name: "",
-        type: "uint256",
-        internalType: "uint256",
-      },
-    ],
-    stateMutability: "view",
-  },
-  {
-    type: "function",
-    name: "isSpace",
-    inputs: [
-      {
-        name: "space",
-        type: "address",
-        internalType: "address",
-      },
-    ],
-    outputs: [
-      {
-        name: "",
-        type: "bool",
-        internalType: "bool",
-      },
-    ],
-    stateMutability: "view",
-  },
-  {
-    type: "function",
     name: "setSpaceArchitectImplementations",
     inputs: [
       {
         name: "ownerTokenImplementation",
         type: "address",
-        internalType: "address",
+        internalType: "contract ISpaceOwner",
       },
       {
         name: "userEntitlementImplementation",
@@ -362,7 +314,7 @@ const _abi = [
         internalType: "address",
       },
       {
-        name: "spaceId",
+        name: "tokenId",
         type: "uint256",
         indexed: true,
         internalType: "uint256",
@@ -370,7 +322,7 @@ const _abi = [
       {
         name: "space",
         type: "address",
-        indexed: false,
+        indexed: true,
         internalType: "address",
       },
     ],

@@ -6,8 +6,8 @@ import { setTimeout } from 'timers/promises'
 import { dlog } from '@river/dlog'
 import {
     makeUniqueChannelStreamId,
-    makeUniqueSpaceStreamId,
     makeUserStreamId,
+    streamIdFromBytes,
     streamIdToBytes,
     userIdFromAddress,
 } from './id'
@@ -28,6 +28,7 @@ import {
     lastEventFiltered,
     makeRandomUserContext,
     makeTestRpcClient,
+    makeUniqueSpaceStreamId,
 } from './util.test'
 import { SignerContext } from './signerContext'
 
@@ -138,7 +139,7 @@ const createNewChannelAndPostHello = async (
     bobsUserId: string,
     bob: StreamRpcClientType,
 ) => {
-    const channelIdStr = makeUniqueChannelStreamId()
+    const channelIdStr = makeUniqueChannelStreamId(streamIdFromBytes(spacedStreamId))
     const channelId = streamIdToBytes(channelIdStr)
     const channelProperties = 'Bobs channel properties'
 

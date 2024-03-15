@@ -64,8 +64,8 @@ export type TransactionContext<T> =
       }
 
 export type CreateSpaceTransactionContext = TransactionContext<{
-    spaceId: string
     spaceName?: string
+    spaceId?: string
     channelId?: string
 }>
 

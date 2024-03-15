@@ -180,12 +180,10 @@ export class UserOps {
         const [createSpaceParams, signer] = args
 
         const townInfo: IArchitectBase.SpaceInfoStruct = {
-            id: createSpaceParams.spaceId,
             name: createSpaceParams.spaceName,
             uri: createSpaceParams.spaceMetadata,
             membership: createSpaceParams.membership,
             channel: {
-                id: createSpaceParams.channelId,
                 metadata: createSpaceParams.channelName || '',
             },
         }
@@ -214,7 +212,7 @@ export class UserOps {
                 toAddress: this.spaceDapp.townRegistrar.TownArchitect.address,
                 callData: callDataCreateSpace,
                 signer,
-                townId: townInfo.id as string,
+                townId: undefined,
                 functionHashForPaymasterProxy,
             })
         }
@@ -240,7 +238,7 @@ export class UserOps {
             ],
             callData: [callDataLinkWallet, callDataCreateSpace],
             signer,
-            townId: townInfo.id as string,
+            townId: undefined,
             functionHashForPaymasterProxy,
         })
     }
@@ -269,10 +267,10 @@ export class UserOps {
             throw new Error('abstractAccountAddress is required')
         }
 
-        const callDataJoinTown = town.Membership.encodeFunctionData('joinTown', [recipient])
+        const callDataJoinTown = town.Membership.encodeFunctionData('joinSpace', [recipient])
 
         if (await this.spaceDapp.walletLink.checkIfLinked(signer, abstractAccountAddress)) {
-            const functionName = 'joinTown'
+            const functionName = 'joinSpace'
 
             const functionHashForPaymasterProxy = this.getFunctionSigHash(
                 town.Membership.interface,
@@ -297,7 +295,7 @@ export class UserOps {
         }
 
         // wallet isn't linked, create a user op that both links and joins the town
-        const functionName = 'joinTown_linkWallet'
+        const functionName = 'joinSpace_linkWallet'
 
         // TODO: this needs to accept an array of names/interfaces
         const functionHashForPaymasterProxy = this.getFunctionSigHash(

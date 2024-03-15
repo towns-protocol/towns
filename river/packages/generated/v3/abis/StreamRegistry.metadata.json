@@ -400,7 +400,7 @@
           },
           {
             "internalType": "bytes32",
-            "name": "prevMiniBlockHash",
+            "name": "",
             "type": "bytes32"
           },
           {
@@ -489,10 +489,10 @@
       "license": "Apache-2.0"
     },
     "contracts/src/river/registry/facets/stream/StreamRegistry.sol": {
-      "keccak256": "0xc4ceb616e707914fe36fa2b3c15206f6a1af5d3bf453cb51b6c585696485086a",
+      "keccak256": "0x33f724ae48e919ee6aeafc3e497ae476a930df9ae3913765ff4b3de2c56d1ce6",
       "urls": [
-        "bzz-raw://0628886698f98e6576dff5b3c1b5708c0737ce2590a54a76bbaf0085a475032d",
-        "dweb:/ipfs/QmWQ5bvQzZZdbBXdcfHyeUwgxNXz2H3bChS9k84KbeGARe"
+        "bzz-raw://8913eb438ae914f7e4a9717f2b1eda8e25ce143594b9fb4be38b229dc515526d",
+        "dweb:/ipfs/Qmc3tzoQ4P58Y3EPqPMGDS9dJmGWPP189mbE8U6LhfP91Z"
       ],
       "license": "Apache-2.0"
     },

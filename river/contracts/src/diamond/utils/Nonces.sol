@@ -49,8 +49,9 @@ abstract contract Nonces {
 }
 
 library NoncesStorage {
+  // keccak256(abi.encode(uint256(keccak256("diamond.facets.utils.nonces.storage")) - 1)) & ~bytes32(uint256(0xff))
   bytes32 internal constant STORAGE_SLOT =
-    keccak256("towns.diamond.facets.utils.NoncesStorage");
+    0xda5d6d87446d81938877f0ee239dac391146dd7466ea30567f72becf06773c00;
 
   struct Layout {
     mapping(address => uint256) _nonces;

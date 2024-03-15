@@ -5,8 +5,8 @@ export default [
     "inputs": [
       {
         "name": "channelId",
-        "type": "string",
-        "internalType": "string"
+        "type": "bytes32",
+        "internalType": "bytes32"
       },
       {
         "name": "roleId",
@@ -23,8 +23,8 @@ export default [
     "inputs": [
       {
         "name": "channelId",
-        "type": "string",
-        "internalType": "string"
+        "type": "bytes32",
+        "internalType": "bytes32"
       },
       {
         "name": "metadata",
@@ -46,8 +46,8 @@ export default [
     "inputs": [
       {
         "name": "channelId",
-        "type": "string",
-        "internalType": "string"
+        "type": "bytes32",
+        "internalType": "bytes32"
       }
     ],
     "outputs": [
@@ -58,8 +58,8 @@ export default [
         "components": [
           {
             "name": "id",
-            "type": "string",
-            "internalType": "string"
+            "type": "bytes32",
+            "internalType": "bytes32"
           },
           {
             "name": "disabled",
@@ -93,8 +93,8 @@ export default [
         "components": [
           {
             "name": "id",
-            "type": "string",
-            "internalType": "string"
+            "type": "bytes32",
+            "internalType": "bytes32"
           },
           {
             "name": "disabled",
@@ -122,8 +122,8 @@ export default [
     "inputs": [
       {
         "name": "channelId",
-        "type": "string",
-        "internalType": "string"
+        "type": "bytes32",
+        "internalType": "bytes32"
       }
     ],
     "outputs": [
@@ -141,8 +141,8 @@ export default [
     "inputs": [
       {
         "name": "channelId",
-        "type": "string",
-        "internalType": "string"
+        "type": "bytes32",
+        "internalType": "bytes32"
       }
     ],
     "outputs": [],
@@ -154,8 +154,8 @@ export default [
     "inputs": [
       {
         "name": "channelId",
-        "type": "string",
-        "internalType": "string"
+        "type": "bytes32",
+        "internalType": "bytes32"
       },
       {
         "name": "roleId",
@@ -172,8 +172,8 @@ export default [
     "inputs": [
       {
         "name": "channelId",
-        "type": "string",
-        "internalType": "string"
+        "type": "bytes32",
+        "internalType": "bytes32"
       },
       {
         "name": "metadata",
@@ -264,9 +264,9 @@ export default [
       },
       {
         "name": "channelId",
-        "type": "string",
+        "type": "bytes32",
         "indexed": false,
-        "internalType": "string"
+        "internalType": "bytes32"
       }
     ],
     "anonymous": false
@@ -283,9 +283,9 @@ export default [
       },
       {
         "name": "channelId",
-        "type": "string",
+        "type": "bytes32",
         "indexed": false,
-        "internalType": "string"
+        "internalType": "bytes32"
       }
     ],
     "anonymous": false
@@ -302,9 +302,9 @@ export default [
       },
       {
         "name": "channelId",
-        "type": "string",
+        "type": "bytes32",
         "indexed": false,
-        "internalType": "string"
+        "internalType": "bytes32"
       },
       {
         "name": "roleId",
@@ -327,9 +327,9 @@ export default [
       },
       {
         "name": "channelId",
-        "type": "string",
+        "type": "bytes32",
         "indexed": false,
-        "internalType": "string"
+        "internalType": "bytes32"
       },
       {
         "name": "roleId",
@@ -352,9 +352,9 @@ export default [
       },
       {
         "name": "channelId",
-        "type": "string",
+        "type": "bytes32",
         "indexed": false,
-        "internalType": "string"
+        "internalType": "bytes32"
       }
     ],
     "anonymous": false

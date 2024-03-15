@@ -53,10 +53,8 @@ import {
     isGDMChannelStreamId,
     isSpaceStreamId,
     makeDMStreamId,
-    makeUniqueChannelStreamId,
     makeUniqueGDMChannelStreamId,
     makeUniqueMediaStreamId,
-    makeUniqueSpaceStreamId,
     makeUserDeviceKeyStreamId,
     makeUserSettingsStreamId,
     makeUserStreamId,
@@ -65,6 +63,8 @@ import {
     addressFromUserId,
     streamIdAsBytes,
     streamIdAsString,
+    makeSpaceStreamId,
+    STREAM_ID_STRING_LENGTH,
 } from './id'
 import { makeEvent, unpackMiniblock, unpackStream, unpackStreamEx } from './sign'
 import { StreamEvents } from './streamEvents'
@@ -454,8 +454,13 @@ export class Client
         return unpackStream(response.stream)
     }
 
-    async createSpace(inSpaceId: string | Uint8Array | undefined): Promise<{ streamId: string }> {
-        const oSpaceId = inSpaceId ?? makeUniqueSpaceStreamId()
+    // createSpace
+    // param spaceAddress: address of the space contract, or address made with makeSpaceStreamId
+    async createSpace(spaceAddressOrId: string): Promise<{ streamId: string }> {
+        const oSpaceId =
+            spaceAddressOrId.length === STREAM_ID_STRING_LENGTH
+                ? spaceAddressOrId
+                : makeSpaceStreamId(spaceAddressOrId)
         const spaceId = streamIdAsBytes(oSpaceId)
         this.logCall('createSpace', spaceId)
         assert(this.userStreamId !== undefined, 'streamId must be set')
@@ -488,11 +493,11 @@ export class Client
         spaceId: string | Uint8Array,
         channelName: string,
         channelTopic: string,
-        inChannelId?: string | Uint8Array,
+        inChannelId: string | Uint8Array,
         streamSettings?: PlainMessage<StreamSettings>,
         isDefault?: boolean,
     ): Promise<{ streamId: string }> {
-        const oChannelId = inChannelId ?? makeUniqueChannelStreamId()
+        const oChannelId = inChannelId
         const channelId = streamIdAsBytes(oChannelId)
         this.logCall('createChannel', channelId, spaceId)
         assert(this.userStreamId !== undefined, 'userStreamId must be set')

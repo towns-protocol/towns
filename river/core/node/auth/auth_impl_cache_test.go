@@ -5,6 +5,8 @@ import (
 	"testing"
 
 	"github.com/river-build/river/core/node/config"
+	"github.com/river-build/river/core/node/shared"
+	"github.com/river-build/river/core/node/testutils"
 
 	"github.com/stretchr/testify/assert"
 )
@@ -22,11 +24,13 @@ func TestCache(t *testing.T) {
 		},
 	)
 	assert.NoError(t, err)
+	spaceId := testutils.FakeStreamId(shared.STREAM_SPACE_BIN)
+	channelId := testutils.MakeChannelId(spaceId)
 
 	var cacheMissForReal bool
 	result, cacheHit, err := c.executeUsingCache(
 		ctx,
-		NewChainAuthArgsForChannel("1", "2", "3", PermissionWrite),
+		NewChainAuthArgsForChannel(spaceId, channelId, "3", PermissionWrite),
 		func(context.Context, *ChainAuthArgs) (bool, error) {
 			cacheMissForReal = true
 			return true, nil
@@ -40,7 +44,7 @@ func TestCache(t *testing.T) {
 	cacheMissForReal = false
 	result, cacheHit, err = c.executeUsingCache(
 		ctx,
-		NewChainAuthArgsForChannel("1", "2", "3", PermissionWrite),
+		NewChainAuthArgsForChannel(spaceId, channelId, "3", PermissionWrite),
 		func(context.Context, *ChainAuthArgs) (bool, error) {
 			cacheMissForReal = true
 			return false, nil

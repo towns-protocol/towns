@@ -6,7 +6,7 @@ import {
     Permission,
     RoleDetails,
 } from '../ContractTypes'
-import { BytesLike, ContractTransaction, ethers } from 'ethers'
+import { BytesLike, ContractReceipt, ContractTransaction, ethers } from 'ethers'
 import { CreateSpaceParams, ISpaceDapp, UpdateChannelParams, UpdateRoleParams } from '../ISpaceDapp'
 import { createRuleEntitlementStruct, createUserEntitlementStruct } from '../ConvertersEntitlements'
 
@@ -52,12 +52,10 @@ export class SpaceDapp implements ISpaceDapp {
         signer: ethers.Signer,
     ): Promise<ContractTransaction> {
         const spaceInfo = {
-            id: params.spaceId,
             name: params.spaceName,
             uri: params.spaceMetadata,
             membership: params.membership as any,
             channel: {
-                id: params.channelId,
                 metadata: params.channelName || '',
             },
         }
@@ -75,7 +73,10 @@ export class SpaceDapp implements ISpaceDapp {
         if (!town) {
             throw new Error(`Town with spaceId "${spaceId}" is not found.`)
         }
-        return town.Channels.write(signer).createChannel(channelNetworkId, channelName, roleIds)
+        const channelId = channelNetworkId.startsWith('0x')
+            ? channelNetworkId
+            : `0x${channelNetworkId}`
+        return town.Channels.write(signer).createChannel(channelId, channelName, roleIds)
     }
 
     public async createRole(
@@ -116,12 +117,15 @@ export class SpaceDapp implements ISpaceDapp {
 
     public async getChannelDetails(
         spaceId: string,
-        channelId: string,
+        channelNetworkId: string,
     ): Promise<ChannelDetails | null> {
         const town = await this.getTown(spaceId)
         if (!town) {
             throw new Error(`Town with spaceId "${spaceId}" is not found.`)
         }
+        const channelId = channelNetworkId.startsWith('0x')
+            ? channelNetworkId
+            : `0x${channelNetworkId}`
         return town.getChannel(channelId)
     }
 
@@ -200,7 +204,7 @@ export class SpaceDapp implements ISpaceDapp {
 
     public async isEntitledToChannel(
         spaceId: string,
-        channelId: string,
+        channelNetworkId: string,
         user: string,
         permission: Permission,
     ): Promise<boolean> {
@@ -208,6 +212,10 @@ export class SpaceDapp implements ISpaceDapp {
         if (!town) {
             return false
         }
+        const channelId = channelNetworkId.startsWith('0x')
+            ? channelNetworkId
+            : `0x${channelNetworkId}`
+
         return town.Entitlements.read.isEntitledToChannel(channelId, user, permission)
     }
 
@@ -266,7 +274,7 @@ export class SpaceDapp implements ISpaceDapp {
         // update the channel metadata
         encodedCallData.push(
             town.Channels.interface.encodeFunctionData('updateChannel', [
-                params.channelId,
+                params.channelId.startsWith('0x') ? params.channelId : `0x${params.channelId}`,
                 params.channelName,
                 params.disabled ?? false, // default to false
             ]),
@@ -318,10 +326,13 @@ export class SpaceDapp implements ISpaceDapp {
 
     public async setChannelAccess(
         spaceId: string,
-        channelId: string,
+        channelNetworkId: string,
         disabled: boolean,
         signer: ethers.Signer,
     ): Promise<ContractTransaction> {
+        const channelId = channelNetworkId.startsWith('0x')
+            ? channelNetworkId
+            : `0x${channelNetworkId}`
         const town = await this.getTown(spaceId)
         if (!town) {
             throw new Error(`Town with spaceId "${spaceId}" is not found.`)
@@ -346,7 +357,7 @@ export class SpaceDapp implements ISpaceDapp {
         if (!town) {
             throw new Error(`Town with spaceId "${spaceId}" is not found.`)
         }
-        return town.Membership.write(signer).joinTown(recipient)
+        return town.Membership.write(signer).joinSpace(recipient)
     }
 
     public async hasTownMembership(spaceId: string, address: string): Promise<boolean> {
@@ -401,9 +412,12 @@ export class SpaceDapp implements ISpaceDapp {
 
     private async encodeUpdateChannelRoles(
         town: Town,
-        channelId: string,
+        channelNetworkId: string,
         _updatedRoleIds: number[],
     ): Promise<BytesLike[]> {
+        const channelId = channelNetworkId.startsWith('0x')
+            ? channelNetworkId
+            : `0x${channelNetworkId}`
         const encodedCallData: BytesLike[] = []
         const [channelInfo] = await Promise.all([
             town.Channels.read.getChannel(channelId),
@@ -438,7 +452,14 @@ export class SpaceDapp implements ISpaceDapp {
         return encodedCallData
     }
 
-    private encodeAddRolesToChannel(town: Town, channelId: string, roleIds: number[]): BytesLike[] {
+    private encodeAddRolesToChannel(
+        town: Town,
+        channelNetworkId: string,
+        roleIds: number[],
+    ): BytesLike[] {
+        const channelId = channelNetworkId.startsWith('0x')
+            ? channelNetworkId
+            : `0x${channelNetworkId}`
         const encodedCallData: BytesLike[] = []
         for (const roleId of roleIds) {
             const encodedBytes = town.Channels.interface.encodeFunctionData('addRoleToChannel', [
@@ -452,9 +473,12 @@ export class SpaceDapp implements ISpaceDapp {
 
     private encodeRemoveRolesFromChannel(
         town: Town,
-        channelId: string,
+        channelNetworkId: string,
         roleIds: number[],
     ): BytesLike[] {
+        const channelId = channelNetworkId.startsWith('0x')
+            ? channelNetworkId
+            : `0x${channelNetworkId}`
         const encodedCallData: BytesLike[] = []
         for (const roleId of roleIds) {
             const encodedBytes = town.Channels.interface.encodeFunctionData(
@@ -490,5 +514,27 @@ export class SpaceDapp implements ISpaceDapp {
             updatedEntitlements.push(entitlementData)
         }
         return updatedEntitlements
+    }
+
+    public getSpaceAddress(receipt: ContractReceipt): string | undefined {
+        const eventName = 'SpaceCreated'
+        if (receipt.status !== 1) {
+            return undefined
+        }
+        for (const log of receipt.logs) {
+            try {
+                // Parse the log with the contract interface
+                const parsedLog = this.townRegistrar.TownArchitect.interface.parseLog(log)
+                if (parsedLog.name === eventName) {
+                    // If the log matches the event we're looking for, do something with it
+                    // parsedLog.args contains the event arguments as an object
+                    console.log(`Event ${eventName} found: `, parsedLog.args)
+                    return parsedLog.args.space as string
+                }
+            } catch (error) {
+                // This log wasn't from the contract we're interested in
+            }
+        }
+        return undefined
     }
 }

@@ -28,7 +28,7 @@ export function isTransactionLimitRequest(obj: any): obj is TransactionLimitRequ
         typeof obj.environment === 'string' &&
         typeof obj.operation === 'string' &&
         (obj.operation === 'createSpace' ||
-            obj.operation === 'joinTown' ||
+            obj.operation === 'joinSpace' ||
             obj.operation === 'linkWallet' ||
             obj.operation === 'useTown') &&
         typeof obj.rootAddress === 'string' &&

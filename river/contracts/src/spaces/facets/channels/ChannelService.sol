@@ -4,7 +4,6 @@ pragma solidity ^0.8.23;
 // interfaces
 
 // libraries
-import {StringSet} from "contracts/src/utils/StringSet.sol";
 import {EnumerableSet} from "@openzeppelin/contracts/utils/structs/EnumerableSet.sol";
 import {ChannelStorage} from "./ChannelStorage.sol";
 
@@ -16,8 +15,8 @@ error ChannelService__RoleAlreadyExists();
 error ChannelService__RoleDoesNotExist();
 
 library ChannelService {
-  using StringSet for StringSet.Set;
   using EnumerableSet for EnumerableSet.UintSet;
+  using EnumerableSet for EnumerableSet.Bytes32Set;
   using ChannelStorage for ChannelStorage.Layout;
 
   // =============================================================
@@ -25,7 +24,7 @@ library ChannelService {
   // =============================================================
 
   function createChannel(
-    string memory channelId,
+    bytes32 channelId,
     string memory metadata,
     uint256[] memory roleIds
   ) internal {
@@ -49,12 +48,8 @@ library ChannelService {
   }
 
   function getChannel(
-    string memory channelId
-  )
-    internal
-    view
-    returns (string memory id, string memory metadata, bool disabled)
-  {
+    bytes32 channelId
+  ) internal view returns (bytes32 id, string memory metadata, bool disabled) {
     checkChannelExists(channelId);
 
     ChannelStorage.Layout storage channel = ChannelStorage.layout();
@@ -66,7 +61,7 @@ library ChannelService {
   }
 
   function updateChannel(
-    string memory channelId,
+    bytes32 channelId,
     string memory metadata,
     bool disabled
   ) internal {
@@ -88,7 +83,7 @@ library ChannelService {
     }
   }
 
-  function removeChannel(string memory channelId) internal {
+  function removeChannel(bytes32 channelId) internal {
     checkChannelExists(channelId);
 
     ChannelStorage.Layout storage channel = ChannelStorage.layout();
@@ -106,23 +101,23 @@ library ChannelService {
     }
   }
 
-  function getChannelIds() internal view returns (string[] memory) {
+  function getChannelIds() internal view returns (bytes32[] memory) {
     ChannelStorage.Layout storage channel = ChannelStorage.layout();
     return channel.channelIds.values();
   }
 
   function getChannelIdsByRole(
     uint256 roleId
-  ) internal view returns (string[] memory channelIds) {
+  ) internal view returns (bytes32[] memory channelIds) {
     ChannelStorage.Layout storage channel = ChannelStorage.layout();
 
     uint256 potentialChannelsLength = channel.channelIds.length();
     uint256 count = 0;
 
-    channelIds = new string[](potentialChannelsLength);
+    channelIds = new bytes32[](potentialChannelsLength);
 
     for (uint256 i = 0; i < potentialChannelsLength; ) {
-      string memory channelId = channel.channelIds.at(i);
+      bytes32 channelId = channel.channelIds.at(i);
 
       if (channel.rolesByChannelId[channelId].contains(roleId)) {
         channelIds[count++] = channelId;
@@ -141,7 +136,7 @@ library ChannelService {
     }
   }
 
-  function addRoleToChannel(string memory channelId, uint256 roleId) internal {
+  function addRoleToChannel(bytes32 channelId, uint256 roleId) internal {
     checkChannelExists(channelId);
     checkChannelNotDisabled(channelId);
 
@@ -155,10 +150,7 @@ library ChannelService {
     channel.rolesByChannelId[channelId].add(roleId);
   }
 
-  function removeRoleFromChannel(
-    string memory channelId,
-    uint256 roleId
-  ) internal {
+  function removeRoleFromChannel(bytes32 channelId, uint256 roleId) internal {
     checkChannelExists(channelId);
     checkChannelNotDisabled(channelId);
     ChannelStorage.Layout storage channel = ChannelStorage.layout();
@@ -172,7 +164,7 @@ library ChannelService {
   }
 
   function getRolesByChannel(
-    string memory channelId
+    bytes32 channelId
   ) internal view returns (uint256[] memory) {
     checkChannelExists(channelId);
 
@@ -184,7 +176,7 @@ library ChannelService {
   //                        Validators
   // =============================================================
 
-  function checkChannelNotDisabled(string memory channelId) internal view {
+  function checkChannelNotDisabled(bytes32 channelId) internal view {
     ChannelStorage.Layout storage channel = ChannelStorage.layout();
 
     if (channel.channelById[channelId].disabled) {
@@ -192,14 +184,14 @@ library ChannelService {
     }
   }
 
-  function checkChannel(string memory channelId) internal view {
+  function checkChannel(bytes32 channelId) internal view {
     // check that channel exists
     if (ChannelStorage.layout().channelIds.contains(channelId)) {
       revert ChannelService__ChannelAlreadyExists();
     }
   }
 
-  function checkChannelExists(string memory channelId) internal view {
+  function checkChannelExists(bytes32 channelId) internal view {
     // check that channel exists
     if (!ChannelStorage.layout().channelIds.contains(channelId)) {
       revert ChannelService__ChannelDoesNotExist();

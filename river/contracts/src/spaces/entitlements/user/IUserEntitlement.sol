@@ -11,7 +11,7 @@ interface IUserEntitlement is IEntitlement {
 
   // Any other external or public functions
   function isEntitled(
-    string calldata channelId,
+    bytes32 channelId,
     address[] memory wallets,
     bytes32 permission
   ) external view returns (bool);

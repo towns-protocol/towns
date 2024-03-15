@@ -26,7 +26,7 @@ func setupTest(ctx context.Context) *PostgresEventStore {
 	exitSignal := make(chan error, 1)
 	store, err := NewPostgresEventStore(ctx, testDatabaseUrl, testSchemaName, instanceId, exitSignal)
 	if err != nil {
-		panic("Can't create event store: " + err.Error())
+		panic(err)
 	}
 	return store
 }
@@ -35,7 +35,7 @@ func testMainImpl(m *testing.M) int {
 	ctx := test.NewTestContext()
 	dbUrl, dbSchemaName, closer, err := dbtestutils.StartDB(ctx)
 	if err != nil {
-		panic("Could not connect to docker" + err.Error())
+		panic(err)
 	}
 
 	defer closer()
@@ -51,6 +51,12 @@ func TestMain(m *testing.M) {
 	os.Exit(testMainImpl(m))
 }
 
+func TestMigrateExistingDb(t *testing.T) {
+	ctx := test.NewTestContext()
+	_ = setupTest(ctx)
+	_ = setupTest(ctx)
+}
+
 func TestPostgresEventStore(t *testing.T) {
 	require := require.New(t)
 
@@ -58,10 +64,9 @@ func TestPostgresEventStore(t *testing.T) {
 	pgEventStore := setupTest(ctx)
 	defer pgEventStore.Close(ctx)
 
-	streamsNumber, _ := pgEventStore.GetStreamsNumber(ctx)
-	if streamsNumber != 0 {
-		t.Fatal("Expected to find zero streams, found different number")
-	}
+	streamsNumber, err := pgEventStore.GetStreamsNumber(ctx)
+	require.NoError(err)
+	require.Equal(0, streamsNumber)
 
 	streamId1 := testutils.FakeStreamId(STREAM_CHANNEL_BIN)
 	streamId2 := testutils.FakeStreamId(STREAM_CHANNEL_BIN)
@@ -69,15 +74,12 @@ func TestPostgresEventStore(t *testing.T) {
 
 	// Test that created stream will have proper genesis miniblock
 	genesisMiniblock := []byte("genesisMinoblock")
-	err := pgEventStore.CreateStreamStorage(ctx, streamId1, genesisMiniblock)
-	if err != nil {
-		t.Fatal(err)
-	}
+	err = pgEventStore.CreateStreamStorage(ctx, streamId1, genesisMiniblock)
+	require.NoError(err)
 
-	streamsNumber, _ = pgEventStore.GetStreamsNumber(ctx)
-	if streamsNumber != 1 {
-		t.Fatal("Expected to find one stream, found different number")
-	}
+	streamsNumber, err = pgEventStore.GetStreamsNumber(ctx)
+	require.NoError(err)
+	require.Equal(1, streamsNumber)
 
 	streamFromLastSnaphot, streamRetrievalError := pgEventStore.ReadStreamFromLastSnapshot(ctx, streamId1, 0)
 
@@ -345,7 +347,7 @@ func TestGetStreamFromLastSnapshotConsistencyChecksMissingBlockFailure(t *testin
 
 	_, _ = pgEventStore.pool.Exec(ctx, "DELETE FROM miniblocks WHERE seq_num = 2")
 
-	_, err := pgEventStore.getStreamFromLastSnapshot(ctx, streamId, 0)
+	_, err := pgEventStore.ReadStreamFromLastSnapshot(ctx, streamId, 0)
 
 	require.NotNil(err)
 	require.Contains(err.Error(), "Miniblocks consistency violation - wrong block sequence number")
@@ -376,7 +378,7 @@ func TestGetStreamFromLastSnapshotConsistencyCheckWrongEnvelopeGeneration(t *tes
 
 	_, _ = pgEventStore.pool.Exec(ctx, "UPDATE minipools SET generation = 777 WHERE slot_num = 1")
 
-	_, err := pgEventStore.getStreamFromLastSnapshot(ctx, streamId, 0)
+	_, err := pgEventStore.ReadStreamFromLastSnapshot(ctx, streamId, 0)
 
 	require.NotNil(err)
 	require.Contains(err.Error(), "Minipool consistency violation - wrong event generation")
@@ -408,7 +410,7 @@ func TestGetStreamFromLastSnapshotConsistencyCheckNoZeroIndexEnvelope(t *testing
 
 	_, _ = pgEventStore.pool.Exec(ctx, "DELETE FROM minipools WHERE slot_num = 0")
 
-	_, err := pgEventStore.getStreamFromLastSnapshot(ctx, streamId, 0)
+	_, err := pgEventStore.ReadStreamFromLastSnapshot(ctx, streamId, 0)
 
 	require.NotNil(err)
 	require.Contains(err.Error(), "Minipool consistency violation - slotNums are not sequential")
@@ -441,7 +443,7 @@ func TestGetStreamFromLastSnapshotConsistencyCheckGapInEnvelopesIndexes(t *testi
 
 	_, _ = pgEventStore.pool.Exec(ctx, "DELETE FROM minipools WHERE slot_num = 1")
 
-	_, err := pgEventStore.getStreamFromLastSnapshot(ctx, streamId, 0)
+	_, err := pgEventStore.ReadStreamFromLastSnapshot(ctx, streamId, 0)
 
 	require.NotNil(err)
 	require.Contains(err.Error(), "Minipool consistency violation - slotNums are not sequential")

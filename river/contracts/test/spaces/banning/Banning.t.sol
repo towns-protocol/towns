@@ -43,13 +43,13 @@ contract BanningTest is BaseSetup, IRolesBase {
     banning.ban(tokenId);
   }
 
-  modifier givenAliceHasJoinedTown() {
+  modifier givenAliceHasJoinedSpace() {
     vm.prank(alice);
-    uint256 tokenId = membership.joinTown(alice);
+    uint256 tokenId = membership.joinSpace(alice);
     _;
   }
 
-  function test_ban() public givenAliceHasJoinedTown {
+  function test_ban() public givenAliceHasJoinedSpace {
     uint256 tokenId = membership.getTokenIdByMembership(alice);
 
     vm.prank(founder);
@@ -66,7 +66,7 @@ contract BanningTest is BaseSetup, IRolesBase {
     _;
   }
 
-  function test_unban() external givenAliceHasJoinedTown givenAliceIsBanned {
+  function test_unban() external givenAliceHasJoinedSpace givenAliceIsBanned {
     uint256 tokenId = membership.getTokenIdByMembership(alice);
 
     assertTrue(banning.isBanned(tokenId));

@@ -52,12 +52,12 @@ interface IEntitlement is IEntitlementBase {
   function isCrosschain() external view returns (bool);
 
   /// @notice checks whether a user is has a given permission for a channel or a space
-  /// @param channelId id of the channel to check, if empty string, checks space
+  /// @param channelId id of the channel to check, if empty, checks space
   /// @param user address of the user to check
   /// @param permission the permission to check
   /// @return whether the user is entitled to the permission
   function isEntitled(
-    string calldata channelId,
+    bytes32 channelId,
     address[] memory user,
     bytes32 permission
   ) external view returns (bool);

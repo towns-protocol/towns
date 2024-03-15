@@ -3,7 +3,7 @@
  */
 
 import { Client } from './client'
-import { makeDonePromise, makeTestClient, waitFor } from './util.test'
+import { makeDonePromise, makeTestClient, makeUniqueSpaceStreamId, waitFor } from './util.test'
 
 describe('userMetadataTests', () => {
     let bobsClient: Client
@@ -28,7 +28,8 @@ describe('userMetadataTests', () => {
         await expect(alicesClient.initializeUser()).toResolve()
         alicesClient.startSync()
 
-        const { streamId } = await bobsClient.createSpace(undefined)
+        const streamId = makeUniqueSpaceStreamId()
+        await bobsClient.createSpace(streamId)
         await bobsClient.waitForStream(streamId)
         await bobsClient.inviteUser(streamId, alicesClient.userId)
         await expect(alicesClient.joinStream(streamId)).toResolve()
@@ -173,7 +174,8 @@ describe('userMetadataTests', () => {
     test('clientsPickUpDisplayNamesAfterJoin', async () => {
         await expect(bobsClient.initializeUser()).toResolve()
         bobsClient.startSync()
-        const { streamId } = await bobsClient.createSpace(undefined)
+        const streamId = makeUniqueSpaceStreamId()
+        await bobsClient.createSpace(streamId)
         await bobsClient.waitForStream(streamId)
         await bobsClient.setDisplayName(streamId, 'bob')
 
@@ -203,7 +205,8 @@ describe('userMetadataTests', () => {
         await expect(alicesClient.initializeUser()).toResolve()
         alicesClient.startSync()
 
-        const { streamId } = await bobsClient.createSpace(undefined)
+        const streamId = makeUniqueSpaceStreamId()
+        await bobsClient.createSpace(streamId)
         await bobsClient.waitForStream(streamId)
         await bobsClient.inviteUser(streamId, alicesClient.userId)
         await expect(alicesClient.joinStream(streamId)).toResolve()

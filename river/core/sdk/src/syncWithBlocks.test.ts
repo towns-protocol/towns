@@ -5,7 +5,6 @@ import { MembershipOp, StreamAndCookie, SyncOp } from '@river/proto'
 import { dlog } from '@river/dlog'
 import {
     makeUniqueChannelStreamId,
-    makeUniqueSpaceStreamId,
     makeUserStreamId,
     streamIdToBytes,
     userIdFromAddress,
@@ -25,6 +24,7 @@ import {
     TEST_ENCRYPTED_MESSAGE_PROPS,
     makeRandomUserContext,
     makeTestRpcClient,
+    makeUniqueSpaceStreamId,
     iterableWrapper,
 } from './util.test'
 import { SignerContext } from './signerContext'
@@ -83,7 +83,7 @@ describe('syncWithBlocks', () => {
             streamId: spacedStreamId,
         })
 
-        const channelIdStr = makeUniqueChannelStreamId()
+        const channelIdStr = makeUniqueChannelStreamId(spacedStreamIdStr)
         const channelId = streamIdToBytes(channelIdStr)
         const channelProperties = 'Bobs channel properties'
 

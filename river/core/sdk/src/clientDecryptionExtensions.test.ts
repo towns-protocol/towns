@@ -5,10 +5,10 @@
 import { Client } from './client'
 import { dlog } from '@river/dlog'
 import { isDefined } from './check'
-import { makeUniqueSpaceStreamId } from './id'
-import { TestClientOpts, makeTestClient, waitFor } from './util.test'
+import { TestClientOpts, makeTestClient, makeUniqueSpaceStreamId, waitFor } from './util.test'
 import { Stream } from './stream'
 import { DecryptionSessionError } from '@river/encryption'
+import { makeUniqueChannelStreamId } from './id'
 
 const log = dlog('csb:test:decryptionExtensions')
 
@@ -156,7 +156,8 @@ describe('ClientDecryptionExtensions', () => {
         const bob1 = await makeAndStartClient({ deviceId: 'bob1' })
         const spaceId = makeUniqueSpaceStreamId()
         await bob1.createSpace(spaceId)
-        const { streamId: channelId } = await bob1.createChannel(spaceId, 'bob1sChannel', '')
+        const channelId = makeUniqueChannelStreamId(spaceId)
+        await bob1.createChannel(spaceId, 'bob1sChannel', '', channelId)
         await sendMessage(bob1, channelId, 'its bob')
         await bob1.stop()
 
@@ -186,8 +187,10 @@ describe('ClientDecryptionExtensions', () => {
 
         const spaceId = makeUniqueSpaceStreamId()
         await bob1.createSpace(spaceId)
-        const { streamId: channel1StreamId } = await bob1.createChannel(spaceId, 'channel1', '')
-        const { streamId: channel2StreamId } = await bob1.createChannel(spaceId, 'channel1', '')
+        const channel1StreamId = makeUniqueChannelStreamId(spaceId)
+        const channel2StreamId = makeUniqueChannelStreamId(spaceId)
+        await bob1.createChannel(spaceId, 'channel1', '', channel1StreamId)
+        await bob1.createChannel(spaceId, 'channel1', '', channel2StreamId)
         await sendMessage(bob1, channel1StreamId, 'hello channel 1')
         await sendMessage(bob1, channel2StreamId, 'hello channel 2')
 

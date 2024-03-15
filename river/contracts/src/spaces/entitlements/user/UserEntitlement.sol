@@ -43,7 +43,7 @@ contract UserEntitlement is
   string public constant description = "Entitlement for users";
   string public constant moduleType = "UserEntitlement";
 
-  modifier onlyTown() {
+  modifier onlySpace() {
     if (_msgSender() != SPACE_ADDRESS) {
       revert Entitlement__NotAllowed();
     }
@@ -67,7 +67,7 @@ contract UserEntitlement is
   /// @param newImplementation address of the new implementation
   function _authorizeUpgrade(
     address newImplementation
-  ) internal override onlyTown {}
+  ) internal override onlySpace {}
 
   function supportsInterface(
     bytes4 interfaceId
@@ -84,11 +84,12 @@ contract UserEntitlement is
 
   // @inheritdoc IEntitlement
   function isEntitled(
-    string calldata channelId,
+    bytes32 channelId,
     address[] memory wallets,
     bytes32 permission
   ) external view returns (bool) {
-    if (bytes(channelId).length > 0) {
+    // Check if channelId is not equal to the zero value for bytes32
+    if (channelId != bytes32(0)) {
       return _isEntitledToChannel(channelId, wallets, permission);
     } else {
       return _isEntitledToSpace(wallets, permission);
@@ -99,7 +100,7 @@ contract UserEntitlement is
   function setEntitlement(
     uint256 roleId,
     bytes calldata entitlementData
-  ) external onlyTown {
+  ) external onlySpace {
     address[] memory users = abi.decode(entitlementData, (address[]));
 
     for (uint256 i = 0; i < users.length; i++) {
@@ -130,7 +131,7 @@ contract UserEntitlement is
   }
 
   // @inheritdoc IEntitlement
-  function removeEntitlement(uint256 roleId) external onlyTown {
+  function removeEntitlement(uint256 roleId) external onlySpace {
     if (entitlementsByRoleId[roleId].grantedBy == address(0)) {
       revert Entitlement__InvalidValue();
     }
@@ -159,7 +160,7 @@ contract UserEntitlement is
   /// @param permission the permission we are checking for
   /// @return _entitled true if the user is entitled to the channel
   function _isEntitledToChannel(
-    string calldata channelId,
+    bytes32 channelId,
     address[] memory wallets,
     bytes32 permission
   ) internal view returns (bool _entitled) {

@@ -40,7 +40,7 @@ import { SignerContext } from '@river/sdk'
 import { PushNotificationClient } from './PushNotificationClient'
 import { SignerUndefinedError } from '../types/error-types'
 import { makeUniqueChannelStreamId } from '@river/sdk'
-import { makeUniqueSpaceStreamId } from '@river/sdk'
+import { makeSpaceStreamId, makeDefaultChannelStreamId } from '@river/sdk'
 import { staticAssertNever } from '../utils/towns-utils'
 import { toUtf8String } from 'ethers/lib/utils.js'
 import { toStreamView } from './casablanca/CasablancaUtils'
@@ -261,8 +261,14 @@ export class TownsClient implements EntitlementsDelegate {
         const txContext = await this._waitForBlockchainTransaction(context)
         if (txContext.status === TransactionStatus.Success) {
             if (txContext.data) {
-                const spaceId = txContext.data.spaceId
-                const channelId = txContext.data.channelId
+                const spaceAddress = this.spaceDapp.getSpaceAddress(txContext.receipt)
+                if (!spaceAddress) {
+                    throw new Error('Space address not found')
+                }
+                const spaceId = makeSpaceStreamId(spaceAddress)
+                const channelId = makeDefaultChannelStreamId(spaceAddress)
+                txContext.data.spaceId = spaceId
+                txContext.data.channelId = channelId
                 // wait until the space and channel are minted on-chain
                 // before creating the streams
                 if (!this.casablancaClient) {
@@ -301,23 +307,16 @@ export class TownsClient implements EntitlementsDelegate {
         membership: IArchitectBase.MembershipStruct,
         signer: ethers.Signer,
     ): Promise<CreateSpaceTransactionContext> {
-        const spaceId: string = makeUniqueSpaceStreamId()
-        const channelId: string = makeUniqueChannelStreamId()
-
         let transaction: TransactionOrUserOperation | undefined = undefined
         let error: Error | undefined = undefined
         const continueStoreTx = this.blockchainTransactionStore.begin({
             type: BlockchainTransactionType.CreateSpace,
-            data: {
-                spaceStreamId: spaceId,
-            },
+            data: {},
         })
 
         const args: CreateSpaceParams = {
-            spaceId,
             spaceName: createSpaceInfo.name,
             spaceMetadata: createSpaceInfo.name,
-            channelId,
             channelName: createSpaceInfo.defaultChannelName ?? 'general', // default channel name
             membership,
         }
@@ -347,9 +346,7 @@ export class TownsClient implements EntitlementsDelegate {
             status: transaction ? TransactionStatus.Pending : TransactionStatus.Failed,
             data: transaction
                 ? {
-                      spaceId,
                       spaceName: createSpaceInfo.name,
-                      channelId,
                   }
                 : undefined,
             error,
@@ -429,7 +426,7 @@ export class TownsClient implements EntitlementsDelegate {
         if (!signer) {
             throw new SignerUndefinedError()
         }
-        const roomId: string = makeUniqueChannelStreamId()
+        const roomId: string = makeUniqueChannelStreamId(createChannelInfo.parentSpaceId)
 
         console.log('[createChannelTransaction] Channel created', roomId)
 

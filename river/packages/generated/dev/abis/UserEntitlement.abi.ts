@@ -94,8 +94,8 @@ export default [
     "inputs": [
       {
         "name": "channelId",
-        "type": "string",
-        "internalType": "string"
+        "type": "bytes32",
+        "internalType": "bytes32"
       },
       {
         "name": "wallets",

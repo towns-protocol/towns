@@ -10,6 +10,7 @@ import {
     makeRandomUserContext,
     makeUserContextFromWallet,
     makeTestRpcClient,
+    makeUniqueSpaceStreamId,
     iterableWrapper,
     TEST_ENCRYPTED_MESSAGE_PROPS,
     waitForSyncStreams,
@@ -17,7 +18,6 @@ import {
 import {
     addressFromUserId,
     makeUniqueChannelStreamId,
-    makeUniqueSpaceStreamId,
     makeUserStreamId,
     streamIdAsString,
     streamIdToBytes,
@@ -103,7 +103,7 @@ describe('streamRpcClient using v2 sync', () => {
             streamId: spaceId,
         })
         // alice creates a channel
-        const channelIdStr = makeUniqueChannelStreamId()
+        const channelIdStr = makeUniqueChannelStreamId(spaceIdStr)
         const channelId = streamIdToBytes(channelIdStr)
         const channelProperties = 'Alices channel properties'
         const channelInceptionEvent = await makeEvent(
@@ -204,7 +204,7 @@ describe('streamRpcClient using v2 sync', () => {
             streamId: spaceId,
         })
         // alice creates a channel
-        const channelIdStr = makeUniqueChannelStreamId()
+        const channelIdStr = makeUniqueChannelStreamId(spaceIdStr)
         const channelId = streamIdToBytes(channelIdStr)
         const channelProperties = 'Alices channel properties'
         const channelInceptionEvent = await makeEvent(
@@ -485,7 +485,7 @@ describe('streamRpcClient', () => {
         })
 
         // Bob creates channel
-        const channelIdStr = makeUniqueChannelStreamId()
+        const channelIdStr = makeUniqueChannelStreamId(spaceIdStr)
         const channelId = streamIdToBytes(channelIdStr)
         const channelProperties = 'Bobs channel properties'
 
@@ -827,7 +827,7 @@ describe('streamRpcClient', () => {
         })
         log('Bob created space, about to create channel')
 
-        const channelIdStr = makeUniqueChannelStreamId()
+        const channelIdStr = makeUniqueChannelStreamId(spacedStreamIdStr)
         const channelId = streamIdToBytes(channelIdStr)
         const channelProperties = 'Bobs channel properties'
 
@@ -852,7 +852,7 @@ describe('streamRpcClient', () => {
         log('Bob created channel')
 
         log('Bob fails to create channel with badly chained initial events, hash empty')
-        const channelId2Str = makeUniqueChannelStreamId()
+        const channelId2Str = makeUniqueChannelStreamId(spacedStreamIdStr)
         const channelId2 = streamIdToBytes(channelId2Str)
         const channelProperties2 = 'Bobs channel properties 2'
         const channelEvent2_0 = await makeEvent(
@@ -963,7 +963,7 @@ describe('streamRpcClient', () => {
         })
         log('Bob created space, about to create channel')
 
-        const channelIdStr = makeUniqueChannelStreamId()
+        const channelIdStr = makeUniqueChannelStreamId(spacedStreamIdStr)
         const channelId = streamIdToBytes(channelIdStr)
         const channelProperties = 'Bobs channel properties'
 

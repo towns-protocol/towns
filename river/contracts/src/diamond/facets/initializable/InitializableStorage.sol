@@ -8,8 +8,9 @@ pragma solidity ^0.8.23;
 // contracts
 
 library InitializableStorage {
+  // keccak256(abi.encode(uint256(keccak256("diamond.facets.initializable.storage")) - 1)) & ~bytes32(uint256(0xff))
   bytes32 internal constant STORAGE_SLOT =
-    keccak256("towns.diamond.facets.initializable.InitializableStorage");
+    0x59b501c3653afc186af7d48dda36cf6732bd21629a6295693664240a6ef52000;
 
   struct Layout {
     uint32 version;

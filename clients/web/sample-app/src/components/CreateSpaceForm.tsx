@@ -162,7 +162,7 @@ export const CreateSpaceForm = (props: Props) => {
     }, [formValue, getSigner, createSpaceTransactionWithRole, councilNftAddress])
 
     useEffect(() => {
-        if (transactionStatus === TransactionStatus.Success && txData) {
+        if (transactionStatus === TransactionStatus.Success && txData && txData.spaceId) {
             onClick(txData.spaceId, Membership.Join)
         }
     }, [onClick, txData, transactionStatus])

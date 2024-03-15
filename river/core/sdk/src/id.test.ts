@@ -6,7 +6,6 @@ import {
     isValidStreamId,
     makeDMStreamId,
     checkStreamId,
-    makeUniqueSpaceStreamId,
     makeUniqueChannelStreamId,
     makeUniqueGDMChannelStreamId,
     makeUniqueMediaStreamId,
@@ -16,16 +15,16 @@ import {
     getUserIdFromStreamId,
     getUserAddressFromStreamId,
 } from './id'
-import { makeRandomUserContext } from './util.test'
+import { makeRandomUserContext, makeUniqueSpaceStreamId } from './util.test'
 
 describe('idTest', () => {
     test('validStreamId', () => {
-        expect(
-            isValidStreamId('10b6cd7a587ea499f57bfdc820b8c57ef654e38bc4572e7843df05321dd74c2f'),
-        ).toBe(true)
-        expect(
-            isValidStreamId('1010101010101010101010101010101010101010101010101010101010101010'),
-        ).toBe(true)
+        expect(isValidStreamId('10b6cd7a587ea499f57bfdc820b8c57ef654e38bc4' + '0'.repeat(22))).toBe(
+            true,
+        )
+        expect(isValidStreamId('101010101010101010101010101010101010101010' + '0'.repeat(22))).toBe(
+            true,
+        )
         expect(isValidStreamId('a81010101010101010101010101010101010101010')).toBe(true)
 
         expect(isValidStreamId('')).toBe(false)
@@ -75,8 +74,9 @@ describe('idTest', () => {
     })
 
     test('makeUnique', () => {
-        expect(isValidStreamId(makeUniqueSpaceStreamId())).toBe(true)
-        expect(isValidStreamId(makeUniqueChannelStreamId())).toBe(true)
+        const spaceId = makeUniqueSpaceStreamId()
+        expect(isValidStreamId(spaceId)).toBe(true)
+        expect(isValidStreamId(makeUniqueChannelStreamId(spaceId))).toBe(true)
         expect(isValidStreamId(makeUniqueGDMChannelStreamId())).toBe(true)
         expect(isValidStreamId(makeUniqueMediaStreamId())).toBe(true)
     })

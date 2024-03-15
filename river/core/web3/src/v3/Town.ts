@@ -137,9 +137,12 @@ export class Town {
         }
     }
 
-    public async getChannel(channelId: string): Promise<ChannelDetails | null> {
+    public async getChannel(channelNetworkId: string): Promise<ChannelDetails | null> {
         // get most of the channel details except the roles which
         // require a separate call to get each role's details
+        const channelId = channelNetworkId.startsWith('0x')
+            ? channelNetworkId
+            : `0x${channelNetworkId}`
         const channelInfo = await this.Channels.read.getChannel(channelId)
         const roles = await this.getChannelRoleEntitlements(channelInfo)
         return {
@@ -164,7 +167,10 @@ export class Town {
         return channels
     }
 
-    public async getChannelRoles(channelId: string): Promise<IRolesBase.RoleStructOutput[]> {
+    public async getChannelRoles(channelNetworkId: string): Promise<IRolesBase.RoleStructOutput[]> {
+        const channelId = channelNetworkId.startsWith('0x')
+            ? channelNetworkId
+            : `0x${channelNetworkId}`
         // get all the roleIds for the channel
         const channelInfo = await this.Channels.read.getChannel(channelId)
         // return the role info
@@ -340,7 +346,7 @@ export class Town {
         for (const c of allChannels) {
             if (!channelMetadatas.has(c.id) && isRoleIdInArray(c.roleIds, roleId)) {
                 channelMetadatas.set(c.id, {
-                    channelNetworkId: c.id,
+                    channelNetworkId: c.id.replace('0x', ''),
                     name: c.metadata,
                     disabled: c.disabled,
                 })

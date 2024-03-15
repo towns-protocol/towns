@@ -10,7 +10,7 @@ import {
 } from './ContractTypes'
 
 import { WalletLink as WalletLinkV3 } from './v3/WalletLink'
-import { BytesLike, ContractTransaction, ethers } from 'ethers'
+import { BytesLike, ContractReceipt, ContractTransaction, ethers } from 'ethers'
 import { SpaceInfo } from './SpaceDappTypes'
 import { IRolesBase, Town, TownRegistrar, IRuleEntitlement } from './v3'
 
@@ -21,10 +21,8 @@ export interface EventsContractInfo {
 }
 
 export interface CreateSpaceParams {
-    spaceId: string
     spaceName: string
     spaceMetadata: string
-    channelId: string
     channelName: string
     membership: MembershipStruct
 }
@@ -121,4 +119,5 @@ export interface ISpaceDapp {
     getMembershipSupply: (spaceId: string) => Promise<TotalSupplyInfo>
     getMembershipInfo: (spaceId: string) => Promise<MembershipInfo>
     getWalletLink: () => WalletLinkV3
+    getSpaceAddress: (receipt: ContractReceipt) => string | undefined
 }

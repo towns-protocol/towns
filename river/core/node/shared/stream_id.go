@@ -132,7 +132,7 @@ func StreamIdContentLengthForType(t byte) (int, error) {
 	case STREAM_GDM_CHANNEL_BIN:
 		return 32, nil
 	case STREAM_SPACE_BIN:
-		return 32, nil
+		return 21, nil
 	default:
 		return 0, RiverError(Err_BAD_STREAM_ID, "invalid stream prefix", "prefix", t)
 	}

@@ -8,8 +8,9 @@ pragma solidity ^0.8.23;
 // contracts
 
 library PausableStorage {
+  // keccak256(abi.encode(uint256(keccak256("diamond.facets.pausable.storage")) - 1)) & ~bytes32(uint256(0xff))
   bytes32 internal constant STORAGE_SLOT =
-    keccak256("towns.diamond.facets.pausable.PausableStorage");
+    0xe17a067c7963a59b6dfd65d33b053fdbea1c56500e2aae4f976d9eda4da9eb00;
 
   struct Layout {
     bool paused;

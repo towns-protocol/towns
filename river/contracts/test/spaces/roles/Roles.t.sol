@@ -524,8 +524,8 @@ contract RolesTest is BaseSetup, IRolesBase, IEntitlementBase {
 
   function test_removeRole_with_channels_already_created() external {
     string memory roleName1 = "role1";
-    string memory channelId1 = "channel1";
-    string memory channelId2 = "channel2";
+    bytes32 channelId1 = "channel1";
+    bytes32 channelId2 = "channel2";
 
     vm.prank(founder);
     uint256 roleId = roles.createRole(
@@ -559,10 +559,9 @@ contract RolesTest is BaseSetup, IRolesBase, IEntitlementBase {
 
   function test_removeRole_with_channels(
     string memory roleName,
-    string memory channelId
+    bytes32 channelId
   ) external {
     vm.assume(bytes(roleName).length > 2);
-    vm.assume(bytes(channelId).length > 2);
 
     // create a roles
     vm.prank(founder);

@@ -2,9 +2,9 @@
  * @group main
  */
 
-import { makeTestClient } from './util.test'
+import { makeTestClient, makeUniqueSpaceStreamId } from './util.test'
 import { Client } from './client'
-import { makeUniqueChannelStreamId, makeDMStreamId, makeUniqueSpaceStreamId } from './id'
+import { makeUniqueChannelStreamId, makeDMStreamId } from './id'
 import { InfoRequest } from '@river/proto'
 
 describe('mediaTests', () => {
@@ -26,7 +26,7 @@ describe('mediaTests', () => {
         const spaceId = makeUniqueSpaceStreamId()
         await expect(bobsClient.createSpace(spaceId)).toResolve()
 
-        const channelId = makeUniqueChannelStreamId()
+        const channelId = makeUniqueChannelStreamId(spaceId)
         await expect(bobsClient.createChannel(spaceId, 'Channel', 'Topic', channelId)).toResolve()
 
         return await bobsClient.createMediaStream(channelId, spaceId, chunkCount)
@@ -104,7 +104,7 @@ describe('mediaTests', () => {
 
     test('channelNeedsToExistBeforeCreatingMediaStream', async () => {
         const nonExistentSpaceId = makeUniqueSpaceStreamId()
-        const nonExistentChannelId = makeUniqueChannelStreamId()
+        const nonExistentChannelId = makeUniqueChannelStreamId(nonExistentSpaceId)
         await expect(
             bobsClient.createMediaStream(nonExistentChannelId, nonExistentSpaceId, 10),
         ).toReject()

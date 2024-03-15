@@ -8,6 +8,7 @@ import {IMembershipBase} from "contracts/src/spaces/facets/membership/IMembershi
 import {IUserEntitlement} from "contracts/src/spaces/entitlements/user/IUserEntitlement.sol";
 import {IRuleEntitlement} from "contracts/src/crosschain/IRuleEntitlement.sol";
 import {IWalletLink} from "contracts/src/river/wallet-link/IWalletLink.sol";
+import {ISpaceOwner} from "contracts/src/spaces/facets/owner/ISpaceOwner.sol";
 
 // contracts
 interface IArchitectBase {
@@ -27,12 +28,10 @@ interface IArchitectBase {
   }
 
   struct ChannelInfo {
-    string id;
     string metadata;
   }
 
   struct SpaceInfo {
-    string id;
     string name;
     string uri;
     Membership membership;
@@ -42,11 +41,10 @@ interface IArchitectBase {
   // =============================================================
   //                           EVENTS
   // =============================================================
-
   event SpaceCreated(
     address indexed owner,
-    uint256 indexed spaceId,
-    address space
+    uint256 indexed tokenId,
+    address indexed space
   );
 
   // =============================================================
@@ -63,19 +61,11 @@ interface IArchitect is IArchitectBase {
   // =============================================================
   //                            Registry
   // =============================================================
-
-  /// @notice Returns the address of a space by its spaceId
-  /// @param spaceId Space identifier
-  /// @return Address of the space
-  function getSpaceById(string memory spaceId) external view returns (address);
-
-  function getTokenIdBySpaceId(
-    string memory spaceId
-  ) external view returns (uint256);
+  function getSpaceByTokenId(
+    uint256 tokenId
+  ) external view returns (address space);
 
   function getTokenIdBySpace(address space) external view returns (uint256);
-
-  function isSpace(address space) external view returns (bool);
 
   /// @notice Creates a new space
   /// @param SpaceInfo Space information
@@ -86,7 +76,7 @@ interface IArchitect is IArchitectBase {
   // =============================================================
 
   function setSpaceArchitectImplementations(
-    address ownerTokenImplementation,
+    ISpaceOwner ownerTokenImplementation,
     IUserEntitlement userEntitlementImplementation,
     IRuleEntitlement ruleEntitlementImplementation,
     IWalletLink walletLink
@@ -96,7 +86,7 @@ interface IArchitect is IArchitectBase {
     external
     view
     returns (
-      address ownerTokenImplementation,
+      ISpaceOwner ownerTokenImplementation,
       IUserEntitlement userEntitlementImplementation,
       IRuleEntitlement ruleEntitlementImplementation,
       IWalletLink walletLink

@@ -31,7 +31,7 @@ var (
 
 // IEntitlmentMetaData contains all meta data concerning the IEntitlment contract.
 var IEntitlmentMetaData = &bind.MetaData{
-	ABI: "[{\"type\":\"function\",\"name\":\"description\",\"inputs\":[],\"outputs\":[{\"name\":\"\",\"type\":\"string\",\"internalType\":\"string\"}],\"stateMutability\":\"view\"},{\"type\":\"function\",\"name\":\"getEntitlementDataByRoleId\",\"inputs\":[{\"name\":\"roleId\",\"type\":\"uint256\",\"internalType\":\"uint256\"}],\"outputs\":[{\"name\":\"\",\"type\":\"bytes\",\"internalType\":\"bytes\"}],\"stateMutability\":\"view\"},{\"type\":\"function\",\"name\":\"initialize\",\"inputs\":[{\"name\":\"space\",\"type\":\"address\",\"internalType\":\"address\"}],\"outputs\":[],\"stateMutability\":\"nonpayable\"},{\"type\":\"function\",\"name\":\"isCrosschain\",\"inputs\":[],\"outputs\":[{\"name\":\"\",\"type\":\"bool\",\"internalType\":\"bool\"}],\"stateMutability\":\"view\"},{\"type\":\"function\",\"name\":\"isEntitled\",\"inputs\":[{\"name\":\"channelId\",\"type\":\"string\",\"internalType\":\"string\"},{\"name\":\"user\",\"type\":\"address[]\",\"internalType\":\"address[]\"},{\"name\":\"permission\",\"type\":\"bytes32\",\"internalType\":\"bytes32\"}],\"outputs\":[{\"name\":\"\",\"type\":\"bool\",\"internalType\":\"bool\"}],\"stateMutability\":\"view\"},{\"type\":\"function\",\"name\":\"moduleType\",\"inputs\":[],\"outputs\":[{\"name\":\"\",\"type\":\"string\",\"internalType\":\"string\"}],\"stateMutability\":\"view\"},{\"type\":\"function\",\"name\":\"name\",\"inputs\":[],\"outputs\":[{\"name\":\"\",\"type\":\"string\",\"internalType\":\"string\"}],\"stateMutability\":\"view\"},{\"type\":\"function\",\"name\":\"removeEntitlement\",\"inputs\":[{\"name\":\"roleId\",\"type\":\"uint256\",\"internalType\":\"uint256\"}],\"outputs\":[],\"stateMutability\":\"nonpayable\"},{\"type\":\"function\",\"name\":\"setEntitlement\",\"inputs\":[{\"name\":\"roleId\",\"type\":\"uint256\",\"internalType\":\"uint256\"},{\"name\":\"entitlementData\",\"type\":\"bytes\",\"internalType\":\"bytes\"}],\"outputs\":[],\"stateMutability\":\"nonpayable\"},{\"type\":\"error\",\"name\":\"Entitlement__InvalidValue\",\"inputs\":[]},{\"type\":\"error\",\"name\":\"Entitlement__NotAllowed\",\"inputs\":[]},{\"type\":\"error\",\"name\":\"Entitlement__NotMember\",\"inputs\":[]},{\"type\":\"error\",\"name\":\"Entitlement__ValueAlreadyExists\",\"inputs\":[]}]",
+	ABI: "[{\"type\":\"function\",\"name\":\"description\",\"inputs\":[],\"outputs\":[{\"name\":\"\",\"type\":\"string\",\"internalType\":\"string\"}],\"stateMutability\":\"view\"},{\"type\":\"function\",\"name\":\"getEntitlementDataByRoleId\",\"inputs\":[{\"name\":\"roleId\",\"type\":\"uint256\",\"internalType\":\"uint256\"}],\"outputs\":[{\"name\":\"\",\"type\":\"bytes\",\"internalType\":\"bytes\"}],\"stateMutability\":\"view\"},{\"type\":\"function\",\"name\":\"initialize\",\"inputs\":[{\"name\":\"space\",\"type\":\"address\",\"internalType\":\"address\"}],\"outputs\":[],\"stateMutability\":\"nonpayable\"},{\"type\":\"function\",\"name\":\"isCrosschain\",\"inputs\":[],\"outputs\":[{\"name\":\"\",\"type\":\"bool\",\"internalType\":\"bool\"}],\"stateMutability\":\"view\"},{\"type\":\"function\",\"name\":\"isEntitled\",\"inputs\":[{\"name\":\"channelId\",\"type\":\"bytes32\",\"internalType\":\"bytes32\"},{\"name\":\"user\",\"type\":\"address[]\",\"internalType\":\"address[]\"},{\"name\":\"permission\",\"type\":\"bytes32\",\"internalType\":\"bytes32\"}],\"outputs\":[{\"name\":\"\",\"type\":\"bool\",\"internalType\":\"bool\"}],\"stateMutability\":\"view\"},{\"type\":\"function\",\"name\":\"moduleType\",\"inputs\":[],\"outputs\":[{\"name\":\"\",\"type\":\"string\",\"internalType\":\"string\"}],\"stateMutability\":\"view\"},{\"type\":\"function\",\"name\":\"name\",\"inputs\":[],\"outputs\":[{\"name\":\"\",\"type\":\"string\",\"internalType\":\"string\"}],\"stateMutability\":\"view\"},{\"type\":\"function\",\"name\":\"removeEntitlement\",\"inputs\":[{\"name\":\"roleId\",\"type\":\"uint256\",\"internalType\":\"uint256\"}],\"outputs\":[],\"stateMutability\":\"nonpayable\"},{\"type\":\"function\",\"name\":\"setEntitlement\",\"inputs\":[{\"name\":\"roleId\",\"type\":\"uint256\",\"internalType\":\"uint256\"},{\"name\":\"entitlementData\",\"type\":\"bytes\",\"internalType\":\"bytes\"}],\"outputs\":[],\"stateMutability\":\"nonpayable\"},{\"type\":\"error\",\"name\":\"Entitlement__InvalidValue\",\"inputs\":[]},{\"type\":\"error\",\"name\":\"Entitlement__NotAllowed\",\"inputs\":[]},{\"type\":\"error\",\"name\":\"Entitlement__NotMember\",\"inputs\":[]},{\"type\":\"error\",\"name\":\"Entitlement__ValueAlreadyExists\",\"inputs\":[]}]",
 }
 
 // IEntitlmentABI is the input ABI used to generate the binding from.
@@ -273,10 +273,10 @@ func (_IEntitlment *IEntitlmentCallerSession) IsCrosschain() (bool, error) {
 	return _IEntitlment.Contract.IsCrosschain(&_IEntitlment.CallOpts)
 }
 
-// IsEntitled is a free data retrieval call binding the contract method 0xa7b72871.
+// IsEntitled is a free data retrieval call binding the contract method 0x0cf0b533.
 //
-// Solidity: function isEntitled(string channelId, address[] user, bytes32 permission) view returns(bool)
-func (_IEntitlment *IEntitlmentCaller) IsEntitled(opts *bind.CallOpts, channelId string, user []common.Address, permission [32]byte) (bool, error) {
+// Solidity: function isEntitled(bytes32 channelId, address[] user, bytes32 permission) view returns(bool)
+func (_IEntitlment *IEntitlmentCaller) IsEntitled(opts *bind.CallOpts, channelId [32]byte, user []common.Address, permission [32]byte) (bool, error) {
 	var out []interface{}
 	err := _IEntitlment.contract.Call(opts, &out, "isEntitled", channelId, user, permission)
 
@@ -290,17 +290,17 @@ func (_IEntitlment *IEntitlmentCaller) IsEntitled(opts *bind.CallOpts, channelId
 
 }
 
-// IsEntitled is a free data retrieval call binding the contract method 0xa7b72871.
+// IsEntitled is a free data retrieval call binding the contract method 0x0cf0b533.
 //
-// Solidity: function isEntitled(string channelId, address[] user, bytes32 permission) view returns(bool)
-func (_IEntitlment *IEntitlmentSession) IsEntitled(channelId string, user []common.Address, permission [32]byte) (bool, error) {
+// Solidity: function isEntitled(bytes32 channelId, address[] user, bytes32 permission) view returns(bool)
+func (_IEntitlment *IEntitlmentSession) IsEntitled(channelId [32]byte, user []common.Address, permission [32]byte) (bool, error) {
 	return _IEntitlment.Contract.IsEntitled(&_IEntitlment.CallOpts, channelId, user, permission)
 }
 
-// IsEntitled is a free data retrieval call binding the contract method 0xa7b72871.
+// IsEntitled is a free data retrieval call binding the contract method 0x0cf0b533.
 //
-// Solidity: function isEntitled(string channelId, address[] user, bytes32 permission) view returns(bool)
-func (_IEntitlment *IEntitlmentCallerSession) IsEntitled(channelId string, user []common.Address, permission [32]byte) (bool, error) {
+// Solidity: function isEntitled(bytes32 channelId, address[] user, bytes32 permission) view returns(bool)
+func (_IEntitlment *IEntitlmentCallerSession) IsEntitled(channelId [32]byte, user []common.Address, permission [32]byte) (bool, error) {
 	return _IEntitlment.Contract.IsEntitled(&_IEntitlment.CallOpts, channelId, user, permission)
 }
 

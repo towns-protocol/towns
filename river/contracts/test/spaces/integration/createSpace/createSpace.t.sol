@@ -80,7 +80,7 @@ contract Integration_CreateSpace is BaseSetup, IRolesBase, IArchitectBase {
     );
 
     vm.prank(user);
-    IMembership(newSpace).joinTown(user);
+    IMembership(newSpace).joinSpace(user);
 
     assertTrue(
       IEntitlementsManager(newSpace).isEntitledToSpace(user, Permissions.Read),
@@ -160,7 +160,7 @@ contract Integration_CreateSpace is BaseSetup, IRolesBase, IArchitectBase {
       _createEveryoneSpaceInfo(spaceId)
     );
 
-    IMembership(newSpace).joinTown(member);
+    IMembership(newSpace).joinSpace(member);
 
     // look for user entitlement
     IEntitlementsManager.Entitlement[]

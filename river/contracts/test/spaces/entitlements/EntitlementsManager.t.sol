@@ -245,7 +245,7 @@ contract EntitlementsManagerTest is
     );
 
     vm.prank(user);
-    MembershipFacet(everyoneSpace).joinTown(user);
+    MembershipFacet(everyoneSpace).joinSpace(user);
 
     assertEq(
       entitlements.isEntitledToSpace(founder, Permissions.JoinSpace),
@@ -254,6 +254,6 @@ contract EntitlementsManagerTest is
 
     vm.prank(user);
     vm.expectRevert(Membership__AlreadyMember.selector);
-    MembershipFacet(everyoneSpace).joinTown(user);
+    MembershipFacet(everyoneSpace).joinSpace(user);
   }
 }

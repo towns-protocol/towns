@@ -13,8 +13,8 @@ const _abi = [
     inputs: [
       {
         name: "channelId",
-        type: "string",
-        internalType: "string",
+        type: "bytes32",
+        internalType: "bytes32",
       },
       {
         name: "roleId",
@@ -31,8 +31,8 @@ const _abi = [
     inputs: [
       {
         name: "channelId",
-        type: "string",
-        internalType: "string",
+        type: "bytes32",
+        internalType: "bytes32",
       },
       {
         name: "metadata",
@@ -54,8 +54,8 @@ const _abi = [
     inputs: [
       {
         name: "channelId",
-        type: "string",
-        internalType: "string",
+        type: "bytes32",
+        internalType: "bytes32",
       },
     ],
     outputs: [
@@ -66,8 +66,8 @@ const _abi = [
         components: [
           {
             name: "id",
-            type: "string",
-            internalType: "string",
+            type: "bytes32",
+            internalType: "bytes32",
           },
           {
             name: "disabled",
@@ -101,8 +101,8 @@ const _abi = [
         components: [
           {
             name: "id",
-            type: "string",
-            internalType: "string",
+            type: "bytes32",
+            internalType: "bytes32",
           },
           {
             name: "disabled",
@@ -130,8 +130,8 @@ const _abi = [
     inputs: [
       {
         name: "channelId",
-        type: "string",
-        internalType: "string",
+        type: "bytes32",
+        internalType: "bytes32",
       },
     ],
     outputs: [
@@ -149,8 +149,8 @@ const _abi = [
     inputs: [
       {
         name: "channelId",
-        type: "string",
-        internalType: "string",
+        type: "bytes32",
+        internalType: "bytes32",
       },
     ],
     outputs: [],
@@ -162,8 +162,8 @@ const _abi = [
     inputs: [
       {
         name: "channelId",
-        type: "string",
-        internalType: "string",
+        type: "bytes32",
+        internalType: "bytes32",
       },
       {
         name: "roleId",
@@ -180,8 +180,8 @@ const _abi = [
     inputs: [
       {
         name: "channelId",
-        type: "string",
-        internalType: "string",
+        type: "bytes32",
+        internalType: "bytes32",
       },
       {
         name: "metadata",
@@ -209,9 +209,9 @@ const _abi = [
       },
       {
         name: "channelId",
-        type: "string",
+        type: "bytes32",
         indexed: false,
-        internalType: "string",
+        internalType: "bytes32",
       },
     ],
     anonymous: false,
@@ -228,9 +228,9 @@ const _abi = [
       },
       {
         name: "channelId",
-        type: "string",
+        type: "bytes32",
         indexed: false,
-        internalType: "string",
+        internalType: "bytes32",
       },
     ],
     anonymous: false,
@@ -247,9 +247,9 @@ const _abi = [
       },
       {
         name: "channelId",
-        type: "string",
+        type: "bytes32",
         indexed: false,
-        internalType: "string",
+        internalType: "bytes32",
       },
       {
         name: "roleId",
@@ -272,9 +272,9 @@ const _abi = [
       },
       {
         name: "channelId",
-        type: "string",
+        type: "bytes32",
         indexed: false,
-        internalType: "string",
+        internalType: "bytes32",
       },
       {
         name: "roleId",
@@ -297,9 +297,9 @@ const _abi = [
       },
       {
         name: "channelId",
-        type: "string",
+        type: "bytes32",
         indexed: false,
-        internalType: "string",
+        internalType: "bytes32",
       },
     ],
     anonymous: false,

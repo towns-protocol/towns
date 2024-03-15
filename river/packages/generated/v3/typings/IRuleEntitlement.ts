@@ -92,7 +92,7 @@ export interface IRuleEntitlementInterface extends utils.Interface {
     "getRuleData(uint256)": FunctionFragment;
     "initialize(address)": FunctionFragment;
     "isCrosschain()": FunctionFragment;
-    "isEntitled(string,address[],bytes32)": FunctionFragment;
+    "isEntitled(bytes32,address[],bytes32)": FunctionFragment;
     "moduleType()": FunctionFragment;
     "name()": FunctionFragment;
     "removeEntitlement(uint256)": FunctionFragment;
@@ -153,7 +153,7 @@ export interface IRuleEntitlementInterface extends utils.Interface {
   encodeFunctionData(
     functionFragment: "isEntitled",
     values: [
-      PromiseOrValue<string>,
+      PromiseOrValue<BytesLike>,
       PromiseOrValue<string>[],
       PromiseOrValue<BytesLike>
     ]
@@ -290,7 +290,7 @@ export interface IRuleEntitlement extends BaseContract {
     isCrosschain(overrides?: CallOverrides): Promise<[boolean]>;
 
     isEntitled(
-      channelId: PromiseOrValue<string>,
+      channelId: PromiseOrValue<BytesLike>,
       user: PromiseOrValue<string>[],
       permission: PromiseOrValue<BytesLike>,
       overrides?: CallOverrides
@@ -352,7 +352,7 @@ export interface IRuleEntitlement extends BaseContract {
   isCrosschain(overrides?: CallOverrides): Promise<boolean>;
 
   isEntitled(
-    channelId: PromiseOrValue<string>,
+    channelId: PromiseOrValue<BytesLike>,
     user: PromiseOrValue<string>[],
     permission: PromiseOrValue<BytesLike>,
     overrides?: CallOverrides
@@ -414,7 +414,7 @@ export interface IRuleEntitlement extends BaseContract {
     isCrosschain(overrides?: CallOverrides): Promise<boolean>;
 
     isEntitled(
-      channelId: PromiseOrValue<string>,
+      channelId: PromiseOrValue<BytesLike>,
       user: PromiseOrValue<string>[],
       permission: PromiseOrValue<BytesLike>,
       overrides?: CallOverrides
@@ -479,7 +479,7 @@ export interface IRuleEntitlement extends BaseContract {
     isCrosschain(overrides?: CallOverrides): Promise<BigNumber>;
 
     isEntitled(
-      channelId: PromiseOrValue<string>,
+      channelId: PromiseOrValue<BytesLike>,
       user: PromiseOrValue<string>[],
       permission: PromiseOrValue<BytesLike>,
       overrides?: CallOverrides
@@ -542,7 +542,7 @@ export interface IRuleEntitlement extends BaseContract {
     isCrosschain(overrides?: CallOverrides): Promise<PopulatedTransaction>;
 
     isEntitled(
-      channelId: PromiseOrValue<string>,
+      channelId: PromiseOrValue<BytesLike>,
       user: PromiseOrValue<string>[],
       permission: PromiseOrValue<BytesLike>,
       overrides?: CallOverrides

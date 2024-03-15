@@ -31,8 +31,7 @@ var (
 
 // IArchitectBaseChannelInfo is an auto generated low-level Go binding around an user-defined struct.
 type IArchitectBaseChannelInfo struct {
-	Id		string
-	Metadata	string
+	Metadata string
 }
 
 // IArchitectBaseMembership is an auto generated low-level Go binding around an user-defined struct.
@@ -51,7 +50,6 @@ type IArchitectBaseMembershipRequirements struct {
 
 // IArchitectBaseSpaceInfo is an auto generated low-level Go binding around an user-defined struct.
 type IArchitectBaseSpaceInfo struct {
-	Id		string
 	Name		string
 	Uri		string
 	Membership	IArchitectBaseMembership
@@ -73,7 +71,7 @@ type IMembershipBaseMembership struct {
 
 // ArchitectMetaData contains all meta data concerning the Architect contract.
 var ArchitectMetaData = &bind.MetaData{
-	ABI: "[{\"type\":\"function\",\"name\":\"createSpace\",\"inputs\":[{\"name\":\"SpaceInfo\",\"type\":\"tuple\",\"internalType\":\"structIArchitectBase.SpaceInfo\",\"components\":[{\"name\":\"id\",\"type\":\"string\",\"internalType\":\"string\"},{\"name\":\"name\",\"type\":\"string\",\"internalType\":\"string\"},{\"name\":\"uri\",\"type\":\"string\",\"internalType\":\"string\"},{\"name\":\"membership\",\"type\":\"tuple\",\"internalType\":\"structIArchitectBase.Membership\",\"components\":[{\"name\":\"settings\",\"type\":\"tuple\",\"internalType\":\"structIMembershipBase.Membership\",\"components\":[{\"name\":\"name\",\"type\":\"string\",\"internalType\":\"string\"},{\"name\":\"symbol\",\"type\":\"string\",\"internalType\":\"string\"},{\"name\":\"price\",\"type\":\"uint256\",\"internalType\":\"uint256\"},{\"name\":\"maxSupply\",\"type\":\"uint256\",\"internalType\":\"uint256\"},{\"name\":\"duration\",\"type\":\"uint64\",\"internalType\":\"uint64\"},{\"name\":\"currency\",\"type\":\"address\",\"internalType\":\"address\"},{\"name\":\"feeRecipient\",\"type\":\"address\",\"internalType\":\"address\"},{\"name\":\"freeAllocation\",\"type\":\"uint256\",\"internalType\":\"uint256\"},{\"name\":\"pricingModule\",\"type\":\"address\",\"internalType\":\"address\"}]},{\"name\":\"requirements\",\"type\":\"tuple\",\"internalType\":\"structIArchitectBase.MembershipRequirements\",\"components\":[{\"name\":\"everyone\",\"type\":\"bool\",\"internalType\":\"bool\"},{\"name\":\"users\",\"type\":\"address[]\",\"internalType\":\"address[]\"},{\"name\":\"ruleData\",\"type\":\"tuple\",\"internalType\":\"structIRuleEntitlement.RuleData\",\"components\":[{\"name\":\"operations\",\"type\":\"tuple[]\",\"internalType\":\"structIRuleEntitlement.Operation[]\",\"components\":[{\"name\":\"opType\",\"type\":\"uint8\",\"internalType\":\"enumIRuleEntitlement.CombinedOperationType\"},{\"name\":\"index\",\"type\":\"uint8\",\"internalType\":\"uint8\"}]},{\"name\":\"checkOperations\",\"type\":\"tuple[]\",\"internalType\":\"structIRuleEntitlement.CheckOperation[]\",\"components\":[{\"name\":\"opType\",\"type\":\"uint8\",\"internalType\":\"enumIRuleEntitlement.CheckOperationType\"},{\"name\":\"chainId\",\"type\":\"uint256\",\"internalType\":\"uint256\"},{\"name\":\"contractAddress\",\"type\":\"address\",\"internalType\":\"address\"},{\"name\":\"threshold\",\"type\":\"uint256\",\"internalType\":\"uint256\"}]},{\"name\":\"logicalOperations\",\"type\":\"tuple[]\",\"internalType\":\"structIRuleEntitlement.LogicalOperation[]\",\"components\":[{\"name\":\"logOpType\",\"type\":\"uint8\",\"internalType\":\"enumIRuleEntitlement.LogicalOperationType\"},{\"name\":\"leftOperationIndex\",\"type\":\"uint8\",\"internalType\":\"uint8\"},{\"name\":\"rightOperationIndex\",\"type\":\"uint8\",\"internalType\":\"uint8\"}]}]}]},{\"name\":\"permissions\",\"type\":\"string[]\",\"internalType\":\"string[]\"}]},{\"name\":\"channel\",\"type\":\"tuple\",\"internalType\":\"structIArchitectBase.ChannelInfo\",\"components\":[{\"name\":\"id\",\"type\":\"string\",\"internalType\":\"string\"},{\"name\":\"metadata\",\"type\":\"string\",\"internalType\":\"string\"}]}]}],\"outputs\":[{\"name\":\"\",\"type\":\"address\",\"internalType\":\"address\"}],\"stateMutability\":\"nonpayable\"},{\"type\":\"function\",\"name\":\"getSpaceArchitectImplementations\",\"inputs\":[],\"outputs\":[{\"name\":\"ownerTokenImplementation\",\"type\":\"address\",\"internalType\":\"address\"},{\"name\":\"userEntitlementImplementation\",\"type\":\"address\",\"internalType\":\"contractIUserEntitlement\"},{\"name\":\"ruleEntitlementImplementation\",\"type\":\"address\",\"internalType\":\"contractIRuleEntitlement\"},{\"name\":\"walletLink\",\"type\":\"address\",\"internalType\":\"contractIWalletLink\"}],\"stateMutability\":\"view\"},{\"type\":\"function\",\"name\":\"getSpaceById\",\"inputs\":[{\"name\":\"spaceId\",\"type\":\"string\",\"internalType\":\"string\"}],\"outputs\":[{\"name\":\"\",\"type\":\"address\",\"internalType\":\"address\"}],\"stateMutability\":\"view\"},{\"type\":\"function\",\"name\":\"getTokenIdBySpace\",\"inputs\":[{\"name\":\"space\",\"type\":\"address\",\"internalType\":\"address\"}],\"outputs\":[{\"name\":\"\",\"type\":\"uint256\",\"internalType\":\"uint256\"}],\"stateMutability\":\"view\"},{\"type\":\"function\",\"name\":\"getTokenIdBySpaceId\",\"inputs\":[{\"name\":\"spaceId\",\"type\":\"string\",\"internalType\":\"string\"}],\"outputs\":[{\"name\":\"\",\"type\":\"uint256\",\"internalType\":\"uint256\"}],\"stateMutability\":\"view\"},{\"type\":\"function\",\"name\":\"isSpace\",\"inputs\":[{\"name\":\"space\",\"type\":\"address\",\"internalType\":\"address\"}],\"outputs\":[{\"name\":\"\",\"type\":\"bool\",\"internalType\":\"bool\"}],\"stateMutability\":\"view\"},{\"type\":\"function\",\"name\":\"setSpaceArchitectImplementations\",\"inputs\":[{\"name\":\"ownerTokenImplementation\",\"type\":\"address\",\"internalType\":\"address\"},{\"name\":\"userEntitlementImplementation\",\"type\":\"address\",\"internalType\":\"contractIUserEntitlement\"},{\"name\":\"ruleEntitlementImplementation\",\"type\":\"address\",\"internalType\":\"contractIRuleEntitlement\"},{\"name\":\"walletLink\",\"type\":\"address\",\"internalType\":\"contractIWalletLink\"}],\"outputs\":[],\"stateMutability\":\"nonpayable\"},{\"type\":\"event\",\"name\":\"SpaceCreated\",\"inputs\":[{\"name\":\"owner\",\"type\":\"address\",\"indexed\":true,\"internalType\":\"address\"},{\"name\":\"spaceId\",\"type\":\"uint256\",\"indexed\":true,\"internalType\":\"uint256\"},{\"name\":\"space\",\"type\":\"address\",\"indexed\":false,\"internalType\":\"address\"}],\"anonymous\":false},{\"type\":\"error\",\"name\":\"Architect__InvalidAddress\",\"inputs\":[]},{\"type\":\"error\",\"name\":\"Architect__InvalidNetworkId\",\"inputs\":[]},{\"type\":\"error\",\"name\":\"Architect__InvalidStringLength\",\"inputs\":[]},{\"type\":\"error\",\"name\":\"Architect__NotContract\",\"inputs\":[]}]",
+	ABI: "[{\"type\":\"function\",\"name\":\"createSpace\",\"inputs\":[{\"name\":\"SpaceInfo\",\"type\":\"tuple\",\"internalType\":\"structIArchitectBase.SpaceInfo\",\"components\":[{\"name\":\"name\",\"type\":\"string\",\"internalType\":\"string\"},{\"name\":\"uri\",\"type\":\"string\",\"internalType\":\"string\"},{\"name\":\"membership\",\"type\":\"tuple\",\"internalType\":\"structIArchitectBase.Membership\",\"components\":[{\"name\":\"settings\",\"type\":\"tuple\",\"internalType\":\"structIMembershipBase.Membership\",\"components\":[{\"name\":\"name\",\"type\":\"string\",\"internalType\":\"string\"},{\"name\":\"symbol\",\"type\":\"string\",\"internalType\":\"string\"},{\"name\":\"price\",\"type\":\"uint256\",\"internalType\":\"uint256\"},{\"name\":\"maxSupply\",\"type\":\"uint256\",\"internalType\":\"uint256\"},{\"name\":\"duration\",\"type\":\"uint64\",\"internalType\":\"uint64\"},{\"name\":\"currency\",\"type\":\"address\",\"internalType\":\"address\"},{\"name\":\"feeRecipient\",\"type\":\"address\",\"internalType\":\"address\"},{\"name\":\"freeAllocation\",\"type\":\"uint256\",\"internalType\":\"uint256\"},{\"name\":\"pricingModule\",\"type\":\"address\",\"internalType\":\"address\"}]},{\"name\":\"requirements\",\"type\":\"tuple\",\"internalType\":\"structIArchitectBase.MembershipRequirements\",\"components\":[{\"name\":\"everyone\",\"type\":\"bool\",\"internalType\":\"bool\"},{\"name\":\"users\",\"type\":\"address[]\",\"internalType\":\"address[]\"},{\"name\":\"ruleData\",\"type\":\"tuple\",\"internalType\":\"structIRuleEntitlement.RuleData\",\"components\":[{\"name\":\"operations\",\"type\":\"tuple[]\",\"internalType\":\"structIRuleEntitlement.Operation[]\",\"components\":[{\"name\":\"opType\",\"type\":\"uint8\",\"internalType\":\"enumIRuleEntitlement.CombinedOperationType\"},{\"name\":\"index\",\"type\":\"uint8\",\"internalType\":\"uint8\"}]},{\"name\":\"checkOperations\",\"type\":\"tuple[]\",\"internalType\":\"structIRuleEntitlement.CheckOperation[]\",\"components\":[{\"name\":\"opType\",\"type\":\"uint8\",\"internalType\":\"enumIRuleEntitlement.CheckOperationType\"},{\"name\":\"chainId\",\"type\":\"uint256\",\"internalType\":\"uint256\"},{\"name\":\"contractAddress\",\"type\":\"address\",\"internalType\":\"address\"},{\"name\":\"threshold\",\"type\":\"uint256\",\"internalType\":\"uint256\"}]},{\"name\":\"logicalOperations\",\"type\":\"tuple[]\",\"internalType\":\"structIRuleEntitlement.LogicalOperation[]\",\"components\":[{\"name\":\"logOpType\",\"type\":\"uint8\",\"internalType\":\"enumIRuleEntitlement.LogicalOperationType\"},{\"name\":\"leftOperationIndex\",\"type\":\"uint8\",\"internalType\":\"uint8\"},{\"name\":\"rightOperationIndex\",\"type\":\"uint8\",\"internalType\":\"uint8\"}]}]}]},{\"name\":\"permissions\",\"type\":\"string[]\",\"internalType\":\"string[]\"}]},{\"name\":\"channel\",\"type\":\"tuple\",\"internalType\":\"structIArchitectBase.ChannelInfo\",\"components\":[{\"name\":\"metadata\",\"type\":\"string\",\"internalType\":\"string\"}]}]}],\"outputs\":[{\"name\":\"\",\"type\":\"address\",\"internalType\":\"address\"}],\"stateMutability\":\"nonpayable\"},{\"type\":\"function\",\"name\":\"getSpaceArchitectImplementations\",\"inputs\":[],\"outputs\":[{\"name\":\"ownerTokenImplementation\",\"type\":\"address\",\"internalType\":\"contractISpaceOwner\"},{\"name\":\"userEntitlementImplementation\",\"type\":\"address\",\"internalType\":\"contractIUserEntitlement\"},{\"name\":\"ruleEntitlementImplementation\",\"type\":\"address\",\"internalType\":\"contractIRuleEntitlement\"},{\"name\":\"walletLink\",\"type\":\"address\",\"internalType\":\"contractIWalletLink\"}],\"stateMutability\":\"view\"},{\"type\":\"function\",\"name\":\"getSpaceByTokenId\",\"inputs\":[{\"name\":\"tokenId\",\"type\":\"uint256\",\"internalType\":\"uint256\"}],\"outputs\":[{\"name\":\"space\",\"type\":\"address\",\"internalType\":\"address\"}],\"stateMutability\":\"view\"},{\"type\":\"function\",\"name\":\"getTokenIdBySpace\",\"inputs\":[{\"name\":\"space\",\"type\":\"address\",\"internalType\":\"address\"}],\"outputs\":[{\"name\":\"\",\"type\":\"uint256\",\"internalType\":\"uint256\"}],\"stateMutability\":\"view\"},{\"type\":\"function\",\"name\":\"setSpaceArchitectImplementations\",\"inputs\":[{\"name\":\"ownerTokenImplementation\",\"type\":\"address\",\"internalType\":\"contractISpaceOwner\"},{\"name\":\"userEntitlementImplementation\",\"type\":\"address\",\"internalType\":\"contractIUserEntitlement\"},{\"name\":\"ruleEntitlementImplementation\",\"type\":\"address\",\"internalType\":\"contractIRuleEntitlement\"},{\"name\":\"walletLink\",\"type\":\"address\",\"internalType\":\"contractIWalletLink\"}],\"outputs\":[],\"stateMutability\":\"nonpayable\"},{\"type\":\"event\",\"name\":\"SpaceCreated\",\"inputs\":[{\"name\":\"owner\",\"type\":\"address\",\"indexed\":true,\"internalType\":\"address\"},{\"name\":\"tokenId\",\"type\":\"uint256\",\"indexed\":true,\"internalType\":\"uint256\"},{\"name\":\"space\",\"type\":\"address\",\"indexed\":true,\"internalType\":\"address\"}],\"anonymous\":false},{\"type\":\"error\",\"name\":\"Architect__InvalidAddress\",\"inputs\":[]},{\"type\":\"error\",\"name\":\"Architect__InvalidNetworkId\",\"inputs\":[]},{\"type\":\"error\",\"name\":\"Architect__InvalidStringLength\",\"inputs\":[]},{\"type\":\"error\",\"name\":\"Architect__NotContract\",\"inputs\":[]}]",
 }
 
 // ArchitectABI is the input ABI used to generate the binding from.
@@ -277,12 +275,12 @@ func (_Architect *ArchitectCallerSession) GetSpaceArchitectImplementations() (st
 	return _Architect.Contract.GetSpaceArchitectImplementations(&_Architect.CallOpts)
 }
 
-// GetSpaceById is a free data retrieval call binding the contract method 0xf181942a.
+// GetSpaceByTokenId is a free data retrieval call binding the contract method 0x673f0dd5.
 //
-// Solidity: function getSpaceById(string spaceId) view returns(address)
-func (_Architect *ArchitectCaller) GetSpaceById(opts *bind.CallOpts, spaceId string) (common.Address, error) {
+// Solidity: function getSpaceByTokenId(uint256 tokenId) view returns(address space)
+func (_Architect *ArchitectCaller) GetSpaceByTokenId(opts *bind.CallOpts, tokenId *big.Int) (common.Address, error) {
 	var out []interface{}
-	err := _Architect.contract.Call(opts, &out, "getSpaceById", spaceId)
+	err := _Architect.contract.Call(opts, &out, "getSpaceByTokenId", tokenId)
 
 	if err != nil {
 		return *new(common.Address), err
@@ -294,18 +292,18 @@ func (_Architect *ArchitectCaller) GetSpaceById(opts *bind.CallOpts, spaceId str
 
 }
 
-// GetSpaceById is a free data retrieval call binding the contract method 0xf181942a.
+// GetSpaceByTokenId is a free data retrieval call binding the contract method 0x673f0dd5.
 //
-// Solidity: function getSpaceById(string spaceId) view returns(address)
-func (_Architect *ArchitectSession) GetSpaceById(spaceId string) (common.Address, error) {
-	return _Architect.Contract.GetSpaceById(&_Architect.CallOpts, spaceId)
+// Solidity: function getSpaceByTokenId(uint256 tokenId) view returns(address space)
+func (_Architect *ArchitectSession) GetSpaceByTokenId(tokenId *big.Int) (common.Address, error) {
+	return _Architect.Contract.GetSpaceByTokenId(&_Architect.CallOpts, tokenId)
 }
 
-// GetSpaceById is a free data retrieval call binding the contract method 0xf181942a.
+// GetSpaceByTokenId is a free data retrieval call binding the contract method 0x673f0dd5.
 //
-// Solidity: function getSpaceById(string spaceId) view returns(address)
-func (_Architect *ArchitectCallerSession) GetSpaceById(spaceId string) (common.Address, error) {
-	return _Architect.Contract.GetSpaceById(&_Architect.CallOpts, spaceId)
+// Solidity: function getSpaceByTokenId(uint256 tokenId) view returns(address space)
+func (_Architect *ArchitectCallerSession) GetSpaceByTokenId(tokenId *big.Int) (common.Address, error) {
+	return _Architect.Contract.GetSpaceByTokenId(&_Architect.CallOpts, tokenId)
 }
 
 // GetTokenIdBySpace is a free data retrieval call binding the contract method 0xc0bc6796.
@@ -339,85 +337,23 @@ func (_Architect *ArchitectCallerSession) GetTokenIdBySpace(space common.Address
 	return _Architect.Contract.GetTokenIdBySpace(&_Architect.CallOpts, space)
 }
 
-// GetTokenIdBySpaceId is a free data retrieval call binding the contract method 0xbed8f27c.
+// CreateSpace is a paid mutator transaction binding the contract method 0x7d8c4522.
 //
-// Solidity: function getTokenIdBySpaceId(string spaceId) view returns(uint256)
-func (_Architect *ArchitectCaller) GetTokenIdBySpaceId(opts *bind.CallOpts, spaceId string) (*big.Int, error) {
-	var out []interface{}
-	err := _Architect.contract.Call(opts, &out, "getTokenIdBySpaceId", spaceId)
-
-	if err != nil {
-		return *new(*big.Int), err
-	}
-
-	out0 := *abi.ConvertType(out[0], new(*big.Int)).(**big.Int)
-
-	return out0, err
-
-}
-
-// GetTokenIdBySpaceId is a free data retrieval call binding the contract method 0xbed8f27c.
-//
-// Solidity: function getTokenIdBySpaceId(string spaceId) view returns(uint256)
-func (_Architect *ArchitectSession) GetTokenIdBySpaceId(spaceId string) (*big.Int, error) {
-	return _Architect.Contract.GetTokenIdBySpaceId(&_Architect.CallOpts, spaceId)
-}
-
-// GetTokenIdBySpaceId is a free data retrieval call binding the contract method 0xbed8f27c.
-//
-// Solidity: function getTokenIdBySpaceId(string spaceId) view returns(uint256)
-func (_Architect *ArchitectCallerSession) GetTokenIdBySpaceId(spaceId string) (*big.Int, error) {
-	return _Architect.Contract.GetTokenIdBySpaceId(&_Architect.CallOpts, spaceId)
-}
-
-// IsSpace is a free data retrieval call binding the contract method 0x33518c80.
-//
-// Solidity: function isSpace(address space) view returns(bool)
-func (_Architect *ArchitectCaller) IsSpace(opts *bind.CallOpts, space common.Address) (bool, error) {
-	var out []interface{}
-	err := _Architect.contract.Call(opts, &out, "isSpace", space)
-
-	if err != nil {
-		return *new(bool), err
-	}
-
-	out0 := *abi.ConvertType(out[0], new(bool)).(*bool)
-
-	return out0, err
-
-}
-
-// IsSpace is a free data retrieval call binding the contract method 0x33518c80.
-//
-// Solidity: function isSpace(address space) view returns(bool)
-func (_Architect *ArchitectSession) IsSpace(space common.Address) (bool, error) {
-	return _Architect.Contract.IsSpace(&_Architect.CallOpts, space)
-}
-
-// IsSpace is a free data retrieval call binding the contract method 0x33518c80.
-//
-// Solidity: function isSpace(address space) view returns(bool)
-func (_Architect *ArchitectCallerSession) IsSpace(space common.Address) (bool, error) {
-	return _Architect.Contract.IsSpace(&_Architect.CallOpts, space)
-}
-
-// CreateSpace is a paid mutator transaction binding the contract method 0xe530ee5c.
-//
-// Solidity: function createSpace((string,string,string,((string,string,uint256,uint256,uint64,address,address,uint256,address),(bool,address[],((uint8,uint8)[],(uint8,uint256,address,uint256)[],(uint8,uint8,uint8)[])),string[]),(string,string)) SpaceInfo) returns(address)
+// Solidity: function createSpace((string,string,((string,string,uint256,uint256,uint64,address,address,uint256,address),(bool,address[],((uint8,uint8)[],(uint8,uint256,address,uint256)[],(uint8,uint8,uint8)[])),string[]),(string)) SpaceInfo) returns(address)
 func (_Architect *ArchitectTransactor) CreateSpace(opts *bind.TransactOpts, SpaceInfo IArchitectBaseSpaceInfo) (*types.Transaction, error) {
 	return _Architect.contract.Transact(opts, "createSpace", SpaceInfo)
 }
 
-// CreateSpace is a paid mutator transaction binding the contract method 0xe530ee5c.
+// CreateSpace is a paid mutator transaction binding the contract method 0x7d8c4522.
 //
-// Solidity: function createSpace((string,string,string,((string,string,uint256,uint256,uint64,address,address,uint256,address),(bool,address[],((uint8,uint8)[],(uint8,uint256,address,uint256)[],(uint8,uint8,uint8)[])),string[]),(string,string)) SpaceInfo) returns(address)
+// Solidity: function createSpace((string,string,((string,string,uint256,uint256,uint64,address,address,uint256,address),(bool,address[],((uint8,uint8)[],(uint8,uint256,address,uint256)[],(uint8,uint8,uint8)[])),string[]),(string)) SpaceInfo) returns(address)
 func (_Architect *ArchitectSession) CreateSpace(SpaceInfo IArchitectBaseSpaceInfo) (*types.Transaction, error) {
 	return _Architect.Contract.CreateSpace(&_Architect.TransactOpts, SpaceInfo)
 }
 
-// CreateSpace is a paid mutator transaction binding the contract method 0xe530ee5c.
+// CreateSpace is a paid mutator transaction binding the contract method 0x7d8c4522.
 //
-// Solidity: function createSpace((string,string,string,((string,string,uint256,uint256,uint64,address,address,uint256,address),(bool,address[],((uint8,uint8)[],(uint8,uint256,address,uint256)[],(uint8,uint8,uint8)[])),string[]),(string,string)) SpaceInfo) returns(address)
+// Solidity: function createSpace((string,string,((string,string,uint256,uint256,uint64,address,address,uint256,address),(bool,address[],((uint8,uint8)[],(uint8,uint256,address,uint256)[],(uint8,uint8,uint8)[])),string[]),(string)) SpaceInfo) returns(address)
 func (_Architect *ArchitectTransactorSession) CreateSpace(SpaceInfo IArchitectBaseSpaceInfo) (*types.Transaction, error) {
 	return _Architect.Contract.CreateSpace(&_Architect.TransactOpts, SpaceInfo)
 }
@@ -513,26 +449,30 @@ func (it *ArchitectSpaceCreatedIterator) Close() error {
 // ArchitectSpaceCreated represents a SpaceCreated event raised by the Architect contract.
 type ArchitectSpaceCreated struct {
 	Owner	common.Address
-	SpaceId	*big.Int
+	TokenId	*big.Int
 	Space	common.Address
 	Raw	types.Log	// Blockchain specific contextual infos
 }
 
 // FilterSpaceCreated is a free log retrieval operation binding the contract event 0xe50fc3942f8a2d7e5a7c8fb9488499eba5255b41e18bc3f1b4791402976d1d0b.
 //
-// Solidity: event SpaceCreated(address indexed owner, uint256 indexed spaceId, address space)
-func (_Architect *ArchitectFilterer) FilterSpaceCreated(opts *bind.FilterOpts, owner []common.Address, spaceId []*big.Int) (*ArchitectSpaceCreatedIterator, error) {
+// Solidity: event SpaceCreated(address indexed owner, uint256 indexed tokenId, address indexed space)
+func (_Architect *ArchitectFilterer) FilterSpaceCreated(opts *bind.FilterOpts, owner []common.Address, tokenId []*big.Int, space []common.Address) (*ArchitectSpaceCreatedIterator, error) {
 
 	var ownerRule []interface{}
 	for _, ownerItem := range owner {
 		ownerRule = append(ownerRule, ownerItem)
 	}
-	var spaceIdRule []interface{}
-	for _, spaceIdItem := range spaceId {
-		spaceIdRule = append(spaceIdRule, spaceIdItem)
+	var tokenIdRule []interface{}
+	for _, tokenIdItem := range tokenId {
+		tokenIdRule = append(tokenIdRule, tokenIdItem)
+	}
+	var spaceRule []interface{}
+	for _, spaceItem := range space {
+		spaceRule = append(spaceRule, spaceItem)
 	}
 
-	logs, sub, err := _Architect.contract.FilterLogs(opts, "SpaceCreated", ownerRule, spaceIdRule)
+	logs, sub, err := _Architect.contract.FilterLogs(opts, "SpaceCreated", ownerRule, tokenIdRule, spaceRule)
 	if err != nil {
 		return nil, err
 	}
@@ -541,19 +481,23 @@ func (_Architect *ArchitectFilterer) FilterSpaceCreated(opts *bind.FilterOpts, o
 
 // WatchSpaceCreated is a free log subscription operation binding the contract event 0xe50fc3942f8a2d7e5a7c8fb9488499eba5255b41e18bc3f1b4791402976d1d0b.
 //
-// Solidity: event SpaceCreated(address indexed owner, uint256 indexed spaceId, address space)
-func (_Architect *ArchitectFilterer) WatchSpaceCreated(opts *bind.WatchOpts, sink chan<- *ArchitectSpaceCreated, owner []common.Address, spaceId []*big.Int) (event.Subscription, error) {
+// Solidity: event SpaceCreated(address indexed owner, uint256 indexed tokenId, address indexed space)
+func (_Architect *ArchitectFilterer) WatchSpaceCreated(opts *bind.WatchOpts, sink chan<- *ArchitectSpaceCreated, owner []common.Address, tokenId []*big.Int, space []common.Address) (event.Subscription, error) {
 
 	var ownerRule []interface{}
 	for _, ownerItem := range owner {
 		ownerRule = append(ownerRule, ownerItem)
 	}
-	var spaceIdRule []interface{}
-	for _, spaceIdItem := range spaceId {
-		spaceIdRule = append(spaceIdRule, spaceIdItem)
+	var tokenIdRule []interface{}
+	for _, tokenIdItem := range tokenId {
+		tokenIdRule = append(tokenIdRule, tokenIdItem)
+	}
+	var spaceRule []interface{}
+	for _, spaceItem := range space {
+		spaceRule = append(spaceRule, spaceItem)
 	}
 
-	logs, sub, err := _Architect.contract.WatchLogs(opts, "SpaceCreated", ownerRule, spaceIdRule)
+	logs, sub, err := _Architect.contract.WatchLogs(opts, "SpaceCreated", ownerRule, tokenIdRule, spaceRule)
 	if err != nil {
 		return nil, err
 	}
@@ -587,7 +531,7 @@ func (_Architect *ArchitectFilterer) WatchSpaceCreated(opts *bind.WatchOpts, sin
 
 // ParseSpaceCreated is a log parse operation binding the contract event 0xe50fc3942f8a2d7e5a7c8fb9488499eba5255b41e18bc3f1b4791402976d1d0b.
 //
-// Solidity: event SpaceCreated(address indexed owner, uint256 indexed spaceId, address space)
+// Solidity: event SpaceCreated(address indexed owner, uint256 indexed tokenId, address indexed space)
 func (_Architect *ArchitectFilterer) ParseSpaceCreated(log types.Log) (*ArchitectSpaceCreated, error) {
 	event := new(ArchitectSpaceCreated)
 	if err := _Architect.contract.UnpackLog(event, "SpaceCreated", log); err != nil {

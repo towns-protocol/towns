@@ -9,8 +9,9 @@ import {EnumerableSet} from "@openzeppelin/contracts/utils/structs/EnumerableSet
 // contracts
 
 library MockUserEntitlementStorage {
+  // keccak256(abi.encode(uint256(keccak256("mock.user.entitlement.storage")) - 1)) & ~bytes32(uint256(0xff))
   bytes32 internal constant STORAGE_SLOT =
-    keccak256("towns.contracts.storage.MockEntitlement");
+    0x045054bc32f63ca45ac0a6e49d4170a95e9d351982702d2827dead877b98f600;
 
   struct Entitlement {
     uint256 roleId;

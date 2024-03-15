@@ -58,13 +58,12 @@ contract SpaceOwner is
 
   /// @inheritdoc ISpaceOwner
   function mintSpace(
-    string memory networkId,
     string memory name,
     string memory uri,
     address space
   ) external onlyFactory returns (uint256 tokenId) {
     tokenId = _nextTokenId();
-    _mintSpace(networkId, name, uri, tokenId, space);
+    _mintSpace(name, uri, tokenId, space);
     _mint(msg.sender, 1);
   }
 

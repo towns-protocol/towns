@@ -6,6 +6,7 @@ import (
 
 	"github.com/river-build/river/core/node/config"
 	"github.com/river-build/river/core/node/infra"
+	"github.com/river-build/river/core/node/shared"
 
 	"github.com/ethereum/go-ethereum/accounts/abi/bind"
 	"github.com/ethereum/go-ethereum/common"
@@ -15,7 +16,7 @@ type Space struct {
 	address      common.Address
 	entitlements Entitlements
 	pausable     Pausable
-	channels     map[string]Channels
+	channels     map[shared.StreamId]Channels
 	channelsLock sync.Mutex
 }
 
@@ -24,7 +25,7 @@ type SpaceContractV3 struct {
 	version   string
 	backend   bind.ContractBackend
 
-	spaces     map[string]*Space
+	spaces     map[shared.StreamId]*Space
 	spacesLock sync.Mutex
 }
 
@@ -47,7 +48,7 @@ func NewSpaceContractV3(
 		architect: architect,
 		version:   architectCfg.Version,
 		backend:   backend,
-		spaces:    make(map[string]*Space),
+		spaces:    make(map[shared.StreamId]*Space),
 	}
 
 	return spaceContract, nil
@@ -55,12 +56,12 @@ func NewSpaceContractV3(
 
 func (sc *SpaceContractV3) IsEntitledToSpace(
 	ctx context.Context,
-	spaceNetworkId string,
+	spaceId shared.StreamId,
 	user common.Address,
 	permission Permission,
 ) (bool, error) {
 	// get the space entitlements and check if user is entitled.
-	space, err := sc.getSpace(ctx, spaceNetworkId)
+	space, err := sc.getSpace(ctx, spaceId)
 	if err != nil || space == nil {
 		return false, err
 	}
@@ -74,28 +75,28 @@ func (sc *SpaceContractV3) IsEntitledToSpace(
 
 func (sc *SpaceContractV3) IsEntitledToChannel(
 	ctx context.Context,
-	spaceNetworkId string,
-	channelNetworkId string,
+	spaceId shared.StreamId,
+	channelId shared.StreamId,
 	user common.Address,
 	permission Permission,
 ) (bool, error) {
 	// get the space entitlements and check if user is entitled to the channel
-	space, err := sc.getSpace(ctx, spaceNetworkId)
+	space, err := sc.getSpace(ctx, spaceId)
 	if err != nil || space == nil {
 		return false, err
 	}
 	// channel entitlement check
 	isEntitled, err := space.entitlements.IsEntitledToChannel(
 		nil,
-		channelNetworkId,
+		channelId.ByteArray(),
 		user,
 		permission.String(),
 	)
 	return isEntitled, err
 }
 
-func (sc *SpaceContractV3) IsSpaceDisabled(ctx context.Context, spaceNetworkId string) (bool, error) {
-	space, err := sc.getSpace(ctx, spaceNetworkId)
+func (sc *SpaceContractV3) IsSpaceDisabled(ctx context.Context, spaceId shared.StreamId) (bool, error) {
+	space, err := sc.getSpace(ctx, spaceId)
 	if err != nil || space == nil {
 		return false, err
 	}
@@ -104,21 +105,21 @@ func (sc *SpaceContractV3) IsSpaceDisabled(ctx context.Context, spaceNetworkId s
 	return isDisabled, err
 }
 
-func (sc *SpaceContractV3) IsChannelDisabled(ctx context.Context, spaceNetworkId string, channelNetworkId string) (bool, error) {
-	channel, err := sc.getChannel(ctx, spaceNetworkId, channelNetworkId)
+func (sc *SpaceContractV3) IsChannelDisabled(ctx context.Context, spaceId shared.StreamId, channelId shared.StreamId) (bool, error) {
+	channel, err := sc.getChannel(ctx, spaceId, channelId)
 	if err != nil || channel == nil {
 		return false, err
 	}
-	isDisabled, err := channel.IsDisabled(nil, channelNetworkId)
+	isDisabled, err := channel.IsDisabled(nil, channelId)
 	return isDisabled, err
 }
 
-func (sc *SpaceContractV3) getSpace(ctx context.Context, spaceId string) (*Space, error) {
+func (sc *SpaceContractV3) getSpace(ctx context.Context, spaceId shared.StreamId) (*Space, error) {
 	sc.spacesLock.Lock()
 	defer sc.spacesLock.Unlock()
 	if sc.spaces[spaceId] == nil {
 		// use the networkId to fetch the space's contract address
-		address, err := sc.architect.GetSpaceById(nil, spaceId)
+		address, err := shared.AddressFromSpaceId(spaceId)
 		if err != nil || address == EMPTY_ADDRESS {
 			return nil, err
 		}
@@ -135,25 +136,25 @@ func (sc *SpaceContractV3) getSpace(ctx context.Context, spaceId string) (*Space
 			address:      address,
 			entitlements: entitlements,
 			pausable:     pausable,
-			channels:     make(map[string]Channels),
+			channels:     make(map[shared.StreamId]Channels),
 		}
 	}
 	return sc.spaces[spaceId], nil
 }
 
-func (sc *SpaceContractV3) getChannel(ctx context.Context, spaceNetworkId string, channelNetworkId string) (Channels, error) {
-	space, err := sc.getSpace(ctx, spaceNetworkId)
+func (sc *SpaceContractV3) getChannel(ctx context.Context, spaceId shared.StreamId, channelId shared.StreamId) (Channels, error) {
+	space, err := sc.getSpace(ctx, spaceId)
 	if err != nil || space == nil {
 		return nil, err
 	}
 	space.channelsLock.Lock()
 	defer space.channelsLock.Unlock()
-	if space.channels[channelNetworkId] == nil {
+	if space.channels[channelId] == nil {
 		channel, err := NewChannels(ctx, sc.version, space.address, sc.backend)
 		if err != nil {
 			return nil, err
 		}
-		space.channels[channelNetworkId] = channel
+		space.channels[channelId] = channel
 	}
-	return space.channels[channelNetworkId], nil
+	return space.channels[channelId], nil
 }

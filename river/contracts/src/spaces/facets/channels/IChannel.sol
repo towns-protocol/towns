@@ -11,7 +11,7 @@ interface IChannelBase {
   //                           Structs
   // =============================================================
   struct Channel {
-    string id;
+    bytes32 id;
     bool disabled;
     string metadata;
     uint256[] roleIds;
@@ -20,17 +20,17 @@ interface IChannelBase {
   // =============================================================
   //                           Events
   // =============================================================
-  event ChannelCreated(address indexed caller, string channelId);
-  event ChannelUpdated(address indexed caller, string channelId);
-  event ChannelRemoved(address indexed caller, string channelId);
+  event ChannelCreated(address indexed caller, bytes32 channelId);
+  event ChannelUpdated(address indexed caller, bytes32 channelId);
+  event ChannelRemoved(address indexed caller, bytes32 channelId);
   event ChannelRoleAdded(
     address indexed caller,
-    string channelId,
+    bytes32 channelId,
     uint256 roleId
   );
   event ChannelRoleRemoved(
     address indexed caller,
-    string channelId,
+    bytes32 channelId,
     uint256 roleId
   );
 }
@@ -41,7 +41,7 @@ interface IChannel is IChannelBase {
   /// @param metadata the metadata of the channel
   /// @param roleIds the roleIds to add to the channel
   function createChannel(
-    string memory channelId,
+    bytes32 channelId,
     string memory metadata,
     uint256[] memory roleIds
   ) external;
@@ -50,7 +50,7 @@ interface IChannel is IChannelBase {
   /// @param channelId the channelId to get
   /// @return channel the channel
   function getChannel(
-    string memory channelId
+    bytes32 channelId
   ) external view returns (Channel memory channel);
 
   /// @notice gets all channels
@@ -62,32 +62,29 @@ interface IChannel is IChannelBase {
   /// @param metadata the new metadata of the channel
   /// @param disabled whether or not the channel is disabled
   function updateChannel(
-    string memory channelId,
+    bytes32 channelId,
     string memory metadata,
     bool disabled
   ) external;
 
   /// @notice removes a channel
   /// @param channelId the channelId to remove
-  function removeChannel(string memory channelId) external;
+  function removeChannel(bytes32 channelId) external;
 
   /// @notice gets all roles for a channel
   /// @param channelId the channelId to get the roles for
   /// @return roleIds an array of roleIds for the channel
   function getRolesByChannel(
-    string calldata channelId
+    bytes32 channelId
   ) external view returns (uint256[] memory roleIds);
 
   /// @notice adds a role to a channel
   /// @param channelId the channelId to add the role to
   /// @param roleId the roleId to add to the channel
-  function addRoleToChannel(string calldata channelId, uint256 roleId) external;
+  function addRoleToChannel(bytes32 channelId, uint256 roleId) external;
 
   /// @notice removes a role from a channel
   /// @param channelId the channelId to remove the role from
   /// @param roleId the roleId to remove from the channel
-  function removeRoleFromChannel(
-    string calldata channelId,
-    uint256 roleId
-  ) external;
+  function removeRoleFromChannel(bytes32 channelId, uint256 roleId) external;
 }

@@ -169,7 +169,7 @@ contract DeploySpaceFactory is DiamondDeployer {
     initDatas[index++] = introspectionHelper.makeInitData("");
     initDatas[index++] = abi.encodeWithSelector(
       architectHelper.initializer(),
-      spaceOwner,
+      spaceOwner, // spaceOwner
       userEntitlement, // userEntitlement
       ruleEntitlement, // ruleEntitlement
       walletLink // walletLink

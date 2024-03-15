@@ -10,7 +10,6 @@ import {TestUtils} from "contracts/test/utils/TestUtils.sol";
 import {MerkleTree} from "contracts/test/utils/MerkleTree.sol";
 import {IERC721Receiver} from "@openzeppelin/contracts/token/ERC721/IERC721Receiver.sol";
 import {Member} from "contracts/src/tokens/Member.sol";
-import {IMember} from "contracts/src/tokens/interfaces/IMember.sol";
 import {StdStorage, stdStorage} from "forge-std/StdStorage.sol";
 
 contract MemberTest is TestUtils {
@@ -89,7 +88,7 @@ contract MemberTest is TestUtils {
 
     bytes32[] memory proof = _merkle.getProof(_treeData, position);
 
-    vm.expectRevert(IMember.NotAllowed.selector);
+    vm.expectRevert(Member.NotAllowed.selector);
     _nft.privateMint{value: _NFT_PRICE}(account, allowance, proof);
   }
 
@@ -100,7 +99,7 @@ contract MemberTest is TestUtils {
 
     bytes32[] memory proof = _merkle.getProof(_treeData, position);
 
-    vm.expectRevert(IMember.InvalidProof.selector);
+    vm.expectRevert(Member.InvalidProof.selector);
     _nft.privateMint{value: _NFT_PRICE}(_randomAddress(), allowance, proof);
   }
 
@@ -151,7 +150,7 @@ contract MemberTest is TestUtils {
     _nft.startWaitlistMint();
     _nft.startPublicMint();
 
-    vm.expectRevert(IMember.MaxSupplyReached.selector);
+    vm.expectRevert(Member.MaxSupplyReached.selector);
     _nft.publicMint{value: _NFT_PRICE}(_randomAddress());
   }
 
@@ -201,7 +200,7 @@ contract MemberTest is TestUtils {
     assertEq(balanceFirstMint, 1);
 
     //This should fail
-    vm.expectRevert(IMember.AlreadyMinted.selector);
+    vm.expectRevert(Member.AlreadyMinted.selector);
     _nft.publicMint{value: _NFT_PRICE}(address(1));
   }
 

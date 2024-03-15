@@ -71,7 +71,7 @@ contract RuleEntitlement is
     SPACE_ADDRESS = _space;
   }
 
-  modifier onlyTown() {
+  modifier onlySpace() {
     if (_msgSender() != SPACE_ADDRESS) {
       revert Entitlement__NotAllowed();
     }
@@ -82,7 +82,7 @@ contract RuleEntitlement is
   /// @param newImplementation address of the new implementation
   function _authorizeUpgrade(
     address newImplementation
-  ) internal override onlyTown {}
+  ) internal override onlySpace {}
 
   function supportsInterface(
     bytes4 interfaceId
@@ -100,7 +100,7 @@ contract RuleEntitlement is
 
   // @inheritdoc IEntitlement
   function isEntitled(
-    string calldata, //channelId,
+    bytes32, //channelId,
     address[] memory, //user,
     bytes32 //permission
   ) external pure returns (bool) {
@@ -112,7 +112,7 @@ contract RuleEntitlement is
   function setEntitlement(
     uint256 roleId,
     bytes calldata entitlementData
-  ) external onlyTown {
+  ) external onlySpace {
     if (entitlementData.length == 0) {
       return;
     }

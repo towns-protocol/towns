@@ -388,9 +388,9 @@
       {
         "inputs": [
           {
-            "internalType": "string",
+            "internalType": "bytes32",
             "name": "channelId",
-            "type": "string"
+            "type": "bytes32"
           },
           {
             "internalType": "address[]",
@@ -573,9 +573,9 @@
             "_0": "whether this entitlement will require crosschain evaluation"
           }
         },
-        "isEntitled(string,address[],bytes32)": {
+        "isEntitled(bytes32,address[],bytes32)": {
           "params": {
-            "channelId": "id of the channel to check, if empty string, checks space",
+            "channelId": "id of the channel to check, if empty, checks space",
             "permission": "the permission to check",
             "user": "address of the user to check"
           },
@@ -612,7 +612,7 @@
         "isCrosschain()": {
           "notice": "some entitlements require cross chain evaluation and may not be executed directly from other contracts"
         },
-        "isEntitled(string,address[],bytes32)": {
+        "isEntitled(bytes32,address[],bytes32)": {
           "notice": "checks whether a user is has a given permission for a channel or a space"
         },
         "moduleType()": {
@@ -666,10 +666,10 @@
       "license": "MIT"
     },
     "contracts/src/spaces/entitlements/IEntitlement.sol": {
-      "keccak256": "0x6f8aab97a4fae69e2ee5dd1820e34dd742d634751d41d833b21fcce47c3df0bf",
+      "keccak256": "0xfb0b5432f19724a40e91cd841bc7306580c2a24574ed2734257e3fef24cabbc3",
       "urls": [
-        "bzz-raw://2d1501e3e3cebaeb556720bbf336233af28e9b76394302a1d97d555496ffd324",
-        "dweb:/ipfs/QmPhggvuU2uHwVnqYXjATiCNrLFXdN2KbF5tgNeo8s3Pui"
+        "bzz-raw://d2c0f0650e41b380dadf79b611c56c0807f44cfdbb984a3eafe776c87ab2c3b3",
+        "dweb:/ipfs/QmQLnsPQa1LWm5JSchGYngWYMdV4N9te6HrD8rMhWprGog"
       ],
       "license": "Apache-2.0"
     }

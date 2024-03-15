@@ -85,7 +85,7 @@ router.post('/api/transaction-limits', async (request: WorkerRequest, env: Env) 
                     { status: 200 },
                 )
             }
-            case 'joinTown': {
+            case 'joinSpace': {
                 // default: if a town exists and membership price is $0, any wallet address that exists in HNT Privy DB
                 // can mint a membership with no gas costs. Note; $0 price means either free allocation remaining or prepaid Town.
                 // more restrictive: only towns on HNT Labs curated whitelist can allow for Users to mint with no gas costs.
@@ -171,19 +171,10 @@ router.post('/api/sponsor-userop', async (request: WorkerRequest, env: Env) => {
                         },
                     )
                 }
-                if (!townId) {
-                    return new Response(
-                        toJson({ error: `Missing townId, cannot verify that town does not exist` }),
-                        {
-                            status: 400,
-                        },
-                    )
-                }
                 if (env.SKIP_TOWNID_VERIFICATION !== 'true') {
                     const verification = await verifyCreateSpace({
                         rootKeyAddress: rootKeyAddress,
                         senderAddress: userOperation.sender,
-                        townId: townId,
                         env,
                     })
                     if (!verification.verified) {
@@ -195,7 +186,7 @@ router.post('/api/sponsor-userop', async (request: WorkerRequest, env: Env) => {
                 }
                 break
             }
-            case 'joinTown': {
+            case 'joinSpace': {
                 if (!isHexString(rootKeyAddress)) {
                     return new Response(
                         toJson({ error: `rootKeyAddress ${rootKeyAddress} not valid` }),
@@ -394,7 +385,6 @@ router.post('/api/sponsor-userop', async (request: WorkerRequest, env: Env) => {
                     })
                     const verificationCreate = await verifyCreateSpace({
                         rootKeyAddress: rootKeyAddress,
-                        townId: townId,
                         senderAddress: userOperation.sender,
                         env,
                     })
@@ -418,7 +408,7 @@ router.post('/api/sponsor-userop', async (request: WorkerRequest, env: Env) => {
                 }
                 break
             }
-            case 'joinTown_linkWallet': {
+            case 'joinSpace_linkWallet': {
                 if (!isHexString(rootKeyAddress)) {
                     return new Response(
                         toJson({ error: `rootKeyAddress ${rootKeyAddress} not valid` }),

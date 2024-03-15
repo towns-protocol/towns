@@ -14,18 +14,18 @@ contract EntitlementGatedTest is TestUtils {
 
   address internal entitlement;
   address internal deployer;
-  address internal town;
+  address internal space;
 
   function setUp() public {
     deployer = _randomAddress();
-    town = _randomAddress();
+    space = _randomAddress();
 
     vm.startPrank(deployer);
     implementation = new RuleEntitlement();
     entitlement = address(
       new ERC1967Proxy(
         address(implementation),
-        abi.encodeCall(RuleEntitlement.initialize, (town))
+        abi.encodeCall(RuleEntitlement.initialize, (space))
       )
     );
 
@@ -81,7 +81,7 @@ contract EntitlementGatedTest is TestUtils {
 
     bytes memory encodedData = abi.encode(ruleData);
 
-    vm.prank(town);
+    vm.prank(space);
 
     ruleEntitlement.setEntitlement(0, encodedData);
     IRuleEntitlement.Operation[] memory ruleOperations = ruleEntitlement
@@ -156,7 +156,7 @@ contract EntitlementGatedTest is TestUtils {
       )
     );
     //rule.initialize();
-    vm.prank(town);
+    vm.prank(space);
     ruleEntitlement.setEntitlement(0, encodedData);
 
     IRuleEntitlement.Operation[] memory ruleOperations = ruleEntitlement

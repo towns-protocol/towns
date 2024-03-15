@@ -23,11 +23,11 @@ interface IEntitlementsManagerBase {
 }
 
 interface IEntitlementsManager is IEntitlementsManagerBase {
-  /// @notice Allows the town owner to add immutable entitlements to the town
+  /// @notice Allows the space owner to add immutable entitlements to the space
   /// @param entitlements The entitlements to add
   function addImmutableEntitlements(address[] memory entitlements) external;
 
-  /// @notice Checks if a user is entitled to a permission in the town
+  /// @notice Checks if a user is entitled to a permission in the space
   /// @param user The user to check
   /// @param permission The permission to check
   /// @return True if the user is entitled to the permission, false otherwise
@@ -49,7 +49,7 @@ interface IEntitlementsManager is IEntitlementsManagerBase {
   /// @param permission The permission to check
   /// @return True if the user is entitled to the permission, false otherwise
   function isEntitledToChannel(
-    string calldata channelId,
+    bytes32 channelId,
     address user,
     string calldata permission
   ) external view returns (bool);
@@ -58,26 +58,26 @@ interface IEntitlementsManager is IEntitlementsManagerBase {
   /// @param permission The permission to check
   /// @return RuleData describing the tests that must pass for the permission
   function getChannelEntitlements(
-    string calldata channelId,
+    bytes32 channelId,
     string calldata permission
   ) external view returns (IRuleEntitlement.RuleData memory);
 
-  /// @notice Adds an entitlement to the town
+  /// @notice Adds an entitlement to the space
   /// @param entitlement The entitlement to add
   function addEntitlementModule(address entitlement) external;
 
-  /// @notice Removes an entitlement from the town
+  /// @notice Removes an entitlement from the space
   /// @param entitlement The entitlement to remove
   function removeEntitlementModule(address entitlement) external;
 
-  /// @notice Gets an entitlement from the town
+  /// @notice Gets an entitlement from the space
   /// @param entitlement The entitlement to get
   /// @return entitlements The entitlement module address
   function getEntitlement(
     address entitlement
   ) external view returns (Entitlement memory entitlements);
 
-  /// @notice Gets all entitlements from the town
+  /// @notice Gets all entitlements from the space
   /// @return entitlements The entitlement modules
   function getEntitlements()
     external

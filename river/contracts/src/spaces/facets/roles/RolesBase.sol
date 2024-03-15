@@ -238,7 +238,7 @@ abstract contract RolesBase is IRolesBase {
       }
     }
 
-    string[] memory channelIds = ChannelService.getChannelIdsByRole(roleId);
+    bytes32[] memory channelIds = ChannelService.getChannelIdsByRole(roleId);
     uint256 channelIdsLen = channelIds.length;
 
     // remove role from channels

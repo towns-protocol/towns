@@ -3,7 +3,7 @@
  */
 
 import { Client } from './client'
-import { makeDonePromise, makeTestClient } from './util.test'
+import { makeDonePromise, makeTestClient, makeUniqueSpaceStreamId } from './util.test'
 import { dlog } from '@river/dlog'
 import { UserDeviceCollection } from '@river/encryption'
 import { UserInboxPayload_GroupEncryptionSessions } from '@river/proto'
@@ -36,7 +36,7 @@ describe('inboxMessageTest', () => {
         log('aliceUserStreamId', aliceUserStreamId)
         alicesClient.startSync()
 
-        const fakeStreamId = makeUniqueChannelStreamId()
+        const fakeStreamId = makeUniqueChannelStreamId(makeUniqueSpaceStreamId())
         const aliceSelfInbox = makeDonePromise()
         alicesClient.once(
             'newGroupSessions',

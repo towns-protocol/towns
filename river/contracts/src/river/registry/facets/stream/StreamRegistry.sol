@@ -79,7 +79,7 @@ contract StreamRegistry is IStreamRegistry, RegistryModifiers {
 
   function setStreamLastMiniblock(
     bytes32 streamId,
-    bytes32 prevMiniBlockHash,
+    bytes32 /*prevMiniBlockHash*/,
     bytes32 lastMiniblockHash,
     uint64 lastMiniblockNum,
     bool isSealed
@@ -91,18 +91,23 @@ contract StreamRegistry is IStreamRegistry, RegistryModifiers {
 
     Stream storage stream = ds.streamById[streamId];
 
-    // Check if the stream is already sealed using bitwise AND
-    if ((stream.flags & StreamFlags.SEALED) != 0) {
-      revert(RiverRegistryErrors.STREAM_SEALED);
-    }
+    // TODO: this check is relaxed until storing of candidate miniblocks is
+    // implemented on river node side. Currently, if there is a failure
+    // to commit during mb production, contract and local storage
+    // get out of sync.
+    // This relaxation allows to get back in sync again.
+    // // Check if the stream is already sealed using bitwise AND
+    // if ((stream.flags & StreamFlags.SEALED) != 0) {
+    //   revert(RiverRegistryErrors.STREAM_SEALED);
+    // }
 
-    // Validate that the lastMiniblockNum is the next expected miniblock
-    if (
-      stream.lastMiniblockNum + 1 != lastMiniblockNum ||
-      stream.lastMiniblockHash != prevMiniBlockHash
-    ) {
-      revert(RiverRegistryErrors.BAD_ARG);
-    }
+    // // Validate that the lastMiniblockNum is the next expected miniblock
+    // if (
+    //   stream.lastMiniblockNum + 1 != lastMiniblockNum ||
+    //   stream.lastMiniblockHash != prevMiniBlockHash
+    // ) {
+    //   revert(RiverRegistryErrors.BAD_ARG);
+    // }
 
     // Update the stream information
     stream.lastMiniblockHash = lastMiniblockHash;

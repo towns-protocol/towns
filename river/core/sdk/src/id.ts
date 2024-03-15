@@ -64,7 +64,7 @@ const expectedIdentityLenByPrefix: { [key in StreamPrefix]: number } = {
     [StreamPrefix.UserDevice]: 40,
     [StreamPrefix.UserSettings]: 40,
     [StreamPrefix.UserInbox]: 40,
-    [StreamPrefix.Space]: 62,
+    [StreamPrefix.Space]: 40,
     [StreamPrefix.Channel]: 62,
     [StreamPrefix.Media]: 62,
     [StreamPrefix.DM]: 62,
@@ -114,9 +114,20 @@ export const makeUserInboxStreamId = (userId: string | Uint8Array): string => {
         userId instanceof Uint8Array ? userIdFromAddress(userId) : userId,
     )
 }
+export const makeSpaceStreamId = (spaceContractAddress: string): string =>
+    makeStreamId(StreamPrefix.Space, spaceContractAddress)
 
-export const makeUniqueSpaceStreamId = (): string => makeStreamId(StreamPrefix.Space, genId())
-export const makeUniqueChannelStreamId = (): string => makeStreamId(StreamPrefix.Channel, genId())
+export const makeUniqueChannelStreamId = (spaceId: string): string => {
+    // check the prefix
+    // replace the first byte with the channel type
+    // copy the 20 bytes of the spaceId address
+    // fill the rest with random bytes
+    return makeStreamId(StreamPrefix.Channel, spaceId.slice(2, 42) + genId(22))
+}
+export const makeDefaultChannelStreamId = (spaceContractAddress: string): string => {
+    // matches code in the smart contract
+    return makeStreamId(StreamPrefix.Channel, spaceContractAddress + '0'.repeat(22))
+}
 export const makeUniqueGDMChannelStreamId = (): string => makeStreamId(StreamPrefix.GDM, genId())
 export const makeUniqueMediaStreamId = (): string => makeStreamId(StreamPrefix.Media, genId())
 
@@ -173,12 +184,26 @@ export const getUserIdFromStreamId = (streamId: string): string => {
     return userIdFromAddress(getUserAddressFromStreamId(streamId))
 }
 
-export const areValidStreamIdParts = (prefix: StreamPrefix, identity: string): boolean => {
-    return (
-        allowedStreamPrefixesVar.includes(prefix) &&
-        identity.length === expectedIdentityLenByPrefix[prefix] &&
-        /^[0-9a-f]*$/.test(identity)
-    )
+const areValidStreamIdParts = (prefix: StreamPrefix, identity: string): boolean => {
+    if (!allowedStreamPrefixesVar.includes(prefix)) {
+        return false
+    }
+    if (!/^[0-9a-f]*$/.test(identity)) {
+        return false
+    }
+    if (identity.length != expectedIdentityLenByPrefix[prefix]) {
+        // if we're not at expected length, we should have padding
+        if (identity.length != 62) {
+            return false
+        }
+        for (let i = expectedIdentityLenByPrefix[prefix]; i < identity.length; i++) {
+            if (identity[i] !== '0') {
+                return false
+            }
+        }
+    }
+
+    return true
 }
 
 export const isValidStreamId = (streamId: string): boolean => {
@@ -191,8 +216,8 @@ export const checkStreamId = (streamId: string): void => {
 
 const hexNanoId = customAlphabet('0123456789abcdef', 62)
 
-export const genId = (): string => {
-    return hexNanoId()
+export const genId = (size?: number | undefined): string => {
+    return hexNanoId(size)
 }
 
 export const genShortId = (): string => {

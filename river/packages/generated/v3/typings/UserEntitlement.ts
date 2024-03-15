@@ -36,7 +36,7 @@ export interface UserEntitlementInterface extends utils.Interface {
     "getEntitlementDataByRoleId(uint256)": FunctionFragment;
     "initialize(address)": FunctionFragment;
     "isCrosschain()": FunctionFragment;
-    "isEntitled(string,address[],bytes32)": FunctionFragment;
+    "isEntitled(bytes32,address[],bytes32)": FunctionFragment;
     "moduleType()": FunctionFragment;
     "name()": FunctionFragment;
     "proxiableUUID()": FunctionFragment;
@@ -91,7 +91,7 @@ export interface UserEntitlementInterface extends utils.Interface {
   encodeFunctionData(
     functionFragment: "isEntitled",
     values: [
-      PromiseOrValue<string>,
+      PromiseOrValue<BytesLike>,
       PromiseOrValue<string>[],
       PromiseOrValue<BytesLike>
     ]
@@ -236,7 +236,7 @@ export interface UserEntitlement extends BaseContract {
     isCrosschain(overrides?: CallOverrides): Promise<[boolean]>;
 
     isEntitled(
-      channelId: PromiseOrValue<string>,
+      channelId: PromiseOrValue<BytesLike>,
       wallets: PromiseOrValue<string>[],
       permission: PromiseOrValue<BytesLike>,
       overrides?: CallOverrides
@@ -290,7 +290,7 @@ export interface UserEntitlement extends BaseContract {
   isCrosschain(overrides?: CallOverrides): Promise<boolean>;
 
   isEntitled(
-    channelId: PromiseOrValue<string>,
+    channelId: PromiseOrValue<BytesLike>,
     wallets: PromiseOrValue<string>[],
     permission: PromiseOrValue<BytesLike>,
     overrides?: CallOverrides
@@ -344,7 +344,7 @@ export interface UserEntitlement extends BaseContract {
     isCrosschain(overrides?: CallOverrides): Promise<boolean>;
 
     isEntitled(
-      channelId: PromiseOrValue<string>,
+      channelId: PromiseOrValue<BytesLike>,
       wallets: PromiseOrValue<string>[],
       permission: PromiseOrValue<BytesLike>,
       overrides?: CallOverrides
@@ -411,7 +411,7 @@ export interface UserEntitlement extends BaseContract {
     isCrosschain(overrides?: CallOverrides): Promise<BigNumber>;
 
     isEntitled(
-      channelId: PromiseOrValue<string>,
+      channelId: PromiseOrValue<BytesLike>,
       wallets: PromiseOrValue<string>[],
       permission: PromiseOrValue<BytesLike>,
       overrides?: CallOverrides
@@ -468,7 +468,7 @@ export interface UserEntitlement extends BaseContract {
     isCrosschain(overrides?: CallOverrides): Promise<PopulatedTransaction>;
 
     isEntitled(
-      channelId: PromiseOrValue<string>,
+      channelId: PromiseOrValue<BytesLike>,
       wallets: PromiseOrValue<string>[],
       permission: PromiseOrValue<BytesLike>,
       overrides?: CallOverrides

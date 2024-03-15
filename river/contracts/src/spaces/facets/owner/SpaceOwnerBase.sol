@@ -40,7 +40,6 @@ abstract contract SpaceOwnerBase is ISpaceOwnerBase {
   // =============================================================
 
   function _mintSpace(
-    string memory networkId,
     string memory name,
     string memory uri,
     uint256 tokenId,
@@ -48,7 +47,6 @@ abstract contract SpaceOwnerBase is ISpaceOwnerBase {
   ) internal {
     Validator.checkLength(name, 2);
     Validator.checkLength(uri, 0);
-    Validator.checkLength(networkId, 1);
     Validator.checkAddress(space);
 
     SpaceOwnerStorage.Layout storage ds = SpaceOwnerStorage.layout();
@@ -58,7 +56,6 @@ abstract contract SpaceOwnerBase is ISpaceOwnerBase {
       name: name,
       uri: uri,
       tokenId: tokenId,
-      networkId: networkId,
       createdAt: block.timestamp
     });
   }

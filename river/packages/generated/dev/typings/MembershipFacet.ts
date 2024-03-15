@@ -74,7 +74,7 @@ export interface MembershipFacetInterface extends utils.Interface {
     "_getMembershipPrice(uint256)": FunctionFragment;
     "_getMembershipSupplyLimit()": FunctionFragment;
     "_getPricingModule()": FunctionFragment;
-    "_getTownFactory()": FunctionFragment;
+    "_getSpaceFactory()": FunctionFragment;
     "_setMembershipCurrency(address)": FunctionFragment;
     "_setMembershipFeeRecipient(address)": FunctionFragment;
     "_setMembershipFreeAllocation(uint256)": FunctionFragment;
@@ -94,11 +94,11 @@ export interface MembershipFacetInterface extends utils.Interface {
     "getMembershipPrice()": FunctionFragment;
     "getMembershipPricingModule()": FunctionFragment;
     "getMembershipRenewalPrice(uint256)": FunctionFragment;
+    "getSpaceFactory()": FunctionFragment;
     "getTokenIdByMembership(address)": FunctionFragment;
-    "getTownFactory()": FunctionFragment;
     "isApprovedForAll(address,address)": FunctionFragment;
-    "joinTown(address)": FunctionFragment;
-    "joinTownWithReferral(address,address,uint256)": FunctionFragment;
+    "joinSpace(address)": FunctionFragment;
+    "joinSpaceWithReferral(address,address,uint256)": FunctionFragment;
     "name()": FunctionFragment;
     "ownerOf(uint256)": FunctionFragment;
     "renewMembership(address)": FunctionFragment;
@@ -128,7 +128,7 @@ export interface MembershipFacetInterface extends utils.Interface {
       | "_getMembershipPrice"
       | "_getMembershipSupplyLimit"
       | "_getPricingModule"
-      | "_getTownFactory"
+      | "_getSpaceFactory"
       | "_setMembershipCurrency"
       | "_setMembershipFeeRecipient"
       | "_setMembershipFreeAllocation"
@@ -148,11 +148,11 @@ export interface MembershipFacetInterface extends utils.Interface {
       | "getMembershipPrice"
       | "getMembershipPricingModule"
       | "getMembershipRenewalPrice"
+      | "getSpaceFactory"
       | "getTokenIdByMembership"
-      | "getTownFactory"
       | "isApprovedForAll"
-      | "joinTown"
-      | "joinTownWithReferral"
+      | "joinSpace"
+      | "joinSpaceWithReferral"
       | "name"
       | "ownerOf"
       | "renewMembership"
@@ -205,7 +205,7 @@ export interface MembershipFacetInterface extends utils.Interface {
     values?: undefined
   ): string;
   encodeFunctionData(
-    functionFragment: "_getTownFactory",
+    functionFragment: "_getSpaceFactory",
     values?: undefined
   ): string;
   encodeFunctionData(
@@ -285,23 +285,23 @@ export interface MembershipFacetInterface extends utils.Interface {
     values: [PromiseOrValue<BigNumberish>]
   ): string;
   encodeFunctionData(
-    functionFragment: "getTokenIdByMembership",
-    values: [PromiseOrValue<string>]
+    functionFragment: "getSpaceFactory",
+    values?: undefined
   ): string;
   encodeFunctionData(
-    functionFragment: "getTownFactory",
-    values?: undefined
+    functionFragment: "getTokenIdByMembership",
+    values: [PromiseOrValue<string>]
   ): string;
   encodeFunctionData(
     functionFragment: "isApprovedForAll",
     values: [PromiseOrValue<string>, PromiseOrValue<string>]
   ): string;
   encodeFunctionData(
-    functionFragment: "joinTown",
+    functionFragment: "joinSpace",
     values: [PromiseOrValue<string>]
   ): string;
   encodeFunctionData(
-    functionFragment: "joinTownWithReferral",
+    functionFragment: "joinSpaceWithReferral",
     values: [
       PromiseOrValue<string>,
       PromiseOrValue<string>,
@@ -417,7 +417,7 @@ export interface MembershipFacetInterface extends utils.Interface {
     data: BytesLike
   ): Result;
   decodeFunctionResult(
-    functionFragment: "_getTownFactory",
+    functionFragment: "_getSpaceFactory",
     data: BytesLike
   ): Result;
   decodeFunctionResult(
@@ -488,20 +488,20 @@ export interface MembershipFacetInterface extends utils.Interface {
     data: BytesLike
   ): Result;
   decodeFunctionResult(
-    functionFragment: "getTokenIdByMembership",
+    functionFragment: "getSpaceFactory",
     data: BytesLike
   ): Result;
   decodeFunctionResult(
-    functionFragment: "getTownFactory",
+    functionFragment: "getTokenIdByMembership",
     data: BytesLike
   ): Result;
   decodeFunctionResult(
     functionFragment: "isApprovedForAll",
     data: BytesLike
   ): Result;
-  decodeFunctionResult(functionFragment: "joinTown", data: BytesLike): Result;
+  decodeFunctionResult(functionFragment: "joinSpace", data: BytesLike): Result;
   decodeFunctionResult(
-    functionFragment: "joinTownWithReferral",
+    functionFragment: "joinSpaceWithReferral",
     data: BytesLike
   ): Result;
   decodeFunctionResult(functionFragment: "name", data: BytesLike): Result;
@@ -896,7 +896,7 @@ export interface MembershipFacet extends BaseContract {
 
     _getPricingModule(overrides?: CallOverrides): Promise<[string]>;
 
-    _getTownFactory(overrides?: CallOverrides): Promise<[string]>;
+    _getSpaceFactory(overrides?: CallOverrides): Promise<[string]>;
 
     _setMembershipCurrency(
       newCurrency: PromiseOrValue<string>,
@@ -975,12 +975,12 @@ export interface MembershipFacet extends BaseContract {
       overrides?: CallOverrides
     ): Promise<[BigNumber]>;
 
+    getSpaceFactory(overrides?: CallOverrides): Promise<[string]>;
+
     getTokenIdByMembership(
       member: PromiseOrValue<string>,
       overrides?: CallOverrides
     ): Promise<[BigNumber]>;
-
-    getTownFactory(overrides?: CallOverrides): Promise<[string]>;
 
     isApprovedForAll(
       owner: PromiseOrValue<string>,
@@ -988,12 +988,12 @@ export interface MembershipFacet extends BaseContract {
       overrides?: CallOverrides
     ): Promise<[boolean]>;
 
-    joinTown(
+    joinSpace(
       receiver: PromiseOrValue<string>,
       overrides?: PayableOverrides & { from?: PromiseOrValue<string> }
     ): Promise<ContractTransaction>;
 
-    joinTownWithReferral(
+    joinSpaceWithReferral(
       receiver: PromiseOrValue<string>,
       referrer: PromiseOrValue<string>,
       referralCode: PromiseOrValue<BigNumberish>,
@@ -1112,7 +1112,7 @@ export interface MembershipFacet extends BaseContract {
 
   _getPricingModule(overrides?: CallOverrides): Promise<string>;
 
-  _getTownFactory(overrides?: CallOverrides): Promise<string>;
+  _getSpaceFactory(overrides?: CallOverrides): Promise<string>;
 
   _setMembershipCurrency(
     newCurrency: PromiseOrValue<string>,
@@ -1189,12 +1189,12 @@ export interface MembershipFacet extends BaseContract {
     overrides?: CallOverrides
   ): Promise<BigNumber>;
 
+  getSpaceFactory(overrides?: CallOverrides): Promise<string>;
+
   getTokenIdByMembership(
     member: PromiseOrValue<string>,
     overrides?: CallOverrides
   ): Promise<BigNumber>;
-
-  getTownFactory(overrides?: CallOverrides): Promise<string>;
 
   isApprovedForAll(
     owner: PromiseOrValue<string>,
@@ -1202,12 +1202,12 @@ export interface MembershipFacet extends BaseContract {
     overrides?: CallOverrides
   ): Promise<boolean>;
 
-  joinTown(
+  joinSpace(
     receiver: PromiseOrValue<string>,
     overrides?: PayableOverrides & { from?: PromiseOrValue<string> }
   ): Promise<ContractTransaction>;
 
-  joinTownWithReferral(
+  joinSpaceWithReferral(
     receiver: PromiseOrValue<string>,
     referrer: PromiseOrValue<string>,
     referralCode: PromiseOrValue<BigNumberish>,
@@ -1326,7 +1326,7 @@ export interface MembershipFacet extends BaseContract {
 
     _getPricingModule(overrides?: CallOverrides): Promise<string>;
 
-    _getTownFactory(overrides?: CallOverrides): Promise<string>;
+    _getSpaceFactory(overrides?: CallOverrides): Promise<string>;
 
     _setMembershipCurrency(
       newCurrency: PromiseOrValue<string>,
@@ -1403,12 +1403,12 @@ export interface MembershipFacet extends BaseContract {
       overrides?: CallOverrides
     ): Promise<BigNumber>;
 
+    getSpaceFactory(overrides?: CallOverrides): Promise<string>;
+
     getTokenIdByMembership(
       member: PromiseOrValue<string>,
       overrides?: CallOverrides
     ): Promise<BigNumber>;
-
-    getTownFactory(overrides?: CallOverrides): Promise<string>;
 
     isApprovedForAll(
       owner: PromiseOrValue<string>,
@@ -1416,12 +1416,12 @@ export interface MembershipFacet extends BaseContract {
       overrides?: CallOverrides
     ): Promise<boolean>;
 
-    joinTown(
+    joinSpace(
       receiver: PromiseOrValue<string>,
       overrides?: CallOverrides
     ): Promise<BigNumber>;
 
-    joinTownWithReferral(
+    joinSpaceWithReferral(
       receiver: PromiseOrValue<string>,
       referrer: PromiseOrValue<string>,
       referralCode: PromiseOrValue<BigNumberish>,
@@ -1706,7 +1706,7 @@ export interface MembershipFacet extends BaseContract {
 
     _getPricingModule(overrides?: CallOverrides): Promise<BigNumber>;
 
-    _getTownFactory(overrides?: CallOverrides): Promise<BigNumber>;
+    _getSpaceFactory(overrides?: CallOverrides): Promise<BigNumber>;
 
     _setMembershipCurrency(
       newCurrency: PromiseOrValue<string>,
@@ -1783,12 +1783,12 @@ export interface MembershipFacet extends BaseContract {
       overrides?: CallOverrides
     ): Promise<BigNumber>;
 
+    getSpaceFactory(overrides?: CallOverrides): Promise<BigNumber>;
+
     getTokenIdByMembership(
       member: PromiseOrValue<string>,
       overrides?: CallOverrides
     ): Promise<BigNumber>;
-
-    getTownFactory(overrides?: CallOverrides): Promise<BigNumber>;
 
     isApprovedForAll(
       owner: PromiseOrValue<string>,
@@ -1796,12 +1796,12 @@ export interface MembershipFacet extends BaseContract {
       overrides?: CallOverrides
     ): Promise<BigNumber>;
 
-    joinTown(
+    joinSpace(
       receiver: PromiseOrValue<string>,
       overrides?: PayableOverrides & { from?: PromiseOrValue<string> }
     ): Promise<BigNumber>;
 
-    joinTownWithReferral(
+    joinSpaceWithReferral(
       receiver: PromiseOrValue<string>,
       referrer: PromiseOrValue<string>,
       referralCode: PromiseOrValue<BigNumberish>,
@@ -1929,7 +1929,7 @@ export interface MembershipFacet extends BaseContract {
 
     _getPricingModule(overrides?: CallOverrides): Promise<PopulatedTransaction>;
 
-    _getTownFactory(overrides?: CallOverrides): Promise<PopulatedTransaction>;
+    _getSpaceFactory(overrides?: CallOverrides): Promise<PopulatedTransaction>;
 
     _setMembershipCurrency(
       newCurrency: PromiseOrValue<string>,
@@ -2020,12 +2020,12 @@ export interface MembershipFacet extends BaseContract {
       overrides?: CallOverrides
     ): Promise<PopulatedTransaction>;
 
+    getSpaceFactory(overrides?: CallOverrides): Promise<PopulatedTransaction>;
+
     getTokenIdByMembership(
       member: PromiseOrValue<string>,
       overrides?: CallOverrides
     ): Promise<PopulatedTransaction>;
-
-    getTownFactory(overrides?: CallOverrides): Promise<PopulatedTransaction>;
 
     isApprovedForAll(
       owner: PromiseOrValue<string>,
@@ -2033,12 +2033,12 @@ export interface MembershipFacet extends BaseContract {
       overrides?: CallOverrides
     ): Promise<PopulatedTransaction>;
 
-    joinTown(
+    joinSpace(
       receiver: PromiseOrValue<string>,
       overrides?: PayableOverrides & { from?: PromiseOrValue<string> }
     ): Promise<PopulatedTransaction>;
 
-    joinTownWithReferral(
+    joinSpaceWithReferral(
       receiver: PromiseOrValue<string>,
       referrer: PromiseOrValue<string>,
       referralCode: PromiseOrValue<BigNumberish>,

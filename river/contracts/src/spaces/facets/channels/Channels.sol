@@ -14,7 +14,7 @@ import {ChannelBase} from "./ChannelBase.sol";
 
 contract Channels is IChannel, ChannelBase, Entitled, Facet {
   function createChannel(
-    string memory channelId,
+    bytes32 channelId,
     string memory metadata,
     uint256[] memory roleIds
   ) external {
@@ -23,7 +23,7 @@ contract Channels is IChannel, ChannelBase, Entitled, Facet {
   }
 
   function getChannel(
-    string memory channelId
+    bytes32 channelId
   ) external view returns (Channel memory channel) {
     return _getChannel(channelId);
   }
@@ -33,7 +33,7 @@ contract Channels is IChannel, ChannelBase, Entitled, Facet {
   }
 
   function updateChannel(
-    string memory channelId,
+    bytes32 channelId,
     string memory metadata,
     bool disabled
   ) external {
@@ -41,29 +41,23 @@ contract Channels is IChannel, ChannelBase, Entitled, Facet {
     _updateChannel(channelId, metadata, disabled);
   }
 
-  function removeChannel(string memory channelId) external {
+  function removeChannel(bytes32 channelId) external {
     _validatePermission(Permissions.ModifyChannels);
     _removeChannel(channelId);
   }
 
-  function addRoleToChannel(
-    string calldata channelId,
-    uint256 roleId
-  ) external {
+  function addRoleToChannel(bytes32 channelId, uint256 roleId) external {
     _validateChannelPermission(channelId, Permissions.ModifyChannels);
     _addRoleToChannel(channelId, roleId);
   }
 
   function getRolesByChannel(
-    string calldata channelId
+    bytes32 channelId
   ) external view returns (uint256[] memory roleIds) {
     return _getRolesByChannel(channelId);
   }
 
-  function removeRoleFromChannel(
-    string calldata channelId,
-    uint256 roleId
-  ) external {
+  function removeRoleFromChannel(bytes32 channelId, uint256 roleId) external {
     _validateChannelPermission(channelId, Permissions.ModifyChannels);
     _removeRoleFromChannel(channelId, roleId);
   }

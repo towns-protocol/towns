@@ -1,10 +1,11 @@
+/* eslint-disable @typescript-eslint/no-unnecessary-type-assertion */
 /**
  * @group with-entitilements
  */
 
 import { makeDonePromise, makeTestClient, makeUserContextFromWallet, waitFor } from './util.test'
 import { dlog } from '@river/dlog'
-import { makeUniqueChannelStreamId, makeUniqueSpaceStreamId, makeUserStreamId } from './id'
+import { makeDefaultChannelStreamId, makeSpaceStreamId, makeUserStreamId } from './id'
 import { MembershipOp } from '@river/proto'
 import { ethers } from 'ethers'
 import {
@@ -38,9 +39,7 @@ describe('spaceTestsWithEntitlements', () => {
         bob.startSync()
 
         // create a space stream,
-        const spaceId = makeUniqueSpaceStreamId()
-        const channelId = makeUniqueChannelStreamId()
-        log('Bob created user, about to create space', { spaceId, channelId })
+        log('Bob created user, about to create space')
         // first on the blockchain
         const membershipInfo: MembershipStruct = {
             settings: {
@@ -63,10 +62,8 @@ describe('spaceTestsWithEntitlements', () => {
         }
         const transaction = await spaceDapp.createSpace(
             {
-                spaceId: spaceId,
-                spaceName: spaceId,
+                spaceName: 'bobs-space-metadata',
                 spaceMetadata: 'bobs-space-metadata',
-                channelId: channelId,
                 channelName: 'general', // default channel name
                 membership: membershipInfo,
             },
@@ -75,6 +72,10 @@ describe('spaceTestsWithEntitlements', () => {
         const receipt = await transaction.wait()
         log('receipt', receipt)
         expect(receipt.status).toEqual(1)
+        const spaceAddress = spaceDapp.getSpaceAddress(receipt)
+        expect(spaceAddress).toBeDefined()
+        const spaceId = makeSpaceStreamId(spaceAddress!)
+        const channelId = makeDefaultChannelStreamId(spaceAddress!)
         // then on the river node
         const returnVal = await bob.createSpace(spaceId)
         expect(returnVal.streamId).toEqual(spaceId)

@@ -29,7 +29,7 @@ contract MockUserEntitlement is
 
   address public SPACE_ADDRESS;
 
-  modifier onlyTown() {
+  modifier onlySpace() {
     if (_msgSender() != SPACE_ADDRESS) {
       revert Entitlement__NotAllowed();
     }
@@ -46,7 +46,7 @@ contract MockUserEntitlement is
 
   function _authorizeUpgrade(
     address newImplementation
-  ) internal override onlyTown {}
+  ) internal override onlySpace {}
 
   function supportsInterface(
     bytes4 interfaceId
@@ -61,7 +61,7 @@ contract MockUserEntitlement is
   }
 
   function isEntitled(
-    string calldata,
+    bytes32,
     address[] memory,
     bytes32
   ) external pure returns (bool) {
@@ -71,7 +71,7 @@ contract MockUserEntitlement is
   function setEntitlement(
     uint256 roleId,
     bytes memory entitlementData
-  ) external onlyTown {
+  ) external onlySpace {
     MockUserEntitlementStorage.Layout storage ds = MockUserEntitlementStorage
       .layout();
 
@@ -108,7 +108,7 @@ contract MockUserEntitlement is
     }
   }
 
-  function removeEntitlement(uint256 roleId) external onlyTown {
+  function removeEntitlement(uint256 roleId) external onlySpace {
     MockUserEntitlementStorage.Layout storage ds = MockUserEntitlementStorage
       .layout();
 
@@ -126,7 +126,7 @@ contract MockUserEntitlement is
   function addRoleIdToChannel(
     string memory channelId,
     uint256 roleId
-  ) external onlyTown {
+  ) external onlySpace {
     MockUserEntitlementStorage.Layout storage ds = MockUserEntitlementStorage
       .layout();
 
@@ -136,7 +136,7 @@ contract MockUserEntitlement is
   function removeRoleIdFromChannel(
     string memory channelId,
     uint256 roleId
-  ) external onlyTown {
+  ) external onlySpace {
     MockUserEntitlementStorage.Layout storage ds = MockUserEntitlementStorage
       .layout();
 

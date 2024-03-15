@@ -70,7 +70,7 @@ interface IPlatformRequirements is IPlatformRequirementsBase {
 
   /**
    * @notice Get the membership mint limit
-   * @dev This is the maximum number of free memberships that can be minted per town
+   * @dev This is the maximum number of free memberships that can be minted per space
    * @return The membership mint limit
    */
   function getMembershipMintLimit() external view returns (uint256);

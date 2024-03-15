@@ -536,13 +536,13 @@ export default [
         "name": "prevState",
         "type": "uint8",
         "indexed": true,
-        "internalType": "enum IMember.MintState"
+        "internalType": "enum Member.MintState"
       },
       {
         "name": "newState",
         "type": "uint8",
         "indexed": true,
-        "internalType": "enum IMember.MintState"
+        "internalType": "enum Member.MintState"
       },
       {
         "name": "timestamp",

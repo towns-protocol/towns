@@ -155,18 +155,11 @@ export declare namespace IArchitectBase {
     permissions: string[];
   };
 
-  export type ChannelInfoStruct = {
-    id: PromiseOrValue<string>;
-    metadata: PromiseOrValue<string>;
-  };
+  export type ChannelInfoStruct = { metadata: PromiseOrValue<string> };
 
-  export type ChannelInfoStructOutput = [string, string] & {
-    id: string;
-    metadata: string;
-  };
+  export type ChannelInfoStructOutput = [string] & { metadata: string };
 
   export type SpaceInfoStruct = {
-    id: PromiseOrValue<string>;
     name: PromiseOrValue<string>;
     uri: PromiseOrValue<string>;
     membership: IArchitectBase.MembershipStruct;
@@ -176,11 +169,9 @@ export declare namespace IArchitectBase {
   export type SpaceInfoStructOutput = [
     string,
     string,
-    string,
     IArchitectBase.MembershipStructOutput,
     IArchitectBase.ChannelInfoStructOutput
   ] & {
-    id: string;
     name: string;
     uri: string;
     membership: IArchitectBase.MembershipStructOutput;
@@ -190,12 +181,10 @@ export declare namespace IArchitectBase {
 
 export interface IArchitectInterface extends utils.Interface {
   functions: {
-    "createSpace((string,string,string,((string,string,uint256,uint256,uint64,address,address,uint256,address),(bool,address[],((uint8,uint8)[],(uint8,uint256,address,uint256)[],(uint8,uint8,uint8)[])),string[]),(string,string)))": FunctionFragment;
+    "createSpace((string,string,((string,string,uint256,uint256,uint64,address,address,uint256,address),(bool,address[],((uint8,uint8)[],(uint8,uint256,address,uint256)[],(uint8,uint8,uint8)[])),string[]),(string)))": FunctionFragment;
     "getSpaceArchitectImplementations()": FunctionFragment;
-    "getSpaceById(string)": FunctionFragment;
+    "getSpaceByTokenId(uint256)": FunctionFragment;
     "getTokenIdBySpace(address)": FunctionFragment;
-    "getTokenIdBySpaceId(string)": FunctionFragment;
-    "isSpace(address)": FunctionFragment;
     "setSpaceArchitectImplementations(address,address,address,address)": FunctionFragment;
   };
 
@@ -203,10 +192,8 @@ export interface IArchitectInterface extends utils.Interface {
     nameOrSignatureOrTopic:
       | "createSpace"
       | "getSpaceArchitectImplementations"
-      | "getSpaceById"
+      | "getSpaceByTokenId"
       | "getTokenIdBySpace"
-      | "getTokenIdBySpaceId"
-      | "isSpace"
       | "setSpaceArchitectImplementations"
   ): FunctionFragment;
 
@@ -219,19 +206,11 @@ export interface IArchitectInterface extends utils.Interface {
     values?: undefined
   ): string;
   encodeFunctionData(
-    functionFragment: "getSpaceById",
-    values: [PromiseOrValue<string>]
+    functionFragment: "getSpaceByTokenId",
+    values: [PromiseOrValue<BigNumberish>]
   ): string;
   encodeFunctionData(
     functionFragment: "getTokenIdBySpace",
-    values: [PromiseOrValue<string>]
-  ): string;
-  encodeFunctionData(
-    functionFragment: "getTokenIdBySpaceId",
-    values: [PromiseOrValue<string>]
-  ): string;
-  encodeFunctionData(
-    functionFragment: "isSpace",
     values: [PromiseOrValue<string>]
   ): string;
   encodeFunctionData(
@@ -253,18 +232,13 @@ export interface IArchitectInterface extends utils.Interface {
     data: BytesLike
   ): Result;
   decodeFunctionResult(
-    functionFragment: "getSpaceById",
+    functionFragment: "getSpaceByTokenId",
     data: BytesLike
   ): Result;
   decodeFunctionResult(
     functionFragment: "getTokenIdBySpace",
     data: BytesLike
   ): Result;
-  decodeFunctionResult(
-    functionFragment: "getTokenIdBySpaceId",
-    data: BytesLike
-  ): Result;
-  decodeFunctionResult(functionFragment: "isSpace", data: BytesLike): Result;
   decodeFunctionResult(
     functionFragment: "setSpaceArchitectImplementations",
     data: BytesLike
@@ -279,7 +253,7 @@ export interface IArchitectInterface extends utils.Interface {
 
 export interface SpaceCreatedEventObject {
   owner: string;
-  spaceId: BigNumber;
+  tokenId: BigNumber;
   space: string;
 }
 export type SpaceCreatedEvent = TypedEvent<
@@ -332,25 +306,15 @@ export interface IArchitect extends BaseContract {
       }
     >;
 
-    getSpaceById(
-      spaceId: PromiseOrValue<string>,
+    getSpaceByTokenId(
+      tokenId: PromiseOrValue<BigNumberish>,
       overrides?: CallOverrides
-    ): Promise<[string]>;
+    ): Promise<[string] & { space: string }>;
 
     getTokenIdBySpace(
       space: PromiseOrValue<string>,
       overrides?: CallOverrides
     ): Promise<[BigNumber]>;
-
-    getTokenIdBySpaceId(
-      spaceId: PromiseOrValue<string>,
-      overrides?: CallOverrides
-    ): Promise<[BigNumber]>;
-
-    isSpace(
-      space: PromiseOrValue<string>,
-      overrides?: CallOverrides
-    ): Promise<[boolean]>;
 
     setSpaceArchitectImplementations(
       ownerTokenImplementation: PromiseOrValue<string>,
@@ -377,8 +341,8 @@ export interface IArchitect extends BaseContract {
     }
   >;
 
-  getSpaceById(
-    spaceId: PromiseOrValue<string>,
+  getSpaceByTokenId(
+    tokenId: PromiseOrValue<BigNumberish>,
     overrides?: CallOverrides
   ): Promise<string>;
 
@@ -386,16 +350,6 @@ export interface IArchitect extends BaseContract {
     space: PromiseOrValue<string>,
     overrides?: CallOverrides
   ): Promise<BigNumber>;
-
-  getTokenIdBySpaceId(
-    spaceId: PromiseOrValue<string>,
-    overrides?: CallOverrides
-  ): Promise<BigNumber>;
-
-  isSpace(
-    space: PromiseOrValue<string>,
-    overrides?: CallOverrides
-  ): Promise<boolean>;
 
   setSpaceArchitectImplementations(
     ownerTokenImplementation: PromiseOrValue<string>,
@@ -422,8 +376,8 @@ export interface IArchitect extends BaseContract {
       }
     >;
 
-    getSpaceById(
-      spaceId: PromiseOrValue<string>,
+    getSpaceByTokenId(
+      tokenId: PromiseOrValue<BigNumberish>,
       overrides?: CallOverrides
     ): Promise<string>;
 
@@ -431,16 +385,6 @@ export interface IArchitect extends BaseContract {
       space: PromiseOrValue<string>,
       overrides?: CallOverrides
     ): Promise<BigNumber>;
-
-    getTokenIdBySpaceId(
-      spaceId: PromiseOrValue<string>,
-      overrides?: CallOverrides
-    ): Promise<BigNumber>;
-
-    isSpace(
-      space: PromiseOrValue<string>,
-      overrides?: CallOverrides
-    ): Promise<boolean>;
 
     setSpaceArchitectImplementations(
       ownerTokenImplementation: PromiseOrValue<string>,
@@ -454,13 +398,13 @@ export interface IArchitect extends BaseContract {
   filters: {
     "SpaceCreated(address,uint256,address)"(
       owner?: PromiseOrValue<string> | null,
-      spaceId?: PromiseOrValue<BigNumberish> | null,
-      space?: null
+      tokenId?: PromiseOrValue<BigNumberish> | null,
+      space?: PromiseOrValue<string> | null
     ): SpaceCreatedEventFilter;
     SpaceCreated(
       owner?: PromiseOrValue<string> | null,
-      spaceId?: PromiseOrValue<BigNumberish> | null,
-      space?: null
+      tokenId?: PromiseOrValue<BigNumberish> | null,
+      space?: PromiseOrValue<string> | null
     ): SpaceCreatedEventFilter;
   };
 
@@ -474,22 +418,12 @@ export interface IArchitect extends BaseContract {
       overrides?: CallOverrides
     ): Promise<BigNumber>;
 
-    getSpaceById(
-      spaceId: PromiseOrValue<string>,
+    getSpaceByTokenId(
+      tokenId: PromiseOrValue<BigNumberish>,
       overrides?: CallOverrides
     ): Promise<BigNumber>;
 
     getTokenIdBySpace(
-      space: PromiseOrValue<string>,
-      overrides?: CallOverrides
-    ): Promise<BigNumber>;
-
-    getTokenIdBySpaceId(
-      spaceId: PromiseOrValue<string>,
-      overrides?: CallOverrides
-    ): Promise<BigNumber>;
-
-    isSpace(
       space: PromiseOrValue<string>,
       overrides?: CallOverrides
     ): Promise<BigNumber>;
@@ -513,22 +447,12 @@ export interface IArchitect extends BaseContract {
       overrides?: CallOverrides
     ): Promise<PopulatedTransaction>;
 
-    getSpaceById(
-      spaceId: PromiseOrValue<string>,
+    getSpaceByTokenId(
+      tokenId: PromiseOrValue<BigNumberish>,
       overrides?: CallOverrides
     ): Promise<PopulatedTransaction>;
 
     getTokenIdBySpace(
-      space: PromiseOrValue<string>,
-      overrides?: CallOverrides
-    ): Promise<PopulatedTransaction>;
-
-    getTokenIdBySpaceId(
-      spaceId: PromiseOrValue<string>,
-      overrides?: CallOverrides
-    ): Promise<PopulatedTransaction>;
-
-    isSpace(
       space: PromiseOrValue<string>,
       overrides?: CallOverrides
     ): Promise<PopulatedTransaction>;

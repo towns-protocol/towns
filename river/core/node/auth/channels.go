@@ -9,13 +9,14 @@ import (
 	"github.com/river-build/river/core/node/dlog"
 	"github.com/river-build/river/core/node/infra"
 	. "github.com/river-build/river/core/node/protocol"
+	"github.com/river-build/river/core/node/shared"
 
 	"github.com/ethereum/go-ethereum/accounts/abi/bind"
 	"github.com/ethereum/go-ethereum/common"
 )
 
 type Channels interface {
-	IsDisabled(opts *bind.CallOpts, channelNetworkId string) (bool, error)
+	IsDisabled(opts *bind.CallOpts, channelId shared.StreamId) (bool, error)
 }
 
 var getChannelCalls = infra.NewSuccessMetrics("get_channel_calls", contractCalls)
@@ -46,20 +47,20 @@ type channelsProxy struct {
 
 var _ Channels = (*channelsProxy)(nil)
 
-func (p *channelsProxy) IsDisabled(opts *bind.CallOpts, channelNetworkId string) (bool, error) {
+func (p *channelsProxy) IsDisabled(opts *bind.CallOpts, channelId shared.StreamId) (bool, error) {
 	log := dlog.FromCtx(p.ctx)
 	start := time.Now()
 	defer infra.StoreExecutionTimeMetrics("IsDisabled", infra.CONTRACT_CALLS_CATEGORY, start)
-	log.Debug("IsDisabled", "channelNetworkId", channelNetworkId)
+	log.Debug("IsDisabled", "channelId", channelId)
 
-	ch, err := p.contract.GetChannel(opts, channelNetworkId)
+	ch, err := p.contract.GetChannel(opts, channelId.ByteArray())
 	if err != nil {
 		getChannelCalls.FailInc()
-		log.Error("IsDisabled", "channelNetworkId", channelNetworkId, "error", err)
+		log.Error("IsDisabled", "channelId", channelId, "error", err)
 		return false, err
 	}
 
 	getChannelCalls.PassInc()
-	log.Debug("IsDisabled", "channelNetworkId", channelNetworkId, "result", ch.Disabled, "duration", time.Since(start).Milliseconds())
+	log.Debug("IsDisabled", "channelId", channelId, "result", ch.Disabled, "duration", time.Since(start).Milliseconds())
 	return ch.Disabled, nil
 }

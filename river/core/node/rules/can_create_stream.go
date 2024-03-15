@@ -385,7 +385,7 @@ func (ru *csSpaceRules) getCreateSpaceChainAuth() (*auth.ChainAuthArgs, error) {
 		return nil, err
 	}
 	return auth.NewChainAuthArgsForSpace(
-		ru.params.streamId.String(),
+		ru.params.streamId,
 		userId,
 		auth.PermissionAddRemoveChannels, // todo should be isOwner...
 	), nil
@@ -403,7 +403,7 @@ func (ru *csChannelRules) getCreateChannelChainAuth() (*auth.ChainAuthArgs, erro
 		return nil, err
 	}
 	return auth.NewChainAuthArgsForSpace(
-		spaceId.String(), // check parent space id
+		spaceId, // check parent space id
 		userId,
 		auth.PermissionAddRemoveChannels,
 	), nil
@@ -507,8 +507,8 @@ func (ru *csMediaRules) getChainAuthForMediaStream() (*auth.ChainAuthArgs, error
 		}
 
 		return auth.NewChainAuthArgsForChannel(
-			spaceId.String(),
-			channelId.String(),
+			spaceId,
+			channelId,
 			userId,
 			auth.PermissionWrite,
 		), nil

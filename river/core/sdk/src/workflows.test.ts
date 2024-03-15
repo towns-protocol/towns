@@ -5,10 +5,14 @@
 import { makeEvent, unpackStreamEnvelopes } from './sign'
 import { MembershipOp } from '@river/proto'
 import { dlog } from '@river/dlog'
-import { lastEventFiltered, makeRandomUserContext, makeTestRpcClient } from './util.test'
+import {
+    lastEventFiltered,
+    makeRandomUserContext,
+    makeTestRpcClient,
+    makeUniqueSpaceStreamId,
+} from './util.test'
 import {
     makeUniqueChannelStreamId,
-    makeUniqueSpaceStreamId,
     makeUserStreamId,
     streamIdToBytes,
     userIdFromAddress,
@@ -89,7 +93,7 @@ describe('workflows', () => {
         expect(joinPayload?.streamId).toEqual(spacedStreamId)
 
         log('Bob created space, about to create channel')
-        const channelIdStr = makeUniqueChannelStreamId()
+        const channelIdStr = makeUniqueChannelStreamId(spacedStreamIdStr)
         const channelId = streamIdToBytes(channelIdStr)
         const channelProperties = 'Bobs channel properties'
 

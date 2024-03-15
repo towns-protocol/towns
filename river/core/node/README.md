@@ -20,6 +20,20 @@ https://connect.build/docs/go/getting-started/#install-tools:
     brew install golangci-lint
     golangci-lint run
 
+# Creating a new migration
+
+Install migrate cli tool with brew:
+
+    brew install golang-migrate
+
+To create new sql migration files, see the documentation [here](https://github.com/golang-migrate/migrate/blob/master/GETTING_STARTED.md). As an example:
+
+cd core/node && migrate create -ext sql -dir migrations -seq create_miniblock_candidates_table
+
+As the docs describe, note the tool will create 2 migration files, one to apply the migration and one to undo it. Please use "IF EXISTS" to prevent errors for creation and deletion of objects.
+
+[Postgres Examples](https://github.com/golang-migrate/migrate/blob/master/database/postgres/TUTORIAL.md)
+
 # Tests & Docker
 
 If you get Docker errors when running tests:

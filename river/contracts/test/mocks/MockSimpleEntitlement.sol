@@ -3,8 +3,6 @@ pragma solidity ^0.8.24;
 
 import {IEntitlement} from "contracts/src/spaces/entitlements/IEntitlement.sol";
 
-import {EnumerableSet} from "@openzeppelin/contracts/utils/structs/EnumerableSet.sol";
-
 import {ERC165Upgradeable} from "@openzeppelin/contracts-upgradeable/utils/introspection/ERC165Upgradeable.sol";
 import {Initializable} from "@openzeppelin/contracts-upgradeable/proxy/utils/Initializable.sol";
 import {ContextUpgradeable} from "@openzeppelin/contracts-upgradeable/utils/ContextUpgradeable.sol";
@@ -17,7 +15,7 @@ contract MockSimpleEntitlement is
   UUPSUpgradeable,
   IEntitlement
 {
-  mapping(address => bool) internal entitledToTown;
+  mapping(address => bool) internal entitledToSpace;
   mapping(uint256 => address) internal nameMap;
 
   string public constant name = "Mock Entitlement";
@@ -26,7 +24,7 @@ contract MockSimpleEntitlement is
 
   address public SPACE_ADDRESS;
 
-  modifier onlyTown() {
+  modifier onlySpace() {
     if (_msgSender() != SPACE_ADDRESS) {
       revert Entitlement__NotAllowed();
     }
@@ -43,7 +41,7 @@ contract MockSimpleEntitlement is
 
   function _authorizeUpgrade(
     address newImplementation
-  ) internal override onlyTown {}
+  ) internal override onlySpace {}
 
   function supportsInterface(
     bytes4 interfaceId
@@ -58,12 +56,12 @@ contract MockSimpleEntitlement is
   }
 
   function isEntitled(
-    string calldata,
+    bytes32,
     address[] memory wallets,
     bytes32
   ) external view returns (bool) {
     for (uint256 i = 0; i < wallets.length; i++) {
-      if (entitledToTown[wallets[i]]) {
+      if (entitledToSpace[wallets[i]]) {
         return true;
       }
     }
@@ -73,14 +71,14 @@ contract MockSimpleEntitlement is
   function setEntitlement(
     uint256 roleId,
     bytes memory entitlementData
-  ) external onlyTown {
+  ) external onlySpace {
     address user = abi.decode(entitlementData, (address));
-    entitledToTown[user] = true;
+    entitledToSpace[user] = true;
     nameMap[roleId] = user;
   }
 
-  function removeEntitlement(uint256 roleId) external onlyTown {
-    entitledToTown[nameMap[roleId]] = false;
+  function removeEntitlement(uint256 roleId) external onlySpace {
+    entitledToSpace[nameMap[roleId]] = false;
   }
 
   function getEntitlementDataByRoleId(

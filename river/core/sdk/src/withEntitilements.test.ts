@@ -1,10 +1,16 @@
+/* eslint-disable @typescript-eslint/no-unnecessary-type-assertion */
 /**
  * @group with-entitilements
  */
 
 import { dlog } from '@river/dlog'
 import { makeUserContextFromWallet, makeTestClient, makeDonePromise } from './util.test'
-import { makeUniqueChannelStreamId, makeUniqueSpaceStreamId, makeUserStreamId } from './id'
+import {
+    isValidStreamId,
+    makeDefaultChannelStreamId,
+    makeSpaceStreamId,
+    makeUserStreamId,
+} from './id'
 import { ethers } from 'ethers'
 import {
     LocalhostWeb3Provider,
@@ -41,9 +47,7 @@ describe('withEntitlements', () => {
         bob.startSync()
 
         // create a space stream,
-        const spaceId = makeUniqueSpaceStreamId()
-        const channelId = makeUniqueChannelStreamId()
-        log('Bob created user, about to create space', { spaceId, channelId })
+        log('Bob created user, about to create space')
         // first on the blockchain
         const membershipInfo: MembershipStruct = {
             settings: {
@@ -66,10 +70,8 @@ describe('withEntitlements', () => {
         }
         const transaction = await spaceDapp.createSpace(
             {
-                spaceId: spaceId,
-                spaceName: spaceId,
+                spaceName: 'bobs-space-metadata',
                 spaceMetadata: 'bobs-space-metadata',
-                channelId: channelId,
                 channelName: 'general', // default channel name
                 membership: membershipInfo,
             },
@@ -78,6 +80,12 @@ describe('withEntitlements', () => {
         const receipt = await transaction.wait()
         log('receipt', receipt)
         expect(receipt.status).toEqual(1)
+        const spaceAddress = spaceDapp.getSpaceAddress(receipt)
+        expect(spaceAddress).toBeDefined()
+        const spaceId = makeSpaceStreamId(spaceAddress!)
+        expect(isValidStreamId(spaceId)).toBe(true)
+        const channelId = makeDefaultChannelStreamId(spaceAddress!)
+        expect(isValidStreamId(channelId)).toBe(true)
         // then on the river node
         const returnVal = await bob.createSpace(spaceId)
         expect(returnVal.streamId).toEqual(spaceId)

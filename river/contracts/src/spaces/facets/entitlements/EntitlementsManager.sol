@@ -54,7 +54,7 @@ contract EntitlementsManager is
   }
 
   function isEntitledToChannel(
-    string calldata channelId,
+    bytes32 channelId,
     address user,
     string calldata permission
   ) external view returns (bool) {
@@ -62,7 +62,7 @@ contract EntitlementsManager is
   }
 
   function getChannelEntitlements(
-    string calldata channelId,
+    bytes32 channelId,
     string calldata permission
   ) external pure returns (IRuleEntitlement.RuleData memory) {
     return _getChannelEntitlements(channelId, permission);

@@ -95,7 +95,7 @@ abstract contract MembershipBase is IMembershipBase {
     // verify it's not more than platform max
     if (
       duration >
-      IPlatformRequirements(_getTownFactory()).getMembershipDuration()
+      IPlatformRequirements(_getSpaceFactory()).getMembershipDuration()
     ) revert Membership__InvalidDuration();
   }
 
@@ -136,13 +136,13 @@ abstract contract MembershipBase is IMembershipBase {
   //                           Pricing
   // =============================================================
   function _verifyPrice(uint256 newPrice) internal view {
-    uint256 minPrice = IPlatformRequirements(_getTownFactory())
+    uint256 minPrice = IPlatformRequirements(_getSpaceFactory())
       .getMembershipFee();
     if (newPrice < minPrice) revert Membership__PriceTooLow();
   }
 
   function _setMembershipPrice(uint256 newPrice) public {
-    IPlatformRequirements platform = IPlatformRequirements(_getTownFactory());
+    IPlatformRequirements platform = IPlatformRequirements(_getSpaceFactory());
 
     // Get base protocol fee
     uint256 membershipMinPrice = platform.getMembershipFee();
@@ -283,7 +283,7 @@ abstract contract MembershipBase is IMembershipBase {
   // =============================================================
   //                           Factory
   // =============================================================
-  function _getTownFactory() public view returns (address) {
+  function _getSpaceFactory() public view returns (address) {
     return MembershipStorage.layout().spaceFactory;
   }
 }

@@ -1,3 +1,4 @@
+import { SpaceAddressFromSpaceId } from '../Utils'
 import { IStaticContractsInfo } from '../IStaticContractsInfo'
 import { ITownArchitectShim } from './ITownArchitectShim'
 import { Town } from './Town'
@@ -35,7 +36,7 @@ export class TownRegistrar {
 
     public async getTown(spaceId: string): Promise<Town | undefined> {
         if (this.towns[spaceId] === undefined) {
-            const townAddress = await this.townArchitect.read.getSpaceById(spaceId)
+            const townAddress = SpaceAddressFromSpaceId(spaceId)
             if (!townAddress || townAddress === ethers.constants.AddressZero) {
                 return undefined // town is not found
             }

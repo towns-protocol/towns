@@ -1,12 +1,14 @@
 package shared
 
 import (
+	"crypto/rand"
 	"encoding/hex"
 	"slices"
 	"strings"
 
 	"github.com/ethereum/go-ethereum/common"
 	"github.com/ethereum/go-ethereum/crypto"
+	"github.com/river-build/river/core/node/base"
 	. "github.com/river-build/river/core/node/base"
 	. "github.com/river-build/river/core/node/protocol"
 )
@@ -26,6 +28,34 @@ func AddressFromUserId(userId string) ([]byte, error) {
 		return nil, RiverError(Err_BAD_ADDRESS, "address should start with 0x", "userId", userId)
 	}
 	return hex.DecodeString(userId[2:])
+}
+
+func AddressFromBytes(addr []byte) (common.Address, error) {
+	return base.BytesToEthAddress(addr)
+}
+
+func AddressFromSpaceId(spaceId StreamId) (common.Address, error) {
+	if spaceId.Type() != STREAM_SPACE_BIN {
+		return common.Address{}, RiverError(Err_BAD_STREAM_ID, "invalid stream type for getting space", "streamId", spaceId)
+	}
+	return common.BytesToAddress(spaceId.Bytes()[1:21]), nil
+}
+
+func MakeChannelId(spaceId StreamId) (StreamId, error) {
+	// replace the first byte with the channel type
+	// copy the 20 bytes of the spaceId address
+	// fill the rest with random bytes
+	if spaceId.Type() != STREAM_SPACE_BIN {
+		return StreamId{}, RiverError(Err_BAD_STREAM_ID, "invalid stream type for space", "streamId", spaceId)
+	}
+	var b [32]byte
+	b[0] = STREAM_CHANNEL_BIN
+	copy(b[1:], spaceId.Bytes()[1:21])
+	_, err := rand.Read(b[21:])
+	if err != nil {
+		return StreamId{}, RiverError(Err_INTERNAL, "failed to create random bytes", "err", err)
+	}
+	return StreamIdFromBytes(b[:])
 }
 
 func UserStreamIdFromBytes(addr []byte) (StreamId, error) {

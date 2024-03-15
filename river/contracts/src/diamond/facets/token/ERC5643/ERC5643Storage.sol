@@ -8,8 +8,9 @@ pragma solidity ^0.8.23;
 // contracts
 
 library ERC5643Storage {
+  // keccak256(abi.encode(uint256(keccak256("diamond.facets.token.ERC5643.storage")) - 1)) & ~bytes32(uint256(0xff))
   bytes32 internal constant STORAGE_SLOT =
-    keccak256("towns.contracts.storage.ERC5643");
+    0x4775a23600034fdd9f073b224f794d51a58b35ba663a9602623ba7a5c09cce00;
 
   struct Layout {
     mapping(uint256 => uint64) expiration;

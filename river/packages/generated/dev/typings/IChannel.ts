@@ -29,7 +29,7 @@ import type {
 
 export declare namespace IChannelBase {
   export type ChannelStruct = {
-    id: PromiseOrValue<string>;
+    id: PromiseOrValue<BytesLike>;
     disabled: PromiseOrValue<boolean>;
     metadata: PromiseOrValue<string>;
     roleIds: PromiseOrValue<BigNumberish>[];
@@ -45,14 +45,14 @@ export declare namespace IChannelBase {
 
 export interface IChannelInterface extends utils.Interface {
   functions: {
-    "addRoleToChannel(string,uint256)": FunctionFragment;
-    "createChannel(string,string,uint256[])": FunctionFragment;
-    "getChannel(string)": FunctionFragment;
+    "addRoleToChannel(bytes32,uint256)": FunctionFragment;
+    "createChannel(bytes32,string,uint256[])": FunctionFragment;
+    "getChannel(bytes32)": FunctionFragment;
     "getChannels()": FunctionFragment;
-    "getRolesByChannel(string)": FunctionFragment;
-    "removeChannel(string)": FunctionFragment;
-    "removeRoleFromChannel(string,uint256)": FunctionFragment;
-    "updateChannel(string,string,bool)": FunctionFragment;
+    "getRolesByChannel(bytes32)": FunctionFragment;
+    "removeChannel(bytes32)": FunctionFragment;
+    "removeRoleFromChannel(bytes32,uint256)": FunctionFragment;
+    "updateChannel(bytes32,string,bool)": FunctionFragment;
   };
 
   getFunction(
@@ -69,19 +69,19 @@ export interface IChannelInterface extends utils.Interface {
 
   encodeFunctionData(
     functionFragment: "addRoleToChannel",
-    values: [PromiseOrValue<string>, PromiseOrValue<BigNumberish>]
+    values: [PromiseOrValue<BytesLike>, PromiseOrValue<BigNumberish>]
   ): string;
   encodeFunctionData(
     functionFragment: "createChannel",
     values: [
-      PromiseOrValue<string>,
+      PromiseOrValue<BytesLike>,
       PromiseOrValue<string>,
       PromiseOrValue<BigNumberish>[]
     ]
   ): string;
   encodeFunctionData(
     functionFragment: "getChannel",
-    values: [PromiseOrValue<string>]
+    values: [PromiseOrValue<BytesLike>]
   ): string;
   encodeFunctionData(
     functionFragment: "getChannels",
@@ -89,20 +89,20 @@ export interface IChannelInterface extends utils.Interface {
   ): string;
   encodeFunctionData(
     functionFragment: "getRolesByChannel",
-    values: [PromiseOrValue<string>]
+    values: [PromiseOrValue<BytesLike>]
   ): string;
   encodeFunctionData(
     functionFragment: "removeChannel",
-    values: [PromiseOrValue<string>]
+    values: [PromiseOrValue<BytesLike>]
   ): string;
   encodeFunctionData(
     functionFragment: "removeRoleFromChannel",
-    values: [PromiseOrValue<string>, PromiseOrValue<BigNumberish>]
+    values: [PromiseOrValue<BytesLike>, PromiseOrValue<BigNumberish>]
   ): string;
   encodeFunctionData(
     functionFragment: "updateChannel",
     values: [
-      PromiseOrValue<string>,
+      PromiseOrValue<BytesLike>,
       PromiseOrValue<string>,
       PromiseOrValue<boolean>
     ]
@@ -139,11 +139,11 @@ export interface IChannelInterface extends utils.Interface {
   ): Result;
 
   events: {
-    "ChannelCreated(address,string)": EventFragment;
-    "ChannelRemoved(address,string)": EventFragment;
-    "ChannelRoleAdded(address,string,uint256)": EventFragment;
-    "ChannelRoleRemoved(address,string,uint256)": EventFragment;
-    "ChannelUpdated(address,string)": EventFragment;
+    "ChannelCreated(address,bytes32)": EventFragment;
+    "ChannelRemoved(address,bytes32)": EventFragment;
+    "ChannelRoleAdded(address,bytes32,uint256)": EventFragment;
+    "ChannelRoleRemoved(address,bytes32,uint256)": EventFragment;
+    "ChannelUpdated(address,bytes32)": EventFragment;
   };
 
   getEvent(nameOrSignatureOrTopic: "ChannelCreated"): EventFragment;
@@ -240,20 +240,20 @@ export interface IChannel extends BaseContract {
 
   functions: {
     addRoleToChannel(
-      channelId: PromiseOrValue<string>,
+      channelId: PromiseOrValue<BytesLike>,
       roleId: PromiseOrValue<BigNumberish>,
       overrides?: Overrides & { from?: PromiseOrValue<string> }
     ): Promise<ContractTransaction>;
 
     createChannel(
-      channelId: PromiseOrValue<string>,
+      channelId: PromiseOrValue<BytesLike>,
       metadata: PromiseOrValue<string>,
       roleIds: PromiseOrValue<BigNumberish>[],
       overrides?: Overrides & { from?: PromiseOrValue<string> }
     ): Promise<ContractTransaction>;
 
     getChannel(
-      channelId: PromiseOrValue<string>,
+      channelId: PromiseOrValue<BytesLike>,
       overrides?: CallOverrides
     ): Promise<
       [IChannelBase.ChannelStructOutput] & {
@@ -270,23 +270,23 @@ export interface IChannel extends BaseContract {
     >;
 
     getRolesByChannel(
-      channelId: PromiseOrValue<string>,
+      channelId: PromiseOrValue<BytesLike>,
       overrides?: CallOverrides
     ): Promise<[BigNumber[]] & { roleIds: BigNumber[] }>;
 
     removeChannel(
-      channelId: PromiseOrValue<string>,
+      channelId: PromiseOrValue<BytesLike>,
       overrides?: Overrides & { from?: PromiseOrValue<string> }
     ): Promise<ContractTransaction>;
 
     removeRoleFromChannel(
-      channelId: PromiseOrValue<string>,
+      channelId: PromiseOrValue<BytesLike>,
       roleId: PromiseOrValue<BigNumberish>,
       overrides?: Overrides & { from?: PromiseOrValue<string> }
     ): Promise<ContractTransaction>;
 
     updateChannel(
-      channelId: PromiseOrValue<string>,
+      channelId: PromiseOrValue<BytesLike>,
       metadata: PromiseOrValue<string>,
       disabled: PromiseOrValue<boolean>,
       overrides?: Overrides & { from?: PromiseOrValue<string> }
@@ -294,20 +294,20 @@ export interface IChannel extends BaseContract {
   };
 
   addRoleToChannel(
-    channelId: PromiseOrValue<string>,
+    channelId: PromiseOrValue<BytesLike>,
     roleId: PromiseOrValue<BigNumberish>,
     overrides?: Overrides & { from?: PromiseOrValue<string> }
   ): Promise<ContractTransaction>;
 
   createChannel(
-    channelId: PromiseOrValue<string>,
+    channelId: PromiseOrValue<BytesLike>,
     metadata: PromiseOrValue<string>,
     roleIds: PromiseOrValue<BigNumberish>[],
     overrides?: Overrides & { from?: PromiseOrValue<string> }
   ): Promise<ContractTransaction>;
 
   getChannel(
-    channelId: PromiseOrValue<string>,
+    channelId: PromiseOrValue<BytesLike>,
     overrides?: CallOverrides
   ): Promise<IChannelBase.ChannelStructOutput>;
 
@@ -316,23 +316,23 @@ export interface IChannel extends BaseContract {
   ): Promise<IChannelBase.ChannelStructOutput[]>;
 
   getRolesByChannel(
-    channelId: PromiseOrValue<string>,
+    channelId: PromiseOrValue<BytesLike>,
     overrides?: CallOverrides
   ): Promise<BigNumber[]>;
 
   removeChannel(
-    channelId: PromiseOrValue<string>,
+    channelId: PromiseOrValue<BytesLike>,
     overrides?: Overrides & { from?: PromiseOrValue<string> }
   ): Promise<ContractTransaction>;
 
   removeRoleFromChannel(
-    channelId: PromiseOrValue<string>,
+    channelId: PromiseOrValue<BytesLike>,
     roleId: PromiseOrValue<BigNumberish>,
     overrides?: Overrides & { from?: PromiseOrValue<string> }
   ): Promise<ContractTransaction>;
 
   updateChannel(
-    channelId: PromiseOrValue<string>,
+    channelId: PromiseOrValue<BytesLike>,
     metadata: PromiseOrValue<string>,
     disabled: PromiseOrValue<boolean>,
     overrides?: Overrides & { from?: PromiseOrValue<string> }
@@ -340,20 +340,20 @@ export interface IChannel extends BaseContract {
 
   callStatic: {
     addRoleToChannel(
-      channelId: PromiseOrValue<string>,
+      channelId: PromiseOrValue<BytesLike>,
       roleId: PromiseOrValue<BigNumberish>,
       overrides?: CallOverrides
     ): Promise<void>;
 
     createChannel(
-      channelId: PromiseOrValue<string>,
+      channelId: PromiseOrValue<BytesLike>,
       metadata: PromiseOrValue<string>,
       roleIds: PromiseOrValue<BigNumberish>[],
       overrides?: CallOverrides
     ): Promise<void>;
 
     getChannel(
-      channelId: PromiseOrValue<string>,
+      channelId: PromiseOrValue<BytesLike>,
       overrides?: CallOverrides
     ): Promise<IChannelBase.ChannelStructOutput>;
 
@@ -362,23 +362,23 @@ export interface IChannel extends BaseContract {
     ): Promise<IChannelBase.ChannelStructOutput[]>;
 
     getRolesByChannel(
-      channelId: PromiseOrValue<string>,
+      channelId: PromiseOrValue<BytesLike>,
       overrides?: CallOverrides
     ): Promise<BigNumber[]>;
 
     removeChannel(
-      channelId: PromiseOrValue<string>,
+      channelId: PromiseOrValue<BytesLike>,
       overrides?: CallOverrides
     ): Promise<void>;
 
     removeRoleFromChannel(
-      channelId: PromiseOrValue<string>,
+      channelId: PromiseOrValue<BytesLike>,
       roleId: PromiseOrValue<BigNumberish>,
       overrides?: CallOverrides
     ): Promise<void>;
 
     updateChannel(
-      channelId: PromiseOrValue<string>,
+      channelId: PromiseOrValue<BytesLike>,
       metadata: PromiseOrValue<string>,
       disabled: PromiseOrValue<boolean>,
       overrides?: CallOverrides
@@ -386,7 +386,7 @@ export interface IChannel extends BaseContract {
   };
 
   filters: {
-    "ChannelCreated(address,string)"(
+    "ChannelCreated(address,bytes32)"(
       caller?: PromiseOrValue<string> | null,
       channelId?: null
     ): ChannelCreatedEventFilter;
@@ -395,7 +395,7 @@ export interface IChannel extends BaseContract {
       channelId?: null
     ): ChannelCreatedEventFilter;
 
-    "ChannelRemoved(address,string)"(
+    "ChannelRemoved(address,bytes32)"(
       caller?: PromiseOrValue<string> | null,
       channelId?: null
     ): ChannelRemovedEventFilter;
@@ -404,7 +404,7 @@ export interface IChannel extends BaseContract {
       channelId?: null
     ): ChannelRemovedEventFilter;
 
-    "ChannelRoleAdded(address,string,uint256)"(
+    "ChannelRoleAdded(address,bytes32,uint256)"(
       caller?: PromiseOrValue<string> | null,
       channelId?: null,
       roleId?: null
@@ -415,7 +415,7 @@ export interface IChannel extends BaseContract {
       roleId?: null
     ): ChannelRoleAddedEventFilter;
 
-    "ChannelRoleRemoved(address,string,uint256)"(
+    "ChannelRoleRemoved(address,bytes32,uint256)"(
       caller?: PromiseOrValue<string> | null,
       channelId?: null,
       roleId?: null
@@ -426,7 +426,7 @@ export interface IChannel extends BaseContract {
       roleId?: null
     ): ChannelRoleRemovedEventFilter;
 
-    "ChannelUpdated(address,string)"(
+    "ChannelUpdated(address,bytes32)"(
       caller?: PromiseOrValue<string> | null,
       channelId?: null
     ): ChannelUpdatedEventFilter;
@@ -438,43 +438,43 @@ export interface IChannel extends BaseContract {
 
   estimateGas: {
     addRoleToChannel(
-      channelId: PromiseOrValue<string>,
+      channelId: PromiseOrValue<BytesLike>,
       roleId: PromiseOrValue<BigNumberish>,
       overrides?: Overrides & { from?: PromiseOrValue<string> }
     ): Promise<BigNumber>;
 
     createChannel(
-      channelId: PromiseOrValue<string>,
+      channelId: PromiseOrValue<BytesLike>,
       metadata: PromiseOrValue<string>,
       roleIds: PromiseOrValue<BigNumberish>[],
       overrides?: Overrides & { from?: PromiseOrValue<string> }
     ): Promise<BigNumber>;
 
     getChannel(
-      channelId: PromiseOrValue<string>,
+      channelId: PromiseOrValue<BytesLike>,
       overrides?: CallOverrides
     ): Promise<BigNumber>;
 
     getChannels(overrides?: CallOverrides): Promise<BigNumber>;
 
     getRolesByChannel(
-      channelId: PromiseOrValue<string>,
+      channelId: PromiseOrValue<BytesLike>,
       overrides?: CallOverrides
     ): Promise<BigNumber>;
 
     removeChannel(
-      channelId: PromiseOrValue<string>,
+      channelId: PromiseOrValue<BytesLike>,
       overrides?: Overrides & { from?: PromiseOrValue<string> }
     ): Promise<BigNumber>;
 
     removeRoleFromChannel(
-      channelId: PromiseOrValue<string>,
+      channelId: PromiseOrValue<BytesLike>,
       roleId: PromiseOrValue<BigNumberish>,
       overrides?: Overrides & { from?: PromiseOrValue<string> }
     ): Promise<BigNumber>;
 
     updateChannel(
-      channelId: PromiseOrValue<string>,
+      channelId: PromiseOrValue<BytesLike>,
       metadata: PromiseOrValue<string>,
       disabled: PromiseOrValue<boolean>,
       overrides?: Overrides & { from?: PromiseOrValue<string> }
@@ -483,43 +483,43 @@ export interface IChannel extends BaseContract {
 
   populateTransaction: {
     addRoleToChannel(
-      channelId: PromiseOrValue<string>,
+      channelId: PromiseOrValue<BytesLike>,
       roleId: PromiseOrValue<BigNumberish>,
       overrides?: Overrides & { from?: PromiseOrValue<string> }
     ): Promise<PopulatedTransaction>;
 
     createChannel(
-      channelId: PromiseOrValue<string>,
+      channelId: PromiseOrValue<BytesLike>,
       metadata: PromiseOrValue<string>,
       roleIds: PromiseOrValue<BigNumberish>[],
       overrides?: Overrides & { from?: PromiseOrValue<string> }
     ): Promise<PopulatedTransaction>;
 
     getChannel(
-      channelId: PromiseOrValue<string>,
+      channelId: PromiseOrValue<BytesLike>,
       overrides?: CallOverrides
     ): Promise<PopulatedTransaction>;
 
     getChannels(overrides?: CallOverrides): Promise<PopulatedTransaction>;
 
     getRolesByChannel(
-      channelId: PromiseOrValue<string>,
+      channelId: PromiseOrValue<BytesLike>,
       overrides?: CallOverrides
     ): Promise<PopulatedTransaction>;
 
     removeChannel(
-      channelId: PromiseOrValue<string>,
+      channelId: PromiseOrValue<BytesLike>,
       overrides?: Overrides & { from?: PromiseOrValue<string> }
     ): Promise<PopulatedTransaction>;
 
     removeRoleFromChannel(
-      channelId: PromiseOrValue<string>,
+      channelId: PromiseOrValue<BytesLike>,
       roleId: PromiseOrValue<BigNumberish>,
       overrides?: Overrides & { from?: PromiseOrValue<string> }
     ): Promise<PopulatedTransaction>;
 
     updateChannel(
-      channelId: PromiseOrValue<string>,
+      channelId: PromiseOrValue<BytesLike>,
       metadata: PromiseOrValue<string>,
       disabled: PromiseOrValue<boolean>,
       overrides?: Overrides & { from?: PromiseOrValue<string> }

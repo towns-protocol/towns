@@ -1,9 +1,10 @@
+/* eslint-disable @typescript-eslint/no-unnecessary-type-assertion */
 /**
  * @group with-entitilements
  */
 
 import { makeUserContextFromWallet, makeTestClient } from './util.test'
-import { makeUniqueChannelStreamId, makeUniqueSpaceStreamId } from './id'
+import { makeDefaultChannelStreamId, makeSpaceStreamId } from './id'
 import { ethers, Wallet } from 'ethers'
 import { Client } from './client'
 import { jest } from '@jest/globals'
@@ -58,9 +59,6 @@ describe('mediaWithEntitlementsTests', () => {
          * Bob creates a space and a channel, both on chain and in River
          */
 
-        const spaceStreamId = makeUniqueSpaceStreamId()
-        const channelId = makeUniqueChannelStreamId()
-
         const provider = new LocalhostWeb3Provider(bobWallet)
         const chainId = (await provider.getNetwork()).chainId
         await provider.fundWallet()
@@ -90,17 +88,20 @@ describe('mediaWithEntitlementsTests', () => {
 
         const transaction = await spaceDapp.createSpace(
             {
-                spaceId: spaceStreamId,
-                spaceName: spaceStreamId,
+                spaceName: 'space-name',
                 spaceMetadata: 'bobs-space-metadata',
-                channelId: channelId,
                 channelName: 'general', // default channel name
                 membership: membershipInfo,
             },
             provider.wallet,
         )
 
-        await transaction.wait()
+        const receipt = await transaction.wait()
+        const spaceAddress = spaceDapp.getSpaceAddress(receipt)
+        expect(spaceAddress).toBeDefined()
+        const spaceStreamId = makeSpaceStreamId(spaceAddress!)
+        const channelId = makeDefaultChannelStreamId(spaceAddress!)
+
         await bobClient.createSpace(spaceStreamId)
         await bobClient.createChannel(spaceStreamId, 'Channel', 'Topic', channelId)
 

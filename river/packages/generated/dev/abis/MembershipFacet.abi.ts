@@ -168,7 +168,7 @@ export default [
   },
   {
     "type": "function",
-    "name": "_getTownFactory",
+    "name": "_getSpaceFactory",
     "inputs": [],
     "outputs": [
       {
@@ -457,6 +457,19 @@ export default [
   },
   {
     "type": "function",
+    "name": "getSpaceFactory",
+    "inputs": [],
+    "outputs": [
+      {
+        "name": "",
+        "type": "address",
+        "internalType": "address"
+      }
+    ],
+    "stateMutability": "view"
+  },
+  {
+    "type": "function",
     "name": "getTokenIdByMembership",
     "inputs": [
       {
@@ -470,19 +483,6 @@ export default [
         "name": "",
         "type": "uint256",
         "internalType": "uint256"
-      }
-    ],
-    "stateMutability": "view"
-  },
-  {
-    "type": "function",
-    "name": "getTownFactory",
-    "inputs": [],
-    "outputs": [
-      {
-        "name": "",
-        "type": "address",
-        "internalType": "address"
       }
     ],
     "stateMutability": "view"
@@ -513,7 +513,7 @@ export default [
   },
   {
     "type": "function",
-    "name": "joinTown",
+    "name": "joinSpace",
     "inputs": [
       {
         "name": "receiver",
@@ -532,7 +532,7 @@ export default [
   },
   {
     "type": "function",
-    "name": "joinTownWithReferral",
+    "name": "joinSpaceWithReferral",
     "inputs": [
       {
         "name": "receiver",

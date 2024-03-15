@@ -14,6 +14,8 @@ import {ITokenOwnableBase} from "contracts/src/diamond/facets/ownable/token/ITok
 import {IManagedProxyBase} from "contracts/src/diamond/proxy/managed/IManagedProxy.sol";
 import {IMembershipBase} from "contracts/src/spaces/facets/membership/IMembership.sol";
 import {IWalletLink} from "contracts/src/river/wallet-link/IWalletLink.sol";
+import {IERC721A} from "contracts/src/diamond/facets/token/ERC721A/IERC721A.sol";
+import {ISpaceOwner} from "contracts/src/spaces/facets/owner/ISpaceOwner.sol";
 
 // libraries
 import {EnumerableSet} from "@openzeppelin/contracts/utils/structs/EnumerableSet.sol";
@@ -21,6 +23,7 @@ import {StringSet} from "contracts/src/utils/StringSet.sol";
 import {Validator} from "contracts/src/utils/Validator.sol";
 import {Address} from "@openzeppelin/contracts/utils/Address.sol";
 import {ArchitectStorage} from "./ArchitectStorage.sol";
+import {ImplementationStorage} from "./ImplementationStorage.sol";
 import {Permissions} from "contracts/src/spaces/facets/Permissions.sol";
 
 // contracts
@@ -28,7 +31,6 @@ import {Factory} from "contracts/src/utils/Factory.sol";
 import {SpaceProxy} from "contracts/src/spaces/facets/proxy/SpaceProxy.sol";
 
 // modules
-import {SpaceOwner} from "contracts/src/spaces/facets/owner/SpaceOwner.sol";
 import {ERC1967Proxy} from "@openzeppelin/contracts/proxy/ERC1967/ERC1967Proxy.sol";
 
 abstract contract ArchitectBase is Factory, IArchitectBase {
@@ -37,72 +39,49 @@ abstract contract ArchitectBase is Factory, IArchitectBase {
 
   address internal constant EVERYONE_ADDRESS = address(1);
   string internal constant MINTER_ROLE = "Minter";
+  bytes1 internal constant CHANNEL_PREFIX = 0x20;
 
   // =============================================================
   //                           Spaces
   // =============================================================
-
-  function _getSpaceById(
-    string memory spaceId
-  ) internal view returns (address) {
-    return ArchitectStorage.layout().spaceById[spaceId].space;
-  }
-
-  function _getTokenIdBySpaceId(
-    string memory spaceId
-  ) internal view returns (uint256) {
-    return ArchitectStorage.layout().spaceById[spaceId].tokenId;
-  }
-
   function _getTokenIdBySpace(address space) internal view returns (uint256) {
     return ArchitectStorage.layout().tokenIdBySpace[space];
+  }
+
+  function _getSpaceByTokenId(uint256 tokenId) internal view returns (address) {
+    return ArchitectStorage.layout().spaceByTokenId[tokenId];
   }
 
   function _createSpace(
     SpaceInfo memory spaceInfo
   ) internal returns (address spaceAddress) {
-    // validate id length
-    Validator.checkStringLength(spaceInfo.id);
-
     ArchitectStorage.Layout storage ds = ArchitectStorage.layout();
-
-    // validate the network id isn't already taken
-    if (ds.spaceIds.contains(spaceInfo.id))
-      revert Architect__InvalidNetworkId();
+    ImplementationStorage.Layout storage ims = ImplementationStorage.layout();
 
     // get the token id of the next space
-    uint256 tokenId = SpaceOwner(ds.spaceToken).nextTokenId();
+    uint256 spaceTokenId = ims.spaceToken.nextTokenId();
 
     // deploy space
-    spaceAddress = _deploySpace(spaceInfo.id, tokenId, spaceInfo.membership);
+    spaceAddress = _deploySpace(spaceTokenId, spaceInfo.membership);
 
     // save space info to storage
-    ds.spaceIds.add(spaceInfo.id);
-    ds.spaces.add(spaceAddress);
+    ds.spaceCount++;
 
     // save to mappings
-    ds.spaceById[spaceInfo.id] = ArchitectStorage.Space({
-      space: spaceAddress,
-      tokenId: tokenId
-    });
-    ds.tokenIdBySpace[spaceAddress] = tokenId;
+    ds.spaceByTokenId[spaceTokenId] = spaceAddress;
+    ds.tokenIdBySpace[spaceAddress] = spaceTokenId;
 
     // mint token to and transfer to Architect
-    SpaceOwner(ds.spaceToken).mintSpace(
-      spaceInfo.name,
-      spaceInfo.uri,
-      spaceInfo.id,
-      spaceAddress
-    );
+    ims.spaceToken.mintSpace(spaceInfo.name, spaceInfo.uri, spaceAddress);
 
     // deploy user entitlement
     IUserEntitlement userEntitlement = IUserEntitlement(
-      _deployEntitlement(ds.userEntitlement, spaceAddress)
+      _deployEntitlement(ims.userEntitlement, spaceAddress)
     );
 
     // deploy token entitlement
     IRuleEntitlement ruleEntitlement = IRuleEntitlement(
-      _deployEntitlement(ds.ruleEntitlement, spaceAddress)
+      _deployEntitlement(ims.ruleEntitlement, spaceAddress)
     );
 
     address[] memory entitlements = new address[](2);
@@ -128,18 +107,18 @@ abstract contract ArchitectBase is Factory, IArchitectBase {
       userEntitlement
     );
 
-    // create channels
-    _createChannel(spaceAddress, memberRoleId, spaceInfo.channel);
+    // create default channel
+    _createDefaultChannel(spaceAddress, memberRoleId, spaceInfo.channel);
 
     // transfer nft to sender
-    SpaceOwner(ds.spaceToken).safeTransferFrom(
+    IERC721A(address(ims.spaceToken)).safeTransferFrom(
       address(this),
-      _msgSenderArchitect(),
-      tokenId
+      msg.sender,
+      spaceTokenId
     );
 
     // emit event
-    emit SpaceCreated(_msgSenderArchitect(), tokenId, spaceAddress);
+    emit SpaceCreated(msg.sender, spaceTokenId, spaceAddress);
   }
 
   // =============================================================
@@ -147,19 +126,19 @@ abstract contract ArchitectBase is Factory, IArchitectBase {
   // =============================================================
 
   function _setImplementations(
-    address spaceToken,
+    ISpaceOwner spaceToken,
     IUserEntitlement userEntitlement,
     IRuleEntitlement ruleEntitlement,
     IWalletLink walletLink
   ) internal {
-    if (spaceToken.code.length == 0) revert Architect__NotContract();
+    if (address(spaceToken).code.length == 0) revert Architect__NotContract();
     if (address(userEntitlement).code.length == 0)
       revert Architect__NotContract();
     if (address(ruleEntitlement).code.length == 0)
       revert Architect__NotContract();
     if (address(walletLink).code.length == 0) revert Architect__NotContract();
 
-    ArchitectStorage.Layout storage ds = ArchitectStorage.layout();
+    ImplementationStorage.Layout storage ds = ImplementationStorage.layout();
     ds.spaceToken = spaceToken;
     ds.userEntitlement = userEntitlement;
     ds.ruleEntitlement = ruleEntitlement;
@@ -170,13 +149,13 @@ abstract contract ArchitectBase is Factory, IArchitectBase {
     internal
     view
     returns (
-      address spaceToken,
+      ISpaceOwner spaceToken,
       IUserEntitlement userEntitlementImplementation,
       IRuleEntitlement ruleEntitlementImplementation,
       IWalletLink walletLink
     )
   {
-    ArchitectStorage.Layout storage ds = ArchitectStorage.layout();
+    ImplementationStorage.Layout storage ds = ImplementationStorage.layout();
 
     return (
       ds.spaceToken,
@@ -190,15 +169,20 @@ abstract contract ArchitectBase is Factory, IArchitectBase {
   //                  Internal Channel Helpers
   // =============================================================
 
-  function _createChannel(
+  function _createDefaultChannel(
     address space,
     uint256 roleId,
     ChannelInfo memory channelInfo
   ) internal {
     uint256[] memory roleIds = new uint256[](1);
     roleIds[0] = roleId;
+
+    bytes32 defaultChannelId = bytes32(
+      bytes.concat(CHANNEL_PREFIX, bytes20(space))
+    );
+
     IChannel(space).createChannel(
-      channelInfo.id,
+      defaultChannelId,
       channelInfo.metadata,
       roleIds
     );
@@ -287,29 +271,13 @@ abstract contract ArchitectBase is Factory, IArchitectBase {
   //                      Deployment Helpers
   // =============================================================
 
-  function _getSpaceDeploymentAddress(
-    string memory spaceId,
-    uint256 tokenId,
-    Membership memory membership
-  ) internal view returns (address space) {
-    // get deployment info
-    (bytes memory initCode, bytes32 salt) = _getSpaceDeploymentInfo(
-      spaceId,
-      tokenId,
-      membership
-    );
-    return _calculateDeploymentAddress(keccak256(initCode), salt);
-  }
-
   function _deploySpace(
-    string memory spaceId,
-    uint256 tokenId,
+    uint256 spaceTokenId,
     Membership memory membership
   ) internal returns (address space) {
     // get deployment info
     (bytes memory initCode, bytes32 salt) = _getSpaceDeploymentInfo(
-      spaceId,
-      tokenId,
+      spaceTokenId,
       membership
     );
     return _deploy(initCode, salt);
@@ -332,28 +300,27 @@ abstract contract ArchitectBase is Factory, IArchitectBase {
   }
 
   function _getSpaceDeploymentInfo(
-    string memory spaceId,
-    uint256 tokenId,
+    uint256 spaceTokenId,
     Membership memory membership
   ) internal view returns (bytes memory initCode, bytes32 salt) {
-    ArchitectStorage.Layout storage ds = ArchitectStorage.layout();
+    ImplementationStorage.Layout storage ds = ImplementationStorage.layout();
 
     // calculate salt
-    salt = keccak256(abi.encode(spaceId, ds.spaceToken, tokenId));
+    salt = keccak256(abi.encode(msg.sender, spaceTokenId, block.timestamp));
 
     // calculate init code
     initCode = abi.encodePacked(
       type(SpaceProxy).creationCode,
       abi.encode(
-        _msgSenderArchitect(),
+        msg.sender,
         ds.walletLink,
         IManagedProxyBase.ManagedProxy({
           managerSelector: IProxyManager.getImplementation.selector,
           manager: address(this)
         }),
         ITokenOwnableBase.TokenOwnable({
-          collection: ds.spaceToken,
-          tokenId: tokenId
+          collection: address(ds.spaceToken),
+          tokenId: spaceTokenId
         }),
         IMembershipBase.Membership({
           name: membership.settings.name,
@@ -363,34 +330,12 @@ abstract contract ArchitectBase is Factory, IArchitectBase {
           duration: membership.settings.duration,
           currency: membership.settings.currency,
           feeRecipient: membership.settings.feeRecipient == address(0)
-            ? _msgSenderArchitect()
+            ? msg.sender
             : membership.settings.feeRecipient,
           freeAllocation: membership.settings.freeAllocation,
           pricingModule: membership.settings.pricingModule
         })
       )
     );
-  }
-
-  function _getNextTokenId() internal view returns (uint256 tokenId) {
-    ArchitectStorage.Layout storage ds = ArchitectStorage.layout();
-    tokenId = SpaceOwner(ds.spaceToken).nextTokenId();
-  }
-
-  // =============================================================
-  //                           Validation
-  // =============================================================
-
-  function _isValidSpace(address spaceAddress) internal view returns (bool) {
-    ArchitectStorage.Layout storage ds = ArchitectStorage.layout();
-    return ds.spaces.contains(spaceAddress);
-  }
-
-  // =============================================================
-  //                           Overrides
-  // =============================================================
-
-  function _msgSenderArchitect() internal view virtual returns (address) {
-    return msg.sender;
   }
 }

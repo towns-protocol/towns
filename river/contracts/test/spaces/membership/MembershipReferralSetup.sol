@@ -17,7 +17,7 @@ import {MembershipReferralFacet} from "contracts/src/spaces/facets/membership/re
 
 abstract contract MembershipReferralSetup is FacetTest {
   MembershipReferralFacet internal referrals;
-  address internal townOwner;
+  address internal spaceOwner;
 
   function setUp() public override {
     super.setUp();
@@ -34,8 +34,8 @@ abstract contract MembershipReferralSetup is FacetTest {
     MockERC721A mockERC721A = new MockERC721A();
     MultiInit multiInit = new MultiInit();
 
-    townOwner = _randomAddress();
-    uint256 tokenId = mockERC721A.mintTo(townOwner);
+    spaceOwner = _randomAddress();
+    uint256 tokenId = mockERC721A.mintTo(spaceOwner);
 
     IDiamond.FacetCut[] memory cuts = new IDiamond.FacetCut[](2);
 

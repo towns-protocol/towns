@@ -18,19 +18,19 @@ contract UserEntitlementTest is TestUtils, IEntitlementBase {
   UserEntitlement internal userEntitlement;
 
   address internal entitlement;
-  address internal town;
+  address internal space;
   address internal deployer;
 
   function setUp() public {
     deployer = _randomAddress();
-    town = _randomAddress();
+    space = _randomAddress();
 
     vm.startPrank(deployer);
     implementation = new UserEntitlement();
     entitlement = address(
       new ERC1967Proxy(
         address(implementation),
-        abi.encodeCall(UserEntitlement.initialize, (town))
+        abi.encodeCall(UserEntitlement.initialize, (space))
       )
     );
 
@@ -46,7 +46,7 @@ contract UserEntitlementTest is TestUtils, IEntitlementBase {
     address[] memory users = new address[](1);
     users[0] = user;
 
-    vm.startPrank(town);
+    vm.startPrank(space);
     userEntitlement.setEntitlement(roleId, abi.encode(users));
     vm.stopPrank();
 
@@ -65,7 +65,7 @@ contract UserEntitlementTest is TestUtils, IEntitlementBase {
   ) external {
     address[] memory users = new address[](1);
     users[0] = _randomAddress();
-    vm.prank(town);
+    vm.prank(space);
     userEntitlement.setEntitlement(roleId, abi.encode(users));
     bytes memory data = userEntitlement.getEntitlementDataByRoleId(roleId);
     address[] memory decodedAddresses = abi.decode(data, (address[]));
@@ -78,7 +78,7 @@ contract UserEntitlementTest is TestUtils, IEntitlementBase {
     address[] memory newUsers = new address[](2);
     newUsers[0] = _randomAddress();
     newUsers[1] = _randomAddress();
-    vm.prank(town);
+    vm.prank(space);
     userEntitlement.setEntitlement(roleId, abi.encode(newUsers));
     address[] memory newDecodedUsers = abi.decode(
       userEntitlement.getEntitlementDataByRoleId(roleId),
@@ -94,7 +94,7 @@ contract UserEntitlementTest is TestUtils, IEntitlementBase {
     address[] memory users = new address[](1);
     users[0] = address(0);
 
-    vm.prank(town);
+    vm.prank(space);
     vm.expectRevert(Entitlement__InvalidValue.selector);
     userEntitlement.setEntitlement(roleId, abi.encode(users));
   }
@@ -107,7 +107,7 @@ contract UserEntitlementTest is TestUtils, IEntitlementBase {
     address[] memory users = new address[](1);
     users[0] = user;
 
-    vm.startPrank(town);
+    vm.startPrank(space);
     userEntitlement.setEntitlement(roleId, abi.encode(users));
     userEntitlement.removeEntitlement(roleId);
     vm.stopPrank();
@@ -125,7 +125,7 @@ contract UserEntitlementTest is TestUtils, IEntitlementBase {
     address[] memory users = new address[](1);
     users[0] = user;
 
-    vm.startPrank(town);
+    vm.startPrank(space);
     userEntitlement.setEntitlement(roleId, abi.encode(users));
 
     vm.expectRevert(Entitlement__InvalidValue.selector);

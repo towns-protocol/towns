@@ -260,13 +260,13 @@
             "indexed": true
           },
           {
-            "internalType": "enum IMember.MintState",
+            "internalType": "enum Member.MintState",
             "name": "prevState",
             "type": "uint8",
             "indexed": true
           },
           {
-            "internalType": "enum IMember.MintState",
+            "internalType": "enum Member.MintState",
             "name": "newState",
             "type": "uint8",
             "indexed": true
@@ -904,18 +904,10 @@
   },
   "sources": {
     "contracts/src/tokens/Member.sol": {
-      "keccak256": "0x4daac700250a75c129c3ed1cd002fb22a83366e403e60326bb515744e353c137",
+      "keccak256": "0x6ab0be5b468d6392088351134a124c49fc7d7a8935d623b1e7ff791eba990c40",
       "urls": [
-        "bzz-raw://923735b74b685eb3bf8bc4de8393cda174ed5b744144aea2b61e4ad4d412fcf8",
-        "dweb:/ipfs/QmcU1F5WbDZE2z5AxE7nMdkCACnA8etWqPGB8MXENSsaKg"
-      ],
-      "license": "Apache-2.0"
-    },
-    "contracts/src/tokens/interfaces/IMember.sol": {
-      "keccak256": "0xe53ae59c5c852fba3f058b063f123a3b46e5b6df52155b38c2d7589c1eaaa935",
-      "urls": [
-        "bzz-raw://242feee625a94aab8bac0f659ef7a2d8f3e379fc84879c8a4e5a64d2c3fa8ebc",
-        "dweb:/ipfs/QmP6jJXKUvD2eddncHb28Cxf1EqWEdg47MFqE8ZkZe6EkM"
+        "bzz-raw://23c9bba8929a167e27ec1e7e01c7eb60bc4add047125f1a23b16eabcdb798c43",
+        "dweb:/ipfs/Qmf5K6F7tg7xczvqGnb2bdXdBUDamwXHpYP8d45CSF2owA"
       ],
       "license": "Apache-2.0"
     },

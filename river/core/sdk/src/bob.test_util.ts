@@ -5,6 +5,7 @@ import {
     lastEventFiltered,
     makeEvent_test,
     makeTestRpcClient,
+    makeUniqueSpaceStreamId,
     sendFlush,
     TEST_ENCRYPTED_MESSAGE_PROPS,
     waitForSyncStreams,
@@ -12,7 +13,6 @@ import {
 } from './util.test'
 import {
     makeUniqueChannelStreamId,
-    makeUniqueSpaceStreamId,
     makeUserStreamId,
     streamIdToBytes,
     userIdFromAddress,
@@ -86,7 +86,7 @@ export const bobTalksToHimself = async (
     })
     await maybeFlush()
 
-    const channelIdStr = makeUniqueChannelStreamId()
+    const channelIdStr = makeUniqueChannelStreamId(spacedStreamIdStr)
     const channelId = streamIdToBytes(channelIdStr)
     const channelProperties = 'Bobs channel properties'
 

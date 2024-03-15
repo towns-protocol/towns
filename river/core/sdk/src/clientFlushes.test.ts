@@ -5,8 +5,8 @@
 import { SnapshotCaseType } from '@river/proto'
 import { Client } from './client'
 import { check, DLogger, dlog } from '@river/dlog'
-import { makeUniqueChannelStreamId, makeUniqueSpaceStreamId } from './id'
-import { makeDonePromise, makeTestClient, sendFlush } from './util.test'
+import { makeUniqueChannelStreamId } from './id'
+import { makeDonePromise, makeTestClient, makeUniqueSpaceStreamId, sendFlush } from './util.test'
 import { DecryptedTimelineEvent } from './types'
 
 const log_base = dlog('csb:test')
@@ -97,7 +97,7 @@ describe('clientFlushes', () => {
                 bobsSpaceId,
                 bobsChannelName,
                 bobsChannelTopic,
-                makeUniqueChannelStreamId(),
+                makeUniqueChannelStreamId(bobsSpaceId),
             ),
         ).toResolve()
 

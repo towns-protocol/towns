@@ -10,8 +10,9 @@ import {StringSet} from "contracts/src/utils/StringSet.sol";
 // contracts
 
 library RolesStorage {
+  // keccak256(abi.encode(uint256(keccak256("spaces.facets.roles.storage")) - 1)) & ~bytes32(uint256(0xff))
   bytes32 internal constant STORAGE_SLOT =
-    keccak256("towns.contracts.storage.Roles");
+    0x672ef851d5f92307da037116e23aa9e31af7e1f7e3ca62c4e6d540631df3fd00;
 
   struct Role {
     string name;

@@ -2,10 +2,10 @@
  * @group main
  */
 
-import { makeTestClient, waitFor } from './util.test'
+import { makeTestClient, makeUniqueSpaceStreamId, waitFor } from './util.test'
 import { Client } from './client'
 import { dlog } from '@river/dlog'
-import { makeUniqueChannelStreamId, makeUniqueSpaceStreamId } from './id'
+import { makeUniqueChannelStreamId } from './id'
 import { MembershipOp } from '@river/proto'
 
 const log = dlog('csb:test')
@@ -35,7 +35,7 @@ describe('spaceTests', () => {
         const spaceId = makeUniqueSpaceStreamId()
         await expect(bobsClient.createSpace(spaceId)).toResolve()
 
-        const channelId = makeUniqueChannelStreamId()
+        const channelId = makeUniqueChannelStreamId(spaceId)
         await expect(bobsClient.createChannel(spaceId, 'name', 'topic', channelId)).toResolve()
 
         await expect(alicesClient.joinStream(spaceId)).toResolve()

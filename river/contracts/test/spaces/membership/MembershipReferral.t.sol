@@ -25,7 +25,7 @@ contract MembershipReferralFacetTest is
     uint256 code = 245;
     uint16 bps = 1000;
 
-    vm.prank(townOwner);
+    vm.prank(spaceOwner);
     referrals.createReferralCode(code, bps);
 
     assertEq(referrals.referralCodeBps(code), bps);
@@ -33,11 +33,11 @@ contract MembershipReferralFacetTest is
 
   function test_createReferralCode_reverts_invalidCode() public {
     uint256 code = 245;
-    vm.prank(townOwner);
+    vm.prank(spaceOwner);
     referrals.createReferralCode(code, 1000);
 
     vm.expectRevert(Membership__InvalidReferralCode.selector);
-    vm.prank(townOwner);
+    vm.prank(spaceOwner);
     referrals.createReferralCode(code, 1000);
   }
 
@@ -45,7 +45,7 @@ contract MembershipReferralFacetTest is
     uint256 code = 245;
     uint16 invalidBps = uint16(BasisPoints.MAX_BPS) + 1;
 
-    vm.prank(townOwner);
+    vm.prank(spaceOwner);
     vm.expectRevert(Membership__InvalidReferralBps.selector);
     referrals.createReferralCode(code, invalidBps);
   }
@@ -57,7 +57,7 @@ contract MembershipReferralFacetTest is
     uint256 startTime = block.timestamp + 10;
     uint256 endTime = block.timestamp + 100;
 
-    vm.prank(townOwner);
+    vm.prank(spaceOwner);
     referrals.createReferralCodeWithTime(code, bps, startTime, endTime);
 
     assertEq(referrals.referralCodeBps(code), bps);
@@ -81,10 +81,10 @@ contract MembershipReferralFacetTest is
     uint256 code = 246;
     uint16 bps = 500;
 
-    vm.prank(townOwner);
+    vm.prank(spaceOwner);
     referrals.createReferralCode(code, bps);
 
-    vm.prank(townOwner);
+    vm.prank(spaceOwner);
     referrals.removeReferralCode(code);
 
     assertEq(referrals.referralCodeBps(code), 0);
@@ -93,7 +93,7 @@ contract MembershipReferralFacetTest is
   function test_removeReferralCode_non_existent() public {
     uint256 nonExistentCode = 999;
 
-    vm.prank(townOwner);
+    vm.prank(spaceOwner);
     vm.expectRevert(Membership__InvalidReferralCode.selector);
     referrals.removeReferralCode(nonExistentCode);
   }
@@ -104,7 +104,7 @@ contract MembershipReferralFacetTest is
     uint16 bps = 800;
     uint256 membershipPrice = 100 ether;
 
-    vm.prank(townOwner);
+    vm.prank(spaceOwner);
     referrals.createReferralCode(referralCode, bps);
 
     uint16 referralBps = referrals.referralCodeBps(referralCode);

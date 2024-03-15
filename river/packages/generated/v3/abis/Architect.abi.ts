@@ -6,7 +6,7 @@ export default [
       {
         "name": "ownerImplementation",
         "type": "address",
-        "internalType": "address"
+        "internalType": "contract ISpaceOwner"
       },
       {
         "name": "userEntitlementImplementation",
@@ -36,11 +36,6 @@ export default [
         "type": "tuple",
         "internalType": "struct IArchitectBase.SpaceInfo",
         "components": [
-          {
-            "name": "id",
-            "type": "string",
-            "internalType": "string"
-          },
           {
             "name": "name",
             "type": "string",
@@ -211,11 +206,6 @@ export default [
             "internalType": "struct IArchitectBase.ChannelInfo",
             "components": [
               {
-                "name": "id",
-                "type": "string",
-                "internalType": "string"
-              },
-              {
                 "name": "metadata",
                 "type": "string",
                 "internalType": "string"
@@ -242,7 +232,7 @@ export default [
       {
         "name": "spaceToken",
         "type": "address",
-        "internalType": "address"
+        "internalType": "contract ISpaceOwner"
       },
       {
         "name": "userEntitlementImplementation",
@@ -264,12 +254,12 @@ export default [
   },
   {
     "type": "function",
-    "name": "getSpaceById",
+    "name": "getSpaceByTokenId",
     "inputs": [
       {
-        "name": "spaceId",
-        "type": "string",
-        "internalType": "string"
+        "name": "tokenId",
+        "type": "uint256",
+        "internalType": "uint256"
       }
     ],
     "outputs": [
@@ -302,50 +292,12 @@ export default [
   },
   {
     "type": "function",
-    "name": "getTokenIdBySpaceId",
-    "inputs": [
-      {
-        "name": "spaceId",
-        "type": "string",
-        "internalType": "string"
-      }
-    ],
-    "outputs": [
-      {
-        "name": "",
-        "type": "uint256",
-        "internalType": "uint256"
-      }
-    ],
-    "stateMutability": "view"
-  },
-  {
-    "type": "function",
-    "name": "isSpace",
-    "inputs": [
-      {
-        "name": "space",
-        "type": "address",
-        "internalType": "address"
-      }
-    ],
-    "outputs": [
-      {
-        "name": "",
-        "type": "bool",
-        "internalType": "bool"
-      }
-    ],
-    "stateMutability": "view"
-  },
-  {
-    "type": "function",
     "name": "setSpaceArchitectImplementations",
     "inputs": [
       {
         "name": "spaceToken",
         "type": "address",
-        "internalType": "address"
+        "internalType": "contract ISpaceOwner"
       },
       {
         "name": "userEntitlementImplementation",
@@ -448,7 +400,7 @@ export default [
         "internalType": "address"
       },
       {
-        "name": "spaceId",
+        "name": "tokenId",
         "type": "uint256",
         "indexed": true,
         "internalType": "uint256"
@@ -456,7 +408,7 @@ export default [
       {
         "name": "space",
         "type": "address",
-        "indexed": false,
+        "indexed": true,
         "internalType": "address"
       }
     ],
@@ -554,11 +506,6 @@ export default [
   {
     "type": "error",
     "name": "Validator__InvalidAddress",
-    "inputs": []
-  },
-  {
-    "type": "error",
-    "name": "Validator__InvalidStringLength",
     "inputs": []
   }
 ] as const

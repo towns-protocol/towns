@@ -518,7 +518,7 @@ export default [
         "internalType": "bytes32"
       },
       {
-        "name": "prevMiniBlockHash",
+        "name": "",
         "type": "bytes32",
         "internalType": "bytes32"
       },

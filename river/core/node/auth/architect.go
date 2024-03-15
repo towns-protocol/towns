@@ -2,6 +2,7 @@ package auth
 
 import (
 	"context"
+	"math/big"
 	"time"
 
 	"github.com/river-build/river/core/node/config"
@@ -18,24 +19,24 @@ import (
 )
 
 type Architect interface {
-	GetSpaceById(opts *bind.CallOpts, spaceId string) (common.Address, error)
+	GetTokenIdBySpace(opts *bind.CallOpts, spaceId common.Address) (*big.Int, error)
 }
 
 type architectProxy struct {
-	contract Architect
+	contract *base.Architect
 	address  common.Address
 	ctx      context.Context
 }
 
-var getSpaceByIdCalls = infra.NewSuccessMetrics("architect_calls", contractCalls)
+var GetTokenIdBySpaceCalls = infra.NewSuccessMetrics("architect_calls", contractCalls)
 
 func NewArchitect(ctx context.Context, cfg *config.ContractConfig, backend bind.ContractBackend) (Architect, error) {
 	address, err := crypto.ParseOrLoadAddress(cfg.Address)
 	if err != nil {
 		return nil, AsRiverError(err, Err_BAD_CONFIG).Message("Failed to parse contract address").Func("NewArchitect")
 	}
-	var c Architect
-	c, err = base.NewArchitect(address, backend)
+	//var c Architect
+	c, err := base.NewArchitect(address, backend)
 	if err != nil {
 		return nil, WrapRiverError(
 			Err_CANNOT_CONNECT,
@@ -51,20 +52,20 @@ func NewArchitect(ctx context.Context, cfg *config.ContractConfig, backend bind.
 	}, nil
 }
 
-func (proxy *architectProxy) GetSpaceById(opts *bind.CallOpts, spaceId string) (common.Address, error) {
+func (proxy *architectProxy) GetTokenIdBySpace(opts *bind.CallOpts, spaceId common.Address) (*big.Int, error) {
 	log := dlog.FromCtx(proxy.ctx)
 	start := time.Now()
-	defer infra.StoreExecutionTimeMetrics("GetSpaceById", infra.CONTRACT_CALLS_CATEGORY, start)
-	log.Debug("GetSpaceById", "address", proxy.address, "networkId", spaceId)
-	result, err := proxy.contract.GetSpaceById(opts, spaceId)
+	defer infra.StoreExecutionTimeMetrics("GetTokenIdBySpace", infra.CONTRACT_CALLS_CATEGORY, start)
+	log.Debug("GetTokenIdBySpace", "address", proxy.address, "networkId", spaceId)
+	result, err := proxy.contract.GetTokenIdBySpace(opts, spaceId)
 	if err != nil {
-		log.Error("GetSpaceById", "address", proxy.address, "networkId", spaceId, "error", err)
-		getSpaceByIdCalls.FailInc()
-		return common.Address{}, WrapRiverError(Err_CANNOT_CALL_CONTRACT, err)
+		log.Error("GetTokenIdBySpace", "address", proxy.address, "networkId", spaceId, "error", err)
+		GetTokenIdBySpaceCalls.FailInc()
+		return nil, WrapRiverError(Err_CANNOT_CALL_CONTRACT, err)
 	}
-	getSpaceByIdCalls.PassInc()
+	GetTokenIdBySpaceCalls.PassInc()
 	log.Debug(
-		"GetSpaceById",
+		"GetTokenIdBySpace",
 		"address",
 		proxy.address,
 		"networkId",

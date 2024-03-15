@@ -3,8 +3,7 @@
  */
 
 import { MembershipOp } from '@river/proto'
-import { makeUniqueSpaceStreamId } from './id'
-import { makeTestClient, waitFor } from './util.test'
+import { makeTestClient, makeUniqueSpaceStreamId, waitFor } from './util.test'
 
 describe('streamStateView_User', () => {
     test('userStreamMembershipsJoin', async () => {

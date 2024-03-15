@@ -38,12 +38,12 @@ contract PrepayTest is BaseSetup {
 
     // we let alice get a membership
     vm.prank(alice);
-    membership.joinTown(alice);
+    membership.joinSpace(alice);
 
     // bob will not since our free allocation changed, so now he has to pay
     vm.prank(bob);
     vm.expectRevert();
-    membership.joinTown(bob);
+    membership.joinSpace(bob);
 
     // founder prepays
     vm.prank(founder);
@@ -55,11 +55,11 @@ contract PrepayTest is BaseSetup {
 
     // bob can now join
     vm.prank(bob);
-    membership.joinTown(bob);
+    membership.joinSpace(bob);
 
     // charlie can't join since no more prepaid supply
     vm.prank(charlie);
     vm.expectRevert();
-    membership.joinTown(charlie);
+    membership.joinSpace(charlie);
   }
 }

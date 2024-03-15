@@ -11,7 +11,7 @@ import {
 } from '@river/proto'
 import { PlainMessage } from '@bufbuild/protobuf'
 import { Client } from './client'
-import { userIdFromAddress } from './id'
+import { genId, makeSpaceStreamId, userIdFromAddress } from './id'
 import { ParsedEvent, DecryptedTimelineEvent } from './types'
 import { getPublicKey, utils } from 'ethereum-cryptography/secp256k1'
 import { EntitlementsDelegate } from '@river/encryption'
@@ -104,6 +104,13 @@ export const TEST_ENCRYPTED_MESSAGE_PROPS: PlainMessage<EncryptedData> = {
     senderKey: '',
 }
 
+/**
+ * makeUniqueSpaceStreamId - space stream ids are derived from the contract
+ * in tests without entitlements there are no contracts, so we use a random id
+ */
+export const makeUniqueSpaceStreamId = (): string => {
+    return makeSpaceStreamId(genId(40))
+}
 /**
  *
  * @returns a random user context

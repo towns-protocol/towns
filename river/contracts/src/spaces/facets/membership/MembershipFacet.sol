@@ -36,7 +36,7 @@ contract MembershipFacet is
   // =============================================================
   //                           Minting
   // =============================================================
-  function _validateJoinTown(address receiver) internal view {
+  function _validateJoinSpace(address receiver) internal view {
     if (receiver == address(0)) revert Membership__InvalidAddress();
     if (_balanceOf(msg.sender) > 0) revert Membership__AlreadyMember();
     if (_balanceOf(receiver) > 0) revert Membership__AlreadyMember();
@@ -50,10 +50,10 @@ contract MembershipFacet is
   }
 
   /// @inheritdoc IMembership
-  function joinTown(
+  function joinSpace(
     address receiver
   ) external payable nonReentrant returns (uint256 tokenId) {
-    _validateJoinTown(receiver);
+    _validateJoinSpace(receiver);
 
     // get token id
     tokenId = _nextTokenId();
@@ -78,12 +78,12 @@ contract MembershipFacet is
   }
 
   /// @inheritdoc IMembership
-  function joinTownWithReferral(
+  function joinSpaceWithReferral(
     address receiver,
     address referrer,
     uint256 referralCode
   ) external payable nonReentrant returns (uint256 tokenId) {
-    _validateJoinTown(receiver);
+    _validateJoinSpace(receiver);
 
     // get token id
     tokenId = _nextTokenId();
@@ -295,8 +295,8 @@ contract MembershipFacet is
   // =============================================================
 
   /// @inheritdoc IMembership
-  function getTownFactory() external view returns (address) {
-    return _getTownFactory();
+  function getSpaceFactory() external view returns (address) {
+    return _getSpaceFactory();
   }
 
   // =============================================================

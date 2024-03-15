@@ -12,6 +12,7 @@ import (
 	"github.com/river-build/river/core/node/dlog"
 	"github.com/river-build/river/core/node/infra"
 	. "github.com/river-build/river/core/node/protocol"
+	"github.com/river-build/river/core/node/shared"
 
 	"github.com/ethereum/go-ethereum/common"
 )
@@ -20,7 +21,7 @@ type ChainAuth interface {
 	IsEntitled(ctx context.Context, args *ChainAuthArgs) error
 }
 
-func NewChainAuthArgsForSpace(spaceId string, userId string, permission Permission) *ChainAuthArgs {
+func NewChainAuthArgsForSpace(spaceId shared.StreamId, userId string, permission Permission) *ChainAuthArgs {
 	return &ChainAuthArgs{
 		kind:       chainAuthKindSpace,
 		spaceId:    spaceId,
@@ -29,7 +30,7 @@ func NewChainAuthArgsForSpace(spaceId string, userId string, permission Permissi
 	}
 }
 
-func NewChainAuthArgsForChannel(spaceId string, channelId string, userId string, permission Permission) *ChainAuthArgs {
+func NewChainAuthArgsForChannel(spaceId shared.StreamId, channelId shared.StreamId, userId string, permission Permission) *ChainAuthArgs {
 	return &ChainAuthArgs{
 		kind:       chainAuthKindChannel,
 		spaceId:    spaceId,
@@ -50,8 +51,8 @@ const (
 
 type ChainAuthArgs struct {
 	kind       chainAuthKind
-	spaceId    string
-	channelId  string
+	spaceId    shared.StreamId
+	channelId  shared.StreamId
 	principal  common.Address
 	permission Permission
 }
@@ -63,14 +64,14 @@ func (args *ChainAuthArgs) withWallet(wallet common.Address) *ChainAuthArgs {
 	return &ret
 }
 
-func newArgsForEnabledSpace(spaceId string) *ChainAuthArgs {
+func newArgsForEnabledSpace(spaceId shared.StreamId) *ChainAuthArgs {
 	return &ChainAuthArgs{
 		kind:    chainAuthKindSpaceEnabled,
 		spaceId: spaceId,
 	}
 }
 
-func newArgsForEnabledChannel(spaceId string, channelId string) *ChainAuthArgs {
+func newArgsForEnabledChannel(spaceId shared.StreamId, channelId shared.StreamId) *ChainAuthArgs {
 	return &ChainAuthArgs{
 		kind:      chainAuthKindChannelEnabled,
 		spaceId:   spaceId,
@@ -188,7 +189,7 @@ func (ca *chainAuth) isSpaceEnabledUncached(ctx context.Context, args *ChainAuth
 	return !isDisabled, err
 }
 
-func (ca *chainAuth) checkSpaceEnabled(ctx context.Context, spaceId string) error {
+func (ca *chainAuth) checkSpaceEnabled(ctx context.Context, spaceId shared.StreamId) error {
 	isEnabled, cacheHit, err := ca.entitlementCache.executeUsingCache(
 		ctx,
 		newArgsForEnabledSpace(spaceId),
@@ -216,7 +217,7 @@ func (ca *chainAuth) isChannelEnabledUncached(ctx context.Context, args *ChainAu
 	return !isDisabled, err
 }
 
-func (ca *chainAuth) checkChannelEnabled(ctx context.Context, spaceId string, channelId string) error {
+func (ca *chainAuth) checkChannelEnabled(ctx context.Context, spaceId shared.StreamId, channelId shared.StreamId) error {
 	isEnabled, cacheHit, err := ca.entitlementCache.executeUsingCache(
 		ctx,
 		newArgsForEnabledChannel(spaceId, channelId),

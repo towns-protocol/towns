@@ -15,25 +15,23 @@ import (
 )
 
 type Entitlements interface {
-	IsEntitledToChannel(opts *bind.CallOpts, channelNetworkId string, user common.Address, permission string) (bool, error)
+	IsEntitledToChannel(opts *bind.CallOpts, channelId [32]byte, user common.Address, permission string) (bool, error)
 	IsEntitledToSpace(opts *bind.CallOpts, user common.Address, permission string) (bool, error)
 }
 
 type entitlementsProxy struct {
-	contract Entitlements
+	contract *base.EntitlementsManager
 	address  common.Address
 	ctx      context.Context
 }
 
 var (
 	isEntitledToChannelCalls = infra.NewSuccessMetrics("is_entitled_to_channel_calls", contractCalls)
-	isEntitledToSpaceCalls    = infra.NewSuccessMetrics("is_entitled_to_space_calls", contractCalls)
+	isEntitledToSpaceCalls   = infra.NewSuccessMetrics("is_entitled_to_space_calls", contractCalls)
 )
 
 func NewEntitlements(ctx context.Context, version string, address common.Address, backend bind.ContractBackend) (Entitlements, error) {
-	var c Entitlements
-	var err error
-	c, err = base.NewEntitlementsManager(address, backend)
+	c, err := base.NewEntitlementsManager(address, backend)
 	if err != nil {
 		return nil, WrapRiverError(
 			Err_CANNOT_CONNECT,
@@ -51,7 +49,7 @@ func NewEntitlements(ctx context.Context, version string, address common.Address
 
 func (proxy *entitlementsProxy) IsEntitledToChannel(
 	opts *bind.CallOpts,
-	channelNetworkId string,
+	channelId [32]byte,
 	user common.Address,
 	permission string,
 ) (bool, error) {
@@ -60,8 +58,8 @@ func (proxy *entitlementsProxy) IsEntitledToChannel(
 	defer infra.StoreExecutionTimeMetrics("IsEntitledToChannel", infra.CONTRACT_CALLS_CATEGORY, start)
 	log.Debug(
 		"IsEntitledToChannel",
-		"channelNetworkId",
-		channelNetworkId,
+		"channelId",
+		channelId,
 		"user",
 		user,
 		"permission",
@@ -69,13 +67,13 @@ func (proxy *entitlementsProxy) IsEntitledToChannel(
 		"address",
 		proxy.address,
 	)
-	result, err := proxy.contract.IsEntitledToChannel(opts, channelNetworkId, user, permission)
+	result, err := proxy.contract.IsEntitledToChannel(opts, channelId, user, permission)
 	if err != nil {
 		isEntitledToChannelCalls.FailInc()
 		log.Error(
 			"IsEntitledToChannel",
-			"channelNetworkId",
-			channelNetworkId,
+			"channelId",
+			channelId,
 			"user",
 			user,
 			"permission",
@@ -90,8 +88,8 @@ func (proxy *entitlementsProxy) IsEntitledToChannel(
 	isEntitledToChannelCalls.PassInc()
 	log.Debug(
 		"IsEntitledToChannel",
-		"channelNetworkId",
-		channelNetworkId,
+		"channelId",
+		channelId,
 		"user",
 		user,
 		"permission",

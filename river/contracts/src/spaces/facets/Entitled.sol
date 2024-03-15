@@ -30,14 +30,14 @@ abstract contract Entitled is
 {
   using EnumerableSet for EnumerableSet.AddressSet;
 
-  string internal constant IN_TOWN = "";
+  bytes32 internal constant IN_TOWN = 0x0;
 
   function _isMember(address user) internal view returns (bool member) {
     member = _balanceOf(user) > 0;
   }
 
   function _isEntitled(
-    string memory channelId,
+    bytes32 channelId,
     address user,
     bytes32 permission
   ) internal view returns (bool) {
@@ -101,7 +101,7 @@ abstract contract Entitled is
   }
 
   function _isEntitledToChannel(
-    string memory channelId,
+    bytes32 channelId,
     address user,
     string calldata permission
   ) internal view returns (bool) {
@@ -109,7 +109,7 @@ abstract contract Entitled is
   }
 
   function _getChannelEntitlements(
-    string memory,
+    bytes32,
     string calldata
   ) internal pure returns (IRuleEntitlement.RuleData memory data) {
     // TODO return correct rules to be validated by apps
@@ -117,7 +117,7 @@ abstract contract Entitled is
   }
 
   function _isAllowed(
-    string memory channelId,
+    bytes32 channelId,
     string memory permission,
     address caller
   ) internal view returns (bool) {
@@ -128,7 +128,7 @@ abstract contract Entitled is
   }
 
   function _isAllowed(
-    string memory channelId,
+    bytes32 channelId,
     string memory permission
   ) internal view returns (bool) {
     address sender = msg.sender;
@@ -161,7 +161,7 @@ abstract contract Entitled is
   }
 
   function _validateChannelPermission(
-    string memory channelId,
+    bytes32 channelId,
     string memory permission
   ) internal view {
     if (!_isAllowed(channelId, permission)) {

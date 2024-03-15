@@ -826,11 +826,6 @@
                 "type": "uint256"
               },
               {
-                "internalType": "string",
-                "name": "networkId",
-                "type": "string"
-              },
-              {
                 "internalType": "uint256",
                 "name": "createdAt",
                 "type": "uint256"
@@ -884,11 +879,6 @@
       },
       {
         "inputs": [
-          {
-            "internalType": "string",
-            "name": "networkId",
-            "type": "string"
-          },
           {
             "internalType": "string",
             "name": "name",
@@ -1198,11 +1188,10 @@
         "isApprovedForAll(address,address)": {
           "details": "Returns if the `operator` is allowed to manage all of the assets of `owner`. See {setApprovalForAll}."
         },
-        "mintSpace(string,string,string,address)": {
+        "mintSpace(string,string,address)": {
           "details": "Only the factory is allowed to mint spaces",
           "params": {
             "name": "The name of the space",
-            "networkId": "The network id of the space",
             "space": "The address of the space",
             "uri": "The URI of the space"
           },
@@ -1257,7 +1246,7 @@
         "getSpaceInfo(address)": {
           "notice": "Get the space info"
         },
-        "mintSpace(string,string,string,address)": {
+        "mintSpace(string,string,address)": {
           "notice": "Mint a space"
         },
         "nextTokenId()": {
@@ -1372,10 +1361,10 @@
       "license": "MIT"
     },
     "contracts/src/diamond/facets/initializable/InitializableStorage.sol": {
-      "keccak256": "0x278589764eab56d2f12e536c168a83f8170918b1dd8811f4a8463b3e720c95ba",
+      "keccak256": "0x5dbbdca0faf75680e1c0d425d92bdb5ce16951c0f8215a668c5144c0ffdb1b01",
       "urls": [
-        "bzz-raw://f19d4d8f41d28de52ef25fbce3eb29ce5fd57c12b806dda64c27e535a6fa43b6",
-        "dweb:/ipfs/QmPj1TyysUzfBYzNCBDF4AK14mGjcGtPcGfYNoSb2t3U7w"
+        "bzz-raw://05e5ba4fcd6e3e1e819e786fce3473d5ef69763b127fe162b2e0906d6a904d09",
+        "dweb:/ipfs/QmYPN5xeMoMBVT2B2FwJrDpwocNNsCuVosgg7vdYrrWNep"
       ],
       "license": "Apache-2.0"
     },
@@ -1396,10 +1385,10 @@
       "license": "Apache-2.0"
     },
     "contracts/src/diamond/facets/introspection/IntrospectionStorage.sol": {
-      "keccak256": "0x6dfdf3a4b7b09bd162e9571abe96ac85244f4b26d1ecbe3cd0c4bf534413445a",
+      "keccak256": "0x2e047e5efa9df7f3d60a8a114da39343635578b7475fcd987860eb5b87e8c758",
       "urls": [
-        "bzz-raw://e454b9dd354536d1defe593d88dbb8f7c4d8d46d7bf855d39a3eb9bf07d7c349",
-        "dweb:/ipfs/QmaZFpCsdutxFcpuWVnjiAUb17vLqnhhQ23tv8my86h8u1"
+        "bzz-raw://a071eda8331b690b689bbbc23e6a6c227324aad90d4101c36410a06b1ca3c357",
+        "dweb:/ipfs/QmTR76zN1durS5acgDZXixrkrheXvaaMqfwXrJsaGyAPkj"
       ],
       "license": "Apache-2.0"
     },
@@ -1420,10 +1409,10 @@
       "license": "Apache-2.0"
     },
     "contracts/src/diamond/facets/ownable/OwnableStorage.sol": {
-      "keccak256": "0x9d27c81f90cb91d1135d440d231776c1749c0836078668a2293f03fa6596f835",
+      "keccak256": "0xd66cdbb7083d80cc567449a7eb4f7272c16e0ceb9f20667d8b17cf2a8432aa64",
       "urls": [
-        "bzz-raw://996d047c91c6f1445bb784851cf7182d9fca47c198829f9897590815d1865923",
-        "dweb:/ipfs/QmNSuLTojYzf5BD8oWkdn3Vavqhw6zR6Vugkb1toGopBoB"
+        "bzz-raw://946997262ab993790ce79eafa7d628ae9a1123192ad5c0d85624957ce8058105",
+        "dweb:/ipfs/QmdSZ7BwGZvXvt9pt8AweDqnLt61eYqVg3QfK9renfGJHZ"
       ],
       "license": "Apache-2.0"
     },
@@ -1444,10 +1433,10 @@
       "license": "Apache-2.0"
     },
     "contracts/src/diamond/facets/token/ERC721A/ERC721AStorage.sol": {
-      "keccak256": "0x96b4e1886b3697a44deccbaf25f3d59842adc1d8ccb8cc9953a591f10c41c14a",
+      "keccak256": "0x8be3fa58d9bb445d169eda30dd35f34e149947eb0572cdb2ced99ed854b8cdc1",
       "urls": [
-        "bzz-raw://59e1cc6fd674d7a1b912e28623be7ca3488dd0305e9cf9f53645387e97c3feae",
-        "dweb:/ipfs/QmUSvBk1MzHBWUPjHYWkGgBbtxZGKpnBAQTqiLNJQNqMsF"
+        "bzz-raw://1b3d9b6c0aef7519ce60c08880a551a0579ae1625e16f89a728700f2eb7e075c",
+        "dweb:/ipfs/QmZfS4Lt9mZBPpYxehPb5p9VAGGVdKGkHpZyhoKTP2rSUu"
       ],
       "license": "Apache-2.0"
     },
@@ -1468,10 +1457,10 @@
       "license": "Apache-2.0"
     },
     "contracts/src/diamond/utils/Nonces.sol": {
-      "keccak256": "0xb830d9485d77fdced0bdb6dbc4e98716c0624d037309c2c501b5dfc59020c885",
+      "keccak256": "0xce0cce96c8f30e4052523e2c67c7b08ed9defa8c2e3858d4534b359be9ee9ee3",
       "urls": [
-        "bzz-raw://e29f44ea18dff657462137312b6b2a73c9d5b41f63594057ccb1aec4c5f56883",
-        "dweb:/ipfs/QmRVeQ2WtRwsrPtCzt1y5Ud7i539bcgyX5kZYPjsJaTHay"
+        "bzz-raw://caae09675d571304907f51e64c255981c5fbfbd60bf26d0117c00ecd7ed7a7fb",
+        "dweb:/ipfs/QmPNReTvJDZ242duATLyDDt1JUUd2ACg472E1vftw5zgXB"
       ],
       "license": "Apache-2.0"
     },
@@ -1500,10 +1489,10 @@
       "license": "Apache-2.0"
     },
     "contracts/src/spaces/facets/guardian/GuardianStorage.sol": {
-      "keccak256": "0xc2e8be1f0d89e7a3f5c6a3f8ca8d35ba02a3edf78a1332847d37d48fd4505ad8",
+      "keccak256": "0xd8af0e2ff9c26165cd30e16eb881b2a58acff8f7f61bfac1b90dc6362f14dd63",
       "urls": [
-        "bzz-raw://335483da54ab46c850fc72219aa128d547ddf0668740c3a15d71c5522cd7d1dc",
-        "dweb:/ipfs/QmXRhA1rqX3jvbhQqKRCfziHCdDXtw5WX9jAUBpQWbdega"
+        "bzz-raw://e06464b1498f896ad0c62ca19aed21f7667e36ebd0f77cb1831e0a60fb373688",
+        "dweb:/ipfs/QmTFenitEo2y4UE3F4qtX1DfoBoEMs1pmtL1AmoeohTpw8"
       ],
       "license": "Apache-2.0"
     },
@@ -1516,34 +1505,34 @@
       "license": "Apache-2.0"
     },
     "contracts/src/spaces/facets/owner/ISpaceOwner.sol": {
-      "keccak256": "0x168e417aba7f522d48c0862f23638cf0b3acea7226bef0db11e82b156e7dc898",
+      "keccak256": "0xf68eb1b3aceeacc0c4162304f74d89890e8c641a9c0778c1786db850a79cfb3f",
       "urls": [
-        "bzz-raw://4d4e28028010cb0562caabbcdbff938843643c6accd8eb3cbe1ab9e1cf91cfe8",
-        "dweb:/ipfs/QmfD6JG54Pc6P95TVt2GEHC6GmNkHoZTs2vi8aiUped1cT"
+        "bzz-raw://8a345161f4d34be281c5f4d165dac958ed3a5e7d2888924d498555871906e6ea",
+        "dweb:/ipfs/QmQcWfQ6k54UPr9eMA2KnXCJAc4NR24LhzbmyA5NUKBVN3"
       ],
       "license": "Apache-2.0"
     },
     "contracts/src/spaces/facets/owner/SpaceOwner.sol": {
-      "keccak256": "0xb07ebdca18a8b93776eedb88bf87fe6da8f9946f017b43d907b0dfc4e24ec8f4",
+      "keccak256": "0x8a644478b3bcfb18fda9c887838d710e59c7c5a2ed7003dcda5ab479f2fefe9c",
       "urls": [
-        "bzz-raw://886f2564bdff634792a8f8103d875ab0855e5d4c0bf99bdac12d8d7001b4d14a",
-        "dweb:/ipfs/QmZBGcHXF9a3ECkMbzBLyeozqRCxn1fZdsu6BrXTySSqXe"
+        "bzz-raw://640e9b7eebba29735acc6b96ebe107a58db8af60ffb84c1b580a1b7e041e9393",
+        "dweb:/ipfs/QmVeuTQ87BVjzZc7FaVwrbz82PVCWkXNjz1sYBzeYRi3h7"
       ],
       "license": "Apache-2.0"
     },
     "contracts/src/spaces/facets/owner/SpaceOwnerBase.sol": {
-      "keccak256": "0xe8a498b293ec017dff36ba127e2ff8a881f9b254499930b6f49fcbbd528be172",
+      "keccak256": "0xd4eda8665f05e74b37a99b21157baa102660d9143e6b45cc6800bbf795299ad2",
       "urls": [
-        "bzz-raw://fac9b2b2ba455370632e12e69d9a0557763d18f7f8ecf3a75d1c7e0e22103dce",
-        "dweb:/ipfs/QmX9DEpV5y4JDyupoHy6pdTo9jSXPDReFpBUYcLmJNCsQA"
+        "bzz-raw://74c3e6034a8f74c315d6790c423b1083c8a9a468f76e3d9b93e86afc8143e7c1",
+        "dweb:/ipfs/QmcZ8TV2rAmwQx2aRSvhRQmcevZYCWWxD4KUnyYteN2Qax"
       ],
       "license": "Apache-2.0"
     },
     "contracts/src/spaces/facets/owner/SpaceOwnerStorage.sol": {
-      "keccak256": "0x1c1c69d3e252604e5714800a1957b9a405bc7da2e7e65c928d373c86208d7c86",
+      "keccak256": "0xae80a53a918d9bd4b064aaeac74a8697a12f669e815f2fbd00385d3b82f39026",
       "urls": [
-        "bzz-raw://e82031db4c00a643feb47aae4f1b39d7eb1121a7cea3aff26071d686765c0339",
-        "dweb:/ipfs/QmRzB5jseuFmjVouCZ3se8giLM1vfJKVijkqGrXhLVh15X"
+        "bzz-raw://497ae2aeb902efd34779b277320544f2c194889b2df926614e19f3cbfc1e787f",
+        "dweb:/ipfs/QmPNLznGfzdidEhCokiEFppJa6faPNNnFGt1Y43X3qrs6B"
       ],
       "license": "Apache-2.0"
     },

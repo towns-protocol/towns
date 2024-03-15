@@ -49,7 +49,7 @@ export const TRANSACTION_LIMIT_DEFAULTS_PER_DAY = {
       HNT Labs Privy DB can mint 3 towns/day with no gas
 */
 export async function verifyCreateSpace(
-    params: ITownTransactionParams,
+    params: Omit<ITownTransactionParams, 'townId'>,
 ): Promise<IVerificationResult> {
     const spaceDapp = await createSpaceDappForNetwork(params.env)
     if (!spaceDapp) {
@@ -57,15 +57,6 @@ export async function verifyCreateSpace(
     }
 
     try {
-        // check if town already exists
-        try {
-            const spaceInfo = await spaceDapp.getSpaceInfo(params.townId)
-            if (spaceInfo) {
-                return { verified: false, error: `Town ${params.townId} already exists` }
-            }
-        } catch (error) {
-            console.error(error)
-        }
         // check for whitelist overrides for user, email associated with privy account
         // checks against Privy and so should the rootKeyAddress
         const isOverride = await checkMintKVOverrides(params.rootKeyAddress, params.env)

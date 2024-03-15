@@ -17,8 +17,7 @@ abstract contract SpaceHelper {
   ) internal pure returns (IArchitectBase.SpaceInfo memory) {
     return
       IArchitectBase.SpaceInfo({
-        id: spaceId,
-        name: "test",
+        name: spaceId,
         uri: "ipfs://test",
         membership: IArchitectBase.Membership({
           settings: IMembershipBase.Membership({
@@ -39,10 +38,7 @@ abstract contract SpaceHelper {
           }),
           permissions: new string[](0)
         }),
-        channel: IArchitectBase.ChannelInfo({
-          id: "test",
-          metadata: "ipfs://test"
-        })
+        channel: IArchitectBase.ChannelInfo({metadata: "ipfs://test"})
       });
   }
 
@@ -51,8 +47,7 @@ abstract contract SpaceHelper {
   ) internal pure returns (IArchitectBase.SpaceInfo memory) {
     return
       IArchitectBase.SpaceInfo({
-        id: spaceId,
-        name: "test",
+        name: spaceId,
         uri: "ipfs://test",
         membership: IArchitectBase.Membership({
           settings: IMembershipBase.Membership({
@@ -73,10 +68,7 @@ abstract contract SpaceHelper {
           }),
           permissions: new string[](0)
         }),
-        channel: IArchitectBase.ChannelInfo({
-          id: "test",
-          metadata: "ipfs://test"
-        })
+        channel: IArchitectBase.ChannelInfo({metadata: "ipfs://test"})
       });
   }
 
@@ -89,8 +81,7 @@ abstract contract SpaceHelper {
 
     return
       IArchitectBase.SpaceInfo({
-        id: spaceId,
-        name: "test",
+        name: spaceId,
         uri: "ipfs://test",
         membership: IArchitectBase.Membership({
           settings: IMembershipBase.Membership({
@@ -111,10 +102,7 @@ abstract contract SpaceHelper {
           }),
           permissions: permissions
         }),
-        channel: IArchitectBase.ChannelInfo({
-          id: "test",
-          metadata: "ipfs://test"
-        })
+        channel: IArchitectBase.ChannelInfo({metadata: "ipfs://test"})
       });
   }
 }

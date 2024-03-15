@@ -4,25 +4,25 @@ pragma solidity ^0.8.23;
 // interfaces
 
 // libraries
-import {StringSet} from "contracts/src/utils/StringSet.sol";
 import {EnumerableSet} from "@openzeppelin/contracts/utils/structs/EnumerableSet.sol";
 
 // contracts
 
 library ChannelStorage {
+  // keccak256(abi.encode(uint256(keccak256("spaces.facets.channel.storage")) - 1)) & ~bytes32(uint256(0xff))
   bytes32 internal constant STORAGE_SLOT =
-    keccak256("towns.contracts.storage.Channel");
+    0x804ad633258ac9b908ae115a2763b3f6e04be3b1165402c872b25af518504300;
 
   struct Channel {
-    string id;
+    bytes32 id;
     bool disabled;
     string metadata;
   }
 
   struct Layout {
-    StringSet.Set channelIds;
-    mapping(string channelId => Channel) channelById;
-    mapping(string channelId => EnumerableSet.UintSet) rolesByChannelId;
+    EnumerableSet.Bytes32Set channelIds;
+    mapping(bytes32 channelId => Channel) channelById;
+    mapping(bytes32 channelId => EnumerableSet.UintSet) rolesByChannelId;
   }
 
   function layout() internal pure returns (Layout storage ds) {

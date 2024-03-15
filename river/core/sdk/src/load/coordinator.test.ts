@@ -5,7 +5,7 @@
 import { ethers } from 'ethers'
 import { makeUserContextFromWallet } from '../util.test'
 import { makeStreamRpcClient } from '../makeStreamRpcClient'
-import { userIdFromAddress, makeUniqueSpaceStreamId, makeUniqueChannelStreamId } from '../id'
+import { userIdFromAddress } from '../id'
 import { Client } from '../client'
 import { RiverDbManager } from '../riverDbManager'
 import { MockEntitlementsDelegate } from '../utils'
@@ -36,8 +36,7 @@ const baseChainRpcUrl = process.env.BASE_CHAIN_RPC_URL
     ? process.env.BASE_CHAIN_RPC_URL
     : jsonRpcProviderUrl
 const riverNodeUrl = process.env.RIVER_NODE_URL ? process.env.RIVER_NODE_URL : rpcClientURL
-const coordinationSpaceId = makeUniqueSpaceStreamId()
-const coordinationChannelId = makeUniqueChannelStreamId()
+
 const numTowns = process.env.NUM_TOWNS ? parseInt(process.env.NUM_TOWNS) : townsToCreate
 const numChannelsPerTown = process.env.NUM_CHANNELS_PER_TOWN
     ? parseInt(process.env.NUM_CHANNELS_PER_TOWN)
@@ -107,11 +106,6 @@ describe('Stress test', () => {
         await redisE2EMessageDeliveryTracking.set('T2000', 0)
         await redisE2EMessageDeliveryTracking.set('Tinf', 0)
 
-        log('coordinationSpaceId: ', coordinationSpaceId)
-        log('coordinationChannelId: ', coordinationChannelId)
-        await redis.set('coordinationSpaceId', coordinationSpaceId)
-        await redis.set('coordinationChannelId', coordinationChannelId)
-
         const result = await createFundedTestUser()
         await fundWallet(result.walletWithProvider)
 
@@ -121,6 +115,15 @@ describe('Stress test', () => {
 
         const townsWithChannels = new TownsWithChannels()
         const channelWithTowns = new ChannelTownPairs()
+
+        const {
+            spaceStreamId: coordinationSpaceId,
+            defaultChannelStreamId: coordinationChannelId,
+        } = await result.riverSDK.createTownAndChannel(
+            'main town',
+            'Controller Town',
+            'main channel',
+        )
 
         function handleEventDecrypted(client: Client) {
             // eslint-disable-next-line
@@ -174,13 +177,11 @@ describe('Stress test', () => {
         }
 
         handleEventDecrypted(result.riverSDK.client)
-        await result.riverSDK.createTownAndChannelWithPresetIDs(
-            'main town',
-            coordinationSpaceId,
-            'Controller Town',
-            'main channel',
-            coordinationChannelId,
-        )
+
+        log('coordinationSpaceId: ', coordinationSpaceId)
+        log('coordinationChannelId: ', coordinationChannelId)
+        await redis.set('coordinationSpaceId', coordinationSpaceId)
+        await redis.set('coordinationChannelId', coordinationChannelId)
 
         await result.riverSDK.joinChannel(coordinationChannelId)
 
