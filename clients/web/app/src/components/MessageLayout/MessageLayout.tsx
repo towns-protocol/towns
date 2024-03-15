@@ -127,7 +127,7 @@ export const MessageLayout = (props: Props) => {
     })
     const profileLink = createLink({ profileId: abstractAccountAddress })
 
-    const hasReplies = replies && eventId
+    const hasReplies = replies && replies.replyEventIds.size > 0 && eventId
     const numReactions = reactions ? Object.values(reactions).length : 0
     const hasReactions = reactions && numReactions && onReaction
     const displayButtonsInRow = numReactions < 3 && isTouch
@@ -361,7 +361,7 @@ export const RedactedMessageLayout = (props: {
                     >
                         <Paragraph>This message was deleted</Paragraph>
                     </Box>
-                    {replies && event.eventId && (
+                    {replies && replies.replyEventIds?.size > 0 && event.eventId && (
                         <Box justifySelf="start">
                             <RepliesButton eventId={event.eventId} threadStats={replies} />
                         </Box>
