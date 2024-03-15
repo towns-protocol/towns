@@ -223,12 +223,12 @@ const PlateEditorWithoutBoundary = ({
             if (key === 'Enter' && !shiftKey) {
                 event.preventDefault()
                 const { message, mentions } = await toMD(editorRef.current)
-                if (!disabled && message && message.trim().length > 0) {
+                if (!disabled && ((message && message.trim().length > 0) || files.length > 0)) {
                     await onSendCb(message, mentions)
                 }
             }
         },
-        [onSendCb, isTouch, disabled],
+        [onSendCb, isTouch, disabled, files.length],
     )
 
     const fileCount = files.length
