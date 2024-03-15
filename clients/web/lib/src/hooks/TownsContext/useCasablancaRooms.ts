@@ -71,6 +71,11 @@ export function useCasablancaRooms(client?: CasablancaClient): Record<string, Ro
                 updateState(streamId)
             }
         }
+
+        const onChannelUpdated = (_spaceId: string, channelId: string) => {
+            updateState(channelId)
+        }
+
         console.log('useCasablancaRooms spaceInfos', spaceInfos)
         client.on('streamNewUserJoined', onStreamUpdated)
         client.on('streamUserLeft', onStreamUpdated)
@@ -80,6 +85,7 @@ export function useCasablancaRooms(client?: CasablancaClient): Record<string, Ro
         client.on('streamPendingDisplayNameUpdated', onStreamUpdated)
         client.on('streamUsernameUpdated', onStreamUpdated)
         client.on('streamPendingUsernameUpdated', onStreamUpdated)
+        client.on('spaceChannelUpdated', onChannelUpdated)
         return () => {
             client.off('streamNewUserJoined', onStreamUpdated)
             client.off('streamUserLeft', onStreamUpdated)
@@ -89,6 +95,7 @@ export function useCasablancaRooms(client?: CasablancaClient): Record<string, Ro
             client.off('streamPendingDisplayNameUpdated', onStreamUpdated)
             client.off('streamUsernameUpdated', onStreamUpdated)
             client.off('streamPendingUsernameUpdated', onStreamUpdated)
+            client.off('spaceChannelUpdated', onChannelUpdated)
             setRooms({})
         }
     }, [client, isLoading, spaceInfos])
