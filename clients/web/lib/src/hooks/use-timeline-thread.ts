@@ -40,7 +40,7 @@ function toDummyThreadStats(
     }
     if (!cache.current[event.eventId]) {
         cache.current[event.eventId] = {
-            replyCount: 0,
+            replyEventIds: new Set(),
             userIds: new Set<string>(event.sender.id ? [event.sender.id] : []),
             latestTs: event.createdAtEpochMs,
             parentId: event.eventId,

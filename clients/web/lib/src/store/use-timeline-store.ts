@@ -583,7 +583,7 @@ function addThreadStats(
                     isParticipating:
                         threadsStats[roomId][timelineEvent.eventId].isParticipating ||
                         (timelineEvent.content?.kind !== ZTEvent.RedactedEvent &&
-                            threadsStats[roomId][timelineEvent.eventId].replyCount > 0 &&
+                            threadsStats[roomId][timelineEvent.eventId].replyEventIds.size > 0 &&
                             (timelineEvent.sender.id === userId || timelineEvent.isMentioned)),
                 },
             },
@@ -600,7 +600,7 @@ function makeNewThreadStats(
 ): ThreadStats {
     const parent = timeline?.find((t) => t.eventId === parentId) // one time lookup of the parent message for the first reply
     return {
-        replyCount: 0,
+        replyEventIds: new Set<string>(),
         userIds: new Set<string>(),
         latestTs: event.createdAtEpochMs,
         parentId,
@@ -621,7 +621,7 @@ function addThreadStat(
     if (event.content?.kind === ZTEvent.RedactedEvent) {
         return updated
     }
-    updated.replyCount++
+    updated.replyEventIds.add(event.eventId)
     updated.latestTs = Math.max(updated.latestTs, event.createdAtEpochMs)
     const senderId = getMessageSenderId(event)
     if (senderId) {
@@ -649,9 +649,10 @@ function removeThreadStat(
     }
     const updated = { ...threadsStats[roomId] }
     const entry = updated[parentId]
+
     if (entry) {
-        entry.replyCount--
-        if (entry.replyCount === 0) {
+        entry.replyEventIds.delete(timelineEvent.eventId)
+        if (entry.replyEventIds.size === 0) {
             delete updated[parentId]
         } else {
             const senderId = getMessageSenderId(timelineEvent)

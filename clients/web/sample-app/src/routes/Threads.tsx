@@ -42,7 +42,7 @@ function formatThreadRoot(threadRoot: ThreadResult): string {
     return (
         isNew +
         `#${threadRoot.channel.label} ${threadRoot.thread.parentMessageContent?.body ?? ''} (${
-            threadRoot.thread.replyCount
+            threadRoot.thread.replyEventIds.size
         })`
     )
 }

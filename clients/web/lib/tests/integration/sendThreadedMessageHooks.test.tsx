@@ -200,7 +200,7 @@ describe('sendThreadedMessageHooks', () => {
             ])
 
             const formatThreadParent = useCallback((t: ThreadStats) => {
-                return `replyCount: (${t.replyCount}) parentId: (${t.parentId}) message: (${
+                return `replyCount: (${t.replyEventIds.size}) parentId: (${t.parentId}) message: (${
                     t.parentMessageContent?.body ?? ''
                 })`
             }, [])
@@ -220,7 +220,7 @@ describe('sendThreadedMessageHooks', () => {
 
             const formatMessage = useCallback(
                 (e: TimelineEvent, v?: 'short') => {
-                    const replyCount = channelThreadStats[e.eventId]?.replyCount
+                    const replyCount = channelThreadStats[e.eventId]?.replyEventIds.size
                     const replyCountStr = replyCount ? `(replyCount:${replyCount})` : ''
                     const eventNumStr = `${e.eventNum}/${e.confirmedEventNum ?? '??'}`
                     const idStr = `id: ${e.eventId}`
@@ -230,7 +230,9 @@ describe('sendThreadedMessageHooks', () => {
                 [channelThreadStats],
             )
             const formatThreadStats = useCallback((k: string, v: ThreadStats) => {
-                return `${k} (replyCount:${v.replyCount} userIds:${[...v.userIds].join(',')})`
+                return `${k} (replyCount:${v.replyEventIds.size} userIds:${[...v.userIds].join(
+                    ',',
+                )})`
             }, [])
 
             const formatFullyReadMarker = useCallback((m?: FullyReadMarker) => {

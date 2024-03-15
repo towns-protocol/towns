@@ -140,7 +140,7 @@ describe('UseTimelineStore', () => {
                 },
                 threadStats: {
                     MSG_0: {
-                        replyCount: 2,
+                        replyEventIds: new Set(['event1', 'event2']),
                         userIds: new Set(['bob']),
                         latestTs: events[2].createdAtEpochMs,
                         parentId: events[0].eventId,
@@ -166,7 +166,7 @@ describe('UseTimelineStore', () => {
                 },
                 threadStats: {
                     MSG_0: {
-                        replyCount: 1,
+                        replyEventIds: new Set(['THREAD_0']),
                         userIds: new Set(['bob']),
                         latestTs: events[1].createdAtEpochMs,
                         parentId: events[0].eventId,
@@ -196,7 +196,7 @@ describe('UseTimelineStore', () => {
                 },
                 threadStats: {
                     MSG_0: {
-                        replyCount: 0,
+                        replyEventIds: new Set([]),
                         userIds: new Set([]),
                         latestTs: events[1].createdAtEpochMs,
                         parentId: events[0].eventId,

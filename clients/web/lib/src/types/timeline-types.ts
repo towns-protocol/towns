@@ -295,7 +295,7 @@ export interface TimelineEventConfirmation {
 
 export interface ThreadStats {
     /// Thread Parent
-    replyCount: number
+    replyEventIds: Set<string>
     userIds: Set<string>
     latestTs: number
     parentId: string

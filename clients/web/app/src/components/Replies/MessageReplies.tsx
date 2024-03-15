@@ -18,7 +18,7 @@ type Props = {
 
 export const RepliesButton = (props: Props) => {
     const { threadStats, eventId } = props
-    const { replyCount } = threadStats
+    const { replyEventIds } = threadStats
 
     const { usersMap } = useUserLookupContext()
 
@@ -49,8 +49,8 @@ export const RepliesButton = (props: Props) => {
                 </Stack>
                 <Stack paddingBottom="xxs">
                     <Paragraph size="sm" color="default" fontWeight="medium">
-                        {replyCount}
-                        {replyCount > 1 ? ' replies' : ' reply'}
+                        {replyEventIds.size}
+                        {replyEventIds.size > 1 ? ' replies' : ' reply'}
                     </Paragraph>
                 </Stack>
             </Box>
