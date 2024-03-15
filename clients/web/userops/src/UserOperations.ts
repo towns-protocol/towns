@@ -442,7 +442,11 @@ export class UserOps {
         if (!this.spaceDapp) {
             throw new Error('spaceDapp is required')
         }
-        const [spaceId, channelName, channelId, roleIds, signer] = args
+        const [spaceId, channelName, channelNetworkId, roleIds, signer] = args
+        const channelId = channelNetworkId.startsWith('0x')
+            ? channelNetworkId
+            : `0x${channelNetworkId}`
+
         const town = await this.spaceDapp.getTown(spaceId)
 
         if (!town) {
