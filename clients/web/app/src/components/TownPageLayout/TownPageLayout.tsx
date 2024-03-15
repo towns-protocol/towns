@@ -13,6 +13,7 @@ import { ToneName } from 'ui/styles/themes'
 import { getInviteUrl } from 'ui/utils/utils'
 import useCopyToClipboard from 'hooks/useCopyToClipboard'
 import { useReadableMembershipInfo } from './useReadableMembershipInfo'
+import { durationTitleSubtitle } from './townPageUtils'
 
 type TownPageLayoutProps = {
     headerContent?: React.ReactNode
@@ -112,7 +113,7 @@ export const TownPageLayout = (props: TownPageLayoutProps) => {
                             <InformationBoxes
                                 imageSrc={imageSrc}
                                 price={membershipInfo?.price}
-                                duration={0}
+                                duration={membershipInfo?.duration}
                                 address={address}
                                 chainId={chainId}
                                 anyoneCanJoin={anyoneCanJoin}
@@ -229,7 +230,7 @@ const InformationBoxes = (props: {
     isTokensGatingMembershipLoading: boolean
     tokens?: { contractAddress: string; tokenIds: number[] }[]
 }) => {
-    const { openSeaLink, price, address, chainId } = props
+    const { openSeaLink, price, address, chainId, duration } = props
     const onAddressClick = useEvent(() => {
         window.open(`${baseScanUrl(chainId)}/address/${address}`, '_blank', 'noopener,noreferrer')
     })
@@ -240,6 +241,7 @@ const InformationBoxes = (props: {
         }
         window.open(openSeaLink, '_blank', 'noopener,noreferrer')
     })
+    const durationTexts = useMemo(() => durationTitleSubtitle(duration), [duration])
 
     return (
         <MotionStack
@@ -252,7 +254,7 @@ const InformationBoxes = (props: {
         >
             {price && (
                 <InformationBox
-                    key="a"
+                    key="cost"
                     title="Cost"
                     centerContent={
                         <Text style={{ fontSize: '24px' }} fontWeight="strong">
@@ -263,9 +265,23 @@ const InformationBoxes = (props: {
                 />
             )}
 
+            {durationTexts && (
+                <InformationBox
+                    key="duration"
+                    title="Valid for"
+                    centerContent={
+                        <Text style={{ fontSize: '24px' }} fontWeight="strong">
+                            {durationTexts.title}
+                        </Text>
+                    }
+                    subtitle={durationTexts.subtitle}
+                    onClick={onAddressClick}
+                />
+            )}
+
             {address && (
                 <InformationBox
-                    key="c"
+                    key="explore"
                     title="Explore"
                     centerContent={<Icon type="etherscan" />}
                     subtitle="Etherscan"
@@ -275,14 +291,13 @@ const InformationBoxes = (props: {
 
             {openSeaLink && (
                 <InformationBox
-                    key="d"
+                    key="opensea"
                     title="View"
                     centerContent={<Icon type="openSeaPlain" />}
                     subtitle="OpenSea"
                     onClick={onOpenSeaClick}
                 />
             )}
-
             <Box width="x2" shrink={false} />
         </MotionStack>
     )
@@ -310,6 +325,9 @@ const InformationBox = (props: {
             shrink={false}
             background={isHovered ? 'hover' : 'lightHover'}
             cursor={props.onClick ? 'pointer' : undefined}
+            initial={{ opacity: 0 }}
+            animate={{ opacity: 1 }}
+            transition={{ duration: 0.3 }}
             layout="position"
             onPointerEnter={onPointerEnter}
             onPointerLeave={onPointerLeave}
