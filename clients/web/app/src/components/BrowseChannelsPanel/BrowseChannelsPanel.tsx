@@ -1,4 +1,4 @@
-import React, { useCallback, useMemo } from 'react'
+import React, { useCallback, useEffect, useMemo, useRef } from 'react'
 import { useEvent } from 'react-use-event-hook'
 import { useSearchParams } from 'react-router-dom'
 import {
@@ -20,8 +20,19 @@ export const BrowseChannelsPanel = () => {
     const channels = useSpaceChannels()
     const [searchParams, setSearchParams] = useSearchParams()
     const [searchText, setSearchText] = React.useState('')
+
+    const { unseenChannelIds: _unseenChannelIds, markChannelsAsSeen } = useUnseenChannelIds()
+    // Store a ref to unseen channel ids, while simultaneously marking them as seen
+    // to suppress any unseen indicators in other parts of the app
+    const unseenChannelIds = useRef<Set<string> | undefined>(undefined)
+    useEffect(() => {
+        if (!unseenChannelIds.current && _unseenChannelIds.size > 0) {
+            unseenChannelIds.current = _unseenChannelIds
+            markChannelsAsSeen()
+        }
+    }, [_unseenChannelIds, markChannelsAsSeen])
+
     const myMemberships = useMyMemberships()
-    const { unseenChannelIds, markChannelsAsSeen } = useUnseenChannelIds()
 
     const onTextFieldChanged = useCallback(
         (event: React.ChangeEvent<HTMLInputElement>) => {
@@ -67,7 +78,7 @@ export const BrowseChannelsPanel = () => {
                                     topic={channel.topic}
                                     channelNetworkId={channel.id}
                                     isJoined={myMemberships[channel.id] === Membership.Join}
-                                    showDot={unseenChannelIds.has(channel.id)}
+                                    showDot={unseenChannelIds.current?.has(channel.id)}
                                 />
                             </Stack>
                         </ChannelContextProvider>
