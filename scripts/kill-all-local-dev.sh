@@ -104,4 +104,5 @@ then
     ./river/core/scripts/stop_storage.sh 
 fi
 
-
+# kill notification service DB
+./scripts/stop-local-notification-db.sh

@@ -4,6 +4,7 @@ import { StreamRpcClient, makeStreamRpcClient } from '../../../infrastructure/rp
 import { isChannelStreamId, isDMChannelStreamId, isGDMChannelStreamId } from './id'
 import { SyncedStreams, unpackStream } from './syncedStreams'
 import { streamIdToBytes, userIdFromAddress } from './utils'
+import { env } from '../../utils/environment'
 
 type StreamsMetadata = {
     [key in StreamKind]: {
@@ -15,6 +16,7 @@ export class StreamsMonitorService {
     private rpcClient: StreamRpcClient = makeStreamRpcClient()
     private streams: SyncedStreams = new SyncedStreams(this.rpcClient)
     private intervalId: NodeJS.Timeout | null = null
+    private releaseServiceAwait: (() => void) | undefined
 
     private async getNewStreamsToMonitor(): Promise<StreamsMetadata> {
         const streamIds = (
@@ -149,12 +151,24 @@ export class StreamsMonitorService {
     }
 
     public async startMonitoringStreams() {
-        await this.fetchAndAddNewChannelStreams()
-        const oneMinute = 1 * 60 * 1000
-        this.intervalId = setInterval(async () => {
+        if (env.NOTIFICATION_SYNC_ENABLED === 'true') {
+            console.log('notification sync is enabled')
             await this.fetchAndAddNewChannelStreams()
-        }, oneMinute)
-        return this.streams.startSyncStreams()
+            const oneMinute = 1 * 60 * 1000
+            this.intervalId = setInterval(async () => {
+                await this.fetchAndAddNewChannelStreams()
+            }, oneMinute)
+
+            return this.streams.startSyncStreams()
+        } else {
+            console.log('notification sync is disabled')
+            return new Promise<void>((resolve) => {
+                this.releaseServiceAwait = () => {
+                    this.releaseServiceAwait = undefined
+                    resolve()
+                }
+            })
+        }
     }
 
     private async fetchAndAddNewChannelStreams() {
@@ -162,7 +176,11 @@ export class StreamsMonitorService {
         const streamsMetadata = await this.getNewStreamsToMonitor()
 
         streamsMetadata.DM.streamIds.forEach(async (streamId) => {
-            await this.addDMSyncStreamToDB(streamId)
+            try {
+                await this.addDMSyncStreamToDB(streamId)
+            } catch (error) {
+                console.error('Failed to add dm sync stream to db', streamId, error)
+            }
         })
         streamsMetadata.GDM.streamIds.forEach(async (streamId) => {
             console.log('[StreamsMonitorService] new gdm stream', streamId)
@@ -173,9 +191,13 @@ export class StreamsMonitorService {
     }
 
     public async stopMonitoringStreams() {
-        if (this.intervalId) {
-            clearInterval(this.intervalId!)
+        if (env.NOTIFICATION_SYNC_ENABLED === 'true') {
+            if (this.intervalId) {
+                clearInterval(this.intervalId!)
+            }
+            return this.streams.stopSync()
+        } else {
+            this.releaseServiceAwait?.()
         }
-        return this.streams.stopSync()
     }
 }

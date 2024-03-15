@@ -154,7 +154,7 @@ commands=(
     "worker_unfurl:cd servers/workers/unfurl-worker && yarn dev:local"
     "worker_token:cd servers/workers/token-worker && yarn dev:local"
     "worker_gateway:cd servers/workers/gateway-worker && yarn dev:local"
-    "worker_push:cd servers/workers/push-notification-worker && ./scripts/start-local-push-worker.sh"
+    "notification_service:sleep 4 && ./scripts/start-local-notification-service.sh"
     "worker_stackup:cd servers/workers/stackup-worker && yarn dev:local"
     "core_single:sleep 3 && ./river/core/node/run_single.sh -sc"
     "core_single_ne:./river/scripts/wait-for-core.sh && ./river/core/node/run_single.sh -sc --de"
@@ -181,6 +181,7 @@ is_closed() {
 
 # Wait for the session to close
 if is_closed ; then
-    echo "Session $SESSION_NAME has closed; delete core postgres container and volume"
+    echo "Session $SESSION_NAME has closed; delete postgres containers and volumes"
     ./river/core/scripts/stop_storage.sh
+    ./scripts/stop-local-notification-db.sh
 fi

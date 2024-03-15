@@ -1,4 +1,3 @@
-import { NotificationTag, PushSubscription } from '@prisma/client'
 import {
     NotificationContentDmSchema,
     NotificationContentMessageSchema,
@@ -6,12 +5,15 @@ import {
     NotifyUsersSchema,
     Urgency,
 } from '../schema/notificationSchema'
-import { NotificationKind } from '../schema/tagSchema'
-import { sendNotificationViaWebPush } from './web-push/send-notification'
+import { NotificationTag } from '@prisma/client'
 import { SendPushResponse, SendPushStatus } from './web-push/web-push-types'
+
+import { NotificationKind } from '../schema/tagSchema'
 import { PushType } from '../schema/subscriptionSchema'
 import { UserSettingsTables } from '../database/userSettingsTables'
 import { database } from '../../infrastructure/database/prisma'
+import { env } from '../utils/environment'
+import { sendNotificationViaWebPush } from './web-push/send-notification'
 
 export class NotificationService {
     constructor() {}
@@ -133,10 +135,7 @@ export class NotificationService {
 
             for (const subscription of pushSubscriptions) {
                 if (subscription.PushType === PushType.WebPush) {
-                    const sendNotificationPromise = this.sendNotificationViaWebPush(
-                        option,
-                        subscription,
-                    )
+                    const sendNotificationPromise = sendNotificationViaWebPush(option, subscription)
                     pushNotificationPromises.push(sendNotificationPromise)
                 }
             }
@@ -144,16 +143,14 @@ export class NotificationService {
         return pushNotificationPromises
     }
 
-    private async sendNotificationViaWebPush(
-        options: NotificationOptions,
-        subscription: PushSubscription,
-    ): Promise<SendPushResponse> {
-        return sendNotificationViaWebPush(options, subscription)
-    }
-
     public async dispatchAllPushNotification(
         pushNotificationRequests: Promise<SendPushResponse>[],
     ): Promise<number> {
+        if (env.NOTIFICATION_SYNC_ENABLED === 'false') {
+            // notification dispatch is disabled
+            return 0
+        }
+
         let sendResults: PromiseSettledResult<SendPushResponse>[] = []
         sendResults = await Promise.allSettled(pushNotificationRequests)
 

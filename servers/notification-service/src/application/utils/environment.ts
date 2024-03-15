@@ -4,6 +4,7 @@ const envSchema = z.object({
     NODE_ENV: z.string(),
     PORT: z.string().default('80'),
     NOTIFICATION_DATABASE_URL: z.string(),
+    NOTIFICATION_SYNC_ENABLED: z.string().default('true'),
     AUTH_SECRET: z.string(),
     VAPID_PUBLIC_KEY: z.string(),
     VAPID_PRIVATE_KEY: z.string(),

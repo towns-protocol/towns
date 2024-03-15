@@ -514,7 +514,7 @@
     {
       "label": "NotificationService",
       "type": "shell",
-      "command": "sleep 4 && cd servers/notification-service && yarn build && yarn dev",
+      "command": "sleep 4 && ./scripts/start-local-notification-service.sh",
       "isBackground": true,
       "problemMatcher": [],
       "presentation": {
