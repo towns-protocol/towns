@@ -1,7 +1,7 @@
 import { useCallback, useMemo, useState } from 'react'
 import { Chain } from 'wagmi'
 import { env } from 'utils'
-import { baseSepoliaClone, foundryClone } from 'customChains'
+import { anvilRiverChain, baseSepoliaClone, foundryClone, riverChain } from 'customChains'
 
 const TOWNS_DEV_ENV = 'TOWNS_DEV_ENV'
 
@@ -23,6 +23,7 @@ export interface TownsEnvironmentInfo {
     casablancaUrl: string | undefined
     chainId: number
     chain: Chain
+    riverChain: typeof riverChain
     protocol: SpaceProtocol
     aaRpcUrl: string | undefined
     aaBundlerUrl: string | undefined
@@ -36,6 +37,7 @@ export const ENVIRONMENTS: TownsEnvironmentInfo[] = [
         casablancaUrl: 'https://localhost:5157',
         chainId: 31337,
         chain: foundryClone,
+        riverChain: anvilRiverChain,
         protocol: SpaceProtocol.Casablanca,
         aaRpcUrl: undefined,
         aaBundlerUrl: undefined,
@@ -47,6 +49,7 @@ export const ENVIRONMENTS: TownsEnvironmentInfo[] = [
         casablancaUrl: 'https://river1.nodes.gamma.towns.com',
         chainId: 84532,
         chain: baseSepoliaClone,
+        riverChain: riverChain,
         protocol: SpaceProtocol.Casablanca,
         aaRpcUrl: env.VITE_PROVIDER_HTTP_URL,
         aaBundlerUrl: env.VITE_AA_BUNDLER_URL,
@@ -106,6 +109,7 @@ export function useEnvironment() {
             chain,
             chainId,
             chainName,
+            riverChain,
             casablancaUrl,
             protocol,
             setEnvironment,

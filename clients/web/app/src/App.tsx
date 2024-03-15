@@ -86,6 +86,7 @@ export const App = () => {
             mutedChannelIds={mutedChannelIds}
             casablancaServerUrl={environment.casablancaUrl}
             chain={environment.chain}
+            riverChain={environment.riverChain}
             timelineFilter={new Set([ZTEvent.Fulfillment, ZTEvent.KeySolicitation])}
             pushNotificationAuthToken={env.VITE_AUTH_WORKER_HEADER_SECRET}
             pushNotificationWorkerUrl={env.VITE_WEB_PUSH_WORKER_URL}

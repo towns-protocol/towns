@@ -100,9 +100,9 @@ export {
     BlockchainTransactionType,
     isNullAddress,
     type TSigner,
+    type IChainConfig,
 } from './types/web3-types'
 export { getAccountAddress } from './types/user-identifier'
-
 export {
     signMessageAbortController,
     signMessageAbortListener,

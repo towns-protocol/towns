@@ -54,7 +54,7 @@ export const App = () => {
 }
 
 const AppContent = () => {
-    const { casablancaUrl, chain, chainId } = useEnvironment()
+    const { casablancaUrl, chain, chainId, riverChain } = useEnvironment()
     return (
         <ThemeProvider theme={theme}>
             <Container maxWidth="md">
@@ -62,6 +62,7 @@ const AppContent = () => {
                     enableSpaceRootUnreads
                     casablancaServerUrl={casablancaUrl}
                     chain={chain}
+                    riverChain={riverChain}
                 >
                     <EmbeddedSignerContextProvider chainId={chainId}>
                         <Routes>

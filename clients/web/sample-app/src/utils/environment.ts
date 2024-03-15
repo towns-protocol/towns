@@ -1,4 +1,17 @@
 import { Chain, baseSepolia, foundry } from 'wagmi/chains'
+import { IChainConfig } from 'use-towns-client'
+
+const anvilRiverChain: IChainConfig = {
+    chainId: 31338,
+    name: 'anvil_river_chain',
+    rpcUrl: 'http://127.0.0.1:8546',
+}
+
+const riverChain: IChainConfig = {
+    chainId: 6524490,
+    name: 'river_chain',
+    rpcUrl: 'https://devnet.rpc.river.build/',
+}
 
 export enum TownsEnvironment {
     Prod = 'prod',
@@ -13,6 +26,7 @@ export interface TownsEnvironmentInfo {
     casablancaUrl: string | undefined
     chainId: number
     chain: Chain
+    riverChain: IChainConfig
 }
 
 export const ENVIRONMENTS: TownsEnvironmentInfo[] = [
@@ -24,6 +38,7 @@ export const ENVIRONMENTS: TownsEnvironmentInfo[] = [
         ),
         chainId: foundry.id,
         chain: foundry,
+        riverChain: anvilRiverChain,
     },
     {
         id: TownsEnvironment.Local,
@@ -31,6 +46,7 @@ export const ENVIRONMENTS: TownsEnvironmentInfo[] = [
         casablancaUrl: 'https://localhost:5157',
         chainId: foundry.id,
         chain: foundry,
+        riverChain: anvilRiverChain,
     },
     {
         id: TownsEnvironment.Gamma,
@@ -38,5 +54,6 @@ export const ENVIRONMENTS: TownsEnvironmentInfo[] = [
         casablancaUrl: 'https://river1.nodes.gamma.towns.com',
         chain: baseSepolia,
         chainId: baseSepolia.id,
+        riverChain,
     },
 ]

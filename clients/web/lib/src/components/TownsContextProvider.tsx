@@ -21,6 +21,7 @@ import { useClientInitStatus } from '../hooks/TownsContext/useClientInitStatus'
 import { GlobalContextUserLookupProvider } from './UserLookupContextProviders'
 import { TownsOpts } from '../client/TownsClientTypes'
 import { Chain } from 'viem/chains'
+import { IChainConfig } from '../types/web3-types'
 
 export type InitialSyncSortPredicate = (a: string, b: string) => number
 
@@ -55,6 +56,7 @@ export function useTownsContext(): ITownsContext {
 
 interface TownsContextProviderProps {
     chain: Chain
+    riverChain: IChainConfig
     casablancaServerUrl?: string | undefined
     enableSpaceRootUnreads?: boolean
     timelineFilter?: Set<ZTEvent>
@@ -73,7 +75,7 @@ export function TownsContextProvider({
 }: TownsContextProviderProps): JSX.Element {
     return (
         <QueryClientProvider>
-            <Web3ContextProvider chain={props.chain}>
+            <Web3ContextProvider chain={props.chain} riverChain={props.riverChain}>
                 <TownsContextImplMemo {...props}></TownsContextImplMemo>
             </Web3ContextProvider>
         </QueryClientProvider>

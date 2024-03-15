@@ -15,6 +15,7 @@ export function useEnvironment() {
     const chain = environmentInfo.chain
     const chainName = environmentInfo.chain.name
     const casablancaUrl = environmentInfo.casablancaUrl
+    const riverChain = environmentInfo.riverChain
 
     return {
         environment, // only defined if IS_DEV
@@ -22,5 +23,6 @@ export function useEnvironment() {
         chainId: chain.id,
         chainName,
         casablancaUrl,
+        riverChain,
     }
 }

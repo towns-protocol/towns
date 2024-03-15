@@ -12,7 +12,7 @@ import { ZLayerProvider } from '@ui'
 import { AuthContextProvider } from 'hooks/useAuth'
 import { env } from 'utils'
 import '@testing-library/jest-dom'
-import { foundryClone } from 'customChains'
+import { anvilRiverChain, foundryClone } from 'customChains'
 
 type TestAppProps = {
     children: JSX.Element
@@ -49,6 +49,7 @@ export const TestApp = (props: TestAppProps) => {
                 <Lib.TownsContextProvider
                     casablancaServerUrl={env.VITE_CASABLANCA_HOMESERVER_URL}
                     chain={foundryClone}
+                    riverChain={anvilRiverChain}
                     {...props.townsContextProviderProps}
                 >
                     <AuthContextProvider>

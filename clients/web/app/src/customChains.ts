@@ -33,3 +33,19 @@ export const baseSepoliaClone: Chain = env.VITE_PROVIDER_HTTP_URL
           },
       }
     : baseSepolia
+
+export const riverChain: { chainId: number; name: string; rpcUrl: string } = {
+    chainId: env.VITE_RIVER_CHAIN_ID ? parseInt(env.VITE_RIVER_CHAIN_ID) : 6524490,
+    name: 'river_chain',
+    rpcUrl: env.VITE_RIVER_CHAIN_PROVIDER_HTTP_URL
+        ? env.VITE_RIVER_CHAIN_PROVIDER_HTTP_URL
+        : 'https://devnet.rpc.river.build',
+}
+
+export const anvilRiverChain: { chainId: number; name: string; rpcUrl: string } = {
+    chainId: env.VITE_RIVER_CHAIN_ID ? parseInt(env.VITE_RIVER_CHAIN_ID) : 31338,
+    name: 'anvil_river_chain',
+    rpcUrl: env.VITE_RIVER_CHAIN_PROVIDER_HTTP_URL
+        ? env.VITE_RIVER_CHAIN_PROVIDER_HTTP_URL
+        : 'http://127.0.0.1:8546',
+}

@@ -18,6 +18,9 @@ export const TownsTestApp = (props: Props) => {
     const { provider, children } = props
     // pull environment variables from the process
     const casablancaServerUrl = process.env.CASABLANCA_SERVER_URL!
+    const riverChainUrl = process.env.RIVER_CHAIN_PROVIDER_HTTP_URL!
+    const riverChainId = parseInt(process.env.RIVER_CHAIN_ID!)
+    const riverChain = { rpcUrl: riverChainUrl, chainId: riverChainId }
     Object.defineProperty(window, 'ethereum', {
         value: provider,
         writable: true,
@@ -27,6 +30,7 @@ export const TownsTestApp = (props: Props) => {
         <TownsContextProvider
             casablancaServerUrl={casablancaServerUrl}
             chain={foundry}
+            riverChain={riverChain}
             QueryClientProvider={TestQueryClientProvider}
         >
             <>
