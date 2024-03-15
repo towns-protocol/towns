@@ -6,6 +6,7 @@ import { Permission, useContractSpaceInfo, useHasPermission, useMyProfile } from
 import { isAddress } from 'viem'
 
 import { Allotment } from 'allotment'
+import { clsx } from 'clsx'
 import { TokenVerification } from '@components/Web3/TokenVerification/TokenVerification'
 import { Avatar } from '@components/Avatar/Avatar'
 import { ClipboardCopy } from '@components/ClipboardCopy/ClipboardCopy'
@@ -42,6 +43,8 @@ import { useAbstractAccountAddress } from 'hooks/useAbstractAccountAddress'
 import { ErrorReportForm } from '@components/ErrorReport/ErrorReport'
 import { useReadableMembershipInfo } from '@components/TownPageLayout/useReadableMembershipInfo'
 import { useDevice } from 'hooks/useDevice'
+import { atoms } from 'ui/styles/atoms.css'
+import { darkTheme } from 'ui/styles/vars.css'
 import { WelcomeLayout } from './layouts/WelcomeLayout'
 
 const log = debug('app:public-town')
@@ -85,10 +88,16 @@ export const PublicTownPage = (props: { isPreview?: boolean; onClosePreview?: ()
 
     useErrorToast({ errorMessage: isNoFundsError ? undefined : errorMessage })
 
+    const className = clsx([
+        darkTheme,
+        atoms({ color: 'default' }),
+        atoms({ background: 'default' }),
+    ])
+
     return spaceInfo ? (
         <>
             <AbsoluteBackground networkId={spaceInfo.networkId} />
-            <Box absoluteFill paddingTop="safeAreaInsetTop">
+            <Box absoluteFill paddingTop="safeAreaInsetTop" className={className}>
                 <TownPageLayout
                     headerContent={
                         <Header

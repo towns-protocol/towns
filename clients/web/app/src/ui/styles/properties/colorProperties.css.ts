@@ -2,7 +2,6 @@ import { style } from '@vanilla-extract/css'
 import { defineProperties } from '@vanilla-extract/sprinkles'
 import { ToneName } from 'ui/styles/themes'
 import { darkTheme, lightTheme, vars } from 'ui/styles/vars.css'
-import { Figma } from '../palette'
 
 export const hoverableClass = style({
     transition: 'background 120ms ease',
@@ -158,17 +157,17 @@ export const colorProperties = defineProperties({
                 backdropFilter: 'blur(10px)',
                 selectors: {
                     [`${darkTheme} &`]: {
-                        background: Figma.DarkMode.Level1Transparent,
+                        background: vars.color.background.level1,
                         color: vars.color.overlay.black,
                         vars: {
-                            '--background': Figma.DarkMode.Level1Transparent,
+                            '--background': vars.color.background.level1,
                         },
                     },
                     [`${lightTheme} &`]: {
-                        background: Figma.LightMode.Level1Transparent,
+                        background: vars.color.background.level1,
                         color: vars.color.overlay.black,
                         vars: {
-                            '--background': Figma.LightMode.Level1Transparent,
+                            '--background': vars.color.background.level1,
                         },
                     },
                 },
