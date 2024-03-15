@@ -18,7 +18,7 @@ import { database } from '../../../infrastructure/database/prisma'
 import { ParsedEvent, ParsedMiniblock, ParsedStreamAndCookie } from './types'
 import { NotifyUsersSchema } from '../../schema/notificationSchema'
 import { notificationService } from '../notificationService'
-import { isDMChannelStreamId } from './id'
+import { isChannelStreamId, isDMChannelStreamId, isGDMChannelStreamId } from './id'
 
 export function isDefined<T>(value: T | undefined | null): value is T {
     return <T>value !== undefined && <T>value !== null
@@ -327,21 +327,12 @@ export class SyncedStreams {
                             // syncStreams() should return a new syncId
                             this.syncId = undefined
 
-                            const dmStreams = await database.dMStream.findMany()
+                            const dbSyncedStreams = await database.syncedStream.findMany()
 
                             const syncCookies: SyncCookie[] = []
-                            for (const dbStream of dmStreams) {
-                                const syncStream = await this.rpcClient.getStream({
-                                    streamId: streamIdToBytes(dbStream.streamId),
-                                    optional: false,
-                                })
-                                if (syncStream.stream?.nextSyncCookie) {
-                                    syncCookies.push(syncStream.stream?.nextSyncCookie)
-                                    if (this.get(dbStream.streamId) === undefined) {
-                                        this.set(dbStream.streamId, syncStream.stream)
-                                        console.log('syncStream added', syncStream.stream)
-                                    }
-                                }
+                            for (const dbStream of dbSyncedStreams) {
+                                console.log('dbStream.syncCookie', dbStream.syncCookie)
+                                syncCookies.push(SyncCookie.fromJsonString(dbStream.syncCookie))
                             }
 
                             const streams = this.rpcClient.syncStreams({
@@ -578,18 +569,27 @@ export class SyncedStreams {
                         ? bin_toHexString(syncStream.nextSyncCookie.streamId)
                         : ''
 
-                    const stream = this.streams.get(streamId)
-                    if (stream === undefined) {
-                        console.log('sync got stream', streamId, 'NOT FOUND')
-                    } else if (syncStream.syncReset) {
+                    // console.log('sync got stream', streamId, 'NOT FOUND')
+                    // } else if (syncStream.syncReset) {
+                    if (syncStream.syncReset) {
                         // const response = await unpackStream(syncStream)
                         // await stream.initializeFromResponse(response)
                     } else {
                         const streamAndCookie = await unpackStreamAndCookie(syncStream)
+                        const stream = this.streams.get(streamId)
+                        if (stream === undefined) {
+                            this.streams.set(streamId, syncStream)
+                        }
                         console.log('streamAndCookie', streamAndCookie)
 
                         if (isDMChannelStreamId(streamId)) {
                             await this.handleDMStreamUpdate(streamAndCookie, streamId)
+                        }
+                        if (isGDMChannelStreamId(streamId)) {
+                            console.log('GDMChannelStreamId', streamId)
+                        }
+                        if (isChannelStreamId(streamId)) {
+                            console.log('ChannelStreamId', streamId)
                         }
                     }
                 } catch (err) {
@@ -621,7 +621,7 @@ export class SyncedStreams {
                     return
                 }
 
-                const dmStream = await database.dMStream.findUnique({
+                const dmStream = await database.syncedStream.findUnique({
                     where: { streamId },
                 })
 
@@ -631,14 +631,20 @@ export class SyncedStreams {
                 }
 
                 const usersToNotify: Set<string> = new Set()
-                if (dmStream?.firstUserId !== creatorUserId) {
-                    console.log('notify first user', dmStream?.firstUserId)
-                    usersToNotify.add(dmStream?.firstUserId)
+                const dbStreamUsers = dmStream.userIds
+                if (!dbStreamUsers.includes(creatorUserId)) {
+                    console.error('creatorUserId not in dm', creatorUserId, dbStreamUsers)
+                    return
                 }
-                if (dmStream?.secondUserId !== creatorUserId) {
-                    console.log('notify second user', dmStream?.secondUserId)
-                    usersToNotify.add(dmStream?.secondUserId)
-                }
+
+                // remove creatorUserId from dbStreamUsers using set
+                dbStreamUsers.forEach((user) => {
+                    if (user !== creatorUserId) {
+                        usersToNotify.add(user)
+                    }
+                })
+                console.log('usersToNotify', usersToNotify)
+
                 const usersToNotifyArray = Array.from(usersToNotify)
 
                 database.$transaction(async (tx) => {

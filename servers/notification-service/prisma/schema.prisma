@@ -59,8 +59,15 @@ enum Mute {
   muted
 }
 
-model DMStream {
-  streamId     String @id
-  firstUserId  String
-  secondUserId String
+model SyncedStream {
+  streamId   String     @id
+  userIds    String[]
+  kind       StreamKind
+  syncCookie String
+}
+
+enum StreamKind {
+  DM
+  GDM
+  Channel
 }

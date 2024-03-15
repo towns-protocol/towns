@@ -1,17 +1,24 @@
 import { database } from '../../../infrastructure/database/prisma'
+import { StreamKind } from '@prisma/client'
 import { StreamRpcClient, makeStreamRpcClient } from '../../../infrastructure/rpc/streamRpcClient'
-import { isDMChannelStreamId } from './id'
+import { isChannelStreamId, isDMChannelStreamId, isGDMChannelStreamId } from './id'
 import { SyncedStreams, unpackStream } from './syncedStreams'
 import { streamIdToBytes, userIdFromAddress } from './utils'
+
+type StreamsMetadata = {
+    [key in StreamKind]: {
+        streamIds: Set<string>
+    }
+}
 
 export class StreamsMonitorService {
     private rpcClient: StreamRpcClient = makeStreamRpcClient()
     private streams: SyncedStreams = new SyncedStreams(this.rpcClient)
     private intervalId: NodeJS.Timeout | null = null
 
-    private async getNewChannelIdsToMonitor() {
+    private async getNewStreamsToMonitor(): Promise<StreamsMetadata> {
         const streamIds = (
-            await database.dMStream.findMany({
+            await database.syncedStream.findMany({
                 select: { streamId: true },
             })
         ).map((s) => s.streamId)
@@ -24,24 +31,50 @@ export class StreamsMonitorService {
             },
             distinct: ['ChannelId'],
         })
-        console.log('channelIds', channelIds)
-        return channelIds.map((c) => c.ChannelId)
+
+        const streamInfo: StreamsMetadata = {
+            [StreamKind.DM]: { streamIds: new Set() },
+            [StreamKind.GDM]: { streamIds: new Set() },
+            [StreamKind.Channel]: { streamIds: new Set() },
+        }
+        for (const { ChannelId } of channelIds) {
+            const streamKind = this.getStreamKind(ChannelId)
+            if (!streamKind) {
+                continue
+            }
+            streamInfo[streamKind].streamIds.add(ChannelId)
+        }
+
+        // console.log('[StreamsMonitorService] getNewChannelIdsToMonitor', streamInfo)
+        return streamInfo
     }
 
-    public async addDMStreamToDB(streamId: string): Promise<void> {
+    private getStreamKind(ChannelId: string) {
+        if (isDMChannelStreamId(ChannelId)) {
+            return StreamKind.DM
+        } else if (isGDMChannelStreamId(ChannelId)) {
+            return StreamKind.GDM
+        } else if (isChannelStreamId(ChannelId)) {
+            return StreamKind.Channel
+        }
+        return ''
+    }
+
+    public async addDMSyncStreamToDB(streamId: string): Promise<void> {
         if (!isDMChannelStreamId(streamId)) {
-            console.log('stream is not a dm channel', streamId)
+            console.log('[StreamsMonitorService] stream is not a dm channel', streamId)
             return
         }
         if (
-            await database.dMStream.findUnique({
+            await database.syncedStream.findUnique({
                 where: { streamId },
             })
         ) {
-            console.log('stream already added to db', streamId)
+            console.log('[StreamsMonitorService] stream already added to db', streamId)
             return
         }
 
+        console.log('[StreamsMonitorService] adding dm', streamId, 'to db')
         const response = await this.rpcClient.getStream({
             streamId: streamIdToBytes(streamId),
             optional: false,
@@ -63,15 +96,19 @@ export class StreamsMonitorService {
         for (const envelope of firstMiniblock.events) {
             const { payload } = envelope.event
             if (payload.case === 'dmChannelPayload' && payload.value.content.case === 'inception') {
-                console.log('new dm channel, storing user ids')
+                console.log('[StreamsMonitorService] new dm channel, storing user ids')
                 inceptionFound = true
 
                 const { firstPartyAddress, secondPartyAddress } = payload.value.content.value
-                await database.dMStream.create({
+                await database.syncedStream.create({
                     data: {
                         streamId,
-                        firstUserId: userIdFromAddress(firstPartyAddress),
-                        secondUserId: userIdFromAddress(secondPartyAddress),
+                        userIds: [
+                            userIdFromAddress(firstPartyAddress),
+                            userIdFromAddress(secondPartyAddress),
+                        ],
+                        kind: StreamKind.DM,
+                        syncCookie: response.stream?.nextSyncCookie?.toJsonString() || '',
                     },
                 })
             } else if (
@@ -81,18 +118,22 @@ export class StreamsMonitorService {
             ) {
                 const inception = payload.value.snapshot.content.value.inception
                 if (!inception) {
-                    console.log('no inception in snapshot')
+                    console.log('[StreamsMonitorService] no inception in snapshot')
                     continue
                 }
                 inceptionFound = true
-                console.log('new dm snapshot, storing user ids')
+                console.log('[StreamsMonitorService] new dm snapshot, storing user ids')
 
                 const { firstPartyAddress, secondPartyAddress } = inception
-                await database.dMStream.create({
+                await database.syncedStream.create({
                     data: {
                         streamId,
-                        firstUserId: userIdFromAddress(firstPartyAddress),
-                        secondUserId: userIdFromAddress(secondPartyAddress),
+                        userIds: [
+                            userIdFromAddress(firstPartyAddress),
+                            userIdFromAddress(secondPartyAddress),
+                        ],
+                        kind: StreamKind.DM,
+                        syncCookie: response.stream?.nextSyncCookie?.toJsonString() || '',
                     },
                 })
             }
@@ -108,18 +149,27 @@ export class StreamsMonitorService {
     }
 
     public async startMonitoringStreams() {
-        console.log('startMonitoringStreams: Starting to monitor streams')
-        for (const channelId of await this.getNewChannelIdsToMonitor()) {
-            await this.addDMStreamToDB(channelId)
-        }
+        await this.fetchAndAddNewChannelStreams()
         const oneMinute = 1 * 60 * 1000
         this.intervalId = setInterval(async () => {
-            console.log('startMonitoringStreams: Checking for new channels to monitor')
-            for (const channelId of await this.getNewChannelIdsToMonitor()) {
-                await this.addDMStreamToDB(channelId)
-            }
+            await this.fetchAndAddNewChannelStreams()
         }, oneMinute)
         return this.streams.startSyncStreams()
+    }
+
+    private async fetchAndAddNewChannelStreams() {
+        console.log('[StreamsMonitorService] fetchAndAddNewChannelStreams')
+        const streamsMetadata = await this.getNewStreamsToMonitor()
+
+        streamsMetadata.DM.streamIds.forEach(async (streamId) => {
+            await this.addDMSyncStreamToDB(streamId)
+        })
+        streamsMetadata.GDM.streamIds.forEach(async (streamId) => {
+            console.log('[StreamsMonitorService] new gdm stream', streamId)
+        })
+        streamsMetadata.Channel.streamIds.forEach(async (streamId) => {
+            console.log('[StreamsMonitorService] new channel stream', streamId)
+        })
     }
 
     public async stopMonitoringStreams() {
