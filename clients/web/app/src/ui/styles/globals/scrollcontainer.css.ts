@@ -19,14 +19,14 @@ export const scrollbarsClass = style({
 })
 
 globalStyle(`${scrollbarsClass}::-webkit-scrollbar`, {
-    width: '4px',
+    width: '8px',
     height: '4px',
     display: 'block',
 })
 
 globalStyle(`${scrollbarsClass}::-webkit-scrollbar-thumb`, {
     backgroundColor: vars.color.background.level3,
-    borderRadius: '2px',
+    borderRadius: '4px',
 })
 
 globalStyle(`${scrollbarsClass}::-webkit-scrollbar-thumb:hover`, {
