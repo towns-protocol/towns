@@ -369,14 +369,7 @@ router.post('/api/sponsor-userop', async (request: WorkerRequest, env: Env) => {
                         },
                     )
                 }
-                if (!townId) {
-                    return new Response(
-                        toJson({ error: `Missing townId, cannot verify that town does not exist` }),
-                        {
-                            status: 400,
-                        },
-                    )
-                }
+
                 if (env.SKIP_TOWNID_VERIFICATION !== 'true') {
                     const verificationLink = await verifyLinkWallet({
                         rootKeyAddress: rootKeyAddress,

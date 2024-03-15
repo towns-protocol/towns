@@ -139,11 +139,13 @@ export const paymasterProxyMiddleware: ({
 
             if (
                 !townId &&
+                functionHashForPaymasterProxy !== 'createSpace' &&
+                functionHashForPaymasterProxy !== 'createSpace_linkWallet' &&
                 functionHashForPaymasterProxy !== 'linkWallet' &&
                 functionHashForPaymasterProxy !== 'removeLink'
             ) {
                 throw new Error(
-                    '[paymasterProxyMiddleware] townId is required for all non wallet-linking operations',
+                    '[paymasterProxyMiddleware] townId is required for all user operations except createSpace, linkWallet, and removeLink',
                 )
             }
 
