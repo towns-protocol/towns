@@ -1,7 +1,12 @@
 import React, { useCallback, useMemo } from 'react'
 import { useEvent } from 'react-use-event-hook'
 import { useSearchParams } from 'react-router-dom'
-import { ChannelContextProvider, useSpaceData } from 'use-towns-client'
+import {
+    ChannelContextProvider,
+    Membership,
+    useMyMemberships,
+    useSpaceData,
+} from 'use-towns-client'
 import fuzzysort from 'fuzzysort'
 import { Box, IconButton, Stack, Text, TextField } from '@ui'
 import { Panel } from '@components/Panel/Panel'
@@ -15,6 +20,7 @@ export const BrowseChannelsPanel = () => {
     const channels = useSpaceChannels()
     const [searchParams, setSearchParams] = useSearchParams()
     const [searchText, setSearchText] = React.useState('')
+    const myMemberships = useMyMemberships()
     const { unseenChannelIds, markChannelsAsSeen } = useUnseenChannelIds()
 
     const onTextFieldChanged = useCallback(
@@ -60,6 +66,7 @@ export const BrowseChannelsPanel = () => {
                                     name={channel.label}
                                     topic={channel.topic}
                                     channelNetworkId={channel.id}
+                                    isJoined={myMemberships[channel.id] === Membership.Join}
                                     showDot={unseenChannelIds.has(channel.id)}
                                 />
                             </Stack>

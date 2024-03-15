@@ -5,11 +5,13 @@ import { useNavigate, useOutlet } from 'react-router'
 import {
     ChannelContextProvider,
     DMChannelContextUserLookupProvider,
+    Membership,
     Permission,
     RoomMember,
     SpaceData,
     useDMLatestMessage,
     useHasPermission,
+    useMyMemberships,
     useSpaceData,
     useSpaceMembers,
     useSpaceThreadRootsUnreadCount,
@@ -415,6 +417,7 @@ const ErrorFallbackComponent = (props: { error: Error }) => {
 const ChannelList = React.memo(
     (props: { label?: string; channelItems: MixedChannelMenuItem[]; space: SpaceData }) => {
         const { channelItems, label, space } = props
+        const myMemberships = useMyMemberships()
 
         if (channelItems.length === 0) {
             return <></>
@@ -440,6 +443,7 @@ const ChannelList = React.memo(
                             space={space}
                             channelNetworkId={c.id}
                             name={c.channel.label}
+                            isJoined={myMemberships[c.id] === Membership.Join}
                         />
                     </ChannelContextProvider>
                 </Box>

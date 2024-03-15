@@ -4,7 +4,7 @@ import {
     Membership,
     SpaceData,
     useMyChannels,
-    useMyMembership,
+    useMyMemberships,
     useSpaceData,
     useTownsClient,
 } from 'use-towns-client'
@@ -29,6 +29,7 @@ export const AllChannelsList = ({
     const space = useSpaceData()
     const { isTouch } = useDevice()
     const channels = useSpaceChannels()
+    const myMemberships = useMyMemberships()
     const { unseenChannelIds } = useUnseenChannelIds()
 
     return (
@@ -75,6 +76,7 @@ export const AllChannelsList = ({
                                         topic={channel.topic}
                                         channelNetworkId={channel.id}
                                         showDot={unseenChannelIds.has(channel.id)}
+                                        isJoined={myMemberships[channel.id] === Membership.Join}
                                     />
                                 </Stack>
                             </ChannelContextProvider>
@@ -97,18 +99,19 @@ export const ChannelItem = ({
     channelNetworkId,
     space,
     showDot,
+    isJoined,
 }: {
     name: string
     topic?: string
     channelNetworkId: string
     space: SpaceData
     showDot?: boolean
+    isJoined?: boolean
 }) => {
     const navigate = useNavigate()
     const { client, leaveRoom } = useTownsClient()
     const channelIdentifier = channelNetworkId
     const currentChannelId = useChannelIdFromPathname()
-    const isJoined = useMyMembership(channelNetworkId) === Membership.Join
     const { createLink } = useCreateLink()
     const groups = useMyChannels(space)
     const myJoinedChannelsInSpace = useMemo(() => groups.flatMap((c) => c.channels), [groups])
