@@ -76,7 +76,14 @@ const GridProfile = ({ member }: { member: RoomMember }) => {
                 background="level1"
                 tooltip={!isTouch ? <ProfileHoverCard userId={member.userId} /> : undefined}
             >
-                <Stack gap grow maxWidth="100%">
+                <Stack
+                    gap
+                    grow
+                    maxWidth="100%"
+                    style={{
+                        alignItems: 'center',
+                    }}
+                >
                     <Box position="relative">
                         <Avatar
                             size="avatar_x15"
