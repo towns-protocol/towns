@@ -56,6 +56,8 @@ export type FieldBaseProps = {
     maxLength?: FormElementProps['maxLength']
     border?: BoxProps['border']
     maxWidth?: BoxProps['maxWidth']
+    rounded?: BoxProps['rounded']
+    minHeight?: BoxProps['minHeight']
 }
 
 type PassthroughProps = 'id' | 'name' | 'disabled' | 'autoComplete' | 'autoFocus' | 'maxLength'

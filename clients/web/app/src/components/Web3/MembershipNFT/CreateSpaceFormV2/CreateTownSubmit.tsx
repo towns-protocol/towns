@@ -38,6 +38,10 @@ export function CreateTownSubmit({
     const getSigner = useGetEmbeddedSigner()
     const { spaceDapp } = useTownsClient()
     const { setRecentlyMintedSpaceToken } = useStore()
+    const [membershipCostValue, membershipPricingType] = form.watch([
+        'membershipCost',
+        'membershipPricingType',
+    ])
 
     const { data, isLoading, error, createSpaceTransactionWithRole, transactionStatus } =
         useCreateSpaceTransaction()
@@ -115,6 +119,10 @@ export function CreateTownSubmit({
                 const signer = await getSigner()
                 if (!signer) {
                     createPrivyNotAuthenticatedNotification()
+                    setTransactionDetails({
+                        isTransacting: false,
+                        townAddress: undefined,
+                    })
                     return
                 }
 
@@ -126,6 +134,12 @@ export function CreateTownSubmit({
                     form.setError('membershipCost', {
                         type: 'manual',
                         message: 'Please enter a valid eth value.',
+                    })
+                    setPanelType(PanelType.all)
+
+                    setTransactionDetails({
+                        isTransacting: false,
+                        townAddress: undefined,
                     })
                     return
                 }
@@ -238,11 +252,7 @@ export function CreateTownSubmit({
                 }
             },
             (errors) => {
-                if (errors.tokensGatingMembership) {
-                    setPanelType(PanelType.gating)
-                } else if (errors.membershipCost || errors.membershipLimit) {
-                    setPanelType(PanelType.pricing)
-                }
+                setPanelType(PanelType.all)
                 setTransactionDetails({
                     isTransacting: false,
                     townAddress: undefined,
@@ -267,7 +277,12 @@ export function CreateTownSubmit({
             <BottomBar
                 panelStatus={panelType ? 'open' : 'closed'}
                 text="Create"
-                disabled={isLoading || Object.keys(form.formState.errors).length > 0}
+                disabled={
+                    isLoading ||
+                    Object.keys(form.formState.errors).length > 0 ||
+                    membershipCostValue === '' ||
+                    (membershipPricingType === 'fixed' && Number(membershipCostValue) === 0)
+                }
                 transactingText="Creating town"
                 successText="Town created!"
                 transactionUIState={transactionUIState}

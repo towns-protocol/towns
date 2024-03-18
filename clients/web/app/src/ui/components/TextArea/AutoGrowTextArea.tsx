@@ -10,7 +10,7 @@ type Props = {
 
 export const AutoGrowTextArea = forwardRef<HTMLTextAreaElement, Props>(
     ({ text, ...textAreaProps }, ref) => {
-        const { maxWidth, fontSize, style } = textAreaProps
+        const { maxWidth, fontSize, style, minHeight } = textAreaProps
         const heightRef = useRef<HTMLDivElement>(null)
         const [height, setHeight] = useState<number | undefined>(undefined)
 
@@ -45,6 +45,7 @@ export const AutoGrowTextArea = forwardRef<HTMLTextAreaElement, Props>(
                             ...style,
                             height,
                         }}
+                        minHeight={minHeight}
                     />
                 </Box>
             </Box>

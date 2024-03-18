@@ -18,6 +18,7 @@ type Props = {
     placeholder?: string
     type?: NativeInputProps['type']
     fontSize?: TextProps['fontSize']
+    textAlign?: TextProps['textAlign']
 } & FieldBaseProps &
     InputCallbackProps &
     InputHTMLAttributes<HTMLInputElement>

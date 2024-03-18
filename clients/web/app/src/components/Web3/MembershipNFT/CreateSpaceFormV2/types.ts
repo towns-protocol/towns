@@ -4,6 +4,7 @@ export enum PanelType {
     gating = 'gating',
     pricing = 'pricing',
     founder = 'founder', // TODO
+    all = 'all',
 }
 
 export type PanelContentProps = {

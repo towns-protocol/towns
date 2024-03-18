@@ -1,6 +1,5 @@
-import React, { ReactNode, useCallback, useEffect, useRef, useState } from 'react'
+import React, { useCallback, useEffect, useRef, useState } from 'react'
 import { FormProvider, UseFormReturn, useFormContext } from 'react-hook-form'
-import { useMyProfile } from 'use-towns-client'
 import { ethers } from 'ethers'
 import { useNavigate } from 'react-router'
 import {
@@ -10,11 +9,10 @@ import {
     FormRender,
     Grid,
     Icon,
-    IconButton,
     MotionBox,
     MotionStack,
+    Paragraph,
     Stack,
-    Text,
 } from '@ui'
 import { BlurredBackground } from '@components/TouchLayoutHeader/BlurredBackground'
 import { LargeUploadImageTemplate } from '@components/UploadImage/LargeUploadImageTemplate'
@@ -22,7 +20,6 @@ import { useImageStore } from '@components/UploadImage/useImageStore'
 import { UploadImageRequestConfig } from 'api/lib/uploadImage'
 import { InteractiveTownsToken } from '@components/TownsToken/InteractiveTownsToken'
 import { useAuth } from 'hooks/useAuth'
-import { AvatarTextHorizontal } from '@components/Avatar/AvatarTextHorizontal'
 import { shortAddress } from 'ui/utils/utils'
 import { FadeInBox } from '@components/Transitions'
 import { TEMPORARY_SPACE_ICON_URL } from '@components/Web3/constants'
@@ -30,6 +27,8 @@ import { AutoGrowTextArea } from 'ui/components/TextArea/AutoGrowTextArea'
 import { useAbstractAccountAddress } from 'hooks/useAbstractAccountAddress'
 import { useTokenMetadataForChainId } from 'api/lib/collectionMetadata'
 import { TokenImage } from '@components/Tokens/TokenSelector/TokenImage'
+import { InformationBox } from '@components/TownPageLayout/TownPageLayout'
+import { Avatar } from '@components/Avatar/Avatar'
 import { CreateSpaceFormV2SchemaType, schema } from './CreateSpaceFormV2.schema'
 import { AvatarPlaceholder } from '../AvatarPlaceholder'
 import { PanelType, TransactionDetails } from './types'
@@ -41,7 +40,6 @@ type Member = { address: ReturnType<typeof useAuth>['loggedInWalletAddress']; di
 
 export function CreateSpaceFormV2() {
     const { loggedInWalletAddress } = useAuth()
-    const displayName = shortAddress(useMyProfile()?.displayName ?? '')
     const hasReached2Chars = useRef(false)
     const navigate = useNavigate()
     const [transactionDetails, setTransactionDetails] = useState<TransactionDetails>({
@@ -61,6 +59,7 @@ export function CreateSpaceFormV2() {
             membershipLimit: 1000,
             membershipCost: '0',
             spaceName: undefined,
+            membershipPricingType: 'dynamic',
             tokensGatingMembership: [],
             spaceIconUrl: null,
             spaceIconFile: null,
@@ -100,6 +99,7 @@ export function CreateSpaceFormV2() {
                         tokensGatingMembership,
                         membershipType,
                         spaceBioValue,
+                        membershipPricingType,
                     ] = _form.watch([
                         'spaceName',
                         'membershipCost',
@@ -107,6 +107,7 @@ export function CreateSpaceFormV2() {
                         'tokensGatingMembership',
                         'membershipType',
                         'spaceBio',
+                        'membershipPricingType',
                     ])
 
                     if (spaceNameValue && !hasReached2Chars.current && spaceNameValue.length > 1) {
@@ -125,23 +126,54 @@ export function CreateSpaceFormV2() {
                         return hasReached2Chars.current
                     }
 
+                    const onInfoBoxClick = () => {
+                        if (transactionDetails.isTransacting) {
+                            return
+                        }
+                        setPanelType(PanelType.all)
+                    }
+
+                    const costInfoBoxText = () => {
+                        {
+                            _form.formState.errors['membershipCost']
+                                ? '--'
+                                : +price === 0
+                                ? 'Free'
+                                : price + ' Ξ'
+                        }
+                        if (_form.formState.errors['membershipCost']) {
+                            return '--'
+                        }
+                        if (membershipPricingType === 'dynamic') {
+                            return 'Free'
+                        }
+
+                        if (price === '') {
+                            return '--'
+                        }
+                        return price + ' Ξ'
+                    }
+
                     return (
                         <FormProvider {..._form}>
                             <Stack grow overflow="auto">
                                 {/* columns */}
-                                <Stack grow alignItems="center" paddingX="lg" width="100%">
+                                <Stack grow alignItems="center" paddingX="lg">
                                     <Stack
                                         horizontal
                                         grow
-                                        position="relative"
-                                        width="100%"
-                                        maxWidth="1200"
                                         paddingTop="x16"
+                                        gap="x20"
+                                        position="relative"
+                                        // width="100%"
+                                        // maxWidth="1200"
+                                        // paddingTop="x16"
                                     >
                                         {/* left col */}
                                         <Stack grow position="relative" zIndex="above">
-                                            <Stack>
-                                                <Stack paddingY="x4" gap="sm">
+                                            <Stack gap="x4">
+                                                {/* space name */}
+                                                <Stack gap="sm">
                                                     <SpaceNameField
                                                         form={_form}
                                                         spaceNameValue={spaceNameValue}
@@ -157,106 +189,120 @@ export function CreateSpaceFormV2() {
                                                         )}
                                                 </Stack>
 
-                                                <Box alignItems="start" gap="md">
-                                                    <FormFieldEdit label="By">
-                                                        <>
-                                                            {loggedInWalletAddress && (
-                                                                <AvatarTextHorizontal
-                                                                    userId={loggedInWalletAddress}
-                                                                    abstractAccountaddress={
-                                                                        abstractAccountAddress
-                                                                    }
-                                                                    name={displayName ?? ''}
-                                                                />
-                                                            )}
-                                                        </>
-                                                    </FormFieldEdit>
-
-                                                    <FormFieldEdit
-                                                        label="For"
+                                                {/* info boxes */}
+                                                <Box horizontal alignItems="start" gap="md">
+                                                    <TokenInfoBox
+                                                        membershipType={membershipType}
                                                         hasError={Boolean(
                                                             _form.formState.errors[
                                                                 'tokensGatingMembership'
                                                             ],
                                                         )}
-                                                        onClick={() => {
-                                                            if (transactionDetails.isTransacting) {
-                                                                return
-                                                            }
-                                                            setPanelType(PanelType.gating)
-                                                        }}
-                                                    >
-                                                        {membershipType === 'tokenHolders' ? (
-                                                            tokensGatingMembership.length === 0 ? (
-                                                                <Text strong size="lg">
-                                                                    Select a token...
-                                                                </Text>
-                                                            ) : (
-                                                                tokensGatingMembership.map(
-                                                                    (token) => (
-                                                                        <SelectedToken
-                                                                            key={
-                                                                                token.address +
-                                                                                token.chainId
-                                                                            }
-                                                                            contractAddress={
-                                                                                token.address
-                                                                            }
-                                                                            chainId={token.chainId}
-                                                                        />
-                                                                    ),
-                                                                )
-                                                            )
-                                                        ) : (
-                                                            <Text strong size="lg">
-                                                                Anyone
-                                                            </Text>
-                                                        )}
-                                                    </FormFieldEdit>
+                                                        tokensGatingMembership={
+                                                            tokensGatingMembership
+                                                        }
+                                                        onInfoBoxClick={onInfoBoxClick}
+                                                    />
 
-                                                    <FormFieldEdit
-                                                        label="Membership"
-                                                        hasError={Boolean(
+                                                    <InformationBox
+                                                        title="Cost"
+                                                        border={
+                                                            _form.formState.errors['membershipCost']
+                                                                ? 'negative'
+                                                                : 'none'
+                                                        }
+                                                        centerContent={
+                                                            <Box paddingX width="100%">
+                                                                <Paragraph
+                                                                    truncate
+                                                                    textAlign="center"
+                                                                >
+                                                                    {costInfoBoxText()}
+                                                                </Paragraph>
+                                                            </Box>
+                                                        }
+                                                        subtitle={
+                                                            membershipPricingType === 'dynamic'
+                                                                ? 'First 100'
+                                                                : ''
+                                                        }
+                                                        onClick={onInfoBoxClick}
+                                                    />
+
+                                                    <InformationBox
+                                                        title="Max"
+                                                        border={
                                                             _form.formState.errors[
-                                                                'membershipCost'
-                                                            ],
+                                                                'membershipLimit'
+                                                            ]
+                                                                ? 'negative'
+                                                                : 'none'
+                                                        }
+                                                        centerContent={
+                                                            <Box paddingX width="100%">
+                                                                <Paragraph
+                                                                    truncate
+                                                                    textAlign="center"
+                                                                >
+                                                                    {_form.formState.errors[
+                                                                        'membershipLimit'
+                                                                    ]
+                                                                        ? '-- '
+                                                                        : limit}
+                                                                </Paragraph>
+                                                            </Box>
+                                                        }
+                                                        subtitle="Memberships"
+                                                        onClick={onInfoBoxClick}
+                                                    />
+
+                                                    <InformationBox
+                                                        title="Founder"
+                                                        centerContent={
+                                                            <Avatar
+                                                                size="avatar_sm"
+                                                                userId={loggedInWalletAddress}
+                                                            />
+                                                        }
+                                                        subtitle={shortAddress(
+                                                            abstractAccountAddress ?? '',
                                                         )}
-                                                        onClick={() => {
-                                                            if (transactionDetails.isTransacting) {
-                                                                return
-                                                            }
-                                                            setPanelType(PanelType.pricing)
-                                                        }}
-                                                    >
-                                                        <>
-                                                            <Text strong size="lg">
-                                                                {isNaN(limit) ? '--' : limit} *{' '}
-                                                                {isNaN(+price) ? '--' : price}
-                                                            </Text>
-                                                        </>
-                                                    </FormFieldEdit>
+                                                    />
+
+                                                    <InformationBox
+                                                        // key="c"
+                                                        title="Valid For"
+                                                        centerContent={1}
+                                                        subtitle="Year"
+                                                    />
                                                 </Box>
-                                                <AutoGrowTextArea
-                                                    text={spaceBioValue ?? undefined}
-                                                    maxWidth="420"
-                                                    fontSize="lg"
-                                                    paddingX="none"
+
+                                                {/* bio */}
+                                                <Box
+                                                    background="lightHover"
+                                                    rounded="sm"
                                                     paddingY="md"
-                                                    placeholder="Add town bio"
-                                                    tone="none"
-                                                    maxLength={400}
-                                                    counterOffset={{
-                                                        bottom: 'none',
-                                                    }}
-                                                    {..._form.register('spaceBio')}
-                                                />
+                                                >
+                                                    <AutoGrowTextArea
+                                                        text={spaceBioValue ?? undefined}
+                                                        fontSize="lg"
+                                                        placeholder="Add town description"
+                                                        tone="none"
+                                                        maxLength={400}
+                                                        minHeight="x20"
+                                                        counterOffset={{
+                                                            bottom: 'none',
+                                                        }}
+                                                        {..._form.register('spaceBio')}
+                                                    />
+                                                </Box>
                                             </Stack>
                                         </Stack>
 
                                         {/* right col */}
 
                                         <MotionStack
-                                            paddingTop="x4"
+                                            paddingTop="sm"
                                             animate={{
                                                 opacity: panelType === undefined ? 1 : 0,
                                             }}
@@ -279,7 +325,7 @@ export function CreateSpaceFormV2() {
 
                             {/* Panel */}
                             <MotionStack
-                                width="600"
+                                width="500"
                                 position="absolute"
                                 zIndex="above"
                                 background="level1"
@@ -322,6 +368,62 @@ export const TownPageMemberList = ({ members }: { members?: Member[] }) => (
         </Grid>
     </Stack>
 )
+
+export const TokenInfoBox = ({
+    membershipType,
+    tokensGatingMembership,
+    onInfoBoxClick,
+    hasError,
+}: {
+    membershipType: 'tokenHolders' | 'everyone'
+    tokensGatingMembership: { address: string; chainId: number }[]
+    onInfoBoxClick: () => void
+    hasError?: boolean
+}) => {
+    return (
+        <InformationBox
+            // key="c"
+            title="For"
+            centerContent={
+                <>
+                    {membershipType === 'tokenHolders' ? (
+                        tokensGatingMembership.length === 0 ? (
+                            <Box>
+                                <TokenImage imgSrc={undefined} width="x4" />
+                            </Box>
+                        ) : (
+                            <Box position="relative" width="x3" aspectRatio="1/1">
+                                {tokensGatingMembership.map((token, index) => (
+                                    <Box
+                                        key={token.address + token.chainId}
+                                        position="absolute"
+                                        top="none"
+                                        style={{
+                                            zIndex: 100 - index,
+                                            transform: `translateX(${
+                                                -(tokensGatingMembership.length * 5) / 2
+                                            }px)`,
+                                            left: index ? `${index * 10}px` : 0,
+                                        }}
+                                    >
+                                        <SelectedToken
+                                            contractAddress={token.address}
+                                            chainId={token.chainId}
+                                        />
+                                    </Box>
+                                ))}
+                            </Box>
+                        )
+                    ) : (
+                        <Icon type="people" size="square_md" />
+                    )}
+                </>
+            }
+            subtitle={membershipType === 'tokenHolders' ? 'Token holders' : 'Anyone'}
+            onClick={onInfoBoxClick}
+        />
+    )
+}
 
 export const TownPageBackgroundImageUpdater = ({
     transactionDetails,
@@ -392,48 +494,6 @@ export const TownPageBackgroundImageUpdater = ({
     )
 }
 
-function FormFieldEdit({
-    label,
-    children,
-    onClick,
-    hasError,
-}: {
-    label: string
-    children: ReactNode
-    onClick?: () => void
-    hasError?: boolean
-}) {
-    const [hovered, setHovered] = useState(false)
-    return (
-        <Box
-            horizontal
-            centerContent
-            gap="sm"
-            cursor="pointer"
-            display="inline-flex"
-            onMouseEnter={() => setHovered(true)}
-            onMouseLeave={() => setHovered(false)}
-            onClick={onClick}
-        >
-            <Text color="gray2" size="lg">
-                {label}
-            </Text>
-            {children}
-            {hasError && <Icon size="square_xs" type="alert" color="error" />}
-            {onClick && (
-                <MotionBox
-                    color="default"
-                    animate={{
-                        opacity: hovered ? 1 : 0,
-                    }}
-                >
-                    <IconButton icon="edit" color="default" />
-                </MotionBox>
-            )}
-        </Box>
-    )
-}
-
 function SpaceNameField({
     form,
     spaceNameValue,
@@ -447,26 +507,27 @@ function SpaceNameField({
     }, [setFocus])
     return (
         <>
-            <AutoGrowTextArea
-                text={spaceNameValue}
-                style={{
-                    fontFamily: 'TitleFont',
-                    textTransform: 'uppercase',
-                }}
-                fontSize="h1"
-                maxWidth="500"
-                paddingY="none"
-                paddingX="none"
-                placeholder="town name"
-                tone="none"
-                autoComplete="one-time-code"
-                onKeyDown={(e) => {
-                    if (e.key === 'Enter') {
-                        e.preventDefault()
-                    }
-                }}
-                {...form.register('spaceName')}
-            />
+            <Box background="lightHover" rounded="sm">
+                <AutoGrowTextArea
+                    text={spaceNameValue}
+                    style={{
+                        fontFamily: 'TitleFont',
+                    }}
+                    maxLength={32}
+                    fontSize="h2"
+                    paddingY="md"
+                    placeholder="Town name"
+                    tone="none"
+                    autoComplete="one-time-code"
+                    rounded="sm"
+                    onKeyDown={(e) => {
+                        if (e.key === 'Enter') {
+                            e.preventDefault()
+                        }
+                    }}
+                    {...form.register('spaceName')}
+                />
+            </Box>
         </>
     )
 }
@@ -474,5 +535,5 @@ function SpaceNameField({
 function SelectedToken({ contractAddress, chainId }: { contractAddress: string; chainId: number }) {
     const { data: tokenDataWithChainId } = useTokenMetadataForChainId(contractAddress, chainId)
 
-    return <TokenImage imgSrc={tokenDataWithChainId?.data.imgSrc} width="x4" />
+    return <TokenImage imgSrc={tokenDataWithChainId?.data.imgSrc} width="x3" />
 }

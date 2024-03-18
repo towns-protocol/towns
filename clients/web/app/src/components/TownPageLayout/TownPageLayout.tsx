@@ -3,7 +3,18 @@ import { Address, useGetRootKeyFromLinkedWallet } from 'use-towns-client'
 import { useEvent } from 'react-use-event-hook'
 import { InteractiveTownsToken } from '@components/TownsToken/InteractiveTownsToken'
 import { ImageVariants, useImageSource } from '@components/UploadImage/useImageSource'
-import { Box, Button, Heading, Icon, IconButton, MotionStack, Paragraph, Stack, Text } from '@ui'
+import {
+    Box,
+    BoxProps,
+    Button,
+    Heading,
+    Icon,
+    IconButton,
+    MotionStack,
+    Paragraph,
+    Stack,
+    Text,
+} from '@ui'
 import { useDevice } from 'hooks/useDevice'
 import { AvatarTextHorizontal } from '@components/Avatar/AvatarTextHorizontal'
 import { useEnvironment } from 'hooks/useEnvironmnet'
@@ -303,10 +314,11 @@ const InformationBoxes = (props: {
     )
 }
 
-const InformationBox = (props: {
+export const InformationBox = (props: {
     title: string
     centerContent: React.ReactNode
     subtitle: string
+    border?: BoxProps['border']
     onClick?: () => void
 }) => {
     const [isHovered, setIsHovered] = useState(false)
@@ -329,6 +341,7 @@ const InformationBox = (props: {
             animate={{ opacity: 1 }}
             transition={{ duration: 0.3 }}
             layout="position"
+            border={props.border}
             onPointerEnter={onPointerEnter}
             onPointerLeave={onPointerLeave}
             onClick={props.onClick}
@@ -338,7 +351,7 @@ const InformationBox = (props: {
                     {props.title}
                 </Text>
             </Box>
-            <Box centerContent height="x3">
+            <Box centerContent height="x3" width="100%">
                 {props.centerContent}
             </Box>
             <Box centerContent height="x4">
