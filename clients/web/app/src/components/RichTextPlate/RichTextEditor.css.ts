@@ -249,7 +249,3 @@ globalStyle(`${richText} ${ol} ${ol} ${ol} ${ol}`, {
 globalStyle(`${codeBlock} strong`, {
     fontWeight: 'bold',
 })
-
-globalStyle(`${richText} ${paragraph} span[data-slate-zero-width='z']`, {
-    display: 'none',
-})
