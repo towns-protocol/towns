@@ -1,4 +1,4 @@
-import React, { useCallback, useMemo, useState } from 'react'
+import React, { FormEvent, useCallback, useMemo, useState } from 'react'
 import { SpaceData, useTownsClient } from 'use-towns-client'
 import { AnimatePresence } from 'framer-motion'
 import { ModalContainer } from '@components/Modals/ModalContainer'
@@ -29,15 +29,24 @@ export const SetUsernameForm = (props: Props) => {
         [setValue, setUsernameAvailable, getIsUsernameAvailable, spaceData.id],
     )
 
-    const onSubmit = useCallback(async () => {
-        setRequestInFlight(true)
-        // If we succeed, we'll be redirected to the space. If not, we'll stay on this page.
-        try {
-            await setUsername(spaceData.id, value)
-        } catch (e) {
-            setRequestInFlight(false)
-        }
-    }, [setUsername, spaceData.id, value, setRequestInFlight])
+    const onSubmit = useCallback(
+        (e: FormEvent<HTMLFormElement>) => {
+            e.preventDefault()
+
+            setRequestInFlight(true)
+            const submit = async () => {
+                // If we succeed, we'll be redirected to the space. If not, we'll stay on this page.
+                try {
+                    await setUsername(spaceData.id, value)
+                } catch (e) {
+                    setRequestInFlight(false)
+                }
+            }
+
+            void submit()
+        },
+        [setUsername, spaceData.id, value, setRequestInFlight],
+    )
 
     const usernameValid = useMemo(() => {
         return validateUsername(value)
@@ -70,44 +79,47 @@ export const SetUsernameForm = (props: Props) => {
 
                 <Text fontWeight="strong">Username</Text>
                 <Text color="gray2">This is the username you will be using for this town.</Text>
-                <TextField
-                    autoFocus
-                    disabled={requestInFlight}
-                    placeholder="Enter your username"
-                    background="level2"
-                    value={value}
-                    autoComplete="off"
-                    onChange={onTextFieldChange}
-                />
-                <AnimatePresence>
-                    {!usernameAvailable && (
-                        <MotionText
-                            color="error"
-                            initial={{ opacity: 0 }}
-                            animate={{ opacity: 1 }}
-                            exit={{ opacity: 0 }}
-                        >
-                            This username is taken in this town already. Please choose another.
-                        </MotionText>
-                    )}
+                <form autoComplete="off" onSubmit={onSubmit}>
+                    <TextField
+                        autoFocus
+                        name="username"
+                        disabled={requestInFlight}
+                        placeholder="Enter your username"
+                        background="level2"
+                        value={value}
+                        autoComplete="off"
+                        onChange={onTextFieldChange}
+                    />
+                    <AnimatePresence>
+                        {!usernameAvailable && (
+                            <MotionText
+                                color="error"
+                                initial={{ opacity: 0 }}
+                                animate={{ opacity: 1 }}
+                                exit={{ opacity: 0 }}
+                            >
+                                This username is taken in this town already. Please choose another.
+                            </MotionText>
+                        )}
 
-                    {showInvalidUsernameError && (
-                        <MotionText
-                            color="error"
-                            initial={{ opacity: 0 }}
-                            animate={{ opacity: 1 }}
-                            exit={{ opacity: 0 }}
-                        >
-                            Your username must be between 3 and 16 characters <br />
-                            and can only contain letters, numbers, and underscores.
-                        </MotionText>
-                    )}
-                </AnimatePresence>
-                <Box paddingTop="md">
-                    <Button disabled={!submitButtonEnabled} tone="cta1" onClick={onSubmit}>
-                        {requestInFlight ? 'Joining Town' : 'Join Town'}
-                    </Button>
-                </Box>
+                        {showInvalidUsernameError && (
+                            <MotionText
+                                color="error"
+                                initial={{ opacity: 0 }}
+                                animate={{ opacity: 1 }}
+                                exit={{ opacity: 0 }}
+                            >
+                                Your username must be between 3 and 16 characters <br />
+                                and can only contain letters, numbers, and underscores.
+                            </MotionText>
+                        )}
+                    </AnimatePresence>
+                    <Box paddingTop="md">
+                        <Button type="submit" disabled={!submitButtonEnabled} tone="cta1">
+                            {requestInFlight ? 'Joining Town' : 'Join Town'}
+                        </Button>
+                    </Box>
+                </form>
             </Stack>
         </ModalContainer>
     )
