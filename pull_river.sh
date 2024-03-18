@@ -9,6 +9,7 @@ print_usage() {
     echo "  -x: USER_MODE_X. includes -u, and runs yarn lint, build, and test:unit."
     echo "  -i: INTERACTIVE. Runs -x and prompts for confirmation before creating a pull request."
     echo "  -c: CI_MODE. Will fail on any errors and not prompt for user input."
+    echo "  -p: PREVIEW. Print diff of changes without creating a pull request."
 }
 
 # Check if at least one argument is passed
@@ -17,7 +18,7 @@ if [ $# -eq 0 ]; then
     exit 1
 fi
 
-while getopts "huxic" arg; do
+while getopts "huxicp" arg; do
   case $arg in
     h)
         print_usage
@@ -37,6 +38,9 @@ while getopts "huxic" arg; do
         ;;
     c)
         CI_MODE=1
+        ;;
+    p)
+        PREVIEW_MODE=1
         ;;
     *)
       echo "Invalid argument. Use -h for help."
@@ -117,15 +121,12 @@ function yarn_install_and_check() {
     fi
 }
 
-if [[ "$(git status --porcelain)" != "" ]]; then
-  echo "There are uncommitted changes. Please commit or stash them before running this script."
-  exit 1
-fi
 
-if [[ "$(parse_git_branch)" != "main" ]]; then
-  echo "You must be on the main branch to run this script."
-  exit 1
-fi
+#
+#
+# BEGIN SCRIPT LOGIC
+#
+#
 
 # Main repository details
 MAINTREE_REPO="herenotthere/harmony"
@@ -133,16 +134,28 @@ MAINTREE_REPO="herenotthere/harmony"
 SUBTREE_PREFIX="river"
 SUBTREE_REPO="https://github.com/river-build/river-stage"
 SUBTREE_BRANCH="main"
-
 # Fetch the latest commit hash from the subtree's main branch
 COMMIT_HASH=$(git ls-remote "${SUBTREE_REPO}" "${SUBTREE_BRANCH}" | cut -f 1)
 SHORT_HASH="${COMMIT_HASH:0:7}"
 
 # Use the commit hash in the branch name
 BRANCH_NAME="river_subtree_merge_${SHORT_HASH}"
-git fetch --all
-git pull
 
+git fetch --all
+    
+# preview can just diff and exit
+if [[ $PREVIEW_MODE -eq 1 ]]; then
+    git diff HEAD:./$SUBTREE_PREFIX FETCH_HEAD --summary
+    exit 0
+elif [[ "$(git status --porcelain)" != "" ]]; then
+    echo "There are uncommitted changes. Please commit or stash them before running this script."
+    exit 1
+elif [[ "$(parse_git_branch)" != "main" ]]; then
+    echo "You must be on the main branch to run this script."
+    exit 1
+fi
+
+git pull
 
 PR_TITLE="Merge ${SUBTREE_PREFIX} at ${SHORT_HASH}"
 PR_BODY_DESC="This merges the latest changes from the ${SUBTREE_PREFIX} repository at commit ${SHORT_HASH}."
@@ -154,7 +167,6 @@ if [[ "$(parse_git_branch)" != "${BRANCH_NAME}" ]]; then
   echo "Failed to check out ${BRANCH_NAME}."
   exit 1
 fi
-
 
 # Pull the latest changes from the subtree, preserving history
 git subtree pull --prefix="${SUBTREE_PREFIX}" "${SUBTREE_REPO}" "${SUBTREE_BRANCH}" --squash -m "git subtree pull ${SUBTREE_PREFIX} at ${SHORT_HASH}"
