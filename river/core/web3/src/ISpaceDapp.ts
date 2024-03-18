@@ -57,6 +57,18 @@ export interface ISpaceDapp {
         roleId: number,
         signer: SignerType,
     ) => Promise<TransactionType>
+    banWalletAddress: (
+        spaceId: string,
+        walletAddress: string,
+        signer: SignerType,
+    ) => Promise<TransactionType>
+    unbanWalletAddress: (
+        spaceId: string,
+        walletAddress: string,
+        signer: SignerType,
+    ) => Promise<TransactionType>
+    walletAddressIsBanned: (spaceId: string, walletAddress: string) => Promise<boolean>
+    bannedWalletAddresses: (spaceId: string) => Promise<string[]>
     createSpace: (params: CreateSpaceParams, signer: SignerType) => Promise<TransactionType>
     createChannel: (
         spaceId: string,

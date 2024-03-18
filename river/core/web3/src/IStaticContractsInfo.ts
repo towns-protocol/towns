@@ -3,10 +3,12 @@ import LocalhostTownOwnerAddress from '@river/generated/addresses/base_anvil/spa
 import LocalhostMockNFTAddress from '@river/generated/addresses/base_anvil/mockNFT.json' assert { type: 'json' }
 import LocalhostMemberAddress from '@river/generated/addresses/base_anvil/member.json' assert { type: 'json' }
 import LocalhostWalletLinkAddress from '@river/generated/addresses/base_anvil/walletLink.json' assert { type: 'json' }
+import LocalhostRiverRegistryAddress from '@river/generated/addresses/river_anvil/riverRegistry.json' assert { type: 'json' }
 
 import BaseSepoliaTownFactoryAddress from '@river/generated/addresses/base_sepolia/spaceFactory.json' assert { type: 'json' }
 import BaseSepoliaTownOwnerAddress from '@river/generated/addresses/base_sepolia/spaceOwner.json' assert { type: 'json' }
 import BaseSepoliaWalletLinkAddress from '@river/generated/addresses/base_sepolia/walletLink.json' assert { type: 'json' }
+import RiverChainRiverRegistryAddress from '@river/generated/addresses/river/riverRegistry.json' assert { type: 'json' }
 
 import { Address } from './ContractTypes'
 export interface IStaticContractsInfo {
@@ -17,6 +19,10 @@ export interface IStaticContractsInfo {
     walletLinkAddress: Address
 }
 
+export interface IRiverChainContractsInfo {
+    riverRegistryAddress: Address
+}
+
 const localhostContractsInfo: IStaticContractsInfo = {
     townFactoryAddress: LocalhostTownFactoryAddress.address as Address,
     townOwnerAddress: LocalhostTownOwnerAddress.address as Address,
@@ -25,11 +31,19 @@ const localhostContractsInfo: IStaticContractsInfo = {
     walletLinkAddress: LocalhostWalletLinkAddress.address as Address,
 }
 
+const localhostRiverChainContractsInfo: IRiverChainContractsInfo = {
+    riverRegistryAddress: LocalhostRiverRegistryAddress.address as Address,
+}
+
 const baseSepoliaContractsInfo: IStaticContractsInfo = {
     townFactoryAddress: BaseSepoliaTownFactoryAddress.address as Address,
     townOwnerAddress: BaseSepoliaTownOwnerAddress.address as Address,
     mockErc721aAddress: '' as Address,
     walletLinkAddress: BaseSepoliaWalletLinkAddress.address as Address,
+}
+
+const riverChainContractsInfo: IRiverChainContractsInfo = {
+    riverRegistryAddress: RiverChainRiverRegistryAddress.address as Address,
 }
 
 /// get contract info for a given chain id
@@ -42,5 +56,17 @@ export function getContractsInfo(chainId: number): IStaticContractsInfo {
             return baseSepoliaContractsInfo
         default:
             throw new Error(`Unsupported chainId ${chainId}. Update IStaticContractsInfo.ts`)
+    }
+}
+
+export function getRiverChainContractsInfo(chainId: number): IRiverChainContractsInfo {
+    switch (chainId) {
+        case 0:
+        case 31338:
+            return localhostRiverChainContractsInfo
+        case 6524490:
+            return riverChainContractsInfo
+        default:
+            throw new Error(`Unsupported chainId ${chainId}. Update IRiverChainContractsInfo`)
     }
 }

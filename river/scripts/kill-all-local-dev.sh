@@ -74,11 +74,17 @@ if prompt 'Stop Casbablanca?:y/n '
 then
     ./core/scripts/stop_node.sh 
     ./core/node/stop_multi.sh
+
+    # just in case
+    do_killl './bin/river_node run'
 fi
 
 if prompt 'Stop XChain?:y/n '
 then
     ./core/xchain/stop_multi.sh
+
+    # that script doesn't always work
+    do_killl './bin/xchain_node run'
 fi
 
 do_killl yarn "$1"
@@ -103,5 +109,3 @@ if prompt 'Remove Casbablanca Docker Containers?:y/n '
 then
     ./core/scripts/stop_storage.sh 
 fi
-
-

@@ -23,16 +23,18 @@ import assert from 'assert'
 import _ from 'lodash'
 import { MockEntitlementsDelegate } from './utils'
 import { SignerContext, makeSignerContext } from './signerContext'
+import { LocalhostWeb3Provider, createRiverRegistry } from '@river/web3'
 
 const log = dlog('csb:test:util')
 
+const RIVER_ANVIL = 'http://localhost:8546'
 const TEST_URL_SINGLE = 'https://localhost:5158'
 const TEST_URL_SINGLE_ENT = 'https://localhost:5157'
 const TEST_URL_MULTI =
     'https://localhost:5170,https://localhost:5171,https://localhost:5172,https://localhost:5173,https://localhost:5174,' +
     'https://localhost:5175,https://localhost:5176,https://localhost:5177,https://localhost:5178,https://localhost:5179'
 
-const initTestUrls = () => {
+const initTestUrls = async () => {
     if (process.env.RIVER_TEST_URLS !== undefined && process.env.RIVER_TEST_URLS !== '') {
         const urls = process.env.RIVER_TEST_URLS.split(',')
         log(
@@ -41,14 +43,28 @@ const initTestUrls = () => {
         )
         return urls
     }
+    // create localhost web3 provider to read node urls from river anvil instance river registry
+    const returnRiverRegistryNodes = async () => {
+        const wallet = ethers.Wallet.createRandom()
+        const provider = new LocalhostWeb3Provider(wallet, RIVER_ANVIL)
+        const chainId = (await provider.getNetwork()).chainId
+        const riverRegistry = createRiverRegistry({ chainId: chainId, provider: provider })
+        const nodeUrls = await riverRegistry.getAllNodeUrls(2)
+        if (nodeUrls === undefined) {
+            log('initTestUrls, no nodes found in river registry')
+            return undefined
+        }
+        return nodeUrls.map((v) => v.url)
+    }
     const config = process.env.RIVER_TEST_CONNECT
+    const riverRegistryNodes = await returnRiverRegistryNodes()
     let urls: string[]
     if (config === 'single') {
-        urls = [TEST_URL_SINGLE]
+        urls = riverRegistryNodes ?? [TEST_URL_SINGLE]
     } else if (config === 'single_ent') {
-        urls = [TEST_URL_SINGLE_ENT]
+        urls = riverRegistryNodes ?? [TEST_URL_SINGLE_ENT]
     } else if (config === 'multi') {
-        urls = TEST_URL_MULTI.split(',')
+        urls = riverRegistryNodes ?? TEST_URL_MULTI.split(',')
     } else {
         throw new Error(`invalid RIVER_TEST_CONNECT: ${config}`)
     }
@@ -56,7 +72,7 @@ const initTestUrls = () => {
     return urls
 }
 
-const testUrls = initTestUrls()
+const testUrls = await initTestUrls()
 let curTestUrl = -1
 
 export const getNextTestUrl = () => {

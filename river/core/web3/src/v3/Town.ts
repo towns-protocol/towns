@@ -28,6 +28,7 @@ import { IMembershipShim } from './IMembershipShim'
 import { NoopRuleData } from '../entitlement'
 import { RuleEntitlementShim } from './RuleEntitlementShim'
 import { IRuleEntitlement } from './'
+import { IBanningShim } from './IBanningShim'
 
 interface AddressToEntitlement {
     [address: string]: EntitlementShim
@@ -55,6 +56,7 @@ export class Town {
     private readonly roles: IRolesShim
     private readonly townOwner: ITownOwnerShim
     private readonly membership: IMembershipShim
+    private readonly banning: IBanningShim
 
     constructor({ address, spaceId, chainId, provider, townOwnerAddress }: TownConstructorArgs) {
         this.address = address
@@ -69,6 +71,7 @@ export class Town {
         this.roles = new IRolesShim(address, chainId, provider)
         this.townOwner = new ITownOwnerShim(townOwnerAddress, chainId, provider)
         this.membership = new IMembershipShim(address, chainId, provider)
+        this.banning = new IBanningShim(address, chainId, provider)
     }
 
     public get Address(): string {
@@ -109,6 +112,10 @@ export class Town {
 
     public get Membership(): IMembershipShim {
         return this.membership
+    }
+
+    public get Banning(): IBanningShim {
+        return this.banning
     }
 
     public getTownInfo(): Promise<ISpaceOwnerBase.SpaceStruct> {

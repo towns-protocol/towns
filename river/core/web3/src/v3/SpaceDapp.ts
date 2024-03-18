@@ -47,6 +47,50 @@ export class SpaceDapp implements ISpaceDapp {
         return town.Channels.write(signer).addRoleToChannel(channelNetworkId, roleId)
     }
 
+    public async banWalletAddress(spaceId: string, walletAddress: string, signer: ethers.Signer) {
+        const town = await this.getTown(spaceId)
+        if (!town) {
+            throw new Error(`Space with spaceId "${spaceId}" is not found.`)
+        }
+        const token = await town.Membership.read.getTokenIdByMembership(walletAddress)
+        return town.Banning.write(signer).ban(token)
+    }
+
+    public async unbanWalletAddress(
+        spaceId: string,
+        walletAddress: string,
+        signer: ethers.Signer,
+    ): Promise<ContractTransaction> {
+        const town = await this.getTown(spaceId)
+        if (!town) {
+            throw new Error(`Space with spaceId "${spaceId}" is not found.`)
+        }
+        const token = await town.Membership.read.getTokenIdByMembership(walletAddress)
+        return town.Banning.write(signer).unban(token)
+    }
+
+    public async walletAddressIsBanned(spaceId: string, walletAddress: string): Promise<boolean> {
+        const town = await this.getTown(spaceId)
+        if (!town) {
+            throw new Error(`Space with spaceId "${spaceId}" is not found.`)
+        }
+
+        const token = await town.Membership.read.getTokenIdByMembership(walletAddress)
+        return await town.Banning.read.isBanned(token)
+    }
+
+    public async bannedWalletAddresses(spaceId: string): Promise<string[]> {
+        const town = await this.getTown(spaceId)
+        if (!town) {
+            throw new Error(`Space with spaceId "${spaceId}" is not found.`)
+        }
+        const bannedTokenIds = await town.Banning.read.banned()
+        const bannedWalletAddresses = await Promise.all(
+            bannedTokenIds.map(async (tokenId) => await town.Membership.read.ownerOf(tokenId)),
+        )
+        return bannedWalletAddresses
+    }
+
     public async createSpace(
         params: CreateSpaceParams,
         signer: ethers.Signer,

@@ -15,4 +15,7 @@ make deploy-river-anvil-explicit contract=DeployRiverRegistry
 
 cd ..
 mkdir -p core/node/run_files/addresses
+mkdir -p packages/generated/addresses/river_anvil
+
 cp contracts/deployments/river_anvil/riverRegistry.json core/node/run_files/addresses
+cp contracts/deployments/river_anvil/riverRegistry.json packages/generated/addresses/river_anvil
