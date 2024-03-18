@@ -262,21 +262,15 @@ const Footer = (props: {
             bottom="none"
             zIndex="above"
             messageContent={
-                <Stack
-                    grow
-                    centerContent
-                    gap={isTouch ? 'sm' : 'md'}
-                    color="default"
-                    paddingTop="sm"
-                >
+                <Stack grow centerContent gap={isTouch ? 'sm' : 'md'} color="default">
                     {totalSupply && maxSupply && (
                         <>
                             <Stack horizontal={!isTouch} width="100%" gap="sm">
-                                <Text fontWeight="strong" fontSize={isTouch ? 'sm' : 'lg'}>
+                                <Text fontWeight="strong" fontSize={isTouch ? 'sm' : 'md'}>
                                     Memberships left
                                 </Text>
                                 {!isTouch && <Box grow />}
-                                <Text color="gray2" fontSize={isTouch ? 'sm' : 'lg'}>
+                                <Text color="gray2" fontSize={isTouch ? 'sm' : 'md'}>
                                     {membershipSupplyText && membershipSupplyText}
                                 </Text>
                             </Stack>
