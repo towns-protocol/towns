@@ -257,6 +257,7 @@ export class TownsClient implements EntitlementsDelegate {
 
     public async waitForCreateSpaceTransaction(
         context: CreateSpaceTransactionContext | undefined,
+        defaultUsernames: string[] = [],
     ): Promise<CreateSpaceTransactionContext> {
         const txContext = await this._waitForBlockchainTransaction(context)
         if (txContext.status === TransactionStatus.Success) {
@@ -280,6 +281,15 @@ export class TownsClient implements EntitlementsDelegate {
                     result: result,
                     spaceId,
                 })
+
+                if (defaultUsernames.length > 0) {
+                    // new space, no member, we can just set first username as default
+                    await this.casablancaClient.setUsername(spaceId, defaultUsernames[0])
+                    console.log('[waitForCreateSpaceTransaction] Set default username', {
+                        defaultUsername: defaultUsernames[0],
+                        spaceId,
+                    })
+                }
 
                 await this.createSpaceDefaultChannelRoom(spaceId, 'general', channelId)
                 console.log(

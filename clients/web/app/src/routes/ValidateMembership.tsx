@@ -26,8 +26,11 @@ export const ValidateMembership = () => {
     }
 
     useEffect(() => {
-        console.log('ValidateMembership', spaceIdFromPathname, { chainSpaceLoading })
-    }, [chainSpaceLoading, spaceIdFromPathname])
+        console.log('ValidateMembership', spaceIdFromPathname, {
+            chainSpaceLoading,
+            usernameConfirmed,
+        })
+    }, [chainSpaceLoading, spaceIdFromPathname, usernameConfirmed])
 
     if (!clientStatus.isRemoteDataLoaded || !clientStatus.isLocalDataLoaded) {
         AnalyticsService.getInstance().trackEventOnce(AnalyticsEvents.WelcomeLayoutLoadLocalData)

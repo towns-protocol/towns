@@ -11,6 +11,7 @@ import { CreateSpaceInfo } from '../types/towns-types'
 import { useTownsClient } from './use-towns-client'
 import { IArchitectBase } from '@river/web3'
 import { getTransactionHashOrUserOpHash } from '@towns/userops'
+import { useMyDefaultUsernames } from './use-my-default-usernames'
 /**
  * Combine space creation and smart contract space
  * creation into one hook.
@@ -21,6 +22,7 @@ export function useCreateSpaceTransaction() {
         CreateSpaceTransactionContext | undefined
     >(undefined)
     const isTransacting = useRef<boolean>(false)
+    const defaultUsernames = useMyDefaultUsernames()
 
     const { data, isLoading, transactionHash, transactionStatus, error } = useMemo(() => {
         return {
@@ -64,7 +66,10 @@ export function useCreateSpaceTransaction() {
 
                 if (transactionResult?.status === TransactionStatus.Pending) {
                     // Wait for transaction to be mined
-                    transactionResult = await waitForCreateSpaceTransaction(transactionResult)
+                    transactionResult = await waitForCreateSpaceTransaction(
+                        transactionResult,
+                        defaultUsernames,
+                    )
                     setTransactionContext(transactionResult)
                 }
                 // eslint-disable-next-line @typescript-eslint/no-explicit-any
@@ -79,7 +84,7 @@ export function useCreateSpaceTransaction() {
             }
             return transactionResult
         },
-        [createSpaceTransaction, waitForCreateSpaceTransaction],
+        [createSpaceTransaction, defaultUsernames, waitForCreateSpaceTransaction],
     )
 
     return {

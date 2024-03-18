@@ -1,5 +1,5 @@
-import React, { FormEvent, useCallback, useMemo, useState } from 'react'
-import { SpaceData, useTownsClient } from 'use-towns-client'
+import React, { FormEvent, useCallback, useEffect, useMemo, useState } from 'react'
+import { SpaceData, useMyDefaultUsernames, useTownsClient } from 'use-towns-client'
 import { AnimatePresence } from 'framer-motion'
 import { ModalContainer } from '@components/Modals/ModalContainer'
 import { Box, Button, MotionText, Stack, Text, TextField } from '@ui'
@@ -12,12 +12,14 @@ export type Props = {
 
 export const SetUsernameForm = (props: Props) => {
     const { spaceData } = props
+    const defaultUsernames = useMyDefaultUsernames()
     const { getIsUsernameAvailable } = useTownsClient()
     const { setUsername } = useSetUsername()
     const [requestInFlight, setRequestInFlight] = useState<boolean>(false)
 
     const [value, setValue] = useState<string>('')
     const [usernameAvailable, setUsernameAvailable] = useState<boolean>(true)
+    const [loading, setLoading] = useState<boolean>(true)
     const onTextFieldChange = useCallback(
         async (e: React.ChangeEvent<HTMLInputElement | HTMLTextAreaElement>) => {
             setValue(e.target.value)
@@ -58,6 +60,26 @@ export const SetUsernameForm = (props: Props) => {
 
     // don't show the error message as the user starts typing
     const showInvalidUsernameError = value.length > 2 && !usernameValid
+
+    const checkAndSetDefaultUsername = useCallback(async () => {
+        for (const username of defaultUsernames) {
+            const available = await getIsUsernameAvailable(spaceData.id, username)
+            if (available) {
+                setValue(username)
+                setUsernameAvailable(true)
+                break
+            }
+        }
+        setLoading(false)
+    }, [defaultUsernames, getIsUsernameAvailable, spaceData.id])
+
+    useEffect(() => {
+        checkAndSetDefaultUsername()
+    }, [checkAndSetDefaultUsername])
+
+    if (loading) {
+        return null
+    }
 
     return (
         <ModalContainer onHide={() => {}}>

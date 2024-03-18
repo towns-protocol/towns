@@ -58,6 +58,7 @@ interface TownsClientImpl {
     ) => Promise<CreateSpaceTransactionContext | undefined>
     waitForCreateSpaceTransaction: (
         context: CreateSpaceTransactionContext | undefined,
+        defaultUsernames: string[],
     ) => Promise<CreateSpaceTransactionContext | undefined>
     createChannelTransaction: (
         createChannelInfo: CreateChannelInfo,
