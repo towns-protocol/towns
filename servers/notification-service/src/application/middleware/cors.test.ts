@@ -15,8 +15,7 @@ describe('isAllowedOrigin', () => {
             'http://localhost:3002', // local app prod builds
             'https://localhost:3000',
             'http://localhost:8787',
-            'https://push-notification-worker-test.johnhntlabs.workers.dev',
-            'https://push-notification-worker-test-beta.towns.com',
+            'https://notifications-gamma.towns.com',
             'https://river1-test-beta.towns.com',
             'https://*.nodes.gamma.towns.com',
             'https://test-harmony-web-pr-*.onrender.com',

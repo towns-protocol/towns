@@ -258,7 +258,6 @@ resource "aws_iam_role_policy" "river_node_credentials" {
           "${local.global_remote_state.river_global_dd_agent_api_key.arn}",
           "${local.global_remote_state.base_chain_network_url_secret.arn}",
           "${local.global_remote_state.river_chain_network_url_secret.arn}",
-          "${local.global_remote_state.river_global_push_notification_auth_token.arn}",
           "${local.global_remote_state.cloudflare_api_token_secret.arn}",
           "${var.river_node_ssl_cert_secret_arn}"
         ]
@@ -396,10 +395,6 @@ resource "aws_ecs_task_definition" "river-fargate" {
         valueFrom = local.shared_credentials.wallet_private_key.arn
       },
       {
-        name      = "PUSHNOTIFICATION__AUTHTOKEN",
-        valueFrom = local.global_remote_state.river_global_push_notification_auth_token.arn
-      },
-      {
         name      = "TLSCONFIG__CERT",
         valueFrom = "${var.river_node_ssl_cert_secret_arn}:cert::"
       },
@@ -458,11 +453,6 @@ resource "aws_ecs_task_definition" "river-fargate" {
       {
         name  = "LOG__NOCOLOR",
         value = "true"
-      },
-      {
-        # TODO: update river node internal env vars for better naming convention
-        name  = "PUSHNOTIFICATION__URL",
-        value = var.notification_service_url
       },
       {
         name  = "DD_SERVICE",

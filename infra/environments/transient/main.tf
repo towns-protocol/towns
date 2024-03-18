@@ -208,9 +208,6 @@ module "river_node" {
     name = local.transient_global_remote_state.river_ecs_cluster.name
   }
 
-  # TODO: use the correct notification service url for gamma
-  notification_service_url = "https://push-notification-worker-test-beta.towns.com"
-
   river_registry_contract_address = local.river_registry_contract_address
 }
 

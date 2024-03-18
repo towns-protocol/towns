@@ -55,7 +55,7 @@
         "test": "turbo test  $(yarn csb:list:exclude:filter) --filter=!@towns/userops  --filter=!notification-service --filter=!use-towns-client && yarn csb:turbo",
         "test:unit": "turbo test:unit -- --silent",
         "worker:wait:stackup": "wait-on tcp:127.0.0.1:${PORT:-8686} --timeout=400000 --i=5000 --verbose",
-        "workers:build": "turbo build --filter gateway-worker --filter siwe-worker --filter token-worker --filter unfurl-worker --filter push-notification-worker --filter jwt-worker"
+        "workers:build": "turbo build --filter gateway-worker --filter siwe-worker --filter token-worker --filter unfurl-worker --filter jwt-worker"
     },
     "devDependencies": {
         "@typechain/ethers-v5": "^10.1.1",

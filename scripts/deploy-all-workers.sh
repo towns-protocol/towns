@@ -47,7 +47,6 @@ fi
 export CF_ENV=$ENVIRONMENT
 
 GATEWAY_WORKER_PATH="servers/workers/gateway-worker"
-PUSH_NOTIFICATION_WORKER_PATH="servers/workers/push-notification-worker"
 SIWE_WORKER_PATH="servers/workers/siwe-worker"
 TOKEN_WORKER_PATH="servers/workers/token-worker"
 UNFURL_WORKER_PATH="servers/workers/unfurl-worker"
@@ -58,7 +57,6 @@ STACKUP_WORKER_PATH="servers/workers/stackup-worker"
 declare -a WORKER_PATHS=(
     $JWT_WORKER_PATH
     $SIWE_WORKER_PATH
-    $PUSH_NOTIFICATION_WORKER_PATH
     $TOKEN_WORKER_PATH
     $UNFURL_WORKER_PATH
     $GATEWAY_WORKER_PATH

@@ -35,11 +35,6 @@ variable "private_subnets" {
   type = list(string)
 }
 
-variable "notification_service_url" {
-  description = "The url of the notification service"
-  type        = string
-}
-
 variable "is_transient" {
   description = "Whether or not this db is transient"
   type        = bool
