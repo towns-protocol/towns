@@ -2,6 +2,7 @@
 pragma solidity ^0.8.23;
 
 // interfaces
+import {IBanning} from "contracts/src/spaces/facets/banning/IBanning.sol";
 
 // libraries
 import {Permissions} from "contracts/src/spaces/facets/Permissions.sol";
@@ -12,7 +13,7 @@ import {ERC721ABase} from "contracts/src/diamond/facets/token/ERC721A/ERC721ABas
 import {BanningBase} from "./BanningBase.sol";
 import {Facet} from "contracts/src/diamond/facets/Facet.sol";
 
-contract Banning is BanningBase, ERC721ABase, Entitled, Facet {
+contract Banning is IBanning, BanningBase, ERC721ABase, Entitled, Facet {
   function ban(uint256 tokenId) external {
     _validatePermission(Permissions.ModifyBanning);
     if (!_exists(tokenId)) revert Banning__InvalidTokenId(tokenId);

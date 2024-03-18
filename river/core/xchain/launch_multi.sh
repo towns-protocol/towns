@@ -47,7 +47,7 @@ for (( i=1; i<=N; i++ ))
 do
   INSTANCE_DIR="${BASE_DIR}/instance_${i}"
   pushd "${INSTANCE_DIR}"
-  "./bin/node" run &
+  "./bin/xchain_node" run &
   node_pid=$!
   pwd
   echo $node_pid > node.pid

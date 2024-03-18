@@ -108,10 +108,10 @@
   },
   "sources": {
     "contracts/src/spaces/facets/banning/IBanning.sol": {
-      "keccak256": "0xe3103b5dc55339fb620ab3cd7f3f18a5de684624663437387befbd93da756809",
+      "keccak256": "0x08a5f860c2bc17d3e7e2b9f8016b5fe4efe4c9a29dff4fead3eeb2c78483d547",
       "urls": [
-        "bzz-raw://d2aefe6caa3f7891e35ade6c75781c21c40ef1c1228d88db6dccae719101a0a9",
-        "dweb:/ipfs/QmUZ4ezyZ4LnN8xd2VTdzrySwUQybLmoHyY2V4qMNzdC5X"
+        "bzz-raw://70d851c84eb03ef0438189de4c9bd4bc94553ada9d3f6ca6d5d506d38f742441",
+        "dweb:/ipfs/QmTqrL3FYrJGoUnREKuK3QB94KmMJ9iBg4Lz2hS3CbYk44"
       ],
       "license": "Apache-2.0"
     }

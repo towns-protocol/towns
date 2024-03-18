@@ -65,7 +65,7 @@ do
     mkdir -p "${INSTANCE_DIR}/bin" "${INSTANCE_DIR}/logs" "${INSTANCE_DIR}/config" "${INSTANCE_DIR}/wallet"
 
     # Copy node binary and config template
-    cp "./bin/node" "${INSTANCE_DIR}/bin"
+    cp "./bin/xchain_node" "${INSTANCE_DIR}/bin"
     cp config-template.yaml "${INSTANCE_DIR}/config/config.yaml"
 
     # Substitute METRIC_PORT and create config.yaml
@@ -81,7 +81,7 @@ do
 
     pushd "${INSTANCE_DIR}"
     # Run each process with 'generate_key' argument
-    "./bin/node" genkey
+    "./bin/xchain_node" genkey
     cast rpc -r http://127.0.0.1:8546 anvil_setBalance `cat wallet/node_address` 10000000000000000000
     echo "Created and funded instance_${i}"
 

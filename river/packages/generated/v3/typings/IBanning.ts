@@ -29,10 +29,10 @@ import type {
 
 export interface IBanningInterface extends utils.Interface {
   functions: {
-    "ban(string,uint256)": FunctionFragment;
+    "ban(uint256)": FunctionFragment;
     "banned()": FunctionFragment;
-    "isBanned(string,uint256)": FunctionFragment;
-    "unban(string,uint256)": FunctionFragment;
+    "isBanned(uint256)": FunctionFragment;
+    "unban(uint256)": FunctionFragment;
   };
 
   getFunction(
@@ -41,16 +41,16 @@ export interface IBanningInterface extends utils.Interface {
 
   encodeFunctionData(
     functionFragment: "ban",
-    values: [PromiseOrValue<string>, PromiseOrValue<BigNumberish>]
+    values: [PromiseOrValue<BigNumberish>]
   ): string;
   encodeFunctionData(functionFragment: "banned", values?: undefined): string;
   encodeFunctionData(
     functionFragment: "isBanned",
-    values: [PromiseOrValue<string>, PromiseOrValue<BigNumberish>]
+    values: [PromiseOrValue<BigNumberish>]
   ): string;
   encodeFunctionData(
     functionFragment: "unban",
-    values: [PromiseOrValue<string>, PromiseOrValue<BigNumberish>]
+    values: [PromiseOrValue<BigNumberish>]
   ): string;
 
   decodeFunctionResult(functionFragment: "ban", data: BytesLike): Result;
@@ -109,7 +109,6 @@ export interface IBanning extends BaseContract {
 
   functions: {
     ban(
-      channelId: PromiseOrValue<string>,
       tokenId: PromiseOrValue<BigNumberish>,
       overrides?: Overrides & { from?: PromiseOrValue<string> }
     ): Promise<ContractTransaction>;
@@ -117,20 +116,17 @@ export interface IBanning extends BaseContract {
     banned(overrides?: CallOverrides): Promise<[BigNumber[]]>;
 
     isBanned(
-      channelId: PromiseOrValue<string>,
       tokenId: PromiseOrValue<BigNumberish>,
       overrides?: CallOverrides
     ): Promise<[boolean]>;
 
     unban(
-      channelId: PromiseOrValue<string>,
       tokenId: PromiseOrValue<BigNumberish>,
       overrides?: Overrides & { from?: PromiseOrValue<string> }
     ): Promise<ContractTransaction>;
   };
 
   ban(
-    channelId: PromiseOrValue<string>,
     tokenId: PromiseOrValue<BigNumberish>,
     overrides?: Overrides & { from?: PromiseOrValue<string> }
   ): Promise<ContractTransaction>;
@@ -138,20 +134,17 @@ export interface IBanning extends BaseContract {
   banned(overrides?: CallOverrides): Promise<BigNumber[]>;
 
   isBanned(
-    channelId: PromiseOrValue<string>,
     tokenId: PromiseOrValue<BigNumberish>,
     overrides?: CallOverrides
   ): Promise<boolean>;
 
   unban(
-    channelId: PromiseOrValue<string>,
     tokenId: PromiseOrValue<BigNumberish>,
     overrides?: Overrides & { from?: PromiseOrValue<string> }
   ): Promise<ContractTransaction>;
 
   callStatic: {
     ban(
-      channelId: PromiseOrValue<string>,
       tokenId: PromiseOrValue<BigNumberish>,
       overrides?: CallOverrides
     ): Promise<void>;
@@ -159,13 +152,11 @@ export interface IBanning extends BaseContract {
     banned(overrides?: CallOverrides): Promise<BigNumber[]>;
 
     isBanned(
-      channelId: PromiseOrValue<string>,
       tokenId: PromiseOrValue<BigNumberish>,
       overrides?: CallOverrides
     ): Promise<boolean>;
 
     unban(
-      channelId: PromiseOrValue<string>,
       tokenId: PromiseOrValue<BigNumberish>,
       overrides?: CallOverrides
     ): Promise<void>;
@@ -187,7 +178,6 @@ export interface IBanning extends BaseContract {
 
   estimateGas: {
     ban(
-      channelId: PromiseOrValue<string>,
       tokenId: PromiseOrValue<BigNumberish>,
       overrides?: Overrides & { from?: PromiseOrValue<string> }
     ): Promise<BigNumber>;
@@ -195,13 +185,11 @@ export interface IBanning extends BaseContract {
     banned(overrides?: CallOverrides): Promise<BigNumber>;
 
     isBanned(
-      channelId: PromiseOrValue<string>,
       tokenId: PromiseOrValue<BigNumberish>,
       overrides?: CallOverrides
     ): Promise<BigNumber>;
 
     unban(
-      channelId: PromiseOrValue<string>,
       tokenId: PromiseOrValue<BigNumberish>,
       overrides?: Overrides & { from?: PromiseOrValue<string> }
     ): Promise<BigNumber>;
@@ -209,7 +197,6 @@ export interface IBanning extends BaseContract {
 
   populateTransaction: {
     ban(
-      channelId: PromiseOrValue<string>,
       tokenId: PromiseOrValue<BigNumberish>,
       overrides?: Overrides & { from?: PromiseOrValue<string> }
     ): Promise<PopulatedTransaction>;
@@ -217,13 +204,11 @@ export interface IBanning extends BaseContract {
     banned(overrides?: CallOverrides): Promise<PopulatedTransaction>;
 
     isBanned(
-      channelId: PromiseOrValue<string>,
       tokenId: PromiseOrValue<BigNumberish>,
       overrides?: CallOverrides
     ): Promise<PopulatedTransaction>;
 
     unban(
-      channelId: PromiseOrValue<string>,
       tokenId: PromiseOrValue<BigNumberish>,
       overrides?: Overrides & { from?: PromiseOrValue<string> }
     ): Promise<PopulatedTransaction>;

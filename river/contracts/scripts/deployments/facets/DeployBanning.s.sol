@@ -1,12 +1,17 @@
-// SPDX-License-Identifier: UNLICENSED
+// SPDX-License-Identifier: Apache-2.0
 pragma solidity ^0.8.23;
 
-import {Deployer} from "contracts/scripts/common/Deployer.s.sol";
-import {EntitlementChecker} from "contracts/src/crosschain/checker/EntitlementChecker.sol";
+//interfaces
 
-contract DeployEntitlementChecker is Deployer {
+//libraries
+
+//contracts
+import {Deployer} from "contracts/scripts/common/Deployer.s.sol";
+import {Banning} from "contracts/src/spaces/facets/banning/Banning.sol";
+
+contract DeployBanning is Deployer {
   function versionName() public pure override returns (string memory) {
-    return "entitlementChecker";
+    return "banningFacet";
   }
 
   function __deploy(
@@ -14,8 +19,8 @@ contract DeployEntitlementChecker is Deployer {
     address
   ) public override returns (address) {
     vm.startBroadcast(deployerPK);
-    EntitlementChecker entitlementChecker = new EntitlementChecker();
+    Banning banning = new Banning();
     vm.stopBroadcast();
-    return address(entitlementChecker);
+    return address(banning);
   }
 }

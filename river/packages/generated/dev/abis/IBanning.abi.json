@@ -4,11 +4,6 @@
     "name": "ban",
     "inputs": [
       {
-        "name": "channelId",
-        "type": "string",
-        "internalType": "string"
-      },
-      {
         "name": "tokenId",
         "type": "uint256",
         "internalType": "uint256"
@@ -35,11 +30,6 @@
     "name": "isBanned",
     "inputs": [
       {
-        "name": "channelId",
-        "type": "string",
-        "internalType": "string"
-      },
-      {
         "name": "tokenId",
         "type": "uint256",
         "internalType": "uint256"
@@ -58,11 +48,6 @@
     "type": "function",
     "name": "unban",
     "inputs": [
-      {
-        "name": "channelId",
-        "type": "string",
-        "internalType": "string"
-      },
       {
         "name": "tokenId",
         "type": "uint256",

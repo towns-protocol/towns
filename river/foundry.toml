@@ -27,9 +27,7 @@ fuzz = { runs = 10_000 }
 verbosity = 4
 
 [etherscan]
-goerli = { key = "${ETHERSCAN_API_KEY}" }
 sepolia = { key = "${ETHERSCAN_API_KEY}" }
-base_goerli = { key = "${BASESCAN_GOERLI_API_KEY}", url = "${BASESCAN_GOERLI_URL}" }
 base_sepolia = { key = "${BLOCKSCOUT_SEPOLIA_API_KEY}", url = "${BLOCKSCOUT_SEPOLIA_URL}" }
 base = { key = "${BASESCAN_API_KEY}", url = "${BASESCAN_URL}" }
 river = { key = "${RIVERSCAN_API_KEY}", url = "${RIVERSCAN_URL}" }
@@ -39,9 +37,7 @@ mainnet = { key = "${ETHERSCAN_API_KEY}" }
 base_anvil = "http://127.0.0.1:8545"
 river_anvil = "http://127.0.0.1:8546"
 river = "${RIVER_RPC_URL}"
-goerli = "${GOERLI_RPC_URL}"
 sepolia = "${SEPOLIA_RPC_URL}"
-base_goerli = "${BASE_GOERLI_RPC_URL}"
 base_sepolia = "${BASE_SEPOLIA_RPC_URL}"
 base = "${BASE_RPC_URL}"
 mainnet = "${MAINNET_RPC_URL}"

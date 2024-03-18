@@ -522,9 +522,6 @@ func (ru *csDmChannelRules) checkDMInceptionPayload() error {
 	if len(ru.inception.FirstPartyAddress) != 20 || len(ru.inception.SecondPartyAddress) != 20 {
 		return RiverError(Err_BAD_STREAM_CREATION_PARAMS, "invalid party addresses for dm channel")
 	}
-	if bytes.Equal(ru.inception.FirstPartyAddress, ru.inception.SecondPartyAddress) {
-		return RiverError(Err_BAD_STREAM_CREATION_PARAMS, "user ids must not be the same for dm channel")
-	}
 	if !bytes.Equal(ru.params.creatorAddress, ru.inception.FirstPartyAddress) {
 		return RiverError(Err_BAD_STREAM_CREATION_PARAMS, "creator must be first party for dm channel")
 	}

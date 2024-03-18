@@ -9,8 +9,9 @@ import {EnumerableSet} from "@openzeppelin/contracts/utils/structs/EnumerableSet
 // contracts
 
 library EntitlementCheckerStorage {
+  // keccak256(abi.encode(uint256(keccak256("crosschain.checker.storage")) - 1)) & ~bytes32(uint256(0xff))
   bytes32 internal constant STORAGE_SLOT =
-    keccak256("crosschain.EntitlementCheckerStorage");
+    0xd81aa39f2c69e22832907b5e1d674eb68a0f37869e4d0826e20ae096d0284000;
 
   struct Layout {
     EnumerableSet.AddressSet nodes;

@@ -4,6 +4,10 @@
 
 import { makeTestClient, createEventDecryptedPromise, waitFor } from './util.test'
 import { Client } from './client'
+import { addressFromUserId, makeDMStreamId, streamIdAsBytes } from './id'
+import { makeEvent } from './sign'
+import { make_DMChannelPayload_Inception, make_MemberPayload_Membership2 } from './types'
+import { MembershipOp } from '@river/proto'
 
 describe('dmsTests', () => {
     let clients: Client[] = []
@@ -125,5 +129,55 @@ describe('dmsTests', () => {
         await expect(
             Promise.all([aliceEventDecryptedPromise, bobEventDecryptedPromise]),
         ).toResolve()
+    })
+
+    test('clientCanCreateSingleParticipantDM', async () => {
+        const bobsClient = await makeInitAndStartClient()
+        const { streamId } = await bobsClient.createDMChannel(bobsClient.userId)
+        const stream = await bobsClient.waitForStream(streamId)
+        expect(stream.view.getMembers().membership.joinedUsers).toEqual(
+            new Set([bobsClient.userId]),
+        )
+    })
+
+    // Alice should not be allowed to create a 1:1 DM between Bob and himself.
+    test('clientCannotCreateSingleParticipantDMForOtherUser', async () => {
+        const bobsClient = await makeInitAndStartClient()
+        const alicesClient = await makeInitAndStartClient()
+        const channelIdStr = makeDMStreamId(bobsClient.userId, bobsClient.userId)
+        const channelId = streamIdAsBytes(channelIdStr)
+        const inceptionEvent = await makeEvent(
+            alicesClient.signerContext,
+            make_DMChannelPayload_Inception({
+                streamId: channelId,
+                firstPartyAddress: bobsClient.signerContext.creatorAddress,
+                secondPartyAddress: addressFromUserId(bobsClient.userId),
+            }),
+        )
+
+        const joinEvent = await makeEvent(
+            alicesClient.signerContext,
+            make_MemberPayload_Membership2({
+                userId: bobsClient.userId,
+                op: MembershipOp.SO_JOIN,
+                initiatorId: bobsClient.userId,
+            }),
+        )
+
+        const inviteEvent = await makeEvent(
+            alicesClient.signerContext,
+            make_MemberPayload_Membership2({
+                userId: bobsClient.userId,
+                op: MembershipOp.SO_JOIN,
+                initiatorId: bobsClient.userId,
+            }),
+        )
+
+        await expect(
+            alicesClient.rpcClient.createStream({
+                events: [inceptionEvent, joinEvent, inviteEvent],
+                streamId: channelId,
+            }),
+        ).rejects.toThrow(new RegExp('creator must be first party for dm channel'))
     })
 })

@@ -12,11 +12,6 @@ const _abi = [
     name: "ban",
     inputs: [
       {
-        name: "channelId",
-        type: "string",
-        internalType: "string",
-      },
-      {
         name: "tokenId",
         type: "uint256",
         internalType: "uint256",
@@ -43,11 +38,6 @@ const _abi = [
     name: "isBanned",
     inputs: [
       {
-        name: "channelId",
-        type: "string",
-        internalType: "string",
-      },
-      {
         name: "tokenId",
         type: "uint256",
         internalType: "uint256",
@@ -66,11 +56,6 @@ const _abi = [
     type: "function",
     name: "unban",
     inputs: [
-      {
-        name: "channelId",
-        type: "string",
-        internalType: "string",
-      },
       {
         name: "tokenId",
         type: "uint256",
