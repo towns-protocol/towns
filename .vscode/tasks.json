@@ -213,6 +213,26 @@
       }
     },
     {
+      "label": "Casablanca Multinode",
+      "type": "shell",
+      "command": "sleep 3 && ./river/core/node/run_multi.sh -c -r",
+      "isBackground": true,
+      "problemMatcher": [],
+      "presentation": {
+        "group": "local-servers"
+      }
+    },
+    {
+      "label": "Casablanca Multinode No-Entitlements",
+      "type": "shell",
+      "command": "sleep 3 && ./river/core/node/run_multi.sh -de -c -r",
+      "isBackground": true,
+      "problemMatcher": [],
+      "presentation": {
+        "group": "local-servers"
+      }
+    },
+    {
       "label": "Stop Casablanca",
       "type": "shell",
       "command": "./river/core/scripts/stop_node.sh",
