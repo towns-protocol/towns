@@ -49,6 +49,26 @@ export function useNotificationSettings() {
         return channelSettings
     }, [data?.channelSettings, rooms])
 
+    const removedSpaceSettings = useMemo(() => {
+        let removedSpaceSettings: string[] = []
+        if (savedSpaceSettings) {
+            removedSpaceSettings = Object.keys(savedSpaceSettings).filter(
+                (s) => !spaceHierarchies[s],
+            )
+        }
+        return removedSpaceSettings.length > 0 ? removedSpaceSettings : undefined
+    }, [savedSpaceSettings, spaceHierarchies])
+
+    const removedChannelSettings = useMemo(() => {
+        let removedChannelSettings: string[] = []
+        if (savedChannelSettings) {
+            removedChannelSettings = Object.keys(savedChannelSettings).filter(
+                (c) => !rooms[c] && !dmChannels.find((dm) => dm.id === c),
+            )
+        }
+        return removedChannelSettings.length > 0 ? removedChannelSettings : undefined
+    }, [dmChannels, rooms, savedChannelSettings])
+
     const updatedSpaceSettings = useMemo(() => {
         let spaceSettings = savedSpaceSettings
         // add any missing space settings from the space hierarchies
@@ -67,8 +87,15 @@ export function useNotificationSettings() {
                 }
             }
         }
+        if (spaceSettings && removedSpaceSettings) {
+            for (const s of removedSpaceSettings) {
+                setSettingsUpdated(true)
+                delete spaceSettings[s]
+                console.log('useNotificationSettings', 'removed space notification settings', s)
+            }
+        }
         return spaceSettings
-    }, [savedSpaceSettings, spaceHierarchies])
+    }, [removedSpaceSettings, savedSpaceSettings, spaceHierarchies])
 
     const updatedChannelSettings = useMemo(() => {
         let channelSettings = savedChannelSettings
@@ -88,6 +115,11 @@ export function useNotificationSettings() {
                             spaceId: s,
                             channelMute: Mute.Default,
                         }
+                        console.log(
+                            'useNotificationSettings',
+                            'added channel notification settings',
+                            c.id,
+                        )
                     }
                 }
             }
@@ -104,10 +136,22 @@ export function useNotificationSettings() {
                     spaceId: '',
                     channelMute: Mute.Default,
                 }
+                console.log(
+                    'useNotificationSettings',
+                    'added dm channel notification settings',
+                    dm.id,
+                )
+            }
+        }
+        if (channelSettings && removedChannelSettings) {
+            for (const c of removedChannelSettings) {
+                setSettingsUpdated(true)
+                delete channelSettings[c]
+                console.log('useNotificationSettings', 'removed channel notification settings', c)
             }
         }
         return channelSettings
-    }, [dmChannels, savedChannelSettings, spaceHierarchies])
+    }, [dmChannels, removedChannelSettings, savedChannelSettings, spaceHierarchies])
 
     return {
         settingsUpdated,
