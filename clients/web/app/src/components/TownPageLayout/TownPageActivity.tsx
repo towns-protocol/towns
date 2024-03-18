@@ -19,7 +19,7 @@ import { useDevice } from 'hooks/useDevice'
 import { notUndefined, shortAddress } from 'ui/utils/utils'
 import { AvatarWithoutDot } from '@components/Avatar/Avatar'
 
-export const Activity = (props: { townId: string }) => {
+export const TownPageActivity = (props: { townId: string }) => {
     const { members, townStats, channelStats, isLoading } = useFetchUnauthenticatedActivity(
         props.townId,
     )
@@ -138,7 +138,7 @@ export const Activity = (props: { townId: string }) => {
                             alignItems="center"
                             paddingBottom="sm"
                         >
-                            <Box centerContent width="x6" paddingBottom="sm">
+                            <Box centerContent width="x6">
                                 {a.icon && <Icon type={a.icon} size="square_md" color="gray2" />}
                             </Box>
                             <Box grow gap="paragraph">

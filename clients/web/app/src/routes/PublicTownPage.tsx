@@ -14,7 +14,7 @@ import { ClipboardCopy } from '@components/ClipboardCopy/ClipboardCopy'
 import { LogoSingleLetter } from '@components/Logo/Logo'
 import { ModalContainer } from '@components/Modals/ModalContainer'
 import { BlurredBackground } from '@components/TouchLayoutHeader/BlurredBackground'
-import { Activity } from '@components/TownPageLayout/TownPageActivity'
+import { TownPageActivity } from '@components/TownPageLayout/TownPageActivity'
 import { TownPageLayout } from '@components/TownPageLayout/TownPageLayout'
 import { FadeInBox } from '@components/Transitions'
 import { ImageVariants, useImageSource } from '@components/UploadImage/useImageSource'
@@ -106,7 +106,7 @@ export const PublicTownPage = (props: { isPreview?: boolean; onClosePreview?: ()
                             onClosePreview={onClosePreview}
                         />
                     }
-                    activityContent={<Activity townId={spaceInfo.networkId} />}
+                    activityContent={<TownPageActivity townId={spaceInfo.networkId} />}
                     isPreview={isPreview}
                     bottomContent={
                         <Footer
