@@ -30,6 +30,9 @@ process.env.CASABLANCA_SERVER_URL =
     'https://localhost:5157'
 process.env.DISABLE_ENCRYPTION = 'false'
 process.env.ETHERS_NETWORK = process.env.ETHERS_NETWORK || 'http://127.0.0.1:8545' // OR "rinkeby"
+process.env.RIVER_CHAIN_PROVIDER_HTTP_URL =
+    process.env.RIVER_CHAIN_PROVIDER_HTTP_URL || 'http://localhost:8546/'
+process.env.RIVER_CHAIN_ID = process.env.RIVER_CHAIN_ID || '31338'
 
 // fetch-polyfill.js
 import fetch, { Headers, Request, Response } from 'node-fetch'
