@@ -182,6 +182,16 @@ export const colorProperties = defineProperties({
                 background: vars.color.background.lightHover,
                 vars: {
                     '--background': vars.color.background.lightHover,
+                    '--background-hover': vars.color.background.level3Hover,
+                },
+                selectors: {
+                    [`&${hoverableClass}:hover, &${hoverableClass}${hoverActiveClass}`]: {
+                        '@media': {
+                            '(hover: hover)': {
+                                background: 'var(--background-hover)',
+                            },
+                        },
+                    },
                 },
             },
             inverted: {
