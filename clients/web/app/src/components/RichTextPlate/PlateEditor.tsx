@@ -300,7 +300,11 @@ const PlateEditorWithoutBoundary = ({
                                     onKeyDown={handleSendOnEnter}
                                 />
                             </Box>
-                            <OnFocusPlugin autoFocus={autoFocus} onFocusChange={onFocusChange} />
+                            <OnFocusPlugin
+                                autoFocus={autoFocus}
+                                editorRef={editorRef}
+                                onFocusChange={onFocusChange}
+                            />
                             <CaptureTownsLinkPlugin onUpdate={onMessageLinksUpdated} />
                             <EmojiPlugin />
                             <MentionCombobox<RoomMember>
