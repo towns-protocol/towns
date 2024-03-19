@@ -12,6 +12,7 @@
         "db:migrate": "prisma migrate deploy",
         "db:migrate:local": "dotenv -e .env.local -- npx prisma migrate deploy",
         "db:create-migration:local": "dotenv -e .env.local -- yarn prisma migrate dev --name",
+        "db:studio": "dotenv -e .env.local -- yarn prisma studio",
         "dev": "yarn db:local && tsc --watch & yarn my-node --env-file .env.local --watch dist/server.js",
         "my-node": "node --experimental-specifier-resolution=node --loader ts-node/esm",
         "start": "node --experimental-specifier-resolution=node --loader ts-node/esm dist/server.js",

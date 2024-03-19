@@ -74,3 +74,5 @@ Click the trash can icon to kill it
 - [Prisma Client](https://www.prisma.io/docs/orm/prisma-client/setup-and-configuration/generating-prisma-client) is an auto-generated database client that's tailored to our database schema, to create run: `$ npx prisma generate`.
 
 - To [generete the migration](https://www.prisma.io/docs/orm/reference/prisma-cli-reference#prisma-migrate) after changing `schema.prisma`, run: `$ yarn db:create-migration:local "migration_description"`
+
+- To use [prisma UI interface (studio)](https://www.prisma.io/studio) to manage the databse, run: `$ yarn db:studio`
