@@ -4,16 +4,15 @@ import { AnimatePresence } from 'framer-motion'
 import { Box, MotionBox, MotionStack, Stack, Text } from '@ui'
 import { TownsToken } from '@components/TownsToken/TownsToken'
 
-const images: string[] = [
-    '/placeholders/nft_1.png',
-    '/placeholders/nft_38.png',
-    '/placeholders/nft_42.png',
-    '/placeholders/nft_2.png',
-    '/placeholders/nft_17.png',
-    '/placeholders/nft_13.png',
-    '/placeholders/nft_21.png',
-    '/placeholders/nft_6.png',
-]
+import nft1 from './images/nft_1.png'
+import nft38 from './images/nft_38.png'
+import nft42 from './images/nft_42.png'
+import nft2 from './images/nft_2.png'
+import nft17 from './images/nft_17.png'
+import nft13 from './images/nft_13.png'
+import nft21 from './images/nft_21.png'
+import nft6 from './images/nft_6.png'
+const images = [nft1, nft38, nft42, nft2, nft17, nft13, nft21, nft6]
 
 const texts: string[] = [
     'Creating town onchain…',
@@ -172,3 +171,5 @@ const IconBox = (props: {
         </MotionBox>
     )
 }
+
+export default CreateSpaceMintAnimation

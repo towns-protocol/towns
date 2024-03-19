@@ -34,7 +34,8 @@ import { AvatarPlaceholder } from '../AvatarPlaceholder'
 import { PanelType, TransactionDetails } from './types'
 import { PanelContent } from './PanelContents'
 import { CreateTownSubmit } from './CreateTownSubmit'
-import { CreateSpaceMintAnimation } from './CreateSpaceMintAnimation'
+
+const LazyCreateSpaceMintAnimation = React.lazy(() => import('./CreateSpaceMintAnimation'))
 
 type Member = { address: ReturnType<typeof useAuth>['loggedInWalletAddress']; displayName?: string }
 
@@ -352,7 +353,7 @@ export function CreateSpaceFormV2() {
                     )
                 }}
             </FormRender>
-            {transactionDetails.isTransacting ? <CreateSpaceMintAnimation /> : <></>}
+            {transactionDetails.isTransacting ? <LazyCreateSpaceMintAnimation /> : <></>}
         </Stack>
     )
 }
