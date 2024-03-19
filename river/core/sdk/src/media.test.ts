@@ -165,7 +165,7 @@ describe('mediaTests', () => {
         await charliesClient.stop()
     })
 
-    test('mediaStream getStreamEx result matches getStream result', async () => {
+    test('mediaStreamGetStreamEx', async () => {
         const { streamId, prevMiniblockHash } = await bobCreateMediaStream(10)
         // Send a series of media chunks
         await bobSendMediaPayloads(streamId, 10, prevMiniblockHash)

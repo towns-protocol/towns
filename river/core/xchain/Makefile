@@ -19,7 +19,7 @@ build: $(OUTPUT_DIR)/node $(OUTPUT_DIR)/integration_test
 
 # Compiles the node binary
 $(OUTPUT_DIR)/node: $(SRC)
-	go build -o $(OUTPUT_DIR)/node ./node
+	go build -o $(OUTPUT_DIR)/xchain_node ./node
 
 # Compiles the integration_test binary
 $(OUTPUT_DIR)/integration_test: $(SRC)
