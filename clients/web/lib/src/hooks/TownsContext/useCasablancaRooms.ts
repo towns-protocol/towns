@@ -199,7 +199,7 @@ function toTownsMembers(stream: Stream): {
  * @returns A list of members with the given membership state. Throw error if membership is not valid or streamId is not associated with a channel or space.
  */
 
-function getMembersWithMembership(membership: Membership, stream: Stream): RoomMember[] {
+export function getMembersWithMembership(membership: Membership, stream: Stream): RoomMember[] {
     const streamId = stream.view.streamId
     //reject if streamId is not associated with a channel, space or DM
     if (
@@ -225,6 +225,9 @@ function getMembersWithMembership(membership: Membership, stream: Stream): RoomM
             users = stream.view.getMembers().membership.invitedUsers
             break
         }
+        case Membership.Leave:
+            users = stream.view.getMembers().membership.leftUsers
+            break
         default: {
             throw new Error('Invalid membership type: ' + membership)
         }

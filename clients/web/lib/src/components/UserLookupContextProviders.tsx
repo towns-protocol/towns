@@ -1,11 +1,12 @@
 import React, { useMemo, useRef } from 'react'
 import { useAllKnownUsers } from '../hooks/use-all-known-users'
-import { useRoom, useRoomWithStreamId } from '../hooks/use-room'
+import { useRoomWithStreamId } from '../hooks/use-room'
 import { useSpaceContext } from './SpaceContextProvider'
 import isEqual from 'lodash/isEqual'
 import { UserLookupContext } from './UserLookupContext'
 import { useUserLookupContext } from '../hooks/use-user-lookup-context'
 import { LookupUser, LookupUserMap, UserLookupContextType } from '../types/user-lookup'
+import { useAllSpaceUsers } from '../hooks/use-all-space-users'
 
 /**
  * utility provider added to topmost towns context
@@ -28,14 +29,14 @@ export const SpaceContextUserLookupProvider = (props: { children: React.ReactNod
     } = useUserLookupContext()
 
     const spaceId = useSpaceContext()?.spaceId ?? rootSpaceId
+    const { users: allSpaceUsers } = useAllSpaceUsers(spaceId)
 
-    const members = useRoom(spaceId)
     const usersCache = useRef<LookupUserMap>({})
 
     const value = useMemo(() => {
         // avoid overriding parent context if spaceId isn't set (e.g DM channels)
-        if (members && spaceId) {
-            const users = members.members.map((member) => {
+        if (spaceId) {
+            const users = allSpaceUsers.map((member) => {
                 const user = {
                     ...member,
                     memberOf: parentContextUsersMap?.[member.userId]?.memberOf,
@@ -66,7 +67,7 @@ export const SpaceContextUserLookupProvider = (props: { children: React.ReactNod
                 usersMap: parentContextUsersMap,
             } satisfies UserLookupContextType
         }
-    }, [members, parentContextUsers, parentContextUsersMap, spaceId])
+    }, [allSpaceUsers, parentContextUsers, parentContextUsersMap, spaceId])
 
     return <UserLookupContext.Provider value={value}>{props.children}</UserLookupContext.Provider>
 }
