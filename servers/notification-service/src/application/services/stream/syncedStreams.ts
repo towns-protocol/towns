@@ -345,6 +345,12 @@ export class SyncedStreams {
                                 syncCookies.push(SyncCookie.fromJsonString(dbStream.syncCookie))
                             }
 
+                            if (syncCookies.length === 0) {
+                                console.log('no syncCookies found')
+                                await this.attemptRetry()
+                                continue
+                            }
+
                             const streams = this.rpcClient.syncStreams({
                                 syncPos: syncCookies,
                             })
