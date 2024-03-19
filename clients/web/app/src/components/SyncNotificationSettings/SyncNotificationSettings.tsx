@@ -2,6 +2,7 @@ import React, { useEffect } from 'react'
 
 import { useQueryClient } from 'wagmi'
 import { useMyProfile } from 'use-towns-client'
+import { Mute } from '@push-notification-worker/types'
 import { useNotificationSettings } from 'hooks/useNotificationSettings'
 import { useStore } from 'store/store'
 import { notificationSettingsQueryKeys, putSettings } from 'api/lib/notificationSettings'
@@ -17,7 +18,7 @@ export const SyncNotificationSettings = () => {
         let muteSpaceIds: string[] = []
         if (spaceSettings) {
             muteSpaceIds = Object.values(spaceSettings).reduce((acc, curr) => {
-                if (curr.spaceMute) {
+                if (curr.spaceMute == Mute.Muted) {
                     acc.push(curr.spaceId)
                 }
                 return acc
@@ -27,7 +28,7 @@ export const SyncNotificationSettings = () => {
         let mutedChannelIds: string[] = []
         if (channelSettings) {
             mutedChannelIds = Object.values(channelSettings).reduce((acc, curr) => {
-                if (curr.channelMute || muteSpaceIds.includes(curr.spaceId)) {
+                if (curr.channelMute == Mute.Muted || muteSpaceIds.includes(curr.spaceId)) {
                     acc.push(curr.channelId)
                 }
                 return acc
