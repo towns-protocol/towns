@@ -11,7 +11,6 @@ import {
 } from 'use-towns-client'
 import { datadogRum } from '@datadog/browser-rum'
 import { isEditorEmpty as PlateIsEditorEmpty } from '@udecode/slate-utils'
-import { deserializeMd } from '@udecode/plate-serializer-md'
 import { focusEditor } from '@udecode/slate-react'
 import { TComboboxItemWithData } from '@udecode/plate-combobox'
 import { useMediaDropContext } from '@components/MediaDropContext/MediaDropContext'
@@ -27,6 +26,7 @@ import {
     MessageAttachmentPreview,
 } from '@components/EmbeddedMessageAttachement/EditorAttachmentPreview'
 import { useInlineReplyAttchmentPreview } from '@components/EmbeddedMessageAttachement/hooks/useInlineReplyAttchmentPreview'
+import { deserializeMd } from './utils/deserializeMD'
 import { EditorFallback } from './components/EditorFallback'
 import { MentionCombobox } from './components/plate-ui/MentionCombobox'
 import { Editor } from './components/plate-ui/Editor'
@@ -120,7 +120,6 @@ const PlateEditorWithoutBoundary = ({
                 },
             ]
         }
-        // #TODO: add support for ~~strikethrough~~, @mention, #channels and :emojis. Preserve new lines
         const tmpEditor = createPlateEditor({ plugins: PlatePlugins })
         return deserializeMd(tmpEditor, _initialValue)
     }, [_initialValue])
