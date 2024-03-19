@@ -154,7 +154,7 @@ export class SyncedStreams {
     }
 
     public async startSyncStreams() {
-        return await this.createSyncLoop()
+        return this.createSyncLoop()
     }
 
     public checkStartTicking() {

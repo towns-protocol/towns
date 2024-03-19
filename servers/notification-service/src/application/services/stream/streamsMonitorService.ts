@@ -245,39 +245,45 @@ export class StreamsMonitorService {
     private async fetchAndAddNewChannelStreams() {
         const streamsMetadata = await this.getNewStreamsToMonitor()
         const notFoundStreams = new Set<string>()
+        const addPromises: Promise<void>[] = []
 
-        streamsMetadata.DM.streamIds.forEach(async (streamId) => {
-            try {
-                logger.info('[StreamsMonitorService] new dm stream', streamId)
-                await this.addDMSyncStreamToDB(streamId)
-            } catch (error) {
-                if (errorContains(error, Err.NOT_FOUND)) {
-                    logger.info(`[StreamsMonitorService] DM ${streamId} stream not found`)
-                    notFoundStreams.add(streamId)
-                    return
+        for (const streamId of streamsMetadata.DM.streamIds) {
+            const p = async () => {
+                try {
+                    logger.log('[StreamsMonitorService] new dm stream', streamId)
+                    await this.addDMSyncStreamToDB(streamId)
+                } catch (error) {
+                    if (errorContains(error, Err.NOT_FOUND)) {
+                        logger.info(`[StreamsMonitorService] DM ${streamId} stream not found`)
+                        notFoundStreams.add(streamId)
+                        return
+                    }
+                    logger.error(
+                        `[StreamsMonitorService] Failed to add DM ${streamId} stream to db. Error: ${error}`,
+                    )
                 }
-                logger.error(
-                    `[StreamsMonitorService] Failed to add DM ${streamId} stream to db. Error: ${error}`,
-                )
             }
-        })
-        streamsMetadata.GDM.streamIds.forEach(async (streamId) => {
-            try {
-                await this.addGDMStreamToDB(streamId)
-            } catch (error) {
-                if (errorContains(error, Err.NOT_FOUND)) {
-                    logger.info(`[StreamsMonitorService] GDM ${streamId} stream not found`)
-                    notFoundStreams.add(streamId)
-                    return
+            addPromises.push(p())
+        }
+        for (const streamId of streamsMetadata.GDM.streamIds) {
+            const p = async () => {
+                try {
+                    await this.addGDMStreamToDB(streamId)
+                } catch (error) {
+                    if (errorContains(error, Err.NOT_FOUND)) {
+                        logger.info(`[StreamsMonitorService] GDM ${streamId} stream not found`)
+                        notFoundStreams.add(streamId)
+                        return
+                    }
+                    logger.error(
+                        `[StreamsMonitorService] Failed to add GDM ${streamId} stream to db. Error: ${error}`,
+                    )
                 }
-                logger.error(
-                    `[StreamsMonitorService] Failed to add GDM ${streamId} stream to db. Error: ${error}`,
-                )
             }
-        })
-        // streamsMetadata.Channel.streamIds.forEach(async (streamId) => {
-        // logger.info('[StreamsMonitorService] new channel stream', streamId)
-        // })
+            addPromises.push(p())
+        }
+
+        await Promise.all(addPromises)
 
         if (notFoundStreams.size > 0) {
             logger.info('[StreamsMonitorService] deleting the not found streams', notFoundStreams)
