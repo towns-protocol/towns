@@ -79,11 +79,18 @@ function extractDetails(jsonString: string): PlaintextDetails {
     const mentionsMatch = jsonString.match(mentionsRegex)
     const threadIdMatch = jsonString.match(threadIdRegex)
     const reactionMatch = jsonString.match(reactionRegex)
-    // replace all \n with ... string because notification body cannot have newlines
+    // replace all \n with '' or '...' string because notification body cannot
+    // have newlines.
     // replace all \" with "
-    const cleanBody = bodyMatch
-        ? bodyMatch[1].replace(/\\n/g, '...').replace(/\\"/g, '"')
-        : undefined
+    let cleanBody: string | undefined
+    if (bodyMatch && bodyMatch.length > 0 && bodyMatch[1]) {
+        const text = bodyMatch[1]
+        const count = (text.match(/\\n/g) || []).length
+        // if there are multiple newlines, replace with '...'
+        // else replace with ''
+        const crReplacement = count > 0 ? ' - ' : ''
+        cleanBody = text.replace(/\\n/g, crReplacement).replace(/\\"/g, '"')
+    }
     return {
         body: cleanBody,
         mentions: mentionsMatch ? mentionsMatch[1] : undefined,
