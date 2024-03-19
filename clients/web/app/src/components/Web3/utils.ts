@@ -154,6 +154,16 @@ export function baseScanUrl(chainId: number) {
     }
 }
 
+export function openSeaAssetUrl(chainId: number, contractAddress: string) {
+    switch (chainId) {
+        case 31337: // just for complete url, doesn't apply to foundry
+        case 84532:
+            return `https://testnets.opensea.io/assets/base-sepolia/${contractAddress}`
+        default:
+            return `https://opensea.io/assets/base/${contractAddress}`
+    }
+}
+
 export const openSeaBaseAssetUrl = 'https://opensea.io/assets/base'
 
 export const supportedNftNetworks = [

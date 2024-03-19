@@ -54,7 +54,8 @@ import { ConfirmLeaveModal } from '@components/ConfirmLeaveModal/ConfirmLeaveMod
 import { Avatar } from '@components/Avatar/Avatar'
 import { WalletLinkingPanel } from '@components/Web3/WalletLinkingPanel'
 import { RolesPanel } from '@components/SpaceSettingsPanel/RolesPanel'
-import { env } from '../utils/environment'
+import { openSeaAssetUrl } from '@components/Web3/utils'
+import { useEnvironment } from 'hooks/useEnvironmnet'
 import { AllChannelsList } from './AllChannelsList/AllChannelsList'
 import { PublicTownPage } from './PublicTownPage'
 
@@ -257,7 +258,7 @@ export const SpaceInfoPanel = () => {
                                 formState={formState}
                                 clearErrors={clearErrors}
                             >
-                                <TownContractOpener>
+                                <TownContractOpener address={address}>
                                     <InteractiveSpaceIcon
                                         spaceId={space.id}
                                         size="lg"
@@ -513,13 +514,16 @@ export const SpaceInfoPanel = () => {
     )
 }
 
-const TownContractOpener = (props: { children?: React.ReactNode }) => {
+const TownContractOpener = (props: { address: string; children?: React.ReactNode }) => {
+    const { address } = props
+    const { chainId } = useEnvironment()
     const onClick = useCallback(() => {
-        window.open(env.VITE_TOWNS_TOKEN_URL, '_blank', 'noopener noreferrer')
-    }, [])
-    if (!env.VITE_TOWNS_TOKEN_URL) {
-        return <>{props.children}</>
-    }
+        if (!chainId) {
+            return
+        }
+        window.open(`${openSeaAssetUrl(chainId, address)}`, '_blank', 'noopener,noreferrer')
+    }, [chainId, address])
+
     return (
         <Box padding="x4">
             <Box tooltip="View official town NFT" onClick={onClick}>

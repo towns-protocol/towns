@@ -18,7 +18,7 @@ import {
 import { useDevice } from 'hooks/useDevice'
 import { AvatarTextHorizontal } from '@components/Avatar/AvatarTextHorizontal'
 import { useEnvironment } from 'hooks/useEnvironmnet'
-import { baseScanUrl } from '@components/Web3/utils'
+import { baseScanUrl, openSeaAssetUrl } from '@components/Web3/utils'
 import { vars } from 'ui/styles/vars.css'
 import { ToneName } from 'ui/styles/themes'
 import { getInviteUrl } from 'ui/utils/utils'
@@ -235,23 +235,23 @@ const InformationBoxes = (props: {
     price?: string | number
     duration?: number
     address?: `0x${string}`
-    openSeaLink?: string
     chainId: number
     anyoneCanJoin: boolean
     isTokensGatingMembershipLoading: boolean
     tokens?: { contractAddress: string; tokenIds: number[] }[]
 }) => {
-    const { openSeaLink, price, address, chainId, duration } = props
+    const { price, address, chainId, duration } = props
     const onAddressClick = useEvent(() => {
         window.open(`${baseScanUrl(chainId)}/address/${address}`, '_blank', 'noopener,noreferrer')
     })
 
     const onOpenSeaClick = useEvent(() => {
-        if (!openSeaLink) {
+        if (!address) {
             return
         }
-        window.open(openSeaLink, '_blank', 'noopener,noreferrer')
+        window.open(`${openSeaAssetUrl(chainId, address)}`, '_blank', 'noopener,noreferrer')
     })
+
     const durationTexts = useMemo(() => durationTitleSubtitle(duration), [duration])
 
     return (
@@ -300,7 +300,7 @@ const InformationBoxes = (props: {
                 />
             )}
 
-            {openSeaLink && (
+            {address && (
                 <InformationBox
                     key="opensea"
                     title="View"
