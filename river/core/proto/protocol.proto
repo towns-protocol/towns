@@ -465,6 +465,7 @@ message MediaPayload {
 message Snapshot {
     
     MemberPayload.Snapshot members = 1;
+    int32 snapshot_version = 2;
     
     // Snapshot data specific for each stream type.
     oneof content {

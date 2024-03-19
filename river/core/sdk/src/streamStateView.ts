@@ -52,6 +52,7 @@ import { StreamStateView_ChannelMetadata } from './streamStateView_ChannelMetada
 import { StreamEvents, StreamEncryptionEvents, StreamStateEvents } from './streamEvents'
 import isEqual from 'lodash/isEqual'
 import { DecryptionSessionError } from '@river/encryption'
+import { migrateSnapshot } from './migrations/migrateSnapshot'
 
 const log = dlog('csb:streams')
 const logError = dlogError('csb:streams:error')
@@ -63,6 +64,7 @@ export class StreamStateView {
     readonly timeline: StreamTimelineEvent[] = []
     readonly events = new Map<string, StreamTimelineEvent>()
     isInitialized = false
+    snapshot?: Snapshot
     prevMiniblockHash?: Uint8Array
     lastEventNum = 0n
     prevSnapshotMiniblockNum: bigint
@@ -187,11 +189,13 @@ export class StreamStateView {
         this.membershipContent = new StreamStateView_Members(streamId)
     }
 
-    applySnapshot(
-        snapshot: Snapshot,
+    private applySnapshot(
+        inSnapshot: Snapshot,
         cleartexts: Record<string, string> | undefined,
         encryptionEmitter: TypedEmitter<StreamEncryptionEvents> | undefined,
     ) {
+        const snapshot = migrateSnapshot(inSnapshot)
+        this.snapshot = snapshot
         switch (snapshot.content.case) {
             case 'spaceContent':
                 this.spaceContent.applySnapshot(
@@ -321,6 +325,9 @@ export class StreamStateView {
                         `Miniblock number out of order ${payload.value.miniblockNum} > ${this.miniblockInfo?.max}`,
                         Err.STREAM_BAD_EVENT,
                     )
+                    if (payload.value.snapshot) {
+                        this.snapshot = migrateSnapshot(payload.value.snapshot)
+                    }
                     this.prevMiniblockHash = event.hash
                     this.updateMiniblockInfo(payload.value, { max: payload.value.miniblockNum })
                     timelineEvent.confirmedEventNum =

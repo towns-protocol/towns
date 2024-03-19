@@ -6,6 +6,7 @@ import (
 	"sort"
 
 	. "github.com/river-build/river/core/node/base"
+	"github.com/river-build/river/core/node/events/migrations"
 	. "github.com/river-build/river/core/node/protocol"
 	"github.com/river-build/river/core/node/shared"
 )
@@ -34,8 +35,9 @@ func Make_GenisisSnapshot(events []*ParsedEvent) (*Snapshot, error) {
 	}
 
 	snapshot := &Snapshot{
-		Content: content,
-		Members: members,
+		Content:         content,
+		Members:         members,
+		SnapshotVersion: migrations.CurrentSnapshotVersion(),
 	}
 
 	for i, event := range events[1:] {
@@ -152,6 +154,7 @@ func make_SnapshotMembers(iInception IsInceptionPayload, creatorAddress []byte) 
 
 // mutate snapshot with content of event if applicable
 func Update_Snapshot(iSnapshot *Snapshot, event *ParsedEvent, miniblockNum int64, eventNum int64) error {
+	iSnapshot = migrations.MigrateSnapshot(iSnapshot)
 	switch payload := event.Event.Payload.(type) {
 	case *StreamEvent_SpacePayload:
 		return update_Snapshot_Space(iSnapshot, payload.SpacePayload, eventNum, event.Hash.Bytes())
@@ -507,6 +510,7 @@ func insertSorted[T any, K any](elements []*T, element *T, cmp func(K, K) int, k
 	})
 	if found {
 		elements[index] = element
+		return elements
 	}
 	elements = append(elements, nil)
 	copy(elements[index+1:], elements[index:])

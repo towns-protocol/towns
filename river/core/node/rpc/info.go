@@ -3,6 +3,7 @@ package rpc
 import (
 	"context"
 	"errors"
+	"time"
 
 	"log/slog"
 
@@ -124,7 +125,7 @@ func (s *Service) info(
 				return nil, err
 			}
 			err = stream.AddEvent(ctx, parsedEvent)
-			return nil, err
+			return connect.NewResponse(&InfoResponse{}), err
 		}
 	}
 
@@ -151,7 +152,24 @@ func (s *Service) debugMakeMiniblock(ctx context.Context, streamId shared.Stream
 		if err != nil {
 			return err
 		}
-		_, err = stream.MakeMiniblock(ctx, forceSnapshot == "true")
-		return err
+		count := 0
+		success := false
+		for {
+			success, err = stream.MakeMiniblock(ctx, forceSnapshot == "true")
+			if !success && err == nil && forceSnapshot == "true" && count < 5 {
+				// we should not retry if we are forcing a snapshot
+				count++
+				time.Sleep(100 * time.Millisecond)
+			} else {
+				break
+			}
+		}
+		if err != nil {
+			return err
+		}
+		if !success && forceSnapshot == "true" {
+			return RiverError(Err_INTERNAL, "Failed to force snapshot")
+		}
+		return nil
 	}
 }
