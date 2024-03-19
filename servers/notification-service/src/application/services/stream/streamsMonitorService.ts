@@ -1,12 +1,16 @@
 import { database } from '../../../infrastructure/database/prisma'
 import { StreamKind } from '@prisma/client'
-import { StreamRpcClient, makeStreamRpcClient } from '../../../infrastructure/rpc/streamRpcClient'
+import {
+    StreamRpcClient,
+    errorContains,
+    makeStreamRpcClient,
+} from '../../../infrastructure/rpc/streamRpcClient'
 import { isChannelStreamId, isDMChannelStreamId, isGDMChannelStreamId } from './id'
 import { SyncedStreams, unpackStream } from './syncedStreams'
 import { streamIdToBytes, userIdFromAddress } from './utils'
 import { env } from '../../utils/environment'
 import assert from 'assert'
-import { MembershipOp } from '@river/proto'
+import { Err } from '@river/proto'
 
 type StreamsMetadata = {
     [key in StreamKind]: {
@@ -49,7 +53,6 @@ export class StreamsMonitorService {
             streamInfo[streamKind].streamIds.add(ChannelId)
         }
 
-        // console.log('[StreamsMonitorService] getNewChannelIdsToMonitor', streamInfo)
         return streamInfo
     }
 
@@ -215,10 +218,10 @@ export class StreamsMonitorService {
     public async startMonitoringStreams() {
         if (env.NOTIFICATION_SYNC_ENABLED === 'true') {
             console.log('notification sync is enabled')
-            await this.fetchAndAddNewChannelStreams()
+            await this.refreshChannelStreams()
             const oneMinute = 1 * 60 * 1000
             this.intervalId = setInterval(async () => {
-                await this.fetchAndAddNewChannelStreams()
+                await this.refreshChannelStreams()
             }, oneMinute)
 
             return this.streams.startSyncStreams()
@@ -233,14 +236,26 @@ export class StreamsMonitorService {
         }
     }
 
+    private async refreshChannelStreams() {
+        console.log('[StreamsMonitorService] refreshChannelStreams')
+        await this.fetchAndAddNewChannelStreams()
+        await this.removeStaleStreams()
+    }
+
     private async fetchAndAddNewChannelStreams() {
-        console.log('[StreamsMonitorService] fetchAndAddNewChannelStreams')
         const streamsMetadata = await this.getNewStreamsToMonitor()
+        const notFoundStreams = new Set<string>()
 
         streamsMetadata.DM.streamIds.forEach(async (streamId) => {
             try {
+                console.log('[StreamsMonitorService] new dm stream', streamId)
                 await this.addDMSyncStreamToDB(streamId)
             } catch (error) {
+                if (errorContains(error, Err.NOT_FOUND)) {
+                    console.log(`[StreamsMonitorService] DM ${streamId} stream not found`)
+                    notFoundStreams.add(streamId)
+                    return
+                }
                 console.error(
                     `[StreamsMonitorService] Failed to add DM ${streamId} stream to db. Error: ${error}`,
                 )
@@ -250,6 +265,11 @@ export class StreamsMonitorService {
             try {
                 await this.addGDMStreamToDB(streamId)
             } catch (error) {
+                if (errorContains(error, Err.NOT_FOUND)) {
+                    console.log(`[StreamsMonitorService] DM ${streamId} stream not found`)
+                    notFoundStreams.add(streamId)
+                    return
+                }
                 console.error(
                     `[StreamsMonitorService] Failed to add GDM ${streamId} stream to db. Error: ${error}`,
                 )
@@ -258,6 +278,48 @@ export class StreamsMonitorService {
         // streamsMetadata.Channel.streamIds.forEach(async (streamId) => {
         // console.log('[StreamsMonitorService] new channel stream', streamId)
         // })
+
+        if (notFoundStreams.size > 0) {
+            console.log('[StreamsMonitorService] deleting the not found streams', notFoundStreams)
+            await database.userSettingsChannel.deleteMany({
+                where: {
+                    ChannelId: {
+                        in: Array.from(notFoundStreams),
+                    },
+                },
+            })
+        }
+    }
+
+    private async removeStaleStreams() {
+        const channelIds = (
+            await database.userSettingsChannel.findMany({
+                select: { ChannelId: true },
+            })
+        ).map((s) => s.ChannelId)
+        const staleStreams = (
+            await database.syncedStream.findMany({
+                select: { streamId: true },
+                where: {
+                    NOT: {
+                        streamId: {
+                            in: channelIds,
+                        },
+                    },
+                },
+            })
+        ).map((s) => s.streamId)
+
+        if (staleStreams.length > 0) {
+            console.log('[StreamsMonitorService] removeStaleStreams', staleStreams)
+            await database.syncedStream.deleteMany({
+                where: {
+                    streamId: {
+                        in: staleStreams,
+                    },
+                },
+            })
+        }
     }
 
     public async stopMonitoringStreams() {
