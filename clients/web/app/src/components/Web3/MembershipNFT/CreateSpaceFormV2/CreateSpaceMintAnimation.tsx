@@ -5,14 +5,14 @@ import { Box, MotionBox, MotionStack, Stack, Text } from '@ui'
 import { TownsToken } from '@components/TownsToken/TownsToken'
 
 const images: string[] = [
-    '/public/placeholders/nft_1.png',
-    '/public/placeholders/nft_38.png',
-    '/public/placeholders/nft_42.png',
-    '/public/placeholders/nft_2.png',
-    '/public/placeholders/nft_17.png',
-    '/public/placeholders/nft_13.png',
-    '/public/placeholders/nft_21.png',
-    '/public/placeholders/nft_6.png',
+    '/placeholders/nft_1.png',
+    '/placeholders/nft_38.png',
+    '/placeholders/nft_42.png',
+    '/placeholders/nft_2.png',
+    '/placeholders/nft_17.png',
+    '/placeholders/nft_13.png',
+    '/placeholders/nft_21.png',
+    '/placeholders/nft_6.png',
 ]
 
 const texts: string[] = [
