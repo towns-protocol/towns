@@ -11,6 +11,7 @@ import { streamIdToBytes, userIdFromAddress } from './utils'
 import { env } from '../../utils/environment'
 import assert from 'assert'
 import { Err } from '@river/proto'
+import { logger } from '../../logger'
 
 type StreamsMetadata = {
     [key in StreamKind]: {
@@ -68,7 +69,7 @@ export class StreamsMonitorService {
     }
 
     public async addDMSyncStreamToDB(streamId: string): Promise<void> {
-        console.log('[StreamsMonitorService] adding DM', streamId, 'to db')
+        logger.info('[StreamsMonitorService] adding DM', streamId, 'to db')
 
         this.validateStream(streamId, StreamKind.DM)
 
@@ -93,7 +94,7 @@ export class StreamsMonitorService {
         for (const envelope of firstMiniblock.events) {
             const { payload } = envelope.event
             if (payload.case === 'dmChannelPayload' && payload.value.content.case === 'inception') {
-                console.log('[StreamsMonitorService] new DM channel, storing user ids')
+                logger.info('[StreamsMonitorService] new DM channel, storing user ids')
                 inceptionFound = true
 
                 const { firstPartyAddress, secondPartyAddress } = payload.value.content.value
@@ -115,11 +116,11 @@ export class StreamsMonitorService {
             ) {
                 const inception = payload.value.snapshot.content.value.inception
                 if (!inception) {
-                    console.log('[StreamsMonitorService] no inception in snapshot')
+                    logger.info('[StreamsMonitorService] no inception in snapshot')
                     continue
                 }
                 inceptionFound = true
-                console.log('[StreamsMonitorService] new DM snapshot, storing user ids')
+                logger.info('[StreamsMonitorService] new DM snapshot, storing user ids')
 
                 const { firstPartyAddress, secondPartyAddress } = inception
                 await database.syncedStream.create({
@@ -141,12 +142,12 @@ export class StreamsMonitorService {
         }
 
         if (!inceptionFound) {
-            console.log('no inception found for DM channel', streamId)
+            logger.info('[StreamsMonitorService] no inception found for DM channel', streamId)
         }
     }
 
     public async addGDMStreamToDB(streamId: string): Promise<void> {
-        console.log('[StreamsMonitorService] adding gdm', streamId, 'to db')
+        logger.info('[StreamsMonitorService] adding gdm', streamId, 'to db')
         this.validateStream(streamId, StreamKind.GDM)
 
         const response = await this.rpcClient.getStream({
@@ -174,7 +175,6 @@ export class StreamsMonitorService {
                 'snapshot' in envelope.event.payload.value
             ) {
                 const { snapshot } = envelope.event.payload.value
-                console.log('snapshot', snapshot)
                 if (!snapshot?.members?.joined) {
                     return
                 }
@@ -184,7 +184,7 @@ export class StreamsMonitorService {
             }
         }
 
-        console.log('[StreamsMonitorService] new GDM channel, user ids', userIds)
+        logger.info('[StreamsMonitorService] new GDM channel, user ids', userIds)
 
         await database.syncedStream.create({
             data: {
@@ -217,7 +217,7 @@ export class StreamsMonitorService {
 
     public async startMonitoringStreams() {
         if (env.NOTIFICATION_SYNC_ENABLED === 'true') {
-            console.log('notification sync is enabled')
+            logger.info('[StreamsMonitorService] notification sync is enabled')
             await this.refreshChannelStreams()
             const oneMinute = 1 * 60 * 1000
             this.intervalId = setInterval(async () => {
@@ -226,7 +226,7 @@ export class StreamsMonitorService {
 
             return this.streams.startSyncStreams()
         } else {
-            console.log('notification sync is disabled')
+            logger.info('[StreamsMonitorService] notification sync is disabled')
             return new Promise<void>((resolve) => {
                 this.releaseServiceAwait = () => {
                     this.releaseServiceAwait = undefined
@@ -237,7 +237,7 @@ export class StreamsMonitorService {
     }
 
     private async refreshChannelStreams() {
-        console.log('[StreamsMonitorService] refreshChannelStreams')
+        logger.info('[StreamsMonitorService] refreshChannelStreams')
         await this.fetchAndAddNewChannelStreams()
         await this.removeStaleStreams()
     }
@@ -248,15 +248,15 @@ export class StreamsMonitorService {
 
         streamsMetadata.DM.streamIds.forEach(async (streamId) => {
             try {
-                console.log('[StreamsMonitorService] new dm stream', streamId)
+                logger.info('[StreamsMonitorService] new dm stream', streamId)
                 await this.addDMSyncStreamToDB(streamId)
             } catch (error) {
                 if (errorContains(error, Err.NOT_FOUND)) {
-                    console.log(`[StreamsMonitorService] DM ${streamId} stream not found`)
+                    logger.info(`[StreamsMonitorService] DM ${streamId} stream not found`)
                     notFoundStreams.add(streamId)
                     return
                 }
-                console.error(
+                logger.error(
                     `[StreamsMonitorService] Failed to add DM ${streamId} stream to db. Error: ${error}`,
                 )
             }
@@ -266,21 +266,21 @@ export class StreamsMonitorService {
                 await this.addGDMStreamToDB(streamId)
             } catch (error) {
                 if (errorContains(error, Err.NOT_FOUND)) {
-                    console.log(`[StreamsMonitorService] DM ${streamId} stream not found`)
+                    logger.info(`[StreamsMonitorService] GDM ${streamId} stream not found`)
                     notFoundStreams.add(streamId)
                     return
                 }
-                console.error(
+                logger.error(
                     `[StreamsMonitorService] Failed to add GDM ${streamId} stream to db. Error: ${error}`,
                 )
             }
         })
         // streamsMetadata.Channel.streamIds.forEach(async (streamId) => {
-        // console.log('[StreamsMonitorService] new channel stream', streamId)
+        // logger.info('[StreamsMonitorService] new channel stream', streamId)
         // })
 
         if (notFoundStreams.size > 0) {
-            console.log('[StreamsMonitorService] deleting the not found streams', notFoundStreams)
+            logger.info('[StreamsMonitorService] deleting the not found streams', notFoundStreams)
             await database.userSettingsChannel.deleteMany({
                 where: {
                     ChannelId: {
@@ -311,7 +311,7 @@ export class StreamsMonitorService {
         ).map((s) => s.streamId)
 
         if (staleStreams.length > 0) {
-            console.log('[StreamsMonitorService] removeStaleStreams', staleStreams)
+            logger.info('[StreamsMonitorService] removeStaleStreams', staleStreams)
             await database.syncedStream.deleteMany({
                 where: {
                     streamId: {

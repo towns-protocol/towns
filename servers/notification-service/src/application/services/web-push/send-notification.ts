@@ -13,6 +13,7 @@ import { PushSubscription } from '@prisma/client'
 import { Urgency } from '../../schema/notificationSchema'
 import crypto from 'crypto'
 import { env } from '../../utils/environment'
+import { logger } from '../../logger'
 
 export async function sendNotificationViaWebPush(
     options: NotificationOptions,
@@ -29,7 +30,7 @@ export async function sendNotificationViaWebPush(
     try {
         const subscription: WebPushSubscription = JSON.parse(subscribed.PushSubscription)
         if (!subscription) {
-            console.error('cannot parse subscription')
+            logger.error('cannot parse subscription')
             return {
                 status: SendPushStatus.Error,
                 message: 'cannot parse subscription',
@@ -59,11 +60,11 @@ export async function sendNotificationViaWebPush(
 
         // create the request to send to the push service
         const request = await createRequest(pushOptions, subscription)
-        console.log('request url', request.url)
+        logger.info('request url', request.url)
 
         const response = await fetch(request)
         const status = response.status
-        console.log('sendNotificationViaWebPush response', {
+        logger.info('sendNotificationViaWebPush response', {
             requestUrl: request.url,
             status: response.status,
             message: await response.text(),
@@ -77,7 +78,7 @@ export async function sendNotificationViaWebPush(
         }
         // eslint-disable-next-line @typescript-eslint/no-explicit-any
     } catch (e: any) {
-        console.log(e)
+        logger.info(e)
         return {
             status: SendPushStatus.Error,
             message: e.message,

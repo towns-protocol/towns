@@ -1,6 +1,7 @@
 import { NextFunction, Request, Response } from 'express'
 import { StatusCodes } from 'http-status-codes'
 import { env } from '../utils/environment'
+import { logger } from '../logger'
 
 const DECODED_AUTH_SECRET = Buffer.from(env.AUTH_SECRET, 'base64').toString('utf8')
 
@@ -18,9 +19,9 @@ export function validateAuthToken(req: Request, res: Response, next: NextFunctio
             next()
             return
         }
-        console.log('secret and token do not match')
+        logger.info('secret and token do not match')
     } catch (error) {
-        console.error(error)
+        logger.error(error)
     }
 
     res.status(StatusCodes.UNAUTHORIZED).json({ error: 'Unauthorized' })

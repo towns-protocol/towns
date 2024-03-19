@@ -1,6 +1,7 @@
 import express from 'express'
 import helmet from 'helmet'
 import morgan from 'morgan'
+import morganjson from 'morgan-json'
 import 'express-async-errors'
 
 import { cors } from './middleware/cors'
@@ -8,14 +9,23 @@ import { validateAuthToken } from './middleware/auth'
 import { handleGlobalError, handleNotFound } from './middleware/errors'
 import { publicRoutes } from './routes/publicRoutes'
 import { routes } from './routes/routes'
-import { env } from './utils/environment'
+import { isProduction } from './utils/environment'
 
 export async function initializeApp() {
     const app = express()
-    const isProduction = env.NODE_ENV === 'production'
 
     // Middlewares
-    app.use(morgan(isProduction ? 'combined' : 'dev'))
+    if (isProduction) {
+        app.use(
+            morgan(
+                morganjson(
+                    ':remote-addr - :remote-user [:date[clf]] :method :url HTTP/:http-version :status :res[content-length] :referrer :user-agent',
+                ),
+            ),
+        )
+    } else {
+        app.use(morgan('dev'))
+    }
     app.use(cors)
     app.use(helmet())
     app.use(express.json())

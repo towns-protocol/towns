@@ -1,3 +1,4 @@
+import './../utils/envs.mock'
 import { Request, Response } from 'express'
 import { StatusCodes } from 'http-status-codes'
 import {
@@ -7,6 +8,7 @@ import {
 } from './notificationSettingsHandler'
 import { database } from '../../infrastructure/database/prisma'
 import { Mute } from '@prisma/client'
+import { logger } from '../logger'
 
 jest.mock('../../infrastructure/database/prisma', () => ({
     database: {
@@ -75,12 +77,12 @@ describe('saveNotificationSettingsHandler', () => {
         const error = new Error('Database error')
         jest.spyOn(database, '$transaction').mockImplementation((callback) => callback(database))
         ;(database.userSettings.upsert as jest.Mock).mockRejectedValue(error)
-        jest.spyOn(console, 'error').mockImplementation(() => {})
+        jest.spyOn(logger, 'error').mockImplementation(() => logger)
 
         await saveNotificationSettingsHandler(req, res)
 
         expect(database.$transaction).toHaveBeenCalledTimes(1)
-        expect(console.error).toHaveBeenCalledWith('saveSettings error', error)
+        expect(logger.error).toHaveBeenCalledWith('saveSettings error', error)
         expect(res.status).toHaveBeenCalledWith(StatusCodes.UNPROCESSABLE_ENTITY)
         expect(res.json).toHaveBeenCalledWith({ error: 'Invalid data' })
     })
@@ -125,7 +127,7 @@ describe('deleteNotificationSettingsHandler', () => {
         await deleteNotificationSettingsHandler(req, res)
 
         expect(database.userSettings.delete).toHaveBeenCalledTimes(1)
-        expect(console.error).toHaveBeenCalledWith('deleteSettings error', error)
+        expect(logger.error).toHaveBeenCalledWith('deleteSettings error', error)
         expect(res.status).toHaveBeenCalledWith(StatusCodes.UNPROCESSABLE_ENTITY)
         expect(res.json).toHaveBeenCalledWith({ error: 'Invalid data' })
     })
@@ -204,7 +206,7 @@ describe('getNotificationSettingsHandler', () => {
         await getNotificationSettingsHandler(req, res)
 
         expect(database.userSettings.findUnique).toHaveBeenCalledTimes(1)
-        expect(console.error).toHaveBeenCalledWith('getSettings error', error)
+        expect(logger.error).toHaveBeenCalledWith('getSettings error', error)
         expect(res.status).toHaveBeenCalledWith(StatusCodes.UNPROCESSABLE_ENTITY)
         expect(res.json).toHaveBeenCalledWith({ error: 'Invalid data' })
     })

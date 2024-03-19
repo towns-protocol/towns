@@ -1,7 +1,9 @@
+import './../utils/envs.mock'
 import { Request, Response } from 'express'
 import { StatusCodes } from 'http-status-codes'
 import { addSubscriptionHandler, removeSubscriptionHandler } from './subscriptionHandler'
 import { database } from '../../infrastructure/database/prisma'
+import { logger } from '../logger'
 
 jest.mock('../../infrastructure/database/prisma', () => ({
     database: {
@@ -63,7 +65,7 @@ describe('addSubscriptionHandler', () => {
     it('should handle error and return UNPROCESSABLE_ENTITY status', async () => {
         const error = new Error('Invalid data')
         ;(database.pushSubscription.upsert as jest.Mock).mockRejectedValue(error)
-        jest.spyOn(console, 'error').mockImplementation(() => {})
+        jest.spyOn(logger, 'error').mockImplementation(() => logger)
 
         await addSubscriptionHandler(req, res)
 
@@ -78,7 +80,7 @@ describe('addSubscriptionHandler', () => {
                 UserId: req.body.userId,
             },
         })
-        expect(console.error).toHaveBeenCalledWith(error)
+        expect(logger.error).toHaveBeenCalledWith(error)
         expect(res.status).toHaveBeenCalledWith(StatusCodes.UNPROCESSABLE_ENTITY)
         expect(res.json).toHaveBeenCalledWith({ error: 'Invalid data' })
     })

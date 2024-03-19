@@ -2,10 +2,11 @@ import { Request, Response } from 'express'
 import { StatusCodes } from 'http-status-codes'
 import { database } from '../../infrastructure/database/prisma'
 import { PushType } from '../schema/subscriptionSchema'
+import { logger } from '../logger'
 
 export async function addSubscriptionHandler(request: Request, res: Response) {
     try {
-        console.log('addSubscriptionHandler userId', request.body.userId)
+        logger.info('addSubscriptionHandler userId', request.body.userId)
         const subscriptionData = {
             UserId: request.body.userId,
             PushSubscription: JSON.stringify(request.body.subscriptionObject),
@@ -21,7 +22,7 @@ export async function addSubscriptionHandler(request: Request, res: Response) {
         })
         return res.status(StatusCodes.OK).json(subscription)
     } catch (error) {
-        console.error(error)
+        logger.error(error)
         return res.status(StatusCodes.UNPROCESSABLE_ENTITY).json({ error: 'Invalid data' })
     }
 }

@@ -14,6 +14,7 @@ import { UserSettingsTables } from '../database/userSettingsTables'
 import { database } from '../../infrastructure/database/prisma'
 import { env } from '../utils/environment'
 import { sendNotificationViaWebPush } from './web-push/send-notification'
+import { logger } from '../logger'
 
 export class NotificationService {
     constructor() {}
@@ -159,7 +160,7 @@ export class NotificationService {
         let notificationsSentCount = 0
         for (const result of sendResults) {
             if (result.status === 'rejected') {
-                console.log('failed to send notification', result.reason)
+                logger.info('failed to send notification', result.reason)
                 continue
             }
 
@@ -168,7 +169,7 @@ export class NotificationService {
                 continue
             }
 
-            console.log('failed to send notification', JSON.stringify(result))
+            logger.info('failed to send notification', JSON.stringify(result))
             await this.deleteFailedSubscription(result)
         }
         return notificationsSentCount
@@ -177,7 +178,7 @@ export class NotificationService {
     public async deleteFailedSubscription(
         result: PromiseFulfilledResult<SendPushResponse>,
     ): Promise<void> {
-        console.log(
+        logger.info(
             'deleting subscription from the db',
             'userId',
             result.value.userId,
@@ -191,7 +192,7 @@ export class NotificationService {
                     PushSubscription: result.value.pushSubscription,
                 },
             })
-            console.log(
+            logger.info(
                 'deleted subscription from the db',
                 'userId',
                 result.value.userId,
@@ -199,7 +200,7 @@ export class NotificationService {
                 result.value.pushSubscription,
             )
         } catch (err) {
-            console.error('failed to delete subscription from the db', err)
+            logger.error('failed to delete subscription from the db', err)
         }
     }
 }

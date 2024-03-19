@@ -1,3 +1,4 @@
+import './../utils/envs.mock'
 import { NotificationService } from './notificationService'
 import { SendPushResponse, SendPushStatus } from './web-push/web-push-types'
 import { PushType } from '../schema/subscriptionSchema'

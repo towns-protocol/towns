@@ -7,6 +7,7 @@ import {
     saveUserSettingsSchema,
 } from '../schema/notificationSettingsSchema'
 import { z } from 'zod'
+import { logger } from '../logger'
 
 export async function saveNotificationSettingsHandler(req: Request, res: Response) {
     const payload: z.infer<typeof saveUserSettingsSchema> = req.body
@@ -70,7 +71,7 @@ export async function saveNotificationSettingsHandler(req: Request, res: Respons
             }
             return
         } catch (e) {
-            console.error('saveSettings error', e)
+            logger.error('saveSettings error', e)
             return res.status(StatusCodes.UNPROCESSABLE_ENTITY).json({ error: 'Invalid data' })
         }
     })
@@ -86,7 +87,7 @@ export async function deleteNotificationSettingsHandler(req: Request, res: Respo
         await database.userSettings.delete({ where: { UserId: userId } })
         return res.sendStatus(StatusCodes.NO_CONTENT)
     } catch (e) {
-        console.error('deleteSettings error', e)
+        logger.error('deleteSettings error', e)
     }
 
     return res.status(StatusCodes.UNPROCESSABLE_ENTITY).json({ error: 'Invalid data' })
@@ -125,7 +126,7 @@ export async function getNotificationSettingsHandler(req: Request, res: Response
             })),
         })
     } catch (e) {
-        console.error('getSettings error', e)
+        logger.error('getSettings error', e)
     }
 
     return res.status(StatusCodes.UNPROCESSABLE_ENTITY).json({ error: 'Invalid data' })

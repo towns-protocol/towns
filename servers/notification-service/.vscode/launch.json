@@ -6,6 +6,7 @@
             "request": "launch",
             "name": "launch notification service",
             "skipFiles": ["<node_internals>/**"],
+            "outputCapture": "std",
             "runtimeExecutable": "node",
             "preLaunchTask": "start dev",
             "runtimeArgs": [
