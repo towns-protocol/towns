@@ -7,9 +7,10 @@ import { LoginStatus } from './login'
 import { bin_toHexString } from '@river/dlog'
 import { TSigner, Address } from '../types/web3-types'
 import { SignerUndefinedError } from '../types/error-types'
+import { makeSignerContext } from '@river/sdk'
 
 export function useCasablancaWalletSignIn() {
-    const { clientSingleton } = useTownsContext()
+    const { casablancaServerUrl } = useTownsContext()
     const { setCasablancaCredentials } = useCredentialStore()
     const { setLoginError, setLoginStatus } = useCasablancaStore()
 
@@ -20,23 +21,17 @@ export function useCasablancaWalletSignIn() {
 
     const loginWithWalletToCasablanca = useCallback(
         async (_statement: string, signer: TSigner) => {
-            if (!clientSingleton) {
-                throw new Error('Towns client not initialized')
-            }
             if (!signer) {
                 throw new SignerUndefinedError()
             }
-            if (!clientSingleton.opts.casablancaServerUrl) {
+            if (!casablancaServerUrl) {
                 throw new Error('Casablanca server url not set')
             }
             const delegateWallet = ethers.Wallet.createRandom()
             const wallet = (await signer.getAddress()) as Address
             try {
-                const casablancaContext = await clientSingleton.signCasablancaDelegate(
-                    delegateWallet,
-                    signer,
-                )
-                setCasablancaCredentials(clientSingleton.opts.casablancaServerUrl, {
+                const casablancaContext = await makeSignerContext(signer, delegateWallet)
+                setCasablancaCredentials(casablancaServerUrl, {
                     privateKey: delegateWallet.privateKey,
                     creatorAddress: ethers.utils.getAddress(
                         bin_toHexString(casablancaContext.creatorAddress),
@@ -59,7 +54,7 @@ export function useCasablancaWalletSignIn() {
                 setLoginStatus(LoginStatus.LoggedOut)
             }
         },
-        [clientSingleton, setCasablancaCredentials, setLoginError, setLoginStatus],
+        [casablancaServerUrl, setCasablancaCredentials, setLoginError, setLoginStatus],
     )
 
     const registerWalletWithCasablanca = useCallback(

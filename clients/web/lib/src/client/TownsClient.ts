@@ -1,11 +1,10 @@
-import { BigNumber, ContractReceipt, ContractTransaction, Wallet, ethers } from 'ethers'
+import { BigNumber, ContractReceipt, ContractTransaction, ethers } from 'ethers'
 import { RoomMessageEvent, transformAttachments } from '../types/timeline-types'
 import {
     Client as CasablancaClient,
     RiverDbManager,
     makeStreamRpcClient,
     userIdFromAddress,
-    makeSignerContext,
 } from '@river/sdk'
 import { EntitlementsDelegate, DecryptionStatus } from '@river/encryption'
 import { CreateSpaceParams, IRuleEntitlement } from '@river/web3'
@@ -163,22 +162,6 @@ export class TownsClient implements EntitlementsDelegate {
         })
 
         this._signerContext = undefined
-    }
-    /************************************************
-     * signCasablancaDelegate
-     * sign the public key of a local wallet
-     * that you will use to sign messages to casablanca
-     * TODO(HNT-1380): this is not final implementation
-     *************************************************/
-    public async signCasablancaDelegate(
-        delegateWallet: Wallet,
-        signer: ethers.Signer | undefined,
-    ): Promise<SignerContext> {
-        if (!signer) {
-            throw new SignerUndefinedError("can't sign without a web3 signer")
-        }
-        const context = await makeSignerContext(signer, delegateWallet)
-        return context
     }
 
     /************************************************

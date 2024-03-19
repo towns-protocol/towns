@@ -19,7 +19,7 @@ import { TownsTestWeb3Provider } from './TownsTestWeb3Provider'
 import { ethers } from 'ethers'
 import { makeUniqueName } from './TestUtils'
 import { toEvent } from '../../../src/hooks/TownsContext/useCasablancaTimelines'
-import { Client as CasablancaClient } from '@river/sdk'
+import { Client as CasablancaClient, makeSignerContext } from '@river/sdk'
 import { Permission, IArchitectBase, IRuleEntitlement } from '@river/web3'
 
 export interface TownsTestClientProps {
@@ -181,18 +181,12 @@ export class TownsTestClient extends TownsClient {
     public async registerWalletAndStartClient() {
         console.log('registerWalletAndStartClient', this.name, this.opts)
 
-        const casablancaContext = await this.signCasablancaDelegate(
-            this.delegateWallet,
-            this.provider.wallet,
-        )
+        const casablancaContext = await makeSignerContext(this.provider.wallet, this.delegateWallet)
         await this.startCasablancaClient(casablancaContext)
     }
 
     public async loginWalletAndStartClient(): Promise<void> {
-        const casablancaContext = await this.signCasablancaDelegate(
-            this.delegateWallet,
-            this.provider.wallet,
-        )
+        const casablancaContext = await makeSignerContext(this.provider.wallet, this.delegateWallet)
         await this.startCasablancaClient(casablancaContext)
     }
 
