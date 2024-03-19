@@ -28,6 +28,8 @@ import { useCreateLink } from 'hooks/useCreateLink'
 
 FontLoader.init()
 
+const DEFAULT_TIMELINE_FILTER = new Set([ZTEvent.Fulfillment, ZTEvent.KeySolicitation]) // we don't need to see these in the ui
+
 export const App = () => {
     const { theme, mutedChannelIds } = useStore((state) => ({
         theme: state.getTheme(),
@@ -87,7 +89,7 @@ export const App = () => {
             casablancaServerUrl={environment.casablancaUrl}
             chain={environment.chain}
             riverChain={environment.riverChain}
-            timelineFilter={new Set([ZTEvent.Fulfillment, ZTEvent.KeySolicitation])}
+            timelineFilter={DEFAULT_TIMELINE_FILTER}
             pushNotificationAuthToken={env.VITE_AUTH_WORKER_HEADER_SECRET}
             pushNotificationWorkerUrl={env.VITE_WEB_PUSH_WORKER_URL}
             accountAbstractionConfig={accountAbstractionConfig}
