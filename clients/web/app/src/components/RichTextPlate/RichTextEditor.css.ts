@@ -28,6 +28,7 @@ export const paragraph = style({})
 export const link = style([
     atoms({
         color: 'cta2',
+        cursor: 'pointer',
     }),
     {
         overflowWrap: 'anywhere',

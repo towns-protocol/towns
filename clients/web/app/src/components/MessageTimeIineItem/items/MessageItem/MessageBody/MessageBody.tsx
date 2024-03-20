@@ -2,12 +2,14 @@ import React, { useCallback, useMemo } from 'react'
 import { Channel, EventStatus, RoomMember, RoomMessageEvent, TimelineEvent } from 'use-towns-client'
 import { UnfurlData } from '@unfurl-worker/types'
 import { ErrorBoundary, FallbackProps } from '@components/ErrorBoundary/ErrorBoundary'
+import { RichTextPreview as PlateRichTextPreview } from '@components/RichTextPlate/RichTextPreview'
 import { RichTextPreview } from '@components/RichText/RichTextPreview'
 import { getMessageBody, getUrls } from 'utils/ztevent_util'
 import { RatioedBackgroundImage } from '@components/RatioedBackgroundImage'
 import { MessageStatusAnnotation } from '@components/RichText/hooks/useInitialConfig'
 import { useDevice } from 'hooks/useDevice'
 import { Box, Icon, Stack, TextButton } from '@ui'
+import { env } from 'utils'
 import { useUnfurlContent } from '../../../../../api/lib/unfurl'
 import { UnfurledTwitterBlock } from './UnfurledTwitterBlock'
 import { UnfurledGenericBlock } from './UnfurledGenericBlock'
@@ -86,10 +88,11 @@ export const MessageBody = ({
         statusAnnotation = 'not-sent' as const
     }
 
+    const MessagePreview = env.VITE_ENABLE_SLATE_PREVIEW ? PlateRichTextPreview : RichTextPreview
     return (
         <>
             {body && (
-                <RichTextPreview
+                <MessagePreview
                     content={body}
                     statusAnnotation={statusAnnotation}
                     members={members}

@@ -1,6 +1,4 @@
 import React from 'react'
-import { PlateElement } from '@udecode/plate-common'
-import { withRef } from '@udecode/cn'
 import { Box } from '@ui'
 import { listitem, ol, ul } from '../../RichTextEditor.css'
 
@@ -9,20 +7,20 @@ const classNameMap = {
     ol,
     li: listitem,
     span: '',
-}
-export const ListElement = withRef<typeof PlateElement, { variant: 'ul' | 'ol' | 'li' | 'span' }>(
-    ({ className, variant, children, ...props }, ref) => {
-        const Component = variant!
+} as const
+export const ListElement = ({
+    variant,
+    children,
+}: React.PropsWithChildren<{ variant: keyof JSX.IntrinsicElements }>) => {
+    const Component = variant!
+    if (variant === 'span') {
         return (
-            <PlateElement asChild ref={ref} {...props}>
-                {variant === 'span' ? (
-                    <Box as="span" display="inline-block" paddingLeft="xxs">
-                        {children}
-                    </Box>
-                ) : (
-                    <Component className={classNameMap[variant]}>{children}</Component>
-                )}
-            </PlateElement>
+            <Box as="span" display="inline-block" paddingLeft="xxs">
+                {children}
+            </Box>
         )
-    },
-)
+    }
+    // eslint-disable-next-line
+    // @ts-ignore
+    return <Component className={classNameMap[variant]}>{children}</Component>
+}

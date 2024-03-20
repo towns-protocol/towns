@@ -8,10 +8,14 @@ export const ParagraphElement = withRef<typeof PlateElement>(
     ({ className, children, ...props }, ref) => {
         return (
             <PlateElement asChild ref={ref} {...props}>
-                <Text as="p" className={paragraph}>
-                    {children}
-                </Text>
+                <ParagraphWithoutPlate>{children}</ParagraphWithoutPlate>
             </PlateElement>
         )
     },
+)
+
+export const ParagraphWithoutPlate = ({ children }: React.PropsWithChildren) => (
+    <Text as="p" className={paragraph}>
+        {children}
+    </Text>
 )

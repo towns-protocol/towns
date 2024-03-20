@@ -12,10 +12,19 @@ export const LinkElement = withRef<typeof PlateElement>(
 
         return (
             <PlateElement asChild ref={ref} {...(linkProps as Record<never, never>)} {...props}>
-                <Box as="a" className={link} display="inline-block">
-                    {children}
-                </Box>
+                <LinkWithoutPlate href={linkProps.href}>{children}</LinkWithoutPlate>
             </PlateElement>
         )
     },
 )
+
+export const LinkWithoutPlate = ({
+    children,
+    href,
+}: React.PropsWithChildren<{ children?: unknown; href?: string }>) => {
+    return (
+        <Box as="a" href={href} target="_blank" className={link} display="inline-block">
+            {children}
+        </Box>
+    )
+}

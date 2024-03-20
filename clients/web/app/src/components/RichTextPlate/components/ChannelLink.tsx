@@ -1,4 +1,4 @@
-import React from 'react'
+import React, { useMemo } from 'react'
 import { NavLink } from 'react-router-dom'
 import { Channel, useSpaceData } from 'use-towns-client'
 import { atoms } from 'ui/styles/atoms.css'
@@ -18,4 +18,19 @@ export const ChannelLink = ({ channel }: { channel: Channel }) => {
             #{channel?.label?.toLowerCase()}
         </NavLink>
     )
+}
+
+export const ChannelLinkForDisplay = ({
+    channels,
+    channelLabel,
+}: {
+    channels?: Channel[]
+    channelLabel: string
+}) => {
+    const channel = useMemo(
+        () => channels?.find((c) => c.label === channelLabel.slice(1)),
+        [channels, channelLabel],
+    )
+
+    return <ChannelLink channel={channel || { id: channelLabel, label: channelLabel }} />
 }

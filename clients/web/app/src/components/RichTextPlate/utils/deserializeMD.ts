@@ -9,7 +9,10 @@ import remarkUserMention from './remark/userMentionPlugin'
  * Deserialize content from Markdown format to Slate format.
  */
 export const deserializeMd = <V extends Value>(editor: PlateEditor<V>, data: string): V => {
-    const tree = unified().use(markdown).use(remarkSlate).use(remarkUserMention).processSync(data)
+    const tree = createUnifiedProcessor().processSync(data)
 
     return tree.result as V
 }
+
+export const createUnifiedProcessor = () =>
+    unified().use(markdown).use(remarkSlate).use(remarkUserMention)
