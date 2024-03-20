@@ -35,7 +35,7 @@ export const bobTalksToHimself = async (
 ) => {
     log('start')
 
-    const bob = makeTestRpcClient()
+    const bob = await makeTestRpcClient()
 
     const maybeFlush = flush
         ? async () => {

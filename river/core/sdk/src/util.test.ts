@@ -34,7 +34,13 @@ const TEST_URL_MULTI =
     'https://localhost:5170,https://localhost:5171,https://localhost:5172,https://localhost:5173,https://localhost:5174,' +
     'https://localhost:5175,https://localhost:5176,https://localhost:5177,https://localhost:5178,https://localhost:5179'
 
+let testUrls: string[] | undefined = undefined
+let curTestUrl = -1
+
 const initTestUrls = async () => {
+    if (testUrls !== undefined) {
+        return testUrls
+    }
     if (process.env.RIVER_TEST_URLS !== undefined && process.env.RIVER_TEST_URLS !== '') {
         const urls = process.env.RIVER_TEST_URLS.split(',')
         log(
@@ -58,24 +64,22 @@ const initTestUrls = async () => {
     }
     const config = process.env.RIVER_TEST_CONNECT
     const riverRegistryNodes = await returnRiverRegistryNodes()
-    let urls: string[]
+
     if (config === 'single') {
-        urls = riverRegistryNodes ?? [TEST_URL_SINGLE]
+        testUrls = riverRegistryNodes ?? [TEST_URL_SINGLE]
     } else if (config === 'single_ent') {
-        urls = riverRegistryNodes ?? [TEST_URL_SINGLE_ENT]
+        testUrls = riverRegistryNodes ?? [TEST_URL_SINGLE_ENT]
     } else if (config === 'multi') {
-        urls = riverRegistryNodes ?? TEST_URL_MULTI.split(',')
+        testUrls = riverRegistryNodes ?? TEST_URL_MULTI.split(',')
     } else {
         throw new Error(`invalid RIVER_TEST_CONNECT: ${config}`)
     }
-    log('initTestUrls, RIVER_TEST_CONNECT=', config, 'urls=', urls)
-    return urls
+    log('initTestUrls, RIVER_TEST_CONNECT=', config, 'testUrls=', testUrls)
+    return testUrls
 }
 
-const testUrls = await initTestUrls()
-let curTestUrl = -1
-
-export const getNextTestUrl = () => {
+export const getNextTestUrl = async () => {
+    const testUrls = await initTestUrls()
     if (testUrls.length === 1) {
         log('getNextTestUrl, url=', testUrls[0])
         return testUrls[0]
@@ -103,7 +107,10 @@ export const getNextTestUrl = () => {
     }
 }
 
-export const makeTestRpcClient = () => makeStreamRpcClient(getNextTestUrl())
+export const makeTestRpcClient = async () => {
+    const url = await getNextTestUrl()
+    return makeStreamRpcClient(url)
+}
 
 export const makeEvent_test = async (
     context: SignerContext,
@@ -167,13 +174,8 @@ export const makeTestClient = async (opts?: TestClientOpts): Promise<Client> => 
 
     // create a new client with store(s)
     const cryptoStore = RiverDbManager.getCryptoDb(userId, dbName)
-    return new Client(
-        context,
-        makeTestRpcClient(),
-        cryptoStore,
-        entitlementsDelegate,
-        persistenceDbName,
-    )
+    const rpcClient = await makeTestRpcClient()
+    return new Client(context, rpcClient, cryptoStore, entitlementsDelegate, persistenceDbName)
 }
 
 class DonePromise {

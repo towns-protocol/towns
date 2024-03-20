@@ -13,5 +13,6 @@ export function migrateSnapshot(snapshot: Snapshot): Snapshot {
     for (let i: number = snapshot.snapshotVersion; i < currentVersion; i++) {
         result = SNAPSHOT_MIGRATIONS[i](result)
     }
+    result.snapshotVersion = currentVersion
     return result
 }

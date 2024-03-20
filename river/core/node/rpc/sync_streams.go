@@ -213,7 +213,10 @@ func (s *syncHandlerImpl) handleSyncRequest(
 				stub:            stub,
 			}
 		}
-		sub.addSyncNode(r, remoteCookie)
+		err := sub.addSyncNode(r, remoteCookie)
+		if err != nil {
+			return err
+		}
 	}
 
 	if len(localCookies) > 0 {

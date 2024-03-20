@@ -27,7 +27,7 @@ describe('syncStreams', () => {
     test('starting->syncing->canceling->notSyncing', async () => {
         log('starting->syncing->canceling->notSyncing')
         /** Arrange */
-        const alice = makeTestRpcClient()
+        const alice = await makeTestRpcClient()
         const done = makeDonePromise()
         const alicesContext = await makeRandomUserContext()
 
@@ -75,7 +75,7 @@ describe('syncStreams', () => {
 //     test.skip('retry loop', async () => {
 //         /** Arrange */
 //         const done = makeDonePromise()
-//         const alice = makeTestRpcClient()
+//         const alice = await makeTestRpcClient()
 //         const alicesUserId = userIdFromAddress(alicesContext.creatorAddress)
 //         const alicesUserStreamId = makeUserStreamId(alicesUserId)
 //         // create account for alice
@@ -158,10 +158,10 @@ describe('syncStreams', () => {
 
 //     test('addStreamToSync', async () => {
 //         /** Arrange */
-//         const alice = makeTestRpcClient()
+//         const alice = await makeTestRpcClient()
 //         const alicesUserId = userIdFromAddress(alicesContext.creatorAddress)
 //         const alicesUserStreamId = makeUserStreamId(alicesUserId)
-//         const bob = makeTestRpcClient()
+//         const bob = await makeTestRpcClient()
 //         const bobsUserId = userIdFromAddress(bobsContext.creatorAddress)
 //         const bobsUserStreamId = makeUserStreamId(bobsUserId)
 //         // create accounts for alice and bob
@@ -289,10 +289,10 @@ describe('syncStreams', () => {
 
 //     test('removeStreamFromSync', async () => {
 //         /** Arrange */
-//         const alice = makeTestRpcClient()
+//         const alice = await makeTestRpcClient()
 //         const alicesUserId = userIdFromAddress(alicesContext.creatorAddress)
 //         const alicesUserStreamId = makeUserStreamId(alicesUserId)
-//         const bob = makeTestRpcClient()
+//         const bob = await makeTestRpcClient()
 //         const bobsUserId = userIdFromAddress(bobsContext.creatorAddress)
 //         const bobsUserStreamId = makeUserStreamId(bobsUserId)
 //         // create accounts for alice and bob

@@ -128,7 +128,7 @@ func (s *syncSubscriptionImpl) unsubLocalStreams() {
 func (s *syncSubscriptionImpl) addSyncNode(
 	node *syncNode,
 	cookies []*protocol.SyncCookie,
-) {
+) error {
 	s.mu.Lock()
 	defer s.mu.Unlock()
 
@@ -140,10 +140,11 @@ func (s *syncSubscriptionImpl) addSyncNode(
 	for _, cookie := range cookies {
 		streamId, err := shared.StreamIdFromBytes(cookie.StreamId)
 		if err != nil {
-			panic(err)
+			return err
 		}
 		s.remoteStreams[streamId.String()] = node
 	}
+	return nil
 }
 
 func (s *syncSubscriptionImpl) addRemoteNode(

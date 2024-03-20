@@ -41,7 +41,7 @@ describe('workflows', () => {
         const log = base_log.extend('creationSideEffects')
         log('start')
 
-        const bob = makeTestRpcClient()
+        const bob = await makeTestRpcClient()
         const bobsUserId = userIdFromAddress(bobsContext.creatorAddress)
         const bobsUserStreamIdStr = makeUserStreamId(bobsUserId)
         const bobsUserStreamId = streamIdToBytes(bobsUserStreamIdStr)

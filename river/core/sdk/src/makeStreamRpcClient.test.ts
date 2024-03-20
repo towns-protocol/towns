@@ -8,7 +8,7 @@ import { errorContains } from './makeStreamRpcClient'
 
 describe('protocol', () => {
     test('info', async () => {
-        const client = makeTestRpcClient()
+        const client = await makeTestRpcClient()
         expect(client).toBeDefined()
 
         const response: InfoResponse = await client.info(new InfoRequest({}), {
@@ -19,7 +19,7 @@ describe('protocol', () => {
     })
 
     test('info-error', async () => {
-        const client = makeTestRpcClient()
+        const client = await makeTestRpcClient()
         expect(client).toBeDefined()
 
         try {

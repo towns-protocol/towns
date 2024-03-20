@@ -65,7 +65,7 @@ describe('streamRpcClient using v2 sync', () => {
 
     test('syncStreamsGetsSyncId', async () => {
         /** Arrange */
-        const alice = makeTestRpcClient()
+        const alice = await makeTestRpcClient()
         const alicesUserId = userIdFromAddress(alicesContext.creatorAddress)
         const alicesUserStreamIdStr = makeUserStreamId(alicesUserId)
         const alicesUserStreamId = streamIdToBytes(alicesUserStreamIdStr)
@@ -151,11 +151,11 @@ describe('streamRpcClient using v2 sync', () => {
 
     test('addStreamToSyncGetsEvents', async () => {
         /** Arrange */
-        const alice = makeTestRpcClient()
+        const alice = await makeTestRpcClient()
         const alicesUserId = userIdFromAddress(alicesContext.creatorAddress)
         const alicesUserStreamIdStr = makeUserStreamId(alicesUserId)
         const alicesUserStreamId = streamIdToBytes(alicesUserStreamIdStr)
-        const bob = makeTestRpcClient()
+        const bob = await makeTestRpcClient()
         const bobsUserId = userIdFromAddress(bobsContext.creatorAddress)
         const bobsUserStreamIdStr = makeUserStreamId(bobsUserId)
         const bobsUserStreamId = streamIdToBytes(bobsUserStreamIdStr)
@@ -305,7 +305,7 @@ describe('streamRpcClient', () => {
     })
 
     test('makeStreamRpcClient', async () => {
-        const client = makeTestRpcClient()
+        const client = await makeTestRpcClient()
         log('makeStreamRpcClient', 'url', client.url)
         expect(client).toBeDefined()
         const result = await client.info({ debug: ['graffiti'] })
@@ -314,7 +314,7 @@ describe('streamRpcClient', () => {
     })
 
     test('error', async () => {
-        const client = makeTestRpcClient()
+        const client = await makeTestRpcClient()
         expect(client).toBeDefined()
 
         let err: Error | undefined = undefined
@@ -331,7 +331,7 @@ describe('streamRpcClient', () => {
     })
 
     test('error_untyped', async () => {
-        const client = makeTestRpcClient()
+        const client = await makeTestRpcClient()
         expect(client).toBeDefined()
 
         let err: Error | undefined = undefined
@@ -348,7 +348,7 @@ describe('streamRpcClient', () => {
     })
 
     test('panic', async () => {
-        const client = makeTestRpcClient()
+        const client = await makeTestRpcClient()
         expect(client).toBeDefined()
         await expect(client.info({ debug: ['panic'] })).rejects.toThrow(
             '[unknown] TypeError: fetch failed',
@@ -359,7 +359,7 @@ describe('streamRpcClient', () => {
         const wallet = ethers.Wallet.createRandom()
         const charliesContext = await makeUserContextFromWallet(wallet)
 
-        const charlie = makeTestRpcClient()
+        const charlie = await makeTestRpcClient()
         const userId = userIdFromAddress(charliesContext.creatorAddress)
         const streamIdStr = makeUserStreamId(userId)
         const streamId = streamIdToBytes(streamIdStr)
@@ -378,7 +378,7 @@ describe('streamRpcClient', () => {
 
     test('bobSendsMismatchedPayloadCase', async () => {
         log('bobSendsMismatchedPayloadCase', 'start')
-        const bob = makeTestRpcClient()
+        const bob = await makeTestRpcClient()
         const bobsUserId = userIdFromAddress(bobsContext.creatorAddress)
         const bobsUserStreamIdStr = makeUserStreamId(bobsUserId)
         const bobsUserStreamId = streamIdToBytes(bobsUserStreamIdStr)
@@ -427,12 +427,12 @@ describe('streamRpcClient', () => {
     test('aliceTalksToBob', async () => {
         log('bobAndAliceConverse start')
 
-        const bob = makeTestRpcClient()
+        const bob = await makeTestRpcClient()
         const bobsUserId = userIdFromAddress(bobsContext.creatorAddress)
         const bobsUserStreamIdStr = makeUserStreamId(bobsUserId)
         const bobsUserStreamId = streamIdToBytes(bobsUserStreamIdStr)
 
-        const alice = makeTestRpcClient()
+        const alice = await makeTestRpcClient()
         const alicesUserId = userIdFromAddress(alicesContext.creatorAddress)
         const alicesUserStreamIdStr = makeUserStreamId(alicesUserId)
         const alicesUserStreamId = streamIdToBytes(alicesUserStreamIdStr)
@@ -704,7 +704,7 @@ describe('streamRpcClient', () => {
         [{ days: 2 }, 'in two days'],
     ])('cantAddOrCreateWithExpiredDelegateSig expiry: %o expires %s', async (goodExpiry, desc) => {
         log('testing with good expiry of', goodExpiry, 'which expires', desc)
-        const jimmy = makeTestRpcClient()
+        const jimmy = await makeTestRpcClient()
 
         const jimmysWallet = ethers.Wallet.createRandom()
         const jimmysDelegateWallet = ethers.Wallet.createRandom()
@@ -789,7 +789,7 @@ describe('streamRpcClient', () => {
     })
 
     test('cantAddWithBadHash', async () => {
-        const bob = makeTestRpcClient()
+        const bob = await makeTestRpcClient()
         const bobsUserId = userIdFromAddress(bobsContext.creatorAddress)
         const bobsUserStreamIdStr = makeUserStreamId(bobsUserId)
         const bobsUserStreamId = streamIdToBytes(bobsUserStreamIdStr)
@@ -924,7 +924,7 @@ describe('streamRpcClient', () => {
     })
 
     test('cantAddWithBadSignature', async () => {
-        const bob = makeTestRpcClient()
+        const bob = await makeTestRpcClient()
         const bobsUserId = userIdFromAddress(bobsContext.creatorAddress)
         const bobsUserStreamIdStr = makeUserStreamId(bobsUserId)
         const bobsUserStreamId = streamIdToBytes(bobsUserStreamIdStr)

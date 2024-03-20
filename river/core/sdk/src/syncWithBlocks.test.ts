@@ -41,7 +41,7 @@ describe('syncWithBlocks', () => {
     test('blocksGetGeneratedAndSynced', async () => {
         log('start')
 
-        const bob = makeTestRpcClient()
+        const bob = await makeTestRpcClient()
 
         const bobsUserId = userIdFromAddress(bobsContext.creatorAddress)
         const bobsUserStreamIdStr = makeUserStreamId(bobsUserId)
