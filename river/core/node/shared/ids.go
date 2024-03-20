@@ -8,7 +8,6 @@ import (
 
 	"github.com/ethereum/go-ethereum/common"
 	"github.com/ethereum/go-ethereum/crypto"
-	"github.com/river-build/river/core/node/base"
 	. "github.com/river-build/river/core/node/base"
 	. "github.com/river-build/river/core/node/protocol"
 )
@@ -31,7 +30,7 @@ func AddressFromUserId(userId string) ([]byte, error) {
 }
 
 func AddressFromBytes(addr []byte) (common.Address, error) {
-	return base.BytesToEthAddress(addr)
+	return BytesToEthAddress(addr)
 }
 
 func AddressFromSpaceId(spaceId StreamId) (common.Address, error) {

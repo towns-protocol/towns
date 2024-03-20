@@ -49,12 +49,12 @@ func NewStreamCache(ctx context.Context, params *StreamCacheParams) (*streamCach
 		params: params,
 	}
 
-	blockNum, err := params.Registry.Blockchain.Client.BlockNumber(ctx)
+	blockNum, err := params.Registry.Blockchain.GetBlockNumber(ctx)
 	if err != nil {
 		return nil, err
 	}
 
-	streams, err := params.Registry.GetAllStreams(ctx, blockNum)
+	streams, err := params.Registry.GetAllStreams(ctx, blockNum.AsUint64())
 	if err != nil {
 		return nil, err
 	}
@@ -75,7 +75,10 @@ func NewStreamCache(ctx context.Context, params *StreamCacheParams) (*streamCach
 	// TODO: setup monitor for stream updates and update records accordingly.
 
 	c := crypto.MakeBlockNumberChannel()
-	params.Riverchain.BlockMonitor.AddListener(c)
+	err = params.Riverchain.BlockMonitor.AddListener(c, blockNum)
+	if err != nil {
+		return nil, err
+	}
 	go s.newBlockReader(ctx, c)
 	return s, nil
 }

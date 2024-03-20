@@ -32,7 +32,6 @@ type PostgresEventStore struct {
 	schemaName string
 	nodeUUID   string
 	exitSignal chan error
-	serverCtx  context.Context
 	dbUrl      string
 }
 
@@ -784,7 +783,6 @@ func newPostgresEventStore(
 		schemaName: databaseSchemaName,
 		nodeUUID:   instanceId,
 		exitSignal: exitSignal,
-		serverCtx:  ctx,
 		dbUrl:      database_url,
 	}
 
@@ -796,10 +794,12 @@ func newPostgresEventStore(
 	// stats thread
 	go func() {
 		for {
+			timer := time.NewTimer(PG_REPORT_INTERVAL)
 			select {
 			case <-ctx.Done():
+				timer.Stop()
 				return
-			case <-time.After(PG_REPORT_INTERVAL):
+			case <-timer.C:
 				stats := pool.Stat()
 				log.Debug("PG pool stats",
 					"acquireCount", stats.AcquireCount(),

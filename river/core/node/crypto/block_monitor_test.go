@@ -64,7 +64,8 @@ func TestMonitorWithoutWebsockets(t *testing.T) {
 	}()
 
 	ch := MakeBlockNumberChannel()
-	bm.AddListener(ch)
+	err = bm.AddListener(ch, initialBlockNum)
+	require.NoError(err)
 
 	prevBN := initialBlockNum
 	for i := 0; i < 10; i++ {

@@ -36,6 +36,11 @@ func makeTestStreamParams(p testParams) (context.Context, *testContext) {
 		panic(err)
 	}
 
+	err = btc.InitNodeRecord(ctx, 0, "fakeurl")
+	if err != nil {
+		panic(err)
+	}
+
 	bc := btc.GetBlockchain(ctx, 0, true)
 	defer bc.Close()
 
@@ -60,11 +65,6 @@ func makeTestStreamParams(p testParams) (context.Context, *testContext) {
 		}
 	} else {
 		streamStorage = storage.NewMemStorage()
-	}
-
-	err = btc.InitNodeRecord(ctx, 0, "fakeurl")
-	if err != nil {
-		panic(err)
 	}
 
 	cfg := btc.RegistryConfig()

@@ -2,7 +2,6 @@ package rpc
 
 import (
 	"context"
-	"fmt"
 	"html/template"
 	"net/http"
 	"sync"
@@ -171,33 +170,24 @@ func MultiHandler(ctx context.Context, cfg *config.Config, streamService *Servic
 					log.Error("Error getting http client", "err", err)
 				}
 
-				node, err := streamService.nodeRegistry.GetNodeRecordByIndex(i)
+				node, err := streamService.nodeRegistry.GetNodeByIndex(i)
 				if err != nil {
 					log.Error("Error fetching node record", "err", err)
 				}
 
-				if !node.IsLocal() {
-					address, err := streamService.nodeRegistry.GetNodeAddressByIndex(i)
+				if !node.Local {
+					s, err := streamService.nodeRegistry.GetStreamServiceClientForAddress(node.Address)
 					if err != nil {
-						log.Error("Error fetching node address", "err", err)
+						log.Error("Error fetching GetStreamServiceClientForAddress", "address", node.Address, "err", err)
 					}
-
-					s, err := streamService.nodeRegistry.GetStreamServiceClientForAddress(address)
-					if err != nil {
-						log.Error("Error fetching GetStreamServiceClientForAddress", "address", address, "err", err)
-					}
-
-					nodeUrl := node.GetUrl()
-					// Construct URL
-					url := fmt.Sprintf("%s/info", nodeUrl)
 
 					wg.Add(2)
 
-					data.Nodes = append(data.Nodes, nodeUrl)
+					data.Nodes = append(data.Nodes, node.Url)
 
 					// Initiate both requests in parallel
-					go makeRequest(client, url, "HTTP", nodeUrl)
-					go makeInfoRequest(s, nodeUrl)
+					go makeRequest(client, node.Url+"/info", "HTTP", node.Url)
+					go makeInfoRequest(s, node.Url)
 				}
 
 			}

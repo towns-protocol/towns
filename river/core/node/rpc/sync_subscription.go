@@ -6,24 +6,24 @@ import (
 
 	"connectrpc.com/connect"
 	"github.com/ethereum/go-ethereum/common"
-	"github.com/river-build/river/core/node/base"
+	. "github.com/river-build/river/core/node/base"
 	"github.com/river-build/river/core/node/dlog"
 	"github.com/river-build/river/core/node/events"
-	"github.com/river-build/river/core/node/protocol"
-	"github.com/river-build/river/core/node/shared"
+	. "github.com/river-build/river/core/node/protocol"
+	. "github.com/river-build/river/core/node/shared"
 
 	"log/slog"
 )
 
 type syncOp interface {
-	getOp() protocol.SyncOp
+	getOp() SyncOp
 }
 
 type baseSyncOp struct {
-	op protocol.SyncOp
+	op SyncOp
 }
 
-func (d *baseSyncOp) getOp() protocol.SyncOp {
+func (d *baseSyncOp) getOp() SyncOp {
 	return d.op
 }
 
@@ -33,25 +33,43 @@ type pingOp struct {
 }
 
 type syncSubscriptionImpl struct {
-	syncId         string
-	cancel         context.CancelFunc
-	dataChannel    chan *protocol.StreamAndCookie
-	controlChannel chan syncOp
-	ctx            context.Context
-	firstError     error
-	localStreams   map[string]*events.SyncStream // mapping of streamId to local stream
-	remoteStreams  map[string]*syncNode          // mapping of streamId to remote node
-	remoteNodes    map[common.Address]*syncNode  // mapping of node address to remote node
+	ctx    context.Context
+	syncId string
+	cancel context.CancelFunc
+
 	mu             sync.Mutex
+	firstError     error
+	dataChannel    chan *StreamAndCookie
+	controlChannel chan syncOp
+	localStreams   map[StreamId]*events.SyncStream // mapping of streamId to local stream
+	remoteStreams  map[StreamId]*syncNode          // mapping of streamId to remote node
+	remoteNodes    map[common.Address]*syncNode    // mapping of node address to remote node
+}
+
+func newSyncSubscription(
+	ctx context.Context,
+	syncId string,
+) *syncSubscriptionImpl {
+	syncCtx, cancelSync := context.WithCancel(ctx)
+	return &syncSubscriptionImpl{
+		ctx:            syncCtx,
+		syncId:         syncId,
+		cancel:         cancelSync,
+		dataChannel:    make(chan *StreamAndCookie, 256),
+		controlChannel: make(chan syncOp, 64),
+		localStreams:   make(map[StreamId]*events.SyncStream),
+		remoteStreams:  make(map[StreamId]*syncNode),
+		remoteNodes:    make(map[common.Address]*syncNode),
+	}
 }
 
 type syncStream interface {
-	Send(msg *protocol.SyncStreamsResponse) error
+	Send(msg *SyncStreamsResponse) error
 }
 
 func (s *syncSubscriptionImpl) addLocalStream(
 	ctx context.Context,
-	syncCookie *protocol.SyncCookie,
+	syncCookie *SyncCookie,
 	stream *events.SyncStream,
 ) error {
 	log := dlog.FromCtx(ctx)
@@ -62,7 +80,7 @@ func (s *syncSubscriptionImpl) addLocalStream(
 		"streamId",
 		syncCookie.StreamId,
 	)
-	streamId, err := shared.StreamIdFromBytes(syncCookie.StreamId)
+	streamId, err := StreamIdFromBytes(syncCookie.StreamId)
 	if err != nil {
 		return err
 	}
@@ -72,8 +90,8 @@ func (s *syncSubscriptionImpl) addLocalStream(
 	s.mu.Lock()
 
 	// only add the stream if it doesn't already exist in the subscription
-	if _, exists = s.localStreams[streamId.String()]; !exists {
-		s.localStreams[streamId.String()] = stream
+	if _, exists = s.localStreams[streamId]; !exists {
+		s.localStreams[streamId] = stream
 	}
 	s.mu.Unlock()
 
@@ -99,14 +117,14 @@ func (s *syncSubscriptionImpl) addLocalStream(
 }
 
 func (s *syncSubscriptionImpl) removeLocalStream(
-	streamId shared.StreamId,
+	streamId StreamId,
 ) {
 	var stream *events.SyncStream
 
 	s.mu.Lock()
-	if st := s.localStreams[streamId.String()]; st != nil {
+	if st := s.localStreams[streamId]; st != nil {
 		stream = st
-		delete(s.localStreams, streamId.String())
+		delete(s.localStreams, streamId)
 	}
 	s.mu.Unlock()
 
@@ -127,7 +145,7 @@ func (s *syncSubscriptionImpl) unsubLocalStreams() {
 
 func (s *syncSubscriptionImpl) addSyncNode(
 	node *syncNode,
-	cookies []*protocol.SyncCookie,
+	cookies []*SyncCookie,
 ) error {
 	s.mu.Lock()
 	defer s.mu.Unlock()
@@ -138,11 +156,11 @@ func (s *syncSubscriptionImpl) addSyncNode(
 		node = s.remoteNodes[node.address]
 	}
 	for _, cookie := range cookies {
-		streamId, err := shared.StreamIdFromBytes(cookie.StreamId)
+		streamId, err := StreamIdFromBytes(cookie.StreamId)
 		if err != nil {
 			return err
 		}
-		s.remoteStreams[streamId.String()] = node
+		s.remoteStreams[streamId] = node
 	}
 	return nil
 }
@@ -162,11 +180,11 @@ func (s *syncSubscriptionImpl) addRemoteNode(
 }
 
 func (s *syncSubscriptionImpl) getLocalStream(
-	streamId shared.StreamId,
+	streamId StreamId,
 ) *events.SyncStream {
 	s.mu.Lock()
 	defer s.mu.Unlock()
-	return s.localStreams[streamId.String()]
+	return s.localStreams[streamId]
 }
 
 func (s *syncSubscriptionImpl) getRemoteNode(
@@ -188,28 +206,28 @@ func (s *syncSubscriptionImpl) getRemoteNodes() []*syncNode {
 }
 
 func (s *syncSubscriptionImpl) addRemoteStream(
-	cookie *protocol.SyncCookie,
+	cookie *SyncCookie,
 ) error {
 	s.mu.Lock()
 	defer s.mu.Unlock()
 	nodeAddress := common.BytesToAddress(cookie.NodeAddress)
 	if remote := s.remoteNodes[nodeAddress]; remote != nil {
-		streamId, err := shared.StreamIdFromBytes(cookie.StreamId)
+		streamId, err := StreamIdFromBytes(cookie.StreamId)
 		if err != nil {
 			return err
 		}
-		s.remoteStreams[streamId.String()] = remote
+		s.remoteStreams[streamId] = remote
 	}
 	return nil
 }
 
 func (s *syncSubscriptionImpl) removeRemoteStream(
-	streamId shared.StreamId,
+	streamId StreamId,
 ) *syncNode {
 	s.mu.Lock()
 	defer s.mu.Unlock()
-	if remote := s.remoteStreams[streamId.String()]; remote != nil {
-		delete(s.remoteStreams, streamId.String())
+	if remote := s.remoteStreams[streamId]; remote != nil {
+		delete(s.remoteStreams, streamId)
 		return remote
 	}
 	return nil
@@ -281,7 +299,7 @@ func (s *syncSubscriptionImpl) OnSyncError(err error) {
 	log.Warn("SyncStreams:syncSubscriptionImpl:OnSyncError: cancelling sync", "error", err)
 }
 
-func (s *syncSubscriptionImpl) OnUpdate(r *protocol.StreamAndCookie) {
+func (s *syncSubscriptionImpl) OnUpdate(r *StreamAndCookie) {
 	// cancel if context is done
 	if s.ctx.Err() != nil {
 		return
@@ -292,7 +310,7 @@ func (s *syncSubscriptionImpl) OnUpdate(r *protocol.StreamAndCookie) {
 		return
 	default:
 		// end the update stream if the channel is full
-		err := base.RiverError(protocol.Err_BUFFER_FULL, "channel full, dropping update and canceling", "streamId", r.NextSyncCookie.StreamId).
+		err := RiverError(Err_BUFFER_FULL, "channel full, dropping update and canceling", "streamId", r.NextSyncCookie.StreamId).
 			Func("OnUpdate").
 			LogWarn(dlog.FromCtx(s.ctx))
 		s.setErrorAndCancel(err)
@@ -309,7 +327,7 @@ func (s *syncSubscriptionImpl) OnClose() {
 	log := dlog.FromCtx(s.ctx)
 	log.Debug("SyncStreams:OnClose: closing stream", "syncId", s.syncId)
 	c := baseSyncOp{
-		op: protocol.SyncOp_SYNC_CLOSE,
+		op: SyncOp_SYNC_CLOSE,
 	}
 	select {
 	case s.controlChannel <- &c:
@@ -320,7 +338,7 @@ func (s *syncSubscriptionImpl) OnClose() {
 	}
 }
 
-func (s *syncSubscriptionImpl) Dispatch(res *connect.ServerStream[protocol.SyncStreamsResponse]) {
+func (s *syncSubscriptionImpl) Dispatch(res *connect.ServerStream[SyncStreamsResponse]) {
 	log := dlog.FromCtx(s.ctx)
 
 	for {
@@ -342,7 +360,7 @@ func (s *syncSubscriptionImpl) Dispatch(res *connect.ServerStream[protocol.SyncS
 				// gather the response metadata + content, and send it
 				resp := events.SyncStreamsResponseFromStreamAndCookie(data)
 				resp.SyncId = s.syncId
-				resp.SyncOp = protocol.SyncOp_SYNC_UPDATE
+				resp.SyncOp = SyncOp_SYNC_UPDATE
 				if err := res.Send(resp); err != nil {
 					log.Info("SyncStreams: Dispatch error sending response", "syncId", s.syncId, "err", err)
 					s.setErrorAndCancel(err)
@@ -353,10 +371,10 @@ func (s *syncSubscriptionImpl) Dispatch(res *connect.ServerStream[protocol.SyncS
 			}
 		case control := <-s.controlChannel:
 			log.Debug("SyncStreams: Dispatch received control message", "syncId", s.syncId, "control", control)
-			if control.getOp() == protocol.SyncOp_SYNC_CLOSE {
-				err := res.Send(&protocol.SyncStreamsResponse{
+			if control.getOp() == SyncOp_SYNC_CLOSE {
+				err := res.Send(&SyncStreamsResponse{
 					SyncId: s.syncId,
-					SyncOp: protocol.SyncOp_SYNC_CLOSE,
+					SyncOp: SyncOp_SYNC_CLOSE,
 				})
 				if err != nil {
 					log.Warn(
@@ -370,12 +388,12 @@ func (s *syncSubscriptionImpl) Dispatch(res *connect.ServerStream[protocol.SyncS
 				}
 				s.cancel()
 				log.Debug("SyncStreams: closed stream", "syncId", s.syncId)
-			} else if control.getOp() == protocol.SyncOp_SYNC_PONG {
+			} else if control.getOp() == SyncOp_SYNC_PONG {
 				log.Debug("SyncStreams: send pong to client", "syncId", s.syncId)
 				data := control.(*pingOp)
-				err := res.Send(&protocol.SyncStreamsResponse{
+				err := res.Send(&SyncStreamsResponse{
 					SyncId:    s.syncId,
-					SyncOp:    protocol.SyncOp_SYNC_PONG,
+					SyncOp:    SyncOp_SYNC_PONG,
 					PongNonce: data.nonce,
 				})
 				if err != nil {

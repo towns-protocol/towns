@@ -474,6 +474,9 @@ type CertKey struct {
 func RunServer(ctx context.Context, cfg *config.Config) error {
 	log := dlog.FromCtx(ctx)
 
+	ctx, cancel := context.WithCancel(ctx)
+	defer cancel()
+
 	service, error := StartServer(ctx, cfg, nil, nil)
 	if error != nil {
 		log.Error("Failed to start server", "error", error)

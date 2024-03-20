@@ -5,7 +5,9 @@ import (
 	"sync"
 	"time"
 
+	. "github.com/river-build/river/core/node/base"
 	"github.com/river-build/river/core/node/dlog"
+	. "github.com/river-build/river/core/node/protocol"
 )
 
 type BlockNumberChannel chan BlockNumber
@@ -15,11 +17,10 @@ func MakeBlockNumberChannel() BlockNumberChannel {
 }
 
 type BlockMonitor interface {
-	AddListener(c BlockNumberChannel)
+	AddListener(c BlockNumberChannel, lastKnownBlockNum BlockNumber) error
 	Close()
 }
 
-// To stop, cancel the context passed to NewBlockMonitor.
 func NewBlockMonitor(ctx context.Context, client BlockchainClient, initialBlockNum BlockNumber, expectedBlocktime time.Duration) (*blockMonitorImpl, error) {
 	ctx, cancel := context.WithCancel(context.WithoutCancel(ctx))
 
@@ -44,7 +45,6 @@ func NewBlockMonitor(ctx context.Context, client BlockchainClient, initialBlockN
 	b := &blockMonitorImpl{
 		ctx:               ctx,
 		cancel:            cancel,
-		initialBlockNum:   initialBlockNum,
 		currentBlockNum:   initialBlockNum,
 		expectedBlocktime: expectedBlocktime,
 		client:            client,
@@ -55,31 +55,40 @@ func NewBlockMonitor(ctx context.Context, client BlockchainClient, initialBlockN
 	return b, nil
 }
 
-// Fake block tracker, to be replaced by a real one.
+type blockMonitorSub struct {
+	c       BlockNumberChannel
+	lastNum BlockNumber
+}
+
+// TODO: this block monitor polls the blockchain for new blocks.
+// Add support for websockets and use them with subscription if available instead.
 type blockMonitorImpl struct {
 	ctx               context.Context
 	cancel            context.CancelFunc
-	initialBlockNum   BlockNumber
 	expectedBlocktime time.Duration
 	client            BlockchainClient
 
 	mu              sync.Mutex
-	subscribers     []BlockNumberChannel
+	subscribers     []blockMonitorSub
 	currentBlockNum BlockNumber
 }
 
 var _ BlockMonitor = (*blockMonitorImpl)(nil)
 
-func (b *blockMonitorImpl) AddListener(c BlockNumberChannel) {
+func (b *blockMonitorImpl) AddListener(c BlockNumberChannel, lastKnownBlockNum BlockNumber) error {
 	b.mu.Lock()
 	defer b.mu.Unlock()
-	b.subscribers = append(b.subscribers, c)
+	b.subscribers = append(b.subscribers, blockMonitorSub{c, lastKnownBlockNum})
 
-	if b.currentBlockNum > b.initialBlockNum {
-		for blockNum := b.initialBlockNum + 1; blockNum <= b.currentBlockNum; blockNum++ {
-			c <- blockNum
+	for blockNum := lastKnownBlockNum + 1; blockNum <= b.currentBlockNum; blockNum++ {
+		select {
+		case c <- blockNum:
+			continue
+		default:
+			return RiverError(Err_INTERNAL, "BlockMonitor: subscriber buffer full")
 		}
 	}
+	return nil
 }
 
 func (b *blockMonitorImpl) Close() {
@@ -137,11 +146,20 @@ func (b *blockMonitorImpl) runNoSub() {
 func (b *blockMonitorImpl) notifySubscribers(currentBlockNum BlockNumber) {
 	b.mu.Lock()
 	defer b.mu.Unlock()
-	for i := b.currentBlockNum + 1; i <= currentBlockNum; i++ {
-		for _, subscriber := range b.subscribers {
-			subscriber <- i
+
+	if currentBlockNum <= b.currentBlockNum {
+		return
+	}
+
+	for i := 0; i < len(b.subscribers); i++ {
+		if b.subscribers[i].lastNum < currentBlockNum {
+			for blockNum := b.subscribers[i].lastNum + 1; blockNum <= currentBlockNum; blockNum++ {
+				b.subscribers[i].c <- blockNum
+			}
+			b.subscribers[i].lastNum = currentBlockNum
 		}
 	}
+
 	b.currentBlockNum = currentBlockNum
 }
 
@@ -149,7 +167,7 @@ func (b *blockMonitorImpl) closeSubscribers() {
 	b.mu.Lock()
 	defer b.mu.Unlock()
 	for _, subscriber := range b.subscribers {
-		close(subscriber)
+		close(subscriber.c)
 	}
 	b.subscribers = nil
 }

@@ -1,18 +1,20 @@
 package nodes
 
 import (
-	"bytes"
 	"context"
 	"net/http"
 	"sync"
 
 	"github.com/ethereum/go-ethereum/common"
 	. "github.com/river-build/river/core/node/base"
+	"github.com/river-build/river/core/node/contracts"
+	"github.com/river-build/river/core/node/crypto"
 	"github.com/river-build/river/core/node/dlog"
 	"github.com/river-build/river/core/node/http_client"
 	. "github.com/river-build/river/core/node/protocol"
 	. "github.com/river-build/river/core/node/protocol/protocolconnect"
 	"github.com/river-build/river/core/node/registries"
+	"github.com/river-build/river/core/node/utils"
 
 	"connectrpc.com/connect"
 )
@@ -24,41 +26,33 @@ type NodeRegistry interface {
 	GetStreamServiceClientForAddress(address common.Address) (StreamServiceClient, error)
 	GetNodeToNodeClientForAddress(address common.Address) (NodeToNodeClient, error)
 
-	CheckNodeIsValid(address common.Address) error
-
 	// Next two methods are required for hash-based stream placement, they will be removed once on-chain registry is implemented.
 	NumNodes() int
 	GetValidNodeAddresses() []common.Address
 	GetNodeAddressByIndex(index int) (common.Address, error)
-	GetNodeRecordByIndex(index int) (*NodeRecord, error)
+
+	// GetNodeInfoByIndex returns the address, url and isLocal of the node at the given index.
+	GetNodeByIndex(index int) (*NodeRecord, error)
 }
 
 type NodeRecord struct {
-	address common.Address
-	url     string
-	local   bool
-
-	streamServiceClientOnce sync.Once
-	streamServiceClient     StreamServiceClient
-
-	nodeToNodeClientOnce sync.Once
-	nodeToNodeClient     NodeToNodeClient
-}
-
-func (nr *NodeRecord) GetUrl() string {
-	return nr.url
-}
-
-func (nr *NodeRecord) IsLocal() bool {
-	return nr.local
+	Address             common.Address
+	Url                 string
+	Status              uint8
+	Local               bool
+	StreamServiceClient StreamServiceClient
+	NodeToNodeClient    NodeToNodeClient
 }
 
 // Currently node registry is immutable, so there is no need for locking yet.
 type nodeRegistryImpl struct {
-	nodes     map[common.Address]*NodeRecord
-	nodesFlat []*NodeRecord
+	contract         *registries.RiverRegistryContract
+	localNodeAddress common.Address
+	httpClient       *http.Client
 
-	httpClient *http.Client
+	mu              sync.Mutex
+	nodes           *utils.OrderedMap[common.Address, *NodeRecord]
+	appliedBlockNum crypto.BlockNumber
 }
 
 var _ NodeRegistry = (*nodeRegistryImpl)(nil)
@@ -66,13 +60,7 @@ var _ NodeRegistry = (*nodeRegistryImpl)(nil)
 func LoadNodeRegistry(ctx context.Context, contract *registries.RiverRegistryContract, localNodeAddress common.Address) (*nodeRegistryImpl, error) {
 	log := dlog.FromCtx(ctx)
 
-	nodes, err := contract.GetAllNodes(ctx)
-	if err != nil {
-		return nil, AsRiverError(err).Func("LoadNodeRegistry")
-	}
-
-	log.Info("Node Registry Loaded from contract", "Nodes", nodes, "localAddress", localNodeAddress)
-
+	var err error
 	var client *http.Client
 	if TestHttpClientMaker != nil {
 		client = TestHttpClientMaker()
@@ -87,98 +75,228 @@ func LoadNodeRegistry(ctx context.Context, contract *registries.RiverRegistryCon
 		}
 	}
 
-	n := &nodeRegistryImpl{
-		nodes:      make(map[common.Address]*NodeRecord),
-		nodesFlat:  make([]*NodeRecord, 0, len(nodes)),
-		httpClient: client,
+	appliedBlockNum, err := contract.Blockchain.GetBlockNumber(ctx)
+	if err != nil {
+		return nil, err
 	}
+
+	nodes, err := contract.GetAllNodes(ctx, appliedBlockNum)
+	if err != nil {
+		return nil, err
+	}
+
+	nodesMap := utils.NewOrderedMap[common.Address, *NodeRecord](len(nodes))
+
 	localFound := false
 	for _, node := range nodes {
-		local := false
-		if bytes.Equal(node.NodeAddress[:], localNodeAddress[:]) {
-			local = true
-			localFound = true
-		}
+		local := node.NodeAddress == localNodeAddress
+		localFound = localFound || local
 		nn := &NodeRecord{
-			address: node.NodeAddress,
-			url:     node.Url,
-			local:   local,
+			Address: node.NodeAddress,
+			Url:     node.Url,
+			Status:  node.Status,
+			Local:   local,
 		}
-		n.nodes[node.NodeAddress] = nn
-		n.nodesFlat = append(n.nodesFlat, nn)
+		nodesMap.Set(node.NodeAddress, nn)
 	}
+
 	if !localFound {
-		return nil, RiverError(Err_UNKNOWN_NODE, "Local node not found in registry", "localAddress", localNodeAddress)
+		return nil, RiverError(Err_UNKNOWN_NODE, "Local node not found in registry", "blockNum", appliedBlockNum, "localAddress", localNodeAddress).LogError(log)
 	}
-	return n, nil
+
+	log.Info("Node Registry Loaded from contract", "blockNum", appliedBlockNum, "Nodes", nodesMap.Values, "localAddress", localNodeAddress)
+
+	ret := &nodeRegistryImpl{
+		contract:         contract,
+		localNodeAddress: localNodeAddress,
+		httpClient:       client,
+		nodes:            nodesMap,
+		appliedBlockNum:  appliedBlockNum,
+	}
+
+	c := crypto.MakeBlockNumberChannel()
+
+	err = contract.Blockchain.BlockMonitor.AddListener(c, appliedBlockNum)
+	if err != nil {
+		return nil, err
+	}
+
+	go ret.readBlockUpdates(ctx, c)
+
+	return ret, nil
+}
+
+func (n *nodeRegistryImpl) readBlockUpdates(ctx context.Context, c crypto.BlockNumberChannel) {
+	for {
+		select {
+		case <-ctx.Done():
+			return
+		case blockNum := <-c:
+			n.updateNodes(ctx, blockNum)
+		}
+	}
+}
+
+func (n *nodeRegistryImpl) updateNodes(ctx context.Context, blockNum crypto.BlockNumber) {
+	log := dlog.FromCtx(ctx)
+
+	events, err := n.contract.GetNodeEventsForBlock(ctx, blockNum)
+	if err != nil {
+		log.Error("NodeRegistry: Error getting node events", "err", err)
+		return
+	}
+
+	if len(events) == 0 {
+		return
+	}
+
+	n.mu.Lock()
+	defer n.mu.Unlock()
+
+	if blockNum <= n.appliedBlockNum {
+		log.Error("NodeRegistry: Got events for block that is not newer than last applied block", "blockNum", blockNum, "appliedBlockNum", n.appliedBlockNum)
+		return
+	}
+	n.appliedBlockNum = blockNum
+
+	for _, event := range events {
+		switch e := event.(type) {
+		case *contracts.NodeRegistryV1NodeAdded:
+			if !n.nodes.Has(e.NodeAddress) {
+				nn := &NodeRecord{
+					Address: e.NodeAddress,
+					Url:     e.Url,
+					Status:  e.Status,
+					Local:   e.NodeAddress == n.localNodeAddress,
+				}
+				n.nodes.Set(e.NodeAddress, nn)
+				log.Info("NodeRegistry: NodeAdded", "blockNum", blockNum, "node", nn)
+			} else {
+				log.Error("NodeRegistry: Got NodeAdded for node that already exists in NodeRegistry", "blockNum", blockNum, "node", e.NodeAddress, "nodes", n.nodes.Values)
+			}
+		case *contracts.NodeRegistryV1NodeRemoved:
+			if n.nodes.Has(e.NodeAddress) {
+				n.nodes.Delete(e.NodeAddress)
+				log.Info("NodeRegistry: NodeRemoved", "blockNum", blockNum, "node", e.NodeAddress)
+			} else {
+				log.Error("NodeRegistry: Got NodeRemoved for node that does not exist in NodeRegistry", "blockNum", blockNum, "node", e.NodeAddress, "nodes", n.nodes.Values)
+			}
+		case *contracts.NodeRegistryV1NodeStatusUpdated:
+			nn, _ := n.nodes.Get(e.NodeAddress)
+			if nn != nil {
+				nn.Status = e.Status
+				log.Info("NodeRegistry: NodeStatusUpdated", "blockNum", blockNum, "node", nn)
+			} else {
+				log.Error("NodeRegistry: Got NodeStatusUpdated for node that does not exist in NodeRegistry", "blockNum", blockNum, "node", e.NodeAddress, "nodes", n.nodes.Values)
+			}
+		case *contracts.NodeRegistryV1NodeUrlUpdated:
+			nn, _ := n.nodes.Get(e.NodeAddress)
+			if nn != nil {
+				nn.Url = e.Url
+				nn.StreamServiceClient = nil
+				nn.NodeToNodeClient = nil
+				log.Info("NodeRegistry: NodeUrlUpdated", "blockNum", blockNum, "node", nn)
+			} else {
+				log.Error("NodeRegistry: Got NodeUrlUpdated for node that does not exist in NodeRegistry", "blockNum", blockNum, "node", e.NodeAddress, "nodes", n.nodes.Values)
+			}
+		default:
+			log.Error("Unknown event type", "event", e)
+		}
+	}
 }
 
 // Returns error for local node.
 func (n *nodeRegistryImpl) GetStreamServiceClientForAddress(address common.Address) (StreamServiceClient, error) {
-	node := n.nodes[address]
+	n.mu.Lock()
+	defer n.mu.Unlock()
+
+	node, _ := n.nodes.Get(address)
 	if node == nil {
 		return nil, RiverError(Err_UNKNOWN_NODE, "No record for node", "address", address, "nodes", n.nodes).Func("GetStreamServiceClientForAddress")
 	}
 
-	if node.local {
+	if node.Local {
 		return nil, RiverError(Err_INTERNAL, "can't get remote stub for local node")
 	}
 
-	node.streamServiceClientOnce.Do(func() {
-		node.streamServiceClient = NewStreamServiceClient(n.httpClient, node.url, connect.WithGRPC())
-	})
-	return node.streamServiceClient, nil
+	if node.StreamServiceClient == nil {
+		node.StreamServiceClient = NewStreamServiceClient(n.httpClient, node.Url, connect.WithGRPC())
+	}
+
+	return node.StreamServiceClient, nil
 }
 
 // Returns error for local node.
 func (n *nodeRegistryImpl) GetNodeToNodeClientForAddress(address common.Address) (NodeToNodeClient, error) {
-	node := n.nodes[address]
+	n.mu.Lock()
+	defer n.mu.Unlock()
+
+	node, _ := n.nodes.Get(address)
 	if node == nil {
 		return nil, RiverError(Err_UNKNOWN_NODE, "No record for node", "address", address, "nodes", n.nodes).Func(
 			"GetNodeToNodeClientForAddress",
 		)
 	}
 
-	if node.local {
+	if node.Local {
 		return nil, RiverError(Err_INTERNAL, "can't get remote stub for local node")
 	}
 
-	node.nodeToNodeClientOnce.Do(func() {
-		node.nodeToNodeClient = NewNodeToNodeClient(n.httpClient, node.url, connect.WithGRPC())
-	})
-	return node.nodeToNodeClient, nil
-}
-
-func (n *nodeRegistryImpl) CheckNodeIsValid(address common.Address) error {
-	node, ok := n.nodes[address]
-	if !ok || node == nil {
-		return RiverError(Err_UNKNOWN_NODE, "No record for node", "address", address, "nodes", n.nodes).Func("CheckNodeIsValid")
+	if node.NodeToNodeClient == nil {
+		node.NodeToNodeClient = NewNodeToNodeClient(n.httpClient, node.Url, connect.WithGRPC())
 	}
-	return nil
+
+	return node.NodeToNodeClient, nil
 }
 
 func (n *nodeRegistryImpl) NumNodes() int {
-	return len(n.nodesFlat)
+	n.mu.Lock()
+	defer n.mu.Unlock()
+	return n.nodes.Len()
 }
 
 func (n *nodeRegistryImpl) GetValidNodeAddresses() []common.Address {
-	ret := make([]common.Address, 0, len(n.nodesFlat))
-	for key := range n.nodes {
-		ret = append(ret, key)
+	n.mu.Lock()
+	defer n.mu.Unlock()
+
+	ret := make([]common.Address, 0, n.nodes.Len())
+	for _, nn := range n.nodes.Values {
+		ret = append(ret, nn.Address)
 	}
 	return ret
 }
 
 func (n *nodeRegistryImpl) GetNodeAddressByIndex(index int) (common.Address, error) {
-	if index < 0 || index >= len(n.nodesFlat) {
+	n.mu.Lock()
+	defer n.mu.Unlock()
+
+	if index < 0 || index >= n.nodes.Len() {
 		return common.Address{}, RiverError(Err_INTERNAL, "Invalid node index", "index", index)
 	}
-	return n.nodesFlat[index].address, nil
+	return n.nodes.Values[index].Address, nil
 }
 
-func (n *nodeRegistryImpl) GetNodeRecordByIndex(index int) (*NodeRecord, error) {
-	if index < 0 || index >= len(n.nodesFlat) {
-		return nil, RiverError(Err_INTERNAL, "Invalid node index", "index", index)
+func (n *nodeRegistryImpl) GetNodeByIndex(index int) (*NodeRecord, error) {
+	n.mu.Lock()
+	defer n.mu.Unlock()
+
+	if index < 0 || index >= n.nodes.Len() {
+		return nil, RiverError(Err_INTERNAL, "Invalid node index", "index", index).Func("GetNodeByIndex")
 	}
-	return n.nodesFlat[index], nil
+	// Create copy of the record
+	nn := *n.nodes.Values[index]
+	return &nn, nil
+}
+
+func (n *nodeRegistryImpl) GetNodeByAddress(addr common.Address) (*NodeRecord, error) {
+	n.mu.Lock()
+	defer n.mu.Unlock()
+
+	node, _ := n.nodes.Get(addr)
+	if node == nil {
+		return nil, RiverError(Err_UNKNOWN_NODE, "No record for node", "address", addr).Func("GetNodeByAddress")
+	}
+	// Create copy of the record
+	nn := *node
+	return &nn, nil
 }

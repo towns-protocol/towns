@@ -69,11 +69,9 @@ func NewTxRunner(ctx context.Context, params *TxRunnerParams) *TxRunner {
 	return r
 }
 
-type SubmitterFunc func(*bind.TransactOpts) (*types.Transaction, error)
-
 func (tr *TxRunner) Submit(
 	ctx context.Context,
-	submitterFunc SubmitterFunc,
+	submitterFunc func(*bind.TransactOpts) (*types.Transaction, error),
 ) (*types.Transaction, error) {
 	tr.mu.Lock()
 	defer tr.mu.Unlock()
@@ -113,7 +111,7 @@ func (tr *TxRunner) Submit(
 // waiters with matching hashes at once, instead of polling in parallel.
 func (tr *TxRunner) SubmitAndWait(
 	ctx context.Context,
-	submitterFunc SubmitterFunc,
+	submitterFunc func(*bind.TransactOpts) (*types.Transaction, error),
 ) (*types.Transaction, *types.Receipt, error) {
 	tx, err := tr.Submit(ctx, submitterFunc)
 	if err != nil {

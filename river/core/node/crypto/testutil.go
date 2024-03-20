@@ -186,7 +186,7 @@ func (c *BlockchainTestContext) Commit() {
 func (c *BlockchainTestContext) Client() BlockchainClient {
 	c.backendMutex.Lock()
 	defer c.backendMutex.Unlock()
-	
+
 	if c.Backend != nil {
 		return c.Backend.Client()
 	} else if c.EthClient != nil {
@@ -267,6 +267,15 @@ func (c *BlockchainTestContext) RegistryConfig() config.ContractConfig {
 	return config.ContractConfig{
 		Address: c.RiverRegistryAddress.Hex(),
 	}
+}
+
+func (c *BlockchainTestContext) BlockNum(ctx context.Context) BlockNumber {
+	blockNum, err := c.Client().BlockNumber(ctx)
+	if err != nil {
+		panic(err)
+	}
+	return BlockNumber(blockNum)
+
 }
 
 // GetTestAddress returns a random common.Address that can be used in tests.

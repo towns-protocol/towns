@@ -8,16 +8,14 @@ import (
 
 	"connectrpc.com/connect"
 	"github.com/ethereum/go-ethereum/common"
-	"github.com/river-build/river/core/node/base"
+	. "github.com/river-build/river/core/node/base"
 	"github.com/river-build/river/core/node/crypto"
 	"github.com/river-build/river/core/node/dlog"
 	"github.com/river-build/river/core/node/events"
 	"github.com/river-build/river/core/node/nodes"
-	"github.com/river-build/river/core/node/protocol"
+	. "github.com/river-build/river/core/node/protocol"
 	"github.com/river-build/river/core/node/protocol/protocolconnect"
-	"github.com/river-build/river/core/node/shared"
-
-	"github.com/google/uuid"
+	. "github.com/river-build/river/core/node/shared"
 )
 
 // TODO: wire metrics.
@@ -51,25 +49,25 @@ func NewSyncHandler(
 type SyncHandler interface {
 	SyncStreams(
 		ctx context.Context,
-		req *connect.Request[protocol.SyncStreamsRequest],
-		res *connect.ServerStream[protocol.SyncStreamsResponse],
+		req *connect.Request[SyncStreamsRequest],
+		res *connect.ServerStream[SyncStreamsResponse],
 	) error
 	AddStreamToSync(
 		ctx context.Context,
-		req *connect.Request[protocol.AddStreamToSyncRequest],
-	) (*connect.Response[protocol.AddStreamToSyncResponse], error)
+		req *connect.Request[AddStreamToSyncRequest],
+	) (*connect.Response[AddStreamToSyncResponse], error)
 	RemoveStreamFromSync(
 		ctx context.Context,
-		req *connect.Request[protocol.RemoveStreamFromSyncRequest],
-	) (*connect.Response[protocol.RemoveStreamFromSyncResponse], error)
+		req *connect.Request[RemoveStreamFromSyncRequest],
+	) (*connect.Response[RemoveStreamFromSyncResponse], error)
 	CancelSync(
 		ctx context.Context,
-		req *connect.Request[protocol.CancelSyncRequest],
-	) (*connect.Response[protocol.CancelSyncResponse], error)
+		req *connect.Request[CancelSyncRequest],
+	) (*connect.Response[CancelSyncResponse], error)
 	PingSync(
 		ctx context.Context,
-		req *connect.Request[protocol.PingSyncRequest],
-	) (*connect.Response[protocol.PingSyncResponse], error)
+		req *connect.Request[PingSyncRequest],
+	) (*connect.Response[PingSyncResponse], error)
 }
 
 type syncHandlerImpl struct {
@@ -88,70 +86,70 @@ type syncNode struct {
 	stub            protocolconnect.StreamServiceClient
 
 	mu     sync.Mutex
-	stream *connect.ServerStreamForClient[protocol.SyncStreamsResponse]
+	stream *connect.ServerStreamForClient[SyncStreamsResponse]
 	closed bool
 }
 
 func (s *Service) SyncStreams(
 	ctx context.Context,
-	req *connect.Request[protocol.SyncStreamsRequest],
-	res *connect.ServerStream[protocol.SyncStreamsResponse],
+	req *connect.Request[SyncStreamsRequest],
+	res *connect.ServerStream[SyncStreamsResponse],
 ) error {
 	return s.syncHandler.SyncStreams(ctx, req, res)
 }
 
 func (s *Service) AddStreamToSync(
 	ctx context.Context,
-	req *connect.Request[protocol.AddStreamToSyncRequest],
-) (*connect.Response[protocol.AddStreamToSyncResponse], error) {
+	req *connect.Request[AddStreamToSyncRequest],
+) (*connect.Response[AddStreamToSyncResponse], error) {
 	return s.syncHandler.AddStreamToSync(ctx, req)
 }
 
 func (s *Service) RemoveStreamFromSync(
 	ctx context.Context,
-	req *connect.Request[protocol.RemoveStreamFromSyncRequest],
-) (*connect.Response[protocol.RemoveStreamFromSyncResponse], error) {
+	req *connect.Request[RemoveStreamFromSyncRequest],
+) (*connect.Response[RemoveStreamFromSyncResponse], error) {
 	return s.syncHandler.RemoveStreamFromSync(ctx, req)
 }
 
 func (s *Service) CancelSync(
 	ctx context.Context,
-	req *connect.Request[protocol.CancelSyncRequest],
-) (*connect.Response[protocol.CancelSyncResponse], error) {
+	req *connect.Request[CancelSyncRequest],
+) (*connect.Response[CancelSyncResponse], error) {
 	return s.syncHandler.CancelSync(ctx, req)
 }
 
 func (s *Service) PingSync(
 	ctx context.Context,
-	req *connect.Request[protocol.PingSyncRequest],
-) (*connect.Response[protocol.PingSyncResponse], error) {
+	req *connect.Request[PingSyncRequest],
+) (*connect.Response[PingSyncResponse], error) {
 	return s.syncHandler.PingSync(ctx, req)
 }
 
 func (s *syncHandlerImpl) SyncStreams(
 	ctx context.Context,
-	req *connect.Request[protocol.SyncStreamsRequest],
-	res *connect.ServerStream[protocol.SyncStreamsResponse],
+	req *connect.Request[SyncStreamsRequest],
+	res *connect.ServerStream[SyncStreamsResponse],
 ) error {
 	ctx, log := ctxAndLogForRequest(ctx, req)
 
 	// generate a random syncId
-	syncId := uuid.New().String()
+	syncId := GenNanoid()
 	log.Debug("SyncStreams:SyncHandlerV2.SyncStreams ENTER", "syncId", syncId, "syncPos", req.Msg.SyncPos)
 
-	sub, err := s.addSubscription(ctx, req, res, syncId)
+	sub, err := s.addSubscription(ctx, syncId)
 	if err != nil {
 		log.Info("SyncStreams:SyncHandlerV2.SyncStreams LEAVE: failed to add subscription", "syncId", syncId, "err", err)
 		return err
 	}
 
 	// send syncId to client
-	e := res.Send(&protocol.SyncStreamsResponse{
+	e := res.Send(&SyncStreamsResponse{
 		SyncId: syncId,
-		SyncOp: protocol.SyncOp_SYNC_NEW,
+		SyncOp: SyncOp_SYNC_NEW,
 	})
 	if e != nil {
-		err := base.AsRiverError(e).Func("SyncStreams")
+		err := AsRiverError(e).Func("SyncStreams")
 		log.Info("SyncStreams:SyncHandlerV2.SyncStreams LEAVE: failed to send syncId", "res", res, "err", err, "syncId", syncId)
 		return err
 	}
@@ -159,8 +157,8 @@ func (s *syncHandlerImpl) SyncStreams(
 
 	e = s.handleSyncRequest(req, res, sub)
 	if e != nil {
-		err := base.AsRiverError(e).Func("SyncStreams")
-		if err.Code == protocol.Err_CANCELED {
+		err := AsRiverError(e).Func("SyncStreams")
+		if err.Code == Err_CANCELED {
 			// Context is canceled when client disconnects, so this is normal case.
 			log.Debug("SyncStreams:SyncHandlerV2.SyncStreams LEAVE: sync Dispatch() ended with expected error", "syncId", syncId)
 			_ = err.LogDebug(log)
@@ -176,12 +174,12 @@ func (s *syncHandlerImpl) SyncStreams(
 }
 
 func (s *syncHandlerImpl) handleSyncRequest(
-	req *connect.Request[protocol.SyncStreamsRequest],
-	res *connect.ServerStream[protocol.SyncStreamsResponse],
+	req *connect.Request[SyncStreamsRequest],
+	res *connect.ServerStream[SyncStreamsResponse],
 	sub *syncSubscriptionImpl,
 ) error {
 	if sub == nil {
-		return base.RiverError(protocol.Err_NOT_FOUND, "SyncId not found").Func("SyncStreams")
+		return RiverError(Err_NOT_FOUND, "SyncId not found").Func("SyncStreams")
 	}
 	log := dlog.FromCtx(sub.ctx)
 
@@ -246,8 +244,8 @@ func (s *syncHandlerImpl) handleSyncRequest(
 
 func (s *syncHandlerImpl) CancelSync(
 	ctx context.Context,
-	req *connect.Request[protocol.CancelSyncRequest],
-) (*connect.Response[protocol.CancelSyncResponse], error) {
+	req *connect.Request[CancelSyncRequest],
+) (*connect.Response[CancelSyncResponse], error) {
 	_, log := ctxAndLogForRequest(ctx, req)
 	log.Debug("SyncStreams:SyncHandlerV2.CancelSync ENTER", "syncId", req.Msg.SyncId)
 	sub := s.getSub(req.Msg.SyncId)
@@ -255,55 +253,55 @@ func (s *syncHandlerImpl) CancelSync(
 		sub.OnClose()
 	}
 	log.Debug("SyncStreams:SyncHandlerV2.CancelSync LEAVE", "syncId", req.Msg.SyncId)
-	return connect.NewResponse(&protocol.CancelSyncResponse{}), nil
+	return connect.NewResponse(&CancelSyncResponse{}), nil
 }
 
 func (s *syncHandlerImpl) PingSync(
 	ctx context.Context,
-	req *connect.Request[protocol.PingSyncRequest],
-) (*connect.Response[protocol.PingSyncResponse], error) {
+	req *connect.Request[PingSyncRequest],
+) (*connect.Response[PingSyncResponse], error) {
 	_, log := ctxAndLogForRequest(ctx, req)
 	syncId := req.Msg.SyncId
 
 	sub := s.getSub(syncId)
 	if sub == nil {
 		log.Debug("SyncStreams: ping sync", "syncId", syncId)
-		return nil, base.RiverError(protocol.Err_NOT_FOUND, "SyncId not found").Func("PingSync")
+		return nil, RiverError(Err_NOT_FOUND, "SyncId not found").Func("PingSync")
 	}
 
 	// cancel if context is done
 	if sub.ctx.Err() != nil {
 		log.Debug("SyncStreams: ping sync", "syncId", syncId, "context_error", sub.ctx.Err())
-		return nil, base.RiverError(protocol.Err_CANCELED, "SyncId canceled").Func("PingSync")
+		return nil, RiverError(Err_CANCELED, "SyncId canceled").Func("PingSync")
 	}
 
 	log.Debug("SyncStreams: ping sync", "syncId", syncId)
 	c := pingOp{
-		baseSyncOp: baseSyncOp{op: protocol.SyncOp_SYNC_PONG},
+		baseSyncOp: baseSyncOp{op: SyncOp_SYNC_PONG},
 		nonce:      req.Msg.Nonce,
 	}
 	select {
 	// send the pong response to the client via the control channel
 	case sub.controlChannel <- &c:
-		return connect.NewResponse(&protocol.PingSyncResponse{}), nil
+		return connect.NewResponse(&PingSyncResponse{}), nil
 	default:
-		return nil, base.RiverError(protocol.Err_BUFFER_FULL, "control channel full").Func("PingSync")
+		return nil, RiverError(Err_BUFFER_FULL, "control channel full").Func("PingSync")
 	}
 }
 
 func getLocalAndRemoteCookies(
 	localWalletAddr common.Address,
-	syncCookies []*protocol.SyncCookie,
-) (localCookies []*protocol.SyncCookie, remoteCookies map[common.Address][]*protocol.SyncCookie) {
-	localCookies = make([]*protocol.SyncCookie, 0, 8)
-	remoteCookies = make(map[common.Address][]*protocol.SyncCookie)
+	syncCookies []*SyncCookie,
+) (localCookies []*SyncCookie, remoteCookies map[common.Address][]*SyncCookie) {
+	localCookies = make([]*SyncCookie, 0, 8)
+	remoteCookies = make(map[common.Address][]*SyncCookie)
 	for _, cookie := range syncCookies {
 		if bytes.Equal(cookie.NodeAddress[:], localWalletAddr[:]) {
 			localCookies = append(localCookies, cookie)
 		} else {
 			remoteAddr := common.BytesToAddress(cookie.NodeAddress[:])
 			if remoteCookies[remoteAddr] == nil {
-				remoteCookies[remoteAddr] = make([]*protocol.SyncCookie, 0, 8)
+				remoteCookies[remoteAddr] = make([]*SyncCookie, 0, 8)
 			}
 			remoteCookies[remoteAddr] = append(remoteCookies[remoteAddr], cookie)
 		}
@@ -313,7 +311,7 @@ func getLocalAndRemoteCookies(
 
 func (s *syncHandlerImpl) syncLocalNode(
 	ctx context.Context,
-	syncPos []*protocol.SyncCookie,
+	syncPos []*SyncCookie,
 	sub *syncSubscriptionImpl,
 ) {
 	log := dlog.FromCtx(ctx)
@@ -334,7 +332,7 @@ func (s *syncHandlerImpl) syncLocalNode(
 
 func (s *syncHandlerImpl) syncLocalStreamsImpl(
 	ctx context.Context,
-	syncPos []*protocol.SyncCookie,
+	syncPos []*SyncCookie,
 	sub *syncSubscriptionImpl,
 ) error {
 	if len(syncPos) <= 0 {
@@ -365,7 +363,7 @@ func (s *syncHandlerImpl) syncLocalStreamsImpl(
 
 func (s *syncHandlerImpl) addLocalStreamToSync(
 	ctx context.Context,
-	cookie *protocol.SyncCookie,
+	cookie *SyncCookie,
 	subs *syncSubscriptionImpl,
 ) error {
 	log := dlog.FromCtx(ctx)
@@ -376,7 +374,7 @@ func (s *syncHandlerImpl) addLocalStreamToSync(
 		return ctx.Err()
 	}
 	if subs == nil {
-		return base.RiverError(protocol.Err_NOT_FOUND, "SyncId not found").Func("SyncStreams")
+		return RiverError(Err_NOT_FOUND, "SyncId not found").Func("SyncStreams")
 	}
 
 	err := events.SyncCookieValidate(cookie)
@@ -385,7 +383,7 @@ func (s *syncHandlerImpl) addLocalStreamToSync(
 		return nil
 	}
 
-	cookieStreamId, err := shared.StreamIdFromBytes(cookie.StreamId)
+	cookieStreamId, err := StreamIdFromBytes(cookie.StreamId)
 	if err != nil {
 		return err
 	}
@@ -420,8 +418,8 @@ func (s *syncHandlerImpl) addLocalStreamToSync(
 
 func (s *syncHandlerImpl) AddStreamToSync(
 	ctx context.Context,
-	req *connect.Request[protocol.AddStreamToSyncRequest],
-) (*connect.Response[protocol.AddStreamToSyncResponse], error) {
+	req *connect.Request[AddStreamToSyncRequest],
+) (*connect.Response[AddStreamToSyncResponse], error) {
 	ctx, log := ctxAndLogForRequest(ctx, req)
 	log.Debug("SyncStreams:SyncHandlerV2.AddStreamToSync ENTER", "syncId", req.Msg.SyncId, "syncPos", req.Msg.SyncPos)
 
@@ -432,7 +430,7 @@ func (s *syncHandlerImpl) AddStreamToSync(
 	sub := s.getSub(syncId)
 	if sub == nil {
 		log.Info("SyncStreams:SyncHandlerV2.AddStreamToSync LEAVE: SyncId not found", "syncId", syncId)
-		return nil, base.RiverError(protocol.Err_NOT_FOUND, "SyncId not found").Func("AddStreamToSync")
+		return nil, RiverError(Err_NOT_FOUND, "SyncId not found").Func("AddStreamToSync")
 	}
 	log.Debug("SyncStreams:SyncHandlerV2.AddStreamToSync: got sub", "syncId", syncId)
 
@@ -445,7 +443,7 @@ func (s *syncHandlerImpl) AddStreamToSync(
 		}
 		// done.
 		log.Debug("SyncStreams:SyncHandlerV2.AddStreamToSync: LEAVE", "syncId", syncId)
-		return connect.NewResponse(&protocol.AddStreamToSyncResponse{}), nil
+		return connect.NewResponse(&AddStreamToSyncResponse{}), nil
 	}
 
 	// Case 2: remote cookie
@@ -489,7 +487,7 @@ func (s *syncHandlerImpl) AddStreamToSync(
 
 	if isNewRemoteNode {
 		// tell the new remote node to sync
-		syncPos := make([]*protocol.SyncCookie, 0, 1)
+		syncPos := make([]*SyncCookie, 0, 1)
 		syncPos = append(syncPos, cookie)
 		log.Info("SyncStreams:SyncHandlerV2.AddStreamToSync: syncing new remote node", "syncId", req.Msg.SyncId)
 		go remoteNode.syncRemoteNode(sub.ctx, sub.syncId, syncPos, sub)
@@ -500,18 +498,18 @@ func (s *syncHandlerImpl) AddStreamToSync(
 	}
 
 	log.Debug("SyncStreams:SyncHandlerV2.AddStreamToSync LEAVE", "syncId", req.Msg.SyncId)
-	return connect.NewResponse(&protocol.AddStreamToSyncResponse{}), nil
+	return connect.NewResponse(&AddStreamToSyncResponse{}), nil
 }
 
 func (s *syncHandlerImpl) RemoveStreamFromSync(
 	ctx context.Context,
-	req *connect.Request[protocol.RemoveStreamFromSyncRequest],
-) (*connect.Response[protocol.RemoveStreamFromSyncResponse], error) {
+	req *connect.Request[RemoveStreamFromSyncRequest],
+) (*connect.Response[RemoveStreamFromSyncResponse], error) {
 	_, log := ctxAndLogForRequest(ctx, req)
 	log.Info("SyncStreams:SyncHandlerV2.RemoveStreamFromSync ENTER", "syncId", req.Msg.SyncId, "streamId", req.Msg.StreamId)
 
 	syncId := req.Msg.SyncId
-	streamId, err := shared.StreamIdFromBytes(req.Msg.StreamId)
+	streamId, err := StreamIdFromBytes(req.Msg.StreamId)
 	if err != nil {
 		log.Info("SyncStreams:SyncHandlerV2.RemoveStreamFromSync LEAVE: failed to parse streamId", "syncId", syncId, "err", err)
 		return nil, err
@@ -520,7 +518,7 @@ func (s *syncHandlerImpl) RemoveStreamFromSync(
 	sub := s.getSub(syncId)
 	if sub == nil {
 		log.Info("SyncStreams:SyncHandlerV2.RemoveStreamFromSync LEAVE: SyncId not found", "syncId", syncId)
-		return nil, base.RiverError(protocol.Err_NOT_FOUND, "SyncId not found").Func("RemoveStreamFromSync")
+		return nil, RiverError(Err_NOT_FOUND, "SyncId not found").Func("RemoveStreamFromSync")
 	}
 
 	// remove the streamId from the local node
@@ -548,13 +546,11 @@ func (s *syncHandlerImpl) RemoveStreamFromSync(
 	}
 
 	log.Info("SyncStreams:SyncHandlerV2.RemoveStreamFromSync LEAVE", "syncId", syncId)
-	return connect.NewResponse(&protocol.RemoveStreamFromSyncResponse{}), nil
+	return connect.NewResponse(&RemoveStreamFromSyncResponse{}), nil
 }
 
 func (s *syncHandlerImpl) addSubscription(
 	ctx context.Context,
-	req *connect.Request[protocol.SyncStreamsRequest],
-	res *connect.ServerStream[protocol.SyncStreamsResponse],
 	syncId string,
 ) (*syncSubscriptionImpl, error) {
 	log := dlog.FromCtx(ctx)
@@ -568,17 +564,7 @@ func (s *syncHandlerImpl) addSubscription(
 	if sub := s.syncIdToSubscription[syncId]; sub != nil {
 		return nil, errors.New("syncId subscription already exists")
 	}
-	syncCtx, cancelSync := context.WithCancel(ctx)
-	sub := &syncSubscriptionImpl{
-		syncId:         syncId,
-		ctx:            syncCtx,
-		cancel:         cancelSync,
-		localStreams:   make(map[string]*events.SyncStream),
-		remoteNodes:    make(map[common.Address]*syncNode),
-		remoteStreams:  make(map[string]*syncNode),
-		dataChannel:    make(chan *protocol.StreamAndCookie, 256),
-		controlChannel: make(chan syncOp, 64),
-	}
+	sub := newSyncSubscription(ctx, syncId)
 	s.syncIdToSubscription[syncId] = sub
 	log.Debug("SyncStreams:addSubscription: syncId subscription added", "syncId", syncId)
 	return sub, nil
@@ -619,7 +605,7 @@ func (s *syncHandlerImpl) getSub(
 func (n *syncNode) syncRemoteNode(
 	ctx context.Context,
 	forwarderSyncId string,
-	syncPos []*protocol.SyncCookie,
+	syncPos []*SyncCookie,
 	receiver events.SyncResultReceiver,
 ) {
 	log := dlog.FromCtx(ctx)
@@ -646,8 +632,8 @@ func (n *syncNode) syncRemoteNode(
 
 	responseStream, err := n.stub.SyncStreams(
 		ctx,
-		&connect.Request[protocol.SyncStreamsRequest]{
-			Msg: &protocol.SyncStreamsRequest{
+		&connect.Request[SyncStreamsRequest]{
+			Msg: &SyncStreamsRequest{
 				SyncPos: syncPos,
 			},
 		},
@@ -663,8 +649,8 @@ func (n *syncNode) syncRemoteNode(
 		return
 	}
 
-	if responseStream.Msg().SyncOp != protocol.SyncOp_SYNC_NEW || responseStream.Msg().SyncId == "" {
-		receiver.OnSyncError(base.RiverError(protocol.Err_INTERNAL, "first sync response should be SYNC_NEW and have SyncId").Func("syncRemoteNode"))
+	if responseStream.Msg().SyncOp != SyncOp_SYNC_NEW || responseStream.Msg().SyncId == "" {
+		receiver.OnSyncError(RiverError(Err_INTERNAL, "first sync response should be SYNC_NEW and have SyncId").Func("syncRemoteNode"))
 		return
 	}
 
@@ -707,7 +693,7 @@ func (n *syncNode) syncRemoteNode(
 
 func (n *syncNode) addStreamToSync(
 	ctx context.Context,
-	cookie *protocol.SyncCookie,
+	cookie *SyncCookie,
 	receiver events.SyncResultReceiver,
 ) {
 	log := dlog.FromCtx(ctx)
@@ -724,8 +710,8 @@ func (n *syncNode) addStreamToSync(
 
 	_, err := n.stub.AddStreamToSync(
 		ctx,
-		&connect.Request[protocol.AddStreamToSyncRequest]{
-			Msg: &protocol.AddStreamToSyncRequest{
+		&connect.Request[AddStreamToSyncRequest]{
+			Msg: &AddStreamToSyncRequest{
 				SyncPos: cookie,
 				SyncId:  n.remoteSyncId,
 			},
@@ -739,7 +725,7 @@ func (n *syncNode) addStreamToSync(
 
 func (n *syncNode) removeStreamFromSync(
 	ctx context.Context,
-	streamId shared.StreamId,
+	streamId StreamId,
 	receiver events.SyncResultReceiver,
 ) error {
 	log := dlog.FromCtx(ctx)
@@ -758,8 +744,8 @@ func (n *syncNode) removeStreamFromSync(
 
 	_, err := n.stub.RemoveStreamFromSync(
 		ctx,
-		&connect.Request[protocol.RemoveStreamFromSyncRequest]{
-			Msg: &protocol.RemoveStreamFromSyncRequest{
+		&connect.Request[RemoveStreamFromSyncRequest]{
+			Msg: &RemoveStreamFromSyncRequest{
 				SyncId:   n.remoteSyncId,
 				StreamId: streamId.Bytes(),
 			},
@@ -772,7 +758,7 @@ func (n *syncNode) removeStreamFromSync(
 	return err
 }
 
-func (n *syncNode) setStream(stream *connect.ServerStreamForClient[protocol.SyncStreamsResponse]) bool {
+func (n *syncNode) setStream(stream *connect.ServerStreamForClient[SyncStreamsResponse]) bool {
 	n.mu.Lock()
 	defer n.mu.Unlock()
 	if !n.closed {

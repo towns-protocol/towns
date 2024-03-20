@@ -256,6 +256,8 @@ func createTestServerAndClient(
 	numNodes int,
 	require *require.Assertions,
 ) (protocolconnect.StreamServiceClient, string, func()) {
+	ctx, cancel := context.WithCancel(ctx)
+
 	btc, err := crypto.NewBlockchainTestContext(ctx, numNodes)
 	require.NoError(err)
 
@@ -282,6 +284,7 @@ func createTestServerAndClient(
 		err = btc.InitNodeRecord(ctx, i, nodes[i].url)
 		require.NoError(err)
 	}
+	btc.Commit()
 
 	dbUrl := dbtestutils.GetTestDbUrl()
 	for i := 0; i < numNodes; i++ {
@@ -318,6 +321,7 @@ func createTestServerAndClient(
 			_ = dbtestutils.DeleteTestSchema(ctx, dbUrl, storage.DbSchemaNameFromAddress(node.addressStr))
 		}
 		btc.Close()
+		cancel()
 	}
 }
 

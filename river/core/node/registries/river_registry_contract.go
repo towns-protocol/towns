@@ -242,8 +242,8 @@ func (c *RiverRegistryContract) SetStreamLastMiniblock(ctx context.Context, stre
 
 type NodeRecord = contracts.Node
 
-func (c *RiverRegistryContract) GetAllNodes(ctx context.Context) ([]NodeRecord, error) {
-	nodes, err := c.NodeRegistry.GetAllNodes(c.callOpts(ctx))
+func (c *RiverRegistryContract) GetAllNodes(ctx context.Context, blockNum crypto.BlockNumber) ([]NodeRecord, error) {
+	nodes, err := c.NodeRegistry.GetAllNodes(c.callOptsWithBlockNum(ctx, blockNum))
 	if err != nil {
 		return nil, WrapRiverError(Err_CANNOT_CALL_CONTRACT, err).Func("GetAllNodes").Message("Call failed")
 	}
@@ -253,6 +253,13 @@ func (c *RiverRegistryContract) GetAllNodes(ctx context.Context) ([]NodeRecord, 
 func (c *RiverRegistryContract) callOpts(ctx context.Context) *bind.CallOpts {
 	return &bind.CallOpts{
 		Context: ctx,
+	}
+}
+
+func (c *RiverRegistryContract) callOptsWithBlockNum(ctx context.Context, blockNum crypto.BlockNumber) *bind.CallOpts {
+	return &bind.CallOpts{
+		Context:     ctx,
+		BlockNumber: blockNum.AsBigInt(),
 	}
 }
 
