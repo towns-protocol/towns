@@ -34,6 +34,21 @@ export const TownPageActivity = (props: { townId: string }) => {
             icon?: IconName
         }[] = []
 
+        const memberAndChannelActivities = [
+            ...(townStats?.latestJoinedUsers || []).map((event) => ({
+                ...event,
+                icon: 'member' as IconName,
+                type: event.type,
+                body: `Purchased membership and joined`,
+            })),
+            ...(townStats?.latestCreatedChannels || []).map((event) => ({
+                ...event,
+                icon: 'tag' as IconName,
+                type: event.type,
+                body: `Created a new channel`,
+            })),
+        ]
+
         !!channelStats?.numMessages &&
             activities.push({
                 icon: 'messageVariant',
@@ -59,29 +74,31 @@ export const TownPageActivity = (props: { townId: string }) => {
                 value: townStats?.numJoinedUsers,
                 body: `new member${townStats?.numJoinedUsers > 1 ? 's' : ''} joined`,
             })
-        !!townStats?.lastJoinedUserId &&
-            activities.push({
-                icon: 'member',
-                title: `${shortAddress(townStats?.lastJoinedUserId)} 1w`,
-                value: undefined,
-                body: `Purchased membership and joined`,
+        memberAndChannelActivities
+            .sort((a, b) => b.timestamp - a.timestamp)
+            .forEach((activity) => {
+                if (!activity.userId.includes('cA3')) {
+                    activities.push({
+                        icon: activity.icon,
+                        title: `${shortAddress(activity.userId)} ${formatRelativeTime(
+                            activity.timestamp,
+                        )}`,
+                        value: undefined,
+                        body: activity.body,
+                    })
+                }
             })
-        !!townStats?.lastCreatedChannelInfo &&
-            activities.push({
-                icon: 'tag',
-                title: `${shortAddress(townStats?.lastCreatedChannelInfo?.creatorUserId ?? '')} 1w`,
-                value: undefined,
-                body: `Created a new channel`,
-            })
-        !!townStats?.spaceCreatedAt &&
+        !!townStats?.spaceCreateEvent &&
             activities.push({
                 icon: 'key',
-                title: `${shortAddress(spaceInfo?.owner ?? '')} 1w`,
+                title: `${shortAddress(townStats.spaceCreateEvent.userId)} ${formatRelativeTime(
+                    townStats.spaceCreateEvent.timestamp,
+                )}`,
                 value: undefined,
                 body: `Founded ${spaceInfo?.name}`,
             })
         return activities
-    }, [channelStats, townStats, spaceInfo?.name, spaceInfo?.owner])
+    }, [channelStats, townStats, spaceInfo?.name])
 
     const { isTouch } = useDevice()
     const maxMembers = isTouch ? 7 : 10
@@ -177,6 +194,12 @@ const Counter = (props: { value: number }) => {
     return <span ref={ref} />
 }
 
+type ActivityEvent = {
+    userId: string
+    timestamp: number
+    type: 'joinedUser' | 'createChannel' | 'createSpace'
+}
+
 const useFetchUnauthenticatedActivity = (townId: string) => {
     const [isLoading, setIsLoading] = useState(true)
     const [members, setMembers] = useState<string[]>([])
@@ -187,15 +210,11 @@ const useFetchUnauthenticatedActivity = (townId: string) => {
     })
     const [townStats, setTownStats] = useState<{
         numJoinedUsers: number
-        lastJoinedUserId: string | undefined
-        spaceCreatedAt: number | undefined
-        lastCreatedChannelInfo:
-            | {
-                  creatorUserId: string
-                  createdAt: number
-              }
-            | undefined
+        latestJoinedUsers: ActivityEvent[] | undefined
+        spaceCreateEvent: ActivityEvent | undefined
+        latestCreatedChannels: ActivityEvent[] | undefined
     }>()
+
     const rpcUrl = useEnvironment().casablancaUrl
     useEffect(() => {
         if (!rpcUrl) {
@@ -231,21 +250,22 @@ const useFetchUnauthenticatedActivity = (townId: string) => {
                             s.remoteEvent.event.payload.value?.content.value?.op ===
                                 MembershipOp.SO_JOIN,
                     )
-                numJoinedUsers.sort(
-                    (a, b) => Number(a.createdAtEpochMs) - Number(b.createdAtEpochMs),
-                )
-
-                // last joined user
-                const lastJoinedUser = numJoinedUsers.at(-1)
-                let lastJoinedUserId = undefined
-
-                if (
-                    lastJoinedUser?.remoteEvent.event.payload.value?.content.case === 'membership'
-                ) {
-                    lastJoinedUserId = userIdFromAddress(
-                        lastJoinedUser.remoteEvent.event.payload.value.content.value.userAddress,
-                    )
-                }
+                    .map((s) => {
+                        if (s.remoteEvent.event.payload.value?.content.case === 'membership') {
+                            const userId = userIdFromAddress(
+                                s.remoteEvent.event.payload.value.content.value.userAddress,
+                            )
+                            return {
+                                userId: userId,
+                                timestamp: Number(s.createdAtEpochMs),
+                                type: 'joinedUser',
+                            } as ActivityEvent
+                        } else {
+                            return undefined
+                        }
+                    })
+                    .filter((item): item is ActivityEvent => item !== undefined)
+                    .sort((a, b) => b.timestamp - a.timestamp)
 
                 // space creation event
                 const spaceInception = stream.timeline
@@ -257,20 +277,27 @@ const useFetchUnauthenticatedActivity = (townId: string) => {
                     )
                     .at(0)
 
-                let spaceCreatedAt = undefined
+                let spaceCreateEvent: ActivityEvent | undefined = undefined
 
                 if (
                     spaceInception?.remoteEvent?.event.payload.value?.content.case === 'inception'
                 ) {
-                    spaceCreatedAt = Number(spaceInception.createdAtEpochMs)
+                    const userId = userIdFromAddress(
+                        spaceInception.remoteEvent.event.creatorAddress,
+                    )
+                    spaceCreateEvent = {
+                        userId: userId,
+                        timestamp: Number(spaceInception.createdAtEpochMs),
+                        type: 'createSpace',
+                    }
                 }
 
                 console.log('TownPageActivity numJoinedUsers last week', numJoinedUsers)
                 setTownStats({
                     numJoinedUsers: Array.from(numJoinedUsers).length,
-                    lastJoinedUserId: lastJoinedUserId,
-                    spaceCreatedAt: spaceCreatedAt,
-                    lastCreatedChannelInfo: undefined,
+                    latestJoinedUsers: numJoinedUsers,
+                    spaceCreateEvent: spaceCreateEvent,
+                    latestCreatedChannels: undefined,
                 })
 
                 const channelsIds = Array.from(stream.spaceContent.spaceChannelsMetadata.keys())
@@ -317,22 +344,25 @@ const useFetchUnauthenticatedActivity = (townId: string) => {
                 channelCreatedEvents.sort(
                     (a, b) => Number(a.createdAtEpochMs) - Number(b.createdAtEpochMs),
                 )
-                const lastCreatedChannel = channelCreatedEvents.at(-1)
-                if (lastCreatedChannel) {
-                    setTownStats((currentStats) => {
-                        if (!currentStats) {
-                            return currentStats
-                        }
+                const latestCreatedChannels = channelCreatedEvents.map(
+                    (event) =>
+                        ({
+                            userId: event.creatorUserId,
+                            timestamp: Number(event.createdAtEpochMs),
+                            type: 'createChannel',
+                        } as ActivityEvent),
+                )
 
-                        return {
-                            ...currentStats,
-                            lastCreatedChannelInfo: {
-                                creatorUserId: lastCreatedChannel.creatorUserId,
-                                createdAt: Number(lastCreatedChannel.createdAtEpochMs),
-                            },
-                        }
-                    })
-                }
+                setTownStats((currentStats) => {
+                    if (!currentStats) {
+                        return currentStats
+                    }
+
+                    return {
+                        ...currentStats,
+                        latestCreatedChannels: latestCreatedChannels,
+                    }
+                })
 
                 setIsLoading(false)
             } catch (error) {
@@ -354,4 +384,25 @@ const useFetchUnauthenticatedActivity = (townId: string) => {
 function isWithin(number: number | bigint, time: number) {
     const minEpochMs = Date.now() - time
     return number > minEpochMs
+}
+
+function formatRelativeTime(timestamp: number) {
+    const secondsAgo = (Date.now() - timestamp) / 1000
+    if (secondsAgo < 60) {
+        return 'just now'
+    }
+    const minutesAgo = secondsAgo / 60
+    if (minutesAgo < 60) {
+        return `${Math.floor(minutesAgo)}m`
+    }
+    const hoursAgo = minutesAgo / 60
+    if (hoursAgo < 24) {
+        return `${Math.floor(hoursAgo)}h`
+    }
+    const daysAgo = hoursAgo / 24
+    if (daysAgo < 7) {
+        return `${Math.floor(daysAgo)}d`
+    }
+    const weeksAgo = daysAgo / 7
+    return `${Math.floor(weeksAgo)}w`
 }
