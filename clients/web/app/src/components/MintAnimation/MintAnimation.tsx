@@ -1,7 +1,8 @@
 import React, { RefObject, useCallback, useMemo, useRef } from 'react'
 import { useSpaceData, useSpaceId } from 'use-towns-client'
 import { Link } from 'react-router-dom'
-import { Box, IconButton, MotionBox, Paragraph, Stack, Text } from '@ui'
+import { AnimatePresence } from 'framer-motion'
+import { Box, IconButton, MotionBox, MotionStack, Paragraph, Stack, Text } from '@ui'
 import { ImageVariants, useImageSource } from '@components/UploadImage/useImageSource'
 import { TownsToken } from '@components/TownsToken/TownsToken'
 import { useCreateLink } from 'hooks/useCreateLink'
@@ -21,11 +22,13 @@ export const MintAnimation = (props: {
     const { createLink: createProfileLink } = useCreateLink()
     const link = createProfileLink({ profileId: 'me' })
     const [shouldAnimate, setShouldAnimate] = React.useState(false)
+
     const fromRef = useRef<HTMLElement>(null)
-    const targetRect = targetRef?.current?.getBoundingClientRect()
-    const sourceRect = fromRef?.current?.getBoundingClientRect()
 
     const animationValues = useMemo(() => {
+        const targetRect = targetRef?.current?.getBoundingClientRect()
+        const sourceRect = fromRef?.current?.getBoundingClientRect()
+
         const targetPos = targetRect ? { x: targetRect.x, y: targetRect.y } : undefined
         const sourcePos = sourceRect ? { x: sourceRect.x, y: sourceRect.y } : undefined
 
@@ -43,15 +46,16 @@ export const MintAnimation = (props: {
                   y: targetRect.y + targetRect.height / 2,
               }
             : undefined
-
-        return { translate, targetCenter }
-    }, [targetRect, sourceRect])
+        // should animate is included to trigger the dependency in order to
+        // recalculate the values just-in-time for the animation
+        return shouldAnimate ? { translate, targetCenter, targetRect } : {}
+    }, [shouldAnimate, targetRef])
 
     const spaceId = useSpaceId()
     const { imageSrc } = useImageSource(spaceId ?? '', ImageVariants.thumbnail100)
     const { isTouch } = useDevice()
 
-    const onAnimationFinished = useCallback(() => {
+    const onDone = useCallback(() => {
         setRecentlyMintedSpaceToken(undefined)
     }, [setRecentlyMintedSpaceToken])
 
@@ -61,57 +65,63 @@ export const MintAnimation = (props: {
 
     return (
         <Box absoluteFill zIndex="uiAbove" pointerEvents="none">
-            {!shouldAnimate && (
-                <Stack
-                    horizontal
-                    border
-                    padding="sm"
-                    position="absolute"
-                    bottom={isTouch ? undefined : 'x4'}
-                    top={isTouch ? 'lg' : undefined}
-                    right={isTouch ? 'sm' : 'x4'}
-                    left={isTouch ? 'sm' : undefined}
-                    rounded="sm"
-                    background="level2"
-                    maxWidth={isTouch ? '100%' : '400'}
-                    pointerEvents="auto"
-                >
-                    <Stack horizontal alignItems="center" gap="sm">
-                        <Box ref={fromRef}>
-                            <TownsToken
-                                size="xxs"
-                                imageSrc={imageSrc}
-                                spaceName={spaceData?.name}
-                            />
-                        </Box>
-                        <Paragraph size="md" color="default" fontWeight="medium">
-                            {info.isOwner
-                                ? `You've minted a founder token for ${
-                                      spaceData?.name ?? ''
-                                  } to your`
-                                : `You've minted a membership for ${
-                                      spaceData?.name ?? ''
-                                  } to your`}{' '}
-                            <Link to={link ?? ''}>
-                                <Text size="md" color="cta2" display="inline-block">
-                                    Towns wallet
-                                </Text>
-                            </Link>
-                            .
-                        </Paragraph>
-                        <Box height="100%" paddingTop="xs">
-                            <IconButton icon="close" onClick={onClose} />
-                        </Box>
-                    </Stack>
-                </Stack>
-            )}
+            <AnimatePresence>
+                {!shouldAnimate && (
+                    <MotionStack
+                        horizontal
+                        border
+                        exit={{ opacity: 0, y: `100%` }}
+                        padding="sm"
+                        position="absolute"
+                        bottom={isTouch ? undefined : 'x4'}
+                        top={isTouch ? 'lg' : undefined}
+                        right={isTouch ? 'sm' : 'x4'}
+                        left={isTouch ? 'sm' : undefined}
+                        rounded="sm"
+                        background="level2"
+                        maxWidth={isTouch ? '100%' : '400'}
+                        pointerEvents="auto"
+                        onClick={onClose}
+                    >
+                        <Stack horizontal alignItems="center" gap="sm">
+                            <Box ref={fromRef}>
+                                {!shouldAnimate && (
+                                    <TownsToken
+                                        size="xxs"
+                                        imageSrc={imageSrc}
+                                        spaceName={spaceData?.name}
+                                    />
+                                )}
+                            </Box>
+                            <Paragraph size="md" color="default" fontWeight="medium">
+                                {info.isOwner
+                                    ? `You've minted a founder token for ${
+                                          spaceData?.name ?? ''
+                                      } to your`
+                                    : `You've minted a membership for ${
+                                          spaceData?.name ?? ''
+                                      } to your`}{' '}
+                                <Link to={link ?? ''}>
+                                    <Text size="md" color="cta2" display="inline-block">
+                                        Towns wallet
+                                    </Text>
+                                </Link>
+                                .
+                            </Paragraph>
+                            <Box height="100%" paddingTop="xs">
+                                <IconButton icon="close" />
+                            </Box>
+                        </Stack>
+                    </MotionStack>
+                )}
+            </AnimatePresence>
             {animationValues.translate && animationValues.targetCenter && shouldAnimate && (
                 <AnimatedToken
                     translate={animationValues.translate}
                     targetCenter={animationValues.targetCenter}
                     imageSrc={imageSrc}
-                    targetRect={targetRect}
-                    onAnimationFinished={onAnimationFinished}
+                    targetRect={animationValues.targetRect}
+                    onDone={onDone}
                 />
             )}
         </Box>
@@ -123,13 +133,13 @@ const AnimatedToken = (props: {
     targetCenter: { x: number; y: number }
     targetRect?: DOMRect
     imageSrc: string
-    onAnimationFinished: () => void
+    onDone: () => void
 }) => {
     const [shouldAnimateOut, setShouldAnimateOut] = React.useState(false)
     const translationAnimationFinished = useCallback(() => {
         setShouldAnimateOut(true)
     }, [setShouldAnimateOut])
-    const { translate, targetCenter, imageSrc, targetRect, onAnimationFinished } = props
+    const { translate, targetCenter, imageSrc, targetRect, onDone } = props
 
     // This entire animation is completely ad hoc and not reusable for anything else
     // It's a custom animation for the minting of a token as it transitions from the toast
@@ -214,7 +224,7 @@ const AnimatedToken = (props: {
                     animate={{ opacity: [0, 1, 0] }}
                     rounded="full"
                     transition={{ duration: duration + 2.0 }}
-                    onAnimationComplete={onAnimationFinished}
+                    onAnimationComplete={onDone}
                 />
             )}
             <MotionBox
