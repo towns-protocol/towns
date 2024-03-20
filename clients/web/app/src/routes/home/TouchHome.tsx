@@ -92,7 +92,7 @@ export const TouchHome = () => {
     const { memberIds } = useSpaceMembers()
     const { usersMap } = useUserLookupContext()
     const members = useMemo(() => {
-        return memberIds.map((userId) => usersMap[userId])
+        return memberIds.map((userId) => usersMap[userId]).filter(notUndefined)
     }, [memberIds, usersMap])
 
     const { unseenChannelIds, markChannelsAsSeen } = useUnseenChannelIds()
@@ -160,7 +160,9 @@ export const TouchHome = () => {
     }, [readChannels, readDms, searchString, unjoinedChannels, unreadChannels])
 
     const filteredMembers = useMemo(() => {
-        return fuzzysort.go(searchString, members, { key: 'name', all: true }).map((m) => m.obj)
+        return fuzzysort
+            .go(searchString, members, { keys: ['username', 'displayName'], all: true })
+            .map((m) => m.obj)
     }, [members, searchString])
 
     const [activeOverlay, setActiveOverlay] = useState<Overlay>(undefined)
