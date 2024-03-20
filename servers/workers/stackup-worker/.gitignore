@@ -3,3 +3,4 @@ node_modules
 transpiled
 /.idea/
 .dev.vars
+e2e_stackup_worker_output.txt
