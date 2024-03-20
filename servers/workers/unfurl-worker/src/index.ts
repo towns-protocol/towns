@@ -13,6 +13,8 @@ import { checkForTweetIdFromUrl, getTweet } from './twitter'
 import { TwitterUnfurl, UnfurlData } from './types'
 import { formattedUnfurlJSData } from './unfurler'
 
+const DISABLE_TWITTER_X_API = true
+
 declare let caches: Caches
 
 export interface Env extends AuthEnv {
@@ -66,7 +68,9 @@ async function unfurlLink(url: string, env: Env): Promise<UnfurlData | null> {
     const tweetId = checkForTweetIdFromUrl(url)
     const twitterBearerToken = env.TWITTER_BEARER
 
-    if (tweetId) {
+    const enableTwitter = !DISABLE_TWITTER_X_API || process.env.NODE_ENV === 'test'
+
+    if (enableTwitter && tweetId) {
         try {
             const response = await getTweet(tweetId, twitterBearerToken)
             const json = await response.json()
