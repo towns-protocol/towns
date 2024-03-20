@@ -191,10 +191,16 @@ export function useCasablancaTimelines(
 
 export function toEvent(timelineEvent: StreamTimelineEvent, userId: string): TimelineEvent {
     const eventId = timelineEvent.hashStr
-    const creatorUserId = timelineEvent.creatorUserId
+    let senderId = timelineEvent.creatorUserId
+
+    if (timelineEvent.remoteEvent?.event.payload.value?.content.case == 'membership') {
+        senderId = userIdFromAddress(
+            timelineEvent.remoteEvent?.event.payload.value?.content.value.initiatorAddress,
+        )
+    }
     const sender = {
-        id: creatorUserId,
-        displayName: creatorUserId, // todo displayName
+        id: senderId,
+        displayName: senderId, // todo displayName
         avatarUrl: undefined, // todo avatarUrl
     }
 
