@@ -7,6 +7,7 @@ import { Box, Button, Heading, Icon, IconButton, Text } from '@ui'
 import { shortAddress } from 'ui/utils/utils'
 import { ButtonSpinner } from 'ui/components/Spinner/ButtonSpinner'
 import { ModalContainer } from '@components/Modals/ModalContainer'
+import { isTouch } from 'hooks/useDevice'
 import { formatEthDisplay } from '../utils'
 import { CopyWalletAddressButton } from '../TokenVerification/Buttons'
 
@@ -52,11 +53,12 @@ function UserOpTxModalContent({ additionalWei }: { additionalWei?: bigint }) {
         (balanceData?.symbol ? balanceData.symbol : '')
 
     const balanceIsLessThanCost = balanceData && balanceData.value < txCost.toBigInt()
+    const _isTouch = isTouch()
 
     return (
         <>
             <IconButton padding="xs" alignSelf="end" icon="close" onClick={deny} />
-            <Box gap centerContent width="400">
+            <Box gap centerContent width={!_isTouch ? '400' : undefined} maxWidth="400">
                 <Box paddingBottom="sm">
                     <Text strong size="lg">
                         Confirm Transaction
@@ -64,7 +66,12 @@ function UserOpTxModalContent({ additionalWei }: { additionalWei?: bigint }) {
                 </Box>
                 <Heading level={2}>{displayTotalEthPrice + ' ETH'}</Heading>
                 <Box padding background="level3" rounded="sm" width="100%" gap="md" color="default">
-                    <Box horizontal width="100%" justifyContent="spaceBetween">
+                    <Box
+                        horizontal={!_isTouch}
+                        gap={_isTouch ? 'sm' : undefined}
+                        width="100%"
+                        justifyContent="spaceBetween"
+                    >
                         <Text>
                             Gas{' '}
                             <Text color="gray2" as="span" display="inline">
@@ -74,7 +81,8 @@ function UserOpTxModalContent({ additionalWei }: { additionalWei?: bigint }) {
                         <Text> {ethPrice + ' ETH'}</Text>
                     </Box>
                     <Box
-                        horizontal
+                        horizontal={!_isTouch}
+                        gap={_isTouch ? 'sm' : undefined}
                         paddingTop="md"
                         borderTop="level4"
                         width="100%"
@@ -85,7 +93,13 @@ function UserOpTxModalContent({ additionalWei }: { additionalWei?: bigint }) {
                     </Box>
                 </Box>
                 <Box color="default" background="level3" rounded="sm" width="100%" gap="md">
-                    <Box horizontal padding justifyContent="spaceBetween" alignItems="center">
+                    <Box
+                        padding
+                        horizontal={!_isTouch}
+                        gap={_isTouch ? 'sm' : undefined}
+                        justifyContent="spaceBetween"
+                        alignItems="center"
+                    >
                         <Box horizontal gap="sm">
                             <Box position="relative" width="x3">
                                 <Icon position="absoluteCenter" type="wallet" />{' '}

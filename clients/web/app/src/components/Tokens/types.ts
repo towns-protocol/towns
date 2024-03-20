@@ -5,6 +5,7 @@ export type TokenData = {
     label: string
     address: Address
     type: TokenType
+    quantity: number | undefined
 }
 
 export type TokenDataWithChainId = {

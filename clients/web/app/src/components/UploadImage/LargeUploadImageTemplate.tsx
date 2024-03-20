@@ -10,6 +10,8 @@ import { FieldOutline } from 'ui/components/_internal/Field/FieldOutline/FieldOu
 import { loadingStyles, spinnerStyles } from './UploadImage.css'
 import { UseOnImageChangeEventProps, useOnImageChangeEvent } from './useOnImageChangeEvent'
 
+export type UploadImageTemplateSize = 'tabletToDesktop' | 'lg' | 'sm'
+
 type Props<T extends FieldValues> = {
     children: React.ReactNode
     canEdit: boolean
@@ -20,12 +22,33 @@ type Props<T extends FieldValues> = {
     overrideUploadCb?: UseOnImageChangeEventProps<T>['overrideUploadCb']
     uploadIconPosition?: BoxProps['position']
     uploadIconSize?: IconProps['size']
+    size?: UploadImageTemplateSize
 } & Pick<UseFormReturn<T>, 'setError' | 'clearErrors' | 'formState' | 'register'>
 
-const config: BoxProps = {
-    width: '200',
-    height: '200',
-    rounded: 'md',
+const config: {
+    [key in UploadImageTemplateSize]: BoxProps
+} = {
+    tabletToDesktop: {
+        width: {
+            tablet: '100',
+            desktop: '200',
+        },
+        height: {
+            tablet: '100',
+            desktop: '200',
+        },
+        rounded: 'md',
+    },
+    sm: {
+        width: 'x10',
+        height: 'x10',
+        rounded: 'md',
+    },
+    lg: {
+        width: '200',
+        height: '200',
+        rounded: 'md',
+    },
 }
 
 export const LargeUploadImageTemplate = <T extends FieldValues>(props: Props<T>) => {
@@ -43,6 +66,7 @@ export const LargeUploadImageTemplate = <T extends FieldValues>(props: Props<T>)
         overrideUploadCb,
         uploadIconSize = 'square_sm',
         uploadIconPosition = 'topRight',
+        size = 'lg',
     } = props
 
     const { onChange, isPending } = useOnImageChangeEvent({
@@ -90,7 +114,7 @@ export const LargeUploadImageTemplate = <T extends FieldValues>(props: Props<T>)
             {canEdit && (
                 <>
                     <Box
-                        {...config}
+                        {...config[size]}
                         centerContent
                         position="absoluteCenter"
                         background={imageAreaIsClickable ? 'level2' : 'none'}

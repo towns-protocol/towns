@@ -7,11 +7,6 @@ export enum PanelType {
     all = 'all',
 }
 
-export type PanelContentProps = {
-    onClick?: () => void
-    panelType?: PanelType
-}
-
 export type TransactionDetails = {
     isTransacting: boolean
     townAddress: Address | undefined

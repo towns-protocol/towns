@@ -8,18 +8,15 @@ import headlessToast, { Toast, toast } from 'react-hot-toast/headless'
 import { Address } from 'wagmi'
 import { datadogRum } from '@datadog/browser-rum'
 import { useGetEmbeddedSigner } from '@towns/privy'
-import { Box, Icon, IconButton, Stack, Text } from '@ui'
+import { Box, Icon, IconButton, Text } from '@ui'
 import { PATHS } from 'routes'
-import { toTransactionUIStates } from 'hooks/TransactionUIState'
 import { useImageStore } from '@components/UploadImage/useImageStore'
 import { useUploadImage } from 'api/lib/uploadImage'
 import { useSetSpaceTopic } from 'hooks/useSpaceTopic'
 import { FailedUploadAfterSpaceCreation } from '@components/Notifications/FailedUploadAfterSpaceCreation'
-import { UserOpTxModal } from '@components/Web3/UserOpTxModal/UserOpTxModal'
 import { createPrivyNotAuthenticatedNotification } from '@components/Notifications/utils'
 import { convertTokenTypeToOperationType } from '@components/Tokens/utils'
 import { useStore } from 'store/store'
-import { BottomBar } from '../BottomBar'
 import { PanelType, TransactionDetails } from './types'
 import { CreateSpaceFormV2SchemaType } from './CreateSpaceFormV2.schema'
 import { mapToErrorMessage } from '../../utils'
@@ -27,13 +24,13 @@ import { mapToErrorMessage } from '../../utils'
 export function CreateTownSubmit({
     form,
     setPanelType,
-    panelType,
     setTransactionDetails,
+    children,
 }: {
     form: UseFormReturn<CreateSpaceFormV2SchemaType>
     setPanelType: (panelType: PanelType | undefined) => void
-    panelType: PanelType | undefined
     setTransactionDetails: ({ isTransacting }: TransactionDetails) => void
+    children: (props: { onSubmit: () => void; disabled: boolean }) => React.ReactNode
 }) {
     const getSigner = useGetEmbeddedSigner()
     const { spaceDapp } = useTownsClient()
@@ -43,11 +40,11 @@ export function CreateTownSubmit({
         'membershipPricingType',
     ])
 
-    const { data, isLoading, error, createSpaceTransactionWithRole, transactionStatus } =
-        useCreateSpaceTransaction()
+    // use the hook props instead of BlockchainStore/BlockchainTxNotifier
+    // b/c creating a space does a lot of things on river and we want to wait for those too, not just for the tx
+    const { data, isLoading, error, createSpaceTransactionWithRole } = useCreateSpaceTransaction()
 
     const navigate = useNavigate()
-    const transactionUIState = toTransactionUIStates(transactionStatus, Boolean(data))
 
     const hasError = useMemo(() => {
         return Boolean(error && error.name !== 'ACTION_REJECTED')
@@ -62,6 +59,7 @@ export function CreateTownSubmit({
     const { mutate: uploadImage } = useUploadImage(undefined, {
         onError: () => {
             if (data?.spaceId === undefined) {
+                console.warn('No space id, cannot upload space image')
                 return
             }
             const { removeLoadedResource } = useImageStore.getState()
@@ -83,6 +81,7 @@ export function CreateTownSubmit({
     const { mutate: uploadSpaceBio } = useSetSpaceTopic(undefined, {
         onError: () => {
             if (data?.spaceId === undefined) {
+                console.warn('No space id, cannot upload space bio')
                 return
             }
             const { removeLoadedResource } = useImageStore.getState()
@@ -115,7 +114,10 @@ export function CreateTownSubmit({
 
                 const createSpaceInfo: CreateSpaceInfo = {
                     name: spaceName ?? '',
+                    // TODO: spaceMetadata
+                    // TODO: defaultChannelName?
                 }
+
                 const signer = await getSigner()
                 if (!signer) {
                     createPrivyNotAuthenticatedNotification()
@@ -126,6 +128,9 @@ export function CreateTownSubmit({
                     return
                 }
 
+                //////////////////////////////////////////
+                // check pricing
+                //////////////////////////////////////////
                 let priceInWei: ethers.BigNumberish
 
                 try {
@@ -144,13 +149,35 @@ export function CreateTownSubmit({
                     return
                 }
 
+                //////////////////////////////////////////
+                // check quantity
+                //////////////////////////////////////////
+                if (tokensGatingMembership.length > 0) {
+                    const missingQuantity = tokensGatingMembership.some(
+                        (token) => token.quantity === 0 || token.quantity === undefined,
+                    )
+                    if (missingQuantity) {
+                        form.setError('tokensGatingMembership', {
+                            type: 'manual',
+                            message: 'Please enter a valid quantity.',
+                        })
+                        setPanelType(PanelType.all)
+
+                        setTransactionDetails({
+                            isTransacting: false,
+                            townAddress: undefined,
+                        })
+                        return
+                    }
+                }
+
                 const requirements: MembershipStruct = {
                     settings: {
                         name: 'Member',
                         symbol: 'MEMBER',
                         price: priceInWei,
                         maxSupply: membershipLimit,
-                        duration: 0,
+                        duration: 60 * 60 * 24 * 365, // 1 year in seconds
                         currency: ethers.constants.AddressZero,
                         feeRecipient: await signer.getAddress(),
                         freeAllocation: 0,
@@ -168,6 +195,7 @@ export function CreateTownSubmit({
                                           address: t.address as Address,
                                           chainId: BigInt(t.chainId),
                                           type: convertTokenTypeToOperationType(t.type),
+                                          threshold: BigInt(t.quantity),
                                       })),
                                   ),
                     },
@@ -186,24 +214,29 @@ export function CreateTownSubmit({
                     requirements,
                     signer,
                 )
-                const errorMessage = result?.error && mapToErrorMessage(result.error)
-                if (errorMessage) {
-                    toast.custom(
-                        (t) => (
-                            <TransactionErrorNotification toast={t} errorMessage={errorMessage} />
-                        ),
-                        {
-                            duration: Infinity,
-                        },
-                    )
+
+                if (result?.error) {
                     setTransactionDetails({
                         isTransacting: false,
                         townAddress: undefined,
                     })
+                    const errorMessage = result?.error && mapToErrorMessage(result.error)
+
+                    if (errorMessage) {
+                        toast.custom(
+                            (t) => (
+                                <TransactionErrorNotification
+                                    toast={t}
+                                    errorMessage={errorMessage}
+                                />
+                            ),
+                            {
+                                duration: Infinity,
+                            },
+                        )
+                    }
                     return
                 }
-
-                // TODO: upload town bio
 
                 if (result?.data && result?.data.spaceId) {
                     const newPath = `/${PATHS.SPACES}/${result?.data.spaceId}/${PATHS.GETTING_STARTED}`
@@ -251,7 +284,7 @@ export function CreateTownSubmit({
                     }, timeoutDuration)
                 }
             },
-            (errors) => {
+            (_errors) => {
                 setPanelType(PanelType.all)
                 setTransactionDetails({
                     isTransacting: false,
@@ -272,25 +305,14 @@ export function CreateTownSubmit({
         setRecentlyMintedSpaceToken,
     ])
 
-    return (
-        <Stack horizontal centerContent>
-            <BottomBar
-                panelStatus={panelType ? 'open' : 'closed'}
-                text="Create"
-                disabled={
-                    isLoading ||
-                    Object.keys(form.formState.errors).length > 0 ||
-                    membershipCostValue === '' ||
-                    (membershipPricingType === 'fixed' && Number(membershipCostValue) === 0)
-                }
-                transactingText="Creating town"
-                successText="Town created!"
-                transactionUIState={transactionUIState}
-                onClick={onSubmit}
-            />
-            <UserOpTxModal />
-        </Stack>
-    )
+    return children({
+        onSubmit,
+        disabled:
+            isLoading ||
+            Object.keys(form.formState.errors).length > 0 ||
+            membershipCostValue === '' ||
+            (membershipPricingType === 'fixed' && Number(membershipCostValue) === 0),
+    })
 }
 
 export const TransactionErrorNotification = ({

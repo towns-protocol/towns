@@ -40,7 +40,7 @@ export function convertRuleDataToTokenFormSchema(
             ...p,
             chainId: Number(p.chainId),
             type: convertOperationTypeToTokenType(p.type),
-            threshold: Number(p.threshold),
+            quantity: Number(p.threshold),
             tokenIds: [], // todo: add token ids
         }
     })

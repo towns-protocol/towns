@@ -28,8 +28,8 @@ export const Panel = (props: Props) => {
     return isTouch ? <TouchPanel {...props} /> : <DesktopPanel {...props} />
 }
 
-const DesktopPanel = (props: Props) => {
-    const { onClose, rightBarButton, leftBarButton, label, ...boxProps } = props
+const DesktopPanel = ({ modalPresentable, ...rest }: Props) => {
+    const { onClose, rightBarButton, leftBarButton, label, ...boxProps } = rest
     useSafeEscapeKeyCancellation({ onEscape: onClose, capture: false })
 
     return (

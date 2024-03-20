@@ -135,5 +135,6 @@ export async function mapToTokenProps(token: ContractMetadata): Promise<TokenDat
         label: token.name || '',
         address: (token.address || '') as Address,
         type: type || TokenType.UNKNOWN,
+        quantity: undefined,
     }
 }

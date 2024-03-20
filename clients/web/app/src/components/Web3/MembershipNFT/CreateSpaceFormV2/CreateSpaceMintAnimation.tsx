@@ -1,7 +1,8 @@
 import React, { useCallback, useState } from 'react'
 
 import { AnimatePresence } from 'framer-motion'
-import { Box, MotionBox, MotionStack, Stack, Text } from '@ui'
+import { createPortal } from 'react-dom'
+import { Box, MotionBox, MotionStack, Stack, Text, useZLayerContext } from '@ui'
 import { TownsToken } from '@components/TownsToken/TownsToken'
 
 import nft1 from './images/nft_1.png'
@@ -57,9 +58,15 @@ export const CreateSpaceMintAnimation = () => {
     const containerWidth = CONTAINER_WIDTH_DESKTOP
     const containerTransformX =
         -1 * (animationIndex.image * imageWidth) + (containerWidth - imageWidth) / 2 - imageWidth
+    const root = useZLayerContext().rootLayerRef?.current
 
-    return (
-        <Box absoluteFill centerContent background="backdropBlur">
+    if (!root) {
+        console.error(`no root context declared for use of modal`)
+        return null
+    }
+
+    return createPortal(
+        <Box centerContent absoluteFill background="backdropBlur" pointerEvents="auto">
             <MotionBox
                 centerContent
                 background="level2"
@@ -137,7 +144,8 @@ export const CreateSpaceMintAnimation = () => {
                     </Box>
                 </Stack>
             </MotionBox>
-        </Box>
+        </Box>,
+        root,
     )
 }
 

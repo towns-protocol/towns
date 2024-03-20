@@ -17,7 +17,7 @@ export const tokenEntitlementSchema = z.object({
         }),
     ),
     chainId: z.number(),
-    threshold: z.number(),
+    quantity: z.number(),
     type: z.nativeEnum(TokenType),
 })
 

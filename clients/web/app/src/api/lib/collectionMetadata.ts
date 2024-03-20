@@ -207,6 +207,7 @@ export function mapToTokenData(token: ContractMetadata, chainId: number): TokenD
             label: token.name || '',
             address: (token.address || '') as Address,
             type: (token?.tokenType as TokenType) || undefined,
+            quantity: undefined,
         },
     }
 }

@@ -128,3 +128,52 @@ const ButtonContainer = (boxProps: BoxProps) => (
         {...boxProps}
     />
 )
+
+export const BottomBarWithColWidths = ({
+    leftColWidth,
+    rightColWidth,
+    rightColContent,
+    leftColContent,
+    ...boxProps
+}: {
+    leftColWidth: number
+    rightColWidth: number
+    rightColContent: React.ReactNode
+    leftColContent: React.ReactNode
+} & BoxProps) => {
+    return (
+        <Stack
+            horizontal
+            centerContent
+            position="relative"
+            width="100%"
+            borderTop="default"
+            alignItems="center"
+            paddingBottom="safeAreaInsetBottom"
+            height={{
+                desktop: 'x12',
+                mobile: 'x10',
+            }}
+            {...boxProps}
+        >
+            <Stack absoluteFill background="level1" opacity="0.5" />
+            <Box
+                position="relative"
+                style={{
+                    width: leftColWidth,
+                }}
+            >
+                {leftColContent}
+            </Box>
+
+            <Box
+                position="relative"
+                style={{
+                    width: rightColWidth,
+                }}
+            >
+                {rightColContent}
+            </Box>
+        </Stack>
+    )
+}

@@ -85,7 +85,7 @@ export function mapTokenOptionsToTokenDataStruct(tokens: TokenDataWithChainId[])
             chainId: t.chainId,
             type: t.data.type,
             tokenIds: [],
-            threshold: 1, // TODO: add count/threshold
+            quantity: t.data.quantity ?? 1,
         }
     })
 }

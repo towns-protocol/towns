@@ -99,10 +99,12 @@ export function EditPricing() {
                     )
                 }}
             </RadioCard>
-            {formState.errors['membershipCost'] && (
+            {formState.errors['membershipCost'] ? (
                 <FadeInBox key="error">
                     <ErrorMessage errors={formState.errors} fieldName="membershipCost" />
                 </FadeInBox>
+            ) : (
+                <>&nbsp;</>
             )}
         </Stack>
     )

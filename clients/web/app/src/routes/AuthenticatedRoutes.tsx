@@ -48,6 +48,7 @@ export const AuthenticatedRoutes = () => {
             <Route element={<SpaceContextRoute />}>
                 {isTouch ? (
                     <>
+                        <Route path={`${PATHS.SPACES}/new`} element={<CreateSpaceFormV2 />} />
                         <Route element={<ValidateMembership />}>
                             <Route path={`${PATHS.SPACES}/:spaceSlug`}>
                                 <Route path="" element={<TouchHome />}>
@@ -83,9 +84,12 @@ export const AuthenticatedRoutes = () => {
                     </>
                 ) : (
                     <>
-                        <Route path={`${PATHS.SPACES}/new`} element={<CreateSpaceFormV2 />} />
                         <Route element={<ValidateMembership />}>
                             <Route element={<AppPanelLayout />}>
+                                <Route
+                                    path={`${PATHS.SPACES}/new`}
+                                    element={<CreateSpaceFormV2 />}
+                                />
                                 <Route path={`${PATHS.SPACES}/:spaceSlug`}>
                                     <Route index element={<SpaceHome />} />
                                     <Route path="members" element={<SpaceMembers />}>

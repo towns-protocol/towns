@@ -7,6 +7,7 @@ import { Box, IconButton, MotionBox, MotionStack, Stack, Text } from '@ui'
 import { SpaceNavItem } from '@components/NavItem/SpaceNavItem'
 import { transitions } from 'ui/transitions/transitions'
 import { PATHS } from 'routes'
+import { ActionNavItem } from '@components/NavItem/ActionNavItem'
 
 type Props = {
     onClose: () => void
@@ -83,6 +84,18 @@ export const TouchHomeOverlay = (props: Props) => {
                                 onClick={onClose}
                             />
                         ))}
+
+                        <ActionNavItem
+                            id={`${PATHS.SPACES}/new`}
+                            link={`/${PATHS.SPACES}/new`}
+                            icon="plus"
+                            label="New Town"
+                            tooltip="New Town"
+                            tooltipOptions={{
+                                placement: 'horizontal',
+                                immediate: true,
+                            }}
+                        />
                     </Box>
                 </Box>
 

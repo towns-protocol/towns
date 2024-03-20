@@ -117,7 +117,9 @@ export function EditGating() {
                 </RadioCard>
             )}
             <Stack>
-                {isValid ? null : (
+                {isValid ? (
+                    <>&nbsp;</>
+                ) : (
                     <>
                         <ErrorMessage
                             errors={formProps.formState.errors}
