@@ -1,9 +1,11 @@
 import './../utils/envs.mock'
+
 import { Request, Response } from 'express'
+
 import { StatusCodes } from 'http-status-codes'
 import { database } from '../../infrastructure/database/prisma'
 import { tagMentionUsersHandler } from './tagHandler'
-import { NotificationKind } from '../schema/tagSchema'
+import { notificationKind } from '../schema/tagSchema'
 
 jest.mock('../../infrastructure/database/prisma', () => ({
     database: {
@@ -39,7 +41,7 @@ describe('tagMentionUsersHandler', () => {
     it('should tag mention users', async () => {
         const tagData = {
             ChannelId: req.body.channelId,
-            Tag: NotificationKind.Mention,
+            Tag: notificationKind.Mention,
             SpaceId: req.body.spaceId,
         }
 
@@ -62,7 +64,7 @@ describe('tagMentionUsersHandler', () => {
         expect(res.status).toHaveBeenCalledWith(StatusCodes.OK)
         expect(res.json).toHaveBeenCalledWith({
             ...req.body,
-            tag: NotificationKind.Mention,
+            tag: notificationKind.Mention,
         })
     })
 

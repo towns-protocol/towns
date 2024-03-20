@@ -1,7 +1,7 @@
 import { Request, Response } from 'express'
 import { StatusCodes } from 'http-status-codes'
 import { database } from '../../infrastructure/database/prisma'
-import { PushType } from '../schema/subscriptionSchema'
+import { pushType } from '../schema/subscriptionSchema'
 import { logger } from '../logger'
 
 export async function addSubscriptionHandler(request: Request, res: Response) {
@@ -10,7 +10,7 @@ export async function addSubscriptionHandler(request: Request, res: Response) {
         const subscriptionData = {
             UserId: request.body.userId,
             PushSubscription: JSON.stringify(request.body.subscriptionObject),
-            PushType: request.body.pushType ?? PushType.WebPush,
+            PushType: request.body.pushType ?? pushType.WebPush,
         }
 
         const subscription = await database.pushSubscription.upsert({

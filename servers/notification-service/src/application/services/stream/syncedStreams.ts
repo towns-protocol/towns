@@ -18,11 +18,11 @@ import { StreamRpcClient, errorContains } from '../../../infrastructure/rpc/stre
 import { bin_toHexString, streamIdToBytes, userIdFromAddress } from './utils'
 import { database } from '../../../infrastructure/database/prisma'
 import { ParsedEvent, ParsedMiniblock, ParsedStreamAndCookie } from './types'
-import { NotifyUsersSchema } from '../../schema/notificationSchema'
 import { notificationService } from '../notificationService'
 import { isChannelStreamId, isDMChannelStreamId, isGDMChannelStreamId } from './id'
 import { StreamKind, SyncedStream } from '@prisma/client'
 import { logger } from '../../logger'
+import { NotifyUsersSchema } from '../../../types'
 
 export function isDefined<T>(value: T | undefined | null): value is T {
     return <T>value !== undefined && <T>value !== null

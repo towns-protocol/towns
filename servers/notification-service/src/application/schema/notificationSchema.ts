@@ -1,6 +1,6 @@
 import { z } from 'zod'
 
-export enum Urgency {
+export enum urgency {
     VERY_LOW = 'very-low',
     LOW = 'low',
     NORMAL = 'normal',
@@ -16,8 +16,6 @@ export const notificationContentMessageSchema = z.object({
     event: z.object({}) as any,
 })
 
-export type NotificationContentMessageSchema = z.infer<typeof notificationContentMessageSchema>
-
 export const notificationContentDmSchema = z.object({
     kind: z.enum(['direct_message']),
     channelId: z.string(),
@@ -27,27 +25,19 @@ export const notificationContentDmSchema = z.object({
     event: z.object({}) as any,
 })
 
-export type NotificationContentDmSchema = z.infer<typeof notificationContentDmSchema>
-
 export const notificationContentSchema = z.union([
     notificationContentMessageSchema,
     notificationContentDmSchema,
 ])
 
-export type NotificationContentSchema = z.infer<typeof notificationContentSchema>
-
 export const notificationPayloadSchema = z.object({
     content: notificationContentSchema,
 })
-
-export type NotificationPayload = z.infer<typeof notificationPayloadSchema>
 
 export const notifyUsersSchema = z.object({
     sender: z.string(),
     users: z.array(z.string()).min(1),
     payload: notificationPayloadSchema,
-    urgency: z.nativeEnum(Urgency).optional(),
+    urgency: z.nativeEnum(urgency).optional(),
     forceNotify: z.boolean().optional(),
 })
-
-export type NotifyUsersSchema = z.infer<typeof notifyUsersSchema>

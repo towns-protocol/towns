@@ -1,6 +1,6 @@
 import { z } from 'zod'
 
-export enum NotificationKind {
+export enum notificationKind {
     DirectMessage = 'direct_message',
     Mention = 'mention',
     NewMessage = 'new_message',

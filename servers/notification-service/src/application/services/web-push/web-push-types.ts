@@ -1,4 +1,4 @@
-import { Urgency } from '../../schema/notificationSchema'
+import { urgency } from '../../schema/notificationSchema'
 import { JwtData } from './jwt'
 
 export interface VapidDetails {
@@ -14,7 +14,7 @@ export interface WebPushOptions {
     ttl: number
     channelId: string
     topic?: string
-    urgency?: Urgency
+    urgency?: urgency
 }
 
 export interface WebPushSubscriptionKeys {
