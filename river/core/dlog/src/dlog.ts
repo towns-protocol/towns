@@ -67,7 +67,7 @@ const cloneAndFormat = (obj: unknown, depth = 0, seen = new WeakSet()): unknown 
     }
 
     if (Array.isArray(obj)) {
-        return obj.map((e) => cloneAndFormat(e, depth + 1), seen)
+        return obj.map((e) => cloneAndFormat(e, depth + 1, seen))
     }
 
     if (typeof obj === 'object' && obj !== null) {

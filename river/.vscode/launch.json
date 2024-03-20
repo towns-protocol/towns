@@ -12,6 +12,16 @@
       "processId": "river_node"
     },
     {
+      "name": "Jest: current file in 'core/dlog/'",
+      "type": "node",
+      "request": "launch",
+      "env": { "NODE_ENV": "development", "NODE_TLS_REJECT_UNAUTHORIZED": "0" },
+      "program": "${workspaceFolder}/node_modules/.bin/jest",
+      "runtimeArgs": ["--experimental-vm-modules", "--experimental-wasm-modules"],
+      "args": ["${file}", "--config", "${workspaceFolder}/core/dlog/jest.config.ts", "-i", "--no-cache", "--forceExit"],
+      "console": "integratedTerminal",
+    },
+    {
       "name": "Jest: current file in 'core/encryption/'",
       "type": "node",
       "request": "launch",

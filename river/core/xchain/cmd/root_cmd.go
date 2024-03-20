@@ -52,6 +52,10 @@ func initConfigAndLog() {
 			fmt.Printf("Failed to unmarshal config, error=%v\n", err)
 		}
 
+		if configStruct.Log.Format == "" {
+			configStruct.Log.Format = "text"
+		}
+
 		if logLevel != "" {
 			configStruct.Log.Level = logLevel
 		}

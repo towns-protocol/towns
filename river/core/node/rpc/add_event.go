@@ -21,7 +21,7 @@ var addEventRequests = infra.NewSuccessMetrics("add_event_requests", serviceRequ
 func (s *Service) localAddEvent(
 	ctx context.Context,
 	req *connect.Request[AddEventRequest],
-	nodes *StreamNodes,
+	nodes StreamNodes,
 ) (*connect.Response[AddEventResponse], error) {
 	log := dlog.FromCtx(ctx)
 
@@ -49,7 +49,7 @@ func (s *Service) localAddEvent(
 	}
 }
 
-func (s *Service) addParsedEvent(ctx context.Context, streamId StreamId, parsedEvent *ParsedEvent, nodes *StreamNodes) error {
+func (s *Service) addParsedEvent(ctx context.Context, streamId StreamId, parsedEvent *ParsedEvent, nodes StreamNodes) error {
 	localStream, streamView, err := s.cache.GetStream(ctx, streamId)
 	if err != nil {
 		return err

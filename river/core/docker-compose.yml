@@ -1,0 +1,36 @@
+services:
+    river-node:
+        # image: public.ecr.aws/h5v6m2x1/river:latest
+        build:
+            dockerfile: ./Dockerfile
+        volumes:
+            - ./local_xchain_node_logs:/riveruser/xchain_node/logs
+            - ./local_stream_node_logs:/riveruser/stream_node/logs
+        environment:
+            - BASECHAIN__CHAINID=31337
+            - STORAGE_TYPE=postgres
+            - DATABASE__USER=postgres
+            - DATABASE__DATABASE=river
+            - DATABASE__PASSWORD=postgres
+            - DATABASE__EXTRA=?sslmode=disable&pool_max_conns=1000
+            - DATABASE__HOST=host.docker.internal
+            - DATABASE__PORT=5433
+            - LOG__FORMAT=json
+            - LOG__NOCOLOR=true
+            - MODE=multi-node
+            - ARCHITECTCONTRACT__VERSION=v3
+            - METRICS__ENABLED=false
+            - PERFORMANCETRACKING__TRACINGENABLED=false
+            - PERFORMANCETRACKING__PROFILINGENABLED=false
+            - SKIP_GENKEY=true
+            - LOG__LEVEL=debug
+            - WALLETLINKCONTRACT__VERSION=v3
+            - PORT=5001
+            - USEBLOCKCHAINSTREAMREGISTRY=true
+            - BASECHAIN__NETWORKURL=http://host.docker.internal:8545
+            - RIVERCHAIN__NETWORKURL=http://host.docker.internal:8546
+            - WALLETPRIVATEKEY=51e02cbb807a535b05ae02f15cc3cbf73950e61d6dde55b3a77ad2be8815147c
+            - ARCHITECTCONTRACT__ADDRESS=0x2552FcE4D398492E4fd063e6aA77186e5c6d0EF1
+            - REGISTRYCONTRACT__ADDRESS=0x531Faa70a60e151d20395E0E4ce9A32FB767Ca00
+            - WALLETLINKCONTRACT__ADDRESS=0x310B258B88f7Ec281A63B27A4d17c2D9749a7783
+            - ENTITLEMENT_CONTRACT__ADDRESS=0x2bdCC0de6bE1f7D2ee689a0342D76F52E8EFABa3

@@ -4,7 +4,7 @@ baseChain:
     networkUrl: 'https://nexus-rpc-worker-test-beta.towns.com/84532?key=NOT_SET'
 riverChain:
     chainId: 6524490
-    networkUrl: 'https://towns-devnet.rpc.caldera.xyz/http'
+    networkUrl: 'https://devnet.rpc.river.build'
 
 # Base contracts
 architectContract:

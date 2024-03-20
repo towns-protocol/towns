@@ -12,7 +12,7 @@ import (
 	"github.com/river-build/river/core/node/shared"
 )
 
-func (s *Service) getStubForStream(ctx context.Context, streamId shared.StreamId) (StreamServiceClient, *StreamNodes, error) {
+func (s *Service) getStubForStream(ctx context.Context, streamId shared.StreamId) (StreamServiceClient, StreamNodes, error) {
 	nodes, err := s.streamRegistry.GetStreamInfo(ctx, streamId)
 	if err != nil {
 		return nil, nil, err

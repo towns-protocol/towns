@@ -35,9 +35,10 @@ fi
 # Change the current working directory to the directory of the script
 cd "$(dirname "$0")"
 
+ENTITLMENT_CHECKER_URL="ws://localhost:8545"
 ENTITLMENT_CHECKER_ADDRESS=$(jq -r '.address' ../../packages/generated/addresses/base_anvil/entitlementChecker.json)
 ENTITLMENT_TEST_ADDRESS=$(jq -r '.address' ../../packages/generated/addresses/base_anvil/entitlementGatedExample.json)
-RIVER_CHAIN_ID=31338
+BASE_CHAIN_ID=31337
 
 make
 
@@ -66,7 +67,7 @@ do
 
     # Copy node binary and config template
     cp "./bin/xchain_node" "${INSTANCE_DIR}/bin"
-    cp config-template.yaml "${INSTANCE_DIR}/config/config.yaml"
+    cp default_config.yaml "${INSTANCE_DIR}/config/config.yaml"
 
     # Substitute METRIC_PORT and create config.yaml
     METRICS_PORT=$((9080 + i))
@@ -74,16 +75,17 @@ do
     echo "Creating instance_${i}"
     
     yq eval ".metrics.port = \"$METRICS_PORT\"" -i "${INSTANCE_DIR}/config/config.yaml"
+    yq eval ".entitlement_contract.url = \"$ENTITLMENT_CHECKER_URL\"" -i "${INSTANCE_DIR}/config/config.yaml"
     yq eval ".entitlement_contract.address = \"$ENTITLMENT_CHECKER_ADDRESS\"" -i "${INSTANCE_DIR}/config/config.yaml"
-    yq eval ".entitlement_contract.chainId = \"$RIVER_CHAIN_ID\"" -i "${INSTANCE_DIR}/config/config.yaml"
+    yq eval ".entitlement_contract.chainId = \"$BASE_CHAIN_ID\"" -i "${INSTANCE_DIR}/config/config.yaml"
+    yq eval ".test_contract.url = \"$ENTITLMENT_CHECKER_URL\"" -i "${INSTANCE_DIR}/config/config.yaml"
     yq eval ".test_contract.address = \"$ENTITLMENT_TEST_ADDRESS\"" -i "${INSTANCE_DIR}/config/config.yaml"
-    yq eval ".test_contract.chainId = \"$RIVER_CHAIN_ID\"" -i "${INSTANCE_DIR}/config/config.yaml"
-
+    yq eval ".test_contract.chainId = \"$BASE_CHAIN_ID\"" -i "${INSTANCE_DIR}/config/config.yaml"
+    yq eval ".log.level = \"debug\"" -i "${INSTANCE_DIR}/config/config.yaml"
+    
     pushd "${INSTANCE_DIR}"
     # Run each process with 'generate_key' argument
     "./bin/xchain_node" genkey
-    cast rpc -r http://127.0.0.1:8546 anvil_setBalance `cat wallet/node_address` 10000000000000000000
-    echo "Created and funded instance_${i}"
 
     popd
   ) &
@@ -92,4 +94,4 @@ done
 # Wait for all background processes to finish
 wait
 
-echo "All instances created and funded."
+echo "All instances created."

@@ -10,14 +10,13 @@ import (
 	"syscall"
 
 	"github.com/river-build/river/core/node/dlog"
-	"github.com/river-build/river/core/node/infra"
 
 	"github.com/spf13/cobra"
 )
 
 func run() error {
 	cfg := config.GetConfig()
-	ctx := context.Background()
+	ctx, cancel := context.WithCancel(context.Background())
 
 	pid := os.Getpid()
 
@@ -26,7 +25,9 @@ func run() error {
 	ctx = dlog.CtxWithLog(ctx, log)
 
 	if cfg.Metrics.Enabled {
-		go infra.StartMetricsService(ctx, cfg.Metrics)
+		// Since the xchain server runs alongside the stream node
+		// we don't need to start the metrics service here
+		// go infra.StartMetricsService(ctx, cfg.Metrics)
 	}
 
 	shutdown := make(chan struct{})
@@ -34,6 +35,7 @@ func run() error {
 	closeShutdown := func() {
 		once.Do(func() {
 			close(shutdown)
+			cancel()
 			log.Info("Channel shutdown closed")
 		})
 	}
@@ -60,7 +62,7 @@ out:
 	for {
 		select {
 		case <-interrupt:
-			log.Info("Interrupted")
+			log.Info("Run Interrupted")
 			closeShutdown()
 		case <-wgDone:
 			log.Info("Done")

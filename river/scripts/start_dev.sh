@@ -142,10 +142,10 @@ commands=(
     "watch_web3:cd core/web3 && yarn watch"
     "watch_go:cd core/proto && yarn watch:go"
     "debug_app:cd core/debug-app && yarn dev"
-    "core_single:sleep 3 && ./core/node/run_single.sh -sc"
-    "core_single_ne:./scripts/wait-for-core.sh && ./core/node/run_single.sh -sc --de"
-    "core:./core/node/run_multi.sh -r"
-    "xchain:./core/xchain/launch_multi.sh"
+#    "core_single:sleep 3 && ./core/node/run_single.sh -sc"
+#    "core_single_ne:./scripts/wait-for-core.sh && ./core/node/run_single.sh -sc --de"
+#    "core:./core/node/run_multi.sh -r"
+#    "xchain:./core/xchain/launch_multi.sh"
 )
 
 # Create a Tmux window for each command

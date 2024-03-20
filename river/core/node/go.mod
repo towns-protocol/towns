@@ -34,6 +34,8 @@ require (
 	gopkg.in/yaml.v3 v3.0.1
 )
 
+require github.com/stretchr/objx v0.5.1 // indirect
+
 require (
 	github.com/DataDog/appsec-internal-go v1.0.0 // indirect
 	github.com/DataDog/datadog-agent/pkg/obfuscate v0.48.0 // indirect

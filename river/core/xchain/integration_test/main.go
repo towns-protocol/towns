@@ -32,7 +32,7 @@ func keyboardInput(input chan rune) {
 }
 
 func main() {
-	bc := context.Background()
+	bc, cancel := context.WithCancel(context.Background())
 	pid := os.Getpid()
 
 	log := dlog.FromCtx(bc).With("pid", pid)
@@ -45,6 +45,7 @@ func main() {
 	closeShutdown := func() {
 		once.Do(func() {
 			close(shutdown)
+			cancel()
 			log.Info("Channel shutdown closed")
 		})
 	}
@@ -90,7 +91,7 @@ out:
 				go xc.ClientSimulator()
 			}
 		case <-interrupt:
-			log.Info("Interrupted")
+			log.Info("Main Interrupted")
 			closeShutdown()
 		case <-wgDone:
 			log.Info("Done")

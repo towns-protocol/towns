@@ -16,6 +16,8 @@ SCRIPT_PID_FILE="${BASE_DIR}/launch_multi.pid"
 # Record the script's own PID
 echo $$ > "$SCRIPT_PID_FILE"
 
+make
+
 # Get number of instances by counting instance directories
 N=$(ls -d ${BASE_DIR}/instance_* 2>/dev/null | wc -l)
 
@@ -46,6 +48,7 @@ trap cleanup SIGINT SIGTERM
 for (( i=1; i<=N; i++ ))
 do
   INSTANCE_DIR="${BASE_DIR}/instance_${i}"
+  cp bin/node "${INSTANCE_DIR}/bin/node"
   pushd "${INSTANCE_DIR}"
   "./bin/xchain_node" run &
   node_pid=$!

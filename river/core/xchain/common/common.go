@@ -3,9 +3,10 @@ package common
 import (
 	"context"
 	"core/xchain/config"
-	_ "embed"
 	"encoding/json"
+	"fmt"
 	"math/big"
+	"net/url"
 	"strings"
 	"sync"
 	"time"
@@ -17,6 +18,7 @@ import (
 	"github.com/ethereum/go-ethereum/common"
 	"github.com/ethereum/go-ethereum/core/types"
 	"github.com/ethereum/go-ethereum/ethclient"
+	"github.com/ethereum/go-ethereum/rpc"
 )
 
 var checkerContractAddress common.Address
@@ -28,9 +30,41 @@ var testContractUrl string
 var loadAddressesOnce sync.Once
 
 func loadConfig() {
+	log := dlog.FromCtx(context.Background())
 	cfg := config.GetConfig()
 	checkerContractAddress = common.HexToAddress(cfg.EntitlementContract.Address)
-	checkerContractUrl = cfg.EntitlementContract.Url
+
+	baseWebsocketURL, err := ConvertHTTPToWebSocket(config.GetConfig().BaseChain.NetworkUrl)
+	if err != nil {
+		log.Error("Failed to convert BaseChain HTTP to WebSocket", "err", err)
+	}
+
+	checkerContractUrl = baseWebsocketURL
+}
+
+func ConvertHTTPToWebSocket(httpURL string) (string, error) {
+	// Parse the URL
+	parsedURL, err := url.Parse(httpURL)
+	if err != nil {
+		return "", err
+	}
+
+	// Change the scheme based on the original
+	switch parsedURL.Scheme {
+	case "http":
+		parsedURL.Scheme = "ws"
+	case "https":
+		parsedURL.Scheme = "wss"
+	case "ws":
+		parsedURL.Scheme = "ws"
+	case "wss":
+		parsedURL.Scheme = "wss"
+	default:
+		return "", fmt.Errorf("unexpected scheme: %s", parsedURL.Scheme)
+	}
+
+	// Return the modified URL
+	return parsedURL.String(), nil
 }
 
 func GetCheckerContractAddress() *common.Address {
@@ -53,26 +87,59 @@ func GetTestContractUrl() string {
 	return testContractUrl
 }
 
-func FundWallet(fromAddress common.Address) (err error) {
-	log := dlog.FromCtx(context.Background())
+const requiredBalance = 10000000000000000 // 0.01 ETH in Wei
 
-	client, err := ethclient.Dial(GetCheckerContractUrl())
+func WaitUntilWalletFunded(ctx context.Context, wsEndpoint string, walletAddress common.Address) error {
+	log := dlog.FromCtx(ctx)
+
+	// Connect to the client using WebSocket for live subscription
+	rpcClient, err := rpc.DialContext(ctx, wsEndpoint)
 	if err != nil {
-		log.Error("Failed to connect to the Ethereum client", "err", err)
+		log.Error("Failed to connect to the Ethereum WebSocket client", "err", err)
 		return err
 	}
+	defer rpcClient.Close()
 
-	var result interface{}
+	ethClient := ethclient.NewClient(rpcClient)
 
-	err = client.Client().CallContext(context.Background(), &result, "anvil_setBalance", fromAddress, 1000000000000000000)
+	// Subscribe to new block headers
+	headers := make(chan *types.Header)
+	subscription, err := ethClient.SubscribeNewHead(ctx, headers)
 	if err != nil {
-		log.Error("Failed call anvil_setBalance", "err", err)
+		log.Error("Failed to subscribe to new block headers", "err", err)
 		return err
-
 	}
-	log.Info("Funded wallet", "result", result)
+	defer subscription.Unsubscribe()
 
-	return err
+	log.Info("Subscription created. Waiting for the wallet to be funded...")
+
+	for {
+		select {
+		case err := <-subscription.Err():
+			log.Error("Subscription error", "err", err)
+			return err
+
+		case <-headers:
+			// Check the balance on each new block
+			balance, err := ethClient.BalanceAt(ctx, walletAddress, nil)
+			if err != nil || balance == nil {
+				log.Warn("Failed to retrieve wallet balance", "err", err)
+				continue // Try again in the next block
+			}
+
+			if balance.Cmp(big.NewInt(requiredBalance)) >= 0 {
+				log.Info("Wallet is funded. Current balance", "balance", balance)
+				return nil
+			} else {
+				log.Warn("Wallet is not funded yet. Current balance", "balance", balance, "requiredBalance", requiredBalance, "walletAddress", walletAddress.Hex())
+			}
+
+		case <-ctx.Done():
+			// Handle context cancellation
+			log.Info("Context cancelled, stopping WaitUntilWalletFunded subscription")
+			return ctx.Err()
+		}
+	}
 }
 
 func WaitForTransaction(client *ethclient.Client, tx *types.Transaction) *big.Int {

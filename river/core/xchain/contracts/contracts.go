@@ -1,15 +1,21 @@
 package contracts
 
 import (
+	"context"
 	"core/xchain/config"
 	"core/xchain/contracts/dev"
 	v3 "core/xchain/contracts/v3"
 	"math/big"
+	"strings"
 
+	"github.com/ethereum/go-ethereum"
+	"github.com/ethereum/go-ethereum/accounts/abi"
 	"github.com/ethereum/go-ethereum/accounts/abi/bind"
 	"github.com/ethereum/go-ethereum/common"
 	"github.com/ethereum/go-ethereum/core/types"
+	"github.com/ethereum/go-ethereum/ethclient"
 	"github.com/ethereum/go-ethereum/event"
+	"github.com/river-build/river/core/node/dlog"
 )
 
 type IRuleEntitlementOperation struct {
@@ -119,6 +125,50 @@ func NewIEntitlementChecker(address common.Address, backend bind.ContractBackend
 		res.devIEntitlementChecker = contract
 		return res, err
 	}
+}
+
+func (c *IEntitlementChecker) GetABI() string {
+	if config.GetConfig().GetContractVersion() == "v3" {
+		return v3.IEntitlementCheckerABI
+	} else {
+		return dev.IEntitlementCheckerABI
+	}
+}
+func (c *IEntitlementChecker) EstimateGas(ctx context.Context, client *ethclient.Client, From common.Address, To *common.Address, name string, args ...interface{}) (*uint64, error) {
+	log := dlog.FromCtx(ctx)
+	// Generate the data for the contract method call
+	// You must replace `YourContractABI` with the actual ABI of your contract
+	// and `registerNodeMethodID` with the actual method ID you wish to call.
+	// The following line is a placeholder for the encoded data of your method call.
+	abiString := c.GetABI()
+
+	parsedABI, err := abi.JSON(strings.NewReader(abiString))
+	if err != nil {
+		return nil, err
+	}
+
+	method, err := parsedABI.Pack(name, args...)
+	if err != nil {
+		return nil, err
+	}
+
+	// Prepare the transaction call message
+	msg := ethereum.CallMsg{
+		From: From,   // Sender of the transaction (optional)
+		To:   To,     // Contract address
+		Data: method, // Encoded method call
+	}
+
+	// Estimate the gas required for the transaction
+	estimatedGas, err := client.EstimateGas(ctx, msg)
+	if err != nil {
+		log.Error("Failed to estimate gas", "err", err)
+		return nil, err
+	}
+
+	log.Debug("estimatedGas", "estimatedGas", estimatedGas)
+	return &estimatedGas, nil
+
 }
 
 func (c *IEntitlementChecker) RegisterNode(opts *bind.TransactOpts) (*types.Transaction, error) {

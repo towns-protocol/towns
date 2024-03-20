@@ -13,7 +13,7 @@ import (
 
 type StreamRegistry interface {
 	// GetStreamInfo: returns nodes, error
-	GetStreamInfo(ctx context.Context, streamId StreamId) (*StreamNodes, error)
+	GetStreamInfo(ctx context.Context, streamId StreamId) (StreamNodes, error)
 	// GetStreamInfo: returns nodes, error
 	AllocateStream(ctx context.Context, streamId StreamId, genesisMiniblockHash common.Hash, genesisMiniblock []byte) ([]common.Address, error)
 }
@@ -39,7 +39,7 @@ func NewStreamRegistry(localNodeAddress common.Address, nodeRegistry NodeRegistr
 	}
 }
 
-func (sr *streamRegistryImpl) GetStreamInfo(ctx context.Context, streamId StreamId) (*StreamNodes, error) {
+func (sr *streamRegistryImpl) GetStreamInfo(ctx context.Context, streamId StreamId) (StreamNodes, error) {
 	ret, err := sr.contract.GetStream(ctx, streamId)
 	if err != nil {
 		return nil, err

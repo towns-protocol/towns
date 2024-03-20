@@ -62,7 +62,7 @@ type streamImpl struct {
 	streamId StreamId
 
 	// TODO: move under lock to support updated.
-	nodes *StreamNodes
+	nodes StreamNodes
 
 	// Mutex protects fields below
 	// View is copied on write.

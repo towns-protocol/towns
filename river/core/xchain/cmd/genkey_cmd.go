@@ -10,19 +10,25 @@ import (
 )
 
 func genkey(overwrite bool) error {
-	ctx := context.Background()
+	ctx := context.Background() // lint:ignore context.Background() is fine here
 
 	wallet, err := crypto.NewWallet(ctx)
 	if err != nil {
 		return err
 	}
 
-	err = os.MkdirAll(crypto.WALLET_PATH, 0755)
+	err = os.MkdirAll(crypto.WALLET_PATH, 0o755)
 	if err != nil {
 		return err
 	}
 
-	err = wallet.SaveWallet(ctx, crypto.WALLET_PATH_PRIVATE_KEY, crypto.WALLET_PATH_PUBLIC_KEY, crypto.WALLET_PATH_NODE_ADDRESS, overwrite)
+	err = wallet.SaveWallet(
+		ctx,
+		crypto.WALLET_PATH_PRIVATE_KEY,
+		crypto.WALLET_PATH_PUBLIC_KEY,
+		crypto.WALLET_PATH_NODE_ADDRESS,
+		overwrite,
+	)
 	if err != nil {
 		return err
 	}

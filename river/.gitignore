@@ -77,3 +77,5 @@ core/node/run_files/*
 go.work.sum
 packages/generated/addresses/base_anvil/entitlementGatedExample.json
 packages/generated/addresses/base_anvil/entitlementChecker.json
+core/local_stream_node_logs/dev.log
+core/local_xchain_node_logs/dev.log

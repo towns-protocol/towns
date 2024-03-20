@@ -36,7 +36,14 @@ func ClientSimulator() {
 	}
 
 	fromAddress := crypto.PubkeyToAddress(*publicKeyECDSA)
-	client, err := ethclient.Dial(config.GetConfig().EntitlementContract.Url)
+
+	baseWebsocketURL, err := xc.ConvertHTTPToWebSocket(config.GetConfig().BaseChain.NetworkUrl)
+	if err != nil {
+		log.Error("Failed to convert BaseChain HTTP to WebSocket", "err", err)
+		return
+	}
+
+	client, err := ethclient.Dial(baseWebsocketURL)
 	if err != nil {
 		log.Error("Failed to connect to the Ethereum client", "err", err)
 		return

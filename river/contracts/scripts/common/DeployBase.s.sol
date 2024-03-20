@@ -27,7 +27,7 @@ contract DeployBase is DeployHelpers, Script {
       ChainData({
         name: "river",
         chainId: 6524490,
-        rpcUrl: "https://towns-devnet.rpc.caldera.xyz/http"
+        rpcUrl: "https://devnet.rpc.river.build"
       })
     );
     setChain(

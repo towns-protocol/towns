@@ -1,0 +1,33 @@
+chains: '1:ws://localhost:8545,2:ws://localhost:8546'
+entitlement_contract:
+    url: ''
+    chainId: ''
+    address: ''
+test_contract:
+    url: ''
+    chainId: ''
+    address: ''
+architectContract:
+    address: ''
+    version: ''
+walletLinkContract:
+    address: ''
+    version: ''
+log:
+    file: logs/dev.log
+    level: info
+    console: true
+    noColor: false
+    format: text
+metrics:
+    enabled: true
+    port: '9081'
+# Blockchain configuration
+baseChain:
+    chainId: 31337
+    networkUrl: 'http://127.0.0.1:8545'
+    blockTimeMs: 2000
+riverChain:
+    chainId: 31338
+    networkUrl: 'http://127.0.0.1:8546'
+    blockTimeMs: 2000

@@ -24,7 +24,7 @@ This XChain Node resides in a monorepo and interfaces with the `EntitlementCheck
 
 ## Prerequisites
 
-- Go 1.20 or higher
+- Go 1.21 or higher
 - Foundry
 - Make utility
 
@@ -91,6 +91,14 @@ This XChain Node resides in a monorepo and interfaces with the `EntitlementCheck
 
 ## Multi-Instance Configuration and Launch
 
+1. ** Start the Dev environment **
+
+   From the root of the repo, run the following command to start the dev environment:
+
+   ```bash
+   ./scripts/start_dev.sh
+   ```
+
 1. **Create Multi-Instance Configs:**
 
    ```bash
@@ -99,7 +107,7 @@ This XChain Node resides in a monorepo and interfaces with the `EntitlementCheck
 
    This will create five instance configurations in `./core/xchain/instance_1-5` using the template in `./core/xchain/config-template.yaml`.
 
-2. **Launch Multiple Instances:**
+1. **Launch Multiple Instances:**
    ```bash
    ./launch-multi.sh
    ```

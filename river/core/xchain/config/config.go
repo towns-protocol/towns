@@ -1,6 +1,11 @@
 package config
 
 import (
+	"fmt"
+	"strconv"
+	"strings"
+
+	node_config "github.com/river-build/river/core/node/config"
 	infra "github.com/river-build/river/core/node/infra/config"
 )
 
@@ -15,29 +20,53 @@ const (
 type Config struct {
 	Metrics             infra.MetricsConfig `mapstructure:"metrics"`
 	Log                 infra.LogConfig     `mapstructure:"log"`
-	Chain               []ChainConfig       `mapstructure:"chain"`
+	ChainsString        string              `mapstructure:"chains"`
+	Chains              []ChainConfig       `mapstructure:"-"` // This is a derived field
 	EntitlementContract ContractConfig      `mapstructure:"entitlement_contract"`
 	TestingContract     ContractConfig      `mapstructure:"test_contract"`
 	contractVersion     ContractVersion     `mapstructure:"contract_version"`
-}
-type ChainConfig struct {
-	NetworkUrl string
-	ChainId    int
+	// Blockchain configuration
+	BaseChain  node_config.ChainConfig
+	RiverChain node_config.ChainConfig
 }
 
+type ChainConfig struct {
+	NetworkUrl string
+	ChainId    uint64
+}
 type ContractConfig struct {
-	Url     string
 	Address string
-	ChainId int
 }
 
 var cmdConfig *Config
+
+func parseChain(chainStr string) []ChainConfig {
+	var chains []ChainConfig
+	chainPairs := strings.Split(chainStr, ",")
+	for _, pair := range chainPairs {
+		parts := strings.SplitN(pair, ":", 2) // Use SplitN to split into exactly two parts
+		if len(parts) == 2 {
+			chainID, err := strconv.Atoi(parts[0])
+			if err != nil {
+				fmt.Printf("Error converting chainID to int: %v\n", err)
+				continue
+			}
+			chains = append(chains, ChainConfig{
+				NetworkUrl: parts[1],
+				ChainId:    uint64(chainID),
+			})
+		}
+	}
+	return chains
+}
 
 func GetConfig() *Config {
 	return cmdConfig
 }
 
 func SetConfig(config *Config) {
+	chains := parseChain(config.ChainsString)
+	config.Chains = chains
 	cmdConfig = config
 }
 

@@ -1,0 +1,84 @@
+# Network configuration
+port: 443
+database:
+    url: ''
+    database: ''
+    user: ''
+    password: ''
+    port: ''
+    extra: ''
+    host: ''
+storageType: postgres
+
+# Certificates for TLS
+TLSConfig:
+    cert: ''
+    key: ''
+UseHttps: true
+
+# Blockchain configuration
+baseChain:
+    chainId: 31337
+    networkUrl: 'http://127.0.0.1:8545'
+    blockTimeMs: 2000
+riverChain:
+    chainId: 31338
+    networkUrl: 'http://127.0.0.1:8546'
+    blockTimeMs: 2000
+
+# Base contracts
+architectContract:
+    address: ''
+    version: ''
+walletLinkContract:
+    address: ''
+    version: ''
+
+# River contracts
+registryContract:
+    address: ''
+    version: '' # Explicitely uses IRiverRegistryV1 interface
+
+# Logging
+log:
+    file: logs/dev.log
+    level: info
+    console: true
+    noColor: true
+    format: text
+
+# Metrics
+metrics:
+    enabled: false
+    port: null
+performanceTracking:
+    profilingEnabled: false
+    tracingEnabled: false
+
+# Push notification configuration
+pushNotification:
+    url: '' # URL to the push notification worker. Default empty string disables it.
+    authToken: '' # auth token for the push notification worker
+
+# Stream settings
+stream:
+    media:
+        maxChunkCount: 10 # max number of chunks in a media stream
+        maxChunkSize: 500000 # max number of bytes in a single chunk
+    recencyConstraints:
+        # Each event must be unique and reference the hash of a previous miniblock
+        # If the hash is not of the most recent block, the referenced miniblock must be less than M seconds old.
+        ageSeconds: 11
+        # The node will load M generation miniblocks before the most recent snapshot
+        generations: 5
+    replicationFactor: 1
+    defaultMinEventsPerSnapshot: 100
+    minEventsPerSnapshot:
+        # stream prefixes should be lower case because go is lower casing them anyway
+        a8: 10 # USER
+        ad: 10 # USER_DEVICE_KEY
+        a1: 10 # USER_INBOX
+        a5: 10 # USER_SETTINGS
+
+# Debug feature flags.
+disableBaseChain: false

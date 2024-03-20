@@ -15,7 +15,7 @@ import (
 type replicatedStream struct {
 	streamId    string
 	localStream AddableStream
-	nodes       *StreamNodes
+	nodes       StreamNodes
 	service     *Service
 }
 

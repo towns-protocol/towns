@@ -6,7 +6,9 @@ import (
 	"encoding/hex"
 	"errors"
 	"math/big"
+	"os"
 
+	"github.com/river-build/river/core/node/crypto"
 	"github.com/river-build/river/core/node/dlog"
 
 	xc "core/xchain/common"
@@ -15,7 +17,6 @@ import (
 
 	"github.com/ethereum/go-ethereum/accounts/abi/bind"
 	"github.com/ethereum/go-ethereum/common"
-	"github.com/ethereum/go-ethereum/crypto"
 	"github.com/ethereum/go-ethereum/ethclient"
 )
 
@@ -35,39 +36,48 @@ func RunServer(ctx context.Context, workerID int, shutdown <-chan struct{}) {
 
 	ctx = dlog.CtxWithLog(ctx, log)
 
-	privateKey, err := crypto.GenerateKey()
+	var err error
+	var wallet *crypto.Wallet
+	// Read env var WALLETPRIVATEKEY or PRIVATE_KEY
+	privKey := os.Getenv("WALLETPRIVATEKEY")
+	if privKey == "" {
+		privKey = os.Getenv("PRIVATE_KEY")
+	}
+	if privKey != "" {
+		wallet, err = crypto.NewWalletFromPrivKey(ctx, privKey)
+	} else {
+		wallet, err = crypto.LoadWallet(ctx, crypto.WALLET_PATH_PRIVATE_KEY)
+	}
 	if err != nil {
-		log.Error("Failed to generate private key", "err", err)
+		log.Error("error finding wallet")
 		return
 	}
 
-	publicKey := privateKey.Public()
-	publicKeyECDSA, ok := publicKey.(*ecdsa.PublicKey)
-	if !ok {
-		log.Error("error casting public key to ECDSA")
-		return
-	}
+	fromAddress := wallet.Address
 
-	fromAddress := crypto.PubkeyToAddress(*publicKeyECDSA)
-	err = xc.FundWallet(fromAddress)
+	baseWebsocketURL, err := xc.ConvertHTTPToWebSocket(config.GetConfig().BaseChain.NetworkUrl)
 	if err != nil {
-		log.Error("Failed to fundWallet", "err", err)
+		log.Error("Failed to convert BaseChain HTTP to WebSocket", "err", err)
 		return
 	}
 
-	blockNumber, err := registerNode(ctx, workerID, fromAddress, privateKey)
+	err = xc.WaitUntilWalletFunded(ctx, baseWebsocketURL, fromAddress)
+	if err != nil {
+		log.Error("Failed to confirm wallet has sufficent funds", "err", err)
+		return
+	}
+
+	blockNumber, err := registerNode(ctx, workerID, fromAddress, wallet.PrivateKeyStruct)
 	if err != nil {
 		log.Error("Failed to registerNode", "err", err)
 		return
 	}
 
-	defer unregisterNode(ctx, workerID, fromAddress, privateKey)
-
 	events := make(chan *e.IEntitlementCheckerEntitlementCheckRequested)
 
 	// Event loop
 	for !isClosed(shutdown) {
-		if eventLoop(ctx, workerID, blockNumber, events, shutdown, fromAddress, privateKey) {
+		if eventLoop(ctx, workerID, blockNumber, events, shutdown, fromAddress, wallet.PrivateKeyStruct) {
 			return
 		}
 	}
@@ -75,9 +85,14 @@ func RunServer(ctx context.Context, workerID int, shutdown <-chan struct{}) {
 
 func registerNode(ctx context.Context, workerID int, fromAddress common.Address, privateKey *ecdsa.PrivateKey) (*uint64, error) {
 	log := dlog.FromCtx(ctx)
-	chainId := big.NewInt(int64(config.GetConfig().EntitlementContract.ChainId))
-	log.Info("Registering node", "Url", config.GetConfig().EntitlementContract.Url)
-	client, err := ethclient.Dial(config.GetConfig().EntitlementContract.Url)
+	chainId := big.NewInt(int64(config.GetConfig().BaseChain.ChainId))
+	log.Info("Registering node", "Url", config.GetConfig().BaseChain.NetworkUrl, "ContractAddress", config.GetConfig().EntitlementContract.Address, "Node", fromAddress.String())
+	baseWebsocketURL, err := xc.ConvertHTTPToWebSocket(config.GetConfig().BaseChain.NetworkUrl)
+	if err != nil {
+		log.Error("Failed to convert BaseChain HTTP to WebSocket", "err", err)
+		return nil, err
+	}
+	client, err := ethclient.Dial(baseWebsocketURL)
 	if err != nil {
 		log.Error("Failed to connect to the Ethereum", "err", err)
 		return nil, err
@@ -85,16 +100,31 @@ func registerNode(ctx context.Context, workerID int, fromAddress common.Address,
 	defer client.Close()
 
 	nonce, err := client.PendingNonceAt(ctx, fromAddress)
+
+	log.Debug("PendingNonceAt", "nonce", nonce)
 	if err != nil {
 		log.Error("Failed PendingNonceAt", "err", err)
 		return nil, err
 	}
 
 	gasPrice, err := client.SuggestGasPrice(ctx)
+	log.Debug("SuggestGasPrice", "gasPrice", gasPrice)
 	if err != nil {
 		log.Error("Failed SuggestGasPrice", "err", err)
 		return nil, err
 	}
+
+	balance, err := client.BalanceAt(ctx, fromAddress, nil) // nil for latest block
+	if err != nil {
+		log.Error("Failed BalanceAt", "err", err)
+		return nil, err
+	}
+
+	// To convert the balance to Ether, you can use the `go-ethereum` units package.
+	etherValue := new(big.Float).Quo(new(big.Float).SetInt(balance), big.NewFloat(float64(1e18)))
+	log.Debug("Balance in Ether", "eth", etherValue.String())
+
+	log.Debug("NewKeyedTransactorWithChainID", "privateKey", privateKey, "chainId", chainId, "address", *xc.GetCheckerContractAddress())
 
 	auth, err := bind.NewKeyedTransactorWithChainID(privateKey, chainId)
 	if err != nil {
@@ -102,9 +132,7 @@ func registerNode(ctx context.Context, workerID int, fromAddress common.Address,
 		return nil, err
 	}
 	auth.Nonce = big.NewInt(int64(nonce))
-	auth.Value = big.NewInt(0)
-	auth.GasLimit = uint64(300000)
-	auth.GasPrice = gasPrice
+	auth.GasLimit = 0
 
 	checker, err := e.NewIEntitlementChecker(*xc.GetCheckerContractAddress(), client)
 	if err != nil {
@@ -112,12 +140,16 @@ func registerNode(ctx context.Context, workerID int, fromAddress common.Address,
 		return nil, err
 	}
 
-	log.Debug("Registering node", "auth", auth, "checker", checker)
-
 	tx, err := checker.RegisterNode(auth)
 	if err != nil {
-		log.Error("Failed RegisterNode", "err", err)
-		return nil, err
+		if err.Error() == "execution reverted: custom error d1922fc1:" {
+			// This error is returned when the node is already registered
+			// This is not an error, so we just log it and continue
+			log.Warn("Node already registered")
+		} else {
+			log.Error("Failed RegisterNode", "err", err)
+			return nil, err
+		}
 	}
 
 	blockNumber := xc.WaitForTransaction(client, tx)
@@ -126,15 +158,23 @@ func registerNode(ctx context.Context, workerID int, fromAddress common.Address,
 
 		return nil, errors.New("failed to get block number")
 	}
+	log.Info("Registered node", "blockNumber", blockNumber, "tx", tx.Hash().Hex())
+
 	temp := blockNumber.Uint64()
 	return &temp, nil
 }
 
 func unregisterNode(ctx context.Context, workerID int, fromAddress common.Address, privateKey *ecdsa.PrivateKey) {
 	log := dlog.FromCtx(ctx)
-	chainId := big.NewInt(int64(config.GetConfig().EntitlementContract.ChainId))
+	chainId := big.NewInt(int64(config.GetConfig().BaseChain.ChainId))
 
-	client, err := ethclient.Dial(config.GetConfig().EntitlementContract.Url)
+	baseWebsocketURL, err := xc.ConvertHTTPToWebSocket(config.GetConfig().BaseChain.NetworkUrl)
+	if err != nil {
+		log.Error("Failed to convert BaseChain HTTP to WebSocket", "err", err)
+		return
+	}
+
+	client, err := ethclient.Dial(baseWebsocketURL)
 	if err != nil {
 		log.Error("Failed to connect to the Ethereum client", "err", err)
 		return
@@ -181,9 +221,14 @@ func unregisterNode(ctx context.Context, workerID int, fromAddress common.Addres
 
 func eventLoop(ctx context.Context, workerID int, blockNumber *uint64, events chan *e.IEntitlementCheckerEntitlementCheckRequested, shutdown <-chan struct{}, fromAddress common.Address, privateKey *ecdsa.PrivateKey) bool {
 	log := dlog.FromCtx(ctx)
-	chainId := big.NewInt(int64(config.GetConfig().EntitlementContract.ChainId))
+	chainId := big.NewInt(int64(config.GetConfig().BaseChain.ChainId))
+	baseWebsocketURL, err := xc.ConvertHTTPToWebSocket(config.GetConfig().BaseChain.NetworkUrl)
+	if err != nil {
+		log.Error("Failed to convert BaseChain HTTP to WebSocket", "err", err)
+		return false
+	}
 
-	client, err := ethclient.Dial(config.GetConfig().EntitlementContract.Url)
+	client, err := ethclient.Dial(baseWebsocketURL)
 	if err != nil {
 		log.Error("Failed to connect to the Ethereum client", "err", err)
 		return false

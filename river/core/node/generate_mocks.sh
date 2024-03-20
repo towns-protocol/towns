@@ -1,0 +1,1 @@
+go run github.com/vektra/mockery/v2@v2.40.3

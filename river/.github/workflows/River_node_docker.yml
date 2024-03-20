@@ -60,7 +60,7 @@ jobs:
                 REGISTRY_ALIAS: h5v6m2x1
                 ECR_REPOSITORY: river
                 RELEASE_VERSION: ${{ steps.set_release_version.outputs.release_version }}
-              working-directory: ./core/node
+              working-directory: ./core
               run: |
                 docker build --build-arg GIT_SHA=${{ github.sha }} --build-arg RELEASE_VERSION=$RELEASE_VERSION -t $ECR_REGISTRY/$REGISTRY_ALIAS/$ECR_REPOSITORY:latest .
                 docker tag $ECR_REGISTRY/$REGISTRY_ALIAS/$ECR_REPOSITORY:latest $ECR_REGISTRY/$REGISTRY_ALIAS/$ECR_REPOSITORY:$RELEASE_VERSION
