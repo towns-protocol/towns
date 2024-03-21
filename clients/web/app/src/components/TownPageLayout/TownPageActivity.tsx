@@ -155,7 +155,7 @@ export const TownPageActivity = (props: { townId: string }) => {
                             alignItems="center"
                             paddingBottom="sm"
                         >
-                            <Box centerContent width="x6">
+                            <Box centerContent width="x6" shrink={false}>
                                 {a.icon && <Icon type={a.icon} size="square_md" color="gray2" />}
                             </Box>
                             <Box grow gap="paragraph">

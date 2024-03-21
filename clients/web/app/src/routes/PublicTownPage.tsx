@@ -97,7 +97,7 @@ export const PublicTownPage = (props: { isPreview?: boolean; onClosePreview?: ()
     return spaceInfo ? (
         <>
             <AbsoluteBackground networkId={spaceInfo.networkId} />
-            <Box absoluteFill paddingTop="safeAreaInsetTop" className={className}>
+            <Box absoluteFill height="100vh" bottom="none" className={className}>
                 <TownPageLayout
                     headerContent={
                         <Header
@@ -175,7 +175,7 @@ const Header = (props: {
     const { login } = useAuth()
 
     return (
-        <Box horizontal centerContent width="100%" position="absolute" top="none">
+        <Box horizontal centerContent width="100%">
             <Stack horizontal width="100%" paddingY="md" gap="md" paddingRight="md">
                 <Link to="/">
                     <Box centerContent width="x8">
@@ -260,6 +260,7 @@ const Footer = (props: {
         <BottomBarLayout
             position="fixed"
             bottom="none"
+            paddingBottom="safeAreaInsetBottom"
             zIndex="above"
             messageContent={
                 <Stack grow centerContent gap={isTouch ? 'sm' : 'md'} color="default">
@@ -267,7 +268,7 @@ const Footer = (props: {
                         <>
                             <Stack horizontal={!isTouch} width="100%" gap="sm">
                                 <Text fontWeight="strong" fontSize={isTouch ? 'sm' : 'md'}>
-                                    Memberships left
+                                    Memberships Left
                                 </Text>
                                 {!isTouch && <Box grow />}
                                 <Text color="gray2" fontSize={isTouch ? 'sm' : 'md'}>

@@ -89,12 +89,12 @@ export const TownPageLayout = (props: TownPageLayoutProps) => {
 
     return (
         <>
-            <Stack alignItems="center" height="100dvh">
+            <Stack scroll alignItems="center" height="100dvh" paddingTop="safeAreaInsetTop">
                 {props.headerContent}
                 <Stack width="100%" alignItems="center" height="100%">
                     <Stack
                         horizontal={!isTouch}
-                        paddingX="lg"
+                        paddingX="md"
                         paddingBottom="x4"
                         width="100%"
                         maxWidth={isTouch ? '100%' : '1000'}
@@ -102,8 +102,8 @@ export const TownPageLayout = (props: TownPageLayoutProps) => {
                         gap="md"
                         height="100%"
                     >
-                        <Stack scroll gap="lg" width="100%" paddingTop="x8">
-                            <Stack horizontal gap="sm" alignContent="start" paddingTop="x4">
+                        <Stack gap="lg" width="100%">
+                            <Stack horizontal gap="sm" alignContent="start">
                                 {isTouch && (
                                     <InteractiveTownsToken
                                         key={imageSrc}
@@ -268,7 +268,7 @@ const InformationBoxes = (props: {
                     key="cost"
                     title="Cost"
                     centerContent={
-                        <Text style={{ fontSize: '24px' }} fontWeight="strong">
+                        <Text size="lg" fontWeight="strong">
                             {price}
                         </Text>
                     }
@@ -281,7 +281,7 @@ const InformationBoxes = (props: {
                     key="duration"
                     title="Valid for"
                     centerContent={
-                        <Text style={{ fontSize: '24px' }} fontWeight="strong">
+                        <Text size="lg" fontWeight="strong">
                             {durationTexts.title}
                         </Text>
                     }
