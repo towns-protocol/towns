@@ -10,8 +10,9 @@ import { SyncedStreams, unpackStream } from './syncedStreams'
 import { streamIdToBytes, userIdFromAddress } from './utils'
 import { env } from '../../utils/environment'
 import assert from 'assert'
-import { Err } from '@river/proto'
+import { Err, MemberPayload_Membership, MembershipOp, MiniblockHeader } from '@river/proto'
 import { logger } from '../../logger'
+import { ParsedStreamAndCookie } from './types'
 
 type StreamsMetadata = {
     [key in StreamKind]: {
@@ -149,7 +150,82 @@ export class StreamsMonitorService {
     public async addGDMStreamToDB(streamId: string): Promise<void> {
         logger.info('[StreamsMonitorService] adding gdm', streamId, 'to db')
         this.validateStream(streamId, StreamKind.GDM)
+        const unpacked = await this.getAndParseStream(streamId)
+        const userIds = this.getUserIdsFromChannelOrGDMStreams(unpacked)
+        await database.syncedStream.create({
+            data: {
+                streamId,
+                kind: StreamKind.GDM,
+                syncCookie: unpacked?.nextSyncCookie?.toJsonString() || '',
+                userIds: Array.from(userIds),
+            },
+        })
+    }
 
+    public async addChannelStreamToDB(streamId: string): Promise<void> {
+        logger.info(`[StreamsMonitorService] adding channel ${streamId} to db`)
+        this.validateStream(streamId, StreamKind.Channel)
+        const unpacked = await this.getAndParseStream(streamId)
+        const userIds = this.getUserIdsFromChannelOrGDMStreams(unpacked)
+        await database.syncedStream.create({
+            data: {
+                streamId,
+                kind: StreamKind.Channel,
+                syncCookie: unpacked?.nextSyncCookie?.toJsonString() || '',
+                userIds: Array.from(userIds),
+            },
+        })
+    }
+
+    private getUserIdsFromChannelOrGDMStreams(unpacked: ParsedStreamAndCookie) {
+        const userIds = new Set<string>()
+        for (const miniblock of unpacked.miniblocks) {
+            for (const envelope of miniblock.events) {
+                const isMembershipUpdate =
+                    envelope.event.payload.case === 'memberPayload' &&
+                    envelope.event.payload.value.content.case === 'membership'
+                const isSnapshot =
+                    envelope.event.payload.case === 'miniblockHeader' &&
+                    'snapshot' in envelope.event.payload.value &&
+                    envelope.event.payload.value.snapshot !== undefined
+
+                if (isMembershipUpdate) {
+                    const value = envelope.event.payload.value!.content
+                        .value as MemberPayload_Membership
+                    const { op } = value
+                    if (op === MembershipOp.SO_JOIN) {
+                        logger.info('[SyncedStreams] membership update SO_JOIN')
+                        const userAddress = userIdFromAddress(value.userAddress)
+                        if (!userIds.has(userAddress)) {
+                            logger.info('[SyncedStreams] adding user to stream', { userAddress })
+                            userIds.add(userAddress)
+                        }
+                    }
+                    if (op === MembershipOp.SO_LEAVE) {
+                        logger.info('[SyncedStreams] membership update SO_LEAVE')
+                        const userAddress = userIdFromAddress(value.userAddress)
+                        if (userIds.has(userAddress)) {
+                            logger.info('[SyncedStreams] removing user from stream', {
+                                userAddress,
+                            })
+                            userIds.delete(userAddress)
+                        }
+                    }
+                } else if (isSnapshot) {
+                    const snapshot = (envelope.event.payload.value as MiniblockHeader).snapshot
+                    if (!snapshot?.members?.joined) {
+                        continue
+                    }
+                    for (const member of snapshot.members.joined) {
+                        userIds.add(userIdFromAddress(member.userAddress))
+                    }
+                }
+            }
+        }
+        return userIds
+    }
+
+    private async getAndParseStream(streamId: string): Promise<ParsedStreamAndCookie> {
         const response = await this.rpcClient.getStream({
             streamId: streamIdToBytes(streamId),
             optional: false,
@@ -161,39 +237,9 @@ export class StreamsMonitorService {
             this.streams.addStreamToSync(response.stream.nextSyncCookie!)
         }
 
-        if (unpacked.miniblocks.length === 0) {
-            return
-        }
+        assert(unpacked.miniblocks.length > 0, 'no miniblocks in stream')
 
-        const firstMiniblock = unpacked.miniblocks[0]
-
-        const userIds = new Set<string>()
-
-        for (const envelope of firstMiniblock.events) {
-            if (
-                envelope.event.payload.case === 'miniblockHeader' &&
-                'snapshot' in envelope.event.payload.value
-            ) {
-                const { snapshot } = envelope.event.payload.value
-                if (!snapshot?.members?.joined) {
-                    return
-                }
-                for (const member of snapshot.members.joined) {
-                    userIds.add(userIdFromAddress(member.userAddress))
-                }
-            }
-        }
-
-        logger.info('[StreamsMonitorService] new GDM channel, user ids', userIds)
-
-        await database.syncedStream.create({
-            data: {
-                streamId,
-                kind: StreamKind.GDM,
-                syncCookie: response.stream?.nextSyncCookie?.toJsonString() || '',
-                userIds: Array.from(userIds),
-            },
-        })
+        return unpacked
     }
 
     private async validateStream(streamId: string, kind: StreamKind): Promise<void> {
@@ -250,7 +296,7 @@ export class StreamsMonitorService {
         for (const streamId of streamsMetadata.DM.streamIds) {
             const p = async () => {
                 try {
-                    logger.log('[StreamsMonitorService] new dm stream', streamId)
+                    logger.info('[StreamsMonitorService] new dm stream', streamId)
                     await this.addDMSyncStreamToDB(streamId)
                 } catch (error) {
                     if (errorContains(error, Err.NOT_FOUND)) {
@@ -272,6 +318,23 @@ export class StreamsMonitorService {
                 } catch (error) {
                     if (errorContains(error, Err.NOT_FOUND)) {
                         logger.info(`[StreamsMonitorService] GDM ${streamId} stream not found`)
+                        notFoundStreams.add(streamId)
+                        return
+                    }
+                    logger.error(
+                        `[StreamsMonitorService] Failed to add GDM ${streamId} stream to db. Error: ${error}`,
+                    )
+                }
+            }
+            addPromises.push(p())
+        }
+        for (const streamId of streamsMetadata.Channel.streamIds) {
+            const p = async () => {
+                try {
+                    await this.addChannelStreamToDB(streamId)
+                } catch (error) {
+                    if (errorContains(error, Err.NOT_FOUND)) {
+                        logger.info(`[StreamsMonitorService] Channel ${streamId} stream not found`)
                         notFoundStreams.add(streamId)
                         return
                     }

@@ -119,6 +119,8 @@ export class SyncedStreams {
         nonces: {},
     }
 
+    private CHANNEL_PROCESSING_UPDATE_DELAY = 1000
+
     constructor(rpcClient: StreamRpcClient) {
         this.rpcClient = rpcClient
     }
@@ -611,7 +613,11 @@ export class SyncedStreams {
                             if (isDMChannelStreamId(streamId) || isGDMChannelStreamId(streamId)) {
                                 await this.handleDmOrGDMStreamUpdate(streamAndCookie, streamId)
                             } else if (isChannelStreamId(streamId)) {
-                                logger.info('[SyncedStreams] ChannelStreamId', streamId)
+                                // The notification tags are needed to process mention and reply to in channels.
+                                // This timeout is needed to ensure that the notification tags request are processed before the channel messages
+                                setTimeout(async () => {
+                                    await this.handleChannelStreamUpdate(streamAndCookie, streamId)
+                                }, this.CHANNEL_PROCESSING_UPDATE_DELAY)
                             }
                         }
 
@@ -639,6 +645,7 @@ export class SyncedStreams {
             )
         }
     }
+
     private async handleDmOrGDMStreamUpdate(
         streamAndCookie: ParsedStreamAndCookie,
         streamId: string,
@@ -677,6 +684,106 @@ export class SyncedStreams {
         }
     }
 
+    private async handleChannelStreamUpdate(
+        streamAndCookie: ParsedStreamAndCookie,
+        streamId: string,
+    ) {
+        const syncedStream = await database.syncedStream.findUnique({
+            where: { streamId },
+        })
+
+        if (!syncedStream) {
+            logger.info('[SyncedStreams] syncedStream not found')
+            return
+        }
+
+        logger.info(`[SyncedStreams] handleChannelStreamUpdate ${streamId}`)
+
+        for (const { event, creatorUserId } of streamAndCookie.events) {
+            const isMessage =
+                event.payload.case === 'channelPayload' &&
+                event.payload.value.content.case === 'message'
+            const isMembershipUpdate =
+                event.payload.case === 'memberPayload' &&
+                event.payload.value.content.case === 'membership'
+
+            if (isMessage) {
+                await this.handleChannelMessageStreamUpdate(
+                    syncedStream,
+                    streamId,
+                    event,
+                    creatorUserId,
+                )
+            } else if (isMembershipUpdate) {
+                await this.handleMembershipUpdate(syncedStream, streamId, event)
+            }
+        }
+    }
+
+    private async handleChannelMessageStreamUpdate(
+        syncedStream: SyncedStream,
+        streamId: string,
+        event: StreamEvent,
+        creatorUserId: string,
+    ) {
+        logger.info(`[SyncedStreams] handleChannelMessageStreamUpdate ${streamId}`)
+        // const usersToNotify: Set<string> = new Set()
+        const usersTaggedOrMentioned = await database.notificationTag.findMany({
+            where: {
+                ChannelId: streamId,
+            },
+        })
+
+        if (usersTaggedOrMentioned.length < 0) {
+            logger.info(`[SyncedStreams] no users tagged or mentioned for stream ${streamId}`)
+            return
+        }
+
+        const channelSettings = await database.userSettingsChannel.findFirst({
+            where: { ChannelId: streamId },
+        })
+        if (!channelSettings) {
+            logger.error(`[SyncedStreams] channelSettings not found for stream ${streamId}`)
+            return
+        }
+
+        const notificationData: NotifyUsersSchema = {
+            sender: creatorUserId,
+            users: syncedStream.userIds,
+            payload: {
+                content: {
+                    kind: 'new_message',
+                    spaceId: channelSettings.SpaceId,
+                    channelId: streamId,
+                    senderId: creatorUserId,
+                    event: event.toJson(),
+                },
+            },
+            forceNotify: false,
+        }
+
+        const usersToNotify = await notificationService.getUsersToNotify(
+            notificationData,
+            streamId,
+            usersTaggedOrMentioned,
+        )
+
+        if (usersToNotify.size === 0) {
+            logger.info(`[SyncedStreams] no users to notify for channel stream ${streamId}`)
+            return
+        }
+
+        logger.info(`[SyncedStreams] usersToNotify`, { usersToNotify })
+
+        await this.dispatchNotification(notificationData, usersToNotify)
+
+        await database.notificationTag.deleteMany({
+            where: {
+                ChannelId: streamId,
+            },
+        })
+    }
+
     private async handleMessageStreamUpdate(
         syncedStream: SyncedStream,
         streamId: string,
@@ -701,7 +808,7 @@ export class SyncedStreams {
                 usersToNotify.add(user)
             }
         })
-        logger.info('[SyncedStreams] usersToNotify', usersToNotify)
+        logger.info(`[SyncedStreams] usersToNotify`, { usersToNotify })
 
         const usersToNotifyArray = Array.from(usersToNotify)
 
@@ -777,7 +884,7 @@ export class SyncedStreams {
             pushNotificationRequests,
         )
 
-        logger.info('[SyncedStreams] notificationsSentCount', notificationsSentCount)
+        logger.info(`[SyncedStreams] notificationsSentCount ${notificationsSentCount}`)
     }
 
     private sendKeepAlivePings() {

@@ -19,7 +19,7 @@ export async function initializeApp() {
         app.use(
             morgan(
                 morganjson(
-                    ':remote-addr - :remote-user [:date[clf]] :method :url HTTP/:http-version :status :res[content-length] :referrer :user-agent',
+                    ':remote-addr :remote-user :date[clf] :method :url :http-version :status :res[content-length] :referrer :user-agent',
                 ),
             ),
         )
