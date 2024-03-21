@@ -125,6 +125,7 @@ export function CreateSpaceFormV2() {
                     alignItems="center"
                     justifyContent="spaceBetween"
                     width="100%"
+                    paddingTop="safeAreaInsetTop"
                 >
                     <Stack>
                         <IconButton

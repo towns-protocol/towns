@@ -4,6 +4,7 @@ import { AnimatePresence } from 'framer-motion'
 import { createPortal } from 'react-dom'
 import { Box, MotionBox, MotionStack, Stack, Text, useZLayerContext } from '@ui'
 import { TownsToken } from '@components/TownsToken/TownsToken'
+import { useDevice } from 'hooks/useDevice'
 
 import town1 from './images/town_1.jpg'
 import town2 from './images/town_2.jpg'
@@ -40,7 +41,9 @@ const texts: string[] = [
 ]
 
 const IMAGE_WIDTH_DESKTOP = 150
+const IMAGE_WIDTH_TOUCH = 130
 const CONTAINER_WIDTH_DESKTOP = 440
+const CONTAINER_WIDTH_TOUCH = window.innerWidth
 
 export const CreateSpaceMintAnimation = () => {
     const [animationIndex, setAnimationIndex] = useState<{ image: number; text: number }>({
@@ -60,6 +63,7 @@ export const CreateSpaceMintAnimation = () => {
         }
         setAnimationIndex(index)
     }, [animationIndex, setAnimationIndex])
+    const { isTouch } = useDevice()
 
     // Scale the image up around the center of the container
     function imageScaleForIndex(index: number) {
@@ -72,8 +76,8 @@ export const CreateSpaceMintAnimation = () => {
     // the first image instantly, without any delay or duration
     const duration = animationIndex.image === images.length ? 0 : 0.5
     const delay = animationIndex.image === images.length ? 0 : 1
-    const imageWidth = IMAGE_WIDTH_DESKTOP
-    const containerWidth = CONTAINER_WIDTH_DESKTOP
+    const imageWidth = isTouch ? IMAGE_WIDTH_TOUCH : IMAGE_WIDTH_DESKTOP
+    const containerWidth = isTouch ? CONTAINER_WIDTH_TOUCH : CONTAINER_WIDTH_DESKTOP
     const containerTransformX =
         -1 * (animationIndex.image * imageWidth) + (containerWidth - imageWidth) / 2 - imageWidth
     const root = useZLayerContext().rootLayerRef?.current
@@ -84,15 +88,23 @@ export const CreateSpaceMintAnimation = () => {
     }
 
     return createPortal(
-        <Box centerContent absoluteFill background="backdropBlur" pointerEvents="auto">
+        <Box
+            absoluteFill
+            justifyContent={isTouch ? 'end' : 'center'}
+            alignItems="center"
+            background={isTouch ? 'none' : 'backdropBlur'}
+            style={{ backgroundColor: isTouch ? 'rgba(0, 0, 0, 0.7)' : undefined }}
+            pointerEvents="auto"
+        >
             <MotionBox
                 centerContent
                 background="level2"
                 style={{ width: containerWidth }}
-                height="350"
-                rounded="md"
-                initial={{ opacity: 0, scale: 0.5 }}
-                animate={{ opacity: 1, scale: 1 }}
+                height={isTouch ? '300' : '350'}
+                roundedBottom={isTouch ? 'none' : 'md'}
+                roundedTop="md"
+                initial={{ opacity: 0, scale: isTouch ? 1 : 0.5, y: isTouch ? '100%' : 0 }}
+                animate={{ opacity: 1, scale: 1, y: 0 }}
                 transition={{ duration: 1, type: 'spring' }}
                 overflow="hidden"
             >
@@ -105,7 +117,7 @@ export const CreateSpaceMintAnimation = () => {
                             transform: `translateX(${containerTransformX}px)`,
                         }}
                         transition={{ duration: duration, ease: 'easeInOut', delay: delay }}
-                        style={{ width: IMAGE_WIDTH_DESKTOP * images.length * 2 }}
+                        style={{ width: imageWidth * images.length * 2 }}
                         onAnimationComplete={onScrollAnimationComplete}
                     >
                         {/* On the left side, pad the list with the last image in the list */}
@@ -154,7 +166,11 @@ export const CreateSpaceMintAnimation = () => {
                                 key={animationIndex.text}
                                 height="x4"
                             >
-                                <Text fontWeight="strong" fontSize="lg" color="default">
+                                <Text
+                                    fontWeight="strong"
+                                    fontSize={isTouch ? 'md' : 'lg'}
+                                    color="default"
+                                >
                                     {texts[animationIndex.text]}
                                 </Text>
                             </MotionBox>
@@ -174,10 +190,11 @@ const IconBox = (props: {
     animationDuration: number
 }) => {
     const { imageSrc, scale, animationDuration, delay } = props
-    const sideLength = IMAGE_WIDTH_DESKTOP
+    const { isTouch } = useDevice()
+    const sideLength = isTouch ? IMAGE_WIDTH_TOUCH : IMAGE_WIDTH_DESKTOP
 
     return (
-        <MotionBox centerContent width="150">
+        <MotionBox centerContent style={{ width: sideLength }}>
             <Stack gap alignItems="center">
                 <MotionStack
                     style={{
@@ -191,7 +208,7 @@ const IconBox = (props: {
                     transition={{ duration: animationDuration, ease: 'easeInOut', delay: delay }}
                     alignItems="center"
                 >
-                    <TownsToken size="md" imageSrc={imageSrc} />
+                    <TownsToken size={isTouch ? 'sm' : 'md'} imageSrc={imageSrc} />
                 </MotionStack>
             </Stack>
         </MotionBox>
