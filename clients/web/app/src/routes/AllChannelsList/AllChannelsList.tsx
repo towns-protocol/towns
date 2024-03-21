@@ -134,7 +134,7 @@ export const ChannelItem = ({
     const [joinFailed, setJoinFailed] = React.useState(false)
     const setTownRouteBookmark = useStore((s) => s.setTownRouteBookmark)
 
-    const onClick = useEvent(async () => {
+    const onJoinClick = useEvent(async () => {
         setSyncingSpace(true)
         setJoinFailed(false)
 
@@ -200,10 +200,28 @@ export const ChannelItem = ({
         }
     })
 
+    const onOpenChannelClick = useEvent(() => {
+        const link = createLink({
+            spaceId: space.id,
+            channelId: channelIdentifier,
+            panel: 'browse-channels',
+        })
+        if (link) {
+            navigate(link)
+        }
+    })
+
     return (
         <Stack>
-            <Stack horizontal justifyContent="spaceBetween">
-                <Stack horizontal centerContent gap="sm" overflow="hidden">
+            <Stack horizontal justifyContent="spaceBetween" alignItems="center">
+                <Stack
+                    horizontal
+                    centerContent
+                    gap="sm"
+                    overflow="hidden"
+                    cursor="pointer"
+                    onClick={onOpenChannelClick}
+                >
                     <Icon type="tag" padding="line" background="level2" size="square_lg" />
                     <Stack gap="sm" overflow="hidden" padding="sm">
                         <Stack horizontal shrink={false} gap="sm" alignItems="center">
@@ -235,7 +253,7 @@ export const ChannelItem = ({
                     rounded="sm"
                     hoverEffect="none"
                     tone={syncingSpace ? 'level3' : isJoined ? 'level3' : 'cta1'}
-                    onClick={onClick}
+                    onClick={onJoinClick}
                 >
                     {syncingSpace ? <ButtonSpinner /> : isJoined ? 'Leave' : 'Join'}
                 </Button>
