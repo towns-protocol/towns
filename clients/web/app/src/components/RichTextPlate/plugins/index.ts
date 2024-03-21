@@ -53,6 +53,7 @@ import { EmojiMentionElement } from '../components/plate-ui/EmojilMentionElement
 import { autoformatRules } from './autoformat'
 import { nodeResetRules } from './nodeReset'
 import { createShiftEnterListPlugin } from './shiftEnterListPlugin'
+import { createExitComboboxPlugin } from './ExitComboboxPlugin'
 import { ELEMENT_MENTION_CHANNEL, createChannelPlugin } from './createChannelPlugin'
 import { ELEMENT_MENTION_EMOJI, createEmojiPlugin } from './emoji/createEmojiPlugin'
 
@@ -71,7 +72,8 @@ const PlatePlugins = createPlugins(
         }),
         createLinkPlugin(),
         createListPlugin(),
-        createComboboxPlugin(),
+        createExitComboboxPlugin(), // should be before createComboboxPlugin
+        createComboboxPlugin(), // should be after createExitComboboxPlugin
         createEmojiPlugin({
             options: {
                 id: 'emojis',
