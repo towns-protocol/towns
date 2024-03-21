@@ -5,7 +5,7 @@ import {
     useSpaceData,
     useSpaceMentions,
 } from 'use-towns-client'
-import { Mute } from '@push-notification-worker/types'
+import { Mute } from '@notification-service/types'
 import { useGetNotificationSettings } from 'api/lib/notificationSettings'
 
 import { useSpaceChannels } from './useSpaceChannels'

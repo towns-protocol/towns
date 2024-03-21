@@ -1,6 +1,6 @@
 import { z } from 'zod'
 
-export enum urgency {
+export enum Urgency {
     VERY_LOW = 'very-low',
     LOW = 'low',
     NORMAL = 'normal',
@@ -38,6 +38,6 @@ export const notifyUsersSchema = z.object({
     sender: z.string(),
     users: z.array(z.string()).min(1),
     payload: notificationPayloadSchema,
-    urgency: z.nativeEnum(urgency).optional(),
+    urgency: z.nativeEnum(Urgency).optional(),
     forceNotify: z.boolean().optional(),
 })

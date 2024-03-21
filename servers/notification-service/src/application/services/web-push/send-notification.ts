@@ -10,7 +10,7 @@ import { JwtData } from './jwt'
 import { base64ToUrlEncoding } from './utils'
 import { NotificationOptions } from '../notificationService'
 import { PushSubscription } from '@prisma/client'
-import { urgency } from '../../schema/notificationSchema'
+import { Urgency } from '../../schema/notificationSchema'
 import crypto from 'crypto'
 import { env } from '../../utils/environment'
 import { logger } from '../../logger'
@@ -55,7 +55,7 @@ export async function sendNotificationViaWebPush(
             // https://linear.app/hnt-labs/issue/HNT-4314/dont-group-notification-by-channelid-to-make-each-notification-for-a
             //topic: patchTopicToEnsureSpecCompliance(options.channelId),
             ttl,
-            urgency: options.urgency ?? urgency.HIGH,
+            urgency: options.urgency ?? Urgency.HIGH,
         }
 
         // create the request to send to the push service

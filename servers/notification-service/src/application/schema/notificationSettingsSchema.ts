@@ -1,5 +1,10 @@
 import { z } from 'zod'
-import { Mute } from '@prisma/client'
+
+export enum Mute {
+    Muted = 'muted',
+    Unmuted = 'unmuted',
+    Default = 'default',
+}
 
 export const saveUserSettingsSchema = z.object({
     userSettings: z.object({

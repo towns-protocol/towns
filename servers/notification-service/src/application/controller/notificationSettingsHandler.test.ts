@@ -7,7 +7,7 @@ import {
     getNotificationSettingsHandler,
 } from './notificationSettingsHandler'
 import { database } from '../../infrastructure/database/prisma'
-import { Mute } from '@prisma/client'
+import { Mute } from '../../application/schema/notificationSettingsSchema'
 import { logger } from '../logger'
 
 jest.mock('../../infrastructure/database/prisma', () => ({
@@ -161,12 +161,12 @@ describe('getNotificationSettingsHandler', () => {
             Mention: true,
             ReplyTo: true,
             UserSettingsSpace: [
-                { SpaceId: 'space1', SpaceMute: Mute.default },
-                { SpaceId: 'space2', SpaceMute: Mute.unmuted },
+                { SpaceId: 'space1', SpaceMute: Mute.Default },
+                { SpaceId: 'space2', SpaceMute: Mute.Unmuted },
             ],
             UserSettingsChannel: [
-                { SpaceId: 'space1', ChannelId: 'channel1', ChannelMute: Mute.unmuted },
-                { SpaceId: 'space2', ChannelId: 'channel2', ChannelMute: Mute.muted },
+                { SpaceId: 'space1', ChannelId: 'channel1', ChannelMute: Mute.Unmuted },
+                { SpaceId: 'space2', ChannelId: 'channel2', ChannelMute: Mute.Muted },
             ],
         }
         jest.spyOn(database, '$transaction').mockImplementation((callback) => callback(database))
@@ -189,12 +189,12 @@ describe('getNotificationSettingsHandler', () => {
             mention: true,
             replyTo: true,
             spaceSettings: [
-                { spaceId: 'space1', spaceMute: Mute.default },
-                { spaceId: 'space2', spaceMute: Mute.unmuted },
+                { spaceId: 'space1', spaceMute: Mute.Default },
+                { spaceId: 'space2', spaceMute: Mute.Unmuted },
             ],
             channelSettings: [
-                { spaceId: 'space1', channelId: 'channel1', channelMute: Mute.unmuted },
-                { spaceId: 'space2', channelId: 'channel2', channelMute: Mute.muted },
+                { spaceId: 'space1', channelId: 'channel1', channelMute: Mute.Unmuted },
+                { spaceId: 'space2', channelId: 'channel2', channelMute: Mute.Muted },
             ],
         })
     })

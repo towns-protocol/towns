@@ -1,4 +1,4 @@
-import { Mute } from '@prisma/client'
+import { Mute } from '../../application/schema/notificationSettingsSchema'
 import { database } from '../../infrastructure/database/prisma'
 
 export class UserSettingsTables {
@@ -11,7 +11,7 @@ export class UserSettingsTables {
             where: {
                 SpaceId: spaceId,
                 ChannelId: channelId,
-                ChannelMute: Mute.muted,
+                ChannelMute: Mute.Muted,
                 UserId: { in: users },
             },
             select: {

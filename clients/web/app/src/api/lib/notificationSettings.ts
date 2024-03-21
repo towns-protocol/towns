@@ -1,11 +1,7 @@
 import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query'
 import { z } from 'zod'
 import { useMyProfile } from 'use-towns-client'
-import {
-    GetSettingsRequestParams,
-    SaveSettingsRequestParams,
-} from '@push-notification-worker/request-interfaces'
-import { Mute } from '@push-notification-worker/types'
+import { GetUserSettingsSchema, Mute, SaveUserSettingsSchema } from '@notification-service/types'
 import { env } from 'utils'
 import { axiosClient } from 'api/apiClient'
 
@@ -14,7 +10,7 @@ export const notificationSettingsQueryKeys = {
     getSettings: (userId: string | undefined) => ['getSettings', userId],
 }
 
-type UserSettings = SaveSettingsRequestParams['userSettings']
+type UserSettings = SaveUserSettingsSchema['userSettings']
 const zSettingsData: z.ZodType<UserSettings> = z.object({
     userId: z.string(),
     channelSettings: z.array(
@@ -35,7 +31,7 @@ const zSettingsData: z.ZodType<UserSettings> = z.object({
     directMessage: z.boolean(),
 })
 
-async function getSettings({ userId }: Partial<GetSettingsRequestParams>): Promise<UserSettings> {
+async function getSettings({ userId }: Partial<GetUserSettingsSchema>): Promise<UserSettings> {
     const url = `${PUSH_WORKER_URL}/api/get-notification-settings`
     if (!userId) {
         throw new Error('userId is required')
@@ -111,7 +107,7 @@ export function useGetNotificationSettings() {
     })
 }
 
-export async function putSettings({ userSettings }: SaveSettingsRequestParams) {
+export async function putSettings({ userSettings }: SaveUserSettingsSchema) {
     const url = `${PUSH_WORKER_URL}/api/notification-settings`
     const response = await axiosClient.put(url, {
         userSettings,

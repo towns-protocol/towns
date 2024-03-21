@@ -158,7 +158,6 @@
         "fake-indexeddb": "^4.0.1",
         "jsdom": "^22.1.0",
         "msw": "^1.0.1",
-        "push-notification-worker": "workspace:^",
         "react": "^18.2.0",
         "react-dom": "^18.2.0",
         "react-error-overlay": "^6.0.11",

@@ -11,10 +11,10 @@ import { UserSettingsTables } from '../database/userSettingsTables'
 import { database } from '../../infrastructure/database/prisma'
 import { env } from '../utils/environment'
 import { logger } from '../logger'
-import { notificationKind } from '../schema/tagSchema'
-import { pushType } from '../schema/subscriptionSchema'
+import { NotificationKind } from '../schema/tagSchema'
+import { PushType } from '../schema/subscriptionSchema'
 import { sendNotificationViaWebPush } from './web-push/send-notification'
-import { urgency } from '../schema/notificationSchema'
+import { Urgency } from '../schema/notificationSchema'
 
 export class NotificationService {
     constructor() {}
@@ -26,7 +26,7 @@ export class NotificationService {
     ): Promise<Set<string>> {
         const recipients: Set<string> = new Set([])
         const notificationContent = notificationData.payload.content
-        const isDMorGDM = notificationContent.kind === notificationKind.DirectMessage
+        const isDMorGDM = notificationContent.kind === NotificationKind.DirectMessage
 
         let mutedUsersInChannel: Set<string> = new Set()
         // if notification kind is DM or GDM, we don't need to check if user is muted in channel
@@ -44,12 +44,12 @@ export class NotificationService {
 
         const metionUsersTagged = new Set(
             taggedUsers
-                .filter((taggedUser) => taggedUser.Tag === notificationKind.Mention.toString())
+                .filter((taggedUser) => taggedUser.Tag === NotificationKind.Mention.toString())
                 .map((user) => user.UserId),
         )
         const replyToUsersTagged = new Set(
             taggedUsers
-                .filter((taggedUser) => taggedUser.Tag === notificationKind.ReplyTo.toString())
+                .filter((taggedUser) => taggedUser.Tag === NotificationKind.ReplyTo.toString())
                 .map((user) => user.UserId),
         )
 
@@ -114,7 +114,7 @@ export class NotificationService {
         usersToNotify: Set<string>,
     ): Promise<Promise<SendPushResponse>[]> {
         const pushNotificationPromises: Promise<SendPushResponse>[] = []
-        const isDMorGDM = notificationData.payload.content.kind === notificationKind.DirectMessage
+        const isDMorGDM = notificationData.payload.content.kind === NotificationKind.DirectMessage
 
         for (const userId of usersToNotify) {
             const option: NotificationOptions = {
@@ -135,7 +135,7 @@ export class NotificationService {
             })
 
             for (const subscription of pushSubscriptions) {
-                if (subscription.PushType === pushType.WebPush) {
+                if (subscription.PushType === PushType.WebPush) {
                     const sendNotificationPromise = sendNotificationViaWebPush(option, subscription)
                     pushNotificationPromises.push(sendNotificationPromise)
                 }
@@ -209,7 +209,7 @@ export interface NotificationOptions {
     userId: string // recipient
     channelId: string
     payload: NotificationPayloadSchema
-    urgency?: urgency
+    urgency?: Urgency
 }
 
 export const notificationService = new NotificationService()

@@ -1,4 +1,4 @@
-import { Mute, UserSettingsChannel, UserSettingsSpace } from '@push-notification-worker/types'
+import { Mute, SaveUserSettingsSchema } from '@notification-service/types'
 
 import { useMemo, useState } from 'react'
 import { useTownsContext } from 'use-towns-client'
@@ -9,6 +9,9 @@ import {
     isSpaceStreamId,
 } from '@river/sdk'
 import { useGetNotificationSettings } from 'api/lib/notificationSettings'
+
+type UserSettingsSpace = SaveUserSettingsSchema['userSettings']['spaceSettings'][0]
+type UserSettingsChannel = SaveUserSettingsSchema['userSettings']['channelSettings'][0]
 
 interface SpaceSettings {
     [spaceId: string]: UserSettingsSpace

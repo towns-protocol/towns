@@ -1,12 +1,12 @@
 import { UserSettingsTables } from './userSettingsTables'
 import { database } from '../../infrastructure/database/prisma'
-import { Mute } from '@prisma/client'
+import { Mute } from '../../application/schema/notificationSettingsSchema'
 
 describe('userSettingsTables', () => {
     const users = ['user1', 'user2', 'user3']
     const SpaceId = 'spaceId'
     const ChannelId = 'channelId'
-    const ChannelMute = Mute.muted
+    const ChannelMute = Mute.Muted
     const expectedUserIds = [
         {
             UserId: 'user1',
@@ -52,7 +52,7 @@ describe('userSettingsTables', () => {
                 where: {
                     SpaceId,
                     ChannelId,
-                    ChannelMute: Mute.muted.toString(),
+                    ChannelMute: Mute.Muted,
                     UserId: { in: users },
                 },
                 select: {

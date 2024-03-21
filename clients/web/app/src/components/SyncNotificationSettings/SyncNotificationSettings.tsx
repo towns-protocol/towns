@@ -2,7 +2,7 @@ import React, { useEffect } from 'react'
 
 import { useQueryClient } from 'wagmi'
 import { useMyProfile } from 'use-towns-client'
-import { Mute } from '@push-notification-worker/types'
+import { Mute } from '@notification-service/types'
 import { useNotificationSettings } from 'hooks/useNotificationSettings'
 import { useStore } from 'store/store'
 import { notificationSettingsQueryKeys, putSettings } from 'api/lib/notificationSettings'

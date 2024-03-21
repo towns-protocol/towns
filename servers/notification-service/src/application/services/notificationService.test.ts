@@ -7,8 +7,8 @@ import { NotifyUsersSchema } from '../../types'
 import { PushSubscription } from '@prisma/client'
 import { UserSettingsTables } from '../database/userSettingsTables'
 import { database } from '../../infrastructure/database/prisma'
-import { notificationKind } from '../schema/tagSchema'
-import { pushType } from '../schema/subscriptionSchema'
+import { NotificationKind } from '../schema/tagSchema'
+import { PushType } from '../schema/subscriptionSchema'
 import { sendNotificationViaWebPush } from './web-push/send-notification'
 
 jest.mock('../../infrastructure/database/prisma', () => ({
@@ -66,7 +66,7 @@ describe('NotificationService', () => {
                         users: ['user1', 'user2', 'user3'],
                         payload: {
                             content: {
-                                kind: notificationKind.NewMessage,
+                                kind: NotificationKind.NewMessage,
                                 spaceId: 'space123',
                                 channelId: 'channel123',
                                 senderId: 'user4',
@@ -78,19 +78,19 @@ describe('NotificationService', () => {
                     taggedUsers: [
                         {
                             UserId: 'user1',
-                            Tag: notificationKind.Mention.toString(),
+                            Tag: NotificationKind.Mention.toString(),
                             SpaceId: 'space123',
                             ChannelId: 'channel123',
                         },
                         {
                             UserId: 'user2',
-                            Tag: notificationKind.Mention.toString(),
+                            Tag: NotificationKind.Mention.toString(),
                             SpaceId: 'space123',
                             ChannelId: 'channel123',
                         },
                         {
                             UserId: 'user3',
-                            Tag: notificationKind.Mention.toString(),
+                            Tag: NotificationKind.Mention.toString(),
                             SpaceId: 'space123',
                             ChannelId: 'channel123',
                         },
@@ -136,7 +136,7 @@ describe('NotificationService', () => {
                     channelId,
                     taggedUsers.map((user) => {
                         if (user.UserId === 'user2') {
-                            user.Tag = notificationKind.ReplyTo
+                            user.Tag = NotificationKind.ReplyTo
                         }
                         return user
                     }),
@@ -212,7 +212,7 @@ describe('NotificationService', () => {
                         users: ['user1', 'user2', 'user3'],
                         payload: {
                             content: {
-                                kind: notificationKind.ReplyTo,
+                                kind: NotificationKind.ReplyTo,
                                 spaceId: 'space123',
                                 channelId: 'channel123',
                                 senderId: 'user4',
@@ -224,19 +224,19 @@ describe('NotificationService', () => {
                     taggedUsers: [
                         {
                             UserId: 'user1',
-                            Tag: notificationKind.ReplyTo.toString(),
+                            Tag: NotificationKind.ReplyTo.toString(),
                             SpaceId: 'space123',
                             ChannelId: 'channel123',
                         },
                         {
                             UserId: 'user2',
-                            Tag: notificationKind.ReplyTo.toString(),
+                            Tag: NotificationKind.ReplyTo.toString(),
                             SpaceId: 'space123',
                             ChannelId: 'channel123',
                         },
                         {
                             UserId: 'user3',
-                            Tag: notificationKind.ReplyTo.toString(),
+                            Tag: NotificationKind.ReplyTo.toString(),
                             SpaceId: 'space123',
                             ChannelId: 'channel123',
                         },
@@ -282,7 +282,7 @@ describe('NotificationService', () => {
                     channelId,
                     taggedUsers.map((user) => {
                         if (user.UserId === 'user2') {
-                            user.Tag = notificationKind.Mention
+                            user.Tag = NotificationKind.Mention
                         }
                         return user
                     }),
@@ -357,7 +357,7 @@ describe('NotificationService', () => {
                         users: ['user1', 'user2', 'user3'],
                         payload: {
                             content: {
-                                kind: notificationKind.DirectMessage,
+                                kind: NotificationKind.DirectMessage,
                                 spaceId: 'space123',
                                 channelId: 'channel123',
                                 senderId: 'user4',
@@ -370,19 +370,19 @@ describe('NotificationService', () => {
                     taggedUsers: [
                         {
                             UserId: 'user1',
-                            Tag: notificationKind.DirectMessage.toString(),
+                            Tag: NotificationKind.DirectMessage.toString(),
                             SpaceId: 'space123',
                             ChannelId: 'channel123',
                         },
                         {
                             UserId: 'user2',
-                            Tag: notificationKind.DirectMessage.toString(),
+                            Tag: NotificationKind.DirectMessage.toString(),
                             SpaceId: 'space123',
                             ChannelId: 'channel123',
                         },
                         {
                             UserId: 'user3',
-                            Tag: notificationKind.DirectMessage.toString(),
+                            Tag: NotificationKind.DirectMessage.toString(),
                             SpaceId: 'space123',
                             ChannelId: 'channel123',
                         },
@@ -481,7 +481,7 @@ describe('NotificationService', () => {
         const mockPushSubscription = (userId: string) => {
             return {
                 UserId: userId,
-                PushType: pushType.WebPush,
+                PushType: PushType.WebPush,
                 PushSubscription: JSON.stringify({
                     endpoint: `https://test.com/webpush/${userId}`,
                     keys: {
@@ -497,7 +497,7 @@ describe('NotificationService', () => {
                 users: ['user1', 'user2', 'user3'],
                 payload: {
                     content: {
-                        kind: notificationKind.Mention.toString(),
+                        kind: NotificationKind.Mention.toString(),
                         spaceId: 'space123',
                         channelId: 'channel123',
                     },

@@ -3,12 +3,12 @@ import { Request, Response } from 'express'
 import { StatusCodes } from 'http-status-codes'
 import { database } from '../../infrastructure/database/prisma'
 import { logger } from '../logger'
-import { notificationKind } from '../schema/tagSchema'
+import { NotificationKind } from '../schema/tagSchema'
 
 export async function tagMentionUsersHandler(request: Request, res: Response) {
     const tagData = {
         ...request.body,
-        tag: notificationKind.Mention,
+        tag: NotificationKind.Mention,
     }
 
     await upsertNotificationTags(tagData, res)
@@ -17,7 +17,7 @@ export async function tagMentionUsersHandler(request: Request, res: Response) {
 export async function tagReplyUserHandler(request: Request, res: Response) {
     const tagData = {
         ...request.body,
-        tag: notificationKind.ReplyTo,
+        tag: NotificationKind.ReplyTo,
     }
 
     await upsertNotificationTags(tagData, res)
@@ -26,7 +26,7 @@ export async function tagReplyUserHandler(request: Request, res: Response) {
 export async function upsertNotificationTags(
     data: {
         channelId: string
-        tag: notificationKind
+        tag: NotificationKind
         spaceId: string
         userIds: string[]
     },

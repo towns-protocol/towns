@@ -17397,7 +17397,6 @@ __metadata:
     minisearch: ^6.1.0
     msw: ^1.0.1
     pino: ^8.17.1
-    push-notification-worker: "workspace:^"
     react: ^18.2.0
     react-dom: ^18.2.0
     react-error-boundary: ^4.0.11
@@ -23662,7 +23661,7 @@ __metadata:
   languageName: node
   linkType: hard
 
-"push-notification-worker@workspace:^, push-notification-worker@workspace:servers/workers/push-notification-worker":
+"push-notification-worker@workspace:servers/workers/push-notification-worker":
   version: 0.0.0-use.local
   resolution: "push-notification-worker@workspace:servers/workers/push-notification-worker"
   dependencies:

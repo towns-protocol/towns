@@ -1,6 +1,6 @@
 import { z } from 'zod'
 
-export enum pushType {
+export enum PushType {
     WebPush = 'web-push',
     iOS = 'ios',
     Android = 'android',
@@ -18,7 +18,7 @@ const subscriptionObjectSchema = z.object({
 export const addSubscriptionSchema = z.object({
     userId: z.string(),
     subscriptionObject: subscriptionObjectSchema,
-    pushType: z.nativeEnum(pushType).optional(),
+    pushType: z.nativeEnum(PushType).optional(),
 })
 
 export const removeSubscriptionSchema = z.object({
