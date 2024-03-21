@@ -5,15 +5,33 @@ import { createPortal } from 'react-dom'
 import { Box, MotionBox, MotionStack, Stack, Text, useZLayerContext } from '@ui'
 import { TownsToken } from '@components/TownsToken/TownsToken'
 
-import nft1 from './images/nft_1.png'
-import nft38 from './images/nft_38.png'
-import nft42 from './images/nft_42.png'
-import nft2 from './images/nft_2.png'
-import nft17 from './images/nft_17.png'
-import nft13 from './images/nft_13.png'
-import nft21 from './images/nft_21.png'
-import nft6 from './images/nft_6.png'
-const images = [nft1, nft38, nft42, nft2, nft17, nft13, nft21, nft6]
+import town1 from './images/town_1.jpg'
+import town2 from './images/town_2.jpg'
+import town3 from './images/town_3.jpg'
+import town4 from './images/town_4.jpg'
+import town5 from './images/town_5.jpg'
+import town6 from './images/town_6.jpg'
+import town7 from './images/town_7.jpg'
+import town8 from './images/town_8.jpg'
+import town9 from './images/town_9.jpg'
+import town10 from './images/town_10.jpg'
+import town11 from './images/town_11.jpg'
+import town12 from './images/town_12.jpg'
+
+const images = [
+    town1,
+    town2,
+    town3,
+    town4,
+    town5,
+    town6,
+    town7,
+    town8,
+    town9,
+    town10,
+    town11,
+    town12,
+]
 
 const texts: string[] = [
     'Creating town onchain…',
