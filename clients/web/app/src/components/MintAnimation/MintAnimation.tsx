@@ -64,7 +64,15 @@ export const MintAnimation = (props: {
     }, [setShouldAnimate])
 
     return (
-        <Box absoluteFill zIndex="uiAbove" pointerEvents="none">
+        <Box
+            position="absolute"
+            zIndex="uiAbove"
+            pointerEvents="none"
+            bottom="none"
+            left="none"
+            top="safeAreaInsetTop"
+            right="none"
+        >
             <AnimatePresence>
                 {!shouldAnimate && (
                     <MotionStack
@@ -74,7 +82,7 @@ export const MintAnimation = (props: {
                         padding="sm"
                         position="absolute"
                         bottom={isTouch ? undefined : 'x4'}
-                        top={isTouch ? 'lg' : undefined}
+                        top={isTouch ? 'sm' : undefined}
                         right={isTouch ? 'sm' : 'x4'}
                         left={isTouch ? 'sm' : undefined}
                         rounded="sm"
