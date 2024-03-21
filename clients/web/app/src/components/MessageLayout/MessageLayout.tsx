@@ -151,7 +151,7 @@ export const MessageLayout = (props: Props) => {
         >
             {/* left / avatar gutter */}
             {/* snippet: center avatar with name row by keeping the size of the containers equal  */}
-            <Box minWidth={isTouch ? 'x5' : 'x8'}>
+            <Box minWidth={isTouch ? 'x5' : 'x6'}>
                 {displayContext === 'single' || displayContext === 'head' ? (
                     senderId ? (
                         <AvatarComponent

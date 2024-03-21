@@ -281,7 +281,7 @@ const MessageWrapper = React.memo((props: MessageWrapperProps) => {
 
     return !event ? null : (
         <MessageLayout
-            avatarSize={isTouch ? 'avatar_x4' : 'avatar_md'}
+            avatarSize="avatar_x4"
             editing={isEditing}
             id={`event-${event.eventId}`}
             highlight={props.highlight}
