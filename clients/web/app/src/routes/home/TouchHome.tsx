@@ -160,8 +160,11 @@ export const TouchHome = () => {
     }, [readChannels, readDms, searchString, unjoinedChannels, unreadChannels])
 
     const filteredMembers = useMemo(() => {
+        if (searchString.length === 0) {
+            return []
+        }
         return fuzzysort
-            .go(searchString, members, { keys: ['username', 'displayName'], all: true })
+            .go(searchString, members, { keys: ['username', 'displayName'], limit: 10 })
             .map((m) => m.obj)
     }, [members, searchString])
 
@@ -182,10 +185,7 @@ export const TouchHome = () => {
 
     const { imageSrc } = useImageSource(space?.id ?? '', ImageVariants.thumbnail300)
 
-    const hasResult =
-        filteredUnreadChannels.length > 0 ||
-        filteredReadChannels.length > 0 ||
-        filteredMembers.length > 0
+    const hasResult = filteredUnreadChannels.length > 0 || filteredReadChannels.length > 0
 
     const { createLink } = useCreateLink()
     const threadsLink = createLink({ route: 'threads' })
@@ -341,6 +341,7 @@ export const TouchHome = () => {
                                                         space={space}
                                                     />
                                                 )}
+
                                                 {filteredMembers.length > 0 && (
                                                     <>
                                                         <Spacer />
@@ -548,18 +549,12 @@ export const TouchUserResultRow = (props: { member: RoomMember }) => {
     return (
         <NavItem to={link} height="x6" padding="none">
             <NavItemContent key={member.userId}>
-                <Stack horizontal gap="sm">
+                <Stack horizontal centerContent gap="sm">
                     <Avatar size="avatar_x4" userId={member.userId} />
-                    <Stack gap="sm" overflow="hidden" paddingY="xxs">
-                        <Text truncate color="default">
-                            {getPrettyDisplayName(member)}
-                        </Text>
-                        {abstractAccountAddress && (
-                            <Paragraph truncate color="gray2" size="xs">
-                                {abstractAccountAddress}
-                            </Paragraph>
-                        )}
-                    </Stack>
+
+                    <Text truncate color="default">
+                        {getPrettyDisplayName(member)}
+                    </Text>
                 </Stack>
                 <Box grow />
                 <SearchResultItemIcon type="arrowRight" background="inherit" />
