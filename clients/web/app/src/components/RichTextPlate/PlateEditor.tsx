@@ -1,5 +1,5 @@
 import React, { useCallback, useEffect, useMemo, useRef, useState } from 'react'
-import { Plate, PlateEditor, TElement, createPlateEditor, resetEditor } from '@udecode/plate-common'
+import { Plate, PlateEditor, TElement, resetEditor } from '@udecode/plate-common'
 import {
     Channel,
     EmbeddedMessageAttachment,
@@ -26,6 +26,8 @@ import {
     MessageAttachmentPreview,
 } from '@components/EmbeddedMessageAttachement/EditorAttachmentPreview'
 import { useInlineReplyAttchmentPreview } from '@components/EmbeddedMessageAttachement/hooks/useInlineReplyAttchmentPreview'
+import { useInputStore } from 'store/store'
+import { RememberInputPlugin } from './plugins/RememberInputPlugin'
 import { deserializeMd } from './utils/deserializeMD'
 import { EditorFallback } from './components/EditorFallback'
 import { MentionCombobox } from './components/plate-ui/MentionCombobox'
@@ -99,6 +101,7 @@ const PlateEditorWithoutBoundary = ({
     const { isTouch } = useDevice()
     const { isOffline } = useNetworkStatus()
     const { uploadFiles, files, isUploadingFiles } = useMediaDropContext()
+    const { inlineReplyPreview, onCancelInlineReply } = useInlineReplyAttchmentPreview()
     const [isSendingMessage, setIsSendingMessage] = useState(false)
 
     const [focused, setFocused] = useState(true)
@@ -110,19 +113,33 @@ const PlateEditorWithoutBoundary = ({
         EmbeddedMessageAttachment[]
     >([])
     const disabled = isOffline || !editable || isSendingMessage
+    const hasInlinePreview = !!inlineReplyPreview
+
+    // hack: reset field + apply autoFocus when a new inline reply is opened
+    // using the builtin focusEditor won't scroll the field into view on iOS
+    const autoFocus = (isTouch && hasInlinePreview) || props.autoFocus
+    const storageId = inlineReplyPreview?.event.eventId ?? props.storageId ?? 'editor'
+
+    const userInput = useInputStore((state) =>
+        storageId ? state.channelMessageInputMap[storageId] : undefined,
+    )
+    const valueFromStore = storageId ? userInput : undefined
 
     const initialValue = useMemo(() => {
         if (!_initialValue) {
-            return [
-                {
-                    type: 'p',
-                    children: [{ text: '' }],
-                },
-            ]
+            if (editable && valueFromStore && valueFromStore.trim().length > 0) {
+                return deserializeMd(valueFromStore)
+            } else {
+                return [
+                    {
+                        type: 'p',
+                        children: [{ text: '' }],
+                    },
+                ]
+            }
         }
-        const tmpEditor = createPlateEditor({ plugins: PlatePlugins })
-        return deserializeMd(tmpEditor, _initialValue)
-    }, [_initialValue])
+        return deserializeMd(_initialValue)
+    }, [_initialValue, editable, valueFromStore])
 
     const userMentions: TComboboxItemWithData<RoomMember>[] = useMemo(() => {
         return props.users
@@ -233,15 +250,6 @@ const PlateEditorWithoutBoundary = ({
     const fileCount = files.length
     const background = isEditing && !isTouch ? 'level1' : 'level2'
 
-    const { inlineReplyPreview, onCancelInlineReply } = useInlineReplyAttchmentPreview()
-
-    const hasInlinePreview = !!inlineReplyPreview
-
-    // hack: reset field + apply autoFocus when a new inline reply is opened
-    // using the builting focusEditor won't scroll the field into view on iOS
-    const autoFocus = (isTouch && hasInlinePreview) || props.autoFocus
-    const storageId = inlineReplyPreview?.event.eventId ?? props.storageId ?? 'editor'
-
     return (
         <>
             <Box position="relative">
@@ -317,6 +325,7 @@ const PlateEditorWithoutBoundary = ({
                                 items={channelMentions}
                             />
                             <OfflineIndicator attemptingToSend={isAttemptingSend} />
+                            <RememberInputPlugin storageId={storageId} />
                         </Box>
                         <Box paddingY="sm" paddingRight="xs">
                             <SendMarkdownPlugin

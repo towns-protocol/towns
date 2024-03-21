@@ -1,7 +1,7 @@
 import { RefObject, useEffect } from 'react'
 import { usePlateSelectors } from '@udecode/plate-core'
 import { focusEditor } from '@udecode/slate-react'
-import { getStartPoint } from '@udecode/slate'
+import { getEndPoint } from '@udecode/slate'
 import { PlateEditor } from '@udecode/plate-common'
 
 type Props = {
@@ -22,7 +22,7 @@ export const OnFocusPlugin = ({ autoFocus, onFocusChange, editorRef }: Props) =>
 
         if (isRendered && editor) {
             const timeout = setTimeout(() => {
-                focusEditor(editor, getStartPoint(editor, [0]))
+                focusEditor(editor, getEndPoint(editor, []))
                 onFocusChange(true)
             }, 0)
             return () => {
