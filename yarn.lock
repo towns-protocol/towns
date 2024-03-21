@@ -8712,15 +8712,6 @@ __metadata:
   languageName: node
   linkType: hard
 
-"@types/jsonwebtoken@npm:^9.0.2":
-  version: 9.0.2
-  resolution: "@types/jsonwebtoken@npm:9.0.2"
-  dependencies:
-    "@types/node": "*"
-  checksum: 3bb8d40e78d7eb53e427db6e9f0f22e0890cfee80965dcf741d08341814913afb211306de6e9847c6d241cc8e36f8a59090cbfdcc510ab7c81af9d650c5afe0e
-  languageName: node
-  linkType: hard
-
 "@types/lodash@npm:^4.14.186, @types/lodash@npm:^4.14.200":
   version: 4.14.202
   resolution: "@types/lodash@npm:4.14.202"
@@ -11013,15 +11004,6 @@ __metadata:
   languageName: node
   linkType: hard
 
-"agent-base@npm:^7.0.2":
-  version: 7.1.0
-  resolution: "agent-base@npm:7.1.0"
-  dependencies:
-    debug: ^4.3.4
-  checksum: f7828f991470a0cc22cb579c86a18cbae83d8a3cbed39992ab34fc7217c4d126017f1c74d0ab66be87f71455318a8ea3e757d6a37881b8d0f2a2c6aa55e5418f
-  languageName: node
-  linkType: hard
-
 "agentkeepalive@npm:^4.2.1":
   version: 4.3.0
   resolution: "agentkeepalive@npm:4.3.0"
@@ -11386,7 +11368,7 @@ __metadata:
   languageName: node
   linkType: hard
 
-"asn1.js@npm:^5.2.0, asn1.js@npm:^5.3.0":
+"asn1.js@npm:^5.2.0":
   version: 5.4.1
   resolution: "asn1.js@npm:5.4.1"
   dependencies:
@@ -11850,7 +11832,7 @@ __metadata:
   languageName: node
   linkType: hard
 
-"better-sqlite3@npm:^8.1.0, better-sqlite3@npm:^8.4.0":
+"better-sqlite3@npm:^8.1.0":
   version: 8.4.0
   resolution: "better-sqlite3@npm:8.4.0"
   dependencies:
@@ -12160,13 +12142,6 @@ __metadata:
   dependencies:
     node-int64: ^0.4.0
   checksum: 9ba4dc58ce86300c862bffc3ae91f00b2a03b01ee07f3564beeeaf82aa243b8b03ba53f123b0b842c190d4399b94697970c8e7cf7b1ea44b61aa28c3526a4449
-  languageName: node
-  linkType: hard
-
-"buffer-equal-constant-time@npm:1.0.1":
-  version: 1.0.1
-  resolution: "buffer-equal-constant-time@npm:1.0.1"
-  checksum: 80bb945f5d782a56f374b292770901065bad21420e34936ecbe949e57724b4a13874f735850dd1cc61f078773c4fb5493a41391e7bda40d1fa388d6bd80daaab
   languageName: node
   linkType: hard
 
@@ -14057,15 +14032,6 @@ __metadata:
   version: 0.2.0
   resolution: "eastasianwidth@npm:0.2.0"
   checksum: 7d00d7cd8e49b9afa762a813faac332dee781932d6f2c848dc348939c4253f1d4564341b7af1d041853bc3f32c2ef141b58e0a4d9862c17a7f08f68df1e0f1ed
-  languageName: node
-  linkType: hard
-
-"ecdsa-sig-formatter@npm:1.0.11":
-  version: 1.0.11
-  resolution: "ecdsa-sig-formatter@npm:1.0.11"
-  dependencies:
-    safe-buffer: ^5.0.1
-  checksum: 207f9ab1c2669b8e65540bce29506134613dd5f122cccf1e6a560f4d63f2732d427d938f8481df175505aad94583bcb32c688737bb39a6df0625f903d6d93c03
   languageName: node
   linkType: hard
 
@@ -17756,15 +17722,6 @@ __metadata:
   languageName: node
   linkType: hard
 
-"http_ece@npm:1.1.0":
-  version: 1.1.0
-  resolution: "http_ece@npm:1.1.0"
-  dependencies:
-    urlsafe-base64: ~1.0.0
-  checksum: 220a9a1c09165b4a3194c9b68a1597d3afc66a6bf8bc3ae1ae8d80d5117d8529f1346d59da7f096df8f3adbe2f42697a6edb31a6075b946207b910b72f28adba
-  languageName: node
-  linkType: hard
-
 "https-browserify@npm:^1.0.0":
   version: 1.0.0
   resolution: "https-browserify@npm:1.0.0"
@@ -17779,16 +17736,6 @@ __metadata:
     agent-base: 6
     debug: 4
   checksum: 571fccdf38184f05943e12d37d6ce38197becdd69e58d03f43637f7fa1269cf303a7d228aa27e5b27bbd3af8f09fd938e1c91dcfefff2df7ba77c20ed8dfc765
-  languageName: node
-  linkType: hard
-
-"https-proxy-agent@npm:^7.0.0":
-  version: 7.0.0
-  resolution: "https-proxy-agent@npm:7.0.0"
-  dependencies:
-    agent-base: ^7.0.2
-    debug: 4
-  checksum: c1365f5202b6a9c5c5fb1e6718e941254c2782bc51e8c57b1a7cacdccf1017278224434c963dfcdbdd4a3147a29c97d782316fabeef4e099968a627049de3347
   languageName: node
   linkType: hard
 
@@ -19659,18 +19606,6 @@ __metadata:
   languageName: node
   linkType: hard
 
-"jsonwebtoken@npm:^9.0.0":
-  version: 9.0.0
-  resolution: "jsonwebtoken@npm:9.0.0"
-  dependencies:
-    jws: ^3.2.2
-    lodash: ^4.17.21
-    ms: ^2.1.1
-    semver: ^7.3.8
-  checksum: b9181cecf9df99f1dc0253f91ba000a1aa4d91f5816d1608c0dba61a5623726a0bfe200b51df25de18c1a6000825d231ad7ce2788aa54fd48dcb760ad9eb9514
-  languageName: node
-  linkType: hard
-
 "jss-plugin-camel-case@npm:^10.10.0":
   version: 10.10.0
   resolution: "jss-plugin-camel-case@npm:10.10.0"
@@ -19764,48 +19699,6 @@ __metadata:
     array-includes: ^3.1.5
     object.assign: ^4.1.3
   checksum: a2ed78cac49a0f0c4be8b1eafe3c5257a1411341d8e7f1ac740debae003de04e5f6372bfcfbd9d082e954ffd99aac85bcda85b7c6bc11609992483f4cdc0f745
-  languageName: node
-  linkType: hard
-
-"jwa@npm:^1.4.1":
-  version: 1.4.1
-  resolution: "jwa@npm:1.4.1"
-  dependencies:
-    buffer-equal-constant-time: 1.0.1
-    ecdsa-sig-formatter: 1.0.11
-    safe-buffer: ^5.0.1
-  checksum: ff30ea7c2dcc61f3ed2098d868bf89d43701605090c5b21b5544b512843ec6fd9e028381a4dda466cbcdb885c2d1150f7c62e7168394ee07941b4098e1035e2f
-  languageName: node
-  linkType: hard
-
-"jwa@npm:^2.0.0":
-  version: 2.0.0
-  resolution: "jwa@npm:2.0.0"
-  dependencies:
-    buffer-equal-constant-time: 1.0.1
-    ecdsa-sig-formatter: 1.0.11
-    safe-buffer: ^5.0.1
-  checksum: 8f00b71ad5fe94cb55006d0d19202f8f56889109caada2f7eeb63ca81755769ce87f4f48101967f398462e3b8ae4faebfbd5a0269cb755dead5d63c77ba4d2f1
-  languageName: node
-  linkType: hard
-
-"jws@npm:^3.2.2":
-  version: 3.2.2
-  resolution: "jws@npm:3.2.2"
-  dependencies:
-    jwa: ^1.4.1
-    safe-buffer: ^5.0.1
-  checksum: f0213fe5b79344c56cd443428d8f65c16bf842dc8cb8f5aed693e1e91d79c20741663ad6eff07a6d2c433d1831acc9814e8d7bada6a0471fbb91d09ceb2bf5c2
-  languageName: node
-  linkType: hard
-
-"jws@npm:^4.0.0":
-  version: 4.0.0
-  resolution: "jws@npm:4.0.0"
-  dependencies:
-    jwa: ^2.0.0
-    safe-buffer: ^5.0.1
-  checksum: d68d07aa6d1b8cb35c363a9bd2b48f15064d342a5d9dc18a250dbbce8dc06bd7e4792516c50baa16b8d14f61167c19e851fd7f66b59ecc68b7f6a013759765f7
   languageName: node
   linkType: hard
 
@@ -23660,34 +23553,6 @@ __metadata:
   checksum: 4bb565399993b815658a72e359f574ce4f04827a42a905105d61163ae86f456d91595a0e4241e7bce04328fae0638ae70ac0428d93ecb55971c465bd084f8648
   languageName: node
   linkType: hard
-
-"push-notification-worker@workspace:servers/workers/push-notification-worker":
-  version: 0.0.0-use.local
-  resolution: "push-notification-worker@workspace:servers/workers/push-notification-worker"
-  dependencies:
-    "@cloudflare/workers-types": ^4.20230710.1
-    "@river/generated": "workspace:^"
-    "@types/jest": ^29.5.3
-    "@types/jsonwebtoken": ^9.0.2
-    "@types/node": ^20.5.0
-    "@typescript-eslint/eslint-plugin": ^6.10.0
-    "@typescript-eslint/parser": ^6.10.0
-    better-sqlite3: ^8.4.0
-    eslint: ^8.53.0
-    itty-router: ^2.6.6
-    jest: ^29.6.2
-    jest-environment-miniflare: ^2.14.0
-    jest-mock-extended: ^3.0.4
-    jsonwebtoken: ^9.0.0
-    miniflare: ^3.20230710.0
-    prettier: ^2.8.8
-    ts-jest: ^29.1.1
-    typescript: ^5.1.6
-    web-push: ^3.6.3
-    worker-common: "workspace:^"
-    wrangler: ^3.2.0
-  languageName: unknown
-  linkType: soft
 
 "qrcode@npm:1.5.3, qrcode@npm:^1.5.1":
   version: 1.5.3
@@ -28057,13 +27922,6 @@ __metadata:
   languageName: node
   linkType: hard
 
-"urlsafe-base64@npm:~1.0.0":
-  version: 1.0.0
-  resolution: "urlsafe-base64@npm:1.0.0"
-  checksum: 41d28a337044e5ad287174e928227b025d03424c5cd316956fdcbd916fccdc70981fa9a67e77325c5250c8150ba90bca0de65e783aa6235567b7f820e1146cb6
-  languageName: node
-  linkType: hard
-
 "use-callback-ref@npm:^1.3.0":
   version: 1.3.1
   resolution: "use-callback-ref@npm:1.3.1"
@@ -29226,21 +29084,6 @@ __metadata:
     "@zxing/text-encoding":
       optional: true
   checksum: 2234a2b122f41006ce07859b3c0bf2e18f46144fda2907d5db0b571b76aa5c26977c646100ad9c00d2f8a4f6f2b848bc02147845d8c447ab365ec4eff376338d
-  languageName: node
-  linkType: hard
-
-"web-push@npm:^3.6.3":
-  version: 3.6.3
-  resolution: "web-push@npm:3.6.3"
-  dependencies:
-    asn1.js: ^5.3.0
-    http_ece: 1.1.0
-    https-proxy-agent: ^7.0.0
-    jws: ^4.0.0
-    minimist: ^1.2.5
-  bin:
-    web-push: src/cli.js
-  checksum: 3f86ce3f10986189f9aad9fb02cc7b7d6445f9dd4cca16a522e2fb757ac8d88a871eb3d6de9feee8a2c6ae634b3ef13a48908b9f68793e826fc93404e906ac6a
   languageName: node
   linkType: hard
 

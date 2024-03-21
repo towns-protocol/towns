@@ -1,6 +1,0 @@
-# wrangler work files
-.wrangler/
-# keys
-.keys/
-.dev.vars.production
-.dev.vars.test
