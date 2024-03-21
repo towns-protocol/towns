@@ -147,14 +147,10 @@ jobs:
         if: needs.check_labels.outputs.num_nodes > 0 && needs.check_labels.outputs.skip_river_node_continuous_deploys != 'true'
         # TODO: only run if a change in /core/node is detected
         # TODO: only deploy if the new docker image is different than what's currently active
-        strategy:
-            matrix:
-                iteration: ${{ fromJson(needs.check_labels.outputs.continuous_deploy_iterations) }}
-            fail-fast: false
         with:
             environment_name: ${{ format('transient-{0}', github.event.pull_request.number )}}
             docker_image_tag: ${{ format('transient-{0}-latest', github.event.pull_request.number )}}
-            auto_deploy_node_numbers_json: ${{ toJson(needs.provision_transient_environment.outputs.auto_deploy_node_numbers) }}
+            auto_deploy_node_numbers_json: ${{ needs.check_labels.outputs.continuous_deploy_iterations }}
             public_ecr_url: public.ecr.aws/l8h0l2e6/river-node
 
     run_synthetic_transactions_test:

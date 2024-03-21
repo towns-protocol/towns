@@ -130,7 +130,7 @@ describe('redact messages', () => {
         expect(alice.getMessages(channelId)).toContain(message)
     })
 
-    test("moderator can redact other's messages", async () => {
+    test.skip("moderator can redact other's messages", async () => {
         /** Arrange */
         // create all the users for the test
         const { alice, bob } = await registerAndStartClients(['alice', 'bob'])

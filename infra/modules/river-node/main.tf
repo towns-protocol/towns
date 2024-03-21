@@ -522,6 +522,10 @@ resource "aws_ecs_task_definition" "river-fargate" {
       {
         name  = "REGISTRYCONTRACT__ADDRESS",
         value = var.river_registry_contract_address
+      },
+      {
+        name  = "ENTITLEMENT_CONTRACT__ADDRESS",
+        value = "0x46297EA7c3895d595366551bdE731B7f0B3cF48e"
       }
       ],
       local.base_chain_override_td_env_config,
@@ -566,6 +570,10 @@ resource "aws_ecs_task_definition" "river-fargate" {
         },
         {
           name  = "DD_APM_ENABLED",
+          value = "true"
+        },
+        {
+          name  = "DD_PROCESS_AGENT_PROCESS_COLLECTION_ENABLED",
           value = "true"
         },
         {

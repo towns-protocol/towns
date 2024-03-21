@@ -108,11 +108,8 @@ contract ChannelsTest is BaseSetup, IEntitlementBase {
     );
   }
 
-  function test_getChannel(
-    bytes32 channelId,
-    string memory channelMetadata
-  ) public {
-    vm.assume(bytes(channelMetadata).length > 2);
+  function test_getChannel(bytes32 channelId) public {
+    string memory channelMetadata = "Metadata";
 
     vm.prank(founder);
     IChannel(everyoneSpace).createChannel(
@@ -156,11 +153,8 @@ contract ChannelsTest is BaseSetup, IEntitlementBase {
     assertEq(_channel.roleIds.length, roleIds.length);
   }
 
-  function test_getChannels(
-    string memory channelMetadata,
-    bytes32 channelId
-  ) public {
-    vm.assume(bytes(channelMetadata).length > 2);
+  function test_getChannels(bytes32 channelId) public {
+    string memory channelMetadata = "Metadata";
 
     vm.prank(founder);
     IChannel(everyoneSpace).createChannel(

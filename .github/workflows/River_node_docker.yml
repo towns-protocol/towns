@@ -119,7 +119,7 @@ jobs:
                 ECR_REPOSITORY: river-node
                 LATEST_TAG: ${{ steps.compute_env_name_and_latest_tag.outputs.latest_tag_name }}
                 RELEASE_VERSION: ${{ steps.set_release_version.outputs.release_version }}
-              working-directory: ./river/core/node
+              working-directory: ./river/core
               run: |
                 docker build --build-arg GIT_SHA=${{ github.sha }} --build-arg RELEASE_VERSION=$RELEASE_VERSION -t $ECR_REGISTRY/$REGISTRY_ALIAS/$ECR_REPOSITORY:$LATEST_TAG .
                 docker tag $ECR_REGISTRY/$REGISTRY_ALIAS/$ECR_REPOSITORY:$LATEST_TAG $ECR_REGISTRY/$REGISTRY_ALIAS/$ECR_REPOSITORY:$RELEASE_VERSION
