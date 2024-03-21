@@ -263,6 +263,9 @@ if ! git diff main --quiet --cached; then
     gh pr merge "${BRANCH_NAME}" --squash --delete-branch
 
     echo "Subtree merge completed successfully."
+
+    echo "Deploying river..."
+    gh workflow run River_deploy.yml -f docker_image_tag="${SHORT_HASH}"
 else
     echo "No changes to commit."
     git checkout main
