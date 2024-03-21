@@ -11,7 +11,7 @@ import {
 } from 'use-towns-client'
 import { usePrivyWagmi } from '@privy-io/wagmi-connector'
 import { Box, BoxProps, Button, Icon, IconButton, Paragraph, Stack, Text } from '@ui'
-import { PanelButton } from '@components/Panel/Panel'
+import { PanelButton } from '@components/Panel/PanelButton'
 import { ClipboardCopy } from '@components/ClipboardCopy/ClipboardCopy'
 import { useAuth } from 'hooks/useAuth'
 import { shortAddress } from 'ui/utils/utils'

@@ -21,12 +21,12 @@ import { TextArea } from 'ui/components/TextArea/TextArea'
 import { axiosClient } from 'api/apiClient'
 import { env } from 'utils'
 import { ButtonSpinner } from '@components/Login/LoginButton/Spinner/ButtonSpinner'
-import { PanelButton } from '@components/Panel/Panel'
 import { bufferedLogger } from 'utils/wrappedlogger'
 import { useStore } from 'store/store'
 import { BetaDebugger } from 'BetaDebugger'
 import { useRequestShakePermissions } from '@components/BugReportButton/ShakeToReport'
 import { useDevice } from 'hooks/useDevice'
+import { PanelButton } from '@components/Panel/PanelButton'
 
 const FormStateKeys = {
     name: 'name',

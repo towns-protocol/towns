@@ -17,7 +17,7 @@ import { getPrettyDisplayName } from 'utils/getPrettyDisplayName'
 import { useAuth } from 'hooks/useAuth'
 import { useStore } from 'store/store'
 import { usePushNotifications } from 'hooks/usePushNotifications'
-import { Panel, PanelButton } from '@components/Panel/Panel'
+import { Panel } from '@components/Panel/Panel'
 import { NESTED_PROFILE_PANEL_PATHS } from 'routes'
 import { useCreateLink } from 'hooks/useCreateLink'
 import { useDevice } from 'hooks/useDevice'
@@ -27,6 +27,7 @@ import { useAbstractAccountAddress } from 'hooks/useAbstractAccountAddress'
 import { ButtonSpinner } from 'ui/components/Spinner/ButtonSpinner'
 import { ClipboardCopy } from '@components/ClipboardCopy/ClipboardCopy'
 import { shortAddress } from 'workers/utils'
+import { PanelButton } from '@components/Panel/PanelButton'
 
 export const SpaceProfilePanel = (props: { children?: React.ReactNode }) => {
     const navigate = useNavigate()

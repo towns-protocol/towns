@@ -21,7 +21,8 @@ import {
     useMuteSettings,
     useSetMuteSettingForChannelOrSpace,
 } from 'api/lib/notificationSettings'
-import { Panel, PanelButton } from '@components/Panel/Panel'
+import { PanelButton } from '@components/Panel/PanelButton'
+import { Panel } from '@components/Panel/Panel'
 import { ChannelMembersModal } from './SpaceChannelDirectoryPanel'
 
 export const ChannelInfoPanel = () => {

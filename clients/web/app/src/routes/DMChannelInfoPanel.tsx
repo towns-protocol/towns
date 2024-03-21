@@ -11,7 +11,7 @@ import {
     useUserLookupContext,
 } from 'use-towns-client'
 import { Box, Icon, Stack, Text, TextButton, TextField } from '@ui'
-import { Panel, PanelButton } from '@components/Panel/Panel'
+import { Panel } from '@components/Panel/Panel'
 import { ConfirmLeaveModal } from '@components/ConfirmLeaveModal/ConfirmLeaveModal'
 import { useDevice } from 'hooks/useDevice'
 import { CHANNEL_INFO_PARAMS } from 'routes'
@@ -22,6 +22,7 @@ import {
     GDMTitleProperties,
     SetUsernameDisplayName,
 } from '@components/SetUsernameDisplayName/SetUsernameDisplayName'
+import { PanelButton } from '@components/Panel/PanelButton'
 import { ChannelMembersModal } from './SpaceChannelDirectoryPanel'
 import { GDMChannelPermissionsModal } from './GDMChannelPermissions'
 
