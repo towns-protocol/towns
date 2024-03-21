@@ -1066,6 +1066,18 @@ export const SearchIcon = forwardRef<SVGSVGElement, SVGIconProps>((props, ref) =
     </svg>
 ))
 
+export const SearchIconBadged = forwardRef<SVGSVGElement, SVGIconProps>((props, ref) => (
+    <svg width="20" height="20" viewBox="0 0 20 20" fill="none" {...props} ref={ref}>
+        <path
+            fillRule="evenodd"
+            clipRule="evenodd"
+            d="M12.1216 2.27063C11.2148 1.8815 10.2158 1.66602 9.1665 1.66602C5.02437 1.66602 1.6665 5.02388 1.6665 9.16602C1.6665 13.3082 5.02437 16.666 9.1665 16.666C11.0255 16.666 12.7265 15.9897 14.0368 14.8697L17.1128 17.9457C17.4383 18.2711 17.9659 18.2711 18.2913 17.9457C18.6168 17.6202 18.6168 17.0926 18.2913 16.7672L15.177 13.6528C16.1125 12.4016 16.6665 10.8485 16.6665 9.16602C16.6665 8.85935 16.6481 8.55698 16.6123 8.25996C16.3599 8.3077 16.0995 8.33268 15.8332 8.33268C15.5215 8.33268 15.2178 8.29846 14.9257 8.23358C14.9745 8.5372 14.9998 8.84864 14.9998 9.16602C14.9998 12.3877 12.3882 14.9993 9.1665 14.9993C5.94484 14.9993 3.33317 12.3877 3.33317 9.16602C3.33317 5.94435 5.94484 3.33268 9.1665 3.33268C10.0645 3.33268 10.9151 3.5356 11.675 3.89808C11.712 3.31486 11.869 2.76424 12.1216 2.27063Z"
+            fill="currentColor"
+        />
+        <ellipse cx="15.8335" cy="4.16602" rx="2.5" ry="2.5" fill="#16C5DA" />
+    </svg>
+))
+
 export const ShakeIcon = forwardRef<SVGSVGElement, SVGIconProps>((props, ref) => (
     <svg width="24" height="24" viewBox="0 0 24 24" fill="none" {...props} ref={ref}>
         <g clipPath="url(#clip0_15442_166587)">
@@ -1709,6 +1721,7 @@ const iconMap = {
     profile: ProfileIcon,
     reply: ReplyIcon,
     search: SearchIcon,
+    searchBadged: SearchIconBadged,
     settings: SettingsIcon,
     share: ShareIcon,
     shake: ShakeIcon,
