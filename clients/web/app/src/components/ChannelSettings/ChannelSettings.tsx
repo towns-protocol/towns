@@ -338,7 +338,7 @@ export const ChannelSettingsPanel = () => {
 
     return spaceId && channelId ? (
         <Panel label="Edit channel" onClose={_onHide}>
-            <Stack padding>
+            <Stack>
                 <ChannelSettingsForm
                     spaceId={spaceId}
                     preventCloseMessage={transactionMessage}
