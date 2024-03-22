@@ -36,7 +36,7 @@ export const PageColors = () => {
             </Container>
             <Container label="Background (layer)">
                 {Object.keys(vars.color.layer)
-                    .filter((c) => !c.match(/hover$/i))
+                    .filter((c) => !c.match(/hover|Transparent$/i))
                     .map((c) => (
                         <Stack horizontal gap key={c} alignItems="center">
                             <Grid grow columns={2} width="200">
