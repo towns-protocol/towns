@@ -91,7 +91,7 @@ export class NotificationService {
 
         for (const userId of notificationData.users) {
             const isUserGloballyMuted = mutedUsersInChannel.has(userId)
-            if (!isDMorGDM && isUserGloballyMuted) {
+            if (userId === notificationData.sender || (!isDMorGDM && isUserGloballyMuted)) {
                 continue
             }
 
