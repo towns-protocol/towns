@@ -1,4 +1,5 @@
 import { z } from 'zod'
+import { NotificationKind } from './tagSchema'
 
 export enum Urgency {
     VERY_LOW = 'very-low',
@@ -8,7 +9,7 @@ export enum Urgency {
 }
 
 export const notificationContentMessageSchema = z.object({
-    kind: z.enum(['new_message', 'reply_to', 'mention']),
+    kind: z.enum([NotificationKind.NewMessage, NotificationKind.ReplyTo, NotificationKind.Mention]),
     spaceId: z.string(),
     channelId: z.string(),
     senderId: z.string(),
@@ -17,7 +18,7 @@ export const notificationContentMessageSchema = z.object({
 })
 
 export const notificationContentDmSchema = z.object({
-    kind: z.enum(['direct_message']),
+    kind: z.enum([NotificationKind.DirectMessage]),
     channelId: z.string(),
     senderId: z.string(),
     recipients: z.array(z.string()),

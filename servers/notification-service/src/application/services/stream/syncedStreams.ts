@@ -18,11 +18,11 @@ import { StreamRpcClient, errorContains } from '../../../infrastructure/rpc/stre
 import { bin_toHexString, streamIdToBytes, userIdFromAddress } from './utils'
 import { database } from '../../../infrastructure/database/prisma'
 import { ParsedEvent, ParsedMiniblock, ParsedStreamAndCookie } from './types'
-import { notificationService } from '../notificationService'
+import { NotifyUser, NotifyUsers, notificationService } from '../notificationService'
 import { isChannelStreamId, isDMChannelStreamId, isGDMChannelStreamId } from './id'
 import { StreamKind, SyncedStream } from '@prisma/client'
 import { logger } from '../../logger'
-import { NotifyUsersSchema } from '../../../types'
+import { NotificationKind, NotifyUsersSchema } from '../../../types'
 
 export function isDefined<T>(value: T | undefined | null): value is T {
     return <T>value !== undefined && <T>value !== null
@@ -677,7 +677,7 @@ export class SyncedStreams {
                 event.payload.value.content.case === 'membership'
 
             if (isMessage) {
-                await this.handleMessageStreamUpdate(syncedStream, streamId, event, creatorUserId)
+                await this.handleDmOrGdmMessageUpdate(syncedStream, streamId, event, creatorUserId)
             } else if (isMembershipUpdate) {
                 await this.handleMembershipUpdate(syncedStream, streamId, event)
             }
@@ -708,19 +708,14 @@ export class SyncedStreams {
                 event.payload.value.content.case === 'membership'
 
             if (isMessage) {
-                await this.handleChannelMessageStreamUpdate(
-                    syncedStream,
-                    streamId,
-                    event,
-                    creatorUserId,
-                )
+                await this.handleChannelMessageUpdate(syncedStream, streamId, event, creatorUserId)
             } else if (isMembershipUpdate) {
                 await this.handleMembershipUpdate(syncedStream, streamId, event)
             }
         }
     }
 
-    private async handleChannelMessageStreamUpdate(
+    private async handleChannelMessageUpdate(
         syncedStream: SyncedStream,
         streamId: string,
         event: StreamEvent,
@@ -752,7 +747,7 @@ export class SyncedStreams {
             users: syncedStream.userIds,
             payload: {
                 content: {
-                    kind: 'new_message',
+                    kind: NotificationKind.NewMessage,
                     spaceId: channelSettings.SpaceId,
                     channelId: streamId,
                     senderId: creatorUserId,
@@ -768,7 +763,7 @@ export class SyncedStreams {
             usersTaggedOrMentioned,
         )
 
-        if (usersToNotify.size === 0) {
+        if (usersToNotify.length === 0) {
             logger.info(`[SyncedStreams] no users to notify for channel stream ${streamId}`)
             return
         }
@@ -784,7 +779,7 @@ export class SyncedStreams {
         })
     }
 
-    private async handleMessageStreamUpdate(
+    private async handleDmOrGdmMessageUpdate(
         syncedStream: SyncedStream,
         streamId: string,
         event: StreamEvent,
@@ -792,7 +787,7 @@ export class SyncedStreams {
     ) {
         logger.info('[SyncedStreams] handleMessageStreamUpdate', streamId)
 
-        const usersToNotify: Set<string> = new Set()
+        const usersToNotify: NotifyUsers = {}
         const dbStreamUsers = syncedStream.userIds
         if (!dbStreamUsers.includes(creatorUserId)) {
             logger.error(
@@ -805,29 +800,32 @@ export class SyncedStreams {
 
         dbStreamUsers.forEach((user) => {
             if (user !== creatorUserId) {
-                usersToNotify.add(user)
+                usersToNotify[user] = {
+                    userId: user,
+                    kind: NotificationKind.DirectMessage,
+                }
             }
         })
         logger.info(`[SyncedStreams] usersToNotify`, { usersToNotify })
 
-        const usersToNotifyArray = Array.from(usersToNotify)
+        const userIds = Object.keys(usersToNotify)
 
         const notificationData: NotifyUsersSchema = {
             sender: creatorUserId,
-            users: usersToNotifyArray,
+            users: userIds,
             payload: {
                 content: {
-                    kind: 'direct_message',
+                    kind: NotificationKind.DirectMessage,
                     channelId: streamId,
                     senderId: creatorUserId,
-                    recipients: usersToNotifyArray,
+                    recipients: userIds,
                     event: event.toJson(),
                 },
             },
             forceNotify: false,
         }
 
-        await this.dispatchNotification(notificationData, usersToNotify)
+        await this.dispatchNotification(notificationData, Object.values(usersToNotify))
     }
 
     private async handleMembershipUpdate(
@@ -873,7 +871,7 @@ export class SyncedStreams {
 
     private async dispatchNotification(
         notificationData: NotifyUsersSchema,
-        usersToNotify: Set<string>,
+        usersToNotify: NotifyUser[],
     ) {
         const pushNotificationRequests = await notificationService.createNotificationAsyncRequests(
             notificationData,

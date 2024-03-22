@@ -16,6 +16,15 @@ import { PushType } from '../schema/subscriptionSchema'
 import { sendNotificationViaWebPush } from './web-push/send-notification'
 import { Urgency } from '../schema/notificationSchema'
 
+export interface NotifyUser {
+    userId: string
+    kind: NotificationKind
+}
+
+export interface NotifyUsers {
+    [userId: string]: NotifyUser
+}
+
 export class NotificationService {
     constructor() {}
 
@@ -23,8 +32,8 @@ export class NotificationService {
         notificationData: NotifyUsersSchema,
         channelId: string,
         taggedUsers: NotificationTag[],
-    ): Promise<Set<string>> {
-        const recipients: Set<string> = new Set([])
+    ): Promise<NotifyUser[]> {
+        const recipients: NotifyUsers = {}
         const notificationContent = notificationData.payload.content
         const isDMorGDM = notificationContent.kind === NotificationKind.DirectMessage
 
@@ -103,23 +112,41 @@ export class NotificationService {
                 continue
             }
 
-            recipients.add(userId)
+            // if user is tagged, use the specific kind of notification
+            if (metionUsersTagged.has(userId)) {
+                recipients[userId] = {
+                    userId,
+                    kind: NotificationKind.Mention,
+                }
+            } else if (replyToUsersTagged.has(userId)) {
+                recipients[userId] = {
+                    userId,
+                    kind: NotificationKind.ReplyTo,
+                }
+            } else {
+                recipients[userId] = {
+                    userId,
+                    kind: notificationData.payload.content.kind,
+                }
+            }
         }
 
-        return recipients
+        return Object.values(recipients)
     }
 
     public async createNotificationAsyncRequests(
         notificationData: NotifyUsersSchema,
-        usersToNotify: Set<string>,
+        usersToNotify: NotifyUser[],
     ): Promise<Promise<SendPushResponse>[]> {
         const pushNotificationPromises: Promise<SendPushResponse>[] = []
         const isDMorGDM = notificationData.payload.content.kind === NotificationKind.DirectMessage
 
-        for (const userId of usersToNotify) {
+        for (const n of usersToNotify) {
+            const payload = { ...notificationData.payload }
+            payload.content.kind = n.kind
             const option: NotificationOptions = {
-                userId,
-                payload: notificationData.payload,
+                userId: n.userId,
+                payload: payload,
                 channelId: notificationData.payload.content.channelId,
                 urgency: notificationData.urgency,
             }
@@ -130,7 +157,7 @@ export class NotificationService {
 
             const pushSubscriptions = await database.pushSubscription.findMany({
                 where: {
-                    UserId: userId,
+                    UserId: n.userId,
                 },
             })
 

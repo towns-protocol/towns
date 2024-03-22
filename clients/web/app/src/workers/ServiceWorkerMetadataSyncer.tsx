@@ -15,7 +15,7 @@ import { NotificationStore } from '../store/notificationStore'
 import { User } from './types.d'
 import { preferredUsername } from './utils'
 
-const log = debug('sw:push')
+const log = debug('sw:push:')
 
 function createInitialCurrentUser() {
     return new NotificationCurrentUser()
@@ -192,8 +192,10 @@ function SpacesAndChannelsMetadata({
         async (space: SpaceData) => {
             const channels = space.channelGroups.flatMap((cg) => cg.channels)
             const cachedChannels = await store.getChannelsBySpaceId(space.id)
-            const changedChannels = channels.filter((channel) =>
-                cachedChannels.some((c) => c.id === channel.id && c.name !== channel.label),
+            const changedChannels = channels.filter(
+                (channel) =>
+                    !cachedChannels.some((c) => c.id === channel.id) ||
+                    cachedChannels.some((c) => c.id === channel.id && c.name !== channel.label),
             )
 
             if (changedChannels.length) {

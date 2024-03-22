@@ -2,7 +2,7 @@ import './../utils/envs.mock'
 
 import { SendPushResponse, SendPushStatus } from './web-push/web-push-types'
 
-import { NotificationService } from './notificationService'
+import { NotificationService, NotifyUser } from './notificationService'
 import { NotifyUsersSchema } from '../../types'
 import { PushSubscription } from '@prisma/client'
 import { UserSettingsTables } from '../database/userSettingsTables'
@@ -78,19 +78,19 @@ describe('NotificationService', () => {
                     taggedUsers: [
                         {
                             UserId: 'user1',
-                            Tag: NotificationKind.Mention.toString(),
+                            Tag: NotificationKind.Mention,
                             SpaceId: 'space123',
                             ChannelId: 'channel123',
                         },
                         {
                             UserId: 'user2',
-                            Tag: NotificationKind.Mention.toString(),
+                            Tag: NotificationKind.Mention,
                             SpaceId: 'space123',
                             ChannelId: 'channel123',
                         },
                         {
                             UserId: 'user3',
-                            Tag: NotificationKind.Mention.toString(),
+                            Tag: NotificationKind.Mention,
                             SpaceId: 'space123',
                             ChannelId: 'channel123',
                         },
@@ -107,7 +107,11 @@ describe('NotificationService', () => {
                     taggedUsers,
                 )
 
-                expect(result).toEqual(new Set(['user1', 'user2', 'user3']))
+                const expected: NotifyUser[] = []
+                expected.push({ userId: 'user1', kind: NotificationKind.Mention })
+                expected.push({ userId: 'user2', kind: NotificationKind.Mention })
+                expected.push({ userId: 'user3', kind: NotificationKind.Mention })
+                expect(result).toEqual(expected)
                 expect(getMutedMentionUsersMock).toHaveBeenCalledWith(
                     expect.arrayContaining(['user1', 'user2', 'user3']),
                 )
@@ -122,7 +126,10 @@ describe('NotificationService', () => {
                     taggedUsers.filter((user) => user.UserId !== 'user2'),
                 )
 
-                expect(result).toEqual(new Set(['user1', 'user3']))
+                const expected: NotifyUser[] = []
+                expected.push({ userId: 'user1', kind: NotificationKind.Mention })
+                expected.push({ userId: 'user3', kind: NotificationKind.Mention })
+                expect(result).toEqual(expected)
                 expect(getMutedMentionUsersMock).toHaveBeenCalledWith(
                     expect.arrayContaining(['user1', 'user3']),
                 )
@@ -142,7 +149,11 @@ describe('NotificationService', () => {
                     }),
                 )
 
-                expect(result).toEqual(new Set(['user1', 'user2', 'user3']))
+                const expected: NotifyUser[] = []
+                expected.push({ userId: 'user1', kind: NotificationKind.Mention })
+                expected.push({ userId: 'user2', kind: NotificationKind.ReplyTo })
+                expected.push({ userId: 'user3', kind: NotificationKind.Mention })
+                expect(result).toEqual(expected)
                 expect(getMutedMentionUsersMock).toHaveBeenCalledWith(
                     expect.arrayContaining(['user1', 'user3']),
                 )
@@ -162,7 +173,9 @@ describe('NotificationService', () => {
                     taggedUsers,
                 )
 
-                expect(result).toEqual(new Set(['user2']))
+                const expected: NotifyUser[] = []
+                expected.push({ userId: 'user2', kind: NotificationKind.Mention })
+                expect(result).toEqual(expected)
                 expect(getMutedMentionUsersMock).toHaveBeenCalledWith(
                     expect.arrayContaining(['user2']),
                 )
@@ -178,7 +191,10 @@ describe('NotificationService', () => {
                     taggedUsers,
                 )
 
-                expect(result).toEqual(new Set(['user2', 'user3']))
+                const expected: NotifyUser[] = []
+                expected.push({ userId: 'user2', kind: NotificationKind.Mention })
+                expected.push({ userId: 'user3', kind: NotificationKind.Mention })
+                expect(result).toEqual(expected)
                 expect(getMutedMentionUsersMock).toHaveBeenCalledWith(
                     expect.arrayContaining(['user2', 'user3']),
                 )
@@ -198,7 +214,11 @@ describe('NotificationService', () => {
                     taggedUsers,
                 )
 
-                expect(result).toEqual(new Set(['user1', 'user2', 'user3']))
+                const expected: NotifyUser[] = []
+                expected.push({ userId: 'user1', kind: NotificationKind.Mention })
+                expected.push({ userId: 'user2', kind: NotificationKind.Mention })
+                expected.push({ userId: 'user3', kind: NotificationKind.Mention })
+                expect(result).toEqual(expected)
                 expect(getMutedMentionUsersMock).toHaveBeenCalledWith(
                     expect.arrayContaining(['user1', 'user2', 'user3']),
                 )
@@ -252,8 +272,11 @@ describe('NotificationService', () => {
                     channelId,
                     taggedUsers,
                 )
-
-                expect(result).toEqual(new Set(['user1', 'user2', 'user3']))
+                const expected: NotifyUser[] = []
+                expected.push({ userId: 'user1', kind: NotificationKind.ReplyTo })
+                expected.push({ userId: 'user2', kind: NotificationKind.ReplyTo })
+                expected.push({ userId: 'user3', kind: NotificationKind.ReplyTo })
+                expect(result).toEqual(expected)
                 expect(getMutedReplyToUsersMock).toHaveBeenCalledWith(
                     expect.arrayContaining(['user1', 'user2', 'user3']),
                 )
@@ -268,7 +291,10 @@ describe('NotificationService', () => {
                     taggedUsers.filter((user) => user.UserId !== 'user2'),
                 )
 
-                expect(result).toEqual(new Set(['user1', 'user3']))
+                const expected: NotifyUser[] = []
+                expected.push({ userId: 'user1', kind: NotificationKind.ReplyTo })
+                expected.push({ userId: 'user3', kind: NotificationKind.ReplyTo })
+                expect(result).toEqual(expected)
                 expect(getMutedReplyToUsersMock).toHaveBeenCalledWith(
                     expect.arrayContaining(['user1', 'user3']),
                 )
@@ -288,7 +314,11 @@ describe('NotificationService', () => {
                     }),
                 )
 
-                expect(result).toEqual(new Set(['user1', 'user2', 'user3']))
+                const expected: NotifyUser[] = []
+                expected.push({ userId: 'user1', kind: NotificationKind.ReplyTo })
+                expected.push({ userId: 'user2', kind: NotificationKind.Mention })
+                expected.push({ userId: 'user3', kind: NotificationKind.ReplyTo })
+                expect(result).toEqual(expected)
                 expect(getMutedReplyToUsersMock).toHaveBeenCalledWith(
                     expect.arrayContaining(['user1', 'user3']),
                 )
@@ -307,7 +337,9 @@ describe('NotificationService', () => {
                     taggedUsers,
                 )
 
-                expect(result).toEqual(new Set(['user2']))
+                const expected: NotifyUser[] = []
+                expected.push({ userId: 'user2', kind: NotificationKind.ReplyTo })
+                expect(result).toEqual(expected)
                 expect(getMutedReplyToUsersMock).toHaveBeenCalledWith(
                     expect.arrayContaining(['user2']),
                 )
@@ -323,7 +355,10 @@ describe('NotificationService', () => {
                     taggedUsers,
                 )
 
-                expect(result).toEqual(new Set(['user2', 'user3']))
+                const expected: NotifyUser[] = []
+                expected.push({ userId: 'user2', kind: NotificationKind.ReplyTo })
+                expected.push({ userId: 'user3', kind: NotificationKind.ReplyTo })
+                expect(result).toEqual(expected)
                 expect(getMutedReplyToUsersMock).toHaveBeenCalledWith(
                     expect.arrayContaining(['user2', 'user3']),
                 )
@@ -343,7 +378,11 @@ describe('NotificationService', () => {
                     taggedUsers,
                 )
 
-                expect(result).toEqual(new Set(['user1', 'user2', 'user3']))
+                const expected: NotifyUser[] = []
+                expected.push({ userId: 'user1', kind: NotificationKind.ReplyTo })
+                expected.push({ userId: 'user2', kind: NotificationKind.ReplyTo })
+                expected.push({ userId: 'user3', kind: NotificationKind.ReplyTo })
+                expect(result).toEqual(expected)
                 expect(getMutedReplyToUsersMock).toHaveBeenCalledWith(
                     expect.arrayContaining(['user1', 'user2', 'user3']),
                 )
@@ -370,13 +409,13 @@ describe('NotificationService', () => {
                     taggedUsers: [
                         {
                             UserId: 'user1',
-                            Tag: NotificationKind.DirectMessage.toString(),
+                            Tag: NotificationKind.DirectMessage,
                             SpaceId: 'space123',
                             ChannelId: 'channel123',
                         },
                         {
                             UserId: 'user2',
-                            Tag: NotificationKind.DirectMessage.toString(),
+                            Tag: NotificationKind.DirectMessage,
                             SpaceId: 'space123',
                             ChannelId: 'channel123',
                         },
@@ -399,7 +438,11 @@ describe('NotificationService', () => {
                     taggedUsers,
                 )
 
-                expect(result).toEqual(new Set(['user1', 'user2', 'user3']))
+                const expected: NotifyUser[] = []
+                expected.push({ userId: 'user1', kind: NotificationKind.DirectMessage })
+                expected.push({ userId: 'user2', kind: NotificationKind.DirectMessage })
+                expected.push({ userId: 'user3', kind: NotificationKind.DirectMessage })
+                expect(result).toEqual(expected)
                 expect(getMutedDirectMessageUsersMock).toHaveBeenCalledWith(
                     expect.arrayContaining(['user1', 'user2', 'user3']),
                 )
@@ -414,7 +457,11 @@ describe('NotificationService', () => {
                     taggedUsers.filter((user) => user.UserId !== 'user2'),
                 )
 
-                expect(result).toEqual(new Set(['user1', 'user2', 'user3']))
+                const expected: NotifyUser[] = []
+                expected.push({ userId: 'user1', kind: NotificationKind.DirectMessage })
+                expected.push({ userId: 'user2', kind: NotificationKind.DirectMessage })
+                expected.push({ userId: 'user3', kind: NotificationKind.DirectMessage })
+                expect(result).toEqual(expected)
                 expect(getMutedDirectMessageUsersMock).toHaveBeenCalledWith(
                     expect.arrayContaining(['user1', 'user2', 'user3']),
                 )
@@ -433,7 +480,11 @@ describe('NotificationService', () => {
                     taggedUsers,
                 )
 
-                expect(result).toEqual(new Set(['user1', 'user2', 'user3']))
+                const expected: NotifyUser[] = []
+                expected.push({ userId: 'user1', kind: NotificationKind.DirectMessage })
+                expected.push({ userId: 'user2', kind: NotificationKind.DirectMessage })
+                expected.push({ userId: 'user3', kind: NotificationKind.DirectMessage })
+                expect(result).toEqual(expected)
                 expect(getMutedDirectMessageUsersMock).toHaveBeenCalledWith(
                     expect.arrayContaining(['user1', 'user2', 'user3']),
                 )
@@ -449,7 +500,10 @@ describe('NotificationService', () => {
                     taggedUsers,
                 )
 
-                expect(result).toEqual(new Set(['user2', 'user3']))
+                const expected: NotifyUser[] = []
+                expected.push({ userId: 'user2', kind: NotificationKind.DirectMessage })
+                expected.push({ userId: 'user3', kind: NotificationKind.DirectMessage })
+                expect(result).toEqual(expected)
                 expect(getMutedDirectMessageUsersMock).toHaveBeenCalledWith(
                     expect.arrayContaining(['user2', 'user3']),
                 )
@@ -469,7 +523,11 @@ describe('NotificationService', () => {
                     taggedUsers,
                 )
 
-                expect(result).toEqual(new Set(['user1', 'user2', 'user3']))
+                const expected: NotifyUser[] = []
+                expected.push({ userId: 'user1', kind: NotificationKind.DirectMessage })
+                expected.push({ userId: 'user2', kind: NotificationKind.DirectMessage })
+                expected.push({ userId: 'user3', kind: NotificationKind.DirectMessage })
+                expect(result).toEqual(expected)
                 expect(getMutedDirectMessageUsersMock).toHaveBeenCalledWith(
                     expect.arrayContaining(['user1', 'user2', 'user3']),
                 )
@@ -497,14 +555,17 @@ describe('NotificationService', () => {
                 users: ['user1', 'user2', 'user3'],
                 payload: {
                     content: {
-                        kind: NotificationKind.Mention.toString(),
+                        kind: NotificationKind.Mention,
                         spaceId: 'space123',
                         channelId: 'channel123',
                     },
                 },
             } as NotifyUsersSchema
 
-            const usersToNotify = ['user1', 'user2', 'user3']
+            const usersToNotify: NotifyUser[] = []
+            usersToNotify.push({ userId: 'user1', kind: NotificationKind.Mention })
+            usersToNotify.push({ userId: 'user2', kind: NotificationKind.Mention })
+            usersToNotify.push({ userId: 'user3', kind: NotificationKind.Mention })
 
             const pushSubscriptions = [
                 mockPushSubscription('user1'),
@@ -531,7 +592,7 @@ describe('NotificationService', () => {
 
             const result = await notificationService.createNotificationAsyncRequests(
                 notificationData,
-                new Set(usersToNotify),
+                usersToNotify,
             )
 
             expect(result).toHaveLength(3)

@@ -412,10 +412,10 @@ async function getNotificationContent(
     try {
         const [space, dmChannel, channel, sender] = await Promise.all([
             notification.content.kind !== AppNotificationType.DirectMessage // space is only needed for non-DM notifications
-                ? await notificationStore?.getSpace(notification.content.spaceId)
+                ? notificationStore?.getSpace(notification.content.spaceId)
                 : undefined,
             notification.content.kind === AppNotificationType.DirectMessage // dmChannel is only needed for DM notifications
-                ? await notificationStore?.getDmChannel(notification.content.channelId)
+                ? notificationStore?.getDmChannel(notification.content.channelId)
                 : undefined,
             notificationStore?.getChannel(notification.content.channelId),
             notificationStore?.getUser(notification.content.senderId),
