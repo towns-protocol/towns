@@ -15,6 +15,7 @@ import {
     getUserSettingsSchema,
     saveUserSettingsSchema,
 } from './application/schema/notificationSettingsSchema'
+import { tagMentionUsersSchema, tagReplyUserSchema } from './application/schema/tagSchema'
 
 export { Mute } from './application/schema/notificationSettingsSchema'
 export { NotificationKind } from './application/schema/tagSchema'
@@ -31,3 +32,5 @@ export type NotificationPayloadSchema = z.infer<typeof notificationPayloadSchema
 export type NotifyUsersSchema = z.infer<typeof notifyUsersSchema>
 export type RemoveSubscriptionSchema = z.infer<typeof removeSubscriptionSchema>
 export type SaveUserSettingsSchema = z.infer<typeof saveUserSettingsSchema>
+export type TagMentionUsersSchema = z.infer<typeof tagMentionUsersSchema>
+export type TagReplyUserSchema = z.infer<typeof tagReplyUserSchema>
