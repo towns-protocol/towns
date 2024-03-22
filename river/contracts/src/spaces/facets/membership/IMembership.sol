@@ -16,7 +16,7 @@ interface IMembershipBase {
     string symbol;
     uint256 price;
     uint256 maxSupply;
-    uint64 duration;
+    uint64 duration; // remove
     address currency;
     address feeRecipient;
     uint256 freeAllocation;

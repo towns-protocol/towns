@@ -1,0 +1,179 @@
+{
+  "compiler": {
+    "version": "0.8.24+commit.e11b9ed9"
+  },
+  "language": "Solidity",
+  "output": {
+    "abi": [
+      {
+        "inputs": [
+          {
+            "internalType": "address",
+            "name": "module",
+            "type": "address"
+          }
+        ],
+        "type": "error",
+        "name": "InvalidPricingModule"
+      },
+      {
+        "inputs": [
+          {
+            "internalType": "address",
+            "name": "module",
+            "type": "address",
+            "indexed": true
+          }
+        ],
+        "type": "event",
+        "name": "PricingModuleAdded",
+        "anonymous": false
+      },
+      {
+        "inputs": [
+          {
+            "internalType": "address",
+            "name": "module",
+            "type": "address",
+            "indexed": true
+          }
+        ],
+        "type": "event",
+        "name": "PricingModuleRemoved",
+        "anonymous": false
+      },
+      {
+        "inputs": [
+          {
+            "internalType": "address",
+            "name": "module",
+            "type": "address",
+            "indexed": true
+          }
+        ],
+        "type": "event",
+        "name": "PricingModuleUpdated",
+        "anonymous": false
+      },
+      {
+        "inputs": [
+          {
+            "internalType": "address",
+            "name": "module",
+            "type": "address"
+          }
+        ],
+        "stateMutability": "nonpayable",
+        "type": "function",
+        "name": "addPricingModule"
+      },
+      {
+        "inputs": [
+          {
+            "internalType": "address",
+            "name": "module",
+            "type": "address"
+          }
+        ],
+        "stateMutability": "view",
+        "type": "function",
+        "name": "isPricingModule",
+        "outputs": [
+          {
+            "internalType": "bool",
+            "name": "",
+            "type": "bool"
+          }
+        ]
+      },
+      {
+        "inputs": [],
+        "stateMutability": "view",
+        "type": "function",
+        "name": "listPricingModules",
+        "outputs": [
+          {
+            "internalType": "struct IPricingModulesBase.PricingModule[]",
+            "name": "",
+            "type": "tuple[]",
+            "components": [
+              {
+                "internalType": "string",
+                "name": "name",
+                "type": "string"
+              },
+              {
+                "internalType": "string",
+                "name": "description",
+                "type": "string"
+              },
+              {
+                "internalType": "address",
+                "name": "module",
+                "type": "address"
+              }
+            ]
+          }
+        ]
+      },
+      {
+        "inputs": [
+          {
+            "internalType": "address",
+            "name": "module",
+            "type": "address"
+          }
+        ],
+        "stateMutability": "nonpayable",
+        "type": "function",
+        "name": "removePricingModule"
+      }
+    ],
+    "devdoc": {
+      "kind": "dev",
+      "methods": {},
+      "version": 1
+    },
+    "userdoc": {
+      "kind": "user",
+      "methods": {},
+      "version": 1
+    }
+  },
+  "settings": {
+    "remappings": [
+      "@openzeppelin/=lib/@openzeppelin/",
+      "@prb/math/=lib/@prb/math/src/",
+      "@prb/test/=lib/@prb/test/src/",
+      "account-abstraction/=lib/account-abstraction/contracts/",
+      "base64/=lib/base64/",
+      "ds-test/=lib/ds-test/src/",
+      "forge-std/=lib/forge-std/src/",
+      "hardhat-deploy/=lib/hardhat-deploy/"
+    ],
+    "optimizer": {
+      "enabled": true,
+      "runs": 200
+    },
+    "metadata": {
+      "bytecodeHash": "none",
+      "appendCBOR": false
+    },
+    "compilationTarget": {
+      "contracts/src/spaces/facets/architect/pricing/IPricingModules.sol": "IPricingModules"
+    },
+    "evmVersion": "paris",
+    "libraries": {}
+  },
+  "sources": {
+    "contracts/src/spaces/facets/architect/pricing/IPricingModules.sol": {
+      "keccak256": "0xbfe90223b87a2fa178024ec2b94dc45a8950b707d76dc54e6743439e8fc0d73e",
+      "urls": [
+        "bzz-raw://73bfdc19b81b36d3c8d7aaa0c6d2701d54b8eeb0613e4c0f6184d1d9e2189716",
+        "dweb:/ipfs/QmSqZaPpb4A3AtjqE4cRXXjre9fQ87fv8P7ycsKmpC4NHU"
+      ],
+      "license": "Apache-2.0"
+    }
+  },
+  "version": 1
+}

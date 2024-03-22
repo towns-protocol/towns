@@ -4,6 +4,7 @@ import {
     ChannelMetadata,
     EntitlementModuleType,
     Permission,
+    PricingModuleStruct,
     RoleDetails,
 } from '../ContractTypes'
 import { BytesLike, ContractReceipt, ContractTransaction, ethers } from 'ethers'
@@ -18,6 +19,7 @@ import { getContractsInfo } from '../IStaticContractsInfo'
 import { WalletLink } from './WalletLink'
 import { SpaceDappConfig, SpaceInfo } from '../SpaceDappTypes'
 import { IRuleEntitlement } from './index'
+import { PricingModules } from './PricingModules'
 import { dlogger } from '@river/dlog'
 
 const logger = dlogger('csb:SpaceDapp:debug')
@@ -26,6 +28,7 @@ export class SpaceDapp implements ISpaceDapp {
     public readonly chainId: number
     public readonly provider: ethers.providers.Provider | undefined
     public readonly townRegistrar: TownRegistrar
+    public readonly pricingModules: PricingModules
     public readonly walletLink: WalletLink
 
     constructor(config: SpaceDappConfig) {
@@ -35,6 +38,7 @@ export class SpaceDapp implements ISpaceDapp {
         const contractsInfo = getContractsInfo(chainId)
         this.townRegistrar = new TownRegistrar(contractsInfo, chainId, provider)
         this.walletLink = new WalletLink(contractsInfo, chainId, provider)
+        this.pricingModules = new PricingModules(contractsInfo, chainId, provider)
     }
 
     public async addRoleToChannel(
@@ -455,6 +459,10 @@ export class SpaceDapp implements ISpaceDapp {
 
     public getTown(townId: string): Promise<Town | undefined> {
         return this.townRegistrar.getTown(townId)
+    }
+
+    public listPricingModules(): Promise<PricingModuleStruct[]> {
+        return this.pricingModules.listPricingModules()
     }
 
     private async encodeUpdateChannelRoles(

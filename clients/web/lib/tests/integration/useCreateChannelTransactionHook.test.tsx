@@ -13,7 +13,7 @@ import { TestConstants } from './helpers/TestConstants'
 import { TransactionStatus } from '../../src/client/TownsClientTypes'
 import { TownsTestApp } from './helpers/TownsTestApp'
 import { TownsTestWeb3Provider } from './helpers/TownsTestWeb3Provider'
-import { makeUniqueName } from './helpers/TestUtils'
+import { createMembershipStruct, makeUniqueName } from './helpers/TestUtils'
 import { useChannelData } from '../../src/hooks/use-channel-data'
 import { useCreateChannelTransaction } from '../../src/hooks/use-create-channel-transaction'
 import { useCreateSpaceTransactionWithRetries } from '../../src/hooks/use-create-space-transaction'
@@ -21,13 +21,10 @@ import { useRoles } from '../../src/hooks/use-roles'
 import { useSpacesFromContract } from '../../src/hooks/use-spaces-from-contract'
 import { useTransactionStore } from '../../src/store/use-transactions-store'
 import { useSpaceData } from '../../src/hooks/use-space-data'
-import {
-    createMembershipStruct,
-    getTestGatingNftAddress,
-    NoopRuleData,
-    Permission,
-} from '@river/web3'
+import { getTestGatingNftAddress, NoopRuleData, Permission } from '@river/web3'
 import { TSigner } from '../../src/types/web3-types'
+import { useTownsClient } from '../../src/hooks/use-towns-client'
+import { getDynamicPricingModule } from '../../src/utils/web3'
 
 describe('useCreateChannelTransactionHook', () => {
     test('user can create channel', async () => {
@@ -94,6 +91,7 @@ describe('useCreateChannelTransactionHook', () => {
             // Use the roles from the parent space to create the channel
             const { spaceRoles } = useRoles(spaceNetworkId)
             const transactions = useTransactionStore()
+            const { client } = useTownsClient()
 
             const roleIds = useMemo(() => {
                 const roleIds: number[] = []
@@ -109,6 +107,7 @@ describe('useCreateChannelTransactionHook', () => {
 
             const onClickCreateSpace = useCallback(() => {
                 const handleClick = async () => {
+                    const dynamicPricingModule = await getDynamicPricingModule(client?.spaceDapp)
                     await createSpaceTransactionWithRetries(
                         {
                             name: spaceName,
@@ -125,13 +124,14 @@ describe('useCreateChannelTransactionHook', () => {
                                 users: [],
                                 ruleData: NoopRuleData,
                             },
+                            pricingModule: dynamicPricingModule.module,
                         }),
                         signer,
                     )
                 }
 
                 void handleClick()
-            }, [createSpaceTransactionWithRetries, signer])
+            }, [client?.spaceDapp, createSpaceTransactionWithRetries, signer])
 
             // callback to create a channel with towns token entitlement
             const onClickCreateChannel = useCallback(() => {

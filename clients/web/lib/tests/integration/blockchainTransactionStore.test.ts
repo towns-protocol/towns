@@ -7,6 +7,7 @@ import { registerAndStartClients, createTestSpaceGatedByTownsNfts } from './help
 import { IArchitectBase, NoopRuleData, Permission } from '@river/web3'
 import { waitFor } from '@testing-library/dom'
 import { ethers } from 'ethers'
+import { getDynamicPricingModule } from '../../src/utils/web3'
 
 test('should clear promise from promise queue after transaction resolves', async () => {
     // create clients
@@ -51,6 +52,8 @@ test('should clear all promises when client stops', async () => {
         return infinitePromise
     })
 
+    const dynamicPricingModule = await getDynamicPricingModule(bob.spaceDapp)
+
     const blockchainStoreAbortSpy = jest.spyOn(
         bob.blockchainTransactionStore.abortController,
         'abort',
@@ -66,7 +69,7 @@ test('should clear all promises when client stops', async () => {
             currency: ethers.constants.AddressZero,
             feeRecipient: bob.provider.wallet.address,
             freeAllocation: 0,
-            pricingModule: ethers.constants.AddressZero,
+            pricingModule: dynamicPricingModule.module,
         },
         permissions: [],
         requirements: {

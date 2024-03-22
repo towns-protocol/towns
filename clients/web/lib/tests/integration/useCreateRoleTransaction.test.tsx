@@ -12,7 +12,7 @@ import { SpaceContextProvider } from '../../src/components/SpaceContextProvider'
 import { TestConstants } from './helpers/TestConstants'
 import { TownsTestApp } from './helpers/TownsTestApp'
 import { TownsTestWeb3Provider } from './helpers/TownsTestWeb3Provider'
-import { makeUniqueName } from './helpers/TestUtils'
+import { createMembershipStruct, makeUniqueName } from './helpers/TestUtils'
 import { useCreateRoleTransaction } from '../../src/hooks/use-create-role-transaction'
 import { useCreateSpaceTransactionWithRetries } from '../../src/hooks/use-create-space-transaction'
 import { useRoleDetails } from '../../src/hooks/use-role-details'
@@ -24,7 +24,6 @@ import {
     getTestGatingNftAddress,
     BasicRoleInfo,
     Permission,
-    createMembershipStruct,
     ruleDataToOperations,
     OperationType,
     createOperationsTree,
@@ -32,6 +31,8 @@ import {
     CheckOperationType,
 } from '@river/web3'
 import { TSigner } from '../../src/types/web3-types'
+import { useTownsClient } from '../../src/hooks/use-towns-client'
+import { getDynamicPricingModule } from '../../src/utils/web3'
 
 /**
  * This test suite tests the useRoles hook.
@@ -143,11 +144,13 @@ function TestComponent(args: {
     const roleTransaction = useCreateRoleTransaction()
     const { createRoleTransaction } = roleTransaction
     const spaceId = txData?.spaceId
+    const { client } = useTownsClient()
 
     const spaceNetworkId = spaceId ? spaceId : ''
     // handle click to create a space
     const onClickCreateSpace = useCallback(() => {
         const handleClick = async () => {
+            const dynamicPricingModule = await getDynamicPricingModule(client?.spaceDapp)
             await createSpaceTransactionWithRetries(
                 {
                     name: args.spaceName,
@@ -155,6 +158,7 @@ function TestComponent(args: {
                 createMembershipStruct({
                     name: args.roleName,
                     permissions: args.permissions,
+                    pricingModule: dynamicPricingModule.module,
                     requirements: {
                         everyone: true, // TODO: change to false when xchain is ready
                         users: [],
@@ -173,6 +177,7 @@ function TestComponent(args: {
 
         void handleClick()
     }, [
+        client?.spaceDapp,
         createSpaceTransactionWithRetries,
         args.spaceName,
         args.roleName,

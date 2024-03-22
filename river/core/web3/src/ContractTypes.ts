@@ -6,6 +6,7 @@ import {
 import { IRolesBase as IRolesBaseV3 } from './v3/IRolesShim'
 import { RuleEntitlementShim } from './v3/RuleEntitlementShim'
 import { IRuleEntitlement } from './v3'
+import { IPricingModulesBase } from './v3/IPricingShim'
 
 export const Permission = {
     Undefined: 'Undefined', // No permission required
@@ -39,6 +40,8 @@ type TotalSupplyOutputStruct = { totalSupply: number }
 export type MembershipStruct = ITownArchitectBaseV3.MembershipStruct
 
 export type TownInfoStruct = ITownArchitectBaseV3.SpaceInfoStruct
+
+export type PricingModuleStruct = IPricingModulesBase.PricingModuleStruct
 
 /**
  * Supported entitlement modules

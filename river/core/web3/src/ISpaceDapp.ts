@@ -5,6 +5,7 @@ import {
     MembershipInfo,
     MembershipStruct,
     Permission,
+    PricingModuleStruct,
     RoleDetails,
     TotalSupplyInfo,
 } from './ContractTypes'
@@ -13,6 +14,7 @@ import { WalletLink as WalletLinkV3 } from './v3/WalletLink'
 import { BytesLike, ContractReceipt, ContractTransaction, ethers } from 'ethers'
 import { SpaceInfo } from './SpaceDappTypes'
 import { IRolesBase, Town, TownRegistrar, IRuleEntitlement } from './v3'
+import { PricingModules } from './v3/PricingModules'
 
 export type SignerType = ethers.Signer
 export interface EventsContractInfo {
@@ -51,6 +53,7 @@ export interface ISpaceDapp {
     readonly provider: ethers.providers.Provider | undefined
     readonly townRegistrar: TownRegistrar
     readonly walletLink: WalletLinkV3
+    readonly pricingModules: PricingModules
     addRoleToChannel: (
         spaceId: string,
         channelNetworkId: string,
@@ -132,4 +135,5 @@ export interface ISpaceDapp {
     getMembershipInfo: (spaceId: string) => Promise<MembershipInfo>
     getWalletLink: () => WalletLinkV3
     getSpaceAddress: (receipt: ContractReceipt) => string | undefined
+    listPricingModules: () => Promise<PricingModuleStruct[]>
 }

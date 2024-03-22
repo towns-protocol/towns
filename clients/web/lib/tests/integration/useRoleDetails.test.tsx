@@ -12,7 +12,7 @@ import { SpaceContextProvider } from '../../src/components/SpaceContextProvider'
 import { TestConstants } from './helpers/TestConstants'
 import { TownsTestApp } from './helpers/TownsTestApp'
 import { TownsTestWeb3Provider } from './helpers/TownsTestWeb3Provider'
-import { makeUniqueName } from './helpers/TestUtils'
+import { createMembershipStruct, makeUniqueName } from './helpers/TestUtils'
 import { useCreateSpaceTransactionWithRetries } from '../../src/hooks/use-create-space-transaction'
 import { useRoleDetails } from '../../src/hooks/use-role-details'
 import { useRoles } from '../../src/hooks/use-roles'
@@ -22,7 +22,6 @@ import {
     getTestGatingNftAddress,
     BasicRoleInfo,
     Permission,
-    createMembershipStruct,
     ruleDataToOperations,
     OperationType,
     createOperationsTree,
@@ -31,6 +30,7 @@ import {
 } from '@river/web3'
 import { useTownsClient } from '../../src/hooks/use-towns-client'
 import { TSigner } from '../../src/types/web3-types'
+import { getDynamicPricingModule } from '../../src/utils/web3'
 /**
  * This test suite tests the useRoles hook.
  */
@@ -134,10 +134,12 @@ function TestComponent(args: {
 
     const spaceNetworkId = spaceId ? spaceId : ''
     const { spaces } = useSpacesFromContract()
+    const { client } = useTownsClient()
 
     // handle click to create a space
     const onClickCreateSpace = useCallback(() => {
         const handleClick = async () => {
+            const dynamicPricingModule = await getDynamicPricingModule(client?.spaceDapp)
             await createSpaceTransactionWithRetries(
                 {
                     name: args.spaceName,
@@ -156,6 +158,7 @@ function TestComponent(args: {
                             },
                         ]),
                     },
+                    pricingModule: dynamicPricingModule.module,
                 }),
                 args.signer,
             )
@@ -164,6 +167,7 @@ function TestComponent(args: {
 
         void handleClick()
     }, [
+        client?.spaceDapp,
         createSpaceTransactionWithRetries,
         args.spaceName,
         args.roleName,

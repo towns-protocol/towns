@@ -5,6 +5,7 @@ import ethers from 'ethers'
 import { TownsTestClient } from '../tests/integration/helpers/TownsTestClient'
 import { Wallet } from 'ethers'
 import fs from 'fs'
+import { getDynamicPricingModule } from '../src/utils/web3'
 
 /**
  * This is not an actual test, it's just a quick hack to create a dev town.
@@ -60,6 +61,14 @@ export async function createDevTown(client: TownsTestClient): Promise<string | u
         throw new Error('client.walletAddress is undefined')
     }
 
+    if (!client.spaceDapp) {
+        throw new Error('no spaceDapp')
+    }
+    const dynamicPricingModule = await getDynamicPricingModule(!client.spaceDapp)
+    if (!dynamicPricingModule) {
+        throw new Error('no dynamicPricingModule')
+    }
+
     const membershipInfo: IArchitectBase.MembershipStruct = {
         settings: {
             name: 'Everyone',
@@ -70,7 +79,7 @@ export async function createDevTown(client: TownsTestClient): Promise<string | u
             currency: ethers.constants.AddressZero,
             feeRecipient: client.walletAddress,
             freeAllocation: 0,
-            pricingModule: ethers.constants.AddressZero,
+            pricingModule: dynamicPricingModule.module,
         },
         permissions: [Permission.Read, Permission.Write, Permission.AddRemoveChannels],
         requirements: {

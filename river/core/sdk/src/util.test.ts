@@ -23,7 +23,7 @@ import assert from 'assert'
 import _ from 'lodash'
 import { MockEntitlementsDelegate } from './utils'
 import { SignerContext, makeSignerContext } from './signerContext'
-import { LocalhostWeb3Provider, createRiverRegistry } from '@river/web3'
+import { LocalhostWeb3Provider, PricingModuleStruct, createRiverRegistry } from '@river/web3'
 
 const log = dlog('csb:test:util')
 
@@ -395,4 +395,15 @@ export function createEventDecryptedPromise(client: Client, expectedMessageText:
 export function isValidEthAddress(address: string): boolean {
     const ethAddressRegex = /^(0x)?[0-9a-fA-F]{40}$/
     return ethAddressRegex.test(address)
+}
+
+export const TIERED_PRICING_ORACLE = 'TieredLogPricingOracle'
+export const FIXED_PRICING = 'FixedPricing'
+
+export const getDynamicPricingModule = (pricingModules: PricingModuleStruct[]) => {
+    return pricingModules.find((module) => module.name === TIERED_PRICING_ORACLE)
+}
+
+export const getFixedPricingModule = (pricingModules: PricingModuleStruct[]) => {
+    return pricingModules.find((module) => module.name === FIXED_PRICING)
 }

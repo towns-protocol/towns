@@ -5,6 +5,7 @@ import { ethers } from 'ethers'
 import { TownsOpts } from '../../src/client/TownsClientTypes'
 import { paymasterProxyMiddleware } from '@towns/userops'
 import { TestConstants } from '../integration/helpers/TestConstants'
+import { getDynamicPricingModule } from '../../src/utils/web3'
 
 /**
  * Create a town with an "Everyone" role that is gated only by a membership token
@@ -26,6 +27,7 @@ export async function createUngatedSpace(
     if (!client.walletAddress) {
         throw new Error('client.walletAddress is undefined')
     }
+    const dynamicPricingModule = await getDynamicPricingModule(client.spaceDapp)
 
     // Everyone role
     const membershipInfo: IArchitectBase.MembershipStruct = {
@@ -38,7 +40,7 @@ export async function createUngatedSpace(
             currency: ethers.constants.AddressZero,
             feeRecipient: client.walletAddress,
             freeAllocation: 0,
-            pricingModule: ethers.constants.AddressZero,
+            pricingModule: dynamicPricingModule.module,
         },
         permissions: rolePermissions,
         requirements: {

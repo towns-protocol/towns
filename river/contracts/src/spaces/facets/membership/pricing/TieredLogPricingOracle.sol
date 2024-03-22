@@ -13,8 +13,7 @@ import {IntrospectionFacet} from "contracts/src/diamond/facets/introspection/Int
 
 /**
  * @title TieredLogPricingOracle
- * @notice Network: Base (Goerli)
- * @notice Aggregator: Chainlink ETH/USD (0xcD2A119bD1F7DF95d706DE6F2057fDD45A0503E2)
+ * @notice Network: Base (Sepolia)
  */
 contract TieredLogPricingOracle is IMembershipPricing, IntrospectionFacet {
   AggregatorV3Interface internal dataFeed;
@@ -33,6 +32,19 @@ contract TieredLogPricingOracle is IMembershipPricing, IntrospectionFacet {
     dataFeed = AggregatorV3Interface(priceFeed);
     exchangeRateDecimals = 10 ** dataFeed.decimals();
     exchangeRateScale = exchangeRateDecimals * CENT_SCALE;
+  }
+
+  function name() public pure override returns (string memory) {
+    return "TieredLogPricingOracle";
+  }
+
+  function description() public pure override returns (string memory) {
+    return
+      "Free for the first 100 members, then logarithmically increasing price";
+  }
+
+  function setPrice(uint256) external pure {
+    revert("TieredLogPricingOracle: price is calculated");
   }
 
   function getPrice(
@@ -69,7 +81,7 @@ contract TieredLogPricingOracle is IMembershipPricing, IntrospectionFacet {
   function _getWeiFromCents(uint256 cents) internal view returns (uint256) {
     uint256 exchangeRate = getChainlinkDataFeedLatestAnswer(); // chainlink oracle returns this value
 
-    //oracle or governance
+    // oracle or governance
     // multiple before divide to avoid truncation which ends up in precision loss
     uint256 ethToUsdExchangeRateCents = (exchangeRate * 100) /
       exchangeRateDecimals;

@@ -8,7 +8,7 @@ import { RegisterWallet, TransactionInfo } from './helpers/TestComponents'
 import { SpaceContextProvider } from '../../src/components/SpaceContextProvider'
 import { TownsTestApp } from './helpers/TownsTestApp'
 import { TownsTestWeb3Provider } from './helpers/TownsTestWeb3Provider'
-import { makeUniqueName } from './helpers/TestUtils'
+import { createMembershipStruct, makeUniqueName } from './helpers/TestUtils'
 import { useCreateSpaceTransactionWithRetries } from '../../src/hooks/use-create-space-transaction'
 import { useMultipleRoleDetails } from '../../src/hooks/use-role-details'
 import { useRoles } from '../../src/hooks/use-roles'
@@ -19,7 +19,6 @@ import {
     getTestGatingNftAddress,
     BasicRoleInfo,
     Permission,
-    createMembershipStruct,
     NoopRuleData,
     ruleDataToOperations,
     OperationType,
@@ -29,6 +28,7 @@ import {
 } from '@river/web3'
 import { useTownsClient } from '../../src/hooks/use-towns-client'
 import { TSigner } from '../../src/types/web3-types'
+import { getDynamicPricingModule } from '../../src/utils/web3'
 
 /**
  * This test suite tests the useRoles hook.
@@ -159,9 +159,12 @@ function TestComponentMultiple(args: {
     const spaceTransaction = useCreateSpaceTransactionWithRetries()
     const { createSpaceTransactionWithRetries, data: txData, transactionStatus } = spaceTransaction
     const spaceId = txData?.spaceId
+    const { client } = useTownsClient()
+
     // handle click to create a space
     const onClickCreateSpace = useCallback(() => {
         const handleClick = async () => {
+            const dynamicPricingModule = await getDynamicPricingModule(client?.spaceDapp)
             await createSpaceTransactionWithRetries(
                 {
                     name: args.spaceNames[0],
@@ -174,6 +177,7 @@ function TestComponentMultiple(args: {
                         users: [],
                         ruleData: NoopRuleData,
                     },
+                    pricingModule: dynamicPricingModule.module,
                 }),
                 args.signer,
             )
@@ -196,6 +200,7 @@ function TestComponentMultiple(args: {
                             },
                         ]),
                     },
+                    pricingModule: dynamicPricingModule.module,
                 }),
                 args.signer,
             )
@@ -203,6 +208,7 @@ function TestComponentMultiple(args: {
 
         void handleClick()
     }, [
+        client?.spaceDapp,
         createSpaceTransactionWithRetries,
         args.spaceNames,
         args.roleName,

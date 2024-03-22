@@ -48,8 +48,11 @@ contract ArchitectTest is
     string memory name = "Test";
     address founder = _randomAddress();
 
+    SpaceInfo memory spaceInfo = _createSpaceInfo(name);
+    spaceInfo.membership.settings.pricingModule = pricingModule;
+
     vm.prank(founder);
-    address spaceAddress = spaceArchitect.createSpace(_createSpaceInfo(name));
+    address spaceAddress = spaceArchitect.createSpace(spaceInfo);
 
     // expect owner to be founder
     assertTrue(
@@ -123,8 +126,11 @@ contract ArchitectTest is
     address founder = _randomAddress();
     address buyer = _randomAddress();
 
+    SpaceInfo memory spaceInfo = _createSpaceInfo(spaceName);
+    spaceInfo.membership.settings.pricingModule = pricingModule;
+
     vm.prank(founder);
-    address newSpace = spaceArchitect.createSpace(_createSpaceInfo(spaceName));
+    address newSpace = spaceArchitect.createSpace(spaceInfo);
 
     assertTrue(
       IEntitlementsManager(newSpace).isEntitledToSpace(founder, "Read")
@@ -159,15 +165,18 @@ contract ArchitectTest is
 
     address founder = _randomAddress();
 
+    SpaceInfo memory spaceInfo = _createSpaceInfo(spaceName);
+    spaceInfo.membership.settings.pricingModule = pricingModule;
+
     vm.prank(founder);
     vm.expectRevert(Pausable__Paused.selector);
-    spaceArchitect.createSpace(_createSpaceInfo(spaceName));
+    spaceArchitect.createSpace(spaceInfo);
 
     vm.prank(deployer);
     IPausable(address(spaceArchitect)).unpause();
 
     vm.prank(founder);
-    spaceArchitect.createSpace(_createSpaceInfo(spaceName));
+    spaceArchitect.createSpace(spaceInfo);
   }
 
   function test_revertIfInvalidSpaceId() external {
@@ -175,17 +184,23 @@ contract ArchitectTest is
 
     vm.expectRevert(Validator__InvalidStringLength.selector);
 
+    SpaceInfo memory spaceInfo = _createSpaceInfo("");
+    spaceInfo.membership.settings.pricingModule = pricingModule;
+
     vm.prank(founder);
-    spaceArchitect.createSpace(_createSpaceInfo(""));
+    spaceArchitect.createSpace(spaceInfo);
   }
 
   function test_revertIfNotProperReceiver(string memory spaceName) external {
     vm.assume(bytes(spaceName).length > 2);
 
+    SpaceInfo memory spaceInfo = _createSpaceInfo(spaceName);
+    spaceInfo.membership.settings.pricingModule = pricingModule;
+
     vm.expectRevert(Factory.Factory__FailedDeployment.selector);
 
     vm.prank(address(this));
-    spaceArchitect.createSpace(_createSpaceInfo(spaceName));
+    spaceArchitect.createSpace(spaceInfo);
   }
 
   function test_createSpace_updateMemberPermissions(
@@ -196,10 +211,11 @@ contract ArchitectTest is
     address founder = _randomAddress();
     address user = _randomAddress();
 
+    SpaceInfo memory spaceInfo = _createEveryoneSpaceInfo(spaceName);
+    spaceInfo.membership.settings.pricingModule = pricingModule;
+
     vm.prank(founder);
-    address spaceInstance = spaceArchitect.createSpace(
-      _createEveryoneSpaceInfo(spaceName)
-    );
+    address spaceInstance = spaceArchitect.createSpace(spaceInfo);
 
     // have another user join the space
     IMembership(spaceInstance).joinSpace(user);

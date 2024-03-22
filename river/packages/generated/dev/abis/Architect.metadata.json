@@ -870,6 +870,14 @@
       ],
       "license": "Apache-2.0"
     },
+    "contracts/src/spaces/facets/architect/pricing/IPricingModules.sol": {
+      "keccak256": "0xbfe90223b87a2fa178024ec2b94dc45a8950b707d76dc54e6743439e8fc0d73e",
+      "urls": [
+        "bzz-raw://73bfdc19b81b36d3c8d7aaa0c6d2701d54b8eeb0613e4c0f6184d1d9e2189716",
+        "dweb:/ipfs/QmSqZaPpb4A3AtjqE4cRXXjre9fQ87fv8P7ycsKmpC4NHU"
+      ],
+      "license": "Apache-2.0"
+    },
     "contracts/src/spaces/facets/channels/IChannel.sol": {
       "keccak256": "0x4a62ec6410779121880a21ae1a42bab2480f672c683f79c7f2e11bf2bfe1bd6e",
       "urls": [
@@ -903,18 +911,18 @@
       "license": "Apache-2.0"
     },
     "contracts/src/spaces/facets/membership/IMembership.sol": {
-      "keccak256": "0x587b0e0c4a9cdc9bd0c992a9678127f47fea77da7210feb3482a069f84afe71d",
+      "keccak256": "0xa7e7d4d715c9c0b49ab531ab2c4eb0e41d4e16e2123809b1344bf658c5a9452e",
       "urls": [
-        "bzz-raw://a2260d042df51a55beb533ee759e10435783b5f401f1ceebf860046609f26cbe",
-        "dweb:/ipfs/QmYk7FRbTCKa7fUdAYWVye1Fs4teLnJp95yyD65TUYVfDe"
+        "bzz-raw://40d1f1f2b996d35e467f85631c5f6ee2976ae010b25c679cac1040e0c8176ee2",
+        "dweb:/ipfs/QmcBHCkP5565EbxkFHvKfrqoFQw4tWaW3WX7LrpwF8BHxv"
       ],
       "license": "Apache-2.0"
     },
     "contracts/src/spaces/facets/membership/MembershipBase.sol": {
-      "keccak256": "0x051aa6b31e65ab69f5fdbef6392a9667ca299c6c9d342f6bf8ac287b90d767fb",
+      "keccak256": "0x579470524d790e0d5cd192cc91db50f3ead3d24d857d65da3b0cb0d8769038c6",
       "urls": [
-        "bzz-raw://a82f58889def5345daa3e72b3c4e24327d69b48c7bdae83adf9eda24c85b24d6",
-        "dweb:/ipfs/QmcDQqUFL6dF7Vvkn2VnEThQddAzwaaL7U31V6PfkP4rXp"
+        "bzz-raw://adc42fd81c2aeaaa1f3c5d8f8fa5495fd53d15b3abe04996f4f7a0331ddc29a1",
+        "dweb:/ipfs/QmT32wjLeBLnnf4VVA2Y1wAvNAPmSWpq9tH79gP6fhoPAY"
       ],
       "license": "Apache-2.0"
     },
@@ -927,10 +935,10 @@
       "license": "Apache-2.0"
     },
     "contracts/src/spaces/facets/membership/pricing/IMembershipPricing.sol": {
-      "keccak256": "0x726e956f8d09bc51103660d2c7e1519de101617962f8a959a15123ec9d68b33f",
+      "keccak256": "0xb68faf2b90536ea53110ebb1d4456f2e9a261b5fac4515df47076da73e0cbd77",
       "urls": [
-        "bzz-raw://cf74057ee9b815f9caead688c5a08fce3bd0f29dcbe03e81a98495ce267d89a2",
-        "dweb:/ipfs/QmWFdvKhvacqsZKtDFfPYUvkjSsdgnos61RXkKcKrUBZ2i"
+        "bzz-raw://063fca54f8210be704b5d9f54efac08017266fafc9d287a6ece7866b25174448",
+        "dweb:/ipfs/QmbXUgKgh36CmNRA5NrtRrVcgfrKYEzZprAcjTVWhHmXBF"
       ],
       "license": "Apache-2.0"
     },
@@ -1139,6 +1147,14 @@
       "urls": [
         "bzz-raw://ad85dd393ee0a1917c57046abc5155f51f77844b2c6a42c05c1b8dd26d6ff3c1",
         "dweb:/ipfs/QmNqYc8To2NdnpP6E1tGz7t6A7beuENde5yovwov5pW1fA"
+      ],
+      "license": "MIT"
+    },
+    "lib/forge-std/src/console.sol": {
+      "keccak256": "0x91d5413c2434ca58fd278b6e1e79fd98d10c83931cc2596a6038eee4daeb34ba",
+      "urls": [
+        "bzz-raw://91ccea707361e48b9b7a161fe81f496b9932bc471e9c4e4e1e9c283f2453cc70",
+        "dweb:/ipfs/QmcB66sZhQ6Kz7MUHcLE78YXRUZxoZnnxZjN6yATsbB2ec"
       ],
       "license": "MIT"
     }

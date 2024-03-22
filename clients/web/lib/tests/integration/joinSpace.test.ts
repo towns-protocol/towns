@@ -22,6 +22,7 @@ import { ethers } from 'ethers'
 import { ParsedChannelProperties, assert } from '@river/sdk'
 import { getTransactionHashFromTransactionOrUserOp } from '@towns/userops'
 import { waitFor } from '@testing-library/dom'
+import { getDynamicPricingModule } from '../../src/utils/web3'
 
 test('create space, and have user join', async () => {
     // create clients
@@ -112,6 +113,7 @@ test.skip(
         ])
 
         console.log('ruleData', ruleData)
+        const dynamicPricingModule = await getDynamicPricingModule(alice.spaceDapp)
 
         const membershipInfo: IArchitectBase.MembershipStruct = {
             settings: {
@@ -123,7 +125,7 @@ test.skip(
                 currency: ethers.constants.AddressZero,
                 feeRecipient: alice.walletAddress ?? ethers.constants.AddressZero,
                 freeAllocation: 0,
-                pricingModule: ethers.constants.AddressZero,
+                pricingModule: dynamicPricingModule.module,
             },
             permissions: [Permission.Read, Permission.Write],
             requirements: {
@@ -185,6 +187,7 @@ test.skip('join_space_gated_2_NFT_2_wallet', async () => {
         expect(receipt?.status).toEqual(1)
     }
     expect(tx_link.error).toBeUndefined()
+    const dynamicPricingModule = await getDynamicPricingModule(alice.spaceDapp)
 
     const membershipInfo: IArchitectBase.MembershipStruct = {
         settings: {
@@ -196,7 +199,7 @@ test.skip('join_space_gated_2_NFT_2_wallet', async () => {
             currency: ethers.constants.AddressZero,
             feeRecipient: alice.walletAddress ?? ethers.constants.AddressZero,
             freeAllocation: 0,
-            pricingModule: ethers.constants.AddressZero,
+            pricingModule: dynamicPricingModule.module,
         },
         permissions: [Permission.Read, Permission.Write],
         requirements: {

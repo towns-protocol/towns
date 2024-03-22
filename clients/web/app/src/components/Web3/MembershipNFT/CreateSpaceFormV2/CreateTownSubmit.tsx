@@ -1,6 +1,11 @@
 import { UseFormReturn } from 'react-hook-form'
 import { MembershipStruct, NoopRuleData, Permission, createOperationsTree } from '@river/web3'
-import { CreateSpaceInfo, useCreateSpaceTransaction, useTownsClient } from 'use-towns-client'
+import {
+    CreateSpaceInfo,
+    getDynamicPricingModule,
+    useCreateSpaceTransaction,
+    useTownsClient,
+} from 'use-towns-client'
 import { useNavigate } from 'react-router'
 import React, { useCallback, useEffect, useMemo } from 'react'
 import { ethers } from 'ethers'
@@ -101,8 +106,11 @@ export function CreateTownSubmit({
         },
     })
 
-    const onSubmit = useCallback(() => {
+    const onSubmit = useCallback(async () => {
         toast.dismiss()
+        // TODO: hook up pricing module to form pricing options
+        const dynamicPricingModule = await getDynamicPricingModule(spaceDapp)
+
         setTransactionDetails({
             isTransacting: true,
             townAddress: undefined,
@@ -181,7 +189,7 @@ export function CreateTownSubmit({
                         currency: ethers.constants.AddressZero,
                         feeRecipient: await signer.getAddress(),
                         freeAllocation: 0,
-                        pricingModule: ethers.constants.AddressZero,
+                        pricingModule: dynamicPricingModule.module,
                     },
                     requirements: {
                         // TODO: make sure token gating works after xchain updated

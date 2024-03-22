@@ -3,7 +3,7 @@
  * @group with-entitilements
  */
 
-import { makeUserContextFromWallet, makeTestClient } from './util.test'
+import { makeUserContextFromWallet, makeTestClient, getDynamicPricingModule } from './util.test'
 import { makeDefaultChannelStreamId, makeSpaceStreamId } from './id'
 import { ethers, Wallet } from 'ethers'
 import { Client } from './client'
@@ -65,6 +65,10 @@ describe('mediaWithEntitlementsTests', () => {
         await provider.mintMockNFT()
         const spaceDapp = createSpaceDapp({ chainId, provider })
 
+        const pricingModules = await spaceDapp.listPricingModules()
+        const dynamicPricingModule = getDynamicPricingModule(pricingModules)
+        expect(dynamicPricingModule).toBeDefined()
+
         // create a space stream,
         const membershipInfo: MembershipStruct = {
             settings: {
@@ -76,7 +80,7 @@ describe('mediaWithEntitlementsTests', () => {
                 currency: ETH_ADDRESS,
                 feeRecipient: bobClient.userId,
                 freeAllocation: 0,
-                pricingModule: ethers.constants.AddressZero,
+                pricingModule: dynamicPricingModule!.module,
             },
             permissions: [Permission.Read, Permission.Write],
             requirements: {

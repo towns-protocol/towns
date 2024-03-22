@@ -13,63 +13,54 @@ import {FacetHelper} from "contracts/test/diamond/Facet.t.sol";
 import {MembershipFacet} from "contracts/src/spaces/facets/membership/MembershipFacet.sol";
 
 contract MembershipHelper is FacetHelper {
-  MembershipFacet internal membership;
-
   constructor() {
-    membership = new MembershipFacet();
-
-    uint256 index;
-    bytes4[] memory selectors_ = new bytes4[](22);
-
     // Minting
-    selectors_[index++] = IMembership.joinSpace.selector;
-    selectors_[index++] = IMembership.joinSpaceWithReferral.selector;
-    selectors_[index++] = IMembership.renewMembership.selector;
-    selectors_[index++] = IMembership.cancelMembership.selector;
-    selectors_[index++] = IMembership.expiresAt.selector;
-    selectors_[index++] = IMembership.getTokenIdByMembership.selector;
+    addSelector(IMembership.joinSpace.selector);
+    addSelector(IMembership.joinSpaceWithReferral.selector);
+    addSelector(IMembership.renewMembership.selector);
+    addSelector(IMembership.cancelMembership.selector);
+    addSelector(IMembership.expiresAt.selector);
+    addSelector(IMembership.getTokenIdByMembership.selector);
 
     // Duration
-    selectors_[index++] = IMembership.setMembershipDuration.selector;
-    selectors_[index++] = IMembership.getMembershipDuration.selector;
+    addSelector(IMembership.setMembershipDuration.selector);
+    addSelector(IMembership.getMembershipDuration.selector);
 
     // Pricing Module
-    selectors_[index++] = IMembership.setMembershipPricingModule.selector;
-    selectors_[index++] = IMembership.getMembershipPricingModule.selector;
+    addSelector(IMembership.setMembershipPricingModule.selector);
+    addSelector(IMembership.getMembershipPricingModule.selector);
 
     // Pricing
-    selectors_[index++] = IMembership.setMembershipPrice.selector;
-    selectors_[index++] = IMembership.getMembershipPrice.selector;
-    selectors_[index++] = IMembership.getMembershipRenewalPrice.selector;
+    addSelector(IMembership.setMembershipPrice.selector);
+    addSelector(IMembership.getMembershipPrice.selector);
+    addSelector(IMembership.getMembershipRenewalPrice.selector);
 
     // Allocation
-    selectors_[index++] = IMembership.setMembershipFreeAllocation.selector;
-    selectors_[index++] = IMembership.getMembershipFreeAllocation.selector;
+    addSelector(IMembership.setMembershipFreeAllocation.selector);
+    addSelector(IMembership.getMembershipFreeAllocation.selector);
 
     // Limits
-    selectors_[index++] = IMembership.setMembershipLimit.selector;
-    selectors_[index++] = IMembership.getMembershipLimit.selector;
+    addSelector(IMembership.setMembershipLimit.selector);
+    addSelector(IMembership.getMembershipLimit.selector);
 
     // Currency
-    selectors_[index++] = IMembership.setMembershipCurrency.selector;
-    selectors_[index++] = IMembership.getMembershipCurrency.selector;
+    addSelector(IMembership.setMembershipCurrency.selector);
+    addSelector(IMembership.getMembershipCurrency.selector);
 
     // Recipient
-    selectors_[index++] = IMembership.setMembershipFeeRecipient.selector;
-    selectors_[index++] = IMembership.getMembershipFeeRecipient.selector;
+    addSelector(IMembership.setMembershipFeeRecipient.selector);
+    addSelector(IMembership.getMembershipFeeRecipient.selector);
 
     // Factory
-    selectors_[index++] = IMembership.getSpaceFactory.selector;
-
-    addSelectors(selectors_);
+    addSelector(IMembership.getSpaceFactory.selector);
   }
 
-  function facet() public view override returns (address) {
-    return address(membership);
+  function facet() public pure override returns (address) {
+    return address(0);
   }
 
-  function initializer() public view override returns (bytes4) {
-    return membership.__Membership_init.selector;
+  function initializer() public pure override returns (bytes4) {
+    return MembershipFacet.__Membership_init.selector;
   }
 
   function selectors() public view override returns (bytes4[] memory) {

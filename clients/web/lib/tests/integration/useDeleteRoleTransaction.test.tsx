@@ -11,7 +11,7 @@ import { RegisterWallet, TransactionInfo } from './helpers/TestComponents'
 import { SpaceContextProvider } from '../../src/components/SpaceContextProvider'
 import { TownsTestApp } from './helpers/TownsTestApp'
 import { TownsTestWeb3Provider } from './helpers/TownsTestWeb3Provider'
-import { makeUniqueName } from './helpers/TestUtils'
+import { createMembershipStruct, makeUniqueName } from './helpers/TestUtils'
 import { useCreateRoleTransaction } from '../../src/hooks/use-create-role-transaction'
 import { useCreateSpaceTransactionWithRetries } from '../../src/hooks/use-create-space-transaction'
 import { useDeleteRoleTransaction } from '../../src/hooks/use-delete-role-transaction'
@@ -21,16 +21,17 @@ import { useSpacesFromContract } from '../../src/hooks/use-spaces-from-contract'
 import { TestConstants } from './helpers/TestConstants'
 import { TransactionStatus } from '../../src/client/TownsClientTypes'
 import {
-    createExternalTokenStruct,
     getTestGatingNftAddress,
     BasicRoleInfo,
     Permission,
-    createMembershipStruct,
+    createExternalTokenStruct,
     NoopRuleData,
     ruleDataToOperations,
     OperationType,
 } from '@river/web3'
 import { TSigner } from '../../src/types/web3-types'
+import { useTownsClient } from '../../src/hooks/use-towns-client'
+import { getDynamicPricingModule } from '../../src/utils/web3'
 
 /**
  * This test suite tests the useRoles hook.
@@ -158,9 +159,12 @@ function TestComponent(args: {
     const spaceNetworkId = spaceId ? spaceId : ''
     const roleIdentifier = data?.roleId
     const roleId = useMemo(() => roleIdentifier?.roleId ?? -1, [roleIdentifier])
+    const { client } = useTownsClient()
+
     // handle click to create a space
     const onClickCreateSpace = useCallback(() => {
         const handleClick = async () => {
+            const dynamicPricingModule = await getDynamicPricingModule(client?.spaceDapp)
             await createSpaceTransactionWithRetries(
                 {
                     name: args.spaceName,
@@ -173,16 +177,18 @@ function TestComponent(args: {
                         users: [],
                         ruleData: NoopRuleData,
                     },
+                    pricingModule: dynamicPricingModule.module,
                 }),
                 args.signer,
             )
         }
         void handleClick()
     }, [
-        args.permissions,
-        args.roleName,
-        args.spaceName,
+        client?.spaceDapp,
         createSpaceTransactionWithRetries,
+        args.spaceName,
+        args.roleName,
+        args.permissions,
         args.signer,
     ])
     // handle click to create a role
@@ -199,12 +205,12 @@ function TestComponent(args: {
         }
         void handleClick()
     }, [
-        args.newRolePermissions,
-        args.newRoleName,
-        args.newRoleTokens,
-        args.newRoleUsers,
         createRoleTransaction,
         spaceNetworkId,
+        args.newRoleName,
+        args.newRolePermissions,
+        args.newRoleUsers,
+        args.newRoleTokens,
         args.signer,
     ])
     // handle click to update a role

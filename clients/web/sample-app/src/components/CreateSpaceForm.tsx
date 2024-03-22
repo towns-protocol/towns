@@ -5,9 +5,11 @@ import {
     CreateSpaceInfo,
     Membership,
     TransactionStatus,
+    getDynamicPricingModule,
     useCasablancaStore,
     useConnectivity,
     useCreateSpaceTransaction,
+    useTownsClient,
     useWeb3Context,
 } from 'use-towns-client'
 import {
@@ -41,6 +43,7 @@ export const CreateSpaceForm = (props: Props) => {
     const { chainName, chainId } = useEnvironment()
     const { chain: walletChain } = useNetwork()
     const { loginStatus: casablancaLoginStatus } = useCasablancaStore()
+    const { client } = useTownsClient()
     const getSigner = useGetEmbeddedSigner()
 
     const [formValue, setFormValue] = useState<FormValues>({
@@ -138,6 +141,12 @@ export const CreateSpaceForm = (props: Props) => {
             console.error('Cannot create space. No signer.')
             return undefined
         }
+        if (!client) {
+            console.error('Cannot create space. No client.')
+            return undefined
+        }
+        const dynamicPricingModule = await getDynamicPricingModule(client.spaceDapp)
+
         const requirements: MembershipStruct = {
             settings: {
                 name: 'Member',
@@ -148,7 +157,7 @@ export const CreateSpaceForm = (props: Props) => {
                 currency: ethers.constants.AddressZero,
                 feeRecipient: await signer.getAddress(),
                 freeAllocation: 0,
-                pricingModule: ethers.constants.AddressZero,
+                pricingModule: dynamicPricingModule.module,
             },
             permissions: memberPermissions,
             requirements: {
@@ -159,7 +168,16 @@ export const CreateSpaceForm = (props: Props) => {
         }
 
         await createSpaceTransactionWithRole(createSpaceInfo, requirements, signer)
-    }, [formValue, getSigner, createSpaceTransactionWithRole, councilNftAddress])
+    }, [
+        formValue.membershipRequirement,
+        formValue.spaceName,
+        formValue.price,
+        formValue.limit,
+        getSigner,
+        client,
+        createSpaceTransactionWithRole,
+        councilNftAddress,
+    ])
 
     useEffect(() => {
         if (transactionStatus === TransactionStatus.Success && txData && txData.spaceId) {

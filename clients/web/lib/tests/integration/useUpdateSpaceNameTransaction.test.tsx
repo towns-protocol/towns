@@ -12,14 +12,16 @@ import { RegisterWallet, TransactionInfo } from './helpers/TestComponents'
 import { SpaceContextProvider } from '../../src/components/SpaceContextProvider'
 import { TownsTestApp } from './helpers/TownsTestApp'
 import { TownsTestWeb3Provider } from './helpers/TownsTestWeb3Provider'
-import { makeUniqueName } from './helpers/TestUtils'
+import { createMembershipStruct, makeUniqueName } from './helpers/TestUtils'
 import { useUpdateSpaceNameTransaction } from '../../src/hooks/use-update-space-name-transaction'
 import { useCreateSpaceTransactionWithRetries } from '../../src/hooks/use-create-space-transaction'
 import { TestConstants } from './helpers/TestConstants'
 import { TransactionStatus } from '../../src/client/TownsClientTypes'
-import { NoopRuleData, createMembershipStruct, getTestGatingNftAddress } from '@river/web3'
+import { NoopRuleData, getTestGatingNftAddress } from '@river/web3'
 import { useContractSpaceInfo } from '../../src/hooks/use-space-data'
 import { TSigner } from '../../src/types/web3-types'
+import { getDynamicPricingModule } from '../../src/utils/web3'
+import { useTownsClient } from '../../src/hooks/use-towns-client'
 
 /**
  * This test suite tests the useUpdateSpaceNameTransaction hook.
@@ -107,10 +109,12 @@ function TestComponent(args: {
     const updateSpaceNameTransactionInfo = useUpdateSpaceNameTransaction()
     const { updateSpaceNameTransaction } = updateSpaceNameTransactionInfo
     const spaceNetworkId = spaceId ? spaceId : ''
+    const { client } = useTownsClient()
 
     // handle click to create a space
     const onClickCreateSpace = useCallback(() => {
         const handleClick = async () => {
+            const dynamicPricingModule = await getDynamicPricingModule(client?.spaceDapp)
             await createSpaceTransactionWithRetries(
                 {
                     name: args.originalSpaceName,
@@ -123,12 +127,13 @@ function TestComponent(args: {
                         users: [],
                         ruleData: NoopRuleData,
                     },
+                    pricingModule: dynamicPricingModule.module,
                 }),
                 args.signer,
             )
         }
         void handleClick()
-    }, [args.originalSpaceName, createSpaceTransactionWithRetries, args.signer])
+    }, [client?.spaceDapp, createSpaceTransactionWithRetries, args.originalSpaceName, args.signer])
 
     // handle click to update space name
     const onClickUpdateSpaceName = useCallback(() => {

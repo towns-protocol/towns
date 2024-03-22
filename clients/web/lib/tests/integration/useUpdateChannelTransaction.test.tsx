@@ -12,7 +12,7 @@ import { TestConstants } from './helpers/TestConstants'
 import { TransactionStatus } from '../../src/client/TownsClientTypes'
 import { TownsTestApp } from './helpers/TownsTestApp'
 import { TownsTestWeb3Provider } from './helpers/TownsTestWeb3Provider'
-import { makeUniqueName } from './helpers/TestUtils'
+import { createMembershipStruct, makeUniqueName } from './helpers/TestUtils'
 import { useChannelData } from '../../src/hooks/use-channel-data'
 import { useCreateChannelTransaction } from '../../src/hooks/use-create-channel-transaction'
 import { useCreateSpaceTransactionWithRetries } from '../../src/hooks/use-create-space-transaction'
@@ -20,13 +20,10 @@ import { useRoles } from '../../src/hooks/use-roles'
 import { useSpacesFromContract } from '../../src/hooks/use-spaces-from-contract'
 import { useUpdateChannelTransaction } from '../../src/hooks/use-update-channel-transaction'
 import { useSpaceData } from '../../src/hooks/use-space-data'
-import {
-    createMembershipStruct,
-    getTestGatingNftAddress,
-    NoopRuleData,
-    Permission,
-} from '@river/web3'
+import { getTestGatingNftAddress, NoopRuleData, Permission } from '@river/web3'
 import { TSigner } from '../../src/types/web3-types'
+import { getDynamicPricingModule } from '../../src/utils/web3'
+import { useTownsClient } from '../../src/hooks/use-towns-client'
 /**
  * This test suite tests the useRoles hook.
  */
@@ -172,6 +169,8 @@ function TestComponent(args: {
     const spaceNetworkId = spaceId ? spaceId : ''
     // Use the roles from the parent space to create the channel
     const { spaceRoles } = useRoles(spaceNetworkId)
+    const { client } = useTownsClient()
+
     // memoize the role ids
     const roleIds = useMemo(() => {
         const roleIds: number[] = []
@@ -187,6 +186,7 @@ function TestComponent(args: {
     // handle click to create a space
     const onClickCreateSpace = useCallback(() => {
         const handleClick = async () => {
+            const dynamicPricingModule = await getDynamicPricingModule(client?.spaceDapp)
             await createSpaceTransactionWithRetries(
                 {
                     name: args.spaceName,
@@ -199,17 +199,19 @@ function TestComponent(args: {
                         users: [],
                         ruleData: NoopRuleData,
                     },
+                    pricingModule: dynamicPricingModule.module,
                 }),
                 args.signer,
             )
         }
         void handleClick()
     }, [
-        args.permissions,
+        client?.spaceDapp,
+        createSpaceTransactionWithRetries,
         args.spaceName,
         args.spaceRoleName,
+        args.permissions,
         args.signer,
-        createSpaceTransactionWithRetries,
     ])
     // handle click to create a channel
     const onClickCreateChannel = useCallback(() => {

@@ -3,7 +3,13 @@
  * @group with-entitilements
  */
 
-import { makeDonePromise, makeTestClient, makeUserContextFromWallet, waitFor } from './util.test'
+import {
+    getDynamicPricingModule,
+    makeDonePromise,
+    makeTestClient,
+    makeUserContextFromWallet,
+    waitFor,
+} from './util.test'
 import { dlog } from '@river/dlog'
 import { makeDefaultChannelStreamId, makeSpaceStreamId, makeUserStreamId } from './id'
 import { MembershipOp } from '@river/proto'
@@ -38,6 +44,10 @@ describe('spaceTestsWithEntitlements', () => {
         await expect(bob.initializeUser()).toResolve()
         bob.startSync()
 
+        const pricingModules = await spaceDapp.listPricingModules()
+        const dynamicPricingModule = getDynamicPricingModule(pricingModules)
+        expect(dynamicPricingModule).toBeDefined()
+
         // create a space stream,
         log('Bob created user, about to create space')
         // first on the blockchain
@@ -51,7 +61,7 @@ describe('spaceTestsWithEntitlements', () => {
                 currency: ETH_ADDRESS,
                 feeRecipient: bob.userId,
                 freeAllocation: 0,
-                pricingModule: ethers.constants.AddressZero,
+                pricingModule: dynamicPricingModule!.module,
             },
             permissions: [Permission.Read, Permission.Write],
             requirements: {

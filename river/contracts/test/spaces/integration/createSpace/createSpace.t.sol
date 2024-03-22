@@ -2,7 +2,6 @@
 pragma solidity ^0.8.23;
 
 // interfaces
-import {IERC173} from "contracts/src/diamond/facets/ownable/IERC173.sol";
 import {IChannel} from "contracts/src/spaces/facets/channels/IChannel.sol";
 import {IChannel} from "contracts/src/spaces/facets/channels/IChannel.sol";
 import {IEntitlementsManager} from "contracts/src/spaces/facets/entitlements/IEntitlementsManager.sol";
@@ -11,14 +10,10 @@ import {IRolesBase} from "contracts/src/spaces/facets/roles/IRoles.sol";
 import {IArchitect} from "contracts/src/spaces/facets/architect/IArchitect.sol";
 import {IArchitectBase} from "contracts/src/spaces/facets/architect/IArchitect.sol";
 import {IMembership} from "contracts/src/spaces/facets/membership/IMembership.sol";
-import {IERC721A} from "contracts/src/diamond/facets/token/ERC721A/IERC721A.sol";
-import {IMembershipBase} from "contracts/src/spaces/facets/membership/IMembership.sol";
-
 import {IRuleEntitlement} from "contracts/src/crosschain/IRuleEntitlement.sol";
 
 // libraries
 import {Permissions} from "contracts/src/spaces/facets/Permissions.sol";
-import {RuleEntitlementUtil} from "contracts/src/crosschain/RuleEntitlementUtil.sol";
 
 // contracts
 import {BaseSetup} from "contracts/test/spaces/BaseSetup.sol";
@@ -41,10 +36,11 @@ contract Integration_CreateSpace is BaseSetup, IRolesBase, IArchitectBase {
     address founder = _randomAddress();
     address user = _randomAddress();
 
+    SpaceInfo memory spaceInfo = _createEveryoneSpaceInfo(spaceId);
+    spaceInfo.membership.settings.pricingModule = pricingModule;
+
     vm.prank(founder);
-    address newSpace = spaceArchitect.createSpace(
-      _createEveryoneSpaceInfo(spaceId)
-    );
+    address newSpace = spaceArchitect.createSpace(spaceInfo);
 
     // assert everyone can join
     assertTrue(
@@ -65,6 +61,7 @@ contract Integration_CreateSpace is BaseSetup, IRolesBase, IArchitectBase {
     users[0] = user;
 
     SpaceInfo memory spaceInfo = _createUserSpaceInfo(spaceId, users);
+    spaceInfo.membership.settings.pricingModule = pricingModule;
     spaceInfo.membership.permissions = new string[](1);
     spaceInfo.membership.permissions[0] = "Read";
 
@@ -126,6 +123,7 @@ contract Integration_CreateSpace is BaseSetup, IRolesBase, IArchitectBase {
 
     SpaceInfo memory spaceInfo = _createSpaceInfo(spaceId);
     spaceInfo.membership.requirements.ruleData = ruleData;
+    spaceInfo.membership.settings.pricingModule = pricingModule;
 
     vm.prank(founder);
     spaceArchitect.createSpace(spaceInfo);
@@ -154,11 +152,11 @@ contract Integration_CreateSpace is BaseSetup, IRolesBase, IArchitectBase {
     address member = _randomAddress();
 
     // create space with default channel
+    SpaceInfo memory spaceInfo = _createEveryoneSpaceInfo(spaceId);
+    spaceInfo.membership.settings.pricingModule = pricingModule;
 
     vm.prank(founder);
-    address newSpace = spaceArchitect.createSpace(
-      _createEveryoneSpaceInfo(spaceId)
-    );
+    address newSpace = spaceArchitect.createSpace(spaceInfo);
 
     IMembership(newSpace).joinSpace(member);
 

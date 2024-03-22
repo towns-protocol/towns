@@ -15,16 +15,16 @@ import {
 import { TestConstants } from './helpers/TestConstants'
 import { TownsTestApp } from 'use-towns-client/tests/integration/helpers/TownsTestApp'
 import { TownsTestWeb3Provider } from 'use-towns-client/tests/integration/helpers/TownsTestWeb3Provider'
-import { makeUniqueName } from 'use-towns-client/tests/integration/helpers/TestUtils'
-import { useCreateSpaceTransactionWithRetries } from 'use-towns-client/src/hooks/use-create-space-transaction'
-import { useSpacesFromContract } from 'use-towns-client/src/hooks/use-spaces-from-contract'
 import {
     createMembershipStruct,
-    getTestGatingNftAddress,
-    NoopRuleData,
-    Permission,
-} from '@river/web3'
+    makeUniqueName,
+} from 'use-towns-client/tests/integration/helpers/TestUtils'
+import { useCreateSpaceTransactionWithRetries } from 'use-towns-client/src/hooks/use-create-space-transaction'
+import { useSpacesFromContract } from 'use-towns-client/src/hooks/use-spaces-from-contract'
+import { getTestGatingNftAddress, NoopRuleData, Permission } from '@river/web3'
 import { TSigner } from '../../src/types/web3-types'
+import { useTownsClient } from '../../src/hooks/use-towns-client'
+import { getDynamicPricingModule } from '../../src/utils/web3'
 
 // TODO Zustand https://docs.pmnd.rs/zustand/testing
 
@@ -47,11 +47,13 @@ describe('spaceManagerContractHooks', () => {
             const { createSpaceTransactionWithRetries } = spaceTransaction
             // spaces
             const { spaces } = useSpacesFromContract()
+            const { client } = useTownsClient()
 
             const [createdSpace, setCreatedSpace] = useState<boolean>(false)
             // callback to create a space
             const onClickCreateSpace = useCallback(() => {
                 const handleClick = async () => {
+                    const dynamicPricingModule = await getDynamicPricingModule(client?.spaceDapp)
                     await createSpaceTransactionWithRetries(
                         {
                             name: spaceName,
@@ -64,6 +66,7 @@ describe('spaceManagerContractHooks', () => {
                                 users: [],
                                 ruleData: NoopRuleData,
                             },
+                            pricingModule: dynamicPricingModule.module,
                         }),
                         signer,
                     )
@@ -72,7 +75,7 @@ describe('spaceManagerContractHooks', () => {
                     setCreatedSpace(true)
                 }
                 void handleClick()
-            }, [createSpaceTransactionWithRetries, signer])
+            }, [client?.spaceDapp, createSpaceTransactionWithRetries, signer])
             const [createSpaceWithMemberRole, setCreateSpaceWithMemberRole] =
                 useState<boolean>(false)
 
@@ -82,6 +85,7 @@ describe('spaceManagerContractHooks', () => {
                     if (!nftAddress) {
                         throw new Error('No towns token address')
                     }
+                    const dynamicPricingModule = await getDynamicPricingModule(client?.spaceDapp)
                     await createSpaceTransactionWithRetries(
                         {
                             name: tokenGatedSpaceName,
@@ -94,6 +98,7 @@ describe('spaceManagerContractHooks', () => {
                                 users: [],
                                 ruleData: NoopRuleData,
                             },
+                            pricingModule: dynamicPricingModule.module,
                         }),
                         signer,
                     )
@@ -104,7 +109,7 @@ describe('spaceManagerContractHooks', () => {
                     setCreateSpaceWithMemberRole(true)
                 }
                 void handleClick()
-            }, [createSpaceTransactionWithRetries, signer])
+            }, [client?.spaceDapp, createSpaceTransactionWithRetries, signer])
 
             useEffect(() => {
                 console.log('TestComponent', 'render', { spaceTransaction })

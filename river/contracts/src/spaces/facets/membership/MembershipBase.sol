@@ -4,9 +4,9 @@ pragma solidity ^0.8.23;
 // interfaces
 import {IMembershipBase} from "./IMembership.sol";
 import {IPlatformRequirements} from "contracts/src/spaces/facets/platform/requirements/IPlatformRequirements.sol";
-import {IERC165} from "contracts/src/diamond/facets/introspection/IERC165.sol";
 import {IMembershipPricing} from "./pricing/IMembershipPricing.sol";
 import {IPrepay} from "contracts/src/spaces/facets/prepay/IPrepay.sol";
+import {IPricingModules} from "contracts/src/spaces/facets/architect/pricing/IPricingModules.sol";
 
 // libraries
 import {MembershipStorage} from "./MembershipStorage.sol";
@@ -21,21 +21,25 @@ abstract contract MembershipBase is IMembershipBase {
     MembershipStorage.Layout storage ds = MembershipStorage.layout();
 
     ds.spaceFactory = spaceFactory;
+    ds.pricingModule = info.pricingModule;
+    ds.membershipCurrency = CurrencyTransfer.NATIVE_TOKEN;
+    ds.membershipMaxSupply = info.maxSupply;
+    ds.freeAllocation = info.freeAllocation;
 
-    _verifyDuration(info.duration);
+    // will be removed in the future
     _verifyRecipient(info.feeRecipient);
-    _verifyFreeAllocation(info.freeAllocation);
+    ds.membershipFeeRecipient = info.feeRecipient;
+
+    if (info.freeAllocation > 0) {
+      _verifyFreeAllocation(info.freeAllocation);
+    }
+
     _verifyPricingModule(info.pricingModule);
 
-    ds.membershipMaxSupply = info.maxSupply;
-    ds.membershipCurrency = info.currency == address(0)
-      ? CurrencyTransfer.NATIVE_TOKEN
-      : info.currency;
-    ds.membershipPrice = info.price;
-    ds.membershipDuration = info.duration;
-    ds.membershipFeeRecipient = info.feeRecipient;
-    ds.freeAllocation = info.freeAllocation;
-    ds.pricingModule = info.pricingModule;
+    if (info.price > 0) {
+      _verifyPrice(info.price);
+      IMembershipPricing(ds.pricingModule).setPrice(info.price);
+    }
   }
 
   // =============================================================
@@ -91,37 +95,19 @@ abstract contract MembershipBase is IMembershipBase {
   // =============================================================
   //                           Duration
   // =============================================================
-  function _verifyDuration(uint64 duration) internal view {
-    // verify it's not more than platform max
-    if (
-      duration >
-      IPlatformRequirements(_getSpaceFactory()).getMembershipDuration()
-    ) revert Membership__InvalidDuration();
-  }
-
   function _getMembershipDuration() internal view returns (uint64) {
     MembershipStorage.Layout storage ds = MembershipStorage.layout();
-
-    if (ds.membershipDuration > 0) return ds.membershipDuration;
-
     return IPlatformRequirements(ds.spaceFactory).getMembershipDuration();
-  }
-
-  function _setMembershipDuration(uint64 newDuration) internal {
-    MembershipStorage.layout().membershipDuration = newDuration;
   }
 
   // =============================================================
   //                        Pricing Module
   // =============================================================
   function _verifyPricingModule(address pricingModule) internal view {
-    if (pricingModule == address(0)) return;
+    if (pricingModule == address(0)) revert Membership__InvalidPricingModule();
 
-    if (
-      !IERC165(pricingModule).supportsInterface(
-        type(IMembershipPricing).interfaceId
-      )
-    ) revert Membership__InvalidPricingModule();
+    if (!IPricingModules(_getSpaceFactory()).isPricingModule(pricingModule))
+      revert Membership__InvalidPricingModule();
   }
 
   function _setPricingModule(address newPricingModule) public {
@@ -139,16 +125,6 @@ abstract contract MembershipBase is IMembershipBase {
     uint256 minPrice = IPlatformRequirements(_getSpaceFactory())
       .getMembershipFee();
     if (newPrice < minPrice) revert Membership__PriceTooLow();
-  }
-
-  function _setMembershipPrice(uint256 newPrice) public {
-    IPlatformRequirements platform = IPlatformRequirements(_getSpaceFactory());
-
-    // Get base protocol fee
-    uint256 membershipMinPrice = platform.getMembershipFee();
-    if (newPrice < membershipMinPrice) revert Membership__PriceTooLow();
-
-    MembershipStorage.layout().membershipPrice = newPrice;
   }
 
   /// @dev Makes it virtual to allow other pricing strategies
@@ -176,7 +152,7 @@ abstract contract MembershipBase is IMembershipBase {
           totalSupply
         );
 
-    return ds.membershipPrice;
+    return IPlatformRequirements(ds.spaceFactory).getMembershipFee();
   }
 
   function _setMembershipRenewalPrice(
@@ -253,14 +229,6 @@ abstract contract MembershipBase is IMembershipBase {
   // =============================================================
   //                           Currency
   // =============================================================
-  function _verifyCurrency(address currency) internal pure {
-    if (currency == address(0)) revert Membership__InvalidCurrency();
-  }
-
-  function _setMembershipCurrency(address newCurrency) public {
-    MembershipStorage.layout().membershipCurrency = newCurrency;
-  }
-
   function _getMembershipCurrency() public view returns (address) {
     return MembershipStorage.layout().membershipCurrency;
   }

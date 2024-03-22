@@ -11,6 +11,7 @@ import { waitFor } from '@testing-library/dom'
 import { sleep } from '../../src/utils/towns-utils'
 import { getTestGatingNftAddress, IArchitectBase, NoopRuleData, Permission } from '@river/web3'
 import { ethers } from 'ethers'
+import { getDynamicPricingModule } from '../../src/utils/web3'
 
 describe('Towns event handlers test', () => {
     test('onCreateSpace', async () => {
@@ -39,6 +40,9 @@ describe('Towns event handlers test', () => {
         }
         expect(testGatingNftAddress).toBeDefined()
         expect(testGatingNftAddress).not.toBe('')
+
+        const dynamicPricingModule = await getDynamicPricingModule(alice.spaceDapp)
+
         const membership: IArchitectBase.MembershipStruct = {
             settings: {
                 name: 'Member',
@@ -49,7 +53,7 @@ describe('Towns event handlers test', () => {
                 currency: ethers.constants.AddressZero,
                 feeRecipient: alice.wallet.address,
                 freeAllocation: 0,
-                pricingModule: ethers.constants.AddressZero,
+                pricingModule: dynamicPricingModule.module,
             },
             permissions: [Permission.Read, Permission.Write],
             requirements: {

@@ -12,7 +12,7 @@ import { TestConstants } from './helpers/TestConstants'
 import { TransactionStatus } from '../../src/client/TownsClientTypes'
 import { TownsTestApp } from './helpers/TownsTestApp'
 import { TownsTestWeb3Provider } from './helpers/TownsTestWeb3Provider'
-import { makeUniqueName } from './helpers/TestUtils'
+import { createMembershipStruct, makeUniqueName } from './helpers/TestUtils'
 import { useAddRoleToChannelTransaction } from '../../src/hooks/use-add-role-channel-transaction'
 import { useChannelData } from '../../src/hooks/use-channel-data'
 import { useCreateChannelTransaction } from '../../src/hooks/use-create-channel-transaction'
@@ -25,12 +25,13 @@ import {
     getTestGatingNftAddress,
     BasicRoleInfo,
     Permission,
-    createMembershipStruct,
     NoopRuleData,
     ruleDataToOperations,
     OperationType,
 } from '@river/web3'
 import { TSigner } from '../../src/types/web3-types'
+import { useTownsClient } from '../../src/hooks/use-towns-client'
+import { getDynamicPricingModule } from '../../src/utils/web3'
 
 /**
  * This test suite tests the useAddRolesToChannel hook.
@@ -166,6 +167,7 @@ function TestComponent(args: {
     const { spaceRoles } = useRoles(spaceNetworkId)
 
     const [addedRoleToChannel, setAddedRoleToChannel] = useState(false)
+    const { client } = useTownsClient()
 
     useEffect(() => {
         if (addRoleToChannelTxStatus === TransactionStatus.Success) {
@@ -189,6 +191,7 @@ function TestComponent(args: {
     // handle click to create a space
     const onClickCreateSpace = useCallback(() => {
         const handleClick = async () => {
+            const dynamicPricingModule = await getDynamicPricingModule(client?.spaceDapp)
             await createSpaceTransactionWithRetries(
                 {
                     name: args.spaceName,
@@ -201,16 +204,18 @@ function TestComponent(args: {
                         users: [],
                         ruleData: NoopRuleData,
                     },
+                    pricingModule: dynamicPricingModule.module,
                 }),
                 args.signer,
             )
         }
         void handleClick()
     }, [
-        args.permissions,
-        args.roleName,
-        args.spaceName,
+        client?.spaceDapp,
         createSpaceTransactionWithRetries,
+        args.spaceName,
+        args.roleName,
+        args.permissions,
         args.signer,
     ])
     // handle click to create a channel

@@ -3,6 +3,7 @@ pragma solidity ^0.8.23;
 
 // interfaces
 import {IMembership} from "./IMembership.sol";
+import {IMembershipPricing} from "./pricing/IMembershipPricing.sol";
 
 // libraries
 import {Permissions} from "contracts/src/spaces/facets/Permissions.sol";
@@ -171,10 +172,7 @@ contract MembershipFacet is
   //                           Duration
   // =============================================================
   /// @inheritdoc IMembership
-  function setMembershipDuration(uint64 newDuration) external onlyOwner {
-    _verifyDuration(newDuration);
-    _setMembershipDuration(newDuration);
-  }
+  function setMembershipDuration(uint64 newDuration) external onlyOwner {}
 
   /// @inheritdoc IMembership
   function getMembershipDuration() external view returns (uint64) {
@@ -188,7 +186,6 @@ contract MembershipFacet is
   function setMembershipPricingModule(
     address pricingModule
   ) external onlyOwner {
-    if (pricingModule == address(0)) revert Membership__InvalidPricingModule();
     _verifyPricingModule(pricingModule);
     _setPricingModule(pricingModule);
   }
@@ -204,9 +201,8 @@ contract MembershipFacet is
 
   /// @inheritdoc IMembership
   function setMembershipPrice(uint256 newPrice) external onlyOwner {
-    _verifyCurrency(_getMembershipCurrency());
     _verifyPrice(newPrice);
-    _setMembershipPrice(newPrice);
+    IMembershipPricing(_getPricingModule()).setPrice(newPrice);
   }
 
   /// @inheritdoc IMembership
@@ -265,10 +261,7 @@ contract MembershipFacet is
   // =============================================================
 
   /// @inheritdoc IMembership
-  function setMembershipCurrency(address newCurrency) external onlyOwner {
-    _verifyCurrency(newCurrency);
-    _setMembershipCurrency(newCurrency);
-  }
+  function setMembershipCurrency(address newCurrency) external onlyOwner {}
 
   /// @inheritdoc IMembership
   function getMembershipCurrency() external view returns (address) {

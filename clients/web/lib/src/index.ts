@@ -114,6 +114,7 @@ export * from './types/error-types'
 export * from './utils/towns-utils'
 export * from './utils/crypto-utils'
 export * from './utils/analyticsService'
+export * from './utils/web3'
 
 // buffer hack required for casalanca: https://github.com/randlabs/myalgo-connect/issues/27
 import buffer from 'buffer'

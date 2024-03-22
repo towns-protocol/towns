@@ -12,7 +12,9 @@ import {
     getFilteredRolesFromSpace,
     IArchitectBase,
     NoopRuleData,
+    MembershipStruct,
 } from '@river/web3'
+import { getDynamicPricingModule } from '../../../src/utils/web3'
 
 export const EVERYONE_ADDRESS = '0x0000000000000000000000000000000000000001'
 
@@ -122,6 +124,7 @@ export async function createTestSpaceGatedByTownsNfts(
     }
 
     // const testGatingNftAddress = await getTestGatingNftAddress(client.chainId)
+    const dynamicPricingModule = await getDynamicPricingModule(client.spaceDapp)
 
     const membershipInfo: IArchitectBase.MembershipStruct = {
         settings: {
@@ -133,7 +136,7 @@ export async function createTestSpaceGatedByTownsNfts(
             currency: ethers.constants.AddressZero,
             feeRecipient: client.walletAddress,
             freeAllocation: 0,
-            pricingModule: ethers.constants.AddressZero,
+            pricingModule: dynamicPricingModule.module,
         },
         permissions: rolePermissions,
         // TODO: THIS SHOULD BE USED ONCE THE XCHAIN WORK IS DONE
@@ -187,6 +190,7 @@ export async function createTestSpaceGatedByTownNft(
     if (!client.walletAddress) {
         throw new Error('client.walletAddress is undefined')
     }
+    const dynamicPricingModule = await getDynamicPricingModule(client.spaceDapp)
 
     // Everyone role
     const membershipInfo: IArchitectBase.MembershipStruct = {
@@ -199,7 +203,7 @@ export async function createTestSpaceGatedByTownNft(
             currency: ethers.constants.AddressZero,
             feeRecipient: client.walletAddress,
             freeAllocation: 0,
-            pricingModule: ethers.constants.AddressZero,
+            pricingModule: dynamicPricingModule.module,
         },
         permissions: rolePermissions,
         requirements: {
@@ -308,4 +312,34 @@ export async function waitForWithRetries<T>(
     expect(failMessage).toBe('')
 
     return result
+}
+
+type CreateMembershipStructArgs = {
+    name: string
+    permissions: Permission[]
+    requirements: IArchitectBase.MembershipRequirementsStruct
+    pricingModule: MembershipStruct['settings']['pricingModule']
+}
+
+export function createMembershipStruct({
+    name,
+    permissions,
+    requirements,
+    pricingModule,
+}: CreateMembershipStructArgs): MembershipStruct {
+    return {
+        settings: {
+            name,
+            symbol: 'MEMBER',
+            price: 0,
+            maxSupply: 1000,
+            duration: 0,
+            currency: ethers.constants.AddressZero,
+            feeRecipient: ethers.constants.AddressZero,
+            freeAllocation: 0,
+            pricingModule,
+        },
+        permissions,
+        requirements,
+    }
 }

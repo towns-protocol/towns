@@ -4,7 +4,12 @@
  */
 
 import { dlog } from '@river/dlog'
-import { makeUserContextFromWallet, makeTestClient, makeDonePromise } from './util.test'
+import {
+    makeUserContextFromWallet,
+    makeTestClient,
+    makeDonePromise,
+    getDynamicPricingModule,
+} from './util.test'
 import {
     isValidStreamId,
     makeDefaultChannelStreamId,
@@ -46,6 +51,10 @@ describe('withEntitlements', () => {
         await expect(bob.initializeUser()).toResolve()
         bob.startSync()
 
+        const pricingModules = await spaceDapp.listPricingModules()
+        const dynamicPricingModule = getDynamicPricingModule(pricingModules)
+        expect(dynamicPricingModule).toBeDefined()
+
         // create a space stream,
         log('Bob created user, about to create space')
         // first on the blockchain
@@ -59,7 +68,7 @@ describe('withEntitlements', () => {
                 currency: ETH_ADDRESS,
                 feeRecipient: bob.userId,
                 freeAllocation: 0,
-                pricingModule: ethers.constants.AddressZero,
+                pricingModule: dynamicPricingModule!.module,
             },
             permissions: [Permission.Read, Permission.Write],
             requirements: {

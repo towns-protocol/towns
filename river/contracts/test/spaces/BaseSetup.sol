@@ -3,6 +3,7 @@ pragma solidity ^0.8.23;
 
 // interfaces
 import {TestUtils} from "contracts/test/utils/TestUtils.sol";
+import {IArchitectBase} from "contracts/src/spaces/facets/architect/IArchitect.sol";
 
 // libraries
 
@@ -20,7 +21,6 @@ import {NodeOperatorFacet} from "contracts/src/base/registry/facets/operator/Nod
 import {DeploySpaceFactory} from "contracts/scripts/deployments/DeploySpaceFactory.s.sol";
 import {DeployBaseRegistry} from "contracts/scripts/deployments/DeployBaseRegistry.s.sol";
 import {DeployRiverBase} from "contracts/scripts/deployments/DeployRiverBase.s.sol";
-
 import {DeployMainnetDelegation} from "contracts/scripts/deployments/DeployMainnetDelegation.s.sol";
 
 /*
@@ -54,6 +54,9 @@ contract BaseSetup is TestUtils, SpaceHelper {
 
   address internal mainnetDelegation;
 
+  address internal pricingModule;
+  address internal fixedPricingModule;
+
   // @notice - This function is called before each test function
   // @dev - It will create a new diamond contract and set the spaceFactory variable to the address of the diamond
   function setUp() public virtual {
@@ -69,6 +72,8 @@ contract BaseSetup is TestUtils, SpaceHelper {
     ruleEntitlement = deploySpaceFactory.ruleEntitlement();
     walletLink = deploySpaceFactory.walletLink();
     spaceOwner = deploySpaceFactory.spaceOwner();
+    pricingModule = deploySpaceFactory.tieredLogPricing();
+    fixedPricingModule = deploySpaceFactory.fixedPricing();
     deploySpaceFactory.postDeploy(deployer, spaceFactory);
 
     // deploy node operator
@@ -86,13 +91,20 @@ contract BaseSetup is TestUtils, SpaceHelper {
     // create a new space
     founder = _randomAddress();
 
+    IArchitectBase.SpaceInfo memory spaceInfo = _createSpaceInfo(
+      "BaseSetupSpace"
+    );
+    spaceInfo.membership.settings.pricingModule = pricingModule;
+
+    IArchitectBase.SpaceInfo
+      memory everyoneSpaceInfo = _createEveryoneSpaceInfo(
+        "BaseSetupEveryoneSpace"
+      );
+    everyoneSpaceInfo.membership.settings.pricingModule = fixedPricingModule;
+
     vm.startPrank(founder);
-    space = Architect(spaceFactory).createSpace(
-      _createSpaceInfo("BaseSetupSpace")
-    );
-    everyoneSpace = Architect(spaceFactory).createSpace(
-      _createEveryoneSpaceInfo("BaseSetupEveryoneSpace")
-    );
+    space = Architect(spaceFactory).createSpace(spaceInfo);
+    everyoneSpace = Architect(spaceFactory).createSpace(everyoneSpaceInfo);
     vm.stopPrank();
   }
 }

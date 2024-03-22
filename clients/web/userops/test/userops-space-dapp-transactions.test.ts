@@ -8,7 +8,7 @@ import { TestUserOps } from './TestUserOps'
 import { NoopRuleData } from '@river/web3/src'
 
 // FOR NOW these tests only work against stackup bundler/paymaster
-describe('UserOpSpaceDapp tests', () => {
+describe.skip('UserOpSpaceDapp tests', () => {
     test('can send createTown user op', async () => {
         const bob = await TestWeb3Provider.init()
 

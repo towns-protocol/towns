@@ -75,10 +75,8 @@ export interface MembershipFacetInterface extends utils.Interface {
     "_getMembershipSupplyLimit()": FunctionFragment;
     "_getPricingModule()": FunctionFragment;
     "_getSpaceFactory()": FunctionFragment;
-    "_setMembershipCurrency(address)": FunctionFragment;
     "_setMembershipFeeRecipient(address)": FunctionFragment;
     "_setMembershipFreeAllocation(uint256)": FunctionFragment;
-    "_setMembershipPrice(uint256)": FunctionFragment;
     "_setMembershipSupplyLimit(uint256)": FunctionFragment;
     "_setPricingModule(address)": FunctionFragment;
     "approve(address,uint256)": FunctionFragment;
@@ -129,10 +127,8 @@ export interface MembershipFacetInterface extends utils.Interface {
       | "_getMembershipSupplyLimit"
       | "_getPricingModule"
       | "_getSpaceFactory"
-      | "_setMembershipCurrency"
       | "_setMembershipFeeRecipient"
       | "_setMembershipFreeAllocation"
-      | "_setMembershipPrice"
       | "_setMembershipSupplyLimit"
       | "_setPricingModule"
       | "approve"
@@ -209,19 +205,11 @@ export interface MembershipFacetInterface extends utils.Interface {
     values?: undefined
   ): string;
   encodeFunctionData(
-    functionFragment: "_setMembershipCurrency",
-    values: [PromiseOrValue<string>]
-  ): string;
-  encodeFunctionData(
     functionFragment: "_setMembershipFeeRecipient",
     values: [PromiseOrValue<string>]
   ): string;
   encodeFunctionData(
     functionFragment: "_setMembershipFreeAllocation",
-    values: [PromiseOrValue<BigNumberish>]
-  ): string;
-  encodeFunctionData(
-    functionFragment: "_setMembershipPrice",
     values: [PromiseOrValue<BigNumberish>]
   ): string;
   encodeFunctionData(
@@ -421,19 +409,11 @@ export interface MembershipFacetInterface extends utils.Interface {
     data: BytesLike
   ): Result;
   decodeFunctionResult(
-    functionFragment: "_setMembershipCurrency",
-    data: BytesLike
-  ): Result;
-  decodeFunctionResult(
     functionFragment: "_setMembershipFeeRecipient",
     data: BytesLike
   ): Result;
   decodeFunctionResult(
     functionFragment: "_setMembershipFreeAllocation",
-    data: BytesLike
-  ): Result;
-  decodeFunctionResult(
-    functionFragment: "_setMembershipPrice",
     data: BytesLike
   ): Result;
   decodeFunctionResult(
@@ -898,11 +878,6 @@ export interface MembershipFacet extends BaseContract {
 
     _getSpaceFactory(overrides?: CallOverrides): Promise<[string]>;
 
-    _setMembershipCurrency(
-      newCurrency: PromiseOrValue<string>,
-      overrides?: Overrides & { from?: PromiseOrValue<string> }
-    ): Promise<ContractTransaction>;
-
     _setMembershipFeeRecipient(
       newRecipient: PromiseOrValue<string>,
       overrides?: Overrides & { from?: PromiseOrValue<string> }
@@ -910,11 +885,6 @@ export interface MembershipFacet extends BaseContract {
 
     _setMembershipFreeAllocation(
       newAllocation: PromiseOrValue<BigNumberish>,
-      overrides?: Overrides & { from?: PromiseOrValue<string> }
-    ): Promise<ContractTransaction>;
-
-    _setMembershipPrice(
-      newPrice: PromiseOrValue<BigNumberish>,
       overrides?: Overrides & { from?: PromiseOrValue<string> }
     ): Promise<ContractTransaction>;
 
@@ -1114,11 +1084,6 @@ export interface MembershipFacet extends BaseContract {
 
   _getSpaceFactory(overrides?: CallOverrides): Promise<string>;
 
-  _setMembershipCurrency(
-    newCurrency: PromiseOrValue<string>,
-    overrides?: Overrides & { from?: PromiseOrValue<string> }
-  ): Promise<ContractTransaction>;
-
   _setMembershipFeeRecipient(
     newRecipient: PromiseOrValue<string>,
     overrides?: Overrides & { from?: PromiseOrValue<string> }
@@ -1126,11 +1091,6 @@ export interface MembershipFacet extends BaseContract {
 
   _setMembershipFreeAllocation(
     newAllocation: PromiseOrValue<BigNumberish>,
-    overrides?: Overrides & { from?: PromiseOrValue<string> }
-  ): Promise<ContractTransaction>;
-
-  _setMembershipPrice(
-    newPrice: PromiseOrValue<BigNumberish>,
     overrides?: Overrides & { from?: PromiseOrValue<string> }
   ): Promise<ContractTransaction>;
 
@@ -1328,11 +1288,6 @@ export interface MembershipFacet extends BaseContract {
 
     _getSpaceFactory(overrides?: CallOverrides): Promise<string>;
 
-    _setMembershipCurrency(
-      newCurrency: PromiseOrValue<string>,
-      overrides?: CallOverrides
-    ): Promise<void>;
-
     _setMembershipFeeRecipient(
       newRecipient: PromiseOrValue<string>,
       overrides?: CallOverrides
@@ -1340,11 +1295,6 @@ export interface MembershipFacet extends BaseContract {
 
     _setMembershipFreeAllocation(
       newAllocation: PromiseOrValue<BigNumberish>,
-      overrides?: CallOverrides
-    ): Promise<void>;
-
-    _setMembershipPrice(
-      newPrice: PromiseOrValue<BigNumberish>,
       overrides?: CallOverrides
     ): Promise<void>;
 
@@ -1708,11 +1658,6 @@ export interface MembershipFacet extends BaseContract {
 
     _getSpaceFactory(overrides?: CallOverrides): Promise<BigNumber>;
 
-    _setMembershipCurrency(
-      newCurrency: PromiseOrValue<string>,
-      overrides?: Overrides & { from?: PromiseOrValue<string> }
-    ): Promise<BigNumber>;
-
     _setMembershipFeeRecipient(
       newRecipient: PromiseOrValue<string>,
       overrides?: Overrides & { from?: PromiseOrValue<string> }
@@ -1720,11 +1665,6 @@ export interface MembershipFacet extends BaseContract {
 
     _setMembershipFreeAllocation(
       newAllocation: PromiseOrValue<BigNumberish>,
-      overrides?: Overrides & { from?: PromiseOrValue<string> }
-    ): Promise<BigNumber>;
-
-    _setMembershipPrice(
-      newPrice: PromiseOrValue<BigNumberish>,
       overrides?: Overrides & { from?: PromiseOrValue<string> }
     ): Promise<BigNumber>;
 
@@ -1931,11 +1871,6 @@ export interface MembershipFacet extends BaseContract {
 
     _getSpaceFactory(overrides?: CallOverrides): Promise<PopulatedTransaction>;
 
-    _setMembershipCurrency(
-      newCurrency: PromiseOrValue<string>,
-      overrides?: Overrides & { from?: PromiseOrValue<string> }
-    ): Promise<PopulatedTransaction>;
-
     _setMembershipFeeRecipient(
       newRecipient: PromiseOrValue<string>,
       overrides?: Overrides & { from?: PromiseOrValue<string> }
@@ -1943,11 +1878,6 @@ export interface MembershipFacet extends BaseContract {
 
     _setMembershipFreeAllocation(
       newAllocation: PromiseOrValue<BigNumberish>,
-      overrides?: Overrides & { from?: PromiseOrValue<string> }
-    ): Promise<PopulatedTransaction>;
-
-    _setMembershipPrice(
-      newPrice: PromiseOrValue<BigNumberish>,
       overrides?: Overrides & { from?: PromiseOrValue<string> }
     ): Promise<PopulatedTransaction>;
 

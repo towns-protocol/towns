@@ -8,6 +8,7 @@ import {IPlatformRequirements} from "contracts/src/spaces/facets/platform/requir
 import {IERC721ABase} from "contracts/src/diamond/facets/token/ERC721A/IERC721A.sol";
 import {IMembershipPricing} from "contracts/src/spaces/facets/membership/pricing/IMembershipPricing.sol";
 import {IMembershipReferral} from "contracts/src/spaces/facets/membership/referral/IMembershipReferral.sol";
+import {IArchitectBase} from "contracts/src/spaces/facets/architect/IArchitect.sol";
 
 // libraries
 import {CurrencyTransfer} from "contracts/src/utils/libraries/CurrencyTransfer.sol";
@@ -55,10 +56,14 @@ contract MembershipTest is
     allowedUsers[0] = alice;
     allowedUsers[1] = charlie;
 
-    vm.startPrank(founder);
-    address userSpace = Architect(spaceFactory).createSpace(
-      _createUserSpaceInfo("MembershipSpace", allowedUsers)
+    IArchitectBase.SpaceInfo memory userSpaceInfo = _createUserSpaceInfo(
+      "MembershipSpace",
+      allowedUsers
     );
+    userSpaceInfo.membership.settings.pricingModule = fixedPricingModule;
+
+    vm.startPrank(founder);
+    address userSpace = Architect(spaceFactory).createSpace(userSpaceInfo);
     vm.stopPrank();
 
     membership = MembershipFacet(userSpace);
@@ -217,14 +222,6 @@ contract MembershipTest is
   //                        Pricing Module
   // =============================================================
   function test_joinSpace_pricingModule() external {
-    MockAggregatorV3 oracle = _setupOracle();
-    IMembershipPricing pricingModule = IMembershipPricing(
-      address(new TieredLogPricingOracle(address(oracle)))
-    );
-
-    vm.prank(founder);
-    membership.setMembershipPricingModule(address(pricingModule));
-
     uint256 membershipPrice = membership.getMembershipPrice();
 
     vm.deal(founder, 2 ether);
@@ -434,29 +431,11 @@ contract MembershipTest is
   // =============================================================
   //                           Duration
   // =============================================================
-  function test_setMembershipDuration() external {
-    uint64 newDuration = 5 days;
-
-    vm.prank(founder);
-    membership.setMembershipDuration(newDuration);
-
-    assertEq(membership.getMembershipDuration(), newDuration);
-  }
-
   function test_getMembershipDuration() external {
     assertEq(
       membership.getMembershipDuration(),
       IPlatformRequirements(spaceFactory).getMembershipDuration()
     );
-  }
-
-  function test_setMembershipDuration_revert_invalidDuration() external {
-    uint64 duration = IPlatformRequirements(spaceFactory)
-      .getMembershipDuration();
-
-    vm.prank(founder);
-    vm.expectRevert(Membership__InvalidDuration.selector);
-    membership.setMembershipDuration(duration + 1);
   }
 
   // =============================================================

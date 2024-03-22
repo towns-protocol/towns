@@ -33,6 +33,8 @@ import {OwnableHelper} from "contracts/test/diamond/ownable/OwnableSetup.sol";
 import {PausableHelper} from "contracts/test/diamond/pausable/PausableSetup.sol";
 import {PlatformRequirementsHelper} from "contracts/test/spaces/platform/requirements/PlatformRequirementsHelper.sol";
 import {PrepayHelper} from "contracts/test/spaces/prepay/PrepayHelper.sol";
+import {PricingModulesHelper} from "contracts/test/spaces/architect/pricing/PricingModulesHelper.sol";
+
 import {MultiInit} from "contracts/src/diamond/initializers/MultiInit.sol";
 
 // deployments
@@ -41,7 +43,10 @@ import {DeployMultiInit} from "contracts/scripts/deployments/DeployMultiInit.s.s
 import {DeploySpace} from "contracts/scripts/deployments/DeploySpace.s.sol";
 import {DeploySpaceOwner} from "contracts/scripts/deployments/DeploySpaceOwner.s.sol";
 import {DeployRuleEntitlement} from "contracts/scripts/deployments/DeployRuleEntitlement.s.sol";
-import {DeployWalletLink} from "./../../scripts/deployments/DeployWalletLink.s.sol";
+import {DeployWalletLink} from "contracts/scripts/deployments/DeployWalletLink.s.sol";
+import {DeployTieredLogPricing} from "contracts/scripts/deployments/DeployTieredLogPricing.s.sol";
+import {DeployFixedPricing} from "contracts/scripts/deployments/DeployFixedPricing.s.sol";
+import {DeployPricingModules} from "contracts/scripts/deployments/facets/DeployPricingModules.s.sol";
 
 contract DeploySpaceFactory is DiamondDeployer {
   DeployMultiInit deployMultiInit = new DeployMultiInit();
@@ -50,6 +55,9 @@ contract DeploySpaceFactory is DiamondDeployer {
   DeployUserEntitlement deployUserEntitlement = new DeployUserEntitlement();
   DeployRuleEntitlement deployRuleEntitlement = new DeployRuleEntitlement();
   DeployWalletLink deployWalletLink = new DeployWalletLink();
+  DeployTieredLogPricing deployTieredLogPricing = new DeployTieredLogPricing();
+  DeployFixedPricing deployFixedPricing = new DeployFixedPricing();
+  DeployPricingModules deployPricingModules = new DeployPricingModules();
 
   // diamond helpers
   DiamondCutHelper cutHelper = new DiamondCutHelper();
@@ -58,16 +66,16 @@ contract DeploySpaceFactory is DiamondDeployer {
 
   // helpers
   ArchitectHelper architectHelper = new ArchitectHelper();
-
   OwnableHelper ownableHelper = new OwnableHelper();
   PausableHelper pausableHelper = new PausableHelper();
   PlatformRequirementsHelper platformReqsHelper =
     new PlatformRequirementsHelper();
   PrepayHelper prepayHelper = new PrepayHelper();
   ProxyManagerHelper proxyManagerHelper = new ProxyManagerHelper();
+  PricingModulesHelper pricingModulesHelper = new PricingModulesHelper();
 
-  uint256 totalFacets = 9;
-  uint256 totalInit = 9;
+  uint256 totalFacets = 10;
+  uint256 totalInit = 10;
 
   address[] initAddresses = new address[](totalInit);
   bytes[] initDatas = new bytes[](totalInit);
@@ -90,6 +98,9 @@ contract DeploySpaceFactory is DiamondDeployer {
   address public walletLink;
   address public spaceOwner;
 
+  address public tieredLogPricing;
+  address public fixedPricing;
+
   function versionName() public pure override returns (string memory) {
     return "spaceFactory";
   }
@@ -102,9 +113,23 @@ contract DeploySpaceFactory is DiamondDeployer {
 
     address space = deploySpace.deploy();
     spaceOwner = deploySpaceOwner.deploy();
+
+    // entitlement modules
     userEntitlement = deployUserEntitlement.deploy();
     ruleEntitlement = deployRuleEntitlement.deploy();
+
+    // wallet link
     walletLink = deployWalletLink.deploy();
+
+    // pricing modules
+    tieredLogPricing = deployTieredLogPricing.deploy();
+    fixedPricing = deployFixedPricing.deploy();
+
+    // pricing modules facet
+    address pricingModulesFacet = deployPricingModules.deploy();
+    address[] memory pricingModules = new address[](2);
+    pricingModules[0] = tieredLogPricing;
+    pricingModules[1] = fixedPricing;
 
     vm.startBroadcast(deployerPK);
     diamondCut = address(new DiamondCutFacet());
@@ -148,6 +173,10 @@ contract DeploySpaceFactory is DiamondDeployer {
       IDiamond.FacetCutAction.Add
     );
     cuts[index++] = prepayHelper.makeCut(prepay, IDiamond.FacetCutAction.Add);
+    cuts[index++] = pricingModulesHelper.makeCut(
+      pricingModulesFacet,
+      IDiamond.FacetCutAction.Add
+    );
 
     _resetIndex();
 
@@ -161,6 +190,7 @@ contract DeploySpaceFactory is DiamondDeployer {
     initAddresses[index++] = pausable;
     initAddresses[index++] = platformReqs;
     initAddresses[index++] = prepay;
+    initAddresses[index++] = pricingModulesFacet;
 
     _resetIndex();
 
@@ -182,11 +212,15 @@ contract DeploySpaceFactory is DiamondDeployer {
       platformReqsHelper.initializer(),
       deployer, // feeRecipient
       500, // membershipBps 5%
-      1 ether, // membershipFee
-      1_000, // membershipMintLimit
+      0.005 ether, // membershipFee
+      1_000, // membershipFreeAllocation
       365 days // membershipDuration
     );
     initDatas[index++] = prepayHelper.makeInitData("");
+    initDatas[index++] = abi.encodeWithSelector(
+      pricingModulesHelper.initializer(),
+      pricingModules
+    );
 
     return
       Diamond.InitParams({

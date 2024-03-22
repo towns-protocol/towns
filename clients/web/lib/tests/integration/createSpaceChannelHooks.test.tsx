@@ -15,8 +15,10 @@ import { useCreateChannelTransaction } from '../../src/hooks/use-create-channel-
 import { CreateChannelInfo } from '../../src/types/towns-types'
 import { SpaceContextProvider } from '../../src/components/SpaceContextProvider'
 import { TestConstants } from './helpers/TestConstants'
-import { NoopRuleData, createMembershipStruct } from '@river/web3'
+import { NoopRuleData } from '@river/web3'
+import { getDynamicPricingModule } from '../../src/utils/web3'
 import { useTownsClient } from '../../src/hooks/use-towns-client'
+import { ethers } from 'ethers'
 
 /// regression, channels weren't showing in sidebar after they were created
 describe('createSpaceChannelHooks', () => {
@@ -29,7 +31,7 @@ describe('createSpaceChannelHooks', () => {
 
         // create a veiw for bob
         const TestComponent = () => {
-            const { leaveRoom } = useTownsClient()
+            const { leaveRoom, spaceDapp } = useTownsClient()
             const spaceTransaction = useCreateSpaceTransactionWithRetries()
             const { createSpaceTransactionWithRetries } = spaceTransaction
             const channelTransaction = useCreateChannelTransaction()
@@ -42,25 +44,39 @@ describe('createSpaceChannelHooks', () => {
             const onClickCreateSpace = useCallback(() => {
                 const name = makeUniqueName('aliceSpace')
                 void (async () => {
+                    // TODO: hook up pricing module to form pricing options
+                    const dynamicPricingModule = await getDynamicPricingModule(spaceDapp)
+
                     const result = await createSpaceTransactionWithRetries(
                         {
                             name: name,
                         },
-                        createMembershipStruct({
-                            name: 'Test Role',
+                        {
+                            settings: {
+                                name,
+                                symbol: 'MEMBER',
+                                price: 0,
+                                maxSupply: 1000,
+                                duration: 0,
+                                currency: ethers.constants.AddressZero,
+                                feeRecipient: ethers.constants.AddressZero,
+                                freeAllocation: 0,
+                                pricingModule: dynamicPricingModule.module,
+                            },
                             permissions: [],
                             requirements: {
                                 everyone: true,
                                 users: [],
                                 ruleData: NoopRuleData,
                             },
-                        }),
+                        },
+
                         aliceProvider.wallet,
                     )
                     setSpaceId(result?.data?.spaceId)
                     console.log('onClickCreateSpace', { name, result })
                 })()
-            }, [createSpaceTransactionWithRetries])
+            }, [createSpaceTransactionWithRetries, spaceDapp])
             const onClickCreateChannel = useCallback(() => {
                 const name = makeUniqueName('aliceChannel')
                 const parentSpaceId = spaceId
