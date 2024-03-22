@@ -14,6 +14,7 @@ import { getTransactionHashOrUserOpHash } from '@towns/userops'
 import { isAddress } from 'viem'
 import { useSpaceDapp } from './use-space-dapp'
 import { useWeb3Context } from '../components/Web3ContextProvider'
+import { useOfflineStore } from '../store/use-offline-store'
 
 export function useLinkWalletTransaction() {
     const { traceTransaction, ...rest } = useLinkTransactionBuilder()
@@ -179,15 +180,31 @@ export function useGetRootKeyFromLinkedWallet({
         chainId: _chainId,
         provider,
     })
+    const { offlineWalletAddressMap, setOfflineWalletAddress } = useOfflineStore()
 
     return useQuery(
         blockchainKeys.rootKeyFromLinkedWallet(walletAddress ?? 'waitingForWalletAddress'),
-        () => {
+        async () => {
             if (!walletAddress || !spaceDapp) {
                 return
             }
+
+            // if we have the root key cached, return it
+            const cachedRootKey = Object.keys(offlineWalletAddressMap).find(
+                (key) => offlineWalletAddressMap[key] === walletAddress,
+            )
+            if (cachedRootKey) {
+                return cachedRootKey
+            }
+
             const walletLink = spaceDapp.getWalletLink()
-            return walletLink.getRootKeyForWallet(walletAddress)
+            const returnVal = await walletLink.getRootKeyForWallet(walletAddress)
+            console.log('useGetRootKeyFromLinkedWallet - setting offline wallet address', {
+                rootKey: returnVal,
+                walletAddress: walletAddress,
+            })
+            setOfflineWalletAddress(returnVal, walletAddress)
+            return returnVal
         },
         {
             enabled: !!walletAddress && isAddress(walletAddress) && !!spaceDapp,

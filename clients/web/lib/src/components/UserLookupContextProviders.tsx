@@ -7,6 +7,7 @@ import { UserLookupContext } from './UserLookupContext'
 import { useUserLookupContext } from '../hooks/use-user-lookup-context'
 import { LookupUser, LookupUserMap, UserLookupContextType } from '../types/user-lookup'
 import { useAllSpaceUsers } from '../hooks/use-all-space-users'
+import { OfflineUser, useOfflineStore, generateOfflineUserKey } from '../store/use-offline-store'
 
 /**
  * utility provider added to topmost towns context
@@ -30,6 +31,7 @@ export const SpaceContextUserLookupProvider = (props: { children: React.ReactNod
 
     const spaceId = useSpaceContext()?.spaceId ?? rootSpaceId
     const { users: allSpaceUsers } = useAllSpaceUsers(spaceId)
+    const { setOfflineUser } = useOfflineStore()
 
     const usersCache = useRef<LookupUserMap>({})
 
@@ -41,6 +43,14 @@ export const SpaceContextUserLookupProvider = (props: { children: React.ReactNod
                     ...member,
                     memberOf: parentContextUsersMap?.[member.userId]?.memberOf,
                 }
+
+                const offlineUserKey = generateOfflineUserKey(spaceId, user.userId)
+                setOfflineUser(offlineUserKey, {
+                    userId: user.userId,
+                    username: user.username,
+                    displayName: user.displayName,
+                } as OfflineUser)
+
                 const prev = usersCache.current[user.userId]
                 if (prev && isEqual(prev, user)) {
                     return prev
@@ -67,7 +77,7 @@ export const SpaceContextUserLookupProvider = (props: { children: React.ReactNod
                 usersMap: parentContextUsersMap,
             } satisfies UserLookupContextType
         }
-    }, [allSpaceUsers, parentContextUsers, parentContextUsersMap, spaceId])
+    }, [allSpaceUsers, parentContextUsers, parentContextUsersMap, setOfflineUser, spaceId])
 
     return <UserLookupContext.Provider value={value}>{props.children}</UserLookupContext.Provider>
 }
@@ -82,6 +92,7 @@ export const DMChannelContextUserLookupProvider = (props: {
     const room = useRoomWithStreamId(channelId)
     const parentContext = useUserLookupContext()
     const spaceId = parentContext?.spaceId
+    const { offlineUserMap, setOfflineUser } = useOfflineStore()
 
     const value = useMemo(() => {
         if (!room) {
@@ -100,28 +111,72 @@ export const DMChannelContextUserLookupProvider = (props: {
             memberOf: parentContext?.usersMap[member.userId]?.memberOf,
         }))
 
+        if (spaceId) {
+            users.forEach((user) => {
+                const offlineUserKey = generateOfflineUserKey(spaceId, user.userId)
+                setOfflineUser(offlineUserKey, {
+                    userId: user.userId,
+                    username: user.username,
+                    displayName: user.displayName,
+                } as OfflineUser)
+            })
+        }
+
         // opportunistically fill in displayName from parent context if
         // allowed. This is designed for the DM channels within spaces
         if (props.fallbackToParentContext) {
-            allUsers.forEach((u) => mergeNames(u, spaceId))
-            users.forEach((u) => mergeNames(u, spaceId))
+            allUsers.forEach((u) => mergeNames({ user: u, spaceId, offlineUserMap }))
+            users.forEach((u) => mergeNames({ user: u, spaceId, offlineUserMap }))
         }
         const usersMap = allUsers.reduce((acc, user) => {
             acc[user.userId] = user
             return acc
         }, {} as { [key: string]: LookupUser })
+
+        // populate data from local cache
+        Object.entries(offlineUserMap).forEach(([key, offlineUser]) => {
+            const [_spaceId, userId] = key.split('-')
+            if (spaceId === _spaceId && offlineUser && userId) {
+                const user = usersMap[userId]
+                if (!user) {
+                    usersMap[userId] = {
+                        userId: offlineUser.userId,
+                        username: offlineUser.username,
+                        usernameConfirmed: false,
+                        usernameEncrypted: false,
+                        displayName: offlineUser.displayName ?? '',
+                        displayNameEncrypted: false,
+                    }
+                }
+            }
+        })
+
         return {
             streamId: channelId,
             spaceId: spaceId,
             users,
             usersMap,
         } satisfies UserLookupContextType
-    }, [room, props.fallbackToParentContext, channelId, parentContext?.usersMap, spaceId])
+    }, [
+        room,
+        spaceId,
+        props.fallbackToParentContext,
+        offlineUserMap,
+        channelId,
+        parentContext?.usersMap,
+        setOfflineUser,
+    ])
 
     return <UserLookupContext.Provider value={value}>{props.children}</UserLookupContext.Provider>
 }
 
-const mergeNames = (user: LookupUser, spaceId?: string) => {
+interface MergeNamesParams {
+    user: LookupUser
+    spaceId?: string
+    offlineUserMap: Record<string, OfflineUser | undefined>
+}
+
+const mergeNames = ({ user, spaceId, offlineUserMap }: MergeNamesParams) => {
     if ((!user.username || !user.displayName) && user.memberOf) {
         // find the first (not necesarilly the best, since that
         // would be subjective) alternative that has a displayName
@@ -138,6 +193,9 @@ const mergeNames = (user: LookupUser, spaceId?: string) => {
         if (matches.length > 0) {
             user.username = matches[0].username
             user.displayName = matches[0].displayName
+        } else if (offlineUserMap[user.userId]) {
+            user.username = offlineUserMap[user.userId]!.username
+            user.displayName = offlineUserMap[user.userId]!.displayName ?? ''
         }
     }
 }

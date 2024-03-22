@@ -1,6 +1,7 @@
 import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query'
 import { useCallback } from 'react'
 import { z } from 'zod'
+import { useOfflineStore } from 'use-towns-client'
 import { env } from 'utils'
 import { axiosClient } from '../api/apiClient'
 
@@ -12,7 +13,11 @@ const zBioReadData: z.ZodType<{
     bio: z.string(),
 })
 
-export async function getUserBio(walletAddress: string): Promise<string> {
+export async function getUserBio(
+    walletAddress: string,
+    cachedBio: string | undefined,
+    setOfflineUserBio: (walletAddress: string, bio: string) => void,
+): Promise<string> {
     const GATEWAY_SERVER_URL = env.VITE_GATEWAY_URL
     const url = `${GATEWAY_SERVER_URL}/user/${walletAddress}/bio`
 
@@ -20,10 +25,13 @@ export async function getUserBio(walletAddress: string): Promise<string> {
     const parseResult = zBioReadData.safeParse(userBio.data)
 
     if (!parseResult.success) {
-        throw new Error("Couldn't parse user bio:: ", parseResult.error)
+        console.error("Couldn't parse user bio:: ", parseResult.error)
+        return cachedBio ?? ''
     }
 
-    return parseResult.data.bio
+    const bio = parseResult.data.bio
+    setOfflineUserBio(walletAddress, bio)
+    return bio
 }
 
 export async function setUserBio(walletAddress: string, bio: string): Promise<void> {
@@ -35,12 +43,19 @@ export async function setUserBio(walletAddress: string, bio: string): Promise<vo
 }
 
 export const useGetUserBio = (walletAddress: string | undefined) => {
+    // walletAddress is the abstractAccountAddress
+    const { offlineUserBioMap, setOfflineUserBio } = useOfflineStore()
+
     const _getUserBio = useCallback(async () => {
         if (!walletAddress) {
             return
         }
-        return getUserBio(walletAddress as string)
-    }, [walletAddress])
+        return await getUserBio(
+            walletAddress as string,
+            offlineUserBioMap[walletAddress],
+            setOfflineUserBio,
+        )
+    }, [walletAddress, offlineUserBioMap, setOfflineUserBio])
 
     return useQuery({
         queryKey: [queryKey, walletAddress],

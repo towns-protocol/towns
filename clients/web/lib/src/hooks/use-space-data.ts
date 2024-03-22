@@ -8,10 +8,10 @@ import isEqual from 'lodash/isEqual'
 import { useSpaceDapp } from './use-space-dapp'
 import { SpaceInfo } from '@river/web3'
 import { useWeb3Context } from '../components/Web3ContextProvider'
-import { useQuery, useQueries, UseQueryResult, defaultStaleTime } from '../query/queryClient'
+import { useQuery, useQueries, defaultStaleTime } from '../query/queryClient'
 import { blockchainKeys } from '../query/query-keys'
 import { isDefined } from '../utils/isDefined'
-import { useSpaceNamesStore } from '../store/use-space-name-store'
+import { useOfflineStore } from '../store/use-offline-store'
 
 const EMPTY_SPACE_INFOS: SpaceInfo[] = []
 
@@ -43,6 +43,7 @@ export function useContractSpaceInfos(client?: CasablancaClient) {
         chainId: chain?.id,
         provider,
     })
+    const { offlineSpaceInfoMap, setOfflineSpaceInfo } = useOfflineStore()
 
     const isEnabled = spaceDapp && client && client.streams.size() > 0
 
@@ -82,15 +83,16 @@ export function useContractSpaceInfos(client?: CasablancaClient) {
             if (!spaceDapp || !isEnabled || spaceId.length === 0) {
                 return undefined
             }
-            try {
-                console.log(`useContractSpaceInfos spaceDapp.getSpaceInfo<${spaceId}> `)
-                return await spaceDapp.getSpaceInfo(spaceId)
-            } catch (err) {
-                console.log('useContractSpaceInfos: Error getting space info')
-                return undefined
+            const spaceInfo: SpaceInfo | undefined = await spaceDapp.getSpaceInfo(spaceId)
+            console.log(`useContractSpaceInfos: ${spaceId}`, { spaceInfo })
+            // if we don't have a spaceInfo from network for some reasons, return the cached one
+            if (!spaceInfo) {
+                return offlineSpaceInfoMap[spaceId]
             }
+            setOfflineSpaceInfo(spaceInfo)
+            return spaceInfo
         },
-        [spaceDapp, isEnabled],
+        [spaceDapp, isEnabled, setOfflineSpaceInfo, offlineSpaceInfoMap],
     )
 
     const queryData = useQueries({
@@ -99,6 +101,7 @@ export function useContractSpaceInfos(client?: CasablancaClient) {
                 queryKey: blockchainKeys.spaceInfo(id),
                 queryFn: () => getSpaceInfo(id),
                 enabled: isEnabled,
+                initialData: offlineSpaceInfoMap[id],
                 refetchOnMount: true,
                 gcTime: defaultStaleTime,
                 staleTime: defaultStaleTime,
@@ -113,47 +116,47 @@ export function useContractSpaceInfos(client?: CasablancaClient) {
     })
 
     const spaceInfos = queryData.data.length > 0 ? queryData.data : EMPTY_SPACE_INFOS
-    const { setSpaceNames: setSpaceNamesInLocalStore } = useSpaceNamesStore()
 
-    useEffect(() => {
-        spaceInfos.forEach((spaceInfo) => {
-            const { name: contractSpaceName = '', address } = spaceInfo ?? {}
-            if (contractSpaceName) {
-                setSpaceNamesInLocalStore(address, contractSpaceName)
-            }
-        })
-    }, [spaceInfos, queryData.isLoading, setSpaceNamesInLocalStore])
-
-    return {
-        data: spaceInfos,
-        isLoading: queryData.isLoading,
-    }
+    return useMemo(() => {
+        return {
+            data: spaceInfos,
+            isLoading: queryData.isLoading,
+        }
+    }, [spaceInfos, queryData.isLoading])
 }
 
 export const useContractSpaceInfo = (
     spaceId: string | undefined,
-): UseQueryResult<SpaceInfo | undefined> => {
+): { data: SpaceInfo | undefined; isLoading: boolean; error: unknown } => {
+    const { offlineSpaceInfoMap, setOfflineSpaceInfo } = useOfflineStore()
     const { provider, chain } = useWeb3Context()
     const spaceDapp = useSpaceDapp({
         chainId: chain?.id,
         provider,
     })
 
-    return useQuery(
+    const {
+        data: spaceInfo,
+        isLoading,
+        error,
+    } = useQuery(
         blockchainKeys.spaceInfo(spaceId ?? ''),
         async () => {
-            if (spaceId && spaceDapp) {
-                const spaceInfo: SpaceInfo | undefined = await spaceDapp.getSpaceInfo(spaceId)
-                console.log(`useContractSpaceInfo: ${spaceInfo?.networkId}`, { spaceInfo })
-                // Query data cannot be undefined. Return a value other than undefined from query function.
-                return spaceInfo ?? null
-            } else {
-                // Query data cannot be undefined. Return a value other than undefined from query function.
-                return null
+            if (!spaceDapp || !spaceId || spaceId.length === 0) {
+                return undefined
             }
+            const spaceInfo: SpaceInfo | undefined = await spaceDapp.getSpaceInfo(spaceId)
+            console.log(`useContractSpaceInfo: ${spaceId}`, { spaceInfo })
+            // if we don't have a spaceInfo from network for some reasons, return the cached one
+            if (!spaceInfo) {
+                return offlineSpaceInfoMap[spaceId]
+            }
+            setOfflineSpaceInfo(spaceInfo)
+            return spaceInfo
         },
         {
             enabled: !!spaceId && !!spaceDapp,
+            initialData: spaceId! ? offlineSpaceInfoMap[spaceId] : undefined,
             refetchOnMount: false,
             refetchOnWindowFocus: false,
             refetchOnReconnect: false,
@@ -161,26 +164,18 @@ export const useContractSpaceInfo = (
             staleTime: defaultStaleTime,
         },
     )
+
+    return useMemo(() => {
+        return { data: spaceInfo, isLoading: isLoading, error: error }
+    }, [spaceInfo, isLoading, error])
 }
 
 function useSpaceRollup(streamId: string | undefined): SpaceData | undefined {
     const { casablancaClient } = useTownsContext()
     const stream = useCasablancaStream(streamId)
-    const { isLoading, data: spaceInfo, error } = useContractSpaceInfo(streamId ?? '')
+    const { data: spaceInfo } = useContractSpaceInfo(streamId ?? '')
     const [space, setSpace] = useState<SpaceData | undefined>(undefined)
     const userStream = useCasablancaStream(casablancaClient?.userStreamId)
-    const { spaceNames: spaceNamesInLocalStore, setSpaceNames: setSpaceNamesInLocalStore } =
-        useSpaceNamesStore()
-
-    useEffect(() => {
-        if (!streamId) {
-            return
-        }
-        const contractSpaceName = spaceInfo?.name ?? ''
-        if (contractSpaceName !== '') {
-            setSpaceNamesInLocalStore(streamId, contractSpaceName)
-        }
-    }, [isLoading, spaceInfo, error, streamId, setSpaceNamesInLocalStore])
 
     useEffect(() => {
         if (!stream || !casablancaClient || !userStream) {
@@ -194,7 +189,7 @@ function useSpaceRollup(streamId: string | undefined): SpaceData | undefined {
         // wrap the update op, we get the channel ids and
         // rollup the space channels into a space
         const update = () => {
-            const spaceName: string = spaceNamesInLocalStore[stream.streamId] ?? ''
+            const spaceName: string = spaceInfo?.name ?? ''
             const membership = toMembership(
                 userStream.view.userContent.getMembership(stream.streamId)?.op,
             )
@@ -236,7 +231,7 @@ function useSpaceRollup(streamId: string | undefined): SpaceData | undefined {
             casablancaClient.off('userStreamMembershipChanged', onStreamUpdated)
             setSpace(undefined)
         }
-    }, [casablancaClient, stream, userStream, spaceNamesInLocalStore])
+    }, [casablancaClient, spaceInfo?.name, stream, userStream])
     return space
 }
 

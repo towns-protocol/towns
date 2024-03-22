@@ -6,6 +6,7 @@ import {
     LookupUser,
     queryClient,
     staleTime24Hours,
+    useOfflineStore,
     useSpaceDapp,
     useUserLookupContext,
     useWeb3Context,
@@ -20,10 +21,14 @@ function querySetup({
     rootKeyAddress,
     userOpsInstance,
     chainId,
+    cachedAddress,
+    setOfflineWalletAddress,
 }: {
     rootKeyAddress: Address | undefined
     userOpsInstance: UserOps | undefined
     chainId: number | undefined
+    cachedAddress: Address | undefined
+    setOfflineWalletAddress: (userId: string, abstractAccountAddress: string) => void
 }) {
     // checking chainId instead of townsClient.isAccountAbstractionEnabled b/c we might not have a townsClient if logged out
     const isAccountAbstractionEnabled = chainId !== LOCALHOST_CHAIN_ID
@@ -34,12 +39,26 @@ function querySetup({
             if (!isAccountAbstractionEnabled) {
                 return rootKeyAddress
             }
-            if (!rootKeyAddress || !userOpsInstance) {
+
+            if (!rootKeyAddress) {
                 return
             }
-            return userOpsInstance.getAbstractAccountAddress({
+
+            if (cachedAddress) {
+                return cachedAddress
+            }
+
+            if (!userOpsInstance) {
+                return
+            }
+            const returnVal = await userOpsInstance.getAbstractAccountAddress({
                 rootKeyAddress,
             })
+            if (returnVal) {
+                console.log('setting offline wallet address', rootKeyAddress, returnVal)
+                setOfflineWalletAddress(rootKeyAddress, returnVal)
+            }
+            return returnVal
         },
         enabled: !!rootKeyAddress,
         refetchOnWindowFocus: false,
@@ -57,24 +76,47 @@ export function useAbstractAccountAddress({
 }) {
     const { chainId } = useEnvironment()
     const userOpsInstance = useUserOpsInstance()
+    const { offlineWalletAddressMap, setOfflineWalletAddress } = useOfflineStore()
+
+    let cachedAddress: Address | undefined
+    if (rootKeyAddress) {
+        cachedAddress = offlineWalletAddressMap[rootKeyAddress] as Address | undefined
+    }
     return useQuery({
-        ...querySetup({ rootKeyAddress, userOpsInstance, chainId }),
+        ...querySetup({
+            rootKeyAddress,
+            userOpsInstance,
+            chainId,
+            cachedAddress,
+            setOfflineWalletAddress,
+        }),
     })
 }
 
 export function useGetAbstractAccountAddressAsync() {
     const { chainId } = useEnvironment()
     const userOpsInstance = useUserOpsInstance()
+    const { offlineWalletAddressMap, setOfflineWalletAddress } = useOfflineStore()
 
     return useCallback(
         ({ rootKeyAddress }: { rootKeyAddress: Address | undefined }) => {
-            const qs = querySetup({ rootKeyAddress, userOpsInstance, chainId })
+            let cachedAddress: Address | undefined
+            if (rootKeyAddress) {
+                cachedAddress = offlineWalletAddressMap[rootKeyAddress] as Address | undefined
+            }
+            const qs = querySetup({
+                rootKeyAddress,
+                userOpsInstance,
+                chainId,
+                cachedAddress,
+                setOfflineWalletAddress,
+            })
             return queryClient.fetchQuery({
                 queryKey: qs.queryKey,
                 queryFn: qs.queryFn,
             })
         },
-        [chainId, userOpsInstance],
+        [chainId, userOpsInstance, offlineWalletAddressMap, setOfflineWalletAddress],
     )
 }
 
@@ -86,12 +128,20 @@ export function useLookupUsersWithAbstractAccountAddress() {
     const { chainId } = useEnvironment()
     const userOpsInstance = useUserOpsInstance()
     const { users: _users } = useUserLookupContext()
+    const { offlineWalletAddressMap, setOfflineWalletAddress } = useOfflineStore()
 
     return useQueries({
         queries: _users.map((user) => {
             const uId = user.userId
+            const cachedAddress = offlineWalletAddressMap[uId] as Address | undefined
             return {
-                ...querySetup({ chainId, rootKeyAddress: uId, userOpsInstance }),
+                ...querySetup({
+                    chainId,
+                    rootKeyAddress: uId,
+                    userOpsInstance,
+                    cachedAddress,
+                    setOfflineWalletAddress,
+                }),
             }
         }),
         combine: (results) => {

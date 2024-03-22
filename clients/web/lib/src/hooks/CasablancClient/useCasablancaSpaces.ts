@@ -3,12 +3,12 @@ import { useEffect, useState } from 'react'
 import { SpaceItem } from '../../types/towns-types'
 import isEqual from 'lodash/isEqual'
 import { useContractSpaceInfos } from '../../hooks/use-space-data'
-import { useSpaceNamesStore } from '../../store/use-space-name-store'
+import { useOfflineStore } from '../../store/use-offline-store'
 
 export function useCasablancaSpaces(casablancaClient?: CasablancaClient): SpaceItem[] {
     const [spaces, setSpaces] = useState<SpaceItem[]>([])
     const { data: spaceInfos } = useContractSpaceInfos(casablancaClient)
-    const { spaceNames: spaceNamesInLocalStore } = useSpaceNamesStore()
+    const { offlineSpaceInfoMap: spaceNamesInLocalStore } = useOfflineStore()
     const userStreamId = casablancaClient?.userStreamId
     useEffect(() => {
         if (!casablancaClient || !userStreamId) {
@@ -31,7 +31,7 @@ export function useCasablancaSpaces(casablancaClient?: CasablancaClient): SpaceI
                 .map((stream: Stream) => {
                     const spaceName =
                         spaceInfos?.find((i) => i.networkId == stream.streamId)?.name ??
-                        spaceNamesInLocalStore[stream.streamId] ??
+                        spaceNamesInLocalStore[stream.streamId]?.name ??
                         ''
 
                     return {

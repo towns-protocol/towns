@@ -5,7 +5,6 @@ import { useNavigate } from 'react-router'
 import { Link, useSearchParams } from 'react-router-dom'
 import { useEvent } from 'react-use-event-hook'
 import {
-    Address,
     useContractSpaceInfo,
     useGetRootKeyFromLinkedWallet,
     useHasPermission,
@@ -96,7 +95,7 @@ export const SpaceInfoPanel = () => {
 
     // the owner in the contract is the smart account, we need to get the user id
     const { data: spaceOwnerRiverUserId } = useGetRootKeyFromLinkedWallet({
-        walletAddress: contractSpaceInfo?.owner as Address | undefined,
+        walletAddress: contractSpaceInfo?.owner,
     })
     const spaceOwner = useUser(spaceOwnerRiverUserId)
 
