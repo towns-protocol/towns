@@ -182,7 +182,7 @@ const _Avatar = forwardRef<
                 transform: ` rotate(45deg) translateX(var(--dot-offset, 50%)) scale(0.37)`,
             }}
         >
-            <Box absoluteFill background="accent" borderRadius="full" />
+            <Box absoluteFill background="positive" borderRadius="full" />
         </FadeInBox>
     )
 
