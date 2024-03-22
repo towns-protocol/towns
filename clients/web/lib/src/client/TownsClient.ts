@@ -380,7 +380,6 @@ export class TownsClient implements EntitlementsDelegate {
             name: channelName ?? 'general',
             parentSpaceId,
             roleIds: [],
-            isDefault: true,
         }
         return await this.createChannelRoom(channelInfo, channelId)
     }

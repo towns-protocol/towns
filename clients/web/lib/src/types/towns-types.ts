@@ -124,7 +124,6 @@ export interface CreateChannelInfo {
     roleIds: number[]
     topic?: string
     streamSettings?: PlainMessage<StreamSettings>
-    isDefault?: boolean
 }
 
 export interface UpdateChannelInfo {
@@ -133,7 +132,6 @@ export interface UpdateChannelInfo {
     updatedChannelName?: string
     updatedRoleIds?: number[]
     updatedChannelTopic?: string
-    isDefault?: boolean
 }
 
 export enum MessageType {
