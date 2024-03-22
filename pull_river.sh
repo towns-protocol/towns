@@ -262,6 +262,12 @@ if ! git diff main --quiet --cached; then
     # Merge the pull request
     gh pr merge "${BRANCH_NAME}" --squash --delete-branch
 
+    exit_status=$?
+    if [ $exit_status -ne 0 ]; then
+        echo "Failed to merge pull request."
+        exit $exit_status
+    fi
+
     echo "Subtree merge completed successfully."
 
     echo "Deploying river..."
