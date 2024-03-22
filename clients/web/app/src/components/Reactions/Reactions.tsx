@@ -36,7 +36,7 @@ export const Reactions = (props: Props) => {
     const { isTouch } = useDevice()
 
     return (
-        <Stack horizontal gap={{ default: 'xs', mobile: 'sm' }}>
+        <Stack horizontal flexWrap="wrap" gap={{ default: 'xs', mobile: 'sm' }}>
             <Suspense>
                 <ReactionRow
                     userId={userId}
