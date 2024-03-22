@@ -1,7 +1,10 @@
 name: Deprovision Transient Environment
 on:
-    pull_request:
-        types: [closed]
+    # Handling intermittent issue with not running deprovision env
+    # https://github.com/orgs/community/discussions/26657
+    pull_request_target:
+        types:
+          - closed
 
     workflow_dispatch:
         inputs:
