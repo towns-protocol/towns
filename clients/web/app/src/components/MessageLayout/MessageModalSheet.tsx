@@ -8,6 +8,8 @@ import { useOpenMessageThread } from 'hooks/useOpenThread'
 import { EmojiPickerContainerMobile } from '@components/EmojiPickerButton/EmojiPickerContainerMobile'
 import { TableCell } from '@components/TableCell/TableCell'
 import { ReplyToMessageContext } from '@components/ReplyToMessageContext/ReplyToMessageContext'
+import { getLinkToMessage } from 'utils/getLinkToMessage'
+import useCopyToClipboard from 'hooks/useCopyToClipboard'
 import { DeleteMessagePrompt } from './DeleteMessagePrompt'
 
 type Props = {
@@ -124,6 +126,16 @@ export const MessageModalSheet = (props: Props) => {
         [sendEmoji, setActivePrompt],
     )
 
+    const [, copy] = useCopyToClipboard()
+
+    const onCopyLinkToMessage = useCallback(() => {
+        const link = getLinkToMessage({ spaceId, channelId, eventId })
+        if (link) {
+            copy(`${location.origin}${link}`)
+            onClose()
+        }
+    }, [channelId, copy, eventId, onClose, spaceId])
+
     return (
         <>
             <Sheet
@@ -186,6 +198,11 @@ export const MessageModalSheet = (props: Props) => {
                                         onClick={onEmojiClick}
                                     />
                                 )}
+                                <TableCell
+                                    iconType="link"
+                                    text="Copy Link"
+                                    onClick={onCopyLinkToMessage}
+                                />
                                 {messageBody && (
                                     <TableCell
                                         iconType="copy"

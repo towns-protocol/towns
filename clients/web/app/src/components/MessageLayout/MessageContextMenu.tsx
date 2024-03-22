@@ -1,6 +1,5 @@
 import React, { useCallback, useContext, useRef } from 'react'
 import { TimelineEvent, useFullyReadMarker, useMyUserId, useTownsClient } from 'use-towns-client'
-import { isDMChannelStreamId, isGDMChannelStreamId } from '@river/sdk'
 import { EmojiPickerButton } from '@components/EmojiPickerButton'
 import { Box, IconButton, MotionStack, Stack } from '@ui'
 import { useOpenMessageThread } from 'hooks/useOpenThread'
@@ -9,8 +8,8 @@ import { MessageTimelineContext } from '@components/MessageTimeline/MessageTimel
 import { useShortcut } from 'hooks/useShortcut'
 import { ShortcutTooltip } from '@components/Shortcuts/ShortcutTooltip'
 import useCopyToClipboard from 'hooks/useCopyToClipboard'
-import { PATHS } from 'routes'
 import { ReplyToMessageContext } from '@components/ReplyToMessageContext/ReplyToMessageContext'
+import { getLinkToMessage } from 'utils/getLinkToMessage'
 import { DeleteMessagePrompt } from './DeleteMessagePrompt'
 
 type Props = {
@@ -117,15 +116,9 @@ export const MessageContextMenu = (props: Props) => {
     const onCopyLinkToMessage = useShortcut(
         'CopyLinkToMessage',
         useCallback(() => {
-            let link = ''
-            if (channelId && (isDMChannelStreamId(channelId) || isGDMChannelStreamId(channelId))) {
-                link = `/${PATHS.MESSAGES}/${channelId}#${eventId}`
-            } else {
-                link = `/${PATHS.SPACES}/${spaceId}/${PATHS.CHANNELS}/${channelId}#${eventId}`
-            }
-
+            const link = getLinkToMessage({ spaceId, channelId, eventId: eventId })
             if (link) {
-                copy(`${location.origin}${link}`)
+                copy(link)
             }
         }, [channelId, copy, eventId, spaceId]),
         { enableOnContentEditable: false },
