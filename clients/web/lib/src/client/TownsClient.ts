@@ -3,6 +3,7 @@ import { RoomMessageEvent, transformAttachments } from '../types/timeline-types'
 import {
     Client as CasablancaClient,
     RiverDbManager,
+    isGDMChannelStreamId,
     makeStreamRpcClient,
     userIdFromAddress,
 } from '@river/sdk'
@@ -1070,12 +1071,17 @@ export class TownsClient implements EntitlementsDelegate {
 
     /************************************************
      * inviteUser
+     * if it's GDM, invite and auto join the user
      *************************************************/
     public async inviteUser(roomId: string, userId: string) {
         if (!this.casablancaClient) {
             throw new Error('Casablanca client not initialized')
         }
-        await this.casablancaClient.inviteUser(roomId, userId)
+        if (isGDMChannelStreamId(roomId)) {
+            await this.casablancaClient.joinUser(roomId, userId)
+        } else {
+            await this.casablancaClient.inviteUser(roomId, userId)
+        }
     }
 
     /************************************************
