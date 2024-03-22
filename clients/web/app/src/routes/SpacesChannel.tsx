@@ -274,11 +274,7 @@ export const SpacesChannelComponent = (props: Props) => {
                         />
                     </MessageTimelineWrapper>
                     <BoxDebugger />
-                    <Box
-                        gap
-                        paddingBottom={isTouch ? 'none' : 'md'}
-                        paddingX={isTouch ? 'none' : 'md'}
-                    >
+                    <Box paddingBottom={isTouch ? 'none' : 'md'} paddingX={isTouch ? 'none' : 'md'}>
                         {!showDMAcceptInvitation && channel && (
                             <RichTextEditor
                                 isFullWidthOnTouch
