@@ -19,8 +19,8 @@ interface IBanningBase {
   // =============================================================
   //                           Events
   // =============================================================
-  event Banned(uint256 indexed tokenId);
-  event Unbanned(uint256 indexed tokenId);
+  event Banned(address indexed moderator, uint256 indexed tokenId);
+  event Unbanned(address indexed moderator, uint256 indexed tokenId);
 }
 
 interface IBanning is IBanningBase {

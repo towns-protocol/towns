@@ -4,7 +4,6 @@ pragma solidity ^0.8.23;
 // interfaces
 import {IDiamond, Diamond} from "contracts/src/diamond/Diamond.sol";
 import {IDiamondCut} from "contracts/src/diamond/facets/cut/IDiamondCut.sol";
-import {IProxyManager} from "contracts/src/diamond/proxy/manager/IProxyManager.sol";
 
 // helpers
 import {BanningHelper} from "contracts/test/spaces/banning/BanningHelper.sol";
@@ -21,10 +20,15 @@ contract InteractBanning is Interaction {
     address space = getDeployment("space");
     address banning = deployBanning.deploy();
 
-    IDiamond.FacetCut[] memory cuts = new IDiamond.FacetCut[](1);
+    IDiamond.FacetCut[] memory cuts = new IDiamond.FacetCut[](2);
     cuts[0] = IDiamond.FacetCut({
+      facetAddress: 0xf3Bf5f6bF0811ABebFc04A46c1631dcbe33D7Bb8,
+      action: IDiamond.FacetCutAction.Remove,
+      functionSelectors: banningHelper.selectors()
+    });
+    cuts[1] = IDiamond.FacetCut({
       facetAddress: banning,
-      action: IDiamond.FacetCutAction.Replace,
+      action: IDiamond.FacetCutAction.Add,
       functionSelectors: banningHelper.selectors()
     });
 

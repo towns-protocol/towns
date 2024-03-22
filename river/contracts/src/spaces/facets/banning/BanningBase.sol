@@ -17,7 +17,7 @@ abstract contract BanningBase is IBanningBase {
     BanningStorage.Layout storage ds = BanningStorage.layout();
     ds.bannedFromSpace[tokenId] = true;
     ds.bannedIds.add(tokenId);
-    emit Banned(tokenId);
+    emit Banned(msg.sender, tokenId);
   }
 
   function _isBanned(uint256 tokenId) internal view returns (bool) {
@@ -28,7 +28,7 @@ abstract contract BanningBase is IBanningBase {
     BanningStorage.Layout storage ds = BanningStorage.layout();
     ds.bannedFromSpace[tokenId] = false;
     ds.bannedIds.remove(tokenId);
-    emit Unbanned(tokenId);
+    emit Unbanned(msg.sender, tokenId);
   }
 
   function _bannedTokenIds() internal view returns (uint256[] memory) {

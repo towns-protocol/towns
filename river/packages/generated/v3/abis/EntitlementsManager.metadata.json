@@ -232,6 +232,12 @@
       {
         "inputs": [
           {
+            "internalType": "address",
+            "name": "moderator",
+            "type": "address",
+            "indexed": true
+          },
+          {
             "internalType": "uint256",
             "name": "tokenId",
             "type": "uint256",
@@ -370,6 +376,12 @@
       },
       {
         "inputs": [
+          {
+            "internalType": "address",
+            "name": "moderator",
+            "type": "address",
+            "indexed": true
+          },
           {
             "internalType": "uint256",
             "name": "tokenId",
@@ -997,10 +1009,10 @@
       "license": "Apache-2.0"
     },
     "contracts/src/spaces/facets/banning/BanningBase.sol": {
-      "keccak256": "0x081717ddc83bd5c7e1711349b0fd40483d33b883ca0d22233248c6c6acaabd86",
+      "keccak256": "0x163f5533b00e6096222b5092e304766f5af36230071df93a394f5204d22b0a4a",
       "urls": [
-        "bzz-raw://1bf01486a8cc5da312326bcf408d168f008e56673b8f53a91f2b866b7d7a04c1",
-        "dweb:/ipfs/QmfFfoXRJQ9cd9EMrRa1GHoTuJR7RmBg9Pku5cHbUZ2BnM"
+        "bzz-raw://02a891304d4ea26c0503ef3bf074c8c1d904cfa3cf73fd8f33eab8d4e706860f",
+        "dweb:/ipfs/QmS7gvCAAaZy8deFJ8vABjms6WN97KEFPvEtFzaX1Fa4vx"
       ],
       "license": "Apache-2.0"
     },
@@ -1013,10 +1025,10 @@
       "license": "Apache-2.0"
     },
     "contracts/src/spaces/facets/banning/IBanning.sol": {
-      "keccak256": "0x08a5f860c2bc17d3e7e2b9f8016b5fe4efe4c9a29dff4fead3eeb2c78483d547",
+      "keccak256": "0x1983a3e375f4dd8a21be759a637b85ed5e416ca8fc7109153986eb2d4b08a505",
       "urls": [
-        "bzz-raw://70d851c84eb03ef0438189de4c9bd4bc94553ada9d3f6ca6d5d506d38f742441",
-        "dweb:/ipfs/QmTqrL3FYrJGoUnREKuK3QB94KmMJ9iBg4Lz2hS3CbYk44"
+        "bzz-raw://1f5f5a54e4cbaca9e10cc174ba73f5f80b0875d097084a9ebc6b259b2c4c1419",
+        "dweb:/ipfs/QmQSfNhhRNkiHeG1XXWVYhQtvuPRyrv72gxuARgsgupjn6"
       ],
       "license": "Apache-2.0"
     },

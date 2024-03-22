@@ -18,8 +18,10 @@ contract DeployBanning is Deployer {
     uint256 deployerPK,
     address
   ) public override returns (address) {
+    bytes32 salt = bytes32(uint256(deployerPK));
+
     vm.startBroadcast(deployerPK);
-    Banning banning = new Banning();
+    Banning banning = new Banning{salt: salt}();
     vm.stopBroadcast();
     return address(banning);
   }

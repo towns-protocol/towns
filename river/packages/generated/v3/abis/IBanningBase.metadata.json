@@ -46,6 +46,12 @@
       {
         "inputs": [
           {
+            "internalType": "address",
+            "name": "moderator",
+            "type": "address",
+            "indexed": true
+          },
+          {
             "internalType": "uint256",
             "name": "tokenId",
             "type": "uint256",
@@ -58,6 +64,12 @@
       },
       {
         "inputs": [
+          {
+            "internalType": "address",
+            "name": "moderator",
+            "type": "address",
+            "indexed": true
+          },
           {
             "internalType": "uint256",
             "name": "tokenId",
@@ -108,10 +120,10 @@
   },
   "sources": {
     "contracts/src/spaces/facets/banning/IBanning.sol": {
-      "keccak256": "0x08a5f860c2bc17d3e7e2b9f8016b5fe4efe4c9a29dff4fead3eeb2c78483d547",
+      "keccak256": "0x1983a3e375f4dd8a21be759a637b85ed5e416ca8fc7109153986eb2d4b08a505",
       "urls": [
-        "bzz-raw://70d851c84eb03ef0438189de4c9bd4bc94553ada9d3f6ca6d5d506d38f742441",
-        "dweb:/ipfs/QmTqrL3FYrJGoUnREKuK3QB94KmMJ9iBg4Lz2hS3CbYk44"
+        "bzz-raw://1f5f5a54e4cbaca9e10cc174ba73f5f80b0875d097084a9ebc6b259b2c4c1419",
+        "dweb:/ipfs/QmQSfNhhRNkiHeG1XXWVYhQtvuPRyrv72gxuARgsgupjn6"
       ],
       "license": "Apache-2.0"
     }

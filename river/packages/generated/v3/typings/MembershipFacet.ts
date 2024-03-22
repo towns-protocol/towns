@@ -544,7 +544,7 @@ export interface MembershipFacetInterface extends utils.Interface {
   events: {
     "Approval(address,address,uint256)": EventFragment;
     "ApprovalForAll(address,address,bool)": EventFragment;
-    "Banned(uint256)": EventFragment;
+    "Banned(address,uint256)": EventFragment;
     "ConsecutiveTransfer(uint256,uint256,address,address)": EventFragment;
     "Initialized(uint32)": EventFragment;
     "InterfaceAdded(bytes4)": EventFragment;
@@ -561,7 +561,7 @@ export interface MembershipFacetInterface extends utils.Interface {
     "Paused(address)": EventFragment;
     "SubscriptionUpdate(uint256,uint64)": EventFragment;
     "Transfer(address,address,uint256)": EventFragment;
-    "Unbanned(uint256)": EventFragment;
+    "Unbanned(address,uint256)": EventFragment;
     "Unpaused(address)": EventFragment;
   };
 
@@ -623,9 +623,10 @@ export type ApprovalForAllEvent = TypedEvent<
 export type ApprovalForAllEventFilter = TypedEventFilter<ApprovalForAllEvent>;
 
 export interface BannedEventObject {
+  moderator: string;
   tokenId: BigNumber;
 }
-export type BannedEvent = TypedEvent<[BigNumber], BannedEventObject>;
+export type BannedEvent = TypedEvent<[string, BigNumber], BannedEventObject>;
 
 export type BannedEventFilter = TypedEventFilter<BannedEvent>;
 
@@ -807,9 +808,13 @@ export type TransferEvent = TypedEvent<
 export type TransferEventFilter = TypedEventFilter<TransferEvent>;
 
 export interface UnbannedEventObject {
+  moderator: string;
   tokenId: BigNumber;
 }
-export type UnbannedEvent = TypedEvent<[BigNumber], UnbannedEventObject>;
+export type UnbannedEvent = TypedEvent<
+  [string, BigNumber],
+  UnbannedEventObject
+>;
 
 export type UnbannedEventFilter = TypedEventFilter<UnbannedEvent>;
 
@@ -1486,10 +1491,14 @@ export interface MembershipFacet extends BaseContract {
       approved?: null
     ): ApprovalForAllEventFilter;
 
-    "Banned(uint256)"(
+    "Banned(address,uint256)"(
+      moderator?: PromiseOrValue<string> | null,
       tokenId?: PromiseOrValue<BigNumberish> | null
     ): BannedEventFilter;
-    Banned(tokenId?: PromiseOrValue<BigNumberish> | null): BannedEventFilter;
+    Banned(
+      moderator?: PromiseOrValue<string> | null,
+      tokenId?: PromiseOrValue<BigNumberish> | null
+    ): BannedEventFilter;
 
     "ConsecutiveTransfer(uint256,uint256,address,address)"(
       fromTokenId?: PromiseOrValue<BigNumberish> | null,
@@ -1617,10 +1626,12 @@ export interface MembershipFacet extends BaseContract {
       tokenId?: PromiseOrValue<BigNumberish> | null
     ): TransferEventFilter;
 
-    "Unbanned(uint256)"(
+    "Unbanned(address,uint256)"(
+      moderator?: PromiseOrValue<string> | null,
       tokenId?: PromiseOrValue<BigNumberish> | null
     ): UnbannedEventFilter;
     Unbanned(
+      moderator?: PromiseOrValue<string> | null,
       tokenId?: PromiseOrValue<BigNumberish> | null
     ): UnbannedEventFilter;
 

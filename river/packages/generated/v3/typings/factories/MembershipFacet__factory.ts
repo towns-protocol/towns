@@ -872,6 +872,12 @@ const _abi = [
     name: "Banned",
     inputs: [
       {
+        name: "moderator",
+        type: "address",
+        indexed: true,
+        internalType: "address",
+      },
+      {
         name: "tokenId",
         type: "uint256",
         indexed: true,
@@ -1158,6 +1164,12 @@ const _abi = [
     type: "event",
     name: "Unbanned",
     inputs: [
+      {
+        name: "moderator",
+        type: "address",
+        indexed: true,
+        internalType: "address",
+      },
       {
         name: "tokenId",
         type: "uint256",

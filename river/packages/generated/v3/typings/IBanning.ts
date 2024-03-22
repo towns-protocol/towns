@@ -59,8 +59,8 @@ export interface IBanningInterface extends utils.Interface {
   decodeFunctionResult(functionFragment: "unban", data: BytesLike): Result;
 
   events: {
-    "Banned(uint256)": EventFragment;
-    "Unbanned(uint256)": EventFragment;
+    "Banned(address,uint256)": EventFragment;
+    "Unbanned(address,uint256)": EventFragment;
   };
 
   getEvent(nameOrSignatureOrTopic: "Banned"): EventFragment;
@@ -68,16 +68,21 @@ export interface IBanningInterface extends utils.Interface {
 }
 
 export interface BannedEventObject {
+  moderator: string;
   tokenId: BigNumber;
 }
-export type BannedEvent = TypedEvent<[BigNumber], BannedEventObject>;
+export type BannedEvent = TypedEvent<[string, BigNumber], BannedEventObject>;
 
 export type BannedEventFilter = TypedEventFilter<BannedEvent>;
 
 export interface UnbannedEventObject {
+  moderator: string;
   tokenId: BigNumber;
 }
-export type UnbannedEvent = TypedEvent<[BigNumber], UnbannedEventObject>;
+export type UnbannedEvent = TypedEvent<
+  [string, BigNumber],
+  UnbannedEventObject
+>;
 
 export type UnbannedEventFilter = TypedEventFilter<UnbannedEvent>;
 
@@ -163,15 +168,21 @@ export interface IBanning extends BaseContract {
   };
 
   filters: {
-    "Banned(uint256)"(
+    "Banned(address,uint256)"(
+      moderator?: PromiseOrValue<string> | null,
       tokenId?: PromiseOrValue<BigNumberish> | null
     ): BannedEventFilter;
-    Banned(tokenId?: PromiseOrValue<BigNumberish> | null): BannedEventFilter;
+    Banned(
+      moderator?: PromiseOrValue<string> | null,
+      tokenId?: PromiseOrValue<BigNumberish> | null
+    ): BannedEventFilter;
 
-    "Unbanned(uint256)"(
+    "Unbanned(address,uint256)"(
+      moderator?: PromiseOrValue<string> | null,
       tokenId?: PromiseOrValue<BigNumberish> | null
     ): UnbannedEventFilter;
     Unbanned(
+      moderator?: PromiseOrValue<string> | null,
       tokenId?: PromiseOrValue<BigNumberish> | null
     ): UnbannedEventFilter;
   };
