@@ -48,8 +48,8 @@ export const Figma = {
         Tertiary: 'hsla(258, 4%, 55%, 1)',
     },
     Colors: {
-        Blue: '#1FDBF1',
-        BlueTransparent: '#1FDBF190',
+        Blue: '#16C5DA',
+        BlueTransparent: '#16C5DA90',
         Green: '#21E078',
         Red: '#F2693E',
 
