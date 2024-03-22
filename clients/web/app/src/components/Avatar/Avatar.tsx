@@ -166,7 +166,6 @@ const _Avatar = forwardRef<
 
     const dot = _dot && (
         <FadeInBox
-            background="positive"
             borderRadius="full"
             style={{
                 position: `absolute`,
@@ -177,11 +176,14 @@ const _Avatar = forwardRef<
                 maxWidth: `var(--dot-width, 50px)`,
                 maxHeight: `var(--dot-width, 50px)`,
                 borderColor: `var(--background)`,
-                border: `var(--dot-border-width) solid`,
+                borderWidth: `var(--dot-border-width)`,
+                borderStyle: `solid`,
                 transformOrigin: `center center`,
                 transform: ` rotate(45deg) translateX(var(--dot-offset, 50%)) scale(0.37)`,
             }}
-        />
+        >
+            <Box absoluteFill background="accent" borderRadius="full" />
+        </FadeInBox>
     )
 
     return (
