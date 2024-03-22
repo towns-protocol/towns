@@ -232,7 +232,7 @@ if ! git diff main --quiet --cached; then
       if [ $exit_status -ne 0 ]; then
           echo "Failure detected in PR checks."
           if [[ $USER_MODE -eq 1 ]]; then
-              read -p "Have you fixed the issue and pushed your changes yet? (any key to continue/n) " -n 1 -r
+              read -p "Harmony CI is failing. Please make fixes, commit and push your changes, or restart CI. (any key to continue/n) " -n 1 -r
               echo ""
               if [[ $REPLY =~ ^[Nn]$ ]]; then
                   echo "Pull request creation aborted."
