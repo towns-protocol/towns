@@ -22,6 +22,7 @@ import { GlobalContextUserLookupProvider } from './UserLookupContextProviders'
 import { TownsOpts } from '../client/TownsClientTypes'
 import { Chain } from 'viem/chains'
 import { IChainConfig } from '../types/web3-types'
+import { SnapshotCaseType } from '@river/proto'
 
 export type InitialSyncSortPredicate = (a: string, b: string) => number
 
@@ -60,6 +61,7 @@ interface TownsContextProviderProps {
     casablancaServerUrl?: string | undefined
     enableSpaceRootUnreads?: boolean
     timelineFilter?: Set<ZTEvent>
+    streamFilter?: Set<SnapshotCaseType>
     children: JSX.Element
     mutedChannelIds?: string[]
     QueryClientProvider?: React.ElementType<{ children: JSX.Element }>
@@ -140,7 +142,11 @@ const TownsContextImpl = (props: TownsContextProviderProps): JSX.Element => {
 
     const rooms = useCasablancaRooms(casablancaClient)
     const dynamicTimelineFilter = useTimelineFilter((state) => state.eventFilter)
-    useCasablancaTimelines(casablancaClient, dynamicTimelineFilter ?? timelineFilter)
+    useCasablancaTimelines(
+        casablancaClient,
+        dynamicTimelineFilter ?? timelineFilter,
+        props.streamFilter,
+    )
     useHookLogger()
 
     return (

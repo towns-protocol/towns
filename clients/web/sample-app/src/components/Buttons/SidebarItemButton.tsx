@@ -12,7 +12,7 @@ export const SidebarItemButton = (props: Props) => {
         <Box
             display="flex"
             flexDirection="row"
-            alignItems="center"
+            alignItems="left"
             sx={{
                 pl: (theme: Theme) => theme.spacing(2),
             }}
@@ -29,12 +29,14 @@ export const SidebarItemButton = (props: Props) => {
             >
                 <CircleOutlined />
             </IconButton>
-            <Button onClick={props.onClick}>
+            <Button fullWidth onClick={props.onClick}>
                 <Typography
                     noWrap
                     variant="body1"
                     component="div"
                     sx={{
+                        textAlign: 'left',
+                        width: '100%',
                         pr: (theme: Theme) => theme.spacing(1),
                     }}
                 >

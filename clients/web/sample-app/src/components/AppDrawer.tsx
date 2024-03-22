@@ -1,7 +1,7 @@
+import React from 'react'
 import { Box, CssBaseline, Divider, Drawer, Toolbar } from '@mui/material'
 import { InviteData } from 'use-towns-client'
 import { Outlet, useNavigate } from 'react-router-dom'
-import React, { useCallback, useState } from 'react'
 
 import { Invites } from './Invites'
 import { SidebarNewItemButton } from './Buttons/SidebarNewItemButton'
@@ -20,13 +20,7 @@ interface Props {
 }
 
 export function AppDrawer(props: Props): JSX.Element {
-    const { window } = props
     const navigate = useNavigate()
-    const [mobileOpen, setMobileOpen] = useState(false)
-
-    const handleDrawerToggle = useCallback(() => {
-        setMobileOpen(!mobileOpen)
-    }, [mobileOpen])
 
     const onClickSpace = (spaceId: string) => {
         console.log('onClickSpace', spaceId)
@@ -60,8 +54,12 @@ export function AppDrawer(props: Props): JSX.Element {
         navigate('/spaces/new')
     }
 
-    const onMeClick = () => {
+    const onClickMe = () => {
         navigate('/')
+    }
+
+    const onClickStreams = () => {
+        navigate('/streams')
     }
 
     const onWeb3Click = () => {
@@ -93,45 +91,24 @@ export function AppDrawer(props: Props): JSX.Element {
             <SidebarItemButton label="Web 3" onClick={onWeb3Click} />
             <SidebarItemButton label="Linked Wallets" onClick={onLinkedWalletsClick} />
             <SidebarItemButton label="Logins" onClick={onLoginsClick} />
-            <SidebarItemButton label="Me" onClick={onMeClick} />
+            <SidebarItemButton label="Me" onClick={onClickMe} />
+            <SidebarItemButton label="Streams" onClick={onClickStreams} />
             <Divider />
             <DebugBar />
         </div>
     )
 
-    const container = window !== undefined ? () => window().document.body : undefined
-
     return (
-        <Box sx={{ display: 'flex' }}>
+        <>
             <CssBaseline />
-            <Box
-                component="nav"
-                sx={{ width: { sm: drawerWidth }, flexShrink: { sm: 0 } }}
-                aria-label="mailbox folders"
-            >
-                {/* The implementation can be swapped with js to avoid SEO duplication of links. */}
-                <Drawer
-                    container={container}
-                    variant="temporary"
-                    open={mobileOpen}
-                    ModalProps={{
-                        keepMounted: true, // Better open performance on mobile.
-                    }}
-                    sx={{
-                        display: { xs: 'block', sm: 'none' },
-                        '& .MuiDrawer-paper': {
-                            boxSizing: 'border-box',
-                            width: drawerWidth,
-                        },
-                    }}
-                    onClose={handleDrawerToggle}
-                >
-                    {drawer}
-                </Drawer>
+            <Box sx={{ display: 'flex' }}>
                 <Drawer
                     open
                     variant="permanent"
+                    anchor="left"
                     sx={{
+                        width: drawerWidth,
+                        flexShrink: 0,
                         display: { xs: 'none', sm: 'block' },
                         '& .MuiDrawer-paper': {
                             boxSizing: 'border-box',
@@ -141,17 +118,18 @@ export function AppDrawer(props: Props): JSX.Element {
                 >
                     {drawer}
                 </Drawer>
+                <Box
+                    component="main"
+                    sx={{
+                        alignSelf: 'right',
+                        flexGrow: 1,
+                        padding: '20px',
+                        maxWidth: `calc(100% - ${drawerWidth}px)`, // Ensure content does not exceed the viewport width minus the drawer width
+                    }}
+                >
+                    <Outlet />
+                </Box>
             </Box>
-            <Box
-                component="main"
-                sx={{
-                    flexGrow: 1,
-                    p: 3,
-                    width: { sm: `calc(100% - ${drawerWidth}px)` },
-                }}
-            >
-                <Outlet />
-            </Box>
-        </Box>
+        </>
     )
 }

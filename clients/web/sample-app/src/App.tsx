@@ -1,12 +1,12 @@
 import React from 'react'
 import { Route, Routes } from 'react-router-dom'
-import { Container } from '@mui/material'
 import { TownsContextProvider } from 'use-towns-client'
 import { ThemeProvider } from '@mui/material/styles'
 import { EmbeddedSignerContextProvider } from '@towns/privy'
 import { WagmiConfig, createConfig } from 'wagmi'
 import { createPublicClient, http } from 'viem'
 import { foundry } from 'wagmi/chains'
+import { SnapshotCaseType } from '@river/proto'
 import { Thread } from 'routes/Thread'
 import { Threads } from 'routes/Threads'
 import { Mentions } from 'routes/Mentions'
@@ -14,6 +14,8 @@ import { Login } from '@components/Login'
 import { useEnvironment } from 'hooks/use-environment'
 import { PrivyProvider } from 'context/PrivyProvider'
 import { WalletLinkingPage } from 'routes/WalletLinkingPage'
+import { StreamsRoute } from 'routes/Streams'
+import { StreamRoute } from './routes/Stream'
 import { Home } from './routes/Home'
 import { MainLayout } from './components/MainLayout'
 import { NotFound } from './routes/NotFound'
@@ -53,47 +55,50 @@ export const App = () => {
     )
 }
 
+const streamFilter = new Set<SnapshotCaseType>() // create an empty stream filter to get all streams in the timelines store
+
 const AppContent = () => {
     const { casablancaUrl, chain, chainId, riverChain } = useEnvironment()
     return (
         <ThemeProvider theme={theme}>
-            <Container maxWidth="md">
-                <TownsContextProvider
-                    enableSpaceRootUnreads
-                    casablancaServerUrl={casablancaUrl}
-                    chain={chain}
-                    riverChain={riverChain}
-                >
-                    <EmbeddedSignerContextProvider chainId={chainId}>
-                        <Routes>
-                            <Route element={<MainLayout />}>
-                                <Route element={<AuthenticatedContent />}>
-                                    <Route index element={<Home />} />
-                                    <Route path="spaces/new" element={<SpacesNew />} />
-                                    <Route path="spaces/:spaceSlug" element={<Spaces />}>
-                                        <Route index element={<SpacesIndex />} />
-                                        <Route path="invite" element={<SpaceInvite />} />
-                                        <Route path="channels/new" element={<SpacesNewChannel />} />
-                                        <Route path="channels/:channelSlug" element={<Channels />}>
-                                            <Route index element={<ChannelsIndex />} />
-                                        </Route>
-                                        <Route path="threads" element={<Threads />} />
-                                        <Route
-                                            path="threads/:channelSlug/:threadParentId"
-                                            element={<Thread />}
-                                        />
-                                        <Route path="mentions" element={<Mentions />} />
+            <TownsContextProvider
+                enableSpaceRootUnreads
+                casablancaServerUrl={casablancaUrl}
+                chain={chain}
+                riverChain={riverChain}
+                streamFilter={streamFilter}
+            >
+                <EmbeddedSignerContextProvider chainId={chainId}>
+                    <Routes>
+                        <Route element={<MainLayout />}>
+                            <Route element={<AuthenticatedContent />}>
+                                <Route index element={<Home />} />
+                                <Route path="spaces/new" element={<SpacesNew />} />
+                                <Route path="spaces/:spaceSlug" element={<Spaces />}>
+                                    <Route index element={<SpacesIndex />} />
+                                    <Route path="invite" element={<SpaceInvite />} />
+                                    <Route path="channels/new" element={<SpacesNewChannel />} />
+                                    <Route path="channels/:channelSlug" element={<Channels />}>
+                                        <Route index element={<ChannelsIndex />} />
                                     </Route>
-                                    <Route path="web3" element={<Web3 />} />
-                                    <Route path="wallet-linking" element={<WalletLinkingPage />} />
-                                    <Route path="logins" element={<Login />} />
-                                    <Route path="*" element={<NotFound />} />
+                                    <Route path="threads" element={<Threads />} />
+                                    <Route
+                                        path="threads/:channelSlug/:threadParentId"
+                                        element={<Thread />}
+                                    />
+                                    <Route path="mentions" element={<Mentions />} />
                                 </Route>
+                                <Route path="web3" element={<Web3 />} />
+                                <Route path="wallet-linking" element={<WalletLinkingPage />} />
+                                <Route path="logins" element={<Login />} />
+                                <Route path="streams" element={<StreamsRoute />} />
+                                <Route path="streams/:streamId" element={<StreamRoute />} />
+                                <Route path="*" element={<NotFound />} />
                             </Route>
-                        </Routes>
-                    </EmbeddedSignerContextProvider>
-                </TownsContextProvider>
-            </Container>
+                        </Route>
+                    </Routes>
+                </EmbeddedSignerContextProvider>
+            </TownsContextProvider>
         </ThemeProvider>
     )
 }

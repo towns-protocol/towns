@@ -15,7 +15,6 @@ import {
     RemoteTimelineEvent,
     userIdFromAddress,
     streamIdFromBytes,
-    getUserIdFromStreamId,
     streamIdAsString,
 } from '@river/sdk'
 import {
@@ -67,6 +66,7 @@ import {
     EventStatus,
     EmbeddedMessageAttachment,
 } from '../../types/timeline-types'
+import { useCallback } from 'react'
 
 type SuccessResult = {
     content: TimelineEvent_OneOf
@@ -83,7 +83,25 @@ type TownsContentResult = SuccessResult | ErrorResult
 export function useCasablancaTimelines(
     casablancaClient: CasablancaClient | undefined,
     eventFilter?: Set<ZTEvent>,
+    streamFilter?: Set<SnapshotCaseType>,
 ) {
+    const hasTimelineContent = useCallback(
+        (kind: SnapshotCaseType) => {
+            if (!streamFilter) {
+                return (
+                    kind === 'channelContent' ||
+                    kind === 'spaceContent' ||
+                    kind === 'dmChannelContent' ||
+                    kind === 'gdmChannelContent'
+                )
+            }
+            if (streamFilter.size === 0) {
+                return true
+            }
+            return streamFilter.has(kind)
+        },
+        [streamFilter],
+    )
     const setState = useTimelineStore((s) => s.setState)
     useEffect(() => {
         if (!casablancaClient) {
@@ -186,7 +204,7 @@ export function useCasablancaTimelines(
             casablancaClient.off('streamLocalEventUpdated', onStreamLocalEventUpdated)
             setState.reset(Array.from(streamIds))
         }
-    }, [casablancaClient, setState, eventFilter])
+    }, [casablancaClient, setState, eventFilter, hasTimelineContent])
 }
 
 export function toEvent(timelineEvent: StreamTimelineEvent, userId: string): TimelineEvent {
@@ -495,9 +513,9 @@ function toTownsContent_UserPayload(
             return {
                 content: {
                     kind: ZTEvent.RoomMember,
-                    userId: getUserIdFromStreamId(streamId), // this is just the current user
+                    userId: '', // this is just the current user
                     avatarUrl: undefined, // todo avatarUrl
-                    displayName: '---TODO---', // todo displayName
+                    displayName: '', // todo displayName
                     isDirect: undefined, // todo is this needed?
                     membership: toMembership(payload.op),
                     streamId: streamId,
@@ -784,15 +802,6 @@ function getEventStatus(timelineEvent: StreamTimelineEvent): EventStatus {
         console.error('$$$ useCasablancaTimelines unknown event status', { timelineEvent })
         return EventStatus.NOT_SENT
     }
-}
-
-function hasTimelineContent(kind: SnapshotCaseType): boolean {
-    return (
-        kind === 'channelContent' ||
-        kind === 'spaceContent' ||
-        kind === 'dmChannelContent' ||
-        kind === 'gdmChannelContent'
-    )
 }
 
 function toAttachments(
