@@ -14,7 +14,7 @@ import {
     ZTEvent,
 } from 'use-towns-client'
 import { ExperimentsState } from 'store/experimentsStore'
-import { HOUR_MS } from 'data/constants'
+import { MINUTE_MS } from 'data/constants'
 
 export enum RenderEventType {
     UserMessages = 'UserMessages',
@@ -440,7 +440,7 @@ function canGroupWithPrevMessage(
     // only group messages that are not redacted
     p = p && !prevMessage.isRedacted
     // only group messages that are close enough in time
-    p = p && event.createdAtEpochMs - prevMessage.createdAtEpochMs < HOUR_MS
+    p = p && event.createdAtEpochMs - prevMessage.createdAtEpochMs < MINUTE_MS * 10
 
     return p
 }
