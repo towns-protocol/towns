@@ -1,5 +1,5 @@
 import React, { RefObject, useCallback, useMemo, useRef } from 'react'
-import { useSpaceData, useSpaceId } from 'use-towns-client'
+import { useSpaceData } from 'use-towns-client'
 import { Link } from 'react-router-dom'
 import { AnimatePresence } from 'framer-motion'
 import { Box, IconButton, MotionBox, MotionStack, Paragraph, Stack, Text } from '@ui'
@@ -18,7 +18,7 @@ export const MintAnimation = (props: {
     const { targetRef, info } = props
     const { setRecentlyMintedSpaceToken } = useStore()
 
-    const spaceData = useSpaceData()
+    const spaceData = useSpaceData(info.spaceId)
     const { createLink: createProfileLink } = useCreateLink()
     const link = createProfileLink({ profileId: 'me' })
     const [shouldAnimate, setShouldAnimate] = React.useState(false)
@@ -51,8 +51,7 @@ export const MintAnimation = (props: {
         return shouldAnimate ? { translate, targetCenter, targetRect } : {}
     }, [shouldAnimate, targetRef])
 
-    const spaceId = useSpaceId()
-    const { imageSrc } = useImageSource(spaceId ?? '', ImageVariants.thumbnail100)
+    const { imageSrc } = useImageSource(info.spaceId, ImageVariants.thumbnail100)
     const { isTouch } = useDevice()
 
     const onDone = useCallback(() => {
