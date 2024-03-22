@@ -78,7 +78,21 @@ jobs:
                   aws-secret-access-key: ${{ secrets.AWS_SECRET_ACCESS_KEY }}
                   aws-region: us-east-1
 
+            - name: Check if image exists
+              env:
+                GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+              run: |
+                if ! docker manifest inspect public.ecr.aws/h5v6m2x1/river:${{ inputs.docker_image_tag }} > /dev/null 2>&1; then
+                    echo "Docker image with the tag=${{ inputs.docker_image_tag }} does not exist. No need to deploy river."
+
+                    # set a github env var to skip the next step
+                    echo "SKIP_DEPLOY=true" >> $GITHUB_ENV
+                else 
+                    echo "Docker image with the tag=${{ inputs.docker_image_tag }} exists. Continue with the deployment."
+                fi
+
             - name: Deploy river node
+              if: env.SKIP_DEPLOY != 'true'
               env:
                   ENVIRONMENT_NAME: ${{ inputs.environment_name }}
                   DOCKER_IMAGE_TAG: ${{ inputs.docker_image_tag }}
