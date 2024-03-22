@@ -183,6 +183,7 @@ export const MessageContextMenu = (props: Props) => {
                         <EmojiPickerButton
                             parentFocused
                             tooltip={<ShortcutTooltip action="ReactToMessage" />}
+                            shortcut="ReactToMessage"
                             onSelectEmoji={onSelectEmoji}
                         />
                     )}

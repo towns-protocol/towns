@@ -80,7 +80,7 @@ export const Shortcuts = {
             description: 'Reply to message',
         },
         ReactToMessage: {
-            keys: '+',
+            keys: 'Meta+E',
             description: 'React to message',
         },
         MarkAsUnread: {

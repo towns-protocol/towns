@@ -104,7 +104,7 @@ const PlateEditorWithoutBoundary = ({
     const { inlineReplyPreview, onCancelInlineReply } = useInlineReplyAttchmentPreview()
     const [isSendingMessage, setIsSendingMessage] = useState(false)
 
-    const [focused, setFocused] = useState(true)
+    const [focused, setFocused] = useState(false)
     const [isEditorEmpty, setIsEditorEmpty] = useState(true)
     // eslint-disable-next-line @typescript-eslint/no-unused-vars
     const [isAttemptingSend, setIsAttemptingSend] = useState(false)
@@ -247,6 +247,9 @@ const PlateEditorWithoutBoundary = ({
         [onSendCb, isTouch, disabled, files.length],
     )
 
+    const onFocus = useCallback(() => onFocusChange(true), [onFocusChange])
+    const onBlur = useCallback(() => onFocusChange(false), [onFocusChange])
+
     const fileCount = files.length
     const background = isEditing && !isTouch ? 'level1' : 'level2'
 
@@ -305,6 +308,8 @@ const PlateEditorWithoutBoundary = ({
                                     renderPlaceholder={RichTextPlaceholder}
                                     disabled={isSendingMessage}
                                     onKeyDown={handleSendOnEnter}
+                                    onFocus={onFocus}
+                                    onBlur={onBlur}
                                 />
                             </Box>
                             <OnFocusPlugin

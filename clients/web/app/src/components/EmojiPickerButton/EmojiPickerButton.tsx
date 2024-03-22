@@ -4,6 +4,7 @@ import { useDevice } from 'hooks/useDevice'
 import { MotionIconButton } from 'ui/components/Motion/MotionComponents'
 import { useShortcut } from 'hooks/useShortcut'
 import { ShortcutTooltip } from '@components/Shortcuts/ShortcutTooltip'
+import { ShortcutAction } from 'data/shortcuts'
 import { EmojiPickerContainer } from './EmojiPickerContainer'
 import { EmojiPickerContainerMobile } from './EmojiPickerContainerMobile'
 
@@ -15,6 +16,7 @@ type Props = {
     pill?: boolean
     parentFocused?: boolean
     tooltip?: string | React.ReactNode
+    shortcut?: ShortcutAction
 }
 
 const PillContainer = (props: { children: React.ReactNode } & BoxProps) => (
@@ -24,7 +26,12 @@ const PillContainer = (props: { children: React.ReactNode } & BoxProps) => (
 const DefaultContainer = (props: { children: React.ReactNode } & BoxProps) => <Box {...props} />
 
 export const EmojiPickerButton = (props: Props) => {
-    const { onSelectEmoji, size = 'square_sm', parentFocused = false } = props
+    const {
+        onSelectEmoji,
+        size = 'square_sm',
+        shortcut = 'OpenEmojiPicker',
+        parentFocused = false,
+    } = props
 
     const Container = props.pill ? PillContainer : DefaultContainer
 
@@ -34,7 +41,7 @@ export const EmojiPickerButton = (props: Props) => {
     const toggleCardRef = useRef<() => void>()
 
     useShortcut(
-        'OpenEmojiPicker',
+        shortcut,
         () => {
             toggleCardRef.current?.()
         },
