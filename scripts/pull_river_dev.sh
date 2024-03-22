@@ -153,7 +153,7 @@ git fetch --all
 git checkout -b "${BRANCH_NAME}"
 
 # Pull the latest changes from the subtree, preserving history
-git subtree pull --prefix="${SUBTREE_PREFIX}" "${SUBTREE_REPO}" "${SUBTREE_BRANCH}" --squash -m "git subtree pull ${SUBTREE_PREFIX} at ${SHORT_HASH}"
+git subtree pull --prefix="${SUBTREE_PREFIX}" "${SUBTREE_REPO}" "${SUBTREE_BRANCH}" -m "git subtree pull ${SUBTREE_PREFIX} at ${SHORT_HASH}"
 
 # Check for unresolved conflicts
 if git ls-files -u | grep -q '^[^ ]'; then
@@ -175,12 +175,10 @@ if ! git diff main --quiet --cached; then
     yarn_install_and_check
 
     # squash and merge back onto the original branch
-    read -p "Do you want to merge the pull request? (y/n) " -n 1 -r
     git checkout "$ORIGINAL_BRANCH"
-    read -p "Do you want to merge the pull request? (y/n) " -n 1 -r
     git merge --squash "$BRANCH_NAME"
-    read -p "Do you want to merge the pull request? (y/n) " -n 1 -r
-    RIVER_ALLOW_COMMIT=true git commit -m "Dev - merged ${SUBTREE_PREFIX} at ${SHORT_HASH}"
+    COMMIT_MERGE_MESSAGE="$(RIVER_ALLOW_COMMIT=true git commit --dry-run)"
+    RIVER_ALLOW_COMMIT=true git commit -m "Dev - merged ${SUBTREE_PREFIX} at ${SHORT_HASH}" -m "$COMMIT_MERGE_MESSAGE"
 else
     echo "No changes to commit."
 fi
