@@ -17,7 +17,6 @@
     "./servers/workers/gateway-worker",
     "./servers/workers/siwe-worker",
     "./servers/workers/unfurl-worker",
-    "./servers/workers/push-notification-worker",
     "./servers/workers/stackup-worker",
   ],
   "[solidity]": {

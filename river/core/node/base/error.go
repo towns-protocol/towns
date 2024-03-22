@@ -141,7 +141,15 @@ func WriteTag(sb *strings.Builder, tag RiverErrorTag) {
 	sb.WriteString("\n    ")
 	sb.WriteString(tag.Name)
 	sb.WriteString(" = ")
-	sb.WriteString(fmt.Sprint(tag.Value))
+	if goStringer, ok := tag.Value.(fmt.GoStringer); ok {
+		sb.WriteString(goStringer.GoString())
+	} else if byteSlice, ok := tag.Value.([]byte); ok {
+		sb.WriteString(hex.EncodeToString(byteSlice))
+	} else if byteSlicePtr, ok := tag.Value.(*[]byte); ok {
+		sb.WriteString(hex.EncodeToString(*byteSlicePtr))
+	} else {
+		sb.WriteString(fmt.Sprint(tag.Value))
+	}
 }
 
 func (e *RiverErrorImpl) Tag(name string, value any) *RiverErrorImpl {

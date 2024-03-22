@@ -16,77 +16,49 @@ type MockNodeRegistry struct {
 	mock.Mock
 }
 
-// CheckNodeIsValid provides a mock function with given fields: address
-func (_m *MockNodeRegistry) CheckNodeIsValid(address common.Address) error {
-	ret := _m.Called(address)
+// GetAllNodes provides a mock function with given fields:
+func (_m *MockNodeRegistry) GetAllNodes() []*nodes.NodeRecord {
+	ret := _m.Called()
 
 	if len(ret) == 0 {
-		panic("no return value specified for CheckNodeIsValid")
+		panic("no return value specified for GetAllNodes")
 	}
 
-	var r0 error
-	if rf, ok := ret.Get(0).(func(common.Address) error); ok {
-		r0 = rf(address)
+	var r0 []*nodes.NodeRecord
+	if rf, ok := ret.Get(0).(func() []*nodes.NodeRecord); ok {
+		r0 = rf()
 	} else {
-		r0 = ret.Error(0)
+		if ret.Get(0) != nil {
+			r0 = ret.Get(0).([]*nodes.NodeRecord)
+		}
 	}
 
 	return r0
 }
 
-// GetNodeAddressByIndex provides a mock function with given fields: index
-func (_m *MockNodeRegistry) GetNodeAddressByIndex(index int) (common.Address, error) {
-	ret := _m.Called(index)
+// GetNode provides a mock function with given fields: address
+func (_m *MockNodeRegistry) GetNode(address common.Address) (*nodes.NodeRecord, error) {
+	ret := _m.Called(address)
 
 	if len(ret) == 0 {
-		panic("no return value specified for GetNodeAddressByIndex")
-	}
-
-	var r0 common.Address
-	var r1 error
-	if rf, ok := ret.Get(0).(func(int) (common.Address, error)); ok {
-		return rf(index)
-	}
-	if rf, ok := ret.Get(0).(func(int) common.Address); ok {
-		r0 = rf(index)
-	} else {
-		if ret.Get(0) != nil {
-			r0 = ret.Get(0).(common.Address)
-		}
-	}
-
-	if rf, ok := ret.Get(1).(func(int) error); ok {
-		r1 = rf(index)
-	} else {
-		r1 = ret.Error(1)
-	}
-
-	return r0, r1
-}
-
-// GetNodeRecordByIndex provides a mock function with given fields: index
-func (_m *MockNodeRegistry) GetNodeRecordByIndex(index int) (*nodes.NodeRecord, error) {
-	ret := _m.Called(index)
-
-	if len(ret) == 0 {
-		panic("no return value specified for GetNodeRecordByIndex")
+		panic("no return value specified for GetNode")
 	}
 
 	var r0 *nodes.NodeRecord
 	var r1 error
-	if rf, ok := ret.Get(0).(func(int) (*nodes.NodeRecord, error)); ok {
-		return rf(index)
+	if rf, ok := ret.Get(0).(func(common.Address) (*nodes.NodeRecord, error)); ok {
+		return rf(address)
 	}
-	if rf, ok := ret.Get(0).(func(int) *nodes.NodeRecord); ok {
-		r0 = rf(index)
+	if rf, ok := ret.Get(0).(func(common.Address) *nodes.NodeRecord); ok {
+		r0 = rf(address)
 	} else {
 		if ret.Get(0) != nil {
 			r0 = ret.Get(0).(*nodes.NodeRecord)
 		}
 	}
 
-	if rf, ok := ret.Get(1).(func(int) error); ok {
-		r1 = rf(index)
+	if rf, ok := ret.Get(1).(func(common.Address) error); ok {
+		r1 = rf(address)
 	} else {
 		r1 = ret.Error(1)
 	}
@@ -169,24 +141,6 @@ func (_m *MockNodeRegistry) GetValidNodeAddresses() []common.Address {
 		if ret.Get(0) != nil {
 			r0 = ret.Get(0).([]common.Address)
 		}
-	}
-
-	return r0
-}
-
-// NumNodes provides a mock function with given fields:
-func (_m *MockNodeRegistry) NumNodes() int {
-	ret := _m.Called()
-
-	if len(ret) == 0 {
-		panic("no return value specified for NumNodes")
-	}
-
-	var r0 int
-	if rf, ok := ret.Get(0).(func() int); ok {
-		r0 = rf()
-	} else {
-		r0 = ret.Get(0).(int)
 	}
 
 	return r0

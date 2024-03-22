@@ -311,6 +311,14 @@ func writeShortHexBytes(w io.Writer, src []byte) {
 	}
 }
 
+func getBytes(v reflect.Value) []byte {
+	if v.Kind() == reflect.Array && !v.CanAddr() {
+		// If the array is not addressable, we can't slice it.
+		return []byte{}
+	}
+	return v.Bytes()
+}
+
 func (p *printer) printArray(v reflect.Value, showType bool) {
 	t := v.Type()
 
@@ -327,12 +335,14 @@ func (p *printer) printArray(v reflect.Value, showType bool) {
 		p.writeString(t.String())
 	}
 
+	//v.CanAddr()
 	if t.Elem().Kind() == reflect.Uint8 {
 		OpenColor(p.Writer, p.opts.Colors[ColorMap_Hex])
+		b := getBytes(v)
 		if p.opts.ShortHex {
-			writeShortHexBytes(p, v.Bytes())
+			writeShortHexBytes(p, b)
 		} else {
-			writeHexBytes(p, v.Interface().([]byte))
+			writeHexBytes(p, b)
 		}
 		CloseColor(p.Writer, p.opts.Colors[ColorMap_Hex])
 		return

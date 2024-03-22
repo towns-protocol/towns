@@ -431,14 +431,14 @@ func (ru *aeMembershipRules) validMembershipTransistion() (bool, error) {
 		// from leave, invite and join are valid
 		return true, nil
 	case MembershipOp_SO_UNSPECIFIED:
-		// from unspecified, leave would be a no op, join and invite are valid
+		// from unspecified, leave isn't valid
 		if ru.membership.Op == MembershipOp_SO_LEAVE {
-			return false, nil
+			return false, RiverError(Err_BAD_EVENT, "current membership is undefined")
 		} else {
 			return true, nil
 		}
 	default:
-		return false, RiverError(Err_BAD_EVENT, "invalid current membership", "op", currentMembership)
+		return false, RiverError(Err_BAD_EVENT, "invalid current membership", "currentMembership", currentMembership)
 	}
 }
 
@@ -531,34 +531,40 @@ func (ru *aeMembershipRules) validMembershipTransistionForGDM() (bool, error) {
 	initiatorAddress := ru.membership.InitiatorAddress
 	userAddress := ru.membership.UserAddress
 
+	initiatorMembership, err := ru.params.streamView.(events.JoinableStreamView).GetMembership(initiatorAddress)
+	if err != nil {
+		return false, err
+	}
+	userMembership, err := ru.params.streamView.(events.JoinableStreamView).GetMembership(userAddress)
+	if err != nil {
+		return false, err
+	}
+
 	switch ru.membership.Op {
 	case MembershipOp_SO_INVITE:
 		// only members can invite (also for some reason invited can invite)
-		membership, err := ru.params.streamView.(events.JoinableStreamView).GetMembership(initiatorAddress)
-		if err != nil {
-			return false, err
-		}
-		if membership != MembershipOp_SO_JOIN && membership != MembershipOp_SO_INVITE {
+		if initiatorMembership != MembershipOp_SO_JOIN && initiatorMembership != MembershipOp_SO_INVITE {
 			return false, RiverError(Err_PERMISSION_DENIED, "initiator of invite is not a member of GDM", "initiator", initiatorAddress, "nodes", ru.params.validNodeAddresses)
 		}
 		return true, nil
 	case MembershipOp_SO_JOIN:
-		// users have to be invited to join
-		membership, err := ru.params.streamView.(events.JoinableStreamView).GetMembership(userAddress)
-		if err != nil {
-			return false, err
+		// if current membership is invite, allow
+		if userMembership == MembershipOp_SO_INVITE {
+			return true, nil
 		}
-		if membership != MembershipOp_SO_INVITE {
+		// if the user is not invited, fail if the initiator is the user,
+		if bytes.Equal(initiatorAddress, userAddress) {
 			return false, RiverError(Err_PERMISSION_DENIED, "user is not invited to GDM", "user", userAddress)
 		}
+		// check the initiator membership
+		if initiatorMembership != MembershipOp_SO_JOIN {
+			return false, RiverError(Err_PERMISSION_DENIED, "initiator of join is not a member of GDM", "initiator", initiatorAddress)
+		}
+		// user is either invited, or initiator is a member and the user did not just leave
 		return true, nil
 	case MembershipOp_SO_LEAVE:
 		// only members can initiate leave
-		membership, err := ru.params.streamView.(events.JoinableStreamView).GetMembership(initiatorAddress)
-		if err != nil {
-			return false, err
-		}
-		if membership != MembershipOp_SO_JOIN && membership != MembershipOp_SO_INVITE {
+		if initiatorMembership != MembershipOp_SO_JOIN && initiatorMembership != MembershipOp_SO_INVITE {
 			return false, RiverError(Err_PERMISSION_DENIED, "initiator of leave is not a member of GDM", "initiator", initiatorAddress)
 		}
 		return true, nil
@@ -812,7 +818,8 @@ func (ru *aeMembershipRules) getPermissionForMembershipOp() (auth.Permission, st
 		return auth.PermissionUndefined, "", err
 	}
 	if membership.Op == currentMembership {
-		panic("membershipOp should not be the same as currentMembership")
+		// this could panic, the rule builder should never allow us to get here
+		return auth.PermissionUndefined, "", RiverError(Err_FAILED_PRECONDITION, "membershipOp should not be the same as currentMembership")
 	}
 
 	switch membership.Op {

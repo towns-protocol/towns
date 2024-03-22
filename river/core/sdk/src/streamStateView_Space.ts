@@ -15,7 +15,7 @@ import { StreamStateView_AbstractContent } from './streamStateView_AbstractConte
 import { DecryptedContent } from './encryptedContentTypes'
 import { check, throwWithCode } from '@river/dlog'
 import { isDefined, logNever } from './check'
-import { streamIdAsString } from './id'
+import { isDefaultChannelId, streamIdAsString } from './id'
 
 export type ParsedChannelProperties = {
     name?: string
@@ -105,7 +105,7 @@ export class StreamStateView_Space extends StreamStateView_AbstractContent {
                 this.spaceChannelsMetadata.set(channelId, {
                     name: props.name,
                     topic: props.topic,
-                    isDefault: payload.isDefault,
+                    isDefault: isDefaultChannelId(channelId),
                 })
                 stateEmitter?.emit('spaceChannelCreated', this.streamId, channelId, props)
                 break
@@ -120,7 +120,7 @@ export class StreamStateView_Space extends StreamStateView_AbstractContent {
                 this.spaceChannelsMetadata.set(channelId, {
                     name: props.name,
                     topic: props.topic,
-                    isDefault: payload.isDefault,
+                    isDefault: isDefaultChannelId(channelId),
                 })
                 stateEmitter?.emit('spaceChannelUpdated', this.streamId, channelId, props)
                 break

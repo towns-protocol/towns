@@ -429,7 +429,6 @@ func (ru *csChannelRules) derivedChannelSpaceParentEvent() (*DerivedEvent, error
 			Hash:      ru.params.parsedEvents[0].Envelope.Hash,
 			Signature: ru.params.parsedEvents[0].Envelope.Signature,
 		},
-		ru.inception.IsDefault,
 	)
 
 	return &DerivedEvent{

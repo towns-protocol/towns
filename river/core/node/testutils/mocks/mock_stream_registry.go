@@ -50,23 +50,23 @@ func (_m *MockStreamRegistry) AllocateStream(ctx context.Context, streamId share
 }
 
 // GetStreamInfo provides a mock function with given fields: ctx, streamId
-func (_m *MockStreamRegistry) GetStreamInfo(ctx context.Context, streamId shared.StreamId) (*nodes.StreamNodes, error) {
+func (_m *MockStreamRegistry) GetStreamInfo(ctx context.Context, streamId shared.StreamId) (nodes.StreamNodes, error) {
 	ret := _m.Called(ctx, streamId)
 
 	if len(ret) == 0 {
 		panic("no return value specified for GetStreamInfo")
 	}
 
-	var r0 *nodes.StreamNodes
+	var r0 nodes.StreamNodes
 	var r1 error
-	if rf, ok := ret.Get(0).(func(context.Context, shared.StreamId) (*nodes.StreamNodes, error)); ok {
+	if rf, ok := ret.Get(0).(func(context.Context, shared.StreamId) (nodes.StreamNodes, error)); ok {
 		return rf(ctx, streamId)
 	}
-	if rf, ok := ret.Get(0).(func(context.Context, shared.StreamId) *nodes.StreamNodes); ok {
+	if rf, ok := ret.Get(0).(func(context.Context, shared.StreamId) nodes.StreamNodes); ok {
 		r0 = rf(ctx, streamId)
 	} else {
 		if ret.Get(0) != nil {
-			r0 = ret.Get(0).(*nodes.StreamNodes)
+			r0 = ret.Get(0).(nodes.StreamNodes)
 		}
 	}
 

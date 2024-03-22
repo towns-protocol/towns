@@ -112,7 +112,6 @@ describe('streamRpcClient using v2 sync', () => {
                 streamId: channelId,
                 spaceId: spaceId,
                 channelProperties: make_fake_encryptedData(channelProperties),
-                isDefault: false,
             }),
         )
         const event = await makeEvent(
@@ -213,7 +212,6 @@ describe('streamRpcClient using v2 sync', () => {
                 streamId: channelId,
                 spaceId: spaceId,
                 channelProperties: make_fake_encryptedData(channelProperties),
-                isDefault: false,
             }),
         )
         let event = await makeEvent(
@@ -495,7 +493,6 @@ describe('streamRpcClient', () => {
                 streamId: channelId,
                 spaceId: spaceId,
                 channelProperties: make_fake_encryptedData(channelProperties),
-                isDefault: false,
             }),
         )
         let event = await makeEvent(
@@ -836,7 +833,6 @@ describe('streamRpcClient', () => {
                 streamId: channelId,
                 channelProperties: make_fake_encryptedData(channelProperties),
                 spaceId: spacedStreamId,
-                isDefault: false,
             }),
             make_MemberPayload_Membership2({
                 userId: bobsUserId,
@@ -861,7 +857,6 @@ describe('streamRpcClient', () => {
                 streamId: channelId2,
                 spaceId: spacedStreamId,
                 channelProperties: make_fake_encryptedData(channelProperties2),
-                isDefault: false,
             }),
         )
 
@@ -972,7 +967,6 @@ describe('streamRpcClient', () => {
                 streamId: channelId,
                 spaceId: spacedStreamId,
                 channelProperties: make_fake_encryptedData(channelProperties),
-                isDefault: false,
             }),
             make_MemberPayload_Membership2({
                 userId: bobsUserId,

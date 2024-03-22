@@ -16,6 +16,15 @@ func RemoveJsonTimestamp(logOutput string) string {
 }
 
 func DlogJsonLogger() (*slog.Logger, *bytes.Buffer) {
-	buffer := bytes.NewBuffer([]byte{})
+	buffer := &bytes.Buffer{}
 	return slog.New(dlog.NewPrettyJSONHandler(buffer, &dlog.PrettyHandlerOptions{})), buffer
+}
+
+func DlogTextLogger() (*slog.Logger, *bytes.Buffer) {
+	buffer := &bytes.Buffer{}
+	handler := dlog.NewPrettyTextHandler(buffer, &dlog.PrettyHandlerOptions{
+		Colors:        dlog.ColorMap_Disabled,
+		PrintLongTime: false,
+	})
+	return slog.New(handler), buffer
 }

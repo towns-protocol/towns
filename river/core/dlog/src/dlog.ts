@@ -46,7 +46,16 @@ const hasOwnProperty = <Y extends PropertyKey>(obj: object, prop: Y): obj is Rec
     return Object.prototype.hasOwnProperty.call(obj, prop)
 }
 
-const cloneAndFormat = (obj: unknown, depth = 0, seen = new WeakSet()): unknown => {
+export const cloneAndFormat = (obj: unknown, opts?: { shortenHex?: boolean }): unknown => {
+    return _cloneAndFormat(obj, 0, new WeakSet(), opts?.shortenHex === true)
+}
+
+const _cloneAndFormat = (
+    obj: unknown,
+    depth: number,
+    seen: WeakSet<object>,
+    shorten: boolean,
+): unknown => {
     if (depth > MAX_CALL_STACK_SZ) {
         return 'MAX_CALL_STACK_SZ exceeded'
     }
@@ -59,15 +68,19 @@ const cloneAndFormat = (obj: unknown, depth = 0, seen = new WeakSet()): unknown 
     }
 
     if (typeof obj === 'string') {
-        return isHexString(obj) ? shortenHexString(obj) : obj
+        return isHexString(obj) && shorten ? shortenHexString(obj) : obj
     }
 
     if (obj instanceof Uint8Array) {
-        return shortenHexString(bin_toHexString(obj))
+        return shorten ? shortenHexString(bin_toHexString(obj)) : bin_toHexString(obj)
+    }
+
+    if (obj instanceof BigInt || typeof obj === 'bigint') {
+        return obj.toString()
     }
 
     if (Array.isArray(obj)) {
-        return obj.map((e) => cloneAndFormat(e, depth + 1, seen))
+        return obj.map((e) => _cloneAndFormat(e, depth + 1, seen, shorten))
     }
 
     if (typeof obj === 'object' && obj !== null) {
@@ -79,7 +92,7 @@ const cloneAndFormat = (obj: unknown, depth = 0, seen = new WeakSet()): unknown 
             // Iterate over values of Map, Set, etc.
             const newObj = []
             for (const e of obj as any) {
-                newObj.push(cloneAndFormat(e, depth + 1, seen))
+                newObj.push(_cloneAndFormat(e, depth + 1, seen, shorten))
             }
             return newObj
         }
@@ -88,13 +101,13 @@ const cloneAndFormat = (obj: unknown, depth = 0, seen = new WeakSet()): unknown 
         for (const key in obj) {
             if (hasOwnProperty(obj, key)) {
                 let newKey = key
-                if (typeof key === 'string' && isHexString(key)) {
+                if (typeof key === 'string' && isHexString(key) && shorten) {
                     newKey = shortenHexString(key)
                 }
                 if (key == 'emitter') {
                     newObj[newKey] = '[emitter]'
                 } else {
-                    newObj[newKey] = cloneAndFormat(obj[key], depth + 1, seen)
+                    newObj[newKey] = _cloneAndFormat(obj[key], depth + 1, seen, shorten)
                 }
             }
         }
@@ -157,7 +170,7 @@ const makeDlog = (d: Debugger, opts?: DLogOpts): DLogger => {
                     tailArgs.push(c)
                 } else {
                     fmt.push('%O\n')
-                    newArgs.push(cloneAndFormat(c))
+                    newArgs.push(cloneAndFormat(c, { shortenHex: true }))
                 }
             } else {
                 fmt.push('%O ')
@@ -210,4 +223,17 @@ export const dlog = (ns: string, opts?: DLogOpts): DLogger => {
 export const dlogError = (ns: string): DLogger => {
     const l = makeDlog(debug(ns), { defaultEnabled: true, printStack: true })
     return l
+}
+
+/**
+ * Create complex logger with multiple levels
+ * @param ns Namespace for the logger.
+ * @returns New logger with log/info/error namespace `ns`.
+ */
+export const dlogger = (ns: string): { log: DLogger; info: DLogger; error: DLogger } => {
+    return {
+        log: makeDlog(debug(ns + ':log')),
+        info: makeDlog(debug(ns + ':info'), { defaultEnabled: true, allowJest: true }),
+        error: dlogError(ns + ':error'),
+    }
 }

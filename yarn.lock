@@ -7398,6 +7398,7 @@ __metadata:
   version: 0.0.0-use.local
   resolution: "@river/web3@workspace:river/core/web3"
   dependencies:
+    "@river/dlog": "workspace:^"
     "@river/generated": "workspace:^"
     "@types/jest": ^29.5.3
     "@types/lodash": ^4.14.186

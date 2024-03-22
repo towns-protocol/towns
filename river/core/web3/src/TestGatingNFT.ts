@@ -4,6 +4,9 @@ import { foundry } from 'viem/chains'
 import MockERC721a from './MockERC721A'
 
 import { keccak256 } from 'viem/utils'
+import { dlogger } from '@river/dlog'
+
+const logger = dlogger('csb:TestGatingNFT')
 
 export function toEIP55Address(address: `0x${string}`): `0x${string}` {
     const addressHash = keccak256(address.substring(2).toLowerCase() as `0x${string}`)
@@ -110,7 +113,7 @@ export async function getContractAddress(nftName: string): Promise<`0x${string}`
                     const receipt = await client.waitForTransactionReceipt({ hash })
 
                     if (receipt.contractAddress) {
-                        console.log(
+                        logger.info(
                             'deployed',
                             nftName,
                             receipt.contractAddress,
@@ -132,7 +135,7 @@ export async function getContractAddress(nftName: string): Promise<`0x${string}`
                         typeof e.message === 'string' &&
                         e.message.includes('nonce too low')
                     ) {
-                        console.log('retrying because nonce too low', e, retryCount)
+                        logger.log('retrying because nonce too low', e, retryCount)
                     } else {
                         throw e
                     }
@@ -169,7 +172,7 @@ export async function publicMint(nftName: string, toAddress: `0x${string}`) {
 
     const contractAddress = await getContractAddress(nftName)
 
-    console.log('minting', contractAddress, toAddress)
+    logger.log('minting', contractAddress, toAddress)
 
     const account = (await client.getAddresses())[0]
 

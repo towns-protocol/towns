@@ -14,6 +14,9 @@ import { BaseContractShim } from './BaseContractShim'
 import { BigNumberish, ethers } from 'ethers'
 import { decodeUsers } from '../ConvertersEntitlements'
 import { EntitlementModuleType, EntitlementModule } from '../ContractTypes'
+import { dlogger } from '@river/dlog'
+
+const logger = dlogger('csb:UserEntitlementShim:debug')
 
 export class UserEntitlementShim
     extends BaseContractShim<
@@ -44,7 +47,7 @@ export class UserEntitlementShim
                 return []
             }
         } catch (e) {
-            console.log('Error getting role entitlement:', e)
+            logger.error('Error getting role entitlement:', e)
             throw e
         }
     }

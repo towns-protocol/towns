@@ -495,7 +495,6 @@ export class Client
         channelTopic: string,
         inChannelId: string | Uint8Array,
         streamSettings?: PlainMessage<StreamSettings>,
-        isDefault?: boolean,
     ): Promise<{ streamId: string }> {
         const oChannelId = inChannelId
         const channelId = streamIdAsBytes(oChannelId)
@@ -513,7 +512,6 @@ export class Client
                     make_ChannelProperties(channelName, channelTopic).toJsonString(),
                 ),
                 settings: streamSettings,
-                isDefault: isDefault === true,
             }),
         )
         const joinEvent = await makeEvent(
@@ -686,7 +684,6 @@ export class Client
         channelId: string | Uint8Array,
         channelName: string,
         channelTopic: string,
-        isDefault: boolean,
     ) {
         this.logCall('updateChannel', channelId, spaceId, channelName, channelTopic)
         assert(isSpaceStreamId(spaceId), 'spaceId must be a valid streamId')
@@ -699,7 +696,6 @@ export class Client
                 op: ChannelOp.CO_UPDATED,
                 channelId: streamIdAsBytes(channelId),
                 channelProperties: make_fake_encryptedData(channelProps),
-                isDefault: isDefault === true,
             }),
             { method: 'updateChannel' },
         )
@@ -1244,6 +1240,20 @@ export class Client
         )
     }
 
+    async joinUser(streamId: string | Uint8Array, userId: string): Promise<void> {
+        await this.initStream(streamId)
+        check(isDefined(this.userStreamId))
+        return this.makeEventAndAddToStream(
+            this.userStreamId,
+            make_UserPayload_UserMembershipAction({
+                op: MembershipOp.SO_JOIN,
+                userId: addressFromUserId(userId),
+                streamId: streamIdAsBytes(streamId),
+            }),
+            { method: 'inviteUser' },
+        )
+    }
+
     async joinStream(
         streamId: string | Uint8Array,
         opts?: {
@@ -1278,8 +1288,6 @@ export class Client
         }
 
         if (opts?.skipWaitForUserStreamUpdate !== true) {
-            const userStream = this.streams.get(this.userStreamId)
-            check(isDefined(userStream), 'userStream not found')
             if (!userStream.view.userContent.isJoined(streamIdStr)) {
                 await userStream.waitFor('userStreamMembershipChanged', (streamId) =>
                     userStream.view.userContent.isJoined(streamId),

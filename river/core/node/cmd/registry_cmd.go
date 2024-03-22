@@ -5,6 +5,7 @@ import (
 	"fmt"
 
 	"github.com/river-build/river/core/node/config"
+	"github.com/river-build/river/core/node/contracts"
 	"github.com/river-build/river/core/node/crypto"
 	"github.com/river-build/river/core/node/registries"
 	. "github.com/river-build/river/core/node/shared"
@@ -82,17 +83,42 @@ func srstream(cfg *config.Config, streamId string) error {
 	return nil
 }
 
+func nodesdump(cfg *config.Config) error {
+	ctx := context.Background() // lint:ignore context.Background() is fine here
+
+	blockchain, err := crypto.NewBlockchain(ctx, &cfg.RiverChain, nil)
+	if err != nil {
+		return err
+	}
+
+	registryContract, err := registries.NewRiverRegistryContract(ctx, blockchain, &cfg.RegistryContract)
+	if err != nil {
+		return err
+	}
+
+	nodes, err := registryContract.GetAllNodes(ctx, blockchain.InitialBlockNum)
+	if err != nil {
+		return err
+	}
+
+	for i, node := range nodes {
+		fmt.Printf("%4d %s %s %d (%-11s) %s\n", i, node.NodeAddress.Hex(), node.Operator.Hex(), node.Status, contracts.NodeStatusString(node.Status), node.Url)
+	}
+
+	return nil
+}
+
 func init() {
 	srCmd := &cobra.Command{
-		Use:     "stream-registry",
-		Aliases: []string{"sr"},
+		Use:     "registry",
+		Aliases: []string{"reg"},
 		Short:   "Stream registry management commands",
 	}
 	rootCmd.AddCommand(srCmd)
 
 	srCmd.AddCommand(&cobra.Command{
-		Use:   "dump",
-		Short: "Dump stream registry",
+		Use:   "streams",
+		Short: "Dump stream records",
 		RunE: func(cmd *cobra.Command, args []string) error {
 			return srdump(cmdConfig)
 		},
@@ -104,6 +130,14 @@ func init() {
 		Args:  cobra.ExactArgs(1),
 		RunE: func(cmd *cobra.Command, args []string) error {
 			return srstream(cmdConfig, args[0])
+		},
+	})
+
+	srCmd.AddCommand(&cobra.Command{
+		Use:   "nodes",
+		Short: "Get node records from the registry contract",
+		RunE: func(cmd *cobra.Command, args []string) error {
+			return nodesdump(cmdConfig)
 		},
 	})
 }

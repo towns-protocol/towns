@@ -2,6 +2,9 @@ import { ethers } from 'ethers'
 import { getContractsInfo } from './IStaticContractsInfo'
 import { MockERC721AShim } from './v3/MockERC721AShim'
 import { PublicClient } from 'viem'
+import { dlogger } from '@river/dlog'
+
+const logger = dlogger('csb:LocalhostWeb3Provider')
 
 export class LocalhostWeb3Provider extends ethers.providers.JsonRpcProvider {
     // note to self, the wallet contains a reference to a provider, which is a circular ref back this class
@@ -15,7 +18,7 @@ export class LocalhostWeb3Provider extends ethers.providers.JsonRpcProvider {
         const networkUrl = network
         super(networkUrl)
         this.wallet = (wallet ?? ethers.Wallet.createRandom()).connect(this)
-        console.log('initializing web3 provider with wallet', this.wallet.address)
+        logger.log('initializing web3 provider with wallet', this.wallet.address)
     }
 
     public async fundWallet() {
@@ -23,10 +26,10 @@ export class LocalhostWeb3Provider extends ethers.providers.JsonRpcProvider {
 
         const result = this.send('anvil_setBalance', [this.wallet.address, amountInWei])
 
-        // console.log('fundWallet tx', result, amountInWei, this.wallet.address)
+        // logger.log('fundWallet tx', result, amountInWei, this.wallet.address)
         // eslint-disable-next-line @typescript-eslint/no-unsafe-assignment
         await result
-        // console.log('fundWallet receipt', receipt)
+        // logger.log('fundWallet receipt', receipt)
     }
 
     /**

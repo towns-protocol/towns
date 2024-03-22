@@ -159,3 +159,7 @@ func (id *StreamId) ScanText(v pgtype.Text) error {
 	}
 	return nil
 }
+
+func (id StreamId) MarshalJSON() ([]byte, error) {
+	return []byte("\"" + id.String() + "\""), nil
+}

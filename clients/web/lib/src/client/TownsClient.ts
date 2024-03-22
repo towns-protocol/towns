@@ -366,7 +366,6 @@ export class TownsClient implements EntitlementsDelegate {
             createInfo.topic ? createInfo.topic : '',
             networkId,
             createInfo.streamSettings,
-            createInfo.isDefault,
         )
         await this.casablancaClient.waitForStream(streamId)
         return streamId
@@ -593,7 +592,6 @@ export class TownsClient implements EntitlementsDelegate {
             updateChannelInfo.channelId,
             updateChannelInfo.updatedChannelName ?? channelProperties?.name ?? '',
             updateChannelInfo.updatedChannelTopic ?? channelProperties?.topic ?? '',
-            updateChannelInfo.isDefault ?? channelProperties?.isDefault ?? false,
         )
     }
 

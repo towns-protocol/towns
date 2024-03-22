@@ -163,38 +163,28 @@ func MultiHandler(ctx context.Context, cfg *config.Config, streamService *Servic
 				mutex.Unlock()
 			}
 
-			numNode := streamService.nodeRegistry.NumNodes()
-			for i := 0; i < numNode; i++ {
-				client, err := http_client.GetHttpClient(ctx)
-				if err != nil {
-					log.Error("Error getting http client", "err", err)
-				}
+			client, err := http_client.GetHttpClient(ctx)
+			if err != nil {
+				log.Error("Error getting http client", "err", err)
+			}
 
-				node, err := streamService.nodeRegistry.GetNodeByIndex(i)
-				if err != nil {
-					log.Error("Error fetching node record", "err", err)
-				}
-
-				if !node.Local {
-					s, err := streamService.nodeRegistry.GetStreamServiceClientForAddress(node.Address)
-					if err != nil {
-						log.Error("Error fetching GetStreamServiceClientForAddress", "address", node.Address, "err", err)
-					}
-
+			nodes := streamService.nodeRegistry.GetAllNodes()
+			for _, node := range nodes {
+				if !node.Local() {
 					wg.Add(2)
 
-					data.Nodes = append(data.Nodes, node.Url)
+					data.Nodes = append(data.Nodes, node.Url())
 
 					// Initiate both requests in parallel
-					go makeRequest(client, node.Url+"/info", "HTTP", node.Url)
-					go makeInfoRequest(s, node.Url)
+					go makeRequest(client, node.Url()+"/info", "HTTP", node.Url())
+					go makeInfoRequest(node.StreamServiceClient(), node.Url())
 				}
 
 			}
 			wg.Wait()
 
 			log.Debug("data", "data", data)
-			err := tmpl.Execute(w, data) // Use the pre-parsed template
+			err = tmpl.Execute(w, data) // Use the pre-parsed template
 			if err != nil {
 				// Template execution failures are low value and typically due to closed tabs, so omit logging.
 				http.Error(w, "Internal Server Error", http.StatusInternalServerError)

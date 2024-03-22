@@ -6,6 +6,7 @@ import (
 
 	"github.com/river-build/river/core/node/dlog"
 	"github.com/river-build/river/core/node/protocol"
+	"github.com/stretchr/testify/assert"
 )
 
 func TestRiverError(t *testing.T) {
@@ -42,4 +43,34 @@ func TestRiverError(t *testing.T) {
 		Func("OuterFunc").Message("outer message").
 		Tag("int", 1).
 		LogInfo(log)
+}
+
+type testStruct1 struct{}
+
+func (t *testStruct1) GoString() string {
+	return "testStruct1"
+}
+
+type testStruct2 struct{}
+
+func (t testStruct2) GoString() string {
+	return "testStruct2"
+}
+
+func TestRiverErrorGoString(t *testing.T) {
+	assert := assert.New(t)
+	assert.Contains(RiverError(protocol.Err_INTERNAL, "GoStringer", "val", &testStruct1{}).Error(), "testStruct1")
+	assert.Contains(RiverError(protocol.Err_INTERNAL, "GoStringer", "val", testStruct2{}).Error(), "testStruct2")
+	assert.Contains(RiverError(protocol.Err_INTERNAL, "GoStringer", "val", &testStruct2{}).Error(), "testStruct2")
+}
+
+func TestRiverErrorBytes(t *testing.T) {
+	assert := assert.New(t)
+	slice := []byte{1, 2, 3, 15}
+	err := RiverError(protocol.Err_INTERNAL, "bytes", "val", slice)
+	println(err.Error())
+	assert.Contains(err.Error(), "0102030f")
+	err = RiverError(protocol.Err_INTERNAL, "bytesPtr", "val", &slice)
+	println(err.Error())
+	assert.Contains(err.Error(), "0102030f")
 }

@@ -5,6 +5,7 @@ import {
     RIVER_CHAIN_ID,
     LOCALHOST_RIVER_CHAIN_ID,
 } from '../Web3Constants'
+import { dlogger } from '@river/dlog'
 
 export type PromiseOrValue<T> = T | Promise<T>
 
@@ -13,6 +14,8 @@ export const UNKNOWN_ERROR = 'UNKNOWN_ERROR'
 interface Abis {
     readonly [chainId: number]: ethers.ContractInterface
 }
+
+const logger = dlogger('csb:BaseContractShim')
 
 // V2 smart contract shim
 // todo: replace BaseContractShim with this when refactoring is done
@@ -118,7 +121,7 @@ export class BaseContractShim<
          * Don't know how to decode it.
          */
         if (!errorData) {
-            console.log(
+            logger.log(
                 `parseError ${errorName}: no error data, or don't know how to extract error data`,
             )
             return {
@@ -138,12 +141,12 @@ export class BaseContractShim<
                 // eslint-disable-next-line @typescript-eslint/no-unsafe-assignment
                 message: errorMessage,
             }
-            console.log('decodedError', decodedError)
+            logger.log('decodedError', decodedError)
             return decodedError
             // eslint-disable-next-line @typescript-eslint/no-explicit-any
         } catch (e: any) {
             // Cannot decode error
-            console.error('cannot decode error', e)
+            logger.error('cannot decode error', e)
             return {
                 name: UNKNOWN_ERROR,
                 // eslint-disable-next-line @typescript-eslint/no-unsafe-assignment, @typescript-eslint/no-unsafe-member-access
@@ -209,7 +212,7 @@ export class BaseContractShim<
                     }
                 }
             } catch (error) {
-                console.log('error parsing reason', error)
+                logger.error('error parsing reason', error)
             }
         }
 

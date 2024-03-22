@@ -6,6 +6,7 @@ import (
 
 	"github.com/ethereum/go-ethereum/common"
 	. "github.com/river-build/river/core/node/base"
+	"github.com/river-build/river/core/node/contracts"
 	. "github.com/river-build/river/core/node/protocol"
 	"github.com/river-build/river/core/node/registries"
 	. "github.com/river-build/river/core/node/shared"
@@ -48,7 +49,7 @@ func (sr *streamRegistryImpl) GetStreamInfo(ctx context.Context, streamId Stream
 }
 
 func (sr *streamRegistryImpl) AllocateStream(ctx context.Context, streamId StreamId, genesisMiniblockHash common.Hash, genesisMiniblock []byte) ([]common.Address, error) {
-	addrs, err := chooseStreamNodes(ctx, streamId, sr.nodeRegistry, sr.replFactor)
+	addrs, err := sr.chooseStreamNodes(ctx, streamId)
 	if err != nil {
 		return nil, err
 	}
@@ -61,47 +62,38 @@ func (sr *streamRegistryImpl) AllocateStream(ctx context.Context, streamId Strea
 	return addrs, nil
 }
 
-func chooseStreamNodes(ctx context.Context, streamId StreamId, nr NodeRegistry, replFactor int) ([]common.Address, error) {
-	if replFactor < 1 {
-		replFactor = 1
+func (sr *streamRegistryImpl) chooseStreamNodes(ctx context.Context, streamId StreamId) ([]common.Address, error) {
+	allNodes := sr.nodeRegistry.GetAllNodes()
+
+	nodes := make([]*NodeRecord, 0, len(allNodes))
+
+	for _, n := range allNodes {
+		if n.Status() == contracts.NodeStatus_Operational {
+			nodes = append(nodes, n)
+		}
 	}
-	if nr.NumNodes() < replFactor {
+
+	if len(nodes) < sr.replFactor {
 		return nil, RiverError(
 			Err_BAD_CONFIG,
-			"replication factor is greater than number of nodes",
+			"replication factor is greater than number of operational nodes",
 			"replication_factor",
-			replFactor,
+			sr.replFactor,
 			"num_nodes",
-			nr.NumNodes(),
+			len(nodes),
 		)
 	}
 
-	indexes := make([]int, 0, replFactor)
 	h := fnv.New64a()
-	numNodes := uint64(nr.NumNodes())
-	for len(indexes) < replFactor {
+	addrs := make([]common.Address, sr.replFactor)
+	for i := 0; i < sr.replFactor; i++ {
 		h.Write(streamId.Bytes())
-		index := int(h.Sum64() % numNodes)
-	outerLoop:
-		for {
-			for _, i := range indexes {
-				if i == index {
-					index = (index + 1) % nr.NumNodes()
-					continue outerLoop
-				}
-			}
-			break
-		}
-		indexes = append(indexes, index)
+		index := i + int(h.Sum64()%uint64(len(nodes)-i))
+		tt := nodes[index]
+		nodes[index] = nodes[i]
+		nodes[i] = tt
+		addrs[i] = nodes[i].Address()
 	}
 
-	addrs := make([]common.Address, 0, len(indexes))
-	for _, i := range indexes {
-		addr, err := nr.GetNodeAddressByIndex(i)
-		if err != nil {
-			return nil, err
-		}
-		addrs = append(addrs, addr)
-	}
 	return addrs, nil
 }

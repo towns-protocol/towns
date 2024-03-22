@@ -14,11 +14,11 @@ import {SpaceHelper} from "contracts/test/spaces/SpaceHelper.sol";
 import {RuleEntitlement} from "contracts/src/crosschain/RuleEntitlement.sol";
 
 import {SpaceOwner} from "contracts/src/spaces/facets/owner/SpaceOwner.sol";
-import {NodeOperatorFacet} from "contracts/src/node/operator/NodeOperatorFacet.sol";
+import {NodeOperatorFacet} from "contracts/src/base/registry/facets/operator/NodeOperatorFacet.sol";
 
 // deployments
 import {DeploySpaceFactory} from "contracts/scripts/deployments/DeploySpaceFactory.s.sol";
-import {DeployNodeOperator} from "contracts/scripts/deployments/DeployNodeOperator.s.sol";
+import {DeployBaseRegistry} from "contracts/scripts/deployments/DeployBaseRegistry.s.sol";
 import {DeployRiverBase} from "contracts/scripts/deployments/DeployRiverBase.s.sol";
 
 import {DeployMainnetDelegation} from "contracts/scripts/deployments/DeployMainnetDelegation.s.sol";
@@ -29,7 +29,7 @@ import {DeployMainnetDelegation} from "contracts/scripts/deployments/DeployMainn
  */
 contract BaseSetup is TestUtils, SpaceHelper {
   DeploySpaceFactory internal deploySpaceFactory = new DeploySpaceFactory();
-  DeployNodeOperator internal deployNodeOperator = new DeployNodeOperator();
+  DeployBaseRegistry internal deployBaseRegistry = new DeployBaseRegistry();
   DeployRiverBase internal deployRiverToken = new DeployRiverBase();
   DeployMainnetDelegation internal deployMainnetDelegation =
     new DeployMainnetDelegation();
@@ -73,16 +73,15 @@ contract BaseSetup is TestUtils, SpaceHelper {
 
     // deploy node operator
     mainnetDelegation = deployMainnetDelegation.deploy();
-    nodeOperator = deployNodeOperator.deploy();
+    nodeOperator = deployBaseRegistry.deploy();
 
     // set the space owner registry and mainnet delegation on the node operator
-    vm.startPrank(deployer);
-    NodeOperatorFacet(nodeOperator).setSpaceOwnerRegistry(spaceFactory);
-    NodeOperatorFacet(nodeOperator).setMainnetDelegation(mainnetDelegation);
-    NodeOperatorFacet(nodeOperator).setRiverToken(riverToken);
-    vm.stopPrank();
-
-    stakeRequirement = deployNodeOperator.stakeRequirement();
+    // vm.startPrank(deployer);
+    // NodeOperatorFacet(nodeOperator).setSpaceOwnerRegistry(spaceFactory);
+    // NodeOperatorFacet(nodeOperator).setMainnetDelegation(mainnetDelegation);
+    // NodeOperatorFacet(nodeOperator).setRiverToken(riverToken);
+    // vm.stopPrank();
+    // stakeRequirement = deployBaseRegistry.stakeRequirement();
 
     // create a new space
     founder = _randomAddress();

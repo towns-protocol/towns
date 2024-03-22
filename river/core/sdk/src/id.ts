@@ -128,6 +128,15 @@ export const makeDefaultChannelStreamId = (spaceContractAddress: string): string
     // matches code in the smart contract
     return makeStreamId(StreamPrefix.Channel, spaceContractAddress + '0'.repeat(22))
 }
+
+export const isDefaultChannelId = (streamId: string): boolean => {
+    const prefix = streamId.slice(0, 2) as StreamPrefix
+    if (prefix !== StreamPrefix.Channel) {
+        return false
+    }
+    return streamId.endsWith('0'.repeat(22))
+}
+
 export const makeUniqueGDMChannelStreamId = (): string => makeStreamId(StreamPrefix.GDM, genId())
 export const makeUniqueMediaStreamId = (): string => makeStreamId(StreamPrefix.Media, genId())
 

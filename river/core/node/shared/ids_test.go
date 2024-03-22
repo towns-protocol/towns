@@ -1,13 +1,17 @@
 package shared
 
 import (
+	"bytes"
 	"fmt"
+	"log/slog"
 	"reflect"
 	"strings"
 	"testing"
 
 	"github.com/ethereum/go-ethereum/common"
+	. "github.com/river-build/river/core/node/base"
 	"github.com/river-build/river/core/node/dlog"
+	. "github.com/river-build/river/core/node/protocol"
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
 )
@@ -60,18 +64,6 @@ func TestStreamIdFromString(t *testing.T) {
 	assert.Equal(t, streamIdFromBytes, streamIdFromStr)
 }
 
-func TestLogStreamId(t *testing.T) {
-	log := dlog.Log()
-
-	streamId1, err := StreamIdFromString(padStringId(STREAM_SPACE_PREFIX + "a00000"))
-	require.NoError(t, err)
-	log.Info("streamId", "streamId1", streamId1)
-
-	streamId2, err := StreamIdFromBytes(padBytesId([]byte{STREAM_SPACE_BIN, 0x22, 0x33}))
-	require.NoError(t, err)
-	log.Info("streamId", "streamId2", streamId2)
-}
-
 func TestReflectStreamId(t *testing.T) {
 	streamId, err := StreamIdFromString(padStringId(STREAM_SPACE_PREFIX + "a00000"))
 	require.NoError(t, err)
@@ -83,6 +75,44 @@ func TestReflectStreamId(t *testing.T) {
 	i := v.Interface()
 	_, ok := i.(fmt.GoStringer)
 	assert.True(t, ok)
+}
+
+func TestLoggingText(t *testing.T) {
+	require := require.New(t)
+
+	buffer := &bytes.Buffer{}
+	log := slog.New(dlog.NewPrettyTextHandler(buffer, &dlog.PrettyHandlerOptions{
+		Colors: dlog.ColorMap_Disabled,
+	}))
+
+	streamId, err := StreamIdFromBytes(padBytesId([]byte{STREAM_SPACE_BIN, 0x22, 0x33}))
+	require.NoError(err)
+
+	log.Info("test", "streamId", streamId)
+	require.Contains(buffer.String(), "1022330000000000000000000000000000000000000000000000000000000000")
+}
+
+func TestLoggingJson(t *testing.T) {
+	require := require.New(t)
+
+	buffer := &bytes.Buffer{}
+	log := slog.New(dlog.NewPrettyJSONHandler(buffer, &dlog.PrettyHandlerOptions{}))
+
+	streamId, err := StreamIdFromBytes(padBytesId([]byte{STREAM_SPACE_BIN, 0x22, 0x33}))
+	require.NoError(err)
+
+	log.Info("test", "streamId", streamId)
+	require.Contains(buffer.String(), "1022330000000000000000000000000000000000000000000000000000000000")
+}
+
+func TestErrorFormat(t *testing.T) {
+	require := require.New(t)
+
+	streamId, err := StreamIdFromBytes(padBytesId([]byte{STREAM_SPACE_BIN, 0x22, 0x33}))
+	require.NoError(err)
+
+	err = RiverError(Err_INTERNAL, "test error", "streamId", streamId)
+	require.Contains(err.Error(), "1022330000000000000000000000000000000000000000000000000000000000")
 }
 
 func padStringId(s string) string {

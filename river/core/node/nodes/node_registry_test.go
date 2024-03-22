@@ -66,14 +66,15 @@ func TestNodeRegistryUpdates(t *testing.T) {
 	r, err = LoadNodeRegistry(ctx, rr, bc.Wallet.Address)
 	require.NoError(err)
 	require.NotNil(r)
-	require.Equal(1, r.NumNodes())
+	nodes := r.GetAllNodes()
+	require.Len(nodes, 1)
 
-	record, err := r.GetNodeByIndex(0)
+	record := nodes[0]
 	require.NoError(err)
-	require.Equal(btc.Wallets[0].Address, record.Address)
-	require.Equal(urls[0], record.Url)
-	require.True(record.Local)
-	require.Equal(contracts.NodeStatus_NotInitialized, record.Status)
+	require.Equal(btc.Wallets[0].Address, record.address)
+	require.Equal(urls[0], record.url)
+	require.True(record.local)
+	require.Equal(contracts.NodeStatus_NotInitialized, record.status)
 
 	_, err = owner.TxRunner.Submit(ctx, func(opts *bind.TransactOpts) (*types.Transaction, error) {
 		return btc.NodeRegistry.RegisterNode(opts, addrs[1], urls[1], contracts.NodeStatus_Operational)
@@ -83,14 +84,15 @@ func TestNodeRegistryUpdates(t *testing.T) {
 	blockNum := btc.BlockNum(ctx)
 	r.testWaitForBlock(blockNum)
 
-	require.Equal(2, r.NumNodes())
+	nodes = r.GetAllNodes()
+	require.Len(nodes, 2)
 
-	record, err = r.GetNodeByAddress(addrs[1])
+	record, err = r.GetNode(addrs[1])
 	require.NoError(err)
-	require.Equal(addrs[1], record.Address)
-	require.Equal(urls[1], record.Url)
-	require.False(record.Local)
-	require.Equal(contracts.NodeStatus_Operational, record.Status)
+	require.Equal(addrs[1], record.address)
+	require.Equal(urls[1], record.url)
+	require.False(record.local)
+	require.Equal(contracts.NodeStatus_Operational, record.status)
 
 	const updatedUrl = "https://river1-updated.test"
 	_, err = owner.TxRunner.Submit(ctx, func(opts *bind.TransactOpts) (*types.Transaction, error) {
@@ -101,12 +103,12 @@ func TestNodeRegistryUpdates(t *testing.T) {
 	blockNum = btc.BlockNum(ctx)
 	r.testWaitForBlock(blockNum)
 
-	record, err = r.GetNodeByAddress(addrs[1])
+	record, err = r.GetNode(addrs[1])
 	require.NoError(err)
-	require.Equal(addrs[1], record.Address)
-	require.Equal(updatedUrl, record.Url)
-	require.False(record.Local)
-	require.Equal(contracts.NodeStatus_Operational, record.Status)
+	require.Equal(addrs[1], record.address)
+	require.Equal(updatedUrl, record.url)
+	require.False(record.local)
+	require.Equal(contracts.NodeStatus_Operational, record.status)
 
 	_, err = owner.TxRunner.Submit(ctx, func(opts *bind.TransactOpts) (*types.Transaction, error) {
 		return btc.NodeRegistry.UpdateNodeStatus(opts, addrs[1], contracts.NodeStatus_Departing)
@@ -116,12 +118,12 @@ func TestNodeRegistryUpdates(t *testing.T) {
 	blockNum = btc.BlockNum(ctx)
 	r.testWaitForBlock(blockNum)
 
-	record, err = r.GetNodeByAddress(addrs[1])
+	record, err = r.GetNode(addrs[1])
 	require.NoError(err)
-	require.Equal(addrs[1], record.Address)
-	require.Equal(updatedUrl, record.Url)
-	require.False(record.Local)
-	require.Equal(contracts.NodeStatus_Departing, record.Status)
+	require.Equal(addrs[1], record.address)
+	require.Equal(updatedUrl, record.url)
+	require.False(record.local)
+	require.Equal(contracts.NodeStatus_Departing, record.status)
 
 	_, err = owner.TxRunner.Submit(ctx, func(opts *bind.TransactOpts) (*types.Transaction, error) {
 		tx, err := btc.NodeRegistry.RemoveNode(opts, addrs[1])
@@ -146,8 +148,9 @@ func TestNodeRegistryUpdates(t *testing.T) {
 	blockNum = btc.BlockNum(ctx)
 	r.testWaitForBlock(blockNum)
 
-	require.Equal(1, r.NumNodes())
-	record, err = r.GetNodeByAddress(addrs[1])
+	nodes = r.GetAllNodes()
+	require.Len(nodes, 1)
+	record, err = r.GetNode(addrs[1])
 	require.Error(err)
 	require.Nil(record)
 }

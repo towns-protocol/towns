@@ -18,6 +18,9 @@ import { getContractsInfo } from '../IStaticContractsInfo'
 import { WalletLink } from './WalletLink'
 import { SpaceDappConfig, SpaceInfo } from '../SpaceDappTypes'
 import { IRuleEntitlement } from './index'
+import { dlogger } from '@river/dlog'
+
+const logger = dlogger('csb:SpaceDapp:debug')
 
 export class SpaceDapp implements ISpaceDapp {
     public readonly chainId: number
@@ -268,7 +271,7 @@ export class SpaceDapp implements ISpaceDapp {
             throw new Error('TownArchitect is not deployed properly.')
         }
         const decodedErr = this.townRegistrar.TownArchitect.parseError(error)
-        console.error(decodedErr)
+        logger.error(decodedErr)
         return decodedErr
     }
 
@@ -278,7 +281,7 @@ export class SpaceDapp implements ISpaceDapp {
             throw new Error(`Town with spaceId "${spaceId}" is not found.`)
         }
         const decodedErr = town.parseError(error)
-        console.error(decodedErr)
+        logger.error(decodedErr)
         return decodedErr
     }
 
@@ -290,11 +293,11 @@ export class SpaceDapp implements ISpaceDapp {
         if (!town) {
             throw new Error(`Town with spaceId "${spaceId}" is not found.`)
         }
-        return logs.map((log) => {
+        return logs.map((spaceLog) => {
             try {
-                return town.parseLog(log)
+                return town.parseLog(spaceLog)
             } catch (err) {
-                console.error(err)
+                logger.error(err)
                 return
             }
         })
@@ -565,14 +568,14 @@ export class SpaceDapp implements ISpaceDapp {
         if (receipt.status !== 1) {
             return undefined
         }
-        for (const log of receipt.logs) {
+        for (const receiptLog of receipt.logs) {
             try {
                 // Parse the log with the contract interface
-                const parsedLog = this.townRegistrar.TownArchitect.interface.parseLog(log)
+                const parsedLog = this.townRegistrar.TownArchitect.interface.parseLog(receiptLog)
                 if (parsedLog.name === eventName) {
                     // If the log matches the event we're looking for, do something with it
                     // parsedLog.args contains the event arguments as an object
-                    console.log(`Event ${eventName} found: `, parsedLog.args)
+                    logger.log(`Event ${eventName} found: `, parsedLog.args)
                     return parsedLog.args.space as string
                 }
             } catch (error) {
