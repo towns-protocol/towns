@@ -10,7 +10,6 @@ import {
 import { MessageAttachmentsContext } from '@components/MessageAttachments/MessageAttachmentsContext'
 import { RichTextPreview } from '@components/RichText/RichTextPreview'
 import { Box, Paragraph, Stack, Text } from '@ui'
-import { PATHS } from 'routes'
 import { shortAddress } from 'ui/utils/utils'
 import { formatDate } from 'utils/formatDates'
 import { getPrettyDisplayName } from 'utils/getPrettyDisplayName'
@@ -55,6 +54,20 @@ export const EmbeddedMessage = (props: {
             : `Private Channel`
 
     const isKnownChannel = !!channel?.id
+    const isDM =
+        isDMChannelStreamId(attachment.info.channelId) ||
+        isGDMChannelStreamId(attachment.info.channelId)
+
+    const messageLinkRoot = isKnownChannel
+        ? isDM
+            ? createLink({ messageId: attachment.info.channelId })
+            : createLink({ spaceId: attachment.info.spaceId, channelId: attachment.info.channelId })
+        : undefined
+
+    const messageLink = messageLinkRoot
+        ? `${messageLinkRoot}#${attachment.info.messageId}`
+        : undefined
+
     const channelName =
         isKnownChannel && !!channel?.name ? `#${channel?.name}` : `From a ${channelType}`
 
@@ -107,12 +120,10 @@ export const EmbeddedMessage = (props: {
                     )}
 
                     <Text size="sm">{formatDate(Number(attachment.info.createdAtEpochMs))}</Text>
-                    {isKnownChannel && (
+                    {messageLink && (
                         <>
                             <Text>&bull;</Text>
-                            <Link
-                                to={`/${PATHS.SPACES}/${attachment.info.spaceId}/${PATHS.CHANNELS}/${attachment.info.channelId}#${attachment.info.messageId}`}
-                            >
+                            <Link to={messageLink}>
                                 <Text size="sm" color="cta2">
                                     View Message
                                 </Text>
@@ -123,4 +134,4 @@ export const EmbeddedMessage = (props: {
             </Box>
         </MessageAttachmentsContext.Provider>
     )
-}
+} // https://localhost:3000/t//channels/883694f664c498beb7f2424337f3b8182c130c73cbdf42ecb089c1459e570f10#e241f9471d14095577513ec73a9c7a4eb59989f950cf8c7116910772a7c34978
