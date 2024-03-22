@@ -107,7 +107,9 @@ export const ComboboxItem = withRef<
                 }}
                 name={item.text + (currentUser === item.key ? ` (you)` : '')}
                 Icon={<ComboboxIcon item={item.data} />}
-                trailingContent={<ComboBoxTrailingContent item={item.data} />}
+                trailingContent={
+                    (item.data as RoomMember).userId && <ComboBoxTrailingContent item={item.data} />
+                }
                 onClick={onClick}
                 onMouseEnter={onMouseEnter}
             />
