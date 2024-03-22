@@ -48,7 +48,7 @@ trap cleanup SIGINT SIGTERM
 for (( i=1; i<=N; i++ ))
 do
   INSTANCE_DIR="${BASE_DIR}/instance_${i}"
-  cp bin/node "${INSTANCE_DIR}/bin/node"
+  cp bin/xchain_node "${INSTANCE_DIR}/bin/xchain_node"
   pushd "${INSTANCE_DIR}"
   "./bin/xchain_node" run &
   node_pid=$!
