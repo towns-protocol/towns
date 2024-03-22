@@ -242,18 +242,18 @@ export class SyncedStreams {
                     syncId: this.syncId,
                     syncPos: syncCookie,
                 })
-                logger.info('[SyncedStreams] addedStreamToSync', syncCookie.streamId)
+                logger.info('[SyncedStreams] addedStreamToSync', syncCookie)
             } catch (err) {
                 // Trigger restart of sync loop
-                logger.info(`addedStreamToSync error`, err)
+                logger.error(`addedStreamToSync error`, { err })
                 if (errorContains(err, Err.BAD_SYNC_COOKIE)) {
-                    logger.info('[SyncedStreams] addStreamToSync BAD_SYNC_COOKIE', syncCookie)
+                    logger.error('[SyncedStreams] addStreamToSync BAD_SYNC_COOKIE', syncCookie)
                     throw err
                 }
             }
         } else {
             logger.info(
-                '[SyncedStream] addStreamToSync: not in "syncing" state; let main sync loop handle this with its streams map',
+                '[SyncedStreams] addStreamToSync: not in "syncing" state; let main sync loop handle this with its streams map',
                 syncCookie.streamId,
             )
         }
@@ -282,7 +282,7 @@ export class SyncedStreams {
             logger.info('[SyncedStreams] removed stream from sync', streamId)
         } else {
             logger.info(
-                '[SyncedStream] removeStreamFromSync: not in "syncing" state; let main sync loop handle this with its streams map',
+                '[SyncedStreams] removeStreamFromSync: not in "syncing" state; let main sync loop handle this with its streams map',
                 streamId,
             )
         }
@@ -295,7 +295,7 @@ export class SyncedStreams {
                 logger.info('[SyncedStreams] starting sync loop')
             } else {
                 logger.info(
-                    '[SyncedStream] runSyncLoop: invalid state transition',
+                    '[SyncedStreams] runSyncLoop: invalid state transition',
                     this.syncState,
                     '->',
                     SyncState.Starting,
@@ -394,7 +394,7 @@ export class SyncedStreams {
                                 }
 
                                 logger.info(
-                                    '[SyncedStream] got syncStreams response',
+                                    '[SyncedStreams] got syncStreams response',
                                     'syncOp',
                                     value.syncOp,
                                     'syncId',
@@ -435,7 +435,7 @@ export class SyncedStreams {
                                         break
                                     default:
                                         logger.info(
-                                            `[SyncedStream] unknown syncOp { syncId: ${this.syncId}, syncOp: ${value.syncOp} }`,
+                                            `[SyncedStreams] unknown syncOp { syncId: ${this.syncId}, syncOp: ${value.syncOp} }`,
                                         )
                                         break
                                 }
@@ -458,7 +458,7 @@ export class SyncedStreams {
                         this.syncId = undefined
                     } else {
                         logger.info(
-                            '[SyncedStream] onStopped: invalid state transition',
+                            '[SyncedStreams] onStopped: invalid state transition',
                             this.syncState,
                             '->',
                             SyncState.NotSyncing,
@@ -506,7 +506,7 @@ export class SyncedStreams {
                     : this.currentRetryCount + 1
             const retryDelay = 2 ** nextRetryCount * 1000 // 2^n seconds
             logger.info(
-                '[SyncedStream] sync error, retrying in',
+                '[SyncedStreams] sync error, retrying in',
                 retryDelay,
                 'ms',
                 ', { currentRetryCount:',
@@ -547,7 +547,7 @@ export class SyncedStreams {
             logger.info('[SyncedStreams] emitted streamSyncActive', true)
         } else {
             logger.info(
-                '[SyncedStream] syncStarted: invalid state transition',
+                '[SyncedStreams] syncStarted: invalid state transition',
                 this.syncState,
                 '->',
                 SyncState.Syncing,
@@ -638,7 +638,7 @@ export class SyncedStreams {
             }
         } else {
             logger.info(
-                '[SyncedStream] onUpdate: invalid state',
+                '[SyncedStreams] onUpdate: invalid state',
                 this.syncState,
                 'should have been',
                 SyncState.Syncing,
@@ -930,7 +930,7 @@ export class SyncedStreams {
         )
         for (const n of sortedNonces) {
             logger.info(
-                `[SyncedStream] sequence=${n.sequence}, nonce=${n.nonce}, pingAt=${
+                `[SyncedStreams] sequence=${n.sequence}, nonce=${n.nonce}, pingAt=${
                     n.pingAt
                 }, receivedAt=${n.receivedAt ?? 'none'}, duration=${n.duration ?? 'none'}`,
             )

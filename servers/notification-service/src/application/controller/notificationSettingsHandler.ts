@@ -8,13 +8,16 @@ import {
 } from '../schema/notificationSettingsSchema'
 import { z } from 'zod'
 import { logger } from '../logger'
+import { streamMonitorService } from '../services/stream/streamsMonitorService'
 
 export async function saveNotificationSettingsHandler(req: Request, res: Response) {
     const payload: z.infer<typeof saveUserSettingsSchema> = req.body
     const { userSettings } = payload
     const { userId } = userSettings
 
-    database.$transaction(async (tx) => {
+    const channelIds: Set<string> = new Set()
+
+    await database.$transaction(async (tx) => {
         try {
             const userSettingsData = {
                 UserId: userId,
@@ -52,6 +55,7 @@ export async function saveNotificationSettingsHandler(req: Request, res: Respons
 
             // upsert channel settings
             for (const channelSettings of userSettings.channelSettings) {
+                channelIds.add(channelSettings.channelId)
                 const newSettings = {
                     SpaceId: channelSettings.spaceId,
                     ChannelId: channelSettings.channelId,
@@ -75,6 +79,10 @@ export async function saveNotificationSettingsHandler(req: Request, res: Respons
             return res.status(StatusCodes.UNPROCESSABLE_ENTITY).json({ error: 'Invalid data' })
         }
     })
+
+    if (channelIds.size > 0) {
+        streamMonitorService.addNewStreamsToDB(channelIds)
+    }
 
     return res.status(StatusCodes.OK).json(userSettings)
 }

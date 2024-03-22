@@ -20,11 +20,12 @@ type StreamsMetadata = {
     }
 }
 
-export class StreamsMonitorService {
+class StreamsMonitorService {
     private rpcClient: StreamRpcClient = makeStreamRpcClient()
     private streams: SyncedStreams = new SyncedStreams(this.rpcClient)
     private intervalId: NodeJS.Timeout | null = null
     private releaseServiceAwait: (() => void) | undefined
+    private lastestStreamIdsProcessed: Set<string> = new Set()
 
     private async getNewStreamsToMonitor(): Promise<StreamsMetadata> {
         const streamIds = (
@@ -69,7 +70,7 @@ export class StreamsMonitorService {
         return ''
     }
 
-    public async addDMSyncStreamToDB(streamId: string): Promise<void> {
+    private async addDMSyncStreamToDB(streamId: string): Promise<void> {
         logger.info('[StreamsMonitorService] adding DM', streamId, 'to db')
 
         this.validateStream(streamId, StreamKind.DM)
@@ -147,7 +148,7 @@ export class StreamsMonitorService {
         }
     }
 
-    public async addGDMStreamToDB(streamId: string): Promise<void> {
+    private async addGDMStreamToDB(streamId: string): Promise<void> {
         logger.info('[StreamsMonitorService] adding gdm', streamId, 'to db')
         this.validateStream(streamId, StreamKind.GDM)
         const unpacked = await this.getAndParseStream(streamId)
@@ -162,7 +163,7 @@ export class StreamsMonitorService {
         })
     }
 
-    public async addChannelStreamToDB(streamId: string): Promise<void> {
+    private async addChannelStreamToDB(streamId: string): Promise<void> {
         logger.info(`[StreamsMonitorService] adding channel ${streamId} to db`)
         this.validateStream(streamId, StreamKind.Channel)
         const unpacked = await this.getAndParseStream(streamId)
@@ -265,10 +266,10 @@ export class StreamsMonitorService {
         if (env.NOTIFICATION_SYNC_ENABLED === 'true') {
             logger.info('[StreamsMonitorService] notification sync is enabled')
             await this.refreshChannelStreams()
-            const oneMinute = 1 * 60 * 1000
+            const tenMinutes = 10 * 60 * 1000
             this.intervalId = setInterval(async () => {
                 await this.refreshChannelStreams()
-            }, oneMinute)
+            }, tenMinutes)
 
             return this.streams.startSyncStreams()
         } else {
@@ -288,8 +289,67 @@ export class StreamsMonitorService {
         await this.removeStaleStreams()
     }
 
-    private async fetchAndAddNewChannelStreams() {
-        const streamsMetadata = await this.getNewStreamsToMonitor()
+    public async addNewStreamsToDB(streamIds: Set<string>) {
+        let newStreamIds = this.findUnprocessedStreams(streamIds)
+        if (newStreamIds.size === 0) {
+            logger.info('[StreamsMonitorService] all new streams already processed')
+            return
+        }
+
+        logger.info('[StreamsMonitorService] addStreamsToDB', { streamIds: newStreamIds })
+        const streamsMetadata: StreamsMetadata = {
+            [StreamKind.DM]: { streamIds: new Set() },
+            [StreamKind.GDM]: { streamIds: new Set() },
+            [StreamKind.Channel]: { streamIds: new Set() },
+        }
+
+        const streamsAlreadyInDB = (
+            await database.syncedStream.findMany({
+                where: {
+                    streamId: {
+                        in: Array.from(newStreamIds),
+                    },
+                },
+                select: {
+                    streamId: true,
+                },
+            })
+        ).map((s) => s.streamId)
+
+        newStreamIds = new Set([...newStreamIds].filter((s) => !streamsAlreadyInDB.includes(s)))
+
+        for (const streamId of newStreamIds) {
+            const streamKind = this.getStreamKind(streamId)
+            if (!streamKind) {
+                continue
+            }
+            streamsMetadata[streamKind].streamIds.add(streamId)
+        }
+
+        if (newStreamIds.size > 0) {
+            return this.processStreamsMetadata(streamsMetadata)
+        }
+    }
+
+    private findUnprocessedStreams(streamIds: Set<string>): Set<string> {
+        const newStreamIds = new Set(
+            [...streamIds].filter((s) => !this.lastestStreamIdsProcessed.has(s)),
+        )
+        if (newStreamIds.size > 0) {
+            this.lastestStreamIdsProcessed = new Set([
+                ...this.lastestStreamIdsProcessed,
+                ...streamIds,
+            ])
+            // keep 100 latest stream ids processed
+            if (this.lastestStreamIdsProcessed.size > 100) {
+                const streamIdsArray = Array.from(this.lastestStreamIdsProcessed).slice(-100)
+                this.lastestStreamIdsProcessed = new Set(streamIdsArray)
+            }
+        }
+        return newStreamIds
+    }
+
+    private async processStreamsMetadata(streamsMetadata: StreamsMetadata) {
         const notFoundStreams = new Set<string>()
         const addPromises: Promise<void>[] = []
 
@@ -360,6 +420,11 @@ export class StreamsMonitorService {
         }
     }
 
+    private async fetchAndAddNewChannelStreams() {
+        const streamsMetadata = await this.getNewStreamsToMonitor()
+        return this.processStreamsMetadata(streamsMetadata)
+    }
+
     private async removeStaleStreams() {
         const channelIds = (
             await database.userSettingsChannel.findMany({
@@ -402,3 +467,5 @@ export class StreamsMonitorService {
         }
     }
 }
+
+export const streamMonitorService = new StreamsMonitorService()

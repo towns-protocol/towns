@@ -46,7 +46,7 @@ can debug it in VS Code.
 
 ```bash
 ctrl+b w
-Arrow key to go to 'worker_push' pane
+Arrow key to go to 'notification_service' pane
 Enter to select pane
 ctrl+c to kill the instance
 ```
