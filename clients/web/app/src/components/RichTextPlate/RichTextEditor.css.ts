@@ -23,7 +23,9 @@ export const contentEditable = style([
 
 export const root = style({})
 
-export const paragraph = style({})
+export const paragraph = style({
+    marginBottom: vars.space.sm,
+})
 
 export const link = style([
     atoms({
@@ -160,7 +162,6 @@ export const codeBlock = style([
         border: 'level4',
     }),
     {
-        marginTop: vars.space.sm,
         marginBottom: vars.space.sm,
     },
     code,
@@ -197,10 +198,6 @@ globalStyle(`${richText} ol ul, ${richText} ol ol`, {
 
 globalStyle(`${richText} ul > ${listitem}:not(${listitemCheckedShared}) `, {
     marginLeft: vars.space.md,
-})
-
-globalStyle(`${richText} ${paragraph} + ${paragraph}`, {
-    marginTop: vars.space.md,
 })
 
 globalStyle(
