@@ -99,10 +99,10 @@ const DesktopChannelHeader = (props: Props & { showLoadingIndicator: boolean }) 
                         Turn on notifications for threads, mentions and DMs?
                     </Text>
                     <Box grow />
-                    <Button tone="cta1" onClick={requestPushPermission}>
+                    <Button size="button_sm" tone="cta1" onClick={requestPushPermission}>
                         Enable
                     </Button>
-                    <Button tone="level2" onClick={denyPushPermission}>
+                    <Button size="button_sm" tone="level2" onClick={denyPushPermission}>
                         No thanks
                     </Button>
                 </Stack>
