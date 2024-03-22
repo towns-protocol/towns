@@ -1,5 +1,5 @@
 import { AnimatePresence } from 'framer-motion'
-import React, { useCallback, useEffect, useState } from 'react'
+import React, { ButtonHTMLAttributes, useCallback, useEffect, useState } from 'react'
 import { Box, BoxProps } from '../Box/Box'
 import { Icon, IconName } from '../Icon'
 import { MotionBox, MotionParagraph, MotionStack } from '../Motion/MotionComponents'
@@ -16,15 +16,27 @@ type FancyButtonProps = {
     onClick?: () => void
     borderRadius?: BoxProps['borderRadius']
     boxShadow?: BoxProps['boxShadow']
-    type?: 'button' | 'submit' | 'reset'
-}
+} & Omit<
+    ButtonHTMLAttributes<HTMLButtonElement>,
+    'onDrag' | 'onDragEnd' | 'onDragStart' | 'onAnimationStart' | 'size' | 'color'
+>
 
 /**
  * Convulted button that enables background transitions
  */
 export const FancyButton = (props: FancyButtonProps) => {
-    const { icon, compact, spinner, disabled, boxShadow, borderRadius = 'sm', type } = props
-    const background = props.cta ? 'cta1' : 'level3'
+    const {
+        children,
+        cta,
+        icon,
+        compact,
+        spinner,
+        disabled,
+        boxShadow,
+        borderRadius = 'sm',
+        ...buttonProps
+    } = props
+    const background = cta ? 'cta1' : 'level3'
 
     const before = spinner ? (
         <ButtonSpinner />
@@ -62,8 +74,8 @@ export const FancyButton = (props: FancyButtonProps) => {
             centerContent
             whileTap="tap"
             as="button"
+            form={props.form}
             disabled={disabled}
-            type={type}
             borderRadius={borderRadius}
             initial="hide"
             animate="show"
@@ -88,6 +100,7 @@ export const FancyButton = (props: FancyButtonProps) => {
             cursor={spinner ? 'wait' : disabled ? 'not-allowed' : 'pointer'}
             onPointerDown={onTap}
             onClick={!disabled ? props.onClick : undefined}
+            {...buttonProps}
         >
             <AnimatePresence>
                 {
@@ -162,7 +175,7 @@ export const FancyButton = (props: FancyButtonProps) => {
                     initial="hide"
                     exit="hide"
                     animate="show"
-                    key={props.children}
+                    key={children}
                     layout="position"
                     fontWeight="medium"
                     color="inherit"
@@ -176,7 +189,7 @@ export const FancyButton = (props: FancyButtonProps) => {
                         },
                     }}
                 >
-                    {props.children}
+                    {children}
                 </MotionParagraph>
             </MotionStack>
         </MotionBox>
