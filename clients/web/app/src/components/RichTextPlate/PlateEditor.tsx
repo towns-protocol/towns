@@ -7,6 +7,7 @@ import {
     MessageType,
     RoomMember,
     SendTextMessageOptions,
+    useChannelMembers,
     useNetworkStatus,
 } from 'use-towns-client'
 import { datadogRum } from '@datadog/browser-rum'
@@ -139,15 +140,19 @@ const PlateEditorWithoutBoundary = ({
         return deserializeMd(_initialValue)
     }, [_initialValue, editable, valueFromStore])
 
-    const userMentions: TComboboxItemWithData<RoomMember>[] = useMemo(() => {
-        return props.users
-            .map((user) => ({
-                text: getPrettyDisplayName(user),
-                key: user.userId,
-                data: user,
-            }))
-            .filter(notUndefined)
-    }, [props.users])
+    const { memberIds: _memberIds } = useChannelMembers()
+    const memberIds = useMemo(() => new Set(_memberIds), [_memberIds])
+
+    const userMentions: TComboboxItemWithData<RoomMember & { isChannelMember: boolean }>[] =
+        useMemo(() => {
+            return props.users
+                .map((user) => ({
+                    text: getPrettyDisplayName(user),
+                    key: user.userId,
+                    data: { ...user, isChannelMember: memberIds.has(user.userId) },
+                }))
+                .filter(notUndefined)
+        }, [props.users, memberIds])
 
     const channelMentions: TComboboxItemWithData<Channel>[] = useMemo(() => {
         return props.channels
@@ -332,7 +337,7 @@ const PlateEditorWithoutBoundary = ({
                             />
                             <CaptureTownsLinkPlugin onUpdate={onMessageLinksUpdated} />
                             <EmojiPlugin />
-                            <MentionCombobox<RoomMember>
+                            <MentionCombobox<RoomMember & { isChannelMember: boolean }>
                                 id="users"
                                 items={userMentions}
                                 currentUser={props.userId}

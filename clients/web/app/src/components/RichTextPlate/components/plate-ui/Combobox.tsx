@@ -20,7 +20,7 @@ import {
     usePlateSelectors,
 } from '@udecode/plate-common'
 import { RoomMember } from 'use-towns-client'
-import { TypeaheadMenu, TypeaheadMenuItem } from '@ui'
+import { Text, TypeaheadMenu, TypeaheadMenuItem } from '@ui'
 import { Avatar } from '@components/Avatar/Avatar'
 import { TMentionComboboxTypes, TMentionEmoji } from '../../utils/ComboboxTypes'
 
@@ -34,6 +34,19 @@ export const ComboboxIcon = <T extends TMentionComboboxTypes>({
     } else {
         return <>#</>
     }
+}
+
+export const ComboBoxTrailingContent = <T extends TMentionComboboxTypes>({
+    item,
+}: PropsWithChildren<{ item: T }>) => {
+    if ((item as { isChannelMember: boolean }).isChannelMember) {
+        return null
+    }
+    return (
+        <Text truncate color="error">
+            Not in Channel
+        </Text>
+    )
 }
 
 export const ComboboxItem = withRef<
@@ -94,6 +107,7 @@ export const ComboboxItem = withRef<
                 }}
                 name={item.text + (currentUser === item.key ? ` (you)` : '')}
                 Icon={<ComboboxIcon item={item.data} />}
+                trailingContent={<ComboBoxTrailingContent item={item.data} />}
                 onClick={onClick}
                 onMouseEnter={onMouseEnter}
             />

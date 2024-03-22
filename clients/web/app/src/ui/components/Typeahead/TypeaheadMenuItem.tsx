@@ -13,6 +13,7 @@ export const TypeaheadMenuItem = <T extends MenuOption>(props: {
     option: T
     Icon?: JSX.Element
     name?: string
+    trailingContent?: JSX.Element
 }) => {
     const { index, isLast, isSelected, onClick, onMouseEnter, option } = props
 
@@ -43,6 +44,13 @@ export const TypeaheadMenuItem = <T extends MenuOption>(props: {
             <Box justifyContent="center">
                 <Text truncate>{props.name}</Text>
             </Box>
+
+            {props.trailingContent && (
+                <>
+                    <Box grow />
+                    <Box justifyContent="center">{props.trailingContent}</Box>
+                </>
+            )}
         </Stack>
     )
 }
