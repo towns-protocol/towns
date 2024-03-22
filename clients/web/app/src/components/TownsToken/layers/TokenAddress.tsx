@@ -1,6 +1,7 @@
 import { motion } from 'framer-motion'
 import React, { useEffect, useMemo, useState } from 'react'
 import { Box } from '@ui'
+import { FontFamily } from 'ui/utils/FontLoader'
 import * as styles from '../TownsToken.css'
 
 export const TokenAddress = (props: {
@@ -232,7 +233,7 @@ const Letter = (props: {
         <motion.p
             className={styles.letters}
             style={{
-                fontFamily: 'TitleFont',
+                fontFamily: FontFamily.MarketingFont,
                 fontSize: props.fontSize,
                 fontWeight: 500,
             }}

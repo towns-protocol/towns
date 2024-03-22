@@ -351,6 +351,7 @@ const root = createGlobalTheme(':root', {
     } as const,
 
     textTransform: {
+        lowercase: 'lowercase',
         uppercase: 'uppercase',
         capitalize: 'capitalize',
         none: 'normal',

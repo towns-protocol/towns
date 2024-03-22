@@ -18,7 +18,7 @@ const fontSizeVariants = {
 
 export const LetterStyles = recipe({
     base: {
-        fontFamily: 'TitleFont',
+        fontFamily: 'MarketingFont',
         fontSize: vars.fontSize.lg,
     },
     defaultVariants: {},

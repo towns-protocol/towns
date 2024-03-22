@@ -5,6 +5,10 @@ const BodyFontStyles = {
     letterSpacing: '-0.02em',
 }
 
+const HeadingFontStyles = {
+    fontVariationSettings: `"wght" 1000`,
+}
+
 /**
  * initial font metrics retrieved from:
  * https://fontdrop.info/#/?darkmode=true
@@ -23,11 +27,11 @@ const fontConfig = {
             capHeight: 700,
         },
     },
-    TitleFont: {
+    MarketingFont: {
         lineHeight: 62 / 56,
         fontMetrics: {
             ascent: 800,
-            descent: -200,
+            descent: -165,
             lineGap: 0,
             unitsPerEm: 1000,
             capHeight: 700,
@@ -37,6 +41,12 @@ const fontConfig = {
 
 export const FontFamily = Object.fromEntries(Object.keys(fontConfig).map((key) => [key, key])) as {
     [fontName in keyof typeof fontConfig]: fontName
+}
+
+export const FontFamilyClass = Object.fromEntries(
+    Object.keys(fontConfig).map((key) => [key, key]),
+) as {
+    [fontName in keyof typeof fontConfig]: `font-${fontName}`
 }
 
 type FontFamilySetting = {
@@ -83,7 +93,17 @@ export const fontSettings: Required<FontFamilySetting>[] = [
             weight: 'normal',
             style: 'normal',
         },
-        targets: ['p', 'ul', 'ol', 'h3', 'h4', 'h5', 'h6'],
+        targets: ['p', 'ul', 'ol', `.${FontFamilyClass.BodyFont}`],
+    },
+    {
+        ...generatedFontFamilySettings[FontFamily.BodyFont],
+        styles: HeadingFontStyles,
+        src: "url('/fonts/fold-grotesque-variable-proportional-pro.woff2')",
+        fontDescription: {
+            weight: 'normal',
+            style: 'normal',
+        },
+        targets: ['h1', 'h2', 'h3', 'h4', 'h5', 'h6', `.${FontFamilyClass.BodyFont}`],
     },
     {
         ...generatedFontFamilySettings[FontFamily.BodyFont],
@@ -96,7 +116,7 @@ export const fontSettings: Required<FontFamilySetting>[] = [
         targets: [],
     },
     {
-        ...generatedFontFamilySettings[FontFamily.TitleFont],
+        ...generatedFontFamilySettings[FontFamily.MarketingFont],
         src: "url('/fonts/Byrd-Black.woff2')",
         styles: {
             letterSpacing: '0',
@@ -107,7 +127,7 @@ export const fontSettings: Required<FontFamilySetting>[] = [
             weight: 'bold',
             style: 'normal',
         },
-        targets: ['h1', 'h2'],
+        targets: [`.${FontFamilyClass.MarketingFont}`],
     },
 ]
 

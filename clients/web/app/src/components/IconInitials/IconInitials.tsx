@@ -1,4 +1,5 @@
 import React from 'react'
+import { clsx } from 'clsx'
 import { Heading } from '@ui'
 import { LetterStyles, LetterStylesVariantProps } from './IconInitials.css'
 
@@ -7,9 +8,10 @@ export const IconInitials = (props: {
     children?: React.ReactNode
 }) => (
     <Heading
-        strong
-        textTransform="uppercase"
-        className={LetterStyles(props.letterFontSize ? { fontSize: props.letterFontSize } : {})}
+        marketingFont
+        className={clsx([
+            LetterStyles(props.letterFontSize ? { fontSize: props.letterFontSize } : undefined),
+        ])}
     >
         {props.children}
     </Heading>

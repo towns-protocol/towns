@@ -34,10 +34,13 @@ export const PageText = () => (
             <Badge value="2" alignSelf="start" />
             <Badge value="99" alignSelf="start" />
         </Container>
-        <Container label="Headings">
+        <Container debug label="Headings">
             <Heading level={1}>Heading 1</Heading>
             <Heading level={2}>Heading 2</Heading>
             <Heading level={3}>Heading 3</Heading>
+            <Heading marketingFont level={1}>
+                Heading 1 / Marketing Font
+            </Heading>
         </Container>
         <Container label="Text Content">
             <Box debug className={richText}>

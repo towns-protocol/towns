@@ -19,11 +19,9 @@ type Props = (ParagraphProps | LabelProps) & {
     children?: React.ReactNode
     // Size token
     size?: BoxProps['fontSize']
-
     truncate?: boolean
     noWrap?: boolean
     strong?: boolean
-
     display?: BoxProps['display']
     style?: BoxProps['style']
 } & TextSprinkles
@@ -41,6 +39,7 @@ export const Text = forwardRef<HTMLElement, TextProps>((props, ref) => {
         textAlign = 'left',
         truncate,
         noWrap,
+
         whiteSpace,
         children,
         className,

@@ -17,6 +17,7 @@ import {
     Paragraph,
     Stack,
     Text,
+    TextField,
 } from '@ui'
 import { BlurredBackground } from '@components/TouchLayoutHeader/BlurredBackground'
 import {
@@ -791,14 +792,12 @@ function SpaceNameField({
     return (
         <>
             <Box background="lightHover" rounded="sm">
-                <AutoGrowTextArea
-                    text={spaceNameValue}
-                    style={{
-                        fontFamily: 'TitleFont',
-                    }}
+                <TextField
+                    paddingY="sm"
+                    value={spaceNameValue}
                     maxLength={32}
                     fontSize="h2"
-                    paddingY="md"
+                    fontWeight="strong"
                     placeholder="Town name"
                     tone="none"
                     autoComplete="one-time-code"

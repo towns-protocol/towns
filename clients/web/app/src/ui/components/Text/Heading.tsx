@@ -1,4 +1,5 @@
 import React, { CSSProperties, forwardRef } from 'react'
+import { FontFamilyClass } from 'ui/utils/FontLoader'
 import { Text, TextProps } from './Text'
 
 enum HeadingNames {
@@ -22,6 +23,7 @@ type HeadingProps = {
     className?: string
     children?: React.ReactNode
     style?: CSSProperties
+    marketingFont?: boolean
     /**
      * Heading level, ordered from most important and down, equivalent to H1, H2, etc.
      */
@@ -29,7 +31,12 @@ type HeadingProps = {
 } & Omit<TextProps, 'size' | 'fontSize'>
 
 export const Heading = forwardRef<HTMLElement, HeadingProps>((props, ref) => {
-    const { level = 1, ...textProps } = props
+    const { level = 1, marketingFont, className: _className, ...textProps } = props
+    const className = !marketingFont
+        ? _className
+        : _className
+        ? `${FontFamilyClass.MarketingFont} ${_className}`
+        : FontFamilyClass.MarketingFont
     const { el, size } = HeadingLevel[level]
-    return <Text strong as={el} size={size} ref={ref} {...textProps} />
+    return <Text as={el} size={size} ref={ref} className={className} {...textProps} />
 })

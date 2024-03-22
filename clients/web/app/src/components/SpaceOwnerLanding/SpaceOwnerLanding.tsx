@@ -38,7 +38,7 @@ export const SpaceOwnerLanding = () => {
     return (
         <Stack padding={{ touch: 'md', default: 'x8' }} maxWidth="600">
             <Stack grow horizontal padding="lg">
-                <Heading level={1}>Welcome to {space?.name}</Heading>
+                <Heading level={2}>Welcome to {space?.name}</Heading>
             </Stack>
             <Stack padding="lg">
                 <Stack gap="lg">

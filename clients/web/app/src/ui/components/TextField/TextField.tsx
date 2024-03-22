@@ -18,13 +18,14 @@ type Props = {
     placeholder?: string
     type?: NativeInputProps['type']
     fontSize?: TextProps['fontSize']
+    fontWeight?: TextProps['fontWeight']
     textAlign?: TextProps['textAlign']
 } & FieldBaseProps &
     InputCallbackProps &
     InputHTMLAttributes<HTMLInputElement>
 
 export const TextField = forwardRef<HTMLInputElement, Props>((props, ref) => {
-    const { type, placeholder, fontSize, autoComplete, ...fieldProps } = props
+    const { type, placeholder, fontSize, fontWeight, autoComplete, ...fieldProps } = props
     return (
         <Field {...fieldProps}>
             {(overlays, { className, ...inputProps }) => (
@@ -37,6 +38,7 @@ export const TextField = forwardRef<HTMLInputElement, Props>((props, ref) => {
                         placeholder={placeholder}
                         className={clsx(className, styles.input)}
                         fontSize={fontSize}
+                        fontWeight={fontWeight}
                         autoComplete={autoComplete || 'off'}
                     />
                     {overlays}
