@@ -18,7 +18,6 @@ import { ErrorBoundary } from '@components/ErrorBoundary/ErrorBoundary'
 import { Box, BoxProps, Stack } from '@ui'
 import { useDevice } from 'hooks/useDevice'
 import { notUndefined } from 'ui/utils/utils'
-import { SpaceProtocol, useEnvironment } from 'hooks/useEnvironmnet'
 import { getPrettyDisplayName } from 'utils/getPrettyDisplayName'
 import { toMD } from '@components/RichTextPlate/utils/toMD'
 import {
@@ -97,7 +96,6 @@ const PlateEditorWithoutBoundary = ({
     const editorRef = useRef<PlateEditor<TElement[]>>(null)
     const editableContainerRef = useRef<HTMLDivElement>(null)
 
-    const { protocol } = useEnvironment()
     const { isTouch } = useDevice()
     const { isOffline } = useNetworkStatus()
     const { uploadFiles, files, isUploadingFiles } = useMediaDropContext()
@@ -251,7 +249,22 @@ const PlateEditorWithoutBoundary = ({
     const onBlur = useCallback(() => onFocusChange(false), [onFocusChange])
 
     const fileCount = files.length
-    const background = isEditing && !isTouch ? 'level1' : 'level2'
+    const background = isEditing && !isTouch ? 'level2' : 'level2'
+
+    const sendButtons = (
+        <SendMarkdownPlugin
+            displayButtons={displayButtons ?? 'on-focus'}
+            disabled={disabled}
+            focused={focused}
+            isEditing={isEditing ?? false}
+            hasImage={fileCount > 0}
+            key="markdownplugin"
+            isEditorEmpty={isEditorEmpty}
+            // onSendAttemptWhileDisabled={onSendAttemptWhileDisabled}
+            onSend={onSendCb}
+            onCancel={onCancel}
+        />
+    )
 
     return (
         <>
@@ -332,31 +345,21 @@ const PlateEditorWithoutBoundary = ({
                             <OfflineIndicator attemptingToSend={isAttemptingSend} />
                             <RememberInputPlugin storageId={storageId} />
                         </Box>
-                        <Box paddingY="sm" paddingRight="xs">
-                            <SendMarkdownPlugin
-                                displayButtons={displayButtons ?? 'on-focus'}
-                                disabled={disabled}
-                                focused={focused}
-                                isEditing={isEditing ?? false}
-                                hasImage={fileCount > 0}
-                                key="markdownplugin"
-                                isEditorEmpty={isEditorEmpty}
-                                // onSendAttemptWhileDisabled={onSendAttemptWhileDisabled}
-                                onSend={onSendCb}
-                                onCancel={onCancel}
-                            />
-                        </Box>
+                        {!isEditing && (
+                            <Box paddingY="sm" paddingRight="xs">
+                                {sendButtons}
+                            </Box>
+                        )}
                     </Stack>
                     <Stack
                         gap
                         shrink
+                        horizontal
                         paddingX
                         paddingBottom="sm"
                         pointerEvents={editable ? 'auto' : 'none'}
                     >
-                        {protocol === SpaceProtocol.Casablanca && (
-                            <PasteFilePlugin editableContainerRef={editableContainerRef} />
-                        )}
+                        <PasteFilePlugin editableContainerRef={editableContainerRef} />
                         <RichTextBottomToolbar
                             editing={isEditing}
                             focused={focused}
@@ -367,6 +370,12 @@ const PlateEditorWithoutBoundary = ({
                             setIsFormattingToolbarOpen={setIsFormattingToolbarOpen}
                             key="toolbar"
                         />
+                        <Box grow />
+                        {isEditing && (
+                            <Box paddingY="sm" paddingRight="xs">
+                                {sendButtons}
+                            </Box>
+                        )}
                     </Stack>
                 </Plate>
             </Stack>
