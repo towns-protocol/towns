@@ -49,6 +49,19 @@ while getopts "huxicp" arg; do
   esac
 done
 
+confirmContinue() {
+    local promptMessage="$1"  # Use $1 to access the first argument passed to the function
+
+    if [[ $INTERACTIVE -eq 1 ]]; then
+        read -p "${promptMessage} (any key/n) " -n 1 -r
+        echo    # Move to a new line
+        if [[ $REPLY =~ ^[Nn]$ ]]; then
+            echo "Merge aborted."
+            exit 1 
+        fi
+    fi
+}
+
 function parse_git_branch() {
     git branch 2> /dev/null | sed -e '/^[^*]/d' -e 's/* \(.*\)/\1/'
 }
@@ -171,17 +184,36 @@ fi
 # Pull the latest changes from the subtree, preserving history
 git subtree pull --prefix="${SUBTREE_PREFIX}" "${SUBTREE_REPO}" "${SUBTREE_BRANCH}" --squash -m "git subtree pull ${SUBTREE_PREFIX} at ${SHORT_HASH}"
 
+confirmContinue "Subtree pull complete. Would you like to continue?"
+
 # Check for unresolved conflicts
 if git ls-files -u | grep -q '^[^ ]'; then
-  echo "Unresolved conflicts detected. Accepting theirs."
-  git diff --name-only --diff-filter=U | xargs git checkout --theirs
+    echo "Unresolved conflicts detected. Accepting theirs."
+    git diff --name-only --diff-filter=U | while read file; do
+        echo "Accepting 'theirs' version of $file"
+        git checkout --theirs -- "$file"
+        exit_status=$?
+        if [ $exit_status -eq 0 ]; then
+            git add "$file"
+        else
+            echo "Failed to checkout $file. "
+            # If there isn't a 'their' version, this means the file might have been deleted or renamed in 'their' branch.
+            git rm -- "$file"
+            echo "File $file removed to accept 'their' structure."
+        fi
+    done
 fi
+
+
+confirmContinue "Conflict resolution complete. Would you like to continue?"
 
 # Remove specific files that should not be merged
 remove_river_yarn_files
 
 # Commit the changes if there are any
 if ! git diff main --quiet --cached; then
+    confirmContinue "Yarn install complete. Would you like to continue?"
+
     git add .
     SUBTREE_MERGE_MESSAGE="$(RIVER_ALLOW_COMMIT=true git commit --dry-run)"
     RIVER_ALLOW_COMMIT=true git commit -m "git subtree pull --prefix=${SUBTREE_PREFIX} ${SUBTREE_REPO} ${SUBTREE_BRANCH} --squash" -m "$SUBTREE_MERGE_MESSAGE"
@@ -190,15 +222,8 @@ if ! git diff main --quiet --cached; then
     # Run yarn, commit new yarn.lock, and check for build breakages
     yarn_install_and_check
     
-    if [[ $INTERACTIVE -eq 1 ]]; then
-        read -p "Do you want to continue and create a pull request? (y/n) " -n 1 -r
-        echo
-        if [[ ! $REPLY =~ ^[Yy]$ ]]; then
-            echo "Pull request creation aborted."
-            exit 0
-        fi
-    fi
-
+    confirmContinue "Do you want to continue and create a pull request?"
+    
     # Push the branch to origin
     git push -u origin "${BRANCH_NAME}"
 
