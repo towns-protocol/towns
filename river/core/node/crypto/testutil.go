@@ -242,12 +242,38 @@ func (c *BlockchainTestContext) GetBlockchain(ctx context.Context, index int, au
 }
 
 func (c *BlockchainTestContext) InitNodeRecord(ctx context.Context, index int, url string) error {
+	return c.InitNodeRecordEx(ctx, index, url, contracts.NodeStatus_Operational)
+}
+
+func (c *BlockchainTestContext) InitNodeRecordEx(ctx context.Context, index int, url string, status uint8) error {
 	owner := c.DeployerBlockchain
 
 	tx, err := owner.TxRunner.Submit(
 		ctx,
 		func(opts *bind.TransactOpts) (*types.Transaction, error) {
-			return c.NodeRegistry.RegisterNode(opts, c.Wallets[index].Address, url, 2)
+			return c.NodeRegistry.RegisterNode(opts, c.Wallets[index].Address, url, status)
+		},
+	)
+	if err != nil {
+		return err
+	}
+
+	err = c.mineBlock()
+	if err != nil {
+		return err
+	}
+
+	_, err = WaitMined(ctx, owner.Client, tx.Hash(), time.Millisecond, time.Second*10)
+	return err
+}
+
+func (c *BlockchainTestContext) UpdateNodeStatus(ctx context.Context, index int, status uint8) error {
+	owner := c.DeployerBlockchain
+
+	tx, err := owner.TxRunner.Submit(
+		ctx,
+		func(opts *bind.TransactOpts) (*types.Transaction, error) {
+			return c.NodeRegistry.UpdateNodeStatus(opts, c.Wallets[index].Address, status)
 		},
 	)
 	if err != nil {

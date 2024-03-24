@@ -1,6 +1,6 @@
 import { isEthersProvider } from './Utils'
 import { Versions, defaultVersion } from './ContractTypes'
-import { SpaceDappConfig as DappConfig } from './SpaceDappTypes'
+import { DappConfig } from './types'
 import { RiverRegistry } from './v3/RiverRegistry'
 
 export function createRiverRegistry(

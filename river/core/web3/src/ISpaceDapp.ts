@@ -12,7 +12,7 @@ import {
 
 import { WalletLink as WalletLinkV3 } from './v3/WalletLink'
 import { BytesLike, ContractReceipt, ContractTransaction, ethers } from 'ethers'
-import { SpaceInfo } from './SpaceDappTypes'
+import { SpaceInfo } from './types'
 import { IRolesBase, Town, TownRegistrar, IRuleEntitlement } from './v3'
 import { PricingModules } from './v3/PricingModules'
 

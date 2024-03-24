@@ -23,7 +23,7 @@ import assert from 'assert'
 import _ from 'lodash'
 import { MockEntitlementsDelegate } from './utils'
 import { SignerContext, makeSignerContext } from './signerContext'
-import { LocalhostWeb3Provider, PricingModuleStruct, createRiverRegistry } from '@river/web3'
+import { createRiverRegistry, LocalhostWeb3Provider, PricingModuleStruct } from '@river/web3'
 
 const log = dlog('csb:test:util')
 
@@ -37,9 +37,12 @@ const TEST_URL_MULTI =
 let testUrls: string[] | undefined = undefined
 let curTestUrl = -1
 
-const initTestUrls = async () => {
+const initTestUrls = async (): Promise<{
+    testUrls: string[]
+    refreshNodeUrl?: () => Promise<string>
+}> => {
     if (testUrls !== undefined) {
-        return testUrls
+        return { testUrls }
     }
     if (process.env.RIVER_TEST_URLS !== undefined && process.env.RIVER_TEST_URLS !== '') {
         const urls = process.env.RIVER_TEST_URLS.split(',')
@@ -47,42 +50,44 @@ const initTestUrls = async () => {
             'initTestUrls, Using explicit urls from RIVER_TEST_URLS, not RIVER_TEST_CONNECT, urls=',
             urls,
         )
-        return urls
+        return { testUrls: urls }
     }
     // create localhost web3 provider to read node urls from river anvil instance river registry
-    const returnRiverRegistryNodes = async () => {
+    const returnRiverRegistryNodes = async (): Promise<{
+        urls: string
+        refreshNodeUrl?: () => Promise<string>
+    }> => {
         const wallet = ethers.Wallet.createRandom()
         const provider = new LocalhostWeb3Provider(wallet, RIVER_ANVIL)
         const chainId = (await provider.getNetwork()).chainId
-        const riverRegistry = createRiverRegistry({ chainId: chainId, provider: provider })
-        const nodeUrls = await riverRegistry.getAllNodeUrls(2)
-        if (nodeUrls === undefined) {
-            log('initTestUrls, no nodes found in river registry')
-            return undefined
-        }
-        return nodeUrls.map((v) => v.url)
+        const riverRegistry = createRiverRegistry({ chainId, provider })
+        const urls = await riverRegistry.getOperationalNodeUrls()
+        return { urls, refreshNodeUrl: () => riverRegistry.getOperationalNodeUrls() }
     }
     const config = process.env.RIVER_TEST_CONNECT
-    const riverRegistryNodes = await returnRiverRegistryNodes()
+    const { urls: riverRegistryNodes, refreshNodeUrl } = await returnRiverRegistryNodes()
 
     if (config === 'single') {
-        testUrls = riverRegistryNodes ?? [TEST_URL_SINGLE]
+        testUrls = riverRegistryNodes.split(',') ?? [TEST_URL_SINGLE]
     } else if (config === 'single_ent') {
-        testUrls = riverRegistryNodes ?? [TEST_URL_SINGLE_ENT]
+        testUrls = riverRegistryNodes.split(',') ?? [TEST_URL_SINGLE_ENT]
     } else if (config === 'multi') {
-        testUrls = riverRegistryNodes ?? TEST_URL_MULTI.split(',')
+        testUrls = riverRegistryNodes.split(',') ?? TEST_URL_MULTI.split(',')
     } else {
         throw new Error(`invalid RIVER_TEST_CONNECT: ${config}`)
     }
     log('initTestUrls, RIVER_TEST_CONNECT=', config, 'testUrls=', testUrls)
-    return testUrls
+    return { testUrls, refreshNodeUrl }
 }
 
-export const getNextTestUrl = async () => {
-    const testUrls = await initTestUrls()
+export const getNextTestUrl = async (): Promise<{
+    urls: string
+    refreshNodeUrl?: () => Promise<string>
+}> => {
+    const { testUrls, refreshNodeUrl } = await initTestUrls()
     if (testUrls.length === 1) {
         log('getNextTestUrl, url=', testUrls[0])
-        return testUrls[0]
+        return { urls: testUrls[0], refreshNodeUrl }
     } else if (testUrls.length > 1) {
         if (curTestUrl < 0) {
             const seed: string | undefined = expect.getState()?.currentTestName
@@ -101,15 +106,15 @@ export const getNextTestUrl = async () => {
         }
         curTestUrl = (curTestUrl + 1) % testUrls.length
         log('getNextTestUrl, url=', testUrls[curTestUrl], 'index=', curTestUrl)
-        return testUrls[curTestUrl]
+        return { urls: testUrls[curTestUrl], refreshNodeUrl }
     } else {
         throw new Error('no test urls')
     }
 }
 
 export const makeTestRpcClient = async () => {
-    const url = await getNextTestUrl()
-    return makeStreamRpcClient(url)
+    const { urls: url, refreshNodeUrl } = await getNextTestUrl()
+    return makeStreamRpcClient(url, undefined, refreshNodeUrl)
 }
 
 export const makeEvent_test = async (

@@ -125,7 +125,7 @@ func appendTextAny(s *handleState, a any, inline bool) error {
 		Quote:           false,
 		InitialIndent:   indent,
 		SkipNilAndEmpty: true,
-		ShortHex:        true,
+		ShortHex:        !s.h.opts.DisableShortHex,
 		Colors:          s.h.opts.Colors,
 	})
 	return nil

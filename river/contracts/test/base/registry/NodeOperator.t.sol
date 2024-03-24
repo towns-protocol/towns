@@ -22,7 +22,7 @@ import {ERC721A} from "contracts/src/diamond/facets/token/ERC721A/ERC721A.sol";
 import {River} from "contracts/src/tokens/river/base/River.sol";
 import {MainnetDelegation} from "contracts/src/tokens/river/base/delegation/MainnetDelegation.sol";
 
-contract BaseRegistryTest is
+contract NodeOperatorFacetTest is
   BaseSetup,
   ISpaceDelegation,
   IOwnableBase,
@@ -60,32 +60,28 @@ contract BaseRegistryTest is
   // =============================================================
   //                           registerOperator
   // =============================================================
-
-  function test_revertWhen_registerOperatorIsCalledWithZeroAddress() public {
-    vm.expectRevert(BaseRegistryErrors.NodeOperator__InvalidAddress.selector);
-    operator.registerOperator(address(0));
-  }
-
-  modifier givenNodeOperatorIsRegistered(address _operator) {
+  modifier givenOperatorIsRegistered(address _operator) {
     vm.assume(address(_operator) != address(0));
     vm.expectEmit();
     emit INodeOperator.OperatorRegistered(_operator);
-    operator.registerOperator(_operator);
+    vm.prank(_operator);
+    operator.registerOperator();
     _;
   }
 
   function test_revertWhen_registerOperatorWithAlreadyRegisteredOperator(
     address randomOperator
-  ) public givenNodeOperatorIsRegistered(randomOperator) {
+  ) public givenOperatorIsRegistered(randomOperator) {
     vm.expectRevert(
       BaseRegistryErrors.NodeOperator__AlreadyRegistered.selector
     );
-    operator.registerOperator(randomOperator);
+    vm.prank(randomOperator);
+    operator.registerOperator();
   }
 
   function test_registerOperatorWithValidAddress(
     address randomOperator
-  ) public givenNodeOperatorIsRegistered(randomOperator) {
+  ) public givenOperatorIsRegistered(randomOperator) {
     assertEq(erc721.balanceOf(randomOperator), 1);
     assertTrue(
       operator.getOperatorStatus(randomOperator) == NodeOperatorStatus.Standby
@@ -99,7 +95,8 @@ contract BaseRegistryTest is
       vm.assume(randomOperators[i] != address(0));
       vm.assume(erc721.balanceOf(randomOperators[i]) == 0);
 
-      operator.registerOperator(randomOperators[i]);
+      vm.prank(randomOperators[i]);
+      operator.registerOperator();
       assertEq(erc721.balanceOf(randomOperators[i]), 1);
       assertTrue(
         operator.getOperatorStatus(randomOperators[i]) ==
@@ -121,7 +118,7 @@ contract BaseRegistryTest is
 
   function test_isOperatorWithValidOperator(
     address randomOperator
-  ) public givenNodeOperatorIsRegistered(randomOperator) {
+  ) public givenOperatorIsRegistered(randomOperator) {
     assertTrue(operator.isOperator(randomOperator));
   }
 
@@ -131,7 +128,7 @@ contract BaseRegistryTest is
 
   function test_revertWhen_setOperatorStatusIsCalledByNonOwner(
     address randomOperator
-  ) public givenNodeOperatorIsRegistered(randomOperator) {
+  ) public givenOperatorIsRegistered(randomOperator) {
     address randomOwner = _randomAddress();
 
     vm.prank(randomOwner);
@@ -167,14 +164,14 @@ contract BaseRegistryTest is
 
   function test_revertWhen_setOperatorStatusWithStatusNotChanged(
     address randomOperator
-  ) public givenNodeOperatorIsRegistered(randomOperator) whenCalledByDeployer {
+  ) public givenOperatorIsRegistered(randomOperator) whenCalledByDeployer {
     vm.expectRevert(BaseRegistryErrors.NodeOperator__StatusNotChanged.selector);
     operator.setOperatorStatus(randomOperator, NodeOperatorStatus.Standby);
   }
 
   function test_revertWhen_setOperatorStatusFromStandbyToExiting(
     address randomOperator
-  ) public givenNodeOperatorIsRegistered(randomOperator) whenCalledByDeployer {
+  ) public givenOperatorIsRegistered(randomOperator) whenCalledByDeployer {
     vm.expectRevert(
       BaseRegistryErrors.NodeOperator__InvalidStatusTransition.selector
     );
@@ -183,7 +180,7 @@ contract BaseRegistryTest is
 
   // function test_revertWhen_setOperatorStatusFromStandbyToApprovedWithNoStake(
   //   address randomOperator
-  // ) public givenNodeOperatorIsRegistered(randomOperator) whenCalledByDeployer {
+  // ) public givenOperatorIsRegistered(randomOperator) whenCalledByDeployer {
   //   vm.expectRevert(BaseRegistryErrors.NodeOperator__NotEnoughStake.selector);
   //   operator.setOperatorStatus(randomOperator, NodeOperatorStatus.Approved);
   // }
@@ -229,7 +226,7 @@ contract BaseRegistryTest is
   //   address randomOperator
   // )
   //   public
-  //   givenNodeOperatorIsRegistered(randomOperator)
+  //   givenOperatorIsRegistered(randomOperator)
   //   givenStakeComesFromMainnetDelegation(delegator, randomOperator)
   //   whenSetOperatorStatusIsCalledByTheOwner(
   //     randomOperator,
@@ -252,7 +249,7 @@ contract BaseRegistryTest is
   )
     public
     givenCallerHasBridgedTokens(delegator, amount)
-    givenNodeOperatorIsRegistered(randomOperator)
+    givenOperatorIsRegistered(randomOperator)
     givenNodeOperatorHasStake(delegator, randomOperator)
     whenSetOperatorStatusIsCalledByTheOwner(
       randomOperator,
@@ -271,7 +268,7 @@ contract BaseRegistryTest is
   )
     public
     givenCallerHasBridgedTokens(delegator, amount)
-    givenNodeOperatorIsRegistered(randomOperator)
+    givenOperatorIsRegistered(randomOperator)
     givenNodeOperatorHasStake(delegator, randomOperator)
     whenSetOperatorStatusIsCalledByTheOwner(
       randomOperator,
@@ -292,7 +289,7 @@ contract BaseRegistryTest is
   )
     public
     givenCallerHasBridgedTokens(delegator, amount)
-    givenNodeOperatorIsRegistered(randomOperator)
+    givenOperatorIsRegistered(randomOperator)
     givenNodeOperatorHasStake(delegator, randomOperator)
     whenSetOperatorStatusIsCalledByTheOwner(
       randomOperator,
@@ -317,7 +314,7 @@ contract BaseRegistryTest is
   )
     public
     givenCallerHasBridgedTokens(delegator, amount)
-    givenNodeOperatorIsRegistered(randomOperator)
+    givenOperatorIsRegistered(randomOperator)
     givenNodeOperatorHasStake(delegator, randomOperator)
     whenSetOperatorStatusIsCalledByTheOwner(
       randomOperator,
@@ -349,7 +346,7 @@ contract BaseRegistryTest is
 
   function test_getOperatorStatus_registeredOperator(
     address randomOperator
-  ) public givenNodeOperatorIsRegistered(randomOperator) {
+  ) public givenOperatorIsRegistered(randomOperator) {
     assertTrue(
       operator.getOperatorStatus(randomOperator) == NodeOperatorStatus.Standby
     );
@@ -362,7 +359,7 @@ contract BaseRegistryTest is
   )
     public
     givenCallerHasBridgedTokens(delegator, amount)
-    givenNodeOperatorIsRegistered(randomOperator)
+    givenOperatorIsRegistered(randomOperator)
     givenNodeOperatorHasStake(delegator, randomOperator)
     whenSetOperatorStatusIsCalledByTheOwner(
       randomOperator,
@@ -381,7 +378,7 @@ contract BaseRegistryTest is
   )
     public
     givenCallerHasBridgedTokens(delegator, amount)
-    givenNodeOperatorIsRegistered(randomOperator)
+    givenOperatorIsRegistered(randomOperator)
     givenNodeOperatorHasStake(delegator, randomOperator)
     whenSetOperatorStatusIsCalledByTheOwner(
       randomOperator,
@@ -403,7 +400,7 @@ contract BaseRegistryTest is
 
   function test_getOperatorsByStatus(
     address randomOperator1
-  ) public givenNodeOperatorIsRegistered(randomOperator1) {
+  ) public givenOperatorIsRegistered(randomOperator1) {
     address[] memory operators = _getOperatorsByStatus(
       NodeOperatorStatus.Standby
     );
@@ -411,11 +408,35 @@ contract BaseRegistryTest is
   }
 
   // =============================================================
+  //                           setCommissionRate
+  // =============================================================
+  function test_setCommissionRate(
+    address randomOperator,
+    uint256 rate
+  ) external givenOperatorIsRegistered(randomOperator) {
+    vm.prank(randomOperator);
+    vm.expectEmit(nodeOperator);
+    emit INodeOperator.OperatorCommissionChanged(randomOperator, rate);
+    operator.setCommissionRate(rate);
+
+    assertEq(operator.getCommissionRate(randomOperator), rate);
+  }
+
+  function test_revertWhen_setCommissionRateIsCalledByInvalidOperator(
+    address randomOperator,
+    uint256 rate
+  ) external {
+    vm.expectRevert(BaseRegistryErrors.NodeOperator__NotRegistered.selector);
+    vm.prank(randomOperator);
+    operator.setCommissionRate(rate);
+  }
+
+  // =============================================================
   //                           addSpaceDelegation
   // =============================================================
   // function test_revertWhen_addSpaceDelegationIsCalledWithZeroSpaceAddress(
   //   address randomOperator
-  // ) public givenNodeOperatorIsRegistered(randomOperator) {
+  // ) public givenOperatorIsRegistered(randomOperator) {
   //   vm.expectRevert(BaseRegistryErrors.NodeOperator__InvalidAddress.selector);
   //   operator.addSpaceDelegation(address(0), randomOperator);
   // }
@@ -430,7 +451,7 @@ contract BaseRegistryTest is
   // function test_revertWhen_addSpaceDelegationIsCalledByInvalidSpaceOwner(
   //   address randomUser,
   //   address randomOperator
-  // ) public givenNodeOperatorIsRegistered(randomOperator) {
+  // ) public givenOperatorIsRegistered(randomOperator) {
   //   vm.assume(randomUser != address(0));
 
   //   vm.prank(randomUser);
@@ -458,7 +479,7 @@ contract BaseRegistryTest is
   //   address randomOperator
   // )
   //   public
-  //   givenNodeOperatorIsRegistered(randomOperator)
+  //   givenOperatorIsRegistered(randomOperator)
   //   givenSpaceHasDelegatedToOperator(randomOperator)
   // {
   //   vm.prank(founder);
@@ -475,7 +496,7 @@ contract BaseRegistryTest is
   //   address randomOperator
   // )
   //   public
-  //   givenNodeOperatorIsRegistered(randomOperator)
+  //   givenOperatorIsRegistered(randomOperator)
   //   givenSpaceHasDelegatedToOperator(randomOperator)
   // {
   //   assertEq(operator.getSpaceDelegation(space), randomOperator);
@@ -486,7 +507,7 @@ contract BaseRegistryTest is
   // =============================================================
   function test_revertWhen_transferIsCalled(
     address randomOperator
-  ) public givenNodeOperatorIsRegistered(randomOperator) {
+  ) public givenOperatorIsRegistered(randomOperator) {
     vm.prank(randomOperator);
     vm.expectRevert(TransferFromIncorrectOwner.selector);
     erc721.transferFrom(randomOperator, _randomAddress(), 0);

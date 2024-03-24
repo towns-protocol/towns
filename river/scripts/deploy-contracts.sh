@@ -15,9 +15,9 @@ if [ "${1-}" != "nobuild" ]; then
 fi
 
 # V3 Contracts
-make deploy-base-anvil-nb contract=DeploySpaceFactory
-make deploy-base-anvil-nb contract=DeployMember
-make deploy-base-anvil-nb contract=DeployMockNFT
+make deploy-base-anvil type=contract contract=DeploySpaceFactory
+make deploy-base-anvil type=contract contract=DeployMember
+make deploy-base-anvil type=contract contract=DeployMockNFT
 
 cd ..
 mkdir -p core/node/run_files/addresses

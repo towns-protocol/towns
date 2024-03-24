@@ -22,10 +22,6 @@ fs_permissions = [
 extra_output = ["metadata", "abi", "bin"]
 extra_output_files = ["metadata", "abi", "bin"]
 
-[profile.ci]
-fuzz = { runs = 10_000 }
-verbosity = 4
-
 [etherscan]
 sepolia = { key = "${ETHERSCAN_API_KEY}" }
 base_sepolia = { key = "${BLOCKSCOUT_SEPOLIA_API_KEY}", url = "${BLOCKSCOUT_SEPOLIA_URL}" }

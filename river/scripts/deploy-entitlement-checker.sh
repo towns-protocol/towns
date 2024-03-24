@@ -11,8 +11,8 @@ if [ "${1-}" != "nobuild" ]; then
     make build
 fi
 
-make deploy-base-anvil-nb contract=DeployEntitlementChecker
-make deploy-base-anvil-nb contract=DeployEntitlementGatedExample
+make deploy-base-anvil type=contract contract=DeployEntitlementChecker
+make deploy-base-anvil type=contract contract=DeployEntitlementGatedExample
 
 cp ./deployments/base_anvil/entitlementChecker.json ../packages/generated/addresses/base_anvil/entitlementChecker.json
 cp ./deployments/base_anvil/entitlementGatedExample.json ../packages/generated/addresses/base_anvil/entitlementGatedExample.json

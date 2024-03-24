@@ -292,6 +292,13 @@ func (p *printer) printNil(t string) {
 	CloseColor(p.Writer, p.opts.Colors[ColorMap_Nil])
 }
 
+const (
+	shortenHexBytes        = 20
+	shortenHexBytesPartLen = shortenHexBytes/2 - 1
+	shortenHexChars        = shortenHexBytes * 2
+	shortenHexCharsPartLen = shortenHexChars/2 - 2
+)
+
 func writeHexBytes(w io.Writer, src []byte) {
 	dst := make([]byte, len(src)*2)
 	hex.Encode(dst, src)
@@ -299,22 +306,30 @@ func writeHexBytes(w io.Writer, src []byte) {
 }
 
 func writeShortHexBytes(w io.Writer, src []byte) {
-	if len(src) <= 5 {
+	if len(src) <= shortenHexBytes {
 		writeHexBytes(w, src)
 	} else {
-		dst := make([]byte, 10)
-		hex.Encode(dst[:4], src[:2])
-		dst[4] = '.'
-		dst[5] = '.'
-		hex.Encode(dst[6:], src[len(src)-2:])
+		dst := make([]byte, hex.EncodedLen(shortenHexBytesPartLen))
+		hex.Encode(dst, src[:shortenHexBytesPartLen])
+		_, _ = w.Write(dst)
+		_, _ = w.Write([]byte(".."))
+		hex.Encode(dst, src[len(src)-shortenHexBytesPartLen:])
 		_, _ = w.Write(dst)
 	}
 }
 
 func getBytes(v reflect.Value) []byte {
 	if v.Kind() == reflect.Array && !v.CanAddr() {
-		// If the array is not addressable, we can't slice it.
-		return []byte{}
+		ret := make([]byte, v.Len())
+		for i := 0; i < v.Len(); i++ {
+			b, ok := v.Index(i).Interface().(byte)
+			if ok {
+				ret[i] = b
+			} else {
+				return []byte{0xBA, 0xD0, 0xBA, 0xD0}
+			}
+		}
+		return ret
 	}
 	return v.Bytes()
 }
@@ -634,12 +649,12 @@ func (p *printer) fmtString(s string, quote bool, key bool) {
 	if hex {
 		if p.opts.ShortHex {
 			if hasPrefix {
-				if len(s) > 12 {
-					s = s[:6] + ".." + s[len(s)-4:]
+				if len(s) > (shortenHexChars + 2) {
+					s = s[:(2+shortenHexCharsPartLen)] + ".." + s[len(s)-shortenHexCharsPartLen:]
 				}
 			} else {
-				if len(s) > 10 {
-					s = s[:4] + ".." + s[len(s)-4:]
+				if len(s) > shortenHexChars {
+					s = s[:shortenHexCharsPartLen] + ".." + s[len(s)-shortenHexCharsPartLen:]
 				}
 			}
 		}

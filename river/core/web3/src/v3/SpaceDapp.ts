@@ -17,7 +17,7 @@ import { TownRegistrar } from './TownRegistrar'
 import { createEntitlementStruct } from '../ConvertersRoles'
 import { getContractsInfo } from '../IStaticContractsInfo'
 import { WalletLink } from './WalletLink'
-import { SpaceDappConfig, SpaceInfo } from '../SpaceDappTypes'
+import { DappConfig, SpaceInfo } from '../types'
 import { IRuleEntitlement } from './index'
 import { PricingModules } from './PricingModules'
 import { dlogger } from '@river/dlog'
@@ -31,7 +31,7 @@ export class SpaceDapp implements ISpaceDapp {
     public readonly pricingModules: PricingModules
     public readonly walletLink: WalletLink
 
-    constructor(config: SpaceDappConfig) {
+    constructor(config: DappConfig) {
         const { chainId, provider } = config
         this.chainId = chainId
         this.provider = provider

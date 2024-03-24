@@ -11,8 +11,8 @@ if [ "${1-}" != "nobuild" ]; then
     make build
 fi
 
-make deploy-base-anvil-nb contract=DeployMultiInit
-make deploy-base-anvil-nb contract=DeployWalletLink
+make deploy-base-anvil type=contract contract=DeployMultiInit
+make deploy-base-anvil type=contract contract=DeployWalletLink
 
 cd ..
 

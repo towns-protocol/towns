@@ -11,7 +11,7 @@ if [ "${1-}" != "nobuild" ]; then
     make build
 fi
 
-make deploy-river-anvil-explicit contract=DeployRiverRegistry
+make deploy-river-anvil type=contract contract=DeployRiverRegistry
 
 cd ..
 mkdir -p core/node/run_files/addresses

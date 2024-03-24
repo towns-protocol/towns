@@ -71,4 +71,13 @@ export class RiverRegistry {
         }
         return nodeUrls
     }
+
+    public async getOperationalNodeUrls(): Promise<string> {
+        const NODE_OPERATIONAL = 2
+        const nodeUrls = await this.getAllNodeUrls(NODE_OPERATIONAL)
+        if (!nodeUrls || nodeUrls.length === 0) {
+            throw new Error('No operational nodes found in registry')
+        }
+        return nodeUrls.map((x) => x.url).join(',')
+    }
 }

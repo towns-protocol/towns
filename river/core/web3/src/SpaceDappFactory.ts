@@ -1,12 +1,12 @@
 import { isEthersProvider } from './Utils'
 import { Versions, defaultVersion } from './ContractTypes'
-import { SpaceDappConfig } from './SpaceDappTypes'
+import { DappConfig } from './types'
 import { SpaceDapp } from './v3'
 import { ISpaceDapp } from './ISpaceDapp'
 
-export function createSpaceDapp(args: SpaceDappConfig, version?: 'v3'): ISpaceDapp
+export function createSpaceDapp(args: DappConfig, version?: 'v3'): ISpaceDapp
 
-export function createSpaceDapp(args: SpaceDappConfig, version: Versions = defaultVersion) {
+export function createSpaceDapp(args: DappConfig, version: Versions = defaultVersion) {
     if (args.provider === undefined) {
         throw new Error('createSpaceDapp() Provider is undefined')
     }

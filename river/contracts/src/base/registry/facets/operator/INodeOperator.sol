@@ -17,15 +17,18 @@ interface INodeOperator {
     address indexed operator,
     NodeOperatorStatus indexed newStatus
   );
+  event OperatorCommissionChanged(
+    address indexed operator,
+    uint256 indexed newCommission
+  );
 
   // =============================================================
   //                           Registration
   // =============================================================
   /*
    * @notice  Registers an operator.
-   * @param   operator Address of the operator that will receive the operator token.
    */
-  function registerOperator(address operator) external;
+  function registerOperator() external;
 
   /*
    * @notice  Returns whether an operator is registered.
@@ -50,4 +53,8 @@ interface INodeOperator {
     address operator,
     NodeOperatorStatus newStatus
   ) external;
+
+  // =============================================================
+  //                           Commission
+  // =============================================================
 }

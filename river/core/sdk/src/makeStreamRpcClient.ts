@@ -14,7 +14,7 @@ import { ConnectTransportOptions, createConnectTransport } from '@connectrpc/con
 import { Err, StreamService } from '@river/proto'
 import { check, dlog, dlogError } from '@river/dlog'
 import { genShortId, streamIdAsString } from './id'
-import { getEnvVar, isIConnectError } from './utils'
+import { getEnvVar, isBaseUrlIncluded, isIConnectError } from './utils'
 
 const logInfo = dlog('csb:rpc:info', { defaultEnabled: true })
 const logCallsHistogram = dlog('csb:rpc:histogram', { defaultEnabled: true })
@@ -29,6 +29,7 @@ export type RetryParams = {
     maxAttempts: number
     initialRetryDelay: number
     maxRetryDelay: number
+    refreshNodeUrl?: () => Promise<string>
 }
 
 const sortObjectKey = (obj: Record<string, any>) => {
@@ -56,6 +57,14 @@ const retryInterceptor: (retryParams: RetryParams) => Interceptor = (retryParams
                     const retryDelay = getRetryDelay(e, attempt, retryParams)
                     if (retryDelay <= 0) {
                         throw e
+                    }
+                    if (retryParams.refreshNodeUrl) {
+                        // re-materialize view and check if client is still operational according to network
+                        const urls = await retryParams.refreshNodeUrl()
+                        const isStillNodeUrl = isBaseUrlIncluded(urls.split(','), req.url)
+                        if (!isStillNodeUrl) {
+                            throw new Error(`Node url ${req.url} no longer operationl in registry`)
+                        }
                     }
                     logError(
                         req.method.name,
@@ -333,6 +342,7 @@ export type StreamRpcClient = PromiseClient<typeof StreamService> & { url?: stri
 export function makeStreamRpcClient(
     dest: Transport | string,
     retryParams: RetryParams = { maxAttempts: 3, initialRetryDelay: 2000, maxRetryDelay: 6000 },
+    refreshNodeUrl?: () => Promise<string>,
 ): StreamRpcClient {
     const transportId = nextRpcClientNum++
     logCallsHistogram('makeStreamRpcClient, transportId =', transportId)
@@ -343,7 +353,10 @@ export function makeStreamRpcClient(
         logInfo('makeStreamRpcClient: Connecting to url=', url, ' allUrls=', dest)
         const options: ConnectTransportOptions = {
             baseUrl: url,
-            interceptors: [retryInterceptor(retryParams), loggingInterceptor(transportId)],
+            interceptors: [
+                retryInterceptor({ ...retryParams, refreshNodeUrl }),
+                loggingInterceptor(transportId),
+            ],
         }
         if (getEnvVar('RIVER_DEBUG_TRANSPORT') !== 'true') {
             options.useBinaryFormat = true
@@ -366,4 +379,4 @@ export function makeStreamRpcClient(
     return client
 }
 
-export type StreamRpcClientType = ReturnType<typeof makeStreamRpcClient>
+export type StreamRpcClientType = StreamRpcClient

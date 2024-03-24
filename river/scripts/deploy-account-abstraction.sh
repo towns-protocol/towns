@@ -7,5 +7,5 @@ set -a
 . .env.localhost
 set +a
 
-make deploy-base-anvil-nb contract=DeployEntrypoint
-make deploy-base-anvil-nb contract=DeployAccountFactory
+make deploy-base-anvil type=contract contract=DeployEntrypoint
+make deploy-base-anvil type=contract contract=DeployAccountFactory

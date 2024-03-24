@@ -123,3 +123,10 @@ export function isMobileSafari(): boolean {
     }
     return /iPad|iPhone|iPod/.test(navigator.userAgent)
 }
+
+export function isBaseUrlIncluded(baseUrls: string[], fullUrl: string): boolean {
+    const urlObj = new URL(fullUrl)
+    const fullUrlBase = `${urlObj.protocol}//${urlObj.host}`
+
+    return baseUrls.some((baseUrl) => fullUrlBase === baseUrl.trim())
+}

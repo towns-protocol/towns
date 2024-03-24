@@ -30,16 +30,14 @@ contract NodeOperatorFacet is
   // =============================================================
 
   /// @inheritdoc INodeOperator
-  function registerOperator(address operator) external {
-    if (operator == address(0))
-      revert BaseRegistryErrors.NodeOperator__InvalidAddress();
-    if (_balanceOf(operator) > 0)
+  function registerOperator() external {
+    if (_balanceOf(msg.sender) > 0)
       revert BaseRegistryErrors.NodeOperator__AlreadyRegistered();
 
-    _mint(operator, 1);
-    ds.statusByOperator[operator] = NodeOperatorStatus.Standby;
+    _mint(msg.sender, 1);
+    ds.statusByOperator[msg.sender] = NodeOperatorStatus.Standby;
 
-    emit OperatorRegistered(operator);
+    emit OperatorRegistered(msg.sender);
   }
 
   // =============================================================
@@ -100,15 +98,18 @@ contract NodeOperatorFacet is
   }
 
   // =============================================================
-  //                           Overrides
+  //                           Commission
   // =============================================================
-  function _beforeTokenTransfers(
-    address from,
-    address,
-    uint256,
-    uint256
-  ) internal pure override {
-    if (from != address(0))
-      revert BaseRegistryErrors.NodeOperator__NotTransferable();
+  function setCommissionRate(
+    uint256 rate
+  ) external onlyValidOperator(msg.sender) {
+    if (_balanceOf(msg.sender) == 0)
+      revert BaseRegistryErrors.NodeOperator__NotRegistered();
+    ds.commissionByOperator[msg.sender] = rate;
+    emit OperatorCommissionChanged(msg.sender, rate);
+  }
+
+  function getCommissionRate(address operator) external view returns (uint256) {
+    return ds.commissionByOperator[operator];
   }
 }

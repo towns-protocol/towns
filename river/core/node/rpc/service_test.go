@@ -10,19 +10,14 @@ import (
 	"testing"
 
 	"github.com/river-build/river/core/node/base/test"
-	"github.com/river-build/river/core/node/config"
 	"github.com/river-build/river/core/node/crypto"
 	"github.com/river-build/river/core/node/dlog"
 	"github.com/river-build/river/core/node/events"
-	"github.com/river-build/river/core/node/infra"
 	"github.com/river-build/river/core/node/nodes"
 	"github.com/river-build/river/core/node/protocol"
 	"github.com/river-build/river/core/node/protocol/protocolconnect"
-	"github.com/river-build/river/core/node/rpc"
 	. "github.com/river-build/river/core/node/shared"
-	"github.com/river-build/river/core/node/storage"
 	"github.com/river-build/river/core/node/testutils"
-	"github.com/river-build/river/core/node/testutils/dbtestutils"
 	"golang.org/x/net/http2"
 
 	"connectrpc.com/connect"
@@ -247,88 +242,9 @@ func createChannel(
 	return reschannel.Msg.Stream.NextSyncCookie, miniblockHash, nil
 }
 
-func testClient(url string) protocolconnect.StreamServiceClient {
-	return protocolconnect.NewStreamServiceClient(nodes.TestHttpClientMaker(), url, connect.WithGRPCWeb())
-}
-
-func createTestServerAndClient(
-	ctx context.Context,
-	numNodes int,
-	require *require.Assertions,
-) (protocolconnect.StreamServiceClient, string, func()) {
-	ctx, cancel := context.WithCancel(ctx)
-
-	btc, err := crypto.NewBlockchainTestContext(ctx, numNodes)
-	require.NoError(err)
-
-	type nodeRecord struct {
-		listener   net.Listener
-		url        string
-		service    *rpc.Service
-		addressStr string
-	}
-	nodes := make([]nodeRecord, numNodes)
-
-	for i := 0; i < numNodes; i++ {
-		// This is a hack to get the port number of the listener
-		// so we can register it in the contract before starting
-		// the server
-		listener, err := net.Listen("tcp", "localhost:0")
-		require.NoError(err)
-		nodes[i].listener = listener
-
-		port := listener.Addr().(*net.TCPAddr).Port
-
-		nodes[i].url = fmt.Sprintf("http://localhost:%d", port)
-
-		err = btc.InitNodeRecord(ctx, i, nodes[i].url)
-		require.NoError(err)
-	}
-	btc.Commit()
-
-	dbUrl := dbtestutils.GetTestDbUrl()
-	for i := 0; i < numNodes; i++ {
-		cfg := &config.Config{
-			DisableBaseChain: true,
-			RegistryContract: btc.RegistryConfig(),
-			Database:         config.DatabaseConfig{Url: dbUrl},
-			StorageType:      "postgres",
-			Stream: config.StreamConfig{
-				Media: config.MediaStreamConfig{
-					MaxChunkCount: 100,
-					MaxChunkSize:  1000000,
-				},
-				RecencyConstraints: config.RecencyConstraintsConfig{
-					AgeSeconds:  11,
-					Generations: 5,
-				},
-			},
-		}
-
-		infra.InitLogFromConfig(&cfg.Log)
-
-		bc := btc.GetBlockchain(ctx, i, true)
-		service, err := rpc.StartServer(ctx, cfg, bc, nodes[i].listener)
-		require.NoError(err)
-		nodes[i].service = service
-		nodes[i].addressStr = bc.Wallet.AddressStr
-	}
-
-	url := nodes[0].url
-	return testClient(url), url, func() {
-		for _, node := range nodes {
-			node.service.Close()
-			_ = dbtestutils.DeleteTestSchema(ctx, dbUrl, storage.DbSchemaNameFromAddress(node.addressStr))
-		}
-		btc.Close()
-		cancel()
-	}
-}
-
-func testMethods(t *testing.T, client protocolconnect.StreamServiceClient, url string, closer func()) {
+func testMethods(t *testing.T, client protocolconnect.StreamServiceClient, url string) {
 	require := require.New(t)
 	ctx := test.NewTestContext()
-	defer closer()
 
 	wallet1, _ := crypto.NewWallet(ctx)
 	wallet2, _ := crypto.NewWallet(ctx)
@@ -513,10 +429,9 @@ func testMethods(t *testing.T, client protocolconnect.StreamServiceClient, url s
 	}
 }
 
-func testRiverDeviceId(t *testing.T, client protocolconnect.StreamServiceClient, url string, closer func()) {
+func testRiverDeviceId(t *testing.T, client protocolconnect.StreamServiceClient, url string) {
 	require := require.New(t)
 	ctx := test.NewTestContext()
-	defer closer()
 
 	wallet, _ := crypto.NewWallet(ctx)
 	deviceWallet, _ := crypto.NewWallet(ctx)
@@ -579,14 +494,13 @@ func testRiverDeviceId(t *testing.T, client protocolconnect.StreamServiceClient,
 	require.Error(err) // expected error when calling AddEvent
 }
 
-func testSyncStreams(t *testing.T, client protocolconnect.StreamServiceClient, url string, closer func()) {
+func testSyncStreams(t *testing.T, client protocolconnect.StreamServiceClient, url string) {
 	require := require.New(t)
 	/**
 	Arrange
 	*/
 	// create the test client and server
 	ctx := test.NewTestContext()
-	defer closer()
 
 	// create the streams for a user
 	wallet, _ := crypto.NewWallet(ctx)
@@ -655,7 +569,7 @@ func testSyncStreams(t *testing.T, client protocolconnect.StreamServiceClient, u
 	require.Equal(syncId, msg.SyncId, "expected sync id to match")
 }
 
-func testAddStreamsToSync(t *testing.T, client protocolconnect.StreamServiceClient, url string, closer func()) {
+func testAddStreamsToSync(t *testing.T, client protocolconnect.StreamServiceClient, url string) {
 	require := require.New(t)
 	/**
 	Arrange
@@ -663,7 +577,6 @@ func testAddStreamsToSync(t *testing.T, client protocolconnect.StreamServiceClie
 	// create the test client and server
 	ctx := test.NewTestContext()
 	aliceClient := client
-	defer closer()
 
 	// create alice's wallet and streams
 	aliceWallet, _ := crypto.NewWallet(ctx)
@@ -758,7 +671,7 @@ func testAddStreamsToSync(t *testing.T, client protocolconnect.StreamServiceClie
 	require.Equal(syncId, msg.SyncId, "expected sync id to match")
 }
 
-func testRemoveStreamsFromSync(t *testing.T, client protocolconnect.StreamServiceClient, url string, closer func()) {
+func testRemoveStreamsFromSync(t *testing.T, client protocolconnect.StreamServiceClient, url string) {
 	require := require.New(t)
 	/**
 	Arrange
@@ -767,7 +680,6 @@ func testRemoveStreamsFromSync(t *testing.T, client protocolconnect.StreamServic
 	ctx := test.NewTestContext()
 	log := dlog.FromCtx(ctx)
 	aliceClient := client
-	defer closer()
 
 	// create alice's wallet and streams
 	aliceWallet, _ := crypto.NewWallet(ctx)
@@ -913,11 +825,12 @@ OuterLoop:
 	require.NotNil(removeRes.Msg, "expected non-nil remove response")
 }
 
-type testFunc func(*testing.T, protocolconnect.StreamServiceClient, string, func())
+type testFunc func(*testing.T, protocolconnect.StreamServiceClient, string)
 
 func run(t *testing.T, numNodes int, tf testFunc) {
 	client, url, closer := createTestServerAndClient(test.NewTestContext(), numNodes, require.New(t))
-	tf(t, client, url, closer)
+	defer closer()
+	tf(t, client, url)
 }
 
 func TestSingleAndMulti(t *testing.T) {

@@ -27,6 +27,8 @@ struct AppStorage {
   address spaceOwnerRegistry;
   address riverToken;
   address mainnetDelegation;
+  // Comission
+  mapping(address operator => uint256) commissionByOperator;
 }
 
 library BaseRegistryStorage {

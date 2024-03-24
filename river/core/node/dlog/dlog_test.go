@@ -1,12 +1,16 @@
 package dlog_test
 
 import (
+	"bytes"
+	"encoding/hex"
 	"fmt"
 	"os"
 	"testing"
 	"time"
 
+	"github.com/ethereum/go-ethereum/common"
 	"github.com/river-build/river/core/node/dlog"
+	"github.com/stretchr/testify/assert"
 
 	"log/slog"
 )
@@ -82,4 +86,82 @@ func TestDlog(t *testing.T) {
 		"duration", time.Minute,
 	)
 	fmt.Println()
+}
+
+type byteArray [10]byte
+
+func TestByteType(t *testing.T) {
+	assert := assert.New(t)
+
+	buf := &bytes.Buffer{}
+	log := slog.New(dlog.NewPrettyTextHandler(buf, &dlog.PrettyHandlerOptions{Colors: dlog.ColorMap_Disabled, DisableShortHex: true}))
+
+	b := byteArray{1, 2, 3, 4, 5, 6, 7, 8, 9, 10}
+	log.Info("byte array", "byte_array", b)
+	assert.Contains(buf.String(), "0102030405060708090a")
+}
+
+func TestCommonAddress(t *testing.T) {
+	assert := assert.New(t)
+
+	buf := &bytes.Buffer{}
+	log := slog.New(dlog.NewPrettyTextHandler(buf, &dlog.PrettyHandlerOptions{Colors: dlog.ColorMap_Disabled, DisableShortHex: true}))
+
+	b := common.Address{1, 2, 3, 4, 5, 6, 7, 8, 9, 10}
+	log.Info("byte array", "byte_array", b)
+	assert.Contains(buf.String(), "0102030405060708090a00000000000000000000")
+}
+
+func TestMapWithCommonAddress(t *testing.T) {
+	assert := assert.New(t)
+
+	buf := &bytes.Buffer{}
+	log := slog.New(dlog.NewPrettyTextHandler(buf, &dlog.PrettyHandlerOptions{Colors: dlog.ColorMap_Disabled, DisableShortHex: true}))
+
+	mm := map[common.Address]string{
+		{1, 2, 3, 4, 5, 6, 7, 8, 9, 10}:          "hello",
+		{11, 12, 13, 14, 15, 16, 17, 18, 19, 20}: "world",
+	}
+	log.Info("byte array", "map", mm)
+	assert.Contains(buf.String(), "0102030405060708090a00000000000000000000")
+	assert.Contains(buf.String(), "0b0c0d0e0f101112131400000000000000000000")
+	assert.Contains(buf.String(), "hello")
+	assert.Contains(buf.String(), "world")
+}
+
+func bytesFromHex(s string) []byte {
+	b, err := hex.DecodeString(s)
+	if err != nil {
+		panic(err)
+	}
+	return b
+}
+
+func TestShortHex(t *testing.T) {
+	assert := assert.New(t)
+
+	buf := &bytes.Buffer{}
+	log := slog.New(dlog.NewPrettyTextHandler(buf, &dlog.PrettyHandlerOptions{Colors: dlog.ColorMap_Disabled, DisableShortHex: false}))
+
+	type testParams struct {
+		arg      any
+		expected string
+	}
+
+	tests := []testParams{
+		{"00112233445566778899", "00112233445566778899"},
+		{"0x00112233445566778899", "0x00112233445566778899"},
+		{"0011223344556677889900112233445566778899", "0011223344556677889900112233445566778899"},
+		{"0x0011223344556677889900112233445566778899", "0x0011223344556677889900112233445566778899"},
+		{"0011223344556677889900112233445566778899aa", "001122334455667788..2233445566778899aa"},
+		{"0x0011223344556677889900112233445566778899aa", "0x001122334455667788..2233445566778899aa"},
+		{bytesFromHex("00112233445566778899"), "00112233445566778899"},
+		{bytesFromHex("0011223344556677889900112233445566778899"), "0011223344556677889900112233445566778899"},
+		{bytesFromHex("0011223344556677889900112233445566778899aa"), "001122334455667788..2233445566778899aa"},
+	}
+	for _, test := range tests {
+		buf.Reset()
+		log.Info("test", "hex", test.arg)
+		assert.Contains(buf.String(), test.expected, "arg: %v", test.arg)
+	}
 }

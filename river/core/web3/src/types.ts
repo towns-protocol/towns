@@ -10,7 +10,7 @@ export interface SpaceInfo {
 
 type ProviderType = ethers.providers.Provider
 
-export type SpaceDappConfig = {
+export type DappConfig = {
     chainId: number
     provider: ProviderType | undefined
 }

@@ -84,7 +84,7 @@ if [ "$CONFIG" == "true" ]; then
     cast call \
         --rpc-url http://127.0.0.1:8546 \
         $RIVER_REGISTRY_ADDRESS \
-        "getAllNodes()((address,string,uint8,address)[])" | sed 's/),/),\n/g'
+        "getAllNodes()((uint8,string,address,address)[])" | sed 's/),/),\n/g'
     echo "<<<<<<<<<<<<<<<<<<<<<<<<<"
 fi
 
