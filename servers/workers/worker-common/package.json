@@ -13,8 +13,9 @@
         "lint": "yarn eslint --format unix ./src",
         "lint:fix": "yarn lint --fix",
         "my-jest": "yarn node -r ../../../scripts/node-no-warn.js --experimental-vm-modules $(yarn bin jest)",
-        "test": "yarn my-jest",
-        "test:ci": "yarn test",
+        "test": "yarn test:unit",
+        "test:unit": "yarn my-jest",
+        "test:ci": "yarn my-jest",
         "test:debug": "DEBUG=test yarn my-jest",
         "watch": "tsc --watch"
     },
