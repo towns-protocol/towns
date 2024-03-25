@@ -11,14 +11,13 @@ import {
     useSpaceThreadRootsUnreadCount,
     useSpaceUnreadThreadMentions,
 } from 'use-towns-client'
-import { CreateDirectMessage } from '@components/DirectMessages/CreateDirectMessage/CreateDirectMessage'
+import { LayoutGroup } from 'framer-motion'
 import { ModalContainer } from '@components/Modals/ModalContainer'
 import { ActionNavItem } from '@components/NavItem/ActionNavItem'
 import { ChannelNavGroup } from '@components/NavItem/ChannelNavGroup'
 import { ChannelNavItem } from '@components/NavItem/ChannelNavItem'
-import { FadeIn, FadeInBox } from '@components/Transitions'
 import { CreateChannelFormContainer } from '@components/Web3/CreateChannelForm'
-import { Badge, Box, Button, Card, Icon, IconButton, Stack, Text } from '@ui'
+import { Badge, Box, Button, Card, Icon, IconButton, MotionBox, Stack, Text } from '@ui'
 import { useAuth } from 'hooks/useAuth'
 import { useCreateLink } from 'hooks/useCreateLink'
 import { useShortcut } from 'hooks/useShortcut'
@@ -29,7 +28,6 @@ import { ReloadPrompt } from '@components/ReloadPrompt/ReloadPrompt'
 import { env } from 'utils'
 import { useDevice } from 'hooks/useDevice'
 import { useUnseenChannelIds } from 'hooks/useUnseenChannelIdsCount'
-import { SidebarListLayout } from './SidebarListLayout'
 import * as styles from './SpaceSideBar.css'
 import { SpaceSideBarHeader } from './SpaceSideBarHeader'
 import { SidebarLoadingAnimation } from './SpaceSideBarLoading'
@@ -38,11 +36,6 @@ import { CondensedChannelNavItem } from './CondensedChannelNavItem'
 type Props = {
     space: SpaceData
     className?: string
-}
-
-enum LayoutMode {
-    Default = 'default',
-    CreateMessage = 'create-message',
 }
 
 export const SpaceSideBar = (props: Props) => {
@@ -110,8 +103,6 @@ export const SpaceSideBar = (props: Props) => {
         setHasScrolledPastHeader(headerY > -1 && headerY <= 0)
     }
 
-    const [layoutMode, setLayoutMode] = useState<LayoutMode>(LayoutMode.Default)
-
     const navigate = useNavigate()
 
     const onDisplayCreate = useCallback(() => {
@@ -121,35 +112,42 @@ export const SpaceSideBar = (props: Props) => {
         }
     }, [createLink, navigate])
 
-    const onDisplayDefault = useCallback(() => {
-        setLayoutMode(LayoutMode.Default)
-    }, [])
-
     useShortcut('CreateMessage', onDisplayCreate)
 
     const params = useParams()
     const currentRouteId = params.channelSlug
 
-    const { unreadChannels, readChannels, readDms } = useSortedChannels({
+    const { favoriteChannels, unreadChannels, readChannels, readDms } = useSortedChannels({
         spaceId: space.id,
         currentRouteId,
     })
 
     const itemRenderer = useCallback(
-        (u: (typeof unreadChannels)[0]) => {
-            if (u.type === 'dm') {
-                return <CondensedChannelNavItem unread={u.unread} key={u.id} channel={u.channel} />
-            } else {
-                return (
-                    <ChannelNavItem
-                        key={u.id}
-                        id={u.id}
-                        space={space}
-                        channel={u.channel}
-                        mentionCount={u.mentionCount}
-                    />
-                )
-            }
+        (u: (typeof unreadChannels)[0], isUnreadSection?: boolean) => {
+            const key = `${u.id}`
+            return (
+                <SpaceSideBarListItem key={key}>
+                    {u.type === 'dm' ? (
+                        <CondensedChannelNavItem
+                            unread={u.unread}
+                            key={key}
+                            channel={u.channel}
+                            favorite={u.favorite}
+                            isUnreadSection={isUnreadSection}
+                        />
+                    ) : (
+                        <ChannelNavItem
+                            key={key}
+                            id={u.id}
+                            space={space}
+                            channel={u.channel}
+                            mentionCount={u.mentionCount}
+                            favorite={u.favorite}
+                            isUnreadSection={isUnreadSection}
+                        />
+                    )}
+                </SpaceSideBarListItem>
+            )
         },
         [space],
     )
@@ -157,7 +155,7 @@ export const SpaceSideBar = (props: Props) => {
     return (
         <>
             <Card absoluteFill data-testid="space-sidebar" onScroll={onScroll}>
-                <FadeInBox grow elevateReadability className={props.className} position="relative">
+                <Box grow elevateReadability className={props.className} position="relative">
                     <Stack
                         position="absolute"
                         className={styles.gradientBackground}
@@ -196,53 +194,54 @@ export const SpaceSideBar = (props: Props) => {
                         )}
                         {space.isLoadingChannels ? (
                             <SidebarLoadingAnimation />
-                        ) : layoutMode === 'create-message' ? (
-                            <Box grow color="gray2">
-                                <ChannelNavGroup label="New Message">
-                                    <IconButton
-                                        icon="close"
-                                        color="gray2"
-                                        size="square_sm"
-                                        cursor="pointer"
-                                        onClick={onDisplayDefault}
-                                    />
-                                </ChannelNavGroup>
-                                <CreateDirectMessage onDirectMessageCreated={onDisplayDefault} />
-                            </Box>
                         ) : (
-                            <FadeIn>
+                            <LayoutGroup>
                                 {/* threads */}
-                                <ActionNavItem
-                                    highlight={unreadThreadsCount > 0}
-                                    icon="threads"
-                                    link={`/${PATHS.SPACES}/${space.id}/threads`}
-                                    id="threads"
-                                    label="Threads"
-                                    badge={
-                                        unreadThreadMentions > 0 && (
-                                            <Badge value={unreadThreadMentions} />
-                                        )
-                                    }
-                                    minHeight="x5"
-                                />
+                                <SpaceSideBarListItem key="threads">
+                                    <ActionNavItem
+                                        highlight={unreadThreadsCount > 0}
+                                        icon="threads"
+                                        link={`/${PATHS.SPACES}/${space.id}/threads`}
+                                        id="threads"
+                                        label="Threads"
+                                        badge={
+                                            unreadThreadMentions > 0 && (
+                                                <Badge value={unreadThreadMentions} />
+                                            )
+                                        }
+                                        minHeight="x5"
+                                        key="threads"
+                                    />
+                                </SpaceSideBarListItem>
                                 {/* mentions */}
-                                <ActionNavItem
-                                    icon="at"
-                                    id="mentions"
-                                    label="Mentions"
-                                    link={`/${PATHS.SPACES}/${space.id}/mentions`}
-                                    minHeight="x5"
-                                />
-                                <SidebarListLayout
-                                    label="Unreads"
-                                    channels={unreadChannels}
-                                    itemRenderer={itemRenderer}
-                                />
 
-                                <SidebarListLayout
-                                    forceDisplay
+                                <SpaceSideBarListItem key="mentions">
+                                    <ActionNavItem
+                                        icon="at"
+                                        id="mentions"
+                                        label="Mentions"
+                                        link={`/${PATHS.SPACES}/${space.id}/mentions`}
+                                        minHeight="x5"
+                                        key="mentions"
+                                    />
+                                </SpaceSideBarListItem>
+
+                                <SpaceSideBarSectionHeader
+                                    label="Unreads"
+                                    key="unreads"
+                                    hidden={unreadChannels.length === 0}
+                                />
+                                {unreadChannels.map((channel) => itemRenderer(channel, true))}
+
+                                <SpaceSideBarSectionHeader
+                                    label="Favorites"
+                                    key="favorites"
+                                    hidden={favoriteChannels.length === 0}
+                                />
+                                {favoriteChannels.map((channel) => itemRenderer(channel))}
+
+                                <SpaceSideBarSectionHeader
                                     label="Channels"
-                                    channels={readChannels}
                                     badgeValue={unseenChannelIds.size}
                                     headerContent={
                                         <Stack horizontal alignItems="center">
@@ -267,20 +266,24 @@ export const SpaceSideBar = (props: Props) => {
                                             )}
                                         </Stack>
                                     }
-                                    itemRenderer={itemRenderer}
+                                    key="channels"
                                 />
 
+                                {readChannels.map((channel) => itemRenderer(channel))}
+
                                 {canCreateChannel && (
-                                    <ActionNavItem
-                                        icon="plus"
-                                        id="newChannel"
-                                        label="Create channel"
-                                        onClick={onShowCreateChannel}
-                                    />
+                                    <SpaceSideBarListItem key="create-channel">
+                                        <ActionNavItem
+                                            icon="plus"
+                                            id="newChannel"
+                                            label="Create channel"
+                                            onClick={onShowCreateChannel}
+                                        />
+                                    </SpaceSideBarListItem>
                                 )}
-                                <SidebarListLayout
+
+                                <SpaceSideBarSectionHeader
                                     label="Direct Messages"
-                                    channels={readDms}
                                     headerContent={
                                         <IconButton
                                             size="square_sm"
@@ -291,9 +294,10 @@ export const SpaceSideBar = (props: Props) => {
                                             onClick={onDisplayCreate}
                                         />
                                     }
-                                    itemRenderer={itemRenderer}
+                                    key="direct-messages"
                                 />
-                            </FadeIn>
+                                {readDms.map((channel) => itemRenderer(channel))}
+                            </LayoutGroup>
                         )}
                     </Stack>
 
@@ -302,7 +306,7 @@ export const SpaceSideBar = (props: Props) => {
                             Towns {APP_VERSION} ({APP_COMMIT_HASH})
                         </Text>
                     </Box>
-                </FadeInBox>
+                </Box>
                 {isCreateChannelModalVisible ? (
                     <ModalContainer onHide={onHideCreateChannel}>
                         <CreateChannelFormContainer
@@ -317,5 +321,34 @@ export const SpaceSideBar = (props: Props) => {
                 {(!env.DEV || env.VITE_PUSH_NOTIFICATION_ENABLED) && !isTouch && <ReloadPrompt />}
             </Card>
         </>
+    )
+}
+
+const SpaceSideBarListItem = ({ children }: { children: React.ReactNode }) => {
+    return (
+        <MotionBox
+            initial={{ opacity: 0.5 }}
+            animate={{ opacity: 1 }}
+            transition={{ duration: 0.3, ease: 'circOut' }}
+            exit={{ opacity: 0 }}
+            layout="position"
+        >
+            {children}
+        </MotionBox>
+    )
+}
+
+const SpaceSideBarSectionHeader = (props: {
+    label: string
+    badgeValue?: number
+    hidden?: boolean
+    headerContent?: React.ReactNode
+}) => {
+    return props.hidden ? null : (
+        <SpaceSideBarListItem key={props.label}>
+            <ChannelNavGroup label={props.label} badgeValue={props.badgeValue}>
+                {props.headerContent}
+            </ChannelNavGroup>
+        </SpaceSideBarListItem>
     )
 }

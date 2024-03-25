@@ -10,14 +10,18 @@ import {
     DirectMessageName,
 } from '@components/DirectMessages/DirectMessageListItem'
 import { ActionNavItem } from '@components/NavItem/ActionNavItem'
-import { Badge, Box } from '@ui'
+import { Badge, Box, Stack } from '@ui'
 import { useCreateLink } from 'hooks/useCreateLink'
+import { FavoriteChannelButton } from '@components/FavoriteChannelButton/FavoriteChannelButton'
 
 export const CondensedChannelNavItem = (props: {
     channel: DMChannelIdentifier
     unread: boolean
+    favorite: boolean
+    isUnreadSection?: boolean
 }) => {
-    const { channel, unread } = props
+    const { channel, unread, favorite, isUnreadSection = false } = props
+
     const { createLink } = useCreateLink()
     const link = useMemo(() => createLink({ messageId: channel.id }), [createLink, channel.id])
 
@@ -30,7 +34,16 @@ export const CondensedChannelNavItem = (props: {
             channelId={channel.id}
         >
             <ActionNavItem
-                badge={unread && <Badge value={unreadCount} />}
+                badge={
+                    <Stack horizontal gap="sm">
+                        <FavoriteChannelButton
+                            channelId={channel.id}
+                            favorite={favorite}
+                            isUnreadSection={isUnreadSection}
+                        />
+                        {unread && <Badge value={unreadCount} />}
+                    </Stack>
+                }
                 key={channel.id}
                 icon={
                     <Box width="x4" shrink={false}>

@@ -12,8 +12,8 @@ import {
     useUserLookupContext,
 } from 'use-towns-client'
 import { isEqual } from 'lodash'
-import { notUndefined } from 'ui/utils/utils'
 import { useSpaceChannels } from './useSpaceChannels'
+import { useFavoriteChannels } from './useFavoriteChannels'
 
 type Params = { spaceId?: string; currentRouteId?: string }
 
@@ -27,6 +27,7 @@ export type ChannelMenuItem = {
     mentionCount: number
     search: string
     unread: boolean
+    favorite: boolean
 }
 
 export type DMChannelMenuItem = {
@@ -38,6 +39,7 @@ export type DMChannelMenuItem = {
     latestMs: number
     search: string
     unread: boolean
+    favorite: boolean
 }
 
 export type MixedChannelMenuItem = ChannelMenuItem | DMChannelMenuItem
@@ -51,6 +53,8 @@ export const useSortedChannels = ({ spaceId, currentRouteId }: Params) => {
     const channels = useSpaceChannels()
     const { memberIds } = useSpaceMembers()
     const { joinedChannels } = useJoinedChannels(spaceId)
+    const { favoriteChannelIds } = useFavoriteChannels()
+
     const unreadChannelIds = useMemo(
         () => (spaceId ? spaceUnreadChannelIds[spaceId] : new Set()),
         [spaceId, spaceUnreadChannelIds],
@@ -66,22 +70,21 @@ export const useSortedChannels = ({ spaceId, currentRouteId }: Params) => {
                         m.unread && !m.thread && m.channel.id === channel.id ? count + 1 : count,
                     0,
                 )
-                return channel
-                    ? ({
-                          type: 'channel',
-                          id: channel.id,
-                          label: channel.label,
-                          search: channel.label,
-                          channel,
-                          mentionCount,
-                          unread: !!unreadChannelIds?.has(channel.id),
-                          joined: !!joinedChannels?.has(channel.id),
-                          latestMs: Number(0),
-                      } as const)
-                    : undefined
+                return {
+                    type: 'channel',
+                    id: channel.id,
+                    label: channel.label,
+                    search: channel.label,
+                    channel,
+                    mentionCount,
+                    unread: !!unreadChannelIds?.has(channel.id),
+                    joined: !!joinedChannels?.has(channel.id),
+                    latestMs: Number(0),
+                    favorite: favoriteChannelIds.has(channel.id),
+                } as const
             })
-            .filter(notUndefined)
-    }, [channels, joinedChannels, mentions, unreadChannelIds])
+            .sort((a, b) => a.channel.label.localeCompare(b.channel.label))
+    }, [channels, joinedChannels, mentions, unreadChannelIds, favoriteChannelIds])
 
     // - - - - - - - - - - - - - - - - - - - - - - - - - collect and map all dms
 
@@ -94,27 +97,33 @@ export const useSortedChannels = ({ spaceId, currentRouteId }: Params) => {
             .filter((c) => !c.left && (!spaceId || c.userIds.every((m) => memberIds.includes(m))))
             .map((channel) => {
                 const roomMembers = rooms[channel.id]?.members
-                return channel
-                    ? ({
-                          type: 'dm',
-                          id: channel.id,
-                          label: channel.properties?.name ?? '',
-                          search: channel.userIds
-                              .map((u) => mapMember(globalUserMap, spaceMembers, roomMembers, u))
-                              .join(),
-                          channel,
-                          unread: dmUnreadChannelIds.has(channel.id),
-                          isGroup: channel.isGroup,
-                          latestMs: Number(channel?.lastEventCreatedAtEpochMs ?? 0),
-                      } satisfies DMChannelMenuItem)
-                    : undefined
+                return {
+                    type: 'dm',
+                    id: channel.id,
+                    label: channel.properties?.name ?? '',
+                    search: channel.userIds
+                        .map((u) => mapMember(globalUserMap, spaceMembers, roomMembers, u))
+                        .join(),
+                    channel,
+                    unread: dmUnreadChannelIds.has(channel.id),
+                    isGroup: channel.isGroup,
+                    latestMs: Number(channel?.lastEventCreatedAtEpochMs ?? 0),
+                    favorite: favoriteChannelIds.has(channel.id),
+                } satisfies DMChannelMenuItem
             })
-            .filter(notUndefined)
 
         dmItemsRef.current = isEqual(value, dmItemsRef.current) ? dmItemsRef.current : value
 
         return dmItemsRef.current
-    }, [dmChannels, dmUnreadChannelIds, globalUserMap, memberIds, rooms, spaceId])
+    }, [
+        dmChannels,
+        dmUnreadChannelIds,
+        globalUserMap,
+        memberIds,
+        rooms,
+        spaceId,
+        favoriteChannelIds,
+    ])
 
     // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
 
@@ -161,10 +170,30 @@ export const useSortedChannels = ({ spaceId, currentRouteId }: Params) => {
                     !c.unread &&
                     joinedChannels.has(c.id) &&
                     persistUnreadId !== c.id &&
+                    !prevUnreads.current.includes(c.id) &&
+                    !c.favorite,
+            ),
+        ]
+    }, [channelItems, joinedChannels, persistUnreadId])
+
+    const favoriteChannels = useMemo(() => {
+        return [
+            ...channelItems.filter(
+                (c) =>
+                    c.favorite &&
+                    !c.unread &&
+                    persistUnreadId !== c.id &&
                     !prevUnreads.current.includes(c.id),
             ),
-        ].sort((a, b) => a.channel.label.localeCompare(b.channel.label))
-    }, [channelItems, joinedChannels, persistUnreadId])
+            ...dmItems.filter(
+                (c) =>
+                    c.favorite &&
+                    !c.unread &&
+                    persistUnreadId !== c.id &&
+                    !prevUnreads.current.includes(c.id),
+            ),
+        ]
+    }, [channelItems, dmItems, persistUnreadId])
 
     // - - - - - - - - - - - - - - - - - - - - - collect read dms sorted by date
 
@@ -172,7 +201,11 @@ export const useSortedChannels = ({ spaceId, currentRouteId }: Params) => {
     const readDms = useMemo(() => {
         const value = [
             ...dmItems.filter(
-                (c) => !c.unread && persistUnreadId !== c.id && !prevUnreads.current.includes(c.id),
+                (c) =>
+                    !c.unread &&
+                    persistUnreadId !== c.id &&
+                    !prevUnreads.current.includes(c.id) &&
+                    !c.favorite,
             ),
         ].sort((a, b) => Math.sign(b.latestMs - a.latestMs))
         readDMsRef.current = isEqual(value, readDMsRef.current) ? readDMsRef.current : value
@@ -189,6 +222,7 @@ export const useSortedChannels = ({ spaceId, currentRouteId }: Params) => {
     }, [unreadChannels])
 
     return {
+        favoriteChannels,
         readChannels,
         readDms,
         unreadChannels,

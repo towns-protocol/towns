@@ -67,6 +67,7 @@ describe('<TouchHome />', () => {
                         unread: false,
                         joined: true,
                         latestMs: 0,
+                        favorite: false,
                     },
                 ],
                 readDms: [],
@@ -74,6 +75,7 @@ describe('<TouchHome />', () => {
                 unjoinedChannels: [],
                 dmItems: [],
                 channelItems: [],
+                favoriteChannels: [],
             }
         })
 

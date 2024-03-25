@@ -33,6 +33,8 @@ interface AppState {
     setRecentlyMintedSpaceToken: (value: { spaceId: string; isOwner: boolean } | undefined) => void
     seenChannelIds: string[]
     setSeenChannelIds: (seenChannelIds: string[]) => void
+    favoriteChannelIds: string[]
+    setFavoriteChannelIds: (favoriteChannelIds: string[]) => void
 }
 
 export const GLOBAL_STORE_NAME = 'towns/global'
@@ -128,6 +130,10 @@ export const useStore = create(
             seenChannelIds: [],
             setSeenChannelIds: (seenChannelIds) => {
                 set(() => ({ seenChannelIds }))
+            },
+            favoriteChannelIds: [],
+            setFavoriteChannelIds: (favoriteChannelIds) => {
+                set(() => ({ favoriteChannelIds }))
             },
         }),
         {
