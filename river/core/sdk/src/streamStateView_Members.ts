@@ -67,7 +67,7 @@ export class StreamStateView_Members {
                 userId,
                 MembershipOp.SO_JOIN,
                 'confirmed',
-                encryptionEmitter, // aellis, this is the wrong emitter, but i'm not sure if removing it breaks anything
+                undefined,
             )
         }
         // user/display names were ported from an older implementation and could be simpler
