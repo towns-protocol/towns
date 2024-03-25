@@ -305,6 +305,7 @@ func (ru *csParams) streamIdTypeIsCorrect(expectedType byte) func() error {
 		}
 	}
 }
+
 func (ru *csParams) isUserStreamId() error {
 	addressInName, err := shared.GetUserAddressFromStreamId(ru.streamId)
 	if err != nil {
@@ -350,7 +351,6 @@ func (ru *csChannelRules) validateChannelJoinEvent() error {
 		return RiverError(Err_BAD_STREAM_CREATION_PARAMS, "second event is not a channel join event")
 	}
 	return ru.params.validateOwnJoinEventPayload(event, membershipPayload)
-
 }
 
 func (ru *csSpaceRules) validateSpaceJoinEvent() error {
@@ -389,7 +389,6 @@ func (ru *csSpaceRules) getCreateSpaceChainAuth() (*auth.ChainAuthArgs, error) {
 		userId,
 		auth.PermissionAddRemoveChannels, // todo should be isOwner...
 	), nil
-
 }
 
 func (ru *csChannelRules) getCreateChannelChainAuth() (*auth.ChainAuthArgs, error) {
@@ -407,7 +406,6 @@ func (ru *csChannelRules) getCreateChannelChainAuth() (*auth.ChainAuthArgs, erro
 		userId,
 		auth.PermissionAddRemoveChannels,
 	), nil
-
 }
 
 func (ru *csChannelRules) derivedChannelSpaceParentEvent() (*DerivedEvent, error) {
@@ -514,7 +512,6 @@ func (ru *csMediaRules) getChainAuthForMediaStream() (*auth.ChainAuthArgs, error
 	} else {
 		return nil, nil
 	}
-
 }
 
 func (ru *csDmChannelRules) checkDMInceptionPayload() error {

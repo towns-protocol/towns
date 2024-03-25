@@ -99,8 +99,8 @@ func MultiHandler(ctx context.Context, cfg *config.Config, streamService *Servic
 				Protocols: []string{"HTTP", "GRPC"},
 			}
 
-			var mutex = &sync.Mutex{}
-			var wg = sync.WaitGroup{}
+			mutex := &sync.Mutex{}
+			wg := sync.WaitGroup{}
 			log.Info("MultiHandler request")
 
 			makeRequest := func(client *http.Client, url string, protocol string, node string) {
@@ -138,7 +138,6 @@ func MultiHandler(ctx context.Context, cfg *config.Config, streamService *Servic
 				status := 200
 
 				resp, err := s.Info(ctx, connect.NewRequest(&protocol.InfoRequest{}))
-
 				if err != nil {
 					log.Error("Error fetching info", "err", err)
 					status = 500
@@ -179,7 +178,6 @@ func MultiHandler(ctx context.Context, cfg *config.Config, streamService *Servic
 					go makeRequest(client, node.Url()+"/info", "HTTP", node.Url())
 					go makeInfoRequest(node.StreamServiceClient(), node.Url())
 				}
-
 			}
 			wg.Wait()
 

@@ -744,3 +744,16 @@ export const getMiniblockHeader = (
     }
     return undefined
 }
+
+export const getRefEventIdFromChannelMessage = (message: ChannelMessage): string | undefined => {
+    switch (message.payload.case) {
+        case 'edit':
+        case 'reaction':
+        case 'redaction':
+            return message.payload.value.refEventId
+        case 'post':
+            return message.payload.value.threadId
+        default:
+            return undefined
+    }
+}

@@ -350,7 +350,7 @@ func (p *printer) printArray(v reflect.Value, showType bool) {
 		p.writeString(t.String())
 	}
 
-	//v.CanAddr()
+	// v.CanAddr()
 	if t.Elem().Kind() == reflect.Uint8 {
 		OpenColor(p.Writer, p.opts.Colors[ColorMap_Hex])
 		b := getBytes(v)

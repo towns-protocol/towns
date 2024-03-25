@@ -11,12 +11,11 @@ import (
 	"errors"
 	"fmt"
 	"io"
+	"log/slog"
 	"reflect"
 	"strconv"
 	"time"
 	"unicode/utf8"
-
-	"log/slog"
 
 	buffer "github.com/river-build/river/core/node/dlog/buffer"
 )

@@ -3,9 +3,8 @@ package rpc
 import (
 	"context"
 	"errors"
-	"time"
-
 	"log/slog"
+	"time"
 
 	"connectrpc.com/connect"
 	"google.golang.org/protobuf/encoding/protojson"

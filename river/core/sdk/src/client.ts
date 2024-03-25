@@ -100,6 +100,7 @@ import {
     make_UserPayload_UserMembership,
     make_MemberPayload_DisplayName,
     make_MemberPayload_Username,
+    getRefEventIdFromChannelMessage,
 } from './types'
 
 import debug from 'debug'
@@ -1024,6 +1025,8 @@ export class Client
         check(isDefined(stream), 'stream not found')
         const cleartext = payload.toJsonString()
         const message = await this.encryptGroupEvent(payload, streamId)
+        message.refEventId = getRefEventIdFromChannelMessage(payload)
+
         if (!message) {
             throw new Error('failed to encrypt message')
         }

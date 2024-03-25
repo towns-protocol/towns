@@ -16,6 +16,7 @@ import {OwnableHelper} from "contracts/test/diamond/ownable/OwnableSetup.sol";
 import {NodeRegistryHelper} from "contracts/test/river/registry/NodeRegistryHelper.sol";
 import {StreamRegistryHelper} from "contracts/test/river/registry/StreamRegistryHelper.sol";
 import {OperatorRegistryHelper} from "contracts/test/river/registry/OperatorRegistryHelper.sol";
+import {RiverConfigHelper} from "contracts/test/river/registry/RiverConfigHelper.sol";
 
 import {DeployMultiInit} from "contracts/scripts/deployments/DeployMultiInit.s.sol";
 
@@ -27,6 +28,7 @@ import {OwnableFacet} from "contracts/src/diamond/facets/ownable/OwnableFacet.so
 import {NodeRegistry} from "contracts/src/river/registry/facets/node/NodeRegistry.sol";
 import {StreamRegistry} from "contracts/src/river/registry/facets/stream/StreamRegistry.sol";
 import {OperatorRegistry} from "contracts/src/river/registry/facets/operator/OperatorRegistry.sol";
+import {RiverConfig} from "contracts/src/river/registry/facets/config/RiverConfig.sol";
 
 import {MultiInit} from "contracts/src/diamond/initializers/MultiInit.sol";
 
@@ -40,6 +42,7 @@ contract DeployRiverRegistry is DiamondDeployer {
     new StreamRegistryHelper();
   OperatorRegistryHelper internal operatorRegistryHelper =
     new OperatorRegistryHelper();
+  RiverConfigHelper internal riverConfigHelper = new RiverConfigHelper();
 
   address internal diamondCut;
   address internal diamondLoupe;
@@ -48,8 +51,10 @@ contract DeployRiverRegistry is DiamondDeployer {
   address internal nodeRegistry;
   address internal streamRegistry;
   address internal operatorRegistry;
+  address internal riverConfig;
 
   address[] internal operators = new address[](1);
+  address[] internal configManagers = new address[](1);
 
   function versionName() public pure override returns (string memory) {
     return "riverRegistry";
@@ -62,6 +67,7 @@ contract DeployRiverRegistry is DiamondDeployer {
     DeployMultiInit deployMultiInit = new DeployMultiInit();
     address multiInit = deployMultiInit.deploy();
     operators[0] = deployer;
+    configManagers[0] = deployer;
 
     vm.startBroadcast(deployerPK);
     diamondCut = address(new DiamondCutFacet());
@@ -71,6 +77,7 @@ contract DeployRiverRegistry is DiamondDeployer {
     nodeRegistry = address(new NodeRegistry());
     streamRegistry = address(new StreamRegistry());
     operatorRegistry = address(new OperatorRegistry());
+    riverConfig = address(new RiverConfig());
     vm.stopBroadcast();
 
     addFacet(
@@ -100,6 +107,11 @@ contract DeployRiverRegistry is DiamondDeployer {
       ),
       operatorRegistry,
       operatorRegistryHelper.makeInitData(operators)
+    );
+    addFacet(
+      riverConfigHelper.makeCut(riverConfig, IDiamond.FacetCutAction.Add),
+      riverConfig,
+      riverConfigHelper.makeInitData(configManagers)
     );
     addCut(
       nodeRegistryHelper.makeCut(nodeRegistry, IDiamond.FacetCutAction.Add)

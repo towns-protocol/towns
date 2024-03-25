@@ -33,5 +33,6 @@
   "solidity.compileUsingRemoteVersion": "v0.8.23+commit.f704f362",
   "[makefile]": {
     "editor.renderWhitespace": "all"
-  }
+  },
+  "go.formatTool": "gofumpt"
 }

@@ -2,9 +2,8 @@ package dlog
 
 import (
 	"context"
-	"os"
-
 	"log/slog"
+	"os"
 )
 
 var (

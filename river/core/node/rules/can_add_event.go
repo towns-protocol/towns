@@ -3,9 +3,8 @@ package rules
 import (
 	"bytes"
 	"context"
-	"time"
-
 	"log/slog"
+	"time"
 
 	"github.com/ethereum/go-ethereum/common"
 	"github.com/river-build/river/core/node/auth"
@@ -74,7 +73,6 @@ type aeMediaPayloadChunkRules struct {
 * (true, chainAuthArgs, &IsStreamEvent_Payload, nil) // event can be added if chainAuthArgs are satisfied and parent event is added or verified
 */
 func CanAddEvent(ctx context.Context, cfg *config.StreamConfig, validNodeAddresses []common.Address, currentTime time.Time, parsedEvent *events.ParsedEvent, streamView events.StreamView) (bool, *auth.ChainAuthArgs, *RequiredParentEvent, error) {
-
 	if parsedEvent.Event.DelegateExpiryEpochMs > 0 && isPastExpiry(currentTime, parsedEvent.Event.DelegateExpiryEpochMs) {
 		return false, nil, nil, RiverError(Err_PERMISSION_DENIED, "event delegate has expired", "currentTime", currentTime, "expiryTime", parsedEvent.Event.DelegateExpiryEpochMs)
 	}
@@ -310,19 +308,16 @@ func (params *aeParams) canAddMemberPayload(payload *StreamEvent_MemberPayload) 
 				check(ru.validMembershipPayload).
 				check(ru.validMembershipTransistionForSpace).
 				requireChainAuth(ru.spaceMembershipEntitlements)
-
 		} else if shared.ValidChannelStreamId(ru.params.streamView.StreamId()) {
 			return aeBuilder().
 				check(ru.validMembershipPayload).
 				check(ru.validMembershipTransistionForChannel).
 				requireChainAuth(ru.channelMembershipEntitlements).
 				requireParentEvent(ru.requireStreamParentMembership)
-
 		} else if shared.ValidDMChannelStreamId(ru.params.streamView.StreamId()) {
 			return aeBuilder().
 				check(ru.validMembershipPayload).
 				check(ru.validMembershipTransistionForDM)
-
 		} else if shared.ValidGDMChannelStreamId(ru.params.streamView.StreamId()) {
 			return aeBuilder().
 				check(ru.validMembershipPayload).
@@ -573,7 +568,6 @@ func (ru *aeMembershipRules) validMembershipTransistionForGDM() (bool, error) {
 	default:
 		return false, RiverError(Err_PERMISSION_DENIED, "unknown membership event", "op", ru.membership.Op)
 	}
-
 }
 
 func (ru *aeMembershipRules) requireStreamParentMembership() (*RequiredParentEvent, error) {
@@ -650,7 +644,6 @@ func (ru *aeUserMembershipRules) validUserMembershipTransistion() (bool, error) 
 	default:
 		return false, RiverError(Err_BAD_EVENT, "invalid current membership", "op", currentMembershipOp)
 	}
-
 }
 
 // / user membership triggers membership events on space, channel, dm, gdm streams
@@ -908,7 +901,6 @@ func (ru *aeMediaPayloadChunkRules) canAddMediaChunk() (bool, error) {
 			"chunk size must be less than or equal to",
 			"cfg.Media.MaxChunkSize",
 			ru.params.cfg.Media.MaxChunkSize)
-
 	}
 
 	return true, nil

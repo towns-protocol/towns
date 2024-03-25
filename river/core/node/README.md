@@ -2,7 +2,7 @@
 
     brew install protobuf
 
-# Installing Buf tools
+# Installing Buf and other tools
 
 https://connect.build/docs/go/getting-started/#install-tools:
 
@@ -10,6 +10,8 @@ https://connect.build/docs/go/getting-started/#install-tools:
     go install github.com/fullstorydev/grpcurl/cmd/grpcurl@latest
     go install google.golang.org/protobuf/cmd/protoc-gen-go@latest
     go install connectrpc.com/connect/cmd/protoc-gen-connect-go@latest
+    go install honnef.co/go/tools/cmd/staticcheck@latest
+    go install mvdan.cc/gofumpt@latest
 
 # Generate proto definitions
 

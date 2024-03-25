@@ -2,9 +2,8 @@ package test
 
 import (
 	"context"
-	"os"
-
 	"log/slog"
+	"os"
 
 	"github.com/river-build/river/core/node/dlog"
 )

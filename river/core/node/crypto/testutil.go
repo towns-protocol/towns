@@ -301,7 +301,6 @@ func (c *BlockchainTestContext) BlockNum(ctx context.Context) BlockNumber {
 		panic(err)
 	}
 	return BlockNumber(blockNum)
-
 }
 
 // GetTestAddress returns a random common.Address that can be used in tests.

@@ -9,11 +9,10 @@ import (
 	"encoding"
 	"fmt"
 	"io"
+	"log/slog"
 	"reflect"
 	"unicode"
 	"unicode/utf8"
-
-	"log/slog"
 )
 
 // PrettyTextHandler is a Handler that writes Records to an io.Writer as a

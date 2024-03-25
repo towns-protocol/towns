@@ -20,8 +20,11 @@ var recencyConstraintsConfig_t = config.RecencyConstraintsConfig{
 	Generations: 5,
 	AgeSeconds:  11,
 }
-var minEventsPerSnapshotDefault = 20
-var minEventsPerSnapshotUserStream = 2
+
+var (
+	minEventsPerSnapshotDefault    = 20
+	minEventsPerSnapshotUserStream = 2
+)
 
 var streamConfig_t = config.StreamConfig{
 	Media: config.MediaStreamConfig{
@@ -242,5 +245,4 @@ func TestLoad(t *testing.T) {
 	}, nextEvent, time.Now())
 	assert.Error(t, err)
 	assert.Contains(t, err.Error(), "BAD_PREV_MINIBLOCK_HASH")
-
 }

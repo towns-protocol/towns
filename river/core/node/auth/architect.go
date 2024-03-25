@@ -35,7 +35,7 @@ func NewArchitect(ctx context.Context, cfg *config.ContractConfig, backend bind.
 	if err != nil {
 		return nil, AsRiverError(err, Err_BAD_CONFIG).Message("Failed to parse contract address").Func("NewArchitect")
 	}
-	//var c Architect
+	// var c Architect
 	c, err := base.NewArchitect(address, backend)
 	if err != nil {
 		return nil, WrapRiverError(

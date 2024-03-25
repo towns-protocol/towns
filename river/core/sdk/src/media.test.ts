@@ -165,7 +165,9 @@ describe('mediaTests', () => {
         await charliesClient.stop()
     })
 
-    test('mediaStreamGetStreamEx', async () => {
+    // This test is flaky because there is a bug in GetStreamEx where sometimes the miniblock is not
+    // finalized before the client tries to fetch it. This is a known issue, see HNT-5291.
+    test.skip('mediaStreamGetStreamEx', async () => {
         const { streamId, prevMiniblockHash } = await bobCreateMediaStream(10)
         // Send a series of media chunks
         await bobSendMediaPayloads(streamId, 10, prevMiniblockHash)

@@ -30,7 +30,6 @@ func run(pass *analysis.Pass) (interface{}, error) {
 	for _, file := range pass.Files {
 		commentMap := ast.NewCommentMap(pass.Fset, file, file.Comments)
 		ast.Inspect(file, func(n ast.Node) bool {
-
 			method, ok := n.(*ast.FuncDecl)
 			if ok {
 				// aellis, by trial and error, this seems to be what maps to comments

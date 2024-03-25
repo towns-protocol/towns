@@ -18,7 +18,6 @@ type JoinableStreamView interface {
 var _ JoinableStreamView = (*streamViewImpl)(nil)
 
 func (r *streamViewImpl) GetChannelMembers() (*mapset.Set[string], error) {
-
 	members := mapset.NewSet[string]()
 
 	for _, member := range r.snapshot.Members.Joined {

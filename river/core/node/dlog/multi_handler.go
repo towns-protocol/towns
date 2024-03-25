@@ -2,7 +2,6 @@ package dlog
 
 import (
 	"context"
-
 	"log/slog"
 )
 

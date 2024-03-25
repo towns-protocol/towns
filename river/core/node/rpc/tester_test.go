@@ -100,29 +100,37 @@ func (st *serviceTester) setNodesStatus(start, stop int, status uint8) {
 
 func (st *serviceTester) startNodes(start, stop int) {
 	for i := start; i < stop; i++ {
-		cfg := &config.Config{
-			DisableBaseChain: true,
-			RegistryContract: st.btc.RegistryConfig(),
-			Database:         config.DatabaseConfig{Url: st.dbUrl},
-			StorageType:      "postgres",
-			Stream: config.StreamConfig{
-				Media: config.MediaStreamConfig{
-					MaxChunkCount: 100,
-					MaxChunkSize:  1000000,
-				},
-				RecencyConstraints: config.RecencyConstraintsConfig{
-					AgeSeconds:  11,
-					Generations: 5,
-				},
-			},
-		}
-
-		bc := st.btc.GetBlockchain(st.ctx, i, true)
-		service, err := rpc.StartServer(st.ctx, cfg, bc, st.nodes[i].listener)
+		err := st.startSinlge(i)
 		st.require.NoError(err)
-		st.nodes[i].service = service
-		st.nodes[i].address = bc.Wallet.Address
 	}
+}
+
+func (st *serviceTester) startSinlge(i int) error {
+	cfg := &config.Config{
+		DisableBaseChain: true,
+		RegistryContract: st.btc.RegistryConfig(),
+		Database:         config.DatabaseConfig{Url: st.dbUrl},
+		StorageType:      "postgres",
+		Stream: config.StreamConfig{
+			Media: config.MediaStreamConfig{
+				MaxChunkCount: 100,
+				MaxChunkSize:  1000000,
+			},
+			RecencyConstraints: config.RecencyConstraintsConfig{
+				AgeSeconds:  11,
+				Generations: 5,
+			},
+		},
+	}
+
+	bc := st.btc.GetBlockchain(st.ctx, i, true)
+	service, err := rpc.StartServer(st.ctx, cfg, bc, st.nodes[i].listener)
+	if err != nil {
+		return err
+	}
+	st.nodes[i].service = service
+	st.nodes[i].address = bc.Wallet.Address
+	return nil
 }
 
 func (st *serviceTester) testClient(i int) protocolconnect.StreamServiceClient {

@@ -35,6 +35,18 @@ struct Node {
   address operator; // 20 bytes
 }
 
+/**
+ * @notice Represents a configuration setting
+ * @param key The setting key
+ * @param blockNumber The block number on which the setting becomes active
+ * @param value The setting value
+ */
+struct Setting {
+  bytes32 key;
+  uint64 blockNumber;
+  bytes value;
+}
+
 struct AppStorage {
   // Ids of all streams in the system
   EnumerableSet.Bytes32Set streams;
@@ -50,6 +62,12 @@ struct AppStorage {
   mapping(address => Node) nodeByAddress;
   // Set of addresses of all operators in the system
   EnumerableSet.AddressSet operators;
+  // Set of all configuration keys
+  EnumerableSet.Bytes32Set configurationKeys;
+  // Set of all configuration settings
+  mapping(bytes32 => Setting[]) configuration;
+  // Set of addresses of all configuration managers
+  EnumerableSet.AddressSet configurationManagers;
 }
 
 library RiverRegistryStorage {
@@ -83,6 +101,18 @@ abstract contract RegistryModifiers {
 
   modifier onlyNodeOperator(address node, address operator) {
     if (ds.nodeByAddress[node].operator != operator)
+      revert(RiverRegistryErrors.BAD_AUTH);
+    _;
+  }
+
+  modifier configKeyExists(bytes32 key) {
+    if (!ds.configurationKeys.contains(key))
+      revert(RiverRegistryErrors.NOT_FOUND);
+    _;
+  }
+
+  modifier onlyConfigurationManager(address manager) {
+    if (!ds.configurationManagers.contains(manager))
       revert(RiverRegistryErrors.BAD_AUTH);
     _;
   }

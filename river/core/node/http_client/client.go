@@ -71,5 +71,4 @@ func GetHttpClient(ctx context.Context) (*http.Client, error) {
 	}
 
 	return client, nil
-
 }

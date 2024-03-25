@@ -69,7 +69,7 @@ func runChecksAE(checksList [][]func() (bool, error)) (bool, error) {
 	// outer loop is an and
 	for _, checks := range checksList {
 		// inner loop is an or
-		var foundCanAdd = false
+		foundCanAdd := false
 		var errorMsgs []string
 		for _, check := range checks {
 			canAdd, err := check()

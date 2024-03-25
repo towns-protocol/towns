@@ -5,6 +5,7 @@ import (
 	"crypto/tls"
 	"encoding/base64"
 	"fmt"
+	"log/slog"
 	"net"
 	"net/http"
 	"os"
@@ -24,8 +25,6 @@ import (
 	"github.com/river-build/river/core/node/registries"
 	"github.com/river-build/river/core/node/rpc/render"
 	"github.com/river-build/river/core/node/storage"
-
-	"log/slog"
 
 	"github.com/rs/cors"
 	"golang.org/x/net/http2"

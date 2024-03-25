@@ -8,6 +8,7 @@ import (
 	"encoding/hex"
 	"errors"
 	"fmt"
+	"log/slog"
 	"os"
 	"runtime"
 	"strconv"
@@ -15,8 +16,6 @@ import (
 
 	"connectrpc.com/connect"
 	"github.com/river-build/river/core/node/protocol"
-
-	"log/slog"
 
 	"github.com/ethereum/go-ethereum/accounts/abi"
 	"github.com/ethereum/go-ethereum/rpc"

@@ -99,7 +99,6 @@ func (s *PostgresEventStore) txRunner(
 
 	for {
 		err := s.txRunnerInner(ctx, accessMode, txFn, opts)
-
 		if err != nil {
 			if pgErr, ok := err.(*pgconn.PgError); ok {
 				if pgErr.Code == pgerrcode.SerializationFailure {
@@ -600,7 +599,6 @@ func (s *PostgresEventStore) GetStreamsNumber(ctx context.Context) (int, error) 
 		return 0, err
 	}
 	return count, nil
-
 }
 
 func (s *PostgresEventStore) getStreamsNumberTx(ctx context.Context) (int, error) {

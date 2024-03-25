@@ -527,6 +527,12 @@ message EncryptedData {
     * Optional checksum of the cleartext data.
     */
     optional string checksum = 5;
+
+    /**
+    * Optional reference to parent event ID
+    */
+    optional string ref_event_id = 6;
+
 }
 
 message WrappedEncryptedData {

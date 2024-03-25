@@ -209,7 +209,6 @@ func (n *nodeRegistryImpl) GetNode(address common.Address) (*NodeRecord, error) 
 		return nil, RiverError(Err_UNKNOWN_NODE, "No record for node", "address", address).Func("GetNode")
 	}
 	return nn, nil
-
 }
 
 func (n *nodeRegistryImpl) GetAllNodes() []*NodeRecord {

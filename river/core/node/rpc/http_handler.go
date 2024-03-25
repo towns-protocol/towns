@@ -1,13 +1,12 @@
 package rpc
 
 import (
+	"log/slog"
 	"net/http"
 
 	. "github.com/river-build/river/core/node/base"
 	"github.com/river-build/river/core/node/dlog"
 	"github.com/river-build/river/core/node/infra"
-
-	"log/slog"
 )
 
 var (

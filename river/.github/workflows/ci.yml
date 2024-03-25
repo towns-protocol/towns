@@ -128,6 +128,13 @@ jobs:
                     exit 1
                   fi
 
+            - name: Staticcheck River Node
+              uses: dominikh/staticcheck-action@v1
+              with:
+                version: latest
+                working-directory: core/node
+                install-go: false
+
             # - name: Terraform Lint
             #   run: make lint
             #   working-directory: ./infra

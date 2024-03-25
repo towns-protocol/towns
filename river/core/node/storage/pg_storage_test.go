@@ -130,7 +130,6 @@ func TestPostgresEventStore(t *testing.T) {
 	}
 
 	err = pgEventStore.DeleteStream(ctx, streamId2)
-
 	if err != nil {
 		t.Fatal("Error of deleting stream", err)
 	}
@@ -162,7 +161,6 @@ func TestPostgresEventStore(t *testing.T) {
 	var testEnvelopes [][]byte
 	testEnvelopes = append(testEnvelopes, []byte("event2"))
 	err = pgEventStore.WriteBlock(ctx, streamId1, 1, 1, []byte("block1"), false, testEnvelopes)
-
 	if err != nil {
 		t.Fatal("error creating block", err)
 	}
@@ -170,7 +168,6 @@ func TestPostgresEventStore(t *testing.T) {
 	var testEnvelopes2 [][]byte
 	testEnvelopes2 = append(testEnvelopes2, []byte("event3"))
 	err = pgEventStore.WriteBlock(ctx, streamId1, 2, 1, []byte("block2"), true, testEnvelopes2)
-
 	if err != nil {
 		t.Fatal("error creating block with snapshot", err)
 	}

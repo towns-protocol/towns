@@ -4,6 +4,7 @@ import (
 	"bytes"
 	"encoding/hex"
 	"fmt"
+	"log/slog"
 	"os"
 	"testing"
 	"time"
@@ -11,8 +12,6 @@ import (
 	"github.com/ethereum/go-ethereum/common"
 	"github.com/river-build/river/core/node/dlog"
 	"github.com/stretchr/testify/assert"
-
-	"log/slog"
 )
 
 type Data2 struct {

@@ -6,6 +6,7 @@ import (
 
 	"connectrpc.com/connect"
 	"github.com/ethereum/go-ethereum/common"
+	. "github.com/river-build/river/core/node/base"
 	"github.com/river-build/river/core/node/contracts"
 	"github.com/river-build/river/core/node/crypto"
 	. "github.com/river-build/river/core/node/protocol"
@@ -102,10 +103,19 @@ func TestAddingNewNodes(t *testing.T) {
 			newNodeCount++
 		} else {
 			oldNodeCount++
-
 		}
 	}
 	fmt.Println("oldNodeCount", oldNodeCount, "newNodeCount", newNodeCount)
 	require.NotZero(oldNodeCount)
 	require.Zero(newNodeCount)
+}
+
+func TestNoRecordNoStart(t *testing.T) {
+	require := require.New(t)
+	tester := newServiceTester(1, require)
+	defer tester.Close()
+
+	err := tester.startSinlge(0)
+	require.Error(err)
+	require.Equal(Err_UNKNOWN_NODE, AsRiverError(err).Code)
 }

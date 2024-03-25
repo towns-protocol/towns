@@ -7,13 +7,12 @@ package dlog
 import (
 	"fmt"
 	"io"
+	"log/slog"
 	"strconv"
 	"sync"
 	"time"
 
 	"golang.org/x/exp/slices"
-
-	"log/slog"
 
 	buffer "github.com/river-build/river/core/node/dlog/buffer"
 )

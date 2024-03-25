@@ -76,4 +76,5 @@ go build -o bin/gen-bindings-remove-struct scripts/gen-bindings-remove-struct.go
 generate_go_nover INodeRegistry node_registry_v1
 generate_go_nover IStreamRegistry stream_registry_v1
 generate_go_nover IOperatorRegistry operator_registry_v1
+generate_go_nover IRiverConfig river_config_v1
 generate_go_deploy MockRiverRegistry mock_river_registry
