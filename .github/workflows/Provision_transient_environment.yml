@@ -89,6 +89,10 @@ jobs:
                 aws-secret-access-key: ${{ secrets.AWS_SECRET_ACCESS_KEY }}
                 aws-region: us-east-1
 
+            - name: Add Workflow level Provision lock
+              working-directory: ./infra
+              run:  ./provision_flag_lock.sh add_lock
+
             - name: Login to Amazon ECR
               id: login-aws-ecr
               uses: aws-actions/amazon-ecr-login@v2
@@ -102,6 +106,11 @@ jobs:
             - name: Terraform apply
               working-directory: ./infra
               run: make apply
+
+            - name: Clear Workflow level Provision lock
+              if: always()
+              working-directory: ./infra
+              run:  ./provision_flag_lock.sh clear_lock
 
             - name: Slack notification
               if: failure()
@@ -128,7 +137,7 @@ jobs:
         needs: check_labels
         permissions: write-all
 
-        if: needs.check_labels.outputs.num_nodes > 0 
+        if: needs.check_labels.outputs.num_nodes > 0
         # TODO: only run if a change in /core/node is detected
         # TODO: only deploy if the new docker image is different than what's currently active
         with:
@@ -155,7 +164,7 @@ jobs:
 
     run_synthetic_transactions_test:
         needs: [check_labels, river_node_continuous_deploys]
-        if: needs.check_labels.outputs.num_nodes > 0 
+        if: needs.check_labels.outputs.num_nodes > 0
         uses: './.github/workflows/Synthetic_transactions.yml'
         secrets:
             SLACK_CI_CHANNEL_WEBHOOK_URL: ${{ secrets.SLACK_CI_CHANNEL_WEBHOOK_URL }}
