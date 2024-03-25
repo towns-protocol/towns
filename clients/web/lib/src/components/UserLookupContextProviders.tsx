@@ -60,11 +60,13 @@ export const SpaceContextUserLookupProvider = (props: { children: React.ReactNod
         }
         users.forEach((user) => {
             const offlineUserKey = generateOfflineUserKey(spaceId, user.userId)
-            setOfflineUser(offlineUserKey, {
-                userId: user.userId,
-                username: user.username,
-                displayName: user.displayName,
-            } as OfflineUser)
+            if (user.username) {
+                setOfflineUser(offlineUserKey, {
+                    userId: user.userId,
+                    username: user.username,
+                    displayName: user.displayName,
+                } as OfflineUser)
+            }
         })
     }, [setOfflineUser, spaceId, users])
 
@@ -127,16 +129,19 @@ export const DMChannelContextUserLookupProvider = (props: {
     }, [room, parentContext?.usersMap])
 
     useEffect(() => {
-        if (spaceId) {
-            users.forEach((user) => {
-                const offlineUserKey = generateOfflineUserKey(spaceId, user.userId)
+        if (!spaceId) {
+            return
+        }
+        users.forEach((user) => {
+            const offlineUserKey = generateOfflineUserKey(spaceId, user.userId)
+            if (user.username) {
                 setOfflineUser(offlineUserKey, {
                     userId: user.userId,
                     username: user.username,
                     displayName: user.displayName,
                 } as OfflineUser)
-            })
-        }
+            }
+        })
     }, [spaceId, setOfflineUser, users])
 
     const value = useMemo(() => {
