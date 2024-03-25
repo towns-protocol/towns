@@ -504,20 +504,11 @@ resource "aws_ecs_task_definition" "river-fargate" {
       },
       {
         name  = "WALLETLINKCONTRACT__ADDRESS"
-        value = "0x4B53e313773df56d8f8b96942c5Cf7a49cFc9774"
+        value = "0x9ddFCd12Ae6f3a8c56d5f07A6308307a23195a30"
       },
       {
         name  = "WALLETLINKCONTRACT__VERSION"
         value = "v3"
-      },
-      {
-        name = "MODE"
-        # TODO: remove this from the dockerfile. everything is multinode now.
-        value = "multi-node"
-      },
-      {
-        name  = "USEBLOCKCHAINSTREAMREGISTRY",
-        value = "true"
       },
       {
         name  = "REGISTRYCONTRACT__ADDRESS",
