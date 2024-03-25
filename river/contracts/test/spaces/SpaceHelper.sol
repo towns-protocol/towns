@@ -105,4 +105,38 @@ abstract contract SpaceHelper {
         channel: IArchitectBase.ChannelInfo({metadata: "ipfs://test"})
       });
   }
+
+  function _createGatedSpaceInfo(
+    string memory townId
+  ) internal pure returns (IArchitectBase.SpaceInfo memory) {
+    string[] memory permissions = new string[](2);
+    permissions[0] = "Read";
+    permissions[1] = "Write";
+
+    return
+      IArchitectBase.SpaceInfo({
+        name: "test",
+        uri: "ipfs://test",
+        membership: IArchitectBase.Membership({
+          settings: IMembershipBase.Membership({
+            name: "Member",
+            symbol: "MEM",
+            price: 0,
+            maxSupply: 0,
+            duration: 0,
+            currency: address(0),
+            feeRecipient: address(0),
+            freeAllocation: 0,
+            pricingModule: address(0)
+          }),
+          requirements: IArchitectBase.MembershipRequirements({
+            everyone: false,
+            users: new address[](0),
+            ruleData: RuleEntitlementUtil.getMockERC721RuleData()
+          }),
+          permissions: permissions
+        }),
+        channel: IArchitectBase.ChannelInfo({metadata: "ipfs://test"})
+      });
+  }
 }

@@ -13,7 +13,7 @@ import {
 import { WalletLink as WalletLinkV3 } from './v3/WalletLink'
 import { BytesLike, ContractReceipt, ContractTransaction, ethers } from 'ethers'
 import { SpaceInfo } from './types'
-import { IRolesBase, Town, TownRegistrar, IRuleEntitlement } from './v3'
+import { IRolesBase, Space, SpaceRegistrar, IRuleEntitlement } from './v3'
 import { PricingModules } from './v3/PricingModules'
 
 export type SignerType = ethers.Signer
@@ -51,7 +51,7 @@ type TransactionType = ContractTransaction
 export interface ISpaceDapp {
     readonly chainId: number
     readonly provider: ethers.providers.Provider | undefined
-    readonly townRegistrar: TownRegistrar
+    readonly spaceRegistrar: SpaceRegistrar
     readonly walletLink: WalletLinkV3
     readonly pricingModules: PricingModules
     addRoleToChannel: (
@@ -89,11 +89,11 @@ export interface ISpaceDapp {
         signer: SignerType,
     ): Promise<TransactionType>
     createUpdatedEntitlements(
-        town: Town,
+        space: Space,
         params: UpdateRoleParams,
     ): Promise<IRolesBase.CreateEntitlementStruct[]>
     deleteRole(spaceId: string, roleId: number, signer: SignerType): Promise<TransactionType>
-    encodedUpdateChannelData(town: Town, params: UpdateChannelParams): Promise<BytesLike[]>
+    encodedUpdateChannelData(space: Space, params: UpdateChannelParams): Promise<BytesLike[]>
     getChannels: (spaceId: string) => Promise<ChannelMetadata[]>
     getChannelDetails: (spaceId: string, channelId: string) => Promise<ChannelDetails | null>
     getPermissionsByRoleId: (spaceId: string, roleId: number) => Promise<Permission[]>
@@ -127,10 +127,10 @@ export interface ISpaceDapp {
         disabled: boolean,
         signer: SignerType,
     ) => Promise<TransactionType>
-    getTown(townId: string): Promise<Town | undefined>
-    getTownMembershipTokenAddress: (spaceId: string) => Promise<string>
-    joinTown: (spaceId: string, recipient: string, signer: SignerType) => Promise<TransactionType>
-    hasTownMembership: (spaceId: string, wallet: string) => Promise<boolean>
+    getSpace(spaceId: string): Space | undefined
+    getSpaceMembershipTokenAddress: (spaceId: string) => Promise<string>
+    joinSpace: (spaceId: string, recipient: string, signer: SignerType) => Promise<TransactionType>
+    hasSpaceMembership: (spaceId: string, wallet: string) => Promise<boolean>
     getMembershipSupply: (spaceId: string) => Promise<TotalSupplyInfo>
     getMembershipInfo: (spaceId: string) => Promise<MembershipInfo>
     getWalletLink: () => WalletLinkV3

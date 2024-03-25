@@ -33,11 +33,11 @@ test('can update a space (name) via userop', async () => {
 
     expect(spaceId).not.toBeUndefined()
 
-    const town = await alice.spaceDapp.getTown(spaceId!)
+    const town = alice.spaceDapp.getSpace(spaceId!)
 
-    expect((await town?.getTownInfo())?.name).toBe(ogName)
+    expect((await town?.getSpaceInfo())?.name).toBe(ogName)
 
     const userop = await alice.updateSpaceNameTransaction(spaceId!, newName, alice.wallet)
     await alice.waitForUpdateSpaceNameTransaction(userop)
-    expect((await town?.getTownInfo())?.name).toBe(newName)
+    expect((await town?.getSpaceInfo())?.name).toBe(newName)
 })

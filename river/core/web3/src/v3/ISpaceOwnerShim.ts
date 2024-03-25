@@ -1,6 +1,6 @@
 import {
     ISpaceOwner as LocalhostContract,
-    ISpaceOwnerBase as LocalhostITownOwnerBase,
+    ISpaceOwnerBase as LocalhostISpaceOwnerBase,
     ISpaceOwnerInterface as LocalhostInterface,
 } from '@river/generated/dev/typings/ISpaceOwner'
 import {
@@ -14,9 +14,9 @@ import BaseSepoliaAbi from '@river/generated/v3/abis/SpaceOwner.abi.json' assert
 import { BaseContractShim } from './BaseContractShim'
 import { ethers } from 'ethers'
 
-export type { LocalhostITownOwnerBase as ISpaceOwnerBase }
+export type { LocalhostISpaceOwnerBase as ISpaceOwnerBase }
 
-export class ITownOwnerShim extends BaseContractShim<
+export class ISpaceOwnerShim extends BaseContractShim<
     LocalhostContract,
     LocalhostInterface,
     BaseSepoliaContract,

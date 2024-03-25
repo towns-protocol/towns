@@ -13,8 +13,8 @@ import { createSpaceDapp } from '@river/web3'
 import Redis from 'ioredis'
 import {
     RiverSDK,
-    TownsWithChannels,
-    ChannelTownPairs,
+    SpacesWithChannels,
+    ChannelSpacePairs,
     ChannelTrackingInfo,
     pauseForXMiliseconds,
     getRandomInt,
@@ -113,13 +113,13 @@ describe('Stress test', () => {
 
         let followersCounter = numFollowers
 
-        const townsWithChannels = new TownsWithChannels()
-        const channelWithTowns = new ChannelTownPairs()
+        const townsWithChannels = new SpacesWithChannels()
+        const channelWithTowns = new ChannelSpacePairs()
 
         const {
             spaceStreamId: coordinationSpaceId,
             defaultChannelStreamId: coordinationChannelId,
-        } = await result.riverSDK.createTownAndChannel(
+        } = await result.riverSDK.createSpaceAndChannel(
             'main town',
             'Controller Town',
             'main channel',
@@ -211,7 +211,7 @@ describe('Stress test', () => {
         let channelsCounter = 0
 
         for (let i = 0; i < numTowns; i++) {
-            const townCreationResult = await result.riverSDK.createTownWithDefaultChannel(
+            const townCreationResult = await result.riverSDK.createSpaceWithDefaultChannel(
                 'Town ' + i,
                 'Channel 0 0',
             )
@@ -220,7 +220,7 @@ describe('Stress test', () => {
             log(i + 1, 'towns out of ', numTowns, ' created')
             log(channelsCounter, 'channels out of ', totalNumberOfChannels, ' created')
 
-            townsWithChannels.addChannelToTown(
+            townsWithChannels.addChannelToSpace(
                 townCreationResult.spaceStreamId,
                 townCreationResult.defaultChannelStreamId,
             )
@@ -261,7 +261,7 @@ describe('Stress test', () => {
                         channelCreationResult,
                 )
 
-                townsWithChannels.addChannelToTown(
+                townsWithChannels.addChannelToSpace(
                     townCreationResult.spaceStreamId,
                     channelCreationResult,
                 )

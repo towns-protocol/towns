@@ -279,7 +279,7 @@ function RolesComponent({ spaceNetworkId }: { spaceNetworkId: string | undefined
             }
             if (!cancel) {
                 setMembershipTokenAddress(
-                    await spaceDapp?.getTownMembershipTokenAddress(spaceNetworkId),
+                    await spaceDapp?.getSpaceMembershipTokenAddress(spaceNetworkId),
                 )
             }
         }

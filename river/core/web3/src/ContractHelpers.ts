@@ -4,7 +4,7 @@ import { Versions, BasicRoleInfo, Permission, defaultVersion, Address } from './
 import { getContractsInfo } from './IStaticContractsInfo'
 import { ISpaceDapp } from './ISpaceDapp'
 import {
-    IArchitectBase as ITownArchitectBaseV3,
+    IArchitectBase as ISpaceArchitectBaseV3,
     MockERC721AShim as MockERC721AShimV3,
     IMembershipBase as IMembershipBaseV3,
 } from './v3'
@@ -85,15 +85,15 @@ export function isRoleIdInArray(
  */
 
 function isMembershipStructV3(
-    returnValue: ITownArchitectBaseV3.MembershipStruct,
-): returnValue is ITownArchitectBaseV3.MembershipStruct {
+    returnValue: ISpaceArchitectBaseV3.MembershipStruct,
+): returnValue is ISpaceArchitectBaseV3.MembershipStruct {
     return typeof returnValue.settings.price === 'number'
 }
 
 type CreateMembershipStructArgs = {
     name: string
     permissions: Permission[]
-    requirements: ITownArchitectBaseV3.MembershipRequirementsStruct
+    requirements: ISpaceArchitectBaseV3.MembershipRequirementsStruct
     version?: Versions
 } & Omit<
     IMembershipBaseV3.MembershipStruct,
@@ -111,7 +111,7 @@ function _createMembershipStruct({
     permissions,
     requirements,
     version = defaultVersion,
-}: CreateMembershipStructArgs): ITownArchitectBaseV3.MembershipStruct {
+}: CreateMembershipStructArgs): ISpaceArchitectBaseV3.MembershipStruct {
     if (version === 'v3') {
         return {
             settings: {

@@ -13,7 +13,7 @@ import { createSpaceDapp } from '@river/web3'
 import {
     RiverSDK,
     startsWithSubstring,
-    ChannelTownPairs,
+    ChannelSpacePairs,
     getRandomInt,
     ChannelTrackingInfo,
     pauseForXMiliseconds,
@@ -140,7 +140,7 @@ async function singleTestProcess(): Promise<void> {
         ['inf', 0],
     ])
 
-    const channelTownPairs = new ChannelTownPairs()
+    const channelTownPairs = new ChannelSpacePairs()
     const townsJoined = new Set<string>()
     const channelsJoined: string[] = []
     const userNumPerChannel = new Map<string, number>()
@@ -175,7 +175,7 @@ async function singleTestProcess(): Promise<void> {
                             const channelId = channelTownPairs.getRecords()[i][0]
                             if (!townsJoined.has(townId)) {
                                 log('Try joining town with Id: ', townId)
-                                await result.riverSDK.joinTown(townId)
+                                await result.riverSDK.joinSpace(townId)
                                 townsJoined.add(townId)
                                 log('Joined town with Id: ', townId)
                             }
@@ -279,7 +279,7 @@ async function singleTestProcess(): Promise<void> {
             }
             log('Coordination space id', coordinationSpaceId)
             log('Coordination channel id', coordinationChannelId)
-            await result.riverSDK.joinTown(coordinationSpaceId)
+            await result.riverSDK.joinSpace(coordinationSpaceId)
             await result.riverSDK.joinChannel(coordinationChannelId)
             joinedMainTown = true
         } catch (e) {

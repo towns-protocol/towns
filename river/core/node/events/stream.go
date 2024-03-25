@@ -506,6 +506,6 @@ func (s *streamImpl) canCreateMiniblock() bool {
 	// Loaded, has events in minipool, fake leader and periodic miniblock creation is not disabled in test settings.
 	return s.view != nil &&
 		s.view.minipool.events.Len() > 0 &&
-		s.nodes.LocalAndFirst() &&
+		s.nodes.LocalIsLeader() &&
 		!s.view.snapshot.GetInceptionPayload().GetSettings().GetDisableMiniblockCreation()
 }

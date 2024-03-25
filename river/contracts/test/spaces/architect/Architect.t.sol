@@ -12,6 +12,7 @@ import {IGuardian} from "contracts/src/spaces/facets/guardian/IGuardian.sol";
 import {IUserEntitlement} from "contracts/src/spaces/entitlements/user/IUserEntitlement.sol";
 import {IRuleEntitlement} from "contracts/src/crosschain/IRuleEntitlement.sol";
 import {RuleEntitlement} from "contracts/src/crosschain/RuleEntitlement.sol";
+import {RuleEntitlementUtil} from "contracts/src/crosschain/RuleEntitlementUtil.sol";
 import {IRoles} from "contracts/src/spaces/facets/roles/IRoles.sol";
 import {IMembership} from "contracts/src/spaces/facets/membership/IMembership.sol";
 import {IWalletLink} from "contracts/src/river/wallet-link/IWalletLink.sol";
@@ -65,6 +66,47 @@ contract ArchitectTest is
         _randomAddress(),
         "Read"
       )
+    );
+  }
+
+  function test_minter_role_entitlments() external {
+    string memory name = "Test";
+
+    address founder = _randomAddress();
+
+    vm.prank(founder);
+    IArchitectBase.SpaceInfo memory spaceInfo = _createGatedSpaceInfo(name);
+    spaceInfo.membership.settings.pricingModule = pricingModule;
+    address spaceAddress = spaceArchitect.createSpace(spaceInfo);
+
+    IEntitlementsManager.Entitlement[]
+      memory entitlements = IEntitlementsManager(spaceAddress)
+        .getEntitlements();
+
+    address ruleEntitlementAddress;
+
+    for (uint256 i = 0; i < entitlements.length; i++) {
+      if (
+        keccak256(abi.encodePacked(entitlements[i].moduleType)) ==
+        keccak256(abi.encodePacked("RuleEntitlement"))
+      ) {
+        ruleEntitlementAddress = entitlements[i].moduleAddress;
+        break;
+      }
+    }
+
+    uint256 minterRoleId = 1;
+    // ruleData for minter role
+    IRuleEntitlement.RuleData memory ruleData = IRuleEntitlement(
+      ruleEntitlementAddress
+    ).getRuleData(minterRoleId);
+
+    assertEq(
+      ruleData.checkOperations[0].contractAddress,
+      RuleEntitlementUtil
+        .getMockERC721RuleData()
+        .checkOperations[0]
+        .contractAddress
     );
   }
 

@@ -51,3 +51,13 @@ See [conventions](conventions.md)
 You need jq to run the run_multi.sh script
 
     brew install jq
+
+# Debugging Tests
+
+Logs are turned off by default in tests. To enable set `RIVER_TEST_LOG` variable to the desired logging level:
+
+    # Run all test in rpc with info logging level
+    RIVER_TEST_LOG=info go test ./rpc -v
+
+    # Run single test by name with debug logging on
+    RIVER_TEST_LOG=debug go test ./rpc -v -run TestSingleAndMulti/multi/testMethods

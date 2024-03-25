@@ -187,7 +187,7 @@ describe.skip('isEntitledToSpace and isEntitledToChannel tests', () => {
             throw new Error('spaceId is undefined')
         }
 
-        const transaction = await bobWithNft.spaceDapp.joinTown(
+        const transaction = await bobWithNft.spaceDapp.joinSpace(
             spaceId,
             bobWithNft.wallet.address,
             bobWithNft.wallet,
@@ -216,7 +216,7 @@ describe.skip('isEntitledToSpace and isEntitledToChannel tests', () => {
         expect(isEntitledToSpace).toBe(true)
     }) // end test
 
-    test('client checks isEntitledToJoinTown with a linked wallet is true', async () => {
+    test('client checks isEntitledToJoinSpace with a linked wallet is true', async () => {
         /** Arrange */
         // create all the users for the test
         const { alice, bob } = await registerAndStartClients(['alice', 'bob'])
@@ -252,7 +252,7 @@ describe.skip('isEntitledToSpace and isEntitledToChannel tests', () => {
         expect(isAliceEntitledToSpace).toBe(true)
 
         // test the user's entitlement to the space
-        const isEntitledToJoinTown = await bob.isEntitled(
+        const isEntitledToJoinSpace = await bob.isEntitled(
             spaceId,
             undefined,
             bob.wallet.address,
@@ -260,10 +260,10 @@ describe.skip('isEntitledToSpace and isEntitledToChannel tests', () => {
         )
 
         /** Assert */
-        expect(isEntitledToJoinTown).toBe(true)
+        expect(isEntitledToJoinSpace).toBe(true)
     }) // end test
 
-    test('client checks isEntitledToJoinTown with a linked wallet is false', async () => {
+    test('client checks isEntitledToJoinSpace with a linked wallet is false', async () => {
         /** Arrange */
         // create all the users for the test
         const { alice, bob } = await registerAndStartClients(['alice', 'bob'])
@@ -298,7 +298,7 @@ describe.skip('isEntitledToSpace and isEntitledToChannel tests', () => {
         expect(isAliceEntitledToSpace).toBe(true)
 
         // test the user's entitlement to the space
-        const isEntitledToJoinTown = await bob.isEntitled(
+        const isEntitledToJoinSpace = await bob.isEntitled(
             spaceId,
             undefined,
             bob.wallet.address,
@@ -306,7 +306,7 @@ describe.skip('isEntitledToSpace and isEntitledToChannel tests', () => {
         )
 
         /** Assert */
-        expect(isEntitledToJoinTown).toBe(false)
+        expect(isEntitledToJoinSpace).toBe(false)
     }) // end test
 
     test('client checks isEntitledToSpace false', async () => {

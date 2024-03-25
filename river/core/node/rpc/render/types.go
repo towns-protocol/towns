@@ -1,9 +1,11 @@
 package render
 
+import "time"
+
 // RenderableData is the interface for all data that can be rendered
 type RenderableData interface {
 	*AvailableDebugHandlersData | *CacheData |
-		*GoRoutineData | *MemStatsData | *InfoIndexData
+		*GoRoutineData | *MemStatsData | *InfoIndexData | *DebugMultiData
 
 	// TemplateName returns the name of the template to be used for rendering
 	TemplateName() string
@@ -76,4 +78,21 @@ type InfoIndexData struct {
 
 func (d InfoIndexData) TemplateName() string {
 	return "templates/info/index.template.html"
+}
+
+type DebugMultiInfo struct {
+	Protocol     string
+	ResponseTime time.Duration
+	StatusCode   int
+	Failed       bool
+}
+
+type DebugMultiData struct {
+	Results   map[string][]DebugMultiInfo
+	Nodes     []string
+	Protocols []string
+}
+
+func (d DebugMultiData) TemplateName() string {
+	return "templates/debug/multi.template.html"
 }

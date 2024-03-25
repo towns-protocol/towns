@@ -1178,8 +1178,8 @@ export class TownsClient implements EntitlementsDelegate {
         // check membership nft first to avoid uncessary mint attempts on rejoins
         try {
             const allPromises = linkedWallets
-                .map((wallet) => this.spaceDapp.hasTownMembership(spaceId, wallet))
-                .concat(this.spaceDapp.hasTownMembership(spaceId, userId))
+                .map((wallet) => this.spaceDapp.hasSpaceMembership(spaceId, wallet))
+                .concat(this.spaceDapp.hasSpaceMembership(spaceId, userId))
             const results = await Promise.all(allPromises)
             if (results.some((result) => result)) {
                 console.log('[joinTown] already have member nft')
@@ -1263,7 +1263,7 @@ export class TownsClient implements EntitlementsDelegate {
             // This will throw an AggregateError if none of the wallets are entitled
             const entitledWallet = await Promise.any(allPromises)
 
-            const hasMembership = await this.spaceDapp.hasTownMembership(spaceId, entitledWallet)
+            const hasMembership = await this.spaceDapp.hasSpaceMembership(spaceId, entitledWallet)
 
             if (hasMembership) {
                 return
@@ -1272,9 +1272,9 @@ export class TownsClient implements EntitlementsDelegate {
             let transaction: TransactionOrUserOperation | undefined = undefined
 
             if (this.isAccountAbstractionEnabled()) {
-                transaction = await this.userOps?.sendJoinTownOp([spaceId, entitledWallet, signer])
+                transaction = await this.userOps?.sendJoinSpaceOp([spaceId, entitledWallet, signer])
             } else {
-                transaction = await this.spaceDapp.joinTown(spaceId, entitledWallet, signer)
+                transaction = await this.spaceDapp.joinSpace(spaceId, entitledWallet, signer)
             }
             // TODO: should this be separated into create/wait methods like other transactions?
             await this._waitForBlockchainTransaction({

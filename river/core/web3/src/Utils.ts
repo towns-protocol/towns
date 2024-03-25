@@ -34,7 +34,7 @@ export class LocalhostWeb3Provider extends ethers.providers.JsonRpcProvider {
 
     /**
      * Mint a mock NFT for the current wallet
-     * required for the wallet to be able to create a town
+     * required for the wallet to be able to create a space
      */
     public async mintMockNFT() {
         await this.ready

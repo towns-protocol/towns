@@ -14,7 +14,7 @@ import {
 } from '../ContractTypes'
 import { IChannelBase, IChannelShim } from './IChannelShim'
 import { IRolesBase, IRolesShim } from './IRolesShim'
-import { ISpaceOwnerBase, ITownOwnerShim } from './ITownOwnerShim'
+import { ISpaceOwnerBase, ISpaceOwnerShim } from './ISpaceOwnerShim'
 
 import { IEntitlementsShim } from './IEntitlementsShim'
 import { IMulticallShim } from './IMulticallShim'
@@ -27,22 +27,22 @@ import { toPermissions } from '../ConvertersRoles'
 import { IMembershipShim } from './IMembershipShim'
 import { NoopRuleData } from '../entitlement'
 import { RuleEntitlementShim } from './RuleEntitlementShim'
-import { IRuleEntitlement } from './'
+import { IRuleEntitlement } from '.'
 import { IBanningShim } from './IBanningShim'
 
 interface AddressToEntitlement {
     [address: string]: EntitlementShim
 }
 
-interface TownConstructorArgs {
+interface SpaceConstructorArgs {
     address: string
     spaceId: string
     chainId: number
     provider: ethers.providers.Provider | undefined
-    townOwnerAddress: string
+    spaceOwnerAddress: string
 }
 
-export class Town {
+export class Space {
     private readonly address: string
     private readonly addressToEntitlement: AddressToEntitlement = {}
     private readonly spaceId: string
@@ -54,11 +54,11 @@ export class Town {
     private readonly ownable: OwnableFacetShim
     private readonly pausable: TokenPausableFacetShim
     private readonly roles: IRolesShim
-    private readonly townOwner: ITownOwnerShim
+    private readonly spaceOwner: ISpaceOwnerShim
     private readonly membership: IMembershipShim
     private readonly banning: IBanningShim
 
-    constructor({ address, spaceId, chainId, provider, townOwnerAddress }: TownConstructorArgs) {
+    constructor({ address, spaceId, chainId, provider, spaceOwnerAddress }: SpaceConstructorArgs) {
         this.address = address
         this.spaceId = spaceId
         this.chainId = chainId
@@ -69,7 +69,7 @@ export class Town {
         this.ownable = new OwnableFacetShim(address, chainId, provider)
         this.pausable = new TokenPausableFacetShim(address, chainId, provider)
         this.roles = new IRolesShim(address, chainId, provider)
-        this.townOwner = new ITownOwnerShim(townOwnerAddress, chainId, provider)
+        this.spaceOwner = new ISpaceOwnerShim(spaceOwnerAddress, chainId, provider)
         this.membership = new IMembershipShim(address, chainId, provider)
         this.banning = new IBanningShim(address, chainId, provider)
     }
@@ -106,8 +106,8 @@ export class Town {
         return this.entitlements
     }
 
-    public get TownOwner(): ITownOwnerShim {
-        return this.townOwner
+    public get SpaceOwner(): ISpaceOwnerShim {
+        return this.spaceOwner
     }
 
     public get Membership(): IMembershipShim {
@@ -118,12 +118,12 @@ export class Town {
         return this.banning
     }
 
-    public getTownInfo(): Promise<ISpaceOwnerBase.SpaceStruct> {
-        return this.townOwner.read.getSpaceInfo(this.address)
+    public getSpaceInfo(): Promise<ISpaceOwnerBase.SpaceStruct> {
+        return this.spaceOwner.read.getSpaceInfo(this.address)
     }
 
     public async getRole(roleId: BigNumberish): Promise<RoleDetails | null> {
-        // get all the entitlements for the town
+        // get all the entitlements for the space
         const entitlementShims = await this.getEntitlementShims()
         // get the various pieces of details
         const [roleEntitlements, channels] = await Promise.all([
@@ -192,7 +192,7 @@ export class Town {
     private async getChannelRoleEntitlements(
         channelInfo: IChannelBase.ChannelStructOutput,
     ): Promise<RoleEntitlements[]> {
-        // get all the entitlements for the town
+        // get all the entitlements for the space
         const entitlementShims = await this.getEntitlementShims()
         const getRoleEntitlementsAsync: Promise<RoleEntitlements | null>[] = []
         for (const roleId of channelInfo.roleIds) {
@@ -297,7 +297,7 @@ export class Town {
     }
 
     public async getEntitlementShims(): Promise<EntitlementShim[]> {
-        // get all the entitlement addresses supported in the town
+        // get all the entitlement addresses supported in the space
         const entitlementInfo = await this.entitlements.read.getEntitlements()
         const getEntitlementShims: Promise<EntitlementShim>[] = []
         // with the addresses, get the entitlement shims

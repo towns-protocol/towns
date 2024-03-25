@@ -1,0 +1,54 @@
+<!DOCTYPE html>
+<html lang="en">
+  <head>
+    <meta charset="UTF-8" />
+    <title>Protocol and Node Responses</title>
+    <style>
+      .success {
+        color: green;
+      }
+      .error {
+        color: red;
+      }
+      table,
+      th,
+      td {
+        border: 1px solid black;
+        border-collapse: collapse;
+      }
+      th,
+      td {
+        padding: 5px;
+        text-align: center;
+      }
+    </style>
+  </head>
+  <body>
+    <h2>Node Response Times</h2>
+    <table>
+      <!-- Header row for Protocols -->
+      <tr>
+        <th>Node</th>
+        {{ range .Protocols }}
+        <th>{{ . }}</th>
+        {{ end }}
+      </tr>
+
+      <!-- Data rows for each Node -->
+      {{ range $node := .Nodes }}
+      <tr>
+        <th>{{ $node }}</th>
+        {{ range $protocol := $.Protocols }} {{ $response := index $.Results
+        $node }} {{ $found := false }} {{ range $response }} {{ if eq .Protocol
+        $protocol }} {{ if or .Failed (ne .StatusCode 200) }}
+        <td class="error">{{ .ResponseTime }} ({{ .StatusCode }})</td>
+        {{ else }}
+        <td class="success">{{ .ResponseTime }} ({{ .StatusCode }})</td>
+        {{ end }} {{ $found = true }} {{ end }} {{ end }} {{ if not $found }}
+        <td>N/A</td>
+        {{ end }} {{ end }}
+      </tr>
+      {{ end }}
+    </table>
+  </body>
+</html>

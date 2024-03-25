@@ -3,6 +3,7 @@ package nodes
 import (
 	"context"
 	"hash/fnv"
+	"sync"
 
 	"github.com/ethereum/go-ethereum/common"
 	. "github.com/river-build/river/core/node/base"
@@ -24,6 +25,8 @@ type streamRegistryImpl struct {
 	nodeRegistry     NodeRegistry
 	replFactor       int
 	contract         *registries.RiverRegistryContract
+
+	streamNodeCache sync.Map
 }
 
 var _ StreamRegistry = (*streamRegistryImpl)(nil)
@@ -41,11 +44,18 @@ func NewStreamRegistry(localNodeAddress common.Address, nodeRegistry NodeRegistr
 }
 
 func (sr *streamRegistryImpl) GetStreamInfo(ctx context.Context, streamId StreamId) (StreamNodes, error) {
+	if streamNodes, ok := sr.streamNodeCache.Load(streamId); ok {
+		return streamNodes.(StreamNodes), nil
+	}
+
 	ret, err := sr.contract.GetStream(ctx, streamId)
 	if err != nil {
 		return nil, err
 	}
-	return NewStreamNodes(ret.Nodes, sr.localNodeAddress), nil
+
+	streamNodes := NewStreamNodes(ret.Nodes, sr.localNodeAddress)
+	sr.streamNodeCache.Store(streamId, streamNodes)
+	return streamNodes, nil
 }
 
 func (sr *streamRegistryImpl) AllocateStream(ctx context.Context, streamId StreamId, genesisMiniblockHash common.Hash, genesisMiniblock []byte) ([]common.Address, error) {

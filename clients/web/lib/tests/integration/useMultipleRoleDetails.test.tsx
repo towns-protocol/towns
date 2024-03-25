@@ -261,7 +261,7 @@ function MultipleRoleDetailsComponent(props: { spaceId: string; roleIds: number[
             }
             if (!cancel) {
                 setMembershipTokenAddress(
-                    await spaceDapp?.getTownMembershipTokenAddress(props.spaceId),
+                    await spaceDapp?.getSpaceMembershipTokenAddress(props.spaceId),
                 )
             }
         }

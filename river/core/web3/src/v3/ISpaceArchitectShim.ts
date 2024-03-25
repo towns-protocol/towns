@@ -1,7 +1,7 @@
 import {
     IMembershipBase as LocalhostIMembershipBase,
     IArchitect as LocalhostContract,
-    IArchitectBase as LocalhostITownArchitectBase,
+    IArchitectBase as LocalhostISpaceArchitectBase,
     IArchitectInterface as LocalhostInterface,
 } from '@river/generated/dev/typings/IArchitect'
 import {
@@ -16,9 +16,9 @@ import { BaseContractShim } from './BaseContractShim'
 import { ethers } from 'ethers'
 
 export type { LocalhostIMembershipBase as IMembershipBase }
-export type { LocalhostITownArchitectBase as IArchitectBase }
+export type { LocalhostISpaceArchitectBase as IArchitectBase }
 
-export class ITownArchitectShim extends BaseContractShim<
+export class ISpaceArchitectShim extends BaseContractShim<
     LocalhostContract,
     LocalhostInterface,
     BaseSepoliaContract,

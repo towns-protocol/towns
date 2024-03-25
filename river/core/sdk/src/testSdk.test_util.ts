@@ -25,32 +25,32 @@ export class RiverSDK {
     }
 
     public async createChannel(
-        townId: string,
+        spaceId: string,
         channelName: string,
         channelTopic: string,
     ): Promise<string> {
-        const channelStreamId = makeUniqueChannelStreamId(townId)
-        const filteredRoles = await getFilteredRolesFromSpace(this.spaceDapp, townId)
+        const channelStreamId = makeUniqueChannelStreamId(spaceId)
+        const filteredRoles = await getFilteredRolesFromSpace(this.spaceDapp, spaceId)
         const roleIds = []
         for (const r of filteredRoles) {
             roleIds.push(BigNumber.from(r.roleId).toNumber())
         }
         const transaction = await this.spaceDapp.createChannel(
-            townId,
+            spaceId,
             channelName,
             channelStreamId,
             roleIds,
             this.walletWithProvider,
         )
         await transaction.wait()
-        await this.client.createChannel(townId, channelName, channelTopic, channelStreamId)
+        await this.client.createChannel(spaceId, channelName, channelTopic, channelStreamId)
         await this.client.joinStream(channelStreamId)
         return channelStreamId
     }
 
-    public async createTownWithDefaultChannel(
-        townName: string,
-        townMetadata: string,
+    public async createSpaceWithDefaultChannel(
+        spaceName: string,
+        spaceMetadata: string,
         defaultChannelName: string = 'general',
     ): Promise<{ spaceStreamId: string; defaultChannelStreamId: string }> {
         log('Creating space: ')
@@ -77,8 +77,8 @@ export class RiverSDK {
 
         const createSpaceTransaction = await this.spaceDapp.createSpace(
             {
-                spaceName: townName,
-                spaceMetadata: townMetadata,
+                spaceName: spaceName,
+                spaceMetadata: spaceMetadata,
                 channelName: defaultChannelName,
                 membership: membershipInfo,
             },
@@ -103,12 +103,12 @@ export class RiverSDK {
         }
     }
 
-    public async createTownAndChannel(
-        townName: string,
-        townMetadata: string,
+    public async createSpaceAndChannel(
+        spaceName: string,
+        spaceMetadata: string,
         channelName: string,
     ): Promise<{ spaceStreamId: string; defaultChannelStreamId: string }> {
-        log('Creating space: ', townName, ' with channel: ', channelName)
+        log('Creating space: ', spaceName, ' with channel: ', channelName)
         const membershipInfo: MembershipStruct = {
             settings: {
                 name: 'Everyone',
@@ -131,8 +131,8 @@ export class RiverSDK {
 
         const createSpaceTransaction = await this.spaceDapp.createSpace(
             {
-                spaceName: townName,
-                spaceMetadata: townMetadata,
+                spaceName: spaceName,
+                spaceMetadata: spaceMetadata,
                 channelName: channelName,
                 membership: membershipInfo,
             },
@@ -147,37 +147,37 @@ export class RiverSDK {
         if (!spaceAddress) {
             throw new Error('Failed to get space address')
         }
-        const townId = makeSpaceStreamId(spaceAddress)
+        const spaceId = makeSpaceStreamId(spaceAddress)
         const channelId = makeDefaultChannelStreamId(spaceAddress)
 
-        const spaceStreamId = await this.client.createSpace(townId)
+        const spaceStreamId = await this.client.createSpace(spaceId)
         await this.client.joinStream(spaceStreamId.streamId)
 
-        await this.client.createChannel(townId, channelName, '', channelId)
+        await this.client.createChannel(spaceId, channelName, '', channelId)
         // await this.client.joinStream(channelId.networkId)
         return {
-            spaceStreamId: townId,
+            spaceStreamId: spaceId,
             defaultChannelStreamId: channelId,
         }
     }
 
     //TODO: make it nice - it is just a hack
-    public async joinTown(townId: string) {
-        const hasMembership = await this.spaceDapp.hasTownMembership(
-            townId,
+    public async joinSpace(spaceId: string) {
+        const hasMembership = await this.spaceDapp.hasSpaceMembership(
+            spaceId,
             this.walletWithProvider.address,
         )
         if (!hasMembership) {
             // mint membership
-            const transaction = await this.spaceDapp.joinTown(
-                townId,
+            const transaction = await this.spaceDapp.joinSpace(
+                spaceId,
                 this.walletWithProvider.address,
                 this.walletWithProvider,
             )
             await transaction.wait()
         }
 
-        await this.client.joinStream(townId)
+        await this.client.joinStream(spaceId)
     }
 
     //TODO: make it nice - it is just a hack
@@ -189,8 +189,8 @@ export class RiverSDK {
         await this.client.leaveStream(channelId)
     }
     //TODO: make it nice - it is just a hack
-    public async getAvailableChannels(townId: string): Promise<Map<string, string>> {
-        const streamStateView = await this.client.getStream(townId)
+    public async getAvailableChannels(spaceId: string): Promise<Map<string, string>> {
+        const streamStateView = await this.client.getStream(spaceId)
         const result = new Map<string, string>()
         streamStateView.spaceContent.spaceChannelsMetadata.forEach((channelProperties, id) => {
             result.set(id, channelProperties.name ?? '')
@@ -203,7 +203,7 @@ export class RiverSDK {
     }
 }
 
-export class TownsWithChannels {
+export class SpacesWithChannels {
     private records: [string, string[]][] = []
 
     // Add a new record to the array
@@ -223,7 +223,7 @@ export class TownsWithChannels {
     }
 
     // Add an element to the proper second array based on the value of the element in the first array
-    addChannelToTown(key: string, elementToAdd: string) {
+    addChannelToSpace(key: string, elementToAdd: string) {
         const record = this.records.find((pair) => pair[0] === key)
 
         if (record) {
@@ -234,7 +234,7 @@ export class TownsWithChannels {
     }
 }
 
-export class ChannelTownPairs {
+export class ChannelSpacePairs {
     private records: [string, string][] = []
 
     // Add a new record to the array

@@ -9,6 +9,7 @@ import (
 	"io"
 	"math/big"
 	"os"
+	"strings"
 
 	"github.com/ethereum/go-ethereum/accounts/abi"
 	"github.com/ethereum/go-ethereum/common"
@@ -113,6 +114,9 @@ func NewWallet(ctx context.Context) (*Wallet, error) {
 
 func NewWalletFromPrivKey(ctx context.Context, privKey string) (*Wallet, error) {
 	log := dlog.FromCtx(ctx)
+
+	privKey = strings.TrimPrefix(privKey, "0x")
+
 	// create key pair from private key bytes
 	k, err := crypto.HexToECDSA(privKey)
 	if err != nil {

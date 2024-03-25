@@ -28,7 +28,7 @@ func (s *Service) loadStream(ctx context.Context, streamId StreamId) (Stream, St
 		return s.cache.GetStream(ctx, streamId)
 	}
 
-	targetNode := nodes.GetRemotes()[0]
+	targetNode := nodes.GetStickyPeer()
 	stub, err := s.nodeRegistry.GetStreamServiceClientForAddress(targetNode)
 	if err != nil {
 		return nil, nil, err

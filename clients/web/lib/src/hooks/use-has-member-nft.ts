@@ -29,8 +29,8 @@ export function useHasMemberNft({
         }
 
         const allPromises = linkedWallets
-            .map((wallet) => spaceDapp.hasTownMembership(spaceId, wallet))
-            .concat(spaceDapp.hasTownMembership(spaceId, userId))
+            .map((wallet) => spaceDapp.hasSpaceMembership(spaceId, wallet))
+            .concat(spaceDapp.hasSpaceMembership(spaceId, userId))
 
         try {
             await Promise.any(allPromises)

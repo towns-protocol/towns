@@ -141,7 +141,7 @@ export async function verifyJoinTown(params: ITownTransactionParams): Promise<IV
             return { verified: false, error: 'townId not on whitelist and restriction is set' }
         }
         // check if user already has membership token
-        const hasMembershipToken = await spaceDapp.hasTownMembership(
+        const hasMembershipToken = await spaceDapp.hasSpaceMembership(
             params.townId,
             params.rootKeyAddress,
         )

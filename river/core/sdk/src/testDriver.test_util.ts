@@ -169,12 +169,12 @@ export const converse = async (conversation: string[][], testName: string): Prom
         const others = drivers.slice(1)
 
         const spaceId = makeUniqueSpaceStreamId()
-        log(`creating town ${spaceId}`)
+        log(`creating space ${spaceId}`)
         await alice.client.createSpace(spaceId)
         await alice.client.waitForStream(spaceId)
 
         // Invite and join space.
-        log(`inviting others to town`)
+        log(`inviting others to space`)
         const allJoinedSpace = Promise.all(
             others.map(async (d) => {
                 log(`awaiting userJoinedStream for`, d.client.userId)

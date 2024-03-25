@@ -94,7 +94,7 @@ describe.skip('channel settings', () => {
         expect(channelSettings.disabled).toBe(false)
         expect(channelSettings.roles.length).toEqual(2)
 
-        const membershipTokenAddress = (await alice.spaceDapp.getTownMembershipTokenAddress(
+        const membershipTokenAddress = (await alice.spaceDapp.getSpaceMembershipTokenAddress(
             spaceId,
         )) as Address
 

@@ -218,30 +218,34 @@ abstract contract ArchitectBase is Factory, IArchitectBase {
           data: abi.encode(users)
         })
       );
-    } else if (requirements.users.length != 0) {
-      // validate users
-      for (uint256 i = 0; i < requirements.users.length; ) {
-        Validator.checkAddress(requirements.users[i]);
-        unchecked {
-          i++;
+    } else {
+      if (requirements.users.length != 0) {
+        // validate users
+        for (uint256 i = 0; i < requirements.users.length; ) {
+          Validator.checkAddress(requirements.users[i]);
+          unchecked {
+            i++;
+          }
         }
+
+        IRoles(spaceAddress).addRoleToEntitlement(
+          roleId,
+          IRolesBase.CreateEntitlement({
+            module: address(userEntitlement),
+            data: abi.encode(requirements.users)
+          })
+        );
       }
 
-      IRoles(spaceAddress).addRoleToEntitlement(
-        roleId,
-        IRolesBase.CreateEntitlement({
-          module: address(userEntitlement),
-          data: abi.encode(requirements.users)
-        })
-      );
-
-      IRoles(spaceAddress).addRoleToEntitlement(
-        roleId,
-        IRolesBase.CreateEntitlement({
-          module: address(ruleEntitlement),
-          data: abi.encode(requirements.ruleData)
-        })
-      );
+      if (requirements.ruleData.operations.length > 0) {
+        IRoles(spaceAddress).addRoleToEntitlement(
+          roleId,
+          IRolesBase.CreateEntitlement({
+            module: address(ruleEntitlement),
+            data: abi.encode(requirements.ruleData)
+          })
+        );
+      }
     }
     return roleId;
   }

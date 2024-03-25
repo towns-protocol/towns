@@ -172,7 +172,7 @@ describe('mirrorMessages', () => {
 
             if (envName !== defaultEnvironmentName) {
                 log('Creating town')
-                const result = await riverSDK.createTownWithDefaultChannel(
+                const result = await riverSDK.createSpaceWithDefaultChannel(
                     'test town',
                     'town metadata',
                     testSpamChannelName,
@@ -197,7 +197,7 @@ describe('mirrorMessages', () => {
                 //It is intentionally hardcoded.
                 //testTownId = match[1]
                 testTownId = '107d4db9ba0fa2078d3669fb03cf5fa1ca3ae3cb3d42d2d2bbc58ed27283ca13'
-                await riverSDK.joinTown(testTownId)
+                await riverSDK.joinSpace(testTownId)
                 const availableChannels = await riverSDK.getAvailableChannels(testTownId)
 
                 availableChannels.forEach((channelName, channelId) => {
@@ -217,7 +217,7 @@ describe('mirrorMessages', () => {
             }
 
             await healthcheckQueueLeader.add(fromLeaderQueueName, {
-                commandType: 'joinTown',
+                commandType: 'joinSpace',
                 command: {
                     townId: testTownId,
                     channelId: testChannelId,

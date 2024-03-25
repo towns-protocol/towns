@@ -105,7 +105,7 @@ describe('mirrorMessages', () => {
                             replyWasSent.done()
                         }
                     }
-                    if (commandData.commandType === 'joinTown') {
+                    if (commandData.commandType === 'joinSpace') {
                         const spaceDapp = createSpaceDapp({
                             chainId: (await walletWithProvider.provider.getNetwork()).chainId,
                             provider: walletWithProvider.provider,
@@ -114,13 +114,13 @@ describe('mirrorMessages', () => {
                             townId: string
                             channelId: string
                         }
-                        const hasMembership = await spaceDapp.hasTownMembership(
+                        const hasMembership = await spaceDapp.hasSpaceMembership(
                             spaceAndChannelIds.townId,
                             walletWithProvider.address,
                         )
                         if (!hasMembership) {
                             // mint membership
-                            const transaction = await spaceDapp.joinTown(
+                            const transaction = await spaceDapp.joinSpace(
                                 spaceAndChannelIds.townId,
                                 walletWithProvider.address,
                                 walletWithProvider,

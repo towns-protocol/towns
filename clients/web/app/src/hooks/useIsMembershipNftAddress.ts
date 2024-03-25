@@ -18,7 +18,7 @@ export function useIsMembershipNftAddress({
             if (!spaceDapp || !spaceId) {
                 return false
             }
-            const townMembershipTokenAddress = (await spaceDapp.getTownMembershipTokenAddress(
+            const townMembershipTokenAddress = (await spaceDapp.getSpaceMembershipTokenAddress(
                 spaceId,
             )) as Address
             return townMembershipTokenAddress === address

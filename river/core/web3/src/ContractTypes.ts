@@ -1,8 +1,8 @@
 import { UserEntitlementShim as UserEntitlementShimV3 } from './v3/UserEntitlementShim'
 import {
     IMembershipBase as IMembershipBaseV3,
-    IArchitectBase as ITownArchitectBaseV3,
-} from './v3/ITownArchitectShim'
+    IArchitectBase as ISpaceArchitectBaseV3,
+} from './v3/ISpaceArchitectShim'
 import { IRolesBase as IRolesBaseV3 } from './v3/IRolesShim'
 import { RuleEntitlementShim } from './v3/RuleEntitlementShim'
 import { IRuleEntitlement } from './v3'
@@ -37,9 +37,9 @@ type MembershipInfoStruct = IMembershipBaseV3.MembershipStruct
 
 type TotalSupplyOutputStruct = { totalSupply: number }
 
-export type MembershipStruct = ITownArchitectBaseV3.MembershipStruct
+export type MembershipStruct = ISpaceArchitectBaseV3.MembershipStruct
 
-export type TownInfoStruct = ITownArchitectBaseV3.SpaceInfoStruct
+export type SpaceInfoStruct = ISpaceArchitectBaseV3.SpaceInfoStruct
 
 export type PricingModuleStruct = IPricingModulesBase.PricingModuleStruct
 

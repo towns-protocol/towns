@@ -7,20 +7,20 @@ import {
 } from './ContractTypes'
 import { createRuleEntitlementStruct, createUserEntitlementStruct } from './ConvertersEntitlements'
 
-import { Town as TownV3 } from './v3/Town'
+import { Space as SpaceV3 } from './v3/Space'
 import { IRuleEntitlement } from './v3'
 
-export async function createEntitlementStruct<Town extends TownV3>(
-    townIn: Town,
+export async function createEntitlementStruct<Space extends SpaceV3>(
+    spaceIn: Space,
     users: string[],
     ruleData: IRuleEntitlement.RuleDataStruct,
     version: Versions = defaultVersion,
 ): Promise<EntitlementStruct[]> {
     switch (version) {
         case 'v3': {
-            const town = townIn as TownV3
+            const space = spaceIn as SpaceV3
             // figure out the addresses for each entitlement module
-            const entitlementModules = await town.Entitlements.read.getEntitlements()
+            const entitlementModules = await space.Entitlements.read.getEntitlements()
             let userEntitlementAddress
             let ruleEntitlementAddress
             for (const module of entitlementModules) {

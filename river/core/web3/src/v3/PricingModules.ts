@@ -11,7 +11,7 @@ export class PricingModules {
         chainId: number,
         provider: ethers.providers.Provider | undefined,
     ) {
-        this.pricingShim = new IPricingShim(contractInfo.townFactoryAddress, chainId, provider)
+        this.pricingShim = new IPricingShim(contractInfo.spaceFactoryAddress, chainId, provider)
     }
 
     public async listPricingModules(): Promise<PricingModuleStruct[]> {

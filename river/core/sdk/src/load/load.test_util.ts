@@ -93,7 +93,7 @@ export async function multipleClientsJoinSpaceAndChannel(
         const chainId = network.chainId
         const spaceDapp = createSpaceDapp({ chainId, provider })
         const riverSDK = new RiverSDK(spaceDapp, client, walletWithProvider)
-        await riverSDK.joinTown(spaceId)
+        await riverSDK.joinSpace(spaceId)
         if (channelId) {
             await riverSDK.joinChannel(channelId)
         }
@@ -134,7 +134,7 @@ export async function createClientSpaceAndChannel(
     const riverSDK = new RiverSDK(spaceDapp, client, walletWithProvider)
 
     // create space
-    const createTownReturnVal = await riverSDK.createTownWithDefaultChannel('load-tests', '')
+    const createTownReturnVal = await riverSDK.createSpaceWithDefaultChannel('load-tests', '')
     const spaceStreamId = createTownReturnVal.spaceStreamId
 
     const spaceId = spaceStreamId

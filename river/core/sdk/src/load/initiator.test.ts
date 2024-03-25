@@ -68,7 +68,10 @@ describe('loadTestsScenario2', () => {
         const bobsRiverSDK = new RiverSDK(bobsSpaceDapp, bob, walletWithProvider)
 
         // create space
-        const createTownReturnVal = await bobsRiverSDK.createTownWithDefaultChannel('load-test', '')
+        const createTownReturnVal = await bobsRiverSDK.createSpaceWithDefaultChannel(
+            'load-test',
+            '',
+        )
         const spaceStreamId = createTownReturnVal.spaceStreamId
 
         // create channel

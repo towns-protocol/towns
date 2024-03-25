@@ -21,7 +21,7 @@ func (s *Service) getStubForStream(ctx context.Context, streamId shared.StreamId
 		return nil, nodes, nil
 	}
 
-	firstRemote := nodes.GetRemotes()[0]
+	firstRemote := nodes.GetStickyPeer()
 	dlog.FromCtx(ctx).Debug("Forwarding request", "nodeAddress", firstRemote)
 	stub, err := s.nodeRegistry.GetStreamServiceClientForAddress(firstRemote)
 	if err != nil {
@@ -256,7 +256,7 @@ func (s *Service) addEventImpl(
 	}
 
 	// TODO: smarter remote select? random?
-	firstRemote := nodes.GetRemotes()[0]
+	firstRemote := nodes.GetStickyPeer()
 	dlog.FromCtx(ctx).Debug("Forwarding request", "nodeAddress", firstRemote)
 	stub, err := s.nodeRegistry.GetStreamServiceClientForAddress(firstRemote)
 	if err != nil {

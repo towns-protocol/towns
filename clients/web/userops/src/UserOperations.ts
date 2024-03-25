@@ -117,7 +117,7 @@ export class UserOps {
         args: UserOpParams & {
             // a function signature hash to pass to paymaster proxy - this is just the function name for now
             functionHashForPaymasterProxy: string
-            townId: string | undefined
+            spaceId: string | undefined
         },
     ): Promise<ISendUserOperationResponse> {
         const { toAddress, callData, value } = args
@@ -179,7 +179,7 @@ export class UserOps {
         }
         const [createSpaceParams, signer] = args
 
-        const townInfo: IArchitectBase.SpaceInfoStruct = {
+        const spaceInfo: IArchitectBase.SpaceInfoStruct = {
             name: createSpaceParams.spaceName,
             uri: createSpaceParams.spaceMetadata,
             membership: createSpaceParams.membership,
@@ -195,34 +195,34 @@ export class UserOps {
             throw new Error('abstractAccountAddress is required')
         }
 
-        const callDataCreateSpace = this.spaceDapp.townRegistrar.TownArchitect.encodeFunctionData(
+        const callDataCreateSpace = this.spaceDapp.spaceRegistrar.SpaceArchitect.encodeFunctionData(
             'createSpace',
-            [townInfo],
+            [spaceInfo],
         )
 
         if (await this.spaceDapp.walletLink.checkIfLinked(signer, abstractAccountAddress)) {
             const functionName = 'createSpace'
 
             const functionHashForPaymasterProxy = this.getFunctionSigHash(
-                this.spaceDapp.townRegistrar.TownArchitect.interface,
+                this.spaceDapp.spaceRegistrar.SpaceArchitect.interface,
                 functionName,
             )
 
             return this.sendUserOp({
-                toAddress: this.spaceDapp.townRegistrar.TownArchitect.address,
+                toAddress: this.spaceDapp.spaceRegistrar.SpaceArchitect.address,
                 callData: callDataCreateSpace,
                 signer,
-                townId: undefined,
+                spaceId: undefined,
                 functionHashForPaymasterProxy,
             })
         }
 
-        // wallet isn't linked, create a user op that both links and creates the town
+        // wallet isn't linked, create a user op that both links and creates the space
         const functionName = 'createSpace_linkWallet'
 
         // TODO: this needs to accept an array of names/interfaces
         const functionHashForPaymasterProxy = this.getFunctionSigHash(
-            this.spaceDapp.townRegistrar.TownArchitect.interface,
+            this.spaceDapp.spaceRegistrar.SpaceArchitect.interface,
             functionName,
         )
 
@@ -234,11 +234,11 @@ export class UserOps {
         return this.sendUserOp({
             toAddress: [
                 this.spaceDapp.walletLink.address,
-                this.spaceDapp.townRegistrar.TownArchitect.address,
+                this.spaceDapp.spaceRegistrar.SpaceArchitect.address,
             ],
             callData: [callDataLinkWallet, callDataCreateSpace],
             signer,
-            townId: undefined,
+            spaceId: undefined,
             functionHashForPaymasterProxy,
         })
     }
@@ -247,17 +247,17 @@ export class UserOps {
         userOpsStore.getState().clear()
     }
 
-    public async sendJoinTownOp(
-        args: Parameters<SpaceDapp['joinTown']>,
+    public async sendJoinSpaceOp(
+        args: Parameters<SpaceDapp['joinSpace']>,
     ): Promise<ISendUserOperationResponse> {
         if (!this.spaceDapp) {
             throw new Error('spaceDapp is required')
         }
         const [spaceId, recipient, signer] = args
-        const town = await this.spaceDapp.getTown(spaceId)
+        const space = await this.spaceDapp.getSpace(spaceId)
 
-        if (!town) {
-            throw new Error(`Town with spaceId "${spaceId}" is not found.`)
+        if (!space) {
+            throw new Error(`Space with spaceId "${spaceId}" is not found.`)
         }
 
         const abstractAccountAddress = await this.getAbstractAccountAddress({
@@ -267,39 +267,39 @@ export class UserOps {
             throw new Error('abstractAccountAddress is required')
         }
 
-        const callDataJoinTown = town.Membership.encodeFunctionData('joinSpace', [recipient])
+        const callDataJoinSpace = space.Membership.encodeFunctionData('joinSpace', [recipient])
 
         if (await this.spaceDapp.walletLink.checkIfLinked(signer, abstractAccountAddress)) {
             const functionName = 'joinSpace'
 
             const functionHashForPaymasterProxy = this.getFunctionSigHash(
-                town.Membership.interface,
+                space.Membership.interface,
                 functionName,
             )
 
             // TODO: determine if this simulation causes an additional signature in UX
             // try {
             //     // simulate the tx - throws an error second time you run it!
-            //     await town.Membership.write(signer).callStatic.joinTown(recipient)
+            //     await space.Membership.write(signer).callStatic.joinSpace(recipient)
             // } catch (error) {
             //     throw this.parseSpaceError(spaceId, error)
             // }
 
             return this.sendUserOp({
-                toAddress: town.Address,
-                callData: callDataJoinTown,
+                toAddress: space.Address,
+                callData: callDataJoinSpace,
                 signer,
-                townId: town.SpaceId,
+                spaceId: space.SpaceId,
                 functionHashForPaymasterProxy,
             })
         }
 
-        // wallet isn't linked, create a user op that both links and joins the town
+        // wallet isn't linked, create a user op that both links and joins the space
         const functionName = 'joinSpace_linkWallet'
 
         // TODO: this needs to accept an array of names/interfaces
         const functionHashForPaymasterProxy = this.getFunctionSigHash(
-            town.Membership.interface,
+            space.Membership.interface,
             functionName,
         )
 
@@ -309,10 +309,10 @@ export class UserOps {
         )
 
         return this.sendUserOp({
-            toAddress: [this.spaceDapp.walletLink.address, town.Address],
-            callData: [callDataLinkWallet, callDataJoinTown],
+            toAddress: [this.spaceDapp.walletLink.address, space.Address],
+            callData: [callDataLinkWallet, callDataJoinSpace],
             signer,
-            townId: town.SpaceId,
+            spaceId: space.SpaceId,
             functionHashForPaymasterProxy,
         })
     }
@@ -351,7 +351,7 @@ export class UserOps {
         //     toAddress: [this.spaceDapp.walletLink.address],
         //     callData: [callDataLinkWallet],
         //     signer,
-        //     townId: undefined,
+        //     spaceId: undefined,
         //     functionHashForPaymasterProxy,
         // })
     }
@@ -393,7 +393,7 @@ export class UserOps {
         //     toAddress: this.spaceDapp.walletLink.address,
         //     callData: callDataRemoveWalletLink,
         //     signer: rootKeySigner,
-        //     townId: undefined,
+        //     spaceId: undefined,
         //     functionHashForPaymasterProxy,
         // })
     }
@@ -405,33 +405,33 @@ export class UserOps {
             throw new Error('spaceDapp is required')
         }
         const [spaceId, spaceName, signer] = args
-        const town = await this.spaceDapp.getTown(spaceId)
+        const space = await this.spaceDapp.getSpace(spaceId)
 
-        if (!town) {
-            throw new Error(`Town with spaceId "${spaceId}" is not found.`)
+        if (!space) {
+            throw new Error(`Space with spaceId "${spaceId}" is not found.`)
         }
-        const townInfo = await town.getTownInfo()
+        const spaceInfo = await space.getSpaceInfo()
 
         // the function name in the contract is updateSpaceInfo
         // in space dapp we update the space name only using updateSpaceName which calls updateSpaceInfo
         const functionName = 'updateSpaceInfo'
 
         const functionHashForPaymasterProxy = this.getFunctionSigHash(
-            town.TownOwner.interface,
+            space.SpaceOwner.interface,
             functionName,
         )
 
-        const callData = await town.TownOwner.encodeFunctionData(functionName, [
-            town.Address,
+        const callData = await space.SpaceOwner.encodeFunctionData(functionName, [
+            space.Address,
             spaceName,
-            townInfo.uri,
+            spaceInfo.uri,
         ])
 
         return this.sendUserOp({
-            toAddress: town.TownOwner.address,
+            toAddress: space.SpaceOwner.address,
             callData: callData,
             signer,
-            townId: spaceId,
+            spaceId: spaceId,
             functionHashForPaymasterProxy,
         })
     }
@@ -447,30 +447,30 @@ export class UserOps {
             ? channelNetworkId
             : `0x${channelNetworkId}`
 
-        const town = await this.spaceDapp.getTown(spaceId)
+        const space = await this.spaceDapp.getSpace(spaceId)
 
-        if (!town) {
-            throw new Error(`Town with spaceId "${spaceId}" is not found.`)
+        if (!space) {
+            throw new Error(`Space with spaceId "${spaceId}" is not found.`)
         }
 
         const functionName = 'createChannel'
 
         const functionHashForPaymasterProxy = this.getFunctionSigHash(
-            town.Channels.interface,
+            space.Channels.interface,
             functionName,
         )
 
-        const callData = await town.Channels.encodeFunctionData(functionName, [
+        const callData = await space.Channels.encodeFunctionData(functionName, [
             channelId,
             channelName,
             roleIds,
         ])
 
         return this.sendUserOp({
-            toAddress: [town.Channels.address],
+            toAddress: [space.Channels.address],
             callData: [callData],
             signer,
-            townId: spaceId,
+            spaceId: spaceId,
             functionHashForPaymasterProxy,
         })
     }
@@ -483,21 +483,21 @@ export class UserOps {
         if (!this.spaceDapp) {
             throw new Error('spaceDapp is required')
         }
-        const town = await this.spaceDapp.getTown(params.spaceId)
+        const space = await this.spaceDapp.getSpace(params.spaceId)
 
-        if (!town) {
-            throw new Error(`Town with spaceId "${params.spaceId}" is not found.`)
+        if (!space) {
+            throw new Error(`Space with spaceId "${params.spaceId}" is not found.`)
         }
 
-        const callData = await this.spaceDapp.encodedUpdateChannelData(town, params)
+        const callData = await this.spaceDapp.encodedUpdateChannelData(space, params)
 
-        const multiCallData = await town.Multicall.encodeFunctionData('multicall', [callData])
+        const multiCallData = await space.Multicall.encodeFunctionData('multicall', [callData])
 
         return this.sendUserOp({
-            toAddress: [town.Multicall.address],
+            toAddress: [space.Multicall.address],
             callData: [multiCallData],
             signer,
-            townId: params.spaceId,
+            spaceId: params.spaceId,
             functionHashForPaymasterProxy: 'updateChannel',
         })
     }
@@ -525,31 +525,31 @@ export class UserOps {
         if (!this.spaceDapp) {
             throw new Error('spaceDapp is required')
         }
-        const town = await this.spaceDapp.getTown(spaceId)
-        if (!town) {
-            throw new Error(`Town with spaceId "${spaceId}" is not found.`)
+        const space = await this.spaceDapp.getSpace(spaceId)
+        if (!space) {
+            throw new Error(`Space with spaceId "${spaceId}" is not found.`)
         }
 
         const functionName = 'createRole'
 
         const functionHashForPaymasterProxy = this.getFunctionSigHash(
-            town.Roles.interface,
+            space.Roles.interface,
             functionName,
         )
 
-        const entitlements = await createEntitlementStruct(town, tokens, users)
+        const entitlements = await createEntitlementStruct(space, tokens, users)
 
-        const callData = await town.Roles.encodeFunctionData(functionName, [
+        const callData = await space.Roles.encodeFunctionData(functionName, [
             roleName,
             permissions,
             entitlements,
         ])
 
         return this.sendUserOp({
-            toAddress: [town.Roles.address],
+            toAddress: [space.Roles.address],
             callData: [callData],
             signer,
-            townId: spaceId,
+            spaceId: spaceId,
             functionHashForPaymasterProxy,
         })
     }
@@ -562,24 +562,24 @@ export class UserOps {
         if (!this.spaceDapp) {
             throw new Error('spaceDapp is required')
         }
-        const town = await this.spaceDapp.getTown(spaceId)
-        if (!town) {
-            throw new Error(`Town with spaceId "${spaceId}" is not found.`)
+        const space = await this.spaceDapp.getSpace(spaceId)
+        if (!space) {
+            throw new Error(`Space with spaceId "${spaceId}" is not found.`)
         }
         const functionName = 'removeRole'
 
         const functionHashForPaymasterProxy = this.getFunctionSigHash(
-            town.Roles.interface,
+            space.Roles.interface,
             functionName,
         )
 
-        const callData = await town.Roles.encodeFunctionData(functionName, [roleId])
+        const callData = await space.Roles.encodeFunctionData(functionName, [roleId])
 
         return this.sendUserOp({
-            toAddress: [town.Roles.address],
+            toAddress: [space.Roles.address],
             callData: [callData],
             signer,
-            townId: spaceId,
+            spaceId: spaceId,
             functionHashForPaymasterProxy,
         })
     }
@@ -592,23 +592,23 @@ export class UserOps {
         if (!this.spaceDapp) {
             throw new Error('spaceDapp is required')
         }
-        const town = await this.spaceDapp.getTown(updateRoleParams.spaceNetworkId)
-        if (!town) {
-            throw new Error(`Town with spaceId "${updateRoleParams.spaceNetworkId}" is not found.`)
+        const space = await this.spaceDapp.getSpace(updateRoleParams.spaceNetworkId)
+        if (!space) {
+            throw new Error(`Space with spaceId "${updateRoleParams.spaceNetworkId}" is not found.`)
         }
         const functionName = 'updateRole'
 
         const functionHashForPaymasterProxy = this.getFunctionSigHash(
-            town.Roles.interface,
+            space.Roles.interface,
             functionName,
         )
 
         const updatedEntitlemets = await this.spaceDapp.createUpdatedEntitlements(
-            town,
+            space,
             updateRoleParams,
         )
 
-        const callData = await town.Roles.encodeFunctionData(functionName, [
+        const callData = await space.Roles.encodeFunctionData(functionName, [
             updateRoleParams.roleId,
             updateRoleParams.roleName,
             updateRoleParams.permissions,
@@ -616,10 +616,10 @@ export class UserOps {
         ])
 
         return this.sendUserOp({
-            toAddress: [town.Roles.address],
+            toAddress: [space.Roles.address],
             callData: [callData],
             signer,
-            townId: updateRoleParams.spaceNetworkId,
+            spaceId: updateRoleParams.spaceNetworkId,
             functionHashForPaymasterProxy,
         })
     }
@@ -633,7 +633,7 @@ export class UserOps {
         args: UserOpParams & {
             // a function signature hash to pass to paymaster proxy - this is just the function name for now
             functionHashForPaymasterProxy?: string
-            townId?: string
+            spaceId?: string
         },
     ) {
         if (!this.spaceDapp) {
@@ -656,7 +656,7 @@ export class UserOps {
                     aaRpcUrl: this.aaRpcUrl,
                     paymasterProxyUrl: this.paymasterProxyUrl,
                     functionHashForPaymasterProxy: args.functionHashForPaymasterProxy,
-                    townId: args.townId,
+                    townId: args.spaceId, // can or should i rename this to space id?
                 }),
         })
     }

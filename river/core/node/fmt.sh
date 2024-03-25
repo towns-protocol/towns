@@ -6,9 +6,12 @@ cd -P -- "$(dirname -- "${BASH_SOURCE[0]}")"
 ARGS=${@:-"-w"}
 
 OUTPUT=$(go list -f '{{.Dir}}' ./... | grep -v /contracts | grep -v /protocol | xargs gofumpt $ARGS)
-echo "$OUTPUT"
+if [ -n "$OUTPUT" ]
+then
+    echo "$OUTPUT"
+fi
 
-if [ "$ARGS" == "-l" ] && [ -n "$OUTPUT" ]; then
+if [ "$ARGS" == "-l" ] && [ -n "$OUTPUT" ]
+then
     exit 1
-else
-
+fi

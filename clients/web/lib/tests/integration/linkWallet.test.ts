@@ -102,7 +102,7 @@ describe('Link Wallet', () => {
             Permission.Write,
         ])
 
-        const joinTx = await alice.spaceDapp.joinTown(
+        const joinTx = await alice.spaceDapp.joinSpace(
             spaceId!,
             metamaskWallet.address,
             alice.wallet,
@@ -120,8 +120,12 @@ describe('Link Wallet', () => {
         )
         expect(isEntitledToSpace).toBeTruthy()
 
-        // ES: 12/11/23 for this to work the contract check for joinTown needs to change
-        const bobJoinTx = await bob.spaceDapp.joinTown(spaceId!, metamaskWallet.address, bob.wallet)
+        // ES: 12/11/23 for this to work the contract check for joinSpace needs to change
+        const bobJoinTx = await bob.spaceDapp.joinSpace(
+            spaceId!,
+            metamaskWallet.address,
+            bob.wallet,
+        )
 
         expect(bobJoinTx).toBeTruthy()
     })

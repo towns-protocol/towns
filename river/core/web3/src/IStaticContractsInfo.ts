@@ -1,19 +1,19 @@
-import LocalhostTownFactoryAddress from '@river/generated/addresses/base_anvil/spaceFactory.json' assert { type: 'json' }
-import LocalhostTownOwnerAddress from '@river/generated/addresses/base_anvil/spaceOwner.json' assert { type: 'json' }
+import LocalhostSpaceFactoryAddress from '@river/generated/addresses/base_anvil/spaceFactory.json' assert { type: 'json' }
+import LocalhostSpaceOwnerAddress from '@river/generated/addresses/base_anvil/spaceOwner.json' assert { type: 'json' }
 import LocalhostMockNFTAddress from '@river/generated/addresses/base_anvil/mockNFT.json' assert { type: 'json' }
 import LocalhostMemberAddress from '@river/generated/addresses/base_anvil/member.json' assert { type: 'json' }
 import LocalhostWalletLinkAddress from '@river/generated/addresses/base_anvil/walletLink.json' assert { type: 'json' }
 import LocalhostRiverRegistryAddress from '@river/generated/addresses/river_anvil/riverRegistry.json' assert { type: 'json' }
 
-import BaseSepoliaTownFactoryAddress from '@river/generated/addresses/base_sepolia/spaceFactory.json' assert { type: 'json' }
-import BaseSepoliaTownOwnerAddress from '@river/generated/addresses/base_sepolia/spaceOwner.json' assert { type: 'json' }
+import BaseSepoliaSpaceFactoryAddress from '@river/generated/addresses/base_sepolia/spaceFactory.json' assert { type: 'json' }
+import BaseSepoliaSpaceOwnerAddress from '@river/generated/addresses/base_sepolia/spaceOwner.json' assert { type: 'json' }
 import BaseSepoliaWalletLinkAddress from '@river/generated/addresses/base_sepolia/walletLink.json' assert { type: 'json' }
 import RiverChainRiverRegistryAddress from '@river/generated/addresses/river/riverRegistry.json' assert { type: 'json' }
 
 import { Address } from './ContractTypes'
 export interface IStaticContractsInfo {
-    townFactoryAddress: Address
-    townOwnerAddress: Address
+    spaceFactoryAddress: Address
+    spaceOwnerAddress: Address
     mockErc721aAddress: Address
     testGatingTokenAddress?: Address // For tesing token gating scenarios
     walletLinkAddress: Address
@@ -24,8 +24,8 @@ export interface IRiverChainContractsInfo {
 }
 
 const localhostContractsInfo: IStaticContractsInfo = {
-    townFactoryAddress: LocalhostTownFactoryAddress.address as Address,
-    townOwnerAddress: LocalhostTownOwnerAddress.address as Address,
+    spaceFactoryAddress: LocalhostSpaceFactoryAddress.address as Address,
+    spaceOwnerAddress: LocalhostSpaceOwnerAddress.address as Address,
     mockErc721aAddress: LocalhostMockNFTAddress.address as Address,
     testGatingTokenAddress: LocalhostMemberAddress.address as Address,
     walletLinkAddress: LocalhostWalletLinkAddress.address as Address,
@@ -36,8 +36,8 @@ const localhostRiverChainContractsInfo: IRiverChainContractsInfo = {
 }
 
 const baseSepoliaContractsInfo: IStaticContractsInfo = {
-    townFactoryAddress: BaseSepoliaTownFactoryAddress.address as Address,
-    townOwnerAddress: BaseSepoliaTownOwnerAddress.address as Address,
+    spaceFactoryAddress: BaseSepoliaSpaceFactoryAddress.address as Address,
+    spaceOwnerAddress: BaseSepoliaSpaceOwnerAddress.address as Address,
     mockErc721aAddress: '' as Address,
     walletLinkAddress: BaseSepoliaWalletLinkAddress.address as Address,
 }
