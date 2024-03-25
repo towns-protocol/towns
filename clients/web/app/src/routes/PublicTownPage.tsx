@@ -34,7 +34,7 @@ import {
 import { useAuth } from 'hooks/useAuth'
 import { useErrorToast } from 'hooks/useErrorToast'
 import { useJoinTown } from 'hooks/useJoinTown'
-import { useGetSpaceTopic } from 'hooks/useSpaceTopic'
+import { useGetSpaceIdentity } from 'hooks/useSpaceIdentity'
 import { ButtonSpinner } from 'ui/components/Spinner/ButtonSpinner'
 import { shortAddress } from 'ui/utils/utils'
 import { MainSideBar } from '@components/SideBars'
@@ -59,7 +59,7 @@ export const PublicTownPage = (props: { isPreview?: boolean; onClosePreview?: ()
     const [isJoining, setIsJoining] = useState(false)
     const { isConnected, loggedInWalletAddress } = useAuth()
     const { data: spaceInfo, isLoading } = useContractSpaceInfo(spaceSlug)
-    const { data: townBio } = useGetSpaceTopic(spaceSlug)
+    const { data: spaceIdentity } = useGetSpaceIdentity(spaceSlug)
     const { data: membershipInfo } = useReadableMembershipInfo(spaceInfo?.networkId ?? '')
 
     const { isAuthenticatedAndConnected } = useAuth()
@@ -123,7 +123,7 @@ export const PublicTownPage = (props: { isPreview?: boolean; onClosePreview?: ()
                     address={isAddress(spaceInfo.address) ? spaceInfo.address : undefined}
                     name={spaceInfo.name}
                     owner={isAddress(spaceInfo.owner) ? spaceInfo.owner : undefined}
-                    bio={townBio}
+                    bio={spaceIdentity?.bio}
                 />
             </Box>
 

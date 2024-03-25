@@ -17,7 +17,7 @@ import { Box, Icon, IconButton, Text } from '@ui'
 import { PATHS } from 'routes'
 import { useImageStore } from '@components/UploadImage/useImageStore'
 import { useUploadImage } from 'api/lib/uploadImage'
-import { useSetSpaceTopic } from 'hooks/useSpaceTopic'
+import { useSetSpaceIdentity } from 'hooks/useSpaceIdentity'
 import { FailedUploadAfterSpaceCreation } from '@components/Notifications/FailedUploadAfterSpaceCreation'
 import { createPrivyNotAuthenticatedNotification } from '@components/Notifications/utils'
 import { convertTokenTypeToOperationType } from '@components/Tokens/utils'
@@ -83,7 +83,7 @@ export function CreateTownSubmit({
             )
         },
     })
-    const { mutate: uploadSpaceBio } = useSetSpaceTopic(undefined, {
+    const { mutate: uploadSpaceIdentity } = useSetSpaceIdentity(undefined, {
         onError: () => {
             if (data?.spaceId === undefined) {
                 console.warn('No space id, cannot upload space bio')
@@ -267,10 +267,10 @@ export function CreateTownSubmit({
                     }
 
                     // if there's no bio, just upload an empty string
-                    const { spaceBio } = values
-                    uploadSpaceBio({
-                        description: spaceBio ?? '',
-                        innerRoomId: networkId,
+                    const { spaceMotto, spaceBio } = values
+                    uploadSpaceIdentity({
+                        spaceIdentity: { motto: spaceMotto ?? '', bio: spaceBio ?? '' },
+                        innerSpaceId: networkId,
                     })
 
                     let timeoutDuration = 0
@@ -309,7 +309,7 @@ export function CreateTownSubmit({
         getSigner,
         spaceDapp,
         uploadImage,
-        uploadSpaceBio,
+        uploadSpaceIdentity,
         setRecentlyMintedSpaceToken,
     ])
 

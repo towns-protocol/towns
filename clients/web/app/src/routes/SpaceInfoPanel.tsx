@@ -44,7 +44,7 @@ import { useAuth } from 'hooks/useAuth'
 import { useCreateLink } from 'hooks/useCreateLink'
 import { useDevice } from 'hooks/useDevice'
 import { useSpaceChannels } from 'hooks/useSpaceChannels'
-import { useGetSpaceTopic, useSetSpaceTopic } from 'hooks/useSpaceTopic'
+import { useGetSpaceIdentity, useSetSpaceIdentity } from 'hooks/useSpaceIdentity'
 import { PATHS } from 'routes'
 import { TextArea } from 'ui/components/TextArea/TextArea'
 import { getInviteUrl, shortAddress } from 'ui/utils/utils'
@@ -86,12 +86,16 @@ export const SpaceInfoPanel = () => {
         permission: Permission.ModifySpaceSettings,
     })
 
-    const [isEdit, setIsEdit] = useState(false)
+    const [isEditMotto, setIsEditMotto] = useState(false)
+    const [isEditBio, setIsEditBio] = useState(false)
     const [editErrorMessage, setEditErrorMessage] = useState<string | null>(null)
-    const textAreaRef = useRef<HTMLTextAreaElement>(null)
-    const { data: roomTopic, isLoading: isLoadingRoomTopic } = useGetSpaceTopic(space?.id)
+    const mottoTextAreaRef = useRef<HTMLTextAreaElement>(null)
+    const bioTextAreaRef = useRef<HTMLTextAreaElement>(null)
+    const { data: spaceIdentity, isLoading: isLoadingSpaceIdentity } = useGetSpaceIdentity(
+        space?.id,
+    )
 
-    const { mutate, isPending: isSettingSpaceTopic } = useSetSpaceTopic(space?.id)
+    const { mutate, isPending: isSettingSpaceIdentity } = useSetSpaceIdentity(space?.id)
 
     // the owner in the contract is the smart account, we need to get the user id
     const { data: spaceOwnerRiverUserId } = useGetRootKeyFromLinkedWallet({
@@ -128,23 +132,72 @@ export const SpaceInfoPanel = () => {
         navigate('../')
     })
 
-    const onEdit = useEvent(() => {
-        setIsEdit(true)
+    const onEditMotto = useEvent(() => {
+        onCancelBio()
+        setIsEditMotto(true)
         setEditErrorMessage(null)
         setTimeout(() => {
-            textAreaRef.current?.focus()
+            mottoTextAreaRef.current?.focus()
         })
     })
-    const onCancel = useEvent(() => setIsEdit(false))
-    const onSave = useEvent(() => {
-        if (!textAreaRef.current?.value.length || !canEdit) {
+    const onEditBio = useEvent(() => {
+        onCancelMotto()
+        setIsEditBio(true)
+        setEditErrorMessage(null)
+        setTimeout(() => {
+            bioTextAreaRef.current?.focus()
+        })
+    })
+    const onCancelMotto = useEvent(() => setIsEditMotto(false))
+    const onCancelBio = useEvent(() => setIsEditBio(false))
+
+    const onSaveMotto = useEvent(() => {
+        if (!mottoTextAreaRef.current?.value.length || !canEdit) {
             return
         }
         mutate(
-            { description: textAreaRef.current.value },
+            {
+                spaceIdentity: {
+                    motto: mottoTextAreaRef.current?.value ?? '',
+                    bio: spaceIdentity?.bio ?? '',
+                },
+            },
             {
                 onSuccess: async () => {
-                    setIsEdit(false)
+                    setIsEditMotto(false)
+                    setEditErrorMessage(null)
+                },
+                onError: (error) => {
+                    if (errorHasInvalidCookieResponseHeader(error)) {
+                        toast.custom((t) => (
+                            <InvalidCookieNotification
+                                toast={t}
+                                actionMessage="edit the town motto"
+                            />
+                        ))
+                    }
+                    setEditErrorMessage(
+                        "We weren't able to save your changes. Please try again later.",
+                    )
+                },
+            },
+        )
+    })
+
+    const onSave = useEvent(() => {
+        if (!bioTextAreaRef.current?.value.length || !canEdit) {
+            return
+        }
+        mutate(
+            {
+                spaceIdentity: {
+                    motto: spaceIdentity?.motto ?? '',
+                    bio: bioTextAreaRef.current?.value ?? '',
+                },
+            },
+            {
+                onSuccess: async () => {
+                    setIsEditBio(false)
                     setEditErrorMessage(null)
                 },
                 onError: (error) => {
@@ -292,7 +345,74 @@ export const SpaceInfoPanel = () => {
                     </Stack>
                 </MdGap>
 
-                {(canEdit || roomTopic) && (
+                {(canEdit || spaceIdentity) && (
+                    <MdGap data-testid="motto-section">
+                        <>
+                            <Box horizontal justifyContent="spaceBetween" alignItems="center">
+                                <Paragraph strong color="default">
+                                    Town Motto
+                                </Paragraph>{' '}
+                                {canEdit &&
+                                    (isEditMotto ? (
+                                        <Box horizontal gap="sm">
+                                            <TextButton
+                                                disabled={isSettingSpaceIdentity}
+                                                onClick={onCancelMotto}
+                                            >
+                                                Cancel
+                                            </TextButton>
+                                            <Box horizontal gap>
+                                                <TextButton
+                                                    disabled={isSettingSpaceIdentity}
+                                                    color="default"
+                                                    data-testid="save-button-motto"
+                                                    onClick={onSaveMotto}
+                                                >
+                                                    Save
+                                                </TextButton>
+                                                {isSettingSpaceIdentity && <ButtonSpinner />}
+                                            </Box>
+                                        </Box>
+                                    ) : (
+                                        <TextButton
+                                            data-testid="edit-motto-button"
+                                            onClick={onEditMotto}
+                                        >
+                                            Edit
+                                        </TextButton>
+                                    ))}
+                            </Box>
+                            {!isLoadingSpaceIdentity &&
+                                (isEditMotto ? (
+                                    <>
+                                        <TextArea
+                                            data-testid="edit-motto-textarea"
+                                            ref={mottoTextAreaRef}
+                                            paddingY="md"
+                                            background="level2"
+                                            defaultValue={spaceIdentity?.motto}
+                                            height="x2"
+                                            maxLength={32}
+                                            style={{ paddingRight: '2.5rem' }}
+                                        />
+                                        {editErrorMessage && (
+                                            <Text color="negative" size="sm">
+                                                {editErrorMessage}
+                                            </Text>
+                                        )}
+                                    </>
+                                ) : (
+                                    <Paragraph color="gray2">
+                                        {spaceIdentity
+                                            ? spaceIdentity.motto
+                                            : 'Click "edit" to add a motto'}
+                                    </Paragraph>
+                                ))}
+                        </>
+                    </MdGap>
+                )}
+
+                {(canEdit || spaceIdentity) && (
                     <MdGap data-testid="about-section">
                         <>
                             <Box horizontal justifyContent="spaceBetween" alignItems="center">
@@ -300,44 +420,44 @@ export const SpaceInfoPanel = () => {
                                     About
                                 </Paragraph>{' '}
                                 {canEdit &&
-                                    (isEdit ? (
+                                    (isEditBio ? (
                                         <Box horizontal gap="sm">
                                             <TextButton
-                                                disabled={isSettingSpaceTopic}
-                                                onClick={onCancel}
+                                                disabled={isSettingSpaceIdentity}
+                                                onClick={onCancelBio}
                                             >
                                                 Cancel
                                             </TextButton>
                                             <Box horizontal gap>
                                                 <TextButton
-                                                    disabled={isSettingSpaceTopic}
+                                                    disabled={isSettingSpaceIdentity}
                                                     color="default"
                                                     data-testid="save-button"
                                                     onClick={onSave}
                                                 >
                                                     Save
                                                 </TextButton>
-                                                {isSettingSpaceTopic && <ButtonSpinner />}
+                                                {isSettingSpaceIdentity && <ButtonSpinner />}
                                             </Box>
                                         </Box>
                                     ) : (
                                         <TextButton
                                             data-testid="edit-description-button"
-                                            onClick={onEdit}
+                                            onClick={onEditBio}
                                         >
                                             Edit
                                         </TextButton>
                                     ))}
                             </Box>
-                            {!isLoadingRoomTopic &&
-                                (isEdit ? (
+                            {!isLoadingSpaceIdentity &&
+                                (isEditBio ? (
                                     <>
                                         <TextArea
                                             data-testid="edit-description-textarea"
-                                            ref={textAreaRef}
+                                            ref={bioTextAreaRef}
                                             paddingY="md"
                                             background="level2"
-                                            defaultValue={roomTopic}
+                                            defaultValue={spaceIdentity?.bio}
                                             height="150"
                                             maxLength={400}
                                             style={{ paddingRight: '2.5rem' }}
@@ -350,8 +470,8 @@ export const SpaceInfoPanel = () => {
                                     </>
                                 ) : (
                                     <Paragraph color="gray2">
-                                        {roomTopic
-                                            ? roomTopic
+                                        {spaceIdentity
+                                            ? spaceIdentity.bio
                                             : 'Click "edit" to add a description'}
                                     </Paragraph>
                                 ))}

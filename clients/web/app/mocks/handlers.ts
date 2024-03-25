@@ -57,7 +57,7 @@ export const testHandlers = [
             return res(ctx.status(404))
         }
 
-        const data = { bio: 'my special space' }
+        const data = { motto: 'my motto', bio: 'my special space' }
         return res(ctx.status(200), ctx.json(data))
     }),
 

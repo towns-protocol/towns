@@ -12,7 +12,7 @@ import {
 import { useSpaceIdFromPathname } from 'hooks/useSpaceInfoFromPathname'
 import { FadeIn } from '@components/Transitions'
 import { useSetDocTitle } from 'hooks/useDocTitle'
-import { useGetSpaceTopic } from 'hooks/useSpaceTopic'
+import { useGetSpaceIdentity as useGetSpaceIdentity } from 'hooks/useSpaceIdentity'
 import { ButtonSpinner } from '@components/Login/LoginButton/Spinner/ButtonSpinner'
 import { PATHS } from 'routes'
 import { LoginComponent } from '@components/Login/LoginComponent'
@@ -25,7 +25,7 @@ const InviteLinkLanding = () => {
     const isInvite = searchParams.get('invite') != undefined
     const { data, isLoading } = useContractSpaceInfo(spaceId)
     const setTitle = useSetDocTitle()
-    const { data: roomTopic } = useGetSpaceTopic(spaceId)
+    const { data: spaceIdentity } = useGetSpaceIdentity(spaceId)
     const url = new URL(window.location.href)
     const { address: currentWallet } = useAccount()
     const invalidWallet = url.searchParams.get('invalidWallet')
@@ -86,9 +86,9 @@ const InviteLinkLanding = () => {
                                 <Heading level={2} textAlign="center">
                                     {data?.name}
                                 </Heading>
-                                {roomTopic && (
+                                {spaceIdentity && (
                                     <Text color="gray1" textAlign="center">
-                                        {roomTopic}
+                                        {spaceIdentity.bio}
                                     </Text>
                                 )}
                             </Box>

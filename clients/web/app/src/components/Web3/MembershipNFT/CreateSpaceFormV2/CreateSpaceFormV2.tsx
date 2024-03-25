@@ -110,6 +110,7 @@ export function CreateSpaceFormV2() {
             tokensGatingMembership: [],
             spaceIconUrl: null,
             spaceIconFile: null,
+            spaceMotto: null,
             spaceBio: null,
             // TODO: currency defaults to ETH when addressZero
             membershipCurrency: ethers.constants.AddressZero,
@@ -173,6 +174,7 @@ export function CreateSpaceFormV2() {
                         limit,
                         tokensGatingMembership,
                         membershipType,
+                        spaceMottoValue,
                         spaceBioValue,
                         membershipPricingType,
                         spaceIconUrl,
@@ -182,6 +184,7 @@ export function CreateSpaceFormV2() {
                         'membershipLimit',
                         'tokensGatingMembership',
                         'membershipType',
+                        'spaceMotto',
                         'spaceBio',
                         'membershipPricingType',
                         'spaceIconUrl',
@@ -418,6 +421,24 @@ export function CreateSpaceFormV2() {
                                                         />
                                                     </Box>
 
+                                                    {/* motto */}
+                                                    <Box
+                                                        background="lightHover"
+                                                        rounded="sm"
+                                                        paddingY="md"
+                                                    >
+                                                        <AutoGrowTextArea
+                                                            text={spaceMottoValue ?? undefined}
+                                                            fontSize="lg"
+                                                            placeholder="Add town motto"
+                                                            tone="none"
+                                                            maxLength={32}
+                                                            counterOffset={{
+                                                                bottom: 'none',
+                                                            }}
+                                                            {..._form.register('spaceMotto')}
+                                                        />
+                                                    </Box>
                                                     {/* bio */}
                                                     <Box
                                                         background="lightHover"

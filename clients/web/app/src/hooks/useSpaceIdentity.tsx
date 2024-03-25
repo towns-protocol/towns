@@ -5,17 +5,24 @@ import { staleTime24Hours } from 'use-towns-client'
 import { env } from 'utils'
 import { axiosClient } from '../api/apiClient'
 
-const queryKey = 'roomTopic'
+const queryKey = 'spaceIdentity'
 
 const zBioReadData: z.ZodType<{
+    motto: string
     bio: string
 }> = z.object({
+    motto: z.string(),
     bio: z.string(),
 })
 
-export async function getSpaceTopic(roomId: string): Promise<string> {
+interface SpaceIdentity {
+    motto: string
+    bio: string
+}
+
+export async function getSpaceIdentity(spaceId: string): Promise<SpaceIdentity> {
     const GATEWAY_SERVER_URL = env.VITE_GATEWAY_URL
-    const url = `${GATEWAY_SERVER_URL}/space/${roomId}/bio`
+    const url = `${GATEWAY_SERVER_URL}/space/${spaceId}/bio`
 
     const spaceTopic = await axiosClient.get(url)
     const parseResult = zBioReadData.safeParse(spaceTopic.data)
@@ -24,23 +31,29 @@ export async function getSpaceTopic(roomId: string): Promise<string> {
         throw new Error("Couldn't parse space topic:: ", parseResult.error)
     }
 
-    return parseResult.data.bio
+    return {
+        motto: parseResult.data.motto,
+        bio: parseResult.data.bio,
+    }
 }
 
-export async function setSpaceTopic(roomId: string, topic: string): Promise<void> {
+export async function setSpaceIdentity(
+    spaceId: string,
+    spaceIdentity: SpaceIdentity,
+): Promise<void> {
     const GATEWAY_SERVER_URL = env.VITE_GATEWAY_URL
-    const url = `${GATEWAY_SERVER_URL}/space/${roomId}/bio`
-    await axiosClient.post(url, JSON.stringify({ bio: topic }), {
+    const url = `${GATEWAY_SERVER_URL}/space/${spaceId}/bio`
+    await axiosClient.post(url, JSON.stringify(spaceIdentity), {
         withCredentials: true,
     })
 }
 
-export const useGetSpaceTopic = (networkId: string | undefined) => {
+export const useGetSpaceIdentity = (networkId: string | undefined) => {
     const _getSpaceTopic = useCallback(async () => {
         if (!networkId) {
             return
         }
-        return getSpaceTopic(networkId)
+        return getSpaceIdentity(networkId)
     }, [networkId])
 
     return useQuery({
@@ -54,8 +67,8 @@ export const useGetSpaceTopic = (networkId: string | undefined) => {
     })
 }
 
-export const useSetSpaceTopic = (
-    roomId: string | undefined,
+export const useSetSpaceIdentity = (
+    spaceId: string | undefined,
     {
         onError,
     }: {
@@ -64,26 +77,32 @@ export const useSetSpaceTopic = (
 ) => {
     const queryClient = useQueryClient()
 
-    const _setSpaceTopic = useCallback(
-        // in case you cannot pass the roomId as a parameter, you can use the innerRoomId in the callback
-        ({ description, innerRoomId }: { description: string; innerRoomId?: string }) => {
-            const _id = innerRoomId ?? roomId
+    const _setSpaceIdenity = useCallback(
+        // in case you cannot pass the spaceId as a parameter, you can use the innerSpaceId in the callback
+        ({
+            spaceIdentity: spaceIdentity,
+            innerSpaceId: innerSpaceId,
+        }: {
+            spaceIdentity: SpaceIdentity
+            innerSpaceId?: string
+        }) => {
+            const _id = innerSpaceId ?? spaceId
             if (!_id) {
                 return Promise.reject('No space id')
             }
 
-            return setSpaceTopic(_id, description)
+            return setSpaceIdentity(_id, spaceIdentity)
         },
-        [roomId],
+        [spaceId],
     )
 
     return useMutation({
-        mutationFn: _setSpaceTopic,
+        mutationFn: _setSpaceIdenity,
         onSuccess: async () => {
-            return queryClient.invalidateQueries({ queryKey: ['roomTopic', roomId] })
+            return queryClient.invalidateQueries({ queryKey: [queryKey, spaceId] })
         },
         onError: (error: unknown) => {
-            console.error('[useSetSpaceTopic] error', error)
+            console.error('[useSetSpaceIdentity] error', error)
             if (onError) {
                 onError(error)
             }

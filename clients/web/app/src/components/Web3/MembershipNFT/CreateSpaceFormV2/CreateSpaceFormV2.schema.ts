@@ -132,6 +132,7 @@ export const schema = z
             .min(2)
             .max(MAX_LENGTH_SPACE_NAME),
         // spaceOwner: z.string(), TODO contract updates
+        spaceMotto: z.string().optional().nullable(),
         spaceBio: z.string().optional().nullable(),
     })
     .and(membershipSettingsSchema)
