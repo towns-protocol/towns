@@ -10,6 +10,8 @@ import { bin_fromHexString } from '@river/dlog'
 export class TownsTestWeb3Provider extends ethers.providers.JsonRpcProvider {
     // note to self, the wallet contains a reference to a provider, which is a circular ref back this class
     public wallet: ethers.Wallet
+    public riverChainProvider: ethers.providers.JsonRpcProvider
+    public riverChainId: number
 
     public get userId() {
         return userIdFromAddress(bin_fromHexString(this.wallet.address))
@@ -24,6 +26,13 @@ export class TownsTestWeb3Provider extends ethers.providers.JsonRpcProvider {
         super(networkUrl)
         this.wallet = (wallet ?? ethers.Wallet.createRandom()).connect(this)
         console.log('initializing web3 provider with wallet', this.wallet.address)
+
+        const riverChainUrl = process.env.RIVER_CHAIN_PROVIDER_HTTP_URL!
+        this.riverChainId = parseInt(process.env.RIVER_CHAIN_ID!)
+        this.riverChainProvider = new ethers.providers.JsonRpcProvider(riverChainUrl, {
+            name: 'river_chain',
+            chainId: this.riverChainId,
+        })
     }
 
     public async fundWallet() {

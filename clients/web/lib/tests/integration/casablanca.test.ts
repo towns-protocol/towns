@@ -16,8 +16,9 @@ import {
     createTestChannelWithSpaceRoles,
     createTestSpaceGatedByTownNft,
     registerAndStartClients,
+    getChainIds,
 } from './helpers/TestUtils'
-import { Permission } from '@river/web3'
+import { Permission, createRiverRegistry } from '@river/web3'
 import debug from 'debug'
 
 const log = debug('test:casablanca')
@@ -27,9 +28,15 @@ describe('casablanca', () => {
         const primaryWallet = ethers.Wallet.createRandom()
         const delegateWallet = ethers.Wallet.createRandom()
         const context = await makeSignerContext(primaryWallet, delegateWallet)
-        const csurl: string = process.env.CASABLANCA_SERVER_URL!
-        log('new CasablancaClient', csurl)
-        const rpcClient = makeStreamRpcClient(csurl)
+        const { riverChainId, riverChainProvider } = await getChainIds()
+        const riverRegistry = createRiverRegistry({
+            chainId: riverChainId,
+            provider: riverChainProvider,
+        })
+        const urls = await riverRegistry.getOperationalNodeUrls()
+        const rpcClient = makeStreamRpcClient(urls, undefined, () =>
+            riverRegistry.getOperationalNodeUrls(),
+        )
         const cryptoStore = RiverDbManager.getCryptoDb('abc')
         const entitlementsDelegate = new MockEntitlementsDelegate()
         const client = new CasablancaClient(context, rpcClient, cryptoStore, entitlementsDelegate)

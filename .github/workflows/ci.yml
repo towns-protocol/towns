@@ -1,4 +1,3 @@
-name: Continuous Integration
 env:
     FOUNDRY_VERSION: nightly
     RIVER_BLOCK_TIME: 1
@@ -235,7 +234,7 @@ jobs:
               working-directory: river/core/node
 
             - name: Build & Test (with entitlements)
-              run: CASABLANCA_SERVER_URL=https://localhost:5170,https://localhost:5171,https://localhost:5172,https://localhost:5173,https://localhost:5174,https://localhost:5175,https://localhost:5176,https://localhost:5177,https://localhost:5178,https://localhost:5179 RIVER_CHAIN_PROVIDER_HTTP_URL=http://localhost:8546/ RIVER_CHAIN_ID=31338 yarn csb:turbo-no-sdk
+              run: RIVER_CHAIN_PROVIDER_HTTP_URL=http://localhost:8546/ RIVER_CHAIN_ID=31338 yarn csb:turbo-no-sdk
 
             - name: Archive River Node Logs and Settings
               if: always()

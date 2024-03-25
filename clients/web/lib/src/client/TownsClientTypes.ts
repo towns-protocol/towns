@@ -9,6 +9,7 @@ export interface TownsOpts {
     initialSyncLimit?: number
     pollTimeoutMs?: number
     web3Provider?: TProvider
+    riverChainId: number
     riverChainProvider?: TProvider
     eventHandlers?: TownsClientEventHandlers
     logNamespaceFilter?: string

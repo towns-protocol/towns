@@ -20,7 +20,11 @@ export const TownsTestApp = (props: Props) => {
     const casablancaServerUrl = process.env.CASABLANCA_SERVER_URL!
     const riverChainUrl = process.env.RIVER_CHAIN_PROVIDER_HTTP_URL!
     const riverChainId = parseInt(process.env.RIVER_CHAIN_ID!)
-    const riverChain = { rpcUrl: riverChainUrl, chainId: riverChainId }
+    const riverChain = {
+        rpcUrl: riverChainUrl,
+        chainId: riverChainId,
+        provider: provider.riverChainProvider,
+    }
     Object.defineProperty(window, 'ethereum', {
         value: provider,
         writable: true,

@@ -34,12 +34,16 @@ export const useTownsClientListener = (opts: {
         const townsClient = new TownsClient({
             ...opts,
             web3Provider: provider,
+            riverChainId: riverChain.chainId,
             riverChainProvider: riverChain?.provider,
         })
         clientSingleton.current = new ClientStateMachine(townsClient)
     }
 
-    logServerUrlMismatch(opts, clientSingleton)
+    logServerUrlMismatch(
+        { ...opts, riverChainId: riverChain.chainId, riverChainProvider: riverChain.provider },
+        clientSingleton,
+    )
 
     useEffect(() => {
         if (!casablancaClient) {

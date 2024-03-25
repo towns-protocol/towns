@@ -7,7 +7,8 @@ import isEqual from 'lodash/isEqual'
 export interface IWeb3Context {
     provider?: TProvider
     chain: Chain
-    riverChain?: IChainConfig
+    riverChain: IChainConfig
+    riverChainProvider: TProvider
 }
 
 export const Web3Context = createContext<IWeb3Context | undefined>(undefined)
@@ -81,7 +82,7 @@ function useWeb3({ chain, riverChain }: Web3ContextOptions): IWeb3Context {
     return useMemo(
         () => ({
             provider: providerRef.current,
-            riverChainProviderRef: riverChainProviderRef.current,
+            riverChainProvider: riverChainProviderRef.current,
             chain,
             riverChain,
         }),

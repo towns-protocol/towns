@@ -8,7 +8,7 @@ import {
     userIdFromAddress,
 } from '@river/sdk'
 import { EntitlementsDelegate, DecryptionStatus } from '@river/encryption'
-import { CreateSpaceParams, IRuleEntitlement } from '@river/web3'
+import { CreateSpaceParams, IRuleEntitlement, createRiverRegistry } from '@river/web3'
 import { FullyReadMarker } from '@river/proto'
 import {
     ChannelTransactionContext,
@@ -90,6 +90,7 @@ export class TownsClient implements EntitlementsDelegate {
             chainId: opts.chainId,
             provider: opts.web3Provider,
         })
+
         if (opts.accountAbstractionConfig?.aaRpcUrl) {
             this.userOps = new UserOps({
                 ...opts.accountAbstractionConfig,
@@ -176,7 +177,17 @@ export class TownsClient implements EntitlementsDelegate {
             throw new Error('casablancaServerUrl is required')
         }
         this._signerContext = context
-        const rpcClient = makeStreamRpcClient(this.opts.casablancaServerUrl)
+        if (!this.opts.riverChainProvider) {
+            throw new Error('riverChainProvider is required')
+        }
+        const riverRegistry = createRiverRegistry({
+            chainId: this.opts.riverChainId,
+            provider: this.opts.riverChainProvider,
+        })
+        const urls = await riverRegistry.getOperationalNodeUrls()
+        const rpcClient = makeStreamRpcClient(urls, undefined, () =>
+            riverRegistry.getOperationalNodeUrls(),
+        )
         // get storage
         // todo jterzis 06/15/23: add client store here
         // crypto store

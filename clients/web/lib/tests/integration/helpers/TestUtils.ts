@@ -16,6 +16,13 @@ import {
 } from '@river/web3'
 import { getDynamicPricingModule } from '../../../src/utils/web3'
 
+interface ChainIds {
+    chainId: number
+    riverChainId: number
+    provder?: ethers.providers.JsonRpcProvider
+    riverChainProvider?: ethers.providers.JsonRpcProvider
+}
+
 export const EVERYONE_ADDRESS = '0x0000000000000000000000000000000000000001'
 
 // eslint-disable-next-line @typescript-eslint/no-explicit-any
@@ -42,9 +49,11 @@ export function parseOptInt(value?: string): number | undefined {
     return parsed
 }
 
-export async function getChainId(): Promise<number> {
+export async function getChainIds(): Promise<ChainIds> {
     const dummyProvider = new TownsTestWeb3Provider()
-    return (await dummyProvider.getNetwork()).chainId
+    const chainId = (await dummyProvider.getNetwork()).chainId
+    const riverChainId = (await dummyProvider.riverChainProvider.getNetwork()).chainId
+    return { chainId, riverChainId, riverChainProvider: dummyProvider.riverChainProvider }
 }
 
 /**
@@ -55,8 +64,8 @@ export async function registerAndStartClients(
     clientNames: string[],
     props?: TownsTestClientProps,
 ): Promise<Record<string, TownsTestClient>> {
-    // get the chain id for the test network
-    const chainId = await getChainId()
+    // get the chain ids for the test network
+    const { chainId } = await getChainIds()
     // create new test clients
     const clients = clientNames.map((name) => new TownsTestClient(chainId, name, props))
     // start them up
@@ -80,9 +89,9 @@ export async function registerAndStartClient(
     walletPromise: Promise<Wallet>,
     props?: TownsTestClientProps,
 ): Promise<TownsTestClient> {
-    const chainId = await getChainId()
     try {
         const wallet = await walletPromise
+        const { chainId } = await getChainIds()
         const client = new TownsTestClient(chainId, name, props, wallet)
 
         if (await client.isUserRegistered()) {
