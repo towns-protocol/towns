@@ -13,24 +13,20 @@ type UseSpaceFromContractReturn = {
     isError: boolean
 }
 
+/// lookup all the spaces returned by river in the contract, return the ones that the user is entitled to see
 export function useSpacesFromContract(): UseSpaceFromContractReturn {
-    const casablancaSpaces = useCasablancaSpacesFromContract()
+    const { loggedInWalletAddress } = useCasablancaCredentials()
+    const contractSpaces = useSpacesFromContractWithAddress(loggedInWalletAddress)
 
     const spaces = useMemo(() => {
-        return uniqBy([...casablancaSpaces.spaces], (s) => s.networkId)
-    }, [casablancaSpaces.spaces])
+        return uniqBy([...contractSpaces.spaces], (s) => s.networkId)
+    }, [contractSpaces.spaces])
 
     return {
         spaces,
-        isLoading: casablancaSpaces.isLoading,
-        isError: casablancaSpaces.isError,
+        isLoading: contractSpaces.isLoading,
+        isError: contractSpaces.isError,
     }
-}
-
-export function useCasablancaSpacesFromContract(): UseSpaceFromContractReturn {
-    const { loggedInWalletAddress } = useCasablancaCredentials()
-    const spaces = useSpacesFromContractWithAddress(loggedInWalletAddress)
-    return spaces
 }
 
 function useSpacesFromContractWithAddress(myWalletAddress?: string): UseSpaceFromContractReturn {
