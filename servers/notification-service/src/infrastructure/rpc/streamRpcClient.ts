@@ -8,7 +8,7 @@ export type StreamRpcClient = PromiseClient<typeof StreamService> & { url?: stri
 
 export function makeStreamRpcClient(): StreamRpcClient {
     const url = env.RIVER_NODE_URL!
-    logger.info('makeStreamRpcClient: Connecting to url=', url)
+    logger.info(`makeStreamRpcClient: Connecting to url=${url}`)
     const options: ConnectTransportOptions = {
         baseUrl: url,
         // interceptors: [retryInterceptor(retryParams), loggingInterceptor(transportId)],

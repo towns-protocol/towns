@@ -10,11 +10,13 @@ import { NotificationTag } from '@prisma/client'
 import { UserSettingsTables } from '../database/userSettingsTables'
 import { database } from '../../infrastructure/database/prisma'
 import { env } from '../utils/environment'
-import { logger } from '../logger'
 import { NotificationKind } from '../schema/tagSchema'
 import { PushType } from '../schema/subscriptionSchema'
 import { sendNotificationViaWebPush } from './web-push/send-notification'
 import { Urgency } from '../schema/notificationSchema'
+import { createLogger } from './logger'
+
+const logger = createLogger('notificationService')
 
 export interface NotifyUser {
     userId: string
@@ -187,7 +189,7 @@ export class NotificationService {
         let notificationsSentCount = 0
         for (const result of sendResults) {
             if (result.status === 'rejected') {
-                logger.info('failed to send notification', result.reason)
+                logger.info('failed to send notification', { result })
                 continue
             }
 
@@ -196,7 +198,7 @@ export class NotificationService {
                 continue
             }
 
-            logger.info('failed to send notification', JSON.stringify(result))
+            logger.info('failed to send notification', { result })
             await this.deleteFailedSubscription(result)
         }
         return notificationsSentCount
@@ -205,13 +207,9 @@ export class NotificationService {
     public async deleteFailedSubscription(
         result: PromiseFulfilledResult<SendPushResponse>,
     ): Promise<void> {
-        logger.info(
-            'deleting subscription from the db',
-            'userId',
-            result.value.userId,
-            'pushSubscription',
-            result.value.pushSubscription,
-        )
+        logger.info(`deleting subscription from the db - userId: ${result.value.userId}`, {
+            pushSubscription: result.value.pushSubscription,
+        })
         try {
             await database.pushSubscription.delete({
                 where: {
@@ -219,15 +217,8 @@ export class NotificationService {
                     PushSubscription: result.value.pushSubscription,
                 },
             })
-            logger.info(
-                'deleted subscription from the db',
-                'userId',
-                result.value.userId,
-                'subscription',
-                result.value.pushSubscription,
-            )
         } catch (err) {
-            logger.error('failed to delete subscription from the db', err)
+            logger.error('failed to delete subscription from the db', { err })
         }
     }
 }

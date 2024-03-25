@@ -7,12 +7,14 @@ import {
 } from '../../../infrastructure/rpc/streamRpcClient'
 import { isChannelStreamId, isDMChannelStreamId, isGDMChannelStreamId } from './id'
 import { SyncedStreams, unpackStream } from './syncedStreams'
-import { streamIdToBytes, userIdFromAddress } from './utils'
+import { streamIdFromBytes, streamIdToBytes, userIdFromAddress } from './utils'
 import { env } from '../../utils/environment'
 import assert from 'assert'
 import { Err, MemberPayload_Membership, MembershipOp, MiniblockHeader } from '@river/proto'
-import { logger } from '../../logger'
 import { ParsedStreamAndCookie } from './types'
+import { createLogger } from '../logger'
+
+const logger = createLogger('streamsMonitorService')
 
 type StreamsMetadata = {
     [key in StreamKind]: {
@@ -71,7 +73,7 @@ class StreamsMonitorService {
     }
 
     private async addDMSyncStreamToDB(streamId: string): Promise<void> {
-        logger.info('[StreamsMonitorService] adding DM', streamId, 'to db')
+        logger.info(`adding DM ${streamId} to db`, { streamId })
 
         this.validateStream(streamId, StreamKind.DM)
 
@@ -96,7 +98,7 @@ class StreamsMonitorService {
         for (const envelope of firstMiniblock.events) {
             const { payload } = envelope.event
             if (payload.case === 'dmChannelPayload' && payload.value.content.case === 'inception') {
-                logger.info('[StreamsMonitorService] new DM channel, storing user ids')
+                logger.info('new DM channel, storing user ids')
                 inceptionFound = true
 
                 const { firstPartyAddress, secondPartyAddress } = payload.value.content.value
@@ -118,11 +120,11 @@ class StreamsMonitorService {
             ) {
                 const inception = payload.value.snapshot.content.value.inception
                 if (!inception) {
-                    logger.info('[StreamsMonitorService] no inception in snapshot')
+                    logger.info('no inception in snapshot')
                     continue
                 }
                 inceptionFound = true
-                logger.info('[StreamsMonitorService] new DM snapshot, storing user ids')
+                logger.info('new DM snapshot, storing user ids')
 
                 const { firstPartyAddress, secondPartyAddress } = inception
                 await database.syncedStream.create({
@@ -144,12 +146,12 @@ class StreamsMonitorService {
         }
 
         if (!inceptionFound) {
-            logger.info('[StreamsMonitorService] no inception found for DM channel', streamId)
+            logger.error('no inception found for DM channel', { streamId })
         }
     }
 
     private async addGDMStreamToDB(streamId: string): Promise<void> {
-        logger.info('[StreamsMonitorService] adding gdm', streamId, 'to db')
+        logger.info(`adding gdm ${streamId} to db`, { streamId })
         this.validateStream(streamId, StreamKind.GDM)
         const unpacked = await this.getAndParseStream(streamId)
         const userIds = this.getUserIdsFromChannelOrGDMStreams(unpacked)
@@ -164,7 +166,7 @@ class StreamsMonitorService {
     }
 
     private async addChannelStreamToDB(streamId: string): Promise<void> {
-        logger.info(`[StreamsMonitorService] adding channel ${streamId} to db`)
+        logger.info(`adding channel ${streamId} to db`, { streamId })
         this.validateStream(streamId, StreamKind.Channel)
         const unpacked = await this.getAndParseStream(streamId)
         const userIds = this.getUserIdsFromChannelOrGDMStreams(unpacked)
@@ -195,20 +197,32 @@ class StreamsMonitorService {
                         .value as MemberPayload_Membership
                     const { op } = value
                     if (op === MembershipOp.SO_JOIN) {
-                        logger.info('[SyncedStreams] membership update SO_JOIN')
                         const userAddress = userIdFromAddress(value.userAddress)
+                        logger.info(
+                            `stream ${streamIdFromBytes(
+                                unpacked.nextSyncCookie.streamId,
+                            )} membership update SO_JOIN for user ${userAddress}`,
+                            {
+                                streamId: streamIdFromBytes(unpacked.nextSyncCookie.streamId),
+                                userAddress,
+                            },
+                        )
                         if (!userIds.has(userAddress)) {
-                            logger.info('[SyncedStreams] adding user to stream', { userAddress })
                             userIds.add(userAddress)
                         }
                     }
                     if (op === MembershipOp.SO_LEAVE) {
-                        logger.info('[SyncedStreams] membership update SO_LEAVE')
                         const userAddress = userIdFromAddress(value.userAddress)
-                        if (userIds.has(userAddress)) {
-                            logger.info('[SyncedStreams] removing user from stream', {
+                        logger.info(
+                            `stream ${streamIdFromBytes(
+                                unpacked.nextSyncCookie.streamId,
+                            )} membership update SO_LEAVE for user ${userAddress}`,
+                            {
+                                streamId: streamIdFromBytes(unpacked.nextSyncCookie.streamId),
                                 userAddress,
-                            })
+                            },
+                        )
+                        if (userIds.has(userAddress)) {
                             userIds.delete(userAddress)
                         }
                     }
@@ -264,7 +278,7 @@ class StreamsMonitorService {
 
     public async startMonitoringStreams() {
         if (env.NOTIFICATION_SYNC_ENABLED === 'true') {
-            logger.info('[StreamsMonitorService] notification sync is enabled')
+            logger.info('notification sync is enabled')
             await this.refreshChannelStreams()
             const tenMinutes = 10 * 60 * 1000
             this.intervalId = setInterval(async () => {
@@ -273,7 +287,7 @@ class StreamsMonitorService {
 
             return this.streams.startSyncStreams()
         } else {
-            logger.info('[StreamsMonitorService] notification sync is disabled')
+            logger.info('notification sync is disabled')
             return new Promise<void>((resolve) => {
                 this.releaseServiceAwait = () => {
                     this.releaseServiceAwait = undefined
@@ -284,7 +298,7 @@ class StreamsMonitorService {
     }
 
     private async refreshChannelStreams() {
-        logger.info('[StreamsMonitorService] refreshChannelStreams')
+        logger.info('refreshChannelStreams')
         await this.fetchAndAddNewChannelStreams()
         await this.removeStaleStreams()
     }
@@ -292,11 +306,11 @@ class StreamsMonitorService {
     public async addNewStreamsToDB(streamIds: Set<string>) {
         let newStreamIds = this.findUnprocessedStreams(streamIds)
         if (newStreamIds.size === 0) {
-            logger.info('[StreamsMonitorService] all new streams already processed')
+            logger.info('all new streams already processed')
             return
         }
 
-        logger.info('[StreamsMonitorService] addStreamsToDB', { streamIds: newStreamIds })
+        logger.info('addStreamsToDB', { streamIds: newStreamIds })
         const streamsMetadata: StreamsMetadata = {
             [StreamKind.DM]: { streamIds: new Set() },
             [StreamKind.GDM]: { streamIds: new Set() },
@@ -356,17 +370,15 @@ class StreamsMonitorService {
         for (const streamId of streamsMetadata.DM.streamIds) {
             const p = async () => {
                 try {
-                    logger.info('[StreamsMonitorService] new dm stream', streamId)
+                    logger.info(`new dm stream ${streamId}`, { streamId })
                     await this.addDMSyncStreamToDB(streamId)
                 } catch (error) {
                     if (errorContains(error, Err.NOT_FOUND)) {
-                        logger.info(`[StreamsMonitorService] DM ${streamId} stream not found`)
+                        logger.info(`DM ${streamId} stream not found`)
                         notFoundStreams.add(streamId)
                         return
                     }
-                    logger.error(
-                        `[StreamsMonitorService] Failed to add DM ${streamId} stream to db. Error: ${error}`,
-                    )
+                    logger.error(`Failed to add DM ${streamId} stream to db`, { error })
                 }
             }
             addPromises.push(p())
@@ -377,13 +389,11 @@ class StreamsMonitorService {
                     await this.addGDMStreamToDB(streamId)
                 } catch (error) {
                     if (errorContains(error, Err.NOT_FOUND)) {
-                        logger.info(`[StreamsMonitorService] GDM ${streamId} stream not found`)
+                        logger.info(`GDM ${streamId} stream not found`)
                         notFoundStreams.add(streamId)
                         return
                     }
-                    logger.error(
-                        `[StreamsMonitorService] Failed to add GDM ${streamId} stream to db. Error: ${error}`,
-                    )
+                    logger.error(`Failed to add GDM ${streamId} stream to db`, { error })
                 }
             }
             addPromises.push(p())
@@ -394,13 +404,11 @@ class StreamsMonitorService {
                     await this.addChannelStreamToDB(streamId)
                 } catch (error) {
                     if (errorContains(error, Err.NOT_FOUND)) {
-                        logger.info(`[StreamsMonitorService] Channel ${streamId} stream not found`)
+                        logger.info(`Channel ${streamId} stream not found`)
                         notFoundStreams.add(streamId)
                         return
                     }
-                    logger.error(
-                        `[StreamsMonitorService] Failed to add GDM ${streamId} stream to db. Error: ${error}`,
-                    )
+                    logger.error(`Failed to add GDM ${streamId} stream to db`, { error })
                 }
             }
             addPromises.push(p())
@@ -409,7 +417,9 @@ class StreamsMonitorService {
         await Promise.all(addPromises)
 
         if (notFoundStreams.size > 0) {
-            logger.info('[StreamsMonitorService] deleting the not found streams', notFoundStreams)
+            logger.info(`deleting ${notFoundStreams.size} not found streams`, {
+                notFoundStreams,
+            })
             await database.userSettingsChannel.deleteMany({
                 where: {
                     ChannelId: {
@@ -445,7 +455,9 @@ class StreamsMonitorService {
         ).map((s) => s.streamId)
 
         if (staleStreams.length > 0) {
-            logger.info('[StreamsMonitorService] removeStaleStreams', staleStreams)
+            logger.info(`removeStaleStreams ${staleStreams.length}`, {
+                staleStreams,
+            })
             await database.syncedStream.deleteMany({
                 where: {
                     streamId: {

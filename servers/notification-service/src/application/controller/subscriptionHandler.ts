@@ -6,7 +6,7 @@ import { logger } from '../logger'
 
 export async function addSubscriptionHandler(request: Request, res: Response) {
     try {
-        logger.info('addSubscriptionHandler userId', request.body.userId)
+        logger.info(`addSubscriptionHandler userId ${request.body.userId}`)
         const subscriptionData = {
             UserId: request.body.userId,
             PushSubscription: JSON.stringify(request.body.subscriptionObject),

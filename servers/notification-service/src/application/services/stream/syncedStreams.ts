@@ -21,8 +21,10 @@ import { ParsedEvent, ParsedMiniblock, ParsedStreamAndCookie } from './types'
 import { NotifyUser, NotifyUsers, notificationService } from '../notificationService'
 import { isChannelStreamId, isDMChannelStreamId, isGDMChannelStreamId } from './id'
 import { StreamKind, SyncedStream } from '@prisma/client'
-import { logger } from '../../logger'
 import { NotificationKind, NotifyUsersSchema } from '../../../types'
+import { createLogger } from '../logger'
+
+const logger = createLogger('syncedStreams')
 
 export function isDefined<T>(value: T | undefined | null): value is T {
     return <T>value !== undefined && <T>value !== null
@@ -134,7 +136,7 @@ export class SyncedStreams {
     }
 
     public set(streamId: string, stream: StreamAndCookie): void {
-        logger.info('[SyncedStreams] stream set', streamId)
+        logger.info(`set ${streamId}`, { streamId })
         this.streams.set(streamId, stream)
     }
 
@@ -160,9 +162,8 @@ export class SyncedStreams {
     }
 
     public checkStartTicking() {
-        logger.info('[SyncedStreams] checkStartTicking', this.responsesQueue.length)
         if (this.inProgressTick) {
-            logger.info('[SyncedStreams] inProgressTick', this.inProgressTick)
+            logger.info('inProgressTick')
             return
         }
 
@@ -173,7 +174,7 @@ export class SyncedStreams {
         const tick = this.tick()
         this.inProgressTick = tick
         queueMicrotask(() => {
-            tick.catch((e) => logger.error('[SyncedStreams] ProcessTick Error', e)).finally(() => {
+            tick.catch((error) => logger.error('ProcessTick Error', { error })).finally(() => {
                 this.inProgressTick = undefined
                 this.checkStartTicking()
             })
@@ -181,7 +182,6 @@ export class SyncedStreams {
     }
 
     private async tick() {
-        logger.info('[SyncedStreams] tick', this.responsesQueue.length)
         const item = this.responsesQueue.shift()
         if (!item || item.syncId !== this.syncId) {
             return
@@ -190,7 +190,7 @@ export class SyncedStreams {
     }
 
     public async stopSync() {
-        logger.info('[SyncedStreams] sync STOP CALLED')
+        logger.info('sync STOP CALLED')
         this.responsesQueue = []
         if (stateConstraints[this.syncState].has(SyncState.Canceling)) {
             const syncId = this.syncId
@@ -203,24 +203,26 @@ export class SyncedStreams {
                 // Give the server 5 seconds to respond to the cancelSync RPC before forceStopSyncStreams
                 const breakTimeout = syncId
                     ? setTimeout(() => {
-                          logger.info('[SyncedStreams] calling forceStopSyncStreams', syncId)
+                          logger.info(`calling forceStopSyncStreams ${syncId}`, {
+                              syncId,
+                          })
                           this.forceStopSyncStreams?.()
                       }, 5000)
                     : undefined
 
-                logger.info('[SyncedStreams] stopSync syncState', syncState)
-                logger.info('[SyncedStreams] stopSync syncLoop', syncLoop)
-                logger.info('[SyncedStreams] stopSync syncId', syncId)
+                logger.info('stopSync syncState', { syncState })
+                logger.info('stopSync syncLoop', { syncLoop })
+                logger.info('stopSync syncId', { syncId })
                 const result = await Promise.allSettled([
                     syncId ? await this.rpcClient.cancelSync({ syncId }) : undefined,
                     syncLoop,
                 ])
-                logger.info('[SyncedStreams] syncLoop awaited', syncId, result)
+                logger.info('syncLoop awaited', { syncId, result })
                 clearTimeout(breakTimeout)
-            } catch (e) {
-                logger.info('[SyncedStreams] sync STOP ERROR', e)
+            } catch (error) {
+                logger.info('sync STOP ERROR', { error })
             }
-            logger.info('[SyncedStreams] sync STOP DONE', syncId)
+            logger.info('sync STOP DONE', { syncId })
         } else {
             logger.info(`WARN: stopSync called from invalid state ${this.syncState}`)
         }
@@ -232,7 +234,7 @@ export class SyncedStreams {
         const stream = this.streams.has(syncCookie.streamId)
 
         if (stream) {
-            logger.info('[SyncedStreams] addStreamToSync streamId already syncing', syncCookie)
+            logger.info('addStreamToSync streamId already syncing', syncCookie)
             return
         }
         */
@@ -242,19 +244,18 @@ export class SyncedStreams {
                     syncId: this.syncId,
                     syncPos: syncCookie,
                 })
-                logger.info('[SyncedStreams] addedStreamToSync', syncCookie)
-            } catch (err) {
+                logger.info('addedStreamToSync', { syncCookie })
+            } catch (error) {
                 // Trigger restart of sync loop
-                logger.error(`addedStreamToSync error`, { err })
-                if (errorContains(err, Err.BAD_SYNC_COOKIE)) {
-                    logger.error('[SyncedStreams] addStreamToSync BAD_SYNC_COOKIE', syncCookie)
-                    throw err
+                logger.error(`addedStreamToSync error`, { error })
+                if (errorContains(error, Err.BAD_SYNC_COOKIE)) {
+                    logger.error('addStreamToSync BAD_SYNC_COOKIE', { syncCookie })
+                    throw error
                 }
             }
         } else {
             logger.info(
-                '[SyncedStreams] addStreamToSync: not in "syncing" state; let main sync loop handle this with its streams map',
-                syncCookie.streamId,
+                `addStreamToSync: not in "syncing" state; let main sync loop handle this with its streams map ${syncCookie.streamId}`,
             )
         }
     }
@@ -263,7 +264,9 @@ export class SyncedStreams {
     public async removeStreamFromSync(streamId: string): Promise<void> {
         const stream = this.streams.get(streamId)
         if (!stream) {
-            logger.info('[SyncedStreams] removeStreamFromSync streamId not found', streamId)
+            logger.info(`removeStreamFromSync streamId ${streamId} not found`, {
+                streamId,
+            })
             // no such stream
             return
         }
@@ -273,17 +276,17 @@ export class SyncedStreams {
                     syncId: this.syncId,
                     streamId: streamIdToBytes(streamId),
                 })
-            } catch (err) {
+            } catch (error) {
                 // Trigger restart of sync loop
-                logger.info('[SyncedStreams] removeStreamFromSync err', err)
+                logger.info('removeStreamFromSync error', { error })
             }
             // stream.stop()
             this.streams.delete(streamId)
-            logger.info('[SyncedStreams] removed stream from sync', streamId)
+            logger.info(`removed stream ${streamId} from sync`, { streamId })
         } else {
             logger.info(
-                '[SyncedStreams] removeStreamFromSync: not in "syncing" state; let main sync loop handle this with its streams map',
-                streamId,
+                'removeStreamFromSync: not in "syncing" state; let main sync loop handle this with its streams map',
+                { streamId },
             )
         }
     }
@@ -292,13 +295,10 @@ export class SyncedStreams {
         return new Promise<void>((resolve, reject) => {
             if (stateConstraints[this.syncState].has(SyncState.Starting)) {
                 this.setSyncState(SyncState.Starting)
-                logger.info('[SyncedStreams] starting sync loop')
+                logger.info('starting sync loop')
             } else {
                 logger.info(
-                    '[SyncedStreams] runSyncLoop: invalid state transition',
-                    this.syncState,
-                    '->',
-                    SyncState.Starting,
+                    `runSyncLoop invalid state transition: ${this.syncState} -> ${SyncState.Starting}`,
                 )
                 reject(new Error('invalid state transition'))
             }
@@ -310,7 +310,7 @@ export class SyncedStreams {
             this.syncLoop = (async (): Promise<number> => {
                 let iteration = 0
 
-                logger.info('[SyncedStreams] sync loop created')
+                logger.info('sync loop created')
                 resolve()
 
                 try {
@@ -319,11 +319,7 @@ export class SyncedStreams {
                         this.syncState === SyncState.Syncing ||
                         this.syncState === SyncState.Retrying
                     ) {
-                        logger.info(
-                            '[SyncedStreams] sync ITERATION start',
-                            ++iteration,
-                            this.syncState,
-                        )
+                        logger.info(`sync ITERATION start ${++iteration} ${this.syncState}`)
                         if (this.syncState === SyncState.Retrying) {
                             this.setSyncState(SyncState.Starting)
                         }
@@ -341,10 +337,6 @@ export class SyncedStreams {
 
                             const syncCookies: SyncCookie[] = []
                             for (const dbStream of dbSyncedStreams) {
-                                logger.info(
-                                    '[SyncedStreams] dbStream.syncCookie',
-                                    dbStream.syncCookie,
-                                )
                                 syncCookies.push(SyncCookie.fromJsonString(dbStream.syncCookie))
                             }
 
@@ -367,13 +359,11 @@ export class SyncedStreams {
                                 const interruptSyncPromise = new Promise<void>(
                                     (resolve, reject) => {
                                         this.forceStopSyncStreams = () => {
-                                            logger.info(
-                                                '[SyncedStreams] forceStopSyncStreams called',
-                                            )
+                                            logger.info('forceStopSyncStreams called')
                                             resolve()
                                         }
                                         this.interruptSync = (e: unknown) => {
-                                            logger.info('[SyncedStreams] sync interrupted', e)
+                                            logger.info('sync interrupted', { e })
                                             reject(e)
                                         }
                                     },
@@ -386,7 +376,7 @@ export class SyncedStreams {
                                     })),
                                 ])
                                 if (done || value === undefined) {
-                                    logger.info('[SyncedStreams] exiting syncStreams', done, value)
+                                    logger.info('exiting syncStreams', done, value)
                                     // exit the syncLoop, it's done
                                     this.forceStopSyncStreams = undefined
                                     this.interruptSync = undefined
@@ -394,15 +384,13 @@ export class SyncedStreams {
                                 }
 
                                 logger.info(
-                                    '[SyncedStreams] got syncStreams response',
-                                    'syncOp',
-                                    value.syncOp,
-                                    'syncId',
-                                    value.syncId,
+                                    `got syncStreams response syncOp ${value.syncOp} syncId ${value.syncId}`,
                                 )
 
                                 if (!value.syncId || !value.syncOp) {
-                                    logger.info('[SyncedStreams] missing syncId or syncOp', value)
+                                    logger.info('missing syncId or syncOp', {
+                                        value,
+                                    })
                                     continue
                                 }
                                 let pingStats: NonceStats | undefined
@@ -414,39 +402,36 @@ export class SyncedStreams {
                                         this.syncClosed()
                                         break
                                     case SyncOp.SYNC_UPDATE:
-                                        logger.info('[SyncedStreams] SYNC_UPDATE', value)
+                                        logger.info('SYNC_UPDATE', { value })
                                         this.responsesQueue.push(value)
                                         this.checkStartTicking()
                                         break
                                     case SyncOp.SYNC_PONG:
-                                        logger.info('[SyncedStreams] SYNC_PONG', value)
+                                        logger.info('SYNC_PONG', { value })
                                         pingStats = this.pingInfo.nonces[value.pongNonce]
                                         if (pingStats) {
                                             pingStats.receivedAt = performance.now()
                                             pingStats.duration =
                                                 pingStats.receivedAt - pingStats.pingAt
                                         } else {
-                                            logger.error(
-                                                '[SyncedStreams] pong nonce not found',
-                                                value.pongNonce,
-                                            )
+                                            logger.error(`pong nonce not found ${value.pongNonce}`)
                                             this.printNonces()
                                         }
                                         break
                                     default:
                                         logger.info(
-                                            `[SyncedStreams] unknown syncOp { syncId: ${this.syncId}, syncOp: ${value.syncOp} }`,
+                                            `unknown syncOp { syncId: ${this.syncId}, syncOp: ${value.syncOp} }`,
                                         )
                                         break
                                 }
                             }
-                        } catch (err) {
-                            logger.error('[SyncedStreams] syncLoop error', err)
+                        } catch (error) {
+                            logger.error('syncLoop error', { error })
                             await this.attemptRetry()
                         }
                     }
                 } finally {
-                    logger.info('[SyncedStreams] sync loop stopping ITERATION', iteration)
+                    logger.info(`sync loop stopping ITERATION ${iteration}`)
                     this.stopPing()
                     if (stateConstraints[this.syncState].has(SyncState.NotSyncing)) {
                         this.setSyncState(SyncState.NotSyncing)
@@ -458,13 +443,10 @@ export class SyncedStreams {
                         this.syncId = undefined
                     } else {
                         logger.info(
-                            '[SyncedStreams] onStopped: invalid state transition',
-                            this.syncState,
-                            '->',
-                            SyncState.NotSyncing,
+                            `onStopped: invalid state transition ${this.syncState} -> ${SyncState.NotSyncing}`,
                         )
                     }
-                    logger.info('[SyncedStreams] sync loop stopped ITERATION', iteration)
+                    logger.info(`sync loop stopped ITERATION ${iteration}`)
                 }
                 return iteration
             })()
@@ -482,7 +464,7 @@ export class SyncedStreams {
         if (!stateConstraints[this._syncState].has(newState)) {
             throw this.logInvalidStateAndReturnError(this._syncState, newState)
         }
-        logger.info('[SyncedStreams] syncState', this._syncState, '->', newState)
+        logger.info(`syncState ${this._syncState} -> ${newState}`)
         this._syncState = newState
     }
 
@@ -505,18 +487,11 @@ export class SyncedStreams {
                     ? MAX_RETRY_DELAY_FACTOR
                     : this.currentRetryCount + 1
             const retryDelay = 2 ** nextRetryCount * 1000 // 2^n seconds
-            logger.info(
-                '[SyncedStreams] sync error, retrying in',
-                retryDelay,
-                'ms',
-                ', { currentRetryCount:',
-                this.currentRetryCount,
-                ', nextRetryCount:',
+            logger.info(`sync error, retrying in ${retryDelay} ms`, {
+                currentRetryCount: this.currentRetryCount,
                 nextRetryCount,
-                ', MAX_RETRY_COUNT:',
                 MAX_RETRY_DELAY_FACTOR,
-                '}',
-            )
+            })
             this.currentRetryCount = nextRetryCount
 
             await new Promise<void>((resolve) => {
@@ -531,7 +506,9 @@ export class SyncedStreams {
                 }
             })
         } else {
-            logger.error('[SyncedStreams] attemptRetry: invalid state transition', this.syncState)
+            logger.error('attemptRetry: invalid state transition', {
+                syncState: this.syncState,
+            })
             // throw new Error('attemptRetry from invalid state')
         }
     }
@@ -543,14 +520,12 @@ export class SyncedStreams {
             // On sucessful sync, reset retryCount
             this.currentRetryCount = 0
             this.sendKeepAlivePings() // ping the server periodically to keep the connection alive
-            logger.info('[SyncedStreams] syncStarted', 'syncId', this.syncId)
-            logger.info('[SyncedStreams] emitted streamSyncActive', true)
+            logger.info(`syncStarted syncId: ${this.syncId}`, {
+                syncId: this.syncId,
+            })
         } else {
             logger.info(
-                '[SyncedStreams] syncStarted: invalid state transition',
-                this.syncState,
-                '->',
-                SyncState.Syncing,
+                `syncStarted: invalid state transition ${this.syncState} -> ${SyncState.Syncing}`,
             )
             //throw new Error('syncStarted: invalid state transition')
         }
@@ -559,11 +534,15 @@ export class SyncedStreams {
     private syncClosed() {
         this.stopPing()
         if (this.syncState === SyncState.Canceling) {
-            logger.info('[SyncedStreams] server acknowledged our close atttempt', this.syncId)
+            logger.info(`server acknowledged our close attempt ${this.syncId}`, {
+                syncId: this.syncId,
+            })
         } else {
             logger.info(
-                '[SyncedStreams] server cancelled unepexectedly, go through the retry loop',
-                this.syncId,
+                `server cancelled unepexectedly, go through the retry loop ${this.syncId}`,
+                {
+                    syncId: this.syncId,
+                },
             )
             this.setSyncState(SyncState.Retrying)
         }
@@ -580,24 +559,10 @@ export class SyncedStreams {
             const syncStream = res.stream
             if (syncStream !== undefined) {
                 try {
-                    /*
-                    logger.info(
-                        'sync RESULTS for stream',
-                        streamId,
-                        'events=',
-                        streamAndCookie.events.length,
-                        'nextSyncCookie=',
-                        streamAndCookie.nextSyncCookie,
-                        'startSyncCookie=',
-                        streamAndCookie.startSyncCookie,
-                    )
-                    */
                     const streamId = syncStream.nextSyncCookie?.streamId
                         ? bin_toHexString(syncStream.nextSyncCookie.streamId)
                         : ''
 
-                    // logger.info('[SyncedStreams] sync got stream', streamId, 'NOT FOUND')
-                    // } else if (syncStream.syncReset) {
                     if (syncStream.syncReset) {
                         // const response = await unpackStream(syncStream)
                         // await stream.initializeFromResponse(response)
@@ -607,7 +572,6 @@ export class SyncedStreams {
                         if (stream === undefined) {
                             this.streams.set(streamId, syncStream)
                         }
-                        logger.info('[SyncedStreams] streamAndCookie', streamAndCookie)
 
                         if (streamAndCookie.events.length > 0) {
                             if (isDMChannelStreamId(streamId) || isGDMChannelStreamId(streamId)) {
@@ -630,18 +594,15 @@ export class SyncedStreams {
                             },
                         })
                     }
-                } catch (err) {
-                    logger.error('[SyncedStreams] onUpdate error:', err)
+                } catch (error) {
+                    logger.error('onUpdate error:', { error })
                 }
             } else {
-                logger.info('[SyncedStreams] sync RESULTS no stream', syncStream)
+                logger.info('sync RESULTS no stream', { syncStream })
             }
         } else {
             logger.info(
-                '[SyncedStreams] onUpdate: invalid state',
-                this.syncState,
-                'should have been',
-                SyncState.Syncing,
+                `onUpdate: invalid state ${this.syncState}, should have been ${SyncState.Syncing}`,
             )
         }
     }
@@ -655,7 +616,9 @@ export class SyncedStreams {
         })
 
         if (!syncedStream) {
-            logger.info('[SyncedStreams] syncedStream not found')
+            logger.info(`syncedStream not found for streamId ${streamId}`, {
+                streamId,
+            })
             return
         }
 
@@ -667,7 +630,7 @@ export class SyncedStreams {
             payloadCase = 'gdmChannelPayload'
         }
 
-        logger.info('[SyncedStreams] handleDmOrGDMStreamUpdate for', streamKind)
+        logger.info(`handleDmOrGDMStreamUpdate for ${streamKind}`)
 
         for (const { event, creatorUserId } of streamAndCookie.events) {
             const isMessage =
@@ -693,11 +656,13 @@ export class SyncedStreams {
         })
 
         if (!syncedStream) {
-            logger.info('[SyncedStreams] syncedStream not found')
+            logger.info(`syncedStream not found for streamId ${streamId}`, {
+                streamId,
+            })
             return
         }
 
-        logger.info(`[SyncedStreams] handleChannelStreamUpdate ${streamId}`)
+        logger.info(`handleChannelStreamUpdate ${streamId}`, { streamId })
 
         for (const { event, creatorUserId } of streamAndCookie.events) {
             const isMessage =
@@ -721,8 +686,8 @@ export class SyncedStreams {
         event: StreamEvent,
         creatorUserId: string,
     ) {
-        logger.info(`[SyncedStreams] handleChannelMessageStreamUpdate ${streamId}`)
-        // const usersToNotify: Set<string> = new Set()
+        logger.info(`handleChannelMessageStreamUpdate ${streamId}`, { streamId })
+
         const usersTaggedOrMentioned = await database.notificationTag.findMany({
             where: {
                 ChannelId: streamId,
@@ -730,7 +695,9 @@ export class SyncedStreams {
         })
 
         if (usersTaggedOrMentioned.length < 0) {
-            logger.info(`[SyncedStreams] no users tagged or mentioned for stream ${streamId}`)
+            logger.info(`no users tagged or mentioned for stream ${streamId}`, {
+                streamId,
+            })
             return
         }
 
@@ -738,7 +705,9 @@ export class SyncedStreams {
             where: { ChannelId: streamId },
         })
         if (!channelSettings) {
-            logger.error(`[SyncedStreams] channelSettings not found for stream ${streamId}`)
+            logger.error(`channelSettings not found for stream ${streamId}`, {
+                streamId,
+            })
             return
         }
 
@@ -764,11 +733,13 @@ export class SyncedStreams {
         )
 
         if (usersToNotify.length === 0) {
-            logger.info(`[SyncedStreams] no users to notify for channel stream ${streamId}`)
+            logger.info(`no users to notify for channel stream ${streamId}`, {
+                streamId,
+            })
             return
         }
 
-        logger.info(`[SyncedStreams] usersToNotify`, { usersToNotify })
+        logger.info(`usersToNotify`, { usersToNotify })
 
         await this.dispatchNotification(notificationData, usersToNotify)
 
@@ -785,16 +756,14 @@ export class SyncedStreams {
         event: StreamEvent,
         creatorUserId: string,
     ) {
-        logger.info('[SyncedStreams] handleMessageStreamUpdate', streamId)
+        logger.info(`handleMessageStreamUpdate ${streamId}`, { streamId })
 
         const usersToNotify: NotifyUsers = {}
         const dbStreamUsers = syncedStream.userIds
         if (!dbStreamUsers.includes(creatorUserId)) {
-            logger.error(
-                '[SyncedStreams] creatorUserId not in stream',
-                creatorUserId,
+            logger.error(`creatorUserId not in stream: ${creatorUserId}`, {
                 dbStreamUsers,
-            )
+            })
             return
         }
 
@@ -806,7 +775,7 @@ export class SyncedStreams {
                 }
             }
         })
-        logger.info(`[SyncedStreams] usersToNotify`, { usersToNotify })
+        logger.info(`usersToNotify`, { usersToNotify })
 
         const userIds = Object.keys(usersToNotify)
 
@@ -833,15 +802,18 @@ export class SyncedStreams {
         streamId: string,
         event: StreamEvent,
     ) {
-        logger.info('[SyncedStreams] handleMembershipUpdate', streamId)
+        logger.info(`handleMembershipUpdate ${streamId}`, { streamId })
 
         const value = event.payload.value?.content.value as MemberPayload_Membership
         const { op } = value
         if (op === MembershipOp.SO_JOIN) {
-            logger.info('[SyncedStreams] membership update SO_JOIN')
             const userAddress = userIdFromAddress(value.userAddress)
+            logger.info(`stream ${streamId} membership update SO_JOIN for user ${userAddress}`, {
+                streamId,
+                userAddress,
+            })
             if (!syncedStream?.userIds.includes(userAddress)) {
-                logger.info('[SyncedStreams] adding user to stream', userAddress)
+                logger.info('adding user to stream', userAddress)
                 await database.syncedStream.update({
                     where: { streamId },
                     data: {
@@ -853,10 +825,13 @@ export class SyncedStreams {
             }
         }
         if (op === MembershipOp.SO_LEAVE) {
-            logger.info('[SyncedStreams] membership update SO_LEAVE')
             const userAddress = userIdFromAddress(value.userAddress)
+            logger.info(`stream ${streamId} membership update SO_LEAVE for user ${userAddress}`, {
+                streamId,
+                userAddress,
+            })
             if (syncedStream?.userIds.includes(userAddress)) {
-                logger.info('[SyncedStreams] removing user from stream', userAddress)
+                logger.info('removing user from stream', userAddress)
                 await database.syncedStream.update({
                     where: { streamId },
                     data: {
@@ -882,7 +857,7 @@ export class SyncedStreams {
             pushNotificationRequests,
         )
 
-        logger.info(`[SyncedStreams] notificationsSentCount ${notificationsSentCount}`)
+        logger.info(`notificationsSentCount ${notificationsSentCount}`)
     }
 
     private sendKeepAlivePings() {
@@ -928,9 +903,9 @@ export class SyncedStreams {
         )
         for (const n of sortedNonces) {
             logger.info(
-                `[SyncedStreams] sequence=${n.sequence}, nonce=${n.nonce}, pingAt=${
-                    n.pingAt
-                }, receivedAt=${n.receivedAt ?? 'none'}, duration=${n.duration ?? 'none'}`,
+                `sequence=${n.sequence}, nonce=${n.nonce}, pingAt=${n.pingAt}, receivedAt=${
+                    n.receivedAt ?? 'none'
+                }, duration=${n.duration ?? 'none'}`,
             )
         }
     }

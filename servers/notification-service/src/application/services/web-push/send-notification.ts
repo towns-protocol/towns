@@ -13,7 +13,7 @@ import { PushSubscription } from '@prisma/client'
 import { Urgency } from '../../schema/notificationSchema'
 import crypto from 'crypto'
 import { env } from '../../utils/environment'
-import { logger } from '../../logger'
+import { logger } from '../logger'
 
 export async function sendNotificationViaWebPush(
     options: NotificationOptions,
@@ -60,7 +60,7 @@ export async function sendNotificationViaWebPush(
 
         // create the request to send to the push service
         const request = await createRequest(pushOptions, subscription)
-        logger.info('request url', request.url)
+        logger.info(`request url ${request.url}`)
 
         const response = await fetch(request)
         const status = response.status
