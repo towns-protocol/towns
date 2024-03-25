@@ -1,6 +1,6 @@
 import React, { createContext, useContext, useEffect, useMemo, useRef } from 'react'
 import { Chain } from 'viem/chains'
-import { TProvider, IChainConfig, isIChainConfig } from '../types/web3-types'
+import { TProvider, IChainConfig } from '../types/web3-types'
 import { ethers } from 'ethers'
 import isEqual from 'lodash/isEqual'
 
@@ -53,20 +53,20 @@ type Web3ContextOptions = {
 /// web3 components, pass chain to lock to a specific chain, pass signer to override the default signer (usefull for tests)
 function useWeb3({ chain, riverChain }: Web3ContextOptions): IWeb3Context {
     const chainRef = useRef<Chain>(chain)
-    const providerRef = useRef<TProvider>(makeProvider(chain))
+    const providerRef = useRef<TProvider>(makeProviderFromChain(chain))
     const riverChainRef = useRef<IChainConfig>(riverChain)
-    const riverChainProviderRef = useRef<TProvider>(makeProvider(riverChain))
+    const riverChainProviderRef = useRef<TProvider>(makeProviderFromConfig(riverChain))
 
     // the chain should never change because we lock to a specific chain,
     // but just in case
     if (!isEqual(chainRef.current, chain)) {
         chainRef.current = chain
-        providerRef.current = makeProvider(chain)
+        providerRef.current = makeProviderFromChain(chain)
     }
 
     if (!isEqual(riverChainRef.current, riverChain)) {
         chainRef.current = chain
-        riverChainProviderRef.current = makeProvider(riverChain)
+        riverChainProviderRef.current = makeProviderFromConfig(riverChain)
     }
 
     useEffect(() => {
@@ -76,6 +76,8 @@ function useWeb3({ chain, riverChain }: Web3ContextOptions): IWeb3Context {
             def: chain?.rpcUrls?.default,
             riverChain,
             riverChainRpc: riverChain?.rpcUrl,
+            provider: providerRef.current,
+            riverChainProvider: riverChainProviderRef.current,
         })
     }, [chain, riverChain])
 
@@ -90,17 +92,17 @@ function useWeb3({ chain, riverChain }: Web3ContextOptions): IWeb3Context {
     )
 }
 
-function makeProvider(chain: Chain | IChainConfig): TProvider {
-    if (isIChainConfig(chain)) {
-        return new ethers.providers.StaticJsonRpcProvider(chain.rpcUrl, {
-            chainId: chain.chainId,
-            name: chain?.name ?? '',
-        })
-    } else {
-        const rpcUrl = chain.rpcUrls.default.http[0]
-        return new ethers.providers.StaticJsonRpcProvider(rpcUrl, {
-            chainId: chain.id,
-            name: chain.name,
-        })
-    }
+function makeProviderFromChain(chain: Chain): TProvider {
+    const rpcUrl = chain.rpcUrls.default.http[0]
+    return new ethers.providers.StaticJsonRpcProvider(rpcUrl, {
+        chainId: chain.id,
+        name: chain.name,
+    })
+}
+
+function makeProviderFromConfig(chain: IChainConfig): TProvider {
+    return new ethers.providers.StaticJsonRpcProvider(chain.rpcUrl, {
+        chainId: chain.chainId,
+        name: chain?.name ?? '',
+    })
 }

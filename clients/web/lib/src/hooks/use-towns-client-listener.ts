@@ -21,7 +21,7 @@ export const useTownsClientListener = (opts: {
     accountAbstractionConfig: TownsOpts['accountAbstractionConfig']
     highPriorityStreamIds?: string[]
 }) => {
-    const { provider, riverChain } = useWeb3Context()
+    const { provider, riverChain, riverChainProvider } = useWeb3Context()
     const { setLoginStatus: setCasablancaLoginStatus, setLoginError: setCasablancaLoginError } =
         useCasablancaStore()
     const { casablancaCredentialsMap, clearCasablancaCredentials } = useCredentialStore()
@@ -35,13 +35,13 @@ export const useTownsClientListener = (opts: {
             ...opts,
             web3Provider: provider,
             riverChainId: riverChain.chainId,
-            riverChainProvider: riverChain?.provider,
+            riverChainProvider: riverChainProvider,
         })
         clientSingleton.current = new ClientStateMachine(townsClient)
     }
 
     logServerUrlMismatch(
-        { ...opts, riverChainId: riverChain.chainId, riverChainProvider: riverChain.provider },
+        { ...opts, riverChainId: riverChain.chainId, riverChainProvider: riverChainProvider },
         clientSingleton,
     )
 

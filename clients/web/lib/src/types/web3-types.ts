@@ -64,18 +64,4 @@ export interface IChainConfig {
     chainId: number
     name?: string
     rpcUrl: string
-    provider?: TProvider
-}
-
-/* eslint-disable @typescript-eslint/no-explicit-any, @typescript-eslint/no-unsafe-member-access, @typescript-eslint/no-unsafe-return */
-export function isIChainConfig(obj: any): obj is IChainConfig {
-    return (
-        obj &&
-        typeof obj === 'object' &&
-        typeof obj.chainId === 'number' &&
-        (obj.name === undefined || typeof obj.name == 'string') &&
-        typeof obj.rpcUrl === 'string' &&
-        (obj.provider === undefined || typeof obj.provider === 'object') // Adjust this line as necessary based on the actual type of TProvider
-    )
-    /* eslint-enable @typescript-eslint/no-unsafe-member-access, @typescript-eslint/no-unsafe-return */
 }
