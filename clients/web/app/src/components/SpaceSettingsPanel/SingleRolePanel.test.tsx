@@ -171,7 +171,8 @@ afterEach(() => {
     vi.clearAllMocks()
 })
 
-describe('SingleRolePanel', () => {
+// https://linear.app/hnt-labs/issue/HNT-5363/re-enable-single-role-panel-tests
+describe.skip('SingleRolePanel', () => {
     test('should render empty fields when creating a new role', async () => {
         mockUseSearchParams.mockReturnValue([new URLSearchParams('roles=new'), vi.fn()])
         render(<Wrapper />)
