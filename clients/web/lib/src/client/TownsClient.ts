@@ -3,6 +3,7 @@ import { RoomMessageEvent, transformAttachments } from '../types/timeline-types'
 import {
     Client as CasablancaClient,
     RiverDbManager,
+    StreamRpcClient,
     isGDMChannelStreamId,
     makeStreamRpcClient,
     userIdFromAddress,
@@ -176,18 +177,25 @@ export class TownsClient implements EntitlementsDelegate {
         if (!this.opts.casablancaServerUrl) {
             throw new Error('casablancaServerUrl is required')
         }
-        this._signerContext = context
         if (!this.opts.riverChainProvider) {
             throw new Error('riverChainProvider is required')
         }
-        const riverRegistry = createRiverRegistry({
-            chainId: this.opts.riverChainId,
-            provider: this.opts.riverChainProvider,
-        })
-        const urls = await riverRegistry.getOperationalNodeUrls()
-        const rpcClient = makeStreamRpcClient(urls, undefined, () =>
-            riverRegistry.getOperationalNodeUrls(),
-        )
+        this._signerContext = context
+        let rpcClient: StreamRpcClient
+
+        // to force a specific rpc url, open the console and type `localStorage.RIVER_RPC_URL = 'https://river1.nodes.gamma.towns.com'`
+        if (localStorage.getItem('RIVER_RPC_URL')) {
+            rpcClient = makeStreamRpcClient(localStorage.getItem('RIVER_RPC_URL') as string)
+        } else {
+            const riverRegistry = createRiverRegistry({
+                chainId: this.opts.riverChainId,
+                provider: this.opts.riverChainProvider,
+            })
+            const urls = await riverRegistry.getOperationalNodeUrls()
+            rpcClient = makeStreamRpcClient(urls, undefined, () =>
+                riverRegistry.getOperationalNodeUrls(),
+            )
+        }
         // get storage
         // todo jterzis 06/15/23: add client store here
         // crypto store
