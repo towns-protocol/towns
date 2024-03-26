@@ -9,6 +9,8 @@ import {
 } from 'use-towns-client'
 import { MessageAttachmentsContext } from '@components/MessageAttachments/MessageAttachmentsContext'
 import { RichTextPreview } from '@components/RichText/RichTextPreview'
+import { RichTextPreview as PlateRichTextPreview } from '@components/RichTextPlate/RichTextPreview'
+import { env } from 'utils'
 import { Box, Paragraph, Stack, Text } from '@ui'
 import { shortAddress } from 'ui/utils/utils'
 import { formatDate } from 'utils/formatDates'
@@ -71,6 +73,8 @@ export const EmbeddedMessage = (props: {
     const channelName =
         isKnownChannel && !!channel?.name ? `#${channel?.name}` : `From a ${channelType}`
 
+    const MessagePreview = env.VITE_ENABLE_SLATE_PREVIEW ? PlateRichTextPreview : RichTextPreview
+
     return (
         <MessageAttachmentsContext.Provider value={{ isMessageAttachementContext: true }}>
             <Box gap padding background="level2" rounded="sm">
@@ -105,7 +109,7 @@ export const EmbeddedMessage = (props: {
                     )}
                 </Stack>
                 <Box gap="md">
-                    {attachedMessage.body && <RichTextPreview content={attachedMessage.body} />}
+                    {attachedMessage.body && <MessagePreview content={attachedMessage.body} />}
                     {props.attachmentChildren}
                 </Box>
 

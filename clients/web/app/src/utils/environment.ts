@@ -95,7 +95,7 @@ const envSchema = z.object({
     VITE_AA_FACTORY_ADDRESS: z.string().optional(),
 
     VITE_ADDRESS_FOR_MAINNET_TOKENS_DEV: z.string().optional(),
-    VITE_ENABLE_SLATE_PREVIEW: boolish.default(false),
+    VITE_ENABLE_SLATE_PREVIEW: boolish.default(true),
 })
 
 const parsed = envSchema.safeParse(import.meta.env)

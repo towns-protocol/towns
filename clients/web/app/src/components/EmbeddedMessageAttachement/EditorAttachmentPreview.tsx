@@ -2,6 +2,8 @@ import { Attachment, EmbeddedMessageAttachment, useUserLookupContext } from 'use
 import React, { useCallback } from 'react'
 import { Box, IconButton, Paragraph } from '@ui'
 import { RichTextPreview } from '@components/RichText/RichTextPreview'
+import { RichTextPreview as PlateRichTextPreview } from '@components/RichTextPlate/RichTextPreview'
+import { env } from 'utils'
 import { getPrettyDisplayName } from 'utils/getPrettyDisplayName'
 import { MessageAttachments } from '@components/MessageAttachments/MessageAttachments'
 import { MessageAttachmentsContext } from '@components/MessageAttachments/MessageAttachmentsContext'
@@ -49,6 +51,7 @@ export const EditorAttachmentPreview = (props: {
     onRemoveClick: () => void
 }) => {
     const messageAbstract = getShortTextFromMarkdown(props.body)
+    const MessagePreview = env.VITE_ENABLE_SLATE_PREVIEW ? PlateRichTextPreview : RichTextPreview
     return (
         <FadeInBox
             horizontal
@@ -64,7 +67,7 @@ export const EditorAttachmentPreview = (props: {
                     {props.type === 'forward' ? 'Forward' : 'Reply to'} {props.displayName}
                     &#39;s message:
                 </Paragraph>
-                {messageAbstract && <RichTextPreview content={messageAbstract} />}
+                {messageAbstract && <MessagePreview content={messageAbstract} />}
                 {props.attachments?.length ? (
                     <Box>
                         <MessageAttachments attachments={props.attachments} />
