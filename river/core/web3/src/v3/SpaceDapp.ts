@@ -408,7 +408,9 @@ export class SpaceDapp implements ISpaceDapp {
         if (!space) {
             throw new Error(`Space with spaceId "${spaceId}" is not found.`)
         }
-        return space.Membership.write(signer).joinSpace(recipient)
+        return space.Membership.write(signer).joinSpace(recipient, {
+            value: await space.Membership.read.getMembershipPrice(),
+        })
     }
 
     public async hasSpaceMembership(spaceId: string, address: string): Promise<boolean> {
@@ -444,7 +446,7 @@ export class SpaceDapp implements ISpaceDapp {
         ])
 
         return {
-            price: price.toNumber(),
+            price: price, // keep as BigNumber (wei)
             maxSupply: limit.toNumber(),
             currency: currency,
             feeRecipient: feeRecipient,

@@ -10,6 +10,13 @@ on:
             - 'core/node/**'
 
     workflow_dispatch: # A build was manually requested
+      inputs:
+        release_version:
+          description: 'The release version to use for the image'
+          required: true
+        additional_tags_csv:
+          description: 'Comma separated list of tags to apply to the image (optional)'
+          required: false
 
 env:
     DOCKER_NAMESPACE: herenotthere
@@ -27,18 +34,9 @@ jobs:
             contents: write
             packages: write
 
-        outputs:
-            release_version: ${{ steps.set_release_version.outputs.release_version }}
-
         steps:
             - name: Checkout
               uses: actions/checkout@v4
-
-            - name: Put abbreviated commit hash to release version
-              id: set_release_version
-              run: |
-                  COMMIT_HASH=$(git log -1 --pretty=%h)
-                  echo "::set-output name=release_version::${COMMIT_HASH}"
 
             - name: Setup AWS Credentials
               uses: aws-actions/configure-aws-credentials@v4
@@ -59,13 +57,39 @@ jobs:
                 #This can be custom alias once requested to aws and approved for public repo
                 REGISTRY_ALIAS: h5v6m2x1
                 ECR_REPOSITORY: river
-                RELEASE_VERSION: ${{ steps.set_release_version.outputs.release_version }}
+                RELEASE_VERSION: ${{ inputs.release_version }}
+                ADDITIONAL_TAGS: ${{ inputs.additional_tags_csv }}
               working-directory: ./core
               run: |
-                docker build --build-arg GIT_SHA=${{ github.sha }} --build-arg RELEASE_VERSION=$RELEASE_VERSION -t $ECR_REGISTRY/$REGISTRY_ALIAS/$ECR_REPOSITORY:latest .
-                docker tag $ECR_REGISTRY/$REGISTRY_ALIAS/$ECR_REPOSITORY:latest $ECR_REGISTRY/$REGISTRY_ALIAS/$ECR_REPOSITORY:$RELEASE_VERSION
-                docker push $ECR_REGISTRY/$REGISTRY_ALIAS/$ECR_REPOSITORY:latest
-                docker push $ECR_REGISTRY/$REGISTRY_ALIAS/$ECR_REPOSITORY:$RELEASE_VERSION
+                COMMIT_HASH=$(git log -1 --pretty=%h)
+
+                # if release version is not provided, we use the commit hash
+                if [ -z "$RELEASE_VERSION" ]; then
+                  RELEASE_VERSION=$COMMIT_HASH
+                fi
+
+                docker build \
+                  --build-arg GIT_SHA=${{ github.sha }} \
+                  --build-arg RELEASE_VERSION=$RELEASE_VERSION \
+                  -t river:local-latest \
+                  . 
+
+                TAGS=($COMMIT_HASH $RELEASE_VERSION)
+
+                # Add additional tags if provided
+                if [ -n "$ADDITIONAL_TAGS" ]; then
+                  IFS=',' read -ra ADDITIONAL_TAGS_ARRAY <<< "$ADDITIONAL_TAGS"
+                  for tag in "${ADDITIONAL_TAGS_ARRAY[@]}"; do
+                    TAGS+=($tag)
+                  done
+                fi
+
+                echo "Pushing the following tags: ${TAGS[@]}"
+
+                for tag in "${TAGS[@]}"; do
+                  docker tag river:local-latest $ECR_REGISTRY/$REGISTRY_ALIAS/$ECR_REPOSITORY:$tag
+                  docker push $ECR_REGISTRY/$REGISTRY_ALIAS/$ECR_REPOSITORY:$tag
+                done
 
             # If action failed, we send a slack notification
             - name: Slack notification

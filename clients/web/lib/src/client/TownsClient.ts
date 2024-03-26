@@ -10,7 +10,7 @@ import {
 } from '@river/sdk'
 import { EntitlementsDelegate, DecryptionStatus } from '@river/encryption'
 import { CreateSpaceParams, IRuleEntitlement, createRiverRegistry } from '@river/web3'
-import { FullyReadMarker } from '@river/proto'
+import { ChannelMessage_Post_Mention, FullyReadMarker } from '@river/proto'
 import {
     ChannelTransactionContext,
     ChannelUpdateTransactionContext,
@@ -1323,7 +1323,9 @@ export class TownsClient implements EntitlementsDelegate {
                         replyPreview: options?.replyPreview,
                         content: {
                             body: message,
-                            mentions: options?.mentions ?? [],
+                            mentions:
+                                options?.mentions?.map((x) => new ChannelMessage_Post_Mention(x)) ??
+                                [],
                             attachments: transformAttachments(options?.attachments),
                         },
                     })
@@ -1422,7 +1424,7 @@ export class TownsClient implements EntitlementsDelegate {
             threadPreview: originalEventContent.threadPreview,
             content: {
                 body: message,
-                mentions: options?.mentions ?? [],
+                mentions: options?.mentions?.map((x) => new ChannelMessage_Post_Mention(x)) ?? [],
                 attachments: transformAttachments(options?.attachments),
             },
         })

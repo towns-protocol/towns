@@ -1,6 +1,8 @@
 syntax = "proto3";
 package river;
 
+import "google/protobuf/empty.proto";
+
 message ChannelMessage {
     message Reaction {
         string ref_event_id = 1;
@@ -21,6 +23,14 @@ message ChannelMessage {
         message Mention {
             string user_id = 1;
             string display_name = 2;
+            oneof mentionBehavior {
+                google.protobuf.Empty at_channel = 100;
+                RoleMention at_role = 101;
+            }
+        }
+
+        message RoleMention {
+            int32 role_id = 1;
         }
 
         message Attachment {
