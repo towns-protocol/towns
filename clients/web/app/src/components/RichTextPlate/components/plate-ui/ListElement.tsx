@@ -15,7 +15,7 @@ export const ListElement = ({
     const Component = variant!
     if (variant === 'span') {
         return (
-            <Box as="span" display="inline-block" paddingLeft="xxs">
+            <Box as="span" display="inline" paddingLeft="xxs">
                 {children}
             </Box>
         )
