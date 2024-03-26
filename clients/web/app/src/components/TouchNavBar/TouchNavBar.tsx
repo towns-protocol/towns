@@ -56,7 +56,7 @@ export const TouchNavBar = (props: Props) => {
                             )}
                         </Stack>
                         {hasSideContent && (
-                            <Box centerContent width="x8">
+                            <Box centerContent paddingRight="md">
                                 {props.contentRight}
                             </Box>
                         )}

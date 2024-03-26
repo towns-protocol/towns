@@ -132,32 +132,44 @@ export const TouchHome = () => {
         }
     }
 
-    const { unreadChannels, readChannels, readDms, unjoinedChannels } = useSortedChannels({
-        spaceId: space?.id ?? '',
-    })
+    const { unreadChannels, readChannels, readDms, unjoinedChannels, favoriteChannels } =
+        useSortedChannels({
+            spaceId: space?.id ?? '',
+        })
 
-    const { filteredUnreadChannels, filteredReadChannels, filteredDms } = useMemo(() => {
-        return {
-            filteredUnreadChannels: fuzzysort
-                .go(searchString, unreadChannels, { keys: ['label', 'search'], all: true })
-                .map((m) => m.obj),
-            filteredReadChannels: fuzzysort
-                .go(
-                    searchString,
-                    [...readChannels, ...(searchString ? unjoinedChannels : [])].filter(
-                        notUndefined,
-                    ),
-                    {
-                        keys: ['label', 'search'],
-                        all: true,
-                    },
-                )
-                .map((m) => m.obj),
-            filteredDms: fuzzysort
-                .go(searchString, readDms, { keys: ['label', 'search'], all: true })
-                .map((m) => m.obj),
-        }
-    }, [readChannels, readDms, searchString, unjoinedChannels, unreadChannels])
+    const { filteredUnreadChannels, filteredReadChannels, filteredDms, filteredFavoriteChannels } =
+        useMemo(() => {
+            return {
+                filteredUnreadChannels: fuzzysort
+                    .go(searchString, unreadChannels, { keys: ['label', 'search'], all: true })
+                    .map((m) => m.obj),
+                filteredReadChannels: fuzzysort
+                    .go(
+                        searchString,
+                        [...readChannels, ...(searchString ? unjoinedChannels : [])].filter(
+                            notUndefined,
+                        ),
+                        {
+                            keys: ['label', 'search'],
+                            all: true,
+                        },
+                    )
+                    .map((m) => m.obj),
+                filteredDms: fuzzysort
+                    .go(searchString, readDms, { keys: ['label', 'search'], all: true })
+                    .map((m) => m.obj),
+                filteredFavoriteChannels: fuzzysort
+                    .go(searchString, favoriteChannels, { keys: ['label', 'search'], all: true })
+                    .map((m) => m.obj),
+            }
+        }, [
+            readChannels,
+            readDms,
+            searchString,
+            unjoinedChannels,
+            unreadChannels,
+            favoriteChannels,
+        ])
 
     const filteredMembers = useMemo(() => {
         if (searchString.length === 0) {
@@ -311,6 +323,11 @@ export const TouchHome = () => {
 
                                         {space && (
                                             <>
+                                                <ChannelList
+                                                    label="Favorites"
+                                                    channelItems={filteredFavoriteChannels}
+                                                    space={space}
+                                                />
                                                 <ChannelList
                                                     label="Unread"
                                                     channelItems={filteredUnreadChannels}

@@ -23,6 +23,8 @@ import { AvatarGroup } from '@components/DirectMessages/GroupDMIcon'
 import { Avatar } from '@components/Avatar/Avatar'
 import type { CHANNEL_INFO_PARAMS_VALUES } from 'routes'
 import { AnimatedLoaderGradient } from '@components/AnimatedLoaderGradient/AnimatedLoaderGradient'
+import { FavoriteChannelButtonTouch } from '@components/FavoriteChannelButton/FavoriteChannelButton'
+import { useFavoriteChannels } from 'hooks/useFavoriteChannels'
 
 type Props = {
     channel: Channel
@@ -151,6 +153,7 @@ const TouchChannelHeader = (props: Props & { showLoadingIndicator: boolean }) =>
     const { channel, onTouchClose, showLoadingIndicator } = props
     const spaceId = useSpaceIdFromPathname()
     const { memberIds } = useChannelMembers()
+    const { favoriteChannelIds } = useFavoriteChannels()
     const { displayNotificationBanner, requestPushPermission, denyPushPermission } =
         usePushNotifications()
     const channelType = useChannelType(channel.id)
@@ -159,6 +162,7 @@ const TouchChannelHeader = (props: Props & { showLoadingIndicator: boolean }) =>
         channelId: channel?.id,
     })
 
+    const isFavorite = favoriteChannelIds.has(channel.id)
     const isMuted = channelIsMuted || spaceIsMuted
     const infoButtonPressed = useChannelInfoButton(channelType)
 
@@ -176,12 +180,15 @@ const TouchChannelHeader = (props: Props & { showLoadingIndicator: boolean }) =>
                     />
                 }
                 contentRight={
-                    <IconButton
-                        icon="info"
-                        size="square_md"
-                        color="default"
-                        onClick={infoButtonPressed}
-                    />
+                    <Stack horizontal alignItems="center" gap="sm" shrink={false}>
+                        <FavoriteChannelButtonTouch channelId={channel.id} favorite={isFavorite} />
+                        <IconButton
+                            icon="info"
+                            size="square_md"
+                            color="default"
+                            onClick={infoButtonPressed}
+                        />
+                    </Stack>
                 }
             >
                 <MotionStack

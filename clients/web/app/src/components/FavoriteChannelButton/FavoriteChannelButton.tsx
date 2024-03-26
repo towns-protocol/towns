@@ -32,3 +32,25 @@ export const FavoriteChannelButton = (props: {
         </Box>
     )
 }
+
+export const FavoriteChannelButtonTouch = (props: { channelId: string; favorite: boolean }) => {
+    const { favorite, channelId } = props
+    const { toggleFavoriteChannelId } = useFavoriteChannels()
+    const onToggleFavorite = useCallback(
+        (event: React.MouseEvent<HTMLElement, MouseEvent>) => {
+            event.preventDefault()
+            event.stopPropagation()
+            toggleFavoriteChannelId(channelId)
+        },
+        [channelId, toggleFavoriteChannelId],
+    )
+
+    return (
+        <Icon
+            type={favorite ? 'starFilled' : 'star'}
+            size="square_md"
+            color={favorite ? 'default' : 'gray2'}
+            onClick={onToggleFavorite}
+        />
+    )
+}
