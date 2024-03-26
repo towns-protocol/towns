@@ -1,6 +1,7 @@
 import { Chain } from 'wagmi'
 import { baseSepolia, foundry } from 'wagmi/chains'
 import { addRpcUrlOverrideToChain } from '@privy-io/react-auth'
+import { IChainConfig } from 'use-towns-client'
 import { env } from 'utils'
 
 export const foundryClone: Chain = structuredClone(foundry)
@@ -34,7 +35,7 @@ export const baseSepoliaClone: Chain = env.VITE_PROVIDER_HTTP_URL
       }
     : baseSepolia
 
-export const riverChain: { chainId: number; name: string; rpcUrl: string } = {
+export const riverTestRiverChain: IChainConfig = {
     chainId: env.VITE_RIVER_CHAIN_ID ? parseInt(env.VITE_RIVER_CHAIN_ID) : 6524490,
     name: 'river_chain',
     rpcUrl: env.VITE_RIVER_CHAIN_PROVIDER_HTTP_URL
@@ -42,10 +43,8 @@ export const riverChain: { chainId: number; name: string; rpcUrl: string } = {
         : 'https://devnet.rpc.river.build',
 }
 
-export const anvilRiverChain: { chainId: number; name: string; rpcUrl: string } = {
-    chainId: env.VITE_RIVER_CHAIN_ID ? parseInt(env.VITE_RIVER_CHAIN_ID) : 31338,
+export const anvilRiverChain: IChainConfig = {
+    chainId: 31338,
     name: 'anvil_river_chain',
-    rpcUrl: env.VITE_RIVER_CHAIN_PROVIDER_HTTP_URL
-        ? env.VITE_RIVER_CHAIN_PROVIDER_HTTP_URL
-        : 'http://127.0.0.1:8546',
+    rpcUrl: 'http://127.0.0.1:8546',
 }

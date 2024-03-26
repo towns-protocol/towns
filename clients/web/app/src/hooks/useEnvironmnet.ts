@@ -1,7 +1,8 @@
 import { useCallback, useMemo, useState } from 'react'
 import { Chain } from 'wagmi'
+import { IChainConfig } from 'use-towns-client'
 import { env } from 'utils'
-import { anvilRiverChain, baseSepoliaClone, foundryClone, riverChain } from 'customChains'
+import { anvilRiverChain, baseSepoliaClone, foundryClone, riverTestRiverChain } from 'customChains'
 
 const TOWNS_DEV_ENV = 'TOWNS_DEV_ENV'
 
@@ -23,7 +24,7 @@ export interface TownsEnvironmentInfo {
     casablancaUrl: string | undefined
     chainId: number
     chain: Chain
-    riverChain: typeof riverChain
+    riverChain: IChainConfig
     protocol: SpaceProtocol
     aaRpcUrl: string | undefined
     aaBundlerUrl: string | undefined
@@ -49,7 +50,7 @@ export const ENVIRONMENTS: TownsEnvironmentInfo[] = [
         casablancaUrl: 'https://river1.nodes.gamma.towns.com',
         chainId: 84532,
         chain: baseSepoliaClone,
-        riverChain: riverChain,
+        riverChain: riverTestRiverChain,
         protocol: SpaceProtocol.Casablanca,
         aaRpcUrl: env.VITE_PROVIDER_HTTP_URL,
         aaBundlerUrl: env.VITE_AA_BUNDLER_URL,
@@ -63,10 +64,11 @@ const CF_TUNNEL_PREFIX = env.VITE_CF_TUNNEL_PREFIX
 const CASABLANCA_URL = env.VITE_CASABLANCA_HOMESERVER_URL
 const CHAIN_ID = parseInt(env.VITE_CHAIN_ID)
 const CHAIN = ENVIRONMENTS.find((e) => e.chainId === CHAIN_ID)?.chain
+const RIVER_CHAIN = ENVIRONMENTS.find((e) => e.chainId === CHAIN_ID)?.riverChain
 
 // if you set VITE_CF_TUNNEL_PREFIX, you'll always be pointed to tunnel for river, and chain will always be foundry
 export function useEnvironment() {
-    if (!CHAIN) {
+    if (!CHAIN || !RIVER_CHAIN) {
         throw new Error(`Invalid chain id: ${CHAIN_ID}`)
     }
 
@@ -84,6 +86,7 @@ export function useEnvironment() {
         if (CF_TUNNEL_PREFIX) {
             return
         }
+        localStorage.removeItem('RIVER_RPC_URL')
         localStorage.removeItem(TOWNS_DEV_ENV)
         _setEnvironment(undefined)
     }, [])
@@ -93,6 +96,7 @@ export function useEnvironment() {
             return
         }
         _setEnvironment(newValue)
+        localStorage.removeItem('RIVER_RPC_URL')
         localStorage.setItem(TOWNS_DEV_ENV, newValue)
     }, [])
 
@@ -102,6 +106,7 @@ export function useEnvironment() {
     const chainName = chain.name
     const casablancaUrl = environmentInfo?.casablancaUrl ?? CASABLANCA_URL
     const protocol = environmentInfo?.protocol ?? SpaceProtocol.Casablanca
+    const riverChain = environmentInfo?.riverChain ?? RIVER_CHAIN
 
     return useMemo(
         () => ({
@@ -116,14 +121,15 @@ export function useEnvironment() {
             clearEnvironment,
         }),
         [
-            casablancaUrl,
+            environment,
             chain,
             chainId,
             chainName,
-            clearEnvironment,
+            riverChain,
+            casablancaUrl,
             protocol,
-            environment,
             setEnvironment,
+            clearEnvironment,
         ],
     )
 }
