@@ -54,6 +54,7 @@ import { autoformatRules } from './autoformat'
 import { nodeResetRules } from './nodeReset'
 import { createShiftEnterListPlugin } from './shiftEnterListPlugin'
 import { createExitComboboxPlugin } from './ExitComboboxPlugin'
+import { createFormatTextLinkPlugin } from './formatTextLinks/createFormatTextLinkPlugin'
 import { ELEMENT_MENTION_CHANNEL, createChannelPlugin } from './createChannelPlugin'
 import { ELEMENT_MENTION_EMOJI, createEmojiPlugin } from './emoji/createEmojiPlugin'
 
@@ -109,9 +110,6 @@ const PlatePlugins = createPlugins(
         createUnderlinePlugin(),
         createStrikethroughPlugin(),
         createCodePlugin(),
-        // createEmojiPlugin({
-        //     renderAfterEditable: EmojiCombobox,
-        // }),
         createNormalizeTypesPlugin(),
         createResetNodePlugin({
             options: {
@@ -146,7 +144,8 @@ const PlatePlugins = createPlugins(
                 ],
             },
         }),
-        createDeserializeMdPlugin(),
+        createFormatTextLinkPlugin(), // should be before createDeserializeMdPlugin
+        createDeserializeMdPlugin(), // should be at the end
     ],
     {
         components: {
