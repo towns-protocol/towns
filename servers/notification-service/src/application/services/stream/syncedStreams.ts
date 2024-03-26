@@ -121,8 +121,6 @@ export class SyncedStreams {
         nonces: {},
     }
 
-    private CHANNEL_PROCESSING_UPDATE_DELAY = 1000
-
     constructor(rpcClient: StreamRpcClient) {
         this.rpcClient = rpcClient
     }
@@ -577,11 +575,7 @@ export class SyncedStreams {
                             if (isDMChannelStreamId(streamId) || isGDMChannelStreamId(streamId)) {
                                 await this.handleDmOrGDMStreamUpdate(streamAndCookie, streamId)
                             } else if (isChannelStreamId(streamId)) {
-                                // The notification tags are needed to process mention and reply to in channels.
-                                // This timeout is needed to ensure that the notification tags request are processed before the channel messages
-                                setTimeout(async () => {
-                                    await this.handleChannelStreamUpdate(streamAndCookie, streamId)
-                                }, this.CHANNEL_PROCESSING_UPDATE_DELAY)
+                                await this.handleChannelStreamUpdate(streamAndCookie, streamId)
                             }
                         }
 

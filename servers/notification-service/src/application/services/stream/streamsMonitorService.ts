@@ -306,11 +306,11 @@ class StreamsMonitorService {
     public async addNewStreamsToDB(streamIds: Set<string>) {
         let newStreamIds = this.findUnprocessedStreams(streamIds)
         if (newStreamIds.size === 0) {
-            logger.info('all new streams already processed')
+            // logger.info('all new streams already processed')
             return
         }
 
-        logger.info('addStreamsToDB', { streamIds: newStreamIds })
+        logger.info('addStreamsToDB', { newStreamIds: Array.from(newStreamIds) })
         const streamsMetadata: StreamsMetadata = {
             [StreamKind.DM]: { streamIds: new Set() },
             [StreamKind.GDM]: { streamIds: new Set() },
@@ -418,7 +418,7 @@ class StreamsMonitorService {
 
         if (notFoundStreams.size > 0) {
             logger.info(`deleting ${notFoundStreams.size} not found streams`, {
-                notFoundStreams,
+                notFoundStreams: Array.from(notFoundStreams),
             })
             await database.userSettingsChannel.deleteMany({
                 where: {
