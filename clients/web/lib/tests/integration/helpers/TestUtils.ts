@@ -14,7 +14,7 @@ import {
     NoopRuleData,
     MembershipStruct,
 } from '@river/web3'
-import { getDynamicPricingModule } from '../../../src/utils/web3'
+import { getDynamicPricingModule, getFixedPricingModule } from '../../../src/utils/web3'
 
 interface ChainIds {
     chainId: number
@@ -213,6 +213,62 @@ export async function createTestSpaceGatedByTownNft(
             feeRecipient: client.walletAddress,
             freeAllocation: 0,
             pricingModule: dynamicPricingModule.module,
+        },
+        permissions: rolePermissions,
+        requirements: {
+            everyone: true,
+            users: [],
+            ruleData: NoopRuleData,
+        },
+    }
+
+    return waitForWithRetries(
+        () => {
+            if (!createSpaceInfo) {
+                createSpaceInfo = {
+                    name: client.makeUniqueName(),
+                }
+            }
+            return client.createSpace(createSpaceInfo, membershipInfo)
+        },
+        {
+            intervalMs: 1000 * 5,
+            timeoutMs: 1000 * 60,
+        },
+    )
+}
+
+/**
+ * Create a town with an "Everyone" role that is gated only by a membership token
+ * and a fixed membership cost
+ */
+export async function createPaidTestSpaceGatedByTownNft(
+    client: TownsTestClient,
+    rolePermissions: Permission[],
+    costInEth = 0.1,
+): Promise<string | undefined> {
+    let createSpaceInfo = {
+        name: client.makeUniqueName(),
+    }
+
+    if (!client.walletAddress) {
+        throw new Error('client.walletAddress is undefined')
+    }
+    const fixedPricingModule = await getFixedPricingModule(client.spaceDapp)
+
+    // Everyone role
+    const membershipInfo: IArchitectBase.MembershipStruct = {
+        settings: {
+            name: 'Everyone',
+            symbol: 'MEMBER',
+            price: ethers.utils.parseEther(costInEth.toString()),
+            maxSupply: 100,
+            duration: 0,
+            currency: ethers.constants.AddressZero,
+            feeRecipient: client.walletAddress,
+            // free allocation should be 1 - the owner gets in free, but everyone else pays
+            freeAllocation: 1,
+            pricingModule: fixedPricingModule.module,
         },
         permissions: rolePermissions,
         requirements: {

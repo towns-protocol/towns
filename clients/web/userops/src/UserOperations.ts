@@ -13,6 +13,8 @@ import { userOpsStore } from './userOpsStore'
 // TODO: we can probably add these via @account-abrstraction/contracts if preferred
 import { EntryPoint__factory, SimpleAccountFactory__factory } from 'userop/dist/typechain'
 import { ERC4337 } from 'userop/dist/constants'
+import { CodeException } from './errors'
+import { UserOperationEventEvent } from 'userop/dist/typechain/EntryPoint'
 
 export class UserOps {
     private bundlerUrl: string
@@ -247,6 +249,9 @@ export class UserOps {
         userOpsStore.getState().clear()
     }
 
+    /**
+     * Join a space, potentially linking a wallet if necessary
+     */
     public async sendJoinSpaceOp(
         args: Parameters<SpaceDapp['joinSpace']>,
     ): Promise<ISendUserOperationResponse> {
@@ -267,6 +272,7 @@ export class UserOps {
             throw new Error('abstractAccountAddress is required')
         }
 
+        const membershipPrice = await space.Membership.read.getMembershipPrice()
         const callDataJoinSpace = space.Membership.encodeFunctionData('joinSpace', [recipient])
 
         if (await this.spaceDapp.walletLink.checkIfLinked(signer, abstractAccountAddress)) {
@@ -288,32 +294,73 @@ export class UserOps {
             return this.sendUserOp({
                 toAddress: space.Address,
                 callData: callDataJoinSpace,
+                value: membershipPrice,
                 signer,
                 spaceId: space.SpaceId,
                 functionHashForPaymasterProxy,
             })
         }
 
-        // wallet isn't linked, create a user op that both links and joins the space
-        const functionName = 'joinSpace_linkWallet'
-
-        // TODO: this needs to accept an array of names/interfaces
-        const functionHashForPaymasterProxy = this.getFunctionSigHash(
-            space.Membership.interface,
-            functionName,
-        )
-
+        // if the user does not have a linked wallet, we need to link their smart account first b/c that is where the memberhship NFT will be minted
+        // joinSpace might require a value, if the space has a fixed membership cost
+        //
+        // But SimpleAccount does not support executeBatch with values
+        // A new user who is joining a paid space will encounter this scenario
+        //
+        // Therefore, we need to link the wallet first, then join the space
+        // Another smart account contract should support this and allow for a single user operation
         const callDataLinkWallet = await this.spaceDapp.walletLink.encodeLinkWalletFunctionData(
             signer,
             abstractAccountAddress,
         )
 
+        const linkWalletUserOp = await this.sendUserOp({
+            toAddress: this.spaceDapp.walletLink.address,
+            callData: callDataLinkWallet,
+            signer,
+            spaceId: undefined,
+            functionHashForPaymasterProxy: 'linkWallet',
+        })
+
+        let userOpEventWalletLink: UserOperationEventEvent | null
+        try {
+            userOpEventWalletLink = await linkWalletUserOp.wait()
+            if (!userOpEventWalletLink?.args.success) {
+                throw new CodeException(
+                    'Failed to perform user operation for linking wallet',
+                    'USER_OPS_FAILED_TO_PERFORM_USER_OPERATION_LINK_WALLET',
+                )
+            }
+        } catch (error) {
+            throw new CodeException(
+                'Failed to perform user operation for linking wallet',
+                'USER_OPS_FAILED_TO_PERFORM_USER_OPERATION_LINK_WALLET',
+                error,
+            )
+        }
+
+        try {
+            const linkWalletReceipt = await this.spaceDapp.provider?.waitForTransaction(
+                userOpEventWalletLink.transactionHash,
+            )
+            if (linkWalletReceipt?.status !== 1) {
+                throw new CodeException('Failed to link wallet', 'USER_OPS_FAILED_TO_LINK_WALLET')
+            }
+        } catch (error) {
+            throw new CodeException(
+                'Failed to link wallet',
+                'USER_OPS_FAILED_TO_LINK_WALLET',
+                error,
+            )
+        }
+
         return this.sendUserOp({
-            toAddress: [this.spaceDapp.walletLink.address, space.Address],
-            callData: [callDataLinkWallet, callDataJoinSpace],
+            toAddress: space.Address,
+            value: membershipPrice,
+            callData: callDataJoinSpace,
             signer,
             spaceId: space.SpaceId,
-            functionHashForPaymasterProxy,
+            functionHashForPaymasterProxy: 'joinSpace',
         })
     }
 

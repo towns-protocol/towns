@@ -2,7 +2,8 @@ import { UseFormReturn } from 'react-hook-form'
 import { MembershipStruct, NoopRuleData, Permission, createOperationsTree } from '@river/web3'
 import {
     CreateSpaceInfo,
-    getDynamicPricingModule,
+    findDynamicPricingModule,
+    findFixedPricingModule,
     useCreateSpaceTransaction,
     useTownsClient,
 } from 'use-towns-client'
@@ -23,7 +24,10 @@ import { createPrivyNotAuthenticatedNotification } from '@components/Notificatio
 import { convertTokenTypeToOperationType } from '@components/Tokens/utils'
 import { useStore } from 'store/store'
 import { PanelType, TransactionDetails } from './types'
-import { CreateSpaceFormV2SchemaType } from './CreateSpaceFormV2.schema'
+import {
+    CreateSpaceFormV2SchemaType,
+    MIN_FIXED_COST_OF_MEMBERSHIP_IN_ETH,
+} from './CreateSpaceFormV2.schema'
 import { mapToErrorMessage } from '../../utils'
 
 export function CreateTownSubmit({
@@ -108,8 +112,6 @@ export function CreateTownSubmit({
 
     const onSubmit = useCallback(async () => {
         toast.dismiss()
-        // TODO: hook up pricing module to form pricing options
-        const dynamicPricingModule = await getDynamicPricingModule(spaceDapp)
 
         setTransactionDetails({
             isTransacting: true,
@@ -157,6 +159,57 @@ export function CreateTownSubmit({
                     return
                 }
 
+                const pricingModules = await spaceDapp?.listPricingModules()
+                const setPricingModuleError = () => {
+                    form.setError('membershipPricingType', {
+                        type: 'manual',
+                        message: 'Unable to get pricing modules. Please try again later',
+                    })
+                    setPanelType(PanelType.all)
+                    setTransactionDetails({
+                        isTransacting: false,
+                        townAddress: undefined,
+                    })
+                }
+                if (!pricingModules) {
+                    console.warn('No pricing modules found')
+                    setPricingModuleError()
+                    return
+                }
+                const dynamicPricingModule = findDynamicPricingModule(pricingModules)
+                const fixedPricingModule = findFixedPricingModule(pricingModules)
+
+                if (!dynamicPricingModule || !fixedPricingModule) {
+                    console.warn('Cannot find dynamic pricing or fixed pricing modules')
+                    setPricingModuleError()
+                    return
+                }
+                const isFixedPricing = membershipPricingType === 'fixed'
+
+                if (
+                    isFixedPricing &&
+                    priceInWei.lt(
+                        ethers.utils.parseEther(MIN_FIXED_COST_OF_MEMBERSHIP_IN_ETH.toString()),
+                    )
+                ) {
+                    form.setError('membershipPricingType', {
+                        type: 'manual',
+                        message: `Fixed price must be at least ${MIN_FIXED_COST_OF_MEMBERSHIP_IN_ETH} ETH`,
+                    })
+                    setPanelType(PanelType.all)
+                    setTransactionDetails({
+                        isTransacting: false,
+                        townAddress: undefined,
+                    })
+                    return
+                }
+
+                let pricingModuleToSubmit: string
+                if (isFixedPricing) {
+                    pricingModuleToSubmit = await fixedPricingModule.module
+                } else {
+                    pricingModuleToSubmit = await dynamicPricingModule.module
+                }
                 //////////////////////////////////////////
                 // check quantity
                 //////////////////////////////////////////
@@ -178,7 +231,24 @@ export function CreateTownSubmit({
                         return
                     }
                 }
+                //////////////////////////////////////////
+                // check rule data
+                //////////////////////////////////////////
+                const isEveryone = tokensGatingMembership.length === 0
+                const ruleData = isEveryone
+                    ? NoopRuleData
+                    : createOperationsTree(
+                          tokensGatingMembership.map((t) => ({
+                              address: t.address as Address,
+                              chainId: BigInt(t.chainId),
+                              type: convertTokenTypeToOperationType(t.type),
+                              threshold: BigInt(t.quantity),
+                          })),
+                      )
 
+                //////////////////////////////////////////
+                // create space
+                //////////////////////////////////////////
                 const requirements: MembershipStruct = {
                     settings: {
                         name: 'Member',
@@ -188,24 +258,16 @@ export function CreateTownSubmit({
                         duration: 60 * 60 * 24 * 365, // 1 year in seconds
                         currency: ethers.constants.AddressZero,
                         feeRecipient: await signer.getAddress(),
-                        freeAllocation: 0,
-                        pricingModule: dynamicPricingModule.module,
+                        // when fixed pricing, freeAllocation is 1, meaning owner gets in for free and all future members must pay
+                        // dynamic pricing has it's own set of rules in contract and has historically been set as 0 here
+                        freeAllocation: isFixedPricing ? 1 : 0,
+                        pricingModule: pricingModuleToSubmit,
                     },
                     requirements: {
                         // TODO: make sure token gating works after xchain updated
-                        everyone: tokensGatingMembership.length === 0,
+                        everyone: isEveryone,
                         users: [],
-                        ruleData:
-                            tokensGatingMembership.length === 0
-                                ? NoopRuleData
-                                : createOperationsTree(
-                                      tokensGatingMembership.map((t) => ({
-                                          address: t.address as Address,
-                                          chainId: BigInt(t.chainId),
-                                          type: convertTokenTypeToOperationType(t.type),
-                                          threshold: BigInt(t.quantity),
-                                      })),
-                                  ),
+                        ruleData,
                     },
                     permissions: [Permission.Read, Permission.Write],
                 }
@@ -301,16 +363,17 @@ export function CreateTownSubmit({
             },
         )()
     }, [
-        createSpaceTransactionWithRole,
-        form,
-        navigate,
-        setPanelType,
         setTransactionDetails,
+        form,
         getSigner,
         spaceDapp,
         uploadImage,
         uploadSpaceIdentity,
+        membershipPricingType,
+        setPanelType,
+        createSpaceTransactionWithRole,
         setRecentlyMintedSpaceToken,
+        navigate,
     ])
 
     return children({

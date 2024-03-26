@@ -2,11 +2,20 @@ import debug from 'debug'
 import React, { Suspense, useCallback, useMemo, useState } from 'react'
 import { useNavigate, useParams } from 'react-router'
 import { Link } from 'react-router-dom'
-import { Permission, useContractSpaceInfo, useHasPermission, useMyProfile } from 'use-towns-client'
+import {
+    BlockchainTransactionType,
+    Permission,
+    useContractSpaceInfo,
+    useHasPermission,
+    useIsTransactionPending,
+    useMembershipInfo,
+    useMyProfile,
+} from 'use-towns-client'
 import { isAddress } from 'viem'
 
 import { Allotment } from 'allotment'
 import { clsx } from 'clsx'
+import { BigNumberish, ethers } from 'ethers'
 import { TokenVerification } from '@components/Web3/TokenVerification/TokenVerification'
 import { Avatar } from '@components/Avatar/Avatar'
 import { ClipboardCopy } from '@components/ClipboardCopy/ClipboardCopy'
@@ -45,6 +54,7 @@ import { useReadableMembershipInfo } from '@components/TownPageLayout/useReadabl
 import { useDevice } from 'hooks/useDevice'
 import { atoms } from 'ui/styles/atoms.css'
 import { darkTheme } from 'ui/styles/vars.css'
+import { useSpaceIdFromPathname } from 'hooks/useSpaceInfoFromPathname'
 import { WelcomeLayout } from './layouts/WelcomeLayout'
 
 const log = debug('app:public-town')
@@ -61,6 +71,11 @@ export const PublicTownPage = (props: { isPreview?: boolean; onClosePreview?: ()
     const { data: spaceInfo, isLoading } = useContractSpaceInfo(spaceSlug)
     const { data: spaceIdentity } = useGetSpaceIdentity(spaceSlug)
     const { data: membershipInfo } = useReadableMembershipInfo(spaceInfo?.networkId ?? '')
+    const {
+        price: membershipPriceInWei,
+        isLoading: isLoadingMembershipPrice,
+        error: membershipPriceError,
+    } = useMembershipPriceInWei()
 
     const { isAuthenticatedAndConnected } = useAuth()
     const [assetModal, setAssetModal] = useState(false)
@@ -134,7 +149,11 @@ export const PublicTownPage = (props: { isPreview?: boolean; onClosePreview?: ()
                 </ModalContainer>
             )}
 
-            <UserOpTxModal />
+            <UserOpTxModal
+                membershipPrice={membershipPriceInWei}
+                isLoadingMembershipPrice={isLoadingMembershipPrice}
+                membershipPriceError={membershipPriceError}
+            />
         </>
     ) : isLoading ? (
         <WelcomeLayout debugText="fetching town data" />
@@ -498,3 +517,31 @@ export const TownNotFoundBox = () => (
         </Box>
     </FadeInBox>
 )
+
+function useMembershipPriceInWei() {
+    const spaceId = useSpaceIdFromPathname()
+
+    const {
+        data: membershipInfo,
+        isLoading: isLoadingMembershipInfo,
+        error,
+    } = useMembershipInfo(spaceId ?? '')
+    const isJoinPending = useIsTransactionPending(BlockchainTransactionType.JoinSpace)
+
+    return useMemo(() => {
+        if (!isJoinPending) {
+            return { price: undefined, isLoading: false, error }
+        }
+        if (isLoadingMembershipInfo) {
+            return { price: undefined, isLoading: true, error }
+        }
+        if (!membershipInfo) {
+            return { price: undefined, isLoading: false, error }
+        }
+        return {
+            price: ethers.BigNumber.from(membershipInfo.price as BigNumberish).toBigInt(),
+            isLoading: false,
+            error,
+        }
+    }, [isJoinPending, isLoadingMembershipInfo, membershipInfo, error])
+}

@@ -1,17 +1,25 @@
 import React from 'react'
 import { userOpsStore } from '@towns/userops'
-import { formatEther } from 'viem'
-import { BigNumber } from 'ethers'
+import { BigNumber, utils } from 'ethers'
 import { useBalance } from 'wagmi'
+
+import { useMembershipInfo } from 'use-towns-client'
 import { Box, Button, Heading, Icon, IconButton, Text } from '@ui'
 import { shortAddress } from 'ui/utils/utils'
 import { ButtonSpinner } from 'ui/components/Spinner/ButtonSpinner'
 import { ModalContainer } from '@components/Modals/ModalContainer'
 import { isTouch } from 'hooks/useDevice'
+import { useIsSmartAccountDeployed } from 'hooks/useIsSmartAccountDeployed'
 import { formatEthDisplay } from '../utils'
 import { CopyWalletAddressButton } from '../TokenVerification/Buttons'
 
-export function UserOpTxModal({ additionalWei }: { additionalWei?: bigint }) {
+type Props = {
+    membershipPrice?: bigint
+    isLoadingMembershipPrice?: boolean
+    membershipPriceError?: ReturnType<typeof useMembershipInfo>['error']
+}
+
+export function UserOpTxModal(props: Props) {
     const { currOpGas, deny } = userOpsStore()
 
     if (!currOpGas) {
@@ -19,26 +27,38 @@ export function UserOpTxModal({ additionalWei }: { additionalWei?: bigint }) {
     }
     return (
         <ModalContainer minWidth="auto" onHide={() => deny?.()}>
-            <UserOpTxModalContent additionalWei={additionalWei} />
+            <UserOpTxModalContent {...props} />
         </ModalContainer>
     )
 }
 
-function UserOpTxModalContent({ additionalWei }: { additionalWei?: bigint }) {
+function UserOpTxModalContent({
+    membershipPrice,
+    isLoadingMembershipPrice,
+    membershipPriceError,
+}: Props) {
     const { currOpGas, confirm, deny, smartAccountAddress } = userOpsStore()
+    const {
+        data: isSmartAccountDeployed,
+        isLoading: isSmartAccountDeployedLoading,
+        error: isSmartAccountDeployedError,
+    } = useIsSmartAccountDeployed()
+
     const gasPrice = currOpGas?.maxFeePerGas ?? 0.0
     const gasLimit = currOpGas?.callGasLimit ?? 0.0
     const preverificationGas = currOpGas?.preverificationGas ?? 0.0
-    // const verificationGasLimit = currOpGas?.verificationGasLimit ?? 0.0
 
-    const txCost = BigNumber.from(gasLimit)
+    const gasCost = BigNumber.from(gasLimit)
         .mul(BigNumber.from(gasPrice))
         .add(BigNumber.from(preverificationGas))
-        .add(BigNumber.from(additionalWei ?? 0))
 
-    const ethPrice = formatEther(txCost.toBigInt())
-    const ethPriceFixed = parseFloat(ethPrice).toFixed(5)
-    const displayTotalEthPrice = ethPriceFixed === '0.00000' ? '< 0.00001' : ethPriceFixed
+    const totalCost = gasCost.add(BigNumber.from(membershipPrice ?? 0))
+
+    const gasInEth = utils.formatEther(gasCost)
+    const membershipInEth = membershipPrice ? utils.formatEther(membershipPrice) : undefined
+    const totalInEth = utils.formatEther(totalCost.toBigInt())
+    const totalInEthFixed = parseFloat(totalInEth).toFixed(5)
+    const displayTotalEthPrice = totalInEthFixed === '0.00000' ? '< 0.00001' : totalInEthFixed
 
     const { data: balanceData, isLoading: isLoadingBalance } = useBalance({
         address: smartAccountAddress,
@@ -52,8 +72,57 @@ function UserOpTxModalContent({ additionalWei }: { additionalWei?: bigint }) {
         ' ' +
         (balanceData?.symbol ? balanceData.symbol : '')
 
-    const balanceIsLessThanCost = balanceData && balanceData.value < txCost.toBigInt()
+    const balanceIsLessThanCost = balanceData && balanceData.value < totalCost.toBigInt()
     const _isTouch = isTouch()
+
+    const bottomContent = () => {
+        if (membershipPriceError) {
+            return (
+                <Text color="error" size="sm">
+                    There was an error grabbing the membership price. Please try again later.
+                </Text>
+            )
+        }
+
+        if (!balanceData) {
+            return <Box centerContent height="x4" width="100%" />
+        }
+
+        if (isSmartAccountDeployedLoading) {
+            return <ButtonSpinner />
+        }
+
+        // Temporary, to be refactored w/ credit card integration
+        // https://linear.app/hnt-labs/issue/HNT-5529/revisit-the-smart-account-not-deployed-guard-in-useroptxmodal
+        if (isSmartAccountDeployedError || !isSmartAccountDeployed) {
+            return (
+                <>
+                    <Text color="error" size="sm">
+                        Smart wallet is not yet deployed.
+                    </Text>
+                </>
+            )
+        }
+
+        if (balanceIsLessThanCost) {
+            return (
+                <>
+                    <Text color="error" size="sm">
+                        Wallet has insufficient funds for this transaction
+                    </Text>
+                    <CopyWalletAddressButton
+                        text="Copy Wallet Address"
+                        address={smartAccountAddress}
+                    />
+                </>
+            )
+        }
+        return (
+            <Button tone="cta1" width="100%" onClick={confirm}>
+                Confirm
+            </Button>
+        )
+    }
 
     return (
         <>
@@ -78,8 +147,21 @@ function UserOpTxModalContent({ additionalWei }: { additionalWei?: bigint }) {
                                 (estimated)
                             </Text>
                         </Text>
-                        <Text> {ethPrice + ' ETH'}</Text>
+                        <Text> {gasInEth + ' ETH'}</Text>
                     </Box>
+                    {isLoadingMembershipPrice ? <ButtonSpinner /> : null}
+                    {membershipPrice ? (
+                        <Box
+                            horizontal={!_isTouch}
+                            gap={_isTouch ? 'sm' : undefined}
+                            width="100%"
+                            justifyContent="spaceBetween"
+                        >
+                            <Text>Membership </Text>
+                            <Text> {membershipInEth + ' ETH'}</Text>
+                        </Box>
+                    ) : null}
+
                     <Box
                         horizontal={!_isTouch}
                         gap={_isTouch ? 'sm' : undefined}
@@ -89,7 +171,7 @@ function UserOpTxModalContent({ additionalWei }: { additionalWei?: bigint }) {
                         justifyContent="spaceBetween"
                     >
                         <Text strong>Total</Text>
-                        <Text strong> {ethPrice + ' ETH'}</Text>
+                        <Text strong> {totalInEth + ' ETH'}</Text>
                     </Box>
                 </Box>
                 <Box color="default" background="level3" rounded="sm" width="100%" gap="md">
@@ -121,25 +203,7 @@ function UserOpTxModalContent({ additionalWei }: { additionalWei?: bigint }) {
                         )}
                     </Box>
                 </Box>
-                {balanceData ? (
-                    balanceIsLessThanCost ? (
-                        <>
-                            <Text color="error" size="sm">
-                                Wallet has insufficient funds for this transaction
-                            </Text>
-                            <CopyWalletAddressButton
-                                text="Copy Wallet Address"
-                                address={smartAccountAddress}
-                            />
-                        </>
-                    ) : (
-                        <Button tone="cta1" width="100%" onClick={confirm}>
-                            Confirm
-                        </Button>
-                    )
-                ) : (
-                    <Box centerContent height="x4" width="100%" />
-                )}
+                {bottomContent()}
             </Box>
         </>
     )

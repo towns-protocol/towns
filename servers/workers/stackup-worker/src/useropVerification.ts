@@ -129,10 +129,10 @@ export async function verifyJoinTown(params: ITownTransactionParams): Promise<IV
         // check if wallet is signed up with privy
         const searchParam = { walletAddresses: [params.rootKeyAddress] }
         const privyResponse = await searchPrivyForUser(searchParam, params.env)
-        if (isPrivyApiSearchResponse(privyResponse)) {
-            if (privyResponse.data.length > 0) {
-                return { verified: true }
-            }
+        if (!isPrivyApiSearchResponse(privyResponse)) {
+            return { verified: false, error: 'not a privy response' }
+        }
+        if (privyResponse.data.length === 0) {
             return { verified: false, error: 'user not in privy db' }
         }
         // check for more restrictive rule and if town is on whitelist if so

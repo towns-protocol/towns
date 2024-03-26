@@ -8,6 +8,9 @@ import { tokenEntitlementSchema } from '@components/Tokens/TokenSelector/tokenSc
 
 export const MAX_LENGTH_SPACE_NAME = 32
 export const MAX_LENGTH_SPACE_BIO = 240
+// contract throws unclear deployment error if the cost is below this value
+// TODO: use PlatformRequirementsFacet to get this value instead of hardcoding it
+export const MIN_FIXED_COST_OF_MEMBERSHIP_IN_ETH = 0.01
 
 const membershipTypeErrorMessage = 'Please choose who can join your town.'
 export const membershipCostError = `Only towns with a fixed cost of more than 1 ETH can set a limit of more than 1000. Read more about River's ecosystem here`
@@ -75,10 +78,10 @@ export const membershipSettingsSchema = z
                 })
             }
 
-            if (membershipCostAsNumber < 0) {
+            if (membershipCostAsNumber < MIN_FIXED_COST_OF_MEMBERSHIP_IN_ETH) {
                 ctx.addIssue({
                     code: z.ZodIssueCode.custom,
-                    message: 'Please enter a positive number.',
+                    message: `The cost of a membership must be at least ${MIN_FIXED_COST_OF_MEMBERSHIP_IN_ETH} ETH.`,
                     path: ['membershipCost'],
                 })
             }

@@ -7,6 +7,8 @@ import {
     registerAndStartClient,
     createTestSpaceGatedByTownsNfts,
     waitForWithRetries,
+    createTestSpaceGatedByTownNft,
+    createPaidTestSpaceGatedByTownNft,
 } from './helpers/TestUtils'
 
 import {
@@ -74,7 +76,7 @@ test('create space, and have user that already has membership NFT join ', async 
     // bob needs funds to create a space
     await bob.fundWallet()
     // bob creates a space
-    const spaceId = await createTestSpaceGatedByTownsNfts(bob, [Permission.Read, Permission.Write])
+    const spaceId = await createTestSpaceGatedByTownNft(bob, [Permission.Read, Permission.Write])
 
     assert(spaceId !== undefined, 'createTestSpaceGatedByTownsNfts failed')
 
@@ -82,6 +84,74 @@ test('create space, and have user that already has membership NFT join ', async 
     // alice joins the space
     await alice.joinTown(spaceId, alice.wallet)
     expect(alice.getRoomData(spaceId)?.id).toEqual(spaceId)
+})
+
+test('create a space with a fixed cost, user must pay to join', async () => {
+    // create clients
+    // alice needs to have a valid nft in order to join bob's space / channel
+    const alice = await registerAndStartClient('alice', TestConstants.getWalletWithTestGatingNft())
+    const { bob } = await registerAndStartClients(['bob'])
+    // bob needs funds to create a space
+    await bob.fundWallet()
+
+    const DEFAULT_FIXED_COST = '0.1'
+    // bob creates a space with (default) 0.1 eth fixed cost
+    const spaceId = await createPaidTestSpaceGatedByTownNft(bob, [
+        Permission.Read,
+        Permission.Write,
+    ])
+
+    assert(spaceId !== undefined, 'createPaidTestSpaceGatedByTownNft failed')
+
+    const spaceInfo = await bob.spaceDapp.getMembershipInfo(spaceId)
+    assert(spaceInfo !== undefined, 'spaceInfo undefined')
+
+    const membershipPriceInEth = ethers.utils.formatEther(await spaceInfo.price)
+    expect(membershipPriceInEth).toEqual(DEFAULT_FIXED_COST)
+
+    const alicesBalanceBefore = await alice.provider.getBalance(alice.wallet.address)
+
+    // alice joins the space
+    await alice.joinTown(spaceId, alice.wallet)
+    expect(alice.getRoomData(spaceId)?.id).toEqual(spaceId)
+
+    expect((await alice.provider.getBalance(alice.wallet.address)).toBigInt()).toBeLessThan(
+        alicesBalanceBefore.sub(ethers.utils.parseEther(DEFAULT_FIXED_COST)).toBigInt(),
+    )
+})
+
+test('create a space with a fixed cost that is higher than joining user balance', async () => {
+    // create clients
+    // alice needs to have a valid nft in order to join bob's space / channel
+    const alice = await registerAndStartClient('alice', TestConstants.getWalletWithTestGatingNft())
+    const { bob } = await registerAndStartClients(['bob'])
+    // bob needs funds to create a space
+    await bob.fundWallet()
+
+    const FIXED_COST = '100.0'
+    // bob creates a space with (default) 0.1 eth fixed cost
+    const spaceId = await createPaidTestSpaceGatedByTownNft(
+        bob,
+        [Permission.Read, Permission.Write],
+        +FIXED_COST,
+    )
+
+    assert(spaceId !== undefined, 'createPaidTestSpaceGatedByTownNft failed')
+
+    const spaceInfo = await bob.spaceDapp.getMembershipInfo(spaceId)
+    assert(spaceInfo !== undefined, 'spaceInfo undefined')
+
+    const membershipPriceInEth = ethers.utils.formatEther(await spaceInfo.price)
+    expect(membershipPriceInEth).toEqual(FIXED_COST)
+
+    // alice joins the space
+    try {
+        await alice.joinTown(spaceId, alice.wallet)
+    } catch (error) {
+        // eslint-disable-next-line @typescript-eslint/ban-ts-comment
+        // @ts-ignore
+        expect(error.message).toMatch(/insufficient funds/)
+    }
 })
 
 // TODO enable this once the minting function is gated by IRuleGated

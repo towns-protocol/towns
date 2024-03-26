@@ -2,7 +2,10 @@ import React, { ChangeEvent, useCallback } from 'react'
 import { UseFormReturn, useFormContext } from 'react-hook-form'
 import { ErrorMessage, RadioCard, Stack, TextField } from '@ui'
 import { FadeInBox } from '@components/Transitions'
-import { MembershipSettingsSchemaType } from '../MembershipNFT/CreateSpaceFormV2/CreateSpaceFormV2.schema'
+import {
+    MIN_FIXED_COST_OF_MEMBERSHIP_IN_ETH,
+    MembershipSettingsSchemaType,
+} from '../MembershipNFT/CreateSpaceFormV2/CreateSpaceFormV2.schema'
 
 export function EditPricing() {
     const { formState, setValue, watch, trigger } = useFormContext<MembershipSettingsSchemaType>()
@@ -53,8 +56,11 @@ export function EditPricing() {
     }, [])
 
     const onFixedClick = useCallback((formProps: UseFormReturn<MembershipSettingsSchemaType>) => {
+        if (formProps.getValues('membershipPricingType') === 'fixed') {
+            return
+        }
         formProps.setValue('membershipPricingType', 'fixed')
-        formProps.setValue('membershipCost', '', {
+        formProps.setValue('membershipCost', MIN_FIXED_COST_OF_MEMBERSHIP_IN_ETH.toString(), {
             shouldValidate: true,
         })
     }, [])

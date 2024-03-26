@@ -1228,6 +1228,11 @@ export class TownsClient implements EntitlementsDelegate {
         console.log('[mintMembershipTransaction] start')
 
         const rootWallet = (await signer?.getAddress()) ?? ''
+        let transaction: TransactionOrUserOperation | undefined = undefined
+        const continueStoreTx = this.blockchainTransactionStore.begin({
+            type: BlockchainTransactionType.JoinSpace,
+        })
+
         try {
             // If any of the linked wallets are entitled, we can join the room
             // get linked wallets includes the root wallet
@@ -1269,13 +1274,18 @@ export class TownsClient implements EntitlementsDelegate {
                 return
             }
 
-            let transaction: TransactionOrUserOperation | undefined = undefined
-
             if (this.isAccountAbstractionEnabled()) {
                 transaction = await this.userOps?.sendJoinSpaceOp([spaceId, entitledWallet, signer])
             } else {
                 transaction = await this.spaceDapp.joinSpace(spaceId, entitledWallet, signer)
             }
+
+            continueStoreTx({
+                hashOrUserOpHash: getTransactionHashOrUserOpHash(transaction),
+                transaction,
+                error: undefined, // if no throw then no error
+            })
+
             // TODO: should this be separated into create/wait methods like other transactions?
             await this._waitForBlockchainTransaction({
                 transaction,
@@ -1293,6 +1303,11 @@ export class TownsClient implements EntitlementsDelegate {
             console.error('[mintMembershipTransaction] failed', error)
             const decodeError = await this.getDecodedErrorForSpace(spaceId, error)
             console.error('[mintMembershipAndJoinRoom] failed', decodeError)
+            continueStoreTx({
+                hashOrUserOpHash: getTransactionHashOrUserOpHash(transaction),
+                transaction,
+                error: decodeError,
+            })
             throw decodeError
         }
     }

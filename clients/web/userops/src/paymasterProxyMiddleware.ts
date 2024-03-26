@@ -1,5 +1,5 @@
 import { UserOpsConfig } from './types'
-import { BigNumber } from 'ethers'
+import { ethers, BigNumber } from 'ethers'
 import { BundlerJsonRpcProvider, IUserOperation, Presets } from 'userop'
 import { z } from 'zod'
 import { userOpsStore } from './userOpsStore'
@@ -57,7 +57,18 @@ export const paymasterProxyMiddleware: ({
                 try {
                     await Presets.Middleware.estimateUserOperationGas(
                         new BundlerJsonRpcProvider(rpcUrl).setBundlerRpc(bundlerUrl),
-                    )(ctx)
+                    )({
+                        ...ctx,
+                        // if a user operation requires a VALUE (not gas) - currently only joinTown on a fixed price space would have one - the paymaster is going to reject it
+                        // estimateUserOperationGas will also reject if the user does not have enough funds to cover the VALUE
+                        // the UI can handle low funds how it wants (and a user may not even need funds if they're going to use credit card)
+                        // so we're overriding the balance of the sender to a high number to avoid the rejection, so this will always return a gas estimate
+                        stateOverrides: {
+                            [ctx.op.sender]: {
+                                balance: ethers.utils.parseEther('1000000').toHexString(),
+                            },
+                        },
+                    })
                     return {
                         maxFeePerGas: ctx.op.maxFeePerGas,
                         maxPriorityFeePerGas: ctx.op.maxPriorityFeePerGas,
@@ -123,6 +134,13 @@ export const paymasterProxyMiddleware: ({
             return
         }
         try {
+            // TODO: ///////////////////////////
+            // check here if the tx is a joinTown,
+            // if so, check if there's a membership price
+            // if so, check if the user has enough funds
+            // if not enough funds, show the confirmation modal here first?
+            ////////////////////////////////////
+
             // ethers.BigNumberish types are:
             // nonce, callGasLimit, verificationGasLimit, preVerificationGas, maxFeePerGas, maxPriorityFeePerGas
             const bigNumberishTypes = [

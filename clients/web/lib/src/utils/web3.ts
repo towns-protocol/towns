@@ -16,6 +16,18 @@ export const getDynamicPricingModule = async (spaceDapp: ISpaceDapp | undefined)
     return dynamicPricingModule
 }
 
+export const getFixedPricingModule = async (spaceDapp: ISpaceDapp | undefined) => {
+    if (!spaceDapp) {
+        throw new Error('getFixedPricingModule: No spaceDapp')
+    }
+    const pricingModules = await spaceDapp.listPricingModules()
+    const fixedPricingModule = findFixedPricingModule(pricingModules)
+    if (!fixedPricingModule) {
+        throw new Error('getFixedPricingModule: no fixedPricingModule')
+    }
+    return fixedPricingModule
+}
+
 export const findDynamicPricingModule = (pricingModules: PricingModuleStruct[]) =>
     pricingModules.find((module) => module.name === TIERED_PRICING_ORACLE)
 

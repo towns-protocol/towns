@@ -580,19 +580,21 @@ export function CreateSpaceFormV2() {
                             {panelType && (
                                 <PanelWrapper panelType={panelType}>
                                     <PanelContent onClick={() => setPanelType(undefined)}>
-                                        <CreateTownSubmit
-                                            setPanelType={setPanelType}
-                                            form={_form}
-                                            setTransactionDetails={setTransactionDetails}
-                                        >
-                                            {({ onSubmit, disabled }) => (
-                                                <SubmitButton
-                                                    disabled={disabled}
-                                                    transactionDetails={transactionDetails}
-                                                    onSubmit={onSubmit}
-                                                />
-                                            )}
-                                        </CreateTownSubmit>
+                                        <Stack height="x16">
+                                            <CreateTownSubmit
+                                                setPanelType={setPanelType}
+                                                form={_form}
+                                                setTransactionDetails={setTransactionDetails}
+                                            >
+                                                {({ onSubmit, disabled }) => (
+                                                    <SubmitButton
+                                                        disabled={disabled}
+                                                        transactionDetails={transactionDetails}
+                                                        onSubmit={onSubmit}
+                                                    />
+                                                )}
+                                            </CreateTownSubmit>
+                                        </Stack>
                                     </PanelContent>
                                 </PanelWrapper>
                             )}
