@@ -36,10 +36,11 @@ type TownPageLayoutProps = {
     name?: string
     owner?: `0x${string}`
     bio?: string
+    motto?: string
 }
 
 export const TownPageLayout = (props: TownPageLayoutProps) => {
-    const { address, bio, name, spaceId, owner, isPreview } = props
+    const { address, bio, motto, name, spaceId, owner, isPreview } = props
     const { chainId } = useEnvironment()
     const { data: userId } = useGetRootKeyFromLinkedWallet({ walletAddress: owner, chainId })
     const [copiedLink, setCopiedLink] = useState(false)
@@ -119,6 +120,7 @@ export const TownPageLayout = (props: TownPageLayoutProps) => {
                                     userId={userId}
                                     spaceId={spaceId}
                                     isPreview={isPreview}
+                                    motto={motto}
                                 />
                             </Stack>
                             <InformationBoxes
@@ -183,9 +185,10 @@ const Header = (props: {
     name?: string
     owner?: string
     userId?: string
+    motto?: string
     isPreview: boolean
 }) => {
-    const { name, owner, userId, spaceId, isPreview } = props
+    const { name, owner, userId, motto, spaceId, isPreview } = props
     const { isTouch } = useDevice()
 
     const onTouchSharePressed = useEvent(async () => {
@@ -199,17 +202,17 @@ const Header = (props: {
     })
 
     return (
-        <Stack gap="lg" width="100%" paddingTop={isTouch ? 'sm' : 'none'}>
+        <Stack gap width="100%" paddingTop={isTouch ? 'sm' : 'none'}>
             <Heading level={2} style={{ textTransform: 'none' }}>
                 {name}
             </Heading>
-            {/* <Box grow /> */}
+            {motto && <Text color="gray2">{motto}</Text>}
             <Stack horizontal>
                 {userId && (
                     <AvatarTextHorizontal
                         userId={userId}
                         abstractAccountaddress={owner as Address}
-                        prepend={<Text color="gray1">By </Text>}
+                        prepend={<Text color="gray2">By </Text>}
                     />
                 )}
                 {isTouch && !isPreview && (

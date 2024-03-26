@@ -124,6 +124,7 @@ export const PublicTownPage = (props: { isPreview?: boolean; onClosePreview?: ()
                     name={spaceInfo.name}
                     owner={isAddress(spaceInfo.owner) ? spaceInfo.owner : undefined}
                     bio={spaceIdentity?.bio}
+                    motto={spaceIdentity?.motto}
                 />
             </Box>
 
