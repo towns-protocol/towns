@@ -335,7 +335,7 @@ export class SyncedStreams {
 
                             const syncCookies: SyncCookie[] = []
                             for (const dbStream of dbSyncedStreams) {
-                                syncCookies.push(SyncCookie.fromJsonString(dbStream.syncCookie))
+                                syncCookies.push(SyncCookie.fromJsonString(dbStream.SyncCookie))
                             }
 
                             if (syncCookies.length === 0) {
@@ -581,10 +581,10 @@ export class SyncedStreams {
 
                         await database.syncedStream.update({
                             where: {
-                                streamId,
+                                StreamId: streamId,
                             },
                             data: {
-                                syncCookie: streamAndCookie.nextSyncCookie.toJsonString(),
+                                SyncCookie: streamAndCookie.nextSyncCookie.toJsonString(),
                             },
                         })
                     }
@@ -606,7 +606,7 @@ export class SyncedStreams {
         streamId: string,
     ) {
         const syncedStream = await database.syncedStream.findUnique({
-            where: { streamId },
+            where: { StreamId: streamId },
         })
 
         if (!syncedStream) {
@@ -616,7 +616,7 @@ export class SyncedStreams {
             return
         }
 
-        const streamKind = syncedStream.kind
+        const streamKind = syncedStream.Kind
         let payloadCase = ''
         if (streamKind === StreamKind.DM) {
             payloadCase = 'dmChannelPayload'
@@ -646,7 +646,7 @@ export class SyncedStreams {
         streamId: string,
     ) {
         const syncedStream = await database.syncedStream.findUnique({
-            where: { streamId },
+            where: { StreamId: streamId },
         })
 
         if (!syncedStream) {
@@ -707,7 +707,7 @@ export class SyncedStreams {
 
         const notificationData: NotifyUsersSchema = {
             sender: creatorUserId,
-            users: syncedStream.userIds,
+            users: syncedStream.UserIds,
             payload: {
                 content: {
                     kind: NotificationKind.NewMessage,
@@ -753,7 +753,7 @@ export class SyncedStreams {
         logger.info(`handleMessageStreamUpdate ${streamId}`, { streamId })
 
         const usersToNotify: NotifyUsers = {}
-        const dbStreamUsers = syncedStream.userIds
+        const dbStreamUsers = syncedStream.UserIds
         if (!dbStreamUsers.includes(creatorUserId)) {
             logger.error(`creatorUserId not in stream: ${creatorUserId}`, {
                 dbStreamUsers,
@@ -806,12 +806,12 @@ export class SyncedStreams {
                 streamId,
                 userAddress,
             })
-            if (!syncedStream?.userIds.includes(userAddress)) {
+            if (!syncedStream?.UserIds.includes(userAddress)) {
                 logger.info('adding user to stream', userAddress)
                 await database.syncedStream.update({
-                    where: { streamId },
+                    where: { StreamId: streamId },
                     data: {
-                        userIds: {
+                        UserIds: {
                             push: userAddress,
                         },
                     },
@@ -824,13 +824,13 @@ export class SyncedStreams {
                 streamId,
                 userAddress,
             })
-            if (syncedStream?.userIds.includes(userAddress)) {
+            if (syncedStream?.UserIds.includes(userAddress)) {
                 logger.info('removing user from stream', userAddress)
                 await database.syncedStream.update({
-                    where: { streamId },
+                    where: { StreamId: streamId },
                     data: {
-                        userIds: {
-                            set: syncedStream.userIds.filter((u) => u !== userAddress),
+                        UserIds: {
+                            set: syncedStream.UserIds.filter((u) => u !== userAddress),
                         },
                     },
                 })

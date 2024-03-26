@@ -32,9 +32,9 @@ class StreamsMonitorService {
     private async getNewStreamsToMonitor(): Promise<StreamsMetadata> {
         const streamIds = (
             await database.syncedStream.findMany({
-                select: { streamId: true },
+                select: { StreamId: true },
             })
-        ).map((s) => s.streamId)
+        ).map((s) => s.StreamId)
         const channelIds = await database.userSettingsChannel.findMany({
             select: { ChannelId: true },
             where: {
@@ -61,12 +61,12 @@ class StreamsMonitorService {
         return streamInfo
     }
 
-    private getStreamKind(ChannelId: string) {
-        if (isDMChannelStreamId(ChannelId)) {
+    private getStreamKind(channelId: string) {
+        if (isDMChannelStreamId(channelId)) {
             return StreamKind.DM
-        } else if (isGDMChannelStreamId(ChannelId)) {
+        } else if (isGDMChannelStreamId(channelId)) {
             return StreamKind.GDM
-        } else if (isChannelStreamId(ChannelId)) {
+        } else if (isChannelStreamId(channelId)) {
             return StreamKind.Channel
         }
         return ''
@@ -104,13 +104,13 @@ class StreamsMonitorService {
                 const { firstPartyAddress, secondPartyAddress } = payload.value.content.value
                 await database.syncedStream.create({
                     data: {
-                        streamId,
-                        userIds: [
+                        StreamId: streamId,
+                        UserIds: [
                             userIdFromAddress(firstPartyAddress),
                             userIdFromAddress(secondPartyAddress),
                         ],
-                        kind: StreamKind.DM,
-                        syncCookie: response.stream?.nextSyncCookie?.toJsonString() || '',
+                        Kind: StreamKind.DM,
+                        SyncCookie: response.stream?.nextSyncCookie?.toJsonString() || '',
                     },
                 })
             } else if (
@@ -129,13 +129,13 @@ class StreamsMonitorService {
                 const { firstPartyAddress, secondPartyAddress } = inception
                 await database.syncedStream.create({
                     data: {
-                        streamId,
-                        userIds: [
+                        StreamId: streamId,
+                        UserIds: [
                             userIdFromAddress(firstPartyAddress),
                             userIdFromAddress(secondPartyAddress),
                         ],
-                        kind: StreamKind.DM,
-                        syncCookie: response.stream?.nextSyncCookie?.toJsonString() || '',
+                        Kind: StreamKind.DM,
+                        SyncCookie: response.stream?.nextSyncCookie?.toJsonString() || '',
                     },
                 })
             }
@@ -157,10 +157,10 @@ class StreamsMonitorService {
         const userIds = this.getUserIdsFromChannelOrGDMStreams(unpacked)
         await database.syncedStream.create({
             data: {
-                streamId,
-                kind: StreamKind.GDM,
-                syncCookie: unpacked?.nextSyncCookie?.toJsonString() || '',
-                userIds: Array.from(userIds),
+                StreamId: streamId,
+                Kind: StreamKind.GDM,
+                SyncCookie: unpacked?.nextSyncCookie?.toJsonString() || '',
+                UserIds: Array.from(userIds),
             },
         })
     }
@@ -172,10 +172,10 @@ class StreamsMonitorService {
         const userIds = this.getUserIdsFromChannelOrGDMStreams(unpacked)
         await database.syncedStream.create({
             data: {
-                streamId,
-                kind: StreamKind.Channel,
-                syncCookie: unpacked?.nextSyncCookie?.toJsonString() || '',
-                userIds: Array.from(userIds),
+                StreamId: streamId,
+                Kind: StreamKind.Channel,
+                SyncCookie: unpacked?.nextSyncCookie?.toJsonString() || '',
+                UserIds: Array.from(userIds),
             },
         })
     }
@@ -270,7 +270,7 @@ class StreamsMonitorService {
         assert(streamIsValid, `stream is not a ${kind} stream`)
         assert(
             (await database.syncedStream.count({
-                where: { streamId },
+                where: { StreamId: streamId },
             })) === 0,
             `stream already added to db`,
         )
@@ -320,15 +320,15 @@ class StreamsMonitorService {
         const streamsAlreadyInDB = (
             await database.syncedStream.findMany({
                 where: {
-                    streamId: {
+                    StreamId: {
                         in: Array.from(newStreamIds),
                     },
                 },
                 select: {
-                    streamId: true,
+                    StreamId: true,
                 },
             })
-        ).map((s) => s.streamId)
+        ).map((s) => s.StreamId)
 
         newStreamIds = new Set([...newStreamIds].filter((s) => !streamsAlreadyInDB.includes(s)))
 
@@ -443,16 +443,16 @@ class StreamsMonitorService {
         ).map((s) => s.ChannelId)
         const staleStreams = (
             await database.syncedStream.findMany({
-                select: { streamId: true },
+                select: { StreamId: true },
                 where: {
                     NOT: {
-                        streamId: {
+                        StreamId: {
                             in: channelIds,
                         },
                     },
                 },
             })
-        ).map((s) => s.streamId)
+        ).map((s) => s.StreamId)
 
         if (staleStreams.length > 0) {
             logger.info(`removeStaleStreams ${staleStreams.length}`, {
@@ -460,7 +460,7 @@ class StreamsMonitorService {
             })
             await database.syncedStream.deleteMany({
                 where: {
-                    streamId: {
+                    StreamId: {
                         in: staleStreams,
                     },
                 },

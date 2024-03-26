@@ -60,10 +60,10 @@ enum Mute {
 }
 
 model SyncedStream {
-  streamId   String     @id
-  userIds    String[]
-  kind       StreamKind
-  syncCookie String
+  StreamId   String     @id
+  UserIds    String[]
+  Kind       StreamKind
+  SyncCookie String
 }
 
 enum StreamKind {
