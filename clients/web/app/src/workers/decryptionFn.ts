@@ -3,7 +3,7 @@ import {
     EncryptionDelegate,
     EncryptionDevice,
     GroupDecryption,
-} from '@river/encryption'
+} from '@river-build/encryption'
 
 import { EncryptedData } from '@river/proto'
 

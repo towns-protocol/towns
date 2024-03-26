@@ -51,7 +51,7 @@ import { StreamStateView_UserMetadata } from './streamStateView_UserMetadata'
 import { StreamStateView_ChannelMetadata } from './streamStateView_ChannelMetadata'
 import { StreamEvents, StreamEncryptionEvents, StreamStateEvents } from './streamEvents'
 import isEqual from 'lodash/isEqual'
-import { DecryptionSessionError } from '@river/encryption'
+import { DecryptionSessionError } from '@river-build/encryption'
 import { migrateSnapshot } from './migrations/migrateSnapshot'
 
 const log = dlog('csb:streams')

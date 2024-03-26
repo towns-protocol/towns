@@ -5,7 +5,7 @@
 import debug from 'debug'
 import { Client } from './client'
 import { makeDonePromise, makeTestClient } from './util.test'
-import { UserDevice } from '@river/encryption'
+import { UserDevice } from '@river-build/encryption'
 
 const log = debug('test')
 

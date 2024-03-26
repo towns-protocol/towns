@@ -1,4 +1,4 @@
-import { CryptoStore } from '@river/encryption'
+import { CryptoStore } from '@river-build/encryption'
 
 export class RiverDbManager {
     public static getCryptoDb(userId: string, dbName?: string): CryptoStore {

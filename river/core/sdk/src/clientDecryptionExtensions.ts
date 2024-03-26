@@ -9,7 +9,7 @@ import {
     KeySolicitationContent,
     KeySolicitationData,
     UserDevice,
-} from '@river/encryption'
+} from '@river-build/encryption'
 import { EncryptedData, UserInboxPayload_GroupEncryptionSessions } from '@river/proto'
 import { make_MemberPayload_KeyFulfillment, make_MemberPayload_KeySolicitation } from './types'
 

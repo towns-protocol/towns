@@ -4,7 +4,7 @@
 
 import { dlog, check } from '@river/dlog'
 import { isDefined } from './check'
-import { DecryptionStatus, UserDevice } from '@river/encryption'
+import { DecryptionStatus, UserDevice } from '@river-build/encryption'
 import { Client } from './client'
 import {
     makeUserStreamId,

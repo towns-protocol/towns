@@ -7,7 +7,7 @@ import { dlog } from '@river/dlog'
 import { isDefined } from './check'
 import { TestClientOpts, makeTestClient, makeUniqueSpaceStreamId, waitFor } from './util.test'
 import { Stream } from './stream'
-import { DecryptionSessionError } from '@river/encryption'
+import { DecryptionSessionError } from '@river-build/encryption'
 import { makeUniqueChannelStreamId } from './id'
 
 const log = dlog('csb:test:decryptionExtensions')

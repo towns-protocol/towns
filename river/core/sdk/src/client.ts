@@ -43,7 +43,7 @@ import {
     UserDevice,
     UserDeviceCollection,
     makeSessionKeys,
-} from '@river/encryption'
+} from '@river-build/encryption'
 import { errorContains, getRpcErrorProperty, StreamRpcClientType } from './makeStreamRpcClient'
 import EventEmitter from 'events'
 import TypedEmitter from 'typed-emitter'

@@ -12,7 +12,7 @@ import {
     RemoteTimelineEvent,
     StreamTimelineEvent,
 } from './types'
-import { KeySolicitationContent, UserDevice } from '@river/encryption'
+import { KeySolicitationContent, UserDevice } from '@river-build/encryption'
 import { EncryptedContent } from './encryptedContentTypes'
 
 export type StreamChange = {

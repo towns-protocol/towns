@@ -8,7 +8,7 @@ import {
     makeStreamRpcClient,
     userIdFromAddress,
 } from '@river/sdk'
-import { EntitlementsDelegate, DecryptionStatus } from '@river/encryption'
+import { EntitlementsDelegate, DecryptionStatus } from '@river-build/encryption'
 import { CreateSpaceParams, IRuleEntitlement, createRiverRegistry } from '@river/web3'
 import { ChannelMessage_Post_Mention, FullyReadMarker } from '@river/proto'
 import {

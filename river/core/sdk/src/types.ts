@@ -38,7 +38,7 @@ import { bin_toHexString } from '@river/dlog'
 import { isDefined } from './check'
 import { DecryptedContent } from './encryptedContentTypes'
 import { addressFromUserId, streamIdAsBytes } from './id'
-import { DecryptionSessionError } from '@river/encryption'
+import { DecryptionSessionError } from '@river-build/encryption'
 
 export type LocalEventStatus = 'sending' | 'sent' | 'failed'
 export interface LocalEvent {
