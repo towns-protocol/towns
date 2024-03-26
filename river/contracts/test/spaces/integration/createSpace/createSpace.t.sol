@@ -63,7 +63,7 @@ contract Integration_CreateSpace is BaseSetup, IRolesBase, IArchitectBase {
     SpaceInfo memory spaceInfo = _createUserSpaceInfo(spaceId, users);
     spaceInfo.membership.settings.pricingModule = pricingModule;
     spaceInfo.membership.permissions = new string[](1);
-    spaceInfo.membership.permissions[0] = "Read";
+    spaceInfo.membership.permissions[0] = Permissions.Read;
 
     vm.prank(founder);
     address newSpace = spaceArchitect.createSpace(spaceInfo);
@@ -182,7 +182,7 @@ contract Integration_CreateSpace is BaseSetup, IRolesBase, IArchitectBase {
 
     // create permissions for entitlement
     string[] memory permissions = new string[](1);
-    permissions[0] = "Write";
+    permissions[0] = Permissions.Write;
 
     // create which entitlements have access to this role
     address[] memory users = new address[](1);
@@ -216,7 +216,7 @@ contract Integration_CreateSpace is BaseSetup, IRolesBase, IArchitectBase {
     assertTrue(
       IEntitlementsManager(newSpace).isEntitledToSpace({
         user: member,
-        permission: "Write"
+        permission: Permissions.Write
       })
     );
 
@@ -225,7 +225,7 @@ contract Integration_CreateSpace is BaseSetup, IRolesBase, IArchitectBase {
       IEntitlementsManager(newSpace).isEntitledToChannel({
         channelId: "test2",
         user: member,
-        permission: "Write"
+        permission: Permissions.Write
       })
     );
 
@@ -234,7 +234,7 @@ contract Integration_CreateSpace is BaseSetup, IRolesBase, IArchitectBase {
     IChannel(newSpace).addRoleToChannel({channelId: "test2", roleId: roleId});
 
     bool isEntitledToChannelAfter = IEntitlementsManager(newSpace)
-      .isEntitledToChannel("test2", member, "Write");
+      .isEntitledToChannel("test2", member, Permissions.Write);
     // members can access the channel now
     assertTrue(isEntitledToChannelAfter);
   }

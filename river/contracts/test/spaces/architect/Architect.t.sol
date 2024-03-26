@@ -57,14 +57,17 @@ contract ArchitectTest is
 
     // expect owner to be founder
     assertTrue(
-      IEntitlementsManager(spaceAddress).isEntitledToSpace(founder, "Read")
+      IEntitlementsManager(spaceAddress).isEntitledToSpace(
+        founder,
+        Permissions.Read
+      )
     );
 
     // expect no one to be entitled
     assertFalse(
       IEntitlementsManager(spaceAddress).isEntitledToSpace(
         _randomAddress(),
-        "Read"
+        Permissions.Read
       )
     );
   }
@@ -175,7 +178,10 @@ contract ArchitectTest is
     address newSpace = spaceArchitect.createSpace(spaceInfo);
 
     assertTrue(
-      IEntitlementsManager(newSpace).isEntitledToSpace(founder, "Read")
+      IEntitlementsManager(newSpace).isEntitledToSpace(
+        founder,
+        Permissions.Read
+      )
     );
 
     (ISpaceOwner spaceOwner, , , ) = spaceArchitect
@@ -191,10 +197,15 @@ contract ArchitectTest is
     IERC721(address(spaceOwner)).transferFrom(founder, buyer, tokenId);
 
     assertFalse(
-      IEntitlementsManager(newSpace).isEntitledToSpace(founder, "Read")
+      IEntitlementsManager(newSpace).isEntitledToSpace(
+        founder,
+        Permissions.Read
+      )
     );
 
-    assertTrue(IEntitlementsManager(newSpace).isEntitledToSpace(buyer, "Read"));
+    assertTrue(
+      IEntitlementsManager(newSpace).isEntitledToSpace(buyer, Permissions.Read)
+    );
   }
 
   function test_revertWhen_createSpaceAndPaused(
@@ -284,7 +295,7 @@ contract ArchitectTest is
     // update the permissions of the member role
     // string[] memory permissions = new string[](3);
     // permissions[0] = Permissions.Read;
-    // permissions[1] = "Write";
+    // permissions[1] = Permissions.Write;
     // permissions[2] = Permissions.ModifyChannels;
     // IRoles.CreateEntitlement[]
     //   memory entitlements = new IRoles.CreateEntitlement[](0);

@@ -10,6 +10,7 @@ import {IEntitlementsManager} from "contracts/src/spaces/facets/entitlements/IEn
 import {IEntitlementBase} from "contracts/src/spaces/entitlements/IEntitlement.sol";
 
 //libraries
+import {Permissions} from "contracts/src/spaces/facets/Permissions.sol";
 
 //contracts
 import {BaseSetup} from "contracts/test/spaces/BaseSetup.sol";
@@ -42,7 +43,7 @@ contract ChannelsTest is BaseSetup, IEntitlementBase {
     vm.assume(bytes(channelMetadata).length > 2);
 
     string[] memory permissions = new string[](1);
-    permissions[0] = "Write";
+    permissions[0] = Permissions.Write;
 
     vm.prank(founder);
     uint256 roleId = IRoles(everyoneSpace).createRole(
@@ -65,7 +66,7 @@ contract ChannelsTest is BaseSetup, IEntitlementBase {
     string memory channelMetadata = "Metadata";
 
     string[] memory permissions = new string[](1);
-    permissions[0] = "Write";
+    permissions[0] = Permissions.Write;
 
     vm.prank(founder);
     uint256 roleId = IRoles(space).createRole(
@@ -92,14 +93,17 @@ contract ChannelsTest is BaseSetup, IEntitlementBase {
     assertEq(_channel.roleIds.length, roleIds.length);
 
     assertFalse(
-      IEntitlementsManager(space).isEntitledToSpace(_randomAddress(), "Write")
+      IEntitlementsManager(space).isEntitledToSpace(
+        _randomAddress(),
+        Permissions.Write
+      )
     );
 
     assertFalse(
       IEntitlementsManager(space).isEntitledToChannel(
         channelId,
         _randomAddress(),
-        "Write"
+        Permissions.Write
       )
     );
   }

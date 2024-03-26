@@ -12,6 +12,7 @@ import {MembershipFacet} from "contracts/src/spaces/facets/membership/Membership
 import {Channels} from "contracts/src/spaces/facets/channels/Channels.sol";
 import {Roles} from "contracts/src/spaces/facets/roles/Roles.sol";
 import {EntitlementsManager} from "contracts/src/spaces/facets/entitlements/EntitlementsManager.sol";
+import {Permissions} from "contracts/src/spaces/facets/Permissions.sol";
 
 // helpers
 import {BaseSetup} from "contracts/test/spaces/BaseSetup.sol";
@@ -56,7 +57,7 @@ contract BanningTest is BaseSetup, IRolesBase {
     banning.ban(tokenId);
 
     assertTrue(banning.isBanned(tokenId));
-    assertFalse(manager.isEntitledToSpace(alice, "Read"));
+    assertFalse(manager.isEntitledToSpace(alice, Permissions.Read));
   }
 
   modifier givenAliceIsBanned() {
@@ -70,12 +71,12 @@ contract BanningTest is BaseSetup, IRolesBase {
     uint256 tokenId = membership.getTokenIdByMembership(alice);
 
     assertTrue(banning.isBanned(tokenId));
-    assertFalse(manager.isEntitledToSpace(alice, "Read"));
+    assertFalse(manager.isEntitledToSpace(alice, Permissions.Read));
 
     vm.prank(founder);
     banning.unban(tokenId);
 
     assertFalse(banning.isBanned(tokenId));
-    assertTrue(manager.isEntitledToSpace(alice, "Read"));
+    assertTrue(manager.isEntitledToSpace(alice, Permissions.Read));
   }
 }

@@ -5,6 +5,7 @@ pragma solidity ^0.8.23;
 import {IArchitectBase} from "contracts/src/spaces/facets/architect/IArchitect.sol";
 import {IMembershipBase} from "contracts/src/spaces/facets/membership/IMembership.sol";
 import {RuleEntitlementUtil} from "contracts/src/crosschain/RuleEntitlementUtil.sol";
+import {Permissions} from "contracts/src/spaces/facets/Permissions.sol";
 
 // libraries
 
@@ -76,8 +77,8 @@ abstract contract SpaceHelper {
     string memory spaceId
   ) internal pure returns (IArchitectBase.SpaceInfo memory) {
     string[] memory permissions = new string[](2);
-    permissions[0] = "Read";
-    permissions[1] = "Write";
+    permissions[0] = Permissions.Read;
+    permissions[1] = Permissions.Write;
 
     return
       IArchitectBase.SpaceInfo({
@@ -110,8 +111,8 @@ abstract contract SpaceHelper {
     string memory townId
   ) internal pure returns (IArchitectBase.SpaceInfo memory) {
     string[] memory permissions = new string[](2);
-    permissions[0] = "Read";
-    permissions[1] = "Write";
+    permissions[0] = Permissions.Read;
+    permissions[1] = Permissions.Write;
 
     return
       IArchitectBase.SpaceInfo({

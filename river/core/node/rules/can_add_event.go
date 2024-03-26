@@ -426,9 +426,9 @@ func (ru *aeMembershipRules) validMembershipTransistion() (bool, error) {
 		// from leave, invite and join are valid
 		return true, nil
 	case MembershipOp_SO_UNSPECIFIED:
-		// from unspecified, leave isn't valid
+		// from unspecified, leave isn't valid, return a no-op
 		if ru.membership.Op == MembershipOp_SO_LEAVE {
-			return false, RiverError(Err_BAD_EVENT, "current membership is undefined")
+			return false, nil
 		} else {
 			return true, nil
 		}
