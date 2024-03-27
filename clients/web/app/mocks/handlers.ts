@@ -52,7 +52,7 @@ export const testHandlers = [
 
     // GATEWAY WORKER ///////////////
 
-    rest.get(`${env.VITE_GATEWAY_URL || ''}/space/*/bio`, (req, res, ctx) => {
+    rest.get(`${env.VITE_GATEWAY_URL || ''}/space/*/identity`, (req, res, ctx) => {
         if (req.url.toString().includes('no-topic')) {
             return res(ctx.status(404))
         }
@@ -61,7 +61,7 @@ export const testHandlers = [
         return res(ctx.status(200), ctx.json(data))
     }),
 
-    rest.post(`${env.VITE_GATEWAY_URL || ''}/space/*/bio`, (req, res, ctx) => {
+    rest.post(`${env.VITE_GATEWAY_URL || ''}/space/*/identity`, (req, res, ctx) => {
         const data = 'imageor whatever'
         return res(ctx.status(200), ctx.json(data))
     }),

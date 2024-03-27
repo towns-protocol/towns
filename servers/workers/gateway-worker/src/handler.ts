@@ -12,6 +12,7 @@ const DEFAULT_OPTIONS = 'width=1920,fit=scale-down'
 export const IMAGE_DELIVERY_SERVICE = 'https://imagedelivery.net'
 const CACHE_TTL = 5
 const BIO_MAX_SIZE = 280
+const MOTTO_MAX_SIZE = 40
 
 const USER_FEEDBACK_TOPIC_ARN = 'arn:aws:sns:us-east-1:211286738967:user-feedback'
 
@@ -327,7 +328,7 @@ router.get('/user/:id/bio', async (request: WorkerRequest, env) => {
     return new Response(JSON.parse(JSON.stringify(value)), { status: 200 })
 })
 
-router.post('/space/:id/bio', async (request: WorkerRequest, env) => {
+router.post('/space/:id/identity', async (request: WorkerRequest, env) => {
     const spaceId = request.params?.id
 
     if (!env.SKIP_SIWE) {
@@ -382,6 +383,13 @@ router.post('/space/:id/bio', async (request: WorkerRequest, env) => {
             { status: 400 },
         )
     }
+    // validate motto length
+    if (!validateLength(JSON.parse(requestBody).motto, MOTTO_MAX_SIZE)) {
+        return new Response(
+            JSON.stringify({ error: `motto must be under ${MOTTO_MAX_SIZE} characters` }),
+            { status: 400 },
+        )
+    }
     try {
         await env.SPACE.put(spaceId, requestBody)
     } catch (error) {
@@ -392,11 +400,11 @@ router.post('/space/:id/bio', async (request: WorkerRequest, env) => {
     return new Response('ok', { status: 200 })
 })
 
-router.get('/space/:id/bio', async (request: WorkerRequest, env) => {
+router.get('/space/:id/identity', async (request: WorkerRequest, env) => {
     const spaceId = request.params?.id
     const value = await env.SPACE.get(spaceId)
     if (value === null) {
-        return new Response(`bio not found for space: ${spaceId}`, { status: 404 })
+        return new Response(`identity not found for space: ${spaceId}`, { status: 404 })
     }
     return new Response(JSON.parse(JSON.stringify(value)), { status: 200 })
 })

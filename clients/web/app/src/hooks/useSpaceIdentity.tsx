@@ -22,7 +22,7 @@ interface SpaceIdentity {
 
 export async function getSpaceIdentity(spaceId: string): Promise<SpaceIdentity> {
     const GATEWAY_SERVER_URL = env.VITE_GATEWAY_URL
-    const url = `${GATEWAY_SERVER_URL}/space/${spaceId}/bio`
+    const url = `${GATEWAY_SERVER_URL}/space/${spaceId}/identity`
 
     const spaceTopic = await axiosClient.get(url)
     const parseResult = zBioReadData.safeParse(spaceTopic.data)
@@ -42,7 +42,7 @@ export async function setSpaceIdentity(
     spaceIdentity: SpaceIdentity,
 ): Promise<void> {
     const GATEWAY_SERVER_URL = env.VITE_GATEWAY_URL
-    const url = `${GATEWAY_SERVER_URL}/space/${spaceId}/bio`
+    const url = `${GATEWAY_SERVER_URL}/space/${spaceId}/identity`
     await axiosClient.post(url, JSON.stringify(spaceIdentity), {
         withCredentials: true,
     })
