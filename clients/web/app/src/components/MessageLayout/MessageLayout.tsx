@@ -1,5 +1,5 @@
 import { format, formatDistance } from 'date-fns'
-import React, { useCallback, useContext, useEffect, useRef, useState } from 'react'
+import React, { useCallback, useEffect, useRef, useState } from 'react'
 import { LookupUser, MessageReactions, ThreadStats } from 'use-towns-client'
 import { Link } from 'react-router-dom'
 import debug from 'debug'
@@ -9,7 +9,6 @@ import { Reactions } from '@components/Reactions/Reactions'
 import { RepliesButton } from '@components/Replies/MessageReplies'
 import { Box, BoxProps, ButtonText, Icon, Paragraph, Stack, Text } from '@ui'
 import { useHover } from 'hooks/useHover'
-import { useOpenMessageThread } from 'hooks/useOpenThread'
 import { useHandleReaction } from 'hooks/useReactions'
 import { AvatarProps, AvatarWithoutDot } from '@components/Avatar/Avatar'
 import { AvatarAtoms } from 'components/Avatar/Avatar.css'
@@ -19,7 +18,6 @@ import { useFocused } from 'hooks/useFocused'
 import { ZRoomMessageRedactedEvent } from '@components/MessageTimeline/util/getEventsByDate'
 import { getPrettyDisplayName } from 'utils/getPrettyDisplayName'
 import { useAbstractAccountAddress } from 'hooks/useAbstractAccountAddress'
-import { ReplyToMessageContext } from '@components/ReplyToMessageContext/ReplyToMessageContext'
 import { MessageContextMenu } from './MessageContextMenu'
 import { MessageModalSheet } from './MessageModalSheet'
 import { SendStatus, SendStatusIndicator } from './SendStatusIndicator'
@@ -115,18 +113,6 @@ export const MessageLayout = (props: Props) => {
         setIsModalSheetVisible(true)
     }, [setIsModalSheetVisible])
 
-    const { canReplyInline, setReplyToEventId } = useContext(ReplyToMessageContext)
-    const { onOpenMessageThread } = useOpenMessageThread(spaceId, channelId)
-    const onDoubleClick = useCallback(() => {
-        if (canReply && eventId) {
-            if (canReplyInline && setReplyToEventId) {
-                setReplyToEventId(eventId)
-            } else {
-                onOpenMessageThread(eventId)
-            }
-        }
-    }, [canReply, eventId, onOpenMessageThread, canReplyInline, setReplyToEventId])
-
     const { createLink } = useCreateLink()
     const { data: abstractAccountAddress } = useAbstractAccountAddress({
         rootKeyAddress: senderId as Address | undefined,
@@ -153,7 +139,6 @@ export const MessageLayout = (props: Props) => {
             hoverActive={isEditing || isHighlight}
             {...backgroundProps}
             tabIndex={props.tabIndex ?? 0}
-            onDoubleClick={!isTouch && canReply ? onDoubleClick : undefined}
         >
             {/* left / avatar gutter */}
             {/* snippet: center avatar with name row by keeping the size of the containers equal  */}
