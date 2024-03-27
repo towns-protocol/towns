@@ -16,7 +16,7 @@ import {
     waitForWithRetries,
 } from './helpers/TestUtils'
 
-import { Permission } from '@river/web3'
+import { Permission } from '@river-build/web3'
 import { ReactionEvent, RoomMessageEvent, ZTEvent } from '../../src/types/timeline-types'
 
 describe('sendReaction', () => {

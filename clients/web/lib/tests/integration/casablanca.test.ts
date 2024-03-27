@@ -18,7 +18,7 @@ import {
     registerAndStartClients,
     getChainIds,
 } from './helpers/TestUtils'
-import { Permission, createRiverRegistry } from '@river/web3'
+import { Permission, createRiverRegistry } from '@river-build/web3'
 import debug from 'debug'
 
 const log = debug('test:casablanca')

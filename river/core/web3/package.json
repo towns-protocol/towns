@@ -1,5 +1,5 @@
 {
-    "name": "@river/web3",
+    "name": "@river-build/web3",
     "packageManager": "yarn@3.8.0",
     "type": "module",
     "main": "dist/index.js",

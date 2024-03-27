@@ -9,7 +9,7 @@ import {
     userIdFromAddress,
 } from '@river/sdk'
 import { EntitlementsDelegate, DecryptionStatus } from '@river-build/encryption'
-import { CreateSpaceParams, IRuleEntitlement, createRiverRegistry } from '@river/web3'
+import { CreateSpaceParams, IRuleEntitlement, createRiverRegistry } from '@river-build/web3'
 import { ChannelMessage_Post_Mention, FullyReadMarker } from '@river-build/proto'
 import {
     ChannelTransactionContext,
@@ -53,7 +53,13 @@ import {
     TransactionOrUserOperation,
     Address,
 } from '../types/web3-types'
-import { createSpaceDapp, IArchitectBase, Permission, SpaceInfo, ISpaceDapp } from '@river/web3'
+import {
+    createSpaceDapp,
+    IArchitectBase,
+    Permission,
+    SpaceInfo,
+    ISpaceDapp,
+} from '@river-build/web3'
 import { BlockchainTransactionStore } from './BlockchainTransactionStore'
 import { UserOps, getTransactionHashOrUserOpHash, isUserOpResponse } from '@towns/userops'
 import AnalyticsService, { AnalyticsEvents } from '../utils/analyticsService'

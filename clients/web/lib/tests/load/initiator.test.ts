@@ -13,7 +13,7 @@ import {
 
 import { waitFor } from '@testing-library/react'
 
-import { Permission } from '@river/web3'
+import { Permission } from '@river-build/web3'
 
 import { numberOfMessagesConfig, numClientsConfig, connectionOptions } from './loadconfig'
 

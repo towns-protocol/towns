@@ -1,4 +1,4 @@
-import { SpaceInfo } from '@river/web3'
+import { SpaceInfo } from '@river-build/web3'
 import isEqual from 'lodash/isEqual'
 import { create, StateCreator } from 'zustand'
 import { createJSONStorage, persist, PersistOptions } from 'zustand/middleware'

@@ -4,7 +4,7 @@ import { SpaceItem } from '../types/towns-types'
 import { useTownsClient } from './use-towns-client'
 import { useTownsContext } from '../components/TownsContextProvider'
 import { useCasablancaCredentials } from './use-casablanca-credentials'
-import { Permission } from '@river/web3'
+import { Permission } from '@river-build/web3'
 import uniqBy from 'lodash/uniqBy'
 
 type UseSpaceFromContractReturn = {

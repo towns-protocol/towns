@@ -8,7 +8,7 @@ import { makeDefaultChannelStreamId, makeSpaceStreamId } from './id'
 import { ethers, Wallet } from 'ethers'
 import { Client } from './client'
 import { jest } from '@jest/globals'
-import { MembershipStruct, NoopRuleData } from '@river/web3'
+import { MembershipStruct, NoopRuleData } from '@river-build/web3'
 import { SignerContext } from './signerContext'
 
 // This is a temporary hack because importing viem via SpaceDapp causes a jest error
@@ -26,7 +26,7 @@ jest.unstable_mockModule('viem', async () => {
     }
 })
 
-const { LocalhostWeb3Provider, Permission, createSpaceDapp } = await import('@river/web3')
+const { LocalhostWeb3Provider, Permission, createSpaceDapp } = await import('@river-build/web3')
 const ETH_ADDRESS = '0xEeeeeEeeeEeEeeEeEeEeeEEEeeeeEeeeeeeeEEeE'
 
 describe('mediaWithEntitlementsTests', () => {

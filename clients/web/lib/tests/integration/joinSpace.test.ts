@@ -18,7 +18,7 @@ import {
     isHexString,
     publicMint,
     createExternalTokenStruct,
-} from '@river/web3'
+} from '@river-build/web3'
 import { TestConstants } from './helpers/TestConstants'
 import { ethers } from 'ethers'
 import { ParsedChannelProperties, assert } from '@river/sdk'

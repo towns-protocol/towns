@@ -1,11 +1,11 @@
-import { TestSpaceDapp } from '@river/web3/tests/TestSpaceDapp'
-import { TestWeb3Provider } from '@river/web3/tests/TestWeb3Provider'
-import { Permission, CreateSpaceParams, ISpaceDapp } from '@river/web3'
+import { TestSpaceDapp } from '@river-build/web3/tests/TestSpaceDapp'
+import { TestWeb3Provider } from '@river-build/web3/tests/TestWeb3Provider'
+import { Permission, CreateSpaceParams, ISpaceDapp } from '@river-build/web3'
 import { paymasterProxyMiddleware } from '../src/paymasterProxyMiddleware'
 import { ethers } from 'ethers'
 import { nanoid } from 'nanoid'
 import { TestUserOps } from './TestUserOps'
-import { NoopRuleData } from '@river/web3/src'
+import { NoopRuleData } from '@river-build/web3/src'
 
 // FOR NOW these tests only work against stackup bundler/paymaster
 describe.skip('UserOpSpaceDapp tests', () => {

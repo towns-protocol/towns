@@ -13,7 +13,7 @@ import {
 
 import { ZTEvent } from '../../src/types/timeline-types'
 import { waitFor } from '@testing-library/dom'
-import { NoopRuleData, Permission } from '@river/web3'
+import { NoopRuleData, Permission } from '@river-build/web3'
 
 const EveryoneRoleName = 'Everyone'
 const MemberRoleName = 'Member'

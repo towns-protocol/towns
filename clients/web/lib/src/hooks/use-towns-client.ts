@@ -28,7 +28,7 @@ import { useSendReadReceipt } from './TownsContext/useSendReadReceipt'
 import { useTownsContext } from '../components/TownsContextProvider'
 import { useCasablancaWalletSignIn } from './use-casablanca-wallet-signin'
 import { create } from 'zustand'
-import { IArchitectBase, Permission, IRuleEntitlement } from '@river/web3'
+import { IArchitectBase, Permission, IRuleEntitlement } from '@river-build/web3'
 import { TSigner } from 'types/web3-types'
 
 export type TownsErrorStoreState = {

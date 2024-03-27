@@ -17,7 +17,7 @@ import { useUpdateSpaceNameTransaction } from '../../src/hooks/use-update-space-
 import { useCreateSpaceTransactionWithRetries } from '../../src/hooks/use-create-space-transaction'
 import { TestConstants } from './helpers/TestConstants'
 import { TransactionStatus } from '../../src/client/TownsClientTypes'
-import { NoopRuleData, getTestGatingNftAddress } from '@river/web3'
+import { NoopRuleData, getTestGatingNftAddress } from '@river-build/web3'
 import { useContractSpaceInfo } from '../../src/hooks/use-space-data'
 import { TSigner } from '../../src/types/web3-types'
 import { getDynamicPricingModule } from '../../src/utils/web3'

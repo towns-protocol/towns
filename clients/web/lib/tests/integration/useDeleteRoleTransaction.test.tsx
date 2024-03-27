@@ -28,7 +28,7 @@ import {
     NoopRuleData,
     ruleDataToOperations,
     OperationType,
-} from '@river/web3'
+} from '@river-build/web3'
 import { TSigner } from '../../src/types/web3-types'
 import { useTownsClient } from '../../src/hooks/use-towns-client'
 import { getDynamicPricingModule } from '../../src/utils/web3'

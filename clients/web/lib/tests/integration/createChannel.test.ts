@@ -3,7 +3,7 @@
  */
 import { CONTRACT_ERROR, NoThrownError, getError } from './helpers/ErrorUtils'
 import { createTestSpaceGatedByTownsNfts, registerAndStartClients } from './helpers/TestUtils'
-import { getFilteredRolesFromSpace, Permission } from '@river/web3'
+import { getFilteredRolesFromSpace, Permission } from '@river-build/web3'
 
 describe('On-chain channel creation tests', () => {
     test('create channel with no roles', async () => {

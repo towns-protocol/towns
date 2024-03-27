@@ -3,7 +3,7 @@ import { ethers, BigNumber } from 'ethers'
 import { BundlerJsonRpcProvider, IUserOperation, Presets } from 'userop'
 import { z } from 'zod'
 import { userOpsStore } from './userOpsStore'
-import { Address, createSpaceDapp } from '@river/web3'
+import { Address, createSpaceDapp } from '@river-build/web3'
 import { CodeException } from './errors'
 
 type PaymasterProxyResponse = {

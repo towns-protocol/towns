@@ -7,7 +7,7 @@ import {
 	withCorsHeaders,
 } from 'worker-common'
 
-import { Permission, createSpaceDapp } from '@river/web3'
+import { Permission, createSpaceDapp } from '@river-build/web3'
 
 // These initial Types are based on bindings that don't exist in the project yet,
 // you can follow the links to learn how to implement them.

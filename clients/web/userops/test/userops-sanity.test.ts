@@ -2,10 +2,10 @@
 // Reference in case we ever use local bundler for testing
 //
 
-import { TestSpaceDapp } from '@river/web3/tests/TestSpaceDapp'
-import { TestWeb3Provider } from '@river/web3/tests/TestWeb3Provider'
+import { TestSpaceDapp } from '@river-build/web3/tests/TestSpaceDapp'
+import { TestWeb3Provider } from '@river-build/web3/tests/TestWeb3Provider'
 import { ethers } from 'ethers'
-import { ISpaceDapp } from '@river/web3'
+import { ISpaceDapp } from '@river-build/web3'
 import { TestUserOps } from './TestUserOps'
 
 // these tests are comprised of basic transactions that don't interact with towns contracts per se,

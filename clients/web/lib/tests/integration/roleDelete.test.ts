@@ -15,7 +15,7 @@ import { ContractReceipt } from 'ethers'
 import { RoleIdentifier } from '../../src/types/web3-types'
 import { TestConstants } from './helpers/TestConstants'
 import { waitFor } from '@testing-library/react'
-import { getTestGatingNftAddress, NoopRuleData, Permission } from '@river/web3'
+import { getTestGatingNftAddress, NoopRuleData, Permission } from '@river-build/web3'
 
 // check all these tests - https://linear.app/hnt-labs/issue/HNT-5238/delete-role-tests-are-broken
 describe('delete role', () => {

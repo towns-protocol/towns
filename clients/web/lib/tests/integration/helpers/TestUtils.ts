@@ -13,7 +13,7 @@ import {
     IArchitectBase,
     NoopRuleData,
     MembershipStruct,
-} from '@river/web3'
+} from '@river-build/web3'
 import { getDynamicPricingModule, getFixedPricingModule } from '../../../src/utils/web3'
 
 interface ChainIds {

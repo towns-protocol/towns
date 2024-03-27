@@ -1,6 +1,6 @@
 import { ContractTransaction } from 'ethers'
 import { ISendUserOperationResponse } from 'userop'
-import { Address } from '@river/web3'
+import { Address } from '@river-build/web3'
 
 export function isUserOpResponse(
     tx: undefined | ContractTransaction | ISendUserOperationResponse,

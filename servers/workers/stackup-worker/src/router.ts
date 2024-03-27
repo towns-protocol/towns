@@ -157,7 +157,7 @@ router.post('/api/sponsor-userop', async (request: WorkerRequest, env: Env) => {
           3. check total number of link actions per wallet
         */
 
-        // todo: all other on-chain write functions exposed in app (see @river/web3 for list)
+        // todo: all other on-chain write functions exposed in app (see @river-build/web3 for list)
         switch (functionHash) {
             // todo: functionHash should be a keccak hash of the function signature
             case 'createSpace': {

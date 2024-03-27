@@ -31,8 +31,8 @@
     "dependencies": {
         "@river-build/generated": "workspace:^",
         "@river-build/proto": "workspace:^",
+        "@river-build/web3": "workspace:^",
         "@river/sdk": "workspace:^",
-        "@river/web3": "workspace:^",
         "@tanstack/react-query": "^5.20.1",
         "@towns/userops": "workspace:^",
         "@types/node-emoji": "^1.8.2",

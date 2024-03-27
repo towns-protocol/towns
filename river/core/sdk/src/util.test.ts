@@ -23,7 +23,7 @@ import assert from 'assert'
 import _ from 'lodash'
 import { MockEntitlementsDelegate } from './utils'
 import { SignerContext, makeSignerContext } from './signerContext'
-import { createRiverRegistry, LocalhostWeb3Provider, PricingModuleStruct } from '@river/web3'
+import { createRiverRegistry, LocalhostWeb3Provider, PricingModuleStruct } from '@river-build/web3'
 
 const log = dlog('csb:test:util')
 

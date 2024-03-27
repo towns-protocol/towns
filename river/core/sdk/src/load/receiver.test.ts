@@ -27,7 +27,7 @@ import { DecryptedTimelineEvent } from '../types'
 import { createAndStartClient } from './load.test_util'
 import { RiverSDK } from '../testSdk.test_util'
 
-const { createSpaceDapp } = await import('@river/web3')
+const { createSpaceDapp } = await import('@river-build/web3')
 
 const base_log = dlog('csb:test:loadTestsS2')
 

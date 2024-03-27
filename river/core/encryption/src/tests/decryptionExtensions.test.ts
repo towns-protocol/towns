@@ -19,7 +19,7 @@ import { CryptoStore } from '../cryptoStore'
 import EventEmitter from 'events'
 import { GroupEncryptionCrypto } from '../groupEncryptionCrypto'
 import { IGroupEncryptionClient } from '../base'
-import { Permission } from '@river/web3'
+import { Permission } from '@river-build/web3'
 import TypedEmitter from 'typed-emitter'
 import { customAlphabet } from 'nanoid'
 

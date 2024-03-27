@@ -3,7 +3,7 @@
 import { ethers } from 'ethers'
 import { waitForOptions } from '@testing-library/react'
 import { getJsonProvider, parseOptInt } from './TestUtils'
-import { TestGatingNFT } from '@river/web3'
+import { TestGatingNFT } from '@river-build/web3'
 
 const amount = ethers.BigNumber.from(10).pow(18).toHexString()
 const provider = getJsonProvider()

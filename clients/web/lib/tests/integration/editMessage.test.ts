@@ -11,7 +11,7 @@ import {
 
 import { waitFor } from '@testing-library/dom'
 import { RoomMessageEvent } from '../../src/types/timeline-types'
-import { Permission } from '@river/web3'
+import { Permission } from '@river-build/web3'
 
 describe('editMessage', () => {
     // test: editMessage

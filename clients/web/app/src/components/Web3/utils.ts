@@ -4,7 +4,7 @@ import {
     useCasablancaStore,
 } from 'use-towns-client'
 
-import { WalletAlreadyLinkedError, WalletNotLinkedError } from '@river/web3'
+import { WalletAlreadyLinkedError, WalletNotLinkedError } from '@river-build/web3'
 
 import { arbitrum, base, baseSepolia, mainnet, optimism } from 'viem/chains'
 import {

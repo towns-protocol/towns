@@ -15,7 +15,7 @@ import { useCreateChannelTransaction } from '../../src/hooks/use-create-channel-
 import { CreateChannelInfo } from '../../src/types/towns-types'
 import { SpaceContextProvider } from '../../src/components/SpaceContextProvider'
 import { TestConstants } from './helpers/TestConstants'
-import { NoopRuleData } from '@river/web3'
+import { NoopRuleData } from '@river-build/web3'
 import { getDynamicPricingModule } from '../../src/utils/web3'
 import { useTownsClient } from '../../src/hooks/use-towns-client'
 import { ethers } from 'ethers'

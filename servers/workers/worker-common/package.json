@@ -21,7 +21,7 @@
     },
     "dependencies": {
         "@river-build/generated": "workspace:^",
-        "@river/web3": "workspace:^",
+        "@river-build/web3": "workspace:^",
         "ethers": "^5.7.2",
         "siwe": "^2.1.3"
     },

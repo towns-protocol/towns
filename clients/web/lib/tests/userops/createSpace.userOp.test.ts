@@ -1,4 +1,4 @@
-import { Permission } from '@river/web3'
+import { Permission } from '@river-build/web3'
 import { registerAndStartClient } from '../integration/helpers/TestUtils'
 import {
     createUngatedSpace,

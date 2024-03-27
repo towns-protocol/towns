@@ -9,7 +9,7 @@ import { userIdFromAddress } from '../id'
 import { Client } from '../client'
 import { RiverDbManager } from '../riverDbManager'
 import { MockEntitlementsDelegate } from '../utils'
-import { createSpaceDapp } from '@river/web3'
+import { createSpaceDapp } from '@river-build/web3'
 import {
     RiverSDK,
     startsWithSubstring,

@@ -11,7 +11,12 @@ import {
 import { ContractReceipt } from 'ethers'
 import { TestConstants } from './helpers/TestConstants'
 import { RoleDetails } from '../../src/types/web3-types'
-import { getFilteredRolesFromSpace, Permission, UpdateRoleParams, NoopRuleData } from '@river/web3'
+import {
+    getFilteredRolesFromSpace,
+    Permission,
+    UpdateRoleParams,
+    NoopRuleData,
+} from '@river-build/web3'
 
 describe('update role', () => {
     test('Update Everyone role with multicall', async () => {

@@ -1,6 +1,6 @@
 import { keccak256 } from 'ethereum-cryptography/keccak'
+import { Permission } from '@river-build/web3'
 import { bin_toHexString, isJest } from '@river-build/dlog'
-import { Permission } from '@river/web3'
 import { isBrowser, isNode } from 'browser-or-node'
 
 export function unsafeProp<K extends keyof any | undefined>(prop: K): boolean {

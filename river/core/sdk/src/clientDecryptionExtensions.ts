@@ -15,7 +15,7 @@ import { make_MemberPayload_KeyFulfillment, make_MemberPayload_KeySolicitation }
 
 import { Client } from './client'
 import { EncryptedContent } from './encryptedContentTypes'
-import { Permission } from '@river/web3'
+import { Permission } from '@river-build/web3'
 import { check } from '@river-build/dlog'
 import chunk from 'lodash/chunk'
 import { isDefined } from './check'

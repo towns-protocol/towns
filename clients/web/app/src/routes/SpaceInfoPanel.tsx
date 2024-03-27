@@ -1,4 +1,4 @@
-import { Permission } from '@river/web3'
+import { Permission } from '@river-build/web3'
 import React, { useCallback, useRef, useState } from 'react'
 import { toast } from 'react-hot-toast/headless'
 import { useNavigate } from 'react-router'

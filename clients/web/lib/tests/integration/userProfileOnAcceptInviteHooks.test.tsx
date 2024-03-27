@@ -7,7 +7,7 @@ import { createTestSpaceGatedByTownNft, registerAndStartClients } from './helper
 import { fireEvent, render, screen, waitFor } from '@testing-library/react'
 
 import { LoginWithWallet } from './helpers/TestComponents'
-import { Permission } from '@river/web3'
+import { Permission } from '@river-build/web3'
 import React from 'react'
 import { TownsTestApp } from './helpers/TownsTestApp'
 import { useInvites } from '../../src/hooks/use-space-data'

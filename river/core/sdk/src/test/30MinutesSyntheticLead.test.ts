@@ -32,8 +32,8 @@ import {
     replySentTime,
 } from './30MinutesSyntheticConfig.test_util'
 import { DecryptedTimelineEvent } from '../types'
+import { createSpaceDapp } from '@river-build/web3'
 import { SnapshotCaseType } from '@river-build/proto'
-import { createSpaceDapp } from '@river/web3'
 import { RiverSDK } from '../testSdk.test_util'
 
 // This is a temporary hack because importing viem via SpaceDapp causes a jest error

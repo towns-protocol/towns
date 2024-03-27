@@ -6,7 +6,7 @@ import {
     Permission,
     NoopRuleData,
     getFilteredRolesFromSpace,
-} from '@river/web3'
+} from '@river-build/web3'
 import { makeDefaultChannelStreamId, makeSpaceStreamId, makeUniqueChannelStreamId } from './id'
 import { BigNumber, ethers } from 'ethers'
 import { dlog } from '@river-build/dlog'

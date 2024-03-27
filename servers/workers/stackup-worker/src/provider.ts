@@ -1,4 +1,4 @@
-import { ISpaceDapp, Versions, createSpaceDapp } from '@river/web3'
+import { ISpaceDapp, Versions, createSpaceDapp } from '@river-build/web3'
 import { ethers } from 'ethers'
 import { env } from 'process'
 import { Environment } from 'worker-common'

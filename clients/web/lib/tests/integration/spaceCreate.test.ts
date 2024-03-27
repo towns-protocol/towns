@@ -2,7 +2,7 @@
  * @group core
  */
 
-import { Permission } from '@river/web3'
+import { Permission } from '@river-build/web3'
 import {
     createTestSpaceGatedByTownNft,
     createTestSpaceGatedByTownsNfts,

@@ -3,7 +3,7 @@
  * @group core
  */
 import { waitFor } from '@testing-library/dom'
-import { Permission } from '@river/web3'
+import { Permission } from '@river-build/web3'
 import { ZTEvent } from '../../src/types/timeline-types'
 import {
     createTestChannelWithSpaceRoles,

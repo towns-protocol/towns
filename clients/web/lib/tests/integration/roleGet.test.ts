@@ -12,7 +12,7 @@ import {
 
 import { RoleIdentifier } from '../../src/types/web3-types'
 import { TestConstants } from './helpers/TestConstants'
-import { getTestGatingNftAddress, Permission, RoleDetails, NoopRuleData } from '@river/web3'
+import { getTestGatingNftAddress, Permission, RoleDetails, NoopRuleData } from '@river-build/web3'
 
 describe('get role details', () => {
     test('get details of a role that no channel uses', async () => {

@@ -2,7 +2,7 @@ import { Env } from '.'
 import { isPrivyApiSearchResponse, searchPrivyForUser } from './privy'
 import { Overrides, isWhitelistStoredOperation, IOverrideOperation } from './types'
 import { TRANSACTION_LIMIT_DEFAULTS_PER_DAY } from './useropVerification'
-//import { Permission } from '@river/web3'
+//import { Permission } from '@river-build/web3'
 
 export interface IVerificationResult {
     verified: boolean

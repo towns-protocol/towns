@@ -1,4 +1,4 @@
-import { IArchitectBase, NoopRuleData, Permission } from '@river/web3'
+import { IArchitectBase, NoopRuleData, Permission } from '@river-build/web3'
 import { TownsTestClient } from '../integration/helpers/TownsTestClient'
 import { CreateSpaceInfo } from '../../src/types/towns-types'
 import { ethers } from 'ethers'

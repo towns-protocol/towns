@@ -25,7 +25,7 @@ import {
     createOperationsTree,
     LOCALHOST_CHAIN_ID,
     CheckOperationType,
-} from '@river/web3'
+} from '@river-build/web3'
 import { useTownsClient } from '../../src/hooks/use-towns-client'
 import { TSigner } from '../../src/types/web3-types'
 import { getDynamicPricingModule } from '../../src/utils/web3'

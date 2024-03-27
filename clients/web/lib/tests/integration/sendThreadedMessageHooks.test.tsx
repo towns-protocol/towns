@@ -5,7 +5,7 @@
 import React, { useCallback, useMemo } from 'react'
 import { setTimeout } from 'timers/promises'
 import { FullyReadMarker } from '@river-build/proto'
-import { Permission } from '@river/web3'
+import { Permission } from '@river-build/web3'
 import {
     RoomMessageEvent,
     ThreadResult,

@@ -1,7 +1,7 @@
 import { ethers } from 'ethers'
 import { UserOps } from '../src/UserOperations'
 import { ISendUserOperationResponse } from 'userop'
-import { LOCALHOST_CHAIN_ID } from '@river/web3'
+import { LOCALHOST_CHAIN_ID } from '@river-build/web3'
 
 export class TestUserOps extends UserOps {
     /**

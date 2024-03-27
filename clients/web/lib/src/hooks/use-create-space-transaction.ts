@@ -9,7 +9,7 @@ import { useCallback, useMemo, useRef, useState } from 'react'
 import { TSigner } from '../types/web3-types'
 import { CreateSpaceInfo } from '../types/towns-types'
 import { useTownsClient } from './use-towns-client'
-import { IArchitectBase } from '@river/web3'
+import { IArchitectBase } from '@river-build/web3'
 import { getTransactionHashOrUserOpHash } from '@towns/userops'
 import { useMyDefaultUsernames } from './use-my-default-usernames'
 /**

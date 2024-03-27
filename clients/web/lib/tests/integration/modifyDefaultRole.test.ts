@@ -3,7 +3,7 @@
  */
 import { TestConstants } from './helpers/TestConstants'
 import { createTestSpaceGatedByTownNft, registerAndStartClients } from './helpers/TestUtils'
-import { NoopRuleData, Permission } from '@river/web3'
+import { NoopRuleData, Permission } from '@river-build/web3'
 
 // TODO: https://linear.app/hnt-labs/issue/HNT-5071/cannot-create-a-channel-when-the-default-member-role-has-the-addremove
 describe('modifyDefaultRole', () => {

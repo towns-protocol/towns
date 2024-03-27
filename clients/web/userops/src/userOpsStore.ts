@@ -1,4 +1,4 @@
-import { Address } from '@river/web3'
+import { Address } from '@river-build/web3'
 import { BigNumberish } from 'ethers'
 import { create } from 'zustand'
 

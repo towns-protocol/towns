@@ -8,7 +8,7 @@
         "test": "DOTENV_CONFIG_PATH=.env.test vitest --coverage"
     },
     "dependencies": {
-        "@river/web3": "workspace:^",
+        "@river-build/web3": "workspace:^",
         "dotenv": "^16.3.1",
         "userop": "^0.3.7",
         "zod": "^3.21.4",

@@ -39,7 +39,7 @@
         "@river-build/dlog": "workspace:^",
         "@river-build/encryption": "workspace:^",
         "@river-build/proto": "workspace:^",
-        "@river/web3": "workspace:^",
+        "@river-build/web3": "workspace:^",
         "axios": "^1.2.6",
         "browser-or-node": "^2.1.1",
         "debug": "^4.3.4",

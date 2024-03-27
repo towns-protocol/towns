@@ -12,7 +12,7 @@ import {
 } from 'use-towns-client/tests/integration/helpers/TestUtils'
 
 import { TestConstants } from './helpers/TestConstants'
-import { Permission, createExternalTokenStruct, getTestGatingNftAddress } from '@river/web3'
+import { Permission, createExternalTokenStruct, getTestGatingNftAddress } from '@river-build/web3'
 import { RoleIdentifier } from '../../src/types/web3-types'
 
 describe('channel with roles and permissions', () => {

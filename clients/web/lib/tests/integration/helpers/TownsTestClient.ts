@@ -20,7 +20,7 @@ import { ethers } from 'ethers'
 import { makeUniqueName } from './TestUtils'
 import { toEvent } from '../../../src/hooks/TownsContext/useCasablancaTimelines'
 import { Client as CasablancaClient, makeSignerContext } from '@river/sdk'
-import { Permission, IArchitectBase, IRuleEntitlement } from '@river/web3'
+import { Permission, IArchitectBase, IRuleEntitlement } from '@river-build/web3'
 
 export interface TownsTestClientProps {
     eventHandlers?: TownsClientEventHandlers

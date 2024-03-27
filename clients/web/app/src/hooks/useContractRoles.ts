@@ -1,6 +1,6 @@
 import { useQuery } from '@tanstack/react-query'
 import { useTownsContext } from 'use-towns-client'
-import { getFilteredRolesFromSpace } from '@river/web3'
+import { getFilteredRolesFromSpace } from '@river-build/web3'
 
 export const useContractRoles = (spaceNetworkId?: string) => {
     const { client } = useTownsContext()

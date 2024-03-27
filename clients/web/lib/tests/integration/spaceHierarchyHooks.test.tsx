@@ -12,7 +12,7 @@ import {
 import { render, screen, waitFor } from '@testing-library/react'
 
 import { LoginStatus } from '../../src/hooks/login'
-import { Permission } from '@river/web3'
+import { Permission } from '@river-build/web3'
 import React from 'react'
 import { SpaceContextProvider } from '../../src/components/SpaceContextProvider'
 import { TestConstants } from './helpers/TestConstants'

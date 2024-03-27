@@ -23,7 +23,7 @@ import {
     Permission,
     MembershipStruct,
     NoopRuleData,
-} from '@river/web3'
+} from '@river-build/web3'
 import { MembershipOp } from '@river-build/proto'
 
 const base_log = dlog('csb:test:withEntitlements')

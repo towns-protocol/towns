@@ -7,7 +7,7 @@ import {
     Stream,
 } from '@river/sdk'
 import { useEffect, useState } from 'react'
-import { SpaceInfo } from '@river/web3'
+import { SpaceInfo } from '@river-build/web3'
 import { RoomMember, Membership, Room, toMembership } from '../../types/towns-types'
 import isEqual from 'lodash/isEqual'
 import { useContractSpaceInfos } from '../use-space-data'

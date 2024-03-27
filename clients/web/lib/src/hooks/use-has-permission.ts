@@ -3,7 +3,7 @@ import { useCallback } from 'react'
 import { useQuery } from '../query/queryClient'
 import { useTownsClient } from './use-towns-client'
 import { blockchainKeys } from '../query/query-keys'
-import { Permission } from '@river/web3'
+import { Permission } from '@river-build/web3'
 import { isAddress } from 'ethers/lib/utils'
 
 interface Props {

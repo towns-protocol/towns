@@ -5,7 +5,7 @@ import {
     SpaceDapp,
     createEntitlementStruct,
     createSpaceDapp,
-} from '@river/web3'
+} from '@river-build/web3'
 import { ethers } from 'ethers'
 import { ISendUserOperationResponse, Client as UseropClient, Presets } from 'userop'
 import { UserOpsConfig, UserOpParams } from './types'

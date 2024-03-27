@@ -1,5 +1,5 @@
 import React, { useEffect } from 'react'
-import { Permission } from '@river/web3'
+import { Permission } from '@river-build/web3'
 import { Paragraph, Stack, Toggle } from '@ui'
 import { rolePermissionDescriptions } from './rolePermissions.const'
 

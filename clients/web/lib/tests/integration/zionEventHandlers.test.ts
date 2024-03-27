@@ -9,7 +9,12 @@ import {
 } from './helpers/TestUtils'
 import { waitFor } from '@testing-library/dom'
 import { sleep } from '../../src/utils/towns-utils'
-import { getTestGatingNftAddress, IArchitectBase, NoopRuleData, Permission } from '@river/web3'
+import {
+    getTestGatingNftAddress,
+    IArchitectBase,
+    NoopRuleData,
+    Permission,
+} from '@river-build/web3'
 import { ethers } from 'ethers'
 import { getDynamicPricingModule } from '../../src/utils/web3'
 

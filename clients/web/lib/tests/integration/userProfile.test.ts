@@ -8,7 +8,7 @@ import {
     registerAndStartClient,
 } from './helpers/TestUtils'
 
-import { Permission } from '@river/web3'
+import { Permission } from '@river-build/web3'
 import { TestConstants } from './helpers/TestConstants'
 import { act, waitFor } from '@testing-library/react'
 

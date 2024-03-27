@@ -4,7 +4,7 @@
 
 import { dlog } from '@river-build/dlog'
 import { ethers } from 'ethers'
-import { LocalhostWeb3Provider, createRiverRegistry } from '@river/web3'
+import { LocalhostWeb3Provider, createRiverRegistry } from '@river-build/web3'
 
 const log = dlog('csb:test')
 const RIVER_NETWORK_ANVIL = 'http://localhost:8546'

@@ -1,7 +1,7 @@
 import { BigNumber } from 'ethers'
 // eslint-disable-next-line no-restricted-imports
 import * as townsClient from 'use-towns-client'
-import { NoopRuleData, Permission } from '@river/web3'
+import { NoopRuleData, Permission } from '@river-build/web3'
 import { EVERYONE_ADDRESS } from 'utils'
 import { convertTokenTypeToOperationType } from '@components/Tokens/utils'
 import { TokenType } from '@components/Tokens/types'

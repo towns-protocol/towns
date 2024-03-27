@@ -10,7 +10,7 @@ import { TSigner } from '../types/web3-types'
 import { blockchainKeys } from '../query/query-keys'
 import { useQueryClient } from '../query/queryClient'
 import { useTownsClient } from './use-towns-client'
-import { Permission, IRuleEntitlement } from '@river/web3'
+import { Permission, IRuleEntitlement } from '@river-build/web3'
 import { getTransactionHashOrUserOpHash } from '@towns/userops'
 
 /**

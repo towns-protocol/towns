@@ -1,6 +1,6 @@
 /* eslint-disable @typescript-eslint/no-non-null-assertion */
 
-import { IArchitectBase, NoopOperation, Permission } from '@river/web3'
+import { IArchitectBase, NoopOperation, Permission } from '@river-build/web3'
 import ethers from 'ethers'
 import { TownsTestClient } from '../tests/integration/helpers/TownsTestClient'
 import { Wallet } from 'ethers'

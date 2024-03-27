@@ -11,7 +11,7 @@ import {
     createTestSpaceGatedByTownNft,
 } from 'use-towns-client/tests/integration/helpers/TestUtils'
 
-import { Permission, createExternalTokenStruct, getTestGatingNftAddress } from '@river/web3'
+import { Permission, createExternalTokenStruct, getTestGatingNftAddress } from '@river-build/web3'
 import { TestConstants } from './helpers/TestConstants'
 import { waitFor } from '@testing-library/dom'
 

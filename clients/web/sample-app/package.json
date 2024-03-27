@@ -23,7 +23,7 @@
         "@privy-io/react-auth": "1.56.0",
         "@privy-io/wagmi-connector": "0.1.12",
         "@river-build/generated": "workspace:^",
-        "@river/web3": "workspace:^",
+        "@river-build/web3": "workspace:^",
         "@towns/privy": "workspace:^",
         "@towns/userops": "workspace:^",
         "@types/node": "^20.5.0",

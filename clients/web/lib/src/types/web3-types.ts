@@ -2,7 +2,7 @@ import {
     RoleEntitlements as R_RoleEntitlements,
     RoleDetails as R_RoleDetails,
     ISpaceDapp as R_ISpaceDapp,
-} from '@river/web3'
+} from '@river-build/web3'
 import { ContractReceipt, ContractTransaction, Signer, providers } from 'ethers'
 import { ISendUserOperationResponse } from 'userop.js'
 

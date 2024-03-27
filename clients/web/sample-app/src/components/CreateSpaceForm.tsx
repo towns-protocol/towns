@@ -18,7 +18,7 @@ import {
     Permission,
     getTestGatingNFTContractAddress,
     mintMockNFT,
-} from '@river/web3'
+} from '@river-build/web3'
 import React, { useCallback, useEffect, useMemo, useRef, useState } from 'react'
 import { ethers } from 'ethers'
 import { useGetEmbeddedSigner } from '@towns/privy'

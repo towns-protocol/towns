@@ -2,7 +2,7 @@ import { useCallback, useEffect } from 'react'
 import { useQuery, useQueryClient } from '../query/queryClient'
 
 import { blockchainKeys } from '../query/query-keys'
-import { getFilteredRolesFromSpace } from '@river/web3'
+import { getFilteredRolesFromSpace } from '@river-build/web3'
 import { useSpaceDapp } from './use-space-dapp'
 import { useWeb3Context } from '../components/Web3ContextProvider'
 

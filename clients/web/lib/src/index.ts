@@ -133,4 +133,4 @@ if (typeof window !== 'undefined' && !window.Buffer) {
     window.Buffer = Buffer
 }
 
-export * from '@river/web3'
+export * from '@river-build/web3'

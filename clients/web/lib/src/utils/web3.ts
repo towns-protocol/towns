@@ -1,4 +1,4 @@
-import { PricingModuleStruct } from '@river/web3'
+import { PricingModuleStruct } from '@river-build/web3'
 import { ISpaceDapp } from '../types/web3-types'
 
 export const TIERED_PRICING_ORACLE = 'TieredLogPricingOracle'

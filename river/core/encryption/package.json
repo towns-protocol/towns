@@ -22,7 +22,7 @@
         "@matrix-org/olm": "^3.2.15",
         "@river-build/dlog": "workspace:^",
         "@river-build/proto": "workspace:^",
-        "@river/web3": "workspace:^",
+        "@river-build/web3": "workspace:^",
         "debug": "^4.3.4",
         "dexie": "^3.2.4",
         "ethers": "^5.7.2",

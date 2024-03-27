@@ -1,16 +1,16 @@
 import { jest } from '@jest/globals'
-import { Permission } from '@river/web3'
+import { Permission } from '@river-build/web3'
 
 const mockIsEntitled = jest.fn()
 
-jest.unstable_mockModule('@river/web3', async () => {
+jest.unstable_mockModule('@river-build/web3', async () => {
 	return {
 		createSpaceDapp() {
 			return {
 				isEntitledToSpace: mockIsEntitled,
 			}
 		},
-		// yes, jest sucks with esm and we can't do jest.requireActual, or import('@river/web3') from w/in the mock
+		// yes, jest sucks with esm and we can't do jest.requireActual, or import('@river-build/web3') from w/in the mock
 		Permission,
 	}
 })

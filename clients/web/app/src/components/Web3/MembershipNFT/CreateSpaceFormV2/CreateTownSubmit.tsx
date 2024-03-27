@@ -1,5 +1,5 @@
 import { UseFormReturn } from 'react-hook-form'
-import { MembershipStruct, NoopRuleData, Permission, createOperationsTree } from '@river/web3'
+import { MembershipStruct, NoopRuleData, Permission, createOperationsTree } from '@river-build/web3'
 import {
     CreateSpaceInfo,
     findDynamicPricingModule,

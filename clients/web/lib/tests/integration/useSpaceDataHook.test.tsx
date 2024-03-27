@@ -12,7 +12,7 @@ import { fireEvent, render, screen, waitFor } from '@testing-library/react'
 
 import { LoginStatus } from '../../src/hooks/login'
 import { useMyProfile } from '../../src/hooks/use-my-profile'
-import { Permission } from '@river/web3'
+import { Permission } from '@river-build/web3'
 import React, { useCallback, useEffect } from 'react'
 import { SpaceContextProvider } from '../../src/components/SpaceContextProvider'
 import { TestConstants } from './helpers/TestConstants'

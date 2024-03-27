@@ -20,7 +20,7 @@ import {
     NoopRuleData,
     Permission,
     createSpaceDapp,
-} from '@river/web3'
+} from '@river-build/web3'
 
 const log = dlog('csb:test')
 const ETH_ADDRESS = '0xEeeeeEeeeEeEeeEeEeEeeEEEeeeeEeeeeeeeEEeE'

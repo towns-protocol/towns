@@ -1,4 +1,4 @@
-import { SpaceDapp } from '@river/web3'
+import { SpaceDapp } from '@river-build/web3'
 import { IUserOperationMiddlewareCtx } from 'userop'
 import { ethers } from 'ethers'
 

@@ -10,7 +10,7 @@ import {
     EVERYONE_ADDRESS,
 } from './helpers/TestUtils'
 
-import { NoopRuleData, Permission, getTestGatingNftAddress } from '@river/web3'
+import { NoopRuleData, Permission, getTestGatingNftAddress } from '@river-build/web3'
 import { TestConstants } from './helpers/TestConstants'
 import { RoleIdentifier } from '../../src/types/web3-types'
 

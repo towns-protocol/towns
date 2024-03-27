@@ -3,7 +3,7 @@
 import { Wallet, ethers } from 'ethers'
 
 import { fundWallet } from './TestUtils'
-import { getContractsInfo, MockERC721AShim } from '@river/web3'
+import { getContractsInfo, MockERC721AShim } from '@river-build/web3'
 import { userIdFromAddress } from '@river/sdk'
 import { bin_fromHexString } from '@river-build/dlog'
 
