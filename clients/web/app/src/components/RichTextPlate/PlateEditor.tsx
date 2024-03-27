@@ -325,7 +325,7 @@ const PlateEditorWithoutBoundary = ({
                                     placeholder={placeholder}
                                     renderPlaceholder={RichTextPlaceholder}
                                     disabled={isSendingMessage}
-                                    onKeyDown={handleSendOnEnter}
+                                    handleSendOnEnter={handleSendOnEnter}
                                     onFocus={onFocus}
                                     onBlur={onBlur}
                                 />
