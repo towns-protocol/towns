@@ -356,6 +356,9 @@ const PlateEditorWithoutBoundary = ({
                             </Box>
                         )}
                     </Stack>
+                    <Box paddingX="md" paddingBottom="sm">
+                        <PasteFilePlugin editableContainerRef={editableContainerRef} />
+                    </Box>
                     <Stack
                         gap
                         shrink
@@ -364,7 +367,6 @@ const PlateEditorWithoutBoundary = ({
                         paddingBottom="sm"
                         pointerEvents={editable ? 'auto' : 'none'}
                     >
-                        <PasteFilePlugin editableContainerRef={editableContainerRef} />
                         <RichTextBottomToolbar
                             editing={isEditing}
                             focused={focused}
