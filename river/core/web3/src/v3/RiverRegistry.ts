@@ -1,4 +1,4 @@
-import { NodeStructOutput } from '@river/generated/dev/typings/INodeRegistry'
+import { NodeStructOutput } from '@river-build/generated/dev/typings/INodeRegistry'
 import { getRiverChainContractsInfo } from '../IStaticContractsInfo'
 import { IRiverRegistryShim } from './IRiverRegistryShim'
 import { ethers } from 'ethers'

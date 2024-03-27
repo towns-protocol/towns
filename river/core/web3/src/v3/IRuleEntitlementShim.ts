@@ -1,6 +1,6 @@
-import { IRuleEntitlement as LocalhostIRuleEntitlement } from '@river/generated/dev/typings/IRuleEntitlement'
+import { IRuleEntitlement as LocalhostIRuleEntitlement } from '@river-build/generated/dev/typings/IRuleEntitlement'
 
-import LocalhostEntitlementAbi from '@river/generated/dev/abis/IRuleEntitlement.abi'
+import LocalhostEntitlementAbi from '@river-build/generated/dev/abis/IRuleEntitlement.abi'
 
 export type { LocalhostIRuleEntitlement as IRuleEntitlement }
 

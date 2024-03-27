@@ -14,7 +14,7 @@
         "test:unit": "yarn node --experimental-vm-modules $(yarn bin jest)"
     },
     "dependencies": {
-        "@river/generated": "workspace:^",
+        "@river-build/generated": "workspace:^",
         "alchemy-sdk": "^2.2.4",
         "itty-router": "^2.6.6",
         "worker-common": "workspace:^"

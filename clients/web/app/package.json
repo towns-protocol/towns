@@ -39,7 +39,7 @@
         "@privy-io/react-auth": "1.56.0",
         "@privy-io/wagmi-connector": "0.1.12",
         "@react-hook/resize-observer": "^1.2.6",
-        "@river/generated": "workspace:^",
+        "@river-build/generated": "workspace:^",
         "@river/proto": "workspace:^",
         "@river/web3": "workspace:^",
         "@tanstack/query-async-storage-persister": "^5.20.1",

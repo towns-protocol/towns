@@ -2,14 +2,14 @@ import {
     IEntitlementsManager as LocalhostContract,
     IEntitlementsManagerBase as LocalhostIEntitlementsBase,
     IEntitlementsManagerInterface as LocalhostInterface,
-} from '@river/generated/dev/typings/IEntitlementsManager'
+} from '@river-build/generated/dev/typings/IEntitlementsManager'
 import {
     IEntitlementsManager as BaseSepoliaContract,
     IEntitlementsManagerInterface as BaseSepoliaInterface,
-} from '@river/generated/v3/typings/IEntitlementsManager'
+} from '@river-build/generated/v3/typings/IEntitlementsManager'
 
-import LocalhostAbi from '@river/generated/dev/abis/EntitlementsManager.abi.json' assert { type: 'json' }
-import BaseSepoliaAbi from '@river/generated/v3/abis/EntitlementsManager.abi.json' assert { type: 'json' }
+import LocalhostAbi from '@river-build/generated/dev/abis/EntitlementsManager.abi.json' assert { type: 'json' }
+import BaseSepoliaAbi from '@river-build/generated/v3/abis/EntitlementsManager.abi.json' assert { type: 'json' }
 
 import { BaseContractShim } from './BaseContractShim'
 import { ethers } from 'ethers'

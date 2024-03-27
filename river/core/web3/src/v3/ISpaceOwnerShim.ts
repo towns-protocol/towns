@@ -2,14 +2,14 @@ import {
     ISpaceOwner as LocalhostContract,
     ISpaceOwnerBase as LocalhostISpaceOwnerBase,
     ISpaceOwnerInterface as LocalhostInterface,
-} from '@river/generated/dev/typings/ISpaceOwner'
+} from '@river-build/generated/dev/typings/ISpaceOwner'
 import {
     ISpaceOwner as BaseSepoliaContract,
     ISpaceOwnerInterface as BaseSepoliaInterface,
-} from '@river/generated/v3/typings/ISpaceOwner'
+} from '@river-build/generated/v3/typings/ISpaceOwner'
 
-import LocalhostAbi from '@river/generated/dev/abis/SpaceOwner.abi.json' assert { type: 'json' }
-import BaseSepoliaAbi from '@river/generated/v3/abis/SpaceOwner.abi.json' assert { type: 'json' }
+import LocalhostAbi from '@river-build/generated/dev/abis/SpaceOwner.abi.json' assert { type: 'json' }
+import BaseSepoliaAbi from '@river-build/generated/v3/abis/SpaceOwner.abi.json' assert { type: 'json' }
 
 import { BaseContractShim } from './BaseContractShim'
 import { ethers } from 'ethers'

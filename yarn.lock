@@ -7253,6 +7253,12 @@ __metadata:
   languageName: unknown
   linkType: soft
 
+"@river-build/generated@workspace:^, @river-build/generated@workspace:river/packages/generated":
+  version: 0.0.0-use.local
+  resolution: "@river-build/generated@workspace:river/packages/generated"
+  languageName: unknown
+  linkType: soft
+
 "@river/contracts@workspace:river/contracts":
   version: 0.0.0-use.local
   resolution: "@river/contracts@workspace:river/contracts"
@@ -7310,12 +7316,6 @@ __metadata:
     ts-jest: ^29.1.1
     ts-node: ^10.9.1
     typescript: ^5.1.6
-  languageName: unknown
-  linkType: soft
-
-"@river/generated@workspace:^, @river/generated@workspace:river/packages/generated":
-  version: 0.0.0-use.local
-  resolution: "@river/generated@workspace:river/packages/generated"
   languageName: unknown
   linkType: soft
 
@@ -7398,8 +7398,8 @@ __metadata:
   version: 0.0.0-use.local
   resolution: "@river/web3@workspace:river/core/web3"
   dependencies:
+    "@river-build/generated": "workspace:^"
     "@river/dlog": "workspace:^"
-    "@river/generated": "workspace:^"
     "@types/jest": ^29.5.3
     "@types/lodash": ^4.14.186
     "@types/node": ^20.5.0
@@ -16726,7 +16726,7 @@ __metadata:
   dependencies:
     "@aws-sdk/client-sns": ^3.295.0
     "@cloudflare/workers-types": ^4.20230710.1
-    "@river/generated": "workspace:^"
+    "@river-build/generated": "workspace:^"
     "@types/jest": ^29.5.3
     "@typescript-eslint/eslint-plugin": ^6.10.0
     "@typescript-eslint/parser": ^6.10.0
@@ -16878,7 +16878,7 @@ __metadata:
   version: 0.0.0-use.local
   resolution: "git-tags@workspace:servers/workers/git-tags"
   dependencies:
-    "@river/generated": "workspace:^"
+    "@river-build/generated": "workspace:^"
     miniflare: ^3.20230710.0
     vitest: ^1.1.1
     vitest-environment-miniflare: ^2.14.1
@@ -17288,7 +17288,7 @@ __metadata:
     "@privy-io/react-auth": 1.56.0
     "@privy-io/wagmi-connector": 0.1.12
     "@react-hook/resize-observer": ^1.2.6
-    "@river/generated": "workspace:^"
+    "@river-build/generated": "workspace:^"
     "@river/proto": "workspace:^"
     "@river/web3": "workspace:^"
     "@tanstack/query-async-storage-persister": ^5.20.1
@@ -19717,7 +19717,7 @@ __metadata:
   resolution: "jwt-worker@workspace:servers/workers/jwt-worker"
   dependencies:
     "@cloudflare/workers-types": ^4.20230710.1
-    "@river/generated": "workspace:^"
+    "@river-build/generated": "workspace:^"
     "@types/jest": ^29.5.3
     "@typescript-eslint/eslint-plugin": ^6.10.0
     "@typescript-eslint/parser": ^6.10.0
@@ -24966,7 +24966,7 @@ __metadata:
     "@mui/styles": ^5.10.10
     "@privy-io/react-auth": 1.56.0
     "@privy-io/wagmi-connector": 0.1.12
-    "@river/generated": "workspace:^"
+    "@river-build/generated": "workspace:^"
     "@river/web3": "workspace:^"
     "@rollup/plugin-inject": ^5.0.3
     "@towns/privy": "workspace:^"
@@ -25382,7 +25382,7 @@ __metadata:
   resolution: "siwe-worker@workspace:servers/workers/siwe-worker"
   dependencies:
     "@cloudflare/workers-types": ^4.20230710.1
-    "@river/generated": "workspace:^"
+    "@river-build/generated": "workspace:^"
     "@river/web3": "workspace:^"
     "@types/jest": ^29.5.3
     "@typescript-eslint/eslint-plugin": ^6.10.0
@@ -25885,7 +25885,7 @@ __metadata:
   resolution: "stackup-worker@workspace:servers/workers/stackup-worker"
   dependencies:
     "@cloudflare/workers-types": ^4.20230710.1
-    "@river/generated": "workspace:^"
+    "@river-build/generated": "workspace:^"
     "@types/jest": ^29.5.3
     "@typescript-eslint/eslint-plugin": ^6.10.0
     "@typescript-eslint/parser": ^6.10.0
@@ -26721,7 +26721,7 @@ __metadata:
   resolution: "token-worker@workspace:servers/workers/token-worker"
   dependencies:
     "@cloudflare/workers-types": ^4.20230710.1
-    "@river/generated": "workspace:^"
+    "@river-build/generated": "workspace:^"
     "@types/jest": ^29.5.3
     "@typescript-eslint/eslint-plugin": ^6.10.0
     "@typescript-eslint/parser": ^6.10.0
@@ -27452,7 +27452,7 @@ __metadata:
   resolution: "unfurl-worker@workspace:servers/workers/unfurl-worker"
   dependencies:
     "@cloudflare/workers-types": ^4.20230710.1
-    "@river/generated": "workspace:^"
+    "@river-build/generated": "workspace:^"
     "@types/jest": ^29.5.3
     "@typescript-eslint/eslint-plugin": ^6.10.0
     "@typescript-eslint/parser": ^6.10.0
@@ -28032,7 +28032,7 @@ __metadata:
   version: 0.0.0-use.local
   resolution: "use-towns-client@workspace:clients/web/lib"
   dependencies:
-    "@river/generated": "workspace:^"
+    "@river-build/generated": "workspace:^"
     "@river/proto": "workspace:^"
     "@river/sdk": "workspace:^"
     "@river/web3": "workspace:^"
@@ -29706,7 +29706,7 @@ __metadata:
   resolution: "worker-common@workspace:servers/workers/worker-common"
   dependencies:
     "@cloudflare/workers-types": ^4.20230710.1
-    "@river/generated": "workspace:^"
+    "@river-build/generated": "workspace:^"
     "@river/web3": "workspace:^"
     "@types/jest": ^29.5.3
     "@typescript-eslint/eslint-plugin": ^6.10.0

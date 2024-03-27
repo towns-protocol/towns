@@ -22,7 +22,7 @@
         "@mui/styles": "^5.10.10",
         "@privy-io/react-auth": "1.56.0",
         "@privy-io/wagmi-connector": "0.1.12",
-        "@river/generated": "workspace:^",
+        "@river-build/generated": "workspace:^",
         "@river/web3": "workspace:^",
         "@towns/privy": "workspace:^",
         "@towns/userops": "workspace:^",

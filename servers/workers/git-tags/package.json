@@ -10,7 +10,7 @@
         "test": "vitest"
     },
     "dependencies": {
-        "@river/generated": "workspace:^",
+        "@river-build/generated": "workspace:^",
         "zod": "^3.21.4"
     },
     "devDependencies": {

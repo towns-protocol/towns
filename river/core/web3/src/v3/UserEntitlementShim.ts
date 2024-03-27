@@ -1,14 +1,14 @@
 import {
     UserEntitlement as LocalhostContract,
     UserEntitlementInterface as LocalhostInterface,
-} from '@river/generated/dev/typings/UserEntitlement'
+} from '@river-build/generated/dev/typings/UserEntitlement'
 import {
     UserEntitlement as BaseSepoliaContract,
     UserEntitlementInterface as BaseSepoliaInterface,
-} from '@river/generated/v3/typings/UserEntitlement'
+} from '@river-build/generated/v3/typings/UserEntitlement'
 
-import LocalhostAbi from '@river/generated/dev/abis/UserEntitlement.abi.json' assert { type: 'json' }
-import BaseSepoliaAbi from '@river/generated/v3/abis/UserEntitlement.abi.json' assert { type: 'json' }
+import LocalhostAbi from '@river-build/generated/dev/abis/UserEntitlement.abi.json' assert { type: 'json' }
+import BaseSepoliaAbi from '@river-build/generated/v3/abis/UserEntitlement.abi.json' assert { type: 'json' }
 
 import { BaseContractShim } from './BaseContractShim'
 import { BigNumberish, ethers } from 'ethers'

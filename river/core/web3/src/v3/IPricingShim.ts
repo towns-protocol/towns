@@ -1,19 +1,19 @@
 import {
     IPricingModules as LocalhostContract,
     IPricingModulesInterface as LocalhostInterface,
-} from '@river/generated/dev/typings/IPricingModules'
-export type { IPricingModulesBase } from '@river/generated/dev/typings/IPricingModules'
+} from '@river-build/generated/dev/typings/IPricingModules'
+export type { IPricingModulesBase } from '@river-build/generated/dev/typings/IPricingModules'
 
 import {
     IPricingModules as BaseSepoliaContract,
     IPricingModulesInterface as BaseSepoliaInterface,
-} from '@river/generated/v3/typings/IPricingModules'
+} from '@river-build/generated/v3/typings/IPricingModules'
 
 import { BaseContractShim } from '../v3/BaseContractShim'
 import { ethers } from 'ethers'
 
-import LocalhostAbi from '@river/generated/dev/abis/IPricingModules.abi.json' assert { type: 'json' }
-import BaseSepoliaAbi from '@river/generated/v3/abis/IPricingModules.abi.json' assert { type: 'json' }
+import LocalhostAbi from '@river-build/generated/dev/abis/IPricingModules.abi.json' assert { type: 'json' }
+import BaseSepoliaAbi from '@river-build/generated/v3/abis/IPricingModules.abi.json' assert { type: 'json' }
 
 export class IPricingShim extends BaseContractShim<
     LocalhostContract,

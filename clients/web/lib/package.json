@@ -29,7 +29,7 @@
         "watch": "tsc --watch"
     },
     "dependencies": {
-        "@river/generated": "workspace:^",
+        "@river-build/generated": "workspace:^",
         "@river/proto": "workspace:^",
         "@river/sdk": "workspace:^",
         "@river/web3": "workspace:^",

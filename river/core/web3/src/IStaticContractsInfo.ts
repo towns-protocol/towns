@@ -1,14 +1,14 @@
-import LocalhostSpaceFactoryAddress from '@river/generated/addresses/base_anvil/spaceFactory.json' assert { type: 'json' }
-import LocalhostSpaceOwnerAddress from '@river/generated/addresses/base_anvil/spaceOwner.json' assert { type: 'json' }
-import LocalhostMockNFTAddress from '@river/generated/addresses/base_anvil/mockNFT.json' assert { type: 'json' }
-import LocalhostMemberAddress from '@river/generated/addresses/base_anvil/member.json' assert { type: 'json' }
-import LocalhostWalletLinkAddress from '@river/generated/addresses/base_anvil/walletLink.json' assert { type: 'json' }
-import LocalhostRiverRegistryAddress from '@river/generated/addresses/river_anvil/riverRegistry.json' assert { type: 'json' }
+import LocalhostSpaceFactoryAddress from '@river-build/generated/addresses/base_anvil/spaceFactory.json' assert { type: 'json' }
+import LocalhostSpaceOwnerAddress from '@river-build/generated/addresses/base_anvil/spaceOwner.json' assert { type: 'json' }
+import LocalhostMockNFTAddress from '@river-build/generated/addresses/base_anvil/mockNFT.json' assert { type: 'json' }
+import LocalhostMemberAddress from '@river-build/generated/addresses/base_anvil/member.json' assert { type: 'json' }
+import LocalhostWalletLinkAddress from '@river-build/generated/addresses/base_anvil/walletLink.json' assert { type: 'json' }
+import LocalhostRiverRegistryAddress from '@river-build/generated/addresses/river_anvil/riverRegistry.json' assert { type: 'json' }
 
-import BaseSepoliaSpaceFactoryAddress from '@river/generated/addresses/base_sepolia/spaceFactory.json' assert { type: 'json' }
-import BaseSepoliaSpaceOwnerAddress from '@river/generated/addresses/base_sepolia/spaceOwner.json' assert { type: 'json' }
-import BaseSepoliaWalletLinkAddress from '@river/generated/addresses/base_sepolia/walletLink.json' assert { type: 'json' }
-import RiverChainRiverRegistryAddress from '@river/generated/addresses/river/riverRegistry.json' assert { type: 'json' }
+import BaseSepoliaSpaceFactoryAddress from '@river-build/generated/addresses/base_sepolia/spaceFactory.json' assert { type: 'json' }
+import BaseSepoliaSpaceOwnerAddress from '@river-build/generated/addresses/base_sepolia/spaceOwner.json' assert { type: 'json' }
+import BaseSepoliaWalletLinkAddress from '@river-build/generated/addresses/base_sepolia/walletLink.json' assert { type: 'json' }
+import RiverChainRiverRegistryAddress from '@river-build/generated/addresses/river/riverRegistry.json' assert { type: 'json' }
 
 import { Address } from './ContractTypes'
 export interface IStaticContractsInfo {

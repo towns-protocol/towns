@@ -1,14 +1,14 @@
 import {
     TokenPausableFacet as LocalhostContract,
     TokenPausableFacetInterface as LocalhostInterface,
-} from '@river/generated/dev/typings/TokenPausableFacet'
+} from '@river-build/generated/dev/typings/TokenPausableFacet'
 import {
     TokenPausableFacet as BaseSepoliaContract,
     TokenPausableFacetInterface as BaseSepoliaInterface,
-} from '@river/generated/v3/typings/TokenPausableFacet'
+} from '@river-build/generated/v3/typings/TokenPausableFacet'
 
-import LocalhostAbi from '@river/generated/dev/abis/TokenPausableFacet.abi.json' assert { type: 'json' }
-import BaseSepoliaAbi from '@river/generated/v3/abis/TokenPausableFacet.abi.json' assert { type: 'json' }
+import LocalhostAbi from '@river-build/generated/dev/abis/TokenPausableFacet.abi.json' assert { type: 'json' }
+import BaseSepoliaAbi from '@river-build/generated/v3/abis/TokenPausableFacet.abi.json' assert { type: 'json' }
 
 import { BaseContractShim } from './BaseContractShim'
 import { ethers } from 'ethers'

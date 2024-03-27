@@ -17,8 +17,8 @@
         "watch": "tsc --watch"
     },
     "dependencies": {
+        "@river-build/generated": "workspace:^",
         "@river/dlog": "workspace:^",
-        "@river/generated": "workspace:^",
         "abitype": "^0.9.10",
         "debug": "^4.3.4",
         "ethers": "^5.7.2",

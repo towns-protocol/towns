@@ -16,7 +16,7 @@
     },
     "dependencies": {
         "@aws-sdk/client-sns": "^3.295.0",
-        "@river/generated": "workspace:^",
+        "@river-build/generated": "workspace:^",
         "aws-sdk": "^2.1339.0",
         "buffer": "^6.0.3",
         "itty-router": "^2.6.6",
