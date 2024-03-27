@@ -39,6 +39,8 @@ export enum BlockchainTransactionType {
     UpdateSpaceName = 'updateSpaceName',
     LinkWallet = 'linkWallet',
     UnlinkWallet = 'unlinkWallet',
+    BanUser = 'banUser',
+    UnbanUser = 'unbanUser',
     JoinSpace = 'joinSpace',
 }
 

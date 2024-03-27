@@ -36,6 +36,7 @@ export const TRANSACTION_LIMIT_DEFAULTS_PER_DAY = {
     channelCreate: 10,
     linkWallet: 10,
     updateSpaceInfo: 10,
+    banUnban: 10,
 }
 
 /* Verifies if a user can create a town
@@ -283,6 +284,10 @@ export async function verifyUseTown(
             case 'addEntitlementModule':
                 maxActionsPerDay = TRANSACTION_LIMIT_DEFAULTS_PER_DAY.entitlementSet
                 break
+            case 'ban':
+            case 'unban':
+                maxActionsPerDay = TRANSACTION_LIMIT_DEFAULTS_PER_DAY.banUnban
+                break
             default:
                 maxActionsPerDay = null
                 break
@@ -390,6 +395,10 @@ export async function verifyUpdateTown(
             case 'updateSpaceInfo':
                 maxActionsPerDay = TRANSACTION_LIMIT_DEFAULTS_PER_DAY.updateSpaceInfo
                 break
+            case 'ban':
+            case 'unban':
+                maxActionsPerDay = TRANSACTION_LIMIT_DEFAULTS_PER_DAY.banUnban
+                break
             default:
                 maxActionsPerDay = null
                 break
@@ -424,6 +433,9 @@ function mapTransactionNameToContractName(transactionName: string): string {
         case 'removeRole':
         case 'updateRole':
             return 'Roles'
+        case 'ban':
+        case 'unban':
+            return 'Banning'
         default:
             throw new Error('Unknown transactionName, cannot map to contract name')
     }

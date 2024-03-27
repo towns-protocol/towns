@@ -24,6 +24,7 @@ import {
     TownsOpts,
     createTransactionContext,
     logTxnResult,
+    BanUnbanWalletTransactionContext,
 } from './TownsClientTypes'
 import {
     CreateChannelInfo,
@@ -1006,6 +1007,106 @@ export class TownsClient implements EntitlementsDelegate {
         const txnContext = await this._waitForBlockchainTransaction(context)
         logTxnResult('waitForUpdateRoleTransaction', txnContext)
         return txnContext
+    }
+
+    public async banTransaction(
+        spaceId: string,
+        walletAddress: string,
+        signer: ethers.Signer,
+    ): Promise<BanUnbanWalletTransactionContext> {
+        let transaction: TransactionOrUserOperation | undefined = undefined
+        let error: Error | undefined = undefined
+        console.log('[banUserTransaction] space', { spaceId, walletAddress })
+
+        const continueStoreTx = this.blockchainTransactionStore.begin({
+            type: BlockchainTransactionType.BanUser,
+        })
+
+        try {
+            if (this.isAccountAbstractionEnabled()) {
+                transaction = await this.userOps?.sendBanWalletAddressOp([
+                    spaceId,
+                    walletAddress,
+                    signer,
+                ])
+            } else {
+                transaction = await this.spaceDapp.banWalletAddress(spaceId, walletAddress, signer)
+            }
+            console.log(`[banTransaction] transaction created`)
+        } catch (err) {
+            error = await this.spaceDapp.parseSpaceError(spaceId, err)
+        }
+
+        continueStoreTx({
+            hashOrUserOpHash: getTransactionHashOrUserOpHash(transaction),
+            transaction,
+            error,
+        })
+
+        return {
+            transaction,
+            receipt: undefined,
+            status: transaction ? TransactionStatus.Pending : TransactionStatus.Failed,
+            data: { spaceId: spaceId, walletAddress: walletAddress, isBan: true },
+            error,
+        }
+    }
+
+    public async unbanTransaction(
+        spaceId: string,
+        walletAddress: string,
+        signer: ethers.Signer,
+    ): Promise<BanUnbanWalletTransactionContext> {
+        let transaction: TransactionOrUserOperation | undefined = undefined
+        let error: Error | undefined = undefined
+        console.log('[unbanUserTransaction] space', { spaceId, walletAddress })
+
+        const continueStoreTx = this.blockchainTransactionStore.begin({
+            type: BlockchainTransactionType.UnbanUser,
+        })
+
+        try {
+            if (this.isAccountAbstractionEnabled()) {
+                transaction = await this.userOps?.sendUnbanWalletAddressOp([
+                    spaceId,
+                    walletAddress,
+                    signer,
+                ])
+            } else {
+                transaction = await this.spaceDapp.unbanWalletAddress(
+                    spaceId,
+                    walletAddress,
+                    signer,
+                )
+            }
+            console.log(`[unbanTransaction] transaction created`)
+        } catch (err) {
+            error = await this.spaceDapp.parseSpaceError(spaceId, err)
+        }
+
+        continueStoreTx({
+            hashOrUserOpHash: getTransactionHashOrUserOpHash(transaction),
+            transaction,
+            error,
+        })
+
+        return {
+            transaction,
+            receipt: undefined,
+            status: transaction ? TransactionStatus.Pending : TransactionStatus.Failed,
+            data: { spaceId: spaceId, walletAddress: walletAddress, isBan: false },
+            error,
+        }
+    }
+
+    public async waitForBanUnbanTransaction(transactionContext: BanUnbanWalletTransactionContext) {
+        const txnContext = await this._waitForBlockchainTransaction(transactionContext)
+        logTxnResult('waitForBanTransaction', txnContext)
+        return txnContext
+    }
+
+    public async walletAddressIsBanned(spaceId: string, walletAddress: string): Promise<boolean> {
+        return this.spaceDapp.walletAddressIsBanned(spaceId, walletAddress)
     }
 
     public async deleteRoleTransaction(

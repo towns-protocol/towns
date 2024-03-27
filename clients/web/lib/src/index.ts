@@ -76,6 +76,12 @@ export { useUpdateChannelTransaction } from './hooks/use-update-channel-transact
 export { useUpdateRoleTransaction } from './hooks/use-update-role-transaction'
 export { useUpdateSpaceNameTransaction } from './hooks/use-update-space-name-transaction'
 export { useUser } from './hooks/use-user'
+export {
+    useBannedWalletAddresses,
+    useBanTransaction,
+    useUnbanTransaction,
+    useWalletAddressIsBanned,
+} from './hooks/use-banning'
 export { useTownsClient } from './hooks/use-towns-client'
 export {
     useLinkWalletTransaction,

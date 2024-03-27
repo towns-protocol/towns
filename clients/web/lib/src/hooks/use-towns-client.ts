@@ -3,6 +3,7 @@
 import { useMemo } from 'react'
 import { FullyReadMarker } from '@river/proto'
 import {
+    BanUnbanWalletTransactionContext,
     ChannelTransactionContext,
     ChannelUpdateTransactionContext,
     CreateSpaceTransactionContext,
@@ -72,6 +73,20 @@ interface TownsClientImpl {
         updateChannelInfo: UpdateChannelInfo,
         signer: TSigner | undefined,
     ) => Promise<ChannelUpdateTransactionContext | undefined>
+    banTransaction: (
+        spaceNetworkId: string,
+        walletAddress: string,
+        signer: TSigner,
+    ) => Promise<BanUnbanWalletTransactionContext | undefined>
+    unbanTransaction: (
+        spaceNetworkId: string,
+        walletAddress: string,
+        signer: TSigner,
+    ) => Promise<BanUnbanWalletTransactionContext | undefined>
+    walletAddressIsBanned(spaceId: string, walletAddress: string): Promise<boolean | undefined>
+    waitForBanUnbanTransaction: (
+        context: BanUnbanWalletTransactionContext,
+    ) => Promise<BanUnbanWalletTransactionContext | undefined>
     createDMChannel: (userId: string) => Promise<string | undefined>
     createGDMChannel: (userIds: string[]) => Promise<string | undefined>
     waitForUpdateChannelTransaction: (
@@ -217,6 +232,10 @@ export function useTownsClient(): TownsClientImpl {
         waitForCreateChannelTransaction: useWithCatch(client?.waitForCreateChannelTransaction),
         updateChannelTransaction: useWithCatch(client?.updateChannelTransaction),
         waitForUpdateChannelTransaction: useWithCatch(client?.waitForUpdateChannelTransaction),
+        banTransaction: useWithCatch(client?.banTransaction),
+        unbanTransaction: useWithCatch(client?.unbanTransaction),
+        waitForBanUnbanTransaction: useWithCatch(client?.waitForBanUnbanTransaction),
+        walletAddressIsBanned: useWithCatch(client?.walletAddressIsBanned),
         createDMChannel: useWithCatch(client?.createDMChannel),
         createGDMChannel: useWithCatch(client?.createGDMChannel),
         createRoleTransaction: useWithCatch(client?.createRoleTransaction),

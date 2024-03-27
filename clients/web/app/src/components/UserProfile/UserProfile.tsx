@@ -122,7 +122,7 @@ export const UserProfile = (props: Props) => {
                 </Stack>
             )}
 
-            {user && (
+            {user && user.memberOf && (
                 <Stack
                     horizontal
                     gap

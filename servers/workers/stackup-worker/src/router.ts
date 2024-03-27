@@ -114,6 +114,12 @@ router.post('/api/transaction-limits', async (request: WorkerRequest, env: Env) 
                 // more restrictive: only Towns on HNT Labs curated whitelist can perform these 3 actions
                 break
             }
+            case 'ban':
+            case 'unban': {
+                // default: ban/unban can be performed for a valid town 10 times / day
+                // more restrictive: only Towns on HNT Labs curated whitelist can perform these 2 actions
+                break
+            }
             case 'updateSpaceInfo': {
                 // todo:
                 break
@@ -268,7 +274,9 @@ router.post('/api/sponsor-userop', async (request: WorkerRequest, env: Env) => {
             case 'addEntitlementModule':
             case 'createChannel':
             case 'updateChannel':
-            case 'removeChannel': {
+            case 'removeChannel':
+            case 'ban':
+            case 'unban': {
                 if (!isHexString(rootKeyAddress)) {
                     return new Response(
                         toJson({ error: `rootKeyAddress ${rootKeyAddress} not valid` }),

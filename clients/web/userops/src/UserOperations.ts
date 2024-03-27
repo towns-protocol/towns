@@ -671,6 +671,61 @@ export class UserOps {
         })
     }
 
+    public async sendBanWalletAddressOp(args: Parameters<SpaceDapp['banWalletAddress']>) {
+        const [spaceId, walletAddress, signer] = args
+        if (!this.spaceDapp) {
+            throw new Error('spaceDapp is required')
+        }
+        const space = await this.spaceDapp.getSpace(spaceId)
+        if (!space) {
+            throw new Error(`Space with spaceId "${spaceId}" is not found.`)
+        }
+
+        const functionName = 'ban'
+        const functionHashForPaymasterProxy = this.getFunctionSigHash(
+            space.Banning.interface,
+            functionName,
+        )
+
+        const tokenId = await space.Membership.read.getTokenIdByMembership(walletAddress)
+        const callData = await space.Banning.encodeFunctionData(functionName, [tokenId])
+
+        return this.sendUserOp({
+            toAddress: [space.Banning.address],
+            callData: [callData],
+            signer,
+            spaceId: spaceId,
+            functionHashForPaymasterProxy,
+        })
+    }
+
+    public async sendUnbanWalletAddressOp(args: Parameters<SpaceDapp['unbanWalletAddress']>) {
+        const [spaceId, walletAddress, signer] = args
+        if (!this.spaceDapp) {
+            throw new Error('spaceDapp is required')
+        }
+        const space = await this.spaceDapp.getSpace(spaceId)
+        if (!space) {
+            throw new Error(`Space with spaceId "${spaceId}" is not found.`)
+        }
+
+        const functionName = 'unban'
+        const functionHashForPaymasterProxy = this.getFunctionSigHash(
+            space.Banning.interface,
+            functionName,
+        )
+
+        const tokenId = await space.Membership.read.getTokenIdByMembership(walletAddress)
+        const callData = await space.Banning.encodeFunctionData(functionName, [tokenId])
+        return this.sendUserOp({
+            toAddress: [space.Banning.address],
+            callData: [callData],
+            signer,
+            spaceId: spaceId,
+            functionHashForPaymasterProxy,
+        })
+    }
+
     // Initialize a builder with middleware based on paymaster config
     //
     // Because we are still determining exactly how we are using paymaster,

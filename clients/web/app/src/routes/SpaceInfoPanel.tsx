@@ -5,6 +5,7 @@ import { useNavigate } from 'react-router'
 import { Link, useSearchParams } from 'react-router-dom'
 import { useEvent } from 'react-use-event-hook'
 import {
+    useBannedWalletAddresses,
     useContractSpaceInfo,
     useGetRootKeyFromLinkedWallet,
     useHasPermission,
@@ -45,7 +46,7 @@ import { useCreateLink } from 'hooks/useCreateLink'
 import { useDevice } from 'hooks/useDevice'
 import { useSpaceChannels } from 'hooks/useSpaceChannels'
 import { useGetSpaceIdentity, useSetSpaceIdentity } from 'hooks/useSpaceIdentity'
-import { PATHS } from 'routes'
+import { CHANNEL_INFO_PARAMS, PATHS } from 'routes'
 import { TextArea } from 'ui/components/TextArea/TextArea'
 import { getInviteUrl, shortAddress } from 'ui/utils/utils'
 import { getPrettyDisplayName } from 'utils/getPrettyDisplayName'
@@ -84,6 +85,12 @@ export const SpaceInfoPanel = () => {
         spaceId: space?.id ?? '',
         walletAddress: loggedInWalletAddress ?? '',
         permission: Permission.ModifySpaceSettings,
+    })
+
+    const { hasPermission: canBan } = useHasPermission({
+        spaceId: space?.id ?? '',
+        walletAddress: loggedInWalletAddress ?? '',
+        permission: Permission.Ban,
     })
 
     const [isEditMotto, setIsEditMotto] = useState(false)
@@ -262,6 +269,11 @@ export const SpaceInfoPanel = () => {
                 setActiveModal('roles')
             }
         }
+    })
+
+    const onBannedUsersClick = useEvent(() => {
+        searchParams.set(CHANNEL_INFO_PARAMS.BANNED, '')
+        setSearchParams(searchParams)
     })
 
     const onLeaveClick = useCallback(() => {
@@ -563,6 +575,10 @@ export const SpaceInfoPanel = () => {
                     </PanelButton>
                 )}
 
+                {canBan && (
+                    <BannedUsersPanelButton spaceId={spaceID} onClick={onBannedUsersClick} />
+                )}
+
                 <PanelButton tone="negative" onClick={onLeaveClick}>
                     <Icon type="logout" size="square_sm" />
                     <Paragraph color="error">Leave {space?.name}</Paragraph>
@@ -650,5 +666,21 @@ const TownContractOpener = (props: { address: string; children?: React.ReactNode
                 <Box inset="md">{props.children}</Box>
             </Box>
         </Box>
+    )
+}
+
+const BannedUsersPanelButton = (props: { onClick: () => void; spaceId?: string }) => {
+    const { onClick, spaceId } = props
+    const { userIds } = useBannedWalletAddresses(spaceId)
+
+    if (!userIds || userIds.length === 0) {
+        return null
+    }
+
+    return (
+        <PanelButton onClick={onClick}>
+            <Icon type="ban" size="square_sm" color="negative" />
+            <Paragraph color="error">Banned Users</Paragraph>
+        </PanelButton>
     )
 }

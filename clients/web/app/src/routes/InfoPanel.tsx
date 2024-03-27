@@ -8,6 +8,7 @@ import { ChannelDirectoryPanel } from './SpaceChannelDirectoryPanel'
 import { ChannelInfoPanel } from './SpaceChannelInfoPanel'
 import { SpaceInfoPanel } from './SpaceInfoPanel'
 import { DMChannelInfoPanel } from './DMChannelInfoPanel'
+import { SpaceBannedUsers } from './SpaceBannedUsers'
 
 const {
     CHANNEL,
@@ -17,6 +18,7 @@ const {
     BROWSE_CHANNELS,
     CREATE_CHANNEL,
     EDIT_CHANNEL,
+    BANNED,
 } = CHANNEL_INFO_PARAMS
 
 export const InfoPanelWrapper = () => {
@@ -33,6 +35,8 @@ export const InfoPanelWrapper = () => {
         return <BrowseChannelsPanel />
     } else if (search.get(EDIT_CHANNEL) !== null) {
         return <ChannelSettingsPanel />
+    } else if (search.get(BANNED) !== null) {
+        return <SpaceBannedUsers />
     }
     return <SpaceInfoPanel />
 }

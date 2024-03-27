@@ -4,12 +4,21 @@ import { useSearchParams } from 'react-router-dom'
 import { useEvent } from 'react-use-event-hook'
 import {
     Address,
+    BlockchainTransactionType,
     LookupUser,
+    Permission,
+    SpaceData,
     useGetRootKeyFromLinkedWallet,
+    useHasPermission,
+    useIsTransactionPending,
     useMyProfile,
+    useSpaceData,
     useTownsClient,
     useUserLookupContext,
+    useWalletAddressIsBanned,
 } from 'use-towns-client'
+import { useBanTransaction, useUnbanTransaction } from 'use-towns-client/dist/hooks/use-banning'
+import { useGetEmbeddedSigner } from '@towns/privy'
 import { useGetUserBio } from 'hooks/useUserBio'
 import { Box, Button, Icon, Paragraph, Stack, Text } from '@ui'
 import { UserProfile } from '@components/UserProfile/UserProfile'
@@ -27,6 +36,8 @@ import { useAbstractAccountAddress } from 'hooks/useAbstractAccountAddress'
 import { ButtonSpinner } from 'ui/components/Spinner/ButtonSpinner'
 import { ClipboardCopy } from '@components/ClipboardCopy/ClipboardCopy'
 import { shortAddress } from 'workers/utils'
+import { createPrivyNotAuthenticatedNotification } from '@components/Notifications/utils'
+import { ConfirmBanUnbanModal } from '@components/ConfirmBanUnbanModal/ConfirmBanUnbanModal'
 import { PanelButton } from '@components/Panel/PanelButton'
 
 export const SpaceProfilePanel = (props: { children?: React.ReactNode }) => {
@@ -47,6 +58,8 @@ export const SpaceProfile = (props: { children?: React.ReactNode }) => {
     const { client } = useTownsClient()
     const isAccountAbstractionEnabled = client?.isAccountAbstractionEnabled()
     const [search] = useSearchParams()
+    const space = useSpaceData()
+
     const cameFromSpaceInfoPanel = search.get('spaceInfo') !== null
     const { profileId: profileIdFromPath = 'me' } = useParams()
     const { data: rootKeyAddress, isLoading: isLoadingRootKey } = useGetRootKeyFromLinkedWallet({
@@ -132,6 +145,17 @@ export const SpaceProfile = (props: { children?: React.ReactNode }) => {
 
     const { data: loggedInAbstractAccountAddress } = useAbstractAccountAddress({
         rootKeyAddress: loggedInWalletAddress,
+    })
+
+    const { isBanned, isLoading: isLoadingBanStatus } = useWalletAddressIsBanned(
+        space?.id,
+        user?.userId,
+    )
+
+    const { hasPermission: canBan } = useHasPermission({
+        spaceId: space?.id ?? '',
+        walletAddress: loggedInWalletAddress ?? '',
+        permission: Permission.Ban,
     })
 
     const { data: userBio } = useGetUserBio(userAbstractAccountAddress)
@@ -281,14 +305,99 @@ export const SpaceProfile = (props: { children?: React.ReactNode }) => {
                 </ModalContainer>
             )}
 
-            {!isCurrentUser && !search.has('message') && user && (
-                <Stack gap>
+            <Stack gap>
+                {!isCurrentUser && !search.has('message') && user && (
                     <PanelButton onClick={onMessageClick}>
                         <Icon type="message" size="square_sm" color="gray2" />
                         <Paragraph color="default">Send Message</Paragraph>
                     </PanelButton>
-                </Stack>
-            )}
+                )}
+                {!isCurrentUser &&
+                    canBan &&
+                    space &&
+                    !isLoadingBanStatus &&
+                    userAbstractAccountAddress && (
+                        <BanPanelButton
+                            walletAddress={userAbstractAccountAddress}
+                            isBanned={isBanned}
+                            space={space}
+                        />
+                    )}
+            </Stack>
         </Stack>
+    )
+}
+
+const BanPanelButton = (props: { walletAddress: string; space: SpaceData; isBanned: boolean }) => {
+    const { walletAddress, space, isBanned } = props
+    const [isConfirmModalVisible, setIsConfirmModalVisible] = useState(false)
+    const { banTransaction } = useBanTransaction()
+    const { unbanTransaction } = useUnbanTransaction()
+
+    const getSigner = useGetEmbeddedSigner()
+
+    const onClick = useCallback(() => {
+        setIsConfirmModalVisible(true)
+    }, [setIsConfirmModalVisible])
+
+    const onCancelClick = useCallback(() => {
+        setIsConfirmModalVisible(false)
+    }, [setIsConfirmModalVisible])
+
+    const onConfirmClick = useCallback(() => {
+        setIsConfirmModalVisible(false)
+        if (!space?.id) {
+            return
+        }
+        async function performTransaction(spaceId: string, userId: string) {
+            const signer = await getSigner()
+            if (!signer) {
+                createPrivyNotAuthenticatedNotification()
+                return
+            }
+            if (isBanned) {
+                unbanTransaction(signer, spaceId, userId)
+            } else {
+                banTransaction(signer, spaceId, userId)
+            }
+        }
+        void performTransaction(space.id, walletAddress)
+    }, [
+        space?.id,
+        walletAddress,
+        getSigner,
+        banTransaction,
+        unbanTransaction,
+        isBanned,
+        setIsConfirmModalVisible,
+    ])
+
+    const isBanTransactionPending = useIsTransactionPending(BlockchainTransactionType.BanUser)
+    const isUnbanTransactionPending = useIsTransactionPending(BlockchainTransactionType.UnbanUser)
+    const isTransactionPending = isBanTransactionPending || isUnbanTransactionPending
+
+    return (
+        <>
+            <PanelButton tone="negative" onClick={onClick}>
+                <Icon type={isBanned ? 'unban' : 'ban'} size="square_sm" />
+                {isTransactionPending ? (
+                    <Box grow>
+                        <ButtonSpinner />
+                    </Box>
+                ) : (
+                    <Paragraph>
+                        {isBanned ? 'Unban' : 'Ban'} from {space.name}
+                    </Paragraph>
+                )}
+            </PanelButton>
+            {isConfirmModalVisible === true && (
+                <ConfirmBanUnbanModal
+                    userId={walletAddress}
+                    ban={!isBanned}
+                    onConfirm={onConfirmClick}
+                    onCancel={onCancelClick}
+                />
+            )}
+        </>
     )
 }

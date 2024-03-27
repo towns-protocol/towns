@@ -3,11 +3,13 @@ import { Environment, isErrorType } from 'worker-common'
 import BaseSepoliaTownOwnerAbi from '@river-build/generated/v3/abis/SpaceOwner.abi.json' assert { type: 'json' }
 import BaseSepoliaWalletLinkAbi from '@river-build/generated/v3/abis/WalletLink.abi.json' assert { type: 'json' }
 import BaseSepoliaTownOwnerContract from '@river-build/generated/addresses/base_sepolia/spaceOwner.json' assert { type: 'json' }
+import BaseSepoliaBanningAbi from '@river-build/generated/v3/abis/IBanning.abi.json' assert { type: 'json' }
 import BaseSepoliaChannelsAbi from '@river-build/generated/v3/abis/Channels.abi.json' assert { type: 'json' }
 import BaseSepoliaRolesAbi from '@river-build/generated/v3/abis/Roles.abi.json' assert { type: 'json' }
 import BaseSepoliaTownFactoryContract from '@river-build/generated/addresses/base_sepolia/spaceFactory.json' assert { type: 'json' }
 import BaseSepoliaTownContract from '@river-build/generated/addresses/base_sepolia/space.json' assert { type: 'json' }
 import BaseSepoliaWalletLinkContract from '@river-build/generated/addresses/base_sepolia/walletLink.json' assert { type: 'json' }
+
 import { createJsonProvider as createProvider } from './provider'
 import { Env } from '.'
 
@@ -38,6 +40,7 @@ const BaseSepoliaContracts = new Map<string, ContractDetails>([
     ],
     ['Channels', { address: BaseSepoliaTownContract.address, abi: BaseSepoliaChannelsAbi }],
     ['Roles', { address: BaseSepoliaTownContract.address, abi: BaseSepoliaRolesAbi }],
+    ['Banning', { address: BaseSepoliaTownContract.address, abi: BaseSepoliaBanningAbi }],
 ])
 
 const NetworkContracts = new Map<string, Map<string, ContractDetails>>([
@@ -67,6 +70,9 @@ export const EventByMethod = new Map<string, string>([
     ['updateSpaceInfo', 'SpaceOwner__UpdateSpace'],
     // WalletLink.sol
     ['linkWalletToRootKey', 'LinkWalletToRootKey'],
+    // Banning.sol
+    ['ban', 'Banned'],
+    ['unban', 'Unbanned'],
 ])
 
 function createContract(

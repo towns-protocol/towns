@@ -85,6 +85,12 @@ export type WalletLinkTransactionContext = TransactionContext<{
     walletAddress: string
 }>
 
+export type BanUnbanWalletTransactionContext = TransactionContext<{
+    spaceId: string
+    walletAddress: string
+    isBan: boolean
+}>
+
 export type TownsClientEventHandlers = {
     onCreateSpace?: (roomId: string) => void
     onJoinRoom?: (roomId: string, spaceId: string) => void

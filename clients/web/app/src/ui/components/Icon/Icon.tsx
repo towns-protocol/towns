@@ -151,6 +151,28 @@ export const BackIcon = forwardRef<SVGSVGElement, SVGIconProps>((props, ref) => 
     </svg>
 ))
 
+export const BanIcon = forwardRef<SVGSVGElement, SVGIconProps>((props, ref) => (
+    <svg width="20" height="20" viewBox="0 0 20 20" fill="none" {...props} ref={ref}>
+        <path
+            fillRule="evenodd"
+            clipRule="evenodd"
+            d="M4.16667 10C4.16667 6.77834 6.77834 4.16667 10 4.16667C11.3103 4.16667 12.5196 4.59866 13.4934 5.32798L5.32798 13.4934C4.59866 12.5196 4.16667 11.3103 4.16667 10ZM6.50648 14.672C7.4803 15.4013 8.6897 15.8333 10 15.8333C13.2217 15.8333 15.8333 13.2217 15.8333 10C15.8333 8.6897 15.4013 7.4803 14.672 6.50648L6.50648 14.672ZM10 2.5C5.85786 2.5 2.5 5.85786 2.5 10C2.5 14.1421 5.85786 17.5 10 17.5C14.1421 17.5 17.5 14.1421 17.5 10C17.5 5.85786 14.1421 2.5 10 2.5Z"
+            fill="currentColor"
+        />
+    </svg>
+))
+
+export const UnbanIcon = forwardRef<SVGSVGElement, SVGIconProps>((props, ref) => (
+    <svg width="20" height="20" viewBox="0 0 20 20" fill="none" {...props} ref={ref}>
+        <path
+            fillRule="evenodd"
+            clipRule="evenodd"
+            d="M3.7926 5.78947L2.42364 4.42051C2.09524 4.09211 2.08137 3.57354 2.39265 3.26225C2.70394 2.95097 3.22251 2.96484 3.55091 3.29324L16.6574 16.3997C16.9858 16.7281 16.9996 17.2467 16.6884 17.558C16.3771 17.8692 15.8585 17.8554 15.5301 17.527L14.2106 16.2075C13.0102 17.0233 11.5608 17.5 10.0001 17.5C5.85792 17.5 2.50005 14.1421 2.50005 10C2.50005 8.43925 2.97679 6.98984 3.7926 5.78947ZM13.0043 15.0012L9.59081 11.5877L6.50653 14.672C7.48036 15.4013 8.68975 15.8333 10.0001 15.8333C11.0989 15.8333 12.1268 15.5295 13.0043 15.0012ZM8.41229 10.4092L5.32803 13.4934C4.59871 12.5196 4.16672 11.3103 4.16672 10C4.16672 8.90112 4.47057 7.87321 4.99883 6.9957L8.41229 10.4092ZM13.4935 5.32798L10.6448 8.17668L11.8233 9.35519L14.672 6.50648C15.4014 7.4803 15.8334 8.6897 15.8334 10C15.8334 10.9753 15.594 11.8947 15.1708 12.7027L16.3926 13.9245C17.0949 12.7828 17.5001 11.4387 17.5001 10C17.5001 5.85786 14.1422 2.5 10.0001 2.5C8.56133 2.5 7.21722 2.90511 6.07558 3.60747L7.29733 4.82922C8.1053 4.40603 9.02472 4.16667 10.0001 4.16667C11.3103 4.16667 12.5197 4.59866 13.4935 5.32798Z"
+            fill="currentColor"
+        />
+    </svg>
+))
+
 export const BellIcon = forwardRef<SVGSVGElement, SVGIconProps>((props, ref) => (
     <svg width="20" height="20" viewBox="0 0 20 20" fill="none" {...props} ref={ref}>
         <path
@@ -1678,6 +1700,7 @@ const iconMap = {
     at: AtIcon,
     attachment: AttachmentIcon,
     back: BackIcon,
+    ban: BanIcon,
     bell: BellIcon,
     blockquote: BlockQuoteIcon,
     bold: BoldIcon,
@@ -1765,6 +1788,7 @@ const iconMap = {
     treasury: TreasuryIcon,
     trending: TrendingIcon,
     type: TypeIcon,
+    unban: UnbanIcon,
     unlink: Unlink,
     unlock: UnlockIcon,
     verified: VerifiedIcon,
