@@ -4,6 +4,7 @@ import {
     TransactionStatus,
     WalletDoesNotMatchSignedInAccountError,
     useCreateChannelTransaction,
+    useHasPermission,
     useMultipleRoleDetails,
 } from 'use-towns-client'
 import React, { useCallback, useEffect, useMemo } from 'react'
@@ -39,6 +40,7 @@ import { UserOpTxModal } from '@components/Web3/UserOpTxModal/UserOpTxModal'
 import { createPrivyNotAuthenticatedNotification } from '@components/Notifications/utils'
 import { useDevice } from 'hooks/useDevice'
 import { useSpaceChannels } from 'hooks/useSpaceChannels'
+import { useAuth } from 'hooks/useAuth'
 import { mapToErrorMessage } from '../utils'
 
 type Props = {
@@ -66,7 +68,7 @@ const schema = z.object({
 })
 
 export const CreateChannelForm = (props: Props) => {
-    const { onCreateChannel, onHide } = props
+    const { onCreateChannel, onHide, spaceId } = props
     const { data: roles } = useContractRoles(props.spaceId)
     const roledIds = useMemo(() => roles?.map((r) => r.roleId) ?? [], [roles])
     const { data: _rolesDetails, invalidateQuery } = useMultipleRoleDetails(props.spaceId, roledIds)
@@ -75,6 +77,7 @@ export const CreateChannelForm = (props: Props) => {
     }, [_rolesDetails])
     const channels = useSpaceChannels()
     const channelNames = useMemo(() => new Set(channels?.map((c) => c.label) ?? []), [channels])
+    const { loggedInWalletAddress } = useAuth()
 
     const { isTouch } = useDevice()
 
@@ -146,6 +149,12 @@ export const CreateChannelForm = (props: Props) => {
         }
         return null
     }, [hasServerError, hasTransactionError, transactionError])
+
+    const { hasPermission: canEditRoles } = useHasPermission({
+        spaceId: spaceId,
+        walletAddress: loggedInWalletAddress ?? '',
+        permission: Permission.ModifySpaceSettings,
+    })
 
     const onKeyDown = useCallback(async (event: React.KeyboardEvent<HTMLInputElement>) => {
         if (!ChannelNameRegExp.test(event.key)) {
@@ -305,14 +314,18 @@ export const CreateChannelForm = (props: Props) => {
                                 )
                             })}
 
-                            <Box flexDirection="row" justifyContent="start" paddingTop="sm">
-                                <Link to={`/${PATHS.SPACES}/${props.spaceId}/${PATHS.SETTINGS}`}>
-                                    <Button onClick={onHide}>
-                                        <Icon type="plus" size="square_sm" />
-                                        Create a new role
-                                    </Button>
-                                </Link>
-                            </Box>
+                            {canEditRoles && (
+                                <Box flexDirection="row" justifyContent="start" paddingTop="sm">
+                                    <Link
+                                        to={`/${PATHS.SPACES}/${props.spaceId}/${PATHS.SETTINGS}`}
+                                    >
+                                        <Button onClick={onHide}>
+                                            <Icon type="plus" size="square_sm" />
+                                            Create a new role
+                                        </Button>
+                                    </Link>
+                                </Box>
+                            )}
 
                             {env.DEV ? (
                                 <Box color="negative" maxWidth="400">
