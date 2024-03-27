@@ -12,7 +12,7 @@ import { GroupDecryption } from './groupDecryption'
 import { GroupEncryption } from './groupEncryption'
 import { EncryptionDevice } from './encryptionDevice'
 import { EncryptionDelegate } from './encryptionDelegate'
-import { check, dlog } from '@river/dlog'
+import { check, dlog } from '@river-build/dlog'
 
 const log = dlog('csb:encryption:groupEncryptionCrypto')
 

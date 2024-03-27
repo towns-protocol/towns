@@ -29,7 +29,7 @@ import {
     check,
     dlog,
     dlogError,
-} from '@river/dlog'
+} from '@river-build/dlog'
 import { assert, isDefined } from './check'
 import {
     BaseDecryptionExtensions,

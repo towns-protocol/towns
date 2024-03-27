@@ -3,7 +3,7 @@
  */
 
 import { bobTalksToHimself } from './bob.test_util'
-import { dlog } from '@river/dlog'
+import { dlog } from '@river-build/dlog'
 import { makeRandomUserContext } from './util.test'
 import { SignerContext } from './signerContext'
 

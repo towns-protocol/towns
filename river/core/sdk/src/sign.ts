@@ -1,5 +1,5 @@
 import { PlainMessage } from '@bufbuild/protobuf'
-import { bin_equal, bin_fromHexString, bin_toHexString, check } from '@river/dlog'
+import { bin_equal, bin_fromHexString, bin_toHexString, check } from '@river-build/dlog'
 import { isDefined, assert, hasElements } from './check'
 import {
     Envelope,

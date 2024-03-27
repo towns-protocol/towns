@@ -4,7 +4,7 @@ import { Address } from '../types/web3-types'
 import { create, StateCreator } from 'zustand'
 import { createJSONStorage, persist, PersistOptions } from 'zustand/middleware'
 import { SignerContext } from '@river/sdk'
-import { bin_fromHexString, bin_toHexString } from '@river/dlog'
+import { bin_fromHexString, bin_toHexString } from '@river-build/dlog'
 
 export type CasablancaCredentials = {
     // TODO(HNT-1380): replace with function, so if object is logged, private key is not printed.

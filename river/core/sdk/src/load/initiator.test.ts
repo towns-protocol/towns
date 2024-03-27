@@ -2,7 +2,7 @@
  * @group load-tests-s2
  */
 
-import { dlog } from '@river/dlog'
+import { dlog } from '@river-build/dlog'
 import {
     createAndStartClient,
     createAndStartClients,

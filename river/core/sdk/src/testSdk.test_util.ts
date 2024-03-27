@@ -9,7 +9,7 @@ import {
 } from '@river/web3'
 import { makeDefaultChannelStreamId, makeSpaceStreamId, makeUniqueChannelStreamId } from './id'
 import { BigNumber, ethers } from 'ethers'
-import { dlog } from '@river/dlog'
+import { dlog } from '@river-build/dlog'
 
 const ETH_ADDRESS = '0xEeeeeEeeeEeEeeEeEeEeeEEEeeeeEeeeeeeeEEeE'
 

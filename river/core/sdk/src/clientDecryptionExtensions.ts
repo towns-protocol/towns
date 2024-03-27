@@ -16,7 +16,7 @@ import { make_MemberPayload_KeyFulfillment, make_MemberPayload_KeySolicitation }
 import { Client } from './client'
 import { EncryptedContent } from './encryptedContentTypes'
 import { Permission } from '@river/web3'
-import { check } from '@river/dlog'
+import { check } from '@river-build/dlog'
 import chunk from 'lodash/chunk'
 import { isDefined } from './check'
 import { isMobileSafari } from './utils'

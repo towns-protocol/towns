@@ -2,7 +2,7 @@
  * @group main
  */
 
-import { bin_fromHexString, bin_toHexString, dlog } from '@river/dlog'
+import { bin_fromHexString, bin_toHexString, dlog } from '@river-build/dlog'
 import { getPublicKey, utils } from 'ethereum-cryptography/secp256k1'
 import { readFileSync, writeFileSync } from 'fs'
 import { riverHash, riverRecoverPubKey, riverSign, riverVerifySignature } from './sign'

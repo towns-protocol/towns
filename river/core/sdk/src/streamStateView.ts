@@ -1,4 +1,4 @@
-import { dlog, dlogError, bin_toHexString, check } from '@river/dlog'
+import { dlog, dlogError, bin_toHexString, check } from '@river-build/dlog'
 import { isDefined, logNever } from './check'
 import {
     ChannelMessage,

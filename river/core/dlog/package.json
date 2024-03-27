@@ -1,5 +1,5 @@
 {
-    "name": "@river/dlog",
+    "name": "@river-build/dlog",
     "packageManager": "yarn@3.8.0",
     "type": "module",
     "main": "dist/index.js",

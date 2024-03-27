@@ -2,7 +2,7 @@
  * @group main
  */
 
-import { dlog, check } from '@river/dlog'
+import { dlog, check } from '@river-build/dlog'
 import { isDefined } from './check'
 import { DecryptionStatus, UserDevice } from '@river-build/encryption'
 import { Client } from './client'

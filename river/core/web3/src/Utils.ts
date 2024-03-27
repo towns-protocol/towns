@@ -2,7 +2,7 @@ import { ethers } from 'ethers'
 import { getContractsInfo } from './IStaticContractsInfo'
 import { MockERC721AShim } from './v3/MockERC721AShim'
 import { PublicClient } from 'viem'
-import { dlogger } from '@river/dlog'
+import { dlogger } from '@river-build/dlog'
 
 const logger = dlogger('csb:LocalhostWeb3Provider')
 

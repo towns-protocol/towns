@@ -4,7 +4,7 @@
 
 import { SnapshotCaseType } from '@river/proto'
 import { Client } from './client'
-import { check, DLogger, dlog } from '@river/dlog'
+import { check, DLogger, dlog } from '@river-build/dlog'
 import { makeUniqueChannelStreamId } from './id'
 import { makeDonePromise, makeTestClient, makeUniqueSpaceStreamId, sendFlush } from './util.test'
 import { DecryptedTimelineEvent } from './types'

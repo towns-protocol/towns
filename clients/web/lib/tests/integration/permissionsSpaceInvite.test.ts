@@ -15,7 +15,7 @@ import { StreamView } from 'use-towns-client/src/types/towns-types'
 import { TestConstants } from './helpers/TestConstants'
 import { TownsTestClient } from './helpers/TownsTestClient'
 import { sleep } from '../../src/utils/towns-utils'
-import { check } from '@river/dlog'
+import { check } from '@river-build/dlog'
 import { isDefined } from '@river/sdk'
 
 describe('space invite', () => {

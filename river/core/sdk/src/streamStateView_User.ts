@@ -9,7 +9,7 @@ import {
 } from '@river/proto'
 import { StreamEncryptionEvents, StreamEvents, StreamStateEvents } from './streamEvents'
 import { StreamStateView_AbstractContent } from './streamStateView_AbstractContent'
-import { check } from '@river/dlog'
+import { check } from '@river-build/dlog'
 import { logNever } from './check'
 import { streamIdFromBytes } from './id'
 

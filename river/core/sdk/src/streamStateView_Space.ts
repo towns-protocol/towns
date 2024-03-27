@@ -13,7 +13,7 @@ import {
 import { StreamEncryptionEvents, StreamEvents, StreamStateEvents } from './streamEvents'
 import { StreamStateView_AbstractContent } from './streamStateView_AbstractContent'
 import { DecryptedContent } from './encryptedContentTypes'
-import { check, throwWithCode } from '@river/dlog'
+import { check, throwWithCode } from '@river-build/dlog'
 import { isDefined, logNever } from './check'
 import { isDefaultChannelId, streamIdAsString } from './id'
 

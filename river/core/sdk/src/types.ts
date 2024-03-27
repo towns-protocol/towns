@@ -34,7 +34,7 @@ import {
     MemberPayload,
 } from '@river/proto'
 import { keccak256 } from 'ethereum-cryptography/keccak'
-import { bin_toHexString } from '@river/dlog'
+import { bin_toHexString } from '@river-build/dlog'
 import { isDefined } from './check'
 import { DecryptedContent } from './encryptedContentTypes'
 import { addressFromUserId, streamIdAsBytes } from './id'

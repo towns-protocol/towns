@@ -12,7 +12,7 @@ import {
 } from './encryptionTypes'
 import { EncryptionDelegate } from './encryptionDelegate'
 import { GROUP_ENCRYPTION_ALGORITHM, GroupEncryptionSession } from './olmLib'
-import { dlog } from '@river/dlog'
+import { dlog } from '@river-build/dlog'
 
 const log = dlog('csb:encryption:encryptionDevice')
 

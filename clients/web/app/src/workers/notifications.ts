@@ -1,6 +1,6 @@
 import * as emoji from 'node-emoji'
 
-import { dlog, dlogError } from '@river/dlog'
+import { dlog, dlogError } from '@river-build/dlog'
 import { UserRecord } from 'store/notificationSchema'
 import {
     AppNotification,

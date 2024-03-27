@@ -2,7 +2,7 @@ import { EncryptedData } from '@river/proto'
 import { PlainMessage } from '@bufbuild/protobuf'
 import { EncryptionAlgorithm, IEncryptionParams } from './base'
 import { GROUP_ENCRYPTION_ALGORITHM } from './olmLib'
-import { dlog } from '@river/dlog'
+import { dlog } from '@river-build/dlog'
 
 const log = dlog('csb:encryption:groupEncryption')
 

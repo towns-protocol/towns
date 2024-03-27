@@ -6,7 +6,7 @@ import {
     isUserStreamId,
     isUserInboxStreamId,
 } from './id'
-import { check, dlog, dlogError } from '@river/dlog'
+import { check, dlog, dlogError } from '@river-build/dlog'
 import { Stream } from './stream'
 import { ClientInitStatus } from './types'
 import pLimit from 'p-limit'

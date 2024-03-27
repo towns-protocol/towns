@@ -3,7 +3,7 @@
 
 import { MembershipOp } from '@river/proto'
 import { setTimeout } from 'timers/promises'
-import { dlog } from '@river/dlog'
+import { dlog } from '@river-build/dlog'
 import {
     makeUniqueChannelStreamId,
     makeUserStreamId,

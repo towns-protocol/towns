@@ -4,7 +4,7 @@
 
 import { Client } from './client'
 import { makeDonePromise, makeTestClient, makeUniqueSpaceStreamId } from './util.test'
-import { dlog } from '@river/dlog'
+import { dlog } from '@river-build/dlog'
 import { UserDeviceCollection } from '@river-build/encryption'
 import { UserInboxPayload_GroupEncryptionSessions } from '@river/proto'
 import { makeUniqueChannelStreamId, streamIdAsString } from './id'

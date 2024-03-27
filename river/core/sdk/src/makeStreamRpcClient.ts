@@ -12,7 +12,7 @@ import {
 import { AnyMessage } from '@bufbuild/protobuf'
 import { ConnectTransportOptions, createConnectTransport } from '@connectrpc/connect-web'
 import { Err, StreamService } from '@river/proto'
-import { check, dlog, dlogError } from '@river/dlog'
+import { check, dlog, dlogError } from '@river-build/dlog'
 import { genShortId, streamIdAsString } from './id'
 import { getEnvVar, isBaseUrlIncluded, isIConnectError } from './utils'
 

@@ -9,7 +9,7 @@ import {
 } from './types'
 import { DecryptedContent } from './encryptedContentTypes'
 import { StreamEncryptionEvents, StreamStateEvents } from './streamEvents'
-import { check } from '@river/dlog'
+import { check } from '@river-build/dlog'
 import { logNever } from './check'
 import { userIdFromAddress } from './id'
 

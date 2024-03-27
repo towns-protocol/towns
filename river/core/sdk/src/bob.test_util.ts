@@ -1,6 +1,6 @@
 import { makeEvent, unpackStreamEnvelopes } from './sign'
 import { MembershipOp, SyncStreamsResponse, Envelope, SyncOp } from '@river/proto'
-import { DLogger } from '@river/dlog'
+import { DLogger } from '@river-build/dlog'
 import {
     lastEventFiltered,
     makeEvent_test,

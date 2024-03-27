@@ -10,7 +10,7 @@ import {
 import { DecryptedContent } from './encryptedContentTypes'
 import { StreamEncryptionEvents, StreamEvents, StreamStateEvents } from './streamEvents'
 import { StreamStateView_ChannelMetadata } from './streamStateView_ChannelMetadata'
-import { check } from '@river/dlog'
+import { check } from '@river-build/dlog'
 import { logNever } from './check'
 
 export class StreamStateView_GDMChannel extends StreamStateView_AbstractContent {

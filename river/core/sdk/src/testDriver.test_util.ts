@@ -1,5 +1,5 @@
 import { Client } from './client'
-import { DLogger, check, dlog } from '@river/dlog'
+import { DLogger, check, dlog } from '@river-build/dlog'
 import { makeTestClient, makeUniqueSpaceStreamId } from './util.test'
 import { makeUniqueChannelStreamId } from './id'
 import { MembershipOp, SnapshotCaseType } from '@river/proto'

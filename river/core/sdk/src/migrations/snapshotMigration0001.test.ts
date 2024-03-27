@@ -7,7 +7,7 @@ import { snapshotMigration0001 } from './snapshotMigration0001'
 import { ethers } from 'ethers'
 import { makeUniqueSpaceStreamId } from '../util.test'
 import { addressFromUserId, makeUniqueChannelStreamId, streamIdAsBytes } from '../id'
-import { check } from '@river/dlog'
+import { check } from '@river-build/dlog'
 
 // a no-op migration test for the initial snapshot, use as a template for new migrations
 describe('snapshotMigration0001', () => {

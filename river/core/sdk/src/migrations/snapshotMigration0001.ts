@@ -1,4 +1,4 @@
-import { bin_equal } from '@river/dlog'
+import { bin_equal } from '@river-build/dlog'
 import { Snapshot } from '@river/proto'
 
 // Generic compactFunc function

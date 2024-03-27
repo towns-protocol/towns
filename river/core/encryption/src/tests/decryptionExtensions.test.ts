@@ -13,7 +13,7 @@ import {
 } from '../decryptionExtensions'
 import { EncryptedData, UserInboxPayload_GroupEncryptionSessions } from '@river/proto'
 import { GroupEncryptionSession, UserDevice, UserDeviceCollection } from '../olmLib'
-import { bin_fromHexString, bin_toHexString, dlog } from '@river/dlog'
+import { bin_fromHexString, bin_toHexString, dlog } from '@river-build/dlog'
 
 import { CryptoStore } from '../cryptoStore'
 import EventEmitter from 'events'

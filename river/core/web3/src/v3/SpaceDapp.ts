@@ -20,7 +20,7 @@ import { WalletLink } from './WalletLink'
 import { DappConfig, SpaceInfo } from '../types'
 import { IRuleEntitlement } from './index'
 import { PricingModules } from './PricingModules'
-import { dlogger } from '@river/dlog'
+import { dlogger } from '@river-build/dlog'
 
 const logger = dlogger('csb:SpaceDapp:debug')
 

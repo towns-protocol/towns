@@ -1,6 +1,6 @@
 import { MutableRefObject, useEffect, useRef, useState } from 'react'
 import { Client as CasablancaClient } from '@river/sdk'
-import { check } from '@river/dlog'
+import { check } from '@river-build/dlog'
 import { LoginStatus } from './login'
 import { TownsClient } from '../client/TownsClient'
 import { TownsOpts } from '../client/TownsClientTypes'

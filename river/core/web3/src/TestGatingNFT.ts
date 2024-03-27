@@ -4,7 +4,7 @@ import { foundry } from 'viem/chains'
 import MockERC721a from './MockERC721A'
 
 import { keccak256 } from 'viem/utils'
-import { dlogger } from '@river/dlog'
+import { dlogger } from '@river-build/dlog'
 
 const logger = dlogger('csb:TestGatingNFT')
 

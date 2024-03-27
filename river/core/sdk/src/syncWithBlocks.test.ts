@@ -2,7 +2,7 @@
  * @group main
  */
 import { MembershipOp, StreamAndCookie, SyncOp } from '@river/proto'
-import { dlog } from '@river/dlog'
+import { dlog } from '@river-build/dlog'
 import {
     makeUniqueChannelStreamId,
     makeUserStreamId,

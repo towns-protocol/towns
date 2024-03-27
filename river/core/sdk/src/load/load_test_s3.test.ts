@@ -2,7 +2,7 @@
  * @group load-tests-s3
  */
 
-import { check, dlog } from '@river/dlog'
+import { check, dlog } from '@river-build/dlog'
 import { waitFor } from '../util.test'
 
 import { bobsAccount, accounts, jsonRpcProviderUrl, nodeRpcURL } from './loadconfig.test_util'

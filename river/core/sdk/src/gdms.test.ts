@@ -4,7 +4,7 @@
 
 import { makeTestClient, createEventDecryptedPromise, waitFor, makeDonePromise } from './util.test'
 import { Client } from './client'
-import { dlog } from '@river/dlog'
+import { dlog } from '@river-build/dlog'
 import { MembershipOp } from '@river/proto'
 
 const log = dlog('csb:test:gdmsTests')

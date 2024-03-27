@@ -1,5 +1,5 @@
 import debug from 'debug'
-import { DLogger, check, dlog, dlogError } from '@river/dlog'
+import { DLogger, check, dlog, dlogError } from '@river-build/dlog'
 import { hasElements, isDefined } from './check'
 import { StreamRpcClientType } from './makeStreamRpcClient'
 import { unpackMiniblock, unpackStream } from './sign'

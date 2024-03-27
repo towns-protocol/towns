@@ -3,7 +3,7 @@
  * @group with-entitilements
  */
 
-import { dlog } from '@river/dlog'
+import { dlog } from '@river-build/dlog'
 import {
     makeUserContextFromWallet,
     makeTestClient,

@@ -14,7 +14,7 @@ import {
     useTownsContext,
 } from 'use-towns-client'
 import React, { useCallback, useEffect, useMemo, useRef, useState } from 'react'
-import { cloneAndFormat } from '@river/dlog'
+import { cloneAndFormat } from '@river-build/dlog'
 
 interface Props {
     streamId: string

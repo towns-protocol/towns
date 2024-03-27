@@ -20,7 +20,7 @@
         "@bufbuild/protobuf": "^1.4.1",
         "@ethereumjs/util": "^8.0.1",
         "@matrix-org/olm": "^3.2.15",
-        "@river/dlog": "workspace:^",
+        "@river-build/dlog": "workspace:^",
         "@river/proto": "workspace:^",
         "@river/web3": "workspace:^",
         "debug": "^4.3.4",

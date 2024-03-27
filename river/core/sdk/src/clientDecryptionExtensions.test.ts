@@ -3,7 +3,7 @@
  */
 
 import { Client } from './client'
-import { dlog } from '@river/dlog'
+import { dlog } from '@river-build/dlog'
 import { isDefined } from './check'
 import { TestClientOpts, makeTestClient, makeUniqueSpaceStreamId, waitFor } from './util.test'
 import { Stream } from './stream'

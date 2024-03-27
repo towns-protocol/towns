@@ -4,7 +4,7 @@
 
 import { makeEvent, unpackStreamEnvelopes } from './sign'
 import { MembershipOp } from '@river/proto'
-import { dlog } from '@river/dlog'
+import { dlog } from '@river-build/dlog'
 import {
     lastEventFiltered,
     makeRandomUserContext,

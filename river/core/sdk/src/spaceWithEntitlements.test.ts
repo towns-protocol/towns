@@ -10,7 +10,7 @@ import {
     makeUserContextFromWallet,
     waitFor,
 } from './util.test'
-import { dlog } from '@river/dlog'
+import { dlog } from '@river-build/dlog'
 import { makeDefaultChannelStreamId, makeSpaceStreamId, makeUserStreamId } from './id'
 import { MembershipOp } from '@river/proto'
 import { ethers } from 'ethers'

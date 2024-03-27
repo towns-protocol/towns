@@ -5,7 +5,7 @@
 import _ from 'lodash'
 import { unpackEnvelope, makeEvent, publicKeyToAddress } from './sign'
 import { make_UserPayload_Inception } from './types'
-import { dlog, bin_fromHexString, bin_toHexString } from '@river/dlog'
+import { dlog, bin_fromHexString, bin_toHexString } from '@river-build/dlog'
 import { PlainMessage } from '@bufbuild/protobuf'
 import { makeUserStreamId, streamIdToBytes } from './id'
 import { getPublicKey } from 'ethereum-cryptography/secp256k1'

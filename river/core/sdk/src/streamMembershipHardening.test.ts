@@ -4,7 +4,7 @@
 
 import { makeTestClient } from './util.test'
 import { Client } from './client'
-import { dlog } from '@river/dlog'
+import { dlog } from '@river-build/dlog'
 
 const log = dlog('csb:test:streamMembershipHardening')
 

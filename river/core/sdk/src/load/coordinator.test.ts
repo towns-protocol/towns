@@ -19,7 +19,7 @@ import {
     pauseForXMiliseconds,
     getRandomInt,
 } from '../testSdk.test_util'
-import { dlog } from '@river/dlog'
+import { dlog } from '@river-build/dlog'
 import {
     townsToCreate,
     channelsPerTownToCreate,

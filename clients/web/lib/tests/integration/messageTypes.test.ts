@@ -15,7 +15,7 @@ import {
 import { Permission } from '@river/web3'
 import { TestConstants } from './helpers/TestConstants'
 import { waitFor } from '@testing-library/dom'
-import { check } from '@river/dlog'
+import { check } from '@river-build/dlog'
 
 describe('messageTypes', () => {
     test('send a m.gm message to test message types', async () => {

@@ -4,7 +4,7 @@
 
 import { makeTestClient, makeUniqueSpaceStreamId, waitFor } from './util.test'
 import { Client } from './client'
-import { dlog } from '@river/dlog'
+import { dlog } from '@river-build/dlog'
 import { makeUniqueChannelStreamId } from './id'
 import { MembershipOp } from '@river/proto'
 

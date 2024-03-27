@@ -6,7 +6,7 @@
 // But, if another app were to import this that didn't bundle via Vite, or if Vite changes something, this may break.
 import olmWasm from '@matrix-org/olm/olm.wasm?url'
 import Olm from '@matrix-org/olm'
-import { isJest } from '@river/dlog'
+import { isJest } from '@river-build/dlog'
 import {
     Account,
     InboundGroupSession,

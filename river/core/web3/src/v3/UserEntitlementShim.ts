@@ -14,7 +14,7 @@ import { BaseContractShim } from './BaseContractShim'
 import { BigNumberish, ethers } from 'ethers'
 import { decodeUsers } from '../ConvertersEntitlements'
 import { EntitlementModuleType, EntitlementModule } from '../ContractTypes'
-import { dlogger } from '@river/dlog'
+import { dlogger } from '@river-build/dlog'
 
 const logger = dlogger('csb:UserEntitlementShim:debug')
 

@@ -8,7 +8,7 @@ import { SyncedStreams } from './syncedStreams'
 import { makeDonePromise, makeRandomUserContext, makeTestRpcClient } from './util.test'
 import { makeUserStreamId, streamIdToBytes, userIdFromAddress } from './id'
 import { make_UserPayload_Inception } from './types'
-import { dlog } from '@river/dlog'
+import { dlog } from '@river-build/dlog'
 import TypedEmitter from 'typed-emitter'
 import { StreamEvents } from './streamEvents'
 

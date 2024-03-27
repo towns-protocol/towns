@@ -5,7 +5,7 @@ import {
     RIVER_CHAIN_ID,
     LOCALHOST_RIVER_CHAIN_ID,
 } from '../Web3Constants'
-import { dlogger } from '@river/dlog'
+import { dlogger } from '@river-build/dlog'
 
 export type PromiseOrValue<T> = T | Promise<T>
 

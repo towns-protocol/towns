@@ -7,7 +7,7 @@ import {
     parsedMiniblockToPersistedMiniblock,
 } from './streamUtils'
 
-import { dlog, dlogError } from '@river/dlog'
+import { dlog, dlogError } from '@river-build/dlog'
 import { isDefined } from './check'
 
 const DEFAULT_RETRY_COUNT = 2

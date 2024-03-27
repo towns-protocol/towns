@@ -6,7 +6,7 @@ import { isDefined, logNever } from './check'
 import { userIdFromAddress } from './id'
 import { StreamStateView_Members_Membership } from './streamStateView_Members_Membership'
 import { StreamStateView_Members_Solicitations } from './streamStateView_Members_Solicitations'
-import { check } from '@river/dlog'
+import { check } from '@river-build/dlog'
 import { DecryptedContent } from './encryptedContentTypes'
 import { StreamStateView_UserMetadata } from './streamStateView_UserMetadata'
 import { KeySolicitationContent } from '@river-build/encryption'
@@ -141,7 +141,7 @@ export class StreamStateView_Members {
             case 'keySolicitation':
                 {
                     const stateMember = this.joined.get(event.creatorUserId)
-                    check(isDefined(stateMember), 'key fulfillment from non-member')
+                    check(isDefined(stateMember), 'key solicitation from non-member')
                     this.solicitHelper.applySolicitation(
                         stateMember,
                         payload.content.value,
@@ -164,7 +164,7 @@ export class StreamStateView_Members {
             case 'displayName':
                 {
                     const stateMember = this.joined.get(event.creatorUserId)
-                    check(isDefined(stateMember), 'key fulfillment from non-member')
+                    check(isDefined(stateMember), 'displayName from non-member')
                     stateMember.encryptedDisplayName = new WrappedEncryptedData({
                         data: payload.content.value,
                     })
@@ -181,7 +181,7 @@ export class StreamStateView_Members {
             case 'username':
                 {
                     const stateMember = this.joined.get(event.creatorUserId)
-                    check(isDefined(stateMember), 'key fulfillment from non-member')
+                    check(isDefined(stateMember), 'username from non-member')
                     stateMember.encryptedUsername = new WrappedEncryptedData({
                         data: payload.content.value,
                     })
