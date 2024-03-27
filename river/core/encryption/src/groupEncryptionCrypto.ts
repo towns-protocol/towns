@@ -1,4 +1,4 @@
-import { EncryptedData } from '@river/proto'
+import { EncryptedData } from '@river-build/proto'
 import {
     GROUP_ENCRYPTION_ALGORITHM,
     GroupEncryptionSession,

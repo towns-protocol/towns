@@ -1,5 +1,5 @@
 import { useMemo } from 'react'
-import { FullyReadMarker } from '@river/proto'
+import { FullyReadMarker } from '@river-build/proto'
 import { useTimelineStore } from '../store/use-timeline-store'
 import { ThreadResult, ThreadStats } from '../types/timeline-types'
 import { useFullyReadMarkerStore } from '../store/use-fully-read-marker-store'

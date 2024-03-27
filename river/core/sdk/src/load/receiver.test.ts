@@ -22,7 +22,7 @@ import {
 } from './loadconfig.test_util'
 import { Queue, Worker } from 'bullmq'
 import fs from 'fs'
-import { SnapshotCaseType } from '@river/proto'
+import { SnapshotCaseType } from '@river-build/proto'
 import { DecryptedTimelineEvent } from '../types'
 import { createAndStartClient } from './load.test_util'
 import { RiverSDK } from '../testSdk.test_util'

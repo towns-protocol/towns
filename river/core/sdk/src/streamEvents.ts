@@ -3,7 +3,7 @@ import {
     SnapshotCaseType,
     FullyReadMarker,
     UserInboxPayload_GroupEncryptionSessions,
-} from '@river/proto'
+} from '@river-build/proto'
 import {
     ClientInitStatus,
     ConfirmedTimelineEvent,

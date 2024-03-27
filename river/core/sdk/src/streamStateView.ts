@@ -8,7 +8,7 @@ import {
     Snapshot,
     MiniblockHeader,
     MembershipOp,
-} from '@river/proto'
+} from '@river-build/proto'
 import TypedEmitter from 'typed-emitter'
 import {
     ConfirmedTimelineEvent,

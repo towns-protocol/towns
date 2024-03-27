@@ -32,7 +32,7 @@ import {
     MemberPayload_KeyFulfillment,
     MemberPayload_KeySolicitation,
     MemberPayload,
-} from '@river/proto'
+} from '@river-build/proto'
 import { keccak256 } from 'ethereum-cryptography/keccak'
 import { bin_toHexString } from '@river-build/dlog'
 import { isDefined } from './check'

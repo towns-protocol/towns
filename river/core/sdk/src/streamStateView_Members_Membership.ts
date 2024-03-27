@@ -1,5 +1,5 @@
 import TypedEmitter from 'typed-emitter'
-import { MemberPayload_Membership, MembershipOp } from '@river/proto'
+import { MemberPayload_Membership, MembershipOp } from '@river-build/proto'
 import { logNever } from './check'
 import { StreamStateEvents } from './streamEvents'
 

@@ -5,7 +5,7 @@ import {
     UserDeviceKeyPayload,
     UserDeviceKeyPayload_EncryptionDevice,
     UserDeviceKeyPayload_Snapshot,
-} from '@river/proto'
+} from '@river-build/proto'
 import { StreamStateView_AbstractContent } from './streamStateView_AbstractContent'
 import { check } from '@river-build/dlog'
 import { logNever } from './check'

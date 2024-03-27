@@ -1,4 +1,4 @@
-import { ChannelMessage, ChannelProperties, EncryptedData } from '@river/proto'
+import { ChannelMessage, ChannelProperties, EncryptedData } from '@river-build/proto'
 import { checkNever } from './check'
 
 /*************

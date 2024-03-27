@@ -2,11 +2,14 @@ package base
 
 import (
 	"errors"
+	"fmt"
 	"testing"
 
+	"connectrpc.com/connect"
 	"github.com/river-build/river/core/node/dlog"
 	"github.com/river-build/river/core/node/protocol"
 	"github.com/stretchr/testify/assert"
+	"github.com/stretchr/testify/require"
 )
 
 func TestRiverError(t *testing.T) {
@@ -73,4 +76,36 @@ func TestRiverErrorBytes(t *testing.T) {
 	err = RiverError(protocol.Err_INTERNAL, "bytesPtr", "val", &slice)
 	println(err.Error())
 	assert.Contains(err.Error(), "0102030f")
+}
+func TestRiverErrorWrapsConnectNetworkingError(t *testing.T) {
+	connectErr := connect.NewError(connect.CodeUnavailable, fmt.Errorf("node unavailable"))
+	wrappedConnectError := AsRiverError(connectErr).AsConnectError()
+
+	require.Equal(t, connect.CodeFailedPrecondition, wrappedConnectError.Code())
+	require.Equal(t, "DOWNSTREAM_NETWORK_ERROR", wrappedConnectError.Meta().Values(RIVER_ERROR_HEADER)[0])
+}
+
+func TestIsConnectNetworkError(t *testing.T) {
+	tests := map[string]struct {
+		err            error
+		isNetworkError bool
+	}{
+		"connect network error (unavailable)": {
+			err:            connect.NewError(connect.CodeUnavailable, fmt.Errorf("node unavailable")),
+			isNetworkError: true,
+		},
+		"river downstream network error": {
+			err:            RiverError(protocol.Err_DOWNSTREAM_NETWORK_ERROR, "downstream network error"),
+			isNetworkError: false,
+		},
+		"propogated connect network error": {
+			err:            AsRiverError(connect.NewError(connect.CodeUnavailable, fmt.Errorf("node unavailable"))).AsConnectError(),
+			isNetworkError: false,
+		},
+	}
+	for name, tc := range tests {
+		t.Run(name, func(t *testing.T) {
+			require.Equal(t, tc.isNetworkError, IsConnectNetworkError(tc.err))
+		})
+	}
 }

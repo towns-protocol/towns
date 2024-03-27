@@ -1,5 +1,5 @@
 {
-    "name": "@river/proto",
+    "name": "@river-build/proto",
     "private": true,
     "packageManager": "yarn@3.8.0",
     "type": "module",

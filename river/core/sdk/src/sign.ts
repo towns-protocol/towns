@@ -9,7 +9,7 @@ import {
     Miniblock,
     StreamAndCookie,
     SyncCookie,
-} from '@river/proto'
+} from '@river-build/proto'
 import { assertBytes } from 'ethereum-cryptography/utils'
 import { recoverPublicKey, signSync, verify } from 'ethereum-cryptography/secp256k1'
 import { genIdBlob, streamIdAsBytes, streamIdAsString, userIdFromAddress } from './id'

@@ -7,7 +7,7 @@ import {
     UserInboxPayload_Snapshot_DeviceSummary,
     UserInboxPayload_GroupEncryptionSessions,
     UserInboxPayload_Ack,
-} from '@river/proto'
+} from '@river-build/proto'
 import { StreamStateView_AbstractContent } from './streamStateView_AbstractContent'
 import { check } from '@river-build/dlog'
 import { logNever } from './check'

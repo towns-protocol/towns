@@ -1,4 +1,9 @@
-import { PersistedEvent, PersistedMiniblock, PersistedSyncedStream, SyncCookie } from '@river/proto'
+import {
+    PersistedEvent,
+    PersistedMiniblock,
+    PersistedSyncedStream,
+    SyncCookie,
+} from '@river-build/proto'
 import { ParsedEvent, ParsedMiniblock } from './types'
 import { bin_toHexString } from '@river-build/dlog'
 import { isDefined } from './check'

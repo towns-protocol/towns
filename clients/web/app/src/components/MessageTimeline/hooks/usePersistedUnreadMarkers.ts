@@ -1,6 +1,6 @@
 import { useCallback, useEffect, useRef, useState } from 'react'
 import { useFullyReadMarker, useTownsClient } from 'use-towns-client'
-import { FullyReadMarker } from '@river/proto'
+import { FullyReadMarker } from '@river-build/proto'
 import { useStore } from 'store/store'
 
 export const usePersistedUnreadMarkers = ({

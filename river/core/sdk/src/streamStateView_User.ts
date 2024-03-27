@@ -6,7 +6,7 @@ import {
     UserPayload,
     UserPayload_Snapshot,
     UserPayload_UserMembership,
-} from '@river/proto'
+} from '@river-build/proto'
 import { StreamEncryptionEvents, StreamEvents, StreamStateEvents } from './streamEvents'
 import { StreamStateView_AbstractContent } from './streamStateView_AbstractContent'
 import { check } from '@river-build/dlog'

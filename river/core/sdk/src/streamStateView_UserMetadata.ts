@@ -1,4 +1,4 @@
-import { WrappedEncryptedData as WrappedEncryptedData, EncryptedData } from '@river/proto'
+import { WrappedEncryptedData as WrappedEncryptedData, EncryptedData } from '@river-build/proto'
 import TypedEmitter from 'typed-emitter'
 import { ConfirmedTimelineEvent, RemoteTimelineEvent } from './types'
 import { StreamEncryptionEvents, StreamStateEvents } from './streamEvents'

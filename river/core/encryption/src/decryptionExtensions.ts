@@ -1,6 +1,11 @@
 import TypedEmitter from 'typed-emitter'
 import { Permission } from '@river/web3'
 import {
+    EncryptedData,
+    SessionKeys,
+    UserInboxPayload_GroupEncryptionSessions,
+} from '@river-build/proto'
+import {
     shortenHexString,
     dlog,
     dlogError,
@@ -8,7 +13,6 @@ import {
     check,
     bin_toHexString,
 } from '@river-build/dlog'
-import { EncryptedData, SessionKeys, UserInboxPayload_GroupEncryptionSessions } from '@river/proto'
 import { GROUP_ENCRYPTION_ALGORITHM, GroupEncryptionSession, UserDevice } from './olmLib'
 import { GroupEncryptionCrypto } from './groupEncryptionCrypto'
 

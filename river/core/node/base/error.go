@@ -196,17 +196,30 @@ func IsRiverError(err error) bool {
 	return ok
 }
 
+func IsConnectNetworkError(err error) bool {
+	if ce, ok := err.(*connect.Error); ok {
+		return IsConnectNetworkErrorCode(ce.Code())
+	}
+	return false
+}
+
+// IsConnectNetworkError identifies connect codes that indicate a network error occurred during
+// a connect call to a downstream client.
+func IsConnectNetworkErrorCode(code connect.Code) bool {
+	return code == connect.CodeUnavailable
+}
+
 // If there is information to be extracted from the error, then code is set accordingly.
-// If not, then provided defaulCode is used.
-func AsRiverError(err error, defaulCode ...protocol.Err) *RiverErrorImpl {
+// If not, then provided defaultCode is used.
+func AsRiverError(err error, defaultCode ...protocol.Err) *RiverErrorImpl {
 	e, ok := err.(*RiverErrorImpl)
 	if ok {
 		return e
 	}
 
 	code := protocol.Err_UNKNOWN
-	if len(defaulCode) > 0 {
-		code = defaulCode[0]
+	if len(defaultCode) > 0 {
+		code = defaultCode[0]
 	}
 
 	// Map connect errors to river errors
@@ -219,6 +232,11 @@ func AsRiverError(err error, defaulCode ...protocol.Err) *RiverErrorImpl {
 		}
 		if code == protocol.Err_UNKNOWN {
 			code = protocol.Err(ce.Code())
+		}
+		// Wrap connect network errors from fanout nodes so they are not propogated back to the
+		// original caller as is, otherwise this node may seem unavailable.
+		if IsConnectNetworkErrorCode(ce.Code()) {
+			code = protocol.Err_DOWNSTREAM_NETWORK_ERROR
 		}
 		return &RiverErrorImpl{
 			Code: code,

@@ -8,7 +8,7 @@ import {
     SnapshotCaseType,
     SyncStreamsResponse,
     SyncOp,
-} from '@river/proto'
+} from '@river-build/proto'
 import { PlainMessage } from '@bufbuild/protobuf'
 import { Client } from './client'
 import { genId, makeSpaceStreamId, userIdFromAddress } from './id'

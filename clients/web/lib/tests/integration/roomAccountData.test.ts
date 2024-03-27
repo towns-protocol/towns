@@ -14,7 +14,7 @@ import {
 
 import { Permission } from '@river/web3'
 import { waitFor } from '@testing-library/dom'
-import { FullyReadMarker } from '@river/proto'
+import { FullyReadMarker } from '@river-build/proto'
 
 // we store fully read markers in the room account data
 // required to show the "new" banner in channels and threads

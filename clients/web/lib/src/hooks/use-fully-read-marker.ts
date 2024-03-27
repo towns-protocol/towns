@@ -1,4 +1,4 @@
-import { FullyReadMarker } from '@river/proto'
+import { FullyReadMarker } from '@river-build/proto'
 import { useFullyReadMarkerStore } from '../store/use-fully-read-marker-store'
 
 export function useFullyReadMarker(

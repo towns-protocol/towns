@@ -2,7 +2,7 @@
  * @group main
  */
 
-import { Snapshot } from '@river/proto'
+import { Snapshot } from '@river-build/proto'
 import { snapshotMigration0000 } from './snapshotMigration0000'
 
 // a no-op migration test for the initial snapshot, use as a template for new migrations

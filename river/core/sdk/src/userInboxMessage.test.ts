@@ -6,7 +6,7 @@ import { Client } from './client'
 import { makeDonePromise, makeTestClient, makeUniqueSpaceStreamId } from './util.test'
 import { dlog } from '@river-build/dlog'
 import { UserDeviceCollection } from '@river-build/encryption'
-import { UserInboxPayload_GroupEncryptionSessions } from '@river/proto'
+import { UserInboxPayload_GroupEncryptionSessions } from '@river-build/proto'
 import { makeUniqueChannelStreamId, streamIdAsString } from './id'
 
 const log = dlog('test:inboxMessage')

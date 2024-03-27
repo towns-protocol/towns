@@ -2,7 +2,7 @@
  * @group main
  */
 
-import { Err, InfoRequest, InfoResponse } from '@river/proto'
+import { Err, InfoRequest, InfoResponse } from '@river-build/proto'
 import { makeTestRpcClient } from './util.test'
 import { errorContains } from './makeStreamRpcClient'
 

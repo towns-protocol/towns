@@ -11,7 +11,7 @@ import {
     KeySolicitationData,
     makeSessionKeys,
 } from '../decryptionExtensions'
-import { EncryptedData, UserInboxPayload_GroupEncryptionSessions } from '@river/proto'
+import { EncryptedData, UserInboxPayload_GroupEncryptionSessions } from '@river-build/proto'
 import { GroupEncryptionSession, UserDevice, UserDeviceCollection } from '../olmLib'
 import { bin_fromHexString, bin_toHexString, dlog } from '@river-build/dlog'
 

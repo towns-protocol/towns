@@ -1,5 +1,5 @@
 import TypedEmitter from 'typed-emitter'
-import { EncryptedData } from '@river/proto'
+import { EncryptedData } from '@river-build/proto'
 import { usernameChecksum } from './utils'
 import { dlog } from '@river-build/dlog'
 import { StreamEncryptionEvents, StreamStateEvents } from './streamEvents'

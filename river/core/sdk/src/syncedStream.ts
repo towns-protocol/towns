@@ -1,5 +1,5 @@
 import TypedEmitter from 'typed-emitter'
-import { PersistedSyncedStream, MiniblockHeader, Snapshot, SyncCookie } from '@river/proto'
+import { PersistedSyncedStream, MiniblockHeader, Snapshot, SyncCookie } from '@river-build/proto'
 import { Stream } from './stream'
 import { ParsedMiniblock, ParsedEvent, ParsedStreamResponse } from './types'
 import { DLogger, bin_toHexString, dlog } from '@river-build/dlog'

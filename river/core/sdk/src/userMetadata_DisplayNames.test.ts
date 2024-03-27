@@ -2,7 +2,7 @@
  * @group main
  */
 
-import { EncryptedData } from '@river/proto'
+import { EncryptedData } from '@river-build/proto'
 import { UserMetadata_DisplayNames } from './userMetadata_DisplayNames'
 
 describe('userMetadata_DisplayNamesTests', () => {

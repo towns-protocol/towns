@@ -10,7 +10,7 @@ import { PlainMessage } from '@bufbuild/protobuf'
 import { makeUserStreamId, streamIdToBytes } from './id'
 import { getPublicKey } from 'ethereum-cryptography/secp256k1'
 import { ethers } from 'ethers'
-import { EncryptedData, StreamEvent } from '@river/proto'
+import { EncryptedData, StreamEvent } from '@river-build/proto'
 import { TEST_ENCRYPTED_MESSAGE_PROPS } from './util.test'
 import { SignerContext, checkDelegateSig, makeSignerContext } from './signerContext'
 

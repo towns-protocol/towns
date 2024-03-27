@@ -2,7 +2,7 @@
  * @group main
  */
 
-import { Snapshot } from '@river/proto'
+import { Snapshot } from '@river-build/proto'
 import { snapshotMigration0001 } from './snapshotMigration0001'
 import { ethers } from 'ethers'
 import { makeUniqueSpaceStreamId } from '../util.test'

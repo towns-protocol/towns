@@ -1,7 +1,7 @@
 /* eslint-disable no-restricted-imports */
 /* eslint-disable @typescript-eslint/unbound-method */
 import { useMemo } from 'react'
-import { FullyReadMarker } from '@river/proto'
+import { FullyReadMarker } from '@river-build/proto'
 import {
     BanUnbanWalletTransactionContext,
     ChannelTransactionContext,

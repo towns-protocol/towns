@@ -1,5 +1,5 @@
 import { useEffect, useRef, useState } from 'react'
-import { FullyReadMarker } from '@river/proto'
+import { FullyReadMarker } from '@river-build/proto'
 import { ListItem } from '../types'
 
 export const useFocusMessage = (

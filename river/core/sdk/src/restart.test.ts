@@ -1,7 +1,7 @@
 /**
  */
 
-import { MembershipOp } from '@river/proto'
+import { MembershipOp } from '@river-build/proto'
 import { setTimeout } from 'timers/promises'
 import { dlog } from '@river-build/dlog'
 import {

@@ -1,7 +1,7 @@
 import { Client as CasablancaClient, Stream, isSpaceStreamId } from '@river/sdk'
 import { useEffect, useState } from 'react'
 import isEqual from 'lodash/isEqual'
-import { SnapshotCaseType } from '@river/proto'
+import { SnapshotCaseType } from '@river-build/proto'
 
 export function useSpacesIds_Casablanca(casablancaClient: CasablancaClient | undefined): {
     spaceIds: string[]

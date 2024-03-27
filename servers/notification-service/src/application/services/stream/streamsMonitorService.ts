@@ -10,7 +10,7 @@ import { SyncedStreams, unpackStream } from './syncedStreams'
 import { streamIdFromBytes, streamIdToBytes, userIdFromAddress } from './utils'
 import { env } from '../../utils/environment'
 import assert from 'assert'
-import { Err, MemberPayload_Membership, MembershipOp, MiniblockHeader } from '@river/proto'
+import { Err, MemberPayload_Membership, MembershipOp, MiniblockHeader } from '@river-build/proto'
 import { ParsedStreamAndCookie } from './types'
 import { createLogger } from '../logger'
 

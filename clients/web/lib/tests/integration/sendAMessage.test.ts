@@ -17,7 +17,7 @@ import { Permission } from '@river/web3'
 import { waitFor } from '@testing-library/dom'
 import { check } from '@river-build/dlog'
 import { DecryptedTimelineEvent } from '@river/sdk'
-import { SnapshotCaseType } from '@river/proto'
+import { SnapshotCaseType } from '@river-build/proto'
 
 describe('sendAMessage', () => {
     test('create room, invite user, accept invite, and send encrypted message', async () => {

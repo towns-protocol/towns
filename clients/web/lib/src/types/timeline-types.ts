@@ -11,7 +11,7 @@ import {
     FullyReadMarker,
     MiniblockHeader,
     PayloadCaseType,
-} from '@river/proto'
+} from '@river-build/proto'
 import { PlainMessage } from '@bufbuild/protobuf'
 import { Channel, Membership, Mention, MessageType } from './towns-types'
 import { staticAssertNever } from '../utils/towns-utils'

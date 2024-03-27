@@ -10,7 +10,7 @@ import {
     SyncCookie,
     SyncOp,
     SyncStreamsResponse,
-} from '@river/proto'
+} from '@river-build/proto'
 import assert from 'assert'
 import { nanoid } from 'nanoid'
 

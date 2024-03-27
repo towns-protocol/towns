@@ -3,7 +3,7 @@
  */
 
 import { makeEvent, unpackStreamEnvelopes } from './sign'
-import { MembershipOp } from '@river/proto'
+import { MembershipOp } from '@river-build/proto'
 import { dlog } from '@river-build/dlog'
 import {
     lastEventFiltered,

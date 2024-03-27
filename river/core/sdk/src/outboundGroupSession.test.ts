@@ -6,7 +6,7 @@ import { makeTestClient, makeUniqueSpaceStreamId } from './util.test'
 import { Client } from './client'
 
 import { makeUniqueChannelStreamId } from './id'
-import { ChannelMessage } from '@river/proto'
+import { ChannelMessage } from '@river-build/proto'
 
 describe('outboundSessionTests', () => {
     let bobsClient: Client

@@ -1,5 +1,5 @@
 import TypedEmitter from 'typed-emitter'
-import { GdmChannelPayload, GdmChannelPayload_Snapshot, Snapshot } from '@river/proto'
+import { GdmChannelPayload, GdmChannelPayload_Snapshot, Snapshot } from '@river-build/proto'
 import { StreamStateView_AbstractContent } from './streamStateView_AbstractContent'
 import {
     ConfirmedTimelineEvent,

@@ -1,5 +1,5 @@
 import * as z from 'zod'
-import { StreamEvent } from '@river/proto'
+import { StreamEvent } from '@river-build/proto'
 import { PATHS } from '../routes'
 import { AppNotification, AppNotificationType, NotificationContent } from './types.d'
 

@@ -31,7 +31,7 @@ import {
     ChannelProperties,
     ChannelMessage_Post_Attachment,
     MemberPayload,
-} from '@river/proto'
+} from '@river-build/proto'
 import { useEffect } from 'react'
 import { MessageType, toMembership } from '../../types/towns-types'
 import {

@@ -10,7 +10,7 @@ import {
     KeySolicitationData,
     UserDevice,
 } from '@river-build/encryption'
-import { EncryptedData, UserInboxPayload_GroupEncryptionSessions } from '@river/proto'
+import { EncryptedData, UserInboxPayload_GroupEncryptionSessions } from '@river-build/proto'
 import { make_MemberPayload_KeyFulfillment, make_MemberPayload_KeySolicitation } from './types'
 
 import { Client } from './client'

@@ -9,7 +9,7 @@ import {
     SpacePayload,
     SpacePayload_Channel,
     SpacePayload_Snapshot,
-} from '@river/proto'
+} from '@river-build/proto'
 import { StreamEncryptionEvents, StreamEvents, StreamStateEvents } from './streamEvents'
 import { StreamStateView_AbstractContent } from './streamStateView_AbstractContent'
 import { DecryptedContent } from './encryptedContentTypes'

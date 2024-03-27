@@ -3,7 +3,7 @@ import { useTownsContext } from '../components/TownsContextProvider'
 import { Channel, SpaceData } from '../types/towns-types'
 import isEqual from 'lodash/isEqual'
 import { isUserStreamId, streamIdAsString } from '@river/sdk'
-import { MembershipOp } from '@river/proto'
+import { MembershipOp } from '@river-build/proto'
 import { useCasablancaStream } from './CasablancClient/useCasablancaStream'
 
 export function useMyChannels(space?: SpaceData) {

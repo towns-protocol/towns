@@ -29,7 +29,7 @@ import {
     SyncOp,
     SyncStreamsRequest,
     SyncStreamsResponse,
-} from '@river/proto'
+} from '@river-build/proto'
 import { PartialMessage } from '@bufbuild/protobuf'
 import { CallOptions } from '@connectrpc/connect'
 // This is needed to get the jest itnerface for using in spyOn

@@ -1,4 +1,4 @@
-import { MembershipOp } from '@river/proto'
+import { MembershipOp } from '@river-build/proto'
 import {
     StreamTimelineEvent,
     UnauthenticatedClient,

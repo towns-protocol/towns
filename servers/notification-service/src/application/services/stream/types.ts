@@ -1,4 +1,4 @@
-import { MiniblockHeader, StreamEvent, SyncCookie } from '@river/proto'
+import { MiniblockHeader, StreamEvent, SyncCookie } from '@river-build/proto'
 
 export interface ParsedMiniblock {
     hash: Uint8Array

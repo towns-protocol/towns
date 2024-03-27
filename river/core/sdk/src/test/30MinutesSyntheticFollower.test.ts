@@ -23,7 +23,7 @@ import {
     riverNodeRpcUrl,
 } from './30MinutesSyntheticConfig.test_util'
 import { DecryptedContent } from '../encryptedContentTypes'
-import { SnapshotCaseType } from '@river/proto'
+import { SnapshotCaseType } from '@river-build/proto'
 import { DecryptedTimelineEvent } from '../types'
 import { createSpaceDapp } from '@river/web3'
 

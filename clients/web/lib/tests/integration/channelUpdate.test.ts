@@ -13,7 +13,7 @@ import {
 import { ContractReceipt } from 'ethers'
 import { RoleIdentifier } from '../../src/types/web3-types'
 import { Permission, createExternalTokenStruct, getContractsInfo } from '@river/web3'
-import { Err } from '@river/proto'
+import { Err } from '@river-build/proto'
 
 describe('channel update', () => {
     test('Update the channel with multicall', async () => {

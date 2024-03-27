@@ -2,7 +2,7 @@
  * @group node-minipool-flush
  */
 
-import { SnapshotCaseType } from '@river/proto'
+import { SnapshotCaseType } from '@river-build/proto'
 import { Client } from './client'
 import { check, DLogger, dlog } from '@river-build/dlog'
 import { makeUniqueChannelStreamId } from './id'

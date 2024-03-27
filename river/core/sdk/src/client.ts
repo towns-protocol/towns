@@ -20,7 +20,7 @@ import {
     Miniblock,
     Err,
     ChannelMessage_Post_Attachment,
-} from '@river/proto'
+} from '@river-build/proto'
 import {
     bin_fromHexString,
     bin_toHexString,

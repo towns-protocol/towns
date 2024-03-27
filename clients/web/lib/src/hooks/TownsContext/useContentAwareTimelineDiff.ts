@@ -1,5 +1,5 @@
 import { useEffect } from 'react'
-import { FullyReadMarker } from '@river/proto'
+import { FullyReadMarker } from '@river-build/proto'
 import {
     Client as CasablancaClient,
     Stream,

@@ -1,5 +1,5 @@
 import TypedEmitter from 'typed-emitter'
-import { Snapshot, MediaPayload, MediaPayload_Snapshot } from '@river/proto'
+import { Snapshot, MediaPayload, MediaPayload_Snapshot } from '@river-build/proto'
 import { RemoteTimelineEvent } from './types'
 import { StreamStateView_AbstractContent } from './streamStateView_AbstractContent'
 import { check } from '@river-build/dlog'

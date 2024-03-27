@@ -1,4 +1,4 @@
-import { MembershipOp, MemberPayload, Snapshot, WrappedEncryptedData } from '@river/proto'
+import { MembershipOp, MemberPayload, Snapshot, WrappedEncryptedData } from '@river-build/proto'
 import TypedEmitter from 'typed-emitter'
 import { StreamEncryptionEvents, StreamStateEvents } from './streamEvents'
 import { ConfirmedTimelineEvent, RemoteTimelineEvent } from './types'

@@ -1,5 +1,5 @@
 import TypedEmitter from 'typed-emitter'
-import { MemberPayload_KeyFulfillment, MemberPayload_KeySolicitation } from '@river/proto'
+import { MemberPayload_KeyFulfillment, MemberPayload_KeySolicitation } from '@river-build/proto'
 import { StreamEncryptionEvents } from './streamEvents'
 import { StreamMember } from './streamStateView_Members'
 import { removeCommon } from './utils'

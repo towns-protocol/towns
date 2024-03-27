@@ -1,4 +1,4 @@
-import { Snapshot } from '@river/proto'
+import { Snapshot } from '@river-build/proto'
 import { snapshotMigration0000 } from './snapshotMigration0000'
 import { snapshotMigration0001 } from './snapshotMigration0001'
 

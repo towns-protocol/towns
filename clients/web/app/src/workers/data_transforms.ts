@@ -1,4 +1,4 @@
-import { EncryptedData } from '@river/proto'
+import { EncryptedData } from '@river-build/proto'
 
 interface ChannelPayload {
     channelPayload: {

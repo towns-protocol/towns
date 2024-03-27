@@ -1,5 +1,5 @@
 import { PlainMessage } from '@bufbuild/protobuf'
-import { MembershipOp, StreamSettings } from '@river/proto'
+import { MembershipOp, StreamSettings } from '@river-build/proto'
 import { Attachment } from './timeline-types'
 import { staticAssertNever } from '../utils/towns-utils'
 

@@ -24,7 +24,7 @@ import {
     MembershipStruct,
     NoopRuleData,
 } from '@river/web3'
-import { MembershipOp } from '@river/proto'
+import { MembershipOp } from '@river-build/proto'
 
 const base_log = dlog('csb:test:withEntitlements')
 const ETH_ADDRESS = '0xEeeeeEeeeEeEeeEeEeEeeEEEeeeeEeeeeeeeEEeE'

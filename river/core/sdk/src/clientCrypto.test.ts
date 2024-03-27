@@ -5,8 +5,8 @@
 import { assert } from './check'
 import { Client } from './client'
 import { makeTestClient } from './util.test'
+import { SessionKeys } from '@river-build/proto'
 import { dlog } from '@river-build/dlog'
-import { SessionKeys } from '@river/proto'
 
 const log = dlog('test:clientCrypto')
 

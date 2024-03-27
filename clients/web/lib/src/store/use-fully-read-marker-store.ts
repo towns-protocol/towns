@@ -1,5 +1,5 @@
 import { create } from 'zustand'
-import { FullyReadMarker } from '@river/proto'
+import { FullyReadMarker } from '@river-build/proto'
 
 export type FullyReadMarkerStoreStates = {
     markers: Record<string, FullyReadMarker>

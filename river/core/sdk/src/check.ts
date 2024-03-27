@@ -1,4 +1,4 @@
-import { Err } from '@river/proto'
+import { Err } from '@river-build/proto'
 import { dlogError, throwWithCode } from '@river-build/dlog'
 
 const log = dlogError('csb:error')

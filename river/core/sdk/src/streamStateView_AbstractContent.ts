@@ -1,5 +1,5 @@
 import TypedEmitter from 'typed-emitter'
-import { EncryptedData } from '@river/proto'
+import { EncryptedData } from '@river-build/proto'
 import { ConfirmedTimelineEvent, RemoteTimelineEvent, StreamTimelineEvent } from './types'
 import { DecryptedContent, EncryptedContent, toDecryptedContent } from './encryptedContentTypes'
 import { StreamStateView_ChannelMetadata } from './streamStateView_ChannelMetadata'

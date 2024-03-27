@@ -9,7 +9,7 @@ import {
     Utility as OlmUtility,
 } from '@matrix-org/olm'
 
-import { EncryptedData } from '@river/proto'
+import { EncryptedData } from '@river-build/proto'
 
 export type Account = OlmAccount
 export type PkDecryption = OlmPkDecryption

@@ -5,7 +5,7 @@ import {
     GroupDecryption,
 } from '@river-build/encryption'
 
-import { EncryptedData } from '@river/proto'
+import { EncryptedData } from '@river-build/proto'
 
 // OlmLib fails initialization if this is not initialized
 globalThis.OLM_OPTIONS = {}

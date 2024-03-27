@@ -18,7 +18,7 @@
     },
     "dependencies": {
         "@bufbuild/protobuf": "^1.4.1",
-        "@river/proto": "workspace:^",
+        "@river-build/proto": "workspace:^",
         "browser-or-node": "^2.1.1",
         "debug": "^4.3.4",
         "ethereum-cryptography": "1.2.0"

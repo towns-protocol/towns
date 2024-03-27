@@ -2,7 +2,7 @@
  * @group main
  */
 
-import { MembershipOp } from '@river/proto'
+import { MembershipOp } from '@river-build/proto'
 import { makeTestClient, makeUniqueSpaceStreamId, waitFor } from './util.test'
 
 describe('streamStateView_User', () => {

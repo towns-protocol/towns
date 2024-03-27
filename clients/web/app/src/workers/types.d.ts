@@ -1,4 +1,4 @@
-import { StreamEvent } from '@river/proto'
+import { StreamEvent } from '@river-build/proto'
 
 export enum AppNotificationType {
     DirectMessage = 'direct_message',

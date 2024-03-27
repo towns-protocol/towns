@@ -22,7 +22,7 @@ import { GlobalContextUserLookupProvider } from './UserLookupContextProviders'
 import { TownsOpts } from '../client/TownsClientTypes'
 import { Chain } from 'viem/chains'
 import { IChainConfig } from '../types/web3-types'
-import { SnapshotCaseType } from '@river/proto'
+import { SnapshotCaseType } from '@river-build/proto'
 
 export type InitialSyncSortPredicate = (a: string, b: string) => number
 

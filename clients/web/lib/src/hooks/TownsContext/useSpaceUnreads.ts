@@ -1,5 +1,5 @@
 import { useEffect, useState } from 'react'
-import { FullyReadMarker } from '@river/proto'
+import { FullyReadMarker } from '@river-build/proto'
 import { TownsClient } from '../../client/TownsClient'
 import { SpaceHierarchies } from '../../types/towns-types'
 import { useFullyReadMarkerStore } from '../../store/use-fully-read-marker-store'

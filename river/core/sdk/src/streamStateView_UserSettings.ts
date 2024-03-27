@@ -6,7 +6,7 @@ import {
     UserSettingsPayload,
     UserSettingsPayload_FullyReadMarkers,
     UserSettingsPayload_Snapshot,
-} from '@river/proto'
+} from '@river-build/proto'
 import TypedEmitter from 'typed-emitter'
 import { RemoteTimelineEvent } from './types'
 import { StreamEncryptionEvents, StreamStateEvents } from './streamEvents'

@@ -3,6 +3,7 @@ package rpc
 import (
 	"context"
 	"errors"
+	"fmt"
 	"log/slog"
 	"time"
 
@@ -45,6 +46,9 @@ func (s *Service) info(
 		debug := request.Msg.Debug[0]
 		if debug == "error" {
 			return nil, RiverError(Err_DEBUG_ERROR, "Error requested through Info request")
+		} else if debug == "network_error" {
+			connectErr := connect.NewError(connect.CodeUnavailable, fmt.Errorf("node unavailable"))
+			return nil, AsRiverError(connectErr).AsConnectError()
 		} else if debug == "error_untyped" {
 			return nil, errors.New("error requested through Info request")
 		} else if debug == "panic" {
