@@ -25,8 +25,7 @@ loadtestMetrics.json
 **/.DS_Store
 **/.env.local
 **/.env.development.local
-**/.env.test.userops-random-wallet
-**/.env.test.userops-privy-wallet
+**/.env.test.userops
 **/.env.test.local
 **/.env.production.local
 **/.envrc

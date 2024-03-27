@@ -34,20 +34,20 @@ while [[ $# -gt 0 ]]; do
     shift
 done
 
+# Defaults in case not in .env file
 AA_PAYMASTER_PROXY_URL=http://localhost:8686
 AA_PAYMASTER_PROXY_AUTH_SECRET=Zm9v
 CASABLANCA_SERVER_URL=https://river1.nodes.gamma.towns.com
+RIVER_CHAIN_PROVIDER_HTTP_URL=https://devnet.rpc.river.build
+RIVER_CHAIN_ID=6524490
 
 ETHERS_NETWORK=""
 AA_RPC_URL=""
 AA_BUNDLER_URL=""
 
 
-ENV_FILE="./clients/web/lib/.env.test.userops-random-wallet"
+ENV_FILE="./clients/web/lib/.env.test.userops"
 
-if [ "$AS_PRIVY_USER" = "true" ]; then
-    ENV_FILE="./clients/web/lib/.env.test.userops-privy-wallet"
-fi
 
 # Check if the file exists
 if [ -f "$ENV_FILE" ]; then
@@ -84,14 +84,5 @@ if [ "$AS_PRIVY_USER" = "false" ]; then
     yarn test:userops:random-wallet
 else
     echo "Running tests as privy user"
-    # if variables are not present, throw an error
-    if [ -z "$PRIVY_WALLET_PRIVATE_KEY_1" ]; then
-        echo "ERROR: Missing PRIVY_WALLET_PRIVATE_KEY_1 in $ENV_FILE"
-        exit 1
-    fi
-    if [ -z "$PRIVY_WALLET_PRIVATE_KEY_2" ]; then
-        echo "ERROR: Missing PRIVY_WALLET_PRIVATE_KEY_2 in $ENV_FILE"
-        exit 1
-    fi
     yarn test:userops:privy-wallet
 fi

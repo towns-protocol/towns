@@ -24,8 +24,8 @@
         "test:ci": "yarn csb:test-web-lib-done --silent --testTimeout=180000",
         "test:ci-todo": "yarn csb:test-web-lib-todo --silent --testTimeout=180000",
         "test:load:all": "yarn my-jest --group=integration/load --testTimeout=3000000",
-        "test:userops:privy-wallet": "DOTENV_CONFIG_PATH=.env.test.userops-privy-wallet yarn my-jest --group=integration/userops --testTimeout=3000000 --silent=false --maxWorkers=1",
-        "test:userops:random-wallet": "DOTENV_CONFIG_PATH=.env.test.userops-random-wallet yarn my-jest --group=integration/userops --testTimeout=3000000 --silent=false --maxWorkers=1",
+        "test:userops:privy-wallet": "DOTENV_CONFIG_PATH=.env.test.userops PRIVY_WALLET_PRIVATE_KEY_1=09892cb15045f5989457e72dd4c7321f29d1dcb93b9f90d78da6fc433852a367 PRIVY_WALLET_PRIVATE_KEY_2=757fb31b53bdf75d16ce0342c54047d1a848a66ba3b0d656b883208a88460ee3 yarn my-jest --group=integration/userops --testTimeout=3000000 --silent=false --maxWorkers=1",
+        "test:userops:random-wallet": "DOTENV_CONFIG_PATH=.env.test.userops yarn my-jest --group=integration/userops --testTimeout=3000000 --silent=false --maxWorkers=1",
         "watch": "tsc --watch"
     },
     "dependencies": {
