@@ -171,38 +171,20 @@ git fetch --all
 # checkout a new working branch
 git checkout -b "${BRANCH_NAME}"
 
-# Pull the latest changes from the subtree, preserving history
-git subtree pull --prefix="${SUBTREE_PREFIX}" "${SUBTREE_REPO}" "${SUBTREE_BRANCH}" -m "git subtree pull ${SUBTREE_PREFIX} at ${SHORT_HASH}"
+# Pull the latest changes from the subtree, blasting away any local changes
+rm -rf river
+git clone "${SUBTREE_REPO}" river
+remove_river_yarn_files
 
+git add .
 
 # if interactive mode pause and ask for confirmation to continue
 confirmContinue "Subtree pull compelte. Continue with the merge?"
 
-# Check for unresolved conflicts
-if git ls-files -u | grep -q '^[^ ]'; then
-    echo "Unresolved conflicts detected. Accepting theirs."
-    git diff --name-only --diff-filter=U | while read file; do
-        if git show :3:"$file" > /dev/null 2>&1; then
-            echo "Accepting 'theirs' version of $file"
-            git checkout --theirs -- "$file"
-            git add "$file"
-        else
-            echo "Failed to checkout $file. "
-            # If there isn't a 'their' version, this means the file might have been deleted or renamed in 'their' branch.
-            git rm -- "$file"
-            echo "File $file removed to accept 'their' structure."
-        fi
-    done
-fi
-
-# Remove specific files that should not be merged
-remove_river_yarn_files
 
 # Commit the changes if there are any
 if ! git diff main --quiet --cached; then
-    confirmContinue "Confict resolution complete. Continue with the merge?"
 
-    git add .
     SUBTREE_MERGE_MESSAGE="$(RIVER_ALLOW_COMMIT=true git commit --dry-run)"
     RIVER_ALLOW_COMMIT=true git commit -m "git subtree pull --prefix=${SUBTREE_PREFIX} ${SUBTREE_REPO} ${SUBTREE_BRANCH} --squash" -m "$SUBTREE_MERGE_MESSAGE"
     echo "Subtree changes committed."
