@@ -20,6 +20,7 @@ import {
     usePlateSelectors,
 } from '@udecode/plate-common'
 import { RoomMember } from 'use-towns-client'
+import { search } from '@components/RichText/plugins/EmojiShortcutPlugin'
 import { Text, TypeaheadMenu, TypeaheadMenuItem } from '@ui'
 import { Avatar } from '@components/Avatar/Avatar'
 import { TMentionComboboxTypes, TMentionEmoji } from '../../utils/ComboboxTypes'
@@ -117,6 +118,8 @@ export const ComboboxItem = withRef<
     },
 )
 
+export const MOCK_EMOJI = '__mock_emoji__'
+
 export const ComboboxContent = <T extends TMentionComboboxTypes>(
     props: ComboboxContentProps<T> & { editor: PlateEditor; currentUser?: string },
 ) => {
@@ -127,7 +130,10 @@ export const ComboboxContent = <T extends TMentionComboboxTypes>(
     const activeComboboxStore = useActiveComboboxStore()!
     useComboboxContentState({ items, combobox })
 
-    if (Array.isArray(filteredItems) && filteredItems.length === 0) {
+    if (
+        Array.isArray(filteredItems) &&
+        filteredItems.filter((item) => item.key !== MOCK_EMOJI).length === 0
+    ) {
         return null
     }
 
@@ -171,6 +177,8 @@ export const Combobox = <T extends TMentionComboboxTypes>({
     const focusedEditorId = useEventEditorSelectors.focus?.()
     const combobox = useComboboxControls()
     const activeId = useComboboxSelectors.activeId()
+    const query = useComboboxSelectors.text()
+    const targetRange = useComboboxSelectors.targetRange()
     const selectionDefined = useEditorSelector((editor) => !!editor.selection, [])
     const editorId = usePlateSelectors().id()
     const editor = useEditorRef()
@@ -187,6 +195,23 @@ export const Combobox = <T extends TMentionComboboxTypes>({
             sort,
         })
     }, [id, trigger, searchPattern, controlled, onSelectItem, maxSuggestions, filter, sort])
+
+    useEffect(() => {
+        if (activeId !== 'emojis' || !query || query.length < 1) {
+            return
+        }
+        // Since Plate does not support async search out of the box, we need to fetch the emojis here
+        // and update the combobox with the new list of items and filteredItems
+        search(query).then((_emojis) => {
+            const emojis = _emojis.slice(0, maxSuggestions ?? 5).map((_emoji) => ({
+                data: _emoji,
+                text: _emoji.name,
+                key: _emoji.emoji,
+            }))
+            comboboxActions.items(emojis)
+            comboboxActions.filteredItems(emojis)
+        })
+    }, [query, activeId, maxSuggestions, targetRange])
 
     if (
         !combobox ||
