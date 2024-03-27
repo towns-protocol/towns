@@ -660,6 +660,14 @@ function toTownsContent_ChannelPayload_Message(
     description: string,
 ): TownsContentResult {
     if (isCiphertext(payload.ciphertext)) {
+        if (payload.refEventId) {
+            return {
+                content: {
+                    kind: ZTEvent.RoomMessageEncryptedWithRef,
+                    refEventId: payload.refEventId,
+                },
+            }
+        }
         return {
             // if payload is an EncryptedData message, than it is encrypted content kind
             content: {

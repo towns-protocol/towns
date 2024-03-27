@@ -60,6 +60,7 @@ export enum ZTEvent {
     RoomMember = 'm.room.member',
     RoomMessage = 'm.room.message',
     RoomMessageEncrypted = 'm.room.encrypted',
+    RoomMessageEncryptedWithRef = 'm.room.encrypted_with_ref',
     RoomMessageMissing = 'm.room.missing',
     RoomName = 'm.room.name',
     RoomProperties = 'm.room.properties',
@@ -94,6 +95,7 @@ export type TimelineEvent_OneOf =
     | SpaceParentEvent
     | SpaceUsernameEvent
     | SpaceDisplayNameEvent
+    | RoomMessageEncryptedRefEvent
 
 export interface MiniblockHeaderEvent {
     kind: ZTEvent.MiniblockHeader
@@ -185,6 +187,11 @@ export interface SpaceDisplayNameEvent {
     kind: ZTEvent.SpaceDisplayName
     userId: string
     displayName: string
+}
+
+export interface RoomMessageEncryptedRefEvent {
+    kind: ZTEvent.RoomMessageEncryptedWithRef
+    refEventId: string
 }
 
 // mentions should always have a user id, but it's data over the wire
@@ -453,6 +460,8 @@ export function getFallbackContent(
             return `KeySolicitation deviceKey: ${content.deviceKey} sessionIds: ${content.sessionIds.length}`
         case ZTEvent.RoomMessageMissing:
             return `eventId: ${content.eventId}`
+        case ZTEvent.RoomMessageEncryptedWithRef:
+            return `refEventId: ${content.refEventId}`
         default:
             staticAssertNever(content)
     }
