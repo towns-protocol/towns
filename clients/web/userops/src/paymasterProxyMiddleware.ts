@@ -3,7 +3,7 @@ import { ethers, BigNumber } from 'ethers'
 import { BundlerJsonRpcProvider, IUserOperation, Presets } from 'userop'
 import { z } from 'zod'
 import { userOpsStore } from './userOpsStore'
-import { Address } from '@river/web3'
+import { Address, createSpaceDapp } from '@river/web3'
 import { CodeException } from './errors'
 
 type PaymasterProxyResponse = {
@@ -54,6 +54,10 @@ export const paymasterProxyMiddleware: ({
 
         async function fallbackEstimate() {
             if (provider) {
+                const spaceDapp = createSpaceDapp({
+                    chainId: (await provider.getNetwork()).chainId,
+                    provider,
+                })
                 try {
                     await Presets.Middleware.estimateUserOperationGas(
                         new BundlerJsonRpcProvider(rpcUrl).setBundlerRpc(bundlerUrl),
@@ -79,10 +83,6 @@ export const paymasterProxyMiddleware: ({
                 } catch (error: unknown) {
                     // eslint-disable-next-line @typescript-eslint/no-explicit-any
                     const _e = error as Error & { body?: any }
-                    console.error(
-                        '[paymasterProxyMiddleware] error estimating gas for user operation that was rejected by paymaster:',
-                        error,
-                    )
 
                     const body = JSON.parse(_e.body ?? '{}') as
                         | {
@@ -95,11 +95,29 @@ export const paymasterProxyMiddleware: ({
                           }
                         | undefined
 
-                    throw new CodeException(
+                    const exception = new CodeException(
                         body?.error?.message ?? 'Error estimating gas for user operation',
                         body?.error?.code ?? 'UNKNOWN_ERROR',
                         body?.error?.data,
                     )
+
+                    let spaceDappError: Error | undefined
+                    // better logs
+                    if (townId) {
+                        spaceDappError = await spaceDapp.parseSpaceError(townId, exception)
+                    } else {
+                        spaceDappError = spaceDapp.parseSpaceFactoryError(exception)
+                    }
+
+                    console.error(
+                        '[paymasterProxyMiddleware] calling estimateUserOperationGas failed:',
+                        {
+                            originalError: exception,
+                            parsedError: spaceDappError,
+                        },
+                    )
+
+                    throw exception
                 }
             }
         }

@@ -23,7 +23,7 @@ import { isErrorType, Environment } from 'worker-common'
 import { WorkerRequest, createPmSponsorUserOperationRequest, getContentAsJson } from './utils'
 import { contractAddress, createFilterWrapper, runLogQuery } from './logFilter'
 import { checkMintKVOverrides } from './checks'
-import { networkMap } from './provider'
+import { createSpaceDappForNetwork, networkMap } from './provider'
 
 // can be 'payg' or 'erc20token'
 // see https://docs.stackup.sh/reference/pm-sponsoruseroperation
@@ -503,11 +503,33 @@ router.post('/api/sponsor-userop', async (request: WorkerRequest, env: Env) => {
         })
     } else {
         if (json.error) {
+            const spaceDapp = await createSpaceDappForNetwork(env)
+            const error = json.error
+            let spaceDappError: Error | undefined
+            if (spaceDapp) {
+                if (townId) {
+                    spaceDappError = await spaceDapp.parseSpaceError(townId, json.error)
+                } else {
+                    spaceDappError = spaceDapp.parseSpaceFactoryError(json.error)
+                }
+            }
+
+            const spaceDappErrorMessage = `${spaceDappError?.message} ${spaceDappError?.name}`
+
             console.error(`stackup API returned error: ${json.error.code}, ${json.error.message}`)
-            return new Response(toJson({ error: 'Internal Service Error' }), {
-                status: 500,
-                statusText: `Error code ${json.error.code}, message ${json.error.message}`,
-            })
+            console.error(`Parsed error from SpaceDapp: ${spaceDappErrorMessage}`)
+
+            return new Response(
+                toJson({
+                    error: spaceDappError ? spaceDappErrorMessage : 'Internal Service Error',
+                }),
+                {
+                    status: 500,
+                    statusText: `Error code ${json.error.code}, message ${
+                        spaceDappError ? spaceDappErrorMessage : json.error.message
+                    }`,
+                },
+            )
         }
         console.log('stackup API response:', json.result)
         return new Response(toJson(json.result), { status: 200 })
