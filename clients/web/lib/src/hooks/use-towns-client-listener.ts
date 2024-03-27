@@ -1,10 +1,14 @@
 import { MutableRefObject, useEffect, useRef, useState } from 'react'
-import { Client as CasablancaClient, SignerContext } from '@river/sdk'
-import { bin_fromHexString, check } from '@river/dlog'
+import { Client as CasablancaClient } from '@river/sdk'
+import { check } from '@river/dlog'
 import { LoginStatus } from './login'
 import { TownsClient } from '../client/TownsClient'
 import { TownsOpts } from '../client/TownsClientTypes'
-import { CasablancaCredentials, useCredentialStore } from '../store/use-credential-store'
+import {
+    CasablancaCredentials,
+    credentialsToSignerContext,
+    useCredentialStore,
+} from '../store/use-credential-store'
 import { useWeb3Context } from '../components/Web3ContextProvider'
 import { useCasablancaStore } from '../store/use-casablanca-store'
 import EventEmitter from 'events'
@@ -203,15 +207,8 @@ class ClientStateMachine extends (EventEmitter as new () => TypedEmitter<ClientS
                 AnalyticsService.getInstance().trackEventOnce(AnalyticsEvents.LoggingIn)
                 this.emit('onErrorUpdated', undefined)
                 const { credentials } = transition
-                const pk = credentials.privateKey.slice(2)
                 try {
-                    const context: SignerContext = {
-                        signerPrivateKey: () => pk,
-                        creatorAddress: bin_fromHexString(credentials.creatorAddress),
-                        delegateSig: credentials.delegateSig
-                            ? bin_fromHexString(credentials.delegateSig)
-                            : undefined,
-                    }
+                    const context = credentialsToSignerContext(credentials)
                     const casablancaClient = await this.client.startCasablancaClient(context)
                     return new LoggedIn(credentials, casablancaClient)
                 } catch (e) {

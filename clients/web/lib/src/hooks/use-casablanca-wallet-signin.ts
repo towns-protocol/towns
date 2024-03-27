@@ -1,10 +1,9 @@
 import { ethers } from 'ethers'
 import { useCallback } from 'react'
-import { useCredentialStore } from '../store/use-credential-store'
+import { credentialsFromSignerContext, useCredentialStore } from '../store/use-credential-store'
 import { useTownsContext } from '../components/TownsContextProvider'
 import { useCasablancaStore } from '../store/use-casablanca-store'
 import { LoginStatus } from './login'
-import { bin_toHexString } from '@river/dlog'
 import { TSigner, Address } from '../types/web3-types'
 import { SignerUndefinedError } from '../types/error-types'
 import { makeSignerContext } from '@river/sdk'
@@ -31,16 +30,10 @@ export function useCasablancaWalletSignIn() {
             const wallet = (await signer.getAddress()) as Address
             try {
                 const casablancaContext = await makeSignerContext(signer, delegateWallet)
-                setCasablancaCredentials(casablancaServerUrl, {
-                    privateKey: delegateWallet.privateKey,
-                    creatorAddress: ethers.utils.getAddress(
-                        bin_toHexString(casablancaContext.creatorAddress),
-                    ),
-                    delegateSig: casablancaContext.delegateSig
-                        ? bin_toHexString(casablancaContext.delegateSig)
-                        : undefined,
-                    loggedInWalletAddress: wallet,
-                })
+                setCasablancaCredentials(
+                    casablancaServerUrl,
+                    credentialsFromSignerContext(wallet, delegateWallet, casablancaContext),
+                )
                 // eslint-disable-next-line @typescript-eslint/no-explicit-any
             } catch (e: any) {
                 console.error('loginWithWalletToCasablanca error', e)
