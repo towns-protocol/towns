@@ -251,7 +251,14 @@ const PlateEditorWithoutBoundary = ({
     )
 
     const onFocus = useCallback(() => onFocusChange(true), [onFocusChange])
-    const onBlur = useCallback(() => onFocusChange(false), [onFocusChange])
+
+    /**
+     * We want to delay the `onBlur` event to allow the user to click on the formatting toolbar icon
+     * Without this delay, the bottom toolbar would disappear before `isFormattingToolbarOpen` is set to `true`
+     *
+     * {@link https://linear.app/hnt-labs/issue/HNT-5502/|HNT-5502}
+     */
+    const onBlur = useCallback(() => setTimeout(() => onFocusChange(false), 200), [onFocusChange])
 
     const fileCount = files.length
     const background = isEditing && !isTouch ? 'level2' : 'level2'
@@ -372,7 +379,9 @@ const PlateEditorWithoutBoundary = ({
                             focused={focused}
                             threadId={props.threadId}
                             threadPreview={props.threadPreview}
-                            visible={!isTouch || focused || !isEditorEmpty}
+                            visible={
+                                !isTouch || focused || !isEditorEmpty || isFormattingToolbarOpen
+                            }
                             isFormattingToolbarOpen={isFormattingToolbarOpen}
                             setIsFormattingToolbarOpen={setIsFormattingToolbarOpen}
                             key="toolbar"
