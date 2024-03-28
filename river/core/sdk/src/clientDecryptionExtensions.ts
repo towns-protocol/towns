@@ -135,7 +135,11 @@ export class ClientDecryptionExtensions extends BaseDecryptionExtensions {
         )
     }
 
-    public async isUserEntitledToKeyExchange(streamId: string, userId: string): Promise<boolean> {
+    public async isUserEntitledToKeyExchange(
+        streamId: string,
+        userId: string,
+        opts?: { skipOnChainValidation: boolean },
+    ): Promise<boolean> {
         const stream = this.client.stream(streamId)
         check(isDefined(stream), 'stream not found')
         if (!stream.view.userIsEntitledToKeyExchange(userId)) {
@@ -144,7 +148,10 @@ export class ClientDecryptionExtensions extends BaseDecryptionExtensions {
             )
             return false
         }
-        if (stream.view.contentKind === 'channelContent') {
+        if (
+            stream.view.contentKind === 'channelContent' &&
+            !(opts?.skipOnChainValidation === true)
+        ) {
             const channel = stream.view.channelContent
             const entitlements = await this.entitlementDelegate.isEntitled(
                 channel.spaceId,

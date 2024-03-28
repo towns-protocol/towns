@@ -380,13 +380,15 @@ func PackWithNonce(address common.Address, nonce uint64) ([]byte, error) {
 	if err != nil {
 		return nil, AsRiverError(err, Err_INTERNAL).
 			Message("Invalid abi type definition").
+			Tag("type", "address").
 			Func("PackWithNonce")
 	}
 
-	uint256Ty, _ := abi.NewType("uint256", "uint256", nil)
+	uint256Ty, err := abi.NewType("uint256", "uint256", nil)
 	if err != nil {
 		return nil, AsRiverError(err, Err_INTERNAL).
 			Message("Invalid abi type definition").
+			Tag("type", "uint256").
 			Func("PackWithNonce")
 	}
 	arguments := abi.Arguments{
@@ -397,7 +399,7 @@ func PackWithNonce(address common.Address, nonce uint64) ([]byte, error) {
 			Type: uint256Ty,
 		},
 	}
-	bytes, err := arguments.Pack(address, big.NewInt(int64(nonce)))
+	bytes, err := arguments.Pack(address, new(big.Int).SetUint64(nonce))
 	if err != nil {
 		return nil, AsRiverError(err, Err_INTERNAL).
 			Message("Failed to pack arguments").

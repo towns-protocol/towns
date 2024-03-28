@@ -255,16 +255,10 @@ export class StreamStateView_Members {
         }
     }
 
-    /**
-     * If no userId is provided, checks current user
-     */
     isMemberJoined(userId: string): boolean {
         return this.membership.joinedUsers.has(userId)
     }
 
-    /**
-     * If no userId is provided, checks current user
-     */
     isMember(membership: MembershipOp, userId: string): boolean {
         return this.membership.isMember(membership, userId)
     }
@@ -273,8 +267,10 @@ export class StreamStateView_Members {
         return this.membership.participants()
     }
 
-    // For GDMs, users must be able to see the messages before joining,
-    // but not after leaving.
+    joinedParticipants(): Set<string> {
+        return this.membership.joinedParticipants()
+    }
+
     joinedOrInvitedParticipants(): Set<string> {
         return this.membership.joinedOrInvitedParticipants()
     }

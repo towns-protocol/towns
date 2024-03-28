@@ -4,16 +4,18 @@ import (
 	"context"
 	"fmt"
 
+	. "github.com/river-build/river/core/node/base"
 	"github.com/river-build/river/core/node/config"
 	"github.com/river-build/river/core/node/contracts"
 	"github.com/river-build/river/core/node/crypto"
+	. "github.com/river-build/river/core/node/protocol"
 	"github.com/river-build/river/core/node/registries"
 	. "github.com/river-build/river/core/node/shared"
 
 	"github.com/spf13/cobra"
 )
 
-func srdump(cfg *config.Config) error {
+func srdump(cfg *config.Config, countOnly bool) error {
 	ctx := context.Background() // lint:ignore context.Background() is fine here
 
 	blockchain, err := crypto.NewBlockchain(ctx, &cfg.RiverChain, nil)
@@ -25,15 +27,19 @@ func srdump(cfg *config.Config) error {
 	if err != nil {
 		return err
 	}
+	fmt.Printf("Using block number: %d\n", blockchain.InitialBlockNum)
 
-	streamNum, err := registryContract.GetStreamCount(ctx)
+	streamNum, err := registryContract.GetStreamCount(ctx, blockchain.InitialBlockNum)
 	if err != nil {
 		return err
 	}
-
 	fmt.Printf("Stream count reported: %d\n", streamNum)
 
-	streams, err := registryContract.GetAllStreams(ctx, 0)
+	if countOnly {
+		return nil
+	}
+
+	streams, err := registryContract.GetAllStreams(ctx, blockchain.InitialBlockNum)
 	if err != nil {
 		return err
 	}
@@ -44,6 +50,10 @@ func srdump(cfg *config.Config) error {
 		for _, node := range strm.Nodes {
 			fmt.Printf("        %s\n", node.Hex())
 		}
+	}
+
+	if streamNum != int64(len(streams)) {
+		return RiverError(Err_INTERNAL, "Stream count mismatch", "GetStreamCount", streamNum, "GetAllStreams", len(streams))
 	}
 
 	return nil
@@ -116,13 +126,19 @@ func init() {
 	}
 	rootCmd.AddCommand(srCmd)
 
-	srCmd.AddCommand(&cobra.Command{
+	streamsCmd := &cobra.Command{
 		Use:   "streams",
 		Short: "Dump stream records",
 		RunE: func(cmd *cobra.Command, args []string) error {
-			return srdump(cmdConfig)
+			countOnly, err := cmd.Flags().GetBool("count")
+			if err != nil {
+				return err
+			}
+			return srdump(cmdConfig, countOnly)
 		},
-	})
+	}
+	streamsCmd.Flags().Bool("count", false, "Only print the stream count")
+	srCmd.AddCommand(streamsCmd)
 
 	srCmd.AddCommand(&cobra.Command{
 		Use:   "stream <stream-id>",

@@ -188,7 +188,11 @@ export abstract class BaseDecryptionExtensions {
     public abstract getKeySolicitations(streamId: string): KeySolicitationContent[]
     public abstract hasStream(streamId: string): boolean
     public abstract hasUnprocessedSession(item: EncryptedContentItem): boolean
-    public abstract isUserEntitledToKeyExchange(streamId: string, userId: string): Promise<boolean>
+    public abstract isUserEntitledToKeyExchange(
+        streamId: string,
+        userId: string,
+        opts?: { skipOnChainValidation: boolean },
+    ): Promise<boolean>
     public abstract isUserInboxStreamUpToDate(upToDateStreams: Set<string>): boolean
     public abstract onDecryptionError(item: EncryptedContentItem, err: DecryptionSessionError): void
     public abstract sendKeySolicitation(args: KeySolicitationData): Promise<void>
@@ -532,7 +536,7 @@ export abstract class BaseDecryptionExtensions {
 
             // If !sessionNotFound, we want to know more about this error.
             if (!sessionNotFound) {
-                this.log.error('failed to decrypt', err, 'streamId', item.streamId)
+                this.log.info('failed to decrypt', err, 'streamId', item.streamId)
             }
 
             this.onDecryptionError(item, {
@@ -566,7 +570,7 @@ export abstract class BaseDecryptionExtensions {
         } catch (err) {
             const sessionNotFound = isSessionNotFoundError(err)
 
-            this.log.error('failed to decrypt on retry', err, 'sessionNotFound', sessionNotFound)
+            this.log.info('failed to decrypt on retry', err, 'sessionNotFound', sessionNotFound)
             this.onDecryptionError(item, {
                 missingSession: sessionNotFound,
                 kind: item.kind,
@@ -612,6 +616,13 @@ export abstract class BaseDecryptionExtensions {
         }
         if (!this.hasStream(streamId)) {
             this.log.debug('processing missing keys', item.streamId, 'stream not found')
+            return
+        }
+        const isEntitled = await this.isUserEntitledToKeyExchange(streamId, this.userId, {
+            skipOnChainValidation: true,
+        })
+        if (!isEntitled) {
+            this.log.debug('processing missing keys', item.streamId, 'user is not member of stream')
             return
         }
         const solicitedEvents = this.getKeySolicitations(streamId)

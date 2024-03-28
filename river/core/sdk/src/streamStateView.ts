@@ -7,7 +7,6 @@ import {
     SyncCookie,
     Snapshot,
     MiniblockHeader,
-    MembershipOp,
 } from '@river-build/proto'
 import TypedEmitter from 'typed-emitter'
 import {
@@ -359,7 +358,10 @@ export class StreamStateView {
                     )
             }
         } catch (e) {
-            logError(`StreamStateView::Error appending event ${event.hashStr}`, e)
+            logError(
+                `StreamStateView::Error appending streamId: ${this.streamId} event ${event.hashStr}`,
+                e,
+            )
         }
         return confirmed
     }
@@ -742,30 +744,19 @@ export class StreamStateView {
      * Streams behave slightly differently.
      * Regular channels: the user needs to be an active member. SO_JOIN
      * DMs: always open for key exchange for any of the two participants
-     * GDMs: open for key exchange while the membership state is either SO_JOIN or SO_INVITE
      */
     userIsEntitledToKeyExchange(userId: string): boolean {
-        switch (this.contentKind) {
-            case 'channelContent':
-            case 'spaceContent':
-                return this.getMembers().isMember(MembershipOp.SO_JOIN, userId)
-            case 'dmChannelContent':
-                return this.getMembers().participants().has(userId)
-            case 'gdmChannelContent':
-                return this.getMembers().joinedOrInvitedParticipants().has(userId)
-            default:
-                throw new Error('Stream does not support key exchange') // meow
-        }
+        return this.getUsersEntitledToKeyExchange().has(userId)
     }
 
     getUsersEntitledToKeyExchange(): Set<string> {
         switch (this.contentKind) {
             case 'channelContent':
-                return this.getMembers().joinedOrInvitedParticipants()
-            case 'dmChannelContent':
-                return this.getMembers().participants()
+            case 'spaceContent':
             case 'gdmChannelContent':
-                return this.getMembers().joinedOrInvitedParticipants()
+                return this.getMembers().joinedParticipants()
+            case 'dmChannelContent':
+                return this.getMembers().participants() // send keys to all participants
             default:
                 return new Set()
         }

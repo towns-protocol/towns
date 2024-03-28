@@ -189,8 +189,8 @@ func (c *RiverRegistryContract) GetStreamWithGenesis(
 	return ret, mbHash, mb, nil
 }
 
-func (c *RiverRegistryContract) GetStreamCount(ctx context.Context) (int64, error) {
-	num, err := c.StreamRegistry.GetStreamCount(c.callOpts(ctx))
+func (c *RiverRegistryContract) GetStreamCount(ctx context.Context, blockNum crypto.BlockNumber) (int64, error) {
+	num, err := c.StreamRegistry.GetStreamCount(c.callOptsWithBlockNum(ctx, blockNum))
 	if err != nil {
 		return 0, WrapRiverError(Err_CANNOT_CALL_CONTRACT, err).Func("GetStreamNum").Message("Call failed")
 	}

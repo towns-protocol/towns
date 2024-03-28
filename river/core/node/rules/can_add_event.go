@@ -331,10 +331,10 @@ func (params *aeParams) canAddMemberPayload(payload *StreamEvent_MemberPayload) 
 		}
 	case *MemberPayload_KeySolicitation_:
 		return aeBuilder().
-			checkOneOf(params.creatorIsMember, params.creatorIsInvited)
+			checkOneOf(params.creatorIsMember)
 	case *MemberPayload_KeyFulfillment_:
 		return aeBuilder().
-			checkOneOf(params.creatorIsMember, params.creatorIsInvited)
+			checkOneOf(params.creatorIsMember)
 	case *MemberPayload_DisplayName:
 		return aeBuilder().
 			check(params.creatorIsMember)
@@ -362,19 +362,7 @@ func (params *aeParams) creatorIsMember() (bool, error) {
 		return false, RiverError(Err_PERMISSION_DENIED, "event creator is not a member of the stream", "creatorAddress", creatorAddress, "streamId", params.streamView.StreamId())
 	}
 	return true, nil
-}
-
-func (params *aeParams) creatorIsInvited() (bool, error) {
-	creatorAddress := params.parsedEvent.Event.CreatorAddress
-	membership, err := params.streamView.(events.JoinableStreamView).GetMembership(creatorAddress)
-	if err != nil {
-		return false, err
-	}
-	if membership != MembershipOp_SO_INVITE {
-		return false, nil
-	}
-	return true, nil
-}
+} 
 
 func (ru *aeMembershipRules) validMembershipPayload() (bool, error) {
 	if ru.membership == nil {
