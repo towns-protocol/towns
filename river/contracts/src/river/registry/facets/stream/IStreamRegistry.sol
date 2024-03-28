@@ -45,6 +45,10 @@ interface IStreamRegistry {
 
   function getStream(bytes32 streamId) external view returns (Stream memory);
 
+  function getStreamByIndex(
+    uint256 i
+  ) external view returns (StreamWithId memory);
+
   /// @return stream, genesisMiniblockHash, genesisMiniblock
   function getStreamWithGenesis(
     bytes32 streamId
@@ -81,6 +85,14 @@ interface IStreamRegistry {
    * uncallable if the map grows to a point where copying to memory consumes too much gas to fit in a block.
    */
   function getAllStreams() external view returns (StreamWithId[] memory);
+
+  /**
+   * @dev Recommended range is 5000 streams, returns true if on the last page.
+   */
+  function getPaginatedStreams(
+    uint256 start,
+    uint256 stop
+  ) external view returns (StreamWithId[] memory, bool);
 
   function getStreamsOnNode(
     address nodeAddress

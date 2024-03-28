@@ -40,8 +40,8 @@ interface IMembershipBase {
   error Membership__PriceTooLow();
   error Membership__MaxSupplyReached();
   error Membership__InvalidTokenId();
-  error Membership__NotRenewable();
   error Membership__NotExpired();
+  error Membership__InsufficientAllowance();
 
   // =============================================================
   //                           Events
@@ -51,9 +51,15 @@ interface IMembershipBase {
   event MembershipCurrencyUpdated(address indexed currency);
   event MembershipFeeRecipientUpdated(address indexed recipient);
   event MembershipFreeAllocationUpdated(uint256 indexed allocation);
+  event MembershipWithdrawal(address indexed recipient, uint256 amount);
 }
 
 interface IMembership is IMembershipBase {
+  // =============================================================
+  //                           Funds
+  // =============================================================
+  function withdraw(address receiver) external;
+
   // =============================================================
   //                           Minting
   // =============================================================
@@ -79,9 +85,9 @@ interface IMembership is IMembershipBase {
 
   /**
    * @notice Renew a space membership
-   * @param receiver The address of the receiver
+   * @param tokenId The token id of the membership
    */
-  function renewMembership(address receiver) external payable;
+  function renewMembership(uint256 tokenId) external payable;
 
   /**
    * @notice Cancel a space membership
@@ -194,31 +200,10 @@ interface IMembership is IMembershipBase {
   // =============================================================
 
   /**
-   * @notice Set the membership currency
-   * @param newCurrency The new membership currency
-   */
-  function setMembershipCurrency(address newCurrency) external;
-
-  /**
    * @notice Get the membership currency
    * @return The membership currency
    */
   function getMembershipCurrency() external view returns (address);
-
-  // =============================================================
-  //                           Recipient
-  // =============================================================
-  /**
-   * @notice Set the membership fee recipient
-   * @param newRecipient The new membership fee recipient
-   */
-  function setMembershipFeeRecipient(address newRecipient) external;
-
-  /**
-   * @notice Get the membership fee recipient
-   * @return The membership fee recipient
-   */
-  function getMembershipFeeRecipient() external view returns (address);
 
   // =============================================================
   //                           Factory

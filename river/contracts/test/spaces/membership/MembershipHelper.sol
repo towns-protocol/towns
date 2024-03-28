@@ -14,6 +14,9 @@ import {MembershipFacet} from "contracts/src/spaces/facets/membership/Membership
 
 contract MembershipHelper is FacetHelper {
   constructor() {
+    // Funds
+    addSelector(IMembership.withdraw.selector);
+
     // Minting
     addSelector(IMembership.joinSpace.selector);
     addSelector(IMembership.joinSpaceWithReferral.selector);
@@ -44,12 +47,8 @@ contract MembershipHelper is FacetHelper {
     addSelector(IMembership.getMembershipLimit.selector);
 
     // Currency
-    addSelector(IMembership.setMembershipCurrency.selector);
-    addSelector(IMembership.getMembershipCurrency.selector);
 
-    // Recipient
-    addSelector(IMembership.setMembershipFeeRecipient.selector);
-    addSelector(IMembership.getMembershipFeeRecipient.selector);
+    addSelector(IMembership.getMembershipCurrency.selector);
 
     // Factory
     addSelector(IMembership.getSpaceFactory.selector);

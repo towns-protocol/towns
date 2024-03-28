@@ -200,27 +200,39 @@ func (c *RiverRegistryContract) GetStreamCount(ctx context.Context) (int64, erro
 	return num.Int64(), nil
 }
 
-func (c *RiverRegistryContract) GetAllStreams(ctx context.Context, blockNum uint64) ([]*GetStreamResult, error) {
-	callOpts := c.callOpts(ctx)
-	if blockNum != 0 {
-		callOpts.BlockNumber = new(big.Int).SetUint64(blockNum)
-	}
-	streams, err := c.StreamRegistry.GetAllStreams(callOpts)
-	if err != nil {
-		return nil, WrapRiverError(
-			Err_CANNOT_CALL_CONTRACT,
-			err,
-		).Func("GetStreamByIndex").
-			Message("Smart contract call failed")
-	}
-	ret := make([]*GetStreamResult, len(streams))
-	for i, stream := range streams {
-		streamId, err := StreamIdFromHash(stream.Id)
+var zeroBytes32 = [32]byte{}
+
+func (c *RiverRegistryContract) GetAllStreams(ctx context.Context, blockNum crypto.BlockNumber) ([]*GetStreamResult, error) {
+	// TODO: setting
+	const pageSize = int64(5000)
+
+	ret := make([]*GetStreamResult, 0, 5000)
+
+	lastPage := false
+	var err error
+	var streams []contracts.StreamWithId
+	for i := int64(0); !lastPage; i += pageSize {
+		callOpts := c.callOptsWithBlockNum(ctx, blockNum)
+		streams, lastPage, err = c.StreamRegistry.GetPaginatedStreams(callOpts, big.NewInt(i), big.NewInt(i+pageSize))
 		if err != nil {
-			return nil, err
+			return nil, WrapRiverError(
+				Err_CANNOT_CALL_CONTRACT,
+				err,
+			).Func("GetStreamByIndex").
+				Message("Smart contract call failed")
 		}
-		ret[i] = makeGetStreamResult(streamId, &stream.Stream)
+		for _, stream := range streams {
+			if stream.Id == zeroBytes32 {
+				continue
+			}
+			streamId, err := StreamIdFromHash(stream.Id)
+			if err != nil {
+				return nil, err
+			}
+			ret = append(ret, makeGetStreamResult(streamId, &stream.Stream))
+		}
 	}
+
 	return ret, nil
 }
 
@@ -257,9 +269,13 @@ func (c *RiverRegistryContract) callOpts(ctx context.Context) *bind.CallOpts {
 }
 
 func (c *RiverRegistryContract) callOptsWithBlockNum(ctx context.Context, blockNum crypto.BlockNumber) *bind.CallOpts {
-	return &bind.CallOpts{
-		Context:     ctx,
-		BlockNumber: blockNum.AsBigInt(),
+	if blockNum == 0 {
+		return c.callOpts(ctx)
+	} else {
+		return &bind.CallOpts{
+			Context:     ctx,
+			BlockNumber: blockNum.AsBigInt(),
+		}
 	}
 }
 

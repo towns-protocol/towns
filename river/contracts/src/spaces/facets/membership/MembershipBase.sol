@@ -12,8 +12,11 @@ import {IPricingModules} from "contracts/src/spaces/facets/architect/pricing/IPr
 import {MembershipStorage} from "./MembershipStorage.sol";
 import {CurrencyTransfer} from "contracts/src/utils/libraries/CurrencyTransfer.sol";
 import {BasisPoints} from "contracts/src/utils/libraries/BasisPoints.sol";
+import {SafeERC20, IERC20} from "@openzeppelin/contracts/token/ERC20/utils/SafeERC20.sol";
 
 abstract contract MembershipBase is IMembershipBase {
+  using SafeERC20 for IERC20;
+
   function __MembershipBase_init(
     Membership memory info,
     address spaceFactory
@@ -25,10 +28,6 @@ abstract contract MembershipBase is IMembershipBase {
     ds.membershipCurrency = CurrencyTransfer.NATIVE_TOKEN;
     ds.membershipMaxSupply = info.maxSupply;
     ds.freeAllocation = info.freeAllocation;
-
-    // will be removed in the future
-    _verifyRecipient(info.feeRecipient);
-    ds.membershipFeeRecipient = info.feeRecipient;
 
     if (info.freeAllocation > 0) {
       _verifyFreeAllocation(info.freeAllocation);
@@ -47,15 +46,7 @@ abstract contract MembershipBase is IMembershipBase {
   // =============================================================
   function _setMembershipTokenId(uint256 tokenId, address member) internal {
     MembershipStorage.Layout storage ds = MembershipStorage.layout();
-
-    ds.memberByTokenId[tokenId] = member;
     ds.tokenIdByMember[member] = tokenId;
-  }
-
-  function _getMembershipByTokenId(
-    uint256 tokenId
-  ) internal view returns (address) {
-    return MembershipStorage.layout().memberByTokenId[tokenId];
   }
 
   function _getTokenIdByMembership(
@@ -71,25 +62,76 @@ abstract contract MembershipBase is IMembershipBase {
     MembershipStorage.Layout storage ds = MembershipStorage.layout();
     IPlatformRequirements platform = IPlatformRequirements(ds.spaceFactory);
 
+    address currency = ds.membershipCurrency;
+
+    if (
+      currency == CurrencyTransfer.NATIVE_TOKEN && msg.value != membershipPrice
+    ) revert Membership__InsufficientPayment();
+
     // Compute fees and recipient addresses
     address platformRecipient = platform.getFeeRecipient();
     uint16 bpsFee = platform.getMembershipBps();
     protocolFeeBps = BasisPoints.calculate(membershipPrice, bpsFee);
 
     //transfer the platform fee to the platform fee recipient
-    _transferOut(buyer, platformRecipient, protocolFeeBps);
+    CurrencyTransfer.transferCurrency(
+      currency,
+      buyer, // from
+      platformRecipient, // to
+      protocolFeeBps
+    );
   }
 
-  function _transferOut(address from, address to, uint256 fee) internal {
+  function _transferIn(
+    address from,
+    uint256 amount
+  ) internal returns (uint256) {
     MembershipStorage.Layout storage ds = MembershipStorage.layout();
+
+    // get the currency being used for membership
+    address currency = _getMembershipCurrency();
+
+    if (currency == CurrencyTransfer.NATIVE_TOKEN) {
+      if (msg.value == 0) revert Membership__InsufficientPayment();
+      ds.tokenBalance += amount;
+      return amount;
+    }
+
+    // handle erc20 tokens
+    if (msg.value != 0) revert Membership__InvalidCurrency();
+
+    IERC20 token = IERC20(currency);
+    uint256 balanceBefore = token.balanceOf(address(this));
+    CurrencyTransfer.transferCurrency(currency, from, address(this), amount);
+    uint256 balanceAfter = token.balanceOf(address(this));
+
+    // Calculate the amount of tokens transferred
+    uint256 finalAmount = balanceAfter - balanceBefore;
+    if (finalAmount != amount) revert Membership__InsufficientPayment();
+
+    ds.tokenBalance += finalAmount;
+    return finalAmount;
+  }
+
+  function _transferOut(
+    address currency,
+    address from,
+    address to,
+    uint256 fee
+  ) internal {
+    emit MembershipWithdrawal(to, fee);
 
     //transfer a fee to a user
     CurrencyTransfer.transferCurrency(
-      ds.membershipCurrency,
+      currency,
       from, // from
       to, // to
       fee
     );
+  }
+
+  function _getCreatorBalance() internal view returns (uint256) {
+    return MembershipStorage.layout().tokenBalance;
   }
 
   // =============================================================
@@ -209,13 +251,9 @@ abstract contract MembershipBase is IMembershipBase {
   function _verifyMaxSupply(
     uint256 newLimit,
     uint256 totalSupply
-  ) internal view {
+  ) internal pure {
     // if the new limit is less than the current total supply, revert
     if (newLimit < totalSupply) revert Membership__InvalidMaxSupply();
-
-    // if the new limit is less than the current max supply, revert
-    if (newLimit <= _getMembershipSupplyLimit())
-      revert Membership__InvalidMaxSupply();
   }
 
   function _setMembershipSupplyLimit(uint256 newLimit) public {
@@ -231,21 +269,6 @@ abstract contract MembershipBase is IMembershipBase {
   // =============================================================
   function _getMembershipCurrency() public view returns (address) {
     return MembershipStorage.layout().membershipCurrency;
-  }
-
-  // =============================================================
-  //                           Recipient
-  // =============================================================
-  function _verifyRecipient(address recipient) internal pure {
-    if (recipient == address(0)) revert Membership__InvalidFeeRecipient();
-  }
-
-  function _setMembershipFeeRecipient(address newRecipient) public {
-    MembershipStorage.layout().membershipFeeRecipient = newRecipient;
-  }
-
-  function _getMembershipFeeRecipient() public view returns (address) {
-    return MembershipStorage.layout().membershipFeeRecipient;
   }
 
   // =============================================================

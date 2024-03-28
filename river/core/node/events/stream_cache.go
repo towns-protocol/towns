@@ -54,7 +54,7 @@ func NewStreamCache(ctx context.Context, params *StreamCacheParams) (*streamCach
 		return nil, err
 	}
 
-	streams, err := params.Registry.GetAllStreams(ctx, blockNum.AsUint64())
+	streams, err := params.Registry.GetAllStreams(ctx, blockNum)
 	if err != nil {
 		return nil, err
 	}

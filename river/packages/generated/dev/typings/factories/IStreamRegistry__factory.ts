@@ -105,6 +105,74 @@ const _abi = [
   },
   {
     type: "function",
+    name: "getPaginatedStreams",
+    inputs: [
+      {
+        name: "start",
+        type: "uint256",
+        internalType: "uint256",
+      },
+      {
+        name: "stop",
+        type: "uint256",
+        internalType: "uint256",
+      },
+    ],
+    outputs: [
+      {
+        name: "",
+        type: "tuple[]",
+        internalType: "struct StreamWithId[]",
+        components: [
+          {
+            name: "id",
+            type: "bytes32",
+            internalType: "bytes32",
+          },
+          {
+            name: "stream",
+            type: "tuple",
+            internalType: "struct Stream",
+            components: [
+              {
+                name: "lastMiniblockHash",
+                type: "bytes32",
+                internalType: "bytes32",
+              },
+              {
+                name: "lastMiniblockNum",
+                type: "uint64",
+                internalType: "uint64",
+              },
+              {
+                name: "reserved0",
+                type: "uint64",
+                internalType: "uint64",
+              },
+              {
+                name: "flags",
+                type: "uint64",
+                internalType: "uint64",
+              },
+              {
+                name: "nodes",
+                type: "address[]",
+                internalType: "address[]",
+              },
+            ],
+          },
+        ],
+      },
+      {
+        name: "",
+        type: "bool",
+        internalType: "bool",
+      },
+    ],
+    stateMutability: "view",
+  },
+  {
+    type: "function",
     name: "getStream",
     inputs: [
       {
@@ -143,6 +211,64 @@ const _abi = [
             name: "nodes",
             type: "address[]",
             internalType: "address[]",
+          },
+        ],
+      },
+    ],
+    stateMutability: "view",
+  },
+  {
+    type: "function",
+    name: "getStreamByIndex",
+    inputs: [
+      {
+        name: "i",
+        type: "uint256",
+        internalType: "uint256",
+      },
+    ],
+    outputs: [
+      {
+        name: "",
+        type: "tuple",
+        internalType: "struct StreamWithId",
+        components: [
+          {
+            name: "id",
+            type: "bytes32",
+            internalType: "bytes32",
+          },
+          {
+            name: "stream",
+            type: "tuple",
+            internalType: "struct Stream",
+            components: [
+              {
+                name: "lastMiniblockHash",
+                type: "bytes32",
+                internalType: "bytes32",
+              },
+              {
+                name: "lastMiniblockNum",
+                type: "uint64",
+                internalType: "uint64",
+              },
+              {
+                name: "reserved0",
+                type: "uint64",
+                internalType: "uint64",
+              },
+              {
+                name: "flags",
+                type: "uint64",
+                internalType: "uint64",
+              },
+              {
+                name: "nodes",
+                type: "address[]",
+                internalType: "address[]",
+              },
+            ],
           },
         ],
       },

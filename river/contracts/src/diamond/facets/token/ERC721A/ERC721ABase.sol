@@ -225,12 +225,14 @@ abstract contract ERC721ABase is IERC721ABase {
     uint256 tokenId
   ) internal view returns (uint256 packed) {
     if (_startTokenId() <= tokenId) {
-      packed = ERC721AStorage.layout()._packedOwnerships[tokenId];
+      ERC721AStorage.Layout storage ds = ERC721AStorage.layout();
+
+      packed = ds._packedOwnerships[tokenId];
       // If not burned.
       if (packed & _BITMASK_BURNED == 0) {
         // If the data at the starting slot does not exist, start the scan.
         if (packed == 0) {
-          if (tokenId >= ERC721AStorage.layout()._currentIndex)
+          if (tokenId >= ds._currentIndex)
             revert OwnerQueryForNonexistentToken();
           // Invariant:
           // There will always be an initialized ownership slot
@@ -243,7 +245,7 @@ abstract contract ERC721ABase is IERC721ABase {
           // If the address is zero, packed will be zero.
           for (;;) {
             unchecked {
-              packed = ERC721AStorage.layout()._packedOwnerships[--tokenId];
+              packed = ds._packedOwnerships[--tokenId];
             }
             if (packed == 0) continue;
             return packed;
@@ -746,6 +748,8 @@ abstract contract ERC721ABase is IERC721ABase {
       }
     }
 
+    ERC721AStorage.Layout storage ds = ERC721AStorage.layout();
+
     // Underflow of the sender's balance is impossible because we check for
     // ownership above and the recipient's balance can't realistically overflow.
     // Counter overflow is incredibly unrealistic as `tokenId` would have to be 2**256.
@@ -756,16 +760,14 @@ abstract contract ERC721ABase is IERC721ABase {
       //
       // We can directly decrement the balance, and increment the number burned.
       // This is equivalent to `packed -= 1; packed += 1 << _BITPOS_NUMBER_BURNED;`.
-      ERC721AStorage.layout()._packedAddressData[from] +=
-        (1 << _BITPOS_NUMBER_BURNED) -
-        1;
+      ds._packedAddressData[from] += (1 << _BITPOS_NUMBER_BURNED) - 1;
 
       // Updates:
       // - `address` to the last owner.
       // - `startTimestamp` to the timestamp of burning.
       // - `burned` to `true`.
       // - `nextInitialized` to `true`.
-      ERC721AStorage.layout()._packedOwnerships[tokenId] = _packOwnershipData(
+      ds._packedOwnerships[tokenId] = _packOwnershipData(
         from,
         (_BITMASK_BURNED | _BITMASK_NEXT_INITIALIZED) |
           _nextExtraData(from, address(0), prevOwnershipPacked)
@@ -775,13 +777,11 @@ abstract contract ERC721ABase is IERC721ABase {
       if (prevOwnershipPacked & _BITMASK_NEXT_INITIALIZED == 0) {
         uint256 nextTokenId = tokenId + 1;
         // If the next slot's address is zero and not burned (i.e. packed value is zero).
-        if (ERC721AStorage.layout()._packedOwnerships[nextTokenId] == 0) {
+        if (ds._packedOwnerships[nextTokenId] == 0) {
           // If the next slot is within bounds.
-          if (nextTokenId != ERC721AStorage.layout()._currentIndex) {
+          if (nextTokenId != ds._currentIndex) {
             // Initialize the next slot to maintain correctness for `ownerOf(tokenId + 1)`.
-            ERC721AStorage.layout()._packedOwnerships[
-              nextTokenId
-            ] = prevOwnershipPacked;
+            ds._packedOwnerships[nextTokenId] = prevOwnershipPacked;
           }
         }
       }
@@ -792,7 +792,7 @@ abstract contract ERC721ABase is IERC721ABase {
 
     // Overflow not possible, as _burnCounter cannot be exceed _currentIndex times.
     unchecked {
-      ERC721AStorage.layout()._burnCounter++;
+      ds._burnCounter++;
     }
   }
 

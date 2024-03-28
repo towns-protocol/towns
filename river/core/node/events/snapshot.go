@@ -286,6 +286,9 @@ func update_Snapshot_UserSettings(iSnapshot *Snapshot, userSettingsPayload *User
 	case *UserSettingsPayload_FullyReadMarkers_:
 		snapshot.UserSettingsContent.FullyReadMarkers = insertFullyReadMarker(snapshot.UserSettingsContent.FullyReadMarkers, content.FullyReadMarkers)
 		return nil
+	case *UserSettingsPayload_UserBlock_:
+		snapshot.UserSettingsContent.UserBlocksList = insertUserBlock(snapshot.UserSettingsContent.UserBlocksList, content.UserBlock)
+		return nil
 	default:
 		return RiverError(Err_INVALID_ARGUMENT, "unknown user settings payload type %T", userSettingsPayload.Content)
 	}
@@ -621,6 +624,42 @@ func insertFullyReadMarker(markers []*UserSettingsPayload_FullyReadMarkers, newM
 		bytes.Compare,
 		func(marker *UserSettingsPayload_FullyReadMarkers) []byte {
 			return marker.StreamId
+		},
+	)
+}
+
+func insertUserBlock(userBlocksArr []*UserSettingsPayload_Snapshot_UserBlocks, newUserBlock *UserSettingsPayload_UserBlock) []*UserSettingsPayload_Snapshot_UserBlocks {
+	userIdBytes := newUserBlock.UserId
+
+	newBlock := &UserSettingsPayload_Snapshot_UserBlocks_Block{
+		IsBlocked: newUserBlock.IsBlocked,
+		EventNum:  newUserBlock.EventNum,
+	}
+
+	var existingUserBlocks, err = findSorted(
+		userBlocksArr,
+		userIdBytes,
+		bytes.Compare,
+		func(userBlocks *UserSettingsPayload_Snapshot_UserBlocks) []byte {
+			return userBlocks.UserId
+		},
+	)
+	if err != nil {
+		// not found, create a new user block
+		existingUserBlocks = &UserSettingsPayload_Snapshot_UserBlocks{
+			UserId: userIdBytes,
+			Blocks: nil,
+		}
+	}
+
+	existingUserBlocks.Blocks = append(existingUserBlocks.Blocks, newBlock)
+
+	return insertSorted(
+		userBlocksArr,
+		existingUserBlocks,
+		bytes.Compare,
+		func(userBlocks *UserSettingsPayload_Snapshot_UserBlocks) []byte {
+			return userBlocks.UserId
 		},
 	)
 }

@@ -116,7 +116,7 @@ abstract contract SpaceHelper {
 
     return
       IArchitectBase.SpaceInfo({
-        name: "test",
+        name: townId,
         uri: "ipfs://test",
         membership: IArchitectBase.Membership({
           settings: IMembershipBase.Membership({

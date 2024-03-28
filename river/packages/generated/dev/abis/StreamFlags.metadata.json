@@ -43,18 +43,18 @@
   },
   "sources": {
     "contracts/src/river/registry/facets/stream/IStreamRegistry.sol": {
-      "keccak256": "0x19dbdaa4c4a2dedde230aabd42338e02158570da0268eaf98def42604bc43ce4",
+      "keccak256": "0x47337d9108adb07ab81e4c71666f916e96234e9837edde35866116c6627d2ff7",
       "urls": [
-        "bzz-raw://b35375b1086e487a7f0939de9fe4a926c66687630ff302d15dca19607b6d9b98",
-        "dweb:/ipfs/QmYwsVPrk77dJwnkc2hwTALrhx7qBeCFKkevjBYvm5PUsq"
+        "bzz-raw://d7d8a5ad98688de306264be8e7bd41edc3f141d8e852b6545c07748a13879ac9",
+        "dweb:/ipfs/QmPgYxzhakDsbnxPTFvMKKMKh2JmGtvq3nFukdcL4bQCZz"
       ],
       "license": "Apache-2.0"
     },
     "contracts/src/river/registry/facets/stream/StreamRegistry.sol": {
-      "keccak256": "0x33f724ae48e919ee6aeafc3e497ae476a930df9ae3913765ff4b3de2c56d1ce6",
+      "keccak256": "0xc422b363ffefaf16dafdfa5983a37b5cf7a306ee9c291ebe510212e91159f934",
       "urls": [
-        "bzz-raw://8913eb438ae914f7e4a9717f2b1eda8e25ce143594b9fb4be38b229dc515526d",
-        "dweb:/ipfs/Qmc3tzoQ4P58Y3EPqPMGDS9dJmGWPP189mbE8U6LhfP91Z"
+        "bzz-raw://965d4bc6045c85fa2fdd3ae4b6f7ef4aba5f3b98d00f0603ddde204c6c5555ac",
+        "dweb:/ipfs/Qmah6HuHF1HvGG1D8SD18g3FG1wxuKAMYTdMNUnFaERn8M"
       ],
       "license": "Apache-2.0"
     },
@@ -67,10 +67,10 @@
       "license": "Apache-2.0"
     },
     "contracts/src/river/registry/libraries/RegistryStorage.sol": {
-      "keccak256": "0xfbcf41b4c4b1544daa4747d9ea9c1a6fdb01cf413fdc30c9a7b3d920ce552058",
+      "keccak256": "0x17e658275a01e90b1778f35b3ce08a18991ddb9e89ce9f94eeb7c4e942607f88",
       "urls": [
-        "bzz-raw://0a64065c598fc295fcdd5dee549e0d7859fb34b1724b20317483cd896bb6e821",
-        "dweb:/ipfs/QmSVV9jXD73QKhG4ry4BZta3PcEAL5D9C3m6BQMWH1JQJy"
+        "bzz-raw://14748339034da35a348b0d28f77bbf4b7e16845e20b894c8106457f886ab09aa",
+        "dweb:/ipfs/QmNXKXYJ5T3LFH2Q1qC1hT9zaKaHRM8EiECL74pfd34uVN"
       ],
       "license": "Apache-2.0"
     },

@@ -1,6 +1,7 @@
 package crypto
 
 import (
+	"math/big"
 	"testing"
 	"time"
 
@@ -13,6 +14,7 @@ import (
 	. "github.com/river-build/river/core/node/base"
 	"github.com/river-build/river/core/node/base/test"
 	. "github.com/river-build/river/core/node/protocol"
+	. "github.com/river-build/river/core/node/shared"
 	"github.com/river-build/river/core/node/testutils"
 )
 
@@ -93,7 +95,9 @@ func TestBlockchain(t *testing.T) {
 	require.NoError(err)
 	assert.Equal(secondBlockNum, currentBlockNum)
 
+	allIds := make(map[StreamId]bool)
 	streamId := testutils.StreamIdFromBytes([]byte{0xa1, 0x02, 0x03})
+	allIds[streamId] = true
 	addrs := []common.Address{nodeAddr1, nodeAddr2}
 
 	genesisHash := common.HexToHash("0x123")
@@ -140,4 +144,42 @@ func TestBlockchain(t *testing.T) {
 	)
 	require.Nil(tx1)
 	require.Equal(Err_UNKNOWN_NODE, AsRiverError(err).Code, "Error: %v", err)
+
+	// Allocate 20 more streams
+	for i := 0; i < 20; i++ {
+		streamId := testutils.StreamIdFromBytes([]byte{0xa1, byte(i), 0x22, 0x33, 0x44, 0x55})
+		allIds[streamId] = true
+		_, err = bc1.TxRunner.Submit(
+			ctx,
+			func(opts *bind.TransactOpts) (*types.Transaction, error) {
+				return tc.StreamRegistry.AllocateStream(opts, streamId.ByteArray(), addrs, genesisHash, genesisMiniblock)
+			},
+		)
+		require.NoError(err)
+	}
+
+	tc.Commit()
+
+	// Read with pagination
+	const pageSize int64 = 4
+	var count int
+	var lastPageSeen bool
+	seenIds := make(map[StreamId]bool)
+	for i := int64(0); i < 30; i += pageSize {
+		streams, lastPage, err := tc.StreamRegistry.GetPaginatedStreams(nil, big.NewInt(i), big.NewInt(i+pageSize))
+		require.NoError(err)
+		for _, stream := range streams {
+			if stream.Id != [32]byte{} {
+				seenIds[testutils.StreamIdFromBytes(stream.Id[:])] = true
+				count++
+			}
+		}
+		if lastPage {
+			require.Equal(len(allIds), count)
+			lastPageSeen = true
+			break
+		}
+	}
+	require.True(lastPageSeen)
+	require.Equal(allIds, seenIds, "allIds: %v, seenIds: %v", allIds, seenIds)
 }

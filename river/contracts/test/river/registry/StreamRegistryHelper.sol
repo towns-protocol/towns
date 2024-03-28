@@ -13,9 +13,11 @@ import {IStreamRegistry} from "contracts/src/river/registry/facets/stream/IStrea
 
 contract StreamRegistryHelper is FacetHelper {
   constructor() {
-    bytes4[] memory selectors_ = new bytes4[](8);
+    bytes4[] memory selectors_ = new bytes4[](10);
     selectors_[_index++] = IStreamRegistry.allocateStream.selector;
+    selectors_[_index++] = IStreamRegistry.getPaginatedStreams.selector;
     selectors_[_index++] = IStreamRegistry.getStream.selector;
+    selectors_[_index++] = IStreamRegistry.getStreamByIndex.selector;
     selectors_[_index++] = IStreamRegistry.getStreamWithGenesis.selector;
     selectors_[_index++] = IStreamRegistry.setStreamLastMiniblock.selector;
     selectors_[_index++] = IStreamRegistry.placeStreamOnNode.selector;

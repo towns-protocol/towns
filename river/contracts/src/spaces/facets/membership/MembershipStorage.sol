@@ -13,7 +13,7 @@ library MembershipStorage {
     0xc21004fcc619240a31f006438274d15cd813308303284436eef6055f0fdcb600;
 
   struct Layout {
-    mapping(uint256 => address) memberByTokenId;
+    mapping(uint256 => address) deprecatedMemberByTokenId;
     mapping(address => uint256) tokenIdByMember;
     uint256 membershipPrice;
     uint256 membershipMaxSupply;
@@ -24,6 +24,7 @@ library MembershipStorage {
     uint256 freeAllocation;
     address pricingModule;
     mapping(uint256 => uint256) renewalPriceByTokenId;
+    uint256 tokenBalance;
   }
 
   function layout() internal pure returns (Layout storage l) {

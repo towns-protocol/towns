@@ -255,6 +255,9 @@ func (params *aeParams) canAddUserSettingsPayload(payload *StreamEvent_UserSetti
 	case *UserSettingsPayload_FullyReadMarkers_:
 		return aeBuilder().
 			check(params.creatorIsMember)
+	case *UserSettingsPayload_UserBlock_:
+		return aeBuilder().
+			check(params.creatorIsMember)
 	default:
 		return aeBuilder().
 			fail(unknownContentType(content))

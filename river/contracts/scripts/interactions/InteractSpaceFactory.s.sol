@@ -6,80 +6,57 @@ import {IProxyManager} from "contracts/src/diamond/proxy/manager/IProxyManager.s
 import {IDiamond, Diamond} from "contracts/src/diamond/Diamond.sol";
 import {IDiamondCut} from "contracts/src/diamond/facets/cut/IDiamondCut.sol";
 
-// utils
+//libraries
+
+//contracts
 import {Interaction} from "../common/Interaction.s.sol";
+import {ProxyManager} from "contracts/src/diamond/proxy/manager/ProxyManager.sol";
+import {DeployArchitect} from "contracts/scripts/deployments/facets/DeployArchitect.s.sol";
+import {DeploySpace} from "contracts/scripts/deployments/DeploySpace.s.sol";
+import {ArchitectHelper} from "contracts/test/spaces/architect/ArchitectHelper.sol";
+import {SpaceHelper} from "contracts/test/spaces/SpaceHelper.sol";
+import {Architect} from "contracts/src/spaces/facets/architect/Architect.sol";
 
-// helpers
-import {PricingModulesHelper} from "contracts/test/spaces/architect/pricing/PricingModulesHelper.sol";
-import {MembershipHelper} from "contracts/test/spaces/membership/MembershipHelper.sol";
-import {ERC721AHelper} from "contracts/test/diamond/erc721a/ERC721ASetup.sol";
+// debuggging
+import {console} from "forge-std/console.sol";
 
-// contracts
-
-// deployments
-import {DeployPricingModules} from "contracts/scripts/deployments/facets/DeployPricingModules.s.sol";
-import {DeployMembership} from "contracts/scripts/deployments/DeployMembership.s.sol";
-import {DeployTieredLogPricing} from "contracts/scripts/deployments/DeployTieredLogPricing.s.sol";
-import {DeployFixedPricing} from "contracts/scripts/deployments/DeployFixedPricing.s.sol";
-
-contract InteractSpaceFactory is Interaction {
-  PricingModulesHelper pricingModulesHelper = new PricingModulesHelper();
-  MembershipHelper membershipHelper = new MembershipHelper();
-  ERC721AHelper erc721aHelper = new ERC721AHelper();
-
-  DeployPricingModules deployPricingModules = new DeployPricingModules();
-  DeployMembership deployMembership = new DeployMembership();
-  DeployFixedPricing deployFixedPricing = new DeployFixedPricing();
-  DeployTieredLogPricing deployTieredLogPricing = new DeployTieredLogPricing();
+contract InteractSpaceFactory is Interaction, SpaceHelper {
+  DeployArchitect deployArchitect = new DeployArchitect();
+  DeploySpace deploySpace = new DeploySpace();
+  ArchitectHelper architectHelper = new ArchitectHelper();
 
   function __interact(uint256 deployerPk, address) public override {
     address spaceFactory = getDeployment("spaceFactory");
 
-    // deploy pricing modules
-    address pricingModulesFacet = deployPricingModules.deploy();
-    address fixedPricingModule = deployFixedPricing.deploy();
-    address tieredLogPricingModule = deployTieredLogPricing.deploy();
+    address architect = deployArchitect.deploy();
 
-    address[] memory pricingModules = new address[](2);
-    pricingModules[0] = fixedPricingModule;
-    pricingModules[1] = tieredLogPricingModule;
+    IDiamond.FacetCut[] memory cuts = new IDiamond.FacetCut[](1);
+    cuts[0] = architectHelper.makeCut(
+      architect,
+      IDiamond.FacetCutAction.Replace
+    );
 
-    IDiamond.FacetCut[] memory factoryCuts = new IDiamond.FacetCut[](1);
-    factoryCuts[0] = IDiamond.FacetCut({
-      facetAddress: pricingModulesFacet,
-      action: IDiamond.FacetCutAction.Add,
-      functionSelectors: pricingModulesHelper.selectors()
-    });
-
+    // upgrade architect facet
     vm.startBroadcast(deployerPk);
     IDiamondCut(spaceFactory).diamondCut({
-      facetCuts: factoryCuts,
-      init: pricingModulesFacet,
-      initPayload: abi.encodeWithSelector(
-        pricingModulesHelper.initializer(),
-        pricingModules
-      )
-    });
-    vm.stopBroadcast();
-
-    address space = getDeployment("space");
-    address membership = deployMembership.deploy();
-
-    membershipHelper.addSelectors(erc721aHelper.selectors());
-
-    IDiamond.FacetCut[] memory spaceCuts = new IDiamond.FacetCut[](1);
-    spaceCuts[0] = IDiamond.FacetCut({
-      facetAddress: membership,
-      action: IDiamond.FacetCutAction.Replace,
-      functionSelectors: membershipHelper.selectors()
-    });
-
-    vm.startBroadcast(deployerPk);
-    IDiamondCut(space).diamondCut({
-      facetCuts: spaceCuts,
+      facetCuts: cuts,
       init: address(0),
       initPayload: ""
     });
     vm.stopBroadcast();
+
+    address space = deploySpace.deploy();
+
+    // set space implementation to new one
+    vm.startBroadcast(deployerPk);
+    ProxyManager(spaceFactory).setImplementation(space);
+    vm.stopBroadcast();
+
+    console.log("Space implementation updated to new one.", space);
+    address newImpl = ProxyManager(spaceFactory).getImplementation(
+      IProxyManager.getImplementation.selector
+    );
+
+    console.log("New space implementation: ", newImpl);
   }
 }

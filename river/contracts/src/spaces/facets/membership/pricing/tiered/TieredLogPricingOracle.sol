@@ -2,7 +2,7 @@
 pragma solidity ^0.8.23;
 
 // interfaces
-import {IMembershipPricing} from "./IMembershipPricing.sol";
+import {IMembershipPricing} from "contracts/src/spaces/facets/membership/pricing/IMembershipPricing.sol";
 import {AggregatorV3Interface} from "contracts/src/utils/interfaces/AggregatorV3Interface.sol";
 
 // libraries

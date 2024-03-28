@@ -440,7 +440,7 @@ export class SpaceDapp implements ISpaceDapp {
             space.Membership.read.getMembershipPrice(),
             space.Membership.read.getMembershipLimit(),
             space.Membership.read.getMembershipCurrency(),
-            space.Membership.read.getMembershipFeeRecipient(),
+            space.Ownable.read.owner(),
             space.Membership.read.getMembershipDuration(),
             space.Membership.read.totalSupply(),
         ])

@@ -383,10 +383,21 @@ message UserInboxPayload {
 */
 message UserSettingsPayload {
     message Snapshot {
+         // for a specific blocked user, there might be multiple block or unblock events
+        message UserBlocks {
+            message Block {
+                bool is_blocked = 1;
+                int64 event_num = 2;
+            }
+            bytes user_id = 1;
+            repeated Block blocks = 2;
+        
+        }
         // inception
         Inception inception = 1;
         // fullyReadMarkers: sorted by stream_id
         repeated FullyReadMarkers fully_read_markers = 2;
+        repeated UserBlocks user_blocks_list = 3;
     }
 
     message Inception {
@@ -399,9 +410,16 @@ message UserSettingsPayload {
         EncryptedData content = 2;
     }
 
+    message UserBlock {
+        bytes user_id = 1;
+        bool is_blocked = 2;
+        int64 event_num = 3;
+    }
+
     oneof content {
         Inception inception = 1;
         FullyReadMarkers fully_read_markers = 2;
+        UserBlock user_block = 3;
     }
 }
 

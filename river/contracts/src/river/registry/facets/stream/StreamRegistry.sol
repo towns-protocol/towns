@@ -64,6 +64,16 @@ contract StreamRegistry is IStreamRegistry, RegistryModifiers {
     return ds.streamById[streamId];
   }
 
+  function getStreamByIndex(
+    uint256 i
+  ) external view returns (StreamWithId memory) {
+    if (i >= ds.streams.length()) {
+      revert(RiverRegistryErrors.NOT_FOUND);
+    }
+    bytes32 streamId = ds.streams.at(i);
+    return StreamWithId({id: streamId, stream: ds.streamById[streamId]});
+  }
+
   /// @return stream, genesisMiniblockHash, genesisMiniblock
   function getStreamWithGenesis(
     bytes32 streamId
@@ -185,6 +195,26 @@ contract StreamRegistry is IStreamRegistry, RegistryModifiers {
     }
 
     return streams;
+  }
+
+  function getPaginatedStreams(
+    uint256 start,
+    uint256 stop
+  ) external view returns (StreamWithId[] memory, bool) {
+    require(start < stop, RiverRegistryErrors.BAD_ARG);
+
+    StreamWithId[] memory streams = new StreamWithId[](stop - start);
+
+    for (
+      uint256 i = 0;
+      ((start + i) < ds.streams.length()) && ((start + i) < stop);
+      ++i
+    ) {
+      bytes32 id = ds.streams.at(start + i);
+      streams[i] = StreamWithId({id: id, stream: ds.streamById[id]});
+    }
+
+    return (streams, stop >= ds.streams.length());
   }
 
   function getStreamsOnNode(

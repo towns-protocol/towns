@@ -35,6 +35,16 @@ contract MembershipFacet is
   }
 
   // =============================================================
+  //                           Withdrawal
+  // =============================================================
+  function withdraw(address account) external onlyOwner {
+    if (account == address(0)) revert Membership__InvalidAddress();
+    uint256 balance = _getCreatorBalance();
+    if (balance == 0) revert Membership__InsufficientPayment();
+    _transferOut(_getMembershipCurrency(), address(this), account, balance);
+  }
+
+  // =============================================================
   //                           Minting
   // =============================================================
   function _validateJoinSpace(address receiver) internal view {
@@ -51,6 +61,17 @@ contract MembershipFacet is
   }
 
   /// @inheritdoc IMembership
+  function getTokenIdByMembership(
+    address member
+  ) external view returns (uint256) {
+    return _getTokenIdByMembership(member);
+  }
+
+  // =============================================================
+  //                           Join
+  // =============================================================
+
+  /// @inheritdoc IMembership
   function joinSpace(
     address receiver
   ) external payable nonReentrant returns (uint256 tokenId) {
@@ -61,14 +82,14 @@ contract MembershipFacet is
 
     // allocate protocol and membership fees
     uint256 membershipPrice = _getMembershipPrice(_totalSupply());
+
     if (membershipPrice > 0) {
       // set renewal price for token
       _setMembershipRenewalPrice(tokenId, membershipPrice);
-
       uint256 protocolFee = _collectProtocolFee(receiver, membershipPrice);
+
       uint256 surplus = membershipPrice - protocolFee;
-      if (surplus > 0)
-        _transferOut(receiver, _getMembershipFeeRecipient(), surplus);
+      if (surplus > 0) _transferIn(receiver, surplus);
     }
 
     // mint membership
@@ -97,20 +118,17 @@ contract MembershipFacet is
       _setMembershipRenewalPrice(tokenId, membershipPrice);
 
       uint256 protocolFee = _collectProtocolFee(receiver, membershipPrice);
-      uint256 netMembershipPrice = membershipPrice - protocolFee;
+      uint256 surplus = membershipPrice - protocolFee;
+      address currency = _getMembershipCurrency();
 
-      if (netMembershipPrice > 0) {
+      if (surplus > 0) {
         // calculate referral fee from net membership price
-        uint256 referralFee = _calculateReferralAmount(
-          netMembershipPrice,
-          referralCode
-        );
-        _transferOut(receiver, referrer, referralFee);
+        uint256 referralFee = _calculateReferralAmount(surplus, referralCode);
+        _transferOut(currency, receiver, referrer, referralFee);
 
         // transfer remaining amount to fee recipient
-        uint256 recipientFee = netMembershipPrice - referralFee;
-        if (recipientFee > 0)
-          _transferOut(receiver, _getMembershipFeeRecipient(), recipientFee);
+        uint256 recipientFee = surplus - referralFee;
+        if (recipientFee > 0) _transferIn(receiver, recipientFee);
       }
     }
 
@@ -121,12 +139,15 @@ contract MembershipFacet is
     _renewSubscription(tokenId, _getMembershipDuration());
   }
 
-  /// @inheritdoc IMembership
-  function renewMembership(address receiver) external payable nonReentrant {
-    if (receiver == address(0)) revert Membership__InvalidAddress();
-    if (_balanceOf(receiver) == 0) revert Membership__NotRenewable();
+  // =============================================================
+  //                           Renewal
+  // =============================================================
 
-    uint256 tokenId = _getTokenIdByMembership(receiver);
+  /// @inheritdoc IMembership
+  function renewMembership(uint256 tokenId) external payable nonReentrant {
+    address receiver = _ownerOf(tokenId);
+
+    if (receiver == address(0)) revert Membership__InvalidAddress();
 
     // should we wait for expiration to renew?
     if (!_isRenewable(tokenId)) revert Membership__NotExpired();
@@ -139,13 +160,21 @@ contract MembershipFacet is
 
     if (membershipPrice > 0) {
       uint256 protocolFee = _collectProtocolFee(receiver, membershipPrice);
-      uint256 netPrice = membershipPrice - protocolFee;
-      if (netPrice > 0)
-        _transferOut(receiver, _getMembershipFeeRecipient(), netPrice);
+      uint256 surplus = membershipPrice - protocolFee;
+      if (surplus > 0) _transferIn(receiver, surplus);
     }
 
     _renewSubscription(tokenId, _getMembershipDuration());
   }
+
+  /// @inheritdoc IMembership
+  function expiresAt(uint256 tokenId) external view returns (uint256) {
+    return _expiresAt(tokenId);
+  }
+
+  // =============================================================
+  //                           Cancellation
+  // =============================================================
 
   /// @inheritdoc IMembership
   function cancelMembership(uint256 tokenId) external nonReentrant {
@@ -156,22 +185,10 @@ contract MembershipFacet is
     _cancelSubscription(tokenId);
   }
 
-  /// @inheritdoc IMembership
-  function expiresAt(uint256 tokenId) external view returns (uint256) {
-    return _expiresAt(tokenId);
-  }
-
-  /// @inheritdoc IMembership
-  function getTokenIdByMembership(
-    address member
-  ) external view returns (uint256) {
-    return _getTokenIdByMembership(member);
-  }
-
   // =============================================================
   //                           Duration
   // =============================================================
-  /// @inheritdoc IMembership
+
   function setMembershipDuration(uint64 newDuration) external onlyOwner {}
 
   /// @inheritdoc IMembership
@@ -261,26 +278,8 @@ contract MembershipFacet is
   // =============================================================
 
   /// @inheritdoc IMembership
-  function setMembershipCurrency(address newCurrency) external onlyOwner {}
-
-  /// @inheritdoc IMembership
   function getMembershipCurrency() external view returns (address) {
     return _getMembershipCurrency();
-  }
-
-  // =============================================================
-  //                           Recipient
-  // =============================================================
-
-  /// @inheritdoc IMembership
-  function setMembershipFeeRecipient(address newRecipient) external onlyOwner {
-    _verifyRecipient(newRecipient);
-    _setMembershipFeeRecipient(newRecipient);
-  }
-
-  /// @inheritdoc IMembership
-  function getMembershipFeeRecipient() external view returns (address) {
-    return _getMembershipFeeRecipient();
   }
 
   // =============================================================

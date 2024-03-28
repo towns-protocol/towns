@@ -7,7 +7,7 @@ pragma solidity ^0.8.23;
 
 //contracts
 import {Deployer} from "../common/Deployer.s.sol";
-import {TieredLogPricingOracle} from "contracts/src/spaces/facets/membership/pricing/TieredLogPricingOracle.sol";
+import {TieredLogPricingOracle} from "contracts/src/spaces/facets/membership/pricing/tiered/TieredLogPricingOracle.sol";
 import {MockAggregatorV3} from "contracts/test/mocks/MockAggregatorV3.sol";
 
 contract DeployTieredLogPricing is Deployer {

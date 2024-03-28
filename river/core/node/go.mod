@@ -20,7 +20,6 @@ require (
 	github.com/prometheus/client_golang v1.16.0
 	github.com/rogpeppe/go-internal v1.11.0
 	github.com/rs/cors v1.9.0
-	github.com/rs/zerolog v1.32.0
 	github.com/spf13/cobra v1.8.0
 	github.com/spf13/viper v1.18.2
 	github.com/stretchr/testify v1.8.4

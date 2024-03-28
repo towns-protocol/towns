@@ -18,7 +18,6 @@ contract ForkCreateSpace is IArchitectBase, TestUtils, SpaceHelper {
 
   function test_createForkSpace() external onlyForked {
     address founder = _randomAddress();
-    address user = _randomAddress();
 
     SpaceInfo memory spaceInfo = _createEveryoneSpaceInfo("fork-space");
     spaceInfo
@@ -29,6 +28,6 @@ contract ForkCreateSpace is IArchitectBase, TestUtils, SpaceHelper {
     Architect spaceArchitect = Architect(spaceFactory);
 
     vm.prank(founder);
-    address newSpace = spaceArchitect.createSpace(spaceInfo);
+    spaceArchitect.createSpace(spaceInfo);
   }
 }

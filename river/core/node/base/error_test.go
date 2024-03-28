@@ -77,6 +77,7 @@ func TestRiverErrorBytes(t *testing.T) {
 	println(err.Error())
 	assert.Contains(err.Error(), "0102030f")
 }
+
 func TestRiverErrorWrapsConnectNetworkingError(t *testing.T) {
 	connectErr := connect.NewError(connect.CodeUnavailable, fmt.Errorf("node unavailable"))
 	wrappedConnectError := AsRiverError(connectErr).AsConnectError()

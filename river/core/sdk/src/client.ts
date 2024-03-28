@@ -79,6 +79,7 @@ import {
     make_UserPayload_Inception,
     make_SpacePayload_Channel,
     make_UserSettingsPayload_FullyReadMarkers,
+    make_UserSettingsPayload_UserBlock,
     make_UserSettingsPayload_Inception,
     make_MediaPayload_Inception,
     make_MediaPayload_Chunk,
@@ -737,6 +738,39 @@ export class Client
                 content: make_fake_encryptedData(fullyReadMarkersContent.toJsonString()),
             }),
             { method: 'sendFullyReadMarker' },
+        )
+    }
+
+    async updateUserBlock(userId: string, isBlocked: boolean) {
+        this.logCall('blockUser', userId)
+
+        if (!isDefined(this.userSettingsStreamId)) {
+            throw Error('userSettingsStreamId is not defined')
+        }
+        const dmStreamId = makeDMStreamId(this.userId, userId)
+        const lastBlock = this.stream(
+            this.userSettingsStreamId,
+        )?.view.userSettingsContent.getLastBlock(userId)
+
+        if (lastBlock?.isBlocked === isBlocked) {
+            throw Error(
+                `updateUserBlock isBlocked<${isBlocked}> must be different from existing value`,
+            )
+        }
+
+        let eventNum = this.stream(dmStreamId)?.view.lastEventNum ?? 0n
+        if (lastBlock && lastBlock.eventNum >= eventNum) {
+            eventNum = lastBlock.eventNum + 1n
+        }
+
+        return this.makeEventAndAddToStream(
+            this.userSettingsStreamId,
+            make_UserSettingsPayload_UserBlock({
+                userId: addressFromUserId(userId),
+                isBlocked: isBlocked,
+                eventNum: eventNum,
+            }),
+            { method: 'updateUserBlock' },
         )
     }
 

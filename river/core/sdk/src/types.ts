@@ -12,6 +12,7 @@ import {
     SpacePayload_Channel,
     EncryptedData,
     UserPayload_UserMembership,
+    UserSettingsPayload_UserBlock,
     UserSettingsPayload_FullyReadMarkers,
     MiniblockHeader,
     ChannelMessage_Post_Mention,
@@ -465,6 +466,20 @@ export const make_UserSettingsPayload_FullyReadMarkers = (
         value: {
             content: {
                 case: 'fullyReadMarkers',
+                value,
+            },
+        },
+    }
+}
+
+export const make_UserSettingsPayload_UserBlock = (
+    value: PlainMessage<UserSettingsPayload_UserBlock>,
+): PlainMessage<StreamEvent>['payload'] => {
+    return {
+        case: 'userSettingsPayload',
+        value: {
+            content: {
+                case: 'userBlock',
                 value,
             },
         },

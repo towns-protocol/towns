@@ -3,7 +3,9 @@ import {
     SnapshotCaseType,
     FullyReadMarker,
     UserInboxPayload_GroupEncryptionSessions,
+    UserSettingsPayload_UserBlock,
 } from '@river-build/proto'
+
 import {
     ClientInitStatus,
     ConfirmedTimelineEvent,
@@ -69,6 +71,7 @@ export type StreamStateEvents = {
         channelId: string,
         fullyReadMarkers: Record<string, FullyReadMarker>,
     ) => void
+    userBlockUpdated: (userBlock: UserSettingsPayload_UserBlock) => void
     eventDecrypted: (
         streamId: string,
         contentKind: SnapshotCaseType,
