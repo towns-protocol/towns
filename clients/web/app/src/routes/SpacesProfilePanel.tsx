@@ -318,7 +318,7 @@ export const SpaceProfile = (props: { children?: React.ReactNode }) => {
                     !isLoadingBanStatus &&
                     userAbstractAccountAddress && (
                         <BanPanelButton
-                            walletAddress={userAbstractAccountAddress}
+                            walletAddress={user?.userId ?? ''}
                             isBanned={isBanned}
                             space={space}
                         />
