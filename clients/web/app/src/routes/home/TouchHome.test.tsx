@@ -68,6 +68,7 @@ describe('<TouchHome />', () => {
                         joined: true,
                         latestMs: 0,
                         favorite: false,
+                        muted: false,
                     },
                 ],
                 readDms: [],

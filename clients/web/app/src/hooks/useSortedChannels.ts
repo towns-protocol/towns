@@ -12,6 +12,7 @@ import {
     useUserLookupContext,
 } from 'use-towns-client'
 import { isEqual } from 'lodash'
+import { useMutedStreamIds } from 'api/lib/notificationSettings'
 import { useSpaceChannels } from './useSpaceChannels'
 import { useFavoriteChannels } from './useFavoriteChannels'
 
@@ -28,6 +29,7 @@ export type ChannelMenuItem = {
     search: string
     unread: boolean
     favorite: boolean
+    muted: boolean
 }
 
 export type DMChannelMenuItem = {
@@ -40,6 +42,7 @@ export type DMChannelMenuItem = {
     search: string
     unread: boolean
     favorite: boolean
+    muted: boolean
 }
 
 export type MixedChannelMenuItem = ChannelMenuItem | DMChannelMenuItem
@@ -54,6 +57,7 @@ export const useSortedChannels = ({ spaceId, currentRouteId }: Params) => {
     const { memberIds } = useSpaceMembers()
     const { joinedChannels } = useJoinedChannels(spaceId)
     const { favoriteChannelIds } = useFavoriteChannels()
+    const { mutedStreamIds } = useMutedStreamIds()
 
     const unreadChannelIds = useMemo(
         () => (spaceId ? spaceUnreadChannelIds[spaceId] : new Set()),
@@ -81,10 +85,16 @@ export const useSortedChannels = ({ spaceId, currentRouteId }: Params) => {
                     joined: !!joinedChannels?.has(channel.id),
                     latestMs: Number(0),
                     favorite: favoriteChannelIds.has(channel.id),
-                } as const
+                    muted: mutedStreamIds.has(channel.id),
+                } satisfies ChannelMenuItem
             })
-            .sort((a, b) => a.channel.label.localeCompare(b.channel.label))
-    }, [channels, joinedChannels, mentions, unreadChannelIds, favoriteChannelIds])
+            .sort((a, b) => {
+                if (a.muted !== b.muted) {
+                    return a.muted ? 1 : -1
+                }
+                return a.channel.label.localeCompare(b.channel.label)
+            })
+    }, [channels, joinedChannels, mentions, unreadChannelIds, favoriteChannelIds, mutedStreamIds])
 
     // - - - - - - - - - - - - - - - - - - - - - - - - - collect and map all dms
 
@@ -109,6 +119,7 @@ export const useSortedChannels = ({ spaceId, currentRouteId }: Params) => {
                     isGroup: channel.isGroup,
                     latestMs: Number(channel?.lastEventCreatedAtEpochMs ?? 0),
                     favorite: favoriteChannelIds.has(channel.id),
+                    muted: mutedStreamIds.has(channel.id),
                 } satisfies DMChannelMenuItem
             })
 
@@ -123,6 +134,7 @@ export const useSortedChannels = ({ spaceId, currentRouteId }: Params) => {
         rooms,
         spaceId,
         favoriteChannelIds,
+        mutedStreamIds,
     ])
 
     // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -

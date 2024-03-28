@@ -2,6 +2,7 @@ import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query'
 import { z } from 'zod'
 import { useMyProfile } from 'use-towns-client'
 import { GetUserSettingsSchema, Mute, SaveUserSettingsSchema } from '@notification-service/types'
+import { useMemo } from 'react'
 import { env } from 'utils'
 import { axiosClient } from 'api/apiClient'
 
@@ -72,6 +73,24 @@ async function getSettings({ userId }: Partial<GetUserSettingsSchema>): Promise<
 
 export function toggleMuteSetting(mute: Mute | undefined) {
     return mute === Mute.Muted ? Mute.Unmuted : Mute.Muted
+}
+
+export function useMutedStreamIds() {
+    const { data } = useGetNotificationSettings()
+    const mutedStreamIds = useMemo(() => {
+        if (!data) {
+            return new Set<string>()
+        }
+        const mutedChannelIds = data.channelSettings
+            .filter((c) => c.channelMute === Mute.Muted)
+            .map((c) => c.channelId)
+        const mutedSpaceIds = data.spaceSettings
+            .filter((s) => s.spaceMute === Mute.Muted)
+            .map((s) => s.spaceId)
+
+        return new Set([...mutedChannelIds, ...mutedSpaceIds])
+    }, [data])
+    return { mutedStreamIds }
 }
 
 export function useMuteSettings({
