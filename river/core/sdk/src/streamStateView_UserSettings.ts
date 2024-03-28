@@ -135,7 +135,7 @@ export class StreamStateView_UserSettings extends StreamStateView_AbstractConten
 
     isUserBlockedAt(userId: string, eventNum: bigint): boolean {
         let isBlocked = false
-        for (const block of this.userBlocks[userId].blocks) {
+        for (const block of this.userBlocks[userId]?.blocks ?? []) {
             if (eventNum >= block.eventNum) {
                 isBlocked = block.isBlocked
             }

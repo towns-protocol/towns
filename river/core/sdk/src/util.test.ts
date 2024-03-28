@@ -27,7 +27,7 @@ import { createRiverRegistry, LocalhostWeb3Provider, PricingModuleStruct } from 
 
 const log = dlog('csb:test:util')
 
-const RIVER_ANVIL = 'http://localhost:8546'
+export const RIVER_ANVIL = 'http://localhost:8546'
 const TEST_URL_SINGLE = 'https://localhost:5158'
 const TEST_URL_SINGLE_ENT = 'https://localhost:5157'
 const TEST_URL_MULTI =
@@ -67,6 +67,9 @@ const initTestUrls = async (): Promise<{
     const config = process.env.RIVER_TEST_CONNECT
     const { urls: riverRegistryNodes, refreshNodeUrl } = await returnRiverRegistryNodes()
 
+    // jterzis: we need to maintain this config switch for cases
+    // where users run multiple concurrent environments locally
+    // and the client needs to pin to a specific node.
     if (config === 'single') {
         testUrls = riverRegistryNodes.split(',') ?? [TEST_URL_SINGLE]
     } else if (config === 'single_ent') {
