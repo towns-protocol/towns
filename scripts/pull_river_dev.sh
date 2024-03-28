@@ -76,6 +76,7 @@ function make_pr_description() {
 
 function remove_river_yarn_files() {
     # these files shouldn't be checked into the harmony repo
+    git rm -rf "${SUBTREE_PREFIX}/.git" 2>/dev/null || echo "${SUBTREE_PREFIX}/.git not found, skipping"
     git rm "${SUBTREE_PREFIX}/package.json" 2>/dev/null || echo "${SUBTREE_PREFIX}/package.json not found, skipping"
     rm "${SUBTREE_PREFIX}/package.json" 2>/dev/null || echo "${SUBTREE_PREFIX}/package.json not found, skipping"
     git rm "${SUBTREE_PREFIX}/yarn.lock" 2>/dev/null || echo "${SUBTREE_PREFIX}/yarn.lock not found, skipping"
@@ -173,7 +174,12 @@ git checkout -b "${BRANCH_NAME}"
 
 # Pull the latest changes from the subtree, blasting away any local changes
 rm -rf river
-git clone "${SUBTREE_REPO}" river
+rm -rf river # run twice to get around permission denied errors
+
+confirmContinue "Deleted river complete. Continue with the clone?"
+
+git clone -b "${SUBTREE_BRANCH}" "${SUBTREE_REPO}" river
+
 remove_river_yarn_files
 
 git add .
