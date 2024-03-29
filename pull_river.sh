@@ -77,7 +77,7 @@ function remove_river_yarn_files() {
     git rm "${SUBTREE_PREFIX}/package.json" 2>/dev/null || echo "${SUBTREE_PREFIX}/package.json not found, skipping"
     rm "${SUBTREE_PREFIX}/package.json" 2>/dev/null || echo "${SUBTREE_PREFIX}/package.json not found, skipping"
     git rm "${SUBTREE_PREFIX}/yarn.lock" 2>/dev/null || echo "${SUBTREE_PREFIX}/yarn.lock not found, skipping"
-    rm "${SUBTREE_PREFIX}/package.json" 2>/dev/null || echo "${SUBTREE_PREFIX}/package.json not found, skipping"
+    rm "${SUBTREE_PREFIX}/yarn.lock" 2>/dev/null || echo "${SUBTREE_PREFIX}/yarn.lock not found, skipping"
 }
 
 function yarn_install_and_check() {
