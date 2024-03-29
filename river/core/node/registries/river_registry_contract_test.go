@@ -24,7 +24,7 @@ func TestNodeEvents(t *testing.T) {
 
 	bc := tt.GetBlockchain(ctx, 0, false)
 
-	rr, err := NewRiverRegistryContract(ctx, bc, &config.ContractConfig{Address: tt.RiverRegistryAddress.Hex()})
+	rr, err := NewRiverRegistryContract(ctx, bc, &config.ContractConfig{Address: tt.RiverRegistryAddress})
 	require.NoError(err)
 
 	num, err := bc.GetBlockNumber(ctx)

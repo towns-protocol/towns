@@ -1,6 +1,7 @@
 package config
 
 import (
+	"github.com/ethereum/go-ethereum/common"
 	infra "github.com/river-build/river/core/node/infra/config"
 )
 
@@ -101,8 +102,8 @@ type RecencyConstraintsConfig struct {
 }
 
 type ContractConfig struct {
-	// Address of the contract on the blockchain or path to the JSON file with address.
-	Address string
+	// Address of the contract
+	Address common.Address
 	// Version of the contract to use.
 	Version string
 }

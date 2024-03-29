@@ -3,6 +3,7 @@ package shared
 import (
 	"crypto/rand"
 	"encoding/hex"
+	"fmt"
 	"slices"
 	"strings"
 
@@ -27,10 +28,6 @@ func AddressFromUserId(userId string) ([]byte, error) {
 		return nil, RiverError(Err_BAD_ADDRESS, "address should start with 0x", "userId", userId)
 	}
 	return hex.DecodeString(userId[2:])
-}
-
-func AddressFromBytes(addr []byte) (common.Address, error) {
-	return BytesToEthAddress(addr)
 }
 
 func AddressFromSpaceId(spaceId StreamId) (common.Address, error) {
@@ -63,11 +60,15 @@ func MakeChannelId(spaceId StreamId) (StreamId, error) {
 }
 
 func UserStreamIdFromBytes(addr []byte) (StreamId, error) {
-	address, err := BytesToEthAddress(addr)
-	if err != nil {
-		return StreamId{}, err
+	if len(addr) == 20 {
+		return UserStreamIdFromAddr(common.BytesToAddress(addr)), nil
 	}
-	return UserStreamIdFromAddr(address), nil
+
+	return StreamId{}, RiverError(
+		Err_BAD_ADDRESS,
+		"Bad address bytes",
+		"address", fmt.Sprintf("%x", addr),
+	).Func("UserStreamIdFromBytes")
 }
 
 func UserStreamIdFromAddr(addr common.Address) StreamId {

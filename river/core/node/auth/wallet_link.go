@@ -8,7 +8,6 @@ import (
 	. "github.com/river-build/river/core/node/base"
 	"github.com/river-build/river/core/node/config"
 	"github.com/river-build/river/core/node/contracts/base"
-	"github.com/river-build/river/core/node/crypto"
 	"github.com/river-build/river/core/node/dlog"
 	"github.com/river-build/river/core/node/infra"
 	. "github.com/river-build/river/core/node/protocol"
@@ -35,11 +34,7 @@ var (
 )
 
 func NewWalletLink(ctx context.Context, cfg *config.ContractConfig, backend bind.ContractBackend) (*WalletLink, error) {
-	address, err := crypto.ParseOrLoadAddress(cfg.Address)
-	if err != nil {
-		return nil, AsRiverError(err, Err_BAD_CONFIG).Message("Failed to parse contract address").Func("NewWalletLink")
-	}
-	c, err := base.NewWalletLink(address, backend)
+	c, err := base.NewWalletLink(cfg.Address, backend)
 	if err != nil {
 		return nil, WrapRiverError(
 			Err_CANNOT_CONNECT,

@@ -2,6 +2,7 @@ package cmd
 
 import (
 	"fmt"
+	"github.com/mitchellh/mapstructure"
 	"os"
 	"strings"
 
@@ -54,8 +55,13 @@ func initConfigAndLog() {
 			fmt.Printf("Failed to read config file, file=%v, error=%v\n", configFile, err)
 		}
 
-		var configStruct config.Config
-		if err := viper.Unmarshal(&configStruct); err != nil {
+		var (
+			configStruct config.Config
+			decodeHooks  = mapstructure.ComposeDecodeHookFunc(
+				config.DecodeAddressOrAddressFileHook(),
+			)
+		)
+		if err := viper.Unmarshal(&configStruct, viper.DecodeHook(decodeHooks)); err != nil {
 			fmt.Printf("Failed to unmarshal config, error=%v\n", err)
 		}
 

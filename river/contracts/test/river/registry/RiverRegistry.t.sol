@@ -95,6 +95,27 @@ contract RiverRegistryTest is TestUtils, IOwnableBase {
   }
 
   // =============================================================
+  //                           RegisterNode
+  // =============================================================
+  function test_registerNode(
+    address nodeOperator,
+    address node,
+    string memory url
+  ) external givenNodeOperatorIsApproved(nodeOperator) {
+    vm.assume(node != address(0));
+
+    vm.prank(nodeOperator);
+    vm.expectEmit();
+    emit INodeRegistry.NodeAdded(node, url, NodeStatus.Operational);
+    nodeRegistry.registerNode(node, url, NodeStatus.Operational);
+
+    Node memory registered = nodeRegistry.getNode(node);
+    assertEq(registered.url, url);
+    assertEq(uint(registered.status), uint(NodeStatus.Operational));
+    assertEq(registered.operator, nodeOperator);
+  }
+
+  // =============================================================
   //                     updateNodeUrl
   // =============================================================
   function test_updateNodeUrl(

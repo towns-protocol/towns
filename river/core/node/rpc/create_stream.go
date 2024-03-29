@@ -94,7 +94,7 @@ func (s *Service) createStream(ctx context.Context, req *CreateStreamRequest) (*
 
 	// check that all required users exist in the system
 	for _, userAddress := range csRules.RequiredUserAddrs {
-		addr, err := BytesToEthAddress(userAddress)
+		addr, err := BytesToAddress(userAddress)
 		if err != nil {
 			return nil, RiverError(Err_PERMISSION_DENIED, "invalid user id", "requiredUser", userAddress)
 		}

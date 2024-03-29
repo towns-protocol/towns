@@ -54,15 +54,6 @@ func NewRiverRegistryContract(
 		).Func("NewRiverRegistryContract")
 	}
 
-	address, err := crypto.ParseOrLoadAddress(cfg.Address)
-	if err != nil {
-		return nil, AsRiverError(
-			err,
-			Err_BAD_CONFIG,
-		).Message("Failed to parse contract address").
-			Func("NewRiverRegistryContract")
-	}
-
 	abi, err := contracts.NodeRegistryV1MetaData.GetAbi()
 	if err != nil {
 		return nil,
@@ -87,7 +78,7 @@ func NewRiverRegistryContract(
 		eventInfo[ev.ID] = e
 	}
 
-	streamRegistry, err := contracts.NewStreamRegistryV1(address, blockchain.Client)
+	streamRegistry, err := contracts.NewStreamRegistryV1(cfg.Address, blockchain.Client)
 	if err != nil {
 		return nil,
 			AsRiverError(err, Err_BAD_CONFIG).
@@ -97,7 +88,7 @@ func NewRiverRegistryContract(
 				LogError(log)
 	}
 
-	operatorRegistry, err := contracts.NewOperatorRegistryV1(address, blockchain.Client)
+	operatorRegistry, err := contracts.NewOperatorRegistryV1(cfg.Address, blockchain.Client)
 	if err != nil {
 		return nil,
 			AsRiverError(err, Err_BAD_CONFIG).
@@ -107,7 +98,7 @@ func NewRiverRegistryContract(
 				LogError(log)
 	}
 
-	nodeRegistry, err := contracts.NewNodeRegistryV1(address, blockchain.Client)
+	nodeRegistry, err := contracts.NewNodeRegistryV1(cfg.Address, blockchain.Client)
 	if err != nil {
 		return nil,
 			AsRiverError(err, Err_BAD_CONFIG).
@@ -122,8 +113,8 @@ func NewRiverRegistryContract(
 		NodeRegistry:     nodeRegistry,
 		StreamRegistry:   streamRegistry,
 		Blockchain:       blockchain,
-		Address:          address,
-		Addresses:        []common.Address{address},
+		Address:          cfg.Address,
+		Addresses:        []common.Address{cfg.Address},
 		Abi:              abi,
 		NodeEventTopics:  [][]common.Hash{nodeEventSigs},
 		EventInfo:        eventInfo,

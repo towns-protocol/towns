@@ -35,7 +35,7 @@ func TestNodeRegistryUpdates(t *testing.T) {
 	rr, err := registries.NewRiverRegistryContract(
 		ctx,
 		bc,
-		&config.ContractConfig{Address: btc.RiverRegistryAddress.Hex()},
+		&config.ContractConfig{Address: btc.RiverRegistryAddress},
 	)
 	require.NoError(err)
 

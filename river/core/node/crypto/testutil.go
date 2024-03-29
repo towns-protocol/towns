@@ -297,7 +297,7 @@ func (c *BlockchainTestContext) UpdateNodeStatus(ctx context.Context, index int,
 
 func (c *BlockchainTestContext) RegistryConfig() config.ContractConfig {
 	return config.ContractConfig{
-		Address: c.RiverRegistryAddress.Hex(),
+		Address: c.RiverRegistryAddress,
 	}
 }
 

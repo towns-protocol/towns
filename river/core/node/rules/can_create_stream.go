@@ -487,7 +487,8 @@ func (ru *csChannelRules) derivedChannelSpaceParentEvent() (*DerivedEvent, error
 }
 
 func (ru *csParams) derivedMembershipEvent() (*DerivedEvent, error) {
-	creatorAddress, err := BytesToEthAddress(ru.parsedEvents[0].Event.GetCreatorAddress())
+
+	creatorAddress, err := BytesToAddress(ru.parsedEvents[0].Event.GetCreatorAddress())
 	if err != nil {
 		return nil, err
 	}
