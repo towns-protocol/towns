@@ -7,9 +7,10 @@ import {
     isGDMChannelStreamId,
     makeStreamRpcClient,
     userIdFromAddress,
+    makeRiverRpcClient,
 } from '@river/sdk'
 import { EntitlementsDelegate, DecryptionStatus } from '@river-build/encryption'
-import { CreateSpaceParams, IRuleEntitlement, createRiverRegistry } from '@river-build/web3'
+import { CreateSpaceParams, IRuleEntitlement } from '@river-build/web3'
 import { ChannelMessage_Post_Mention, FullyReadMarker } from '@river-build/proto'
 import {
     ChannelTransactionContext,
@@ -194,14 +195,10 @@ export class TownsClient implements EntitlementsDelegate {
         if (localStorage.getItem('RIVER_RPC_URL')) {
             rpcClient = makeStreamRpcClient(localStorage.getItem('RIVER_RPC_URL') as string)
         } else {
-            const riverRegistry = createRiverRegistry({
+            rpcClient = await makeRiverRpcClient({
                 chainId: this.opts.riverChainId,
                 provider: this.opts.riverChainProvider,
             })
-            const urls = await riverRegistry.getOperationalNodeUrls()
-            rpcClient = makeStreamRpcClient(urls, undefined, () =>
-                riverRegistry.getOperationalNodeUrls(),
-            )
         }
         // get storage
         // todo jterzis 06/15/23: add client store here
