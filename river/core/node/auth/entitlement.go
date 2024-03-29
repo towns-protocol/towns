@@ -30,7 +30,12 @@ var (
 	isEntitledToSpaceCalls   = infra.NewSuccessMetrics("is_entitled_to_space_calls", contractCalls)
 )
 
-func NewEntitlements(ctx context.Context, version string, address common.Address, backend bind.ContractBackend) (Entitlements, error) {
+func NewEntitlements(
+	ctx context.Context,
+	version string,
+	address common.Address,
+	backend bind.ContractBackend,
+) (Entitlements, error) {
 	c, err := base.NewEntitlementsManager(address, backend)
 	if err != nil {
 		return nil, WrapRiverError(
@@ -104,7 +109,11 @@ func (proxy *entitlementsProxy) IsEntitledToChannel(
 	return result, nil
 }
 
-func (proxy *entitlementsProxy) IsEntitledToSpace(opts *bind.CallOpts, user common.Address, permission string) (bool, error) {
+func (proxy *entitlementsProxy) IsEntitledToSpace(
+	opts *bind.CallOpts,
+	user common.Address,
+	permission string,
+) (bool, error) {
 	log := dlog.FromCtx(proxy.ctx)
 	start := time.Now()
 	defer infra.StoreExecutionTimeMetrics("IsEntitledToSpace", infra.CONTRACT_CALLS_CATEGORY, start)

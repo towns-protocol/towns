@@ -128,7 +128,10 @@ func runChecksCS(checksList [][]func() error) error {
 	return nil
 }
 
-func runDerivedEvents(fns1 []func() (*DerivedEvent, error), fns2 []func() ([]*DerivedEvent, error)) ([]*DerivedEvent, error) {
+func runDerivedEvents(
+	fns1 []func() (*DerivedEvent, error),
+	fns2 []func() ([]*DerivedEvent, error),
+) ([]*DerivedEvent, error) {
 	var derivedEvents []*DerivedEvent
 	for _, fn := range fns1 {
 		derivedEvent, err := fn()

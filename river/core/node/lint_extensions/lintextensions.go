@@ -55,7 +55,10 @@ func run(pass *analysis.Pass) (interface{}, error) {
 				if isIgnored(cmap) {
 					return true // Skip this node
 				}
-				pass.Reportf(callExpr.Pos(), "use of context.Background() is discouraged, use the default context instead")
+				pass.Reportf(
+					callExpr.Pos(),
+					"use of context.Background() is discouraged, use the default context instead",
+				)
 			}
 			return true
 		})

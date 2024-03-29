@@ -28,6 +28,7 @@ type StreamCache interface {
 	CreateStream(ctx context.Context, streamId StreamId) (SyncStream, StreamView, error)
 	ForceFlushAll(ctx context.Context)
 	GetLoadedViews(ctx context.Context) []StreamView
+	OnNewBlock(ctx context.Context)
 }
 
 type streamCacheImpl struct {
@@ -44,17 +45,17 @@ type streamCacheImpl struct {
 
 var _ StreamCache = (*streamCacheImpl)(nil)
 
-func NewStreamCache(ctx context.Context, params *StreamCacheParams) (*streamCacheImpl, error) {
+func NewStreamCache(
+	ctx context.Context,
+	params *StreamCacheParams,
+	appliedBlockNum crypto.BlockNumber,
+	chainMonitor crypto.ChainMonitorBuilder,
+) (*streamCacheImpl, error) {
 	s := &streamCacheImpl{
 		params: params,
 	}
 
-	blockNum, err := params.Registry.Blockchain.GetBlockNumber(ctx)
-	if err != nil {
-		return nil, err
-	}
-
-	streams, err := params.Registry.GetAllStreams(ctx, blockNum)
+	streams, err := params.Registry.GetAllStreams(ctx, appliedBlockNum)
 	if err != nil {
 		return nil, err
 	}
@@ -74,12 +75,8 @@ func NewStreamCache(ctx context.Context, params *StreamCacheParams) (*streamCach
 
 	// TODO: setup monitor for stream updates and update records accordingly.
 
-	c := crypto.MakeBlockNumberChannel()
-	err = params.Riverchain.BlockMonitor.AddListener(c, blockNum)
-	if err != nil {
-		return nil, err
-	}
-	go s.newBlockReader(ctx, c)
+	chainMonitor.OnBlock(func(crypto.BlockNumber) { s.OnNewBlock(ctx) })
+
 	return s, nil
 }
 
@@ -205,10 +202,10 @@ func (s *streamCacheImpl) GetLoadedViews(ctx context.Context) []StreamView {
 	return result
 }
 
-func (s *streamCacheImpl) onNewBlock(ctx context.Context) {
+func (s *streamCacheImpl) OnNewBlock(ctx context.Context) {
 	log := dlog.FromCtx(ctx)
 	// Log at level below debug, otherwise it's too chatty.
-	log.Log(ctx, -8, "onNewBlock: ENTER producing new miniblocks")
+	log.Log(ctx, -8, "OnNewBlock: ENTER producing new miniblocks")
 
 	// Try lock to have only one invocation at a time. Previous onNewBlock may still be running.
 	if !s.onNewBlockMutex.TryLock() {
@@ -226,18 +223,4 @@ func (s *streamCacheImpl) onNewBlock(ctx context.Context) {
 
 	// Log at level below debug, otherwise it's too chatty.
 	log.Log(ctx, -8, "onNewBlock: EXIT produced new miniblocks")
-}
-
-func (s *streamCacheImpl) newBlockReader(ctx context.Context, c crypto.BlockNumberChannel) {
-	for {
-		select {
-		case _, ok := <-c:
-			if !ok {
-				return
-			}
-			go s.onNewBlock(ctx)
-		case <-ctx.Done():
-			return
-		}
-	}
 }

@@ -26,7 +26,12 @@ type pausableProxy struct {
 
 var pausedCalls = infra.NewSuccessMetrics("paused_calls", contractCalls)
 
-func NewPausable(ctx context.Context, version string, address common.Address, backend bind.ContractBackend) (Pausable, error) {
+func NewPausable(
+	ctx context.Context,
+	version string,
+	address common.Address,
+	backend bind.ContractBackend,
+) (Pausable, error) {
 	var c Pausable
 	var err error
 	c, err = base.NewPausable(address, backend)

@@ -168,7 +168,12 @@ var groupPool = sync.Pool{New: func() any {
 	return &s
 }}
 
-func (h *commonHandler) newHandleState(buf *buffer.Buffer, freeBuf bool, sep string, prefix *buffer.Buffer) handleState {
+func (h *commonHandler) newHandleState(
+	buf *buffer.Buffer,
+	freeBuf bool,
+	sep string,
+	prefix *buffer.Buffer,
+) handleState {
 	s := handleState{
 		h:       h,
 		buf:     buf,

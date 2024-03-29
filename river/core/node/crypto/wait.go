@@ -32,7 +32,11 @@ func WaitMined(
 		}
 
 		if !errors.Is(err, ethereum.NotFound) {
-			return nil, WrapRiverError(Err_CANNOT_CALL_CONTRACT, err).Func("WaitMined").Message("Cannot get transaction receipt")
+			return nil, WrapRiverError(
+				Err_CANNOT_CALL_CONTRACT,
+				err,
+			).Func("WaitMined").
+				Message("Cannot get transaction receipt")
 		}
 
 		// Wait for the next round.
@@ -40,7 +44,10 @@ func WaitMined(
 		case <-ctx.Done():
 			return nil, ctx.Err()
 		case <-maxWaitTimer.C:
-			return nil, RiverError(Err_CANNOT_CALL_CONTRACT, "Timeout waiting for transaction to be mined").Func("WaitMined")
+			return nil, RiverError(
+				Err_CANNOT_CALL_CONTRACT,
+				"Timeout waiting for transaction to be mined",
+			).Func("WaitMined")
 		case <-queryTicker.C:
 		}
 	}

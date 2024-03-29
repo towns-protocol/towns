@@ -76,7 +76,14 @@ func checkExpectedLength(b []byte) error {
 	// all bytes after expectedLen should be 0
 	for i := expectedContentLen; i < len(b); i++ {
 		if b[i] != 0 {
-			return RiverError(Err_BAD_STREAM_ID, "zero suffix expected for id type", "streamId", b, "expectedLen", expectedContentLen)
+			return RiverError(
+				Err_BAD_STREAM_ID,
+				"zero suffix expected for id type",
+				"streamId",
+				b,
+				"expectedLen",
+				expectedContentLen,
+			)
 		}
 	}
 	return nil

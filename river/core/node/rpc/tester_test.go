@@ -72,7 +72,11 @@ func (st *serviceTester) Close() {
 				node.service.Close()
 			}
 			if node.address != (common.Address{}) {
-				_ = dbtestutils.DeleteTestSchema(st.ctx, st.dbUrl, storage.DbSchemaNameFromAddress(node.address.String()))
+				_ = dbtestutils.DeleteTestSchema(
+					st.ctx,
+					st.dbUrl,
+					storage.DbSchemaNameFromAddress(node.address.String()),
+				)
 			}
 		}
 	}
@@ -100,12 +104,12 @@ func (st *serviceTester) setNodesStatus(start, stop int, status uint8) {
 
 func (st *serviceTester) startNodes(start, stop int) {
 	for i := start; i < stop; i++ {
-		err := st.startSinlge(i)
+		err := st.startSingle(i)
 		st.require.NoError(err)
 	}
 }
 
-func (st *serviceTester) startSinlge(i int) error {
+func (st *serviceTester) startSingle(i int) error {
 	cfg := &config.Config{
 		DisableBaseChain: true,
 		RegistryContract: st.btc.RegistryConfig(),

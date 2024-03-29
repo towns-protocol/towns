@@ -208,7 +208,13 @@ func (c *BlockchainTestContext) GetDeployerWallet() *Wallet {
 	return c.Wallets[len(c.Wallets)-1]
 }
 
-func makeTestBlockchain(ctx context.Context, wallet *Wallet, client BlockchainClient, chainId *big.Int, onSubmit func()) *Blockchain {
+func makeTestBlockchain(
+	ctx context.Context,
+	wallet *Wallet,
+	client BlockchainClient,
+	chainId *big.Int,
+	onSubmit func(),
+) *Blockchain {
 	bc, err := NewBlockchainWithClient(
 		ctx,
 		&config.ChainConfig{

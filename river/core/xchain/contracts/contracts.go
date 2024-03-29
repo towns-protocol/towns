@@ -6,7 +6,6 @@ import (
 	"core/xchain/contracts/dev"
 	v3 "core/xchain/contracts/v3"
 	"math/big"
-	"strings"
 
 	"github.com/ethereum/go-ethereum"
 	"github.com/ethereum/go-ethereum/accounts/abi"
@@ -127,25 +126,30 @@ func NewIEntitlementChecker(address common.Address, backend bind.ContractBackend
 	}
 }
 
-func (c *IEntitlementChecker) GetABI() string {
+func (c *IEntitlementChecker) GetMetadata() *bind.MetaData {
 	if config.GetConfig().GetContractVersion() == "v3" {
-		return v3.IEntitlementCheckerABI
+		return v3.IEntitlementCheckerMetaData
 	} else {
-		return dev.IEntitlementCheckerABI
+		return dev.IEntitlementCheckerMetaData
 	}
 }
+
+func (c *IEntitlementChecker) GetAbi() *abi.ABI {
+	md := c.GetMetadata()
+	abi, err := md.GetAbi()
+	if err != nil {
+		panic("Failed to parse EntitlementChecker ABI")
+	}
+	return abi
+}
+
 func (c *IEntitlementChecker) EstimateGas(ctx context.Context, client *ethclient.Client, From common.Address, To *common.Address, name string, args ...interface{}) (*uint64, error) {
 	log := dlog.FromCtx(ctx)
 	// Generate the data for the contract method call
 	// You must replace `YourContractABI` with the actual ABI of your contract
 	// and `registerNodeMethodID` with the actual method ID you wish to call.
 	// The following line is a placeholder for the encoded data of your method call.
-	abiString := c.GetABI()
-
-	parsedABI, err := abi.JSON(strings.NewReader(abiString))
-	if err != nil {
-		return nil, err
-	}
+	parsedABI := c.GetAbi()
 
 	method, err := parsedABI.Pack(name, args...)
 	if err != nil {

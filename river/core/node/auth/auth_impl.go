@@ -30,7 +30,12 @@ func NewChainAuthArgsForSpace(spaceId shared.StreamId, userId string, permission
 	}
 }
 
-func NewChainAuthArgsForChannel(spaceId shared.StreamId, channelId shared.StreamId, userId string, permission Permission) *ChainAuthArgs {
+func NewChainAuthArgsForChannel(
+	spaceId shared.StreamId,
+	channelId shared.StreamId,
+	userId string,
+	permission Permission,
+) *ChainAuthArgs {
 	return &ChainAuthArgs{
 		kind:       chainAuthKindChannel,
 		spaceId:    spaceId,
@@ -217,7 +222,11 @@ func (ca *chainAuth) isChannelEnabledUncached(ctx context.Context, args *ChainAu
 	return !isDisabled, err
 }
 
-func (ca *chainAuth) checkChannelEnabled(ctx context.Context, spaceId shared.StreamId, channelId shared.StreamId) error {
+func (ca *chainAuth) checkChannelEnabled(
+	ctx context.Context,
+	spaceId shared.StreamId,
+	channelId shared.StreamId,
+) error {
 	isEnabled, cacheHit, err := ca.entitlementCache.executeUsingCache(
 		ctx,
 		newArgsForEnabledChannel(spaceId, channelId),

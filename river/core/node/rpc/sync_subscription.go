@@ -235,7 +235,11 @@ func (s *syncSubscriptionImpl) removeRemoteStream(
 func (s *syncSubscriptionImpl) purgeUnusedRemoteNodes(log *slog.Logger) {
 	nodesToRemove := make([]*syncNode, 0)
 
-	log.Debug("SyncStreams:syncSubscriptionImpl:purgeUnusedRemoteNodes: purging unused remote nodes", "syncId", s.syncId)
+	log.Debug(
+		"SyncStreams:syncSubscriptionImpl:purgeUnusedRemoteNodes: purging unused remote nodes",
+		"syncId",
+		s.syncId,
+	)
 
 	s.mu.Lock()
 	if len(s.remoteNodes) > 0 {
@@ -309,7 +313,12 @@ func (s *syncSubscriptionImpl) OnUpdate(r *StreamAndCookie) {
 		return
 	default:
 		// end the update stream if the channel is full
-		err := RiverError(Err_BUFFER_FULL, "channel full, dropping update and canceling", "streamId", r.NextSyncCookie.StreamId).
+		err := RiverError(
+			Err_BUFFER_FULL,
+			"channel full, dropping update and canceling",
+			"streamId",
+			r.NextSyncCookie.StreamId,
+		).
 			Func("OnUpdate").
 			LogWarn(dlog.FromCtx(s.ctx))
 		s.setErrorAndCancel(err)

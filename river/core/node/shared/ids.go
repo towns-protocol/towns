@@ -35,7 +35,12 @@ func AddressFromBytes(addr []byte) (common.Address, error) {
 
 func AddressFromSpaceId(spaceId StreamId) (common.Address, error) {
 	if spaceId.Type() != STREAM_SPACE_BIN {
-		return common.Address{}, RiverError(Err_BAD_STREAM_ID, "invalid stream type for getting space", "streamId", spaceId)
+		return common.Address{}, RiverError(
+			Err_BAD_STREAM_ID,
+			"invalid stream type for getting space",
+			"streamId",
+			spaceId,
+		)
 	}
 	return common.BytesToAddress(spaceId.Bytes()[1:21]), nil
 }
@@ -93,7 +98,12 @@ func GetUserAddressFromStreamId(streamId StreamId) (common.Address, error) {
 		prefix != STREAM_USER_DEVICE_KEY_BIN &&
 		prefix != STREAM_USER_INBOX_BIN &&
 		prefix != STREAM_USER_SETTINGS_BIN {
-		return common.Address{}, RiverError(Err_BAD_STREAM_ID, "invalid stream type for getting user", "streamId", streamId)
+		return common.Address{}, RiverError(
+			Err_BAD_STREAM_ID,
+			"invalid stream type for getting user",
+			"streamId",
+			streamId,
+		)
 	}
 	return common.BytesToAddress(streamId.Bytes()[1:21]), nil
 }

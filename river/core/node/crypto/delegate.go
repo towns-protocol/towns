@@ -13,7 +13,12 @@ import (
 
 func recoverEthereumMessageSignerAddress(hashSrc []byte, inSignature []byte) (*common.Address, error) {
 	if len(inSignature) != 65 {
-		return nil, RiverError(Err_BAD_EVENT_SIGNATURE, "Bad signature provided, expected 65 bytes", "len", len(inSignature))
+		return nil, RiverError(
+			Err_BAD_EVENT_SIGNATURE,
+			"Bad signature provided, expected 65 bytes",
+			"len",
+			len(inSignature),
+		)
 	}
 
 	var signature []byte

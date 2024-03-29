@@ -53,7 +53,14 @@ func srdump(cfg *config.Config, countOnly bool) error {
 	}
 
 	if streamNum != int64(len(streams)) {
-		return RiverError(Err_INTERNAL, "Stream count mismatch", "GetStreamCount", streamNum, "GetAllStreams", len(streams))
+		return RiverError(
+			Err_INTERNAL,
+			"Stream count mismatch",
+			"GetStreamCount",
+			streamNum,
+			"GetAllStreams",
+			len(streams),
+		)
 	}
 
 	return nil
@@ -112,7 +119,15 @@ func nodesdump(cfg *config.Config) error {
 	}
 
 	for i, node := range nodes {
-		fmt.Printf("%4d %s %s %d (%-11s) %s\n", i, node.NodeAddress.Hex(), node.Operator.Hex(), node.Status, contracts.NodeStatusString(node.Status), node.Url)
+		fmt.Printf(
+			"%4d %s %s %d (%-11s) %s\n",
+			i,
+			node.NodeAddress.Hex(),
+			node.Operator.Hex(),
+			node.Status,
+			contracts.NodeStatusString(node.Status),
+			node.Url,
+		)
 	}
 
 	return nil

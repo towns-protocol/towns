@@ -140,7 +140,13 @@ func (c *RiverRegistryContract) AllocateStream(
 	_, _, err := c.Blockchain.TxRunner.SubmitAndWait(
 		ctx,
 		func(opts *bind.TransactOpts) (*types.Transaction, error) {
-			return c.StreamRegistry.AllocateStream(opts, streamId.ByteArray(), addresses, genesisMiniblockHash, genesisMiniblock)
+			return c.StreamRegistry.AllocateStream(
+				opts,
+				streamId.ByteArray(),
+				addresses,
+				genesisMiniblockHash,
+				genesisMiniblock,
+			)
 		},
 	)
 	if err != nil {
@@ -183,7 +189,11 @@ func (c *RiverRegistryContract) GetStreamWithGenesis(
 ) (*GetStreamResult, common.Hash, []byte, error) {
 	stream, mbHash, mb, err := c.StreamRegistry.GetStreamWithGenesis(c.callOpts(ctx), streamId.ByteArray())
 	if err != nil {
-		return nil, common.Hash{}, nil, WrapRiverError(Err_CANNOT_CALL_CONTRACT, err).Func("GetStream").Message("Call failed")
+		return nil, common.Hash{}, nil, WrapRiverError(
+			Err_CANNOT_CALL_CONTRACT,
+			err,
+		).Func("GetStream").
+			Message("Call failed")
 	}
 	ret := makeGetStreamResult(streamId, &stream)
 	return ret, mbHash, mb, nil
@@ -202,7 +212,10 @@ func (c *RiverRegistryContract) GetStreamCount(ctx context.Context, blockNum cry
 
 var zeroBytes32 = [32]byte{}
 
-func (c *RiverRegistryContract) GetAllStreams(ctx context.Context, blockNum crypto.BlockNumber) ([]*GetStreamResult, error) {
+func (c *RiverRegistryContract) GetAllStreams(
+	ctx context.Context,
+	blockNum crypto.BlockNumber,
+) ([]*GetStreamResult, error) {
 	// TODO: setting
 	const pageSize = int64(5000)
 
@@ -236,11 +249,25 @@ func (c *RiverRegistryContract) GetAllStreams(ctx context.Context, blockNum cryp
 	return ret, nil
 }
 
-func (c *RiverRegistryContract) SetStreamLastMiniblock(ctx context.Context, streamId StreamId, prevMiniblockHash common.Hash, lastMiniblockHash common.Hash, lastMiniblockNum uint64, isSealed bool) error {
+func (c *RiverRegistryContract) SetStreamLastMiniblock(
+	ctx context.Context,
+	streamId StreamId,
+	prevMiniblockHash common.Hash,
+	lastMiniblockHash common.Hash,
+	lastMiniblockNum uint64,
+	isSealed bool,
+) error {
 	_, _, err := c.Blockchain.TxRunner.SubmitAndWait(
 		ctx,
 		func(opts *bind.TransactOpts) (*types.Transaction, error) {
-			tx, err := c.StreamRegistry.SetStreamLastMiniblock(opts, streamId.ByteArray(), prevMiniblockHash, lastMiniblockHash, lastMiniblockNum, isSealed)
+			tx, err := c.StreamRegistry.SetStreamLastMiniblock(
+				opts,
+				streamId.ByteArray(),
+				prevMiniblockHash,
+				lastMiniblockHash,
+				lastMiniblockNum,
+				isSealed,
+			)
 			if err != nil {
 				err = AsRiverError(err, Err_CANNOT_CALL_CONTRACT).Func("SetStreamLastMiniblock").
 					Tags("streamId", streamId, "prevMiniblockHash", prevMiniblockHash, "lastMiniblockHash",
@@ -295,7 +322,11 @@ func (c *RiverRegistryContract) GetNodeEventsForBlock(ctx context.Context, block
 		Topics:    c.NodeEventTopics,
 	})
 	if err != nil {
-		return nil, WrapRiverError(Err_CANNOT_CALL_CONTRACT, err).Func("GetNodeEventsForBlock").Message("FilterLogs failed")
+		return nil, WrapRiverError(
+			Err_CANNOT_CALL_CONTRACT,
+			err,
+		).Func("GetNodeEventsForBlock").
+			Message("FilterLogs failed")
 	}
 	var ret []any
 	for _, log := range logs {
@@ -309,7 +340,11 @@ func (c *RiverRegistryContract) GetNodeEventsForBlock(ctx context.Context, block
 		ee := eventInfo.Maker()
 		err = c.NodeRegistry.BoundContract().UnpackLog(ee, eventInfo.Name, log)
 		if err != nil {
-			return nil, WrapRiverError(Err_CANNOT_CALL_CONTRACT, err).Func("GetNodeEventsForBlock").Message("UnpackLog failed")
+			return nil, WrapRiverError(
+				Err_CANNOT_CALL_CONTRACT,
+				err,
+			).Func("GetNodeEventsForBlock").
+				Message("UnpackLog failed")
 		}
 		ret = append(ret, ee)
 	}

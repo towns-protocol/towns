@@ -100,7 +100,9 @@ func TestIsConnectNetworkError(t *testing.T) {
 			isNetworkError: false,
 		},
 		"propogated connect network error": {
-			err:            AsRiverError(connect.NewError(connect.CodeUnavailable, fmt.Errorf("node unavailable"))).AsConnectError(),
+			err: AsRiverError(
+				connect.NewError(connect.CodeUnavailable, fmt.Errorf("node unavailable")),
+			).AsConnectError(),
 			isNetworkError: false,
 		},
 	}

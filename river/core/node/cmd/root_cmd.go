@@ -90,7 +90,8 @@ func initConfigAndLog() {
 
 func init() {
 	cobra.OnInitialize(initConfigAndLog)
-	rootCmd.PersistentFlags().StringVarP(&configFile, "config", "c", "./config/config.yaml", "Path to the configuration file")
+	rootCmd.PersistentFlags().
+		StringVarP(&configFile, "config", "c", "./config/config.yaml", "Path to the configuration file")
 
 	rootCmd.PersistentFlags().StringVarP(
 		&logLevel,

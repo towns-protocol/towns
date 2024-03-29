@@ -102,14 +102,25 @@ func (s *PostgresEventStore) txRunner(
 		if err != nil {
 			if pgErr, ok := err.(*pgconn.PgError); ok {
 				if pgErr.Code == pgerrcode.SerializationFailure {
-					log.Warn("pg.txRunner: retrying transaction due to serialization failure", "name", name, "pgErr", pgErr)
+					log.Warn(
+						"pg.txRunner: retrying transaction due to serialization failure",
+						"name",
+						name,
+						"pgErr",
+						pgErr,
+					)
 					continue
 				}
 				log.Warn("pg.txRunner: transaction failed", "name", name, "pgErr", pgErr)
 			} else {
 				log.Warn("pg.txRunner: transaction failed", "name", name, "err", err)
 			}
-			return WrapRiverError(Err_DB_OPERATION_FAILURE, err).Func("pg.txRunner").Message("transaction failed").Tag("name", name)
+			return WrapRiverError(
+				Err_DB_OPERATION_FAILURE,
+				err,
+			).Func("pg.txRunner").
+				Message("transaction failed").
+				Tag("name", name)
 		}
 		return nil
 	}
@@ -146,7 +157,11 @@ func (s *PostgresEventStore) txRunnerWithMetrics(
 	return nil
 }
 
-func (s *PostgresEventStore) CreateStreamStorage(ctx context.Context, streamId StreamId, genesisMiniblock []byte) error {
+func (s *PostgresEventStore) CreateStreamStorage(
+	ctx context.Context,
+	streamId StreamId,
+	genesisMiniblock []byte,
+) error {
 	return s.txRunnerWithMetrics(
 		ctx,
 		"CreateStreamStorage",
@@ -159,7 +174,12 @@ func (s *PostgresEventStore) CreateStreamStorage(ctx context.Context, streamId S
 	)
 }
 
-func (s *PostgresEventStore) createStreamStorageTx(ctx context.Context, tx pgx.Tx, streamId StreamId, genesisMiniblock []byte) error {
+func (s *PostgresEventStore) createStreamStorageTx(
+	ctx context.Context,
+	tx pgx.Tx,
+	streamId StreamId,
+	genesisMiniblock []byte,
+) error {
 	tableSuffix := createTableSuffix(streamId)
 	sql := fmt.Sprintf(
 		`INSERT INTO es (stream_id, latest_snapshot_miniblock) VALUES ($1, 0);
@@ -295,13 +315,19 @@ func (s *PostgresEventStore) readStreamFromLastSnapshotTx(
 		}
 		// Check that we don't have gaps in slot numbers
 		if slotNum != slotNumsCounter {
-			return nil, RiverError(Err_MINIBLOCKS_STORAGE_FAILURE, "Minipool consistency violation - slotNums are not sequential").
+			return nil, RiverError(
+				Err_MINIBLOCKS_STORAGE_FAILURE,
+				"Minipool consistency violation - slotNums are not sequential",
+			).
 				Tag("ActualSlotNumber", slotNum).
 				Tag("ExpectedSlotNumber", slotNumsCounter)
 		}
 		// Check that all events in minipool have proper generation
 		if generation != seqNum+1 {
-			return nil, RiverError(Err_MINIBLOCKS_STORAGE_FAILURE, "Minipool consistency violation - wrong event generation").
+			return nil, RiverError(
+				Err_MINIBLOCKS_STORAGE_FAILURE,
+				"Minipool consistency violation - wrong event generation",
+			).
 				Tag("ActualGeneration", generation).
 				Tag("ExpectedGeneration", slotNum)
 		}
@@ -491,7 +517,16 @@ func (s *PostgresEventStore) WriteBlock(
 		"WriteBlock",
 		pgx.ReadWrite,
 		func(ctx context.Context, tx pgx.Tx) error {
-			return s.writeBlockTx(ctx, tx, streamId, minipoolGeneration, minipoolSize, miniblock, snapshotMiniblock, envelopes)
+			return s.writeBlockTx(
+				ctx,
+				tx,
+				streamId,
+				minipoolGeneration,
+				minipoolSize,
+				miniblock,
+				snapshotMiniblock,
+				envelopes,
+			)
 		},
 		nil,
 		"streamId", streamId,
@@ -547,7 +582,12 @@ func (s *PostgresEventStore) writeBlockTx(
 
 	// update stream_snapshots_index if needed
 	if snapshotMiniblock {
-		_, err := tx.Exec(ctx, `UPDATE es SET latest_snapshot_miniblock = $1 WHERE stream_id = $2`, minipoolGeneration, streamId)
+		_, err := tx.Exec(
+			ctx,
+			`UPDATE es SET latest_snapshot_miniblock = $1 WHERE stream_id = $2`,
+			minipoolGeneration,
+			streamId,
+		)
 		if err != nil {
 			return err
 		}

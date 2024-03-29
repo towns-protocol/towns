@@ -12,3 +12,4 @@ go install google.golang.org/protobuf/cmd/protoc-gen-go@latest
 go install connectrpc.com/connect/cmd/protoc-gen-connect-go@latest
 go install honnef.co/go/tools/cmd/staticcheck@latest
 go install mvdan.cc/gofumpt@latest
+go install github.com/segmentio/golines@latest

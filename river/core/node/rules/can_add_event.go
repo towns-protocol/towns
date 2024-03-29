@@ -72,9 +72,24 @@ type aeMediaPayloadChunkRules struct {
 * (true, chainAuthArgs, nil, nil) // event can be added if chainAuthArgs are satisfied
 * (true, chainAuthArgs, &IsStreamEvent_Payload, nil) // event can be added if chainAuthArgs are satisfied and parent event is added or verified
 */
-func CanAddEvent(ctx context.Context, cfg *config.StreamConfig, validNodeAddresses []common.Address, currentTime time.Time, parsedEvent *events.ParsedEvent, streamView events.StreamView) (bool, *auth.ChainAuthArgs, *RequiredParentEvent, error) {
-	if parsedEvent.Event.DelegateExpiryEpochMs > 0 && isPastExpiry(currentTime, parsedEvent.Event.DelegateExpiryEpochMs) {
-		return false, nil, nil, RiverError(Err_PERMISSION_DENIED, "event delegate has expired", "currentTime", currentTime, "expiryTime", parsedEvent.Event.DelegateExpiryEpochMs)
+func CanAddEvent(
+	ctx context.Context,
+	cfg *config.StreamConfig,
+	validNodeAddresses []common.Address,
+	currentTime time.Time,
+	parsedEvent *events.ParsedEvent,
+	streamView events.StreamView,
+) (bool, *auth.ChainAuthArgs, *RequiredParentEvent, error) {
+	if parsedEvent.Event.DelegateExpiryEpochMs > 0 &&
+		isPastExpiry(currentTime, parsedEvent.Event.DelegateExpiryEpochMs) {
+		return false, nil, nil, RiverError(
+			Err_PERMISSION_DENIED,
+			"event delegate has expired",
+			"currentTime",
+			currentTime,
+			"expiryTime",
+			parsedEvent.Event.DelegateExpiryEpochMs,
+		)
 	}
 
 	// validate that event has required properties
@@ -359,10 +374,17 @@ func (params *aeParams) creatorIsMember() (bool, error) {
 		return false, err
 	}
 	if !isMember {
-		return false, RiverError(Err_PERMISSION_DENIED, "event creator is not a member of the stream", "creatorAddress", creatorAddress, "streamId", params.streamView.StreamId())
+		return false, RiverError(
+			Err_PERMISSION_DENIED,
+			"event creator is not a member of the stream",
+			"creatorAddress",
+			creatorAddress,
+			"streamId",
+			params.streamView.StreamId(),
+		)
 	}
 	return true, nil
-} 
+}
 
 func (ru *aeMembershipRules) validMembershipPayload() (bool, error) {
 	if ru.membership == nil {
@@ -374,10 +396,22 @@ func (ru *aeMembershipRules) validMembershipPayload() (bool, error) {
 
 		if streamParentId != nil {
 			if ru.membership.StreamParentId == nil {
-				return false, RiverError(Err_INVALID_ARGUMENT, "membership parent stream id is nil", "streamParentId", streamParentId)
+				return false, RiverError(
+					Err_INVALID_ARGUMENT,
+					"membership parent stream id is nil",
+					"streamParentId",
+					streamParentId,
+				)
 			}
 			if !streamParentId.EqualsBytes(ru.membership.StreamParentId) {
-				return false, RiverError(Err_INVALID_ARGUMENT, "membership parent stream id does not match parent stream id", "membershipParentStreamId", FormatFullHashFromBytes(ru.membership.StreamParentId), "streamParentId", streamParentId)
+				return false, RiverError(
+					Err_INVALID_ARGUMENT,
+					"membership parent stream id does not match parent stream id",
+					"membershipParentStreamId",
+					FormatFullHashFromBytes(ru.membership.StreamParentId),
+					"streamParentId",
+					streamParentId,
+				)
 			}
 		}
 	}
@@ -484,7 +518,12 @@ func (ru *aeMembershipRules) validMembershipTransistionForDM() (bool, error) {
 
 	if !ru.params.isValidNode(initiatorAddress) {
 		if !bytes.Equal(initiatorAddress, fp) && !bytes.Equal(initiatorAddress, sp) {
-			return false, RiverError(Err_PERMISSION_DENIED, "initiator is not a member of DM", "initiator", initiatorAddress)
+			return false, RiverError(
+				Err_PERMISSION_DENIED,
+				"initiator is not a member of DM",
+				"initiator",
+				initiatorAddress,
+			)
 		}
 	}
 
@@ -530,7 +569,14 @@ func (ru *aeMembershipRules) validMembershipTransistionForGDM() (bool, error) {
 	case MembershipOp_SO_INVITE:
 		// only members can invite (also for some reason invited can invite)
 		if initiatorMembership != MembershipOp_SO_JOIN && initiatorMembership != MembershipOp_SO_INVITE {
-			return false, RiverError(Err_PERMISSION_DENIED, "initiator of invite is not a member of GDM", "initiator", initiatorAddress, "nodes", ru.params.validNodeAddresses)
+			return false, RiverError(
+				Err_PERMISSION_DENIED,
+				"initiator of invite is not a member of GDM",
+				"initiator",
+				initiatorAddress,
+				"nodes",
+				ru.params.validNodeAddresses,
+			)
 		}
 		return true, nil
 	case MembershipOp_SO_JOIN:
@@ -544,14 +590,24 @@ func (ru *aeMembershipRules) validMembershipTransistionForGDM() (bool, error) {
 		}
 		// check the initiator membership
 		if initiatorMembership != MembershipOp_SO_JOIN {
-			return false, RiverError(Err_PERMISSION_DENIED, "initiator of join is not a member of GDM", "initiator", initiatorAddress)
+			return false, RiverError(
+				Err_PERMISSION_DENIED,
+				"initiator of join is not a member of GDM",
+				"initiator",
+				initiatorAddress,
+			)
 		}
 		// user is either invited, or initiator is a member and the user did not just leave
 		return true, nil
 	case MembershipOp_SO_LEAVE:
 		// only members can initiate leave
 		if initiatorMembership != MembershipOp_SO_JOIN && initiatorMembership != MembershipOp_SO_INVITE {
-			return false, RiverError(Err_PERMISSION_DENIED, "initiator of leave is not a member of GDM", "initiator", initiatorAddress)
+			return false, RiverError(
+				Err_PERMISSION_DENIED,
+				"initiator of leave is not a member of GDM",
+				"initiator",
+				initiatorAddress,
+			)
 		}
 		return true, nil
 	case MembershipOp_SO_UNSPECIFIED:
@@ -665,7 +721,12 @@ func (ru *aeUserMembershipRules) parentEventForUserMembership() (*RequiredParent
 	}
 
 	return &RequiredParentEvent{
-		Payload:  events.Make_MemberPayload_Membership(userMembership.Op, userAddress.Bytes(), initiatorAddress, userMembership.StreamParentId),
+		Payload: events.Make_MemberPayload_Membership(
+			userMembership.Op,
+			userAddress.Bytes(),
+			initiatorAddress,
+			userMembership.StreamParentId,
+		),
 		StreamId: toStreamId,
 	}, nil
 }
@@ -774,7 +835,14 @@ func (params *aeParams) channelMessageEntitlements() (*auth.ChainAuthArgs, error
 func (params *aeParams) creatorIsValidNode() (bool, error) {
 	creatorAddress := params.parsedEvent.Event.CreatorAddress
 	if !params.isValidNode(creatorAddress) {
-		return false, RiverError(Err_UNKNOWN_NODE, "Event creator must be a valid node", "address", creatorAddress, "nodes", params.validNodeAddresses).Func("CheckNodeIsValid")
+		return false, RiverError(
+			Err_UNKNOWN_NODE,
+			"Event creator must be a valid node",
+			"address",
+			creatorAddress,
+			"nodes",
+			params.validNodeAddresses,
+		).Func("CheckNodeIsValid")
 	}
 	return true, nil
 }
@@ -803,13 +871,23 @@ func (ru *aeMembershipRules) getPermissionForMembershipOp() (auth.Permission, st
 	}
 	if membership.Op == currentMembership {
 		// this could panic, the rule builder should never allow us to get here
-		return auth.PermissionUndefined, "", RiverError(Err_FAILED_PRECONDITION, "membershipOp should not be the same as currentMembership")
+		return auth.PermissionUndefined, "", RiverError(
+			Err_FAILED_PRECONDITION,
+			"membershipOp should not be the same as currentMembership",
+		)
 	}
 
 	switch membership.Op {
 	case MembershipOp_SO_INVITE:
 		if currentMembership == MembershipOp_SO_JOIN {
-			return auth.PermissionUndefined, "", RiverError(Err_FAILED_PRECONDITION, "user is already a member of the channel", "user", userId, "initiator", initiatorId)
+			return auth.PermissionUndefined, "", RiverError(
+				Err_FAILED_PRECONDITION,
+				"user is already a member of the channel",
+				"user",
+				userId,
+				"initiator",
+				initiatorId,
+			)
 		}
 		return auth.PermissionInvite, initiatorId, nil
 
@@ -818,7 +896,14 @@ func (ru *aeMembershipRules) getPermissionForMembershipOp() (auth.Permission, st
 
 	case MembershipOp_SO_LEAVE:
 		if currentMembership != MembershipOp_SO_JOIN {
-			return auth.PermissionUndefined, "", RiverError(Err_FAILED_PRECONDITION, "user is not a member of the channel", "user", userId, "initiator", initiatorId)
+			return auth.PermissionUndefined, "", RiverError(
+				Err_FAILED_PRECONDITION,
+				"user is not a member of the channel",
+				"user",
+				userId,
+				"initiator",
+				initiatorId,
+			)
 		}
 		if userId != initiatorId {
 			return auth.PermissionBan, initiatorId, nil

@@ -53,7 +53,12 @@ func ParseEvent(envelope *Envelope) (*ParsedEvent, error) {
 
 	if len(streamEvent.DelegateSig) > 0 {
 
-		err := CheckDelegateSig(streamEvent.CreatorAddress, signerPubKey, streamEvent.DelegateSig, streamEvent.DelegateExpiryEpochMs)
+		err := CheckDelegateSig(
+			streamEvent.CreatorAddress,
+			signerPubKey,
+			streamEvent.DelegateSig,
+			streamEvent.DelegateExpiryEpochMs,
+		)
 		if err != nil {
 			return nil, WrapRiverError(
 				Err_BAD_EVENT_SIGNATURE,

@@ -11,6 +11,7 @@ import (
 	"os"
 	"os/signal"
 	"syscall"
+	"time"
 
 	"connectrpc.com/connect"
 	"github.com/river-build/river/core/node/auth"
@@ -187,23 +188,31 @@ func StartServer(
 		}
 	}
 
+	// listen for chain changes on the next block
+	chainMonitorBuilder := crypto.NewChainMonitorBuilder(riverChain.InitialBlockNum + 1)
+
 	registryContract, err := registries.NewRiverRegistryContract(ctx, riverChain, &cfg.RegistryContract)
 	if err != nil {
 		log.Error("NewRiverRegistryContract", "error", err)
 		return nil, err
 	}
 
-	nodeRegistry, err := nodes.LoadNodeRegistry(ctx, registryContract, wallet.Address)
+	nodeRegistry, err := nodes.LoadNodeRegistry(ctx, registryContract, wallet.Address, riverChain.InitialBlockNum, chainMonitorBuilder)
 	if err != nil {
 		log.Error("Failed to load node registry", "error", err)
 		return nil, err
 	}
 
-	streamRegistry := nodes.NewStreamRegistry(wallet.Address, nodeRegistry, registryContract, cfg.Stream.ReplicationFactor)
+	streamRegistry := nodes.NewStreamRegistry(
+		wallet.Address,
+		nodeRegistry,
+		registryContract,
+		cfg.Stream.ReplicationFactor,
+	)
 
 	log.Info("Using blockchain river registry")
 
-	cache, err := events.NewStreamCache(
+	streamCache, err := events.NewStreamCache(
 		ctx,
 		&events.StreamCacheParams{
 			Storage:      store,
@@ -212,15 +221,21 @@ func StartServer(
 			Registry:     registryContract,
 			StreamConfig: &cfg.Stream,
 		},
+		riverChain.InitialBlockNum,
+		chainMonitorBuilder,
 	)
 	if err != nil {
 		log.Error("Failed to create stream cache", "error", err)
 		return nil, err
 	}
 
+	go chainMonitorBuilder.
+		Build(time.Duration(cfg.RiverChain.BlockTimeMs)*time.Millisecond).
+		Run(ctx, riverChain.Client)
+
 	syncHandler := NewSyncHandler(
 		wallet,
-		cache,
+		streamCache,
 		nodeRegistry,
 		streamRegistry,
 	)
@@ -229,7 +244,7 @@ func StartServer(
 		riverChain:     riverChain,
 		baseChain:      baseChain,
 		storage:        store,
-		cache:          cache,
+		cache:          streamCache,
 		chainAuth:      chainAuth,
 		wallet:         wallet,
 		exitSignal:     exitSignal,
@@ -259,7 +274,7 @@ func StartServer(
 
 	mux.HandleFunc("/info", InfoIndexHandler)
 
-	registerDebugHandlers(ctx, cfg, mux, cache, streamService)
+	registerDebugHandlers(ctx, cfg, mux, streamCache, streamService)
 
 	if listener == nil {
 		if cfg.Port == 0 {
@@ -322,7 +337,13 @@ func StartServer(
 				return string(decoded)
 			}
 			if fileExists(cfg.TLSConfig.Cert) && fileExists(cfg.TLSConfig.Key) {
-				srv, err = createServerFromFile(ctx, address, corsMiddleware.Handler(mux), cfg.TLSConfig.Cert, cfg.TLSConfig.Key)
+				srv, err = createServerFromFile(
+					ctx,
+					address,
+					corsMiddleware.Handler(mux),
+					cfg.TLSConfig.Cert,
+					cfg.TLSConfig.Key,
+				)
 				https = true
 			} else if isBase64(cfg.TLSConfig.Cert) && isBase64(cfg.TLSConfig.Key) {
 				srv, err = createServerFromStrings(ctx, address, corsMiddleware.Handler(mux), decodeBase64(cfg.TLSConfig.Cert), decodeBase64(cfg.TLSConfig.Key))
@@ -403,7 +424,12 @@ func InfoIndexHandler(w http.ResponseWriter, r *http.Request) {
 	_, _ = w.Write(output.Bytes())
 }
 
-func createServerFromStrings(ctx context.Context, address string, handler http.Handler, certString, keyString string) (*http.Server, error) {
+func createServerFromStrings(
+	ctx context.Context,
+	address string,
+	handler http.Handler,
+	certString, keyString string,
+) (*http.Server, error) {
 	log := dlog.FromCtx(ctx)
 	// Load the certificate and key from strings
 	cert, err := tls.X509KeyPair([]byte(certString), []byte(keyString))
@@ -427,7 +453,12 @@ func createServerFromStrings(ctx context.Context, address string, handler http.H
 	}, nil
 }
 
-func createServerFromFile(ctx context.Context, address string, handler http.Handler, certFile, keyFile string) (*http.Server, error) {
+func createServerFromFile(
+	ctx context.Context,
+	address string,
+	handler http.Handler,
+	certFile, keyFile string,
+) (*http.Server, error) {
 	log := dlog.FromCtx(ctx)
 	// Read certificate and key from files
 	cert, err := tls.LoadX509KeyPair(certFile, keyFile)

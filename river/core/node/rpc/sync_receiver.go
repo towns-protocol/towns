@@ -30,7 +30,12 @@ func (s *syncReceiver) OnUpdate(r *StreamAndCookie) {
 	case s.channel <- r:
 		return
 	default:
-		err := RiverError(Err_BUFFER_FULL, "channel full, dropping update and canceling", "streamId", r.NextSyncCookie.StreamId).
+		err := RiverError(
+			Err_BUFFER_FULL,
+			"channel full, dropping update and canceling",
+			"streamId",
+			r.NextSyncCookie.StreamId,
+		).
 			Func("OnUpdate").
 			LogWarn(dlog.FromCtx(s.ctx))
 		s.setErrorAndCancel(err)

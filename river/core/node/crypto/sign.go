@@ -102,7 +102,13 @@ func NewWallet(ctx context.Context) (*Wallet, error) {
 	}
 	address := crypto.PubkeyToAddress(key.PublicKey)
 
-	log.Info("New wallet generated.", "address", address.Hex(), "publicKey", FormatFullHashFromBytes(crypto.FromECDSAPub(&key.PublicKey)))
+	log.Info(
+		"New wallet generated.",
+		"address",
+		address.Hex(),
+		"publicKey",
+		FormatFullHashFromBytes(crypto.FromECDSAPub(&key.PublicKey)),
+	)
 	return &Wallet{
 			PrivateKeyStruct: key,
 			PrivateKey:       crypto.FromECDSA(key),
@@ -126,7 +132,13 @@ func NewWalletFromPrivKey(ctx context.Context, privKey string) (*Wallet, error) 
 	}
 	address := crypto.PubkeyToAddress(k.PublicKey)
 
-	log.Info("Wallet loaded from configured private key.", "address", address.Hex(), "publicKey", crypto.FromECDSAPub(&k.PublicKey))
+	log.Info(
+		"Wallet loaded from configured private key.",
+		"address",
+		address.Hex(),
+		"publicKey",
+		crypto.FromECDSAPub(&k.PublicKey),
+	)
 	return &Wallet{
 			PrivateKeyStruct: k,
 			PrivateKey:       crypto.FromECDSA(k),
@@ -250,7 +262,13 @@ func (w *Wallet) SaveWalletFromEnv(
 			Func("SaveWalletFromEnv")
 	}
 
-	log.Info("Wallet saved from env.", "address", w.Address.Hex(), "publicKey", crypto.FromECDSAPub(&w.PrivateKeyStruct.PublicKey))
+	log.Info(
+		"Wallet saved from env.",
+		"address",
+		w.Address.Hex(),
+		"publicKey",
+		crypto.FromECDSAPub(&w.PrivateKeyStruct.PublicKey),
+	)
 	return nil
 }
 

@@ -12,7 +12,10 @@ import (
 	"github.com/river-build/river/core/node/shared"
 )
 
-func (s *Service) getStubForStream(ctx context.Context, streamId shared.StreamId) (StreamServiceClient, StreamNodes, error) {
+func (s *Service) getStubForStream(
+	ctx context.Context,
+	streamId shared.StreamId,
+) (StreamServiceClient, StreamNodes, error) {
 	nodes, err := s.streamRegistry.GetStreamInfo(ctx, streamId)
 	if err != nil {
 		return nil, nil, err
@@ -38,7 +41,12 @@ func (s *Service) CreateStream(
 	log.Debug("CreateStream ENTER")
 	r, e := s.createStreamImpl(ctx, req)
 	if e != nil {
-		return nil, AsRiverError(e).Func("CreateStream").Tag("req.Msg.StreamId", req.Msg.StreamId).LogWarn(log).AsConnectError()
+		return nil, AsRiverError(
+			e,
+		).Func("CreateStream").
+			Tag("req.Msg.StreamId", req.Msg.StreamId).
+			LogWarn(log).
+			AsConnectError()
 	}
 	log.Debug("CreateStream LEAVE", "response", r.Msg)
 	return r, nil
@@ -52,7 +60,12 @@ func (s *Service) GetStream(
 	log.Debug("GetStream ENTER")
 	r, e := s.getStreamImpl(ctx, req)
 	if e != nil {
-		return nil, AsRiverError(e).Func("GetStream").Tag("req.Msg.StreamId", req.Msg.StreamId).LogWarn(log).AsConnectError()
+		return nil, AsRiverError(
+			e,
+		).Func("GetStream").
+			Tag("req.Msg.StreamId", req.Msg.StreamId).
+			LogWarn(log).
+			AsConnectError()
 	}
 	log.Debug("GetStream LEAVE", "response", r.Msg)
 	return r, nil
@@ -67,7 +80,12 @@ func (s *Service) GetStreamEx(
 	log.Debug("GetStreamEx ENTER")
 	e := s.getStreamExImpl(ctx, req, resp)
 	if e != nil {
-		return AsRiverError(e).Func("GetStreamEx").Tag("req.Msg.StreamId", req.Msg.StreamId).LogWarn(log).AsConnectError()
+		return AsRiverError(
+			e,
+		).Func("GetStreamEx").
+			Tag("req.Msg.StreamId", req.Msg.StreamId).
+			LogWarn(log).
+			AsConnectError()
 	}
 	log.Debug("GetStreamEx LEAVE")
 	return nil
@@ -153,7 +171,12 @@ func (s *Service) GetMiniblocks(
 	log.Debug("GetMiniblocks ENTER", "req", req.Msg)
 	r, e := s.getMiniblocksImpl(ctx, req)
 	if e != nil {
-		return nil, AsRiverError(e).Func("GetMiniblocks").Tag("req.Msg.StreamId", req.Msg.StreamId).LogWarn(log).AsConnectError()
+		return nil, AsRiverError(
+			e,
+		).Func("GetMiniblocks").
+			Tag("req.Msg.StreamId", req.Msg.StreamId).
+			LogWarn(log).
+			AsConnectError()
 	}
 	log.Debug("GetMiniblocks LEAVE", "response", r.Msg)
 	return r, nil
@@ -192,7 +215,12 @@ func (s *Service) GetLastMiniblockHash(
 	log.Debug("GetLastMiniblockHash ENTER", "req", req.Msg)
 	r, e := s.getLastMiniblockHashImpl(ctx, req)
 	if e != nil {
-		return nil, AsRiverError(e).Func("GetLastMiniblockHash").Tag("req.Msg.StreamId", req.Msg.StreamId).LogWarn(log).AsConnectError()
+		return nil, AsRiverError(
+			e,
+		).Func("GetLastMiniblockHash").
+			Tag("req.Msg.StreamId", req.Msg.StreamId).
+			LogWarn(log).
+			AsConnectError()
 	}
 	log.Debug("GetLastMiniblockHash LEAVE", "response", r.Msg)
 	return r, nil
@@ -231,7 +259,12 @@ func (s *Service) AddEvent(
 	log.Debug("AddEvent ENTER", "req", req.Msg)
 	r, e := s.addEventImpl(ctx, req)
 	if e != nil {
-		return nil, AsRiverError(e).Func("AddEvent").Tag("req.Msg.StreamId", req.Msg.StreamId).LogWarn(log).AsConnectError()
+		return nil, AsRiverError(
+			e,
+		).Func("AddEvent").
+			Tag("req.Msg.StreamId", req.Msg.StreamId).
+			LogWarn(log).
+			AsConnectError()
 	}
 	log.Debug("AddEvent LEAVE", "req.Msg.StreamId", req.Msg.StreamId)
 	return r, nil

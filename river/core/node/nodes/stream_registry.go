@@ -17,7 +17,12 @@ type StreamRegistry interface {
 	// GetStreamInfo: returns nodes, error
 	GetStreamInfo(ctx context.Context, streamId StreamId) (StreamNodes, error)
 	// GetStreamInfo: returns nodes, error
-	AllocateStream(ctx context.Context, streamId StreamId, genesisMiniblockHash common.Hash, genesisMiniblock []byte) ([]common.Address, error)
+	AllocateStream(
+		ctx context.Context,
+		streamId StreamId,
+		genesisMiniblockHash common.Hash,
+		genesisMiniblock []byte,
+	) ([]common.Address, error)
 }
 
 type streamRegistryImpl struct {
@@ -31,7 +36,12 @@ type streamRegistryImpl struct {
 
 var _ StreamRegistry = (*streamRegistryImpl)(nil)
 
-func NewStreamRegistry(localNodeAddress common.Address, nodeRegistry NodeRegistry, contract *registries.RiverRegistryContract, replFactor int) *streamRegistryImpl {
+func NewStreamRegistry(
+	localNodeAddress common.Address,
+	nodeRegistry NodeRegistry,
+	contract *registries.RiverRegistryContract,
+	replFactor int,
+) *streamRegistryImpl {
 	if replFactor < 1 {
 		replFactor = 1
 	}
@@ -58,7 +68,12 @@ func (sr *streamRegistryImpl) GetStreamInfo(ctx context.Context, streamId Stream
 	return streamNodes, nil
 }
 
-func (sr *streamRegistryImpl) AllocateStream(ctx context.Context, streamId StreamId, genesisMiniblockHash common.Hash, genesisMiniblock []byte) ([]common.Address, error) {
+func (sr *streamRegistryImpl) AllocateStream(
+	ctx context.Context,
+	streamId StreamId,
+	genesisMiniblockHash common.Hash,
+	genesisMiniblock []byte,
+) ([]common.Address, error) {
 	addrs, err := sr.chooseStreamNodes(ctx, streamId)
 	if err != nil {
 		return nil, err

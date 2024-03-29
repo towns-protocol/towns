@@ -46,7 +46,17 @@ func MultiHandler(ctx context.Context, cfg *config.Config, streamService *Servic
 			if err != nil {
 				responseInfo.StatusCode = 0
 				responseInfo.Failed = true
-				log.Error("Error fetching URL", "url", url, "err", err, "protocol", protocol, "responseInfo", responseInfo)
+				log.Error(
+					"Error fetching URL",
+					"url",
+					url,
+					"err",
+					err,
+					"protocol",
+					protocol,
+					"responseInfo",
+					responseInfo,
+				)
 			} else {
 				defer resp.Body.Close()
 				responseInfo.StatusCode = resp.StatusCode

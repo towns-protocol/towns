@@ -6,6 +6,7 @@ import (
 	"sync"
 
 	"github.com/ethereum/go-ethereum/common"
+	"github.com/ethereum/go-ethereum/core/types"
 	. "github.com/river-build/river/core/node/base"
 	"github.com/river-build/river/core/node/contracts"
 	"github.com/river-build/river/core/node/crypto"
@@ -44,7 +45,13 @@ type nodeRegistryImpl struct {
 
 var _ NodeRegistry = (*nodeRegistryImpl)(nil)
 
-func LoadNodeRegistry(ctx context.Context, contract *registries.RiverRegistryContract, localNodeAddress common.Address) (*nodeRegistryImpl, error) {
+func LoadNodeRegistry(
+	ctx context.Context,
+	contract *registries.RiverRegistryContract,
+	localNodeAddress common.Address,
+	appliedBlockNum crypto.BlockNumber,
+	chainMonitor crypto.ChainMonitorBuilder,
+) (*nodeRegistryImpl, error) {
 	log := dlog.FromCtx(ctx)
 
 	var err error
@@ -62,11 +69,6 @@ func LoadNodeRegistry(ctx context.Context, contract *registries.RiverRegistryCon
 		}
 	}
 
-	appliedBlockNum, err := contract.Blockchain.GetBlockNumber(ctx)
-	if err != nil {
-		return nil, err
-	}
-
 	nodes, err := contract.GetAllNodes(ctx, appliedBlockNum)
 	if err != nil {
 		return nil, err
@@ -80,6 +82,12 @@ func LoadNodeRegistry(ctx context.Context, contract *registries.RiverRegistryCon
 		appliedBlockNum:  appliedBlockNum,
 	}
 
+	chainMonitor.
+		OnContractWithTopicsEvent(contract.Address, [][]common.Hash{{contract.Abi.Events["NodeAdded"].ID}}, ret.OnNodeAdded).
+		OnContractWithTopicsEvent(contract.Address, [][]common.Hash{{contract.Abi.Events["NodeRemoved"].ID}}, ret.OnNodeRemoved).
+		OnContractWithTopicsEvent(contract.Address, [][]common.Hash{{contract.Abi.Events["NodeStatusUpdated"].ID}}, ret.OnNodeStatusUpdated).
+		OnContractWithTopicsEvent(contract.Address, [][]common.Hash{{contract.Abi.Events["NodeUrlUpdated"].ID}}, ret.OnNodeUrlUpdated)
+
 	localFound := false
 	for _, node := range nodes {
 		nn := ret.addNode(node.NodeAddress, node.Url, node.Status)
@@ -87,19 +95,25 @@ func LoadNodeRegistry(ctx context.Context, contract *registries.RiverRegistryCon
 	}
 
 	if !localFound {
-		return nil, RiverError(Err_UNKNOWN_NODE, "Local node not found in registry", "blockNum", appliedBlockNum, "localAddress", localNodeAddress).LogError(log)
+		return nil, RiverError(
+			Err_UNKNOWN_NODE,
+			"Local node not found in registry",
+			"blockNum",
+			appliedBlockNum,
+			"localAddress",
+			localNodeAddress,
+		).LogError(log)
 	}
 
-	log.Info("Node Registry Loaded from contract", "blockNum", appliedBlockNum, "Nodes", ret.nodes, "localAddress", localNodeAddress)
-
-	c := crypto.MakeBlockNumberChannel()
-
-	err = contract.Blockchain.BlockMonitor.AddListener(c, appliedBlockNum)
-	if err != nil {
-		return nil, err
-	}
-
-	go ret.readBlockUpdates(ctx, c)
+	log.Info(
+		"Node Registry Loaded from contract",
+		"blockNum",
+		appliedBlockNum,
+		"Nodes",
+		ret.nodes,
+		"localAddress",
+		localNodeAddress,
+	)
 
 	return ret, nil
 }
@@ -121,82 +135,99 @@ func (n *nodeRegistryImpl) addNode(addr common.Address, url string, status uint8
 	return nn
 }
 
-func (n *nodeRegistryImpl) readBlockUpdates(ctx context.Context, c crypto.BlockNumberChannel) {
-	for {
-		select {
-		case <-ctx.Done():
-			return
-		case blockNum := <-c:
-			n.updateNodes(ctx, blockNum)
-		}
-	}
-}
+// OnNodeAdded can apply INodeRegistry::NodeAdded event against the in-memory node registry.
+func (n *nodeRegistryImpl) OnNodeAdded(event types.Log) {
+	log := dlog.Log()
 
-func (n *nodeRegistryImpl) updateNodes(ctx context.Context, blockNum crypto.BlockNumber) {
-	log := dlog.FromCtx(ctx)
-
-	events, err := n.contract.GetNodeEventsForBlock(ctx, blockNum)
-	if err != nil {
-		log.Error("NodeRegistry: Error getting node events", "err", err)
-		return
-	}
-
-	if len(events) == 0 {
+	var e contracts.NodeRegistryV1NodeAdded
+	if err := n.contract.NodeRegistry.BoundContract().UnpackLog(&e, "NodeAdded", event); err != nil {
+		log.Error("OnNodeAdded: unable to decode NodeAdded event")
 		return
 	}
 
 	n.mu.Lock()
 	defer n.mu.Unlock()
 
-	if blockNum <= n.appliedBlockNum {
-		log.Error("NodeRegistry: Got events for block that is not newer than last applied block", "blockNum", blockNum, "appliedBlockNum", n.appliedBlockNum)
+	if _, exists := n.nodes[e.NodeAddress]; !exists {
+		nodeRecord := n.addNode(e.NodeAddress, e.Url, e.Status)
+		log.Info("NodeRegistry: NodeAdded", "node", nodeRecord.address, "blockNum", event.BlockNumber)
+	} else {
+		log.Error("NodeRegistry: Got NodeAdded for node that already exists in NodeRegistry", "blockNum", event.BlockNumber, "node", e.NodeAddress, "nodes", n.nodes)
+	}
+}
+
+// OnNodeRemoved can apply INodeRegistry::NodeRemoved event against the in-memory node registry.
+func (n *nodeRegistryImpl) OnNodeRemoved(event types.Log) {
+	log := dlog.Log()
+
+	var e contracts.NodeRegistryV1NodeRemoved
+	if err := n.contract.NodeRegistry.BoundContract().UnpackLog(&e, "NodeRemoved", event); err != nil {
+		log.Error("OnNodeRemoved: unable to decode NodeRemoved event")
 		return
 	}
-	n.appliedBlockNum = blockNum
 
-	for _, event := range events {
-		switch e := event.(type) {
-		case *contracts.NodeRegistryV1NodeAdded:
-			if _, exists := n.nodes[e.NodeAddress]; !exists {
-				nn := n.addNode(e.NodeAddress, e.Url, e.Status)
-				log.Info("NodeRegistry: NodeAdded", "blockNum", blockNum, "node", nn)
-			} else {
-				log.Error("NodeRegistry: Got NodeAdded for node that already exists in NodeRegistry", "blockNum", blockNum, "node", e.NodeAddress, "nodes", n.nodes)
-			}
-		case *contracts.NodeRegistryV1NodeRemoved:
-			if _, exists := n.nodes[e.NodeAddress]; exists {
-				delete(n.nodes, e.NodeAddress)
-				log.Info("NodeRegistry: NodeRemoved", "blockNum", blockNum, "node", e.NodeAddress)
-			} else {
-				log.Error("NodeRegistry: Got NodeRemoved for node that does not exist in NodeRegistry", "blockNum", blockNum, "node", e.NodeAddress, "nodes", n.nodes)
-			}
-		case *contracts.NodeRegistryV1NodeStatusUpdated:
-			nn := n.nodes[e.NodeAddress]
-			if nn != nil {
-				newNode := *nn
-				newNode.status = e.Status
-				n.nodes[e.NodeAddress] = &newNode
-				log.Info("NodeRegistry: NodeStatusUpdated", "blockNum", blockNum, "node", nn)
-			} else {
-				log.Error("NodeRegistry: Got NodeStatusUpdated for node that does not exist in NodeRegistry", "blockNum", blockNum, "node", e.NodeAddress, "nodes", n.nodes)
-			}
-		case *contracts.NodeRegistryV1NodeUrlUpdated:
-			nn := n.nodes[e.NodeAddress]
-			if nn != nil {
-				newNode := *nn
-				newNode.url = e.Url
-				if !nn.local {
-					newNode.streamServiceClient = NewStreamServiceClient(n.httpClient, e.Url, connect.WithGRPC())
-					newNode.nodeToNodeClient = NewNodeToNodeClient(n.httpClient, e.Url, connect.WithGRPC())
-				}
-				n.nodes[e.NodeAddress] = &newNode
-				log.Info("NodeRegistry: NodeUrlUpdated", "blockNum", blockNum, "node", nn)
-			} else {
-				log.Error("NodeRegistry: Got NodeUrlUpdated for node that does not exist in NodeRegistry", "blockNum", blockNum, "node", e.NodeAddress, "nodes", n.nodes)
-			}
-		default:
-			log.Error("Unknown event type", "event", e)
+	n.mu.Lock()
+	defer n.mu.Unlock()
+
+	if _, exists := n.nodes[e.NodeAddress]; exists {
+		delete(n.nodes, e.NodeAddress)
+		log.Info("NodeRegistry: NodeRemoved", "blockNum", event.BlockNumber, "node", e.NodeAddress)
+	} else {
+		log.Error("NodeRegistry: Got NodeRemoved for node that does not exist in NodeRegistry",
+			"blockNum", event.BlockNumber, "node", e.NodeAddress, "nodes", n.nodes)
+	}
+}
+
+// OnNodeStatusUpdated can apply INodeRegistry::NodeStatusUpdated event against the in-memory node registry.
+func (n *nodeRegistryImpl) OnNodeStatusUpdated(event types.Log) {
+	log := dlog.Log()
+
+	var e contracts.NodeRegistryV1NodeStatusUpdated
+	if err := n.contract.NodeRegistry.BoundContract().UnpackLog(&e, "NodeStatusUpdated", event); err != nil {
+		log.Error("OnNodeStatusUpdated: unable to decode NodeStatusUpdated event")
+		return
+	}
+
+	n.mu.Lock()
+	defer n.mu.Unlock()
+
+	nn := n.nodes[e.NodeAddress]
+	if nn != nil {
+		newNode := *nn
+		newNode.status = e.Status
+		n.nodes[e.NodeAddress] = &newNode
+		log.Info("NodeRegistry: NodeStatusUpdated", "blockNum", event.BlockNumber, "node", nn)
+	} else {
+		log.Error("NodeRegistry: Got NodeStatusUpdated for node that does not exist in NodeRegistry", "blockNum", event.BlockNumber, "node", e.NodeAddress, "nodes", n.nodes)
+	}
+}
+
+// OnNodeUrlUpdated can apply INodeRegistry::NodeUrlUpdated events against the in-memory node registry.
+func (n *nodeRegistryImpl) OnNodeUrlUpdated(event types.Log) {
+	log := dlog.Log()
+
+	var e contracts.NodeRegistryV1NodeUrlUpdated
+	if err := n.contract.NodeRegistry.BoundContract().UnpackLog(&e, "NodeUrlUpdated", event); err != nil {
+		log.Error("OnNodeUrlUpdated: unable to decode NodeUrlUpdated event")
+		return
+	}
+
+	n.mu.Lock()
+	defer n.mu.Unlock()
+
+	nn := n.nodes[e.NodeAddress]
+	if nn != nil {
+		newNode := *nn
+		newNode.url = e.Url
+		if !nn.local {
+			newNode.streamServiceClient = NewStreamServiceClient(n.httpClient, e.Url, connect.WithGRPC())
+			newNode.nodeToNodeClient = NewNodeToNodeClient(n.httpClient, e.Url, connect.WithGRPC())
 		}
+		n.nodes[e.NodeAddress] = &newNode
+		log.Info("NodeRegistry: NodeUrlUpdated", "blockNum", event.BlockNumber, "node", nn)
+	} else {
+		log.Error("NodeRegistry: Got NodeUrlUpdated for node that does not exist in NodeRegistry",
+			"blockNum", event.BlockNumber, "node", e.NodeAddress, "nodes", n.nodes)
 	}
 }
 

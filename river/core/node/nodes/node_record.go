@@ -47,5 +47,12 @@ func (n *NodeRecord) GoString() string {
 	if n.local {
 		local = " local"
 	}
-	return fmt.Sprintf("NodeRecord{%s %d (%-11s) %s%s}\n", n.address.Hex(), n.status, contracts.NodeStatusString(n.status), n.url, local)
+	return fmt.Sprintf(
+		"NodeRecord{%s %d (%-11s) %s%s}\n",
+		n.address.Hex(),
+		n.status,
+		contracts.NodeStatusString(n.status),
+		n.url,
+		local,
+	)
 }

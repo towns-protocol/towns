@@ -22,7 +22,14 @@ func GetTestDbUrl() string {
 
 func DeleteTestSchema(ctx context.Context, dbUrl string, schemaName string) error {
 	if os.Getenv("RIVER_TEST_DUMP_DB") != "" {
-		cmd := exec.Command("pg_dump", "-Fp", "-d", "postgres://postgres:postgres@localhost:5433/river?sslmode=disable", "-n", schemaName)
+		cmd := exec.Command(
+			"pg_dump",
+			"-Fp",
+			"-d",
+			"postgres://postgres:postgres@localhost:5433/river?sslmode=disable",
+			"-n",
+			schemaName,
+		)
 		var out bytes.Buffer
 		cmd.Stdout = &out
 		err := cmd.Run()

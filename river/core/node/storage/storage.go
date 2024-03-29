@@ -31,7 +31,13 @@ type StreamStorage interface {
 	// Adds event to the given minipool.
 	// Current generation of minipool should match minipoolGeneration,
 	// and there should be exactly minipoolSlot events in the minipool.
-	WriteEvent(ctx context.Context, streamId StreamId, minipoolGeneration int64, minipoolSlot int, envelope []byte) error
+	WriteEvent(
+		ctx context.Context,
+		streamId StreamId,
+		minipoolGeneration int64,
+		minipoolSlot int,
+		envelope []byte,
+	) error
 
 	// Current minipool generation must be minipoolGeneration and size must be minipoolSize,
 	// stream must have minipoolGeneration miniblocks.

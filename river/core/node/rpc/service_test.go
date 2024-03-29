@@ -344,7 +344,10 @@ func testMethods(t *testing.T, client protocolconnect.StreamServiceClient, url s
 	)
 	require.NoError(err)
 
-	_, err = client.Info(ctx, connect.NewRequest(&protocol.InfoRequest{Debug: []string{"make_miniblock", channelId.String(), "false"}}))
+	_, err = client.Info(
+		ctx,
+		connect.NewRequest(&protocol.InfoRequest{Debug: []string{"make_miniblock", channelId.String(), "false"}}),
+	)
 	require.NoError(err)
 
 	_, err = client.Info(ctx, connect.NewRequest(&protocol.InfoRequest{
@@ -370,7 +373,10 @@ func testMethods(t *testing.T, client protocolconnect.StreamServiceClient, url s
 	)
 	require.NoError(err)
 
-	_, err = client.Info(ctx, connect.NewRequest(&protocol.InfoRequest{Debug: []string{"make_miniblock", channelId.String(), "false"}}))
+	_, err = client.Info(
+		ctx,
+		connect.NewRequest(&protocol.InfoRequest{Debug: []string{"make_miniblock", channelId.String(), "false"}}),
+	)
 	require.NoError(err)
 
 	_, err = client.Info(ctx, connect.NewRequest(&protocol.InfoRequest{

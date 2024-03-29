@@ -93,7 +93,12 @@ func TestByteType(t *testing.T) {
 	assert := assert.New(t)
 
 	buf := &bytes.Buffer{}
-	log := slog.New(dlog.NewPrettyTextHandler(buf, &dlog.PrettyHandlerOptions{Colors: dlog.ColorMap_Disabled, DisableShortHex: true}))
+	log := slog.New(
+		dlog.NewPrettyTextHandler(
+			buf,
+			&dlog.PrettyHandlerOptions{Colors: dlog.ColorMap_Disabled, DisableShortHex: true},
+		),
+	)
 
 	b := byteArray{1, 2, 3, 4, 5, 6, 7, 8, 9, 10}
 	log.Info("byte array", "byte_array", b)
@@ -104,7 +109,12 @@ func TestCommonAddress(t *testing.T) {
 	assert := assert.New(t)
 
 	buf := &bytes.Buffer{}
-	log := slog.New(dlog.NewPrettyTextHandler(buf, &dlog.PrettyHandlerOptions{Colors: dlog.ColorMap_Disabled, DisableShortHex: true}))
+	log := slog.New(
+		dlog.NewPrettyTextHandler(
+			buf,
+			&dlog.PrettyHandlerOptions{Colors: dlog.ColorMap_Disabled, DisableShortHex: true},
+		),
+	)
 
 	b := common.Address{1, 2, 3, 4, 5, 6, 7, 8, 9, 10}
 	log.Info("byte array", "byte_array", b)
@@ -115,7 +125,12 @@ func TestMapWithCommonAddress(t *testing.T) {
 	assert := assert.New(t)
 
 	buf := &bytes.Buffer{}
-	log := slog.New(dlog.NewPrettyTextHandler(buf, &dlog.PrettyHandlerOptions{Colors: dlog.ColorMap_Disabled, DisableShortHex: true}))
+	log := slog.New(
+		dlog.NewPrettyTextHandler(
+			buf,
+			&dlog.PrettyHandlerOptions{Colors: dlog.ColorMap_Disabled, DisableShortHex: true},
+		),
+	)
 
 	mm := map[common.Address]string{
 		{1, 2, 3, 4, 5, 6, 7, 8, 9, 10}:          "hello",
@@ -140,7 +155,12 @@ func TestShortHex(t *testing.T) {
 	assert := assert.New(t)
 
 	buf := &bytes.Buffer{}
-	log := slog.New(dlog.NewPrettyTextHandler(buf, &dlog.PrettyHandlerOptions{Colors: dlog.ColorMap_Disabled, DisableShortHex: false}))
+	log := slog.New(
+		dlog.NewPrettyTextHandler(
+			buf,
+			&dlog.PrettyHandlerOptions{Colors: dlog.ColorMap_Disabled, DisableShortHex: false},
+		),
+	)
 
 	type testParams struct {
 		arg      any

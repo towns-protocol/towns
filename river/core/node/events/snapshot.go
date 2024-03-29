@@ -380,7 +380,9 @@ func update_Snapshot_UserInbox(
 }
 
 func cleanup_Snapshot_UserInbox(snapshot *Snapshot_UserInboxContent, currentMiniblockNum int64) {
-	maxGenerations := int64(3600) // blocks are made every 2 seconds if events exist. 3600 would be 5 days of blocks 24 hours a day
+	maxGenerations := int64(
+		3600,
+	) // blocks are made every 2 seconds if events exist. 3600 would be 5 days of blocks 24 hours a day
 	if snapshot.UserInboxContent.DeviceSummary != nil {
 		for deviceKey, deviceSummary := range snapshot.UserInboxContent.DeviceSummary {
 			isOlderThanMaxGenerations := (currentMiniblockNum - deviceSummary.LowerBound) > maxGenerations
@@ -391,7 +393,14 @@ func cleanup_Snapshot_UserInbox(snapshot *Snapshot_UserInboxContent, currentMini
 	}
 }
 
-func update_Snapshot_Member(iSnapshot *Snapshot, memberPayload *MemberPayload, creatorAddress []byte, miniblockNum int64, eventNum int64, eventHash []byte) error {
+func update_Snapshot_Member(
+	iSnapshot *Snapshot,
+	memberPayload *MemberPayload,
+	creatorAddress []byte,
+	miniblockNum int64,
+	eventNum int64,
+	eventHash []byte,
+) error {
 	snapshot := iSnapshot.Members
 	if snapshot == nil {
 		return RiverError(Err_INVALID_ARGUMENT, "blockheader snapshot is not a membership snapshot")
@@ -556,7 +565,10 @@ func insertChannel(channels []*SpacePayload_Channel, newChannels ...*SpacePayloa
 	return channels
 }
 
-func findMember(members []*MemberPayload_Snapshot_Member, memberAddress []byte) (*MemberPayload_Snapshot_Member, error) {
+func findMember(
+	members []*MemberPayload_Snapshot_Member,
+	memberAddress []byte,
+) (*MemberPayload_Snapshot_Member, error) {
 	return findSorted(
 		members,
 		memberAddress,
@@ -578,7 +590,10 @@ func removeMember(members []*MemberPayload_Snapshot_Member, memberAddress []byte
 	)
 }
 
-func insertMember(members []*MemberPayload_Snapshot_Member, newMembers ...*MemberPayload_Snapshot_Member) []*MemberPayload_Snapshot_Member {
+func insertMember(
+	members []*MemberPayload_Snapshot_Member,
+	newMembers ...*MemberPayload_Snapshot_Member,
+) []*MemberPayload_Snapshot_Member {
 	for _, member := range newMembers {
 		members = insertSorted(
 			members,
@@ -592,7 +607,10 @@ func insertMember(members []*MemberPayload_Snapshot_Member, newMembers ...*Membe
 	return members
 }
 
-func findUserMembership(memberships []*UserPayload_UserMembership, streamId []byte) (*UserPayload_UserMembership, error) {
+func findUserMembership(
+	memberships []*UserPayload_UserMembership,
+	streamId []byte,
+) (*UserPayload_UserMembership, error) {
 	return findSorted(
 		memberships,
 		streamId,
@@ -603,7 +621,10 @@ func findUserMembership(memberships []*UserPayload_UserMembership, streamId []by
 	)
 }
 
-func insertUserMembership(memberships []*UserPayload_UserMembership, newMemberships ...*UserPayload_UserMembership) []*UserPayload_UserMembership {
+func insertUserMembership(
+	memberships []*UserPayload_UserMembership,
+	newMemberships ...*UserPayload_UserMembership,
+) []*UserPayload_UserMembership {
 	for _, membership := range newMemberships {
 		memberships = insertSorted(
 			memberships,
@@ -617,7 +638,10 @@ func insertUserMembership(memberships []*UserPayload_UserMembership, newMembersh
 	return memberships
 }
 
-func insertFullyReadMarker(markers []*UserSettingsPayload_FullyReadMarkers, newMarker *UserSettingsPayload_FullyReadMarkers) []*UserSettingsPayload_FullyReadMarkers {
+func insertFullyReadMarker(
+	markers []*UserSettingsPayload_FullyReadMarkers,
+	newMarker *UserSettingsPayload_FullyReadMarkers,
+) []*UserSettingsPayload_FullyReadMarkers {
 	return insertSorted(
 		markers,
 		newMarker,
@@ -628,7 +652,10 @@ func insertFullyReadMarker(markers []*UserSettingsPayload_FullyReadMarkers, newM
 	)
 }
 
-func insertUserBlock(userBlocksArr []*UserSettingsPayload_Snapshot_UserBlocks, newUserBlock *UserSettingsPayload_UserBlock) []*UserSettingsPayload_Snapshot_UserBlocks {
+func insertUserBlock(
+	userBlocksArr []*UserSettingsPayload_Snapshot_UserBlocks,
+	newUserBlock *UserSettingsPayload_UserBlock,
+) []*UserSettingsPayload_Snapshot_UserBlocks {
 	userIdBytes := newUserBlock.UserId
 
 	newBlock := &UserSettingsPayload_Snapshot_UserBlocks_Block{
@@ -636,7 +663,7 @@ func insertUserBlock(userBlocksArr []*UserSettingsPayload_Snapshot_UserBlocks, n
 		EventNum:  newUserBlock.EventNum,
 	}
 
-	var existingUserBlocks, err = findSorted(
+	existingUserBlocks, err := findSorted(
 		userBlocksArr,
 		userIdBytes,
 		bytes.Compare,

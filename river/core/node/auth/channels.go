@@ -21,7 +21,12 @@ type Channels interface {
 
 var getChannelCalls = infra.NewSuccessMetrics("get_channel_calls", contractCalls)
 
-func NewChannels(ctx context.Context, version string, address common.Address, backend bind.ContractBackend) (Channels, error) {
+func NewChannels(
+	ctx context.Context,
+	version string,
+	address common.Address,
+	backend bind.ContractBackend,
+) (Channels, error) {
 	var err error
 	var cc *base.Channels
 	cc, err = base.NewChannels(address, backend)

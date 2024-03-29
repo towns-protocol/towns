@@ -183,7 +183,12 @@ func Make_ChannelPayload_Inception(
 }
 
 // todo delete and replace with Make_MemberPayload_Membership
-func Make_ChannelPayload_Membership(op MembershipOp, userId string, initiatorId string, spaceId *StreamId) *StreamEvent_MemberPayload {
+func Make_ChannelPayload_Membership(
+	op MembershipOp,
+	userId string,
+	initiatorId string,
+	spaceId *StreamId,
+) *StreamEvent_MemberPayload {
 	userAddress, err := AddressFromUserId(userId)
 	if err != nil {
 		panic(err) // todo convert everything to StreamId

@@ -3,7 +3,6 @@ package crypto
 import (
 	"context"
 	"math/big"
-	"time"
 
 	. "github.com/river-build/river/core/node/base"
 	"github.com/river-build/river/core/node/config"
@@ -48,7 +47,6 @@ type Blockchain struct {
 	ClientCloser    Closable
 	TxRunner        *TxRunner
 	Config          *config.ChainConfig
-	BlockMonitor    BlockMonitor
 	InitialBlockNum BlockNumber
 }
 
@@ -69,7 +67,13 @@ func NewBlockchain(ctx context.Context, cfg *config.ChainConfig, wallet *Wallet)
 	return NewBlockchainWithClient(ctx, cfg, wallet, client, client)
 }
 
-func NewBlockchainWithClient(ctx context.Context, cfg *config.ChainConfig, wallet *Wallet, client BlockchainClient, clientCloser Closable) (*Blockchain, error) {
+func NewBlockchainWithClient(
+	ctx context.Context,
+	cfg *config.ChainConfig,
+	wallet *Wallet,
+	client BlockchainClient,
+	clientCloser Closable,
+) (*Blockchain, error) {
 	chainId, err := client.ChainID(ctx)
 	if err != nil {
 		return nil, AsRiverError(err).
@@ -85,21 +89,19 @@ func NewBlockchainWithClient(ctx context.Context, cfg *config.ChainConfig, walle
 
 	blockNum, err := client.BlockNumber(ctx)
 	if err != nil {
-		return nil, AsRiverError(err, Err_CANNOT_CONNECT).Message("Cannot retrieve block number").Func("NewBlockchainWithClient")
+		return nil, AsRiverError(
+			err,
+			Err_CANNOT_CONNECT,
+		).Message("Cannot retrieve block number").
+			Func("NewBlockchainWithClient")
 	}
 	initialBlockNum := BlockNumber(blockNum)
-
-	bm, err := NewBlockMonitor(ctx, client, initialBlockNum, time.Duration(cfg.BlockTimeMs)*time.Millisecond)
-	if err != nil {
-		return nil, AsRiverError(err, Err_CANNOT_CONNECT).Message("Cannot create block monitor").Func("NewBlockchainWithClient")
-	}
 
 	bc := &Blockchain{
 		ChainId:         big.NewInt(int64(cfg.ChainId)),
 		Client:          client,
 		ClientCloser:    clientCloser,
 		Config:          cfg,
-		BlockMonitor:    bm,
 		InitialBlockNum: initialBlockNum,
 	}
 
@@ -118,9 +120,6 @@ func NewBlockchainWithClient(ctx context.Context, cfg *config.ChainConfig, walle
 }
 
 func (b *Blockchain) Close() {
-	if b.BlockMonitor != nil {
-		b.BlockMonitor.Close()
-	}
 	if b.ClientCloser != nil {
 		b.ClientCloser.Close()
 	}

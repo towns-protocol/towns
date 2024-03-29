@@ -114,7 +114,15 @@ func TestLoad(t *testing.T) {
 	})
 
 	assert.Equal(t, 3, len(newEnvelopesHashes))
-	assert.Equal(t, []common.Hash{common.BytesToHash(inception.Hash), common.BytesToHash(join.Hash), common.BytesToHash(miniblockHeaderProto.Hash)}, newEnvelopesHashes)
+	assert.Equal(
+		t,
+		[]common.Hash{
+			common.BytesToHash(inception.Hash),
+			common.BytesToHash(join.Hash),
+			common.BytesToHash(miniblockHeaderProto.Hash),
+		},
+		newEnvelopesHashes,
+	)
 
 	cookie := view.SyncCookie(nodeWallet.Address)
 	cookieStreamId, err := StreamIdFromBytes(cookie.StreamId)
@@ -201,7 +209,11 @@ func TestLoad(t *testing.T) {
 	// how many blocks do we currently have?
 	assert.Equal(t, len(view.blocks), 1)
 	// create a new block
-	miniblockHeaderEvent, err := MakeParsedEventWithPayload(userWallet, Make_MiniblockHeader(miniblockHeader), view.LastBlock().Hash[:])
+	miniblockHeaderEvent, err := MakeParsedEventWithPayload(
+		userWallet,
+		Make_MiniblockHeader(miniblockHeader),
+		view.LastBlock().Hash[:],
+	)
 	assert.NoError(t, err)
 	miniblock, err := NewMiniblockInfoFromParsed(miniblockHeaderEvent, envelopes)
 	assert.NoError(t, err)

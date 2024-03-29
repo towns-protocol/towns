@@ -19,7 +19,10 @@ import (
 
 var infoRequests = infra.NewSuccessMetrics("info_requests", serviceRequests)
 
-func (s *Service) Info(ctx context.Context, req *connect.Request[InfoRequest]) (*connect.Response[InfoResponse], error) {
+func (s *Service) Info(
+	ctx context.Context,
+	req *connect.Request[InfoRequest],
+) (*connect.Response[InfoResponse], error) {
 	ctx, log := ctxAndLogForRequest(ctx, req)
 
 	log.Debug("Info ENTER", "request", req.Msg)

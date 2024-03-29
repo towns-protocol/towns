@@ -49,7 +49,12 @@ func (s *Service) localAddEvent(
 	}
 }
 
-func (s *Service) addParsedEvent(ctx context.Context, streamId StreamId, parsedEvent *ParsedEvent, nodes StreamNodes) error {
+func (s *Service) addParsedEvent(
+	ctx context.Context,
+	streamId StreamId,
+	parsedEvent *ParsedEvent,
+	nodes StreamNodes,
+) error {
 	localStream, streamView, err := s.cache.GetStream(ctx, streamId)
 	if err != nil {
 		return err

@@ -8,6 +8,7 @@ import (
 	"math/big"
 	"os"
 
+	"github.com/river-build/river/core/node/contracts"
 	"github.com/river-build/river/core/node/crypto"
 	"github.com/river-build/river/core/node/dlog"
 
@@ -140,14 +141,33 @@ func registerNode(ctx context.Context, workerID int, fromAddress common.Address,
 		return nil, err
 	}
 
+	var (
+		entitlementMD  = checker.GetMetadata()
+		entitlementABI = checker.GetAbi()
+	)
+
+	alreadyRegisteredId := entitlementABI.Errors["EntitlementChecker_NodeAlreadyRegistered"].ID
+
+	log.Info("AlreadyRegisteredId", "alreadyRegisteredId", alreadyRegisteredId)
+
+	errorDecoder, err := contracts.NewEVMErrorDecoder(entitlementMD)
+	if err != nil {
+		log.Error("Failed to create error decoder", "err", err)
+		return nil, err
+	}
+
 	tx, err := checker.RegisterNode(auth)
 	if err != nil {
-		if err.Error() == "execution reverted: custom error d1922fc1:" {
+		customError, stringError, err := errorDecoder.DecodeEVMError(err)
+		log.Error("Failed RegisterNode", "err", err, "customError", customError, "stringError", stringError)
+
+		if customError != nil && customError.DecodedError.ID == alreadyRegisteredId {
+			// was if err.Error() == "execution reverted: custom error d1922fc1:" {
 			// This error is returned when the node is already registered
 			// This is not an error, so we just log it and continue
 			log.Warn("Node already registered")
 		} else {
-			log.Error("Failed RegisterNode", "err", err)
+			log.Error("Failed RegisterNode", "err", err, "Error", err.Error())
 			return nil, err
 		}
 	}

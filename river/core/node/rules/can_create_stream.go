@@ -98,13 +98,27 @@ type csUserInboxRules struct {
 * (chainAuthArgs, nil, nil) // stream can be created if chainAuthArgs are satisfied
 * (chainAuthArgs, []*DerivedEvent, nil) // stream can be created if chainAuthArgs are satisfied and derived events should be created after
 */
-func CanCreateStream(ctx context.Context, cfg *config.StreamConfig, currentTime time.Time, streamId shared.StreamId, parsedEvents []*events.ParsedEvent) (*CreateStreamRules, error) {
+func CanCreateStream(
+	ctx context.Context,
+	cfg *config.StreamConfig,
+	currentTime time.Time,
+	streamId shared.StreamId,
+	parsedEvents []*events.ParsedEvent,
+) (*CreateStreamRules, error) {
 	if len(parsedEvents) == 0 {
 		return nil, RiverError(Err_BAD_STREAM_CREATION_PARAMS, "no events")
 	}
 
-	if parsedEvents[0].Event.DelegateExpiryEpochMs > 0 && isPastExpiry(currentTime, parsedEvents[0].Event.DelegateExpiryEpochMs) {
-		return nil, RiverError(Err_PERMISSION_DENIED, "event delegate has expired", "currentTime", currentTime, "expiry", parsedEvents[0].Event.DelegateExpiryEpochMs)
+	if parsedEvents[0].Event.DelegateExpiryEpochMs > 0 &&
+		isPastExpiry(currentTime, parsedEvents[0].Event.DelegateExpiryEpochMs) {
+		return nil, RiverError(
+			Err_PERMISSION_DENIED,
+			"event delegate has expired",
+			"currentTime",
+			currentTime,
+			"expiry",
+			parsedEvents[0].Event.DelegateExpiryEpochMs,
+		)
 	}
 
 	creatorAddress := parsedEvents[0].Event.GetCreatorAddress()
@@ -133,7 +147,14 @@ func CanCreateStream(ctx context.Context, cfg *config.StreamConfig, currentTime 
 	}
 
 	if !streamId.EqualsBytes(inceptionPayload.GetStreamId()) {
-		return nil, RiverError(Err_BAD_STREAM_CREATION_PARAMS, "stream id in request does not match stream id in inception event", "inceptionStreamId", inceptionPayload.GetStreamId(), "streamId", streamId)
+		return nil, RiverError(
+			Err_BAD_STREAM_CREATION_PARAMS,
+			"stream id in request does not match stream id in inception event",
+			"inceptionStreamId",
+			inceptionPayload.GetStreamId(),
+			"streamId",
+			streamId,
+		)
 	}
 
 	r := &csParams{
@@ -316,7 +337,16 @@ func (ru *csParams) isUserStreamId() error {
 	creatorAddress := common.BytesToAddress(ru.parsedEvents[0].Event.GetCreatorAddress())
 
 	if addressInName != creatorAddress {
-		return RiverError(Err_BAD_STREAM_CREATION_PARAMS, "stream id doesn't match creator address", "streamId", ru.streamId, "addressInName", addressInName, "creator", creatorAddress)
+		return RiverError(
+			Err_BAD_STREAM_CREATION_PARAMS,
+			"stream id doesn't match creator address",
+			"streamId",
+			ru.streamId,
+			"addressInName",
+			addressInName,
+			"creator",
+			creatorAddress,
+		)
 	}
 	return nil
 }
@@ -324,7 +354,14 @@ func (ru *csParams) isUserStreamId() error {
 func (ru *csParams) eventCountMatches(eventCount int) func() error {
 	return func() error {
 		if len(ru.parsedEvents) != eventCount {
-			return RiverError(Err_BAD_STREAM_CREATION_PARAMS, "bad event count", "count", len(ru.parsedEvents), "expectedCount", eventCount)
+			return RiverError(
+				Err_BAD_STREAM_CREATION_PARAMS,
+				"bad event count",
+				"count",
+				len(ru.parsedEvents),
+				"expectedCount",
+				eventCount,
+			)
 		}
 		return nil
 	}
@@ -333,7 +370,14 @@ func (ru *csParams) eventCountMatches(eventCount int) func() error {
 func (ru *csParams) eventCountGreaterThanOrEqualTo(eventCount int) func() error {
 	return func() error {
 		if len(ru.parsedEvents) < eventCount {
-			return RiverError(Err_BAD_STREAM_CREATION_PARAMS, "bad event count", "count", len(ru.parsedEvents), "expectedCount", eventCount)
+			return RiverError(
+				Err_BAD_STREAM_CREATION_PARAMS,
+				"bad event count",
+				"count",
+				len(ru.parsedEvents),
+				"expectedCount",
+				eventCount,
+			)
 		}
 		return nil
 	}
@@ -373,7 +417,14 @@ func (ru *csParams) validateOwnJoinEventPayload(event *events.ParsedEvent, membe
 		return RiverError(Err_BAD_STREAM_CREATION_PARAMS, "bad join op", "op", membership.GetOp())
 	}
 	if !bytes.Equal(membership.UserAddress, creatorAddress) {
-		return RiverError(Err_BAD_STREAM_CREATION_PARAMS, "bad join user", "id", membership.UserAddress, "created_by", creatorAddress)
+		return RiverError(
+			Err_BAD_STREAM_CREATION_PARAMS,
+			"bad join user",
+			"id",
+			membership.UserAddress,
+			"created_by",
+			creatorAddress,
+		)
 	}
 	return nil
 }
@@ -521,7 +572,11 @@ func (ru *csDmChannelRules) checkDMInceptionPayload() error {
 	if !bytes.Equal(ru.params.creatorAddress, ru.inception.FirstPartyAddress) {
 		return RiverError(Err_BAD_STREAM_CREATION_PARAMS, "creator must be first party for dm channel")
 	}
-	if !shared.ValidDMChannelStreamIdBetween(ru.params.streamId, ru.inception.FirstPartyAddress, ru.inception.SecondPartyAddress) {
+	if !shared.ValidDMChannelStreamIdBetween(
+		ru.params.streamId,
+		ru.inception.FirstPartyAddress,
+		ru.inception.SecondPartyAddress,
+	) {
 		return RiverError(Err_BAD_STREAM_CREATION_PARAMS, "invalid stream id for dm channel")
 	}
 	return nil

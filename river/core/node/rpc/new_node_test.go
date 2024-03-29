@@ -115,7 +115,7 @@ func TestNoRecordNoStart(t *testing.T) {
 	tester := newServiceTester(1, require)
 	defer tester.Close()
 
-	err := tester.startSinlge(0)
+	err := tester.startSingle(0)
 	require.Error(err)
 	require.Equal(Err_UNKNOWN_NODE, AsRiverError(err).Code)
 }

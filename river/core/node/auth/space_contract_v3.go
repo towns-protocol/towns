@@ -105,7 +105,11 @@ func (sc *SpaceContractV3) IsSpaceDisabled(ctx context.Context, spaceId shared.S
 	return isDisabled, err
 }
 
-func (sc *SpaceContractV3) IsChannelDisabled(ctx context.Context, spaceId shared.StreamId, channelId shared.StreamId) (bool, error) {
+func (sc *SpaceContractV3) IsChannelDisabled(
+	ctx context.Context,
+	spaceId shared.StreamId,
+	channelId shared.StreamId,
+) (bool, error) {
 	channel, err := sc.getChannel(ctx, spaceId, channelId)
 	if err != nil || channel == nil {
 		return false, err
@@ -142,7 +146,11 @@ func (sc *SpaceContractV3) getSpace(ctx context.Context, spaceId shared.StreamId
 	return sc.spaces[spaceId], nil
 }
 
-func (sc *SpaceContractV3) getChannel(ctx context.Context, spaceId shared.StreamId, channelId shared.StreamId) (Channels, error) {
+func (sc *SpaceContractV3) getChannel(
+	ctx context.Context,
+	spaceId shared.StreamId,
+	channelId shared.StreamId,
+) (Channels, error) {
 	space, err := sc.getSpace(ctx, spaceId)
 	if err != nil || space == nil {
 		return nil, err

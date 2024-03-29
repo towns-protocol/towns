@@ -56,7 +56,13 @@ type httpMux interface {
 	Handle(pattern string, handler http.Handler)
 }
 
-func registerDebugHandlers(ctx context.Context, cfg *config.Config, mux httpMux, cache StreamCache, streamService *Service) {
+func registerDebugHandlers(
+	ctx context.Context,
+	cfg *config.Config,
+	mux httpMux,
+	cache StreamCache,
+	streamService *Service,
+) {
 	handler := debugHandler{}
 	mux.HandleFunc("/debug", handler.ServeHTTP)
 

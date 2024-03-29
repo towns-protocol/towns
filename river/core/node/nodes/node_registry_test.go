@@ -1,6 +1,7 @@
 package nodes
 
 import (
+	"sync"
 	"testing"
 	"time"
 
@@ -17,19 +18,6 @@ import (
 	"github.com/stretchr/testify/require"
 )
 
-func (n *nodeRegistryImpl) testWaitForBlock(blockNum crypto.BlockNumber) {
-	for {
-		n.mu.Lock()
-		exit := n.appliedBlockNum >= blockNum
-		n.mu.Unlock()
-		if exit {
-			return
-		}
-
-		time.Sleep(5 * time.Millisecond)
-	}
-}
-
 func TestNodeRegistryUpdates(t *testing.T) {
 	require := require.New(t)
 
@@ -44,30 +32,59 @@ func TestNodeRegistryUpdates(t *testing.T) {
 	bc := btc.GetBlockchain(ctx, 0, true)
 	defer bc.Close()
 
-	rr, err := registries.NewRiverRegistryContract(ctx, bc, &config.ContractConfig{Address: btc.RiverRegistryAddress.Hex()})
+	rr, err := registries.NewRiverRegistryContract(
+		ctx,
+		bc,
+		&config.ContractConfig{Address: btc.RiverRegistryAddress.Hex()},
+	)
 	require.NoError(err)
 
-	r, err := LoadNodeRegistry(ctx, rr, bc.Wallet.Address)
+	var (
+		chainBlockNum        = btc.BlockNum(ctx)
+		confirmedTransaction = new(sync.Map)
+		chainMonitor         = crypto.NewChainMonitorBuilder(crypto.BlockNumber(chainBlockNum+1)).OnContractEvent(rr.Address, func(event types.Log) {
+			confirmedTransaction.Store(event.TxHash, struct{}{})
+		})
+
+		waitForTx = func(tx *types.Transaction) {
+			for {
+				time.Sleep(time.Second)
+				if _, ok := confirmedTransaction.Load(tx.Hash()); ok {
+					return
+				}
+				time.Sleep(10 * time.Millisecond)
+			}
+		}
+	)
+
+	r, err := LoadNodeRegistry(ctx, rr, bc.Wallet.Address, chainBlockNum, chainMonitor)
 	require.Error(err)
 	require.Nil(r)
 	require.Equal(Err_UNKNOWN_NODE, AsRiverError(err).Code)
 
 	owner := btc.DeployerBlockchain
 
+	go chainMonitor.Build(10*time.Millisecond).Run(ctx, bc.Client)
+
 	urls := []string{"https://river0.test", "https://river1.test", "https://river2.test"}
 	addrs := []common.Address{btc.Wallets[0].Address, crypto.GetTestAddress(), crypto.GetTestAddress()}
 
-	_, err = owner.TxRunner.Submit(ctx, func(opts *bind.TransactOpts) (*types.Transaction, error) {
+	tx, err := owner.TxRunner.Submit(ctx, func(opts *bind.TransactOpts) (*types.Transaction, error) {
 		return btc.NodeRegistry.RegisterNode(opts, addrs[0], urls[0], contracts.NodeStatus_NotInitialized)
 	})
 	require.NoError(err)
 	btc.Commit()
+	waitForTx(tx)
 
-	r, err = LoadNodeRegistry(ctx, rr, bc.Wallet.Address)
+	chainBlockNum = btc.BlockNum(ctx)
+
+	r, err = LoadNodeRegistry(ctx, rr, bc.Wallet.Address, chainBlockNum, chainMonitor)
 	require.NoError(err)
 	require.NotNil(r)
 	nodes := r.GetAllNodes()
 	require.Len(nodes, 1)
+
+	go chainMonitor.Build(10*time.Millisecond).Run(ctx, bc.Client)
 
 	record := nodes[0]
 	require.NoError(err)
@@ -76,13 +93,12 @@ func TestNodeRegistryUpdates(t *testing.T) {
 	require.True(record.local)
 	require.Equal(contracts.NodeStatus_NotInitialized, record.status)
 
-	_, err = owner.TxRunner.Submit(ctx, func(opts *bind.TransactOpts) (*types.Transaction, error) {
+	tx, err = owner.TxRunner.Submit(ctx, func(opts *bind.TransactOpts) (*types.Transaction, error) {
 		return btc.NodeRegistry.RegisterNode(opts, addrs[1], urls[1], contracts.NodeStatus_Operational)
 	})
 	require.NoError(err)
 	btc.Commit()
-	blockNum := btc.BlockNum(ctx)
-	r.testWaitForBlock(blockNum)
+	waitForTx(tx)
 
 	nodes = r.GetAllNodes()
 	require.Len(nodes, 2)
@@ -100,8 +116,7 @@ func TestNodeRegistryUpdates(t *testing.T) {
 	})
 	require.NoError(err)
 	btc.Commit()
-	blockNum = btc.BlockNum(ctx)
-	r.testWaitForBlock(blockNum)
+	waitForTx(tx)
 
 	record, err = r.GetNode(addrs[1])
 	require.NoError(err)
@@ -115,8 +130,7 @@ func TestNodeRegistryUpdates(t *testing.T) {
 	})
 	require.NoError(err)
 	btc.Commit()
-	blockNum = btc.BlockNum(ctx)
-	r.testWaitForBlock(blockNum)
+	waitForTx(tx)
 
 	record, err = r.GetNode(addrs[1])
 	require.NoError(err)
@@ -145,8 +159,7 @@ func TestNodeRegistryUpdates(t *testing.T) {
 	})
 	require.NoError(err)
 	btc.Commit()
-	blockNum = btc.BlockNum(ctx)
-	r.testWaitForBlock(blockNum)
+	waitForTx(tx)
 
 	nodes = r.GetAllNodes()
 	require.Len(nodes, 1)

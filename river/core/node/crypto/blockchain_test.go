@@ -139,7 +139,13 @@ func TestBlockchain(t *testing.T) {
 		ctx,
 		func(opts *bind.TransactOpts) (*types.Transaction, error) {
 			streamId := testutils.StreamIdFromBytes([]byte{0x10, 0x22, 0x33})
-			return tc.StreamRegistry.AllocateStream(opts, streamId.ByteArray(), []common.Address{common.HexToAddress("0x123")}, genesisHash, genesisMiniblock)
+			return tc.StreamRegistry.AllocateStream(
+				opts,
+				streamId.ByteArray(),
+				[]common.Address{common.HexToAddress("0x123")},
+				genesisHash,
+				genesisMiniblock,
+			)
 		},
 	)
 	require.Nil(tx1)
@@ -152,7 +158,13 @@ func TestBlockchain(t *testing.T) {
 		_, err = bc1.TxRunner.Submit(
 			ctx,
 			func(opts *bind.TransactOpts) (*types.Transaction, error) {
-				return tc.StreamRegistry.AllocateStream(opts, streamId.ByteArray(), addrs, genesisHash, genesisMiniblock)
+				return tc.StreamRegistry.AllocateStream(
+					opts,
+					streamId.ByteArray(),
+					addrs,
+					genesisHash,
+					genesisMiniblock,
+				)
 			},
 		)
 		require.NoError(err)

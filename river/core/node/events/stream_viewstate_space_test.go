@@ -29,15 +29,6 @@ var streamConfig_viewstate_space_t = config.StreamConfig{
 	MinEventsPerSnapshot:        map[string]int{},
 }
 
-type noopBlockMonitor struct{}
-
-var _ crypto.BlockMonitor = (*noopBlockMonitor)(nil)
-
-func (b *noopBlockMonitor) AddListener(crypto.BlockNumberChannel, crypto.BlockNumber) error {
-	return nil
-}
-func (b *noopBlockMonitor) Close() {}
-
 func makeEnvelopeWithPayload_T(
 	t *testing.T,
 	wallet *crypto.Wallet,
@@ -293,7 +284,12 @@ func TestSpaceViewState(t *testing.T) {
 	spaceViewStateTest_CheckUserJoined(t, view3.(JoinableStreamView), user3Wallet, true)
 }
 
-func spaceViewStateTest_CheckUserJoined(t *testing.T, view JoinableStreamView, userWallet *crypto.Wallet, expected bool) {
+func spaceViewStateTest_CheckUserJoined(
+	t *testing.T,
+	view JoinableStreamView,
+	userWallet *crypto.Wallet,
+	expected bool,
+) {
 	joined, err := view.IsMember(userWallet.Address.Bytes())
 	require.NoError(t, err)
 	require.Equal(t, expected, joined)

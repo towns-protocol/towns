@@ -4,7 +4,11 @@
 
 # Installing Buf and other tools
 
-https://connect.build/docs/go/getting-started/#install-tools:
+Run
+
+    ./scripts/install-protobuf-deps.sh
+
+or manually:
 
     go install github.com/bufbuild/buf/cmd/buf@latest
     go install github.com/fullstorydev/grpcurl/cmd/grpcurl@latest
@@ -12,6 +16,9 @@ https://connect.build/docs/go/getting-started/#install-tools:
     go install connectrpc.com/connect/cmd/protoc-gen-connect-go@latest
     go install honnef.co/go/tools/cmd/staticcheck@latest
     go install mvdan.cc/gofumpt@latest
+    go install github.com/segmentio/golines@latest
+
+Connect install docs: https://connect.build/docs/go/getting-started/#install-tools
 
 # Generate proto definitions
 

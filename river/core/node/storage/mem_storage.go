@@ -57,7 +57,12 @@ func (m *memStorage) ReadStreamFromLastSnapshot(
 	}, nil
 }
 
-func (m *memStorage) ReadMiniblocks(ctx context.Context, streamId StreamId, fromInclusive int64, toExclusive int64) ([][]byte, error) {
+func (m *memStorage) ReadMiniblocks(
+	ctx context.Context,
+	streamId StreamId,
+	fromInclusive int64,
+	toExclusive int64,
+) ([][]byte, error) {
 	m.mutex.Lock()
 	defer m.mutex.Unlock()
 
