@@ -22,6 +22,7 @@
       "dependsOn": [
         "CheckVersions",
         "FoundryUp",
+        "YarnInstall",
         "Stage 1",
       ],
       // Mark as the default build task so cmd/ctrl+shift+b will create them
@@ -47,7 +48,6 @@
       "label": "Stage 2",
       "dependsOn": [
         "Deploy Smart Contracts",
-        "YarnInstall",
         "BuildProtobufs",
         "XChainCreateMulti",
         "Stage 3"
