@@ -87,6 +87,7 @@ jobs:
 
                     # set a github env var to skip the next step
                     echo "SKIP_DEPLOY=true" >> $GITHUB_ENV
+                    exit 1 # fail the job, this is an error, don't call this with a image that doesn't exist
                 else 
                     echo "Docker image with the tag=${{ inputs.docker_image_tag }} exists. Continue with the deployment."
                 fi
