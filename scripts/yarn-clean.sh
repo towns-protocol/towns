@@ -34,7 +34,7 @@ find . -name "tsconfig.tsbuildinfo" -type f -exec rm -r "{}" \;
 find . -name ".eslintcache" -type f -exec rm -r "{}" \;
 
 # remove run_files
-pushd "core/node" > /dev/null
+pushd "river/core/node" > /dev/null
 rm -rf run_files/*
 popd > /dev/null
 
