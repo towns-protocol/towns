@@ -2,13 +2,14 @@ import React, { useMemo } from 'react'
 import uniqBy from 'lodash/uniqBy'
 import { Link } from 'react-router-dom'
 import { firstBy } from 'thenby'
-import { Membership, useUserLookupContext } from 'use-towns-client'
+import { Address, LookupUserMap, Membership, useUserLookupContext } from 'use-towns-client'
 import { Box, Paragraph, Stack, Tooltip } from '@ui'
 import { notUndefined } from 'ui/utils/utils'
 import { getPrettyDisplayName } from 'utils/getPrettyDisplayName'
 import { AvatarStack } from 'routes/AvatarStack'
 import { getNameListFromUsers } from '@components/UserList/UserList'
 import { ProfileHoverCard } from '@components/ProfileHoverCard/ProfileHoverCard'
+import { useAbstractAccountAddress } from 'hooks/useAbstractAccountAddress'
 import { AccumulatedRoomMemberRenderEvent } from '../../MessageTimeline/util/getEventsByDate'
 
 type Props = {
@@ -16,6 +17,11 @@ type Props = {
     channelName?: string
     channelEncrypted?: boolean
     userId?: string
+}
+
+type UserNameLinkProps = {
+    userId: string
+    usersMap: LookupUserMap
 }
 
 const Verbs = {
@@ -81,20 +87,11 @@ export const AccumulatedRoomMemberEvent = (props: Props) => {
                         return index === 0 ? 'You' : 'you'
                     }
                     return (
-                        <Link key={e.content.userId} to={`profile/${e.content.userId}`}>
-                            <Box
-                                color="default"
-                                display="inline"
-                                tooltip={<ProfileHoverCard userId={e.content.userId} />}
-                            >
-                                {getPrettyDisplayName(
-                                    usersMap[e.content.userId] ?? {
-                                        userId: e.content.userId,
-                                        displayName: e.content.displayName ?? '',
-                                    },
-                                )}
-                            </Box>
-                        </Link>
+                        <UserNameLink
+                            key={e.content.userId}
+                            userId={e.content.userId}
+                            usersMap={usersMap}
+                        />
                     )
                 })
                 .filter(notUndefined),
@@ -166,5 +163,28 @@ const getNameListFromArray = (names: React.ReactNode[], verb: string, maxLength 
                 {originalNames.length - 1} others
             </Stack>
         </>
+    )
+}
+
+const UserNameLink = (props: UserNameLinkProps) => {
+    const { userId, usersMap } = props
+
+    const { data: abstractAccountAddress } = useAbstractAccountAddress({
+        rootKeyAddress: userId as Address,
+    })
+
+    const userDisplayName = getPrettyDisplayName(
+        usersMap[userId] ?? {
+            abstractAccountAddress,
+            displayName: '',
+        },
+    )
+
+    return (
+        <Link to={`profile/${abstractAccountAddress}`}>
+            <Box color="default" display="inline" tooltip={<ProfileHoverCard userId={userId} />}>
+                {userDisplayName}
+            </Box>
+        </Link>
     )
 }
