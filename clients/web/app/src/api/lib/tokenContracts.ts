@@ -11,7 +11,6 @@ import {
     mainnetTokenAddress,
     useNetworkForNftApi,
 } from 'hooks/useNetworkForNftApi'
-import { getTokenType } from '@components/Web3/checkTokenType'
 import { useAuth } from 'hooks/useAuth'
 import { useEnvironment } from 'hooks/useEnvironmnet'
 import { axiosClient } from '../apiClient'
@@ -34,13 +33,13 @@ const zContractData: z.ZodType<ContractMetadata> = z.object({
     address: z.string().optional(),
     name: z.string().optional(),
     symbol: z.string().optional(),
-    tokenType: z.string().optional(),
+    tokenType: z.nativeEnum(TokenType).optional(),
     imageUrl: z.string().optional().nullable(),
 })
 
 const zSchema: z.ZodType<GetCollectionsForOwnerResponse> = z.object({
     totalCount: z.number(),
-    pageKey: z.string().optional(),
+    pageKey: z.nativeEnum(TokenType).optional(),
     collections: z.array(zContractData),
 })
 
@@ -123,18 +122,11 @@ async function getTokenContractsForAddress(wallet: string, nftNetwork: number) {
 }
 
 export async function mapToTokenProps(token: ContractMetadata): Promise<TokenData> {
-    let type: TokenType | undefined
-    try {
-        type = token.address ? await getTokenType({ address: token.address as Address }) : undefined
-    } catch (error) {
-        console.error(`Error getting token type for ${token.address}`, error)
-    }
-
     return {
         imgSrc: token.imageUrl || '',
         label: token.name || '',
         address: (token.address || '') as Address,
-        type: type || TokenType.UNKNOWN,
+        type: (token.tokenType as TokenType) || TokenType.UNKNOWN,
         quantity: undefined,
     }
 }

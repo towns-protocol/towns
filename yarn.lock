@@ -26734,8 +26734,10 @@ __metadata:
     prettier: ^2.8.8
     ts-jest: ^29.1.1
     typescript: ^5.1.6
+    viem: ^1.18.2
     worker-common: "workspace:^"
     wrangler: ^3.2.0
+    zod: ^3.21.4
   languageName: unknown
   linkType: soft
 

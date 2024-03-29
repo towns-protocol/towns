@@ -8,9 +8,12 @@ import { getCollectionMetadata } from './handlers/alchemy/getCollectionMetadata'
 import { router } from './router'
 import { Env, TokenProviderRequest } from './types'
 import { getCollectionsForOwner } from './handlers/alchemy/getCollectionsForOwner'
-import { generateAlchemyUrl } from './utils'
+import { generateAlchemyNftUrl } from './utils'
 import { getCollectionsForOwnerAcrossNetworks } from './handlers/alchemy/getCollectionsForOwnerAcrossNetworks'
 import { getCollectionMetadataAcrossNetworks } from './handlers/alchemy/getCollectionMetadataAcrossNetworks'
+import { getTokenType } from './handlers/getTokenType'
+import { getTokenBalance } from './handlers/getTokenBalance'
+import { TokenSchema, WalletList, tokenSchema, walletListSchema } from './requestSchemas'
 
 // enum for supported providers
 // currently only alchemy is supported
@@ -32,7 +35,7 @@ const withNetwork = async (request: TokenProviderRequest, env: Env) => {
         case ProviderAlias.Alchemy:
             {
                 try {
-                    request.rpcUrl = generateAlchemyUrl(chainId, env.ALCHEMY_API_KEY)
+                    request.rpcUrl = generateAlchemyNftUrl(chainId, env.ALCHEMY_API_KEY)
                 } catch (error) {
                     return new Response(`invalid chainId:: ${chainId}`, { status: 400 })
                 }
@@ -115,6 +118,69 @@ router
             )
         },
     )
+
+    .get(`/api/getTokenType/:address`, (request: TokenProviderRequest, env: Env) => {
+        const address = request.params?.address
+        const headers = withCorsHeaders(request, env.ENVIRONMENT)
+        if (!address) {
+            return new Response('missing address', { status: 400 })
+        }
+        try {
+            const tokenType = getTokenType(address, env.ALCHEMY_API_KEY)
+            return new Response(JSON.stringify({ data: tokenType }), { status: 200, headers })
+        } catch (error) {
+            return new Response(JSON.stringify({ error }), { status: 500, headers })
+        }
+    })
+
+    .post(`/api/tokenBalance`, async (request: TokenProviderRequest, env: Env) => {
+        const json = (await request.json()) as {
+            token: TokenSchema
+            wallets: WalletList
+        }
+        const { token, wallets } = json
+        const headers = withCorsHeaders(request, env.ENVIRONMENT)
+
+        const tokenParse = tokenSchema.safeParse(token)
+        if (!tokenParse.success) {
+            console.error('invalid token', tokenParse.error)
+            return new Response(
+                JSON.stringify({
+                    error: 'invalid token',
+                    details: tokenParse.error,
+                }),
+                { status: 400, headers },
+            )
+        }
+
+        const walletsParse = walletListSchema.safeParse(wallets)
+
+        if (!walletsParse.success) {
+            console.error('invalid wallet list', walletsParse.error)
+            return new Response(
+                JSON.stringify({
+                    error: 'invalid wallets',
+                    details: walletsParse.error,
+                }),
+                { status: 400, headers },
+            )
+        }
+
+        const _token = tokenParse.data
+        const _wallets = walletsParse.data
+
+        try {
+            const balance = await getTokenBalance({
+                token: _token,
+                walletAddresses: _wallets,
+                alchemyApiKey: env.ALCHEMY_API_KEY,
+                environment: env.ENVIRONMENT,
+            })
+            return new Response(JSON.stringify({ data: balance }), { status: 200, headers })
+        } catch (error) {
+            return new Response(JSON.stringify({ error }), { status: 500, headers })
+        }
+    })
 
     .get('*', () => new Response('Not found', { status: 404 }))
 

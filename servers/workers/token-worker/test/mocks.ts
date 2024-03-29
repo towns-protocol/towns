@@ -2,6 +2,7 @@ import {
     GetCollectionMetadataInfuraResponse,
     GetContractMetadataAlchemyResponse,
     ContractMetadata,
+    TokenType,
 } from '../src/types'
 
 export const getNftsMock = {
@@ -79,7 +80,7 @@ export const getNftsMock = {
             id: {
                 tokenId: '0x00000000000000000000000000000000000000000000000000000000000000fb',
                 tokenMetadata: {
-                    tokenType: 'ERC721',
+                    tokenType: TokenType.ERC721,
                 },
             },
             balance: '1',
@@ -147,7 +148,7 @@ export const getNftsMock = {
                 name: 'smolfrens',
                 symbol: 'sf',
                 totalSupply: '285',
-                tokenType: 'ERC721',
+                tokenType: TokenType.ERC721,
                 contractDeployer: '0x1340676ab8aeb4dbd97b100b35aa169c533c01a5',
                 deployedBlockNumber: 14918426,
                 openSea: {
@@ -241,7 +242,7 @@ export const getNftsMockPage2 = {
             id: {
                 tokenId: '0x00000000000000000000000000000000000000000000000000000000000000fb',
                 tokenMetadata: {
-                    tokenType: 'ERC721',
+                    tokenType: TokenType.ERC721,
                 },
             },
             balance: '1',
@@ -309,7 +310,7 @@ export const getNftsMockPage2 = {
                 name: 'smolfrens',
                 symbol: 'sf',
                 totalSupply: '285',
-                tokenType: 'ERC721',
+                tokenType: TokenType.ERC721,
                 contractDeployer: '0x1340676ab8aeb4dbd97b100b35aa169c533c01a5',
                 deployedBlockNumber: 14918426,
                 openSea: {
@@ -335,7 +336,7 @@ export const getNftsContractMetaMock = {
     ownedNftsContract: [
         {
             address: '0x047fb9f175f796cdc34f92624492d73df58370e1',
-            tokenType: 'ERC1155',
+            tokenType: TokenType.ERC1155,
             imageUrl:
                 'https://i.seadn.io/gae/j1l_Hq1q6MCO_diS6J0HPlFE8gwOqvzVZ-mGZsoLx6aCe2HvHZWiNp6S6FAo7csSK5oNsHHhalqp2iPkePHsyfBZqrpJ3oa0C_y1?w=500&auto=format',
         },
@@ -343,7 +344,7 @@ export const getNftsContractMetaMock = {
             name: 'smolfrens',
             address: '0x04bc6a8631aac43a66db41f33e6fe428c4d3e91f',
             symbol: 'sf',
-            tokenType: 'ERC721',
+            tokenType: TokenType.ERC721,
             imageUrl:
                 'https://i.seadn.io/gcs/files/d2101c202e6333beada3e953100a8d3f.png?w=500&auto=format',
         },
@@ -355,7 +356,7 @@ export const getCollectionMetadataAlchemyMock: GetContractMetadataAlchemyRespons
     name: 'World Of Women',
     symbol: 'WOW',
     totalSupply: '10000',
-    tokenType: 'ERC721',
+    tokenType: TokenType.ERC721,
     contractDeployer: '0xc9b6321dc216d91e626e9baa61b06b0e4d55bdb1',
     deployedBlockNumber: 12907782,
     openSeaMetadata: {
@@ -376,7 +377,7 @@ export const getCollectionMetadataAlchemyMock: GetContractMetadataAlchemyRespons
 export const getCollectionMetadataInfuraMock: GetCollectionMetadataInfuraResponse = {
     contract: '0xe785e82358879f061bc3dcac6f0444462d4b5330',
     name: 'World Of Women',
-    tokenType: 'ERC721',
+    tokenType: TokenType.ERC721,
     symbol: 'WOW',
 }
 
@@ -384,7 +385,7 @@ export const getContractMetadataMock: ContractMetadata = {
     address: '0xe785e82358879f061bc3dcac6f0444462d4b5330',
     name: 'World Of Women',
     symbol: 'WOW',
-    tokenType: 'ERC721',
+    tokenType: TokenType.ERC721,
     imageUrl:
         'https://i.seadn.io/gae/EFAQpIktMBU5SU0TqSdPWZ4byHr3hFirL_mATsR8KWhM5z-GJljX8E73V933lkyKgv2SAFlfRRjGsWvWbQQmJAwu3F2FDXVa1C9F?w=500&auto=format',
 }
@@ -400,7 +401,7 @@ export const alchemyGetCollectionsMock = {
             name: 'HAVAH Friends',
             title: 'Harvesting Papa',
             symbol: 'hHVHF',
-            tokenType: 'ERC721',
+            tokenType: TokenType.ERC721,
             contractDeployer: '0x82148231d76dfc18a4d1c4063e694c179b7911ed',
             deployedBlockNumber: 8143848,
             opensea: {
@@ -427,7 +428,7 @@ export const alchemyGetCollectionsMock = {
             name: 'Space Owner',
             title: '',
             symbol: 'SPACE',
-            tokenType: 'ERC721',
+            tokenType: TokenType.ERC721,
             contractDeployer: '0x86312a65b491cf25d9d265f6218ab013daca5e19',
             deployedBlockNumber: 8533417,
             opensea: {
@@ -455,7 +456,7 @@ export const alchemyGetCollectionsMockPage2 = {
             name: 'HAVAH Friends',
             title: 'Harvesting Papa',
             symbol: 'hHVHF',
-            tokenType: 'ERC721',
+            tokenType: TokenType.ERC721,
             contractDeployer: '0x82148231d76dfc18a4d1c4063e694c179b7911ed',
             deployedBlockNumber: 8143848,
             opensea: {
@@ -487,13 +488,13 @@ export const infuraGetCollectionMock = {
     collections: [
         {
             contract: '0xec3d9441d8c5ce4147eec8d05ca337e662f7cf13',
-            tokenType: 'ERC721',
+            tokenType: TokenType.ERC721,
             name: 'Doodle Prime Apes',
             symbol: 'DPA',
         },
         {
             contract: '0xd33eb0dc95aff1a5f6ca04ba6cc33acdf85e7f62',
-            tokenType: 'ERC721',
+            tokenType: TokenType.ERC721,
             name: 'Fast Food Lil Baby Apes Club',
             symbol: 'WuW',
         },
@@ -510,7 +511,7 @@ export const infuraGetCollectionMockPage2 = {
     collections: [
         {
             contract: '0xce82d65314502ce39472a2442d4a2cbc4cb9f293',
-            tokenType: 'ERC721',
+            tokenType: TokenType.ERC721,
             name: 'Animal Society',
             symbol: 'AS',
         },

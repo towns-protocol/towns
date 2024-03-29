@@ -6,7 +6,7 @@ import {
 } from '../../types'
 import {
     fetchAlchemyNfts,
-    generateAlchemyUrl,
+    generateAlchemyNftUrl,
     supportedNftNetworks,
     withOpenSeaImage,
 } from '../../utils'
@@ -25,7 +25,7 @@ export const getCollectionsForOwnerAcrossNetworks = async (
             supportedNftNetworks.map(async (network) => {
                 try {
                     const pageKey = query?.pageKey || ''
-                    const rpcUrl = generateAlchemyUrl(network.vChain.id, alchemyApiKey)
+                    const rpcUrl = generateAlchemyNftUrl(network.vChain.id, alchemyApiKey)
                     const json = await fetchAlchemyNfts(rpcUrl, wallet, pageKey)
                     json.contracts = withOpenSeaImage(json.contracts)
 

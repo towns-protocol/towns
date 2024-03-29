@@ -5,6 +5,7 @@ import {
     GetContractsForOwnerAlchemyResponse,
 } from './types'
 import { throwCustomError } from './router'
+import { createPublicClient, http } from 'viem'
 
 export const supportedNftNetworks = [
     { vChain: mainnet, alchemyIdentifier: 'eth-mainnet' },
@@ -18,12 +19,20 @@ export function getChainFromChainId(id: number) {
     return supportedNftNetworks.find((n) => n.vChain.id === id)
 }
 
-export function generateAlchemyUrl(chainId: number, apiKey: string) {
+export function generateAlchemyNftUrl(chainId: number, apiKey: string) {
     const chain = getChainFromChainId(chainId)
     if (!chain) {
         throw new Error(`invalid chainId:: ${chainId}`)
     }
     return `https://${chain.alchemyIdentifier}.g.alchemy.com/nft/v3/${apiKey}`
+}
+
+export function generateAlchemyRpcUrl(chainId: number, apiKey: string) {
+    const chain = getChainFromChainId(chainId)
+    if (!chain) {
+        throw new Error(`invalid chainId:: ${chainId}`)
+    }
+    return `https://${chain.alchemyIdentifier}.g.alchemy.com/v2/${apiKey}`
 }
 
 export function withOpenSeaImage(
@@ -96,4 +105,14 @@ export function toContractMetadata(response: GetContractMetadataAlchemyResponse)
         tokenType: response.tokenType,
         imageUrl: response.openSeaMetadata?.imageUrl,
     }
+}
+
+export function generatePublicClients(alchemyApiKey: string) {
+    return supportedNftNetworks.map((n) => {
+        return createPublicClient({
+            chain: n.vChain,
+            transport: http(generateAlchemyRpcUrl(n.vChain.id, alchemyApiKey)),
+            pollingInterval: 2_000,
+        })
+    })
 }

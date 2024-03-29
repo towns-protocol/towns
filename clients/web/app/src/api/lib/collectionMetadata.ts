@@ -15,7 +15,7 @@ const metadataForSingleNetworkSchema: z.ZodType<ContractMetadata> = z.object({
     address: z.string().optional().nullable(),
     name: z.string().optional().nullable(),
     symbol: z.string().optional().nullable(),
-    tokenType: z.string(),
+    tokenType: z.nativeEnum(TokenType),
     imageUrl: z.string().optional().nullable(),
 })
 
@@ -27,7 +27,7 @@ const metadataAcrossNetworksSchema: z.ZodType<GetCollectionMetadataAcrossNetwork
                 address: z.string().optional().nullable(),
                 name: z.string().optional().nullable(),
                 symbol: z.string().optional().nullable(),
-                tokenType: z.string(),
+                tokenType: z.nativeEnum(TokenType),
                 imageUrl: z.string().optional().nullable(),
             }),
         }),

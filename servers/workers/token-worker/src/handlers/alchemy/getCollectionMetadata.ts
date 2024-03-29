@@ -5,6 +5,10 @@ import { fetchAlchemyContractMetadata, toContractMetadata } from '../../utils'
 export const getCollectionMetadata = async (request: TokenProviderRequest, env: Environment) => {
     const { rpcUrl, query } = request
 
+    if (!rpcUrl) {
+        return new Response('missing rpcUrl', { status: 400 })
+    }
+
     const { contractAddress } = query || {}
 
     let json

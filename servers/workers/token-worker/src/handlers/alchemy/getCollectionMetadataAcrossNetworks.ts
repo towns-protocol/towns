@@ -2,7 +2,7 @@ import { Environment, withCorsHeaders } from 'worker-common'
 import { TokenProviderRequest } from '../../types'
 import {
     fetchAlchemyContractMetadata,
-    generateAlchemyUrl,
+    generateAlchemyNftUrl,
     supportedNftNetworks,
     toContractMetadata,
 } from '../../utils'
@@ -21,7 +21,7 @@ export const getCollectionMetadataAcrossNetworks = async (
         const allResults = await Promise.all(
             supportedNftNetworks.map(async (network) => {
                 try {
-                    const rpcUrl = generateAlchemyUrl(network.vChain.id, alchemyApiKey)
+                    const rpcUrl = generateAlchemyNftUrl(network.vChain.id, alchemyApiKey)
                     const json = await fetchAlchemyContractMetadata(rpcUrl, contractAddress)
 
                     return {

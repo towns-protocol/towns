@@ -6,6 +6,10 @@ import { withOpenSeaImage, fetchAlchemyNfts } from '../../utils'
 export const getCollectionsForOwner = async (request: TokenProviderRequest, env: Environment) => {
     const { rpcUrl, params, query } = request
 
+    if (!rpcUrl) {
+        return new Response('missing rpcUrl', { status: 400 })
+    }
+
     const { wallet } = params || {}
 
     const pageKey = query?.pageKey || ''

@@ -5,6 +5,7 @@ import {
     OwnedNft,
     OpenSeaCollectionMetadata,
     GetContractsForOwnerResponse,
+    ContractForOwner,
 } from 'alchemy-sdk'
 import { AuthEnv, Environment } from 'worker-common'
 
@@ -16,7 +17,7 @@ export interface Env extends AuthEnv {
 }
 
 export interface TokenProviderRequest extends Request {
-    rpcUrl: string
+    rpcUrl?: string
     authHeader?: string
     params: IttyRequest['params']
     query: IttyRequest['query']
@@ -34,7 +35,7 @@ export interface GetCollectionMetadataInfuraResponse {
     contract: string
     name: string
     symbol: string
-    tokenType: string
+    tokenType: TokenType
 }
 
 export interface GetCollectionsForOwnerInfuraResponse {
@@ -48,7 +49,7 @@ export interface GetCollectionsForOwnerInfuraResponse {
         contract: string
         name: string
         symbol: string
-        tokenType: string
+        tokenType: TokenType
     }[]
 }
 
@@ -58,7 +59,12 @@ export interface GetNftsAlchemyResponse extends OwnedNftsResponse {
     pageKey?: string // override readonly
 }
 
-export type GetContractsForOwnerAlchemyResponse = GetContractsForOwnerResponse
+export type GetContractsForOwnerAlchemyResponse = Omit<
+    GetContractsForOwnerResponse,
+    'contracts'
+> & {
+    contracts: (Omit<ContractForOwner, 'tokenType'> & { tokenType: TokenType })[]
+}
 
 export interface GetContractMetadataAlchemyResponse extends ContractMetadata {
     address: string
@@ -67,7 +73,7 @@ export interface GetContractMetadataAlchemyResponse extends ContractMetadata {
     totalSupply: string
     contractDeployer: string
     deployedBlockNumber: number
-    tokenType: string
+    tokenType: TokenType
     openSeaMetadata: OpenSeaCollectionMetadata
 }
 
@@ -98,7 +104,7 @@ export type ContractMetadata = {
     address?: string | null
     name?: string | null
     symbol?: string | null
-    tokenType?: string
+    tokenType?: TokenType
     imageUrl?: string | null // from OpenSea data if available
 }
 
@@ -110,3 +116,11 @@ export type GetCollectionMetadataAcrossNetworksResponse = {
 // TODO: remove? we probably won't use this endpoint
 export type IsHolderOfCollectionAlchemyResponse = { isHolderOfCollection: boolean }
 export type IsHolderOfCollectionResponse = IsHolderOfCollectionAlchemyResponse
+
+export enum TokenType {
+    ERC1155 = 'ERC1155',
+    ERC721 = 'ERC721',
+    ERC20 = 'ERC20',
+    NOT_A_CONTRACT = 'NOT_A_CONTRACT',
+    UNKNOWN = 'UNKNOWN',
+}
