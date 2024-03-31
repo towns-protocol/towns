@@ -3,11 +3,12 @@
     "source.fixAll.eslint": "explicit"
   },
   "eslint.workingDirectories": [
-    "./core/proto",
-    "./core/debug-app",
-    "./core/waterproof",
-    "./core/sdk",
-    "./core/web3",
+    "./river/core/debug-app",
+    "./river/core/dlog",
+    "./river/core/encryption",
+    "./river/core/proto",
+    "./river/core/sdk",
+    "./river/core/web3",
     "./clients/web/app",
     "./clients/web/lib",
     "./clients/web/sample-app",
