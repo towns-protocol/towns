@@ -13,8 +13,8 @@ import { useConnectivity } from './use-connectivity'
 import { getTransactionHashOrUserOpHash } from '@towns/userops'
 import { isAddress } from 'viem'
 import { useSpaceDapp } from './use-space-dapp'
-import { useWeb3Context } from '../components/Web3ContextProvider'
 import { useOfflineStore } from '../store/use-offline-store'
+import { useTownsContext } from '../components/TownsContextProvider'
 
 export function useLinkWalletTransaction() {
     const { traceTransaction, ...rest } = useLinkTransactionBuilder()
@@ -175,7 +175,7 @@ export function useGetRootKeyFromLinkedWallet({
 }) {
     const { chainId: clientChainId } = useTownsClient()
     const _chainId = chainId ?? clientChainId
-    const { provider } = useWeb3Context()
+    const { baseProvider: provider } = useTownsContext()
     const spaceDapp = useSpaceDapp({
         chainId: _chainId,
         provider,

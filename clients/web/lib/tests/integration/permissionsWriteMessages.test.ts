@@ -140,7 +140,7 @@ describe('write messages', () => {
         await bob.inviteUser(spaceId, tokenGrantedUser.getUserId() as string)
         await tokenGrantedUser.joinTown(spaceId, tokenGrantedUser.wallet)
         await waitForWithRetries(() => tokenGrantedUser.joinRoom(channelId))
-        // bob send 25 messages (20 is our default initialSyncLimit)
+        // bob send 25 messages
         for (let i = 0; i < 25; i++) {
             await bob.sendMessage(channelId, `message ${i}`)
         }

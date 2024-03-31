@@ -95,14 +95,3 @@ export function mockUseConnectivity(): ReturnType<typeof Lib.useConnectivity> {
         loginError: null,
     }
 }
-
-export function mockUseWeb3Context() {
-    return {
-        sign: async () => undefined,
-        activeWalletAddress: '0x1234',
-        accounts: ['0x1234'],
-        chains: [],
-        isConnected: true,
-        walletStatus: 'connected',
-    }
-}

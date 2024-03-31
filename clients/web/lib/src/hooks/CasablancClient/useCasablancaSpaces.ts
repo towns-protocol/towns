@@ -4,10 +4,14 @@ import { SpaceItem } from '../../types/towns-types'
 import isEqual from 'lodash/isEqual'
 import { useContractSpaceInfos } from '../../hooks/use-space-data'
 import { useOfflineStore } from '../../store/use-offline-store'
+import { TownsOpts } from '../../client/TownsClientTypes'
 
-export function useCasablancaSpaces(casablancaClient?: CasablancaClient): SpaceItem[] {
+export function useCasablancaSpaces(
+    opts: TownsOpts,
+    casablancaClient?: CasablancaClient,
+): SpaceItem[] {
     const [spaces, setSpaces] = useState<SpaceItem[]>([])
-    const { data: spaceInfos } = useContractSpaceInfos(casablancaClient)
+    const { data: spaceInfos } = useContractSpaceInfos(opts, casablancaClient)
     const { offlineSpaceInfoMap: spaceNamesInLocalStore } = useOfflineStore()
     const userStreamId = casablancaClient?.userStreamId
     useEffect(() => {

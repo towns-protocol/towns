@@ -10,7 +10,6 @@ export {
     TownsContext,
     type InitialSyncSortPredicate,
 } from './components/TownsContextProvider'
-export { useWeb3Context } from './components/Web3ContextProvider'
 export type { DMChannelIdentifier } from './types/dm-channel-identifier'
 export * from './components/UserLookupContextProviders'
 
@@ -122,6 +121,7 @@ export * from './types/error-types'
 export * from './utils/towns-utils'
 export * from './utils/crypto-utils'
 export * from './utils/analyticsService'
+export * from './utils/provider-utils'
 export * from './utils/web3'
 
 // buffer hack required for casalanca: https://github.com/randlabs/myalgo-connect/issues/27

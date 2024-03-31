@@ -7,11 +7,11 @@ import { Client as CasablancaClient, Stream, isSpaceStreamId } from '@river/sdk'
 import isEqual from 'lodash/isEqual'
 import { useSpaceDapp } from './use-space-dapp'
 import { SpaceInfo } from '@river-build/web3'
-import { useWeb3Context } from '../components/Web3ContextProvider'
 import { useQuery, useQueries, defaultStaleTime } from '../query/queryClient'
 import { blockchainKeys } from '../query/query-keys'
 import { isDefined } from '../utils/isDefined'
 import { useOfflineStore } from '../store/use-offline-store'
+import { TownsOpts } from 'client/TownsClientTypes'
 
 const EMPTY_SPACE_INFOS: SpaceInfo[] = []
 
@@ -36,11 +36,12 @@ export const useInviteData = (slug: string | undefined) => {
         [invites, slug],
     )
 }
-export function useContractSpaceInfos(client?: CasablancaClient) {
-    const { provider, chain } = useWeb3Context()
+export function useContractSpaceInfos(opts: TownsOpts, client?: CasablancaClient) {
+    const provider = opts.baseProvider
+    const chainId = opts.baseChainId
 
     const spaceDapp = useSpaceDapp({
-        chainId: chain?.id,
+        chainId,
         provider,
     })
     const { offlineSpaceInfoMap, setOfflineSpaceInfo } = useOfflineStore()
@@ -129,7 +130,7 @@ export const useContractSpaceInfo = (
     spaceId: string | undefined,
 ): { data: SpaceInfo | undefined; isLoading: boolean; error: unknown } => {
     const { offlineSpaceInfoMap, setOfflineSpaceInfo } = useOfflineStore()
-    const { provider, chain } = useWeb3Context()
+    const { baseProvider: provider, baseChain: chain } = useTownsContext()
     const spaceDapp = useSpaceDapp({
         chainId: chain?.id,
         provider,

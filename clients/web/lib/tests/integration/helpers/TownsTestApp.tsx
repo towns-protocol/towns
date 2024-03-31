@@ -8,8 +8,6 @@ import { useTownsErrorStore } from '../../../src/hooks/use-towns-client'
 
 interface Props {
     provider: TownsTestWeb3Provider
-    initialSyncLimit?: number
-    pollTimeoutMs?: number
     chainId?: number
     children: JSX.Element
 }

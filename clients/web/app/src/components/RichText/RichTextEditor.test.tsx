@@ -1,14 +1,25 @@
 import { render, screen } from '@testing-library/react'
 import React from 'react'
 import { UserLookupContext } from 'use-towns-client/dist/components/UserLookupContext'
-import { ChannelContextProvider, SpaceContextProvider, TownsContext } from 'use-towns-client'
+import {
+    ChannelContextProvider,
+    SpaceContextProvider,
+    TownsContext,
+    makeProviderFromChain,
+    makeProviderFromConfig,
+} from 'use-towns-client'
 import { describe, expect, test } from 'vitest'
+import { anvilRiverChain, foundryClone } from 'customChains'
 import { RichTextEditor } from './RichTextEditor'
 
 const Wrapper = (props: { children: React.ReactElement }) => {
     return (
         <TownsContext.Provider
             value={{
+                baseChain: foundryClone,
+                baseProvider: makeProviderFromChain(foundryClone),
+                riverChain: anvilRiverChain,
+                riverProvider: makeProviderFromConfig(anvilRiverChain),
                 rooms: {},
                 spaceUnreads: {},
                 spaceMentions: {},

@@ -1,11 +1,11 @@
 import { useQuery } from '../query/queryClient'
 import { blockchainKeys } from '../query/query-keys'
 import { useTownsClient } from './use-towns-client'
-import { useWeb3Context } from '../components/Web3ContextProvider'
 import { useSpaceDapp } from './use-space-dapp'
 import { useCallback } from 'react'
 import { useLinkedWallets } from './use-linked-wallets'
 import { useMyUserId } from './use-my-user-id'
+import { useTownsContext } from '../components/TownsContextProvider'
 
 export function useHasMemberNft({
     spaceId,
@@ -15,7 +15,7 @@ export function useHasMemberNft({
     enabled?: boolean
 }) {
     const { chainId } = useTownsClient()
-    const { provider } = useWeb3Context()
+    const { baseProvider: provider } = useTownsContext()
     const spaceDapp = useSpaceDapp({
         chainId,
         provider,

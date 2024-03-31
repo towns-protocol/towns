@@ -9,7 +9,6 @@ import {
     credentialsToSignerContext,
     useCredentialStore,
 } from '../store/use-credential-store'
-import { useWeb3Context } from '../components/Web3ContextProvider'
 import { useCasablancaStore } from '../store/use-casablanca-store'
 import EventEmitter from 'events'
 import TypedEmitter from 'typed-emitter'
@@ -17,15 +16,7 @@ import { staticAssertNever } from '../utils/towns-utils'
 import AnalyticsService, { AnalyticsEvents } from '../utils/analyticsService'
 import { useNetworkStatus } from './use-network-status'
 
-export const useTownsClientListener = (opts: {
-    chainId: number
-    casablancaServerUrl?: string
-    pushNotificationWorkerUrl?: string
-    pushNotificationAuthToken?: string
-    accountAbstractionConfig: TownsOpts['accountAbstractionConfig']
-    highPriorityStreamIds?: string[]
-}) => {
-    const { provider, riverChain, riverChainProvider } = useWeb3Context()
+export const useTownsClientListener = (opts: TownsOpts) => {
     const { setLoginStatus: setCasablancaLoginStatus, setLoginError: setCasablancaLoginError } =
         useCasablancaStore()
     const { casablancaCredentialsMap, clearCasablancaCredentials } = useCredentialStore()
@@ -35,19 +26,11 @@ export const useTownsClientListener = (opts: {
     const { isOffline } = useNetworkStatus()
 
     if (!clientSingleton.current) {
-        const townsClient = new TownsClient({
-            ...opts,
-            web3Provider: provider,
-            riverChainId: riverChain.chainId,
-            riverChainProvider: riverChainProvider,
-        })
+        const townsClient = new TownsClient(opts)
         clientSingleton.current = new ClientStateMachine(townsClient)
     }
 
-    logServerUrlMismatch(
-        { ...opts, riverChainId: riverChain.chainId, riverChainProvider: riverChainProvider },
-        clientSingleton,
-    )
+    logServerUrlMismatch(opts.casablancaServerUrl, clientSingleton)
 
     useEffect(() => {
         if (!casablancaClient) {
@@ -257,14 +240,14 @@ function logTick(client: TownsClient, situation: Situations, transition?: Transi
 }
 
 function logServerUrlMismatch(
-    opts: TownsOpts,
+    casablancaServerUrl: string | undefined,
     clientSingleton: MutableRefObject<ClientStateMachine | undefined>,
 ) {
-    if (opts.casablancaServerUrl !== clientSingleton.current?.client.opts.casablancaServerUrl) {
+    if (casablancaServerUrl !== clientSingleton.current?.client.opts.casablancaServerUrl) {
         // aellis there is an assumption in this code that the casablanca server url never changes
         // if it does change, we need to refresh the page to recreate the client
         console.error("$$$ use towns client listener: casablancaServerUrl doesn't match", {
-            opts: opts.casablancaServerUrl,
+            opts: casablancaServerUrl,
             client: clientSingleton.current?.client.opts.casablancaServerUrl,
         })
     }

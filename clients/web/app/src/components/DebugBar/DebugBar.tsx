@@ -3,7 +3,7 @@ import { Address, useBalance, useNetwork } from 'wagmi'
 import { useSwitchNetwork } from '@privy-io/wagmi-connector'
 import { useEvent } from 'react-use-event-hook'
 import { ethers, providers } from 'ethers'
-import { mintMockNFT, useConnectivity, useWeb3Context } from 'use-towns-client'
+import { mintMockNFT, useConnectivity, useTownsContext } from 'use-towns-client'
 import { debug } from 'debug'
 import { isAddress } from 'ethers/lib/utils'
 import { usePrivy } from '@privy-io/react-auth'
@@ -158,7 +158,7 @@ const DebugModal = ({
     onSwitchEnvironment,
     onClear,
 }: ModalProps) => {
-    const { provider } = useWeb3Context()
+    const { baseProvider: provider } = useTownsContext()
     const { chain: walletChain } = useNetwork()
     const { logout: libLogout } = useConnectivity()
     const { logout: fullLogout, loggedInWalletAddress } = useAuth()

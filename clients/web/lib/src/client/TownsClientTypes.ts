@@ -5,12 +5,10 @@ import { UserOpsConfig } from '@towns/userops'
 
 export interface TownsOpts {
     casablancaServerUrl?: string
-    chainId: number
-    initialSyncLimit?: number
-    pollTimeoutMs?: number
-    web3Provider?: TProvider
+    baseChainId: number
+    baseProvider: TProvider
     riverChainId: number
-    riverChainProvider?: TProvider
+    riverProvider?: TProvider
     eventHandlers?: TownsClientEventHandlers
     logNamespaceFilter?: string
     pushNotificationWorkerUrl?: string

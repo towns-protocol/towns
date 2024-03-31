@@ -1,4 +1,4 @@
-import { Address, useMyUserId, useSpaceDapp, useWeb3Context } from 'use-towns-client'
+import { Address, useMyUserId, useSpaceDapp, useTownsContext } from 'use-towns-client'
 import { useQuery } from '@tanstack/react-query'
 import { useAbstractAccountAddress } from './useAbstractAccountAddress'
 
@@ -9,7 +9,7 @@ export function useIsSmartAccountDeployed() {
     const { data: abstractAccountAddress } = useAbstractAccountAddress({
         rootKeyAddress: userId as Address | undefined,
     })
-    const { provider, chain } = useWeb3Context()
+    const { baseProvider: provider, baseChain: chain } = useTownsContext()
     const spaceDapp = useSpaceDapp({
         provider,
         chainId: chain?.id,

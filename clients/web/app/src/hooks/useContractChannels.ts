@@ -1,6 +1,5 @@
 import { useQuery } from '@tanstack/react-query'
-import { ISpaceDapp, useSpaceDapp, useWeb3Context } from 'use-towns-client'
-import { useEnvironment } from './useEnvironmnet'
+import { ISpaceDapp, useSpaceDapp, useTownsContext } from 'use-towns-client'
 
 async function getChannels(spaceId: string | undefined, spaceDapp: ISpaceDapp | undefined) {
     if (spaceId && spaceDapp) {
@@ -14,8 +13,8 @@ async function getChannels(spaceId: string | undefined, spaceDapp: ISpaceDapp | 
 const queryKey = 'spaceDappGetChannels'
 
 export const useContractChannels = (spaceId: string | undefined) => {
-    const { provider } = useWeb3Context()
-    const { chainId } = useEnvironment()
+    const { baseProvider: provider, baseChain: chain } = useTownsContext()
+    const chainId = chain.id
 
     const spaceDapp = useSpaceDapp({
         chainId,

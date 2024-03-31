@@ -8,8 +8,8 @@ import {
     staleTime24Hours,
     useOfflineStore,
     useSpaceDapp,
+    useTownsContext,
     useUserLookupContext,
-    useWeb3Context,
 } from 'use-towns-client'
 import { UserOps } from '@towns/userops'
 import { useAccountAbstractionConfig } from 'userOpConfig'
@@ -179,8 +179,8 @@ export function isAbstractAccountAddress({
 // so we use a userOps instance instead of townsClient.getAbstractAccountAddress
 // b/c the latter requires a client, which requires a logged in user
 function useUserOpsInstance() {
-    const { provider } = useWeb3Context()
-    const { chainId } = useEnvironment()
+    const { baseProvider: provider, baseChain: chain } = useTownsContext()
+    const chainId = chain.id
 
     const spaceDapp = useSpaceDapp({
         chainId,

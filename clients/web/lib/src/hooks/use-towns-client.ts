@@ -220,7 +220,7 @@ export function useTownsClient(): TownsClientImpl {
     const resetFullyReadMarkers = useResetFullyReadMarkers()
 
     return {
-        chainId: client?.opts.chainId,
+        chainId: client?.opts.baseChainId,
         client,
         clientRunning,
         spaceDapp: client?.spaceDapp,

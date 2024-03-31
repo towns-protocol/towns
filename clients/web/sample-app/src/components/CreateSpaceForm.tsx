@@ -10,7 +10,7 @@ import {
     useConnectivity,
     useCreateSpaceTransaction,
     useTownsClient,
-    useWeb3Context,
+    useTownsContext,
 } from 'use-towns-client'
 import {
     MembershipStruct,
@@ -23,7 +23,6 @@ import React, { useCallback, useEffect, useMemo, useRef, useState } from 'react'
 import { ethers } from 'ethers'
 import { useGetEmbeddedSigner } from '@towns/privy'
 import { MembershipRequirement, SpaceRoleSettings } from 'routes/SpaceRoleSettings'
-import { useEnvironment } from 'hooks/use-environment'
 import { ChainSwitchingButton } from './Buttons/ChainSwitchingButton'
 
 interface Props {
@@ -38,9 +37,10 @@ type FormValues = {
 }
 
 export const CreateSpaceForm = (props: Props) => {
-    const { chain } = useWeb3Context()
+    const { baseChain: chain } = useTownsContext()
+    const chainId = chain.id
+    const chainName = chain.name
     const { loggedInWalletAddress } = useConnectivity()
-    const { chainName, chainId } = useEnvironment()
     const { chain: walletChain } = useNetwork()
     const { loginStatus: casablancaLoginStatus } = useCasablancaStore()
     const { client } = useTownsClient()
@@ -303,8 +303,8 @@ export const CreateSpaceForm = (props: Props) => {
 }
 
 const LocalhostWalletInfo = (props: { accountId: Address }) => {
-    const { provider } = useWeb3Context()
-    const { chainId } = useEnvironment()
+    const { baseProvider: provider, baseChain: chain } = useTownsContext()
+    const chainId = chain.id
     const { accountId } = props
     const balance = useBalance({
         address: accountId,

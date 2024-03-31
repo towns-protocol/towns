@@ -2,9 +2,9 @@ import { useQuery, useQueryClient } from '../query/queryClient'
 
 import { blockchainKeys } from '../query/query-keys'
 import { useCallback } from 'react'
-import { useWeb3Context } from '../components/Web3ContextProvider'
 import { useSpaceDapp } from './use-space-dapp'
 import { RoleDetails } from '../types/web3-types'
+import { useTownsContext } from '../components/TownsContextProvider'
 /**
  * Convience function to get space role details.
  */
@@ -17,7 +17,7 @@ export function useRoleDetails(
     roleDetails: RoleDetails | undefined | null
     error: unknown
 } {
-    const { provider, chain } = useWeb3Context()
+    const { baseProvider: provider, baseChain: chain } = useTownsContext()
 
     const spaceDapp = useSpaceDapp({
         chainId: chain?.id,
@@ -59,7 +59,7 @@ export function useRoleDetails(
 
 export function useMultipleRoleDetails(spaceId: string, roleIds: number[]) {
     const queryClient = useQueryClient()
-    const { provider, chain } = useWeb3Context()
+    const { baseProvider: provider, baseChain: chain } = useTownsContext()
 
     const spaceDapp = useSpaceDapp({
         chainId: chain?.id,

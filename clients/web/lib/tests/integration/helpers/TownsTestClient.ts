@@ -63,11 +63,10 @@ export class TownsTestClient extends TownsClient {
         super(
             {
                 casablancaServerUrl: process.env.CASABLANCA_SERVER_URL!,
-                chainId,
+                baseChainId: chainId,
+                baseProvider: provider,
                 riverChainId: provider.riverChainId,
-                riverChainProvider: provider.riverChainProvider,
-                initialSyncLimit: 20,
-                web3Provider: provider,
+                riverProvider: provider.riverChainProvider,
                 eventHandlers: props?.eventHandlers,
                 accountAbstractionConfig: props?.accountAbstractionConfig,
                 verbose: true,

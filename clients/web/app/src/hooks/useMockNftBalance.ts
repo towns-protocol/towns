@@ -1,14 +1,13 @@
 import { useQuery } from '@tanstack/react-query'
 import { balanceOfMockNFT } from '@river-build/web3'
 import { Address } from 'wagmi'
-import { useWeb3Context } from 'use-towns-client'
-import { useEnvironment } from './useEnvironmnet'
+import { useTownsContext } from 'use-towns-client'
 
 const QUERY_KEY = 'balanceOfMockNFT'
 
 export function useMockNftBalance(address: Address) {
-    const { provider } = useWeb3Context()
-    const chainId = useEnvironment().chainId
+    const { baseProvider: provider, baseChain: chain } = useTownsContext()
+    const chainId = chain.id
 
     return useQuery({
         queryKey: [QUERY_KEY, chainId, address],

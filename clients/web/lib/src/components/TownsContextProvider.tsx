@@ -1,4 +1,4 @@
-import React, { createContext, useContext, useEffect, useRef } from 'react'
+import React, { createContext, useContext, useEffect, useMemo, useRef } from 'react'
 import { TownsClient } from '../client/TownsClient'
 import { useContentAwareTimelineDiffCasablanca } from '../hooks/TownsContext/useContentAwareTimelineDiff'
 import { useSpacesIds } from '../hooks/TownsContext/useSpaceIds'
@@ -7,7 +7,6 @@ import { useSpaces } from '../hooks/TownsContext/useSpaces'
 import { useCasablancaSpaceHierarchies } from '../hooks/TownsContext/useCasablancaSpaceHierarchies'
 import { useTownsClientListener } from '../hooks/use-towns-client-listener'
 import { Room, SpaceHierarchies, SpaceItem } from '../types/towns-types'
-import { Web3ContextProvider } from './Web3ContextProvider'
 import { QueryProvider } from './QueryProvider'
 import { Client as CasablancaClient, ClientInitStatus } from '@river/sdk'
 import { useCasablancaTimelines } from '../hooks/TownsContext/useCasablancaTimelines'
@@ -21,8 +20,9 @@ import { useClientInitStatus } from '../hooks/TownsContext/useClientInitStatus'
 import { GlobalContextUserLookupProvider } from './UserLookupContextProviders'
 import { TownsOpts } from '../client/TownsClientTypes'
 import { Chain } from 'viem/chains'
-import { IChainConfig } from '../types/web3-types'
+import { IChainConfig, TProvider } from '../types/web3-types'
 import { SnapshotCaseType } from '@river-build/proto'
+import { makeProviderFromChain, makeProviderFromConfig } from '../utils/provider-utils'
 
 export type InitialSyncSortPredicate = (a: string, b: string) => number
 
@@ -31,6 +31,10 @@ export interface ITownsContext {
     client?: TownsClient /// only set when user is authenticated
     clientSingleton?: TownsClient /// always set, can be use for , this duplication can be removed once we transition to casablanca
     casablancaClient?: CasablancaClient /// set if we're logged in and casablanca client is started
+    baseChain: Chain
+    baseProvider: TProvider
+    riverChain: IChainConfig
+    riverProvider: TProvider
     rooms: Record<string, Room | undefined>
     spaceUnreads: Record<string, boolean> // spaceId -> aggregated hasUnread
     spaceMentions: Record<string, number | undefined> // spaceId -> aggregated mentionCount
@@ -77,16 +81,12 @@ export function TownsContextProvider({
 }: TownsContextProviderProps): JSX.Element {
     return (
         <QueryClientProvider>
-            <Web3ContextProvider chain={props.chain} riverChain={props.riverChain}>
-                <TownsContextImplMemo {...props}></TownsContextImplMemo>
-            </Web3ContextProvider>
+            <TownsContextImplMemo {...props}></TownsContextImplMemo>
         </QueryClientProvider>
     )
 }
 
 const TownsContextImpl = (props: TownsContextProviderProps): JSX.Element => {
-    const { mutedChannelIds } = props
-
     let hookCounter = 0
 
     function useHookLogger() {
@@ -98,7 +98,14 @@ const TownsContextImpl = (props: TownsContextProviderProps): JSX.Element => {
         }, [])
     }
 
-    const { casablancaServerUrl, enableSpaceRootUnreads = false, timelineFilter } = props
+    const {
+        casablancaServerUrl,
+        enableSpaceRootUnreads = false,
+        timelineFilter,
+        mutedChannelIds,
+        chain: baseChain,
+        riverChain,
+    } = props
 
     const previousProps = useRef<TownsContextProviderProps>()
 
@@ -115,18 +122,42 @@ const TownsContextImpl = (props: TownsContextProviderProps): JSX.Element => {
 
     previousProps.current = props
 
-    const { client, clientSingleton, casablancaClient } = useTownsClientListener({
-        chainId: props.chain.id,
-        casablancaServerUrl: props.casablancaServerUrl,
-        pushNotificationAuthToken: props.pushNotificationAuthToken,
-        pushNotificationWorkerUrl: props.pushNotificationWorkerUrl,
-        accountAbstractionConfig: props.accountAbstractionConfig,
-        highPriorityStreamIds: props.highPriorityStreamIds,
-    })
+    const baseProvider = useMemo(() => {
+        return makeProviderFromChain(baseChain)
+    }, [baseChain])
+    const riverProvider = useMemo(() => {
+        return makeProviderFromConfig(riverChain)
+    }, [riverChain])
+
+    const townsOpts = useMemo(() => {
+        return {
+            casablancaServerUrl,
+            baseChainId: baseChain.id,
+            baseProvider,
+            riverChainId: riverChain.chainId,
+            riverProvider,
+            pushNotificationAuthToken: props.pushNotificationAuthToken,
+            pushNotificationWorkerUrl: props.pushNotificationWorkerUrl,
+            accountAbstractionConfig: props.accountAbstractionConfig,
+            highPriorityStreamIds: props.highPriorityStreamIds,
+        } satisfies TownsOpts
+    }, [
+        baseChain,
+        baseProvider,
+        casablancaServerUrl,
+        props.accountAbstractionConfig,
+        props.highPriorityStreamIds,
+        props.pushNotificationAuthToken,
+        props.pushNotificationWorkerUrl,
+        riverChain,
+        riverProvider,
+    ])
+
+    const { client, clientSingleton, casablancaClient } = useTownsClientListener(townsOpts)
     useSpacesIds(casablancaClient)
     useContentAwareTimelineDiffCasablanca(casablancaClient)
     const { clientStatus } = useClientInitStatus(casablancaClient)
-    const { spaces } = useSpaces(casablancaClient)
+    const { spaces } = useSpaces(townsOpts, casablancaClient)
     const { channels: dmChannels } = useCasablancaDMs(casablancaClient)
     const spaceHierarchies = useCasablancaSpaceHierarchies(casablancaClient)
 
@@ -140,7 +171,7 @@ const TownsContextImpl = (props: TownsContextProviderProps): JSX.Element => {
     const { dmUnreadChannelIds } = useDMUnreads(casablancaClient, dmChannels)
     useHookLogger()
 
-    const rooms = useCasablancaRooms(casablancaClient)
+    const rooms = useCasablancaRooms(townsOpts, casablancaClient)
     const dynamicTimelineFilter = useTimelineFilter((state) => state.eventFilter)
     useCasablancaTimelines(
         casablancaClient,
@@ -155,6 +186,10 @@ const TownsContextImpl = (props: TownsContextProviderProps): JSX.Element => {
                 client,
                 clientSingleton,
                 casablancaClient,
+                baseChain,
+                baseProvider,
+                riverChain,
+                riverProvider,
                 rooms,
                 spaceUnreads,
                 spaceMentions,

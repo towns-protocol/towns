@@ -1,10 +1,10 @@
-import { useWeb3Context } from '../components/Web3ContextProvider'
 import { useSpaceDapp } from './use-space-dapp'
 import { staleTime24Hours, useQuery } from '../query/queryClient'
 import { blockchainKeys } from '../query/query-keys'
+import { useTownsContext } from '../components/TownsContextProvider'
 
 export function usePricingModules() {
-    const { provider, chain } = useWeb3Context()
+    const { baseProvider: provider, baseChain: chain } = useTownsContext()
 
     const spaceDapp = useSpaceDapp({
         chainId: chain?.id,

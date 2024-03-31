@@ -253,7 +253,7 @@ test.skip('join_space_gated_2_NFT_2_wallet', async () => {
 
     assert(txHash !== undefined, 'linkWallet failed')
     if (txHash) {
-        const receipt = await bob1.opts.web3Provider?.waitForTransaction(txHash)
+        const receipt = await bob1.opts.baseProvider?.waitForTransaction(txHash)
         expect(receipt?.status).toEqual(1)
     }
     expect(tx_link.error).toBeUndefined()

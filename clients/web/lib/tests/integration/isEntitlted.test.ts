@@ -227,7 +227,7 @@ describe.skip('isEntitledToSpace and isEntitledToChannel tests', () => {
         const txHash = await getTransactionHashFromTransactionOrUserOp(tx_link.transaction)
 
         if (txHash) {
-            await bob.opts.web3Provider?.waitForTransaction(txHash)
+            await bob.opts.baseProvider?.waitForTransaction(txHash)
         }
         expect(tx_link.error).toBeUndefined()
         expect(txHash).toBeDefined()
@@ -273,7 +273,7 @@ describe.skip('isEntitledToSpace and isEntitledToChannel tests', () => {
         const txHash = await getTransactionHashFromTransactionOrUserOp(tx_link.transaction)
 
         if (txHash) {
-            await bob.opts.web3Provider?.waitForTransaction(txHash)
+            await bob.opts.baseProvider?.waitForTransaction(txHash)
         }
         expect(tx_link.error).toBeUndefined()
         expect(txHash).toBeDefined()

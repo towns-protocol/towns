@@ -4,7 +4,7 @@ import { useQuery, useQueryClient } from '../query/queryClient'
 import { blockchainKeys } from '../query/query-keys'
 import { getFilteredRolesFromSpace } from '@river-build/web3'
 import { useSpaceDapp } from './use-space-dapp'
-import { useWeb3Context } from '../components/Web3ContextProvider'
+import { useTownsContext } from '../components/TownsContextProvider'
 
 /**
  * Convience function to get space roles.
@@ -12,7 +12,7 @@ import { useWeb3Context } from '../components/Web3ContextProvider'
 export function useRoles(_spaceId: string | undefined) {
     const spaceId = _spaceId && _spaceId.length > 0 ? _spaceId : ''
     const queryClient = useQueryClient()
-    const { provider, chain } = useWeb3Context()
+    const { baseProvider: provider, baseChain: chain } = useTownsContext()
 
     const spaceDapp = useSpaceDapp({
         chainId: chain?.id,

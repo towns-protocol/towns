@@ -11,10 +11,14 @@ import { SpaceInfo } from '@river-build/web3'
 import { RoomMember, Membership, Room, toMembership } from '../../types/towns-types'
 import isEqual from 'lodash/isEqual'
 import { useContractSpaceInfos } from '../use-space-data'
+import { TownsOpts } from '../../client/TownsClientTypes'
 
-export function useCasablancaRooms(client?: CasablancaClient): Record<string, Room | undefined> {
+export function useCasablancaRooms(
+    opts: TownsOpts,
+    client?: CasablancaClient,
+): Record<string, Room | undefined> {
     const [rooms, setRooms] = useState<Record<string, Room | undefined>>({})
-    const { data: spaceInfos, isLoading } = useContractSpaceInfos(client)
+    const { data: spaceInfos, isLoading } = useContractSpaceInfos(opts, client)
 
     //TODO: placeholder for working with Rooms in Casablanca
     useEffect(() => {

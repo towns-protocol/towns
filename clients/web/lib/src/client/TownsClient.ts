@@ -96,14 +96,14 @@ export class TownsClient implements EntitlementsDelegate {
         console.log('~~~ new TownsClient ~~~', this.name, this.opts)
         AnalyticsService.getInstance().trackEventOnce(AnalyticsEvents.ClientWrapperCreated)
         this.spaceDapp = createSpaceDapp({
-            chainId: opts.chainId,
-            provider: opts.web3Provider,
+            chainId: opts.baseChainId,
+            provider: opts.baseProvider,
         })
 
         if (opts.accountAbstractionConfig?.aaRpcUrl) {
             this.userOps = new UserOps({
                 ...opts.accountAbstractionConfig,
-                provider: opts.web3Provider,
+                provider: opts.baseProvider,
                 spaceDapp: this.spaceDapp,
             })
         }
@@ -122,7 +122,7 @@ export class TownsClient implements EntitlementsDelegate {
     }
 
     public get chainId(): number {
-        return this.opts.chainId
+        return this.opts.baseChainId
     }
 
     public isAccountAbstractionEnabled() {
@@ -185,7 +185,7 @@ export class TownsClient implements EntitlementsDelegate {
         if (!this.opts.casablancaServerUrl) {
             throw new Error('casablancaServerUrl is required')
         }
-        if (!this.opts.riverChainProvider) {
+        if (!this.opts.riverProvider) {
             throw new Error('riverChainProvider is required')
         }
         this._signerContext = context
@@ -197,7 +197,7 @@ export class TownsClient implements EntitlementsDelegate {
         } else {
             rpcClient = await makeRiverRpcClient({
                 chainId: this.opts.riverChainId,
-                provider: this.opts.riverChainProvider,
+                provider: this.opts.riverProvider,
             })
         }
         // get storage
@@ -211,7 +211,7 @@ export class TownsClient implements EntitlementsDelegate {
             rpcClient,
             cryptoStore,
             this,
-            `persistence-${userId}-${this.opts.chainId}`,
+            `persistence-${userId}-${this.opts.baseChainId}`,
             this.opts.logNamespaceFilter,
             this.opts.highPriorityStreamIds,
         )
@@ -1827,11 +1827,11 @@ export class TownsClient implements EntitlementsDelegate {
     }
 
     /*
-     * Error when web3Provider.waitForTransaction receipt has a status of 0
+     * Error when baseProvider.waitForTransaction receipt has a status of 0
      */
     private async throwTransactionError(receipt: ContractReceipt): Promise<Error> {
         try {
-            const code = await this.opts.web3Provider?.call(receipt, receipt.blockNumber)
+            const code = await this.opts.baseProvider?.call(receipt, receipt.blockNumber)
             const reason = toUtf8String(`0x${code?.substring(138) || ''}`)
             throw new Error(reason)
         } catch (error) {
@@ -1972,14 +1972,14 @@ export class TownsClient implements EntitlementsDelegate {
                     }
 
                     // we probably don't need to wait for this transaction, but for now we can convert it to a receipt for less refactoring
-                    receipt = await this.opts.web3Provider?.waitForTransaction(
+                    receipt = await this.opts.baseProvider?.waitForTransaction(
                         userOpEvent.transactionHash,
                     )
                 } else {
                     throw new Error(`[_waitForBlockchainTransaction] userOpEvent is undefined`)
                 }
             } else {
-                receipt = await this.opts.web3Provider?.waitForTransaction(transaction.hash)
+                receipt = await this.opts.baseProvider?.waitForTransaction(transaction.hash)
             }
 
             if (receipt?.status === 1) {

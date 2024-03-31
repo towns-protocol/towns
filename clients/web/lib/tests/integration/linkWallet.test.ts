@@ -16,7 +16,7 @@ describe('Link Wallet', () => {
         const txHash = await getTransactionHashFromTransactionOrUserOp(tx_link.transaction)
 
         if (txHash) {
-            await alice.opts.web3Provider?.waitForTransaction(txHash)
+            await alice.opts.baseProvider?.waitForTransaction(txHash)
         }
         expect(tx_link.error).toBeUndefined()
         expect(txHash).toBeDefined()
@@ -42,7 +42,7 @@ describe('Link Wallet', () => {
         )
 
         if (txHashAgain) {
-            await alice.opts.web3Provider?.waitForTransaction(txHashAgain)
+            await alice.opts.baseProvider?.waitForTransaction(txHashAgain)
         }
 
         expect(tx_link_again.error).toBeDefined()
@@ -56,7 +56,7 @@ describe('Link Wallet', () => {
         )
         const txHashRemove = await getTransactionHashFromTransactionOrUserOp(tx_remove.transaction)
         if (txHashRemove) {
-            await alice.opts.web3Provider?.waitForTransaction(txHashRemove)
+            await alice.opts.baseProvider?.waitForTransaction(txHashRemove)
         }
 
         expect(tx_remove.error).toBeUndefined()
@@ -67,7 +67,7 @@ describe('Link Wallet', () => {
             tx_link_again_bob.transaction,
         )
         if (txHashAgainBob) {
-            await alice.opts.web3Provider?.waitForTransaction(txHashAgainBob)
+            await alice.opts.baseProvider?.waitForTransaction(txHashAgainBob)
         }
         expect(tx_link_again_bob.error).toBeUndefined()
 
@@ -84,7 +84,7 @@ describe('Link Wallet', () => {
         const tx_link = await bob.linkWallet(bob.provider.wallet, metamaskWallet)
         const txHash = await getTransactionHashFromTransactionOrUserOp(tx_link.transaction)
         if (txHash) {
-            await alice.opts.web3Provider?.waitForTransaction(txHash)
+            await alice.opts.baseProvider?.waitForTransaction(txHash)
         }
         expect(tx_link.error).toBeUndefined()
         expect(txHash).toBeDefined()
@@ -109,7 +109,7 @@ describe('Link Wallet', () => {
         )
 
         if (joinTx?.hash) {
-            await alice.opts.web3Provider?.waitForTransaction(joinTx?.hash)
+            await alice.opts.baseProvider?.waitForTransaction(joinTx?.hash)
         }
 
         const isEntitledToSpace = await bob.isEntitled(
