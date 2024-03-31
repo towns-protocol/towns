@@ -65,6 +65,6 @@ export type TransactionOrUserOperation = ContractTransaction | ISendUserOperatio
 
 export interface IChainConfig {
     chainId: number
-    name?: string
+    name: string
     rpcUrl: string
 }

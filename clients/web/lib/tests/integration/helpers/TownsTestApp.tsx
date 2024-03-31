@@ -5,6 +5,7 @@ import { TownsContextProvider } from '../../../src/components/TownsContextProvid
 import { TownsTestWeb3Provider } from './TownsTestWeb3Provider'
 import { foundry } from 'viem/chains'
 import { useTownsErrorStore } from '../../../src/hooks/use-towns-client'
+import { IChainConfig } from '../../../src/types/web3-types'
 
 interface Props {
     provider: TownsTestWeb3Provider
@@ -20,9 +21,9 @@ export const TownsTestApp = (props: Props) => {
     const riverChainId = parseInt(process.env.RIVER_CHAIN_ID!)
     const riverChain = {
         rpcUrl: riverChainUrl,
+        name: 'river_chain',
         chainId: riverChainId,
-        provider: provider.riverChainProvider,
-    }
+    } satisfies IChainConfig
     Object.defineProperty(window, 'ethereum', {
         value: provider,
         writable: true,
