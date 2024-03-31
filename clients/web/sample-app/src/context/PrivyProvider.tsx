@@ -1,4 +1,4 @@
-import React, { useMemo } from 'react'
+import React from 'react'
 import { baseSepolia, foundry, localhost } from 'wagmi/chains'
 import { configureChains } from 'wagmi'
 import { jsonRpcProvider } from 'wagmi/providers/jsonRpc'
@@ -6,7 +6,6 @@ import { publicProvider } from 'wagmi/providers/public'
 import { PrivyProvider as _PrivyProvider } from '@privy-io/react-auth'
 import { PrivyProvider as TownsPrivyProvider } from '@towns/privy'
 import { useEnvironment } from 'hooks/use-environment'
-import { ENVIRONMENTS } from 'utils/environment'
 
 const PROVIDER_HTTP_URL = import.meta.env.VITE_PROVIDER_HTTP_URL ?? ''
 const PROVIDER_WS_URL = import.meta.env.VITE_PROVIDER_WS_URL ?? ''
@@ -38,11 +37,7 @@ export const wagmiChainsConfig = configureChains(
     { retryCount: 5 },
 )
 export function PrivyProvider({ children }: { children: JSX.Element }) {
-    const { chainId } = useEnvironment()
-
-    const chain = useMemo(() => {
-        return ENVIRONMENTS.find((e) => e.chainId === chainId)?.chain
-    }, [chainId])
+    const { chain } = useEnvironment()
 
     return chain ? (
         <TownsPrivyProvider

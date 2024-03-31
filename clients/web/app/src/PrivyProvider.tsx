@@ -1,11 +1,11 @@
-import React, { useMemo } from 'react'
+import React from 'react'
 import { configureChains } from 'wagmi'
 import { localhost } from 'wagmi/chains'
 import { jsonRpcProvider } from 'wagmi/providers/jsonRpc'
 import { publicProvider } from 'wagmi/providers/public'
 import { PrivyProvider as TownsPrivyProvider } from '@towns/privy'
 import { env } from 'utils'
-import { ENVIRONMENTS, useEnvironment } from 'hooks/useEnvironmnet'
+import { useEnvironment } from 'hooks/useEnvironmnet'
 import { baseSepoliaClone, foundryClone } from 'customChains'
 import { useStore } from 'store/store'
 import { Figma } from 'ui/styles/palette'
@@ -60,14 +60,10 @@ const wagmiChainsConfig = configureChains(
 const logo = '/towns_privy.svg'
 
 export function PrivyProvider({ children }: { children: JSX.Element }) {
-    const { chainId } = useEnvironment()
+    const { chain } = useEnvironment()
     const theme = useStore((s) => s.getTheme())
 
-    const chain = useMemo(() => {
-        return ENVIRONMENTS.find((e) => e.chainId === chainId)?.chain
-    }, [chainId])
-
-    return chain ? (
+    return (
         <TownsPrivyProvider
             wagmiChainsConfig={wagmiChainsConfig}
             appId={env.VITE_PRIVY_ID}
@@ -92,5 +88,5 @@ export function PrivyProvider({ children }: { children: JSX.Element }) {
         >
             {children}
         </TownsPrivyProvider>
-    ) : null
+    )
 }
