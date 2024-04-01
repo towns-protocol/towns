@@ -151,6 +151,7 @@ export const code = style([
         fontSize: vars.fontSize.sm,
         tabSize: vars.space.md,
         whiteSpace: 'normal',
+        overflowWrap: 'anywhere',
     },
 ])
 
