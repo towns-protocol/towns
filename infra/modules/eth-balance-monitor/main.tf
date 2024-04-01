@@ -46,7 +46,8 @@ module "lambda_function" {
   environment_variables = {
     DATADOG_API_KEY_SECRET_ARN         = local.global_remote_state.river_global_dd_agent_api_key.arn
     DATADOG_APPLICATION_KEY_SECRET_ARN = local.global_remote_state.datadog_application_key_secret.arn
-    RPC_URL_SECRET_ARN                 = local.global_remote_state.river_chain_network_url_secret.arn,
+    RIVER_CHAIN_RPC_URL_SECRET_ARN     = local.global_remote_state.river_chain_network_url_secret.arn,
+    BASE_CHAIN_RPC_URL_SECRET_ARN      = local.global_remote_state.base_chain_network_url_secret.arn,
     RIVER_REGISTRY_CONTRACT_ADDRESS    = var.river_registry_contract_address,
     ENVIRONMENT                        = terraform.workspace
   }
@@ -63,8 +64,9 @@ module "lambda_function" {
         ],
         Resource = [
           local.global_remote_state.river_global_dd_agent_api_key.arn,
+          local.global_remote_state.datadog_application_key_secret.arn,
           local.global_remote_state.river_chain_network_url_secret.arn,
-          local.global_remote_state.datadog_application_key_secret.arn
+          local.global_remote_state.base_chain_network_url_secret.arn
         ]
       },
     ]

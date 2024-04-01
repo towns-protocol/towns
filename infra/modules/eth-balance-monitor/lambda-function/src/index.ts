@@ -7,6 +7,12 @@ import {
   import { client, v2 } from "@datadog/datadog-api-client";
   import { SecretsManager } from "@aws-sdk/client-secrets-manager";
   import { Client, PublicClient, createPublicClient, http as httpViem, isAddress } from "viem";
+
+  type WalletBalance = { 
+    walletAddress: string; 
+    balance: number; 
+    chain: string;
+  };
   
   const riverRegistryAbi = [
     {
@@ -35,6 +41,7 @@ import {
     "0x9df6e5F15ec682ca58Df6d2a831436973f98fe60": 8,
     "0xB79FaCbFC07Bff49cD2e2971305Da0DF7aCa9bF8": 9,
     "0xA278267f396a317c5Bb583f47F7f2792Bc00D3b3": 10,
+    "0x75b5eb02d2fe5e2f0008a05849d81526963886c2": 11,
   };
   
   // Handler function for Lambda
@@ -46,7 +53,8 @@ import {
     const {
       ENVIRONMENT,
       DATADOG_API_KEY_SECRET_ARN,
-      RPC_URL_SECRET_ARN,
+      RIVER_CHAIN_RPC_URL_SECRET_ARN,
+      BASE_CHAIN_RPC_URL_SECRET_ARN,
       DATADOG_APPLICATION_KEY_SECRET_ARN,
       RIVER_REGISTRY_CONTRACT_ADDRESS,
     } = getEnvConfig();
@@ -54,21 +62,32 @@ import {
     const datadogApplicationKey = await getSecretValue(
       DATADOG_APPLICATION_KEY_SECRET_ARN
     );
-    const rpcUrl = await getSecretValue(RPC_URL_SECRET_ARN);
-    const client = createPublicClient({
-      transport: httpViem(rpcUrl),
+    const riverChainRpcUrl = await getSecretValue(RIVER_CHAIN_RPC_URL_SECRET_ARN);
+    const riverChainClient = createPublicClient({
+      transport: httpViem(riverChainRpcUrl),
+    });
+
+    const baseChainRpcUrl = await getSecretValue(BASE_CHAIN_RPC_URL_SECRET_ARN);
+    const baseChainClient = createPublicClient({
+      transport: httpViem(baseChainRpcUrl),
     });
   
     const nodeAddresses = await getNodeAddresses(
-      client,
+      riverChainClient,
       RIVER_REGISTRY_CONTRACT_ADDRESS
     );
     console.log(`Got node addresses`, nodeAddresses);
-    const walletBalances = await getWalletBalances(client, nodeAddresses);
-    console.log(`Got wallet balances`, walletBalances);
+
+    const riverChainWalletBalances = await getWalletBalances(riverChainClient, nodeAddresses, 'river');
+    console.log(`Got river chain wallet balances`, riverChainWalletBalances);
+
+    const baseChainWalletBalances = await getWalletBalances(baseChainClient, nodeAddresses, 'base');
+    console.log(`Got base chain wallet balances`, baseChainWalletBalances);
   
+
+    console.log(`Posting wallet balances to Datadog`);
     await postWalletBalancesToDatadog({
-      walletBalances,
+      walletBalances: riverChainWalletBalances.concat(baseChainWalletBalances),
       env: ENVIRONMENT,
       datadogApiKey,
       datadogApplicationKey,
@@ -95,8 +114,8 @@ import {
     return nodeAddresses as string[];
   }
   
-  async function getWalletBalances(client: PublicClient, walletAddresses: string[]) {
-    const walletBalances: {walletAddress: string, balance: number}[] = [];
+  async function getWalletBalances(client: PublicClient, walletAddresses: string[], chain: string) {
+    const walletBalances: WalletBalance[] = [];
     for (const walletAddress of walletAddresses) {
         console.log(`Getting balance for wallet ${walletAddress}`);
         if (!isAddress(walletAddress)) {
@@ -109,7 +128,7 @@ import {
         const balanceNum = Number(balanceBigInt);
         const balance = balanceNum / 10**18;
         console.log(`Got balance for wallet ${walletAddress}: ${balance}`);
-        walletBalances.push({ walletAddress, balance });
+        walletBalances.push({ walletAddress, balance, chain });
     }
     return walletBalances;
   }
@@ -120,7 +139,7 @@ import {
     datadogApplicationKey,
     env,
   }: {
-    walletBalances: { walletAddress: string; balance: number }[];
+    walletBalances: WalletBalance[];
     datadogApiKey: string;
     datadogApplicationKey: string;
     env: string;
@@ -133,12 +152,13 @@ import {
       },
     });
     const timestamp = Math.floor(Date.now() / 1000);
-    const series = walletBalances.map(({ walletAddress, balance }) => {
+    const series = walletBalances.map(({ walletAddress, balance, chain }) => {
       const tags = [`env:${env}`, `wallet_address:${walletAddress}`];
       const nodeNumber = KNOWN_NODES[walletAddress];
       if (typeof KNOWN_NODES[walletAddress] === "number") {
         tags.push(`node_number:${nodeNumber}`);
       }
+      tags.push(`chain:${chain}`)
       return {
         metric: `river_node.wallet_balance`,
         points: [{ timestamp, value: balance }],
@@ -181,7 +201,8 @@ import {
       DATADOG_API_KEY_SECRET_ARN,
       DATADOG_APPLICATION_KEY_SECRET_ARN,
       RIVER_REGISTRY_CONTRACT_ADDRESS,
-      RPC_URL_SECRET_ARN,
+      RIVER_CHAIN_RPC_URL_SECRET_ARN,
+      BASE_CHAIN_RPC_URL_SECRET_ARN,
     } = process.env;
     if (typeof ENVIRONMENT !== "string" || !ENVIRONMENT.trim().length) {
       throw new Error("ENVIRONMENT is not defined");
@@ -193,10 +214,16 @@ import {
       throw new Error("DATADOG_API_KEY_SECRET_ARN is not defined");
     }
     if (
-      typeof RPC_URL_SECRET_ARN !== "string" ||
-      !RPC_URL_SECRET_ARN.trim().length
+      typeof RIVER_CHAIN_RPC_URL_SECRET_ARN !== "string" ||
+      !RIVER_CHAIN_RPC_URL_SECRET_ARN.trim().length
     ) {
-      throw new Error("RPC_URL_SECRET_ARN is not defined");
+      throw new Error("RIVER_CHAIN_RPC_URL_SECRET_ARN is not defined");
+    }
+    if (
+      typeof BASE_CHAIN_RPC_URL_SECRET_ARN !== "string" ||
+      !BASE_CHAIN_RPC_URL_SECRET_ARN.trim().length
+    ) {
+      throw new Error("BASE_CHAIN_RPC_URL_SECRET_ARN is not defined");
     }
     if (
       typeof DATADOG_APPLICATION_KEY_SECRET_ARN !== "string" ||
@@ -214,7 +241,8 @@ import {
       ENVIRONMENT,
       DATADOG_API_KEY_SECRET_ARN,
       DATADOG_APPLICATION_KEY_SECRET_ARN,
-      RPC_URL_SECRET_ARN,
+      RIVER_CHAIN_RPC_URL_SECRET_ARN,
+      BASE_CHAIN_RPC_URL_SECRET_ARN,
       RIVER_REGISTRY_CONTRACT_ADDRESS,
     };
   }
