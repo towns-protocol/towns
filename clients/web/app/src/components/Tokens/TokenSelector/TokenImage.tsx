@@ -14,7 +14,6 @@ export function TokenImage({
             <Box
                 centerContent
                 horizontal
-                height="100%"
                 background="level4"
                 rounded="sm"
                 width={width}

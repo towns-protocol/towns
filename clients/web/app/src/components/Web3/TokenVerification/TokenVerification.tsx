@@ -1,5 +1,7 @@
-import React, { PropsWithChildren, useEffect, useRef } from 'react'
+import React, { PropsWithChildren, useCallback, useState } from 'react'
 import {
+    BlockchainTransactionType,
+    useIsTransactionPending,
     useLinkWalletTransaction,
     useLinkedWallets,
     useUnlinkWalletTransaction,
@@ -12,21 +14,19 @@ import { useErrorToast } from 'hooks/useErrorToast'
 import { useAuth } from 'hooks/useAuth'
 import { useEnvironment } from 'hooks/useEnvironmnet'
 import { isTouch } from 'hooks/useDevice'
-import { ButtonSpinner } from 'ui/components/Spinner/ButtonSpinner'
 import { useJoinTown } from 'hooks/useJoinTown'
 import { useSpaceIdFromPathname } from 'hooks/useSpaceInfoFromPathname'
 import { createPrivyNotAuthenticatedNotification } from '@components/Notifications/utils'
+import { TokenGatingMembership, useTokensGatingMembership } from 'hooks/useTokensGatingMembership'
 import { FullPanelOverlay, LinkedWallet, useConnectThenLink } from '../WalletLinkingPanel'
 import { mapToErrorMessage } from '../utils'
 import { currentWalletLinkingStore, useTokenBalances } from './tokenStatus'
-import { CopyWalletAddressButton, OpenSeaButton } from './Buttons'
 import { TokenBox } from './TokenBox'
-import { TokenGatingMembership } from './TokenGatingMembership'
 
 export function TokenVerification({ onHide, spaceId }: { spaceId: string; onHide: () => void }) {
     const { data: linkedWallets } = useLinkedWallets()
     const { loggedInWalletAddress } = useAuth()
-    const { data: tokensGatingMembership } = { data: { tokens: [] } }
+    const { data: tokensGatingMembership } = useTokensGatingMembership(spaceId)
     const tokensLength = tokensGatingMembership?.tokens.length ?? 0
     const maxWidth = tokensLength > 2 ? 'auto' : '400'
     const getSigner = useGetEmbeddedSigner()
@@ -63,9 +63,9 @@ export function TokenVerification({ onHide, spaceId }: { spaceId: string; onHide
                 </Text>
                 <Text color="gray1">{`To join this town, you need to prove ownership of the following digital asset(s):`}</Text>
 
-                {linkedWallets !== undefined && (
-                    <Content tokensGatingMembership={tokensGatingMembership}>
-                        {linkedWallets.map((a) => {
+                <Content tokensGatingMembership={tokensGatingMembership}>
+                    {linkedWallets !== undefined &&
+                        linkedWallets.map((a) => {
                             return (
                                 <Stack width="100%" key={a}>
                                     <LinkedWallet
@@ -77,8 +77,7 @@ export function TokenVerification({ onHide, spaceId }: { spaceId: string; onHide
                                 </Stack>
                             )
                         })}
-                    </Content>
-                )}
+                </Content>
 
                 {isLoadingUnlinkingWallet && <FullPanelOverlay text="Unlinking Wallet" />}
             </Stack>
@@ -95,14 +94,15 @@ function Content({
     const tokensLength = tokensGatingMembership.tokens.length
     const { chainId } = useEnvironment()
     const columns = isTouch() ? 1 : tokensLength > 2 ? 3 : tokensLength > 1 ? 2 : 1
-    const tokenStatuses = useTokenBalances({
+    const { data: tokenBalances, isLoading: isLoadingBalances } = useTokenBalances({
         chainId,
-        tokensGatingMembership: tokensGatingMembership['tokens'],
+        tokensGatingMembership: tokensGatingMembership.tokens,
     })
     const noAssets = currentWalletLinkingStore((s) => s.noAssets)
     const spaceId = useSpaceIdFromPathname()
     const { joinSpace, errorMessage: errorJoinSpace } = useJoinTown(spaceId)
-    const triedToJoin = useRef(false)
+    const [isJoining, setIsJoining] = useState(false)
+    const isJoinPending = useIsTransactionPending(BlockchainTransactionType.JoinSpace)
 
     const {
         isLoading: isLoadingLinkingWallet,
@@ -113,10 +113,6 @@ function Content({
     const connectWalletThenLink = useConnectThenLink({
         onLinkWallet: linkWalletTransaction,
     })
-    const singleTokenAddress =
-        tokensLength === 1
-            ? (tokensGatingMembership?.tokens[0]?.contractAddress as Address)
-            : undefined
 
     useErrorToast({
         errorMessage: errorLinkWallet ? mapToErrorMessage(errorLinkWallet) : undefined,
@@ -126,17 +122,20 @@ function Content({
         errorMessage: errorJoinSpace ? errorJoinSpace : undefined,
     })
 
+    // probably can update to use useHasPermission Persmission.JoinSpace
+    // but entitlement is somewhat broken atm
+    // also this will update at inteveral of 2s and need to adjust useHasPermission to allow for that
     const allTokensSuccessful =
-        tokenStatuses.length && tokenStatuses.every((t) => t.balance && t.balance > 0)
+        tokenBalances?.length && tokenBalances?.every((t) => t.balance && t.balance > 0)
 
-    useEffect(() => {
-        if (allTokensSuccessful && !triedToJoin.current) {
-            triedToJoin.current = true
-            setTimeout(() => {
-                joinSpace()
-            }, 500)
+    const onJoinClick = useCallback(async () => {
+        if (isJoining) {
+            return
         }
-    }, [allTokensSuccessful, joinSpace])
+        setIsJoining(true)
+        await joinSpace()
+        setIsJoining(false)
+    }, [joinSpace, isJoining])
 
     return (
         <>
@@ -144,7 +143,7 @@ function Content({
                 {tokensGatingMembership.tokens.map((token) => {
                     return (
                         <TokenBox
-                            key={token.contractAddress as Address}
+                            key={token.address as Address}
                             token={token}
                             tokensLength={tokensLength}
                             chainId={chainId}
@@ -154,9 +153,15 @@ function Content({
             </Grid>
 
             {allTokensSuccessful ? (
-                <Stack gap>
-                    Joining Town <ButtonSpinner />
-                </Stack>
+                <Button
+                    disabled={isJoining || isJoinPending}
+                    tone="cta1"
+                    width="100%"
+                    type="button"
+                    onClick={onJoinClick}
+                >
+                    Join
+                </Button>
             ) : (
                 <>
                     <MotionBox
@@ -177,15 +182,17 @@ function Content({
 
                     <Button tone="cta1" width="100%" onClick={connectWalletThenLink}>
                         <Icon type="link" />
-                        Link another wallet
+                        Link a wallet with asset
                     </Button>
 
-                    <CopyWalletAddressButton />
-
-                    {singleTokenAddress && (
-                        <OpenSeaButton singleTokenAddress={singleTokenAddress} />
-                    )}
                     {isLoadingLinkingWallet && <FullPanelOverlay text="Linking Wallet" />}
+                    {isLoadingBalances && (
+                        <FullPanelOverlay
+                            opacity="opaque"
+                            text="Checking assets in your wallets"
+                            background="level1"
+                        />
+                    )}
                 </>
             )}
         </>

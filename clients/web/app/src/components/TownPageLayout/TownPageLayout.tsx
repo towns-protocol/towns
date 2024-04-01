@@ -3,18 +3,7 @@ import { Address, useGetRootKeyFromLinkedWallet } from 'use-towns-client'
 import { useEvent } from 'react-use-event-hook'
 import { InteractiveTownsToken } from '@components/TownsToken/InteractiveTownsToken'
 import { ImageVariants, useImageSource } from '@components/UploadImage/useImageSource'
-import {
-    Box,
-    BoxProps,
-    Button,
-    Heading,
-    Icon,
-    IconButton,
-    MotionStack,
-    Paragraph,
-    Stack,
-    Text,
-} from '@ui'
+import { Box, Button, Heading, Icon, IconButton, MotionStack, Paragraph, Stack, Text } from '@ui'
 import { useDevice } from 'hooks/useDevice'
 import { AvatarTextHorizontal } from '@components/Avatar/AvatarTextHorizontal'
 import { useEnvironment } from 'hooks/useEnvironmnet'
@@ -23,8 +12,15 @@ import { vars } from 'ui/styles/vars.css'
 import { ToneName } from 'ui/styles/themes'
 import { getInviteUrl } from 'ui/utils/utils'
 import useCopyToClipboard from 'hooks/useCopyToClipboard'
+import {
+    TokenGatingMembership,
+    checkAnyoneCanJoin,
+    useTokensGatingMembership,
+} from 'hooks/useTokensGatingMembership'
 import { useReadableMembershipInfo } from './useReadableMembershipInfo'
 import { durationTitleSubtitle } from './townPageUtils'
+import { TokenInfoBox } from './TokenInfoBox'
+import { InformationBox } from './InformationBox'
 
 type TownPageLayoutProps = {
     headerContent?: React.ReactNode
@@ -75,18 +71,12 @@ export const TownPageLayout = (props: TownPageLayoutProps) => {
 
     const { data: membershipInfo } = useReadableMembershipInfo(spaceId)
 
-    const isTokensGatingMembershipLoading = false // TODO get from join role data
+    const { data: tokensGatingMembership, isLoading: isTokensGatingMembershipLoading } =
+        useTokensGatingMembership(spaceId)
 
-    const anyoneCanJoin = true // TODO get from join role data
+    const anyoneCanJoin = checkAnyoneCanJoin(tokensGatingMembership)
 
     const { imageSrc } = useImageSource(spaceId, ImageVariants.thumbnail600)
-
-    // const tokens = [
-    //     {
-    //         contractAddress: '0x123',
-    //         tokenIds: [1, 2],
-    //     },
-    // ] // TODO get from join role data
 
     return (
         <>
@@ -131,7 +121,7 @@ export const TownPageLayout = (props: TownPageLayoutProps) => {
                                 chainId={chainId}
                                 anyoneCanJoin={anyoneCanJoin}
                                 isTokensGatingMembershipLoading={isTokensGatingMembershipLoading}
-                                tokens={[]}
+                                tokensGatingMembership={tokensGatingMembership}
                             />
                             <Bio bio={bio} />
 
@@ -241,9 +231,9 @@ const InformationBoxes = (props: {
     chainId: number
     anyoneCanJoin: boolean
     isTokensGatingMembershipLoading: boolean
-    tokens?: { contractAddress: string; tokenIds: number[] }[]
+    tokensGatingMembership?: TokenGatingMembership
 }) => {
-    const { price, address, chainId, duration } = props
+    const { price, address, chainId, duration, anyoneCanJoin, tokensGatingMembership } = props
     const onAddressClick = useEvent(() => {
         window.open(`${baseScanUrl(chainId)}/address/${address}`, '_blank', 'noopener,noreferrer')
     })
@@ -256,6 +246,7 @@ const InformationBoxes = (props: {
     })
 
     const durationTexts = useMemo(() => durationTitleSubtitle(duration), [duration])
+    const _tokens = useMemo(() => tokensGatingMembership?.tokens ?? [], [tokensGatingMembership])
 
     return (
         <MotionStack
@@ -266,6 +257,13 @@ const InformationBoxes = (props: {
             alignItems="center"
             shrink={false}
         >
+            <TokenInfoBox
+                title="For"
+                subtitle={anyoneCanJoin ? 'Anyone' : 'Holders'}
+                anyoneCanJoin={anyoneCanJoin}
+                tokensGatingMembership={_tokens}
+            />
+
             {price && (
                 <InformationBox
                     key="cost"
@@ -313,55 +311,6 @@ const InformationBoxes = (props: {
                 />
             )}
             <Box width="x2" shrink={false} />
-        </MotionStack>
-    )
-}
-
-export const InformationBox = (props: {
-    title: string
-    centerContent: React.ReactNode
-    subtitle: string
-    border?: BoxProps['border']
-    onClick?: () => void
-}) => {
-    const [isHovered, setIsHovered] = useState(false)
-    const onPointerEnter = useEvent(() => {
-        setIsHovered(true)
-    })
-    const onPointerLeave = useEvent(() => {
-        setIsHovered(false)
-    })
-    return (
-        <MotionStack
-            centerContent
-            rounded="md"
-            height="x12"
-            width="x12"
-            shrink={false}
-            background={isHovered ? 'hover' : 'lightHover'}
-            cursor={props.onClick ? 'pointer' : undefined}
-            initial={{ opacity: 0 }}
-            animate={{ opacity: 1 }}
-            transition={{ duration: 0.3 }}
-            layout="position"
-            border={props.border}
-            onPointerEnter={onPointerEnter}
-            onPointerLeave={onPointerLeave}
-            onClick={props.onClick}
-        >
-            <Box centerContent height="x4">
-                <Text size="sm" color="gray2">
-                    {props.title}
-                </Text>
-            </Box>
-            <Box centerContent height="x3" width="100%">
-                {props.centerContent}
-            </Box>
-            <Box centerContent height="x4">
-                <Text size="sm" color="gray2">
-                    {props.subtitle}
-                </Text>
-            </Box>
         </MotionStack>
     )
 }

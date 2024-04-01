@@ -10,7 +10,6 @@ import {
     ErrorMessage,
     FormRender,
     Grid,
-    Icon,
     IconButton,
     MotionBox,
     MotionStack,
@@ -33,14 +32,13 @@ import { FadeInBox } from '@components/Transitions'
 import { TEMPORARY_SPACE_ICON_URL } from '@components/Web3/constants'
 import { AutoGrowTextArea } from 'ui/components/TextArea/AutoGrowTextArea'
 import { useAbstractAccountAddress } from 'hooks/useAbstractAccountAddress'
-import { useTokenMetadataForChainId } from 'api/lib/collectionMetadata'
-import { TokenImage } from '@components/Tokens/TokenSelector/TokenImage'
-import { InformationBox } from '@components/TownPageLayout/TownPageLayout'
 import { Avatar } from '@components/Avatar/Avatar'
 import { ButtonSpinner } from 'ui/components/Spinner/ButtonSpinner'
 import { isTouch } from 'hooks/useDevice'
 import { ModalContainer } from '@components/Modals/ModalContainer'
 import { ErrorReportForm } from '@components/ErrorReport/ErrorReport'
+import { InformationBox } from '@components/TownPageLayout/InformationBox'
+import { TokenInfoBox } from '@components/TownPageLayout/TokenInfoBox'
 import { CreateSpaceFormV2SchemaType, schema } from './CreateSpaceFormV2.schema'
 import { AvatarPlaceholder } from '../AvatarPlaceholder'
 import { PanelType, TransactionDetails } from './types'
@@ -237,6 +235,8 @@ export function CreateSpaceFormV2() {
                         return price + ' Ξ'
                     }
 
+                    const isEveryoneMembership = membershipType === 'everyone'
+
                     return (
                         <FormProvider {..._form}>
                             <Stack centerContent grow width="100%" padding="xs">
@@ -335,15 +335,21 @@ export function CreateSpaceFormV2() {
                                                         overflow="auto"
                                                     >
                                                         <TokenInfoBox
-                                                            membershipType={membershipType}
+                                                            tokensGatingMembership={
+                                                                tokensGatingMembership
+                                                            }
                                                             hasError={Boolean(
                                                                 _form.formState.errors[
                                                                     'tokensGatingMembership'
                                                                 ],
                                                             )}
-                                                            tokensGatingMembership={
-                                                                tokensGatingMembership
+                                                            title="For"
+                                                            subtitle={
+                                                                isEveryoneMembership
+                                                                    ? 'Anyone'
+                                                                    : 'Holders'
                                                             }
+                                                            anyoneCanJoin={isEveryoneMembership}
                                                             onInfoBoxClick={onInfoBoxClick}
                                                         />
 
@@ -674,63 +680,6 @@ export const TownPageMemberList = ({ members }: { members?: Member[] }) => (
     </Stack>
 )
 
-export const TokenInfoBox = ({
-    membershipType,
-    tokensGatingMembership,
-    onInfoBoxClick,
-    hasError,
-}: {
-    membershipType: 'tokenHolders' | 'everyone'
-    tokensGatingMembership: { address: string; chainId: number }[]
-    onInfoBoxClick: () => void
-    hasError?: boolean
-}) => {
-    return (
-        <InformationBox
-            // key="c"
-            border={hasError ? 'negative' : 'none'}
-            title="For"
-            centerContent={
-                <>
-                    {membershipType === 'tokenHolders' ? (
-                        tokensGatingMembership.length === 0 ? (
-                            <Box>
-                                <TokenImage imgSrc={undefined} width="x4" />
-                            </Box>
-                        ) : (
-                            <Box position="relative" width="x3" aspectRatio="1/1">
-                                {tokensGatingMembership.map((token, index) => (
-                                    <Box
-                                        key={token.address + token.chainId}
-                                        position="absolute"
-                                        top="none"
-                                        style={{
-                                            zIndex: 100 - index,
-                                            transform: `translateX(${
-                                                -(tokensGatingMembership.length * 5) / 2
-                                            }px)`,
-                                            left: index ? `${index * 10}px` : 0,
-                                        }}
-                                    >
-                                        <SelectedToken
-                                            contractAddress={token.address}
-                                            chainId={token.chainId}
-                                        />
-                                    </Box>
-                                ))}
-                            </Box>
-                        )
-                    ) : (
-                        <Icon type="people" size="square_md" />
-                    )}
-                </>
-            }
-            subtitle={membershipType === 'tokenHolders' ? 'Token holders' : 'Anyone'}
-            onClick={onInfoBoxClick}
-        />
-    )
-}
-
 export const UploadImageField = ({
     isActive,
     transactionDetails,
@@ -835,10 +784,4 @@ function SpaceNameField({
             </Box>
         </>
     )
-}
-
-function SelectedToken({ contractAddress, chainId }: { contractAddress: string; chainId: number }) {
-    const { data: tokenDataWithChainId } = useTokenMetadataForChainId(contractAddress, chainId)
-
-    return <TokenImage imgSrc={tokenDataWithChainId?.data.imgSrc} width="x3" />
 }

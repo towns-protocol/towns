@@ -1,14 +1,14 @@
-import { Address } from 'wagmi'
-import { BigNumber } from 'ethers'
-import { useLinkedWallets } from 'use-towns-client'
+import { z } from 'zod'
+import { isAddress } from 'ethers/lib/utils'
+import { Address, useLinkedWallets } from 'use-towns-client'
 import { useQuery, useQueryClient } from '@tanstack/react-query'
 import { useEffect, useMemo, useState } from 'react'
 import { create } from 'zustand'
-import { TokenType } from '@components/Tokens/types'
 import { useAuth } from 'hooks/useAuth'
 import { ArrayElement } from 'types'
-import { balanceOfErc1155, balanceOfErc20, balanceOfErc721, getTokenType } from '../checkTokenType'
-import { TokenGatingMembership } from './TokenGatingMembership'
+import { TokenGatingMembership } from 'hooks/useTokensGatingMembership'
+import { env } from 'utils'
+import { axiosClient } from 'api/apiClient'
 
 export type TokenStatus = {
     tokenAddress: Address
@@ -17,12 +17,9 @@ export type TokenStatus = {
 
 type TokenBalance = {
     tokenAddress: Address
-    tokenIds?: { id: number; balance: number }[]
-    balance?: number
+    tokenIds?: { id: number; balance: number }[] | undefined
+    balance?: number | undefined
 }
-
-export const gatedTokenStatusQueryKey = 'gatedTokenStatusQueryKey'
-export const tokenBalancesForWallet = 'tokenBalancesForWallet'
 
 const CHECK_WALLETS_FOR_TOKENS = 'checkWalletsForTokens'
 
@@ -32,6 +29,19 @@ const tokenBalanceFromWalletsQuery = (chainId: number, tokenAddress: Address) =>
     chainId,
     { tokenAddress },
 ]
+
+const tokenBalanceSchema: z.ZodType<TokenBalance> = z.object({
+    tokenAddress: z.custom<Address>((val) => typeof val === 'string' && isAddress(val)),
+    tokenIds: z
+        .array(
+            z.object({
+                id: z.number(),
+                balance: z.number(),
+            }),
+        )
+        .optional(),
+    balance: z.number().optional(),
+})
 
 // broader query to grab all queried tokens
 const allTokensBalanceFromWalletsQuery = (chainId: number) =>
@@ -59,22 +69,58 @@ export function useTokenBalances({
 }) {
     const queryClient = useQueryClient()
     const qKey = useMemo(() => allTokensBalanceFromWalletsQuery(chainId), [chainId])
-    const [tokenBalances, setTokenBalances] = useState<TokenBalance[]>([])
-    const gatingAddresses = tokensGatingMembership.map((t) => t.contractAddress as Address)
+    const [tokenBalances, setTokenBalances] = useState<{
+        data: TokenBalance[] | undefined
+        isLoading: boolean
+        error: unknown | undefined
+    }>(() => ({
+        data: undefined,
+        isLoading: queryClient
+            .getQueryCache()
+            .getAll()
+            .filter((v) => v.queryKey.includes(CHECK_WALLETS_FOR_TOKENS)).length
+            ? false
+            : true,
+        error: undefined,
+    }))
+    const gatingAddresses = tokensGatingMembership.map((t) => t.address as Address)
 
     useEffect(() => {
         const unsubscribe = queryClient.getQueryCache().subscribe(({ query, type }) => {
             if (query.queryKey.includes(CHECK_WALLETS_FOR_TOKENS)) {
                 setTokenBalances((state) => {
-                    const data: TokenBalance = query.state.data
-                    if (!data) {
-                        return state
+                    if (query.state.status === 'pending') {
+                        return { ...state, isLoading: true }
                     }
-                    const match = state.findIndex((t) => t.tokenAddress === data.tokenAddress)
+
+                    if (query.state.status === 'error') {
+                        return { ...state, isLoading: false, error: query.state.error }
+                    }
+
+                    const queryData: TokenBalance = query.state.data
+
+                    if (!state.data) {
+                        return {
+                            data: [queryData],
+                            isLoading: false,
+                            error: undefined,
+                        }
+                    }
+                    const match = state.data.findIndex(
+                        (t) => t.tokenAddress === queryData.tokenAddress,
+                    )
                     if (match > -1) {
-                        return [...state.slice(0, match), data, ...state.slice(match + 1)]
+                        return {
+                            isLoading: false,
+                            error: undefined,
+                            data: [
+                                ...state.data.slice(0, match),
+                                queryData,
+                                ...state.data.slice(match + 1),
+                            ],
+                        }
                     }
-                    return [...state, data]
+                    return { isLoading: false, error: undefined, data: [...state.data, queryData] }
                 })
             }
         })
@@ -83,6 +129,7 @@ export function useTokenBalances({
             unsubscribe()
         }
     }, [gatingAddresses, qKey, queryClient])
+
     return tokenBalances
 }
 
@@ -116,8 +163,8 @@ export function useWatchLinkedWalletsForToken({
             : [loggedInWalletAddress, ...(linkedWallets as Address[])]
 
     const qKey = useMemo(
-        () => tokenBalanceFromWalletsQuery(chainId, token.contractAddress as Address),
-        [chainId, token.contractAddress],
+        () => tokenBalanceFromWalletsQuery(chainId, token.address as Address),
+        [chainId, token.address],
     )
 
     return useQuery({
@@ -161,110 +208,28 @@ export function useWatchLinkedWalletsForToken({
     })
 }
 
-async function fetchTokenBalance({
-    token,
-    walletAddress,
-}: {
-    token: ArrayElement<TokenGatingMembership['tokens']>
-    walletAddress: Address
-}): Promise<TokenBalance> {
-    const tokenContractAddress = token.contractAddress as Address
-    const type = await getTokenType({ address: tokenContractAddress })
-    switch (type) {
-        case TokenType.ERC1155: {
-            return {
-                tokenAddress: tokenContractAddress,
-                tokenIds: await Promise.all(
-                    (token.tokenIds as BigNumber[]).map(async (id) => {
-                        const _id = id.toNumber()
-                        try {
-                            return {
-                                id: _id,
-                                balance: Number(
-                                    await balanceOfErc1155({
-                                        contractAddress: tokenContractAddress,
-                                        id: _id,
-                                        walletAddress,
-                                    }),
-                                ),
-                            }
-                        } catch (error) {
-                            console.error(`[checkWalletForTokens] ERC1155`, error)
-                            return {
-                                id: _id,
-                                balance: 0,
-                            }
-                        }
-                    }),
-                ),
-            }
-        }
-        case TokenType.ERC721: {
-            try {
-                return {
-                    tokenAddress: tokenContractAddress,
-                    balance: Number(
-                        await balanceOfErc721({
-                            contractAddress: tokenContractAddress,
-                            walletAddress,
-                        }),
-                    ),
-                }
-            } catch (error) {
-                console.error(`[checkWalletForTokens] ERC721`, error)
-                return {
-                    tokenAddress: tokenContractAddress,
-                    balance: 0,
-                }
-            }
-        }
-        case TokenType.ERC20: {
-            try {
-                return {
-                    tokenAddress: tokenContractAddress,
-                    balance: Number(
-                        await balanceOfErc20({
-                            contractAddress: tokenContractAddress,
-                            walletAddress,
-                        }),
-                    ),
-                }
-            } catch (error) {
-                console.error(`[checkWalletForTokens] ERC20`, error)
-                return {
-                    tokenAddress: tokenContractAddress,
-                    balance: 0,
-                }
-            }
-        }
-        default:
-            console.error(`[checkWalletForTokens] Unknown token type`, type)
-            return {
-                tokenAddress: tokenContractAddress,
-                balance: 0,
-            }
-    }
-}
-
-function checkWalletsForToken({
+async function checkWalletsForToken({
     walletAddresses,
     token,
 }: {
     walletAddresses: Address[]
     token: ArrayElement<TokenGatingMembership['tokens']>
 }): Promise<TokenBalance> {
-    return Promise.any(
-        walletAddresses.map(async (walletAddress) => {
-            const data = await fetchTokenBalance({ token, walletAddress: walletAddress as Address })
-            if (!data || !data.balance) {
-                throw new Error('No balance')
-            }
-            return data
-        }),
-    ).catch(() => {
-        return {
-            tokenAddress: token.contractAddress as Address,
-            balance: 0,
-        }
+    const TOKENS_SERVER_URL = env.VITE_TOKEN_SERVER_URL
+    // See token-worker README for more information
+    const url = `${TOKENS_SERVER_URL}/api/tokenBalance`
+
+    const response = await axiosClient.post(url, {
+        wallets: walletAddresses,
+        token: token,
     })
+
+    const parseResult = tokenBalanceSchema.safeParse(response.data.data)
+
+    if (!parseResult.success) {
+        console.error(`Error parsing ${url} results:: ${parseResult.error}`)
+        throw new Error(`Error parsing ${url} results:: ${parseResult.error}`)
+    }
+
+    return parseResult.data
 }

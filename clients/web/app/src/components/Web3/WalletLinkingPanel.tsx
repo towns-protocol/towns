@@ -133,10 +133,12 @@ export function FullPanelOverlay({
     text,
     background = 'level3',
     withSpinner = true,
+    opacity = '0.9',
 }: {
     text?: string
     background?: BoxProps['background']
     withSpinner?: boolean
+    opacity?: BoxProps['opacity']
 }) {
     return (
         <Stack
@@ -149,7 +151,7 @@ export function FullPanelOverlay({
             alignItems="center"
         >
             <Stack
-                opacity="0.9"
+                opacity={opacity}
                 position="absolute"
                 background={background}
                 width="100%"
