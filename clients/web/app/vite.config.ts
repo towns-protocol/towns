@@ -91,21 +91,6 @@ export default ({ mode }: { mode: string }) => {
             hmr: {
                 overlay: false,
             },
-            proxy: env.VITE_CASABLANCA_HOMESERVER_DEV_PROXY_PATH
-                ? {
-                      [`/${env.VITE_CASABLANCA_HOMESERVER_DEV_PROXY_PATH}`]: {
-                          target: env.VITE_CASABLANCA_HOMESERVER_URL,
-                          changeOrigin: true,
-                          rewrite: (path) =>
-                              path.replace(
-                                  new RegExp(
-                                      `^\/${env.VITE_CASABLANCA_HOMESERVER_DEV_PROXY_PATH}/`,
-                                  ),
-                                  '',
-                              ),
-                      },
-                  }
-                : undefined,
         },
         resolve: {
             alias: {

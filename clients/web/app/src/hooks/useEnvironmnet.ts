@@ -60,13 +60,11 @@ export const ENVIRONMENTS: TownsEnvironmentInfo[] = [
 
 export type UseEnvironmentReturn = ReturnType<typeof useEnvironment>
 
-const CF_TUNNEL_PREFIX = env.VITE_CF_TUNNEL_PREFIX
 const CASABLANCA_URL = env.VITE_CASABLANCA_HOMESERVER_URL
 const CHAIN_ID = parseInt(env.VITE_CHAIN_ID)
 const CHAIN = ENVIRONMENTS.find((e) => e.chainId === CHAIN_ID)?.chain
 const RIVER_CHAIN = ENVIRONMENTS.find((e) => e.chainId === CHAIN_ID)?.riverChain
 
-// if you set VITE_CF_TUNNEL_PREFIX, you'll always be pointed to tunnel for river, and chain will always be foundry
 export function useEnvironment() {
     if (!CHAIN || !RIVER_CHAIN) {
         throw new Error(`Invalid chain id: ${CHAIN_ID}`)
@@ -75,26 +73,18 @@ export function useEnvironment() {
     let _environment: TownsEnvironment | undefined
 
     if (env.DEV) {
-        _environment = CF_TUNNEL_PREFIX
-            ? TownsEnvironment.Tunnel
-            : (localStorage.getItem(TOWNS_DEV_ENV) as TownsEnvironment)
+        _environment = localStorage.getItem(TOWNS_DEV_ENV) as TownsEnvironment
     }
 
     const [environment, _setEnvironment] = useState<TownsEnvironment | undefined>(_environment)
 
     const clearEnvironment = useCallback(() => {
-        if (CF_TUNNEL_PREFIX) {
-            return
-        }
         localStorage.removeItem('RIVER_RPC_URL')
         localStorage.removeItem(TOWNS_DEV_ENV)
         _setEnvironment(undefined)
     }, [])
 
     const setEnvironment = useCallback((newValue: TownsEnvironment) => {
-        if (CF_TUNNEL_PREFIX) {
-            return
-        }
         _setEnvironment(newValue)
         localStorage.removeItem('RIVER_RPC_URL')
         localStorage.setItem(TOWNS_DEV_ENV, newValue)

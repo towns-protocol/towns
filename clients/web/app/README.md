@@ -25,7 +25,7 @@ yarn dev
 
 - [ESLint](https://marketplace.visualstudio.com/items?itemName=dbaeumer.vscode-eslint)
 
-## Testing Push notifications locally on mobile devices
+## DEPRECATED Testing Push notifications locally on mobile devices
 
 1. Set up a [cloudflare tunnel](https://developers.cloudflare.com/cloudflare-one/connections/connect-networks/install-and-setup/tunnel-guide/remote/) using the cf dashboard. Once the tunnel is set up, you need to set up hostnames for 4 services. Each hostname's subdomain should be set with a common phrase of your choosing exactly as described below (I suggest your name). For this example, let's use `star`
 

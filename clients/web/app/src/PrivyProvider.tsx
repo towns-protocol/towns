@@ -19,18 +19,6 @@ if (!window.Buffer) {
     window.Buffer = Buffer
 }
 
-if (env.VITE_CF_TUNNEL_PREFIX) {
-    const rpcUrl = `https://${env.VITE_CF_TUNNEL_PREFIX}-anvil.towns.com`
-    foundryClone.rpcUrls = {
-        default: {
-            http: [rpcUrl],
-        },
-        public: {
-            http: [rpcUrl],
-        },
-    }
-}
-
 const SUPPORTED_CHAINS = [foundryClone, baseSepoliaClone, localhost]
 
 const wagmiChainsConfig = configureChains(

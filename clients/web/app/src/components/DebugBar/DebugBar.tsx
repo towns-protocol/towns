@@ -19,11 +19,8 @@ import {
     UseEnvironmentReturn,
 } from 'hooks/useEnvironmnet'
 import { useAuth } from 'hooks/useAuth'
-import { env } from 'utils'
 import { useMockNftBalance } from 'hooks/useMockNftBalance'
 import { useAccountAbstractionConfig } from 'userOpConfig'
-
-const CF_TUNNEL_PREFIX = env.VITE_CF_TUNNEL_PREFIX
 
 const log = debug('app:DebugBar')
 const anvilKey = '0xac0974bec39a17e36ba4a6b4d238ff944bacb478cbed5efcae784d7bf4f2ff80'
@@ -207,66 +204,62 @@ const DebugModal = ({
 
                         <Divider />
 
-                        {CF_TUNNEL_PREFIX ? (
-                            <Text color="error">Your environment is using tunnels</Text>
-                        ) : (
-                            <Stack gap justifyContent="end">
-                                {ENVIRONMENTS.map((env) => (
-                                    <Button
-                                        key={env.name}
-                                        size="button_xs"
-                                        tone="accent"
-                                        disabled={
-                                            chainId === env.chainId &&
-                                            walletChain.id === env.chainId &&
-                                            environment === env.id
-                                        }
-                                        onClick={() => onSwitchEnvironment(env)}
-                                    >
-                                        Switch to {env.name}/{env.chain.name}
-                                    </Button>
-                                ))}
-                                <Button size="button_xs" onClick={onClear}>
-                                    <Text size="sm" color="default">
-                                        Clear Local Storage
-                                    </Text>
-                                </Button>
-
+                        <Stack gap justifyContent="end">
+                            {ENVIRONMENTS.map((env) => (
                                 <Button
+                                    key={env.name}
                                     size="button_xs"
-                                    onClick={async () => {
-                                        await libLogout()
-                                        goHome()
-                                    }}
+                                    tone="accent"
+                                    disabled={
+                                        chainId === env.chainId &&
+                                        walletChain.id === env.chainId &&
+                                        environment === env.id
+                                    }
+                                    onClick={() => onSwitchEnvironment(env)}
                                 >
-                                    Logout from River
+                                    Switch to {env.name}/{env.chain.name}
                                 </Button>
+                            ))}
+                            <Button size="button_xs" onClick={onClear}>
+                                <Text size="sm" color="default">
+                                    Clear Local Storage
+                                </Text>
+                            </Button>
 
-                                <Button
-                                    size="button_xs"
-                                    onClick={async () => {
-                                        await privyLogout()
-                                        onHide()
-                                    }}
-                                >
-                                    Logout from Privy
-                                </Button>
+                            <Button
+                                size="button_xs"
+                                onClick={async () => {
+                                    await libLogout()
+                                    goHome()
+                                }}
+                            >
+                                Logout from River
+                            </Button>
 
-                                <Button
-                                    size="button_xs"
-                                    onClick={async () => {
-                                        await fullLogout()
-                                        goHome()
-                                    }}
-                                >
-                                    Logout from River + Privy
-                                </Button>
+                            <Button
+                                size="button_xs"
+                                onClick={async () => {
+                                    await privyLogout()
+                                    onHide()
+                                }}
+                            >
+                                Logout from Privy
+                            </Button>
 
-                                <Button size="button_xs" onClick={onHide}>
-                                    Cancel
-                                </Button>
-                            </Stack>
-                        )}
+                            <Button
+                                size="button_xs"
+                                onClick={async () => {
+                                    await fullLogout()
+                                    goHome()
+                                }}
+                            >
+                                Logout from River + Privy
+                            </Button>
+
+                            <Button size="button_xs" onClick={onHide}>
+                                Cancel
+                            </Button>
+                        </Stack>
                     </>
                 )}
             </Stack>
@@ -414,18 +407,7 @@ const DebugBar = ({
                 />
             )}
             <Box flexDirection="row" alignItems="center" cursor="pointer" gap="sm" onClick={onShow}>
-                {CF_TUNNEL_PREFIX ? (
-                    <>
-                        <Box
-                            background="cta1"
-                            rounded="full"
-                            style={{ width: '15px', height: '15px' }}
-                        />
-                        <Text strong as="span" size="sm">
-                            Tunnels
-                        </Text>
-                    </>
-                ) : touch ? (
+                {touch ? (
                     <>
                         <Box
                             background="cta1"
