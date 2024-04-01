@@ -136,7 +136,7 @@ export const SetUsernameDisplayName = (props: { titleProperties: TitleProperties
             case 'space':
                 return `In ${titleProperties.spaceName}`
             case 'dm':
-                return `In this DM between ${titleProperties.counterPartyName}`
+                return `In this DM with ${titleProperties.counterPartyName}`
             case 'gdm':
                 return `In this group`
         }
