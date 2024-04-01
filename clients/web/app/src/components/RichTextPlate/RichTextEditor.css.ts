@@ -150,6 +150,7 @@ export const code = style([
         fontFamily: 'monospace',
         fontSize: vars.fontSize.sm,
         tabSize: vars.space.md,
+        whiteSpace: 'normal',
     },
 ])
 
