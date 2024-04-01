@@ -2,9 +2,12 @@ import React, { useCallback, useEffect } from 'react'
 import { useConnectivity } from 'use-towns-client'
 import { useGetEmbeddedSigner } from '@towns/privy'
 import useStateMachine from '@cassiozen/usestatemachine'
-import { usePrivy } from '@privy-io/react-auth'
 import { toast } from 'react-hot-toast/headless'
+import { ethers } from 'ethers'
+import { usePrivy } from '@privy-io/react-auth'
+import { clearEmbeddedWalletStorage } from '@towns/privy/EmbeddedSignerContext'
 import { ErrorNotification } from '@components/Notifications/ErrorNotifcation'
+import { waitFor } from 'utils'
 type UseConnectivtyReturnValue = ReturnType<typeof useConnectivity>
 
 export function useAutoLoginToRiverIfEmbeddedWallet({
@@ -49,6 +52,7 @@ export function useAutoLoginToRiverIfEmbeddedWallet({
                 effect() {
                     async function _logout() {
                         await privyLogout()
+                        clearEmbeddedWalletStorage()
                         send('RESET')
                         toast.custom((t) => (
                             <ErrorNotification
@@ -73,11 +77,14 @@ export function useAutoLoginToRiverIfEmbeddedWallet({
                             console.warn('Aborting auto login to river, already logged in')
                             return
                         }
+
                         setContext((c) => ({ ...c, isAutoLoggingInToRiver: true }))
 
-                        let signer
+                        let signer: ethers.Signer | undefined
                         try {
-                            signer = await getSigner()
+                            // same machine, same browser, different users
+                            // i've found that for certain of my privy accounts, this takes much longer to be true???
+                            signer = await waitFor(() => getSigner(), 5_000)
                         } catch (error) {
                             send('NO_SIGNER')
                             return
@@ -87,7 +94,7 @@ export function useAutoLoginToRiverIfEmbeddedWallet({
                             send('NO_SIGNER')
                             return
                         }
-                        riverLogin(signer)
+                        await riverLogin(signer)
                         send('LOGGED_IN_TO_RIVER')
                     }
                     _login()

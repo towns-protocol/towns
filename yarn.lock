@@ -2767,7 +2767,7 @@ __metadata:
   languageName: node
   linkType: hard
 
-"@coinbase/wallet-sdk@npm:^3.6.6, @coinbase/wallet-sdk@npm:^3.9.0":
+"@coinbase/wallet-sdk@npm:^3.6.6":
   version: 3.9.1
   resolution: "@coinbase/wallet-sdk@npm:3.9.1"
   dependencies:
@@ -2781,6 +2781,23 @@ __metadata:
     preact: ^10.16.0
     sha.js: ^2.4.11
   checksum: 8e6ab9c1fdfe87c703e65e046c62b5d24821b103ae616646dd79b5639a6fef8861e5548a501598bd21d3b6884cd2ed86821b4517c1d3b90574f23f4ca4a459ba
+  languageName: node
+  linkType: hard
+
+"@coinbase/wallet-sdk@npm:^3.9.2":
+  version: 3.9.3
+  resolution: "@coinbase/wallet-sdk@npm:3.9.3"
+  dependencies:
+    bn.js: ^5.2.1
+    buffer: ^6.0.3
+    clsx: ^1.2.1
+    eth-block-tracker: ^7.1.0
+    eth-json-rpc-filters: ^6.0.0
+    eventemitter3: ^5.0.1
+    keccak: ^3.0.3
+    preact: ^10.16.0
+    sha.js: ^2.4.11
+  checksum: c3ab1b30facbe43f6d0f7f4010e438f9c488b72f9dad768b60adbb0e4f6b057e7518e3d86c7859fdd15df187ef3f1d6212898eae4694a7d8ed0ceb05ef216eb9
   languageName: node
   linkType: hard
 
@@ -6832,11 +6849,11 @@ __metadata:
   languageName: node
   linkType: hard
 
-"@privy-io/react-auth@npm:1.56.0":
-  version: 1.56.0
-  resolution: "@privy-io/react-auth@npm:1.56.0"
+"@privy-io/react-auth@npm:^1.59.7":
+  version: 1.59.7
+  resolution: "@privy-io/react-auth@npm:1.59.7"
   dependencies:
-    "@coinbase/wallet-sdk": ^3.9.0
+    "@coinbase/wallet-sdk": ^3.9.2
     "@ethersproject/abstract-signer": ^5.7.0
     "@ethersproject/address": ^5.7.0
     "@ethersproject/bignumber": ^5.7.0
@@ -6851,14 +6868,14 @@ __metadata:
     "@heroicons/react": ^2.0.18
     "@marsidev/react-turnstile": ^0.4.1
     "@metamask/eth-sig-util": ^6.0.0
-    "@walletconnect/ethereum-provider": ^2.10.5
+    "@walletconnect/ethereum-provider": ^2.11.1
     "@walletconnect/modal": ^2.6.2
     base64-js: ^1.5.1
     dotenv: ^16.0.3
     encoding: ^0.1.13
     eventemitter3: ^5.0.1
     fast-password-entropy: ^1.1.1
-    jose: ^4.11.2
+    jose: ^4.15.5
     js-cookie: ^3.0.5
     libphonenumber-js: ^1.10.14
     lokijs: ^1.5.12
@@ -6878,20 +6895,20 @@ __metadata:
   peerDependencies:
     react: ^18
     react-dom: ^18
-  checksum: 8ce01a339ce0fe6184cfffded00f9cc87d4a7c53f5bdcd63bdb8a8459163fd9990e353d7266e7928189f877166db3d176a318e5e54baecd55e192acb50052008
+  checksum: 6de942d962b54e66bebf76b533b49843a4496bd98e78ee07dfb459f2d25c00967eb286f18535bd8faade8ff13bcf41c67fb4c96509585aea01ef52780da83625
   languageName: node
   linkType: hard
 
-"@privy-io/wagmi-connector@npm:0.1.12":
-  version: 0.1.12
-  resolution: "@privy-io/wagmi-connector@npm:0.1.12"
+"@privy-io/wagmi-connector@npm:^0.1.13":
+  version: 0.1.13
+  resolution: "@privy-io/wagmi-connector@npm:0.1.13"
   peerDependencies:
     "@privy-io/react-auth": ^1.33.0
     react: ^18
     react-dom: ^18
     viem: ">=0.3.35"
     wagmi: ">=1.4.12 <2"
-  checksum: 9116da5e7e055081278dde9420f2cd6db7b62f9194664f9f3f8890253248bb108f875f7c0ad6a9437d9c19a64abbdb952747e0aa9d6decdda88cc83d26df7e32
+  checksum: 7d9bdae4729b2fc8d3aebbdf3d748ae842b9325237125b65e898cec6b8e740783f5be5ae6b9d7f953c37a91cc914007bad86e6443954ed0815b05c75e3eb13b0
   languageName: node
   linkType: hard
 
@@ -8230,8 +8247,8 @@ __metadata:
     eslint-plugin-react: ^7.32.2
     typescript: ^5.1.6
   peerDependencies:
-    "@privy-io/react-auth": 1.56.0
-    "@privy-io/wagmi-connector": 0.1.12
+    "@privy-io/react-auth": ^1.59.7
+    "@privy-io/wagmi-connector": ^0.1.13
     "@types/react": ^18.2.11
     "@types/react-dom": ^18.2.4
     react: ^18.2.0
@@ -10324,6 +10341,31 @@ __metadata:
   languageName: node
   linkType: hard
 
+"@walletconnect/core@npm:2.11.3":
+  version: 2.11.3
+  resolution: "@walletconnect/core@npm:2.11.3"
+  dependencies:
+    "@walletconnect/heartbeat": 1.2.1
+    "@walletconnect/jsonrpc-provider": 1.0.13
+    "@walletconnect/jsonrpc-types": 1.0.3
+    "@walletconnect/jsonrpc-utils": 1.0.8
+    "@walletconnect/jsonrpc-ws-connection": 1.0.14
+    "@walletconnect/keyvaluestorage": ^1.1.1
+    "@walletconnect/logger": ^2.0.1
+    "@walletconnect/relay-api": ^1.0.9
+    "@walletconnect/relay-auth": ^1.0.4
+    "@walletconnect/safe-json": ^1.0.2
+    "@walletconnect/time": ^1.0.2
+    "@walletconnect/types": 2.11.3
+    "@walletconnect/utils": 2.11.3
+    events: ^3.3.0
+    isomorphic-unfetch: 3.1.0
+    lodash.isequal: 4.5.0
+    uint8arrays: ^3.1.0
+  checksum: 75bef3c4f09971c4e38abb01fe9497580c4c6f3f33e4841f240bbbeca38c241f482c8d6205d4a4bf961fdcfd02a214733800bb10a5745170ed94e2834ab9dfc3
+  languageName: node
+  linkType: hard
+
 "@walletconnect/crypto@npm:^1.0.3":
   version: 1.0.3
   resolution: "@walletconnect/crypto@npm:1.0.3"
@@ -10358,7 +10400,7 @@ __metadata:
   languageName: node
   linkType: hard
 
-"@walletconnect/ethereum-provider@npm:2.10.6, @walletconnect/ethereum-provider@npm:^2.10.5":
+"@walletconnect/ethereum-provider@npm:2.10.6":
   version: 2.10.6
   resolution: "@walletconnect/ethereum-provider@npm:2.10.6"
   dependencies:
@@ -10373,6 +10415,24 @@ __metadata:
     "@walletconnect/utils": 2.10.6
     events: ^3.3.0
   checksum: 02452044400ef751358598aada659ce77ae69495f3b01f040a6888289d74d22a03c1736a4860a9e1157bc0211bbcde1e3b0eb01d4ff209c2bf14efe7172774c9
+  languageName: node
+  linkType: hard
+
+"@walletconnect/ethereum-provider@npm:^2.11.1":
+  version: 2.11.3
+  resolution: "@walletconnect/ethereum-provider@npm:2.11.3"
+  dependencies:
+    "@walletconnect/jsonrpc-http-connection": ^1.0.7
+    "@walletconnect/jsonrpc-provider": ^1.0.13
+    "@walletconnect/jsonrpc-types": ^1.0.3
+    "@walletconnect/jsonrpc-utils": ^1.0.8
+    "@walletconnect/modal": ^2.6.2
+    "@walletconnect/sign-client": 2.11.3
+    "@walletconnect/types": 2.11.3
+    "@walletconnect/universal-provider": 2.11.3
+    "@walletconnect/utils": 2.11.3
+    events: ^3.3.0
+  checksum: 3fff2ee81f6935655c0c31233803b4f895d05f3645d1e274bff6f87c0bfef9ad9f20c43b19651c4a2b84ca8ca031a3793bda53742f62f20ed304a7b5c206c15f
   languageName: node
   linkType: hard
 
@@ -10642,6 +10702,23 @@ __metadata:
   languageName: node
   linkType: hard
 
+"@walletconnect/sign-client@npm:2.11.3":
+  version: 2.11.3
+  resolution: "@walletconnect/sign-client@npm:2.11.3"
+  dependencies:
+    "@walletconnect/core": 2.11.3
+    "@walletconnect/events": ^1.0.1
+    "@walletconnect/heartbeat": 1.2.1
+    "@walletconnect/jsonrpc-utils": 1.0.8
+    "@walletconnect/logger": ^2.0.1
+    "@walletconnect/time": ^1.0.2
+    "@walletconnect/types": 2.11.3
+    "@walletconnect/utils": 2.11.3
+    events: ^3.3.0
+  checksum: 5bb322a691f22ba54983d6a2f6440ff18ce7a415b869520d3c3bc6514cf3018e2435e1a4b11e1f77636cc5ad3402519385b098ad426b3921f292dc5cfc6e4120
+  languageName: node
+  linkType: hard
+
 "@walletconnect/time@npm:^1.0.2":
   version: 1.0.2
   resolution: "@walletconnect/time@npm:1.0.2"
@@ -10679,6 +10756,20 @@ __metadata:
   languageName: node
   linkType: hard
 
+"@walletconnect/types@npm:2.11.3":
+  version: 2.11.3
+  resolution: "@walletconnect/types@npm:2.11.3"
+  dependencies:
+    "@walletconnect/events": ^1.0.1
+    "@walletconnect/heartbeat": 1.2.1
+    "@walletconnect/jsonrpc-types": 1.0.3
+    "@walletconnect/keyvaluestorage": ^1.1.1
+    "@walletconnect/logger": ^2.0.1
+    events: ^3.3.0
+  checksum: a8afbffa401fab7c8c67ac5c3f12638d0d14a763c3b3000f71b77a3d5f451498e6ede5f9ab7c112db48f620fbcb892ac55ebac0dbfa2ce1bd9159e9aa291b5b2
+  languageName: node
+  linkType: hard
+
 "@walletconnect/universal-provider@npm:2.10.6":
   version: 2.10.6
   resolution: "@walletconnect/universal-provider@npm:2.10.6"
@@ -10693,6 +10784,23 @@ __metadata:
     "@walletconnect/utils": 2.10.6
     events: ^3.3.0
   checksum: c09fd28819389d990edafb261d0570d54527f0872dd3c2ac38ac0c6fc25905dc2248809fc4fea2de382b2f68c86eee8e1d192fb46402bcc49370d76959662436
+  languageName: node
+  linkType: hard
+
+"@walletconnect/universal-provider@npm:2.11.3":
+  version: 2.11.3
+  resolution: "@walletconnect/universal-provider@npm:2.11.3"
+  dependencies:
+    "@walletconnect/jsonrpc-http-connection": ^1.0.7
+    "@walletconnect/jsonrpc-provider": 1.0.13
+    "@walletconnect/jsonrpc-types": ^1.0.2
+    "@walletconnect/jsonrpc-utils": ^1.0.7
+    "@walletconnect/logger": ^2.0.1
+    "@walletconnect/sign-client": 2.11.3
+    "@walletconnect/types": 2.11.3
+    "@walletconnect/utils": 2.11.3
+    events: ^3.3.0
+  checksum: 7009bc329ae9af2092cd73c5b25e62b24d21d83234169ab5cb32d9949ae1fcc7078e3c054f40b507b6a0d3e167b7a4a38006cdd27e06398dd91727a7b8793b99
   languageName: node
   linkType: hard
 
@@ -10737,6 +10845,28 @@ __metadata:
     query-string: 7.1.3
     uint8arrays: ^3.1.0
   checksum: f6543601897aaa00f7aa0178df1cb88cca8f06f65846d3f4be85c458e79d04c462ad45e1f38d3fc993fcfa4f77871c92308e81620d6256da8138ae10e4b7546c
+  languageName: node
+  linkType: hard
+
+"@walletconnect/utils@npm:2.11.3":
+  version: 2.11.3
+  resolution: "@walletconnect/utils@npm:2.11.3"
+  dependencies:
+    "@stablelib/chacha20poly1305": 1.0.1
+    "@stablelib/hkdf": 1.0.1
+    "@stablelib/random": ^1.0.2
+    "@stablelib/sha256": 1.0.1
+    "@stablelib/x25519": ^1.0.3
+    "@walletconnect/relay-api": ^1.0.9
+    "@walletconnect/safe-json": ^1.0.2
+    "@walletconnect/time": ^1.0.2
+    "@walletconnect/types": 2.11.3
+    "@walletconnect/window-getters": ^1.0.1
+    "@walletconnect/window-metadata": ^1.0.1
+    detect-browser: 5.3.0
+    query-string: 7.1.3
+    uint8arrays: ^3.1.0
+  checksum: b62b80ad2ea02d799637b1014894e8b227d68e4e79c1267b7ffccf2176acf79387cf7f909923739a1b7a7f2084fd50149bc7528a5a2fb9991671e88637ebd7ac
   languageName: node
   linkType: hard
 
@@ -17285,8 +17415,8 @@ __metadata:
     "@lexical/selection": ^0.12.4
     "@lexical/utils": ^0.12.4
     "@ngneat/falso": ^6.1.0
-    "@privy-io/react-auth": 1.56.0
-    "@privy-io/wagmi-connector": 0.1.12
+    "@privy-io/react-auth": ^1.59.7
+    "@privy-io/wagmi-connector": ^0.1.13
     "@react-hook/resize-observer": ^1.2.6
     "@river-build/generated": "workspace:^"
     "@river-build/proto": "workspace:^"
@@ -18594,6 +18724,16 @@ __metadata:
   languageName: node
   linkType: hard
 
+"isomorphic-unfetch@npm:3.1.0":
+  version: 3.1.0
+  resolution: "isomorphic-unfetch@npm:3.1.0"
+  dependencies:
+    node-fetch: ^2.6.1
+    unfetch: ^4.2.0
+  checksum: 82b92fe4ec2823a81ab0fc0d11bd94d710e6f9a940d56b3cba31896d4345ec9ffc7949f4ff31ebcae84f6b95f7ebf3474c4c7452b834eb4078ea3f2c37e459c5
+  languageName: node
+  linkType: hard
+
 "isows@npm:1.0.3":
   version: 1.0.3
   resolution: "isows@npm:1.0.3"
@@ -19262,10 +19402,10 @@ __metadata:
   languageName: node
   linkType: hard
 
-"jose@npm:^4.11.2":
-  version: 4.15.4
-  resolution: "jose@npm:4.15.4"
-  checksum: dccad91cb3357f36423774a0b89ad830dd84b31090de65cd139b85488439f16a00f8c59c0773825e8a1adb0dd9d13ad725ad66e6ea33880ecb3959bb99e1ea5b
+"jose@npm:^4.15.5":
+  version: 4.15.5
+  resolution: "jose@npm:4.15.5"
+  checksum: 7dde76447c7707bd4b448f914b216f3858e701aa83f00447434252461af5b9e159dcbffb88badea3f9616739526763581267c9560622f0a058df8d68c86d7f79
   languageName: node
   linkType: hard
 
@@ -22203,7 +22343,7 @@ __metadata:
   languageName: node
   linkType: hard
 
-"node-fetch@npm:^2.6.0, node-fetch@npm:^2.6.12, node-fetch@npm:^2.6.7":
+"node-fetch@npm:^2.6.0, node-fetch@npm:^2.6.1, node-fetch@npm:^2.6.12, node-fetch@npm:^2.6.7":
   version: 2.7.0
   resolution: "node-fetch@npm:2.7.0"
   dependencies:
@@ -24964,8 +25104,8 @@ __metadata:
     "@mui/icons-material": ^5.10.9
     "@mui/material": ^5.10.10
     "@mui/styles": ^5.10.10
-    "@privy-io/react-auth": 1.56.0
-    "@privy-io/wagmi-connector": 0.1.12
+    "@privy-io/react-auth": ^1.59.7
+    "@privy-io/wagmi-connector": ^0.1.13
     "@river-build/generated": "workspace:^"
     "@river-build/web3": "workspace:^"
     "@rollup/plugin-inject": ^5.0.3
@@ -27446,6 +27586,13 @@ __metadata:
     node-fetch-native: ^1.4.1
     pathe: ^1.1.1
   checksum: 8118260ac7be8d13f99ebb5ca6a40203cf64cc592142753c1a1f75d40b07398c3208430d9a0299573cef3e4f2eba3bf6735901ff4217583df8344b2491314fb0
+  languageName: node
+  linkType: hard
+
+"unfetch@npm:^4.2.0":
+  version: 4.2.0
+  resolution: "unfetch@npm:4.2.0"
+  checksum: 6a4b2557e1d921eaa80c4425ce27a404945ec26491ed06e62598f333996a91a44c7908cb26dc7c2746d735762b13276cf4aa41829b4c8f438dde63add3045d7a
   languageName: node
   linkType: hard
 

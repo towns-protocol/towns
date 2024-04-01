@@ -3,6 +3,7 @@ import React, { createContext, useCallback, useContext, useMemo } from 'react'
 import { toast } from 'react-hot-toast/headless'
 import { useLogin, usePrivy } from '@privy-io/react-auth'
 import { useEmbeddedWallet, useGetEmbeddedSigner } from '@towns/privy'
+import { clearEmbeddedWalletStorage } from '@towns/privy/EmbeddedSignerContext'
 import { ErrorNotification } from '@components/Notifications/ErrorNotifcation'
 import { useAutoLoginToRiverIfEmbeddedWallet } from './useAutoLoginToRiverIfEmbeddedWallet'
 
@@ -105,6 +106,7 @@ function useAuthContext(): AuthContext {
             return
         }
         await privyLogout()
+        clearEmbeddedWalletStorage()
         resetAutoLoginState()
     }, [riverLogout, privyLogout, resetAutoLoginState])
 

@@ -1,12 +1,20 @@
 import React, { createContext, useCallback, useContext, useEffect } from 'react'
 import { useEmbeddedWallet } from './useEmbeddedWallet'
 import { TSigner } from 'use-towns-client'
-import { usePrivyWagmi } from '@privy-io/wagmi-connector'
-import { usePrivy } from '@privy-io/react-auth'
+import { ConnectedWallet, usePrivy } from '@privy-io/react-auth'
+import { create } from 'zustand'
 
 const EmbeddedSignerContext = createContext<(() => Promise<TSigner | undefined>) | undefined>(
     undefined,
 )
+
+const store = create<{
+    embeddedWallet: ConnectedWallet | undefined
+    setEmbeddedWallet: (embeddedWallet: ConnectedWallet | undefined) => void
+}>((set) => ({
+    embeddedWallet: undefined,
+    setEmbeddedWallet: (embeddedWallet) => set({ embeddedWallet }),
+}))
 
 export function EmbeddedSignerContextProvider({
     children,
@@ -15,23 +23,26 @@ export function EmbeddedSignerContextProvider({
     chainId: number
     children: React.ReactNode | React.ReactNode[]
 }) {
+    const embeddedWallet = useEmbeddedWallet()
+    // experimenting with saving the embedded wallet in the store b/c it seems like the embedded wallet from useWallets can be flaky??
+    // and want to get the embedded wallet at time the app requests the signer, which can't do with privy hook
+    //
+    // don't want to deal with clearing the embeddedWallet in the store in this effect, maybe there's an instance where the wallet comes back undefined (network conditions, privy conditions, etc.)
+    // instead we'll just clear it on logout - see clearEmbeddedWalletStorage
+    //
+    // useGetEmbeddedSignerContext below checks for privy authentication, so we'll still reject txs if the user isn't authenticated even if the embedded wallet is set
+    useEffect(() => {
+        if (embeddedWallet && !store.getState().embeddedWallet) {
+            store.getState().setEmbeddedWallet(embeddedWallet)
+        }
+    }, [embeddedWallet])
+
     const value = useGetEmbeddedSignerContext(chainId)
     return <EmbeddedSignerContext.Provider value={value}>{children}</EmbeddedSignerContext.Provider>
 }
 
 function useGetEmbeddedSignerContext(chainId: number) {
-    const embeddedWallet = useEmbeddedWallet()
     const { ready: privyReady, authenticated } = usePrivy()
-    const { setActiveWallet, ready: wagmiReady } = usePrivyWagmi()
-
-    // make sure the embedded wallet is always active + on the right network
-    // more of a sanity check than anything
-    useEffect(() => {
-        if (!embeddedWallet || !wagmiReady) {
-            return
-        }
-        setActiveWallet(embeddedWallet)
-    }, [chainId, embeddedWallet, wagmiReady, setActiveWallet])
 
     // always get the embedded signer on the correct chain
     const getSigner = useCallback(async () => {
@@ -43,14 +54,16 @@ function useGetEmbeddedSignerContext(chainId: number) {
             console.warn('[useGetEmbeddedSignerContext] not authenticated')
             return
         }
-        if (!embeddedWallet) {
+        // get value at time of call
+        const storedEmbeddedWallet = store.getState().embeddedWallet
+        if (!storedEmbeddedWallet) {
             console.warn('[useGetEmbeddedSignerContext] no embedded wallet')
             return
         }
-        await embeddedWallet?.switchChain(chainId)
-        const provider = await embeddedWallet.getEthersProvider()
+        await storedEmbeddedWallet?.switchChain(chainId)
+        const provider = await storedEmbeddedWallet.getEthersProvider()
         return provider.getSigner()
-    }, [authenticated, chainId, embeddedWallet, privyReady])
+    }, [authenticated, chainId, privyReady])
 
     return getSigner
 }
@@ -61,4 +74,8 @@ export function useGetEmbeddedSigner() {
         throw new Error('useGetEmbeddedSigner must be used in a EmbeddedSignerContextProvider')
     }
     return context
+}
+
+export function clearEmbeddedWalletStorage() {
+    return store.getState().setEmbeddedWallet(undefined)
 }
