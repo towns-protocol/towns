@@ -38,7 +38,7 @@ describe('delete role', () => {
         }
         const newRoleName = 'newRole1'
         const newPermissions = [Permission.Read, Permission.Write]
-        const newNftAddress = await getTestGatingNftAddress(alice.chainId)
+        const newNftAddress = await getTestGatingNftAddress(alice.opts.baseChainId)
         if (!newNftAddress) {
             throw new Error('councilNftAddress is undefined')
         }

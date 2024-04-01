@@ -121,10 +121,6 @@ export class TownsClient implements EntitlementsDelegate {
         return this._signerContext
     }
 
-    public get chainId(): number {
-        return this.opts.baseChainId
-    }
-
     public isAccountAbstractionEnabled() {
         return !!this.opts.accountAbstractionConfig?.aaRpcUrl
     }

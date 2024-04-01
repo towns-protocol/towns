@@ -138,7 +138,7 @@ describe('channel update', () => {
         // create another role
         const newRoleName = `role${Date.now()}`
         const newPermissions = [Permission.Read, Permission.Write, Permission.Redact]
-        const mockNFTAddress = getContractsInfo(alice.chainId).mockErc721aAddress
+        const mockNFTAddress = getContractsInfo(alice.opts.baseChainId).mockErc721aAddress
         // test space was created with council token. replace with Towns token
         const ruleData = createExternalTokenStruct([mockNFTAddress])
         const users: string[] = []

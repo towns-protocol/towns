@@ -31,7 +31,7 @@ describe('write messages', () => {
             throw new Error('Failed to create room')
         }
 
-        const councilNftAddress = await getTestGatingNftAddress(alice.chainId)
+        const councilNftAddress = await getTestGatingNftAddress(alice.opts.baseChainId)
         if (!councilNftAddress) {
             throw new Error('councilNftAddress is undefined')
         }

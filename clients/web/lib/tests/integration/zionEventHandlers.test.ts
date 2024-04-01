@@ -39,7 +39,7 @@ describe('Towns event handlers test', () => {
         const createSpaceInfo = {
             name: alice.makeUniqueName(),
         }
-        const testGatingNftAddress = await getTestGatingNftAddress(alice.chainId)
+        const testGatingNftAddress = await getTestGatingNftAddress(alice.opts.baseChainId)
         if (!testGatingNftAddress) {
             throw new Error('testGatingNftAddress is undefined')
         }

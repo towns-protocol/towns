@@ -124,7 +124,7 @@ describe('get role details', () => {
         const memberRole = await findRoleByName(alice, spaceId, 'Member')
 
         /** Assert */
-        const councilNftAddress = await getTestGatingNftAddress(alice.chainId)
+        const councilNftAddress = await getTestGatingNftAddress(alice.opts.baseChainId)
         if (!councilNftAddress) {
             throw new Error('councilNftAddress is undefined')
         }
@@ -209,7 +209,7 @@ describe('get role details', () => {
         }
         // create new role in space
         const permissions = [Permission.Read, Permission.Write, Permission.Redact]
-        const councilNftAddress = await getTestGatingNftAddress(alice.chainId)
+        const councilNftAddress = await getTestGatingNftAddress(alice.opts.baseChainId)
         if (!councilNftAddress) {
             throw new Error('councilNftAddress is undefined')
         }
