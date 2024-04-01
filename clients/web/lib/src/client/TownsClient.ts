@@ -1643,6 +1643,13 @@ export class TownsClient implements EntitlementsDelegate {
         return Promise.resolve(this.casablancaClient.isUsernameAvailable(streamId, username))
     }
 
+    public async adminRedactMessage(streamId: string, eventId: string): Promise<void> {
+        if (!this.casablancaClient) {
+            throw new Error('No casablanca client')
+        }
+        await this.casablancaClient.redactMessage(streamId, eventId)
+    }
+
     /************************************************
      * setDisplayName
      ************************************************/

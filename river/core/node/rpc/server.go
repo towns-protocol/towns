@@ -251,8 +251,10 @@ func StartServer(
 		nodeRegistry:   nodeRegistry,
 		streamRegistry: streamRegistry,
 		streamConfig:   &cfg.Stream,
+		networkConfig:  &cfg.Network,
 		syncHandler:    syncHandler,
 		serverCtx:      ctx,
+		startTime:      time.Now(),
 	}
 
 	mux := httptrace.NewServeMux(

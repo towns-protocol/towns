@@ -4,8 +4,8 @@ import (
 	"bytes"
 	"context"
 	"sync"
+	"time"
 
-	"github.com/ethereum/go-ethereum/common"
 	"github.com/river-build/river/core/node/dlog"
 	"github.com/river-build/river/core/node/storage"
 
@@ -43,9 +43,9 @@ type SyncStream interface {
 
 	// Returns true if miniblock was created, false if not.
 	MakeMiniblock(ctx context.Context, forceSnapshot bool) (bool, error) // TODO: doesn't seem pertinent to SyncStream
-	ProposeNextMiniblock(ctx context.Context, forceSnapshot bool) (*MiniblockProposal, error)
+	ProposeNextMiniblock(ctx context.Context, forceSnapshot bool) (*MiniblockInfo, error)
 	MakeMiniblockHeader(ctx context.Context, proposal *MiniblockProposal) (*MiniblockHeader, []*ParsedEvent, error)
-	ApplyMiniblock(ctx context.Context, miniblockHeader *ParsedEvent, envelopes []*ParsedEvent) error
+	ApplyMiniblock(ctx context.Context, miniblock *MiniblockInfo) error
 	GetView(ctx context.Context) (StreamView, error)
 }
 
@@ -71,6 +71,9 @@ type streamImpl struct {
 	// of view is created, and copy is modified and stored.
 	mu   sync.RWMutex
 	view *streamViewImpl
+
+	// lastAccessedTime keeps track when the stream was last used by a client
+	lastAccessedTime time.Time
 
 	// TODO: perf optimization: support subs on unloaded streams.
 	receivers mapset.Set[SyncResultReceiver]
@@ -109,7 +112,7 @@ func (s *streamImpl) loadInternal(ctx context.Context) error {
 	return nil
 }
 
-func (s *streamImpl) ProposeNextMiniblock(ctx context.Context, forceSnapshot bool) (*MiniblockProposal, error) {
+func (s *streamImpl) generateMiniblockProposal(ctx context.Context, forceSnapshot bool) (*MiniblockProposal, error) {
 	s.mu.RLock()
 	defer s.mu.RUnlock()
 
@@ -119,6 +122,42 @@ func (s *streamImpl) ProposeNextMiniblock(ctx context.Context, forceSnapshot boo
 	}
 
 	return s.view.ProposeNextMiniblock(ctx, s.params.StreamConfig, forceSnapshot)
+}
+
+func (s *streamImpl) ProposeNextMiniblock(ctx context.Context, forceSnapshot bool) (*MiniblockInfo, error) {
+	proposal, err := s.generateMiniblockProposal(ctx, forceSnapshot)
+
+	// empty minipool, do not propose.
+	if proposal == nil {
+		return nil, nil
+	}
+
+	if err != nil {
+		return nil, AsRiverError(
+			err,
+		).Func("Stream.ProposeNextMiniblock").
+			Message("Failed to generate miniblock proposal").
+			Tag("streamId", s.streamId)
+	}
+
+	miniblock, err := s.constructMiniblockFromProposal(ctx, proposal)
+	if err != nil {
+		return nil, AsRiverError(
+			err,
+		).Func("Stream.ProposeNextMiniblock").
+			Message("Failed to construct miniblock from proposal").
+			Tag("streamId", s.streamId)
+	}
+
+	// Save proposal in storage
+	if err = s.storeMiniblockCandidate(ctx, miniblock); err != nil {
+		return nil, AsRiverError(
+			err,
+		).Func("Stream.ProposeNextMiniblock").
+			Message("Failed to store miniblock candidate").
+			Tag("streamId", s.streamId)
+	}
+	return miniblock, nil
 }
 
 func (s *streamImpl) MakeMiniblockHeader(
@@ -136,26 +175,30 @@ func (s *streamImpl) MakeMiniblockHeader(
 	return s.view.makeMiniblockHeader(ctx, proposal)
 }
 
-func (s *streamImpl) ApplyMiniblock(
-	ctx context.Context,
-	miniblockHeaderEvent *ParsedEvent,
-	envelopes []*ParsedEvent,
-) error {
+// Store miniblock proposal in storage to prevent data loss between proposal and election. This block
+// can later be promoted within the db.
+func (s *streamImpl) storeMiniblockCandidate(ctx context.Context, miniblock *MiniblockInfo) error {
+	miniblockBytes, err := miniblock.ToBytes()
+	if err != nil {
+		return AsRiverError(err).Func("Stream.storeMiniblockCandidate").Message("Failed to serialize miniblock")
+	}
+
+	return s.params.Storage.WriteBlockProposal(
+		ctx,
+		s.streamId,
+		miniblock.Hash,
+		s.view.minipool.generation,
+		miniblockBytes,
+	)
+}
+
+// ApplyMiniblock applies the selected miniblock candidate, updating the cached stream view and storage.
+func (s *streamImpl) ApplyMiniblock(ctx context.Context, miniblock *MiniblockInfo) error {
 	s.mu.Lock()
 	defer s.mu.Unlock()
 
-	miniblock, err := NewMiniblockInfoFromParsed(miniblockHeaderEvent, envelopes)
-	if err != nil {
-		return err
-	}
-
 	// Lets see if this miniblock can be applied.
 	newSV, err := s.view.copyAndApplyBlock(miniblock, s.params.StreamConfig)
-	if err != nil {
-		return err
-	}
-
-	miniblockBytes, err := miniblock.ToBytes()
 	if err != nil {
 		return err
 	}
@@ -169,13 +212,12 @@ func (s *streamImpl) ApplyMiniblock(
 		newMinipool = append(newMinipool, b)
 	}
 
-	err = s.params.Storage.WriteBlock(
+	err = s.params.Storage.PromoteBlock(
 		ctx,
 		s.streamId,
 		s.view.minipool.generation,
-		s.view.minipool.nextSlotNumber(),
-		miniblockBytes,
-		miniblockHeaderEvent.Event.GetMiniblockHeader().GetSnapshot() != nil,
+		miniblock.Hash,
+		miniblock.headerEvent.Event.GetMiniblockHeader().GetSnapshot() != nil,
 		newMinipool,
 	)
 	if err != nil {
@@ -186,35 +228,24 @@ func (s *streamImpl) ApplyMiniblock(
 	s.view = newSV
 	newSyncCookie := s.view.SyncCookie(s.params.Wallet.Address)
 
-	s.notifySubscribers([]*Envelope{miniblockHeaderEvent.Envelope}, newSyncCookie, prevSyncCookie)
+	s.notifySubscribers([]*Envelope{miniblock.headerEvent.Envelope}, newSyncCookie, prevSyncCookie)
 	return nil
 }
 
-// Returns true if miniblock was created, false if not.
-func (s *streamImpl) MakeMiniblock(ctx context.Context, forceSnapshot bool) (bool, error) {
-	if !s.makeMiniblockMutex.TryLock() {
-		return false, nil
-	}
-	defer s.makeMiniblockMutex.Unlock()
-
-	log := dlog.FromCtx(ctx)
-
-	proposal, err := s.ProposeNextMiniblock(ctx, forceSnapshot)
-	if err != nil {
-		log.Error("Stream.MakeMiniblock: ProposeNextMiniblock failed", "error", err, "streamId", s.streamId)
-		return false, err
-	}
-	if proposal == nil {
-		return false, nil
-	}
-
+func (s *streamImpl) constructMiniblockFromProposal(
+	ctx context.Context,
+	proposal *MiniblockProposal,
+) (*MiniblockInfo, error) {
 	miniblockHeader, envelopes, err := s.MakeMiniblockHeader(ctx, proposal)
 	if err != nil {
-		log.Error("Stream.MakeMiniblock: MakeMiniblockHeader failed", "error", err, "streamId", s.streamId)
-		return false, err
+		return nil, AsRiverError(
+			err,
+		).Func("Stream.constructMiniblockFromProposal").
+			Message("Failed to make miniblock header").
+			Tag("streamId", s.streamId)
 	}
 	if miniblockHeader == nil {
-		return false, nil
+		return nil, nil
 	}
 
 	miniblockHeaderEvent, err := MakeParsedEventWithPayload(
@@ -223,24 +254,55 @@ func (s *streamImpl) MakeMiniblock(ctx context.Context, forceSnapshot bool) (boo
 		miniblockHeader.PrevMiniblockHash,
 	)
 	if err != nil {
-		log.Error("Stream.MakeMiniblock: MakeParsedEventWithPayload failed", "error", err, "streamId", s.streamId)
+		return nil, AsRiverError(
+			err,
+		).Func("Stream.constructMiniblockFromProposal").
+			Message("Failed to make miniblock header event").
+			Tag("streamId", s.streamId)
+	}
+
+	return NewMiniblockInfoFromParsed(miniblockHeaderEvent, envelopes)
+}
+
+// Returns true if miniblock was created, false if not.
+// 1. Create proposal
+// 2. Update registry with candidate block metadata
+// 3. Commit proposal as current block
+func (s *streamImpl) MakeMiniblock(ctx context.Context, forceSnapshot bool) (bool, error) {
+	if !s.makeMiniblockMutex.TryLock() {
+		return false, nil
+	}
+	defer s.makeMiniblockMutex.Unlock()
+
+	log := dlog.FromCtx(ctx)
+
+	// 1. Create miniblock
+	miniblock, err := s.ProposeNextMiniblock(ctx, forceSnapshot)
+	if err != nil {
+		log.Error("Stream.MakeMiniblock ProposeNextMiniblock failed", "error", err, "streamId", s.streamId)
 		return false, err
 	}
 
-	err = s.params.Registry.SetStreamLastMiniblock(
+	// empty minipool, do not propose.
+	if miniblock == nil {
+		return false, nil
+	}
+
+	// 2. Update registry with candidate block metadata
+	if err = s.params.Registry.SetStreamLastMiniblock(
 		ctx,
 		s.streamId,
-		common.BytesToHash(miniblockHeader.PrevMiniblockHash),
-		miniblockHeaderEvent.Hash,
-		uint64(miniblockHeader.MiniblockNum),
+		*miniblock.headerEvent.PrevMiniblockHash,
+		miniblock.headerEvent.Hash,
+		uint64(miniblock.Num),
 		false,
-	)
-	if err != nil {
+	); err != nil {
 		log.Error("Stream.MakeMiniblock: SetStreamLastMiniblock failed", "error", err, "streamId", s.streamId)
 		return false, err
 	}
 
-	err = s.ApplyMiniblock(ctx, miniblockHeaderEvent, envelopes)
+	// 3. Commit proposal as current block
+	err = s.ApplyMiniblock(ctx, miniblock)
 	if err != nil {
 		log.Error("Stream.MakeMiniblock: ApplyMiniblock failed", "error", err, "streamId", s.streamId)
 		return false, err
@@ -297,6 +359,7 @@ func (s *streamImpl) GetView(ctx context.Context) (StreamView, error) {
 
 	s.mu.Lock()
 	defer s.mu.Unlock()
+	s.lastAccessedTime = time.Now()
 	err := s.loadInternal(ctx)
 	if err != nil {
 		return nil, err
@@ -357,8 +420,11 @@ func (s *streamImpl) AddEvent(ctx context.Context, event *ParsedEvent) error {
 	return s.addEventImpl(ctx, event)
 }
 
+// caller must have a RW lock on s.mu
 func (s *streamImpl) notifySubscribers(envelopes []*Envelope, newSyncCookie *SyncCookie, prevSyncCookie *SyncCookie) {
 	if s.receivers != nil && s.receivers.Cardinality() > 0 {
+		s.lastAccessedTime = time.Now()
+
 		resp := &StreamAndCookie{
 			Events:         envelopes,
 			NextSyncCookie: newSyncCookie,
@@ -435,6 +501,8 @@ func (s *streamImpl) Sub(ctx context.Context, cookie *SyncCookie, receiver SyncR
 	if err != nil {
 		return err
 	}
+
+	s.lastAccessedTime = time.Now()
 
 	if cookie.MinipoolGen == int64(s.view.minipool.generation) {
 		if slot > int64(s.view.minipool.events.Len()) {

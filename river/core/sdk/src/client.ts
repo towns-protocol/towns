@@ -102,6 +102,7 @@ import {
     make_MemberPayload_DisplayName,
     make_MemberPayload_Username,
     getRefEventIdFromChannelMessage,
+    make_ChannelPayload_Redaction,
 } from './types'
 
 import debug from 'debug'
@@ -909,13 +910,35 @@ export class Client
             const response = this.rpcClient.getStreamEx({
                 streamId: streamIdAsBytes(streamId),
             })
-
             const miniblocks: Miniblock[] = []
+            let seenEndOfStream = false
             for await (const chunk of response) {
-                assert(chunk.miniblock !== undefined, 'bad miniblock in getStreamEx response')
-                miniblocks.push(chunk.miniblock)
+                switch (chunk.data.case) {
+                    case 'miniblock':
+                        if (seenEndOfStream) {
+                            throw new Error(
+                                `GetStreamEx: received miniblock after minipool contents for stream ${streamIdAsString(
+                                    streamId,
+                                )}.`,
+                            )
+                        }
+                        miniblocks.push(chunk.data.value)
+                        break
+                    case 'minipool':
+                        // TODO: add minipool contents to the unpacked response
+                        break
+                    case undefined:
+                        seenEndOfStream = true
+                        break
+                }
             }
-
+            if (!seenEndOfStream) {
+                throw new Error(
+                    `Failed receive all getStreamEx streaming responses for stream ${streamIdAsString(
+                        streamId,
+                    )}.`,
+                )
+            }
             const unpackedResponse = await unpackStreamEx(miniblocks)
             return this.streamViewFromUnpackedResponse(streamId, unpackedResponse)
         } catch (err) {
@@ -1247,6 +1270,19 @@ export class Client
                 value: content,
             },
         })
+    }
+
+    async redactMessage(streamId: string, eventId: string): Promise<void> {
+        const stream = this.stream(streamId)
+        check(isDefined(stream), 'stream not found')
+
+        return this.makeEventAndAddToStream(
+            streamId,
+            make_ChannelPayload_Redaction(bin_fromHexString(eventId)),
+            {
+                method: 'redactMessage',
+            },
+        )
     }
 
     async retrySendMessage(streamId: string, localId: string): Promise<void> {

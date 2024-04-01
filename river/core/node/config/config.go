@@ -1,6 +1,8 @@
 package config
 
 import (
+	"time"
+
 	"github.com/ethereum/go-ethereum/common"
 	infra "github.com/river-build/river/core/node/infra/config"
 )
@@ -47,11 +49,18 @@ type Config struct {
 	// Stream configuration
 	Stream StreamConfig
 
+	// Network configuration
+	Network NetworkConfig
+
 	// Feature flags
 	// Used to disable functionality for some testing setups.
 
 	// Disable base chain contract usage.
 	DisableBaseChain bool
+}
+
+type NetworkConfig struct {
+	NumRetries int
 }
 
 type DatabaseConfig struct {
@@ -89,6 +98,11 @@ type StreamConfig struct {
 	ReplicationFactor           int
 	DefaultMinEventsPerSnapshot int
 	MinEventsPerSnapshot        map[string]int
+	// CacheExpiration is the interval (secs) after streams with no activity in the cache are expired and evicted
+	CacheExpiration time.Duration
+	// CacheExpirationPollIntervalSec is the interval to check for inactive streams in the cache
+	// (default=CacheExpiration/10)
+	CacheExpirationPollInterval time.Duration
 }
 
 type MediaStreamConfig struct {

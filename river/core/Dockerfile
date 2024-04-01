@@ -5,12 +5,20 @@ FROM golang:1.21-alpine as builder
 # Install libsecp256k1-dev if available or compile it from source.
 RUN apk add --no-cache build-base git libsecp256k1-dev
 
+ARG VER_VERSION=version_unset
+ARG VER_BRANCH=branch_unset
+ARG VER_COMMIT=commit_unset
+
 # Build node_app
 WORKDIR /build/node
 COPY node/go.* /build/node/
 RUN go mod download
 COPY node/ /build/node/
-RUN go build -trimpath -o /bin/stream_node ./node
+RUN go build \
+    -trimpath \
+    -o /bin/stream_node \
+    -ldflags="-X github.com/river-build/river/core/node/node/version.version=$VER_VERSION -X github.com/river-build/river/core/node/node/version.branch=$VER_BRANCH -X github.com/river-build/river/core/node/node/version.commit=$VER_COMMIT" \
+    ./node
 
 # Build xchain_app
 WORKDIR /build/xchain

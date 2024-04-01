@@ -4,6 +4,7 @@ import (
 	"context"
 	"sync"
 
+	"github.com/ethereum/go-ethereum/common"
 	. "github.com/river-build/river/core/node/base"
 	. "github.com/river-build/river/core/node/protocol"
 	. "github.com/river-build/river/core/node/shared"
@@ -12,7 +13,13 @@ import (
 type memStream struct {
 	miniblocks        [][]byte
 	minipool          [][]byte
+	candidates        map[common.Hash]*blockCandidate // map of hash -> block content
 	lastSnapshotIndex int
+}
+
+type blockCandidate struct {
+	blockData []byte
+	blockNum  int64
 }
 
 type memStorage struct {
@@ -32,6 +39,7 @@ func (m *memStorage) CreateStreamStorage(ctx context.Context, streamId StreamId,
 	m.streams[streamId] = &memStream{
 		miniblocks:        [][]byte{genesisMiniblock},
 		minipool:          [][]byte{},
+		candidates:        map[common.Hash]*blockCandidate{},
 		lastSnapshotIndex: 0,
 	}
 	return nil
@@ -101,12 +109,37 @@ func (m *memStorage) WriteEvent(
 	return nil
 }
 
-func (m *memStorage) WriteBlock(
+// WriteBlockProposal adds a miniblock proposal candidate. When the miniblock is finalized, the node will promote the
+// candidate with the correct hash.
+func (m *memStorage) WriteBlockProposal(
+	ctx context.Context,
+	streamId StreamId,
+	blockHash common.Hash,
+	blockNumber int64,
+	miniblock []byte,
+) error {
+	m.mutex.Lock()
+	defer m.mutex.Unlock()
+
+	stream, ok := m.streams[streamId]
+	if !ok {
+		return RiverError(Err_NOT_FOUND, "Stream not found")
+	}
+	if blockNumber != int64(len(stream.miniblocks)) {
+		return RiverError(Err_BAD_BLOCK_NUMBER, "Invalid minipool generation")
+	}
+	stream.candidates[blockHash] = &blockCandidate{
+		blockData: miniblock,
+		blockNum:  blockNumber,
+	}
+	return nil
+}
+
+func (m *memStorage) PromoteBlock(
 	ctx context.Context,
 	streamId StreamId,
 	minipoolGeneration int64,
-	minipoolSize int,
-	miniblock []byte,
+	candidateBlockHash common.Hash,
 	snapshotMiniblock bool,
 	envelopes [][]byte,
 ) error {
@@ -120,14 +153,25 @@ func (m *memStorage) WriteBlock(
 	if minipoolGeneration != int64(len(stream.miniblocks)) {
 		return RiverError(Err_BAD_BLOCK_NUMBER, "Invalid minipool generation")
 	}
-	if minipoolSize != len(stream.minipool) {
-		return RiverError(Err_BAD_MINIPOOL_SLOT, "Invalid minipool size")
+	blockCandidate, ok := stream.candidates[candidateBlockHash]
+	if !ok {
+		return RiverError(Err_NOT_FOUND, "Miniblock candidate not found")
 	}
-	stream.miniblocks = append(stream.miniblocks, miniblock)
+
+	stream.miniblocks = append(stream.miniblocks, blockCandidate.blockData)
+
 	stream.minipool = envelopes
 	if snapshotMiniblock {
 		stream.lastSnapshotIndex = len(stream.miniblocks) - 1
 	}
+
+	// Delete all stale candidates upon block promotion.
+	for blockHash, candidate := range stream.candidates {
+		if candidate.blockNum <= minipoolGeneration {
+			delete(stream.candidates, blockHash)
+		}
+	}
+
 	return nil
 }
 

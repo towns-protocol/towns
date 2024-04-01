@@ -88,7 +88,7 @@ func NextMiniblockTimestamp(prevBlockTimestamp *timestamppb.Timestamp) *timestam
 	return now
 }
 
-type miniblockInfo struct {
+type MiniblockInfo struct {
 	Hash        common.Hash
 	Num         int64
 	headerEvent *ParsedEvent
@@ -96,11 +96,11 @@ type miniblockInfo struct {
 	proto       *Miniblock
 }
 
-func (b *miniblockInfo) header() *MiniblockHeader {
+func (b *MiniblockInfo) header() *MiniblockHeader {
 	return b.headerEvent.Event.GetMiniblockHeader()
 }
 
-func (b *miniblockInfo) lastEvent() *ParsedEvent {
+func (b *MiniblockInfo) lastEvent() *ParsedEvent {
 	if len(b.events) > 0 {
 		return b.events[len(b.events)-1]
 	} else {
@@ -108,7 +108,7 @@ func (b *miniblockInfo) lastEvent() *ParsedEvent {
 	}
 }
 
-func (b *miniblockInfo) forEachEvent(op func(e *ParsedEvent) (bool, error)) error {
+func (b *MiniblockInfo) forEachEvent(op func(e *ParsedEvent) (bool, error)) error {
 	for _, event := range b.events {
 		c, err := op(event)
 		if !c {
@@ -122,7 +122,7 @@ func (b *miniblockInfo) forEachEvent(op func(e *ParsedEvent) (bool, error)) erro
 	return nil
 }
 
-func NewMiniblockInfoFromBytes(bytes []byte, expectedBlockNumber int64) (*miniblockInfo, error) {
+func NewMiniblockInfoFromBytes(bytes []byte, expectedBlockNumber int64) (*MiniblockInfo, error) {
 	var pb Miniblock
 	err := proto.Unmarshal(bytes, &pb)
 	if err != nil {
@@ -134,7 +134,7 @@ func NewMiniblockInfoFromBytes(bytes []byte, expectedBlockNumber int64) (*minibl
 	return NewMiniblockInfoFromProto(&pb, expectedBlockNumber)
 }
 
-func NewMiniblockInfoFromProto(pb *Miniblock, expectedBlockNumber int64) (*miniblockInfo, error) {
+func NewMiniblockInfoFromProto(pb *Miniblock, expectedBlockNumber int64) (*MiniblockInfo, error) {
 	headerEvent, err := ParseEvent(pb.Header)
 	if err != nil {
 		return nil, err
@@ -162,7 +162,7 @@ func NewMiniblockInfoFromProto(pb *Miniblock, expectedBlockNumber int64) (*minib
 
 	// TODO: add header validation, num of events, prev block hash, block num, etc
 
-	return &miniblockInfo{
+	return &MiniblockInfo{
 		Hash:        headerEvent.Hash,
 		Num:         blockHeader.MiniblockNum,
 		headerEvent: headerEvent,
@@ -171,7 +171,7 @@ func NewMiniblockInfoFromProto(pb *Miniblock, expectedBlockNumber int64) (*minib
 	}, nil
 }
 
-func NewMiniblockInfoFromParsed(headerEvent *ParsedEvent, events []*ParsedEvent) (*miniblockInfo, error) {
+func NewMiniblockInfoFromParsed(headerEvent *ParsedEvent, events []*ParsedEvent) (*MiniblockInfo, error) {
 	if headerEvent.Event.GetMiniblockHeader() == nil {
 		return nil, RiverError(Err_BAD_EVENT, "header event must be a block header")
 	}
@@ -181,7 +181,7 @@ func NewMiniblockInfoFromParsed(headerEvent *ParsedEvent, events []*ParsedEvent)
 		envelopes[i] = e.Envelope
 	}
 
-	return &miniblockInfo{
+	return &MiniblockInfo{
 		Hash:        headerEvent.Hash,
 		Num:         headerEvent.Event.GetMiniblockHeader().MiniblockNum,
 		headerEvent: headerEvent,
@@ -193,7 +193,7 @@ func NewMiniblockInfoFromParsed(headerEvent *ParsedEvent, events []*ParsedEvent)
 	}, nil
 }
 
-func (b *miniblockInfo) ToBytes() ([]byte, error) {
+func (b *MiniblockInfo) ToBytes() ([]byte, error) {
 	serialized, err := proto.Marshal(b.proto)
 	if err == nil {
 		return serialized, nil

@@ -254,6 +254,7 @@ export interface RedactedEvent {
 export interface RedactionActionEvent {
     kind: ZTEvent.RedactionActionEvent
     refEventId: string
+    adminRedaction: boolean
 }
 
 export interface SpaceChildEvent {
@@ -440,7 +441,7 @@ export function getFallbackContent(
         case ZTEvent.RedactedEvent:
             return `~Redacted~`
         case ZTEvent.RedactionActionEvent:
-            return `Redacts ${content.refEventId}`
+            return `Redacts ${content.refEventId} adminRedaction: ${content.adminRedaction}`
         case ZTEvent.SpaceChild:
             return `childId: ${content.childId}`
         case ZTEvent.SpaceParent:

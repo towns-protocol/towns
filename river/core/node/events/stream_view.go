@@ -36,7 +36,7 @@ type StreamView interface {
 	MinipoolEnvelopes() []*Envelope
 	MiniblocksFromLastSnapshot() []*Miniblock
 	SyncCookie(localNodeAddress common.Address) *SyncCookie
-	LastBlock() *miniblockInfo
+	LastBlock() *MiniblockInfo
 	ValidateNextEvent(
 		ctx context.Context,
 		cfg *config.RecencyConstraintsConfig,
@@ -53,7 +53,7 @@ func MakeStreamView(streamData *storage.ReadStreamFromLastSnapshotResult) (*stre
 		return nil, RiverError(Err_STREAM_EMPTY, "no blocks").Func("MakeStreamView")
 	}
 
-	miniblocks := make([]*miniblockInfo, len(streamData.Miniblocks))
+	miniblocks := make([]*MiniblockInfo, len(streamData.Miniblocks))
 	lastMiniblockNumber := int64(-2)
 	snapshotIndex := -1
 	for i, binMiniblock := range streamData.Miniblocks {
@@ -109,7 +109,7 @@ func MakeRemoteStreamView(resp *GetStreamResponse) (*streamViewImpl, error) {
 		return nil, RiverError(Err_STREAM_EMPTY, "no blocks").Func("MakeStreamViewFromRemote")
 	}
 
-	miniblocks := make([]*miniblockInfo, len(resp.Stream.Miniblocks))
+	miniblocks := make([]*MiniblockInfo, len(resp.Stream.Miniblocks))
 	// +1 below will make it -1 for the first iteration so block number is not enforced.
 	lastMiniblockNumber := int64(-2)
 	snapshotIndex := 0
@@ -154,7 +154,7 @@ func MakeRemoteStreamView(resp *GetStreamResponse) (*streamViewImpl, error) {
 
 type streamViewImpl struct {
 	streamId      StreamId
-	blocks        []*miniblockInfo
+	blocks        []*MiniblockInfo
 	minipool      *minipoolInstance
 	snapshot      *Snapshot
 	snapshotIndex int
@@ -177,7 +177,7 @@ func (r *streamViewImpl) copyAndAddEvent(event *ParsedEvent) (*streamViewImpl, e
 	return r, nil
 }
 
-func (r *streamViewImpl) LastBlock() *miniblockInfo {
+func (r *streamViewImpl) LastBlock() *MiniblockInfo {
 	return r.blocks[len(r.blocks)-1]
 }
 
@@ -290,7 +290,7 @@ func (r *streamViewImpl) makeMiniblockHeader(
 }
 
 func (r *streamViewImpl) copyAndApplyBlock(
-	miniblock *miniblockInfo,
+	miniblock *MiniblockInfo,
 	cfg *config.StreamConfig,
 ) (*streamViewImpl, error) {
 	header := miniblock.headerEvent.Event.GetMiniblockHeader()
@@ -587,7 +587,7 @@ func (r *streamViewImpl) ValidateNextEvent(
 func (r *streamViewImpl) isRecentBlock(
 	ctx context.Context,
 	cfg *config.RecencyConstraintsConfig,
-	block *miniblockInfo,
+	block *MiniblockInfo,
 	currentTime time.Time,
 ) bool {
 	maxAgeDuration := time.Duration(cfg.AgeSeconds) * time.Second

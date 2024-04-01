@@ -26,20 +26,42 @@ type testNodeRecord struct {
 	address  common.Address
 }
 
+func (n *testNodeRecord) Close(ctx context.Context, dbUrl string) {
+	if n.service != nil {
+		n.service.Close()
+		n.service = nil
+	}
+	if n.address != (common.Address{}) {
+		_ = dbtestutils.DeleteTestSchema(
+			ctx,
+			dbUrl,
+			storage.DbSchemaNameFromAddress(n.address.String()),
+		)
+	}
+}
+
 type serviceTester struct {
-	ctx     context.Context
-	cancel  context.CancelFunc
-	require *require.Assertions
-	dbUrl   string
-	btc     *crypto.BlockchainTestContext
-	nodes   []*testNodeRecord
+	ctx               context.Context
+	cancel            context.CancelFunc
+	require           *require.Assertions
+	dbUrl             string
+	btc               *crypto.BlockchainTestContext
+	nodes             []*testNodeRecord
+	replicationFactor int
+}
+
+func newServiceTesterWithReplication(numNodes int, replicationFactor int, require *require.Assertions) *serviceTester {
+	st := newServiceTester(numNodes, require)
+	st.replicationFactor = replicationFactor
+	return st
 }
 
 func newServiceTester(numNodes int, require *require.Assertions) *serviceTester {
 	st := &serviceTester{
-		require: require,
-		dbUrl:   dbtestutils.GetTestDbUrl(),
-		nodes:   make([]*testNodeRecord, numNodes),
+		require:           require,
+		dbUrl:             dbtestutils.GetTestDbUrl(),
+		nodes:             make([]*testNodeRecord, numNodes),
+		replicationFactor: 1,
 	}
 	st.ctx, st.cancel = context.WithCancel(test.NewTestContext())
 
@@ -65,19 +87,16 @@ func newServiceTester(numNodes int, require *require.Assertions) *serviceTester 
 	return st
 }
 
+func (st serviceTester) CloseNode(i int) {
+	if st.nodes[i] != nil {
+		st.nodes[i].Close(st.ctx, st.dbUrl)
+	}
+}
+
 func (st *serviceTester) Close() {
 	for _, node := range st.nodes {
 		if node != nil {
-			if node.service != nil {
-				node.service.Close()
-			}
-			if node.address != (common.Address{}) {
-				_ = dbtestutils.DeleteTestSchema(
-					st.ctx,
-					st.dbUrl,
-					storage.DbSchemaNameFromAddress(node.address.String()),
-				)
-			}
+			node.Close(st.ctx, st.dbUrl)
 		}
 	}
 	if st.btc != nil {
@@ -124,6 +143,10 @@ func (st *serviceTester) startSingle(i int) error {
 				AgeSeconds:  11,
 				Generations: 5,
 			},
+			ReplicationFactor: st.replicationFactor,
+		},
+		Network: config.NetworkConfig{
+			NumRetries: 3,
 		},
 	}
 

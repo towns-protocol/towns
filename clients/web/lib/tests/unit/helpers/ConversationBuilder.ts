@@ -174,5 +174,6 @@ function makeRedaction(params: { redacts: string }): RedactionActionEvent {
     return {
         kind: ZTEvent.RedactionActionEvent,
         refEventId: params.redacts,
+        adminRedaction: false,
     }
 }

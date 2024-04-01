@@ -55,12 +55,19 @@ func (s *Service) getStreamEx(
 		}
 
 		if err := resp.Send(&GetStreamExResponse{
-			Miniblock: &miniblock,
+			Data: &GetStreamExResponse_Miniblock{
+				Miniblock: &miniblock,
+			},
 		}); err != nil {
 			return err
 		}
 
 		miniblockNumber++
+	}
+
+	// Send back an empty response to signal the end of the stream.
+	if err := resp.Send(&GetStreamExResponse{}); err != nil {
+		return err
 	}
 
 	return nil

@@ -1,5 +1,13 @@
 import React, { useCallback, useContext, useRef } from 'react'
-import { TimelineEvent, useFullyReadMarker, useMyUserId, useTownsClient } from 'use-towns-client'
+import {
+    Permission,
+    TimelineEvent,
+    useFullyReadMarker,
+    useHasPermission,
+    useMyUserId,
+    useSpaceData,
+    useTownsClient,
+} from 'use-towns-client'
 import { EmojiPickerButton } from '@components/EmojiPickerButton'
 import { Box, IconButton, MotionStack, Stack } from '@ui'
 import { useOpenMessageThread } from 'hooks/useOpenThread'
@@ -10,6 +18,7 @@ import { ShortcutTooltip } from '@components/Shortcuts/ShortcutTooltip'
 import useCopyToClipboard from 'hooks/useCopyToClipboard'
 import { ReplyToMessageContext } from '@components/ReplyToMessageContext/ReplyToMessageContext'
 import { getLinkToMessage } from 'utils/getLinkToMessage'
+import { useAuth } from 'hooks/useAuth'
 import { DeleteMessagePrompt } from './DeleteMessagePrompt'
 
 type Props = {
@@ -31,7 +40,7 @@ const style = {
 export const MessageContextMenu = (props: Props) => {
     const { eventId, channelId, spaceId, threadParentId } = props
 
-    const { redactEvent, sendReaction, sendReadReceipt } = useTownsClient()
+    const { redactEvent, sendReaction, sendReadReceipt, adminRedactMessage } = useTownsClient()
     const timelineContext = useContext(MessageTimelineContext)
 
     const { canReplyInline, setReplyToEventId } = useContext(ReplyToMessageContext)
@@ -39,6 +48,15 @@ export const MessageContextMenu = (props: Props) => {
 
     const [copiedText, copy] = useCopyToClipboard()
     const hasCopied = !!copiedText
+
+    const space = useSpaceData()
+    const { loggedInWalletAddress } = useAuth()
+
+    const { hasPermission: canRedact } = useHasPermission({
+        spaceId: space?.id ?? '',
+        walletAddress: loggedInWalletAddress ?? '',
+        permission: Permission.Redact,
+    })
 
     const onSelectEmoji = useCallback(
         (data: { id: string }) => {
@@ -56,16 +74,18 @@ export const MessageContextMenu = (props: Props) => {
     )
     const ref = useRef<HTMLDivElement>(null)
 
-    const [showDeletePrompt, setShowDeletePrompt] = React.useState(false)
+    const [deletePrompt, setDeletePrompt] = React.useState<
+        'adminRedaction' | 'redaction' | undefined
+    >(undefined)
 
     const onDeleteClick = useCallback(() => {
         if (channelId && eventId) {
-            setShowDeletePrompt(true)
+            setDeletePrompt('redaction')
         }
     }, [channelId, eventId])
 
     const onDeleteCancel = useCallback(() => {
-        setShowDeletePrompt(false)
+        setDeletePrompt(undefined)
     }, [])
 
     const timeline = timelineContext?.events
@@ -102,7 +122,7 @@ export const MessageContextMenu = (props: Props) => {
         [],
     )
 
-    const onDeleteConfirm = useShortcut(
+    const onRedactConfirm = useShortcut(
         'DeleteMessage',
         useCallback(() => {
             if (channelId) {
@@ -112,6 +132,12 @@ export const MessageContextMenu = (props: Props) => {
         { enableOnContentEditable: false },
         [],
     )
+
+    const onAdminRedactConfirm = useCallback(() => {
+        if (channelId && eventId) {
+            adminRedactMessage(channelId, eventId)
+        }
+    }, [channelId, eventId, adminRedactMessage])
 
     const onCopyLinkToMessage = useShortcut(
         'CopyLinkToMessage',
@@ -136,6 +162,10 @@ export const MessageContextMenu = (props: Props) => {
         { enableOnContentEditable: false },
         [],
     )
+
+    const onAdminRedact = useCallback(() => {
+        setDeletePrompt('adminRedaction')
+    }, [setDeletePrompt])
 
     return (
         <MotionStack pointerEvents="auto" position="topRight" {...animation} ref={ref}>
@@ -195,7 +225,7 @@ export const MessageContextMenu = (props: Props) => {
                         size="square_sm"
                         onClick={onCopyLinkToMessage}
                     />
-                    {props.canEdit && (
+                    {props.canEdit ? (
                         <IconButton
                             tooltip={<ShortcutTooltip action="DeleteMessage" />}
                             icon="delete"
@@ -203,13 +233,24 @@ export const MessageContextMenu = (props: Props) => {
                             color="error"
                             onClick={onDeleteClick}
                         />
+                    ) : canRedact && space ? (
+                        <IconButton
+                            icon="delete"
+                            size="square_sm"
+                            color="gray2"
+                            onClick={onAdminRedact}
+                        />
+                    ) : (
+                        <></>
                     )}
                 </Stack>
             </Box>
-            {showDeletePrompt && (
+            {deletePrompt && (
                 <DeleteMessagePrompt
                     onDeleteCancel={onDeleteCancel}
-                    onDeleteConfirm={onDeleteConfirm}
+                    onDeleteConfirm={
+                        deletePrompt === 'adminRedaction' ? onAdminRedactConfirm : onRedactConfirm
+                    }
                 />
             )}
         </MotionStack>

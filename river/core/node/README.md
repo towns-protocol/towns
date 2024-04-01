@@ -37,9 +37,13 @@ Install migrate cli tool with brew:
 
 To create new sql migration files, see the documentation [here](https://github.com/golang-migrate/migrate/blob/master/GETTING_STARTED.md). As an example:
 
-cd core/node && migrate create -ext sql -dir migrations -seq create_miniblock_candidates_table
+`cd core/node && migrate create -ext sql -dir storage/migrations -seq create_miniblock_candidates_table`
 
 As the docs describe, note the tool will create 2 migration files, one to apply the migration and one to undo it. Please use "IF EXISTS" to prevent errors for creation and deletion of objects.
+
+To run migrations locally in the public schema for hand testing/experimentation, try:
+
+`migrate -source file://./core/node/storage/migrations/ -database "postgres://postgres:postgres@localhost:5433/river?sslmode=disable" up`
 
 [Postgres Examples](https://github.com/golang-migrate/migrate/blob/master/database/postgres/TUTORIAL.md)
 

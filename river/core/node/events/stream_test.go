@@ -76,7 +76,6 @@ func addEvent(
 
 type mbTestParams struct {
 	addAfterProposal bool
-	addAfterMake     bool
 	eventsInMinipool int
 }
 
@@ -98,41 +97,30 @@ func mbTest(
 	addEvent(t, ctx, tt.params, stream, "2", view.LastBlock().Hash)
 
 	proposal, err := stream.ProposeNextMiniblock(ctx, false)
-	require.NoError(err)
-	require.Equal(2, len(proposal.Hashes))
-	require.EqualValues(view.LastBlock().Hash[:], proposal.PrevMiniblockHash)
-	require.Equal(int64(1), proposal.NewMiniblockNum)
-
-	if params.addAfterProposal {
-		addEvent(t, ctx, tt.params, stream, "3", view.LastBlock().Hash)
-	}
-
-	mb, events, err := stream.MakeMiniblockHeader(ctx, proposal)
+	mb := proposal.headerEvent.Event.GetMiniblockHeader()
+	events := proposal.events
 	require.NoError(err)
 	require.Equal(2, len(events))
 	require.Equal(2, len(mb.EventHashes))
 	require.EqualValues(view.LastBlock().Hash[:], mb.PrevMiniblockHash)
 	require.Equal(int64(1), mb.MiniblockNum)
 
-	if params.addAfterMake {
-		addEvent(t, ctx, tt.params, stream, "4", view.LastBlock().Hash)
+	if params.addAfterProposal {
+		addEvent(t, ctx, tt.params, stream, "3", view.LastBlock().Hash)
 	}
 
-	miniblockHeaderEvent, err := MakeParsedEventWithPayload(
-		tt.params.Wallet,
-		Make_MiniblockHeader(mb),
-		mb.PrevMiniblockHash,
-	)
 	require.NoError(err)
+	require.Equal(2, len(events))
+	require.Equal(int64(1), mb.MiniblockNum)
 
-	err = stream.ApplyMiniblock(ctx, miniblockHeaderEvent, events)
+	err = stream.ApplyMiniblock(ctx, proposal)
 	require.NoError(err)
 
 	view2, err := stream.GetView(ctx)
 	require.NoError(err)
 	stats := view2.GetStats()
 	require.Equal(params.eventsInMinipool, stats.EventsInMinipool)
-	addEvent(t, ctx, tt.params, stream, "5", view2.LastBlock().Hash)
+	addEvent(t, ctx, tt.params, stream, "4", view2.LastBlock().Hash)
 
 	view2, err = stream.GetView(ctx)
 	require.NoError(err)
@@ -145,10 +133,8 @@ func mbTest(
 
 func TestMiniblockProduction(t *testing.T) {
 	cases := []mbTestParams{
-		{false, false, 0},
-		{true, false, 1},
-		{false, true, 1},
-		{true, true, 2},
+		{false, 0},
+		{true, 1},
 	}
 
 	for i, c := range cases {

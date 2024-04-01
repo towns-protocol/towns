@@ -7,6 +7,9 @@ import (
 	"sync"
 
 	"github.com/ethereum/go-ethereum/common"
+
+	. "github.com/river-build/river/core/node/base"
+	. "github.com/river-build/river/core/node/protocol"
 )
 
 type StreamNodes interface {
@@ -77,6 +80,14 @@ func (s *streamNodesImpl) IsLocal() bool {
 	defer s.mu.RUnlock()
 
 	return s.localNodeIndex >= 0
+}
+
+func (s *streamNodesImpl) GetLocal() (common.Address, error) {
+	if !s.IsLocal() {
+		return common.Address{}, RiverError(Err_INTERNAL, "Expected nodes to be local")
+	} else {
+		return s.nodes[s.localNodeIndex], nil
+	}
 }
 
 // LocalAndFirst is used for fake leader election currently.

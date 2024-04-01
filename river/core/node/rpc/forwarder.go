@@ -12,25 +12,128 @@ import (
 	"github.com/river-build/river/core/node/shared"
 )
 
-func (s *Service) getStubForStream(
+// peerNodeRequestWithRetries makes a request to as many as each of the remote nodes, returning the first response
+// that is not a network unavailability error.
+func peerNodeRequestWithRetries[T any](
 	ctx context.Context,
-	streamId shared.StreamId,
-) (StreamServiceClient, StreamNodes, error) {
-	nodes, err := s.streamRegistry.GetStreamInfo(ctx, streamId)
-	if err != nil {
-		return nil, nil, err
-	}
-	if nodes.IsLocal() {
-		return nil, nodes, nil
+	nodes StreamNodes,
+	s *Service,
+	makeStubRequest func(ctx context.Context, stub StreamServiceClient) (*connect.Response[T], error),
+	numRetries int,
+) (*connect.Response[T], error) {
+	if nodes.NumRemotes() <= 0 {
+		return nil, RiverError(Err_INTERNAL, "Cannot make peer node requests: no nodes available").
+			Func("peerNodeRequestWithRetries")
 	}
 
-	firstRemote := nodes.GetStickyPeer()
-	dlog.FromCtx(ctx).Debug("Forwarding request", "nodeAddress", firstRemote)
-	stub, err := s.nodeRegistry.GetStreamServiceClientForAddress(firstRemote)
-	if err != nil {
-		return nil, nil, err
+	var stub StreamServiceClient
+	var resp *connect.Response[T]
+	var err error
+
+	if numRetries <= 0 {
+		numRetries = max(s.networkConfig.NumRetries, 1)
 	}
-	return stub, nodes, nil
+
+	// Do not make more than one request to a single node
+	numRetries = min(numRetries, nodes.NumRemotes())
+
+	for retry := 0; retry < numRetries; retry++ {
+		peer := nodes.GetStickyPeer()
+		stub, err = s.nodeRegistry.GetStreamServiceClientForAddress(peer)
+		if err != nil {
+			return nil, AsRiverError(err).
+				Func("peerNodeRequestWithRetries").
+				Message("Could not get stream service client for address").
+				Tag("address", peer)
+		}
+
+		resp, err = makeStubRequest(ctx, stub)
+
+		if err == nil {
+			return resp, nil
+		}
+
+		if IsConnectNetworkError(err) {
+			// Mark peer as unavailable.
+			nodes.AdvanceStickyPeer(peer)
+		} else {
+			return nil, AsRiverError(err).
+				Func("peerNodeRequestWithRetries").
+				Message("makeStubRequest failed").
+				Tag("retry", retry).
+				Tag("numRetries", numRetries)
+		}
+	}
+	// If all requests fail, return the last error.
+	return nil, AsRiverError(err).
+		Func("peerNodeRequestWithRetries").
+		Message("All retries failed").
+		Tag("numRetries", numRetries)
+}
+
+// peerNodeStreamingResponseWithRetries makes a request with a streaming server response to remote nodes, retrying
+// in the event of unavailable nodes.
+func peerNodeStreamingResponseWithRetries(
+	ctx context.Context,
+	nodes StreamNodes,
+	s *Service,
+	makeStubRequest func(ctx context.Context, stub StreamServiceClient) (hasStreamed bool, err error),
+	numRetries int,
+) error {
+	if nodes.NumRemotes() <= 0 {
+		return RiverError(Err_INTERNAL, "Cannot make peer node requests: no nodes available").
+			Func("peerNodeStreamingResponseWithRetries")
+	}
+
+	var stub StreamServiceClient
+	var err error
+	var hasStreamed bool
+
+	if numRetries <= 0 {
+		numRetries = max(s.networkConfig.NumRetries, 1)
+	}
+
+	// Do not make more than one request to a single node
+	numRetries = min(numRetries, nodes.NumRemotes())
+
+	for retry := 0; retry < numRetries; retry++ {
+		peer := nodes.GetStickyPeer()
+		stub, err = s.nodeRegistry.GetStreamServiceClientForAddress(peer)
+		if err != nil {
+			return AsRiverError(err).
+				Func("peerNodeStreamingResponseWithRetries").
+				Message("Could not get stream service client for address").
+				Tag("address", peer)
+		}
+
+		// The stub request handles streaming the entire response.
+		hasStreamed, err = makeStubRequest(ctx, stub)
+
+		if err == nil {
+			return nil
+		}
+
+		if IsConnectNetworkError(err) && !hasStreamed {
+			// Mark peer as unavailable.
+			nodes.AdvanceStickyPeer(peer)
+		} else {
+			return AsRiverError(err).
+				Message("makeStubRequest failed").
+				Func("peerNodeStreamingResponseWithRetries").
+				Tag("hasStreamed", hasStreamed).
+				Tag("retry", retry).
+				Tag("numRetries", numRetries)
+		}
+	}
+	// If all requests fail, return the last error.
+	if err != nil {
+		return AsRiverError(err).
+			Func("peerNodeStreamingResponseWithRetries").
+			Message("All retries failed").
+			Tag("numRetries", numRetries)
+	}
+
+	return nil
 }
 
 func (s *Service) CreateStream(
@@ -100,23 +203,32 @@ func (s *Service) getStreamImpl(
 		return nil, err
 	}
 
-	stub, _, err := s.getStubForStream(ctx, streamId)
-
+	nodes, err := s.streamRegistry.GetStreamInfo(ctx, streamId)
 	if err != nil && req.Msg.Optional && AsRiverError(err).Code == Err_NOT_FOUND {
 		return connect.NewResponse(&GetStreamResponse{}), nil
-	} else if err != nil {
+	}
+
+	if err != nil {
 		return nil, err
 	}
 
-	if stub != nil {
-		ret, err := stub.GetStream(ctx, req)
-		if err != nil {
-			return nil, err
-		}
-		return connect.NewResponse(ret.Msg), nil
-	} else {
+	if nodes.IsLocal() {
 		return s.localGetStream(ctx, req)
 	}
+
+	return peerNodeRequestWithRetries(
+		ctx,
+		nodes,
+		s,
+		func(ctx context.Context, stub StreamServiceClient) (*connect.Response[GetStreamResponse], error) {
+			ret, err := stub.GetStream(ctx, req)
+			if err != nil {
+				return nil, err
+			}
+			return connect.NewResponse(ret.Msg), nil
+		},
+		-1,
+	)
 }
 
 func (s *Service) getStreamExImpl(
@@ -129,38 +241,60 @@ func (s *Service) getStreamExImpl(
 		return err
 	}
 
-	stub, _, err := s.getStubForStream(ctx, streamId)
+	nodes, err := s.streamRegistry.GetStreamInfo(ctx, streamId)
 	if err != nil {
 		return err
 	}
 
-	if stub != nil {
-		// Get the raw stream from another client and forward packets.
-		clientStream, err := stub.GetStreamEx(ctx, req)
-
-		// Capture close stream error at method return
-		defer func() {
-			err = clientStream.Close()
-		}()
-
-		if err != nil {
-			return err
-		}
-
-		// Forward the stream
-		for clientStream.Receive() {
-			err = resp.Send(clientStream.Msg())
-			if err != nil {
-				return err
-			}
-		}
-		if err = clientStream.Err(); err != nil {
-			return err
-		}
-		return nil
-	} else {
+	if nodes.IsLocal() {
 		return s.localGetStreamEx(ctx, req, resp)
 	}
+
+	err = peerNodeStreamingResponseWithRetries(
+		ctx,
+		nodes,
+		s,
+		func(ctx context.Context, stub StreamServiceClient) (hasStreamed bool, err error) {
+			// Get the raw stream from another client and forward packets.
+			clientStream, err := stub.GetStreamEx(ctx, req)
+			if err != nil {
+				return hasStreamed, err
+			}
+			defer clientStream.Close()
+
+			// Forward the stream
+			sawLastPacket := false
+			for clientStream.Receive() {
+				packet := clientStream.Msg()
+				hasStreamed = true
+
+				// We expect the last packet in the stream to be empty.
+				if packet.GetData() == nil {
+					sawLastPacket = true
+				}
+
+				err = resp.Send(clientStream.Msg())
+				if err != nil {
+					return hasStreamed, err
+				}
+			}
+			if err = clientStream.Err(); err != nil {
+				return hasStreamed, err
+			}
+
+			// If we did not see the last packet, assume the node became unavailable.
+			if !sawLastPacket {
+				return hasStreamed, RiverError(
+					Err_UNAVAILABLE,
+					"Stream did not send all packets (expected empty packet)",
+				).Func("service.getStreamExImpl").Tag("streamId", req.Msg.StreamId)
+			}
+
+			return hasStreamed, nil
+		},
+		-1,
+	)
+	return err
 }
 
 func (s *Service) GetMiniblocks(
@@ -191,20 +325,28 @@ func (s *Service) getMiniblocksImpl(
 		return nil, err
 	}
 
-	stub, _, err := s.getStubForStream(ctx, streamId)
+	nodes, err := s.streamRegistry.GetStreamInfo(ctx, streamId)
 	if err != nil {
 		return nil, err
 	}
 
-	if stub != nil {
-		ret, err := stub.GetMiniblocks(ctx, req)
-		if err != nil {
-			return nil, err
-		}
-		return connect.NewResponse(ret.Msg), nil
-	} else {
+	if nodes.IsLocal() {
 		return s.localGetMiniblocks(ctx, req)
 	}
+
+	return peerNodeRequestWithRetries(
+		ctx,
+		nodes,
+		s,
+		func(ctx context.Context, stub StreamServiceClient) (*connect.Response[GetMiniblocksResponse], error) {
+			ret, err := stub.GetMiniblocks(ctx, req)
+			if err != nil {
+				return nil, err
+			}
+			return connect.NewResponse(ret.Msg), nil
+		},
+		-1,
+	)
 }
 
 func (s *Service) GetLastMiniblockHash(
@@ -235,20 +377,28 @@ func (s *Service) getLastMiniblockHashImpl(
 		return nil, err
 	}
 
-	stub, _, err := s.getStubForStream(ctx, streamId)
+	nodes, err := s.streamRegistry.GetStreamInfo(ctx, streamId)
 	if err != nil {
 		return nil, err
 	}
 
-	if stub != nil {
-		ret, err := stub.GetLastMiniblockHash(ctx, req)
-		if err != nil {
-			return nil, err
-		}
-		return connect.NewResponse(ret.Msg), nil
-	} else {
+	if nodes.IsLocal() {
 		return s.localGetLastMiniblockHash(ctx, req)
 	}
+
+	return peerNodeRequestWithRetries(
+		ctx,
+		nodes,
+		s,
+		func(ctx context.Context, stub StreamServiceClient) (*connect.Response[GetLastMiniblockHashResponse], error) {
+			ret, err := stub.GetLastMiniblockHash(ctx, req)
+			if err != nil {
+				return nil, err
+			}
+			return connect.NewResponse(ret.Msg), nil
+		},
+		-1,
+	)
 }
 
 func (s *Service) AddEvent(

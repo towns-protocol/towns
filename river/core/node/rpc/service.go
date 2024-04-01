@@ -3,6 +3,7 @@ package rpc
 import (
 	"context"
 	"net/http"
+	"time"
 
 	"github.com/river-build/river/core/node/auth"
 	"github.com/river-build/river/core/node/config"
@@ -27,9 +28,11 @@ type Service struct {
 	nodeRegistry   nodes.NodeRegistry
 	streamRegistry nodes.StreamRegistry
 	streamConfig   *config.StreamConfig
+	networkConfig  *config.NetworkConfig
 	syncHandler    SyncHandler
 	serverCtx      context.Context
 	httpServer     *http.Server
+	startTime      time.Time
 }
 
 var (

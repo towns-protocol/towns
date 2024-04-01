@@ -67,6 +67,7 @@ import {
     EmbeddedMessageAttachment,
 } from '../../types/timeline-types'
 import { useCallback } from 'react'
+import { bin_toHexString } from '@river-build/dlog'
 
 type SuccessResult = {
     content: TimelineEvent_OneOf
@@ -578,6 +579,14 @@ function toTownsContent_ChannelPayload(
                 description,
             )
         }
+        case 'redaction':
+            return {
+                content: {
+                    kind: ZTEvent.RedactionActionEvent,
+                    refEventId: bin_toHexString(value.content.value.eventId),
+                    adminRedaction: true,
+                } satisfies RedactionActionEvent,
+            }
         case undefined: {
             return { error: `Undefined payload case: ${description}` }
         }
@@ -617,6 +626,7 @@ function toTownsContent_FromChannelMessage(
                 content: {
                     kind: ZTEvent.RedactionActionEvent,
                     refEventId: channelMessage.payload.value.refEventId,
+                    adminRedaction: false,
                 } satisfies RedactionActionEvent,
             }
         case 'edit': {

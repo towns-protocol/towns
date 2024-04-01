@@ -89,9 +89,14 @@ if [ "$CONFIG" == "true" ]; then
 fi
 
 if [ "$BUILD" == "true" ]; then
-    echo Building node binary
+    OUTPUT=${RUN_BASE}/bin/river_node
+    echo Building node binary ${OUTPUT}
     mkdir -p ${RUN_BASE}/bin
-    go build -o ${RUN_BASE}/bin/river_node -race ./node/main.go
+    go build \
+        -o ${OUTPUT} \
+        -race \
+        -ldflags="-X github.com/river-build/river/core/node/node/version.branch=$(git rev-parse --abbrev-ref HEAD) -X github.com/river-build/river/core/node/node/version.commit=$(git describe --tags --always --dirty)" \
+        ./node/main.go
 fi
 
 if [ "$RUN" == "true" ]; then

@@ -1,0 +1,18 @@
+package version
+
+var (
+	version = "dev_local" // default version
+	branch  = ""          // default branch name
+	commit  = ""          // default commit hash
+)
+
+func GetFullVersion() string {
+	ret := version
+	if branch != "" {
+		ret += "/" + branch
+	}
+	if commit != "" {
+		ret += "/" + commit
+	}
+	return ret
+}

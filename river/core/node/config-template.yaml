@@ -79,6 +79,12 @@ stream:
         ad: 10 # USER_DEVICE_KEY
         a1: 10 # USER_INBOX
         a5: 10 # USER_SETTINGS
+    # Timeout after streams with no activity in the cache are expired and evicted (default=5m)
+    # valid time unites are "ns", "us" (or "µs"), "ms", "s", "m", "h"
+    cacheExpiration: 5m
+    # Interval to check for inactive streams in the cache (default=cacheExpirationSec/10)
+    # valid time unites are "ns", "us" (or "µs"), "ms", "s", "m", "h"
+    cacheExpirationPollInterval: 30s
 
 # Debug feature flags.
 disableBaseChain: <DISABLE_BASE_CHAIN>

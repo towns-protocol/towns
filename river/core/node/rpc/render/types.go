@@ -1,7 +1,5 @@
 package render
 
-import "time"
-
 // RenderableData is the interface for all data that can be rendered
 type RenderableData interface {
 	*AvailableDebugHandlersData | *CacheData |
@@ -80,17 +78,21 @@ func (d InfoIndexData) TemplateName() string {
 	return "templates/info/index.template.html"
 }
 
-type DebugMultiInfo struct {
-	Protocol     string
-	ResponseTime time.Duration
-	StatusCode   int
-	Failed       bool
+type DebugMultiNodeInfo struct {
+	Url         string
+	Local       bool
+	HttpMsg     string
+	HttpSuccess bool
+	GrpcMsg     string
+	GrpcSuccess bool
+	Address     string
+	Status      string
+	Operator    string
 }
 
 type DebugMultiData struct {
-	Results   map[string][]DebugMultiInfo
-	Nodes     []string
-	Protocols []string
+	Results     []*DebugMultiNodeInfo
+	CurrentTime string
 }
 
 func (d DebugMultiData) TemplateName() string {

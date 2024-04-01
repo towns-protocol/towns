@@ -9,11 +9,14 @@ import (
 
 	"connectrpc.com/connect"
 	"google.golang.org/protobuf/encoding/protojson"
+	"google.golang.org/protobuf/types/known/timestamppb"
 
 	. "github.com/river-build/river/core/node/base"
 	"github.com/river-build/river/core/node/events"
 	"github.com/river-build/river/core/node/infra"
+	"github.com/river-build/river/core/node/node/version"
 	. "github.com/river-build/river/core/node/protocol"
+	. "github.com/river-build/river/core/node/protocol/protocolconnect"
 	"github.com/river-build/river/core/node/shared"
 )
 
@@ -106,54 +109,59 @@ func (s *Service) info(
 				return nil, err
 			}
 			log.Info("Info Debug request to add event", "stream_id", streamId)
-			stub, _, err := s.getStubForStream(ctx, streamId)
+			nodes, err := s.streamRegistry.GetStreamInfo(ctx, streamId)
 			if err != nil {
 				return nil, err
 			}
-			if stub != nil {
-				_, err := stub.Info(ctx, connect.NewRequest(&InfoRequest{
-					Debug: []string{"add_event", streamId.String()},
-				}))
-				return nil, err
+
+			if nodes.IsLocal() {
+				stream, _, err := s.cache.GetStream(ctx, streamId)
+				if err != nil {
+					return nil, err
+				}
+				eventStr := request.Msg.Debug[2]
+				envelope := &Envelope{}
+				err = protojson.Unmarshal([]byte(eventStr), envelope)
+				if err != nil {
+					return nil, err
+				}
+				parsedEvent, err := events.ParseEvent(envelope)
+				if err != nil {
+					return nil, err
+				}
+				err = stream.AddEvent(ctx, parsedEvent)
+				return connect.NewResponse(&InfoResponse{}), err
 			}
-			stream, _, err := s.cache.GetStream(ctx, streamId)
-			if err != nil {
-				return nil, err
-			}
-			eventStr := request.Msg.Debug[2]
-			envelope := &Envelope{}
-			err = protojson.Unmarshal([]byte(eventStr), envelope)
-			if err != nil {
-				return nil, err
-			}
-			parsedEvent, err := events.ParseEvent(envelope)
-			if err != nil {
-				return nil, err
-			}
-			err = stream.AddEvent(ctx, parsedEvent)
-			return connect.NewResponse(&InfoResponse{}), err
+			return peerNodeRequestWithRetries(
+				ctx,
+				nodes,
+				s,
+				func(ctx context.Context, stub StreamServiceClient) (*connect.Response[InfoResponse], error) {
+					_, err := stub.Info(ctx, connect.NewRequest(&InfoRequest{
+						Debug: []string{"add_event", streamId.String()},
+					}))
+					return nil, err
+				},
+				-1,
+			)
 		}
 	}
 
 	// TODO: set graffiti in config
-	// TODO: return version
 	return connect.NewResponse(&InfoResponse{
-		Graffiti: "River Node welcomes you!",
+		Graffiti:  "River Node welcomes you!",
+		StartTime: timestamppb.New(s.startTime),
+		Version:   version.GetFullVersion(),
 	}), nil
 }
 
 func (s *Service) debugMakeMiniblock(ctx context.Context, streamId shared.StreamId, forceSnapshot string) error {
-	stub, _, err := s.getStubForStream(ctx, streamId)
+	nodes, err := s.streamRegistry.GetStreamInfo(ctx, streamId)
 	if err != nil {
 		return err
 	}
 
-	if stub != nil {
-		_, err := stub.Info(ctx, connect.NewRequest(&InfoRequest{
-			Debug: []string{"make_miniblock", streamId.String(), forceSnapshot},
-		}))
-		return err
-	} else {
+	if nodes.IsLocal() {
 		stream, _, err := s.cache.GetStream(ctx, streamId)
 		if err != nil {
 			return err
@@ -178,4 +186,18 @@ func (s *Service) debugMakeMiniblock(ctx context.Context, streamId shared.Stream
 		}
 		return nil
 	}
+
+	_, err = peerNodeRequestWithRetries(
+		ctx,
+		nodes,
+		s,
+		func(ctx context.Context, stub StreamServiceClient) (*connect.Response[InfoResponse], error) {
+			_, err := stub.Info(ctx, connect.NewRequest(&InfoRequest{
+				Debug: []string{"make_miniblock", streamId.String(), forceSnapshot},
+			}))
+			return nil, err
+		},
+		-1,
+	)
+	return err
 }

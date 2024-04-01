@@ -175,6 +175,7 @@ interface TownsClientImpl {
         limit: number,
     ) => Promise<boolean | undefined>
     sendMessage: (roomId: string, message: string, options?: SendMessageOptions) => Promise<void>
+    adminRedactMessage: (roomId: string, eventId: string) => Promise<void>
     retrySendMessage: (roomId: string, localEventId: string) => Promise<void>
     sendReaction: (roomId: string, eventId: string, reaction: string) => Promise<void>
     sendMediaPayload: (
@@ -271,6 +272,7 @@ export function useTownsClient(): TownsClientImpl {
         sendReaction: useWithCatch(client?.sendReaction),
         sendMediaPayload: useWithCatch(client?.sendMediaPayload),
         sendReadReceipt: useWithCatch(sendReadReceipt),
+        adminRedactMessage: useWithCatch(client?.adminRedactMessage),
         setDisplayName: useWithCatch(client?.setDisplayName),
         setRoomProperties: useWithCatch(client?.setRoomProperties),
         setAvatarUrl: useWithCatch(client?.setAvatarUrl),

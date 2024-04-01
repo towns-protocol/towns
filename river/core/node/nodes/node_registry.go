@@ -90,7 +90,7 @@ func LoadNodeRegistry(
 
 	localFound := false
 	for _, node := range nodes {
-		nn := ret.addNode(node.NodeAddress, node.Url, node.Status)
+		nn := ret.addNode(node.NodeAddress, node.Url, node.Status, node.Operator)
 		localFound = localFound || nn.local
 	}
 
@@ -118,12 +118,13 @@ func LoadNodeRegistry(
 	return ret, nil
 }
 
-func (n *nodeRegistryImpl) addNode(addr common.Address, url string, status uint8) *NodeRecord {
+func (n *nodeRegistryImpl) addNode(addr common.Address, url string, status uint8, operator common.Address) *NodeRecord {
 	// Lock should be taken by the caller
 	nn := &NodeRecord{
-		address: addr,
-		url:     url,
-		status:  status,
+		address:  addr,
+		operator: operator,
+		url:      url,
+		status:   status,
 	}
 	if addr == n.localNodeAddress {
 		nn.local = true
@@ -149,7 +150,8 @@ func (n *nodeRegistryImpl) OnNodeAdded(event types.Log) {
 	defer n.mu.Unlock()
 
 	if _, exists := n.nodes[e.NodeAddress]; !exists {
-		nodeRecord := n.addNode(e.NodeAddress, e.Url, e.Status)
+		// TODO: add operator to NodeAdded event
+		nodeRecord := n.addNode(e.NodeAddress, e.Url, e.Status, common.Address{})
 		log.Info("NodeRegistry: NodeAdded", "node", nodeRecord.address, "blockNum", event.BlockNumber)
 	} else {
 		log.Error("NodeRegistry: Got NodeAdded for node that already exists in NodeRegistry", "blockNum", event.BlockNumber, "node", e.NodeAddress, "nodes", n.nodes)

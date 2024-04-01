@@ -189,7 +189,7 @@ describe('UseTimelineStore', () => {
                 timeline: [
                     'MSG_0 alice: hi bob!',
                     'THREAD_0 ~Redacted~',
-                    'event2 Redacts THREAD_0',
+                    'event2 Redacts THREAD_0 adminRedaction: false',
                 ],
                 threads: {
                     MSG_0: ['THREAD_0 ~Redacted~'],
@@ -235,7 +235,7 @@ describe('UseTimelineStore', () => {
                     'MSG_1 bob: hi alice! (edited)',
                     'MSG_2 ~Redacted~',
                     'event4 alice: banannas? lol',
-                    'event5 Redacts MSG_2',
+                    'event5 Redacts MSG_2 adminRedaction: false',
                 ],
             })
         })

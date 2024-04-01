@@ -59,16 +59,24 @@ jobs:
                 ADDITIONAL_TAGS: ${{ inputs.additional_tags_csv }}
               working-directory: ./core
               run: |
-                COMMIT_HASH=$(git log -1 --pretty=%h)
+                COMMIT_HASH=$(git describe --tags --always --dirty)
+                BRANCH=$(git rev-parse --abbrev-ref HEAD)
+                VERSION="unset"
 
                 # if release version is not provided, we use the commit hash
                 if [ -z "$RELEASE_VERSION" ]; then
                   RELEASE_VERSION=$COMMIT_HASH
+                  VERSION="dev"
+                else
+                  VERSION=$RELEASE_VERSION
                 fi
 
                 docker build \
                   --build-arg GIT_SHA=${{ github.sha }} \
                   --build-arg RELEASE_VERSION=$RELEASE_VERSION \
+                  --build-arg VER_VERSION=$VERSION \
+                  --build-arg VER_BRANCH=$BRANCH \
+                  --build-arg VER_COMMIT=$COMMIT_HASH \
                   -t river:local-latest \
                   . 
 

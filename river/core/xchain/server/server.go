@@ -4,7 +4,6 @@ import (
 	"context"
 	"crypto/ecdsa"
 	"encoding/hex"
-	"errors"
 	"math/big"
 	"os"
 
@@ -156,6 +155,13 @@ func registerNode(ctx context.Context, workerID int, fromAddress common.Address,
 		return nil, err
 	}
 
+	// Get the latest block number
+	blockNumber, err := client.BlockByNumber(ctx, nil)
+	if err != nil {
+		log.Error("Failed to get current block number", "err", err)
+		return nil, err
+	}
+
 	tx, err := checker.RegisterNode(auth)
 	if err != nil {
 		customError, stringError, err := errorDecoder.DecodeEVMError(err)
@@ -170,17 +176,12 @@ func registerNode(ctx context.Context, workerID int, fromAddress common.Address,
 			log.Error("Failed RegisterNode", "err", err, "Error", err.Error())
 			return nil, err
 		}
+	} else {
+		_ = xc.WaitForTransaction(client, tx)
+
 	}
-
-	blockNumber := xc.WaitForTransaction(client, tx)
-	if blockNumber == nil {
-		log.Error("Failed to get block number", "err", err)
-
-		return nil, errors.New("failed to get block number")
-	}
-	log.Info("Registered node", "blockNumber", blockNumber, "tx", tx.Hash().Hex())
-
-	temp := blockNumber.Uint64()
+	log.Info("Registered node", "blockNumber", blockNumber)
+	temp := blockNumber.NumberU64()
 	return &temp, nil
 }
 

@@ -26,29 +26,31 @@
   <body>
     <h2>Node Response Times</h2>
     <table>
-      <!-- Header row for Protocols -->
+      <!-- Header row -->
       <tr>
         <th>Node</th>
-        {{ range .Protocols }}
-        <th>{{ . }}</th>
-        {{ end }}
+        <th>Local</th>
+        <th>HTTP</th>
+        <th>GRPC</th>
+        <th>Address</th>
+        <th>Status</th>
+        <th>Operator</th>
       </tr>
 
       <!-- Data rows for each Node -->
-      {{ range $node := .Nodes }}
+      {{range $r := .Results}}
+      <!-- prettier-ignore -->
       <tr>
-        <th>{{ $node }}</th>
-        {{ range $protocol := $.Protocols }} {{ $response := index $.Results
-        $node }} {{ $found := false }} {{ range $response }} {{ if eq .Protocol
-        $protocol }} {{ if or .Failed (ne .StatusCode 200) }}
-        <td class="error">{{ .ResponseTime }} ({{ .StatusCode }})</td>
-        {{ else }}
-        <td class="success">{{ .ResponseTime }} ({{ .StatusCode }})</td>
-        {{ end }} {{ $found = true }} {{ end }} {{ end }} {{ if not $found }}
-        <td>N/A</td>
-        {{ end }} {{ end }}
+        <th><a href="{{$r.Url}}/debug/multi">{{$r.Url}}</a></th>
+        <td>{{if $r.Local}}*{{end}}</td>
+        <td class="{{if $r.HttpSuccess}}success{{else}}error{{end}}">{{$r.HttpMsg}}</td>
+        <td class="{{if $r.GrpcSuccess}}success{{else}}error{{end}}">{{$r.GrpcMsg}}</td>
+        <td>{{$r.Address}}</td>
+        <td>{{$r.Status}}</td>
+        <td>{{$r.Operator}}</td>
       </tr>
-      {{ end }}
+      {{end}}
     </table>
+    Current UTC Time: {{.CurrentTime}}
   </body>
 </html>

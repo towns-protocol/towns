@@ -3,6 +3,7 @@ package storage
 import (
 	"context"
 
+	"github.com/ethereum/go-ethereum/common"
 	. "github.com/river-build/river/core/node/shared"
 )
 
@@ -39,19 +40,26 @@ type StreamStorage interface {
 		envelope []byte,
 	) error
 
-	// Current minipool generation must be minipoolGeneration and size must be minipoolSize,
-	// stream must have minipoolGeneration miniblocks.
+	// WriteBlockProposal adds a proposal candidate for future
+	WriteBlockProposal(
+		ctx context.Context,
+		streamId StreamId,
+		blockHash common.Hash,
+		blockNumber int64,
+		miniblock []byte,
+	) error
+
+	// Promote block candidate to miniblock
 	// Deletes current minipool at minipoolGeneration,
 	// creates new minipool at minipoolGeneration + 1,
-	// stores provided miniblock at minipoolGeneration index,
-	// if snapshotMiniblock is true, stores minipoolGeneration as last snapshot miniblock index,
+	// stores miniblock proposal with given hash at minipoolGeneration index and wipes all candidates for stream.
+	// If snapshotMiniblock is true, stores minipoolGeneration as last snapshot miniblock index,
 	// stores envelopes in the new minipool in slots starting with 0.
-	WriteBlock(
+	PromoteBlock(
 		ctx context.Context,
 		streamId StreamId,
 		minipoolGeneration int64,
-		minipoolSize int,
-		miniblock []byte,
+		candidateBlockHash common.Hash,
 		snapshotMiniblock bool,
 		envelopes [][]byte,
 	) error

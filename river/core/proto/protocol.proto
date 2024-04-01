@@ -242,9 +242,14 @@ message ChannelPayload {
         StreamSettings settings = 5;
     }
 
+    message Redaction {
+        bytes event_id = 1;
+    }
+
     oneof content {
         Inception inception = 1;
         EncryptedData message = 2;
+        Redaction redaction = 3;
     }
 }
 
@@ -579,12 +584,19 @@ message GetStreamExRequest {
     bytes stream_id = 1;
 }
 
+message Minipool {
+    repeated Envelope events = 1;
+}
+
 // GetStreamExResponse is a stream of raw data that represents the current state of the requested stream.
 // These responses represent streams that are not expected to change once finalized, and have a optimized code path
 // for retrieval. Response may potentially be very large, and are streamed back to the client. The client is expected
 // to martial the raw data back into protobuf messages.
 message GetStreamExResponse {
-    Miniblock miniblock = 1;
+    oneof data {
+        Miniblock miniblock = 1;
+        Minipool minipool = 2;
+    }
 }
 
 message CreateStreamRequest {
@@ -680,6 +692,8 @@ message InfoRequest {
 
 message InfoResponse {
     string graffiti = 1;
+    google.protobuf.Timestamp start_time = 2;
+    string version = 3;
 }
 
 service StreamService {

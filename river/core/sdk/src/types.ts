@@ -618,6 +618,22 @@ export const make_ChannelPayload_Message = (
     }
 }
 
+export const make_ChannelPayload_Redaction = (
+    eventId: Uint8Array,
+): PlainMessage<StreamEvent>['payload'] => {
+    return {
+        case: 'channelPayload',
+        value: {
+            content: {
+                case: 'redaction',
+                value: {
+                    eventId,
+                },
+            },
+        },
+    }
+}
+
 export const make_MemberPayload_KeyFulfillment = (
     value: PlainMessage<MemberPayload_KeyFulfillment>,
 ): PlainMessage<StreamEvent>['payload'] => {

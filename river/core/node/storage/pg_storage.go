@@ -9,6 +9,7 @@ import (
 	"strings"
 	"time"
 
+	"github.com/ethereum/go-ethereum/common"
 	. "github.com/river-build/river/core/node/base"
 	. "github.com/river-build/river/core/node/protocol"
 	. "github.com/river-build/river/core/node/shared"
@@ -28,11 +29,12 @@ import (
 )
 
 type PostgresEventStore struct {
-	pool       *pgxpool.Pool
-	schemaName string
-	nodeUUID   string
-	exitSignal chan error
-	dbUrl      string
+	pool         *pgxpool.Pool
+	schemaName   string
+	nodeUUID     string
+	exitSignal   chan error
+	dbUrl        string
+	migrationDir embed.FS
 }
 
 var _ StreamStorage = (*PostgresEventStore)(nil)
@@ -185,6 +187,7 @@ func (s *PostgresEventStore) createStreamStorageTx(
 		`INSERT INTO es (stream_id, latest_snapshot_miniblock) VALUES ($1, 0);
 		CREATE TABLE miniblocks_%[1]s PARTITION OF miniblocks FOR VALUES IN ($1);
 		CREATE TABLE minipools_%[1]s PARTITION OF minipools FOR VALUES IN ($1);
+		CREATE TABLE miniblock_candidates_%[1]s PARTITION OF miniblock_candidates for values in ($1);
 		INSERT INTO miniblocks (stream_id, seq_num, blockdata) VALUES ($1, 0, $2);
 		INSERT INTO minipools (stream_id, generation, slot_num) VALUES ($1, 1, -1);`,
 		tableSuffix,
@@ -503,27 +506,86 @@ func (s *PostgresEventStore) readMiniblocksTx(
 	return miniblocks, nil
 }
 
-func (s *PostgresEventStore) WriteBlock(
+// WriteBlockProposal adds a miniblock proposal candidate. When the miniblock is finalized, the node will promote the
+// candidate with the correct hash.
+func (s *PostgresEventStore) WriteBlockProposal(
+	ctx context.Context,
+	streamId StreamId,
+	blockHash common.Hash,
+	blockNumber int64,
+	miniblock []byte,
+) error {
+	return s.txRunnerWithMetrics(
+		ctx,
+		"WriteBlockProposal",
+		pgx.ReadWrite,
+		func(ctx context.Context, tx pgx.Tx) error {
+			return s.writeBlockProposalTxn(ctx, tx, streamId, blockHash, blockNumber, miniblock)
+		},
+		nil,
+		"streamId", streamId,
+		"blockHash", blockHash,
+		"blockNumber", blockNumber,
+	)
+}
+
+// Supported consistency checks:
+// 1. Proposal block number is current miniblock block number + 1
+func (s *PostgresEventStore) writeBlockProposalTxn(
+	ctx context.Context,
+	tx pgx.Tx,
+	streamId StreamId,
+	blockHash common.Hash,
+	blockNumber int64,
+	miniblock []byte,
+) error {
+	var seqNum *int64
+
+	err := tx.QueryRow(ctx, "SELECT MAX(seq_num) as latest_blocks_number FROM miniblocks WHERE stream_id = $1", streamId).
+		Scan(&seqNum)
+	if err != nil {
+		return err
+	}
+	if seqNum == nil {
+		return RiverError(Err_NOT_FOUND, "No blocks for the stream found in block storage")
+	}
+	// Proposal should be for or after the next block number. Candidates from before the next block number are rejected.
+	if blockNumber < *seqNum+1 {
+		return RiverError(Err_MINIBLOCKS_STORAGE_FAILURE, "Miniblock proposal blockNumber mismatch").
+			Tag("ExpectedBlockNumber", *seqNum+1).Tag("ActualBlockNumber", blockNumber)
+	}
+
+	// insert miniblock proposal into miniblock_candidates table
+	_, err = tx.Exec(
+		ctx,
+		"INSERT INTO miniblock_candidates (stream_id, seq_num, block_hash, blockdata) VALUES ($1, $2, $3, $4) ON CONFLICT(stream_id, seq_num, block_hash) DO NOTHING",
+		streamId,
+		blockNumber,
+		hex.EncodeToString(blockHash.Bytes()), // avoid leading '0x'
+		miniblock,
+	)
+	return err
+}
+
+func (s *PostgresEventStore) PromoteBlock(
 	ctx context.Context,
 	streamId StreamId,
 	minipoolGeneration int64,
-	minipoolSize int,
-	miniblock []byte,
+	candidateBlockHash common.Hash,
 	snapshotMiniblock bool,
 	envelopes [][]byte,
 ) error {
 	return s.txRunnerWithMetrics(
 		ctx,
-		"WriteBlock",
+		"PromoteBlock",
 		pgx.ReadWrite,
 		func(ctx context.Context, tx pgx.Tx) error {
-			return s.writeBlockTx(
+			return s.promoteBlockTxn(
 				ctx,
 				tx,
 				streamId,
 				minipoolGeneration,
-				minipoolSize,
-				miniblock,
+				candidateBlockHash,
 				snapshotMiniblock,
 				envelopes,
 			)
@@ -531,20 +593,17 @@ func (s *PostgresEventStore) WriteBlock(
 		nil,
 		"streamId", streamId,
 		"minipoolGeneration", minipoolGeneration,
-		"minipoolSize", minipoolSize,
+		"candidateBlockHash", candidateBlockHash,
 		"snapshotMiniblock", snapshotMiniblock,
 	)
 }
 
-// Supported consistency checks:
-// 1. Stream has minipoolGeneration-1 miniblocks
-func (s *PostgresEventStore) writeBlockTx(
+func (s *PostgresEventStore) promoteBlockTxn(
 	ctx context.Context,
 	tx pgx.Tx,
 	streamId StreamId,
 	minipoolGeneration int64,
-	minipoolSize int,
-	miniblock []byte,
+	candidateBlockHash common.Hash,
 	snapshotMiniblock bool,
 	envelopes [][]byte,
 ) error {
@@ -559,7 +618,7 @@ func (s *PostgresEventStore) writeBlockTx(
 		return RiverError(Err_NOT_FOUND, "No blocks for the stream found in block storage")
 	}
 	if minipoolGeneration != *seqNum+1 {
-		return RiverError(Err_MINIBLOCKS_STORAGE_FAILURE, "Minipool generation missmatch").
+		return RiverError(Err_MINIBLOCKS_STORAGE_FAILURE, "Minipool generation mismatch").
 			Tag("ExpectedNewMinipoolGeneration", minipoolGeneration).Tag("ActualNewMinipoolGeneration", *seqNum+1)
 	}
 
@@ -608,18 +667,30 @@ func (s *PostgresEventStore) writeBlockTx(
 		}
 	}
 
-	// insert new miniblock into miniblocks table
-	_, err = tx.Exec(
+	// promote miniblock candidate into miniblocks table
+	tag, err := tx.Exec(
 		ctx,
-		"INSERT INTO miniblocks (stream_id, seq_num, blockdata) VALUES ($1, $2, $3)",
+		"INSERT INTO miniblocks SELECT stream_id, seq_num, blockdata FROM miniblock_candidates WHERE stream_id = $1 AND seq_num = $2 AND miniblock_candidates.block_hash = $3",
 		streamId,
 		minipoolGeneration,
-		miniblock,
+		hex.EncodeToString(candidateBlockHash.Bytes()), // avoid leading '0x'
 	)
 	if err != nil {
 		return err
 	}
-	return nil
+	// Exactly one row should be copied. (stream_id, seq_num, blockhash) is a unique key, so we expect 0 or 1 copies.
+	if tag.RowsAffected() < 1 {
+		return RiverError(Err_NOT_FOUND, "No candidate block found")
+	}
+
+	// clean up miniblock proposals for stream id
+	_, err = tx.Exec(
+		ctx,
+		"DELETE FROM miniblock_candidates WHERE stream_id = $1 and seq_num <= $2",
+		streamId,
+		minipoolGeneration,
+	)
+	return err
 }
 
 func (s *PostgresEventStore) GetStreamsNumber(ctx context.Context) (int, error) {
@@ -791,12 +862,13 @@ func NewPostgresEventStore(
 	return store, nil
 }
 
-func newPostgresEventStore(
+func newPostgresEventStoreWithMigrations(
 	ctx context.Context,
 	database_url string,
 	databaseSchemaName string,
 	instanceId string,
 	exitSignal chan error,
+	migrations embed.FS,
 ) (*PostgresEventStore, error) {
 	log := dlog.FromCtx(ctx)
 
@@ -817,11 +889,12 @@ func newPostgresEventStore(
 	}
 
 	store := &PostgresEventStore{
-		pool:       pool,
-		schemaName: databaseSchemaName,
-		nodeUUID:   instanceId,
-		exitSignal: exitSignal,
-		dbUrl:      database_url,
+		pool:         pool,
+		schemaName:   databaseSchemaName,
+		nodeUUID:     instanceId,
+		exitSignal:   exitSignal,
+		dbUrl:        database_url,
+		migrationDir: migrations,
 	}
 
 	err = store.InitStorage(ctx)
@@ -850,6 +923,23 @@ func newPostgresEventStore(
 	}()
 
 	return store, nil
+}
+
+func newPostgresEventStore(
+	ctx context.Context,
+	database_url string,
+	databaseSchemaName string,
+	instanceId string,
+	exitSignal chan error,
+) (*PostgresEventStore, error) {
+	return newPostgresEventStoreWithMigrations(
+		ctx,
+		database_url,
+		databaseSchemaName,
+		instanceId,
+		exitSignal,
+		migrationsDir,
+	)
 }
 
 // Close removes instance record from singlenodekey table and closes the connection pool
@@ -896,14 +986,17 @@ func (s *PostgresEventStore) createSchemaTx(ctx context.Context, tx pgx.Tx) erro
 	return nil
 }
 
-func (s *PostgresEventStore) runMigrations(ctx context.Context) error {
+func (s *PostgresEventStore) runMigrations() error {
 	// Run migrations
-	iofsMigrationsDir, err := iofs.New(migrationsDir, "migrations")
+	iofsMigrationsDir, err := iofs.New(s.migrationDir, "migrations")
 	if err != nil {
 		return WrapRiverError(Err_DB_OPERATION_FAILURE, err).Message("Error loading migrations")
 	}
 
-	dbUrlWithSchema := strings.Split(s.dbUrl, "?")[0] + fmt.Sprintf("?sslmode=disable&search_path=%v", s.schemaName)
+	dbUrlWithSchema := strings.Split(s.dbUrl, "?")[0] + fmt.Sprintf(
+		"?sslmode=disable&search_path=%v,public",
+		s.schemaName,
+	)
 	migration, err := migrate.NewWithSourceInstance("iofs", iofsMigrationsDir, dbUrlWithSchema)
 	if err != nil {
 		return WrapRiverError(Err_DB_OPERATION_FAILURE, err).Message("Error creating migration instance")
@@ -965,7 +1058,7 @@ func (s *PostgresEventStore) initStorage(ctx context.Context) error {
 		return err
 	}
 
-	if err := s.runMigrations(ctx); err != nil {
+	if err := s.runMigrations(); err != nil {
 		return err
 	}
 

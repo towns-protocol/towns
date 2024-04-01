@@ -10,6 +10,7 @@ import (
 	"testing"
 
 	"github.com/river-build/river/core/node/base/test"
+	"github.com/river-build/river/core/node/contracts"
 	"github.com/river-build/river/core/node/crypto"
 	"github.com/river-build/river/core/node/dlog"
 	"github.com/river-build/river/core/node/events"
@@ -865,4 +866,89 @@ func TestSingleAndMulti(t *testing.T) {
 			})
 		}
 	})
+}
+
+// This number is large enough that we're pretty much guaranteed to have a node forward a request to
+// another node that is down.
+const TestStreams = 40
+
+func TestForwardingWithRetries(t *testing.T) {
+	tests := map[string]struct {
+		testStreamRequest func(t *testing.T, ctx context.Context, client protocolconnect.StreamServiceClient, streamId StreamId)
+	}{
+		"Unary request / response: GetStream": {
+			testStreamRequest: func(t *testing.T, ctx context.Context, client protocolconnect.StreamServiceClient, streamId StreamId) {
+				resp, err := client.GetStream(ctx, connect.NewRequest(&protocol.GetStreamRequest{
+					StreamId: streamId.Bytes(),
+				}))
+				require.NoError(t, err)
+				require.NotNil(t, resp)
+				require.Equal(t, streamId.Bytes(), resp.Msg.Stream.NextSyncCookie.StreamId)
+			},
+		},
+		"Streaming server response: GetStreamEx": {
+			testStreamRequest: func(t *testing.T, ctx context.Context, client protocolconnect.StreamServiceClient, streamId StreamId) {
+				resp, err := client.GetStreamEx(ctx, connect.NewRequest(&protocol.GetStreamExRequest{
+					StreamId: streamId.Bytes(),
+				}))
+				require.NoError(t, err)
+
+				// Read messages
+				msgs := make([]*protocol.GetStreamExResponse, 0)
+				for resp.Receive() {
+					msgs = append(msgs, resp.Msg())
+				}
+				require.NoError(t, resp.Err())
+				// Expect 1 miniblock, 1 empty minipool message.
+				require.Len(t, msgs, 2)
+			},
+		},
+	}
+	for testName, tc := range tests {
+		t.Run(testName, func(t *testing.T) {
+			ctx := test.NewTestContext()
+			numNodes := 5
+			replicationFactor := 3
+			serviceTester := newServiceTesterWithReplication(numNodes, replicationFactor, require.New(t))
+			serviceTester.initNodeRecords(0, numNodes, contracts.NodeStatus_Operational)
+			serviceTester.startNodes(0, numNodes)
+
+			defer serviceTester.Close()
+
+			userStreamIds := make([]StreamId, 0, TestStreams)
+
+			// Stream registry seems biased to allocate locally so we'll make requests from a different node
+			// to increase likelyhood of retries.
+			client0 := serviceTester.testClient(0)
+			client4 := serviceTester.testClient(4)
+
+			// Allocate TestStreams user streams
+			for i := 0; i < TestStreams; i++ {
+				// Create a user stream
+				wallet, err := crypto.NewWallet(ctx)
+				require.NoError(t, err)
+
+				res, _, err := createUser(ctx, wallet, client0)
+				streamId := UserStreamIdFromAddr(wallet.Address)
+				require.NoError(t, err)
+				require.NotNil(t, res, "nil sync cookie")
+				userStreamIds = append(userStreamIds, streamId)
+
+				_, err = client0.Info(ctx, connect.NewRequest(&protocol.InfoRequest{
+					Debug: []string{"make_miniblock", streamId.String(), "false"},
+				}))
+				require.NoError(t, err)
+			}
+
+			// Shut down replicationfactor - 1 nodes. All streams should still be available, but many
+			// stream requests should result in at least some retries.
+			serviceTester.CloseNode(0)
+			serviceTester.CloseNode(1)
+
+			// All stream requests should succeed.
+			for _, streamId := range userStreamIds {
+				tc.testStreamRequest(t, ctx, client4, streamId)
+			}
+		})
+	}
 }

@@ -54,6 +54,8 @@ export class StreamStateView_Channel extends StreamStateView_AbstractContent {
                     encryptionEmitter,
                 )
                 break
+            case 'redaction':
+                break
             case undefined:
                 break
             default:
@@ -81,6 +83,8 @@ export class StreamStateView_Channel extends StreamStateView_AbstractContent {
                     cleartext,
                     encryptionEmitter,
                 )
+                break
+            case 'redaction':
                 break
             case undefined:
                 break

@@ -15,6 +15,7 @@ type IsUserSettingsPayload_Content = isUserSettingsPayload_Content
 type IsUserDeviceKeyPayload_Content = isUserDeviceKeyPayload_Content
 type IsMediaPayload_Content = isMediaPayload_Content
 type IsSnapshot_Content = isSnapshot_Content
+type IsGetStreamExResponse_Data = isGetStreamExResponse_Data
 
 type IsInceptionPayload interface {
 	isInceptionPayload()

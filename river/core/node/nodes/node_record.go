@@ -11,6 +11,7 @@ import (
 // NodeRecord is immutable and so can be passed by pointer.
 type NodeRecord struct {
 	address             common.Address
+	operator            common.Address
 	url                 string
 	status              uint8
 	local               bool
@@ -20,6 +21,10 @@ type NodeRecord struct {
 
 func (n *NodeRecord) Address() common.Address {
 	return n.address
+}
+
+func (n *NodeRecord) Operator() common.Address {
+	return n.operator
 }
 
 func (n *NodeRecord) Url() string {
@@ -42,17 +47,22 @@ func (n *NodeRecord) NodeToNodeClient() NodeToNodeClient {
 	return n.nodeToNodeClient
 }
 
-func (n *NodeRecord) GoString() string {
+func (n *NodeRecord) String() string {
 	var local string
 	if n.local {
 		local = " local"
 	}
 	return fmt.Sprintf(
-		"NodeRecord{%s %d (%-11s) %s%s}\n",
+		"%s %d (%-11s) %s%s %s",
 		n.address.Hex(),
 		n.status,
 		contracts.NodeStatusString(n.status),
 		n.url,
 		local,
+		n.operator.Hex(),
 	)
+}
+
+func (n *NodeRecord) GoString() string {
+	return "NodeRecord{" + n.String() + "}\n"
 }

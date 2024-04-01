@@ -3,6 +3,7 @@ package events
 import (
 	"context"
 	"sync"
+	"time"
 
 	. "github.com/river-build/river/core/node/base"
 	"github.com/river-build/river/core/node/config"
@@ -77,7 +78,43 @@ func NewStreamCache(
 
 	chainMonitor.OnBlock(func(crypto.BlockNumber) { s.OnNewBlock(ctx) })
 
+	go s.cacheCleanup(ctx, params.StreamConfig.CacheExpirationPollInterval, params.StreamConfig.CacheExpiration)
+
 	return s, nil
+}
+
+// polls the cache every pollInterval and evicts streams from the cache that have not been accessed in expiration.
+func (s *streamCacheImpl) cacheCleanup(ctx context.Context, pollInterval time.Duration, expiration time.Duration) {
+	log := dlog.FromCtx(ctx)
+
+	if expiration <= 0 {
+		expiration = 5 * time.Minute
+	}
+	if pollInterval <= 0 {
+		pollInterval = expiration / 10
+	}
+	
+	log.Debug("stream cache cache cleanup", "expiration", expiration, "poll", pollInterval)
+
+	for {
+		select {
+		case <-time.After(pollInterval):
+			s.cache.Range(func(streamID, streamVal any) bool {
+				stream := streamVal.(*streamImpl)
+				stream.mu.Lock()
+				expired := time.Since(stream.lastAccessedTime) >= expiration
+				if expired && (stream.receivers == nil || stream.receivers.Cardinality() == 0) {
+					s.cache.Delete(streamID)
+					log.Debug("stream evicted from cache", "streamId", streamID)
+				}
+				stream.mu.Unlock()
+				return true
+			})
+		case <-ctx.Done():
+			log.Debug("stream cache cache cleanup shutdown")
+			return
+		}
+	}
 }
 
 func (s *streamCacheImpl) tryLoadStreamRecord(ctx context.Context, streamId StreamId) (SyncStream, StreamView, error) {
@@ -108,9 +145,10 @@ func (s *streamCacheImpl) tryLoadStreamRecord(ctx context.Context, streamId Stre
 	}
 
 	stream := &streamImpl{
-		params:   s.params,
-		streamId: streamId,
-		nodes:    nodes,
+		params:           s.params,
+		streamId:         streamId,
+		nodes:            nodes,
+		lastAccessedTime: time.Now(),
 	}
 
 	// Lock stream, so parallel creators have to wait for the stream to be intialized.
@@ -216,7 +254,12 @@ func (s *streamCacheImpl) OnNewBlock(ctx context.Context) {
 	s.cache.Range(func(key, value interface{}) bool {
 		stream := value.(*streamImpl)
 		if stream.canCreateMiniblock() {
-			go func() { _, _ = stream.MakeMiniblock(ctx, false) }()
+			go func() {
+				_, err := stream.MakeMiniblock(ctx, false)
+				if err != nil {
+					log.Error("onNewBlock: Error creating miniblock", "streamId", stream.streamId, "err", err)
+				}
+			}()
 		}
 		return true
 	})
