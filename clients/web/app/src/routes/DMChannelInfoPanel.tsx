@@ -10,6 +10,7 @@ import {
     useTownsClient,
     useUserLookupContext,
 } from 'use-towns-client'
+import { Address } from 'wagmi'
 import { Box, Icon, Stack, Text, TextButton, TextField } from '@ui'
 import { Panel } from '@components/Panel/Panel'
 import { ConfirmLeaveModal } from '@components/ConfirmLeaveModal/ConfirmLeaveModal'
@@ -23,6 +24,8 @@ import {
     SetUsernameDisplayName,
 } from '@components/SetUsernameDisplayName/SetUsernameDisplayName'
 import { PanelButton } from '@components/Panel/PanelButton'
+import { getPrettyDisplayName } from 'utils/getPrettyDisplayName'
+import { useAbstractAccountAddress } from 'hooks/useAbstractAccountAddress'
 import { ChannelMembersModal } from './SpaceChannelDirectoryPanel'
 import { GDMChannelPermissionsModal } from './GDMChannelPermissions'
 
@@ -84,9 +87,13 @@ export const DMChannelInfoPanel = () => {
     //     }
     // }, [navigate, isTouch])
 
-    const memberNamesExludingSelf = useMemo(() => {
-        return members.filter((member) => member.userId !== myUserId).map((m) => m.userId)
+    const membersExcludingSelf = useMemo(() => {
+        return members.filter((member) => member.userId !== myUserId)
     }, [members, myUserId])
+
+    const memberNamesExludingSelf = useMemo(() => {
+        return membersExcludingSelf.map((m) => m.userId)
+    }, [membersExcludingSelf])
 
     const membersText = useUserList({ userIds: memberNamesExludingSelf, excludeSelf: true }).join(
         '',
@@ -110,6 +117,7 @@ export const DMChannelInfoPanel = () => {
     }, [data, membersText])
 
     const title = data ? (data.isGroup ? 'Group Info' : 'Direct Message') : ''
+    const isGDM = data?.isGroup ?? false
 
     return (
         <Panel modalPresentable label={title} onClose={onClose}>
@@ -121,23 +129,39 @@ export const DMChannelInfoPanel = () => {
                     {usernameProperties && (
                         <SetUsernameDisplayName titleProperties={usernameProperties} />
                     )}
-                    {memberNamesExludingSelf.length > 0 && (
-                        <Stack gap padding background="level2" rounded="sm">
-                            {data?.isGroup ? (
-                                <RoomPropertiesInputField defaultTitle={membersText} data={data} />
-                            ) : (
-                                <Text fontWeight="medium" color="default">
-                                    {membersText}
-                                </Text>
+                    {isGDM ? (
+                        <>
+                            {memberNamesExludingSelf.length > 0 && (
+                                <Stack gap padding background="level2" rounded="sm">
+                                    {isGDM ? (
+                                        <RoomPropertiesInputField
+                                            defaultTitle={membersText}
+                                            data={data}
+                                        />
+                                    ) : (
+                                        <Text fontWeight="medium" color="default">
+                                            {membersText}
+                                        </Text>
+                                    )}
+                                </Stack>
                             )}
-                        </Stack>
+                        </>
+                    ) : (
+                        <>
+                            {membersExcludingSelf.map((member) => (
+                                <ProfilePanelButton key={member.userId} member={member} />
+                            ))}
+                        </>
                     )}
-                    <PanelButton onClick={onMembersClick}>
-                        <Icon type="people" size="square_sm" color="gray2" />
-                        <Text color="default" fontWeight="medium">
-                            {memberCount} {memberCount === 1 ? 'member' : 'members'}{' '}
-                        </Text>
-                    </PanelButton>
+
+                    {isGDM && (
+                        <PanelButton onClick={onMembersClick}>
+                            <Icon type="people" size="square_sm" color="gray2" />
+                            <Text color="default" fontWeight="medium">
+                                {memberCount} {memberCount === 1 ? 'member' : 'members'}{' '}
+                            </Text>
+                        </PanelButton>
+                    )}
                     {/* {data?.isGroup && (
                         <PanelButton onClick={onPermissionsClick}>
                             <Icon type="people" size="square_sm" color="gray2" />
@@ -168,6 +192,36 @@ export const DMChannelInfoPanel = () => {
                 )}
             </DMChannelContextUserLookupProvider>
         </Panel>
+    )
+}
+
+const ProfilePanelButton = (props: {
+    member: {
+        userId: string
+        displayName: string
+        username?: string
+    }
+}) => {
+    const { member } = props
+    const { createLink } = useCreateLink()
+    const { data: abstractAccountAddress } = useAbstractAccountAddress({
+        rootKeyAddress: member.userId as Address | undefined,
+    })
+
+    const profileLink = createLink({ profileId: abstractAccountAddress })
+    const navigate = useNavigate()
+    const onClick = useCallback(() => {
+        if (profileLink) {
+            navigate(profileLink)
+        }
+    }, [profileLink, navigate])
+
+    return (
+        <PanelButton onClick={onClick}>
+            <Text fontWeight="medium" color="default">
+                {getPrettyDisplayName(member)}
+            </Text>
+        </PanelButton>
     )
 }
 
