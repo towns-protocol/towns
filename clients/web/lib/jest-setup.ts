@@ -58,7 +58,7 @@ afterEach(() => {
         queryClient.cancelQueries().then(() => queryClient.resetQueries()),
         TownsTestClient.cleanup(),
     ])
-}, 5000)
+}, 30_000)
 
 afterAll(() => {
     // clear storage
