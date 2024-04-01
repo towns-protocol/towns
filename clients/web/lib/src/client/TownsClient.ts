@@ -1021,6 +1021,11 @@ export class TownsClient implements EntitlementsDelegate {
         let error: Error | undefined = undefined
         console.log('[banUserTransaction] space', { spaceId, walletAddress })
 
+        const walletAddressWithToken = await this.walletAddressForMembership(spaceId, walletAddress)
+        if (!walletAddressWithToken) {
+            throw new Error('Membership token not found')
+        }
+
         const continueStoreTx = this.blockchainTransactionStore.begin({
             type: BlockchainTransactionType.BanUser,
         })
@@ -1029,11 +1034,15 @@ export class TownsClient implements EntitlementsDelegate {
             if (this.isAccountAbstractionEnabled()) {
                 transaction = await this.userOps?.sendBanWalletAddressOp([
                     spaceId,
-                    walletAddress,
+                    walletAddressWithToken,
                     signer,
                 ])
             } else {
-                transaction = await this.spaceDapp.banWalletAddress(spaceId, walletAddress, signer)
+                transaction = await this.spaceDapp.banWalletAddress(
+                    spaceId,
+                    walletAddressWithToken,
+                    signer,
+                )
             }
             console.log(`[banTransaction] transaction created`)
         } catch (err) {
@@ -1064,6 +1073,11 @@ export class TownsClient implements EntitlementsDelegate {
         let error: Error | undefined = undefined
         console.log('[unbanUserTransaction] space', { spaceId, walletAddress })
 
+        const walletAddressWithToken = await this.walletAddressForMembership(spaceId, walletAddress)
+        if (!walletAddressWithToken) {
+            throw new Error('Membership token not found')
+        }
+
         const continueStoreTx = this.blockchainTransactionStore.begin({
             type: BlockchainTransactionType.UnbanUser,
         })
@@ -1072,13 +1086,13 @@ export class TownsClient implements EntitlementsDelegate {
             if (this.isAccountAbstractionEnabled()) {
                 transaction = await this.userOps?.sendUnbanWalletAddressOp([
                     spaceId,
-                    walletAddress,
+                    walletAddressWithToken,
                     signer,
                 ])
             } else {
                 transaction = await this.spaceDapp.unbanWalletAddress(
                     spaceId,
-                    walletAddress,
+                    walletAddressWithToken,
                     signer,
                 )
             }
@@ -1109,7 +1123,13 @@ export class TownsClient implements EntitlementsDelegate {
     }
 
     public async walletAddressIsBanned(spaceId: string, walletAddress: string): Promise<boolean> {
-        return this.spaceDapp.walletAddressIsBanned(spaceId, walletAddress)
+        const wallets = (await this.getLinkedWallets(walletAddress)).concat(walletAddress)
+        for (const walletAddress of wallets) {
+            if (await this.spaceDapp.walletAddressIsBanned(spaceId, walletAddress)) {
+                return true
+            }
+        }
+        return false
     }
 
     public async deleteRoleTransaction(
@@ -1846,6 +1866,19 @@ export class TownsClient implements EntitlementsDelegate {
             }
             throw error
         }
+    }
+
+    private async walletAddressForMembership(
+        spaceId: string,
+        walletAddress: string,
+    ): Promise<string | undefined> {
+        const wallets = (await this.getLinkedWallets(walletAddress)).concat(walletAddress)
+        for (const walletAddress of wallets) {
+            if (await this.spaceDapp.hasSpaceMembership(spaceId, walletAddress)) {
+                return walletAddress
+            }
+        }
+        return undefined
     }
 
     // eslint-disable-next-line @typescript-eslint/no-explicit-any
