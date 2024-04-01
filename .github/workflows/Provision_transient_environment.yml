@@ -77,6 +77,7 @@ jobs:
             TF_VAR_has_stress_test_infra: ${{ needs.check_labels.outputs.has_stress_test_infra }}
             GIT_PR_NUMBER: ${{ github.event.pull_request.number}}
             CI_AUTOAPPROVE: true
+            TF_VAR_datadog_api_key: ${{ secrets.TF_VAR_datadog_api_key }}
 
         steps:
             - name: Checkout code

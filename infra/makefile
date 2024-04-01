@@ -101,20 +101,32 @@ _plan:
 	terraform -chdir=${terraform_folder} plan
 
 # This will apply the terraform infra changes
-apply: env check
+pre_apply: env check
 	@$(CMD) make _apply GIT_PR_NUMBER=$(GIT_PR_NUMBER) CI_AUTOAPPROVE=$(CI_AUTOAPPROVE)
 
 _apply:
 	terraform -chdir=${terraform_folder} workspace select $(terraform_workspace_name) || terraform -chdir=${terraform_folder} workspace new $(terraform_workspace_name)
 	terraform -chdir=${terraform_folder} apply $(CI_AUTOAPPROVE)
 
+apply: pre_apply
+	@echo "CI_AUTOAPPROVE=$(CI_AUTOAPPROVE)" >> .env
+	@echo "TF_ACTION_TYPE=Provision" >> .env
+	@echo "LOG_MESSAGE=Provision step is done for $(GIT_PR_NUMBER) PR" >> .env
+	@$(CMD) sh log_datadog.sh
+
 wait_for_lock_release:
 	$(CMD) sh lock_wait.sh
 
 # This will destroy the terraform infra
-destroy: env check wait_for_lock_release
+pre_destroy: env check wait_for_lock_release
 	@$(CMD) make _destroy GIT_PR_NUMBER=$(GIT_PR_NUMBER) CI_AUTOAPPROVE=$(CI_AUTOAPPROVE)
 
 _destroy:
 	- terraform -chdir=${terraform_folder} workspace select $(terraform_workspace_name)
 	terraform -chdir=${terraform_folder} destroy $(CI_AUTOAPPROVE)
+
+destroy: pre_destroy
+	@echo "CI_AUTOAPPROVE=$(CI_AUTOAPPROVE)" >> .env
+	@echo "TF_ACTION_TYPE=Deprovision" >> .env
+	@echo "LOG_MESSAGE=Deprovision step is done for $(GIT_PR_NUMBER) PR" >> .env
+	@$(CMD) sh log_datadog.sh
