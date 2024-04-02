@@ -705,11 +705,6 @@ export class TownsClient implements EntitlementsDelegate {
             Promise.any(
                 wallets.map((wallet) =>
                     this.isWalletEntitled(spaceId, channelId, wallet, permission).then((result) => {
-                        console.log(
-                            '[isEntitled] linkedWallet is user entitlted for channel and space',
-                            result,
-                            { spaceId, channelId, user, permission },
-                        )
                         if (!result) {
                             throw new Error('not entitled')
                         } else {
