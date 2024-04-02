@@ -43,6 +43,8 @@ module "lambda_function" {
   create_role          = true
   attach_policy_json   = true
 
+  trigger_on_package_timestamp = false
+
   environment_variables = {
     DATADOG_API_KEY_SECRET_ARN         = local.global_remote_state.river_global_dd_agent_api_key.arn
     DATADOG_APPLICATION_KEY_SECRET_ARN = local.global_remote_state.datadog_application_key_secret.arn

@@ -631,8 +631,8 @@ resource "aws_ecs_service" "river-ecs-service" {
   cluster                            = var.ecs_cluster.id
   task_definition                    = aws_ecs_task_definition.river-fargate.arn
   desired_count                      = 1
-  deployment_minimum_healthy_percent = 100  // Service isn't healthy unless one task is running
-  deployment_maximum_percent         = 100  // Don't allow more than one task to run at a time, it results in two nodes accessing the same database
+  deployment_minimum_healthy_percent = 0   // During deployment, actually bring down the old task before bringing up the new one.
+  deployment_maximum_percent         = 100 // Don't allow more than one task to run at a time, it results in two nodes accessing the same database
 
   # do not attempt to create the service before the lambda runs
   depends_on = [
