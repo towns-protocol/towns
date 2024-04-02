@@ -98,7 +98,9 @@ export const RichTextPreview = React.memo(
                         [singleEmojiMessage]: isSingleEmoji,
                     })}
                 >
-                    <Markdown components={memoizedComponents}>{content}</Markdown>
+                    <Markdown components={memoizedComponents} channels={channels}>
+                        {content}
+                    </Markdown>
                 </Box>
             </div>
         )

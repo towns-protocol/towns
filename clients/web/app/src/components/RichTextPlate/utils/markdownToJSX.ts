@@ -5,16 +5,19 @@ import { Fragment, jsx, jsxs } from 'react/jsx-runtime'
 import { VFile } from 'vfile'
 import { ELEMENT_MENTION, TMentionElement } from '@udecode/plate-mention'
 import remarkRehype from 'remark-rehype'
+import { Channel } from 'use-towns-client'
 import { TChannelMentionElement } from './ComboboxTypes'
 import { ELEMENT_MENTION_CHANNEL } from '../plugins/createChannelPlugin'
 import { createUnifiedProcessor } from './deserializeMD'
 
-export function Markdown(options: React.PropsWithChildren<{ components: Partial<Components> }>) {
+export function Markdown({
+    components,
+    channels = [],
+    ...options
+}: React.PropsWithChildren<{ components: Partial<Components>; channels?: Channel[] }>) {
     const children = options.children || ''
-    // const className = options.className
-    const components = options.components
     // @ts-expect-error: untyped.
-    const processor = createUnifiedProcessor().use(remarkRehype, {
+    const processor = createUnifiedProcessor(channels).use(remarkRehype, {
         passThrough: [ELEMENT_MENTION, ELEMENT_MENTION_CHANNEL],
         handlers: {
             [ELEMENT_MENTION]: (_: never, node: TMentionElement) => {

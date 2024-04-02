@@ -91,6 +91,7 @@ const PlateEditorWithoutBoundary = ({
     onSend,
     onCancel,
     displayButtons,
+    channels,
     initialValue: _initialValue,
     ...props
 }: Props) => {
@@ -127,7 +128,7 @@ const PlateEditorWithoutBoundary = ({
     const initialValue = useMemo(() => {
         if (!_initialValue) {
             if (editable && valueFromStore && valueFromStore.trim().length > 0) {
-                return deserializeMd(valueFromStore)
+                return deserializeMd(valueFromStore, channels)
             } else {
                 return [
                     {
@@ -137,8 +138,8 @@ const PlateEditorWithoutBoundary = ({
                 ]
             }
         }
-        return deserializeMd(_initialValue)
-    }, [_initialValue, editable, valueFromStore])
+        return deserializeMd(_initialValue, channels)
+    }, [_initialValue, editable, valueFromStore, channels])
 
     const { memberIds: _memberIds } = useChannelMembers()
     const memberIds = useMemo(() => new Set(_memberIds), [_memberIds])
@@ -155,14 +156,14 @@ const PlateEditorWithoutBoundary = ({
         }, [props.users, memberIds])
 
     const channelMentions: TComboboxItemWithData<Channel>[] = useMemo(() => {
-        return props.channels
+        return channels
             .map((channel) => ({
                 text: channel.label,
                 key: channel.id,
                 data: channel,
             }))
             .filter(notUndefined)
-    }, [props.channels])
+    }, [channels])
 
     const onFocusChange = useCallback(
         (focus: boolean) => {
