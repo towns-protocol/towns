@@ -5,7 +5,6 @@ import {
     useFullyReadMarker,
     useHasPermission,
     useMyUserId,
-    useSpaceData,
     useTownsClient,
 } from 'use-towns-client'
 import { EmojiPickerButton } from '@components/EmojiPickerButton'
@@ -49,11 +48,10 @@ export const MessageContextMenu = (props: Props) => {
     const [copiedText, copy] = useCopyToClipboard()
     const hasCopied = !!copiedText
 
-    const space = useSpaceData()
     const { loggedInWalletAddress } = useAuth()
 
     const { hasPermission: canRedact } = useHasPermission({
-        spaceId: space?.id ?? '',
+        spaceId: spaceId ?? '',
         walletAddress: loggedInWalletAddress ?? '',
         permission: Permission.Redact,
     })
@@ -233,7 +231,7 @@ export const MessageContextMenu = (props: Props) => {
                             color="error"
                             onClick={onDeleteClick}
                         />
-                    ) : canRedact && space ? (
+                    ) : canRedact && spaceId ? (
                         <IconButton
                             icon="delete"
                             size="square_sm"
