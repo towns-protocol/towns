@@ -84,6 +84,7 @@ function remove_river_yarn_files() {
 }
 
 function yarn_install_and_check() {
+    ./scripts/yarn-clean.sh
     
     # run yarn, give user a chance to fix issues
     while true; do
