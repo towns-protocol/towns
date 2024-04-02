@@ -1,4 +1,5 @@
-import { useLayoutEffect } from 'react'
+import { useLayoutEffect, useMemo } from 'react'
+import { useShallow } from 'zustand/react/shallow'
 import { useStore } from 'store/store'
 import { atoms } from 'ui/styles/atoms.css'
 import { darkTheme, globalPreventTransitions, lightTheme } from 'ui/styles/vars.css'
@@ -9,13 +10,15 @@ type ThemeSettings = {
 }
 
 export const useRootTheme = (settings: ThemeSettings) => {
-    const { theme, toggleTheme, setSystemTheme } = useStore((state) => ({
-        theme: state.getTheme(),
-        userTheme: state.userTheme,
-        setUserTheme: state.setUserTheme,
-        setSystemTheme: state.setSystemTheme,
-        toggleTheme: state.toggleTheme,
-    }))
+    const { theme, toggleTheme, setSystemTheme } = useStore(
+        useShallow((state) => ({
+            theme: state.getTheme(),
+            userTheme: state.userTheme,
+            setUserTheme: state.setUserTheme,
+            setSystemTheme: state.setSystemTheme,
+            toggleTheme: state.toggleTheme,
+        })),
+    )
 
     const { ammendHTMLBody = false, useDefaultOSTheme = false } = settings
 
@@ -65,5 +68,11 @@ export const useRootTheme = (settings: ThemeSettings) => {
         }
     }, [ammendHTMLBody, themeClass])
 
-    return { theme, toggleTheme }
+    return useMemo(
+        () => ({
+            theme,
+            toggleTheme,
+        }),
+        [theme, toggleTheme],
+    )
 }
