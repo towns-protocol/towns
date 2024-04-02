@@ -1,7 +1,9 @@
 import React, { ComponentProps, useCallback, useState } from 'react'
 import { AnimatePresence } from 'framer-motion'
+import linkifyit from 'linkify-it'
 import { useEvent } from 'react-use-event-hook'
 import { useEditorRef } from '@udecode/plate-common'
+import { getEditorString } from '@udecode/slate'
 import { focusEditor } from '@udecode/slate-react'
 import { MARK_BOLD, MARK_CODE, MARK_ITALIC, MARK_STRIKETHROUGH } from '@udecode/plate-basic-marks'
 import { upsertLink } from '@udecode/plate-link'
@@ -16,6 +18,8 @@ import { MarkToolbarButton } from './MarkToolbarButton'
 import { LinkToolbarButton } from './LinkToolbarButton'
 import { CodeBlockToolbarButton } from './CodeBlockToolbarButton'
 import { BlockQuoteToolbarButton } from './BlockQuoteToolbarButton'
+
+const linkify = linkifyit()
 
 type Props = {
     editing?: boolean
@@ -52,8 +56,19 @@ export const PlateToolbar = ({ showFormattingToolbar, focused }: Props) => {
         }
     })
 
-    const onSaveLink = useEvent((url: string) => {
-        upsertLink(editor, { url })
+    const onSaveLink = useEvent((text: string) => {
+        const parsedLink = linkify.match(text)?.[0]
+        if (!parsedLink) {
+            return
+        }
+
+        // If user has selected a text, we do not want to override it with the
+        // user's inputted link which may not be correctly formatted and let
+        // PlateJS handle it internally but adding an HREF over initially selected text
+        const selectionText = getEditorString(editor, editor.selection)
+        const linkText = selectionText ? undefined : parsedLink.text
+
+        upsertLink(editor, { url: parsedLink.url, text: linkText })
     })
 
     const onHideModal = useEvent(() => {
