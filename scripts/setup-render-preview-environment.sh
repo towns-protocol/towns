@@ -89,6 +89,7 @@ if [ "$IS_PULL_REQUEST" = true ]; then
     mode=$(get_transient_env_mode "$pr_number")
     domain="$pr_number.$PREVIEW_DOMAIN_SUFFIX"
     transient_provider_http_url="https://base-fork-transient-${pr_number}.towns.com"
+    transient_riverchain_provider_http_url="https://river-fork-transient-${pr_number}.towns.com"
     transient_provider_ws_url="wss://base-fork-transient-${pr_number}.towns.com"
 
     echo "Setting service $RENDER_SERVICE_ID domain to $domain"
@@ -117,6 +118,9 @@ if [ "$IS_PULL_REQUEST" = true ]; then
 
         echo "Setting VITE_PROVIDER_WS_URL to $transient_provider_ws_url"
         export VITE_PROVIDER_WS_URL="$transient_provider_ws_url"
+
+        echo "Setting VITE_RIVER_CHAIN_PROVIDER_HTTP_URL to $transient_riverchain_provider_http_url"
+        export VITE_RIVER_CHAIN_PROVIDER_HTTP_URL="$transient_riverchain_provider_http_url"
     fi
 
     echo "Setting VITE_TRANSIENT_ENV_GITHUB_PR_NUMBER to $pr_number"
