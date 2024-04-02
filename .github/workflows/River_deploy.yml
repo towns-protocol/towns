@@ -81,8 +81,12 @@ jobs:
             - name: Check if image exists
               env:
                 GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+
               run: |
-                if ! docker manifest inspect public.ecr.aws/h5v6m2x1/river:${{ inputs.docker_image_tag }} > /dev/null 2>&1; then
+                # Don't run the check for transient environments. 
+                if grep -q "transient" <<< "${{ inputs.docker_image_tag }}"; then
+                    echo "Transient deploy detected. Not running image checks."
+                elif ! docker manifest inspect public.ecr.aws/h5v6m2x1/river:${{ inputs.docker_image_tag }} > /dev/null 2>&1; then
                     echo "Docker image with the tag=${{ inputs.docker_image_tag }} does not exist. No need to deploy river."
 
                     # set a github env var to skip the next step
