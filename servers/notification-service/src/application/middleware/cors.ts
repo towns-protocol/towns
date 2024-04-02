@@ -20,6 +20,7 @@ const cors = createCorsConfig({
     },
 })
 
+// eslint-disable-next-line @typescript-eslint/no-unused-vars
 export function isAllowedOrigin(origin: string | undefined, environment: Environment): boolean {
     // TODO: uncomment and fix
     // const corsOrigin = getOriginForCors(origin, environment)
@@ -53,6 +54,7 @@ export function isAllowedOrigin(origin: string | undefined, environment: Environ
     return true
 }
 
+// eslint-disable-next-line @typescript-eslint/no-unused-vars
 function getOriginForCors(origin: string | undefined, environment: Environment): string {
     const allowedOrigins = getAllowedOrigins(environment)
     let foundOrigin: string | undefined

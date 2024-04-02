@@ -18,7 +18,9 @@
         "start": "node --experimental-specifier-resolution=node --loader ts-node/esm dist/server.js",
         "start:local": "yarn my-node --env-file .env.local dist/server.js",
         "test": "jest",
-        "watch": "tsc --watch"
+        "watch": "tsc --watch",
+        "lint": "eslint . --max-warnings=0",
+        "lint:fix": "yarn lint --fix"
     },
     "dependencies": {
         "@bufbuild/protobuf": "^1.4.1",
