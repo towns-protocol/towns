@@ -116,19 +116,27 @@ export const EmbeddedMessage = (props: {
                 <Stack horizontal gap="sm" color="gray2" alignItems="center" fontSize="sm">
                     {isKnownChannel && channelName ? (
                         <>
-                            <Text size="sm">{channelName}</Text>
+                            <Text size={{ desktop: 'sm', mobile: 'xs' }} whiteSpace="nowrap">
+                                {channelName}
+                            </Text>
                             <Text>&bull;</Text>
                         </>
                     ) : (
                         <></>
                     )}
 
-                    <Text size="sm">{formatDate(Number(attachment.info.createdAtEpochMs))}</Text>
+                    <Text size={{ desktop: 'sm', mobile: 'xs' }} whiteSpace="nowrap">
+                        {formatDate(Number(attachment.info.createdAtEpochMs))}
+                    </Text>
                     {messageLink && (
                         <>
                             <Text>&bull;</Text>
                             <Link to={messageLink}>
-                                <Text size="sm" color="cta2">
+                                <Text
+                                    size={{ desktop: 'sm', mobile: 'xs' }}
+                                    whiteSpace="nowrap"
+                                    color="cta2"
+                                >
                                     View Message
                                 </Text>
                             </Link>

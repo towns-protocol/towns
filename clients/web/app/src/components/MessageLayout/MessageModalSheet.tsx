@@ -131,7 +131,7 @@ export const MessageModalSheet = (props: Props) => {
     const onCopyLinkToMessage = useCallback(() => {
         const link = getLinkToMessage({ spaceId, channelId, eventId })
         if (link) {
-            copy(`${location.origin}${link}`)
+            copy(`${link}`)
             onClose()
         }
     }, [channelId, copy, eventId, onClose, spaceId])
