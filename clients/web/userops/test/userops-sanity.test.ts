@@ -5,7 +5,7 @@
 import { TestSpaceDapp } from '@river-build/web3/tests/TestSpaceDapp'
 import { TestWeb3Provider } from '@river-build/web3/tests/TestWeb3Provider'
 import { ethers } from 'ethers'
-import { ISpaceDapp } from '@river-build/web3'
+import { Address, ISpaceDapp } from '@river-build/web3'
 import { TestUserOps } from './TestUserOps'
 
 // these tests are comprised of basic transactions that don't interact with towns contracts per se,
@@ -35,7 +35,7 @@ describe.skip('sanity: user operations', () => {
         // must fund the AA wallet to pass gas verification checks b/c no paymaster
         await bob.fundWallet(
             await userOps.getAbstractAccountAddress({
-                signer: bob.wallet,
+                rootKeyAddress: bob.wallet.address as Address,
             }),
         )
         const newWallet = ethers.Wallet.createRandom().connect(bob)

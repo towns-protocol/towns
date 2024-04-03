@@ -58,14 +58,17 @@ describe.skip('UserOpSpaceDapp tests', () => {
         expect(txReceipt?.status).toBe(1)
         // BUT the op failed
         expect(opReceipt?.args.success).toBe(true)
+        const spaceAddress = spaceDapp.getSpaceAddress(txReceipt)
+        expect(spaceAddress).toBeDefined()
+        const spaceId = '10' + spaceAddress!.slice(2) + '0'.repeat(64 - spaceAddress!.length)
         let town
         try {
-            town = await (await spaceDapp.getTown(townInfo.spaceId))?.getTownInfo()
+            town = await (await spaceDapp.getSpace(spaceId))?.getSpaceInfo()
         } catch (error) {
             throw new Error("can't fetch town data: " + JSON.stringify(error))
         }
         // this fails for local anvil tests
-        expect(town?.networkId).toBe(townInfo.spaceId)
+        expect(town?.networkId).toBe(spaceId)
     })
 })
 
@@ -76,10 +79,8 @@ function createSpaceParams({ feeRecipient }: { feeRecipient: string }): CreateSp
     const channelName = `${channelId}__${new Date().getTime()}`
 
     return {
-        spaceId,
         spaceName: name,
         spaceMetadata: name,
-        channelId,
         channelName,
         membership: {
             settings: {

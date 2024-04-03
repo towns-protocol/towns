@@ -22,7 +22,7 @@ export class TestUserOps extends UserOps {
             callData: '0x',
             value,
             functionHashForPaymasterProxy: '',
-            townId: '',
+            spaceId: '',
         })
     }
     private isAnvil() {
