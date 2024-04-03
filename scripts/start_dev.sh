@@ -115,17 +115,6 @@ echo "STARTED ALL CHAINS AND DEPLOYED ALL CONTRACTS"
 ./river/core/node/run_single.sh -c
 ./river/core/node/run_single.sh -c --de
 
-# Define the base directory for easier reference
-CONFIGS_DIR="./river/core/node/run_files/"
-PNW_URL="http://localhost:8787"
-PNW_AUTH_TOKEN="Zm9v"
-
-# Loop over each config.yaml file in the run_files subdirectories
-find "$CONFIGS_DIR" -type f -name "config.yaml" | while read -r YAML_FILE; do
-    yq eval ".pushNotification.url = \"$PNW_URL\"" -i $YAML_FILE
-    yq eval ".pushNotification.authToken = \"$PNW_AUTH_TOKEN\"" -i $YAML_FILE
-done
-
 # xchain nodes
 # disabled: https://linear.app/hnt-labs/issue/HNT-4317/create-multish-call-in-the-start-devsh-fails
 ./river/core/xchain/create_multi.sh
