@@ -71,7 +71,11 @@ const PlatePlugins = createPlugins(
         createCodeBlockPlugin({
             options: { syntax: false },
         }),
-        createLinkPlugin(),
+        createLinkPlugin({
+            options: {
+                getUrlHref: (url) => encodeURI(url),
+            },
+        }),
         createListPlugin(),
         createExitComboboxPlugin(), // should be before createComboboxPlugin
         createComboboxPlugin(), // should be after createExitComboboxPlugin
@@ -144,8 +148,8 @@ const PlatePlugins = createPlugins(
                 ],
             },
         }),
-        createFormatTextLinkPlugin(), // should be before createDeserializeMdPlugin
-        createDeserializeMdPlugin(), // should be at the end
+        createDeserializeMdPlugin(), // should be before createFormatTextLinkPlugin
+        createFormatTextLinkPlugin(), // should be after createDeserializeMdPlugin
     ],
     {
         components: {
