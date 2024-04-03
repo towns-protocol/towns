@@ -679,30 +679,30 @@ export class TownsClient implements EntitlementsDelegate {
         user: string,
         permission: Permission,
     ): Promise<boolean> {
-        const rootKeyPromise = this.isWalletEntitled(spaceId, channelId, user, permission).then(
-            (result) => {
-                console.log(
-                    '[isEntitled] rootKey is user entitlted for channel and space',
-                    result,
-                    {
-                        spaceId,
-                        channelId,
-                        user,
-                        permission,
-                    },
-                )
-                if (!result) {
-                    throw new Error('not entitled')
-                } else {
-                    return result
-                }
-            },
-        )
+        const rootKeyPromise = this.isWalletEntitled(
+            spaceId,
+            channelId,
+            user,
+            permission,
+            `rootKey:${user}`,
+        ).then((result) => {
+            if (!result) {
+                throw new Error('not entitled')
+            } else {
+                return result
+            }
+        })
 
         const walletsPromise = this.getLinkedWallets(user).then((wallets) =>
             Promise.any(
                 wallets.map((wallet) =>
-                    this.isWalletEntitled(spaceId, channelId, wallet, permission).then((result) => {
+                    this.isWalletEntitled(
+                        spaceId,
+                        channelId,
+                        wallet,
+                        permission,
+                        `wallet:${wallet}`,
+                    ).then((result) => {
                         if (!result) {
                             throw new Error('not entitled')
                         } else {
@@ -717,11 +717,12 @@ export class TownsClient implements EntitlementsDelegate {
         return Promise.any(allPromises).catch(() => false)
     }
 
-    public async isWalletEntitled(
+    private async isWalletEntitled(
         spaceId: string | undefined,
         channelId: string | undefined,
         wallet: string,
         permission: Permission,
+        subTag: string,
     ): Promise<boolean> {
         let isEntitled = false
         if (channelId && spaceId) {
@@ -739,7 +740,7 @@ export class TownsClient implements EntitlementsDelegate {
             isEntitled = true
         }
         console.log(
-            '[isEntitled] is user entitlted for channel and space for permission',
+            `[isEntitled] [${subTag}] is user entitlted for channel and space for permission`,
             isEntitled,
             {
                 user: wallet,
@@ -1356,6 +1357,7 @@ export class TownsClient implements EntitlementsDelegate {
                     undefined,
                     wallet,
                     Permission.JoinSpace,
+                    `mintMembershipTransaction:wallet`,
                 )
                 if (isEntitled) {
                     return wallet
@@ -1370,6 +1372,7 @@ export class TownsClient implements EntitlementsDelegate {
                         undefined,
                         rootWallet,
                         Permission.JoinSpace,
+                        `mintMembershipTransaction:rootWallet`,
                     )
                     if (isEntitled) {
                         return rootWallet
