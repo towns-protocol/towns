@@ -1,6 +1,7 @@
 import React, { createContext, useContext, useEffect, useMemo, useRef } from 'react'
 import { TownsClient } from '../client/TownsClient'
 import { useContentAwareTimelineDiffCasablanca } from '../hooks/TownsContext/useContentAwareTimelineDiff'
+import { useBlockedUsers } from '../hooks/use-blocked-users'
 import { useSpacesIds } from '../hooks/TownsContext/useSpaceIds'
 import { useSpaceUnreads } from '../hooks/TownsContext/useSpaceUnreads'
 import { useSpaces } from '../hooks/TownsContext/useSpaces'
@@ -44,6 +45,7 @@ export interface ITownsContext {
     dmChannels: DMChannelIdentifier[]
     dmUnreadChannelIds: Set<string> // dmChannelId -> set of channelIds with unreads
     clientStatus: ClientInitStatus & { streamSyncActive: boolean }
+    blockedUserIds: Set<string>
 }
 
 export const TownsContext = createContext<ITownsContext | undefined>(undefined)
@@ -160,6 +162,7 @@ const TownsContextImpl = (props: TownsContextProviderProps): JSX.Element => {
     const { spaces } = useSpaces(townsOpts, casablancaClient)
     const { channels: dmChannels } = useCasablancaDMs(casablancaClient)
     const spaceHierarchies = useCasablancaSpaceHierarchies(casablancaClient)
+    const blockedUserIds = useBlockedUsers(casablancaClient)
 
     const { spaceUnreads, spaceMentions, spaceUnreadChannelIds } = useSpaceUnreads({
         client,
@@ -200,6 +203,7 @@ const TownsContextImpl = (props: TownsContextProviderProps): JSX.Element => {
                 dmUnreadChannelIds,
                 casablancaServerUrl: casablancaServerUrl,
                 clientStatus,
+                blockedUserIds,
             }}
         >
             <GlobalContextUserLookupProvider>{props.children}</GlobalContextUserLookupProvider>

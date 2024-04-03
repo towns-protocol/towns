@@ -34,7 +34,7 @@ import { MessageTimelineWrapper } from '@components/MessageTimeline/MessageTimel
 import { RichTextEditor } from '@components/RichTextPlate/PlateEditor'
 import { RegisterChannelShortcuts } from '@components/Shortcuts/RegisterChannelShortcuts'
 import { useUserList } from '@components/UserList/UserList'
-import { Box, Button, Stack, Text } from '@ui'
+import { Box, Button, Paragraph, Stack, Text } from '@ui'
 import { useAuth } from 'hooks/useAuth'
 import { useDevice } from 'hooks/useDevice'
 import { useIsChannelWritable } from 'hooks/useIsChannelWritable'
@@ -44,6 +44,7 @@ import { notUndefined } from 'ui/utils/utils'
 import { SECOND_MS } from 'data/constants'
 import { ReplyContextProvider } from '@components/ReplyToMessageContext/ReplyToMessageProvider'
 import { ReplyToMessageContext } from '@components/ReplyToMessageContext/ReplyToMessageContext'
+import { useBlockedUsers } from 'hooks/useBlockedUsers'
 import { CentralPanelLayout } from './layouts/CentralPanelLayout'
 
 type Props = {
@@ -188,6 +189,12 @@ export const SpacesChannelComponent = (props: Props) => {
 
     const userList = useUserList({ excludeSelf: true, userIds }).join('')
 
+    const isDm = isDMChannelStreamId(channelId)
+    const isUserBlocked = useBlockedUsers()
+    const isBlocked = useMemo(
+        () => isDm && counterParty && isUserBlocked(counterParty),
+        [isDm, counterParty, isUserBlocked],
+    )
     const { placeholder, imageUploadTitle } = useMessageFieldPlaceholders({
         channelId,
         channelLabel: channel?.label,
@@ -275,22 +282,30 @@ export const SpacesChannelComponent = (props: Props) => {
                     </MessageTimelineWrapper>
                     <BoxDebugger />
                     <Box paddingBottom={isTouch ? 'none' : 'md'} paddingX={isTouch ? 'none' : 'md'}>
-                        {!showDMAcceptInvitation && channel && (
-                            <RichTextEditor
-                                isFullWidthOnTouch
-                                editable={!!isChannelWritable}
-                                background={isChannelWritable ? 'level2' : 'level1'}
-                                displayButtons={isTouch ? 'on-focus' : 'always'}
-                                key={`${channelId}-${isChannelWritable ? '' : '-readonly'}`}
-                                storageId={channel.id}
-                                autoFocus={!hasThreadOpen && !isTouch && !props.preventAutoFocus}
-                                initialValue=""
-                                placeholder={placeholder}
-                                channels={channels}
-                                users={users}
-                                userId={userId}
-                                onSend={onSend}
-                            />
+                        {isBlocked && counterParty ? (
+                            <BlockedUserBottomBanner userId={counterParty} />
+                        ) : (
+                            <>
+                                {!showDMAcceptInvitation && channel && (
+                                    <RichTextEditor
+                                        isFullWidthOnTouch
+                                        editable={!!isChannelWritable}
+                                        background={isChannelWritable ? 'level2' : 'level1'}
+                                        displayButtons={isTouch ? 'on-focus' : 'always'}
+                                        key={`${channelId}-${isChannelWritable ? '' : '-readonly'}`}
+                                        storageId={channel.id}
+                                        autoFocus={
+                                            !hasThreadOpen && !isTouch && !props.preventAutoFocus
+                                        }
+                                        initialValue=""
+                                        placeholder={placeholder}
+                                        channels={channels}
+                                        users={users}
+                                        userId={userId}
+                                        onSend={onSend}
+                                    />
+                                )}
+                            </>
                         )}
                     </Box>
                 </MediaDropContextProvider>
@@ -394,4 +409,49 @@ const useMessageFieldPlaceholders = (params: {
         : `Loading permissions`
 
     return { placeholder, imageUploadTitle }
+}
+
+const BlockedUserBottomBanner = (props: { userId: string }) => {
+    const { userId } = props
+    const { updateUserBlock } = useTownsClient()
+
+    const [isRequestInFlight, setIsRequestInFlight] = useState(false)
+    const onUnblockClick = useCallback(async () => {
+        if (isRequestInFlight) {
+            return
+        }
+        try {
+            setIsRequestInFlight(true)
+            await updateUserBlock(userId, false)
+        } catch (error) {
+            console.error('Failed to update user block status:', error)
+        } finally {
+            setIsRequestInFlight(false)
+        }
+    }, [isRequestInFlight, updateUserBlock, userId])
+
+    return (
+        <>
+            <Stack
+                horizontal
+                background="level2"
+                rounded="sm"
+                padding="md"
+                justifyContent="center"
+                alignItems="center"
+                maxWidth="100%"
+                border="none"
+                gap="md"
+            >
+                <Stack flexDirection="row" gap="md" alignItems="center">
+                    <Paragraph color="gray2">{'You have blocked this user.'}</Paragraph>
+                </Stack>
+                <Box position="relative" height="x5">
+                    <Button tone="cta1" onClick={onUnblockClick}>
+                        Unblock
+                    </Button>
+                </Box>
+            </Stack>
+        </>
+    )
 }

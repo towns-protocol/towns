@@ -34,6 +34,7 @@ const Wrapper = (props: { children: React.ReactElement }) => {
                     streamSyncActive: false,
                 },
                 spaceHierarchies: {},
+                blockedUserIds: new Set(),
             }}
         >
             <UserLookupContext.Provider

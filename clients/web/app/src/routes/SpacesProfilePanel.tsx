@@ -38,7 +38,9 @@ import { ClipboardCopy } from '@components/ClipboardCopy/ClipboardCopy'
 import { shortAddress } from 'workers/utils'
 import { createPrivyNotAuthenticatedNotification } from '@components/Notifications/utils'
 import { ConfirmBanUnbanModal } from '@components/ConfirmBanUnbanModal/ConfirmBanUnbanModal'
+import { ConfirmBlockModal } from '@components/ConfirmBlockModal/ConfirmBlockModal'
 import { PanelButton } from '@components/Panel/PanelButton'
+import { useBlockedUsers } from 'hooks/useBlockedUsers'
 
 export const SpaceProfilePanel = (props: { children?: React.ReactNode }) => {
     const navigate = useNavigate()
@@ -167,6 +169,9 @@ export const SpaceProfile = (props: { children?: React.ReactNode }) => {
     const isCurrentUser = user?.userId === myUser?.userId
 
     const { isTouch } = useDevice()
+
+    const isUserBlocked = useBlockedUsers()
+    const isBlocked: boolean = isUserBlocked(userId)
 
     if (isLoadingRootKey) {
         return (
@@ -323,6 +328,9 @@ export const SpaceProfile = (props: { children?: React.ReactNode }) => {
                             space={space}
                         />
                     )}
+                {!isCurrentUser && userId && (
+                    <BlockPanelButton userId={userId} isBlocked={isBlocked} />
+                )}
             </Stack>
         </Stack>
     )
@@ -394,6 +402,55 @@ const BanPanelButton = (props: { walletAddress: string; space: SpaceData; isBann
                 <ConfirmBanUnbanModal
                     userId={walletAddress}
                     ban={!isBanned}
+                    onConfirm={onConfirmClick}
+                    onCancel={onCancelClick}
+                />
+            )}
+        </>
+    )
+}
+
+const BlockPanelButton = (props: { userId: string; isBlocked: boolean }) => {
+    const { userId, isBlocked: isCurrentlyBlocked } = props
+    const [isConfirmModalVisible, setIsConfirmModalVisible] = useState(false)
+    const [isUserBlockRequestInFlight, setIsUserBlockRequestInFlight] = useState(false)
+    const { updateUserBlock } = useTownsClient()
+
+    const onClick = useCallback(async () => {
+        if (isUserBlockRequestInFlight) {
+            return
+        }
+        if (isCurrentlyBlocked) {
+            setIsUserBlockRequestInFlight(true)
+            // unblock user
+            await updateUserBlock(userId, false)
+            setIsUserBlockRequestInFlight(false)
+        } else {
+            setIsConfirmModalVisible(true)
+        }
+    }, [isCurrentlyBlocked, isUserBlockRequestInFlight, updateUserBlock, userId])
+
+    const onCancelClick = useCallback(() => {
+        setIsConfirmModalVisible(false)
+    }, [setIsConfirmModalVisible])
+
+    const onConfirmClick = useCallback(async () => {
+        setIsConfirmModalVisible(false)
+        setIsUserBlockRequestInFlight(true)
+        // block user
+        await updateUserBlock(userId, true)
+        setIsUserBlockRequestInFlight(false)
+    }, [updateUserBlock, userId])
+
+    return (
+        <>
+            <PanelButton tone="negative" onClick={onClick}>
+                <Icon type={isCurrentlyBlocked ? 'unblockHand' : 'blockHand'} size="square_sm" />
+                <Paragraph>{isCurrentlyBlocked ? 'Unblock' : 'Block'}</Paragraph>
+            </PanelButton>
+            {isConfirmModalVisible === true && (
+                <ConfirmBlockModal
+                    userId={userId}
                     onConfirm={onConfirmClick}
                     onCancel={onCancelClick}
                 />

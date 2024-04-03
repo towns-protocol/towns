@@ -81,6 +81,7 @@ export {
     useUnbanTransaction,
     useWalletAddressIsBanned,
 } from './hooks/use-banning'
+export { useBlockedUsers } from './hooks/use-blocked-users'
 export { useTownsClient } from './hooks/use-towns-client'
 export {
     useLinkEOAToRootKeyTransaction,

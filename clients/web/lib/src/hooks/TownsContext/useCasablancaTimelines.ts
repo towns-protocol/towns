@@ -67,7 +67,7 @@ import {
     EmbeddedMessageAttachment,
 } from '../../types/timeline-types'
 import { useCallback } from 'react'
-import { bin_toHexString } from '@river-build/dlog'
+import { bin_toHexString, check } from '@river-build/dlog'
 
 type SuccessResult = {
     content: TimelineEvent_OneOf
@@ -112,7 +112,10 @@ export function useCasablancaTimelines(
 
         const streamIds = new Set<string>()
 
-        const filterFn = (event: TimelineEvent) => {
+        const filterFn = (event: TimelineEvent, kind: SnapshotCaseType | undefined) => {
+            if (isDMMessageEventBlocked(event, kind, casablancaClient)) {
+                return false
+            }
             return !eventFilter || !event.content?.kind || !eventFilter.has(event.content.kind)
         }
 
@@ -122,7 +125,7 @@ export function useCasablancaTimelines(
                 const messages = casablancaClient.stream(streamId)?.view.timeline ?? []
                 const timelineEvents = messages
                     .map((event) => toEvent(event, userId))
-                    .filter(filterFn)
+                    .filter((event) => filterFn(event, kind))
                 setState.initializeStream(userId, streamId)
                 setState.appendEvents(timelineEvents, userId, streamId)
             }
@@ -137,15 +140,21 @@ export function useCasablancaTimelines(
                 const { prepended, appended, updated, confirmed } = change
                 streamIds.add(streamId)
                 if (prepended) {
-                    const events = prepended.map((event) => toEvent(event, userId)).filter(filterFn)
+                    const events = prepended
+                        .map((event) => toEvent(event, userId))
+                        .filter((event) => filterFn(event, kind))
                     setState.prependEvents(events, userId, streamId)
                 }
                 if (appended) {
-                    const events = appended.map((event) => toEvent(event, userId)).filter(filterFn)
+                    const events = appended
+                        .map((event) => toEvent(event, userId))
+                        .filter((event) => filterFn(event, kind))
                     setState.appendEvents(events, userId, streamId)
                 }
                 if (updated) {
-                    const events = updated.map((event) => toEvent(event, userId)).filter(filterFn)
+                    const events = updated
+                        .map((event) => toEvent(event, userId))
+                        .filter((event) => filterFn(event, kind))
                     setState.updateEvents(events, userId, streamId)
                 }
                 if (confirmed) {
@@ -168,7 +177,7 @@ export function useCasablancaTimelines(
             if (hasTimelineContent(kind)) {
                 streamIds.add(streamId)
                 const event = toEvent(localEvent, userId)
-                if (filterFn(event)) {
+                if (filterFn(event, kind)) {
                     setState.updateEvent(event, userId, streamId, localEventId)
                 }
             }
@@ -184,7 +193,15 @@ export function useCasablancaTimelines(
                 console.log('$$$ useCasablancaTimelines load streamId', stream.streamId)
                 stream.view.timeline.forEach((event) => {
                     const parsedEvent = toEvent(event, casablancaClient.userId)
-                    timelineEvents.get(stream.streamId)?.push(parsedEvent)
+                    if (
+                        !isDMMessageEventBlocked(
+                            parsedEvent,
+                            stream.view.contentKind,
+                            casablancaClient,
+                        )
+                    ) {
+                        timelineEvents.get(stream.streamId)?.push(parsedEvent)
+                    }
                 })
             }
         })
@@ -192,7 +209,13 @@ export function useCasablancaTimelines(
         //Step 2: add them into the timeline
         timelineEvents.forEach((events, streamId) => {
             setState.initializeStream(userId, streamId)
-            setState.appendEvents(events.filter(filterFn), userId, streamId)
+            setState.appendEvents(
+                events.filter((event) =>
+                    filterFn(event, casablancaClient?.streams.get(streamId)?.view.contentKind),
+                ),
+                userId,
+                streamId,
+            )
         })
 
         casablancaClient.on('streamInitialized', onStreamInitialized)
@@ -908,4 +931,20 @@ function toAttachment(
         default:
             return undefined
     }
+}
+
+function isDMMessageEventBlocked(
+    event: TimelineEvent,
+    kind: SnapshotCaseType,
+    casablancaClient: CasablancaClient,
+) {
+    if (kind !== 'dmChannelContent') {
+        return false
+    }
+    if (!casablancaClient?.userSettingsStreamId) {
+        return false
+    }
+    const stream = casablancaClient.stream(casablancaClient.userSettingsStreamId)
+    check(isDefined(stream), 'stream must be defined')
+    return stream.view.userSettingsContent.isUserBlockedAt(event.sender.id, event.eventNum)
 }

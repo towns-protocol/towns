@@ -1586,6 +1586,16 @@ export class TownsClient implements EntitlementsDelegate {
     }
 
     /************************************************
+     * updateUserBlock
+     ************************************************/
+    public async updateUserBlock(userId: string, isBlocked: boolean) {
+        if (!this.casablancaClient) {
+            throw new Error('Casablanca client is undefined')
+        }
+        await this.casablancaClient.updateUserBlock(userId, isBlocked)
+    }
+
+    /************************************************
      * getMembership
      ************************************************/
     public getMembership(streamId: string): Membership {
