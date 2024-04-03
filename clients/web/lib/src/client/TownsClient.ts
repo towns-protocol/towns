@@ -73,10 +73,8 @@ import AnalyticsService, { AnalyticsEvents } from '../utils/analyticsService'
  * - enforce space / channel relationships
  * - get user wallet info
  * - go to the blockchain when creating a space
- * - go to the blockchain when updating power levels
+ * - go to the blockchain when updating channel settings, etc
  * - etc
- * the Towns client will wrap the underlying river client and
- * ensure correct protocol business logic
  */
 
 export class TownsClient implements EntitlementsDelegate {

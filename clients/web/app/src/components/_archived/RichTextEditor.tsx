@@ -31,7 +31,6 @@ import { useInputStore } from 'store/store'
 import { Box, BoxProps, Stack } from '@ui'
 import { SomethingWentWrong } from '@components/Errors/SomethingWentWrong'
 import { useDevice } from 'hooks/useDevice'
-import { SpaceProtocol, useEnvironment } from 'hooks/useEnvironmnet'
 import { useMediaDropContext } from '@components/MediaDropContext/MediaDropContext'
 import { useThrottledValue } from 'hooks/useThrottledValue'
 import { SECOND_MS } from 'data/constants'
@@ -118,7 +117,6 @@ const RichTextEditorWithoutBoundary = React.memo((props: Props) => {
     const { transformers } = useTransformers({ members, channels })
     const { isTouch } = useDevice()
     const [isEditorEmpty, setIsEditorEmpty] = useState(true)
-    const { protocol } = useEnvironment()
     const { uploadFiles, files, isUploadingFiles } = useMediaDropContext()
     const fileCount = files.length
 
@@ -302,7 +300,7 @@ const RichTextEditorWithoutBoundary = React.memo((props: Props) => {
                         paddingBottom="sm"
                         pointerEvents={editable ? 'auto' : 'none'}
                     >
-                        {protocol === SpaceProtocol.Casablanca && <PasteFilePlugin />}
+                        <PasteFilePlugin />
                         <RichTextBottomToolbar
                             editing={isEditing}
                             focused={focused}

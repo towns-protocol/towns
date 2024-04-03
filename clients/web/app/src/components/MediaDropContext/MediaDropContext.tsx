@@ -4,7 +4,6 @@ import { uniqueId } from 'lodash'
 import { isDefined } from '@river/sdk'
 import { Attachment } from 'use-towns-client'
 import { Box, Heading, Icon, Stack } from '@ui'
-import { SpaceProtocol, useEnvironment } from 'hooks/useEnvironmnet'
 import { useDevice } from 'hooks/useDevice'
 import { FileUploadFailedToast } from '@components/RichText/FileUploadFailedToast'
 import { isMediaMimeType } from 'utils/isMediaMimeType'
@@ -62,7 +61,6 @@ export const MediaDropContextProvider = ({
     const [files, setFiles] = useState<FileUpload[]>([])
     const { uploadAttachment } = useUploadAttachment()
 
-    const { protocol } = useEnvironment()
     const { isTouch } = useDevice()
 
     const uploadFiles = useCallback(async () => {
@@ -176,10 +174,6 @@ export const MediaDropContextProvider = ({
         e.preventDefault()
         setIsDragging(false)
     }, [])
-
-    if (protocol !== SpaceProtocol.Casablanca) {
-        return children
-    }
 
     return (
         <MediaDropContext.Provider

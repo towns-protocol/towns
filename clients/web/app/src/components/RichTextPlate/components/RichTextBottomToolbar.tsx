@@ -8,7 +8,6 @@ import { useDevice } from 'hooks/useDevice'
 import { Box, IconButton, Stack } from '@ui'
 import { MotionIcon, MotionIconButton } from 'ui/components/Motion/MotionComponents'
 import { useMediaDropContext } from '@components/MediaDropContext/MediaDropContext'
-import { SpaceProtocol, useEnvironment } from 'hooks/useEnvironmnet'
 import { ELEMENT_MENTION_EMOJI } from '../plugins/emoji/createEmojiPlugin'
 import { TEmojiMentionElement } from '../utils/ComboboxTypes'
 
@@ -26,7 +25,6 @@ export const RichTextBottomToolbar = (props: Props) => {
     const { isTouch } = useDevice()
     const editor = useEditorRef()
     const mediaDropContext = useMediaDropContext()
-    const { protocol } = useEnvironment()
 
     const {
         isFormattingToolbarOpen,
@@ -123,36 +121,34 @@ export const RichTextBottomToolbar = (props: Props) => {
                 </>
             )}
 
-            {protocol === SpaceProtocol.Casablanca && (
-                <label htmlFor={mediaInputId}>
-                    {props.visible && (
-                        <Box
-                            padding="xs"
-                            tooltip={isTouch ? undefined : 'Upload file'}
-                            tooltipOptions={{ immediate: true, placement: 'vertical' }}
-                        >
-                            <MotionIcon
-                                type="attachment"
-                                size="square_sm"
-                                color={{ hover: 'default', default: 'gray2' }}
-                                cursor="pointer"
-                                initial={isTouch ? { opacity: 0 } : undefined}
-                                animate={isTouch ? { opacity: 1 } : undefined}
-                                exit={isTouch ? { opacity: 0 } : undefined}
-                            />
-                        </Box>
-                    )}
-                    <input
-                        multiple
-                        type="file"
-                        name="image-file-input"
-                        id={mediaInputId}
-                        accept={isTouch ? 'image/*' : '*'}
-                        style={{ display: 'none' }}
-                        onChange={didSelectImages}
-                    />
-                </label>
-            )}
+            <label htmlFor={mediaInputId}>
+                {props.visible && (
+                    <Box
+                        padding="xs"
+                        tooltip={isTouch ? undefined : 'Upload file'}
+                        tooltipOptions={{ immediate: true, placement: 'vertical' }}
+                    >
+                        <MotionIcon
+                            type="attachment"
+                            size="square_sm"
+                            color={{ hover: 'default', default: 'gray2' }}
+                            cursor="pointer"
+                            initial={isTouch ? { opacity: 0 } : undefined}
+                            animate={isTouch ? { opacity: 1 } : undefined}
+                            exit={isTouch ? { opacity: 0 } : undefined}
+                        />
+                    </Box>
+                )}
+                <input
+                    multiple
+                    type="file"
+                    name="image-file-input"
+                    id={mediaInputId}
+                    accept={isTouch ? 'image/*' : '*'}
+                    style={{ display: 'none' }}
+                    onChange={didSelectImages}
+                />
+            </label>
         </Stack>
     )
 }

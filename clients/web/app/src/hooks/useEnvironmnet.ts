@@ -6,10 +6,6 @@ import { anvilRiverChain, baseSepoliaClone, foundryClone, riverTestRiverChain } 
 
 const TOWNS_DEV_ENV = 'TOWNS_DEV_ENV'
 
-export enum SpaceProtocol {
-    Casablanca = 'casablanca',
-}
-
 export enum TownsEnvironment {
     Prod = 'prod',
     Test = 'test',
@@ -25,7 +21,6 @@ export interface TownsEnvironmentInfo {
     chainId: number
     chain: Chain
     riverChain: IChainConfig
-    protocol: SpaceProtocol
     aaRpcUrl: string | undefined
     aaBundlerUrl: string | undefined
     aaPaymasterProxyUrl: string | undefined
@@ -39,7 +34,6 @@ export const ENVIRONMENTS: TownsEnvironmentInfo[] = [
         chainId: 31337,
         chain: foundryClone,
         riverChain: anvilRiverChain,
-        protocol: SpaceProtocol.Casablanca,
         aaRpcUrl: undefined,
         aaBundlerUrl: undefined,
         aaPaymasterProxyUrl: undefined,
@@ -51,7 +45,6 @@ export const ENVIRONMENTS: TownsEnvironmentInfo[] = [
         chainId: 84532,
         chain: baseSepoliaClone,
         riverChain: riverTestRiverChain,
-        protocol: SpaceProtocol.Casablanca,
         aaRpcUrl: env.VITE_PROVIDER_HTTP_URL,
         aaBundlerUrl: env.VITE_AA_BUNDLER_URL,
         aaPaymasterProxyUrl: env.VITE_AA_PAYMASTER_PROXY_URL,
@@ -95,7 +88,6 @@ export function useEnvironment() {
     const chainId = chain.id
     const chainName = chain.name
     const casablancaUrl = environmentInfo?.casablancaUrl ?? CASABLANCA_URL
-    const protocol = environmentInfo?.protocol ?? SpaceProtocol.Casablanca
     const riverChain = environmentInfo?.riverChain ?? RIVER_CHAIN
 
     return useMemo(
@@ -106,7 +98,6 @@ export function useEnvironment() {
             chainName,
             riverChain,
             casablancaUrl,
-            protocol,
             setEnvironment,
             clearEnvironment,
         }),
@@ -117,7 +108,6 @@ export function useEnvironment() {
             chainName,
             riverChain,
             casablancaUrl,
-            protocol,
             setEnvironment,
             clearEnvironment,
         ],

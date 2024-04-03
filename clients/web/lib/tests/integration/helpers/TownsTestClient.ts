@@ -84,7 +84,7 @@ export class TownsTestClient extends TownsClient {
     }
 
     /************************************************
-     * getUserId - returns the current user id for the primary protocol, or undefined if not logged in there
+     * getUserId
      ************************************************/
     getUserId(): string | undefined {
         return this.casablancaClient?.userId

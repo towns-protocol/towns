@@ -328,7 +328,6 @@ const DebugBar = ({
     chainId: destinationChainId,
     chainName: destinationChainName,
     casablancaUrl,
-    protocol,
     setEnvironment,
     clearEnvironment,
 }: Props) => {
