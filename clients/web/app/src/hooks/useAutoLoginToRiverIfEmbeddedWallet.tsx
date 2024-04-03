@@ -84,7 +84,7 @@ export function useAutoLoginToRiverIfEmbeddedWallet({
                         try {
                             // same machine, same browser, different users
                             // i've found that for certain of my privy accounts, this takes much longer to be true???
-                            signer = await waitFor(() => getSigner(), 5_000)
+                            signer = await waitFor(() => getSigner(), 10_000)
                         } catch (error) {
                             send('NO_SIGNER')
                             return
