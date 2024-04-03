@@ -22,36 +22,34 @@ const cors = createCorsConfig({
 
 // eslint-disable-next-line @typescript-eslint/no-unused-vars
 export function isAllowedOrigin(origin: string | undefined, environment: Environment): boolean {
-    // TODO: uncomment and fix
-    // const corsOrigin = getOriginForCors(origin, environment)
-    // switch (environment) {
-    //     // case 'production': TODO: test in production
-    //     case 'development':
-    //     case 'test-beta':
-    //     case 'test': {
-    //         // RFC Origin: https://www.rfc-editor.org/rfc/rfc6454
-    //         // The RFC states that the origin is null is allowed:
-    //         // "Whenever a user agent issues an HTTP request from a "privacy-
-    //         //  sensitive" context, the user agent MUST send the value "null" in
-    //         //  the Origin header field."
-    //         //
-    //         // Researching the topic more, it looks like the origin is null in
-    //         // many scenarios, some of which is exploitable:
-    //         // https://portswigger.net/web-security/cors
-    //         //  * Cross-origin redirects.
-    //         //  * Requests from serialized data.
-    //         //  * Request using the file: protocol.
-    //         //  * Sandboxed cross-origin requests.
-    //         //
-    //         // origin is also null when localhost is used during development
-    //         // only allow origin null for local development or test environments
-    //         return !origin || (corsOrigin ? true : false)
-    //     }
-    //     default:
-    //         // be strict about the allowed origin
-    //         return corsOrigin ? true : false
-    // }
-    return true
+    const corsOrigin = getOriginForCors(origin, environment)
+    switch (environment) {
+        case 'production':
+        case 'development':
+        case 'test-beta':
+        case 'test': {
+            // RFC Origin: https://www.rfc-editor.org/rfc/rfc6454
+            // The RFC states that the origin is null is allowed:
+            // "Whenever a user agent issues an HTTP request from a "privacy-
+            //  sensitive" context, the user agent MUST send the value "null" in
+            //  the Origin header field."
+            //
+            // Researching the topic more, it looks like the origin is null in
+            // many scenarios, some of which is exploitable:
+            // https://portswigger.net/web-security/cors
+            //  * Cross-origin redirects.
+            //  * Requests from serialized data.
+            //  * Request using the file: protocol.
+            //  * Sandboxed cross-origin requests.
+            //
+            // origin is also null when localhost is used during development
+            // only allow origin null for local development or test environments
+            return !origin || (corsOrigin ? true : false)
+        }
+        default:
+            // be strict about the allowed origin
+            return corsOrigin ? true : false
+    }
 }
 
 // eslint-disable-next-line @typescript-eslint/no-unused-vars
