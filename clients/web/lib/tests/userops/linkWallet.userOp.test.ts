@@ -1,7 +1,11 @@
 import { Address } from '../../src/types/web3-types'
 import { TestConstants } from '../integration/helpers/TestConstants'
-import { registerAndStartClient } from '../integration/helpers/TestUtils'
-import { generateRandomUnfundedOrPrivateKeyWallet, getAccountAbstractionConfig } from './testUtils'
+import { registerAndStartClient, waitForWithRetries } from '../integration/helpers/TestUtils'
+import {
+    generateRandomUnfundedOrPrivateKeyWallet,
+    getAccountAbstractionConfig,
+    isSmartAccountDeployed,
+} from './testUtils'
 
 /**
  *
@@ -27,6 +31,7 @@ test('can link a wallet with unfunded EOA', async () => {
 
     const tx = await alice.linkEOAToRootKey(alice.wallet, metamaskWallet)
     await alice.waitWalletLinkTransaction(tx)
+    await waitForWithRetries(() => isSmartAccountDeployed(alice))
 
     const aliceWallets = await alice.getLinkedWallets(alice.getUserId()!)
     expect(aliceWallets).toContain(metamaskAddress)
@@ -61,6 +66,7 @@ test('can link a smart account', async () => {
 
     const tx = await alice.linkCallerToRootKey(alice.wallet)
     await alice.waitWalletLinkTransaction(tx)
+    await waitForWithRetries(() => isSmartAccountDeployed(alice))
 
     const aliceWallets = await alice.getLinkedWallets(alice.getUserId()!)
     expect(aliceWallets).toContain(aaAddress)

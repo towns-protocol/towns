@@ -6,6 +6,7 @@ import { TownsOpts } from '../../src/client/TownsClientTypes'
 import { paymasterProxyMiddleware } from '@towns/userops'
 import { TestConstants } from '../integration/helpers/TestConstants'
 import { getDynamicPricingModule } from '../../src/utils/web3'
+import { Address } from '../../src/types/web3-types'
 
 /**
  * Create a town with an "Everyone" role that is gated only by a membership token
@@ -99,4 +100,18 @@ export async function generateRandomUnfundedOrPrivateKeyWallet(privateKey?: stri
         wallet = await TestConstants.getUnfundedWallet()
     }
     return wallet
+}
+
+export async function isSmartAccountDeployed(townsTestClient: TownsTestClient) {
+    const abstractAccountAddress = await townsTestClient.getAbstractAccountAddress({
+        rootKeyAddress: townsTestClient.wallet.address as Address,
+    })
+
+    if (abstractAccountAddress) {
+        const isDeployed = await townsTestClient.provider.getCode(abstractAccountAddress)
+        if (!isDeployed || isDeployed === '0x') {
+            return false
+        }
+        return true
+    }
 }

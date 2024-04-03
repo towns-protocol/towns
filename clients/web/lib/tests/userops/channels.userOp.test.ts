@@ -1,9 +1,10 @@
 import { NoopRuleData, Permission } from '@river-build/web3'
-import { registerAndStartClient } from '../integration/helpers/TestUtils'
+import { registerAndStartClient, waitForWithRetries } from '../integration/helpers/TestUtils'
 import {
     createUngatedSpace,
     generateRandomUnfundedOrPrivateKeyWallet,
     getAccountAbstractionConfig,
+    isSmartAccountDeployed,
 } from './testUtils'
 import { Address } from '../../src/types/web3-types'
 
@@ -29,6 +30,7 @@ test('can create and update channel with user ops', async () => {
 
     // send a user op that creates a space and links AA wallet so entitlement passes
     const spaceId = await createUngatedSpace(alice, [Permission.Read, Permission.Write])
+    await waitForWithRetries(() => isSmartAccountDeployed(alice))
 
     let channelId: string | undefined
     if (spaceId) {
@@ -100,10 +102,13 @@ test("can create a channel when role is gated by user's smart account", async ()
     )
 
     const spaceId = await createUngatedSpace(alice, [Permission.Read, Permission.Write])
+    await waitForWithRetries(() => isSmartAccountDeployed(alice))
 
     expect(alice.getRoomMember(spaceId!, alice.getUserId()!)).toBeTruthy()
 
     const room = await bob.joinTown(spaceId!, bob.wallet)
+    await waitForWithRetries(() => isSmartAccountDeployed(bob))
+
     expect(room.members.map((m) => m.userId).includes(bob.getUserId()!)).toBeTruthy()
 
     const bobsSmartAccount = await bob.getAbstractAccountAddress({

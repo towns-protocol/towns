@@ -1,9 +1,10 @@
 import { Permission } from '@river-build/web3'
-import { registerAndStartClient } from '../integration/helpers/TestUtils'
+import { registerAndStartClient, waitForWithRetries } from '../integration/helpers/TestUtils'
 import {
     createUngatedSpace,
     getAccountAbstractionConfig,
     generateRandomUnfundedOrPrivateKeyWallet,
+    isSmartAccountDeployed,
 } from './testUtils'
 
 /**
@@ -25,6 +26,7 @@ test('can create a space via userop and pass entitlement check to become member'
 
     // send a user op that creates a space and links AA wallet so entitlement passes
     const spaceId = await createUngatedSpace(alice, [Permission.Read, Permission.Write])
+    await waitForWithRetries(() => isSmartAccountDeployed(alice))
 
     expect(alice.getRoomMember(spaceId!, alice.getUserId()!)).toBeTruthy()
 })

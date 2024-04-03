@@ -1,9 +1,10 @@
 import { Permission } from '@river-build/web3'
-import { registerAndStartClient } from '../integration/helpers/TestUtils'
+import { registerAndStartClient, waitForWithRetries } from '../integration/helpers/TestUtils'
 import {
     createUngatedSpace,
     getAccountAbstractionConfig,
     generateRandomUnfundedOrPrivateKeyWallet,
+    isSmartAccountDeployed,
 } from './testUtils'
 
 /**
@@ -30,6 +31,7 @@ test('can update a space (name) via userop', async () => {
     const spaceId = await createUngatedSpace(alice, [Permission.Read, Permission.Write], {
         name: ogName,
     })
+    await waitForWithRetries(() => isSmartAccountDeployed(alice))
 
     expect(spaceId).not.toBeUndefined()
 

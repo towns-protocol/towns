@@ -1,9 +1,10 @@
 import { NoopRuleData, Permission } from '@river-build/web3'
-import { registerAndStartClient } from '../integration/helpers/TestUtils'
+import { registerAndStartClient, waitForWithRetries } from '../integration/helpers/TestUtils'
 import {
     createUngatedSpace,
     generateRandomUnfundedOrPrivateKeyWallet,
     getAccountAbstractionConfig,
+    isSmartAccountDeployed,
 } from './testUtils'
 
 /**
@@ -27,6 +28,8 @@ test('can create, update, and delete a role with user ops', async () => {
 
     // send a user op that creates a space and links AA wallet so entitlement passes
     const spaceId = await createUngatedSpace(alice, [Permission.Read, Permission.Write])
+    await waitForWithRetries(() => isSmartAccountDeployed(alice))
+
     expect(spaceId).toBeDefined()
 
     // create role

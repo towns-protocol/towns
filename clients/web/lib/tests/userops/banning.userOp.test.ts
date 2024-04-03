@@ -1,9 +1,10 @@
 import { Permission } from '@river-build/web3'
-import { registerAndStartClient } from '../integration/helpers/TestUtils'
+import { registerAndStartClient, waitForWithRetries } from '../integration/helpers/TestUtils'
 import {
     createUngatedSpace,
     generateRandomUnfundedOrPrivateKeyWallet,
     getAccountAbstractionConfig,
+    isSmartAccountDeployed,
 } from './testUtils'
 
 /**
@@ -32,10 +33,13 @@ test('can ban a user from a space via userop', async () => {
     )
 
     const spaceId = await createUngatedSpace(alice, [Permission.Read, Permission.Write])
+    await waitForWithRetries(() => isSmartAccountDeployed(alice))
 
     expect(alice.getRoomMember(spaceId!, alice.getUserId()!)).toBeTruthy()
 
     const room = await bob.joinTown(spaceId!, bob.wallet)
+    await waitForWithRetries(() => isSmartAccountDeployed(bob))
+
     expect(room.members.map((m) => m.userId).includes(bob.getUserId()!)).toBeTruthy()
 
     const banTransaction = await alice.banTransaction(spaceId!, bob.getUserId()!, alice.wallet)
