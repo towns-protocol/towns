@@ -6,6 +6,7 @@ import {IArchitect} from "contracts/src/spaces/facets/architect/IArchitect.sol";
 import {IRuleEntitlement} from "contracts/src/crosschain/IRuleEntitlement.sol";
 import {IWalletLink} from "contracts/src/river/wallet-link/IWalletLink.sol";
 import {ISpaceOwner} from "contracts/src/spaces/facets/owner/ISpaceOwner.sol";
+import {IUserEntitlement} from "contracts/src/spaces/entitlements/user/IUserEntitlement.sol";
 
 // libraries
 
@@ -15,7 +16,6 @@ import {OwnableBase} from "contracts/src/diamond/facets/ownable/OwnableBase.sol"
 import {ReentrancyGuard} from "contracts/src/diamond/facets/reentrancy/ReentrancyGuard.sol";
 import {PausableBase} from "contracts/src/diamond/facets/pausable/PausableBase.sol";
 import {Facet} from "contracts/src/diamond/facets/Facet.sol";
-import {IUserEntitlement} from "contracts/src/spaces/entitlements/user/IUserEntitlement.sol";
 
 contract Architect is
   IArchitect,

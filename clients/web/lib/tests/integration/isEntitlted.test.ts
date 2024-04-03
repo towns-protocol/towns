@@ -222,7 +222,8 @@ describe.skip('isEntitledToSpace and isEntitledToChannel tests', () => {
         const { alice, bob } = await registerAndStartClients(['alice', 'bob'])
         const metamaskWalletWithGatingNFT = await TestConstants.getWalletWithTestGatingNft()
 
-        const tx_link = await bob.linkWallet(bob.provider.wallet, metamaskWalletWithGatingNFT)
+        // bob must have funds to link the wallet
+        const tx_link = await bob.linkEOAToRootKey(bob.provider.wallet, metamaskWalletWithGatingNFT)
 
         const txHash = await getTransactionHashFromTransactionOrUserOp(tx_link.transaction)
 
@@ -269,7 +270,11 @@ describe.skip('isEntitledToSpace and isEntitledToChannel tests', () => {
         const { alice, bob } = await registerAndStartClients(['alice', 'bob'])
         const metamaskWalletWithoutGatingNft = await new TownsTestWeb3Provider().fundWallet()
 
-        const tx_link = await bob.linkWallet(bob.provider.wallet, metamaskWalletWithoutGatingNft)
+        // bob must have funds to link the wallet
+        const tx_link = await bob.linkEOAToRootKey(
+            bob.provider.wallet,
+            metamaskWalletWithoutGatingNft,
+        )
         const txHash = await getTransactionHashFromTransactionOrUserOp(tx_link.transaction)
 
         if (txHash) {

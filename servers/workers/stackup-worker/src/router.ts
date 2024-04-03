@@ -91,7 +91,9 @@ router.post('/api/transaction-limits', async (request: WorkerRequest, env: Env) 
                 // more restrictive: only towns on HNT Labs curated whitelist can allow for Users to mint with no gas costs.
                 break
             }
-            case 'linkWallet': {
+            case 'removeLink':
+            case 'linkCallerToRootKey':
+            case 'linkWalletToRootKey': {
                 // default: any wallet address that exists in HNT Privy DB can link 10 wallets / day with no gas costs.
                 // more restrictive: only addresses in HNT Labs curated whitelist can perform these actions.
                 break
@@ -233,7 +235,9 @@ router.post('/api/sponsor-userop', async (request: WorkerRequest, env: Env) => {
                 }
                 break
             }
-            case 'linkWallet': {
+            case 'removeLink':
+            case 'linkCallerToRootKey':
+            case 'linkWalletToRootKey': {
                 if (!isHexString(rootKeyAddress)) {
                     return new Response(
                         toJson({ error: `rootKeyAddress ${rootKeyAddress} not valid` }),
@@ -254,6 +258,7 @@ router.post('/api/sponsor-userop', async (request: WorkerRequest, env: Env) => {
                     const verification = await verifyLinkWallet({
                         rootKeyAddress: rootKeyAddress,
                         senderAddress: userOperation.sender,
+                        functionHash: functionHash,
                         env,
                     })
                     if (!verification.verified) {
@@ -382,6 +387,7 @@ router.post('/api/sponsor-userop', async (request: WorkerRequest, env: Env) => {
                     const verificationLink = await verifyLinkWallet({
                         rootKeyAddress: rootKeyAddress,
                         senderAddress: userOperation.sender,
+                        functionHash: 'linkCallerToRootKey',
                         env,
                     })
                     const verificationCreate = await verifyCreateSpace({
@@ -440,6 +446,7 @@ router.post('/api/sponsor-userop', async (request: WorkerRequest, env: Env) => {
                     const verificationLink = await verifyLinkWallet({
                         rootKeyAddress: rootKeyAddress,
                         senderAddress: userOperation.sender,
+                        functionHash: 'linkCallerToRootKey',
                         env,
                     })
                     const verificationJoin = await verifyJoinTown({

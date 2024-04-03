@@ -980,10 +980,10 @@
       "license": "Apache-2.0"
     },
     "contracts/src/river/wallet-link/IWalletLink.sol": {
-      "keccak256": "0x0d6f4b0d6ba2cca41f652356d895c411c0bcb83325349dd5a2839c7e84833e4f",
+      "keccak256": "0x548d2531215e1387f83265975af58947d37c01ae9ea75cce91147a2468fc653b",
       "urls": [
-        "bzz-raw://6bab70c4eb1bbce65f3346c75f403e995d40412c12b5f7e19c196240ba184a73",
-        "dweb:/ipfs/QmakgkJykNfCDWBVfiiXtSKKhopTrerWFFY7kYadQtYSit"
+        "bzz-raw://f2300ddc317d8f0e9f24dee7904de69a87325305d913f541a0dc877bba7e1f13",
+        "dweb:/ipfs/QmY6kMFdswJnVtkYu415QG5ePjUrS9W1QiXi9VXaLBeRJR"
       ],
       "license": "Apache-2.0"
     },

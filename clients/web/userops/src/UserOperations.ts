@@ -197,17 +197,17 @@ export class UserOps {
             throw new Error('abstractAccountAddress is required')
         }
 
+        const createSpaceFnName = 'createSpace'
+
         const callDataCreateSpace = this.spaceDapp.spaceRegistrar.SpaceArchitect.encodeFunctionData(
-            'createSpace',
+            createSpaceFnName,
             [spaceInfo],
         )
 
         if (await this.spaceDapp.walletLink.checkIfLinked(signer, abstractAccountAddress)) {
-            const functionName = 'createSpace'
-
             const functionHashForPaymasterProxy = this.getFunctionSigHash(
                 this.spaceDapp.spaceRegistrar.SpaceArchitect.interface,
-                functionName,
+                createSpaceFnName,
             )
 
             return this.sendUserOp({
@@ -228,21 +228,37 @@ export class UserOps {
             functionName,
         )
 
-        const callDataLinkWallet = await this.spaceDapp.walletLink.encodeLinkWalletFunctionData(
-            signer,
-            abstractAccountAddress,
-        )
+        const callDataForLinkingSmartAccount = await this.encodeDataForLinkingSmartAccount(signer)
 
         return this.sendUserOp({
             toAddress: [
                 this.spaceDapp.walletLink.address,
                 this.spaceDapp.spaceRegistrar.SpaceArchitect.address,
             ],
-            callData: [callDataLinkWallet, callDataCreateSpace],
+            callData: [callDataForLinkingSmartAccount, callDataCreateSpace],
             signer,
             spaceId: undefined,
             functionHashForPaymasterProxy,
         })
+    }
+
+    private async encodeDataForLinkingSmartAccount(rootKeySigner: ethers.Signer) {
+        if (!this.spaceDapp) {
+            throw new Error('spaceDapp is required')
+        }
+
+        const abstractAccountAddress = await this.getAbstractAccountAddress({
+            rootKeyAddress: await getSignerAddress(rootKeySigner),
+        })
+
+        if (!abstractAccountAddress) {
+            throw new Error('abstractAccountAddress is required')
+        }
+
+        return this.spaceDapp.walletLink.encodeLinkCallerToRootKey(
+            rootKeySigner,
+            abstractAccountAddress,
+        )
     }
 
     public clearStore() {
@@ -276,6 +292,7 @@ export class UserOps {
         const callDataJoinSpace = space.Membership.encodeFunctionData('joinSpace', [recipient])
 
         if (await this.spaceDapp.walletLink.checkIfLinked(signer, abstractAccountAddress)) {
+            // they already have a linked wallet, just join the space
             const functionName = 'joinSpace'
 
             const functionHashForPaymasterProxy = this.getFunctionSigHash(
@@ -309,18 +326,7 @@ export class UserOps {
         //
         // Therefore, we need to link the wallet first, then join the space
         // Another smart account contract should support this and allow for a single user operation
-        const callDataLinkWallet = await this.spaceDapp.walletLink.encodeLinkWalletFunctionData(
-            signer,
-            abstractAccountAddress,
-        )
-
-        const linkWalletUserOp = await this.sendUserOp({
-            toAddress: this.spaceDapp.walletLink.address,
-            callData: callDataLinkWallet,
-            signer,
-            spaceId: undefined,
-            functionHashForPaymasterProxy: 'linkWallet',
-        })
+        const linkWalletUserOp = await this.sendLinkSmartAccountToRootKeyOp(signer)
 
         let userOpEventWalletLink: UserOperationEventEvent | null
         try {
@@ -364,85 +370,102 @@ export class UserOps {
         })
     }
 
-    public async sendWalletLinkOp(
-        // eslint-disable-next-line @typescript-eslint/no-unused-vars
-        args: Parameters<SpaceDapp['walletLink']['linkWallet']>,
+    /**
+     * User operation to link smart account wallet to the root key.
+     * @param args
+     */
+    public async sendLinkSmartAccountToRootKeyOp(
+        rootKeySigner: ethers.Signer,
     ): Promise<ISendUserOperationResponse> {
-        // see https://linear.app/hnt-labs/issue/HNT-4908/refactor-wallet-linking-for-smart-accounts-or-dont-use-it-with-smart
-        throw new Error("Don't use sendWalletLinkOp with smart accounts.")
+        if (!this.spaceDapp) {
+            throw new Error('spaceDapp is required')
+        }
+        const signer = rootKeySigner
+        const walletLink = await this.spaceDapp.walletLink
+        const functionName = 'linkCallerToRootKey'
 
-        // if (!this.spaceDapp) {
-        //     throw new Error('spaceDapp is required')
-        // }
-        // const [signer, externalWalletSigner] = args
-        // const walletLink = await this.spaceDapp.walletLink
+        const functionHashForPaymasterProxy = this.getFunctionSigHash(
+            walletLink.getInterface(),
+            functionName,
+        )
 
-        // const externalWalletAddress = (await externalWalletSigner.getAddress()) as Address
+        const callDataForLinkingSmartAccount = await this.encodeDataForLinkingSmartAccount(signer)
 
-        // if (await walletLink.checkIfLinked(signer, externalWalletAddress)) {
-        //     throw new WalletAlreadyLinkedError()
-        // }
-        // const functionName = 'linkWallet'
+        return this.sendUserOp({
+            toAddress: this.spaceDapp.walletLink.address,
+            callData: callDataForLinkingSmartAccount,
+            signer,
+            spaceId: undefined,
+            functionHashForPaymasterProxy,
+        })
+    }
 
-        // const functionHashForPaymasterProxy = this.getFunctionSigHash(
-        //     walletLink.getInterface(),
-        //     functionName,
-        // )
+    /**
+     * User operation to link an EOA (NOT smart account) wallet to the root key.
+     *
+     * @param args
+     * @returns
+     */
+    public async sendLinkEOAToRootKeyOp(
+        args: Parameters<SpaceDapp['walletLink']['linkWalletToRootKey']>,
+    ) {
+        if (!this.spaceDapp) {
+            throw new Error('spaceDapp is required')
+        }
+        const [signer, externalWalletSigner] = args
 
-        // const callDataLinkWallet = await this.spaceDapp.walletLink.encodeLinkWalletFunctionData(
-        //     signer,
-        //     externalWalletAddress,
-        // )
+        const walletLink = await this.spaceDapp.walletLink
+        const functionName = 'linkWalletToRootKey'
 
-        // return this.sendUserOp({
-        //     toAddress: [this.spaceDapp.walletLink.address],
-        //     callData: [callDataLinkWallet],
-        //     signer,
-        //     spaceId: undefined,
-        //     functionHashForPaymasterProxy,
-        // })
+        const functionHashForPaymasterProxy = this.getFunctionSigHash(
+            walletLink.getInterface(),
+            functionName,
+        )
+
+        const callDataForLinkingWallet = await this.spaceDapp.walletLink.encodeLinkWalletToRootKey(
+            signer,
+            externalWalletSigner,
+        )
+
+        return this.sendUserOp({
+            toAddress: this.spaceDapp.walletLink.address,
+            callData: callDataForLinkingWallet,
+            signer,
+            spaceId: undefined,
+            functionHashForPaymasterProxy,
+        })
     }
 
     public async sendRemoveWalletLinkOp(
         // eslint-disable-next-line @typescript-eslint/no-unused-vars
         args: Parameters<SpaceDapp['walletLink']['removeLink']>,
     ): Promise<ISendUserOperationResponse> {
-        // see https://linear.app/hnt-labs/issue/HNT-4908/refactor-wallet-linking-for-smart-accounts-or-dont-use-it-with-smart
-        throw new Error("Don't use removeWalletLink with smart accounts.")
+        if (!this.spaceDapp) {
+            throw new Error('spaceDapp is required')
+        }
+        const [rootKeySigner, walletAddressToRemove] = args
 
-        // if (!this.spaceDapp) {
-        //     throw new Error('spaceDapp is required')
-        // }
-        // const [rootKeySigner, walletAddressToRemove] = args
+        const walletLink = this.spaceDapp.walletLink
 
-        // const isLinkedAlready = await this.spaceDapp.walletLink.checkIfLinked(
-        //     rootKeySigner,
-        //     walletAddressToRemove,
-        // )
-        // if (!isLinkedAlready) {
-        //     throw new WalletNotLinkedError()
-        // }
+        const functionName = 'removeLink'
 
-        // const walletLink = this.spaceDapp.walletLink
+        const functionHashForPaymasterProxy = this.getFunctionSigHash(
+            walletLink.getInterface(),
+            functionName,
+        )
 
-        // const functionName = 'removeLink'
+        const callDataRemoveWalletLink = await walletLink.encodeRemoveLink(
+            rootKeySigner,
+            walletAddressToRemove,
+        )
 
-        // const functionHashForPaymasterProxy = this.getFunctionSigHash(
-        //     walletLink.getInterface(),
-        //     functionName,
-        // )
-
-        // const callDataRemoveWalletLink = await walletLink
-        //     .getInterface()
-        //     .encodeFunctionData('removeLink', [walletAddressToRemove])
-
-        // return this.sendUserOp({
-        //     toAddress: this.spaceDapp.walletLink.address,
-        //     callData: callDataRemoveWalletLink,
-        //     signer: rootKeySigner,
-        //     spaceId: undefined,
-        //     functionHashForPaymasterProxy,
-        // })
+        return this.sendUserOp({
+            toAddress: this.spaceDapp.walletLink.address,
+            callData: callDataRemoveWalletLink,
+            signer: rootKeySigner,
+            spaceId: undefined,
+            functionHashForPaymasterProxy,
+        })
     }
 
     public async sendUpdateSpaceNameOp(

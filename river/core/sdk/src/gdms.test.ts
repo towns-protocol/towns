@@ -277,4 +277,67 @@ describe('gdmsTests', () => {
             'initiator of leave is not a member of GDM',
         )
     })
+
+    test('membershipLimitCanBeEqualedOnInception', async () => {
+        const userIds: string[] = []
+        // Create 5 users
+        for (let i = 0; i < 5; i++) {
+            const client = await makeTestClient()
+            await client.initializeUser()
+            userIds.push(client.userId)
+        }
+        // 6 members total is OK
+        const { streamId } = await bobsClient.createGDMChannel(userIds)
+        expect(streamId).toBeDefined()
+    })
+
+    test('membershipLimitCannotBeExceededOnInception', async () => {
+        const userIds: string[] = []
+        // Create 6 users
+        for (let i = 0; i < 6; i++) {
+            const client = await makeTestClient()
+            await client.initializeUser()
+            userIds.push(client.userId)
+        }
+        // 7 members total exceeds the configured limit
+        await expect(bobsClient.createGDMChannel(userIds)).rejects.toThrow(
+            /membership limit reached[\s]+membershipLimit = 6/,
+        )
+    })
+
+    test('membershipLimitCannotBeExceededByJoins', async () => {
+        const userIds = [alicesClient.userId, charliesClient.userId]
+        const { streamId } = await bobsClient.createGDMChannel(userIds)
+
+        // add 3 more users
+        for (let i = 0; i < 3; i++) {
+            const client = await makeTestClient()
+            await client.initializeUser()
+            await expect(bobsClient.joinUser(streamId, client.userId)).toResolve()
+        }
+
+        // total memberships are now 6, joining another user should fail
+        await expect(bobsClient.waitForStream(streamId)).toResolve()
+        await expect(bobsClient.joinUser(streamId, chucksClient.userId)).rejects.toThrow(
+            /membership limit reached[\s]+membershipLimit = 6/,
+        )
+    })
+
+    test('membershipLimitCannotBeExceededByInvites', async () => {
+        const userIds = [alicesClient.userId, charliesClient.userId]
+        const { streamId } = await bobsClient.createGDMChannel(userIds)
+
+        // add 3 more users
+        for (let i = 0; i < 3; i++) {
+            const client = await makeTestClient()
+            await client.initializeUser()
+            await expect(bobsClient.joinUser(streamId, client.userId)).toResolve()
+        }
+
+        // total memberships are now 6, inviting another user should fail
+        await expect(bobsClient.waitForStream(streamId)).toResolve()
+        await expect(bobsClient.inviteUser(streamId, chucksClient.userId)).rejects.toThrow(
+            /membership limit reached[\s]+membershipLimit = 6/,
+        )
+    })
 })

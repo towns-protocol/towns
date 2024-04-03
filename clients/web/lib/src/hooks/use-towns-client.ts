@@ -194,9 +194,13 @@ interface TownsClientImpl {
         name: string,
         signer: TSigner | undefined,
     ) => Promise<TransactionContext<void> | undefined>
-    linkWallet: (
+    linkEOAToRootKey: (
         rootKey: TSigner,
         wallet: TSigner,
+    ) => Promise<WalletLinkTransactionContext | undefined>
+    linkCallerToRootKey: (
+        rootKey: TSigner,
+        wallet?: TSigner,
     ) => Promise<WalletLinkTransactionContext | undefined>
     removeLink: (
         rootKey: TSigner,
@@ -277,7 +281,8 @@ export function useTownsClient(): TownsClientImpl {
         setRoomProperties: useWithCatch(client?.setRoomProperties),
         setAvatarUrl: useWithCatch(client?.setAvatarUrl),
         setHighPriorityStreams: useWithCatch(client?.setHighPriorityStreams),
-        linkWallet: useWithCatch(client?.linkWallet),
+        linkEOAToRootKey: useWithCatch(client?.linkEOAToRootKey),
+        linkCallerToRootKey: useWithCatch(client?.linkCallerToRootKey),
         removeLink: useWithCatch(client?.removeLink),
         getLinkedWallets: useWithCatch(client?.getLinkedWallets),
         waitWalletLinkTransaction: useWithCatch(client?.waitWalletLinkTransaction),

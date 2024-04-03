@@ -2,9 +2,14 @@
 pragma solidity ^0.8.23;
 
 //interfaces
+import {IArchitect} from "contracts/src/spaces/facets/architect/IArchitect.sol";
 import {IProxyManager} from "contracts/src/diamond/proxy/manager/IProxyManager.sol";
 import {IDiamond, Diamond} from "contracts/src/diamond/Diamond.sol";
 import {IDiamondCut} from "contracts/src/diamond/facets/cut/IDiamondCut.sol";
+import {IRuleEntitlement} from "contracts/src/crosschain/IRuleEntitlement.sol";
+import {IWalletLink} from "contracts/src/river/wallet-link/IWalletLink.sol";
+import {IUserEntitlement} from "contracts/src/spaces/entitlements/user/IUserEntitlement.sol";
+import {ISpaceOwner} from "contracts/src/spaces/facets/owner/ISpaceOwner.sol";
 
 //libraries
 
@@ -16,20 +21,32 @@ import {DeploySpace} from "contracts/scripts/deployments/DeploySpace.s.sol";
 import {ArchitectHelper} from "contracts/test/spaces/architect/ArchitectHelper.sol";
 import {SpaceHelper} from "contracts/test/spaces/SpaceHelper.sol";
 import {Architect} from "contracts/src/spaces/facets/architect/Architect.sol";
+import {DeployWalletLink} from "./../deployments/DeployWalletLink.s.sol";
 
 // debuggging
-import {console} from "forge-std/console.sol";
 
-contract InteractSpaceFactory is Interaction, SpaceHelper {
+contract InteractSpaceFactory is Interaction {
+  // Deployments
   DeployArchitect deployArchitect = new DeployArchitect();
   DeploySpace deploySpace = new DeploySpace();
+  DeployWalletLink deployWalletLink = new DeployWalletLink();
+
+  // Helpers
   ArchitectHelper architectHelper = new ArchitectHelper();
 
   function __interact(uint256 deployerPk, address) public override {
     address spaceFactory = getDeployment("spaceFactory");
 
-    address architect = deployArchitect.deploy();
+    vm.startBroadcast(deployerPk);
+    IArchitect(spaceFactory).setSpaceArchitectImplementations(
+      ISpaceOwner(getDeployment("spaceOwner")),
+      IUserEntitlement(getDeployment("userEntitlement")),
+      IRuleEntitlement(getDeployment("ruleEntitlement")),
+      IWalletLink(getDeployment("walletLink"))
+    );
+    vm.stopBroadcast();
 
+    address architect = deployArchitect.deploy();
     IDiamond.FacetCut[] memory cuts = new IDiamond.FacetCut[](1);
     cuts[0] = architectHelper.makeCut(
       architect,
@@ -51,12 +68,5 @@ contract InteractSpaceFactory is Interaction, SpaceHelper {
     vm.startBroadcast(deployerPk);
     ProxyManager(spaceFactory).setImplementation(space);
     vm.stopBroadcast();
-
-    console.log("Space implementation updated to new one.", space);
-    address newImpl = ProxyManager(spaceFactory).getImplementation(
-      IProxyManager.getImplementation.selector
-    );
-
-    console.log("New space implementation: ", newImpl);
   }
 }

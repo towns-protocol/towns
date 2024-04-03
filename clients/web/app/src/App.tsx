@@ -25,6 +25,7 @@ import { SyncNotificationSettings } from '@components/SyncNotificationSettings/S
 import { useAccountAbstractionConfig } from 'userOpConfig'
 import { PATHS } from 'routes'
 import { useCreateLink } from 'hooks/useCreateLink'
+import { AutoLinkSmartAccount } from 'AutoLinkSmartAccount'
 
 FontLoader.init()
 
@@ -126,6 +127,7 @@ export const App = () => {
                     <Notifications />
                     <BlockchainTxNotifier />
                     <ServiceWorkerMetadataSyncer />
+                    <AutoLinkSmartAccount />
                 </AuthContextProvider>
             </EmbeddedSignerContextProvider>
         </TownsContextProvider>

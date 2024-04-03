@@ -29,7 +29,9 @@ export function isTransactionLimitRequest(obj: any): obj is TransactionLimitRequ
         typeof obj.operation === 'string' &&
         (obj.operation === 'createSpace' ||
             obj.operation === 'joinSpace' ||
-            obj.operation === 'linkWallet' ||
+            obj.operation === 'linkWalletToRootKey' ||
+            obj.operation === 'linkCallerToRootKey' ||
+            obj.operation === 'removeLink' ||
             obj.operation === 'useTown') &&
         typeof obj.rootAddress === 'string' &&
         (typeof obj.blockLookbackNum === 'number' || obj.blockLookbackNum === undefined)

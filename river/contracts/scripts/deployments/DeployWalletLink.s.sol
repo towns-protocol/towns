@@ -8,21 +8,30 @@ import {IDiamond, Diamond} from "contracts/src/diamond/Diamond.sol";
 
 //contracts
 import {DiamondDeployer} from "../common/DiamondDeployer.s.sol";
+import {DeployDiamondCut} from "contracts/scripts/deployments/facets/DeployDiamondCut.s.sol";
+import {DeployDiamondLoupe} from "contracts/scripts/deployments/facets/DeployDiamondLoupe.s.sol";
+import {DeployIntrospection} from "contracts/scripts/deployments/facets/DeployIntrospection.s.sol";
 
-import {DiamondLoupeFacet} from "contracts/src/diamond/facets/loupe/DiamondLoupeFacet.sol";
-import {IntrospectionFacet} from "contracts/src/diamond/facets/introspection/IntrospectionFacet.sol";
 import {WalletLink} from "contracts/src/river/wallet-link/WalletLink.sol";
 
 import {DiamondLoupeHelper} from "contracts/test/diamond/loupe/DiamondLoupeSetup.sol";
+import {DiamondCutHelper} from "contracts/test/diamond/cut/DiamondCutSetup.sol";
 import {IntrospectionHelper} from "contracts/test/diamond/introspection/IntrospectionSetup.sol";
-import {WalletLinkHelper} from "contracts/test/river/wallet-link/WalletLinkSetup.sol";
+import {WalletLinkHelper} from "contracts/test/river/wallet-link/WalletLinkHelper.sol";
 
 import {MultiInit} from "contracts/src/diamond/initializers/MultiInit.sol";
 
 import {DeployMultiInit} from "contracts/scripts/deployments/DeployMultiInit.s.sol";
 
 contract DeployWalletLink is DiamondDeployer {
+  // deployments
+  DeployDiamondCut deployDiamondCut = new DeployDiamondCut();
+  DeployDiamondLoupe deployDiamondLoupe = new DeployDiamondLoupe();
+  DeployIntrospection deployIntrospection = new DeployIntrospection();
+
+  // helpers
   DiamondLoupeHelper diamondLoupeHelper = new DiamondLoupeHelper();
+  DiamondCutHelper diamondCutHelper = new DiamondCutHelper();
   IntrospectionHelper introspectionHelper = new IntrospectionHelper();
   WalletLinkHelper walletLinkHelper = new WalletLinkHelper();
 
@@ -30,6 +39,7 @@ contract DeployWalletLink is DiamondDeployer {
   DeployMultiInit deployMultiInit = new DeployMultiInit();
 
   address diamondLoupe;
+  address diamondCut;
   address introspection;
   address walletLink;
 
@@ -42,53 +52,43 @@ contract DeployWalletLink is DiamondDeployer {
     address
   ) public override returns (Diamond.InitParams memory) {
     address multiInit = deployMultiInit.deploy();
+    diamondCut = deployDiamondCut.deploy();
+    diamondLoupe = deployDiamondLoupe.deploy();
+    introspection = deployIntrospection.deploy();
 
     vm.startBroadcast(pk);
-    diamondLoupe = address(new DiamondLoupeFacet());
-    introspection = address(new IntrospectionFacet());
     walletLink = address(new WalletLink());
     vm.stopBroadcast();
 
-    uint256 facetCount = 3;
-
-    IDiamond.FacetCut[] memory cuts = new IDiamond.FacetCut[](facetCount);
-
-    cuts[index++] = diamondLoupeHelper.makeCut(
+    addFacet(
+      diamondCutHelper.makeCut(diamondCut, IDiamond.FacetCutAction.Add),
+      diamondCut,
+      diamondCutHelper.makeInitData("")
+    );
+    addFacet(
+      diamondLoupeHelper.makeCut(diamondLoupe, IDiamond.FacetCutAction.Add),
       diamondLoupe,
-      IDiamond.FacetCutAction.Add
+      diamondLoupeHelper.makeInitData("")
     );
-    cuts[index++] = introspectionHelper.makeCut(
+    addFacet(
+      introspectionHelper.makeCut(introspection, IDiamond.FacetCutAction.Add),
       introspection,
-      IDiamond.FacetCutAction.Add
+      introspectionHelper.makeInitData("")
     );
-    cuts[index++] = walletLinkHelper.makeCut(
+    addFacet(
+      walletLinkHelper.makeCut(walletLink, IDiamond.FacetCutAction.Add),
       walletLink,
-      IDiamond.FacetCutAction.Add
+      walletLinkHelper.makeInitData("")
     );
-
-    _resetIndex();
-
-    address[] memory addresses = new address[](facetCount);
-    addresses[index++] = diamondLoupe;
-    addresses[index++] = introspection;
-    addresses[index++] = walletLink;
-
-    _resetIndex();
-
-    bytes[] memory data = new bytes[](facetCount);
-
-    data[index++] = diamondLoupeHelper.makeInitData("");
-    data[index++] = introspectionHelper.makeInitData("");
-    data[index++] = walletLinkHelper.makeInitData("");
 
     return
       Diamond.InitParams({
-        baseFacets: cuts,
+        baseFacets: baseFacets(),
         init: multiInit,
         initData: abi.encodeWithSelector(
           MultiInit.multiInit.selector,
-          addresses,
-          data
+          _initAddresses,
+          _initDatas
         )
       });
   }

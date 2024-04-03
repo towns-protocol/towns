@@ -3,7 +3,7 @@ import { ConnectedWallet, usePrivy, useWallets } from '@privy-io/react-auth'
 import React, { useCallback, useEffect, useState } from 'react'
 import { Link } from 'react-router-dom'
 import {
-    useLinkWalletTransaction,
+    useLinkEOAToRootKeyTransaction,
     useTownsClient,
     useUnlinkWalletTransaction,
 } from 'use-towns-client'
@@ -84,7 +84,7 @@ const WalletListItem = (props: { wallet: ConnectedWallet }) => {
 
 const WalletLinkButton = (props: { wallet: ConnectedWallet }) => {
     const { wallets } = useWallets()
-    const { isLoading, linkWalletTransaction } = useLinkWalletTransaction()
+    const { isLoading, linkEOAToRootKeyTransaction } = useLinkEOAToRootKeyTransaction()
     const { unlinkWalletTransaction } = useUnlinkWalletTransaction()
     const { getLinkedWallets } = useTownsClient()
 
@@ -109,12 +109,12 @@ const WalletLinkButton = (props: { wallet: ConnectedWallet }) => {
         if (!privy) {
             return
         }
-        const res = await linkWalletTransaction(
+        const res = await linkEOAToRootKeyTransaction(
             (await privy.getEthersProvider()).getSigner(),
             (await wallet.getEthersProvider()).getSigner(),
         )
         console.log('linkWallet', res)
-    }, [wallets, wallet, linkWalletTransaction])
+    }, [wallets, wallet, linkEOAToRootKeyTransaction])
 
     const onUnlinkClick = useCallback(async () => {
         const privy = findPrivyWallet(wallets)

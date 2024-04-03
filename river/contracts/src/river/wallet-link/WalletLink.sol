@@ -16,17 +16,29 @@ contract WalletLink is IWalletLink, WalletLinkBase, Facet {
   }
 
   /// @inheritdoc IWalletLink
-  function linkWalletToRootKey(
-    address rootKey,
-    bytes calldata rootKeySignature,
+  function linkCallerToRootKey(
+    LinkedWallet memory rootWallet,
     uint256 nonce
   ) external {
-    _linkWalletToRootKey(rootKey, rootKeySignature, nonce);
+    _linkCallerToRootWallet(rootWallet, nonce);
   }
 
   /// @inheritdoc IWalletLink
-  function removeLink(address wallet) external {
-    _removeLink(wallet);
+  function linkWalletToRootKey(
+    LinkedWallet memory wallet,
+    LinkedWallet memory rootWallet,
+    uint256 nonce
+  ) external {
+    _linkWalletToRootWallet(wallet, rootWallet, nonce);
+  }
+
+  /// @inheritdoc IWalletLink
+  function removeLink(
+    address wallet,
+    LinkedWallet memory rootWallet,
+    uint256 nonce
+  ) external {
+    _removeLink(wallet, rootWallet, nonce);
   }
 
   /*
@@ -44,7 +56,7 @@ contract WalletLink is IWalletLink, WalletLinkBase, Facet {
   function getRootKeyForWallet(
     address wallet
   ) external view returns (address rootKey) {
-    return _getRootKeyForWallet(wallet);
+    return _getRootKeyByWallet(wallet);
   }
 
   /**

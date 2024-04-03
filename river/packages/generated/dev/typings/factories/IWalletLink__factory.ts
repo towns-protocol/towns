@@ -90,17 +90,71 @@ const _abi = [
   },
   {
     type: "function",
+    name: "linkCallerToRootKey",
+    inputs: [
+      {
+        name: "rootWallet",
+        type: "tuple",
+        internalType: "struct IWalletLinkBase.LinkedWallet",
+        components: [
+          {
+            name: "addr",
+            type: "address",
+            internalType: "address",
+          },
+          {
+            name: "signature",
+            type: "bytes",
+            internalType: "bytes",
+          },
+        ],
+      },
+      {
+        name: "nonce",
+        type: "uint256",
+        internalType: "uint256",
+      },
+    ],
+    outputs: [],
+    stateMutability: "nonpayable",
+  },
+  {
+    type: "function",
     name: "linkWalletToRootKey",
     inputs: [
       {
-        name: "rootKey",
-        type: "address",
-        internalType: "address",
+        name: "wallet",
+        type: "tuple",
+        internalType: "struct IWalletLinkBase.LinkedWallet",
+        components: [
+          {
+            name: "addr",
+            type: "address",
+            internalType: "address",
+          },
+          {
+            name: "signature",
+            type: "bytes",
+            internalType: "bytes",
+          },
+        ],
       },
       {
-        name: "rootKeySignature",
-        type: "bytes",
-        internalType: "bytes",
+        name: "rootWallet",
+        type: "tuple",
+        internalType: "struct IWalletLinkBase.LinkedWallet",
+        components: [
+          {
+            name: "addr",
+            type: "address",
+            internalType: "address",
+          },
+          {
+            name: "signature",
+            type: "bytes",
+            internalType: "bytes",
+          },
+        ],
       },
       {
         name: "nonce",
@@ -119,6 +173,28 @@ const _abi = [
         name: "wallet",
         type: "address",
         internalType: "address",
+      },
+      {
+        name: "rootWallet",
+        type: "tuple",
+        internalType: "struct IWalletLinkBase.LinkedWallet",
+        components: [
+          {
+            name: "addr",
+            type: "address",
+            internalType: "address",
+          },
+          {
+            name: "signature",
+            type: "bytes",
+            internalType: "bytes",
+          },
+        ],
+      },
+      {
+        name: "nonce",
+        type: "uint256",
+        internalType: "uint256",
       },
     ],
     outputs: [],
@@ -164,12 +240,59 @@ const _abi = [
   },
   {
     type: "error",
+    name: "WalletLink__CannotLinkToRootWallet",
+    inputs: [
+      {
+        name: "wallet",
+        type: "address",
+        internalType: "address",
+      },
+      {
+        name: "rootKey",
+        type: "address",
+        internalType: "address",
+      },
+    ],
+  },
+  {
+    type: "error",
+    name: "WalletLink__CannotLinkToSelf",
+    inputs: [],
+  },
+  {
+    type: "error",
+    name: "WalletLink__CannotRemoveRootWallet",
+    inputs: [],
+  },
+  {
+    type: "error",
+    name: "WalletLink__InvalidAddress",
+    inputs: [],
+  },
+  {
+    type: "error",
     name: "WalletLink__InvalidSignature",
     inputs: [],
   },
   {
     type: "error",
     name: "WalletLink__LinkAlreadyExists",
+    inputs: [
+      {
+        name: "wallet",
+        type: "address",
+        internalType: "address",
+      },
+      {
+        name: "rootKey",
+        type: "address",
+        internalType: "address",
+      },
+    ],
+  },
+  {
+    type: "error",
+    name: "WalletLink__LinkedToAnotherRootKey",
     inputs: [
       {
         name: "wallet",

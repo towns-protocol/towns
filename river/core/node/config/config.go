@@ -1,10 +1,11 @@
 package config
 
 import (
+	"encoding/hex"
 	"time"
-
 	"github.com/ethereum/go-ethereum/common"
 	infra "github.com/river-build/river/core/node/infra/config"
+	"github.com/river-build/river/core/node/shared"
 )
 
 type TLSConfig struct {
@@ -94,6 +95,7 @@ type PerformanceTrackingConfig struct {
 
 type StreamConfig struct {
 	Media                       MediaStreamConfig
+	StreamMembershipLimits      map[string]int
 	RecencyConstraints          RecencyConstraintsConfig
 	ReplicationFactor           int
 	DefaultMinEventsPerSnapshot int
@@ -124,4 +126,14 @@ type ContractConfig struct {
 
 func (cfg *Config) UsesHTTPS() bool {
 	return cfg.UseHttps
+}
+
+func (cfg *StreamConfig) GetMembershipLimit(streamId shared.StreamId) int {
+	if cfg.StreamMembershipLimits != nil {
+		streamPrefix := hex.EncodeToString(streamId.Bytes()[:1])
+		if value, ok := cfg.StreamMembershipLimits[streamPrefix]; ok {
+			return value
+		}
+	}
+	return 0
 }

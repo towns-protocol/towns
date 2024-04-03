@@ -451,7 +451,9 @@ function mapTransactionNameToContractName(transactionName: string): string {
    2. user address must also be on whitelist to link
 */
 export async function verifyLinkWallet(
-    params: Omit<ITownTransactionParams, 'townId'>,
+    params: Omit<ITownTransactionParams, 'townId'> & {
+        functionHash: 'linkWalletToRootKey' | 'linkCallerToRootKey' | 'removeLink'
+    },
 ): Promise<IVerificationResult> {
     const spaceDapp = await createSpaceDappForNetwork(params.env)
     if (!spaceDapp) {
@@ -471,17 +473,49 @@ export async function verifyLinkWallet(
         if (!network) {
             throw new Error(`Unknown environment network: ${params.env.ENVIRONMENT}`)
         }
-        // check that quota has not been breached on-chain
-        const queryResult = await runLogQuery(
-            params.env.ENVIRONMENT,
-            network,
-            params.env,
-            'WalletLink',
-            'LinkWalletToRootKey',
-            [null, params.rootKeyAddress],
-            createFilterWrapper,
-            NetworkBlocksPerDay.get(params.env.ENVIRONMENT) ?? undefined,
-        )
+
+        let queryResult: Awaited<ReturnType<typeof runLogQuery>> | undefined
+
+        if (params.functionHash === 'linkCallerToRootKey') {
+            // https://linear.app/hnt-labs/issue/HNT-5664/event-for-linkcallertorootkey
+            // linking smart Account to rootKey
+            // no event to filter on ATM
+            return {
+                verified: true,
+                maxActionsPerDay: TRANSACTION_LIMIT_DEFAULTS_PER_DAY.linkWallet,
+            }
+        }
+
+        switch (params.functionHash) {
+            case 'linkWalletToRootKey':
+                // linking EOAs
+                queryResult = await runLogQuery(
+                    params.env.ENVIRONMENT,
+                    network,
+                    params.env,
+                    'WalletLink',
+                    'LinkWalletToRootKey',
+                    [null, params.rootKeyAddress],
+                    createFilterWrapper,
+                    NetworkBlocksPerDay.get(params.env.ENVIRONMENT) ?? undefined,
+                )
+                break
+            case 'removeLink':
+                queryResult = await runLogQuery(
+                    params.env.ENVIRONMENT,
+                    network,
+                    params.env,
+                    'WalletLink',
+                    'RemoveLink',
+                    [null, params.rootKeyAddress],
+                    createFilterWrapper,
+                    NetworkBlocksPerDay.get(params.env.ENVIRONMENT) ?? undefined,
+                )
+                break
+            default:
+                throw new Error('Unknown functionHash for wallet linking')
+        }
+
         if (!queryResult || !queryResult.events) {
             return { verified: false, error: 'Unable to queryFilter for wallet linking' }
         }

@@ -55,16 +55,14 @@ performanceTracking:
     profilingEnabled: false
     tracingEnabled: false
 
-# Push notification configuration
-pushNotification:
-    url: '' # URL to the push notification worker. Default empty string disables it.
-    authToken: '' # auth token for the push notification worker
-
 # Stream settings
 stream:
     media:
         maxChunkCount: 10 # max number of chunks in a media stream
         maxChunkSize: 500000 # max number of bytes in a single chunk
+    streamMembershipLimits:
+        77: 6 # GDMs
+        88: 2 # DMs
     recencyConstraints:
         # Each event must be unique and reference the hash of a previous miniblock
         # If the hash is not of the most recent block, the referenced miniblock must be less than M seconds old.
@@ -81,7 +79,8 @@ stream:
         a5: 10 # USER_SETTINGS
     # Timeout after streams with no activity in the cache are expired and evicted (default=5m)
     # valid time unites are "ns", "us" (or "µs"), "ms", "s", "m", "h"
-    cacheExpiration: 5m
+    # Set to 0 to disable cache expiration
+    cacheExpiration: 0s
     # Interval to check for inactive streams in the cache (default=cacheExpirationSec/10)
     # valid time unites are "ns", "us" (or "µs"), "ms", "s", "m", "h"
     cacheExpirationPollInterval: 30s

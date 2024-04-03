@@ -16,12 +16,12 @@ import { useSpaceDapp } from './use-space-dapp'
 import { useOfflineStore } from '../store/use-offline-store'
 import { useTownsContext } from '../components/TownsContextProvider'
 
-export function useLinkWalletTransaction() {
+export function useLinkEOAToRootKeyTransaction() {
     const { traceTransaction, ...rest } = useLinkTransactionBuilder()
-    const { linkWallet } = useTownsClient()
+    const { linkEOAToRootKey } = useTownsClient()
     return {
         ...rest,
-        linkWalletTransaction: useCallback(
+        linkEOAToRootKeyTransaction: useCallback(
             async function (
                 rootKey: ethers.Signer | undefined,
                 wallet: ethers.Signer | undefined,
@@ -35,10 +35,40 @@ export function useLinkWalletTransaction() {
                         })
                     }
                     // ok to proceed
-                    return linkWallet(rootKey, wallet)
+                    return linkEOAToRootKey(rootKey, wallet)
                 })
             },
-            [linkWallet, traceTransaction],
+            [linkEOAToRootKey, traceTransaction],
+        ),
+    }
+}
+
+/**
+ * Only use this to link the smart account
+ * @returns
+ */
+export function useLinkCallerToRootKey() {
+    const { traceTransaction, ...rest } = useLinkTransactionBuilder()
+    const { linkCallerToRootKey } = useTownsClient()
+    return {
+        ...rest,
+        linkCallerToRootKeyTransaction: useCallback(
+            async function (
+                rootKey: ethers.Signer | undefined,
+            ): Promise<WalletLinkTransactionContext | undefined> {
+                return traceTransaction(async () => {
+                    if (!rootKey) {
+                        // cannot sign the transaction. stop processing.
+                        return createTransactionContext({
+                            status: TransactionStatus.Failed,
+                            error: new SignerUndefinedError(),
+                        })
+                    }
+                    // ok to proceed
+                    return linkCallerToRootKey(rootKey)
+                })
+            },
+            [linkCallerToRootKey, traceTransaction],
         ),
     }
 }
@@ -141,7 +171,7 @@ function useLinkTransactionBuilder() {
     }
 }
 
-export function useLinkedWallets() {
+export function useLinkedWallets({ enabled = true } = {}) {
     const { loggedInWalletAddress } = useConnectivity()
     const { client } = useTownsClient()
     return useQuery(
@@ -153,7 +183,7 @@ export function useLinkedWallets() {
             return client.getLinkedWallets(loggedInWalletAddress)
         },
         {
-            enabled: !!loggedInWalletAddress && !!client,
+            enabled: enabled && !!loggedInWalletAddress && !!client,
             // b/c this query is only invalidated if the transaction hooks await the transaction to be mined (component could be unmounted before that)
             // we need to refetch on mount to make sure we have the latest data
             refetchOnMount: true,

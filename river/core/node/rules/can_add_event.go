@@ -328,21 +328,25 @@ func (params *aeParams) canAddMemberPayload(payload *StreamEvent_MemberPayload) 
 			return aeBuilder().
 				check(ru.validMembershipPayload).
 				check(ru.validMembershipTransistionForSpace).
+				check(ru.validMembershipLimit).
 				requireChainAuth(ru.spaceMembershipEntitlements)
 		} else if shared.ValidChannelStreamId(ru.params.streamView.StreamId()) {
 			return aeBuilder().
 				check(ru.validMembershipPayload).
 				check(ru.validMembershipTransistionForChannel).
+				check(ru.validMembershipLimit).
 				requireChainAuth(ru.channelMembershipEntitlements).
 				requireParentEvent(ru.requireStreamParentMembership)
 		} else if shared.ValidDMChannelStreamId(ru.params.streamView.StreamId()) {
 			return aeBuilder().
 				check(ru.validMembershipPayload).
-				check(ru.validMembershipTransistionForDM)
+				check(ru.validMembershipTransistionForDM).
+				check(ru.validMembershipLimit)
 		} else if shared.ValidGDMChannelStreamId(ru.params.streamView.StreamId()) {
 			return aeBuilder().
 				check(ru.validMembershipPayload).
-				check(ru.validMembershipTransistionForGDM)
+				check(ru.validMembershipTransistionForGDM).
+				check(ru.validMembershipLimit)
 		} else {
 			return aeBuilder().
 				fail(RiverError(Err_INVALID_ARGUMENT, "invalid stream id for membership payload", "streamId", ru.params.streamView.StreamId()))
@@ -416,6 +420,24 @@ func (ru *aeMembershipRules) validMembershipPayload() (bool, error) {
 					streamParentId,
 				)
 			}
+		}
+	}
+	return true, nil
+}
+
+func (ru *aeMembershipRules) validMembershipLimit() (bool, error) {
+	if ru.membership.Op == MembershipOp_SO_JOIN || ru.membership.Op == MembershipOp_SO_INVITE {
+		members, err := ru.params.streamView.(events.JoinableStreamView).GetChannelMembers()
+		if err != nil {
+			return false, err
+		}
+		membershipLimit := ru.params.cfg.GetMembershipLimit(*ru.params.streamView.StreamId())
+		if membershipLimit > 0 && (*members).Cardinality() >= membershipLimit {
+			return false, RiverError(
+				Err_INVALID_ARGUMENT,
+				"membership limit reached",
+				"membershipLimit",
+				membershipLimit)
 		}
 	}
 	return true, nil

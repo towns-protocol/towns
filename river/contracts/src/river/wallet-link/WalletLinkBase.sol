@@ -13,91 +13,153 @@ import {WalletLinkStorage} from "./WalletLinkStorage.sol";
 // contracts
 import {Nonces} from "contracts/src/diamond/utils/Nonces.sol";
 
+// debuggging
+import {console} from "forge-std/console.sol";
+
 abstract contract WalletLinkBase is IWalletLinkBase, Nonces {
   using EnumerableSet for EnumerableSet.AddressSet;
-  using ECDSA for bytes32;
 
   // =============================================================
   //                      External - Write
   // =============================================================
 
-  function _linkWalletToRootKey(
-    address rootKey,
-    bytes calldata rootKeySignature,
+  /// @dev Links a caller address to a root wallet
+  /// @param rootWallet the root wallet that the caller is linking to
+  /// @param nonce a nonce used to prevent replay attacks, nonce must always be higher than previous nonce
+  function _linkCallerToRootWallet(
+    LinkedWallet memory rootWallet,
     uint256 nonce
   ) internal {
     WalletLinkStorage.Layout storage ds = WalletLinkStorage.layout();
 
-    address linkingWallet = msg.sender;
+    // The caller is the wallet that is being linked to the root wallet
+    address newWallet = msg.sender;
 
-    //Check that this wallet is not already linked to a rootkey
-    if (ds.walletsToRootKey[linkingWallet] != address(0)) {
-      revert WalletLink__LinkAlreadyExists(linkingWallet, rootKey);
-    }
+    _verifyWallets(ds, newWallet, rootWallet.addr);
 
-    //Verify that the root key signature contains the correct nonce and the correct wallet
+    //Verify that the root wallet signature contains the correct nonce and the correct caller wallet
     bytes32 rootKeyMessageHash = MessageHashUtils.toEthSignedMessageHash(
-      keccak256(abi.encode(linkingWallet, nonce))
+      keccak256(abi.encode(newWallet, nonce))
     );
 
-    if (_recoverSigner(rootKeyMessageHash, rootKeySignature) != rootKey) {
+    // Verify the signature of the root wallet is correct for the nonce and wallet address
+    if (
+      ECDSA.recover(rootKeyMessageHash, rootWallet.signature) != rootWallet.addr
+    ) {
       revert WalletLink__InvalidSignature();
     }
 
     //Check that the nonce being used is higher than the last nonce used
-    _useCheckedNonce(rootKey, nonce);
+    _useCheckedNonce(rootWallet.addr, nonce);
 
     //set link in mapping
-    ds.rootKeysToWallets[rootKey].add(linkingWallet);
-    ds.walletsToRootKey[linkingWallet] = rootKey;
+    ds.walletsByRootKey[rootWallet.addr].add(newWallet);
+    ds.rootKeyByWallet[newWallet] = rootWallet.addr;
 
-    emit LinkWalletToRootKey(linkingWallet, rootKey);
+    emit LinkWalletToRootKey(newWallet, rootWallet.addr);
   }
 
-  function _removeLink(address wallet) internal {
+  /// @dev Links a wallet to a root wallet
+  /// @param wallet the wallet that is being linked to the root wallet
+  /// @param rootWallet the root wallet that the wallet is linking to
+  /// @param nonce a nonce used to prevent replay attacks, nonce must always be higher than previous nonce
+  function _linkWalletToRootWallet(
+    LinkedWallet memory wallet,
+    LinkedWallet memory rootWallet,
+    uint256 nonce
+  ) internal {
     WalletLinkStorage.Layout storage ds = WalletLinkStorage.layout();
 
-    address originatingWallet = msg.sender;
+    _verifyWallets(ds, wallet.addr, rootWallet.addr);
 
-    //if this is called from an originating wallet
-    if (ds.walletsToRootKey[originatingWallet] == wallet) {
-      _removeInternalLink(ds, wallet, originatingWallet);
+    //Verify that the root wallet signature contains the correct nonce and the correct wallet
+    bytes32 rootKeyMessageHash = MessageHashUtils.toEthSignedMessageHash(
+      keccak256(abi.encode(wallet.addr, nonce))
+    );
 
-      //if this is called from the root key wallet
-    } else if (ds.walletsToRootKey[wallet] == originatingWallet) {
-      _removeInternalLink(ds, originatingWallet, wallet);
-    } else {
-      revert WalletLink__NotLinked(wallet, originatingWallet);
+    // Verify the signature of the root wallet is correct for the nonce and wallet address
+    if (
+      ECDSA.recover(rootKeyMessageHash, rootWallet.signature) != rootWallet.addr
+    ) {
+      revert WalletLink__InvalidSignature();
     }
-    emit RemoveLink(wallet, msg.sender);
+
+    bytes32 walletMessageHash = MessageHashUtils.toEthSignedMessageHash(
+      keccak256(abi.encode(rootWallet.addr, nonce))
+    );
+
+    // Verify the signature of the wallet is correct for the nonce and root wallet address
+    if (ECDSA.recover(walletMessageHash, wallet.signature) != wallet.addr) {
+      revert WalletLink__InvalidSignature();
+    }
+
+    //Check that the nonce being used is higher than the last nonce used
+    _useCheckedNonce(rootWallet.addr, nonce);
+
+    //set link in mapping
+    ds.walletsByRootKey[rootWallet.addr].add(wallet.addr);
+    ds.rootKeyByWallet[wallet.addr] = rootWallet.addr;
+
+    emit LinkWalletToRootKey(wallet.addr, rootWallet.addr);
   }
 
-  function _removeInternalLink(
-    WalletLinkStorage.Layout storage ds,
-    address wallet,
-    address originatingWallet
-  ) internal {
-    //remove the link in the wallet to root keys map
-    ds.walletsToRootKey[originatingWallet] = address(0);
+  // =============================================================
+  //                           Remove
+  // =============================================================
 
-    //remove the link in the root keys to wallets[]  map
-    ds.rootKeysToWallets[wallet].remove(originatingWallet);
+  function _removeLink(
+    address walletToRemove,
+    LinkedWallet memory rootWallet,
+    uint256 nonce
+  ) internal {
+    WalletLinkStorage.Layout storage ds = WalletLinkStorage.layout();
+
+    // Check walletToRemove or rootWallet.addr are not address(0)
+    if (walletToRemove == address(0) || rootWallet.addr == address(0)) {
+      revert WalletLink__InvalidAddress();
+    }
+
+    // Check walletToRemove is not the root wallet
+    if (walletToRemove == rootWallet.addr) {
+      revert WalletLink__CannotRemoveRootWallet();
+    }
+
+    // Check that the wallet is linked to the root wallet
+    if (ds.rootKeyByWallet[walletToRemove] != rootWallet.addr) {
+      revert WalletLink__NotLinked(walletToRemove, rootWallet.addr);
+    }
+
+    bytes32 rootKeyMessageHash = MessageHashUtils.toEthSignedMessageHash(
+      keccak256(abi.encode(walletToRemove, nonce))
+    );
+
+    // Verify the signature of the root wallet is correct for the nonce and wallet address
+    if (
+      ECDSA.recover(rootKeyMessageHash, rootWallet.signature) != rootWallet.addr
+    ) {
+      revert WalletLink__InvalidSignature();
+    }
+
+    // Remove the link in the walletToRemove to root keys map
+    ds.rootKeyByWallet[walletToRemove] = address(0);
+    ds.walletsByRootKey[rootWallet.addr].remove(walletToRemove);
+
+    emit RemoveLink(walletToRemove, msg.sender);
   }
 
   // =============================================================
   //                        Read
   // =============================================================
-
   function _getWalletsByRootKey(
     address rootKey
   ) internal view returns (address[] memory wallets) {
-    return WalletLinkStorage.layout().rootKeysToWallets[rootKey].values();
+    return WalletLinkStorage.layout().walletsByRootKey[rootKey].values();
   }
 
-  function _getRootKeyForWallet(
+  function _getRootKeyByWallet(
     address wallet
   ) internal view returns (address rootKey) {
-    return WalletLinkStorage.layout().walletsToRootKey[wallet];
+    return WalletLinkStorage.layout().rootKeyByWallet[wallet];
   }
 
   function _checkIfLinked(
@@ -105,42 +167,44 @@ abstract contract WalletLinkBase is IWalletLinkBase, Nonces {
     address wallet
   ) internal view returns (bool) {
     WalletLinkStorage.Layout storage ds = WalletLinkStorage.layout();
-    return ds.walletsToRootKey[wallet] == rootKey;
+    return ds.rootKeyByWallet[wallet] == rootKey;
   }
 
-  function _recoverSigner(
-    bytes32 _ethSignedMessageHash,
-    bytes memory _signature
-  ) internal pure returns (address) {
-    (bytes32 r, bytes32 s, uint8 v) = _splitSignature(_signature);
-    return ecrecover(_ethSignedMessageHash, v, r, s);
-  }
+  // =============================================================
+  //                           Helpers
+  // =============================================================
 
-  function _splitSignature(
-    bytes memory sig
-  ) internal pure returns (bytes32 r, bytes32 s, uint8 v) {
-    if (sig.length != 65) {
-      revert WalletLink__InvalidSignature();
+  function _verifyWallets(
+    WalletLinkStorage.Layout storage ds,
+    address wallet,
+    address rootWallet
+  ) internal view {
+    // Check wallet or rootWallet.addr are not address(0)
+    if (wallet == address(0) || rootWallet == address(0)) {
+      revert WalletLink__InvalidAddress();
     }
 
-    assembly {
-      /*
-            First 32 bytes stores the length of the signature
-
-            add(sig, 32) = pointer of sig + 32
-            effectively, skips first 32 bytes of signature
-
-            mload(p) loads next 32 bytes starting at the memory address p into memory
-            */
-
-      // first 32 bytes, after the length prefix
-      r := mload(add(sig, 32))
-      // second 32 bytes
-      s := mload(add(sig, 64))
-      // final byte (first byte of the next 32 bytes)
-      v := byte(0, mload(add(sig, 96)))
+    // Check not linking wallet to itself
+    if (wallet == rootWallet) {
+      revert WalletLink__CannotLinkToSelf();
     }
 
-    // implicitly return (r, s, v)
+    // Check that the wallet is not already linked to the root wallet
+    if (ds.rootKeyByWallet[wallet] != address(0)) {
+      revert WalletLink__LinkAlreadyExists(wallet, rootWallet);
+    }
+
+    // Check that the root wallet is not already linked to another root wallet
+    if (ds.rootKeyByWallet[rootWallet] != address(0)) {
+      revert WalletLink__LinkedToAnotherRootKey(
+        wallet,
+        ds.rootKeyByWallet[rootWallet]
+      );
+    }
+
+    // Check that the wallet is not itself a root wallet
+    if (ds.walletsByRootKey[wallet].length() > 0) {
+      revert WalletLink__CannotLinkToRootWallet(wallet, rootWallet);
+    }
   }
 }

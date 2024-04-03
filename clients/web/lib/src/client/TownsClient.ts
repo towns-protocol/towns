@@ -262,6 +262,7 @@ export class TownsClient implements EntitlementsDelegate {
     ): Promise<CreateSpaceTransactionContext> {
         const txContext = await this._waitForBlockchainTransaction(context)
         if (txContext.status === TransactionStatus.Success) {
+            console.log('[waitForCreateSpaceTransaction] space created on chain', txContext.data)
             if (txContext.data) {
                 const spaceAddress = this.spaceDapp.getSpaceAddress(txContext.receipt)
                 if (!spaceAddress) {
@@ -1720,7 +1721,7 @@ export class TownsClient implements EntitlementsDelegate {
     /************************************************
      * Wallet linking
      */
-    public async linkWallet(
+    public async linkEOAToRootKey(
         rootKey: ethers.Signer,
         wallet: ethers.Signer,
     ): Promise<WalletLinkTransactionContext> {
@@ -1735,22 +1736,80 @@ export class TownsClient implements EntitlementsDelegate {
         })
 
         try {
-            // evan 2.13.24 - wallet link contract needs update for this to work
-            // see https://linear.app/hnt-labs/issue/HNT-4908/refactor-wallet-linking-for-smart-accounts-or-dont-use-it-with-smart
-            // we need to link the smart account to root account when either creating or joining a space
-            // other scenarios for wallet linking do not work with smart accounts + current wallet link contract
-            if (
-                this.isAccountAbstractionEnabled() &&
-                (await wallet.getAddress()) ===
-                    (await this.userOps?.getAbstractAccountAddress({
-                        rootKeyAddress: (await rootKey.getAddress()) as Address,
-                    }))
-            ) {
-                transaction = await this.userOps?.sendWalletLinkOp([rootKey, wallet])
+            if (this.isAccountAbstractionEnabled()) {
+                transaction = await this.userOps?.sendLinkEOAToRootKeyOp([rootKey, wallet])
             } else {
-                transaction = await walletLink.linkWallet(rootKey, wallet)
+                transaction = await walletLink.linkWalletToRootKey(rootKey, wallet)
             }
-            console.log(`[linkWallet] transaction created` /*, transaction*/)
+            console.log(`[linkEOAToRootKey] transaction created` /*, transaction*/)
+            // eslint-disable-next-line @typescript-eslint/no-explicit-any
+        } catch (err: any) {
+            const parsedError = walletLink.parseError(err)
+            error = parsedError
+        }
+        continueStoreTx({
+            hashOrUserOpHash: getTransactionHashOrUserOpHash(transaction),
+            transaction,
+            error,
+        })
+
+        return {
+            transaction,
+            receipt: undefined,
+            status: transaction ? TransactionStatus.Pending : TransactionStatus.Failed,
+            data: transaction
+                ? {
+                      rootKeyAddress,
+                      walletAddress,
+                  }
+                : undefined,
+            error,
+        }
+    }
+
+    /**
+     * Link the caller of the tx to the root key. For now, this is used to link a smart account to a root key.
+     * @param rootKey
+     * @param wallet - optional because if it's a user op, we only need the root key
+     * @returns
+     */
+    public async linkCallerToRootKey(
+        rootKey: ethers.Signer,
+        wallet?: ethers.Signer,
+    ): Promise<WalletLinkTransactionContext> {
+        const rootKeyAddress = await rootKey.getAddress()
+        let walletAddress = ''
+        const walletLink = this.spaceDapp.getWalletLink()
+
+        let transaction: TransactionOrUserOperation | undefined = undefined
+        let error: Error | undefined = undefined
+        const continueStoreTx = this.blockchainTransactionStore.begin({
+            type: BlockchainTransactionType.LinkWallet,
+        })
+
+        try {
+            if (this.isAccountAbstractionEnabled()) {
+                // when account abstraction is enabled, the only time we should be using this method is when linking a smart account to a root key
+                if (wallet) {
+                    throw new Error(
+                        '[linkCallerToRootKey] wallet address should not be provided when account abstraction is enabled',
+                    )
+                }
+                transaction = await this.userOps?.sendLinkSmartAccountToRootKeyOp(rootKey)
+                walletAddress =
+                    (await this.getAbstractAccountAddress({
+                        rootKeyAddress: rootKeyAddress as Address,
+                    })) ?? ''
+            } else {
+                if (!wallet) {
+                    throw new Error(
+                        '[linkCallerToRootKey] wallet address must be provided when account abstraction is enabled',
+                    )
+                }
+                walletAddress = await wallet.getAddress()
+                transaction = await walletLink.linkCallerToRootKey(rootKey, wallet)
+            }
+            console.log(`[linkCallerToRootKey] transaction created` /*, transaction*/)
             // eslint-disable-next-line @typescript-eslint/no-explicit-any
         } catch (err: any) {
             const parsedError = walletLink.parseError(err)
@@ -1789,14 +1848,11 @@ export class TownsClient implements EntitlementsDelegate {
         })
 
         try {
-            // evan 2.13.24 - wallet link contract needs update for this to work
-            // see https://linear.app/hnt-labs/issue/HNT-4908/refactor-wallet-linking-for-smart-accounts-or-dont-use-it-with-smart
-            // if (this.isAccountAbstractionEnabled()) {
-            //     transaction = await this.userOps?.sendRemoveWalletLinkOp([rootKey, walletAddress])
-            // } else {
-            //     transaction = await walletLink.removeLink(rootKey, walletAddress)
-            // }
-            transaction = await walletLink.removeLink(rootKey, walletAddress)
+            if (this.isAccountAbstractionEnabled()) {
+                transaction = await this.userOps?.sendRemoveWalletLinkOp([rootKey, walletAddress])
+            } else {
+                transaction = await walletLink.removeLink(rootKey, walletAddress)
+            }
         } catch (err) {
             const parsedError = walletLink.parseError(err)
             error = parsedError

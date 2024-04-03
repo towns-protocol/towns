@@ -2,7 +2,7 @@ import React, { PropsWithChildren, useCallback, useState } from 'react'
 import {
     BlockchainTransactionType,
     useIsTransactionPending,
-    useLinkWalletTransaction,
+    useLinkEOAToRootKeyTransaction,
     useLinkedWallets,
     useUnlinkWalletTransaction,
 } from 'use-towns-client'
@@ -106,12 +106,12 @@ function Content({
 
     const {
         isLoading: isLoadingLinkingWallet,
-        linkWalletTransaction,
+        linkEOAToRootKeyTransaction,
         error: errorLinkWallet,
-    } = useLinkWalletTransaction()
+    } = useLinkEOAToRootKeyTransaction()
 
     const connectWalletThenLink = useConnectThenLink({
-        onLinkWallet: linkWalletTransaction,
+        onLinkWallet: linkEOAToRootKeyTransaction,
     })
 
     useErrorToast({

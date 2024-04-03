@@ -83,7 +83,8 @@ export {
 } from './hooks/use-banning'
 export { useTownsClient } from './hooks/use-towns-client'
 export {
-    useLinkWalletTransaction,
+    useLinkEOAToRootKeyTransaction,
+    useLinkCallerToRootKey,
     useUnlinkWalletTransaction,
     useLinkedWallets,
     useGetRootKeyFromLinkedWallet,

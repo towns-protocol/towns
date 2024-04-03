@@ -668,6 +668,17 @@ func (ru *csGdmChannelRules) checkGDMPayloads() error {
 		return RiverError(Err_BAD_STREAM_CREATION_PARAMS, "gdm channel requires 3+ users")
 	}
 
+	// GDM memberships cannot exceed the configured limit. the first event is the inception event
+	// and is subtracted from the parsed events count.
+	membershipLimit := ru.params.cfg.GetMembershipLimit(ru.params.streamId)
+	if len(ru.params.parsedEvents)-1 > membershipLimit {
+		return RiverError(
+			Err_INVALID_ARGUMENT,
+			"membership limit reached",
+			"membershipLimit",
+			membershipLimit)
+	}
+
 	// check the first join
 	if err := ru.checkGDMMemberPayload(ru.params.parsedEvents[1], &ru.params.creatorAddress); err != nil {
 		return err

@@ -235,6 +235,7 @@ test.skip('join_space_gated_2_NFT_2_wallet', async () => {
         getContractAddress('tokenA'),
         getContractAddress('tokenB'),
     ])
+    // TODO: remove this struct helper - it's from river/web3 and only used in tests
     const ruleData = createExternalTokenStruct([tokenA, tokenB])
 
     assert(isHexString(alice.walletAddress), 'alice.walletAddress is not a hex string')
@@ -248,7 +249,8 @@ test.skip('join_space_gated_2_NFT_2_wallet', async () => {
         await publicMint('tokenB', bob2.walletAddress),
     ])
 
-    const tx_link = await bob1.linkWallet(bob1.provider.wallet, bob2.provider.wallet)
+    // bob1 must have funds to link wallet
+    const tx_link = await bob1.linkEOAToRootKey(bob1.provider.wallet, bob2.provider.wallet)
     const txHash = await getTransactionHashFromTransactionOrUserOp(tx_link.transaction)
 
     assert(txHash !== undefined, 'linkWallet failed')

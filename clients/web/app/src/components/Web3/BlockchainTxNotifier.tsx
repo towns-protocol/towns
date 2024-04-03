@@ -122,7 +122,7 @@ function MonitoringNotification(props: ToastProps & { toast: Toast }) {
         pendingMessage = 'Transaction pending...',
         pendingContextMessage,
         successContextMessage,
-        errorMessage = mapToErrorMessage(tx.error),
+        errorMessage = tx.error ? mapToErrorMessage(tx.error) : undefined,
         errorContextMessage,
         toast,
     } = props

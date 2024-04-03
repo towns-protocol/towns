@@ -97,19 +97,6 @@
   },
   {
     "type": "function",
-    "name": "_getMembershipFeeRecipient",
-    "inputs": [],
-    "outputs": [
-      {
-        "name": "",
-        "type": "address",
-        "internalType": "address"
-      }
-    ],
-    "stateMutability": "view"
-  },
-  {
-    "type": "function",
     "name": "_getMembershipFreeAllocation",
     "inputs": [],
     "outputs": [
@@ -178,19 +165,6 @@
       }
     ],
     "stateMutability": "view"
-  },
-  {
-    "type": "function",
-    "name": "_setMembershipFeeRecipient",
-    "inputs": [
-      {
-        "name": "newRecipient",
-        "type": "address",
-        "internalType": "address"
-      }
-    ],
-    "outputs": [],
-    "stateMutability": "nonpayable"
   },
   {
     "type": "function",
@@ -341,19 +315,6 @@
         "name": "",
         "type": "uint64",
         "internalType": "uint64"
-      }
-    ],
-    "stateMutability": "view"
-  },
-  {
-    "type": "function",
-    "name": "getMembershipFeeRecipient",
-    "inputs": [],
-    "outputs": [
-      {
-        "name": "",
-        "type": "address",
-        "internalType": "address"
       }
     ],
     "stateMutability": "view"
@@ -570,9 +531,9 @@
     "name": "renewMembership",
     "inputs": [
       {
-        "name": "receiver",
-        "type": "address",
-        "internalType": "address"
+        "name": "tokenId",
+        "type": "uint256",
+        "internalType": "uint256"
       }
     ],
     "outputs": [],
@@ -649,38 +610,12 @@
   },
   {
     "type": "function",
-    "name": "setMembershipCurrency",
-    "inputs": [
-      {
-        "name": "newCurrency",
-        "type": "address",
-        "internalType": "address"
-      }
-    ],
-    "outputs": [],
-    "stateMutability": "nonpayable"
-  },
-  {
-    "type": "function",
     "name": "setMembershipDuration",
     "inputs": [
       {
         "name": "newDuration",
         "type": "uint64",
         "internalType": "uint64"
-      }
-    ],
-    "outputs": [],
-    "stateMutability": "nonpayable"
-  },
-  {
-    "type": "function",
-    "name": "setMembershipFeeRecipient",
-    "inputs": [
-      {
-        "name": "newRecipient",
-        "type": "address",
-        "internalType": "address"
       }
     ],
     "outputs": [],
@@ -805,6 +740,19 @@
     ],
     "outputs": [],
     "stateMutability": "payable"
+  },
+  {
+    "type": "function",
+    "name": "withdraw",
+    "inputs": [
+      {
+        "name": "account",
+        "type": "address",
+        "internalType": "address"
+      }
+    ],
+    "outputs": [],
+    "stateMutability": "nonpayable"
   },
   {
     "type": "event",
@@ -1005,6 +953,25 @@
         "name": "price",
         "type": "uint256",
         "indexed": true,
+        "internalType": "uint256"
+      }
+    ],
+    "anonymous": false
+  },
+  {
+    "type": "event",
+    "name": "MembershipWithdrawal",
+    "inputs": [
+      {
+        "name": "recipient",
+        "type": "address",
+        "indexed": true,
+        "internalType": "address"
+      },
+      {
+        "name": "amount",
+        "type": "uint256",
+        "indexed": false,
         "internalType": "uint256"
       }
     ],
@@ -1340,6 +1307,11 @@
   },
   {
     "type": "error",
+    "name": "Membership__InsufficientAllowance",
+    "inputs": []
+  },
+  {
+    "type": "error",
     "name": "Membership__InsufficientPayment",
     "inputs": []
   },
@@ -1416,11 +1388,6 @@
   {
     "type": "error",
     "name": "Membership__NotExpired",
-    "inputs": []
-  },
-  {
-    "type": "error",
-    "name": "Membership__NotRenewable",
     "inputs": []
   },
   {

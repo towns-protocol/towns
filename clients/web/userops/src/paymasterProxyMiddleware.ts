@@ -177,7 +177,8 @@ export const paymasterProxyMiddleware: ({
                 !townId &&
                 functionHashForPaymasterProxy !== 'createSpace' &&
                 functionHashForPaymasterProxy !== 'createSpace_linkWallet' &&
-                functionHashForPaymasterProxy !== 'linkWallet' &&
+                functionHashForPaymasterProxy !== 'linkWalletToRootKey' &&
+                functionHashForPaymasterProxy !== 'linkCallerToRootKey' &&
                 functionHashForPaymasterProxy !== 'removeLink'
             ) {
                 throw new Error(

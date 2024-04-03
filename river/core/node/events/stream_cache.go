@@ -88,12 +88,13 @@ func (s *streamCacheImpl) cacheCleanup(ctx context.Context, pollInterval time.Du
 	log := dlog.FromCtx(ctx)
 
 	if expiration <= 0 {
-		expiration = 5 * time.Minute
+		log.Warn("stream cache cache cleanup disabled", "expiration", expiration)
+		return
 	}
 	if pollInterval <= 0 {
 		pollInterval = expiration / 10
 	}
-	
+
 	log.Debug("stream cache cache cleanup", "expiration", expiration, "poll", pollInterval)
 
 	for {

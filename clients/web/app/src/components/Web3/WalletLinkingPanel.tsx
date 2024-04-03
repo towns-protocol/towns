@@ -5,11 +5,13 @@ import { useEmbeddedWallet, useGetEmbeddedSigner } from '@towns/privy'
 import {
     BlockchainTransactionType,
     useIsTransactionPending,
-    useLinkWalletTransaction,
+    useLinkCallerToRootKey,
+    useLinkEOAToRootKeyTransaction,
     useLinkedWallets,
     useUnlinkWalletTransaction,
 } from 'use-towns-client'
 import { usePrivyWagmi } from '@privy-io/wagmi-connector'
+import { useSearchParams } from 'react-router-dom'
 import { Box, BoxProps, Button, Icon, IconButton, Paragraph, Stack, Text } from '@ui'
 import { PanelButton } from '@components/Panel/PanelButton'
 import { ClipboardCopy } from '@components/ClipboardCopy/ClipboardCopy'
@@ -22,6 +24,8 @@ import {
     useAbstractAccountAddress,
 } from 'hooks/useAbstractAccountAddress'
 import { createPrivyNotAuthenticatedNotification } from '@components/Notifications/utils'
+import { useIsSmartAccountLinked } from 'hooks/useIsSmartAccountLinked'
+import { env } from 'utils'
 import { formatEthDisplay } from './utils'
 
 export function WalletLinkingPanel() {
@@ -44,13 +48,17 @@ export function WalletLinkingPanel() {
         })
     const { loggedInWalletAddress } = useAuth()
     const { wallets: connectedWallets } = useWallets()
-    const { linkWalletTransaction } = useLinkWalletTransaction()
+    const { linkEOAToRootKeyTransaction } = useLinkEOAToRootKeyTransaction()
+    const { linkCallerToRootKeyTransaction } = useLinkCallerToRootKey()
     const { unlinkWalletTransaction } = useUnlinkWalletTransaction()
     const getSigner = useGetEmbeddedSigner()
 
-    const onLinkClick = useConnectThenLink({
-        onLinkWallet: linkWalletTransaction,
+    const onLinkEOAClick = useConnectThenLink({
+        onLinkWallet: linkEOAToRootKeyTransaction,
     })
+
+    const { data: smartAccountLinked, isLoading: isSmartAccountLinkedLoading } =
+        useIsSmartAccountLinked()
 
     const { data: linkedWallets } = useLinkedWallets()
 
@@ -62,6 +70,16 @@ export function WalletLinkingPanel() {
         }
         unlinkWalletTransaction(signer, addressToUnlink)
     }
+
+    async function onLinkSmartAccountClick() {
+        const signer = await getSigner()
+        if (!signer) {
+            createPrivyNotAuthenticatedNotification()
+            return
+        }
+        linkCallerToRootKeyTransaction(signer)
+    }
+
     const isWalletLinkingPending = useIsTransactionPending(BlockchainTransactionType.LinkWallet)
     const isWalletUnLinkingPending = useIsTransactionPending(BlockchainTransactionType.UnlinkWallet)
 
@@ -91,13 +109,32 @@ export function WalletLinkingPanel() {
                 }
                 opacity={isWalletLinkingPending || isWalletUnLinkingPending ? '0.5' : 'opaque'}
                 disabled={isWalletLinkingPending || isWalletUnLinkingPending}
-                onClick={onLinkClick}
+                onClick={onLinkEOAClick}
             >
                 <Box width="height_md" alignItems="center">
                     <Icon type="link" size="square_sm" />
                 </Box>
                 <Paragraph color="default">Link new wallet</Paragraph>
             </PanelButton>
+
+            {/* TODO: remove this https://linear.app/hnt-labs/issue/HNT-5662/remove-auto-smart-account-linking-from-app  */}
+            {isSmartAccountLinkedLoading || smartAccountLinked ? null : (
+                <PanelButton
+                    cursor={
+                        isWalletLinkingPending || isWalletUnLinkingPending
+                            ? 'not-allowed'
+                            : 'pointer'
+                    }
+                    opacity={isWalletLinkingPending || isWalletUnLinkingPending ? '0.5' : 'opaque'}
+                    disabled={isWalletLinkingPending || isWalletUnLinkingPending}
+                    onClick={onLinkSmartAccountClick}
+                >
+                    <Box width="height_md" alignItems="center">
+                        <Icon type="link" size="square_sm" />
+                    </Box>
+                    <Paragraph color="default">Link Smart Account</Paragraph>
+                </PanelButton>
+            )}
             {/* {isLoadingLinkingWallet && <FullPanelOverlay text="Linking Wallet" />} */}
             {/* {isLoadingUnlinkingWallet && <FullPanelOverlay text="Unlinking Wallet" />} */}
 
@@ -176,6 +213,7 @@ export function LinkedWallet({
     onUnlinkClick?: (address: Address) => void
     height?: BoxProps['height']
 }) {
+    const [searchParams] = useSearchParams()
     const isTownsWallet = address === loggedInWalletAddress
     const townsBalance = useBalance({
         address: address,
@@ -190,6 +228,8 @@ export function LinkedWallet({
 
     const isWalletLinkingPending = useIsTransactionPending(BlockchainTransactionType.LinkWallet)
     const isWalletUnLinkingPending = useIsTransactionPending(BlockchainTransactionType.UnlinkWallet)
+    const hasUnlinkParam = searchParams.get('unlinkAA') != null
+    const enableUnlinkAAOn = env.DEV && hasUnlinkParam
 
     // TODO: we have a privy wallet, and AA wallet. Probably we want to filter out the privy wallet, and only show AA wallet address. Do we need to have our own UI for AA wallet assets? Since you can't export it to MM
     return (
@@ -226,7 +266,7 @@ export function LinkedWallet({
 
             {isTownsWallet ? (
                 <ExportWallet />
-            ) : isLoadingAaAddress ? null : isAbstractAccount ? (
+            ) : isLoadingAaAddress ? null : isAbstractAccount && !enableUnlinkAAOn ? (
                 'AA Account'
             ) : (
                 <IconButton
@@ -264,7 +304,9 @@ export function useConnectThenLink({
     onLinkWallet,
 }: {
     onLinkWallet: (
-        ...args: Parameters<ReturnType<typeof useLinkWalletTransaction>['linkWalletTransaction']>
+        ...args: Parameters<
+            ReturnType<typeof useLinkEOAToRootKeyTransaction>['linkEOAToRootKeyTransaction']
+        >
     ) => void
 }) {
     const embeddedWallet = useEmbeddedWallet()
