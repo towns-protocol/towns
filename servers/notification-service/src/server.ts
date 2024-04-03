@@ -1,7 +1,7 @@
 import gracefulShutdown from 'http-graceful-shutdown'
 import { initializeApp } from './application/app'
 import { env } from './application/utils/environment'
-import { streamMonitorService } from './application/services/stream/streamsMonitorService'
+import { StreamsMonitorService } from './application/services/stream/streamsMonitorService'
 import { logger } from './application/logger'
 
 const port = env.PORT
@@ -15,14 +15,14 @@ try {
 
     // start syncing streams
     try {
-        await streamMonitorService.startMonitoringStreams()
+        await StreamsMonitorService.instance.startMonitoringStreams()
     } catch (error) {
         logger.error('Failed to start monitoring streams', error)
     }
 
     gracefulShutdown(server, {
         onShutdown: async () => {
-            await streamMonitorService.stopMonitoringStreams()
+            await StreamsMonitorService.instance.stopMonitoringStreams()
         },
         finally: () => {
             logger.info('Notification service is shutting down')

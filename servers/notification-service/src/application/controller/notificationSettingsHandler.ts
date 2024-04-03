@@ -8,7 +8,7 @@ import {
 } from '../schema/notificationSettingsSchema'
 import { z } from 'zod'
 import { logger } from '../logger'
-import { streamMonitorService } from '../services/stream/streamsMonitorService'
+import { StreamsMonitorService } from '../services/stream/streamsMonitorService'
 
 export async function saveNotificationSettingsHandler(req: Request, res: Response) {
     const payload: z.infer<typeof saveUserSettingsSchema> = req.body
@@ -81,7 +81,7 @@ export async function saveNotificationSettingsHandler(req: Request, res: Respons
     })
 
     if (channelIds.size > 0) {
-        streamMonitorService.addNewStreamsToDB(channelIds)
+        StreamsMonitorService.instance.addNewStreamsToDB(channelIds)
     }
 
     return res.status(StatusCodes.OK).json(userSettings)

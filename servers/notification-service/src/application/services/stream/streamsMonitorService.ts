@@ -22,12 +22,20 @@ type StreamsMetadata = {
     }
 }
 
-class StreamsMonitorService {
+export class StreamsMonitorService {
     private rpcClient: StreamRpcClient = makeStreamRpcClient()
     private streams: SyncedStreams = new SyncedStreams(this.rpcClient)
     private intervalId: NodeJS.Timeout | null = null
     private releaseServiceAwait: (() => void) | undefined
     private lastestStreamIdsProcessed: Set<string> = new Set()
+
+    private static _instance: StreamsMonitorService | undefined = undefined
+    public static get instance(): StreamsMonitorService {
+        if (!StreamsMonitorService._instance) {
+            StreamsMonitorService._instance = new StreamsMonitorService()
+        }
+        return StreamsMonitorService._instance
+    }
 
     private async getNewStreamsToMonitor(): Promise<StreamsMetadata> {
         const streamIds = (
@@ -479,5 +487,3 @@ class StreamsMonitorService {
         }
     }
 }
-
-export const streamMonitorService = new StreamsMonitorService()
