@@ -97,12 +97,14 @@
             "name": "wagmi",
             "importNames": [
               "Address",
+              "Chain",
               "useQueryClient",
+              "useMutation",
               "useConnect",
               "useWebSocketProvider",
               "useSwitchNetwork"
             ],
-            "message": "\n\nImport 'Address' from 'use-towns-client.\n\nImport 'useQueryClient' from @tanstack.\n\n'useConnect', 'useWebSocketProvider', 'useSwitchNetwork', Privy does not currently support these hooks. https://docs.privy.io/guide/guides/wagmi#supported-hooks. If you need these hooks in a test then you can disable this rule in the test because TownsTestApp does not use Privy."
+            "message": "\n\nImport 'Address' from 'use-towns-client.\n\nImport 'Chain' from viem. \n\nImport 'useQueryClient', 'useMutation' from @tanstack.\n\n'useConnect', 'useWebSocketProvider', 'useSwitchNetwork', Privy does not currently support these hooks. https://docs.privy.io/guide/guides/wagmi#supported-hooks. If you need these hooks in a test then you can disable this rule in the test because TownsTestApp does not use Privy."
           }
         ]
       }

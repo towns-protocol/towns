@@ -2,8 +2,8 @@ import React, { useCallback, useEffect, useRef, useState } from 'react'
 import { useEvent } from 'react-use-event-hook'
 import { z } from 'zod'
 import { hexlify, randomBytes } from 'ethers/lib/utils'
-import { useMutation } from 'wagmi'
 import { datadogRum } from '@datadog/browser-rum'
+import { useMutation } from '@tanstack/react-query'
 import { ModalContainer } from '@components/Modals/ModalContainer'
 import {
     Box,
@@ -142,7 +142,9 @@ export const ErrorReportForm = (props: { onHide?: () => void }) => {
     const { onHide } = props
     const [success, setSuccess] = useState(false)
     const [errorMessage, setErrorMessage] = useState('')
-    const { mutate: doCustomError, isLoading } = useMutation(postCustomError)
+    const { mutate: doCustomError, isPending: isLoading } = useMutation({
+        mutationFn: postCustomError,
+    })
     const { isTouch } = useDevice()
 
     const { setSidePanel, setBugReportCredentials, bugReportCredentials } = useStore(

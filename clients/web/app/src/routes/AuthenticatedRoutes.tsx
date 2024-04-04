@@ -8,7 +8,6 @@ import { CreateSpaceFormV2 } from '@components/Web3/MembershipNFT/CreateSpaceFor
 import { NestedPanel } from '@components/Panel/NestedPanel'
 import { CreateMessagePanel } from '@components/DirectMessages/CreateDirectMessage/CreateDirectMessage'
 import { ChannelSettings } from './ChannelSettings'
-import { InvitesIndex } from './InvitesIndex'
 import { SpaceGettingStarted } from './SpaceGettingStarted'
 import { SpaceHome, TouchHome } from './home'
 import { SpaceMentions } from './SpaceMentions'
@@ -136,7 +135,6 @@ const messageRoutes = (
 const OutsideTownRoutes = () => {
     return (
         <Routes>
-            <Route path="invites/:inviteSlug" element={<InvitesIndex />} />
             {messageRoutes}
 
             {/* catch all */}

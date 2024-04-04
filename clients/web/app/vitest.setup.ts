@@ -5,7 +5,7 @@ import { vi } from 'vitest'
 import { act } from 'react-test-renderer'
 import { ResizeObserver } from '@juggle/resize-observer' // dependency of react-hook/resize-observer
 import { ConnectedWallet, EIP1193Provider } from '@privy-io/react-auth'
-import { Chain } from 'wagmi'
+import { Chain } from 'viem'
 
 server.listen()
 

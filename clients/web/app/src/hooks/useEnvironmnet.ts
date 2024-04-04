@@ -1,5 +1,5 @@
 import { useCallback, useMemo, useRef, useState } from 'react'
-import { Chain } from 'wagmi'
+import { Chain } from 'viem'
 import { IChainConfig } from 'use-towns-client'
 import {
     Address,

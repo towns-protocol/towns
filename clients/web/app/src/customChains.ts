@@ -1,4 +1,4 @@
-import { Chain } from 'wagmi'
+import { Chain } from 'viem'
 import { baseSepolia, foundry } from 'wagmi/chains'
 import { addRpcUrlOverrideToChain } from '@privy-io/react-auth'
 import { IChainConfig } from 'use-towns-client'
