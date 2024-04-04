@@ -193,21 +193,15 @@ export function useLinkedWallets({ enabled = true } = {}) {
 
 /**
  * grab the root key for a linked wallet
- * this hook might be used in a context where the user is logged out and a client doen't exist
- * the chainId parameter is optional and should be used when the chainId is not available from useTownsClient
  */
 export function useGetRootKeyFromLinkedWallet({
     walletAddress,
-    chainId,
 }: {
     walletAddress: string | undefined
-    chainId?: number | undefined
 }) {
-    const { chainId: clientChainId } = useTownsClient()
-    const _chainId = chainId ?? clientChainId
-    const { baseProvider: provider } = useTownsContext()
+    const { baseProvider: provider, baseConfig: config } = useTownsContext()
     const spaceDapp = useSpaceDapp({
-        chainId: _chainId,
+        config,
         provider,
     })
     const { offlineWalletAddressMap, setOfflineWalletAddress } = useOfflineStore()

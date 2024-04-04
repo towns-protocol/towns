@@ -3,7 +3,12 @@
  * @group with-entitilements
  */
 
-import { makeUserContextFromWallet, makeTestClient, getDynamicPricingModule } from './util.test'
+import {
+    makeUserContextFromWallet,
+    makeTestClient,
+    getDynamicPricingModule,
+    makeBaseChainConfig,
+} from './util.test'
 import { makeDefaultChannelStreamId, makeSpaceStreamId } from './id'
 import { ethers, Wallet } from 'ethers'
 import { Client } from './client'
@@ -38,6 +43,8 @@ describe('mediaWithEntitlementsTests', () => {
     let aliceWallet: Wallet
     let aliceContext: SignerContext
 
+    const baseConfig = makeBaseChainConfig()
+
     beforeEach(async () => {
         bobWallet = ethers.Wallet.createRandom()
         bobContext = await makeUserContextFromWallet(bobWallet)
@@ -59,11 +66,10 @@ describe('mediaWithEntitlementsTests', () => {
          * Bob creates a space and a channel, both on chain and in River
          */
 
-        const provider = new LocalhostWeb3Provider(bobWallet)
-        const chainId = (await provider.getNetwork()).chainId
+        const provider = new LocalhostWeb3Provider(baseConfig.rpcUrl, bobWallet)
         await provider.fundWallet()
-        await provider.mintMockNFT()
-        const spaceDapp = createSpaceDapp({ chainId, provider })
+        await provider.mintMockNFT(baseConfig.chainConfig)
+        const spaceDapp = createSpaceDapp(provider, baseConfig.chainConfig)
 
         const pricingModules = await spaceDapp.listPricingModules()
         const dynamicPricingModule = getDynamicPricingModule(pricingModules)

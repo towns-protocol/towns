@@ -12,10 +12,10 @@ import { useTownsContext } from '../components/TownsContextProvider'
 export function useRoles(_spaceId: string | undefined) {
     const spaceId = _spaceId && _spaceId.length > 0 ? _spaceId : ''
     const queryClient = useQueryClient()
-    const { baseProvider: provider, baseChain: chain } = useTownsContext()
+    const { baseProvider: provider, baseConfig: config } = useTownsContext()
 
     const spaceDapp = useSpaceDapp({
-        chainId: chain?.id,
+        config,
         provider,
     })
 

@@ -1,76 +1,5 @@
 import { ethers } from 'ethers'
-import { getContractsInfo } from './IStaticContractsInfo'
-import { MockERC721AShim } from './v3/MockERC721AShim'
 import { PublicClient } from 'viem'
-import { dlogger } from '@river-build/dlog'
-
-const logger = dlogger('csb:LocalhostWeb3Provider')
-
-export class LocalhostWeb3Provider extends ethers.providers.JsonRpcProvider {
-    // note to self, the wallet contains a reference to a provider, which is a circular ref back this class
-    public wallet: ethers.Wallet
-
-    public get isMetaMask() {
-        return true
-    }
-
-    constructor(wallet?: ethers.Wallet, network = 'http://127.0.0.1:8545') {
-        const networkUrl = network
-        super(networkUrl)
-        this.wallet = (wallet ?? ethers.Wallet.createRandom()).connect(this)
-        logger.log('initializing web3 provider with wallet', this.wallet.address)
-    }
-
-    public async fundWallet() {
-        const amountInWei = ethers.BigNumber.from(10).pow(18).toHexString()
-
-        const result = this.send('anvil_setBalance', [this.wallet.address, amountInWei])
-
-        // logger.log('fundWallet tx', result, amountInWei, this.wallet.address)
-        // eslint-disable-next-line @typescript-eslint/no-unsafe-assignment
-        await result
-        // logger.log('fundWallet receipt', receipt)
-    }
-
-    /**
-     * Mint a mock NFT for the current wallet
-     * required for the wallet to be able to create a space
-     */
-    public async mintMockNFT() {
-        await this.ready
-        const chainId = this.network.chainId
-        const mockNFTAddress = getContractsInfo(chainId).mockErc721aAddress
-        const mockNFT = new MockERC721AShim(mockNFTAddress, chainId, this)
-        return mockNFT.write(this.wallet).mintTo(this.wallet.address)
-    }
-
-    public async request({
-        method,
-        params = [] as unknown[],
-    }: {
-        method: string
-        params?: unknown[]
-    }) {
-        if (method === 'eth_requestAccounts') {
-            return [this.wallet.address]
-        } else if (method === 'eth_accounts') {
-            return [this.wallet.address]
-        } else if (method === 'personal_sign') {
-            // eslint-disable-next-line @typescript-eslint/no-unused-vars
-            const [message, address] = params as [string, string]
-            if (ethers.utils.isHexString(message)) {
-                // the json rpc provider will hexify the message, so we need to unhexify it
-                const m1 = ethers.utils.arrayify(message)
-                const m2 = ethers.utils.toUtf8String(m1)
-                return this.wallet.signMessage(m2)
-            } else {
-                return this.wallet.signMessage(message)
-            }
-        } else {
-            return this.send(method, params)
-        }
-    }
-}
 
 export function isEthersProvider(
     provider: ethers.providers.Provider | PublicClient,
@@ -98,4 +27,16 @@ export function isPublicClient(
 // incidentally this should also work if you just pass the space contract address with 0x prefix
 export function SpaceAddressFromSpaceId(spaceId: string): string {
     return ethers.utils.getAddress(spaceId.slice(2, 42))
+}
+
+/**
+ * Use this function in the default case of a exhaustive switch statement to ensure that all cases are handled.
+ * Always throws JSON RPC error.
+ * @param value Switch value
+ * @param message Error message
+ * @param code JSON RPC error code
+ * @param data Optional data to include in the error
+ */
+export function checkNever(value: never, message?: string): never {
+    throw new Error(message ?? `Unhandled switch value ${value}`)
 }

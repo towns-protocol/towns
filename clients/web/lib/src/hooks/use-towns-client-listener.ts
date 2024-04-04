@@ -20,7 +20,7 @@ export const useTownsClientListener = (opts: TownsOpts) => {
     const { setLoginStatus: setCasablancaLoginStatus, setLoginError: setCasablancaLoginError } =
         useCasablancaStore()
     const { casablancaCredentialsMap, clearCasablancaCredentials } = useCredentialStore()
-    const casablancaCredentials = casablancaCredentialsMap[opts.casablancaServerUrl ?? '']
+    const casablancaCredentials = casablancaCredentialsMap[opts.environmentId ?? '']
     const [casablancaClient, setCasablancaClient] = useState<CasablancaClient>()
     const clientSingleton = useRef<ClientStateMachine>()
     const { isOffline } = useNetworkStatus()
@@ -30,7 +30,7 @@ export const useTownsClientListener = (opts: TownsOpts) => {
         clientSingleton.current = new ClientStateMachine(townsClient)
     }
 
-    logServerUrlMismatch(opts.casablancaServerUrl, clientSingleton)
+    logServerUrlMismatch(opts.environmentId, clientSingleton)
 
     useEffect(() => {
         if (!casablancaClient) {
@@ -54,7 +54,7 @@ export const useTownsClientListener = (opts: TownsOpts) => {
         }
 
         const onClearCredentials = (oldCredendials: CasablancaCredentials) => {
-            clearCasablancaCredentials(opts.casablancaServerUrl ?? '', oldCredendials)
+            clearCasablancaCredentials(opts.environmentId ?? '', oldCredendials)
         }
 
         const onErrorUpdated = (e?: unknown) => {
@@ -86,7 +86,7 @@ export const useTownsClientListener = (opts: TownsOpts) => {
         }
     }, [
         casablancaCredentials,
-        opts.casablancaServerUrl,
+        opts.environmentId,
         setCasablancaClient,
         setCasablancaLoginStatus,
         clearCasablancaCredentials,
@@ -240,15 +240,15 @@ function logTick(client: TownsClient, situation: Situations, transition?: Transi
 }
 
 function logServerUrlMismatch(
-    casablancaServerUrl: string | undefined,
+    environmentId: string,
     clientSingleton: MutableRefObject<ClientStateMachine | undefined>,
 ) {
-    if (casablancaServerUrl !== clientSingleton.current?.client.opts.casablancaServerUrl) {
-        // aellis there is an assumption in this code that the casablanca server url never changes
+    if (environmentId !== clientSingleton.current?.client.opts.environmentId) {
+        // aellis there is an assumption in this code that the environmentId url never changes
         // if it does change, we need to refresh the page to recreate the client
-        console.error("$$$ use towns client listener: casablancaServerUrl doesn't match", {
-            opts: casablancaServerUrl,
-            client: clientSingleton.current?.client.opts.casablancaServerUrl,
+        console.error("$$$ use towns client listener: environmentId doesn't match", {
+            environmentId: environmentId,
+            client: clientSingleton.current?.client.opts.environmentId,
         })
     }
 }

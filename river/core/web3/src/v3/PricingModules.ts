@@ -1,17 +1,17 @@
 import { ethers } from 'ethers'
-import { IStaticContractsInfo } from '../IStaticContractsInfo'
+import { BaseChainConfig } from '../IStaticContractsInfo'
 import { PricingModuleStruct } from '../ContractTypes'
 import { IPricingShim } from './IPricingShim'
 
 export class PricingModules {
     private readonly pricingShim: IPricingShim
 
-    constructor(
-        contractInfo: IStaticContractsInfo,
-        chainId: number,
-        provider: ethers.providers.Provider | undefined,
-    ) {
-        this.pricingShim = new IPricingShim(contractInfo.spaceFactoryAddress, chainId, provider)
+    constructor(config: BaseChainConfig, provider: ethers.providers.Provider | undefined) {
+        this.pricingShim = new IPricingShim(
+            config.addresses.spaceFactory,
+            config.contractVersion,
+            provider,
+        )
     }
 
     public async listPricingModules(): Promise<PricingModuleStruct[]> {

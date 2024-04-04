@@ -37,7 +37,7 @@ export const wagmiChainsConfig = configureChains(
     { retryCount: 5 },
 )
 export function PrivyProvider({ children }: { children: JSX.Element }) {
-    const { chain } = useEnvironment()
+    const { baseChain: chain } = useEnvironment()
 
     return chain ? (
         <TownsPrivyProvider

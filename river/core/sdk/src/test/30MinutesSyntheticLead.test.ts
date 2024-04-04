@@ -13,6 +13,7 @@ import { RiverDbManager } from '../riverDbManager'
 import { MockEntitlementsDelegate } from '../utils'
 import { Queue, Worker } from 'bullmq'
 import {
+    baseChainConfig,
     testRunTimeMs,
     connectionOptions,
     loginWaitTime,
@@ -56,6 +57,7 @@ const log = dlog('csb:test:synthetic')
 log(
     JSON.stringify(
         {
+            baseChainConfig,
             testRunTimeMs,
             connectionOptions,
             loginWaitTime,
@@ -160,10 +162,7 @@ describe('mirrorMessages', () => {
 
             //Step 3.5 - if we run on transient environment, we need to create a town and join it
             //TODO: spaceDatpp creation should be moved to the test SDK
-            const spaceDapp = createSpaceDapp({
-                chainId: (await walletWithProvider.provider.getNetwork()).chainId,
-                provider: walletWithProvider.provider,
-            })
+            const spaceDapp = createSpaceDapp(walletWithProvider.provider, baseChainConfig)
 
             const riverSDK = new RiverSDK(spaceDapp, client, walletWithProvider)
 

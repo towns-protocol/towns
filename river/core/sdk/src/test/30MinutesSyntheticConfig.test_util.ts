@@ -1,3 +1,5 @@
+import { getWeb3Deployment } from '@river-build/web3'
+
 export const leaderKey = '20921e50975c1df7515ec55ad66dd16d7cea24bc7fec7f84d58ccc509136ff17' //HNTTest1
 export const leaderId = '0x29B4bd8DbEA61949164E125dBe3C400aDC65a7de'
 export const leaderUserName = 'Artem (AppleId)'
@@ -20,17 +22,11 @@ export const testSpamChannelName = 'test spam'
 
 export const envName = process.env.ENVIRONMENT_NAME || defaultEnvironmentName
 
-const getRiverNodeRpcUrl = () => {
-    if (envName.includes('transient')) {
-        const parts = envName.split('-')
-        const prNumber = parts[parts.length - 1]
-        return `https://river1-${prNumber}.nodes.transient.towns.com`
-    } else if (envName.includes('test-beta')) {
-        return 'https://river1-test-beta.towns.com'
-    } else {
-        return `https://river1.nodes.${envName}.towns.com`
-    }
+const getRiverNodeRpcUrl = (): string => {
+    throw new Error('Not implemented - needs to pull from river registry')
 }
+
+export const baseChainConfig = getWeb3Deployment(envName).base
 
 export const riverNodeRpcUrl = getRiverNodeRpcUrl()
 

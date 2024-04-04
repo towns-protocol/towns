@@ -1,9 +1,12 @@
-import { SpaceDapp } from '@river-build/web3'
+import { BaseChainConfig, SpaceDapp } from '@river-build/web3'
 import { IUserOperationMiddlewareCtx } from 'userop'
 import { ethers } from 'ethers'
 
+export type AccountAbstractionConfig = Omit<UserOpsConfig, 'chainId' | 'provider' | 'config'>
+
 export type UserOpsConfig = {
     provider: SpaceDapp['provider']
+    config: BaseChainConfig
     /**
      * Node RPC url for user operations
      */
@@ -25,7 +28,10 @@ export type UserOpsConfig = {
             rootKeyAddress: string
             functionHashForPaymasterProxy: string | undefined
             townId: string | undefined
-        } & Pick<UserOpsConfig, 'bundlerUrl' | 'aaRpcUrl' | 'provider' | 'paymasterProxyUrl'>,
+        } & Pick<
+            UserOpsConfig,
+            'bundlerUrl' | 'aaRpcUrl' | 'provider' | 'config' | 'paymasterProxyUrl'
+        >,
     ) => Promise<void>
 }
 

@@ -75,7 +75,7 @@ describe('signInFromGlobalStorageHooks', () => {
 
     test('Stage 2 test reading prior auth objects and logged in state from localStorage', async () => {
         console.log('$$$$ #2 test reading prior auth objects and logged in state from localStorage')
-        const casablancaUrl = process.env.CASABLANCA_SERVER_URL!
+        const environmentId = process.env.RIVER_ENV!
         const credentialSessionStore = JSON.parse(
             global.sessionStorage.getItem(CREDENTIAL_STORE_NAME) || '{}',
         )
@@ -83,7 +83,7 @@ describe('signInFromGlobalStorageHooks', () => {
             global.localStorage.getItem(CREDENTIAL_STORE_NAME) || '{}',
         )
         await waitFor(() =>
-            expect(credentialStore.state.casablancaCredentialsMap[casablancaUrl]).toHaveProperty(
+            expect(credentialStore.state.casablancaCredentialsMap[environmentId]).toHaveProperty(
                 'delegateSig',
             ),
         )
@@ -93,7 +93,7 @@ describe('signInFromGlobalStorageHooks', () => {
 
     test('Stage 3 test logging in again using stored auth from localStorage', async () => {
         console.log('$$$$ #3 test logging in again using stored auth from localStorage')
-        const casablancaUrl = process.env.CASABLANCA_SERVER_URL!
+        const environmentId = process.env.RIVER_ENV!
         const credentialStore = JSON.parse(
             global.localStorage.getItem(CREDENTIAL_STORE_NAME) || '{}',
         )
@@ -102,10 +102,10 @@ describe('signInFromGlobalStorageHooks', () => {
 
         // build a view for alice to render
         const TestComponent = () => {
-            const { casablancaServerUrl } = useTownsContext()
+            const { environmentId } = useTownsContext()
             const isConnected = Boolean(dummyProvider.wallet.provider)
             const { delegateSig } =
-                useCredentialStore().casablancaCredentialsMap[casablancaServerUrl ?? ''] ?? {}
+                useCredentialStore().casablancaCredentialsMap[environmentId ?? ''] ?? {}
             const { loginStatus, loginError } = useCasablancaStore()
             const { logout } = useTownsClient()
 
@@ -138,7 +138,7 @@ describe('signInFromGlobalStorageHooks', () => {
         // check that alice is using stored delegateSig, not a new one
         await waitFor(() =>
             expect(delegateSig).toHaveTextContent(
-                credentialStore.state.casablancaCredentialsMap[casablancaUrl].delegateSig,
+                credentialStore.state.casablancaCredentialsMap[environmentId].delegateSig,
             ),
         )
         await waitFor(() => expect(loginStatus).toHaveTextContent(LoginStatus.LoggedIn))
@@ -148,11 +148,11 @@ describe('signInFromGlobalStorageHooks', () => {
     })
     test('Stage 4 test stores are cleared after logout', async () => {
         console.log('$$$$ #4 test stores are cleared after logout')
-        const casablancaUrl = process.env.CASABLANCA_SERVER_URL!
+        const environmentId = process.env.RIVER_ENV!
         const credentialStore = JSON.parse(
             global.localStorage.getItem(CREDENTIAL_STORE_NAME) || '{}',
         )
-        expect(credentialStore.state.casablancaCredentialsMap[casablancaUrl]).toBeNull()
+        expect(credentialStore.state.casablancaCredentialsMap[environmentId]).toBeNull()
         const dummyProvider = new TownsTestWeb3Provider()
 
         // build a view for alice to render

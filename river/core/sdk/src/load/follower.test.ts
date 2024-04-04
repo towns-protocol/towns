@@ -3,7 +3,7 @@
  */
 import { dlog } from '@river-build/dlog'
 import { ethers } from 'ethers'
-import { makeUserContextFromWallet } from '../util.test'
+import { makeBaseChainConfig, makeUserContextFromWallet } from '../util.test'
 import { makeStreamRpcClient } from '../makeStreamRpcClient'
 import { userIdFromAddress } from '../id'
 import { Client } from '../client'
@@ -42,6 +42,7 @@ import * as v8 from 'v8'
 const baseChainRpcUrl = process.env.BASE_CHAIN_RPC_URL
     ? process.env.BASE_CHAIN_RPC_URL
     : jsonRpcProviderUrl
+const baseConfig = makeBaseChainConfig() // todo aellis fix when we do load tests
 const riverNodeUrl = process.env.RIVER_NODE_URL ? process.env.RIVER_NODE_URL : rpcClientURL
 const joinFactor = process.env.JOIN_FACTOR ? parseInt(process.env.JOIN_FACTOR) : defaultJoinFactor
 const numberOfClientsPerProcess = process.env.NUM_CLIENTS_PER_PROCESS
@@ -410,10 +411,7 @@ async function createFundedTestUser(): Promise<{
     await client.initializeUser()
     client.startSync()
 
-    const spaceDapp = createSpaceDapp({
-        chainId: (await walletWithProvider.provider.getNetwork()).chainId,
-        provider: walletWithProvider.provider,
-    })
+    const spaceDapp = createSpaceDapp(provider, baseConfig.chainConfig)
     const riverSDK = new RiverSDK(spaceDapp, client, walletWithProvider)
     return { riverSDK, provider, walletWithProvider }
 }

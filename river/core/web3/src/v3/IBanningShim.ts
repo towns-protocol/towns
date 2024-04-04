@@ -8,8 +8,9 @@ import {
     IBanningInterface as BaseSepoliaInterface,
 } from '@river-build/generated/v3/typings/IBanning'
 
-import { BaseContractShim } from '../v3/BaseContractShim'
 import { ethers } from 'ethers'
+import { BaseContractShim } from './BaseContractShim'
+import { ContractVersion } from '../IStaticContractsInfo'
 
 import LocalhostAbi from '@river-build/generated/dev/abis/IBanning.abi.json' assert { type: 'json' }
 import BaseSepoliaAbi from '@river-build/generated/v3/abis/IBanning.abi.json' assert { type: 'json' }
@@ -20,10 +21,14 @@ export class IBanningShim extends BaseContractShim<
     BaseSepoliaContract,
     BaseSepoliaInterface
 > {
-    constructor(address: string, chainId: number, provider: ethers.providers.Provider | undefined) {
-        super(address, chainId, provider, {
-            31337: LocalhostAbi,
-            84532: BaseSepoliaAbi,
+    constructor(
+        address: string,
+        version: ContractVersion,
+        provider: ethers.providers.Provider | undefined,
+    ) {
+        super(address, version, provider, {
+            [ContractVersion.dev]: LocalhostAbi,
+            [ContractVersion.v3]: BaseSepoliaAbi,
         })
     }
 }

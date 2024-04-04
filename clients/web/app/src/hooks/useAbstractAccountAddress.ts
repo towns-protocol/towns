@@ -12,7 +12,6 @@ import {
     useUserLookupContext,
 } from 'use-towns-client'
 import { UserOps } from '@towns/userops'
-import { useAccountAbstractionConfig } from 'userOpConfig'
 import { useEnvironment } from './useEnvironmnet'
 
 const queryKey = 'smartAccountAddress'
@@ -74,7 +73,8 @@ export function useAbstractAccountAddress({
 }: {
     rootKeyAddress: Address | undefined
 }) {
-    const { chainId } = useEnvironment()
+    const { baseChain } = useEnvironment()
+    const chainId = baseChain.id
     const userOpsInstance = useUserOpsInstance()
     const { offlineWalletAddressMap, setOfflineWalletAddress } = useOfflineStore()
 
@@ -94,7 +94,8 @@ export function useAbstractAccountAddress({
 }
 
 export function useGetAbstractAccountAddressAsync() {
-    const { chainId } = useEnvironment()
+    const { baseChain } = useEnvironment()
+    const chainId = baseChain.id
     const userOpsInstance = useUserOpsInstance()
     const { offlineWalletAddressMap, setOfflineWalletAddress } = useOfflineStore()
 
@@ -125,7 +126,8 @@ export type LookupUserWithAbstractAccountAddress = LookupUser & {
 }
 
 export function useLookupUsersWithAbstractAccountAddress() {
-    const { chainId } = useEnvironment()
+    const { baseChain } = useEnvironment()
+    const chainId = baseChain.id
     const userOpsInstance = useUserOpsInstance()
     const { users: _users } = useUserLookupContext()
     const { offlineWalletAddressMap, setOfflineWalletAddress } = useOfflineStore()
@@ -179,26 +181,26 @@ export function isAbstractAccountAddress({
 // so we use a userOps instance instead of townsClient.getAbstractAccountAddress
 // b/c the latter requires a client, which requires a logged in user
 function useUserOpsInstance() {
-    const { baseProvider: provider, baseChain: chain } = useTownsContext()
-    const chainId = chain.id
+    const { baseProvider: provider, baseConfig: config } = useTownsContext()
+
+    const { accountAbstractionConfig: aaConfig } = useEnvironment()
 
     const spaceDapp = useSpaceDapp({
-        chainId,
         provider,
+        config,
     })
 
     // undefined if on anvil
-    const aaConfig = useAccountAbstractionConfig(chainId)
 
     return useMemo(() => {
-        if (!spaceDapp || !chainId || !aaConfig) {
+        if (!spaceDapp || !aaConfig) {
             return
         }
-        return UserOps.instance({
+        return new UserOps({
             ...aaConfig,
             spaceDapp,
-            chainId,
             provider,
+            config,
         })
-    }, [aaConfig, chainId, provider, spaceDapp])
+    }, [aaConfig, config, provider, spaceDapp])
 }

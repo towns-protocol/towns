@@ -421,13 +421,13 @@ jobs:
               run: |
                   cd ./core/node
                   ./run_multi.sh --de -c -r &
-                  for i in {5170..5179}; do yarn wait-on https://localhost:$i/debug/multi --timeout=400000 --i=5000 --verbose; done
+                  for i in {5180..5189}; do yarn wait-on https://localhost:$i/debug/multi --timeout=400000 --i=5000 --verbose; done
 
             - name: Run SDK Tests (without entitlements)
               run: |
                   yarn run turbo run build
                   cd core/sdk
-                  yarn test:ci:multi
+                  yarn test:ci:multi:ne
 
             - name: Archive River Node Logs and Settings
               if: always()

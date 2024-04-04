@@ -1,19 +1,10 @@
 import { BytesLike, ethers } from 'ethers'
-import {
-    LOCALHOST_CHAIN_ID,
-    BASE_SEPOLIA,
-    RIVER_CHAIN_ID,
-    LOCALHOST_RIVER_CHAIN_ID,
-} from '../Web3Constants'
 import { dlogger } from '@river-build/dlog'
+import { ContractVersion } from '../IStaticContractsInfo'
 
 export type PromiseOrValue<T> = T | Promise<T>
 
 export const UNKNOWN_ERROR = 'UNKNOWN_ERROR'
-
-interface Abis {
-    readonly [chainId: number]: ethers.ContractInterface
-}
 
 const logger = dlogger('csb:BaseContractShim')
 
@@ -26,7 +17,7 @@ export class BaseContractShim<
     T_VERSIONED_INTERFACE extends ethers.utils.Interface,
 > {
     public readonly address: string
-    public readonly chainId: number
+    public readonly version: ContractVersion
     public readonly contractInterface: ethers.utils.Interface
     public readonly provider: ethers.providers.Provider | undefined
     public readonly signer: ethers.Signer | undefined
@@ -36,27 +27,28 @@ export class BaseContractShim<
 
     constructor(
         address: string,
-        chainId: number,
+        version: ContractVersion,
         provider: ethers.providers.Provider | undefined,
-        abis: Abis,
+        abis: Record<ContractVersion, ethers.ContractInterface>,
     ) {
+        if (!abis[version]) {
+            throw new Error(`No ABI for version ${version}`)
+        }
         this.address = address
-        this.chainId = chainId
+        this.version = version
         this.provider = provider
-        this.abi = getAbiForChain(chainId, abis)
+        this.abi = abis[version]
         this.contractInterface = new ethers.utils.Interface(this.abi as string)
     }
 
     public get interface(): T_DEV_INTERFACE | T_VERSIONED_INTERFACE {
-        switch (this.chainId) {
-            case LOCALHOST_CHAIN_ID:
-            case LOCALHOST_RIVER_CHAIN_ID:
+        switch (this.version) {
+            case ContractVersion.dev:
                 return this.contractInterface as unknown as T_DEV_INTERFACE
-            case BASE_SEPOLIA:
-            case RIVER_CHAIN_ID:
+            case ContractVersion.v3:
                 return this.contractInterface as unknown as T_VERSIONED_INTERFACE
             default:
-                throw new Error(`Unsupported chainId ${this.chainId}`)
+                throw new Error(`Unsupported version ${this.version}`)
         }
     }
 
@@ -65,15 +57,13 @@ export class BaseContractShim<
         if (!this.readContract) {
             this.readContract = this.createReadContractInstance()
         }
-        switch (this.chainId) {
-            case LOCALHOST_CHAIN_ID:
-            case LOCALHOST_RIVER_CHAIN_ID:
+        switch (this.version) {
+            case ContractVersion.dev:
                 return this.readContract as unknown as T_DEV_CONTRACT
-            case BASE_SEPOLIA:
-            case RIVER_CHAIN_ID:
+            case ContractVersion.v3:
                 return this.readContract as unknown as T_VERSIONED_CONTRACT
             default:
-                throw new Error(`Unsupported chainId ${this.chainId}`)
+                throw new Error(`Unsupported version ${this.version}`)
         }
     }
 
@@ -87,15 +77,13 @@ export class BaseContractShim<
                 this.writeContract = this.createWriteContractInstance(signer)
             }
         }
-        switch (this.chainId) {
-            case LOCALHOST_CHAIN_ID:
-            case LOCALHOST_RIVER_CHAIN_ID:
+        switch (this.version) {
+            case ContractVersion.dev:
                 return this.writeContract as unknown as T_DEV_CONTRACT
-            case BASE_SEPOLIA:
-            case RIVER_CHAIN_ID:
+            case ContractVersion.v3:
                 return this.writeContract as unknown as T_VERSIONED_CONTRACT
             default:
-                throw new Error(`Unsupported chainId ${this.chainId}`)
+                throw new Error(`Unsupported version ${this.version}`)
         }
     }
 
@@ -237,11 +225,4 @@ export class BaseContractShim<
     private createWriteContractInstance(signer: ethers.Signer): ethers.Contract {
         return new ethers.Contract(this.address, this.abi, signer)
     }
-}
-
-function getAbiForChain(chainId: number, abis: Abis): ethers.ContractInterface {
-    if (!abis[chainId]) {
-        throw new Error(`Unsupported chainId ${chainId}`)
-    }
-    return abis[chainId]
 }

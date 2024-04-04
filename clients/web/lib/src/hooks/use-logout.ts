@@ -5,7 +5,7 @@ import { useCasablancaStore } from '../store/use-casablanca-store'
 import { LoginStatus } from './login'
 
 export const useLogout = () => {
-    const { casablancaServerUrl } = useTownsContext()
+    const { environmentId } = useTownsContext()
     const { setLoginStatus } = useCasablancaStore()
     const { setCasablancaCredentials } = useCredentialStore()
 
@@ -26,10 +26,10 @@ export const useLogout = () => {
             }
 
             setLoginStatus(LoginStatus.LoggedOut)
-            if (casablancaServerUrl) {
-                setCasablancaCredentials(casablancaServerUrl, null)
+            if (environmentId) {
+                setCasablancaCredentials(environmentId, null)
             }
         },
-        [setLoginStatus, client, casablancaServerUrl, setCasablancaCredentials],
+        [setLoginStatus, client, environmentId, setCasablancaCredentials],
     )
 }

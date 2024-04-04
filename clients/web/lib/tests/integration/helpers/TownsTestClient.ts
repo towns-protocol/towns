@@ -51,21 +51,17 @@ export class TownsTestClient extends TownsClient {
         return this.provider.wallet.address
     }
 
-    constructor(
-        chainId: number,
-        name: string,
-        props?: TownsTestClientProps,
-        wallet?: ethers.Wallet,
-    ) {
+    constructor(name: string, props?: TownsTestClientProps, wallet?: ethers.Wallet) {
         const provider = new TownsTestWeb3Provider(wallet)
-        console.log('CASABLANCA_SERVER_URL', process.env.CASABLANCA_SERVER_URL)
         // super
         super(
             {
-                casablancaServerUrl: process.env.CASABLANCA_SERVER_URL!,
-                baseChainId: chainId,
+                environmentId: process.env.RIVER_ENV!,
+                baseChainId: provider.config.base.chainConfig.chainId,
+                baseConfig: provider.config.base.chainConfig,
                 baseProvider: provider,
-                riverChainId: provider.riverChainId,
+                riverChainId: provider.config.river.chainConfig.chainId,
+                riverConfig: provider.config.river.chainConfig,
                 riverProvider: provider.riverChainProvider,
                 eventHandlers: props?.eventHandlers,
                 accountAbstractionConfig: props?.accountAbstractionConfig,

@@ -197,6 +197,8 @@ func StartServer(
 		return nil, err
 	}
 
+	log.Info("Using River Registry", "config", cfg.RegistryContract, "address", registryContract.Address)
+
 	nodeRegistry, err := nodes.LoadNodeRegistry(
 		ctx,
 		registryContract,
@@ -271,7 +273,7 @@ func StartServer(
 		),
 	)
 
-	interceptors := connect.WithInterceptors(NewMetricsInterceptor())
+	interceptors := connect.WithInterceptors(NewMetricsInterceptor(), NewTimeoutInterceptor(cfg.Network.RequestTimeout))
 	streamServicePattern, streamServiceHandler := protocolconnect.NewStreamServiceHandler(streamService, interceptors)
 	log.Info("Registering StreamServiceHandler", "pattern", streamServicePattern)
 	mux.Handle(streamServicePattern, newHttpHandler(streamServiceHandler, log))

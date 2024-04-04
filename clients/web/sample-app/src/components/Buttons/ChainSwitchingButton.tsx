@@ -9,7 +9,7 @@ type Props = ComponentPropsWithRef<typeof Button> & {
 }
 
 export function ChainSwitchingButton(props: Props) {
-    const { chainName, chainId } = useEnvironment()
+    const { baseChain } = useEnvironment()
     const { chain: walletChain } = useNetwork()
     const { authenticated: privyAuthenticated } = usePrivy()
 
@@ -20,14 +20,14 @@ export function ChainSwitchingButton(props: Props) {
     })
 
     const onSwitchToAppChain = useCallback(() => {
-        switchNetwork?.(chainId)
-    }, [chainId, switchNetwork])
+        switchNetwork?.(baseChain.id)
+    }, [baseChain.id, switchNetwork])
 
-    if (!privyAuthenticated && chainId !== walletChain?.id) {
+    if (!privyAuthenticated && baseChain.id !== walletChain?.id) {
         const { disabled: _disabled, ...rest } = props
         return (
             <Button {...rest} variant="contained" color="error" onClick={onSwitchToAppChain}>
-                Switch to {chainName}
+                Switch to {baseChain.name}
             </Button>
         )
     } else {

@@ -67,7 +67,8 @@ export function useCollectionsForLoggedInUser() {
     // TODO: this should probably be all linked wallets
     // and use useQueries to get all the tokens for all the wallets
     const { loggedInWalletAddress } = useAuth()
-    const { chainId } = useEnvironment()
+    const { baseChain } = useEnvironment()
+    const chainId = baseChain.id
 
     return useCollectionsForOwner({
         wallet:

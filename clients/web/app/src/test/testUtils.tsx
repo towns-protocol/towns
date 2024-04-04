@@ -10,9 +10,13 @@ import { ethers } from 'ethers'
 import { WagmiConfig, createConfig } from 'wagmi'
 import { ZLayerProvider } from '@ui'
 import { AuthContextProvider } from 'hooks/useAuth'
-import { env } from 'utils'
 import '@testing-library/jest-dom'
-import { anvilRiverChain, foundryClone } from 'customChains'
+import { getCustomBaseChain, getCustomRiverChain } from 'customChains'
+
+const environmentId = 'testnet'
+const web3Deployment = Lib.getWeb3Deployment(environmentId)
+const baseChain = getCustomBaseChain(web3Deployment.base.chainId)!
+const riverChain = getCustomRiverChain(web3Deployment.river.chainId)!
 
 type TestAppProps = {
     children: JSX.Element
@@ -26,7 +30,7 @@ export const getWalletAddress = () => ethers.Wallet.createRandom().address
 const wagmiConfig = createConfig({
     autoConnect: true,
     publicClient: createPublicClient({
-        chain: foundryClone,
+        chain: baseChain,
         transport: http(),
     }),
 })
@@ -41,15 +45,16 @@ export const TestApp = (props: TestAppProps) => {
             },
         },
     })
-
     return (
         // Using WagmiConfig instead of Privy/PrivyWagmi b/c needs a lot of mocking and we don't actually need a wallet for any of our unit tests
         <WagmiConfig config={wagmiConfig}>
             <ZLayerProvider>
                 <Lib.TownsContextProvider
-                    casablancaServerUrl={env.VITE_CASABLANCA_HOMESERVER_URL}
-                    chain={foundryClone}
-                    riverChain={anvilRiverChain}
+                    environmentId={environmentId}
+                    baseChain={baseChain}
+                    baseConfig={web3Deployment.base}
+                    riverChain={riverChain}
+                    riverConfig={web3Deployment.river}
                     {...props.townsContextProviderProps}
                 >
                     <AuthContextProvider>

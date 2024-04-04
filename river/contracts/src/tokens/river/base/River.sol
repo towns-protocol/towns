@@ -7,6 +7,7 @@ import {ISemver} from "contracts/src/tokens/river/base/ISemver.sol";
 import {IERC5805} from "@openzeppelin/contracts/interfaces/IERC5805.sol";
 import {IERC20} from "@openzeppelin/contracts/token/ERC20/IERC20.sol";
 import {IERC20Permit} from "@openzeppelin/contracts/token/ERC20/extensions/IERC20Permit.sol";
+import {IERC5805} from "@openzeppelin/contracts/interfaces/IERC5805.sol";
 import {IERC20Metadata} from "@openzeppelin/contracts/token/ERC20/extensions/IERC20Metadata.sol";
 
 // libraries
@@ -15,8 +16,7 @@ import {Nonces} from "@openzeppelin/contracts/utils/Nonces.sol";
 // contracts
 import {ERC20} from "@openzeppelin/contracts/token/ERC20/ERC20.sol";
 import {ERC20Permit} from "@openzeppelin/contracts/token/ERC20/extensions/ERC20Permit.sol";
-import {Votes} from "@openzeppelin/contracts/governance/utils/Votes.sol";
-import {Ownable} from "@openzeppelin/contracts/access/Ownable.sol";
+import {ERC20Votes} from "@openzeppelin/contracts/token/ERC20/extensions/ERC20Votes.sol";
 
 import {VotesEnumerable} from "contracts/src/diamond/facets/governance/votes/enumerable/VotesEnumerable.sol";
 import {IntrospectionFacet} from "contracts/src/diamond/facets/introspection/IntrospectionFacet.sol";
@@ -26,9 +26,8 @@ contract River is
   IOptimismMintableERC20,
   ILegacyMintableERC20,
   ISemver,
-  Ownable,
   ERC20Permit,
-  Votes,
+  ERC20Votes,
   VotesEnumerable,
   LockFacet,
   IntrospectionFacet
@@ -65,25 +64,24 @@ contract River is
   constructor(
     address _bridge,
     address _remoteToken
-  ) ERC20Permit("River") Ownable(msg.sender) ERC20("River", "RVR") {
+  ) ERC20Permit("River") ERC20("River", "RVR") {
     __IntrospectionBase_init();
     __LockFacet_init_unchained(30 days);
 
     // add interface
-    _addInterface(type(IERC5805).interfaceId);
     _addInterface(type(IERC20).interfaceId);
     _addInterface(type(IERC20Metadata).interfaceId);
     _addInterface(type(IERC20Permit).interfaceId);
+    _addInterface(type(IERC5805).interfaceId);
+    _addInterface(type(IOptimismMintableERC20).interfaceId);
+    _addInterface(type(ILegacyMintableERC20).interfaceId);
+    _addInterface(type(ISemver).interfaceId);
 
     // set the bridge
     BRIDGE = _bridge;
 
     // set the remote token
     REMOTE_TOKEN = _remoteToken;
-
-    // interfaces
-    _addInterface(type(IOptimismMintableERC20).interfaceId);
-    _addInterface(type(ILegacyMintableERC20).interfaceId);
   }
 
   // =============================================================
@@ -135,6 +133,17 @@ contract River is
   // =============================================================
   //                           Overrides
   // =============================================================
+  /// @notice Clock used for flagging checkpoints, overriden to implement timestamp based
+  /// checkpoints (and voting).
+  function clock() public view override returns (uint48) {
+    return uint48(block.timestamp);
+  }
+
+  /// @notice Machine-readable description of the clock as specified in EIP-6372.
+  function CLOCK_MODE() public pure override returns (string memory) {
+    return "mode=timestamp";
+  }
+
   function nonces(
     address owner
   ) public view virtual override(ERC20Permit, Nonces) returns (uint256) {
@@ -148,7 +157,7 @@ contract River is
     address from,
     address to,
     uint256 value
-  ) internal virtual override {
+  ) internal virtual override(ERC20, ERC20Votes) {
     if (from != address(0) && _lockEnabled(from)) {
       // allow transfering at minting time
       revert River__TransferLockEnabled();

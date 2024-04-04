@@ -4,6 +4,7 @@
  */
 
 import {
+    makeBaseChainConfig,
     getDynamicPricingModule,
     makeDonePromise,
     makeTestClient,
@@ -29,14 +30,14 @@ describe('spaceTestsWithEntitlements', () => {
     // Banning with entitlements — users need permission to ban other users.
     test('ownerCanBanOtherUsers', async () => {
         // set up the web3 provider and spacedap
+        const baseConfig = makeBaseChainConfig()
         const bobsWallet = ethers.Wallet.createRandom()
         const bobsContext = await makeUserContextFromWallet(bobsWallet)
-        const bobProvider = new LocalhostWeb3Provider(bobsWallet)
-        const chainId = (await bobProvider.getNetwork()).chainId
+        const bobProvider = new LocalhostWeb3Provider(baseConfig.rpcUrl, bobsWallet)
         await bobProvider.fundWallet()
-        const mintReceipt = await bobProvider.mintMockNFT()
+        const mintReceipt = await bobProvider.mintMockNFT(baseConfig.chainConfig)
         log('mintReceipt', mintReceipt)
-        const spaceDapp = createSpaceDapp({ chainId, provider: bobProvider })
+        const spaceDapp = createSpaceDapp(bobProvider, baseConfig.chainConfig)
 
         // create a user stream
         const bob = await makeTestClient({ context: bobsContext })
@@ -122,7 +123,7 @@ describe('spaceTestsWithEntitlements', () => {
         // join alice
         const alicesWallet = ethers.Wallet.createRandom()
         const alicesContext = await makeUserContextFromWallet(alicesWallet)
-        const aliceProvider = new LocalhostWeb3Provider(alicesWallet)
+        const aliceProvider = new LocalhostWeb3Provider(baseConfig.rpcUrl, alicesWallet)
         await aliceProvider.fundWallet()
         const alice = await makeTestClient({
             context: alicesContext,
@@ -132,7 +133,7 @@ describe('spaceTestsWithEntitlements', () => {
         log('Alice created user, about to join space', { alicesUserId: alice.userId })
 
         // first join the space on chain
-        const aliceSpaceDapp = createSpaceDapp({ chainId, provider: aliceProvider })
+        const aliceSpaceDapp = createSpaceDapp(aliceProvider, baseConfig.chainConfig)
         const transaction2 = await aliceSpaceDapp.joinSpace(
             spaceId,
             alicesWallet.address,

@@ -3,12 +3,12 @@ import {
     StreamTimelineEvent,
     UnauthenticatedClient,
     isRemoteEvent,
-    makeStreamRpcClient,
+    makeRiverRpcClient,
     userIdFromAddress,
 } from '@river/sdk'
 import { AnimatePresence, animate } from 'framer-motion'
 import React, { useEffect, useMemo, useRef, useState } from 'react'
-import { useContractSpaceInfo } from 'use-towns-client'
+import { makeProviderFromConfig, useContractSpaceInfo } from 'use-towns-client'
 import { useParams } from 'react-router'
 import { Spinner } from '@components/Spinner'
 import { FadeInBox } from '@components/Transitions'
@@ -215,11 +215,13 @@ const useFetchUnauthenticatedActivity = (townId: string) => {
         latestCreatedChannels: ActivityEvent[] | undefined
     }>()
 
-    const rpcUrl = useEnvironment().casablancaUrl
+    const { riverChainConfig, riverChain } = useEnvironment()
     useEffect(() => {
-        if (!rpcUrl) {
+        if (!riverChainConfig) {
             return
         }
+        const provider = makeProviderFromConfig(riverChain)
+        let client: UnauthenticatedClient | undefined = undefined
         // for hmr
         setChannelStats({
             numMessages: 0,
@@ -232,8 +234,10 @@ const useFetchUnauthenticatedActivity = (townId: string) => {
         const fetch = async () => {
             try {
                 const streamId = townId
-                const rpcClient = makeStreamRpcClient(rpcUrl)
-                const client = new UnauthenticatedClient(rpcClient)
+                if (!client) {
+                    const rpcClient = await makeRiverRpcClient(provider, riverChainConfig)
+                    client = new UnauthenticatedClient(rpcClient)
+                }
 
                 const stream = await client.getStream(streamId)
 
@@ -371,7 +375,7 @@ const useFetchUnauthenticatedActivity = (townId: string) => {
         }
 
         fetch()
-    }, [rpcUrl, townId])
+    }, [riverChain, riverChainConfig, townId])
 
     return {
         isLoading,

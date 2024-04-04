@@ -23,10 +23,6 @@ export const Permission = {
 
 export type Permission = (typeof Permission)[keyof typeof Permission]
 
-export type Versions = 'v3'
-export const defaultVersion: Versions = 'v3'
-export type TDefaultVersion = typeof defaultVersion
-
 export type EntitlementShim = UserEntitlementShimV3 | RuleEntitlementShim
 
 export type EntitlementStruct = IRolesBaseV3.CreateEntitlementStruct

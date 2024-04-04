@@ -95,21 +95,15 @@ echo "Both Anvil chains and Postgres are now running, deploying contracts"
 # Wait for build to finish
 wait_for_process "$BUILD_PID" "build"
 
-# In your tmux session, start the deployments in background panes/windows
-tmux new-window -t $SESSION_NAME -n deploy-base './scripts/deploy-base.sh nobuild; tmux wait-for -S deploy-base-done'
-tmux new-window -t $SESSION_NAME -n deploy-river './scripts/deploy-river.sh nobuild; tmux wait-for -S deploy-river-done'
 
-# Now, in your original pane or window, block until the deployments signal they are done
-tmux wait-for deploy-base-done
-tmux wait-for deploy-river-done
-
-echo "STARTED ALL CHAINS AND DEPLOYED ALL CONTRACTS"
-
+echo "STARTED ALL CHAINS AND BUILT ALL CONTRACTS"
 
 # Now generate the core server config
-./core/node/run_multi.sh -c -n 10
-./core/node/run_single.sh -c
-./core/node/run_single.sh -c --de
+./scripts/configure-nodes.sh --single
+./scripts/configure-nodes.sh --single_ne
+#./scripts/configure-nodes.sh --multi
+#./scripts/configure-nodes.sh --multi_ne
+
 
 # Define the base directory for easier reference
 CONFIGS_DIR="./core/node/run_files/"
@@ -121,10 +115,6 @@ find "$CONFIGS_DIR" -type f -name "config.yaml" | while read -r YAML_FILE; do
     yq eval ".pushNotification.url = \"$PNW_URL\"" -i $YAML_FILE
     yq eval ".pushNotification.authToken = \"$PNW_AUTH_TOKEN\"" -i $YAML_FILE
 done
-
-# xchain nodes
-# disabled: https://linear.app/hnt-labs/issue/HNT-4317/create-multish-call-in-the-start-devsh-fails
-./core/xchain/create_multi.sh
 
 # Continue with rest of the script
 echo "Continuing with the rest of the script..."
@@ -142,10 +132,11 @@ commands=(
     "watch_web3:cd core/web3 && yarn watch"
     "watch_go:cd core/proto && yarn watch:go"
     "debug_app:cd core/debug-app && yarn dev"
-#    "core_single:sleep 3 && ./core/node/run_single.sh -sc"
-#    "core_single_ne:./scripts/wait-for-core.sh && ./core/node/run_single.sh -sc --de"
-#    "core:./core/node/run_multi.sh -r"
-#    "xchain:./core/xchain/launch_multi.sh"
+    "core_single:sleep 3 && ./core/node/run_single.sh -r"
+    "core_single_ne:./scripts/wait-for-core.sh && ./core/node/run_single.sh -r --de"
+    #"core:./core/node/run_multi.sh -r"
+    #"core:./core/node/run_multi.sh -r --de"
+    "xchain:RUN_ENV=single ./core/xchain/launch_multi.sh"
 )
 
 # Create a Tmux window for each command

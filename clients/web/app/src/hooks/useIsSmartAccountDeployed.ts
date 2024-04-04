@@ -9,10 +9,10 @@ export function useIsSmartAccountDeployed() {
     const { data: abstractAccountAddress } = useAbstractAccountAddress({
         rootKeyAddress: userId as Address | undefined,
     })
-    const { baseProvider: provider, baseChain: chain } = useTownsContext()
+    const { baseProvider: provider, baseConfig: config } = useTownsContext()
     const spaceDapp = useSpaceDapp({
         provider,
-        chainId: chain?.id,
+        config,
     })
 
     return useQuery({

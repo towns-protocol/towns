@@ -15,6 +15,7 @@ import { BytesLike, ContractReceipt, ContractTransaction, ethers } from 'ethers'
 import { SpaceInfo } from './types'
 import { IRolesBase, Space, SpaceRegistrar, IRuleEntitlement } from './v3'
 import { PricingModules } from './v3/PricingModules'
+import { BaseChainConfig } from './IStaticContractsInfo'
 
 export type SignerType = ethers.Signer
 export interface EventsContractInfo {
@@ -49,8 +50,8 @@ export interface UpdateRoleParams {
 type TransactionType = ContractTransaction
 
 export interface ISpaceDapp {
-    readonly chainId: number
-    readonly provider: ethers.providers.Provider | undefined
+    readonly provider: ethers.providers.Provider
+    readonly config: BaseChainConfig
     readonly spaceRegistrar: SpaceRegistrar
     readonly walletLink: WalletLinkV3
     readonly pricingModules: PricingModules

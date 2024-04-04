@@ -9,7 +9,7 @@ echo "Waiting for ${NAME} to launch on ${PORT} port..."
 
 for ((i=0; i<$ITERATIONS; i++)); do
     if nc -z 127.0.0.1 ${PORT}; then
-        echo "${NAME} on ${PORT} port launched"
+        echo "${NAME} on ${PORT} port ready"
         exit 0
     fi
     sleep 0.1

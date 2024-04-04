@@ -13,6 +13,7 @@ import { RiverDbManager } from '../riverDbManager'
 import { MockEntitlementsDelegate } from '../utils'
 import { Queue, Worker } from 'bullmq'
 import {
+    baseChainConfig,
     testRunTimeMs,
     connectionOptions,
     loginWaitTime,
@@ -106,10 +107,10 @@ describe('mirrorMessages', () => {
                         }
                     }
                     if (commandData.commandType === 'joinSpace') {
-                        const spaceDapp = createSpaceDapp({
-                            chainId: (await walletWithProvider.provider.getNetwork()).chainId,
-                            provider: walletWithProvider.provider,
-                        })
+                        const spaceDapp = createSpaceDapp(
+                            walletWithProvider.provider,
+                            baseChainConfig,
+                        )
                         const spaceAndChannelIds = commandData.command as {
                             townId: string
                             channelId: string

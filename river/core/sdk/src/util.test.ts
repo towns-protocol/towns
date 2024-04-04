@@ -23,67 +23,119 @@ import assert from 'assert'
 import _ from 'lodash'
 import { MockEntitlementsDelegate } from './utils'
 import { SignerContext, makeSignerContext } from './signerContext'
-import { createRiverRegistry, LocalhostWeb3Provider, PricingModuleStruct } from '@river-build/web3'
+import {
+    Address,
+    BaseChainConfig,
+    ContractVersion,
+    LocalhostWeb3Provider,
+    PricingModuleStruct,
+    RiverChainConfig,
+    Web3Deployment,
+    createRiverRegistry,
+    getWeb3Deployment,
+} from '@river-build/web3'
 
 const log = dlog('csb:test:util')
 
-export const RIVER_ANVIL = 'http://localhost:8546'
-const TEST_URL_SINGLE = 'https://localhost:5158'
-const TEST_URL_SINGLE_ENT = 'https://localhost:5157'
-const TEST_URL_MULTI =
-    'https://localhost:5170,https://localhost:5171,https://localhost:5172,https://localhost:5173,https://localhost:5174,' +
-    'https://localhost:5175,https://localhost:5176,https://localhost:5177,https://localhost:5178,https://localhost:5179'
+const RIVER_ENV = process.env.RIVER_ENV || 'local_single'
 
-let testUrls: string[] | undefined = undefined
-let curTestUrl = -1
+function getBaseRpcUrlForChain(chainId: number): string {
+    if (process.env.BASE_CHAIN_RPC_URL) {
+        return process.env.BASE_CHAIN_RPC_URL
+    }
+    switch (chainId) {
+        case 31337:
+            return 'http://localhost:8545'
+        default:
+            throw new Error(`No preset RPC url for base chainId ${chainId}`)
+    }
+}
+
+function getRiverRpcUrlForChain(chainId: number): string {
+    if (process.env.RIVER_CHAIN_RPC_URL) {
+        return process.env.RIVER_CHAIN_RPC_URL
+    }
+    switch (chainId) {
+        case 31338:
+            return 'http://localhost:8546'
+        case 6524490:
+            return 'https://devnet.rpc.river.build'
+        default:
+            throw new Error(`No preset RPC url for river chainId ${chainId}`)
+    }
+}
+
+const getTestWeb3Deployment = (): Web3Deployment => {
+    // allow for passing a custom environment
+    if (RIVER_ENV === 'custom') {
+        return {
+            base: {
+                chainId: parseInt(process.env.BASE_CHAIN_ID!),
+                contractVersion: (process.env.CONTRACT_VERSION ?? 'dev') as ContractVersion,
+                addresses: {
+                    spaceFactory: process.env.SPACE_FACTORY_ADDRESS! as Address,
+                    spaceOwner: process.env.SPACE_OWNER_ADDRESS! as Address,
+                    mockNFT: process.env.MOCK_NFT_ADDRESS as Address | undefined,
+                    member: process.env.MEMBER_ADDRESS as Address | undefined,
+                    walletLink: process.env.WALLET_LINK_ADDRESS! as Address,
+                },
+            },
+            river: {
+                chainId: parseInt(process.env.RIVER_CHAIN_ID!),
+                contractVersion: (process.env.CONTRACT_VERSION ?? 'dev') as ContractVersion,
+                addresses: {
+                    riverRegistry: process.env.RIVER_REGISTRY_ADDRESS! as Address,
+                },
+            },
+        }
+    }
+    // otherwise just return the deployment for the current environment
+    return getWeb3Deployment(RIVER_ENV)
+}
+
+export const makeRiverChainConfig = (): {
+    rpcUrl: string
+    chainConfig: RiverChainConfig
+} => {
+    const env = getTestWeb3Deployment()
+    return {
+        rpcUrl: getRiverRpcUrlForChain(env.river.chainId),
+        chainConfig: env.river,
+    }
+}
+
+export const makeBaseChainConfig = (): { rpcUrl: string; chainConfig: BaseChainConfig } => {
+    const env = getTestWeb3Deployment()
+    return {
+        rpcUrl: getBaseRpcUrlForChain(env.base.chainId),
+        chainConfig: env.base,
+    }
+}
+
+export type TestConfig = ReturnType<typeof makeTestConfig>
+
+export const makeTestConfig = () => {
+    return {
+        base: makeBaseChainConfig(),
+        river: makeRiverChainConfig(),
+    }
+}
 
 const initTestUrls = async (): Promise<{
     testUrls: string[]
     refreshNodeUrl?: () => Promise<string>
 }> => {
-    if (testUrls !== undefined) {
-        return { testUrls }
-    }
-    if (process.env.RIVER_TEST_URLS !== undefined && process.env.RIVER_TEST_URLS !== '') {
-        const urls = process.env.RIVER_TEST_URLS.split(',')
-        log(
-            'initTestUrls, Using explicit urls from RIVER_TEST_URLS, not RIVER_TEST_CONNECT, urls=',
-            urls,
-        )
-        return { testUrls: urls }
-    }
-    // create localhost web3 provider to read node urls from river anvil instance river registry
-    const returnRiverRegistryNodes = async (): Promise<{
-        urls: string
-        refreshNodeUrl?: () => Promise<string>
-    }> => {
-        const wallet = ethers.Wallet.createRandom()
-        const provider = new LocalhostWeb3Provider(wallet, RIVER_ANVIL)
-        const chainId = (await provider.getNetwork()).chainId
-        const riverRegistry = createRiverRegistry({ chainId, provider })
-        const urls = await riverRegistry.getOperationalNodeUrls()
-        return { urls, refreshNodeUrl: () => riverRegistry.getOperationalNodeUrls() }
-    }
-    const config = process.env.RIVER_TEST_CONNECT
-    const { urls: riverRegistryNodes, refreshNodeUrl } = await returnRiverRegistryNodes()
-
-    // jterzis: we need to maintain this config switch for cases
-    // where users run multiple concurrent environments locally
-    // and the client needs to pin to a specific node.
-    if (config === 'single') {
-        testUrls = riverRegistryNodes.split(',') ?? [TEST_URL_SINGLE]
-    } else if (config === 'single_ent') {
-        testUrls = riverRegistryNodes.split(',') ?? [TEST_URL_SINGLE_ENT]
-    } else if (config === 'multi') {
-        testUrls = riverRegistryNodes.split(',') ?? TEST_URL_MULTI.split(',')
-    } else {
-        throw new Error(`invalid RIVER_TEST_CONNECT: ${config}`)
-    }
-    log('initTestUrls, RIVER_TEST_CONNECT=', config, 'testUrls=', testUrls)
-    return { testUrls, refreshNodeUrl }
+    const config = makeRiverChainConfig()
+    const provider = new LocalhostWeb3Provider(config.rpcUrl)
+    const riverRegistry = createRiverRegistry(provider, config.chainConfig)
+    const urls = await riverRegistry.getOperationalNodeUrls()
+    const refreshNodeUrl = () => riverRegistry.getOperationalNodeUrls()
+    log('initTestUrls, RIVER_TEST_CONNECT=', config, 'testUrls=', urls)
+    return { testUrls: urls.split(','), refreshNodeUrl }
 }
 
-export const getNextTestUrl = async (): Promise<{
+let curTestUrl = -1
+const getNextTestUrl = async (): Promise<{
     urls: string
     refreshNodeUrl?: () => Promise<string>
 }> => {

@@ -8,10 +8,10 @@ import { useTownsContext } from '../components/TownsContextProvider'
  * Grab membership price, limit, currency, and feeRecipient for a space.
  */
 export function useMembershipInfo(spaceId: string) {
-    const { baseProvider: provider, baseChain: chain } = useTownsContext()
+    const { baseProvider: provider, baseConfig: config } = useTownsContext()
 
     const spaceDapp = useSpaceDapp({
-        chainId: chain?.id,
+        config,
         provider,
     })
 

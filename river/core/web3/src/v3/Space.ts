@@ -29,6 +29,7 @@ import { NoopRuleData } from '../entitlement'
 import { RuleEntitlementShim } from './RuleEntitlementShim'
 import { IRuleEntitlement } from '.'
 import { IBanningShim } from './IBanningShim'
+import { ContractVersion } from '../IStaticContractsInfo'
 
 interface AddressToEntitlement {
     [address: string]: EntitlementShim
@@ -37,7 +38,7 @@ interface AddressToEntitlement {
 interface SpaceConstructorArgs {
     address: string
     spaceId: string
-    chainId: number
+    version: ContractVersion
     provider: ethers.providers.Provider | undefined
     spaceOwnerAddress: string
 }
@@ -46,7 +47,7 @@ export class Space {
     private readonly address: string
     private readonly addressToEntitlement: AddressToEntitlement = {}
     private readonly spaceId: string
-    private readonly chainId: number
+    private readonly version: ContractVersion
     private readonly provider: ethers.providers.Provider | undefined
     private readonly channel: IChannelShim
     private readonly entitlements: IEntitlementsShim
@@ -58,20 +59,20 @@ export class Space {
     private readonly membership: IMembershipShim
     private readonly banning: IBanningShim
 
-    constructor({ address, spaceId, chainId, provider, spaceOwnerAddress }: SpaceConstructorArgs) {
+    constructor({ address, version, spaceId, provider, spaceOwnerAddress }: SpaceConstructorArgs) {
         this.address = address
         this.spaceId = spaceId
-        this.chainId = chainId
+        this.version = version
         this.provider = provider
-        this.channel = new IChannelShim(address, chainId, provider)
-        this.entitlements = new IEntitlementsShim(address, chainId, provider)
-        this.multicall = new IMulticallShim(address, chainId, provider)
-        this.ownable = new OwnableFacetShim(address, chainId, provider)
-        this.pausable = new TokenPausableFacetShim(address, chainId, provider)
-        this.roles = new IRolesShim(address, chainId, provider)
-        this.spaceOwner = new ISpaceOwnerShim(spaceOwnerAddress, chainId, provider)
-        this.membership = new IMembershipShim(address, chainId, provider)
-        this.banning = new IBanningShim(address, chainId, provider)
+        this.channel = new IChannelShim(address, version, provider)
+        this.entitlements = new IEntitlementsShim(address, version, provider)
+        this.multicall = new IMulticallShim(address, version, provider)
+        this.ownable = new OwnableFacetShim(address, version, provider)
+        this.pausable = new TokenPausableFacetShim(address, version, provider)
+        this.roles = new IRolesShim(address, version, provider)
+        this.spaceOwner = new ISpaceOwnerShim(spaceOwnerAddress, version, provider)
+        this.membership = new IMembershipShim(address, version, provider)
+        this.banning = new IBanningShim(address, version, provider)
     }
 
     public get Address(): string {
@@ -266,14 +267,14 @@ export class Space {
                 case EntitlementModuleType.UserEntitlement:
                     this.addressToEntitlement[address] = new UserEntitlementShim(
                         address,
-                        this.chainId,
+                        this.version,
                         this.provider,
                     )
                     break
                 case EntitlementModuleType.RuleEntitlement:
                     this.addressToEntitlement[address] = new RuleEntitlementShim(
                         address,
-                        this.chainId,
+                        this.version,
                         this.provider,
                     )
                     break

@@ -15,7 +15,8 @@ export type Props = {
 
 export function RequireTransactionNetworkModal({ onHide, isSpinning, onLoginClick }: Props) {
     const timeoutId = useRef<ReturnType<typeof setTimeout> | undefined>()
-    const { chainName } = useEnvironment()
+    const { baseChain } = useEnvironment()
+    const chainName = baseChain.name
     const [showWalletCommsFailure, setShowWalletCommsFailure] = useState(false)
     const clicked = useRef(false)
 

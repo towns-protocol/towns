@@ -99,12 +99,7 @@ describe('historyVisibility', () => {
         })
 
         // create a new client with same wallet, but different deviceId/auth
-        const alice2 = new TownsTestClient(
-            alice.opts.baseChainId,
-            'alice2',
-            alice.props,
-            alice.wallet,
-        )
+        const alice2 = new TownsTestClient('alice2', alice.props, alice.wallet)
 
         await alice2.loginWalletAndStartClient()
 
@@ -124,12 +119,7 @@ describe('historyVisibility', () => {
         await john.logout()
 
         // have alice log into yet another client, see if she will share keys with herself
-        const alice3 = new TownsTestClient(
-            alice.opts.baseChainId,
-            'alice3',
-            alice.props,
-            alice.wallet,
-        )
+        const alice3 = new TownsTestClient('alice3', alice.props, alice.wallet)
 
         await alice3.loginWalletAndStartClient()
 

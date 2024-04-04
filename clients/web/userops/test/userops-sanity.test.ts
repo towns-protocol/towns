@@ -2,8 +2,7 @@
 // Reference in case we ever use local bundler for testing
 //
 
-import { TestSpaceDapp } from '@river-build/web3/tests/TestSpaceDapp'
-import { TestWeb3Provider } from '@river-build/web3/tests/TestWeb3Provider'
+import { Address, LocalhostWeb3Provider, SpaceDapp, getWeb3Deployment } from '@river-build/web3'
 import { ethers } from 'ethers'
 import { Address, ISpaceDapp } from '@river-build/web3'
 import { TestUserOps } from './TestUserOps'
@@ -13,18 +12,18 @@ import { TestUserOps } from './TestUserOps'
 // this test does work with skandha bundler
 describe.skip('sanity: user operations', () => {
     test('sanity: should be able to send some funds via a user operation without a paymaster', async () => {
-        const bob = await TestWeb3Provider.init()
+        const bob = new LocalhostWeb3Provider(process.env.RPC_URL as string)
+        await bob.ready
+        const baseConfig = getWeb3Deployment(process.env.RIVER_ENV as string).base // see util.test.ts for loading from env
         if ((await bob.getNetwork()).chainId !== 31337) {
             throw new Error('this test should only be run against a local anvil instance')
         }
         await bob.fundWallet()
-        const spaceDapp = new TestSpaceDapp({
-            chainId: bob.network.chainId,
-            provider: bob,
-        }) as unknown as ISpaceDapp
+        const spaceDapp = new SpaceDapp(baseConfig, bob) as unknown as ISpaceDapp
 
         const userOps = new TestUserOps({
             provider: spaceDapp.provider,
+            config: spaceDapp.config,
             spaceDapp,
             bundlerUrl: process.env.VITE_AA_BUNDLER_URL,
             paymasterProxyUrl: process.env.VITE_AA_PAYMASTER_PROXY_URL,

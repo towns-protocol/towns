@@ -25,6 +25,6 @@ describe('Accordion test', () => {
             </React.StrictMode>,
         )
 
-        expect(screen.getByText(/Environment/i)).toBeDefined()
+        expect(screen.getAllByText(/Environment/i)).toBeDefined()
     })
 })

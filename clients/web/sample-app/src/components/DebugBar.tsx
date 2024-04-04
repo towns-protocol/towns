@@ -5,11 +5,11 @@ import { useNetwork } from 'wagmi'
 
 export const DebugBar = () => {
     const { chain } = useNetwork()
-    const { casablancaServerUrl } = useTownsContext()
+    const { environmentId } = useTownsContext()
     return (
         <Box paddingX="md" paddingTop={2} flexDirection="row">
             <Typography align="center" fontSize={10} paddingTop="20">
-                River: <b>{casablancaServerUrl}</b> Chain: <b>{chain?.name || 'Not connected'}</b>
+                River: <b>{environmentId}</b> Chain: <b>{chain?.name || 'Not connected'}</b>
             </Typography>
         </Box>
     )

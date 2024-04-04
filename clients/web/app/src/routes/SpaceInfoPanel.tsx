@@ -652,7 +652,8 @@ export const SpaceInfoPanel = () => {
 
 const TownContractOpener = (props: { address: string; children?: React.ReactNode }) => {
     const { address } = props
-    const { chainId } = useEnvironment()
+    const { baseChain } = useEnvironment()
+    const chainId = baseChain.id
     const onClick = useCallback(() => {
         if (!chainId) {
             return

@@ -5,22 +5,19 @@
 import { dlog } from '@river-build/dlog'
 import { ethers } from 'ethers'
 import { LocalhostWeb3Provider, createRiverRegistry } from '@river-build/web3'
+import { makeRiverChainConfig } from './util.test'
 
 const log = dlog('csb:test')
-const RIVER_NETWORK_ANVIL = 'http://localhost:8546'
 
 describe('nodeSelectionsTests', () => {
     test('TestRiverRegistryNodeRetrieval', async () => {
         // set up the web3 provider and riverRegistry
+        const riverConfig = makeRiverChainConfig()
         const bobsWallet = ethers.Wallet.createRandom()
-        const bobRiverChainProvider = new LocalhostWeb3Provider(bobsWallet, RIVER_NETWORK_ANVIL)
-        const riverChainId = (await bobRiverChainProvider.getNetwork()).chainId
+        const bobRiverChainProvider = new LocalhostWeb3Provider(riverConfig.rpcUrl, bobsWallet)
 
         // create river registry
-        const riverRegistry = createRiverRegistry({
-            chainId: riverChainId,
-            provider: bobRiverChainProvider,
-        })
+        const riverRegistry = createRiverRegistry(bobRiverChainProvider, riverConfig.chainConfig)
         // read nodes from river registry
         const nodes = await riverRegistry.getAllNodes()
         log('river registry rpc nodes', nodes)

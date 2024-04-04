@@ -2,7 +2,6 @@ import { CreateChannelInfo, CreateSpaceInfo } from 'use-towns-client/src/types/t
 import { BigNumber, Wallet, ethers } from 'ethers'
 import { TownsTestClient, TownsTestClientProps } from './TownsTestClient'
 
-import { TownsTestWeb3Provider } from './TownsTestWeb3Provider'
 import { TownsClient } from '../../../src/client/TownsClient'
 import { waitFor } from '@testing-library/dom'
 import { RoleDetails } from '../../../src/types/web3-types'
@@ -15,13 +14,7 @@ import {
     MembershipStruct,
 } from '@river-build/web3'
 import { getDynamicPricingModule, getFixedPricingModule } from '../../../src/utils/web3'
-
-interface ChainIds {
-    chainId: number
-    riverChainId: number
-    provder?: ethers.providers.JsonRpcProvider
-    riverChainProvider?: ethers.providers.JsonRpcProvider
-}
+import { makeTestConfig } from '@river/sdk/src/util.test'
 
 export const EVERYONE_ADDRESS = '0x0000000000000000000000000000000000000001'
 
@@ -33,9 +26,8 @@ export function assert(condition: any, msg?: string): asserts condition {
 }
 
 export function getJsonProvider() {
-    const providerUrl = process.env.ETHERS_NETWORK ?? 'http://127.0.0.1:8545'
-
-    return new ethers.providers.JsonRpcProvider(providerUrl)
+    const config = makeTestConfig()
+    return new ethers.providers.JsonRpcProvider(config.base.rpcUrl)
 }
 
 export function parseOptInt(value?: string): number | undefined {
@@ -49,13 +41,6 @@ export function parseOptInt(value?: string): number | undefined {
     return parsed
 }
 
-export async function getChainIds(): Promise<ChainIds> {
-    const dummyProvider = new TownsTestWeb3Provider()
-    const chainId = (await dummyProvider.getNetwork()).chainId
-    const riverChainId = (await dummyProvider.riverChainProvider.getNetwork()).chainId
-    return { chainId, riverChainId, riverChainProvider: dummyProvider.riverChainProvider }
-}
-
 /**
  * Create N clients with unique names and random wallet addresses
  * waits for the clients to start up
@@ -64,10 +49,8 @@ export async function registerAndStartClients(
     clientNames: string[],
     props?: TownsTestClientProps,
 ): Promise<Record<string, TownsTestClient>> {
-    // get the chain ids for the test network
-    const { chainId } = await getChainIds()
     // create new test clients
-    const clients = clientNames.map((name) => new TownsTestClient(chainId, name, props))
+    const clients = clientNames.map((name) => new TownsTestClient(name, props))
     // start them up
     await Promise.all(clients.map((client) => client.registerWalletAndStartClient()))
     // all clients need funds to create or join a space
@@ -91,8 +74,7 @@ export async function registerAndStartClient(
 ): Promise<TownsTestClient> {
     try {
         const wallet = await walletPromise
-        const { chainId } = await getChainIds()
-        const client = new TownsTestClient(chainId, name, props, wallet)
+        const client = new TownsTestClient(name, props, wallet)
 
         if (await client.isUserRegistered()) {
             await client.loginWalletAndStartClient()
@@ -114,9 +96,7 @@ export function makeUniqueName(prefix: string): string {
 export async function fundWallet(walletToFund: ethers.Wallet) {
     const provider = getJsonProvider()
     const amountInWei = ethers.BigNumber.from(10).pow(18).toHexString()
-
     const result = provider.send('anvil_setBalance', [walletToFund.address, amountInWei])
-
     await result
 }
 

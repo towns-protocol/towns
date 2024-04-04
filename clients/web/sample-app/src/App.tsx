@@ -58,17 +58,25 @@ export const App = () => {
 const streamFilter = new Set<SnapshotCaseType>() // create an empty stream filter to get all streams in the timelines store
 
 const AppContent = () => {
-    const { casablancaUrl, chain, chainId, riverChain } = useEnvironment()
+    const {
+        id: environmentId,
+        baseChain,
+        baseChainConfig,
+        riverChain,
+        riverChainConfig,
+    } = useEnvironment()
     return (
         <ThemeProvider theme={theme}>
             <TownsContextProvider
                 enableSpaceRootUnreads
-                casablancaServerUrl={casablancaUrl}
-                chain={chain}
+                environmentId={environmentId}
+                baseChain={baseChain}
+                baseConfig={baseChainConfig}
                 riverChain={riverChain}
+                riverConfig={riverChainConfig}
                 streamFilter={streamFilter}
             >
-                <EmbeddedSignerContextProvider chainId={chainId}>
+                <EmbeddedSignerContextProvider chainId={baseChain.id}>
                     <Routes>
                         <Route element={<MainLayout />}>
                             <Route element={<AuthenticatedContent />}>

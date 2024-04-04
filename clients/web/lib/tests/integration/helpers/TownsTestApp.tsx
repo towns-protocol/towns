@@ -6,6 +6,7 @@ import { TownsTestWeb3Provider } from './TownsTestWeb3Provider'
 import { foundry } from 'viem/chains'
 import { useTownsErrorStore } from '../../../src/hooks/use-towns-client'
 import { IChainConfig } from '../../../src/types/web3-types'
+import { Chain } from 'viem'
 
 interface Props {
     provider: TownsTestWeb3Provider
@@ -16,24 +17,35 @@ interface Props {
 export const TownsTestApp = (props: Props) => {
     const { provider, children } = props
     // pull environment variables from the process
-    const casablancaServerUrl = process.env.CASABLANCA_SERVER_URL!
-    const riverChainUrl = process.env.RIVER_CHAIN_PROVIDER_HTTP_URL!
-    const riverChainId = parseInt(process.env.RIVER_CHAIN_ID!)
+    const environmentId = process.env.RIVER_ENV!
+
     const riverChain = {
-        rpcUrl: riverChainUrl,
+        rpcUrl: provider.config.river.rpcUrl,
         name: 'river_chain',
-        chainId: riverChainId,
+        chainId: provider.config.river.chainConfig.chainId,
     } satisfies IChainConfig
     Object.defineProperty(window, 'ethereum', {
         value: provider,
         writable: true,
     })
+    const baseChain = {
+        id: provider.config.base.chainConfig.chainId,
+        name: 'base_chain',
+        network: 'base_chain_network',
+        nativeCurrency: foundry.nativeCurrency,
+        rpcUrls: {
+            default: { http: [provider.config.base.rpcUrl] },
+            public: { http: [provider.config.base.rpcUrl] },
+        },
+    } satisfies Chain
 
     return (
         <TownsContextProvider
-            casablancaServerUrl={casablancaServerUrl}
-            chain={foundry}
+            environmentId={environmentId}
+            baseChain={baseChain}
+            baseConfig={provider.config.base.chainConfig}
             riverChain={riverChain}
+            riverConfig={provider.config.river.chainConfig}
             QueryClientProvider={TestQueryClientProvider}
         >
             <>

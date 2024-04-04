@@ -13,13 +13,9 @@ async function getChannels(spaceId: string | undefined, spaceDapp: ISpaceDapp | 
 const queryKey = 'spaceDappGetChannels'
 
 export const useContractChannels = (spaceId: string | undefined) => {
-    const { baseProvider: provider, baseChain: chain } = useTownsContext()
-    const chainId = chain.id
+    const { baseProvider: provider, baseConfig: config } = useTownsContext()
 
-    const spaceDapp = useSpaceDapp({
-        chainId,
-        provider,
-    })
+    const spaceDapp = useSpaceDapp({ provider, config })
 
     return useQuery({
         queryKey: [queryKey, spaceId],

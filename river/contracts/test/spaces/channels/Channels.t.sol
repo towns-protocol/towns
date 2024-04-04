@@ -24,7 +24,7 @@ contract ChannelsTest is BaseSetup, IEntitlementBase {
   }
 
   function test_createChannel(string memory channelMetadata) public {
-    vm.assume(bytes(channelMetadata).length > 2);
+    bound(bytes(channelMetadata).length, 3, 1000);
 
     bytes32 channelId = "my-cool-channel";
 
@@ -40,7 +40,7 @@ contract ChannelsTest is BaseSetup, IEntitlementBase {
     string memory channelMetadata,
     bytes32 channelId
   ) public {
-    vm.assume(bytes(channelMetadata).length > 2);
+    bound(bytes(channelMetadata).length, 3, 1000);
 
     string[] memory permissions = new string[](1);
     permissions[0] = Permissions.Write;
@@ -109,7 +109,7 @@ contract ChannelsTest is BaseSetup, IEntitlementBase {
   }
 
   function test_getChannel(string memory channelMetadata) public {
-    vm.assume(bytes(channelMetadata).length > 2);
+    bound(bytes(channelMetadata).length, 3, 1000);
 
     bytes32 channelId = "my-cool-channel";
 
@@ -131,7 +131,7 @@ contract ChannelsTest is BaseSetup, IEntitlementBase {
   }
 
   function test_getChannel_with_roles(string memory channelMetadata) public {
-    vm.assume(bytes(channelMetadata).length > 2);
+    bound(bytes(channelMetadata).length, 3, 1000);
 
     bytes32 channelId = "my-cool-channel";
 
@@ -158,7 +158,7 @@ contract ChannelsTest is BaseSetup, IEntitlementBase {
     string memory channelMetadata,
     bytes32 channelId
   ) public {
-    vm.assume(bytes(channelMetadata).length > 2);
+    bound(bytes(channelMetadata).length, 3, 1000);
 
     vm.prank(founder);
     IChannel(everyoneSpace).createChannel(
@@ -211,7 +211,7 @@ contract ChannelsTest is BaseSetup, IEntitlementBase {
     string memory channelMetadata,
     string memory newMetadata
   ) public {
-    vm.assume(bytes(channelMetadata).length > 2);
+    bound(bytes(channelMetadata).length, 3, 1000);
     vm.assume(bytes(newMetadata).length > 2);
 
     bytes32 channelId = "my-cool-channel";
@@ -237,7 +237,7 @@ contract ChannelsTest is BaseSetup, IEntitlementBase {
   function test_updateChannel_disable_channel(
     string memory channelMetadata
   ) public {
-    vm.assume(bytes(channelMetadata).length > 2);
+    bound(bytes(channelMetadata).length, 3, 1000);
 
     bytes32 channelId = "fooChannel";
 
@@ -257,7 +257,7 @@ contract ChannelsTest is BaseSetup, IEntitlementBase {
   }
 
   function test_removeChannel(string memory channelMetadata) public {
-    vm.assume(bytes(channelMetadata).length > 2);
+    bound(bytes(channelMetadata).length, 3, 1000);
 
     bytes32 channelId = "fooChannel";
 
@@ -278,7 +278,7 @@ contract ChannelsTest is BaseSetup, IEntitlementBase {
     string memory channelMetadata,
     uint256 roleId
   ) public {
-    vm.assume(bytes(channelMetadata).length > 2);
+    bound(bytes(channelMetadata).length, 3, 1000);
 
     bytes32 channelId = "my-cool-channel";
 
@@ -303,7 +303,7 @@ contract ChannelsTest is BaseSetup, IEntitlementBase {
     string memory channelMetadata,
     uint256 roleId
   ) public {
-    vm.assume(bytes(channelMetadata).length > 2);
+    bound(bytes(channelMetadata).length, 3, 1000);
 
     bytes32 channelId = "my-cool-channel";
 
@@ -325,7 +325,7 @@ contract ChannelsTest is BaseSetup, IEntitlementBase {
     string memory channelMetadata,
     uint256 roleId
   ) public {
-    vm.assume(bytes(channelMetadata).length > 2);
+    bound(bytes(channelMetadata).length, 3, 1000);
 
     bytes32 channelId = "my-cool-channel";
 
@@ -349,7 +349,7 @@ contract ChannelsTest is BaseSetup, IEntitlementBase {
   function test_removeRoleFromChannel_nonexistent_role(
     string memory channelMetadata
   ) public {
-    vm.assume(bytes(channelMetadata).length > 2);
+    bound(bytes(channelMetadata).length, 3, 1000);
 
     bytes32 channelId = "my-cool-channel";
 
@@ -375,7 +375,7 @@ contract ChannelsTest is BaseSetup, IEntitlementBase {
   function test_createChannel_reverts_when_not_allowed(
     string memory channelMetadata
   ) public {
-    vm.assume(bytes(channelMetadata).length > 2);
+    bound(bytes(channelMetadata).length, 3, 1000);
 
     bytes32 channelId = "my-cool-channel";
 
@@ -392,7 +392,7 @@ contract ChannelsTest is BaseSetup, IEntitlementBase {
   function test_createChannel_reverts_when_channel_exists(
     string memory channelMetadata
   ) public {
-    vm.assume(bytes(channelMetadata).length > 2);
+    bound(bytes(channelMetadata).length, 3, 1000);
 
     bytes32 channelId = "my-cool-channel";
 

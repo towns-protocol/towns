@@ -102,6 +102,7 @@ This XChain Node resides in a monorepo and interfaces with the `EntitlementCheck
 1. **Create Multi-Instance Configs:**
 
    ```bash
+   export RIVER_ENV="local_single"
    ./create_multi.sh
    ```
 

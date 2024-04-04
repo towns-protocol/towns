@@ -28,15 +28,15 @@ riverChain:
 
 # Base contracts
 architectContract:
-    address: '../addresses/spaceFactory.json'
+    address: <SPACE_FACTORY_ADDRESS>
     version: 'dev'
 walletLinkContract:
-    address: '../addresses/walletLink.json'
+    address: <WALLET_LINK_ADDRESS>
     version: 'dev'
 
 # River contracts
 registryContract:
-    address: '../addresses/riverRegistry.json'
+    address: <RIVER_REGISTRY_ADDRESS>
     version: '' # Explicitely uses IRiverRegistryV1 interface
 
 # Logging
@@ -84,6 +84,11 @@ stream:
     # Interval to check for inactive streams in the cache (default=cacheExpirationSec/10)
     # valid time unites are "ns", "us" (or "µs"), "ms", "s", "m", "h"
     cacheExpirationPollInterval: 30s
+
+network:
+    numRetries: 3
+    # Make this nice and long to not break anything.
+    requestTimeout: 30s
 
 # Debug feature flags.
 disableBaseChain: <DISABLE_BASE_CHAIN>

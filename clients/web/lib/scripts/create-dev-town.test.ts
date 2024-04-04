@@ -1,6 +1,6 @@
 /* eslint-disable @typescript-eslint/no-non-null-assertion */
 
-import { IArchitectBase, NoopOperation, Permission } from '@river-build/web3'
+import { IArchitectBase, NoopRuleData, Permission } from '@river-build/web3'
 import ethers from 'ethers'
 import { TownsTestClient } from '../tests/integration/helpers/TownsTestClient'
 import { Wallet } from 'ethers'
@@ -11,7 +11,7 @@ import { getDynamicPricingModule } from '../src/utils/web3'
  * This is not an actual test, it's just a quick hack to create a dev town.
  * We piggy back on jest's browser environment and a few test utils.
  *
- * - WARNING: Make sure ETHERS_NETWORK, CASABLANCA_SERVER_URL, WALLET_PRIVATE_KEY and CHAIN_ID env vars are set before running this jest script
+ * - WARNING: Make sure RIVER_ENV and BASE_CHAIN_RPC_URL, WALLET_PRIVATE_KEY env vars are set before running this jest script
  *
  * Workflow:
  * 1) Creates a Towns test client with the provided private key from the environment
@@ -22,22 +22,21 @@ import { getDynamicPricingModule } from '../src/utils/web3'
  */
 
 test('create dev town', async () => {
-    // make sure ETHERS_NETWORK and CASABLANCA_SERVER_URL env vars are set before running this test
+    // make sure RIVER_ENV and BASE_CHAIN_RPC_URL env vars are set before running this test
     // jest-setup.ts will provide default values for these env vars if they are not set
     // and they won't work for creating a town on the gamma environment.
 
-    const { WALLET_PRIVATE_KEY, CHAIN_ID } = process.env
+    const { WALLET_PRIVATE_KEY, RIVER_ENV } = process.env
 
     if (!WALLET_PRIVATE_KEY) {
         throw new Error('WALLET_PRIVATE_KEY env var is not set')
     }
 
-    if (!CHAIN_ID) {
-        throw new Error('CHAIN_ID env var is not set')
+    if (!RIVER_ENV) {
+        throw new Error('RIVER_ENV env var is not set')
     }
 
     const harmonyHotWallet = new TownsTestClient(
-        parseInt(CHAIN_ID, 10),
         'harmonyHotWallet',
         undefined,
         new Wallet(WALLET_PRIVATE_KEY),
@@ -64,7 +63,7 @@ export async function createDevTown(client: TownsTestClient): Promise<string | u
     if (!client.spaceDapp) {
         throw new Error('no spaceDapp')
     }
-    const dynamicPricingModule = await getDynamicPricingModule(!client.spaceDapp)
+    const dynamicPricingModule = await getDynamicPricingModule(client.spaceDapp)
     if (!dynamicPricingModule) {
         throw new Error('no dynamicPricingModule')
     }
@@ -85,7 +84,7 @@ export async function createDevTown(client: TownsTestClient): Promise<string | u
         requirements: {
             everyone: true,
             users: [],
-            entitlementData: NoopOperation,
+            ruleData: NoopRuleData,
         },
     }
 

@@ -37,8 +37,9 @@ type TownPageLayoutProps = {
 
 export const TownPageLayout = (props: TownPageLayoutProps) => {
     const { address, bio, motto, name, spaceId, owner, isPreview } = props
-    const { chainId } = useEnvironment()
-    const { data: userId } = useGetRootKeyFromLinkedWallet({ walletAddress: owner, chainId })
+    const { baseChain } = useEnvironment()
+    const chainId = baseChain.id
+    const { data: userId } = useGetRootKeyFromLinkedWallet({ walletAddress: owner })
     const [copiedLink, setCopiedLink] = useState(false)
     const [, copy] = useCopyToClipboard()
 

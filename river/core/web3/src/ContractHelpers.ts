@@ -1,7 +1,7 @@
 import { BigNumber, BigNumberish, ethers } from 'ethers'
 
-import { Versions, BasicRoleInfo, Permission, defaultVersion, Address } from './ContractTypes'
-import { getContractsInfo } from './IStaticContractsInfo'
+import { BasicRoleInfo, Permission, Address } from './ContractTypes'
+import { BaseChainConfig } from './IStaticContractsInfo'
 import { ISpaceDapp } from './ISpaceDapp'
 import {
     IArchitectBase as ISpaceArchitectBaseV3,
@@ -12,30 +12,30 @@ import {
 import { getTestGatingNFTContractAddress } from './TestGatingNFT'
 
 export function mintMockNFT(
-    chainId: number,
     provider: ethers.providers.Provider,
+    config: BaseChainConfig,
     fromWallet: ethers.Wallet,
     toAddress: string,
 ): Promise<ethers.ContractTransaction> {
-    if (chainId === 31337) {
-        const mockNFTAddress = getContractsInfo(chainId).mockErc721aAddress
-        const mockNFT = new MockERC721AShimV3(mockNFTAddress, chainId, provider)
-        return mockNFT.write(fromWallet).mintTo(toAddress)
+    if (!config.addresses.mockNFT) {
+        throw new Error('No mock ERC721 address provided')
     }
-    throw new Error(`Unsupported chainId ${chainId}, only 31337 is supported.`)
+    const mockNFTAddress = config.addresses.mockNFT
+    const mockNFT = new MockERC721AShimV3(mockNFTAddress, config.contractVersion, provider)
+    return mockNFT.write(fromWallet).mintTo(toAddress)
 }
 
 export function balanceOfMockNFT(
-    chainId: number,
+    config: BaseChainConfig,
     provider: ethers.providers.Provider,
     address: Address,
 ) {
-    if (chainId === 31337) {
-        const mockNFTAddress = getContractsInfo(chainId).mockErc721aAddress
-        const mockNFT = new MockERC721AShimV3(mockNFTAddress, chainId, provider)
-        return mockNFT.read.balanceOf(address)
+    if (!config.addresses.mockNFT) {
+        throw new Error('No mock ERC721 address provided')
     }
-    throw new Error(`Unsupported chainId ${chainId}, only 31337 is supported.`)
+    const mockNFTAddress = config.addresses.mockNFT
+    const mockNFT = new MockERC721AShimV3(mockNFTAddress, config.contractVersion, provider)
+    return mockNFT.read.balanceOf(address)
 }
 
 export async function getTestGatingNftAddress(_chainId: number): Promise<`0x${string}`> {
@@ -61,22 +61,12 @@ export async function getFilteredRolesFromSpace(
 export function isRoleIdInArray(
     roleIds: BigNumber[] | readonly bigint[],
     roleId: BigNumberish | bigint,
-    version = defaultVersion,
 ): boolean {
-    if (version === 'v3') {
-        for (const r of roleIds as BigNumber[]) {
-            if (r.eq(roleId)) {
-                return true
-            }
-        }
-    } else {
-        for (const r of roleIds) {
-            if (r === roleId) {
-                return true
-            }
+    for (const r of roleIds as BigNumber[]) {
+        if (r.eq(roleId)) {
+            return true
         }
     }
-
     return false
 }
 
@@ -94,7 +84,6 @@ type CreateMembershipStructArgs = {
     name: string
     permissions: Permission[]
     requirements: ISpaceArchitectBaseV3.MembershipRequirementsStruct
-    version?: Versions
 } & Omit<
     IMembershipBaseV3.MembershipStruct,
     | 'symbol'
@@ -110,40 +99,21 @@ function _createMembershipStruct({
     name,
     permissions,
     requirements,
-    version = defaultVersion,
 }: CreateMembershipStructArgs): ISpaceArchitectBaseV3.MembershipStruct {
-    if (version === 'v3') {
-        return {
-            settings: {
-                name,
-                symbol: 'MEMBER',
-                price: 0,
-                maxSupply: 1000,
-                duration: 0,
-                currency: ethers.constants.AddressZero,
-                feeRecipient: ethers.constants.AddressZero,
-                freeAllocation: 0,
-                pricingModule: ethers.constants.AddressZero,
-            },
-            permissions,
-            requirements,
-        }
-    } else {
-        return {
-            settings: {
-                name,
-                symbol: 'MEMBER',
-                price: BigInt(0),
-                maxSupply: BigInt(1000),
-                duration: BigInt(0),
-                currency: ethers.constants.AddressZero,
-                feeRecipient: ethers.constants.AddressZero,
-                freeAllocation: 0,
-                pricingModule: ethers.constants.AddressZero,
-            },
-            permissions,
-            requirements,
-        }
+    return {
+        settings: {
+            name,
+            symbol: 'MEMBER',
+            price: 0,
+            maxSupply: 1000,
+            duration: 0,
+            currency: ethers.constants.AddressZero,
+            feeRecipient: ethers.constants.AddressZero,
+            freeAllocation: 0,
+            pricingModule: ethers.constants.AddressZero,
+        },
+        permissions,
+        requirements,
     }
 }
 

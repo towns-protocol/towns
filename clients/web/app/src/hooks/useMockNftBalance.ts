@@ -5,7 +5,7 @@ import { Address, useTownsContext } from 'use-towns-client'
 const QUERY_KEY = 'balanceOfMockNFT'
 
 export function useMockNftBalance(address: Address) {
-    const { baseProvider: provider, baseChain: chain } = useTownsContext()
+    const { baseProvider: provider, baseChain: chain, baseConfig: config } = useTownsContext()
     const chainId = chain.id
 
     return useQuery({
@@ -15,7 +15,7 @@ export function useMockNftBalance(address: Address) {
             if (!address || !provider) {
                 return null
             }
-            return Promise.resolve(balanceOfMockNFT(chainId, provider, address))
+            return Promise.resolve(balanceOfMockNFT(config, provider, address))
         },
 
         select: (balance) => balance?.toString(),

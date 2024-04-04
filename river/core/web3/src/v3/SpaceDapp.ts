@@ -15,9 +15,9 @@ import { IRolesBase } from './IRolesShim'
 import { Space } from './Space'
 import { SpaceRegistrar } from './SpaceRegistrar'
 import { createEntitlementStruct } from '../ConvertersRoles'
-import { getContractsInfo } from '../IStaticContractsInfo'
+import { BaseChainConfig } from '../IStaticContractsInfo'
 import { WalletLink } from './WalletLink'
-import { DappConfig, SpaceInfo } from '../types'
+import { SpaceInfo } from '../types'
 import { IRuleEntitlement } from './index'
 import { PricingModules } from './PricingModules'
 import { dlogger } from '@river-build/dlog'
@@ -25,20 +25,18 @@ import { dlogger } from '@river-build/dlog'
 const logger = dlogger('csb:SpaceDapp:debug')
 
 export class SpaceDapp implements ISpaceDapp {
-    public readonly chainId: number
-    public readonly provider: ethers.providers.Provider | undefined
+    public readonly config: BaseChainConfig
+    public readonly provider: ethers.providers.Provider
     public readonly spaceRegistrar: SpaceRegistrar
     public readonly pricingModules: PricingModules
     public readonly walletLink: WalletLink
 
-    constructor(config: DappConfig) {
-        const { chainId, provider } = config
-        this.chainId = chainId
+    constructor(config: BaseChainConfig, provider: ethers.providers.Provider) {
+        this.config = config
         this.provider = provider
-        const contractsInfo = getContractsInfo(chainId)
-        this.spaceRegistrar = new SpaceRegistrar(contractsInfo, chainId, provider)
-        this.walletLink = new WalletLink(contractsInfo, chainId, provider)
-        this.pricingModules = new PricingModules(contractsInfo, chainId, provider)
+        this.spaceRegistrar = new SpaceRegistrar(config, provider)
+        this.walletLink = new WalletLink(config, provider)
+        this.pricingModules = new PricingModules(config, provider)
     }
 
     public async addRoleToChannel(

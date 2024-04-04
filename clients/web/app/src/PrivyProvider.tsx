@@ -1,12 +1,10 @@
 import React from 'react'
 import { configureChains } from 'wagmi'
-import { localhost } from 'wagmi/chains'
-import { jsonRpcProvider } from 'wagmi/providers/jsonRpc'
 import { publicProvider } from 'wagmi/providers/public'
 import { PrivyProvider as TownsPrivyProvider } from '@towns/privy'
+import uniqBy from 'lodash/uniqBy'
 import { env } from 'utils'
-import { useEnvironment } from 'hooks/useEnvironmnet'
-import { baseSepoliaClone, foundryClone } from 'customChains'
+import { ENVIRONMENTS, useEnvironment } from 'hooks/useEnvironmnet'
 import { useStore } from 'store/store'
 import { Figma } from 'ui/styles/palette'
 import { Buffer } from 'buffer'
@@ -19,36 +17,18 @@ if (!window.Buffer) {
     window.Buffer = Buffer
 }
 
-const SUPPORTED_CHAINS = [foundryClone, baseSepoliaClone, localhost]
-
-const wagmiChainsConfig = configureChains(
-    SUPPORTED_CHAINS,
-    env.VITE_PROVIDER_HTTP_URL
-        ? [
-              jsonRpcProvider({
-                  rpc: (chain) => {
-                      if (chain.id === foundryClone.id) {
-                          const httpUrl = chain.rpcUrls.default.http[0]
-                          return {
-                              http: httpUrl,
-                          }
-                      }
-                      return {
-                          webSocket: baseSepoliaClone.rpcUrls.default.webSocket?.[0],
-                          http: baseSepoliaClone.rpcUrls.default.http[0],
-                      }
-                  },
-              }),
-              publicProvider(),
-          ]
-        : [publicProvider()],
-    { retryCount: 5 },
+const SUPPORTED_CHAINS = uniqBy(
+    ENVIRONMENTS.map((env) => env.baseChain),
+    (x) => x.id,
 )
+
+// the chains are custom configured to include the rpcUrls we want to use, the publicProvider is a function that just checks null for us
+const wagmiChainsConfig = configureChains(SUPPORTED_CHAINS, [publicProvider()], { retryCount: 5 })
 
 const logo = '/towns_privy.svg'
 
 export function PrivyProvider({ children }: { children: JSX.Element }) {
-    const { chain } = useEnvironment()
+    const { baseChain: chain } = useEnvironment()
     const theme = useStore((s) => s.getTheme())
 
     return (

@@ -24,16 +24,20 @@ import { Chain } from 'viem/chains'
 import { IChainConfig, TProvider } from '../types/web3-types'
 import { SnapshotCaseType } from '@river-build/proto'
 import { makeProviderFromChain, makeProviderFromConfig } from '../utils/provider-utils'
+import { BaseChainConfig, RiverChainConfig } from '@river-build/web3'
+import { AccountAbstractionConfig } from '@towns/userops'
 
 export type InitialSyncSortPredicate = (a: string, b: string) => number
 
 export interface ITownsContext {
-    casablancaServerUrl?: TownsOpts['casablancaServerUrl']
+    environmentId: string /// the environment id, used to manage local storage keys
     client?: TownsClient /// only set when user is authenticated
     clientSingleton?: TownsClient /// always set, can be use for , this duplication can be removed once we transition to casablanca
     casablancaClient?: CasablancaClient /// set if we're logged in and casablanca client is started
+    baseConfig: BaseChainConfig
     baseChain: Chain
     baseProvider: TProvider
+    riverConfig: RiverChainConfig
     riverChain: IChainConfig
     riverProvider: TProvider
     rooms: Record<string, Room | undefined>
@@ -62,9 +66,11 @@ export function useTownsContext(): ITownsContext {
 }
 
 interface TownsContextProviderProps {
-    chain: Chain
+    environmentId: string
+    baseConfig: BaseChainConfig
+    baseChain: Chain
+    riverConfig: RiverChainConfig
     riverChain: IChainConfig
-    casablancaServerUrl?: string | undefined
     enableSpaceRootUnreads?: boolean
     timelineFilter?: Set<ZTEvent>
     streamFilter?: Set<SnapshotCaseType>
@@ -73,7 +79,7 @@ interface TownsContextProviderProps {
     QueryClientProvider?: React.ElementType<{ children: JSX.Element }>
     pushNotificationAuthToken?: string
     pushNotificationWorkerUrl?: string
-    accountAbstractionConfig?: TownsOpts['accountAbstractionConfig']
+    accountAbstractionConfig?: AccountAbstractionConfig
     highPriorityStreamIds?: string[]
 }
 
@@ -90,7 +96,6 @@ export function TownsContextProvider({
 
 const TownsContextImpl = (props: TownsContextProviderProps): JSX.Element => {
     let hookCounter = 0
-
     function useHookLogger() {
         useEffect(() => {
             console.log(`Hook number ${++hookCounter}`)
@@ -101,12 +106,14 @@ const TownsContextImpl = (props: TownsContextProviderProps): JSX.Element => {
     }
 
     const {
-        casablancaServerUrl,
+        environmentId,
+        baseConfig,
+        baseChain,
+        riverConfig,
+        riverChain,
         enableSpaceRootUnreads = false,
         timelineFilter,
         mutedChannelIds,
-        chain: baseChain,
-        riverChain,
     } = props
 
     const previousProps = useRef<TownsContextProviderProps>()
@@ -133,10 +140,12 @@ const TownsContextImpl = (props: TownsContextProviderProps): JSX.Element => {
 
     const townsOpts = useMemo(() => {
         return {
-            casablancaServerUrl,
+            environmentId,
             baseChainId: baseChain.id,
+            baseConfig,
             baseProvider,
             riverChainId: riverChain.chainId,
+            riverConfig,
             riverProvider,
             pushNotificationAuthToken: props.pushNotificationAuthToken,
             pushNotificationWorkerUrl: props.pushNotificationWorkerUrl,
@@ -144,14 +153,16 @@ const TownsContextImpl = (props: TownsContextProviderProps): JSX.Element => {
             highPriorityStreamIds: props.highPriorityStreamIds,
         } satisfies TownsOpts
     }, [
-        baseChain,
+        baseChain.id,
+        baseConfig,
         baseProvider,
-        casablancaServerUrl,
+        environmentId,
         props.accountAbstractionConfig,
         props.highPriorityStreamIds,
         props.pushNotificationAuthToken,
         props.pushNotificationWorkerUrl,
-        riverChain,
+        riverChain.chainId,
+        riverConfig,
         riverProvider,
     ])
 
@@ -186,11 +197,14 @@ const TownsContextImpl = (props: TownsContextProviderProps): JSX.Element => {
     return (
         <TownsContext.Provider
             value={{
+                environmentId,
                 client,
                 clientSingleton,
                 casablancaClient,
+                baseConfig,
                 baseChain,
                 baseProvider,
+                riverConfig,
                 riverChain,
                 riverProvider,
                 rooms,
@@ -201,7 +215,6 @@ const TownsContextImpl = (props: TownsContextProviderProps): JSX.Element => {
                 spaceHierarchies,
                 dmChannels,
                 dmUnreadChannelIds,
-                casablancaServerUrl: casablancaServerUrl,
                 clientStatus,
                 blockedUserIds,
             }}

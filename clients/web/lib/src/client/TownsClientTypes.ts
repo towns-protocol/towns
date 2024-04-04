@@ -1,20 +1,23 @@
 import { BigNumberish, ContractReceipt } from 'ethers'
 import { SendMessageOptions, UpdateChannelInfo } from '../types/towns-types'
 import { RoleIdentifier, TProvider, TransactionOrUserOperation } from '../types/web3-types'
-import { UserOpsConfig } from '@towns/userops'
+import { BaseChainConfig, RiverChainConfig } from '@river-build/web3'
+import { AccountAbstractionConfig } from '@towns/userops'
 
 export interface TownsOpts {
-    casablancaServerUrl?: string
+    environmentId: string
     baseChainId: number
+    baseConfig: BaseChainConfig
     baseProvider: TProvider
     riverChainId: number
+    riverConfig: RiverChainConfig
     riverProvider?: TProvider
     eventHandlers?: TownsClientEventHandlers
     logNamespaceFilter?: string
     pushNotificationWorkerUrl?: string
     pushNotificationAuthToken?: string
     verbose?: boolean
-    accountAbstractionConfig?: Omit<UserOpsConfig, 'chainId' | 'provider'>
+    accountAbstractionConfig?: AccountAbstractionConfig
     highPriorityStreamIds?: string[]
 }
 

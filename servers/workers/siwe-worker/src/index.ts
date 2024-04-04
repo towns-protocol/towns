@@ -1,13 +1,4 @@
-import {
-	isAuthedRequest,
-	isOptionsRequest,
-	getOptionsResponse,
-	Environment,
-	AuthEnv,
-	withCorsHeaders,
-} from 'worker-common'
-
-import { Permission, createSpaceDapp } from '@river-build/web3'
+import { Environment, AuthEnv } from 'worker-common'
 
 // These initial Types are based on bindings that don't exist in the project yet,
 // you can follow the links to learn how to implement them.
@@ -35,52 +26,54 @@ export default {
 
 export const worker = {
 	async fetch(request: FetchEvent['request'], env: Env): Promise<Response> {
-		const dapp = createSpaceDapp({ chainId: 1, provider: undefined })
-		if (isOptionsRequest(request)) {
-			return getOptionsResponse(request, env.ENVIRONMENT)
-		}
+		await new Promise((resolve) => setTimeout(resolve, 1))
+		throw new Error('Not implemented')
+		// const dapp = createSpaceDapp({ chainId: 1, provider: undefined })
+		// if (isOptionsRequest(request)) {
+		// 	return getOptionsResponse(request, env.ENVIRONMENT)
+		// }
 
-		if (!isAuthedRequest(request, env)) {
-			return new Response('Unauthorised', {
-				status: 401,
-				headers: withCorsHeaders(request, env.ENVIRONMENT),
-			})
-		}
+		// if (!isAuthedRequest(request, env)) {
+		// 	return new Response('Unauthorised', {
+		// 		status: 401,
+		// 		headers: withCorsHeaders(request, env.ENVIRONMENT),
+		// 	})
+		// }
 
-		if (request.method !== 'POST') {
-			return new Response('Method not allowed', {
-				status: 405,
-				headers: withCorsHeaders(request, env.ENVIRONMENT),
-			})
-		}
+		// if (request.method !== 'POST') {
+		// 	return new Response('Method not allowed', {
+		// 		status: 405,
+		// 		headers: withCorsHeaders(request, env.ENVIRONMENT),
+		// 	})
+		// }
 
-		try {
-			const newRequest = new Request(request.clone())
-			const { spaceId, userId } = (await newRequest.json()) as {
-				spaceId?: string
-				userId?: string
-			}
-			if (await dapp.isEntitledToSpace('space', 'user', Permission.Read)) {
-				return new Response('OK', {
-					status: 200,
-					headers: withCorsHeaders(request, env.ENVIRONMENT),
-				})
-			}
-			console.log(`spaceId: ${spaceId ?? ''}, userId: ${userId ?? ''}`)
-			if (!!spaceId && !!userId) {
-				return new Response('Unauthorized', { status: 401 })
-			} else {
-				return new Response('Unauthorized', { status: 401 })
-			}
-		} catch (e) {
-			console.log(`error: `, e)
-			return new Response('Unauthorized', {
-				status: 401,
-				headers: {
-					'content-type': 'application/json;charset=UTF-8',
-					...withCorsHeaders(request, env.ENVIRONMENT),
-				},
-			})
-		}
+		// try {
+		// 	const newRequest = new Request(request.clone())
+		// 	const { spaceId, userId } = (await newRequest.json()) as {
+		// 		spaceId?: string
+		// 		userId?: string
+		// 	}
+		// 	if (await dapp.isEntitledToSpace('space', 'user', Permission.Read)) {
+		// 		return new Response('OK', {
+		// 			status: 200,
+		// 			headers: withCorsHeaders(request, env.ENVIRONMENT),
+		// 		})
+		// 	}
+		// 	console.log(`spaceId: ${spaceId ?? ''}, userId: ${userId ?? ''}`)
+		// 	if (!!spaceId && !!userId) {
+		// 		return new Response('Unauthorized', { status: 401 })
+		// 	} else {
+		// 		return new Response('Unauthorized', { status: 401 })
+		// 	}
+		// } catch (e) {
+		// 	console.log(`error: `, e)
+		// 	return new Response('Unauthorized', {
+		// 		status: 401,
+		// 		headers: {
+		// 			'content-type': 'application/json;charset=UTF-8',
+		// 			...withCorsHeaders(request, env.ENVIRONMENT),
+		// 		},
+		// 	})
+		// }
 	},
 }

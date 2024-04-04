@@ -73,10 +73,10 @@ export const useInviteData = (slug: string | undefined) => {
 }
 export function useContractSpaceInfos(opts: TownsOpts, client?: CasablancaClient) {
     const provider = opts.baseProvider
-    const chainId = opts.baseChainId
+    const config = opts.baseConfig
 
     const spaceDapp = useSpaceDapp({
-        chainId,
+        config,
         provider,
     })
     const { offlineSpaceInfoMap, setOfflineSpaceInfo } = useOfflineStore()
@@ -165,9 +165,9 @@ export const useContractSpaceInfo = (
     spaceId: string | undefined,
 ): { data: SpaceInfo | undefined; isLoading: boolean; error: unknown } => {
     const { offlineSpaceInfoMap, setOfflineSpaceInfo } = useOfflineStore()
-    const { baseProvider: provider, baseChain: chain } = useTownsContext()
+    const { baseProvider: provider, baseConfig: config } = useTownsContext()
     const spaceDapp = useSpaceDapp({
-        chainId: chain?.id,
+        config,
         provider,
     })
 

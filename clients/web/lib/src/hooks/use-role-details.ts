@@ -17,10 +17,10 @@ export function useRoleDetails(
     roleDetails: RoleDetails | undefined | null
     error: unknown
 } {
-    const { baseProvider: provider, baseChain: chain } = useTownsContext()
+    const { baseProvider: provider, baseConfig: config } = useTownsContext()
 
     const spaceDapp = useSpaceDapp({
-        chainId: chain?.id,
+        config,
         provider,
     })
 
@@ -59,10 +59,10 @@ export function useRoleDetails(
 
 export function useMultipleRoleDetails(spaceId: string, roleIds: number[]) {
     const queryClient = useQueryClient()
-    const { baseProvider: provider, baseChain: chain } = useTownsContext()
+    const { baseProvider: provider, baseConfig: config } = useTownsContext()
 
     const spaceDapp = useSpaceDapp({
-        chainId: chain?.id,
+        config,
         provider,
     })
     const isEnabled = spaceDapp && spaceId.length > 0 && roleIds.length > 0

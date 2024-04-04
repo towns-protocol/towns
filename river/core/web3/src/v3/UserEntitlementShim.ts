@@ -15,6 +15,7 @@ import { BigNumberish, ethers } from 'ethers'
 import { decodeUsers } from '../ConvertersEntitlements'
 import { EntitlementModuleType, EntitlementModule } from '../ContractTypes'
 import { dlogger } from '@river-build/dlog'
+import { ContractVersion } from '../IStaticContractsInfo'
 
 const logger = dlogger('csb:UserEntitlementShim:debug')
 
@@ -27,10 +28,14 @@ export class UserEntitlementShim
     >
     implements EntitlementModule
 {
-    constructor(address: string, chainId: number, provider: ethers.providers.Provider | undefined) {
-        super(address, chainId, provider, {
-            31337: LocalhostAbi,
-            84532: BaseSepoliaAbi,
+    constructor(
+        address: string,
+        version: ContractVersion,
+        provider: ethers.providers.Provider | undefined,
+    ) {
+        super(address, version, provider, {
+            [ContractVersion.dev]: LocalhostAbi,
+            [ContractVersion.v3]: BaseSepoliaAbi,
         })
     }
 

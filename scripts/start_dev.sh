@@ -99,25 +99,14 @@ echo "Both Anvil chains and Postgres are now running, deploying contracts"
 # Wait for build to finish
 wait_for_process "$BUILD_PID" "build"
 
-# In your tmux session, start the deployments in background panes/windows
-tmux new-window -t $SESSION_NAME -n deploy-base './river/scripts/deploy-base.sh nobuild; tmux wait-for -S deploy-base-done'
-tmux new-window -t $SESSION_NAME -n deploy-river './river/scripts/deploy-river.sh nobuild; tmux wait-for -S deploy-river-done'
-
-# Now, in your original pane or window, block until the deployments signal they are done
-tmux wait-for deploy-base-done
-tmux wait-for deploy-river-done
 
 echo "STARTED ALL CHAINS AND DEPLOYED ALL CONTRACTS"
 
-
 # Now generate the core server config
-./river/core/node/run_multi.sh -c -n 10
-./river/core/node/run_single.sh -c
-./river/core/node/run_single.sh -c --de
-
-# xchain nodes
-# disabled: https://linear.app/hnt-labs/issue/HNT-4317/create-multish-call-in-the-start-devsh-fails
-./river/core/xchain/create_multi.sh
+./river/scripts/configure-nodes.sh --single
+#./river/scripts/configure-nodes.sh --single_ne
+#./river/scripts/configure-nodes.sh --multi
+#./river/scripts/configure-nodes.sh --multi_ne
 
 # Continue with rest of the script
 echo "Continuing with the rest of the script..."
@@ -136,19 +125,18 @@ commands=(
     "watch_worker:cd servers/workers/worker-common && yarn watch"
     "watch_proto:cd river/core/proto && yarn watch"
     "watch_web3:cd river/core/web3 && yarn watch"
-    "watch_go:cd river/core/proto && yarn watch:go"
     "app:cd clients/web/app && yarn dev"
     "sample_app:cd clients/web/sample-app && yarn dev"
-    "debug_app:cd river/core/debug-app && yarn dev"
     "worker_unfurl:cd servers/workers/unfurl-worker && yarn dev:local"
     "worker_token:cd servers/workers/token-worker && yarn dev:local"
     "worker_gateway:cd servers/workers/gateway-worker && yarn dev:local"
     "notification_service:sleep 4 && ./scripts/start-local-notification-service.sh"
     "worker_stackup:cd servers/workers/stackup-worker && yarn dev:local"
-    "core_single:sleep 3 && ./river/core/node/run_single.sh -sc"
-    "core_single_ne:./river/scripts/wait-for-core.sh && ./river/core/node/run_single.sh -sc --de"
-    "core:./river/core/node/run_multi.sh -r"
-    "xchain:./river/core/xchain/launch_multi.sh"
+    "core_single:sleep 3 && ./river/core/node/run_single.sh -r"
+    #"core_single_ne:./river/scripts/wait-for-core.sh && ./river/core/node/run_single.sh -r --de"
+    #"core:./river/core/node/run_multi.sh -r"
+    #"core:./river/core/node/run_multi.sh -r --de"
+    "xchain:RUN_ENV=single ./river/core/xchain/launch_multi.sh"
 )
 
 # Create a Tmux window for each command

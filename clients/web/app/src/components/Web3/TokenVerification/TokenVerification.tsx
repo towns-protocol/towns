@@ -92,7 +92,8 @@ function Content({
     tokensGatingMembership: TokenGatingMembership
 }>) {
     const tokensLength = tokensGatingMembership.tokens.length
-    const { chainId } = useEnvironment()
+    const { baseChain } = useEnvironment()
+    const chainId = baseChain.id
     const columns = isTouch() ? 1 : tokensLength > 2 ? 3 : tokensLength > 1 ? 2 : 1
     const { data: tokenBalances, isLoading: isLoadingBalances } = useTokenBalances({
         chainId,

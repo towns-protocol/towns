@@ -29,7 +29,8 @@ export const SpaceSideBarHeader = (props: {
     scrollOffset: number
 }) => {
     const { opaqueHeaderBar, space } = props
-    const { chainId } = useEnvironment()
+    const { baseChain } = useEnvironment()
+    const chainId = baseChain.id
 
     const { memberIds } = useSpaceMembers()
     const { data: spaceInfo } = useContractSpaceInfo(space.id)

@@ -1,5 +1,5 @@
 import { NodeStructOutput } from '@river-build/generated/dev/typings/INodeRegistry'
-import { getRiverChainContractsInfo } from '../IStaticContractsInfo'
+import { RiverChainConfig } from '../IStaticContractsInfo'
 import { IRiverRegistryShim } from './IRiverRegistryShim'
 import { ethers } from 'ethers'
 
@@ -12,21 +12,17 @@ interface NodeUrls {
 }
 
 export class RiverRegistry {
-    public readonly chainId: number
-    public readonly provider: ethers.providers.Provider | undefined
+    public readonly config: RiverChainConfig
+    public readonly provider: ethers.providers.Provider
     public readonly riverRegistry: IRiverRegistryShim
     public readonly registry: IRiverRegistry = {}
 
-    constructor(chainId: number, provider: ethers.providers.Provider | undefined) {
-        const contractsInfo = getRiverChainContractsInfo(chainId)
-        if (contractsInfo.riverRegistryAddress === undefined) {
-            throw new Error('RiverRegistry address is not defined')
-        }
-        this.chainId = chainId
+    constructor(config: RiverChainConfig, provider: ethers.providers.Provider) {
+        this.config = config
         this.provider = provider
         this.riverRegistry = new IRiverRegistryShim(
-            contractsInfo.riverRegistryAddress,
-            chainId,
+            this.config.addresses.riverRegistry,
+            this.config.contractVersion,
             provider,
         )
     }

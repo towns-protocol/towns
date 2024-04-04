@@ -7,9 +7,9 @@ import { ethers } from 'ethers'
 /// credentials and login status are stored in local storage, and is
 /// used to show the login screen
 export function useCasablancaCredentials() {
-    const { casablancaServerUrl } = useTownsContext()
+    const { environmentId } = useTownsContext()
     const credentials = useCredentialStore(
-        (state) => state.casablancaCredentialsMap[casablancaServerUrl ?? ''] ?? undefined,
+        (state) => state.casablancaCredentialsMap[environmentId ?? ''] ?? undefined,
     )
     const { loginStatus, loginError } = useCasablancaStore()
     const isAuthenticated = credentials?.delegateSig !== undefined

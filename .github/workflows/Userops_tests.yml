@@ -52,14 +52,13 @@ jobs:
               timeout-minutes: 10
               env:
                 AA_PAYMASTER_PROXY_URL: http://127.0.0.1:8686
-                CASABLANCA_SERVER_URL: https://river1.nodes.gamma.towns.com
                 AA_PAYMASTER_PROXY_AUTH_SECRET: Zm9v
                 DATADOG_API_KEY: ${{ secrets.DD_TOWNS_LOAD_TESTING_KEY }}
-                ETHERS_NETWORK: ${{ secrets.USEROPS_RPC_URL }}
+                BASE_CHAIN_RPC_URL: ${{ secrets.USEROPS_RPC_URL }}
                 AA_RPC_URL: ${{ secrets.AA_RPC_URL }}
                 AA_BUNDLER_URL: ${{ secrets.AA_BUNDLER_URL }}
-                RIVER_CHAIN_PROVIDER_HTTP_URL: https://devnet.rpc.river.build
-                RIVER_CHAIN_ID: 6524490
+                RIVER_CHAIN_RPC_URL: https://devnet.rpc.river.build
+                RIVER_ENV: testnet
 
               working-directory: ./clients/web/lib
               run: yarn test:userops:random-wallet
@@ -68,14 +67,13 @@ jobs:
               timeout-minutes: 10
               env:
                 AA_PAYMASTER_PROXY_URL: http://127.0.0.1:8787
-                CASABLANCA_SERVER_URL: https://river1.nodes.gamma.towns.com
                 AA_PAYMASTER_PROXY_AUTH_SECRET: Zm9v
                 DATADOG_API_KEY: ${{ secrets.DD_TOWNS_LOAD_TESTING_KEY }}
-                ETHERS_NETWORK: ${{ secrets.USEROPS_RPC_URL }}
+                BASE_CHAIN_RPC_URL: ${{ secrets.USEROPS_RPC_URL }}
                 AA_RPC_URL: ${{ secrets.AA_RPC_URL }}
                 AA_BUNDLER_URL: ${{ secrets.AA_BUNDLER_URL }}
-                RIVER_CHAIN_PROVIDER_HTTP_URL: https://devnet.rpc.river.build
-                RIVER_CHAIN_ID: 6524490
+                RIVER_CHAIN_RPC_URL: https://devnet.rpc.river.build
+                RIVER_ENV: testnet
 
               working-directory: ./clients/web/lib
               run: yarn test:userops:privy-wallet

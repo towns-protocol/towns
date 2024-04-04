@@ -3,10 +3,17 @@ pragma solidity ^0.8.0;
 
 // solhint-disable-next-line
 
-import {PRBTest} from "@prb/test/PRBTest.sol";
-import {StdCheats} from "forge-std/StdCheats.sol";
+import "@prb/test/Helpers.sol" as Helpers;
+import {Test} from "forge-std/Test.sol";
 
-contract TestUtils is PRBTest, StdCheats {
+contract TestUtils is Test {
+  event LogNamedArray(string key, address[] value);
+  event LogNamedArray(string key, bool[] value);
+  event LogNamedArray(string key, bytes32[] value);
+  event LogNamedArray(string key, int256[] value);
+  event LogNamedArray(string key, string[] value);
+  event LogNamedArray(string key, uint256[] value);
+
   uint256 private immutable _NONCE;
 
   address public constant NATIVE_TOKEN =
@@ -110,11 +117,125 @@ contract TestUtils is PRBTest, StdCheats {
     return block.chainid == 31337 || block.chainid == 31338;
   }
 
-  function isTesting() internal returns (bool) {
+  function isTesting() internal view returns (bool) {
     return vm.envOr("IN_TESTING", false);
   }
 
   function getDeployer() internal view returns (address) {
     return vm.addr(vm.envUint("LOCAL_PRIVATE_KEY"));
+  }
+
+  /*//////////////////////////////////////////////////////////////////////////
+                                CONTAINMENT ASSERTIONS
+    //////////////////////////////////////////////////////////////////////////*/
+
+  /// @dev Tests that `a` contains `b`. If it does not, the test fails.
+  function assertContains(address[] memory a, address b) internal virtual {
+    if (!Helpers.contains(a, b)) {
+      emit log("Error: a does not contain b [address[]]");
+      emit log_named_array("  Array a", a);
+      emit log_named_address("   Item b", b);
+      fail();
+    }
+  }
+
+  /// @dev Tests that `a` contains `b`. If it does not, the test fails with the error message `err`.
+  function assertContains(
+    address[] memory a,
+    address b,
+    string memory err
+  ) internal virtual {
+    if (!Helpers.contains(a, b)) {
+      emit log_named_string("Error", err);
+      assertContains(a, b);
+    }
+  }
+
+  /// @dev Tests that `a` contains `b`. If it does not, the test fails.
+  function assertContains(bytes32[] memory a, bytes32 b) internal virtual {
+    if (!Helpers.contains(a, b)) {
+      emit log("Error: a does not contain b [bytes32[]]");
+      emit LogNamedArray("  Array a", a);
+      emit log_named_bytes32("   Item b", b);
+      fail();
+    }
+  }
+
+  /// @dev Tests that `a` contains `b`. If it does not, the test fails with the error message `err`.
+  function assertContains(
+    bytes32[] memory a,
+    bytes32 b,
+    string memory err
+  ) internal virtual {
+    if (!Helpers.contains(a, b)) {
+      emit log_named_string("Error", err);
+      assertContains(a, b);
+    }
+  }
+
+  /// @dev Tests that `a` contains `b`. If it does not, the test fails.
+  function assertContains(int256[] memory a, int256 b) internal virtual {
+    if (!Helpers.contains(a, b)) {
+      emit log("Error: a does not contain b [int256[]]");
+      emit LogNamedArray("  Array a", a);
+      emit log_named_int("   Item b", b);
+      fail();
+    }
+  }
+
+  /// @dev Tests that `a` contains `b`. If it does not, the test fails with the error message `err`.
+  function assertContains(
+    int256[] memory a,
+    int256 b,
+    string memory err
+  ) internal virtual {
+    if (!Helpers.contains(a, b)) {
+      emit log_named_string("Error", err);
+      assertContains(a, b);
+    }
+  }
+
+  /// @dev Tests that `a` contains `b`. If it does not, the test fails.
+  function assertContains(string[] memory a, string memory b) internal virtual {
+    if (!Helpers.contains(a, b)) {
+      emit log("Error: a does not contain b [string[]]");
+      emit LogNamedArray("  Array a", a);
+      emit log_named_string("   Item b", b);
+      fail();
+    }
+  }
+
+  /// @dev Tests that `a` contains `b`. If it does not, the test fails with the error message `err`.
+  function assertContains(
+    string[] memory a,
+    string memory b,
+    string memory err
+  ) internal virtual {
+    if (!Helpers.contains(a, b)) {
+      emit log_named_string("Error", err);
+      assertContains(a, b);
+    }
+  }
+
+  /// @dev Tests that `a` contains `b`. If it does not, the test fails.
+  function assertContains(uint256[] memory a, uint256 b) internal virtual {
+    if (!Helpers.contains(a, b)) {
+      emit log("Error: a does not contain b [uint256[]]");
+      emit LogNamedArray("  Array a", a);
+      emit log_named_uint("   Item b", b);
+      fail();
+    }
+  }
+
+  /// @dev Tests that `a` contains `b`. If it does not, the test fails with the error message `err`.
+  function assertContains(
+    uint256[] memory a,
+    uint256 b,
+    string memory err
+  ) internal virtual {
+    if (!Helpers.contains(a, b)) {
+      emit log_named_string("Error", err);
+      assertContains(a, b);
+    }
   }
 }

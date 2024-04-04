@@ -16,10 +16,10 @@ import {
     createTestChannelWithSpaceRoles,
     createTestSpaceGatedByTownNft,
     registerAndStartClients,
-    getChainIds,
 } from './helpers/TestUtils'
 import { Permission, createRiverRegistry } from '@river-build/web3'
 import debug from 'debug'
+import { TownsTestWeb3Provider } from './helpers/TownsTestWeb3Provider'
 
 const log = debug('test:casablanca')
 
@@ -28,11 +28,12 @@ describe('casablanca', () => {
         const primaryWallet = ethers.Wallet.createRandom()
         const delegateWallet = ethers.Wallet.createRandom()
         const context = await makeSignerContext(primaryWallet, delegateWallet)
-        const { riverChainId, riverChainProvider } = await getChainIds()
-        const riverRegistry = createRiverRegistry({
-            chainId: riverChainId,
-            provider: riverChainProvider,
-        })
+        // the towns test provider wraps all the configuration needed to run a test and is also a ethers provider
+        const provider = new TownsTestWeb3Provider(primaryWallet)
+        const riverRegistry = createRiverRegistry(
+            provider.riverChainProvider,
+            provider.config.river.chainConfig,
+        )
         const urls = await riverRegistry.getOperationalNodeUrls()
         const rpcClient = makeStreamRpcClient(urls, undefined, () =>
             riverRegistry.getOperationalNodeUrls(),

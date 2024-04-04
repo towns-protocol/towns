@@ -103,25 +103,21 @@ if [ "$IS_PULL_REQUEST" = true ]; then
     transient_single_node_river_url=$(get_transient_river_node_url $pr_number 1)
     transient_multi_node_river_url=$(get_transient_multinode_csv_node_urls $pr_number 10)
 
-    # Set VITE_CASABLANCA_HOMESERVER_URL based on mode
-    if [ "$mode" = "single-node" ]; then
-        echo "Setting VITE_CASABLANCA_HOMESERVER_URL to $transient_single_node_river_url"
-        export VITE_CASABLANCA_HOMESERVER_URL="$transient_single_node_river_url"
-    elif [ "$mode" = "multi-node" ]; then
-        echo "Setting VITE_CASABLANCA_HOMESERVER_URL to $transient_multi_node_river_url"
-        export VITE_CASABLANCA_HOMESERVER_URL="$transient_multi_node_river_url"
-    fi
-
-    if [ "$mode" = "single-node" ] || [ "$mode" = "multi-node" ]; then
-        echo "Setting VITE_PROVIDER_HTTP_URL to $transient_provider_http_url"
-        export VITE_PROVIDER_HTTP_URL="$transient_provider_http_url"
-
-        echo "Setting VITE_PROVIDER_WS_URL to $transient_provider_ws_url"
-        export VITE_PROVIDER_WS_URL="$transient_provider_ws_url"
-
-        echo "Setting VITE_RIVER_CHAIN_PROVIDER_HTTP_URL to $transient_riverchain_provider_http_url"
-        export VITE_RIVER_CHAIN_PROVIDER_HTTP_URL="$transient_riverchain_provider_http_url"
-    fi
+    # the app no longer has a url to the river node,
+    # it pulls available nodes from the river registry 
+    # identified by: ADDRESS_RIVER_REGISTRY
+    # if these variables are not set, it will connect 
+    # to the checked in testnet env
+    # export VITE_RIVER_ENV='transient_${pr_number}'
+    # export VITE_BASE_CHAIN_RPC_URL='todo'
+    # export VITE_BASE_CHAIN_WS_URL='todo'
+    # export VITE_BASE_CHAIN_ID='todo'
+    # export VITE_RIVER_CHAIN_RPC_URL='todo'
+    # export VITE_RIVER_CHAIN_ID='todo'
+    # export VITE_ADDRESS_SPACE_FACTORY='todo'
+    # export VITE_ADDRESS_SPACE_OWNER='todo'
+    # export VITE_ADDRESS_WALLET_LINK='todo'
+    # export VITE_ADDRESS_RIVER_REGISTRY='todo'
 
     echo "Setting VITE_TRANSIENT_ENV_GITHUB_PR_NUMBER to $pr_number"
     export VITE_TRANSIENT_ENV_GITHUB_PR_NUMBER="$pr_number"

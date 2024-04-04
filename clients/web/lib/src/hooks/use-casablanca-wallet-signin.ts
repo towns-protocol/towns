@@ -9,7 +9,7 @@ import { SignerUndefinedError } from '../types/error-types'
 import { makeSignerContext } from '@river/sdk'
 
 export function useCasablancaWalletSignIn() {
-    const { casablancaServerUrl } = useTownsContext()
+    const { environmentId } = useTownsContext()
     const { setCasablancaCredentials } = useCredentialStore()
     const { setLoginError, setLoginStatus } = useCasablancaStore()
 
@@ -23,15 +23,15 @@ export function useCasablancaWalletSignIn() {
             if (!signer) {
                 throw new SignerUndefinedError()
             }
-            if (!casablancaServerUrl) {
-                throw new Error('Casablanca server url not set')
+            if (!environmentId) {
+                throw new Error('environmentId not set')
             }
             const delegateWallet = ethers.Wallet.createRandom()
             const wallet = (await signer.getAddress()) as Address
             try {
                 const casablancaContext = await makeSignerContext(signer, delegateWallet)
                 setCasablancaCredentials(
-                    casablancaServerUrl,
+                    environmentId,
                     credentialsFromSignerContext(wallet, delegateWallet, casablancaContext),
                 )
                 // eslint-disable-next-line @typescript-eslint/no-explicit-any
@@ -47,7 +47,7 @@ export function useCasablancaWalletSignIn() {
                 setLoginStatus(LoginStatus.LoggedOut)
             }
         },
-        [casablancaServerUrl, setCasablancaCredentials, setLoginError, setLoginStatus],
+        [environmentId, setCasablancaCredentials, setLoginError, setLoginStatus],
     )
 
     const registerWalletWithCasablanca = useCallback(

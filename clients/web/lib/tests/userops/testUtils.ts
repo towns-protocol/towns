@@ -69,12 +69,15 @@ export function getAccountAbstractionConfig() {
         )
     }
 
-    if (process.env.ETHERS_NETWORK?.includes('localhost')) {
-        throw new Error(
-            'ETHERS_NETWORK should not be set to localhost. Use a testnet. Do you have a .env.test.userops file?',
-        )
+    if (!process.env.BASE_CHAIN_RPC_URL) {
+        throw new Error('BASE_CHAIN_RPC_URL env var not set. Do you have a .env.test.userops file?')
     }
 
+    if (process.env.BASE_CHAIN_RPC_URL?.includes('localhost')) {
+        throw new Error(
+            'BASE_CHAIN_RPC_URL should not be set to localhost. Use a testnet. Do you have a .env.test.userops file?',
+        )
+    }
     const accountAbstractionConfig: TownsOpts['accountAbstractionConfig'] = {
         bundlerUrl: process.env.AA_BUNDLER_URL,
         paymasterProxyUrl: process.env.AA_PAYMASTER_PROXY_URL,

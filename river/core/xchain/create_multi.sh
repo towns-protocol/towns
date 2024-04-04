@@ -35,9 +35,13 @@ fi
 # Change the current working directory to the directory of the script
 cd "$(dirname "$0")"
 
+
+: ${RUN_ENV:?}
+: ${RIVER_ENV:?} 
+
 ENTITLMENT_CHECKER_URL="ws://localhost:8545"
-ENTITLMENT_CHECKER_ADDRESS=$(jq -r '.address' ../../packages/generated/addresses/base_anvil/entitlementChecker.json)
-ENTITLMENT_TEST_ADDRESS=$(jq -r '.address' ../../packages/generated/addresses/base_anvil/entitlementGatedExample.json)
+ENTITLMENT_CHECKER_ADDRESS=$(jq -r '.address' ../../packages/generated/deployments/${RIVER_ENV}/base/addresses/entitlementChecker.json)
+ENTITLMENT_TEST_ADDRESS=$(jq -r '.address' ../../packages/generated/deployments/${RIVER_ENV}/base/addresses/entitlementGatedExample.json)
 BASE_CHAIN_ID=31337
 
 make
@@ -46,7 +50,7 @@ make
 N=5
 
 # Base directory for the instances
-BASE_DIR="./run_files"
+BASE_DIR="./run_files/${RUN_ENV}"
 
 
 

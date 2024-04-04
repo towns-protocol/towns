@@ -1,6 +1,5 @@
-import { TestSpaceDapp } from '@river-build/web3/tests/TestSpaceDapp'
-import { TestWeb3Provider } from '@river-build/web3/tests/TestWeb3Provider'
-import { Permission, CreateSpaceParams, ISpaceDapp } from '@river-build/web3'
+import { LocalhostWeb3Provider, SpaceDapp, getWeb3Deployment } from '@river-build/web3'
+import { Permission, CreateSpaceParams } from '@river-build/web3'
 import { paymasterProxyMiddleware } from '../src/paymasterProxyMiddleware'
 import { ethers } from 'ethers'
 import { nanoid } from 'nanoid'
@@ -10,7 +9,9 @@ import { NoopRuleData } from '@river-build/web3/src'
 // FOR NOW these tests only work against stackup bundler/paymaster
 describe.skip('UserOpSpaceDapp tests', () => {
     test('can send createTown user op', async () => {
-        const bob = await TestWeb3Provider.init()
+        const bob = new LocalhostWeb3Provider(process.env.RPC_URL as string)
+        await bob.ready
+        const baseConfig = getWeb3Deployment(process.env.RIVER_ENV as string).base // see util.test.ts for loading from env
 
         // ANVIL
         // also mint the mock nft in case there's gating on creating a space
@@ -18,13 +19,11 @@ describe.skip('UserOpSpaceDapp tests', () => {
             await bob.fundWallet()
         }
 
-        const spaceDapp = new TestSpaceDapp({
-            chainId: bob.network.chainId,
-            provider: bob,
-        }) as unknown as ISpaceDapp
+        const spaceDapp = new SpaceDapp(baseConfig, bob)
 
         const userOps = new TestUserOps({
             provider: spaceDapp.provider,
+            config: spaceDapp.config,
             spaceDapp,
             bundlerUrl: process.env.VITE_AA_BUNDLER_URL,
             paymasterProxyUrl: process.env.VITE_AA_PAYMASTER_PROXY_URL,
@@ -61,6 +60,7 @@ describe.skip('UserOpSpaceDapp tests', () => {
         const spaceAddress = spaceDapp.getSpaceAddress(txReceipt)
         expect(spaceAddress).toBeDefined()
         const spaceId = '10' + spaceAddress!.slice(2) + '0'.repeat(64 - spaceAddress!.length)
+
         let town
         try {
             town = await (await spaceDapp.getSpace(spaceId))?.getSpaceInfo()

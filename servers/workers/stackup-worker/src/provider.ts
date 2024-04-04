@@ -1,4 +1,4 @@
-import { ISpaceDapp, Versions, createSpaceDapp } from '@river-build/web3'
+import { ISpaceDapp, createSpaceDapp, getWeb3Deployment } from '@river-build/web3'
 import { ethers } from 'ethers'
 import { env } from 'process'
 import { Environment } from 'worker-common'
@@ -15,6 +15,11 @@ const providerMap = new Map<string, string>([
 export const networkMap = new Map<string, string>([
     ['development', 'anvil'],
     ['test-beta', 'base_sepolia'],
+])
+
+export const riverEnvMap = new Map<string, string>([
+    ['development', 'single'],
+    ['test-beta', 'testnet'],
 ])
 
 export function createStaticProvider(
@@ -46,11 +51,15 @@ export function createJsonProvider(
 }
 
 export async function createSpaceDappForNetwork(env: Env): Promise<ISpaceDapp | undefined> {
+    const riverEnv = riverEnvMap.get(env.ENVIRONMENT)
+    if (!riverEnv) {
+        console.error('riverEnv not found for environment')
+        return undefined
+    }
     const provider = createStaticProvider(env.ENVIRONMENT, env)
-    const network = await provider.getNetwork()
-    const spaceDapp = createSpaceDapp({
-        chainId: network.chainId,
-        provider,
-    })
+    await provider.ready
+    const config = getWeb3Deployment(riverEnv)
+
+    const spaceDapp = createSpaceDapp(provider, config.base)
     return spaceDapp
 }

@@ -1,0 +1,4 @@
+# the env file is generated with yarn preinstall or scripts/make-environment.sh
+config/*
+# ignore any known localhost deployments
+deployments/local*

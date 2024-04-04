@@ -1,12 +1,13 @@
-import { DappConfig, Versions, createRiverRegistry } from '@river-build/web3'
+import { RiverChainConfig, createRiverRegistry } from '@river-build/web3'
 import { RetryParams, StreamRpcClient, makeStreamRpcClient } from './makeStreamRpcClient'
+import { ethers } from 'ethers'
 
 export async function makeRiverRpcClient(
-    config: DappConfig,
-    version?: Versions,
+    provider: ethers.providers.Provider,
+    config: RiverChainConfig,
     retryParams?: RetryParams,
 ): Promise<StreamRpcClient> {
-    const riverRegistry = createRiverRegistry({ ...config }, version)
+    const riverRegistry = createRiverRegistry(provider, config)
     const urls = await riverRegistry.getOperationalNodeUrls()
     const rpcClient = makeStreamRpcClient(urls, retryParams, () =>
         riverRegistry.getOperationalNodeUrls(),

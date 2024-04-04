@@ -2,8 +2,9 @@
 set -euo pipefail
 cd -P -- "$(dirname -- "${BASH_SOURCE[0]}")"
 
-: ${RUN_BASE:?}
+: ${RUN_ENV:?} # values are single, single_ne, multi, multi_ne
 
+export RUN_BASE="./run_files/${RUN_ENV}"
 export DB_PORT="${DB_PORT:-5433}"
 export LOG_LEVEL="${LOG_LEVEL:-info}"
 export LOG_NOCOLOR="${LOG_NOCOLOR:-false}"
@@ -13,6 +14,8 @@ export NUM_INSTANCES="${NUM_INSTANCES:-10}"
 export REPL_FACTOR="${REPL_FACTOR:-1}"
 export RPC_PORT="${RPC_PORT:-5170}"
 export DISABLE_BASE_CHAIN="${DISABLE_BASE_CHAIN:-false}"
+export RIVER_ENV="local_${RUN_ENV}"
+
 
 [ -z "${BLOCK_TIME_MS+x}" ] && BLOCK_TIME_MS=$(( ${RIVER_BLOCK_TIME:-1} * 1000 ))
 export BLOCK_TIME_MS
@@ -52,11 +55,16 @@ fi
 
 if [ "$CONFIG" == "true" ]; then
     mkdir -p ${RUN_BASE}
-    ../../scripts/deploy-river-registry.sh
-    cp -r ./run_files/addresses/ ${RUN_BASE}/addresses
+    ../../scripts/deploy-contracts.sh
+
+    SPACE_FACTORY_ADDRESS=$(jq -r '.address' ../../packages/generated/deployments/${RIVER_ENV}/base/addresses/spaceFactory.json)
+    WALLET_LINK_ADDRESS=$(jq -r '.address' ../../packages/generated/deployments/${RIVER_ENV}/base/addresses/walletLink.json)
+    RIVER_REGISTRY_ADDRESS=$(jq -r '.address' ../../packages/generated/deployments/${RIVER_ENV}/river/addresses/riverRegistry.json)    
+    export SPACE_FACTORY_ADDRESS
+    export WALLET_LINK_ADDRESS
+    export RIVER_REGISTRY_ADDRESS
 
     source ../../contracts/.env.localhost
-    RIVER_REGISTRY_ADDRESS=$(jq -r .address ${RUN_BASE}/addresses/riverRegistry.json)
 
     for ((i=0; i<NUM_INSTANCES; i++)); do
         printf -v INSTANCE "%02d" $i
@@ -86,6 +94,9 @@ if [ "$CONFIG" == "true" ]; then
         $RIVER_REGISTRY_ADDRESS \
         "getAllNodes()((uint8,string,address,address)[])" | sed 's/),/),\n/g'
     echo "<<<<<<<<<<<<<<<<<<<<<<<<<"
+
+    # config multi-node for this deployment
+    ../xchain/create_multi.sh
 fi
 
 if [ "$BUILD" == "true" ]; then

@@ -1,6 +1,6 @@
 import { BigNumber, ContractTransaction, ethers } from 'ethers'
 import { IWalletLinkShim } from './WalletLinkShim'
-import { IStaticContractsInfo } from '../IStaticContractsInfo'
+import { BaseChainConfig } from '../IStaticContractsInfo'
 import { arrayify } from 'ethers/lib/utils'
 import { WalletAlreadyLinkedError, WalletNotLinkedError } from '../error-types'
 import { Address } from '../ContractTypes'
@@ -9,13 +9,13 @@ export class WalletLink {
     private readonly walletLinkShim: IWalletLinkShim
     public address: Address
 
-    constructor(
-        contractInfo: IStaticContractsInfo,
-        chainId: number,
-        provider: ethers.providers.Provider | undefined,
-    ) {
-        this.walletLinkShim = new IWalletLinkShim(contractInfo.walletLinkAddress, chainId, provider)
-        this.address = contractInfo.walletLinkAddress
+    constructor(config: BaseChainConfig, provider: ethers.providers.Provider | undefined) {
+        this.walletLinkShim = new IWalletLinkShim(
+            config.addresses.walletLink,
+            config.contractVersion,
+            provider,
+        )
+        this.address = config.addresses.walletLink
     }
 
     private async assertNotAlreadyLinked(rootKey: ethers.Signer, wallet: ethers.Signer | Address) {

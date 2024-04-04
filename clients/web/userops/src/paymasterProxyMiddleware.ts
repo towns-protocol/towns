@@ -42,6 +42,7 @@ export const paymasterProxyMiddleware: ({
             rootKeyAddress,
             bundlerUrl,
             provider,
+            config,
             aaRpcUrl: rpcUrl,
             functionHashForPaymasterProxy,
             townId,
@@ -54,10 +55,7 @@ export const paymasterProxyMiddleware: ({
 
         async function fallbackEstimate() {
             if (provider) {
-                const spaceDapp = createSpaceDapp({
-                    chainId: (await provider.getNetwork()).chainId,
-                    provider,
-                })
+                const spaceDapp = createSpaceDapp(provider, config)
                 try {
                     await Presets.Middleware.estimateUserOperationGas(
                         new BundlerJsonRpcProvider(rpcUrl).setBundlerRpc(bundlerUrl),

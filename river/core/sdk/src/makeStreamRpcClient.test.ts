@@ -3,11 +3,10 @@
  */
 
 import { Err, InfoRequest, InfoResponse } from '@river-build/proto'
-import { makeTestRpcClient, RIVER_ANVIL } from './util.test'
+import { makeTestRpcClient, makeRiverChainConfig } from './util.test'
 import { errorContains } from './makeStreamRpcClient'
 import { makeRiverRpcClient } from './makeRiverRpcClient'
 import { LocalhostWeb3Provider } from '@river-build/web3'
-import { ethers } from 'ethers'
 
 describe('protocol 1', () => {
     test('info using makeStreamRpcClient', async () => {
@@ -35,16 +34,15 @@ describe('protocol 1', () => {
 
     describe('protocol 2', () => {
         let provider: LocalhostWeb3Provider
-        let chainId: number
+        let riverConfig: ReturnType<typeof makeRiverChainConfig>
 
         beforeAll(async () => {
-            const wallet = ethers.Wallet.createRandom()
-            provider = new LocalhostWeb3Provider(wallet, RIVER_ANVIL)
-            chainId = (await provider.getNetwork()).chainId
+            riverConfig = makeRiverChainConfig()
+            provider = new LocalhostWeb3Provider(riverConfig.rpcUrl)
         })
 
         test('info using makeRiverRpcClient', async () => {
-            const client = await makeRiverRpcClient({ chainId, provider })
+            const client = await makeRiverRpcClient(provider, riverConfig.chainConfig)
             expect(client).toBeDefined()
 
             const response: InfoResponse = await client.info(new InfoRequest({}), {
@@ -55,7 +53,7 @@ describe('protocol 1', () => {
         })
 
         test('info-error using makeRiverRpcClient', async () => {
-            const client = await makeRiverRpcClient({ chainId, provider })
+            const client = await makeRiverRpcClient(provider, riverConfig.chainConfig)
             expect(client).toBeDefined()
 
             try {

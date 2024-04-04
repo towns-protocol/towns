@@ -1,4 +1,4 @@
-import { makeUserContextFromWallet } from '../util.test'
+import { makeBaseChainConfig, makeUserContextFromWallet } from '../util.test'
 import { BigNumber, ethers } from 'ethers'
 import { makeStreamRpcClient } from '../makeStreamRpcClient'
 import { userIdFromAddress } from '../id'
@@ -83,15 +83,13 @@ export async function multipleClientsJoinSpaceAndChannel(
     spaceId: string,
     channelId: string | undefined,
 ): Promise<void> {
+    const baseConfig = makeBaseChainConfig()
     const clientPromises = Object.keys(clientWalletInfos).map(async (key) => {
         const clientWalletInfo = clientWalletInfos[key]
-
         const provider = clientWalletInfo.provider
         const walletWithProvider = clientWalletInfo.walletWithProvider
         const client = clientWalletInfo.client
-        const network = await provider.getNetwork()
-        const chainId = network.chainId
-        const spaceDapp = createSpaceDapp({ chainId, provider })
+        const spaceDapp = createSpaceDapp(provider, baseConfig.chainConfig)
         const riverSDK = new RiverSDK(spaceDapp, client, walletWithProvider)
         await riverSDK.joinSpace(spaceId)
         if (channelId) {
@@ -118,13 +116,12 @@ export async function createClientSpaceAndChannel(
     nodeRpcURL: string,
     createExtraChannel: boolean = false,
 ): Promise<ClientSpaceChannelInfo> {
+    const baseConfig = makeBaseChainConfig()
     const clientWalletInfo = await createAndStartClient(account, jsonRpcProviderUrl, nodeRpcURL)
     const client = clientWalletInfo.client
     const provider = clientWalletInfo.provider
     const walletWithProvider = clientWalletInfo.walletWithProvider
-    const network = await provider.getNetwork()
-    const chainId = network.chainId
-    const spaceDapp = createSpaceDapp({ chainId, provider })
+    const spaceDapp = createSpaceDapp(provider, baseConfig.chainConfig)
 
     const balance = await walletWithProvider.getBalance()
     const minimalWeiValue = BigNumber.from(BigInt(Math.floor(minimalBalance * 1e18)))

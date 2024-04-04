@@ -63,6 +63,8 @@ type Config struct {
 
 type NetworkConfig struct {
 	NumRetries int
+	// RequestTimeout only applies to unary requests.
+	RequestTimeout time.Duration
 }
 
 type DatabaseConfig struct {

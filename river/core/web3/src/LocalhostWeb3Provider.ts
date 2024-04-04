@@ -1,52 +1,39 @@
-/* eslint-disable @typescript-eslint/no-non-null-assertion, @typescript-eslint/no-explicit-any */
+import { ethers } from 'ethers'
+import { dlogger } from '@river-build/dlog'
+import { BaseChainConfig } from './IStaticContractsInfo'
+import { mintMockNFT } from './ContractHelpers'
 
-import { Wallet, ethers } from 'ethers'
-import { getContractsInfo } from '../src/IStaticContractsInfo'
-import { Versions } from '../src/ContractTypes'
-import { MockERC721AShim as MockERC721AShimV3 } from '../src/v3'
+const logger = dlogger('csb:LocalhostWeb3Provider')
 
-export class TestWeb3Provider extends ethers.providers.JsonRpcProvider {
+// Behaves like a metamask provider
+export class LocalhostWeb3Provider extends ethers.providers.JsonRpcProvider {
     // note to self, the wallet contains a reference to a provider, which is a circular ref back this class
     public wallet: ethers.Wallet
-    private version: Versions
 
     public get isMetaMask() {
         return true
     }
 
-    constructor(wallet?: Wallet, version: Versions = 'v3') {
-        const networkUrl = process.env.RPC_URL!
-        super(networkUrl)
+    constructor(rpcUrl: string, wallet?: ethers.Wallet) {
+        super(rpcUrl)
         this.wallet = (wallet ?? ethers.Wallet.createRandom()).connect(this)
-        this.version = version
-        console.log('initializing web3 provider with wallet', this.wallet.address)
+        logger.log('initializing web3 provider with wallet', this.wallet.address)
     }
 
     public async fundWallet(walletToFund: ethers.Wallet | string = this.wallet) {
         const amountInWei = ethers.BigNumber.from(100).pow(18).toHexString()
         const address = typeof walletToFund === 'string' ? walletToFund : walletToFund.address
         const result = this.send('anvil_setBalance', [address, amountInWei])
-        console.log('fundWallet tx', result, amountInWei, address)
+        logger.log('fundWallet tx', result, amountInWei, address)
         const receipt = await result
-        console.log('fundWallet receipt', receipt)
+        logger.log('fundWallet receipt', receipt)
         const balance = await this.getBalance(address)
-        console.log('fundWallet balance', balance.toString())
+        logger.log('fundWallet balance', balance.toString())
         return true
     }
 
-    /**
-     * Mint a mock NFT for the current wallet
-     * required for the wallet to be able to create a town
-     */
-    public async mintMockNFT(walletToMint: string | ethers.Wallet = this.wallet) {
-        await this.ready
-        const address = typeof walletToMint === 'string' ? walletToMint : walletToMint.address
-        await this.fundWallet(address)
-        const chainId = this.network.chainId
-        const mockNFTAddress = getContractsInfo(chainId).mockErc721aAddress
-        // TODO: add V4 compat
-        const mockNFT = new MockERC721AShimV3(mockNFTAddress, chainId, this)
-        return mockNFT.write(this.wallet).mintTo(address)
+    public async mintMockNFT(config: BaseChainConfig) {
+        return mintMockNFT(this, config, this.wallet, this.wallet.address)
     }
 
     public async request({
@@ -74,11 +61,5 @@ export class TestWeb3Provider extends ethers.providers.JsonRpcProvider {
         } else {
             return this.send(method, params)
         }
-    }
-
-    static async init({ version = 'v3', wallet }: { version?: Versions; wallet?: Wallet } = {}) {
-        const provider = new TestWeb3Provider(wallet, version)
-        await provider.ready
-        return provider
     }
 }

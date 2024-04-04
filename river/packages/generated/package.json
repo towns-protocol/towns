@@ -2,5 +2,8 @@
     "name": "@river-build/generated",
     "version": "workspace:^",
     "private": true,
-    "packageManager": "yarn@3.8.0"
+    "packageManager": "yarn@3.8.0",
+    "scripts": {
+        "preinstall": "./scripts/make-config.sh"
+    }
 }

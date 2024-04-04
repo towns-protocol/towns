@@ -36,12 +36,10 @@ contract BanningTest is BaseSetup, IRolesBase {
     manager = EntitlementsManager(everyoneSpace);
   }
 
-  function test_revertWhen_tokenDoesNotExist(uint256 tokenId) external {
-    vm.assume(tokenId != membership.getTokenIdByMembership(founder));
-
+  function test_revertWhen_tokenDoesNotExist() external {
     vm.prank(founder);
     vm.expectRevert();
-    banning.ban(tokenId);
+    banning.ban(type(uint256).max);
   }
 
   modifier givenAliceHasJoinedSpace() {

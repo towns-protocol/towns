@@ -19,6 +19,7 @@
     },
     "dependencies": {
         "@river-build/generated": "workspace:^",
+        "@river-build/web3": "workspace:^",
         "itty-router": "^2.6.6",
         "userop.js": "^0.3.7",
         "worker-common": "workspace:^"

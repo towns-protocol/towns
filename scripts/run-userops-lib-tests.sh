@@ -34,14 +34,16 @@ while [[ $# -gt 0 ]]; do
     shift
 done
 
+# Set the environment
+RIVER_ENV="${RIVER_ENV:-testnet}"
+
 # Defaults in case not in .env file
 AA_PAYMASTER_PROXY_URL=http://localhost:8686
 AA_PAYMASTER_PROXY_AUTH_SECRET=Zm9v
-CASABLANCA_SERVER_URL=https://river1.nodes.gamma.towns.com
-RIVER_CHAIN_PROVIDER_HTTP_URL=https://devnet.rpc.river.build
-RIVER_CHAIN_ID=6524490
+RIVER_CHAIN_RPC_URL=https://devnet.rpc.river.build
 
-ETHERS_NETWORK=""
+
+BASE_CHAIN_RPC_URL=""
 AA_RPC_URL=""
 AA_BUNDLER_URL=""
 
@@ -60,8 +62,8 @@ else
 fi
 
 # if variables are not present, throw an error
-if [ -z "$ETHERS_NETWORK" ]; then
-    echo "ERROR: Missing ETHERS_NETWORK in $ENV_FILE"
+if [ -z "$BASE_CHAIN_RPC_URL" ]; then
+    echo "ERROR: Missing BASE_CHAIN_RPC_URL in $ENV_FILE"
     exit 1
 fi
 if [ -z "$AA_RPC_URL" ]; then
@@ -73,7 +75,7 @@ if [ -z "$AA_BUNDLER_URL" ]; then
     exit 1
 fi
 
-echo "ETHERS_NETWORK: ${ETHERS_NETWORK}"
+echo "BASE_CHAIN_RPC_URL: ${BASE_CHAIN_RPC_URL}"
 echo "AA_RPC_URL: ${AA_RPC_URL}"
 echo "AA_BUNDLER_URL: ${AA_BUNDLER_URL}"
 

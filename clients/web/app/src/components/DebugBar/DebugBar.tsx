@@ -3,7 +3,13 @@ import { useBalance, useNetwork } from 'wagmi'
 import { useSwitchNetwork } from '@privy-io/wagmi-connector'
 import { useEvent } from 'react-use-event-hook'
 import { ethers, providers } from 'ethers'
-import { Address, mintMockNFT, useConnectivity, useTownsContext } from 'use-towns-client'
+import {
+    Address,
+    BaseChainConfig,
+    mintMockNFT,
+    useConnectivity,
+    useTownsContext,
+} from 'use-towns-client'
 import { debug } from 'debug'
 import { isAddress } from 'ethers/lib/utils'
 import { usePrivy } from '@privy-io/react-auth'
@@ -12,27 +18,18 @@ import { ModalContainer } from '@components/Modals/ModalContainer'
 import { shortAddress } from 'ui/utils/utils'
 import { isTouch } from 'hooks/useDevice'
 
-import {
-    ENVIRONMENTS,
-    TownsEnvironment,
-    TownsEnvironmentInfo,
-    UseEnvironmentReturn,
-} from 'hooks/useEnvironmnet'
+import { ENVIRONMENTS, TownsEnvironmentInfo, UseEnvironmentReturn } from 'hooks/useEnvironmnet'
 import { useAuth } from 'hooks/useAuth'
 import { useMockNftBalance } from 'hooks/useMockNftBalance'
-import { useAccountAbstractionConfig } from 'userOpConfig'
 
 const log = debug('app:DebugBar')
 const anvilKey = '0xac0974bec39a17e36ba4a6b4d238ff944bacb478cbed5efcae784d7bf4f2ff80'
-
-type Props = UseEnvironmentReturn
 
 type ModalProps = {
     onHide: () => void
     platform: string
     synced: boolean
-    environment?: TownsEnvironment
-    casablancaUrl?: string
+    environmentId?: string
     chainId: number
     chainName: string
     onSwitchEnvironment: (env: TownsEnvironmentInfo) => void
@@ -43,6 +40,7 @@ type FundProps = {
     accountId: Address
     provider?: providers.BaseProvider
     chainId?: number
+    chainConfig?: BaseChainConfig
 }
 
 const goHome = () => (window.location.href = window.location.protocol + '//' + window.location.host)
@@ -70,12 +68,12 @@ async function fundWallet({ accountId, provider, chainId }: FundProps) {
     }
 }
 
-async function mint({ accountId, provider, chainId }: FundProps) {
+async function mint({ accountId, provider, chainId, chainConfig }: FundProps) {
     const wallet = new ethers.Wallet(anvilKey, provider)
     try {
-        if (chainId === 31337 && provider) {
+        if (chainId === 31337 && provider && chainConfig) {
             // only support localhost anvil testing
-            const mintTx = await mintMockNFT(chainId, provider, wallet, accountId)
+            const mintTx = await mintMockNFT(provider, chainConfig, wallet, accountId)
             await mintTx.wait()
             log(' minted MockNFT', { walletAddress: accountId })
             console.log(' minted MockNFT', { walletAddress: accountId })
@@ -147,8 +145,7 @@ const FundButton = (props: FundProps & { disabled: boolean }) => {
 }
 
 const DebugModal = ({
-    environment,
-    casablancaUrl,
+    environmentId,
     chainId,
     chainName,
     onHide,
@@ -164,15 +161,7 @@ const DebugModal = ({
         <ModalContainer onHide={onHide}>
             <Stack gap="lg">
                 <Text strong size="sm">
-                    Environment:{' '}
-                    {environment ??
-                        `Default (${
-                            ENVIRONMENTS.find((e) => e.casablancaUrl === casablancaUrl)?.name ||
-                            'Unknown'
-                        })`}
-                </Text>
-                <Text strong size="sm">
-                    CasablancaUrl: {!casablancaUrl ? 'Not Set' : casablancaUrl}
+                    Environment: {environmentId}
                 </Text>
                 <Text strong size="sm">
                     Wallet Chain: {walletChain?.name || 'Not connected'}{' '}
@@ -211,13 +200,13 @@ const DebugModal = ({
                                     size="button_xs"
                                     tone="accent"
                                     disabled={
-                                        chainId === env.chainId &&
-                                        walletChain.id === env.chainId &&
-                                        environment === env.id
+                                        chainId === env.baseChain.id &&
+                                        walletChain.id === env.baseChain.id &&
+                                        environmentId === env.id
                                     }
                                     onClick={() => onSwitchEnvironment(env)}
                                 >
-                                    Switch to {env.name}/{env.chain.name}
+                                    Switch to {env.name}/{env.baseChain.name}
                                 </Button>
                             ))}
                             <Button size="button_xs" onClick={onClear}>
@@ -323,30 +312,23 @@ const useAsyncSwitchNetwork = () => {
     return executor
 }
 
-const DebugBar = ({
-    environment,
-    chainId: destinationChainId,
-    chainName: destinationChainName,
-    casablancaUrl,
-    setEnvironment,
-    clearEnvironment,
-}: Props) => {
+const DebugBar = (environment: UseEnvironmentReturn) => {
     const { chain } = useNetwork()
     const { logout } = useAuth()
     const [modal, setModal] = useState(false)
-    const accountAbstractionConfig = useAccountAbstractionConfig(destinationChainId)
+    const { setEnvironment, clearEnvironment, accountAbstractionConfig } = environment
 
     const switchNetwork = useAsyncSwitchNetwork()
 
     const onSwitchEnvironment = useCallback(
         async (env: TownsEnvironmentInfo) => {
             log('onSwitchEnvironment', { env })
-            if (env.chainId !== chain?.id) {
+            if (env.baseChain.id !== chain?.id) {
                 log('onSwitchEnvironment switching chain')
-                const newChainId = await switchNetwork?.(env.chainId)
+                const newChainId = await switchNetwork?.(env.baseChain.id)
                 log('onSwitchEnvironment switched chain', { newChainId })
             }
-            if (env.id !== environment) {
+            if (env.id !== environment.id) {
                 log('onSwitchEnvironment logging out')
                 await logout()
                 log('onSwitchEnvironment updating environment')
@@ -366,9 +348,9 @@ const DebugBar = ({
     })
 
     const connectedChainId = chain?.id
-    const synced = destinationChainId === connectedChainId
+    const synced = environment.baseChain.id === connectedChainId
 
-    const serverName = casablancaUrl?.replaceAll('https://', '').replaceAll('http://', '')
+    const serverName = environment.id
 
     const platform = !chain?.name ? ` ${serverName}` : `w: ${chain.id} | ${serverName}`
 
@@ -394,10 +376,9 @@ const DebugBar = ({
         >
             {modal && (
                 <DebugModal
-                    environment={environment}
-                    casablancaUrl={casablancaUrl}
-                    chainId={destinationChainId}
-                    chainName={destinationChainName}
+                    environmentId={environment.id}
+                    chainId={environment.baseChain.id}
+                    chainName={environment.baseChain.name}
                     platform={platform}
                     synced={synced}
                     onSwitchEnvironment={onSwitchEnvironment}
@@ -444,7 +425,7 @@ const DebugBar = ({
                             )}
                         </Box>
                         <Text strong as="span" size="xs">
-                            {platform}&nbsp; | app: {destinationChainId} | Connected: &nbsp;
+                            {platform}&nbsp; | app: {environment.baseChain.id} | Connected: &nbsp;
                             <Icon
                                 display="inline-block"
                                 size="square_xxs"

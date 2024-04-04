@@ -3,6 +3,7 @@ import { useLinkCallerToRootKey, useTransactionStore } from 'use-towns-client'
 import { useGetEmbeddedSigner } from '@towns/privy'
 import { useIsSmartAccountLinked } from 'hooks/useIsSmartAccountLinked'
 import { useAuth } from 'hooks/useAuth'
+import { useEnvironment } from 'hooks/useEnvironmnet'
 
 /**
  * Automatically link the smart account to the caller if the user is authenticated and the smart account is not linked.
@@ -17,8 +18,12 @@ export function AutoLinkSmartAccount() {
     const { linkCallerToRootKeyTransaction } = useLinkCallerToRootKey()
     const getSigner = useGetEmbeddedSigner()
     const transactions = useTransactionStore()
+    const { accountAbstractionConfig } = useEnvironment()
 
     useEffect(() => {
+        if (!accountAbstractionConfig) {
+            return
+        }
         if (!isAuthenticated) {
             return
         }
@@ -54,6 +59,7 @@ export function AutoLinkSmartAccount() {
 
         link()
     }, [
+        accountAbstractionConfig,
         getSigner,
         isAuthenticated,
         isSmartAccountLinked,

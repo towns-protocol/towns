@@ -3,7 +3,7 @@
  */
 
 import { check, dlog } from '@river-build/dlog'
-import { makeDonePromise } from '../util.test'
+import { makeBaseChainConfig, makeDonePromise } from '../util.test'
 // eslint-disable-next-line import/no-extraneous-dependencies
 import { waitFor } from '@testing-library/react'
 
@@ -72,6 +72,7 @@ describe('loadTestsScenario2', () => {
             log('now we have chainSpaceChannelData', chainSpaceChannelData)
 
             // register new client
+            const baseConfig = makeBaseChainConfig()
             const aliceClientWalletInfo = await createAndStartClient(
                 alicesAccount,
                 jsonRpcProviderUrl,
@@ -80,10 +81,9 @@ describe('loadTestsScenario2', () => {
             const alice = aliceClientWalletInfo.client
             const provider = aliceClientWalletInfo.provider
             const walletWithProvider = aliceClientWalletInfo.walletWithProvider
-            const network = await provider.getNetwork()
 
             // alice joins the space
-            const alicesSpaceDapp = createSpaceDapp({ chainId: network.chainId, provider })
+            const alicesSpaceDapp = createSpaceDapp(provider, baseConfig.chainConfig)
             const alicesRiverSDK = new RiverSDK(alicesSpaceDapp, alice, walletWithProvider)
             await alicesRiverSDK.joinSpace(chainSpaceChannelData.spaceId)
 

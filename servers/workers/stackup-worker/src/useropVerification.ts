@@ -121,7 +121,7 @@ export async function verifyJoinTown(params: ITownTransactionParams): Promise<IV
     }
     try {
         // check if town does not already exist
-        console.log(spaceDapp.chainId, params, await spaceDapp.provider?.getNetwork())
+        console.log(spaceDapp.config.chainId, params, await spaceDapp.provider?.getNetwork())
         const spaceInfo = await spaceDapp.getSpaceInfo(params.townId)
         if (!spaceInfo) {
             return { verified: false, error: `Town ${params.townId} does not exist` }

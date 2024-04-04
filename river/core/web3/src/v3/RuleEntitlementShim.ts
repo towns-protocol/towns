@@ -11,6 +11,7 @@ import BaseSepoliaAbi from '@river-build/generated/v3/abis/IRuleEntitlement.abi.
 import { BaseContractShim } from './BaseContractShim'
 import { BigNumberish, ethers } from 'ethers'
 import { EntitlementModuleType, EntitlementModule } from '../ContractTypes'
+import { ContractVersion } from '../IStaticContractsInfo'
 
 export class RuleEntitlementShim
     extends BaseContractShim<
@@ -21,10 +22,14 @@ export class RuleEntitlementShim
     >
     implements EntitlementModule
 {
-    constructor(address: string, chainId: number, provider: ethers.providers.Provider | undefined) {
-        super(address, chainId, provider, {
-            31337: LocalhostAbi,
-            84532: BaseSepoliaAbi,
+    constructor(
+        address: string,
+        version: ContractVersion,
+        provider: ethers.providers.Provider | undefined,
+    ) {
+        super(address, version, provider, {
+            [ContractVersion.dev]: LocalhostAbi,
+            [ContractVersion.v3]: BaseSepoliaAbi,
         })
     }
 

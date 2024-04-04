@@ -1,24 +1,10 @@
-import { isEthersProvider } from './Utils'
-import { Versions, defaultVersion } from './ContractTypes'
-import { DappConfig } from './types'
 import { RiverRegistry } from './v3/RiverRegistry'
+import { ethers } from 'ethers'
+import { RiverChainConfig } from './IStaticContractsInfo'
 
 export function createRiverRegistry(
-    args: DappConfig,
-    version: Versions = defaultVersion,
+    provider: ethers.providers.Provider,
+    config: RiverChainConfig,
 ): RiverRegistry {
-    if (args.provider === undefined) {
-        throw new Error('createRiverRegistry() Provider is undefined')
-    }
-
-    switch (version) {
-        case 'v3': {
-            if (isEthersProvider(args.provider)) {
-                return new RiverRegistry(args.chainId, args.provider)
-            }
-            throw new Error("createRiverRegistry() 'v3' Provider is not an ethers provider")
-        }
-        default:
-            throw new Error('createRiverRegistry() not a valid version')
-    }
+    return new RiverRegistry(config, provider)
 }

@@ -10,8 +10,9 @@ import {
 import DevAbi from '@river-build/generated/dev/abis/NodeRegistry.abi.json' assert { type: 'json' }
 import V3Abi from '@river-build/generated/v3/abis/NodeRegistry.abi.json' assert { type: 'json' }
 
-import { BaseContractShim } from './BaseContractShim'
 import { ethers } from 'ethers'
+import { BaseContractShim } from './BaseContractShim'
+import { ContractVersion } from '../IStaticContractsInfo'
 
 export class IRiverRegistryShim extends BaseContractShim<
     DevContract,
@@ -19,10 +20,14 @@ export class IRiverRegistryShim extends BaseContractShim<
     V3Contract,
     V3Interface
 > {
-    constructor(address: string, chainId: number, provider: ethers.providers.Provider | undefined) {
-        super(address, chainId, provider, {
-            31338: DevAbi,
-            6524490: V3Abi,
+    constructor(
+        address: string,
+        version: ContractVersion,
+        provider: ethers.providers.Provider | undefined,
+    ) {
+        super(address, version, provider, {
+            [ContractVersion.dev]: DevAbi,
+            [ContractVersion.v3]: V3Abi,
         })
     }
 }

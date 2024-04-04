@@ -3,7 +3,6 @@ set -euo pipefail
 cd -P -- "$(dirname -- "${BASH_SOURCE[0]}")"
 
 export DB_PORT=5433
-export INSTANCE=single
 export LOG_LEVEL=info
 export LOG_NOCOLOR=false
 export METRICS_ENABLED=true
@@ -11,7 +10,7 @@ export METRICS_PORT=8081
 export NUM_INSTANCES=1
 export REPL_FACTOR=1
 export RPC_PORT=5157
-export RUN_BASE=./run_files/single
+export RUN_ENV=single
 export DISABLE_BASE_CHAIN=${DISABLE_BASE_CHAIN:-false}
 
 # Parse command-line options
@@ -27,9 +26,12 @@ while [[ "$#" -gt 0 ]]; do
             RUN_OPT="-r"
             shift
             ;;
+        -r|--run-only) # same as -sc, but everything else uses -r
+            RUN_OPT="-r"
+            shift
+            ;;
         --disable_entitlements|--de)
-            INSTANCE=single_ne
-            RUN_BASE=./run_files/single_ne
+            RUN_ENV=single_ne
             METRICS_ENABLED=false
             METRICS_PORT=8082
             RPC_PORT=5158

@@ -7,7 +7,7 @@ import { EmbeddedSignerContextProvider } from '@towns/privy'
 import { isDefined } from '@river/sdk'
 import { Notifications } from '@components/Notifications/Notifications'
 import { useDevice } from 'hooks/useDevice'
-import { useEnvironment } from 'hooks/useEnvironmnet'
+import { ENVIRONMENTS, useEnvironment } from 'hooks/useEnvironmnet'
 import { useWindowListener } from 'hooks/useWindowListener'
 import { FontLoader } from 'ui/utils/FontLoader'
 import { env } from 'utils'
@@ -22,7 +22,6 @@ import { AuthContextProvider } from 'hooks/useAuth'
 import DebugBar from '@components/DebugBar/DebugBar'
 import { BlockchainTxNotifier } from '@components/Web3/BlockchainTxNotifier'
 import { SyncNotificationSettings } from '@components/SyncNotificationSettings/SyncNotificationSettings'
-import { useAccountAbstractionConfig } from 'userOpConfig'
 import { PATHS } from 'routes'
 import { useCreateLink } from 'hooks/useCreateLink'
 import { AutoLinkSmartAccount } from 'AutoLinkSmartAccount'
@@ -32,6 +31,7 @@ FontLoader.init()
 const DEFAULT_TIMELINE_FILTER = new Set([ZTEvent.Fulfillment, ZTEvent.KeySolicitation]) // we don't need to see these in the ui
 
 export const App = () => {
+    const _envornmentId = useRef<string | undefined>(undefined)
     const { theme, mutedChannelIds } = useStore((state) => ({
         theme: state.getTheme(),
         mutedChannelIds: state.mutedChannelIds,
@@ -79,24 +79,32 @@ export const App = () => {
 
     useWindowListener()
 
-    // aellis april 2023, the two server urls and the chain id should all be considered
-    // a single piece of state, PROD, TEST, and LOCAL each should have {casablancaUrl, chainId}
     const environment = useEnvironment()
-    const accountAbstractionConfig = useAccountAbstractionConfig(environment.chainId)
+
+    // Log environment changes
+    if (environment.id !== _envornmentId.current) {
+        _envornmentId.current = environment.id
+        console.log('Environment: ', {
+            current: environment.id,
+            ENVIRONMENTS,
+        })
+    }
 
     return (
         <TownsContextProvider
             mutedChannelIds={mutedChannelIds}
-            casablancaServerUrl={environment.casablancaUrl}
-            chain={environment.chain}
+            environmentId={environment.id}
+            baseChain={environment.baseChain}
+            baseConfig={environment.baseChainConfig}
             riverChain={environment.riverChain}
+            riverConfig={environment.riverChainConfig}
             timelineFilter={DEFAULT_TIMELINE_FILTER}
             pushNotificationAuthToken={env.VITE_AUTH_WORKER_HEADER_SECRET}
             pushNotificationWorkerUrl={env.VITE_WEB_PUSH_WORKER_URL}
-            accountAbstractionConfig={accountAbstractionConfig}
+            accountAbstractionConfig={environment.accountAbstractionConfig}
             highPriorityStreamIds={highPriorityStreamIds.current}
         >
-            <EmbeddedSignerContextProvider chainId={environment.chainId}>
+            <EmbeddedSignerContextProvider chainId={environment.baseChain.id}>
                 <AuthContextProvider>
                     <FaviconBadge />
                     <AppBadge />

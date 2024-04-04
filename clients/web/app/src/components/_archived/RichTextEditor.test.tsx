@@ -5,21 +5,30 @@ import {
     ChannelContextProvider,
     SpaceContextProvider,
     TownsContext,
+    getWeb3Deployment,
     makeProviderFromChain,
     makeProviderFromConfig,
 } from 'use-towns-client'
 import { describe, expect, test } from 'vitest'
-import { anvilRiverChain, foundryClone } from 'customChains'
+import { getCustomBaseChain, getCustomRiverChain } from 'customChains'
 import { RichTextEditor } from './RichTextEditor'
+
+const environmentId = 'testnet'
+const web3Deployment = getWeb3Deployment(environmentId)
+const baseChain = getCustomBaseChain(web3Deployment.base.chainId)!
+const riverChain = getCustomRiverChain(web3Deployment.river.chainId)!
 
 const Wrapper = (props: { children: React.ReactElement }) => {
     return (
         <TownsContext.Provider
             value={{
-                baseChain: foundryClone,
-                baseProvider: makeProviderFromChain(foundryClone),
-                riverChain: anvilRiverChain,
-                riverProvider: makeProviderFromConfig(anvilRiverChain),
+                environmentId,
+                baseChain,
+                baseProvider: makeProviderFromChain(baseChain),
+                baseConfig: web3Deployment.base,
+                riverChain,
+                riverProvider: makeProviderFromConfig(riverChain),
+                riverConfig: web3Deployment.river,
                 rooms: {},
                 spaceUnreads: {},
                 spaceMentions: {},

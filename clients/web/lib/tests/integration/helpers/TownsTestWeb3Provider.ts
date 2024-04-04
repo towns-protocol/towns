@@ -3,15 +3,17 @@
 import { Wallet, ethers } from 'ethers'
 
 import { fundWallet } from './TestUtils'
-import { getContractsInfo, MockERC721AShim } from '@river-build/web3'
+import { MockERC721AShim } from '@river-build/web3'
+import { TestConfig, makeTestConfig } from '@river/sdk/src/util.test'
 import { userIdFromAddress } from '@river/sdk'
 import { bin_fromHexString } from '@river-build/dlog'
 
+// the towns test web3 provider wraps all the configuration needed to run a test and is also a ethers provider
 export class TownsTestWeb3Provider extends ethers.providers.JsonRpcProvider {
     // note to self, the wallet contains a reference to a provider, which is a circular ref back this class
+    public config: TestConfig
     public wallet: ethers.Wallet
     public riverChainProvider: ethers.providers.JsonRpcProvider
-    public riverChainId: number
 
     public get userId() {
         return userIdFromAddress(bin_fromHexString(this.wallet.address))
@@ -22,16 +24,15 @@ export class TownsTestWeb3Provider extends ethers.providers.JsonRpcProvider {
     }
 
     constructor(wallet?: Wallet) {
-        const networkUrl = process.env.ETHERS_NETWORK!
-        super(networkUrl)
+        const config = makeTestConfig()
+        super(config.base.rpcUrl)
+        this.config = config
         this.wallet = (wallet ?? ethers.Wallet.createRandom()).connect(this)
-        console.log('initializing web3 provider with wallet', this.wallet.address)
+        console.log('initializing web3 provider with wallet', this.wallet.address, this.config)
 
-        const riverChainUrl = process.env.RIVER_CHAIN_PROVIDER_HTTP_URL!
-        this.riverChainId = parseInt(process.env.RIVER_CHAIN_ID!)
-        this.riverChainProvider = new ethers.providers.JsonRpcProvider(riverChainUrl, {
+        this.riverChainProvider = new ethers.providers.JsonRpcProvider(config.river.rpcUrl, {
             name: 'river_chain',
-            chainId: this.riverChainId,
+            chainId: config.river.chainConfig.chainId,
         })
     }
 
@@ -46,9 +47,15 @@ export class TownsTestWeb3Provider extends ethers.providers.JsonRpcProvider {
      */
     public async mintMockNFT() {
         await this.ready
-        const chainId = this.network.chainId
-        const mockNFTAddress = getContractsInfo(chainId).mockErc721aAddress
-        const mockNFT = new MockERC721AShim(mockNFTAddress, chainId, this)
+        const mockNFTAddress = this.config.base.chainConfig.addresses.mockNFT
+        if (!mockNFTAddress) {
+            throw new Error('mockNFTAddress not found in config')
+        }
+        const mockNFT = new MockERC721AShim(
+            mockNFTAddress,
+            this.config.base.chainConfig.contractVersion,
+            this,
+        )
         return mockNFT.write(this.wallet).mintTo(this.wallet.address)
     }
 

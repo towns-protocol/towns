@@ -37,6 +37,9 @@ find . -name ".eslintcache" -type f -exec rm -r "{}" \;
 pushd "core/node" > /dev/null
 rm -rf run_files/*
 popd > /dev/null
+pushd "core/xchain" > /dev/null
+rm -rf run_files/*
+popd > /dev/null
 
 echo ""
 

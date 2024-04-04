@@ -62,7 +62,7 @@ export function Login(): JSX.Element {
 function NetworkInfo() {
     const { loginWithWalletToCasablanca } = useTownsClient()
     const { loginStatus: casablancaLoginStatus } = useCasablancaStore()
-    const { casablancaUrl } = useEnvironment()
+    const { id: environmentId } = useEnvironment()
     const getSigner = useGetEmbeddedSigner()
 
     const onLoginCasablanca = useCallback(
@@ -114,7 +114,7 @@ function NetworkInfo() {
                 />
                 <Paper elevation={3} sx={{ padding: '20px' }}>
                     <Typography variant="h6" component="p" sx={{ marginTop: '20px' }}>
-                        {`Remote Url: ${(casablancaUrl ?? '').substring(0, 50)}`}
+                        {`Environment: ${environmentId}`}
                     </Typography>
                     {casablancaButton}
                 </Paper>

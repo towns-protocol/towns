@@ -4,11 +4,15 @@ set -euo pipefail
 # Change the current working directory to the directory of the script
 cd "$(dirname "$0")"
 
+: ${RUN_ENV:?}
+
 # Base directory for the instances
-BASE_DIR="./run_files"
+RUN_FILES_DIR="./run_files"
 
 # PID file for the script, stored in the base directory
-SCRIPT_PID_FILE="${BASE_DIR}/launch_multi.pid"
+SCRIPT_PID_FILE="${RUN_FILES_DIR}/launch_multi.pid"
+
+BASE_DIR="${RUN_FILES_DIR}/${RUN_ENV}"
 
 # stop previous instances
 ./stop_multi.sh

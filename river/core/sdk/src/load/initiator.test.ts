@@ -28,6 +28,7 @@ import {
     loadTestTimeout,
 } from './loadconfig.test_util'
 import { RiverSDK } from '../testSdk.test_util'
+import { makeBaseChainConfig } from '../util.test'
 
 const { createSpaceDapp } = await import('@river-build/web3')
 
@@ -43,6 +44,7 @@ describe('loadTestsScenario2', () => {
         log('start')
         const loadTestStartTime = Date.now()
 
+        const baseConfig = makeBaseChainConfig()
         const bobClientWalletInfo = await createAndStartClient(
             bobsAccount,
             jsonRpcProviderUrl,
@@ -64,7 +66,7 @@ describe('loadTestsScenario2', () => {
         log('Wallet address:', walletWithProvider.address)
         expect(balance.gte(minBalanceRequired)).toBe(true)
 
-        const bobsSpaceDapp = createSpaceDapp({ chainId: bobChainId, provider: bobProvider })
+        const bobsSpaceDapp = createSpaceDapp(bobProvider, baseConfig.chainConfig)
         const bobsRiverSDK = new RiverSDK(bobsSpaceDapp, bob, walletWithProvider)
 
         // create space

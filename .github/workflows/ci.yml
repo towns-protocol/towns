@@ -234,7 +234,7 @@ jobs:
               working-directory: river/core/node
 
             - name: Build & Test (with entitlements)
-              run: RIVER_CHAIN_PROVIDER_HTTP_URL=http://localhost:8546/ RIVER_CHAIN_ID=31338 yarn csb:turbo-no-sdk
+              run: RIVER_ENV=local_multi yarn csb:turbo-no-sdk
 
             - name: Archive River Node Logs and Settings
               if: always()

@@ -1,5 +1,11 @@
 import { Chain, baseSepolia, foundry } from 'wagmi/chains'
-import { IChainConfig } from 'use-towns-client'
+import {
+    BaseChainConfig,
+    IChainConfig,
+    RiverChainConfig,
+    getWeb3Deployment,
+    getWeb3Deployments,
+} from 'use-towns-client'
 
 const anvilRiverChain: IChainConfig = {
     chainId: 31338,
@@ -13,47 +19,66 @@ const riverChain: IChainConfig = {
     rpcUrl: 'https://devnet.rpc.river.build/',
 }
 
-export enum TownsEnvironment {
-    Prod = 'prod',
-    Gamma = 'gamma',
-    Local = 'local',
-    Multinode = 'multinode',
+const baseSepoliaClone: Chain = import.meta.env.VITE_BASE_SEPOLIA_RPC_URL
+    ? {
+          ...baseSepolia,
+          rpcUrls: {
+              ...baseSepolia.rpcUrls,
+              default: {
+                  http: [import.meta.env.VITE_BASE_SEPOLIA_RPC_URL],
+                  webSocket: import.meta.env.VITE_BASE_SEPOLIA_WS_URL
+                      ? [import.meta.env.VITE_BASE_SEPOLIA_WS_URL]
+                      : undefined,
+              },
+              public: {
+                  http: [import.meta.env.VITE_BASE_SEPOLIA_RPC_URL],
+                  webSocket: import.meta.env.VITE_BASE_SEPOLIA_WS_URL
+                      ? [import.meta.env.VITE_BASE_SEPOLIA_WS_URL]
+                      : undefined,
+              },
+          },
+      }
+    : baseSepolia
+
+function getBaseChainFromId(chainId: number): Chain {
+    switch (chainId) {
+        case foundry.id:
+            return foundry
+        case baseSepoliaClone.id:
+            return baseSepoliaClone
+        default:
+            throw new Error(`Unknown chain id ${chainId}`)
+    }
+}
+
+function getRiverChainFromId(chainId: number): IChainConfig {
+    switch (chainId) {
+        case anvilRiverChain.chainId:
+            return anvilRiverChain
+        case riverChain.chainId:
+            return riverChain
+        default:
+            throw new Error(`Unknown chain id ${chainId}`)
+    }
 }
 
 export interface TownsEnvironmentInfo {
-    id: TownsEnvironment
+    id: string
     name: string
-    casablancaUrl: string | undefined
-    chainId: number
-    chain: Chain
+    baseChain: Chain
+    baseChainConfig: BaseChainConfig
     riverChain: IChainConfig
+    riverChainConfig: RiverChainConfig
 }
 
-export const ENVIRONMENTS: TownsEnvironmentInfo[] = [
-    {
-        id: TownsEnvironment.Multinode,
-        name: 'Multinode (local)',
-        casablancaUrl: Array.from({ length: 10 }, (_, i) => `https://localhost:${5170 + i}`).join(
-            ',',
-        ),
-        chainId: foundry.id,
-        chain: foundry,
-        riverChain: anvilRiverChain,
-    },
-    {
-        id: TownsEnvironment.Local,
-        name: 'Local',
-        casablancaUrl: 'https://localhost:5157',
-        chainId: foundry.id,
-        chain: foundry,
-        riverChain: anvilRiverChain,
-    },
-    {
-        id: TownsEnvironment.Gamma,
-        name: 'Gamma',
-        casablancaUrl: 'https://river1.nodes.gamma.towns.com',
-        chain: baseSepolia,
-        chainId: baseSepolia.id,
-        riverChain,
-    },
-]
+export const ENVIRONMENTS: TownsEnvironmentInfo[] = getWeb3Deployments().map((env) => {
+    const { base, river } = getWeb3Deployment(env)
+    return {
+        id: env,
+        name: env,
+        baseChain: getBaseChainFromId(base.chainId),
+        baseChainConfig: base,
+        riverChain: getRiverChainFromId(river.chainId),
+        riverChainConfig: river,
+    }
+})

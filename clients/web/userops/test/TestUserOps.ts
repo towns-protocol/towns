@@ -26,6 +26,6 @@ export class TestUserOps extends UserOps {
         })
     }
     private isAnvil() {
-        return this.spaceDapp?.chainId === LOCALHOST_CHAIN_ID
+        return this.spaceDapp?.config.chainId === LOCALHOST_CHAIN_ID
     }
 }

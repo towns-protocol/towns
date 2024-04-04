@@ -12,7 +12,7 @@ import {
 
 import { ContractReceipt } from 'ethers'
 import { RoleIdentifier } from '../../src/types/web3-types'
-import { Permission, createExternalTokenStruct, getContractsInfo } from '@river-build/web3'
+import { Permission, createExternalTokenStruct } from '@river-build/web3'
 import { Err } from '@river-build/proto'
 
 describe('channel update', () => {
@@ -138,7 +138,10 @@ describe('channel update', () => {
         // create another role
         const newRoleName = `role${Date.now()}`
         const newPermissions = [Permission.Read, Permission.Write, Permission.Redact]
-        const mockNFTAddress = getContractsInfo(alice.opts.baseChainId).mockErc721aAddress
+        const mockNFTAddress = alice.provider.config.base.chainConfig.addresses.mockNFT
+        if (!mockNFTAddress) {
+            throw new Error('mockNFTAddress is undefined')
+        }
         // test space was created with council token. replace with Towns token
         const ruleData = createExternalTokenStruct([mockNFTAddress])
         const users: string[] = []

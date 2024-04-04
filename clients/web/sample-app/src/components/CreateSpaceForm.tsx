@@ -303,7 +303,7 @@ export const CreateSpaceForm = (props: Props) => {
 }
 
 const LocalhostWalletInfo = (props: { accountId: Address }) => {
-    const { baseProvider: provider, baseChain: chain } = useTownsContext()
+    const { baseProvider: provider, baseChain: chain, baseConfig: config } = useTownsContext()
     const chainId = chain.id
     const { accountId } = props
     const balance = useBalance({
@@ -340,7 +340,7 @@ const LocalhostWalletInfo = (props: { accountId: Address }) => {
                         console.log('fundWallet receipt', receipt)
                         if (chainId === 31337 && provider) {
                             // only support localhost anvil testing
-                            const mintTx = await mintMockNFT(chainId, provider, wallet, accountId)
+                            const mintTx = await mintMockNFT(provider, config, wallet, accountId)
                             await mintTx.wait()
                             console.log('fundWallet minted MockNFT', { walletAddress: accountId })
                         }
@@ -356,7 +356,7 @@ const LocalhostWalletInfo = (props: { accountId: Address }) => {
                 console.log('fundWallet in progress')
             }
         },
-        [balance, chainId, provider],
+        [balance, chainId, config, provider],
     )
 
     return (

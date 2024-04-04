@@ -1,5 +1,5 @@
 import { SpaceAddressFromSpaceId } from '../Utils'
-import { IStaticContractsInfo } from '../IStaticContractsInfo'
+import { BaseChainConfig } from '../IStaticContractsInfo'
 import { ISpaceArchitectShim } from './ISpaceArchitectShim'
 import { Space } from './Space'
 import { ethers } from 'ethers'
@@ -14,23 +14,19 @@ interface SpaceMap {
  * creates a space object with relevant addresses and data
  */
 export class SpaceRegistrar {
-    private readonly chainId: number
+    public readonly config: BaseChainConfig
     private readonly provider: ethers.providers.Provider | undefined
     private readonly spaceArchitect: ISpaceArchitectShim
     private readonly spaceOwnerAddress: string
     private readonly spaces: SpaceMap = {}
 
-    constructor(
-        contractsInfo: IStaticContractsInfo,
-        chainId: number,
-        provider: ethers.providers.Provider | undefined,
-    ) {
-        this.chainId = chainId
+    constructor(config: BaseChainConfig, provider: ethers.providers.Provider | undefined) {
+        this.config = config
         this.provider = provider
-        this.spaceOwnerAddress = contractsInfo.spaceOwnerAddress
+        this.spaceOwnerAddress = this.config.addresses.spaceOwner
         this.spaceArchitect = new ISpaceArchitectShim(
-            contractsInfo.spaceFactoryAddress,
-            chainId,
+            config.addresses.spaceFactory,
+            config.contractVersion,
             provider,
         )
     }
@@ -49,7 +45,7 @@ export class SpaceRegistrar {
                 address: spaceAddress,
                 spaceId: spaceId,
                 spaceOwnerAddress: this.spaceOwnerAddress,
-                chainId: this.chainId,
+                version: this.config.contractVersion,
                 provider: this.provider,
             })
         }

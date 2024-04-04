@@ -1,27 +1,14 @@
-import { isEthersProvider } from './Utils'
-import { Versions, defaultVersion } from './ContractTypes'
-import { DappConfig } from './types'
 import { SpaceDapp } from './v3'
 import { ISpaceDapp } from './ISpaceDapp'
+import { ethers } from 'ethers'
+import { BaseChainConfig } from './IStaticContractsInfo'
 
-export function createSpaceDapp(args: DappConfig, version?: 'v3'): ISpaceDapp
-
-export function createSpaceDapp(args: DappConfig, version: Versions = defaultVersion) {
-    if (args.provider === undefined) {
+export function createSpaceDapp(
+    provider: ethers.providers.Provider,
+    config: BaseChainConfig,
+): ISpaceDapp {
+    if (provider === undefined) {
         throw new Error('createSpaceDapp() Provider is undefined')
     }
-
-    switch (version) {
-        case 'v3': {
-            if (isEthersProvider(args.provider)) {
-                return new SpaceDapp({
-                    ...args,
-                }) as ISpaceDapp
-            }
-            throw new Error("createSpaceDapp() 'v3' Provider is not an ethers provider")
-        }
-
-        default:
-            throw new Error('createSpaceDapp() not a valid version')
-    }
+    return new SpaceDapp(config, provider)
 }

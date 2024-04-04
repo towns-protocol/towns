@@ -93,15 +93,13 @@ export class TownsClient implements EntitlementsDelegate {
         this.name = name || Math.random().toString(36).substring(7)
         console.log('~~~ new TownsClient ~~~', this.name, this.opts)
         AnalyticsService.getInstance().trackEventOnce(AnalyticsEvents.ClientWrapperCreated)
-        this.spaceDapp = createSpaceDapp({
-            chainId: opts.baseChainId,
-            provider: opts.baseProvider,
-        })
+        this.spaceDapp = createSpaceDapp(opts.baseProvider, opts.baseConfig)
 
         if (opts.accountAbstractionConfig?.aaRpcUrl) {
             this.userOps = new UserOps({
                 ...opts.accountAbstractionConfig,
                 provider: opts.baseProvider,
+                config: opts.baseConfig,
                 spaceDapp: this.spaceDapp,
             })
         }
@@ -176,9 +174,6 @@ export class TownsClient implements EntitlementsDelegate {
         if (this.casablancaClient) {
             throw new Error('already started casablancaClient')
         }
-        if (!this.opts.casablancaServerUrl) {
-            throw new Error('casablancaServerUrl is required')
-        }
         if (!this.opts.riverProvider) {
             throw new Error('riverChainProvider is required')
         }
@@ -189,23 +184,20 @@ export class TownsClient implements EntitlementsDelegate {
         if (localStorage.getItem('RIVER_RPC_URL')) {
             rpcClient = makeStreamRpcClient(localStorage.getItem('RIVER_RPC_URL') as string)
         } else {
-            rpcClient = await makeRiverRpcClient({
-                chainId: this.opts.riverChainId,
-                provider: this.opts.riverProvider,
-            })
+            rpcClient = await makeRiverRpcClient(this.opts.riverProvider, this.opts.riverConfig)
         }
-        // get storage
-        // todo jterzis 06/15/23: add client store here
-        // crypto store
-        const userId = userIdFromAddress(context.creatorAddress)
 
-        const cryptoStore = RiverDbManager.getCryptoDb(userId)
+        const userId = userIdFromAddress(context.creatorAddress)
+        const envSuffix = this.opts.environmentId === 'testnet' ? '' : `-${this.opts.environmentId}`
+        const cryptoDbName = `database-${userId}${envSuffix}`
+        const persistenceDbName = `persistence-${userId}${envSuffix}`
+        const cryptoStore = RiverDbManager.getCryptoDb(userId, cryptoDbName)
         this.casablancaClient = new CasablancaClient(
             context,
             rpcClient,
             cryptoStore,
             this,
-            `persistence-${userId}-${this.opts.baseChainId}`,
+            persistenceDbName,
             this.opts.logNamespaceFilter,
             this.opts.highPriorityStreamIds,
         )
@@ -1813,7 +1805,7 @@ export class TownsClient implements EntitlementsDelegate {
             } else {
                 if (!wallet) {
                     throw new Error(
-                        '[linkCallerToRootKey] wallet address must be provided when account abstraction is enabled',
+                        '[linkCallerToRootKey] wallet address must be provided when account abstraction is disabled',
                     )
                 }
                 walletAddress = await wallet.getAddress()
