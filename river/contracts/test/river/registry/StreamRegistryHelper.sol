@@ -13,30 +13,15 @@ import {IStreamRegistry} from "contracts/src/river/registry/facets/stream/IStrea
 
 contract StreamRegistryHelper is FacetHelper {
   constructor() {
-    bytes4[] memory selectors_ = new bytes4[](10);
-    selectors_[_index++] = IStreamRegistry.allocateStream.selector;
-    selectors_[_index++] = IStreamRegistry.getPaginatedStreams.selector;
-    selectors_[_index++] = IStreamRegistry.getStream.selector;
-    selectors_[_index++] = IStreamRegistry.getStreamByIndex.selector;
-    selectors_[_index++] = IStreamRegistry.getStreamWithGenesis.selector;
-    selectors_[_index++] = IStreamRegistry.setStreamLastMiniblock.selector;
-    selectors_[_index++] = IStreamRegistry.placeStreamOnNode.selector;
-    selectors_[_index++] = IStreamRegistry.getStreamCount.selector;
-    selectors_[_index++] = IStreamRegistry.getAllStreamIds.selector;
-    selectors_[_index++] = IStreamRegistry.getAllStreams.selector;
-
-    addSelectors(selectors_);
-  }
-
-  function facet() public pure override returns (address) {
-    return address(0);
-  }
-
-  function selectors() public view override returns (bytes4[] memory) {
-    return functionSelectors;
-  }
-
-  function initializer() public pure override returns (bytes4) {
-    return "";
+    addSelector(IStreamRegistry.allocateStream.selector);
+    addSelector(IStreamRegistry.getPaginatedStreams.selector);
+    addSelector(IStreamRegistry.getStream.selector);
+    addSelector(IStreamRegistry.getStreamByIndex.selector);
+    addSelector(IStreamRegistry.getStreamWithGenesis.selector);
+    addSelector(IStreamRegistry.setStreamLastMiniblock.selector);
+    addSelector(IStreamRegistry.placeStreamOnNode.selector);
+    addSelector(IStreamRegistry.getStreamCount.selector);
+    addSelector(IStreamRegistry.getAllStreamIds.selector);
+    addSelector(IStreamRegistry.getAllStreams.selector);
   }
 }

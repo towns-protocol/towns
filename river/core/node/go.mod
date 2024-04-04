@@ -4,6 +4,8 @@ go 1.21
 
 toolchain go1.21.5
 
+replace github.com/ethereum/go-ethereum => github.com/ethereum-optimism/op-geth v1.101309.0-rc.2
+
 require (
 	connectrpc.com/connect v1.14.0
 	github.com/deckarep/golang-set/v2 v2.3.1
@@ -33,6 +35,7 @@ require (
 )
 
 require (
+	github.com/ethereum-optimism/superchain-registry/superchain v0.0.0-20240318114348-52d3dbd1605d // indirect
 	github.com/google/uuid v1.4.0 // indirect
 	github.com/stretchr/objx v0.5.1 // indirect
 )
@@ -143,7 +146,7 @@ require (
 	go4.org/intern v0.0.0-20230525184215-6c62f75575cb // indirect
 	go4.org/unsafe/assume-no-moving-gc v0.0.0-20230525183740-e7c30c78aeb2 // indirect
 	golang.org/x/mod v0.14.0 // indirect
-	golang.org/x/sync v0.6.0 // indirect
+	golang.org/x/sync v0.6.0
 	golang.org/x/sys v0.18.0 // indirect
 	golang.org/x/time v0.5.0 // indirect
 	golang.org/x/xerrors v0.0.0-20220907171357-04be3eba64a2 // indirect

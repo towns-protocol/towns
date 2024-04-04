@@ -59,8 +59,10 @@ func initConfigAndLog() {
 			configStruct config.Config
 			decodeHooks  = mapstructure.ComposeDecodeHookFunc(
 				config.DecodeAddressOrAddressFileHook(),
+				config.DecodeDurationHook(),
 			)
 		)
+
 		if err := viper.Unmarshal(&configStruct, viper.DecodeHook(decodeHooks)); err != nil {
 			fmt.Printf("Failed to unmarshal config, error=%v\n", err)
 		}

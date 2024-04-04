@@ -14,7 +14,7 @@ import {PricingModulesFacet} from "contracts/src/spaces/facets/architect/pricing
 import {console} from "forge-std/console.sol";
 
 contract InteractDiamond is IPricingModulesBase, Interaction {
-  function __interact(uint256 deployerPk, address) public override {
+  function __interact(uint256, address) public override {
     address diamond = getDeployment("spaceFactory");
     PricingModule[] memory modules = PricingModulesFacet(diamond)
       .listPricingModules();

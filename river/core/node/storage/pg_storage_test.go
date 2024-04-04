@@ -5,13 +5,13 @@ import (
 	"embed"
 	"os"
 	"reflect"
+	"strings"
 	"testing"
 	"time"
 
 	"github.com/ethereum/go-ethereum/common"
 	. "github.com/river-build/river/core/node/base"
 	"github.com/river-build/river/core/node/base/test"
-	"github.com/river-build/river/core/node/dlog"
 	. "github.com/river-build/river/core/node/protocol"
 	. "github.com/river-build/river/core/node/shared"
 	"github.com/river-build/river/core/node/testutils"
@@ -25,28 +25,23 @@ var (
 	testSchemaName  string
 )
 
-func setupTest(t *testing.T) (context.Context, *PostgresEventStore, func(), chan error) {
-	return setupTestWithMigration(t, testSchemaName, migrationsDir)
+func setupTest() (context.Context, *PostgresEventStore, func(), chan error) {
+	return setupTestWithMigration(testSchemaName, migrationsDir, testDatabaseUrl)
 }
 
 func setupTestWithMigration(
-	t *testing.T,
 	schemaName string,
 	migrations embed.FS,
+	dbUrl string,
 ) (context.Context, *PostgresEventStore, func(), chan error) {
 	ctx := test.NewTestContext()
 	ctx, closer := context.WithCancel(ctx)
-
-	log := dlog.Log()
-	log = log.With("testName", t.Name())
-	dlog.SetLog(log)
-	ctx = dlog.CtxWithLog(ctx, dlog.Log())
 
 	instanceId := GenShortNanoid()
 	exitSignal := make(chan error, 1)
 	store, err := newPostgresEventStoreWithMigrations(
 		ctx,
-		testDatabaseUrl,
+		dbUrl,
 		schemaName,
 		instanceId,
 		exitSignal,
@@ -83,10 +78,70 @@ func TestMain(m *testing.M) {
 	os.Exit(testMainImpl(m))
 }
 
+func TestPostgresAcquireConnections(t *testing.T) {
+	tests := map[string]struct {
+		acquire       func(t *testing.T, ctx context.Context, pgEventStore *PostgresEventStore) func()
+		expectedSlots int
+		tryAcquire    func(t *testing.T, ctx context.Context, pgEventStore *PostgresEventStore) bool
+	}{
+		"AcquireRegularConnection": {
+			acquire: func(t *testing.T, ctx context.Context, pgEventStore *PostgresEventStore) func() {
+				release, err := pgEventStore.acquireRegularConnection(ctx)
+				require.NoError(t, err)
+				return release
+			},
+			expectedSlots: 8,
+			tryAcquire: func(t *testing.T, ctx context.Context, pgEventStore *PostgresEventStore) bool {
+				return pgEventStore.regularConnections.TryAcquire(1)
+			},
+		},
+		"AcquireStreamingConnection": {
+			acquire: func(t *testing.T, ctx context.Context, pgEventStore *PostgresEventStore) func() {
+				release, err := pgEventStore.acquireStreamingConnection(ctx)
+				require.NoError(t, err)
+				return release
+			},
+			expectedSlots: 1,
+			tryAcquire: func(t *testing.T, ctx context.Context, pgEventStore *PostgresEventStore) bool {
+				return pgEventStore.streamingConnections.TryAcquire(1)
+			},
+		},
+	}
+
+	for name, tc := range tests {
+		t.Run(name, func(t *testing.T) {
+			require := require.New(t)
+
+			dbUrl := strings.Replace(testDatabaseUrl, "pool_max_conns=1000", "pool_max_conns=10", 1)
+			ctx, pgEventStore, closer, _ := setupTestWithMigration(testSchemaName, migrationsDir, dbUrl)
+			defer closer()
+
+			// Test that we can acquire and release connections
+			releaseConnections := make(chan func(), tc.expectedSlots+10)
+			for i := 0; i < tc.expectedSlots; i++ {
+				releaseConnections <- tc.acquire(t, ctx, pgEventStore)
+			}
+
+			// All acquires now blocked
+			require.False(tc.tryAcquire(t, ctx, pgEventStore))
+
+			for i := 0; i < 10; i++ {
+				// One release frees up one acquire
+				(<-releaseConnections)()
+				releaseConnections <- tc.acquire(t, ctx, pgEventStore)
+			}
+
+			for i := 0; i < tc.expectedSlots; i++ {
+				(<-releaseConnections)()
+			}
+		})
+	}
+}
+
 func TestPostgresEventStore(t *testing.T) {
 	require := require.New(t)
 
-	ctx, pgEventStore, closer, _ := setupTest(t)
+	ctx, pgEventStore, closer, _ := setupTest()
 	defer closer()
 
 	streamsNumber, err := pgEventStore.GetStreamsNumber(ctx)
@@ -204,7 +259,7 @@ func TestPostgresEventStore(t *testing.T) {
 }
 
 func TestPromoteMiniblockCandidate(t *testing.T) {
-	ctx, pgEventStore, closer, _ := setupTest(t)
+	ctx, pgEventStore, closer, _ := setupTest()
 	defer closer()
 	require := require.New(t)
 
@@ -306,7 +361,7 @@ func prepareTestDataForAddEventConsistencyCheck(ctx context.Context, s *Postgres
 // Test that if there is an event with wrong generation in minipool, we will get error
 func TestAddEventConsistencyChecksImproperGeneration(t *testing.T) {
 	require := require.New(t)
-	ctx, pgEventStore, closer, _ := setupTest(t)
+	ctx, pgEventStore, closer, _ := setupTest()
 	defer closer()
 
 	streamId := testutils.FakeStreamId(STREAM_CHANNEL_BIN)
@@ -327,7 +382,7 @@ func TestAddEventConsistencyChecksImproperGeneration(t *testing.T) {
 // Test that if there is a gap in minipool records, we will get error
 func TestAddEventConsistencyChecksGaps(t *testing.T) {
 	require := require.New(t)
-	ctx, pgEventStore, closer, _ := setupTest(t)
+	ctx, pgEventStore, closer, _ := setupTest()
 	defer closer()
 
 	streamId := testutils.FakeStreamId(STREAM_CHANNEL_BIN)
@@ -347,7 +402,7 @@ func TestAddEventConsistencyChecksGaps(t *testing.T) {
 // Test that if there is a wrong number minipool records, we will get error
 func TestAddEventConsistencyChecksEventsNumberMismatch(t *testing.T) {
 	require := require.New(t)
-	ctx, pgEventStore, closer, _ := setupTest(t)
+	ctx, pgEventStore, closer, _ := setupTest()
 	defer closer()
 
 	streamId := testutils.FakeStreamId(STREAM_CHANNEL_BIN)
@@ -366,7 +421,7 @@ func TestAddEventConsistencyChecksEventsNumberMismatch(t *testing.T) {
 
 func TestNoStream(t *testing.T) {
 	require := require.New(t)
-	ctx, pgEventStore, closer, _ := setupTest(t)
+	ctx, pgEventStore, closer, _ := setupTest()
 	defer closer()
 
 	res, err := pgEventStore.ReadStreamFromLastSnapshot(ctx, testutils.FakeStreamId(STREAM_CHANNEL_BIN), 0)
@@ -377,7 +432,7 @@ func TestNoStream(t *testing.T) {
 
 func TestCreateBlockProposalConsistencyChecksProperNewMinipoolGeneration(t *testing.T) {
 	require := require.New(t)
-	ctx, pgEventStore, closer, _ := setupTest(t)
+	ctx, pgEventStore, closer, _ := setupTest()
 	defer closer()
 
 	streamId := testutils.FakeStreamId(STREAM_CHANNEL_BIN)
@@ -406,7 +461,7 @@ func TestCreateBlockProposalConsistencyChecksProperNewMinipoolGeneration(t *test
 }
 
 func TestPromoteBlockConsistencyChecksProperNewMinipoolGeneration(t *testing.T) {
-	ctx, pgEventStore, closer, _ := setupTest(t)
+	ctx, pgEventStore, closer, _ := setupTest()
 	defer closer()
 
 	require := require.New(t)
@@ -445,7 +500,7 @@ func TestPromoteBlockConsistencyChecksProperNewMinipoolGeneration(t *testing.T) 
 
 func TestCreateBlockProposalNoSuchStreamError(t *testing.T) {
 	require := require.New(t)
-	ctx, pgEventStore, closer, _ := setupTest(t)
+	ctx, pgEventStore, closer, _ := setupTest()
 	defer closer()
 
 	streamId := testutils.FakeStreamId(STREAM_CHANNEL_BIN)
@@ -462,7 +517,7 @@ func TestCreateBlockProposalNoSuchStreamError(t *testing.T) {
 }
 
 func TestPromoteBlockNoSuchStreamError(t *testing.T) {
-	ctx, pgEventStore, closer, _ := setupTest(t)
+	ctx, pgEventStore, closer, _ := setupTest()
 	defer closer()
 
 	require := require.New(t)
@@ -489,7 +544,7 @@ func TestExitIfSecondStorageCreated(t *testing.T) {
 	require := require.New(t)
 	ctx := test.NewTestContext()
 
-	_, pgEventStore, closer, exitSignal := setupTest(t)
+	_, pgEventStore, closer, exitSignal := setupTest()
 	defer closer()
 
 	// Give listener thread some time to start
@@ -500,12 +555,12 @@ func TestExitIfSecondStorageCreated(t *testing.T) {
 	err := pgEventStore.CreateStreamStorage(ctx, streamId, genesisMiniblock)
 	require.NoError(err)
 
-	_, _, closerAlternateSchema, _ := setupTestWithMigration(t, testSchemaName+"-alternate", migrationsDir)
+	_, _, closerAlternateSchema, _ := setupTestWithMigration(testSchemaName+"-alternate", migrationsDir, testDatabaseUrl)
 	defer closerAlternateSchema()
 	// A store using a different schema name will not cause an exit
 	require.Len(exitSignal, 0)
 
-	_, pgEventStore2, closer2, _ := setupTest(t)
+	_, pgEventStore2, closer2, _ := setupTest()
 	require.NotNil(pgEventStore2)
 	defer closer2()
 
@@ -524,7 +579,7 @@ func TestExitIfSecondStorageCreated(t *testing.T) {
 // Test that if there is a gap in miniblocks sequence, we will get error
 func TestGetStreamFromLastSnapshotConsistencyChecksMissingBlockFailure(t *testing.T) {
 	require := require.New(t)
-	ctx, pgEventStore, closer, _ := setupTest(t)
+	ctx, pgEventStore, closer, _ := setupTest()
 	defer closer()
 
 	streamId := testutils.FakeStreamId(STREAM_CHANNEL_BIN)
@@ -558,7 +613,7 @@ func TestGetStreamFromLastSnapshotConsistencyChecksMissingBlockFailure(t *testin
 
 func TestGetStreamFromLastSnapshotConsistencyCheckWrongEnvelopeGeneration(t *testing.T) {
 	require := require.New(t)
-	ctx, pgEventStore, closer, _ := setupTest(t)
+	ctx, pgEventStore, closer, _ := setupTest()
 	defer closer()
 
 	streamId := testutils.FakeStreamId(STREAM_CHANNEL_BIN)
@@ -589,7 +644,7 @@ func TestGetStreamFromLastSnapshotConsistencyCheckWrongEnvelopeGeneration(t *tes
 
 func TestGetStreamFromLastSnapshotConsistencyCheckNoZeroIndexEnvelope(t *testing.T) {
 	require := require.New(t)
-	ctx, pgEventStore, closer, _ := setupTest(t)
+	ctx, pgEventStore, closer, _ := setupTest()
 	defer closer()
 
 	streamId := testutils.FakeStreamId(STREAM_CHANNEL_BIN)
@@ -621,7 +676,7 @@ func TestGetStreamFromLastSnapshotConsistencyCheckNoZeroIndexEnvelope(t *testing
 
 func TestGetStreamFromLastSnapshotConsistencyCheckGapInEnvelopesIndexes(t *testing.T) {
 	require := require.New(t)
-	ctx, pgEventStore, closer, _ := setupTest(t)
+	ctx, pgEventStore, closer, _ := setupTest()
 	defer closer()
 
 	streamId := testutils.FakeStreamId(STREAM_CHANNEL_BIN)
@@ -653,7 +708,7 @@ func TestGetStreamFromLastSnapshotConsistencyCheckGapInEnvelopesIndexes(t *testi
 
 func TestGetMiniblocksConsistencyChecks(t *testing.T) {
 	require := require.New(t)
-	ctx, pgEventStore, closer, _ := setupTest(t)
+	ctx, pgEventStore, closer, _ := setupTest()
 	defer closer()
 
 	streamId := testutils.FakeStreamId(STREAM_CHANNEL_BIN)
@@ -686,7 +741,7 @@ func TestGetMiniblocksConsistencyChecks(t *testing.T) {
 
 func TestAlreadyExists(t *testing.T) {
 	require := require.New(t)
-	ctx, pgEventStore, closer, _ := setupTest(t)
+	ctx, pgEventStore, closer, _ := setupTest()
 	defer closer()
 
 	streamId := testutils.FakeStreamId(STREAM_CHANNEL_BIN)
@@ -700,7 +755,7 @@ func TestAlreadyExists(t *testing.T) {
 
 func TestNotFound(t *testing.T) {
 	require := require.New(t)
-	ctx, pgEventStore, closer, _ := setupTest(t)
+	ctx, pgEventStore, closer, _ := setupTest()
 	defer closer()
 
 	streamId := testutils.FakeStreamId(STREAM_CHANNEL_BIN)

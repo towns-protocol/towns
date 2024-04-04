@@ -33,12 +33,18 @@ abstract contract FacetHelper is IDiamond {
   bytes4[] public functionSelectors;
   uint256 internal _index;
 
+  function initializer() public view virtual returns (bytes4) {
+    return bytes4(0);
+  }
+
   /// @dev Deploy facet contract in constructor and return address for testing.
-  function facet() public view virtual returns (address);
+  function facet() public view virtual returns (address) {
+    return address(0);
+  }
 
-  function selectors() public virtual returns (bytes4[] memory);
-
-  function initializer() public view virtual returns (bytes4);
+  function selectors() public virtual returns (bytes4[] memory) {
+    return functionSelectors;
+  }
 
   function makeCut(FacetCutAction action) public returns (FacetCut memory) {
     return

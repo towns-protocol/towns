@@ -8,16 +8,15 @@ import (
 	"sync"
 	"time"
 
-	"github.com/river-build/river/core/node/config"
-	"github.com/river-build/river/core/node/contracts/deploy"
-
 	"github.com/ethereum/go-ethereum/accounts/abi/bind"
 	"github.com/ethereum/go-ethereum/common"
 	"github.com/ethereum/go-ethereum/core"
 	"github.com/ethereum/go-ethereum/core/types"
 	"github.com/ethereum/go-ethereum/ethclient"
 	"github.com/ethereum/go-ethereum/ethclient/simulated"
+	"github.com/river-build/river/core/node/config"
 	"github.com/river-build/river/core/node/contracts"
+	"github.com/river-build/river/core/node/contracts/deploy"
 )
 
 var (
@@ -50,7 +49,7 @@ func initSimulated(ctx context.Context, numKeys int) ([]*Wallet, *simulated.Back
 		genesisAlloc[wallets[i].Address] = core.GenesisAccount{Balance: Eth_100}
 	}
 
-	backend := simulated.NewBackend(genesisAlloc)
+	backend := simulated.New(genesisAlloc, 30_000_000)
 	return wallets, backend, nil
 }
 

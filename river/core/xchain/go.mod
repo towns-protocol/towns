@@ -4,6 +4,10 @@ go 1.21
 
 toolchain go1.21.5
 
+
+replace github.com/river-build/river/core/node => ./../node
+replace github.com/ethereum/go-ethereum => github.com/ethereum-optimism/op-geth v1.101309.0-rc.2
+
 require (
 	github.com/ethereum/go-ethereum v1.13.12
 	github.com/mitchellh/mapstructure v1.5.0
@@ -36,6 +40,7 @@ require (
 	github.com/davecgh/go-spew v1.1.2-0.20180830191138-d8f796af33cc // indirect
 	github.com/deckarep/golang-set/v2 v2.3.1 // indirect
 	github.com/decred/dcrd/dcrec/secp256k1/v4 v4.2.0 // indirect
+	github.com/ethereum-optimism/superchain-registry/superchain v0.0.0-20240318114348-52d3dbd1605d // indirect
 	github.com/ethereum/c-kzg-4844 v0.4.1 // indirect
 	github.com/fjl/memsize v0.0.2 // indirect
 	github.com/fsnotify/fsnotify v1.7.0 // indirect
@@ -112,5 +117,3 @@ require (
 	gopkg.in/natefinch/lumberjack.v2 v2.0.0 // indirect
 	rsc.io/tmplfunc v0.0.3 // indirect
 )
-
-replace github.com/river-build/river/core/node => ./../node

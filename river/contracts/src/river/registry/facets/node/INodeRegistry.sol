@@ -6,8 +6,7 @@ import {NodeStatus, Node} from "contracts/src/river/registry/libraries/RegistryS
 // libraries
 
 // contracts
-
-interface INodeRegistry {
+interface INodeRegistryBase {
   // =============================================================
   //                           Events
   // =============================================================
@@ -15,7 +14,9 @@ interface INodeRegistry {
   event NodeStatusUpdated(address indexed nodeAddress, NodeStatus status);
   event NodeUrlUpdated(address indexed nodeAddress, string url);
   event NodeRemoved(address indexed nodeAddress);
+}
 
+interface INodeRegistry is INodeRegistryBase {
   // =============================================================
   //                           Nodes
   // =============================================================

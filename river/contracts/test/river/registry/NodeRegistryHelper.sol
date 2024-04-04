@@ -13,27 +13,13 @@ import {INodeRegistry} from "contracts/src/river/registry/facets/node/INodeRegis
 
 contract NodeRegistryHelper is FacetHelper {
   constructor() {
-    bytes4[] memory selectors_ = new bytes4[](8);
-    selectors_[_index++] = INodeRegistry.registerNode.selector;
-    selectors_[_index++] = INodeRegistry.removeNode.selector;
-    selectors_[_index++] = INodeRegistry.updateNodeStatus.selector;
-    selectors_[_index++] = INodeRegistry.updateNodeUrl.selector;
-    selectors_[_index++] = INodeRegistry.getNode.selector;
-    selectors_[_index++] = INodeRegistry.getNodeCount.selector;
-    selectors_[_index++] = INodeRegistry.getAllNodeAddresses.selector;
-    selectors_[_index++] = INodeRegistry.getAllNodes.selector;
-    addSelectors(selectors_);
-  }
-
-  function facet() public pure override returns (address) {
-    return address(0);
-  }
-
-  function selectors() public view override returns (bytes4[] memory) {
-    return functionSelectors;
-  }
-
-  function initializer() public pure override returns (bytes4) {
-    return "";
+    addSelector(INodeRegistry.registerNode.selector);
+    addSelector(INodeRegistry.removeNode.selector);
+    addSelector(INodeRegistry.updateNodeStatus.selector);
+    addSelector(INodeRegistry.updateNodeUrl.selector);
+    addSelector(INodeRegistry.getNode.selector);
+    addSelector(INodeRegistry.getNodeCount.selector);
+    addSelector(INodeRegistry.getAllNodeAddresses.selector);
+    addSelector(INodeRegistry.getAllNodes.selector);
   }
 }

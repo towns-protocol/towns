@@ -14,19 +14,9 @@ import {OperatorRegistry} from "contracts/src/river/registry/facets/operator/Ope
 
 contract OperatorRegistryHelper is FacetHelper {
   constructor() {
-    bytes4[] memory selectors_ = new bytes4[](3);
-    selectors_[_index++] = IOperatorRegistry.approveOperator.selector;
-    selectors_[_index++] = IOperatorRegistry.isOperator.selector;
-    selectors_[_index++] = IOperatorRegistry.removeOperator.selector;
-    addSelectors(selectors_);
-  }
-
-  function facet() public pure override returns (address) {
-    return address(0);
-  }
-
-  function selectors() public view override returns (bytes4[] memory) {
-    return functionSelectors;
+    addSelector(IOperatorRegistry.approveOperator.selector);
+    addSelector(IOperatorRegistry.isOperator.selector);
+    addSelector(IOperatorRegistry.removeOperator.selector);
   }
 
   function initializer() public pure override returns (bytes4) {

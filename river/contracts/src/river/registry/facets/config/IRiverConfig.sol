@@ -4,11 +4,43 @@ pragma solidity ^0.8.23;
 // libraries
 import {Setting} from "contracts/src/river/registry/libraries/RegistryStorage.sol";
 
+interface IRiverConfigBase {
+  // =============================================================
+  //                           Events
+  // =============================================================
+
+  /**
+   * @notice Emitted when a setting is changed
+   * @param key The setting key that is changed
+   * @param block The block number on which the setting becomes active
+   * @param value The new setting value
+   * @param deleted True if the setting is deleted (value is empty in this case)
+   */
+  event ConfigurationChanged(
+    bytes32 key,
+    uint64 block,
+    bytes value,
+    bool deleted
+  );
+
+  /**
+   * @notice Emitted when a configuration manager is added
+   * @param manager The configuration manager address
+   */
+  event ConfigurationManagerAdded(address indexed manager);
+
+  /**
+   * @notice Emitted when a configuration manager is removed
+   * @param manager The configuration manager address
+   */
+  event ConfigurationManagerRemoved(address indexed manager);
+}
+
 /**
  * @title IRiverConfig
  * @notice The interface for the RiverConfig facet
  */
-interface IRiverConfig {
+interface IRiverConfig is IRiverConfigBase {
   /**
    * @notice Indication if one or more settings exists for the given key
    * @param key The setting key
@@ -76,34 +108,4 @@ interface IRiverConfig {
    * @param manager The address to remove
    */
   function removeConfigurationManager(address manager) external;
-
-  // =============================================================
-  //                           Events
-  // =============================================================
-
-  /**
-   * @notice Emitted when a setting is changed
-   * @param key The setting key that is changed
-   * @param block The block number on which the setting becomes active
-   * @param value The new setting value
-   * @param deleted True if the setting is deleted (value is empty in this case)
-   */
-  event ConfigurationChanged(
-    bytes32 key,
-    uint64 block,
-    bytes value,
-    bool deleted
-  );
-
-  /**
-   * @notice Emitted when a configuration manager is added
-   * @param manager The configuration manager address
-   */
-  event ConfigurationManagerAdded(address indexed manager);
-
-  /**
-   * @notice Emitted when a configuration manager is removed
-   * @param manager The configuration manager address
-   */
-  event ConfigurationManagerRemoved(address indexed manager);
 }

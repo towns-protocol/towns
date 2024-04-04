@@ -3,6 +3,7 @@ package config
 import (
 	"encoding/hex"
 	"time"
+
 	"github.com/ethereum/go-ethereum/common"
 	infra "github.com/river-build/river/core/node/infra/config"
 	"github.com/river-build/river/core/node/shared"

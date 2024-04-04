@@ -22,6 +22,7 @@ import (
 	"github.com/jackc/pgx/v5/pgconn"
 	"github.com/jackc/pgx/v5/pgxpool"
 	"golang.org/x/crypto/sha3"
+	"golang.org/x/sync/semaphore"
 
 	"github.com/golang-migrate/migrate/v4"
 	_ "github.com/golang-migrate/migrate/v4/database/postgres"
@@ -36,6 +37,9 @@ type PostgresEventStore struct {
 	dbUrl             string
 	migrationDir      embed.FS
 	cleanupListenFunc func()
+
+	regularConnections   *semaphore.Weighted
+	streamingConnections *semaphore.Weighted
 }
 
 var _ StreamStorage = (*PostgresEventStore)(nil)
@@ -48,10 +52,59 @@ var dbCalls = infra.NewSuccessMetrics(infra.DB_CALLS_CATEGORY, nil)
 
 type txRunnerOpts struct {
 	disableCompareUUID bool
+	streaming          bool
 }
 
 func rollbackTx(ctx context.Context, tx pgx.Tx) {
 	_ = tx.Rollback(ctx)
+}
+
+func (s *PostgresEventStore) acquireRegularConnection(ctx context.Context) (func(), error) {
+	// Return error if context is already done.
+	if ctx.Err() != nil {
+		return nil, ctx.Err()
+	}
+
+	if err := s.regularConnections.Acquire(ctx, 1); err != nil {
+		return nil, err
+	}
+
+	release := func() {
+		s.regularConnections.Release(1)
+	}
+
+	// semaphore acquire can sometimes return a valid result for an expired context, so go ahead
+	// and check again here.
+	if ctx.Err() != nil {
+		release()
+		return nil, ctx.Err()
+	}
+
+	return release, nil
+}
+
+func (s *PostgresEventStore) acquireStreamingConnection(ctx context.Context) (func(), error) {
+	// Return error if context is already done.
+	if ctx.Err() != nil {
+		return nil, ctx.Err()
+	}
+
+	if err := s.streamingConnections.Acquire(ctx, 1); err != nil {
+		return nil, err
+	}
+
+	release := func() {
+		s.streamingConnections.Release(1)
+	}
+
+	// semaphore acquire can sometimes return a valid result for an expired context, so go ahead
+	// and check again here.
+	if ctx.Err() != nil {
+		release()
+		return nil, ctx.Err()
+	}
+
+	return release, nil
 }
 
 func (s *PostgresEventStore) txRunnerInner(
@@ -60,6 +113,22 @@ func (s *PostgresEventStore) txRunnerInner(
 	txFn func(context.Context, pgx.Tx) error,
 	opts *txRunnerOpts,
 ) error {
+	// Acquire rights to use a connection. We split the pool ourselves into two parts: one for connections that stream results
+	// back, and one for regular connections. This is to prevent a streaming connections from consuming the regular pool.
+	var err error
+	var release func()
+	if opts == nil || !opts.streaming {
+		release, err = s.acquireRegularConnection(ctx)
+	} else {
+		release, err = s.acquireStreamingConnection(ctx)
+	}
+	if err != nil {
+		return AsRiverError(err, Err_DB_OPERATION_FAILURE).
+			Func("pg.txRunnerInner").
+			Message("failed to acquire connection before running transaction")
+	}
+	defer release()
+
 	tx, err := s.pool.BeginTx(ctx, pgx.TxOptions{IsoLevel: pgx.Serializable, AccessMode: accessMode})
 	if err != nil {
 		return err
@@ -702,7 +771,7 @@ func (s *PostgresEventStore) GetStreamsNumber(ctx context.Context) (int, error) 
 		pgx.ReadOnly,
 		func(ctx context.Context, tx pgx.Tx) error {
 			var err error
-			count, err = s.getStreamsNumberTx(ctx)
+			count, err = s.getStreamsNumberTx(ctx, tx)
 			return err
 		},
 		nil,
@@ -713,9 +782,9 @@ func (s *PostgresEventStore) GetStreamsNumber(ctx context.Context) (int, error) 
 	return count, nil
 }
 
-func (s *PostgresEventStore) getStreamsNumberTx(ctx context.Context) (int, error) {
+func (s *PostgresEventStore) getStreamsNumberTx(ctx context.Context, tx pgx.Tx) (int, error) {
 	var count int
-	row := s.pool.QueryRow(ctx, "SELECT COUNT(stream_id) FROM es")
+	row := tx.QueryRow(ctx, "SELECT COUNT(stream_id) FROM es")
 	err := row.Scan(&count)
 	if err != nil {
 		return 0, err
@@ -865,7 +934,7 @@ func NewPostgresEventStore(
 
 func newPostgresEventStoreWithMigrations(
 	ctx context.Context,
-	database_url string,
+	databaseUrl string,
 	databaseSchemaName string,
 	instanceId string,
 	exitSignal chan error,
@@ -873,29 +942,42 @@ func newPostgresEventStoreWithMigrations(
 ) (*PostgresEventStore, error) {
 	log := dlog.FromCtx(ctx)
 
-	pool_conf, err := pgxpool.ParseConfig(database_url)
+	poolConf, err := pgxpool.ParseConfig(databaseUrl)
 	if err != nil {
 		return nil, WrapRiverError(Err_DB_OPERATION_FAILURE, err).Message("Error parsing config")
 	}
 
 	// In general, it should be possible to add database schema name into database url as a parameter search_path (&search_path=database_schema_name)
 	// For some reason it doesn't work so have to put it into config explicitly
-	pool_conf.ConnConfig.RuntimeParams["search_path"] = databaseSchemaName
+	poolConf.ConnConfig.RuntimeParams["search_path"] = databaseSchemaName
 
-	pool_conf.ConnConfig.DefaultQueryExecMode = pgx.QueryExecModeSimpleProtocol
+	poolConf.ConnConfig.DefaultQueryExecMode = pgx.QueryExecModeSimpleProtocol
 
-	pool, err := pgxpool.NewWithConfig(ctx, pool_conf)
+	pool, err := pgxpool.NewWithConfig(ctx, poolConf)
 	if err != nil {
 		return nil, WrapRiverError(Err_DB_OPERATION_FAILURE, err).Message("New with config error")
 	}
 
+	// TODO: make the ratio of available connections reserved for streaming configurable
+	var regularConnectionRatio float32 = 1.0
+	var totalReservableConns int64 = int64(poolConf.MaxConns) - 1 // subtract extra connection for the listeneer
+	var numRegularConnections int64 = int64(float32(totalReservableConns) * regularConnectionRatio)
+	var numStreamingConnections int64 = totalReservableConns - numRegularConnections
+
+	if numStreamingConnections < 1 {
+		numStreamingConnections += 1
+		numRegularConnections -= 1
+	}
+
 	store := &PostgresEventStore{
-		pool:         pool,
-		schemaName:   databaseSchemaName,
-		nodeUUID:     instanceId,
-		exitSignal:   exitSignal,
-		dbUrl:        database_url,
-		migrationDir: migrations,
+		pool:                 pool,
+		schemaName:           databaseSchemaName,
+		nodeUUID:             instanceId,
+		exitSignal:           exitSignal,
+		dbUrl:                databaseUrl,
+		migrationDir:         migrations,
+		regularConnections:   semaphore.NewWeighted(numRegularConnections),
+		streamingConnections: semaphore.NewWeighted(numStreamingConnections),
 	}
 
 	err = store.InitStorage(ctx)

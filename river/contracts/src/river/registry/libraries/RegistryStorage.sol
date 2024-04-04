@@ -85,7 +85,8 @@ abstract contract RegistryModifiers {
   AppStorage internal ds;
 
   modifier onlyNode(address node) {
-    if (!ds.nodes.contains(node)) revert(RiverRegistryErrors.BAD_AUTH);
+    if (ds.nodeByAddress[node].nodeAddress == address(0))
+      revert(RiverRegistryErrors.NODE_NOT_FOUND);
     _;
   }
 

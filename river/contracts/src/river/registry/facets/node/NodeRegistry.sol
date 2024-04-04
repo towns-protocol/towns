@@ -21,7 +21,7 @@ contract NodeRegistry is INodeRegistry, RegistryModifiers {
     NodeStatus status
   ) external onlyOperator(msg.sender) {
     // validate that the node is not already in the registry
-    if (ds.nodes.contains(nodeAddress))
+    if (ds.nodeByAddress[nodeAddress].nodeAddress != address(0))
       revert(RiverRegistryErrors.ALREADY_EXISTS);
 
     Node memory newNode = Node({
@@ -31,7 +31,7 @@ contract NodeRegistry is INodeRegistry, RegistryModifiers {
       operator: msg.sender
     });
 
-    ds.nodes.add(nodeAddress);
+    ds.nodes.add(nodeAddress); // TODO: remove this line
     ds.nodeByAddress[nodeAddress] = newNode;
 
     emit NodeAdded(nodeAddress, url, status);
@@ -40,13 +40,13 @@ contract NodeRegistry is INodeRegistry, RegistryModifiers {
   function removeNode(
     address nodeAddress
   ) external onlyNodeOperator(nodeAddress, msg.sender) {
-    if (!ds.nodes.contains(nodeAddress))
+    if (ds.nodeByAddress[nodeAddress].nodeAddress == address(0)) {
       revert(RiverRegistryErrors.NODE_NOT_FOUND);
+    }
 
-    require(
-      ds.nodeByAddress[nodeAddress].status == NodeStatus.Deleted,
-      RiverRegistryErrors.NODE_STATE_NOT_ALLOWED
-    );
+    if (ds.nodeByAddress[nodeAddress].status != NodeStatus.Deleted) {
+      revert(RiverRegistryErrors.NODE_STATE_NOT_ALLOWED);
+    }
 
     ds.nodes.remove(nodeAddress);
     delete ds.nodeByAddress[nodeAddress];
@@ -63,9 +63,6 @@ contract NodeRegistry is INodeRegistry, RegistryModifiers {
     onlyOperator(msg.sender)
     onlyNodeOperator(nodeAddress, msg.sender)
   {
-    if (!ds.nodes.contains(nodeAddress))
-      revert(RiverRegistryErrors.NODE_NOT_FOUND);
-
     Node storage node = ds.nodeByAddress[nodeAddress];
 
     _checkNodeStatusTransionAllowed(node.status, status);
@@ -83,9 +80,6 @@ contract NodeRegistry is INodeRegistry, RegistryModifiers {
     onlyNode(nodeAddress)
     onlyNodeOperator(nodeAddress, msg.sender)
   {
-    if (!ds.nodes.contains(nodeAddress))
-      revert(RiverRegistryErrors.NODE_NOT_FOUND);
-
     Node storage node = ds.nodeByAddress[nodeAddress];
 
     if (

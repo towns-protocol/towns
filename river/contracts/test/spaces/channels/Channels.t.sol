@@ -235,10 +235,11 @@ contract ChannelsTest is BaseSetup, IEntitlementBase {
   }
 
   function test_updateChannel_disable_channel(
-    string memory channelMetadata,
-    bytes32 channelId
+    string memory channelMetadata
   ) public {
     vm.assume(bytes(channelMetadata).length > 2);
+
+    bytes32 channelId = "fooChannel";
 
     vm.startPrank(founder);
     IChannel(everyoneSpace).createChannel(
@@ -255,11 +256,10 @@ contract ChannelsTest is BaseSetup, IEntitlementBase {
     assertTrue(_channel.disabled);
   }
 
-  function test_removeChannel(
-    string memory channelMetadata,
-    bytes32 channelId
-  ) public {
+  function test_removeChannel(string memory channelMetadata) public {
     vm.assume(bytes(channelMetadata).length > 2);
+
+    bytes32 channelId = "fooChannel";
 
     vm.startPrank(founder);
     IChannel(everyoneSpace).createChannel(
