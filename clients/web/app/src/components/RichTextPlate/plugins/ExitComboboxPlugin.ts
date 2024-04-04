@@ -8,6 +8,7 @@ import {
 } from '@udecode/plate-common'
 import { comboboxActions, comboboxSelectors } from '@udecode/plate-combobox'
 import { findMentionInput, removeMentionInput } from '@udecode/plate-mention'
+import { getFilteredItemsWithoutMockEmoji } from '../utils/helpers'
 
 const KEY_EXIT_COMBOBOX = 'exit_combobox'
 
@@ -32,7 +33,7 @@ export const createExitComboboxPlugin = createPluginFactory<HotkeyPlugin>({
                 }
                 const { filteredItems } = comboboxSelectors.state()
                 if (
-                    filteredItems.length === 0 &&
+                    getFilteredItemsWithoutMockEmoji(filteredItems).length === 0 &&
                     (isHotkey('space', event) || isHotkey('Enter', event))
                 ) {
                     comboboxActions.reset()

@@ -1,6 +1,9 @@
 import React from 'react'
 import { withRef } from '@udecode/cn'
 import { PlateElement, getHandler } from '@udecode/plate-common'
+import { comboboxSelectors } from '@udecode/plate-combobox'
+import { getFilteredItemsWithoutMockEmoji } from '../../utils/helpers'
+
 import { mentionInput } from '../../RichTextEditor.css'
 
 export const MentionInputElement = withRef<
@@ -11,13 +14,15 @@ export const MentionInputElement = withRef<
     }
 >(({ className, prefix, onClick, ...props }, ref) => {
     const { children, element } = props
+    const { filteredItems, text } = comboboxSelectors.state()
+    const matchLength = getFilteredItemsWithoutMockEmoji(filteredItems).length
 
     return (
         <PlateElement
             asChild
             ref={ref}
             data-slate-value={element.value}
-            className={mentionInput}
+            className={matchLength > 0 || !text ? mentionInput : ''}
             onClick={getHandler(onClick, element)}
             {...props}
         >

@@ -1,8 +1,7 @@
 import React, { useCallback } from 'react'
 import { TComboboxItemWithData } from '@udecode/plate-combobox'
-import { MOCK_EMOJI } from '../../components/plate-ui/Combobox'
 import { MentionCombobox } from '../../components/plate-ui/MentionCombobox'
-import { TMentionEmoji } from '../../utils/ComboboxTypes'
+import { MOCK_EMOJI, TMentionEmoji } from '../../utils/ComboboxTypes'
 import { ELEMENT_MENTION_EMOJI } from './createEmojiPlugin'
 
 export const EmojiPlugin = () => {

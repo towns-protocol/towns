@@ -4,6 +4,7 @@ import {
     ComboboxContentItemProps,
     ComboboxContentProps,
     ComboboxProps,
+    TComboboxItem,
     TComboboxItemWithData,
     comboboxActions,
     useActiveComboboxStore,
@@ -24,6 +25,7 @@ import { search } from '@components/RichText/plugins/EmojiShortcutPlugin'
 import { Text, TypeaheadMenu, TypeaheadMenuItem } from '@ui'
 import { Avatar } from '@components/Avatar/Avatar'
 import { TMentionComboboxTypes, TMentionEmoji } from '../../utils/ComboboxTypes'
+import { getFilteredItemsWithoutMockEmoji } from '../../utils/helpers'
 
 export const ComboboxIcon = <T extends TMentionComboboxTypes>({
     item,
@@ -118,8 +120,6 @@ export const ComboboxItem = withRef<
     },
 )
 
-export const MOCK_EMOJI = '__mock_emoji__'
-
 export const ComboboxContent = <T extends TMentionComboboxTypes>(
     props: ComboboxContentProps<T> & { editor: PlateEditor; currentUser?: string },
 ) => {
@@ -132,7 +132,7 @@ export const ComboboxContent = <T extends TMentionComboboxTypes>(
 
     if (
         Array.isArray(filteredItems) &&
-        filteredItems.filter((item) => item.key !== MOCK_EMOJI).length === 0
+        getFilteredItemsWithoutMockEmoji(filteredItems).length === 0
     ) {
         return null
     }
@@ -141,10 +141,10 @@ export const ComboboxContent = <T extends TMentionComboboxTypes>(
         <TypeaheadMenu zIndex="tooltips" outerBorder={false}>
             {Component ? Component({ store: activeComboboxStore }) : null}
 
-            {(filteredItems || []).map((item, index) => (
+            {getFilteredItemsWithoutMockEmoji(filteredItems || []).map((item, index) => (
                 <ComboboxItem
                     key={item.key}
-                    item={item}
+                    item={item as TComboboxItem<T>}
                     combobox={combobox}
                     index={index}
                     isHighlighted={index === highlightedIndex}
@@ -177,7 +177,7 @@ export const Combobox = <T extends TMentionComboboxTypes>({
     const focusedEditorId = useEventEditorSelectors.focus?.()
     const combobox = useComboboxControls()
     const activeId = useComboboxSelectors.activeId()
-    const query = useComboboxSelectors.text()
+    const query = (useComboboxSelectors.text() || '').replace(/[^a-zA-Z0-9-_\s]/gi, '')
     const targetRange = useComboboxSelectors.targetRange()
     const selectionDefined = useEditorSelector((editor) => !!editor.selection, [])
     const editorId = usePlateSelectors().id()
@@ -197,7 +197,7 @@ export const Combobox = <T extends TMentionComboboxTypes>({
     }, [id, trigger, searchPattern, controlled, onSelectItem, maxSuggestions, filter, sort])
 
     useEffect(() => {
-        if (activeId !== 'emojis' || !query || query.length < 1) {
+        if (activeId !== 'emojis' || query.length < 1) {
             return
         }
         // Since Plate does not support async search out of the box, we need to fetch the emojis here

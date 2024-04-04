@@ -8,3 +8,4 @@ export type TMentionComboboxTypes =
     | TMentionEmoji
 export type TEmojiMentionElement = TMentionElement & { emoji: TMentionEmoji }
 export type TChannelMentionElement = TMentionElement & { channel: Channel }
+export const MOCK_EMOJI = '__mock_emoji__'
