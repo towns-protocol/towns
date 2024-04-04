@@ -93,7 +93,7 @@ output "alb_reserved_num_rules" {
 }
 
 locals {
-  num_nodes = 10
+  num_nodes = 11
 
   is_transient = length(regexall("transient-\\d+", terraform.workspace)) > 0
 
@@ -105,7 +105,7 @@ locals {
   transient_no = local.is_transient ? (tonumber(split("-", terraform.workspace)[1])) : 0
 
   transient_river_node_urls = [
-    for i in range(0, 10) : "https://river${i + 1}-${local.transient_no}.nodes.transient.towns.com"
+    for i in range(0, local.num_nodes) : "https://river${i + 1}-${local.transient_no}.nodes.transient.towns.com"
   ]
 
   river_node_urls = local.is_transient ? local.transient_river_node_urls : local.regular_river_node_urls
@@ -152,6 +152,9 @@ output "nodes_metadata" {
     , {
       address = "0xA278267f396a317c5Bb583f47F7f2792Bc00D3b3"
       url     = local.river_node_urls[9]
+      }, {
+      address = "0x75b5eb02d2fe5e2f0008a05849d81526963886c2",
+      url     = local.river_node_urls[10]
     }
   ]
 }

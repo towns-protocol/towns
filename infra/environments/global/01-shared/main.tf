@@ -164,7 +164,7 @@ resource "aws_secretsmanager_secret_version" "notification_service_db_password_s
 module "river_node_credentials" {
   source = "../../../modules/river-node-credentials"
 
-  count = 10
+  count = 11
 
   node_number = count.index + 1
 }
