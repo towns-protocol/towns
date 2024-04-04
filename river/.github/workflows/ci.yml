@@ -746,6 +746,7 @@ jobs:
                     --health-interval 10s
                     --health-timeout 5s
                     --health-retries 5
+                    --name river_postgres_container
 
         steps:
             - name: Cancel previous runs
@@ -754,6 +755,27 @@ jobs:
               with:
                   access_token: ${{ github.token }}
 
+            - name: Show PostgreSQL max_connections
+              run: psql -h localhost -p 5433 -U postgres -c 'SHOW max_connections;'
+              env:
+                  POSTGRES_PASSWORD: postgres
+                  PGPASSWORD: postgres
+    
+            - name: Increase max_connections in Postgres
+              run: |
+                  docker exec -i river_postgres_container bash << EOF
+                    echo 'max_connections = 1000' >> /var/lib/postgresql/data/postgresql.conf
+                    echo 'shared_buffers = 2GB' >> /var/lib/postgresql/data/postgresql.conf
+                  EOF
+                  docker restart --time 0 river_postgres_container
+                  sleep 5
+    
+            - name: Show PostgreSQL max_connections
+              run: psql -h localhost -p 5433 -U postgres -c 'SHOW max_connections;'
+              env:
+                  POSTGRES_PASSWORD: postgres
+                  PGPASSWORD: postgres
+    
             - name: Checkout code
               uses: actions/checkout@v4
 
@@ -787,6 +809,27 @@ jobs:
             - name: Start and configure blockchains
               run: ./scripts/bc-all-start.sh
 
+            - name: Show PostgreSQL max_connections
+              run: psql -h localhost -p 5433 -U postgres -c 'SHOW max_connections;'
+              env:
+                  POSTGRES_PASSWORD: postgres
+                  PGPASSWORD: postgres
+
+            - name: Increase max_connections in Postgres
+              run: |
+                  docker exec -i river_postgres_container bash << EOF
+                    echo 'max_connections = 1000' >> /var/lib/postgresql/data/postgresql.conf
+                    echo 'shared_buffers = 2GB' >> /var/lib/postgresql/data/postgresql.conf
+                  EOF
+                  docker restart --time 0 river_postgres_container
+                  sleep 5
+
+            - name: Show PostgreSQL max_connections
+              run: psql -h localhost -p 5433 -U postgres -c 'SHOW max_connections;'
+              env:
+                  POSTGRES_PASSWORD: postgres
+                  PGPASSWORD: postgres
+
             - name: create db
               run: psql -h localhost -p 5433 -U postgres -f scripts/sql/create_db.sql
               working-directory: core
@@ -799,7 +842,7 @@ jobs:
               working-directory: core
 
             - name: Run node tests
-              run: go test --race ./...
+              run: go test -timeout 20m  --race ./...
               working-directory: core/node
 
             # If CI failed, we send a slack notification

@@ -6,10 +6,12 @@ import (
 	"os"
 	"reflect"
 	"testing"
+	"time"
 
 	"github.com/ethereum/go-ethereum/common"
 	. "github.com/river-build/river/core/node/base"
 	"github.com/river-build/river/core/node/base/test"
+	"github.com/river-build/river/core/node/dlog"
 	. "github.com/river-build/river/core/node/protocol"
 	. "github.com/river-build/river/core/node/shared"
 	"github.com/river-build/river/core/node/testutils"
@@ -23,13 +25,22 @@ var (
 	testSchemaName  string
 )
 
-func setupTest() (context.Context, *PostgresEventStore, func()) {
-	return setupTestWithMigration(testSchemaName, migrationsDir)
+func setupTest(t *testing.T) (context.Context, *PostgresEventStore, func(), chan error) {
+	return setupTestWithMigration(t, testSchemaName, migrationsDir)
 }
 
-func setupTestWithMigration(schemaName string, migrations embed.FS) (context.Context, *PostgresEventStore, func()) {
+func setupTestWithMigration(
+	t *testing.T,
+	schemaName string,
+	migrations embed.FS,
+) (context.Context, *PostgresEventStore, func(), chan error) {
 	ctx := test.NewTestContext()
 	ctx, closer := context.WithCancel(ctx)
+
+	log := dlog.Log()
+	log = log.With("testName", t.Name())
+	dlog.SetLog(log)
+	ctx = dlog.CtxWithLog(ctx, dlog.Log())
 
 	instanceId := GenShortNanoid()
 	exitSignal := make(chan error, 1)
@@ -44,10 +55,12 @@ func setupTestWithMigration(schemaName string, migrations embed.FS) (context.Con
 	if err != nil {
 		panic(err)
 	}
-	return ctx, store, func() {
-		store.Close(ctx)
+	cleanupStore := func() {
 		closer()
+		store.Close(ctx)
 	}
+
+	return ctx, store, cleanupStore, exitSignal
 }
 
 func testMainImpl(m *testing.M) int {
@@ -73,7 +86,7 @@ func TestMain(m *testing.M) {
 func TestPostgresEventStore(t *testing.T) {
 	require := require.New(t)
 
-	ctx, pgEventStore, closer := setupTest()
+	ctx, pgEventStore, closer, _ := setupTest(t)
 	defer closer()
 
 	streamsNumber, err := pgEventStore.GetStreamsNumber(ctx)
@@ -191,7 +204,7 @@ func TestPostgresEventStore(t *testing.T) {
 }
 
 func TestPromoteMiniblockCandidate(t *testing.T) {
-	ctx, pgEventStore, closer := setupTest()
+	ctx, pgEventStore, closer, _ := setupTest(t)
 	defer closer()
 	require := require.New(t)
 
@@ -293,7 +306,7 @@ func prepareTestDataForAddEventConsistencyCheck(ctx context.Context, s *Postgres
 // Test that if there is an event with wrong generation in minipool, we will get error
 func TestAddEventConsistencyChecksImproperGeneration(t *testing.T) {
 	require := require.New(t)
-	ctx, pgEventStore, closer := setupTest()
+	ctx, pgEventStore, closer, _ := setupTest(t)
 	defer closer()
 
 	streamId := testutils.FakeStreamId(STREAM_CHANNEL_BIN)
@@ -314,7 +327,7 @@ func TestAddEventConsistencyChecksImproperGeneration(t *testing.T) {
 // Test that if there is a gap in minipool records, we will get error
 func TestAddEventConsistencyChecksGaps(t *testing.T) {
 	require := require.New(t)
-	ctx, pgEventStore, closer := setupTest()
+	ctx, pgEventStore, closer, _ := setupTest(t)
 	defer closer()
 
 	streamId := testutils.FakeStreamId(STREAM_CHANNEL_BIN)
@@ -334,7 +347,7 @@ func TestAddEventConsistencyChecksGaps(t *testing.T) {
 // Test that if there is a wrong number minipool records, we will get error
 func TestAddEventConsistencyChecksEventsNumberMismatch(t *testing.T) {
 	require := require.New(t)
-	ctx, pgEventStore, closer := setupTest()
+	ctx, pgEventStore, closer, _ := setupTest(t)
 	defer closer()
 
 	streamId := testutils.FakeStreamId(STREAM_CHANNEL_BIN)
@@ -353,7 +366,7 @@ func TestAddEventConsistencyChecksEventsNumberMismatch(t *testing.T) {
 
 func TestNoStream(t *testing.T) {
 	require := require.New(t)
-	ctx, pgEventStore, closer := setupTest()
+	ctx, pgEventStore, closer, _ := setupTest(t)
 	defer closer()
 
 	res, err := pgEventStore.ReadStreamFromLastSnapshot(ctx, testutils.FakeStreamId(STREAM_CHANNEL_BIN), 0)
@@ -364,7 +377,7 @@ func TestNoStream(t *testing.T) {
 
 func TestCreateBlockProposalConsistencyChecksProperNewMinipoolGeneration(t *testing.T) {
 	require := require.New(t)
-	ctx, pgEventStore, closer := setupTest()
+	ctx, pgEventStore, closer, _ := setupTest(t)
 	defer closer()
 
 	streamId := testutils.FakeStreamId(STREAM_CHANNEL_BIN)
@@ -393,7 +406,7 @@ func TestCreateBlockProposalConsistencyChecksProperNewMinipoolGeneration(t *test
 }
 
 func TestPromoteBlockConsistencyChecksProperNewMinipoolGeneration(t *testing.T) {
-	ctx, pgEventStore, closer := setupTest()
+	ctx, pgEventStore, closer, _ := setupTest(t)
 	defer closer()
 
 	require := require.New(t)
@@ -432,7 +445,7 @@ func TestPromoteBlockConsistencyChecksProperNewMinipoolGeneration(t *testing.T) 
 
 func TestCreateBlockProposalNoSuchStreamError(t *testing.T) {
 	require := require.New(t)
-	ctx, pgEventStore, closer := setupTest()
+	ctx, pgEventStore, closer, _ := setupTest(t)
 	defer closer()
 
 	streamId := testutils.FakeStreamId(STREAM_CHANNEL_BIN)
@@ -449,7 +462,7 @@ func TestCreateBlockProposalNoSuchStreamError(t *testing.T) {
 }
 
 func TestPromoteBlockNoSuchStreamError(t *testing.T) {
-	ctx, pgEventStore, closer := setupTest()
+	ctx, pgEventStore, closer, _ := setupTest(t)
 	defer closer()
 
 	require := require.New(t)
@@ -475,48 +488,43 @@ func TestPromoteBlockNoSuchStreamError(t *testing.T) {
 func TestExitIfSecondStorageCreated(t *testing.T) {
 	require := require.New(t)
 	ctx := test.NewTestContext()
-	ctx, closer := context.WithCancel(ctx)
+
+	_, pgEventStore, closer, exitSignal := setupTest(t)
 	defer closer()
 
-	instanceId := GenShortNanoid()
-	exitSignal := make(chan error, 1)
-	pgEventStore, err := NewPostgresEventStore(ctx, testDatabaseUrl, testSchemaName, instanceId, exitSignal)
-	require.NoError(err)
-	require.NotNil(pgEventStore)
-	defer pgEventStore.Close(ctx)
+	// Give listener thread some time to start
+	time.Sleep(500 * time.Millisecond)
 
-	genesisMiniblock := []byte("genesisMinoblock")
+	genesisMiniblock := []byte("genesisMiniblock")
 	streamId := testutils.FakeStreamId(STREAM_CHANNEL_BIN)
-	err = pgEventStore.CreateStreamStorage(ctx, streamId, genesisMiniblock)
+	err := pgEventStore.CreateStreamStorage(ctx, streamId, genesisMiniblock)
 	require.NoError(err)
 
-	exitSignal2 := make(chan error, 1)
-	pgEventStore2, err := NewPostgresEventStore(ctx, testDatabaseUrl, testSchemaName, GenShortNanoid(), exitSignal2)
-	require.NoError(err)
+	_, _, closerAlternateSchema, _ := setupTestWithMigration(t, testSchemaName+"-alternate", migrationsDir)
+	defer closerAlternateSchema()
+	// A store using a different schema name will not cause an exit
+	require.Len(exitSignal, 0)
+
+	_, pgEventStore2, closer2, _ := setupTest(t)
 	require.NotNil(pgEventStore2)
-	defer pgEventStore2.Close(ctx)
+	defer closer2()
 
-	streamId2 := testutils.FakeStreamId(STREAM_CHANNEL_BIN)
-	err = pgEventStore.CreateStreamStorage(ctx, streamId2, genesisMiniblock)
-	require.Error(err)
-	require.Equal(Err_RESOURCE_EXHAUSTED, AsRiverError(err).Code)
+	// Give listener thread for the first store some time to detect the notification and emit an error
+	time.Sleep(500 * time.Millisecond)
 
-	var exitErr error
-	select {
-	case exitErr = <-exitSignal:
-	default:
-	}
-	require.Error(exitErr)
+	require.Len(exitSignal, 1)
+	require.ErrorContains(<-exitSignal, "No longer a current node, shutting down")
 
 	result, err := pgEventStore2.ReadStreamFromLastSnapshot(ctx, streamId, 0)
 	require.NoError(err)
 	require.NotNil(result)
+
 }
 
 // Test that if there is a gap in miniblocks sequence, we will get error
 func TestGetStreamFromLastSnapshotConsistencyChecksMissingBlockFailure(t *testing.T) {
 	require := require.New(t)
-	ctx, pgEventStore, closer := setupTest()
+	ctx, pgEventStore, closer, _ := setupTest(t)
 	defer closer()
 
 	streamId := testutils.FakeStreamId(STREAM_CHANNEL_BIN)
@@ -550,7 +558,7 @@ func TestGetStreamFromLastSnapshotConsistencyChecksMissingBlockFailure(t *testin
 
 func TestGetStreamFromLastSnapshotConsistencyCheckWrongEnvelopeGeneration(t *testing.T) {
 	require := require.New(t)
-	ctx, pgEventStore, closer := setupTest()
+	ctx, pgEventStore, closer, _ := setupTest(t)
 	defer closer()
 
 	streamId := testutils.FakeStreamId(STREAM_CHANNEL_BIN)
@@ -581,7 +589,7 @@ func TestGetStreamFromLastSnapshotConsistencyCheckWrongEnvelopeGeneration(t *tes
 
 func TestGetStreamFromLastSnapshotConsistencyCheckNoZeroIndexEnvelope(t *testing.T) {
 	require := require.New(t)
-	ctx, pgEventStore, closer := setupTest()
+	ctx, pgEventStore, closer, _ := setupTest(t)
 	defer closer()
 
 	streamId := testutils.FakeStreamId(STREAM_CHANNEL_BIN)
@@ -613,7 +621,7 @@ func TestGetStreamFromLastSnapshotConsistencyCheckNoZeroIndexEnvelope(t *testing
 
 func TestGetStreamFromLastSnapshotConsistencyCheckGapInEnvelopesIndexes(t *testing.T) {
 	require := require.New(t)
-	ctx, pgEventStore, closer := setupTest()
+	ctx, pgEventStore, closer, _ := setupTest(t)
 	defer closer()
 
 	streamId := testutils.FakeStreamId(STREAM_CHANNEL_BIN)
@@ -645,7 +653,7 @@ func TestGetStreamFromLastSnapshotConsistencyCheckGapInEnvelopesIndexes(t *testi
 
 func TestGetMiniblocksConsistencyChecks(t *testing.T) {
 	require := require.New(t)
-	ctx, pgEventStore, closer := setupTest()
+	ctx, pgEventStore, closer, _ := setupTest(t)
 	defer closer()
 
 	streamId := testutils.FakeStreamId(STREAM_CHANNEL_BIN)
@@ -678,7 +686,7 @@ func TestGetMiniblocksConsistencyChecks(t *testing.T) {
 
 func TestAlreadyExists(t *testing.T) {
 	require := require.New(t)
-	ctx, pgEventStore, closer := setupTest()
+	ctx, pgEventStore, closer, _ := setupTest(t)
 	defer closer()
 
 	streamId := testutils.FakeStreamId(STREAM_CHANNEL_BIN)
@@ -692,7 +700,7 @@ func TestAlreadyExists(t *testing.T) {
 
 func TestNotFound(t *testing.T) {
 	require := require.New(t)
-	ctx, pgEventStore, closer := setupTest()
+	ctx, pgEventStore, closer, _ := setupTest(t)
 	defer closer()
 
 	streamId := testutils.FakeStreamId(STREAM_CHANNEL_BIN)

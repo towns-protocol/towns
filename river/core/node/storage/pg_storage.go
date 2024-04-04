@@ -29,12 +29,13 @@ import (
 )
 
 type PostgresEventStore struct {
-	pool         *pgxpool.Pool
-	schemaName   string
-	nodeUUID     string
-	exitSignal   chan error
-	dbUrl        string
-	migrationDir embed.FS
+	pool              *pgxpool.Pool
+	schemaName        string
+	nodeUUID          string
+	exitSignal        chan error
+	dbUrl             string
+	migrationDir      embed.FS
+	cleanupListenFunc func()
 }
 
 var _ StreamStorage = (*PostgresEventStore)(nil)
@@ -902,6 +903,12 @@ func newPostgresEventStoreWithMigrations(
 		return nil, err
 	}
 
+	cancelCtx, cancel := context.WithCancel(ctx)
+	store.cleanupListenFunc = cancel
+	go func() {
+		store.listenForNewNodes(cancelCtx)
+	}()
+
 	// stats thread
 	go func() {
 		for {
@@ -945,6 +952,9 @@ func newPostgresEventStore(
 // Close removes instance record from singlenodekey table and closes the connection pool
 func (s *PostgresEventStore) Close(ctx context.Context) {
 	_ = s.CleanupStorage(ctx)
+	// Cancel the notify listening func to release the listener connection before closing the pool.
+	s.cleanupListenFunc()
+
 	s.pool.Close()
 }
 
@@ -1044,7 +1054,79 @@ func (s *PostgresEventStore) initializeSingleNodeKeyTx(ctx context.Context, tx p
 	if err != nil {
 		return err
 	}
+
 	return nil
+}
+
+// acquireListeningConnection returns a connection that listens for changes to the schema, or
+// a nil connection if the context is cancelled. In the event of failure to acquire a connection
+// or listen, it will retry indefinitely until success.
+func (s *PostgresEventStore) acquireListeningConnection(ctx context.Context) *pgxpool.Conn {
+	var err error
+	var conn *pgxpool.Conn
+	log := dlog.FromCtx(ctx)
+	for {
+		conn, err = s.pool.Acquire(ctx)
+		if err == nil {
+			_, err = conn.Exec(ctx, "listen singlenodekey")
+			if err == nil {
+				log.Debug("Listening connection acquired")
+				return conn
+			} else {
+				conn.Release()
+			}
+		}
+		if err == context.Canceled {
+			return nil
+		}
+		log.Debug("Failed to acquire listening connection, retrying", "error", err)
+
+		// In the event of networking issues, wait a small period of time for recovery.
+		time.Sleep(100 * time.Millisecond)
+	}
+}
+
+// Call with a cancellable context and pgx should terminate when the context is
+// cancelled. Call after storage has been initialized in order to not receive a
+// notification when this node updates the table.
+func (s *PostgresEventStore) listenForNewNodes(ctx context.Context) {
+	conn := s.acquireListeningConnection(ctx)
+	if conn == nil {
+		return
+	}
+	defer conn.Release()
+
+	for {
+		notification, err := conn.Conn().WaitForNotification(ctx)
+
+		// Cancellation indicates a valid exit.
+		if err == context.Canceled {
+			return
+		}
+
+		// Unexpected.
+		if err != nil {
+			// Ok to call Release multiple times
+			conn.Release()
+			conn = s.acquireListeningConnection(ctx)
+			if conn == nil {
+				return
+			}
+			defer conn.Release()
+		}
+
+		// Listen only for changes to our schema.
+		if notification.Payload == s.schemaName {
+			err = RiverError(Err_RESOURCE_EXHAUSTED, "No longer a current node, shutting down").
+				Func("listenForNewNodes").
+				Tag("schema", s.schemaName).
+				LogError(dlog.FromCtx(ctx))
+
+				// In the event of detecting node conflict, send the error to the main thread to shut down.
+			s.exitSignal <- err
+			return
+		}
+	}
 }
 
 func (s *PostgresEventStore) initStorage(ctx context.Context) error {

@@ -197,7 +197,13 @@ func StartServer(
 		return nil, err
 	}
 
-	nodeRegistry, err := nodes.LoadNodeRegistry(ctx, registryContract, wallet.Address, riverChain.InitialBlockNum, chainMonitorBuilder)
+	nodeRegistry, err := nodes.LoadNodeRegistry(
+		ctx,
+		registryContract,
+		wallet.Address,
+		riverChain.InitialBlockNum,
+		chainMonitorBuilder,
+	)
 	if err != nil {
 		log.Error("Failed to load node registry", "error", err)
 		return nil, err

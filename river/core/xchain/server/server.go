@@ -156,7 +156,7 @@ func registerNode(ctx context.Context, workerID int, fromAddress common.Address,
 	}
 
 	// Get the latest block number
-	blockNumber, err := client.BlockByNumber(ctx, nil)
+	blockNumber, err := client.BlockNumber(ctx)
 	if err != nil {
 		log.Error("Failed to get current block number", "err", err)
 		return nil, err
@@ -181,7 +181,7 @@ func registerNode(ctx context.Context, workerID int, fromAddress common.Address,
 
 	}
 	log.Info("Registered node", "blockNumber", blockNumber)
-	temp := blockNumber.NumberU64()
+	temp := blockNumber
 	return &temp, nil
 }
 
