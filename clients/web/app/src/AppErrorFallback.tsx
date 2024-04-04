@@ -1,31 +1,6 @@
 import React, { useEffect } from 'react'
-import { Box, Icon, Paragraph, Stack } from '@ui'
+import { Box, FancyButton, Icon, Paragraph, Stack } from '@ui'
 import { WelcomeLayout } from 'routes/layouts/WelcomeLayout'
-
-function setWithExpiry(key: string, value: string, ttl: number) {
-    const item = {
-        value: value,
-        expiry: new Date().getTime() + ttl,
-    }
-    localStorage.setItem(key, JSON.stringify(item))
-}
-
-function getWithExpiry(key: string) {
-    const itemString = window.localStorage.getItem(key)
-    if (!itemString) {
-        return null
-    }
-
-    const item = JSON.parse(itemString)
-    const isExpired = new Date().getTime() > item.expiry
-
-    if (isExpired) {
-        localStorage.removeItem(key)
-        return null
-    }
-
-    return item.value
-}
 
 type FallbackRender = {
     error: Error
@@ -38,35 +13,26 @@ export function AppErrorFallback({ error }: FallbackRender) {
 
     useEffect(() => {
         if (isDynamicImportError) {
-            if (!getWithExpiry('isDynamicImportError')) {
-                setWithExpiry('isDynamicImportError', 'true', 1000 * 60 * 3)
-                console.warn('AppErrorFallback: isDynamicImportError, reloading...')
-                window.location.reload()
-            }
+            console.warn('AppErrorFallback: isDynamicImportError, reloading...')
         }
     }, [isDynamicImportError])
 
     return (
         <WelcomeLayout>
-            <Box />
-            <Box
-                horizontal
-                border
-                background="level2"
-                color="gray1"
-                padding="lg"
-                rounded="sm"
-                gap="md"
-            >
-                <Stack debug justifyContent="start">
-                    <Icon type="alert" />
-                </Stack>
-                <Stack>
-                    <Paragraph>
-                        We&apos;re sorry, we&apos;re having some technical issues right now.
+            <Box centerContent elevateReadability border="faint" padding="lg" gap="x4" rounded="sm">
+                <Icon type="alert" color="negative" size="square_lg" insetBottom="xs" />
+                <Stack color="gray1" maxWidth="400">
+                    <Paragraph textAlign="center">Oops! We&apos;ve hit a snag. </Paragraph>
+                    <Paragraph textAlign="center" color="gray2">
+                        Our team has been notified. In the meantime, please consider restarting the
+                        app or give it a moment before trying again.
                     </Paragraph>
-                    <Paragraph>Please try again later.</Paragraph>
                 </Stack>
+                <Box width="fit-content">
+                    <FancyButton compact onClick={() => window.location.reload()}>
+                        Restart App
+                    </FancyButton>
+                </Box>
             </Box>
         </WelcomeLayout>
     )
