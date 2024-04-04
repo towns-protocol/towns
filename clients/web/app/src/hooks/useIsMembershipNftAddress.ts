@@ -1,6 +1,5 @@
 import { useQuery } from '@tanstack/react-query'
-import { useTownsClient } from 'use-towns-client'
-import { Address } from 'wagmi'
+import { Address, useTownsClient } from 'use-towns-client'
 
 export function useIsMembershipNftAddress({
     address,

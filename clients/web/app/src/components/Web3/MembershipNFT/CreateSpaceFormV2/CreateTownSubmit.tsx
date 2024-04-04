@@ -1,6 +1,7 @@
 import { UseFormReturn } from 'react-hook-form'
 import { MembershipStruct, NoopRuleData, Permission, createOperationsTree } from '@river-build/web3'
 import {
+    Address,
     CreateSpaceInfo,
     findDynamicPricingModule,
     findFixedPricingModule,
@@ -11,7 +12,6 @@ import { useNavigate } from 'react-router'
 import React, { useCallback, useEffect, useMemo } from 'react'
 import { ethers } from 'ethers'
 import headlessToast, { Toast, toast } from 'react-hot-toast/headless'
-import { Address } from 'wagmi'
 import { datadogRum } from '@datadog/browser-rum'
 import { useGetEmbeddedSigner } from '@towns/privy'
 import { Box, Icon, IconButton, Text } from '@ui'

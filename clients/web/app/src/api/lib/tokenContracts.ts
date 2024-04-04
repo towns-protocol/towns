@@ -1,8 +1,8 @@
 import { useQuery, useQueryClient } from '@tanstack/react-query'
 import { z } from 'zod'
 import { ContractMetadata, GetCollectionsForOwnerResponse } from '@token-worker/types'
-import { Address } from 'wagmi'
 import { useMemo } from 'react'
+import { Address } from 'use-towns-client'
 import { TokenData, TokenType } from '@components/Tokens/types'
 import { env } from 'utils'
 import {

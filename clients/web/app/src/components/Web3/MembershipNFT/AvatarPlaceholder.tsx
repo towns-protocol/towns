@@ -1,5 +1,5 @@
 import React from 'react'
-import { Address } from 'wagmi'
+import { Address } from 'use-towns-client'
 import { Stack, Text } from '@ui'
 import { shortAddress } from 'ui/utils/utils'
 import { Avatar } from '@components/Avatar/Avatar'

@@ -1,5 +1,6 @@
 import React, { useCallback } from 'react'
 import {
+    Address,
     BlockchainTransactionType,
     useBannedWalletAddresses,
     useIsTransactionPending,
@@ -7,7 +8,6 @@ import {
     useUnbanTransaction,
     useUserLookupContext,
 } from 'use-towns-client'
-import { Address } from 'wagmi'
 import { useGetEmbeddedSigner } from '@towns/privy'
 import { useSearchParams } from 'react-router-dom'
 import { useEvent } from 'react-use-event-hook'

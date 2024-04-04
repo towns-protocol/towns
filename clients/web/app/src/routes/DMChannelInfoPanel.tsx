@@ -1,6 +1,7 @@
 import React, { useCallback, useEffect, useMemo, useState } from 'react'
 import { useNavigate, useParams } from 'react-router'
 import {
+    Address,
     DMChannelContextUserLookupProvider,
     DMChannelIdentifier,
     useChannelData,
@@ -10,7 +11,6 @@ import {
     useTownsClient,
     useUserLookupContext,
 } from 'use-towns-client'
-import { Address } from 'wagmi'
 import { Box, Icon, Stack, Text, TextButton, TextField } from '@ui'
 import { Panel } from '@components/Panel/Panel'
 import { ConfirmLeaveModal } from '@components/ConfirmLeaveModal/ConfirmLeaveModal'

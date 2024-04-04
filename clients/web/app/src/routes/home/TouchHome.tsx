@@ -3,6 +3,7 @@ import fuzzysort from 'fuzzysort'
 import React, { useCallback, useEffect, useMemo, useRef, useState } from 'react'
 import { useNavigate, useOutlet } from 'react-router'
 import {
+    Address,
     ChannelContextProvider,
     DMChannelContextUserLookupProvider,
     Membership,
@@ -18,7 +19,6 @@ import {
     useSpaceUnreadThreadMentions,
     useUserLookupContext,
 } from 'use-towns-client'
-import { Address } from 'wagmi'
 import { Avatar } from '@components/Avatar/Avatar'
 import {
     DirectMessageIcon,

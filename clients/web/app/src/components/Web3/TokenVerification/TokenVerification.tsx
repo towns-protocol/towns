@@ -1,12 +1,12 @@
 import React, { PropsWithChildren, useCallback, useState } from 'react'
 import {
+    Address,
     BlockchainTransactionType,
     useIsTransactionPending,
     useLinkEOAToRootKeyTransaction,
     useLinkedWallets,
     useUnlinkWalletTransaction,
 } from 'use-towns-client'
-import { Address } from 'wagmi'
 import { useWallets } from '@privy-io/react-auth'
 import { useGetEmbeddedSigner } from '@towns/privy'
 import { Button, Grid, Icon, IconButton, MotionBox, Stack, Text } from '@ui'

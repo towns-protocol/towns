@@ -1,8 +1,9 @@
 import React, { useState } from 'react'
-import { Address, useBalance } from 'wagmi'
+import { useBalance } from 'wagmi'
 import { useConnectWallet, usePrivy, useWallets } from '@privy-io/react-auth'
 import { useEmbeddedWallet, useGetEmbeddedSigner } from '@towns/privy'
 import {
+    Address,
     BlockchainTransactionType,
     useIsTransactionPending,
     useLinkCallerToRootKey,
