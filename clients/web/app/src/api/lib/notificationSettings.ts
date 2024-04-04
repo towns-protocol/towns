@@ -120,9 +120,9 @@ export function useGetNotificationSettings() {
         queryFn: () => getSettings({ userId }),
         enabled: !!userId,
         refetchOnMount: false,
-        refetchOnWindowFocus: false,
-        refetchOnReconnect: false,
-        staleTime: Infinity,
+        refetchOnWindowFocus: true,
+        refetchOnReconnect: 'always',
+        staleTime: 1_000 * 60 * 5,
     })
 }
 
