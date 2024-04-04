@@ -1,41 +1,23 @@
 import React from 'react'
-import { baseSepolia, foundry, localhost } from 'wagmi/chains'
 import { configureChains } from 'wagmi'
-import { jsonRpcProvider } from 'wagmi/providers/jsonRpc'
 import { publicProvider } from 'wagmi/providers/public'
 import { PrivyProvider as _PrivyProvider } from '@privy-io/react-auth'
 import { PrivyProvider as TownsPrivyProvider } from '@towns/privy'
+import uniqBy from 'lodash/uniqBy'
 import { useEnvironment } from 'hooks/use-environment'
+import { ENVIRONMENTS } from 'utils/environment'
 
-const PROVIDER_HTTP_URL = import.meta.env.VITE_PROVIDER_HTTP_URL ?? ''
-const PROVIDER_WS_URL = import.meta.env.VITE_PROVIDER_WS_URL ?? ''
 const PRIVY_ID = import.meta.env.VITE_PRIVY_ID ?? 'imustbe25charslong_______'
 
-const SUPPORTED_CHAINS = [foundry, baseSepolia, localhost]
-
-export const wagmiChainsConfig = configureChains(
-    SUPPORTED_CHAINS,
-    PROVIDER_HTTP_URL
-        ? [
-              jsonRpcProvider({
-                  rpc: (chain) => {
-                      if (chain.id === foundry.id) {
-                          const httpUrl = chain.rpcUrls.default.http[0]
-                          return {
-                              http: httpUrl,
-                          }
-                      }
-                      return {
-                          webSocket: PROVIDER_WS_URL,
-                          http: PROVIDER_HTTP_URL ?? '',
-                      }
-                  },
-              }),
-              publicProvider(),
-          ]
-        : [publicProvider()],
-    { retryCount: 5 },
+const SUPPORTED_CHAINS = uniqBy(
+    ENVIRONMENTS.map((env) => env.baseChain),
+    (x) => x.id,
 )
+
+// the chains are custom configured to include the rpcUrls we want to use, the publicProvider is a function that just checks null for us
+export const wagmiChainsConfig = configureChains(SUPPORTED_CHAINS, [publicProvider()], {
+    retryCount: 5,
+})
 export function PrivyProvider({ children }: { children: JSX.Element }) {
     const { baseChain: chain } = useEnvironment()
 
