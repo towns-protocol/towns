@@ -3,7 +3,7 @@ import {
     SpaceContextProvider,
     SpaceData,
     useMyProfile,
-    useSpaceData,
+    useSpaceDataWithId,
     useTownsContext,
     useUserLookupContext,
 } from 'use-towns-client'
@@ -166,7 +166,7 @@ function SpacesAndChannelsMetadata({
     spaceId: string
     store: NotificationStore
 }) {
-    const space = useSpaceData(spaceId)
+    const space = useSpaceDataWithId(spaceId, 'SpacesAndChannelsMetadata')
 
     const setSpace = useCallback(
         async (space: SpaceData) => {

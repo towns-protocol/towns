@@ -1,5 +1,5 @@
 import React, { RefObject, useCallback, useMemo, useRef } from 'react'
-import { useSpaceData } from 'use-towns-client'
+import { useSpaceDataWithId } from 'use-towns-client'
 import { Link } from 'react-router-dom'
 import { AnimatePresence } from 'framer-motion'
 import { Box, IconButton, MotionBox, MotionStack, Paragraph, Stack, Text } from '@ui'
@@ -18,7 +18,7 @@ export const MintAnimation = (props: {
     const { targetRef, info } = props
     const { setRecentlyMintedSpaceToken } = useStore()
 
-    const spaceData = useSpaceData(info.spaceId)
+    const spaceData = useSpaceDataWithId(info.spaceId, 'MintAnimation')
     const { createLink: createProfileLink } = useCreateLink()
     const link = createProfileLink({ profileId: 'me' })
     const [shouldAnimate, setShouldAnimate] = React.useState(false)

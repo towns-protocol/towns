@@ -5,7 +5,7 @@ import {
     LookupUserMap,
     RoomMember,
     useMyChannels,
-    useSpaceData,
+    useSpaceDataWithId,
     useSpaceMembers,
     useSpaceMentions,
     useTownsContext,
@@ -244,8 +244,8 @@ export const useSortedChannels = ({ spaceId, currentRouteId }: Params) => {
     }
 }
 
-export const useJoinedChannels = (spaceId?: string) => {
-    const space = useSpaceData(spaceId)
+export const useJoinedChannels = (spaceId: string | undefined) => {
+    const space = useSpaceDataWithId(spaceId, 'useJoinedChannels')
     const myChannelGroups = useMyChannels(space)
     const joinedChannels = useMemo(
         () => new Set(myChannelGroups.flatMap((g) => g.channels).map((c) => c.id)),

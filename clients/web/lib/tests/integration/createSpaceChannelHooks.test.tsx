@@ -8,7 +8,7 @@ import { TownsTestApp } from './helpers/TownsTestApp'
 import { RegisterWallet, TransactionInfo } from './helpers/TestComponents'
 import { TownsTestWeb3Provider } from './helpers/TownsTestWeb3Provider'
 import { makeUniqueName } from './helpers/TestUtils'
-import { useSpaceData } from '../../src/hooks/use-space-data'
+import { useSpaceDataWithId } from '../../src/hooks/use-space-data'
 import { useMyChannels } from '../../src/hooks/use-my-channels'
 import { useCreateSpaceTransactionWithRetries } from '../../src/hooks/use-create-space-transaction'
 import { useCreateChannelTransaction } from '../../src/hooks/use-create-channel-transaction'
@@ -37,7 +37,7 @@ describe('createSpaceChannelHooks', () => {
             const channelTransaction = useCreateChannelTransaction()
             const { createChannelTransaction } = channelTransaction
             const [spaceId, setSpaceId] = useState<string | undefined>(undefined)
-            const spaceData = useSpaceData(spaceId)
+            const spaceData = useSpaceDataWithId(spaceId)
 
             const channelGroups = useMyChannels(spaceData)
 

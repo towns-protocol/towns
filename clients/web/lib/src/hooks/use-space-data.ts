@@ -12,14 +12,49 @@ import { blockchainKeys } from '../query/query-keys'
 import { isDefined } from '../utils/isDefined'
 import { useOfflineStore } from '../store/use-offline-store'
 import { TownsOpts } from 'client/TownsClientTypes'
+import { create } from 'zustand'
 
 const EMPTY_SPACE_INFOS: SpaceInfo[] = []
 
+export type SpaceDataMap = Record<string, SpaceData | undefined>
+
+export type SpaceDataStore = {
+    spaceDataMap: SpaceDataMap
+    setSpaceData: (spaceData: SpaceData) => void
+}
+
+export const useSpaceDataStore = create<SpaceDataStore>((set) => ({
+    spaceDataMap: {},
+    setSpaceData: (spaceData) =>
+        set((state) => {
+            if (isEqual(state.spaceDataMap[spaceData.id], spaceData)) {
+                return state
+            }
+            console.log(`setSpaceData<${spaceData.id}> data changed`, { spaceData })
+            return {
+                spaceDataMap: {
+                    ...state.spaceDataMap,
+                    [spaceData.id]: spaceData,
+                },
+            }
+        }),
+}))
+
 /// returns default space if no space slug is provided
-export function useSpaceData(inSpaceId?: string): SpaceData | undefined {
+export function useSpaceData(): SpaceData | undefined {
     const { spaceId: contextSpaceId } = useSpaceContext()
-    const spaceId = inSpaceId ?? contextSpaceId
-    return useSpaceRollup(spaceId)
+    useSpaceRollup(contextSpaceId, `useSpaceData`)
+    const spaceDataMap = useSpaceDataStore((state) => state.spaceDataMap)
+    return contextSpaceId ? spaceDataMap[contextSpaceId] : undefined
+}
+
+export function useSpaceDataWithId(
+    inSpaceId: string | undefined,
+    fromTag: string | undefined = undefined,
+): SpaceData | undefined {
+    useSpaceRollup(inSpaceId, `useSpaceDataWithId<${fromTag}>`)
+    const spaceDataMap = useSpaceDataStore((state) => state.spaceDataMap)
+    return inSpaceId ? spaceDataMap[inSpaceId] : undefined
 }
 
 export function useInvites(): InviteData[] {
@@ -171,12 +206,12 @@ export const useContractSpaceInfo = (
     }, [spaceInfo, isLoading, error])
 }
 
-function useSpaceRollup(streamId: string | undefined): SpaceData | undefined {
+export function useSpaceRollup(streamId: string | undefined, fromTag: string | undefined) {
     const { casablancaClient } = useTownsContext()
     const stream = useCasablancaStream(streamId)
     const { data: spaceInfo } = useContractSpaceInfo(streamId ?? '')
-    const [space, setSpace] = useState<SpaceData | undefined>(undefined)
     const userStream = useCasablancaStream(casablancaClient?.userStreamId)
+    const { setSpaceData } = useSpaceDataStore()
 
     useEffect(() => {
         if (!stream || !casablancaClient || !userStream) {
@@ -196,16 +231,10 @@ function useSpaceRollup(streamId: string | undefined): SpaceData | undefined {
             )
             const channelIds = Array.from(stream.view.spaceContent.spaceChannelsMetadata.keys())
             const newSpace = rollupSpace(stream, membership, channelIds, spaceName)
-            setSpace((prev) => {
-                if (isEqual(prev, newSpace)) {
-                    return prev
-                }
-                console.log(`useSpaceRollup: updating space ${stream.streamId} ${spaceName}`, {
-                    prev,
-                    newSpace,
-                })
-                return newSpace
-            })
+            console.log(`useSpaceRollup ${fromTag}`, newSpace)
+            if (newSpace) {
+                setSpaceData(newSpace)
+            }
         }
 
         const onStreamUpdated = (streamId: string) => {
@@ -230,10 +259,8 @@ function useSpaceRollup(streamId: string | undefined): SpaceData | undefined {
             casablancaClient.off('spaceChannelCreated', onStreamUpdated)
             casablancaClient.off('spaceChannelUpdated', onStreamUpdated)
             casablancaClient.off('userStreamMembershipChanged', onStreamUpdated)
-            setSpace(undefined)
         }
-    }, [casablancaClient, spaceInfo?.name, stream, userStream])
-    return space
+    }, [casablancaClient, fromTag, setSpaceData, spaceInfo?.name, stream, userStream])
 }
 
 function rollupSpace(

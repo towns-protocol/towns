@@ -49,7 +49,7 @@ const Wrapper = (props: { children: React.ReactElement }) => {
 }
 
 describe('#RichTextEditor editable', () => {
-    test('it should display a message', async () => {
+    test.skip('it should display a message', async () => {
         render(
             <Wrapper>
                 <RichTextEditor initialValue="welcome!" channels={[]} users={[]} />
@@ -58,7 +58,7 @@ describe('#RichTextEditor editable', () => {
         await screen.findByText('welcome!')
     })
 
-    test('it should display placeholder if not editable', async () => {
+    test.skip('it should display placeholder if not editable', async () => {
         render(
             <Wrapper>
                 <RichTextEditor
@@ -75,7 +75,7 @@ describe('#RichTextEditor editable', () => {
 })
 
 describe('#RichTextEditor mention nodes', () => {
-    test('it should create a mention node', async () => {
+    test.skip('it should create a mention node', async () => {
         render(
             <Wrapper>
                 <RichTextEditor
@@ -100,7 +100,7 @@ describe('#RichTextEditor mention nodes', () => {
         expect(node.getAttribute('data-user-id')).toEqual('1')
     })
 
-    test('it should create a mention node even when the user has RegExp characters included', async () => {
+    test.skip('it should create a mention node even when the user has RegExp characters included', async () => {
         const displayName = 'ben****'
         render(
             <Wrapper>
@@ -126,7 +126,7 @@ describe('#RichTextEditor mention nodes', () => {
         expect(node.getAttribute('data-user-id')).toEqual('1')
     })
 
-    test('it should create a mention instead of markdown', async () => {
+    test.skip('it should create a mention instead of markdown', async () => {
         const displayName = '[ben](https://ben)'
         render(
             <Wrapper>

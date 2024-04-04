@@ -4,7 +4,7 @@ import {
     SpaceItem,
     toRoomIdentifier,
     useChannelNotificationCounts,
-    useSpaceData,
+    useSpaceDataWithId,
     useSpaceNotificationCounts,
     useSpaceThreadRootsUnreadCount,
     useTownsContext,
@@ -69,7 +69,7 @@ const SpaceListItem = (props: {
         return id === selectedSpaceId
     }
     const spaceNotifications = useSpaceNotificationCounts(space.id)
-    const spaceData = useSpaceData(space.id)
+    const spaceData = useSpaceDataWithId(space.id)
     const spaceThreadCount = useSpaceThreadRootsUnreadCount()
     const formatNameWithUnreads = useCallback(
         (space: SpaceItem) => {
