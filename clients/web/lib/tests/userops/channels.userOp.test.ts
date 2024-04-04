@@ -5,6 +5,7 @@ import {
     generateRandomUnfundedOrPrivateKeyWallet,
     getAccountAbstractionConfig,
     isSmartAccountDeployed,
+    sleepBetweenTxs,
 } from './testUtils'
 import { Address } from '../../src/types/web3-types'
 
@@ -31,6 +32,7 @@ test('can create and update channel with user ops', async () => {
     // send a user op that creates a space and links AA wallet so entitlement passes
     const spaceId = await createUngatedSpace(alice, [Permission.Read, Permission.Write])
     await waitForWithRetries(() => isSmartAccountDeployed(alice))
+    await sleepBetweenTxs()
 
     let channelId: string | undefined
     if (spaceId) {
@@ -59,6 +61,7 @@ test('can create and update channel with user ops', async () => {
     )
 
     expect(newRoleId).toBeDefined()
+    await sleepBetweenTxs()
 
     // new role + default roles (member/minter)
     expect(await alice.spaceDapp.getRoles(spaceId!)).toHaveLength(3)
@@ -77,6 +80,7 @@ test('can create and update channel with user ops', async () => {
         alice.provider.wallet,
     )
     await alice.waitForUpdateChannelTransaction(txContext)
+    await sleepBetweenTxs()
 
     const channelDetailsSecondCheck = await alice.spaceDapp.getChannelDetails(spaceId!, channelId!)
     expect(channelDetailsSecondCheck?.name).toBe(NEW_CHANNEL_NAME)
@@ -103,11 +107,13 @@ test("can create a channel when role is gated by user's smart account", async ()
 
     const spaceId = await createUngatedSpace(alice, [Permission.Read, Permission.Write])
     await waitForWithRetries(() => isSmartAccountDeployed(alice))
+    await sleepBetweenTxs()
 
     expect(alice.getRoomMember(spaceId!, alice.getUserId()!)).toBeTruthy()
 
     const room = await bob.joinTown(spaceId!, bob.wallet)
     await waitForWithRetries(() => isSmartAccountDeployed(bob))
+    await sleepBetweenTxs()
 
     expect(room.members.map((m) => m.userId).includes(bob.getUserId()!)).toBeTruthy()
 
@@ -131,6 +137,7 @@ test("can create a channel when role is gated by user's smart account", async ()
     expect(createRoleTx).toBeDefined()
     const createdRole = await alice.spaceDapp.getRole(spaceId!, 3)
     expect(createdRole?.permissions).toContain(Permission.AddRemoveChannels)
+    await sleepBetweenTxs()
 
     const channel = await bob.createChannel(
         {

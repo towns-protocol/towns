@@ -5,6 +5,7 @@ import {
     getAccountAbstractionConfig,
     generateRandomUnfundedOrPrivateKeyWallet,
     isSmartAccountDeployed,
+    sleepBetweenTxs,
 } from './testUtils'
 
 /**
@@ -32,6 +33,7 @@ test('can update a space (name) via userop', async () => {
         name: ogName,
     })
     await waitForWithRetries(() => isSmartAccountDeployed(alice))
+    await sleepBetweenTxs()
 
     expect(spaceId).not.toBeUndefined()
 
@@ -41,5 +43,7 @@ test('can update a space (name) via userop', async () => {
 
     const userop = await alice.updateSpaceNameTransaction(spaceId!, newName, alice.wallet)
     await alice.waitForUpdateSpaceNameTransaction(userop)
+    await sleepBetweenTxs()
+
     expect((await town?.getSpaceInfo())?.name).toBe(newName)
 })

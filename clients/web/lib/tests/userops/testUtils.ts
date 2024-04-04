@@ -7,6 +7,7 @@ import { paymasterProxyMiddleware } from '@towns/userops'
 import { TestConstants } from '../integration/helpers/TestConstants'
 import { getDynamicPricingModule } from '../../src/utils/web3'
 import { Address } from '../../src/types/web3-types'
+import { sleep } from '../../src/utils/towns-utils'
 
 /**
  * Create a town with an "Everyone" role that is gated only by a membership token
@@ -114,4 +115,16 @@ export async function isSmartAccountDeployed(townsTestClient: TownsTestClient) {
         }
         return true
     }
+}
+
+/**
+ * Debugging tests
+ * Sometimes I'm getting AA25 invalid account nonce
+ * I suspect this is b/c multiple userops for the same account are being sent too quickly and sitting in the mempool
+ * But I don't want to introduce 2D nonces atm https://docs.stackup.sh/docs/useroperation-nonce
+ * So this is a hack to slow down the time between userops
+ * @param sleepTime
+ */
+export async function sleepBetweenTxs(sleepTime = 5_000) {
+    await sleep(sleepTime)
 }

@@ -5,6 +5,7 @@ import {
     generateRandomUnfundedOrPrivateKeyWallet,
     getAccountAbstractionConfig,
     isSmartAccountDeployed,
+    sleepBetweenTxs,
 } from './testUtils'
 
 /**
@@ -29,6 +30,7 @@ test('can create, update, and delete a role with user ops', async () => {
     // send a user op that creates a space and links AA wallet so entitlement passes
     const spaceId = await createUngatedSpace(alice, [Permission.Read, Permission.Write])
     await waitForWithRetries(() => isSmartAccountDeployed(alice))
+    await sleepBetweenTxs()
 
     expect(spaceId).toBeDefined()
 
@@ -43,8 +45,9 @@ test('can create, update, and delete a role with user ops', async () => {
         // tokens
         NoopRuleData,
     )
-
     expect(roleId).toBeDefined()
+    await sleepBetweenTxs()
+
     const role = await alice.spaceDapp.getRole(spaceId!, roleId!.roleId)
     expect(role?.name).toBe(ROLE_NAME)
     expect(role?.permissions).toHaveLength(0)
@@ -64,6 +67,8 @@ test('can create, update, and delete a role with user ops', async () => {
     )
 
     await alice.waitForUpdateRoleTransaction(txContext)
+    await sleepBetweenTxs()
+
     const updatedRole = await alice.spaceDapp.getRole(spaceId!, roleId!.roleId)
     expect(updatedRole?.name).toBe(NEW_ROLE_NAME)
     expect(updatedRole?.permissions).toHaveLength(2)
@@ -75,6 +80,8 @@ test('can create, update, and delete a role with user ops', async () => {
         alice.provider.wallet,
     )
     await alice.waitForDeleteRoleTransaction(deleteTxContext)
+    await sleepBetweenTxs()
+
     const deletedRole = await alice.spaceDapp.getRole(spaceId!, roleId!.roleId)
     expect(deletedRole).toBeNull()
 })

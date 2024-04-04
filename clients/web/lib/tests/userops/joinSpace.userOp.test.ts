@@ -5,6 +5,7 @@ import {
     generateRandomUnfundedOrPrivateKeyWallet,
     getAccountAbstractionConfig,
     isSmartAccountDeployed,
+    sleepBetweenTxs,
 } from './testUtils'
 
 /**
@@ -34,6 +35,7 @@ test('can join a space via userop and pass entitlement check to become a member'
 
     const spaceId = await createUngatedSpace(alice, [Permission.Read, Permission.Write])
     await waitForWithRetries(() => isSmartAccountDeployed(alice))
+    await sleepBetweenTxs()
 
     expect(alice.getRoomMember(spaceId!, alice.getUserId()!)).toBeTruthy()
 
