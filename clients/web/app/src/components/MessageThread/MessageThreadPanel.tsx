@@ -69,7 +69,7 @@ export const MessageThreadPanel = (props: Props) => {
         : `Loading permissions`
 
     return (
-        <Panel label={panelLabel} padding="none" onClose={props.onClose}>
+        <Panel label={panelLabel} padding="none" gap="none" onClose={props.onClose}>
             <MediaDropContextProvider
                 title={imageUploadTitle}
                 channelId={channelId}
