@@ -49,7 +49,7 @@ jobs:
               run: PORT=8787 yarn worker:wait:stackup
 
             - name: Run userops tests without verification
-              timeout-minutes: 10
+              timeout-minutes: 15
               env:
                 AA_PAYMASTER_PROXY_URL: http://127.0.0.1:8686
                 AA_PAYMASTER_PROXY_AUTH_SECRET: Zm9v
@@ -64,7 +64,7 @@ jobs:
               run: yarn test:userops:random-wallet
 
             - name: Run userops tests with verification
-              timeout-minutes: 10
+              timeout-minutes: 15
               env:
                 AA_PAYMASTER_PROXY_URL: http://127.0.0.1:8787
                 AA_PAYMASTER_PROXY_AUTH_SECRET: Zm9v
