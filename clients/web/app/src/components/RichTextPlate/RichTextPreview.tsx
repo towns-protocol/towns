@@ -30,7 +30,8 @@ export const RichTextPreview = React.memo(
         onMentionHover?: (element?: HTMLElement, userId?: string) => void
         highlightTerms?: string[]
     }) => {
-        const { content, members, channels, onMentionClick, onMentionHover } = props
+        const { content, statusAnnotation, members, channels, onMentionClick, onMentionHover } =
+            props
 
         const _onMentionHover = useCallback(
             (element?: HTMLElement, username?: string) => {
@@ -101,6 +102,11 @@ export const RichTextPreview = React.memo(
                     <Markdown components={memoizedComponents} channels={channels}>
                         {content}
                     </Markdown>
+                    {statusAnnotation === 'edited' && (
+                        <Box as="span" color="gray2" fontSize="sm">
+                            (edited)
+                        </Box>
+                    )}
                 </Box>
             </div>
         )
