@@ -4,6 +4,7 @@ import { publicProvider } from 'wagmi/providers/public'
 import { PrivyProvider as _PrivyProvider } from '@privy-io/react-auth'
 import { PrivyProvider as TownsPrivyProvider } from '@towns/privy'
 import uniqBy from 'lodash/uniqBy'
+import { PrivyWagmiConnector } from '@privy-io/wagmi-connector'
 import { useEnvironment } from 'hooks/use-environment'
 import { ENVIRONMENTS } from 'utils/environment'
 
@@ -15,7 +16,7 @@ const SUPPORTED_CHAINS = uniqBy(
 )
 
 // the chains are custom configured to include the rpcUrls we want to use, the publicProvider is a function that just checks null for us
-export const wagmiChainsConfig = configureChains(SUPPORTED_CHAINS, [publicProvider()], {
+const wagmiChainsConfig = configureChains(SUPPORTED_CHAINS, [publicProvider()], {
     retryCount: 5,
 })
 export function PrivyProvider({ children }: { children: JSX.Element }) {
@@ -34,7 +35,9 @@ export function PrivyProvider({ children }: { children: JSX.Element }) {
                 loginMethods: ['sms', 'google', 'twitter', 'apple'],
             }}
         >
-            {children}
+            <PrivyWagmiConnector wagmiChainsConfig={wagmiChainsConfig}>
+                {children}
+            </PrivyWagmiConnector>
         </TownsPrivyProvider>
     ) : null
 }
