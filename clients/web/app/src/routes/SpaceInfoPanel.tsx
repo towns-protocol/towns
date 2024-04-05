@@ -2,7 +2,7 @@ import { Permission } from '@river-build/web3'
 import React, { useCallback, useRef, useState } from 'react'
 import { toast } from 'react-hot-toast/headless'
 import { useNavigate } from 'react-router'
-import { Link, useSearchParams } from 'react-router-dom'
+import { useSearchParams } from 'react-router-dom'
 import { useEvent } from 'react-use-event-hook'
 import {
     useBannedWalletAddresses,
@@ -42,7 +42,6 @@ import {
     useSetMuteSettingForChannelOrSpace,
 } from 'api/lib/notificationSettings'
 import { useAuth } from 'hooks/useAuth'
-import { useCreateLink } from 'hooks/useCreateLink'
 import { useDevice } from 'hooks/useDevice'
 import { useSpaceChannels } from 'hooks/useSpaceChannels'
 import { useGetSpaceIdentity, useSetSpaceIdentity } from 'hooks/useSpaceIdentity'
@@ -59,6 +58,7 @@ import { useEnvironment } from 'hooks/useEnvironmnet'
 import { Panel } from '@components/Panel/Panel'
 import { AllChannelsList } from './AllChannelsList/AllChannelsList'
 import { PublicTownPage } from './PublicTownPage'
+import { usePanelActions } from './layouts/hooks/usePanelActions'
 
 const MdGap = ({ children, ...boxProps }: { children: JSX.Element } & BoxProps) => (
     <Box padding="md" gap="md" {...boxProps} background="level2" rounded="sm">
@@ -67,18 +67,25 @@ const MdGap = ({ children, ...boxProps }: { children: JSX.Element } & BoxProps) 
 )
 
 export const SpaceInfoPanel = () => {
+    return (
+        <Panel modalPresentable label="Town Info">
+            <SpaceInfo />
+        </Panel>
+    )
+}
+
+export const SpaceInfo = () => {
     const space = useSpaceData()
     const { isTouch } = useDevice()
     const [searchParams, setSearchParams] = useSearchParams()
     // touch handles roles panel with modals
     const isRolesPanel = !isTouch && searchParams.get('roles') != null
-    const { createLink } = useCreateLink()
-
     const { leaveRoom } = useTownsClient()
     const channels = useSpaceChannels()
     const { loggedInWalletAddress } = useAuth()
 
     const { data: contractSpaceInfo } = useContractSpaceInfo(space?.id)
+    const owner = contractSpaceInfo?.owner
     const address = contractSpaceInfo?.address ?? ''
     const navigate = useNavigate()
     const { hasPermission: canEdit } = useHasPermission({
@@ -104,12 +111,6 @@ export const SpaceInfoPanel = () => {
 
     const { mutate, isPending: isSettingSpaceIdentity } = useSetSpaceIdentity(space?.id)
 
-    // the owner in the contract is the smart account, we need to get the user id
-    const { data: spaceOwnerRiverUserId } = useGetRootKeyFromLinkedWallet({
-        walletAddress: contractSpaceInfo?.owner,
-    })
-    const spaceOwner = useUser(spaceOwnerRiverUserId)
-
     const { memberIds } = useSpaceMembers()
     const [activeModal, setActiveModal] = useState<
         | 'browse-channels'
@@ -123,21 +124,18 @@ export const SpaceInfoPanel = () => {
     >(undefined)
 
     const onHideBrowseChannels = useEvent(() => setActiveModal(undefined))
+    const { openPanel } = usePanelActions()
+
     const onShowBrowseChannels = useEvent(() => {
         if (isTouch) {
-            setActiveModal('browse-channels')
+            setActiveModal(CHANNEL_INFO_PARAMS.BROWSE_CHANNELS)
         } else {
-            searchParams.set('browse-channels', '')
-            setSearchParams(searchParams)
+            openPanel(CHANNEL_INFO_PARAMS.BROWSE_CHANNELS)
         }
     })
 
     const onHideTownPreview = useEvent(() => setActiveModal(undefined))
     const onShowTownPreview = useEvent(() => setActiveModal('preview'))
-
-    const onClose = useEvent(() => {
-        navigate('../')
-    })
 
     const onEditMotto = useEvent(() => {
         onCancelBio()
@@ -257,14 +255,13 @@ export const SpaceInfoPanel = () => {
         if (isTouch) {
             setActiveModal('members')
         } else {
-            navigate(`/${PATHS.SPACES}/${spaceID}/members/info`)
+            navigate(`/${PATHS.SPACES}/${spaceID}/members?panel=${CHANNEL_INFO_PARAMS.TOWN_INFO}`)
         }
     }, [isTouch, navigate, spaceID])
 
     const onManageRolesClick = useEvent(() => {
         if (!isRolesPanel) {
-            searchParams.set('roles', '')
-            setSearchParams(searchParams)
+            openPanel(CHANNEL_INFO_PARAMS.ROLES)
             if (isTouch) {
                 setActiveModal('roles')
             }
@@ -294,10 +291,8 @@ export const SpaceInfoPanel = () => {
         setActiveModal('settings')
     }, [setActiveModal])
 
-    const ownerProfileLink = spaceOwner && createLink({ profileId: contractSpaceInfo?.owner })
-
     return (
-        <Panel modalPresentable label="Town Info" onClose={onClose}>
+        <>
             {space?.id && (
                 <Stack centerContent padding>
                     {shareButtonEnabled && (
@@ -344,7 +339,7 @@ export const SpaceInfoPanel = () => {
                                 {space?.name ?? ''}
                             </Paragraph>
                             <Box grow />
-                            {canEdit && (
+                            {canEdit && !isTouch && (
                                 <TextButton onClick={onEditSpaceNameClick}>Edit</TextButton>
                             )}
                         </Stack>
@@ -491,50 +486,7 @@ export const SpaceInfoPanel = () => {
                     </MdGap>
                 )}
 
-                <MdGap>
-                    <>
-                        <Paragraph strong color="default">
-                            Founder
-                        </Paragraph>
-                        {spaceOwner && ownerProfileLink ? (
-                            <>
-                                <Link to={ownerProfileLink + `?spaceInfo`}>
-                                    <Box flexDirection="row" gap="sm">
-                                        {spaceOwner && (
-                                            <Avatar size="avatar_x4" userId={spaceOwner.userId} />
-                                        )}
-                                        <Box
-                                            justifyContent="spaceBetween"
-                                            overflow="hidden"
-                                            paddingY="xs"
-                                            insetY="xxs"
-                                            gap="paragraph"
-                                        >
-                                            <Paragraph truncate data-testid="owner">
-                                                {spaceOwner && getPrettyDisplayName(spaceOwner)}
-                                            </Paragraph>
-
-                                            {contractSpaceInfo?.owner && (
-                                                <ClipboardCopy
-                                                    label={shortAddress(contractSpaceInfo.owner)}
-                                                    clipboardContent={address}
-                                                />
-                                            )}
-                                        </Box>
-                                    </Box>
-                                </Link>
-                            </>
-                        ) : (
-                            <>
-                                <Paragraph color="gray2">
-                                    {contractSpaceInfo?.owner
-                                        ? shortAddress(contractSpaceInfo.owner)
-                                        : ''}
-                                </Paragraph>
-                            </>
-                        )}
-                    </>
-                </MdGap>
+                {!!owner && <TownOwnerButton owner={owner} address={address} />}
 
                 <PanelButton disabled={isSettingNotification} onClick={onShowTownPreview}>
                     <Icon type="search" size="square_sm" color="gray2" />
@@ -635,7 +587,7 @@ export const SpaceInfoPanel = () => {
                 </ModalContainer>
             )}
 
-            {isRolesPanel && <RolesPanel setActiveModal={(m) => setActiveModal(m)} />}
+            {isRolesPanel && <RolesPanel />}
 
             {activeModal === 'roles' && (
                 <ModalContainer
@@ -643,10 +595,63 @@ export const SpaceInfoPanel = () => {
                     border="none"
                     onHide={() => setActiveModal(undefined)}
                 >
-                    <RolesPanel setActiveModal={(m) => setActiveModal(m)} />
+                    <RolesPanel />
                 </ModalContainer>
             )}
-        </Panel>
+        </>
+    )
+}
+
+const TownOwnerButton = (props: { owner: string; address: string }) => {
+    const { owner, address } = props
+    // the owner in the contract is the smart account, we need to get the user id
+    const { data: spaceOwnerRiverUserId } = useGetRootKeyFromLinkedWallet({
+        walletAddress: owner,
+    })
+
+    const ownerUser = useUser(spaceOwnerRiverUserId)
+    const { openPanel } = usePanelActions()
+    const openFounderPanel = useCallback(() => {
+        if (ownerUser) {
+            openPanel(CHANNEL_INFO_PARAMS.PROFILE, { profileId: owner })
+        }
+    }, [openPanel, owner, ownerUser])
+
+    return (
+        <PanelButton height="auto" onClick={openFounderPanel}>
+            <Stack gap>
+                <Paragraph strong color="default">
+                    Founder
+                </Paragraph>
+                {ownerUser ? (
+                    <Box flexDirection="row" gap="sm" onClick={openFounderPanel}>
+                        {ownerUser && <Avatar size="avatar_x4" userId={ownerUser.userId} />}
+                        <Box
+                            justifyContent="spaceBetween"
+                            overflow="hidden"
+                            paddingY="xs"
+                            insetY="xxs"
+                            gap="paragraph"
+                        >
+                            <Paragraph truncate data-testid="owner">
+                                {ownerUser && getPrettyDisplayName(ownerUser)}
+                            </Paragraph>
+
+                            {owner && (
+                                <ClipboardCopy
+                                    label={shortAddress(owner)}
+                                    clipboardContent={address}
+                                />
+                            )}
+                        </Box>
+                    </Box>
+                ) : (
+                    <>
+                        <Paragraph color="gray2">{owner ? shortAddress(owner) : ''}</Paragraph>
+                    </>
+                )}
+            </Stack>
+        </PanelButton>
     )
 }
 

@@ -9,7 +9,7 @@ export const BugReportPanel = () => {
         setSidePanel(null)
     }, [setSidePanel])
     return (
-        <Panel label="Bug Report" onClose={onClose}>
+        <Panel label="Bug Report" onClosed={onClose}>
             <ErrorReportForm />
         </Panel>
     )

@@ -1,6 +1,5 @@
 import React, { useCallback, useEffect, useMemo, useRef } from 'react'
 import { useEvent } from 'react-use-event-hook'
-import { useSearchParams } from 'react-router-dom'
 import {
     ChannelContextProvider,
     Membership,
@@ -8,7 +7,7 @@ import {
     useSpaceData,
 } from 'use-towns-client'
 import fuzzysort from 'fuzzysort'
-import { Box, IconButton, Stack, Text, TextField } from '@ui'
+import { Box, Stack, Text, TextField } from '@ui'
 import { Panel } from '@components/Panel/Panel'
 import { useSpaceChannels } from 'hooks/useSpaceChannels'
 import { ChannelItem } from 'routes/AllChannelsList/AllChannelsList'
@@ -18,7 +17,6 @@ import { useUnseenChannelIds } from 'hooks/useUnseenChannelIdsCount'
 export const BrowseChannelsPanel = () => {
     const space = useSpaceData()
     const channels = useSpaceChannels()
-    const [searchParams, setSearchParams] = useSearchParams()
     const [searchText, setSearchText] = React.useState('')
 
     const { unseenChannelIds: _unseenChannelIds, markChannelsAsSeen } = useUnseenChannelIds()
@@ -41,10 +39,8 @@ export const BrowseChannelsPanel = () => {
         [setSearchText],
     )
 
-    const onCloseClick = useEvent(() => {
+    const onClosed = useEvent(() => {
         markChannelsAsSeen()
-        searchParams.delete('browse-channels')
-        setSearchParams(searchParams)
     })
 
     const filteredChannels = useMemo(() => {
@@ -54,12 +50,7 @@ export const BrowseChannelsPanel = () => {
     }, [channels, searchText])
 
     return (
-        <Panel
-            gap
-            label="Channels"
-            leftBarButton={<IconButton icon="arrowLeft" onClick={onCloseClick} />}
-            onClose={onCloseClick}
-        >
+        <Panel gap label="Channels" onClosed={onClosed}>
             <Box position="sticky" top="none">
                 <TextField
                     background="level2"

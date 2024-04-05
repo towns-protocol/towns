@@ -69,7 +69,7 @@ export const ChannelInvitePanel = () => {
                     Add New Member
                 </Stack>
             }
-            onClose={onClose}
+            onClosed={onClose}
         >
             <GlobalContextUserLookupProvider>
                 <ChannelInvite onClose={onClose} />

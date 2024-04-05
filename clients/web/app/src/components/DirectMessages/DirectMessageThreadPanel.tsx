@@ -11,7 +11,7 @@ export const DirectMessageThreadPanel = () => {
     })
 
     return (
-        <Panel label="Message Thread" onClose={onClose}>
+        <Panel label="Message Thread" onClosed={onClose}>
             <DirectMessageThread />
         </Panel>
     )

@@ -1,11 +1,12 @@
 import React, { useCallback } from 'react'
 import { Membership, useMyMembership, useSpaceData, useSpaceMembers } from 'use-towns-client'
 import { Box, Dot, Icon, IconButton, Paragraph, Stack, Text } from '@ui'
-import { useNavigateToCurrentSpaceInfo } from 'hooks/useNavigateToCurrentSpaceInfo'
 import { useGetSpaceIdentity } from 'hooks/useSpaceIdentity'
 import { useShowHasUnreadBadgeForOtherSpaces } from 'hooks/useSpaceUnreadsIgnoreMuted'
 import { useMuteSettings } from 'api/lib/notificationSettings'
 import { BugReportButton } from '@components/BugReportButton/BugReportButton'
+import { usePanelActions } from 'routes/layouts/hooks/usePanelActions'
+import { CHANNEL_INFO_PARAMS } from 'routes'
 
 type Props = {
     onDisplayMainPanel: () => void
@@ -17,17 +18,16 @@ export const TouchLayoutHeader = (props: Props) => {
     const { data: spaceIdentity } = useGetSpaceIdentity(space?.id)
     const currentSpaceId = space?.id
 
-    const { navigateToCurrentSpace } = useNavigateToCurrentSpaceInfo()
-
     const hasUnread = useShowHasUnreadBadgeForOtherSpaces(currentSpaceId)
 
     const { spaceIsMuted } = useMuteSettings({
         spaceId: currentSpaceId,
     })
 
+    const { openPanel } = usePanelActions()
     const onTokenClick = useCallback(() => {
-        navigateToCurrentSpace()
-    }, [navigateToCurrentSpace])
+        openPanel(CHANNEL_INFO_PARAMS.TOWN_INFO)
+    }, [openPanel])
 
     const myMembership = useMyMembership(space?.id)
 

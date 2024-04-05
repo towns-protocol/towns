@@ -25,7 +25,6 @@ import {
     ErrorMessage,
     FormRender,
     Icon,
-    IconButton,
     MotionStack,
     Paragraph,
     Stack,
@@ -58,16 +57,12 @@ export type RoleFormSchemaType = z.infer<typeof formSchema>
 
 export function SingleRolePanel() {
     const spaceIdFromPath = useSpaceIdFromPathname()
-    const [searchParams, setSearchParams] = useSearchParams()
+    const [searchParams] = useSearchParams()
     const rolesParam = searchParams.get('roles')
     const isCreateRole = rolesParam === 'new'
     const roleId = isCreateRole ? undefined : convertToNumber(rolesParam ?? '')
 
     const { isLoading, roleDetails } = useRoleDetails(spaceIdFromPath ?? '', roleId)
-    const onCloseClick = useEvent(() => {
-        searchParams.set('roles', '')
-        setSearchParams(searchParams)
-    })
     const [deleteModal, setDeleteModal] = useState(false)
     const hideDeleteModal = () => setDeleteModal(false)
     const showDeleteModal = () => setDeleteModal(true)
@@ -88,11 +83,7 @@ export function SingleRolePanel() {
         pendingCreateRoleTransaction || pendingUpdateRoleTransaction || pendingDeleteRoleTransaction
 
     return (
-        <Panel
-            label="Roles"
-            leftBarButton={<IconButton icon="arrowLeft" onClick={onCloseClick} />}
-            onClose={onCloseClick}
-        >
+        <Panel label="Roles">
             {isLoading ? (
                 <Stack grow centerContent>
                     <ButtonSpinner />

@@ -9,11 +9,9 @@ import {
     useUserLookupContext,
 } from 'use-towns-client'
 import { useGetEmbeddedSigner } from '@towns/privy'
-import { useSearchParams } from 'react-router-dom'
-import { useEvent } from 'react-use-event-hook'
 import { Panel } from '@components/Panel/Panel'
 import { ButtonSpinner } from '@components/Login/LoginButton/Spinner/ButtonSpinner'
-import { Box, Button, IconButton, Paragraph, Stack } from '@ui'
+import { Box, Button, Paragraph, Stack } from '@ui'
 import { Avatar } from '@components/Avatar/Avatar'
 import { useDevice } from 'hooks/useDevice'
 import { ProfileHoverCard } from '@components/ProfileHoverCard/ProfileHoverCard'
@@ -22,19 +20,12 @@ import { ClipboardCopy } from '@components/ClipboardCopy/ClipboardCopy'
 import { shortAddress } from 'workers/utils'
 import { getPrettyDisplayName } from 'utils/getPrettyDisplayName'
 import { ConfirmBanUnbanModal } from '@components/ConfirmBanUnbanModal/ConfirmBanUnbanModal'
-import { CHANNEL_INFO_PARAMS } from 'routes'
 import { createPrivyNotAuthenticatedNotification } from '@components/Notifications/utils'
 
 export const SpaceBannedUsers = () => {
     const spaceId = useSpaceId()
     const [selectedUserId, setSelectedUserId] = React.useState<string | undefined>(undefined)
     const [showConfirmModal, setShowConfirmModal] = React.useState(false)
-    const [searchParams, setSearchParams] = useSearchParams()
-
-    const onClose = useEvent(() => {
-        searchParams.delete(CHANNEL_INFO_PARAMS.BANNED)
-        setSearchParams(searchParams)
-    })
 
     const { userIds: bannedUserIds, isLoading } = useBannedWalletAddresses(spaceId)
     const { unbanTransaction } = useUnbanTransaction()
@@ -81,12 +72,7 @@ export const SpaceBannedUsers = () => {
     ])
 
     return (
-        <Panel
-            label="Banned Users"
-            leftBarButton={<IconButton icon="arrowLeft" onClick={onClose} />}
-            padding="none"
-            onClose={onClose}
-        >
+        <Panel label="Banned Users" padding="none">
             {isLoading ? (
                 <Box absoluteFill centerContent>
                     <ButtonSpinner />

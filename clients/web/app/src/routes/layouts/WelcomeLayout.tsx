@@ -5,7 +5,7 @@ import { Box, MotionBox, Paragraph, Stack, Text } from '@ui'
 import { useDevice } from 'hooks/useDevice'
 import { TimelineShimmer } from '@components/Shimmer'
 import { ModalContainer } from '@components/Modals/ModalContainer'
-import { AppPanelLayoutSkeleton } from './AppPanelLayout'
+import { AppPanelLayoutSkeleton } from './AppPanelLayoutSkeleton'
 
 export const WelcomeLayout = (props: { children?: React.ReactNode; debugText?: string }) => {
     AnalyticsService.getInstance().trackEventOnce(AnalyticsEvents.Welcome)

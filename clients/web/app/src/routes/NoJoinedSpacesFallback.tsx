@@ -1,21 +1,17 @@
-import React, { useEffect } from 'react'
+import React, { useCallback, useEffect } from 'react'
 import { useNavigate } from 'react-router'
 import { Membership, useTownsClient, useTownsContext } from 'use-towns-client'
-import { Box, Button, Heading, Stack, Text } from '@ui'
 import { PATHS } from 'routes'
-import { env } from 'utils'
+import { Button, Heading, Icon, Stack, Text } from '@ui'
 
 import { useDevice } from 'hooks/useDevice'
 import { useStore } from 'store/store'
-import { useAuth } from 'hooks/useAuth'
-import { CentralPanelLayout } from './layouts/CentralPanelLayout'
 import { WelcomeLayout } from './layouts/WelcomeLayout'
 
 export const NoJoinedSpacesFallback = () => {
     const navigate = useNavigate()
     const { spaces } = useTownsContext()
     const { client } = useTownsClient()
-    const { logout } = useAuth()
 
     const spaceIdBookmark = useStore((s) => {
         return s.spaceIdBookmark
@@ -37,45 +33,30 @@ export const NoJoinedSpacesFallback = () => {
         }
     }, [spaces, navigate, client, spaceIdBookmark])
 
+    const openTownPanel = useCallback(() => {
+        navigate(`/${PATHS.SPACES}/new`)
+    }, [navigate])
+
     if (spaces.length || !client) {
         return isTouch ? <WelcomeLayout debugText="no joined space fallback" /> : <></>
     }
 
     return (
-        <CentralPanelLayout>
-            <Stack
-                centerContent
-                height="100vh"
-                data-testid="space-home-fallback-content"
-                paddingX="lg"
-            >
-                <Stack centerContent gap="x4" maxWidth="500">
-                    <Heading level={2} textAlign="center">
+        <Stack centerContent data-testid="space-home-fallback-content" paddingX="lg" height="100%">
+            <Stack centerContent gap="x4">
+                <Icon padding="md" size="square_xl" type="home" background="level2" />
+                <Stack centerContent gap>
+                    <Heading level={3} textAlign="center">
                         You don&apos;t have invitations to any town
                     </Heading>
-                    <Stack maxWidth="300" gap="x4">
-                        <Text textAlign="center" color="gray2">
-                            Want to join Pioneer Town and be able to create new towns?
-                        </Text>
-                        <Text textAlign="center" color="gray2">
-                            Apply here:
-                        </Text>
-                        <Box horizontal centerContent>
-                            <Stack gap>
-                                <Button
-                                    tone="cta1"
-                                    onClick={() => window.open(env.VITE_TYPEFORM_ALPHA_URL)}
-                                >
-                                    Join alpha
-                                </Button>
-                                <Button tone="level2" onClick={logout}>
-                                    Log out
-                                </Button>
-                            </Stack>
-                        </Box>
-                    </Stack>
+                    <Text textAlign="center" color="gray2">
+                        Quit waiting around and start a town now:
+                    </Text>
                 </Stack>
+                <Button tone="cta1" width="auto" grow={false} onClick={openTownPanel}>
+                    Create a Town
+                </Button>
             </Stack>
-        </CentralPanelLayout>
+        </Stack>
     )
 }

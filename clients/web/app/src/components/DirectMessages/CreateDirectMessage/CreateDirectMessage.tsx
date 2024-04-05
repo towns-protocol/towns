@@ -1,7 +1,6 @@
 import { AnimatePresence } from 'framer-motion'
-import React, { useCallback, useEffect, useMemo, useState } from 'react'
+import React, { useCallback, useContext, useEffect, useMemo, useState } from 'react'
 import { Outlet, useNavigate } from 'react-router'
-import { useSearchParams } from 'react-router-dom'
 import {
     ChannelContextProvider,
     DMChannelContextUserLookupProvider,
@@ -10,6 +9,7 @@ import {
     useTownsContext,
     useUserLookupContext,
 } from 'use-towns-client'
+import { useSearchParams } from 'react-router-dom'
 import { Panel } from '@components/Panel/Panel'
 import { FadeInBox } from '@components/Transitions'
 import { UserList } from '@components/UserList/UserList'
@@ -18,6 +18,7 @@ import { Box, Button, Icon, MotionBox, Paragraph, Stack, Text } from '@ui'
 import { useCreateLink } from 'hooks/useCreateLink'
 import { useDevice } from 'hooks/useDevice'
 import { SpacesChannelComponent } from 'routes/SpacesChannel'
+import { PanelContext, PanelStack } from '@components/Panel/PanelContext'
 import { ChannelPlaceholder } from './ChannelPlaceholder'
 import { MessageDropDown } from './MessageDropDown'
 import { UserOption, UserPillSelector } from './UserPillSelector'
@@ -29,32 +30,22 @@ type Props = {
 }
 
 export const CreateMessagePanel = () => {
-    const { createLink } = useCreateLink()
-    const navigate = useNavigate()
-    const [searchParams] = useSearchParams()
-
-    const onClose = useCallback(() => {
-        if (searchParams.get('ref')) {
-            navigate(-1)
-        } else {
-            const link = createLink({ route: 'townHome' })
-            if (link) {
-                navigate(link)
-            }
-        }
-    }, [createLink, navigate, searchParams])
-
-    const panel = (
+    const { isTouch } = useDevice()
+    const [search] = useSearchParams()
+    const stackId =
+        search.get('stackId') === PanelStack.DIRECT_MESSAGES
+            ? PanelStack.DIRECT_MESSAGES
+            : PanelStack.MAIN
+    return isTouch ? (
         <>
-            <Panel label="New Message" padding="none" onClose={onClose}>
+            <Panel label="New Message" padding="none" stackId={stackId}>
                 <CreateDirectMessage />
             </Panel>
             <Outlet />
         </>
+    ) : (
+        <CreateDirectMessage />
     )
-
-    // TODO: central panel layout includes animation on touch
-    return panel
 }
 
 export const CreateDirectMessage = (props: Props) => {
@@ -98,6 +89,8 @@ export const CreateDirectMessage = (props: Props) => {
         }
     }, [navigate])
 
+    const stackId = useContext(PanelContext)?.stackId
+
     const onSelectChannel = useCallback(
         (channelId?: string) => {
             if (!channelId) {
@@ -106,10 +99,10 @@ export const CreateDirectMessage = (props: Props) => {
 
             const link = createLink({ messageId: channelId })
             if (link) {
-                navigate(link)
+                navigate(`${link}${stackId?.length ? `?stackId=${stackId}` : ''}`)
             }
         },
-        [createLink, navigate],
+        [createLink, navigate, stackId],
     )
 
     // preview a channel when selecting first user from dropdown

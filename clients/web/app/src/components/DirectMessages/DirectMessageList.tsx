@@ -97,7 +97,7 @@ const useSelectMessage = (dmChannels: DMChannelIdentifier[], messageId?: string)
         (id: string) => {
             const link = createLink({ messageId: id })
             if (link) {
-                navigate(link)
+                navigate({ pathname: link, search: 'stackId=direct-messages' })
             }
         },
         [createLink, navigate],

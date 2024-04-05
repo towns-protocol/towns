@@ -1,11 +1,11 @@
 import { default as React, useCallback } from 'react'
-import { useLocation, useMatch, useNavigate } from 'react-router'
+import { useMatch } from 'react-router'
 import { useMyProfile } from 'use-towns-client'
+import { Avatar } from '@components/Avatar/Avatar'
 import { Box } from '@ui'
 import { useAuth } from 'hooks/useAuth'
-import { useCreateLink } from 'hooks/useCreateLink'
-import { PATHS } from 'routes'
-import { Avatar } from '@components/Avatar/Avatar'
+import { CHANNEL_INFO_PARAMS, PATHS } from 'routes'
+import { usePanelActions } from 'routes/layouts/hooks/usePanelActions'
 
 export const ProfileCardButton = () => {
     const myProfile = useMyProfile()
@@ -14,20 +14,12 @@ export const ProfileCardButton = () => {
 
     const { isAuthenticated } = useAuth()
 
-    const navigate = useNavigate()
-    const location = useLocation()
-
-    const { createLink: createProfileLink } = useCreateLink()
-
-    const link = userId ? createProfileLink({ profileId: 'me' }) : undefined
-
+    const { openPanel, closePanel, isPanelOpen } = usePanelActions()
     const onClick = useCallback(() => {
-        if (location.pathname.match(/profile\/me/)) {
-            navigate('../../', { relative: 'path' })
-        } else if (link) {
-            navigate(link)
-        }
-    }, [link, navigate, location.pathname])
+        isPanelOpen(CHANNEL_INFO_PARAMS.PROFILE)
+            ? closePanel()
+            : openPanel(CHANNEL_INFO_PARAMS.PROFILE, { profileId: 'me' })
+    }, [closePanel, isPanelOpen, openPanel])
 
     const hasAvatar = isAuthenticated && userId
 
@@ -35,10 +27,10 @@ export const ProfileCardButton = () => {
         <Box centerContent>
             <Box
                 hoverable={!isSpaceCreateRoute}
-                cursor={isSpaceCreateRoute ? 'auto' : 'pointer'}
-                tooltip={isSpaceCreateRoute ? undefined : 'Profile Info'}
-                tooltipOptions={{ placement: 'horizontal', immediate: true }}
-                onClick={!isSpaceCreateRoute && hasAvatar ? onClick : undefined}
+                cursor="pointer"
+                tooltip="Profile Info"
+                tooltipOptions={{ placement: 'horizontal' }}
+                onClick={onClick}
             >
                 {hasAvatar ? (
                     <Avatar size="avatar_x4" userId={userId} />

@@ -1,5 +1,4 @@
 import React, { useCallback, useMemo } from 'react'
-import { useNavigate } from 'react-router-dom'
 import {
     Channel,
     useChannelMembers,
@@ -10,6 +9,7 @@ import {
     useTownsContext,
 } from 'use-towns-client'
 import { AnimatePresence } from 'framer-motion'
+import { useSearchParams } from 'react-router-dom'
 import { ChannelUsersPill } from '@components/ChannelUserPill/ChannelUserPill'
 import { TouchNavBar } from '@components/TouchNavBar/TouchNavBar'
 import { useUserList } from '@components/UserList/UserList'
@@ -25,6 +25,7 @@ import type { CHANNEL_INFO_PARAMS_VALUES } from 'routes'
 import { AnimatedLoaderGradient } from '@components/AnimatedLoaderGradient/AnimatedLoaderGradient'
 import { FavoriteChannelButtonTouch } from '@components/FavoriteChannelButton/FavoriteChannelButton'
 import { useFavoriteChannels } from 'hooks/useFavoriteChannels'
+import { usePanelActions } from 'routes/layouts/hooks/usePanelActions'
 
 type Props = {
     channel: Channel
@@ -56,7 +57,7 @@ const DesktopChannelHeader = (props: Props & { showLoadingIndicator: boolean }) 
     })
     const isMuted = channelIsMuted || spaceIsMuted
     const channelType = useChannelType(channel.id)
-    const onInfoPressed = useChannelInfoButton(channelType)
+    const onInfoPressed = useChannelInfoButton(channelType, channel.id)
 
     return (
         <>
@@ -164,7 +165,7 @@ const TouchChannelHeader = (props: Props & { showLoadingIndicator: boolean }) =>
 
     const isFavorite = favoriteChannelIds.has(channel.id)
     const isMuted = channelIsMuted || spaceIsMuted
-    const infoButtonPressed = useChannelInfoButton(channelType)
+    const infoButtonPressed = useChannelInfoButton(channelType, channel.id)
 
     return (
         <Stack gap="sm">
@@ -255,9 +256,10 @@ const TouchChannelHeader = (props: Props & { showLoadingIndicator: boolean }) =>
     )
 }
 
-const useChannelInfoButton = (type: CHANNEL_INFO_PARAMS_VALUES) => {
-    const navigate = useNavigate()
+const useChannelInfoButton = (type: CHANNEL_INFO_PARAMS_VALUES, channelId: string) => {
+    const [searchParams] = useSearchParams()
+    const { openPanel } = usePanelActions()
     return useCallback(() => {
-        navigate(`info?${type}`)
-    }, [navigate, type])
+        openPanel(type, { channelId, stackId: searchParams.get('stackId') ?? '' })
+    }, [channelId, openPanel, searchParams, type])
 }

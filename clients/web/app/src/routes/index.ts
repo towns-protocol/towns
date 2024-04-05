@@ -14,6 +14,8 @@ export const PATHS = {
     MESSAGES: 'messages',
     PROFILE: 'profile',
     SEARCH: 'search',
+    INVITE: 'invite',
+    INVITES: 'invites',
 } as const
 
 export const QUERY_PARAMS = {
@@ -22,23 +24,23 @@ export const QUERY_PARAMS = {
 } as const
 
 export const CHANNEL_INFO_PARAMS = {
-    INFO: 'info',
-    CHANNEL: 'channel',
-    CREATE_CHANNEL: 'create-channel',
-    EDIT_CHANNEL: 'edit-channel',
-    DM_CHANNEL: 'dm',
-    GDM_CHANNEL: 'gdm',
-    PERMISSIONS: 'permissions',
-    DIRECTORY: 'directory',
-    INVITE: 'invite',
     BROWSE_CHANNELS: 'browse-channels',
     BANNED: 'banned',
+    BUG_REPORT: 'bug-report',
+    CHANNEL_INFO: 'channel',
+    CREATE_CHANNEL: 'create-channel',
+    DIRECTORY: 'directory',
+    DM_CHANNEL_INFO: 'dm',
+    EDIT_CHANNEL: 'edit-channel',
+    GDM_CHANNEL_INFO: 'gdm',
+    INVITE: 'invite',
+    PERMISSIONS: 'permissions',
+    PROFILE: 'profile',
+    ROLES: 'roles',
+    THREAD: 'thread',
+    TOWN_INFO: 'town-info',
+    WALLETS: 'wallets',
 } as const
 
 export type CHANNEL_INFO_PARAMS_VALUES =
     (typeof CHANNEL_INFO_PARAMS)[keyof typeof CHANNEL_INFO_PARAMS]
-
-export const NESTED_PROFILE_PANEL_PATHS = {
-    WALLETS: 'wallets',
-    ROLES: 'roles',
-} as const

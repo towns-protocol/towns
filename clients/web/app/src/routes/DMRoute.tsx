@@ -1,39 +1,44 @@
-import React, { useEffect, useRef } from 'react'
+import React, { useContext, useEffect, useRef } from 'react'
 import { Outlet, useNavigate, useOutlet, useParams } from 'react-router'
-import { useSearchParams } from 'react-router-dom'
 import { useTownsContext } from 'use-towns-client'
+import { useSearchParams } from 'react-router-dom'
 import { DirectMessagesPanel } from '@components/DirectMessages/DirectMessages'
-import { ZLayerBox } from '@components/ZLayer/ZLayerContext'
 import { Box, Heading, Icon, Paragraph, Stack } from '@ui'
 import { useDevice } from 'hooks/useDevice'
 import { PATHS } from 'routes'
 import { useStore } from 'store/store'
+import { PanelContext, PanelStack } from '@components/Panel/PanelContext'
 import { WelcomeLayout } from './layouts/WelcomeLayout'
 
 export const DirectMessages = () => {
     const { isTouch } = useDevice()
+
+    const [searchParams] = useSearchParams()
     const outlet = useOutlet()
+
+    const stackId = useContext(PanelContext)?.stackId
 
     const { spaceSlug } = useParams()
     useTouchRedirect({ isTouch })
-    const [search] = useSearchParams()
 
     if (isTouch && !spaceSlug) {
         return <WelcomeLayout debugText="TOUCH MESSAGE REDIRECT" />
     }
 
     if (isTouch) {
-        if (search.get('ref') === 'home') {
+        if (
+            stackId === PanelStack.DIRECT_MESSAGES ||
+            searchParams.get('stackId') === PanelStack.DIRECT_MESSAGES
+        ) {
+            return (
+                <Box absoluteFill background="level1">
+                    <DirectMessagesPanel />
+                    <Outlet />
+                </Box>
+            )
+        } else {
             return <Outlet />
         }
-        return (
-            <Box absoluteFill background="level1">
-                <DirectMessagesPanel />
-                <ZLayerBox>
-                    <Outlet />
-                </ZLayerBox>
-            </Box>
-        )
     } else {
         return (
             outlet ?? (

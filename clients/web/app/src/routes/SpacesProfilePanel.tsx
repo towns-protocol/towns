@@ -1,5 +1,5 @@
 import React, { useCallback, useMemo, useState } from 'react'
-import { matchRoutes, useLocation, useNavigate, useParams } from 'react-router'
+import { matchRoutes, useLocation, useNavigate } from 'react-router'
 import { useSearchParams } from 'react-router-dom'
 import { useEvent } from 'react-use-event-hook'
 import {
@@ -27,7 +27,7 @@ import { useAuth } from 'hooks/useAuth'
 import { useStore } from 'store/store'
 import { usePushNotifications } from 'hooks/usePushNotifications'
 import { Panel } from '@components/Panel/Panel'
-import { NESTED_PROFILE_PANEL_PATHS } from 'routes'
+import { CHANNEL_INFO_PARAMS } from 'routes'
 import { useCreateLink } from 'hooks/useCreateLink'
 import { useDevice } from 'hooks/useDevice'
 import { ModalContainer } from '@components/Modals/ModalContainer'
@@ -41,16 +41,11 @@ import { ConfirmBanUnbanModal } from '@components/ConfirmBanUnbanModal/ConfirmBa
 import { ConfirmBlockModal } from '@components/ConfirmBlockModal/ConfirmBlockModal'
 import { PanelButton } from '@components/Panel/PanelButton'
 import { useBlockedUsers } from 'hooks/useBlockedUsers'
+import { usePanelActions } from './layouts/hooks/usePanelActions'
 
 export const SpaceProfilePanel = (props: { children?: React.ReactNode }) => {
-    const navigate = useNavigate()
-
-    const onClose = useEvent(() => {
-        navigate('../')
-    })
-
     return (
-        <Panel label="Profile" onClose={onClose}>
+        <Panel label="Profile">
             <SpaceProfile {...props} />
         </Panel>
     )
@@ -63,7 +58,8 @@ export const SpaceProfile = (props: { children?: React.ReactNode }) => {
     const space = useSpaceData()
 
     const cameFromSpaceInfoPanel = search.get('spaceInfo') !== null
-    const { profileId: profileIdFromPath = 'me' } = useParams()
+    const [searchParams] = useSearchParams()
+    const profileIdFromPath = searchParams.get('profileId') || 'me'
     const { data: rootKeyAddress, isLoading: isLoadingRootKey } = useGetRootKeyFromLinkedWallet({
         walletAddress: profileIdFromPath,
     })
@@ -114,15 +110,13 @@ export const SpaceProfile = (props: { children?: React.ReactNode }) => {
     const location = useLocation()
     const isMeRoute = matchRoutes([{ path: '/me' }], location) || profileIdFromPath === 'me'
 
+    const { openPanel } = usePanelActions()
+
     const onWalletLinkingClick = useEvent(() => {
         if (isTouch) {
             setModal('wallets')
         } else {
-            navigate(`${location.pathname}/${NESTED_PROFILE_PANEL_PATHS.WALLETS}`, {
-                state: {
-                    from: location.pathname,
-                },
-            })
+            openPanel(CHANNEL_INFO_PARAMS.WALLETS)
         }
     })
 

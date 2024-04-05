@@ -22,12 +22,13 @@ import { useAuth } from 'hooks/useAuth'
 import { useCreateLink } from 'hooks/useCreateLink'
 import { useShortcut } from 'hooks/useShortcut'
 import { useSortedChannels } from 'hooks/useSortedChannels'
-import { PATHS } from 'routes'
+import { CHANNEL_INFO_PARAMS, PATHS } from 'routes'
 import { useStore } from 'store/store'
 import { ReloadPrompt } from '@components/ReloadPrompt/ReloadPrompt'
 import { env } from 'utils'
 import { useDevice } from 'hooks/useDevice'
 import { useUnseenChannelIds } from 'hooks/useUnseenChannelIdsCount'
+import { usePanelActions } from 'routes/layouts/hooks/usePanelActions'
 import * as styles from './SpaceSideBar.css'
 import { SpaceSideBarHeader } from './SpaceSideBarHeader'
 import { SidebarLoadingAnimation } from './SpaceSideBarLoading'
@@ -35,7 +36,6 @@ import { CondensedChannelNavItem } from './CondensedChannelNavItem'
 
 type Props = {
     space: SpaceData
-    className?: string
 }
 
 export const SpaceSideBar = (props: Props) => {
@@ -54,26 +54,13 @@ export const SpaceSideBar = (props: Props) => {
     const [isCreateChannelModalVisible, setCreateChannelModalVisible] = useState(false)
     const onHideCreateChannel = useEvent(() => setCreateChannelModalVisible(false))
     const onShowCreateChannel = useEvent(() => {
-        const path = createLink({
-            spaceId: space.id,
-            panel: 'create-channel',
-        })
-
-        if (path) {
-            navigate(path)
-        }
+        openPanel(CHANNEL_INFO_PARAMS.CREATE_CHANNEL)
     })
 
-    const onShowBrowseChannels = useEvent(() => {
-        const path = createLink({
-            channelId: undefined,
-            spaceId: space.id,
-            panel: 'browse-channels',
-        })
+    const { openPanel } = usePanelActions()
 
-        if (path) {
-            navigate(path)
-        }
+    const onShowBrowseChannels = useEvent(() => {
+        openPanel(CHANNEL_INFO_PARAMS.BROWSE_CHANNELS)
     })
 
     const unreadThreadMentions = useSpaceUnreadThreadMentions()
@@ -155,7 +142,7 @@ export const SpaceSideBar = (props: Props) => {
     return (
         <>
             <Card absoluteFill data-testid="space-sidebar" onScroll={onScroll}>
-                <Box grow elevateReadability className={props.className} position="relative">
+                <Box grow elevateReadability position="relative">
                     <Stack
                         position="absolute"
                         className={styles.gradientBackground}

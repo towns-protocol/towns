@@ -14,7 +14,7 @@ import { useSpaceChannels } from 'hooks/useSpaceChannels'
 import { useStore } from 'store/store'
 import { atoms } from 'ui/styles/atoms.css'
 import { useDmChannels } from 'hooks/useDMChannels'
-import { CentralPanelLayout } from './layouts/CentralPanelLayout'
+import { Panel } from '@components/Panel/Panel'
 
 const sectionTypeNameMap = {
     user: 'People',
@@ -103,75 +103,73 @@ export const TouchSearchTab = () => {
     }, [])
 
     return (
-        <CentralPanelLayout>
-            <Box grow paddingTop="safeAreaInsetTop" overflow="hidden">
-                <Stack horizontal paddingX alignItems="center" paddingY="xs" gap="sm">
-                    <TextField
-                        autoFocus
-                        id={TouchScrollToTopScrollId.SearchTabInputId}
-                        type="search"
-                        placeholder={searchLabel}
-                        height="x5"
-                        background="level2"
-                        value={searchTerms}
-                        onChange={onChange}
-                        onFocus={onFieldFocus}
-                        onBlur={onFieldBlur}
-                        onKeyDown={onKeyPress}
-                    />
-                    {!!searchTerms && <IconButton icon="close" onClick={onClearSearch} />}
-                </Stack>
+        <Panel isRootPanel paddingTop="md" label="Search" padding="none">
+            <Stack horizontal paddingX alignItems="center" paddingY="xs" gap="sm">
+                <TextField
+                    autoFocus
+                    id={TouchScrollToTopScrollId.SearchTabInputId}
+                    type="search"
+                    placeholder={searchLabel}
+                    height="x5"
+                    background="level2"
+                    value={searchTerms}
+                    onChange={onChange}
+                    onFocus={onFieldFocus}
+                    onBlur={onFieldBlur}
+                    onKeyDown={onKeyPress}
+                />
+                {!!searchTerms && <IconButton icon="close" onClick={onClearSearch} />}
+            </Stack>
 
-                <Stack
-                    grow
-                    padding
-                    position="relative"
-                    pointerEvents={isFieldFocused ? 'none' : 'all'}
-                    height="100%"
+            <Stack
+                grow
+                padding
+                position="relative"
+                pointerEvents={isFieldFocused ? 'none' : 'all'}
+                height="100%"
+            >
+                <Box
+                    absoluteFill
+                    scroll
+                    id={TouchScrollToTopScrollId.SearchTabScrollId}
+                    gap="sm"
+                    paddingY="md"
+                    onScroll={onScroll}
                 >
-                    <Box
-                        absoluteFill
-                        scroll
-                        id={TouchScrollToTopScrollId.SearchTabScrollId}
-                        gap="sm"
-                        paddingY="md"
-                        onScroll={onScroll}
-                    >
-                        {searchResults.length === 0 ? (
-                            <Box alignItems="center" paddingTop="x8" onClick={onSearchClick}>
-                                <NoResults searchTerms={searchTerms} />
-                            </Box>
-                        ) : (
-                            searchResults.map((s, index, items) => {
-                                const result = (
-                                    <ResultItem
-                                        result={s}
-                                        key={s.item.key}
-                                        misc={miscProps}
-                                        background="level1"
-                                    />
+                    {searchResults.length === 0 ? (
+                        <Box alignItems="center" paddingTop="x8" onClick={onSearchClick}>
+                            <NoResults searchTerms={searchTerms} />
+                        </Box>
+                    ) : (
+                        searchResults.map((s, index, items) => {
+                            const result = (
+                                <ResultItem
+                                    result={s}
+                                    key={s.item.key}
+                                    misc={miscProps}
+                                    background="level1"
+                                />
+                            )
+                            const prevItemType = items[index - 1]?.item?.type
+                            if (s.item.type !== prevItemType) {
+                                return (
+                                    <>
+                                        <Box paddingX="md" paddingY="sm" key={s.item.type}>
+                                            <Paragraph size="sm" color="gray2">
+                                                {getSectionTitle(s.item.type)}
+                                            </Paragraph>
+                                        </Box>
+                                        {result}
+                                    </>
                                 )
-                                const prevItemType = items[index - 1]?.item?.type
-                                if (s.item.type !== prevItemType) {
-                                    return (
-                                        <>
-                                            <Box paddingX="md" paddingY="sm" key={s.item.type}>
-                                                <Paragraph size="sm" color="gray2">
-                                                    {getSectionTitle(s.item.type)}
-                                                </Paragraph>
-                                            </Box>
-                                            {result}
-                                        </>
-                                    )
-                                } else {
-                                    return result
-                                }
-                            })
-                        )}
-                    </Box>
-                </Stack>
-            </Box>
-        </CentralPanelLayout>
+                            } else {
+                                return result
+                            }
+                        })
+                    )}
+                </Box>
+            </Stack>
+        </Panel>
     )
 }
 

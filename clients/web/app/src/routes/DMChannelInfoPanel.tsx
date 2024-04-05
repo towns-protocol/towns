@@ -28,6 +28,7 @@ import { getPrettyDisplayName } from 'utils/getPrettyDisplayName'
 import { useAbstractAccountAddress } from 'hooks/useAbstractAccountAddress'
 import { ChannelMembersModal } from './SpaceChannelDirectoryPanel'
 import { GDMChannelPermissionsModal } from './GDMChannelPermissions'
+import { usePanelActions } from './layouts/hooks/usePanelActions'
 
 export const DMChannelInfoPanel = () => {
     const [activeModal, setActiveModal] = useState<
@@ -51,10 +52,6 @@ export const DMChannelInfoPanel = () => {
 
     const { createLink } = useCreateLink()
 
-    const onClose = useCallback(() => {
-        navigate('..')
-    }, [navigate])
-
     const onLeaveClick = useCallback(() => {
         setActiveModal('confirm-leave')
     }, [setActiveModal])
@@ -71,13 +68,14 @@ export const DMChannelInfoPanel = () => {
         }
     }, [channel?.id, createLink, leaveRoom, navigate])
 
+    const { openPanel } = usePanelActions()
     const onMembersClick = useCallback(() => {
         if (isTouch) {
             setActiveModal('members')
         } else {
-            navigate(`../${CHANNEL_INFO_PARAMS.INFO}?${CHANNEL_INFO_PARAMS.DIRECTORY}`)
+            openPanel(CHANNEL_INFO_PARAMS.DIRECTORY)
         }
-    }, [navigate, isTouch])
+    }, [isTouch, openPanel])
 
     // const onPermissionsClick = useCallback(() => {
     //     if (isTouch) {
@@ -120,7 +118,7 @@ export const DMChannelInfoPanel = () => {
     const isGDM = data?.isGroup ?? false
 
     return (
-        <Panel modalPresentable label={title} onClose={onClose}>
+        <Panel modalPresentable label={title}>
             <DMChannelContextUserLookupProvider
                 fallbackToParentContext
                 channelId={channelSlug ?? ''}

@@ -1,6 +1,6 @@
 import { AnimatePresence } from 'framer-motion'
 import fuzzysort from 'fuzzysort'
-import React, { useCallback, useEffect, useMemo, useRef, useState } from 'react'
+import React, { useCallback, useMemo, useState } from 'react'
 import { useNavigate, useOutlet } from 'react-router'
 import {
     Address,
@@ -60,13 +60,14 @@ import { vars } from 'ui/styles/vars.css'
 import { getPrettyDisplayName } from 'utils/getPrettyDisplayName'
 import { DMChannelMenuItem, MixedChannelMenuItem, useSortedChannels } from 'hooks/useSortedChannels'
 import { notUndefined } from 'ui/utils/utils'
-import { BugReportPanel } from 'routes/BugReportPanel'
 import { ShakeToReport } from '@components/BugReportButton/ShakeToReport'
 import { useAbstractAccountAddress } from 'hooks/useAbstractAccountAddress'
 import { ReloadPrompt } from '@components/ReloadPrompt/ReloadPrompt'
 import { env } from 'utils'
 import { BrowseChannelsPanel } from '@components/BrowseChannelsPanel/BrowseChannelsPanel'
 import { useUnseenChannelIds } from 'hooks/useUnseenChannelIdsCount'
+import { usePanels } from 'routes/layouts/hooks/usePanels'
+import { usePanelActions } from 'routes/layouts/hooks/usePanelActions'
 import { ChannelItem } from '../AllChannelsList/AllChannelsList'
 import { TouchTabBarLayout } from '../layouts/TouchTabBarLayout'
 
@@ -224,7 +225,10 @@ export const TouchHome = () => {
     const displayMentionsItem =
         mentionsLink && (!isSearching || filteredMenuItems.some((f) => f.obj.value === 'mentions'))
 
-    const outlet = useOutlet()
+    const { openPanel } = usePanelActions()
+    const openCreateChannelPanel = useCallback(() => {
+        openPanel('create-channel')
+    }, [openPanel])
 
     return (
         <ErrorBoundary FallbackComponent={ErrorFallbackComponent}>
@@ -346,9 +350,7 @@ export const TouchHome = () => {
                                                 />
                                                 {canCreateChannel && (
                                                     <CreateChannelRow
-                                                        onClick={() =>
-                                                            setActiveOverlay('create-channel')
-                                                        }
+                                                        onClick={openCreateChannelPanel}
                                                     />
                                                 )}
                                                 {filteredDms.length > 0 && (
@@ -384,7 +386,7 @@ export const TouchHome = () => {
                         </MotionStack>
                     </AnimatePresence>
 
-                    <OutletOrPanel outlet={outlet} />
+                    <OutletOrPanel />
                 </TouchTabBarLayout>
                 <AnimatePresence>
                     {activeOverlay === 'main-panel' && <TouchHomeOverlay onClose={onHideOverlay} />}
@@ -402,28 +404,18 @@ export const TouchHome = () => {
     )
 }
 
-const OutletOrPanel = (props: { outlet: ReturnType<typeof useOutlet> }) => {
-    const { outlet } = props
-    const { sidePanel, setSidePanel } = useStore(({ sidePanel, setSidePanel }) => ({
-        sidePanel,
-        setSidePanel,
-    }))
+const OutletOrPanel = () => {
+    const outlet = useOutlet()
+    const panel = usePanels()
 
-    const outletRef = useRef(outlet)
-
-    useEffect(() => {
-        if (outlet && !outletRef.current && sidePanel) {
-            setSidePanel(null)
-        }
-        outletRef.current = outlet
-    }, [outlet, setSidePanel, sidePanel])
-
-    const panel = sidePanel === 'bugReport' ? <BugReportPanel /> : null
-
-    // precedence: panel (state) > outlet (route)
-    const panelOrOutlet = panel || outlet
-
-    return panelOrOutlet
+    return (
+        <>
+            {/* base path defined by route (home/dms/profile) */}
+            {outlet}
+            {/* defined by params (i.e. ?panel=) */}
+            {panel}
+        </>
+    )
 }
 
 const ErrorFallbackComponent = (props: { error: Error }) => {

@@ -22,8 +22,8 @@ import { MediaDropContextProvider } from '@components/MediaDropContext/MediaDrop
 
 type Props = {
     messageId: string
-    onClose?: () => void
     highlightId?: string
+    parentRoute?: string
 }
 export const MessageThreadPanel = (props: Props) => {
     const { channelId, spaceId } = useChannelContext()
@@ -69,7 +69,7 @@ export const MessageThreadPanel = (props: Props) => {
         : `Loading permissions`
 
     return (
-        <Panel label={panelLabel} padding="none" gap="none" onClose={props.onClose}>
+        <Panel label={panelLabel} padding="none" gap="none" parentRoute={props.parentRoute}>
             <MediaDropContextProvider
                 title={imageUploadTitle}
                 channelId={channelId}

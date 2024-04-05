@@ -11,7 +11,7 @@ export const GDMChannelPermissionsPanel = () => {
     }, [navigate])
 
     return (
-        <Panel modalPresentable label="Member Permissions" onClose={onClose}>
+        <Panel modalPresentable label="Member Permissions" onClosed={onClose}>
             <GDMChannelPermissions />
         </Panel>
     )

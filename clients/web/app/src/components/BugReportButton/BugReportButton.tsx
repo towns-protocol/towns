@@ -1,19 +1,21 @@
 import React, { useCallback } from 'react'
 import { useTownsContext } from 'use-towns-client'
 import { Box, Icon } from '@ui'
-import { useStore } from 'store/store'
+import { usePanelActions } from 'routes/layouts/hooks/usePanelActions'
 
 export const BugReportButton = () => {
     const { clientStatus } = useTownsContext()
 
-    const { sidePanel, setSidePanel } = useStore(({ sidePanel, setSidePanel }) => ({
-        sidePanel,
-        setSidePanel,
-    }))
+    const { closePanel, openPanel, isPanelOpen } = usePanelActions()
+    const isActive = isPanelOpen('bug-report')
 
     const onBugReportClick = useCallback(() => {
-        setSidePanel(sidePanel === 'bugReport' ? null : 'bugReport')
-    }, [setSidePanel, sidePanel])
+        if (isPanelOpen('bug-report')) {
+            closePanel()
+        } else {
+            openPanel('bug-report')
+        }
+    }, [closePanel, isPanelOpen, openPanel])
 
     return (
         <>
@@ -21,7 +23,7 @@ export const BugReportButton = () => {
                 hoverable
                 centerContent
                 cursor="pointer"
-                tooltip={sidePanel === 'bugReport' ? undefined : 'Report a bug'}
+                tooltip={isActive ? undefined : 'Report a bug'}
                 tooltipOptions={{ placement: 'horizontal' }}
                 padding="line"
                 background="level2"
@@ -33,13 +35,9 @@ export const BugReportButton = () => {
             >
                 <Icon
                     size="square_sm"
-                    type={sidePanel === 'bugReport' ? 'bugFill' : 'bug'}
+                    type={isActive ? 'bugFill' : 'bug'}
                     color={
-                        !clientStatus.streamSyncActive
-                            ? 'error'
-                            : sidePanel === 'bugReport'
-                            ? 'default'
-                            : 'gray1'
+                        !clientStatus.streamSyncActive ? 'error' : isActive ? 'default' : 'gray1'
                     }
                 />
             </Box>

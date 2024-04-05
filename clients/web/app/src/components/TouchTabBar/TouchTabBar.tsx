@@ -11,6 +11,7 @@ import { useCreateLink } from 'hooks/useCreateLink'
 import { Avatar } from '@components/Avatar/Avatar'
 import { MintAnimation } from '@components/MintAnimation/MintAnimation'
 import { useStore } from 'store/store'
+import { PanelStack } from '@components/Panel/PanelContext'
 import { TouchScrollToTopScrollId } from './TouchScrollToTopScrollId'
 
 export const TouchTabBar = () => {
@@ -75,7 +76,7 @@ export const TouchTabBar = () => {
                                 {hasUnreadDMs && <Dot position="topRight" />}
                             </Box>
                         )}
-                        to={messageLink}
+                        to={`${messageLink}?stackId=${PanelStack.DIRECT_MESSAGES}`}
                         scrollToTopId={TouchScrollToTopScrollId.SearchTabScrollId}
                         onPressTwice={() => {
                             document

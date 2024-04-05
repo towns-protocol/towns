@@ -2,54 +2,40 @@ import React, { useCallback } from 'react'
 import { useNavigate } from 'react-router'
 import { GlobalContextUserLookupProvider } from 'use-towns-client'
 import { BoxProps, IconButton, IconName } from '@ui'
-import { ZLayerBox } from '@components/ZLayer/ZLayerContext'
 import { useShortcut } from 'hooks/useShortcut'
 import { useCreateLink } from 'hooks/useCreateLink'
 import { Panel } from '@components/Panel/Panel'
+import { PanelStack } from '@components/Panel/PanelContext'
 import { DirectMessageList } from './DirectMessageList'
 
-type DirectMessagesPanelProps = {
-    hideNavigation?: boolean
-}
-
-export const DirectMessagesPanel = (props: DirectMessagesPanelProps) => {
-    const { hideNavigation = false } = props
-
+export const DirectMessagesPanel = () => {
     const navigate = useNavigate()
-
     const { createLink } = useCreateLink()
-
     const onDisplayCreate = useCallback(() => {
         const link = createLink({ messageId: 'new' })
         if (link) {
-            navigate(`${link}?ref=messages`)
+            navigate(`${link}?stackId=${PanelStack.DIRECT_MESSAGES}`)
         }
     }, [createLink, navigate])
 
     useShortcut('CreateMessage', onDisplayCreate)
 
-    return <MessageListPanel hideNavigation={hideNavigation} onNavAction={onDisplayCreate} />
+    return <MessageListPanel onNavAction={onDisplayCreate} />
 }
 
-const MessageListPanel = ({
-    onNavAction,
-    hideNavigation,
-}: {
-    onNavAction: () => void
-    hideNavigation: boolean
-}) => {
+const MessageListPanel = ({ onNavAction }: { onNavAction: () => void }) => {
     return (
-        <ZLayerBox height="100%">
-            <Panel
-                label="Direct Messages"
-                rightBarButton={<PanelHeaderButton icon="compose" onClick={onNavAction} />}
-                padding="sm"
-            >
-                <GlobalContextUserLookupProvider>
-                    <DirectMessageList />
-                </GlobalContextUserLookupProvider>
-            </Panel>
-        </ZLayerBox>
+        <Panel
+            isRootPanel
+            stackId={PanelStack.DIRECT_MESSAGES}
+            label="Direct Messages"
+            rightBarButton={<PanelHeaderButton icon="compose" onClick={onNavAction} />}
+            padding="sm"
+        >
+            <GlobalContextUserLookupProvider>
+                <DirectMessageList />
+            </GlobalContextUserLookupProvider>
+        </Panel>
     )
 }
 

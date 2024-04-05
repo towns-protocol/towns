@@ -1,7 +1,6 @@
 import React, { useMemo } from 'react'
 import { Link } from 'react-router-dom'
 import { Address, RoomMember, useSpaceMembers, useUserLookupContext } from 'use-towns-client'
-import { CentralPanelLayout } from 'routes/layouts/CentralPanelLayout'
 import { shortAddress } from 'ui/utils/utils'
 import { Box, CardLabel, Grid, Paragraph, Stack } from '@ui'
 import { ClipboardCopy } from '@components/ClipboardCopy/ClipboardCopy'
@@ -24,19 +23,17 @@ export const MembersPage = (props: Props) => {
         [props.memberIds, usersMap],
     )
     return members?.length ? (
-        <CentralPanelLayout>
-            <Stack height="100%">
-                <CardLabel label="Members" />
+        <Stack height="100%">
+            <CardLabel label="Members" />
 
-                <Stack grow overflowY="scroll">
-                    <Grid columnMinSize="180px">
-                        {members.map((member) => (
-                            <GridProfile member={member} key={member.userId} />
-                        ))}
-                    </Grid>
-                </Stack>
+            <Stack grow overflowY="scroll">
+                <Grid columnMinSize="180px">
+                    {members.map((member) => (
+                        <GridProfile member={member} key={member.userId} />
+                    ))}
+                </Grid>
             </Stack>
-        </CentralPanelLayout>
+        </Stack>
     ) : (
         <></>
     )

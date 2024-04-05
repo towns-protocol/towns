@@ -61,20 +61,23 @@ export const CardLabel = (props: {
     leftBarButton?: React.ReactNode
     rightBarButton?: React.ReactNode
 }) => (
-    <CardHeader>
-        {props.leftBarButton && <Box paddingRight="sm">{props.leftBarButton}</Box>}
-        <Box grow overflow="hidden" paddingY="sm" fontWeight="medium">
+    <CardHeader gap="sm">
+        {props.leftBarButton}
+        <Box grow paddingY="sm" width="none" /* truncate hack */>
             {typeof props.label === 'string' ? (
-                <Paragraph fontWeight="medium">{props.label}</Paragraph>
+                <Paragraph truncate fontWeight="medium">
+                    {props.label}
+                </Paragraph>
             ) : (
                 props.label
             )}
         </Box>
-        <Box>{props.onClose && <IconButton icon="close" onClick={props.onClose} />}</Box>
+        <Box>
+            {props.onClose && <IconButton icon="close" insetRight="xs" onClick={props.onClose} />}
+        </Box>
         {props.rightBarButton && (
             <>
-                <Box grow />
-                {props.rightBarButton}
+                <Box>{props.rightBarButton}</Box>
             </>
         )}
     </CardHeader>

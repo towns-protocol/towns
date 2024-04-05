@@ -5,8 +5,9 @@ import { SpaceContextRoute } from 'routes/SpaceContextRoute'
 import { useDevice } from 'hooks/useDevice'
 import { DirectMessageThread } from '@components/DirectMessages/DirectMessageThread'
 import { CreateSpaceFormV2 } from '@components/Web3/MembershipNFT/CreateSpaceFormV2/CreateSpaceFormV2'
-import { NestedPanel } from '@components/Panel/NestedPanel'
 import { CreateMessagePanel } from '@components/DirectMessages/CreateDirectMessage/CreateDirectMessage'
+import { Panel } from '@components/Panel/Panel'
+import { CardLabel } from '@ui'
 import { ChannelSettings } from './ChannelSettings'
 import { SpaceGettingStarted } from './SpaceGettingStarted'
 import { SpaceHome, TouchHome } from './home'
@@ -17,7 +18,6 @@ import { SpacesInvite } from './SpacesInvite'
 import { SpaceThreads } from './SpaceThreads'
 import { SpaceProfilePanel } from './SpacesProfilePanel'
 import { SpaceMembers } from './SpaceMembers'
-import { InfoPanelWrapper } from './InfoPanel'
 import { NoJoinedSpacesFallback } from './NoJoinedSpacesFallback'
 import { ChannelMembers } from './ChannelMembers'
 import { TouchProfile } from './TouchProfile'
@@ -26,15 +26,6 @@ import { AppPanelLayout } from './layouts/AppPanelLayout'
 import { TouchSearchTab } from './TouchSearchTab'
 import { ValidateMembership } from './ValidateMembership'
 import { DirectMessages } from './DMRoute'
-import { DMInfoPanelWrapper } from './DMInfoPanel'
-import { SpacesSettingsOld } from './SpaceSettingsOld'
-
-const desktopSpaceProfilePanelRoutes = (prefix: string = 'profile') => [
-    // eslint-disable-next-line react/jsx-key
-    <Route path={`${prefix}/:profileId`} element={<SpaceProfilePanel />} />,
-    // eslint-disable-next-line react/jsx-key
-    <Route path={`${prefix}/:profileId/:nestedPanel`} element={<NestedPanel />} />,
-]
 
 export const AuthenticatedRoutes = () => {
     const { isTouch } = useDevice()
@@ -51,21 +42,35 @@ export const AuthenticatedRoutes = () => {
                         <Route element={<ValidateMembership />}>
                             <Route path={`${PATHS.SPACES}/:spaceSlug`}>
                                 <Route path="" element={<TouchHome />}>
-                                    <Route path="info" element={<InfoPanelWrapper />} />
                                     {messageRoutes}
                                     <Route
-                                        path="channels/:channelSlug"
-                                        element={<SpacesChannelAnimated />}
+                                        path={PATHS.THREADS}
+                                        element={
+                                            <Panel label="Threads" padding="none" parentRoute="../">
+                                                <SpaceThreads />
+                                            </Panel>
+                                        }
+                                    />
+                                    <Route
+                                        path={PATHS.MENTIONS}
+                                        element={
+                                            <Panel
+                                                label="Mentions"
+                                                padding="none"
+                                                parentRoute="../"
+                                            >
+                                                <SpaceMentions />
+                                            </Panel>
+                                        }
+                                    />
+                                    <Route
+                                        path={`${PATHS.CHANNELS}/:channelSlug`}
+                                        element={<SpacesChannelAnimated parentRoute="../" />}
                                     >
                                         <Route
                                             path="replies/:messageId"
                                             element={<SpacesChannelReplies parentRoute="../" />}
                                         />
-                                        <Route
-                                            path="profile/:profileId"
-                                            element={<SpaceProfilePanel />}
-                                        />
-                                        <Route path="info" element={<InfoPanelWrapper />} />
                                     </Route>
                                     <Route
                                         path={`${PATHS.PROFILE}/me`}
@@ -91,19 +96,35 @@ export const AuthenticatedRoutes = () => {
                                 />
                                 <Route path={`${PATHS.SPACES}/:spaceSlug`}>
                                     <Route index element={<SpaceHome />} />
-                                    <Route path="members" element={<SpaceMembers />}>
-                                        {...desktopSpaceProfilePanelRoutes()}
-                                        <Route path="info" element={<InfoPanelWrapper />} />
-                                    </Route>
+                                    <Route path={PATHS.MEMBERS} element={<SpaceMembers />} />
                                     {messageRoutes}
-                                    <Route path="channels/:channelSlug" element={<SpacesChannel />}>
+                                    <Route
+                                        path={`${PATHS.CHANNELS}/:channelSlug`}
+                                        element={<SpacesChannel />}
+                                    >
                                         <Route
-                                            path="replies/:messageId"
-                                            element={<SpacesChannelReplies parentRoute="../" />}
+                                            path={`${PATHS.REPLIES}/:messageId`}
+                                            element={<SpacesChannelReplies parentRoute=".." />}
                                         />
-                                        {...desktopSpaceProfilePanelRoutes()}
-                                        <Route path="info" element={<InfoPanelWrapper />} />
                                     </Route>
+                                    <Route
+                                        path={PATHS.THREADS}
+                                        element={
+                                            <>
+                                                <CardLabel label="Threads" />
+                                                <SpaceThreads />
+                                            </>
+                                        }
+                                    />
+                                    <Route
+                                        path={PATHS.MENTIONS}
+                                        element={
+                                            <>
+                                                <CardLabel label="Mentions" />
+                                                <SpaceMentions />
+                                            </>
+                                        }
+                                    />
                                     <Route path="*" element={<TownRoutes />} />
                                 </Route>
                                 <Route path="*" element={<OutsideTownRoutes />} />
@@ -116,16 +137,11 @@ export const AuthenticatedRoutes = () => {
     )
 }
 const messageRoutes = (
-    <Route path="messages" element={<DirectMessages />}>
+    <Route path={PATHS.MESSAGES} element={<DirectMessages />}>
         <Route path="new" element={<CreateMessagePanel />}>
             <Route path=":channelSlug" element={<DirectMessageThread />} />
-            {...desktopSpaceProfilePanelRoutes()}
         </Route>
-        <Route path=":channelSlug" element={<DirectMessageThread />}>
-            <Route path="replies/:messageId" element={<SpacesChannelReplies parentRoute="../" />} />
-            {...desktopSpaceProfilePanelRoutes()}
-            <Route path="info" element={<DMInfoPanelWrapper />} />
-        </Route>
+        <Route path=":channelSlug" element={<DirectMessageThread />} />
     </Route>
 )
 
@@ -136,10 +152,9 @@ const OutsideTownRoutes = () => {
     return (
         <Routes>
             {messageRoutes}
-
             {/* catch all */}
             <Route path="*" element={<NoJoinedSpacesFallback />}>
-                {...desktopSpaceProfilePanelRoutes('me')}
+                <Route path="me" element={<SpaceProfilePanel />} />,
             </Route>
         </Routes>
     )
@@ -150,37 +165,15 @@ const OutsideTownRoutes = () => {
  */
 const TownRoutes = () => (
     <Routes>
-        <Route path={PATHS.THREADS} element={<SpaceThreads />}>
-            {...desktopSpaceProfilePanelRoutes()}
-            <Route path="info" element={<InfoPanelWrapper />} />
-        </Route>
+        <Route path={PATHS.GETTING_STARTED} element={<SpaceGettingStarted />} />
+        <Route path={PATHS.INVITE} element={<SpacesInvite />} />
+        <Route path={PATHS.SEARCH} element={<TouchSearchTab />} />
 
-        <Route path="mentions" element={<SpaceMentions />}>
-            {...desktopSpaceProfilePanelRoutes()}
-            <Route path="info" element={<InfoPanelWrapper />} />
-        </Route>
-
-        <Route path={PATHS.GETTING_STARTED} element={<SpaceGettingStarted />}>
-            {...desktopSpaceProfilePanelRoutes()}
-            <Route path="info" element={<InfoPanelWrapper />} />
-        </Route>
-
-        {/* TODO: Remove SpacesSettingsOld */}
-        <Route path="settings-legacy" element={<SpacesSettingsOld />} />
-
-        <Route path="invite" element={<SpacesInvite />} />
-
-        <Route path="search" element={<TouchSearchTab />} />
-
-        <Route element={<SpacesChannelRoute />}>
-            <Route path="channels/:channelSlug/members" element={<ChannelMembers />}>
-                {...desktopSpaceProfilePanelRoutes()}
-                <Route path="info" element={<InfoPanelWrapper />} />
+        <Route path={`${PATHS.CHANNELS}/:channelSlug`}>
+            <Route element={<SpacesChannelRoute />}>
+                <Route path={PATHS.MEMBERS} element={<ChannelMembers />} />
+                <Route path={PATHS.SETTINGS} element={<ChannelSettings />} />
             </Route>
-        </Route>
-
-        <Route element={<SpacesChannelRoute />}>
-            <Route path="channels/:channelSlug/settings" element={<ChannelSettings />} />
         </Route>
     </Routes>
 )

@@ -1,21 +1,15 @@
-import React, { useCallback } from 'react'
+import React from 'react'
 import { useMyProfile, useSpaceMentions } from 'use-towns-client'
-import { useNavigate } from 'react-router'
 import { ButtonSpinner } from '@components/Login/LoginButton/Spinner/ButtonSpinner'
-import { IsolatedMessageItem } from '@components/ResultItem/IsolatedMessageItem'
 import { NoJoinedChannelsFallback } from '@components/NoJoinedChannelsFallback'
-import { TouchNavBar } from '@components/TouchNavBar/TouchNavBar'
+import { IsolatedMessageItem } from '@components/ResultItem/IsolatedMessageItem'
 import { TouchScrollToTopScrollId } from '@components/TouchTabBar/TouchScrollToTopScrollId'
-import { Box, CardLabel, Heading, Icon, IconButton, Paragraph, Stack } from '@ui'
-import { useDevice } from 'hooks/useDevice'
+import { Box, Heading, Icon, Paragraph, Stack } from '@ui'
 import { useHasJoinedChannels } from 'hooks/useHasJoinedChannels'
-import { useCreateLink } from 'hooks/useCreateLink'
-import { CentralPanelLayout } from './layouts/CentralPanelLayout'
 
 export const SpaceMentions = () => {
     const userId = useMyProfile()?.userId
     const mentions = useSpaceMentions()
-    const { isTouch } = useDevice()
     const { loadingChannels, hasJoinedChannels } = useHasJoinedChannels()
 
     const renderContent = () => {
@@ -43,34 +37,8 @@ export const SpaceMentions = () => {
         return <NoJoinedChannelsFallback />
     }
 
-    const navigate = useNavigate()
-
-    const { createLink } = useCreateLink()
-    const onTouchClose = useCallback(() => {
-        const link = createLink({ route: 'townHome' })
-        if (link) {
-            navigate(link)
-        }
-    }, [createLink, navigate])
-
     return (
-        <CentralPanelLayout>
-            {isTouch ? (
-                <TouchNavBar
-                    contentLeft={
-                        <IconButton
-                            icon="back"
-                            size="square_md"
-                            color="default"
-                            onClick={onTouchClose}
-                        />
-                    }
-                >
-                    Mentions
-                </TouchNavBar>
-            ) : (
-                <CardLabel label="Mentions" />
-            )}
+        <>
             <Stack
                 scroll
                 height="100%"
@@ -106,6 +74,6 @@ export const SpaceMentions = () => {
                     </Stack>
                 )}
             </Stack>
-        </CentralPanelLayout>
+        </>
     )
 }

@@ -1,22 +1,17 @@
 import React from 'react'
 import { Box, Stack } from '@ui'
-import { TouchNavBar } from '@components/TouchNavBar/TouchNavBar'
 import { TouchScrollToTopScrollId } from '@components/TouchTabBar/TouchScrollToTopScrollId'
+import { Panel } from '@components/Panel/Panel'
 import { SpaceProfile } from './SpacesProfilePanel'
 
 export const TouchProfile = () => {
     return (
-        <Stack absoluteFill background="level1">
-            <TouchNavBar>You</TouchNavBar>
-            <Box grow position="relative">
-                <Box absoluteFill position="relative">
-                    <Stack scroll height="100%" id={TouchScrollToTopScrollId.ProfileTabScrollId}>
-                        <Box minHeight="forceScroll">
-                            <SpaceProfile />
-                        </Box>
-                    </Stack>
+        <Panel isRootPanel label="You">
+            <Stack scroll height="100%" id={TouchScrollToTopScrollId.ProfileTabScrollId}>
+                <Box minHeight="forceScroll">
+                    <SpaceProfile />
                 </Box>
-            </Box>
-        </Stack>
+            </Stack>
+        </Panel>
     )
 }

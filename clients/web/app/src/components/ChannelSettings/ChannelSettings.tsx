@@ -13,7 +13,6 @@ import {
 } from 'use-towns-client'
 import React, { useCallback, useEffect, useMemo, useState } from 'react'
 import { useGetEmbeddedSigner } from '@towns/privy'
-import { useSearchParams } from 'react-router-dom'
 import { FieldValues, UseFormReset } from 'react-hook-form'
 import { ChannelNameRegExp, isForbiddenError, isRejectionError } from 'ui/utils/utils'
 import { Box, ErrorMessage, FancyButton, FormRender, Stack, TextField } from '@ui'
@@ -24,7 +23,6 @@ import { UserOpTxModal } from '@components/Web3/UserOpTxModal/UserOpTxModal'
 import { mapToErrorMessage } from '@components/Web3/utils'
 import { createPrivyNotAuthenticatedNotification } from '@components/Notifications/utils'
 import { Panel } from '@components/Panel/Panel'
-import { CHANNEL_INFO_PARAMS } from 'routes'
 import { useSpaceChannels } from 'hooks/useSpaceChannels'
 import { FormState, FormStateKeys, emptyDefaultValues, schema } from './formConfig'
 import { RoleCheckboxProps, RolesSection, getCheckedValuesForRoleIdsField } from './RolesSection'
@@ -322,7 +320,6 @@ const AutoResetFormStateComponent = (props: {
 export const ChannelSettingsPanel = () => {
     const spaceId = useSpaceId()
     const channelId = useChannelId()
-    const [searchParams, setSearchParams] = useSearchParams()
     const [transactionMessage, setTransactionMessage] = useState<string | undefined>()
     const hasPendingTx = useIsTransactionPending(BlockchainTransactionType.EditChannel)
 
@@ -331,13 +328,10 @@ export const ChannelSettingsPanel = () => {
             setTransactionMessage('Please wait for the transaction to complete.')
             return
         }
-        searchParams.delete(CHANNEL_INFO_PARAMS.EDIT_CHANNEL)
-        searchParams.append(CHANNEL_INFO_PARAMS.CHANNEL, '')
-        setSearchParams(searchParams)
-    }, [hasPendingTx, searchParams, setSearchParams])
+    }, [hasPendingTx])
 
     return spaceId && channelId ? (
-        <Panel label="Edit channel" onClose={_onHide}>
+        <Panel label="Edit channel" onClosed={_onHide}>
             <Stack>
                 <ChannelSettingsForm
                     spaceId={spaceId}

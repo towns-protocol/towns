@@ -1,4 +1,4 @@
-import React, { useCallback, useEffect, useRef, useState } from 'react'
+import React, { useCallback, useEffect, useMemo, useRef, useState } from 'react'
 import { FormProvider, UseFormReturn, useFormContext } from 'react-hook-form'
 import { ethers } from 'ethers'
 
@@ -269,6 +269,7 @@ export function CreateSpaceFormV2() {
                                     <Stack
                                         grow
                                         centerContent
+                                        scrollbars
                                         position="relative"
                                         alignItems="center"
                                         paddingX="lg"
@@ -328,8 +329,10 @@ export function CreateSpaceFormV2() {
                                                     </Stack>
 
                                                     {/* info boxes */}
-                                                    <Box
+                                                    <MotionBox
                                                         horizontal
+                                                        scrollbars
+                                                        layoutScroll
                                                         alignItems="start"
                                                         gap="sm"
                                                         overflow="auto"
@@ -425,7 +428,7 @@ export function CreateSpaceFormV2() {
                                                             centerContent={1}
                                                             subtitle="Year"
                                                         />
-                                                    </Box>
+                                                    </MotionBox>
 
                                                     {/* motto */}
                                                     <Box
@@ -712,8 +715,10 @@ export const UploadImageField = ({
         [setValue],
     )
 
+    const avoidScrollbarsStyle = useMemo(() => ({ contain: 'layout' }), [])
+
     return (
-        <Box display="inline-block">
+        <Box display="inline-block" style={avoidScrollbarsStyle}>
             {isActive ? (
                 <LargeUploadImageTemplate<CreateSpaceFormV2SchemaType>
                     canEdit={!transactionDetails.isTransacting}

@@ -24,8 +24,15 @@ import {
 import { PanelButton } from '@components/Panel/PanelButton'
 import { Panel } from '@components/Panel/Panel'
 import { ChannelMembersModal } from './SpaceChannelDirectoryPanel'
+import { usePanelActions } from './layouts/hooks/usePanelActions'
 
-export const ChannelInfoPanel = () => {
+export const ChannelInfoPanel = () => (
+    <Panel modalPresentable label="Channel Info">
+        <ChannelInfo />
+    </Panel>
+)
+
+export const ChannelInfo = () => {
     const { channel } = useChannelData()
     const { memberIds } = useChannelMembers()
     const { isTouch } = useDevice()
@@ -44,10 +51,6 @@ export const ChannelInfoPanel = () => {
     const room = useRoom(channel?.id)
     const [activeModal, setActiveModal] = useState<'members' | 'settings' | undefined>(undefined)
 
-    const onClose = useEvent(() => {
-        navigate('..')
-    })
-
     const onLeaveClick = useEvent(async () => {
         if (!channel || !spaceData) {
             return
@@ -56,20 +59,18 @@ export const ChannelInfoPanel = () => {
         navigate(`/${PATHS.SPACES}/${spaceData?.id}`)
     })
 
+    const { openPanel } = usePanelActions()
+
     const onMembersClick = useCallback(() => {
         if (isTouch) {
             setActiveModal('members')
         } else {
-            navigate(
-                `/${PATHS.SPACES}/${spaceData?.id}/${PATHS.CHANNELS}/${channel?.id}/info?directory`,
-            )
+            openPanel(CHANNEL_INFO_PARAMS.DIRECTORY)
         }
-    }, [navigate, isTouch, spaceData?.id, channel?.id])
+    }, [isTouch, openPanel])
 
     const onShowChannelSettingsPopup = useEvent(() => {
-        navigate(
-            `/${PATHS.SPACES}/${spaceData?.id}/${PATHS.CHANNELS}/${channel?.id}/info?${CHANNEL_INFO_PARAMS.EDIT_CHANNEL}`,
-        )
+        openPanel(CHANNEL_INFO_PARAMS.EDIT_CHANNEL)
     })
 
     const onHideChannelSettingsPopup = useEvent(() => {
@@ -110,7 +111,7 @@ export const ChannelInfoPanel = () => {
     )
 
     return (
-        <Panel modalPresentable label="Channel Info" onClose={onClose}>
+        <>
             <Stack gap>
                 <Stack gap padding background="level2" rounded="sm">
                     <Paragraph strong size="lg">
@@ -176,6 +177,6 @@ export const ChannelInfoPanel = () => {
             {activeModal === 'members' && (
                 <ChannelMembersModal onHide={onHideChannelSettingsPopup} />
             )}
-        </Panel>
+        </>
     )
 }

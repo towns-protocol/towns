@@ -45,7 +45,7 @@ import { SECOND_MS } from 'data/constants'
 import { ReplyContextProvider } from '@components/ReplyToMessageContext/ReplyToMessageProvider'
 import { ReplyToMessageContext } from '@components/ReplyToMessageContext/ReplyToMessageContext'
 import { useBlockedUsers } from 'hooks/useBlockedUsers'
-import { CentralPanelLayout } from './layouts/CentralPanelLayout'
+import { TouchPanelContext } from '@components/Panel/Panel'
 
 type Props = {
     onTouchClose?: () => void
@@ -70,7 +70,9 @@ export const SpacesChannelRoute = () => {
     )
 }
 
-const SpaceChannelWrapper = (props: { children: React.ReactElement } & { channelId?: string }) => {
+export const SpaceChannelWrapper = (
+    props: { children: React.ReactElement } & { channelId?: string },
+) => {
     const { channelSlug } = useParams()
     const channelId = props.channelId ?? channelSlug
     const isDmOrGDM =
@@ -81,11 +83,9 @@ const SpaceChannelWrapper = (props: { children: React.ReactElement } & { channel
     }
     return (
         <ChannelContextProvider channelId={channelId}>
-            <CentralPanelLayout>
-                <ReplyContextProvider key={channelId} canReplyInline={!!isDmOrGDM}>
-                    {props.children}
-                </ReplyContextProvider>
-            </CentralPanelLayout>
+            <ReplyContextProvider key={channelId} canReplyInline={!!isDmOrGDM}>
+                {props.children}
+            </ReplyContextProvider>
         </ChannelContextProvider>
     )
 }
@@ -225,6 +225,8 @@ export const SpacesChannelComponent = (props: Props) => {
     const showJoinChannel = myMembership && myMembership !== Membership.Join && !isDmOrGDM
     const showDMAcceptInvitation = myMembership === Membership.Invite && isDmOrGDM
 
+    const triggerClose = useContext(TouchPanelContext)?.triggerPanelClose
+
     return (
         <>
             {!isTouch && <RegisterChannelShortcuts />}
@@ -253,7 +255,7 @@ export const SpacesChannelComponent = (props: Props) => {
                             <ChannelHeader
                                 channel={channel}
                                 spaceId={spaceId}
-                                onTouchClose={props.onTouchClose}
+                                onTouchClose={triggerClose}
                             />
                         )}
 

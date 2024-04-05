@@ -1,11 +1,12 @@
-import React, { useContext, useMemo } from 'react'
+import React, { useCallback, useContext, useMemo } from 'react'
 import { ZTEvent, useChannelMembers } from 'use-towns-client'
-import { Link } from 'react-router-dom'
 import { uniq } from 'lodash'
 import { Box, Paragraph, Stack } from '@ui'
 import { CopySpaceLink } from '@components/CopySpaceLink/CopySpaceLink'
 import { MessageTimelineContext } from '@components/MessageTimeline/MessageTimelineContext'
 import { Avatar } from '@components/Avatar/Avatar'
+import { CHANNEL_INFO_PARAMS } from 'routes'
+import { PanelLink } from '@components/Panel/PanelLink'
 
 export const ChannelUsersPill = (props: { spaceId: string | undefined; channelId: string }) => {
     const { spaceId, channelId } = props
@@ -36,26 +37,36 @@ export const ChannelUsersPill = (props: { spaceId: string | undefined; channelId
         return lastUniqueIds
     }, [timelineContext?.events, memberIds])
 
+    const onClickPreventPropagation = useCallback((e: React.MouseEvent) => {
+        e.stopPropagation()
+    }, [])
+
     return (
-        <Stack horizontal rounded="sm" height="x4" overflow="hidden" background="level2">
-            <Link to="info?directory">
-                <Stack
-                    horizontal
-                    grow
-                    hoverable
-                    gap="sm"
-                    padding="sm"
-                    alignItems="center"
-                    background="level2"
-                >
-                    <Stack horizontal gap="line">
-                        {lastInteractedUniqueUserIds.map((userId) => (
-                            <Avatar key={userId} size="avatar_xs" userId={userId} />
-                        ))}
-                    </Stack>
-                    <Paragraph size="sm">{memberIds.length}</Paragraph>
+        <Stack
+            horizontal
+            rounded="sm"
+            height="x4"
+            overflow="hidden"
+            background="level2"
+            onClick={onClickPreventPropagation}
+        >
+            <PanelLink
+                horizontal
+                grow
+                hoverable
+                panel={CHANNEL_INFO_PARAMS.DIRECTORY}
+                gap="sm"
+                padding="sm"
+                alignItems="center"
+                background="level2"
+            >
+                <Stack horizontal gap="line">
+                    {lastInteractedUniqueUserIds.map((userId) => (
+                        <Avatar key={userId} size="avatar_xs" userId={userId} />
+                    ))}
                 </Stack>
-            </Link>
+                <Paragraph size="sm">{memberIds.length}</Paragraph>
+            </PanelLink>
 
             {spaceId && (
                 <Box centerContent borderLeft hoverable padding="xs" background="level2">

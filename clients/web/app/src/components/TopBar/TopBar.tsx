@@ -47,16 +47,3 @@ export const TopBar = () => {
         </>
     )
 }
-
-export const TopBarSkeleton = () => {
-    return (
-        <Stack horizontal minHeight="x7">
-            <Box centerContent width="x8">
-                <a href="https://towns.com" rel=", noopener noreferrer" target="_blank">
-                    <LogoSingleLetter />
-                </a>
-            </Box>
-            <Box grow />
-        </Stack>
-    )
-}

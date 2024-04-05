@@ -1,6 +1,5 @@
 import React, { useCallback, useEffect, useState } from 'react'
 import { useNavigate } from 'react-router'
-import { useEvent } from 'react-use-event-hook'
 import {
     Address,
     RoomMember,
@@ -16,7 +15,6 @@ import { ClipboardCopy } from '@components/ClipboardCopy/ClipboardCopy'
 import { Box, Button, Icon, Paragraph, Stack, Text } from '@ui'
 import { atoms } from 'ui/styles/atoms.css'
 import { shortAddress } from 'ui/utils/utils'
-import { useCreateLink } from 'hooks/useCreateLink'
 import { ModalContainer } from '@components/Modals/ModalContainer'
 import { Panel } from '@components/Panel/Panel'
 import { getPrettyDisplayName } from 'utils/getPrettyDisplayName'
@@ -28,6 +26,7 @@ import { modalSheetClass } from 'ui/styles/globals/sheet.css'
 import { TableCell } from '@components/TableCell/TableCell'
 import { useAbstractAccountAddress } from 'hooks/useAbstractAccountAddress'
 import { ChannelInviteModal } from './ChannelInvitePanel'
+import { usePanelActions } from './layouts/hooks/usePanelActions'
 
 export const ChannelDirectoryPanel = () => {
     const { channel } = useChannelData()
@@ -38,9 +37,6 @@ export const ChannelDirectoryPanel = () => {
         undefined,
     )
     const canAddMembers = channel?.id ? isGDMChannelStreamId(channel.id) : false
-    const onClose = useEvent(() => {
-        navigate('..')
-    })
 
     const canRemoveMembers = channel?.id ? isGDMChannelStreamId(channel.id) : false
     const onRemoveMember = useCallback(
@@ -66,7 +62,7 @@ export const ChannelDirectoryPanel = () => {
     }, [setPendingRemovalUserId])
 
     const addMembersClick = useCallback(() => {
-        navigate(`../${CHANNEL_INFO_PARAMS.INFO}?${CHANNEL_INFO_PARAMS.INVITE}`)
+        navigate(`?panel=${CHANNEL_INFO_PARAMS.INVITE}`)
     }, [navigate])
 
     return (
@@ -80,7 +76,6 @@ export const ChannelDirectoryPanel = () => {
                 </Stack>
             }
             padding="none"
-            onClose={onClose}
         >
             <ChannelMembers
                 onAddMembersClick={canAddMembers ? addMembersClick : undefined}
@@ -235,18 +230,15 @@ const ChannelMemberRow = (props: ChannelMemberRowProps) => {
     const { data: abstractAccountAddress } = useAbstractAccountAddress({
         rootKeyAddress: props.user.userId as Address | undefined,
     })
-    const link = useCreateLink().createLink({ profileId: abstractAccountAddress })
+    const { openPanel } = usePanelActions()
     const { isTouch } = useDevice()
-    const navigate = useNavigate()
     const onClick = useCallback(() => {
         if (isTouch) {
             onRemoveMember?.(user.userId)
         } else {
-            if (link) {
-                navigate(link)
-            }
+            openPanel(CHANNEL_INFO_PARAMS.PROFILE, { profileId: abstractAccountAddress })
         }
-    }, [link, navigate, user.userId, onRemoveMember, isTouch])
+    }, [isTouch, onRemoveMember, user.userId, openPanel, abstractAccountAddress])
 
     const { usersMap } = useUserLookupContext()
     const globalUser = usersMap[user.userId] ?? user

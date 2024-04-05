@@ -5,7 +5,6 @@ import { Stack } from '@ui'
 import { SpaceOwnerLanding } from '@components/SpaceOwnerLanding'
 import { PATHS } from 'routes'
 import { useAuth } from 'hooks/useAuth'
-import { CentralPanelLayout } from './layouts/CentralPanelLayout'
 
 export const SpaceGettingStarted = () => {
     const space = useSpaceData()
@@ -24,12 +23,8 @@ export const SpaceGettingStarted = () => {
     }, [isOwner, isLoading, navigate, space?.id])
 
     return (
-        <CentralPanelLayout>
-            <Stack>
-                <Stack position="relative">
-                    <SpaceOwnerLanding />
-                </Stack>
-            </Stack>
-        </CentralPanelLayout>
+        <Stack position="relative">
+            <SpaceOwnerLanding />
+        </Stack>
     )
 }

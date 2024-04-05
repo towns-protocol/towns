@@ -1,6 +1,6 @@
 import { useMemo } from 'react'
 import { generatePath, matchRoutes, useLocation } from 'react-router'
-import { PATHS } from 'routes'
+import { CHANNEL_INFO_PARAMS, PATHS } from 'routes'
 
 type Path = {
     path: string
@@ -9,90 +9,33 @@ type Path = {
 
 const profilePaths = [
     {
-        path: `/profile?/:profileId?`,
-        replace: `/me`,
+        path: `/*`,
+        replace: `?panel=profile&profileId=:profileId`,
     },
-    // matches channel, profile
-    {
-        path: `/${PATHS.SPACES}/:spaceId/${PATHS.CHANNELS}/:channelId/:channelPanel?/:channelPanelParam?`,
-        replace: `/${PATHS.SPACES}/:spaceId/${PATHS.CHANNELS}/:channelId/profile/:profileId`,
-    },
-    {
-        path: `/${PATHS.SPACES}/:spaceId/${PATHS.MESSAGES}/:channelId/:channelPanel?/:channelPanelParam?`,
-        replace: `/${PATHS.SPACES}/:spaceId/${PATHS.MESSAGES}/:channelId/profile/:profileId`,
-    },
-    {
-        path: `/${PATHS.SPACES}/:spaceId/home/profile?/:profileId?`,
-        replace: `/${PATHS.SPACES}/:spaceId/profile/:profileId`,
-    },
-    {
-        path: `/${PATHS.SPACES}/:spaceId/search/profile?/:profileId?`,
-        replace: `/${PATHS.SPACES}/:spaceId/profile/:profileId`,
-    },
-    {
-        path: `/${PATHS.MESSAGES}/:channelId/*`,
-        replace: `/${PATHS.MESSAGES}/:channelId/profile/:profileId`,
-    },
-    // wildcard matching for one level deep profiles such as threads/mentions
-    { path: `/${PATHS.SPACES}/:spaceId/:customPath/profile?/:profileId?` },
-
-    // TODO: may not need this
-    { path: `/${PATHS.SPACES}/:spaceId/profile?/:profileId?` },
 ] satisfies Path[]
 
 const browseChannelsPaths: Path[] = [
     {
-        path: `/${PATHS.SPACES}/:spaceId/${PATHS.CHANNELS}/:channelId/info`,
-        replace: `/${PATHS.SPACES}/:spaceId/${PATHS.CHANNELS}/:channelId/info?browse-channels`,
-    },
-    {
-        path: `/${PATHS.SPACES}/:spaceId/:path/info`,
-        replace: `/${PATHS.SPACES}/:spaceId/:path/info?browse-channels`,
-    },
-    {
-        path: `/${PATHS.SPACES}/:spaceId/:path/:panelPath/:panelPathId`,
-        replace: `/${PATHS.SPACES}/:spaceId/:path/info?browse-channels`,
-    },
-    {
-        path: `/${PATHS.SPACES}/:spaceId/:path`,
-        replace: `/${PATHS.SPACES}/:spaceId/:path/info?browse-channels`,
-    },
-    {
-        path: `/${PATHS.SPACES}/:spaceId/:path/:channelId`,
-        replace: `/${PATHS.SPACES}/:spaceId/:path/:channelId/info?browse-channels`,
-    },
-
-    {
-        path: `/${PATHS.SPACES}/:spaceId/${PATHS.CHANNELS}/:channelId/:channelPanel/:channelPanelParam`,
-        replace: `/${PATHS.SPACES}/:spaceId/${PATHS.CHANNELS}/:channelId/info?browse-channels`,
+        path: `/${PATHS.SPACES}/:spaceId/*`,
+        replace: `?panel=browse-channels`,
     },
 ]
 
 const townInfoPaths: Path[] = [
-    { path: `/${PATHS.SPACES}/:spaceId/:path/info?` },
     {
-        path: `/${PATHS.SPACES}/:spaceId/:path/:panelPath/:panelPathId`,
-        replace: `/${PATHS.SPACES}/:spaceId/:path/info`,
-    },
-    { path: `/${PATHS.SPACES}/:spaceId/${PATHS.CHANNELS}/:channelId/info?` },
-    {
-        path: `/${PATHS.SPACES}/:spaceId/${PATHS.CHANNELS}/:channelId/:channelPanel/:channelPanelParam`,
-        replace: `/${PATHS.SPACES}/:spaceId/${PATHS.CHANNELS}/:channelId/info`,
+        path: `/${PATHS.SPACES}/:spaceId/*`,
+        replace: `?panel=town-info`,
     },
 ]
 
 const channelInfoPaths: Path[] = [
     {
         path: `/${PATHS.SPACES}/:spaceId/*`,
-        replace: `/${PATHS.SPACES}/:spaceId/${PATHS.CHANNELS}/:channelId/info?channel`,
+        replace: `?panel=${CHANNEL_INFO_PARAMS.CHANNEL_INFO}`,
     },
 ]
 
 const channelPaths: Path[] = [
-    {
-        path: `/${PATHS.SPACES}/:spaceId/*/info`,
-        replace: `/${PATHS.SPACES}/:spaceId/${PATHS.CHANNELS}/:channelId/info`,
-    },
     {
         path: `/${PATHS.SPACES}/:spaceId/*`,
         replace: `/${PATHS.SPACES}/:spaceId/${PATHS.CHANNELS}/:channelId/`,
@@ -100,38 +43,16 @@ const channelPaths: Path[] = [
 ]
 
 const createChannelPaths: Path[] = [
-    { path: `/${PATHS.SPACES}/:spaceId/:path/info?create-channel` },
     {
-        path: `/${PATHS.SPACES}/:spaceId/:path/info`,
-        replace: `/${PATHS.SPACES}/:spaceId/:path/info?create-channel`,
-    },
-    {
-        path: `/${PATHS.SPACES}/:spaceId/${PATHS.CHANNELS}/:channelId/info`,
-        replace: `/${PATHS.SPACES}/:spaceId/${PATHS.CHANNELS}/:channelId/info?create-channel`,
-    },
-    {
-        path: `/${PATHS.SPACES}/:spaceId/:path/:panelPath/:panelPathId`,
-        replace: `/${PATHS.SPACES}/:spaceId/:path/info?create-channel`,
-    },
-    {
-        path: `/${PATHS.SPACES}/:spaceId/:path`,
-        replace: `/${PATHS.SPACES}/:spaceId/:path/info?create-channel`,
-    },
-    {
-        path: `/${PATHS.SPACES}/:spaceId/:path/:channelId`,
-        replace: `/${PATHS.SPACES}/:spaceId/:path/:channelId/info?create-channel`,
-    },
-    { path: `/${PATHS.SPACES}/:spaceId/${PATHS.CHANNELS}/:channelId/info?create-channel` },
-    {
-        path: `/${PATHS.SPACES}/:spaceId/${PATHS.CHANNELS}/:channelId/:channelPanel/:channelPanelParam`,
-        replace: `/${PATHS.SPACES}/:spaceId/${PATHS.CHANNELS}/:channelId/info?create-channel`,
+        path: `/${PATHS.SPACES}/:spaceId/*`,
+        replace: `?panel=${CHANNEL_INFO_PARAMS.CREATE_CHANNEL}`,
     },
 ]
 
 const channelDirectoryPaths: Path[] = [
     {
-        path: `/${PATHS.SPACES}/:spaceId/${PATHS.CHANNELS}/:channelId/:channelPanel?/:channelPanelParam?`,
-        replace: `/${PATHS.SPACES}/:spaceId/${PATHS.CHANNELS}/:channelId/info?directory`,
+        path: `/${PATHS.SPACES}/:spaceId/${PATHS.CHANNELS}/:channelId/*`,
+        replace: `?panel=${CHANNEL_INFO_PARAMS.DIRECTORY}`,
     },
 ]
 
@@ -330,7 +251,12 @@ const getSearchPathsForParams = (linkParams: LinkParams) => {
         return messagesThreadPaths
     }
     if ('profileId' in linkParams) {
-        return profilePaths
+        return profilePaths.map((path) => ({
+            ...path,
+            // TODO: hack to to avoid updating all references to
+            // useCreateLink({profileID:}) should be openPanel('profile', {profileId:})
+            replace: path.replace?.replace(':profileId', linkParams.profileId ?? ''),
+        }))
     }
 
     if (

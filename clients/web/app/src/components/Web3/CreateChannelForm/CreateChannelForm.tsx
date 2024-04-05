@@ -392,7 +392,7 @@ export const CreateChannelFormContainer = ({
         (roomId: string) => {
             console.log('[CreateChannelForm]', 'onCreateChannel', roomId)
             navigate(
-                `/${PATHS.SPACES}/${spaceId}/${PATHS.CHANNELS}/${roomId}/${CHANNEL_INFO_PARAMS.INFO}?${CHANNEL_INFO_PARAMS.CHANNEL}`,
+                `/${PATHS.SPACES}/${spaceId}/${PATHS.CHANNELS}/${roomId}/?panel=${CHANNEL_INFO_PARAMS.CHANNEL_INFO}`,
             )
             if (hideOnCreation) {
                 onHide()

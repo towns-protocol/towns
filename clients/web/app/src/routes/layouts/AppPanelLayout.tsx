@@ -3,16 +3,17 @@ import React, { useRef } from 'react'
 import { Outlet, useMatch } from 'react-router'
 import { useSpaceData } from 'use-towns-client'
 import { DirectMessagesPanel } from '@components/DirectMessages/DirectMessages'
-import { PotentiallyUnusedSuspenseLoader } from '@components/Loaders/SuspenseLoader'
 import { ShortcutModal } from '@components/Shortcuts/ShortcutModal'
 import { MainSideBar, SpaceSideBar } from '@components/SideBars'
 import { SpaceSidebarLoadingPlaceholder } from '@components/SideBars/SpaceSideBar/SpaceSideBarLoading'
-import { Box, Stack } from '@ui'
+import { Box, Card, Stack } from '@ui'
 import { usePersistPanes } from 'hooks/usePersistPanes'
 import { useSpaceIdFromPathname } from 'hooks/useSpaceInfoFromPathname'
+import { TopBar } from '@components/TopBar/TopBar'
+import { SomethingWentWrong } from '@components/Errors/SomethingWentWrong'
+import { ErrorBoundary } from '@components/ErrorBoundary/ErrorBoundary'
 import { PATHS } from 'routes'
-import { TopBar, TopBarSkeleton } from '@components/TopBar/TopBar'
-import * as styles from './AppPanelLayout.css'
+import { usePanels } from './hooks/usePanels'
 
 export const AppPanelLayout = () => {
     const allotemntRef = useRef<AllotmentHandle>(null)
@@ -62,11 +63,7 @@ export const AppPanelLayout = () => {
                         {isMessagesRoute ? (
                             <DirectMessagesPanel />
                         ) : space ? (
-                            <SpaceSideBar
-                                space={space}
-                                className={styles.allotmentResizeBorderPadding}
-                                key={space.id}
-                            />
+                            <SpaceSideBar space={space} key={space.id} />
                         ) : (
                             <SpaceSidebarLoadingPlaceholder />
                         )}
@@ -74,10 +71,8 @@ export const AppPanelLayout = () => {
 
                     {/* main container */}
                     <Allotment.Pane>
-                        <Box absoluteFill scroll className={styles.allotmentResizeBorderPadding}>
-                            <PotentiallyUnusedSuspenseLoader>
-                                <Outlet />
-                            </PotentiallyUnusedSuspenseLoader>
+                        <Box absoluteFill scroll>
+                            <CentralPanelLayout />
                         </Box>
                     </Allotment.Pane>
                 </Allotment>
@@ -87,29 +82,38 @@ export const AppPanelLayout = () => {
     )
 }
 
-export const AppPanelLayoutSkeleton = () => {
+const CentralPanelLayout = () => {
+    const { sizes, onSizesChange } = usePersistPanes(['channel', 'right'])
+
+    const panel = usePanels()
+
     return (
-        <Stack horizontal grow position="relative">
-            <Box absoluteFill>
-                <TopBarSkeleton />
-                <Allotment>
-                    {/* left-side side-bar goes here */}
-                    <Allotment.Pane minSize={65} maxSize={65} preferredSize={65}>
-                        <></>
+        <Stack minHeight="100%">
+            <Allotment onChange={onSizesChange}>
+                <Allotment.Pane minSize={550}>
+                    <ErrorBoundary FallbackComponent={ErrorFallbackComponent}>
+                        <Card absoluteFill>
+                            <Outlet />
+                        </Card>
+                    </ErrorBoundary>
+                </Allotment.Pane>
+                {panel && (
+                    <Allotment.Pane minSize={300} preferredSize={sizes[1] || 450}>
+                        <ErrorBoundary FallbackComponent={ErrorFallbackComponent}>
+                            {/* named outled would have been ideal here */}
+                            {panel}
+                        </ErrorBoundary>
                     </Allotment.Pane>
-
-                    {/* channel side-bar goes here */}
-                    <Allotment.Pane visible minSize={180} maxSize={320} preferredSize={320}>
-                        <SpaceSidebarLoadingPlaceholder />
-                    </Allotment.Pane>
-
-                    {/* main container */}
-                    <Allotment.Pane>
-                        <Box absoluteFill scroll className={styles.allotmentResizeBorderPadding} />
-                    </Allotment.Pane>
-                </Allotment>
-            </Box>
-            <ShortcutModal />
+                )}
+            </Allotment>
         </Stack>
+    )
+}
+
+const ErrorFallbackComponent = (props: { error: Error }) => {
+    return (
+        <Box centerContent absoluteFill>
+            <SomethingWentWrong error={props.error} />
+        </Box>
     )
 }

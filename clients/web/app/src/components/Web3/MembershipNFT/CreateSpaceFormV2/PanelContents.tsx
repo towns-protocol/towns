@@ -14,7 +14,7 @@ export function PanelContent({
     children,
 }: PanelContentProps & { children: React.ReactNode }) {
     return (
-        <Panel modalPresentable label="Edit Membership" onClose={onClick}>
+        <Panel modalPresentable label="Edit Membership" onClosed={onClick}>
             <Stack gap>
                 <Paragraph strong>Who Can Join</Paragraph>
                 <EditGating />

@@ -1,20 +1,12 @@
 import React from 'react'
-import { useNavigate, useParams } from 'react-router'
+import { useParams } from 'react-router'
 import { MessageThreadPanel } from '@components/MessageThread/MessageThreadPanel'
 
 export const SpacesChannelReplies = (props: {
     children?: React.ReactNode
     parentRoute?: string
 }) => {
-    const { parentRoute } = props
     const { messageId } = useParams()
-    const navigate = useNavigate()
-
-    const handleClose = !parentRoute
-        ? undefined
-        : () => {
-              navigate(parentRoute)
-          }
 
     // keep to make TS happy. this should never occur with since empty messageId
     // woultn't target this route
@@ -28,7 +20,7 @@ export const SpacesChannelReplies = (props: {
             key={messageId}
             messageId={messageId}
             highlightId={highlightId}
-            onClose={handleClose}
+            parentRoute={props.parentRoute}
         />
     ) : (
         <>Invalid Thread</>

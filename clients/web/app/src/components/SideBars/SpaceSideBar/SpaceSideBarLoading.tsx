@@ -12,6 +12,8 @@ export const SpaceSidebarLoadingPlaceholder = () => (
             position="relative"
             width="100%"
             height="100%"
+            borderRadius="sm"
+            overflow="hidden"
         >
             <Stack
                 position="absolute"
