@@ -54,10 +54,7 @@ export default ({ mode }: { mode: string }) => {
             rollupOptions: {
                 output: {
                     manualChunks: (id) => {
-                        // This works around a circular dependency issue with the @wagmi package
-                        if (id.includes('@wagmi')) {
-                            return 'wagmi'
-                        } else if (id.includes('lodash')) {
+                        if (id.includes('lodash')) {
                             return 'lodash'
                         }
                     },

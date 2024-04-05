@@ -17416,7 +17416,6 @@ __metadata:
     "@lexical/utils": ^0.12.4
     "@ngneat/falso": ^6.1.0
     "@privy-io/react-auth": ^1.59.7
-    "@privy-io/wagmi-connector": ^0.1.13
     "@react-hook/resize-observer": ^1.2.6
     "@river-build/generated": "workspace:^"
     "@river-build/proto": "workspace:^"
@@ -17549,7 +17548,6 @@ __metadata:
     vitest: ^1.1.1
     vitest-canvas-mock: ^0.3.3
     vitest-preview: ^0.0.1
-    wagmi: ^1.4.12
     workbox-window: ^7.0.0
     yet-another-react-lightbox: ^3.12.2
     zod: ^3.21.4

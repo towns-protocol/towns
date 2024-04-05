@@ -1,29 +1,16 @@
-import React, { useEffect, useState } from 'react'
+import React, { useState } from 'react'
 import { useNetworkStatus, useTownsContext } from 'use-towns-client'
-import { usePrivyWagmi } from '@privy-io/wagmi-connector'
-import { useEmbeddedWallet } from '@towns/privy'
 import { Box, Button, Paragraph, Stack, Text, TextButton } from '@ui'
-import { shortAddress } from 'ui/utils/utils'
 import { ModalContainer } from '@components/Modals/ModalContainer'
 import { ClipboardCopy } from '@components/ClipboardCopy/ClipboardCopy'
 
 export function BetaDebugger() {
-    const { wallet: activeWallet } = usePrivyWagmi()
-    const embeddedWallet = useEmbeddedWallet()
     const [isVisible, setIsVisible] = useState(false)
     const show = () => setIsVisible(true)
     const hide = () => setIsVisible(false)
     const { errorMessage, clearSiteData } = useClearSiteData()
     const { clientStatus } = useTownsContext()
-    const [mismatchedActiveWallet, setMismatchedActiveWallet] = useState(false)
     const { isOffline } = useNetworkStatus()
-
-    useEffect(() => {
-        if (!activeWallet?.address || !embeddedWallet?.address) {
-            return
-        }
-        setMismatchedActiveWallet(activeWallet?.address !== embeddedWallet?.address)
-    }, [activeWallet?.address, embeddedWallet?.address])
 
     return (
         <>
@@ -45,18 +32,6 @@ export function BetaDebugger() {
                     </Text>
                 </Stack>
 
-                <Stack
-                    horizontal
-                    gap="xs"
-                    color={mismatchedActiveWallet ? 'error' : 'gray1'}
-                    alignItems="center"
-                >
-                    <Paragraph size="sm">Active Wallet:</Paragraph>
-                    <ClipboardCopy
-                        clipboardContent={activeWallet?.address}
-                        label={shortAddress(activeWallet?.address ?? '')}
-                    />
-                </Stack>
                 <Stack horizontal gap="xs" color="gray1" fontSize="sm" alignItems="center">
                     <Paragraph size="sm">App Version:</Paragraph>
                     <ClipboardCopy clipboardContent={APP_COMMIT_HASH} label={APP_COMMIT_HASH} />

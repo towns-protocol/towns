@@ -1,6 +1,4 @@
 import React, { useCallback, useRef, useState } from 'react'
-import { useBalance, useNetwork } from 'wagmi'
-import { useSwitchNetwork } from '@privy-io/wagmi-connector'
 import { useEvent } from 'react-use-event-hook'
 import { ethers, providers } from 'ethers'
 import {
@@ -13,6 +11,7 @@ import {
 import { debug } from 'debug'
 import { isAddress } from 'ethers/lib/utils'
 import { usePrivy } from '@privy-io/react-auth'
+import { useEmbeddedWallet } from '@towns/privy'
 import { Box, Button, Divider, Icon, Stack, Text, TextField } from '@ui'
 import { ModalContainer } from '@components/Modals/ModalContainer'
 import { shortAddress } from 'ui/utils/utils'
@@ -21,6 +20,7 @@ import { isTouch } from 'hooks/useDevice'
 import { ENVIRONMENTS, TownsEnvironmentInfo, UseEnvironmentReturn } from 'hooks/useEnvironmnet'
 import { useAuth } from 'hooks/useAuth'
 import { useMockNftBalance } from 'hooks/useMockNftBalance'
+import { useBalance } from 'hooks/useBalance'
 
 const log = debug('app:DebugBar')
 const anvilKey = '0xac0974bec39a17e36ba4a6b4d238ff944bacb478cbed5efcae784d7bf4f2ff80'
@@ -152,8 +152,8 @@ const DebugModal = ({
     onSwitchEnvironment,
     onClear,
 }: ModalProps) => {
-    const { baseProvider: provider } = useTownsContext()
-    const { chain: walletChain } = useNetwork()
+    const { baseProvider: provider, baseChain } = useTownsContext()
+    const walletChain = baseChain
     const { logout: libLogout } = useConnectivity()
     const { logout: fullLogout, loggedInWalletAddress } = useAuth()
     const { logout: privyLogout } = usePrivy()
@@ -260,6 +260,7 @@ const useAsyncSwitchNetwork = () => {
     const promiseRef = useRef<Promise<number>>()
     const resolveRef = useRef<(chainId: number) => void>()
     const rejectRef = useRef<(error: Error) => void>()
+    const embeddedWallet = useEmbeddedWallet()
 
     if (!promiseRef.current) {
         log('useSwitchNetwork creating promise')
@@ -270,22 +271,24 @@ const useAsyncSwitchNetwork = () => {
         log('useSwitchNetwork promise created', promiseRef.current)
     }
 
-    const { switchNetwork } = useSwitchNetwork({
-        onSuccess: (chain) => {
-            log('switched network to', chain.name)
-            resolveRef.current?.(chain.id)
+    const switchNetwork = useCallback(
+        async (chainId: number) => {
+            if (!embeddedWallet) {
+                throw new Error('embeddedWallet not available')
+            }
+            try {
+                await embeddedWallet.switchChain(chainId)
+                log('switched network to', chainId)
+                resolveRef.current?.(chainId)
+            } catch (error) {
+                console.error('switch network error', error)
+                rejectRef.current?.(error as Error)
+            }
+            return embeddedWallet.switchChain(chainId)
         },
-        onError: (error) => {
-            console.error('switch network error', error)
-            rejectRef.current?.(error)
-        },
-        onMutate: () => {
-            log('switching network onMutate')
-        },
-        onSettled: () => {
-            log('switching network onSettled')
-        },
-    })
+        [embeddedWallet],
+    )
+
     const executor = useCallback(
         async (chainId: number) => {
             log('useSwitchNetwork calling switchNetwork with chainId: ', {
@@ -313,7 +316,7 @@ const useAsyncSwitchNetwork = () => {
 }
 
 const DebugBar = (environment: UseEnvironmentReturn) => {
-    const { chain } = useNetwork()
+    const chain = environment.baseChain
     const { logout } = useAuth()
     const [modal, setModal] = useState(false)
     const { setEnvironment, clearEnvironment, accountAbstractionConfig } = environment

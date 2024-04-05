@@ -1,7 +1,6 @@
 import React from 'react'
 import { userOpsStore } from '@towns/userops'
 import { BigNumber, utils } from 'ethers'
-import { useBalance } from 'wagmi'
 
 import { useMembershipInfo } from 'use-towns-client'
 import { Box, Button, Heading, Icon, IconButton, Text } from '@ui'
@@ -10,6 +9,7 @@ import { ButtonSpinner } from 'ui/components/Spinner/ButtonSpinner'
 import { ModalContainer } from '@components/Modals/ModalContainer'
 import { isTouch } from 'hooks/useDevice'
 import { useIsSmartAccountDeployed } from 'hooks/useIsSmartAccountDeployed'
+import { useBalance } from 'hooks/useBalance'
 import { formatEthDisplay } from '../utils'
 import { CopyWalletAddressButton } from '../TokenVerification/Buttons'
 
@@ -64,8 +64,6 @@ function UserOpTxModalContent({
         address: smartAccountAddress,
         enabled: !!smartAccountAddress,
         watch: true,
-        cacheTime: 15_000,
-        staleTime: 10_000,
     })
     const formattedBalance =
         formatEthDisplay(Number.parseFloat(balanceData?.formatted ?? '0')) +

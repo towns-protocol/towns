@@ -24,7 +24,6 @@ export function PrivyProvider({ children }: { children: JSX.Element }) {
     return chain ? (
         <TownsPrivyProvider
             appId={PRIVY_ID}
-            wagmiChainsConfig={wagmiChainsConfig}
             config={{
                 defaultChain: chain,
                 supportedChains: SUPPORTED_CHAINS,

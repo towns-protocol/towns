@@ -1,6 +1,4 @@
 import React from 'react'
-import { configureChains } from 'wagmi'
-import { publicProvider } from 'wagmi/providers/public'
 import { PrivyProvider as TownsPrivyProvider } from '@towns/privy'
 import uniqBy from 'lodash/uniqBy'
 import { env } from 'utils'
@@ -22,9 +20,6 @@ const SUPPORTED_CHAINS = uniqBy(
     (x) => x.id,
 )
 
-// the chains are custom configured to include the rpcUrls we want to use, the publicProvider is a function that just checks null for us
-const wagmiChainsConfig = configureChains(SUPPORTED_CHAINS, [publicProvider()], { retryCount: 5 })
-
 const logo = '/towns_privy.svg'
 
 export function PrivyProvider({ children }: { children: JSX.Element }) {
@@ -33,7 +28,6 @@ export function PrivyProvider({ children }: { children: JSX.Element }) {
 
     return (
         <TownsPrivyProvider
-            wagmiChainsConfig={wagmiChainsConfig}
             appId={env.VITE_PRIVY_ID}
             config={{
                 defaultChain: chain,

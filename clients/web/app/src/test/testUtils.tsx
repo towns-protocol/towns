@@ -5,9 +5,7 @@ import * as Lib from 'use-towns-client'
 import { afterEach, vi } from 'vitest'
 import { MemoryRouter } from 'react-router'
 import { BrowserRouter } from 'react-router-dom'
-import { createPublicClient, http } from 'viem'
 import { ethers } from 'ethers'
-import { WagmiConfig, createConfig } from 'wagmi'
 import { ZLayerProvider } from '@ui'
 import { AuthContextProvider } from 'hooks/useAuth'
 import '@testing-library/jest-dom'
@@ -27,14 +25,6 @@ type TestAppProps = {
 
 export const getWalletAddress = () => ethers.Wallet.createRandom().address
 
-const wagmiConfig = createConfig({
-    autoConnect: true,
-    publicClient: createPublicClient({
-        chain: baseChain,
-        transport: http(),
-    }),
-})
-
 export const TestApp = (props: TestAppProps) => {
     // new query client for each test for isolation
     const Router = props.Router || MemoryRouter
@@ -46,25 +36,22 @@ export const TestApp = (props: TestAppProps) => {
         },
     })
     return (
-        // Using WagmiConfig instead of Privy/PrivyWagmi b/c needs a lot of mocking and we don't actually need a wallet for any of our unit tests
-        <WagmiConfig config={wagmiConfig}>
-            <ZLayerProvider>
-                <Lib.TownsContextProvider
-                    environmentId={environmentId}
-                    baseChain={baseChain}
-                    baseConfig={web3Deployment.base}
-                    riverChain={riverChain}
-                    riverConfig={web3Deployment.river}
-                    {...props.townsContextProviderProps}
-                >
-                    <AuthContextProvider>
-                        <QueryClientProvider client={queryClient}>
-                            <Router initialEntries={props.initialEntries}>{props.children}</Router>
-                        </QueryClientProvider>
-                    </AuthContextProvider>
-                </Lib.TownsContextProvider>
-            </ZLayerProvider>
-        </WagmiConfig>
+        <ZLayerProvider>
+            <Lib.TownsContextProvider
+                environmentId={environmentId}
+                baseChain={baseChain}
+                baseConfig={web3Deployment.base}
+                riverChain={riverChain}
+                riverConfig={web3Deployment.river}
+                {...props.townsContextProviderProps}
+            >
+                <AuthContextProvider>
+                    <QueryClientProvider client={queryClient}>
+                        <Router initialEntries={props.initialEntries}>{props.children}</Router>
+                    </QueryClientProvider>
+                </AuthContextProvider>
+            </Lib.TownsContextProvider>
+        </ZLayerProvider>
     )
 }
 

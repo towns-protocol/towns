@@ -1,5 +1,4 @@
 import React, { useState } from 'react'
-import { useBalance } from 'wagmi'
 import { useConnectWallet, usePrivy, useWallets } from '@privy-io/react-auth'
 import { useEmbeddedWallet, useGetEmbeddedSigner } from '@towns/privy'
 import {
@@ -11,7 +10,6 @@ import {
     useLinkedWallets,
     useUnlinkWalletTransaction,
 } from 'use-towns-client'
-import { usePrivyWagmi } from '@privy-io/wagmi-connector'
 import { useSearchParams } from 'react-router-dom'
 import { Box, BoxProps, Button, Icon, IconButton, Paragraph, Stack, Text } from '@ui'
 import { PanelButton } from '@components/Panel/PanelButton'
@@ -27,6 +25,7 @@ import {
 import { createPrivyNotAuthenticatedNotification } from '@components/Notifications/utils'
 import { useIsSmartAccountLinked } from 'hooks/useIsSmartAccountLinked'
 import { env } from 'utils'
+import { useBalance } from 'hooks/useBalance'
 import { formatEthDisplay } from './utils'
 
 export function WalletLinkingPanel() {
@@ -311,7 +310,6 @@ export function useConnectThenLink({
     ) => void
 }) {
     const embeddedWallet = useEmbeddedWallet()
-    const { setActiveWallet } = usePrivyWagmi()
     const getSigner = useGetEmbeddedSigner()
 
     const { connectWallet } = useConnectWallet({
@@ -321,12 +319,7 @@ export function useConnectThenLink({
                 console.error('no embedded wallet')
                 return
             }
-            try {
-                await setActiveWallet(embeddedWallet)
-            } catch (error) {
-                console.error('Could not set active wallet')
-                return
-            }
+
             onLinkWallet(rootSigner, (await wallet.getEthersProvider()).getSigner())
         },
     })

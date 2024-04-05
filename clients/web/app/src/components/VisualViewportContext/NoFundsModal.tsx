@@ -1,9 +1,9 @@
 import React from 'react'
-import { useBalance } from 'wagmi'
 import { useAuth } from 'hooks/useAuth'
 import { formatEthDisplay } from '@components/Web3/utils'
 import { Box, Button, Text } from '@ui'
 import { ClipboardCopy } from '@components/ClipboardCopy/ClipboardCopy'
+import { useBalance } from 'hooks/useBalance'
 
 export function NoFundsModal({ onHide }: { onHide: () => void }) {
     const { loggedInWalletAddress } = useAuth()
