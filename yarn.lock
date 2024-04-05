@@ -17543,7 +17543,7 @@ __metadata:
     vite-plugin-checker: ^0.6.2
     vite-plugin-eslint: ^1.8.1
     vite-plugin-mkcert: ^1.17.1
-    vite-plugin-pwa: ^0.18.2
+    vite-plugin-pwa: ^0.19.7
     vite-tsconfig-paths: ^4.2.3
     vitest: ^1.1.1
     vitest-canvas-mock: ^0.3.3
@@ -28752,9 +28752,9 @@ __metadata:
   languageName: node
   linkType: hard
 
-"vite-plugin-pwa@npm:^0.18.2":
-  version: 0.18.2
-  resolution: "vite-plugin-pwa@npm:0.18.2"
+"vite-plugin-pwa@npm:^0.19.7":
+  version: 0.19.7
+  resolution: "vite-plugin-pwa@npm:0.19.7"
   dependencies:
     debug: ^4.3.4
     fast-glob: ^3.3.2
@@ -28762,10 +28762,14 @@ __metadata:
     workbox-build: ^7.0.0
     workbox-window: ^7.0.0
   peerDependencies:
+    "@vite-pwa/assets-generator": ^0.2.4
     vite: ^3.1.0 || ^4.0.0 || ^5.0.0
     workbox-build: ^7.0.0
     workbox-window: ^7.0.0
-  checksum: 6dded6aff4ea7ce5aeef2041f277cf59a64fe6ae085821b501cd405c2640d10980e93761d5429f946f9f79a7c574d19fec2e1f1ab716d5bcda418b4fd76ede2f
+  peerDependenciesMeta:
+    "@vite-pwa/assets-generator":
+      optional: true
+  checksum: 789e604afdee11c82bfe6fd19ebeab1a6b4fbab7b0dea13a86143a1767164cc56db3cc51e3627a4b5e4cb3a36f44a21efe3ab26d2c29a430fe40b95135f72002
   languageName: node
   linkType: hard
 
