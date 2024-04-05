@@ -1,14 +1,16 @@
 import { Mute, SaveUserSettingsSchema } from '@notification-service/types'
 
-import { useMemo, useState } from 'react'
-import { useTownsContext } from 'use-towns-client'
+import { useEffect, useMemo, useRef, useState } from 'react'
+import { useMyProfile, useTownsContext } from 'use-towns-client'
 import {
     isChannelStreamId,
     isDMChannelStreamId,
     isGDMChannelStreamId,
     isSpaceStreamId,
 } from '@river/sdk'
+import { isEqual } from 'lodash'
 import { useGetNotificationSettings } from 'api/lib/notificationSettings'
+import { SECOND_MS } from 'data/constants'
 
 type UserSettingsSpace = SaveUserSettingsSchema['userSettings']['spaceSettings'][0]
 type UserSettingsChannel = SaveUserSettingsSchema['userSettings']['channelSettings'][0]
@@ -21,14 +23,78 @@ interface ChannelSettings {
     [channelId: string]: UserSettingsChannel
 }
 
-export function useNotificationSettings() {
-    const { dmChannels, rooms, spaceHierarchies } = useTownsContext()
-    const { data } = useGetNotificationSettings()
+interface DebouncedEffectProps {
+    compareFn: (a: unknown, b: unknown) => boolean
+    newValue: unknown
+    currentValue: unknown
+    onChange: (value: unknown) => void
+}
+
+export function useNotificationSettings(
+    onSettingsUpdated: (settings: SaveUserSettingsSchema['userSettings']) => void,
+) {
+    const {
+        dmChannels: tcDmChannels,
+        rooms: tcRooms,
+        spaceHierarchies: tcSpaceHierarchies,
+    } = useTownsContext()
+    const userId = useMyProfile()?.userId
+    const { data, isLoading } = useGetNotificationSettings()
     const [settingsUpdated, setSettingsUpdated] = useState(false)
+    const [rooms, setRooms] = useState(tcRooms)
+    const [dmChannels, setDmChannels] = useState(tcDmChannels)
+    const [spaceHierarchies, setSpaceHierarchies] = useState(tcSpaceHierarchies)
+
+    const debounceTimeout = useRef<NodeJS.Timeout | undefined>(undefined)
+    const onSettingsUpdatedTimeout = useRef<NodeJS.Timeout | undefined>(undefined)
+
+    function useDebouncedEffect(props: DebouncedEffectProps) {
+        useEffect(() => {
+            if (!props.compareFn(props.newValue, props.currentValue)) {
+                if (debounceTimeout.current) {
+                    clearTimeout(debounceTimeout.current)
+                }
+
+                debounceTimeout.current = setTimeout(() => {
+                    props.onChange(props.newValue)
+                }, SECOND_MS)
+            }
+            return () => {
+                if (debounceTimeout.current) {
+                    clearTimeout(debounceTimeout.current)
+                }
+            }
+        }, [props])
+    }
+
+    function onTownsContextDataChange() {
+        setRooms(tcRooms)
+        setDmChannels(tcDmChannels)
+        setSpaceHierarchies(tcSpaceHierarchies)
+    }
+
+    useDebouncedEffect({
+        compareFn: isEqual,
+        newValue: tcRooms,
+        currentValue: rooms,
+        onChange: onTownsContextDataChange,
+    })
+    useDebouncedEffect({
+        compareFn: isEqual,
+        newValue: tcDmChannels,
+        currentValue: dmChannels,
+        onChange: onTownsContextDataChange,
+    })
+    useDebouncedEffect({
+        compareFn: isEqual,
+        newValue: tcSpaceHierarchies,
+        currentValue: spaceHierarchies,
+        onChange: onTownsContextDataChange,
+    })
 
     const savedSpaceSettings = useMemo(() => {
         let spaceSettings: SpaceSettings | undefined = undefined
-        if (data?.spaceSettings && data.spaceSettings.length > 0) {
+        if (!isLoading && data?.spaceSettings) {
             spaceSettings = {}
             for (const s of data.spaceSettings) {
                 if (isSpaceStreamId(s.spaceId) && rooms[s.spaceId]) {
@@ -37,11 +103,11 @@ export function useNotificationSettings() {
             }
         }
         return spaceSettings
-    }, [data?.spaceSettings, rooms])
+    }, [data?.spaceSettings, rooms, isLoading])
 
     const savedChannelSettings = useMemo(() => {
         let channelSettings: ChannelSettings | undefined = undefined
-        if (data?.channelSettings && data.channelSettings.length > 0) {
+        if (!isLoading && data?.channelSettings) {
             channelSettings = {}
             for (const c of data.channelSettings) {
                 if (isSupportedNotificationChannel(c.channelId) && rooms[c.channelId]) {
@@ -50,7 +116,7 @@ export function useNotificationSettings() {
             }
         }
         return channelSettings
-    }, [data?.channelSettings, rooms])
+    }, [data?.channelSettings, rooms, isLoading])
 
     const removedSpaceSettings = useMemo(() => {
         let removedSpaceSettings: string[] = []
@@ -73,13 +139,18 @@ export function useNotificationSettings() {
     }, [dmChannels, rooms, savedChannelSettings])
 
     const updatedSpaceSettings = useMemo(() => {
+        let settingsIsUpdated = false
+
         let spaceSettings = savedSpaceSettings
+        if (spaceSettings === undefined) {
+            return spaceSettings
+        }
         // add any missing space settings from the space hierarchies
         for (const s of Object.keys(spaceHierarchies)) {
             if (isSpaceStreamId(s)) {
                 spaceSettings = spaceSettings ?? {}
                 if (!spaceSettings[s]) {
-                    setSettingsUpdated(true)
+                    settingsIsUpdated = true
                     // create a new copy
                     spaceSettings = { ...spaceSettings }
                     spaceSettings[s] = {
@@ -92,16 +163,24 @@ export function useNotificationSettings() {
         }
         if (spaceSettings && removedSpaceSettings) {
             for (const s of removedSpaceSettings) {
-                setSettingsUpdated(true)
+                settingsIsUpdated = true
                 delete spaceSettings[s]
                 console.log('useNotificationSettings', 'removed space notification settings', s)
             }
+        }
+        if (settingsIsUpdated) {
+            setSettingsUpdated(true)
         }
         return spaceSettings
     }, [removedSpaceSettings, savedSpaceSettings, spaceHierarchies])
 
     const updatedChannelSettings = useMemo(() => {
         let channelSettings = savedChannelSettings
+        if (channelSettings === undefined) {
+            return channelSettings
+        }
+
+        let settingsIsUpdated = false
         // add any missing channel settings from the space hierarchies
         for (const s of Object.keys(spaceHierarchies)) {
             const space = spaceHierarchies[s]
@@ -110,7 +189,7 @@ export function useNotificationSettings() {
                 if (isSupportedNotificationChannel(c.id)) {
                     channelSettings = channelSettings ?? {}
                     if (!channelSettings[c.id]) {
-                        setSettingsUpdated(true)
+                        settingsIsUpdated = true
                         // create a new copy
                         channelSettings = { ...channelSettings }
                         channelSettings[c.id] = {
@@ -131,7 +210,7 @@ export function useNotificationSettings() {
         for (const dm of dmChannels) {
             channelSettings = channelSettings ?? {}
             if (!channelSettings[dm.id]) {
-                setSettingsUpdated(true)
+                settingsIsUpdated = true
                 // create a new copy
                 channelSettings = { ...channelSettings }
                 channelSettings[dm.id] = {
@@ -148,13 +227,53 @@ export function useNotificationSettings() {
         }
         if (channelSettings && removedChannelSettings) {
             for (const c of removedChannelSettings) {
-                setSettingsUpdated(true)
+                settingsIsUpdated = true
                 delete channelSettings[c]
                 console.log('useNotificationSettings', 'removed channel notification settings', c)
             }
         }
+        if (settingsIsUpdated) {
+            setSettingsUpdated(true)
+        }
+
         return channelSettings
     }, [dmChannels, removedChannelSettings, savedChannelSettings, spaceHierarchies])
+
+    useEffect(() => {
+        if (settingsUpdated && updatedSpaceSettings && updatedChannelSettings && userId) {
+            if (onSettingsUpdatedTimeout.current) {
+                clearTimeout(onSettingsUpdatedTimeout.current)
+            }
+
+            onSettingsUpdatedTimeout.current = setTimeout(() => {
+                console.log('useNotificationSettings', 'onSettingsUpdated', onSettingsUpdated)
+                onSettingsUpdated({
+                    userId,
+                    directMessage: data?.directMessage ?? true,
+                    mention: data?.mention ?? true,
+                    replyTo: data?.replyTo ?? true,
+                    spaceSettings: updatedSpaceSettings ? Object.values(updatedSpaceSettings) : [],
+                    channelSettings: updatedChannelSettings
+                        ? Object.values(updatedChannelSettings)
+                        : [],
+                })
+                setSettingsUpdated(false)
+            }, SECOND_MS)
+
+            return () => {
+                if (onSettingsUpdatedTimeout.current) {
+                    clearTimeout(onSettingsUpdatedTimeout.current)
+                }
+            }
+        }
+    }, [
+        data,
+        onSettingsUpdated,
+        settingsUpdated,
+        updatedChannelSettings,
+        updatedSpaceSettings,
+        userId,
+    ])
 
     return {
         settingsUpdated,
@@ -163,6 +282,7 @@ export function useNotificationSettings() {
         replyTo: data?.replyTo ?? true,
         spaceSettings: updatedSpaceSettings,
         channelSettings: updatedChannelSettings,
+        isLoading,
     }
 }
 

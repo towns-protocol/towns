@@ -5,6 +5,7 @@ import { GetUserSettingsSchema, Mute, SaveUserSettingsSchema } from '@notificati
 import { useMemo } from 'react'
 import { env } from 'utils'
 import { axiosClient } from 'api/apiClient'
+import { MINUTE_MS } from 'data/constants'
 
 const PUSH_WORKER_URL = env.VITE_WEB_PUSH_WORKER_URL
 export const notificationSettingsQueryKeys = {
@@ -121,8 +122,8 @@ export function useGetNotificationSettings() {
         enabled: !!userId,
         refetchOnMount: false,
         refetchOnWindowFocus: true,
-        refetchOnReconnect: 'always',
-        staleTime: 1_000 * 60 * 5,
+        refetchOnReconnect: true,
+        staleTime: 7 * MINUTE_MS,
     })
 }
 
@@ -133,6 +134,25 @@ export async function putSettings({ userSettings }: SaveUserSettingsSchema) {
     })
     console.log('[putSettings] settings saved')
     return response.data
+}
+
+export function useUpdateNotificationSettings() {
+    const userId = useMyProfile()?.userId
+    const queryClient = useQueryClient()
+
+    return useMutation({
+        mutationFn: async ({ userSettings }: SaveUserSettingsSchema) => {
+            return putSettings({ userSettings })
+        },
+        onSuccess: async () => {
+            queryClient.invalidateQueries({
+                queryKey: notificationSettingsQueryKeys.getSettings(userId),
+            })
+        },
+        onError: (error: unknown) => {
+            console.error('[useSetNotificationSettings] error', error)
+        },
+    })
 }
 
 /**

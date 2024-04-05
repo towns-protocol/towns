@@ -1,17 +1,17 @@
 import React, { useEffect } from 'react'
 
-import { useMyProfile } from 'use-towns-client'
 import { Mute } from '@notification-service/types'
-import { useQueryClient } from '@tanstack/react-query'
 import { useNotificationSettings } from 'hooks/useNotificationSettings'
 import { useStore } from 'store/store'
-import { notificationSettingsQueryKeys, putSettings } from 'api/lib/notificationSettings'
+import { useUpdateNotificationSettings } from 'api/lib/notificationSettings'
 
 export const SyncNotificationSettings = () => {
-    const userId = useMyProfile()?.userId
-    const queryClient = useQueryClient()
-    const { settingsUpdated, spaceSettings, channelSettings, directMessage, replyTo, mention } =
-        useNotificationSettings()
+    const { mutate: mutateNotificationSettings } = useUpdateNotificationSettings()
+    const { spaceSettings, channelSettings } = useNotificationSettings((userSettings) => {
+        mutateNotificationSettings({
+            userSettings,
+        })
+    })
 
     // cache the muted channel ids locally
     useEffect(() => {
@@ -37,50 +37,6 @@ export const SyncNotificationSettings = () => {
 
         useStore.setState({ mutedChannelIds })
     }, [channelSettings, spaceSettings])
-
-    // save the updated settings to the cloud
-    useEffect(() => {
-        if (userId && settingsUpdated) {
-            console.log(
-                '[SyncNotificationSettings]',
-                'saving to cloud',
-                'spaceSettings',
-                spaceSettings,
-                'channelSettings',
-                channelSettings,
-            )
-            putSettings({
-                userSettings: {
-                    userId,
-                    spaceSettings: spaceSettings ? Object.values(spaceSettings) : [],
-                    channelSettings: channelSettings ? Object.values(channelSettings) : [],
-                    replyTo,
-                    mention,
-                    directMessage,
-                },
-            })
-                .then(() => {
-                    const queryKey = notificationSettingsQueryKeys.getSettings(userId)
-                    if (queryKey) {
-                        queryClient.invalidateQueries({ queryKey }).catch((e) => {
-                            console.error('Error invalidating notification settings query', e)
-                        })
-                    }
-                })
-                .catch((e) => {
-                    console.error('Error saving notification settings', e)
-                })
-        }
-    }, [
-        channelSettings,
-        directMessage,
-        mention,
-        queryClient,
-        replyTo,
-        settingsUpdated,
-        spaceSettings,
-        userId,
-    ])
 
     return <></>
 }
