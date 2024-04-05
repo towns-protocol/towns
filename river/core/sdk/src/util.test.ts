@@ -37,8 +37,6 @@ import {
 
 const log = dlog('csb:test:util')
 
-const RIVER_ENV = process.env.RIVER_ENV || 'local_single'
-
 function getBaseRpcUrlForChain(chainId: number): string {
     if (process.env.BASE_CHAIN_RPC_URL) {
         return process.env.BASE_CHAIN_RPC_URL
@@ -66,6 +64,8 @@ function getRiverRpcUrlForChain(chainId: number): string {
 }
 
 const getTestWeb3Deployment = (): Web3Deployment => {
+    const RIVER_ENV = process.env.RIVER_ENV || 'local_single'
+
     // allow for passing a custom environment
     if (RIVER_ENV === 'custom') {
         return {
