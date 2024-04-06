@@ -1,4 +1,4 @@
-import React from 'react'
+import React, { useRef } from 'react'
 import { Route, Routes } from 'react-router-dom'
 import { TownsContextProvider } from 'use-towns-client'
 import { ThemeProvider } from '@mui/material/styles'
@@ -15,6 +15,7 @@ import { useEnvironment } from 'hooks/use-environment'
 import { PrivyProvider } from 'context/PrivyProvider'
 import { WalletLinkingPage } from 'routes/WalletLinkingPage'
 import { StreamsRoute } from 'routes/Streams'
+import { ENVIRONMENTS } from 'utils/environment'
 import { StreamRoute } from './routes/Stream'
 import { Home } from './routes/Home'
 import { MainLayout } from './components/MainLayout'
@@ -58,13 +59,23 @@ export const App = () => {
 const streamFilter = new Set<SnapshotCaseType>() // create an empty stream filter to get all streams in the timelines store
 
 const AppContent = () => {
+    const _envornmentId = useRef<string | undefined>(undefined)
+    const environment = useEnvironment()
+    // Log environment changes
+    if (environment.id !== _envornmentId.current) {
+        _envornmentId.current = environment.id
+        console.log('Environment: ', {
+            current: environment.id,
+            ENVIRONMENTS,
+        })
+    }
     const {
         id: environmentId,
         baseChain,
         baseChainConfig,
         riverChain,
         riverChainConfig,
-    } = useEnvironment()
+    } = environment
     return (
         <ThemeProvider theme={theme}>
             <TownsContextProvider
