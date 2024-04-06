@@ -31,7 +31,7 @@ export function StreamsRoute(): JSX.Element {
                         <ListItem button key={stream} onClick={() => onClickTimeline(stream)}>
                             {stream}
                         </ListItem>
-                        <Divider />
+                        <Divider key={stream + '_div'} />
                     </>
                 ))}
             </List>
