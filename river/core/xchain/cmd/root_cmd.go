@@ -2,12 +2,11 @@ package cmd
 
 import (
 	"core/xchain/config"
+	"fmt"
+	"os"
 	"strings"
 
 	"github.com/river-build/river/core/node/infra"
-
-	"fmt"
-	"os"
 
 	"github.com/spf13/cobra"
 	"github.com/spf13/viper"
@@ -23,7 +22,7 @@ var (
 )
 
 var rootCmd = &cobra.Command{
-	Use:   "node",
+	Use:   "xchain_node",
 	Short: "Towns.com xchain node",
 }
 
@@ -82,7 +81,8 @@ func initConfigAndLog() {
 
 func init() {
 	cobra.OnInitialize(initConfigAndLog)
-	rootCmd.PersistentFlags().StringVarP(&configFile, "config", "c", "./config/config.yaml", "Path to the configuration file")
+	rootCmd.PersistentFlags().
+		StringVarP(&configFile, "config", "c", "./config/config.yaml", "Path to the configuration file")
 
 	rootCmd.PersistentFlags().StringVarP(
 		&logLevel,

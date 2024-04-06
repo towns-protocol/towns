@@ -42,9 +42,10 @@ func TestNodeRegistryUpdates(t *testing.T) {
 	var (
 		chainBlockNum        = btc.BlockNum(ctx)
 		confirmedTransaction = new(sync.Map)
-		chainMonitor         = crypto.NewChainMonitorBuilder(crypto.BlockNumber(chainBlockNum+1)).OnContractEvent(rr.Address, func(event types.Log) {
-			confirmedTransaction.Store(event.TxHash, struct{}{})
-		})
+		chainMonitor         = crypto.NewChainMonitorBuilder(crypto.BlockNumber(chainBlockNum+1)).
+					OnContractEvent(rr.Address, func(event types.Log) {
+				confirmedTransaction.Store(event.TxHash, struct{}{})
+			})
 
 		waitForTx = func(tx *types.Transaction) {
 			for {

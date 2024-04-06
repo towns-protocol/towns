@@ -215,7 +215,6 @@ func getOperationTree(address string) (Operation, error) {
 			}
 
 		} else if OperationType(op.GetOpType()) == CHECK {
-
 			stack = append(stack, op)
 		} else {
 			return nil, errors.New("Unknown operation type")
@@ -228,6 +227,7 @@ func getOperationTree(address string) (Operation, error) {
 
 	return stack[0], nil
 }
+
 func evaluateAndOperation(
 	ctx context.Context,
 	op AndOperation,
@@ -264,7 +264,6 @@ func evaluateAndOperation(
 			leftCancel()
 		}
 		wg.Done()
-
 	}()
 
 	wg.Wait()
@@ -307,7 +306,6 @@ func evaluateOrOperation(
 			leftCancel()
 		}
 		wg.Done()
-
 	}()
 
 	wg.Wait()
@@ -334,9 +332,8 @@ func awaitTimeout(ctx context.Context, f func() error) error {
 func evaluateOp(
 	ctx context.Context,
 	op Operation,
-	callerAddres *common.Address,
+	callerAddress *common.Address,
 ) (bool, error) {
-
 	if op == nil {
 		return false, fmt.Errorf("operation is nil")
 	}
@@ -344,17 +341,17 @@ func evaluateOp(
 	switch op.GetOpType() {
 	case CHECK:
 		checkOp := (op).(*CheckOperation)
-		return evaluateCheckOperation(ctx, checkOp, callerAddres)
+		return evaluateCheckOperation(ctx, checkOp, callerAddress)
 	case LOGICAL:
 		logicalOp := (op).(LogicalOperation)
 
 		switch logicalOp.GetLogicalType() {
 		case AND:
 			andOp := (op).(AndOperation)
-			return evaluateAndOperation(ctx, andOp, callerAddres)
+			return evaluateAndOperation(ctx, andOp, callerAddress)
 		case OR:
 			orOp := (op).(OrOperation)
-			return evaluateOrOperation(ctx, orOp, callerAddres)
+			return evaluateOrOperation(ctx, orOp, callerAddress)
 		default:
 			return false, fmt.Errorf("invalid LogicalOperation type")
 		}

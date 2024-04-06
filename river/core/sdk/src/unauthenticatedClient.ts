@@ -5,7 +5,7 @@ import { StreamRpcClientType } from './makeStreamRpcClient'
 import { unpackMiniblock, unpackStream } from './sign'
 import { StreamStateView } from './streamStateView'
 import { ParsedMiniblock, StreamTimelineEvent } from './types'
-import { streamIdAsString, streamIdAsBytes } from './id'
+import { streamIdAsString, streamIdAsBytes, userIdFromAddress, makeUserStreamId } from './id'
 
 const SCROLLBACK_MAX_COUNT = 20
 export class UnauthenticatedClient {
@@ -32,6 +32,21 @@ export class UnauthenticatedClient {
         this.logError = dlogError('csb:cl:error').extend(shortId)
 
         this.logCall('new UnauthenticatedClient')
+    }
+
+    async userExists(userId: string): Promise<boolean> {
+        const userStreamId = makeUserStreamId(userId)
+        this.logCall('userExists', userId)
+        const response = await this.rpcClient.getStream({
+            streamId: streamIdAsBytes(userStreamId),
+            optional: true,
+        })
+        this.logCall('userExists', userId, response.stream)
+        return response.stream !== undefined
+    }
+
+    async userWithAddressExists(address: Uint8Array): Promise<boolean> {
+        return this.userExists(userIdFromAddress(address))
     }
 
     async getStream(streamId: string | Uint8Array): Promise<StreamStateView> {

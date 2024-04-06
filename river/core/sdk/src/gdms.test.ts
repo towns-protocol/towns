@@ -153,7 +153,7 @@ describe('gdmsTests', () => {
         await Promise.all(promises)
     })
 
-    test('usersReceiveKeysAfterInvite', async () => {
+    test('usersReceiveKeysAfterInviteAndJoin', async () => {
         const userIds = [alicesClient.userId, charliesClient.userId]
         const { streamId } = await bobsClient.createGDMChannel(userIds)
         await expect(bobsClient.waitForStream(streamId)).toResolve()

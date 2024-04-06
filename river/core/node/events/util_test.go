@@ -7,6 +7,7 @@ import (
 	"github.com/ethereum/go-ethereum/common"
 	. "github.com/river-build/river/core/node/base"
 	"github.com/river-build/river/core/node/base/test"
+	"github.com/river-build/river/core/node/config"
 	"github.com/river-build/river/core/node/crypto"
 	. "github.com/river-build/river/core/node/nodes"
 	. "github.com/river-build/river/core/node/protocol"
@@ -48,15 +49,16 @@ func makeTestStreamParams(p testParams) (context.Context, *testContext) {
 	var streamStorage storage.StreamStorage
 	var schemaDeleter func()
 	if p.usePostgres {
-		var url, schema string
-		url, schema, schemaDeleter, err = dbtestutils.StartDB(ctx)
+		var cfg config.DatabaseConfig
+		var schema string
+		cfg, schema, schemaDeleter, err = dbtestutils.StartDB(ctx)
 		if err != nil {
 			panic(err)
 		}
 
 		streamStorage, err = storage.NewPostgresEventStore(
 			ctx,
-			url,
+			cfg,
 			schema,
 			GenShortNanoid(),
 			make(chan error, 1),

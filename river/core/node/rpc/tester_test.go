@@ -132,8 +132,10 @@ func (st *serviceTester) startSingle(i int) error {
 	cfg := &config.Config{
 		DisableBaseChain: true,
 		RegistryContract: st.btc.RegistryConfig(),
-		Database:         config.DatabaseConfig{Url: st.dbUrl},
-		StorageType:      "postgres",
+		Database: config.DatabaseConfig{
+			Url: st.dbUrl,
+		},
+		StorageType: "postgres",
 		Stream: config.StreamConfig{
 			Media: config.MediaStreamConfig{
 				MaxChunkCount: 100,
@@ -153,6 +155,10 @@ func (st *serviceTester) startSingle(i int) error {
 	bc := st.btc.GetBlockchain(st.ctx, i, true)
 	service, err := rpc.StartServer(st.ctx, cfg, bc, st.nodes[i].listener)
 	if err != nil {
+		if service != nil {
+			// Sanity check
+			panic("service should be nil")
+		}
 		return err
 	}
 	st.nodes[i].service = service

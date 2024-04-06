@@ -28,7 +28,6 @@ func keyboardInput(input chan rune) {
 		}
 		input <- char
 	}
-
 }
 
 func main() {

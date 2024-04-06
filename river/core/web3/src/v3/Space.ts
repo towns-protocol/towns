@@ -155,7 +155,7 @@ export class Space {
         const roles = await this.getChannelRoleEntitlements(channelInfo)
         return {
             spaceNetworkId: this.spaceId,
-            channelNetworkId,
+            channelNetworkId: channelNetworkId.replace('0x', ''),
             name: channelInfo.metadata,
             disabled: channelInfo.disabled,
             roles,

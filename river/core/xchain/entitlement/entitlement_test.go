@@ -9,8 +9,10 @@ import (
 	"github.com/ethereum/go-ethereum/common"
 )
 
-const slow = 500
-const fast = 10
+const (
+	slow = 500
+	fast = 10
+)
 
 var fastTrueCheck = CheckOperation{
 	OpType:          CHECK,
@@ -69,13 +71,12 @@ func TestAndOperation(t *testing.T) {
 	for idx, tc := range testCases {
 		t.Log("TestAndOperation", tc)
 		var tree Operation
-		tree =
-			AndOperation{
-				OpType:         LOGICAL,
-				LogicalType:    LogicalOperationType(AND),
-				LeftOperation:  tc.a,
-				RightOperation: tc.b,
-			}
+		tree = AndOperation{
+			OpType:         LOGICAL,
+			LogicalType:    LogicalOperationType(AND),
+			LeftOperation:  tc.a,
+			RightOperation: tc.b,
+		}
 		startTime := time.Now() // Get the current time
 
 		callerAddress := common.Address{}
@@ -89,7 +90,11 @@ func TestAndOperation(t *testing.T) {
 		if result != tc.expected {
 			t.Errorf("evaluateAndOperation(%v) = %v; want %v", idx, result, tc.expected)
 		}
-		if !areDurationsClose(elapsedTime, time.Duration(tc.expectedTime*int32(time.Millisecond)), 10*time.Millisecond) {
+		if !areDurationsClose(
+			elapsedTime,
+			time.Duration(tc.expectedTime*int32(time.Millisecond)),
+			10*time.Millisecond,
+		) {
 			t.Errorf("evaluateAndOperation(%v) took %v; want %v", idx, elapsedTime, time.Duration(tc.expectedTime))
 		}
 		t.Log("TestAndOperation done", tc)
@@ -122,13 +127,12 @@ func TestOrOperation(t *testing.T) {
 	for idx, tc := range testCases {
 		t.Log("TestOrOperation", tc)
 		var tree LogicalOperation
-		tree =
-			OrOperation{
-				OpType:         LOGICAL,
-				LogicalType:    LogicalOperationType(OR),
-				LeftOperation:  tc.a,
-				RightOperation: tc.b,
-			}
+		tree = OrOperation{
+			OpType:         LOGICAL,
+			LogicalType:    LogicalOperationType(OR),
+			LeftOperation:  tc.a,
+			RightOperation: tc.b,
+		}
 		startTime := time.Now() // Get the current time
 
 		callerAddress := common.Address{}
@@ -141,7 +145,11 @@ func TestOrOperation(t *testing.T) {
 		if result != tc.expected {
 			t.Errorf("evaluateOrOperation(%v) = %v; want %v", idx, result, tc.expected)
 		}
-		if !areDurationsClose(elapsedTime, time.Duration(tc.expectedTime*int32(time.Millisecond)), 10*time.Millisecond) {
+		if !areDurationsClose(
+			elapsedTime,
+			time.Duration(tc.expectedTime*int32(time.Millisecond)),
+			10*time.Millisecond,
+		) {
 			t.Errorf("evaluateOrOperation(%v) took %v; want %v", idx, elapsedTime, time.Duration(tc.expectedTime))
 		}
 		t.Log("TestOrOperation done", tc)
@@ -156,6 +164,7 @@ func areDurationsClose(d1, d2, threshold time.Duration) bool {
 	}
 	return diff <= threshold
 }
+
 func TestCheckOperation(t *testing.T) {
 	t.Log("TestCheckOperation")
 	testCases := []struct {
@@ -185,8 +194,17 @@ func TestCheckOperation(t *testing.T) {
 		if result != tc.expected {
 			t.Errorf("evaluateCheckOperation result (%v) = %v; want %v", tc.a, result, tc.expected)
 		}
-		if !areDurationsClose(elapsedTime, time.Duration(tc.expectedTime*int32(time.Millisecond)), 10*time.Millisecond) {
-			t.Errorf("evaluateCheckOperation(%v) took %v; want %v", fastFalseCheck, elapsedTime, time.Duration(tc.expectedTime))
+		if !areDurationsClose(
+			elapsedTime,
+			time.Duration(tc.expectedTime*int32(time.Millisecond)),
+			10*time.Millisecond,
+		) {
+			t.Errorf(
+				"evaluateCheckOperation(%v) took %v; want %v",
+				fastFalseCheck,
+				elapsedTime,
+				time.Duration(tc.expectedTime),
+			)
 		}
 
 	}

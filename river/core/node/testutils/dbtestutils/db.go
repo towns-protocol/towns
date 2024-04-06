@@ -10,6 +10,7 @@ import (
 	"os/exec"
 
 	"github.com/jackc/pgx/v5/pgxpool"
+	"github.com/river-build/river/core/node/config"
 )
 
 func GetTestDbUrl() string {
@@ -54,27 +55,36 @@ func DeleteTestSchema(ctx context.Context, dbUrl string, schemaName string) erro
 	return nil
 }
 
-func StartDB(ctx context.Context) (string, string, func(), error) {
+func StartDB(ctx context.Context) (cfg config.DatabaseConfig, schema string, schemaDeleter func(), err error) {
 	dbSchemaName := os.Getenv("TEST_DATABASE_SCHEMA_NAME")
 	if dbSchemaName == "" {
 		b := make([]byte, 16)
 		_, err := rand.Read(b)
 		if err != nil {
-			return "", "", func() {}, err
+			return config.DatabaseConfig{}, "", func() {}, err
 		}
 		// convert to hex string
 		dbSchemaName = "tst" + hex.EncodeToString(b)
 	}
-
 	dbUrl := os.Getenv("TEST_DATABASE_URL")
 	if dbUrl != "" {
-		return dbUrl, dbSchemaName, func() {}, nil
+		cfg = config.DatabaseConfig{
+			Url: dbUrl,
+		}
+		schemaDeleter = func() {}
+	} else {
+		cfg = config.DatabaseConfig{
+			Host:                      "localhost",
+			Port:                      5433,
+			User:                      "postgres",
+			Password:                  "postgres",
+			Database:                  "river",
+			Extra:                     "?sslmode=disable&pool_max_conns=1000",
+			StreamingConnectionsRatio: 0.1,
+		}
+		schemaDeleter = func() {
+			_ = DeleteTestSchema(ctx, dbUrl, dbSchemaName)
+		}
 	}
-	dbUrl = "postgres://postgres:postgres@localhost:5433/river?sslmode=disable&pool_max_conns=1000"
-
-	schemaDeleter := func() {
-		_ = DeleteTestSchema(ctx, dbUrl, dbSchemaName)
-	}
-
-	return dbUrl, dbSchemaName, schemaDeleter, nil
+	return cfg, dbSchemaName, schemaDeleter, nil
 }

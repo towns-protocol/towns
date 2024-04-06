@@ -56,11 +56,15 @@ type aeMediaPayloadChunkRules struct {
 * a pure function with no side effects that returns a boolean value and prerequesits
 * for adding an event to a stream.
 *
+
   - @return canAddEvent bool // true if the event can be added to the stream, will be false in case of duplictate state
+
   - @return chainAuthArgs *auth.ChainAuthArgs // on chain requirements for adding an event to the stream
+
   - @return requiredParentEvent *RequiredParentEvent // event that must exist in the stream before the event can be added
     // required parent events must be replayable - meaning that in the case of a no-op, the can_add_event function should return false, nil, nil, nil to indicate
     // that the event cannot be added to the stream, but there is no error
+
   - @return error // if adding result would result in invalid state
 
 *

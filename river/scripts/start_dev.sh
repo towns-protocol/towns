@@ -51,6 +51,8 @@ if ! command -v yq &> /dev/null; then
     echo "yq installed successfully."
 fi
 
+yarn install
+
 # Create a new tmux session
 tmux new-session -d -s $SESSION_NAME
 
@@ -118,8 +120,6 @@ done
 
 # Continue with rest of the script
 echo "Continuing with the rest of the script..."
-
-yarn install
 
 yarn csb:build
 

@@ -2,11 +2,10 @@ package entitlement
 
 import (
 	"context"
+	"core/xchain/bindings/erc20"
 	"fmt"
 	"log"
 	"time"
-
-	"core/xchain/bindings/erc20"
 
 	"github.com/ethereum/go-ethereum/accounts/abi/bind"
 	"github.com/ethereum/go-ethereum/common"
@@ -32,12 +31,11 @@ func evaluateCheckOperation(
 	default:
 		return false, fmt.Errorf("unknown operation")
 	}
-
 }
 
 func evaluateMockOperation(ctx context.Context,
-	op *CheckOperation) (bool, error) {
-
+	op *CheckOperation,
+) (bool, error) {
 	delay := int(op.Threshold.Int64())
 
 	result := awaitTimeout(ctx, func() error {
@@ -56,8 +54,8 @@ func evaluateMockOperation(ctx context.Context,
 }
 
 func evaluateIsEntitledOperation(ctx context.Context,
-	op *CheckOperation) (bool, error) {
-
+	op *CheckOperation,
+) (bool, error) {
 	delay := int(op.Threshold.Int64())
 
 	result := awaitTimeout(ctx, func() error {
@@ -77,9 +75,9 @@ func evaluateIsEntitledOperation(ctx context.Context,
 
 func evaluateErc20Operation(ctx context.Context,
 	op *CheckOperation,
-	callerAddress *common.Address) (bool, error) {
+	callerAddress *common.Address,
+) (bool, error) {
 	client, err := ethclient.Dial("https://mainnet.infura.io/v3/YOUR_INFURA_PROJECT_ID")
-
 	if err != nil {
 		log.Fatalf("Failed to dial %v", err)
 		return false, err
@@ -108,8 +106,8 @@ func evaluateErc20Operation(ctx context.Context,
 }
 
 func evaluateErc721Operation(ctx context.Context,
-	op *CheckOperation) (bool, error) {
-
+	op *CheckOperation,
+) (bool, error) {
 	delay := int(op.Threshold.Int64())
 
 	result := awaitTimeout(ctx, func() error {
@@ -128,8 +126,8 @@ func evaluateErc721Operation(ctx context.Context,
 }
 
 func evaluateErc1155Operation(ctx context.Context,
-	op *CheckOperation) (bool, error) {
-
+	op *CheckOperation,
+) (bool, error) {
 	delay := int(op.Threshold.Int64())
 
 	result := awaitTimeout(ctx, func() error {

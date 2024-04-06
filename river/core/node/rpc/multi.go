@@ -7,7 +7,6 @@ import (
 	"slices"
 	"strings"
 	"sync"
-
 	"time"
 
 	"connectrpc.com/connect"
@@ -52,7 +51,12 @@ func getHttpStatus(ctx context.Context, record *render.DebugMultiNodeInfo, clien
 	}
 }
 
-func getGrpcStatus(ctx context.Context, record *render.DebugMultiNodeInfo, client StreamServiceClient, wg *sync.WaitGroup) {
+func getGrpcStatus(
+	ctx context.Context,
+	record *render.DebugMultiNodeInfo,
+	client StreamServiceClient,
+	wg *sync.WaitGroup,
+) {
 	log := dlog.FromCtx(ctx)
 	defer wg.Done()
 

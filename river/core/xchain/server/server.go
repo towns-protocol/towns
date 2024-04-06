@@ -2,6 +2,7 @@ package server
 
 import (
 	"context"
+	"core/xchain/config"
 	"crypto/ecdsa"
 	"encoding/hex"
 	"math/big"
@@ -12,7 +13,7 @@ import (
 	"github.com/river-build/river/core/node/dlog"
 
 	xc "core/xchain/common"
-	"core/xchain/config"
+
 	e "core/xchain/contracts"
 
 	"github.com/ethereum/go-ethereum/accounts/abi/bind"
@@ -30,8 +31,8 @@ func isClosed(ch <-chan struct{}) bool {
 		return false
 	}
 }
-func RunServer(ctx context.Context, workerID int, shutdown <-chan struct{}) {
 
+func RunServer(ctx context.Context, workerID int, shutdown <-chan struct{}) {
 	log := dlog.FromCtx(ctx).With("worker_id", workerID)
 
 	ctx = dlog.CtxWithLog(ctx, log)
@@ -83,10 +84,23 @@ func RunServer(ctx context.Context, workerID int, shutdown <-chan struct{}) {
 	}
 }
 
-func registerNode(ctx context.Context, workerID int, fromAddress common.Address, privateKey *ecdsa.PrivateKey) (*uint64, error) {
+func registerNode(
+	ctx context.Context,
+	workerID int,
+	fromAddress common.Address,
+	privateKey *ecdsa.PrivateKey,
+) (*uint64, error) {
 	log := dlog.FromCtx(ctx)
 	chainId := big.NewInt(int64(config.GetConfig().BaseChain.ChainId))
-	log.Info("Registering node", "Url", config.GetConfig().BaseChain.NetworkUrl, "ContractAddress", config.GetConfig().EntitlementContract.Address, "Node", fromAddress.String())
+	log.Info(
+		"Registering node",
+		"Url",
+		config.GetConfig().BaseChain.NetworkUrl,
+		"ContractAddress",
+		config.GetConfig().EntitlementContract.Address,
+		"Node",
+		fromAddress.String(),
+	)
 	baseWebsocketURL, err := xc.ConvertHTTPToWebSocket(config.GetConfig().BaseChain.NetworkUrl)
 	if err != nil {
 		log.Error("Failed to convert BaseChain HTTP to WebSocket", "err", err)
@@ -124,7 +138,15 @@ func registerNode(ctx context.Context, workerID int, fromAddress common.Address,
 	etherValue := new(big.Float).Quo(new(big.Float).SetInt(balance), big.NewFloat(float64(1e18)))
 	log.Debug("Balance in Ether", "eth", etherValue.String())
 
-	log.Debug("NewKeyedTransactorWithChainID", "privateKey", privateKey, "chainId", chainId, "address", *xc.GetCheckerContractAddress())
+	log.Debug(
+		"NewKeyedTransactorWithChainID",
+		"privateKey",
+		privateKey,
+		"chainId",
+		chainId,
+		"address",
+		*xc.GetCheckerContractAddress(),
+	)
 
 	auth, err := bind.NewKeyedTransactorWithChainID(privateKey, chainId)
 	if err != nil {
@@ -178,7 +200,6 @@ func registerNode(ctx context.Context, workerID int, fromAddress common.Address,
 		}
 	} else {
 		_ = xc.WaitForTransaction(client, tx)
-
 	}
 	log.Info("Registered node", "blockNumber", blockNumber)
 	temp := blockNumber
@@ -240,7 +261,15 @@ func unregisterNode(ctx context.Context, workerID int, fromAddress common.Addres
 	log.Info("Unregistered node", "block_num", blockNumber)
 }
 
-func eventLoop(ctx context.Context, workerID int, blockNumber *uint64, events chan *e.IEntitlementCheckerEntitlementCheckRequested, shutdown <-chan struct{}, fromAddress common.Address, privateKey *ecdsa.PrivateKey) bool {
+func eventLoop(
+	ctx context.Context,
+	workerID int,
+	blockNumber *uint64,
+	events chan *e.IEntitlementCheckerEntitlementCheckRequested,
+	shutdown <-chan struct{},
+	fromAddress common.Address,
+	privateKey *ecdsa.PrivateKey,
+) bool {
 	log := dlog.FromCtx(ctx)
 	chainId := big.NewInt(int64(config.GetConfig().BaseChain.ChainId))
 	baseWebsocketURL, err := xc.ConvertHTTPToWebSocket(config.GetConfig().BaseChain.NetworkUrl)
@@ -304,7 +333,8 @@ func eventLoop(ctx context.Context, workerID int, blockNumber *uint64, events ch
 			// in case the client needs to restart
 			*blockNumber = event.Raw.BlockNumber
 
-			log := dlog.FromCtx(ctx).With("transaction_id", hex.EncodeToString(event.TransactionId[:]), "block_num", event.Raw.BlockNumber)
+			log := dlog.FromCtx(ctx).
+				With("transaction_id", hex.EncodeToString(event.TransactionId[:]), "block_num", event.Raw.BlockNumber)
 
 			eventCtx := dlog.CtxWithLog(ctx, log)
 
@@ -319,10 +349,16 @@ func eventLoop(ctx context.Context, workerID int, blockNumber *uint64, events ch
 		}
 	}
 	return true
-
 }
 
-func postCheckResult(ctx context.Context, workerID int, event *e.IEntitlementCheckerEntitlementCheckRequested, client *ethclient.Client, fromAddress common.Address, auth *bind.TransactOpts) {
+func postCheckResult(
+	ctx context.Context,
+	workerID int,
+	event *e.IEntitlementCheckerEntitlementCheckRequested,
+	client *ethclient.Client,
+	fromAddress common.Address,
+	auth *bind.TransactOpts,
+) {
 	log := dlog.FromCtx(ctx)
 	log.Info("EntitlementCheckRequested being handeled")
 

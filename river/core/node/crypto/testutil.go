@@ -49,7 +49,7 @@ func initSimulated(ctx context.Context, numKeys int) ([]*Wallet, *simulated.Back
 		genesisAlloc[wallets[i].Address] = core.GenesisAccount{Balance: Eth_100}
 	}
 
-	backend := simulated.New(genesisAlloc, 30_000_000)
+	backend := simulated.NewBackend(genesisAlloc, simulated.WithBlockGasLimit(30_000_000))
 	return wallets, backend, nil
 }
 

@@ -126,12 +126,10 @@ github.com/envoyproxy/go-control-plane v0.9.0/go.mod h1:YTl/9mNaCwkRvm6d1a2C3ymF
 github.com/envoyproxy/go-control-plane v0.9.4/go.mod h1:6rpuAdCZL397s3pYoYcLgu1mIlRU8Am5FuJP05cCM98=
 github.com/envoyproxy/protoc-gen-validate v0.1.0/go.mod h1:iSmxcyjqTsJpI2R4NaDN7+kN2VEUnK/pcBlmesArF7c=
 github.com/etcd-io/bbolt v1.3.3/go.mod h1:ZF2nL25h33cCyBtcyWeZ2/I3HQOfTP+0PIEvHjkjCrw=
-github.com/ethereum-optimism/op-geth v1.101309.0-rc.2 h1:8XIKJAH78fLl0AAY4Bq00nIeAeoodZjCcm5CNTcr0eU=
-github.com/ethereum-optimism/op-geth v1.101309.0-rc.2/go.mod h1:eFb6HyjixYhM8b0r0imIYKKfhPKx+xIvTqbkIipoBig=
-github.com/ethereum-optimism/superchain-registry/superchain v0.0.0-20240318114348-52d3dbd1605d h1:K7HdD/ZAcSFhcqqnUAbvU+8vsg0DzL8pvetHw5vRLCc=
-github.com/ethereum-optimism/superchain-registry/superchain v0.0.0-20240318114348-52d3dbd1605d/go.mod h1:7xh2awFQqsiZxFrHKTgEd+InVfDRrkKVUIuK8SAFHp0=
 github.com/ethereum/c-kzg-4844 v0.4.1 h1:ftiEBwhGX3Q08lJiMEfoSmqiUZPyad0exVSmGLjyPuc=
 github.com/ethereum/c-kzg-4844 v0.4.1/go.mod h1:VewdlzQmpT5QSrVhbBuGoCdFJkpaJlO1aQputP83wc0=
+github.com/ethereum/go-ethereum v1.13.12 h1:iDr9UM2JWkngBHGovRJEQn4Kor7mT4gt9rUZqB5M29Y=
+github.com/ethereum/go-ethereum v1.13.12/go.mod h1:hKL2Qcj1OvStXNSEDbucexqnEt1Wh4Cz329XsjAalZY=
 github.com/fasthttp-contrib/websocket v0.0.0-20160511215533-1f3b11f56072/go.mod h1:duJ4Jxv5lDcvg4QuQr0oowTf7dz4/CR8NtyCooz9HL8=
 github.com/fatih/structs v1.1.0/go.mod h1:9NiDSp5zOcgEDl+j00MP/WkGVPOlPRLejGD8Ga6PJ7M=
 github.com/fjl/memsize v0.0.2 h1:27txuSD9or+NZlnOWdKUxeBzTAUkWCVh+4Gf2dWFOzA=

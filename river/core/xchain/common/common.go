@@ -21,11 +21,15 @@ import (
 	"github.com/ethereum/go-ethereum/rpc"
 )
 
-var checkerContractAddress common.Address
-var checkerContractUrl string
+var (
+	checkerContractAddress common.Address
+	checkerContractUrl     string
+)
 
-var testContractAddress common.Address
-var testContractUrl string
+var (
+	testContractAddress common.Address
+	testContractUrl     string
+)
 
 var loadAddressesOnce sync.Once
 
@@ -160,7 +164,11 @@ func WaitForTransaction(client *ethclient.Client, tx *types.Transaction) *big.In
 		if receipt.Status != types.ReceiptStatusSuccessful {
 
 			// The ABI for a `revert` reason is essentially a string, so we'll use that
-			parsed, err := abi.JSON(strings.NewReader(`[{"constant":true,"inputs":[],"name":"errorMessage","outputs":[{"name":"","type":"string"}],"type":"function"}]`))
+			parsed, err := abi.JSON(
+				strings.NewReader(
+					`[{"constant":true,"inputs":[],"name":"errorMessage","outputs":[{"name":"","type":"string"}],"type":"function"}]`,
+				),
+			)
 			if err != nil {
 				log.Error("Failed to parse ABI", "err", err)
 				return nil
@@ -180,7 +188,15 @@ func WaitForTransaction(client *ethclient.Client, tx *types.Transaction) *big.In
 				if err != nil {
 					log.Error("Failed to execute debug_traceTransaction: %v", err)
 				}
-				log.Error("Transaction failed with status but no logs were emitted.", "status", tx.Hash().Hex(), "rcp", rcp, "result", result)
+				log.Error(
+					"Transaction failed with status but no logs were emitted.",
+					"status",
+					tx.Hash().Hex(),
+					"rcp",
+					rcp,
+					"result",
+					result,
+				)
 
 				return nil
 			}

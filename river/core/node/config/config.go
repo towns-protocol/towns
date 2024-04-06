@@ -68,13 +68,14 @@ type NetworkConfig struct {
 }
 
 type DatabaseConfig struct {
-	Url      string `dlog:"omit" json:"-"` // Sensitive data, omitted from logging.
-	Host     string
-	Port     int
-	User     string
-	Password string `dlog:"omit" json:"-"` // Sensitive data, omitted from logging.
-	Database string
-	Extra    string
+	Url                       string `dlog:"omit" json:"-"` // Sensitive data, omitted from logging.
+	Host                      string
+	Port                      int
+	User                      string
+	Password                  string `dlog:"omit" json:"-"` // Sensitive data, omitted from logging.
+	Database                  string
+	Extra                     string
+	StreamingConnectionsRatio float32
 }
 
 type ChainConfig struct {

@@ -4,8 +4,6 @@ go 1.21
 
 toolchain go1.21.5
 
-replace github.com/ethereum/go-ethereum => github.com/ethereum-optimism/op-geth v1.101309.0-rc.2
-
 require (
 	connectrpc.com/connect v1.14.0
 	github.com/deckarep/golang-set/v2 v2.3.1
@@ -35,7 +33,6 @@ require (
 )
 
 require (
-	github.com/ethereum-optimism/superchain-registry/superchain v0.0.0-20240318114348-52d3dbd1605d // indirect
 	github.com/google/uuid v1.4.0 // indirect
 	github.com/stretchr/objx v0.5.1 // indirect
 )

@@ -11,6 +11,7 @@ import (
 
 	"github.com/ethereum/go-ethereum/common"
 	. "github.com/river-build/river/core/node/base"
+	"github.com/river-build/river/core/node/config"
 	. "github.com/river-build/river/core/node/protocol"
 	. "github.com/river-build/river/core/node/shared"
 
@@ -917,14 +918,39 @@ func DbSchemaNameFromAddress(address string) string {
 	return "s" + strings.ToLower(address)
 }
 
+func getDbURL(dbConfig config.DatabaseConfig) string {
+	if dbConfig.Password != "" {
+		return fmt.Sprintf(
+			"postgresql://%s:%s@%s:%d/%s%s",
+			dbConfig.User,
+			dbConfig.Password,
+			dbConfig.Host,
+			dbConfig.Port,
+			dbConfig.Database,
+			dbConfig.Extra,
+		)
+	}
+
+	return dbConfig.Url
+}
+
 func NewPostgresEventStore(
 	ctx context.Context,
-	database_url string,
+	cfg config.DatabaseConfig,
 	databaseSchemaName string,
 	instanceId string,
 	exitSignal chan error,
 ) (*PostgresEventStore, error) {
-	store, err := newPostgresEventStore(ctx, database_url, databaseSchemaName, instanceId, exitSignal)
+	database_url := getDbURL(cfg)
+
+	store, err := newPostgresEventStore(
+		ctx,
+		database_url,
+		databaseSchemaName,
+		cfg.StreamingConnectionsRatio,
+		instanceId,
+		exitSignal,
+	)
 	if err != nil {
 		return nil, AsRiverError(err).Func("NewPostgresEventStore")
 	}
@@ -932,10 +958,14 @@ func NewPostgresEventStore(
 	return store, nil
 }
 
+// Disallow allocating more than 30% of connections for streaming connections.
+var MaxStreamingConnectionsRatio float32 = 0.3
+
 func newPostgresEventStoreWithMigrations(
 	ctx context.Context,
 	databaseUrl string,
 	databaseSchemaName string,
+	streamingConnectionRatio float32,
 	instanceId string,
 	exitSignal chan error,
 	migrations embed.FS,
@@ -958,12 +988,32 @@ func newPostgresEventStoreWithMigrations(
 		return nil, WrapRiverError(Err_DB_OPERATION_FAILURE, err).Message("New with config error")
 	}
 
-	// TODO: make the ratio of available connections reserved for streaming configurable
-	var regularConnectionRatio float32 = 1.0
+	// Bounds check the streaming connection ratio
+	// TODO: when we add streaming calls, we should make the minimum larger, perhaps 5%.
+	if streamingConnectionRatio < 0 {
+		log.Info(
+			"Invalid streaming connection ratio, setting to 0",
+			"streamingConnectionRatio",
+			streamingConnectionRatio,
+		)
+		streamingConnectionRatio = 0
+	}
+	// Limit the ratio of available connections reserved for streaming to 30%
+	if streamingConnectionRatio > MaxStreamingConnectionsRatio {
+		log.Info(
+			"Invalid streaming connection ratio, setting to maximum of 30%",
+			"streamingConnectionRatio",
+			streamingConnectionRatio,
+		)
+		streamingConnectionRatio = MaxStreamingConnectionsRatio
+	}
+
 	var totalReservableConns int64 = int64(poolConf.MaxConns) - 1 // subtract extra connection for the listeneer
-	var numRegularConnections int64 = int64(float32(totalReservableConns) * regularConnectionRatio)
+	var numRegularConnections int64 = int64(float32(totalReservableConns) * (1 - streamingConnectionRatio))
 	var numStreamingConnections int64 = totalReservableConns - numRegularConnections
 
+	// Ensure there is at least one connection set aside for streaming queries even though we're not using them at
+	// this time.
 	if numStreamingConnections < 1 {
 		numStreamingConnections += 1
 		numRegularConnections -= 1
@@ -1018,6 +1068,7 @@ func newPostgresEventStore(
 	ctx context.Context,
 	database_url string,
 	databaseSchemaName string,
+	streamingConnectionRatio float32,
 	instanceId string,
 	exitSignal chan error,
 ) (*PostgresEventStore, error) {
@@ -1025,6 +1076,7 @@ func newPostgresEventStore(
 		ctx,
 		database_url,
 		databaseSchemaName,
+		streamingConnectionRatio,
 		instanceId,
 		exitSignal,
 		migrationsDir,

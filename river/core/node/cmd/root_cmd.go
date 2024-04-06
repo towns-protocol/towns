@@ -2,9 +2,10 @@ package cmd
 
 import (
 	"fmt"
-	"github.com/mitchellh/mapstructure"
 	"os"
 	"strings"
+
+	"github.com/mitchellh/mapstructure"
 
 	"github.com/river-build/river/core/node/config"
 	"github.com/river-build/river/core/node/infra"

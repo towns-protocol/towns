@@ -33,22 +33,6 @@ import (
 	httptrace "gopkg.in/DataDog/dd-trace-go.v1/contrib/net/http"
 )
 
-func getDbURL(dbConfig config.DatabaseConfig) string {
-	if dbConfig.Password != "" {
-		return fmt.Sprintf(
-			"postgresql://%s:%s@%s:%d/%s%s",
-			dbConfig.User,
-			dbConfig.Password,
-			dbConfig.Host,
-			dbConfig.Port,
-			dbConfig.Database,
-			dbConfig.Extra,
-		)
-	}
-
-	return dbConfig.Url
-}
-
 func createStore(
 	ctx context.Context,
 	dbConfig config.DatabaseConfig,
@@ -62,9 +46,8 @@ func createStore(
 		log.Warn("Using in-memory storage")
 		return storage.NewMemStorage(), nil
 	} else {
-		dbUrl := getDbURL(dbConfig)
 		schema := storage.DbSchemaNameFromAddress(address)
-		store, err := storage.NewPostgresEventStore(ctx, dbUrl, schema, instanceId, exitSignal)
+		store, err := storage.NewPostgresEventStore(ctx, dbConfig, schema, instanceId, exitSignal)
 		if err != nil {
 			return nil, err
 		}
@@ -112,12 +95,23 @@ func StartServer(
 	cfg *config.Config,
 	riverChain *crypto.Blockchain,
 	listener net.Listener,
-) (*Service, error) {
+) (streamService *Service, err error) {
+	streamService = &Service{
+		serverCtx: ctx,
+	}
+
+	// If service cannot be started, clean up any allocated resources.
+	defer func() {
+		if err != nil {
+			streamService.Close()
+			streamService = nil
+		}
+	}()
+
 	log := dlog.FromCtx(ctx)
 
 	log.Info("Starting server", "config", cfg)
 
-	var err error
 	var wallet *crypto.Wallet
 	if riverChain == nil {
 		// Read env var WALLETPRIVATEKEY or PRIVATE_KEY
@@ -131,11 +125,12 @@ func StartServer(
 			wallet, err = crypto.LoadWallet(ctx, crypto.WALLET_PATH_PRIVATE_KEY)
 		}
 		if err != nil {
-			return nil, err
+			return streamService, err
 		}
 	} else {
 		wallet = riverChain.Wallet
 	}
+	streamService.wallet = wallet
 
 	instanceId := GenShortNanoid()
 	log = log.With(
@@ -145,13 +140,22 @@ func StartServer(
 	)
 	ctx = dlog.CtxWithLog(ctx, log)
 	slog.SetDefault(log)
+	// update ctx in service after adding logger attributes.
+	streamService.serverCtx = ctx
 
-	exitSignal := make(chan error, 1)
-
-	store, err := createStore(ctx, cfg.Database, cfg.StorageType, wallet.AddressStr, instanceId, exitSignal)
+	streamService.exitSignal = make(chan error, 1)
+	store, err := createStore(
+		ctx,
+		cfg.Database,
+		cfg.StorageType,
+		wallet.AddressStr,
+		instanceId,
+		streamService.exitSignal,
+	)
 	if err != nil {
-		return nil, err
+		return streamService, err
 	}
+	streamService.storage = store
 
 	var chainAuth auth.ChainAuth
 	var baseChain *crypto.Blockchain
@@ -159,8 +163,9 @@ func StartServer(
 		baseChain, err = crypto.NewBlockchain(ctx, &cfg.BaseChain, nil)
 		if err != nil {
 			log.Error("Failed to initialize blockchain for base", "error", err, "chain_config", cfg.BaseChain)
-			return nil, err
+			return streamService, err
 		}
+		streamService.baseChain = baseChain
 
 		log.Info("Using River Auth", "chain_config", cfg.BaseChain)
 		chainAuth, err = auth.NewChainAuth(
@@ -173,20 +178,22 @@ func StartServer(
 		)
 		if err != nil {
 			log.Error("failed to create auth", "error", err)
-			return nil, err
+			return streamService, err
 		}
 	} else {
 		log.Warn("Using fake auth for testing")
 		chainAuth = auth.NewFakeChainAuth()
 	}
+	streamService.chainAuth = chainAuth
 
 	if riverChain == nil {
 		riverChain, err = crypto.NewBlockchain(ctx, &cfg.RiverChain, wallet)
 		if err != nil {
 			log.Error("Failed to initialize blockchain for river", "error", err, "chain_config", cfg.RiverChain)
-			return nil, err
+			return streamService, err
 		}
 	}
+	streamService.riverChain = riverChain
 
 	// listen for chain changes on the next block
 	chainMonitorBuilder := crypto.NewChainMonitorBuilder(riverChain.InitialBlockNum + 1)
@@ -194,7 +201,7 @@ func StartServer(
 	registryContract, err := registries.NewRiverRegistryContract(ctx, riverChain, &cfg.RegistryContract)
 	if err != nil {
 		log.Error("NewRiverRegistryContract", "error", err)
-		return nil, err
+		return streamService, err
 	}
 
 	log.Info("Using River Registry", "config", cfg.RegistryContract, "address", registryContract.Address)
@@ -208,10 +215,10 @@ func StartServer(
 	)
 	if err != nil {
 		log.Error("Failed to load node registry", "error", err)
-		return nil, err
+		return streamService, err
 	}
-
-	streamRegistry := nodes.NewStreamRegistry(
+	streamService.nodeRegistry = nodeRegistry
+	streamService.streamRegistry = nodes.NewStreamRegistry(
 		wallet.Address,
 		nodeRegistry,
 		registryContract,
@@ -234,36 +241,24 @@ func StartServer(
 	)
 	if err != nil {
 		log.Error("Failed to create stream cache", "error", err)
-		return nil, err
+		return streamService, err
 	}
+	streamService.cache = streamCache
 
 	go chainMonitorBuilder.
 		Build(time.Duration(cfg.RiverChain.BlockTimeMs)*time.Millisecond).
 		Run(ctx, riverChain.Client)
 
-	syncHandler := NewSyncHandler(
+	streamService.syncHandler = NewSyncHandler(
 		wallet,
 		streamCache,
 		nodeRegistry,
-		streamRegistry,
+		streamService.streamRegistry,
 	)
 
-	streamService := &Service{
-		riverChain:     riverChain,
-		baseChain:      baseChain,
-		storage:        store,
-		cache:          streamCache,
-		chainAuth:      chainAuth,
-		wallet:         wallet,
-		exitSignal:     exitSignal,
-		nodeRegistry:   nodeRegistry,
-		streamRegistry: streamRegistry,
-		streamConfig:   &cfg.Stream,
-		networkConfig:  &cfg.Network,
-		syncHandler:    syncHandler,
-		serverCtx:      ctx,
-		startTime:      time.Now(),
-	}
+	streamService.streamConfig = &cfg.Stream
+	streamService.networkConfig = &cfg.Network
+	streamService.startTime = time.Now()
 
 	mux := httptrace.NewServeMux(
 		httptrace.WithResourceNamer(
@@ -289,13 +284,13 @@ func StartServer(
 	if listener == nil {
 		if cfg.Port == 0 {
 			log.Error("Port is not set")
-			return nil, RiverError(Err_BAD_CONFIG, "Port is not set")
+			return streamService, RiverError(Err_BAD_CONFIG, "Port is not set")
 		}
 		address := fmt.Sprintf("%s:%d", cfg.Address, cfg.Port)
 		listener, err = net.Listen("tcp", address)
 		if err != nil {
 			log.Error("failed to listen", "error", err)
-			return nil, AsRiverError(err, Err_INTERNAL).Func("StartServer")
+			return streamService, AsRiverError(err, Err_INTERNAL).Func("StartServer")
 		}
 		log.Info("Listening", "addr", address+streamServicePattern)
 	} else {
@@ -365,7 +360,7 @@ func StartServer(
 			}
 		} else {
 			log.Error("TLSConfig.Cert and TLSConfig.Key must be set")
-			return nil, err
+			return streamService, err
 		}
 	} else {
 		log.Info("Using H2C server")
@@ -375,7 +370,7 @@ func StartServer(
 
 	if err != nil {
 		log.Error("failed to create server", "err", err)
-		return nil, err
+		return streamService, err
 	}
 
 	streamService.httpServer = srv

@@ -77,7 +77,11 @@ func (lfb *chainMonitorBuilder) OnContractEvent(addr common.Address, cb OnChainE
 	return lfb
 }
 
-func (lfb *chainMonitorBuilder) OnContractWithTopicsEvent(addr common.Address, topics [][]common.Hash, cb OnChainEventCallback) ChainMonitorBuilder {
+func (lfb *chainMonitorBuilder) OnContractWithTopicsEvent(
+	addr common.Address,
+	topics [][]common.Hash,
+	cb OnChainEventCallback,
+) ChainMonitorBuilder {
 	lfb.eventCallbacks = append(lfb.eventCallbacks, &chainEventCallback{handler: cb, address: &addr, topics: topics})
 	return lfb
 }

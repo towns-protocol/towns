@@ -2,6 +2,7 @@ package client_simulator
 
 import (
 	"context"
+	"core/xchain/config"
 	"crypto/ecdsa"
 	"encoding/hex"
 	"math/big"
@@ -9,7 +10,7 @@ import (
 	"github.com/river-build/river/core/node/dlog"
 
 	xc "core/xchain/common"
-	"core/xchain/config"
+
 	e "core/xchain/contracts"
 
 	"github.com/ethereum/go-ethereum/accounts/abi/bind"
@@ -67,16 +68,22 @@ func ClientSimulator() {
 	checkRequestedResults := make(chan *e.IEntitlementCheckerEntitlementCheckRequested)
 
 	checkerFilterer, err := e.NewIEntitlementChecker(*xc.GetCheckerContractAddress(), client)
-
 	if err != nil {
 		log.Error("Failed call NewEntitlementCheckerEventsFilterer", "err", err)
 		return
 	}
 
-	checkerOpts := &bind.WatchOpts{Start: nil, Context: bc} // Replace with appropriate context and filter query if needed
+	checkerOpts := &bind.WatchOpts{
+		Start:   nil,
+		Context: bc,
+	} // Replace with appropriate context and filter query if needed
 
 	// checkRequestedSub, err := checkRequestedFilterer.WatchEntitlementCheckRequested(opts, checkRequestedResults, []common.Address{fromAddress})
-	checkRequestedSub, err := checkerFilterer.WatchEntitlementCheckRequested(checkerOpts, checkRequestedResults, []common.Address{fromAddress})
+	checkRequestedSub, err := checkerFilterer.WatchEntitlementCheckRequested(
+		checkerOpts,
+		checkRequestedResults,
+		[]common.Address{fromAddress},
+	)
 	if err != nil {
 		log.Error("Failed call WatchEntitlementCheckRequested", "err", err)
 		return
@@ -105,7 +112,10 @@ func ClientSimulator() {
 		return
 	}
 
-	auth, err := bind.NewKeyedTransactorWithChainID(privateKey, big.NewInt(31337)) // replace 31337 with your actual chainID
+	auth, err := bind.NewKeyedTransactorWithChainID(
+		privateKey,
+		big.NewInt(31337),
+	) // replace 31337 with your actual chainID
 	if err != nil {
 		log.Error("NewKeyedTransactorWithChainID", "err", err)
 		return
@@ -141,9 +151,18 @@ func ClientSimulator() {
 		select {
 		case checkRequestedResult := <-checkRequestedResults:
 			transactionId = checkRequestedResult.TransactionId
-			log.Info("Client checkRequestedResult event transactionId", "transactionId", hex.EncodeToString(transactionId[:]), "BlockNumber", checkRequestedResult.Raw.BlockNumber)
+			log.Info(
+				"Client checkRequestedResult event transactionId",
+				"transactionId",
+				hex.EncodeToString(transactionId[:]),
+				"BlockNumber",
+				checkRequestedResult.Raw.BlockNumber,
+			)
 
-			gatedOpts := &bind.WatchOpts{Start: &requestBlockNumber, Context: bc} // Replace with appropriate context and filter query if needed
+			gatedOpts := &bind.WatchOpts{
+				Start:   &requestBlockNumber,
+				Context: bc,
+			} // Replace with appropriate context and filter query if needed
 
 			resultSub, err = gated.WatchEntitlementCheckResultPosted(gatedOpts, resultPosted, [][32]byte{transactionId})
 			if err != nil {
@@ -164,14 +183,27 @@ func ClientSimulator() {
 
 		case result := <-resultPosted:
 
-			log.Info("Client Result event", "TransactionId", hex.EncodeToString(result.TransactionId[:]), "Result", result.Result, "BlockNumber", result.Raw.BlockNumber)
+			log.Info(
+				"Client Result event",
+				"TransactionId",
+				hex.EncodeToString(result.TransactionId[:]),
+				"Result",
+				result.Result,
+				"BlockNumber",
+				result.Raw.BlockNumber,
+			)
 			if result.TransactionId != transactionId {
-				log.Error("Client Result event transactionId != transactionId", "TransactionId", hex.EncodeToString(result.TransactionId[:]), "transactionId", hex.EncodeToString(transactionId[:]))
+				log.Error(
+					"Client Result event transactionId != transactionId",
+					"TransactionId",
+					hex.EncodeToString(result.TransactionId[:]),
+					"transactionId",
+					hex.EncodeToString(transactionId[:]),
+				)
 				return
 			}
 
 			nonce, err = client.PendingNonceAt(context.Background(), fromAddress)
-
 			if err != nil {
 				log.Error("Client PendingNonceAt error", "err", err)
 				return
@@ -190,7 +222,13 @@ func ClientSimulator() {
 			}
 			go func() {
 				removeBlockNum := xc.WaitForTransaction(client, tx)
-				log.Info("Client RemoveTransaction ", "TransactionId", hex.EncodeToString(result.TransactionId[:]), "blcokNumber", removeBlockNum) // for verifying tx on Etherscan
+				log.Info(
+					"Client RemoveTransaction ",
+					"TransactionId",
+					hex.EncodeToString(result.TransactionId[:]),
+					"blcokNumber",
+					removeBlockNum,
+				) // for verifying tx on Etherscan
 			}()
 			return
 		case err := <-checkRequestedSubCh:
@@ -205,5 +243,4 @@ func ClientSimulator() {
 			}
 		}
 	}
-
 }

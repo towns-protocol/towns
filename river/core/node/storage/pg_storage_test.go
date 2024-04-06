@@ -43,6 +43,7 @@ func setupTestWithMigration(
 		ctx,
 		dbUrl,
 		schemaName,
+		.1,
 		instanceId,
 		exitSignal,
 		migrations,
@@ -60,13 +61,13 @@ func setupTestWithMigration(
 
 func testMainImpl(m *testing.M) int {
 	ctx := test.NewTestContext()
-	dbUrl, dbSchemaName, closer, err := dbtestutils.StartDB(ctx)
+	dbCfg, dbSchemaName, closer, err := dbtestutils.StartDB(ctx)
 	if err != nil {
 		panic(err)
 	}
 
 	defer closer()
-	testDatabaseUrl = dbUrl
+	testDatabaseUrl = getDbURL(dbCfg)
 	testSchemaName = dbSchemaName
 
 	// Run tests
@@ -555,7 +556,11 @@ func TestExitIfSecondStorageCreated(t *testing.T) {
 	err := pgEventStore.CreateStreamStorage(ctx, streamId, genesisMiniblock)
 	require.NoError(err)
 
-	_, _, closerAlternateSchema, _ := setupTestWithMigration(testSchemaName+"-alternate", migrationsDir, testDatabaseUrl)
+	_, _, closerAlternateSchema, _ := setupTestWithMigration(
+		testSchemaName+"-alternate",
+		migrationsDir,
+		testDatabaseUrl,
+	)
 	defer closerAlternateSchema()
 	// A store using a different schema name will not cause an exit
 	require.Len(exitSignal, 0)
@@ -573,7 +578,6 @@ func TestExitIfSecondStorageCreated(t *testing.T) {
 	result, err := pgEventStore2.ReadStreamFromLastSnapshot(ctx, streamId, 0)
 	require.NoError(err)
 	require.NotNil(result)
-
 }
 
 // Test that if there is a gap in miniblocks sequence, we will get error
