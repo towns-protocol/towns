@@ -254,7 +254,7 @@ export class TownsClient implements EntitlementsDelegate {
     ): Promise<CreateSpaceTransactionContext> {
         const txContext = await this._waitForBlockchainTransaction(context)
         if (txContext.status === TransactionStatus.Success) {
-            console.log('[waitForCreateSpaceTransaction] space created on chain', txContext.data)
+            this.log('[waitForCreateSpaceTransaction] space created on chain', txContext.data)
             if (txContext.data) {
                 const spaceAddress = this.spaceDapp.getSpaceAddress(txContext.receipt)
                 if (!spaceAddress) {
@@ -271,7 +271,7 @@ export class TownsClient implements EntitlementsDelegate {
                 }
                 const result = await this.casablancaClient.createSpace(spaceId)
                 await this.casablancaClient.waitForStream(spaceId)
-                console.log('[waitForCreateSpaceTransaction] Space stream created', {
+                this.log('[waitForCreateSpaceTransaction] Space stream created', {
                     result: result,
                     spaceId,
                 })
@@ -279,14 +279,14 @@ export class TownsClient implements EntitlementsDelegate {
                 if (defaultUsernames.length > 0) {
                     // new space, no member, we can just set first username as default
                     await this.casablancaClient.setUsername(spaceId, defaultUsernames[0])
-                    console.log('[waitForCreateSpaceTransaction] Set default username', {
+                    this.log('[waitForCreateSpaceTransaction] Set default username', {
                         defaultUsername: defaultUsernames[0],
                         spaceId,
                     })
                 }
 
                 await this.createSpaceDefaultChannelRoom(spaceId, 'general', channelId)
-                console.log(
+                this.log(
                     '[waitForCreateSpaceTransaction] default channel stream created',
                     channelId,
                 )
@@ -332,7 +332,7 @@ export class TownsClient implements EntitlementsDelegate {
                 transaction = await this.spaceDapp.createSpace(args, signer)
             }
 
-            console.log(`[createCasablancaSpaceTransaction] transaction created` /*, transaction*/)
+            this.log(`[createCasablancaSpaceTransaction] transaction created` /*, transaction*/)
         } catch (err) {
             console.error('[createCasablancaSpaceTransaction] error', err)
             error = this.getDecodedErrorForSpaceFactory(err)
@@ -405,7 +405,7 @@ export class TownsClient implements EntitlementsDelegate {
         if (!signer) {
             throw new SignerUndefinedError()
         }
-        console.log('[createChannel] creating channel', createChannelInfo)
+        this.log('[createChannel] creating channel', createChannelInfo)
         const txContext = await this.createChannelTransaction(createChannelInfo, signer)
         if (txContext.error) {
             throw txContext.error
@@ -430,7 +430,7 @@ export class TownsClient implements EntitlementsDelegate {
         }
         const roomId: string = makeUniqueChannelStreamId(createChannelInfo.parentSpaceId)
 
-        console.log('[createChannelTransaction] Channel created', roomId)
+        this.log('[createChannelTransaction] Channel created', roomId)
 
         let transaction: TransactionOrUserOperation | undefined = undefined
         let error: Error | undefined = undefined
@@ -457,7 +457,7 @@ export class TownsClient implements EntitlementsDelegate {
             } else {
                 transaction = await this.spaceDapp.createChannel(...args)
             }
-            console.log(`[createChannelTransaction] transaction created` /*, transaction*/)
+            this.log(`[createChannelTransaction] transaction created` /*, transaction*/)
         } catch (err) {
             console.error('[createChannelTransaction] error', err)
             error = await this.getDecodedErrorForSpace(createChannelInfo.parentSpaceId, err)
@@ -490,7 +490,7 @@ export class TownsClient implements EntitlementsDelegate {
                 // wait until the channel is minted on-chain
                 // before creating the stream
                 await this.createChannelRoom(createChannelInfo, roomId)
-                console.log('[waitForCreateChannelTransaction] Channel stream created', roomId)
+                this.log('[waitForCreateChannelTransaction] Channel stream created', roomId)
             }
         }
 
@@ -544,7 +544,7 @@ export class TownsClient implements EntitlementsDelegate {
                     transaction = await this.spaceDapp.updateChannel(newChannelInfo, signer)
                 }
 
-                console.log(`[updateChannelTransaction] transaction created` /*, transaction*/)
+                this.log(`[updateChannelTransaction] transaction created` /*, transaction*/)
             } else {
                 // this is an off chain state update
             }
@@ -591,7 +591,7 @@ export class TownsClient implements EntitlementsDelegate {
             .get(updateChannelInfo.parentSpaceId)
             ?.view.spaceContent.spaceChannelsMetadata.get(updateChannelInfo.channelId)
 
-        console.log('[updateChannelRoom] channelProperties', {
+        this.log('[updateChannelRoom] channelProperties', {
             prev: channelProperties,
             new: updateChannelInfo,
         })
@@ -732,7 +732,7 @@ export class TownsClient implements EntitlementsDelegate {
             // https://linear.app/hnt-labs/issue/HNT-3112/implement-entitlement-checks
             isEntitled = true
         }
-        console.log(
+        this.log(
             `[isEntitled] [${subTag}] is user entitlted for channel and space for permission`,
             isEntitled,
             {
@@ -782,7 +782,7 @@ export class TownsClient implements EntitlementsDelegate {
                 transaction = await this.spaceDapp.createRole(...args)
             }
 
-            console.log(`[createRoleTransaction] transaction created` /*, transaction*/)
+            this.log(`[createRoleTransaction] transaction created` /*, transaction*/)
         } catch (err) {
             error = await this.spaceDapp.parseSpaceError(spaceNetworkId, err)
         }
@@ -849,7 +849,7 @@ export class TownsClient implements EntitlementsDelegate {
         }
         let transaction: ContractTransaction | undefined = undefined
         let error: Error | undefined = undefined
-        console.log('[addRoleToChannelTransaction] space', {
+        this.log('[addRoleToChannelTransaction] space', {
             spaceNetworkId,
             channelNetworkId,
             roleId,
@@ -861,7 +861,7 @@ export class TownsClient implements EntitlementsDelegate {
                 roleId,
                 signer,
             )
-            console.log(`[addRoleToChannelTransaction] transaction created` /*, transaction*/)
+            this.log(`[addRoleToChannelTransaction] transaction created` /*, transaction*/)
         } catch (err) {
             error = await this.spaceDapp.parseSpaceError(spaceNetworkId, err)
         }
@@ -898,7 +898,7 @@ export class TownsClient implements EntitlementsDelegate {
             } else {
                 transaction = await this.spaceDapp.updateSpaceName(...args)
             }
-            console.log(`[updateSpaceNameTransaction] transaction created` /*, transaction*/)
+            this.log(`[updateSpaceNameTransaction] transaction created` /*, transaction*/)
         } catch (err) {
             error = await this.spaceDapp.parseSpaceError(spaceNetworkId, err)
         }
@@ -953,7 +953,7 @@ export class TownsClient implements EntitlementsDelegate {
                 transaction = await this.spaceDapp.updateRole(args, signer)
             }
 
-            console.log(`[updateRoleTransaction] transaction created` /*, transaction*/)
+            this.log(`[updateRoleTransaction] transaction created` /*, transaction*/)
         } catch (err) {
             error = await this.spaceDapp.parseSpaceError(spaceNetworkId, err)
         }
@@ -1002,7 +1002,7 @@ export class TownsClient implements EntitlementsDelegate {
     ): Promise<BanUnbanWalletTransactionContext> {
         let transaction: TransactionOrUserOperation | undefined = undefined
         let error: Error | undefined = undefined
-        console.log('[banUserTransaction] space', { spaceId, walletAddress })
+        this.log('[banUserTransaction] space', { spaceId, walletAddress })
 
         const walletAddressWithToken = await this.walletAddressForMembership(spaceId, walletAddress)
         if (!walletAddressWithToken) {
@@ -1027,7 +1027,7 @@ export class TownsClient implements EntitlementsDelegate {
                     signer,
                 )
             }
-            console.log(`[banTransaction] transaction created`)
+            this.log(`[banTransaction] transaction created`)
         } catch (err) {
             error = await this.spaceDapp.parseSpaceError(spaceId, err)
         }
@@ -1054,7 +1054,7 @@ export class TownsClient implements EntitlementsDelegate {
     ): Promise<BanUnbanWalletTransactionContext> {
         let transaction: TransactionOrUserOperation | undefined = undefined
         let error: Error | undefined = undefined
-        console.log('[unbanUserTransaction] space', { spaceId, walletAddress })
+        this.log('[unbanUserTransaction] space', { spaceId, walletAddress })
 
         const walletAddressWithToken = await this.walletAddressForMembership(spaceId, walletAddress)
         if (!walletAddressWithToken) {
@@ -1079,7 +1079,7 @@ export class TownsClient implements EntitlementsDelegate {
                     signer,
                 )
             }
-            console.log(`[unbanTransaction] transaction created`)
+            this.log(`[unbanTransaction] transaction created`)
         } catch (err) {
             error = await this.spaceDapp.parseSpaceError(spaceId, err)
         }
@@ -1137,7 +1137,7 @@ export class TownsClient implements EntitlementsDelegate {
             } else {
                 transaction = await this.spaceDapp.deleteRole(spaceNetworkId, roleId, signer)
             }
-            console.log(`[deleteRoleTransaction] transaction created` /*, transaction*/)
+            this.log(`[deleteRoleTransaction] transaction created` /*, transaction*/)
         } catch (err) {
             error = await this.spaceDapp.parseSpaceError(spaceNetworkId, err)
         }
@@ -1186,7 +1186,7 @@ export class TownsClient implements EntitlementsDelegate {
             throw decodedError
         } finally {
             if (receipt?.status === 1) {
-                console.log('[setSpaceAccess] successful')
+                this.log('[setSpaceAccess] successful')
                 success = true
             } else {
                 console.error('[setSpaceAccess] failed')
@@ -1265,13 +1265,13 @@ export class TownsClient implements EntitlementsDelegate {
 
         const joinRiverRoom = async () => {
             const room = await this.joinRoom(spaceId)
-            console.log('[joinTown] room', room)
+            this.log('[joinTown] room', room)
             // join the default channels
             const spaceContent = this.casablancaClient?.streams.get(spaceId)?.view.spaceContent
             if (spaceContent) {
                 for (const [key, value] of spaceContent.spaceChannelsMetadata.entries()) {
                     if (value.isDefault) {
-                        console.log('[joinTown] joining default channel', key)
+                        this.log('[joinTown] joining default channel', key)
                         await this.joinRoom(key, undefined, {
                             skipWaitForMiniblockConfirmation: true,
                             skipWaitForUserStreamUpdate: true,
@@ -1289,14 +1289,14 @@ export class TownsClient implements EntitlementsDelegate {
                 .concat(this.spaceDapp.hasSpaceMembership(spaceId, userId))
             const results = await Promise.all(allPromises)
             if (results.some((result) => result)) {
-                console.log('[joinTown] already have member nft')
+                this.log('[joinTown] already have member nft')
                 const room = await joinRiverRoom()
                 return room
             }
         } catch (error) {
             // skip if no membership nft found
             if (error instanceof AggregateError) {
-                console.log('[joinTown] no membership nft found, proceeding with mint', error)
+                this.log('[joinTown] no membership nft found, proceeding with mint', error)
             }
             // otherwise some other error occurred
             else {
@@ -1305,9 +1305,9 @@ export class TownsClient implements EntitlementsDelegate {
         }
 
         try {
-            console.log('[joinTown] minting membership')
+            this.log('[joinTown] minting membership')
             await this.mintMembershipTransaction(spaceId, signer)
-            console.log('[joinTown] minted membership')
+            this.log('[joinTown] minted membership')
         } catch (error: unknown) {
             if (
                 error &&
@@ -1318,7 +1318,7 @@ export class TownsClient implements EntitlementsDelegate {
                     // TODO: is this correct revert? https://linear.app/hnt-labs/issue/HNT-5147/trying-to-mint-membership-nft-when-you-already-own-it-reverts-with
                     error.name.match('Entitlement__NotAllowed'))
             ) {
-                console.log('[joinTown] already member')
+                this.log('[joinTown] already member')
             } else {
                 console.error('[joinTown] mint membership failed', error)
                 throw error
@@ -1332,7 +1332,7 @@ export class TownsClient implements EntitlementsDelegate {
      * mintMembershipTransaction
      *************************************************/
     public async mintMembershipTransaction(spaceId: string, signer: ethers.Signer) {
-        console.log('[mintMembershipTransaction] start')
+        this.log('[mintMembershipTransaction] start')
 
         const rootWallet = (await signer?.getAddress()) ?? ''
         let transaction: TransactionOrUserOperation | undefined = undefined
@@ -1513,7 +1513,7 @@ export class TownsClient implements EntitlementsDelegate {
             reaction,
             refEventId: eventId,
         })
-        console.log('sendReaction')
+        this.log('sendReaction')
     }
 
     /************************************************
@@ -1743,7 +1743,7 @@ export class TownsClient implements EntitlementsDelegate {
             } else {
                 transaction = await walletLink.linkWalletToRootKey(rootKey, wallet)
             }
-            console.log(`[linkEOAToRootKey] transaction created` /*, transaction*/)
+            this.log(`[linkEOAToRootKey] transaction created` /*, transaction*/)
             // eslint-disable-next-line @typescript-eslint/no-explicit-any
         } catch (err: any) {
             const parsedError = walletLink.parseError(err)
@@ -1811,7 +1811,7 @@ export class TownsClient implements EntitlementsDelegate {
                 walletAddress = await wallet.getAddress()
                 transaction = await walletLink.linkCallerToRootKey(rootKey, wallet)
             }
-            console.log(`[linkCallerToRootKey] transaction created` /*, transaction*/)
+            this.log(`[linkCallerToRootKey] transaction created` /*, transaction*/)
             // eslint-disable-next-line @typescript-eslint/no-explicit-any
         } catch (err: any) {
             const parsedError = walletLink.parseError(err)
@@ -1933,20 +1933,6 @@ export class TownsClient implements EntitlementsDelegate {
         for (const walletAddress of wallets) {
             if (await this.spaceDapp.hasSpaceMembership(spaceId, walletAddress)) {
                 return walletAddress
-            }
-        }
-        return undefined
-    }
-
-    // eslint-disable-next-line @typescript-eslint/no-explicit-any
-    private getWalletRejectionError(error: any): Error | undefined {
-        // eslint-disable-next-line @typescript-eslint/no-unsafe-assignment, @typescript-eslint/no-unsafe-member-access
-        if (error?.code === 'ACTION_REJECTED' && !error?.error) {
-            return {
-                // eslint-disable-next-line @typescript-eslint/no-unsafe-assignment, @typescript-eslint/no-unsafe-member-access
-                name: error?.code,
-                // eslint-disable-next-line @typescript-eslint/no-unsafe-assignment, @typescript-eslint/no-unsafe-member-access
-                message: error.message,
             }
         }
         return undefined
