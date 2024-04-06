@@ -1,9 +1,10 @@
+import React, { useCallback, useMemo } from 'react'
 import { ELEMENT_MENTION, TMentionElement } from '@udecode/plate-mention'
 import { clsx } from 'clsx'
-import React, { useCallback, useMemo } from 'react'
 import { Channel, RoomMember } from 'use-towns-client'
+import { CodeBlockElement } from '@components/RichTextPlate/components/plate-ui/CodeBlockElement'
 import { MessageStatusAnnotation } from '@components/RichText/hooks/useInitialConfig'
-import { Box } from '@ui'
+import { Box, Text } from '@ui'
 import { TChannelMentionElement } from './utils/ComboboxTypes'
 import { ELEMENT_MENTION_CHANNEL } from './plugins/createChannelPlugin'
 import { MentionElementWithoutPlate } from './components/plate-ui/MentionElement'
@@ -16,7 +17,7 @@ import { LinkWithoutPlate } from './components/plate-ui/LinkElement'
 import { ListElement } from './components/plate-ui/ListElement'
 import { ParagraphWithoutPlate } from './components/plate-ui/ParagraphElement'
 import { richText, singleEmojiMessage } from './RichTextEditor.css'
-import { Markdown } from './utils/markdownToJSX'
+import MarkdownToJSX from './utils/MarkdownToJSX'
 
 const fieldClassName = clsx([fieldStyles.field, richText])
 
@@ -32,7 +33,7 @@ export const RichTextPreview = React.memo(
     }) => {
         const { content, statusAnnotation, members, channels, onMentionClick, onMentionHover } =
             props
-
+        const ref = React.useRef<HTMLElement>(null)
         const _onMentionHover = useCallback(
             (element?: HTMLElement, username?: string) => {
                 if (!onMentionHover) {
@@ -67,8 +68,22 @@ export const RichTextPreview = React.memo(
                 li: (props: React.PropsWithChildren) => (
                     <ListElement variant="li">{props.children}</ListElement>
                 ),
+                lic: (props: React.PropsWithChildren) => (
+                    <ListElement variant="span">{props.children}</ListElement>
+                ),
                 p: ParagraphWithoutPlate,
+                strong: (props: React.PropsWithChildren) => (
+                    <Text strong display="inline" as="span">
+                        {props.children}
+                    </Text>
+                ),
+                em: (props: React.PropsWithChildren) => (
+                    <Text display="inline" as="span" style={{ fontStyle: 'italic' }}>
+                        {props.children}
+                    </Text>
+                ),
                 code: CodeLeaf,
+                pre: (props: React.PropsWithChildren) => <CodeBlockElement ref={ref} {...props} />,
                 blockquote: BlockquoteElement,
                 a: LinkWithoutPlate,
                 [ELEMENT_MENTION]: (props: React.PropsWithChildren<{ node: TMentionElement }>) => (
@@ -99,9 +114,9 @@ export const RichTextPreview = React.memo(
                         [singleEmojiMessage]: isSingleEmoji,
                     })}
                 >
-                    <Markdown components={memoizedComponents} channels={channels}>
+                    <MarkdownToJSX components={memoizedComponents} channels={channels}>
                         {content}
-                    </Markdown>
+                    </MarkdownToJSX>
                     {statusAnnotation === 'edited' && (
                         <Box as="span" color="gray2" fontSize="sm">
                             (edited)

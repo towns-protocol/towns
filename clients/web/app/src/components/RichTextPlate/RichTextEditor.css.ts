@@ -150,7 +150,6 @@ export const code = style([
         fontFamily: 'monospace',
         fontSize: vars.fontSize.sm,
         tabSize: vars.space.md,
-        whiteSpace: 'break-spaces',
         overflowWrap: 'anywhere',
     },
 ])
@@ -165,6 +164,7 @@ export const codeBlock = style([
     }),
     {
         marginBottom: vars.space.sm,
+        whiteSpace: 'pre-wrap',
     },
     code,
 ])
@@ -191,6 +191,11 @@ globalStyle(`${richText}${singleEmojiMessage} p`, {
 globalStyle(`${richText} ul ul, ${richText} ul ol`, {
     marginLeft: vars.space.md,
 })
+
+globalStyle(`${richText} ${codeBlock} ${code}`, {
+    border: 'none',
+})
+
 globalStyle(`${richText} ${listitem} > *`, {
     verticalAlign: 'text-top',
 })

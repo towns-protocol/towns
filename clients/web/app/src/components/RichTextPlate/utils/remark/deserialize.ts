@@ -93,7 +93,12 @@ export default function deserialize<T extends InputNodeTypes>(
             return {
                 type: types.code_block,
                 language: node.lang,
-                children: [{ text: node.value }],
+                children:
+                    typeof node.value === 'string'
+                        ? node.value
+                              .split('\n')
+                              .map((val) => ({ type: 'code_line', children: [{ text: val }] }))
+                        : [{ text: node.value }],
             } as CodeBlockNode<T>
         case ELEMENT_MENTION: {
             return {
@@ -145,6 +150,7 @@ export default function deserialize<T extends InputNodeTypes>(
                 text: node.value,
                 ...persistLeafFormats(children as Array<MdastNode>),
             }
+        case 'break':
         case 'thematicBreak':
             return {
                 type: types.thematic_break,

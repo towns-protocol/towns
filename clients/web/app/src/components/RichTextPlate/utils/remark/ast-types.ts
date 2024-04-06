@@ -43,6 +43,7 @@ export type MdastNodeType =
     | 'strong'
     | 'delete'
     | 'inlineCode'
+    | 'break'
     | 'thematicBreak'
     | 'text'
     | typeof ELEMENT_MENTION
