@@ -19,8 +19,9 @@ import { TownsTestWeb3Provider } from './TownsTestWeb3Provider'
 import { ethers } from 'ethers'
 import { makeUniqueName } from './TestUtils'
 import { toEvent } from '../../../src/hooks/TownsContext/useCasablancaTimelines'
-import { Client as CasablancaClient, makeSignerContext } from '@river/sdk'
+import { Client as CasablancaClient, makeSignerContext, userIdFromAddress } from '@river/sdk'
 import { Permission, IArchitectBase, IRuleEntitlement } from '@river-build/web3'
+import { bin_fromHexString } from '@river-build/dlog'
 
 export interface TownsTestClientProps {
     eventHandlers?: TownsClientEventHandlers
@@ -49,6 +50,9 @@ export class TownsTestClient extends TownsClient {
     public delegateWallet: ethers.Wallet
     public get walletAddress(): string | undefined {
         return this.provider.wallet.address
+    }
+    public get userId(): string {
+        return userIdFromAddress(bin_fromHexString(this.provider.wallet.address))
     }
 
     constructor(name: string, props?: TownsTestClientProps, wallet?: ethers.Wallet) {
@@ -82,8 +86,8 @@ export class TownsTestClient extends TownsClient {
     /************************************************
      * getUserId
      ************************************************/
-    getUserId(): string | undefined {
-        return this.casablancaClient?.userId
+    getUserId(): string {
+        return this.userId
     }
 
     /************************************************
@@ -92,7 +96,7 @@ export class TownsTestClient extends TownsClient {
     public async createSpace(
         createSpaceInfo: CreateSpaceInfo,
         membership: IArchitectBase.MembershipStruct,
-    ): Promise<string | undefined> {
+    ): Promise<string> {
         const txContext = await this.createSpaceTransaction(
             createSpaceInfo,
             membership,
@@ -106,10 +110,16 @@ export class TownsTestClient extends TownsClient {
             if (rxContext.error) {
                 throw rxContext.error
             }
-            return rxContext.data?.spaceId
+            if (!rxContext.data) {
+                throw new Error('createSpaceTransaction has no data')
+            }
+            if (!rxContext.data.spaceId) {
+                throw new Error('createSpaceTransaction has no spaceId')
+            }
+            return rxContext.data.spaceId
         }
         // Something went wrong. Don't return a room identifier.
-        return undefined
+        throw new Error('createSpaceTransaction failed')
     }
 
     /************************************************

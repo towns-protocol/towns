@@ -38,16 +38,16 @@ describe('mentionsHooks', () => {
         // bob needs funds to create a space
         await bob.fundWallet()
         // create a space
-        const spaceId = (await createTestSpaceGatedByTownNft(bob, [
+        const spaceId = await createTestSpaceGatedByTownNft(bob, [
             Permission.Read,
             Permission.Write,
-        ])) as string
+        ])
         // create a channel
-        const channelId = (await createTestChannelWithSpaceRoles(bob, {
+        const channelId = await createTestChannelWithSpaceRoles(bob, {
             name: 'bobs channel',
             parentSpaceId: spaceId,
             roleIds: [],
-        })) as string
+        })
         expect(spaceId).toBeDefined()
         expect(channelId).toBeDefined()
         // alice join space and channel

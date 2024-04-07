@@ -34,19 +34,19 @@ describe('sendAMessage', () => {
         // bob needs funds to create a space
         await bob.fundWallet()
         // create a space
-        const spaceId = (await createTestSpaceGatedByTownNft(
+        const spaceId = await createTestSpaceGatedByTownNft(
             bob,
             [Permission.Read, Permission.Write],
             {
                 name: bob.makeUniqueName(),
             },
-        ))!
+        )
         // create a channel
-        const channelId = (await createTestChannelWithSpaceRoles(bob, {
+        const channelId = await createTestChannelWithSpaceRoles(bob, {
             name: 'bobs channel',
             parentSpaceId: spaceId,
             roleIds: [],
-        })) as string
+        })
 
         console.log("bob's spaceId", { spaceId, channelId })
 
@@ -104,7 +104,7 @@ describe('sendAMessage', () => {
         for (let i = 1; i < numClients; i++) {
             console.log(`!!!!!! client ${i} sends a message`)
             const client = clients[`client_${i}`]
-            await client.sendMessage(channelId, `Hello Bob! from ${client.getUserId()!}`)
+            await client.sendMessage(channelId, `Hello Bob! from ${client.getUserId()}`)
         }
 
         await waitFor(() => {
@@ -115,7 +115,7 @@ describe('sendAMessage', () => {
         await waitFor(() => {
             const client = clients[`client_${1}`]
             const events = getMessages(bobRecievedEvents)
-            expect(events).toContain(`Hello Bob! from ${client.getUserId()!}`)
+            expect(events).toContain(`Hello Bob! from ${client.getUserId()}`)
         })
 
         await bob.leave(channelId)

@@ -44,23 +44,21 @@ describe('sendMessageHooks', () => {
         // jane needs funds to create a space
         await jane.fundWallet()
         // create a space
-        const janesSpaceId = (await createTestSpaceGatedByTownNft(
+        const janesSpaceId = await createTestSpaceGatedByTownNft(
             jane,
             [Permission.Read, Permission.Write],
             {
                 name: makeUniqueName('janes space'),
             },
-        )) as string
+        )
         // create a space
         //
-        let janesChannelId: string
-        if (janesSpaceId) {
-            janesChannelId = (await createTestChannelWithSpaceRoles(jane, {
-                name: 'janes channel',
-                parentSpaceId: janesSpaceId,
-                roleIds: [],
-            })) as string
-        }
+        const janesChannelId = await createTestChannelWithSpaceRoles(jane, {
+            name: 'janes channel',
+            parentSpaceId: janesSpaceId,
+            roleIds: [],
+        })
+
         // create a veiw for bob
         const TestRoomMessages = ({ signer }: { signer: TSigner }) => {
             const { sendMessage, editMessage, redactEvent } = useTownsClient()
@@ -160,7 +158,7 @@ describe('sendMessageHooks', () => {
         render(
             <TownsTestApp provider={bobProvider}>
                 <SpaceContextProvider spaceId={janesSpaceId}>
-                    <ChannelContextProvider channelId={janesChannelId!}>
+                    <ChannelContextProvider channelId={janesChannelId}>
                         <TestRoomMessages signer={bobProvider.wallet} />
                     </ChannelContextProvider>
                 </SpaceContextProvider>

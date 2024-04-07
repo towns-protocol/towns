@@ -18,17 +18,17 @@ describe.skip('disable channel', () => {
         const { alice } = await registerAndStartClients(['alice'])
         await alice.fundWallet()
 
-        const roomId = await createTestSpaceGatedByTownsNfts(alice, [Permission.Read])
-        const spaceNetworkId: string | undefined = roomId
+        const spaceNetworkId = await createTestSpaceGatedByTownsNfts(alice, [Permission.Read])
+
         /** Act */
         // set space access off, disabling space in TownsSpaceManager
         const success: boolean | undefined = await alice.setSpaceAccess(
-            spaceNetworkId as string,
+            spaceNetworkId,
             true,
             alice.provider.wallet,
         )
 
-        const spaceInfo = await alice.getSpaceInfoBySpaceId(spaceNetworkId as string)
+        const spaceInfo = await alice.getSpaceInfoBySpaceId(spaceNetworkId)
 
         /** Assert */
         expect(success).toEqual(true)
@@ -81,7 +81,7 @@ describe.skip('disable channel', () => {
         /** Act */
         // set space access off, disabling space in TownsSpaceManager
         const error = await getError<Error>(async function () {
-            await bob.setSpaceAccess(spaceNetworkId as string, true, bob.provider.wallet)
+            await bob.setSpaceAccess(spaceNetworkId, true, bob.provider.wallet)
         })
 
         /* Assert */

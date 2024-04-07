@@ -16,20 +16,15 @@ describe('On-chain channel creation tests', () => {
             Permission.Read,
             Permission.Write,
         ])
-        let channel: string | undefined
-
-        /* Act */
-        if (roomId) {
-            // create a channel on-chain with no roles
-            channel = await alice.createChannel(
-                {
-                    name: 'test_channel',
-                    parentSpaceId: roomId,
-                    roleIds: [],
-                },
-                alice.provider.wallet,
-            )
-        }
+        // create a channel on-chain with no roles
+        const channel = await alice.createChannel(
+            {
+                name: 'test_channel',
+                parentSpaceId: roomId,
+                roleIds: [],
+            },
+            alice.provider.wallet,
+        )
 
         /* Assert */
         expect(channel).toBeDefined()
@@ -41,10 +36,10 @@ describe('On-chain channel creation tests', () => {
         await alice.fundWallet()
 
         // create a space with token entitlement to write
-        const roomId = (await createTestSpaceGatedByTownsNfts(alice, [
+        const roomId = await createTestSpaceGatedByTownsNfts(alice, [
             Permission.Read,
             Permission.Write,
-        ])) as string
+        ])
 
         /* Act */
         // create a channel on-chain with roles from the space
@@ -53,14 +48,14 @@ describe('On-chain channel creation tests', () => {
         for (const r of allowedRoles) {
             roleIds.push(r.roleId)
         }
-        const channel = (await alice.createChannel(
+        const channel = await alice.createChannel(
             {
                 name: 'test_channel',
                 parentSpaceId: roomId,
                 roleIds,
             },
             alice.provider.wallet,
-        )) as string
+        )
 
         /* Assert */
         expect(channel).toBeTruthy()
@@ -72,10 +67,10 @@ describe('On-chain channel creation tests', () => {
         await alice.fundWallet()
 
         // create a space with token entitlement to write
-        const roomId = (await createTestSpaceGatedByTownsNfts(alice, [
+        const roomId = await createTestSpaceGatedByTownsNfts(alice, [
             Permission.Read,
             Permission.Write,
-        ])) as string
+        ])
 
         /* Act */
         // create a channel on-chain with roles from the space

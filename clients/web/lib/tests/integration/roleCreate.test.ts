@@ -118,14 +118,14 @@ describe('create role', () => {
         const permissions = [Permission.Ban]
         const users: string[] = []
         const roleIdentifier: RoleIdentifier | undefined = await alice.createRole(
-            roomId as string,
+            roomId,
             'newRole1',
             permissions,
             users,
             NoopRuleData,
         )
         const roleIdentifier2: RoleIdentifier | undefined = await alice.createRole(
-            roomId as string,
+            roomId,
             'newRole2',
             permissions,
             users,

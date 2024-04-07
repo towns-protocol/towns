@@ -26,16 +26,16 @@ describe('roomAccountData', () => {
         // bob needs funds to create a space
         await bob.fundWallet()
         // bob creates a public room
-        const spaceId = (await createTestSpaceGatedByTownNft(bob, [
+        const spaceId = await createTestSpaceGatedByTownNft(bob, [
             Permission.Read,
             Permission.Write,
-        ])) as string
+        ])
 
-        const channelId = (await createTestChannelWithSpaceRoles(bob, {
+        const channelId = await createTestChannelWithSpaceRoles(bob, {
             name: 'bobs channel',
             parentSpaceId: spaceId,
             roleIds: [],
-        }))!
+        })
 
         // alice joins the space
         await alice.joinTown(spaceId, alice.wallet)

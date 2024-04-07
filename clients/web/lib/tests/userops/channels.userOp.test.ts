@@ -109,13 +109,13 @@ test("can create a channel when role is gated by user's smart account", async ()
     await waitForWithRetries(() => isSmartAccountDeployed(alice))
     await sleepBetweenTxs()
 
-    expect(alice.getRoomMember(spaceId!, alice.getUserId()!)).toBeTruthy()
+    expect(alice.getRoomMember(spaceId!, alice.getUserId())).toBeTruthy()
 
     const room = await bob.joinTown(spaceId!, bob.wallet)
     await waitForWithRetries(() => isSmartAccountDeployed(bob))
     await sleepBetweenTxs()
 
-    expect(room.members.map((m) => m.userId).includes(bob.getUserId()!)).toBeTruthy()
+    expect(room.members.map((m) => m.userId).includes(bob.getUserId())).toBeTruthy()
 
     const bobsSmartAccount = await bob.getAbstractAccountAddress({
         rootKeyAddress: bob.wallet.address as Address,

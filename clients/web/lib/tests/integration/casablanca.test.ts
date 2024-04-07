@@ -53,20 +53,20 @@ describe('casablanca', () => {
         await bob.fundWallet()
 
         log("Bob's wallet funded, creating a space")
-        const spaceId = (await createTestSpaceGatedByTownNft(
+        const spaceId = await createTestSpaceGatedByTownNft(
             bob,
             [Permission.Read, Permission.Write],
             {
                 name: bob.makeUniqueName(),
             },
-        ))!
+        )
 
         log("Bob's space created, creating a channel")
-        const channelId = (await createTestChannelWithSpaceRoles(bob, {
+        const channelId = await createTestChannelWithSpaceRoles(bob, {
             name: 'bobs channel',
             parentSpaceId: spaceId,
             roleIds: [],
-        }))!
+        })
 
         log("bob's spaceId and channelId", { spaceId, channelId })
         log('Sending a message from Bob')
@@ -91,20 +91,20 @@ describe('casablanca', () => {
         await bob.fundWallet()
 
         log("Bob's wallet funded, creating a space")
-        const spaceId = (await createTestSpaceGatedByTownNft(
+        const spaceId = await createTestSpaceGatedByTownNft(
             bob,
             [Permission.Read, Permission.Write],
             {
                 name: bob.makeUniqueName(),
             },
-        ))!
+        )
 
         log("Bob's space created, creating a channel")
-        const channelId = (await createTestChannelWithSpaceRoles(bob, {
+        const channelId = await createTestChannelWithSpaceRoles(bob, {
             name: 'bobs channel',
             parentSpaceId: spaceId,
             roleIds: [],
-        }))!
+        })
 
         log("bob's spaceId and channelId", { spaceId, channelId })
 
@@ -136,20 +136,20 @@ describe('casablanca', () => {
         await bob.fundWallet()
 
         log("Bob's wallet funded, creating a space")
-        const spaceId = (await createTestSpaceGatedByTownNft(
+        const spaceId = await createTestSpaceGatedByTownNft(
             bob,
             [Permission.Read, Permission.Write],
             {
                 name: bob.makeUniqueName(),
             },
-        ))!
+        )
 
         log("Bob's space created, creating a channel")
-        const channelId = (await createTestChannelWithSpaceRoles(bob, {
+        const channelId = await createTestChannelWithSpaceRoles(bob, {
             name: 'bobs channel',
             parentSpaceId: spaceId,
             roleIds: [],
-        }))!
+        })
 
         log("bob's spaceId and channelId", { spaceId, channelId })
 

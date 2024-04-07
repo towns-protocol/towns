@@ -29,17 +29,17 @@ describe('spaceHierarchy', () => {
         // bob needs funds to create a space
         await bob.fundWallet()
         // bob creates a space
-        const spaceId = (await createTestSpaceGatedByTownsNfts(bob, [
+        const spaceId = await createTestSpaceGatedByTownsNfts(bob, [
             Permission.Read,
             Permission.Write,
-        ])) as string
+        ])
 
         // bob creates a room
-        const roomId = (await createTestChannelWithSpaceRoles(bob, {
+        const roomId = await createTestChannelWithSpaceRoles(bob, {
             name: 'bobs channel',
             parentSpaceId: spaceId,
             roleIds: [],
-        })) as string
+        })
 
         await waitFor(() => {
             const bob_spaceInfo = toSpaceHierarchy(bob.casablancaClient!, spaceId)
@@ -71,20 +71,20 @@ describe('spaceHierarchy', () => {
         // bob needs funds to create a space
         await bob.fundWallet()
         // bob creates a space
-        const spaceId = (await createTestSpaceGatedByTownsNfts(
+        const spaceId = await createTestSpaceGatedByTownsNfts(
             bob,
             [Permission.Read, Permission.Write],
             {
                 name: makeUniqueName('bobs space'),
             },
-        )) as string
+        )
 
         // bob creates a room
-        const roomId = (await createTestChannelWithSpaceRoles(bob, {
+        const roomId = await createTestChannelWithSpaceRoles(bob, {
             name: 'bobs channel',
             parentSpaceId: spaceId,
             roleIds: [],
-        })) as string
+        })
 
         await waitFor(() => {
             const bob_spaceInfo = toSpaceHierarchy(bob.casablancaClient!, spaceId)
@@ -95,7 +95,7 @@ describe('spaceHierarchy', () => {
         expect(toSpaceHierarchy(alice.casablancaClient!, spaceId)?.channels).toStrictEqual([])
 
         // bob invites alice
-        await bob.inviteUser(spaceId, alice.getUserId()!)
+        await bob.inviteUser(spaceId, alice.getUserId())
 
         // alice joins the space
         await alice.joinTown(spaceId, alice.wallet)

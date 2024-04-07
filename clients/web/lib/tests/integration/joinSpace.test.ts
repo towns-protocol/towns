@@ -34,10 +34,7 @@ test('create space, and have user join', async () => {
     // bob needs funds to create a space
     await bob.fundWallet()
     // bob creates a space
-    const spaceId = (await createTestSpaceGatedByTownsNfts(bob, [
-        Permission.Read,
-        Permission.Write,
-    ])) as string
+    const spaceId = await createTestSpaceGatedByTownsNfts(bob, [Permission.Read, Permission.Write])
 
     // alice joins the space
     await alice.joinTown(spaceId, alice.wallet)
@@ -60,7 +57,7 @@ test('create space, and have user join', async () => {
     const channelStream = alice.casablancaClient?.streams.get(channelId)
     expect(channelStream).toBeDefined()
     await waitFor(() =>
-        expect(channelStream!.view.getMembers().isMemberJoined(alice.getUserId()!)).toBeTruthy(),
+        expect(channelStream!.view.getMembers().isMemberJoined(alice.getUserId())).toBeTruthy(),
     )
     const userStreamId = alice.casablancaClient?.userStreamId
     const userStream = alice.casablancaClient?.streams.get(userStreamId!)
@@ -77,8 +74,6 @@ test('create space, and have user that already has membership NFT join ', async 
     await bob.fundWallet()
     // bob creates a space
     const spaceId = await createTestSpaceGatedByTownNft(bob, [Permission.Read, Permission.Write])
-
-    assert(spaceId !== undefined, 'createTestSpaceGatedByTownsNfts failed')
 
     await alice.mintMembershipTransaction(spaceId, alice.wallet)
     // alice joins the space
@@ -100,8 +95,6 @@ test('create a space with a fixed cost, user must pay to join', async () => {
         Permission.Read,
         Permission.Write,
     ])
-
-    assert(spaceId !== undefined, 'createPaidTestSpaceGatedByTownNft failed')
 
     const spaceInfo = await bob.spaceDapp.getMembershipInfo(spaceId)
     assert(spaceInfo !== undefined, 'spaceInfo undefined')
@@ -135,8 +128,6 @@ test('create a space with a fixed cost that is higher than joining user balance'
         [Permission.Read, Permission.Write],
         +FIXED_COST,
     )
-
-    assert(spaceId !== undefined, 'createPaidTestSpaceGatedByTownNft failed')
 
     const spaceInfo = await bob.spaceDapp.getMembershipInfo(spaceId)
     assert(spaceInfo !== undefined, 'spaceInfo undefined')

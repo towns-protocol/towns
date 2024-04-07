@@ -44,19 +44,19 @@ describe('sendReactionHooks', () => {
         // jane needs funds to create a space
         await jane.fundWallet()
         // create a space
-        const janesSpaceId = (await createTestSpaceGatedByTownNft(
+        const janesSpaceId = await createTestSpaceGatedByTownNft(
             jane,
             [Permission.Read, Permission.Write],
             {
                 name: makeUniqueName('janes space'),
             },
-        )) as string
+        )
         //
-        const janesChannelId = (await createTestChannelWithSpaceRoles(jane, {
+        const janesChannelId = await createTestChannelWithSpaceRoles(jane, {
             name: 'janes channel',
             parentSpaceId: janesSpaceId,
             roleIds: [],
-        })) as string
+        })
         // create a veiw for bob
         const TestRoomMessages = ({ signer }: { signer: TSigner }) => {
             const { sendReaction } = useTownsClient()

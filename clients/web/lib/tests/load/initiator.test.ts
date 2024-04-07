@@ -34,20 +34,20 @@ describe('loadtest1', () => {
         await bob.fundWallet()
 
         // First user (Bob) creates a space
-        const spaceId = (await createTestSpaceGatedByTownNft(
+        const spaceId = await createTestSpaceGatedByTownNft(
             bob,
             [Permission.Read, Permission.Write],
             {
                 name: bob.makeUniqueName(),
             },
-        ))!
+        )
 
         // First user (Bob) creates a channel
-        const channelId = (await createTestChannelWithSpaceRoles(bob, {
+        const channelId = await createTestChannelWithSpaceRoles(bob, {
             name: 'bobs channel',
             parentSpaceId: spaceId,
             roleIds: [],
-        })) as string
+        })
 
         // All other users join the space
         const joinTownPromises: Promise<unknown>[] = []

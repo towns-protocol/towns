@@ -30,19 +30,11 @@ describe('historyVisibility', () => {
             },
         )
 
-        if (!spaceId) {
-            throw new Error('spaceId is undefined')
-        }
-
         const roomId = await createTestChannelWithSpaceRoles(bob, {
             parentSpaceId: spaceId,
             name: 'bobs channel',
             roleIds: [],
         })
-
-        if (!roomId) {
-            throw new Error('roomId is undefined')
-        }
 
         await john.joinTown(spaceId, john.wallet)
 

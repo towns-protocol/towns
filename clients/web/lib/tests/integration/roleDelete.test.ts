@@ -75,9 +75,6 @@ describe('delete role', () => {
             },
             alice.provider.wallet,
         )
-        if (!channel) {
-            throw new Error('channel is undefined')
-        }
         // sanity check: bob joins the space successfully
         // have to join and mint b/c down below there is a check to see if bob is entitled to the space
         await bobWithNft.joinTown(roomId, bobWithNft.wallet)
@@ -146,7 +143,7 @@ describe('delete role', () => {
         expect(
             await bobWithNft.spaceDapp.isEntitledToSpace(
                 spaceId,
-                bobWithNft.getUserId()!,
+                bobWithNft.getUserId(),
                 Permission.Read,
             ),
         ).toBe(true)
@@ -155,7 +152,7 @@ describe('delete role', () => {
             await bobWithNft.spaceDapp.isEntitledToChannel(
                 spaceId,
                 channel,
-                bobWithNft.getUserId()!,
+                bobWithNft.getUserId(),
                 Permission.Read,
             ),
         ).toBe(false)
@@ -170,7 +167,7 @@ describe('delete role', () => {
         const newRoleName = 'newRole1'
         const newPermissions = [Permission.Read, Permission.Write]
         // add bob to the users list
-        const newUsers: string[] = [bob.getUserId()!, carol.getUserId()!]
+        const newUsers: string[] = [bob.getUserId(), carol.getUserId()]
         // create a new test space
         await alice.fundWallet()
         const roomId = await createTestSpaceGatedByTownsNfts(alice, [
@@ -203,9 +200,6 @@ describe('delete role', () => {
             },
             alice.provider.wallet,
         )
-        if (!channel) {
-            throw new Error('channel is undefined')
-        }
         // sanity check: bob joins the space successfully
         await waitForWithRetries(() => bob.joinRoom(channel, spaceId))
         // bob leaves the room so that we can delete the role, and test
@@ -268,14 +262,14 @@ describe('delete role', () => {
         expect(actual).toBeNull()
         // verify bob is not entitled to the space
         expect(
-            await bob.spaceDapp.isEntitledToSpace(spaceId, bob.getUserId()!, Permission.Read),
+            await bob.spaceDapp.isEntitledToSpace(spaceId, bob.getUserId(), Permission.Read),
         ).toBe(false)
         // verify bob is no longer entitled to the channel
         expect(
             await bob.spaceDapp.isEntitledToChannel(
                 spaceId,
                 channel,
-                bob.getUserId()!,
+                bob.getUserId(),
                 Permission.Read,
             ),
         ).toBe(false)
@@ -294,7 +288,7 @@ describe('delete role', () => {
         const newRoleName = 'newRole1'
         const newPermissions = [Permission.Read, Permission.Write]
         // add bob to the users list
-        const newUsers: string[] = [bob.getUserId()!]
+        const newUsers: string[] = [bob.getUserId()]
         // create a new test space
         await alice.fundWallet()
         const roomId = await createTestSpaceGatedByTownsNfts(alice, [
@@ -343,14 +337,14 @@ describe('delete role', () => {
         expect(actual).toBeNull()
         // verify alice is not affected
         expect(
-            await alice.spaceDapp.isEntitledToSpace(spaceId, alice.getUserId()!, Permission.Read),
+            await alice.spaceDapp.isEntitledToSpace(spaceId, alice.getUserId(), Permission.Read),
         ).toBe(true)
         expect(
-            await alice.spaceDapp.isEntitledToSpace(spaceId, alice.getUserId()!, Permission.Write),
+            await alice.spaceDapp.isEntitledToSpace(spaceId, alice.getUserId(), Permission.Write),
         ).toBe(true)
         // verify bob is not entitled to the space
         expect(
-            await bob.spaceDapp.isEntitledToSpace(spaceId, bob.getUserId()!, Permission.Read),
+            await bob.spaceDapp.isEntitledToSpace(spaceId, bob.getUserId(), Permission.Read),
         ).toBe(false)
     })
 })

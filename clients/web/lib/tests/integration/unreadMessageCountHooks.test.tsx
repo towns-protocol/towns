@@ -37,16 +37,16 @@ describe('unreadMessageCountHooks', () => {
         // jane needs funds to create a space
         await jane.fundWallet()
         // create a space
-        const janesSpaceId = (await createTestSpaceGatedByTownNft(jane, [
+        const janesSpaceId = await createTestSpaceGatedByTownNft(jane, [
             Permission.Read,
             Permission.Write,
-        ])) as string
+        ])
         //
-        const janesChannelId = (await createTestChannelWithSpaceRoles(jane, {
+        const janesChannelId = await createTestChannelWithSpaceRoles(jane, {
             name: 'janes channel',
             parentSpaceId: janesSpaceId,
             roleIds: [],
-        })) as string
+        })
         // send 20 messages to the space after we make the channel
         // dendrite doesn't natively send space child events with state
         // if they are too far back we don't know if this room has children

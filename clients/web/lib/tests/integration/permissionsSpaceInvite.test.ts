@@ -62,13 +62,13 @@ describe('space invite', () => {
         ])
 
         const isEntitledRead = await alice.isEntitled(
-            roomId as string,
+            roomId,
             '',
             alice.provider.wallet.address,
             Permission.Read,
         )
         const isEntitledWrite = await alice.isEntitled(
-            roomId as string,
+            roomId,
             '',
             alice.provider.wallet.address,
             Permission.Write,
@@ -76,7 +76,7 @@ describe('space invite', () => {
         /** Act */
         // invite user to join the space by first checking if they can read.
         if (roomId && alice.getUserId()) {
-            !isEntitledRead && (await bob.inviteUser(roomId, alice.getUserId()!))
+            !isEntitledRead && (await bob.inviteUser(roomId, alice.getUserId()))
         }
         /** Assert */
         expect(isEntitledRead).toBe(false)
@@ -100,10 +100,10 @@ describe('space invite', () => {
         // default Read which invariably allows all invitees regardless of
         // token gating
 
-        const roomId = (await createTestSpaceGatedByTownsNfts(bob, [
+        const roomId = await createTestSpaceGatedByTownsNfts(bob, [
             Permission.Read,
             Permission.Write,
-        ])) as string
+        ])
 
         await tokenGrantedUser.mintMembershipTransaction(roomId, tokenGrantedUser.wallet)
 
@@ -122,7 +122,7 @@ describe('space invite', () => {
         /** Act */
         // invite user to join the space by first checking if they can read.
         if (roomId && tokenGrantedUser.getUserId()) {
-            isEntitledRead && (await bob.inviteUser(roomId, tokenGrantedUser.getUserId()!))
+            isEntitledRead && (await bob.inviteUser(roomId, tokenGrantedUser.getUserId()))
         }
         /** Assert */
         expect(isEntitledRead).toBe(true)
@@ -233,18 +233,17 @@ describe('space invite', () => {
         /** Act */
         let failedJoinIndex = 0
         let numJoinersProcessed = 1
-        if (spaceId) {
-            for (const user of joiners) {
-                try {
-                    await user.joinTown(spaceId, user.wallet)
-                    numJoinersProcessed++
-                } catch (e) {
-                    console.log('error joining room', e)
-                    failedJoinIndex = numJoinersProcessed
-                    break
-                }
+        for (const user of joiners) {
+            try {
+                await user.joinTown(spaceId, user.wallet)
+                numJoinersProcessed++
+            } catch (e) {
+                console.log('error joining room', e)
+                failedJoinIndex = numJoinersProcessed
+                break
             }
         }
+
         /** Assert */
         expect(failedJoinIndex).toBe(maxUsers)
     }, 120000) // end test
@@ -284,20 +283,18 @@ describe('space invite', () => {
         // create a channel with the same roles and permissions as the space
         const channelId = await createTestChannelWithSpaceRoles(bob, {
             name: 'alice channel',
-            parentSpaceId: spaceId as string,
+            parentSpaceId: spaceId,
             roleIds: [],
         })
 
         // users to join the space.
         /** Act */
-        if (spaceId) {
-            for (const user of joiners) {
-                try {
-                    await user.joinTown(spaceId, user.wallet)
-                } catch (e) {
-                    console.log('error joining room', e)
-                    break
-                }
+        for (const user of joiners) {
+            try {
+                await user.joinTown(spaceId, user.wallet)
+            } catch (e) {
+                console.log('error joining room', e)
+                break
             }
         }
 

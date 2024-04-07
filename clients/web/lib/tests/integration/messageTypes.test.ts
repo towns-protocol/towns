@@ -29,19 +29,19 @@ describe('messageTypes', () => {
         // bob needs funds to create a space
         await bob.fundWallet()
         // bob creates a public room
-        const spaceId = (await createTestSpaceGatedByTownsNfts(
+        const spaceId = await createTestSpaceGatedByTownsNfts(
             bob,
             [Permission.Read, Permission.Write],
             {
                 name: makeUniqueName('bobs room'),
             },
-        )) as string
+        )
         // create a channel
-        const channelId = (await createTestChannelWithSpaceRoles(bob, {
+        const channelId = await createTestChannelWithSpaceRoles(bob, {
             name: 'bobs channel',
             parentSpaceId: spaceId,
             roleIds: [],
-        }))!
+        })
 
         // alice joins the room
         await alice.joinTown(spaceId, alice.wallet)
@@ -90,19 +90,19 @@ describe('messageTypes', () => {
         // bob needs funds to create a space
         await bob.fundWallet()
         // bob creates a public room
-        const spaceId = (await createTestSpaceGatedByTownsNfts(
+        const spaceId = await createTestSpaceGatedByTownsNfts(
             bob,
             [Permission.Read, Permission.Write],
             {
                 name: makeUniqueName('bobs room'),
             },
-        )) as string
+        )
         // create a channel
-        const channelId = (await createTestChannelWithSpaceRoles(bob, {
+        const channelId = await createTestChannelWithSpaceRoles(bob, {
             name: 'bobs channel',
             parentSpaceId: spaceId,
             roleIds: [],
-        }))!
+        })
 
         // alice joins the room
         await alice.joinTown(spaceId, alice.wallet)

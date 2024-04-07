@@ -24,14 +24,14 @@ describe('sendThreadedMessage', () => {
         // bob needs funds to create a space
         await bob.fundWallet()
         // create a space
-        const spaceId = (await createTestSpaceGatedByTownNft(
+        const spaceId = await createTestSpaceGatedByTownNft(
             bob,
             // For alice to create a channel, the role must include the AddRemoveChannels permission.
             [Permission.Read, Permission.Write, Permission.AddRemoveChannels],
             {
                 name: makeUniqueName('bobs space'),
             },
-        )) as string
+        )
         // create a channel
         const channelId = (await createTestChannelWithSpaceRoles(bob, {
             name: 'bobs channel',

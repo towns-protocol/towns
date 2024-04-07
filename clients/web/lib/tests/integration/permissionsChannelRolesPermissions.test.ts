@@ -27,17 +27,17 @@ describe('channel with roles and permissions', () => {
         const { alice } = await registerAndStartClients(['alice'])
         // create a space with token entitlement to read & write
         await alice.fundWallet()
-        const spaceId = (await createTestSpaceGatedByTownsNfts(alice, [
+        const spaceId = await createTestSpaceGatedByTownsNfts(alice, [
             Permission.Read,
             Permission.Write,
-        ])) as string
+        ])
 
         // create a channel with the same roles and permissions as the space
-        const channelId = (await createTestChannelWithSpaceRoles(alice, {
+        const channelId = await createTestChannelWithSpaceRoles(alice, {
             name: 'alice channel',
             parentSpaceId: spaceId,
             roleIds: [],
-        })) as string
+        })
 
         /** Act */
 
@@ -53,17 +53,17 @@ describe('channel with roles and permissions', () => {
         const { alice, bob } = await registerAndStartClients(['alice', 'bob'])
         // create a space with token entitlement to read & write
         await alice.fundWallet()
-        const spaceId = (await createTestSpaceGatedByTownNft(alice, [
+        const spaceId = await createTestSpaceGatedByTownNft(alice, [
             Permission.Read,
             Permission.Write,
-        ])) as string
+        ])
 
         // create a channel with the same roles and permissions as the space
-        const channelId = (await createTestChannelWithSpaceRoles(alice, {
+        const channelId = await createTestChannelWithSpaceRoles(alice, {
             name: 'alice channel',
             parentSpaceId: spaceId,
             roleIds: [],
-        })) as string
+        })
 
         /** Act */
 
@@ -78,10 +78,10 @@ describe('channel with roles and permissions', () => {
         // create all the users for the test
         const { alice, bob } = await registerAndStartClients(['alice', 'bob'])
         await alice.fundWallet()
-        const spaceId = (await createTestSpaceGatedByTownNft(alice, [
+        const spaceId = await createTestSpaceGatedByTownNft(alice, [
             Permission.Read,
             Permission.Write,
-        ])) as string
+        ])
 
         const testGatingNftAddress = await getTestGatingNftAddress(alice.opts.baseChainId)
         if (!testGatingNftAddress) {
@@ -100,11 +100,11 @@ describe('channel with roles and permissions', () => {
             throw new Error('roleIdentifier is undefined')
         }
 
-        const channelId = (await createTestChannelWithSpaceRoles(alice, {
+        const channelId = await createTestChannelWithSpaceRoles(alice, {
             name: 'alice channel',
             parentSpaceId: spaceId,
             roleIds: [roleIdentifier.roleId],
-        })) as string
+        })
 
         /** Act & Assert */
 

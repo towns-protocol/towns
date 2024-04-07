@@ -38,24 +38,24 @@ describe('userProfileHooks', () => {
         // alice needs funds to create a space
         await alice.fundWallet()
         // create a space
-        const alicesSpaceId = (await createTestSpaceGatedByTownNft(
+        const alicesSpaceId = await createTestSpaceGatedByTownNft(
             alice,
             [Permission.Read, Permission.Write],
             {
                 name: makeUniqueName('alices space'),
             },
-        )) as string
+        )
 
         // set display name and avatar
         await alice.setDisplayName(alicesSpaceId, "Alice's your aunt")
         await alice.setAvatarUrl('alice.png')
 
         //
-        const alicesChannelId = (await createTestChannelWithSpaceRoles(alice, {
+        const alicesChannelId = await createTestChannelWithSpaceRoles(alice, {
             name: 'alices channel',
             parentSpaceId: alicesSpaceId,
             roleIds: [],
-        })) as string
+        })
         // create a veiw for bob
         const TestUserProfile = ({ signer }: { signer: TSigner }) => {
             const { setDisplayName, setAvatarUrl } = useTownsClient()

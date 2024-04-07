@@ -48,9 +48,7 @@ describe('redact messages', () => {
             },
             alice.provider.wallet,
         )
-        if (!channelId) {
-            throw new Error('channelId is undefined')
-        }
+
         await alice.waitForStream(channelId)
 
         /** Act */
@@ -91,18 +89,12 @@ describe('redact messages', () => {
                 name: alice.makeUniqueName(),
             },
         )
-        if (!spaceId) {
-            throw new Error('spaceId is undefined')
-        }
         // create a channel for reading and writing
-        const channelId = (await createTestChannelWithSpaceRoles(alice, {
+        const channelId = await createTestChannelWithSpaceRoles(alice, {
             name: 'alices channel',
             parentSpaceId: spaceId,
             roleIds: [],
-        }))!
-        if (!channelId) {
-            throw new Error('channelId is undefined')
-        }
+        })
         // invite user to join the channel
         const bobUserId = bob.getUserId()
         if (!bobUserId) {
@@ -140,9 +132,6 @@ describe('redact messages', () => {
             Permission.Read,
             Permission.Write,
         ])
-        if (!spaceId) {
-            throw new Error('spaceId is undefined')
-        }
 
         // get the roles for channel creation later
         const roleDetails = await findRoleByName(alice, spaceId, EveryoneRoleName)
@@ -176,9 +165,7 @@ describe('redact messages', () => {
             },
             alice.provider.wallet,
         )
-        if (!channelId) {
-            throw new Error('channelId is undefined')
-        }
+
         // invite user to join the channel
         const bobUserId = bob.getUserId()
         if (!bobUserId) {

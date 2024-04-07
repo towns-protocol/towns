@@ -16,18 +16,17 @@ describe('modifyDefaultRole', () => {
             Permission.Read,
             Permission.Write,
         ])
-        expect(spaceId).toBeDefined()
 
         // add the AddRemoveChannels permission to the Member role
         // 1 is the Minter role
         // 2 is the member role
-        const role = await alice.spaceDapp.getRole(spaceId!, 2)
+        const role = await alice.spaceDapp.getRole(spaceId, 2)
 
         expect(role).toBeDefined()
 
         const _r = role!
         const updatedRoleTx = await alice.updateRoleTransaction(
-            spaceId!,
+            spaceId,
             _r.id,
             _r.name,
             _r.permissions.concat([Permission.AddRemoveChannels]),
@@ -37,12 +36,12 @@ describe('modifyDefaultRole', () => {
         )
         const updateRoleResult = await alice.waitForUpdateRoleTransaction(updatedRoleTx)
         expect(updateRoleResult.receipt?.status).toBe(1)
-        const updatedRole = await alice.spaceDapp.getRole(spaceId!, 2)
+        const updatedRole = await alice.spaceDapp.getRole(spaceId, 2)
         expect(updatedRole?.permissions).toContain(Permission.AddRemoveChannels)
 
         const { bob } = await registerAndStartClients(['bob'])
         await bob.fundWallet()
-        const join = await bob.joinTown(spaceId!, bob.wallet)
+        const join = await bob.joinTown(spaceId, bob.wallet)
 
         expect(join).toBeDefined()
 
@@ -50,7 +49,7 @@ describe('modifyDefaultRole', () => {
             await bob.createChannel(
                 {
                     name: 'test_channel',
-                    parentSpaceId: spaceId!,
+                    parentSpaceId: spaceId,
                     roleIds: [2],
                 },
                 bob.provider.wallet,
@@ -71,29 +70,28 @@ describe('modifyDefaultRole', () => {
             Permission.Read,
             Permission.Write,
         ])
-        expect(spaceId).toBeDefined()
 
         const createRoleTx = await alice.createRole(
-            spaceId!,
+            spaceId,
             'new_role',
             [Permission.AddRemoveChannels],
             [TestConstants.EveryoneAddress],
             NoopRuleData,
         )
         expect(createRoleTx).toBeDefined()
-        const createdRole = await alice.spaceDapp.getRole(spaceId!, 3)
+        const createdRole = await alice.spaceDapp.getRole(spaceId, 3)
         expect(createdRole?.permissions).toContain(Permission.AddRemoveChannels)
 
         const { bob } = await registerAndStartClients(['bob'])
         await bob.fundWallet()
-        const join = await bob.joinTown(spaceId!, bob.wallet)
+        const join = await bob.joinTown(spaceId, bob.wallet)
 
         expect(join).toBeDefined()
 
         const channel = await bob.createChannel(
             {
                 name: 'test_channel',
-                parentSpaceId: spaceId!,
+                parentSpaceId: spaceId,
                 roleIds: [2],
             },
             bob.provider.wallet,

@@ -174,7 +174,7 @@ describe('Link Wallet', () => {
         await bob.fundWallet()
 
         // check that the wallet is linked
-        const wallets = await bob.getLinkedWallets(bobAddress!)
+        const wallets = await bob.getLinkedWallets(bobAddress)
         expect(wallets).toContain(await metamaskWallet.getAddress())
 
         const spaceId = await createTestSpaceGatedByTownsNfts(alice, [
@@ -183,7 +183,7 @@ describe('Link Wallet', () => {
         ])
 
         const joinTx = await alice.spaceDapp.joinSpace(
-            spaceId!,
+            spaceId,
             metamaskWallet.address,
             alice.wallet,
         )
@@ -201,11 +201,7 @@ describe('Link Wallet', () => {
         expect(isEntitledToSpace).toBeTruthy()
 
         // ES: 12/11/23 for this to work the contract check for joinSpace needs to change
-        const bobJoinTx = await bob.spaceDapp.joinSpace(
-            spaceId!,
-            metamaskWallet.address,
-            bob.wallet,
-        )
+        const bobJoinTx = await bob.spaceDapp.joinSpace(spaceId, metamaskWallet.address, bob.wallet)
 
         expect(bobJoinTx).toBeTruthy()
     })

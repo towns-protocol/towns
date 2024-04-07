@@ -24,9 +24,7 @@ describe('update role', () => {
         const { alice } = await registerAndStartClients(['alice'])
         await alice.fundWallet()
         const roomId = await createTestSpaceGatedByTownNft(alice, [Permission.Ban])
-        if (!roomId) {
-            throw new Error('roomId is undefined')
-        }
+
         // get current role details
         const spaceNetworkId = roomId
         const roles = await getFilteredRolesFromSpace(alice.spaceDapp, spaceNetworkId)

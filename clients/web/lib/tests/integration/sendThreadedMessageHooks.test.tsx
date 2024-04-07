@@ -64,24 +64,24 @@ describe('sendThreadedMessageHooks', () => {
         // jane needs funds to create a spaceß
         await jane.fundWallet()
         // create a space
-        const spaceId = (await createTestSpaceGatedByTownNft(
+        const spaceId = await createTestSpaceGatedByTownNft(
             jane,
             [Permission.Read, Permission.Write],
             {
                 name: makeUniqueName('janes space'),
             },
-        )) as string
+        )
         // create channels
-        const channel_1 = (await createTestChannelWithSpaceRoles(jane, {
+        const channel_1 = await createTestChannelWithSpaceRoles(jane, {
             name: 'channel_1',
             parentSpaceId: spaceId,
             roleIds: [],
-        })) as string
-        const channel_2 = (await createTestChannelWithSpaceRoles(jane, {
+        })
+        const channel_2 = await createTestChannelWithSpaceRoles(jane, {
             name: 'channel_2',
             parentSpaceId: spaceId,
             roleIds: [],
-        })) as string
+        })
 
         // 3 chnannels should exist b/c of default channel
         await waitFor(

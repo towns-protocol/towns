@@ -31,19 +31,19 @@ describe('encryptionDecrypt', () => {
         const bobProvider = new TownsTestWeb3Provider()
 
         // create a space
-        const janesSpaceId = (await createTestSpaceGatedByTownNft(
+        const janesSpaceId = await createTestSpaceGatedByTownNft(
             jane,
             [Permission.Read, Permission.Write],
             {
                 name: makeUniqueName('janes_space'),
             },
-        ))!
+        )
         //
-        const janesChannelId = (await createTestChannelWithSpaceRoles(jane, {
+        const janesChannelId = await createTestChannelWithSpaceRoles(jane, {
             name: 'janes_channel',
             parentSpaceId: janesSpaceId,
             roleIds: [],
-        }))!
+        })
 
         // create a veiw for bob
         const TestRoomMessages = () => {

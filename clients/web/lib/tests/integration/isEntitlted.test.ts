@@ -29,14 +29,14 @@ describe.skip('isEntitledToSpace and isEntitledToChannel tests', () => {
             'bobWithNft',
             TestConstants.getWalletWithTestGatingNft(),
         )
-        const bobUserId = bobWithNft.getUserId() as string
+        const bobUserId = bobWithNft.getUserId()
         const { alice } = await registerAndStartClients(['alice'])
         // create a space with token entitlement to read & write
         await alice.fundWallet()
-        const spaceId = (await createTestSpaceGatedByTownsNfts(alice, [
+        const spaceId = await createTestSpaceGatedByTownsNfts(alice, [
             Permission.Read,
             Permission.Write,
-        ])) as string
+        ])
 
         // invite user to join the town
         await alice.inviteUser(spaceId, bobUserId)
@@ -70,7 +70,7 @@ describe.skip('isEntitledToSpace and isEntitledToChannel tests', () => {
         console.time('inviteUser')
         // invite user to join the town
         if (spaceId) {
-            await alice.inviteUser(spaceId, bob.getUserId() as string)
+            await alice.inviteUser(spaceId, bob.getUserId())
         } else {
             throw new Error('spaceId is undefined')
         }
@@ -103,7 +103,7 @@ describe.skip('isEntitledToSpace and isEntitledToChannel tests', () => {
         const ruleData = createExternalTokenStruct([testGatingNftAddress])
         const users: string[] = []
         await alice.fundWallet()
-        const spaceId = (await createTestSpaceGatedByTownsNfts(alice, permissions)) as string
+        const spaceId = await createTestSpaceGatedByTownsNfts(alice, permissions)
         // create a channel with token entitlement to read & write
         const roleId: RoleIdentifier | undefined = (await alice.createRole(
             spaceId,
@@ -112,14 +112,14 @@ describe.skip('isEntitledToSpace and isEntitledToChannel tests', () => {
             users,
             ruleData,
         )) as RoleIdentifier
-        const channelId = (await alice.createChannel(
+        const channelId = await alice.createChannel(
             {
                 name: `aliceChannel${Date.now()}`,
                 parentSpaceId: spaceId,
                 roleIds: [roleId.roleId],
             },
             alice.provider.wallet,
-        )) as string
+        )
 
         /** Act */
         /** Assert */
@@ -141,7 +141,7 @@ describe.skip('isEntitledToSpace and isEntitledToChannel tests', () => {
         const ruleData = createExternalTokenStruct([testGatingNftAddress])
         const users: string[] = []
         await alice.fundWallet()
-        const spaceId = (await createTestSpaceGatedByTownsNfts(alice, permissions)) as string
+        const spaceId = await createTestSpaceGatedByTownsNfts(alice, permissions)
         // create a channel with token entitlement to read & write
         const roleId: RoleIdentifier | undefined = (await alice.createRole(
             spaceId,
@@ -150,14 +150,14 @@ describe.skip('isEntitledToSpace and isEntitledToChannel tests', () => {
             users,
             ruleData,
         )) as RoleIdentifier
-        const channelId = (await alice.createChannel(
+        const channelId = await alice.createChannel(
             {
                 name: `aliceChannel${Date.now()}`,
                 parentSpaceId: spaceId,
                 roleIds: [roleId.roleId],
             },
             alice.provider.wallet,
-        )) as string
+        )
 
         /** Act */
         // join the town. let the server enforce the channel entitlement check
@@ -320,13 +320,13 @@ describe.skip('isEntitledToSpace and isEntitledToChannel tests', () => {
         const { alice, bob } = await registerAndStartClients(['alice', 'bob'])
         // convert bob's userId into its wallet address
         const bobUserId = bob.getUserId()
-        const bobAccountAddress = getAccountAddress(bobUserId as string) ?? ''
+        const bobAccountAddress = getAccountAddress(bobUserId) ?? ''
         // create a space with token entitlement to read & write
         await alice.fundWallet()
-        const spaceId = (await createTestSpaceGatedByTownsNfts(alice, [
+        const spaceId = await createTestSpaceGatedByTownsNfts(alice, [
             Permission.Read,
             Permission.Write,
-        ])) as string
+        ])
 
         /** Act */
         // test the user's entitlement to the space
@@ -351,7 +351,7 @@ describe.skip('isEntitledToSpace and isEntitledToChannel tests', () => {
         )
         // convert bob's userId into its wallet address
         const bobUserId = bobWithNft.getUserId()
-        const bobAccountAddress = getAccountAddress(bobUserId as string) ?? ''
+        const bobAccountAddress = getAccountAddress(bobUserId) ?? ''
         // create a space with token entitlement to read & write
         const permissions = [Permission.Read, Permission.Write]
         const testGatingNftAddress = await getTestGatingNftAddress(alice.opts.baseChainId)
@@ -362,7 +362,7 @@ describe.skip('isEntitledToSpace and isEntitledToChannel tests', () => {
         const ruleData = createExternalTokenStruct([testGatingNftAddress])
         const users: string[] = []
         await alice.fundWallet()
-        const spaceId = (await createTestSpaceGatedByTownsNfts(alice, permissions)) as string
+        const spaceId = await createTestSpaceGatedByTownsNfts(alice, permissions)
         // create a channel with token entitlement to read & write
         const roleId: RoleIdentifier | undefined = (await alice.createRole(
             spaceId,
@@ -371,14 +371,14 @@ describe.skip('isEntitledToSpace and isEntitledToChannel tests', () => {
             users,
             ruleData,
         )) as RoleIdentifier
-        const channelId = (await alice.createChannel(
+        const channelId = await alice.createChannel(
             {
                 name: `aliceChannel${Date.now()}`,
                 parentSpaceId: spaceId,
                 roleIds: [roleId.roleId],
             },
             alice.provider.wallet,
-        )) as string
+        )
 
         /** Act */
         // test the user's entitlement to the space
@@ -399,7 +399,7 @@ describe.skip('isEntitledToSpace and isEntitledToChannel tests', () => {
         const { alice, bob } = await registerAndStartClients(['alice', 'bob'])
         // convert bob's userId into its wallet address
         const bobUserId = bob.getUserId()
-        const bobAccountAddress = getAccountAddress(bobUserId as string) ?? ''
+        const bobAccountAddress = getAccountAddress(bobUserId) ?? ''
         // create a space with token entitlement to read & write
         const permissions = [Permission.Read, Permission.Write]
         const testGatingNftAddress = await getTestGatingNftAddress(alice.opts.baseChainId)
@@ -409,7 +409,7 @@ describe.skip('isEntitledToSpace and isEntitledToChannel tests', () => {
         const ruleData = createExternalTokenStruct([testGatingNftAddress])
         const users: string[] = []
         await alice.fundWallet()
-        const spaceId = (await createTestSpaceGatedByTownsNfts(alice, permissions)) as string
+        const spaceId = await createTestSpaceGatedByTownsNfts(alice, permissions)
         // create a channel with token entitlement to read & write
         const roleId: RoleIdentifier | undefined = (await alice.createRole(
             spaceId,
@@ -418,14 +418,14 @@ describe.skip('isEntitledToSpace and isEntitledToChannel tests', () => {
             users,
             ruleData,
         )) as RoleIdentifier
-        const channelId = (await alice.createChannel(
+        const channelId = await alice.createChannel(
             {
                 name: `aliceChannel${Date.now()}`,
                 parentSpaceId: spaceId,
                 roleIds: [roleId.roleId],
             },
             alice.provider.wallet,
-        )) as string
+        )
 
         /** Act */
         // test the user's entitlement to the space
@@ -450,12 +450,12 @@ describe.skip('isEntitledToSpace and isEntitledToChannel tests', () => {
         )
         // convert bob's userId into its wallet address
         const bobUserId = bobWithNft.getUserId()
-        const bobAccountAddress = getAccountAddress(bobUserId as string) ?? ''
+        const bobAccountAddress = getAccountAddress(bobUserId) ?? ''
         // create a space with token entitlement to read & write
         const permissions = [Permission.Read, Permission.Write]
         const users: string[] = []
         await alice.fundWallet()
-        const spaceId = (await createTestSpaceGatedByTownsNfts(alice, permissions)) as string
+        const spaceId = await createTestSpaceGatedByTownsNfts(alice, permissions)
         const roleName = `newRole${Date.now()}`
         // create a channel with token entitlement to read & write
         const roleId = await alice.createRole(spaceId, roleName, permissions, users, NoopRuleData)

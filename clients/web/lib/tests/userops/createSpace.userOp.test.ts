@@ -28,5 +28,5 @@ test('can create a space via userop and pass entitlement check to become member'
     const spaceId = await createUngatedSpace(alice, [Permission.Read, Permission.Write])
     await waitForWithRetries(() => isSmartAccountDeployed(alice))
 
-    expect(alice.getRoomMember(spaceId!, alice.getUserId()!)).toBeTruthy()
+    expect(alice.getRoomMember(spaceId!, alice.getUserId())).toBeTruthy()
 })

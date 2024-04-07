@@ -24,10 +24,10 @@ describe('messageScrollback', () => {
         // bob needs funds to create a space
         await bob.fundWallet()
         // bob creates a public room
-        const spaceId = (await createTestSpaceGatedByTownsNfts(bob, [
+        const spaceId = await createTestSpaceGatedByTownsNfts(bob, [
             Permission.Read,
             Permission.Write,
-        ])) as string
+        ])
         // send 25 messages
         for (let i = 0; i < 25; i++) {
             await bob.sendMessage(spaceId, `message ${i}`)

@@ -30,26 +30,21 @@ describe('sendAMessageThenRefresh.hooks', () => {
         // jane needs funds to create a space
         await jane.fundWallet()
         // create a space
-        const janesSpaceId = (await createTestSpaceGatedByTownNft(
+        const janesSpaceId = await createTestSpaceGatedByTownNft(
             jane,
             [Permission.Read, Permission.Write],
             {
                 name: makeUniqueName('janes space'),
             },
-        )) as string
+        )
         // create a space
         //
-        let janesChannelId: string | undefined
-        if (janesSpaceId) {
-            janesChannelId = (await createTestChannelWithSpaceRoles(jane, {
-                name: 'janes channel',
-                parentSpaceId: janesSpaceId,
-                roleIds: [],
-            })) as string
-        }
-        if (!janesChannelId) {
-            throw new Error('janesChannelId not defined')
-        }
+        const janesChannelId = await createTestChannelWithSpaceRoles(jane, {
+            name: 'janes channel',
+            parentSpaceId: janesSpaceId,
+            roleIds: [],
+        })
+
         await jane.sendMessage(janesChannelId, 'Hello World')
         await jane.sendMessage(janesChannelId, 'Im a teapot')
 

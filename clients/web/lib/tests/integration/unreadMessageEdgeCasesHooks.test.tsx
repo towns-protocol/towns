@@ -29,21 +29,21 @@ describe('unreadMessageCountEdgeCases', () => {
         // create clients
         const { jane, bob } = await registerAndStartClients(['jane', 'bob'])
         const bobName = bob.name
-        const bobUserId = bob.getUserId()!
+        const bobUserId = bob.getUserId()
         await bob.logout()
         // jane needs funds to create a space
         await jane.fundWallet()
         // create a space
-        const spaceId = (await createTestSpaceGatedByTownNft(jane, [
+        const spaceId = await createTestSpaceGatedByTownNft(jane, [
             Permission.Read,
             Permission.Write,
-        ])) as string
+        ])
         //
-        const channelId = (await createTestChannelWithSpaceRoles(jane, {
+        const channelId = await createTestChannelWithSpaceRoles(jane, {
             name: 'janes channel',
             parentSpaceId: spaceId,
             roleIds: [],
-        })) as string
+        })
 
         // create a veiw for bob
         const TestComponent = ({ signer }: { signer: TSigner }) => {

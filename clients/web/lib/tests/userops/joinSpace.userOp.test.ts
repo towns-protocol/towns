@@ -37,10 +37,10 @@ test('can join a space via userop and pass entitlement check to become a member'
     await waitForWithRetries(() => isSmartAccountDeployed(alice))
     await sleepBetweenTxs()
 
-    expect(alice.getRoomMember(spaceId!, alice.getUserId()!)).toBeTruthy()
+    expect(alice.getRoomMember(spaceId!, alice.getUserId())).toBeTruthy()
 
     const room = await bob.joinTown(spaceId!, bob.wallet)
     await waitForWithRetries(() => isSmartAccountDeployed(bob))
 
-    expect(room.members.map((m) => m.userId).includes(bob.getUserId()!)).toBeTruthy()
+    expect(room.members.map((m) => m.userId).includes(bob.getUserId())).toBeTruthy()
 })

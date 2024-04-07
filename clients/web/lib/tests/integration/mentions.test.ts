@@ -19,19 +19,19 @@ describe('mentions', () => {
         await bob.fundWallet()
 
         // create a space
-        const spaceId = (await createTestSpaceGatedByTownNft(
+        const spaceId = await createTestSpaceGatedByTownNft(
             bob,
             [Permission.Read, Permission.Write],
             {
                 name: bob.makeUniqueName(),
             },
-        ))!
+        )
         // create a channel
-        const channelId = (await createTestChannelWithSpaceRoles(bob, {
+        const channelId = await createTestChannelWithSpaceRoles(bob, {
             name: 'bobs channel',
             parentSpaceId: spaceId,
             roleIds: [],
-        }))!
+        })
 
         console.log("bob's spaceId", { spaceId, channelId })
 
@@ -42,7 +42,7 @@ describe('mentions', () => {
         await alice.sendMessage(channelId, 'Hi @bob', {
             mentions: [
                 {
-                    userId: bob.getUserId()!,
+                    userId: bob.getUserId(),
                     displayName: bobDisplayName,
                 },
             ],

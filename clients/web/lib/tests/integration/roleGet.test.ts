@@ -85,9 +85,6 @@ describe('get role details', () => {
             },
             alice.provider.wallet,
         )
-        if (!channel) {
-            throw new Error('channel is undefined')
-        }
 
         /** Act */
         const roleDetails = await alice.spaceDapp.getRole(roomId, roleIdentifier.roleId)
@@ -161,9 +158,6 @@ describe('get role details', () => {
         await alice.fundWallet()
         const permissions = [Permission.Read, Permission.Write]
         const spaceId = await createTestSpaceGatedByTownNft(alice, permissions)
-        if (!spaceId) {
-            throw new Error('roomId is undefined')
-        }
 
         /** Act */
         // minter role is created with a JoinTown permission, and is not gated by any tokens see createTestSpaceGatedByTownNft

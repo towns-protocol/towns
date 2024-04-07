@@ -401,7 +401,7 @@ export class TownsClient implements EntitlementsDelegate {
     public async createChannel(
         createChannelInfo: CreateChannelInfo,
         signer: ethers.Signer | undefined,
-    ): Promise<string | undefined> {
+    ): Promise<string> {
         if (!signer) {
             throw new SignerUndefinedError()
         }
@@ -415,10 +415,16 @@ export class TownsClient implements EntitlementsDelegate {
                 createChannelInfo,
                 txContext,
             )
-            return rxContext?.data
+            if (!rxContext) {
+                throw new Error('no rxContext returned')
+            }
+            if (!rxContext.data) {
+                throw new Error('no room identifier returned')
+            }
+            return rxContext.data
         }
         // Something went wrong. Don't return a room identifier.
-        return undefined
+        throw new Error('Failed to create channel')
     }
 
     public async createChannelTransaction(
@@ -1617,15 +1623,23 @@ export class TownsClient implements EntitlementsDelegate {
      * getRoomData
      * - This function is primarily intended for testing purposes
      ************************************************/
-    public getRoomData(roomId: string): StreamView | undefined {
+    public getRoomData(streamId: string): StreamView | undefined {
         if (!this.casablancaClient) {
             throw new Error('casablanca client is undefined')
         }
-        const stream = this.casablancaClient.stream(roomId)
-        if (!stream) {
+        const membership = this.getMembership(streamId)
+        const stream = this.casablancaClient.stream(streamId)
+        if (stream) {
+            return toStreamView(stream, membership)
+        } else if (membership !== Membership.None) {
+            return {
+                id: streamId,
+                membership,
+                members: [],
+            }
+        } else {
             return undefined
         }
-        return toStreamView(stream, this.getMembership(roomId))
     }
 
     /************************************************

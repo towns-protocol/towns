@@ -107,7 +107,7 @@ export async function createTestSpaceGatedByTownsNfts(
     client: TownsTestClient,
     rolePermissions: Permission[],
     createSpaceInfo?: CreateSpaceInfo,
-): Promise<string | undefined> {
+): Promise<string> {
     if (!client.walletAddress) {
         throw new Error('client.walletAddress is undefined')
     }
@@ -146,7 +146,7 @@ export async function createTestSpaceGatedByTownsNfts(
         },
     }
 
-    return waitForWithRetries(
+    const spaceId = await waitForWithRetries(
         () => {
             if (!createSpaceInfo) {
                 createSpaceInfo = {
@@ -160,6 +160,10 @@ export async function createTestSpaceGatedByTownsNfts(
             timeoutMs: 1000 * 60,
         },
     )
+    if (!spaceId) {
+        throw new Error('createTestSpaceGatedByTownsNfts failed : spaceId is undefined')
+    }
+    return spaceId
 }
 
 /**
@@ -169,7 +173,7 @@ export async function createTestSpaceGatedByTownNft(
     client: TownsTestClient,
     rolePermissions: Permission[],
     createSpaceInfo?: CreateSpaceInfo,
-): Promise<string | undefined> {
+): Promise<string> {
     if (!createSpaceInfo) {
         createSpaceInfo = {
             name: client.makeUniqueName(),
@@ -202,7 +206,7 @@ export async function createTestSpaceGatedByTownNft(
         },
     }
 
-    return waitForWithRetries(
+    const streamId = await waitForWithRetries(
         () => {
             if (!createSpaceInfo) {
                 createSpaceInfo = {
@@ -216,6 +220,10 @@ export async function createTestSpaceGatedByTownNft(
             timeoutMs: 1000 * 60,
         },
     )
+    if (!streamId) {
+        throw new Error('createTestSpaceGatedByTownNft failed : streamId is undefined')
+    }
+    return streamId
 }
 
 /**
@@ -226,7 +234,7 @@ export async function createPaidTestSpaceGatedByTownNft(
     client: TownsTestClient,
     rolePermissions: Permission[],
     costInEth = 0.1,
-): Promise<string | undefined> {
+): Promise<string> {
     let createSpaceInfo = {
         name: client.makeUniqueName(),
     }
@@ -258,7 +266,7 @@ export async function createPaidTestSpaceGatedByTownNft(
         },
     }
 
-    return waitForWithRetries(
+    const streamId = await waitForWithRetries(
         () => {
             if (!createSpaceInfo) {
                 createSpaceInfo = {
@@ -272,12 +280,16 @@ export async function createPaidTestSpaceGatedByTownNft(
             timeoutMs: 1000 * 60,
         },
     )
+    if (!streamId) {
+        throw new Error('createPaidTestSpaceGatedByTownNft failed : streamId is undefined')
+    }
+    return streamId
 }
 
 export async function createTestChannelWithSpaceRoles(
     client: TownsTestClient,
     createChannelInfo: CreateChannelInfo,
-): Promise<string | undefined> {
+): Promise<string> {
     if (createChannelInfo.roleIds.length === 0) {
         // In the app, the user is shown roles from the space and chooses
         // at least one role from the UI.
@@ -291,7 +303,13 @@ export async function createTestChannelWithSpaceRoles(
         }
     }
 
-    return waitForWithRetries(() => client.createChannel(createChannelInfo, client.provider.wallet))
+    const streamId = await waitForWithRetries(() =>
+        client.createChannel(createChannelInfo, client.provider.wallet),
+    )
+    if (!streamId) {
+        throw new Error('createTestChannelWithSpaceRoles failed : streamId is undefined')
+    }
+    return streamId
 }
 
 export async function findRoleByName(

@@ -42,9 +42,6 @@ describe('channel update', () => {
             },
             alice.provider.wallet,
         )
-        if (!channelId) {
-            throw new Error('channelId is undefined')
-        }
         await alice.waitForStream(channelId)
 
         /** Act */
@@ -132,9 +129,6 @@ describe('channel update', () => {
             },
             alice.provider.wallet,
         )
-        if (!channelId) {
-            throw new Error('channelId is undefined')
-        }
         // create another role
         const newRoleName = `role${Date.now()}`
         const newPermissions = [Permission.Read, Permission.Write, Permission.Redact]

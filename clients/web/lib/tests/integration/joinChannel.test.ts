@@ -23,10 +23,7 @@ test('create a public space and a public room, and have user join', async () => 
     // bob needs funds to create a space
     await bob.fundWallet()
     // bob creates a space
-    const spaceId = (await createTestSpaceGatedByTownsNfts(bob, [
-        Permission.Read,
-        Permission.Write,
-    ])) as string
+    const spaceId = await createTestSpaceGatedByTownsNfts(bob, [Permission.Read, Permission.Write])
 
     const testGatingNftAddress = await getTestGatingNftAddress(bob.opts.baseChainId)
     expect(testGatingNftAddress).toBeDefined()

@@ -74,9 +74,6 @@ describe.skip('channel settings', () => {
             },
             alice.provider.wallet,
         )
-        if (!channelId) {
-            throw new Error('channelId is undefined')
-        }
 
         /** Act */
         // get the channel settings

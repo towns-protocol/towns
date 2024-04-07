@@ -71,15 +71,15 @@ describe.skip('userProfileOnAcceptInviteHooks', () => {
         // bob needs funds to create a space
         await bob.fundWallet()
         // bob creates a room
-        const roomId = (await createTestSpaceGatedByTownNft(
+        const roomId = await createTestSpaceGatedByTownNft(
             bob,
             [Permission.Read, Permission.Write],
             {
                 name: bob.makeUniqueName(),
             },
-        )) as string
+        )
         // bob invites alice to the room
-        await bob.inviteUser(roomId, alice.getUserId()!)
+        await bob.inviteUser(roomId, alice.getUserId())
         // wait for the invite to show (this will transition back to 0 after the invite is accepted)
         await waitFor(() => expect(invitesCount).toHaveTextContent('1'))
         // click the accept button

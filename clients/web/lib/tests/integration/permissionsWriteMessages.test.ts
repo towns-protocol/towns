@@ -27,10 +27,6 @@ describe('write messages', () => {
         // ! there is a bug with default member role and modifying permissions on it, so creating a member role with read only permissions instead of later modifying it
         const spaceId = await createTestSpaceGatedByTownNft(bob, [Permission.Read])
 
-        if (!spaceId) {
-            throw new Error('Failed to create room')
-        }
-
         const councilNftAddress = await getTestGatingNftAddress(alice.opts.baseChainId)
         if (!councilNftAddress) {
             throw new Error('councilNftAddress is undefined')
@@ -63,10 +59,6 @@ describe('write messages', () => {
             roleIds: [],
         })
 
-        if (!channelId) {
-            throw new Error('Failed to create room')
-        }
-
         const spaceContent = Array.from(
             bob.casablancaClient?.streams
                 .get(spaceId)
@@ -78,7 +70,7 @@ describe('write messages', () => {
         // /** Act */
         // invite user to join the space by first checking if they can read.
         await alice.joinTown(spaceId, alice.wallet)
-        await bob.inviteUser(channelId, alice.getUserId() as string)
+        await bob.inviteUser(channelId, alice.getUserId())
 
         await alice.joinRoom(channelId)
         // bob sends a message to the room
@@ -130,14 +122,10 @@ describe('write messages', () => {
             roleIds: [],
         })
 
-        if (!channelId) {
-            throw new Error('Failed to create room')
-        }
-
         /** Act */
 
         // invite user to join the space by first checking if they can read.
-        await bob.inviteUser(spaceId, tokenGrantedUser.getUserId() as string)
+        await bob.inviteUser(spaceId, tokenGrantedUser.getUserId())
         await tokenGrantedUser.joinTown(spaceId, tokenGrantedUser.wallet)
         await waitForWithRetries(() => tokenGrantedUser.joinRoom(channelId))
         // bob send 25 messages
@@ -183,14 +171,10 @@ describe('write messages', () => {
             roleIds: [],
         })
 
-        if (!channelId) {
-            throw new Error('Failed to create room')
-        }
-
         /** Act */
         // invite user to join the space by first checking if they can read.
         await tokenGrantedUser.joinTown(spaceId, tokenGrantedUser.wallet)
-        await bob.inviteUser(channelId, tokenGrantedUser.getUserId() as string)
+        await bob.inviteUser(channelId, tokenGrantedUser.getUserId())
         await tokenGrantedUser.joinRoom(channelId)
 
         // bob sends a message to the room

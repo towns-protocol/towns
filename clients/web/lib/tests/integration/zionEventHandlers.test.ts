@@ -100,10 +100,6 @@ describe('Towns event handlers test', () => {
             },
         )
 
-        if (!spaceId) {
-            throw new Error('roomId is undefined')
-        }
-
         const userId = bob.getUserId()
 
         if (!userId) {
@@ -147,10 +143,6 @@ describe('Towns event handlers test', () => {
                 name: alice.makeUniqueName(),
             },
         )
-
-        if (!spaceId) {
-            throw new Error('roomId is undefined')
-        }
 
         const channelId = await createTestChannelWithSpaceRoles(alice, {
             name: alice.makeUniqueName(),
@@ -249,10 +241,6 @@ describe('Towns event handlers test', () => {
                 name: alice.makeUniqueName(),
             },
         )
-
-        if (!spaceId) {
-            throw new Error('roomId is undefined')
-        }
 
         const channelId = await createTestChannelWithSpaceRoles(alice, {
             name: alice.makeUniqueName(),

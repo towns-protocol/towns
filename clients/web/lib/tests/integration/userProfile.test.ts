@@ -22,10 +22,10 @@ describe('userProfile', () => {
         // bob needs funds to create a space
         await bob.fundWallet()
         // bob creates a room
-        const spaceId = (await createTestSpaceGatedByTownsNfts(bob, [
+        const spaceId = await createTestSpaceGatedByTownsNfts(bob, [
             Permission.Read,
             Permission.Write,
-        ])) as string
+        ])
 
         // bob sets user name and profile photo
         await bob.setDisplayName(spaceId, "Bob's your uncle")
@@ -40,25 +40,25 @@ describe('userProfile', () => {
         await alice.joinTown(spaceId, alice.wallet)
         // alice should see bob's user name
         await waitFor(() =>
-            expect(alice.getRoomMember(spaceId, bob.getUserId()!)?.username).toBe(
+            expect(alice.getRoomMember(spaceId, bob.getUserId())?.username).toBe(
                 "Bob's your uncle",
             ),
         )
         // alice should see bob's profile photo
         await waitFor(() =>
-            expect(alice.getRoomMember(spaceId, bob.getUserId()!)?.avatarUrl).toBe(
+            expect(alice.getRoomMember(spaceId, bob.getUserId())?.avatarUrl).toBe(
                 'https://example.com/bob.png',
             ),
         )
         // log alice's view of bob
-        const alicesViewOfBob = alice.getRoomMember(spaceId, bob.getUserId()!)
+        const alicesViewOfBob = alice.getRoomMember(spaceId, bob.getUserId())
         console.log('alice sees bob as', {
             username: alicesViewOfBob?.username,
             displayName: alicesViewOfBob?.displayName,
             avatarUrl: alicesViewOfBob?.avatarUrl,
         })
         // log bob's view of alice
-        const bobsViewOfAlice = bob.getRoomMember(spaceId, alice.getUserId()!)
+        const bobsViewOfAlice = bob.getRoomMember(spaceId, alice.getUserId())
         console.log('bob sees alice as', {
             username: bobsViewOfAlice?.username,
             displayName: bobsViewOfAlice?.displayName,
@@ -71,13 +71,13 @@ describe('userProfile', () => {
         })
         // bob should see alices new user name
         await waitFor(() =>
-            expect(bob.getRoomMember(spaceId, alice.getUserId()!)?.username).toBe(
+            expect(bob.getRoomMember(spaceId, alice.getUserId())?.username).toBe(
                 "Alice's your aunt",
             ),
         )
         // alice should see bob's profile photo
         await waitFor(() =>
-            expect(bob.getRoomMember(spaceId, alice.getUserId()!)?.avatarUrl).toBe(
+            expect(bob.getRoomMember(spaceId, alice.getUserId())?.avatarUrl).toBe(
                 'https://example.com/alice.png',
             ),
         )
