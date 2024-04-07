@@ -57,15 +57,12 @@ describe('useSpaceDataHook', () => {
         await alice.stopClients()
 
         const LoginAndJoin = () => {
-            const { client } = useTownsClient()
+            const { joinTown } = useTownsClient()
             const profile = useMyProfile()
 
             const onJoinClick = useCallback(async () => {
-                if (!client) {
-                    throw new Error('aw shucks, no client')
-                }
-                await client.joinTown(spaceId, alice.wallet)
-            }, [client])
+                await joinTown(spaceId, alice.wallet)
+            }, [joinTown])
             return (
                 <>
                     <LoginWithWallet signer={alice.provider.wallet} />

@@ -91,12 +91,6 @@ describe('spaceHierarchy', () => {
             expect(bob_spaceInfo?.channels.length).toEqual(2)
         })
 
-        // alice syncs the space before getting an invite...
-        expect(toSpaceHierarchy(alice.casablancaClient!, spaceId)?.channels).toStrictEqual([])
-
-        // bob invites alice
-        await bob.inviteUser(spaceId, alice.getUserId())
-
         // alice joins the space
         await alice.joinTown(spaceId, alice.wallet)
 

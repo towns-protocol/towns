@@ -106,9 +106,6 @@ describe('Towns event handlers test', () => {
             throw new Error('bob.getUserId() is undefined')
         }
 
-        // alice invites bob to the room
-        await alice.inviteUser(spaceId, userId)
-
         console.log('alice.getRoomData(spaceId)', alice.getRoomData(spaceId))
 
         await bob.joinTown(spaceId, bob.wallet)

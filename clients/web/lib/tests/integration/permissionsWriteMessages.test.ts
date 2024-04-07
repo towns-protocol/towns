@@ -68,9 +68,8 @@ describe('write messages', () => {
         console.log('defaultChannelId', defaultChannelId)
 
         // /** Act */
-        // invite user to join the space by first checking if they can read.
+        // user to join the space by first checking if they can read.
         await alice.joinTown(spaceId, alice.wallet)
-        await bob.inviteUser(channelId, alice.getUserId())
 
         await alice.joinRoom(channelId)
         // bob sends a message to the room
@@ -124,18 +123,14 @@ describe('write messages', () => {
 
         /** Act */
 
-        // invite user to join the space by first checking if they can read.
-        await bob.inviteUser(spaceId, tokenGrantedUser.getUserId())
+        // user to join the space by first checking if they can read.
         await tokenGrantedUser.joinTown(spaceId, tokenGrantedUser.wallet)
         await waitForWithRetries(() => tokenGrantedUser.joinRoom(channelId))
         // bob send 25 messages
         for (let i = 0; i < 25; i++) {
             await bob.sendMessage(channelId, `message ${i}`)
         }
-
-        // /** Assert */
-
-        // user should expect an invite to the room
+        // user should expect membership
         await waitFor(() => expect(tokenGrantedUser.getRoomData(channelId)).toBeDefined())
 
         // we should get more events
@@ -172,9 +167,8 @@ describe('write messages', () => {
         })
 
         /** Act */
-        // invite user to join the space by first checking if they can read.
+        // user to join the space by first checking if they can read.
         await tokenGrantedUser.joinTown(spaceId, tokenGrantedUser.wallet)
-        await bob.inviteUser(channelId, tokenGrantedUser.getUserId())
         await tokenGrantedUser.joinRoom(channelId)
 
         // bob sends a message to the room
