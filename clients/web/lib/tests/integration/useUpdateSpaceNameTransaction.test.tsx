@@ -109,12 +109,12 @@ function TestComponent(args: {
     const updateSpaceNameTransactionInfo = useUpdateSpaceNameTransaction()
     const { updateSpaceNameTransaction } = updateSpaceNameTransactionInfo
     const spaceNetworkId = spaceId ? spaceId : ''
-    const { client } = useTownsClient()
+    const { spaceDapp } = useTownsClient()
 
     // handle click to create a space
     const onClickCreateSpace = useCallback(() => {
         const handleClick = async () => {
-            const dynamicPricingModule = await getDynamicPricingModule(client?.spaceDapp)
+            const dynamicPricingModule = await getDynamicPricingModule(spaceDapp)
             await createSpaceTransactionWithRetries(
                 {
                     name: args.originalSpaceName,
@@ -133,7 +133,7 @@ function TestComponent(args: {
             )
         }
         void handleClick()
-    }, [client?.spaceDapp, createSpaceTransactionWithRetries, args.originalSpaceName, args.signer])
+    }, [spaceDapp, createSpaceTransactionWithRetries, args.originalSpaceName, args.signer])
 
     // handle click to update space name
     const onClickUpdateSpaceName = useCallback(() => {

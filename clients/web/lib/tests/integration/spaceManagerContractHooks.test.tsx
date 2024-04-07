@@ -47,13 +47,13 @@ describe('spaceManagerContractHooks', () => {
             const { createSpaceTransactionWithRetries } = spaceTransaction
             // spaces
             const { spaces } = useSpacesFromContract()
-            const { client } = useTownsClient()
+            const { spaceDapp } = useTownsClient()
 
             const [createdSpace, setCreatedSpace] = useState<boolean>(false)
             // callback to create a space
             const onClickCreateSpace = useCallback(() => {
                 const handleClick = async () => {
-                    const dynamicPricingModule = await getDynamicPricingModule(client?.spaceDapp)
+                    const dynamicPricingModule = await getDynamicPricingModule(spaceDapp)
                     await createSpaceTransactionWithRetries(
                         {
                             name: spaceName,
@@ -75,7 +75,7 @@ describe('spaceManagerContractHooks', () => {
                     setCreatedSpace(true)
                 }
                 void handleClick()
-            }, [client?.spaceDapp, createSpaceTransactionWithRetries, signer])
+            }, [spaceDapp, createSpaceTransactionWithRetries, signer])
             const [createSpaceWithMemberRole, setCreateSpaceWithMemberRole] =
                 useState<boolean>(false)
 
@@ -85,7 +85,7 @@ describe('spaceManagerContractHooks', () => {
                     if (!nftAddress) {
                         throw new Error('No towns token address')
                     }
-                    const dynamicPricingModule = await getDynamicPricingModule(client?.spaceDapp)
+                    const dynamicPricingModule = await getDynamicPricingModule(spaceDapp)
                     await createSpaceTransactionWithRetries(
                         {
                             name: tokenGatedSpaceName,
@@ -109,7 +109,7 @@ describe('spaceManagerContractHooks', () => {
                     setCreateSpaceWithMemberRole(true)
                 }
                 void handleClick()
-            }, [client?.spaceDapp, createSpaceTransactionWithRetries, signer])
+            }, [spaceDapp, createSpaceTransactionWithRetries, signer])
 
             useEffect(() => {
                 console.log('TestComponent', 'render', { spaceTransaction })

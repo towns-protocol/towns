@@ -43,7 +43,7 @@ export const CreateSpaceForm = (props: Props) => {
     const { loggedInWalletAddress } = useConnectivity()
     const { chain: walletChain } = useNetwork()
     const { loginStatus: casablancaLoginStatus } = useCasablancaStore()
-    const { client } = useTownsClient()
+    const { spaceDapp } = useTownsClient()
     const getSigner = useGetEmbeddedSigner()
 
     const [formValue, setFormValue] = useState<FormValues>({
@@ -141,11 +141,11 @@ export const CreateSpaceForm = (props: Props) => {
             console.error('Cannot create space. No signer.')
             return undefined
         }
-        if (!client) {
-            console.error('Cannot create space. No client.')
+        if (!spaceDapp) {
+            console.error('Cannot create space. No spaceDapp.')
             return undefined
         }
-        const dynamicPricingModule = await getDynamicPricingModule(client.spaceDapp)
+        const dynamicPricingModule = await getDynamicPricingModule(spaceDapp)
 
         const requirements: MembershipStruct = {
             settings: {
@@ -174,7 +174,7 @@ export const CreateSpaceForm = (props: Props) => {
         formValue.price,
         formValue.limit,
         getSigner,
-        client,
+        spaceDapp,
         createSpaceTransactionWithRole,
         councilNftAddress,
     ])

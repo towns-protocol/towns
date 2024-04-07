@@ -91,7 +91,7 @@ describe('useCreateChannelTransactionHook', () => {
             // Use the roles from the parent space to create the channel
             const { spaceRoles } = useRoles(spaceNetworkId)
             const transactions = useTransactionStore()
-            const { client } = useTownsClient()
+            const { spaceDapp } = useTownsClient()
 
             const roleIds = useMemo(() => {
                 const roleIds: number[] = []
@@ -107,7 +107,7 @@ describe('useCreateChannelTransactionHook', () => {
 
             const onClickCreateSpace = useCallback(() => {
                 const handleClick = async () => {
-                    const dynamicPricingModule = await getDynamicPricingModule(client?.spaceDapp)
+                    const dynamicPricingModule = await getDynamicPricingModule(spaceDapp)
                     await createSpaceTransactionWithRetries(
                         {
                             name: spaceName,
@@ -131,7 +131,7 @@ describe('useCreateChannelTransactionHook', () => {
                 }
 
                 void handleClick()
-            }, [client?.spaceDapp, createSpaceTransactionWithRetries, signer])
+            }, [spaceDapp, createSpaceTransactionWithRetries, signer])
 
             // callback to create a channel with towns token entitlement
             const onClickCreateChannel = useCallback(() => {

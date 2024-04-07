@@ -159,12 +159,12 @@ function TestComponentMultiple(args: {
     const spaceTransaction = useCreateSpaceTransactionWithRetries()
     const { createSpaceTransactionWithRetries, data: txData, transactionStatus } = spaceTransaction
     const spaceId = txData?.spaceId
-    const { client } = useTownsClient()
+    const { spaceDapp } = useTownsClient()
 
     // handle click to create a space
     const onClickCreateSpace = useCallback(() => {
         const handleClick = async () => {
-            const dynamicPricingModule = await getDynamicPricingModule(client?.spaceDapp)
+            const dynamicPricingModule = await getDynamicPricingModule(spaceDapp)
             await createSpaceTransactionWithRetries(
                 {
                     name: args.spaceNames[0],
@@ -208,7 +208,7 @@ function TestComponentMultiple(args: {
 
         void handleClick()
     }, [
-        client?.spaceDapp,
+        spaceDapp,
         createSpaceTransactionWithRetries,
         args.spaceNames,
         args.roleName,
