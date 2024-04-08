@@ -1,4 +1,4 @@
-import React, { useCallback, useEffect, useMemo, useRef, useState } from 'react'
+import React, { Suspense, useCallback, useEffect, useMemo, useRef, useState } from 'react'
 import { FormProvider, UseFormReturn, useFormContext } from 'react-hook-form'
 import { ethers } from 'ethers'
 
@@ -611,7 +611,13 @@ export function CreateSpaceFormV2() {
                     )
                 }}
             </FormRender>
-            {transactionDetails.isTransacting ? <LazyCreateSpaceMintAnimation /> : <></>}
+            {transactionDetails.isTransacting ? (
+                <Suspense fallback={<></>}>
+                    <LazyCreateSpaceMintAnimation />
+                </Suspense>
+            ) : (
+                <></>
+            )}
             <UserOpTxModal />
         </Stack>
     )
