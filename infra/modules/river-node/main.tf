@@ -673,3 +673,56 @@ resource "cloudflare_record" "public_ip_a_record" {
     ignore_changes = all
   }
 }
+
+// MONITORING //
+
+locals {
+  # notifies the "infra - goalie" slack group
+  datadog_monitor_slack_mention = "@slack-Here_Not_There_Labs-sre-alerts <!subteam^S064UNJ7YQ2>"
+}
+
+module "datadog_sythetics_test" {
+  source  = "../../modules/datadog/synthetic-test"
+  name    = "${local.node_name} - 1min - 1 location"
+  type    = "api"
+  subtype = "http"
+  enabled = !var.is_transient
+
+  locations = ["aws:us-west-1"]
+  tags      = ["created_by:terraform", "env:${terraform.workspace}", "node_number:${var.node_number}"]
+  message   = local.datadog_monitor_slack_mention
+  request_definition = {
+    method = "GET"
+    url    = "${module.global_constants.nodes_metadata[var.node_number - 1].url}/info"
+  }
+  assertions = [
+    {
+      type     = "responseTime"
+      operator = "lessThan"
+      target   = "3000"
+    },
+    {
+      type     = "statusCode"
+      operator = "is"
+      target   = "200"
+    },
+    {
+      type     = "header"
+      property = "content-type"
+      operator = "is"
+      target   = "text/html"
+    }
+  ]
+  options_list = {
+    tick_every = 60
+    retry = {
+      count    = 2
+      interval = 300 #Sec
+    }
+    monitor_options = {
+      renotify_interval = 30 #Min
+    }
+    min_failure_duration = 60 #Sec
+    min_location_failed  = 1
+  }
+}

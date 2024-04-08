@@ -78,6 +78,7 @@ jobs:
             GIT_PR_NUMBER: ${{ github.event.pull_request.number}}
             CI_AUTOAPPROVE: true
             TF_VAR_datadog_api_key: ${{ secrets.TF_VAR_datadog_api_key }}
+            TF_VAR_datadog_app_key: ${{ secrets.TF_VAR_datadog_app_key }}
 
         steps:
             - name: Checkout code
