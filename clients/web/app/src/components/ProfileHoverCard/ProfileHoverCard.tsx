@@ -24,7 +24,7 @@ export const ProfileHoverCard = (props: Props) => {
     const { data: userBio } = useGetUserBio(abstractAccountAddress)
 
     return user ? (
-        <Tooltip gap maxWidth="300" background="level2" border="level3">
+        <Tooltip gap elevate maxWidth="300" background="level2">
             <Stack gap padding="sm">
                 <Stack horizontal gap>
                     <Avatar userId={userId} size="avatar_lg" />

@@ -13,7 +13,7 @@ export const SpacesChannelAnimated = (props: Props) => {
     const channelId = props.channelId || channelSlug
 
     return (
-        <Panel padding="none" parentRoute="../">
+        <Panel padding="none" gap="none" parentRoute="../">
             <SpacesChannel channelId={channelId} />
         </Panel>
     )
