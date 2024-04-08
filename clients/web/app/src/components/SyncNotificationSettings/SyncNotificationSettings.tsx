@@ -1,6 +1,7 @@
 import React, { useEffect } from 'react'
 
 import { Mute } from '@notification-service/types'
+import isEqual from 'lodash/isEqual'
 import { useNotificationSettings } from 'hooks/useNotificationSettings'
 import { useStore } from 'store/store'
 import { useUpdateNotificationSettings } from 'api/lib/notificationSettings'
@@ -35,7 +36,12 @@ export const SyncNotificationSettings = () => {
             }, [] as string[])
         }
 
-        useStore.setState({ mutedChannelIds })
+        useStore.setState((prev) => {
+            if (isEqual(mutedChannelIds, prev['mutedChannelIds'])) {
+                return prev
+            }
+            return { ...prev, ['mutedChannelIds']: mutedChannelIds }
+        })
     }, [channelSettings, spaceSettings])
 
     return <></>
