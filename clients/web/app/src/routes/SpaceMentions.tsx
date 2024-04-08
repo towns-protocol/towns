@@ -47,19 +47,21 @@ export const SpaceMentions = () => {
             >
                 {mentions.length ? (
                     <Stack minHeight="forceScroll">
-                        <Stack padding gap={{ touch: 'none', default: 'md' }}>
+                        <Stack
+                            padding={{ touch: 'sm', default: 'md' }}
+                            gap={{ touch: 'sm', default: 'md' }}
+                        >
                             {mentions.map((m) => {
                                 return (
                                     m.type === 'mention' && (
                                         <IsolatedMessageItem
                                             hoverable
-                                            // border
                                             result={m}
                                             key={m.event.eventId}
                                             userId={userId}
                                             padding="md"
                                             borderRadius="md"
-                                            // boxShadow="card"
+                                            background="readability"
                                         />
                                     )
                                 )

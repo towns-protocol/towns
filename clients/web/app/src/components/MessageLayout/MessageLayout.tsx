@@ -177,13 +177,7 @@ export const MessageLayout = (props: Props) => {
             <Stack grow gap="paragraph" position="relative">
                 {/* name & date top row */}
                 {(displayContext === 'head' || displayContext === 'single') && (
-                    <Stack
-                        horizontal
-                        grow
-                        gap={{ default: 'xs', mobile: 'xs' }}
-                        height="height_sm"
-                        alignItems="end"
-                    >
+                    <Stack horizontal grow gap="xs" height="height_sm" alignItems="end">
                         {/* display name with tooltip */}
                         {senderId && (
                             <Box

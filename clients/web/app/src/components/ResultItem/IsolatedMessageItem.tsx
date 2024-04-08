@@ -4,6 +4,7 @@ import {
     EventStatus,
     MentionResult as MessageResult,
     useSpaceId,
+    useTimelineReactions,
     useUserLookupContext,
 } from 'use-towns-client'
 import { isDMChannelStreamId, isGDMChannelStreamId } from '@river/sdk'
@@ -19,6 +20,7 @@ import { atoms } from 'ui/styles/atoms.css'
 import { getPrettyDisplayName } from 'utils/getPrettyDisplayName'
 import { getIsRoomMessageContent, getMessageBody } from 'utils/ztevent_util'
 import { useDmChannels } from 'hooks/useDMChannels'
+import { useHandleReaction } from 'hooks/useReactions'
 
 const createMessageLink = (
     spaceId: string,
@@ -78,6 +80,10 @@ export const IsolatedMessageItem = (
         }
     }, [props.selected])
 
+    const messageReactionsMap = useTimelineReactions(result.channel.id)
+    const reactions = messageReactionsMap[result.event.eventId]
+    const onReaction = useHandleReaction(result.channel.id)
+
     if (!content) {
         return null
     }
@@ -100,14 +106,17 @@ export const IsolatedMessageItem = (
                 relativeDate
                 background="inherit"
                 tabIndex={-1}
-                avatarSize={isTouch ? 'avatar_x4' : 'avatar_md'}
+                avatarSize="avatar_x4"
                 padding={padding}
                 key={result.event.eventId}
                 messageSourceAnnotation={sourceAnnotation}
                 timestamp={result.event.createdAtEpochMs}
                 userId={sender?.userId}
                 senderId={sender?.userId}
+                user={sender}
                 name={getPrettyDisplayName(sender)}
+                reactions={reactions}
+                onReaction={onReaction}
             >
                 <MessagePreview
                     key={props.highligtTerms?.join('')}
