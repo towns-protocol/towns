@@ -199,6 +199,16 @@ const PlateEditorWithoutBoundary = ({
         setIsAttemptingSend(true)
     }, [])
 
+    const onFocus = useCallback(() => onFocusChange(true), [onFocusChange])
+
+    /**
+     * We want to delay the `onBlur` event to allow the user to click on the formatting toolbar icon
+     * Without this delay, the bottom toolbar would disappear before `isFormattingToolbarOpen` is set to `true`
+     *
+     * {@link https://linear.app/hnt-labs/issue/HNT-5502/|HNT-5502}
+     */
+    const onBlur = useCallback(() => setTimeout(() => onFocusChange(false), 0), [onFocusChange])
+
     const onSendCb = useCallback(
         async (message: string, mentions: Mention[]) => {
             if (isUploadingFiles) {
@@ -250,16 +260,6 @@ const PlateEditorWithoutBoundary = ({
         },
         [onSendCb, isTouch, disabled, files.length],
     )
-
-    const onFocus = useCallback(() => onFocusChange(true), [onFocusChange])
-
-    /**
-     * We want to delay the `onBlur` event to allow the user to click on the formatting toolbar icon
-     * Without this delay, the bottom toolbar would disappear before `isFormattingToolbarOpen` is set to `true`
-     *
-     * {@link https://linear.app/hnt-labs/issue/HNT-5502/|HNT-5502}
-     */
-    const onBlur = useCallback(() => setTimeout(() => onFocusChange(false), 200), [onFocusChange])
 
     const fileCount = files.length
     const background = isEditing && !isTouch ? 'level2' : 'level2'

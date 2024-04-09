@@ -125,10 +125,10 @@ export const ComboboxContent = <T extends TMentionComboboxTypes>(
 ) => {
     const { component: Component, editor, items, combobox, onRenderItem } = props
 
+    useComboboxContentState({ items, combobox })
     const filteredItems = useComboboxSelectors.filteredItems() as typeof items
     const highlightedIndex = useComboboxSelectors.highlightedIndex() as number
     const activeComboboxStore = useActiveComboboxStore()!
-    useComboboxContentState({ items, combobox })
 
     if (
         Array.isArray(filteredItems) &&

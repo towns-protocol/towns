@@ -52,10 +52,10 @@ export const EditMessageButtons = (props: {
         <Stack horizontal gap paddingX={isTouch ? 'none' : 'xs'}>
             {isEditing ? (
                 <>
-                    <Button size="button_xs" onClick={cancelButtonPressed}>
+                    <Button size="button_xs" onMouseDown={cancelButtonPressed}>
                         Cancel
                     </Button>
-                    <Button size="button_xs" tone="cta1" onClick={saveButtonPressed}>
+                    <Button size="button_xs" tone="cta1" onMouseDown={saveButtonPressed}>
                         Save
                     </Button>
                 </>
@@ -63,13 +63,13 @@ export const EditMessageButtons = (props: {
                 <Icon
                     type={disabled ? 'touchSendDisabled' : 'touchSendEnabled'}
                     size="square_lg"
-                    onClick={disabled ? props.onCancel : props.onSave}
+                    onMouseDown={disabled ? props.onCancel : props.onSave}
                 />
             ) : (
                 <Icon
                     type={disabled ? 'touchSendDisabled' : 'touchSendEnabled'}
                     size="square_md"
-                    onClick={disabled ? undefined : props.onSave}
+                    onMouseDown={disabled ? undefined : props.onSave}
                 />
             )}
         </Stack>
