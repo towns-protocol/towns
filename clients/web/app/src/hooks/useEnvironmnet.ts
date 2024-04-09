@@ -141,7 +141,9 @@ export const ENVIRONMENTS = makeEnvironments()
 if (!ENVIRONMENTS.length) {
     throw new Error('No environments defined')
 }
-const DEFAULT_ENVIRNOMENT = ENVIRONMENTS[0]
+const defaultEnvironmentId = env.VITE_RIVER_ENV ?? env.VITE_RIVER_DEFAULT_ENV
+const DEFAULT_ENVIRNOMENT =
+    ENVIRONMENTS.find((x) => x.id === defaultEnvironmentId) ?? ENVIRONMENTS[0]
 
 export type UseEnvironmentReturn = ReturnType<typeof useEnvironment>
 

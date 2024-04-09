@@ -41,7 +41,8 @@ const envSchema = z.object({
     DEV: boolish,
     BASE_URL: baseUrlSchema,
     DESTROY_PROD_SERVICE_WORKER: boolish.default(false),
-    // environment config, if any are set, all should be set
+
+    // start environment config, if any are set, all should be set
     VITE_RIVER_ENV: z.string().optional(),
     VITE_BASE_CHAIN_RPC_URL: z.string().url().optional(),
     VITE_BASE_CHAIN_WS_URL: z.string().url().optional(),
@@ -58,8 +59,13 @@ const envSchema = z.object({
     VITE_ADDRESS_MOCK_NFT: z.string().optional(),
     VITE_ADDRESS_MEMBER: z.string().optional(),
     // end environment config
+
+    // start env specific config
     VITE_BASE_SEPOLIA_RPC_URL: z.string().url().optional(),
     VITE_BASE_SEPOLIA_WS_URL: z.string().url().optional(),
+    VITE_RIVER_TESTNET_RPC_URL: z.string().url().optional(),
+    // end env specific config
+    VITE_RIVER_DEFAULT_ENV: z.string().optional(), // if more than one env is available, and VITE_RIVER_ENV is not set, this is the default
 
     VITE_TYPEFORM_ALPHA_URL: z.string().optional(),
     VITE_IGNORE_IS_DEV_CHECKS: z.string().optional(),

@@ -20,7 +20,7 @@ const anvilRiverChain: IChainConfig = {
 const testnetRiverChain: IChainConfig = {
     chainId: 6524490,
     name: 'testnet_river_chain',
-    rpcUrl: 'https://devnet.rpc.river.build',
+    rpcUrl: env.VITE_RIVER_TESTNET_RPC_URL ?? 'https://devnet.rpc.river.build',
 }
 
 export const getCustomBaseChain = (chainId: number): Chain => {
