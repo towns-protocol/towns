@@ -121,6 +121,9 @@ const root = createGlobalTheme(':root', {
         '-xs': `${baseline * -0.5}px`,
         '-sm': `${baseline * -1}px`,
         '-md': `${baseline * -2}px`,
+        '-lg': `${baseline * -3}px`,
+        '-x4': `${baseline * -4}px`,
+        '-x8': `${baseline * -8}px`,
     } as const,
 
     dims: {

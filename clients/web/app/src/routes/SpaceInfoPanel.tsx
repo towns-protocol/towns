@@ -317,6 +317,13 @@ export const SpaceInfo = () => {
                                 register={register}
                                 formState={formState}
                                 clearErrors={clearErrors}
+                                imageRestrictions={{
+                                    // no limits on dimensions for spaces
+                                    minDimension: {
+                                        message: '',
+                                        min: 0,
+                                    },
+                                }}
                             >
                                 <TownContractOpener address={address}>
                                     <InteractiveSpaceIcon

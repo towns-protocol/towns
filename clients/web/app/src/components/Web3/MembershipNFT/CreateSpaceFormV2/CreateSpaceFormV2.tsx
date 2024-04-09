@@ -734,6 +734,13 @@ export const UploadImageField = ({
                     setError={setError}
                     register={register}
                     formState={formState}
+                    imageRestrictions={{
+                        // no limits on dimensions for spaces
+                        minDimension: {
+                            message: '',
+                            min: 0,
+                        },
+                    }}
                     clearErrors={clearErrors}
                     overrideUploadCb={onUpload}
                     uploadIconSize="square_md"

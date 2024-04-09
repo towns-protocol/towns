@@ -89,14 +89,11 @@ export const LargeUploadImageTemplate = <T extends FieldValues>(props: Props<T>)
         ref.current?.click()
     }
 
-    const imageAreaIsClickable = uploadIconPosition === 'absoluteCenter'
+    const noImage = uploadIconPosition === 'absoluteCenter'
 
     return (
         <Box position="relative" data-testid="upload-image-container">
-            <Box
-                className={isPending ? loadingStyles : ''}
-                onClick={imageAreaIsClickable ? onClick : void 0}
-            >
+            <Box className={isPending ? loadingStyles : ''} onClick={onClick}>
                 {children}
             </Box>
 
@@ -117,7 +114,7 @@ export const LargeUploadImageTemplate = <T extends FieldValues>(props: Props<T>)
                         {...config[size]}
                         centerContent
                         position="absoluteCenter"
-                        background={imageAreaIsClickable ? 'level2' : 'none'}
+                        background={noImage ? 'level2' : 'none'}
                         justifySelf="center"
                         alignSelf="center"
                         pointerEvents="none"
@@ -132,22 +129,20 @@ export const LargeUploadImageTemplate = <T extends FieldValues>(props: Props<T>)
                         />
                         <FieldOutline tone="accent" rounded="md" />
                     </Box>
-                    <Box position={uploadIconPosition} padding="md">
+                    <Box position={uploadIconPosition} padding="md" pointerEvents="none">
                         <Box
                             centerContent
                             disabled={isPending}
                             data-testid="upload-image-button"
-                            role="button"
                             top="xs"
                             right="xs"
-                            background={imageAreaIsClickable ? 'level2' : 'level3'}
+                            background={noImage ? 'level2' : 'level3'}
                             width="x4"
                             height="x4"
                             rounded="full"
-                            border={imageAreaIsClickable ? 'none' : 'strongLevel1'}
+                            border={noImage ? 'none' : 'strongLevel1'}
                             padding="md"
                             cursor="pointer"
-                            onClick={onClick}
                         >
                             <Icon
                                 type="camera"
@@ -159,7 +154,7 @@ export const LargeUploadImageTemplate = <T extends FieldValues>(props: Props<T>)
                         </Box>
                     </Box>
                     {formState?.errors[formFieldName] && (
-                        <Box centerContent padding width="100%">
+                        <Box centerContent padding width="100%" position="absolute" bottom="-x8">
                             <ErrorMessage
                                 maxWidth="200"
                                 textProps={{
