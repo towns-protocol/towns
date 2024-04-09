@@ -37,7 +37,7 @@ export const NoJoinedSpacesFallback = () => {
         navigate(`/${PATHS.SPACES}/new`)
     }, [navigate])
 
-    if (spaces.length || !client) {
+    if (spaces.length) {
         return isTouch ? <WelcomeLayout debugText="no joined space fallback" /> : <></>
     }
 

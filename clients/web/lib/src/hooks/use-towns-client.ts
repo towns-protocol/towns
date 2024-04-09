@@ -1,6 +1,6 @@
 /* eslint-disable no-restricted-imports */
 /* eslint-disable @typescript-eslint/unbound-method */
-import { useMemo } from 'react'
+import { useCallback, useMemo } from 'react'
 import { FullyReadMarker } from '@river-build/proto'
 import {
     BanUnbanWalletTransactionContext,
@@ -30,6 +30,7 @@ import { useCasablancaWalletSignIn } from './use-casablanca-wallet-signin'
 import { create } from 'zustand'
 import { IArchitectBase, Permission, IRuleEntitlement } from '@river-build/web3'
 import { TSigner } from 'types/web3-types'
+import { SignerContext } from '@river/sdk'
 
 export type TownsErrorStoreState = {
     errors: string[]
@@ -51,6 +52,8 @@ interface TownsClientImpl {
     chainId: number | undefined
     client: TownsClient | undefined
     clientRunning: boolean
+    clientSingleton: TownsClient | undefined
+    signerContext: SignerContext | undefined
     spaceDapp: TownsClient['spaceDapp'] | undefined
     createSpaceTransaction: (
         createSpaceInfo: CreateSpaceInfo,
@@ -219,82 +222,119 @@ export function useTownsClient(): TownsClientImpl {
         loginWithWalletToCasablanca,
         registerWalletWithCasablanca,
     } = useCasablancaWalletSignIn()
-    const { client } = useTownsContext()
-    const clientRunning = useMemo(() => client !== undefined, [client])
+    const { client, clientSingleton, signerContext } = useTownsContext()
+    const clientRunning = useMemo(() => signerContext !== undefined, [signerContext])
     const logout = useLogout()
     const sendReadReceipt = useSendReadReceipt(client)
     const resetFullyReadMarkers = useResetFullyReadMarkers()
-
+    const joinTown = useCallback(
+        // if you call join town before you have a user in the stream node
+        // join town will initialize your user after you have have minted in the space contract
+        // capture and pass the space context here
+        (spaceId: string, signer: TSigner) => {
+            if (!clientSingleton) {
+                console.error('clientSingleton is undefined')
+                return Promise.resolve(undefined)
+            }
+            return clientSingleton.joinTown(spaceId, signer, signerContext)
+        },
+        [clientSingleton, signerContext],
+    )
+    const waitForCreateSpaceTransaction = useCallback(
+        // if you call join town before you have a user in the stream node
+        // join town will initialize your user after you have have minted in the space contract
+        // capture and pass the space context here
+        (context: CreateSpaceTransactionContext | undefined, defaultUsernames: string[]) => {
+            if (!clientSingleton) {
+                console.error('clientSingleton is undefined')
+                return Promise.resolve(undefined)
+            }
+            return clientSingleton.waitForCreateSpaceTransaction(
+                context,
+                signerContext,
+                defaultUsernames,
+            )
+        },
+        [clientSingleton, signerContext],
+    )
     return {
         chainId: client?.opts.baseChainId,
         client,
         clientRunning,
-        spaceDapp: client?.spaceDapp,
-        createSpaceTransaction: useWithCatch(client?.createSpaceTransaction),
-        waitForCreateSpaceTransaction: useWithCatch(client?.waitForCreateSpaceTransaction),
-        createMediaStream: useWithCatch(client?.createMediaStream),
+        clientSingleton,
+        spaceDapp: clientSingleton?.spaceDapp,
+        signerContext,
+        createSpaceTransaction: useWithCatch(clientSingleton?.createSpaceTransaction),
+        waitForCreateSpaceTransaction,
+        createMediaStream: useWithCatch(clientSingleton?.createMediaStream),
 
-        createChannelTransaction: useWithCatch(client?.createChannelTransaction),
-        waitForCreateChannelTransaction: useWithCatch(client?.waitForCreateChannelTransaction),
-        updateChannelTransaction: useWithCatch(client?.updateChannelTransaction),
-        waitForUpdateChannelTransaction: useWithCatch(client?.waitForUpdateChannelTransaction),
-        banTransaction: useWithCatch(client?.banTransaction),
-        unbanTransaction: useWithCatch(client?.unbanTransaction),
-        waitForBanUnbanTransaction: useWithCatch(client?.waitForBanUnbanTransaction),
-        walletAddressIsBanned: useWithCatch(client?.walletAddressIsBanned),
-        createDMChannel: useWithCatch(client?.createDMChannel),
-        createGDMChannel: useWithCatch(client?.createGDMChannel),
-        createRoleTransaction: useWithCatch(client?.createRoleTransaction),
-        waitForCreateRoleTransaction: useWithCatch(client?.waitForCreateRoleTransaction),
-        addRoleToChannelTransaction: useWithCatch(client?.addRoleToChannelTransaction),
-        waitForAddRoleToChannelTransaction: useWithCatch(
-            client?.waitForAddRoleToChannelTransaction,
+        createChannelTransaction: useWithCatch(clientSingleton?.createChannelTransaction),
+        waitForCreateChannelTransaction: useWithCatch(
+            clientSingleton?.waitForCreateChannelTransaction,
         ),
-        updateRoleTransaction: useWithCatch(client?.updateRoleTransaction),
-        waitForUpdateRoleTransaction: useWithCatch(client?.waitForUpdateRoleTransaction),
-        deleteRoleTransaction: useWithCatch(client?.deleteRoleTransaction),
-        waitForDeleteRoleTransaction: useWithCatch(client?.waitForDeleteRoleTransaction),
-        waitForUpdateSpaceNameTransaction: useWithCatch(client?.waitForUpdateSpaceNameTransaction),
-        updateSpaceNameTransaction: useWithCatch(client?.updateSpaceNameTransaction),
-        editMessage: useWithCatch(client?.editMessage),
-        getIsUsernameAvailable: useWithCatch(client?.getIsUsernameAvailable),
+        updateChannelTransaction: useWithCatch(clientSingleton?.updateChannelTransaction),
+        waitForUpdateChannelTransaction: useWithCatch(
+            clientSingleton?.waitForUpdateChannelTransaction,
+        ),
+        banTransaction: useWithCatch(clientSingleton?.banTransaction),
+        unbanTransaction: useWithCatch(clientSingleton?.unbanTransaction),
+        waitForBanUnbanTransaction: useWithCatch(clientSingleton?.waitForBanUnbanTransaction),
+        walletAddressIsBanned: useWithCatch(clientSingleton?.walletAddressIsBanned),
+        createDMChannel: useWithCatch(clientSingleton?.createDMChannel),
+        createGDMChannel: useWithCatch(clientSingleton?.createGDMChannel),
+        createRoleTransaction: useWithCatch(clientSingleton?.createRoleTransaction),
+        waitForCreateRoleTransaction: useWithCatch(clientSingleton?.waitForCreateRoleTransaction),
+        addRoleToChannelTransaction: useWithCatch(clientSingleton?.addRoleToChannelTransaction),
+        waitForAddRoleToChannelTransaction: useWithCatch(
+            clientSingleton?.waitForAddRoleToChannelTransaction,
+        ),
+        updateRoleTransaction: useWithCatch(clientSingleton?.updateRoleTransaction),
+        waitForUpdateRoleTransaction: useWithCatch(clientSingleton?.waitForUpdateRoleTransaction),
+        deleteRoleTransaction: useWithCatch(clientSingleton?.deleteRoleTransaction),
+        waitForDeleteRoleTransaction: useWithCatch(clientSingleton?.waitForDeleteRoleTransaction),
+        waitForUpdateSpaceNameTransaction: useWithCatch(
+            clientSingleton?.waitForUpdateSpaceNameTransaction,
+        ),
+        updateSpaceNameTransaction: useWithCatch(clientSingleton?.updateSpaceNameTransaction),
+        editMessage: useWithCatch(clientSingleton?.editMessage),
+        getIsUsernameAvailable: useWithCatch(clientSingleton?.getIsUsernameAvailable),
         getIsWalletRegisteredWithCasablanca,
-        getServerVersions: useWithCatch(client?.getServerVersions),
-        updateUserBlock: useWithCatch(client?.updateUserBlock),
-        inviteUser: useWithCatch(client?.inviteUser),
-        joinRoom: useWithCatch(client?.joinRoom),
-        leaveRoom: useWithCatch(client?.leave),
+        getServerVersions: useWithCatch(clientSingleton?.getServerVersions),
+        updateUserBlock: useWithCatch(clientSingleton?.updateUserBlock),
+        inviteUser: useWithCatch(clientSingleton?.inviteUser),
+        joinRoom: useWithCatch(clientSingleton?.joinRoom),
+        leaveRoom: useWithCatch(clientSingleton?.leave),
         loginWithWalletToCasablanca,
         logout,
-        joinTown: useWithCatch(client?.joinTown),
-        redactEvent: useWithCatch(client?.redactEvent),
+        joinTown,
+        redactEvent: useWithCatch(clientSingleton?.redactEvent),
         registerWalletWithCasablanca,
-        removeUser: useWithCatch(client?.removeUser),
+        removeUser: useWithCatch(clientSingleton?.removeUser),
         resetFullyReadMarkers,
-        scrollback: useWithCatch(client?.scrollback),
-        scrollbackToEvent: useWithCatch(client?.scrollbackToEvent),
-        sendMessage: useWithCatch(client?.sendMessage),
-        retrySendMessage: useWithCatch(client?.retrySendMessage),
-        sendReaction: useWithCatch(client?.sendReaction),
-        sendMediaPayload: useWithCatch(client?.sendMediaPayload),
+        scrollback: useWithCatch(clientSingleton?.scrollback),
+        scrollbackToEvent: useWithCatch(clientSingleton?.scrollbackToEvent),
+        sendMessage: useWithCatch(clientSingleton?.sendMessage),
+        retrySendMessage: useWithCatch(clientSingleton?.retrySendMessage),
+        sendReaction: useWithCatch(clientSingleton?.sendReaction),
+        sendMediaPayload: useWithCatch(clientSingleton?.sendMediaPayload),
         sendReadReceipt: useWithCatch(sendReadReceipt),
-        adminRedactMessage: useWithCatch(client?.adminRedactMessage),
-        setDisplayName: useWithCatch(client?.setDisplayName),
-        setRoomProperties: useWithCatch(client?.setRoomProperties),
-        setAvatarUrl: useWithCatch(client?.setAvatarUrl),
-        setHighPriorityStreams: useWithCatch(client?.setHighPriorityStreams),
-        linkEOAToRootKey: useWithCatch(client?.linkEOAToRootKey),
-        linkCallerToRootKey: useWithCatch(client?.linkCallerToRootKey),
-        removeLink: useWithCatch(client?.removeLink),
-        getLinkedWallets: useWithCatch(client?.getLinkedWallets),
-        waitWalletLinkTransaction: useWithCatch(client?.waitWalletLinkTransaction),
+        adminRedactMessage: useWithCatch(clientSingleton?.adminRedactMessage),
+        setDisplayName: useWithCatch(clientSingleton?.setDisplayName),
+        setRoomProperties: useWithCatch(clientSingleton?.setRoomProperties),
+        setAvatarUrl: useWithCatch(clientSingleton?.setAvatarUrl),
+        setHighPriorityStreams: useWithCatch(clientSingleton?.setHighPriorityStreams),
+        linkEOAToRootKey: useWithCatch(clientSingleton?.linkEOAToRootKey),
+        linkCallerToRootKey: useWithCatch(clientSingleton?.linkCallerToRootKey),
+        removeLink: useWithCatch(clientSingleton?.removeLink),
+        getLinkedWallets: useWithCatch(clientSingleton?.getLinkedWallets),
+        waitWalletLinkTransaction: useWithCatch(clientSingleton?.waitWalletLinkTransaction),
     }
 }
 
 const useWithCatch = <T extends Array<unknown>, U>(
     fn?: (...args: T) => Promise<U | undefined>,
 ): ((...args: T) => Promise<U | undefined>) => {
-    const client = useTownsContext().client
+    const client = useTownsContext().clientSingleton
     return useMemo(
         () =>
             async (...args: T): Promise<U | undefined> => {
@@ -307,6 +347,8 @@ const useWithCatch = <T extends Array<unknown>, U>(
                         console.error('Not a retryable error', err)
                         return
                     }
+                } else {
+                    console.error('client or fn is undefined', { fn, client })
                 }
             },
         [fn, client],

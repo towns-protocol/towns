@@ -1,5 +1,5 @@
 import { MutableRefObject, useEffect, useRef, useState } from 'react'
-import { Client as CasablancaClient } from '@river/sdk'
+import { Client as CasablancaClient, SignerContext } from '@river/sdk'
 import { check } from '@river-build/dlog'
 import { LoginStatus } from './login'
 import { TownsClient } from '../client/TownsClient'
@@ -22,6 +22,7 @@ export const useTownsClientListener = (opts: TownsOpts) => {
     const { casablancaCredentialsMap, clearCasablancaCredentials } = useCredentialStore()
     const casablancaCredentials = casablancaCredentialsMap[opts.environmentId ?? '']
     const [casablancaClient, setCasablancaClient] = useState<CasablancaClient>()
+    const [signerContext, setSignerContext] = useState<SignerContext>()
     const clientSingleton = useRef<ClientStateMachine>()
     const { isOffline } = useNetworkStatus()
 
@@ -51,6 +52,7 @@ export const useTownsClientListener = (opts: TownsOpts) => {
         const onStateMachineUpdated = (state: States) => {
             setCasablancaClient(state.casablancaClient)
             setCasablancaLoginStatus(state.loginStatus)
+            setSignerContext(state.signerContext)
         }
 
         const onClearCredentials = (oldCredendials: CasablancaCredentials) => {
@@ -97,6 +99,7 @@ export const useTownsClientListener = (opts: TownsOpts) => {
         client: casablancaClient ? clientSingleton.current.client : undefined,
         clientSingleton: clientSingleton.current.client,
         casablancaClient,
+        signerContext,
     }
 }
 
@@ -105,30 +108,50 @@ class LoggedIn {
     constructor(
         readonly credentials: CasablancaCredentials,
         readonly casablancaClient: CasablancaClient,
+        readonly signerContext: SignerContext,
     ) {}
 }
 
 class LoggedOut {
     readonly loginStatus = LoginStatus.LoggedOut
     readonly credentials = undefined
+    readonly signerContext = undefined
     readonly casablancaClient = undefined
+}
+
+class Authenticated {
+    readonly loginStatus = LoginStatus.Authenticated
+    readonly casablancaClient = undefined
+    constructor(
+        readonly credentials: CasablancaCredentials,
+        readonly signerContext: SignerContext,
+    ) {}
 }
 
 class LoggingIn {
     readonly loginStatus = LoginStatus.LoggingIn
     readonly casablancaClient = undefined
+    readonly signerContext = undefined
     constructor(readonly credentials: CasablancaCredentials) {}
 }
 
 class LoggingOut {
     readonly loginStatus = LoginStatus.LoggingOut
     readonly credentials = undefined
+    readonly signerContext = undefined
     constructor(readonly casablancaClient: CasablancaClient) {}
 }
 
+class Deauthenticating {
+    readonly loginStatus = LoginStatus.Deauthenticating
+    readonly casablancaClient = undefined
+    readonly credentials = undefined
+    readonly signerContext = undefined
+}
+
 type Next = { credentials?: CasablancaCredentials }
-type Transitions = LoggingIn | LoggingOut
-type Situations = LoggedIn | LoggedOut
+type Transitions = LoggingIn | LoggingOut | Deauthenticating
+type Situations = LoggedIn | LoggedOut | Authenticated
 type States = Transitions | Situations
 
 function isSituation(state: States): state is Situations {
@@ -149,11 +172,22 @@ class ClientStateMachine extends (EventEmitter as new () => TypedEmitter<ClientS
     constructor(client: TownsClient) {
         super()
         this.client = client
+
+        this.client.on('onCasablancaClientCreated', (client) => {
+            this.updateClient(client)
+        })
     }
 
     update(nextCredentials?: CasablancaCredentials) {
-        this.next = { credentials: nextCredentials }
+        this.next = { credentials: nextCredentials } satisfies Next
         void this.tick()
+    }
+
+    private updateClient(client: CasablancaClient) {
+        if (this.state instanceof Authenticated) {
+            this.state = new LoggedIn(this.state.credentials, client, this.state.signerContext)
+            this.emit('onStateUpdated', this.state)
+        }
     }
 
     private async tick() {
@@ -185,15 +219,31 @@ class ClientStateMachine extends (EventEmitter as new () => TypedEmitter<ClientS
                 check(currentSituation instanceof LoggedIn)
                 await this.client.stopCasablancaClient()
                 return new LoggedOut()
+            case LoginStatus.Deauthenticating:
+                check(currentSituation instanceof Authenticated)
+                return new LoggedOut()
             case LoginStatus.LoggingIn: {
                 check(currentSituation instanceof LoggedOut)
                 AnalyticsService.getInstance().trackEventOnce(AnalyticsEvents.LoggingIn)
                 this.emit('onErrorUpdated', undefined)
                 const { credentials } = transition
                 try {
+                    console.log('**logging in')
                     const context = credentialsToSignerContext(credentials)
-                    const casablancaClient = await this.client.startCasablancaClient(context)
-                    return new LoggedIn(credentials, casablancaClient)
+
+                    // use unauthenticated client to check to see if we exist on the server, if so, we can login
+                    const unauthedClient = await this.client.makeUnauthenticatedClient()
+                    const isRegistered = await unauthedClient.userWithAddressExists(
+                        context.creatorAddress,
+                    )
+                    if (!isRegistered) {
+                        console.log("**user authenticated, hasn't joined a space")
+                        return new Authenticated(credentials, context)
+                    } else {
+                        console.log('**user authenticated, starting casablanca client')
+                        const casablancaClient = await this.client.startCasablancaClient(context)
+                        return new LoggedIn(credentials, casablancaClient, context)
+                    }
                 } catch (e) {
                     console.log('******* casablanca client encountered exception *******', e)
                     try {
@@ -223,6 +273,11 @@ function getTransition(current: Situations, next: Next): Transitions | undefined
             AnalyticsService.getInstance().trackEventOnce(AnalyticsEvents.LoggedIn)
             if (next.credentials !== current.credentials) {
                 return new LoggingOut(current.casablancaClient)
+            }
+            break
+        case LoginStatus.Authenticated:
+            if (next.credentials != current.credentials) {
+                return new Deauthenticating()
             }
             break
         default:

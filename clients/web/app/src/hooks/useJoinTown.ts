@@ -1,12 +1,12 @@
 import { useCallback, useState } from 'react'
-import { useTownsClient } from 'use-towns-client'
+import { useTownsContext } from 'use-towns-client'
 import { useGetEmbeddedSigner } from '@towns/privy'
 import { isLimitReachedError, isMaybeFundsError, mapToErrorMessage } from '@components/Web3/utils'
 import { createPrivyNotAuthenticatedNotification } from '@components/Notifications/utils'
 import { useStore } from 'store/store'
 
 export const useJoinTown = (spaceId: string | undefined, onSuccessfulJoin?: () => void) => {
-    const { client } = useTownsClient()
+    const { clientSingleton, signerContext } = useTownsContext()
     const { setRecentlyMintedSpaceToken } = useStore()
     const getSigner = useGetEmbeddedSigner()
     const [errorDetails, setErrorDetails] = useState<{
@@ -35,13 +35,13 @@ export const useJoinTown = (spaceId: string | undefined, onSuccessfulJoin?: () =
             createPrivyNotAuthenticatedNotification()
             return
         }
-        if (client && spaceId && signer) {
+        if (clientSingleton && spaceId && signer) {
             const roomIdentifier = spaceId
             try {
                 // use client.joinRoom b/c it will throw an error, not the joinRoom wrapped in useWithCatch()
                 // we can keep this notEntitled state in the interm to catch some weird errors/states just in case
                 // but the entitled check should already happen in the UI, and never show a join button if not entitled
-                const result = await client.joinTown(roomIdentifier, signer)
+                const result = await clientSingleton.joinTown(roomIdentifier, signer, signerContext)
 
                 if (!result) {
                     setErrorDetails({
@@ -79,7 +79,14 @@ export const useJoinTown = (spaceId: string | undefined, onSuccessfulJoin?: () =
                 }
             }
         }
-    }, [client, spaceId, onSuccessfulJoin, getSigner, setRecentlyMintedSpaceToken])
+    }, [
+        getSigner,
+        clientSingleton,
+        spaceId,
+        signerContext,
+        setRecentlyMintedSpaceToken,
+        onSuccessfulJoin,
+    ])
 
     return { joinSpace, errorMessage, clearErrors, ...errorDetails }
 }

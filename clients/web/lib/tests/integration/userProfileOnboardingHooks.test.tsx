@@ -40,7 +40,7 @@ describe('userProfileOnboardingHooks', () => {
         )
         const myProfileName = screen.getByTestId('myProfileName')
         const loginStatus = screen.getByTestId('loginStatus')
-        await waitFor(() => expect(loginStatus).toHaveTextContent(LoginStatus.LoggedIn))
+        await waitFor(() => expect(loginStatus).toHaveTextContent(LoginStatus.Authenticated))
 
         // verify alice userid is rendering
         await waitFor(() => expect(myProfileName).toHaveTextContent(aliceProvider.wallet.address))

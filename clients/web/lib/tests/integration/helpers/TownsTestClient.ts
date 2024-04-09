@@ -12,14 +12,21 @@ import {
     TownsOpts,
 } from '../../../src/client/TownsClientTypes'
 
-import { CreateSpaceInfo } from '../../../src/types/towns-types'
+import { CreateSpaceInfo, StreamView } from '../../../src/types/towns-types'
 import { RoleIdentifier } from '../../../src/types/web3-types'
 import { TownsClient } from '../../../src/client/TownsClient'
 import { TownsTestWeb3Provider } from './TownsTestWeb3Provider'
 import { ethers } from 'ethers'
 import { makeUniqueName } from './TestUtils'
 import { toEvent } from '../../../src/hooks/TownsContext/useCasablancaTimelines'
-import { Client as CasablancaClient, makeSignerContext, userIdFromAddress } from '@river/sdk'
+import {
+    Client as CasablancaClient,
+    SignerContext,
+    UnauthenticatedClient,
+    makeRiverRpcClient,
+    makeSignerContext,
+    userIdFromAddress,
+} from '@river/sdk'
 import { Permission, IArchitectBase, IRuleEntitlement } from '@river-build/web3'
 import { bin_fromHexString } from '@river-build/dlog'
 
@@ -97,6 +104,9 @@ export class TownsTestClient extends TownsClient {
         createSpaceInfo: CreateSpaceInfo,
         membership: IArchitectBase.MembershipStruct,
     ): Promise<string> {
+        const signerContext =
+            this.signerContext ??
+            (await makeSignerContext(this.provider.wallet, this.delegateWallet))
         const txContext = await this.createSpaceTransaction(
             createSpaceInfo,
             membership,
@@ -106,7 +116,7 @@ export class TownsTestClient extends TownsClient {
             throw txContext.error
         }
         if (txContext.status === TransactionStatus.Pending) {
-            const rxContext = await this.waitForCreateSpaceTransaction(txContext)
+            const rxContext = await this.waitForCreateSpaceTransaction(txContext, signerContext)
             if (rxContext.error) {
                 throw rxContext.error
             }
@@ -120,6 +130,16 @@ export class TownsTestClient extends TownsClient {
         }
         // Something went wrong. Don't return a room identifier.
         throw new Error('createSpaceTransaction failed')
+    }
+
+    public override async joinTown(
+        spaceId: string,
+        signer: ethers.Signer,
+        inSignerContext?: SignerContext | undefined,
+    ): Promise<StreamView> {
+        const signerContext =
+            inSignerContext ?? (await makeSignerContext(signer, this.delegateWallet))
+        return super.joinTown(spaceId, signer, signerContext)
     }
 
     /************************************************
@@ -183,23 +203,19 @@ export class TownsTestClient extends TownsClient {
         this.log('minted mock NFT')
     }
 
-    // Helper function to get a test client up and running.
-    // Registers a new user and starts the client.
-    public async registerWalletAndStartClient() {
-        console.log('registerWalletAndStartClient', this.name, this.opts)
-
-        const casablancaContext = await makeSignerContext(this.provider.wallet, this.delegateWallet)
-        await this.startCasablancaClient(casablancaContext)
-    }
-
-    public async loginWalletAndStartClient(): Promise<void> {
+    public async makeSignerContextAndStartClient(): Promise<void> {
         const casablancaContext = await makeSignerContext(this.provider.wallet, this.delegateWallet)
         await this.startCasablancaClient(casablancaContext)
     }
 
     // eslint-disable-next-line @typescript-eslint/require-await
     public async isUserRegistered(): Promise<boolean> {
-        return false // n/a for casablanca
+        const rpcClient = await makeRiverRpcClient(
+            this.provider.riverChainProvider,
+            this.provider.config.river.chainConfig,
+        )
+        const unauthedClient = new UnauthenticatedClient(rpcClient)
+        return unauthedClient.userExists(this.getUserId())
     }
 
     public async waitForStream(roomId: string): Promise<void> {

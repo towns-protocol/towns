@@ -12,7 +12,7 @@ import { AppSkeletonView, WelcomeLayout } from './layouts/WelcomeLayout'
 
 export const ValidateMembership = () => {
     const { serverSpace: space, chainSpace, chainSpaceLoading } = useContractAndServerSpaceData()
-    const { spaces, clientStatus } = useTownsContext()
+    const { spaces, client, clientStatus } = useTownsContext()
     const spaceIdFromPathname = useSpaceIdFromPathname()
     const { confirmed: usernameConfirmed } = useUsernameConfirmed()
     const riverSpace = useMemo(
@@ -24,13 +24,23 @@ export const ValidateMembership = () => {
     if (isMember) {
         AnalyticsService.getInstance().trackEventOnce(AnalyticsEvents.IsMember)
     }
-
     useEffect(() => {
         console.log('ValidateMembership', spaceIdFromPathname, {
             chainSpaceLoading,
             usernameConfirmed,
+            clientStatus,
+            client: client !== undefined,
         })
-    }, [chainSpaceLoading, spaceIdFromPathname, usernameConfirmed])
+    }, [chainSpaceLoading, client, clientStatus, spaceIdFromPathname, usernameConfirmed])
+
+    if (!client) {
+        // if we're not connected to the server, render the public town page, or an empty space
+        if (spaceIdFromPathname) {
+            return <PublicTownPage />
+        } else {
+            return <Outlet />
+        }
+    }
 
     if (!clientStatus.isRemoteDataLoaded || !clientStatus.isLocalDataLoaded) {
         AnalyticsService.getInstance().trackEventOnce(AnalyticsEvents.WelcomeLayoutLoadLocalData)

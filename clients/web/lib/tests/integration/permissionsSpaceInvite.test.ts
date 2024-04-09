@@ -11,7 +11,6 @@ import {
 } from 'use-towns-client/tests/integration/helpers/TestUtils'
 
 import { Permission } from '@river-build/web3'
-import { StreamView } from 'use-towns-client/src/types/towns-types'
 import { TestConstants } from './helpers/TestConstants'
 import { TownsTestClient } from './helpers/TownsTestClient'
 import { sleep } from '../../src/utils/towns-utils'
@@ -27,15 +26,19 @@ describe('space invite', () => {
         await bob.fundWallet()
 
         // create a space with token entitlement
-        const roomId = await createTestSpaceGatedByTownsNfts(bob, [Permission.Read])
+        const bobsSpaceId = await createTestSpaceGatedByTownsNfts(bob, [Permission.Read])
+        // have alice create a space so she can create a user stream
+        const aliceSpaceId = await createTestSpaceGatedByTownsNfts(alice, [Permission.Read])
+        // have enstein join alice space and become a real user
+        await einstein.joinTown(aliceSpaceId, einstein.wallet)
 
         /** Act */
         // invite users to join the space.
         try {
             const einsteinUserId = einstein.getUserId()
-            if (roomId && einsteinUserId) {
+            if (bobsSpaceId && einsteinUserId) {
                 // TODO: add an assertion on inviteUser by typing return value
-                await alice.inviteUser(roomId, einsteinUserId)
+                await alice.inviteUser(bobsSpaceId, einsteinUserId)
             }
         } catch (e) {
             /** Assert */
@@ -92,6 +95,9 @@ describe('space invite', () => {
             'tokenGrantedUser',
             TestConstants.getWalletWithTestGatingNft(),
         )
+        // have tokengranted user create a space so she can create a user stream
+        const _ = await createTestSpaceGatedByTownsNfts(tokenGrantedUser, [Permission.Read])
+
         const { bob } = await registerAndStartClients(['bob'])
         await bob.fundWallet()
 
@@ -138,24 +144,17 @@ describe('space invite', () => {
             'tokenGrantedUser',
             TestConstants.getWalletWithTestGatingNft(),
         )
+        // have tokengranted user create a space so she can create a user stream
+        const _ = await createTestSpaceGatedByTownsNfts(tokenGrantedUser, [Permission.Read])
+
         const { bob } = await registerAndStartClients(['bob'])
         await bob.fundWallet()
 
         // create a space with token entitlement
         const spaceId = await createTestSpaceGatedByTownsNfts(bob, [Permission.Read])
 
-        // invite users to join the space.
-        if (spaceId) {
-            const tokenGrantedUserId = tokenGrantedUser.getUserId()
-            if (tokenGrantedUserId) {
-                await bob.inviteUser(spaceId, tokenGrantedUserId)
-            }
-        }
         /** Act */
-        let actualJoin: StreamView | undefined
-        if (spaceId) {
-            actualJoin = await tokenGrantedUser.joinTown(spaceId, tokenGrantedUser.wallet)
-        }
+        const actualJoin = await tokenGrantedUser.joinTown(spaceId, tokenGrantedUser.wallet)
 
         /** Assert */
         // can join the room if the user has Read permission.
@@ -173,13 +172,6 @@ describe('space invite', () => {
         const spaceId = await createTestSpaceGatedByTownsNfts(bob, [Permission.Read])
 
         check(isDefined(spaceId), 'spaceId')
-
-        // invite users to join the space.
-
-        const aliceUserId = alice.getUserId()
-        if (aliceUserId) {
-            await bob.inviteUser(spaceId, aliceUserId)
-        }
 
         /** Act */
         try {

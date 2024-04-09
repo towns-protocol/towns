@@ -71,7 +71,7 @@ describe('historyVisibility', () => {
 
         await alice.logout()
 
-        await john.loginWalletAndStartClient()
+        await john.makeSignerContextAndStartClient()
         await john.waitForStream(roomId)
         //
         john.logEvents(roomId)
@@ -93,7 +93,7 @@ describe('historyVisibility', () => {
         // create a new client with same wallet, but different deviceId/auth
         const alice2 = new TownsTestClient('alice2', alice.props, alice.wallet)
 
-        await alice2.loginWalletAndStartClient()
+        await alice2.makeSignerContextAndStartClient()
 
         await alice2.waitForStream(roomId)
 
@@ -113,7 +113,7 @@ describe('historyVisibility', () => {
         // have alice log into yet another client, see if she will share keys with herself
         const alice3 = new TownsTestClient('alice3', alice.props, alice.wallet)
 
-        await alice3.loginWalletAndStartClient()
+        await alice3.makeSignerContextAndStartClient()
 
         await alice3.waitForStream(roomId)
 

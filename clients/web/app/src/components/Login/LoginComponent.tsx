@@ -17,10 +17,7 @@ export function LoginComponent() {
 
     const errorMessage = loginError ? mapToErrorMessage(loginError) : undefined
 
-    const isBusy =
-        libLoginStatus === LoginStatus.LoggingIn ||
-        libLoginStatus === LoginStatus.Registering ||
-        isAutoLoggingInToRiver
+    const isBusy = libLoginStatus === LoginStatus.LoggingIn || isAutoLoggingInToRiver
 
     useErrorToast({
         errorMessage,

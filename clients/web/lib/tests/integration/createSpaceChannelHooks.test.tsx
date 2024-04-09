@@ -143,7 +143,7 @@ describe('createSpaceChannelHooks', () => {
         const leaveChannel = screen.getByRole('button', {
             name: 'leaveChannel',
         })
-        await waitFor(() => expect(loginStatus).toHaveTextContent('LoggedIn'))
+        await waitFor(() => expect(loginStatus).toHaveTextContent('Authenticated'))
         await waitFor(() => expect(clientRunning).toHaveTextContent('true'))
         //
         // create a space

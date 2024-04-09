@@ -14,12 +14,12 @@ interface Props {
 }
 
 export function useHasPermission(props: Props) {
-    const { client } = useTownsClient()
+    const { clientSingleton } = useTownsClient()
     const { spaceId, channelId, walletAddress, permission } = props
 
     const getHasPermission = useCallback(async () => {
-        if (client && walletAddress) {
-            const isEntitled = await client.isEntitled(
+        if (clientSingleton && walletAddress) {
+            const isEntitled = await clientSingleton.isEntitled(
                 spaceId,
                 channelId,
                 walletAddress,
@@ -40,7 +40,7 @@ export function useHasPermission(props: Props) {
             return isEntitled
         }
         return false
-    }, [channelId, client, permission, spaceId, walletAddress])
+    }, [channelId, clientSingleton, permission, spaceId, walletAddress])
 
     // Queries
     const {
@@ -56,7 +56,7 @@ export function useHasPermission(props: Props) {
         // options for the query.
         // query will not execute until the client is defined.
         {
-            enabled: client !== undefined && !!walletAddress && isAddress(walletAddress),
+            enabled: clientSingleton !== undefined && !!walletAddress && isAddress(walletAddress),
             refetchOnMount: true,
             // inherits default staleTime of 15 secs
             // server strictly enforces permissions in real time.

@@ -94,7 +94,7 @@ export const SpacesChannelComponent = (props: Props) => {
     const { messageId: threadId } = useParams()
     const { isTouch } = useDevice()
     const { replyToEventId, setReplyToEventId } = useContext(ReplyToMessageContext)
-    const { joinRoom, leaveRoom, scrollback, sendMessage, setHighPriorityStreams } =
+    const { client, joinRoom, leaveRoom, scrollback, sendMessage, setHighPriorityStreams } =
         useTownsClient()
 
     const { spaceId, channelId, channel } = useChannelData()
@@ -140,11 +140,15 @@ export const SpacesChannelComponent = (props: Props) => {
     )
 
     useEffect(() => {
+        if (!client) {
+            return
+        }
         const streamIds = spaceId ? [channelId, spaceId] : [channelId]
+        console.log('Set High Priority Streams', streamIds)
         if (channelId) {
             setHighPriorityStreams(streamIds)
         }
-    }, [spaceId, channelId, setHighPriorityStreams])
+    }, [client, spaceId, channelId, setHighPriorityStreams])
 
     const onJoinChannel = useCallback(() => {
         joinRoom(channelId)

@@ -1,9 +1,12 @@
 import { BigNumber, ContractReceipt, ContractTransaction, ethers } from 'ethers'
+import EventEmitter from 'events'
+import TypedEmitter from 'typed-emitter'
 import { RoomMessageEvent, transformAttachments } from '../types/timeline-types'
 import {
     Client as CasablancaClient,
     RiverDbManager,
     StreamRpcClient,
+    UnauthenticatedClient,
     isGDMChannelStreamId,
     makeStreamRpcClient,
     userIdFromAddress,
@@ -77,7 +80,14 @@ import AnalyticsService, { AnalyticsEvents } from '../utils/analyticsService'
  * - etc
  */
 
-export class TownsClient implements EntitlementsDelegate {
+export type TownsClientEvents = {
+    onCasablancaClientCreated: (client: CasablancaClient) => void
+}
+
+export class TownsClient
+    extends (EventEmitter as new () => TypedEmitter<TownsClientEvents>)
+    implements EntitlementsDelegate
+{
     public readonly opts: TownsOpts
     public readonly name: string
     public spaceDapp: ISpaceDapp
@@ -89,6 +99,7 @@ export class TownsClient implements EntitlementsDelegate {
     private userOps: UserOps | undefined = undefined
 
     constructor(opts: TownsOpts, name?: string) {
+        super()
         this.opts = opts
         this.name = name || Math.random().toString(36).substring(7)
         console.log('~~~ new TownsClient ~~~', this.name, this.opts)
@@ -167,10 +178,19 @@ export class TownsClient implements EntitlementsDelegate {
         this._signerContext = undefined
     }
 
+    public async makeUnauthenticatedClient(): Promise<UnauthenticatedClient> {
+        if (!this.opts.riverProvider) {
+            throw new Error('riverChainProvider is required')
+        }
+        const rpcClient = await makeRiverRpcClient(this.opts.riverProvider, this.opts.riverConfig)
+        return new UnauthenticatedClient(rpcClient)
+    }
+
     /************************************************
      * startCasablancaClient
      *************************************************/
     public async startCasablancaClient(context: SignerContext): Promise<CasablancaClient> {
+        this.log('startCasablancaClient', context)
         if (this.casablancaClient) {
             throw new Error('already started casablancaClient')
         }
@@ -214,6 +234,7 @@ export class TownsClient implements EntitlementsDelegate {
         })
 
         this.casablancaClient.startSync()
+        this.emit('onCasablancaClientCreated', this.casablancaClient)
         return this.casablancaClient
     }
 
@@ -250,6 +271,7 @@ export class TownsClient implements EntitlementsDelegate {
 
     public async waitForCreateSpaceTransaction(
         context: CreateSpaceTransactionContext | undefined,
+        signerContext: SignerContext | undefined,
         defaultUsernames: string[] = [],
     ): Promise<CreateSpaceTransactionContext> {
         const txContext = await this._waitForBlockchainTransaction(context)
@@ -266,8 +288,11 @@ export class TownsClient implements EntitlementsDelegate {
                 txContext.data.channelId = channelId
                 // wait until the space and channel are minted on-chain
                 // before creating the streams
+                if (!this.casablancaClient && signerContext) {
+                    await this.startCasablancaClient(signerContext)
+                }
                 if (!this.casablancaClient) {
-                    throw new Error("Casablanca client doesn't exist")
+                    throw new Error('casablancaClient not started')
                 }
                 const result = await this.casablancaClient.createSpace(spaceId)
                 await this.casablancaClient.waitForStream(spaceId)
@@ -1265,11 +1290,17 @@ export class TownsClient implements EntitlementsDelegate {
      * - mints membership if needed
      * - joins the space
      *************************************************/
-    public async joinTown(spaceId: string, signer: ethers.Signer) {
+    public async joinTown(spaceId: string, signer: ethers.Signer, signerContext?: SignerContext) {
+        if (!this.casablancaClient && !signerContext) {
+            throw new Error('Casablanca client not initialized, pass signer context')
+        }
         const userId = await signer.getAddress()
         const linkedWallets = await this.getLinkedWallets(userId)
 
         const joinRiverRoom = async () => {
+            if (!this.casablancaClient && signerContext) {
+                await this.startCasablancaClient(signerContext)
+            }
             const room = await this.joinRoom(spaceId)
             this.log('[joinTown] room', room)
             // join the default channels

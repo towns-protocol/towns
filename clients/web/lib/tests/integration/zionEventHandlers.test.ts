@@ -4,6 +4,7 @@
 import {
     createTestChannelWithSpaceRoles,
     createTestSpaceGatedByTownNft,
+    createTestSpaceGatedByTownsNfts,
     registerAndStartClients,
     waitForWithRetries,
 } from './helpers/TestUtils'
@@ -163,13 +164,15 @@ describe('Towns event handlers test', () => {
             registered: false,
         }
 
-        await registerAndStartClients(['alice'], {
+        const { alice } = await registerAndStartClients(['alice'], {
             eventHandlers: {
                 onRegister: () => {
                     authEvents.registered = true
                 },
             },
         })
+
+        await createTestSpaceGatedByTownsNfts(alice, [Permission.Read])
 
         expect(authEvents.registered).toBe(true)
     })
@@ -204,6 +207,7 @@ describe('Towns event handlers test', () => {
                 },
             },
         })
+        await createTestSpaceGatedByTownsNfts(alice, [Permission.Read])
 
         expect(authEvents.loggedOut).toBe(false)
         await sleep(5000)

@@ -19,6 +19,7 @@ vi.mock('use-towns-client', async () => {
         ...actual,
         useTownsContext: () => ({
             ...actual.useTownsContext(),
+            client: {},
             clientStatus: {
                 isRemoteDataLoaded: true,
                 isLocalDataLoaded: true,

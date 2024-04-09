@@ -42,10 +42,9 @@ test('create dev town', async () => {
         new Wallet(WALLET_PRIVATE_KEY),
     )
     if (await harmonyHotWallet.isUserRegistered()) {
-        await harmonyHotWallet.loginWalletAndStartClient()
-    } else {
-        await harmonyHotWallet.registerWalletAndStartClient()
+        await harmonyHotWallet.makeSignerContextAndStartClient()
     }
+
     // create a space
     const streamId = (await createDevTown(harmonyHotWallet))!
     const inviteLink = `https://app.gamma.towns.com/t/${streamId}/?invite`

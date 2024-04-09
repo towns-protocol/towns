@@ -129,7 +129,7 @@ describe('useSpaceDataHook', () => {
         const userIdContent = screen.getByTestId('userIdContent')
 
         // wait for registration
-        await waitFor(() => expect(loginStatus).toHaveTextContent(LoginStatus.LoggedIn))
+        await waitFor(() => expect(loginStatus).toHaveTextContent(LoginStatus.Authenticated))
         // sanity check, we need to be logged in as alice
         await waitFor(() => expect(userIdContent).toHaveTextContent(aliceUserId))
         // extra sanity check, need client running

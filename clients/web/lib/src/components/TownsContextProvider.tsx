@@ -9,7 +9,7 @@ import { useCasablancaSpaceHierarchies } from '../hooks/TownsContext/useCasablan
 import { useTownsClientListener } from '../hooks/use-towns-client-listener'
 import { Room, SpaceHierarchies, SpaceItem } from '../types/towns-types'
 import { QueryProvider } from './QueryProvider'
-import { Client as CasablancaClient, ClientInitStatus } from '@river/sdk'
+import { Client as CasablancaClient, ClientInitStatus, SignerContext } from '@river/sdk'
 import { useCasablancaTimelines } from '../hooks/TownsContext/useCasablancaTimelines'
 import { useCasablancaRooms } from '../hooks/TownsContext/useCasablancaRooms'
 import { useCasablancaDMs } from '../hooks/CasablancClient/useCasablancaDMs'
@@ -31,6 +31,7 @@ export type InitialSyncSortPredicate = (a: string, b: string) => number
 
 export interface ITownsContext {
     environmentId: string /// the environment id, used to manage local storage keys
+    signerContext?: SignerContext // context you will use to auth to the river stream node
     client?: TownsClient /// only set when user is authenticated
     clientSingleton?: TownsClient /// always set, can be use for , this duplication can be removed once we transition to casablanca
     casablancaClient?: CasablancaClient /// set if we're logged in and casablanca client is started
@@ -166,7 +167,8 @@ const TownsContextImpl = (props: TownsContextProviderProps): JSX.Element => {
         riverProvider,
     ])
 
-    const { client, clientSingleton, casablancaClient } = useTownsClientListener(townsOpts)
+    const { client, clientSingleton, casablancaClient, signerContext } =
+        useTownsClientListener(townsOpts)
     useSpacesIds(casablancaClient)
     useContentAwareTimelineDiffCasablanca(casablancaClient)
     const { clientStatus } = useClientInitStatus(casablancaClient)
@@ -217,6 +219,7 @@ const TownsContextImpl = (props: TownsContextProviderProps): JSX.Element => {
                 dmUnreadChannelIds,
                 clientStatus,
                 blockedUserIds,
+                signerContext,
             }}
         >
             <GlobalContextUserLookupProvider>{props.children}</GlobalContextUserLookupProvider>

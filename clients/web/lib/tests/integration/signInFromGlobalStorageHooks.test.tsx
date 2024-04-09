@@ -10,7 +10,7 @@ import React from 'react'
 import { LoginWithWallet } from './helpers/TestComponents'
 import { fireEvent, render, screen, waitFor, act } from '@testing-library/react'
 import { TownsTestApp } from './helpers/TownsTestApp'
-import { registerAndStartClients } from './helpers/TestUtils'
+import { createTestSpaceGatedByTownNft, registerAndStartClients } from './helpers/TestUtils'
 import { LoginStatus } from '../../src/hooks/login'
 import { TownsTestWeb3Provider } from './helpers/TownsTestWeb3Provider'
 import { useTownsClient } from '../../src/hooks/use-towns-client'
@@ -18,6 +18,7 @@ import { sleep } from '../../src/utils/towns-utils'
 import { CREDENTIAL_STORE_NAME, useCredentialStore } from '../../src/store/use-credential-store'
 import { useCasablancaStore } from '../../src/store/use-casablanca-store'
 import { useTownsContext } from '../../src/components/TownsContextProvider'
+import { Permission } from '@river-build/web3'
 
 const initialCasablanacStoreState = useCasablancaStore.getState()
 console.log('$$$$ ', { initialCasablanacStoreState })
@@ -43,6 +44,12 @@ describe('signInFromGlobalStorageHooks', () => {
         console.log('$$$$ #1 test login using localStorage for auth')
         // create a new client and sign in
         const { alice } = await registerAndStartClients(['alice'])
+
+        console.log('$$$$ alice address', alice.provider.wallet.address)
+        // create a space so we can create a user stream
+        await createTestSpaceGatedByTownNft(alice, [Permission.Read, Permission.Write], {
+            name: alice.makeUniqueName(),
+        })
         // assign device id for later use
         provider = alice.provider
         // stop alice

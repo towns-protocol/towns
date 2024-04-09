@@ -51,8 +51,6 @@ export async function registerAndStartClients(
 ): Promise<Record<string, TownsTestClient>> {
     // create new test clients
     const clients = clientNames.map((name) => new TownsTestClient(name, props))
-    // start them up
-    await Promise.all(clients.map((client) => client.registerWalletAndStartClient()))
     // all clients need funds to create or join a space
     await Promise.all(clients.map((client) => client.fundWallet()))
     // return a dictionary of clients
@@ -77,9 +75,7 @@ export async function registerAndStartClient(
         const client = new TownsTestClient(name, props, wallet)
 
         if (await client.isUserRegistered()) {
-            await client.loginWalletAndStartClient()
-        } else {
-            await client.registerWalletAndStartClient()
+            await client.makeSignerContextAndStartClient()
         }
 
         return client

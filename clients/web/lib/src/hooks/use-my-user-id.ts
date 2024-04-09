@@ -1,6 +1,10 @@
+import { useMemo } from 'react'
 import { useTownsContext } from '../components/TownsContextProvider'
+import { userIdFromAddress } from '@river/sdk'
 
 export const useMyUserId = () => {
-    const context = useTownsContext()
-    return context.casablancaClient?.userId
+    const { signerContext } = useTownsContext()
+    return useMemo(() => {
+        return signerContext ? userIdFromAddress(signerContext.creatorAddress) : undefined
+    }, [signerContext])
 }

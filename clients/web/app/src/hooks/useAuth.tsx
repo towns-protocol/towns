@@ -1,5 +1,5 @@
 import { useConnectivity } from 'use-towns-client'
-import React, { createContext, useCallback, useContext, useMemo } from 'react'
+import React, { createContext, useCallback, useContext, useEffect, useMemo } from 'react'
 import { toast } from 'react-hot-toast/headless'
 import { useLogin, usePrivy } from '@privy-io/react-auth'
 import { useEmbeddedWallet, useGetEmbeddedSigner } from '@towns/privy'
@@ -109,6 +109,26 @@ function useAuthContext(): AuthContext {
         clearEmbeddedWalletStorage()
         resetAutoLoginState()
     }, [riverLogout, privyLogout, resetAutoLoginState])
+
+    useEffect(() => {
+        console.log('AuthContext', {
+            riverLoginStatus,
+            loggedInWalletAddress,
+            isAuthenticated: riverIsAuthenticated,
+            isAuthenticatedAndConnected, // csb + wallet
+            isConnected, // isConnected means privy account is created and logged in
+            loginError,
+            isAutoLoggingInToRiver,
+        })
+    }, [
+        isAuthenticatedAndConnected,
+        isAutoLoggingInToRiver,
+        isConnected,
+        loggedInWalletAddress,
+        loginError,
+        riverIsAuthenticated,
+        riverLoginStatus,
+    ])
 
     return useMemo(
         () => ({
