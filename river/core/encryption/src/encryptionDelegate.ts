@@ -1,3 +1,10 @@
+/* eslint-disable import/no-unresolved */
+// @ts-ignore
+// need to include the olmWasm file for the app/browser. BUT this is probably not what we want to do in the long run
+// Since we are not bundling the csb SDK, just transpiling TS to JS (like in lib), the SDK is not handling this import at all.
+// Actually `?url` is vite specific - which means that the vite bundler in app is handling this import and doing its thing, and our app runs.
+// But, if another app were to import this that didn't bundle via Vite, or if Vite changes something, this may break.
+import olmWasm from '@matrix-org/olm/olm.wasm?url'
 import Olm from '@matrix-org/olm'
 import {
     Account,
@@ -9,6 +16,7 @@ import {
     Session,
     Utility,
 } from './encryptionTypes'
+import { isJest } from '@river-build/dlog'
 
 type OlmLib = typeof Olm
 
@@ -34,7 +42,12 @@ export class EncryptionDelegate {
             return
         }
 
-        await this.delegate.init()
+        if (isJest()) {
+            await this.delegate.init()
+        } else {
+            await this.delegate.init({ locateFile: () => olmWasm as unknown })
+        }
+
         this._initialized = typeof this.delegate.get_library_version === 'function'
     }
 
