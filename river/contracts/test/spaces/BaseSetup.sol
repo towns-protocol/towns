@@ -4,6 +4,7 @@ pragma solidity ^0.8.23;
 // interfaces
 import {TestUtils} from "contracts/test/utils/TestUtils.sol";
 import {IArchitectBase} from "contracts/src/spaces/facets/architect/IArchitect.sol";
+import {IEntitlementChecker} from "contracts/src/crosschain/checker/IEntitlementChecker.sol";
 
 // libraries
 
@@ -44,6 +45,8 @@ contract BaseSetup is TestUtils, SpaceHelper {
   address internal ruleEntitlement;
   address internal walletLink;
   address internal spaceOwner;
+  IEntitlementChecker internal entitlementChecker;
+  address[] internal nodes;
 
   address internal nodeOperator;
   uint256 internal stakeRequirement;
@@ -74,6 +77,9 @@ contract BaseSetup is TestUtils, SpaceHelper {
     spaceOwner = deploySpaceFactory.spaceOwner();
     pricingModule = deploySpaceFactory.tieredLogPricing();
     fixedPricingModule = deploySpaceFactory.fixedPricing();
+    entitlementChecker = IEntitlementChecker(
+      deploySpaceFactory.entitlementChecker()
+    );
     deploySpaceFactory.postDeploy(deployer, spaceFactory);
 
     // deploy node operator
@@ -106,5 +112,16 @@ contract BaseSetup is TestUtils, SpaceHelper {
     space = Architect(spaceFactory).createSpace(spaceInfo);
     everyoneSpace = Architect(spaceFactory).createSpace(everyoneSpaceInfo);
     vm.stopPrank();
+
+    _registerNodes();
+  }
+
+  function _registerNodes() internal {
+    nodes = new address[](10);
+    for (uint256 i = 0; i < 10; i++) {
+      nodes[i] = _randomAddress();
+      vm.prank(nodes[i]);
+      IEntitlementChecker(entitlementChecker).registerNode();
+    }
   }
 }

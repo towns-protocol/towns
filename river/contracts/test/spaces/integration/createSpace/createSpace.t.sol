@@ -11,7 +11,8 @@ import {IArchitect} from "contracts/src/spaces/facets/architect/IArchitect.sol";
 import {IArchitectBase} from "contracts/src/spaces/facets/architect/IArchitect.sol";
 import {IMembership} from "contracts/src/spaces/facets/membership/IMembership.sol";
 import {IRuleEntitlement} from "contracts/src/crosschain/IRuleEntitlement.sol";
-
+import {IEntitlement} from "contracts/src/spaces/entitlements/IEntitlement.sol";
+import {IEntitlementChecker} from "contracts/src/crosschain/checker/IEntitlementChecker.sol";
 // libraries
 import {Permissions} from "contracts/src/spaces/facets/Permissions.sol";
 
@@ -192,7 +193,7 @@ contract Integration_CreateSpace is BaseSetup, IRolesBase, IArchitectBase {
 
     // create entitlement adding users and user entitlement
     roleEntitlements[0] = CreateEntitlement({
-      module: userEntitlement,
+      module: IEntitlement(userEntitlement),
       data: abi.encode(users)
     });
 

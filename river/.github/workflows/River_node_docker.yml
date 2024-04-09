@@ -82,6 +82,11 @@ jobs:
 
                 TAGS=($COMMIT_HASH $RELEASE_VERSION)
 
+                # If this is a push to main, we also tag the image as dev
+                if [ "$BRANCH" == "main" && ${{ github.event_name }} == 'push' ]; then
+                  TAGS+=(dev)
+                fi
+
                 # Add additional tags if provided
                 if [ -n "$ADDITIONAL_TAGS" ]; then
                   IFS=',' read -ra ADDITIONAL_TAGS_ARRAY <<< "$ADDITIONAL_TAGS"

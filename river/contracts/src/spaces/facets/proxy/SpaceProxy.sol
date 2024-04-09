@@ -8,8 +8,10 @@ import {IMembership, IMembershipBase} from "contracts/src/spaces/facets/membersh
 import {IManagedProxyBase} from "contracts/src/diamond/proxy/managed/IManagedProxy.sol";
 import {ITokenOwnableBase} from "contracts/src/diamond/facets/ownable/token/ITokenOwnable.sol";
 import {IWalletLink} from "contracts/src/river/wallet-link/IWalletLink.sol";
+import {IEntitlementChecker} from "contracts/src/crosschain/checker/IEntitlementChecker.sol";
 
 // libraries
+import {EntitlementGatedStorage} from "contracts/src/crosschain/EntitlementGatedStorage.sol";
 
 // contracts
 import {ManagedProxyBase} from "contracts/src/diamond/proxy/managed/ManagedProxyBase.sol";
@@ -35,6 +37,7 @@ contract SpaceProxy is
   constructor(
     address owner,
     IWalletLink walletLink,
+    IEntitlementChecker entitlementChecker,
     IManagedProxyBase.ManagedProxy memory managedProxy,
     ITokenOwnableBase.TokenOwnable memory tokenOwnable,
     IMembershipBase.Membership memory membership
@@ -45,6 +48,11 @@ contract SpaceProxy is
     __ERC721ABase_init(membership.name, membership.symbol);
     __MembershipBase_init(membership, managedProxy.manager);
     __MembershipReferralBase_init();
+
+    EntitlementGatedStorage.Layout storage ds = EntitlementGatedStorage
+      .layout();
+    ds.entitlementChecker = entitlementChecker;
+
     _setWalletLinkProxy(walletLink);
 
     uint256 tokenId = _nextTokenId();

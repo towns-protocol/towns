@@ -47,6 +47,7 @@ import {DeployWalletLink} from "contracts/scripts/deployments/DeployWalletLink.s
 import {DeployTieredLogPricing} from "contracts/scripts/deployments/DeployTieredLogPricing.s.sol";
 import {DeployFixedPricing} from "contracts/scripts/deployments/DeployFixedPricing.s.sol";
 import {DeployPricingModules} from "contracts/scripts/deployments/facets/DeployPricingModules.s.sol";
+import {DeployEntitlementChecker} from "contracts/scripts/deployments/facets/DeployEntitlementChecker.s.sol";
 
 contract DeploySpaceFactory is DiamondDeployer {
   DeployMultiInit deployMultiInit = new DeployMultiInit();
@@ -58,6 +59,8 @@ contract DeploySpaceFactory is DiamondDeployer {
   DeployTieredLogPricing deployTieredLogPricing = new DeployTieredLogPricing();
   DeployFixedPricing deployFixedPricing = new DeployFixedPricing();
   DeployPricingModules deployPricingModules = new DeployPricingModules();
+  DeployEntitlementChecker deployEntitlementChecker =
+    new DeployEntitlementChecker();
 
   // diamond helpers
   DiamondCutHelper cutHelper = new DiamondCutHelper();
@@ -97,6 +100,7 @@ contract DeploySpaceFactory is DiamondDeployer {
   address public ruleEntitlement;
   address public walletLink;
   address public spaceOwner;
+  address public entitlementChecker;
 
   address public tieredLogPricing;
   address public fixedPricing;
@@ -120,6 +124,9 @@ contract DeploySpaceFactory is DiamondDeployer {
 
     // wallet link
     walletLink = deployWalletLink.deploy();
+
+    // entitlement checker
+    entitlementChecker = deployEntitlementChecker.deploy();
 
     // pricing modules
     tieredLogPricing = deployTieredLogPricing.deploy();
@@ -202,7 +209,8 @@ contract DeploySpaceFactory is DiamondDeployer {
       spaceOwner, // spaceOwner
       userEntitlement, // userEntitlement
       ruleEntitlement, // ruleEntitlement
-      walletLink // walletLink
+      walletLink, // walletLink
+      entitlementChecker // entitlementChecker
     );
     initDatas[index++] = proxyManagerHelper.makeInitData(space);
 

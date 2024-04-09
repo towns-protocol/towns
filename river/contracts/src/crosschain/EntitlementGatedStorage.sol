@@ -3,6 +3,7 @@ pragma solidity ^0.8.23;
 
 // interfaces
 import {IEntitlementGatedBase} from "./IEntitlementGated.sol";
+import {IEntitlementChecker} from "./checker/IEntitlementChecker.sol";
 
 // libraries
 
@@ -13,6 +14,7 @@ library EntitlementGatedStorage {
     keccak256("crosschain.EntitlementGatedStorage");
 
   struct Layout {
+    IEntitlementChecker entitlementChecker;
     mapping(bytes32 => IEntitlementGatedBase.Transaction) transactions;
   }
 

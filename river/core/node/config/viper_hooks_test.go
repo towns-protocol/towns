@@ -8,16 +8,15 @@ import (
 	"github.com/mitchellh/mapstructure"
 	"github.com/river-build/river/core/node/config"
 	"github.com/spf13/viper"
+	"github.com/stretchr/testify/assert"
+	"github.com/stretchr/testify/require"
 )
 
 func TestDecodeHooks(t *testing.T) {
-	viper.SetConfigFile("./testdata/test_config.yaml")
-	if err := viper.ReadInConfig(); err != nil {
-		t.Fatal(err)
-	}
-
 	var (
-		cfg = struct {
+		assert  = assert.New(t)
+		require = require.New(t)
+		cfg     = struct {
 			FromHex     common.Address
 			FromFile    common.Address
 			DurationOne time.Duration
@@ -33,20 +32,13 @@ func TestDecodeHooks(t *testing.T) {
 		)
 	)
 
-	if err := viper.Unmarshal(&cfg, viper.DecodeHook(decodeHooks)); err != nil {
-		t.Fatal(err)
-	}
+	viper.SetConfigFile("./testdata/test_config.yaml")
 
-	if cfg.FromHex != expFromHex {
-		t.Errorf("load address has unexpected value: got %v, want %v", cfg.FromHex, expFromHex)
-	}
-	if cfg.FromFile != expFromFile {
-		t.Errorf("load address has unexpected value: got %v, want %v", cfg.FromFile, expFromFile)
-	}
-	if cfg.DurationOne != expDurationOne {
-		t.Errorf("load duration has unexpected value: got %v, want %v", cfg.DurationOne, expDurationOne)
-	}
-	if cfg.DurationTwo != expDurationTwo {
-		t.Errorf("load address has unexpected value: got %v, want %v", cfg.DurationTwo, expDurationTwo)
-	}
+	require.Nil(viper.ReadInConfig(), "read in config")
+	require.Nil(viper.Unmarshal(&cfg, viper.DecodeHook(decodeHooks)), "unmarshal config")
+
+	assert.Equal(expFromHex, cfg.FromHex, "address from hex")
+	assert.Equal(expFromFile, cfg.FromFile, "address from file")
+	assert.Equal(expDurationOne, cfg.DurationOne, "duration one")
+	assert.Equal(expDurationTwo, cfg.DurationTwo, "duration two")
 }

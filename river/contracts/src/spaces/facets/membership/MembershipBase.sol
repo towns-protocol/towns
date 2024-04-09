@@ -7,7 +7,6 @@ import {IPlatformRequirements} from "contracts/src/spaces/facets/platform/requir
 import {IMembershipPricing} from "./pricing/IMembershipPricing.sol";
 import {IPrepay} from "contracts/src/spaces/facets/prepay/IPrepay.sol";
 import {IPricingModules} from "contracts/src/spaces/facets/architect/pricing/IPricingModules.sol";
-
 // libraries
 import {MembershipStorage} from "./MembershipStorage.sol";
 import {CurrencyTransfer} from "contracts/src/utils/libraries/CurrencyTransfer.sol";

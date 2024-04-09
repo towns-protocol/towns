@@ -9,6 +9,7 @@ import {IUserEntitlement} from "contracts/src/spaces/entitlements/user/IUserEnti
 import {IRuleEntitlement} from "contracts/src/crosschain/IRuleEntitlement.sol";
 import {IWalletLink} from "contracts/src/river/wallet-link/IWalletLink.sol";
 import {ISpaceOwner} from "contracts/src/spaces/facets/owner/ISpaceOwner.sol";
+import {IEntitlementChecker} from "contracts/src/crosschain/checker/IEntitlementChecker.sol";
 
 // contracts
 interface IArchitectBase {
@@ -79,7 +80,8 @@ interface IArchitect is IArchitectBase {
     ISpaceOwner ownerTokenImplementation,
     IUserEntitlement userEntitlementImplementation,
     IRuleEntitlement ruleEntitlementImplementation,
-    IWalletLink walletLink
+    IWalletLink walletLink,
+    IEntitlementChecker entitlementChecker
   ) external;
 
   function getSpaceArchitectImplementations()
@@ -89,6 +91,7 @@ interface IArchitect is IArchitectBase {
       ISpaceOwner ownerTokenImplementation,
       IUserEntitlement userEntitlementImplementation,
       IRuleEntitlement ruleEntitlementImplementation,
-      IWalletLink walletLink
+      IWalletLink walletLink,
+      IEntitlementChecker entitlementChecker
     );
 }

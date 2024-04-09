@@ -53,6 +53,31 @@ If you get Docker errors when running tests:
 
     sudo ln -s ~/Library/Containers/com.docker.docker/Data/docker.raw.sock /var/run/docker.sock
 
+## Tests from source against geth node
+
+- Start a local geth instance with the following command (this mines a new block every second):
+
+```
+geth --dev --http --dev.period 1
+```
+
+- Generate fund account from which accounts that are dynamically generated during the tests are funded.
+- Because this account is only used for tests the easiest method is to generate it on `https://vanity-eth.tk` (bottom of page).
+- Fund the account with the following script (replace `to` with the fund account address):
+
+```
+geth --dev attach -exec 'eth.sendTransaction({from: eth.accounts[0], to: "<fund account adress>", value: web3.toWei(10000000000000000, "ether")})'
+```
+
+- Run the tests with (replace `RIVER_REMOTE_NODE_FUND_PRIVATE_KEY` with the private key of the fund account)
+
+```
+RIVER_REMOTE_NODE_URL=http://127.0.0.1:8545 RIVER_REMOTE_NODE_FUND_PRIVATE_KEY=<fund account private hex as hex> \
+go tests ./...
+```
+
+Block production is not on demand as with the simulator or anvil and therefore these tests take a long time.
+
 # Code Conventions
 
 See [conventions](conventions.md)

@@ -3,6 +3,7 @@ pragma solidity ^0.8.23;
 
 // interfaces
 import {IMembership} from "contracts/src/spaces/facets/membership/IMembership.sol";
+import {IEntitlementGated} from "contracts/src/crosschain/EntitlementGated.sol";
 
 // libraries
 
@@ -52,6 +53,9 @@ contract MembershipHelper is FacetHelper {
 
     // Factory
     addSelector(IMembership.getSpaceFactory.selector);
+
+    // Entitlement Gated
+    addSelector(IEntitlementGated.postEntitlementCheckResult.selector);
   }
 
   function facet() public pure override returns (address) {

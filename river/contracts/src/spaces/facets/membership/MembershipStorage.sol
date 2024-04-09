@@ -25,6 +25,7 @@ library MembershipStorage {
     address pricingModule;
     mapping(uint256 => uint256) renewalPriceByTokenId;
     uint256 tokenBalance;
+    mapping(bytes32 => address) pendingJoinRequests;
   }
 
   function layout() internal pure returns (Layout storage l) {

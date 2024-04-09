@@ -31,7 +31,7 @@ var (
 
 // IEntitlementGatedMetaData contains all meta data concerning the IEntitlementGated contract.
 var IEntitlementGatedMetaData = &bind.MetaData{
-	ABI: "[{\"type\":\"function\",\"name\":\"getEntitlementOperations\",\"inputs\":[],\"outputs\":[{\"name\":\"\",\"type\":\"bytes\",\"internalType\":\"bytes\"}],\"stateMutability\":\"view\"},{\"type\":\"function\",\"name\":\"postEntitlementCheckResult\",\"inputs\":[{\"name\":\"transactionId\",\"type\":\"bytes32\",\"internalType\":\"bytes32\"},{\"name\":\"result\",\"type\":\"uint8\",\"internalType\":\"enumIEntitlementGatedBase.NodeVoteStatus\"}],\"outputs\":[],\"stateMutability\":\"nonpayable\"},{\"type\":\"function\",\"name\":\"removeTransaction\",\"inputs\":[{\"name\":\"transactionId\",\"type\":\"bytes32\",\"internalType\":\"bytes32\"}],\"outputs\":[],\"stateMutability\":\"nonpayable\"},{\"type\":\"function\",\"name\":\"requestEntitlementCheck\",\"inputs\":[],\"outputs\":[],\"stateMutability\":\"nonpayable\"},{\"type\":\"event\",\"name\":\"EntitlementCheckResultPosted\",\"inputs\":[{\"name\":\"transactionId\",\"type\":\"bytes32\",\"indexed\":true,\"internalType\":\"bytes32\"},{\"name\":\"result\",\"type\":\"uint8\",\"indexed\":false,\"internalType\":\"enumIEntitlementGatedBase.NodeVoteStatus\"}],\"anonymous\":false},{\"type\":\"error\",\"name\":\"EntitlementGated_InvalidAddress\",\"inputs\":[]},{\"type\":\"error\",\"name\":\"EntitlementGated_NodeAlreadyVoted\",\"inputs\":[]},{\"type\":\"error\",\"name\":\"EntitlementGated_NodeNotFound\",\"inputs\":[]},{\"type\":\"error\",\"name\":\"EntitlementGated_TransactionAlreadyCompleted\",\"inputs\":[]},{\"type\":\"error\",\"name\":\"EntitlementGated_TransactionAlreadyRegistered\",\"inputs\":[]},{\"type\":\"error\",\"name\":\"EntitlementGated_TransactionNotRegistered\",\"inputs\":[]}]",
+	ABI: "[{\"type\":\"function\",\"name\":\"postEntitlementCheckResult\",\"inputs\":[{\"name\":\"transactionId\",\"type\":\"bytes32\",\"internalType\":\"bytes32\"},{\"name\":\"result\",\"type\":\"uint8\",\"internalType\":\"enumIEntitlementGatedBase.NodeVoteStatus\"}],\"outputs\":[],\"stateMutability\":\"nonpayable\"},{\"type\":\"function\",\"name\":\"requestEntitlementCheck\",\"inputs\":[],\"outputs\":[{\"name\":\"\",\"type\":\"bytes32\",\"internalType\":\"bytes32\"}],\"stateMutability\":\"nonpayable\"},{\"type\":\"event\",\"name\":\"EntitlementCheckResultPosted\",\"inputs\":[{\"name\":\"transactionId\",\"type\":\"bytes32\",\"indexed\":true,\"internalType\":\"bytes32\"},{\"name\":\"result\",\"type\":\"uint8\",\"indexed\":false,\"internalType\":\"enumIEntitlementGatedBase.NodeVoteStatus\"}],\"anonymous\":false},{\"type\":\"error\",\"name\":\"EntitlementGated_InvalidAddress\",\"inputs\":[]},{\"type\":\"error\",\"name\":\"EntitlementGated_NodeAlreadyVoted\",\"inputs\":[]},{\"type\":\"error\",\"name\":\"EntitlementGated_NodeNotFound\",\"inputs\":[]},{\"type\":\"error\",\"name\":\"EntitlementGated_TransactionAlreadyCompleted\",\"inputs\":[]},{\"type\":\"error\",\"name\":\"EntitlementGated_TransactionAlreadyRegistered\",\"inputs\":[]},{\"type\":\"error\",\"name\":\"EntitlementGated_TransactionNotRegistered\",\"inputs\":[]}]",
 }
 
 // IEntitlementGatedABI is the input ABI used to generate the binding from.
@@ -180,37 +180,6 @@ func (_IEntitlementGated *IEntitlementGatedTransactorRaw) Transact(opts *bind.Tr
 	return _IEntitlementGated.Contract.contract.Transact(opts, method, params...)
 }
 
-// GetEntitlementOperations is a free data retrieval call binding the contract method 0x4cdf3ab8.
-//
-// Solidity: function getEntitlementOperations() view returns(bytes)
-func (_IEntitlementGated *IEntitlementGatedCaller) GetEntitlementOperations(opts *bind.CallOpts) ([]byte, error) {
-	var out []interface{}
-	err := _IEntitlementGated.contract.Call(opts, &out, "getEntitlementOperations")
-
-	if err != nil {
-		return *new([]byte), err
-	}
-
-	out0 := *abi.ConvertType(out[0], new([]byte)).(*[]byte)
-
-	return out0, err
-
-}
-
-// GetEntitlementOperations is a free data retrieval call binding the contract method 0x4cdf3ab8.
-//
-// Solidity: function getEntitlementOperations() view returns(bytes)
-func (_IEntitlementGated *IEntitlementGatedSession) GetEntitlementOperations() ([]byte, error) {
-	return _IEntitlementGated.Contract.GetEntitlementOperations(&_IEntitlementGated.CallOpts)
-}
-
-// GetEntitlementOperations is a free data retrieval call binding the contract method 0x4cdf3ab8.
-//
-// Solidity: function getEntitlementOperations() view returns(bytes)
-func (_IEntitlementGated *IEntitlementGatedCallerSession) GetEntitlementOperations() ([]byte, error) {
-	return _IEntitlementGated.Contract.GetEntitlementOperations(&_IEntitlementGated.CallOpts)
-}
-
 // PostEntitlementCheckResult is a paid mutator transaction binding the contract method 0xf4efb0bb.
 //
 // Solidity: function postEntitlementCheckResult(bytes32 transactionId, uint8 result) returns()
@@ -232,44 +201,23 @@ func (_IEntitlementGated *IEntitlementGatedTransactorSession) PostEntitlementChe
 	return _IEntitlementGated.Contract.PostEntitlementCheckResult(&_IEntitlementGated.TransactOpts, transactionId, result)
 }
 
-// RemoveTransaction is a paid mutator transaction binding the contract method 0xf7332550.
-//
-// Solidity: function removeTransaction(bytes32 transactionId) returns()
-func (_IEntitlementGated *IEntitlementGatedTransactor) RemoveTransaction(opts *bind.TransactOpts, transactionId [32]byte) (*types.Transaction, error) {
-	return _IEntitlementGated.contract.Transact(opts, "removeTransaction", transactionId)
-}
-
-// RemoveTransaction is a paid mutator transaction binding the contract method 0xf7332550.
-//
-// Solidity: function removeTransaction(bytes32 transactionId) returns()
-func (_IEntitlementGated *IEntitlementGatedSession) RemoveTransaction(transactionId [32]byte) (*types.Transaction, error) {
-	return _IEntitlementGated.Contract.RemoveTransaction(&_IEntitlementGated.TransactOpts, transactionId)
-}
-
-// RemoveTransaction is a paid mutator transaction binding the contract method 0xf7332550.
-//
-// Solidity: function removeTransaction(bytes32 transactionId) returns()
-func (_IEntitlementGated *IEntitlementGatedTransactorSession) RemoveTransaction(transactionId [32]byte) (*types.Transaction, error) {
-	return _IEntitlementGated.Contract.RemoveTransaction(&_IEntitlementGated.TransactOpts, transactionId)
-}
-
 // RequestEntitlementCheck is a paid mutator transaction binding the contract method 0xd7eca30a.
 //
-// Solidity: function requestEntitlementCheck() returns()
+// Solidity: function requestEntitlementCheck() returns(bytes32)
 func (_IEntitlementGated *IEntitlementGatedTransactor) RequestEntitlementCheck(opts *bind.TransactOpts) (*types.Transaction, error) {
 	return _IEntitlementGated.contract.Transact(opts, "requestEntitlementCheck")
 }
 
 // RequestEntitlementCheck is a paid mutator transaction binding the contract method 0xd7eca30a.
 //
-// Solidity: function requestEntitlementCheck() returns()
+// Solidity: function requestEntitlementCheck() returns(bytes32)
 func (_IEntitlementGated *IEntitlementGatedSession) RequestEntitlementCheck() (*types.Transaction, error) {
 	return _IEntitlementGated.Contract.RequestEntitlementCheck(&_IEntitlementGated.TransactOpts)
 }
 
 // RequestEntitlementCheck is a paid mutator transaction binding the contract method 0xd7eca30a.
 //
-// Solidity: function requestEntitlementCheck() returns()
+// Solidity: function requestEntitlementCheck() returns(bytes32)
 func (_IEntitlementGated *IEntitlementGatedTransactorSession) RequestEntitlementCheck() (*types.Transaction, error) {
 	return _IEntitlementGated.Contract.RequestEntitlementCheck(&_IEntitlementGated.TransactOpts)
 }

@@ -37,13 +37,12 @@ contract RuleEntitlement is
   using EnumerableSet for EnumerableSet.Bytes32Set;
 
   struct Entitlement {
-    uint256 roleId;
     address grantedBy;
     uint256 grantedTime;
     RuleData data;
   }
 
-  mapping(uint256 => Entitlement) internal entitlementIdsByRoleId;
+  mapping(uint256 => Entitlement) internal entitlementsByRoleId;
 
   address public SPACE_ADDRESS;
 
@@ -158,11 +157,10 @@ contract RuleEntitlement is
       }
     }
 
-    Entitlement storage entitlement = entitlementIdsByRoleId[roleId];
+    Entitlement storage entitlement = entitlementsByRoleId[roleId];
 
     entitlement.grantedBy = _msgSender();
     entitlement.grantedTime = block.timestamp;
-    entitlement.roleId = roleId;
 
     if (data.operations.length == 0) {
       return;
@@ -171,45 +169,41 @@ contract RuleEntitlement is
     // All checks passed; initialize state variables
     // Manually copy _checkOperations to checkOperations
     for (uint256 i = 0; i < data.checkOperations.length; i++) {
-      entitlementIdsByRoleId[roleId].data.checkOperations.push(
+      entitlementsByRoleId[roleId].data.checkOperations.push(
         data.checkOperations[i]
       );
     }
 
     for (uint256 i = 0; i < data.logicalOperations.length; i++) {
-      entitlementIdsByRoleId[roleId].data.logicalOperations.push(
+      entitlementsByRoleId[roleId].data.logicalOperations.push(
         data.logicalOperations[i]
       );
     }
 
     for (uint256 i = 0; i < data.operations.length; i++) {
-      entitlementIdsByRoleId[roleId].data.operations.push(data.operations[i]);
+      entitlementsByRoleId[roleId].data.operations.push(data.operations[i]);
     }
   }
 
   // @inheritdoc IEntitlement
   function removeEntitlement(uint256 roleId) external {
-    Entitlement memory entitlement = entitlementIdsByRoleId[roleId];
+    Entitlement memory entitlement = entitlementsByRoleId[roleId];
     if (entitlement.grantedBy == address(0)) {
       revert Entitlement__InvalidValue();
     }
 
-    if (entitlement.roleId == 0) {
-      revert Entitlement__InvalidValue();
-    }
-
-    delete entitlementIdsByRoleId[entitlement.roleId];
+    delete entitlementsByRoleId[roleId];
   }
 
   // @inheritdoc IEntitlement
   function getEntitlementDataByRoleId(
     uint256 roleId
   ) external view returns (bytes memory) {
-    Entitlement storage entitlement = entitlementIdsByRoleId[roleId];
+    Entitlement storage entitlement = entitlementsByRoleId[roleId];
     return abi.encode(entitlement.data);
   }
 
-  function setRuleData(
+  function encodeRuleData(
     RuleData calldata data
   ) external pure returns (bytes memory) {
     return abi.encode(data);
@@ -218,24 +212,24 @@ contract RuleEntitlement is
   function getRuleData(
     uint256 roleId
   ) external view returns (RuleData memory data) {
-    return entitlementIdsByRoleId[roleId].data;
+    return entitlementsByRoleId[roleId].data;
   }
 
   function getOperations(
     uint256 roleId
   ) external view returns (Operation[] memory) {
-    return entitlementIdsByRoleId[roleId].data.operations;
+    return entitlementsByRoleId[roleId].data.operations;
   }
 
   function getLogicalOperations(
     uint256 roleId
   ) external view returns (LogicalOperation[] memory) {
-    return entitlementIdsByRoleId[roleId].data.logicalOperations;
+    return entitlementsByRoleId[roleId].data.logicalOperations;
   }
 
   function getCheckOperations(
     uint256 roleId
   ) external view returns (CheckOperation[] memory) {
-    return entitlementIdsByRoleId[roleId].data.checkOperations;
+    return entitlementsByRoleId[roleId].data.checkOperations;
   }
 }

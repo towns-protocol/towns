@@ -2,6 +2,7 @@
 pragma solidity ^0.8.23;
 
 // interfaces
+import {IEntitlement} from "contracts/src/spaces/entitlements/IEntitlement.sol";
 
 // libraries
 
@@ -12,11 +13,11 @@ interface IRolesBase {
     string name;
     bool disabled;
     string[] permissions;
-    address[] entitlements;
+    IEntitlement[] entitlements;
   }
 
   struct CreateEntitlement {
-    address module;
+    IEntitlement module;
     bytes data;
   }
 

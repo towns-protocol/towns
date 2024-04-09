@@ -39,7 +39,7 @@ type IEntitlementsManagerBaseEntitlement struct {
 
 // EntitlementsManagerMetaData contains all meta data concerning the EntitlementsManager contract.
 var EntitlementsManagerMetaData = &bind.MetaData{
-	ABI: "[{\"type\":\"function\",\"name\":\"addEntitlementModule\",\"inputs\":[{\"name\":\"entitlement\",\"type\":\"address\",\"internalType\":\"address\"}],\"outputs\":[],\"stateMutability\":\"nonpayable\"},{\"type\":\"function\",\"name\":\"addImmutableEntitlements\",\"inputs\":[{\"name\":\"entitlements\",\"type\":\"address[]\",\"internalType\":\"address[]\"}],\"outputs\":[],\"stateMutability\":\"nonpayable\"},{\"type\":\"function\",\"name\":\"getChannelEntitlements\",\"inputs\":[{\"name\":\"channelId\",\"type\":\"bytes32\",\"internalType\":\"bytes32\"},{\"name\":\"permission\",\"type\":\"string\",\"internalType\":\"string\"}],\"outputs\":[{\"name\":\"\",\"type\":\"tuple\",\"internalType\":\"structIRuleEntitlement.RuleData\",\"components\":[{\"name\":\"operations\",\"type\":\"tuple[]\",\"internalType\":\"structIRuleEntitlement.Operation[]\",\"components\":[{\"name\":\"opType\",\"type\":\"uint8\",\"internalType\":\"enumIRuleEntitlement.CombinedOperationType\"},{\"name\":\"index\",\"type\":\"uint8\",\"internalType\":\"uint8\"}]},{\"name\":\"checkOperations\",\"type\":\"tuple[]\",\"internalType\":\"structIRuleEntitlement.CheckOperation[]\",\"components\":[{\"name\":\"opType\",\"type\":\"uint8\",\"internalType\":\"enumIRuleEntitlement.CheckOperationType\"},{\"name\":\"chainId\",\"type\":\"uint256\",\"internalType\":\"uint256\"},{\"name\":\"contractAddress\",\"type\":\"address\",\"internalType\":\"address\"},{\"name\":\"threshold\",\"type\":\"uint256\",\"internalType\":\"uint256\"}]},{\"name\":\"logicalOperations\",\"type\":\"tuple[]\",\"internalType\":\"structIRuleEntitlement.LogicalOperation[]\",\"components\":[{\"name\":\"logOpType\",\"type\":\"uint8\",\"internalType\":\"enumIRuleEntitlement.LogicalOperationType\"},{\"name\":\"leftOperationIndex\",\"type\":\"uint8\",\"internalType\":\"uint8\"},{\"name\":\"rightOperationIndex\",\"type\":\"uint8\",\"internalType\":\"uint8\"}]}]}],\"stateMutability\":\"view\"},{\"type\":\"function\",\"name\":\"getEntitlement\",\"inputs\":[{\"name\":\"entitlement\",\"type\":\"address\",\"internalType\":\"address\"}],\"outputs\":[{\"name\":\"entitlements\",\"type\":\"tuple\",\"internalType\":\"structIEntitlementsManagerBase.Entitlement\",\"components\":[{\"name\":\"name\",\"type\":\"string\",\"internalType\":\"string\"},{\"name\":\"moduleAddress\",\"type\":\"address\",\"internalType\":\"address\"},{\"name\":\"moduleType\",\"type\":\"string\",\"internalType\":\"string\"},{\"name\":\"isImmutable\",\"type\":\"bool\",\"internalType\":\"bool\"}]}],\"stateMutability\":\"view\"},{\"type\":\"function\",\"name\":\"getEntitlements\",\"inputs\":[],\"outputs\":[{\"name\":\"entitlements\",\"type\":\"tuple[]\",\"internalType\":\"structIEntitlementsManagerBase.Entitlement[]\",\"components\":[{\"name\":\"name\",\"type\":\"string\",\"internalType\":\"string\"},{\"name\":\"moduleAddress\",\"type\":\"address\",\"internalType\":\"address\"},{\"name\":\"moduleType\",\"type\":\"string\",\"internalType\":\"string\"},{\"name\":\"isImmutable\",\"type\":\"bool\",\"internalType\":\"bool\"}]}],\"stateMutability\":\"view\"},{\"type\":\"function\",\"name\":\"getSpaceEntitlements\",\"inputs\":[{\"name\":\"permission\",\"type\":\"string\",\"internalType\":\"string\"}],\"outputs\":[{\"name\":\"\",\"type\":\"tuple\",\"internalType\":\"structIRuleEntitlement.RuleData\",\"components\":[{\"name\":\"operations\",\"type\":\"tuple[]\",\"internalType\":\"structIRuleEntitlement.Operation[]\",\"components\":[{\"name\":\"opType\",\"type\":\"uint8\",\"internalType\":\"enumIRuleEntitlement.CombinedOperationType\"},{\"name\":\"index\",\"type\":\"uint8\",\"internalType\":\"uint8\"}]},{\"name\":\"checkOperations\",\"type\":\"tuple[]\",\"internalType\":\"structIRuleEntitlement.CheckOperation[]\",\"components\":[{\"name\":\"opType\",\"type\":\"uint8\",\"internalType\":\"enumIRuleEntitlement.CheckOperationType\"},{\"name\":\"chainId\",\"type\":\"uint256\",\"internalType\":\"uint256\"},{\"name\":\"contractAddress\",\"type\":\"address\",\"internalType\":\"address\"},{\"name\":\"threshold\",\"type\":\"uint256\",\"internalType\":\"uint256\"}]},{\"name\":\"logicalOperations\",\"type\":\"tuple[]\",\"internalType\":\"structIRuleEntitlement.LogicalOperation[]\",\"components\":[{\"name\":\"logOpType\",\"type\":\"uint8\",\"internalType\":\"enumIRuleEntitlement.LogicalOperationType\"},{\"name\":\"leftOperationIndex\",\"type\":\"uint8\",\"internalType\":\"uint8\"},{\"name\":\"rightOperationIndex\",\"type\":\"uint8\",\"internalType\":\"uint8\"}]}]}],\"stateMutability\":\"view\"},{\"type\":\"function\",\"name\":\"isEntitledToChannel\",\"inputs\":[{\"name\":\"channelId\",\"type\":\"bytes32\",\"internalType\":\"bytes32\"},{\"name\":\"user\",\"type\":\"address\",\"internalType\":\"address\"},{\"name\":\"permission\",\"type\":\"string\",\"internalType\":\"string\"}],\"outputs\":[{\"name\":\"\",\"type\":\"bool\",\"internalType\":\"bool\"}],\"stateMutability\":\"view\"},{\"type\":\"function\",\"name\":\"isEntitledToSpace\",\"inputs\":[{\"name\":\"user\",\"type\":\"address\",\"internalType\":\"address\"},{\"name\":\"permission\",\"type\":\"string\",\"internalType\":\"string\"}],\"outputs\":[{\"name\":\"\",\"type\":\"bool\",\"internalType\":\"bool\"}],\"stateMutability\":\"view\"},{\"type\":\"function\",\"name\":\"removeEntitlementModule\",\"inputs\":[{\"name\":\"entitlement\",\"type\":\"address\",\"internalType\":\"address\"}],\"outputs\":[],\"stateMutability\":\"nonpayable\"},{\"type\":\"event\",\"name\":\"EntitlementModuleAdded\",\"inputs\":[{\"name\":\"caller\",\"type\":\"address\",\"indexed\":true,\"internalType\":\"address\"},{\"name\":\"entitlement\",\"type\":\"address\",\"indexed\":false,\"internalType\":\"address\"}],\"anonymous\":false},{\"type\":\"event\",\"name\":\"EntitlementModuleRemoved\",\"inputs\":[{\"name\":\"caller\",\"type\":\"address\",\"indexed\":true,\"internalType\":\"address\"},{\"name\":\"entitlement\",\"type\":\"address\",\"indexed\":false,\"internalType\":\"address\"}],\"anonymous\":false}]",
+	ABI: "[{\"type\":\"function\",\"name\":\"addEntitlementModule\",\"inputs\":[{\"name\":\"entitlement\",\"type\":\"address\",\"internalType\":\"address\"}],\"outputs\":[],\"stateMutability\":\"nonpayable\"},{\"type\":\"function\",\"name\":\"addImmutableEntitlements\",\"inputs\":[{\"name\":\"entitlements\",\"type\":\"address[]\",\"internalType\":\"address[]\"}],\"outputs\":[],\"stateMutability\":\"nonpayable\"},{\"type\":\"function\",\"name\":\"getEntitlement\",\"inputs\":[{\"name\":\"entitlement\",\"type\":\"address\",\"internalType\":\"address\"}],\"outputs\":[{\"name\":\"entitlements\",\"type\":\"tuple\",\"internalType\":\"structIEntitlementsManagerBase.Entitlement\",\"components\":[{\"name\":\"name\",\"type\":\"string\",\"internalType\":\"string\"},{\"name\":\"moduleAddress\",\"type\":\"address\",\"internalType\":\"address\"},{\"name\":\"moduleType\",\"type\":\"string\",\"internalType\":\"string\"},{\"name\":\"isImmutable\",\"type\":\"bool\",\"internalType\":\"bool\"}]}],\"stateMutability\":\"view\"},{\"type\":\"function\",\"name\":\"getEntitlements\",\"inputs\":[],\"outputs\":[{\"name\":\"entitlements\",\"type\":\"tuple[]\",\"internalType\":\"structIEntitlementsManagerBase.Entitlement[]\",\"components\":[{\"name\":\"name\",\"type\":\"string\",\"internalType\":\"string\"},{\"name\":\"moduleAddress\",\"type\":\"address\",\"internalType\":\"address\"},{\"name\":\"moduleType\",\"type\":\"string\",\"internalType\":\"string\"},{\"name\":\"isImmutable\",\"type\":\"bool\",\"internalType\":\"bool\"}]}],\"stateMutability\":\"view\"},{\"type\":\"function\",\"name\":\"isEntitledToChannel\",\"inputs\":[{\"name\":\"channelId\",\"type\":\"bytes32\",\"internalType\":\"bytes32\"},{\"name\":\"user\",\"type\":\"address\",\"internalType\":\"address\"},{\"name\":\"permission\",\"type\":\"string\",\"internalType\":\"string\"}],\"outputs\":[{\"name\":\"\",\"type\":\"bool\",\"internalType\":\"bool\"}],\"stateMutability\":\"view\"},{\"type\":\"function\",\"name\":\"isEntitledToSpace\",\"inputs\":[{\"name\":\"user\",\"type\":\"address\",\"internalType\":\"address\"},{\"name\":\"permission\",\"type\":\"string\",\"internalType\":\"string\"}],\"outputs\":[{\"name\":\"\",\"type\":\"bool\",\"internalType\":\"bool\"}],\"stateMutability\":\"view\"},{\"type\":\"function\",\"name\":\"removeEntitlementModule\",\"inputs\":[{\"name\":\"entitlement\",\"type\":\"address\",\"internalType\":\"address\"}],\"outputs\":[],\"stateMutability\":\"nonpayable\"},{\"type\":\"event\",\"name\":\"EntitlementModuleAdded\",\"inputs\":[{\"name\":\"caller\",\"type\":\"address\",\"indexed\":true,\"internalType\":\"address\"},{\"name\":\"entitlement\",\"type\":\"address\",\"indexed\":false,\"internalType\":\"address\"}],\"anonymous\":false},{\"type\":\"event\",\"name\":\"EntitlementModuleRemoved\",\"inputs\":[{\"name\":\"caller\",\"type\":\"address\",\"indexed\":true,\"internalType\":\"address\"},{\"name\":\"entitlement\",\"type\":\"address\",\"indexed\":false,\"internalType\":\"address\"}],\"anonymous\":false}]",
 }
 
 // EntitlementsManagerABI is the input ABI used to generate the binding from.
@@ -188,37 +188,6 @@ func (_EntitlementsManager *EntitlementsManagerTransactorRaw) Transact(opts *bin
 	return _EntitlementsManager.Contract.contract.Transact(opts, method, params...)
 }
 
-// GetChannelEntitlements is a free data retrieval call binding the contract method 0x542bee3b.
-//
-// Solidity: function getChannelEntitlements(bytes32 channelId, string permission) view returns(((uint8,uint8)[],(uint8,uint256,address,uint256)[],(uint8,uint8,uint8)[]))
-func (_EntitlementsManager *EntitlementsManagerCaller) GetChannelEntitlements(opts *bind.CallOpts, channelId [32]byte, permission string) (IRuleEntitlementRuleData, error) {
-	var out []interface{}
-	err := _EntitlementsManager.contract.Call(opts, &out, "getChannelEntitlements", channelId, permission)
-
-	if err != nil {
-		return *new(IRuleEntitlementRuleData), err
-	}
-
-	out0 := *abi.ConvertType(out[0], new(IRuleEntitlementRuleData)).(*IRuleEntitlementRuleData)
-
-	return out0, err
-
-}
-
-// GetChannelEntitlements is a free data retrieval call binding the contract method 0x542bee3b.
-//
-// Solidity: function getChannelEntitlements(bytes32 channelId, string permission) view returns(((uint8,uint8)[],(uint8,uint256,address,uint256)[],(uint8,uint8,uint8)[]))
-func (_EntitlementsManager *EntitlementsManagerSession) GetChannelEntitlements(channelId [32]byte, permission string) (IRuleEntitlementRuleData, error) {
-	return _EntitlementsManager.Contract.GetChannelEntitlements(&_EntitlementsManager.CallOpts, channelId, permission)
-}
-
-// GetChannelEntitlements is a free data retrieval call binding the contract method 0x542bee3b.
-//
-// Solidity: function getChannelEntitlements(bytes32 channelId, string permission) view returns(((uint8,uint8)[],(uint8,uint256,address,uint256)[],(uint8,uint8,uint8)[]))
-func (_EntitlementsManager *EntitlementsManagerCallerSession) GetChannelEntitlements(channelId [32]byte, permission string) (IRuleEntitlementRuleData, error) {
-	return _EntitlementsManager.Contract.GetChannelEntitlements(&_EntitlementsManager.CallOpts, channelId, permission)
-}
-
 // GetEntitlement is a free data retrieval call binding the contract method 0xfba4ff9d.
 //
 // Solidity: function getEntitlement(address entitlement) view returns((string,address,string,bool) entitlements)
@@ -279,37 +248,6 @@ func (_EntitlementsManager *EntitlementsManagerSession) GetEntitlements() ([]IEn
 // Solidity: function getEntitlements() view returns((string,address,string,bool)[] entitlements)
 func (_EntitlementsManager *EntitlementsManagerCallerSession) GetEntitlements() ([]IEntitlementsManagerBaseEntitlement, error) {
 	return _EntitlementsManager.Contract.GetEntitlements(&_EntitlementsManager.CallOpts)
-}
-
-// GetSpaceEntitlements is a free data retrieval call binding the contract method 0x38d171b1.
-//
-// Solidity: function getSpaceEntitlements(string permission) view returns(((uint8,uint8)[],(uint8,uint256,address,uint256)[],(uint8,uint8,uint8)[]))
-func (_EntitlementsManager *EntitlementsManagerCaller) GetSpaceEntitlements(opts *bind.CallOpts, permission string) (IRuleEntitlementRuleData, error) {
-	var out []interface{}
-	err := _EntitlementsManager.contract.Call(opts, &out, "getSpaceEntitlements", permission)
-
-	if err != nil {
-		return *new(IRuleEntitlementRuleData), err
-	}
-
-	out0 := *abi.ConvertType(out[0], new(IRuleEntitlementRuleData)).(*IRuleEntitlementRuleData)
-
-	return out0, err
-
-}
-
-// GetSpaceEntitlements is a free data retrieval call binding the contract method 0x38d171b1.
-//
-// Solidity: function getSpaceEntitlements(string permission) view returns(((uint8,uint8)[],(uint8,uint256,address,uint256)[],(uint8,uint8,uint8)[]))
-func (_EntitlementsManager *EntitlementsManagerSession) GetSpaceEntitlements(permission string) (IRuleEntitlementRuleData, error) {
-	return _EntitlementsManager.Contract.GetSpaceEntitlements(&_EntitlementsManager.CallOpts, permission)
-}
-
-// GetSpaceEntitlements is a free data retrieval call binding the contract method 0x38d171b1.
-//
-// Solidity: function getSpaceEntitlements(string permission) view returns(((uint8,uint8)[],(uint8,uint256,address,uint256)[],(uint8,uint8,uint8)[]))
-func (_EntitlementsManager *EntitlementsManagerCallerSession) GetSpaceEntitlements(permission string) (IRuleEntitlementRuleData, error) {
-	return _EntitlementsManager.Contract.GetSpaceEntitlements(&_EntitlementsManager.CallOpts, permission)
 }
 
 // IsEntitledToChannel is a free data retrieval call binding the contract method 0x367287e3.

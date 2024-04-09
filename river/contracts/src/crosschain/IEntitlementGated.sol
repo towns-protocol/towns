@@ -19,6 +19,7 @@ interface IEntitlementGatedBase {
     NodeVoteStatus checkResult;
     bool isCompleted;
     NodeVote[] nodeVotesArray;
+    bytes encodedRuleData;
   }
 
   error EntitlementGated_InvalidAddress();
@@ -35,14 +36,11 @@ interface IEntitlementGatedBase {
 }
 
 interface IEntitlementGated is IEntitlementGatedBase {
-  function getEntitlementOperations() external view returns (bytes memory);
-
-  function requestEntitlementCheck() external;
-
   function postEntitlementCheckResult(
     bytes32 transactionId,
     NodeVoteStatus result
   ) external;
 
-  function removeTransaction(bytes32 transactionId) external;
+  // For testing purposes
+  function requestEntitlementCheck() external returns (bytes32);
 }

@@ -185,7 +185,7 @@ export interface IArchitectInterface extends utils.Interface {
     "getSpaceArchitectImplementations()": FunctionFragment;
     "getSpaceByTokenId(uint256)": FunctionFragment;
     "getTokenIdBySpace(address)": FunctionFragment;
-    "setSpaceArchitectImplementations(address,address,address,address)": FunctionFragment;
+    "setSpaceArchitectImplementations(address,address,address,address,address)": FunctionFragment;
   };
 
   getFunction(
@@ -216,6 +216,7 @@ export interface IArchitectInterface extends utils.Interface {
   encodeFunctionData(
     functionFragment: "setSpaceArchitectImplementations",
     values: [
+      PromiseOrValue<string>,
       PromiseOrValue<string>,
       PromiseOrValue<string>,
       PromiseOrValue<string>,
@@ -298,11 +299,12 @@ export interface IArchitect extends BaseContract {
     getSpaceArchitectImplementations(
       overrides?: CallOverrides
     ): Promise<
-      [string, string, string, string] & {
+      [string, string, string, string, string] & {
         ownerTokenImplementation: string;
         userEntitlementImplementation: string;
         ruleEntitlementImplementation: string;
         walletLink: string;
+        entitlementChecker: string;
       }
     >;
 
@@ -321,6 +323,7 @@ export interface IArchitect extends BaseContract {
       userEntitlementImplementation: PromiseOrValue<string>,
       ruleEntitlementImplementation: PromiseOrValue<string>,
       walletLink: PromiseOrValue<string>,
+      entitlementChecker: PromiseOrValue<string>,
       overrides?: Overrides & { from?: PromiseOrValue<string> }
     ): Promise<ContractTransaction>;
   };
@@ -333,11 +336,12 @@ export interface IArchitect extends BaseContract {
   getSpaceArchitectImplementations(
     overrides?: CallOverrides
   ): Promise<
-    [string, string, string, string] & {
+    [string, string, string, string, string] & {
       ownerTokenImplementation: string;
       userEntitlementImplementation: string;
       ruleEntitlementImplementation: string;
       walletLink: string;
+      entitlementChecker: string;
     }
   >;
 
@@ -356,6 +360,7 @@ export interface IArchitect extends BaseContract {
     userEntitlementImplementation: PromiseOrValue<string>,
     ruleEntitlementImplementation: PromiseOrValue<string>,
     walletLink: PromiseOrValue<string>,
+    entitlementChecker: PromiseOrValue<string>,
     overrides?: Overrides & { from?: PromiseOrValue<string> }
   ): Promise<ContractTransaction>;
 
@@ -368,11 +373,12 @@ export interface IArchitect extends BaseContract {
     getSpaceArchitectImplementations(
       overrides?: CallOverrides
     ): Promise<
-      [string, string, string, string] & {
+      [string, string, string, string, string] & {
         ownerTokenImplementation: string;
         userEntitlementImplementation: string;
         ruleEntitlementImplementation: string;
         walletLink: string;
+        entitlementChecker: string;
       }
     >;
 
@@ -391,6 +397,7 @@ export interface IArchitect extends BaseContract {
       userEntitlementImplementation: PromiseOrValue<string>,
       ruleEntitlementImplementation: PromiseOrValue<string>,
       walletLink: PromiseOrValue<string>,
+      entitlementChecker: PromiseOrValue<string>,
       overrides?: CallOverrides
     ): Promise<void>;
   };
@@ -433,6 +440,7 @@ export interface IArchitect extends BaseContract {
       userEntitlementImplementation: PromiseOrValue<string>,
       ruleEntitlementImplementation: PromiseOrValue<string>,
       walletLink: PromiseOrValue<string>,
+      entitlementChecker: PromiseOrValue<string>,
       overrides?: Overrides & { from?: PromiseOrValue<string> }
     ): Promise<BigNumber>;
   };
@@ -462,6 +470,7 @@ export interface IArchitect extends BaseContract {
       userEntitlementImplementation: PromiseOrValue<string>,
       ruleEntitlementImplementation: PromiseOrValue<string>,
       walletLink: PromiseOrValue<string>,
+      entitlementChecker: PromiseOrValue<string>,
       overrides?: Overrides & { from?: PromiseOrValue<string> }
     ): Promise<PopulatedTransaction>;
   };

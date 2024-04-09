@@ -52,6 +52,11 @@ interface IMembershipBase {
   event MembershipFeeRecipientUpdated(address indexed recipient);
   event MembershipFreeAllocationUpdated(uint256 indexed allocation);
   event MembershipWithdrawal(address indexed recipient, uint256 amount);
+  event MembershipTokenIssued(
+    address indexed recipient,
+    uint256 indexed tokenId
+  );
+  event MembershipTokenRejected(address indexed recipient);
 }
 
 interface IMembership is IMembershipBase {
@@ -66,22 +71,20 @@ interface IMembership is IMembershipBase {
   /**
    * @notice Join a space
    * @param receiver The address of the receiver
-   * @return The token id of the membership
    */
-  function joinSpace(address receiver) external payable returns (uint256);
+  function joinSpace(address receiver) external payable;
 
   /**
    * @notice Join a space with a referral
    * @param receiver The address of the receiver
    * @param referrer The address of the referrer
    * @param referralCode The referral code
-   * @return The token id of the membership
    */
   function joinSpaceWithReferral(
     address receiver,
     address referrer,
     uint256 referralCode
-  ) external payable returns (uint256);
+  ) external payable;
 
   /**
    * @notice Renew a space membership

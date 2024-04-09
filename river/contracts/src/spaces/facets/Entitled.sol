@@ -4,7 +4,6 @@ pragma solidity ^0.8.23;
 // interfaces
 import {IEntitlement} from "contracts/src/spaces/entitlements/IEntitlement.sol";
 import {IEntitlementBase} from "contracts/src/spaces/entitlements/IEntitlement.sol";
-import {IRuleEntitlement} from "contracts/src/crosschain/IRuleEntitlement.sol";
 import {IWalletLink} from "contracts/src/river/wallet-link/IWalletLink.sol";
 
 // libraries
@@ -12,7 +11,6 @@ import {EnumerableSet} from "@openzeppelin/contracts/utils/structs/EnumerableSet
 import {EntitlementsManagerStorage} from "contracts/src/spaces/facets/entitlements/EntitlementsManagerStorage.sol";
 import {MembershipStorage} from "contracts/src/spaces/facets/membership/MembershipStorage.sol";
 import {ERC721ABase} from "contracts/src/diamond/facets/token/ERC721A/ERC721ABase.sol";
-import {RuleEntitlementUtil} from "contracts/src/crosschain/RuleEntitlementUtil.sol";
 import {WalletLinkProxyBase} from "contracts/src/spaces/facets/delegation/WalletLinkProxyBase.sol";
 
 // contracts
@@ -76,7 +74,7 @@ abstract contract Entitled is
         ds.entitlements.at(i)
       ];
       if (
-        !e.isCrosschain &&
+        !e.entitlement.isCrosschain() &&
         e.entitlement.isEntitled(channelId, wallets, permission)
       ) {
         return true;
@@ -93,27 +91,12 @@ abstract contract Entitled is
     return _isEntitled(IN_TOWN, user, bytes32(abi.encodePacked(permission)));
   }
 
-  function _getSpaceEntitlements(
-    string calldata
-  ) internal pure returns (IRuleEntitlement.RuleData memory data) {
-    // TODO return correct rules to be validated by apps
-    data = RuleEntitlementUtil.getNoopRuleData();
-  }
-
   function _isEntitledToChannel(
     bytes32 channelId,
     address user,
     string calldata permission
   ) internal view returns (bool) {
     return _isEntitled(channelId, user, bytes32(abi.encodePacked(permission)));
-  }
-
-  function _getChannelEntitlements(
-    bytes32,
-    string calldata
-  ) internal pure returns (IRuleEntitlement.RuleData memory data) {
-    // TODO return correct rules to be validated by apps
-    data = RuleEntitlementUtil.getNoopRuleData();
   }
 
   function _isAllowed(

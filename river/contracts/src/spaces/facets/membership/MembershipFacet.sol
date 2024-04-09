@@ -4,10 +4,15 @@ pragma solidity ^0.8.23;
 // interfaces
 import {IMembership} from "./IMembership.sol";
 import {IMembershipPricing} from "./pricing/IMembershipPricing.sol";
+import {IEntitlement} from "contracts/src/spaces/entitlements/IEntitlement.sol";
+import {IRuleEntitlement} from "contracts/src/crosschain/IRuleEntitlement.sol";
+//import {IEntitlementChecker} from "contracts/src/crosschain/checker/IEntitlementChecker.sol";
+import {IEntitlementGatedBase} from "contracts/src/crosschain/IEntitlementGated.sol";
+import {IRolesBase} from "contracts/src/spaces/facets/roles/IRoles.sol";
 
 // libraries
 import {Permissions} from "contracts/src/spaces/facets/Permissions.sol";
-
+import {console2} from "forge-std/console2.sol";
 // contracts
 import {MembershipBase} from "./MembershipBase.sol";
 import {ERC721A} from "contracts/src/diamond/facets/token/ERC721A/ERC721A.sol";
@@ -15,6 +20,9 @@ import {ERC5643Base} from "contracts/src/diamond/facets/token/ERC5643/ERC5643Bas
 import {ReentrancyGuard} from "contracts/src/diamond/facets/reentrancy/ReentrancyGuard.sol";
 import {Entitled} from "contracts/src/spaces/facets/Entitled.sol";
 import {MembershipReferralBase} from "./referral/MembershipReferralBase.sol";
+import {EntitlementGated} from "./../../../crosschain/EntitlementGated.sol";
+import {MembershipStorage} from "./MembershipStorage.sol";
+import {RolesBase} from "contracts/src/spaces/facets/roles/RolesBase.sol";
 
 contract MembershipFacet is
   IMembership,
@@ -23,12 +31,18 @@ contract MembershipFacet is
   ERC5643Base,
   ReentrancyGuard,
   ERC721A,
-  Entitled
+  Entitled,
+  RolesBase,
+  EntitlementGated
 {
+  bytes32 constant JOIN_SPACE =
+    bytes32(abi.encodePacked(Permissions.JoinSpace));
+
   function __Membership_init(
     Membership memory info,
     address spaceFactory
   ) external onlyInitializing {
+    console2.log("MembershipFacet.__Membership_init");
     _addInterface(type(IMembership).interfaceId);
     __MembershipBase_init(info, spaceFactory);
     __ERC721A_init_unchained(info.name, info.symbol);
@@ -51,13 +65,11 @@ contract MembershipFacet is
     if (receiver == address(0)) revert Membership__InvalidAddress();
     if (_balanceOf(msg.sender) > 0) revert Membership__AlreadyMember();
     if (_balanceOf(receiver) > 0) revert Membership__AlreadyMember();
+
     if (
       _getMembershipSupplyLimit() != 0 &&
       _totalSupply() >= _getMembershipSupplyLimit()
     ) revert Membership__MaxSupplyReached();
-
-    // validate the receiver is allowed to join
-    _validatePermission(Permissions.JoinSpace, receiver);
   }
 
   /// @inheritdoc IMembership
@@ -72,16 +84,57 @@ contract MembershipFacet is
   // =============================================================
 
   /// @inheritdoc IMembership
-  function joinSpace(
-    address receiver
-  ) external payable nonReentrant returns (uint256 tokenId) {
+  function joinSpace(address receiver) external payable nonReentrant {
     _validateJoinSpace(receiver);
+    address sender = msg.sender;
+    bool isCrosschainPending = false;
 
-    // get token id
-    tokenId = _nextTokenId();
+    IRolesBase.Role[] memory roles = _getRolesWithPermission(
+      Permissions.JoinSpace
+    );
+    for (uint256 i = 0; i < roles.length; i++) {
+      IRolesBase.Role memory role = roles[i];
 
+      if (!role.disabled) {
+        for (uint256 j = 0; j < role.entitlements.length; j++) {
+          IEntitlement entitlement = IEntitlement(role.entitlements[j]);
+          if (!entitlement.isCrosschain()) {
+            address[] memory users = new address[](1);
+            users[0] = sender;
+            if (entitlement.isEntitled(0x0, users, JOIN_SPACE)) {
+              _issueToken(receiver);
+              return;
+            }
+          } else {
+            IRuleEntitlement re = IRuleEntitlement(address(entitlement));
+            IRuleEntitlement.RuleData memory ruleData = re.getRuleData(role.id);
+
+            if (
+              ruleData.operations.length == 1 &&
+              ruleData.operations[0].opType ==
+              IRuleEntitlement.CombinedOperationType.NONE
+            ) {
+              //console2.log("crosschain entitlement noop rule, skipping");
+            } else {
+              bytes memory encodedRuleData = re.encodeRuleData(ruleData);
+              bytes32 txId = _requestEntitlementCheck(encodedRuleData);
+              MembershipStorage.Layout storage ds = MembershipStorage.layout();
+              ds.pendingJoinRequests[txId] = receiver;
+              isCrosschainPending = true;
+            }
+          }
+        }
+      }
+    }
+    if (!isCrosschainPending) {
+      revert Entitlement__NotAllowed();
+    }
+  }
+
+  function _issueToken(address receiver) internal {
     // allocate protocol and membership fees
     uint256 membershipPrice = _getMembershipPrice(_totalSupply());
+    uint256 tokenId = _nextTokenId();
 
     if (membershipPrice > 0) {
       // set renewal price for token
@@ -97,6 +150,7 @@ contract MembershipFacet is
 
     // set expiration of membership
     _renewSubscription(tokenId, _getMembershipDuration());
+    emit MembershipTokenIssued(receiver, tokenId);
   }
 
   /// @inheritdoc IMembership
@@ -104,11 +158,11 @@ contract MembershipFacet is
     address receiver,
     address referrer,
     uint256 referralCode
-  ) external payable nonReentrant returns (uint256 tokenId) {
+  ) external payable nonReentrant {
     _validateJoinSpace(receiver);
 
     // get token id
-    tokenId = _nextTokenId();
+    uint256 tokenId = _nextTokenId();
 
     // allocate protocol, membership and referral fees
     uint256 membershipPrice = _getMembershipPrice(_totalSupply());
@@ -137,6 +191,25 @@ contract MembershipFacet is
 
     // set expiration of membership
     _renewSubscription(tokenId, _getMembershipDuration());
+  }
+
+  /// @inheritdoc EntitlementGated
+  function _onEntitlementCheckResultPosted(
+    bytes32 transactionId,
+    IEntitlementGatedBase.NodeVoteStatus result
+  ) internal override {
+    MembershipStorage.Layout storage ds = MembershipStorage.layout();
+
+    // get trasnaction from memmbership storage
+    if (result == NodeVoteStatus.PASSED) {
+      address receiver = ds.pendingJoinRequests[transactionId];
+      _issueToken(receiver);
+      delete ds.pendingJoinRequests[transactionId];
+    } else {
+      address receiver = ds.pendingJoinRequests[transactionId];
+      emit MembershipTokenRejected(receiver);
+      delete ds.pendingJoinRequests[transactionId];
+    }
   }
 
   // =============================================================
@@ -333,5 +406,10 @@ contract MembershipFacet is
   ) internal override {
     super._beforeTokenTransfers(from, to, startTokenId, quantity);
     _setMembershipTokenId(startTokenId, to);
+  }
+
+  // For testing
+  function requestEntitlementCheck() external override returns (bytes32) {
+    revert Entitlement__NotAllowed();
   }
 }

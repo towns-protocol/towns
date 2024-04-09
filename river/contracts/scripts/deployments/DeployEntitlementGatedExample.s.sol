@@ -2,6 +2,7 @@
 pragma solidity ^0.8.23;
 
 //interfaces
+import {IEntitlementChecker} from "contracts/src/crosschain/checker/IEntitlementChecker.sol";
 
 //libraries
 
@@ -20,6 +21,10 @@ contract DeployEntitlementGatedExample is Deployer {
   ) public override returns (address) {
     vm.broadcast(deployerPK);
     return
-      address(new MockEntitlementGated(getDeployment("entitlementChecker")));
+      address(
+        new MockEntitlementGated(
+          IEntitlementChecker(getDeployment("entitlementChecker"))
+        )
+      );
   }
 }

@@ -28,7 +28,7 @@ contract EntitlementGatedTest is
 
   function setUp() external {
     checker = new EntitlementChecker();
-    gated = new MockEntitlementGated(address(checker));
+    gated = new MockEntitlementGated(checker);
   }
 
   // =============================================================
@@ -50,7 +50,8 @@ contract EntitlementGatedTest is
       nodes,
       address(gated)
     );
-    gated.requestEntitlementCheck();
+    bytes32 generatedTxId = gated.requestEntitlementCheck();
+    assertEq(generatedTxId, transactionId);
   }
 
   function test_requestEntitlementCheck_revert_alreadyRegistered() external {
@@ -69,11 +70,7 @@ contract EntitlementGatedTest is
     _registerNodes();
 
     address[] memory nodes = checker.getRandomNodes(5, address(gated));
-    bytes32 transactionId = keccak256(
-      abi.encodePacked(tx.origin, block.number)
-    );
-
-    gated.requestEntitlementCheck();
+    bytes32 transactionId = gated.requestEntitlementCheck();
 
     _nodeVotes(transactionId, nodes, NodeVoteStatus.PASSED);
   }
@@ -82,11 +79,8 @@ contract EntitlementGatedTest is
     _registerNodes();
 
     address[] memory nodes = checker.getRandomNodes(5, address(gated));
-    bytes32 transactionId = keccak256(
-      abi.encodePacked(tx.origin, block.number)
-    );
 
-    gated.requestEntitlementCheck();
+    bytes32 transactionId = gated.requestEntitlementCheck();
 
     _nodeVotes(transactionId, nodes, NodeVoteStatus.FAILED);
   }
@@ -105,11 +99,8 @@ contract EntitlementGatedTest is
     _registerNodes();
 
     address[] memory nodes = checker.getRandomNodes(5, address(gated));
-    bytes32 transactionId = keccak256(
-      abi.encodePacked(tx.origin, block.number)
-    );
 
-    gated.requestEntitlementCheck();
+    bytes32 transactionId = gated.requestEntitlementCheck();
 
     vm.prank(nodes[0]);
     gated.postEntitlementCheckResult(transactionId, NodeVoteStatus.PASSED);
@@ -122,11 +113,7 @@ contract EntitlementGatedTest is
   function test_postEntitlementCheckResult_revert_nodeNotFound() external {
     _registerNodes();
 
-    bytes32 transactionId = keccak256(
-      abi.encodePacked(tx.origin, block.number)
-    );
-
-    gated.requestEntitlementCheck();
+    bytes32 transactionId = gated.requestEntitlementCheck();
 
     vm.prank(_randomAddress());
     vm.expectRevert(EntitlementGated_NodeNotFound.selector);
@@ -142,14 +129,15 @@ contract EntitlementGatedTest is
 
     address[] memory nodes = checker.getRandomNodes(5, address(gated));
 
-    bytes32 transactionId = keccak256(
-      abi.encodePacked(tx.origin, block.number)
-    );
+    bytes32 transactionId = gated.requestEntitlementCheck();
 
-    gated.requestEntitlementCheck();
-    gated.removeTransaction(transactionId);
+    for (uint256 i = 0; i < 3; i++) {
+      vm.startPrank(nodes[i]);
+      gated.postEntitlementCheckResult(transactionId, NodeVoteStatus.PASSED);
+      vm.stopPrank();
+    }
 
-    vm.prank(nodes[0]);
+    vm.prank(nodes[3]);
     vm.expectRevert(EntitlementGated_TransactionNotRegistered.selector);
     gated.postEntitlementCheckResult(transactionId, NodeVoteStatus.PASSED);
   }
@@ -163,6 +151,7 @@ contract EntitlementGatedTest is
     NodeVoteStatus vote
   ) internal {
     uint256 halfNodes = nodes.length / 2;
+    bool eventEmitted = false;
 
     for (uint256 i = 0; i < nodes.length; i++) {
       vm.startPrank(nodes[i]);
@@ -173,10 +162,13 @@ contract EntitlementGatedTest is
         if (i == halfNodes + 1) {
           vm.expectEmit(true, true, true, true);
           emit EntitlementCheckResultPosted(transactionId, vote);
+          gated.postEntitlementCheckResult(transactionId, vote);
+          eventEmitted = true;
+        } else {
+          gated.postEntitlementCheckResult(transactionId, vote);
         }
-
-        gated.postEntitlementCheckResult(transactionId, vote);
       } else {
+        vm.expectRevert(EntitlementGated_TransactionNotRegistered.selector);
         gated.postEntitlementCheckResult(transactionId, vote);
       }
 

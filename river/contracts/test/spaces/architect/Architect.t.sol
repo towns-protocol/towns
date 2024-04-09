@@ -17,6 +17,7 @@ import {IRoles} from "contracts/src/spaces/facets/roles/IRoles.sol";
 import {IMembership} from "contracts/src/spaces/facets/membership/IMembership.sol";
 import {IWalletLink} from "contracts/src/river/wallet-link/IWalletLink.sol";
 import {ISpaceOwner} from "contracts/src/spaces/facets/owner/ISpaceOwner.sol";
+import {IEntitlementChecker} from "contracts/src/crosschain/checker/IEntitlementChecker.sol";
 
 // libraries
 import {Permissions} from "contracts/src/spaces/facets/Permissions.sol";
@@ -27,6 +28,7 @@ import {Architect} from "contracts/src/spaces/facets/architect/Architect.sol";
 import {MockERC721} from "contracts/test/mocks/MockERC721.sol";
 import {UserEntitlement} from "contracts/src/spaces/entitlements/user/UserEntitlement.sol";
 import {WalletLink} from "contracts/src/river/wallet-link/WalletLink.sol";
+import {EntitlementChecker} from "contracts/src/crosschain/checker/EntitlementChecker.sol";
 import {Factory} from "contracts/src/utils/Factory.sol";
 
 // errors
@@ -118,7 +120,8 @@ contract ArchitectTest is
       ISpaceOwner spaceTokenAddress,
       IUserEntitlement userEntitlementAddress,
       IRuleEntitlement ruleEntitlementAddress,
-      IWalletLink walletLinkAddress
+      IWalletLink walletLinkAddress,
+      IEntitlementChecker entitlementChecker
     ) = spaceArchitect.getSpaceArchitectImplementations();
 
     assertEq(spaceOwner, address(spaceTokenAddress));
@@ -132,6 +135,7 @@ contract ArchitectTest is
     IUserEntitlement newUserEntitlement = new UserEntitlement();
     IRuleEntitlement newRuleEntitlement = new RuleEntitlement();
     IWalletLink newWalletLink = new WalletLink();
+    IEntitlementChecker newEntitlementChecker = new EntitlementChecker();
 
     address user = _randomAddress();
 
@@ -141,7 +145,8 @@ contract ArchitectTest is
       newSpaceToken,
       newUserEntitlement,
       newRuleEntitlement,
-      newWalletLink
+      newWalletLink,
+      newEntitlementChecker
     );
 
     vm.prank(deployer);
@@ -149,14 +154,16 @@ contract ArchitectTest is
       newSpaceToken,
       newUserEntitlement,
       newRuleEntitlement,
-      newWalletLink
+      newWalletLink,
+      newEntitlementChecker
     );
 
     (
       ISpaceOwner spaceTokenAddress,
       IUserEntitlement userEntitlementAddress,
       IRuleEntitlement tokenEntitlementAddress,
-      IWalletLink walletLink
+      IWalletLink walletLink,
+      IEntitlementChecker entitlementChecker
     ) = spaceArchitect.getSpaceArchitectImplementations();
 
     assertEq(address(newSpaceToken), address(spaceTokenAddress));
@@ -184,7 +191,7 @@ contract ArchitectTest is
       )
     );
 
-    (ISpaceOwner spaceOwner, , , ) = spaceArchitect
+    (ISpaceOwner spaceOwner, , , , ) = spaceArchitect
       .getSpaceArchitectImplementations();
     uint256 tokenId = spaceArchitect.getTokenIdBySpace(newSpace);
 

@@ -6,7 +6,7 @@ import {TestUtils} from "contracts/test/utils/TestUtils.sol";
 
 //interfaces
 import {IArchitectBase} from "contracts/src/spaces/facets/architect/IArchitect.sol";
-
+import {IEntitlementChecker} from "contracts/src/crosschain/checker/IEntitlementChecker.sol";
 //libraries
 
 //contracts

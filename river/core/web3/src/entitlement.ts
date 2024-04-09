@@ -167,17 +167,17 @@ export const getOperationTree = async (
     return postOrderArrayToTree(operations)
 }
 
-const setRuleDataInputs: readonly AbiParameter[] | undefined = (
-    Object.values(IRuleEntitlementAbi).find((abi) => abi.name === 'setRuleData') as
+const encodeRuleDataInputs: readonly AbiParameter[] | undefined = (
+    Object.values(IRuleEntitlementAbi).find((abi) => abi.name === 'encodeRuleData') as
         | AbiFunction
         | undefined
 )?.inputs
 
 export function encodeEntitlementData(ruleData: IRuleEntitlement.RuleDataStruct): `0x${string}` {
-    if (!setRuleDataInputs) {
+    if (!encodeRuleDataInputs) {
         throw new Error('setRuleDataInputs not found')
     }
-    return encodeAbiParameters(setRuleDataInputs, [ruleData])
+    return encodeAbiParameters(encodeRuleDataInputs, [ruleData])
 }
 
 const getRuleDataOutputs: readonly AbiParameter[] | undefined = (

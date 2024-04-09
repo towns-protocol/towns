@@ -148,8 +148,10 @@ func ClientSimulator() {
 
 	// Event loop
 	for {
+		log.Info("ClientSimulator waiting for events")
 		select {
 		case checkRequestedResult := <-checkRequestedResults:
+			log.Info("Client checkRequestedResult event", "TransactionId", checkRequestedResult.TransactionId)
 			transactionId = checkRequestedResult.TransactionId
 			log.Info(
 				"Client checkRequestedResult event transactionId",
@@ -182,7 +184,6 @@ func ClientSimulator() {
 			}
 
 		case result := <-resultPosted:
-
 			log.Info(
 				"Client Result event",
 				"TransactionId",
@@ -210,11 +211,6 @@ func ClientSimulator() {
 			}
 			auth.Nonce = big.NewInt(int64(nonce))
 
-			tx, err = gatedContract.RemoveTransaction(auth, result.TransactionId)
-			if err != nil {
-				log.Error("Client RemoveTransaction error", "err", err)
-				return
-			}
 			if resultSub != nil {
 				resultSub.Unsubscribe()
 				resultSub = nil

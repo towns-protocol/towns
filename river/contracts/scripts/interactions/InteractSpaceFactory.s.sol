@@ -3,13 +3,13 @@ pragma solidity ^0.8.23;
 
 //interfaces
 import {IArchitect} from "contracts/src/spaces/facets/architect/IArchitect.sol";
-import {IProxyManager} from "contracts/src/diamond/proxy/manager/IProxyManager.sol";
 import {IDiamond, Diamond} from "contracts/src/diamond/Diamond.sol";
 import {IDiamondCut} from "contracts/src/diamond/facets/cut/IDiamondCut.sol";
 import {IRuleEntitlement} from "contracts/src/crosschain/IRuleEntitlement.sol";
 import {IWalletLink} from "contracts/src/river/wallet-link/IWalletLink.sol";
 import {IUserEntitlement} from "contracts/src/spaces/entitlements/user/IUserEntitlement.sol";
 import {ISpaceOwner} from "contracts/src/spaces/facets/owner/ISpaceOwner.sol";
+import {IEntitlementChecker} from "contracts/src/crosschain/checker/IEntitlementChecker.sol";
 
 //libraries
 
@@ -19,7 +19,6 @@ import {ProxyManager} from "contracts/src/diamond/proxy/manager/ProxyManager.sol
 import {DeployArchitect} from "contracts/scripts/deployments/facets/DeployArchitect.s.sol";
 import {DeploySpace} from "contracts/scripts/deployments/DeploySpace.s.sol";
 import {ArchitectHelper} from "contracts/test/spaces/architect/ArchitectHelper.sol";
-import {SpaceHelper} from "contracts/test/spaces/SpaceHelper.sol";
 import {Architect} from "contracts/src/spaces/facets/architect/Architect.sol";
 import {DeployWalletLink} from "./../deployments/DeployWalletLink.s.sol";
 
@@ -42,7 +41,8 @@ contract InteractSpaceFactory is Interaction {
       ISpaceOwner(getDeployment("spaceOwner")),
       IUserEntitlement(getDeployment("userEntitlement")),
       IRuleEntitlement(getDeployment("ruleEntitlement")),
-      IWalletLink(getDeployment("walletLink"))
+      IWalletLink(getDeployment("walletLink")),
+      IEntitlementChecker(getDeployment("entitlementChecker"))
     );
     vm.stopBroadcast();
 

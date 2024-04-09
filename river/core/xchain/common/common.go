@@ -37,6 +37,7 @@ func loadConfig() {
 	log := dlog.FromCtx(context.Background())
 	cfg := config.GetConfig()
 	checkerContractAddress = common.HexToAddress(cfg.EntitlementContract.Address)
+	testContractAddress = common.HexToAddress(cfg.TestingContract.Address)
 
 	baseWebsocketURL, err := ConvertHTTPToWebSocket(config.GetConfig().BaseChain.NetworkUrl)
 	if err != nil {

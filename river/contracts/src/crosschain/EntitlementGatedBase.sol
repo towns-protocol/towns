@@ -11,22 +11,20 @@ import {EntitlementGatedStorage} from "./EntitlementGatedStorage.sol";
 // contracts
 
 abstract contract EntitlementGatedBase is IEntitlementGatedBase {
-  IEntitlementChecker internal entitlementChecker;
-
-  modifier onlyEntitled() {
-    require(true, "Not entitled to perform this operation");
-    _;
-  }
-
   function __EntitlementGatedBase_init(address checker) internal {
     if (checker == address(0)) {
       revert EntitlementGated_InvalidAddress();
     }
 
-    entitlementChecker = IEntitlementChecker(checker);
+    EntitlementGatedStorage.Layout storage ds = EntitlementGatedStorage
+      .layout();
+
+    ds.entitlementChecker = IEntitlementChecker(checker);
   }
 
-  function _requestEntitlementCheck() internal {
+  function _requestEntitlementCheck(
+    bytes memory encodedRuleData
+  ) internal returns (bytes32) {
     bytes32 transactionId = keccak256(
       abi.encodePacked(tx.origin, block.number)
     );
@@ -40,7 +38,7 @@ abstract contract EntitlementGatedBase is IEntitlementGatedBase {
       revert EntitlementGated_TransactionAlreadyRegistered();
     }
 
-    address[] memory selectedNodes = entitlementChecker.getRandomNodes(
+    address[] memory selectedNodes = ds.entitlementChecker.getRandomNodes(
       5,
       address(this)
     );
@@ -49,6 +47,7 @@ abstract contract EntitlementGatedBase is IEntitlementGatedBase {
     transaction.clientAddress = msg.sender;
     transaction.checkResult = NodeVoteStatus.NOT_VOTED;
     transaction.isCompleted = false;
+    transaction.encodedRuleData = encodedRuleData;
 
     for (uint256 i = 0; i < selectedNodes.length; i++) {
       transaction.nodeVotesArray.push(
@@ -56,10 +55,11 @@ abstract contract EntitlementGatedBase is IEntitlementGatedBase {
       );
     }
 
-    entitlementChecker.emitEntitlementCheckRequested(
+    ds.entitlementChecker.emitEntitlementCheckRequested(
       transactionId,
       selectedNodes
     );
+    return transactionId;
   }
 
   function _postEntitlementCheckResult(
@@ -113,11 +113,15 @@ abstract contract EntitlementGatedBase is IEntitlementGatedBase {
       if (passed > transaction.nodeVotesArray.length / 2) {
         transaction.isCompleted = true;
         transaction.checkResult = NodeVoteStatus.PASSED;
+        _onEntitlementCheckResultPosted(transactionId, NodeVoteStatus.PASSED);
         emit EntitlementCheckResultPosted(transactionId, NodeVoteStatus.PASSED);
+        _removeTransaction(transactionId);
       } else if (failed > transaction.nodeVotesArray.length / 2) {
         transaction.checkResult = NodeVoteStatus.FAILED;
         transaction.isCompleted = true;
+        _onEntitlementCheckResultPosted(transactionId, NodeVoteStatus.FAILED);
         emit EntitlementCheckResultPosted(transactionId, NodeVoteStatus.FAILED);
+        _removeTransaction(transactionId);
       }
     }
   }
@@ -126,6 +130,15 @@ abstract contract EntitlementGatedBase is IEntitlementGatedBase {
     EntitlementGatedStorage.Layout storage ds = EntitlementGatedStorage
       .layout();
 
+    // TODO check to make sure the transaction is completed
     delete ds.transactions[transactionId];
   }
+
+  // must be implemented by the derived contract
+  // to handle the result of the entitlement check
+  // the caller is verified to be an enrolled xchain node
+  function _onEntitlementCheckResultPosted(
+    bytes32 transactionId,
+    NodeVoteStatus result
+  ) internal virtual;
 }

@@ -11,14 +11,5 @@ contract EntitlementGatedExample is EntitlementGated {
   constructor(
     IEntitlementChecker assignedEntitlementChecker
   ) EntitlementGated(assignedEntitlementChecker) {}
-
-  function getEntitlementOperations()
-    public
-    pure
-    override
-    returns (bytes memory)
-  {
-    return test;
-  }
 }
 ```

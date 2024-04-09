@@ -44,7 +44,7 @@ contract BanningTest is BaseSetup, IRolesBase {
 
   modifier givenAliceHasJoinedSpace() {
     vm.prank(alice);
-    uint256 tokenId = membership.joinSpace(alice);
+    membership.joinSpace(alice);
     _;
   }
 

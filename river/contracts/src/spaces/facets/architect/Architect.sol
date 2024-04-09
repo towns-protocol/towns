@@ -7,6 +7,7 @@ import {IRuleEntitlement} from "contracts/src/crosschain/IRuleEntitlement.sol";
 import {IWalletLink} from "contracts/src/river/wallet-link/IWalletLink.sol";
 import {ISpaceOwner} from "contracts/src/spaces/facets/owner/ISpaceOwner.sol";
 import {IUserEntitlement} from "contracts/src/spaces/entitlements/user/IUserEntitlement.sol";
+import {IEntitlementChecker} from "contracts/src/crosschain/checker/IEntitlementChecker.sol";
 
 // libraries
 
@@ -29,13 +30,15 @@ contract Architect is
     ISpaceOwner ownerImplementation,
     IUserEntitlement userEntitlementImplementation,
     IRuleEntitlement ruleEntitlementImplementation,
-    IWalletLink walletLink
+    IWalletLink walletLink,
+    IEntitlementChecker entitlementChecker
   ) external onlyInitializing {
     _setImplementations(
       ownerImplementation,
       userEntitlementImplementation,
       ruleEntitlementImplementation,
-      walletLink
+      walletLink,
+      entitlementChecker
     );
   }
 
@@ -64,13 +67,15 @@ contract Architect is
     ISpaceOwner spaceToken,
     IUserEntitlement userEntitlementImplementation,
     IRuleEntitlement ruleEntitlementImplementation,
-    IWalletLink walletLink
+    IWalletLink walletLink,
+    IEntitlementChecker entitlementChecker
   ) external onlyOwner {
     _setImplementations(
       spaceToken,
       userEntitlementImplementation,
       ruleEntitlementImplementation,
-      walletLink
+      walletLink,
+      entitlementChecker
     );
   }
 
@@ -81,7 +86,8 @@ contract Architect is
       ISpaceOwner spaceToken,
       IUserEntitlement userEntitlementImplementation,
       IRuleEntitlement ruleEntitlementImplementation,
-      IWalletLink walletLink
+      IWalletLink walletLink,
+      IEntitlementChecker entitlementChecker
     )
   {
     return _getImplementations();

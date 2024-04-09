@@ -6,6 +6,7 @@ import {IRuleEntitlement} from "contracts/src/crosschain/IRuleEntitlement.sol";
 import {IUserEntitlement} from "contracts/src/spaces/entitlements/user/IUserEntitlement.sol";
 import {IWalletLink} from "contracts/src/river/wallet-link/IWalletLink.sol";
 import {ISpaceOwner} from "contracts/src/spaces/facets/owner/ISpaceOwner.sol";
+import {IEntitlementChecker} from "contracts/src/crosschain/checker/IEntitlementChecker.sol";
 
 // libraries
 
@@ -21,6 +22,7 @@ library ImplementationStorage {
     IUserEntitlement userEntitlement;
     IRuleEntitlement ruleEntitlement;
     IWalletLink walletLink;
+    IEntitlementChecker entitlementChecker;
   }
 
   function layout() internal pure returns (Layout storage ds) {

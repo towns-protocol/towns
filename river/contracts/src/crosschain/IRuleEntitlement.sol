@@ -64,7 +64,7 @@ interface IRuleEntitlement is IEntitlement {
     LogicalOperation[] logicalOperations;
   }
 
-  function setRuleData(
+  function encodeRuleData(
     RuleData memory data
   ) external pure returns (bytes memory);
 

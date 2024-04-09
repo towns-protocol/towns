@@ -7,18 +7,18 @@
     "abi": [
       {
         "inputs": [],
-        "type": "error",
-        "name": "ApprovalCallerNotOwnerNorApproved"
+        "name": "ApprovalCallerNotOwnerNorApproved",
+        "type": "error"
       },
       {
         "inputs": [],
-        "type": "error",
-        "name": "ApprovalQueryForNonexistentToken"
+        "name": "ApprovalQueryForNonexistentToken",
+        "type": "error"
       },
       {
         "inputs": [],
-        "type": "error",
-        "name": "BalanceQueryForZeroAddress"
+        "name": "BalanceQueryForZeroAddress",
+        "type": "error"
       },
       {
         "inputs": [
@@ -28,13 +28,13 @@
             "type": "uint256"
           }
         ],
-        "type": "error",
-        "name": "Banning__AlreadyBanned"
+        "name": "Banning__AlreadyBanned",
+        "type": "error"
       },
       {
         "inputs": [],
-        "type": "error",
-        "name": "Banning__CannotBanSelf"
+        "name": "Banning__CannotBanSelf",
+        "type": "error"
       },
       {
         "inputs": [
@@ -44,8 +44,8 @@
             "type": "uint256"
           }
         ],
-        "type": "error",
-        "name": "Banning__InvalidTokenId"
+        "name": "Banning__InvalidTokenId",
+        "type": "error"
       },
       {
         "inputs": [
@@ -55,73 +55,73 @@
             "type": "uint256"
           }
         ],
-        "type": "error",
-        "name": "Banning__NotBanned"
+        "name": "Banning__NotBanned",
+        "type": "error"
       },
       {
         "inputs": [],
-        "type": "error",
-        "name": "ChannelService__ChannelDisabled"
+        "name": "ChannelService__ChannelDisabled",
+        "type": "error"
       },
       {
         "inputs": [],
-        "type": "error",
-        "name": "ChannelService__ChannelDoesNotExist"
+        "name": "ChannelService__ChannelDoesNotExist",
+        "type": "error"
       },
       {
         "inputs": [],
-        "type": "error",
-        "name": "ChannelService__RoleDoesNotExist"
+        "name": "ChannelService__RoleDoesNotExist",
+        "type": "error"
       },
       {
         "inputs": [],
-        "type": "error",
-        "name": "Entitlement__InvalidValue"
+        "name": "Entitlement__InvalidValue",
+        "type": "error"
       },
       {
         "inputs": [],
-        "type": "error",
-        "name": "Entitlement__NotAllowed"
+        "name": "Entitlement__NotAllowed",
+        "type": "error"
       },
       {
         "inputs": [],
-        "type": "error",
-        "name": "Entitlement__NotMember"
+        "name": "Entitlement__NotMember",
+        "type": "error"
       },
       {
         "inputs": [],
-        "type": "error",
-        "name": "Entitlement__ValueAlreadyExists"
+        "name": "Entitlement__ValueAlreadyExists",
+        "type": "error"
       },
       {
         "inputs": [],
-        "type": "error",
-        "name": "EntitlementsService__EntitlementDoesNotExist"
+        "name": "EntitlementsService__EntitlementDoesNotExist",
+        "type": "error"
       },
       {
         "inputs": [],
-        "type": "error",
-        "name": "EntitlementsService__InvalidEntitlementAddress"
+        "name": "EntitlementsService__InvalidEntitlementAddress",
+        "type": "error"
       },
       {
         "inputs": [],
-        "type": "error",
-        "name": "EntitlementsService__InvalidEntitlementInterface"
+        "name": "EntitlementsService__InvalidEntitlementInterface",
+        "type": "error"
       },
       {
         "inputs": [],
-        "type": "error",
-        "name": "MintERC2309QuantityExceedsLimit"
+        "name": "MintERC2309QuantityExceedsLimit",
+        "type": "error"
       },
       {
         "inputs": [],
-        "type": "error",
-        "name": "MintToZeroAddress"
+        "name": "MintToZeroAddress",
+        "type": "error"
       },
       {
         "inputs": [],
-        "type": "error",
-        "name": "MintZeroQuantity"
+        "name": "MintZeroQuantity",
+        "type": "error"
       },
       {
         "inputs": [
@@ -131,349 +131,349 @@
             "type": "address"
           }
         ],
-        "type": "error",
-        "name": "Ownable__NotOwner"
+        "name": "Ownable__NotOwner",
+        "type": "error"
       },
       {
         "inputs": [],
-        "type": "error",
-        "name": "Ownable__ZeroAddress"
+        "name": "Ownable__ZeroAddress",
+        "type": "error"
       },
       {
         "inputs": [],
-        "type": "error",
-        "name": "OwnerQueryForNonexistentToken"
+        "name": "OwnerQueryForNonexistentToken",
+        "type": "error"
       },
       {
         "inputs": [],
-        "type": "error",
-        "name": "OwnershipNotInitializedForExtraData"
+        "name": "OwnershipNotInitializedForExtraData",
+        "type": "error"
       },
       {
         "inputs": [],
-        "type": "error",
-        "name": "Pausable__NotPaused"
+        "name": "Pausable__NotPaused",
+        "type": "error"
       },
       {
         "inputs": [],
-        "type": "error",
-        "name": "Pausable__Paused"
+        "name": "Pausable__Paused",
+        "type": "error"
       },
       {
         "inputs": [],
-        "type": "error",
-        "name": "Roles__EntitlementAlreadyExists"
+        "name": "Roles__EntitlementAlreadyExists",
+        "type": "error"
       },
       {
         "inputs": [],
-        "type": "error",
-        "name": "Roles__EntitlementDoesNotExist"
+        "name": "Roles__EntitlementDoesNotExist",
+        "type": "error"
       },
       {
         "inputs": [],
-        "type": "error",
-        "name": "Roles__InvalidEntitlementAddress"
+        "name": "Roles__InvalidEntitlementAddress",
+        "type": "error"
       },
       {
         "inputs": [],
-        "type": "error",
-        "name": "Roles__InvalidPermission"
+        "name": "Roles__InvalidPermission",
+        "type": "error"
       },
       {
         "inputs": [],
-        "type": "error",
-        "name": "Roles__PermissionAlreadyExists"
+        "name": "Roles__PermissionAlreadyExists",
+        "type": "error"
       },
       {
         "inputs": [],
-        "type": "error",
-        "name": "Roles__PermissionDoesNotExist"
+        "name": "Roles__PermissionDoesNotExist",
+        "type": "error"
       },
       {
         "inputs": [],
-        "type": "error",
-        "name": "Roles__RoleDoesNotExist"
+        "name": "Roles__RoleDoesNotExist",
+        "type": "error"
       },
       {
         "inputs": [],
-        "type": "error",
-        "name": "TransferCallerNotOwnerNorApproved"
+        "name": "TransferCallerNotOwnerNorApproved",
+        "type": "error"
       },
       {
         "inputs": [],
-        "type": "error",
-        "name": "TransferFromIncorrectOwner"
+        "name": "TransferFromIncorrectOwner",
+        "type": "error"
       },
       {
         "inputs": [],
-        "type": "error",
-        "name": "TransferToNonERC721ReceiverImplementer"
+        "name": "TransferToNonERC721ReceiverImplementer",
+        "type": "error"
       },
       {
         "inputs": [],
-        "type": "error",
-        "name": "TransferToZeroAddress"
+        "name": "TransferToZeroAddress",
+        "type": "error"
       },
       {
         "inputs": [],
-        "type": "error",
-        "name": "URIQueryForNonexistentToken"
+        "name": "URIQueryForNonexistentToken",
+        "type": "error"
       },
       {
         "inputs": [],
-        "type": "error",
-        "name": "Validator__InvalidByteLength"
+        "name": "Validator__InvalidByteLength",
+        "type": "error"
       },
       {
         "inputs": [],
-        "type": "error",
-        "name": "Validator__InvalidStringLength"
+        "name": "Validator__InvalidStringLength",
+        "type": "error"
       },
       {
+        "anonymous": false,
         "inputs": [
           {
+            "indexed": true,
             "internalType": "address",
             "name": "owner",
-            "type": "address",
-            "indexed": true
+            "type": "address"
           },
           {
+            "indexed": true,
             "internalType": "address",
             "name": "approved",
-            "type": "address",
-            "indexed": true
+            "type": "address"
           },
           {
+            "indexed": true,
             "internalType": "uint256",
             "name": "tokenId",
-            "type": "uint256",
-            "indexed": true
+            "type": "uint256"
           }
         ],
-        "type": "event",
         "name": "Approval",
-        "anonymous": false
+        "type": "event"
       },
       {
+        "anonymous": false,
         "inputs": [
           {
+            "indexed": true,
             "internalType": "address",
             "name": "owner",
-            "type": "address",
-            "indexed": true
+            "type": "address"
           },
           {
+            "indexed": true,
             "internalType": "address",
             "name": "operator",
-            "type": "address",
-            "indexed": true
+            "type": "address"
           },
           {
+            "indexed": false,
             "internalType": "bool",
             "name": "approved",
-            "type": "bool",
-            "indexed": false
+            "type": "bool"
           }
         ],
-        "type": "event",
         "name": "ApprovalForAll",
-        "anonymous": false
+        "type": "event"
       },
       {
+        "anonymous": false,
         "inputs": [
           {
+            "indexed": true,
             "internalType": "address",
             "name": "moderator",
-            "type": "address",
-            "indexed": true
+            "type": "address"
           },
           {
+            "indexed": true,
             "internalType": "uint256",
             "name": "tokenId",
-            "type": "uint256",
-            "indexed": true
+            "type": "uint256"
           }
         ],
-        "type": "event",
         "name": "Banned",
-        "anonymous": false
+        "type": "event"
       },
       {
+        "anonymous": false,
         "inputs": [
           {
+            "indexed": true,
             "internalType": "uint256",
             "name": "fromTokenId",
-            "type": "uint256",
-            "indexed": true
+            "type": "uint256"
           },
           {
+            "indexed": false,
             "internalType": "uint256",
             "name": "toTokenId",
-            "type": "uint256",
-            "indexed": false
+            "type": "uint256"
           },
           {
+            "indexed": true,
             "internalType": "address",
             "name": "from",
-            "type": "address",
-            "indexed": true
+            "type": "address"
           },
           {
+            "indexed": true,
             "internalType": "address",
             "name": "to",
-            "type": "address",
-            "indexed": true
+            "type": "address"
           }
         ],
-        "type": "event",
         "name": "ConsecutiveTransfer",
-        "anonymous": false
+        "type": "event"
       },
       {
+        "anonymous": false,
         "inputs": [
           {
+            "indexed": true,
             "internalType": "address",
             "name": "previousOwner",
-            "type": "address",
-            "indexed": true
+            "type": "address"
           },
           {
+            "indexed": true,
             "internalType": "address",
             "name": "newOwner",
-            "type": "address",
-            "indexed": true
+            "type": "address"
           }
         ],
-        "type": "event",
         "name": "OwnershipTransferred",
-        "anonymous": false
+        "type": "event"
       },
       {
+        "anonymous": false,
         "inputs": [
           {
+            "indexed": false,
             "internalType": "address",
             "name": "account",
-            "type": "address",
-            "indexed": false
+            "type": "address"
           }
         ],
-        "type": "event",
         "name": "Paused",
-        "anonymous": false
+        "type": "event"
       },
       {
+        "anonymous": false,
         "inputs": [
           {
+            "indexed": true,
             "internalType": "address",
             "name": "creator",
-            "type": "address",
-            "indexed": true
+            "type": "address"
           },
           {
+            "indexed": true,
             "internalType": "uint256",
             "name": "roleId",
-            "type": "uint256",
-            "indexed": true
+            "type": "uint256"
           }
         ],
-        "type": "event",
         "name": "RoleCreated",
-        "anonymous": false
+        "type": "event"
       },
       {
+        "anonymous": false,
         "inputs": [
           {
+            "indexed": true,
             "internalType": "address",
             "name": "remover",
-            "type": "address",
-            "indexed": true
+            "type": "address"
           },
           {
+            "indexed": true,
             "internalType": "uint256",
             "name": "roleId",
-            "type": "uint256",
-            "indexed": true
+            "type": "uint256"
           }
         ],
-        "type": "event",
         "name": "RoleRemoved",
-        "anonymous": false
+        "type": "event"
       },
       {
+        "anonymous": false,
         "inputs": [
           {
+            "indexed": true,
             "internalType": "address",
             "name": "updater",
-            "type": "address",
-            "indexed": true
+            "type": "address"
           },
           {
+            "indexed": true,
             "internalType": "uint256",
             "name": "roleId",
-            "type": "uint256",
-            "indexed": true
+            "type": "uint256"
           }
         ],
-        "type": "event",
         "name": "RoleUpdated",
-        "anonymous": false
+        "type": "event"
       },
       {
+        "anonymous": false,
         "inputs": [
           {
+            "indexed": true,
             "internalType": "address",
             "name": "from",
-            "type": "address",
-            "indexed": true
+            "type": "address"
           },
           {
+            "indexed": true,
             "internalType": "address",
             "name": "to",
-            "type": "address",
-            "indexed": true
+            "type": "address"
           },
           {
+            "indexed": true,
             "internalType": "uint256",
             "name": "tokenId",
-            "type": "uint256",
-            "indexed": true
+            "type": "uint256"
           }
         ],
-        "type": "event",
         "name": "Transfer",
-        "anonymous": false
+        "type": "event"
       },
       {
+        "anonymous": false,
         "inputs": [
           {
+            "indexed": true,
             "internalType": "address",
             "name": "moderator",
-            "type": "address",
-            "indexed": true
+            "type": "address"
           },
           {
+            "indexed": true,
             "internalType": "uint256",
             "name": "tokenId",
-            "type": "uint256",
-            "indexed": true
+            "type": "uint256"
           }
         ],
-        "type": "event",
         "name": "Unbanned",
-        "anonymous": false
+        "type": "event"
       },
       {
+        "anonymous": false,
         "inputs": [
           {
+            "indexed": false,
             "internalType": "address",
             "name": "account",
-            "type": "address",
-            "indexed": false
+            "type": "address"
           }
         ],
-        "type": "event",
         "name": "Unpaused",
-        "anonymous": false
+        "type": "event"
       },
       {
         "inputs": [
@@ -488,9 +488,10 @@
             "type": "string[]"
           }
         ],
+        "name": "addPermissionsToRole",
+        "outputs": [],
         "stateMutability": "nonpayable",
-        "type": "function",
-        "name": "addPermissionsToRole"
+        "type": "function"
       },
       {
         "inputs": [
@@ -500,12 +501,9 @@
             "type": "uint256"
           },
           {
-            "internalType": "struct IRolesBase.CreateEntitlement",
-            "name": "entitlement",
-            "type": "tuple",
             "components": [
               {
-                "internalType": "address",
+                "internalType": "contract IEntitlement",
                 "name": "module",
                 "type": "address"
               },
@@ -514,12 +512,16 @@
                 "name": "data",
                 "type": "bytes"
               }
-            ]
+            ],
+            "internalType": "struct IRolesBase.CreateEntitlement",
+            "name": "entitlement",
+            "type": "tuple"
           }
         ],
+        "name": "addRoleToEntitlement",
+        "outputs": [],
         "stateMutability": "nonpayable",
-        "type": "function",
-        "name": "addRoleToEntitlement"
+        "type": "function"
       },
       {
         "inputs": [
@@ -534,12 +536,9 @@
             "type": "string[]"
           },
           {
-            "internalType": "struct IRolesBase.CreateEntitlement[]",
-            "name": "entitlements",
-            "type": "tuple[]",
             "components": [
               {
-                "internalType": "address",
+                "internalType": "contract IEntitlement",
                 "name": "module",
                 "type": "address"
               },
@@ -548,11 +547,12 @@
                 "name": "data",
                 "type": "bytes"
               }
-            ]
+            ],
+            "internalType": "struct IRolesBase.CreateEntitlement[]",
+            "name": "entitlements",
+            "type": "tuple[]"
           }
         ],
-        "stateMutability": "nonpayable",
-        "type": "function",
         "name": "createRole",
         "outputs": [
           {
@@ -560,7 +560,9 @@
             "name": "",
             "type": "uint256"
           }
-        ]
+        ],
+        "stateMutability": "nonpayable",
+        "type": "function"
       },
       {
         "inputs": [
@@ -570,8 +572,6 @@
             "type": "uint256"
           }
         ],
-        "stateMutability": "view",
-        "type": "function",
         "name": "getPermissionsByRoleId",
         "outputs": [
           {
@@ -579,7 +579,9 @@
             "name": "permissions",
             "type": "string[]"
           }
-        ]
+        ],
+        "stateMutability": "view",
+        "type": "function"
       },
       {
         "inputs": [
@@ -589,14 +591,9 @@
             "type": "uint256"
           }
         ],
-        "stateMutability": "view",
-        "type": "function",
         "name": "getRoleById",
         "outputs": [
           {
-            "internalType": "struct IRolesBase.Role",
-            "name": "",
-            "type": "tuple",
             "components": [
               {
                 "internalType": "uint256",
@@ -619,24 +616,24 @@
                 "type": "string[]"
               },
               {
-                "internalType": "address[]",
+                "internalType": "contract IEntitlement[]",
                 "name": "entitlements",
                 "type": "address[]"
               }
-            ]
+            ],
+            "internalType": "struct IRolesBase.Role",
+            "name": "",
+            "type": "tuple"
           }
-        ]
+        ],
+        "stateMutability": "view",
+        "type": "function"
       },
       {
         "inputs": [],
-        "stateMutability": "view",
-        "type": "function",
         "name": "getRoles",
         "outputs": [
           {
-            "internalType": "struct IRolesBase.Role[]",
-            "name": "",
-            "type": "tuple[]",
             "components": [
               {
                 "internalType": "uint256",
@@ -659,13 +656,18 @@
                 "type": "string[]"
               },
               {
-                "internalType": "address[]",
+                "internalType": "contract IEntitlement[]",
                 "name": "entitlements",
                 "type": "address[]"
               }
-            ]
+            ],
+            "internalType": "struct IRolesBase.Role[]",
+            "name": "",
+            "type": "tuple[]"
           }
-        ]
+        ],
+        "stateMutability": "view",
+        "type": "function"
       },
       {
         "inputs": [
@@ -680,9 +682,10 @@
             "type": "string[]"
           }
         ],
+        "name": "removePermissionsFromRole",
+        "outputs": [],
         "stateMutability": "nonpayable",
-        "type": "function",
-        "name": "removePermissionsFromRole"
+        "type": "function"
       },
       {
         "inputs": [
@@ -692,9 +695,10 @@
             "type": "uint256"
           }
         ],
+        "name": "removeRole",
+        "outputs": [],
         "stateMutability": "nonpayable",
-        "type": "function",
-        "name": "removeRole"
+        "type": "function"
       },
       {
         "inputs": [
@@ -704,12 +708,9 @@
             "type": "uint256"
           },
           {
-            "internalType": "struct IRolesBase.CreateEntitlement",
-            "name": "entitlement",
-            "type": "tuple",
             "components": [
               {
-                "internalType": "address",
+                "internalType": "contract IEntitlement",
                 "name": "module",
                 "type": "address"
               },
@@ -718,12 +719,16 @@
                 "name": "data",
                 "type": "bytes"
               }
-            ]
+            ],
+            "internalType": "struct IRolesBase.CreateEntitlement",
+            "name": "entitlement",
+            "type": "tuple"
           }
         ],
+        "name": "removeRoleFromEntitlement",
+        "outputs": [],
         "stateMutability": "nonpayable",
-        "type": "function",
-        "name": "removeRoleFromEntitlement"
+        "type": "function"
       },
       {
         "inputs": [
@@ -743,12 +748,9 @@
             "type": "string[]"
           },
           {
-            "internalType": "struct IRolesBase.CreateEntitlement[]",
-            "name": "entitlements",
-            "type": "tuple[]",
             "components": [
               {
-                "internalType": "address",
+                "internalType": "contract IEntitlement",
                 "name": "module",
                 "type": "address"
               },
@@ -757,338 +759,410 @@
                 "name": "data",
                 "type": "bytes"
               }
-            ]
+            ],
+            "internalType": "struct IRolesBase.CreateEntitlement[]",
+            "name": "entitlements",
+            "type": "tuple[]"
           }
         ],
+        "name": "updateRole",
+        "outputs": [],
         "stateMutability": "nonpayable",
-        "type": "function",
-        "name": "updateRole"
+        "type": "function"
       }
     ],
     "devdoc": {
+      "events": {
+        "Approval(address,address,uint256)": {
+          "details": "Emitted when `owner` enables `approved` to manage the `tokenId` token."
+        },
+        "ApprovalForAll(address,address,bool)": {
+          "details": "Emitted when `owner` enables or disables (`approved`) `operator` to manage all of its assets."
+        },
+        "ConsecutiveTransfer(uint256,uint256,address,address)": {
+          "details": "Emitted when tokens in `fromTokenId` to `toTokenId` (inclusive) is transferred from `from` to `to`, as defined in the [ERC2309](https://eips.ethereum.org/EIPS/eip-2309) standard. See {_mintERC2309} for more details."
+        },
+        "OwnershipTransferred(address,address)": {
+          "details": "This emits when ownership of a contract changes."
+        },
+        "Transfer(address,address,uint256)": {
+          "details": "Emitted when `tokenId` token is transferred from `from` to `to`."
+        }
+      },
       "kind": "dev",
       "methods": {},
       "version": 1
     },
     "userdoc": {
+      "errors": {
+        "ApprovalCallerNotOwnerNorApproved()": [
+          {
+            "notice": "The caller must own the token or be an approved operator."
+          }
+        ],
+        "ApprovalQueryForNonexistentToken()": [
+          {
+            "notice": "The token does not exist."
+          }
+        ],
+        "BalanceQueryForZeroAddress()": [
+          {
+            "notice": "Cannot query the balance for the zero address."
+          }
+        ],
+        "MintERC2309QuantityExceedsLimit()": [
+          {
+            "notice": "The `quantity` minted with ERC2309 exceeds the safety limit."
+          }
+        ],
+        "MintToZeroAddress()": [
+          {
+            "notice": "Cannot mint to the zero address."
+          }
+        ],
+        "MintZeroQuantity()": [
+          {
+            "notice": "The quantity of tokens minted must be more than zero."
+          }
+        ],
+        "OwnerQueryForNonexistentToken()": [
+          {
+            "notice": "The token does not exist."
+          }
+        ],
+        "OwnershipNotInitializedForExtraData()": [
+          {
+            "notice": "The `extraData` cannot be set on an unintialized ownership slot."
+          }
+        ],
+        "TransferCallerNotOwnerNorApproved()": [
+          {
+            "notice": "The caller must own the token or be an approved operator."
+          }
+        ],
+        "TransferFromIncorrectOwner()": [
+          {
+            "notice": "The token must be owned by `from`."
+          }
+        ],
+        "TransferToNonERC721ReceiverImplementer()": [
+          {
+            "notice": "Cannot safely transfer to a contract that does not implement the ERC721Receiver interface."
+          }
+        ],
+        "TransferToZeroAddress()": [
+          {
+            "notice": "Cannot transfer to the zero address."
+          }
+        ],
+        "URIQueryForNonexistentToken()": [
+          {
+            "notice": "The token does not exist."
+          }
+        ]
+      },
       "kind": "user",
       "methods": {},
       "version": 1
     }
   },
   "settings": {
-    "remappings": [
-      "@openzeppelin/=lib/@openzeppelin/",
-      "@prb/math/=lib/@prb/math/src/",
-      "@prb/test/=lib/@prb/test/src/",
-      "account-abstraction/=lib/account-abstraction/contracts/",
-      "base64/=lib/base64/",
-      "ds-test/=lib/ds-test/src/",
-      "forge-std/=lib/forge-std/src/",
-      "hardhat-deploy/=lib/hardhat-deploy/"
-    ],
-    "optimizer": {
-      "enabled": true,
-      "runs": 200
-    },
-    "metadata": {
-      "bytecodeHash": "none",
-      "appendCBOR": false
-    },
     "compilationTarget": {
       "contracts/src/spaces/facets/roles/Roles.sol": "Roles"
     },
     "evmVersion": "paris",
-    "libraries": {}
+    "libraries": {},
+    "metadata": {
+      "appendCBOR": false,
+      "bytecodeHash": "none"
+    },
+    "optimizer": {
+      "enabled": true,
+      "runs": 200
+    },
+    "remappings": [
+      ":@openzeppelin/=lib/@openzeppelin/",
+      ":@prb/math/=lib/@prb/math/src/",
+      ":@prb/test/=lib/@prb/test/src/",
+      ":account-abstraction/=lib/account-abstraction/contracts/",
+      ":base64/=lib/base64/",
+      ":ds-test/=lib/ds-test/src/",
+      ":forge-std/=lib/forge-std/src/",
+      ":hardhat-deploy/=lib/hardhat-deploy/"
+    ]
   },
   "sources": {
-    "contracts/src/crosschain/IRuleEntitlement.sol": {
-      "keccak256": "0x3da336bbe54d6a62cb521d47af057095a307042d5741e08d7cf190552f4616b0",
-      "urls": [
-        "bzz-raw://2139ec62b79becb583e95f8d8d7ba941769ff26efdea56ff3f2322a5ad2a55a7",
-        "dweb:/ipfs/QmSsZXgEEALmakJT5a2QfuE2EoMJ27o7UFQYP3DA2fm4EU"
-      ],
-      "license": "MIT"
-    },
-    "contracts/src/crosschain/RuleEntitlementUtil.sol": {
-      "keccak256": "0xf090ce4d02156b147dcfd06a34cb7df086cac519b27de7049f3b9585bd80af55",
-      "urls": [
-        "bzz-raw://91a92a3d1b759967f65cebec631adb03524ed9226177f3e0620c308588509fdb",
-        "dweb:/ipfs/QmP83G85dRbW6z4zPRQ8EoY64sSisj63M3rief78ZmfKM7"
-      ],
-      "license": "MIT"
-    },
     "contracts/src/diamond/facets/introspection/IERC165.sol": {
       "keccak256": "0x243cfeefa64ba07bee887b0b03704147f9bd2f25571272a6ebca3ba684af1b00",
+      "license": "Apache-2.0",
       "urls": [
         "bzz-raw://1aed67ea7251fad9dbfb58a30f59f7edd81d48d7f6b193b98f957be359653361",
         "dweb:/ipfs/QmQauJL4nFMN3QDutjWezRbBjLX5GsTWt5jeLfkX4JW64T"
-      ],
-      "license": "Apache-2.0"
+      ]
     },
     "contracts/src/diamond/facets/ownable/IERC173.sol": {
       "keccak256": "0xec6475a73e1229430edadb6fd3e32f1599ebb8af78dbbc762d54ded196e534ae",
+      "license": "Apache-2.0",
       "urls": [
         "bzz-raw://46e9fef226666c827f408b5d2c9061600fa5233ddf5fcbc3a2b8956d89e8a872",
         "dweb:/ipfs/Qmd6L6wtehyrD8XwKqFD7gG5hJxsBZ1ja6hGSf2dtN4XEx"
-      ],
-      "license": "Apache-2.0"
+      ]
     },
     "contracts/src/diamond/facets/ownable/token/ITokenOwnable.sol": {
       "keccak256": "0x3035bb5eb69a7c939aa038f27eb216b117727beba7d89aa84657c3f24c98b32d",
+      "license": "Apache-2.0",
       "urls": [
         "bzz-raw://c1a6860c8105dad4d1b193883ecd700c223ea9b81c096ed86b3d25bd6c9eed7f",
         "dweb:/ipfs/QmVEDbbF6eyZfmqcM1FfedAuCQqiUYpagDmZMhHM4Ap7n9"
-      ],
-      "license": "Apache-2.0"
+      ]
     },
     "contracts/src/diamond/facets/ownable/token/TokenOwnableBase.sol": {
       "keccak256": "0xc5ef68652f692a56131badcf0adb92893d822fd5e0d97dda49a4520d1859a00a",
+      "license": "Apache-2.0",
       "urls": [
         "bzz-raw://bf38ee4ec154de7ef7de263241454d98392d6e61caf4582e2145325258bb8fa5",
         "dweb:/ipfs/QmcZGn5KeSPwsTVominE537CDPbTMGoVDgko51onHZoGyW"
-      ],
-      "license": "Apache-2.0"
+      ]
     },
     "contracts/src/diamond/facets/ownable/token/TokenOwnableStorage.sol": {
       "keccak256": "0xb348f08d762f1b4ccda363a361eb6d635b50501e93821fe9911296f86f4374f0",
+      "license": "Apache-2.0",
       "urls": [
         "bzz-raw://4416ee362b1485fb1cbae83087f7da85d34fec41a39146bd1fb9f877094df0fc",
         "dweb:/ipfs/QmPiCdrarzwS1YLYLPpcPMFxhkqE5rT9EFLYsVCV2N5Qkf"
-      ],
-      "license": "Apache-2.0"
+      ]
     },
     "contracts/src/diamond/facets/pausable/IPausable.sol": {
       "keccak256": "0xd5cc8d743bd12bbd23526178c11808634527c87e2f6da29dfb6aec75dab56261",
+      "license": "Apache-2.0",
       "urls": [
         "bzz-raw://c893da163481570ae2e00e5deae732404261cc0e7143fdc0448145810448c6b6",
         "dweb:/ipfs/QmbyUkcew8vmUXPVLDJ7GjvxMkmTqjhKZWLDYtWEPzZ2SM"
-      ],
-      "license": "Apache-2.0"
+      ]
     },
     "contracts/src/diamond/facets/pausable/PausableBase.sol": {
       "keccak256": "0xa278c9cdc622351a088d6d96759a51972b1720ef72424f1f98e5822dd9fd6438",
+      "license": "Apache-2.0",
       "urls": [
         "bzz-raw://379dabb0f68319e89d4b7447c31d5a3d0d2b4ecbce92b07f6e096974f2541c6c",
         "dweb:/ipfs/QmPQPKBYtuNiFDNh9nGCJGtLXP2AqPLkZ7BBTKgQZeaVH1"
-      ],
-      "license": "Apache-2.0"
+      ]
     },
     "contracts/src/diamond/facets/pausable/PausableStorage.sol": {
       "keccak256": "0x54ca45de7b414be27767111aa11f06e9d5deeb3241bb4c9476edda7febd92c07",
+      "license": "Apache-2.0",
       "urls": [
         "bzz-raw://0e573c53f32ec5c9c89e68ca9e2153635fcb2694ba261e93389dc360ef98226b",
         "dweb:/ipfs/QmQUfuRRg8zRFzrqfYaay7RyR2L4D4d4vb4c2TtUqb2GhL"
-      ],
-      "license": "Apache-2.0"
+      ]
     },
     "contracts/src/diamond/facets/token/ERC721A/ERC721ABase.sol": {
       "keccak256": "0x8e6c8700603a5f50982462009bf0bd6d9167937d75d5d5b4ecaf2be25e48f334",
+      "license": "Apache-2.0",
       "urls": [
         "bzz-raw://4003c6a7b68ba9d38baa8a338a747c70048f6ce862b34bd5b8da390a888b73fa",
         "dweb:/ipfs/QmSGRHzFkquMpe6zdDnRBG6e5ngr7QNDHD8ovb4RDACB7W"
-      ],
-      "license": "Apache-2.0"
+      ]
     },
     "contracts/src/diamond/facets/token/ERC721A/ERC721AStorage.sol": {
       "keccak256": "0x8be3fa58d9bb445d169eda30dd35f34e149947eb0572cdb2ced99ed854b8cdc1",
+      "license": "Apache-2.0",
       "urls": [
         "bzz-raw://1b3d9b6c0aef7519ce60c08880a551a0579ae1625e16f89a728700f2eb7e075c",
         "dweb:/ipfs/QmZfS4Lt9mZBPpYxehPb5p9VAGGVdKGkHpZyhoKTP2rSUu"
-      ],
-      "license": "Apache-2.0"
+      ]
     },
     "contracts/src/diamond/facets/token/ERC721A/IERC721A.sol": {
       "keccak256": "0xfce3dc8955c337c405c27c7741b7beff81685ed89f2e102fbad517043e20edf9",
+      "license": "Apache-2.0",
       "urls": [
         "bzz-raw://6c0ef999aaa971921ba4a4d2190ce5fae92fe15a34a87aac02fd081773fdbe9e",
         "dweb:/ipfs/QmUFD83GFhupZo2d3PafyK5fjqrzFRDnJHEsTGYhHakzUM"
-      ],
-      "license": "Apache-2.0"
+      ]
     },
     "contracts/src/river/wallet-link/IWalletLink.sol": {
       "keccak256": "0x548d2531215e1387f83265975af58947d37c01ae9ea75cce91147a2468fc653b",
+      "license": "Apache-2.0",
       "urls": [
         "bzz-raw://f2300ddc317d8f0e9f24dee7904de69a87325305d913f541a0dc877bba7e1f13",
         "dweb:/ipfs/QmY6kMFdswJnVtkYu415QG5ePjUrS9W1QiXi9VXaLBeRJR"
-      ],
-      "license": "Apache-2.0"
+      ]
     },
     "contracts/src/spaces/entitlements/IEntitlement.sol": {
       "keccak256": "0xfb0b5432f19724a40e91cd841bc7306580c2a24574ed2734257e3fef24cabbc3",
+      "license": "Apache-2.0",
       "urls": [
         "bzz-raw://d2c0f0650e41b380dadf79b611c56c0807f44cfdbb984a3eafe776c87ab2c3b3",
         "dweb:/ipfs/QmQLnsPQa1LWm5JSchGYngWYMdV4N9te6HrD8rMhWprGog"
-      ],
-      "license": "Apache-2.0"
+      ]
     },
     "contracts/src/spaces/facets/Entitled.sol": {
-      "keccak256": "0x9abbb553a67d159f68ff9ffbba362773c2f6a99d617ae189c1a144f75a6be75b",
+      "keccak256": "0xbf6050ce2e1a7f617188da09f27ed24520f8e390d34233ed76cc835744d7ceed",
+      "license": "Apache-2.0",
       "urls": [
-        "bzz-raw://31835e9cd03aceec279e348e6d9cff401a62ff2308bd4ea0b2ea403a8752a8ee",
-        "dweb:/ipfs/QmexE37D163SKjEn8V8tVQMNY1pR5zeoTSh6mx3ByaDt1y"
-      ],
-      "license": "Apache-2.0"
+        "bzz-raw://303bd13fe08b741d3b8d0164f35ca9c77de8a8d6dce07aa570d48e0470009521",
+        "dweb:/ipfs/QmWLxZ1mhyrfJhZK9MzX5ERvViwZrRrtTHoxyUoazRe5Pt"
+      ]
     },
     "contracts/src/spaces/facets/Permissions.sol": {
       "keccak256": "0xd168f6402ce23a1bbc0503c1287e94096ef7c7b35733a8d835a8747f79df77f5",
+      "license": "Apache-2.0",
       "urls": [
         "bzz-raw://2d805a55d9e2050d763bc1cf3f0a5d40ca8066bdcdc3c920908f6f63cfa1a721",
         "dweb:/ipfs/QmPSieLU3W9f8FrDu918KPPSQQKBMfRUetRq5fdEsTBFxp"
-      ],
-      "license": "Apache-2.0"
+      ]
     },
     "contracts/src/spaces/facets/banning/BanningBase.sol": {
       "keccak256": "0x163f5533b00e6096222b5092e304766f5af36230071df93a394f5204d22b0a4a",
+      "license": "Apache-2.0",
       "urls": [
         "bzz-raw://02a891304d4ea26c0503ef3bf074c8c1d904cfa3cf73fd8f33eab8d4e706860f",
         "dweb:/ipfs/QmS7gvCAAaZy8deFJ8vABjms6WN97KEFPvEtFzaX1Fa4vx"
-      ],
-      "license": "Apache-2.0"
+      ]
     },
     "contracts/src/spaces/facets/banning/BanningStorage.sol": {
       "keccak256": "0xd48969bfaf9c8bfc980981818ed96101e858652f5516567c08236ce525487492",
+      "license": "Apache-2.0",
       "urls": [
         "bzz-raw://95f1b33fb46ea8d8ed6145d4f646dca4f670712dca81ec75cab5db2dbff6e0f0",
         "dweb:/ipfs/QmPfCAZF3S5ehqKoL2SBg2TEB22TKFuytDNcG8PBa7qVe1"
-      ],
-      "license": "Apache-2.0"
+      ]
     },
     "contracts/src/spaces/facets/banning/IBanning.sol": {
       "keccak256": "0x1983a3e375f4dd8a21be759a637b85ed5e416ca8fc7109153986eb2d4b08a505",
+      "license": "Apache-2.0",
       "urls": [
         "bzz-raw://1f5f5a54e4cbaca9e10cc174ba73f5f80b0875d097084a9ebc6b259b2c4c1419",
         "dweb:/ipfs/QmQSfNhhRNkiHeG1XXWVYhQtvuPRyrv72gxuARgsgupjn6"
-      ],
-      "license": "Apache-2.0"
+      ]
     },
     "contracts/src/spaces/facets/channels/ChannelService.sol": {
       "keccak256": "0x5459092e3b26770de949b6ce3021e3582b62602cf3a419a695da19aa1810eab7",
+      "license": "Apache-2.0",
       "urls": [
         "bzz-raw://d80a0bc5adf516cfda380ac0bc966e2f430b395b78b5aa756adc3ef0a28ae1b9",
         "dweb:/ipfs/QmW2RvEFxrhFt5gxBK2Ay5BS1BgXAv37sipBPSxYBt1vfi"
-      ],
-      "license": "Apache-2.0"
+      ]
     },
     "contracts/src/spaces/facets/channels/ChannelStorage.sol": {
       "keccak256": "0x2c56c47bf36e703f0703ea1f2a27db2406b17d2a173d24bde6efbbfc4bab301f",
+      "license": "Apache-2.0",
       "urls": [
         "bzz-raw://0030cd42de4b20ddb33284bec5065fa4d1edb817ac7f667f845881cb66a2a3b7",
         "dweb:/ipfs/QmNg6DmtqbHn4QMiMzu4yAr8G5G19HZSJ6dRteeGArsnzS"
-      ],
-      "license": "Apache-2.0"
+      ]
     },
     "contracts/src/spaces/facets/delegation/WalletLinkProxyBase.sol": {
       "keccak256": "0x2d800fabc6eaec00c2b25d72dda50cb612eca2ad08700ba537e1dcabf771efdc",
+      "license": "Apache-2.0",
       "urls": [
         "bzz-raw://3d5346877c8dd48f84b4dc2b9958736fdded102211a8368e83ae82564f0f2334",
         "dweb:/ipfs/Qmdfq725QN1vdtZd7xC2PSEUbt7ChWh3HEwCcFg7QiqNMd"
-      ],
-      "license": "Apache-2.0"
+      ]
     },
     "contracts/src/spaces/facets/delegation/WalletLinkProxyStorage.sol": {
       "keccak256": "0x53bc0beb753473e7e927cede43c68006d27a30c212451ffd03b5b3d710713599",
+      "license": "Apache-2.0",
       "urls": [
         "bzz-raw://055bbca7d475e12d1d0344389803684ffe50fa04bbcc1755dc947f5c3fee5658",
         "dweb:/ipfs/QmT3RDDQ8qvkRM91FxMixLfgsSvf77idAbA1AJL7aKxVMa"
-      ],
-      "license": "Apache-2.0"
+      ]
     },
     "contracts/src/spaces/facets/entitlements/EntitlementsManagerService.sol": {
       "keccak256": "0x6f40f5b41ad702ea55bf10f987b3e2b6d02ac527a66be523f06f025cead1867d",
+      "license": "Apache-2.0",
       "urls": [
         "bzz-raw://da2012c616b833c5b491735c230be707e4f9b7657b3a71d7bdf52e7c2ba128b9",
         "dweb:/ipfs/Qme4864V46rozVDRWtfYqtpyzE1SzBnqYQQf3iD2rrqiPg"
-      ],
-      "license": "Apache-2.0"
+      ]
     },
     "contracts/src/spaces/facets/entitlements/EntitlementsManagerStorage.sol": {
       "keccak256": "0xc8e97604a9fb7e2f90de70eed0299ad59bbede47563103fc4cdae8b5a90088f8",
+      "license": "Apache-2.0",
       "urls": [
         "bzz-raw://01194896393f0e77f617f02bed7da7cee5ec7a2d810a058f9c1be8c2ad99f583",
         "dweb:/ipfs/QmbPtkGzBPHYKwvsM3d26MYJKLbFZ7p253pXJCe8aDzUfK"
-      ],
-      "license": "Apache-2.0"
+      ]
     },
     "contracts/src/spaces/facets/membership/MembershipStorage.sol": {
-      "keccak256": "0xcd7729718776574d6cfbee24aa46bca5bacb83bd57490963d9c3e080cad2567d",
+      "keccak256": "0x10fa75bcf06a265b8454b0d76c6e2ed3316dc2542b227c6ca91429df042b1a69",
+      "license": "Apache-2.0",
       "urls": [
-        "bzz-raw://18bd515bf1504d0cddf0675c58cda49556c7ca0338d097a43fff798edfe4f62b",
-        "dweb:/ipfs/Qmbu4vbsAFdhmBX3LaAmeyjXtGHYyJeVzkgD1JZiaKd1nU"
-      ],
-      "license": "Apache-2.0"
+        "bzz-raw://33d66bc406ce2d3ca8f1bf2a105dd67b357c671b32d1fc3152366bedae7b37ac",
+        "dweb:/ipfs/QmTbcxoxFx3iG1hQfzu29FMoN2cFuVZZCaNN4Ed86gDPRa"
+      ]
     },
     "contracts/src/spaces/facets/roles/IRoles.sol": {
-      "keccak256": "0x914a4a0309bee60e391c5a4ee7fb587d8902940f87daa4e3445cf7955d1e68f5",
+      "keccak256": "0x1c1c7dba102545ff4d555c1f6aa677cd75b089869d6ea3a7c1f447ffeaca3b1d",
+      "license": "Apache-2.0",
       "urls": [
-        "bzz-raw://90130798b400f16b42a951b70024b6655e33594b34c1e82fbb999ce5ea49fcb6",
-        "dweb:/ipfs/QmeQNoribmDQ7S2PiQ3qNLCL1w6puAnuxWK3hz1w3ue2z9"
-      ],
-      "license": "Apache-2.0"
+        "bzz-raw://923b68b8b6eb7711d91c602d7c43861aef6ee67d5198ba27d41790b4f2753ab8",
+        "dweb:/ipfs/QmdzeevayVP8ZRT85sbWCVi2QUuBKiNmZHQjGRWC43Rx6N"
+      ]
     },
     "contracts/src/spaces/facets/roles/Roles.sol": {
       "keccak256": "0xc941bcf9a296c108389b1c0916ca05643a89c5f466e6b3f955bbd9dde64df762",
+      "license": "Apache-2.0",
       "urls": [
         "bzz-raw://d86c333a63ffb52d23b7aa7af3711abb7501a0bddae059e5744d9ffcb1dee00b",
         "dweb:/ipfs/QmZMhHACX9gD7CGrHnMZNJM8CWzfndT3rihUWQm8PYy8XD"
-      ],
-      "license": "Apache-2.0"
+      ]
     },
     "contracts/src/spaces/facets/roles/RolesBase.sol": {
-      "keccak256": "0x3fc67054c3cc8c69e26e218478aed62924941e4a99f327aa210ed0c23f4f326b",
+      "keccak256": "0x2ef137dec4a5390009fd931e34fdbb4a742c96b68b40f5c152cec8cf2809ed6f",
+      "license": "Apache-2.0",
       "urls": [
-        "bzz-raw://3c113d9a693d2819699bbcf0b01a69e88e84d8e6db0ee765e37390c547dadafa",
-        "dweb:/ipfs/QmXzYPqo5rTTwW668VnZ6ZeDK5SQAhjJe4dpaiiYKYFYVV"
-      ],
-      "license": "Apache-2.0"
+        "bzz-raw://3cb29b4a780742a30ba3af5719f77a4a65ea55ebbdc3ccd9c93c86573f20c7df",
+        "dweb:/ipfs/QmdvPJydLCcEwCB3xk5VpET8X2GfrxC3NBUD5G6C8a9aW8"
+      ]
     },
     "contracts/src/spaces/facets/roles/RolesStorage.sol": {
       "keccak256": "0x40f288a613e35cbc02aceb1d23f89af888f65538853f61cc1fcd25901b9bc4af",
+      "license": "Apache-2.0",
       "urls": [
         "bzz-raw://396b5e157c9a29adc94edc5d234f416a44e6e7c4588b1aaa0587bb04018705e9",
         "dweb:/ipfs/QmWDCQz555WbvZw7XxfkybE5dPfouc6rKxU5Zu1Gsuz1Zr"
-      ],
-      "license": "Apache-2.0"
+      ]
     },
     "contracts/src/utils/StringSet.sol": {
       "keccak256": "0x3c9d29fdec8d96b627600dc69aa8e164c992162028d877df89c062da32b6e319",
+      "license": "Apache-2.0",
       "urls": [
         "bzz-raw://ab4f8ad17edac234b55f2c5b5a45a2956d82d0b64f70e04350edd879d2f0d1e6",
         "dweb:/ipfs/QmeqwedjAGMjfgizTjspVi5eEojEe8S1ezJFLFafPcfAjK"
-      ],
-      "license": "Apache-2.0"
+      ]
     },
     "contracts/src/utils/Validator.sol": {
       "keccak256": "0xb8d6d023395c2611e308cb09606dc9e49dce0d985a75f20572aeed590d738f50",
+      "license": "Apache-2.0",
       "urls": [
         "bzz-raw://144807c8826c643f74c48e3589243ac4b05dffd0a00b861b75ce46451224be64",
         "dweb:/ipfs/QmazGzxM9owCyKTV1cY46PiMHXdApYJR221Lm9YMcn7J72"
-      ],
-      "license": "Apache-2.0"
+      ]
     },
     "lib/@openzeppelin/contracts/token/ERC721/IERC721.sol": {
       "keccak256": "0x5ef46daa3b58ef2702279d514780316efaa952915ee1aa3396f041ee2982b0b4",
+      "license": "MIT",
       "urls": [
         "bzz-raw://2f8f2a76e23b02fc69e8cd24c3cb47da6c7af3a2d6c3a382f8ac25c6e094ade7",
         "dweb:/ipfs/QmPV4ZS4tPVv4mTCf9ejyZ1ai57EEibDRj7mN2ARDCLV5n"
-      ],
-      "license": "MIT"
+      ]
     },
     "lib/@openzeppelin/contracts/utils/introspection/IERC165.sol": {
       "keccak256": "0x4296879f55019b23e135000eb36896057e7101fb7fb859c5ef690cf14643757b",
+      "license": "MIT",
       "urls": [
         "bzz-raw://87b3541437c8c443ccd36795e56a338ed12855eec17f8da624511b8d1a7e14df",
         "dweb:/ipfs/QmeJQCtZrQjtJLr6u7ZHWeH3pBnjtLWzvRrKViAi7UZqxL"
-      ],
-      "license": "MIT"
+      ]
     },
     "lib/@openzeppelin/contracts/utils/structs/EnumerableSet.sol": {
       "keccak256": "0x86c1470cbfd878491e5de030072b647352d36bd27122cffb928970b1945282aa",
+      "license": "MIT",
       "urls": [
         "bzz-raw://ad85dd393ee0a1917c57046abc5155f51f77844b2c6a42c05c1b8dd26d6ff3c1",
         "dweb:/ipfs/QmNqYc8To2NdnpP6E1tGz7t6A7beuENde5yovwov5pW1fA"
-      ],
-      "license": "MIT"
+      ]
     }
   },
   "version": 1

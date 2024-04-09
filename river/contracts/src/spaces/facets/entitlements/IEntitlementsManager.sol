@@ -2,7 +2,6 @@
 pragma solidity ^0.8.23;
 
 // interfaces
-import {IRuleEntitlement} from "contracts/src/crosschain/IRuleEntitlement.sol";
 
 // libraries
 
@@ -36,13 +35,6 @@ interface IEntitlementsManager is IEntitlementsManagerBase {
     string calldata permission
   ) external view returns (bool);
 
-  /// @notice Returns the EntitlementData that qualifies for a permission
-  /// @param permission The permission to check
-  /// @return RuleData describing the tests that must pass for the permission
-  function getSpaceEntitlements(
-    string calldata permission
-  ) external view returns (IRuleEntitlement.RuleData memory);
-
   /// @notice Checks if a user is entitled to a permission in a channel
   /// @param channelId The channel to check
   /// @param user The user to check
@@ -53,14 +45,6 @@ interface IEntitlementsManager is IEntitlementsManagerBase {
     address user,
     string calldata permission
   ) external view returns (bool);
-
-  /// @notice Returns the EntitlementData that qualifies for a permission
-  /// @param permission The permission to check
-  /// @return RuleData describing the tests that must pass for the permission
-  function getChannelEntitlements(
-    bytes32 channelId,
-    string calldata permission
-  ) external view returns (IRuleEntitlement.RuleData memory);
 
   /// @notice Adds an entitlement to the space
   /// @param entitlement The entitlement to add

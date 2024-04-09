@@ -16,6 +16,7 @@ import {IMembershipBase} from "contracts/src/spaces/facets/membership/IMembershi
 import {IWalletLink} from "contracts/src/river/wallet-link/IWalletLink.sol";
 import {IERC721A} from "contracts/src/diamond/facets/token/ERC721A/IERC721A.sol";
 import {ISpaceOwner} from "contracts/src/spaces/facets/owner/ISpaceOwner.sol";
+import {IEntitlementChecker} from "contracts/src/crosschain/checker/IEntitlementChecker.sol";
 
 // libraries
 import {EnumerableSet} from "@openzeppelin/contracts/utils/structs/EnumerableSet.sol";
@@ -129,7 +130,8 @@ abstract contract ArchitectBase is Factory, IArchitectBase {
     ISpaceOwner spaceToken,
     IUserEntitlement userEntitlement,
     IRuleEntitlement ruleEntitlement,
-    IWalletLink walletLink
+    IWalletLink walletLink,
+    IEntitlementChecker entitlementChecker
   ) internal {
     if (address(spaceToken).code.length == 0) revert Architect__NotContract();
     if (address(userEntitlement).code.length == 0)
@@ -143,6 +145,7 @@ abstract contract ArchitectBase is Factory, IArchitectBase {
     ds.userEntitlement = userEntitlement;
     ds.ruleEntitlement = ruleEntitlement;
     ds.walletLink = walletLink;
+    ds.entitlementChecker = entitlementChecker;
   }
 
   function _getImplementations()
@@ -152,7 +155,8 @@ abstract contract ArchitectBase is Factory, IArchitectBase {
       ISpaceOwner spaceToken,
       IUserEntitlement userEntitlementImplementation,
       IRuleEntitlement ruleEntitlementImplementation,
-      IWalletLink walletLink
+      IWalletLink walletLink,
+      IEntitlementChecker entitlementChecker
     )
   {
     ImplementationStorage.Layout storage ds = ImplementationStorage.layout();
@@ -161,7 +165,8 @@ abstract contract ArchitectBase is Factory, IArchitectBase {
       ds.spaceToken,
       ds.userEntitlement,
       ds.ruleEntitlement,
-      ds.walletLink
+      ds.walletLink,
+      ds.entitlementChecker
     );
   }
 
@@ -214,7 +219,7 @@ abstract contract ArchitectBase is Factory, IArchitectBase {
       IRoles(spaceAddress).addRoleToEntitlement(
         roleId,
         IRolesBase.CreateEntitlement({
-          module: address(userEntitlement),
+          module: userEntitlement,
           data: abi.encode(users)
         })
       );
@@ -231,7 +236,7 @@ abstract contract ArchitectBase is Factory, IArchitectBase {
         IRoles(spaceAddress).addRoleToEntitlement(
           roleId,
           IRolesBase.CreateEntitlement({
-            module: address(userEntitlement),
+            module: userEntitlement,
             data: abi.encode(requirements.users)
           })
         );
@@ -241,7 +246,7 @@ abstract contract ArchitectBase is Factory, IArchitectBase {
         IRoles(spaceAddress).addRoleToEntitlement(
           roleId,
           IRolesBase.CreateEntitlement({
-            module: address(ruleEntitlement),
+            module: ruleEntitlement,
             data: abi.encode(requirements.ruleData)
           })
         );
@@ -261,7 +266,7 @@ abstract contract ArchitectBase is Factory, IArchitectBase {
 
     IRolesBase.CreateEntitlement[]
       memory entitlements = new IRolesBase.CreateEntitlement[](1);
-    entitlements[0].module = address(userEntitlement);
+    entitlements[0].module = userEntitlement;
     entitlements[0].data = abi.encode(users);
 
     roleId = IRoles(spaceAddress).createRole(
@@ -318,6 +323,7 @@ abstract contract ArchitectBase is Factory, IArchitectBase {
       abi.encode(
         msg.sender,
         ds.walletLink,
+        ds.entitlementChecker,
         IManagedProxyBase.ManagedProxy({
           managerSelector: IProxyManager.getImplementation.selector,
           manager: address(this)

@@ -96,7 +96,9 @@ export interface MembershipFacetInterface extends utils.Interface {
     "joinSpaceWithReferral(address,address,uint256)": FunctionFragment;
     "name()": FunctionFragment;
     "ownerOf(uint256)": FunctionFragment;
+    "postEntitlementCheckResult(bytes32,uint8)": FunctionFragment;
     "renewMembership(uint256)": FunctionFragment;
+    "requestEntitlementCheck()": FunctionFragment;
     "safeTransferFrom(address,address,uint256)": FunctionFragment;
     "safeTransferFrom(address,address,uint256,bytes)": FunctionFragment;
     "setApprovalForAll(address,bool)": FunctionFragment;
@@ -144,7 +146,9 @@ export interface MembershipFacetInterface extends utils.Interface {
       | "joinSpaceWithReferral"
       | "name"
       | "ownerOf"
+      | "postEntitlementCheckResult"
       | "renewMembership"
+      | "requestEntitlementCheck"
       | "safeTransferFrom(address,address,uint256)"
       | "safeTransferFrom(address,address,uint256,bytes)"
       | "setApprovalForAll"
@@ -282,8 +286,16 @@ export interface MembershipFacetInterface extends utils.Interface {
     values: [PromiseOrValue<BigNumberish>]
   ): string;
   encodeFunctionData(
+    functionFragment: "postEntitlementCheckResult",
+    values: [PromiseOrValue<BytesLike>, PromiseOrValue<BigNumberish>]
+  ): string;
+  encodeFunctionData(
     functionFragment: "renewMembership",
     values: [PromiseOrValue<BigNumberish>]
+  ): string;
+  encodeFunctionData(
+    functionFragment: "requestEntitlementCheck",
+    values?: undefined
   ): string;
   encodeFunctionData(
     functionFragment: "safeTransferFrom(address,address,uint256)",
@@ -451,7 +463,15 @@ export interface MembershipFacetInterface extends utils.Interface {
   decodeFunctionResult(functionFragment: "name", data: BytesLike): Result;
   decodeFunctionResult(functionFragment: "ownerOf", data: BytesLike): Result;
   decodeFunctionResult(
+    functionFragment: "postEntitlementCheckResult",
+    data: BytesLike
+  ): Result;
+  decodeFunctionResult(
     functionFragment: "renewMembership",
+    data: BytesLike
+  ): Result;
+  decodeFunctionResult(
+    functionFragment: "requestEntitlementCheck",
     data: BytesLike
   ): Result;
   decodeFunctionResult(
@@ -503,6 +523,7 @@ export interface MembershipFacetInterface extends utils.Interface {
     "ApprovalForAll(address,address,bool)": EventFragment;
     "Banned(address,uint256)": EventFragment;
     "ConsecutiveTransfer(uint256,uint256,address,address)": EventFragment;
+    "EntitlementCheckResultPosted(bytes32,uint8)": EventFragment;
     "Initialized(uint32)": EventFragment;
     "InterfaceAdded(bytes4)": EventFragment;
     "InterfaceRemoved(bytes4)": EventFragment;
@@ -511,12 +532,17 @@ export interface MembershipFacetInterface extends utils.Interface {
     "MembershipFreeAllocationUpdated(uint256)": EventFragment;
     "MembershipLimitUpdated(uint256)": EventFragment;
     "MembershipPriceUpdated(uint256)": EventFragment;
+    "MembershipTokenIssued(address,uint256)": EventFragment;
+    "MembershipTokenRejected(address)": EventFragment;
     "MembershipWithdrawal(address,uint256)": EventFragment;
     "Membership__ReferralCreated(uint256,uint16)": EventFragment;
     "Membership__ReferralRemoved(uint256)": EventFragment;
     "Membership__ReferralTimeCreated(uint256,uint16,uint256,uint256)": EventFragment;
     "OwnershipTransferred(address,address)": EventFragment;
     "Paused(address)": EventFragment;
+    "RoleCreated(address,uint256)": EventFragment;
+    "RoleRemoved(address,uint256)": EventFragment;
+    "RoleUpdated(address,uint256)": EventFragment;
     "SubscriptionUpdate(uint256,uint64)": EventFragment;
     "Transfer(address,address,uint256)": EventFragment;
     "Unbanned(address,uint256)": EventFragment;
@@ -527,6 +553,9 @@ export interface MembershipFacetInterface extends utils.Interface {
   getEvent(nameOrSignatureOrTopic: "ApprovalForAll"): EventFragment;
   getEvent(nameOrSignatureOrTopic: "Banned"): EventFragment;
   getEvent(nameOrSignatureOrTopic: "ConsecutiveTransfer"): EventFragment;
+  getEvent(
+    nameOrSignatureOrTopic: "EntitlementCheckResultPosted"
+  ): EventFragment;
   getEvent(nameOrSignatureOrTopic: "Initialized"): EventFragment;
   getEvent(nameOrSignatureOrTopic: "InterfaceAdded"): EventFragment;
   getEvent(nameOrSignatureOrTopic: "InterfaceRemoved"): EventFragment;
@@ -539,6 +568,8 @@ export interface MembershipFacetInterface extends utils.Interface {
   ): EventFragment;
   getEvent(nameOrSignatureOrTopic: "MembershipLimitUpdated"): EventFragment;
   getEvent(nameOrSignatureOrTopic: "MembershipPriceUpdated"): EventFragment;
+  getEvent(nameOrSignatureOrTopic: "MembershipTokenIssued"): EventFragment;
+  getEvent(nameOrSignatureOrTopic: "MembershipTokenRejected"): EventFragment;
   getEvent(nameOrSignatureOrTopic: "MembershipWithdrawal"): EventFragment;
   getEvent(
     nameOrSignatureOrTopic: "Membership__ReferralCreated"
@@ -551,6 +582,9 @@ export interface MembershipFacetInterface extends utils.Interface {
   ): EventFragment;
   getEvent(nameOrSignatureOrTopic: "OwnershipTransferred"): EventFragment;
   getEvent(nameOrSignatureOrTopic: "Paused"): EventFragment;
+  getEvent(nameOrSignatureOrTopic: "RoleCreated"): EventFragment;
+  getEvent(nameOrSignatureOrTopic: "RoleRemoved"): EventFragment;
+  getEvent(nameOrSignatureOrTopic: "RoleUpdated"): EventFragment;
   getEvent(nameOrSignatureOrTopic: "SubscriptionUpdate"): EventFragment;
   getEvent(nameOrSignatureOrTopic: "Transfer"): EventFragment;
   getEvent(nameOrSignatureOrTopic: "Unbanned"): EventFragment;
@@ -602,6 +636,18 @@ export type ConsecutiveTransferEvent = TypedEvent<
 
 export type ConsecutiveTransferEventFilter =
   TypedEventFilter<ConsecutiveTransferEvent>;
+
+export interface EntitlementCheckResultPostedEventObject {
+  transactionId: string;
+  result: number;
+}
+export type EntitlementCheckResultPostedEvent = TypedEvent<
+  [string, number],
+  EntitlementCheckResultPostedEventObject
+>;
+
+export type EntitlementCheckResultPostedEventFilter =
+  TypedEventFilter<EntitlementCheckResultPostedEvent>;
 
 export interface InitializedEventObject {
   version: number;
@@ -686,6 +732,29 @@ export type MembershipPriceUpdatedEvent = TypedEvent<
 export type MembershipPriceUpdatedEventFilter =
   TypedEventFilter<MembershipPriceUpdatedEvent>;
 
+export interface MembershipTokenIssuedEventObject {
+  recipient: string;
+  tokenId: BigNumber;
+}
+export type MembershipTokenIssuedEvent = TypedEvent<
+  [string, BigNumber],
+  MembershipTokenIssuedEventObject
+>;
+
+export type MembershipTokenIssuedEventFilter =
+  TypedEventFilter<MembershipTokenIssuedEvent>;
+
+export interface MembershipTokenRejectedEventObject {
+  recipient: string;
+}
+export type MembershipTokenRejectedEvent = TypedEvent<
+  [string],
+  MembershipTokenRejectedEventObject
+>;
+
+export type MembershipTokenRejectedEventFilter =
+  TypedEventFilter<MembershipTokenRejectedEvent>;
+
 export interface MembershipWithdrawalEventObject {
   recipient: string;
   amount: BigNumber;
@@ -753,6 +822,39 @@ export interface PausedEventObject {
 export type PausedEvent = TypedEvent<[string], PausedEventObject>;
 
 export type PausedEventFilter = TypedEventFilter<PausedEvent>;
+
+export interface RoleCreatedEventObject {
+  creator: string;
+  roleId: BigNumber;
+}
+export type RoleCreatedEvent = TypedEvent<
+  [string, BigNumber],
+  RoleCreatedEventObject
+>;
+
+export type RoleCreatedEventFilter = TypedEventFilter<RoleCreatedEvent>;
+
+export interface RoleRemovedEventObject {
+  remover: string;
+  roleId: BigNumber;
+}
+export type RoleRemovedEvent = TypedEvent<
+  [string, BigNumber],
+  RoleRemovedEventObject
+>;
+
+export type RoleRemovedEventFilter = TypedEventFilter<RoleRemovedEvent>;
+
+export interface RoleUpdatedEventObject {
+  updater: string;
+  roleId: BigNumber;
+}
+export type RoleUpdatedEvent = TypedEvent<
+  [string, BigNumber],
+  RoleUpdatedEventObject
+>;
+
+export type RoleUpdatedEventFilter = TypedEventFilter<RoleUpdatedEvent>;
 
 export interface SubscriptionUpdateEventObject {
   tokenId: BigNumber;
@@ -944,9 +1046,19 @@ export interface MembershipFacet extends BaseContract {
       overrides?: CallOverrides
     ): Promise<[string]>;
 
+    postEntitlementCheckResult(
+      transactionId: PromiseOrValue<BytesLike>,
+      result: PromiseOrValue<BigNumberish>,
+      overrides?: Overrides & { from?: PromiseOrValue<string> }
+    ): Promise<ContractTransaction>;
+
     renewMembership(
       tokenId: PromiseOrValue<BigNumberish>,
       overrides?: PayableOverrides & { from?: PromiseOrValue<string> }
+    ): Promise<ContractTransaction>;
+
+    requestEntitlementCheck(
+      overrides?: Overrides & { from?: PromiseOrValue<string> }
     ): Promise<ContractTransaction>;
 
     "safeTransferFrom(address,address,uint256)"(
@@ -1134,9 +1246,19 @@ export interface MembershipFacet extends BaseContract {
     overrides?: CallOverrides
   ): Promise<string>;
 
+  postEntitlementCheckResult(
+    transactionId: PromiseOrValue<BytesLike>,
+    result: PromiseOrValue<BigNumberish>,
+    overrides?: Overrides & { from?: PromiseOrValue<string> }
+  ): Promise<ContractTransaction>;
+
   renewMembership(
     tokenId: PromiseOrValue<BigNumberish>,
     overrides?: PayableOverrides & { from?: PromiseOrValue<string> }
+  ): Promise<ContractTransaction>;
+
+  requestEntitlementCheck(
+    overrides?: Overrides & { from?: PromiseOrValue<string> }
   ): Promise<ContractTransaction>;
 
   "safeTransferFrom(address,address,uint256)"(
@@ -1308,14 +1430,14 @@ export interface MembershipFacet extends BaseContract {
     joinSpace(
       receiver: PromiseOrValue<string>,
       overrides?: CallOverrides
-    ): Promise<BigNumber>;
+    ): Promise<void>;
 
     joinSpaceWithReferral(
       receiver: PromiseOrValue<string>,
       referrer: PromiseOrValue<string>,
       referralCode: PromiseOrValue<BigNumberish>,
       overrides?: CallOverrides
-    ): Promise<BigNumber>;
+    ): Promise<void>;
 
     name(overrides?: CallOverrides): Promise<string>;
 
@@ -1324,10 +1446,18 @@ export interface MembershipFacet extends BaseContract {
       overrides?: CallOverrides
     ): Promise<string>;
 
+    postEntitlementCheckResult(
+      transactionId: PromiseOrValue<BytesLike>,
+      result: PromiseOrValue<BigNumberish>,
+      overrides?: CallOverrides
+    ): Promise<void>;
+
     renewMembership(
       tokenId: PromiseOrValue<BigNumberish>,
       overrides?: CallOverrides
     ): Promise<void>;
+
+    requestEntitlementCheck(overrides?: CallOverrides): Promise<string>;
 
     "safeTransferFrom(address,address,uint256)"(
       from: PromiseOrValue<string>,
@@ -1442,6 +1572,15 @@ export interface MembershipFacet extends BaseContract {
       to?: PromiseOrValue<string> | null
     ): ConsecutiveTransferEventFilter;
 
+    "EntitlementCheckResultPosted(bytes32,uint8)"(
+      transactionId?: PromiseOrValue<BytesLike> | null,
+      result?: null
+    ): EntitlementCheckResultPostedEventFilter;
+    EntitlementCheckResultPosted(
+      transactionId?: PromiseOrValue<BytesLike> | null,
+      result?: null
+    ): EntitlementCheckResultPostedEventFilter;
+
     "Initialized(uint32)"(version?: null): InitializedEventFilter;
     Initialized(version?: null): InitializedEventFilter;
 
@@ -1494,6 +1633,22 @@ export interface MembershipFacet extends BaseContract {
       price?: PromiseOrValue<BigNumberish> | null
     ): MembershipPriceUpdatedEventFilter;
 
+    "MembershipTokenIssued(address,uint256)"(
+      recipient?: PromiseOrValue<string> | null,
+      tokenId?: PromiseOrValue<BigNumberish> | null
+    ): MembershipTokenIssuedEventFilter;
+    MembershipTokenIssued(
+      recipient?: PromiseOrValue<string> | null,
+      tokenId?: PromiseOrValue<BigNumberish> | null
+    ): MembershipTokenIssuedEventFilter;
+
+    "MembershipTokenRejected(address)"(
+      recipient?: PromiseOrValue<string> | null
+    ): MembershipTokenRejectedEventFilter;
+    MembershipTokenRejected(
+      recipient?: PromiseOrValue<string> | null
+    ): MembershipTokenRejectedEventFilter;
+
     "MembershipWithdrawal(address,uint256)"(
       recipient?: PromiseOrValue<string> | null,
       amount?: null
@@ -1543,6 +1698,33 @@ export interface MembershipFacet extends BaseContract {
 
     "Paused(address)"(account?: null): PausedEventFilter;
     Paused(account?: null): PausedEventFilter;
+
+    "RoleCreated(address,uint256)"(
+      creator?: PromiseOrValue<string> | null,
+      roleId?: PromiseOrValue<BigNumberish> | null
+    ): RoleCreatedEventFilter;
+    RoleCreated(
+      creator?: PromiseOrValue<string> | null,
+      roleId?: PromiseOrValue<BigNumberish> | null
+    ): RoleCreatedEventFilter;
+
+    "RoleRemoved(address,uint256)"(
+      remover?: PromiseOrValue<string> | null,
+      roleId?: PromiseOrValue<BigNumberish> | null
+    ): RoleRemovedEventFilter;
+    RoleRemoved(
+      remover?: PromiseOrValue<string> | null,
+      roleId?: PromiseOrValue<BigNumberish> | null
+    ): RoleRemovedEventFilter;
+
+    "RoleUpdated(address,uint256)"(
+      updater?: PromiseOrValue<string> | null,
+      roleId?: PromiseOrValue<BigNumberish> | null
+    ): RoleUpdatedEventFilter;
+    RoleUpdated(
+      updater?: PromiseOrValue<string> | null,
+      roleId?: PromiseOrValue<BigNumberish> | null
+    ): RoleUpdatedEventFilter;
 
     "SubscriptionUpdate(uint256,uint64)"(
       tokenId?: PromiseOrValue<BigNumberish> | null,
@@ -1695,9 +1877,19 @@ export interface MembershipFacet extends BaseContract {
       overrides?: CallOverrides
     ): Promise<BigNumber>;
 
+    postEntitlementCheckResult(
+      transactionId: PromiseOrValue<BytesLike>,
+      result: PromiseOrValue<BigNumberish>,
+      overrides?: Overrides & { from?: PromiseOrValue<string> }
+    ): Promise<BigNumber>;
+
     renewMembership(
       tokenId: PromiseOrValue<BigNumberish>,
       overrides?: PayableOverrides & { from?: PromiseOrValue<string> }
+    ): Promise<BigNumber>;
+
+    requestEntitlementCheck(
+      overrides?: Overrides & { from?: PromiseOrValue<string> }
     ): Promise<BigNumber>;
 
     "safeTransferFrom(address,address,uint256)"(
@@ -1904,9 +2096,19 @@ export interface MembershipFacet extends BaseContract {
       overrides?: CallOverrides
     ): Promise<PopulatedTransaction>;
 
+    postEntitlementCheckResult(
+      transactionId: PromiseOrValue<BytesLike>,
+      result: PromiseOrValue<BigNumberish>,
+      overrides?: Overrides & { from?: PromiseOrValue<string> }
+    ): Promise<PopulatedTransaction>;
+
     renewMembership(
       tokenId: PromiseOrValue<BigNumberish>,
       overrides?: PayableOverrides & { from?: PromiseOrValue<string> }
+    ): Promise<PopulatedTransaction>;
+
+    requestEntitlementCheck(
+      overrides?: Overrides & { from?: PromiseOrValue<string> }
     ): Promise<PopulatedTransaction>;
 
     "safeTransferFrom(address,address,uint256)"(

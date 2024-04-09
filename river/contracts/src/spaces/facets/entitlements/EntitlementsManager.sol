@@ -47,24 +47,11 @@ contract EntitlementsManager is
     return _isEntitledToSpace(user, permission);
   }
 
-  function getSpaceEntitlements(
-    string calldata permission
-  ) external pure returns (IRuleEntitlement.RuleData memory) {
-    return _getSpaceEntitlements(permission);
-  }
-
   function isEntitledToChannel(
     bytes32 channelId,
     address user,
     string calldata permission
   ) external view returns (bool) {
     return _isEntitledToChannel(channelId, user, permission);
-  }
-
-  function getChannelEntitlements(
-    bytes32 channelId,
-    string calldata permission
-  ) external pure returns (IRuleEntitlement.RuleData memory) {
-    return _getChannelEntitlements(channelId, permission);
   }
 }

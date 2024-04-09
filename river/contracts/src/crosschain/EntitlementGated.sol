@@ -10,20 +10,8 @@ import {IEntitlementGated} from "./IEntitlementGated.sol";
 import {EntitlementGatedBase} from "./EntitlementGatedBase.sol";
 
 abstract contract EntitlementGated is IEntitlementGated, EntitlementGatedBase {
-  constructor(address checker) {
-    __EntitlementGatedBase_init(checker);
-  }
-
-  function getEntitlementOperations()
-    external
-    view
-    virtual
-    returns (bytes memory);
-
-  function requestEntitlementCheck() external {
-    _requestEntitlementCheck();
-  }
-
+  // Called by the xchain node to post the result of the entitlement check
+  // the internal function validates the transactionId and the result
   function postEntitlementCheckResult(
     bytes32 transactionId,
     NodeVoteStatus result
@@ -31,7 +19,11 @@ abstract contract EntitlementGated is IEntitlementGated, EntitlementGatedBase {
     _postEntitlementCheckResult(transactionId, result);
   }
 
-  function removeTransaction(bytes32 transactionId) external {
-    _removeTransaction(transactionId);
-  }
+  // must be implemented by the derived contract
+  // to handle the result of the entitlement check
+  // the caller is verified to be an enrolled xchain node
+  function _onEntitlementCheckResultPosted(
+    bytes32 transactionId,
+    NodeVoteStatus result
+  ) internal virtual override;
 }

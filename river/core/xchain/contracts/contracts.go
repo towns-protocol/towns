@@ -70,14 +70,6 @@ func (g *IEntitlementGated) PostEntitlementCheckResult(opts *bind.TransactOpts, 
 	}
 }
 
-func (g *IEntitlementGated) RemoveTransaction(opts *bind.TransactOpts, transactionId [32]byte) (*types.Transaction, error) {
-	if config.GetConfig().GetContractVersion() == "v3" {
-		return g.v3IEntitlementGated.RemoveTransaction(opts, transactionId)
-	} else {
-		return g.devIEntitlementGated.RemoveTransaction(opts, transactionId)
-	}
-}
-
 func (g *IEntitlementGated) WatchEntitlementCheckResultPosted(opts *bind.WatchOpts, sink chan<- *IEntitlementGatedEntitlementCheckResultPosted, transactionId [][32]byte) (event.Subscription, error) {
 	if config.GetConfig().GetContractVersion() == "v3" {
 		v3Sink := make(chan *v3.IEntitlementGatedEntitlementCheckResultPosted)

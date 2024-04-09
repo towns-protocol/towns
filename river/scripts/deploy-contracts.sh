@@ -43,7 +43,7 @@ make deploy-base-anvil type=contract contract=DeployMultiInit
 make deploy-base-anvil type=contract contract=DeployWalletLink
 
 # Entitlement Checker
-make deploy-base-anvil type=contract contract=DeployEntitlementChecker
+make deploy-base-anvil type=facet contract=DeployEntitlementChecker
 make deploy-base-anvil type=contract contract=DeployEntitlementGatedExample
 
 # River Registry

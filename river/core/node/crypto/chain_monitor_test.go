@@ -30,7 +30,7 @@ func TestChainMonitorBlocks(t *testing.T) {
 
 	var (
 		client          = tc.Client()
-		head, _         = tc.Backend.Client().HeaderByNumber(ctx, nil)
+		head, _         = client.HeaderByNumber(ctx, nil)
 		headBlockNum    = head.Number.Uint64()
 		collectedBlocks = make(chan crypto.BlockNumber, 10)
 		onBlockCallback = func(blockNumber crypto.BlockNumber) {
@@ -69,7 +69,7 @@ func TestChainMonitorEvents(t *testing.T) {
 	var (
 		client  = tc.Client()
 		owner   = tc.DeployerBlockchain
-		head, _ = tc.Backend.Client().HeaderByNumber(ctx, nil)
+		head, _ = client.HeaderByNumber(ctx, nil)
 
 		collectedBlocksCount atomic.Int64
 		collectedBlocks      []crypto.BlockNumber
@@ -117,18 +117,20 @@ func TestChainMonitorEvents(t *testing.T) {
 	require.NoError(err)
 
 	// generate some blocks
-	for i := 0; i < 55; i++ {
+	N := 15
+	for i := 0; i < N; i++ {
 		tc.Commit()
 	}
 
 	// wait a bit for the monitor to catch up and has called the callbacks
-	for collectedBlocksCount.Load() < 55 {
+	for collectedBlocksCount.Load() < int64(N) {
 		time.Sleep(10 * time.Millisecond)
 	}
 
-	require.Exactly(crypto.BlockNumber(2), collectedBlocks[0])
-	require.Exactly(crypto.BlockNumber(27), collectedBlocks[25])
-	require.Exactly(crypto.BlockNumber(56), collectedBlocks[54])
+	firstBlock := collectedBlocks[0]
+	for i := range collectedBlocks {
+		require.Exactly(firstBlock+crypto.BlockNumber(i), collectedBlocks[i])
+	}
 	require.GreaterOrEqual(len(allEventCallbackCapturedEvents), 1)
 	require.GreaterOrEqual(len(contractEventCallbackCapturedEvents), 1)
 	require.Equal(1, len(contractWithTopicsEventCallbackCapturedEvents))

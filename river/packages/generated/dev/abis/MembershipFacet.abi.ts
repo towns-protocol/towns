@@ -456,13 +456,7 @@ export default [
         "internalType": "address"
       }
     ],
-    "outputs": [
-      {
-        "name": "tokenId",
-        "type": "uint256",
-        "internalType": "uint256"
-      }
-    ],
+    "outputs": [],
     "stateMutability": "payable"
   },
   {
@@ -485,13 +479,7 @@ export default [
         "internalType": "uint256"
       }
     ],
-    "outputs": [
-      {
-        "name": "tokenId",
-        "type": "uint256",
-        "internalType": "uint256"
-      }
-    ],
+    "outputs": [],
     "stateMutability": "payable"
   },
   {
@@ -528,6 +516,24 @@ export default [
   },
   {
     "type": "function",
+    "name": "postEntitlementCheckResult",
+    "inputs": [
+      {
+        "name": "transactionId",
+        "type": "bytes32",
+        "internalType": "bytes32"
+      },
+      {
+        "name": "result",
+        "type": "uint8",
+        "internalType": "enum IEntitlementGatedBase.NodeVoteStatus"
+      }
+    ],
+    "outputs": [],
+    "stateMutability": "nonpayable"
+  },
+  {
+    "type": "function",
     "name": "renewMembership",
     "inputs": [
       {
@@ -538,6 +544,19 @@ export default [
     ],
     "outputs": [],
     "stateMutability": "payable"
+  },
+  {
+    "type": "function",
+    "name": "requestEntitlementCheck",
+    "inputs": [],
+    "outputs": [
+      {
+        "name": "",
+        "type": "bytes32",
+        "internalType": "bytes32"
+      }
+    ],
+    "stateMutability": "nonpayable"
   },
   {
     "type": "function",
@@ -856,6 +875,25 @@ export default [
   },
   {
     "type": "event",
+    "name": "EntitlementCheckResultPosted",
+    "inputs": [
+      {
+        "name": "transactionId",
+        "type": "bytes32",
+        "indexed": true,
+        "internalType": "bytes32"
+      },
+      {
+        "name": "result",
+        "type": "uint8",
+        "indexed": false,
+        "internalType": "enum IEntitlementGatedBase.NodeVoteStatus"
+      }
+    ],
+    "anonymous": false
+  },
+  {
+    "type": "event",
     "name": "Initialized",
     "inputs": [
       {
@@ -954,6 +992,38 @@ export default [
         "type": "uint256",
         "indexed": true,
         "internalType": "uint256"
+      }
+    ],
+    "anonymous": false
+  },
+  {
+    "type": "event",
+    "name": "MembershipTokenIssued",
+    "inputs": [
+      {
+        "name": "recipient",
+        "type": "address",
+        "indexed": true,
+        "internalType": "address"
+      },
+      {
+        "name": "tokenId",
+        "type": "uint256",
+        "indexed": true,
+        "internalType": "uint256"
+      }
+    ],
+    "anonymous": false
+  },
+  {
+    "type": "event",
+    "name": "MembershipTokenRejected",
+    "inputs": [
+      {
+        "name": "recipient",
+        "type": "address",
+        "indexed": true,
+        "internalType": "address"
       }
     ],
     "anonymous": false
@@ -1068,6 +1138,63 @@ export default [
         "type": "address",
         "indexed": false,
         "internalType": "address"
+      }
+    ],
+    "anonymous": false
+  },
+  {
+    "type": "event",
+    "name": "RoleCreated",
+    "inputs": [
+      {
+        "name": "creator",
+        "type": "address",
+        "indexed": true,
+        "internalType": "address"
+      },
+      {
+        "name": "roleId",
+        "type": "uint256",
+        "indexed": true,
+        "internalType": "uint256"
+      }
+    ],
+    "anonymous": false
+  },
+  {
+    "type": "event",
+    "name": "RoleRemoved",
+    "inputs": [
+      {
+        "name": "remover",
+        "type": "address",
+        "indexed": true,
+        "internalType": "address"
+      },
+      {
+        "name": "roleId",
+        "type": "uint256",
+        "indexed": true,
+        "internalType": "uint256"
+      }
+    ],
+    "anonymous": false
+  },
+  {
+    "type": "event",
+    "name": "RoleUpdated",
+    "inputs": [
+      {
+        "name": "updater",
+        "type": "address",
+        "indexed": true,
+        "internalType": "address"
+      },
+      {
+        "name": "roleId",
+        "type": "uint256",
+        "indexed": true,
+        "internalType": "uint256"
       }
     ],
     "anonymous": false
@@ -1254,6 +1381,36 @@ export default [
         "internalType": "uint256"
       }
     ]
+  },
+  {
+    "type": "error",
+    "name": "EntitlementGated_InvalidAddress",
+    "inputs": []
+  },
+  {
+    "type": "error",
+    "name": "EntitlementGated_NodeAlreadyVoted",
+    "inputs": []
+  },
+  {
+    "type": "error",
+    "name": "EntitlementGated_NodeNotFound",
+    "inputs": []
+  },
+  {
+    "type": "error",
+    "name": "EntitlementGated_TransactionAlreadyCompleted",
+    "inputs": []
+  },
+  {
+    "type": "error",
+    "name": "EntitlementGated_TransactionAlreadyRegistered",
+    "inputs": []
+  },
+  {
+    "type": "error",
+    "name": "EntitlementGated_TransactionNotRegistered",
+    "inputs": []
   },
   {
     "type": "error",
@@ -1449,6 +1606,41 @@ export default [
   {
     "type": "error",
     "name": "ReentrancyGuard__ReentrantCall",
+    "inputs": []
+  },
+  {
+    "type": "error",
+    "name": "Roles__EntitlementAlreadyExists",
+    "inputs": []
+  },
+  {
+    "type": "error",
+    "name": "Roles__EntitlementDoesNotExist",
+    "inputs": []
+  },
+  {
+    "type": "error",
+    "name": "Roles__InvalidEntitlementAddress",
+    "inputs": []
+  },
+  {
+    "type": "error",
+    "name": "Roles__InvalidPermission",
+    "inputs": []
+  },
+  {
+    "type": "error",
+    "name": "Roles__PermissionAlreadyExists",
+    "inputs": []
+  },
+  {
+    "type": "error",
+    "name": "Roles__PermissionDoesNotExist",
+    "inputs": []
+  },
+  {
+    "type": "error",
+    "name": "Roles__RoleDoesNotExist",
     "inputs": []
   },
   {

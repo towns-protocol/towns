@@ -1,0 +1,11 @@
+{
+    "extends": ["//"],
+    "pipeline": {
+        "build": {
+            // custom configuration for the build task in this workspace
+            "dependsOn": ["@river-build/proto#build", "@river-build/dlog#build", "@river-build/web3#build", "@river-build/encryption#build"]
+        },
+        // new tasks only available in this workspace
+        "special-task": {}
+    }
+}

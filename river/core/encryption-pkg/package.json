@@ -1,0 +1,43 @@
+{
+    "name": "@river-build/encryption-pkg",
+    "main": "/dist/index.js",
+    "types": "./dist/index.d.ts",
+    "description": "River Encryption documentation: <https://docs.river.build/concepts/encryption>",
+    "version": "1.0.1",
+    "repository": {
+        "type": "git",
+        "url": "git+https://github.com/river-build/river-stage.git"
+    },
+    "keywords": [
+        "river-build-encryption",
+        "riverbuildencryption"
+    ],
+    "author": "River Association",
+    "license": "MIT",
+    "bugs": {
+        "url": "https://github.com/river-build/river-stage/issues"
+    },
+    "homepage": "https://docs.river.build/introduction",
+    "scripts": {
+        "build": "rollup -c",
+        "cb": "yarn clean && yarn && yarn build",
+        "clean": "rm -rf dist",
+        "npm:publish": "yarn npm publish --access public",
+        "pack:dryrun": "yarn pack --dry-run",
+        "pack:tgz": "mkdir -p ./artifacts && yarn pack --out ./artifacts/%s-%v.tgz"
+    },
+    "devDependencies": {
+        "@rollup/plugin-commonjs": "^25.0.7",
+        "@rollup/plugin-node-resolve": "^15.2.3",
+        "@rollup/plugin-terser": "^0.4.4",
+        "@rollup/plugin-typescript": "^11.1.6",
+        "@rollup/plugin-wasm": "^6.2.2",
+        "rollup": "^2.56.3",
+        "rollup-plugin-generate-package-json": "^3.2.0",
+        "rollup-plugin-polyfill-node": "^0.12.0",
+        "typescript": "^5.1.6"
+    },
+    "peerDependencies": {
+        "@matrix-org/olm": "^3.2.15"
+    }
+}

@@ -20,6 +20,7 @@ core/**/run_files/*
 core/node/.mockery.yaml
 core/node/auth/contracts/*.json
 core/node/registries/contracts/*.json
+core/encryption-pkg/turbo.json
 contracts/cache/*
 contracts/deployments/*
 contracts/addresses/*

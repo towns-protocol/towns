@@ -3,20 +3,25 @@ package crypto
 import (
 	"context"
 	"crypto/rand"
+	"errors"
 	"math/big"
 	"os"
 	"sync"
 	"time"
 
+	"github.com/ethereum/go-ethereum"
 	"github.com/ethereum/go-ethereum/accounts/abi/bind"
 	"github.com/ethereum/go-ethereum/common"
 	"github.com/ethereum/go-ethereum/core"
 	"github.com/ethereum/go-ethereum/core/types"
+	"github.com/ethereum/go-ethereum/crypto"
 	"github.com/ethereum/go-ethereum/ethclient"
 	"github.com/ethereum/go-ethereum/ethclient/simulated"
+	"github.com/river-build/river/core/node/base"
 	"github.com/river-build/river/core/node/config"
 	"github.com/river-build/river/core/node/contracts"
 	"github.com/river-build/river/core/node/contracts/deploy"
+	"github.com/river-build/river/core/node/protocol"
 )
 
 var (
@@ -35,6 +40,7 @@ type BlockchainTestContext struct {
 	StreamRegistry       *contracts.StreamRegistryV1
 	ChainId              *big.Int
 	DeployerBlockchain   *Blockchain
+	RemoteNode           bool
 }
 
 func initSimulated(ctx context.Context, numKeys int) ([]*Wallet, *simulated.Backend, error) {
@@ -51,6 +57,83 @@ func initSimulated(ctx context.Context, numKeys int) ([]*Wallet, *simulated.Back
 
 	backend := simulated.NewBackend(genesisAlloc, simulated.WithBlockGasLimit(30_000_000))
 	return wallets, backend, nil
+}
+
+func initRemoteNode(ctx context.Context, url string, seedWalletPrivateKey string, numKeys int) ([]*Wallet, *ethclient.Client, error) {
+	if len(seedWalletPrivateKey) >= 2 && seedWalletPrivateKey[0] == '0' && (seedWalletPrivateKey[1] == 'x' || seedWalletPrivateKey[1] == 'X') {
+		seedWalletPrivateKey = seedWalletPrivateKey[2:]
+	}
+	seederPrivateKey, err := crypto.HexToECDSA(seedWalletPrivateKey)
+	if err != nil {
+		return nil, nil, err
+	}
+	seederAddress := crypto.PubkeyToAddress(seederPrivateKey.PublicKey)
+
+	client, err := ethclient.DialContext(ctx, url)
+	if err != nil {
+		return nil, nil, err
+	}
+
+	chainID, err := client.ChainID(ctx)
+	if err != nil {
+		return nil, nil, err
+	}
+	signer := types.LatestSignerForChainID(chainID)
+
+	nonce, err := client.PendingNonceAt(ctx, seederAddress)
+	if err != nil {
+		return nil, nil, err
+	}
+
+	gasPrice, err := client.SuggestGasPrice(ctx)
+	if err != nil {
+		return nil, nil, err
+	}
+
+	// fund accounts
+	wallets := make([]*Wallet, numKeys)
+	var lastFundTx *types.Transaction
+	for i := 0; i < numKeys; i++ {
+		wallets[i], err = NewWallet(ctx)
+		if err != nil {
+			return nil, nil, err
+		}
+
+		tx := types.NewTx(&types.LegacyTx{
+			Nonce:    nonce,
+			To:       &wallets[i].Address,
+			Value:    Eth_100,
+			Gas:      21000,
+			GasPrice: gasPrice,
+		})
+
+		tx, err := types.SignTx(tx, signer, seederPrivateKey)
+		if err != nil {
+			return nil, nil, err
+		}
+
+		if err := client.SendTransaction(ctx, tx); err != nil {
+			return nil, nil, err
+		}
+
+		lastFundTx = tx
+		nonce++
+	}
+
+	// wait for all fund txs to be mined
+	for {
+		<-time.After(25 * time.Millisecond)
+		receipt, err := client.TransactionReceipt(ctx, lastFundTx.Hash())
+		if receipt != nil && receipt.Status == 1 {
+			break
+		} else if receipt != nil && receipt.Status == 0 {
+			return nil, nil, base.RiverError(protocol.Err_INTERNAL, "could not fund wallet")
+		} else if !errors.Is(err, ethereum.NotFound) {
+			return nil, nil, err
+		}
+	}
+
+	return wallets, client, nil
 }
 
 func initAnvil(ctx context.Context, url string, numKeys int) ([]*Wallet, *ethclient.Client, error) {
@@ -84,8 +167,19 @@ func NewBlockchainTestContext(ctx context.Context, numKeys int) (*BlockchainTest
 	var ethClient *ethclient.Client
 	var client BlockchainClient
 	var err error
+
+	remoteNodeURL := os.Getenv("RIVER_REMOTE_NODE_URL")
+	remoteFundAccount := os.Getenv("RIVER_REMOTE_NODE_FUND_PRIVATE_KEY")
 	anvilUrl := os.Getenv("RIVER_TEST_ANVIL_URL")
-	if anvilUrl != "" {
+
+	remoteNode := remoteNodeURL != "" && remoteFundAccount != ""
+	if remoteNode {
+		wallets, ethClient, err = initRemoteNode(ctx, remoteNodeURL, remoteFundAccount, numKeys)
+		if err != nil {
+			return nil, err
+		}
+		client = ethClient
+	} else if anvilUrl != "" {
 		wallets, ethClient, err = initAnvil(ctx, anvilUrl, numKeys)
 		if err != nil {
 			return nil, err
@@ -136,6 +230,7 @@ func NewBlockchainTestContext(ctx context.Context, numKeys int) (*BlockchainTest
 		StreamRegistry:       stream_registry,
 		ChainId:              chainId,
 		DeployerBlockchain:   deployerBC,
+		RemoteNode:           remoteNode,
 	}
 
 	err = btc.mineBlock()
@@ -147,6 +242,27 @@ func NewBlockchainTestContext(ctx context.Context, numKeys int) (*BlockchainTest
 }
 
 func (c *BlockchainTestContext) mineBlock() error {
+	if c.RemoteNode {
+		//lint:ignore LE0000 context.Background() used correctly
+		ctx, cancel := context.WithTimeout(context.Background(), 30*time.Second)
+		defer cancel()
+
+		head, err := c.EthClient.HeaderByNumber(ctx, nil)
+		if err != nil {
+			return err
+		}
+
+		for {
+			<-time.After(500 * time.Millisecond)
+			newHead, err := c.EthClient.HeaderByNumber(ctx, nil)
+			if err != nil {
+				return err
+			}
+			if newHead.Number.Cmp(head.Number) > 0 {
+				return nil
+			}
+		}
+	}
 	c.backendMutex.Lock()
 	defer c.backendMutex.Unlock()
 
@@ -200,7 +316,11 @@ func (c *BlockchainTestContext) IsAnvil() bool {
 }
 
 func (c *BlockchainTestContext) IsSimulated() bool {
-	return c.Backend != nil
+	return c.Backend != nil && !c.RemoteNode
+}
+
+func (c *BlockchainTestContext) IsRemote() bool {
+	return c.RemoteNode
 }
 
 func (c *BlockchainTestContext) GetDeployerWallet() *Wallet {

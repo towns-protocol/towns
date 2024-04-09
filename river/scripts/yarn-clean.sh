@@ -55,4 +55,7 @@ find . -type d -not -path "./.git/*" -print0 | while IFS= read -r -d '' dir; do
     fi
 done
 
+echo "removing anvil tmp files" # --prune-history should be the default when running anvil, but it doesn't work
+rm -rf ~/.foundry/anvil/tmp
+
 popd

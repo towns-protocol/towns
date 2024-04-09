@@ -96,7 +96,7 @@ deploy-base :;
 
 interact-base :;
 	@echo "Interacting through $(contract)..."
-	@forge script scripts/interactions/${contract}.s.sol:${contract} --ffi --rpc-url base --private-key ${BASE_PRIVATE_KEY} --broadcast --watch
+	@forge script scripts/interactions/${contract}.s.sol:${contract} --ffi --rpc-url base --private-key ${BASE_PRIVATE_KEY} --broadcast
 
 verify-base :;
 	@forge verify-contract ${address} ${contract} --verifier-url ${BASESCAN_URL} -e ${BASESCAN_API_KEY}
@@ -107,10 +107,14 @@ verify-base :;
 
 deploy-sepolia :;
 	@echo "Deploying $(contract)..."
-	@SAVE_DEPLOYMENTS=1 forge script scripts/deployments/$(if $(findstring facet,$(type)),facets/)${contract}.s.sol:${contract} --ffi --rpc-url sepolia --private-key ${BASE_PRIVATE_KEY} --broadcast --verify --watch -vvvv
+	@SAVE_DEPLOYMENTS=1 forge script scripts/deployments/$(if $(findstring facet,$(type)),facets/)${contract}.s.sol:${contract} --ffi --rpc-url sepolia --private-key ${BASE_PRIVATE_KEY} --broadcast --verify -vvvv
 
 verify-sepolia :;
 	@forge verify-contract ${address} ${contract} --chain sepolia
+
+interact-sepolia :;
+	@echo "Interacting through $(contract)..."
+	@forge script scripts/interactions/${contract}.s.sol:${contract} --ffi --rpc-url sepolia --private-key ${BASE_PRIVATE_KEY} --broadcast
 
 # ===========================
 # 				Mainnet

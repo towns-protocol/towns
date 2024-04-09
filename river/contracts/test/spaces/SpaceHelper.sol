@@ -35,7 +35,7 @@ abstract contract SpaceHelper {
           requirements: IArchitectBase.MembershipRequirements({
             everyone: false,
             users: users,
-            ruleData: RuleEntitlementUtil.getNoopRuleData()
+            ruleData: RuleEntitlementUtil.getMockERC721RuleData()
           }),
           permissions: new string[](0)
         }),
