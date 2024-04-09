@@ -3,7 +3,6 @@ export const PATHS = {
     CHANNELS: 'channels',
     REPLIES: 'replies',
     REGISTER: 'register',
-    GETTING_STARTED: 'getting-started',
     MENTIONS: 'mentions',
     MEMBERS: 'members',
     THREADS: 'threads',

@@ -2,12 +2,9 @@ import React, { useCallback, useRef, useState } from 'react'
 import { useNavigate, useParams } from 'react-router'
 import { useEvent } from 'react-use-event-hook'
 import {
-    Membership,
     Permission,
     SpaceData,
     useHasPermission,
-    useIsSpaceOwner,
-    useMyMembership,
     useSpaceThreadRootsUnreadCount,
     useSpaceUnreadThreadMentions,
 } from 'use-towns-client'
@@ -17,13 +14,12 @@ import { ActionNavItem } from '@components/NavItem/ActionNavItem'
 import { ChannelNavGroup } from '@components/NavItem/ChannelNavGroup'
 import { ChannelNavItem } from '@components/NavItem/ChannelNavItem'
 import { CreateChannelFormContainer } from '@components/Web3/CreateChannelForm'
-import { Badge, Box, Button, Card, Icon, IconButton, MotionBox, Stack, Text } from '@ui'
+import { Badge, Box, Card, IconButton, MotionBox, Stack, Text } from '@ui'
 import { useAuth } from 'hooks/useAuth'
 import { useCreateLink } from 'hooks/useCreateLink'
 import { useShortcut } from 'hooks/useShortcut'
 import { useSortedChannels } from 'hooks/useSortedChannels'
 import { CHANNEL_INFO_PARAMS, PATHS } from 'routes'
-import { useStore } from 'store/store'
 import { ReloadPrompt } from '@components/ReloadPrompt/ReloadPrompt'
 import { env } from 'utils'
 import { useDevice } from 'hooks/useDevice'
@@ -46,10 +42,6 @@ export const SpaceSideBar = (props: Props) => {
     const { unseenChannelIds } = useUnseenChannelIds()
 
     const unreadThreadsCount = useSpaceThreadRootsUnreadCount()
-    const membership = useMyMembership(space?.id)
-    const { isOwner } = useIsSpaceOwner(space.id, loggedInWalletAddress)
-    const setDismissedGettingStarted = useStore((state) => state.setDismissedGettingStarted)
-    const dismissedGettingStartedMap = useStore((state) => state.dismissedGettingStartedMap)
 
     const [isCreateChannelModalVisible, setCreateChannelModalVisible] = useState(false)
     const onHideCreateChannel = useEvent(() => setCreateChannelModalVisible(false))
@@ -70,15 +62,6 @@ export const SpaceSideBar = (props: Props) => {
         walletAddress: loggedInWalletAddress ?? '',
         permission: Permission.AddRemoveChannels,
     })
-
-    const onRemoveGettingStarted = useCallback(
-        (e: React.MouseEvent) => {
-            e.preventDefault()
-            e.stopPropagation()
-            setDismissedGettingStarted(space.id)
-        },
-        [setDismissedGettingStarted, space.id],
-    )
 
     const [hasScrolldedPastHeader, setHasScrolledPastHeader] = useState(false)
     const [scrollOffset, setScrollOffset] = useState(1)
@@ -157,28 +140,6 @@ export const SpaceSideBar = (props: Props) => {
                     />
 
                     <Stack grow paddingY="md">
-                        {membership === Membership.Join && (
-                            <>
-                                {isOwner && !dismissedGettingStartedMap[space.id] && (
-                                    <Box className={styles.buttonTextParent}>
-                                        <ActionNavItem
-                                            icon="wand"
-                                            id="getting-started"
-                                            label="Getting Started"
-                                            link={`/${PATHS.SPACES}/${space.id}/${PATHS.GETTING_STARTED}`}
-                                            minHeight="x5"
-                                        >
-                                            <Button
-                                                className={styles.buttonText}
-                                                onClick={onRemoveGettingStarted}
-                                            >
-                                                <Icon type="close" />
-                                            </Button>
-                                        </ActionNavItem>
-                                    </Box>
-                                )}
-                            </>
-                        )}
                         {space.isLoadingChannels ? (
                             <SidebarLoadingAnimation />
                         ) : (

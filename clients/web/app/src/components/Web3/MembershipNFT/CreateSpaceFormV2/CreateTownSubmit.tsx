@@ -308,8 +308,8 @@ export function CreateTownSubmit({
                     return
                 }
 
-                if (result?.data && result?.data.spaceId) {
-                    const newPath = `/${PATHS.SPACES}/${result?.data.spaceId}/${PATHS.GETTING_STARTED}`
+                if (result?.data && result.data.spaceId && result.data.channelId) {
+                    const newPath = `/${PATHS.SPACES}/${result.data.spaceId}/${PATHS.CHANNELS}/${result.data.channelId}`
                     const networkId = result.data.spaceId
 
                     if (values.spaceIconUrl && values.spaceIconFile) {

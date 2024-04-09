@@ -9,7 +9,6 @@ import { CreateMessagePanel } from '@components/DirectMessages/CreateDirectMessa
 import { Panel } from '@components/Panel/Panel'
 import { CardLabel } from '@ui'
 import { ChannelSettings } from './ChannelSettings'
-import { SpaceGettingStarted } from './SpaceGettingStarted'
 import { SpaceHome, TouchHome } from './home'
 import { SpaceMentions } from './SpaceMentions'
 import { SpacesChannel, SpacesChannelRoute } from './SpacesChannel'
@@ -165,7 +164,6 @@ const OutsideTownRoutes = () => {
  */
 const TownRoutes = () => (
     <Routes>
-        <Route path={PATHS.GETTING_STARTED} element={<SpaceGettingStarted />} />
         <Route path={PATHS.INVITE} element={<SpacesInvite />} />
         <Route path={PATHS.SEARCH} element={<TouchSearchTab />} />
 

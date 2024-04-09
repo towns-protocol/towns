@@ -12,8 +12,6 @@ interface AppState {
     setPaneSize: (id: string, size: number) => void
     isWindowFocused: boolean
     setIsWindowFocused: (isWindowActive: boolean) => void
-    dismissedGettingStartedMap: { [spaceId: string]: string }
-    setDismissedGettingStarted: (spaceId: string) => void
     setTownRouteBookmark: (spaceId: string, route: string) => void
     townRouteBookmarks: { [spaceId: string]: string }
     spaceIdBookmark?: string
@@ -76,15 +74,6 @@ export const useStore = create(
             },
 
             channelMessageInputMap: {},
-            dismissedGettingStartedMap: {},
-            setDismissedGettingStarted: (spacedId) => {
-                set((state) => ({
-                    dismissedGettingStartedMap: {
-                        ...state.dismissedGettingStartedMap,
-                        [spacedId]: spacedId,
-                    },
-                }))
-            },
 
             paneSizes: {},
             setPaneSize: (id: string, size: number) =>
