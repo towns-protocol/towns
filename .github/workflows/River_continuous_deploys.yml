@@ -1,0 +1,21 @@
+name: 'River_continuous_deploys'
+
+on:
+    workflow_dispatch:
+
+concurrency:
+    group: ${{ github.workflow }}
+    cancel-in-progress: false
+
+jobs:
+    compare_docker_images:
+        name: Deploy to AWS ECS
+        runs-on: ubuntu-latest
+
+        permissions:
+            contents: read
+            packages: read
+
+        steps:
+            - name: Checkout
+              uses: actions/checkout@v4
