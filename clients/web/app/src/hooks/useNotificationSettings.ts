@@ -157,7 +157,6 @@ export function useNotificationSettings(
                         spaceId: s,
                         spaceMute: Mute.Default,
                     }
-                    console.log('useNotificationSettings', 'added space notification settings', s)
                 }
             }
         }
@@ -165,7 +164,6 @@ export function useNotificationSettings(
             for (const s of removedSpaceSettings) {
                 settingsIsUpdated = true
                 delete spaceSettings[s]
-                console.log('useNotificationSettings', 'removed space notification settings', s)
             }
         }
         if (settingsIsUpdated) {
@@ -197,11 +195,6 @@ export function useNotificationSettings(
                             spaceId: s,
                             channelMute: Mute.Default,
                         }
-                        console.log(
-                            'useNotificationSettings',
-                            'added channel notification settings',
-                            c.id,
-                        )
                     }
                 }
             }
@@ -218,18 +211,12 @@ export function useNotificationSettings(
                     spaceId: '',
                     channelMute: Mute.Default,
                 }
-                console.log(
-                    'useNotificationSettings',
-                    'added dm channel notification settings',
-                    dm.id,
-                )
             }
         }
         if (channelSettings && removedChannelSettings) {
             for (const c of removedChannelSettings) {
                 settingsIsUpdated = true
                 delete channelSettings[c]
-                console.log('useNotificationSettings', 'removed channel notification settings', c)
             }
         }
         if (settingsIsUpdated) {
