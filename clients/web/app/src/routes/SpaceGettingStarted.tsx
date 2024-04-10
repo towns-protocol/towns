@@ -1,14 +1,13 @@
 import React, { useEffect } from 'react'
-import { useIsSpaceOwner, useSpaceData } from 'use-towns-client'
+import { useConnectivity, useIsSpaceOwner, useSpaceData } from 'use-towns-client'
 import { useNavigate } from 'react-router'
 import { Stack } from '@ui'
 import { SpaceOwnerLanding } from '@components/SpaceOwnerLanding'
 import { PATHS } from 'routes'
-import { useAuth } from 'hooks/useAuth'
 
 export const SpaceGettingStarted = () => {
     const space = useSpaceData()
-    const { loggedInWalletAddress } = useAuth()
+    const { loggedInWalletAddress } = useConnectivity()
     const { isOwner, isLoading } = useIsSpaceOwner(space?.id, loggedInWalletAddress)
     const navigate = useNavigate()
 

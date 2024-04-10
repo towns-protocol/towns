@@ -1,7 +1,6 @@
 import React, { useCallback } from 'react'
-import { useSpaceContext, useTownsContext } from 'use-towns-client'
+import { useConnectivity, useSpaceContext, useTownsContext } from 'use-towns-client'
 import { useNavigate } from 'react-router'
-import { useAuth } from 'hooks/useAuth'
 import { shortAddress } from 'ui/utils/utils'
 import { Box, IconButton, MotionBox, MotionStack, Stack, Text } from '@ui'
 import { SpaceNavItem } from '@components/NavItem/SpaceNavItem'
@@ -16,7 +15,7 @@ type Props = {
 export const TouchHomeOverlay = (props: Props) => {
     const { onClose } = props
 
-    const { loggedInWalletAddress } = useAuth()
+    const { loggedInWalletAddress } = useConnectivity()
     const { spaces } = useTownsContext()
     const { spaceId } = useSpaceContext()
     const navigate = useNavigate()

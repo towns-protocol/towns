@@ -30,12 +30,14 @@ import { SUDOLETS_MOCK } from '../../../mocks/token-collections'
 
 const [roleWithEveryone, roleWithMemberMNft] = roleDataWithBothRolesAssignedToChannel
 
-vi.mock('hooks/useAuth', async () => {
-    const actual = (await vi.importActual('hooks/useAuth')) as typeof import('hooks/useAuth')
+vi.mock('privy/useCombinedAuth', async () => {
+    const actual = (await vi.importActual(
+        'privy/useCombinedAuth',
+    )) as typeof import('privy/useCombinedAuth')
 
     return {
         ...actual,
-        useAuth: () => ({
+        useCombinedAuth: () => ({
             register: () => Promise.resolve(),
             loggedInWalletAddress: '0x1234',
             isConnected: true,

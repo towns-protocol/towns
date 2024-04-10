@@ -4,7 +4,7 @@ import '@testing-library/jest-dom/extend-expect' // dont delete this line its ne
 import { vi } from 'vitest'
 import { act } from 'react-test-renderer'
 import { ResizeObserver } from '@juggle/resize-observer' // dependency of react-hook/resize-observer
-import { ConnectedWallet, EIP1193Provider } from '@privy-io/react-auth'
+import { ConnectedWallet, EIP1193Provider, PrivyProvider } from '@privy-io/react-auth'
 import { Chain } from 'viem'
 
 server.listen()
@@ -61,6 +61,7 @@ vi.mock('@privy-io/react-auth', async () => {
             ],
         }),
         addRpcUrlOverrideToChain: (c: Chain) => c,
+        PrivyProvider: ({ children }: { children: JSX.Element }) => children,
     }
 })
 

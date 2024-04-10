@@ -12,13 +12,14 @@ import { debug } from 'debug'
 import { isAddress } from 'ethers/lib/utils'
 import { usePrivy } from '@privy-io/react-auth'
 import { useEmbeddedWallet } from '@towns/privy'
-import { Box, Button, Divider, Icon, Stack, Text, TextField } from '@ui'
+import { PrivyWrapper } from 'privy/PrivyProvider'
+import { Box, Button, Divider, Stack, Text, TextField } from '@ui'
 import { ModalContainer } from '@components/Modals/ModalContainer'
 import { shortAddress } from 'ui/utils/utils'
 import { isTouch } from 'hooks/useDevice'
 
 import { ENVIRONMENTS, TownsEnvironmentInfo, UseEnvironmentReturn } from 'hooks/useEnvironmnet'
-import { useAuth } from 'hooks/useAuth'
+import { useCombinedAuth } from 'privy/useCombinedAuth'
 import { useMockNftBalance } from 'hooks/useMockNftBalance'
 import { useBalance } from 'hooks/useBalance'
 
@@ -29,11 +30,7 @@ type ModalProps = {
     onHide: () => void
     platform: string
     synced: boolean
-    environmentId?: string
-    chainId: number
-    chainName: string
-    onSwitchEnvironment: (env: TownsEnvironmentInfo) => void
-    onClear: () => void
+    environment: UseEnvironmentReturn
 }
 
 type FundProps = {
@@ -144,31 +141,52 @@ const FundButton = (props: FundProps & { disabled: boolean }) => {
     )
 }
 
-const DebugModal = ({
-    environmentId,
-    chainId,
-    chainName,
-    onHide,
-    onSwitchEnvironment,
-    onClear,
-}: ModalProps) => {
+const DebugModal = ({ onHide, environment }: ModalProps) => {
     const { baseProvider: provider, baseChain } = useTownsContext()
     const walletChain = baseChain
     const { logout: libLogout } = useConnectivity()
-    const { logout: fullLogout, loggedInWalletAddress } = useAuth()
+    const { logout: fullLogout } = useCombinedAuth()
     const { logout: privyLogout } = usePrivy()
+    const { loggedInWalletAddress } = useConnectivity()
+    const { setEnvironment, clearEnvironment } = environment
+
+    const switchNetwork = useAsyncSwitchNetwork()
+
+    const onSwitchEnvironment = useCallback(
+        async (env: TownsEnvironmentInfo) => {
+            log('onSwitchEnvironment', { env })
+            if (env.baseChain.id !== environment.baseChain.id) {
+                log('onSwitchEnvironment switching chain')
+                const newChainId = await switchNetwork?.(env.baseChain.id)
+                log('onSwitchEnvironment switched chain', { newChainId })
+            }
+            if (env.id !== environment.id) {
+                log('onSwitchEnvironment logging out')
+                await fullLogout()
+                log('onSwitchEnvironment updating environment')
+                setEnvironment(env.id)
+                goHome()
+            }
+        },
+        [environment, fullLogout, setEnvironment, switchNetwork],
+    )
+
+    const onClear = useCallback(() => {
+        clearEnvironment()
+    }, [clearEnvironment])
+
     return (
         <ModalContainer onHide={onHide}>
             <Stack gap="lg">
                 <Text strong size="sm">
-                    Environment: {environmentId}
+                    Environment: {environment.id}
                 </Text>
                 <Text strong size="sm">
                     Wallet Chain: {walletChain?.name || 'Not connected'}{' '}
-                    {walletChain?.id !== chainId && '(Mismatch)'}
+                    {walletChain?.id !== environment.baseChain.id && '(Mismatch)'}
                 </Text>
                 <Text strong size="sm">
-                    App chain: {chainName}
+                    App chain: {environment.baseChain.name}
                 </Text>
                 {walletChain?.name && (
                     <>
@@ -186,7 +204,7 @@ const DebugModal = ({
                                     accountId={loggedInWalletAddress}
                                     disabled={walletChain.id !== 31337}
                                     provider={provider}
-                                    chainId={chainId}
+                                    chainId={environment.baseChain.id}
                                 />
                             )}
                         </Box>
@@ -200,9 +218,9 @@ const DebugModal = ({
                                     size="button_xs"
                                     tone="accent"
                                     disabled={
-                                        chainId === env.baseChain.id &&
+                                        environment.baseChain.id === env.baseChain.id &&
                                         walletChain.id === env.baseChain.id &&
-                                        environmentId === env.id
+                                        environment.id === env.id
                                     }
                                     onClick={() => onSwitchEnvironment(env)}
                                 >
@@ -273,18 +291,14 @@ const useAsyncSwitchNetwork = () => {
 
     const switchNetwork = useCallback(
         async (chainId: number) => {
-            if (!embeddedWallet) {
-                throw new Error('embeddedWallet not available')
-            }
             try {
-                await embeddedWallet.switchChain(chainId)
+                await embeddedWallet?.switchChain(chainId)
                 log('switched network to', chainId)
                 resolveRef.current?.(chainId)
             } catch (error) {
                 console.error('switch network error', error)
                 rejectRef.current?.(error as Error)
             }
-            return embeddedWallet.switchChain(chainId)
         },
         [embeddedWallet],
     )
@@ -317,30 +331,8 @@ const useAsyncSwitchNetwork = () => {
 
 const DebugBar = (environment: UseEnvironmentReturn) => {
     const chain = environment.baseChain
-    const { logout } = useAuth()
     const [modal, setModal] = useState(false)
-    const { setEnvironment, clearEnvironment, accountAbstractionConfig } = environment
-
-    const switchNetwork = useAsyncSwitchNetwork()
-
-    const onSwitchEnvironment = useCallback(
-        async (env: TownsEnvironmentInfo) => {
-            log('onSwitchEnvironment', { env })
-            if (env.baseChain.id !== chain?.id) {
-                log('onSwitchEnvironment switching chain')
-                const newChainId = await switchNetwork?.(env.baseChain.id)
-                log('onSwitchEnvironment switched chain', { newChainId })
-            }
-            if (env.id !== environment.id) {
-                log('onSwitchEnvironment logging out')
-                await logout()
-                log('onSwitchEnvironment updating environment')
-                setEnvironment(env.id)
-                goHome()
-            }
-        },
-        [chain?.id, environment, logout, setEnvironment, switchNetwork],
-    )
+    const { accountAbstractionConfig } = environment
 
     const onHide = useEvent(() => {
         setModal(false)
@@ -357,12 +349,7 @@ const DebugBar = (environment: UseEnvironmentReturn) => {
 
     const platform = !chain?.name ? ` ${serverName}` : `w: ${chain.id} | ${serverName}`
 
-    const onClear = useCallback(() => {
-        clearEnvironment()
-    }, [clearEnvironment])
-
     const touch = isTouch()
-    const { isConnected } = useAuth()
 
     return (
         <Box
@@ -378,16 +365,14 @@ const DebugBar = (environment: UseEnvironmentReturn) => {
             justifyContent={touch ? 'start' : 'end'}
         >
             {modal && (
-                <DebugModal
-                    environmentId={environment.id}
-                    chainId={environment.baseChain.id}
-                    chainName={environment.baseChain.name}
-                    platform={platform}
-                    synced={synced}
-                    onSwitchEnvironment={onSwitchEnvironment}
-                    onClear={onClear}
-                    onHide={onHide}
-                />
+                <PrivyWrapper>
+                    <DebugModal
+                        environment={environment}
+                        platform={platform}
+                        synced={synced}
+                        onHide={onHide}
+                    />
+                </PrivyWrapper>
             )}
             <Box flexDirection="row" alignItems="center" cursor="pointer" gap="sm" onClick={onShow}>
                 {touch ? (
@@ -429,12 +414,6 @@ const DebugBar = (environment: UseEnvironmentReturn) => {
                         </Box>
                         <Text strong as="span" size="xs">
                             {platform}&nbsp; | app: {environment.baseChain.id} | Connected: &nbsp;
-                            <Icon
-                                display="inline-block"
-                                size="square_xxs"
-                                type={isConnected ? 'check' : 'alert'}
-                                color={isConnected ? 'cta1' : 'error'}
-                            />
                         </Text>
                     </>
                 )}

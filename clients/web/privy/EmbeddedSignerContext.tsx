@@ -33,6 +33,10 @@ export function EmbeddedSignerContextProvider({
     // useGetEmbeddedSignerContext below checks for privy authentication, so we'll still reject txs if the user isn't authenticated even if the embedded wallet is set
     useEffect(() => {
         if (embeddedWallet && !store.getState().embeddedWallet) {
+            console.log(
+                '[EmbeddedSignerContextProvider]: saving embedded wallet ',
+                embeddedWallet.address,
+            )
             store.getState().setEmbeddedWallet(embeddedWallet)
         }
     }, [embeddedWallet])

@@ -1,19 +1,16 @@
 import React from 'react'
-import { LoginStatus } from 'use-towns-client'
+import { LoginStatus, useConnectivity } from 'use-towns-client'
 import { usePrivy } from '@privy-io/react-auth'
-import { useAuth } from 'hooks/useAuth'
+import { PrivyWrapper } from 'privy/PrivyProvider'
+import { useCombinedAuth } from 'privy/useCombinedAuth'
 import { Box, FancyButton } from '@ui'
 import { useErrorToast } from 'hooks/useErrorToast'
 import { mapToErrorMessage } from '@components/Web3/utils'
 
-export function LoginComponent() {
+function LoginComponent() {
     const { ready: privyReady } = usePrivy()
-    const {
-        login,
-        loginError,
-        riverLoginStatus: libLoginStatus,
-        isAutoLoggingInToRiver,
-    } = useAuth()
+    const { login, isAutoLoggingInToRiver } = useCombinedAuth()
+    const { loginError, loginStatus: libLoginStatus } = useConnectivity()
 
     const errorMessage = loginError ? mapToErrorMessage(loginError) : undefined
 
@@ -35,4 +32,12 @@ export function LoginComponent() {
     )
 }
 
-export default LoginComponent
+function LoginWithAuth() {
+    return (
+        <PrivyWrapper>
+            <LoginComponent />
+        </PrivyWrapper>
+    )
+}
+
+export default LoginWithAuth

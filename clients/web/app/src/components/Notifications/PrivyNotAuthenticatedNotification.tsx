@@ -2,11 +2,11 @@ import React, { useCallback, useState } from 'react'
 import headlessToast, { Toast } from 'react-hot-toast/headless'
 import { sleep } from 'use-towns-client'
 import { Box, Button, Icon, IconButton, Text } from '@ui'
-import { useAuth } from 'hooks/useAuth'
+import { useCombinedAuth } from 'privy/useCombinedAuth'
 import { ButtonSpinner } from 'ui/components/Spinner/ButtonSpinner'
 
 export const PrivyNotAuthenticatedNotification = ({ toast }: { toast: Toast }) => {
-    const { login, logout } = useAuth()
+    const { login, logout } = useCombinedAuth()
     const [isTransitioning, setIsTransitioning] = useState(false)
     const [isLogoutError, setIsLogoutError] = useState(false)
 

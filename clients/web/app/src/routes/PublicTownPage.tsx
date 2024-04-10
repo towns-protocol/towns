@@ -5,6 +5,7 @@ import { Link } from 'react-router-dom'
 import {
     BlockchainTransactionType,
     Permission,
+    useConnectivity,
     useContractSpaceInfo,
     useHasPermission,
     useIsTransactionPending,
@@ -16,6 +17,7 @@ import { isAddress } from 'viem'
 import { Allotment } from 'allotment'
 import { clsx } from 'clsx'
 import { BigNumberish, ethers } from 'ethers'
+import { PrivyWrapper } from 'privy/PrivyProvider'
 import { TokenVerification } from '@components/Web3/TokenVerification/TokenVerification'
 import { Avatar } from '@components/Avatar/Avatar'
 import { ClipboardCopy } from '@components/ClipboardCopy/ClipboardCopy'
@@ -40,7 +42,7 @@ import {
     Stack,
     Text,
 } from '@ui'
-import { useAuth } from 'hooks/useAuth'
+import { useCombinedAuth } from 'privy/useCombinedAuth'
 import { useErrorToast } from 'hooks/useErrorToast'
 import { useJoinTown } from 'hooks/useJoinTown'
 import { useGetSpaceIdentity } from 'hooks/useSpaceIdentity'
@@ -62,12 +64,16 @@ log.enabled = true
 
 const LoginComponent = React.lazy(() => import('@components/Login/LoginComponent'))
 
-export const PublicTownPage = (props: { isPreview?: boolean; onClosePreview?: () => void }) => {
+export const PublicTownPageWithoutAuth = (props: {
+    isPreview?: boolean
+    onClosePreview?: () => void
+}) => {
     const { isPreview = false, onClosePreview } = props
     const { spaceSlug } = useParams()
     // TEMPORARY joining state until hook is built for minting
     const [isJoining, setIsJoining] = useState(false)
-    const { isConnected, loggedInWalletAddress } = useAuth()
+    const { isConnected } = useCombinedAuth()
+    const { loggedInWalletAddress } = useConnectivity()
     const { data: spaceInfo, isLoading } = useContractSpaceInfo(spaceSlug)
     const { data: spaceIdentity } = useGetSpaceIdentity(spaceSlug)
     const { data: membershipInfo } = useReadableMembershipInfo(spaceInfo?.networkId ?? '')
@@ -77,7 +83,9 @@ export const PublicTownPage = (props: { isPreview?: boolean; onClosePreview?: ()
         error: membershipPriceError,
     } = useMembershipPriceInWei()
 
-    const { isAuthenticatedAndConnected } = useAuth()
+    const { isAuthenticated } = useConnectivity()
+    const isAuthenticatedAndConnected = isConnected && isAuthenticated
+
     const [assetModal, setAssetModal] = useState(false)
     const showAssetModal = () => setAssetModal(true)
     const hideAssetModal = () => setAssetModal(false)
@@ -178,6 +186,14 @@ export const PublicTownPage = (props: { isPreview?: boolean; onClosePreview?: ()
     )
 }
 
+export const PublicTownPage = (props: { isPreview?: boolean; onClosePreview?: () => void }) => {
+    return (
+        <PrivyWrapper>
+            <PublicTownPageWithoutAuth {...props} />
+        </PrivyWrapper>
+    )
+}
+
 const Header = (props: {
     isConnected: boolean
     isPreview: boolean
@@ -192,7 +208,7 @@ const Header = (props: {
     const onHideBugReport = useCallback(() => {
         setIsShowingBugReport(false)
     }, [setIsShowingBugReport])
-    const { login } = useAuth()
+    const { login } = useCombinedAuth()
 
     return (
         <Box horizontal centerContent width="100%">
@@ -405,7 +421,9 @@ const LoggedUserAvatar = () => {
     // but b/c this page is for both public and authed users, there are edge cases where a user might have profile data
     // but some other condition for them to be authed is not met (like the signer is not set)
     // so we should check for this too to avoid misleading UI
-    const { isAuthenticatedAndConnected } = useAuth()
+    const { isConnected } = useCombinedAuth()
+    const { isAuthenticated } = useConnectivity()
+    const isAuthenticatedAndConnected = isConnected && isAuthenticated
 
     if (!isAuthenticatedAndConnected || !profileUser) {
         return
@@ -428,7 +446,8 @@ const LoggedUserAvatar = () => {
 }
 
 const LoggedUserMenu = () => {
-    const { logout, loggedInWalletAddress } = useAuth()
+    const { logout } = useCombinedAuth()
+    const { loggedInWalletAddress } = useConnectivity()
     const { data: abstractAccountAddress } = useAbstractAccountAddress({
         rootKeyAddress: loggedInWalletAddress,
     })

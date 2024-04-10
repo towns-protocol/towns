@@ -1,10 +1,9 @@
 import { z } from 'zod'
 import { isAddress } from 'ethers/lib/utils'
-import { Address, useLinkedWallets } from 'use-towns-client'
+import { Address, useConnectivity, useLinkedWallets } from 'use-towns-client'
 import { useQuery, useQueryClient } from '@tanstack/react-query'
 import { useEffect, useMemo, useState } from 'react'
 import { create } from 'zustand'
-import { useAuth } from 'hooks/useAuth'
 import { ArrayElement } from 'types'
 import { TokenGatingMembership } from 'hooks/useTokensGatingMembership'
 import { env } from 'utils'
@@ -141,7 +140,7 @@ export function useWatchLinkedWalletsForToken({
     token: ArrayElement<TokenGatingMembership['tokens']>
 }) {
     const { data: linkedWallets } = useLinkedWallets()
-    const { loggedInWalletAddress } = useAuth()
+    const { loggedInWalletAddress } = useConnectivity()
     // state for deterniming if a wallet is freshly linked in this session
     const [seenWallets, setSeenWallets] = useState<Address[] | undefined>(() => {
         if (loggedInWalletAddress && linkedWallets) {

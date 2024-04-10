@@ -1,9 +1,10 @@
 import React, { useState } from 'react'
-import { useConnectWallet, usePrivy, useWallets } from '@privy-io/react-auth'
+import { useConnectWallet, usePrivy } from '@privy-io/react-auth'
 import { useEmbeddedWallet, useGetEmbeddedSigner } from '@towns/privy'
 import {
     Address,
     BlockchainTransactionType,
+    useConnectivity,
     useIsTransactionPending,
     useLinkCallerToRootKey,
     useLinkEOAToRootKeyTransaction,
@@ -11,10 +12,10 @@ import {
     useUnlinkWalletTransaction,
 } from 'use-towns-client'
 import { useSearchParams } from 'react-router-dom'
+import { PrivyWrapper } from 'privy/PrivyProvider'
 import { Box, BoxProps, Button, Icon, IconButton, Paragraph, Stack, Text } from '@ui'
 import { PanelButton } from '@components/Panel/PanelButton'
 import { ClipboardCopy } from '@components/ClipboardCopy/ClipboardCopy'
-import { useAuth } from 'hooks/useAuth'
 import { shortAddress } from 'ui/utils/utils'
 import { ButtonSpinner } from 'ui/components/Spinner/ButtonSpinner'
 import { ModalContainer } from '@components/Modals/ModalContainer'
@@ -29,6 +30,14 @@ import { useBalance } from 'hooks/useBalance'
 import { formatEthDisplay } from './utils'
 
 export function WalletLinkingPanel() {
+    return (
+        <PrivyWrapper>
+            <WalletLinkingPanelWithoutAuth />
+        </PrivyWrapper>
+    )
+}
+
+function WalletLinkingPanelWithoutAuth() {
     const [unlinkModal, setUnlinkModal] = useState<{
         visible: boolean
         addressToUnlink?: Address
@@ -46,8 +55,7 @@ export function WalletLinkingPanel() {
             visible: false,
             addressToUnlink: undefined,
         })
-    const { loggedInWalletAddress } = useAuth()
-    const { wallets: connectedWallets } = useWallets()
+    const { loggedInWalletAddress } = useConnectivity()
     const { linkEOAToRootKeyTransaction } = useLinkEOAToRootKeyTransaction()
     const { linkCallerToRootKeyTransaction } = useLinkCallerToRootKey()
     const { unlinkWalletTransaction } = useUnlinkWalletTransaction()
@@ -64,7 +72,7 @@ export function WalletLinkingPanel() {
 
     async function onUnlinkClick(addressToUnlink: Address) {
         const signer = await getSigner()
-        if (!signer || !connectedWallets) {
+        if (!signer) {
             createPrivyNotAuthenticatedNotification()
             return
         }
@@ -287,12 +295,11 @@ export function LinkedWallet({
 }
 
 function ExportWallet() {
-    const { ready, authenticated, exportWallet } = usePrivy()
-    const isAuthenticated = ready && authenticated
+    const { exportWallet } = usePrivy()
     const embeddedWallet = !!useEmbeddedWallet()
     return (
         <IconButton
-            disabled={!isAuthenticated || !embeddedWallet}
+            disabled={!embeddedWallet}
             icon="linkOutWithFrame"
             color="default"
             onClick={exportWallet}

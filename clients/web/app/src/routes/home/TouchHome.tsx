@@ -10,6 +10,7 @@ import {
     Permission,
     RoomMember,
     SpaceData,
+    useConnectivity,
     useDMLatestMessage,
     useHasPermission,
     useMyMemberships,
@@ -51,7 +52,6 @@ import {
     Text,
     TextField,
 } from '@ui'
-import { useAuth } from 'hooks/useAuth'
 import { useCreateLink } from 'hooks/useCreateLink'
 import { useStore } from 'store/store'
 import { ButtonSpinner } from 'ui/components/Spinner/ButtonSpinner'
@@ -85,7 +85,7 @@ type Overlay = undefined | 'main-panel' | 'create-channel' | 'browse-channels'
 
 export const TouchHome = () => {
     const space = useSpaceData()
-    const { loggedInWalletAddress } = useAuth()
+    const { loggedInWalletAddress } = useConnectivity()
     const [isSearching, setIsSearching] = useState<boolean>(false)
     const [searchString, setSearchString] = useState<string>('')
     const [caretVisible, setCaretVisible] = useState<boolean>(false)

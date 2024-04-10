@@ -8,6 +8,7 @@ import {
     LookupUser,
     Permission,
     SpaceData,
+    useConnectivity,
     useGetRootKeyFromLinkedWallet,
     useHasPermission,
     useIsTransactionPending,
@@ -19,11 +20,12 @@ import {
 } from 'use-towns-client'
 import { useBanTransaction, useUnbanTransaction } from 'use-towns-client/dist/hooks/use-banning'
 import { useGetEmbeddedSigner } from '@towns/privy'
+import { PrivyWrapper } from 'privy/PrivyProvider'
 import { useGetUserBio } from 'hooks/useUserBio'
 import { Box, Button, Icon, Paragraph, Stack, Text } from '@ui'
 import { UserProfile } from '@components/UserProfile/UserProfile'
 import { getPrettyDisplayName } from 'utils/getPrettyDisplayName'
-import { useAuth } from 'hooks/useAuth'
+import { useCombinedAuth } from 'privy/useCombinedAuth'
 import { useStore } from 'store/store'
 import { usePushNotifications } from 'hooks/usePushNotifications'
 import { Panel } from '@components/Panel/Panel'
@@ -51,7 +53,13 @@ export const SpaceProfilePanel = (props: { children?: React.ReactNode }) => {
     )
 }
 
-export const SpaceProfile = (props: { children?: React.ReactNode }) => {
+export const SpaceProfile = (props: { children?: React.ReactNode }) => (
+    <PrivyWrapper>
+        <SpaceProfileWithoutAuth {...props} />
+    </PrivyWrapper>
+)
+
+const SpaceProfileWithoutAuth = (props: { children?: React.ReactNode }) => {
     const { client } = useTownsClient()
     const isAccountAbstractionEnabled = client?.isAccountAbstractionEnabled()
     const [search] = useSearchParams()
@@ -85,7 +93,8 @@ export const SpaceProfile = (props: { children?: React.ReactNode }) => {
         navigate(-1)
     })
 
-    const { logout, loggedInWalletAddress } = useAuth()
+    const { logout } = useCombinedAuth()
+    const { loggedInWalletAddress } = useConnectivity()
 
     const onLogoutClick = useEvent(() => {
         logout()

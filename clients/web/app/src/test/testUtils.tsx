@@ -7,7 +7,8 @@ import { MemoryRouter } from 'react-router'
 import { BrowserRouter } from 'react-router-dom'
 import { ethers } from 'ethers'
 import { ZLayerProvider } from '@ui'
-import { AuthContextProvider } from 'hooks/useAuth'
+// eslint-disable-next-line no-restricted-imports
+import { CombinedAuthContextProvider } from 'privy/useCombinedAuth'
 import '@testing-library/jest-dom'
 import { getCustomBaseChain, getCustomRiverChain } from 'customChains'
 
@@ -45,11 +46,11 @@ export const TestApp = (props: TestAppProps) => {
                 riverConfig={web3Deployment.river}
                 {...props.townsContextProviderProps}
             >
-                <AuthContextProvider>
+                <CombinedAuthContextProvider>
                     <QueryClientProvider client={queryClient}>
                         <Router initialEntries={props.initialEntries}>{props.children}</Router>
                     </QueryClientProvider>
-                </AuthContextProvider>
+                </CombinedAuthContextProvider>
             </Lib.TownsContextProvider>
         </ZLayerProvider>
     )

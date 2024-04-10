@@ -1,9 +1,8 @@
 import { default as React, useCallback } from 'react'
 import { useMatch } from 'react-router'
-import { useMyProfile } from 'use-towns-client'
+import { useConnectivity, useMyProfile } from 'use-towns-client'
 import { Avatar } from '@components/Avatar/Avatar'
 import { Box } from '@ui'
-import { useAuth } from 'hooks/useAuth'
 import { CHANNEL_INFO_PARAMS, PATHS } from 'routes'
 import { usePanelActions } from 'routes/layouts/hooks/usePanelActions'
 
@@ -12,7 +11,7 @@ export const ProfileCardButton = () => {
     const userId = myProfile?.userId
     const isSpaceCreateRoute = useMatch(`${PATHS.SPACES}/new`)
 
-    const { isAuthenticated } = useAuth()
+    const { isAuthenticated } = useConnectivity()
 
     const { openPanel, closePanel, isPanelOpen } = usePanelActions()
     const onClick = useCallback(() => {

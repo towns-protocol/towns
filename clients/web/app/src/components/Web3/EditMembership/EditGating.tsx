@@ -1,16 +1,17 @@
 import React, { useCallback, useMemo, useRef, useState } from 'react'
 import { UseFormReturn, useFormContext } from 'react-hook-form'
-import { useAuth } from 'hooks/useAuth'
+import { useConnectivity } from 'use-towns-client'
 import { useMultipleTokenMetadatasForChainIds } from 'api/lib/collectionMetadata'
 import { TokenDataWithChainId } from '@components/Tokens/types'
 import { mapTokenOptionsToTokenDataStruct } from '@components/SpaceSettingsPanel/utils'
 import { ErrorMessage, RadioCard, Stack } from '@ui'
 import { ButtonSpinner } from 'ui/components/Spinner/ButtonSpinner'
 import { TokenSelector } from '@components/Tokens/TokenSelector/TokenSelector'
+
 import { MembershipSettingsSchemaType } from '../MembershipNFT/CreateSpaceFormV2/CreateSpaceFormV2.schema'
 
 export function EditGating() {
-    const { loggedInWalletAddress: wallet } = useAuth()
+    const { loggedInWalletAddress: wallet } = useConnectivity()
     const formProps = useFormContext<MembershipSettingsSchemaType>()
     const setValue = formProps.setValue
     const getValues = formProps.getValues

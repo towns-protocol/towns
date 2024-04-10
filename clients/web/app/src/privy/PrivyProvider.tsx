@@ -1,10 +1,11 @@
-import React from 'react'
-import { PrivyProvider as TownsPrivyProvider } from '@towns/privy'
+import React, { createContext, useContext } from 'react'
+import { EmbeddedSignerContextProvider, PrivyProvider as TownsPrivyProvider } from '@towns/privy'
 import uniqBy from 'lodash/uniqBy'
 import { env } from 'utils'
 import { ENVIRONMENTS, useEnvironment } from 'hooks/useEnvironmnet'
 import { useStore } from 'store/store'
 import { Figma } from 'ui/styles/palette'
+import { CombinedAuthContextProvider } from './useCombinedAuth'
 import { Buffer } from 'buffer'
 
 // polyfill Buffer for client
@@ -22,7 +23,7 @@ const SUPPORTED_CHAINS = uniqBy(
 
 const logo = '/towns_privy.svg'
 
-export function PrivyProvider({ children }: { children: JSX.Element }) {
+function PrivyProvider({ children }: { children: JSX.Element }) {
     const { baseChain: chain } = useEnvironment()
     const theme = useStore((s) => s.getTheme())
 
@@ -50,5 +51,35 @@ export function PrivyProvider({ children }: { children: JSX.Element }) {
         >
             {children}
         </TownsPrivyProvider>
+    )
+}
+
+const AncestorContext = createContext<boolean>(false)
+
+function useAncestorContext() {
+    return useContext(AncestorContext)
+}
+
+/**
+ * This provider should wrap compoenents that require Privy: logging in or making transactions
+ * Every time this provider is used, it will load the privy sdk. Hopefully this does not cause issue
+ */
+export function PrivyWrapper({ children }: { children: JSX.Element }) {
+    const hasAncestorContext = useAncestorContext()
+    const environment = useEnvironment()
+
+    // If the parent is already a PrivyProvider, we don't need to wrap it again
+    if (hasAncestorContext) {
+        return <>{children}</>
+    }
+
+    return (
+        <AncestorContext.Provider value>
+            <PrivyProvider>
+                <EmbeddedSignerContextProvider chainId={environment.baseChain.id}>
+                    <CombinedAuthContextProvider>{children}</CombinedAuthContextProvider>
+                </EmbeddedSignerContextProvider>
+            </PrivyProvider>
+        </AncestorContext.Provider>
     )
 }

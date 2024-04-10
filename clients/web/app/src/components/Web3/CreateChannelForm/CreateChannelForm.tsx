@@ -3,6 +3,7 @@ import {
     SignerUndefinedError,
     TransactionStatus,
     WalletDoesNotMatchSignedInAccountError,
+    useConnectivity,
     useCreateChannelTransaction,
     useHasPermission,
     useMultipleRoleDetails,
@@ -13,6 +14,7 @@ import { useNavigate } from 'react-router'
 import { z } from 'zod'
 import { useGetEmbeddedSigner } from '@towns/privy'
 import { Toast, toast } from 'react-hot-toast/headless'
+import { PrivyWrapper } from 'privy/PrivyProvider'
 import {
     Box,
     Button,
@@ -40,7 +42,6 @@ import { UserOpTxModal } from '@components/Web3/UserOpTxModal/UserOpTxModal'
 import { createPrivyNotAuthenticatedNotification } from '@components/Notifications/utils'
 import { useDevice } from 'hooks/useDevice'
 import { useSpaceChannels } from 'hooks/useSpaceChannels'
-import { useAuth } from 'hooks/useAuth'
 import { mapToErrorMessage } from '../utils'
 
 type Props = {
@@ -77,7 +78,7 @@ export const CreateChannelForm = (props: Props) => {
     }, [_rolesDetails])
     const channels = useSpaceChannels()
     const channelNames = useMemo(() => new Set(channels?.map((c) => c.label) ?? []), [channels])
-    const { loggedInWalletAddress } = useAuth()
+    const { loggedInWalletAddress } = useConnectivity()
 
     const { isTouch } = useDevice()
 
@@ -402,14 +403,16 @@ export const CreateChannelFormContainer = ({
     )
 
     return (
-        <>
-            <CreateChannelForm
-                spaceId={spaceId}
-                onHide={onHide}
-                onCreateChannel={onCreateChannel}
-            />
-            <UserOpTxModal />
-        </>
+        <PrivyWrapper>
+            <>
+                <CreateChannelForm
+                    spaceId={spaceId}
+                    onHide={onHide}
+                    onCreateChannel={onCreateChannel}
+                />
+                <UserOpTxModal />
+            </>
+        </PrivyWrapper>
     )
 }
 

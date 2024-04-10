@@ -1,7 +1,7 @@
 import React from 'react'
 import { Outlet, Route, Routes } from 'react-router'
+import { useConnectivity } from 'use-towns-client'
 import { Box, Stack } from '@ui'
-import { useAuth } from 'hooks/useAuth'
 import { useDevice } from 'hooks/useDevice'
 import { PATHS } from 'routes'
 import { PublicTownPage } from 'routes/PublicTownPage'
@@ -13,7 +13,7 @@ const AuthenticatedRoutes = React.lazy(() => import('routes/AuthenticatedRoutes'
 const PlaygroundRoutes = React.lazy(() => import('@components/Playground/PlaygroundRoutes'))
 
 export const AllRoutes = () => {
-    const { isAuthenticated } = useAuth()
+    const { isAuthenticated } = useConnectivity()
 
     return (
         <>

@@ -3,6 +3,8 @@ import { FormProvider, UseFormReturn, useFormContext } from 'react-hook-form'
 import { ethers } from 'ethers'
 
 import { useNavigate } from 'react-router'
+import { useConnectivity } from 'use-towns-client'
+import { PrivyWrapper } from 'privy/PrivyProvider'
 import { UserOpTxModal } from '@components/Web3/UserOpTxModal/UserOpTxModal'
 import {
     Box,
@@ -26,7 +28,6 @@ import {
 import { useImageStore } from '@components/UploadImage/useImageStore'
 import { UploadImageRequestConfig } from 'api/lib/uploadImage'
 import { InteractiveTownsToken } from '@components/TownsToken/InteractiveTownsToken'
-import { useAuth } from 'hooks/useAuth'
 import { shortAddress } from 'ui/utils/utils'
 import { FadeInBox } from '@components/Transitions'
 import { TEMPORARY_SPACE_ICON_URL } from '@components/Web3/constants'
@@ -48,7 +49,10 @@ import { BottomBarWithColWidths } from '../BottomBar'
 
 const LazyCreateSpaceMintAnimation = React.lazy(() => import('./CreateSpaceMintAnimation'))
 
-type Member = { address: ReturnType<typeof useAuth>['loggedInWalletAddress']; displayName?: string }
+type Member = {
+    address: ReturnType<typeof useConnectivity>['loggedInWalletAddress']
+    displayName?: string
+}
 
 function useColumnWidths({
     leftColRef,
@@ -76,7 +80,7 @@ function useColumnWidths({
 }
 
 export function CreateSpaceFormV2() {
-    const { loggedInWalletAddress } = useAuth()
+    const { loggedInWalletAddress } = useConnectivity()
     const hasReached2Chars = useRef(false)
     const navigate = useNavigate()
 
@@ -238,376 +242,387 @@ export function CreateSpaceFormV2() {
                     const isEveryoneMembership = membershipType === 'everyone'
 
                     return (
-                        <FormProvider {..._form}>
-                            <Stack centerContent grow width="100%" padding="xs">
-                                <Stack
-                                    centerContent
-                                    grow
-                                    width="100%"
-                                    background={isTouch() ? 'none' : 'readability'}
-                                    rounded="xs"
-                                    position="relative"
-                                    overflow="auto"
-                                >
-                                    {spaceIconUrl && (
-                                        <MotionBox
-                                            initial={{ opacity: 0 }}
-                                            animate={{ opacity: 1 }}
-                                            transition={{ duration: 0.5 }}
-                                            position="absolute"
-                                            top="none"
-                                            left="none"
-                                            bottom="none"
-                                            right="none"
-                                            pointerEvents="none"
-                                        >
-                                            <BlurredBackground imageSrc={spaceIconUrl} blur={40} />
-                                        </MotionBox>
-                                    )}
-
-                                    {/* columns */}
+                        <PrivyWrapper>
+                            <FormProvider {..._form}>
+                                <Stack centerContent grow width="100%" padding="xs">
                                     <Stack
-                                        grow
                                         centerContent
-                                        scrollbars
+                                        grow
+                                        width="100%"
+                                        background={isTouch() ? 'none' : 'readability'}
+                                        rounded="xs"
                                         position="relative"
-                                        alignItems="center"
-                                        paddingX="lg"
-                                        width={{
-                                            tablet: '100%',
-                                        }}
                                         overflow="auto"
                                     >
+                                        {spaceIconUrl && (
+                                            <MotionBox
+                                                initial={{ opacity: 0 }}
+                                                animate={{ opacity: 1 }}
+                                                transition={{ duration: 0.5 }}
+                                                position="absolute"
+                                                top="none"
+                                                left="none"
+                                                bottom="none"
+                                                right="none"
+                                                pointerEvents="none"
+                                            >
+                                                <BlurredBackground
+                                                    imageSrc={spaceIconUrl}
+                                                    blur={40}
+                                                />
+                                            </MotionBox>
+                                        )}
+
+                                        {/* columns */}
                                         <Stack
-                                            gap={{
-                                                tablet: 'x4',
-                                                desktop: 'x20',
+                                            grow
+                                            centerContent
+                                            scrollbars
+                                            position="relative"
+                                            alignItems="center"
+                                            paddingX="lg"
+                                            width={{
+                                                tablet: '100%',
                                             }}
-                                            flexDirection={{
-                                                tablet: 'columnReverse',
-                                                desktop: 'row',
-                                            }}
-                                            width="100%"
+                                            overflow="auto"
                                         >
-                                            {/* left col */}
                                             <Stack
-                                                grow
-                                                position="relative"
-                                                zIndex="above"
-                                                ref={leftColRef}
+                                                gap={{
+                                                    tablet: 'x4',
+                                                    desktop: 'x20',
+                                                }}
+                                                flexDirection={{
+                                                    tablet: 'columnReverse',
+                                                    desktop: 'row',
+                                                }}
+                                                width="100%"
                                             >
-                                                <Stack gap="x4">
-                                                    {/* image when panel open */}
-                                                    {!_isTouch && panelType && (
-                                                        <Stack display="block">
-                                                            <UploadImageField
-                                                                size="sm"
-                                                                isActive={!!panelType}
-                                                                transactionDetails={
-                                                                    transactionDetails
-                                                                }
-                                                            />
-                                                        </Stack>
-                                                    )}
-
-                                                    <Stack gap="sm">
-                                                        <SpaceNameField
-                                                            form={_form}
-                                                            spaceNameValue={spaceNameValue}
-                                                        />
-                                                        {_form.formState.errors['spaceName'] &&
-                                                            showSpaceNameError() && (
-                                                                <FadeInBox key="spaceNameError">
-                                                                    <ErrorMessage
-                                                                        errors={
-                                                                            _form.formState.errors
-                                                                        }
-                                                                        fieldName="spaceName"
-                                                                    />
-                                                                </FadeInBox>
-                                                            )}
-                                                    </Stack>
-
-                                                    {/* info boxes */}
-                                                    <MotionBox
-                                                        horizontal
-                                                        scrollbars
-                                                        layoutScroll
-                                                        alignItems="start"
-                                                        gap="sm"
-                                                        overflow="auto"
-                                                    >
-                                                        <TokenInfoBox
-                                                            tokensGatingMembership={
-                                                                tokensGatingMembership
-                                                            }
-                                                            hasError={Boolean(
-                                                                _form.formState.errors[
-                                                                    'tokensGatingMembership'
-                                                                ],
-                                                            )}
-                                                            title="For"
-                                                            subtitle={
-                                                                isEveryoneMembership
-                                                                    ? 'Anyone'
-                                                                    : 'Holders'
-                                                            }
-                                                            anyoneCanJoin={isEveryoneMembership}
-                                                            onInfoBoxClick={onInfoBoxClick}
-                                                        />
-
-                                                        <InformationBox
-                                                            title="Cost"
-                                                            border={
-                                                                _form.formState.errors[
-                                                                    'membershipCost'
-                                                                ]
-                                                                    ? 'negative'
-                                                                    : 'none'
-                                                            }
-                                                            centerContent={
-                                                                <Box paddingX width="100%">
-                                                                    <Paragraph
-                                                                        truncate
-                                                                        textAlign="center"
-                                                                    >
-                                                                        {costInfoBoxText()}
-                                                                    </Paragraph>
-                                                                </Box>
-                                                            }
-                                                            subtitle={
-                                                                membershipPricingType === 'dynamic'
-                                                                    ? 'First 100'
-                                                                    : ''
-                                                            }
-                                                            onClick={onInfoBoxClick}
-                                                        />
-
-                                                        <InformationBox
-                                                            title="Max"
-                                                            border={
-                                                                _form.formState.errors[
-                                                                    'membershipLimit'
-                                                                ]
-                                                                    ? 'negative'
-                                                                    : 'none'
-                                                            }
-                                                            centerContent={
-                                                                <Box paddingX width="100%">
-                                                                    <Paragraph
-                                                                        truncate
-                                                                        textAlign="center"
-                                                                    >
-                                                                        {_form.formState.errors[
-                                                                            'membershipLimit'
-                                                                        ]
-                                                                            ? '-- '
-                                                                            : formattedLimit}
-                                                                    </Paragraph>
-                                                                </Box>
-                                                            }
-                                                            subtitle="Memberships"
-                                                            onClick={onInfoBoxClick}
-                                                        />
-
-                                                        <InformationBox
-                                                            title="Founder"
-                                                            centerContent={
-                                                                <Avatar
-                                                                    size="avatar_sm"
-                                                                    userId={loggedInWalletAddress}
+                                                {/* left col */}
+                                                <Stack
+                                                    grow
+                                                    position="relative"
+                                                    zIndex="above"
+                                                    ref={leftColRef}
+                                                >
+                                                    <Stack gap="x4">
+                                                        {/* image when panel open */}
+                                                        {!_isTouch && panelType && (
+                                                            <Stack display="block">
+                                                                <UploadImageField
+                                                                    size="sm"
+                                                                    isActive={!!panelType}
+                                                                    transactionDetails={
+                                                                        transactionDetails
+                                                                    }
                                                                 />
-                                                            }
-                                                            subtitle={shortAddress(
-                                                                abstractAccountAddress ?? '',
-                                                            )}
-                                                        />
+                                                            </Stack>
+                                                        )}
 
-                                                        <InformationBox
-                                                            title="Valid For"
-                                                            centerContent={1}
-                                                            subtitle="Year"
-                                                        />
-                                                    </MotionBox>
+                                                        <Stack gap="sm">
+                                                            <SpaceNameField
+                                                                form={_form}
+                                                                spaceNameValue={spaceNameValue}
+                                                            />
+                                                            {_form.formState.errors['spaceName'] &&
+                                                                showSpaceNameError() && (
+                                                                    <FadeInBox key="spaceNameError">
+                                                                        <ErrorMessage
+                                                                            errors={
+                                                                                _form.formState
+                                                                                    .errors
+                                                                            }
+                                                                            fieldName="spaceName"
+                                                                        />
+                                                                    </FadeInBox>
+                                                                )}
+                                                        </Stack>
 
-                                                    {/* motto */}
-                                                    <Box
-                                                        background="lightHover"
-                                                        rounded="sm"
-                                                        paddingY="md"
-                                                    >
-                                                        <AutoGrowTextArea
-                                                            text={spaceMottoValue ?? undefined}
-                                                            fontSize="lg"
-                                                            placeholder="Add town motto"
-                                                            tone="none"
-                                                            maxLength={32}
-                                                            counterOffset={{
-                                                                bottom: 'none',
-                                                            }}
-                                                            {..._form.register('spaceMotto')}
-                                                        />
-                                                    </Box>
-                                                    {/* bio */}
-                                                    <Box
-                                                        background="lightHover"
-                                                        rounded="sm"
-                                                        paddingY="md"
-                                                    >
-                                                        <AutoGrowTextArea
-                                                            text={spaceBioValue ?? undefined}
-                                                            fontSize="lg"
-                                                            placeholder="Add town description"
-                                                            tone="none"
-                                                            maxLength={400}
-                                                            minHeight="x20"
-                                                            counterOffset={{
-                                                                bottom: 'none',
-                                                            }}
-                                                            {..._form.register('spaceBio')}
-                                                        />
-                                                    </Box>
+                                                        {/* info boxes */}
+                                                        <MotionBox
+                                                            horizontal
+                                                            scrollbars
+                                                            layoutScroll
+                                                            alignItems="start"
+                                                            gap="sm"
+                                                            overflow="auto"
+                                                        >
+                                                            <TokenInfoBox
+                                                                tokensGatingMembership={
+                                                                    tokensGatingMembership
+                                                                }
+                                                                hasError={Boolean(
+                                                                    _form.formState.errors[
+                                                                        'tokensGatingMembership'
+                                                                    ],
+                                                                )}
+                                                                title="For"
+                                                                subtitle={
+                                                                    isEveryoneMembership
+                                                                        ? 'Anyone'
+                                                                        : 'Holders'
+                                                                }
+                                                                anyoneCanJoin={isEveryoneMembership}
+                                                                onInfoBoxClick={onInfoBoxClick}
+                                                            />
+
+                                                            <InformationBox
+                                                                title="Cost"
+                                                                border={
+                                                                    _form.formState.errors[
+                                                                        'membershipCost'
+                                                                    ]
+                                                                        ? 'negative'
+                                                                        : 'none'
+                                                                }
+                                                                centerContent={
+                                                                    <Box paddingX width="100%">
+                                                                        <Paragraph
+                                                                            truncate
+                                                                            textAlign="center"
+                                                                        >
+                                                                            {costInfoBoxText()}
+                                                                        </Paragraph>
+                                                                    </Box>
+                                                                }
+                                                                subtitle={
+                                                                    membershipPricingType ===
+                                                                    'dynamic'
+                                                                        ? 'First 100'
+                                                                        : ''
+                                                                }
+                                                                onClick={onInfoBoxClick}
+                                                            />
+
+                                                            <InformationBox
+                                                                title="Max"
+                                                                border={
+                                                                    _form.formState.errors[
+                                                                        'membershipLimit'
+                                                                    ]
+                                                                        ? 'negative'
+                                                                        : 'none'
+                                                                }
+                                                                centerContent={
+                                                                    <Box paddingX width="100%">
+                                                                        <Paragraph
+                                                                            truncate
+                                                                            textAlign="center"
+                                                                        >
+                                                                            {_form.formState.errors[
+                                                                                'membershipLimit'
+                                                                            ]
+                                                                                ? '-- '
+                                                                                : formattedLimit}
+                                                                        </Paragraph>
+                                                                    </Box>
+                                                                }
+                                                                subtitle="Memberships"
+                                                                onClick={onInfoBoxClick}
+                                                            />
+
+                                                            <InformationBox
+                                                                title="Founder"
+                                                                centerContent={
+                                                                    <Avatar
+                                                                        size="avatar_sm"
+                                                                        userId={
+                                                                            loggedInWalletAddress
+                                                                        }
+                                                                    />
+                                                                }
+                                                                subtitle={shortAddress(
+                                                                    abstractAccountAddress ?? '',
+                                                                )}
+                                                            />
+
+                                                            <InformationBox
+                                                                title="Valid For"
+                                                                centerContent={1}
+                                                                subtitle="Year"
+                                                            />
+                                                        </MotionBox>
+
+                                                        {/* motto */}
+                                                        <Box
+                                                            background="lightHover"
+                                                            rounded="sm"
+                                                            paddingY="md"
+                                                        >
+                                                            <AutoGrowTextArea
+                                                                text={spaceMottoValue ?? undefined}
+                                                                fontSize="lg"
+                                                                placeholder="Add town motto"
+                                                                tone="none"
+                                                                maxLength={32}
+                                                                counterOffset={{
+                                                                    bottom: 'none',
+                                                                }}
+                                                                {..._form.register('spaceMotto')}
+                                                            />
+                                                        </Box>
+                                                        {/* bio */}
+                                                        <Box
+                                                            background="lightHover"
+                                                            rounded="sm"
+                                                            paddingY="md"
+                                                        >
+                                                            <AutoGrowTextArea
+                                                                text={spaceBioValue ?? undefined}
+                                                                fontSize="lg"
+                                                                placeholder="Add town description"
+                                                                tone="none"
+                                                                maxLength={400}
+                                                                minHeight="x20"
+                                                                counterOffset={{
+                                                                    bottom: 'none',
+                                                                }}
+                                                                {..._form.register('spaceBio')}
+                                                            />
+                                                        </Box>
+                                                    </Stack>
                                                 </Stack>
-                                            </Stack>
 
-                                            {/* right col */}
-                                            <MotionStack
-                                                centerContent={_isTouch}
-                                                paddingTop="sm"
-                                                opacity={
-                                                    _isTouch
-                                                        ? 'opaque'
-                                                        : panelType === undefined
-                                                        ? 'opaque'
-                                                        : 'transparent'
-                                                }
-                                                ref={rightColRef}
-                                            >
-                                                <Stack display="block">
-                                                    <UploadImageField
-                                                        isActive={
-                                                            _isTouch || panelType === undefined
+                                                {/* right col */}
+                                                <MotionStack
+                                                    centerContent={_isTouch}
+                                                    paddingTop="sm"
+                                                    opacity={
+                                                        _isTouch
+                                                            ? 'opaque'
+                                                            : panelType === undefined
+                                                            ? 'opaque'
+                                                            : 'transparent'
+                                                    }
+                                                    ref={rightColRef}
+                                                >
+                                                    <Stack display="block">
+                                                        <UploadImageField
+                                                            isActive={
+                                                                _isTouch || panelType === undefined
+                                                            }
+                                                            transactionDetails={transactionDetails}
+                                                        />
+                                                    </Stack>
+                                                </MotionStack>
+                                            </Stack>
+                                        </Stack>
+
+                                        {/* Bottom bar */}
+                                        <>
+                                            {_isTouch ? (
+                                                <Stack padding width="100%">
+                                                    <CreateTownSubmit
+                                                        setPanelType={setPanelType}
+                                                        form={_form}
+                                                        setTransactionDetails={
+                                                            setTransactionDetails
                                                         }
-                                                        transactionDetails={transactionDetails}
+                                                    >
+                                                        {({ onSubmit, disabled }) => (
+                                                            <>
+                                                                {
+                                                                    <SubmitButton
+                                                                        disabled={disabled}
+                                                                        transactionDetails={
+                                                                            transactionDetails
+                                                                        }
+                                                                        onSubmit={onSubmit}
+                                                                    />
+                                                                }
+                                                            </>
+                                                        )}
+                                                    </CreateTownSubmit>
+                                                </Stack>
+                                            ) : (
+                                                <Stack width="100%">
+                                                    <BottomBarWithColWidths
+                                                        gap="x20"
+                                                        leftColWidth={leftColWidth}
+                                                        rightColWidth={rightColWidth}
+                                                        leftColContent={
+                                                            _isTouch ? (
+                                                                <></>
+                                                            ) : (
+                                                                <Stack gap="sm">
+                                                                    <Stack
+                                                                        horizontal
+                                                                        width="100%"
+                                                                        justifyContent="spaceBetween"
+                                                                    >
+                                                                        <Text
+                                                                            fontWeight="strong"
+                                                                            color="default"
+                                                                        >
+                                                                            Memberships
+                                                                        </Text>
+                                                                        <Text color="gray2">
+                                                                            {formattedLimit}
+                                                                        </Text>
+                                                                    </Stack>
+
+                                                                    <Box
+                                                                        height="x1"
+                                                                        background="cta1"
+                                                                        rounded="full"
+                                                                        width="100%"
+                                                                    />
+                                                                </Stack>
+                                                            )
+                                                        }
+                                                        rightColContent={
+                                                            <CreateTownSubmit
+                                                                setPanelType={setPanelType}
+                                                                form={_form}
+                                                                setTransactionDetails={
+                                                                    setTransactionDetails
+                                                                }
+                                                            >
+                                                                {({ onSubmit, disabled }) => (
+                                                                    <>
+                                                                        {!panelType && (
+                                                                            <SubmitButton
+                                                                                disabled={disabled}
+                                                                                transactionDetails={
+                                                                                    transactionDetails
+                                                                                }
+                                                                                onSubmit={onSubmit}
+                                                                            />
+                                                                        )}
+                                                                    </>
+                                                                )}
+                                                            </CreateTownSubmit>
+                                                        }
                                                     />
                                                 </Stack>
-                                            </MotionStack>
-                                        </Stack>
+                                            )}
+                                        </>
                                     </Stack>
+                                </Stack>
 
-                                    {/* Bottom bar */}
-                                    <>
-                                        {_isTouch ? (
-                                            <Stack padding width="100%">
+                                {/* Panel */}
+                                {panelType && (
+                                    <PanelWrapper panelType={panelType}>
+                                        <PanelContent onClick={() => setPanelType(undefined)}>
+                                            <Stack height="x16">
                                                 <CreateTownSubmit
                                                     setPanelType={setPanelType}
                                                     form={_form}
                                                     setTransactionDetails={setTransactionDetails}
                                                 >
                                                     {({ onSubmit, disabled }) => (
-                                                        <>
-                                                            {
-                                                                <SubmitButton
-                                                                    disabled={disabled}
-                                                                    transactionDetails={
-                                                                        transactionDetails
-                                                                    }
-                                                                    onSubmit={onSubmit}
-                                                                />
-                                                            }
-                                                        </>
+                                                        <SubmitButton
+                                                            disabled={disabled}
+                                                            transactionDetails={transactionDetails}
+                                                            onSubmit={onSubmit}
+                                                        />
                                                     )}
                                                 </CreateTownSubmit>
                                             </Stack>
-                                        ) : (
-                                            <Stack width="100%">
-                                                <BottomBarWithColWidths
-                                                    gap="x20"
-                                                    leftColWidth={leftColWidth}
-                                                    rightColWidth={rightColWidth}
-                                                    leftColContent={
-                                                        _isTouch ? (
-                                                            <></>
-                                                        ) : (
-                                                            <Stack gap="sm">
-                                                                <Stack
-                                                                    horizontal
-                                                                    width="100%"
-                                                                    justifyContent="spaceBetween"
-                                                                >
-                                                                    <Text
-                                                                        fontWeight="strong"
-                                                                        color="default"
-                                                                    >
-                                                                        Memberships
-                                                                    </Text>
-                                                                    <Text color="gray2">
-                                                                        {formattedLimit}
-                                                                    </Text>
-                                                                </Stack>
-
-                                                                <Box
-                                                                    height="x1"
-                                                                    background="cta1"
-                                                                    rounded="full"
-                                                                    width="100%"
-                                                                />
-                                                            </Stack>
-                                                        )
-                                                    }
-                                                    rightColContent={
-                                                        <CreateTownSubmit
-                                                            setPanelType={setPanelType}
-                                                            form={_form}
-                                                            setTransactionDetails={
-                                                                setTransactionDetails
-                                                            }
-                                                        >
-                                                            {({ onSubmit, disabled }) => (
-                                                                <>
-                                                                    {!panelType && (
-                                                                        <SubmitButton
-                                                                            disabled={disabled}
-                                                                            transactionDetails={
-                                                                                transactionDetails
-                                                                            }
-                                                                            onSubmit={onSubmit}
-                                                                        />
-                                                                    )}
-                                                                </>
-                                                            )}
-                                                        </CreateTownSubmit>
-                                                    }
-                                                />
-                                            </Stack>
-                                        )}
-                                    </>
-                                </Stack>
-                            </Stack>
-
-                            {/* Panel */}
-                            {panelType && (
-                                <PanelWrapper panelType={panelType}>
-                                    <PanelContent onClick={() => setPanelType(undefined)}>
-                                        <Stack height="x16">
-                                            <CreateTownSubmit
-                                                setPanelType={setPanelType}
-                                                form={_form}
-                                                setTransactionDetails={setTransactionDetails}
-                                            >
-                                                {({ onSubmit, disabled }) => (
-                                                    <SubmitButton
-                                                        disabled={disabled}
-                                                        transactionDetails={transactionDetails}
-                                                        onSubmit={onSubmit}
-                                                    />
-                                                )}
-                                            </CreateTownSubmit>
-                                        </Stack>
-                                    </PanelContent>
-                                </PanelWrapper>
-                            )}
-                        </FormProvider>
+                                        </PanelContent>
+                                    </PanelWrapper>
+                                )}
+                            </FormProvider>
+                        </PrivyWrapper>
                     )
                 }}
             </FormRender>

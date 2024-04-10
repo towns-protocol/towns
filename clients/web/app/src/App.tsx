@@ -3,7 +3,6 @@ import React, { useEffect, useRef, useState } from 'react'
 import { matchPath, useNavigate } from 'react-router'
 import { TownsContextProvider, ZTEvent } from 'use-towns-client'
 import { Helmet } from 'react-helmet'
-import { EmbeddedSignerContextProvider } from '@towns/privy'
 import { isDefined } from '@river/sdk'
 import { Notifications } from '@components/Notifications/Notifications'
 import { useDevice } from 'hooks/useDevice'
@@ -18,13 +17,11 @@ import { useStore } from 'store/store'
 import { RegisterPushSubscription } from '@components/RegisterPushSubscription/RegisterPushSubscription'
 import { AllRoutes } from 'AllRoutes'
 import { ServiceWorkerMetadataSyncer } from 'workers/ServiceWorkerMetadataSyncer'
-import { AuthContextProvider } from 'hooks/useAuth'
 import DebugBar from '@components/DebugBar/DebugBar'
 import { BlockchainTxNotifier } from '@components/Web3/BlockchainTxNotifier'
 import { SyncNotificationSettings } from '@components/SyncNotificationSettings/SyncNotificationSettings'
 import { PATHS } from 'routes'
 import { useCreateLink } from 'hooks/useCreateLink'
-import { AutoLinkSmartAccount } from 'AutoLinkSmartAccount'
 
 FontLoader.init()
 
@@ -104,40 +101,37 @@ export const App = () => {
             accountAbstractionConfig={environment.accountAbstractionConfig}
             highPriorityStreamIds={highPriorityStreamIds.current}
         >
-            <EmbeddedSignerContextProvider chainId={environment.baseChain.id}>
-                <AuthContextProvider>
-                    <FaviconBadge />
-                    <AppBadge />
-                    <AppNotifications />
-                    <RegisterPushSubscription />
-                    <Helmet>
-                        <meta
-                            name="theme-color"
-                            content={
-                                isTouch
-                                    ? theme === 'dark'
-                                        ? Figma.DarkMode.Level1
-                                        : Figma.LightMode.Level1
-                                    : theme === 'dark'
-                                    ? Figma.DarkMode.Readability
-                                    : Figma.LightMode.Readability
-                            }
-                        />
-                    </Helmet>
-                    <>
-                        {env.DEV && !env.VITE_DISABLE_DEBUG_BARS && <DebugBar {...environment} />}
-                        <AllRoutes />
-                    </>
-                    {!env.VITE_DISABLE_DEBUG_BARS && (
-                        <ReactQueryDevtools position="bottom" initialIsOpen={false} />
-                    )}
-                    <SyncNotificationSettings />
-                    <Notifications />
-                    <BlockchainTxNotifier />
-                    <ServiceWorkerMetadataSyncer />
-                    <AutoLinkSmartAccount />
-                </AuthContextProvider>
-            </EmbeddedSignerContextProvider>
+            <>
+                <FaviconBadge />
+                <AppBadge />
+                <AppNotifications />
+                <RegisterPushSubscription />
+                <Helmet>
+                    <meta
+                        name="theme-color"
+                        content={
+                            isTouch
+                                ? theme === 'dark'
+                                    ? Figma.DarkMode.Level1
+                                    : Figma.LightMode.Level1
+                                : theme === 'dark'
+                                ? Figma.DarkMode.Readability
+                                : Figma.LightMode.Readability
+                        }
+                    />
+                </Helmet>
+                <>
+                    {env.DEV && !env.VITE_DISABLE_DEBUG_BARS && <DebugBar {...environment} />}
+                    <AllRoutes />
+                </>
+                {!env.VITE_DISABLE_DEBUG_BARS && (
+                    <ReactQueryDevtools position="bottom" initialIsOpen={false} />
+                )}
+                <SyncNotificationSettings />
+                <Notifications />
+                <BlockchainTxNotifier />
+                <ServiceWorkerMetadataSyncer />
+            </>
         </TownsContextProvider>
     )
 }

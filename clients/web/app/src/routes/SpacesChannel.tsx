@@ -17,6 +17,7 @@ import {
     SendMessageOptions,
     useChannelData,
     useChannelTimeline,
+    useConnectivity,
     useDMData,
     useMyMembership,
     useMyProfile,
@@ -35,7 +36,6 @@ import { RichTextEditor } from '@components/RichTextPlate/PlateEditor'
 import { RegisterChannelShortcuts } from '@components/Shortcuts/RegisterChannelShortcuts'
 import { useUserList } from '@components/UserList/UserList'
 import { Box, Button, Paragraph, Stack, Text } from '@ui'
-import { useAuth } from 'hooks/useAuth'
 import { useDevice } from 'hooks/useDevice'
 import { useIsChannelWritable } from 'hooks/useIsChannelWritable'
 import { useSpaceChannels } from 'hooks/useSpaceChannels'
@@ -171,7 +171,7 @@ export const SpacesChannelComponent = (props: Props) => {
 
     const { users } = useUserLookupContext()
 
-    const { loggedInWalletAddress } = useAuth()
+    const { loggedInWalletAddress } = useConnectivity()
     const userId = useMyProfile()?.userId
 
     const channels = useSpaceChannels()

@@ -1,8 +1,7 @@
 import React, { useCallback, useEffect, useState } from 'react'
 import { Link } from 'react-router-dom'
-import { Address } from 'use-towns-client'
+import { Address, useConnectivity } from 'use-towns-client'
 import { BoxProps, Icon, MotionBox, Stack, Text } from '@ui'
-import { useAuth } from 'hooks/useAuth'
 import useCopyToClipboard from 'hooks/useCopyToClipboard'
 import { openSeaBaseAssetUrl } from '../utils'
 
@@ -28,7 +27,7 @@ export function CopyWalletAddressButton({
     text?: string
     address?: Address
 }) {
-    const { loggedInWalletAddress } = useAuth()
+    const { loggedInWalletAddress } = useConnectivity()
     const addressToCopy = address || loggedInWalletAddress
     const [copied, setCopied] = useState(false)
 

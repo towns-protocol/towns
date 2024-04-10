@@ -3,6 +3,7 @@ import {
     SendMessageOptions,
     useChannelContext,
     useChannelData,
+    useConnectivity,
     useMyProfile,
     useTimelineThread,
     useUserLookupContext,
@@ -16,7 +17,6 @@ import { useSendReply } from 'hooks/useSendReply'
 import { useSpaceChannels } from 'hooks/useSpaceChannels'
 import { atoms } from 'ui/styles/atoms.css'
 import { useDevice } from 'hooks/useDevice'
-import { useAuth } from 'hooks/useAuth'
 import { Panel } from '@components/Panel/Panel'
 import { MediaDropContextProvider } from '@components/MediaDropContext/MediaDropContext'
 
@@ -45,7 +45,7 @@ export const MessageThreadPanel = (props: Props) => {
     const { users } = useUserLookupContext()
 
     const userId = useMyProfile()?.userId
-    const { loggedInWalletAddress } = useAuth()
+    const { loggedInWalletAddress } = useConnectivity()
     const channels = useSpaceChannels()
     const { isTouch } = useDevice()
 

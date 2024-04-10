@@ -2,16 +2,15 @@ import React, { PropsWithChildren, useCallback, useState } from 'react'
 import {
     Address,
     BlockchainTransactionType,
+    useConnectivity,
     useIsTransactionPending,
     useLinkEOAToRootKeyTransaction,
     useLinkedWallets,
     useUnlinkWalletTransaction,
 } from 'use-towns-client'
-import { useWallets } from '@privy-io/react-auth'
 import { useGetEmbeddedSigner } from '@towns/privy'
 import { Button, Grid, Icon, IconButton, MotionBox, Stack, Text } from '@ui'
 import { useErrorToast } from 'hooks/useErrorToast'
-import { useAuth } from 'hooks/useAuth'
 import { useEnvironment } from 'hooks/useEnvironmnet'
 import { isTouch } from 'hooks/useDevice'
 import { useJoinTown } from 'hooks/useJoinTown'
@@ -25,7 +24,7 @@ import { TokenBox } from './TokenBox'
 
 export function TokenVerification({ onHide, spaceId }: { spaceId: string; onHide: () => void }) {
     const { data: linkedWallets } = useLinkedWallets()
-    const { loggedInWalletAddress } = useAuth()
+    const { loggedInWalletAddress } = useConnectivity()
     const { data: tokensGatingMembership } = useTokensGatingMembership(spaceId)
     const tokensLength = tokensGatingMembership?.tokens.length ?? 0
     const maxWidth = tokensLength > 2 ? 'auto' : '400'
@@ -41,11 +40,9 @@ export function TokenVerification({ onHide, spaceId }: { spaceId: string; onHide
         errorMessage: errorUnlinkWallet ? mapToErrorMessage(errorUnlinkWallet) : undefined,
     })
 
-    const { wallets: connectedWallets } = useWallets()
-
     async function onUnlinkClick(addressToUnlink: Address) {
         const signer = await getSigner()
-        if (!signer || !connectedWallets) {
+        if (!signer) {
             createPrivyNotAuthenticatedNotification()
             return
         }

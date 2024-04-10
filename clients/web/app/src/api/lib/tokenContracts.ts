@@ -2,7 +2,7 @@ import { useQuery, useQueryClient } from '@tanstack/react-query'
 import { z } from 'zod'
 import { ContractMetadata, GetCollectionsForOwnerResponse } from '@token-worker/types'
 import { useMemo } from 'react'
-import { Address } from 'use-towns-client'
+import { Address, useConnectivity } from 'use-towns-client'
 import { TokenData, TokenType } from '@components/Tokens/types'
 import { env } from 'utils'
 import {
@@ -11,7 +11,6 @@ import {
     mainnetTokenAddress,
     useNetworkForNftApi,
 } from 'hooks/useNetworkForNftApi'
-import { useAuth } from 'hooks/useAuth'
 import { useEnvironment } from 'hooks/useEnvironmnet'
 import { axiosClient } from '../apiClient'
 
@@ -66,7 +65,7 @@ export function useCollectionsForOwner({ wallet, enabled, chainId }: UseTokenCon
 export function useCollectionsForLoggedInUser() {
     // TODO: this should probably be all linked wallets
     // and use useQueries to get all the tokens for all the wallets
-    const { loggedInWalletAddress } = useAuth()
+    const { loggedInWalletAddress } = useConnectivity()
     const { baseChain } = useEnvironment()
     const chainId = baseChain.id
 

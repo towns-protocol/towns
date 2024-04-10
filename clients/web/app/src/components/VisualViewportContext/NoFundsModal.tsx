@@ -1,12 +1,12 @@
 import React from 'react'
-import { useAuth } from 'hooks/useAuth'
+import { useConnectivity } from 'use-towns-client'
 import { formatEthDisplay } from '@components/Web3/utils'
 import { Box, Button, Text } from '@ui'
 import { ClipboardCopy } from '@components/ClipboardCopy/ClipboardCopy'
 import { useBalance } from 'hooks/useBalance'
 
 export function NoFundsModal({ onHide }: { onHide: () => void }) {
-    const { loggedInWalletAddress } = useAuth()
+    const { loggedInWalletAddress } = useConnectivity()
     const { data } = useBalance({
         address: loggedInWalletAddress,
     })

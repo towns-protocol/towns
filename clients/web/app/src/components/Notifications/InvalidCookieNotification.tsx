@@ -1,7 +1,7 @@
 import React from 'react'
 import headlessToast, { Toast } from 'react-hot-toast/headless'
 import { Box, Button, Icon, Text } from '@ui'
-import { useAuth } from 'hooks/useAuth'
+import { useCombinedAuth } from 'privy/useCombinedAuth'
 
 export const InvalidCookieNotification = ({
     toast,
@@ -10,7 +10,7 @@ export const InvalidCookieNotification = ({
     toast: Toast
     actionMessage: string
 }) => {
-    const { logout } = useAuth()
+    const { logout } = useCombinedAuth()
     return (
         <Box horizontal gap width="300">
             <Icon color="error" type="alert" />

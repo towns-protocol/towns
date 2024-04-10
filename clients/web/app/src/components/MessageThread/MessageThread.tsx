@@ -6,6 +6,7 @@ import {
     SendMessageOptions,
     TimelineEvent,
     ZTEvent,
+    useConnectivity,
     useMyProfile,
     useTimelineThread,
     useUserLookupContext,
@@ -21,7 +22,6 @@ import { Box, Paragraph, Stack } from '@ui'
 import { useIsChannelWritable } from 'hooks/useIsChannelWritable'
 import { useSendReply } from 'hooks/useSendReply'
 import { getPrettyDisplayName } from 'utils/getPrettyDisplayName'
-import { useAuth } from 'hooks/useAuth'
 import { useDevice } from 'hooks/useDevice'
 import { useThrottledValue } from 'hooks/useThrottledValue'
 import { FullScreenMedia } from '@components/FullScreenMedia/FullScreenMedia'
@@ -116,7 +116,7 @@ export const MessageThread = (props: {
 
     const { users } = useUserLookupContext()
     const userId = useMyProfile()?.userId
-    const { loggedInWalletAddress } = useAuth()
+    const { loggedInWalletAddress } = useConnectivity()
 
     const { isChannelWritable } = useIsChannelWritable(spaceId, channelId, loggedInWalletAddress)
 

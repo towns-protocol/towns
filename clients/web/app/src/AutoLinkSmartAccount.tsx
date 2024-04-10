@@ -1,8 +1,7 @@
 import { useEffect, useRef } from 'react'
-import { useLinkCallerToRootKey, useTransactionStore } from 'use-towns-client'
+import { useConnectivity, useLinkCallerToRootKey, useTransactionStore } from 'use-towns-client'
 import { useGetEmbeddedSigner } from '@towns/privy'
 import { useIsSmartAccountLinked } from 'hooks/useIsSmartAccountLinked'
-import { useAuth } from 'hooks/useAuth'
 import { useEnvironment } from 'hooks/useEnvironmnet'
 
 /**
@@ -13,7 +12,7 @@ import { useEnvironment } from 'hooks/useEnvironmnet'
 export function AutoLinkSmartAccount() {
     const { data: isSmartAccountLinked, isLoading: isSmartAccountLinkedLoading } =
         useIsSmartAccountLinked()
-    const { isAuthenticated } = useAuth()
+    const { isAuthenticated } = useConnectivity()
     const linkAttempted = useRef(false)
     const { linkCallerToRootKeyTransaction } = useLinkCallerToRootKey()
     const getSigner = useGetEmbeddedSigner()

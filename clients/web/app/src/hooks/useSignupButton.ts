@@ -1,5 +1,5 @@
 import { useCallback, useEffect, useMemo, useRef, useState } from 'react'
-import { useAuth } from './useAuth'
+import { useConnectivity } from 'use-towns-client'
 
 export enum SignupButtonStatus {
     Login = 'login.required',
@@ -33,7 +33,7 @@ const useSignUpButtonClick = (
  * async registration check fired once the wallet is unlocked
  **/
 const useCheckRegistrationStatus = () => {
-    const { getIsWalletRegistered } = useAuth()
+    const { getIsWalletRegistered } = useConnectivity()
     const [registrationStatus, setRegistrationStatus] = useState<SignupButtonStatus>()
     const checkedRef = useRef(false)
 

@@ -4,7 +4,6 @@ import { ErrorBoundary } from '@components/ErrorBoundary/ErrorBoundary'
 import { AppErrorFallback } from 'AppErrorFallback'
 import { ZLayerProvider } from '@ui'
 import { useRootTheme } from 'hooks/useRootTheme'
-import { PrivyProvider } from 'PrivyProvider'
 import { WelcomeLayout } from 'routes/layouts/WelcomeLayout'
 import { usePeriodicUpdates } from 'hooks/usePeriodicUpdates'
 
@@ -19,15 +18,13 @@ export const Main = () => {
 
     return (
         <ErrorBoundary FallbackComponent={AppErrorFallback}>
-            <PrivyProvider>
-                <BrowserRouter>
-                    <Suspense fallback={<WelcomeLayout debugText="lazy loading app" />}>
-                        <ZLayerProvider>
-                            <App />
-                        </ZLayerProvider>
-                    </Suspense>
-                </BrowserRouter>
-            </PrivyProvider>
+            <BrowserRouter>
+                <Suspense fallback={<WelcomeLayout debugText="lazy loading app" />}>
+                    <ZLayerProvider>
+                        <App />
+                    </ZLayerProvider>
+                </Suspense>
+            </BrowserRouter>
         </ErrorBoundary>
     )
 }

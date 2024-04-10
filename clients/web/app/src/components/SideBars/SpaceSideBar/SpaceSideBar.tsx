@@ -4,6 +4,7 @@ import { useEvent } from 'react-use-event-hook'
 import {
     Permission,
     SpaceData,
+    useConnectivity,
     useHasPermission,
     useSpaceThreadRootsUnreadCount,
     useSpaceUnreadThreadMentions,
@@ -15,7 +16,6 @@ import { ChannelNavGroup } from '@components/NavItem/ChannelNavGroup'
 import { ChannelNavItem } from '@components/NavItem/ChannelNavItem'
 import { CreateChannelFormContainer } from '@components/Web3/CreateChannelForm'
 import { Badge, Box, Card, IconButton, MotionBox, Stack, Text } from '@ui'
-import { useAuth } from 'hooks/useAuth'
 import { useCreateLink } from 'hooks/useCreateLink'
 import { useShortcut } from 'hooks/useShortcut'
 import { useSortedChannels } from 'hooks/useSortedChannels'
@@ -37,7 +37,7 @@ type Props = {
 export const SpaceSideBar = (props: Props) => {
     const { space } = props
     const { isTouch } = useDevice()
-    const { loggedInWalletAddress } = useAuth()
+    const { loggedInWalletAddress } = useConnectivity()
     const { createLink } = useCreateLink()
     const { unseenChannelIds } = useUnseenChannelIds()
 

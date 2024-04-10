@@ -1,10 +1,10 @@
 import React, { useCallback, useMemo } from 'react'
 import { useForm } from 'react-hook-form'
 import { matchPath, useNavigate } from 'react-router'
-import { LoginStatus, useMyProfile } from 'use-towns-client'
+import { LoginStatus, useConnectivity, useMyProfile } from 'use-towns-client'
 import { useGetEmbeddedSigner } from '@towns/privy'
 import { Button, ErrorMessage, Icon, MotionBox, Paragraph, Stack, TextField } from '@ui'
-import { useAuth } from 'hooks/useAuth'
+import { useCombinedAuth } from 'privy/useCombinedAuth'
 import { PATHS } from 'routes'
 import { useUploadImage } from 'api/lib/uploadImage'
 import { ButtonSpinner } from '@components/Login/LoginButton/Spinner/ButtonSpinner'
@@ -18,12 +18,9 @@ type RegisterFormFieldValues = {
 }
 
 export const RegisterForm = () => {
-    const {
-        loggedInWalletAddress,
-        isConnected,
-        register: registerWallet,
-        riverLoginStatus: loginStatus,
-    } = useAuth()
+    const { isConnected } = useCombinedAuth()
+    const { register: registerWallet, loginStatus } = useConnectivity()
+    const { loggedInWalletAddress } = useConnectivity()
     // const { setDisplayName } = useTownsClient()
     const navigate = useNavigate()
     const myProfile = useMyProfile()

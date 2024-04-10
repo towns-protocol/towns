@@ -6,6 +6,7 @@ import { useSearchParams } from 'react-router-dom'
 import { useEvent } from 'react-use-event-hook'
 import {
     useBannedWalletAddresses,
+    useConnectivity,
     useContractSpaceInfo,
     useGetRootKeyFromLinkedWallet,
     useHasPermission,
@@ -41,7 +42,6 @@ import {
     useMuteSettings,
     useSetMuteSettingForChannelOrSpace,
 } from 'api/lib/notificationSettings'
-import { useAuth } from 'hooks/useAuth'
 import { useDevice } from 'hooks/useDevice'
 import { useSpaceChannels } from 'hooks/useSpaceChannels'
 import { useGetSpaceIdentity, useSetSpaceIdentity } from 'hooks/useSpaceIdentity'
@@ -56,6 +56,7 @@ import { RolesPanel } from '@components/SpaceSettingsPanel/RolesPanel'
 import { openSeaAssetUrl } from '@components/Web3/utils'
 import { useEnvironment } from 'hooks/useEnvironmnet'
 import { Panel } from '@components/Panel/Panel'
+import { PrivyWrapper } from 'privy/PrivyProvider'
 import { AllChannelsList } from './AllChannelsList/AllChannelsList'
 import { PublicTownPage } from './PublicTownPage'
 import { usePanelActions } from './layouts/hooks/usePanelActions'
@@ -82,7 +83,7 @@ export const SpaceInfo = () => {
     const isRolesPanel = !isTouch && searchParams.get('roles') != null
     const { leaveRoom } = useTownsClient()
     const channels = useSpaceChannels()
-    const { loggedInWalletAddress } = useAuth()
+    const { loggedInWalletAddress } = useConnectivity()
 
     const { data: contractSpaceInfo } = useContractSpaceInfo(space?.id)
     const owner = contractSpaceInfo?.owner
@@ -571,7 +572,9 @@ export const SpaceInfo = () => {
             )}
 
             {activeModal === 'settings' && (
-                <SpaceNameModal onHide={() => setActiveModal(undefined)} />
+                <PrivyWrapper>
+                    <SpaceNameModal onHide={() => setActiveModal(undefined)} />
+                </PrivyWrapper>
             )}
 
             {activeModal === 'preview' && (

@@ -2,6 +2,7 @@ import React, { useCallback, useContext, useRef } from 'react'
 import {
     Permission,
     TimelineEvent,
+    useConnectivity,
     useFullyReadMarker,
     useHasPermission,
     useMyUserId,
@@ -17,7 +18,6 @@ import { ShortcutTooltip } from '@components/Shortcuts/ShortcutTooltip'
 import useCopyToClipboard from 'hooks/useCopyToClipboard'
 import { ReplyToMessageContext } from '@components/ReplyToMessageContext/ReplyToMessageContext'
 import { getLinkToMessage } from 'utils/getLinkToMessage'
-import { useAuth } from 'hooks/useAuth'
 import { DeleteMessagePrompt } from './DeleteMessagePrompt'
 
 type Props = {
@@ -47,8 +47,7 @@ export const MessageContextMenu = (props: Props) => {
 
     const [copiedText, copy] = useCopyToClipboard()
     const hasCopied = !!copiedText
-
-    const { loggedInWalletAddress } = useAuth()
+    const { loggedInWalletAddress } = useConnectivity()
 
     const { hasPermission: canRedact } = useHasPermission({
         spaceId: spaceId ?? '',

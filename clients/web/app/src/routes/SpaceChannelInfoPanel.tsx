@@ -5,6 +5,7 @@ import {
     Permission,
     useChannelData,
     useChannelMembers,
+    useConnectivity,
     useHasPermission,
     useRoom,
     useSpaceData,
@@ -14,7 +15,6 @@ import {
 import { ClipboardCopy } from '@components/ClipboardCopy/ClipboardCopy'
 import { Icon, Paragraph, Stack } from '@ui'
 import { CHANNEL_INFO_PARAMS, PATHS } from 'routes'
-import { useAuth } from 'hooks/useAuth'
 import { useDevice } from 'hooks/useDevice'
 import {
     toggleMuteSetting,
@@ -23,6 +23,7 @@ import {
 } from 'api/lib/notificationSettings'
 import { PanelButton } from '@components/Panel/PanelButton'
 import { Panel } from '@components/Panel/Panel'
+
 import { ChannelMembersModal } from './SpaceChannelDirectoryPanel'
 import { usePanelActions } from './layouts/hooks/usePanelActions'
 
@@ -37,7 +38,7 @@ export const ChannelInfo = () => {
     const { memberIds } = useChannelMembers()
     const { isTouch } = useDevice()
     const spaceData = useSpaceData()
-    const { loggedInWalletAddress } = useAuth()
+    const { loggedInWalletAddress } = useConnectivity()
     const { hasPermission: canEditChannel } = useHasPermission({
         spaceId: spaceData?.id ?? '',
         channelId: channel?.id,

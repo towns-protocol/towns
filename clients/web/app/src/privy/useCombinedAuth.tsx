@@ -1,5 +1,5 @@
-import { useConnectivity } from 'use-towns-client'
-import React, { createContext, useCallback, useContext, useEffect, useMemo } from 'react'
+import { Address, useConnectivity } from 'use-towns-client'
+import React, { createContext, useCallback, useContext, useMemo } from 'react'
 import { toast } from 'react-hot-toast/headless'
 import { useLogin, usePrivy } from '@privy-io/react-auth'
 import { useEmbeddedWallet, useGetEmbeddedSigner } from '@towns/privy'
@@ -7,12 +7,7 @@ import { clearEmbeddedWalletStorage } from '@towns/privy/EmbeddedSignerContext'
 import { ErrorNotification } from '@components/Notifications/ErrorNotifcation'
 import { useAutoLoginToRiverIfEmbeddedWallet } from './useAutoLoginToRiverIfEmbeddedWallet'
 
-export const registerWalletMsgToSign = `Click to register and accept the Towns Terms of Service.`
-
-type UseConnectivtyReturnValue = ReturnType<typeof useConnectivity>
-export type LoginError = UseConnectivtyReturnValue['loginError']
-
-export type AuthContext = Omit<UseConnectivtyReturnValue, 'login' | 'logout' | 'loginStatus'> & {
+type CombinedAuthContext = {
     /**
      * true after the callback from logging in to privy is called, while the signer is being set and the user is logging in to river
      */
@@ -21,11 +16,7 @@ export type AuthContext = Omit<UseConnectivtyReturnValue, 'login' | 'logout' | '
      * the user is logged in to privy and has an embedded wallet
      */
     isConnected: boolean
-    /**
-     * the user is logged in to privy and has an embedded wallet
-     * and is logged into river
-     */
-    isAuthenticatedAndConnected: boolean
+
     /**
      * login to privy if not connected, otherwise login to river
      */
@@ -34,41 +25,34 @@ export type AuthContext = Omit<UseConnectivtyReturnValue, 'login' | 'logout' | '
      * logout of both privy and river
      */
     logout: () => Promise<void>
-    /**
-     * login status for river
-     */
-    riverLoginStatus: UseConnectivtyReturnValue['loginStatus']
 }
 
-const AuthContext = createContext<AuthContext | undefined>(undefined)
+const CombinedAuthContext = createContext<CombinedAuthContext | undefined>(undefined)
 
-export function AuthContextProvider({
+export function CombinedAuthContextProvider({
     children,
 }: {
     children: React.ReactNode | React.ReactNode[]
 }) {
-    const auth = useAuthContext()
-    return <AuthContext.Provider value={auth}>{children}</AuthContext.Provider>
+    const auth = useCombinedAuthContext()
+    return <CombinedAuthContext.Provider value={auth}>{children}</CombinedAuthContext.Provider>
 }
 
-export function useAuth() {
-    const context = useContext(AuthContext)
+export function useCombinedAuth() {
+    const context = useContext(CombinedAuthContext)
     if (!context) {
-        throw new Error('useAuth must be used in a AuthContextProvider')
+        throw new Error('useCombinedAuth must be used in a CombinedAuthContextProvider')
     }
     return context
 }
 
-function useAuthContext(): AuthContext {
+function useCombinedAuthContext(): CombinedAuthContext {
     const {
         login: riverLogin,
         logout: riverLogout,
-        register,
         loggedInWalletAddress,
         isAuthenticated: riverIsAuthenticated,
         loginError,
-        loginStatus: riverLoginStatus,
-        getIsWalletRegistered,
     } = useConnectivity()
     const { logout: privyLogout } = usePrivy()
 
@@ -86,7 +70,6 @@ function useAuthContext(): AuthContext {
 
     const getSigner = useGetEmbeddedSigner()
     const isConnected = useIsConnected()
-    const isAuthenticatedAndConnected = isConnected && riverIsAuthenticated
 
     const login = useCallback(async () => {
         if (isConnected) {
@@ -110,61 +93,21 @@ function useAuthContext(): AuthContext {
         resetAutoLoginState()
     }, [riverLogout, privyLogout, resetAutoLoginState])
 
-    useEffect(() => {
-        console.log('AuthContext', {
-            riverLoginStatus,
-            loggedInWalletAddress,
-            isAuthenticated: riverIsAuthenticated,
-            isAuthenticatedAndConnected, // csb + wallet
-            isConnected, // isConnected means privy account is created and logged in
-            loginError,
-            isAutoLoggingInToRiver,
-        })
-    }, [
-        isAuthenticatedAndConnected,
-        isAutoLoggingInToRiver,
-        isConnected,
-        loggedInWalletAddress,
-        loginError,
-        riverIsAuthenticated,
-        riverLoginStatus,
-    ])
-
     return useMemo(
         () => ({
             login,
             logout,
-            getIsWalletRegistered,
-            register,
-            riverLoginStatus,
-            loggedInWalletAddress,
-            isAuthenticated: riverIsAuthenticated,
-            isAuthenticatedAndConnected, // csb + wallet
             isConnected, // isConnected means privy account is created and logged in
-            loginError,
             isAutoLoggingInToRiver,
         }),
-        [
-            getIsWalletRegistered,
-            isAuthenticatedAndConnected,
-            isConnected,
-            riverLoginStatus,
-            riverIsAuthenticated,
-            loggedInWalletAddress,
-            login,
-            loginError,
-            logout,
-            register,
-            isAutoLoggingInToRiver,
-        ],
+        [isConnected, login, logout, isAutoLoggingInToRiver],
     )
 }
 
 /**
  * the user is logged in to privy and has an embedded wallet
- * This hook can be used outside of auth context provider
  */
-export function useIsConnected(): AuthContext['isConnected'] {
+function useIsConnected(): CombinedAuthContext['isConnected'] {
     const { ready: privyReady, authenticated: privyAuthenticated } = usePrivy()
     const embeddedWallet = useEmbeddedWallet()
     return privyReady && privyAuthenticated && !!embeddedWallet
@@ -174,7 +117,7 @@ function usePrivyLoginWithErrorHandler({
     loggedInWalletAddress,
     loginToRiverAfterPrivy,
 }: {
-    loggedInWalletAddress: AuthContext['loggedInWalletAddress']
+    loggedInWalletAddress: Address | undefined
     loginToRiverAfterPrivy?: () => void
 }) {
     const { login: privyLogin } = useLogin({

@@ -18,6 +18,7 @@ import { FormProvider, SubmitErrorHandler, UseFormReturn, useFormContext } from 
 import isEqual from 'lodash/isEqual'
 import { AnimatePresence } from 'framer-motion'
 import { useGetEmbeddedSigner } from '@towns/privy'
+import { PrivyWrapper } from 'privy/PrivyProvider'
 import { useSpaceIdFromPathname } from 'hooks/useSpaceInfoFromPathname'
 import { Panel } from '@components/Panel/Panel'
 import {
@@ -221,14 +222,16 @@ export function SingleRolePanel() {
                                         </Stack>
 
                                         <Stack padding="md" paddingTop="sm">
-                                            <SubmitButton
-                                                isCreateRole={isCreateRole}
-                                                roleId={roleId}
-                                                spaceId={spaceIdFromPath}
-                                                transactionIsPending={transactionIsPending}
-                                            >
-                                                {isCreateRole ? 'Create Role' : 'Save Role'}
-                                            </SubmitButton>
+                                            <PrivyWrapper>
+                                                <SubmitButton
+                                                    isCreateRole={isCreateRole}
+                                                    roleId={roleId}
+                                                    spaceId={spaceIdFromPath}
+                                                    transactionIsPending={transactionIsPending}
+                                                >
+                                                    {isCreateRole ? 'Create Role' : 'Save Role'}
+                                                </SubmitButton>
+                                            </PrivyWrapper>
                                         </Stack>
 
                                         {Object.keys(_form.formState.errors).length > 0 && (
