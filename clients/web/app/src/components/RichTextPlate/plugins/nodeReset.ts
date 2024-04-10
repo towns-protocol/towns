@@ -1,15 +1,15 @@
-import { getNodeString, isBlockAboveEmpty, isSelectionAtBlockStart } from '@udecode/plate-common'
 import { ELEMENT_BLOCKQUOTE } from '@udecode/plate-block-quote'
-import { ELEMENT_PARAGRAPH } from '@udecode/plate-paragraph'
-import { ResetNodePluginRule } from '@udecode/plate-reset-node'
-import { ELEMENT_LI, ELEMENT_LIC, ELEMENT_OL, ELEMENT_UL, unwrapList } from '@udecode/plate-list'
 import { exitBreak } from '@udecode/plate-break'
 import {
     ELEMENT_CODE_BLOCK,
     isSelectionAtCodeBlockStart,
     unwrapCodeBlock,
 } from '@udecode/plate-code-block'
-import { getLowestBlockquoteNode } from '../utils/helpers'
+import { getNodeString, isBlockAboveEmpty, isSelectionAtBlockStart } from '@udecode/plate-common'
+import { ELEMENT_LI, ELEMENT_LIC, ELEMENT_OL, ELEMENT_UL, unwrapList } from '@udecode/plate-list'
+import { ELEMENT_PARAGRAPH } from '@udecode/plate-paragraph'
+import { ResetNodePluginRule } from '@udecode/plate-reset-node'
+import { getLowestBlockquoteNode, getLowestParagraphNode } from '../utils/helpers'
 
 const resetBlockTypesCommonRule = {
     types: [ELEMENT_BLOCKQUOTE],
@@ -59,6 +59,22 @@ export const nodeResetRules: ResetNodePluginRule[] = [
                 return true
             }
             return false
+        },
+    },
+    {
+        types: [ELEMENT_PARAGRAPH],
+        hotkey: 'shift+enter',
+        predicate: (editor) => {
+            const paragraphNode = getLowestParagraphNode(editor)
+            if (!paragraphNode) {
+                return false
+            }
+            return getNodeString(paragraphNode).endsWith('\n')
+        },
+        defaultType: ELEMENT_PARAGRAPH,
+        onReset: (editor) => {
+            editor.deleteBackward('character')
+            exitBreak(editor, { defaultType: ELEMENT_PARAGRAPH })
         },
     },
     {

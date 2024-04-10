@@ -1,10 +1,14 @@
-import { ELEMENT_MENTION } from '@udecode/plate-mention'
+import { ELEMENT_MENTION, TMentionElement } from '@udecode/plate-mention'
+import { ELEMENT_CODE_BLOCK, ELEMENT_CODE_LINE, TCodeBlockElement } from '@udecode/plate-code-block'
+import { TChannelMentionElement, TMentionEmoji } from '../ComboboxTypes'
+import { ELEMENT_MENTION_EMOJI } from '../../plugins/emoji/createEmojiPlugin'
 import { ELEMENT_MENTION_CHANNEL } from '../../plugins/createChannelPlugin'
 
 export interface NodeTypes {
     paragraph: string
     block_quote: string
     code_block: string
+    code_line: string
     link: string
     ul_list: string
     ol_list: string
@@ -25,6 +29,9 @@ export interface NodeTypes {
     inline_code_mark: string
     thematic_break: string
     image: string
+    mention: string
+    mention_channel: string
+    mention_emoji: string
 }
 
 export type MdastNodeType =
@@ -48,11 +55,13 @@ export type MdastNodeType =
     | 'text'
     | typeof ELEMENT_MENTION
     | typeof ELEMENT_MENTION_CHANNEL
+    | typeof ELEMENT_MENTION_EMOJI
 
 export const defaultNodeTypes: NodeTypes = {
     paragraph: 'p',
     block_quote: 'blockquote',
-    code_block: 'code_block',
+    code_block: ELEMENT_CODE_BLOCK,
+    code_line: ELEMENT_CODE_LINE,
     link: 'a',
     ul_list: 'ul',
     ol_list: 'ol',
@@ -73,11 +82,14 @@ export const defaultNodeTypes: NodeTypes = {
     inline_code_mark: 'code',
     thematic_break: 'thematic_break',
     image: 'image',
+    mention: ELEMENT_MENTION,
+    mention_channel: ELEMENT_MENTION_CHANNEL,
+    mention_emoji: ELEMENT_MENTION_EMOJI,
 }
 
 export interface LeafType {
     text: string
-    strikeThrough?: boolean
+    strikethrough?: boolean
     bold?: boolean
     italic?: boolean
     code?: boolean
@@ -88,6 +100,8 @@ export interface BlockType {
     type: string
     parentType?: string
     link?: string
+    url?: string
+    value?: string
     caption?: string
     language?: string
     break?: boolean
@@ -247,3 +261,7 @@ export type DeserializedNode<T extends InputNodeTypes> =
     | StrikeThoughNode
     | InlineCodeNode
     | TextNode
+    | TCodeBlockElement
+    | TChannelMentionElement
+    | TMentionElement
+    | TMentionEmoji

@@ -7,13 +7,22 @@ interface Options {
     ignoreParagraphNewline?: boolean
 }
 
+const MENTION_TYPES = [
+    defaultNodeTypes.mention,
+    defaultNodeTypes.mention_channel,
+    defaultNodeTypes.mention_emoji,
+]
+
 const isLeafNode = (node: BlockType | LeafType): node is LeafType => {
-    return typeof (node as LeafType).text === 'string'
+    return (
+        typeof (node as LeafType).text === 'string' ||
+        MENTION_TYPES.includes((node as BlockType).type)
+    )
 }
 
 const VOID_ELEMENTS: Array<keyof NodeTypes> = ['thematic_break', 'image']
 
-const BREAK_TAG = '<br>'
+const BREAK_TAG = '\n'
 
 export default function serialize(
     chunk: BlockType | LeafType,
@@ -25,8 +34,13 @@ export default function serialize(
         listDepth = 0,
     } = opts
 
-    const text = (chunk as LeafType).text || ''
+    let text = (chunk as LeafType).text || ''
     let type = (chunk as BlockType).type || ''
+
+    // Handle mentions
+    if (MENTION_TYPES.includes(type)) {
+        text = (chunk as BlockType).value || ''
+    }
 
     const nodeTypes: NodeTypes = {
         ...defaultNodeTypes,
@@ -39,7 +53,7 @@ export default function serialize(
 
     const LIST_TYPES = [nodeTypes.ul_list, nodeTypes.ol_list]
 
-    let children = text
+    let children = text ? text.split('\n').join('  \n') : text
 
     if (!isLeafNode(chunk)) {
         children = chunk.children
@@ -99,7 +113,8 @@ export default function serialize(
     if (
         !ignoreParagraphNewline &&
         (text === '' || text === '\n') &&
-        chunk.parentType === nodeTypes.paragraph
+        chunk.parentType === nodeTypes.paragraph &&
+        !MENTION_TYPES.includes(type)
     ) {
         type = nodeTypes.paragraph
         children = BREAK_TAG
@@ -117,7 +132,7 @@ export default function serialize(
     // "Text foo bar **baz**" resulting in "**Text foo bar **baz****"
     // which is invalid markup and can mess everything up
     if (children !== BREAK_TAG && isLeafNode(chunk)) {
-        if (chunk.strikeThrough && chunk.bold && chunk.italic) {
+        if (chunk.strikethrough && chunk.bold && chunk.italic) {
             children = retainWhitespaceAndFormat(children, '~~***')
         } else if (chunk.bold && chunk.italic) {
             children = retainWhitespaceAndFormat(children, '***')
@@ -130,7 +145,7 @@ export default function serialize(
                 children = retainWhitespaceAndFormat(children, '_')
             }
 
-            if (chunk.strikeThrough) {
+            if (chunk.strikethrough) {
                 children = retainWhitespaceAndFormat(children, '~~')
             }
 
@@ -161,18 +176,16 @@ export default function serialize(
             return `> ${children}\n\n`
 
         case nodeTypes.code_block:
-            return `\`\`\`${(chunk as BlockType).language || ''}\n${children}\n\`\`\`\n`
+            return `\`\`\`${(chunk as BlockType).language || ''}\n${children}\`\`\`\n`
 
         case nodeTypes.link:
-            return `[${children}](${(chunk as BlockType).link || ''})`
-        case nodeTypes.image:
-            return `![${(chunk as BlockType).caption}](${(chunk as BlockType).link || ''})`
+            return `[${children}](${(chunk as BlockType).url || ''})`
 
         case nodeTypes.ul_list:
         case nodeTypes.ol_list:
             return `\n${children}\n`
 
-        case nodeTypes.listItem: {
+        case nodeTypes.li: {
             const isOL = chunk && chunk.parentType === nodeTypes.ol_list
             const treatAsLeaf =
                 (chunk as BlockType).children.length === 1 &&
@@ -189,6 +202,8 @@ export default function serialize(
             }
             return `${spacer}${isOL ? '1.' : '-'} ${children}${treatAsLeaf ? '\n' : ''}`
         }
+        case nodeTypes.code_line:
+        case nodeTypes.lic:
         case nodeTypes.paragraph:
             return `${children}\n`
 
@@ -211,7 +226,7 @@ function retainWhitespaceAndFormat(string: string, format: string) {
     // children will be mutated
     const children = frozenString
 
-    // We reverse the right side formatting, to properly handle bold/italic and strikeThrough
+    // We reverse the right side formatting, to properly handle bold/italic and strikethrough
     // formats, so we can create ~~***FooBar***~~
     const fullFormat = `${format}${children}${reverseStr(format)}`
 
@@ -222,7 +237,7 @@ function retainWhitespaceAndFormat(string: string, format: string) {
     }
 
     // if we do have whitespace, let's add our formatting around our trimmed string
-    // We reverse the right side formatting, to properly handle bold/italic and strikeThrough
+    // We reverse the right side formatting, to properly handle bold/italic and strikethrough
     // formats, so we can create ~~***FooBar***~~
     const formattedString = format + children + reverseStr(format)
 

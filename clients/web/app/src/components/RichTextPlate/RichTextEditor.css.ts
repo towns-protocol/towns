@@ -254,3 +254,7 @@ globalStyle(`${richText} ${ol} ${ol} ${ol} ${ol}`, {
 globalStyle(`${codeBlock} strong`, {
     fontWeight: 'bold',
 })
+
+globalStyle(`${richText} ${paragraph} + ${paragraph}`, {
+    marginTop: vars.space.md,
+})

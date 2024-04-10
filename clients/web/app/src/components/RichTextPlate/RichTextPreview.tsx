@@ -72,6 +72,7 @@ export const RichTextPreview = React.memo(
                     <ListElement variant="span">{props.children}</ListElement>
                 ),
                 p: ParagraphWithoutPlate,
+                paragraph: ParagraphWithoutPlate,
                 strong: (props: React.PropsWithChildren) => (
                     <Text strong display="inline" as="span">
                         {props.children}

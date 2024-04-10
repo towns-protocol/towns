@@ -1,5 +1,6 @@
 import { ELEMENT_BLOCKQUOTE } from '@udecode/plate-block-quote'
 import { ELEMENT_CODE_LINE } from '@udecode/plate-code-block'
+import { ELEMENT_PARAGRAPH } from '@udecode/plate-paragraph'
 import { PlateEditor, findNode, getBlockAbove, isBlock, setElements } from '@udecode/plate-common'
 import { isType } from '@udecode/plate-utils'
 import { TComboboxItemBase } from '@udecode/plate-combobox'
@@ -14,6 +15,13 @@ export const isBlockquoteElement = (editor: PlateEditor) =>
 export const getLowestBlockquoteNode = (editor: PlateEditor) => {
     return findNode(editor, {
         match: { type: ELEMENT_BLOCKQUOTE },
+        mode: 'lowest',
+    })?.[0]
+}
+
+export const getLowestParagraphNode = (editor: PlateEditor) => {
+    return findNode(editor, {
+        match: { type: ELEMENT_PARAGRAPH },
         mode: 'lowest',
     })?.[0]
 }

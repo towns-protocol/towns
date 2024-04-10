@@ -15,7 +15,6 @@ import {
     OptionType,
     ParagraphNode,
     TextNode,
-    ThematicBreakNode,
     defaultNodeTypes,
 } from './ast-types'
 import { ELEMENT_MENTION_CHANNEL } from '../../plugins/createChannelPlugin'
@@ -71,8 +70,9 @@ export default function deserialize<T extends InputNodeTypes>(
         case 'listItem':
             return { type: types.li, children } as ListItemNode<T>
         case 'lic':
-        case 'paragraph':
             return { type: node.type, children } as ParagraphNode<T>
+        case 'paragraph':
+            return { type: defaultNodeTypes.paragraph, children } as ParagraphNode<T>
         case 'link':
             return {
                 type: types.link,
@@ -152,11 +152,7 @@ export default function deserialize<T extends InputNodeTypes>(
             }
         case 'break':
         case 'thematicBreak':
-            return {
-                type: types.thematic_break,
-                children: [{ text: '' }],
-            } as ThematicBreakNode<T>
-
+            return { text: '  \n' }
         case 'text':
         default:
             return { text: node.value || '' }
