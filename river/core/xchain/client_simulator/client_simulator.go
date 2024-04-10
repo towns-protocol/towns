@@ -22,6 +22,7 @@ import (
 
 func ClientSimulator() {
 	log := dlog.FromCtx(context.Background())
+	log.Info("ClientSimulator started")
 
 	privateKey, err := crypto.GenerateKey()
 	if err != nil {
@@ -38,6 +39,8 @@ func ClientSimulator() {
 
 	fromAddress := crypto.PubkeyToAddress(*publicKeyECDSA)
 
+	log.Info("ClientSimulator fromAddress", "fromAddress", fromAddress.Hex())
+
 	baseWebsocketURL, err := xc.ConvertHTTPToWebSocket(config.GetConfig().BaseChain.NetworkUrl)
 	if err != nil {
 		log.Error("Failed to convert BaseChain HTTP to WebSocket", "err", err)
@@ -49,6 +52,8 @@ func ClientSimulator() {
 		log.Error("Failed to connect to the Ethereum client", "err", err)
 		return
 	}
+	log.Info("ClientSimulator connected to Ethereum client")
+
 	bc := context.Background()
 	var result interface{}
 	err = client.Client().CallContext(bc, &result, "anvil_setBalance", fromAddress, 1000000000000000000)
@@ -56,6 +61,7 @@ func ClientSimulator() {
 		log.Info("Failed call anvil_setBalance %v", err)
 		return
 	}
+	log.Info("ClientSimulator add funds on anvil to wallet address", "result", result)
 
 	gatedContract, err := e.NewIEntitlementGated(*xc.GetTestContractAddress(), client)
 	if err != nil {
@@ -78,6 +84,8 @@ func ClientSimulator() {
 		Context: bc,
 	} // Replace with appropriate context and filter query if needed
 
+	log.Info("ClientSimulator watching for events...")
+
 	// checkRequestedSub, err := checkRequestedFilterer.WatchEntitlementCheckRequested(opts, checkRequestedResults, []common.Address{fromAddress})
 	checkRequestedSub, err := checkerFilterer.WatchEntitlementCheckRequested(
 		checkerOpts,
@@ -88,6 +96,8 @@ func ClientSimulator() {
 		log.Error("Failed call WatchEntitlementCheckRequested", "err", err)
 		return
 	}
+
+	log.Info("ClientSimulator subscribed to checkRequestedSub")
 
 	var checkRequestedSubCh <-chan error
 	if checkRequestedSub != nil {
@@ -125,6 +135,7 @@ func ClientSimulator() {
 	auth.GasLimit = uint64(30000000) // in units
 	auth.GasPrice = gasPrice
 
+	log.Info("ClientSimulator Requesting entitlement check")
 	tx, err := gatedContract.RequestEntitlementCheck(auth)
 	if err != nil {
 		log.Error("RequestEntitlementCheck", "err", err)
@@ -140,7 +151,7 @@ func ClientSimulator() {
 
 	requestBlockNumber := rawBlockNumber.Uint64()
 
-	log.Info("Client RequestEntitlementCheck mined in block", "rawBlockNumber", rawBlockNumber)
+	log.Info("Client RequestEntitlementCheck mined in block", "rawBlockNumber", rawBlockNumber, "id", tx.Hash(), "hex", tx.Hash().Hex())
 
 	var resultSubCh <-chan error
 	var resultSub event.Subscription

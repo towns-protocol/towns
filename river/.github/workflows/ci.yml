@@ -1,6 +1,6 @@
 name: Continuous Integration
 env:
-    FOUNDRY_VERSION: nightly
+    FOUNDRY_VERSION: nightly-de33b6af53005037b463318d2628b5cfcaf39916
     RIVER_BLOCK_TIME: 1
 on:
     schedule:
@@ -421,7 +421,7 @@ jobs:
               run: |
                   cd ./core/node
                   ./run_multi.sh --de -c -r &
-                  for i in {5180..5189}; do yarn wait-on https://localhost:$i/debug/multi --timeout=400000 --i=5000 --verbose; done
+                  for i in {5180..5189}; do yarn wait-on https://localhost:$i/debug/multi --timeout=900000 --i=5000 --verbose; done
 
             - name: Run SDK Tests (without entitlements)
               run: |
@@ -698,7 +698,7 @@ jobs:
               run: |
                   cd ./core/node
                   ./run_multi.sh -c -r &
-                  for i in {5170..5179}; do yarn wait-on https://localhost:$i/debug/multi --timeout=400000 --i=5000 --verbose; done
+                  for i in {5170..5179}; do yarn wait-on https://localhost:$i/debug/multi --timeout=900000 --i=5000 --verbose; done
 
             - name: Build & Test (with entitlements)
               run: yarn csb:turbo-no-sdk

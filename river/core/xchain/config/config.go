@@ -21,7 +21,7 @@ type Config struct {
 	Metrics             infra.MetricsConfig `mapstructure:"metrics"`
 	Log                 infra.LogConfig     `mapstructure:"log"`
 	ChainsString        string              `mapstructure:"chains"`
-	Chains              []ChainConfig       `mapstructure:"-"` // This is a derived field
+	Chains              map[uint64]string   `mapstructure:"-"` // This is a derived field
 	EntitlementContract ContractConfig      `mapstructure:"entitlement_contract"`
 	TestingContract     ContractConfig      `mapstructure:"test_contract"`
 	contractVersion     ContractVersion     `mapstructure:"contract_version"`
@@ -30,18 +30,14 @@ type Config struct {
 	RiverChain node_config.ChainConfig
 }
 
-type ChainConfig struct {
-	NetworkUrl string
-	ChainId    uint64
-}
 type ContractConfig struct {
 	Address string
 }
 
 var cmdConfig *Config
 
-func parseChain(chainStr string) []ChainConfig {
-	var chains []ChainConfig
+func parseChain(chainStr string) map[uint64]string {
+	chainUrls := make(map[uint64]string)
 	chainPairs := strings.Split(chainStr, ",")
 	for _, pair := range chainPairs {
 		parts := strings.SplitN(pair, ":", 2) // Use SplitN to split into exactly two parts
@@ -51,13 +47,10 @@ func parseChain(chainStr string) []ChainConfig {
 				fmt.Printf("Error converting chainID to int: %v\n", err)
 				continue
 			}
-			chains = append(chains, ChainConfig{
-				NetworkUrl: parts[1],
-				ChainId:    uint64(chainID),
-			})
+			chainUrls[uint64(chainID)] = parts[1]
 		}
 	}
-	return chains
+	return chainUrls
 }
 
 func GetConfig() *Config {

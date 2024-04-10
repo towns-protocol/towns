@@ -129,7 +129,7 @@ export function isStringArray(
 
 export type MembershipInfo = Pick<
     MembershipInfoStruct,
-    'maxSupply' | 'currency' | 'feeRecipient' | 'price' | 'duration'
+    'maxSupply' | 'currency' | 'feeRecipient' | 'price' | 'duration' | 'pricingModule'
 > &
     TotalSupplyInfo
 

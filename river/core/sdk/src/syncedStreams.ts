@@ -159,7 +159,7 @@ export class SyncedStreams {
         this.log('network status changed. Network online?', isOnline)
         if (isOnline) {
             // immediate retry if the network comes back online
-            this.log('back online, release retry wait')
+            this.log('back online, release retry wait', { syncState: this.syncState })
             this.releaseRetryWait?.()
         }
     }
@@ -168,6 +168,9 @@ export class SyncedStreams {
         this.isMobileSafariBackgrounded = document.visibilityState === 'hidden'
         this.log('onMobileSafariBackgrounded', this.isMobileSafariBackgrounded)
         if (!this.isMobileSafariBackgrounded) {
+            // if foregrounded, attempt to retry
+            this.log('foregrounded, release retry wait', { syncState: this.syncState })
+            this.releaseRetryWait?.()
             this.checkStartTicking()
         }
     }

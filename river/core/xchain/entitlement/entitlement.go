@@ -76,27 +76,27 @@ type OrOperation struct {
 	RightOperation   Operation
 }
 
-func (o OrOperation) GetOpType() OperationType {
+func (o *OrOperation) GetOpType() OperationType {
 	return o.OpType
 }
 
-func (o OrOperation) GetLogicalType() LogicalOperationType {
+func (o *OrOperation) GetLogicalType() LogicalOperationType {
 	return o.LogicalType
 }
 
-func (o OrOperation) GetLeftOperation() Operation {
+func (o *OrOperation) GetLeftOperation() Operation {
 	return o.LeftOperation
 }
 
-func (o OrOperation) GetRightOperation() Operation {
+func (o *OrOperation) GetRightOperation() Operation {
 	return o.RightOperation
 }
 
-func (o OrOperation) SetLeftOperation(left Operation) {
+func (o *OrOperation) SetLeftOperation(left Operation) {
 	o.LeftOperation = left
 }
 
-func (o OrOperation) SetRightOperation(right Operation) {
+func (o *OrOperation) SetRightOperation(right Operation) {
 	o.RightOperation = right
 }
 
@@ -108,27 +108,27 @@ type AndOperation struct {
 	RightOperation   Operation
 }
 
-func (a AndOperation) GetOpType() OperationType {
+func (a *AndOperation) GetOpType() OperationType {
 	return a.OpType
 }
 
-func (a AndOperation) GetLogicalType() LogicalOperationType {
+func (a *AndOperation) GetLogicalType() LogicalOperationType {
 	return a.LogicalType
 }
 
-func (a AndOperation) GetLeftOperation() Operation {
+func (a *AndOperation) GetLeftOperation() Operation {
 	return a.LeftOperation
 }
 
-func (a AndOperation) GetRightOperation() Operation {
+func (a *AndOperation) GetRightOperation() Operation {
 	return a.RightOperation
 }
 
-func (a AndOperation) SetLeftOperation(left Operation) {
+func (a *AndOperation) SetLeftOperation(left Operation) {
 	a.LeftOperation = left
 }
 
-func (a AndOperation) SetRightOperation(right Operation) {
+func (a *AndOperation) SetRightOperation(right Operation) {
 	a.RightOperation = right
 }
 
@@ -175,14 +175,14 @@ func getOperationTree(address string) (Operation, error) {
 		} else if OperationType(operation.OpType) == LOGICAL {
 			logicalOperation := logicalOperations[operation.Index]
 			if LogicalOperationType(logicalOperation.LogOpType) == AND {
-				decodedOperations = append(decodedOperations, AndOperation{
+				decodedOperations = append(decodedOperations, &AndOperation{
 					OpType:         LOGICAL,
 					LogicalType:    LogicalOperationType(logicalOperation.LogOpType),
 					LeftOperation:  decodedOperations[logicalOperation.LeftOperationIndex],
 					RightOperation: decodedOperations[logicalOperation.RightOperationIndex],
 				})
 			} else if LogicalOperationType(logicalOperation.LogOpType) == OR {
-				decodedOperations = append(decodedOperations, OrOperation{
+				decodedOperations = append(decodedOperations, &OrOperation{
 					OpType:         LOGICAL,
 					LogicalType:    LogicalOperationType(logicalOperation.LogOpType),
 					LeftOperation:  decodedOperations[logicalOperation.LeftOperationIndex],
@@ -230,7 +230,7 @@ func getOperationTree(address string) (Operation, error) {
 
 func evaluateAndOperation(
 	ctx context.Context,
-	op AndOperation,
+	op *AndOperation,
 	callerAddress *common.Address,
 ) (bool, error) {
 	if op.LeftOperation == nil || op.RightOperation == nil {
@@ -272,7 +272,7 @@ func evaluateAndOperation(
 
 func evaluateOrOperation(
 	ctx context.Context,
-	op OrOperation,
+	op *OrOperation,
 	callerAddress *common.Address,
 ) (bool, error) {
 	if op.LeftOperation == nil || op.RightOperation == nil {
@@ -347,10 +347,10 @@ func evaluateOp(
 
 		switch logicalOp.GetLogicalType() {
 		case AND:
-			andOp := (op).(AndOperation)
+			andOp := (op).(*AndOperation)
 			return evaluateAndOperation(ctx, andOp, callerAddress)
 		case OR:
-			orOp := (op).(OrOperation)
+			orOp := (op).(*OrOperation)
 			return evaluateOrOperation(ctx, orOp, callerAddress)
 		default:
 			return false, fmt.Errorf("invalid LogicalOperation type")

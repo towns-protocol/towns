@@ -434,14 +434,16 @@ export class SpaceDapp implements ISpaceDapp {
         if (!space) {
             throw new Error(`Space with spaceId "${spaceId}" is not found.`)
         }
-        const [price, limit, currency, feeRecipient, duration, totalSupply] = await Promise.all([
-            space.Membership.read.getMembershipPrice(),
-            space.Membership.read.getMembershipLimit(),
-            space.Membership.read.getMembershipCurrency(),
-            space.Ownable.read.owner(),
-            space.Membership.read.getMembershipDuration(),
-            space.Membership.read.totalSupply(),
-        ])
+        const [price, limit, currency, feeRecipient, duration, totalSupply, pricingModule] =
+            await Promise.all([
+                space.Membership.read.getMembershipPrice(),
+                space.Membership.read.getMembershipLimit(),
+                space.Membership.read.getMembershipCurrency(),
+                space.Ownable.read.owner(),
+                space.Membership.read.getMembershipDuration(),
+                space.Membership.read.totalSupply(),
+                space.Membership.read.getMembershipPricingModule(),
+            ])
 
         return {
             price: price, // keep as BigNumber (wei)
@@ -450,6 +452,7 @@ export class SpaceDapp implements ISpaceDapp {
             feeRecipient: feeRecipient,
             duration: duration.toNumber(),
             totalSupply: totalSupply.toNumber(),
+            pricingModule: pricingModule,
         }
     }
 
