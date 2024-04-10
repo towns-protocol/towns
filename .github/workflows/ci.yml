@@ -255,4 +255,5 @@ jobs:
                   SLACK_USERNAME: 'CI'
                   SLACK_ICON_EMOJI: ':boom:'
                   SLACK_COLOR: '#FF0000'
-                  SLACK_MESSAGE: 'CI Failure on ${{ github.repository }}'
+                  SLACK_MESSAGE: 'CI Failure on ${{ github.repository }} ${{ vars.GOALIE_SLACK_GROUP_ID}}'
+                  SLACK_LINK_NAMES: true
