@@ -504,7 +504,7 @@ resource "aws_ecs_task_definition" "river-fargate" {
       },
       {
         name  = "WALLETLINKCONTRACT__ADDRESS"
-        value = "0x9ddFCd12Ae6f3a8c56d5f07A6308307a23195a30"
+        value = "0x2cF3e30BaCd44272Ee1494659cf895022786AAF3"
       },
       {
         name  = "WALLETLINKCONTRACT__VERSION"
