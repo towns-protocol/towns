@@ -6,7 +6,6 @@ import tsconfigPaths from 'vite-tsconfig-paths'
 import { visualizer } from 'rollup-plugin-visualizer'
 import polyfillNode from 'rollup-plugin-polyfill-node'
 import mkcert from 'vite-plugin-mkcert'
-import path from 'path'
 import { VitePWA } from 'vite-plugin-pwa'
 import { vitePWAOptions } from './vite-pwa-options.config'
 import { execSync } from 'child_process'
@@ -74,7 +73,7 @@ export default ({ mode }: { mode: string }) => {
                   }
                 : {}),
         },
-        assetsInclude: ['**/*.png', '**/*.svg'],
+        assetsInclude: ['**/*.png', '**/*.svg', '**/*.wasm'],
         plugins: [
             VitePWA(vitePWAOptions(mode, env)),
             polyfillNode(),
