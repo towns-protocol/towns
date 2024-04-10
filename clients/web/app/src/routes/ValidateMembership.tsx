@@ -1,46 +1,59 @@
-import React, { useEffect, useMemo } from 'react'
+import React, { useEffect } from 'react'
 import { Outlet } from 'react-router'
-import { Membership, useTownsContext } from 'use-towns-client'
+import { Membership, useOfflineStore, useSpaceData, useTownsContext } from 'use-towns-client'
 import AnalyticsService, { AnalyticsEvents } from 'use-towns-client/dist/utils/analyticsService'
-import { Box } from '@ui'
-import { useContractAndServerSpaceData } from 'hooks/useContractAndServerSpaceData'
 import { useSpaceIdFromPathname } from 'hooks/useSpaceInfoFromPathname'
 import { SetUsernameForm } from '@components/SetUsernameForm/SetUsernameForm'
 import { useUsernameConfirmed } from 'hooks/useUsernameConfirmed'
-import { PublicTownPage, TownNotFoundBox } from './PublicTownPage'
-import { AppSkeletonView, WelcomeLayout } from './layouts/WelcomeLayout'
+import { PublicTownPage } from './PublicTownPage'
+import { AppSkeletonView } from './layouts/WelcomeLayout'
 
 export const ValidateMembership = () => {
-    const { serverSpace: space, chainSpace, chainSpaceLoading } = useContractAndServerSpaceData()
-    const { spaces, client, clientStatus } = useTownsContext()
+    const space = useSpaceData()
+    const { client, clientStatus } = useTownsContext()
     const spaceIdFromPathname = useSpaceIdFromPathname()
     const { confirmed: usernameConfirmed } = useUsernameConfirmed()
-    const riverSpace = useMemo(
-        () => spaces.find((s) => s.id === spaceIdFromPathname),
-        [spaceIdFromPathname, spaces],
-    )
-    const isMember = space?.membership === Membership.Join
 
-    if (isMember) {
-        AnalyticsService.getInstance().trackEventOnce(AnalyticsEvents.IsMember)
-    }
+    const offlineSyncedSpaceIds = useOfflineStore((s) => s.offlineSyncedSpaceIds)
+
     useEffect(() => {
         console.log('ValidateMembership', spaceIdFromPathname, {
-            chainSpaceLoading,
             usernameConfirmed,
             clientStatus,
             client: client !== undefined,
         })
-    }, [chainSpaceLoading, client, clientStatus, spaceIdFromPathname, usernameConfirmed])
+    }, [client, clientStatus, spaceIdFromPathname, usernameConfirmed])
 
-    if (!client) {
-        // if we're not connected to the server, render the public town page, or an empty space
-        if (spaceIdFromPathname) {
-            return <PublicTownPage />
+    if (!spaceIdFromPathname) {
+        return <Outlet />
+    }
+
+    // space can take some time to sync on load
+    if (!client || space === undefined) {
+        if (offlineSyncedSpaceIds.includes(spaceIdFromPathname)) {
+            // we can for now assume the user is a member
+            return <AppSkeletonView />
         } else {
-            return <Outlet />
+            // not sure if they're a member yet
+            // while the space loads, show the public town page
+            AnalyticsService.getInstance().trackEventOnce(AnalyticsEvents.PublicTownPage)
+            return <PublicTownPage />
         }
     }
+
+    // if you are logged in and a member, it might need some time to get your membership status
+    if (!space.hasLoadedMemberships) {
+        return <AppSkeletonView />
+    }
+
+    const isMember = space.membership === Membership.Join
+
+    if (!isMember) {
+        AnalyticsService.getInstance().trackEventOnce(AnalyticsEvents.PublicTownPage)
+        return <PublicTownPage />
+    }
+
+    AnalyticsService.getInstance().trackEventOnce(AnalyticsEvents.IsMember)
 
     if (!clientStatus.isRemoteDataLoaded || !clientStatus.isLocalDataLoaded) {
         AnalyticsService.getInstance().trackEventOnce(AnalyticsEvents.WelcomeLayoutLoadLocalData)
@@ -51,44 +64,10 @@ export const ValidateMembership = () => {
         )
     }
 
-    if (!spaceIdFromPathname) {
-        return <Outlet />
-    }
-
-    // when you navigate to another town, after the first town is loaded,
-    // we can show the river space while the chainSpace is loading
-    if (chainSpaceLoading) {
-        return riverSpace ? (
-            <Outlet />
-        ) : (
-            <WelcomeLayout debugText="validate membership: loading blockchain space data" />
-        )
-    }
-
-    // TODO: if we persist react-query data, this will pass even if node provider is down
-    if (!riverSpace && !chainSpace) {
-        return (
-            <Box absoluteFill centerContent>
-                <TownNotFoundBox />
-            </Box>
-        )
-    }
-
-    // space will always be undefined if you are logged out or not a member
-    // but if you are logged in and a member, it might need some time to get your membership status
-    if (space && !space.hasLoadedMemberships) {
-        return <WelcomeLayout debugText="validate membership: loading river memberships" />
-    }
-
-    if (!isMember) {
-        AnalyticsService.getInstance().trackEventOnce(AnalyticsEvents.PublicTownPage)
-        return <PublicTownPage />
-    }
-
     return (
         <>
             <Outlet />
-            {space && !usernameConfirmed && <SetUsernameForm spaceData={space} />}
+            {!usernameConfirmed && <SetUsernameForm spaceData={space} />}
         </>
     )
 }

@@ -5,7 +5,6 @@ import { describe, expect, test, vi } from 'vitest'
 import * as Lib from 'use-towns-client'
 import { Route, Routes } from 'react-router'
 import { TestApp } from 'test/testUtils'
-import * as useContractAndServerSpaceDataHook from 'hooks/useContractAndServerSpaceData'
 import { PATHS } from 'routes'
 import { spaceRoomIdentifier } from 'test/testMocks'
 import { ValidateMembership } from './ValidateMembership'
@@ -48,14 +47,6 @@ const mockSpaceData: Lib.SpaceData = {
     hasLoadedMemberships: true,
 }
 
-const mockChainSpace = {
-    address: '0x1',
-    networkId: 'some-id',
-    name: 'some-name',
-    owner: '0x0',
-    disabled: false,
-}
-
 const Wrapper = () => {
     return (
         <TestApp initialEntries={[`/${PATHS.SPACES}/${spaceRoomIdentifier}`]}>
@@ -75,16 +66,7 @@ const Wrapper = () => {
 
 describe('<ValidateMembership />', () => {
     test('shows not found message when town does not exist', async () => {
-        vi.spyOn(
-            useContractAndServerSpaceDataHook,
-            'useContractAndServerSpaceData',
-        ).mockImplementation(() => {
-            return {
-                chainSpaceLoading: false,
-                chainSpace: undefined,
-                serverSpace: undefined,
-            }
-        })
+        vi.spyOn(Lib, 'useSpaceData').mockImplementation(() => undefined)
 
         render(<Wrapper />)
 
@@ -94,19 +76,11 @@ describe('<ValidateMembership />', () => {
     })
 
     test('shows content when space is found and user is a member', async () => {
-        vi.spyOn(
-            useContractAndServerSpaceDataHook,
-            'useContractAndServerSpaceData',
-        ).mockImplementation(() => {
-            return {
-                chainSpaceLoading: false,
-                chainSpace: mockChainSpace,
-                serverSpace: {
-                    ...mockSpaceData,
-                    membership: Lib.Membership.Join,
-                },
-            }
-        })
+        vi.spyOn(Lib, 'useSpaceData').mockImplementation(() => ({
+            ...mockSpaceData,
+            membership: Lib.Membership.Join,
+        }))
+
         render(<Wrapper />)
 
         await waitFor(() => {
@@ -115,16 +89,7 @@ describe('<ValidateMembership />', () => {
     })
 
     test('does not show content when space is found and user is not a member', async () => {
-        vi.spyOn(
-            useContractAndServerSpaceDataHook,
-            'useContractAndServerSpaceData',
-        ).mockImplementation(() => {
-            return {
-                chainSpaceLoading: false,
-                chainSpace: mockChainSpace,
-                serverSpace: undefined,
-            }
-        })
+        vi.spyOn(Lib, 'useSpaceData').mockImplementation(() => undefined)
         render(<Wrapper />)
 
         await waitFor(() => {

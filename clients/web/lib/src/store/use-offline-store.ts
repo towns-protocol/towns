@@ -23,6 +23,8 @@ export type OfflineUserBioMap = Record<string, string>
 export type OfflineStates = {
     offlineSpaceInfoMap: OfflineSpaceInfoMap
     setOfflineSpaceInfo: (spaceInfo: SpaceInfo) => void
+    offlineSyncedSpaceIds: string[]
+    addOfflineSyncedSpaceId: (spaceId: string) => void
     offlineUserMap: OfflineUserMap
     setOfflineUser: (key: string, offlineUser: OfflineUser) => void
     offlineWalletAddressMap: OfflineWalletAddressMap
@@ -45,6 +47,18 @@ export const generateOfflineUserKey = (spaceId: string, walletAddress: string): 
 export const useOfflineStore = create<OfflineStates>(
     (persist as unknown as MyPersist)(
         (set) => ({
+            offlineSyncedSpaceIds: [],
+            addOfflineSyncedSpaceId: (spaceId) => {
+                set((state) => {
+                    if (state.offlineSyncedSpaceIds.includes(spaceId)) {
+                        return state
+                    }
+                    return {
+                        ...state,
+                        offlineSyncedSpaceIds: [...state.offlineSyncedSpaceIds, spaceId],
+                    }
+                })
+            },
             offlineSpaceInfoMap: {},
             setOfflineSpaceInfo(spaceInfo) {
                 set((state) => {
