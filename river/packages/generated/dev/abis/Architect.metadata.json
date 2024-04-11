@@ -556,7 +556,7 @@
   },
   "settings": {
     "compilationTarget": {
-      "contracts/src/spaces/facets/architect/Architect.sol": "Architect"
+      "contracts/src/factory/facets/architect/Architect.sol": "Architect"
     },
     "evmVersion": "paris",
     "libraries": {},
@@ -892,7 +892,7 @@
         "dweb:/ipfs/QmPSieLU3W9f8FrDu918KPPSQQKBMfRUetRq5fdEsTBFxp"
       ]
     },
-    "contracts/src/spaces/facets/architect/Architect.sol": {
+    "contracts/src/factory/facets/architect/Architect.sol": {
       "keccak256": "0x2405c4cef19c5161c26192cdf6aa34a42851752f9fa157ff4f7960358cfb8b9a",
       "license": "Apache-2.0",
       "urls": [
@@ -900,7 +900,7 @@
         "dweb:/ipfs/Qmb2SVH69HmZFJu2RK3Yau5poCMUk4weYtGMEeK6JJjAUP"
       ]
     },
-    "contracts/src/spaces/facets/architect/ArchitectBase.sol": {
+    "contracts/src/factory/facets/architect/ArchitectBase.sol": {
       "keccak256": "0xe9ad01715d6af5e47f335e356673cb2cfc58c6488856e9dfac8706ef2a8d3645",
       "license": "Apache-2.0",
       "urls": [
@@ -908,7 +908,7 @@
         "dweb:/ipfs/QmeeRhXkmruGwsuGzRUcFnfcQcoHMdJ6EDRrWtCZoczTM8"
       ]
     },
-    "contracts/src/spaces/facets/architect/ArchitectStorage.sol": {
+    "contracts/src/factory/facets/architect/ArchitectStorage.sol": {
       "keccak256": "0x6a11f25a21155e73624631305407602e8ac0e1f11c53936ffaab820263f51d1e",
       "license": "Apache-2.0",
       "urls": [
@@ -916,7 +916,7 @@
         "dweb:/ipfs/QmVfoXqJ1WDnxtRzKiynzkduXbizL4H9WVVDFDVNH7aNxq"
       ]
     },
-    "contracts/src/spaces/facets/architect/IArchitect.sol": {
+    "contracts/src/factory/facets/architect/IArchitect.sol": {
       "keccak256": "0xea649f578c7e6cd3c5deaff4460ee82f6f73dfbfa4cbdc1511f385897aa247ff",
       "license": "Apache-2.0",
       "urls": [
@@ -924,7 +924,7 @@
         "dweb:/ipfs/QmQoPNfPj8xx3otFsnJNcyQokV185TpGecNJSqCxPwLBHr"
       ]
     },
-    "contracts/src/spaces/facets/architect/ImplementationStorage.sol": {
+    "contracts/src/factory/facets/architect/ImplementationStorage.sol": {
       "keccak256": "0x455100b15a508a5d053181bd14929ea50b707f53c108398e0a6ebf0f19d097d0",
       "license": "Apache-2.0",
       "urls": [
@@ -932,7 +932,7 @@
         "dweb:/ipfs/QmbRAd9pXRQZnMZFDRGcnEQGuBuuEsSCpeRkXTPtiLwZMR"
       ]
     },
-    "contracts/src/spaces/facets/architect/pricing/IPricingModules.sol": {
+    "contracts/src/factory/facets/architect/pricing/IPricingModules.sol": {
       "keccak256": "0xbfe90223b87a2fa178024ec2b94dc45a8950b707d76dc54e6743439e8fc0d73e",
       "license": "Apache-2.0",
       "urls": [
@@ -1036,7 +1036,7 @@
         "dweb:/ipfs/QmQcWfQ6k54UPr9eMA2KnXCJAc4NR24LhzbmyA5NUKBVN3"
       ]
     },
-    "contracts/src/spaces/facets/platform/requirements/IPlatformRequirements.sol": {
+    "contracts/src/factory/facets/platform/requirements/IPlatformRequirements.sol": {
       "keccak256": "0xc0b22b0caa2336e0c3f6b6813432643053785c39531d30e5851eeb613a0a7991",
       "license": "Apache-2.0",
       "urls": [
@@ -1044,7 +1044,7 @@
         "dweb:/ipfs/QmRJVrZiZpbGsLngz4J3NVgapKXLErdLc7BPyEyTNKdijg"
       ]
     },
-    "contracts/src/spaces/facets/prepay/IPrepay.sol": {
+    "contracts/src/factory/facets/prepay/IPrepay.sol": {
       "keccak256": "0x0c5c097dd77471d041cdbb84011ac789147af937d275329d857d1a4b257635e9",
       "license": "Apache-2.0",
       "urls": [

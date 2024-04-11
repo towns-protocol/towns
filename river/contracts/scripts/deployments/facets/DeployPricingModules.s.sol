@@ -7,7 +7,7 @@ pragma solidity ^0.8.23;
 
 //contracts
 import {Deployer} from "contracts/scripts/common/Deployer.s.sol";
-import {PricingModulesFacet} from "contracts/src/spaces/facets/architect/pricing/PricingModulesFacet.sol";
+import {PricingModulesFacet} from "contracts/src/factory/facets/architect/pricing/PricingModulesFacet.sol";
 
 contract DeployPricingModules is Deployer {
   function versionName() public pure override returns (string memory) {

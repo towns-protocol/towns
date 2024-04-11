@@ -2,14 +2,14 @@
 pragma solidity ^0.8.23;
 
 // interfaces
-import {IPricingModulesBase} from "contracts/src/spaces/facets/architect/pricing/IPricingModules.sol";
+import {IPricingModulesBase} from "contracts/src/factory/facets/architect/pricing/IPricingModules.sol";
 import {IOwnableBase} from "contracts/src/diamond/facets/ownable/IERC173.sol";
 
 // libraries
 
 // contracts
 import {BaseSetup} from "contracts/test/spaces/BaseSetup.sol";
-import {PricingModulesFacet} from "contracts/src/spaces/facets/architect/pricing/PricingModulesFacet.sol";
+import {PricingModulesFacet} from "contracts/src/factory/facets/architect/pricing/PricingModulesFacet.sol";
 
 // mocks
 import {MockPricingModule} from "contracts/test/mocks/MockPricingModule.sol";

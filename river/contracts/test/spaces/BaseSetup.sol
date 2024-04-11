@@ -3,7 +3,7 @@ pragma solidity ^0.8.23;
 
 // interfaces
 import {TestUtils} from "contracts/test/utils/TestUtils.sol";
-import {IArchitectBase} from "contracts/src/spaces/facets/architect/IArchitect.sol";
+import {IArchitectBase} from "contracts/src/factory/facets/architect/IArchitect.sol";
 import {IEntitlementChecker} from "contracts/src/crosschain/checker/IEntitlementChecker.sol";
 
 // libraries
@@ -11,7 +11,7 @@ import {IEntitlementChecker} from "contracts/src/crosschain/checker/IEntitlement
 // contracts
 
 // deployments
-import {Architect} from "contracts/src/spaces/facets/architect/Architect.sol";
+import {Architect} from "contracts/src/factory/facets/architect/Architect.sol";
 import {SpaceHelper} from "contracts/test/spaces/SpaceHelper.sol";
 import {RuleEntitlement} from "contracts/src/crosschain/RuleEntitlement.sol";
 

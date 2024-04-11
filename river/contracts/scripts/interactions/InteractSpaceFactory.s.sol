@@ -2,7 +2,7 @@
 pragma solidity ^0.8.23;
 
 //interfaces
-import {IArchitect} from "contracts/src/spaces/facets/architect/IArchitect.sol";
+import {IArchitect} from "contracts/src/factory/facets/architect/IArchitect.sol";
 import {IDiamond, Diamond} from "contracts/src/diamond/Diamond.sol";
 import {IDiamondCut} from "contracts/src/diamond/facets/cut/IDiamondCut.sol";
 import {IRuleEntitlement} from "contracts/src/crosschain/IRuleEntitlement.sol";
@@ -19,7 +19,7 @@ import {ProxyManager} from "contracts/src/diamond/proxy/manager/ProxyManager.sol
 import {DeployArchitect} from "contracts/scripts/deployments/facets/DeployArchitect.s.sol";
 import {DeploySpace} from "contracts/scripts/deployments/DeploySpace.s.sol";
 import {ArchitectHelper} from "contracts/test/spaces/architect/ArchitectHelper.sol";
-import {Architect} from "contracts/src/spaces/facets/architect/Architect.sol";
+import {Architect} from "contracts/src/factory/facets/architect/Architect.sol";
 import {DeployWalletLink} from "./../deployments/DeployWalletLink.s.sol";
 
 // debuggging

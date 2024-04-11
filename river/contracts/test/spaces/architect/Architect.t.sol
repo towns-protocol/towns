@@ -2,7 +2,7 @@
 pragma solidity ^0.8.23;
 
 // interfaces
-import {IArchitectBase} from "contracts/src/spaces/facets/architect/IArchitect.sol";
+import {IArchitectBase} from "contracts/src/factory/facets/architect/IArchitect.sol";
 import {IEntitlementsManager} from "contracts/src/spaces/facets/entitlements/IEntitlementsManager.sol";
 import {IOwnableBase} from "contracts/src/diamond/facets/ownable/IERC173.sol";
 import {IERC721} from "@openzeppelin/contracts/token/ERC721/IERC721.sol";
@@ -24,7 +24,7 @@ import {Permissions} from "contracts/src/spaces/facets/Permissions.sol";
 
 // contracts
 import {BaseSetup} from "contracts/test/spaces/BaseSetup.sol";
-import {Architect} from "contracts/src/spaces/facets/architect/Architect.sol";
+import {Architect} from "contracts/src/factory/facets/architect/Architect.sol";
 import {MockERC721} from "contracts/test/mocks/MockERC721.sol";
 import {UserEntitlement} from "contracts/src/spaces/entitlements/user/UserEntitlement.sol";
 import {WalletLink} from "contracts/src/river/wallet-link/WalletLink.sol";

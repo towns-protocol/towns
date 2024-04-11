@@ -14,12 +14,12 @@ import {DiamondCutFacet} from "contracts/src/diamond/facets/cut/DiamondCutFacet.
 import {DiamondLoupeFacet} from "contracts/src/diamond/facets/loupe/DiamondLoupeFacet.sol";
 import {IntrospectionFacet} from "contracts/src/diamond/facets/introspection/IntrospectionFacet.sol";
 
-import {Architect} from "contracts/src/spaces/facets/architect/Architect.sol";
+import {Architect} from "contracts/src/factory/facets/architect/Architect.sol";
 import {ProxyManager} from "contracts/src/diamond/proxy/manager/ProxyManager.sol";
 import {OwnableFacet} from "contracts/src/diamond/facets/ownable/OwnableFacet.sol";
 import {PausableFacet} from "contracts/src/diamond/facets/pausable/PausableFacet.sol";
-import {PlatformRequirementsFacet} from "contracts/src/spaces/facets/platform/requirements/PlatformRequirementsFacet.sol";
-import {PrepayFacet} from "contracts/src/spaces/facets/prepay/PrepayFacet.sol";
+import {PlatformRequirementsFacet} from "contracts/src/factory/facets/platform/requirements/PlatformRequirementsFacet.sol";
+import {PrepayFacet} from "contracts/src/factory/facets/prepay/PrepayFacet.sol";
 
 // diamond helpers
 import {DiamondCutHelper} from "contracts/test/diamond/cut/DiamondCutSetup.sol";

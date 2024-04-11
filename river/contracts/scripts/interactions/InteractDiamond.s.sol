@@ -2,13 +2,13 @@
 pragma solidity ^0.8.23;
 
 // interfaces
-import {IPricingModulesBase} from "./../../src/spaces/facets/architect/pricing/IPricingModules.sol";
+import {IPricingModulesBase} from "contracts/src/factory/facets/architect/pricing/IPricingModules.sol";
 
 // libraries
 
 // contracts
 import {Interaction} from "../common/Interaction.s.sol";
-import {PricingModulesFacet} from "contracts/src/spaces/facets/architect/pricing/PricingModulesFacet.sol";
+import {PricingModulesFacet} from "contracts/src/factory/facets/architect/pricing/PricingModulesFacet.sol";
 
 // debuggging
 import {console} from "forge-std/console.sol";

@@ -7,7 +7,7 @@ pragma solidity ^0.8.23;
 
 //contracts
 import {Deployer} from "contracts/scripts/common/Deployer.s.sol";
-import {Architect} from "contracts/src/spaces/facets/architect/Architect.sol";
+import {Architect} from "contracts/src/factory/facets/architect/Architect.sol";
 
 contract DeployArchitect is Deployer {
   function versionName() public pure override returns (string memory) {

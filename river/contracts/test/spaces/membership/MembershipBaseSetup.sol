@@ -5,8 +5,8 @@ pragma solidity ^0.8.23;
 import {IMembershipBase} from "contracts/src/spaces/facets/membership/IMembership.sol";
 import {IEntitlementBase} from "contracts/src/spaces/entitlements/IEntitlement.sol";
 import {IERC721ABase} from "contracts/src/diamond/facets/token/ERC721A/IERC721A.sol";
-import {IArchitectBase} from "contracts/src/spaces/facets/architect/IArchitect.sol";
-import {IPlatformRequirements} from "contracts/src/spaces/facets/platform/requirements/IPlatformRequirements.sol";
+import {IArchitectBase} from "contracts/src/factory/facets/architect/IArchitect.sol";
+import {IPlatformRequirements} from "contracts/src/factory/facets/platform/requirements/IPlatformRequirements.sol";
 import {IOwnableBase} from "contracts/src/diamond/facets/ownable/IERC173.sol";
 
 // libraries
@@ -14,7 +14,7 @@ import {IOwnableBase} from "contracts/src/diamond/facets/ownable/IERC173.sol";
 // contracts
 import {BaseSetup} from "contracts/test/spaces/BaseSetup.sol";
 
-import {Architect} from "contracts/src/spaces/facets/architect/Architect.sol";
+import {Architect} from "contracts/src/factory/facets/architect/Architect.sol";
 import {MembershipFacet} from "contracts/src/spaces/facets/membership/MembershipFacet.sol";
 import {MembershipReferralFacet} from "contracts/src/spaces/facets/membership/referral/MembershipReferralFacet.sol";
 

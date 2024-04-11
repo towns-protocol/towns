@@ -5,7 +5,7 @@ pragma solidity ^0.8.19;
 import {MembershipBaseSetup} from "../MembershipBaseSetup.sol";
 
 //interfaces
-import {IPlatformRequirements} from "contracts/src/spaces/facets/platform/requirements/IPlatformRequirements.sol";
+import {IPlatformRequirements} from "contracts/src/factory/facets/platform/requirements/IPlatformRequirements.sol";
 
 //libraries
 import {BasisPoints} from "contracts/src/utils/libraries/BasisPoints.sol";

@@ -1949,7 +1949,7 @@
       ],
       "license": "Apache-2.0"
     },
-    "contracts/src/spaces/facets/architect/pricing/IPricingModules.sol": {
+    "contracts/src/factory/facets/architect/pricing/IPricingModules.sol": {
       "keccak256": "0xbfe90223b87a2fa178024ec2b94dc45a8950b707d76dc54e6743439e8fc0d73e",
       "urls": [
         "bzz-raw://73bfdc19b81b36d3c8d7aaa0c6d2701d54b8eeb0613e4c0f6184d1d9e2189716",
@@ -2069,7 +2069,7 @@
       ],
       "license": "Apache-2.0"
     },
-    "contracts/src/spaces/facets/platform/requirements/IPlatformRequirements.sol": {
+    "contracts/src/factory/facets/platform/requirements/IPlatformRequirements.sol": {
       "keccak256": "0xc0b22b0caa2336e0c3f6b6813432643053785c39531d30e5851eeb613a0a7991",
       "urls": [
         "bzz-raw://8a7ceb199e92f484efcc444fffd54fbabaf332c210dda0ef46d89a66f4cb47c7",
@@ -2077,7 +2077,7 @@
       ],
       "license": "Apache-2.0"
     },
-    "contracts/src/spaces/facets/prepay/IPrepay.sol": {
+    "contracts/src/factory/facets/prepay/IPrepay.sol": {
       "keccak256": "0x0c5c097dd77471d041cdbb84011ac789147af937d275329d857d1a4b257635e9",
       "urls": [
         "bzz-raw://baca271a5a66856f3144a4bf0ed6a484b0c981539d6bf0c57ffade9e4986eb49",

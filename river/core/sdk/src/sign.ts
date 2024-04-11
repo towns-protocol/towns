@@ -136,14 +136,17 @@ export const unpackStreamAndCookie = async (
 }
 
 // returns all events + the header event and pointer to header content
-export const unpackMiniblock = async (miniblock: Miniblock): Promise<ParsedMiniblock> => {
+export const unpackMiniblock = async (
+    miniblock: Miniblock,
+    opts?: { disableChecks: boolean },
+): Promise<ParsedMiniblock> => {
     check(isDefined(miniblock.header), 'Miniblock header is not set')
-    const header = await unpackEnvelope(miniblock.header)
+    const header = await unpackEnvelope(miniblock.header, opts)
     check(
         header.event.payload.case === 'miniblockHeader',
         `bad miniblock header: wrong case received: ${header.event.payload.case}`,
     )
-    const events = await unpackEnvelopes(miniblock.events)
+    const events = await unpackEnvelopes(miniblock.events, opts)
     return {
         hash: miniblock.header.hash,
         header: header.event.payload.value,
@@ -151,40 +154,47 @@ export const unpackMiniblock = async (miniblock: Miniblock): Promise<ParsedMinib
     }
 }
 
-export const unpackEnvelope = async (envelope: Envelope): Promise<ParsedEvent> => {
+export const unpackEnvelope = async (
+    envelope: Envelope,
+    opts?: { disableChecks: boolean },
+): Promise<ParsedEvent> => {
     check(hasElements(envelope.event), 'Event base is not set', Err.BAD_EVENT)
     check(hasElements(envelope.hash), 'Event hash is not set', Err.BAD_EVENT)
     check(hasElements(envelope.signature), 'Event signature is not set', Err.BAD_EVENT)
 
-    const hash = riverHash(envelope.event)
-    check(bin_equal(hash, envelope.hash), 'Event id is not valid', Err.BAD_EVENT_ID)
-
-    const recoveredPubKey = riverRecoverPubKey(hash, envelope.signature)
-
     const event = StreamEvent.fromBinary(envelope.event)
-    if (!hasElements(event.delegateSig)) {
-        const address = publicKeyToAddress(recoveredPubKey)
-        check(
-            bin_equal(address, event.creatorAddress),
-            'Event signature is not valid',
-            Err.BAD_EVENT_SIGNATURE,
-        )
-    } else {
-        checkDelegateSig({
-            delegatePubKey: recoveredPubKey,
-            creatorAddress: event.creatorAddress,
-            delegateSig: event.delegateSig,
-            expiryEpochMs: event.delegateExpiryEpochMs,
-        })
-    }
 
-    if (event.prevMiniblockHash) {
-        // TODO replace with a proper check
-        // check(
-        //     bin_equal(e.prevEvents[0], prevEventHash),
-        //     'prevEvents[0] is not valid',
-        //     Err.BAD_PREV_EVENTS,
-        // )
+    const runChecks = opts?.disableChecks !== true
+    if (runChecks) {
+        const hash = riverHash(envelope.event)
+        check(bin_equal(hash, envelope.hash), 'Event id is not valid', Err.BAD_EVENT_ID)
+
+        const recoveredPubKey = riverRecoverPubKey(hash, envelope.signature)
+
+        if (!hasElements(event.delegateSig)) {
+            const address = publicKeyToAddress(recoveredPubKey)
+            check(
+                bin_equal(address, event.creatorAddress),
+                'Event signature is not valid',
+                Err.BAD_EVENT_SIGNATURE,
+            )
+        } else {
+            checkDelegateSig({
+                delegatePubKey: recoveredPubKey,
+                creatorAddress: event.creatorAddress,
+                delegateSig: event.delegateSig,
+                expiryEpochMs: event.delegateExpiryEpochMs,
+            })
+        }
+
+        if (event.prevMiniblockHash) {
+            // TODO replace with a proper check
+            // check(
+            //     bin_equal(e.prevEvents[0], prevEventHash),
+            //     'prevEvents[0] is not valid',
+            //     Err.BAD_PREV_EVENTS,
+            // )
+        }
     }
 
     return {
@@ -198,13 +208,16 @@ export const unpackEnvelope = async (envelope: Envelope): Promise<ParsedEvent> =
     }
 }
 
-export const unpackEnvelopes = async (event: Envelope[]): Promise<ParsedEvent[]> => {
+export const unpackEnvelopes = async (
+    event: Envelope[],
+    opts?: { disableChecks: boolean },
+): Promise<ParsedEvent[]> => {
     const ret: ParsedEvent[] = []
     //let prevEventHash: Uint8Array | undefined = undefined
     for (const e of event) {
         // TODO: this handling of prevEventHash is not correct,
         // hashes should be checked against all preceding events in the stream.
-        ret.push(await unpackEnvelope(e))
+        ret.push(await unpackEnvelope(e, opts))
         //prevEventHash = e.hash!
     }
     return ret

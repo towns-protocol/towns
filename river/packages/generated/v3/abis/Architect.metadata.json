@@ -544,7 +544,7 @@
       "appendCBOR": false
     },
     "compilationTarget": {
-      "contracts/src/spaces/facets/architect/Architect.sol": "Architect"
+      "contracts/src/factory/facets/architect/Architect.sol": "Architect"
     },
     "evmVersion": "paris",
     "libraries": {}
@@ -830,7 +830,7 @@
       ],
       "license": "Apache-2.0"
     },
-    "contracts/src/spaces/facets/architect/Architect.sol": {
+    "contracts/src/factory/facets/architect/Architect.sol": {
       "keccak256": "0xb4ff39cb83fef6d90350690993af3f7a5f31deaa89d792a3e98b505cac1a5470",
       "urls": [
         "bzz-raw://422014f2aa39542afa73da33245ecf36df547dec096f5d29925ab9265cc7c829",
@@ -838,7 +838,7 @@
       ],
       "license": "Apache-2.0"
     },
-    "contracts/src/spaces/facets/architect/ArchitectBase.sol": {
+    "contracts/src/factory/facets/architect/ArchitectBase.sol": {
       "keccak256": "0x65ddd549d7b75ab66fe74193298e471dc6ad05a4a9ea5a1f6c546519a5d123a0",
       "urls": [
         "bzz-raw://f6187864b362883f01946c8ab2aa02de6fe33184af3d64d9a63bea077fd0d369",
@@ -846,7 +846,7 @@
       ],
       "license": "Apache-2.0"
     },
-    "contracts/src/spaces/facets/architect/ArchitectStorage.sol": {
+    "contracts/src/factory/facets/architect/ArchitectStorage.sol": {
       "keccak256": "0x6a11f25a21155e73624631305407602e8ac0e1f11c53936ffaab820263f51d1e",
       "urls": [
         "bzz-raw://3c88b9f38fba7ca69b355fdce609e898857c2bfc69ca62365138bbda9aa6b74b",
@@ -854,7 +854,7 @@
       ],
       "license": "Apache-2.0"
     },
-    "contracts/src/spaces/facets/architect/IArchitect.sol": {
+    "contracts/src/factory/facets/architect/IArchitect.sol": {
       "keccak256": "0xb7dd6c8170ed402c7547d24b07802cda497a7742bf1b96bc62b5b7392d53d4b7",
       "urls": [
         "bzz-raw://5276370330c559db2c30630e80c2e901570fdf646ebccf792606d3d491ea3d5d",
@@ -862,7 +862,7 @@
       ],
       "license": "Apache-2.0"
     },
-    "contracts/src/spaces/facets/architect/ImplementationStorage.sol": {
+    "contracts/src/factory/facets/architect/ImplementationStorage.sol": {
       "keccak256": "0x34b5adcef13e5a5c034e65b1624387e5fe556f3653a1e507cc439f5d057ed8f0",
       "urls": [
         "bzz-raw://d9f3f8157670583492b35324c4f635c6564f3179b3d6c8b6af7ea1ee6de08214",
@@ -870,7 +870,7 @@
       ],
       "license": "Apache-2.0"
     },
-    "contracts/src/spaces/facets/architect/pricing/IPricingModules.sol": {
+    "contracts/src/factory/facets/architect/pricing/IPricingModules.sol": {
       "keccak256": "0xbfe90223b87a2fa178024ec2b94dc45a8950b707d76dc54e6743439e8fc0d73e",
       "urls": [
         "bzz-raw://73bfdc19b81b36d3c8d7aaa0c6d2701d54b8eeb0613e4c0f6184d1d9e2189716",
@@ -974,7 +974,7 @@
       ],
       "license": "Apache-2.0"
     },
-    "contracts/src/spaces/facets/platform/requirements/IPlatformRequirements.sol": {
+    "contracts/src/factory/facets/platform/requirements/IPlatformRequirements.sol": {
       "keccak256": "0xc0b22b0caa2336e0c3f6b6813432643053785c39531d30e5851eeb613a0a7991",
       "urls": [
         "bzz-raw://8a7ceb199e92f484efcc444fffd54fbabaf332c210dda0ef46d89a66f4cb47c7",
@@ -982,7 +982,7 @@
       ],
       "license": "Apache-2.0"
     },
-    "contracts/src/spaces/facets/prepay/IPrepay.sol": {
+    "contracts/src/factory/facets/prepay/IPrepay.sol": {
       "keccak256": "0x0c5c097dd77471d041cdbb84011ac789147af937d275329d857d1a4b257635e9",
       "urls": [
         "bzz-raw://baca271a5a66856f3144a4bf0ed6a484b0c981539d6bf0c57ffade9e4986eb49",

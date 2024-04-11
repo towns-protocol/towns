@@ -8,10 +8,10 @@ pragma solidity ^0.8.23;
 //libraries
 
 //contracts
-import {Architect} from "contracts/src/spaces/facets/architect/Architect.sol";
+import {Architect} from "contracts/src/factory/facets/architect/Architect.sol";
 
 import {BaseSetup} from "contracts/test/spaces/BaseSetup.sol";
-import {PrepayFacet} from "contracts/src/spaces/facets/prepay/PrepayFacet.sol";
+import {PrepayFacet} from "contracts/src/factory/facets/prepay/PrepayFacet.sol";
 import {MembershipFacet} from "contracts/src/spaces/facets/membership/MembershipFacet.sol";
 
 contract PrepayTest is BaseSetup {

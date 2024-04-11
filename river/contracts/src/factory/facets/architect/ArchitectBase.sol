@@ -4,7 +4,7 @@ pragma solidity ^0.8.23;
 // interfaces
 import {IArchitectBase} from "./IArchitect.sol";
 import {IEntitlement} from "contracts/src/spaces/entitlements/IEntitlement.sol";
-import {IUserEntitlement} from "./../../entitlements/user/IUserEntitlement.sol";
+import {IUserEntitlement} from "contracts/src/spaces/entitlements/user/IUserEntitlement.sol";
 import {IRuleEntitlement} from "../../../crosschain/IRuleEntitlement.sol";
 import {IRoles, IRolesBase} from "contracts/src/spaces/facets/roles/IRoles.sol";
 import {IChannel} from "contracts/src/spaces/facets/channels/IChannel.sol";

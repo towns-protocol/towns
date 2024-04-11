@@ -8,6 +8,7 @@ import { ParsedMiniblock, StreamTimelineEvent } from './types'
 import { streamIdAsString, streamIdAsBytes, userIdFromAddress, makeUserStreamId } from './id'
 
 const SCROLLBACK_MAX_COUNT = 20
+const SCROLLBACK_MULTIPLIER = 4n
 export class UnauthenticatedClient {
     readonly rpcClient: StreamRpcClientType
 
@@ -81,14 +82,18 @@ export class UnauthenticatedClient {
     }
 
     async scrollbackToDate(streamView: StreamStateView, toDate: number): Promise<void> {
+        this.logCall('scrollbackToDate', { streamId: streamView.streamId, toDate })
         // scrollback to get events till max scrollback, toDate or till no events are left
         for (let i = 0; i < SCROLLBACK_MAX_COUNT; i++) {
             const result = await this.scrollback(streamView)
             if (result.terminus) {
                 break
             }
-
             const currentOldestEvent = result.firstEvent
+            this.logCall('scrollbackToDate result', {
+                oldest: currentOldestEvent?.createdAtEpochMs,
+                toDate,
+            })
             if (currentOldestEvent) {
                 if (!this.isWithin(currentOldestEvent.createdAtEpochMs, toDate)) {
                     break
@@ -125,9 +130,12 @@ export class UnauthenticatedClient {
             })
             const toExclusive = streamView.miniblockInfo.min
             const fromInclusive = streamView.prevSnapshotMiniblockNum
+            const span = toExclusive - fromInclusive
+            let fromInclusiveNew = toExclusive - span * SCROLLBACK_MULTIPLIER
+            fromInclusiveNew = fromInclusiveNew < 0n ? 0n : fromInclusiveNew
             const response = await this.getMiniblocks(
                 streamView.streamId,
-                fromInclusive,
+                fromInclusiveNew,
                 toExclusive,
             )
 
@@ -175,7 +183,8 @@ export class UnauthenticatedClient {
 
         const unpackedMiniblocks: ParsedMiniblock[] = []
         for (const miniblock of response.miniblocks) {
-            const unpackedMiniblock = await unpackMiniblock(miniblock)
+            const unpackedMiniblock = await unpackMiniblock(miniblock, { disableChecks: true })
+            await new Promise((resolve) => setTimeout(resolve, 0))
             unpackedMiniblocks.push(unpackedMiniblock)
         }
         return {

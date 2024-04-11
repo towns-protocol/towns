@@ -5,13 +5,13 @@ pragma solidity ^0.8.19;
 import {TestUtils} from "contracts/test/utils/TestUtils.sol";
 
 //interfaces
-import {IArchitectBase} from "contracts/src/spaces/facets/architect/IArchitect.sol";
+import {IArchitectBase} from "contracts/src/factory/facets/architect/IArchitect.sol";
 import {IEntitlementChecker} from "contracts/src/crosschain/checker/IEntitlementChecker.sol";
 //libraries
 
 //contracts
 import {SpaceHelper} from "contracts/test/spaces/SpaceHelper.sol";
-import {Architect} from "contracts/src/spaces/facets/architect/Architect.sol";
+import {Architect} from "contracts/src/factory/facets/architect/Architect.sol";
 
 contract ForkCreateSpace is IArchitectBase, TestUtils, SpaceHelper {
   address spaceFactory = 0x968696BC59431Ef085441641f550C8e2Eaca8BEd;

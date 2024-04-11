@@ -9,7 +9,7 @@ pragma solidity ^0.8.23;
 import {FacetHelper} from "contracts/test/diamond/Facet.t.sol";
 
 // contracts
-import {PrepayFacet} from "contracts/src/spaces/facets/prepay/PrepayFacet.sol";
+import {PrepayFacet} from "contracts/src/factory/facets/prepay/PrepayFacet.sol";
 
 contract PrepayHelper is FacetHelper {
   PrepayFacet internal prepay;

@@ -2,13 +2,13 @@
 pragma solidity ^0.8.19;
 
 // interfaces
-import {IPricingModules} from "contracts/src/spaces/facets/architect/pricing/IPricingModules.sol";
+import {IPricingModules} from "contracts/src/factory/facets/architect/pricing/IPricingModules.sol";
 
 // helpers
 import {FacetHelper} from "contracts/test/diamond/Facet.t.sol";
 
 // contracts
-import {PricingModulesFacet} from "contracts/src/spaces/facets/architect/pricing/PricingModulesFacet.sol";
+import {PricingModulesFacet} from "contracts/src/factory/facets/architect/pricing/PricingModulesFacet.sol";
 
 contract PricingModulesHelper is FacetHelper {
   constructor() {

@@ -43,7 +43,7 @@ while getopts "huxicp" arg; do
   esac
 done
 
-confirmContinue() {
+function confirmContinue() {
     local promptMessage="$1"  # Use $1 to access the first argument passed to the function
 
     if [[ $INTERACTIVE -eq 1 ]]; then
@@ -53,6 +53,23 @@ confirmContinue() {
             echo "Merge aborted."
             exit 1 
         fi
+    fi
+}
+
+function play_failure_sound() {
+    if [[ $USER_MODE -eq 1 ]]; then
+        afplay /System/Library/Sounds/Sosumi.aiff
+    fi
+}
+function play_success_sound() {
+    if [[ $USER_MODE -eq 1 ]]; then
+        afplay /System/Library/Sounds/Purr.aiff
+    fi
+}
+
+function play_prompt_sound() {
+    if [[ $USER_MODE -eq 1 ]]; then
+        afplay /System/Library/Sounds/Bottle.aiff
     fi
 }
 
@@ -284,6 +301,7 @@ if ! git diff main --quiet --cached; then
 
       # Check if the command succeeded or failed
       if [ $exit_status -ne 0 ]; then
+          play_failure_sound
           echo "Failure detected in PR checks."
           if [[ $USER_MODE -eq 1 ]]; then
               read -p "Harmony CI is failing. Please make fixes, commit and push your changes, or restart CI. (any key to continue/n) " -n 1 -r
@@ -305,6 +323,7 @@ if ! git diff main --quiet --cached; then
     done
 
     if [[ $PROMPT_BEFORE_MERGE -eq 1 ]]; then
+        play_prompt_sound
         read -p "Do you want to merge the pull request? (y/n) " -n 1 -r
         echo
         if [[ ! $REPLY =~ ^[Yy]$ ]]; then
@@ -318,6 +337,7 @@ if ! git diff main --quiet --cached; then
 
     exit_status=$?
     if [ $exit_status -ne 0 ]; then
+        play_failure_sound
         echo "Failed to merge pull request."
         exit $exit_status
     fi
@@ -326,7 +346,9 @@ if ! git diff main --quiet --cached; then
 
     echo "Deploying river..."
     gh workflow run River_deploy.yml -f docker_image_tag="${SHORT_HASH}"
+    play_success_sound
 else
+    play_failure_sound
     echo "No changes to commit."
     git checkout main
     git branch -D "${BRANCH_NAME}"

@@ -69,7 +69,7 @@
   },
   "settings": {
     "compilationTarget": {
-      "contracts/src/spaces/facets/architect/pricing/IPricingModules.sol": "IPricingModulesBase"
+      "contracts/src/factory/facets/architect/pricing/IPricingModules.sol": "IPricingModulesBase"
     },
     "evmVersion": "paris",
     "libraries": {},
@@ -93,7 +93,7 @@
     ]
   },
   "sources": {
-    "contracts/src/spaces/facets/architect/pricing/IPricingModules.sol": {
+    "contracts/src/factory/facets/architect/pricing/IPricingModules.sol": {
       "keccak256": "0xbfe90223b87a2fa178024ec2b94dc45a8950b707d76dc54e6743439e8fc0d73e",
       "license": "Apache-2.0",
       "urls": [

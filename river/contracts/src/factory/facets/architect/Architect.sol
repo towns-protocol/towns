@@ -2,7 +2,7 @@
 pragma solidity ^0.8.23;
 
 // interfaces
-import {IArchitect} from "contracts/src/spaces/facets/architect/IArchitect.sol";
+import {IArchitect} from "contracts/src/factory/facets/architect/IArchitect.sol";
 import {IRuleEntitlement} from "contracts/src/crosschain/IRuleEntitlement.sol";
 import {IWalletLink} from "contracts/src/river/wallet-link/IWalletLink.sol";
 import {ISpaceOwner} from "contracts/src/spaces/facets/owner/ISpaceOwner.sol";

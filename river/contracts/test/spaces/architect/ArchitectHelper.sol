@@ -4,7 +4,7 @@ pragma solidity ^0.8.23;
 // interfaces
 
 // contracts
-import {Architect} from "contracts/src/spaces/facets/architect/Architect.sol";
+import {Architect} from "contracts/src/factory/facets/architect/Architect.sol";
 import {FacetHelper} from "contracts/test/diamond/Facet.t.sol";
 
 contract ArchitectHelper is FacetHelper {

@@ -160,13 +160,13 @@
       "appendCBOR": false
     },
     "compilationTarget": {
-      "contracts/src/spaces/facets/architect/pricing/IPricingModules.sol": "IPricingModules"
+      "contracts/src/factory/facets/architect/pricing/IPricingModules.sol": "IPricingModules"
     },
     "evmVersion": "paris",
     "libraries": {}
   },
   "sources": {
-    "contracts/src/spaces/facets/architect/pricing/IPricingModules.sol": {
+    "contracts/src/factory/facets/architect/pricing/IPricingModules.sol": {
       "keccak256": "0xbfe90223b87a2fa178024ec2b94dc45a8950b707d76dc54e6743439e8fc0d73e",
       "urls": [
         "bzz-raw://73bfdc19b81b36d3c8d7aaa0c6d2701d54b8eeb0613e4c0f6184d1d9e2189716",

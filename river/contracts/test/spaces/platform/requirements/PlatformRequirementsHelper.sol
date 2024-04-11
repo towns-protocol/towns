@@ -2,13 +2,13 @@
 pragma solidity ^0.8.23;
 
 // interfaces
-import {IPlatformRequirements} from "contracts/src/spaces/facets/platform/requirements/IPlatformRequirements.sol";
+import {IPlatformRequirements} from "contracts/src/factory/facets/platform/requirements/IPlatformRequirements.sol";
 
 // libraries
 
 // contracts
 import {FacetHelper} from "contracts/test/diamond/Facet.t.sol";
-import {PlatformRequirementsFacet} from "contracts/src/spaces/facets/platform/requirements/PlatformRequirementsFacet.sol";
+import {PlatformRequirementsFacet} from "contracts/src/factory/facets/platform/requirements/PlatformRequirementsFacet.sol";
 
 contract PlatformRequirementsHelper is FacetHelper {
   PlatformRequirementsFacet internal platformReqs;

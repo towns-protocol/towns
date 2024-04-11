@@ -4,14 +4,14 @@ pragma solidity ^0.8.23;
 // utils
 
 //interfaces
-import {IPlatformRequirementsBase} from "contracts/src/spaces/facets/platform/requirements/IPlatformRequirements.sol";
+import {IPlatformRequirementsBase} from "contracts/src/factory/facets/platform/requirements/IPlatformRequirements.sol";
 import {IOwnableBase} from "contracts/src/diamond/facets/ownable/IERC173.sol";
 
 //libraries
 
 //contracts
 import {BaseSetup} from "contracts/test/spaces/BaseSetup.sol";
-import {PlatformRequirementsFacet} from "contracts/src/spaces/facets/platform/requirements/PlatformRequirementsFacet.sol";
+import {PlatformRequirementsFacet} from "contracts/src/factory/facets/platform/requirements/PlatformRequirementsFacet.sol";
 
 contract PlatformRequirementsTest is
   BaseSetup,

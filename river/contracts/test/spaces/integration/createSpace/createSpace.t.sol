@@ -7,8 +7,8 @@ import {IChannel} from "contracts/src/spaces/facets/channels/IChannel.sol";
 import {IEntitlementsManager} from "contracts/src/spaces/facets/entitlements/IEntitlementsManager.sol";
 import {IRoles} from "contracts/src/spaces/facets/roles/IRoles.sol";
 import {IRolesBase} from "contracts/src/spaces/facets/roles/IRoles.sol";
-import {IArchitect} from "contracts/src/spaces/facets/architect/IArchitect.sol";
-import {IArchitectBase} from "contracts/src/spaces/facets/architect/IArchitect.sol";
+import {IArchitect} from "contracts/src/factory/facets/architect/IArchitect.sol";
+import {IArchitectBase} from "contracts/src/factory/facets/architect/IArchitect.sol";
 import {IMembership} from "contracts/src/spaces/facets/membership/IMembership.sol";
 import {IRuleEntitlement} from "contracts/src/crosschain/IRuleEntitlement.sol";
 import {IEntitlement} from "contracts/src/spaces/entitlements/IEntitlement.sol";
@@ -18,7 +18,7 @@ import {Permissions} from "contracts/src/spaces/facets/Permissions.sol";
 
 // contracts
 import {BaseSetup} from "contracts/test/spaces/BaseSetup.sol";
-import {Architect} from "contracts/src/spaces/facets/architect/Architect.sol";
+import {Architect} from "contracts/src/factory/facets/architect/Architect.sol";
 
 // mocks
 import {MockERC721} from "contracts/test/mocks/MockERC721.sol";

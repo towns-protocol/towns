@@ -6,14 +6,14 @@ import {IERC165} from "contracts/src/diamond/facets/introspection/IERC165.sol";
 import {IMembership} from "contracts/src/spaces/facets/membership/IMembership.sol";
 import {IERC721A} from "contracts/src/diamond/facets/token/ERC721A/IERC721A.sol";
 import {IERC173} from "contracts/src/diamond/facets/ownable/IERC173.sol";
-import {IPrepay} from "contracts/src/spaces/facets/prepay/IPrepay.sol";
+import {IPrepay} from "contracts/src/factory/facets/prepay/IPrepay.sol";
 
 // libraries
 import {CurrencyTransfer} from "contracts/src/utils/libraries/CurrencyTransfer.sol";
 
 // contracts
 import {PrepayBase} from "./PrepayBase.sol";
-import {PlatformRequirementsBase} from "contracts/src/spaces/facets/platform/requirements/PlatformRequirementsBase.sol";
+import {PlatformRequirementsBase} from "contracts/src/factory/facets/platform/requirements/PlatformRequirementsBase.sol";
 import {ReentrancyGuard} from "contracts/src/diamond/facets/reentrancy/ReentrancyGuard.sol";
 import {Facet} from "contracts/src/diamond/facets/Facet.sol";
 
