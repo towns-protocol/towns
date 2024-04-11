@@ -17,6 +17,7 @@ import { isAddress } from 'viem'
 import { Allotment } from 'allotment'
 import { clsx } from 'clsx'
 import { BigNumberish, ethers } from 'ethers'
+import { usePricingModuleForMembership } from 'use-towns-client/dist/hooks/use-pricing-modules'
 import { PrivyWrapper } from 'privy/PrivyProvider'
 import { TokenVerification } from '@components/Web3/TokenVerification/TokenVerification'
 import { Avatar } from '@components/Avatar/Avatar'
@@ -83,6 +84,8 @@ const PublicTownPageWithoutAuth = (props: { isPreview?: boolean; onClosePreview?
     const { isAuthenticated } = useConnectivity()
     const isAuthenticatedAndConnected = isConnected && isAuthenticated
 
+    const { data: membershipPricingModule } = usePricingModuleForMembership(spaceInfo?.networkId)
+
     const [assetModal, setAssetModal] = useState(false)
     const showAssetModal = () => setAssetModal(true)
     const hideAssetModal = () => setAssetModal(false)
@@ -127,6 +130,7 @@ const PublicTownPageWithoutAuth = (props: { isPreview?: boolean; onClosePreview?
                         />
                     }
                     activityContent={<TownPageActivity townId={spaceInfo.networkId} />}
+                    membershipPricingModule={membershipPricingModule}
                     isPreview={isPreview}
                     bottomContent={
                         <Footer

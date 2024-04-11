@@ -1,6 +1,7 @@
 import React, { useCallback, useEffect, useMemo, useState } from 'react'
 import { Address, useGetRootKeyFromLinkedWallet } from 'use-towns-client'
 import { useEvent } from 'react-use-event-hook'
+import { usePricingModuleForMembership } from 'use-towns-client/dist/hooks/use-pricing-modules'
 import { InteractiveTownsToken } from '@components/TownsToken/InteractiveTownsToken'
 import { ImageVariants, useImageSource } from '@components/UploadImage/useImageSource'
 import { Box, Button, Heading, Icon, IconButton, MotionStack, Paragraph, Stack, Text } from '@ui'
@@ -26,6 +27,7 @@ type TownPageLayoutProps = {
     headerContent?: React.ReactNode
     activityContent?: React.ReactNode
     bottomContent?: React.ReactNode
+    membershipPricingModule: ReturnType<typeof usePricingModuleForMembership>['data']
     isPreview: boolean
     spaceId: string
     address?: `0x${string}`
@@ -36,7 +38,7 @@ type TownPageLayoutProps = {
 }
 
 export const TownPageLayout = (props: TownPageLayoutProps) => {
-    const { address, bio, motto, name, spaceId, owner, isPreview } = props
+    const { address, bio, motto, name, spaceId, owner, isPreview, membershipPricingModule } = props
     const { baseChain } = useEnvironment()
     const chainId = baseChain.id
     const { data: userId } = useGetRootKeyFromLinkedWallet({ walletAddress: owner })
@@ -123,6 +125,7 @@ export const TownPageLayout = (props: TownPageLayoutProps) => {
                                 anyoneCanJoin={anyoneCanJoin}
                                 isTokensGatingMembershipLoading={isTokensGatingMembershipLoading}
                                 tokensGatingMembership={tokensGatingMembership}
+                                membershipPricingModule={membershipPricingModule}
                             />
                             <Bio bio={bio} />
 
@@ -233,8 +236,17 @@ const InformationBoxes = (props: {
     anyoneCanJoin: boolean
     isTokensGatingMembershipLoading: boolean
     tokensGatingMembership?: TokenGatingMembership
+    membershipPricingModule?: ReturnType<typeof usePricingModuleForMembership>['data']
 }) => {
-    const { price, address, chainId, duration, anyoneCanJoin, tokensGatingMembership } = props
+    const {
+        price,
+        address,
+        chainId,
+        duration,
+        anyoneCanJoin,
+        tokensGatingMembership,
+        membershipPricingModule,
+    } = props
     const onAddressClick = useEvent(() => {
         window.open(`${baseScanUrl(chainId)}/address/${address}`, '_blank', 'noopener,noreferrer')
     })
@@ -274,7 +286,13 @@ const InformationBoxes = (props: {
                             {price}
                         </Text>
                     }
-                    subtitle="ETH"
+                    subtitle={
+                        membershipPricingModule === undefined
+                            ? ''
+                            : membershipPricingModule.isFixed
+                            ? 'ETH'
+                            : 'First 100'
+                    }
                 />
             )}
 

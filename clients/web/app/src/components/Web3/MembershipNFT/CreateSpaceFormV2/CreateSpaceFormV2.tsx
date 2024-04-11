@@ -224,7 +224,7 @@ export function CreateSpaceFormV2() {
                                 ? '--'
                                 : +price === 0
                                 ? 'Free'
-                                : price + ' Ξ'
+                                : price
                         }
                         if (_form.formState.errors['membershipCost']) {
                             return '--'
@@ -236,7 +236,7 @@ export function CreateSpaceFormV2() {
                         if (price === '') {
                             return '--'
                         }
-                        return price + ' Ξ'
+                        return price
                     }
 
                     const isEveryoneMembership = membershipType === 'everyone'
@@ -388,7 +388,7 @@ export function CreateSpaceFormV2() {
                                                                     membershipPricingType ===
                                                                     'dynamic'
                                                                         ? 'First 100'
-                                                                        : ''
+                                                                        : 'ETH'
                                                                 }
                                                                 onClick={onInfoBoxClick}
                                                             />
