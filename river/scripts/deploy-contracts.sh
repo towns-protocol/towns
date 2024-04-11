@@ -39,6 +39,12 @@ fi
 # Account Abstraction is not supported on anvil
 # make deploy-base-anvil type=contract contract=DeployEntrypoint
 # make deploy-base-anvil type=contract contract=DeployAccountFactory
+RPC_URL_BASECHAIN=http://localhost:8545
+RPC_URL_RIVERCHAIN=http://localhost:8546
+RIVER_BLOCK_TIME="${RIVER_BLOCK_TIME:-1}"
+
+cast rpc evm_setAutomine true --rpc-url $RPC_URL_BASECHAIN
+cast rpc evm_setAutomine true --rpc-url $RPC_URL_RIVERCHAIN
 
 # Space Architect
 make deploy-base-anvil type=contract contract=DeploySpaceFactory
@@ -55,6 +61,9 @@ make deploy-base-anvil type=contract contract=DeployEntitlementGatedExample
 
 # River Registry
 make deploy-river-anvil type=contract contract=DeployRiverRegistry
+
+cast rpc evm_setIntervalMining $RIVER_BLOCK_TIME --rpc-url $RPC_URL_BASECHAIN
+cast rpc evm_setIntervalMining $RIVER_BLOCK_TIME --rpc-url $RPC_URL_RIVERCHAIN
 
 popd
 

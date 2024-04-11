@@ -420,7 +420,8 @@ jobs:
             - name: Run multiple nodes
               run: |
                   cd ./core/node
-                  ./run_multi.sh --de -c -r &
+                  ./run_multi.sh --de -c
+                  ./run_multi.sh --de -r &
                   for i in {5180..5189}; do yarn wait-on https://localhost:$i/debug/multi --timeout=900000 --i=5000 --verbose; done
 
             - name: Run SDK Tests (without entitlements)
@@ -697,7 +698,8 @@ jobs:
             - name: Run multiple nodes
               run: |
                   cd ./core/node
-                  ./run_multi.sh -c -r &
+                  ./run_multi.sh -c
+                  ./run_multi.sh -r &
                   for i in {5170..5179}; do yarn wait-on https://localhost:$i/debug/multi --timeout=900000 --i=5000 --verbose; done
 
             - name: Build & Test (with entitlements)
