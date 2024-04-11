@@ -26,6 +26,7 @@ import {
 } from 'use-towns-client'
 import { useHotkeys } from 'react-hotkeys-hook'
 import debug from 'debug'
+import { useSearchParams } from 'react-router-dom'
 import { ChannelHeader } from '@components/ChannelHeader/ChannelHeader'
 import { ChannelIntro } from '@components/ChannelIntro'
 import { FullScreenMedia } from '@components/FullScreenMedia/FullScreenMedia'
@@ -100,7 +101,7 @@ export const SpacesChannelComponent = (props: Props) => {
     const { spaceId, channelId, channel } = useChannelData()
 
     const location = useLocation()
-    const searchParams = new URLSearchParams(location.search)
+    const [searchParams] = useSearchParams()
     const galleryId = searchParams.get(QUERY_PARAMS.GALLERY_ID)
     const galleryThreadId = searchParams.get(QUERY_PARAMS.GALLERY_THREAD_ID)
     const myMembership = useMyMembership(channelId)

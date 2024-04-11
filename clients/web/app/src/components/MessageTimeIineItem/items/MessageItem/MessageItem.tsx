@@ -7,7 +7,7 @@ import {
     staticAssertNever,
     useTownsClient,
 } from 'use-towns-client'
-import { useNavigate } from 'react-router'
+import { useSearchParams } from 'react-router-dom'
 import {
     MessageLayout,
     MessageLayoutProps,
@@ -57,25 +57,31 @@ export const MessageItem = (props: Props) => {
     const { isTouch } = useDevice()
     const messageTooltipRef = useRef<HTMLElement | null>(null)
     const [hoveredMentionUserId, setHoveredMentionUserId] = useState<string | undefined>(undefined)
-    const navigate = useNavigate()
 
     const timelineContext = useContext(MessageTimelineContext)
 
     const { canReplyInline } = useContext(ReplyToMessageContext)
+
+    const [, setSearchParams] = useSearchParams()
 
     const onMediaClick = useCallback(
         (e: React.MouseEvent) => {
             e.stopPropagation()
             e.preventDefault()
             if (!event.threadParentId || event.threadParentId.length === 0) {
-                navigate(`./?${QUERY_PARAMS.GALLERY_ID}=${event.eventId}`)
+                setSearchParams((params) => ({
+                    ...params,
+                    [QUERY_PARAMS.GALLERY_ID]: event.eventId,
+                }))
                 return
             }
-            return navigate(
-                `./?${QUERY_PARAMS.GALLERY_ID}=${event.eventId}&${QUERY_PARAMS.GALLERY_THREAD_ID}=${event.threadParentId}`,
-            )
+            setSearchParams((params) => ({
+                ...params,
+                [QUERY_PARAMS.GALLERY_ID]: event.eventId,
+                [QUERY_PARAMS.GALLERY_THREAD_ID]: event.threadParentId,
+            }))
         },
-        [navigate, event.eventId, event.threadParentId],
+        [event.threadParentId, event.eventId, setSearchParams],
     )
 
     const onRetryClick = useCallback(() => {
@@ -225,7 +231,6 @@ type MessageWrapperProps = {
 const MessageWrapper = React.memo((props: MessageWrapperProps) => {
     const { event, displayContext, selectable, replies, onMediaClick } = props
     const { sender } = event
-    const navigate = useNavigate()
     const timelineContext = useTimelineContext()
     const { isTouch } = useDevice()
 
@@ -265,18 +270,21 @@ const MessageWrapper = React.memo((props: MessageWrapperProps) => {
     )
 
     const attachments = isRoomMessage(event) ? event.content.attachments : undefined
-
+    const [, setSearchParams] = useSearchParams()
     const onAttachmentClick = useCallback(
         (attachmentId: string) => {
             if (!threadParentId || threadParentId.length === 0) {
-                navigate(`./?${QUERY_PARAMS.GALLERY_ID}=${attachmentId}`)
+                setSearchParams({
+                    [QUERY_PARAMS.GALLERY_ID]: attachmentId,
+                })
                 return
             }
-            return navigate(
-                `./?${QUERY_PARAMS.GALLERY_ID}=${attachmentId}&${QUERY_PARAMS.GALLERY_THREAD_ID}=${threadParentId}`,
-            )
+            return setSearchParams({
+                [QUERY_PARAMS.GALLERY_ID]: attachmentId,
+                [QUERY_PARAMS.GALLERY_THREAD_ID]: threadParentId,
+            })
         },
-        [navigate, threadParentId],
+        [setSearchParams, threadParentId],
     )
 
     return !event ? null : (

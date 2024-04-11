@@ -20,7 +20,7 @@ export const AppPanelLayoutSkeleton = () => {
                 <Allotment.Pane visible minSize={180} maxSize={320} preferredSize={320}>
                     <Box absoluteFill padding="xs">
                         <Box grow overflow="hidden" rounded="sm">
-                            <SpaceSidebarLoadingPlaceholder />s
+                            <SpaceSidebarLoadingPlaceholder />
                         </Box>
                     </Box>
                 </Allotment.Pane>

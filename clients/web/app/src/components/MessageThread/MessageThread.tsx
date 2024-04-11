@@ -12,8 +12,7 @@ import {
     useUserLookupContext,
 } from 'use-towns-client'
 import { firstBy } from 'thenby'
-import { useLocation } from 'react-router'
-import { Link } from 'react-router-dom'
+import { Link, useSearchParams } from 'react-router-dom'
 import { isDefined } from '@river/sdk'
 import { MessageTimeline } from '@components/MessageTimeline/MessageTimeline'
 import { MessageTimelineWrapper } from '@components/MessageTimeline/MessageTimelineContext'
@@ -60,8 +59,7 @@ export const MessageThread = (props: {
     }
 
     const { isTouch } = useDevice()
-    const location = useLocation()
-    const searchParams = new URLSearchParams(location.search)
+    const [searchParams] = useSearchParams()
     const galleryId = searchParams.get(QUERY_PARAMS.GALLERY_ID)
     const galleryThreadId = searchParams.get(QUERY_PARAMS.GALLERY_THREAD_ID)
     const showGallery = galleryThreadId === parentId || galleryId === parentId
