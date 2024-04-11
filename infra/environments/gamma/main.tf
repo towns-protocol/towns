@@ -36,6 +36,7 @@ module "global_constants" {
   source = "../../modules/global-constants"
 }
 
+
 module "vpc" {
   source = "terraform-aws-modules/vpc/aws"
 
@@ -111,8 +112,16 @@ resource "aws_secretsmanager_secret" "notification_vapid_key" {
 }
 
 locals {
-  num_nodes                       = 11
-  river_registry_contract_address = "0xf18E98D36A6bd1aDb52F776aCc191E69B491c070"
+  num_nodes = 11
+}
+
+module "system_parameters" {
+  source = "../../modules/river-system-parameters"
+
+  space_factory_contract_address_default_value       = "0x968696BC59431Ef085441641f550C8e2Eaca8BEd"
+  river_registry_contract_address_default_value      = "0xf18E98D36A6bd1aDb52F776aCc191E69B491c070"
+  wallet_link_contract_address_default_value         = "0x2cF3e30BaCd44272Ee1494659cf895022786AAF3"
+  entitlement_checker_contract_address_default_value = "0x46297EA7c3895d595366551bdE731B7f0B3cF48e"
 }
 
 module "river_node" {
@@ -129,7 +138,7 @@ module "river_node" {
   private_subnets = module.vpc.private_subnets
   vpc_id          = module.vpc.vpc_id
 
-  river_registry_contract_address = local.river_registry_contract_address
+  system_parameters = module.system_parameters
 
   base_chain_id  = 84532
   river_chain_id = 6524490
@@ -168,7 +177,7 @@ module "eth_balance_monitor" {
   source = "../../modules/eth-balance-monitor"
 
   subnet_ids                      = module.vpc.private_subnets
-  river_registry_contract_address = local.river_registry_contract_address
+  river_registry_contract_address = module.system_parameters.river_registry_contract_address_parameter.value
 }
 
 module "loadtest" {

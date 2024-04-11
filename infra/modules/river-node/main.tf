@@ -239,6 +239,10 @@ resource "aws_cloudwatch_log_subscription_filter" "service_discovery_log_group_f
   destination_arn = module.global_constants.datadug_forwarder_stack_lambda.arn
 }
 
+locals {
+  system_parameters_arns_json = jsonencode([for p in values(var.system_parameters) : p.arn])
+}
+
 resource "aws_iam_role_policy" "river_node_credentials" {
   name = "${local.node_name}-node-credentials"
   role = aws_iam_role.ecs_task_execution_role.id
@@ -275,19 +279,7 @@ resource "aws_iam_role_policy" "river_node_credentials" {
         ],
         "Effect": "Allow",
         "Resource": "*"
-      }
-    ]
-  }
-  EOF
-}
-
-resource "aws_iam_role_policy" "ssm_policy" {
-  name = "${local.node_name}-ssmPolicy"
-  role = aws_iam_role.ecs_task_execution_role.id
-
-  policy = jsonencode({
-    "Version" : "2012-10-17",
-    "Statement" : [
+      },
       {
         "Effect" : "Allow",
         "Action" : [
@@ -297,9 +289,15 @@ resource "aws_iam_role_policy" "ssm_policy" {
           "ssmmessages:OpenDataChannel"
         ],
         "Resource" : "*"
+      },
+      {
+        "Effect": "Allow",
+        "Action" : "ssm:GetParameters",
+        "Resource" : ${local.system_parameters_arns_json}
       }
     ]
-  })
+  }
+  EOF
 }
 
 locals {
@@ -335,8 +333,6 @@ locals {
     name  = "RIVERCHAIN__NETWORKURL"
     value = var.river_chain_network_url_override
   }]
-
-  node_registry_csv_multinode = "${local.nodes[0].address},${local.nodes[0].url},${local.nodes[1].address},${local.nodes[1].url},${local.nodes[2].address},${local.nodes[2].url},${local.nodes[3].address},${local.nodes[3].url},${local.nodes[4].address},${local.nodes[4].url},${local.nodes[5].address},${local.nodes[5].url},${local.nodes[6].address},${local.nodes[6].url},${local.nodes[7].address},${local.nodes[7].url},${local.nodes[8].address},${local.nodes[8].url},${local.nodes[9].address},${local.nodes[9].url}"
 }
 
 data "cloudflare_zone" "zone" {
@@ -386,6 +382,22 @@ resource "aws_ecs_task_definition" "river-fargate" {
     memory = local.river_node_memory
 
     secrets = concat([
+      {
+        name      = "ARCHITECTCONTRACT__ADDRESS"
+        valueFrom = var.system_parameters.space_factory_contract_address_parameter.arn
+      },
+      {
+        name      = "WALLETLINKCONTRACT__ADDRESS"
+        valueFrom = var.system_parameters.wallet_link_contract_address_parameter.arn
+      },
+      {
+        name      = "REGISTRYCONTRACT__ADDRESS",
+        valueFrom = var.system_parameters.river_registry_contract_address_parameter.arn
+      },
+      {
+        name      = "ENTITLEMENT_CONTRACT__ADDRESS",
+        valueFrom = var.system_parameters.entitlement_checker_contract_address_parameter.arn
+      },
       {
         name      = "DATABASE__PASSWORD",
         valueFrom = local.shared_credentials.db_password.arn
@@ -495,29 +507,13 @@ resource "aws_ecs_task_definition" "river-fargate" {
         value = "?sslmode=disable&pool_max_conns=1000"
       },
       {
-        name  = "ARCHITECTCONTRACT__ADDRESS"
-        value = "0x968696BC59431Ef085441641f550C8e2Eaca8BEd"
-      },
-      {
         name  = "ARCHITECTCONTRACT__VERSION"
         value = "v3"
-      },
-      {
-        name  = "WALLETLINKCONTRACT__ADDRESS"
-        value = "0x2cF3e30BaCd44272Ee1494659cf895022786AAF3"
       },
       {
         name  = "WALLETLINKCONTRACT__VERSION"
         value = "v3"
       },
-      {
-        name  = "REGISTRYCONTRACT__ADDRESS",
-        value = var.river_registry_contract_address
-      },
-      {
-        name  = "ENTITLEMENT_CONTRACT__ADDRESS",
-        value = "0x46297EA7c3895d595366551bdE731B7f0B3cF48e"
-      }
       ],
       local.base_chain_override_td_env_config,
       local.river_chain_override_td_env_config
