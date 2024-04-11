@@ -1,6 +1,6 @@
 name: 'Run Userops Tests'
 env:
-    FOUNDRY_VERSION: nightly
+    FOUNDRY_VERSION: nightly-de33b6af53005037b463318d2628b5cfcaf39916
 
 on:
   workflow_dispatch:
