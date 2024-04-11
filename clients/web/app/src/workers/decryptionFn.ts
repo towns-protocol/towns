@@ -19,6 +19,7 @@ export interface PlaintextDetails {
     mentions: string | undefined
     threadId: string | undefined
     reaction: string | undefined
+    refEventId?: string
 }
 
 export async function decrypt(

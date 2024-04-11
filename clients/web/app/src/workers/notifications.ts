@@ -144,13 +144,19 @@ export function handleNotifications(worker: ServiceWorkerGlobalScope) {
                 )
 
                 if (hadWindowToFocus) {
-                    log('notification: posting message')
+                    console.warn('notification: posting message', 'push_hnt-5685', {
+                        path: pathToNavigateTo,
+                        hadWindowToFocus: true,
+                    })
                     await hadWindowToFocus.focus()
                     const navigationChannel = new BroadcastChannel(WEB_PUSH_NAVIGATION_CHANNEL)
                     // avoid reloading the page
                     navigationChannel.postMessage({ path: pathToNavigateTo })
                 } else {
-                    log('notification: opening window')
+                    console.warn('notification: opening window', 'push_hnt-5685', {
+                        path: pathToNavigateTo,
+                        hadWindowToFocus: false,
+                    })
                     const url = new URL(worker.location.origin)
                     url.pathname = pathToNavigateTo
                     const window = await worker.clients.openWindow(url.toString())
@@ -546,6 +552,9 @@ async function tryDecryptEvent(
             log('tryDecryptEvent', event)
             const encryptedData = getEncryptedData(event)
             plaintext = await decrypt(userId, channelId, encryptedData)
+            if (plaintext) {
+                plaintext.refEventId = encryptedData.refEventId
+            }
             log(`decrypt returns "${plaintext}"`)
             return plaintext
         } catch (error) {

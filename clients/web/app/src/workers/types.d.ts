@@ -63,6 +63,7 @@ export type NotificationNewMessage = {
     channelId: string
     title: string
     body: string
+    refEventId?: string
 }
 
 export type NotificationMention = {
@@ -72,6 +73,7 @@ export type NotificationMention = {
     threadId?: string
     title: string
     body: string
+    refEventId?: string
 }
 
 export type NotificationReplyTo = {
@@ -81,6 +83,7 @@ export type NotificationReplyTo = {
     threadId: string
     title: string
     body: string
+    refEventId?: string
 }
 
 export type NotificationDM = {
@@ -88,6 +91,7 @@ export type NotificationDM = {
     channelId: string
     title: string
     body: string
+    refEventId?: string
 }
 
 export type NotificationContent =
