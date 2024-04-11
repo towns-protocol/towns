@@ -55,25 +55,27 @@ if (env.DEV) {
 if (env.VITE_DD_CLIENT_TOKEN) {
     const service = 'towns-webapp'
 
-    datadogRum.init({
-        applicationId: 'c6afdc65-2431-48ff-b8f2-c4879fc75293',
-        clientToken: 'pub947b3cbe543e47b9a64b2abca5028974',
-        site: 'datadoghq.com',
-        service,
-        version: env.VITE_APP_RELEASE_VERSION,
-        env: datadogEnvName,
-        sessionSampleRate: 100,
-        sessionReplaySampleRate: 100,
-        trackUserInteractions: true,
-        trackResources: true,
-        trackLongTasks: true,
-        defaultPrivacyLevel: 'mask',
-    })
+    // Disabling RUM
+
+    // datadogRum.init({
+    //     applicationId: 'c6afdc65-2431-48ff-b8f2-c4879fc75293',
+    //     clientToken: 'pub947b3cbe543e47b9a64b2abca5028974',
+    //     site: 'datadoghq.com',
+    //     service,
+    //     version: env.VITE_APP_RELEASE_VERSION,
+    //     env: datadogEnvName,
+    //     sessionSampleRate: 100,
+    //     sessionReplaySampleRate: 100,
+    //     trackUserInteractions: true,
+    //     trackResources: true,
+    //     trackLongTasks: true,
+    //     defaultPrivacyLevel: 'mask',
+    // })
 
     datadogLogs.init({
         clientToken: env.VITE_DD_CLIENT_TOKEN,
         service,
-        forwardConsoleLogs: env.VITE_LOG_FORWARDING,
+        forwardConsoleLogs: ['error', 'warn'],
         forwardErrorsToLogs: true,
         sessionSampleRate: env.VITE_LOG_SAMPLING_RATE,
         telemetrySampleRate: 0,
