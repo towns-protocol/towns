@@ -3,6 +3,7 @@ package server
 import (
 	"context"
 	"core/xchain/config"
+	"core/xchain/entitlement"
 	"crypto/ecdsa"
 	"encoding/hex"
 	"math/big"
@@ -54,7 +55,7 @@ func RunServer(ctx context.Context, workerID int, shutdown <-chan struct{}) {
 		return
 	}
 
-	fromAddress := wallet.Address
+	nodeAddress := wallet.Address
 
 	baseWebsocketURL, err := xc.ConvertHTTPToWebSocket(config.GetConfig().BaseChain.NetworkUrl)
 	if err != nil {
@@ -62,13 +63,13 @@ func RunServer(ctx context.Context, workerID int, shutdown <-chan struct{}) {
 		return
 	}
 
-	err = xc.WaitUntilWalletFunded(ctx, baseWebsocketURL, fromAddress)
+	err = xc.WaitUntilWalletFunded(ctx, baseWebsocketURL, nodeAddress)
 	if err != nil {
 		log.Error("Failed to confirm wallet has sufficent funds", "err", err)
 		return
 	}
 
-	blockNumber, err := registerNode(ctx, workerID, fromAddress, wallet.PrivateKeyStruct)
+	blockNumber, err := registerNode(ctx, nodeAddress, wallet.PrivateKeyStruct)
 	if err != nil {
 		log.Error("Failed to registerNode", "err", err)
 		return
@@ -78,7 +79,7 @@ func RunServer(ctx context.Context, workerID int, shutdown <-chan struct{}) {
 
 	// Event loop
 	for !isClosed(shutdown) {
-		if eventLoop(ctx, workerID, blockNumber, events, shutdown, fromAddress, wallet.PrivateKeyStruct) {
+		if eventLoop(ctx, blockNumber, events, shutdown, nodeAddress, wallet.PrivateKeyStruct) {
 			return
 		}
 	}
@@ -86,7 +87,6 @@ func RunServer(ctx context.Context, workerID int, shutdown <-chan struct{}) {
 
 func registerNode(
 	ctx context.Context,
-	workerID int,
 	fromAddress common.Address,
 	privateKey *ecdsa.PrivateKey,
 ) (*uint64, error) {
@@ -206,7 +206,8 @@ func registerNode(
 	return &temp, nil
 }
 
-func unregisterNode(ctx context.Context, workerID int, fromAddress common.Address, privateKey *ecdsa.PrivateKey) {
+//nolint:unused
+func unregisterNode(ctx context.Context, fromAddress common.Address, privateKey *ecdsa.PrivateKey) {
 	log := dlog.FromCtx(ctx)
 	chainId := big.NewInt(int64(config.GetConfig().BaseChain.ChainId))
 
@@ -263,14 +264,14 @@ func unregisterNode(ctx context.Context, workerID int, fromAddress common.Addres
 
 func eventLoop(
 	ctx context.Context,
-	workerID int,
 	blockNumber *uint64,
 	events chan *e.IEntitlementCheckerEntitlementCheckRequested,
 	shutdown <-chan struct{},
-	fromAddress common.Address,
+	nodeAddress common.Address,
 	privateKey *ecdsa.PrivateKey,
 ) bool {
 	log := dlog.FromCtx(ctx)
+
 	chainId := big.NewInt(int64(config.GetConfig().BaseChain.ChainId))
 	baseWebsocketURL, err := xc.ConvertHTTPToWebSocket(config.GetConfig().BaseChain.NetworkUrl)
 	if err != nil {
@@ -285,7 +286,7 @@ func eventLoop(
 	}
 	defer client.Close()
 
-	nonce, err := client.PendingNonceAt(context.Background(), fromAddress)
+	nonce, err := client.PendingNonceAt(context.Background(), nodeAddress)
 	if err != nil {
 		log.Error("Failed PendingNonceAt", "err", err)
 		return false
@@ -338,9 +339,14 @@ func eventLoop(
 
 			eventCtx := dlog.CtxWithLog(ctx, log)
 
-			for _, nodeAddress := range event.SelectedNodes {
-				if nodeAddress == fromAddress {
-					postCheckResult(eventCtx, workerID, event, client, fromAddress, auth)
+			for _, selectedNodeAddress := range event.SelectedNodes {
+				if selectedNodeAddress == nodeAddress {
+					result, err := evaluateEvent(eventCtx, event, client, event.CallerAddress, nodeAddress)
+					if err != nil {
+						log.Error("Failed to evaluateEvent", "err", err)
+						continue
+					}
+					postCheckResult(eventCtx, result, event, client, nodeAddress, auth)
 				}
 			}
 		case err := <-sub.Err():
@@ -351,32 +357,70 @@ func eventLoop(
 	return true
 }
 
+func evaluateEvent(
+	ctx context.Context,
+	event *e.IEntitlementCheckerEntitlementCheckRequested,
+	client *ethclient.Client,
+	callerAddress common.Address,
+	fromAddress common.Address,
+) (result bool, err error) {
+	log := dlog.FromCtx(ctx).With("function", "evaluateEvent")
+	log.Info("EntitlementCheckRequested being handled")
+
+	gater, err := e.NewIEntitlementGated(event.ContractAddress, client)
+	if err != nil {
+		log.Error("Failed to NewEntitlementGated watch", "err", err)
+		return false, err
+	}
+
+	ruleData, err := gater.GetRuleData(&bind.CallOpts{}, event.TransactionId)
+	if err != nil {
+		log.Error("Failed to GetEncodedRuleData watch", "err", err)
+		return false, err
+	}
+
+	result, err = entitlement.EvaluateRuleData(ctx, &callerAddress, ruleData)
+	if err != nil {
+		log.Error("Failed to EvaluateRuleData watch", "err", err)
+		return false, err
+	}
+
+	return result, nil
+}
+
 func postCheckResult(
 	ctx context.Context,
-	workerID int,
+	result bool,
 	event *e.IEntitlementCheckerEntitlementCheckRequested,
 	client *ethclient.Client,
 	fromAddress common.Address,
 	auth *bind.TransactOpts,
 ) {
-	log := dlog.FromCtx(ctx)
-	log.Info("EntitlementCheckRequested being handled")
+	log := dlog.FromCtx(ctx).With("function", "postCheckResult")
+	resultCode := uint8(0)
+	if result {
+		resultCode = 1
+	}
+	log.Info(
+		"posting PostEntitlementCheckResult...",
+		"result", result,
+		"tx", event.TransactionId,
+		"fromAddress", fromAddress.String(),
+	)
 
 	nonce, err := client.PendingNonceAt(ctx, fromAddress)
 	if err != nil {
 		log.Error("Failed PendingNonceAt", "err", err)
 	}
+
 	auth.Nonce = big.NewInt(int64(nonce))
-
-	gatedContractAdress := event.ContractAddress
-
-	gater, err := e.NewIEntitlementGated(gatedContractAdress, client)
+	gater, err := e.NewIEntitlementGated(event.ContractAddress, client)
 	if err != nil {
 		log.Error("Failed to NewEntitlementGated watch", "err", err)
 		return
 	}
 
-	tx, err := gater.PostEntitlementCheckResult(auth, event.TransactionId, 1)
+	tx, err := gater.PostEntitlementCheckResult(auth, event.TransactionId, resultCode)
 	if err != nil {
 		log.Error("Failed to PostEntitlementCheckResult watch", "err", err)
 		return
@@ -385,6 +429,6 @@ func postCheckResult(
 	go func() {
 		// TODO retry the transaction if it fails
 		postedBlockNumber := xc.WaitForTransaction(client, tx)
-		log.Info("PostEntitlementCheckResult", "tx", tx.Hash().Hex(), "posted_block_num", postedBlockNumber)
+		log.Info("PostEntitlementCheckResult mined", "tx", tx.Hash().Hex(), "posted_block_num", postedBlockNumber)
 	}()
 }

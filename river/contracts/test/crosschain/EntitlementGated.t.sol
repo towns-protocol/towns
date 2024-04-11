@@ -9,12 +9,14 @@ import {IEntitlementChecker} from "contracts/src/crosschain/checker/IEntitlement
 import {IEntitlementCheckerBase} from "contracts/src/crosschain/checker/IEntitlementChecker.sol";
 import {IEntitlementGated} from "contracts/src/crosschain/IEntitlementGated.sol";
 import {IEntitlementGatedBase} from "contracts/src/crosschain/IEntitlementGated.sol";
+import {IRuleEntitlement} from "contracts/src/crosschain/IRuleEntitlement.sol";
 
 //libraries
 
 //contracts
 import {EntitlementChecker} from "contracts/src/crosschain/checker/EntitlementChecker.sol";
 import {MockEntitlementGated} from "contracts/test/mocks/MockEntitlementGated.sol";
+import {RuleEntitlementUtil} from "contracts/src/crosschain/RuleEntitlementUtil.sol";
 
 contract EntitlementGatedTest is
   TestUtils,
@@ -118,6 +120,67 @@ contract EntitlementGatedTest is
     vm.prank(_randomAddress());
     vm.expectRevert(EntitlementGated_NodeNotFound.selector);
     gated.postEntitlementCheckResult(transactionId, NodeVoteStatus.PASSED);
+  }
+
+  // =============================================================
+  //                       Get Encoded Rule Data
+  // =============================================================
+
+  function assertRuleDatasEqual(
+    IRuleEntitlement.RuleData memory actual,
+    IRuleEntitlement.RuleData memory expected
+  ) internal {
+    assert(actual.checkOperations.length == expected.checkOperations.length);
+    assert(
+      actual.logicalOperations.length == expected.logicalOperations.length
+    );
+    assert(actual.operations.length == expected.operations.length);
+
+    for (uint256 i = 0; i < actual.checkOperations.length; i++) {
+      assert(
+        actual.checkOperations[i].opType == expected.checkOperations[i].opType
+      );
+      assert(
+        actual.checkOperations[i].chainId == expected.checkOperations[i].chainId
+      );
+      assert(
+        actual.checkOperations[i].contractAddress ==
+          expected.checkOperations[i].contractAddress
+      );
+      assert(
+        actual.checkOperations[i].threshold ==
+          expected.checkOperations[i].threshold
+      );
+    }
+
+    for (uint256 i = 0; i < actual.logicalOperations.length; i++) {
+      assert(
+        actual.logicalOperations[i].logOpType ==
+          expected.logicalOperations[i].logOpType
+      );
+      assert(
+        actual.logicalOperations[i].leftOperationIndex ==
+          expected.logicalOperations[i].leftOperationIndex
+      );
+      assert(
+        actual.logicalOperations[i].rightOperationIndex ==
+          expected.logicalOperations[i].rightOperationIndex
+      );
+    }
+
+    for (uint256 i = 0; i < actual.operations.length; i++) {
+      assert(actual.operations[i].opType == expected.operations[i].opType);
+      assert(actual.operations[i].index == expected.operations[i].index);
+    }
+  }
+
+  function test_getEncodedRuleData() external {
+    _registerNodes();
+    bytes32 transactionId = gated.requestEntitlementCheck();
+    IRuleEntitlement.RuleData memory ruleData = gated.getRuleData(
+      transactionId
+    );
+    assertRuleDatasEqual(ruleData, RuleEntitlementUtil.getMockERC721RuleData());
   }
 
   // =============================================================

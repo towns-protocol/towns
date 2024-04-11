@@ -4,6 +4,7 @@ pragma solidity ^0.8.23;
 // interfaces
 import {IEntitlementGatedBase} from "./IEntitlementGated.sol";
 import {IEntitlementChecker} from "./checker/IEntitlementChecker.sol";
+import {IRuleEntitlement} from "./IRuleEntitlement.sol";
 
 // libraries
 import {EntitlementGatedStorage} from "./EntitlementGatedStorage.sol";
@@ -141,4 +142,19 @@ abstract contract EntitlementGatedBase is IEntitlementGatedBase {
     bytes32 transactionId,
     NodeVoteStatus result
   ) internal virtual;
+
+  function _getRuleData(
+    bytes32 transactionId
+  ) internal view returns (IRuleEntitlement.RuleData memory) {
+    EntitlementGatedStorage.Layout storage ds = EntitlementGatedStorage
+      .layout();
+
+    Transaction storage transaction = ds.transactions[transactionId];
+
+    if (transaction.hasBenSet == false) {
+      revert EntitlementGated_TransactionNotRegistered();
+    }
+
+    return abi.decode(transaction.encodedRuleData, (IRuleEntitlement.RuleData));
+  }
 }

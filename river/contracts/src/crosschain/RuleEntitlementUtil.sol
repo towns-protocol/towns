@@ -35,8 +35,71 @@ library RuleEntitlementUtil {
     IRuleEntitlement.CheckOperation memory checkOp = IRuleEntitlement
       .CheckOperation({
         opType: IRuleEntitlement.CheckOperationType.ERC721,
-        chainId: 1,
-        contractAddress: address(0x23),
+        chainId: 11155111,
+        contractAddress: address(0xb088b3f2b35511A611bF2aaC13fE605d491D6C19),
+        threshold: 1
+      });
+    IRuleEntitlement.Operation memory op = IRuleEntitlement.Operation({
+      opType: IRuleEntitlement.CombinedOperationType.CHECK,
+      index: 0
+    });
+
+    data.operations[0] = op;
+    data.checkOperations[0] = checkOp;
+  }
+
+  function getMockERC20RuleData()
+    internal
+    pure
+    returns (IRuleEntitlement.RuleData memory data)
+  {
+    IRuleEntitlement.CheckOperation memory checkOp = IRuleEntitlement
+      .CheckOperation({
+        opType: IRuleEntitlement.CheckOperationType.ERC721,
+        chainId: 11155111,
+        contractAddress: address(0xb088b3f2b35511A611bF2aaC13fE605d491D6C19),
+        threshold: 1
+      });
+    IRuleEntitlement.Operation memory op = IRuleEntitlement.Operation({
+      opType: IRuleEntitlement.CombinedOperationType.CHECK,
+      index: 0
+    });
+
+    data.operations[0] = op;
+    data.checkOperations[0] = checkOp;
+  }
+
+  function getMockAndOperation()
+    internal
+    pure
+    returns (IRuleEntitlement.RuleData memory data)
+  {
+    IRuleEntitlement.CheckOperation memory checkOp = IRuleEntitlement
+      .CheckOperation({
+        opType: IRuleEntitlement.CheckOperationType.ERC721,
+        chainId: 11155111,
+        contractAddress: address(0xb088b3f2b35511A611bF2aaC13fE605d491D6C19),
+        threshold: 1
+      });
+    IRuleEntitlement.Operation memory op = IRuleEntitlement.Operation({
+      opType: IRuleEntitlement.CombinedOperationType.CHECK,
+      index: 0
+    });
+
+    data.operations[0] = op;
+    data.checkOperations[0] = checkOp;
+  }
+
+  function getMockNestedOrOperation()
+    internal
+    pure
+    returns (IRuleEntitlement.RuleData memory data)
+  {
+    IRuleEntitlement.CheckOperation memory checkOp = IRuleEntitlement
+      .CheckOperation({
+        opType: IRuleEntitlement.CheckOperationType.ERC721,
+        chainId: 11155111,
+        contractAddress: address(0xb088b3f2b35511A611bF2aaC13fE605d491D6C19),
         threshold: 1
       });
     IRuleEntitlement.Operation memory op = IRuleEntitlement.Operation({

@@ -61,6 +61,8 @@ do
   echo "Launched instance $i from ${INSTANCE_DIR} with PID $node_pid"
   popd
 done
+# Fund the instances
+./fund_multi.sh
 
 wait
 

@@ -32,5 +32,4 @@ generate_go() {
 
 generate_go IEntitlementChecker i_entitlement_checker
 generate_go IEntitlementGated i_entitlement_gated
-generate_go IRuleEntitlement i_rule_entitlement
-generate_go IEntitlement i_entitlment
+generate_go IEntitlement i_entitlement

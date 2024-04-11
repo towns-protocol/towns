@@ -156,8 +156,7 @@ func TestAndOperation(t *testing.T) {
 
 	for idx, tc := range testCases {
 		t.Log("TestAndOperation", tc)
-		var tree Operation
-		tree = &AndOperation{
+		tree := &AndOperation{
 			OpType:         LOGICAL,
 			LogicalType:    LogicalOperationType(AND),
 			LeftOperation:  tc.a,
@@ -212,8 +211,7 @@ func TestOrOperation(t *testing.T) {
 
 	for idx, tc := range testCases {
 		t.Log("TestOrOperation", tc)
-		var tree LogicalOperation
-		tree = &OrOperation{
+		tree := &OrOperation{
 			OpType:         LOGICAL,
 			LogicalType:    LogicalOperationType(OR),
 			LeftOperation:  tc.a,

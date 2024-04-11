@@ -15,8 +15,6 @@ import (
 	"github.com/river-build/river/core/node/dlog"
 )
 
-var chainRPCUrls = map[uint64]string{}
-
 func evaluateCheckOperation(
 	ctx context.Context,
 	op *CheckOperation,
@@ -33,6 +31,8 @@ func evaluateCheckOperation(
 		return evaluateErc721Operation(ctx, op, callerAddress)
 	case CheckOperationType(ERC1155):
 		return evaluateErc1155Operation(ctx, op)
+	case CheckOperationType(NONE):
+		fallthrough
 	default:
 		return false, fmt.Errorf("unknown operation")
 	}
@@ -89,7 +89,7 @@ func evaluateErc20Operation(
 	op *CheckOperation,
 	callerAddress *common.Address,
 ) (bool, error) {
-	log := dlog.FromCtx(ctx)
+	log := dlog.FromCtx(ctx).With("function", "evaluateErc20Operation")
 	url, ok := getChainRPCUrl(op.ChainID.Uint64())
 	if !ok {
 		log.Error("Chain ID not found", "chainID", op.ChainID)
@@ -141,12 +141,14 @@ func evaluateErc721Operation(
 	op *CheckOperation,
 	callerAddress *common.Address,
 ) (bool, error) {
-	log := dlog.FromCtx(ctx)
+	log := dlog.FromCtx(ctx).With("function", "evaluateErc721Operation")
+
 	url, ok := getChainRPCUrl(op.ChainID.Uint64())
 	if !ok {
 		log.Error("Chain ID not found", "chainID", op.ChainID)
 		return false, fmt.Errorf("evaluateErc20Operation: Chain ID %v not found", op.ChainID)
 	}
+	log.Info("Evalutating operation with chain RPC URL", "url", url)
 	client, err := ethclient.Dial(url)
 	if err != nil {
 		log.Error("Failed to dial", "err", err)
@@ -162,6 +164,11 @@ func evaluateErc721Operation(
 	}
 
 	// Check if the caller owns the NFT
+	log.Info(
+		"Checking if caller owns NFT",
+		"callerAddress", callerAddress,
+		"contractAddress", op.ContractAddress,
+	)
 	tokenBalance, err := nft.BalanceOf(&bind.CallOpts{Context: ctx}, *callerAddress)
 	if err != nil {
 		log.Error("Failed to retrieve NFT balance",

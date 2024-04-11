@@ -3,7 +3,7 @@ pragma solidity ^0.8.23;
 
 // interfaces
 import {IEntitlementGated} from "./IEntitlementGated.sol";
-
+import {IRuleEntitlement} from "./IRuleEntitlement.sol";
 // libraries
 
 // contracts
@@ -26,4 +26,10 @@ abstract contract EntitlementGated is IEntitlementGated, EntitlementGatedBase {
     bytes32 transactionId,
     NodeVoteStatus result
   ) internal virtual override;
+
+  function getRuleData(
+    bytes32 transactionId
+  ) external view override returns (IRuleEntitlement.RuleData memory) {
+    return _getRuleData(transactionId);
+  }
 }

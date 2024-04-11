@@ -10,7 +10,18 @@ import (
 	er "core/xchain/contracts"
 
 	"github.com/ethereum/go-ethereum/common"
+	"github.com/river-build/river/core/node/dlog"
 )
+
+func EvaluateRuleData(ctx context.Context, callerAddress *common.Address, ruleData *er.IRuleData) (bool, error) {
+	opTree, err := getOperationTree(ruleData)
+	log := dlog.FromCtx(ctx)
+	log.Info("built operation tree", "opTree", opTree)
+	if err != nil {
+		return false, err
+	}
+	return evaluateOp(ctx, opTree, callerAddress)
+}
 
 // OperationType Enum
 type OperationType int
@@ -55,7 +66,7 @@ type CheckOperation struct {
 	Threshold       *big.Int
 }
 
-func (c CheckOperation) GetOpType() OperationType {
+func (c *CheckOperation) GetOpType() OperationType {
 	return c.OpType
 }
 
@@ -132,40 +143,12 @@ func (a *AndOperation) SetRightOperation(right Operation) {
 	a.RightOperation = right
 }
 
-func getOperationTree(address string) (Operation, error) {
-	var wg sync.WaitGroup
-	wg.Add(3)
-
-	var operations []er.IRuleEntitlementOperation
-	var logicalOperations []er.IRuleEntitlementLogicalOperation
-	var checkOperations []er.IRuleEntitlementCheckOperation
-
-	go func() {
-		// Simulate publicClient.readContract for 'getOperations'
-		// Fill operations
-		wg.Done()
-	}()
-
-	go func() {
-		// Simulate publicClient.readContract for 'getLogicalOperations'
-		// Fill logicalOperations
-		wg.Done()
-	}()
-
-	go func() {
-		// Simulate publicClient.readContract for 'getCheckOperations'
-		// Fill checkOperations
-		wg.Done()
-	}()
-
-	wg.Wait()
-
+func getOperationTree(ruleData *er.IRuleData) (Operation, error) {
 	decodedOperations := []Operation{}
-
-	for _, operation := range operations {
+	for _, operation := range ruleData.Operations {
 		if OperationType(operation.OpType) == CHECK {
-			checkOperation := checkOperations[operation.Index]
-			decodedOperations = append(decodedOperations, CheckOperation{
+			checkOperation := ruleData.CheckOperations[operation.Index]
+			decodedOperations = append(decodedOperations, &CheckOperation{
 				OpType:          CHECK,
 				CheckType:       CheckOperationType(checkOperation.OpType),
 				ChainID:         checkOperation.ChainId,
@@ -173,7 +156,7 @@ func getOperationTree(address string) (Operation, error) {
 				Threshold:       checkOperation.Threshold,
 			})
 		} else if OperationType(operation.OpType) == LOGICAL {
-			logicalOperation := logicalOperations[operation.Index]
+			logicalOperation := ruleData.LogicalOperations[operation.Index]
 			if LogicalOperationType(logicalOperation.LogOpType) == AND {
 				decodedOperations = append(decodedOperations, &AndOperation{
 					OpType:         LOGICAL,
@@ -352,9 +335,13 @@ func evaluateOp(
 		case OR:
 			orOp := (op).(*OrOperation)
 			return evaluateOrOperation(ctx, orOp, callerAddress)
+		case LogNONE:
+			fallthrough
 		default:
 			return false, fmt.Errorf("invalid LogicalOperation type")
 		}
+	case NONE:
+		fallthrough
 	default:
 		return false, fmt.Errorf("invalid Operation type")
 	}

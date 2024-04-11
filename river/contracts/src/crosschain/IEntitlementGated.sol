@@ -1,6 +1,9 @@
 // SPDX-License-Identifier: MIT
 pragma solidity ^0.8.23;
 
+// interfaces
+import {IRuleEntitlement} from "contracts/src/crosschain/IRuleEntitlement.sol";
+
 interface IEntitlementGatedBase {
   enum NodeVoteStatus {
     NOT_VOTED,
@@ -43,4 +46,8 @@ interface IEntitlementGated is IEntitlementGatedBase {
 
   // For testing purposes
   function requestEntitlementCheck() external returns (bytes32);
+
+  function getRuleData(
+    bytes32 transactionId
+  ) external view returns (IRuleEntitlement.RuleData memory);
 }

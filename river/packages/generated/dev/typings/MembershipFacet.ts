@@ -64,6 +64,65 @@ export declare namespace IMembershipBase {
   };
 }
 
+export declare namespace IRuleEntitlement {
+  export type OperationStruct = {
+    opType: PromiseOrValue<BigNumberish>;
+    index: PromiseOrValue<BigNumberish>;
+  };
+
+  export type OperationStructOutput = [number, number] & {
+    opType: number;
+    index: number;
+  };
+
+  export type CheckOperationStruct = {
+    opType: PromiseOrValue<BigNumberish>;
+    chainId: PromiseOrValue<BigNumberish>;
+    contractAddress: PromiseOrValue<string>;
+    threshold: PromiseOrValue<BigNumberish>;
+  };
+
+  export type CheckOperationStructOutput = [
+    number,
+    BigNumber,
+    string,
+    BigNumber
+  ] & {
+    opType: number;
+    chainId: BigNumber;
+    contractAddress: string;
+    threshold: BigNumber;
+  };
+
+  export type LogicalOperationStruct = {
+    logOpType: PromiseOrValue<BigNumberish>;
+    leftOperationIndex: PromiseOrValue<BigNumberish>;
+    rightOperationIndex: PromiseOrValue<BigNumberish>;
+  };
+
+  export type LogicalOperationStructOutput = [number, number, number] & {
+    logOpType: number;
+    leftOperationIndex: number;
+    rightOperationIndex: number;
+  };
+
+  export type RuleDataStruct = {
+    operations: IRuleEntitlement.OperationStruct[];
+    checkOperations: IRuleEntitlement.CheckOperationStruct[];
+    logicalOperations: IRuleEntitlement.LogicalOperationStruct[];
+  };
+
+  export type RuleDataStructOutput = [
+    IRuleEntitlement.OperationStructOutput[],
+    IRuleEntitlement.CheckOperationStructOutput[],
+    IRuleEntitlement.LogicalOperationStructOutput[]
+  ] & {
+    operations: IRuleEntitlement.OperationStructOutput[];
+    checkOperations: IRuleEntitlement.CheckOperationStructOutput[];
+    logicalOperations: IRuleEntitlement.LogicalOperationStructOutput[];
+  };
+}
+
 export interface MembershipFacetInterface extends utils.Interface {
   functions: {
     "__ERC721A_init(string,string)": FunctionFragment;
@@ -89,6 +148,7 @@ export interface MembershipFacetInterface extends utils.Interface {
     "getMembershipPrice()": FunctionFragment;
     "getMembershipPricingModule()": FunctionFragment;
     "getMembershipRenewalPrice(uint256)": FunctionFragment;
+    "getRuleData(bytes32)": FunctionFragment;
     "getSpaceFactory()": FunctionFragment;
     "getTokenIdByMembership(address)": FunctionFragment;
     "isApprovedForAll(address,address)": FunctionFragment;
@@ -139,6 +199,7 @@ export interface MembershipFacetInterface extends utils.Interface {
       | "getMembershipPrice"
       | "getMembershipPricingModule"
       | "getMembershipRenewalPrice"
+      | "getRuleData"
       | "getSpaceFactory"
       | "getTokenIdByMembership"
       | "isApprovedForAll"
@@ -255,6 +316,10 @@ export interface MembershipFacetInterface extends utils.Interface {
   encodeFunctionData(
     functionFragment: "getMembershipRenewalPrice",
     values: [PromiseOrValue<BigNumberish>]
+  ): string;
+  encodeFunctionData(
+    functionFragment: "getRuleData",
+    values: [PromiseOrValue<BytesLike>]
   ): string;
   encodeFunctionData(
     functionFragment: "getSpaceFactory",
@@ -441,6 +506,10 @@ export interface MembershipFacetInterface extends utils.Interface {
   ): Result;
   decodeFunctionResult(
     functionFragment: "getMembershipRenewalPrice",
+    data: BytesLike
+  ): Result;
+  decodeFunctionResult(
+    functionFragment: "getRuleData",
     data: BytesLike
   ): Result;
   decodeFunctionResult(
@@ -1014,6 +1083,11 @@ export interface MembershipFacet extends BaseContract {
       overrides?: CallOverrides
     ): Promise<[BigNumber]>;
 
+    getRuleData(
+      transactionId: PromiseOrValue<BytesLike>,
+      overrides?: CallOverrides
+    ): Promise<[IRuleEntitlement.RuleDataStructOutput]>;
+
     getSpaceFactory(overrides?: CallOverrides): Promise<[string]>;
 
     getTokenIdByMembership(
@@ -1214,6 +1288,11 @@ export interface MembershipFacet extends BaseContract {
     overrides?: CallOverrides
   ): Promise<BigNumber>;
 
+  getRuleData(
+    transactionId: PromiseOrValue<BytesLike>,
+    overrides?: CallOverrides
+  ): Promise<IRuleEntitlement.RuleDataStructOutput>;
+
   getSpaceFactory(overrides?: CallOverrides): Promise<string>;
 
   getTokenIdByMembership(
@@ -1413,6 +1492,11 @@ export interface MembershipFacet extends BaseContract {
       tokenId: PromiseOrValue<BigNumberish>,
       overrides?: CallOverrides
     ): Promise<BigNumber>;
+
+    getRuleData(
+      transactionId: PromiseOrValue<BytesLike>,
+      overrides?: CallOverrides
+    ): Promise<IRuleEntitlement.RuleDataStructOutput>;
 
     getSpaceFactory(overrides?: CallOverrides): Promise<string>;
 
@@ -1845,6 +1929,11 @@ export interface MembershipFacet extends BaseContract {
       overrides?: CallOverrides
     ): Promise<BigNumber>;
 
+    getRuleData(
+      transactionId: PromiseOrValue<BytesLike>,
+      overrides?: CallOverrides
+    ): Promise<BigNumber>;
+
     getSpaceFactory(overrides?: CallOverrides): Promise<BigNumber>;
 
     getTokenIdByMembership(
@@ -2061,6 +2150,11 @@ export interface MembershipFacet extends BaseContract {
 
     getMembershipRenewalPrice(
       tokenId: PromiseOrValue<BigNumberish>,
+      overrides?: CallOverrides
+    ): Promise<PopulatedTransaction>;
+
+    getRuleData(
+      transactionId: PromiseOrValue<BytesLike>,
       overrides?: CallOverrides
     ): Promise<PopulatedTransaction>;
 

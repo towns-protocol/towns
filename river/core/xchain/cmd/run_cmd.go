@@ -2,7 +2,6 @@ package cmd
 
 import (
 	"context"
-	"core/xchain/config"
 	"core/xchain/server"
 	"os"
 	"os/signal"
@@ -15,7 +14,6 @@ import (
 )
 
 func run() error {
-	cfg := config.GetConfig()
 	ctx, cancel := context.WithCancel(context.Background())
 
 	pid := os.Getpid()
@@ -24,11 +22,12 @@ func run() error {
 
 	ctx = dlog.CtxWithLog(ctx, log)
 
-	if cfg.Metrics.Enabled {
-		// Since the xchain server runs alongside the stream node
-		// we don't need to start the metrics service here
-		// go infra.StartMetricsService(ctx, cfg.Metrics)
-	}
+	// cfg := config.GetConfig()
+	// if cfg.Metrics.Enabled {
+	// 	// Since the xchain server runs alongside the stream node
+	// 	// we don't need to start the metrics service here
+	// 	go infra.StartMetricsService(ctx, cfg.Metrics)
+	// }
 
 	shutdown := make(chan struct{})
 	var once sync.Once

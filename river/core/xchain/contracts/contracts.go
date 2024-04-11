@@ -17,6 +17,12 @@ import (
 	"github.com/river-build/river/core/node/dlog"
 )
 
+type IRuleData struct {
+	Operations        []IRuleEntitlementOperation
+	CheckOperations   []IRuleEntitlementCheckOperation
+	LogicalOperations []IRuleEntitlementLogicalOperation
+}
+
 type IRuleEntitlementOperation struct {
 	OpType uint8
 	Index  uint8
@@ -75,12 +81,9 @@ func (g *IEntitlementGated) WatchEntitlementCheckResultPosted(opts *bind.WatchOp
 		v3Sink := make(chan *v3.IEntitlementGatedEntitlementCheckResultPosted)
 		sub, err := g.v3IEntitlementGated.WatchEntitlementCheckResultPosted(opts, v3Sink, transactionId)
 		go func() {
-			for {
-				select {
-				case v3Event := <-v3Sink:
-					shimEvent := convertV3ToShimResultPosted(v3Event)
-					sink <- shimEvent
-				}
+			for v3Event := range v3Sink {
+				shimEvent := convertV3ToShimResultPosted(v3Event)
+				sink <- shimEvent
 			}
 		}()
 		return sub, err
@@ -88,15 +91,81 @@ func (g *IEntitlementGated) WatchEntitlementCheckResultPosted(opts *bind.WatchOp
 		devSink := make(chan *dev.IEntitlementGatedEntitlementCheckResultPosted)
 		sub, err := g.devIEntitlementGated.WatchEntitlementCheckResultPosted(opts, devSink, transactionId)
 		go func() {
-			for {
-				select {
-				case devEvent := <-devSink:
-					shimEvent := converDevToShimResultPosted(devEvent)
-					sink <- shimEvent
-				}
+			for devEvent := range devSink {
+				shimEvent := converDevToShimResultPosted(devEvent)
+				sink <- shimEvent
 			}
 		}()
 		return sub, err
+	}
+}
+
+func (g *IEntitlementGated) GetRuleData(opts *bind.CallOpts, transactionId [32]byte) (*IRuleData, error) {
+	var ruleData IRuleData
+	if config.GetConfig().GetContractVersion() == "v3" {
+		v3RuleData, err := g.v3IEntitlementGated.GetRuleData(opts, transactionId)
+		if err != nil {
+			return nil, err
+		}
+		ruleData = IRuleData{
+			Operations:        make([]IRuleEntitlementOperation, len(v3RuleData.Operations)),
+			CheckOperations:   make([]IRuleEntitlementCheckOperation, len(v3RuleData.CheckOperations)),
+			LogicalOperations: make([]IRuleEntitlementLogicalOperation, len(v3RuleData.LogicalOperations)),
+		}
+		for i, op := range v3RuleData.Operations {
+			ruleData.Operations[i] = IRuleEntitlementOperation{
+				OpType: op.OpType,
+				Index:  op.Index,
+			}
+		}
+		for i, op := range v3RuleData.CheckOperations {
+			ruleData.CheckOperations[i] = IRuleEntitlementCheckOperation{
+				OpType:          op.OpType,
+				ChainId:         op.ChainId,
+				ContractAddress: op.ContractAddress,
+				Threshold:       op.Threshold,
+			}
+		}
+		for i, op := range v3RuleData.LogicalOperations {
+			ruleData.LogicalOperations[i] = IRuleEntitlementLogicalOperation{
+				LogOpType:           op.LogOpType,
+				LeftOperationIndex:  op.LeftOperationIndex,
+				RightOperationIndex: op.RightOperationIndex,
+			}
+		}
+		return &ruleData, nil
+	} else {
+		devRuleDtata, err := g.devIEntitlementGated.GetRuleData(opts, transactionId)
+		if err != nil {
+			return nil, err
+		}
+		ruleData = IRuleData{
+			Operations:        make([]IRuleEntitlementOperation, len(devRuleDtata.Operations)),
+			CheckOperations:   make([]IRuleEntitlementCheckOperation, len(devRuleDtata.CheckOperations)),
+			LogicalOperations: make([]IRuleEntitlementLogicalOperation, len(devRuleDtata.LogicalOperations)),
+		}
+		for i, op := range devRuleDtata.Operations {
+			ruleData.Operations[i] = IRuleEntitlementOperation{
+				OpType: op.OpType,
+				Index:  op.Index,
+			}
+		}
+		for i, op := range devRuleDtata.CheckOperations {
+			ruleData.CheckOperations[i] = IRuleEntitlementCheckOperation{
+				OpType:          op.OpType,
+				ChainId:         op.ChainId,
+				ContractAddress: op.ContractAddress,
+				Threshold:       op.Threshold,
+			}
+		}
+		for i, op := range devRuleDtata.LogicalOperations {
+			ruleData.LogicalOperations[i] = IRuleEntitlementLogicalOperation{
+				LogOpType:           op.LogOpType,
+				LeftOperationIndex:  op.LeftOperationIndex,
+				RightOperationIndex: op.RightOperationIndex,
+			}
+		}
+		return &ruleData, nil
 	}
 }
 
@@ -188,12 +257,9 @@ func (c *IEntitlementChecker) WatchEntitlementCheckRequested(opts *bind.WatchOpt
 		v3Sink := make(chan *v3.IEntitlementCheckerEntitlementCheckRequested)
 		sub, err := c.v3IEntitlementChecker.WatchEntitlementCheckRequested(opts, v3Sink, nodeAddress)
 		go func() {
-			for {
-				select {
-				case v3Event := <-v3Sink:
-					shimEvent := convertV3ToShimCheckRequested(v3Event)
-					sink <- shimEvent
-				}
+			for v3Event := range v3Sink {
+				shimEvent := convertV3ToShimCheckRequested(v3Event)
+				sink <- shimEvent
 			}
 		}()
 		return sub, err
@@ -201,12 +267,9 @@ func (c *IEntitlementChecker) WatchEntitlementCheckRequested(opts *bind.WatchOpt
 		devSink := make(chan *dev.IEntitlementCheckerEntitlementCheckRequested)
 		sub, err := c.devIEntitlementChecker.WatchEntitlementCheckRequested(opts, devSink, nodeAddress)
 		go func() {
-			for {
-				select {
-				case devEvent := <-devSink:
-					shimEvent := convertDevToShimCheckRequested(devEvent)
-					sink <- shimEvent
-				}
+			for devEvent := range devSink {
+				shimEvent := convertDevToShimCheckRequested(devEvent)
+				sink <- shimEvent
 			}
 		}()
 		return sub, err
