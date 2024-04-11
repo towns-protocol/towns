@@ -173,6 +173,14 @@ export const boxProperties = defineProperties({
                     },
                 },
             },
+            pill: {
+                boxShadow: `0 6px 25px rgba(0, 0, 0, 1)`,
+                selectors: {
+                    [`${lightTheme} &`]: {
+                        boxShadow: `0 6px 16px rgba(0, 0, 0, 0.20)`,
+                    },
+                },
+            },
             none: {
                 boxShadow: `none`,
             },

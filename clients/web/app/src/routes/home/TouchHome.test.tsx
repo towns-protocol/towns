@@ -72,6 +72,7 @@ describe('<TouchHome />', () => {
                     },
                 ],
                 readDms: [],
+                actualUnreadChannels: [],
                 unreadChannels: [],
                 unjoinedChannels: [],
                 dmItems: [],

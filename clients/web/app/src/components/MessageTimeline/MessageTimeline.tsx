@@ -519,16 +519,16 @@ export const MessageTimeline = (props: Props) => {
                 <Box
                     horizontal
                     centerContent
-                    paddingY="md"
-                    paddingX="lg"
                     gap="sm"
+                    height="height_lg"
+                    paddingX="lg"
                     rounded="lg"
                     cursor="pointer"
-                    background="cta1"
+                    background="accent"
                     boxShadow="medium"
                 >
-                    <Paragraph fontWeight="medium">New messages</Paragraph>
                     <Paragraph fontWeight="medium">↓</Paragraph>
+                    <Paragraph fontWeight="medium">new messages</Paragraph>
                 </Box>
             </Box>
         )

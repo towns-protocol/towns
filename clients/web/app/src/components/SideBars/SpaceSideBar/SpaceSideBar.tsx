@@ -25,14 +25,18 @@ import { env } from 'utils'
 import { useDevice } from 'hooks/useDevice'
 import { useUnseenChannelIds } from 'hooks/useUnseenChannelIdsCount'
 import { usePanelActions } from 'routes/layouts/hooks/usePanelActions'
+import { OffscreenMarker, OffscreenPill } from '@components/OffscreenPill/OffscreenPill'
 import * as styles from './SpaceSideBar.css'
 import { SpaceSideBarHeader } from './SpaceSideBarHeader'
 import { SidebarLoadingAnimation } from './SpaceSideBarLoading'
 import { CondensedChannelNavItem } from './CondensedChannelNavItem'
+import { useOffscreenMarkers } from './hooks/useOffscreenMarkers'
 
 type Props = {
     space: SpaceData
 }
+
+const HEADER_MARGIN = 50
 
 export const SpaceSideBar = (props: Props) => {
     const { space } = props
@@ -40,6 +44,7 @@ export const SpaceSideBar = (props: Props) => {
     const { loggedInWalletAddress } = useConnectivity()
     const { createLink } = useCreateLink()
     const { unseenChannelIds } = useUnseenChannelIds()
+    const scrollRef = useRef<HTMLDivElement>(null)
 
     const unreadThreadsCount = useSpaceThreadRootsUnreadCount()
 
@@ -67,8 +72,10 @@ export const SpaceSideBar = (props: Props) => {
     const [scrollOffset, setScrollOffset] = useState(1)
 
     const headerRef = useRef<HTMLElement>(null)
-    const onScroll = (e: React.UIEvent) => {
-        const headerY = headerRef.current?.getBoundingClientRect()?.top ?? -1
+
+    const onScroll = () => {
+        const containerTop = scrollRef.current?.getBoundingClientRect().top ?? 0
+        const headerY = (headerRef.current?.getBoundingClientRect()?.top ?? 0) - containerTop
         setScrollOffset(Math.max(0, Math.min(headerY - 58, 50)) / 50)
         setHasScrolledPastHeader(headerY > -1 && headerY <= 0)
     }
@@ -87,9 +94,16 @@ export const SpaceSideBar = (props: Props) => {
     const params = useParams()
     const currentRouteId = params.channelSlug
 
-    const { favoriteChannels, unreadChannels, readChannels, readDms } = useSortedChannels({
-        spaceId: space.id,
-        currentRouteId,
+    const { favoriteChannels, unreadChannels, actualUnreadChannels, readChannels, readDms } =
+        useSortedChannels({
+            spaceId: space.id,
+            currentRouteId,
+        })
+
+    const offscreenMarkers = useOffscreenMarkers({
+        unreadChannels: actualUnreadChannels,
+        unreadThreadsCount,
+        unreadThreadMentions,
     })
 
     const itemRenderer = useCallback(
@@ -97,6 +111,7 @@ export const SpaceSideBar = (props: Props) => {
             const key = `${u.id}`
             return (
                 <SpaceSideBarListItem key={key}>
+                    <OffscreenMarker id={key} containerMarginTop={HEADER_MARGIN} />
                     {u.type === 'dm' ? (
                         <CondensedChannelNavItem
                             unread={u.unread}
@@ -124,7 +139,13 @@ export const SpaceSideBar = (props: Props) => {
 
     return (
         <>
-            <Card absoluteFill data-testid="space-sidebar" onScroll={onScroll}>
+            <Card
+                absoluteFill
+                scroll
+                data-testid="space-sidebar"
+                ref={scrollRef}
+                onScroll={onScroll}
+            >
                 <Box grow elevateReadability position="relative">
                     <Stack
                         position="absolute"
@@ -132,6 +153,7 @@ export const SpaceSideBar = (props: Props) => {
                         width="100%"
                         height="200"
                     />
+
                     <SpaceSideBarHeader
                         scrollOffset={scrollOffset}
                         space={space}
@@ -146,6 +168,10 @@ export const SpaceSideBar = (props: Props) => {
                             <LayoutGroup>
                                 {/* threads */}
                                 <SpaceSideBarListItem key="threads">
+                                    <OffscreenMarker
+                                        id="threads"
+                                        containerMarginTop={HEADER_MARGIN}
+                                    />
                                     <ActionNavItem
                                         highlight={unreadThreadsCount > 0}
                                         icon="threads"
@@ -161,8 +187,8 @@ export const SpaceSideBar = (props: Props) => {
                                         key="threads"
                                     />
                                 </SpaceSideBarListItem>
-                                {/* mentions */}
 
+                                {/* mentions */}
                                 <SpaceSideBarListItem key="mentions">
                                     <ActionNavItem
                                         icon="at"
@@ -179,6 +205,7 @@ export const SpaceSideBar = (props: Props) => {
                                     key="unreads"
                                     hidden={unreadChannels.length === 0}
                                 />
+                                <OffscreenMarker id="unreads" containerMarginTop={HEADER_MARGIN} />
                                 {unreadChannels.map((channel) => itemRenderer(channel, true))}
 
                                 <SpaceSideBarSectionHeader
@@ -255,6 +282,7 @@ export const SpaceSideBar = (props: Props) => {
                         </Text>
                     </Box>
                 </Box>
+
                 {isCreateChannelModalVisible ? (
                     <ModalContainer onHide={onHideCreateChannel}>
                         <CreateChannelFormContainer
@@ -265,6 +293,12 @@ export const SpaceSideBar = (props: Props) => {
                 ) : (
                     <></>
                 )}
+                <OffscreenPill
+                    markers={offscreenMarkers.markers}
+                    defaultLabel={offscreenMarkers.defaultLabel}
+                    scrollRef={scrollRef}
+                    containerMarginTop={HEADER_MARGIN}
+                />
                 {/* the service worker won't exist in dev-mode and there's not need to check for updates */}
                 {(!env.DEV || env.VITE_PUSH_NOTIFICATION_ENABLED) && !isTouch && <ReloadPrompt />}
             </Card>

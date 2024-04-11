@@ -84,15 +84,15 @@ export const SpaceSideBarHeader = (props: {
         <>
             <Stack
                 horizontal
-                height="x8"
-                zIndex="ui"
+                height="x6"
+                zIndex="uiAbove"
                 pointerEvents={opaqueHeaderBar ? 'auto' : 'none'}
                 className={styles.spaceHeader}
                 justifyContent="spaceBetween"
                 onPointerEnter={onHeaderOver}
                 onPointerLeave={onHeaderLeave}
             >
-                <Box centerContent width="x8" pointerEvents="auto">
+                <Box centerContent width="x6" pointerEvents="auto">
                     <Box
                         cursor="pointer"
                         padding="xs"
@@ -104,7 +104,7 @@ export const SpaceSideBarHeader = (props: {
                         <Icon type="settings" size="square_sm" />
                     </Box>
                 </Box>
-                <Box centerContent width="x8" pointerEvents="auto">
+                <Box centerContent width="x6" pointerEvents="auto">
                     <AnimatePresence>
                         {isHeaderHovering && (
                             <FadeIn fast>
@@ -130,7 +130,6 @@ export const SpaceSideBarHeader = (props: {
                 onPointerLeave={onHeaderLeave}
                 onClick={onTokenClick}
             >
-                <Box height="x2" />
                 {space ? (
                     <InteractiveSpaceIcon
                         key={space.id}
@@ -140,30 +139,31 @@ export const SpaceSideBarHeader = (props: {
                         spaceName={space.name}
                     />
                 ) : (
-                    <Box background="level1" rounded="full" width="x15" aspectRatio="1/1" />
+                    <Box background="level1" rounded="md" width="x17" aspectRatio="1/1" />
                 )}
+                <Box height="x2" />
             </Stack>
 
             <Stack
                 width="100%"
                 position="sticky"
                 top="none"
-                zIndex="above"
-                height="x8"
+                zIndex="ui"
+                height="x6"
                 ref={props.headerRef}
-                borderBottom={opaqueHeaderBar ? 'accent' : 'none'}
             >
-                <Stack
+                <Box
+                    style={{ opacity: opaqueHeaderBar ? 1 : 0 }}
                     position="absolute"
                     bottom="none"
-                    background="level1"
+                    background="level2"
                     boxShadow="medium"
-                    height="x8"
+                    height="x6"
                     width="100%"
                     pointerEvents="none"
-                    style={{ opacity: 1 - props.scrollOffset }}
+                    roundedTop="sm"
                 />
-                <Stack horizontal height="x8">
+                <Stack horizontal height="x6">
                     <Box width="x7" shrink={false} />
                     <Box grow position="relative">
                         <Box

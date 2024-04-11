@@ -173,6 +173,22 @@ export const useSortedChannels = ({ spaceId, currentRouteId }: Params) => {
         return unreadChannelsRef.current
     }, [channelItems, dmItems, joinedChannels, persistUnreadId])
 
+    // - - - - - - - - - - - - - - - - - collect actual unread channels (not persisted)
+
+    const actualUnreadChannelsRef = useRef<MixedChannelMenuItem[]>([])
+    const actualUnreadChannels = useMemo(() => {
+        const value = [
+            ...channelItems.filter((c) => c.unread && joinedChannels.has(c.id)),
+            ...dmItems.filter((c) => c.unread),
+        ].sort((a, b) => Math.sign(b.latestMs - a.latestMs))
+
+        actualUnreadChannelsRef.current = isEqual(value, actualUnreadChannelsRef.current)
+            ? actualUnreadChannelsRef.current
+            : value
+
+        return actualUnreadChannelsRef.current
+    }, [channelItems, dmItems, joinedChannels])
+
     // - - - - - - - - - - - - - - - - - - - collect read channels sorted by name
 
     const readChannels = useMemo(() => {
@@ -235,6 +251,7 @@ export const useSortedChannels = ({ spaceId, currentRouteId }: Params) => {
 
     return {
         favoriteChannels,
+        actualUnreadChannels,
         readChannels,
         readDms,
         unreadChannels,
