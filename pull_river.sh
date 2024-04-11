@@ -7,9 +7,7 @@ print_usage() {
     echo "  -h: Display this help message."
     echo "  -u: USER_MODE. Will wait if there are CI errors and allow you to fix them."
     echo "  -x: USER_MODE_X. includes -u, and runs yarn lint, build, and test:unit."
-    echo "  -i: INTERACTIVE. Runs -x and prompts for confirmation before creating a pull request."
-    echo "  -c: CI_MODE. Will fail on any errors and not prompt for user input."
-    echo "  -p: PREVIEW. Print diff of changes without creating a pull request."
+    echo "  -i: INTERACTIVE. Runs -x and prompts for confirmation before creating a pull request. For debugging each step."
 }
 
 # Check if at least one argument is passed
@@ -30,17 +28,13 @@ while getopts "huxicp" arg; do
     x)
         USER_MODE=1
         USER_MODE_X=1
+        PROMPT_BEFORE_MERGE=1
         ;;
     i)
         USER_MODE=1
         USER_MODE_X=1
         INTERACTIVE=1
-        ;;
-    c)
-        CI_MODE=1
-        ;;
-    p)
-        PREVIEW_MODE=1
+        PROMPT_BEFORE_MERGE=1
         ;;
     *)
       echo "Invalid argument. Use -h for help."
@@ -73,11 +67,11 @@ function make_pr_description() {
 
 function remove_river_yarn_files() {
     # these files shouldn't be checked into the harmony repo
-    git rm -rf "${SUBTREE_PREFIX}/.git" 2>/dev/null || echo "${SUBTREE_PREFIX}/.git not found, skipping"
-    git rm "${SUBTREE_PREFIX}/package.json" 2>/dev/null || echo "${SUBTREE_PREFIX}/package.json not found, skipping"
-    rm "${SUBTREE_PREFIX}/package.json" 2>/dev/null || echo "${SUBTREE_PREFIX}/package.json not found, skipping"
-    git rm "${SUBTREE_PREFIX}/yarn.lock" 2>/dev/null || echo "${SUBTREE_PREFIX}/yarn.lock not found, skipping"
-    rm "${SUBTREE_PREFIX}/yarn.lock" 2>/dev/null || echo "${SUBTREE_PREFIX}/yarn.lock not found, skipping"
+    rm -rf "${SUBTREE_PREFIX}/.git"
+    git rm "${SUBTREE_PREFIX}/package.json"
+    rm "${SUBTREE_PREFIX}/package.json" 2>/dev/null
+    git rm "${SUBTREE_PREFIX}/yarn.lock"
+    rm "${SUBTREE_PREFIX}/yarn.lock" 2>/dev/null
 }
 
 function yarn_install_and_check() {
@@ -135,6 +129,28 @@ function yarn_install_and_check() {
     fi
 }
 
+function list_inprogress_branches() {
+    # stop if branch with same exact name exists
+    branch_with_current_commit=$(git branch -r | grep "${BRANCH_NAME}" | sed 's/origin\///')
+    if [ ! -z "$branch_with_current_commit" ]; then
+        echo "Remote branch '$BRANCH_NAME' exists, pull_river already in progress"
+        exit 0
+    fi
+
+    # list other branches in progress
+    branches=$(git branch -r | grep 'river_subtree_merge' | sed 's/origin\///')
+    if [ -z "$branches" ]; then
+        echo "No branches with the prefix 'river_subtree_merge' found."
+    else
+        # Loop through the branches and print the author of the latest commit
+        for branch in $branches; do
+            # Fetch the author of the latest commit on the branch
+            author=$(git log -1 --format="%an" "origin/$branch")
+            echo "Subtree pull in progress on branch '$branch' made by: $author"
+        done
+    fi
+}
+
 
 #
 #
@@ -148,20 +164,39 @@ MAINTREE_REPO="herenotthere/harmony"
 SUBTREE_PREFIX="river"
 SUBTREE_REPO="https://github.com/river-build/river-stage"
 SUBTREE_BRANCH="main"
+
+
+# prompt the user for a commit hash, if they don't enter one, just use the latest
+echo "Enter the commit hash of the river repo you would like to merge, or press enter to use the latest."
+read -p "Commit hash: " COMMIT_HASH
+if [[ -z "$COMMIT_HASH" ]]; then
+    echo "No commit hash entered. Using the latest commit."
+    COMMIT_HASH=$(git ls-remote "${SUBTREE_REPO}" "${SUBTREE_BRANCH}" | cut -f 1)
+else
+    echo "Using commit hash: $COMMIT_HASH"
+fi
+
+# if PROMPT_BEFORE_MERGE is not 1, prompt the user y/n to see if they want to set PROMPT_BEFORE_MERGE=1
+if [[ $PROMPT_BEFORE_MERGE -ne 1 ]]; then
+    read -p "Would you like to auto commit your pull request when all CI is green? (y/n) " -n 1 -r
+    echo
+    if [[ $REPLY =~ ^[Nn]$ ]]; then
+        PROMPT_BEFORE_MERGE=1
+    fi
+fi
+
 # Fetch the latest commit hash from the subtree's main branch
-COMMIT_HASH=$(git ls-remote "${SUBTREE_REPO}" "${SUBTREE_BRANCH}" | cut -f 1)
 SHORT_HASH="${COMMIT_HASH:0:7}"
+
+# echo short hash
+echo "Short hash: $SHORT_HASH"
 
 # Use the commit hash in the branch name
 BRANCH_NAME="river_subtree_merge_${SHORT_HASH}"
 
-git fetch --all
-    
-# preview can just diff and exit
-if [[ $PREVIEW_MODE -eq 1 ]]; then
-    git diff HEAD:./$SUBTREE_PREFIX FETCH_HEAD --summary
-    exit 0
-elif [[ "$(git status --porcelain)" != "" ]]; then
+list_inprogress_branches
+
+if [[ "$(git status --porcelain)" != "" ]]; then
     echo "There are uncommitted changes. Please commit or stash them before running this script."
     exit 1
 elif [[ "$(parse_git_branch)" != "main" ]]; then
@@ -169,10 +204,12 @@ elif [[ "$(parse_git_branch)" != "main" ]]; then
     exit 1
 fi
 
+git fetch --all
 git pull
 
 PR_TITLE="Merge ${SUBTREE_PREFIX} at ${SHORT_HASH}"
 PR_BODY_DESC="This merges the latest changes from the ${SUBTREE_PREFIX} repository at commit ${SHORT_HASH}."
+
 
 # Checkout a new branch for the merge
 git checkout -b "${BRANCH_NAME}"
@@ -183,9 +220,21 @@ if [[ "$(parse_git_branch)" != "${BRANCH_NAME}" ]]; then
 fi
 
 # Pull the latest changes from the subtree, blasting away any local changes
-rm -rf river
-rm -rf river # run twice to get around permission denied errors
-git clone "${SUBTREE_REPO}" river
+rm -rf "${SUBTREE_PREFIX}"
+rm -rf "${SUBTREE_PREFIX}" # run twice to get around permission denied errors
+git clone --depth 1 "${SUBTREE_REPO}" "${SUBTREE_PREFIX}"
+pushd "${SUBTREE_PREFIX}"
+git checkout "${COMMIT_HASH}"
+if git checkout "$COMMIT_HASH" >/dev/null 2>&1; then
+  # If the fetch succeeds, the commit exists
+  echo "$COMMIT_HASH is a valid commit in the repository."
+else
+  # If the fetch fails, the commit does not exist in the repository
+  echo "$COMMIT_HASH is not a valid commit in the repository."
+  exit 1
+fi
+popd
+
 remove_river_yarn_files
 
 git add .
@@ -255,7 +304,7 @@ if ! git diff main --quiet --cached; then
       fi
     done
 
-    if [[ $INTERACTIVE -eq 1 ]]; then
+    if [[ $PROMPT_BEFORE_MERGE -eq 1 ]]; then
         read -p "Do you want to merge the pull request? (y/n) " -n 1 -r
         echo
         if [[ ! $REPLY =~ ^[Yy]$ ]]; then
