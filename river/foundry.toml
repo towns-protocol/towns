@@ -30,8 +30,8 @@ river = { key = "${RIVERSCAN_API_KEY}", url = "${RIVERSCAN_URL}" }
 mainnet = { key = "${ETHERSCAN_API_KEY}" }
 
 [rpc_endpoints]
-base_anvil = "http://127.0.0.1:8545"
-river_anvil = "http://127.0.0.1:8546"
+base_anvil = "${BASE_ANVIL_RPC_URL}"
+river_anvil = "${RIVER_ANVIL_RPC_URL}"
 river = "${RIVER_RPC_URL}"
 sepolia = "${SEPOLIA_RPC_URL}"
 base_sepolia = "${BASE_SEPOLIA_RPC_URL}"
