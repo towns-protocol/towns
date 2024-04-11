@@ -1,4 +1,4 @@
-import React, { useCallback, useEffect, useState } from 'react'
+import React, { useCallback, useState } from 'react'
 import { useRegisterSW } from 'virtual:pwa-register/react'
 import { AnimatePresence } from 'framer-motion'
 import { debug } from 'debug'
@@ -16,17 +16,7 @@ export const ReloadPrompt = () => {
         updateServiceWorker,
     } = useRegisterSW()
 
-    const [isVersionHidden, setIsVersionHidden] = useState(false)
     const [isUpdating, setIsUpdating] = useState(false)
-
-    useEffect(() => {
-        const timeout = setTimeout(() => {
-            setIsVersionHidden(true)
-        }, SECOND_MS * 5)
-        return () => {
-            clearTimeout(timeout)
-        }
-    }, [])
 
     const onUpdateClick = useCallback(() => {
         const asyncUpdate = async () => {
@@ -81,11 +71,7 @@ export const ReloadPrompt = () => {
             <AnimatePresence mode="sync">
                 <FadeInBox centerContent preset="fadeup" pointerEvents="auto" width="100%">
                     <Box>
-                        {!isVersionHidden ? (
-                            <FancyButton compact borderRadius="lg" boxShadow="card">
-                                {APP_COMMIT_HASH}
-                            </FancyButton>
-                        ) : needRefresh ? (
+                        {needRefresh ? (
                             <FancyButton
                                 cta
                                 compact
