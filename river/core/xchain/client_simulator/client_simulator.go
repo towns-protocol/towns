@@ -6,7 +6,9 @@ import (
 	"crypto/ecdsa"
 	"encoding/hex"
 	"math/big"
+	"os"
 
+	node_crypto "github.com/river-build/river/core/node/crypto"
 	"github.com/river-build/river/core/node/dlog"
 
 	xc "core/xchain/common"
@@ -21,15 +23,27 @@ import (
 )
 
 func ClientSimulator() {
-	log := dlog.FromCtx(context.Background())
-	log.Info("ClientSimulator started")
+	ctx := context.Background()
+	log := dlog.FromCtx(ctx)
 
-	privateKey, err := crypto.GenerateKey()
+	var wallet *node_crypto.Wallet
+	var err error
+	// Read env var WALLETPRIVATEKEY or PRIVATE_KEY
+	privKey := os.Getenv("WALLETPRIVATEKEY")
+	if privKey == "" {
+		privKey = os.Getenv("PRIVATE_KEY")
+	}
+	if privKey != "" {
+		wallet, err = node_crypto.NewWalletFromPrivKey(ctx, privKey)
+	} else {
+		wallet, err = node_crypto.LoadWallet(ctx, node_crypto.WALLET_PATH_PRIVATE_KEY)
+	}
 	if err != nil {
-		log.Error("Failed to generate private key", "err", err)
+		log.Error("error finding wallet")
 		return
 	}
 
+	privateKey := wallet.PrivateKeyStruct
 	publicKey := privateKey.Public()
 	publicKeyECDSA, ok := publicKey.(*ecdsa.PublicKey)
 	if !ok {

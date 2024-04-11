@@ -360,7 +360,7 @@ func postCheckResult(
 	auth *bind.TransactOpts,
 ) {
 	log := dlog.FromCtx(ctx)
-	log.Info("EntitlementCheckRequested being handeled")
+	log.Info("EntitlementCheckRequested being handled")
 
 	nonce, err := client.PendingNonceAt(ctx, fromAddress)
 	if err != nil {
