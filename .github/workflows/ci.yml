@@ -3,8 +3,8 @@ env:
     RIVER_BLOCK_TIME: 1
 on:
     schedule:
-        # run during working hours
-        - cron: '0 15-23 * * *'
+        # Run every hour
+        - cron: '0 * * * *'
     pull_request:
     workflow_dispatch: # Allow manual trigger in GitHub UI
         inputs:
