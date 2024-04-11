@@ -288,6 +288,7 @@ if ! git diff main --quiet --cached; then
     
     # if PROMPT_BEFORE_PR is true, prompt the user for any key to continue
     if [[ $PROMPT_BEFORE_PR -eq 1 ]]; then
+        play_prompt_sound
         read -p "Are you ready to submit a pr? (any key to continue/n) " -n 1 -r
         echo ""
         if [[ $REPLY =~ ^[Nn]$ ]]; then
