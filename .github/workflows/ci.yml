@@ -229,7 +229,8 @@ jobs:
 
             - name: Run multiple nodes
               run: |
-                  ./run_multi.sh -c -r &
+                  ./run_multi.sh -c
+                  ./run_multi.sh -r &
                   for i in {5170..5179}; do yarn wait-on https://localhost:$i/debug/multi --timeout=900000 --i=5000 --verbose; done
               working-directory: river/core/node
 
