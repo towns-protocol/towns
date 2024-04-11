@@ -88,4 +88,6 @@ jobs:
                   SLACK_USERNAME: 'Userops Tests'
                   SLACK_ICON_EMOJI: ':test_tube:'
                   SLACK_COLOR: '#FF0000'
-                  SLACK_MESSAGE: 'Userops Test Failure <@Evan>'
+                  SLACK_MESSAGE: 'Userops Test Failure <@Evan> ${{ vars.GOALIE_SLACK_GROUP_ID }}'
+                  SLACK_LINK_NAMES: true
+                  
