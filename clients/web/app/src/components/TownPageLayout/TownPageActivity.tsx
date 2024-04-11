@@ -2,6 +2,7 @@ import { MembershipOp } from '@river-build/proto'
 import {
     StreamTimelineEvent,
     UnauthenticatedClient,
+    isDefined,
     isRemoteEvent,
     makeRiverRpcClient,
     userIdFromAddress,
@@ -147,11 +148,11 @@ export const TownPageActivity = (props: { townId: string }) => {
                         {isLoading && <Spinner height="height_sm" />}
                     </Stack>
 
-                    {activities.map((a) => (
+                    {activities.map((a, i) => (
                         <Stack
                             horizontal
                             gap
-                            key={a.title + a.body}
+                            key={a.title + a.body + `${i}`}
                             alignItems="center"
                             paddingBottom="sm"
                         >
@@ -233,6 +234,7 @@ const useFetchUnauthenticatedActivity = (townId: string) => {
 
         const fetch = async () => {
             try {
+                console.log('TownPageActivity fetch space', townId)
                 const streamId = townId
                 if (!client) {
                     const rpcClient = await makeRiverRpcClient(provider, riverChainConfig)
@@ -241,11 +243,26 @@ const useFetchUnauthenticatedActivity = (townId: string) => {
 
                 const stream = await client.getStream(streamId)
 
+                let numJoinedUsers = Array.from(stream.getMembers().joined.values()).map((m) => {
+                    return {
+                        userId: m.userId,
+                        timestamp: 0,
+                        type: 'joinedUser',
+                    } as ActivityEvent
+                })
+
+                setTownStats({
+                    numJoinedUsers: Array.from(numJoinedUsers).length,
+                    latestJoinedUsers: Array.from(numJoinedUsers),
+                    spaceCreateEvent: undefined,
+                    latestCreatedChannels: undefined,
+                })
+
                 setMembers(Array.from(stream.getMembers().membership.joinedUsers))
 
-                await client.scrollbackToDate(stream, WEEK_MS)
+                await client.scrollbackToDate(stream, Date.now() - WEEK_MS)
 
-                const numJoinedUsers = stream.timeline
+                numJoinedUsers = stream.timeline
                     .flatMap((e) => (isRemoteEvent(e) ? e : undefined))
                     .filter(notUndefined)
                     .filter(
@@ -263,12 +280,12 @@ const useFetchUnauthenticatedActivity = (townId: string) => {
                                 userId: userId,
                                 timestamp: Number(s.createdAtEpochMs),
                                 type: 'joinedUser',
-                            } as ActivityEvent
+                            } satisfies ActivityEvent
                         } else {
                             return undefined
                         }
                     })
-                    .filter((item): item is ActivityEvent => item !== undefined)
+                    .filter(isDefined)
                     .sort((a, b) => b.timestamp - a.timestamp)
 
                 // space creation event
@@ -308,8 +325,9 @@ const useFetchUnauthenticatedActivity = (townId: string) => {
                 const channelCreatedEvents: StreamTimelineEvent[] = []
 
                 for (const channelId of channelsIds) {
+                    console.log('TownPageActivity fetch channel', channelId)
                     const streamView = await client.getStream(channelId)
-                    await client.scrollbackToDate(streamView, WEEK_MS)
+                    await client.scrollbackToDate(streamView, Date.now() - WEEK_MS)
                     const channelMessages = streamView.timeline.filter(
                         (x) =>
                             isRemoteEvent(x) &&
@@ -375,6 +393,10 @@ const useFetchUnauthenticatedActivity = (townId: string) => {
         }
 
         fetch()
+
+        return () => {
+            console.log('TownPageActivity fetch hook exit')
+        }
     }, [riverChain, riverChainConfig, townId])
 
     return {
