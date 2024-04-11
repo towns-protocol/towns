@@ -24,6 +24,7 @@ import { mapToErrorMessage } from '@components/Web3/utils'
 import { createPrivyNotAuthenticatedNotification } from '@components/Notifications/utils'
 import { Panel } from '@components/Panel/Panel'
 import { useSpaceChannels } from 'hooks/useSpaceChannels'
+import { PrivyWrapper } from 'privy/PrivyProvider'
 import { FormState, FormStateKeys, emptyDefaultValues, schema } from './formConfig'
 import { RoleCheckboxProps, RolesSection, getCheckedValuesForRoleIdsField } from './RolesSection'
 
@@ -333,11 +334,13 @@ export const ChannelSettingsPanel = () => {
     return spaceId && channelId ? (
         <Panel label="Edit channel" onClosed={_onHide}>
             <Stack>
-                <ChannelSettingsForm
-                    spaceId={spaceId}
-                    preventCloseMessage={transactionMessage}
-                    channelId={channelId}
-                />
+                <PrivyWrapper>
+                    <ChannelSettingsForm
+                        spaceId={spaceId}
+                        preventCloseMessage={transactionMessage}
+                        channelId={channelId}
+                    />
+                </PrivyWrapper>
             </Stack>
             <UserOpTxModal />
         </Panel>
