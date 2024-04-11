@@ -1,4 +1,4 @@
-import { useCallback, useEffect, useMemo, useState } from 'react'
+import { useEffect, useMemo, useState } from 'react'
 import { InviteData, Membership, SpaceData, toMembership } from '../types/towns-types'
 import { useTownsContext } from '../components/TownsContextProvider'
 import { useSpaceContext } from '../components/SpaceContextProvider'
@@ -6,7 +6,7 @@ import { useCasablancaStream } from './CasablancClient/useCasablancaStream'
 import { Client as CasablancaClient, Stream, isSpaceStreamId } from '@river/sdk'
 import isEqual from 'lodash/isEqual'
 import { useSpaceDapp } from './use-space-dapp'
-import { SpaceInfo } from '@river-build/web3'
+import { ISpaceDapp, SpaceInfo } from '@river-build/web3'
 import { useQuery, useQueries, defaultStaleTime } from '../query/queryClient'
 import { blockchainKeys } from '../query/query-keys'
 import { isDefined } from '../utils/isDefined'
@@ -72,6 +72,44 @@ export const useInviteData = (slug: string | undefined) => {
         [invites, slug],
     )
 }
+
+function spaceInfoQueryConfig({
+    spaceId,
+    spaceDapp,
+    initialData,
+    enabled = true,
+}: {
+    spaceId: string
+    spaceDapp: ISpaceDapp | undefined
+    initialData: SpaceInfo | undefined
+    enabled?: boolean | undefined
+}) {
+    return {
+        queryKey: blockchainKeys.spaceInfo(spaceId ?? ''),
+        queryFn: async (spaceDapp: ISpaceDapp | undefined, spaceId: string | undefined) => {
+            if (!spaceDapp || !spaceId || spaceId.length === 0) {
+                return undefined
+            }
+            const spaceInfo: SpaceInfo | undefined = await spaceDapp.getSpaceInfo(spaceId)
+            console.log(`useContractSpaceInfo: ${spaceId}`, { spaceInfo })
+            // if we don't have a spaceInfo from network for some reasons, return the cached one
+            if (!spaceInfo) {
+                return useOfflineStore.getState().offlineSpaceInfoMap[spaceId]
+            }
+            useOfflineStore.getState().setOfflineSpaceInfo(spaceInfo)
+            return spaceInfo
+        },
+        options: {
+            enabled: enabled && !!spaceId && !!spaceDapp,
+            initialData,
+            refetchOnMount: false,
+            refetchOnWindowFocus: false,
+            refetchOnReconnect: false,
+            staleTime: defaultStaleTime,
+        },
+    }
+}
+
 export function useContractSpaceInfos(opts: TownsOpts, client?: CasablancaClient) {
     const provider = opts.baseProvider
     const config = opts.baseConfig
@@ -80,7 +118,7 @@ export function useContractSpaceInfos(opts: TownsOpts, client?: CasablancaClient
         config,
         provider,
     })
-    const { offlineSpaceInfoMap, setOfflineSpaceInfo } = useOfflineStore()
+    const offlineSpaceInfoMap = useOfflineStore((s) => s.offlineSpaceInfoMap)
 
     const isEnabled = spaceDapp && client && client.streams.size() > 0
 
@@ -115,33 +153,23 @@ export function useContractSpaceInfos(opts: TownsOpts, client?: CasablancaClient
         }
     }, [isEnabled, client, setSpaceIds])
 
-    const getSpaceInfo = useCallback(
-        async function (spaceId: string): Promise<SpaceInfo | undefined> {
-            if (!spaceDapp || !isEnabled || spaceId.length === 0) {
-                return undefined
-            }
-            const spaceInfo: SpaceInfo | undefined = await spaceDapp.getSpaceInfo(spaceId)
-            console.log(`useContractSpaceInfos: ${spaceId}`, { spaceInfo })
-            // if we don't have a spaceInfo from network for some reasons, return the cached one
-            if (!spaceInfo) {
-                return offlineSpaceInfoMap[spaceId]
-            }
-            setOfflineSpaceInfo(spaceInfo)
-            return spaceInfo
-        },
-        [spaceDapp, isEnabled, setOfflineSpaceInfo, offlineSpaceInfoMap],
-    )
-
     const queryData = useQueries({
         queries: spaceIds.map((id) => {
-            return {
-                queryKey: blockchainKeys.spaceInfo(id),
-                queryFn: () => getSpaceInfo(id),
-                enabled: isEnabled,
+            const queryConfig = spaceInfoQueryConfig({
+                spaceId: id,
+                spaceDapp,
                 initialData: offlineSpaceInfoMap[id],
+                enabled: isEnabled && !!id,
+            })
+            return {
+                queryKey: queryConfig.queryKey,
+                queryFn: () => {
+                    const res = queryConfig.queryFn(spaceDapp, id)
+                    console.log(`useContractSpaceInfos: ${id}`, { spaceInfo: res })
+                    return queryConfig.queryFn(spaceDapp, id)
+                },
+                ...queryConfig.options,
                 refetchOnMount: true,
-                gcTime: defaultStaleTime,
-                staleTime: defaultStaleTime,
             }
         }),
         combine: (results) => {
@@ -165,11 +193,18 @@ export function useContractSpaceInfos(opts: TownsOpts, client?: CasablancaClient
 export const useContractSpaceInfo = (
     spaceId: string | undefined,
 ): { data: SpaceInfo | undefined; isLoading: boolean; error: unknown } => {
-    const { offlineSpaceInfoMap, setOfflineSpaceInfo } = useOfflineStore()
+    const offlineSpaceInfoMap = useOfflineStore((s) => s.offlineSpaceInfoMap)
     const { baseProvider: provider, baseConfig: config } = useTownsContext()
     const spaceDapp = useSpaceDapp({
         config,
         provider,
+    })
+
+    const queryConfig = spaceInfoQueryConfig({
+        spaceId: spaceId ?? '',
+        spaceDapp,
+        initialData: spaceId ? offlineSpaceInfoMap[spaceId] : undefined,
+        enabled: !!spaceId && !!spaceDapp,
     })
 
     const {
@@ -177,28 +212,14 @@ export const useContractSpaceInfo = (
         isLoading,
         error,
     } = useQuery(
-        blockchainKeys.spaceInfo(spaceId ?? ''),
-        async () => {
-            if (!spaceDapp || !spaceId || spaceId.length === 0) {
-                return undefined
-            }
-            const spaceInfo: SpaceInfo | undefined = await spaceDapp.getSpaceInfo(spaceId)
-            console.log(`useContractSpaceInfo: ${spaceId}`, { spaceInfo })
-            // if we don't have a spaceInfo from network for some reasons, return the cached one
-            if (!spaceInfo) {
-                return offlineSpaceInfoMap[spaceId]
-            }
-            setOfflineSpaceInfo(spaceInfo)
-            return spaceInfo
+        queryConfig.queryKey,
+        () => {
+            const res = queryConfig.queryFn(spaceDapp, spaceId)
+            console.log(`useContractSpaceInfo: ${spaceId}`, { spaceInfo: res })
+            return res
         },
         {
-            enabled: !!spaceId && !!spaceDapp,
-            initialData: spaceId! ? offlineSpaceInfoMap[spaceId] : undefined,
-            refetchOnMount: false,
-            refetchOnWindowFocus: false,
-            refetchOnReconnect: false,
-            gcTime: defaultStaleTime,
-            staleTime: defaultStaleTime,
+            ...queryConfig.options,
         },
     )
 
