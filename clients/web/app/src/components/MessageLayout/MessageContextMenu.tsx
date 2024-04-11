@@ -139,11 +139,11 @@ export const MessageContextMenu = (props: Props) => {
     const onCopyLinkToMessage = useShortcut(
         'CopyLinkToMessage',
         useCallback(() => {
-            const link = getLinkToMessage({ spaceId, channelId, eventId: eventId })
+            const link = getLinkToMessage({ spaceId, channelId, eventId, threadId: threadParentId })
             if (link) {
                 copy(link)
             }
-        }, [channelId, copy, eventId, spaceId]),
+        }, [channelId, copy, eventId, spaceId, threadParentId]),
         { enableOnContentEditable: false },
         [],
     )

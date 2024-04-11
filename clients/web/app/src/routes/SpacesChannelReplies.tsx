@@ -12,16 +12,8 @@ export const SpacesChannelReplies = (props: {
     // woultn't target this route
     const isValid = !!messageId
 
-    const eventHash = window.location.hash?.replace(/^#/, '')
-    const highlightId = eventHash?.match(/^\$[a-z0-9_-]{16,128}/i) ? eventHash : undefined
-
     return isValid ? (
-        <MessageThreadPanel
-            key={messageId}
-            messageId={messageId}
-            highlightId={highlightId}
-            parentRoute={props.parentRoute}
-        />
+        <MessageThreadPanel key={messageId} messageId={messageId} parentRoute={props.parentRoute} />
     ) : (
         <>Invalid Thread</>
     )

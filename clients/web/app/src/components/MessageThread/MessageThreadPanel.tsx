@@ -8,6 +8,7 @@ import {
     useTimelineThread,
     useUserLookupContext,
 } from 'use-towns-client'
+import { useLocation } from 'react-router'
 import { MessageTimeline } from '@components/MessageTimeline/MessageTimeline'
 import { MessageTimelineWrapper } from '@components/MessageTimeline/MessageTimelineContext'
 import { RichTextEditor } from '@components/RichTextPlate/PlateEditor'
@@ -48,6 +49,17 @@ export const MessageThreadPanel = (props: Props) => {
     const { loggedInWalletAddress } = useConnectivity()
     const channels = useSpaceChannels()
     const { isTouch } = useDevice()
+
+    const location = useLocation()
+
+    const highlightId = useMemo(() => {
+        const eventHash = location.hash?.replace(/^#/, '')
+        return eventHash?.match(/^[a-z0-9_-]{16,128}/i)
+            ? messages.some((m) => m.eventId === eventHash)
+                ? eventHash
+                : undefined
+            : undefined
+    }, [location.hash, messages])
 
     const panelLabel = (
         <Paragraph truncate>
@@ -94,7 +106,7 @@ export const MessageThreadPanel = (props: Props) => {
                     >
                         <MessageTimeline
                             align="bottom"
-                            highlightId={props.highlightId}
+                            highlightId={highlightId}
                             groupByUser={false}
                         />
                     </MessageTimelineWrapper>
