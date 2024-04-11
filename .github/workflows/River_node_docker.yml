@@ -141,23 +141,3 @@ jobs:
                           "actor": "${{ github.actor }}"
                       }
                   # env: # Computed via the root env block
-
-    deploy:
-        # if this is a push to main, we deploy to AWS. otherwise we check if the user wants to deploy
-        uses: './.github/workflows/River_deploy.yml'
-        needs: build
-        permissions:
-            contents: write
-            packages: write
-        secrets:
-            AWS_ACCESS_KEY_ID: ${{ secrets.AWS_ACCESS_KEY_ID }}
-            AWS_SECRET_ACCESS_KEY: ${{ secrets.AWS_SECRET_ACCESS_KEY }}
-            SLACK_WEBHOOK_URL: ${{ secrets.SLACK_WEBHOOK_URL || secrets.SLACK_CD_WORKFLOW_WEBHOOK_URL }}
-        # TODO: only run if a change in /core/node is detected
-        # TODO: only deploy if the new docker image is different than what's currently active
-        if: ${{ needs.build.outputs.auto_deploy_node_numbers_json != '[-1]' }}
-
-        with:
-            environment_name: ${{ needs.build.outputs.environment_name }}
-            docker_image_tag: ${{ needs.build.outputs.release_version }}
-            auto_deploy_node_numbers_json: ${{ needs.build.outputs.auto_deploy_node_numbers_json }}

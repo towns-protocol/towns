@@ -11,7 +11,7 @@ on:
             docker_image_tag:
                 description: 'Docker image tag to deploy'
                 required: true
-                default: 'latest'
+                default: 'dev'
             auto_deploy_node_numbers_json:
                 description: 'JSON array of node numbers to deploy to'
                 type: string
@@ -42,21 +42,77 @@ on:
             AWS_SECRET_ACCESS_KEY:
                 description: 'AWS secret access key'
                 required: true
-            SLACK_WEBHOOK_URL:
-                description: 'Slack webhook url'
+            SLACK_ALERT_WEBHOOK_URL:
+                description: 'Slack webhook url for alerts'
                 required: true
 
 concurrency:
     group: ${{ github.workflow }}-${{ inputs.environment_name }}
     cancel-in-progress: true
 
-env:
-    SLACK_WEBHOOK_URL: ${{ secrets.SLACK_WEBHOOK_URL || secrets.SLACK_CD_WORKFLOW_WEBHOOK_URL }}
-
 jobs:
+    pre_deploy:
+        name: Pre-deploy checks
+        runs-on: ubuntu-latest
+
+        permissions:
+            contents: read
+            packages: read
+
+        steps:
+            - name: Checkout
+              uses: actions/checkout@v4
+            
+            - name: Debug Log
+              run: |
+                echo "Deploying to environment: ${{ inputs.environment_name }}"
+                echo "with image tag: ${{ inputs.docker_image_tag }}"
+                echo "to nodes: ${{ inputs.auto_deploy_node_numbers_json }}"
+                echo "using public ECR URL: ${{ inputs.public_ecr_url }}"
+
+            - name: Configure AWS credentials
+              uses: aws-actions/configure-aws-credentials@v4
+              with:
+                  aws-access-key-id: ${{ secrets.AWS_ACCESS_KEY_ID }}
+                  aws-secret-access-key: ${{ secrets.AWS_SECRET_ACCESS_KEY }}
+                  aws-region: us-east-1
+
+            - name: Check if image exists
+              env:
+                GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+
+              run: |
+                # Don't run the check for transient environments. 
+                if grep -q "transient" <<< "${{ inputs.docker_image_tag }}"; then
+                    echo "Transient deploy detected. Not running image checks."
+                elif ! docker manifest inspect public.ecr.aws/h5v6m2x1/river:${{ inputs.docker_image_tag }} > /dev/null 2>&1; then
+                    echo "Docker image with the tag=${{ inputs.docker_image_tag }} does not exist. No need to deploy river."
+                    exit 1 # fail the job, this is an error, don't call this with a image that doesn't exist
+                else 
+                    echo "Docker image with the tag=${{ inputs.docker_image_tag }} exists. Continue with the deployment."
+                fi
+
+            # Send a slack notification before deploying if the environment is gamma 
+            - name: Info notification
+              if: ${{ inputs.environment_name == 'gamma' }}
+              uses: slackapi/slack-github-action@v1.24.0
+              env:
+                  SLACK_WEBHOOK_URL: ${{ secrets.SLACK_CD_INFO_WORKFLOW_WEBHOOK_URL }}
+              with:
+                  payload: |
+                      {
+                          "message": "Begin deployment with image tag: ${{ inputs.docker_image_tag  }} for nodes: ${{ inputs.auto_deploy_node_numbers_json }}",
+                          "environment": "${{ inputs.environment_name }}",
+                          "branch": "${{ github.ref }}",
+                          "url": "https://github.com/${{ github.repository }}/actions/runs/${{ github.run_id }}",
+                          "commit": "${{ github.sha }}",
+                          "actor": "${{ github.actor }}"
+                      }
     deploy:
         name: Deploy to AWS ECS
         runs-on: ubuntu-latest
+
+        needs: pre_deploy
 
         permissions:
             contents: write
@@ -78,26 +134,7 @@ jobs:
                   aws-secret-access-key: ${{ secrets.AWS_SECRET_ACCESS_KEY }}
                   aws-region: us-east-1
 
-            - name: Check if image exists
-              env:
-                GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
-
-              run: |
-                # Don't run the check for transient environments. 
-                if grep -q "transient" <<< "${{ inputs.docker_image_tag }}"; then
-                    echo "Transient deploy detected. Not running image checks."
-                elif ! docker manifest inspect public.ecr.aws/h5v6m2x1/river:${{ inputs.docker_image_tag }} > /dev/null 2>&1; then
-                    echo "Docker image with the tag=${{ inputs.docker_image_tag }} does not exist. No need to deploy river."
-
-                    # set a github env var to skip the next step
-                    echo "SKIP_DEPLOY=true" >> $GITHUB_ENV
-                    exit 1 # fail the job, this is an error, don't call this with a image that doesn't exist
-                else 
-                    echo "Docker image with the tag=${{ inputs.docker_image_tag }} exists. Continue with the deployment."
-                fi
-
             - name: Deploy river node
-              if: env.SKIP_DEPLOY != 'true'
               env:
                   ENVIRONMENT_NAME: ${{ inputs.environment_name }}
                   DOCKER_IMAGE_TAG: ${{ inputs.docker_image_tag }}
@@ -105,10 +142,25 @@ jobs:
                   PUBLIC_ECR_URL: ${{ inputs.public_ecr_url }}
               run: ./scripts/create-and-deploy-river-task-definition.sh
               
+
+    on_failure:
+        name: On Failure
+        runs-on: ubuntu-latest
+
+        needs: [pre_deploy, deploy]
+
+        if: failure() && inputs.environment_name == 'gamma' 
+
+        permissions:
+            contents: read
+            packages: read
+
+        steps:
             # If action failed, we send a slack notification
-            - name: Slack notification
-              if: failure()
+            - name: Alert notification
               uses: slackapi/slack-github-action@v1.24.0
+              env:
+                  SLACK_WEBHOOK_URL: ${{ secrets.SLACK_ALERT_WEBHOOK_URL || secrets.SLACK_CD_ALERT_WORKFLOW_WEBHOOK_URL }}
               with:
                   payload: |
                       {
@@ -119,3 +171,31 @@ jobs:
                           "commit": "${{ github.sha }}",
                           "actor": "${{ github.actor }}"
                       }
+
+    on_success:
+        name: On Success
+        runs-on: ubuntu-latest
+
+        needs: [pre_deploy, deploy]
+        
+        if: success() && inputs.environment_name == 'gamma'
+        
+        permissions:
+            contents: read
+            packages: read
+
+        steps:
+            - name: Success notification
+              uses: slackapi/slack-github-action@v1.24.0
+              env:
+                  SLACK_WEBHOOK_URL: ${{ secrets.SLACK_CD_INFO_WORKFLOW_WEBHOOK_URL }}
+              with:
+                payload: |
+                    {
+                        "message": "Deploy job ran successfully for docker tag: ${{ inputs.docker_image_tag }} on nodes: ${{ inputs.auto_deploy_node_numbers_json }}",
+                        "environment": "${{ inputs.environment_name }}",
+                        "branch": "${{ github.ref }}",
+                        "url": "https://github.com/${{ github.repository }}/actions/runs/${{ github.run_id }}",
+                        "commit": "${{ github.sha }}",
+                        "actor": "${{ github.actor }}"
+                    }
