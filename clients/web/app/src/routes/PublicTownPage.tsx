@@ -1,6 +1,6 @@
 import debug from 'debug'
 import React, { Suspense, useCallback, useMemo, useState } from 'react'
-import { useNavigate, useParams } from 'react-router'
+import { useNavigate } from 'react-router'
 import { Link } from 'react-router-dom'
 import {
     BlockchainTransactionType,
@@ -64,18 +64,15 @@ log.enabled = true
 
 const LoginComponent = React.lazy(() => import('@components/Login/LoginComponent'))
 
-export const PublicTownPageWithoutAuth = (props: {
-    isPreview?: boolean
-    onClosePreview?: () => void
-}) => {
+const PublicTownPageWithoutAuth = (props: { isPreview?: boolean; onClosePreview?: () => void }) => {
     const { isPreview = false, onClosePreview } = props
-    const { spaceSlug } = useParams()
+    const spaceId = useSpaceIdFromPathname()
     // TEMPORARY joining state until hook is built for minting
     const [isJoining, setIsJoining] = useState(false)
     const { isConnected } = useCombinedAuth()
     const { loggedInWalletAddress } = useConnectivity()
-    const { data: spaceInfo, isLoading } = useContractSpaceInfo(spaceSlug)
-    const { data: spaceIdentity } = useGetSpaceIdentity(spaceSlug)
+    const { data: spaceInfo, isLoading } = useContractSpaceInfo(spaceId)
+    const { data: spaceIdentity } = useGetSpaceIdentity(spaceId)
     const { data: membershipInfo } = useReadableMembershipInfo(spaceInfo?.networkId ?? '')
     const {
         price: membershipPriceInWei,
@@ -186,13 +183,15 @@ export const PublicTownPageWithoutAuth = (props: {
     )
 }
 
-export const PublicTownPage = (props: { isPreview?: boolean; onClosePreview?: () => void }) => {
-    return (
-        <PrivyWrapper>
-            <PublicTownPageWithoutAuth {...props} />
-        </PrivyWrapper>
-    )
-}
+export const PublicTownPage = React.memo(
+    (props: { isPreview?: boolean; onClosePreview?: () => void }) => {
+        return (
+            <PrivyWrapper>
+                <PublicTownPageWithoutAuth {...props} />
+            </PrivyWrapper>
+        )
+    },
+)
 
 const Header = (props: {
     isConnected: boolean

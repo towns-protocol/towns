@@ -10,7 +10,6 @@ import {
 import { AnimatePresence, animate } from 'framer-motion'
 import React, { useEffect, useMemo, useRef, useState } from 'react'
 import { makeProviderFromConfig, useContractSpaceInfo } from 'use-towns-client'
-import { useParams } from 'react-router'
 import { Spinner } from '@components/Spinner'
 import { FadeInBox } from '@components/Transitions'
 import { Box, Icon, IconName, MotionBox, Paragraph, Stack, Text } from '@ui'
@@ -19,13 +18,14 @@ import { useEnvironment } from 'hooks/useEnvironmnet'
 import { useDevice } from 'hooks/useDevice'
 import { notUndefined, shortAddress } from 'ui/utils/utils'
 import { AvatarWithoutDot } from '@components/Avatar/Avatar'
+import { useSpaceIdFromPathname } from 'hooks/useSpaceInfoFromPathname'
 
 export const TownPageActivity = (props: { townId: string }) => {
     const { members, townStats, channelStats, isLoading } = useFetchUnauthenticatedActivity(
         props.townId,
     )
-    const { spaceSlug } = useParams()
-    const { data: spaceInfo } = useContractSpaceInfo(spaceSlug)
+    const spaceId = useSpaceIdFromPathname()
+    const { data: spaceInfo } = useContractSpaceInfo(spaceId)
 
     const activities = useMemo(() => {
         const activities: {
