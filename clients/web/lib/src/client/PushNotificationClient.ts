@@ -55,7 +55,7 @@ export class PushNotificationClient {
             channelId,
             mentions,
         })
-        const url = `${this.options.url}/api/tag-mention-users`
+        const url = `${this.options.url}/api/tag/mention-users`
         console.log('PUSH: sending @mention tag to Push Notification Worker ...', url, body)
         try {
             const response = await fetch(url, {
@@ -80,7 +80,7 @@ export class PushNotificationClient {
             channelId,
             participants,
         })
-        const url = `${this.options.url}/api/tag-reply-to-users`
+        const url = `${this.options.url}/api/tag/reply-to-users`
         console.log('PUSH: sending reply_to tags to Push Notification Worker ...', url, body)
         try {
             const response = await fetch(url, {

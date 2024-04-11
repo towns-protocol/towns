@@ -5,5 +5,5 @@ import { tagMentionUsersHandler, tagReplyUserHandler } from '../controller/tagHa
 
 export const tagRouter = Router()
 
-tagRouter.post('/tag-mention-users', validateSchema(tagMentionUsersSchema), tagMentionUsersHandler)
-tagRouter.post('/tag-reply-to-users', validateSchema(tagReplyUserSchema), tagReplyUserHandler)
+tagRouter.post('/tag/mention-users', validateSchema(tagMentionUsersSchema), tagMentionUsersHandler)
+tagRouter.post('/tag/reply-to-users', validateSchema(tagReplyUserSchema), tagReplyUserHandler)
