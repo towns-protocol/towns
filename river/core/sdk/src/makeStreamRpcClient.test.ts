@@ -3,10 +3,11 @@
  */
 
 import { Err, InfoRequest, InfoResponse } from '@river-build/proto'
-import { makeTestRpcClient, makeRiverChainConfig } from './util.test'
+import { makeTestRpcClient } from './util.test'
 import { errorContains } from './makeStreamRpcClient'
 import { makeRiverRpcClient } from './makeRiverRpcClient'
 import { LocalhostWeb3Provider } from '@river-build/web3'
+import { makeRiverChainConfig } from './riverConfig'
 
 describe('protocol 1', () => {
     test('info using makeStreamRpcClient', async () => {

@@ -14,7 +14,7 @@ import {
     MembershipStruct,
 } from '@river-build/web3'
 import { getDynamicPricingModule, getFixedPricingModule } from '../../../src/utils/web3'
-import { makeTestConfig } from '@river/sdk/src/util.test'
+import { makeRiverConfig } from '@river/sdk'
 
 export const EVERYONE_ADDRESS = '0x0000000000000000000000000000000000000001'
 
@@ -26,7 +26,7 @@ export function assert(condition: any, msg?: string): asserts condition {
 }
 
 export function getJsonProvider() {
-    const config = makeTestConfig()
+    const config = makeRiverConfig()
     return new ethers.providers.JsonRpcProvider(config.base.rpcUrl)
 }
 

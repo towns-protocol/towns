@@ -3,18 +3,14 @@
  * @group with-entitilements
  */
 
-import {
-    makeUserContextFromWallet,
-    makeTestClient,
-    getDynamicPricingModule,
-    makeBaseChainConfig,
-} from './util.test'
+import { makeUserContextFromWallet, makeTestClient, getDynamicPricingModule } from './util.test'
 import { makeDefaultChannelStreamId, makeSpaceStreamId } from './id'
 import { ethers, Wallet } from 'ethers'
 import { Client } from './client'
 import { jest } from '@jest/globals'
 import { MembershipStruct, NoopRuleData } from '@river-build/web3'
 import { SignerContext } from './signerContext'
+import { makeBaseChainConfig } from './riverConfig'
 
 // This is a temporary hack because importing viem via SpaceDapp causes a jest error
 // specifically the code in ConvertersEntitlements.ts - decodeAbiParameters and encodeAbiParameters functions have an import that can't be found

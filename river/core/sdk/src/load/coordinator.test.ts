@@ -3,7 +3,7 @@
  */
 
 import { ethers } from 'ethers'
-import { makeBaseChainConfig, makeUserContextFromWallet } from '../util.test'
+import { makeUserContextFromWallet } from '../util.test'
 import { makeStreamRpcClient } from '../makeStreamRpcClient'
 import { userIdFromAddress } from '../id'
 import { Client } from '../client'
@@ -31,6 +31,7 @@ import {
     defaultRedisHost,
     defaultRedisPort,
 } from './stressconfig.test_util'
+import { makeBaseChainConfig } from '../riverConfig'
 
 const baseChainRpcUrl = process.env.BASE_CHAIN_RPC_URL
     ? process.env.BASE_CHAIN_RPC_URL

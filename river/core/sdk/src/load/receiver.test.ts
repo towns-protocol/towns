@@ -3,7 +3,7 @@
  */
 
 import { check, dlog } from '@river-build/dlog'
-import { makeBaseChainConfig, makeDonePromise } from '../util.test'
+import { makeDonePromise } from '../util.test'
 // eslint-disable-next-line import/no-extraneous-dependencies
 import { waitFor } from '@testing-library/react'
 
@@ -26,6 +26,7 @@ import { SnapshotCaseType } from '@river-build/proto'
 import { DecryptedTimelineEvent } from '../types'
 import { createAndStartClient } from './load.test_util'
 import { RiverSDK } from '../testSdk.test_util'
+import { makeBaseChainConfig } from '../riverConfig'
 
 const { createSpaceDapp } = await import('@river-build/web3')
 

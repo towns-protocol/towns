@@ -9,7 +9,6 @@ import {
     makeTestClient,
     makeDonePromise,
     getDynamicPricingModule,
-    makeBaseChainConfig,
 } from './util.test'
 import {
     isValidStreamId,
@@ -26,6 +25,7 @@ import {
     NoopRuleData,
 } from '@river-build/web3'
 import { MembershipOp } from '@river-build/proto'
+import { makeBaseChainConfig } from './riverConfig'
 
 const base_log = dlog('csb:test:withEntitlements')
 const ETH_ADDRESS = '0xEeeeeEeeeEeEeeEeEeEeeEEEeeeeEeeeeeeeEEeE'

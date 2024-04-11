@@ -7,16 +7,17 @@ print_usage() {
     echo "  -h: Display this help message."
     echo "  -u: USER_MODE. Will wait if there are CI errors and allow you to fix them."
     echo "  -x: USER_MODE_X. includes -u, and runs yarn lint, build, and test:unit."
+    echo "  -k: PROMPT_BEFORE_PR. Will prompt the user before creating the pull request. (use if you know you need to fix things)"
+    echo "  -j: PROMPT_BEFORE_MERGE. Will prompt the user before merging the pull request. (use if you know you need to fix things)"
     echo "  -i: INTERACTIVE. Runs -x and prompts for confirmation before creating a pull request. For debugging each step."
 }
 
 # Check if at least one argument is passed
 if [ $# -eq 0 ]; then
-    print_usage
-    exit 1
+    USER_MODE=1 # user mode is currently the only way this script is used.
 fi
 
-while getopts "huxicp" arg; do
+while getopts "huxjki" arg; do
   case $arg in
     h)
         print_usage
@@ -24,6 +25,14 @@ while getopts "huxicp" arg; do
         ;;
     u)
         USER_MODE=1
+        ;;
+    k)
+        USER_MODE=1
+        PROMPT_BEFORE_PR=1
+        ;;
+    j)
+        USER_MODE=1
+        PROMPT_BEFORE_MERGE=1
         ;;
     x)
         USER_MODE=1
@@ -159,11 +168,12 @@ function list_inprogress_branches() {
     if [ -z "$branches" ]; then
         echo "No branches with the prefix 'river_subtree_merge' found."
     else
+        echo "Found branches with the prefix 'river_subtree_merge':"
         # Loop through the branches and print the author of the latest commit
         for branch in $branches; do
             # Fetch the author of the latest commit on the branch
             author=$(git log -1 --format="%an" "origin/$branch")
-            echo "Subtree pull in progress on branch '$branch' made by: $author"
+            echo "    Subtree pull in progress on branch '$branch' made by: $author"
         done
     fi
 }
@@ -186,6 +196,7 @@ SUBTREE_BRANCH="main"
 # prompt the user for a commit hash, if they don't enter one, just use the latest
 echo "Enter the commit hash of the river repo you would like to merge, or press enter to use the latest."
 read -p "Commit hash: " COMMIT_HASH
+
 if [[ -z "$COMMIT_HASH" ]]; then
     echo "No commit hash entered. Using the latest commit."
     COMMIT_HASH=$(git ls-remote "${SUBTREE_REPO}" "${SUBTREE_BRANCH}" | cut -f 1)
@@ -193,9 +204,16 @@ else
     echo "Using commit hash: $COMMIT_HASH"
 fi
 
-# if PROMPT_BEFORE_MERGE is not 1, prompt the user y/n to see if they want to set PROMPT_BEFORE_MERGE=1
+if [[ $PROMPT_BEFORE_PR -ne 1 ]]; then
+    read -p "Do you need to make fixes before submitting a PR? (y/n) " -n 1 -r
+    echo
+    if [[ $REPLY =~ ^[Yy]$ ]]; then
+        PROMPT_BEFORE_PR=1
+    fi
+fi
+
 if [[ $PROMPT_BEFORE_MERGE -ne 1 ]]; then
-    read -p "Would you like to auto commit your pull request when all CI is green? (y/n) " -n 1 -r
+    read -p "Would you like to auto commit when CI is green? (y/n) " -n 1 -r
     echo
     if [[ $REPLY =~ ^[Nn]$ ]]; then
         PROMPT_BEFORE_MERGE=1
@@ -268,8 +286,18 @@ if ! git diff main --quiet --cached; then
     # Run yarn, commit new yarn.lock, and check for build breakages
     yarn_install_and_check
     
-    confirmContinue "Do you want to continue and create a pull request?"
-    
+    # if PROMPT_BEFORE_PR is true, prompt the user for any key to continue
+    if [[ $PROMPT_BEFORE_PR -eq 1 ]]; then
+        read -p "Are you ready to submit a pr? (any key to continue/n) " -n 1 -r
+        echo ""
+        if [[ $REPLY =~ ^[Nn]$ ]]; then
+            echo "Pull request creation aborted."
+            exit $exit_status
+        fi
+    else
+        confirmContinue "Do you want to continue and create a pull request?"
+    fi
+
     # Push the branch to origin
     git push -u origin "${BRANCH_NAME}"
 

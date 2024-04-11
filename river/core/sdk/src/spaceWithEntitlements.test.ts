@@ -4,7 +4,6 @@
  */
 
 import {
-    makeBaseChainConfig,
     getDynamicPricingModule,
     makeDonePromise,
     makeTestClient,
@@ -22,6 +21,7 @@ import {
     Permission,
     createSpaceDapp,
 } from '@river-build/web3'
+import { makeBaseChainConfig } from './riverConfig'
 
 const log = dlog('csb:test')
 const ETH_ADDRESS = '0xEeeeeEeeeEeEeeEeEeEeeEEEeeeeEeeeeeeeEEeE'

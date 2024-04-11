@@ -4,14 +4,14 @@ import { Wallet, ethers } from 'ethers'
 
 import { fundWallet } from './TestUtils'
 import { MockERC721AShim } from '@river-build/web3'
-import { TestConfig, makeTestConfig } from '@river/sdk/src/util.test'
+import { RiverConfig, makeRiverConfig } from '@river/sdk'
 import { userIdFromAddress } from '@river/sdk'
 import { bin_fromHexString } from '@river-build/dlog'
 
 // the towns test web3 provider wraps all the configuration needed to run a test and is also a ethers provider
 export class TownsTestWeb3Provider extends ethers.providers.JsonRpcProvider {
     // note to self, the wallet contains a reference to a provider, which is a circular ref back this class
-    public config: TestConfig
+    public config: RiverConfig
     public wallet: ethers.Wallet
     public riverChainProvider: ethers.providers.JsonRpcProvider
 
@@ -24,7 +24,7 @@ export class TownsTestWeb3Provider extends ethers.providers.JsonRpcProvider {
     }
 
     constructor(wallet?: Wallet) {
-        const config = makeTestConfig()
+        const config = makeRiverConfig()
         super(config.base.rpcUrl)
         this.config = config
         this.wallet = (wallet ?? ethers.Wallet.createRandom()).connect(this)

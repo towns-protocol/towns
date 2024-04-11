@@ -5,7 +5,7 @@
 import { dlog } from '@river-build/dlog'
 import { ethers } from 'ethers'
 import { LocalhostWeb3Provider, createRiverRegistry } from '@river-build/web3'
-import { makeRiverChainConfig } from './util.test'
+import { makeRiverChainConfig } from './riverConfig'
 
 const log = dlog('csb:test')
 

@@ -3,7 +3,7 @@
  */
 import { dlog } from '@river-build/dlog'
 import { ethers } from 'ethers'
-import { makeBaseChainConfig, makeUserContextFromWallet } from '../util.test'
+import { makeUserContextFromWallet } from '../util.test'
 import { makeStreamRpcClient } from '../makeStreamRpcClient'
 import { userIdFromAddress } from '../id'
 import { Client } from '../client'
@@ -33,6 +33,7 @@ import {
     defaultHeapDumpIntervalMs,
     defaultNumberOfClientsPerProcess,
 } from './stressconfig.test_util'
+import { makeBaseChainConfig } from '../riverConfig'
 
 //import * as fs from 'fs'
 import * as path from 'path'

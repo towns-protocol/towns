@@ -1,4 +1,4 @@
-import { makeBaseChainConfig, makeUserContextFromWallet } from '../util.test'
+import { makeUserContextFromWallet } from '../util.test'
 import { BigNumber, ethers } from 'ethers'
 import { makeStreamRpcClient } from '../makeStreamRpcClient'
 import { userIdFromAddress } from '../id'
@@ -9,6 +9,7 @@ import { MockEntitlementsDelegate } from '../utils'
 import { ISpaceDapp, createSpaceDapp } from '@river-build/web3'
 import { dlog } from '@river-build/dlog'
 import { minimalBalance } from './loadconfig.test_util'
+import { makeBaseChainConfig } from '../riverConfig'
 
 const log = dlog('csb:test:loadTests')
 

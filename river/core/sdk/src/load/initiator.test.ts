@@ -28,7 +28,7 @@ import {
     loadTestTimeout,
 } from './loadconfig.test_util'
 import { RiverSDK } from '../testSdk.test_util'
-import { makeBaseChainConfig } from '../util.test'
+import { makeBaseChainConfig } from '../riverConfig'
 
 const { createSpaceDapp } = await import('@river-build/web3')
 
