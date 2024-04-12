@@ -133,7 +133,7 @@ func (h *cacheHandler) ServeHTTP(w http.ResponseWriter, r *http.Request) {
 	}
 
 	slices.SortFunc(streams, func(a, b StreamView) int {
-		return bytes.Compare(a.StreamId().Bytes(), b.StreamId().Bytes())
+		return a.StreamId().Compare(*b.StreamId())
 	})
 
 	for i, view := range streams {

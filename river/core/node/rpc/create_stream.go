@@ -182,7 +182,7 @@ func (s *Service) createReplicatedStream(
 						ctx,
 						connect.NewRequest[AllocateStreamRequest](
 							&AllocateStreamRequest{
-								StreamId:  streamId.Bytes(),
+								StreamId:  streamId[:],
 								Miniblock: mb,
 							},
 						),

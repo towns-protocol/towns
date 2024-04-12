@@ -172,8 +172,8 @@ func Make_ChannelPayload_Inception(
 		ChannelPayload: &ChannelPayload{
 			Content: &ChannelPayload_Inception_{
 				Inception: &ChannelPayload_Inception{
-					StreamId:          streamId.Bytes(),
-					SpaceId:           spaceId.Bytes(),
+					StreamId:          streamId[:],
+					SpaceId:           spaceId[:],
 					ChannelProperties: channelProperties,
 					Settings:          settings,
 				},
@@ -202,7 +202,7 @@ func Make_ChannelPayload_Membership(
 	}
 	var spaceIdBytes []byte
 	if spaceId != nil {
-		spaceIdBytes = spaceId.Bytes()
+		spaceIdBytes = spaceId[:]
 	} else {
 		spaceIdBytes = nil
 	}
@@ -258,7 +258,7 @@ func Make_SpacePayload_Inception(streamId StreamId, settings *StreamSettings) *S
 		SpacePayload: &SpacePayload{
 			Content: &SpacePayload_Inception_{
 				Inception: &SpacePayload_Inception{
-					StreamId: streamId.Bytes(),
+					StreamId: streamId[:],
 					Settings: settings,
 				},
 			},
@@ -293,7 +293,7 @@ func Make_SpacePayload_Channel(
 			Content: &SpacePayload_Channel_{
 				Channel: &SpacePayload_Channel{
 					Op:                op,
-					ChannelId:         channelId.Bytes(),
+					ChannelId:         channelId[:],
 					OriginEvent:       originEvent,
 					ChannelProperties: channelProperties,
 				},
@@ -307,7 +307,7 @@ func Make_UserPayload_Inception(streamId StreamId, settings *StreamSettings) *St
 		UserPayload: &UserPayload{
 			Content: &UserPayload_Inception_{
 				Inception: &UserPayload_Inception{
-					StreamId: streamId.Bytes(),
+					StreamId: streamId[:],
 					Settings: settings,
 				},
 			},
@@ -323,7 +323,7 @@ func Make_UserDeviceKeyPayload_Inception(
 		UserDeviceKeyPayload: &UserDeviceKeyPayload{
 			Content: &UserDeviceKeyPayload_Inception_{
 				Inception: &UserDeviceKeyPayload_Inception{
-					StreamId: streamId.Bytes(),
+					StreamId: streamId[:],
 					Settings: settings,
 				},
 			},
@@ -350,7 +350,7 @@ func Make_UserPayload_Membership(
 		UserPayload: &UserPayload{
 			Content: &UserPayload_UserMembership_{
 				UserMembership: &UserPayload_UserMembership{
-					StreamId:       streamId.Bytes(),
+					StreamId:       streamId[:],
 					Op:             op,
 					Inviter:        inviter,
 					StreamParentId: streamParentId,
@@ -365,7 +365,7 @@ func Make_UserSettingsPayload_Inception(streamId StreamId, settings *StreamSetti
 		UserSettingsPayload: &UserSettingsPayload{
 			Content: &UserSettingsPayload_Inception_{
 				Inception: &UserSettingsPayload_Inception{
-					StreamId: streamId.Bytes(),
+					StreamId: streamId[:],
 					Settings: settings,
 				},
 			},

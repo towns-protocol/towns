@@ -55,7 +55,7 @@ func (r *streamViewImpl) GetUserMembership(streamId shared.StreamId) (Membership
 	}
 	membership, _ := findUserMembership(
 		snap.Memberships,
-		streamId.Bytes(),
+		streamId[:],
 	)
 
 	if membership != nil {

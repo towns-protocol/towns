@@ -823,7 +823,7 @@ func (n *syncNode) removeStreamFromSync(
 		&connect.Request[RemoveStreamFromSyncRequest]{
 			Msg: &RemoveStreamFromSyncRequest{
 				SyncId:   n.remoteSyncId,
-				StreamId: streamId.Bytes(),
+				StreamId: streamId[:],
 			},
 		},
 	)

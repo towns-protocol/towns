@@ -134,7 +134,7 @@ func (cfg *Config) UsesHTTPS() bool {
 
 func (cfg *StreamConfig) GetMembershipLimit(streamId shared.StreamId) int {
 	if cfg.StreamMembershipLimits != nil {
-		streamPrefix := hex.EncodeToString(streamId.Bytes()[:1])
+		streamPrefix := hex.EncodeToString(streamId[:1])
 		if value, ok := cfg.StreamMembershipLimits[streamPrefix]; ok {
 			return value
 		}

@@ -112,7 +112,7 @@ func (sr *streamRegistryImpl) chooseStreamNodes(ctx context.Context, streamId St
 	h := fnv.New64a()
 	addrs := make([]common.Address, sr.replFactor)
 	for i := 0; i < sr.replFactor; i++ {
-		h.Write(streamId.Bytes())
+		h.Write(streamId[:])
 		index := i + int(h.Sum64()%uint64(len(nodes)-i))
 		tt := nodes[index]
 		nodes[index] = nodes[i]

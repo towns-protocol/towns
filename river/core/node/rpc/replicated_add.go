@@ -51,7 +51,7 @@ func (r *replicatedStream) AddEvent(ctx context.Context, event *ParsedEvent) err
 						ctx,
 						connect.NewRequest[NewEventReceivedRequest](
 							&NewEventReceivedRequest{
-								StreamId: streamId.Bytes(),
+								StreamId: streamId[:],
 								Event:    event.Envelope,
 							},
 						),

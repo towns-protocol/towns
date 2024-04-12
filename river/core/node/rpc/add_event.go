@@ -104,7 +104,7 @@ func (s *Service) addParsedEvent(
 
 func (s *Service) addEventPayload(ctx context.Context, streamId StreamId, payload IsStreamEvent_Payload) error {
 	hashRequest := &GetLastMiniblockHashRequest{
-		StreamId: streamId.Bytes(),
+		StreamId: streamId[:],
 	}
 	hashResponse, err := s.GetLastMiniblockHash(ctx, connect.NewRequest(hashRequest))
 	if err != nil {
@@ -116,7 +116,7 @@ func (s *Service) addEventPayload(ctx context.Context, streamId StreamId, payloa
 	}
 
 	req := &AddEventRequest{
-		StreamId: streamId.Bytes(),
+		StreamId: streamId[:],
 		Event:    envelope,
 	}
 

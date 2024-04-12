@@ -133,7 +133,7 @@ func (c *RiverRegistryContract) AllocateStream(
 		func(opts *bind.TransactOpts) (*types.Transaction, error) {
 			return c.StreamRegistry.AllocateStream(
 				opts,
-				streamId.ByteArray(),
+				streamId,
 				addresses,
 				genesisMiniblockHash,
 				genesisMiniblock,
@@ -166,7 +166,7 @@ func makeGetStreamResult(streamId StreamId, stream *contracts.Stream) *GetStream
 }
 
 func (c *RiverRegistryContract) GetStream(ctx context.Context, streamId StreamId) (*GetStreamResult, error) {
-	stream, err := c.StreamRegistry.GetStream(c.callOpts(ctx), streamId.ByteArray())
+	stream, err := c.StreamRegistry.GetStream(c.callOpts(ctx), streamId)
 	if err != nil {
 		return nil, WrapRiverError(Err_CANNOT_CALL_CONTRACT, err).Func("GetStream").Message("Call failed")
 	}
@@ -178,7 +178,7 @@ func (c *RiverRegistryContract) GetStreamWithGenesis(
 	ctx context.Context,
 	streamId StreamId,
 ) (*GetStreamResult, common.Hash, []byte, error) {
-	stream, mbHash, mb, err := c.StreamRegistry.GetStreamWithGenesis(c.callOpts(ctx), streamId.ByteArray())
+	stream, mbHash, mb, err := c.StreamRegistry.GetStreamWithGenesis(c.callOpts(ctx), streamId)
 	if err != nil {
 		return nil, common.Hash{}, nil, WrapRiverError(
 			Err_CANNOT_CALL_CONTRACT,
@@ -253,7 +253,7 @@ func (c *RiverRegistryContract) SetStreamLastMiniblock(
 		func(opts *bind.TransactOpts) (*types.Transaction, error) {
 			tx, err := c.StreamRegistry.SetStreamLastMiniblock(
 				opts,
-				streamId.ByteArray(),
+				streamId,
 				prevMiniblockHash,
 				lastMiniblockHash,
 				lastMiniblockNum,

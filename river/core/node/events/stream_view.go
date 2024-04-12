@@ -466,7 +466,7 @@ func (r *streamViewImpl) MiniblocksFromLastSnapshot() []*Miniblock {
 func (r *streamViewImpl) SyncCookie(localNodeAddress common.Address) *SyncCookie {
 	return &SyncCookie{
 		NodeAddress:       localNodeAddress.Bytes(),
-		StreamId:          r.streamId.Bytes(),
+		StreamId:          r.streamId[:],
 		MinipoolGen:       r.minipool.generation,
 		MinipoolSlot:      int64(r.minipool.events.Len()),
 		PrevMiniblockHash: r.LastBlock().headerEvent.Hash[:],
@@ -476,7 +476,7 @@ func (r *streamViewImpl) SyncCookie(localNodeAddress common.Address) *SyncCookie
 func (r *streamViewImpl) getMinEventsPerSnapshot(cfg *config.StreamConfig) int {
 	// does this stream have a custom value for it's prefix?
 	if cfg.MinEventsPerSnapshot != nil {
-		streamPrefix := hex.EncodeToString(r.streamId.Bytes()[:1])
+		streamPrefix := hex.EncodeToString(r.streamId[:1])
 		if value, ok := cfg.MinEventsPerSnapshot[streamPrefix]; ok {
 			return value
 		}

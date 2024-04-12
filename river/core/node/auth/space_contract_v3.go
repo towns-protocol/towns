@@ -88,7 +88,7 @@ func (sc *SpaceContractV3) IsEntitledToChannel(
 	// channel entitlement check
 	isEntitled, err := space.entitlements.IsEntitledToChannel(
 		nil,
-		channelId.ByteArray(),
+		channelId,
 		user,
 		permission.String(),
 	)

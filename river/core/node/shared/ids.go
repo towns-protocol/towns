@@ -39,7 +39,7 @@ func AddressFromSpaceId(spaceId StreamId) (common.Address, error) {
 			spaceId,
 		)
 	}
-	return common.BytesToAddress(spaceId.Bytes()[1:21]), nil
+	return common.BytesToAddress(spaceId[1:21]), nil
 }
 
 func MakeChannelId(spaceId StreamId) (StreamId, error) {
@@ -51,7 +51,7 @@ func MakeChannelId(spaceId StreamId) (StreamId, error) {
 	}
 	var b [32]byte
 	b[0] = STREAM_CHANNEL_BIN
-	copy(b[1:], spaceId.Bytes()[1:21])
+	copy(b[1:], spaceId[1:21])
 	_, err := rand.Read(b[21:])
 	if err != nil {
 		return StreamId{}, RiverError(Err_INTERNAL, "failed to create random bytes", "err", err)
@@ -73,15 +73,15 @@ func UserStreamIdFromBytes(addr []byte) (StreamId, error) {
 
 func UserStreamIdFromAddr(addr common.Address) StreamId {
 	var b StreamId
-	b.bytes[0] = STREAM_USER_BIN
-	copy(b.bytes[1:], addr.Bytes())
+	b[0] = STREAM_USER_BIN
+	copy(b[1:], addr.Bytes())
 	return b
 }
 
 func UserDeviceKeyStreamIdFromAddress(addr common.Address) StreamId {
 	var b StreamId
-	b.bytes[0] = STREAM_USER_DEVICE_KEY_BIN
-	copy(b.bytes[1:], addr.Bytes())
+	b[0] = STREAM_USER_DEVICE_KEY_BIN
+	copy(b[1:], addr.Bytes())
 	return b
 }
 
@@ -106,7 +106,7 @@ func GetUserAddressFromStreamId(streamId StreamId) (common.Address, error) {
 			streamId,
 		)
 	}
-	return common.BytesToAddress(streamId.Bytes()[1:21]), nil
+	return common.BytesToAddress(streamId[1:21]), nil
 }
 
 func CheckUserStreamIdForPrefix(streamId string, creatorUserId []byte, expectedPrefix string) error {
@@ -169,8 +169,8 @@ func DMStreamIdForUsers(a []byte, b []byte) (StreamId, error) {
 	hash := crypto.Keccak256([]byte(joined))
 
 	var s StreamId
-	s.bytes[0] = STREAM_DM_CHANNEL_BIN
-	copy(s.bytes[1:], hash[:31])
+	s[0] = STREAM_DM_CHANNEL_BIN
+	copy(s[1:], hash[:31])
 	return s, nil
 }
 

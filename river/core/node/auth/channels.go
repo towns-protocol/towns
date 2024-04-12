@@ -58,7 +58,7 @@ func (p *channelsProxy) IsDisabled(opts *bind.CallOpts, channelId shared.StreamI
 	defer infra.StoreExecutionTimeMetrics("IsDisabled", infra.CONTRACT_CALLS_CATEGORY, start)
 	log.Debug("IsDisabled", "channelId", channelId)
 
-	ch, err := p.contract.GetChannel(opts, channelId.ByteArray())
+	ch, err := p.contract.GetChannel(opts, channelId)
 	if err != nil {
 		getChannelCalls.FailInc()
 		log.Error("IsDisabled", "channelId", channelId, "error", err)

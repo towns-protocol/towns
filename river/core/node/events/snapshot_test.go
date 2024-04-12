@@ -125,7 +125,7 @@ func TestMakeSnapshot(t *testing.T) {
 	assert.NoError(t, err)
 	assert.Equal(
 		t,
-		streamId.Bytes(),
+		streamId[:],
 		snapshot.Content.(*Snapshot_UserContent).UserContent.Inception.StreamId)
 }
 
@@ -141,7 +141,7 @@ func TestUpdateSnapshot(t *testing.T) {
 	assert.NoError(t, err)
 	foundUserMembership, err := findUserMembership(
 		snapshot.Content.(*Snapshot_UserContent).UserContent.Memberships,
-		streamId.Bytes(),
+		streamId[:],
 	)
 	assert.NoError(t, err)
 	assert.Equal(
@@ -165,7 +165,7 @@ func TestCloneAndUpdateUserSnapshot(t *testing.T) {
 	assert.NoError(t, err)
 	foundUserMembership, err := findUserMembership(
 		snapshot.Content.(*Snapshot_UserContent).UserContent.Memberships,
-		streamId.Bytes(),
+		streamId[:],
 	)
 	assert.NoError(t, err)
 	assert.Equal(

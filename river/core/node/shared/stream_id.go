@@ -34,9 +34,7 @@ const (
 	STREAM_ID_STRING_LENGTH = STREAM_ID_BYTES_LENGTH * 2
 )
 
-type StreamId struct {
-	bytes [STREAM_ID_BYTES_LENGTH]byte
-}
+type StreamId [STREAM_ID_BYTES_LENGTH]byte
 
 func StreamIdFromString(s string) (StreamId, error) {
 	b, err := hex.DecodeString(s)
@@ -52,7 +50,7 @@ func StreamIdFromBytes(b []byte) (StreamId, error) {
 		return StreamId{}, err
 	}
 	var id StreamId
-	copy(id.bytes[:], b)
+	copy(id[:], b)
 	return id, nil
 }
 
@@ -62,7 +60,9 @@ func StreamIdFromHash(b common.Hash) (StreamId, error) {
 	if err != nil {
 		return StreamId{}, err
 	}
-	return StreamId{bytes: b}, nil
+	var sid StreamId
+	copy(sid[:], b[:])
+	return sid, nil
 }
 
 func checkExpectedLength(b []byte) error {
@@ -89,34 +89,24 @@ func checkExpectedLength(b []byte) error {
 	return nil
 }
 
-// Returns full 32 byte array
-func (id *StreamId) Bytes() []byte {
-	return id.bytes[:]
-}
-
-// Returns full 32 byte fixed array
-func (id *StreamId) ByteArray() [STREAM_ID_BYTES_LENGTH]byte {
-	return id.bytes
-}
-
-func (id *StreamId) String() string {
-	return hex.EncodeToString(id.bytes[:])
+func (id StreamId) String() string {
+	return hex.EncodeToString(id[:])
 }
 
 func (id StreamId) GoString() string {
 	return id.String()
 }
 
-func (id *StreamId) Equal(other StreamId) bool {
-	return bytes.Equal(id.Bytes(), other.Bytes())
+func (id StreamId) EqualsBytes(other []byte) bool {
+	return bytes.Equal(id[:], other)
 }
 
-func (id *StreamId) EqualsBytes(other []byte) bool {
-	return bytes.Equal(id.Bytes(), other)
+func (id StreamId) Type() byte {
+	return id[0]
 }
 
-func (id *StreamId) Type() byte {
-	return id.bytes[0]
+func (id StreamId) Compare(other StreamId) int {
+	return bytes.Compare(id[:], other[:])
 }
 
 // user streams are expected to have 20 bytes of address, so the expected content length is 21 when including the prefix

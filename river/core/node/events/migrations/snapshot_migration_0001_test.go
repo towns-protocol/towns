@@ -42,10 +42,10 @@ func TestSnapshotMigration0001(t *testing.T) {
 			SpaceContent: &SpacePayload_Snapshot{
 				Channels: []*SpacePayload_Channel{
 					{
-						ChannelId: channelId.Bytes(),
+						ChannelId: channelId[:],
 					},
 					{
-						ChannelId: channelId.Bytes(),
+						ChannelId: channelId[:],
 					},
 				},
 			},
@@ -60,10 +60,10 @@ func TestSnapshotMigration0001(t *testing.T) {
 			UserContent: &UserPayload_Snapshot{
 				Memberships: []*UserPayload_UserMembership{
 					{
-						StreamId: spaceId.Bytes(),
+						StreamId: spaceId[:],
 					},
 					{
-						StreamId: spaceId.Bytes(),
+						StreamId: spaceId[:],
 					},
 				},
 			},
@@ -78,10 +78,10 @@ func TestSnapshotMigration0001(t *testing.T) {
 			UserSettingsContent: &UserSettingsPayload_Snapshot{
 				FullyReadMarkers: []*UserSettingsPayload_FullyReadMarkers{
 					{
-						StreamId: channelId.Bytes(),
+						StreamId: channelId[:],
 					},
 					{
-						StreamId: channelId.Bytes(),
+						StreamId: channelId[:],
 					},
 				},
 			},

@@ -22,7 +22,7 @@ func TestEqualAndCopy(t *testing.T) {
 
 	a := &SyncCookie{
 		NodeAddress:       nodeWallet1.Address[:],
-		StreamId:          stream1Id.Bytes(),
+		StreamId:          stream1Id[:],
 		MinipoolGen:       5,
 		MinipoolSlot:      10,
 		PrevMiniblockHash: []byte{0, 1, 2, 4},
@@ -32,7 +32,7 @@ func TestEqualAndCopy(t *testing.T) {
 	require.False(t, SyncCookieEqual(a, nil))
 	b := SyncCookieCopy(a)
 	require.True(t, SyncCookieEqual(a, b))
-	b.StreamId = badStreamId.Bytes()
+	b.StreamId = badStreamId[:]
 	require.False(t, SyncCookieEqual(a, b))
 	b = SyncCookieCopy(a)
 	b.MinipoolGen = 6

@@ -72,7 +72,7 @@ func TestAddingNewNodes(t *testing.T) {
 	// Read new streams through old client
 	var oldNodeCount, newNodeCount int
 	for _, streamId := range streamdIds1 {
-		id := streamId.Bytes()
+		id := streamId[:]
 		r, err := c0.GetStream(ctx, connect.NewRequest(&GetStreamRequest{
 			StreamId: id,
 		}))
@@ -92,7 +92,7 @@ func TestAddingNewNodes(t *testing.T) {
 	// Read old streams through new client
 	oldNodeCount, newNodeCount = 0, 0
 	for _, streamId := range streamdIds0 {
-		id := streamId.Bytes()
+		id := streamId[:]
 		r, err := c1.GetStream(ctx, connect.NewRequest(&GetStreamRequest{
 			StreamId: id,
 		}))

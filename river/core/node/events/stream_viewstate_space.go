@@ -40,7 +40,7 @@ func (r *streamViewImpl) GetChannelInfo(channelId shared.StreamId) (*SpacePayloa
 	if err != nil {
 		return nil, err
 	}
-	channel, _ := findChannel(snap.Channels, channelId.Bytes())
+	channel, _ := findChannel(snap.Channels, channelId[:])
 
 	updateFn := func(e *ParsedEvent) (bool, error) {
 		switch payload := e.Event.Payload.(type) {
