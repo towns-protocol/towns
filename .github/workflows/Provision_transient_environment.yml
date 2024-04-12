@@ -1,3 +1,6 @@
+env:
+  FOUNDRY_VERSION: nightly-de33b6af53005037b463318d2628b5cfcaf39916
+
 name: Provision Transient Environment
 on:
     pull_request:
@@ -108,6 +111,28 @@ jobs:
             - name: Terraform apply
               working-directory: ./infra
               run: make apply
+
+            - name: Install Foundry
+              uses: foundry-rs/foundry-toolchain@v1
+              with:
+                  version: ${{ env.FOUNDRY_VERSION }}
+            
+            - uses: actions/setup-node@v4
+              with:
+                  node-version: '20'
+                  cache: 'yarn'
+
+            - name: Install node dependencies
+              run: yarn install --immutable
+            
+            - name: Print versions
+              run: ./river/scripts/print-versions.sh
+
+            - name: Transient contracts
+              env:
+                  TRANSIENT_ID: ${{ github.event.pull_request.number }}
+                  NUM_NODES: ${{ needs.check_labels.outputs.num_nodes }}
+              run: "./scripts/transient-contracts.sh"
 
             - name: Clear Workflow level Provision lock
               if: always()

@@ -80,10 +80,5 @@ variable "river_node_ssl_cert_secret_arn" {
 }
 
 variable "system_parameters" {
-  type = object({
-    space_factory_contract_address_parameter : any,
-    wallet_link_contract_address_parameter : any,
-    river_registry_contract_address_parameter : any,
-    entitlement_checker_contract_address_parameter : any
-  })
+  type = any
 }

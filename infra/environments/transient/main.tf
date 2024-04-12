@@ -38,6 +38,7 @@ module "global_constants" {
 
 module "system_parameters" {
   source = "../../modules/river-system-parameters"
+  count  = local.create_system_parameters ? 1 : 0
 }
 
 data "cloudflare_zone" "zone" {
@@ -58,11 +59,11 @@ locals {
 
   global_remote_state = module.global_constants.global_remote_state.outputs
 
-  create_db_cluster           = var.num_nodes > 0
-  create_forked_chain_service = var.num_nodes > 0
-  create_notification_service = var.num_nodes > 0
-  base_chain_id               = 84532
-  river_chain_id              = 6524490
+  create_db_cluster        = var.num_nodes > 0
+  create_anvil_service     = var.num_nodes > 0
+  create_system_parameters = var.num_nodes > 0
+  base_chain_id            = 31337
+  river_chain_id           = 31338
 
   nodes     = var.num_nodes == 0 ? [] : slice(module.global_constants.nodes_metadata, 0, var.num_nodes)
   nodes_csv = join(",", [for node in local.nodes : "${node.address},${node.url}"])
@@ -101,21 +102,12 @@ module "river_db_cluster" {
 }
 
 locals {
-  # These block numbers determien the earliest fork we can make. They will
-  # outline critical events, such as contract deployments or upgrades.
-
-  # TODO: Find the earliest fork block number for the base chain
-  base_earliest_fork_block_number = "latest"
-
-  # This is when the Stream Registry was first deployed
-  river_clean_fork_block_number = "4577770"
-
   river_registry_contract_address = "0xf18E98D36A6bd1aDb52F776aCc191E69B491c070"
 }
 
-module "base_forked_chain_service" {
-  source                 = "../../modules/forked-chain-service"
-  count                  = local.create_forked_chain_service ? 1 : 0
+module "base_anvil_service" {
+  source                 = "../../modules/anvil-service"
+  count                  = local.create_anvil_service ? 1 : 0
   alb_security_group_id  = local.transient_global_remote_state.river_alb.security_group_id
   alb_dns_name           = local.transient_global_remote_state.river_alb.lb_dns_name
   alb_https_listener_arn = local.transient_global_remote_state.river_alb.lb_https_listener_arn
@@ -128,16 +120,14 @@ module "base_forked_chain_service" {
     name = local.transient_global_remote_state.river_ecs_cluster.name
   }
 
-  fork_block_number = var.is_clean_environment ? local.base_earliest_fork_block_number : "latest"
 
-  service_subnets     = local.transient_global_remote_state.vpc.private_subnets
-  fork_url_secret_arn = local.global_remote_state.base_chain_network_url_secret.arn
-  vpc_id              = local.transient_global_remote_state.vpc.vpc_id
+  service_subnets = local.transient_global_remote_state.vpc.private_subnets
+  vpc_id          = local.transient_global_remote_state.vpc.vpc_id
 }
 
-module "river_forked_chain_service" {
-  source                 = "../../modules/forked-chain-service"
-  count                  = local.create_forked_chain_service ? 1 : 0
+module "river_anvil_service" {
+  source                 = "../../modules/anvil-service"
+  count                  = local.create_anvil_service ? 1 : 0
   alb_security_group_id  = local.transient_global_remote_state.river_alb.security_group_id
   alb_dns_name           = local.transient_global_remote_state.river_alb.lb_dns_name
   alb_https_listener_arn = local.transient_global_remote_state.river_alb.lb_https_listener_arn
@@ -150,15 +140,9 @@ module "river_forked_chain_service" {
     name = local.transient_global_remote_state.river_ecs_cluster.name
   }
 
-  fork_block_number = var.is_clean_environment ? local.river_clean_fork_block_number : "latest"
 
-  service_subnets     = local.transient_global_remote_state.vpc.private_subnets
-  fork_url_secret_arn = local.global_remote_state.river_chain_network_url_secret.arn
-  vpc_id              = local.transient_global_remote_state.vpc.vpc_id
-
-
-  river_registry_contract_address = local.river_registry_contract_address
-  nodes_csv                       = local.nodes_csv
+  service_subnets = local.transient_global_remote_state.vpc.private_subnets
+  vpc_id          = local.transient_global_remote_state.vpc.vpc_id
 }
 
 module "river_node" {
@@ -180,27 +164,27 @@ module "river_node" {
 
   log_level                       = var.river_node_log_level
   base_chain_id                   = local.base_chain_id
-  base_chain_network_url_override = module.base_forked_chain_service[0].network_url
+  base_chain_network_url_override = module.base_anvil_service[0].network_url
 
   river_chain_id                   = local.river_chain_id
-  river_chain_network_url_override = module.river_forked_chain_service[0].network_url
+  river_chain_network_url_override = module.river_anvil_service[0].network_url
 
   ecs_cluster = {
     id   = local.transient_global_remote_state.river_ecs_cluster.id
     name = local.transient_global_remote_state.river_ecs_cluster.name
   }
 
-  system_parameters = module.system_parameters
+  system_parameters = local.create_system_parameters ? module.system_parameters[0] : null
 }
 
-module "loadtest" {
-  count                       = var.has_stress_test_infra ? 1 : 0
-  source                      = "../../modules/loadtest"
-  vpc_id                      = local.transient_global_remote_state.vpc.vpc_id
-  public_subnets              = local.transient_global_remote_state.vpc.public_subnets
-  private_subnets             = local.transient_global_remote_state.vpc.private_subnets
-  base_chain_rpc_url_override = var.has_stress_test_infra ? module.base_forked_chain_service[0].network_url : null
-  river_node_url              = var.has_stress_test_infra ? module.global_constants.nodes_metadata[0].url : null
-  is_forked_anvil             = true
-}
+# module "loadtest" {
+#   count                       = var.has_stress_test_infra ? 1 : 0
+#   source                      = "../../modules/loadtest"
+#   vpc_id                      = local.transient_global_remote_state.vpc.vpc_id
+#   public_subnets              = local.transient_global_remote_state.vpc.public_subnets
+#   private_subnets             = local.transient_global_remote_state.vpc.private_subnets
+#   base_chain_rpc_url_override = var.has_stress_test_infra ? module.base_forked_chain_service[0].network_url : null
+#   river_node_url              = var.has_stress_test_infra ? module.global_constants.nodes_metadata[0].url : null
+#   is_forked_anvil             = true
+# }
 
