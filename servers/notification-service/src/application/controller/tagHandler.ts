@@ -23,6 +23,16 @@ export async function tagReplyUserHandler(request: Request, res: Response) {
     await upsertNotificationTags(tagData, res)
 }
 
+export async function tagAtChannelHandler(request: Request, res: Response) {
+    const tagData = {
+        ...request.body,
+        tag: NotificationKind.AtChannel,
+        userIds: [NotificationKind.AtChannel],
+    }
+
+    await upsertNotificationTags(tagData, res)
+}
+
 export async function upsertNotificationTags(
     data: {
         channelId: string

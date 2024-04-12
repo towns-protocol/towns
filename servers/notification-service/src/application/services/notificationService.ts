@@ -38,6 +38,9 @@ export class NotificationService {
         const recipients: NotifyUsers = {}
         const notificationContent = notificationData.payload.content
         const isDMorGDM = notificationContent.kind === NotificationKind.DirectMessage
+        const isAtChannel = taggedUsers.some(
+            (taggedUser) => taggedUser.Tag === NotificationKind.AtChannel,
+        )
 
         let mutedUsersInChannel: Set<string> = new Set()
         // if notification kind is DM or GDM, we don't need to check if user is muted in channel
@@ -98,7 +101,10 @@ export class NotificationService {
             }
 
             const isUserNotTagged =
-                !isDMorGDM && !metionUsersTagged.has(userId) && !replyToUsersTagged.has(userId)
+                !isDMorGDM &&
+                !metionUsersTagged.has(userId) &&
+                !replyToUsersTagged.has(userId) &&
+                !isAtChannel
             const isUserMutedForMention =
                 metionUsersTagged.has(userId) && mutedMentionUsers.has(userId)
             const isUserMutedForReplyTo =

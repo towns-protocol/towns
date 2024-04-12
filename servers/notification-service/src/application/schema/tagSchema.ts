@@ -5,6 +5,7 @@ export enum NotificationKind {
     Mention = 'mention',
     NewMessage = 'new_message',
     ReplyTo = 'reply_to',
+    AtChannel = '@channel',
 }
 
 export const tagMentionUsersSchema = z.object({
@@ -17,4 +18,9 @@ export const tagReplyUserSchema = z.object({
     spaceId: z.string(),
     channelId: z.string().min(1),
     userIds: z.array(z.string()),
+})
+
+export const tagAtChannelSchema = z.object({
+    spaceId: z.string(),
+    channelId: z.string().min(1),
 })

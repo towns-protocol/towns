@@ -18,6 +18,24 @@
                 "ts-node/esm"
             ],
             "program": "${workspaceFolder}/dist/server.js"
+        },
+        {
+          "name": "Debug test (current file)",
+          "type": "node",
+          "request": "launch",
+          "env": { "NODE_ENV": "test", "NODE_TLS_REJECT_UNAUTHORIZED": "0" },
+          "program": "${workspaceFolder}/../../node_modules/.bin/jest",
+          "args": [
+            "--config",
+            "${workspaceFolder}//jest.config.ts",
+            "-i",
+            "--no-cache",
+            "--forceExit",
+            "${file}"
+          ],
+          "cwd": "${workspaceFolder}",
+          "console": "integratedTerminal",
+          "internalConsoleOptions": "neverOpen"
         }
     ]
 }

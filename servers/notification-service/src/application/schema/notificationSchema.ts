@@ -9,7 +9,12 @@ export enum Urgency {
 }
 
 export const notificationContentMessageSchema = z.object({
-    kind: z.enum([NotificationKind.NewMessage, NotificationKind.ReplyTo, NotificationKind.Mention]),
+    kind: z.enum([
+        NotificationKind.NewMessage,
+        NotificationKind.ReplyTo,
+        NotificationKind.Mention,
+        NotificationKind.AtChannel,
+    ]),
     spaceId: z.string(),
     channelId: z.string(),
     senderId: z.string(),
