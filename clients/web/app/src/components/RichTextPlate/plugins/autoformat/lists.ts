@@ -1,14 +1,7 @@
 import { AutoformatRule } from '@udecode/plate-autoformat'
-import { isBlock, setNodes } from '@udecode/plate-common'
-import {
-    ELEMENT_LI,
-    ELEMENT_OL,
-    ELEMENT_TODO_LI,
-    ELEMENT_UL,
-    TTodoListItemElement,
-} from '@udecode/plate-list'
+import { ELEMENT_LI, ELEMENT_OL, ELEMENT_UL } from '@udecode/plate-list'
 
-import { formatList, preFormat } from './utils'
+import { formatList, isParagraph, preFormat } from './utils'
 
 export const autoformatLists: AutoformatRule[] = [
     {
@@ -26,21 +19,21 @@ export const autoformatLists: AutoformatRule[] = [
         format: (editor) => formatList(editor, ELEMENT_OL),
     },
     {
-        mode: 'block',
-        type: ELEMENT_TODO_LI,
-        match: '[] ',
+        mode: 'text',
+        match: ['\n* ', '\n- '],
+        query: isParagraph,
+        format: (editor) => {
+            editor.insertBreak()
+            formatList(editor, ELEMENT_UL)
+        },
     },
     {
-        mode: 'block',
-        type: ELEMENT_TODO_LI,
-        match: '[x] ',
-        format: (editor) =>
-            setNodes<TTodoListItemElement>(
-                editor,
-                { type: ELEMENT_TODO_LI, checked: true },
-                {
-                    match: (n) => isBlock(editor, n),
-                },
-            ),
+        mode: 'text',
+        match: ['\n1. ', '\n1) '],
+        query: isParagraph,
+        format: (editor) => {
+            editor.insertBreak()
+            formatList(editor, ELEMENT_OL)
+        },
     },
 ]

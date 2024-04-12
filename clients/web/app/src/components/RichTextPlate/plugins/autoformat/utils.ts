@@ -1,4 +1,5 @@
 import { AutoformatBlockRule } from '@udecode/plate-autoformat'
+import { ELEMENT_PARAGRAPH } from '@udecode/plate-paragraph'
 import {
     ELEMENT_CODE_BLOCK,
     ELEMENT_CODE_LINE,
@@ -49,4 +50,17 @@ export const formatCodeBlock = (editor: PlateEditor) => {
         defaultType: ELEMENT_DEFAULT,
         insertNodesOptions: { select: true },
     })
+}
+
+export const isParagraph = (editor: PlateEditor) => {
+    if (!editor.selection) {
+        return false
+    }
+
+    const parentEntry = getParentNode(editor, editor.selection)
+    if (!parentEntry) {
+        return false
+    }
+    const [node] = parentEntry
+    return isType(editor, node, ELEMENT_DEFAULT) || isType(editor, node, ELEMENT_PARAGRAPH)
 }
