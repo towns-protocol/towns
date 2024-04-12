@@ -29,7 +29,9 @@ contract InteractRiverRegistry is Interaction {
       string(".nodes.gamma.towns.com")
     );
 
-    for (uint256 i = 0; i < nodes.length; i++) {
+    uint numNodes = vm.envOr("NUM_NODES", uint(10));
+
+    for (uint256 i = 0; i < numNodes; i++) {
       vm.broadcast(pk);
 
       NodeRegistry(registry).registerNode(
