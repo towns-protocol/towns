@@ -58,7 +58,7 @@ import { useEnvironment } from 'hooks/useEnvironmnet'
 import { Panel } from '@components/Panel/Panel'
 import { PrivyWrapper } from 'privy/PrivyProvider'
 import { AllChannelsList } from './AllChannelsList/AllChannelsList'
-import { PublicTownPage } from './PublicTownPage'
+import { PublicTownPage } from './PublicTownPage/PublicTownPage'
 import { usePanelActions } from './layouts/hooks/usePanelActions'
 
 const MdGap = ({ children, ...boxProps }: { children: JSX.Element } & BoxProps) => (

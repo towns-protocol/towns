@@ -4,17 +4,9 @@ import { Box, BoxProps, Button, MotionStack, Stack } from '@ui'
 import { TransactionUIState } from 'hooks/TransactionUIState'
 import { useDevice } from 'hooks/useDevice'
 
-type Props = {
-    onClick?: () => void
-    text: string
-    disabled?: boolean
-    panelStatus?: 'open' | 'closed'
-    transactionUIState?: TransactionUIState
-    transactingText?: string
-    successText?: string
-    idleText?: string
-}
-
+/**
+ * @deprecated
+ */
 export function BottomBar({
     onClick,
     text,
@@ -24,7 +16,16 @@ export function BottomBar({
     transactingText,
     successText,
     idleText,
-}: Props) {
+}: {
+    onClick?: () => void
+    text: string
+    disabled?: boolean
+    panelStatus?: 'open' | 'closed'
+    transactionUIState?: TransactionUIState
+    transactingText?: string
+    successText?: string
+    idleText?: string
+}) {
     const isDisabled = disabled
 
     return (
@@ -73,7 +74,10 @@ export function BottomBar({
     )
 }
 
-export const BottomBarLayout = ({
+/**
+ * @deprecated
+ */
+const BottomBarLayout = ({
     messageContent,
     buttonContent,
     errorReportButton: leftContent,
@@ -116,6 +120,9 @@ export const BottomBarLayout = ({
     )
 }
 
+/**
+ * @deprecated
+ */
 const ButtonContainer = (boxProps: BoxProps) => (
     <Box
         shrink
@@ -155,7 +162,7 @@ export const BottomBarWithColWidths = ({
             }}
             {...boxProps}
         >
-            <Stack absoluteFill background="level1" opacity="0.5" />
+            <Stack absoluteFill background="level1" opacity="0.7" />
             <Box
                 position="relative"
                 style={{

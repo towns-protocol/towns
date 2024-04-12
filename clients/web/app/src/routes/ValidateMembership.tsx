@@ -5,7 +5,7 @@ import AnalyticsService, { AnalyticsEvents } from 'use-towns-client/dist/utils/a
 import { useSpaceIdFromPathname } from 'hooks/useSpaceInfoFromPathname'
 import { SetUsernameForm } from '@components/SetUsernameForm/SetUsernameForm'
 import { useUsernameConfirmed } from 'hooks/useUsernameConfirmed'
-import { PublicTownPage } from './PublicTownPage'
+import { PublicTownPage } from './PublicTownPage/PublicTownPage'
 import { AppSkeletonView } from './layouts/WelcomeLayout'
 
 export const ValidateMembership = () => {

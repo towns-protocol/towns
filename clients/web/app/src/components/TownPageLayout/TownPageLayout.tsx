@@ -1,7 +1,8 @@
-import React, { useCallback, useEffect, useMemo, useState } from 'react'
-import { Address, useGetRootKeyFromLinkedWallet } from 'use-towns-client'
+import React, { useCallback, useEffect, useLayoutEffect, useMemo, useRef, useState } from 'react'
+import { Address, useContractSpaceInfo, useGetRootKeyFromLinkedWallet } from 'use-towns-client'
 import { useEvent } from 'react-use-event-hook'
 import { usePricingModuleForMembership } from 'use-towns-client/dist/hooks/use-pricing-modules'
+import { isAddress } from 'viem'
 import { InteractiveTownsToken } from '@components/TownsToken/InteractiveTownsToken'
 import { ImageVariants, useImageSource } from '@components/UploadImage/useImageSource'
 import { Box, Button, Heading, Icon, IconButton, MotionStack, Paragraph, Stack, Text } from '@ui'
@@ -18,6 +19,7 @@ import {
     checkAnyoneCanJoin,
     useTokensGatingMembership,
 } from 'hooks/useTokensGatingMembership'
+import { useGetSpaceIdentity } from 'hooks/useSpaceIdentity'
 import { useReadableMembershipInfo } from './useReadableMembershipInfo'
 import { durationTitleSubtitle } from './townPageUtils'
 import { TokenInfoBox } from './TokenInfoBox'
@@ -26,24 +28,33 @@ import { InformationBox } from './InformationBox'
 type TownPageLayoutProps = {
     headerContent?: React.ReactNode
     activityContent?: React.ReactNode
-    bottomContent?: React.ReactNode
-    membershipPricingModule: ReturnType<typeof usePricingModuleForMembership>['data']
+    bottomContent?: ({
+        leftColWidth,
+        rightColWidth,
+    }: {
+        leftColWidth: number
+        rightColWidth: number
+    }) => React.ReactNode
     isPreview: boolean
     spaceId: string
-    address?: `0x${string}`
-    name?: string
-    owner?: `0x${string}`
-    bio?: string
-    motto?: string
+    spaceInfo: NonNullable<ReturnType<typeof useContractSpaceInfo>['data']>
 }
 
 export const TownPageLayout = (props: TownPageLayoutProps) => {
-    const { address, bio, motto, name, spaceId, owner, isPreview, membershipPricingModule } = props
+    const { spaceId, isPreview, spaceInfo } = props
+    const address = isAddress(spaceInfo.address) ? spaceInfo.address : undefined
+    const owner = isAddress(spaceInfo.owner) ? spaceInfo.owner : undefined
+    const name = spaceInfo.name
+    const { data: membershipPricingModule } = usePricingModuleForMembership(spaceId)
+
     const { baseChain } = useEnvironment()
     const chainId = baseChain.id
     const { data: userId } = useGetRootKeyFromLinkedWallet({ walletAddress: owner })
     const [copiedLink, setCopiedLink] = useState(false)
     const [, copy] = useCopyToClipboard()
+    const { data: spaceIdentity } = useGetSpaceIdentity(spaceId)
+    const bio = spaceIdentity?.bio
+    const motto = spaceIdentity?.motto
 
     useEffect(() => {
         if (copiedLink) {
@@ -80,98 +91,149 @@ export const TownPageLayout = (props: TownPageLayoutProps) => {
     const anyoneCanJoin = checkAnyoneCanJoin(tokensGatingMembership)
 
     const { imageSrc } = useImageSource(spaceId, ImageVariants.thumbnail600)
+    const leftColRef = useRef<HTMLDivElement>(null)
+    const rightColRef = useRef<HTMLDivElement>(null)
+    const [leftColWidth, rightColWidth] = useColumnWidths({ leftColRef, rightColRef })
 
     return (
         <>
-            <Stack scroll alignItems="center" height="100dvh" paddingTop="safeAreaInsetTop">
+            <Stack
+                scroll
+                alignItems="center"
+                height="100dvh"
+                paddingTop="safeAreaInsetTop"
+                paddingX="md"
+            >
                 {props.headerContent}
-                <Stack width="100%" alignItems="center" height="100%">
-                    <Stack
-                        horizontal={!isTouch}
-                        paddingX="md"
-                        paddingBottom="x4"
-                        width="100%"
-                        maxWidth={isTouch ? '100%' : '1000'}
-                        pointerEvents="all"
-                        gap="md"
-                        height="100%"
-                    >
-                        <Stack gap="lg" width="100%">
-                            <Stack horizontal gap="sm" alignContent="start">
-                                {isTouch && (
-                                    <InteractiveTownsToken
-                                        key={imageSrc}
-                                        size="sm"
-                                        address={address}
-                                        imageSrc={imageSrc ?? undefined}
-                                        spaceName={name}
-                                    />
-                                )}
-                                <Header
-                                    name={name}
-                                    owner={owner}
-                                    userId={userId}
-                                    spaceId={spaceId}
-                                    isPreview={isPreview}
-                                    motto={motto}
-                                />
-                            </Stack>
-                            <InformationBoxes
-                                imageSrc={imageSrc}
-                                price={membershipInfo?.price}
-                                duration={membershipInfo?.duration}
-                                address={address}
-                                chainId={chainId}
-                                anyoneCanJoin={anyoneCanJoin}
-                                isTokensGatingMembershipLoading={isTokensGatingMembershipLoading}
-                                tokensGatingMembership={tokensGatingMembership}
-                                membershipPricingModule={membershipPricingModule}
-                            />
-                            <Bio bio={bio} />
-
-                            <Box>{props.activityContent}</Box>
-                            <Box height="x12" shrink={false} />
-                        </Stack>
-                        {/* right column */}
-                        {!isTouch && (
-                            <Stack gap="lg" alignItems="center" paddingTop="x8">
-                                <Box height="x2" shrink={false} />
+                <Stack
+                    justifyContent={{
+                        desktop: 'center',
+                        tablet: 'end',
+                    }}
+                    flexDirection={{
+                        desktop: 'row',
+                        tablet: 'columnReverse',
+                    }}
+                    paddingBottom="x4"
+                    width="100%"
+                    maxWidth={isTouch ? '100%' : undefined}
+                    pointerEvents="all"
+                    height="100%"
+                    gap={{
+                        desktop: 'x20',
+                        tablet: 'md',
+                    }}
+                >
+                    <Stack gap="lg" ref={leftColRef}>
+                        <Stack horizontal gap="sm" alignContent="start">
+                            {isTouch && (
                                 <InteractiveTownsToken
                                     key={imageSrc}
-                                    size={isTouch ? 'lg' : 'xl'}
+                                    size="sm"
                                     address={address}
                                     imageSrc={imageSrc ?? undefined}
                                     spaceName={name}
                                 />
+                            )}
+                            <Header
+                                name={name}
+                                owner={owner}
+                                userId={userId}
+                                spaceId={spaceId}
+                                isPreview={isPreview}
+                                motto={motto}
+                            />
+                        </Stack>
+                        <InformationBoxes
+                            imageSrc={imageSrc}
+                            price={membershipInfo?.price}
+                            duration={membershipInfo?.duration}
+                            address={address}
+                            chainId={chainId}
+                            anyoneCanJoin={anyoneCanJoin}
+                            isTokensGatingMembershipLoading={isTokensGatingMembershipLoading}
+                            tokensGatingMembership={tokensGatingMembership}
+                            membershipPricingModule={membershipPricingModule}
+                        />
+                        <Bio bio={bio} />
 
-                                {!isPreview && (
-                                    <Box tooltip="Copy link">
-                                        <Button
-                                            size="button_md"
-                                            width="300"
-                                            tone="lightHover"
-                                            color="default"
-                                            onClick={onCopyInviteLink}
-                                        >
-                                            {copiedLink ? (
-                                                'Link copied'
-                                            ) : (
-                                                <>
-                                                    <Icon type="share" />
-                                                    Share Link
-                                                </>
-                                            )}
-                                        </Button>
-                                    </Box>
-                                )}
-                            </Stack>
-                        )}
+                        <Box>{props.activityContent}</Box>
+                        <Box height="x12" shrink={false} />
                     </Stack>
+                    {/* right column */}
+                    {!isTouch && (
+                        <Stack gap="lg" alignItems="center" paddingTop="x8" ref={rightColRef}>
+                            <Box height="x2" shrink={false} />
+                            <InteractiveTownsToken
+                                key={imageSrc}
+                                size="xl"
+                                address={address}
+                                imageSrc={imageSrc ?? undefined}
+                                spaceName={name}
+                            />
+
+                            {!isPreview && (
+                                <Box tooltip="Copy link">
+                                    <Button
+                                        size="button_md"
+                                        width="300"
+                                        tone="lightHover"
+                                        color="default"
+                                        onClick={onCopyInviteLink}
+                                    >
+                                        {copiedLink ? (
+                                            'Link copied'
+                                        ) : (
+                                            <>
+                                                <Icon type="share" />
+                                                Share Link
+                                            </>
+                                        )}
+                                    </Button>
+                                </Box>
+                            )}
+                        </Stack>
+                    )}
                 </Stack>
-                {!isPreview && <>{props.bottomContent && props.bottomContent}</>}
+                {!isPreview &&
+                    props.bottomContent &&
+                    props.bottomContent({
+                        leftColWidth,
+                        rightColWidth,
+                    })}
             </Stack>
         </>
     )
+}
+
+function useColumnWidths({
+    leftColRef,
+    rightColRef,
+}: {
+    leftColRef: React.RefObject<HTMLDivElement>
+    rightColRef: React.RefObject<HTMLDivElement>
+}) {
+    const [widths, setWidths] = useState<[number, number]>([0, 0])
+    const observer = useMemo(
+        () =>
+            new ResizeObserver(([left, right]) => {
+                setWidths([left?.contentRect.width, right?.contentRect.width])
+            }),
+        [],
+    )
+    useLayoutEffect(() => {
+        if (leftColRef.current) {
+            observer.observe(leftColRef.current)
+        }
+        if (rightColRef.current) {
+            observer.observe(rightColRef.current)
+        }
+        return () => {
+            observer.disconnect()
+        }
+    }, [leftColRef, observer, rightColRef])
+
+    return widths
 }
 
 const Header = (props: {
@@ -276,40 +338,35 @@ const InformationBoxes = (props: {
                 anyoneCanJoin={anyoneCanJoin}
                 tokensGatingMembership={_tokens}
             />
-
-            {price && (
-                <InformationBox
-                    key="cost"
-                    title="Cost"
-                    centerContent={
-                        <Text size="lg" fontWeight="strong">
-                            {price}
-                        </Text>
-                    }
-                    subtitle={
-                        membershipPricingModule === undefined
-                            ? ''
-                            : membershipPricingModule.isFixed
-                            ? 'ETH'
-                            : 'First 100'
-                    }
-                />
-            )}
-
-            {durationTexts && (
-                <InformationBox
-                    key="duration"
-                    title="Valid for"
-                    centerContent={
-                        <Text size="lg" fontWeight="strong">
-                            {durationTexts.title}
-                        </Text>
-                    }
-                    subtitle={durationTexts.subtitle}
-                    onClick={onAddressClick}
-                />
-            )}
-
+            <InformationBox
+                key="cost"
+                title="Cost"
+                placeholder={!price}
+                centerContent={
+                    <Text size="lg" fontWeight="strong">
+                        {price}
+                    </Text>
+                }
+                subtitle={
+                    membershipPricingModule === undefined
+                        ? ''
+                        : membershipPricingModule.isFixed
+                        ? 'ETH'
+                        : 'First 100'
+                }
+            />
+            <InformationBox
+                key="duration"
+                title="Valid for"
+                placeholder={!durationTexts}
+                centerContent={
+                    <Text size="lg" fontWeight="strong">
+                        {durationTexts?.title}
+                    </Text>
+                }
+                subtitle={durationTexts?.subtitle ?? ''}
+                onClick={onAddressClick}
+            />
             {address && (
                 <InformationBox
                     key="explore"
@@ -319,7 +376,6 @@ const InformationBoxes = (props: {
                     onClick={onAddressClick}
                 />
             )}
-
             {address && (
                 <InformationBox
                     key="opensea"

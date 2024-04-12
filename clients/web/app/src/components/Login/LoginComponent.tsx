@@ -7,7 +7,13 @@ import { Box, FancyButton } from '@ui'
 import { useErrorToast } from 'hooks/useErrorToast'
 import { mapToErrorMessage } from '@components/Web3/utils'
 
-function LoginComponent() {
+function LoginComponent({
+    text = 'Login',
+    loggingInText = 'Logging In...',
+}: {
+    text?: string
+    loggingInText?: string
+}) {
     const { ready: privyReady } = usePrivy()
     const { login, isAutoLoggingInToRiver } = useCombinedAuth()
     const { loginError, loginStatus: libLoginStatus } = useConnectivity()
@@ -16,26 +22,43 @@ function LoginComponent() {
 
     const isBusy = libLoginStatus === LoginStatus.LoggingIn || isAutoLoggingInToRiver
 
+    const loginContent = () => {
+        if (isAutoLoggingInToRiver) {
+            return loggingInText
+        }
+        // on app load user starts in a logging in state.
+        // The goal is to never show this button in that state.
+        // but in case this component appears, just let the spinner show
+        if (LoginStatus.LoggingIn === libLoginStatus) {
+            return ''
+        }
+        return text
+    }
+
     useErrorToast({
         errorMessage,
         contextMessage: 'There was an error logging in, please try again.',
     })
 
+    if (LoginStatus.LoggingIn === libLoginStatus) {
+        return <></>
+    }
+
     return (
         <Box centerContent gap="lg">
             <Box width="100%">
                 <FancyButton cta disabled={!privyReady || isBusy} spinner={isBusy} onClick={login}>
-                    {isBusy ? 'Logging In...' : 'Login'}
+                    {loginContent()}
                 </FancyButton>
             </Box>
         </Box>
     )
 }
 
-function LoginWithAuth() {
+function LoginWithAuth(props: { text?: string; loggingInText?: string }) {
     return (
         <PrivyWrapper>
-            <LoginComponent />
+            <LoginComponent {...props} />
         </PrivyWrapper>
     )
 }

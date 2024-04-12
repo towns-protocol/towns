@@ -4,7 +4,7 @@ import { useConnectivity } from 'use-towns-client'
 import { Box, Stack } from '@ui'
 import { useDevice } from 'hooks/useDevice'
 import { PATHS } from 'routes'
-import { PublicTownPage } from 'routes/PublicTownPage'
+import { PublicTownPage } from 'routes/PublicTownPage/PublicTownPage'
 import { WelcomeRoute } from 'routes/Welcome'
 import { mobileAppClass } from 'ui/styles/globals/utils.css'
 
