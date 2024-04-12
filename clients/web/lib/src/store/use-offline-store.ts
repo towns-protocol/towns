@@ -25,6 +25,7 @@ export type OfflineStates = {
     setOfflineSpaceInfo: (spaceInfo: SpaceInfo) => void
     offlineSyncedSpaceIds: string[]
     addOfflineSyncedSpaceId: (spaceId: string) => void
+    removeOfflineSyncedSpaceId: (spaceId: string) => void
     offlineUserMap: OfflineUserMap
     setOfflineUser: (key: string, offlineUser: OfflineUser) => void
     offlineWalletAddressMap: OfflineWalletAddressMap
@@ -56,6 +57,19 @@ export const useOfflineStore = create<OfflineStates>(
                     return {
                         ...state,
                         offlineSyncedSpaceIds: [...state.offlineSyncedSpaceIds, spaceId],
+                    }
+                })
+            },
+            removeOfflineSyncedSpaceId: (spaceId) => {
+                set((state) => {
+                    if (!state.offlineSyncedSpaceIds.includes(spaceId)) {
+                        return state
+                    }
+                    return {
+                        ...state,
+                        offlineSyncedSpaceIds: state.offlineSyncedSpaceIds.filter(
+                            (id) => id !== spaceId,
+                        ),
                     }
                 })
             },

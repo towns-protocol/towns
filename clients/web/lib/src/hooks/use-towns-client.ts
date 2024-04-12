@@ -31,6 +31,7 @@ import { create } from 'zustand'
 import { IArchitectBase, Permission, IRuleEntitlement } from '@river-build/web3'
 import { TSigner } from 'types/web3-types'
 import { SignerContext } from '@river/sdk'
+import { useOfflineStore } from '../store/use-offline-store'
 
 export type TownsErrorStoreState = {
     errors: string[]
@@ -257,6 +258,19 @@ export function useTownsClient(): TownsClientImpl {
         },
         [clientSingleton, signerContext],
     )
+
+    const leaveRoom = useCallback(
+        (roomId: string, parentNetworkId?: string | undefined) => {
+            if (!clientSingleton) {
+                console.error('clientSingleton is undefined')
+                return Promise.resolve()
+            }
+            useOfflineStore.getState().removeOfflineSyncedSpaceId(roomId)
+            return clientSingleton.leave(roomId, parentNetworkId)
+        },
+        [clientSingleton],
+    )
+
     return {
         chainId: client?.opts.baseChainId,
         client,
@@ -303,7 +317,7 @@ export function useTownsClient(): TownsClientImpl {
         updateUserBlock: useWithCatch(clientSingleton?.updateUserBlock),
         inviteUser: useWithCatch(clientSingleton?.inviteUser),
         joinRoom: useWithCatch(clientSingleton?.joinRoom),
-        leaveRoom: useWithCatch(clientSingleton?.leave),
+        leaveRoom: useWithCatch(leaveRoom),
         loginWithWalletToCasablanca,
         logout,
         joinTown,
