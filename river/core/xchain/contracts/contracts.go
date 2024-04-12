@@ -47,6 +47,36 @@ type IEntitlementGated struct {
 	devIEntitlementGated *dev.IEntitlementGated
 }
 
+type MockCustomEntitlement struct {
+	v3MockCustomEntitlement  *v3.MockCustomEntitlement
+	devMockCustomEntitlement *dev.MockCustomEntitlement
+}
+
+func NewMockCustomEntitlement(address common.Address, backend bind.ContractBackend) (*MockCustomEntitlement, error) {
+	res := &MockCustomEntitlement{}
+	if config.GetConfig().GetContractVersion() == "v3" {
+		contract, err := v3.NewMockCustomEntitlement(address, backend)
+		res.v3MockCustomEntitlement = contract
+		return res, err
+	} else {
+		contract, err := dev.NewMockCustomEntitlement(address, backend)
+		res.devMockCustomEntitlement = contract
+		return res, err
+	}
+}
+
+func (m *MockCustomEntitlement) SetEntitled(
+	opts *bind.TransactOpts,
+	user []common.Address,
+	userIsEntitled bool,
+) (*types.Transaction, error) {
+	if config.GetConfig().GetContractVersion() == "v3" {
+		return m.v3MockCustomEntitlement.SetEntitled(opts, user, userIsEntitled)
+	} else {
+		return m.devMockCustomEntitlement.SetEntitled(opts, user, userIsEntitled)
+	}
+}
+
 func NewIEntitlementGated(address common.Address, backend bind.ContractBackend) (*IEntitlementGated, error) {
 	res := &IEntitlementGated{}
 	if config.GetConfig().GetContractVersion() == "v3" {
@@ -60,11 +90,11 @@ func NewIEntitlementGated(address common.Address, backend bind.ContractBackend) 
 	}
 }
 
-func (g *IEntitlementGated) RequestEntitlementCheck(opts *bind.TransactOpts) (*types.Transaction, error) {
+func (g *IEntitlementGated) RequestEntitlementCheck(opts *bind.TransactOpts, ruledata IRuleData) (*types.Transaction, error) {
 	if config.GetConfig().GetContractVersion() == "v3" {
-		return g.v3IEntitlementGated.RequestEntitlementCheck(opts)
+		return g.v3IEntitlementGated.RequestEntitlementCheck(opts, convertRuleDataToV3(ruledata))
 	} else {
-		return g.devIEntitlementGated.RequestEntitlementCheck(opts)
+		return g.devIEntitlementGated.RequestEntitlementCheck(opts, convertRuleDataToDev(ruledata))
 	}
 }
 
@@ -166,6 +196,49 @@ func (g *IEntitlementGated) GetRuleData(opts *bind.CallOpts, transactionId [32]b
 			}
 		}
 		return &ruleData, nil
+	}
+}
+
+type ICustomEntitlement struct {
+	v3ICustomEntitlement  *v3.ICustomEntitlement
+	devICustomEntitlement *dev.ICustomEntitlement
+}
+
+func NewICustomEntitlement(address common.Address, backend bind.ContractBackend) (*ICustomEntitlement, error) {
+	res := &ICustomEntitlement{}
+	if config.GetConfig().GetContractVersion() == "v3" {
+		contract, err := v3.NewICustomEntitlement(address, backend)
+		res.v3ICustomEntitlement = contract
+		return res, err
+	} else {
+		contract, err := dev.NewICustomEntitlement(address, backend)
+		res.devICustomEntitlement = contract
+		return res, err
+	}
+}
+
+func (c *ICustomEntitlement) GetMetadata() *bind.MetaData {
+	if config.GetConfig().GetContractVersion() == "v3" {
+		return v3.ICustomEntitlementMetaData
+	} else {
+		return dev.ICustomEntitlementMetaData
+	}
+}
+
+func (c *ICustomEntitlement) GetAbi() *abi.ABI {
+	md := c.GetMetadata()
+	abi, err := md.GetAbi()
+	if err != nil {
+		panic("Failed to parse CustomEntitlement ABI")
+	}
+	return abi
+}
+
+func (c *ICustomEntitlement) IsEntitled(opts *bind.CallOpts, user []common.Address) (bool, error) {
+	if config.GetConfig().GetContractVersion() == "v3" {
+		return c.v3ICustomEntitlement.IsEntitled(opts, user)
+	} else {
+		return c.devICustomEntitlement.IsEntitled(opts, user)
 	}
 }
 
@@ -324,4 +397,69 @@ func converDevToShimResultPosted(devEvent *dev.IEntitlementGatedEntitlementCheck
 		Result:        devEvent.Result,
 		Raw:           devEvent.Raw,
 	}
+}
+
+func convertRuleDataToV3(ruleData IRuleData) v3.IRuleEntitlementRuleData {
+	operations := make([]v3.IRuleEntitlementOperation, len(ruleData.Operations))
+	for i, op := range ruleData.Operations {
+		operations[i] = v3.IRuleEntitlementOperation{
+			OpType: op.OpType,
+			Index:  op.Index,
+		}
+	}
+	checkOperations := make([]v3.IRuleEntitlementCheckOperation, len(ruleData.CheckOperations))
+	for i, op := range ruleData.CheckOperations {
+		checkOperations[i] = v3.IRuleEntitlementCheckOperation{
+			OpType:          op.OpType,
+			ChainId:         op.ChainId,
+			ContractAddress: op.ContractAddress,
+			Threshold:       op.Threshold,
+		}
+	}
+	logicalOperations := make([]v3.IRuleEntitlementLogicalOperation, len(ruleData.LogicalOperations))
+	for i, op := range ruleData.LogicalOperations {
+		logicalOperations[i] = v3.IRuleEntitlementLogicalOperation{
+			LogOpType:           op.LogOpType,
+			LeftOperationIndex:  op.LeftOperationIndex,
+			RightOperationIndex: op.RightOperationIndex,
+		}
+	}
+	return v3.IRuleEntitlementRuleData{
+		Operations:        operations,
+		CheckOperations:   checkOperations,
+		LogicalOperations: logicalOperations,
+	}
+}
+
+func convertRuleDataToDev(ruleData IRuleData) dev.IRuleEntitlementRuleData {
+	operations := make([]dev.IRuleEntitlementOperation, len(ruleData.Operations))
+	for i, op := range ruleData.Operations {
+		operations[i] = dev.IRuleEntitlementOperation{
+			OpType: op.OpType,
+			Index:  op.Index,
+		}
+	}
+	checkOperations := make([]dev.IRuleEntitlementCheckOperation, len(ruleData.CheckOperations))
+	for i, op := range ruleData.CheckOperations {
+		checkOperations[i] = dev.IRuleEntitlementCheckOperation{
+			OpType:          op.OpType,
+			ChainId:         op.ChainId,
+			ContractAddress: op.ContractAddress,
+			Threshold:       op.Threshold,
+		}
+	}
+	logicalOperations := make([]dev.IRuleEntitlementLogicalOperation, len(ruleData.LogicalOperations))
+	for i, op := range ruleData.LogicalOperations {
+		logicalOperations[i] = dev.IRuleEntitlementLogicalOperation{
+			LogOpType:           op.LogOpType,
+			LeftOperationIndex:  op.LeftOperationIndex,
+			RightOperationIndex: op.RightOperationIndex,
+		}
+	}
+	return dev.IRuleEntitlementRuleData{
+		Operations:        operations,
+		CheckOperations:   checkOperations,
+		LogicalOperations: logicalOperations,
+	}
+
 }

@@ -12,7 +12,6 @@ import {IGuardian} from "contracts/src/spaces/facets/guardian/IGuardian.sol";
 import {IUserEntitlement} from "contracts/src/spaces/entitlements/user/IUserEntitlement.sol";
 import {IRuleEntitlement} from "contracts/src/crosschain/IRuleEntitlement.sol";
 import {RuleEntitlement} from "contracts/src/crosschain/RuleEntitlement.sol";
-import {RuleEntitlementUtil} from "contracts/src/crosschain/RuleEntitlementUtil.sol";
 import {IRoles} from "contracts/src/spaces/facets/roles/IRoles.sol";
 import {IMembership} from "contracts/src/spaces/facets/membership/IMembership.sol";
 import {IWalletLink} from "contracts/src/river/wallet-link/IWalletLink.sol";
@@ -21,6 +20,7 @@ import {IEntitlementChecker} from "contracts/src/crosschain/checker/IEntitlement
 
 // libraries
 import {Permissions} from "contracts/src/spaces/facets/Permissions.sol";
+import {RuleEntitlementUtil} from "contracts/test/crosschain/RuleEntitlementUtil.sol";
 
 // contracts
 import {BaseSetup} from "contracts/test/spaces/BaseSetup.sol";

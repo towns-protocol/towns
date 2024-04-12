@@ -51,9 +51,17 @@ out:
 		select {
 		case char := <-input:
 			log.Info("Input", "char", char)
-			if char == 'c' {
-				go xc.ClientSimulator()
+			switch char {
+			case 'a':
+				go xc.ClientSimulator(xc.ERC20)
+			case 'b':
+				go xc.ClientSimulator(xc.ERC721)
+			case 'c':
+				go xc.ClientSimulator(xc.ISENTITLED)
+			case 'd':
+				go xc.ClientSimulator(xc.TOGGLEISENTITLED)
 			}
+
 		case <-interrupt:
 			log.Info("Main Interrupted")
 			break out

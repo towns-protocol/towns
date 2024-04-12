@@ -22,13 +22,11 @@ import (
 )
 
 var (
-	checkerContractAddress common.Address
-	checkerContractUrl     string
-)
-
-var (
-	testContractAddress common.Address
-	testContractUrl     string
+	checkerContractAddress               common.Address
+	checkerContractUrl                   string
+	testContractAddress                  common.Address
+	testContractUrl                      string
+	testCustomEntitlementContractAddress common.Address
 )
 
 var loadAddressesOnce sync.Once
@@ -45,6 +43,7 @@ func loadConfig() {
 	}
 
 	checkerContractUrl = baseWebsocketURL
+	testCustomEntitlementContractAddress = common.HexToAddress(cfg.TestCustomEntitlementContract.Address)
 }
 
 func ConvertHTTPToWebSocket(httpURL string) (string, error) {
@@ -90,6 +89,11 @@ func GetTestContractAddress() *common.Address {
 func GetTestContractUrl() string {
 	loadAddressesOnce.Do(loadConfig)
 	return testContractUrl
+}
+
+func GetTestCustomEntitlementContractAddress() *common.Address {
+	loadAddressesOnce.Do(loadConfig)
+	return &testCustomEntitlementContractAddress
 }
 
 const requiredBalance = 10000000000000000 // 0.01 ETH in Wei

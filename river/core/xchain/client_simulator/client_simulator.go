@@ -3,6 +3,8 @@ package client_simulator
 import (
 	"context"
 	"core/xchain/config"
+	"core/xchain/entitlement"
+	"core/xchain/examples"
 	"crypto/ecdsa"
 	"encoding/hex"
 	"math/big"
@@ -22,7 +24,144 @@ import (
 	"github.com/ethereum/go-ethereum/event"
 )
 
-func ClientSimulator() {
+var isEntitled = false
+
+func toggleCustomEntitlement(
+	ctx context.Context,
+	fromAddress common.Address,
+	client *ethclient.Client,
+	privateKey *ecdsa.PrivateKey,
+) {
+	log := dlog.FromCtx(ctx)
+
+	nonce, err := client.PendingNonceAt(context.Background(), fromAddress)
+	if err != nil {
+		log.Error("Failed getting PendingNonceAt", "err", err)
+		return
+	}
+
+	gasPrice, err := client.SuggestGasPrice(context.Background())
+	if err != nil {
+		log.Error("Failed SuggestGasPrice", "err", err)
+		return
+	}
+
+	auth, err := bind.NewKeyedTransactorWithChainID(
+		privateKey,
+		big.NewInt(31337),
+	) // replace 31337 with your actual chainID
+	if err != nil {
+		log.Error("NewKeyedTransactorWithChainID", "err", err)
+		return
+	}
+	auth.Nonce = big.NewInt(int64(nonce))
+	auth.Value = big.NewInt(0)       // in wei
+	auth.GasLimit = uint64(30000000) // in units
+	auth.GasPrice = gasPrice
+
+	mockCustomContract, err := e.NewMockCustomEntitlement(*xc.GetTestCustomEntitlementContractAddress(), client)
+	if err != nil {
+		log.Error("Failed to parse contract ABI", "err", err)
+		return
+	}
+
+	isEntitled = !isEntitled
+
+	txn, err := mockCustomContract.SetEntitled(auth, []common.Address{fromAddress}, isEntitled)
+	if err != nil {
+		log.Error("Failed to SetEntitled", "err", err)
+		return
+	}
+
+	rawBlockNumber := xc.WaitForTransaction(client, txn)
+
+	if rawBlockNumber == nil {
+		log.Error("Client MockCustomContract SetEntitled failed to mine")
+		return
+	}
+
+	log.Info(
+		"Client SetEntitled mined in block",
+		"rawBlockNumber",
+		rawBlockNumber,
+		"id",
+		txn.Hash(),
+		"hex",
+		txn.Hash().Hex(),
+	)
+}
+
+func customEntitlementExample() e.IRuleData {
+	return e.IRuleData{
+		Operations: []e.IRuleEntitlementOperation{
+			{
+				OpType: uint8(entitlement.CHECK),
+				Index:  0,
+			},
+		},
+		CheckOperations: []e.IRuleEntitlementCheckOperation{
+			{
+				OpType:  uint8(entitlement.ISENTITLED),
+				ChainId: big.NewInt(1),
+				// This contract is deployed on our local base dev chain.
+				ContractAddress: *xc.GetTestCustomEntitlementContractAddress(),
+				Threshold:       big.NewInt(0),
+			},
+		},
+	}
+}
+
+func erc721Example() e.IRuleData {
+	return e.IRuleData{
+		Operations: []e.IRuleEntitlementOperation{
+			{
+				OpType: uint8(entitlement.CHECK),
+				Index:  0,
+			},
+		},
+		CheckOperations: []e.IRuleEntitlementCheckOperation{
+			{
+				OpType:  uint8(entitlement.ERC721),
+				ChainId: examples.EthSepoliaChainId,
+				// Custom NFT contract example
+				ContractAddress: examples.EthSepoliaTestNftContract,
+				Threshold:       big.NewInt(1),
+			},
+		},
+	}
+}
+
+func erc20Example() e.IRuleData {
+	return e.IRuleData{
+		Operations: []e.IRuleEntitlementOperation{
+			{
+				OpType: uint8(entitlement.CHECK),
+				Index:  0,
+			},
+		},
+		CheckOperations: []e.IRuleEntitlementCheckOperation{
+			{
+				OpType:  uint8(entitlement.ERC20),
+				ChainId: examples.EthSepoliaChainId,
+				// Chainlink is a good ERC 20 token to use for testing because it's easy to get from faucets.
+				ContractAddress: examples.EthSepoliaChainlinkContract,
+				Threshold:       big.NewInt(20),
+			},
+		},
+	}
+}
+
+type SimulationType int
+
+// SimulationType Enum
+const (
+	ERC721 SimulationType = iota
+	ERC20
+	ISENTITLED
+	TOGGLEISENTITLED
+)
+
+func ClientSimulator(simType SimulationType) {
 	ctx := context.Background()
 	log := dlog.FromCtx(ctx)
 
@@ -76,6 +215,11 @@ func ClientSimulator() {
 		return
 	}
 	log.Info("ClientSimulator add funds on anvil to wallet address", "result", result)
+
+	if simType == TOGGLEISENTITLED {
+		toggleCustomEntitlement(ctx, fromAddress, client, privateKey)
+		return
+	}
 
 	gatedContract, err := e.NewIEntitlementGated(*xc.GetTestContractAddress(), client)
 	if err != nil {
@@ -150,7 +294,23 @@ func ClientSimulator() {
 	auth.GasPrice = gasPrice
 
 	log.Info("ClientSimulator Requesting entitlement check")
-	tx, err := gatedContract.RequestEntitlementCheck(auth)
+	var ruleData e.IRuleData
+	switch simType {
+	case ERC721:
+		ruleData = erc721Example()
+	case ERC20:
+		ruleData = erc20Example()
+	case ISENTITLED:
+		ruleData = customEntitlementExample()
+
+	case TOGGLEISENTITLED:
+		fallthrough
+	default:
+		log.Error("ClientSimulator invalid SimulationType", "simType", simType)
+		return
+	}
+
+	tx, err := gatedContract.RequestEntitlementCheck(auth, ruleData)
 	if err != nil {
 		log.Error("RequestEntitlementCheck", "err", err)
 		return
@@ -165,7 +325,15 @@ func ClientSimulator() {
 
 	requestBlockNumber := rawBlockNumber.Uint64()
 
-	log.Info("Client RequestEntitlementCheck mined in block", "rawBlockNumber", rawBlockNumber, "id", tx.Hash(), "hex", tx.Hash().Hex())
+	log.Info(
+		"Client RequestEntitlementCheck mined in block",
+		"rawBlockNumber",
+		rawBlockNumber,
+		"id",
+		tx.Hash(),
+		"hex",
+		tx.Hash().Hex(),
+	)
 
 	var resultSubCh <-chan error
 	var resultSub event.Subscription
@@ -207,6 +375,7 @@ func ClientSimulator() {
 				checkRequestedSubCh = nil
 				log.Info("Client Unsubscribe checkRequestedSub")
 			}
+			return
 
 		case result := <-resultPosted:
 			log.Info(

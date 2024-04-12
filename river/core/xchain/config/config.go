@@ -18,13 +18,15 @@ const (
 
 // Viper uses mapstructure module to marshal settings into config struct.
 type Config struct {
-	Metrics             infra.MetricsConfig `mapstructure:"metrics"`
-	Log                 infra.LogConfig     `mapstructure:"log"`
-	ChainsString        string              `mapstructure:"chains"`
-	Chains              map[uint64]string   `mapstructure:"-"` // This is a derived field
-	EntitlementContract ContractConfig      `mapstructure:"entitlement_contract"`
-	TestingContract     ContractConfig      `mapstructure:"test_contract"`
-	contractVersion     ContractVersion     `mapstructure:"contract_version"`
+	Metrics                       infra.MetricsConfig `mapstructure:"metrics"`
+	Log                           infra.LogConfig     `mapstructure:"log"`
+	ChainsString                  string              `mapstructure:"chains"`
+	Chains                        map[uint64]string   `mapstructure:"-"` // This is a derived field
+	EntitlementContract           ContractConfig      `mapstructure:"entitlement_contract"`
+	TestingContract               ContractConfig      `mapstructure:"test_contract"`
+	contractVersion               ContractVersion     `mapstructure:"contract_version"`
+	TestCustomEntitlementContract ContractConfig      `mapstructure:"test_custom_entitlement_contract"`
+
 	// Blockchain configuration
 	BaseChain  node_config.ChainConfig
 	RiverChain node_config.ChainConfig

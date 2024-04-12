@@ -409,7 +409,9 @@ contract MembershipFacet is
   }
 
   // For testing
-  function requestEntitlementCheck() external override returns (bytes32) {
+  function requestEntitlementCheck(
+    IRuleEntitlement.RuleData calldata
+  ) external override returns (bytes32) {
     revert Entitlement__NotAllowed();
   }
 }

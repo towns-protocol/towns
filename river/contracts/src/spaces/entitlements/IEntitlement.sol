@@ -1,5 +1,5 @@
 //SPDX-License-Identifier: Apache-2.0
-pragma solidity ^0.8.24;
+pragma solidity ^0.8.23;
 
 interface IEntitlementBase {
   // Caller is not allowed to perform this action

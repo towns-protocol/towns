@@ -45,7 +45,9 @@ interface IEntitlementGated is IEntitlementGatedBase {
   ) external;
 
   // For testing purposes
-  function requestEntitlementCheck() external returns (bytes32);
+  function requestEntitlementCheck(
+    IRuleEntitlement.RuleData calldata
+  ) external returns (bytes32);
 
   function getRuleData(
     bytes32 transactionId

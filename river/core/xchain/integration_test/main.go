@@ -87,7 +87,7 @@ out:
 			if char == 27 || char == 'q' {
 				closeShutdown()
 			} else if char == 'c' {
-				go xc.ClientSimulator()
+				go xc.ClientSimulator(xc.ERC721)
 			}
 		case <-interrupt:
 			log.Info("Main Interrupted")

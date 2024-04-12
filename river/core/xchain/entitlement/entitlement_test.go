@@ -3,6 +3,7 @@ package entitlement
 import (
 	"context"
 	"core/xchain/config"
+	"core/xchain/examples"
 	"math/big"
 	"os"
 	"testing"
@@ -49,15 +50,6 @@ var slowFalseCheck = CheckOperation{
 }
 
 var (
-	baseSepoliaChainId = big.NewInt(84532)
-	ethSepoliaChainId  = big.NewInt(11155111)
-	// This wallet has been loaded with 25 LINK tokens on base sepolia and 50 on ethereum sepolia
-	sepoliaChainlinkWallet = common.HexToAddress("0x4BCfC6962Ab0297aF801da21216014F53B46E991")
-
-	// Contract addresses for LINK
-	baseSepoliaChainlinkContract = common.HexToAddress("0xE4aB69C077896252FAFBD49EFD26B5D171A32410")
-	ethSepoliaChainlinkContract  = common.HexToAddress("0x779877A7B0D9E8603169DdbD7836e478b4624789")
-
 	// Token decimals for LINK
 	ChainlinkExp = new(big.Int).Exp(big.NewInt(10), big.NewInt(18), nil)
 
@@ -70,42 +62,38 @@ var (
 	// addresses defined below.
 	sepoliaTestNftWallet = common.HexToAddress("0x1FDBA84c2153568bc22686B88B617CF64cdb0637")
 	// This wallet has been kept void of nfts on all testnets.
-	sepoliaTestNoNftsWallet = sepoliaChainlinkWallet
-
-	// Contract addresses for the test NFT contracts.
-	ethSepoliaTestNftContract  = common.HexToAddress("0xb088b3f2b35511A611bF2aaC13fE605d491D6C19")
-	baseSepoliaTestNftContract = common.HexToAddress("0xb088b3f2b35511A611bF2aaC13fE605d491D6C19")
+	sepoliaTestNoNftsWallet = examples.SepoliaChainlinkWallet
 )
 
 var erc20TrueCheckBaseSepolia = CheckOperation{
 	OpType:          CHECK,
 	CheckType:       CheckOperationType(ERC20),
-	ChainID:         baseSepoliaChainId,
-	ContractAddress: baseSepoliaChainlinkContract,
+	ChainID:         examples.BaseSepoliaChainId,
+	ContractAddress: examples.BaseSepoliaChainlinkContract,
 	Threshold:       TwentyChainlinkTokens,
 }
 
 var erc20FalseCheckBaseSepolia = CheckOperation{
 	OpType:          CHECK,
 	CheckType:       CheckOperationType(ERC20),
-	ChainID:         baseSepoliaChainId,
-	ContractAddress: baseSepoliaChainlinkContract,
+	ChainID:         examples.BaseSepoliaChainId,
+	ContractAddress: examples.BaseSepoliaChainlinkContract,
 	Threshold:       ThirtyChainlinkTokens,
 }
 
 var erc20TrueCheckEthereumSepolia = CheckOperation{
 	OpType:          CHECK,
 	CheckType:       CheckOperationType(ERC20),
-	ChainID:         ethSepoliaChainId,
-	ContractAddress: ethSepoliaChainlinkContract,
+	ChainID:         examples.EthSepoliaChainId,
+	ContractAddress: examples.EthSepoliaChainlinkContract,
 	Threshold:       TwentyChainlinkTokens,
 }
 
 var erc20FalseCheckEthereumSepolia = CheckOperation{
 	OpType:          CHECK,
 	CheckType:       CheckOperationType(ERC20),
-	ChainID:         ethSepoliaChainId,
-	ContractAddress: ethSepoliaChainlinkContract,
+	ChainID:         examples.EthSepoliaChainId,
+	ContractAddress: examples.EthSepoliaChainlinkContract,
 	Threshold:       SixtyChainlinkTokens,
 }
 
@@ -114,14 +102,16 @@ var nftCheckEthereumSepolia = CheckOperation{
 	OpType:          CHECK,
 	CheckType:       CheckOperationType(ERC721),
 	ChainID:         big.NewInt(11155111),
-	ContractAddress: ethSepoliaTestNftContract,
+	ContractAddress: examples.EthSepoliaTestNftContract,
+	Threshold:       big.NewInt(1),
 }
 
 var nftCheckBaseSepolia = CheckOperation{
 	OpType:          CHECK,
 	CheckType:       CheckOperationType(ERC721),
 	ChainID:         big.NewInt(84532),
-	ContractAddress: baseSepoliaTestNftContract,
+	ContractAddress: examples.BaseSepoliaTestNftContract,
+	Threshold:       big.NewInt(1),
 }
 
 func TestMain(m *testing.M) {
@@ -266,10 +256,10 @@ func TestCheckOperation(t *testing.T) {
 		// behave the same as a real chain, so these tests are here to ensure that the
 		// entitlement checks work on base and ethereum mainnets, which is where they will happen
 		// in practice.
-		{&erc20TrueCheckBaseSepolia, sepoliaChainlinkWallet, true, 0},
-		{&erc20FalseCheckBaseSepolia, sepoliaChainlinkWallet, false, 0},
-		{&erc20TrueCheckEthereumSepolia, sepoliaChainlinkWallet, true, 0},
-		{&erc20FalseCheckEthereumSepolia, sepoliaChainlinkWallet, false, 0},
+		{&erc20TrueCheckBaseSepolia, examples.SepoliaChainlinkWallet, true, 0},
+		{&erc20FalseCheckBaseSepolia, examples.SepoliaChainlinkWallet, false, 0},
+		{&erc20TrueCheckEthereumSepolia, examples.SepoliaChainlinkWallet, true, 0},
+		{&erc20FalseCheckEthereumSepolia, examples.SepoliaChainlinkWallet, false, 0},
 		{&nftCheckEthereumSepolia, sepoliaTestNftWallet, true, 0},
 		{&nftCheckBaseSepolia, sepoliaTestNftWallet, true, 0},
 		{&nftCheckEthereumSepolia, sepoliaTestNoNftsWallet, false, 0},

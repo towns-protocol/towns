@@ -4,6 +4,7 @@
 export type { IArchitect } from "./IArchitect";
 export type { IBanning } from "./IBanning";
 export type { IChannel } from "./IChannel";
+export type { ICustomEntitlement } from "./ICustomEntitlement";
 export type { IDiamond } from "./IDiamond";
 export type { IDiamondCut } from "./IDiamondCut";
 export type { IEntitlementsManager } from "./IEntitlementsManager";
@@ -28,6 +29,7 @@ export * as factories from "./factories";
 export { IArchitect__factory } from "./factories/IArchitect__factory";
 export { IBanning__factory } from "./factories/IBanning__factory";
 export { IChannel__factory } from "./factories/IChannel__factory";
+export { ICustomEntitlement__factory } from "./factories/ICustomEntitlement__factory";
 export { IDiamond__factory } from "./factories/IDiamond__factory";
 export { IDiamondCut__factory } from "./factories/IDiamondCut__factory";
 export { IEntitlementsManager__factory } from "./factories/IEntitlementsManager__factory";

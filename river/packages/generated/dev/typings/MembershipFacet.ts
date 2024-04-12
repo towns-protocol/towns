@@ -158,7 +158,7 @@ export interface MembershipFacetInterface extends utils.Interface {
     "ownerOf(uint256)": FunctionFragment;
     "postEntitlementCheckResult(bytes32,uint8)": FunctionFragment;
     "renewMembership(uint256)": FunctionFragment;
-    "requestEntitlementCheck()": FunctionFragment;
+    "requestEntitlementCheck(((uint8,uint8)[],(uint8,uint256,address,uint256)[],(uint8,uint8,uint8)[]))": FunctionFragment;
     "safeTransferFrom(address,address,uint256)": FunctionFragment;
     "safeTransferFrom(address,address,uint256,bytes)": FunctionFragment;
     "setApprovalForAll(address,bool)": FunctionFragment;
@@ -360,7 +360,7 @@ export interface MembershipFacetInterface extends utils.Interface {
   ): string;
   encodeFunctionData(
     functionFragment: "requestEntitlementCheck",
-    values?: undefined
+    values: [IRuleEntitlement.RuleDataStruct]
   ): string;
   encodeFunctionData(
     functionFragment: "safeTransferFrom(address,address,uint256)",
@@ -1132,6 +1132,7 @@ export interface MembershipFacet extends BaseContract {
     ): Promise<ContractTransaction>;
 
     requestEntitlementCheck(
+      arg0: IRuleEntitlement.RuleDataStruct,
       overrides?: Overrides & { from?: PromiseOrValue<string> }
     ): Promise<ContractTransaction>;
 
@@ -1337,6 +1338,7 @@ export interface MembershipFacet extends BaseContract {
   ): Promise<ContractTransaction>;
 
   requestEntitlementCheck(
+    arg0: IRuleEntitlement.RuleDataStruct,
     overrides?: Overrides & { from?: PromiseOrValue<string> }
   ): Promise<ContractTransaction>;
 
@@ -1541,7 +1543,10 @@ export interface MembershipFacet extends BaseContract {
       overrides?: CallOverrides
     ): Promise<void>;
 
-    requestEntitlementCheck(overrides?: CallOverrides): Promise<string>;
+    requestEntitlementCheck(
+      arg0: IRuleEntitlement.RuleDataStruct,
+      overrides?: CallOverrides
+    ): Promise<string>;
 
     "safeTransferFrom(address,address,uint256)"(
       from: PromiseOrValue<string>,
@@ -1978,6 +1983,7 @@ export interface MembershipFacet extends BaseContract {
     ): Promise<BigNumber>;
 
     requestEntitlementCheck(
+      arg0: IRuleEntitlement.RuleDataStruct,
       overrides?: Overrides & { from?: PromiseOrValue<string> }
     ): Promise<BigNumber>;
 
@@ -2202,6 +2208,7 @@ export interface MembershipFacet extends BaseContract {
     ): Promise<PopulatedTransaction>;
 
     requestEntitlementCheck(
+      arg0: IRuleEntitlement.RuleDataStruct,
       overrides?: Overrides & { from?: PromiseOrValue<string> }
     ): Promise<PopulatedTransaction>;
 

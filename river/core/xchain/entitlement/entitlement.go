@@ -64,6 +64,8 @@ type CheckOperation struct {
 	ChainID         *big.Int
 	ContractAddress common.Address
 	Threshold       *big.Int
+	ChannelId       [32]byte
+	Permission      string
 }
 
 func (c *CheckOperation) GetOpType() OperationType {

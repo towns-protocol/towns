@@ -1,0 +1,118 @@
+{
+  "compiler": {
+    "version": "0.8.24+commit.e11b9ed9"
+  },
+  "language": "Solidity",
+  "output": {
+    "abi": [
+      {
+        "inputs": [],
+        "stateMutability": "nonpayable",
+        "type": "constructor"
+      },
+      {
+        "inputs": [
+          {
+            "internalType": "address[]",
+            "name": "user",
+            "type": "address[]"
+          }
+        ],
+        "stateMutability": "view",
+        "type": "function",
+        "name": "isEntitled",
+        "outputs": [
+          {
+            "internalType": "bool",
+            "name": "",
+            "type": "bool"
+          }
+        ]
+      },
+      {
+        "inputs": [
+          {
+            "internalType": "address[]",
+            "name": "user",
+            "type": "address[]"
+          },
+          {
+            "internalType": "bool",
+            "name": "userIsEntitled",
+            "type": "bool"
+          }
+        ],
+        "stateMutability": "nonpayable",
+        "type": "function",
+        "name": "setEntitled"
+      }
+    ],
+    "devdoc": {
+      "kind": "dev",
+      "methods": {
+        "isEntitled(address[])": {
+          "params": {
+            "user": "address of the user to check"
+          },
+          "returns": {
+            "_0": "whether the user is entitled to the permission"
+          }
+        }
+      },
+      "version": 1
+    },
+    "userdoc": {
+      "kind": "user",
+      "methods": {
+        "isEntitled(address[])": {
+          "notice": "checks whether a user is has a given permission for a channel or a space"
+        }
+      },
+      "version": 1
+    }
+  },
+  "settings": {
+    "remappings": [
+      "@openzeppelin/=lib/@openzeppelin/",
+      "@prb/math/=lib/@prb/math/src/",
+      "@prb/test/=lib/@prb/test/src/",
+      "account-abstraction/=lib/account-abstraction/contracts/",
+      "base64/=lib/base64/",
+      "ds-test/=lib/ds-test/src/",
+      "forge-std/=lib/forge-std/src/",
+      "hardhat-deploy/=lib/hardhat-deploy/"
+    ],
+    "optimizer": {
+      "enabled": true,
+      "runs": 200
+    },
+    "metadata": {
+      "bytecodeHash": "none",
+      "appendCBOR": false
+    },
+    "compilationTarget": {
+      "contracts/test/mocks/MockCustomEntitlement.sol": "MockCustomEntitlement"
+    },
+    "evmVersion": "paris",
+    "libraries": {}
+  },
+  "sources": {
+    "contracts/src/crosschain/ICustomEntitlement.sol": {
+      "keccak256": "0xbb879f5fd547f6f93c898ae5d4fc5c6a738123ddac530b6a7267da9307f3e08d",
+      "urls": [
+        "bzz-raw://39e90fc649d84e0ccb48b067ea61d0a5564051d69b0f1dd59d13689625632e05",
+        "dweb:/ipfs/QmQAB6ASqGYURyoQuPqf1SaahZtfnAEyr9me3cM3iCLT1K"
+      ],
+      "license": "Apache-2.0"
+    },
+    "contracts/test/mocks/MockCustomEntitlement.sol": {
+      "keccak256": "0x407da80c05214ca941ac79775cc0a0e7def74ed6a047304e7e6acfc8fb5ac560",
+      "urls": [
+        "bzz-raw://eb33290adc09195274782d80876af65a91aa67dd04a8d8ab68fcef972f63eaad",
+        "dweb:/ipfs/QmaKxzkDsuZztEX8jXbUmtFkyQA7m8hwkPru4yWbY6mz8j"
+      ],
+      "license": "Apache-2.0"
+    }
+  },
+  "version": 1
+}

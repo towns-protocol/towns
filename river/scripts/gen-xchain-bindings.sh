@@ -33,3 +33,5 @@ generate_go() {
 generate_go IEntitlementChecker i_entitlement_checker
 generate_go IEntitlementGated i_entitlement_gated
 generate_go IEntitlement i_entitlement
+generate_go ICustomEntitlement i_custom_entitlement
+generate_go MockCustomEntitlement mock_custom_entitlement

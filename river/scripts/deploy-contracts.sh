@@ -51,6 +51,7 @@ make deploy-base-anvil type=contract contract=DeployMockNFT
 
 # Entitlement Checker
 make deploy-base-anvil type=contract contract=DeployEntitlementGatedExample
+make deploy-base-anvil type=contract contract=DeployCustomEntitlementExample
 
 # River Registry
 make deploy-river-anvil type=contract contract=DeployRiverRegistry

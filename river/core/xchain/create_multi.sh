@@ -39,9 +39,10 @@ cd "$(dirname "$0")"
 : ${RUN_ENV:?}
 : ${RIVER_ENV:?} 
 
-ENTITLMENT_CHECKER_URL="ws://localhost:8545"
-ENTITLMENT_CHECKER_ADDRESS=$(jq -r '.address' ../../packages/generated/deployments/${RIVER_ENV}/base/addresses/entitlementChecker.json)
+ENTITLEMENT_CHECKER_URL="ws://localhost:8545"
+ENTITLEMENT_CHECKER_ADDRESS=$(jq -r '.address' ../../packages/generated/deployments/${RIVER_ENV}/base/addresses/entitlementChecker.json)
 ENTITLMENT_TEST_ADDRESS=$(jq -r '.address' ../../packages/generated/deployments/${RIVER_ENV}/base/addresses/entitlementGatedExample.json)
+CUSTOM_ENTITLEMENT_TEST_ADDRESS=$(jq -r '.address' ../../packages/generated/deployments/${RIVER_ENV}/base/addresses/customEntitlementExample.json)
 BASE_CHAIN_ID=31337
 
 make
@@ -79,12 +80,16 @@ do
     echo "Creating instance_${i}"
     
     yq eval ".metrics.port = \"$METRICS_PORT\"" -i "${INSTANCE_DIR}/config/config.yaml"
-    yq eval ".entitlement_contract.url = \"$ENTITLMENT_CHECKER_URL\"" -i "${INSTANCE_DIR}/config/config.yaml"
-    yq eval ".entitlement_contract.address = \"$ENTITLMENT_CHECKER_ADDRESS\"" -i "${INSTANCE_DIR}/config/config.yaml"
+    yq eval ".entitlement_contract.url = \"$ENTITLEMENT_CHECKER_URL\"" -i "${INSTANCE_DIR}/config/config.yaml"
+    yq eval ".entitlement_contract.address = \"$ENTITLEMENT_CHECKER_ADDRESS\"" -i "${INSTANCE_DIR}/config/config.yaml"
     yq eval ".entitlement_contract.chainId = \"$BASE_CHAIN_ID\"" -i "${INSTANCE_DIR}/config/config.yaml"
-    yq eval ".test_contract.url = \"$ENTITLMENT_CHECKER_URL\"" -i "${INSTANCE_DIR}/config/config.yaml"
-    yq eval ".test_contract.address = \"$ENTITLMENT_TEST_ADDRESS\"" -i "${INSTANCE_DIR}/config/config.yaml"
+    yq eval ".test_contract.url = \"$ENTITLEMENT_CHECKER_URL\"" -i "${INSTANCE_DIR}/config/config.yaml"
+    yq eval ".test_contract.address = \"$ENTITLEMENT_TEST_ADDRESS\"" -i "${INSTANCE_DIR}/config/config.yaml"
     yq eval ".test_contract.chainId = \"$BASE_CHAIN_ID\"" -i "${INSTANCE_DIR}/config/config.yaml"
+    yq eval ".test_custom_entitlement_contract.url = \"$ENTITLEMENT_CHECKER_URL\"" -i "${INSTANCE_DIR}/config/config.yaml"
+    yq eval ".test_custom_entitlement_contract.address = \"$CUSTOM_ENTITLEMENT_TEST_ADDRESS\"" -i "${INSTANCE_DIR}/config/config.yaml"
+    yq eval ".test_custom_entitlement_contract.chainId = \"$BASE_CHAIN_ID\"" -i "${INSTANCE_DIR}/config/config.yaml"
+
     yq eval ".log.level = \"debug\"" -i "${INSTANCE_DIR}/config/config.yaml"
     
     pushd "${INSTANCE_DIR}"

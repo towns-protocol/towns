@@ -5,8 +5,8 @@ import (
 	"core/xchain/bindings/erc20"
 	"core/xchain/bindings/erc721"
 	"core/xchain/config"
+	"core/xchain/contracts"
 	"fmt"
-	"math/big"
 	"time"
 
 	"github.com/ethereum/go-ethereum/accounts/abi/bind"
@@ -24,7 +24,7 @@ func evaluateCheckOperation(
 	case CheckOperationType(MOCK):
 		return evaluateMockOperation(ctx, op)
 	case CheckOperationType(ISENTITLED):
-		return evaluateIsEntitledOperation(ctx, op)
+		return evaluateIsEntitledOperation(ctx, op, callerAddress)
 	case CheckOperationType(ERC20):
 		return evaluateErc20Operation(ctx, op, callerAddress)
 	case CheckOperationType(ERC721):
@@ -58,24 +58,50 @@ func evaluateMockOperation(ctx context.Context,
 	}
 }
 
-func evaluateIsEntitledOperation(ctx context.Context,
+func evaluateIsEntitledOperation(
+	ctx context.Context,
 	op *CheckOperation,
+	callerAddress *common.Address,
 ) (bool, error) {
-	delay := int(op.Threshold.Int64())
-
-	result := awaitTimeout(ctx, func() error {
-		delayDuration := time.Duration(delay*1000) * time.Millisecond
-		time.Sleep(delayDuration) // simulate a long-running operation
-		return nil
-	})
-	if result != nil {
-		return false, result
+	log := dlog.FromCtx(ctx).With("function", "evaluateErc20Operation")
+	url, ok := getChainRPCUrl(op.ChainID.Uint64())
+	if !ok {
+		log.Error("Chain ID not found", "chainID", op.ChainID)
+		return false, fmt.Errorf("evaluateErc20Operation: Chain ID %v not found", op.ChainID)
 	}
-	if op.ChainID.Sign() != 0 {
-		return true, nil
-	} else {
-		return false, nil
+	client, err := ethclient.Dial(url)
+	if err != nil {
+		log.Error("Failed to dial", "err", err)
+		return false, err
 	}
+	customEntitlementChecker, err := contracts.NewICustomEntitlement(op.ContractAddress, client)
+	if err != nil {
+		log.Error("Failed to instantiate a CustomEntitlement contract from supplied contract address",
+			"err", err,
+			"contractAddress", op.ContractAddress,
+			"chainId", op.ChainID,
+			"chainUrl", url,
+		)
+		return false, err
+	}
+	// Check if the caller is entitled
+	isEntitled, err := customEntitlementChecker.IsEntitled(
+		&bind.CallOpts{Context: ctx},
+		[]common.Address{*callerAddress},
+	)
+	if err != nil {
+		log.Error("Failed to check if caller is entitled",
+			"error", err,
+			"contractAddress", op.ContractAddress,
+			"callerAddress", callerAddress,
+			"channelId", op.ChannelId,
+			"permission", op.Permission,
+			"chainId", op.ChainID,
+			"chainUrl", url,
+		)
+		return false, err
+	}
+	return isEntitled, nil
 }
 
 func getChainRPCUrl(chainId uint64) (string, bool) {
@@ -178,25 +204,11 @@ func evaluateErc721Operation(
 		return false, err
 	}
 	// Require the caller to own at least one NFT in this contract.
-	return tokenBalance.Cmp(big.NewInt(0)) > 0, nil
+	return tokenBalance.Cmp(op.Threshold) >= 0, nil
 }
 
 func evaluateErc1155Operation(ctx context.Context,
 	op *CheckOperation,
 ) (bool, error) {
-	delay := int(op.Threshold.Int64())
-
-	result := awaitTimeout(ctx, func() error {
-		delayDuration := time.Duration(delay*1000) * time.Millisecond
-		time.Sleep(delayDuration) // simulate a long-running operation
-		return nil
-	})
-	if result != nil {
-		return false, result
-	}
-	if op.ChainID.Sign() != 0 {
-		return true, nil
-	} else {
-		return false, nil
-	}
+	return false, fmt.Errorf("ERC1155 not implemented")
 }

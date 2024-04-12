@@ -4,10 +4,10 @@ pragma solidity ^0.8.23;
 // interfaces
 import {IArchitectBase} from "contracts/src/factory/facets/architect/IArchitect.sol";
 import {IMembershipBase} from "contracts/src/spaces/facets/membership/IMembership.sol";
-import {RuleEntitlementUtil} from "contracts/src/crosschain/RuleEntitlementUtil.sol";
 import {Permissions} from "contracts/src/spaces/facets/Permissions.sol";
 
 // libraries
+import {RuleEntitlementUtil} from "contracts/test/crosschain/RuleEntitlementUtil.sol";
 
 // contracts
 
