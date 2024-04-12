@@ -6,6 +6,10 @@ export type TokenData = {
     address: Address
     type: TokenType
     quantity: number | undefined
+    displayNft?: {
+        tokenId?: string | null
+        name?: string | null
+    }
 }
 
 export type TokenDataWithChainId = {

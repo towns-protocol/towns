@@ -49,12 +49,7 @@ make deploy-base-anvil type=contract contract=DeploySpaceFactory
 make deploy-base-anvil type=contract contract=DeployMember
 make deploy-base-anvil type=contract contract=DeployMockNFT
 
-# Wallet Link
-make deploy-base-anvil type=contract contract=DeployMultiInit
-make deploy-base-anvil type=contract contract=DeployWalletLink
-
 # Entitlement Checker
-make deploy-base-anvil type=facet contract=DeployEntitlementChecker
 make deploy-base-anvil type=contract contract=DeployEntitlementGatedExample
 
 # River Registry

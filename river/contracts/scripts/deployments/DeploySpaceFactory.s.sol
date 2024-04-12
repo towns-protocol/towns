@@ -10,34 +10,28 @@ import {DiamondDeployer} from "../common/DiamondDeployer.s.sol";
 
 // contracts
 import {Diamond} from "contracts/src/diamond/Diamond.sol";
-import {DiamondCutFacet} from "contracts/src/diamond/facets/cut/DiamondCutFacet.sol";
-import {DiamondLoupeFacet} from "contracts/src/diamond/facets/loupe/DiamondLoupeFacet.sol";
-import {IntrospectionFacet} from "contracts/src/diamond/facets/introspection/IntrospectionFacet.sol";
 
 import {Architect} from "contracts/src/factory/facets/architect/Architect.sol";
 import {ProxyManager} from "contracts/src/diamond/proxy/manager/ProxyManager.sol";
-import {OwnableFacet} from "contracts/src/diamond/facets/ownable/OwnableFacet.sol";
 import {PausableFacet} from "contracts/src/diamond/facets/pausable/PausableFacet.sol";
 import {PlatformRequirementsFacet} from "contracts/src/factory/facets/platform/requirements/PlatformRequirementsFacet.sol";
 import {PrepayFacet} from "contracts/src/factory/facets/prepay/PrepayFacet.sol";
 
-// diamond helpers
-import {DiamondCutHelper} from "contracts/test/diamond/cut/DiamondCutSetup.sol";
-import {DiamondLoupeHelper} from "contracts/test/diamond/loupe/DiamondLoupeSetup.sol";
-import {IntrospectionHelper} from "contracts/test/diamond/introspection/IntrospectionSetup.sol";
-
 // space helpers
-import {ArchitectHelper} from "contracts/test/spaces/architect/ArchitectHelper.sol";
 import {ProxyManagerHelper} from "contracts/test/diamond/proxy/ProxyManagerSetup.sol";
-import {OwnableHelper} from "contracts/test/diamond/ownable/OwnableSetup.sol";
 import {PausableHelper} from "contracts/test/diamond/pausable/PausableSetup.sol";
 import {PlatformRequirementsHelper} from "contracts/test/spaces/platform/requirements/PlatformRequirementsHelper.sol";
 import {PrepayHelper} from "contracts/test/spaces/prepay/PrepayHelper.sol";
-import {PricingModulesHelper} from "contracts/test/spaces/architect/pricing/PricingModulesHelper.sol";
-
 import {MultiInit} from "contracts/src/diamond/initializers/MultiInit.sol";
 
 // deployments
+import {DeployOwnable} from "contracts/scripts/deployments/facets/DeployOwnable.s.sol";
+import {DeployDiamondCut} from "contracts/scripts/deployments/facets/DeployDiamondCut.s.sol";
+import {DeployDiamondLoupe} from "contracts/scripts/deployments/facets/DeployDiamondLoupe.s.sol";
+import {DeployIntrospection} from "contracts/scripts/deployments/facets/DeployIntrospection.s.sol";
+import {DeployMetadata} from "contracts/scripts/deployments/facets/DeployMetadata.s.sol";
+import {DeployArchitect} from "contracts/scripts/deployments/facets/DeployArchitect.s.sol";
+
 import {DeployUserEntitlement} from "contracts/scripts/deployments/DeployUserEntitlement.s.sol";
 import {DeployMultiInit} from "contracts/scripts/deployments/DeployMultiInit.s.sol";
 import {DeploySpace} from "contracts/scripts/deployments/DeploySpace.s.sol";
@@ -50,7 +44,17 @@ import {DeployPricingModules} from "contracts/scripts/deployments/facets/DeployP
 import {DeployEntitlementChecker} from "contracts/scripts/deployments/facets/DeployEntitlementChecker.s.sol";
 
 contract DeploySpaceFactory is DiamondDeployer {
+  // diamond helpers
+  DeployOwnable ownableHelper = new DeployOwnable();
+  DeployDiamondCut diamondCutHelper = new DeployDiamondCut();
+  DeployDiamondLoupe diamondLoupeHelper = new DeployDiamondLoupe();
+  DeployIntrospection introspectionHelper = new DeployIntrospection();
+  DeployMetadata metadataHelper = new DeployMetadata();
+  DeployArchitect architectHelper = new DeployArchitect();
+  DeployPricingModules pricingModulesHelper = new DeployPricingModules();
   DeployMultiInit deployMultiInit = new DeployMultiInit();
+
+  // dependencies
   DeploySpace deploySpace = new DeploySpace();
   DeploySpaceOwner deploySpaceOwner = new DeploySpaceOwner();
   DeployUserEntitlement deployUserEntitlement = new DeployUserEntitlement();
@@ -58,40 +62,27 @@ contract DeploySpaceFactory is DiamondDeployer {
   DeployWalletLink deployWalletLink = new DeployWalletLink();
   DeployTieredLogPricing deployTieredLogPricing = new DeployTieredLogPricing();
   DeployFixedPricing deployFixedPricing = new DeployFixedPricing();
-  DeployPricingModules deployPricingModules = new DeployPricingModules();
+
   DeployEntitlementChecker deployEntitlementChecker =
     new DeployEntitlementChecker();
 
-  // diamond helpers
-  DiamondCutHelper cutHelper = new DiamondCutHelper();
-  DiamondLoupeHelper loupeHelper = new DiamondLoupeHelper();
-  IntrospectionHelper introspectionHelper = new IntrospectionHelper();
-
   // helpers
-  ArchitectHelper architectHelper = new ArchitectHelper();
-  OwnableHelper ownableHelper = new OwnableHelper();
   PausableHelper pausableHelper = new PausableHelper();
   PlatformRequirementsHelper platformReqsHelper =
     new PlatformRequirementsHelper();
   PrepayHelper prepayHelper = new PrepayHelper();
   ProxyManagerHelper proxyManagerHelper = new ProxyManagerHelper();
-  PricingModulesHelper pricingModulesHelper = new PricingModulesHelper();
-
-  uint256 totalFacets = 10;
-  uint256 totalInit = 10;
-
-  address[] initAddresses = new address[](totalInit);
-  bytes[] initDatas = new bytes[](totalInit);
 
   // diamond addresses
+  address ownable;
   address diamondCut;
   address diamondLoupe;
   address introspection;
+  address metadata;
 
   // space addresses
   address architect;
   address proxyManager;
-  address ownable;
   address pausable;
   address platformReqs;
   address prepay;
@@ -133,111 +124,105 @@ contract DeploySpaceFactory is DiamondDeployer {
     fixedPricing = deployFixedPricing.deploy();
 
     // pricing modules facet
-    address pricingModulesFacet = deployPricingModules.deploy();
+    address pricingModulesFacet = pricingModulesHelper.deploy();
     address[] memory pricingModules = new address[](2);
     pricingModules[0] = tieredLogPricing;
     pricingModules[1] = fixedPricing;
 
-    vm.startBroadcast(deployerPK);
-    diamondCut = address(new DiamondCutFacet());
-    diamondLoupe = address(new DiamondLoupeFacet());
-    introspection = address(new IntrospectionFacet());
+    // diamond facets
+    ownable = ownableHelper.deploy();
+    diamondCut = diamondCutHelper.deploy();
+    diamondLoupe = diamondLoupeHelper.deploy();
+    introspection = introspectionHelper.deploy();
+    metadata = metadataHelper.deploy();
+    architect = architectHelper.deploy();
 
-    architect = address(new Architect());
+    vm.startBroadcast(deployerPK);
     proxyManager = address(new ProxyManager());
-    ownable = address(new OwnableFacet());
     pausable = address(new PausableFacet());
     platformReqs = address(new PlatformRequirementsFacet());
     prepay = address(new PrepayFacet());
     vm.stopBroadcast();
 
-    IDiamond.FacetCut[] memory cuts = new IDiamond.FacetCut[](totalFacets);
-
-    cuts[index++] = cutHelper.makeCut(diamondCut, IDiamond.FacetCutAction.Add);
-    cuts[index++] = loupeHelper.makeCut(
+    addFacet(
+      diamondCutHelper.makeCut(diamondCut, IDiamond.FacetCutAction.Add),
+      diamondCut,
+      diamondCutHelper.makeInitData("")
+    );
+    addFacet(
+      diamondLoupeHelper.makeCut(diamondLoupe, IDiamond.FacetCutAction.Add),
       diamondLoupe,
-      IDiamond.FacetCutAction.Add
+      diamondLoupeHelper.makeInitData("")
     );
-    cuts[index++] = introspectionHelper.makeCut(
+    addFacet(
+      introspectionHelper.makeCut(introspection, IDiamond.FacetCutAction.Add),
       introspection,
-      IDiamond.FacetCutAction.Add
+      introspectionHelper.makeInitData("")
     );
-    cuts[index++] = architectHelper.makeCut(
+    addFacet(
+      metadataHelper.makeCut(metadata, IDiamond.FacetCutAction.Add),
+      metadata,
+      metadataHelper.makeInitData(bytes32("SpaceFactory"), "")
+    );
+    addFacet(
+      ownableHelper.makeCut(ownable, IDiamond.FacetCutAction.Add),
+      ownable,
+      ownableHelper.makeInitData(deployer)
+    );
+    addFacet(
+      architectHelper.makeCut(architect, IDiamond.FacetCutAction.Add),
       architect,
-      IDiamond.FacetCutAction.Add
+      architectHelper.makeInitData(
+        spaceOwner, // spaceOwner
+        userEntitlement, // userEntitlement
+        ruleEntitlement, // ruleEntitlement
+        walletLink, // walletLink
+        entitlementChecker // entitlementChecker
+      )
     );
-    cuts[index++] = proxyManagerHelper.makeCut(
+    addFacet(
+      proxyManagerHelper.makeCut(proxyManager, IDiamond.FacetCutAction.Add),
       proxyManager,
-      IDiamond.FacetCutAction.Add
+      proxyManagerHelper.makeInitData(space)
     );
-    cuts[index++] = ownableHelper.makeCut(ownable, IDiamond.FacetCutAction.Add);
-    cuts[index++] = pausableHelper.makeCut(
+    addFacet(
+      pausableHelper.makeCut(pausable, IDiamond.FacetCutAction.Add),
       pausable,
-      IDiamond.FacetCutAction.Add
+      pausableHelper.makeInitData("")
     );
-    cuts[index++] = platformReqsHelper.makeCut(
+    addFacet(
+      platformReqsHelper.makeCut(platformReqs, IDiamond.FacetCutAction.Add),
       platformReqs,
-      IDiamond.FacetCutAction.Add
+      platformReqsHelper.makeInitData(
+        deployer, // feeRecipient
+        500, // membershipBps 5%
+        0.005 ether, // membershipFee
+        1_000, // membershipFreeAllocation
+        365 days // membershipDuration
+      )
     );
-    cuts[index++] = prepayHelper.makeCut(prepay, IDiamond.FacetCutAction.Add);
-    cuts[index++] = pricingModulesHelper.makeCut(
+    addFacet(
+      prepayHelper.makeCut(prepay, IDiamond.FacetCutAction.Add),
+      prepay,
+      prepayHelper.makeInitData("")
+    );
+    addFacet(
+      pricingModulesHelper.makeCut(
+        pricingModulesFacet,
+        IDiamond.FacetCutAction.Add
+      ),
       pricingModulesFacet,
-      IDiamond.FacetCutAction.Add
-    );
-
-    _resetIndex();
-
-    initAddresses[index++] = diamondCut;
-    initAddresses[index++] = diamondLoupe;
-    initAddresses[index++] = introspection;
-
-    initAddresses[index++] = architect;
-    initAddresses[index++] = proxyManager;
-    initAddresses[index++] = ownable;
-    initAddresses[index++] = pausable;
-    initAddresses[index++] = platformReqs;
-    initAddresses[index++] = prepay;
-    initAddresses[index++] = pricingModulesFacet;
-
-    _resetIndex();
-
-    initDatas[index++] = cutHelper.makeInitData("");
-    initDatas[index++] = loupeHelper.makeInitData("");
-    initDatas[index++] = introspectionHelper.makeInitData("");
-    initDatas[index++] = abi.encodeWithSelector(
-      architectHelper.initializer(),
-      spaceOwner, // spaceOwner
-      userEntitlement, // userEntitlement
-      ruleEntitlement, // ruleEntitlement
-      walletLink, // walletLink
-      entitlementChecker // entitlementChecker
-    );
-    initDatas[index++] = proxyManagerHelper.makeInitData(space);
-
-    initDatas[index++] = ownableHelper.makeInitData(deployer);
-    initDatas[index++] = pausableHelper.makeInitData("");
-    initDatas[index++] = abi.encodeWithSelector(
-      platformReqsHelper.initializer(),
-      deployer, // feeRecipient
-      500, // membershipBps 5%
-      0.005 ether, // membershipFee
-      1_000, // membershipFreeAllocation
-      365 days // membershipDuration
-    );
-    initDatas[index++] = prepayHelper.makeInitData("");
-    initDatas[index++] = abi.encodeWithSelector(
-      pricingModulesHelper.initializer(),
-      pricingModules
+      pricingModulesHelper.makeInitData(pricingModules)
     );
 
     return
       Diamond.InitParams({
-        baseFacets: cuts,
+        baseFacets: baseFacets(),
         init: multiInit,
         initData: abi.encodeWithSelector(
           MultiInit.multiInit.selector,
-          initAddresses,
-          initDatas
+          _initAddresses,
+          _initDatas
         )
       });
   }

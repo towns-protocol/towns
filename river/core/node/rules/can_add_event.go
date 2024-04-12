@@ -50,6 +50,11 @@ type aeMediaPayloadChunkRules struct {
 	chunk  *MediaPayload_Chunk
 }
 
+type aeEnsAddressRules struct {
+	params  *aeParams
+	address *MemberPayload_EnsAddress
+}
+
 /*
 *
 * CanAddEvent
@@ -367,6 +372,15 @@ func (params *aeParams) canAddMemberPayload(payload *StreamEvent_MemberPayload) 
 	case *MemberPayload_Username:
 		return aeBuilder().
 			check(params.creatorIsMember)
+	case *MemberPayload_EnsAddress:
+		ru := &aeEnsAddressRules{
+			params:  params,
+			address: content,
+		}
+		return aeBuilder().
+			check(params.creatorIsMember).
+			check(ru.validEnsAddress)
+
 	default:
 		return aeBuilder().
 			fail(unknownContentType(content))
@@ -1034,6 +1048,18 @@ func (ru *aeMediaPayloadChunkRules) canAddMediaChunk() (bool, error) {
 			ru.params.cfg.Media.MaxChunkSize)
 	}
 
+	return true, nil
+}
+
+func (ru *aeEnsAddressRules) validEnsAddress() (bool, error) {
+	if ru.address == nil {
+		return false, RiverError(Err_INVALID_ARGUMENT, "event is not an ENS address event")
+	}
+
+	// Allow users to clear their ENS Address or set a valid address
+	if len(ru.address.EnsAddress) != 0 && len(ru.address.EnsAddress) != 20 {
+		return false, RiverError(Err_INVALID_ARGUMENT, "Invalid ENS address length")
+	}
 	return true, nil
 }
 

@@ -173,18 +173,28 @@ function useLinkTransactionBuilder() {
 
 export function useLinkedWallets({ enabled = true } = {}) {
     const { loggedInWalletAddress } = useConnectivity()
+    return useLinkedWalletsForWallet({ walletAddress: loggedInWalletAddress, enabled })
+}
+
+export function useLinkedWalletsForWallet({
+    walletAddress,
+    enabled,
+}: {
+    walletAddress: string | undefined
+    enabled?: boolean
+}) {
     const { clientSingleton } = useTownsClient()
     return useQuery(
-        blockchainKeys.linkedWallets(loggedInWalletAddress ?? 'waitingForLoggedUser'),
+        blockchainKeys.linkedWallets(walletAddress ?? 'waitingForLoggedUser'),
         () => {
-            if (!clientSingleton || !loggedInWalletAddress) {
+            if (!clientSingleton || !walletAddress) {
                 console.error('useLinkedWallets - no clientSingleton or logged in wallet address')
                 return []
             }
-            return clientSingleton.getLinkedWallets(loggedInWalletAddress)
+            return clientSingleton.getLinkedWallets(walletAddress)
         },
         {
-            enabled: enabled && !!loggedInWalletAddress && !!clientSingleton,
+            enabled: enabled && !!walletAddress && !!clientSingleton,
             // b/c this query is only invalidated if the transaction hooks await the transaction to be mined (component could be unmounted before that)
             // we need to refetch on mount to make sure we have the latest data
             refetchOnMount: true,

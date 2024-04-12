@@ -267,6 +267,20 @@ export const make_MemberPayload_Username = (
     }
 }
 
+export const make_MemberPayload_EnsAddress = (
+    value: Uint8Array,
+): PlainMessage<StreamEvent>['payload'] => {
+    return {
+        case: 'memberPayload',
+        value: {
+            content: {
+                case: 'ensAddress',
+                value: value,
+            },
+        },
+    }
+}
+
 export const make_ChannelMessage_Post_Content_Text = (
     body: string,
     mentions?: PlainMessage<ChannelMessage_Post_Mention>[],

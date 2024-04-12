@@ -11,15 +11,26 @@ import {FacetHelper, FacetTest} from "contracts/test/diamond/Facet.t.sol";
 import {ProxyManager} from "contracts/src/diamond/proxy/manager/ProxyManager.sol";
 
 // helpers
-import {OwnableHelper} from "contracts/test/diamond/ownable/OwnableSetup.sol";
-import {DiamondLoupeHelper} from "contracts/test/diamond/loupe/DiamondLoupeSetup.sol";
+import {DeployOwnable} from "contracts/scripts/deployments/facets/DeployOwnable.s.sol";
+import {DeployDiamondCut} from "contracts/scripts/deployments/facets/DeployDiamondCut.s.sol";
+import {DeployDiamondLoupe} from "contracts/scripts/deployments/facets/DeployDiamondLoupe.s.sol";
+import {DeployIntrospection} from "contracts/scripts/deployments/facets/DeployIntrospection.s.sol";
 import {MultiInit} from "contracts/src/diamond/initializers/MultiInit.sol";
 
 // mocks
 import {MockDiamondHelper} from "contracts/test/mocks/MockDiamond.sol";
 import {MockOwnableManagedProxy} from "contracts/test/mocks/MockOwnableManagedProxy.sol";
 
+// debuggging
+
 abstract contract ProxyManagerSetup is FacetTest {
+  DeployDiamondCut diamondCutHelper = new DeployDiamondCut();
+  DeployDiamondLoupe diamondLoupeHelper = new DeployDiamondLoupe();
+  DeployIntrospection introspectionHelper = new DeployIntrospection();
+  DeployOwnable ownableHelper = new DeployOwnable();
+  ProxyManagerHelper proxyManagerHelper = new ProxyManagerHelper();
+  MockDiamondHelper mockDiamondHelper = new MockDiamondHelper();
+
   address internal proxyOwner;
   address internal proxyTokenOwner;
 
@@ -48,64 +59,61 @@ abstract contract ProxyManagerSetup is FacetTest {
     override
     returns (Diamond.InitParams memory)
   {
-    ProxyManagerHelper proxyManagerHelper = new ProxyManagerHelper();
-    OwnableHelper ownableHelper = new OwnableHelper();
-    DiamondLoupeHelper diamondLoupeHelper = new DiamondLoupeHelper();
-
     MultiInit multiInit = new MultiInit();
 
     // Create a mock implementation for the proxy manager to use
     // The owner of the implementation is the deployer
-    MockDiamondHelper mockDiamondHelper = new MockDiamondHelper();
     implementation = mockDiamondHelper.createDiamond(deployer);
 
-    // Create the facets for the proxy manager
-    // The owner of the proxy manager is the deployer
-    IDiamond.FacetCut[] memory cuts = new IDiamond.FacetCut[](3);
-    cuts[0] = proxyManagerHelper.makeCut(IDiamond.FacetCutAction.Add);
-    cuts[1] = ownableHelper.makeCut(IDiamond.FacetCutAction.Add);
-    cuts[2] = diamondLoupeHelper.makeCut(IDiamond.FacetCutAction.Add);
+    address cut = diamondCutHelper.deploy();
+    address loupe = diamondLoupeHelper.deploy();
+    address introspection = introspectionHelper.deploy();
+    address ownable = ownableHelper.deploy();
+    address manager = address(new ProxyManager());
 
-    address[] memory addresses = new address[](3);
-    bytes[] memory payloads = new bytes[](3);
-
-    addresses[0] = proxyManagerHelper.facet();
-    addresses[1] = ownableHelper.facet();
-    addresses[2] = diamondLoupeHelper.facet();
-
-    payloads[0] = proxyManagerHelper.makeInitData(address(implementation));
-    payloads[1] = ownableHelper.makeInitData(deployer);
-    payloads[2] = diamondLoupeHelper.makeInitData("");
+    addFacet(
+      diamondCutHelper.makeCut(cut, IDiamond.FacetCutAction.Add),
+      cut,
+      diamondCutHelper.makeInitData("")
+    );
+    addFacet(
+      diamondLoupeHelper.makeCut(loupe, IDiamond.FacetCutAction.Add),
+      loupe,
+      diamondLoupeHelper.makeInitData("")
+    );
+    addFacet(
+      introspectionHelper.makeCut(introspection, IDiamond.FacetCutAction.Add),
+      introspection,
+      introspectionHelper.makeInitData("")
+    );
+    addFacet(
+      proxyManagerHelper.makeCut(manager, IDiamond.FacetCutAction.Add),
+      manager,
+      proxyManagerHelper.makeInitData(address(implementation))
+    );
+    addFacet(
+      ownableHelper.makeCut(ownable, IDiamond.FacetCutAction.Add),
+      ownable,
+      ownableHelper.makeInitData(deployer)
+    );
 
     return
       Diamond.InitParams({
-        baseFacets: cuts,
+        baseFacets: baseFacets(),
         init: address(multiInit),
         initData: abi.encodeWithSelector(
-          multiInit.multiInit.selector,
-          addresses,
-          payloads
+          MultiInit.multiInit.selector,
+          _initAddresses,
+          _initDatas
         )
       });
   }
 }
 
 contract ProxyManagerHelper is FacetHelper {
-  ProxyManager internal manager;
-
   constructor() {
-    manager = new ProxyManager();
-  }
-
-  function facet() public view override returns (address) {
-    return address(manager);
-  }
-
-  function selectors() public pure override returns (bytes4[] memory) {
-    bytes4[] memory selectors_ = new bytes4[](2);
-    selectors_[0] = ProxyManager.getImplementation.selector;
-    selectors_[1] = ProxyManager.setImplementation.selector;
-    return selectors_;
+    addSelector(ProxyManager.getImplementation.selector);
+    addSelector(ProxyManager.setImplementation.selector);
   }
 
   function initializer() public pure override returns (bytes4) {

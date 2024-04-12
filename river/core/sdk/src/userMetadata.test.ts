@@ -3,7 +3,14 @@
  */
 
 import { Client } from './client'
-import { makeDonePromise, makeTestClient, makeUniqueSpaceStreamId, waitFor } from './util.test'
+import { userIdFromAddress } from './id'
+import {
+    makeDonePromise,
+    makeRandomUserAddress,
+    makeTestClient,
+    makeUniqueSpaceStreamId,
+    waitFor,
+} from './util.test'
 
 describe('userMetadataTests', () => {
     let bobsClient: Client
@@ -357,5 +364,182 @@ describe('userMetadataTests', () => {
             const streamView = client.streams.get(streamId)!.view
             expect(streamView.getUserMetadata().usernames.plaintextUsernames).toEqual(expected)
         }
+    })
+
+    test('clientCanSetEnsAddressesInSpace', async () => {
+        await expect(bobsClient.initializeUser()).toResolve()
+        bobsClient.startSync()
+        await expect(alicesClient.initializeUser()).toResolve()
+        alicesClient.startSync()
+
+        const streamId = makeUniqueSpaceStreamId()
+        await bobsClient.createSpace(streamId)
+        await bobsClient.waitForStream(streamId)
+        await bobsClient.inviteUser(streamId, alicesClient.userId)
+        await expect(alicesClient.joinStream(streamId)).toResolve()
+        await alicesClient.waitForStream(streamId)
+
+        const bobPromise = makeDonePromise()
+        bobsClient.on('streamEnsAddressUpdated', (updatedStreamId, userId) => {
+            expect(updatedStreamId).toBe(streamId)
+            expect(userId).toBe(bobsClient.userId)
+            bobPromise.done()
+        })
+
+        const alicePromise = makeDonePromise()
+        alicesClient.on('streamEnsAddressUpdated', (updatedStreamId, userId) => {
+            expect(updatedStreamId).toBe(streamId)
+            expect(userId).toBe(bobsClient.userId)
+            alicePromise.done()
+        })
+
+        const ensAddress = makeRandomUserAddress()
+        await bobsClient.setEnsAddress(streamId, ensAddress)
+
+        await bobPromise.expectToSucceed()
+        await alicePromise.expectToSucceed()
+
+        const expected = new Map<string, string>([
+            [bobsClient.userId, userIdFromAddress(ensAddress)],
+        ])
+        for (const client of [bobsClient, alicesClient]) {
+            const streamView = client.streams.get(streamId)!.view
+            expect(streamView.getUserMetadata().ensAddresses.confirmedEnsAddresses).toEqual(
+                expected,
+            )
+        }
+    })
+
+    test('clientCanSetEnsAddressesInDM', async () => {
+        await expect(bobsClient.initializeUser()).toResolve()
+        bobsClient.startSync()
+        await expect(alicesClient.initializeUser()).toResolve()
+        alicesClient.startSync()
+
+        const { streamId } = await bobsClient.createDMChannel(alicesClient.userId)
+        const stream = await bobsClient.waitForStream(streamId)
+        await alicesClient.waitForStream(streamId)
+        await expect(alicesClient.joinStream(streamId)).toResolve()
+        await waitFor(() => {
+            expect(stream.view.getMembers().membership.joinedUsers).toEqual(
+                new Set([bobsClient.userId, alicesClient.userId]),
+            )
+        })
+
+        const bobPromise = makeDonePromise()
+        bobsClient.on('streamEnsAddressUpdated', (updatedStreamId, userId) => {
+            expect(updatedStreamId).toBe(streamId)
+            expect(userId).toBe(bobsClient.userId)
+            bobPromise.done()
+        })
+
+        const alicePromise = makeDonePromise()
+        alicesClient.on('streamEnsAddressUpdated', (updatedStreamId, userId) => {
+            expect(updatedStreamId).toBe(streamId)
+            expect(userId).toBe(bobsClient.userId)
+            alicePromise.done()
+        })
+
+        const ensAddress = makeRandomUserAddress()
+        await expect(bobsClient.setEnsAddress(streamId, ensAddress)).toResolve()
+        const expected = new Map<string, string>([
+            [bobsClient.userId, userIdFromAddress(ensAddress)],
+        ])
+
+        await bobPromise.expectToSucceed()
+        await alicePromise.expectToSucceed()
+
+        for (const client of [bobsClient, alicesClient]) {
+            const streamView = client.streams.get(streamId)?.view
+            expect(streamView).toBeDefined()
+            const ensAddresses = streamView!.getUserMetadata().ensAddresses.confirmedEnsAddresses
+            expect(ensAddresses).toEqual(expected)
+        }
+    })
+
+    test('clientCanSetEnsAddressesInGDM', async () => {
+        await expect(bobsClient.initializeUser()).toResolve()
+        bobsClient.startSync()
+        await expect(alicesClient.initializeUser()).toResolve()
+        alicesClient.startSync()
+        await expect(evesClient.initializeUser()).toResolve()
+        evesClient.startSync()
+
+        const { streamId } = await bobsClient.createGDMChannel([
+            alicesClient.userId,
+            evesClient.userId,
+        ])
+        const stream = await bobsClient.waitForStream(streamId)
+        await expect(alicesClient.joinStream(streamId)).toResolve()
+        await expect(evesClient.joinStream(streamId)).toResolve()
+        await waitFor(() => {
+            expect(stream.view.getMembers().membership.joinedUsers).toEqual(
+                new Set([bobsClient.userId, alicesClient.userId, evesClient.userId]),
+            )
+        })
+
+        const bobPromise = makeDonePromise()
+        bobsClient.on('streamEnsAddressUpdated', (updatedStreamId, userId) => {
+            expect(updatedStreamId).toBe(streamId)
+            expect(userId).toBe(bobsClient.userId)
+            bobPromise.done()
+        })
+
+        const alicePromise = makeDonePromise()
+        alicesClient.on('streamEnsAddressUpdated', (updatedStreamId, userId) => {
+            expect(updatedStreamId).toBe(streamId)
+            expect(userId).toBe(bobsClient.userId)
+            alicePromise.done()
+        })
+
+        const evePromise = makeDonePromise()
+        evesClient.on('streamEnsAddressUpdated', (updatedStreamId, userId) => {
+            expect(updatedStreamId).toBe(streamId)
+            expect(userId).toBe(bobsClient.userId)
+            evePromise.done()
+        })
+
+        const ensAddress = makeRandomUserAddress()
+        await expect(bobsClient.setEnsAddress(streamId, ensAddress)).toResolve()
+        const expected = new Map<string, string>([
+            [bobsClient.userId, userIdFromAddress(ensAddress)],
+        ])
+
+        await bobPromise.expectToSucceed()
+        await alicePromise.expectToSucceed()
+        await evePromise.expectToSucceed()
+
+        for (const client of [bobsClient, alicesClient, evesClient]) {
+            const streamView = client.streams.get(streamId)?.view
+            expect(streamView).toBeDefined()
+            const ensAddresses = streamView!.getUserMetadata().ensAddresses.confirmedEnsAddresses
+            expect(ensAddresses).toEqual(expected)
+        }
+    })
+
+    test('clientCannotSetInvalidEnsAddresses', async () => {
+        await expect(bobsClient.initializeUser()).toResolve()
+        bobsClient.startSync()
+
+        const streamId = makeUniqueSpaceStreamId()
+        await bobsClient.createSpace(streamId)
+        await bobsClient.waitForStream(streamId)
+
+        const ensAddress = new Uint8Array([1, 2, 3, 4, 5, 6, 7, 8])
+        await expect(bobsClient.setEnsAddress(streamId, ensAddress)).rejects.toThrow(
+            /Invalid ENS address/,
+        )
+    })
+
+    test('clientCanClearEnsAddress', async () => {
+        await expect(bobsClient.initializeUser()).toResolve()
+        bobsClient.startSync()
+
+        const streamId = makeUniqueSpaceStreamId()
+        await bobsClient.createSpace(streamId)
+        await bobsClient.waitForStream(streamId)
+
+        const ensAddress = new Uint8Array()
+        await expect(bobsClient.setEnsAddress(streamId, ensAddress)).toResolve()
     })
 })

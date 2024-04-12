@@ -8,10 +8,10 @@ import {IDiamond} from "contracts/src/diamond/IDiamond.sol";
 import {DiamondDeployer} from "../common/DiamondDeployer.s.sol";
 import {Diamond} from "contracts/src/diamond/Diamond.sol";
 
-import {DiamondCutHelper} from "contracts/test/diamond/cut/DiamondCutSetup.sol";
-import {DiamondLoupeHelper} from "contracts/test/diamond/loupe/DiamondLoupeSetup.sol";
-import {IntrospectionHelper} from "contracts/test/diamond/introspection/IntrospectionSetup.sol";
-import {OwnableHelper} from "contracts/test/diamond/ownable/OwnableSetup.sol";
+import {DeployDiamondCut} from "contracts/scripts/deployments/facets/DeployDiamondCut.s.sol";
+import {DeployDiamondLoupe} from "contracts/scripts/deployments/facets/DeployDiamondLoupe.s.sol";
+import {DeployIntrospection} from "contracts/scripts/deployments/facets/DeployIntrospection.s.sol";
+import {DeployOwnable} from "contracts/scripts/deployments/facets/DeployOwnable.s.sol";
 
 import {NodeRegistryHelper} from "contracts/test/river/registry/NodeRegistryHelper.sol";
 import {StreamRegistryHelper} from "contracts/test/river/registry/StreamRegistryHelper.sol";
@@ -23,10 +23,6 @@ import {DeployMultiInit} from "contracts/scripts/deployments/DeployMultiInit.s.s
 import {DeployRiverConfig} from "./facets/DeployRiverConfig.s.sol";
 
 // facets
-import {DiamondCutFacet} from "contracts/src/diamond/facets/cut/DiamondCutFacet.sol";
-import {DiamondLoupeFacet} from "contracts/src/diamond/facets/loupe/DiamondLoupeFacet.sol";
-import {IntrospectionFacet} from "contracts/src/diamond/facets/introspection/IntrospectionFacet.sol";
-import {OwnableFacet} from "contracts/src/diamond/facets/ownable/OwnableFacet.sol";
 import {NodeRegistry} from "contracts/src/river/registry/facets/node/NodeRegistry.sol";
 import {StreamRegistry} from "contracts/src/river/registry/facets/stream/StreamRegistry.sol";
 import {OperatorRegistry} from "contracts/src/river/registry/facets/operator/OperatorRegistry.sol";
@@ -35,10 +31,11 @@ import {RiverConfig} from "contracts/src/river/registry/facets/config/RiverConfi
 import {MultiInit} from "contracts/src/diamond/initializers/MultiInit.sol";
 
 contract DeployRiverRegistry is DiamondDeployer {
-  DiamondCutHelper internal cutHelper = new DiamondCutHelper();
-  DiamondLoupeHelper internal loupeHelper = new DiamondLoupeHelper();
-  IntrospectionHelper internal introspectionHelper = new IntrospectionHelper();
-  OwnableHelper internal ownableHelper = new OwnableHelper();
+  DeployDiamondCut internal cutHelper = new DeployDiamondCut();
+  DeployDiamondLoupe internal loupeHelper = new DeployDiamondLoupe();
+  DeployIntrospection internal introspectionHelper = new DeployIntrospection();
+  DeployOwnable internal ownableHelper = new DeployOwnable();
+
   NodeRegistryHelper internal nodeRegistryHelper = new NodeRegistryHelper();
   StreamRegistryHelper internal streamRegistryHelper =
     new StreamRegistryHelper();
@@ -48,6 +45,7 @@ contract DeployRiverRegistry is DiamondDeployer {
 
   // deployer
   DeployRiverConfig internal deployRiverConfig = new DeployRiverConfig();
+  DeployMultiInit deployMultiInit = new DeployMultiInit();
 
   address internal diamondCut;
   address internal diamondLoupe;
@@ -69,7 +67,10 @@ contract DeployRiverRegistry is DiamondDeployer {
     uint256 deployerPK,
     address deployer
   ) public override returns (Diamond.InitParams memory) {
-    DeployMultiInit deployMultiInit = new DeployMultiInit();
+    diamondCut = cutHelper.deploy();
+    diamondLoupe = loupeHelper.deploy();
+    introspection = introspectionHelper.deploy();
+    ownable = ownableHelper.deploy();
     address multiInit = deployMultiInit.deploy();
     riverConfig = deployRiverConfig.deploy();
 
@@ -77,10 +78,7 @@ contract DeployRiverRegistry is DiamondDeployer {
     configManagers[0] = deployer;
 
     vm.startBroadcast(deployerPK);
-    diamondCut = address(new DiamondCutFacet());
-    diamondLoupe = address(new DiamondLoupeFacet());
-    introspection = address(new IntrospectionFacet());
-    ownable = address(new OwnableFacet());
+
     nodeRegistry = address(new NodeRegistry());
     streamRegistry = address(new StreamRegistry());
     operatorRegistry = address(new OperatorRegistry());

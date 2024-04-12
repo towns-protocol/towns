@@ -11,37 +11,34 @@ import {DiamondDeployer} from "../common/DiamondDeployer.s.sol";
 import {DeployDiamondCut} from "contracts/scripts/deployments/facets/DeployDiamondCut.s.sol";
 import {DeployDiamondLoupe} from "contracts/scripts/deployments/facets/DeployDiamondLoupe.s.sol";
 import {DeployIntrospection} from "contracts/scripts/deployments/facets/DeployIntrospection.s.sol";
+import {DeployOwnable} from "contracts/scripts/deployments/facets/DeployOwnable.s.sol";
+import {DeployMetadata} from "contracts/scripts/deployments/facets/DeployMetadata.s.sol";
+import {DeployMultiInit} from "contracts/scripts/deployments/DeployMultiInit.s.sol";
 
 import {WalletLink} from "contracts/src/river/wallet-link/WalletLink.sol";
-
-import {DiamondLoupeHelper} from "contracts/test/diamond/loupe/DiamondLoupeSetup.sol";
-import {DiamondCutHelper} from "contracts/test/diamond/cut/DiamondCutSetup.sol";
-import {IntrospectionHelper} from "contracts/test/diamond/introspection/IntrospectionSetup.sol";
 import {WalletLinkHelper} from "contracts/test/river/wallet-link/WalletLinkHelper.sol";
 
 import {MultiInit} from "contracts/src/diamond/initializers/MultiInit.sol";
 
-import {DeployMultiInit} from "contracts/scripts/deployments/DeployMultiInit.s.sol";
-
 contract DeployWalletLink is DiamondDeployer {
   // deployments
-  DeployDiamondCut deployDiamondCut = new DeployDiamondCut();
-  DeployDiamondLoupe deployDiamondLoupe = new DeployDiamondLoupe();
-  DeployIntrospection deployIntrospection = new DeployIntrospection();
+  DeployDiamondCut cutHelper = new DeployDiamondCut();
+  DeployDiamondLoupe loupeHelper = new DeployDiamondLoupe();
+  DeployIntrospection introspectionHelper = new DeployIntrospection();
+  DeployOwnable ownableHelper = new DeployOwnable();
+  DeployMetadata metadataHelper = new DeployMetadata();
+  DeployMultiInit multiInitHelper = new DeployMultiInit();
 
   // helpers
-  DiamondLoupeHelper diamondLoupeHelper = new DiamondLoupeHelper();
-  DiamondCutHelper diamondCutHelper = new DiamondCutHelper();
-  IntrospectionHelper introspectionHelper = new IntrospectionHelper();
   WalletLinkHelper walletLinkHelper = new WalletLinkHelper();
-
-  // deployments
-  DeployMultiInit deployMultiInit = new DeployMultiInit();
 
   address diamondLoupe;
   address diamondCut;
   address introspection;
+  address ownable;
   address walletLink;
+  address metadata;
+  address multiInit;
 
   function versionName() public pure override returns (string memory) {
     return "walletLink";
@@ -49,26 +46,29 @@ contract DeployWalletLink is DiamondDeployer {
 
   function diamondInitParams(
     uint256 pk,
-    address
+    address deployer
   ) public override returns (Diamond.InitParams memory) {
-    address multiInit = deployMultiInit.deploy();
-    diamondCut = deployDiamondCut.deploy();
-    diamondLoupe = deployDiamondLoupe.deploy();
-    introspection = deployIntrospection.deploy();
+    multiInit = multiInitHelper.deploy();
+
+    diamondCut = cutHelper.deploy();
+    diamondLoupe = loupeHelper.deploy();
+    introspection = introspectionHelper.deploy();
+    ownable = ownableHelper.deploy();
+    metadata = metadataHelper.deploy();
 
     vm.startBroadcast(pk);
     walletLink = address(new WalletLink());
     vm.stopBroadcast();
 
     addFacet(
-      diamondCutHelper.makeCut(diamondCut, IDiamond.FacetCutAction.Add),
+      cutHelper.makeCut(diamondCut, IDiamond.FacetCutAction.Add),
       diamondCut,
-      diamondCutHelper.makeInitData("")
+      cutHelper.makeInitData("")
     );
     addFacet(
-      diamondLoupeHelper.makeCut(diamondLoupe, IDiamond.FacetCutAction.Add),
+      loupeHelper.makeCut(diamondLoupe, IDiamond.FacetCutAction.Add),
       diamondLoupe,
-      diamondLoupeHelper.makeInitData("")
+      loupeHelper.makeInitData("")
     );
     addFacet(
       introspectionHelper.makeCut(introspection, IDiamond.FacetCutAction.Add),
@@ -76,9 +76,19 @@ contract DeployWalletLink is DiamondDeployer {
       introspectionHelper.makeInitData("")
     );
     addFacet(
+      ownableHelper.makeCut(ownable, IDiamond.FacetCutAction.Add),
+      ownable,
+      ownableHelper.makeInitData(deployer)
+    );
+    addFacet(
       walletLinkHelper.makeCut(walletLink, IDiamond.FacetCutAction.Add),
       walletLink,
       walletLinkHelper.makeInitData("")
+    );
+    addFacet(
+      metadataHelper.makeCut(metadata, IDiamond.FacetCutAction.Add),
+      metadata,
+      metadataHelper.makeInitData(bytes32("WalletLink"), "")
     );
 
     return

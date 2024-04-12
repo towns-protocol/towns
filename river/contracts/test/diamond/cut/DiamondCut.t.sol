@@ -38,13 +38,13 @@ contract DiamondCutTest is DiamondCutSetup, IDiamondCutBase, IOwnableBase {
     vm.expectEmit(true, true, true, true, diamond);
     emit DiamondCut(extensions, address(0), "");
     // cut diamond
+    vm.prank(deployer);
     diamondCut.diamondCut(extensions, address(0), "");
     // assert facet function is callable
     assertEq(IMockFacet(diamond).mockFunction(), 42);
   }
 
   function test_diamondCut_reverts_when_not_owner() external {
-    vm.stopPrank();
     // create facet selectors
     bytes4[] memory facetSelectors = new bytes4[](1);
     facetSelectors[0] = mockFacet.mockFunction.selector;
@@ -78,6 +78,7 @@ contract DiamondCutTest is DiamondCutSetup, IDiamondCutBase, IOwnableBase {
     vm.expectRevert(
       abi.encodeWithSelector(DiamondCut_InvalidContract.selector, init)
     );
+    vm.prank(deployer);
     diamondCut.diamondCut(extensions, init, "");
   }
 
@@ -92,6 +93,7 @@ contract DiamondCutTest is DiamondCutSetup, IDiamondCutBase, IOwnableBase {
     vm.expectRevert(
       abi.encodeWithSelector(DiamondCut_InvalidFacet.selector, address(0))
     );
+    vm.prank(deployer);
     diamondCut.diamondCut(facetCuts, address(0), "");
   }
 
@@ -107,6 +109,7 @@ contract DiamondCutTest is DiamondCutSetup, IDiamondCutBase, IOwnableBase {
     vm.expectRevert(
       abi.encodeWithSelector(DiamondCut_InvalidFacet.selector, facet)
     );
+    vm.prank(deployer);
     diamondCut.diamondCut(facetCuts, address(0), "");
   }
 
@@ -124,6 +127,7 @@ contract DiamondCutTest is DiamondCutSetup, IDiamondCutBase, IOwnableBase {
         address(mockFacet)
       )
     );
+    vm.prank(deployer);
     diamondCut.diamondCut(facetCuts, address(0), "");
   }
 
@@ -141,6 +145,7 @@ contract DiamondCutTest is DiamondCutSetup, IDiamondCutBase, IOwnableBase {
 
     // cut diamond
     vm.expectRevert(Address.FailedInnerCall.selector);
+    vm.prank(deployer);
     diamondCut.diamondCut(
       cuts,
       address(this),
@@ -161,6 +166,7 @@ contract DiamondCutTest is DiamondCutSetup, IDiamondCutBase, IOwnableBase {
         functionSelectors: facetSelectors
       })
     );
+    vm.prank(deployer);
     diamondCut.diamondCut(facetCuts, address(0), "");
     vm.expectRevert(
       abi.encodeWithSelector(
@@ -168,6 +174,7 @@ contract DiamondCutTest is DiamondCutSetup, IDiamondCutBase, IOwnableBase {
         facetSelectors[0]
       )
     );
+    vm.prank(deployer);
     diamondCut.diamondCut(facetCuts, address(0), "");
   }
 
@@ -182,6 +189,7 @@ contract DiamondCutTest is DiamondCutSetup, IDiamondCutBase, IOwnableBase {
       })
     );
     vm.expectRevert(DiamondCut_InvalidSelector.selector);
+    vm.prank(deployer);
     diamondCut.diamondCut(facetCuts, address(0), "");
   }
 
@@ -200,6 +208,7 @@ contract DiamondCutTest is DiamondCutSetup, IDiamondCutBase, IOwnableBase {
       functionSelectors: facetSelectors
     });
     // cut diamond
+    vm.prank(deployer);
     diamondCut.diamondCut(extensions, address(0), "");
     facetSelectors = new bytes4[](1);
     facetSelectors[0] = 0x12345678;
@@ -217,6 +226,7 @@ contract DiamondCutTest is DiamondCutSetup, IDiamondCutBase, IOwnableBase {
         facetSelectors[0]
       )
     );
+    vm.prank(deployer);
     diamondCut.diamondCut(facetCuts, address(0), "");
   }
 
@@ -232,6 +242,7 @@ contract DiamondCutTest is DiamondCutSetup, IDiamondCutBase, IOwnableBase {
       functionSelectors: facetSelectors
     });
     // cut diamond
+    vm.prank(deployer);
     diamondCut.diamondCut(extensions, address(0), "");
     facetSelectors = new bytes4[](1);
     facetSelectors[0] = bytes4(0);
@@ -243,6 +254,7 @@ contract DiamondCutTest is DiamondCutSetup, IDiamondCutBase, IOwnableBase {
       })
     );
     vm.expectRevert(DiamondCut_InvalidSelector.selector);
+    vm.prank(deployer);
     diamondCut.diamondCut(facetCuts, address(0), "");
   }
 
@@ -255,6 +267,7 @@ contract DiamondCutTest is DiamondCutSetup, IDiamondCutBase, IOwnableBase {
       })
     );
     vm.expectRevert(DiamondCut_ImmutableFacet.selector);
+    vm.prank(deployer);
     diamondCut.diamondCut(facetCuts, address(0), "");
   }
 
@@ -272,6 +285,7 @@ contract DiamondCutTest is DiamondCutSetup, IDiamondCutBase, IOwnableBase {
       })
     );
     vm.expectRevert(DiamondCut_InvalidSelector.selector);
+    vm.prank(deployer);
     diamondCut.diamondCut(facetCuts, address(0), "");
   }
 
@@ -298,6 +312,7 @@ contract DiamondCutTest is DiamondCutSetup, IDiamondCutBase, IOwnableBase {
         facetSelectors[0]
       )
     );
+    vm.prank(deployer);
     diamondCut.diamondCut(facetCuts, address(0), "");
   }
 
@@ -312,6 +327,7 @@ contract DiamondCutTest is DiamondCutSetup, IDiamondCutBase, IOwnableBase {
       })
     );
     vm.expectRevert(DiamondCut_ImmutableFacet.selector);
+    vm.prank(deployer);
     diamondCut.diamondCut(facetCuts, address(0), "");
   }
 }

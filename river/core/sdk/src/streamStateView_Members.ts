@@ -19,6 +19,7 @@ export type StreamMember = {
     solicitations: KeySolicitationContent[]
     encryptedUsername?: WrappedEncryptedData
     encryptedDisplayName?: WrappedEncryptedData
+    ensAddress?: Uint8Array
 }
 
 export class StreamStateView_Members {
@@ -62,6 +63,7 @@ export class StreamStateView_Members {
                 ),
                 encryptedUsername: member.username,
                 encryptedDisplayName: member.displayName,
+                ensAddress: member.ensAddress,
             })
             this.membership.applyMembershipEvent(
                 userId,
@@ -83,7 +85,20 @@ export class StreamStateView_Members {
                 userId: member.userId,
                 wrappedEncryptedData: member.encryptedDisplayName!,
             }))
-        this.userMetadata.applySnapshot(usernames, displayNames, cleartexts, encryptionEmitter)
+        const ensAddresses = Array.from(this.joined.values())
+            .filter((x) => isDefined(x.ensAddress))
+            .map((member) => ({
+                userId: member.userId,
+                ensAddress: member.ensAddress!,
+            }))
+
+        this.userMetadata.applySnapshot(
+            usernames,
+            displayNames,
+            ensAddresses,
+            cleartexts,
+            encryptionEmitter,
+        )
         this.solicitHelper.initSolicitations(Array.from(this.joined.values()), encryptionEmitter)
     }
 
@@ -195,6 +210,17 @@ export class StreamStateView_Members {
                     )
                 }
                 break
+            case 'ensAddress': {
+                const stateMember = this.joined.get(event.creatorUserId)
+                check(isDefined(stateMember), 'username from non-member')
+                this.userMetadata.appendEnsAddress(
+                    event.hashStr,
+                    payload.content.value,
+                    event.creatorUserId,
+                    stateEmitter,
+                )
+                break
+            }
             case undefined:
                 break
             default:
@@ -236,6 +262,7 @@ export class StreamStateView_Members {
                 break
             case 'displayName':
             case 'username':
+            case 'ensAddress':
                 this.userMetadata.onConfirmedEvent(event, stateEmitter)
                 break
             case undefined:

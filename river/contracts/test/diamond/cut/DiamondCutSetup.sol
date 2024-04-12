@@ -7,28 +7,36 @@ import {IDiamond, Diamond} from "contracts/src/diamond/Diamond.sol";
 // libraries
 
 // contracts
-import {FacetHelper, FacetTest} from "contracts/test/diamond/Facet.t.sol";
+import {FacetTest} from "contracts/test/diamond/Facet.t.sol";
 import {DiamondCutFacet} from "contracts/src/diamond/facets/cut/DiamondCutFacet.sol";
+import {DiamondLoupeFacet} from "contracts/src/diamond/facets/loupe/DiamondLoupeFacet.sol";
 
 // helpers
-import {OwnableHelper} from "contracts/test/diamond/ownable/OwnableSetup.sol";
-import {DiamondLoupeHelper} from "contracts/test/diamond/loupe/DiamondLoupeSetup.sol";
-import {IntrospectionHelper} from "contracts/test/diamond/introspection/IntrospectionSetup.sol";
+import {DeployDiamondCut} from "contracts/scripts/deployments/facets/DeployDiamondCut.s.sol";
+import {DeployDiamondLoupe} from "contracts/scripts/deployments/facets/DeployDiamondLoupe.s.sol";
+import {DeployIntrospection} from "contracts/scripts/deployments/facets/DeployIntrospection.s.sol";
+import {DeployOwnable} from "contracts/scripts/deployments/facets/DeployOwnable.s.sol";
 
 // mocks
 import {MultiInit} from "contracts/src/diamond/initializers/MultiInit.sol";
 import {MockFacet} from "contracts/test/mocks/MockFacet.sol";
 
 abstract contract DiamondCutSetup is FacetTest {
+  DeployDiamondCut cutHelper = new DeployDiamondCut();
+  DeployDiamondLoupe loupeHelper = new DeployDiamondLoupe();
+  DeployIntrospection introspectionHelper = new DeployIntrospection();
+  DeployOwnable ownableHelper = new DeployOwnable();
+
   DiamondCutFacet internal diamondCut;
+  DiamondLoupeFacet internal diamondLoupe;
   MockFacet internal mockFacet;
 
-  function setUp() public override {
+  function setUp() public virtual override {
     super.setUp();
-    diamondCut = DiamondCutFacet(diamond);
-    mockFacet = new MockFacet();
 
-    vm.startPrank(deployer);
+    diamondCut = DiamondCutFacet(diamond);
+    diamondLoupe = DiamondLoupeFacet(diamond);
+    mockFacet = new MockFacet();
   }
 
   function diamondInitParams()
@@ -36,64 +44,43 @@ abstract contract DiamondCutSetup is FacetTest {
     override
     returns (Diamond.InitParams memory)
   {
-    DiamondCutHelper diamondCutHelper = new DiamondCutHelper();
-    OwnableHelper ownableHelper = new OwnableHelper();
-    DiamondLoupeHelper diamondLoupeHelper = new DiamondLoupeHelper();
-    IntrospectionHelper introspectionHelper = new IntrospectionHelper();
-
-    uint256 selectorCount = 4;
-
-    IDiamond.FacetCut[] memory cuts = new IDiamond.FacetCut[](selectorCount);
-    cuts[0] = diamondCutHelper.makeCut(IDiamond.FacetCutAction.Add);
-    cuts[1] = ownableHelper.makeCut(IDiamond.FacetCutAction.Add);
-    cuts[2] = diamondLoupeHelper.makeCut(IDiamond.FacetCutAction.Add);
-    cuts[3] = introspectionHelper.makeCut(IDiamond.FacetCutAction.Add);
-
-    address[] memory initAddresses = new address[](selectorCount);
-    bytes[] memory initDatas = new bytes[](selectorCount);
-
-    initAddresses[0] = diamondCutHelper.facet();
-    initAddresses[1] = ownableHelper.facet();
-    initAddresses[2] = diamondLoupeHelper.facet();
-    initAddresses[3] = introspectionHelper.facet();
-
-    initDatas[0] = diamondCutHelper.makeInitData("");
-    initDatas[1] = ownableHelper.makeInitData(deployer);
-    initDatas[2] = diamondLoupeHelper.makeInitData("");
-    initDatas[3] = introspectionHelper.makeInitData("");
-
     MultiInit multiInit = new MultiInit();
+
+    address cut = cutHelper.deploy();
+    address loupe = loupeHelper.deploy();
+    address introspection = introspectionHelper.deploy();
+    address ownable = ownableHelper.deploy();
+
+    addFacet(
+      cutHelper.makeCut(cut, IDiamond.FacetCutAction.Add),
+      cut,
+      cutHelper.makeInitData("")
+    );
+    addFacet(
+      ownableHelper.makeCut(ownable, IDiamond.FacetCutAction.Add),
+      ownable,
+      ownableHelper.makeInitData(deployer)
+    );
+    addFacet(
+      loupeHelper.makeCut(loupe, IDiamond.FacetCutAction.Add),
+      loupe,
+      loupeHelper.makeInitData("")
+    );
+    addFacet(
+      introspectionHelper.makeCut(introspection, IDiamond.FacetCutAction.Add),
+      introspection,
+      introspectionHelper.makeInitData("")
+    );
 
     return
       Diamond.InitParams({
-        baseFacets: cuts,
+        baseFacets: baseFacets(),
         init: address(multiInit),
         initData: abi.encodeWithSelector(
-          multiInit.multiInit.selector,
-          initAddresses,
-          initDatas
+          MultiInit.multiInit.selector,
+          _initAddresses,
+          _initDatas
         )
       });
-  }
-}
-
-contract DiamondCutHelper is FacetHelper {
-  DiamondCutFacet internal diamondCut;
-
-  constructor() {
-    diamondCut = new DiamondCutFacet();
-    addSelector(diamondCut.diamondCut.selector);
-  }
-
-  function facet() public view override returns (address) {
-    return address(diamondCut);
-  }
-
-  function selectors() public view override returns (bytes4[] memory) {
-    return functionSelectors;
-  }
-
-  function initializer() public pure override returns (bytes4) {
-    return DiamondCutFacet.__DiamondCut_init.selector;
   }
 }

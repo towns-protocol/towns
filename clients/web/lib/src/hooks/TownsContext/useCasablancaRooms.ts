@@ -90,6 +90,7 @@ export function useCasablancaRooms(
         client.on('streamUsernameUpdated', onStreamUpdated)
         client.on('streamPendingUsernameUpdated', onStreamUpdated)
         client.on('spaceChannelUpdated', onChannelUpdated)
+        client.on('streamEnsAddressUpdated', onStreamUpdated)
         return () => {
             client.off('streamNewUserJoined', onStreamUpdated)
             client.off('streamUserLeft', onStreamUpdated)
@@ -100,6 +101,7 @@ export function useCasablancaRooms(
             client.off('streamUsernameUpdated', onStreamUpdated)
             client.off('streamPendingUsernameUpdated', onStreamUpdated)
             client.off('spaceChannelUpdated', onChannelUpdated)
+            client.off('streamEnsAddressUpdated', onStreamUpdated)
             setRooms({})
         }
     }, [client, isLoading, spaceInfos])
@@ -248,6 +250,7 @@ export function getMembersWithMembership(membership: Membership, stream: Stream)
             displayName: info?.displayName ?? userId,
             displayNameEncrypted: info?.displayNameEncrypted ?? false,
             avatarUrl: '',
+            ensAddress: info?.ensAddress,
         })
     })
     return members
@@ -268,6 +271,7 @@ function getUsersMap(stream: Stream): { [userId: string]: RoomMember } {
             usernameConfirmed: info?.usernameConfirmed ?? false,
             displayName: info?.displayName ?? '',
             displayNameEncrypted: info?.displayNameEncrypted ?? false,
+            ensAddress: info?.ensAddress,
         }
     }
     return usersMap

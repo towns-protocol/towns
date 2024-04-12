@@ -9,17 +9,13 @@ import {DiamondDeployer} from "../common/DiamondDeployer.s.sol";
 import {Diamond} from "contracts/src/diamond/Diamond.sol";
 
 // helpers
-import {DiamondCutHelper} from "contracts/test/diamond/cut/DiamondCutSetup.sol";
-import {DiamondLoupeHelper} from "contracts/test/diamond/loupe/DiamondLoupeSetup.sol";
 import {NodeOperatorHelper} from "contracts/test/base/registry/NodeOperatorHelper.sol";
-import {OwnableHelper} from "contracts/test/diamond/ownable/OwnableSetup.sol";
 import {ERC721AHelper} from "contracts/test/diamond/erc721a/ERC721ASetup.sol";
 import {IntrospectionHelper} from "contracts/test/diamond/introspection/IntrospectionSetup.sol";
 
 // facets
 import {ERC721ANonTransferable} from "contracts/src/diamond/facets/token/ERC721A/ERC721ANonTransferable.sol";
 import {NodeOperatorFacet} from "contracts/src/base/registry/facets/operator/NodeOperatorFacet.sol";
-import {OwnableFacet} from "contracts/src/diamond/facets/ownable/OwnableFacet.sol";
 import {MultiInit} from "contracts/src/diamond/initializers/MultiInit.sol";
 
 // deployers
@@ -27,22 +23,20 @@ import {DeployMultiInit} from "contracts/scripts/deployments/DeployMultiInit.s.s
 import {DeployDiamondCut} from "contracts/scripts/deployments/facets/DeployDiamondCut.s.sol";
 import {DeployDiamondLoupe} from "contracts/scripts/deployments/facets/DeployDiamondLoupe.s.sol";
 import {DeployIntrospection} from "contracts/scripts/deployments/facets/DeployIntrospection.s.sol";
+import {DeployOwnable} from "contracts/scripts/deployments/facets/DeployOwnable.s.sol";
 import {DeployMainnetDelegation} from "contracts/scripts/deployments/DeployMainnetDelegation.s.sol";
 import {DeploySpaceOwner} from "contracts/scripts/deployments/DeploySpaceOwner.s.sol";
 
 contract DeployBaseRegistry is DiamondDeployer {
-  DiamondCutHelper cutHelper = new DiamondCutHelper();
-  DiamondLoupeHelper loupeHelper = new DiamondLoupeHelper();
-  OwnableHelper ownableHelper = new OwnableHelper();
   NodeOperatorHelper operatorHelper = new NodeOperatorHelper();
   ERC721AHelper erc721aHelper = new ERC721AHelper();
-  IntrospectionHelper introspectionHelper = new IntrospectionHelper();
 
   // deployments
   DeployMultiInit deployMultiInit = new DeployMultiInit();
-  DeployDiamondCut deployDiamondCut = new DeployDiamondCut();
-  DeployDiamondLoupe deployDiamondLoupe = new DeployDiamondLoupe();
-  DeployIntrospection deployIntrospection = new DeployIntrospection();
+  DeployDiamondCut cutHelper = new DeployDiamondCut();
+  DeployDiamondLoupe loupeHelper = new DeployDiamondLoupe();
+  DeployIntrospection introspectionHelper = new DeployIntrospection();
+  DeployOwnable ownableHelper = new DeployOwnable();
   DeployMainnetDelegation deployMainnetDelegation =
     new DeployMainnetDelegation();
   DeploySpaceOwner deploySpaceOwner = new DeploySpaceOwner();
@@ -56,12 +50,12 @@ contract DeployBaseRegistry is DiamondDeployer {
     address deployer
   ) public override returns (Diamond.InitParams memory) {
     address multiInit = deployMultiInit.deploy();
-    address diamondCut = deployDiamondCut.deploy();
-    address diamondLoupe = deployDiamondLoupe.deploy();
-    address introspection = deployIntrospection.deploy();
+    address diamondCut = cutHelper.deploy();
+    address diamondLoupe = loupeHelper.deploy();
+    address introspection = introspectionHelper.deploy();
+    address ownable = ownableHelper.deploy();
 
     vm.startBroadcast(deployerPK);
-    address ownable = address(new OwnableFacet());
     address nft = address(new ERC721ANonTransferable());
     address operator = address(new NodeOperatorFacet());
     vm.stopBroadcast();

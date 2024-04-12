@@ -24,9 +24,10 @@ contract ProxyManagerTest is ProxyManagerSetup {
 
   /// @notice This test creates a new implementation and sets it as the implementation for the proxy manager
   function test_manager_setImplementation() external {
+    MockDiamondHelper diamondHelper = new MockDiamondHelper();
+
     // create a new implementation
-    MockDiamondHelper mockDiamondHelper = new MockDiamondHelper();
-    address implementation = address(mockDiamondHelper.createDiamond(deployer));
+    address implementation = address(diamondHelper.createDiamond(deployer));
 
     // update the implementation to be something else in our proxy manager
     vm.prank(deployer);

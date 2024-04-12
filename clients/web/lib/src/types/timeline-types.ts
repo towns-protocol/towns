@@ -17,6 +17,7 @@ import { Channel, Membership, Mention, MessageType } from './towns-types'
 import { staticAssertNever } from '../utils/towns-utils'
 import { DecryptionSessionError } from '@river-build/encryption'
 import { isDefined } from '@river/sdk'
+import { bin_toHexString } from '@river-build/dlog'
 
 /**************************************************************************
  * We're using a union type to represent the different types of events that
@@ -69,6 +70,7 @@ export enum ZTEvent {
     SpaceParent = 'm.space.parent',
     SpaceUsername = 'm.space.username',
     SpaceDisplayName = 'm.space.display_name',
+    SpaceEnsAddress = 'm.space.ens_name',
 }
 
 /// a timeline event should have one or none of the following fields set
@@ -95,6 +97,7 @@ export type TimelineEvent_OneOf =
     | SpaceParentEvent
     | SpaceUsernameEvent
     | SpaceDisplayNameEvent
+    | SpaceEnsAddressEvent
     | RoomMessageEncryptedRefEvent
 
 export interface MiniblockHeaderEvent {
@@ -187,6 +190,12 @@ export interface SpaceDisplayNameEvent {
     kind: ZTEvent.SpaceDisplayName
     userId: string
     displayName: string
+}
+
+export interface SpaceEnsAddressEvent {
+    kind: ZTEvent.SpaceEnsAddress
+    userId: string
+    ensAddress: Uint8Array
 }
 
 export interface RoomMessageEncryptedRefEvent {
@@ -436,6 +445,8 @@ export function getFallbackContent(
             return `username: ${content.username}`
         case ZTEvent.SpaceDisplayName:
             return `username: ${content.displayName}`
+        case ZTEvent.SpaceEnsAddress:
+            return `ensAddress: ${bin_toHexString(content.ensAddress)}`
         case ZTEvent.RoomTopic:
             return `newValue: ${content.topic}`
         case ZTEvent.RedactedEvent:

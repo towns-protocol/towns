@@ -106,6 +106,7 @@ export interface RoomMember {
     displayName: string
     displayNameEncrypted: boolean
     avatarUrl?: string
+    ensAddress?: string
 }
 
 export interface UserIdToMember {

@@ -65,6 +65,7 @@ import {
     ImageAttachment,
     EventStatus,
     EmbeddedMessageAttachment,
+    SpaceEnsAddressEvent,
 } from '../../types/timeline-types'
 import { useCallback } from 'react'
 import { bin_toHexString, check } from '@river-build/dlog'
@@ -504,6 +505,14 @@ function toTownsContent_MemberPayload(
                     username: value.content.value.ciphertext,
                 } satisfies SpaceUsernameEvent,
             }
+        case 'ensAddress':
+            return {
+                content: {
+                    kind: ZTEvent.SpaceEnsAddress,
+                    userId: message.creatorUserId,
+                    ensAddress: value.content.value,
+                } satisfies SpaceEnsAddressEvent,
+            }
         case undefined:
             return { error: `Undefined payload case: ${description}` }
         default:
@@ -560,6 +569,7 @@ function toTownsContent_UserPayload(
                 } satisfies RoomMemberEvent,
             }
         }
+
         case undefined: {
             return { error: `Undefined payload case: ${description}` }
         }

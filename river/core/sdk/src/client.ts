@@ -103,6 +103,7 @@ import {
     make_MemberPayload_Username,
     getRefEventIdFromChannelMessage,
     make_ChannelPayload_Redaction,
+    make_MemberPayload_EnsAddress,
 } from './types'
 
 import debug from 'debug'
@@ -804,6 +805,16 @@ export class Client
             stream.view.getUserMetadata().usernames.resetLocalUsername(this.userId)
             throw err
         }
+    }
+
+    async setEnsAddress(streamId: string, walletAddress: string | Uint8Array) {
+        check(isDefined(this.cryptoBackend))
+        const bytes =
+            typeof walletAddress === 'string' ? addressFromUserId(walletAddress) : walletAddress
+
+        await this.makeEventAndAddToStream(streamId, make_MemberPayload_EnsAddress(bytes), {
+            method: 'ensAddress',
+        })
     }
 
     isUsernameAvailable(streamId: string, username: string): boolean {

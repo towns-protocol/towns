@@ -7,6 +7,8 @@ import { Paragraph } from 'ui/components/Text/Paragraph'
 import { Tooltip } from 'ui/components/Tooltip/Tooltip'
 import { MutualTowns } from '@components/MutualTowns/MutualTowns'
 import { useAbstractAccountAddress } from 'hooks/useAbstractAccountAddress'
+import { useResolveEnsName } from 'api/lib/ensNames'
+import { Icon, Text } from '@ui'
 
 type Props = {
     userId: string
@@ -16,12 +18,12 @@ export const ProfileHoverCard = (props: Props) => {
     const { userId } = props
 
     const { usersMap } = useUserLookupContext()
-
     const user = usersMap[userId]
     const { data: abstractAccountAddress } = useAbstractAccountAddress({
         rootKeyAddress: userId as Address | undefined,
     })
     const { data: userBio } = useGetUserBio(abstractAccountAddress)
+    const { resolvedEnsName } = useResolveEnsName({ userId, ensAddress: user.ensAddress })
 
     return user ? (
         <Tooltip gap elevate maxWidth="300" background="level2">
@@ -34,6 +36,14 @@ export const ProfileHoverCard = (props: Props) => {
                             <Paragraph truncate strong color="default">
                                 {user.displayName}
                             </Paragraph>
+                        )}
+                        {resolvedEnsName && (
+                            <Stack horizontal key={resolvedEnsName} alignItems="center" gap="xs">
+                                <Text size="sm" color="default">
+                                    {resolvedEnsName}
+                                </Text>
+                                <Icon type="verifiedEnsName" size="square_sm" color="gray2" />
+                            </Stack>
                         )}
 
                         {user.username.length > 0 && (

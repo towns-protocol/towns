@@ -9,11 +9,11 @@ import {IERC165} from "contracts/src/diamond/facets/introspection/IERC165.sol";
 //libraries
 
 //contracts
-import {DiamondLoupeSetup} from "./DiamondLoupeSetup.sol";
+import {DiamondCutSetup} from "contracts/test/diamond/cut/DiamondCutSetup.sol";
 import {MockFacetHelper} from "contracts/test/mocks/MockFacet.sol";
 import {MockFacet} from "contracts/test/mocks/MockFacet.sol";
 
-contract DiamondLoupeTest is DiamondLoupeSetup {
+contract DiamondLoupeTest is DiamondCutSetup {
   IDiamond.FacetCut[] internal facetCuts;
   MockFacetHelper internal mockFacetHelper = new MockFacetHelper();
 
@@ -36,6 +36,7 @@ contract DiamondLoupeTest is DiamondLoupeSetup {
     });
 
     // cut diamond
+    vm.prank(deployer);
     diamondCut.diamondCut(extensions, address(0), "");
 
     // get facets
@@ -57,6 +58,7 @@ contract DiamondLoupeTest is DiamondLoupeSetup {
     });
 
     // cut diamond
+    vm.prank(deployer);
     diamondCut.diamondCut(extensions, address(0), "");
 
     // get facet selectors
@@ -87,6 +89,7 @@ contract DiamondLoupeTest is DiamondLoupeSetup {
     });
 
     // cut diamond
+    vm.prank(deployer);
     diamondCut.diamondCut(extensions, address(0), "");
 
     // get facet addresses
@@ -114,6 +117,7 @@ contract DiamondLoupeTest is DiamondLoupeSetup {
     });
 
     // cut diamond
+    vm.prank(deployer);
     diamondCut.diamondCut(extensions, address(0), "");
 
     // loop through mock facet selectors
@@ -138,6 +142,7 @@ contract DiamondLoupeTest is DiamondLoupeSetup {
     });
 
     // cut diamond
+    vm.prank(deployer);
     diamondCut.diamondCut(extensions, address(0), "");
 
     // remove facet cuts
@@ -148,6 +153,7 @@ contract DiamondLoupeTest is DiamondLoupeSetup {
     });
 
     // cut diamond
+    vm.prank(deployer);
     diamondCut.diamondCut(extensions, address(0), "");
 
     // loop through mock facet selectors
@@ -169,6 +175,7 @@ contract DiamondLoupeTest is DiamondLoupeSetup {
     });
 
     // cut diamond
+    vm.prank(deployer);
     diamondCut.diamondCut(extensions, address(0), "");
 
     address expectedFacetAddress = address(new MockFacet());
@@ -181,6 +188,7 @@ contract DiamondLoupeTest is DiamondLoupeSetup {
     });
 
     // cut diamond
+    vm.prank(deployer);
     diamondCut.diamondCut(extensions, address(0), "");
 
     // loop through mock facet selectors

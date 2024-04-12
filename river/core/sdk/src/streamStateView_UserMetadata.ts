@@ -5,19 +5,23 @@ import { StreamEncryptionEvents, StreamStateEvents } from './streamEvents'
 import { UserMetadata_Usernames } from './userMetadata_Usernames'
 import { UserMetadata_DisplayNames } from './userMetadata_DisplayNames'
 import { bin_toHexString } from '@river-build/dlog'
+import { userMetadata_EnsAddresses } from './userMetadata_EnsAddresses'
 
 export class StreamStateView_UserMetadata {
     readonly usernames: UserMetadata_Usernames
     readonly displayNames: UserMetadata_DisplayNames
+    readonly ensAddresses: userMetadata_EnsAddresses
 
     constructor(streamId: string) {
         this.usernames = new UserMetadata_Usernames(streamId)
         this.displayNames = new UserMetadata_DisplayNames(streamId)
+        this.ensAddresses = new userMetadata_EnsAddresses(streamId)
     }
 
     applySnapshot(
         usernames: { userId: string; wrappedEncryptedData: WrappedEncryptedData }[],
         displayNames: { userId: string; wrappedEncryptedData: WrappedEncryptedData }[],
+        ensAddresses: { userId: string; ensAddress: Uint8Array }[],
         cleartexts: Record<string, string> | undefined,
         encryptionEmitter: TypedEmitter<StreamEncryptionEvents> | undefined,
     ) {
@@ -61,6 +65,8 @@ export class StreamStateView_UserMetadata {
                 undefined,
             )
         }
+
+        this.ensAddresses.applySnapshot(ensAddresses)
     }
 
     onConfirmedEvent(
@@ -70,6 +76,7 @@ export class StreamStateView_UserMetadata {
         const eventId = confirmedEvent.hashStr
         this.usernames.onConfirmEvent(eventId, stateEmitter)
         this.displayNames.onConfirmEvent(eventId, stateEmitter)
+        this.ensAddresses.onConfirmEvent(eventId, stateEmitter)
     }
 
     prependEvent(
@@ -105,7 +112,6 @@ export class StreamStateView_UserMetadata {
         data: EncryptedData,
         userId: string,
         cleartext: string | undefined,
-
         encryptionEmitter: TypedEmitter<StreamEncryptionEvents> | undefined,
         stateEmitter: TypedEmitter<StreamStateEvents> | undefined,
     ): void {
@@ -118,6 +124,15 @@ export class StreamStateView_UserMetadata {
             encryptionEmitter,
             stateEmitter,
         )
+    }
+
+    appendEnsAddress(
+        eventId: string,
+        EnsAddress: Uint8Array,
+        userId: string,
+        stateEmitter: TypedEmitter<StreamStateEvents> | undefined,
+    ): void {
+        this.ensAddresses.addEnsAddressEvent(eventId, EnsAddress, userId, true, stateEmitter)
     }
 
     onDecryptedContent(
@@ -135,12 +150,15 @@ export class StreamStateView_UserMetadata {
         usernameEncrypted: boolean
         displayName: string
         displayNameEncrypted: boolean
+        ensAddress?: string
     } {
         const usernameInfo = this.usernames.info(userId)
         const displayNameInfo = this.displayNames.info(userId)
+        const ensAddress = this.ensAddresses.info(userId)
         return {
             ...usernameInfo,
             ...displayNameInfo,
+            ensAddress,
         }
     }
 }

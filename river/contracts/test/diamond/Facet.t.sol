@@ -13,6 +13,12 @@ import {IDiamond, Diamond} from "contracts/src/diamond/Diamond.sol";
 
 /// @notice This contract is abstract and must be inherited to be used in tests
 abstract contract FacetTest is IDiamond, TestUtils {
+  uint256 index = 0;
+
+  IDiamond.FacetCut[] internal _cuts;
+  address[] internal _initAddresses;
+  bytes[] internal _initDatas;
+
   address internal deployer;
   address internal diamond;
 
@@ -27,6 +33,32 @@ abstract contract FacetTest is IDiamond, TestUtils {
     public
     virtual
     returns (Diamond.InitParams memory);
+
+  function addInit(address initAddress, bytes memory initData) internal {
+    _initAddresses.push(initAddress);
+    _initDatas.push(initData);
+  }
+
+  function addCut(IDiamond.FacetCut memory cut) internal {
+    _cuts.push(cut);
+  }
+
+  function addFacet(
+    IDiamond.FacetCut memory cut,
+    address initAddress,
+    bytes memory initData
+  ) internal {
+    addCut(cut);
+    addInit(initAddress, initData);
+  }
+
+  function baseFacets() internal view returns (IDiamond.FacetCut[] memory) {
+    return _cuts;
+  }
+
+  function _resetIndex() internal {
+    index = 0;
+  }
 }
 
 abstract contract FacetHelper is IDiamond {

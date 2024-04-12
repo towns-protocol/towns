@@ -6,44 +6,66 @@ pragma solidity ^0.8.23;
 // libraries
 
 // contracts
-import {TestUtils} from "contracts/test/utils/TestUtils.sol";
 import {IDiamond, Diamond} from "contracts/src/diamond/Diamond.sol";
-import {OwnableHelper} from "contracts/test/diamond/ownable/OwnableSetup.sol";
-import {DiamondCutHelper} from "contracts/test/diamond/cut/DiamondCutSetup.sol";
-import {DiamondLoupeHelper} from "contracts/test/diamond/loupe/DiamondLoupeSetup.sol";
+
+import {DeployOwnable} from "contracts/scripts/deployments/facets/DeployOwnable.s.sol";
+import {DeployDiamondCut} from "contracts/scripts/deployments/facets/DeployDiamondCut.s.sol";
+import {DeployDiamondLoupe} from "contracts/scripts/deployments/facets/DeployDiamondLoupe.s.sol";
+import {DeployIntrospection} from "contracts/scripts/deployments/facets/DeployIntrospection.s.sol";
+
 import {ManagedProxyHelper} from "contracts/test/diamond/proxy/ManagedProxyHelper.sol";
+import {ManagedProxyFacet} from "contracts/src/diamond/proxy/managed/ManagedProxyFacet.sol";
 import {MultiInit} from "contracts/src/diamond/initializers/MultiInit.sol";
+
+// debuggging
 
 /// @title MockDiamondHelper
 /// @notice Used to create a diamond with all the facets we need for testing
-contract MockDiamondHelper is TestUtils {
+contract MockDiamondHelper {
+  DeployDiamondCut diamondCutHelper = new DeployDiamondCut();
+  DeployDiamondLoupe diamondLoupeHelper = new DeployDiamondLoupe();
+  DeployIntrospection introspectionHelper = new DeployIntrospection();
+  DeployOwnable ownableHelper = new DeployOwnable();
+  ManagedProxyHelper managedProxyHelper = new ManagedProxyHelper();
+
+  Diamond.FacetCut[] cuts;
+  address[] addresses;
+  bytes[] payloads;
+
   function createDiamond(address owner) public returns (Diamond) {
-    OwnableHelper ownableHelper = new OwnableHelper();
-    DiamondCutHelper diamondCutHelper = new DiamondCutHelper();
-    DiamondLoupeHelper diamondLoupeHelper = new DiamondLoupeHelper();
-    ManagedProxyHelper managedProxyHelper = new ManagedProxyHelper();
     MultiInit multiInit = new MultiInit();
 
-    uint256 cutCount = 4;
+    address ownable = ownableHelper.deploy();
+    address diamondCut = diamondCutHelper.deploy();
+    address diamondLoupe = diamondLoupeHelper.deploy();
+    address introspection = introspectionHelper.deploy();
+    address managedProxy = address(new ManagedProxyFacet());
 
-    Diamond.FacetCut[] memory cuts = new Diamond.FacetCut[](cutCount);
-    cuts[0] = ownableHelper.makeCut(IDiamond.FacetCutAction.Add);
-    cuts[1] = diamondCutHelper.makeCut(IDiamond.FacetCutAction.Add);
-    cuts[2] = diamondLoupeHelper.makeCut(IDiamond.FacetCutAction.Add);
-    cuts[3] = managedProxyHelper.makeCut(IDiamond.FacetCutAction.Add);
+    cuts.push(
+      diamondCutHelper.makeCut(diamondCut, IDiamond.FacetCutAction.Add)
+    );
+    cuts.push(
+      diamondLoupeHelper.makeCut(diamondLoupe, IDiamond.FacetCutAction.Add)
+    );
+    cuts.push(
+      introspectionHelper.makeCut(introspection, IDiamond.FacetCutAction.Add)
+    );
+    cuts.push(ownableHelper.makeCut(ownable, IDiamond.FacetCutAction.Add));
+    cuts.push(
+      managedProxyHelper.makeCut(managedProxy, IDiamond.FacetCutAction.Add)
+    );
 
-    address[] memory addresses = new address[](cutCount);
-    bytes[] memory payloads = new bytes[](cutCount);
+    addresses.push(diamondCut);
+    addresses.push(diamondLoupe);
+    addresses.push(introspection);
+    addresses.push(ownable);
+    addresses.push(managedProxy);
 
-    addresses[0] = ownableHelper.facet();
-    addresses[1] = diamondCutHelper.facet();
-    addresses[2] = diamondLoupeHelper.facet();
-    addresses[3] = managedProxyHelper.facet();
-
-    payloads[0] = ownableHelper.makeInitData(owner);
-    payloads[1] = diamondCutHelper.makeInitData("");
-    payloads[2] = diamondLoupeHelper.makeInitData("");
-    payloads[3] = managedProxyHelper.makeInitData("");
+    payloads.push(diamondCutHelper.makeInitData(""));
+    payloads.push(diamondLoupeHelper.makeInitData(""));
+    payloads.push(introspectionHelper.makeInitData(""));
+    payloads.push(ownableHelper.makeInitData(owner));
+    payloads.push(managedProxyHelper.makeInitData(""));
 
     return
       new Diamond(

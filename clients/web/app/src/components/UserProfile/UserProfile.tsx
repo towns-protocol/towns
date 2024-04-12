@@ -12,6 +12,7 @@ import { LargeUploadImageTemplate } from '@components/UploadImage/LargeUploadIma
 import { Avatar } from '@components/Avatar/Avatar'
 import { SetUsernameDisplayName } from '@components/SetUsernameDisplayName/SetUsernameDisplayName'
 import { MutualTowns } from '@components/MutualTowns/MutualTowns'
+import { EnsBadge } from '@components/EnsBadge/EnsBadge'
 import { UserWalletContent } from './UserWalletContent'
 
 type Props = {
@@ -107,13 +108,16 @@ export const UserProfile = (props: Props) => {
                     )}
                 </>
             ) : (
-                <Stack padding gap rounded="sm" background="level2">
+                <Stack padding gap="sm" rounded="sm" background="level2">
                     {user && (
                         <>
                             {user.displayName.length > 0 && (
                                 <Text color="default" fontSize="lg" fontWeight="strong">
                                     {user.displayName}
                                 </Text>
+                            )}
+                            {userId && user.ensAddress && (
+                                <EnsBadge userId={userId} ensAddress={user.ensAddress} />
                             )}
                             <Text color="default">@{user.username}</Text>
                         </>

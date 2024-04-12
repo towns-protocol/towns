@@ -17,6 +17,7 @@ export type LookupUser = {
     displayName: string
     displayNameEncrypted: boolean
     avatarUrl?: string
+    ensAddress?: string
     memberOf?: MemberOf
 }
 
@@ -27,9 +28,11 @@ export type MemberOf = {
         username: string
         displayName: string
         avatarUrl?: string
+        ensAddress?: string
     }
 }
 
 export type KnownUser = RoomMember & {
     memberOf: MemberOf
+    ensAddress?: string
 }

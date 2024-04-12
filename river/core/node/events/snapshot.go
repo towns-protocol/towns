@@ -475,6 +475,13 @@ func update_Snapshot_Member(
 		}
 		member.Username = &WrappedEncryptedData{Data: content.Username, EventNum: eventNum, EventHash: eventHash}
 		return nil
+	case *MemberPayload_EnsAddress:
+		member, err := findMember(snapshot.Joined, creatorAddress)
+		if err != nil {
+			return err
+		}
+		member.EnsAddress = content.EnsAddress
+		return nil
 	default:
 		return RiverError(Err_INVALID_ARGUMENT, "unknown membership payload type %T", memberPayload.Content)
 	}

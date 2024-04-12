@@ -10,31 +10,24 @@ import {Diamond} from "contracts/src/diamond/Diamond.sol";
 import {MultiInit} from "contracts/src/diamond/initializers/MultiInit.sol";
 
 // mocks
-import {DiamondCutHelper} from "contracts/test/diamond/cut/DiamondCutSetup.sol";
-import {DiamondLoupeHelper} from "contracts/test/diamond/loupe/DiamondLoupeSetup.sol";
-import {IntrospectionHelper} from "contracts/test/diamond/introspection/IntrospectionSetup.sol";
 import {ERC721AMockHelper} from "contracts/test/diamond/erc721a/ERC721ASetup.sol";
 import {ERC721AHelper} from "contracts/test/diamond/erc721a/ERC721ASetup.sol";
 
 // contracts
-import {DiamondCutFacet} from "contracts/src/diamond/facets/cut/DiamondCutFacet.sol";
-import {DiamondLoupeFacet} from "contracts/src/diamond/facets/loupe/DiamondLoupeFacet.sol";
-import {IntrospectionFacet} from "contracts/src/diamond/facets/introspection/IntrospectionFacet.sol";
+import {DeployDiamondCut} from "contracts/scripts/deployments/facets/DeployDiamondCut.s.sol";
+import {DeployDiamondLoupe} from "contracts/scripts/deployments/facets/DeployDiamondLoupe.s.sol";
+import {DeployIntrospection} from "contracts/scripts/deployments/facets/DeployIntrospection.s.sol";
+import {DeployMultiInit} from "contracts/scripts/deployments/DeployMultiInit.s.sol";
 import {MockERC721A} from "contracts/test/mocks/MockERC721A.sol";
 
 contract DeployMockNFT is DiamondDeployer {
-  // helpers
-  DiamondCutHelper diamondCutHelper = new DiamondCutHelper();
-  DiamondLoupeHelper loupeHelper = new DiamondLoupeHelper();
-  IntrospectionHelper introspectionHelper = new IntrospectionHelper();
+  DeployDiamondCut diamondCutHelper = new DeployDiamondCut();
+  DeployDiamondLoupe loupeHelper = new DeployDiamondLoupe();
+  DeployIntrospection introspectionHelper = new DeployIntrospection();
+  DeployMultiInit multiInitHelper = new DeployMultiInit();
+
   ERC721AHelper erc721aHelper = new ERC721AHelper();
   ERC721AMockHelper erc721aMockHelper = new ERC721AMockHelper();
-
-  uint256 totalFacets = 4;
-  uint256 totalInit = 4;
-
-  address[] addresses = new address[](totalInit);
-  bytes[] payloads = new bytes[](totalInit);
 
   address diamondCut;
   address diamondLoupe;
@@ -49,59 +42,47 @@ contract DeployMockNFT is DiamondDeployer {
     uint256 deployerPK,
     address
   ) public override returns (Diamond.InitParams memory) {
+    address multiInit = multiInitHelper.deploy();
+
+    diamondCut = diamondCutHelper.deploy();
+    diamondLoupe = loupeHelper.deploy();
+    introspection = introspectionHelper.deploy();
+
     vm.startBroadcast(deployerPK);
-    diamondCut = address(new DiamondCutFacet());
-    diamondLoupe = address(new DiamondLoupeFacet());
-    introspection = address(new IntrospectionFacet());
     erc721aMock = address(new MockERC721A());
     vm.stopBroadcast();
 
     erc721aMockHelper.addSelectors(erc721aHelper.selectors());
 
-    IDiamond.FacetCut[] memory cuts = new IDiamond.FacetCut[](totalFacets);
-
-    cuts[index++] = diamondCutHelper.makeCut(
+    addFacet(
+      diamondCutHelper.makeCut(diamondCut, IDiamond.FacetCutAction.Add),
       diamondCut,
-      IDiamond.FacetCutAction.Add
+      diamondCutHelper.makeInitData("")
     );
-    cuts[index++] = loupeHelper.makeCut(
+    addFacet(
+      loupeHelper.makeCut(diamondLoupe, IDiamond.FacetCutAction.Add),
       diamondLoupe,
-      IDiamond.FacetCutAction.Add
+      loupeHelper.makeInitData("")
     );
-    cuts[index++] = introspectionHelper.makeCut(
+    addFacet(
+      introspectionHelper.makeCut(diamondCut, IDiamond.FacetCutAction.Add),
       introspection,
-      IDiamond.FacetCutAction.Add
+      introspectionHelper.makeInitData("")
     );
-    cuts[index++] = erc721aMockHelper.makeCut(
+    addFacet(
+      erc721aMockHelper.makeCut(erc721aMock, IDiamond.FacetCutAction.Add),
       erc721aMock,
-      IDiamond.FacetCutAction.Add
-    );
-
-    _resetIndex();
-
-    addresses[index++] = diamondCut;
-    addresses[index++] = diamondLoupe;
-    addresses[index++] = introspection;
-    addresses[index++] = erc721aMock;
-
-    _resetIndex();
-
-    payloads[index++] = diamondCutHelper.makeInitData("");
-    payloads[index++] = loupeHelper.makeInitData("");
-    payloads[index++] = introspectionHelper.makeInitData("");
-    payloads[index++] = erc721aMockHelper.makeInitData(
-      "MockERC721A",
-      "MERC721A"
+      erc721aMockHelper.makeInitData("MockERC721A", "MERC721A")
     );
 
     return
       Diamond.InitParams({
-        baseFacets: cuts,
-        init: getDeployment("multiInit"),
+        baseFacets: baseFacets(),
+        init: multiInit,
         initData: abi.encodeWithSelector(
           MultiInit.multiInit.selector,
-          addresses,
-          payloads
+          _initAddresses,
+          _initDatas
         )
       });
   }

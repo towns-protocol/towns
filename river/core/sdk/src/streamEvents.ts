@@ -91,6 +91,7 @@ export type StreamStateEvents = {
     streamDisplayNameUpdated: (streamId: string, userId: string) => void
     streamPendingUsernameUpdated: (streamId: string, userId: string) => void
     streamPendingDisplayNameUpdated: (streamId: string, userId: string) => void
+    streamEnsAddressUpdated: (streamId: string, userId: string) => void
     streamChannelPropertiesUpdated: (streamId: string) => void
     streamRemovedFromSync: (streamId: string) => void
 }

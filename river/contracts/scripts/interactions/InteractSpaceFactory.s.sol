@@ -18,7 +18,6 @@ import {Interaction} from "../common/Interaction.s.sol";
 import {ProxyManager} from "contracts/src/diamond/proxy/manager/ProxyManager.sol";
 import {DeployArchitect} from "contracts/scripts/deployments/facets/DeployArchitect.s.sol";
 import {DeploySpace} from "contracts/scripts/deployments/DeploySpace.s.sol";
-import {ArchitectHelper} from "contracts/test/spaces/architect/ArchitectHelper.sol";
 import {Architect} from "contracts/src/factory/facets/architect/Architect.sol";
 import {DeployWalletLink} from "./../deployments/DeployWalletLink.s.sol";
 
@@ -26,12 +25,9 @@ import {DeployWalletLink} from "./../deployments/DeployWalletLink.s.sol";
 
 contract InteractSpaceFactory is Interaction {
   // Deployments
-  DeployArchitect deployArchitect = new DeployArchitect();
+  DeployArchitect architectHelper = new DeployArchitect();
   DeploySpace deploySpace = new DeploySpace();
   DeployWalletLink deployWalletLink = new DeployWalletLink();
-
-  // Helpers
-  ArchitectHelper architectHelper = new ArchitectHelper();
 
   function __interact(uint256 deployerPk, address) public override {
     address spaceFactory = getDeployment("spaceFactory");
@@ -46,7 +42,7 @@ contract InteractSpaceFactory is Interaction {
     );
     vm.stopBroadcast();
 
-    address architect = deployArchitect.deploy();
+    address architect = architectHelper.deploy();
     IDiamond.FacetCut[] memory cuts = new IDiamond.FacetCut[](1);
     cuts[0] = architectHelper.makeCut(
       architect,

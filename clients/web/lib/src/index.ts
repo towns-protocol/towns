@@ -89,6 +89,7 @@ export {
     useLinkCallerToRootKey,
     useUnlinkWalletTransaction,
     useLinkedWallets,
+    useLinkedWalletsForWallet,
     useGetRootKeyFromLinkedWallet,
 } from './hooks/use-linked-wallets'
 export { useHasMemberNft } from './hooks/use-has-member-nft'

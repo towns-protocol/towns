@@ -157,6 +157,7 @@ message MemberPayload {
             repeated KeySolicitation solicitations = 4;
             WrappedEncryptedData username = 5;
             WrappedEncryptedData display_name = 6;
+            bytes ens_address = 7;
         }
         
         repeated Member joined = 1;
@@ -188,6 +189,7 @@ message MemberPayload {
         KeyFulfillment key_fulfillment = 3;
         EncryptedData username = 4;
         EncryptedData display_name = 5;
+        bytes ens_address = 6;
     }
 }
 

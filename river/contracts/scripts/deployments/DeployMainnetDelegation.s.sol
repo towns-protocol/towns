@@ -10,19 +10,12 @@ import {IDiamond} from "contracts/src/diamond/IDiamond.sol";
 import {DiamondDeployer} from "../common/DiamondDeployer.s.sol";
 import {Diamond} from "contracts/src/diamond/Diamond.sol";
 
-// helpers
-import {DiamondCutHelper} from "contracts/test/diamond/cut/DiamondCutSetup.sol";
-import {DiamondLoupeHelper} from "contracts/test/diamond/loupe/DiamondLoupeSetup.sol";
-import {IntrospectionHelper} from "contracts/test/diamond/introspection/IntrospectionSetup.sol";
-import {OwnableHelper} from "contracts/test/diamond/ownable/OwnableSetup.sol";
-
-// facets
-import {DiamondCutFacet} from "contracts/src/diamond/facets/cut/DiamondCutFacet.sol";
-import {DiamondLoupeFacet} from "contracts/src/diamond/facets/loupe/DiamondLoupeFacet.sol";
-import {IntrospectionFacet} from "contracts/src/diamond/facets/introspection/IntrospectionFacet.sol";
-import {OwnableFacet} from "contracts/src/diamond/facets/ownable/OwnableFacet.sol";
-
 // utils
+import {DeployDiamondCut} from "contracts/scripts/deployments/facets/DeployDiamondCut.s.sol";
+import {DeployDiamondLoupe} from "contracts/scripts/deployments/facets/DeployDiamondLoupe.s.sol";
+import {DeployIntrospection} from "contracts/scripts/deployments/facets/DeployIntrospection.s.sol";
+import {DeployOwnable} from "contracts/scripts/deployments/facets/DeployOwnable.s.sol";
+
 import {DeployMultiInit} from "contracts/scripts/deployments/DeployMultiInit.s.sol";
 import {MultiInit} from "contracts/src/diamond/initializers/MultiInit.sol";
 
@@ -31,10 +24,12 @@ import {MainnetDelegation} from "contracts/src/tokens/river/base/delegation/Main
 import {MainnetDelegationHelper} from "contracts/test/tokens/delegation/MainnetDelegationHelper.sol";
 
 contract DeployMainnetDelegation is DiamondDeployer {
-  DiamondCutHelper cutHelper = new DiamondCutHelper();
-  DiamondLoupeHelper loupeHelper = new DiamondLoupeHelper();
-  IntrospectionHelper introspectionHelper = new IntrospectionHelper();
-  OwnableHelper ownableHelper = new OwnableHelper();
+  DeployDiamondCut cutHelper = new DeployDiamondCut();
+  DeployDiamondLoupe loupeHelper = new DeployDiamondLoupe();
+  DeployIntrospection introspectionHelper = new DeployIntrospection();
+  DeployOwnable ownableHelper = new DeployOwnable();
+  DeployMultiInit deployMultiInit = new DeployMultiInit();
+
   MainnetDelegationHelper delegationHelper = new MainnetDelegationHelper();
 
   function versionName() public pure override returns (string memory) {
@@ -45,14 +40,13 @@ contract DeployMainnetDelegation is DiamondDeployer {
     uint256 deployerPK,
     address deployer
   ) public override returns (Diamond.InitParams memory) {
-    DeployMultiInit deployMultiInit = new DeployMultiInit();
+    address diamondCut = cutHelper.deploy();
+    address diamondLoupe = loupeHelper.deploy();
+    address ownable = ownableHelper.deploy();
+    address introspection = introspectionHelper.deploy();
     address multiInit = deployMultiInit.deploy();
 
     vm.startBroadcast(deployerPK);
-    address diamondCut = address(new DiamondCutFacet());
-    address diamondLoupe = address(new DiamondLoupeFacet());
-    address ownable = address(new OwnableFacet());
-    address introspection = address(new IntrospectionFacet());
     address delegation = address(new MainnetDelegation());
     vm.stopBroadcast();
 

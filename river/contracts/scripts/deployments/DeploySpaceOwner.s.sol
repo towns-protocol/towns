@@ -11,18 +11,16 @@ import {DiamondDeployer} from "../common/DiamondDeployer.s.sol";
 
 // facets
 import {SpaceOwner} from "contracts/src/spaces/facets/owner/SpaceOwner.sol";
-import {DiamondCutFacet} from "contracts/src/diamond/facets/cut/DiamondCutFacet.sol";
-import {DiamondLoupeFacet} from "contracts/src/diamond/facets/loupe/DiamondLoupeFacet.sol";
-import {OwnableFacet} from "contracts/src/diamond/facets/ownable/OwnableFacet.sol";
 import {GuardianFacet} from "contracts/src/spaces/facets/guardian/GuardianFacet.sol";
-import {IntrospectionFacet} from "contracts/src/diamond/facets/introspection/IntrospectionFacet.sol";
 
 // helpers
-import {DiamondCutHelper} from "contracts/test/diamond/cut/DiamondCutSetup.sol";
-import {DiamondLoupeHelper} from "contracts/test/diamond/loupe/DiamondLoupeSetup.sol";
-import {OwnableHelper} from "contracts/test/diamond/ownable/OwnableSetup.sol";
-import {GuardianHelper} from "contracts/test/spaces/guardian/GuardianSetup.sol";
+import {DeployOwnable} from "contracts/scripts/deployments/facets/DeployOwnable.s.sol";
+import {DeployDiamondCut} from "contracts/scripts/deployments/facets/DeployDiamondCut.s.sol";
+import {DeployDiamondLoupe} from "contracts/scripts/deployments/facets/DeployDiamondLoupe.s.sol";
+import {DeployIntrospection} from "contracts/scripts/deployments/facets/DeployIntrospection.s.sol";
+import {DeployMetadata} from "contracts/scripts/deployments/facets/DeployMetadata.s.sol";
 
+import {GuardianHelper} from "contracts/test/spaces/guardian/GuardianSetup.sol";
 import {SpaceOwnerHelper} from "contracts/test/spaces/owner/SpaceOwnerHelper.sol";
 import {IntrospectionHelper} from "contracts/test/diamond/introspection/IntrospectionSetup.sol";
 import {ERC721AHelper} from "contracts/test/diamond/erc721a/ERC721ASetup.sol";
@@ -33,26 +31,17 @@ import {MultiInit} from "contracts/src/diamond/initializers/MultiInit.sol";
 import {DeployMultiInit} from "contracts/scripts/deployments/DeployMultiInit.s.sol";
 
 contract DeploySpaceOwner is DiamondDeployer {
-  DiamondCutHelper diamondCutHelper = new DiamondCutHelper();
-  DiamondLoupeHelper diamondLoupeHelper = new DiamondLoupeHelper();
-  OwnableHelper ownableHelper = new OwnableHelper();
+  DeployDiamondCut diamondCutHelper = new DeployDiamondCut();
+  DeployDiamondLoupe diamondLoupeHelper = new DeployDiamondLoupe();
+  DeployOwnable ownableHelper = new DeployOwnable();
+  DeployIntrospection introspectionHelper = new DeployIntrospection();
+  DeployMetadata metadataHelper = new DeployMetadata();
+  DeployMultiInit multiInitHelper = new DeployMultiInit();
+
   GuardianHelper guardianHelper = new GuardianHelper();
-  IntrospectionHelper introspectionHelper = new IntrospectionHelper();
   ERC721AHelper erc721aHelper = new ERC721AHelper();
   VotesHelper votesHelper = new VotesHelper();
   SpaceOwnerHelper spaceOwnerHelper = new SpaceOwnerHelper();
-
-  DeployMultiInit deployMultiInit = new DeployMultiInit();
-
-  address[] addresses = new address[](6);
-  bytes[] payloads = new bytes[](6);
-
-  address diamondCut;
-  address diamondLoupe;
-  address ownable;
-  address spaceOwner;
-  address guardian;
-  address introspection;
 
   function versionName() public pure override returns (string memory) {
     return "spaceOwner";
@@ -62,74 +51,71 @@ contract DeploySpaceOwner is DiamondDeployer {
     uint256 pk,
     address deployer
   ) public override returns (Diamond.InitParams memory) {
-    address multiInit = deployMultiInit.deploy();
+    address diamondCut = diamondCutHelper.deploy();
+    address diamondLoupe = diamondLoupeHelper.deploy();
+    address introspection = introspectionHelper.deploy();
+    address ownable = ownableHelper.deploy();
+    address metadata = metadataHelper.deploy();
+    address multiInit = multiInitHelper.deploy();
 
     vm.startBroadcast(pk);
-    diamondCut = address(new DiamondCutFacet());
-    diamondLoupe = address(new DiamondLoupeFacet());
-    ownable = address(new OwnableFacet());
-    spaceOwner = address(new SpaceOwner());
-    guardian = address(new GuardianFacet());
-    introspection = address(new IntrospectionFacet());
+    address spaceOwner = address(new SpaceOwner());
+    address guardian = address(new GuardianFacet());
     vm.stopBroadcast();
 
     spaceOwnerHelper.addSelectors(erc721aHelper.selectors());
     spaceOwnerHelper.addSelectors(votesHelper.selectors());
 
-    IDiamond.FacetCut[] memory cuts = new IDiamond.FacetCut[](6);
-
-    cuts[index++] = diamondCutHelper.makeCut(
+    addFacet(
+      diamondCutHelper.makeCut(diamondCut, IDiamond.FacetCutAction.Add),
       diamondCut,
-      IDiamond.FacetCutAction.Add
+      diamondCutHelper.makeInitData("")
     );
-    cuts[index++] = diamondLoupeHelper.makeCut(
+
+    addFacet(
+      diamondLoupeHelper.makeCut(diamondLoupe, IDiamond.FacetCutAction.Add),
       diamondLoupe,
-      IDiamond.FacetCutAction.Add
+      diamondLoupeHelper.makeInitData("")
     );
-    cuts[index++] = ownableHelper.makeCut(ownable, IDiamond.FacetCutAction.Add);
-    cuts[index++] = introspectionHelper.makeCut(
+
+    addFacet(
+      ownableHelper.makeCut(ownable, IDiamond.FacetCutAction.Add),
+      ownable,
+      ownableHelper.makeInitData(deployer)
+    );
+
+    addFacet(
+      introspectionHelper.makeCut(introspection, IDiamond.FacetCutAction.Add),
       introspection,
-      IDiamond.FacetCutAction.Add
+      introspectionHelper.makeInitData("")
     );
-    cuts[index++] = spaceOwnerHelper.makeCut(
+
+    addFacet(
+      spaceOwnerHelper.makeCut(spaceOwner, IDiamond.FacetCutAction.Add),
       spaceOwner,
-      IDiamond.FacetCutAction.Add
+      spaceOwnerHelper.makeInitData("Space Owner", "OWNER", "1")
     );
-    cuts[index++] = guardianHelper.makeCut(
+
+    addFacet(
+      guardianHelper.makeCut(guardian, IDiamond.FacetCutAction.Add),
       guardian,
-      IDiamond.FacetCutAction.Add
+      guardianHelper.makeInitData(7 days)
     );
 
-    _resetIndex();
-
-    addresses[index++] = diamondCut;
-    addresses[index++] = diamondLoupe;
-    addresses[index++] = ownable;
-    addresses[index++] = introspection;
-    addresses[index++] = spaceOwner;
-    addresses[index++] = guardian;
-
-    _resetIndex();
-
-    payloads[index++] = diamondCutHelper.makeInitData("");
-    payloads[index++] = diamondLoupeHelper.makeInitData("");
-    payloads[index++] = ownableHelper.makeInitData(deployer);
-    payloads[index++] = introspectionHelper.makeInitData("");
-    payloads[index++] = spaceOwnerHelper.makeInitData(
-      "Space Owner",
-      "OWNER",
-      "1"
+    addFacet(
+      metadataHelper.makeCut(metadata, IDiamond.FacetCutAction.Add),
+      metadata,
+      metadataHelper.makeInitData(bytes32("Space Owner"), "")
     );
-    payloads[index++] = guardianHelper.makeInitData(7 days);
 
     return
       Diamond.InitParams({
-        baseFacets: cuts,
+        baseFacets: baseFacets(),
         init: multiInit,
         initData: abi.encodeWithSelector(
           MultiInit.multiInit.selector,
-          addresses,
-          payloads
+          _initAddresses,
+          _initDatas
         )
       });
   }

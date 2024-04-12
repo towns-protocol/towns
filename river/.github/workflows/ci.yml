@@ -762,7 +762,7 @@ jobs:
               env:
                   POSTGRES_PASSWORD: postgres
                   PGPASSWORD: postgres
-    
+
             - name: Increase max_connections in Postgres
               run: |
                   docker exec -i river_postgres_container bash << EOF
@@ -771,13 +771,13 @@ jobs:
                   EOF
                   docker restart --time 0 river_postgres_container
                   sleep 5
-    
+
             - name: Show PostgreSQL max_connections
               run: psql -h localhost -p 5433 -U postgres -c 'SHOW max_connections;'
               env:
                   POSTGRES_PASSWORD: postgres
                   PGPASSWORD: postgres
-    
+
             - name: Checkout code
               uses: actions/checkout@v4
 

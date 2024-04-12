@@ -2,11 +2,18 @@ import React, { useCallback, useEffect, useMemo, useState } from 'react'
 import { LookupUser, useMyUserId, useTownsClient, useUserLookupContext } from 'use-towns-client'
 import { useParams } from 'react-router'
 import { isDMChannelStreamId, isGDMChannelStreamId } from '@river/sdk'
-import { Box, Button, Stack, Text, TextButton, TextField } from '@ui'
+import { Box, Button, Icon, IconButton, Stack, Text, TextButton, TextField } from '@ui'
 import { validateUsername } from '@components/SetUsernameForm/validateUsername'
 import { useSetUsername } from 'hooks/useSetUsername'
 import { EncryptedName } from '@components/EncryptedContent/EncryptedName'
 import { shortAddress } from 'ui/utils/utils'
+import { useEnsNames } from 'api/lib/ensNames'
+import { ModalContainer } from '@components/Modals/ModalContainer'
+import { ButtonSpinner } from 'ui/components/Spinner/ButtonSpinner'
+import { useSetEnsName } from 'hooks/useSetEnsName'
+import { EnsBadge } from '@components/EnsBadge/EnsBadge'
+import { usePanelActions } from 'routes/layouts/hooks/usePanelActions'
+import { CHANNEL_INFO_PARAMS } from 'routes'
 
 const useCurrentStreamID = () => {
     const { spaceSlug, channelSlug } = useParams()
@@ -48,9 +55,11 @@ export const SetUsernameDisplayName = (props: { titleProperties: TitleProperties
 
     const { setUsername } = useSetUsername()
     const { setDisplayName } = useTownsClient()
+    const { setEnsName } = useSetEnsName()
     const [dirtyUsername, setDirtyUsername] = React.useState<string>(user?.username ?? '')
     const [usernameAvailable, setUsernameAvailable] = React.useState<boolean>(true)
     const [dirtyDisplayName, setDirtyDisplayName] = React.useState<string>(user?.displayName ?? '')
+    const [isShowingEnsDisplayNameForm, setShowinEnsDisplayNameForm] = useState<boolean>(false)
     const { getIsUsernameAvailable } = useTownsClient()
 
     const onUsernameChange = useCallback(
@@ -102,6 +111,10 @@ export const SetUsernameDisplayName = (props: { titleProperties: TitleProperties
         [setDirtyDisplayName],
     )
 
+    const onSetEnsNameClicked = useCallback(() => {
+        setShowinEnsDisplayNameForm(true)
+    }, [setShowinEnsDisplayNameForm])
+
     const usernameErrorMessage = useMemo(() => {
         if (dirtyUsername === user?.username || dirtyUsername.length < 3) {
             return undefined
@@ -142,16 +155,24 @@ export const SetUsernameDisplayName = (props: { titleProperties: TitleProperties
         }
     }, [titleProperties])
 
+    const onClearEnsName = useCallback(() => {
+        if (!streamId) {
+            return
+        }
+        void setEnsName(streamId, undefined)
+    }, [setEnsName, streamId])
+
     if (!user) {
         return null
     }
 
     return (
-        <Stack padding gap background="level2" rounded="sm">
-            <Text size="sm" color="gray2">
-                {titlePrefix}, you appear as:
-            </Text>
-
+        <Stack padding gap="sm" background="level2" rounded="sm">
+            <Box paddingBottom="sm">
+                <Text size="sm" color="gray2">
+                    {titlePrefix}, you appear as:
+                </Text>
+            </Box>
             {showEditFields ? (
                 <>
                     <EditableInputField
@@ -162,6 +183,32 @@ export const SetUsernameDisplayName = (props: { titleProperties: TitleProperties
                         maxLength={32}
                         onChange={onDisplayNameChange}
                     />
+                    {user && user.ensAddress && (
+                        <EnsBadge userId={user.userId} ensAddress={user.ensAddress} />
+                    )}
+
+                    <Stack horizontal gap="sm">
+                        <Button
+                            tone="level3"
+                            size="button_sm"
+                            width="auto"
+                            onClick={onSetEnsNameClicked}
+                        >
+                            {user?.ensAddress ? 'Change ENS Name' : 'Add ENS Name'}
+                        </Button>
+
+                        {user?.ensAddress && (
+                            <Button
+                                tone="level3"
+                                size="button_sm"
+                                color="error"
+                                onClick={onClearEnsName}
+                            >
+                                Remove
+                            </Button>
+                        )}
+                        {/* <Box grow /> */}
+                    </Stack>
                     <EditableInputField
                         title="Username"
                         value={dirtyUsername}
@@ -174,7 +221,10 @@ export const SetUsernameDisplayName = (props: { titleProperties: TitleProperties
             ) : (
                 <>
                     <Stack horizontal>
-                        <Stack gap>
+                        <Stack gap="sm">
+                            {user && user.ensAddress && (
+                                <EnsBadge userId={user.userId} ensAddress={user.ensAddress} />
+                            )}
                             <UsernameDisplayNameContent user={user} />
                         </Stack>
                         <Box grow />
@@ -206,6 +256,12 @@ export const SetUsernameDisplayName = (props: { titleProperties: TitleProperties
                     </>
                 </Stack>
             )}
+            {isShowingEnsDisplayNameForm && (
+                <EnsDisplayNameModal
+                    selectedEnsName={user?.ensAddress}
+                    onHide={() => setShowinEnsDisplayNameForm(false)}
+                />
+            )}
         </Stack>
     )
 }
@@ -231,7 +287,7 @@ const EditableInputField = (props: {
     const charLimitExceeded = charsRemaining < 0
     return (
         <Stack gap="sm">
-            <Text color="default" fontWeight="medium">
+            <Text color="default" fontSize="sm" fontWeight="medium">
                 {title}
             </Text>
             <Stack horizontal gap alignItems="center" background="level3" rounded="sm">
@@ -303,5 +359,85 @@ const UsernameDisplayNameEncryptedContent = (props: { user: LookupUser }) => {
         <EncryptedName message="Your username is still decrypting." />
     ) : (
         <></>
+    )
+}
+
+const EnsDisplayNameModal = (props: { selectedEnsName?: string; onHide: () => void }) => {
+    const { onHide, selectedEnsName: selectedEnsName } = props
+    const { ensNames, isFetching } = useEnsNames()
+    const { setEnsName } = useSetEnsName()
+    const streamId = useCurrentStreamID()
+    const { openPanel } = usePanelActions()
+
+    const onSelectToken = useCallback(
+        (tokenId: string) => {
+            if (!streamId) {
+                return
+            }
+            void setEnsName(streamId, tokenId)
+        },
+        [setEnsName, streamId],
+    )
+
+    const onViewLinkedWalletsClick = useCallback(() => {
+        openPanel(CHANNEL_INFO_PARAMS.WALLETS)
+    }, [openPanel])
+
+    return (
+        <ModalContainer onHide={onHide}>
+            <Box position="relative">
+                <IconButton position="topRight" icon="close" onClick={onHide} />
+            </Box>
+            <Stack gap alignItems="center" paddingTop="lg">
+                <Text size="lg" fontWeight="strong" color="default">
+                    Set ENS Display Name
+                </Text>
+
+                {ensNames.length === 0 && isFetching && <ButtonSpinner />}
+
+                {ensNames.length > 0 && (
+                    <Stack horizontal alignContent="start" width="100%">
+                        {ensNames.map((ensName) => (
+                            <Stack
+                                hoverable
+                                key={ensName.wallet}
+                                alignItems="center"
+                                gap="sm"
+                                background={{ hover: 'level2' }}
+                                padding="sm"
+                                rounded="sm"
+                                onClick={() => onSelectToken(ensName.wallet)}
+                            >
+                                <Box
+                                    rounded="sm"
+                                    padding="sm"
+                                    width="x12"
+                                    aspectRatio="1/1"
+                                    background="cta2"
+                                >
+                                    {selectedEnsName && ensName.wallet == selectedEnsName && (
+                                        <Box position="relative">
+                                            <Icon
+                                                type="verifiedEnsName"
+                                                size="square_sm"
+                                                position="topRight"
+                                            />
+                                        </Box>
+                                    )}
+                                </Box>
+
+                                <Text size="md" color="gray2">
+                                    {ensName.ensName}
+                                </Text>
+                            </Stack>
+                        ))}
+                    </Stack>
+                )}
+
+                <Button tone="level2" width="100%" onClick={onViewLinkedWalletsClick}>
+                    View Linked Wallets
+                </Button>
+            </Stack>
+        </ModalContainer>
     )
 }
