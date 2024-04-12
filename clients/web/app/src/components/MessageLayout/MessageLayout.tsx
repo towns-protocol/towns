@@ -17,6 +17,7 @@ import { useFocused } from 'hooks/useFocused'
 import { ZRoomMessageRedactedEvent } from '@components/MessageTimeline/util/getEventsByDate'
 import { getPrettyDisplayName } from 'utils/getPrettyDisplayName'
 import { useAbstractAccountAddress } from 'hooks/useAbstractAccountAddress'
+import { useResolveEnsName } from 'api/lib/ensNames'
 import { MessageContextMenu } from './MessageContextMenu'
 import { MessageModalSheet } from './MessageModalSheet'
 import { SendStatus, SendStatusIndicator } from './SendStatusIndicator'
@@ -177,7 +178,7 @@ export const MessageLayout = (props: Props) => {
             <Stack grow gap="paragraph" position="relative">
                 {/* name & date top row */}
                 {(displayContext === 'head' || displayContext === 'single') && (
-                    <Stack horizontal grow gap="xs" height="height_sm" alignItems="end">
+                    <Stack horizontal grow gap="xs" height="height_sm" alignItems="center">
                         {/* display name with tooltip */}
                         {senderId && (
                             <Box
@@ -305,6 +306,21 @@ export const MessageLayout = (props: Props) => {
 
 const UserName = ({ user }: { user?: LookupUser }) => {
     const name = user ? getPrettyDisplayName(user) : ''
+    const { resolvedEnsName } = useResolveEnsName({
+        userId: user?.userId,
+        ensAddress: user?.ensAddress,
+    })
+
+    if (resolvedEnsName) {
+        return (
+            <Stack horizontal gap="xs" alignItems="center">
+                <Text truncate fontWeight="strong" color="default" as="span">
+                    {resolvedEnsName}
+                </Text>
+                <Icon type="verifiedEnsName" size="square_sm" color="gray2" />
+            </Stack>
+        )
+    }
     return (
         <Text truncate fontWeight="strong" color="default" as="span">
             {name}&nbsp;

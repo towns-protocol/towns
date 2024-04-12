@@ -15,7 +15,7 @@ export function useEnsNames() {
                 const ensName = await publicClient.getEnsName({ address: wallet as `0x${string}` })
                 return { ensName: ensName as string | undefined, wallet }
             },
-            staleTime: 1000 * 15,
+            staleTime: 1000 * 3600,
             refetchOnMount: false,
             refetchOnWindowFocus: false,
             refetchOnReconnect: false,
@@ -23,7 +23,10 @@ export function useEnsNames() {
     })
 
     const ensResponses = useQueries({ queries: queries })
-    const ensNames = ensResponses.map((r) => r.data).filter(isDefined)
+    const ensNames = ensResponses
+        .map((r) => r.data)
+        .filter(isDefined)
+        .filter((r) => r.ensName && r.ensName.length > 0)
 
     const isLoadingEnsNames = ensResponses.some((response) => response.isLoading)
     return { ensNames: ensNames, isFetching: isLoadingWallets || isLoadingEnsNames }
