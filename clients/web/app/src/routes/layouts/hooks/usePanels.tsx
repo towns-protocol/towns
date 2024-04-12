@@ -17,6 +17,7 @@ import { WalletLinkingPanel } from '@components/Web3/WalletLinkingPanel'
 import { Panel } from '@components/Panel/Panel'
 import { ChannelSettingsPanel } from '@components/ChannelSettings/ChannelSettings'
 import { useCreateLink } from 'hooks/useCreateLink'
+import { ChannelInvitePanel } from 'routes/ChannelInvitePanel'
 
 export const usePanels = () => {
     const [searchParams] = useSearchParams()
@@ -88,6 +89,9 @@ export const usePanels = () => {
         }
         case CHANNEL_INFO_PARAMS.EDIT_CHANNEL: {
             return withWrapper(<ChannelSettingsPanel />)
+        }
+        case CHANNEL_INFO_PARAMS.INVITE: {
+            return withWrapper(<ChannelInvitePanel />)
         }
     }
 

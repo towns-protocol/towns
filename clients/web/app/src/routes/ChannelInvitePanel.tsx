@@ -1,5 +1,4 @@
 import React, { useCallback, useMemo, useState } from 'react'
-import { useNavigate } from 'react-router'
 import {
     GlobalContextUserLookupProvider,
     useChannelId,
@@ -10,23 +9,29 @@ import { Panel } from '@components/Panel/Panel'
 import { Box, Button, Stack } from '@ui'
 import { InviteUserList } from '@components/InviteUserList/InviteUserList'
 import { ModalContainer } from '@components/Modals/ModalContainer'
+import { usePanelActions } from './layouts/hooks/usePanelActions'
 
-const ChannelInvite = (props: { onClose: () => void }) => {
-    const { onClose } = props
+const ChannelInvite = (props: { onClose?: () => void }) => {
     const channel = useChannelId()
     const { inviteUser } = useTownsClient()
 
     const { memberIds } = useChannelMembers()
     const currentMemberIds = useMemo(() => new Set<string>(memberIds), [memberIds])
     const [selectedUserIds, setSelectedUserIds] = useState<Set<string>>(new Set<string>())
+    const { closePanel } = usePanelActions()
 
     const onSubmit = useCallback(async () => {
         const userIds = Array.from(selectedUserIds)
         for (const userId of userIds) {
             await inviteUser(channel, userId)
         }
-        onClose()
-    }, [channel, inviteUser, onClose, selectedUserIds])
+        if (props.onClose) {
+            // only for touch / modal
+            props.onClose()
+        } else {
+            closePanel()
+        }
+    }, [channel, closePanel, inviteUser, props, selectedUserIds])
 
     const onSelectionChange = useCallback((selectedUserIds: Set<string>) => {
         setSelectedUserIds(selectedUserIds)
@@ -57,22 +62,17 @@ const ChannelInvite = (props: { onClose: () => void }) => {
 }
 
 export const ChannelInvitePanel = () => {
-    const navigate = useNavigate()
-    const onClose = useCallback(() => {
-        navigate('..')
-    }, [navigate])
-
     return (
         <Panel
+            padding="none"
             label={
                 <Stack horizontal gap="xs">
                     Add New Member
                 </Stack>
             }
-            onClosed={onClose}
         >
             <GlobalContextUserLookupProvider>
-                <ChannelInvite onClose={onClose} />
+                <ChannelInvite />
             </GlobalContextUserLookupProvider>
         </Panel>
     )

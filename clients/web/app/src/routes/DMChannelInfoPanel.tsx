@@ -31,15 +31,26 @@ import { GDMChannelPermissionsModal } from './GDMChannelPermissions'
 import { usePanelActions } from './layouts/hooks/usePanelActions'
 
 export const DMChannelInfoPanel = () => {
+    const channelId = useChannelData()?.channel?.id
+    const { data } = useDMData(channelId)
+    const title = data ? (data.isGroup ? 'Group Info' : 'Direct Message') : ''
+    return (
+        <Panel modalPresentable label={title}>
+            {<DMChannelInfo channelId={channelId} data={data} />}
+        </Panel>
+    )
+}
+
+export const DMChannelInfo = (props: { channelId?: string; data?: DMChannelIdentifier }) => {
+    const { channelId, data } = props
     const [activeModal, setActiveModal] = useState<
         'members' | 'permissions' | 'confirm-leave' | undefined
     >(undefined)
     const { leaveRoom } = useTownsClient()
     const { isTouch } = useDevice()
-    const { channel } = useChannelData()
-    const { data } = useDMData(channel?.id)
+
     const { channelSlug } = useParams()
-    const { memberIds } = useMembers(channel?.id)
+    const { memberIds } = useMembers(channelId)
     const { usersMap } = useUserLookupContext()
     const members = useMemo(
         () => memberIds.map((userId) => usersMap[userId]),
@@ -57,16 +68,16 @@ export const DMChannelInfoPanel = () => {
     }, [setActiveModal])
 
     const onLeaveConfirm = useCallback(async () => {
-        if (!channel?.id) {
+        if (!channelId) {
             return
         }
-        await leaveRoom(channel.id)
+        await leaveRoom(channelId)
         setActiveModal(undefined)
         const link = createLink({ route: 'messages' })
         if (link) {
             navigate(link)
         }
-    }, [channel?.id, createLink, leaveRoom, navigate])
+    }, [channelId, createLink, leaveRoom, navigate])
 
     const { openPanel } = usePanelActions()
     const onMembersClick = useCallback(() => {
@@ -114,11 +125,10 @@ export const DMChannelInfoPanel = () => {
         }
     }, [data, membersText])
 
-    const title = data ? (data.isGroup ? 'Group Info' : 'Direct Message') : ''
     const isGDM = data?.isGroup ?? false
 
     return (
-        <Panel modalPresentable label={title}>
+        <>
             <DMChannelContextUserLookupProvider
                 fallbackToParentContext
                 channelId={channelSlug ?? ''}
@@ -189,7 +199,7 @@ export const DMChannelInfoPanel = () => {
                     <GDMChannelPermissionsModal onHide={() => setActiveModal(undefined)} />
                 )}
             </DMChannelContextUserLookupProvider>
-        </Panel>
+        </>
     )
 }
 

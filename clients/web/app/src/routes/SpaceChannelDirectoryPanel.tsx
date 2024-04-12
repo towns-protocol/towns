@@ -1,5 +1,4 @@
 import React, { useCallback, useEffect, useState } from 'react'
-import { useNavigate } from 'react-router'
 import {
     Address,
     RoomMember,
@@ -30,7 +29,6 @@ import { usePanelActions } from './layouts/hooks/usePanelActions'
 
 export const ChannelDirectoryPanel = () => {
     const { channel } = useChannelData()
-    const navigate = useNavigate()
     const { client } = useTownsClient()
 
     const [pendingRemovalUserId, setPendingRemovalUserId] = React.useState<string | undefined>(
@@ -61,10 +59,6 @@ export const ChannelDirectoryPanel = () => {
         setPendingRemovalUserId(undefined)
     }, [setPendingRemovalUserId])
 
-    const addMembersClick = useCallback(() => {
-        navigate(`?panel=${CHANNEL_INFO_PARAMS.INVITE}`)
-    }, [navigate])
-
     return (
         <Panel
             label={
@@ -78,7 +72,7 @@ export const ChannelDirectoryPanel = () => {
             padding="none"
         >
             <ChannelMembers
-                onAddMembersClick={canAddMembers ? addMembersClick : undefined}
+                canAddMembers={canAddMembers}
                 onRemoveMember={canRemoveMembers ? onRemoveMember : undefined}
             />
             {pendingRemovalUserId && (
@@ -93,17 +87,29 @@ export const ChannelDirectoryPanel = () => {
 }
 
 const ChannelMembers = (props: {
+    canAddMembers: boolean
     onAddMembersClick?: () => void
     onRemoveMember?: (userId: string) => void
 }) => {
-    const { onAddMembersClick, onRemoveMember } = props
+    const { canAddMembers, onRemoveMember } = props
     const { memberIds } = useChannelMembers()
     const { usersMap } = useUserLookupContext()
     const myUserId = useMyUserId()
 
+    const { openPanel } = usePanelActions()
+
+    const addMembersClick = useCallback(() => {
+        if (props.onAddMembersClick) {
+            // only for touch / modal
+            props.onAddMembersClick()
+        } else {
+            openPanel(CHANNEL_INFO_PARAMS.INVITE)
+        }
+    }, [openPanel, props])
+
     return (
         <Stack minHeight="forceScroll">
-            {onAddMembersClick && <AddMemberRow onClick={onAddMembersClick} />}
+            {canAddMembers && <AddMemberRow onClick={addMembersClick} />}
             {memberIds.map((userId) => (
                 <ChannelMemberRow
                     key={userId}
@@ -161,7 +167,8 @@ export const ChannelMembersModal = (props: { onHide: () => void }) => {
         <>
             <ModalContainer touchTitle="Members" onHide={props.onHide}>
                 <ChannelMembers
-                    onAddMembersClick={canAddMembers ? onAddMembersClick : undefined}
+                    canAddMembers={canAddMembers}
+                    onAddMembersClick={onAddMembersClick}
                     onRemoveMember={canRemoveMembers ? onMemberClick : undefined}
                 />
                 {inviteModalOpen && <ChannelInviteModal onHide={() => setInviteModalOpen(false)} />}
