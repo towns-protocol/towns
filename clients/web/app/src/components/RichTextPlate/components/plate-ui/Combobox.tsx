@@ -20,9 +20,11 @@ import {
     useEventEditorSelectors,
     usePlateSelectors,
 } from '@udecode/plate-common'
+import { createVirtualRef } from '@udecode/plate-floating'
+import { toDOMNode } from '@udecode/slate-react'
 import { RoomMember } from 'use-towns-client'
 import { search } from '@components/RichText/plugins/EmojiShortcutPlugin'
-import { Text, TypeaheadMenu, TypeaheadMenuItem } from '@ui'
+import { Text, TypeaheadMenuAnchored, TypeaheadMenuItem } from '@ui'
 import { Avatar } from '@components/Avatar/Avatar'
 import { TMentionComboboxTypes, TMentionEmoji } from '../../utils/ComboboxTypes'
 import { getFilteredItemsWithoutMockEmoji } from '../../utils/helpers'
@@ -126,9 +128,14 @@ export const ComboboxContent = <T extends TMentionComboboxTypes>(
     const { component: Component, editor, items, combobox, onRenderItem } = props
 
     useComboboxContentState({ items, combobox })
+    const query = (useComboboxSelectors.text() || '').replace(/[^a-zA-Z0-9-_\s]/gi, '')
+    const activeId = useComboboxSelectors.activeId()
     const filteredItems = useComboboxSelectors.filteredItems() as typeof items
     const highlightedIndex = useComboboxSelectors.highlightedIndex() as number
     const activeComboboxStore = useActiveComboboxStore()!
+    const inputRef = createVirtualRef(editor, editor.selection ?? undefined, {
+        fallbackRect: (toDOMNode(editor, editor) as HTMLDivElement).getBoundingClientRect(),
+    })
 
     if (
         Array.isArray(filteredItems) &&
@@ -138,7 +145,12 @@ export const ComboboxContent = <T extends TMentionComboboxTypes>(
     }
 
     return (
-        <TypeaheadMenu zIndex="tooltips" outerBorder={false}>
+        <TypeaheadMenuAnchored
+            targetRef={inputRef}
+            portalKey={`${query}_${activeId}`}
+            zIndex="tooltips"
+            outerBorder={false}
+        >
             {Component ? Component({ store: activeComboboxStore }) : null}
 
             {getFilteredItemsWithoutMockEmoji(filteredItems || []).map((item, index) => (
@@ -155,7 +167,7 @@ export const ComboboxContent = <T extends TMentionComboboxTypes>(
                     onRenderItem={onRenderItem}
                 />
             ))}
-        </TypeaheadMenu>
+        </TypeaheadMenuAnchored>
     )
 }
 

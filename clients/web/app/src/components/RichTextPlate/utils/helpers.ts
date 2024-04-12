@@ -4,6 +4,7 @@ import { ELEMENT_PARAGRAPH } from '@udecode/plate-paragraph'
 import { PlateEditor, findNode, getBlockAbove, isBlock, setElements } from '@udecode/plate-common'
 import { isType } from '@udecode/plate-utils'
 import { TComboboxItemBase } from '@udecode/plate-combobox'
+import { VirtualRef } from '@udecode/plate-floating'
 import { MOCK_EMOJI } from './ComboboxTypes'
 
 export const isCodeBlockElement = (editor: PlateEditor) =>
@@ -39,3 +40,26 @@ export const setNodeType = (editor: PlateEditor, type: string) => {
 
 export const getFilteredItemsWithoutMockEmoji = (filteredItems: TComboboxItemBase[]) =>
     filteredItems.filter((item) => item.key !== MOCK_EMOJI)
+
+export type TypeaheadPositionResult = {
+    left?: string
+    bottom?: string
+    right?: string
+}
+export const getTypeaheadPosition = (targetRef: VirtualRef): TypeaheadPositionResult => {
+    if (!targetRef.current) {
+        return {}
+    }
+
+    const SAFETY_PAD = 50
+    const { left, bottom } = targetRef.current.getBoundingClientRect()
+    const absPosition: TypeaheadPositionResult = {
+        bottom: `${window.innerHeight - bottom + 30}px`,
+    }
+    if (window.innerWidth < left + SAFETY_PAD + 250) {
+        absPosition.right = `${window.innerWidth - left}px`
+    } else {
+        absPosition.left = `${left - 20}px`
+    }
+    return absPosition
+}

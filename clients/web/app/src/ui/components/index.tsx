@@ -24,7 +24,7 @@ export { TooltipRenderer } from './Tooltip/TooltipRenderer'
 export { Badge } from './Badge'
 export { ErrorMessage } from './ErrorMessage/ErrorMessage'
 export { VList } from './VList'
-export { TypeaheadMenu, TypeaheadMenuItem } from './Typeahead'
+export { TypeaheadMenu, TypeaheadMenuItem, TypeaheadMenuAnchored } from './Typeahead'
 export * from './Toggle'
 export {
     MotionBox,
