@@ -23,9 +23,8 @@ export const contentEditable = style([
 
 export const root = style({})
 
-export const paragraph = style({
-    marginBottom: vars.space.sm,
-})
+export const paragraph = style({})
+export const edited = style({})
 
 export const link = style([
     atoms({
@@ -163,6 +162,7 @@ export const codeBlock = style([
         border: 'level4',
     }),
     {
+        marginTop: vars.space.sm,
         marginBottom: vars.space.sm,
         whiteSpace: 'pre-wrap',
     },
@@ -257,4 +257,8 @@ globalStyle(`${codeBlock} strong`, {
 
 globalStyle(`${richText} ${paragraph} + ${paragraph}`, {
     marginTop: vars.space.md,
+})
+
+globalStyle(`${richText} ${paragraph} + ${edited}`, {
+    marginTop: vars.space.sm,
 })

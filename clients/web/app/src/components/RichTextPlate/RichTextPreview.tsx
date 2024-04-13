@@ -16,7 +16,7 @@ import { CodeLeaf } from './components/plate-ui/CodeLeaf'
 import { LinkWithoutPlate } from './components/plate-ui/LinkElement'
 import { ListElement } from './components/plate-ui/ListElement'
 import { ParagraphWithoutPlate } from './components/plate-ui/ParagraphElement'
-import { richText, singleEmojiMessage } from './RichTextEditor.css'
+import { edited, richText, singleEmojiMessage } from './RichTextEditor.css'
 import MarkdownToJSX from './utils/MarkdownToJSX'
 
 const fieldClassName = clsx([fieldStyles.field, richText])
@@ -119,7 +119,7 @@ export const RichTextPreview = React.memo(
                         {content}
                     </MarkdownToJSX>
                     {statusAnnotation === 'edited' && (
-                        <Box as="span" color="gray2" fontSize="sm">
+                        <Box as="span" color="gray2" fontSize="sm" className={edited}>
                             (edited)
                         </Box>
                     )}
