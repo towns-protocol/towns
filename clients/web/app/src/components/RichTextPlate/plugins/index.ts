@@ -9,7 +9,7 @@ import {
     ELEMENT_CODE_SYNTAX,
     createCodeBlockPlugin,
 } from '@udecode/plate-code-block'
-import { TComboboxItem, TComboboxItemWithData, createComboboxPlugin } from '@udecode/plate-combobox'
+import { TComboboxItemWithData, createComboboxPlugin } from '@udecode/plate-combobox'
 import { ELEMENT_LINK, createLinkPlugin } from '@udecode/plate-link'
 import {
     ELEMENT_LI,
@@ -57,6 +57,7 @@ import { createExitComboboxPlugin } from './ExitComboboxPlugin'
 import { createFormatTextLinkPlugin } from './formatTextLinks/createFormatTextLinkPlugin'
 import { ELEMENT_MENTION_CHANNEL, createChannelPlugin } from './createChannelPlugin'
 import { ELEMENT_MENTION_EMOJI, createEmojiPlugin } from './emoji/createEmojiPlugin'
+import { ComboboxTypes, TUserMention } from '../utils/ComboboxTypes'
 
 const PlatePlugins = createPlugins(
     [
@@ -81,12 +82,12 @@ const PlatePlugins = createPlugins(
         createComboboxPlugin(), // should be after createExitComboboxPlugin
         createEmojiPlugin({
             options: {
-                id: 'emojis',
+                id: ComboboxTypes.emojiMention,
             },
         }),
         createChannelPlugin({
             options: {
-                id: 'channels',
+                id: ComboboxTypes.channelMention,
                 trigger: '#',
                 insertSpaceAfterMention: true,
                 triggerPreviousCharPattern: /^$|^[\s"']$/,
@@ -100,12 +101,13 @@ const PlatePlugins = createPlugins(
         }),
         createMentionPlugin({
             options: {
-                id: 'users',
+                id: ComboboxTypes.userMention,
                 insertSpaceAfterMention: true,
                 triggerPreviousCharPattern: /^$|^[\s"']$/,
-                createMentionNode: (item: TComboboxItem) => ({
+                createMentionNode: (item) => ({
                     value: '@' + item.text,
                     userId: item.key,
+                    atChannel: (item as TComboboxItemWithData<TUserMention>).data.atChannel,
                 }),
             },
         }),

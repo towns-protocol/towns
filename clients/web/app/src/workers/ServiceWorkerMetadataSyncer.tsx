@@ -28,6 +28,10 @@ export function ServiceWorkerMetadataSyncer() {
     const [currentUser] = useState<NotificationCurrentUser>(createInitialCurrentUser)
 
     const cryptoStoreDatabaseName = useMemo(() => {
+        log(
+            'casablancaClient.cryptoStore.name:',
+            casablancaClient?.cryptoStore?.name ?? 'undefined',
+        )
         if (!casablancaClient) {
             return
         }
@@ -47,7 +51,7 @@ export function ServiceWorkerMetadataSyncer() {
                 if (!cancelled) {
                     // open the notification cache for this user
                     setStore(new NotificationStore(currentUserId))
-                    log('set current user', 'currentUserId:', currentUserId)
+                    log('set currentUser', { currentUser })
                 }
             } catch (error) {
                 console.error('sw:push: error setting my userId', error)

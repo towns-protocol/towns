@@ -46,6 +46,7 @@ export type TypeaheadPositionResult = {
     bottom?: string
     right?: string
 }
+
 export const getTypeaheadPosition = (targetRef: VirtualRef): TypeaheadPositionResult => {
     if (!targetRef.current) {
         return {}

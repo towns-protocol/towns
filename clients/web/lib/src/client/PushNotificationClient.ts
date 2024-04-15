@@ -7,6 +7,8 @@ import {
 } from '../types/towns-types'
 
 import {
+    AT_CHANNEL_MENTION,
+    AtChannelRequestParams,
     AttachmentTagRequestParams,
     MentionUsersRequestParams,
     NotificationAttachmentKind,
@@ -32,8 +34,6 @@ export class PushNotificationClient {
         options: SendMessageOptions,
     ): Promise<void> {
         console.log('PUSH: sendNotificationTagIfAny', options)
-        const spaceId = options.parentSpaceId
-
         // GiphyPickerCard sendMessage in this format and the GIF's title as message
         const messageIsImageGif =
             options?.messageType === MessageType.Image && options?.info?.mimetype === 'image/gif'
@@ -63,28 +63,49 @@ export class PushNotificationClient {
             )
         }
 
-        if (!spaceId) {
-            return
-        }
-
+        const spaceId = options.parentSpaceId ?? ''
+        const postRequests: Promise<void>[] = []
+        let userMentions: Mention[] = []
         if (
             isMentionedTextMessageOptions(options) &&
             options.mentions // don't do any extra work unless there are mentions
         ) {
-            return this.sendMentionNotificationToWorker(spaceId, channelId, options.mentions)
-        } else if (
+            const channelMentions = options.mentions.filter((mention) => mention.atChannel)
+            userMentions = options.mentions.filter((mention) => !mention.atChannel)
+            console.log('PUSH: sendNotificationTagIfAny', { channelMentions, userMentions })
+            if (channelMentions.length > 0) {
+                postRequests.push(this.sendAtChannelToNotificationService(spaceId, channelId))
+            }
+            if (userMentions.length > 0) {
+                postRequests.push(
+                    this.sendUserMentionToNotificationService(spaceId, channelId, userMentions),
+                )
+            }
+        }
+        if (
             isThreadIdOptions(options) &&
             options.threadParticipants // don't do any extra work unless there are thread participants
         ) {
-            return this.sendThreadNotificationToWorker(
-                spaceId,
-                channelId,
-                options.threadParticipants,
-            )
+            const threadParticipants: Set<string> = new Set<string>()
+            // skip any users who were mentioned in the message
+            // because they are already being tagged in above logic.
+            options.threadParticipants.forEach((u) => {
+                if (u !== AT_CHANNEL_MENTION && !userMentions.find((m) => m.userId === u)) {
+                    threadParticipants.add(u)
+                }
+            })
+            //console.log('sendNotificationTagIfAny', { threadParticipants })
+            if (threadParticipants.size > 0) {
+                postRequests.push(
+                    this.sendThreadNotificationToWorker(spaceId, channelId, threadParticipants),
+                )
+            }
         }
+
+        await Promise.all(postRequests)
     }
 
-    public async sendAttachmentNotificationTag(
+    private async sendAttachmentNotificationTag(
         tag: NotificationAttachmentKind,
         spaceId: string | undefined,
         channelId: string,
@@ -106,31 +127,6 @@ export class PushNotificationClient {
             console.log('PUSH: sent attachment tag to Push Notification Worker', response.status)
         } catch (error) {
             console.error('PUSH: error sending attachment tag to Push Notification Worker', error)
-        }
-    }
-
-    private async sendMentionNotificationToWorker(
-        spaceId: string,
-        channelId: string,
-        mentions: Mention[],
-    ): Promise<void> {
-        const headers = this.createHttpHeaders()
-        const body = this.createMentionNotificationParams({
-            spaceId,
-            channelId,
-            mentions,
-        })
-        const url = `${this.options.url}/api/tag/mention-users`
-        console.log('PUSH: sending @mention tag to Push Notification Worker ...', url, body)
-        try {
-            const response = await fetch(url, {
-                method: 'POST',
-                headers,
-                body: JSON.stringify(body),
-            })
-            console.log('PUSH: sent @mention tag to Push Notification Worker', response.status)
-        } catch (error) {
-            console.error('PUSH: error sending @mention tag to Push Notification Worker', error)
         }
     }
 
@@ -159,7 +155,55 @@ export class PushNotificationClient {
         }
     }
 
-    private createMentionNotificationParams({
+    private async sendUserMentionToNotificationService(
+        spaceId: string,
+        channelId: string,
+        mentions: Mention[],
+    ): Promise<void> {
+        const headers = this.createHttpHeaders()
+        const body = this.createUserMentionNotificationParams({
+            spaceId,
+            channelId,
+            mentions,
+        })
+        const url = `${this.options.url}/api/tag/mention-users`
+        console.log('PUSH: sending @userMention tag to Notification Service ...', url, body)
+        try {
+            const response = await fetch(url, {
+                method: 'POST',
+                headers,
+                body: JSON.stringify(body),
+            })
+            console.log('PUSH: sent @userMention tag to Notification Service', response.status)
+        } catch (error) {
+            console.error('PUSH: error sending @userMention tag to Notification Service', error)
+        }
+    }
+
+    private async sendAtChannelToNotificationService(
+        spaceId: string,
+        channelId: string,
+    ): Promise<void> {
+        const headers = this.createHttpHeaders()
+        const body = this.createAtChannelNotificationParams({
+            spaceId,
+            channelId,
+        })
+        const url = `${this.options.url}/api/tag/at-channel`
+        console.log('PUSH: sending @channel tag to Notification Service ...', url, body)
+        try {
+            const response = await fetch(url, {
+                method: 'POST',
+                headers,
+                body: JSON.stringify(body),
+            })
+            console.log('PUSH: sent @channel tag to Notification Service', response.status)
+        } catch (error) {
+            console.error('PUSH: error sending @channel tag to Notification Service', error)
+        }
+    }
+
+    private createUserMentionNotificationParams({
         spaceId,
         channelId,
         mentions,
@@ -168,13 +212,25 @@ export class PushNotificationClient {
         channelId: string
         mentions: Mention[]
     }): MentionUsersRequestParams {
-        // JSON schema:
-        // https://www.notion.so/herenottherelabs/RFC-Notification-system-architecture-20aae4a6608640539838bafe24a0e48c?pvs=4#ab2259d34c5c4c649133a779b216b6b7
         const userIds = mentions.map((mention) => mention.userId)
         const params: MentionUsersRequestParams = {
             spaceId,
             channelId,
             userIds,
+        }
+        return params
+    }
+
+    private createAtChannelNotificationParams({
+        spaceId,
+        channelId,
+    }: {
+        spaceId: string
+        channelId: string
+    }): AtChannelRequestParams {
+        const params: AtChannelRequestParams = {
+            spaceId,
+            channelId,
         }
         return params
     }

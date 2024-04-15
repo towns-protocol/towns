@@ -3,7 +3,7 @@ import { ELEMENT_MENTION, TMentionElement } from '@udecode/plate-mention'
 import { Mention } from 'use-towns-client'
 
 export type MyMentionElement = TDescendant &
-    TMentionElement & { userId: string; children: MyMentionElement }
+    TMentionElement & { userId: string; atChannel?: boolean; children: MyMentionElement }
 
 /**
  * @desc Recursively go through the nodes to extract all the `Mention` nodes
@@ -23,6 +23,7 @@ const recursivelyGetNameAndId = (node: MyMentionElement, mentions: Mention[]) =>
         mentions.push({
             displayName: (node as MyMentionElement).value,
             userId: (node as MyMentionElement).userId,
+            atChannel: (node as MyMentionElement).atChannel,
         })
     }
 }

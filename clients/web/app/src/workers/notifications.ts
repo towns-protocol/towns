@@ -45,12 +45,16 @@ async function initCurrentUserNotificationStore(): Promise<
     // if the notificationStore is not initialized, initialize it
     const currentUser = await currentUserStore.getCurrentUserRecord()
     const { userId, databaseName } = currentUser || { userId: undefined, databaseName: undefined }
+    log('currentUser', {
+        userId: userId ? userId : 'undefined',
+        databaseName: databaseName ? databaseName : 'undefined',
+    })
     if (userId) {
         if (notificationStores[userId] === undefined) {
             notificationStores[userId] = new NotificationStore(userId)
         }
         await notificationStores[userId].open()
-        log('currentUser', {
+        log('new currentUser', {
             userId: userId ? userId : 'undefined',
             databaseName: databaseName ? databaseName : 'undefined',
         })

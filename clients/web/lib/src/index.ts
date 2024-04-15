@@ -138,3 +138,4 @@ if (typeof window !== 'undefined' && !window.Buffer) {
 }
 
 export * from '@river-build/web3'
+export * from './types/notification-types'

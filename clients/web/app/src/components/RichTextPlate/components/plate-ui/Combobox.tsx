@@ -1,4 +1,3 @@
-import React, { PropsWithChildren, useCallback, useEffect } from 'react'
 import { withRef } from '@udecode/cn'
 import {
     ComboboxContentItemProps,
@@ -22,37 +21,13 @@ import {
 } from '@udecode/plate-common'
 import { createVirtualRef } from '@udecode/plate-floating'
 import { toDOMNode } from '@udecode/slate-react'
-import { RoomMember } from 'use-towns-client'
+import React, { useCallback, useEffect } from 'react'
+import { TypeaheadMenuAnchored, TypeaheadMenuItem } from '@ui'
 import { search } from '@components/RichText/plugins/EmojiShortcutPlugin'
-import { Text, TypeaheadMenuAnchored, TypeaheadMenuItem } from '@ui'
-import { Avatar } from '@components/Avatar/Avatar'
-import { TMentionComboboxTypes, TMentionEmoji } from '../../utils/ComboboxTypes'
+import { ComboboxTypes, TMentionComboboxTypes, TUserWithChannel } from '../../utils/ComboboxTypes'
 import { getFilteredItemsWithoutMockEmoji } from '../../utils/helpers'
-
-export const ComboboxIcon = <T extends TMentionComboboxTypes>({
-    item,
-}: PropsWithChildren<{ item: T }>) => {
-    if ((item as RoomMember).userId) {
-        return <Avatar size="avatar_sm" userId={(item as RoomMember).userId} />
-    } else if ((item as TMentionEmoji).emoji) {
-        return <span>{(item as TMentionEmoji).emoji}</span>
-    } else {
-        return <>#</>
-    }
-}
-
-export const ComboBoxTrailingContent = <T extends TMentionComboboxTypes>({
-    item,
-}: PropsWithChildren<{ item: T }>) => {
-    if ((item as { isChannelMember: boolean }).isChannelMember) {
-        return null
-    }
-    return (
-        <Text truncate color="error">
-            Not in Channel
-        </Text>
-    )
-}
+import { ComboboxIcon } from './ComboboxIcon'
+import { ComboBoxTrailingContent } from './ComboboxTrailingContent'
 
 export const ComboboxItem = withRef<
     'div',
@@ -61,6 +36,7 @@ export const ComboboxItem = withRef<
         isLast: boolean
         editor: PlateEditor
         currentUser?: string
+        comboboxType: ComboboxTypes
         onSelectItem:
             | null
             | ((editor: PlateEditor, item: TComboboxItemWithData<TMentionComboboxTypes>) => void)
@@ -77,6 +53,7 @@ export const ComboboxItem = withRef<
             isHighlighted,
             onRenderItem,
             className,
+            comboboxType,
             currentUser,
             ...rest
         },
@@ -111,9 +88,14 @@ export const ComboboxItem = withRef<
                     setRefElement: () => ref,
                 }}
                 name={item.text + (currentUser === item.key ? ` (you)` : '')}
-                Icon={<ComboboxIcon item={item.data} />}
+                Icon={<ComboboxIcon item={item.data} comboboxType={comboboxType} />}
                 trailingContent={
-                    (item.data as RoomMember).userId && <ComboBoxTrailingContent item={item.data} />
+                    comboboxType === ComboboxTypes.userMention && (
+                        <ComboBoxTrailingContent
+                            userId={(item.data as TUserWithChannel).userId}
+                            isChannelMember={(item.data as TUserWithChannel).isChannelMember}
+                        />
+                    )
                 }
                 onClick={onClick}
                 onMouseEnter={onMouseEnter}
@@ -163,6 +145,7 @@ export const ComboboxContent = <T extends TMentionComboboxTypes>(
                     isLast={index === (filteredItems || []).length - 1}
                     editor={editor}
                     currentUser={props.currentUser}
+                    comboboxType={activeId}
                     onSelectItem={activeComboboxStore.get.onSelectItem()}
                     onRenderItem={onRenderItem}
                 />
@@ -209,7 +192,7 @@ export const Combobox = <T extends TMentionComboboxTypes>({
     }, [id, trigger, searchPattern, controlled, onSelectItem, maxSuggestions, filter, sort])
 
     useEffect(() => {
-        if (activeId !== 'emojis' || query.length < 1) {
+        if (activeId !== ComboboxTypes.emojiMention || query.length < 1) {
             return
         }
         // Since Plate does not support async search out of the box, we need to fetch the emojis here

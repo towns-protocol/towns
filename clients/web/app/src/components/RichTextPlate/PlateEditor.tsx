@@ -20,15 +20,16 @@ import { Box, BoxProps, Stack } from '@ui'
 import { useDevice } from 'hooks/useDevice'
 import { notUndefined } from 'ui/utils/utils'
 import { getPrettyDisplayName } from 'utils/getPrettyDisplayName'
-import { toMD } from '@components/RichTextPlate/utils/toMD'
 import {
     EditorAttachmentPreview,
     MessageAttachmentPreview,
 } from '@components/EmbeddedMessageAttachement/EditorAttachmentPreview'
 import { useInlineReplyAttchmentPreview } from '@components/EmbeddedMessageAttachement/hooks/useInlineReplyAttchmentPreview'
 import { useInputStore } from 'store/store'
+import { toMD } from './utils/toMD'
 import { RememberInputPlugin } from './plugins/RememberInputPlugin'
 import { deserializeMd } from './utils/deserializeMD'
+import { AtChannelUser, ComboboxTypes, TUserWithChannel } from './utils/ComboboxTypes'
 import { EditorFallback } from './components/EditorFallback'
 import { MentionCombobox } from './components/plate-ui/MentionCombobox'
 import { Editor } from './components/plate-ui/Editor'
@@ -144,16 +145,16 @@ const PlateEditorWithoutBoundary = ({
     const { memberIds: _memberIds } = useChannelMembers()
     const memberIds = useMemo(() => new Set(_memberIds), [_memberIds])
 
-    const userMentions: TComboboxItemWithData<RoomMember & { isChannelMember: boolean }>[] =
-        useMemo(() => {
-            return props.users
-                .map((user) => ({
-                    text: getPrettyDisplayName(user),
-                    key: user.userId,
-                    data: { ...user, isChannelMember: memberIds.has(user.userId) },
-                }))
-                .filter(notUndefined)
-        }, [props.users, memberIds])
+    const userMentions: TComboboxItemWithData<TUserWithChannel>[] = useMemo(() => {
+        return [AtChannelUser]
+            .concat(props.users)
+            .map((user) => ({
+                text: getPrettyDisplayName(user),
+                key: user.userId,
+                data: { ...user, isChannelMember: memberIds.has(user.userId) },
+            }))
+            .filter(notUndefined)
+    }, [props.users, memberIds])
 
     const channelMentions: TComboboxItemWithData<Channel>[] = useMemo(() => {
         return channels
@@ -345,14 +346,14 @@ const PlateEditorWithoutBoundary = ({
                             />
                             <CaptureTownsLinkPlugin onUpdate={onMessageLinksUpdated} />
                             <EmojiPlugin />
-                            <MentionCombobox<RoomMember & { isChannelMember: boolean }>
-                                id="users"
+                            <MentionCombobox<TUserWithChannel>
+                                id={ComboboxTypes.userMention}
                                 items={userMentions}
                                 currentUser={props.userId}
                             />
                             <MentionCombobox<Channel>
                                 pluginKey={ELEMENT_MENTION_CHANNEL}
-                                id="channels"
+                                id={ComboboxTypes.channelMention}
                                 items={channelMentions}
                             />
                             <OfflineIndicator attemptingToSend={isAttemptingSend} />

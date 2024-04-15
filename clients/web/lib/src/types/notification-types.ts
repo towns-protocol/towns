@@ -1,3 +1,6 @@
+export const AT_CHANNEL_MENTION = '@channel'
+export const AT_CHANNEL_MENTION_DISPLAY = 'channel'
+
 export enum NotificationAttachmentKind {
     Image = 'image',
     Gif = 'gif',
@@ -14,6 +17,11 @@ export interface ReplyToUsersRequestParams {
     spaceId: string
     channelId: string
     userIds: string[]
+}
+
+export interface AtChannelRequestParams {
+    spaceId: string
+    channelId: string
 }
 
 export interface AttachmentTagRequestParams {

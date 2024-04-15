@@ -1,3 +1,4 @@
+import { Empty } from '@bufbuild/protobuf'
 import { BigNumber, ContractReceipt, ContractTransaction, ethers } from 'ethers'
 import EventEmitter from 'events'
 import TypedEmitter from 'typed-emitter'
@@ -1479,6 +1480,19 @@ export class TownsClient
             case undefined:
             case MessageType.Text:
                 {
+                    const mentions =
+                        options?.mentions?.map((x) => {
+                            if (x.atChannel) {
+                                return new ChannelMessage_Post_Mention({
+                                    mentionBehavior: {
+                                        case: 'atChannel',
+                                        value: new Empty(),
+                                    },
+                                })
+                            } else {
+                                return new ChannelMessage_Post_Mention(x)
+                            }
+                        }) ?? []
                     await this.casablancaClient.sendChannelMessage_Text(roomId, {
                         threadId: options?.threadId,
                         threadPreview: options?.threadPreview,
@@ -1486,9 +1500,7 @@ export class TownsClient
                         replyPreview: options?.replyPreview,
                         content: {
                             body: message,
-                            mentions:
-                                options?.mentions?.map((x) => new ChannelMessage_Post_Mention(x)) ??
-                                [],
+                            mentions,
                             attachments: transformAttachments(options?.attachments),
                         },
                     })
