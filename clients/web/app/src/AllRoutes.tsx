@@ -3,14 +3,12 @@ import { Outlet, Route, Routes } from 'react-router'
 import { useConnectivity } from 'use-towns-client'
 import { Box, Stack } from '@ui'
 import { useDevice } from 'hooks/useDevice'
-import { PATHS } from 'routes'
-import { PublicTownPage } from 'routes/PublicTownPage/PublicTownPage'
 import { WelcomeRoute } from 'routes/Welcome'
 import { mobileAppClass } from 'ui/styles/globals/utils.css'
-
-const AuthenticatedRoutes = React.lazy(() => import('routes/AuthenticatedRoutes'))
-
-const PlaygroundRoutes = React.lazy(() => import('@components/Playground/PlaygroundRoutes'))
+import { PATHS } from 'routes'
+import { PublicTownPage } from 'routes/PublicTownPage/PublicTownPage'
+import { AuthenticatedRoutes } from 'routes/AuthenticatedRoutes'
+import { PlaygroundLazy } from '@components/Playground/PlaygroundLazy'
 
 export const AllRoutes = () => {
     const { isAuthenticated } = useConnectivity()
@@ -36,7 +34,7 @@ export const AllRoutes = () => {
                         </>
                     </Route>
 
-                    <Route path="/playground/*" element={<PlaygroundRoutes />} />
+                    <Route path="/playground/*" element={<PlaygroundLazy />} />
                 </Route>
             </Routes>
         </>
