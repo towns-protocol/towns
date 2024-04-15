@@ -1,24 +1,14 @@
-import { MembershipOp } from '@river-build/proto'
-import {
-    StreamTimelineEvent,
-    UnauthenticatedClient,
-    isDefined,
-    isRemoteEvent,
-    makeRiverRpcClient,
-    userIdFromAddress,
-} from '@river/sdk'
 import { AnimatePresence, animate } from 'framer-motion'
-import React, { useEffect, useMemo, useRef, useState } from 'react'
-import { makeProviderFromConfig, useContractSpaceInfo } from 'use-towns-client'
+import React, { useEffect, useMemo, useRef } from 'react'
+import { useContractSpaceInfo } from 'use-towns-client'
 import { Spinner } from '@components/Spinner'
 import { FadeInBox } from '@components/Transitions'
-import { Box, Icon, IconName, MotionBox, Paragraph, Stack, Text } from '@ui'
-import { DAY_MS, WEEK_MS } from 'data/constants'
-import { useEnvironment } from 'hooks/useEnvironmnet'
+import { Box, Icon, IconName, Paragraph, Stack, Text } from '@ui'
 import { useDevice } from 'hooks/useDevice'
-import { notUndefined, shortAddress } from 'ui/utils/utils'
+import { shortAddress } from 'ui/utils/utils'
 import { AvatarWithoutDot } from '@components/Avatar/Avatar'
 import { useSpaceIdFromPathname } from 'hooks/useSpaceInfoFromPathname'
+import { useFetchUnauthenticatedActivity } from './useFetchUnauthenticatedActivity'
 
 export const TownPageActivity = (props: { townId: string }) => {
     const { members, townStats, channelStats, isLoading } = useFetchUnauthenticatedActivity(
@@ -140,7 +130,7 @@ export const TownPageActivity = (props: { townId: string }) => {
                     </FadeInBox>
                 )}
 
-                <MotionBox gap="md" key="activities" layout="position">
+                <Box gap="md" key="activities">
                     <Stack horizontal gap alignItems="center">
                         <Text strong size="md">
                             Activity
@@ -169,7 +159,7 @@ export const TownPageActivity = (props: { townId: string }) => {
                             </Box>
                         </Stack>
                     ))}
-                </MotionBox>
+                </Box>
             </Stack>
         </AnimatePresence>
     )
@@ -193,223 +183,6 @@ const Counter = (props: { value: number }) => {
         return () => controls.stop()
     }, [to])
     return <span ref={ref} />
-}
-
-type ActivityEvent = {
-    userId: string
-    timestamp: number
-    type: 'joinedUser' | 'createChannel' | 'createSpace'
-}
-
-const useFetchUnauthenticatedActivity = (townId: string) => {
-    const [isLoading, setIsLoading] = useState(true)
-    const [members, setMembers] = useState<string[]>([])
-    const [channelStats, setChannelStats] = useState({
-        numMessages: 0,
-        numActiveUsers: 0,
-        activeUsers: new Set<string>(),
-    })
-    const [townStats, setTownStats] = useState<{
-        numJoinedUsers: number
-        latestJoinedUsers: ActivityEvent[] | undefined
-        spaceCreateEvent: ActivityEvent | undefined
-        latestCreatedChannels: ActivityEvent[] | undefined
-    }>()
-
-    const { riverChainConfig, riverChain } = useEnvironment()
-    useEffect(() => {
-        if (!riverChainConfig) {
-            return
-        }
-        const provider = makeProviderFromConfig(riverChain)
-        let client: UnauthenticatedClient | undefined = undefined
-        // for hmr
-        setChannelStats({
-            numMessages: 0,
-            numActiveUsers: 0,
-            activeUsers: new Set<string>(),
-        })
-
-        setIsLoading(true)
-
-        const fetch = async () => {
-            try {
-                console.log('TownPageActivity fetch space', townId)
-                const streamId = townId
-                if (!client) {
-                    const rpcClient = await makeRiverRpcClient(provider, riverChainConfig)
-                    client = new UnauthenticatedClient(rpcClient)
-                }
-
-                const stream = await client.getStream(streamId)
-
-                let numJoinedUsers = Array.from(stream.getMembers().joined.values()).map((m) => {
-                    return {
-                        userId: m.userId,
-                        timestamp: 0,
-                        type: 'joinedUser',
-                    } as ActivityEvent
-                })
-
-                setTownStats({
-                    numJoinedUsers: Array.from(numJoinedUsers).length,
-                    latestJoinedUsers: Array.from(numJoinedUsers),
-                    spaceCreateEvent: undefined,
-                    latestCreatedChannels: undefined,
-                })
-
-                setMembers(Array.from(stream.getMembers().membership.joinedUsers))
-
-                await client.scrollbackToDate(stream, Date.now() - WEEK_MS)
-
-                numJoinedUsers = stream.timeline
-                    .flatMap((e) => (isRemoteEvent(e) ? e : undefined))
-                    .filter(notUndefined)
-                    .filter(
-                        (s) =>
-                            s?.remoteEvent.event.payload.value?.content.case === 'membership' &&
-                            s.remoteEvent.event.payload.value?.content.value?.op ===
-                                MembershipOp.SO_JOIN,
-                    )
-                    .map((s) => {
-                        if (s.remoteEvent.event.payload.value?.content.case === 'membership') {
-                            const userId = userIdFromAddress(
-                                s.remoteEvent.event.payload.value.content.value.userAddress,
-                            )
-                            return {
-                                userId: userId,
-                                timestamp: Number(s.createdAtEpochMs),
-                                type: 'joinedUser',
-                            } satisfies ActivityEvent
-                        } else {
-                            return undefined
-                        }
-                    })
-                    .filter(isDefined)
-                    .sort((a, b) => b.timestamp - a.timestamp)
-
-                // space creation event
-                const spaceInception = stream.timeline
-                    .filter(
-                        (x) =>
-                            isRemoteEvent(x) &&
-                            x.remoteEvent.event.payload.case === 'spacePayload' &&
-                            x.remoteEvent.event.payload.value?.content.case === 'inception',
-                    )
-                    .at(0)
-
-                let spaceCreateEvent: ActivityEvent | undefined = undefined
-
-                if (
-                    spaceInception?.remoteEvent?.event.payload.value?.content.case === 'inception'
-                ) {
-                    const userId = userIdFromAddress(
-                        spaceInception.remoteEvent.event.creatorAddress,
-                    )
-                    spaceCreateEvent = {
-                        userId: userId,
-                        timestamp: Number(spaceInception.createdAtEpochMs),
-                        type: 'createSpace',
-                    }
-                }
-
-                console.log('TownPageActivity numJoinedUsers last week', numJoinedUsers)
-                setTownStats({
-                    numJoinedUsers: Array.from(numJoinedUsers).length,
-                    latestJoinedUsers: numJoinedUsers,
-                    spaceCreateEvent: spaceCreateEvent,
-                    latestCreatedChannels: undefined,
-                })
-
-                const channelsIds = Array.from(stream.spaceContent.spaceChannelsMetadata.keys())
-                const channelCreatedEvents: StreamTimelineEvent[] = []
-
-                for (const channelId of channelsIds) {
-                    console.log('TownPageActivity fetch channel', channelId)
-                    const streamView = await client.getStream(channelId)
-                    await client.scrollbackToDate(streamView, Date.now() - WEEK_MS)
-                    const channelMessages = streamView.timeline.filter(
-                        (x) =>
-                            isRemoteEvent(x) &&
-                            x.remoteEvent.event.payload.case === 'channelPayload' &&
-                            x.remoteEvent.event.payload.value?.content.case === 'message',
-                    )
-
-                    const channelInception = streamView.timeline.filter(
-                        (x) =>
-                            isRemoteEvent(x) &&
-                            x.remoteEvent.event.payload.case === 'channelPayload' &&
-                            x.remoteEvent.event.payload.value?.content.case === 'inception',
-                    )
-                    channelCreatedEvents.push(...channelInception)
-
-                    const messages = channelMessages.filter((f) =>
-                        isWithin(f.createdAtEpochMs, DAY_MS),
-                    )
-
-                    setChannelStats((s) => {
-                        const activeUsers = channelMessages
-                            .filter((f) => isWithin(f.createdAtEpochMs, DAY_MS))
-                            .reduce((acc, curr) => {
-                                acc.add(curr.creatorUserId)
-                                return acc
-                            }, s.activeUsers)
-
-                        return {
-                            numMessages: s.numMessages + messages.length,
-                            numActiveUsers: Array.from(activeUsers).length,
-                            activeUsers,
-                        }
-                    })
-                }
-
-                channelCreatedEvents.sort(
-                    (a, b) => Number(a.createdAtEpochMs) - Number(b.createdAtEpochMs),
-                )
-                const latestCreatedChannels = channelCreatedEvents.map(
-                    (event) =>
-                        ({
-                            userId: event.creatorUserId,
-                            timestamp: Number(event.createdAtEpochMs),
-                            type: 'createChannel',
-                        } as ActivityEvent),
-                )
-
-                setTownStats((currentStats) => {
-                    if (!currentStats) {
-                        return currentStats
-                    }
-
-                    return {
-                        ...currentStats,
-                        latestCreatedChannels: latestCreatedChannels,
-                    }
-                })
-
-                setIsLoading(false)
-            } catch (error) {
-                console.error(error)
-            }
-        }
-
-        fetch()
-
-        return () => {
-            console.log('TownPageActivity fetch hook exit')
-        }
-    }, [riverChain, riverChainConfig, townId])
-
-    return {
-        isLoading,
-        townStats,
-        channelStats,
-        members,
-    }
-}
-
-function isWithin(number: number | bigint, time: number) {
-    const minEpochMs = Date.now() - time
-    return number > minEpochMs
 }
 
 function formatRelativeTime(timestamp: number) {
