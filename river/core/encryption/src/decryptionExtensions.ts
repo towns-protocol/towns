@@ -508,28 +508,9 @@ export abstract class BaseDecryptionExtensions {
     private async processEncryptedContentItem(item: EncryptedContentItem): Promise<void> {
         this.log.debug('processEncryptedContentItem', item)
         try {
-            if (this.hasUnprocessedSession(item)) {
-                this.log.debug('skipping, session is pending in to device stream')
-                // if we have a pending session for this key, waiting for confirmation then we can't decrypt it yet
-                insertSorted(
-                    this.queues.decryptionRetries,
-                    {
-                        streamId: item.streamId,
-                        event: item,
-                        retryAt: new Date(Date.now() + 1000), // give it 1 seconds for miniblockblock to confirm
-                    },
-                    (x) => x.retryAt,
-                )
-            } else {
-                // do the work to decrypt the event
-                this.log.debug('decrypting content')
-                await this.decryptGroupEvent(
-                    item.streamId,
-                    item.eventId,
-                    item.kind,
-                    item.encryptedData,
-                )
-            }
+            // do the work to decrypt the event
+            this.log.debug('decrypting content')
+            await this.decryptGroupEvent(item.streamId, item.eventId, item.kind, item.encryptedData)
         } catch (err: unknown) {
             const sessionNotFound = isSessionNotFoundError(err)
             this.log.debug('failed to decrypt', err, 'sessionNotFound', sessionNotFound)
