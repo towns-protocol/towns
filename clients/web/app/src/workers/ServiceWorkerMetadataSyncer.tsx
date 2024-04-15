@@ -7,7 +7,7 @@ import {
     useTownsContext,
     useUserLookupContext,
 } from 'use-towns-client'
-import React, { useCallback, useEffect, useState } from 'react'
+import React, { useCallback, useEffect, useMemo, useState } from 'react'
 
 import debug from 'debug'
 import { NotificationCurrentUser } from 'store/notificationCurrentUser'
@@ -23,36 +23,41 @@ function createInitialCurrentUser() {
 
 export function ServiceWorkerMetadataSyncer() {
     const myProfile = useMyProfile()
-    const { spaceHierarchies } = useTownsContext()
+    const { casablancaClient, spaceHierarchies } = useTownsContext()
     const [store, setStore] = useState<NotificationStore | null>(null)
     const [currentUser] = useState<NotificationCurrentUser>(createInitialCurrentUser)
 
+    const cryptoStoreDatabaseName = useMemo(() => {
+        if (!casablancaClient) {
+            return
+        }
+        return casablancaClient.cryptoStore.name
+    }, [casablancaClient])
+
     useEffect(() => {
         let cancelled = false
-        async function setCurrentUserId() {
-            if (!myProfile?.userId) {
+        async function setCurrentUser() {
+            if (!myProfile?.userId || !cryptoStoreDatabaseName) {
                 return
             }
 
             const currentUserId = myProfile.userId
             try {
-                if (currentUserId) {
-                    await currentUser.setCurrentUserId(currentUserId)
-                    if (!cancelled) {
-                        // open the notification cache for this user
-                        setStore(new NotificationStore(currentUserId))
-                        log('set current user', 'currentUserId:', currentUserId)
-                    }
+                await currentUser.setCurrentUserRecord(currentUserId, cryptoStoreDatabaseName)
+                if (!cancelled) {
+                    // open the notification cache for this user
+                    setStore(new NotificationStore(currentUserId))
+                    log('set current user', 'currentUserId:', currentUserId)
                 }
             } catch (error) {
                 console.error('sw:push: error setting my userId', error)
             }
         }
-        void setCurrentUserId()
+        void setCurrentUser()
         return () => {
             cancelled = true
         }
-    }, [currentUser, myProfile?.userId])
+    }, [cryptoStoreDatabaseName, currentUser, myProfile?.userId])
 
     return (
         <GlobalContextUserLookupProvider>

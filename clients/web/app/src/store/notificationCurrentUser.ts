@@ -1,8 +1,9 @@
 import Dexie, { Table } from 'dexie'
 
-interface CurrentUserRecord {
+export interface CurrentUserRecord {
     keyPath: string
     userId: string
+    databaseName: string
 }
 
 export class NotificationCurrentUser extends Dexie {
@@ -14,19 +15,20 @@ export class NotificationCurrentUser extends Dexie {
         const storeName = 'notification-current-user'
         super(storeName)
         this.storeName = storeName
-        this.version(1).stores({
+        this.version(2).stores({
             currentUser: 'keyPath',
         })
     }
 
-    public async getCurrentUserId(): Promise<string | undefined> {
-        return (await this.currentUser.get(NotificationCurrentUser.keyPath))?.userId
+    public async getCurrentUserRecord(): Promise<CurrentUserRecord | undefined> {
+        return this.currentUser.get(NotificationCurrentUser.keyPath)
     }
 
-    public async setCurrentUserId(userId: string): Promise<void> {
+    public async setCurrentUserRecord(userId: string, databaseName: string): Promise<void> {
         await this.currentUser.put({
             keyPath: NotificationCurrentUser.keyPath,
             userId,
+            databaseName,
         })
     }
 

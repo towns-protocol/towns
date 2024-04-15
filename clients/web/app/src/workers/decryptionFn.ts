@@ -24,10 +24,11 @@ export interface PlaintextDetails {
 
 export async function decrypt(
     userId: string,
+    databaseName: string,
     channelId: string,
     encryptedData: EncryptedData,
 ): Promise<PlaintextDetails | undefined> {
-    const decryptor = await getDecryptor(userId)
+    const decryptor = await getDecryptor(userId, databaseName)
     const plaintext = await decryptor.decrypt(channelId, encryptedData)
     log('decrypted plaintext', plaintext)
     // if the decryption is successful, plaintext has the string, else it's null
@@ -36,9 +37,12 @@ export async function decrypt(
     return plaintextBody
 }
 
-async function getDecryptor(userId: string) {
+async function getDecryptor(userId: string, databaseName: string) {
     if (!decryptorCache.has(userId)) {
-        const cryptoStore = getCryptoStore(userId)
+        const cryptoStore = getCryptoStore(userId, databaseName)
+        log('getCryptoStore', {
+            cryptoStoreName: cryptoStore ? cryptoStore.name : 'undefined',
+        })
         if (!cryptoStore) {
             throw new Error('Could not get crypto store')
         }
@@ -52,9 +56,9 @@ async function getDecryptor(userId: string) {
     return decryptor
 }
 
-function getCryptoStore(userId: string) {
+function getCryptoStore(userId: string, databaseName: string) {
     if (!cryptoStoreCache.has(userId)) {
-        const cryptoStore = new CryptoStore(`database-${userId}`, userId)
+        const cryptoStore = new CryptoStore(databaseName, userId)
         cryptoStoreCache.set(userId, cryptoStore)
     }
     return cryptoStoreCache.get(userId)

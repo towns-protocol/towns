@@ -34,19 +34,31 @@ let currentUserStore: NotificationCurrentUser | undefined = undefined
 
 // initializse the current user's notification store
 // which allows us to map the ids in the notification to the names
-async function initCurrentUserNotificationStore(): Promise<string | undefined> {
+async function initCurrentUserNotificationStore(): Promise<
+    { userId: string; databaseName: string } | undefined
+> {
     if (!currentUserStore) {
         currentUserStore = new NotificationCurrentUser()
     }
     // if the notificationStore is not initialized, initialize it
-    const currentUserId = await currentUserStore.getCurrentUserId()
-    if (currentUserId && notificationStores[currentUserId] === undefined) {
-        notificationStores[currentUserId] = new NotificationStore(currentUserId)
-        await notificationStores[currentUserId].open()
+    const currentUser = await currentUserStore.getCurrentUserRecord()
+    const { userId, databaseName } = currentUser || { userId: undefined, databaseName: undefined }
+    if (userId && notificationStores[userId] === undefined) {
+        const notif = new NotificationStore(userId)
+        notificationStores[userId] = notif
+        await notificationStores[userId].open()
+        log('currentUser', {
+            userId: userId ? userId : 'undefined',
+            databaseName: databaseName ? databaseName : 'undefined',
+        })
+        return {
+            userId,
+            databaseName,
+        }
     } else {
-        log('no currentUserId in NotificationCurrentUser')
+        log('no userId in NotificationCurrentUser')
     }
-    return currentUserId
+    return undefined
 }
 
 export function handleNotifications(worker: ServiceWorkerGlobalScope) {
@@ -101,8 +113,7 @@ export function handleNotifications(worker: ServiceWorkerGlobalScope) {
                 return
             }
 
-            const currentUserId = await initCurrentUserNotificationStore()
-            const content = await getNotificationContent(notification, currentUserId)
+            const content = await getNotificationContent(notification)
             log('getNotificationContent', content)
 
             // options: https://developer.mozilla.org/en-US/docs/Web/API/Notification
@@ -406,13 +417,18 @@ function generateReplyToMessage(
 
 async function getNotificationContent(
     notification: AppNotification,
-    currentUserId: string | undefined,
 ): Promise<NotificationContent | undefined> {
     let townName: string | undefined = undefined
     let channelName: string | undefined = undefined
     let dmChannelName: string | undefined = undefined
     let senderName: string | undefined = undefined
     let recipients: UserRecord[] = []
+    let currentUserId: string | undefined = undefined
+    let currentUserDatabaseName: string | undefined = undefined
+
+    const currentUser = await initCurrentUserNotificationStore()
+    currentUserId = currentUser?.userId
+    currentUserDatabaseName = currentUser?.databaseName
     const notificationStore = currentUserId ? notificationStores[currentUserId] : undefined
 
     try {
@@ -431,16 +447,6 @@ async function getNotificationContent(
         channelName = channel?.name
         // transform the sender name to the shortened version
         senderName = getShortenedName(sender?.name)
-        log(
-            'townName:',
-            townName,
-            'channelName:',
-            channelName,
-            'dmChannelName:',
-            dmChannelName,
-            'senderName:',
-            senderName,
-        )
 
         if (
             notification.content.kind === AppNotificationType.DirectMessage &&
@@ -466,16 +472,22 @@ async function getNotificationContent(
     } catch (error) {
         logError('error fetching space/channel/user names from notification store', error)
         // there may be a problem reading from the notification store, so we'll
-        // reset the cache for next time
+        // reset the cache and try again
         if (currentUserId) {
             delete notificationStores[currentUserId]
         }
-        currentUserId = await initCurrentUserNotificationStore()
+        // reinitialize the notification store, and see if we can get the userId and databaseName
+        const currentUser = await initCurrentUserNotificationStore()
+        currentUserId = currentUser?.userId
+        currentUserDatabaseName = currentUser?.databaseName
     }
 
     // try to decrypt, if we can't, return undefined, and the notification will be a generic message
     log('currentUserId before calling tryDecryptEvent', currentUserId)
-    const plaintext = currentUserId ? await tryDecryptEvent(currentUserId, notification) : undefined
+    const plaintext =
+        currentUserId && currentUserDatabaseName
+            ? await tryDecryptEvent(currentUserId, currentUserDatabaseName, notification)
+            : undefined
 
     switch (notification.content.kind) {
         case AppNotificationType.DirectMessage:
@@ -522,6 +534,7 @@ async function getNotificationContent(
 
 async function tryDecryptEvent(
     userId: string,
+    databaseName: string,
     notification: AppNotification,
 ): Promise<PlaintextDetails | undefined> {
     log('tryDecryptEvent', userId, notification)
@@ -551,7 +564,7 @@ async function tryDecryptEvent(
         try {
             log('tryDecryptEvent', event)
             const encryptedData = getEncryptedData(event)
-            plaintext = await decrypt(userId, channelId, encryptedData)
+            plaintext = await decrypt(userId, databaseName, channelId, encryptedData)
             if (plaintext) {
                 plaintext.refEventId = encryptedData.refEventId
             }
