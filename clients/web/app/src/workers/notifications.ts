@@ -45,9 +45,10 @@ async function initCurrentUserNotificationStore(): Promise<
     // if the notificationStore is not initialized, initialize it
     const currentUser = await currentUserStore.getCurrentUserRecord()
     const { userId, databaseName } = currentUser || { userId: undefined, databaseName: undefined }
-    if (userId && notificationStores[userId] === undefined) {
-        const notif = new NotificationStore(userId)
-        notificationStores[userId] = notif
+    if (userId) {
+        if (notificationStores[userId] === undefined) {
+            notificationStores[userId] = new NotificationStore(userId)
+        }
         await notificationStores[userId].open()
         log('currentUser', {
             userId: userId ? userId : 'undefined',
@@ -58,7 +59,7 @@ async function initCurrentUserNotificationStore(): Promise<
             databaseName,
         }
     } else {
-        log('no userId in NotificationCurrentUser')
+        log('no currentUser in NotificationCurrentUser')
     }
     return undefined
 }
