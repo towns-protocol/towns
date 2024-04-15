@@ -125,6 +125,7 @@ const PlateEditorWithoutBoundary = ({
         storageId ? state.channelMessageInputMap[storageId] : undefined,
     )
     const valueFromStore = storageId ? userInput : undefined
+    const setInput = useInputStore((state) => state.setChannelmessageInput)
 
     const initialValue = useMemo(() => {
         if (!_initialValue) {
@@ -210,6 +211,16 @@ const PlateEditorWithoutBoundary = ({
      */
     const onBlur = useCallback(() => setTimeout(() => onFocusChange(false), 0), [onFocusChange])
 
+    /** Reset the editor after sending a message and clear local storage value as well */
+    const resetEditorAfterSend = useCallback(() => {
+        setInput(storageId, '')
+        if (editorRef.current) {
+            resetEditor(editorRef.current)
+            focusEditor(editorRef.current)
+        }
+        setIsSendingMessage(false)
+    }, [setInput, storageId, setIsSendingMessage])
+
     const onSendCb = useCallback(
         async (message: string, mentions: Mention[]) => {
             if (isUploadingFiles) {
@@ -228,11 +239,7 @@ const PlateEditorWithoutBoundary = ({
                 options.attachments = attachments
             }
             onSend?.(message, options)
-            if (editorRef.current) {
-                resetEditor(editorRef.current)
-                focusEditor(editorRef.current)
-            }
-            setIsSendingMessage(false)
+            resetEditorAfterSend()
         },
         [
             files.length,
@@ -240,7 +247,7 @@ const PlateEditorWithoutBoundary = ({
             embeddedMessageAttachments,
             onSend,
             isUploadingFiles,
-            setIsSendingMessage,
+            resetEditorAfterSend,
         ],
     )
 
