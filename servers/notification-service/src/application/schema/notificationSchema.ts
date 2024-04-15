@@ -1,5 +1,5 @@
 import { z } from 'zod'
-import { NotificationKind } from './tagSchema'
+import { NotificationAttachmentKind, NotificationKind } from './tagSchema'
 
 export enum Urgency {
     VERY_LOW = 'very-low',
@@ -18,6 +18,7 @@ export const notificationContentMessageSchema = z.object({
     spaceId: z.string(),
     channelId: z.string(),
     senderId: z.string(),
+    attachmentOnly: z.nativeEnum(NotificationAttachmentKind).optional(),
     // eslint-disable-next-line @typescript-eslint/no-explicit-any
     event: z.object({}) as any,
 })
@@ -27,6 +28,7 @@ export const notificationContentDmSchema = z.object({
     channelId: z.string(),
     senderId: z.string(),
     recipients: z.array(z.string()),
+    attachmentOnly: z.nativeEnum(NotificationAttachmentKind).optional(),
     // eslint-disable-next-line @typescript-eslint/no-explicit-any
     event: z.object({}) as any,
 })

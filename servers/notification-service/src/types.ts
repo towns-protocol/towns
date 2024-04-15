@@ -18,7 +18,7 @@ import {
 import { tagMentionUsersSchema, tagReplyUserSchema } from './application/schema/tagSchema'
 
 export { Mute } from './application/schema/notificationSettingsSchema'
-export { NotificationKind } from './application/schema/tagSchema'
+export { NotificationKind, NotificationAttachmentKind } from './application/schema/tagSchema'
 export { PushType } from './application/schema/subscriptionSchema'
 export { Urgency } from './application/schema/notificationSchema'
 

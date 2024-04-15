@@ -9,7 +9,7 @@ datasource db {
 }
 
 model NotificationTag {
-  SpaceId   String
+  SpaceId   String?
   ChannelId String
   UserId    String
   Tag       String

@@ -8,6 +8,12 @@ export enum NotificationKind {
     AtChannel = '@channel',
 }
 
+export enum NotificationAttachmentKind {
+    Image = 'image',
+    Gif = 'gif',
+    File = 'file',
+}
+
 export const tagMentionUsersSchema = z.object({
     spaceId: z.string(),
     channelId: z.string().min(1),
@@ -23,4 +29,10 @@ export const tagReplyUserSchema = z.object({
 export const tagAtChannelSchema = z.object({
     spaceId: z.string(),
     channelId: z.string().min(1),
+})
+
+export const tagAttachmentSchema = z.object({
+    spaceId: z.string().optional(),
+    channelId: z.string(),
+    tag: z.nativeEnum(NotificationAttachmentKind),
 })

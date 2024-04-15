@@ -4,8 +4,8 @@ import { Request, Response } from 'express'
 
 import { StatusCodes } from 'http-status-codes'
 import { database } from '../../infrastructure/database/prisma'
-import { tagAtChannelHandler, tagMentionUsersHandler } from './tagHandler'
-import { NotificationKind } from '../schema/tagSchema'
+import { tagAtChannelHandler, tagAttachmentHandler, tagMentionUsersHandler } from './tagHandler'
+import { NotificationAttachmentKind, NotificationKind } from '../schema/tagSchema'
 
 jest.mock('../../infrastructure/database/prisma', () => ({
     database: {
@@ -101,6 +101,42 @@ describe('tagMentionUsersHandler', () => {
             ...req.body,
             tag: NotificationKind.AtChannel,
             userIds: [NotificationKind.AtChannel],
+        })
+    })
+
+    it('should tag attachment only', async () => {
+        req = {
+            body: {
+                channelId: 'channel123',
+                spaceId: 'space123',
+                tag: NotificationAttachmentKind.File,
+            },
+        } as unknown as Request
+        const tagData = {
+            ChannelId: req.body.channelId,
+            Tag: NotificationAttachmentKind.File,
+            SpaceId: req.body.spaceId,
+            UserId: NotificationAttachmentKind.File,
+        }
+
+        await tagAttachmentHandler(req, res)
+
+        expect(database.notificationTag.upsert).toHaveBeenCalled()
+        expect(database.notificationTag.upsert).toHaveBeenCalledWith({
+            where: {
+                ChannelId_UserId: {
+                    ChannelId: tagData.ChannelId,
+                    UserId: tagData.UserId,
+                },
+            },
+            update: { Tag: tagData.Tag },
+            create: { ...tagData },
+        })
+
+        expect(res.status).toHaveBeenCalledWith(StatusCodes.OK)
+        expect(res.json).toHaveBeenCalledWith({
+            ...req.body,
+            userIds: [NotificationAttachmentKind.File],
         })
     })
 

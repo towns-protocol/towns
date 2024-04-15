@@ -1,3 +1,4 @@
+import { NotificationAttachmentKind } from '@notification-service/types'
 import { StreamEvent } from '@river-build/proto'
 
 export enum AppNotificationType {
@@ -15,6 +16,7 @@ export type AppNotificationMessage = {
         channelId: string
         senderId: string
         event: StreamEvent
+        attachmentOnly?: NotificationAttachmentKind
     }
 }
 
@@ -37,6 +39,7 @@ export type AppNotificationReplyTo = {
         channelId: string
         senderId: string
         event: StreamEvent
+        attachmentOnly?: NotificationAttachmentKind
     }
 }
 
@@ -48,6 +51,7 @@ export type AppNotificationDM = {
         senderId: string
         recipients: string[]
         event: StreamEvent
+        attachmentOnly?: NotificationAttachmentKind
     }
 }
 
@@ -106,4 +110,10 @@ export interface User {
     userId: string
     username: string
     displayName: string
+}
+
+export enum NotificationAttachmentKind {
+    Image = 'image',
+    Gif = 'gif',
+    File = 'file',
 }

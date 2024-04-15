@@ -1462,10 +1462,11 @@ export class TownsClient
      * sendMessage
      *************************************************/
     public async sendMessage(roomId: string, message: string, options?: SendMessageOptions) {
-        if (this.pushNotificationClient && options?.parentSpaceId) {
+        if (this.pushNotificationClient && options) {
+            const messageIsEmpty = message.trim() === ''
             await this.pushNotificationClient.sendNotificationTagIfAny(
-                options.parentSpaceId,
                 roomId,
+                messageIsEmpty,
                 options,
             )
         }
@@ -1473,6 +1474,7 @@ export class TownsClient
         if (!this.casablancaClient) {
             throw new Error('Casablanca client not initialized')
         }
+
         switch (options?.messageType) {
             case undefined:
             case MessageType.Text:

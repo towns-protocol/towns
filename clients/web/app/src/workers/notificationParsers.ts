@@ -1,7 +1,12 @@
 import * as z from 'zod'
 import { StreamEvent } from '@river-build/proto'
 import { PATHS } from '../routes'
-import { AppNotification, AppNotificationType, NotificationContent } from './types.d'
+import {
+    AppNotification,
+    AppNotificationType,
+    NotificationAttachmentKind,
+    NotificationContent,
+} from './types.d'
 
 const payloadMessage = z.object({
     kind: z.enum([
@@ -13,6 +18,7 @@ const payloadMessage = z.object({
     channelId: z.string(),
     senderId: z.string(),
     event: z.unknown(),
+    attachmentOnly: z.nativeEnum(NotificationAttachmentKind).optional(),
 })
 
 const payloadDm = z.object({
@@ -21,6 +27,7 @@ const payloadDm = z.object({
     senderId: z.string(),
     recipients: z.array(z.string()),
     event: z.unknown(),
+    attachmentOnly: z.nativeEnum(NotificationAttachmentKind).optional(),
 })
 
 const payload = z.discriminatedUnion('kind', [payloadMessage, payloadDm])
@@ -43,6 +50,7 @@ const payloadSchema = z
                         senderId: data.content.senderId,
                         recipients: data.content.recipients ?? [],
                         event: data.content.event as StreamEvent,
+                        attachmentOnly: data.content.attachmentOnly,
                     },
                 }
             case AppNotificationType.NewMessage:
@@ -76,6 +84,7 @@ const payloadSchema = z
                         channelId: data.content.channelId,
                         senderId: data.content.senderId,
                         event: data.content.event as StreamEvent,
+                        attachmentOnly: data.content.attachmentOnly,
                     },
                 }
             default:

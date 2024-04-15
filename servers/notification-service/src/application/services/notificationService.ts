@@ -10,17 +10,18 @@ import { NotificationTag } from '@prisma/client'
 import { UserSettingsTables } from '../database/userSettingsTables'
 import { database } from '../../infrastructure/database/prisma'
 import { env } from '../utils/environment'
-import { NotificationKind } from '../schema/tagSchema'
+import { NotificationAttachmentKind, NotificationKind } from '../schema/tagSchema'
 import { PushType } from '../schema/subscriptionSchema'
 import { sendNotificationViaWebPush } from './web-push/send-notification'
 import { Urgency } from '../schema/notificationSchema'
 import { createLogger } from './logger'
+import { isChannelStreamId, isDMChannelStreamId, isGDMChannelStreamId } from './stream/id'
 
 const logger = createLogger('notificationService')
 
 export interface NotifyUser {
     userId: string
-    kind: NotificationKind
+    kind: NotificationKind | NotificationAttachmentKind
 }
 
 export interface NotifyUsers {
@@ -66,6 +67,12 @@ export class NotificationService {
                 .filter((taggedUser) => taggedUser.Tag === NotificationKind.ReplyTo.toString())
                 .map((user) => user.UserId),
         )
+        const attachmentNotificationTag = taggedUsers.find((taggedUser) =>
+            Object.values(NotificationAttachmentKind).includes(
+                taggedUser.Tag as NotificationAttachmentKind,
+            ),
+        )
+        const isAttachmentOnly = attachmentNotificationTag !== undefined
 
         let mutedMentionUsers = new Set()
         if (metionUsersTagged.size > 0) {
@@ -104,7 +111,8 @@ export class NotificationService {
                 !isDMorGDM &&
                 !metionUsersTagged.has(userId) &&
                 !replyToUsersTagged.has(userId) &&
-                !isAtChannel
+                !isAtChannel &&
+                !isAttachmentOnly
             const isUserMutedForMention =
                 metionUsersTagged.has(userId) && mutedMentionUsers.has(userId)
             const isUserMutedForReplyTo =
@@ -120,7 +128,6 @@ export class NotificationService {
                 continue
             }
 
-            // if user is tagged, use the specific kind of notification
             if (metionUsersTagged.has(userId)) {
                 recipients[userId] = {
                     userId,
@@ -130,6 +137,11 @@ export class NotificationService {
                 recipients[userId] = {
                     userId,
                     kind: NotificationKind.ReplyTo,
+                }
+            } else if (isAttachmentOnly) {
+                recipients[userId] = {
+                    userId,
+                    kind: attachmentNotificationTag.Tag as NotificationAttachmentKind,
                 }
             } else {
                 recipients[userId] = {
@@ -151,7 +163,27 @@ export class NotificationService {
 
         for (const n of usersToNotify) {
             const payload = { ...notificationData.payload }
-            payload.content.kind = n.kind
+
+            let kind = n.kind
+
+            const isAttachmentOnly = Object.values(NotificationAttachmentKind).includes(
+                kind as unknown as NotificationAttachmentKind,
+            )
+            if (isAttachmentOnly) {
+                logger.info('Attachment notification', kind)
+                payload.content.attachmentOnly = kind as NotificationAttachmentKind
+                if (
+                    isDMChannelStreamId(payload.content.channelId) ||
+                    isGDMChannelStreamId(payload.content.channelId)
+                ) {
+                    kind = NotificationKind.DirectMessage
+                } else if (isChannelStreamId(payload.content.channelId)) {
+                    kind = NotificationKind.ReplyTo
+                }
+                payload.content.event = {}
+            }
+            payload.content.kind = kind as NotificationKind
+
             const option: NotificationOptions = {
                 userId: n.userId,
                 payload: payload,

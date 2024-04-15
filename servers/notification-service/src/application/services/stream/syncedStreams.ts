@@ -18,7 +18,7 @@ import { StreamRpcClient, errorContains } from '../../../infrastructure/rpc/stre
 import { bin_toHexString, streamIdToBytes, userIdFromAddress } from './utils'
 import { database } from '../../../infrastructure/database/prisma'
 import { ParsedEvent, ParsedMiniblock, ParsedStreamAndCookie } from './types'
-import { NotifyUser, NotifyUsers, notificationService } from '../notificationService'
+import { NotifyUser, notificationService } from '../notificationService'
 import { isChannelStreamId, isDMChannelStreamId, isGDMChannelStreamId } from './id'
 import { StreamKind, SyncedStream } from '@prisma/client'
 import { NotificationKind, NotifyUsersSchema } from '../../../types'
@@ -752,7 +752,7 @@ export class SyncedStreams {
     ) {
         logger.info(`handleMessageStreamUpdate ${streamId}`, { streamId })
 
-        const usersToNotify: NotifyUsers = {}
+        const userIds: string[] = []
         const dbStreamUsers = syncedStream.UserIds
         if (!dbStreamUsers.includes(creatorUserId)) {
             logger.error(`creatorUserId not in stream: ${creatorUserId}`, {
@@ -763,15 +763,15 @@ export class SyncedStreams {
 
         dbStreamUsers.forEach((user) => {
             if (user !== creatorUserId) {
-                usersToNotify[user] = {
-                    userId: user,
-                    kind: NotificationKind.DirectMessage,
-                }
+                userIds.push(user)
             }
         })
-        logger.info(`usersToNotify`, { usersToNotify })
 
-        const userIds = Object.keys(usersToNotify)
+        const usersTaggedOrMentioned = await database.notificationTag.findMany({
+            where: {
+                ChannelId: streamId,
+            },
+        })
 
         const notificationData: NotifyUsersSchema = {
             sender: creatorUserId,
@@ -788,7 +788,26 @@ export class SyncedStreams {
             forceNotify: false,
         }
 
+        const usersToNotify = await notificationService.getUsersToNotify(
+            notificationData,
+            streamId,
+            usersTaggedOrMentioned,
+        )
+
+        if (usersToNotify.length === 0) {
+            logger.info(`no users to notify for channel stream ${streamId}`, {
+                streamId,
+            })
+            return
+        }
+
         await this.dispatchNotification(notificationData, Object.values(usersToNotify))
+
+        await database.notificationTag.deleteMany({
+            where: {
+                ChannelId: streamId,
+            },
+        })
     }
 
     private async handleMembershipUpdate(

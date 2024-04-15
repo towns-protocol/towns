@@ -1,10 +1,12 @@
 import * as emoji from 'node-emoji'
 
 import { dlog, dlogError } from '@river-build/dlog'
+
 import { UserRecord } from 'store/notificationSchema'
 import {
     AppNotification,
     AppNotificationType,
+    NotificationAttachmentKind,
     NotificationContent,
     NotificationDM,
     NotificationMention,
@@ -265,13 +267,16 @@ function generateDM(
     sender: string | undefined,
     recipients: UserRecord[] | undefined,
     plaintext: PlaintextDetails | undefined,
+    attachmentKind?: NotificationAttachmentKind,
 ): NotificationDM | undefined {
     // if myUserId is available, remove it from the recipients list
     const recipientsExcludeMe =
         recipients?.filter((recipient) => (myUserId ? recipient.id !== myUserId : false)) ?? []
     const title = generateDmTitle(sender, recipientsExcludeMe, dmChannelName)
     let body = plaintext?.body
-    if (!body) {
+    if (attachmentKind) {
+        body = generateAttachmentBody(attachmentKind)
+    } else if (!body) {
         // always show something to avoid getting throttled
         // if there's no body, use the default message
         body =
@@ -295,6 +300,18 @@ function generateDM(
         channelId,
         title,
         body,
+    }
+}
+
+function generateAttachmentBody(attachmentKind: string) {
+    switch (attachmentKind) {
+        case NotificationAttachmentKind.Image:
+            return 'Sent an image'
+        case NotificationAttachmentKind.Gif:
+            return 'Sent a gif'
+        case NotificationAttachmentKind.File:
+        default:
+            return 'Sent a file'
     }
 }
 
@@ -386,10 +403,13 @@ function generateReplyToMessage(
     channelName: string | undefined,
     sender: string | undefined,
     plaintext: PlaintextDetails | undefined,
+    attachmentKind?: NotificationAttachmentKind,
 ): NotificationReplyTo {
     const title = generateReplyToTitle(sender, townName, channelName)
     let body = plaintext?.body
-    if (!body) {
+    if (attachmentKind) {
+        body = generateAttachmentBody(attachmentKind)
+    } else if (!body) {
         switch (true) {
             case stringHasValue(channelName) && stringHasValue(sender):
                 body = `@${sender} replied to a thread in #${channelName} that you're participating in`
@@ -498,6 +518,7 @@ async function getNotificationContent(
                 senderName,
                 recipients,
                 plaintext,
+                notification.content.attachmentOnly,
             )
         case AppNotificationType.NewMessage:
             return generateNewNotificationMessage(
@@ -525,6 +546,7 @@ async function getNotificationContent(
                 channelName,
                 senderName,
                 plaintext,
+                notification.content.attachmentOnly,
             )
 
         default:
