@@ -21,7 +21,7 @@ export const RememberInputPlugin = (props: Props) => {
     )
 
     useEffect(() => {
-        if (!storageId) {
+        if (!storageId || editor.history.undos.length === 0) {
             return
         }
         toMD(editor).then((markdownMessage) => {
