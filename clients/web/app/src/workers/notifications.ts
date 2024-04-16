@@ -1,6 +1,7 @@
 import * as emoji from 'node-emoji'
 
 import { dlog, dlogError } from '@river-build/dlog'
+import { EncryptedData } from '@river-build/proto'
 
 import { UserRecord } from 'store/notificationSchema'
 import {
@@ -20,11 +21,16 @@ import {
     notificationContentFromEvent,
     pathFromAppNotification,
 } from './notificationParsers'
-import { checkClientIsVisible, getShortenedName, stringHasValue } from './utils'
+import {
+    checkClientIsVisible,
+    deserializeMdToString,
+    getShortenedName,
+    stringHasValue,
+} from './utils'
 
 import { NotificationCurrentUser } from '../store/notificationCurrentUser'
 import { NotificationStore } from '../store/notificationStore'
-import { env } from '../utils/environment'
+import { env } from '../utils'
 import { getEncryptedData } from './data_transforms'
 
 const MIDDLE_DOT = '\u00B7'
@@ -34,7 +40,7 @@ const logError = dlogError('sw:push')
 const notificationStores: Record<string, NotificationStore> = {}
 let currentUserStore: NotificationCurrentUser | undefined = undefined
 
-// initializse the current user's notification store
+// initialize the current user's notification store
 // which allows us to map the ids in the notification to the names
 async function initCurrentUserNotificationStore(): Promise<
     { userId: string; databaseName: string } | undefined
@@ -75,7 +81,7 @@ export function handleNotifications(worker: ServiceWorkerGlobalScope) {
     }
 
     if (prod) {
-        // print the various lifecyle / event hooks for debugging
+        // print the various lifecycle / event hooks for debugging
         worker.addEventListener('install', () => {
             log('"install" event')
         })
@@ -448,8 +454,8 @@ async function getNotificationContent(
     let dmChannelName: string | undefined = undefined
     let senderName: string | undefined = undefined
     let recipients: UserRecord[] = []
-    let currentUserId: string | undefined = undefined
-    let currentUserDatabaseName: string | undefined = undefined
+    let currentUserId: string | undefined
+    let currentUserDatabaseName: string | undefined
 
     const currentUser = await initCurrentUserNotificationStore()
     currentUserId = currentUser?.userId
@@ -587,14 +593,10 @@ async function tryDecryptEvent(
     })
 
     // attempt to decrypt the data
-    const decryptPromise = async function () {
+    const decryptPromise = async function (encryptedData: EncryptedData) {
         try {
             log('tryDecryptEvent', event)
-            const encryptedData = getEncryptedData(event)
             plaintext = await decrypt(userId, databaseName, channelId, encryptedData)
-            if (plaintext) {
-                plaintext.refEventId = encryptedData.refEventId
-            }
             log(`decrypt returns "${plaintext}"`)
             return plaintext
         } catch (error) {
@@ -606,7 +608,12 @@ async function tryDecryptEvent(
     }
 
     try {
-        await Promise.race([decryptPromise(), timeoutPromise])
+        const encryptedData = getEncryptedData(event)
+        await Promise.race([decryptPromise(encryptedData), timeoutPromise])
+        if (plaintext) {
+            plaintext.refEventId = encryptedData.refEventId
+            plaintext.body = await deserializeMdToString(plaintext?.body)
+        }
     } catch (error) {
         logError('error decrypting event', error)
     }

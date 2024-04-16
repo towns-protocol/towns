@@ -17480,7 +17480,9 @@ __metadata:
     linkify-it: ^5.0.0
     lodash: ^4.17.21
     mdast-util-find-and-replace: ^3.0.1
+    mdast-util-from-markdown: ^2.0.0
     mdast-util-to-hast: ^13.1.0
+    mdast-util-to-string: ^4.0.0
     minisearch: ^6.1.0
     msw: ^1.0.1
     pino: ^8.17.1
