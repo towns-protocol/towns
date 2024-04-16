@@ -117,11 +117,6 @@ locals {
 
 module "system_parameters" {
   source = "../../modules/river-system-parameters"
-
-  space_factory_contract_address_default_value       = "0x968696BC59431Ef085441641f550C8e2Eaca8BEd"
-  river_registry_contract_address_default_value      = "0xf18E98D36A6bd1aDb52F776aCc191E69B491c070"
-  wallet_link_contract_address_default_value         = "0x2cF3e30BaCd44272Ee1494659cf895022786AAF3"
-  entitlement_checker_contract_address_default_value = "0x46297EA7c3895d595366551bdE731B7f0B3cF48e"
 }
 
 module "river_node" {
