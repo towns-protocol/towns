@@ -136,7 +136,7 @@ func (s *streamCacheImpl) tryLoadStreamRecord(ctx context.Context, streamId Stre
 			"Stream is not local",
 			"streamId", streamId,
 			"nodes", record.Nodes,
-			"localNode", s.params.Wallet.AddressStr,
+			"localNode", s.params.Wallet,
 		)
 	}
 

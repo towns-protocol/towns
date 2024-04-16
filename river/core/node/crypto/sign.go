@@ -88,7 +88,6 @@ type Wallet struct {
 	PrivateKeyStruct *ecdsa.PrivateKey
 	PrivateKey       []byte
 	Address          common.Address
-	AddressStr       string
 }
 
 func NewWallet(ctx context.Context) (*Wallet, error) {
@@ -113,7 +112,6 @@ func NewWallet(ctx context.Context) (*Wallet, error) {
 			PrivateKeyStruct: key,
 			PrivateKey:       crypto.FromECDSA(key),
 			Address:          address,
-			AddressStr:       address.Hex(),
 		},
 		nil
 }
@@ -143,7 +141,6 @@ func NewWalletFromPrivKey(ctx context.Context, privKey string) (*Wallet, error) 
 			PrivateKeyStruct: k,
 			PrivateKey:       crypto.FromECDSA(k),
 			Address:          address,
-			AddressStr:       address.Hex(),
 		},
 		nil
 }
@@ -166,7 +163,6 @@ func LoadWallet(ctx context.Context, filename string) (*Wallet, error) {
 			PrivateKeyStruct: key,
 			PrivateKey:       crypto.FromECDSA(key),
 			Address:          address,
-			AddressStr:       address.Hex(),
 		},
 		nil
 }
@@ -194,7 +190,7 @@ func (w *Wallet) SaveWalletFromEnv(
 	}
 	defer fAddr.Close()
 
-	_, err = fAddr.WriteString(w.AddressStr)
+	_, err = fAddr.WriteString(w.String())
 	if err != nil {
 		return AsRiverError(err, Err_INTERNAL).
 			Message("Failed to write address to file").
@@ -347,7 +343,7 @@ func (w *Wallet) SaveWallet(
 			Func("SaveWallet")
 	}
 
-	_, err = fAddr.WriteString(w.AddressStr)
+	_, err = fAddr.WriteString(w.String())
 	if err != nil {
 		return AsRiverError(err, Err_INTERNAL).
 			Message("Failed to write address to file").
@@ -429,4 +425,12 @@ func PackWithNonce(address common.Address, nonce uint64) ([]byte, error) {
 	bytes = hasher.Sum(nil)
 
 	return bytes, nil
+}
+
+func (w Wallet) String() string {
+	return w.Address.Hex()
+}
+
+func (w Wallet) GoString() string {
+	return w.Address.Hex()
 }

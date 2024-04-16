@@ -134,7 +134,7 @@ func StartServer(
 
 	instanceId := GenShortNanoid()
 	log = log.With(
-		"nodeAddress", wallet.AddressStr,
+		"nodeAddress", wallet.Address.Hex(),
 		"port", cfg.Port,
 		"instanceId", instanceId,
 	)
@@ -148,7 +148,7 @@ func StartServer(
 		ctx,
 		cfg.Database,
 		cfg.StorageType,
-		wallet.AddressStr,
+		wallet.Address.Hex(),
 		instanceId,
 		streamService.exitSignal,
 	)

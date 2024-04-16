@@ -323,7 +323,7 @@ func (s *streamImpl) initFromBlockchain(ctx context.Context) error {
 			"Stream is not local",
 			"streamId", s.streamId,
 			"nodes", record.Nodes,
-			"localNode", s.params.Wallet.AddressStr,
+			"localNode", s.params.Wallet,
 		)
 	}
 	s.nodes = nodes
@@ -477,7 +477,7 @@ func (s *streamImpl) Sub(ctx context.Context, cookie *SyncCookie, receiver SyncR
 			"cookie.NodeAddress",
 			cookie.NodeAddress,
 			"s.params.Wallet.AddressStr",
-			s.params.Wallet.AddressStr,
+			s.params.Wallet,
 		)
 	}
 	if !s.streamId.EqualsBytes(cookie.StreamId) {
