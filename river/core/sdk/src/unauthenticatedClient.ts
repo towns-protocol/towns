@@ -184,7 +184,6 @@ export class UnauthenticatedClient {
         const unpackedMiniblocks: ParsedMiniblock[] = []
         for (const miniblock of response.miniblocks) {
             const unpackedMiniblock = await unpackMiniblock(miniblock, { disableChecks: true })
-            await new Promise((resolve) => setTimeout(resolve, 0))
             unpackedMiniblocks.push(unpackedMiniblock)
         }
         return {
