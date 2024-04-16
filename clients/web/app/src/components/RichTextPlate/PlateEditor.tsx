@@ -209,7 +209,14 @@ const PlateEditorWithoutBoundary = ({
      *
      * {@link https://linear.app/hnt-labs/issue/HNT-5502/|HNT-5502}
      */
-    const onBlur = useCallback(() => setTimeout(() => onFocusChange(false), 0), [onFocusChange])
+    const onBlur = useCallback(
+        (e: React.FocusEvent) => {
+            if (isTouch) {
+                setTimeout(() => onFocusChange(false), 0)
+            }
+        },
+        [isTouch, onFocusChange],
+    )
 
     /** Reset the editor after sending a message and clear local storage value as well */
     const resetEditorAfterSend = useCallback(() => {

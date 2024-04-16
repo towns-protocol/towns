@@ -38,9 +38,15 @@ export const SearchBar = () => {
 
     const containerRef = useRef<HTMLDivElement>(null)
 
-    useShortcut('DisplaySearchModal', () => {
-        setIsSearchActive(true)
-    })
+    useShortcut(
+        'DisplaySearchModal',
+        () => {
+            setIsSearchActive(true)
+        },
+        {
+            enableOnContentEditable: true,
+        },
+    )
 
     useEffect(() => {
         if (isSearchActive) {
