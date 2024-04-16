@@ -13,3 +13,11 @@ output "river_registry_contract_address_parameter" {
 output "entitlement_checker_contract_address_parameter" {
   value = aws_ssm_parameter.entitlement_checker_contract_address
 }
+
+output "space_owner_contract_address_parameter" {
+  value = aws_ssm_parameter.space_owner_contract_address
+}
+
+output "river_system_parameters_policy" {
+  value = aws_iam_policy.river_system_parameters_policy
+}

@@ -26,10 +26,14 @@ jobs:
                       const webAppUrl = `https://${gitPrNumber}.app-preview.towns.com`;
                       const sampleAppUrl = `https://${gitPrNumber}.sample-app-preview.towns.com`;
                       const riverNodeUrl = `https://river1-${gitPrNumber}.nodes.transient.towns.com`;
+                      const baseChainRpcUrl = `https://base-anvil-transient-${gitPrNumber}.towns.com`;
+                      const riverChainRpcUrl = `https://river-anvil-transient-${gitPrNumber}.towns.com`;
                       const message = `
                       Web App: [${webAppUrl}](${webAppUrl})
                       Sample App: [${sampleAppUrl}](${sampleAppUrl})
                       River Node: [${riverNodeUrl}](${riverNodeUrl})
+                      Base Chain RPC: [${baseChainRpcUrl}](${baseChainRpcUrl})
+                      River Chain RPC: [${riverChainRpcUrl}](${riverChainRpcUrl})
                       `;
 
                       github.rest.issues.createComment({

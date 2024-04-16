@@ -165,16 +165,19 @@ function update_parameter_stores_with_deployed_contracts() {
     local walletLink=$(echo $transient_deployment | jq '.["base"]["addresses"]["walletLink"]' | tr -d '"')
     local entitlementChecker=$(echo $transient_deployment | jq '.["base"]["addresses"]["entitlementChecker"]' | tr -d '"')
     local riverRegistry=$(echo $transient_deployment | jq '.["river"]["addresses"]["riverRegistry"]' | tr -d '"')
+    local spaceOwner=$(echo $transient_deployment | jq '.["base"]["addresses"]["spaceOwner"]' | tr -d '"')
 
     echo "spaceFactory: $spaceFactory"
     echo "walletLink: $walletLink"
     echo "entitlementChecker: $entitlementChecker"
     echo "riverRegistry: $riverRegistry"
+    echo "spaceOwner: $spaceOwner"
 
     set_aws_parameter_store_value_for_contract "space-factory" $spaceFactory > /dev/null    
     set_aws_parameter_store_value_for_contract "entitlement-checker" $entitlementChecker > /dev/null
     set_aws_parameter_store_value_for_contract "river-registry" $riverRegistry > /dev/null
     set_aws_parameter_store_value_for_contract "wallet-link" $walletLink > /dev/null
+    set_aws_parameter_store_value_for_contract "space-owner" $spaceOwner > /dev/null
 }
 
 function check_parameter_stores() {
@@ -184,11 +187,13 @@ function check_parameter_stores() {
     local entitlementChecker=$(get_aws_parameter_store_value_for_contract "entitlement-checker")
     local riverRegistry=$(get_aws_parameter_store_value_for_contract "river-registry")
     local walletLink=$(get_aws_parameter_store_value_for_contract "wallet-link")
+    local spaceOwner=$(get_aws_parameter_store_value_for_contract "space-owner")
 
     echo "spaceFactory: $spaceFactory"
     echo "entitlementChecker: $entitlementChecker"
     echo "riverRegistry: $riverRegistry"
     echo "walletLink: $walletLink"
+    echo "spaceOwner: $spaceOwner"
 }
 
 main

@@ -41,6 +41,7 @@ module "system_parameters" {
   count  = local.create_system_parameters ? 1 : 0
 }
 
+
 data "cloudflare_zone" "zone" {
   name = module.global_constants.primary_hosted_zone_name
 }
@@ -67,6 +68,12 @@ locals {
 
   nodes     = var.num_nodes == 0 ? [] : slice(module.global_constants.nodes_metadata, 0, var.num_nodes)
   nodes_csv = join(",", [for node in local.nodes : "${node.address},${node.url}"])
+}
+
+resource "aws_iam_user_policy_attachment" "river_system_parameters" {
+  count      = local.create_system_parameters ? 1 : 0
+  policy_arn = local.create_system_parameters ? module.system_parameters[0].river_system_parameters_policy.arn : ""
+  user       = local.transient_global_remote_state.render_webapp_user.name
 }
 
 resource "cloudflare_record" "app_dns" {

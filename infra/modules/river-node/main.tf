@@ -90,8 +90,11 @@ data "terraform_remote_state" "global_remote_state" {
 }
 
 resource "aws_iam_role" "ecs_task_execution_role" {
-  name                = "${local.node_name}-ecsTaskExecutionRole"
-  managed_policy_arns = ["arn:aws:iam::aws:policy/service-role/AmazonECSTaskExecutionRolePolicy"]
+  name = "${local.node_name}-ecsTaskExecutionRole"
+  managed_policy_arns = [
+    "arn:aws:iam::aws:policy/service-role/AmazonECSTaskExecutionRolePolicy",
+    var.system_parameters.river_system_parameters_policy.arn
+  ]
   assume_role_policy = jsonencode({
     "Version" : "2012-10-17",
     "Statement" : [
@@ -239,10 +242,6 @@ resource "aws_cloudwatch_log_subscription_filter" "service_discovery_log_group_f
   destination_arn = module.global_constants.datadug_forwarder_stack_lambda.arn
 }
 
-locals {
-  system_parameters_arns_json = jsonencode([for p in values(var.system_parameters) : p.arn])
-}
-
 resource "aws_iam_role_policy" "river_node_credentials" {
   name = "${local.node_name}-node-credentials"
   role = aws_iam_role.ecs_task_execution_role.id
@@ -289,11 +288,6 @@ resource "aws_iam_role_policy" "river_node_credentials" {
           "ssmmessages:OpenDataChannel"
         ],
         "Resource" : "*"
-      },
-      {
-        "Effect": "Allow",
-        "Action" : "ssm:GetParameters",
-        "Resource" : ${local.system_parameters_arns_json}
       }
     ]
   }

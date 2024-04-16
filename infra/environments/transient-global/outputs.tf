@@ -24,3 +24,7 @@ output "river_node_ssl_cert_secret_arn" {
 output "notification_vapid_key" {
   value = aws_secretsmanager_secret.notification_vapid_key
 }
+
+output "render_webapp_user" {
+  value = aws_iam_user.render_webapp_user
+}

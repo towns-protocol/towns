@@ -13,7 +13,7 @@ export VITE_APP_RELEASE_VERSION=$RENDER_GIT_COMMIT
 
 export PREVIEW_DOMAIN_SUFFIX="app-preview.towns.com"
 
-source ./scripts/setup-render-preview-environment.sh
+source ./scripts/setup-render-preview-environment/run.sh
 
 echo "Build: Previous step set VITE_TRANSIENT_ENV_GITHUB_PR_NUMBER to $VITE_TRANSIENT_ENV_GITHUB_PR_NUMBER"
 

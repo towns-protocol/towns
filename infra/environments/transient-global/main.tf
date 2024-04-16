@@ -98,3 +98,7 @@ resource "aws_secretsmanager_secret" "notification_vapid_key" {
   name        = "notification-vapid-key-${terraform.workspace}"
   description = "Key-pair for notification service"
 }
+
+resource "aws_iam_user" "render_webapp_user" {
+  name = "render-webapp-user-${terraform.workspace}"
+}
