@@ -1,7 +1,8 @@
-import React, { useCallback, useMemo } from 'react'
+import React, { ClassAttributes, useCallback, useMemo } from 'react'
 import { ELEMENT_MENTION, TMentionElement } from '@udecode/plate-mention'
 import { clsx } from 'clsx'
 import { Channel, RoomMember } from 'use-towns-client'
+import { Components } from 'hast-util-to-jsx-runtime'
 import { CodeBlockElement } from '@components/RichTextPlate/components/plate-ui/CodeBlockElement'
 import { MessageStatusAnnotation } from '@components/RichText/hooks/useInitialConfig'
 import { Box } from '@ui'
@@ -57,15 +58,17 @@ export const RichTextPreview = React.memo(
             )
         }, [content])
 
-        const memoizedComponents = useMemo(
+        const memoizedComponents: Partial<Components> = useMemo(
             () => ({
-                ul: (props: React.PropsWithChildren) => (
+                ul: (props: React.PropsWithChildren<ClassAttributes<HTMLUListElement>>) => (
                     <ListElement variant="ul">{props.children}</ListElement>
                 ),
-                ol: (props: React.PropsWithChildren) => (
-                    <ListElement variant="ol">{props.children}</ListElement>
+                ol: (props: React.PropsWithChildren<ClassAttributes<HTMLOListElement>>) => (
+                    <ListElement variant="ol" {...props}>
+                        {props.children}
+                    </ListElement>
                 ),
-                li: (props: React.PropsWithChildren) => (
+                li: (props: React.PropsWithChildren<ClassAttributes<HTMLLIElement>>) => (
                     <ListElement variant="li">{props.children}</ListElement>
                 ),
                 lic: (props: React.PropsWithChildren) => (

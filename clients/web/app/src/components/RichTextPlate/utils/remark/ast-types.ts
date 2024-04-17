@@ -105,6 +105,7 @@ export interface BlockType {
     caption?: string
     language?: string
     break?: boolean
+    start?: number
     children: Array<BlockType | LeafType>
 }
 
@@ -153,7 +154,7 @@ export interface MdastNode {
     url?: string
     alt?: string
     lang?: string
-    // mdast metadata
+    start?: number
     // position?: any
     // spread?: any
     // checked?: any

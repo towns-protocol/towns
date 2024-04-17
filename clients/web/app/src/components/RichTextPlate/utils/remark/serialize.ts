@@ -4,6 +4,7 @@ import { BlockType, LeafType, NodeTypes, defaultNodeTypes } from './ast-types'
 interface Options {
     nodeTypes: NodeTypes
     listDepth?: number
+    olStartIndex?: number
     ignoreParagraphNewline?: boolean
 }
 
@@ -103,6 +104,7 @@ export default function serialize(
                         listDepth: (LIST_TYPES as string[]).includes((c as BlockType).type || '')
                             ? listDepth + 1
                             : listDepth,
+                        olStartIndex: (chunk as BlockType).start ?? 1,
                     },
                 )
             })
@@ -200,7 +202,9 @@ export default function serialize(
                     spacer += '  '
                 }
             }
-            return `${spacer}${isOL ? '1.' : '-'} ${children}${treatAsLeaf ? '\n' : ''}`
+            return `${spacer}${isOL ? `${opts.olStartIndex ?? 1}.` : '-'} ${children}${
+                treatAsLeaf ? '\n' : ''
+            }`
         }
         case nodeTypes.code_line:
         case nodeTypes.lic:

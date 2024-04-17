@@ -65,6 +65,7 @@ export default function deserialize<T extends InputNodeTypes>(
         case 'list':
             return {
                 type: node.ordered ? types.ol_list : types.ul_list,
+                start: node.start,
                 children,
             } as ListNode<T>
         case 'listItem':
