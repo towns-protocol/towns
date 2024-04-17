@@ -6,7 +6,7 @@ import {
     createPluginFactory,
     isHotkey,
 } from '@udecode/plate-common'
-import { comboboxActions, comboboxSelectors } from '@udecode/plate-combobox'
+import { comboboxActions, comboboxSelectors, getComboboxStoreById } from '@udecode/plate-combobox'
 import { findMentionInput, removeMentionInput } from '@udecode/plate-mention'
 import { getFilteredItemsWithoutMockEmoji } from '../utils/helpers'
 
@@ -32,15 +32,23 @@ export const createExitComboboxPlugin = createPluginFactory<HotkeyPlugin>({
                     return
                 }
                 const { filteredItems } = comboboxSelectors.state()
-                if (
-                    getFilteredItemsWithoutMockEmoji(filteredItems).length === 0 &&
-                    (isHotkey('space', event) || isHotkey('Enter', event))
-                ) {
-                    comboboxActions.reset()
-                    const currentMentionInput = findMentionInput(editor)!
-                    if (currentMentionInput) {
-                        removeMentionInput(editor, currentMentionInput[1])
+
+                const filteredItemsWithoutMockEmoji =
+                    getFilteredItemsWithoutMockEmoji(filteredItems)
+                if (isHotkey('space', event) || isHotkey('Enter', event)) {
+                    if (filteredItemsWithoutMockEmoji.length === 0) {
+                        comboboxActions.reset()
+                        const currentMentionInput = findMentionInput(editor)!
+                        if (currentMentionInput) {
+                            removeMentionInput(editor, currentMentionInput[1])
+                        }
                     }
+                }
+
+                // If there is only one item when user presses space, select it
+                if (isHotkey('space', event) && filteredItemsWithoutMockEmoji.length === 1) {
+                    const activeCombobox = getComboboxStoreById(comboboxSelectors.activeId())!
+                    activeCombobox.get.onSelectItem()?.(editor, filteredItemsWithoutMockEmoji[0])
                 }
             },
     },
