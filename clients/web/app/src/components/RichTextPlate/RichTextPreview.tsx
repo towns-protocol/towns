@@ -4,7 +4,7 @@ import { clsx } from 'clsx'
 import { Channel, RoomMember } from 'use-towns-client'
 import { CodeBlockElement } from '@components/RichTextPlate/components/plate-ui/CodeBlockElement'
 import { MessageStatusAnnotation } from '@components/RichText/hooks/useInitialConfig'
-import { Box, Text } from '@ui'
+import { Box } from '@ui'
 import { TChannelMentionElement } from './utils/ComboboxTypes'
 import { ELEMENT_MENTION_CHANNEL } from './plugins/createChannelPlugin'
 import { MentionElementWithoutPlate } from './components/plate-ui/MentionElement'
@@ -74,14 +74,14 @@ export const RichTextPreview = React.memo(
                 p: ParagraphWithoutPlate,
                 paragraph: ParagraphWithoutPlate,
                 strong: (props: React.PropsWithChildren) => (
-                    <Text strong display="inline" as="span">
+                    <Box fontWeight="strong" display="inline" as="span">
                         {props.children}
-                    </Text>
+                    </Box>
                 ),
                 em: (props: React.PropsWithChildren) => (
-                    <Text display="inline" as="span" style={{ fontStyle: 'italic' }}>
+                    <Box fontStyle="italic" display="inline" as="span">
                         {props.children}
-                    </Text>
+                    </Box>
                 ),
                 code: CodeLeaf,
                 pre: (props: React.PropsWithChildren) => <CodeBlockElement ref={ref} {...props} />,
