@@ -3,10 +3,15 @@ package rpc_test
 import (
 	"context"
 	"fmt"
+	"log"
+	"math/big"
 	"net"
+	"time"
 
 	"connectrpc.com/connect"
+	"github.com/ethereum/go-ethereum/accounts/abi/bind"
 	"github.com/ethereum/go-ethereum/common"
+	"github.com/ethereum/go-ethereum/core/types"
 	"github.com/river-build/river/core/node/base/test"
 	"github.com/river-build/river/core/node/config"
 	"github.com/river-build/river/core/node/contracts"
@@ -69,6 +74,10 @@ func newServiceTester(numNodes int, require *require.Assertions) *serviceTester 
 	require.NoError(err)
 	st.btc = btc
 
+	st.btc.DeployerBlockchain.TxPool.SetOnSubmitHandler(func() {
+		st.btc.Commit()
+	})
+
 	for i := 0; i < numNodes; i++ {
 		st.nodes[i] = &testNodeRecord{}
 
@@ -122,10 +131,37 @@ func (st *serviceTester) setNodesStatus(start, stop int, status uint8) {
 }
 
 func (st *serviceTester) startNodes(start, stop int) {
+	// creates blocks that signals the river nodes to check and create miniblocks when required.
+	if st.btc.IsSimulated() || (st.btc.IsAnvil() && !st.btc.AnvilAutoMineEnabled()) {
+		// hack to ensure that the chain always produces blocks (automining=true)
+		// commit on simulated backend with no pending txs can sometimes crash in the simulator.
+		// by having a pending tx with automining enabled we can work around that issue.
+		go func() {
+			blockPeriod := time.NewTicker(2 * time.Second)
+			chainID, err := st.btc.Client().ChainID(st.ctx)
+			if err != nil {
+				log.Fatal(err)
+			}
+			signer := types.LatestSignerForChainID(chainID)
+
+			for range blockPeriod.C {
+				_, _ = st.btc.DeployerBlockchain.TxPool.Submit(st.ctx, func(opts *bind.TransactOpts) (*types.Transaction, error) {
+					gp, err := st.btc.Client().SuggestGasPrice(st.ctx)
+					if err != nil {
+						return nil, err
+					}
+					tx := types.NewTransaction(opts.Nonce.Uint64(), st.btc.GetDeployerWallet().Address, big.NewInt(1), 21000, gp, nil)
+					return types.SignTx(tx, signer, st.btc.GetDeployerWallet().PrivateKeyStruct)
+				})
+			}
+		}()
+	}
+
 	for i := start; i < stop; i++ {
 		err := st.startSingle(i)
 		st.require.NoError(err)
 	}
+
 }
 
 func (st *serviceTester) startSingle(i int) error {

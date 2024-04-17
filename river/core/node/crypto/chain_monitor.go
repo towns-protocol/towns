@@ -6,32 +6,99 @@ import (
 	"sync"
 	"time"
 
-	"github.com/ethereum/go-ethereum"
+	"github.com/ethereum/go-ethereum/common"
 	"github.com/ethereum/go-ethereum/core/types"
+	. "github.com/river-build/river/core/node/base"
 	"github.com/river-build/river/core/node/dlog"
+	. "github.com/river-build/river/core/node/protocol"
 )
 
-// OnChainEventCallback is called for each event that matches the filter.
-// Note that the monitor doesn't care about errors in the callback and doesn't
-// expect callbacks to change the received event.
-type OnChainEventCallback = func(event types.Log)
+type (
+	// ChainMonitor monitors the EVM chain for new blocks and/or events.
+	ChainMonitor interface {
+		// Run the monitor until the given ctx expires using the client to interact
+		// with the chain. It tries to determine the block period.
+		Run(ctx context.Context, client BlockchainClient, initialBlock BlockNumber)
+		// RunWithBlockPeriod the monitor until the given ctx expires using the client to interact
+		// with the chain.
+		RunWithBlockPeriod(
+			ctx context.Context,
+			client BlockchainClient,
+			initialBlock BlockNumber,
+			blockPeriod time.Duration,
+		)
+		// OnHeader adds a callback that is when a new header is received.
+		// Note: it is not guaranteed to be called for every new header!
+		OnHeader(cb OnChainNewHeader)
+		// OnBlock adds a callback that is called for each new block
+		OnBlock(cb OnChainNewBlock)
+		// OnAllEvents matches all events for all contracts, e.g. all chain events.
+		OnAllEvents(cb OnChainEventCallback)
+		// Contract matches all events created by the contract on the given address.
+		OnContractEvent(addr common.Address, cb OnChainEventCallback)
+		// ContractWithTopics matches events created by the contract on the given
+		OnContractWithTopicsEvent(addr common.Address, topics [][]common.Hash, cb OnChainEventCallback)
+	}
 
-// OnChainNewBlock is called for each new block that is added to the chain.
-type OnChainNewBlock = func(BlockNumber)
+	// OnChainEventCallback is called for each event that matches the filter.
+	// Note that the monitor doesn't care about errors in the callback and doesn't
+	// expect callbacks to change the received event.
+	OnChainEventCallback = func(context.Context, types.Log)
 
-type chainMonitor struct {
-	fromBlock      BlockNumber
-	filter         ethereum.FilterQuery
-	blockCallbacks chainBlockCallbacks
-	eventCallbacks chainEventCallbacks
-	blockPeriod    time.Duration
+	// OnChainNewHeader is called when a new header is detected to be added to the chain.
+	// Note, it is NOT guaranteed to be called for every new header.
+	// It is called each time the chain is polled and a new header is detected, discarding intermediate headers.
+	OnChainNewHeader = func(context.Context, *types.Header)
+
+	// OnChainNewBlock is called for each new block that is added to the chain.
+	OnChainNewBlock = func(context.Context, BlockNumber)
+
+	chainMonitor struct {
+		muBuilder sync.Mutex
+		builder   chainMonitorBuilder
+	}
+)
+
+// EstimateBlockPeriod tries to estimate the block period from the chain the given client is connected to.
+func EstimateBlockPeriod(ctx context.Context, client BlockchainClient) (time.Duration, error) {
+	log := dlog.FromCtx(ctx)
+
+	// try to determine block period from the last 2 blocks
+	for {
+		head, err := client.HeaderByNumber(ctx, nil)
+		if err != nil || head.Number.Uint64() < 2 {
+			log.Warn("unable to retrieve block header to determine block period", "error", err)
+			if wait(ctx, 2*time.Second) {
+				return 0, RiverError(Err_DEADLINE_EXCEEDED, "Unable to determine chain block period")
+			}
+			continue
+		}
+
+		prev, err := client.HeaderByNumber(ctx, big.NewInt(head.Number.Int64()-1))
+		if err != nil {
+			log.Warn("unable to retrieve block header to determine block period", "error", err)
+			if wait(ctx, 2*time.Second) {
+				return 0, RiverError(Err_DEADLINE_EXCEEDED, "Unable to determine chain block period")
+			}
+			continue
+		}
+
+		blockTime := head.Time - prev.Time
+		if blockTime != 0 {
+			return time.Duration(blockTime) * time.Second, nil
+		}
+
+		return 0, RiverError(Err_BAD_CONFIG,
+			"Unable to determine chain block period, last 2 blocks have same timestamp")
+	}
 }
 
-// EvmChainMonitor monitors the EVM chain for new blocks and/or events.
-type ChainMonitor interface {
-	// Run the monitor until the given ctx expires using the client to interact
-	// with the chain.
-	Run(ctx context.Context, client BlockchainClient)
+// NewChainMonitorBuilder constructs a chain monitor that implements ChainMinotor
+// and starts to monitor the chain on the given block.
+func NewChainMonitor() *chainMonitor {
+	return &chainMonitor{
+		builder: chainMonitorBuilder{dirty: true},
+	}
 }
 
 // Run monitors the chain the given client is connected to and calls the
@@ -40,14 +107,79 @@ type ChainMonitor interface {
 // fromBlock block number. Callbacks are called in the order they were added and
 // aren't called concurrently to ensure that events are processed in the order
 // they were received.
-func (ecm *chainMonitor) Run(ctx context.Context, client BlockchainClient) {
-	ecm.runWithPolling(ctx, client)
+func (ecm *chainMonitor) Run(ctx context.Context, client BlockchainClient, initialBlock BlockNumber) {
+	var (
+		blockPeriod time.Duration
+		err         error
+	)
+
+	for {
+		if blockPeriod, err = EstimateBlockPeriod(ctx, client); err == nil {
+			break
+		}
+
+		select {
+		case <-ctx.Done():
+			return
+		case <-time.After(2 * time.Second):
+			continue
+		}
+	}
+	ecm.runWithPolling(ctx, client, initialBlock, blockPeriod)
 }
 
-func (ecm *chainMonitor) runWithPolling(ctx context.Context, client BlockchainClient) {
+func (ecm *chainMonitor) RunWithBlockPeriod(
+	ctx context.Context,
+	client BlockchainClient,
+	initialBlock BlockNumber,
+	blockPeriod time.Duration,
+) {
+	ecm.runWithPolling(ctx, client, initialBlock, blockPeriod)
+}
+
+func (ecm *chainMonitor) OnHeader(cb OnChainNewHeader) {
+	ecm.muBuilder.Lock()
+	defer ecm.muBuilder.Unlock()
+	ecm.builder.OnHeader(cb)
+}
+
+func (ecm *chainMonitor) OnBlock(cb OnChainNewBlock) {
+	ecm.muBuilder.Lock()
+	defer ecm.muBuilder.Unlock()
+	ecm.builder.OnBlock(cb)
+}
+
+func (ecm *chainMonitor) OnAllEvents(cb OnChainEventCallback) {
+	ecm.muBuilder.Lock()
+	defer ecm.muBuilder.Unlock()
+	ecm.builder.OnAllEvents(cb)
+}
+
+func (ecm *chainMonitor) OnContractEvent(addr common.Address, cb OnChainEventCallback) {
+	ecm.muBuilder.Lock()
+	defer ecm.muBuilder.Unlock()
+	ecm.builder.OnContractEvent(addr, cb)
+}
+
+func (ecm *chainMonitor) OnContractWithTopicsEvent(
+	addr common.Address,
+	topics [][]common.Hash,
+	cb OnChainEventCallback,
+) {
+	ecm.muBuilder.Lock()
+	defer ecm.muBuilder.Unlock()
+	ecm.builder.OnContractWithTopicsEvent(addr, topics, cb)
+}
+
+func (ecm *chainMonitor) runWithPolling(
+	ctx context.Context,
+	client BlockchainClient,
+	initialBlock BlockNumber,
+	blockPeriod time.Duration,
+) {
 	var (
-		fromBlock        = ecm.fromBlock.AsBigInt()
-		blockPeriod      = ecm.estimateBlockPeriod(ctx, client)
+		fromBlock        = initialBlock.AsBigInt()
+		lastHead         *types.Header
 		shortBlockPeriod = blockPeriod / 20
 		one              = big.NewInt(1)
 		errCounter       = 0
@@ -72,11 +204,10 @@ func (ecm *chainMonitor) runWithPolling(ctx context.Context, client BlockchainCl
 			return blockPeriod
 		}
 		pollInterval = blockPeriod
-		query        = ecm.filter
 		log          = dlog.FromCtx(ctx)
 	)
 
-	log.Info("chain monitor started", "blockPeriod", blockPeriod)
+	log.Info("chain monitor started", "blockPeriod", blockPeriod, "fromBlock", initialBlock)
 
 	for {
 		select {
@@ -94,10 +225,15 @@ func (ecm *chainMonitor) runWithPolling(ctx context.Context, client BlockchainCl
 				continue
 			}
 
-			if head.Number.Cmp(fromBlock) < 0 { // no new block
+			if lastHead != nil && lastHead.Number.Cmp(head.Number) >= 0 { // no new block
 				pollInterval = nextPollInterval(time.Since(start), false, false)
 				continue
 			}
+
+			lastHead = head
+
+			ecm.muBuilder.Lock()
+			ecm.builder.headerCallbacks.onHeadReceived(ctx, head)
 
 			var (
 				newBlocks         []BlockNumber
@@ -112,44 +248,47 @@ func (ecm *chainMonitor) runWithPolling(ctx context.Context, client BlockchainCl
 				toBlock.SetUint64(fromBlock.Uint64() + 25)
 			}
 
+			query := ecm.builder.Query()
 			query.FromBlock, query.ToBlock = fromBlock, toBlock
 
-			if len(ecm.blockCallbacks) > 0 {
+			if len(ecm.builder.blockCallbacks) > 0 {
 				for i := query.FromBlock.Uint64(); i <= query.ToBlock.Uint64(); i++ {
 					newBlocks = append(newBlocks, BlockNumber(i))
 				}
 			}
 
-			if len(ecm.eventCallbacks) > 0 { // collect events in new blocks
+			if len(ecm.builder.eventCallbacks) > 0 { // collect events in new blocks
 				collectedLogs, err = client.FilterLogs(ctx, query)
 				if err != nil {
 					log.Warn("unable to retrieve logs", "error", err)
 					pollInterval = nextPollInterval(time.Since(start), false, true)
+					ecm.muBuilder.Unlock()
 					continue
 				}
 			}
 
-			if len(ecm.blockCallbacks) > 0 {
+			if len(ecm.builder.blockCallbacks) > 0 {
 				callbacksExecuted.Add(1)
 				go func() {
 					for _, header := range newBlocks {
-						ecm.blockCallbacks.onBlockReceived(header)
+						ecm.builder.blockCallbacks.onBlockReceived(ctx, header)
 					}
 					callbacksExecuted.Done()
 				}()
 			}
 
-			if len(ecm.eventCallbacks) > 0 {
+			if len(ecm.builder.eventCallbacks) > 0 {
 				callbacksExecuted.Add(1)
 				go func() {
 					for _, log := range collectedLogs {
-						ecm.eventCallbacks.onLogReceived(log)
+						ecm.builder.eventCallbacks.onLogReceived(ctx, log)
 					}
 					callbacksExecuted.Done()
 				}()
 			}
 
 			callbacksExecuted.Wait()
+			ecm.muBuilder.Unlock()
 
 			took := time.Since(start)
 
@@ -164,45 +303,5 @@ func (ecm *chainMonitor) runWithPolling(ctx context.Context, client BlockchainCl
 			fromBlock = new(big.Int).Add(query.ToBlock, one)
 			pollInterval = nextPollInterval(took, true, false)
 		}
-	}
-}
-
-func (ecm *chainMonitor) estimateBlockPeriod(ctx context.Context, client BlockchainClient) time.Duration {
-	if ecm.blockPeriod != 0 {
-		return ecm.blockPeriod
-	}
-	log := dlog.FromCtx(ctx)
-
-	// try to determine block period from the last 2 blocks
-	for {
-		head, err := client.HeaderByNumber(ctx, nil)
-		if err != nil {
-			log.Warn("unable to retrieve block header to determine block period", "error", err)
-			if wait(ctx, 2*time.Second) {
-				return time.Hour
-			}
-			continue
-		}
-		if head.Number.Uint64() == 0 {
-			log.Warn("unable to determine chain block period, falling back to 2 seconds")
-			return 2 * time.Second
-		}
-
-		prev, err := client.HeaderByNumber(ctx, big.NewInt(head.Number.Int64()-1))
-		if err != nil {
-			log.Warn("unable to retrieve block header to determine block period", "error", err)
-			if wait(ctx, 2*time.Second) {
-				return time.Hour
-			}
-			continue
-		}
-
-		blockTime := head.Time - prev.Time
-		if blockTime != 0 {
-			return time.Duration(blockTime) * time.Second
-		}
-
-		log.Warn("latest 2 block have the same timestamp, falling back to 2 seconds")
-		return 2 * time.Second
 	}
 }

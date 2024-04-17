@@ -50,7 +50,7 @@ func NewStreamCache(
 	ctx context.Context,
 	params *StreamCacheParams,
 	appliedBlockNum crypto.BlockNumber,
-	chainMonitor crypto.ChainMonitorBuilder,
+	chainMonitor crypto.ChainMonitor,
 ) (*streamCacheImpl, error) {
 	s := &streamCacheImpl{
 		params: params,
@@ -76,7 +76,7 @@ func NewStreamCache(
 
 	// TODO: setup monitor for stream updates and update records accordingly.
 
-	chainMonitor.OnBlock(func(crypto.BlockNumber) { s.OnNewBlock(ctx) })
+	chainMonitor.OnBlock(func(ctx context.Context, blockNumber crypto.BlockNumber) { s.OnNewBlock(ctx) })
 
 	go s.cacheCleanup(ctx, params.StreamConfig.CacheExpirationPollInterval, params.StreamConfig.CacheExpiration)
 

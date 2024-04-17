@@ -2,7 +2,7 @@ package render
 
 // RenderableData is the interface for all data that can be rendered
 type RenderableData interface {
-	*AvailableDebugHandlersData | *CacheData |
+	*AvailableDebugHandlersData | *CacheData | *TransactionPoolData |
 		*GoRoutineData | *MemStatsData | *InfoIndexData | *DebugMultiData
 
 	// TemplateName returns the name of the template to be used for rendering
@@ -38,6 +38,19 @@ type CacheDataStream struct {
 
 type GoRoutineData struct {
 	Stacks []*GoRoutineStack
+}
+
+type TransactionPoolData struct {
+	River struct {
+		ProcessedTransactions        int64
+		PendingTransactions          int64
+		ReplacementTransactionsCount int64
+		LastReplacementTransaction   string
+	}
+}
+
+func (d TransactionPoolData) TemplateName() string {
+	return "templates/debug/txpool.template.html"
 }
 
 func (d GoRoutineData) TemplateName() string {

@@ -64,6 +64,7 @@ export interface RoleDetails {
  */
 export interface ChannelMetadata {
     name: string
+    description?: string
     channelNetworkId: string
     disabled: boolean
 }

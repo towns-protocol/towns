@@ -14,7 +14,7 @@ import {
     makeRiverRpcClient,
 } from '@river/sdk'
 import { EntitlementsDelegate, DecryptionStatus } from '@river-build/encryption'
-import { CreateSpaceParams, IRuleEntitlement } from '@river-build/web3'
+import { CreateSpaceParams, IRuleEntitlement, UpdateChannelParams } from '@river-build/web3'
 import { ChannelMessage_Post_Mention, FullyReadMarker } from '@river-build/proto'
 import {
     ChannelTransactionContext,
@@ -567,8 +567,9 @@ export class TownsClient
                     spaceId: updateChannelInfo.parentSpaceId,
                     channelId: updateChannelInfo.channelId,
                     channelName: updateChannelInfo.updatedChannelName,
+                    channelDescription: updateChannelInfo.updatedChannelTopic ?? '',
                     roleIds: updateChannelInfo.updatedRoleIds,
-                }
+                } satisfies UpdateChannelParams
 
                 if (this.isAccountAbstractionEnabled()) {
                     transaction = await this.userOps?.sendUpdateChannelOp([newChannelInfo, signer])

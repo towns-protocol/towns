@@ -4,20 +4,18 @@ import (
 	"context"
 	"math/big"
 
-	. "github.com/river-build/river/core/node/base"
-	"github.com/river-build/river/core/node/config"
-	"github.com/river-build/river/core/node/contracts"
-	"github.com/river-build/river/core/node/dlog"
-	. "github.com/river-build/river/core/node/protocol"
-	. "github.com/river-build/river/core/node/shared"
-
-	"github.com/river-build/river/core/node/crypto"
-
 	"github.com/ethereum/go-ethereum"
 	"github.com/ethereum/go-ethereum/accounts/abi"
 	"github.com/ethereum/go-ethereum/accounts/abi/bind"
 	"github.com/ethereum/go-ethereum/common"
 	"github.com/ethereum/go-ethereum/core/types"
+	. "github.com/river-build/river/core/node/base"
+	"github.com/river-build/river/core/node/config"
+	"github.com/river-build/river/core/node/contracts"
+	"github.com/river-build/river/core/node/crypto"
+	"github.com/river-build/river/core/node/dlog"
+	. "github.com/river-build/river/core/node/protocol"
+	. "github.com/river-build/river/core/node/shared"
 )
 
 // Convinience wrapper for the IRiverRegistryV1 interface (abigen exports it as RiverRegistryV1)
@@ -128,23 +126,27 @@ func (c *RiverRegistryContract) AllocateStream(
 	genesisMiniblockHash common.Hash,
 	genesisMiniblock []byte,
 ) error {
-	_, _, err := c.Blockchain.TxRunner.SubmitAndWait(
-		ctx,
-		func(opts *bind.TransactOpts) (*types.Transaction, error) {
-			return c.StreamRegistry.AllocateStream(
-				opts,
-				streamId,
-				addresses,
-				genesisMiniblockHash,
-				genesisMiniblock,
-			)
-		},
-	)
+	pendingTx, err := c.Blockchain.TxPool.Submit(ctx, func(opts *bind.TransactOpts) (*types.Transaction, error) {
+		return c.StreamRegistry.AllocateStream(
+			opts, streamId, addresses, genesisMiniblockHash, genesisMiniblock)
+	})
 	if err != nil {
-		return AsRiverError(err, Err_CANNOT_CALL_CONTRACT).Func("AllocateStream").Message("Smart contract call failed")
+		return AsRiverError(err, Err_CANNOT_CALL_CONTRACT).
+			Func("AllocateStream").
+			Message("Smart contract call failed")
 	}
 
-	return nil
+	receipt := <-pendingTx.Wait()
+	if receipt != nil && receipt.Status == crypto.TransactionResultSuccess {
+		return nil
+	}
+	if receipt != nil && receipt.Status != crypto.TransactionResultSuccess {
+		return RiverError(Err_ERR_UNSPECIFIED, "Allocate stream transaction failed").
+			Tag("tx", receipt.TxHash.Hex()).
+			Func("AllocateStream")
+	}
+
+	return RiverError(Err_ERR_UNSPECIFIED, "AllocateStream transaction result unknown")
 }
 
 type GetStreamResult struct {
@@ -248,26 +250,28 @@ func (c *RiverRegistryContract) SetStreamLastMiniblock(
 	lastMiniblockNum uint64,
 	isSealed bool,
 ) error {
-	_, _, err := c.Blockchain.TxRunner.SubmitAndWait(
-		ctx,
-		func(opts *bind.TransactOpts) (*types.Transaction, error) {
-			tx, err := c.StreamRegistry.SetStreamLastMiniblock(
-				opts,
-				streamId,
-				prevMiniblockHash,
-				lastMiniblockHash,
-				lastMiniblockNum,
-				isSealed,
-			)
-			if err != nil {
-				err = AsRiverError(err, Err_CANNOT_CALL_CONTRACT).Func("SetStreamLastMiniblock").
-					Tags("streamId", streamId, "prevMiniblockHash", prevMiniblockHash, "lastMiniblockHash",
-						lastMiniblockHash, "lastMiniblockNum", lastMiniblockNum, "isSealed", isSealed)
-			}
-			return tx, err
-		},
-	)
-	return err
+	pendingTx, err := c.Blockchain.TxPool.Submit(ctx, func(opts *bind.TransactOpts) (*types.Transaction, error) {
+		return c.StreamRegistry.SetStreamLastMiniblock(
+			opts, streamId, prevMiniblockHash, lastMiniblockHash, lastMiniblockNum, isSealed)
+	})
+	if err != nil {
+		return AsRiverError(err, Err_CANNOT_CALL_CONTRACT).
+			Func("SetStreamLastMiniblock").
+			Tags("streamId", streamId, "prevMiniblockHash", prevMiniblockHash, "lastMiniblockHash",
+				lastMiniblockHash, "lastMiniblockNum", lastMiniblockNum, "isSealed", isSealed)
+	}
+
+	receipt := <-pendingTx.Wait()
+	if receipt != nil && receipt.Status == crypto.TransactionResultSuccess {
+		return nil
+	}
+	if receipt != nil && receipt.Status != crypto.TransactionResultSuccess {
+		return RiverError(Err_ERR_UNSPECIFIED, "Set stream last mini block transaction failed").
+			Tag("tx", receipt.TxHash.Hex()).
+			Func("SetStreamLastMiniblock")
+	}
+
+	return RiverError(Err_ERR_UNSPECIFIED, "SetStreamLastMiniblock transaction result unknown")
 }
 
 type NodeRecord = contracts.Node

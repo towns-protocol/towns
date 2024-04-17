@@ -2,7 +2,6 @@ package events
 
 import (
 	"context"
-	"time"
 
 	"github.com/ethereum/go-ethereum/common"
 	. "github.com/river-build/river/core/node/base"
@@ -44,7 +43,6 @@ func makeTestStreamParams(p testParams) (context.Context, *testContext) {
 	}
 
 	bc := btc.GetBlockchain(ctx, 0, true)
-	defer bc.Close()
 
 	var streamStorage storage.StreamStorage
 	var schemaDeleter func()
@@ -77,9 +75,8 @@ func makeTestStreamParams(p testParams) (context.Context, *testContext) {
 	}
 
 	blockNumber := btc.BlockNum(ctx)
-	chainMonitorBuilder := crypto.NewChainMonitorBuilder(blockNumber + 1)
 
-	nr, err := LoadNodeRegistry(ctx, registry, bc.Wallet.Address, blockNumber, chainMonitorBuilder)
+	nr, err := LoadNodeRegistry(ctx, registry, bc.Wallet.Address, blockNumber, bc.ChainMonitor)
 	if err != nil {
 		panic(err)
 	}
@@ -94,12 +91,10 @@ func makeTestStreamParams(p testParams) (context.Context, *testContext) {
 		StreamConfig: &streamConfig_viewstate_space_t,
 	}
 
-	cache, err := NewStreamCache(ctx, params, blockNumber, chainMonitorBuilder)
+	cache, err := NewStreamCache(ctx, params, blockNumber, bc.ChainMonitor)
 	if err != nil {
 		panic(err)
 	}
-
-	go chainMonitorBuilder.Build(time.Minute).Run(ctx, bc.Client)
 
 	return ctx,
 		&testContext{
@@ -128,16 +123,12 @@ func makeTestStreamCache(p testParams) (context.Context, *testContext) {
 		panic(err)
 	}
 
-	chainMonitorBuilder := crypto.NewChainMonitorBuilder(blockNumber + 1)
-
-	streamCache, err := NewStreamCache(ctx, testContext.params, blockNumber, chainMonitorBuilder)
+	streamCache, err := NewStreamCache(ctx, testContext.params, blockNumber, bc.ChainMonitor)
 	if err != nil {
 		testContext.closer()
 		panic(err)
 	}
 	testContext.cache = streamCache
-
-	go chainMonitorBuilder.Build(10*time.Millisecond).Run(ctx, bc.Client)
 
 	return ctx, testContext
 }

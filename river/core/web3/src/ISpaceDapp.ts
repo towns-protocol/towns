@@ -34,6 +34,7 @@ export interface UpdateChannelParams {
     spaceId: string
     channelId: string
     channelName: string
+    channelDescription: string
     roleIds: number[]
     disabled?: boolean
 }

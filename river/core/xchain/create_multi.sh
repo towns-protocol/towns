@@ -41,7 +41,7 @@ cd "$(dirname "$0")"
 
 ENTITLEMENT_CHECKER_URL="ws://localhost:8545"
 ENTITLEMENT_CHECKER_ADDRESS=$(jq -r '.address' ../../packages/generated/deployments/${RIVER_ENV}/base/addresses/entitlementChecker.json)
-ENTITLMENT_TEST_ADDRESS=$(jq -r '.address' ../../packages/generated/deployments/${RIVER_ENV}/base/addresses/entitlementGatedExample.json)
+ENTITLEMENT_TEST_ADDRESS=$(jq -r '.address' ../../packages/generated/deployments/${RIVER_ENV}/base/addresses/entitlementGatedExample.json)
 CUSTOM_ENTITLEMENT_TEST_ADDRESS=$(jq -r '.address' ../../packages/generated/deployments/${RIVER_ENV}/base/addresses/customEntitlementExample.json)
 BASE_CHAIN_ID=31337
 

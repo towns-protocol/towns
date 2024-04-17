@@ -26,7 +26,6 @@ import (
 	"github.com/river-build/river/core/node/registries"
 	"github.com/river-build/river/core/node/rpc/render"
 	"github.com/river-build/river/core/node/storage"
-
 	"github.com/rs/cors"
 	"golang.org/x/net/http2"
 	"golang.org/x/net/http2/h2c"
@@ -73,14 +72,6 @@ func (s *Service) Close() {
 
 	if s.storage != nil {
 		s.storage.Close(s.serverCtx)
-	}
-
-	if s.riverChain != nil {
-		s.riverChain.Close()
-	}
-
-	if s.baseChain != nil {
-		s.baseChain.Close()
 	}
 }
 
@@ -165,7 +156,6 @@ func StartServer(
 			log.Error("Failed to initialize blockchain for base", "error", err, "chain_config", cfg.BaseChain)
 			return streamService, err
 		}
-		streamService.baseChain = baseChain
 
 		log.Info("Using River Auth", "chain_config", cfg.BaseChain)
 		chainAuth, err = auth.NewChainAuth(
@@ -193,10 +183,6 @@ func StartServer(
 			return streamService, err
 		}
 	}
-	streamService.riverChain = riverChain
-
-	// listen for chain changes on the next block
-	chainMonitorBuilder := crypto.NewChainMonitorBuilder(riverChain.InitialBlockNum + 1)
 
 	registryContract, err := registries.NewRiverRegistryContract(ctx, riverChain, &cfg.RegistryContract)
 	if err != nil {
@@ -207,16 +193,12 @@ func StartServer(
 	log.Info("Using River Registry", "config", cfg.RegistryContract, "address", registryContract.Address)
 
 	nodeRegistry, err := nodes.LoadNodeRegistry(
-		ctx,
-		registryContract,
-		wallet.Address,
-		riverChain.InitialBlockNum,
-		chainMonitorBuilder,
-	)
+		ctx, registryContract, wallet.Address, riverChain.InitialBlockNum, riverChain.ChainMonitor)
 	if err != nil {
 		log.Error("Failed to load node registry", "error", err)
 		return streamService, err
 	}
+
 	streamService.nodeRegistry = nodeRegistry
 	streamService.streamRegistry = nodes.NewStreamRegistry(
 		wallet.Address,
@@ -237,7 +219,7 @@ func StartServer(
 			StreamConfig: &cfg.Stream,
 		},
 		riverChain.InitialBlockNum,
-		chainMonitorBuilder,
+		riverChain.ChainMonitor,
 	)
 	if err != nil {
 		log.Error("Failed to create stream cache", "error", err)
@@ -245,9 +227,7 @@ func StartServer(
 	}
 	streamService.cache = streamCache
 
-	go chainMonitorBuilder.
-		Build(time.Duration(cfg.RiverChain.BlockTimeMs)*time.Millisecond).
-		Run(ctx, riverChain.Client)
+	go riverChain.ChainMonitor.Run(ctx, riverChain.Client, riverChain.InitialBlockNum)
 
 	streamService.syncHandler = NewSyncHandler(
 		wallet,
@@ -279,7 +259,7 @@ func StartServer(
 
 	mux.HandleFunc("/info", InfoIndexHandler)
 
-	registerDebugHandlers(ctx, cfg, mux, streamCache, streamService)
+	registerDebugHandlers(ctx, cfg, mux, streamCache, streamService, riverChain.TxPool)
 
 	if listener == nil {
 		if cfg.Port == 0 {

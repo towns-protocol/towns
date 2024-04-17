@@ -25,6 +25,19 @@ riverChain:
     chainId: 31338
     networkUrl: 'http://127.0.0.1:8546'
     blockTimeMs: <BLOCK_TIME_MS>
+    transactionPool:
+        # transactionTimeout specifies the duration after which a pending transaction is replaced. Recommended is a
+        # multiple of the chain block period. If not specified the node uses blockTimeMs, if that is not set it tries
+        # to estimate the block period based on the 2 last blocks and sets Timeout to 3 * chain.BlockPeriod.
+        transactionTimeout: 6s
+        # gasFeeCap is a hard limit for the max price per gas in EIP1559 transactions (in Wei)
+        gasFeeCap: 150_000_000_000 # 150 Gwei
+        # The miner tip increase (%) for EIP-1559 replacement transactions.
+        # Nodes typically accept replacement transactions with at least a 10% miner tip increase.
+        minerTipFeeReplacementPercentage: 10
+        # The gas price increase (%) for legacy replacement transactions.
+        # Nodes typically accept legacy replacement transactions with at least a 10% gas fee increase.
+        gasFeeIncreasePercentage: 10
 
 # Base contracts
 architectContract:

@@ -50,7 +50,7 @@ func LoadNodeRegistry(
 	contract *registries.RiverRegistryContract,
 	localNodeAddress common.Address,
 	appliedBlockNum crypto.BlockNumber,
-	chainMonitor crypto.ChainMonitorBuilder,
+	chainMonitor crypto.ChainMonitor,
 ) (*nodeRegistryImpl, error) {
 	log := dlog.FromCtx(ctx)
 
@@ -82,11 +82,26 @@ func LoadNodeRegistry(
 		appliedBlockNum:  appliedBlockNum,
 	}
 
-	chainMonitor.
-		OnContractWithTopicsEvent(contract.Address, [][]common.Hash{{contract.Abi.Events["NodeAdded"].ID}}, ret.OnNodeAdded).
-		OnContractWithTopicsEvent(contract.Address, [][]common.Hash{{contract.Abi.Events["NodeRemoved"].ID}}, ret.OnNodeRemoved).
-		OnContractWithTopicsEvent(contract.Address, [][]common.Hash{{contract.Abi.Events["NodeStatusUpdated"].ID}}, ret.OnNodeStatusUpdated).
-		OnContractWithTopicsEvent(contract.Address, [][]common.Hash{{contract.Abi.Events["NodeUrlUpdated"].ID}}, ret.OnNodeUrlUpdated)
+	chainMonitor.OnContractWithTopicsEvent(
+		contract.Address,
+		[][]common.Hash{{contract.Abi.Events["NodeAdded"].ID}},
+		ret.OnNodeAdded,
+	)
+	chainMonitor.OnContractWithTopicsEvent(
+		contract.Address,
+		[][]common.Hash{{contract.Abi.Events["NodeRemoved"].ID}},
+		ret.OnNodeRemoved,
+	)
+	chainMonitor.OnContractWithTopicsEvent(
+		contract.Address,
+		[][]common.Hash{{contract.Abi.Events["NodeStatusUpdated"].ID}},
+		ret.OnNodeStatusUpdated,
+	)
+	chainMonitor.OnContractWithTopicsEvent(
+		contract.Address,
+		[][]common.Hash{{contract.Abi.Events["NodeUrlUpdated"].ID}},
+		ret.OnNodeUrlUpdated,
+	)
 
 	localFound := false
 	for _, node := range nodes {
@@ -137,7 +152,7 @@ func (n *nodeRegistryImpl) addNode(addr common.Address, url string, status uint8
 }
 
 // OnNodeAdded can apply INodeRegistry::NodeAdded event against the in-memory node registry.
-func (n *nodeRegistryImpl) OnNodeAdded(event types.Log) {
+func (n *nodeRegistryImpl) OnNodeAdded(ctx context.Context, event types.Log) {
 	log := dlog.Log()
 
 	var e contracts.NodeRegistryV1NodeAdded
@@ -159,7 +174,7 @@ func (n *nodeRegistryImpl) OnNodeAdded(event types.Log) {
 }
 
 // OnNodeRemoved can apply INodeRegistry::NodeRemoved event against the in-memory node registry.
-func (n *nodeRegistryImpl) OnNodeRemoved(event types.Log) {
+func (n *nodeRegistryImpl) OnNodeRemoved(ctx context.Context, event types.Log) {
 	log := dlog.Log()
 
 	var e contracts.NodeRegistryV1NodeRemoved
@@ -181,7 +196,7 @@ func (n *nodeRegistryImpl) OnNodeRemoved(event types.Log) {
 }
 
 // OnNodeStatusUpdated can apply INodeRegistry::NodeStatusUpdated event against the in-memory node registry.
-func (n *nodeRegistryImpl) OnNodeStatusUpdated(event types.Log) {
+func (n *nodeRegistryImpl) OnNodeStatusUpdated(ctx context.Context, event types.Log) {
 	log := dlog.Log()
 
 	var e contracts.NodeRegistryV1NodeStatusUpdated
@@ -205,7 +220,7 @@ func (n *nodeRegistryImpl) OnNodeStatusUpdated(event types.Log) {
 }
 
 // OnNodeUrlUpdated can apply INodeRegistry::NodeUrlUpdated events against the in-memory node registry.
-func (n *nodeRegistryImpl) OnNodeUrlUpdated(event types.Log) {
+func (n *nodeRegistryImpl) OnNodeUrlUpdated(ctx context.Context, event types.Log) {
 	log := dlog.Log()
 
 	var e contracts.NodeRegistryV1NodeUrlUpdated

@@ -17,7 +17,6 @@ import (
 
 func srdump(cfg *config.Config, countOnly bool) error {
 	ctx := context.Background() // lint:ignore context.Background() is fine here
-
 	blockchain, err := crypto.NewBlockchain(ctx, &cfg.RiverChain, nil)
 	if err != nil {
 		return err

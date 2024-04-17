@@ -1,0 +1,18 @@
+<!DOCTYPE html>
+<html>
+  <head>
+    <title>Transaction pool</title>
+    <meta charset="utf-8" />
+  </head>
+  <body>
+    <h3>River chain</h3>
+    <p>Processed transactions: {{.River.ProcessedTransactions}}</p>
+    <p>Pending transactions: {{.River.PendingTransactions}}</p>
+    <p>
+      Replacement transactions count: {{.River.ReplacementTransactionsCount}}
+    </p>
+    {{if .River.LastReplacementTransaction}}
+    <p>Last replacement: {{.River.LastReplacementTransaction}}</p>
+    {{end}}
+  </body>
+</html>

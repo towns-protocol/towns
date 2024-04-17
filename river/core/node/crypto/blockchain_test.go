@@ -3,7 +3,6 @@ package crypto
 import (
 	"math/big"
 	"testing"
-	"time"
 
 	"github.com/ethereum/go-ethereum/accounts/abi/bind"
 	"github.com/ethereum/go-ethereum/common"
@@ -28,6 +27,7 @@ func TestBlockchain(t *testing.T) {
 	defer tc.Close()
 
 	owner := tc.DeployerBlockchain
+	tc.Commit()
 
 	bc1 := tc.GetBlockchain(ctx, 0, false)
 	defer bc1.Close()
@@ -39,20 +39,14 @@ func TestBlockchain(t *testing.T) {
 	nodeAddr2 := bc2.Wallet.Address
 	nodeUrl2 := "http://node2.node"
 
-	tx1, err := owner.TxRunner.Submit(
-		ctx,
-		func(opts *bind.TransactOpts) (*types.Transaction, error) {
-			return tc.NodeRegistry.RegisterNode(opts, nodeAddr1, nodeUrl1, 2)
-		},
-	)
+	tx1, err := owner.TxPool.Submit(ctx, func(opts *bind.TransactOpts) (*types.Transaction, error) {
+		return tc.NodeRegistry.RegisterNode(opts, nodeAddr1, nodeUrl1, 2)
+	})
 	require.NoError(err)
 
-	tx2, err := owner.TxRunner.Submit(
-		ctx,
-		func(opts *bind.TransactOpts) (*types.Transaction, error) {
-			return tc.NodeRegistry.RegisterNode(opts, nodeAddr2, nodeUrl2, 2)
-		},
-	)
+	tx2, err := owner.TxPool.Submit(ctx, func(opts *bind.TransactOpts) (*types.Transaction, error) {
+		return tc.NodeRegistry.RegisterNode(opts, nodeAddr2, nodeUrl2, 2)
+	})
 	require.NoError(err)
 
 	firstBlockNum, err := tc.Client().BlockNumber(ctx)
@@ -66,10 +60,10 @@ func TestBlockchain(t *testing.T) {
 		assert.Equal(firstBlockNum+1, secondBlockNum)
 	}
 
-	_, err = WaitMined(ctx, owner.Client, tx1.Hash(), time.Millisecond, time.Second*10)
-	require.NoError(err)
-	_, err = WaitMined(ctx, owner.Client, tx2.Hash(), time.Millisecond, time.Second*10)
-	require.NoError(err)
+	receipt1 := <-tx1.Wait()
+	require.Equal(uint64(1), receipt1.Status)
+	receipt2 := <-tx2.Wait()
+	require.Equal(uint64(1), receipt2.Status)
 
 	nodes, err := tc.NodeRegistry.GetAllNodes(nil)
 	require.NoError(err)
@@ -80,12 +74,9 @@ func TestBlockchain(t *testing.T) {
 	assert.Equal(nodeUrl2, nodes[1].Url)
 
 	// Can't add the same node twice
-	tx1, err = owner.TxRunner.Submit(
-		ctx,
-		func(opts *bind.TransactOpts) (*types.Transaction, error) {
-			return tc.NodeRegistry.RegisterNode(opts, nodeAddr1, nodeUrl1, 2)
-		},
-	)
+	tx1, err = owner.TxPool.Submit(ctx, func(opts *bind.TransactOpts) (*types.Transaction, error) {
+		return tc.NodeRegistry.RegisterNode(opts, nodeAddr1, nodeUrl1, 2)
+	})
 	// Looks like this is a difference for simulated backend:
 	// this error should be know only after the transaction is mined - i.e. after Commit call.
 	require.Nil(tx1)
@@ -93,7 +84,9 @@ func TestBlockchain(t *testing.T) {
 
 	currentBlockNum, err := tc.Client().BlockNumber(ctx)
 	require.NoError(err)
-	assert.Equal(secondBlockNum, currentBlockNum)
+	if tc.IsSimulated() {
+		assert.Equal(secondBlockNum, currentBlockNum)
+	}
 
 	allIds := make(map[StreamId]bool)
 	streamId := testutils.StreamIdFromBytes([]byte{0xa1, 0x02, 0x03})
@@ -103,7 +96,7 @@ func TestBlockchain(t *testing.T) {
 	genesisHash := common.HexToHash("0x123")
 	genesisMiniblock := []byte("genesis")
 
-	tx1, err = bc1.TxRunner.Submit(
+	tx1, err = bc1.TxPool.Submit(
 		ctx,
 		func(opts *bind.TransactOpts) (*types.Transaction, error) {
 			return tc.StreamRegistry.AllocateStream(opts, streamId, addrs, genesisHash, genesisMiniblock)
@@ -113,8 +106,8 @@ func TestBlockchain(t *testing.T) {
 
 	tc.Commit()
 
-	_, err = WaitMined(ctx, bc1.Client, tx1.Hash(), time.Millisecond, time.Second*10)
-	require.NoError(err)
+	receipt := <-tx1.Wait()
+	require.Equal(uint64(1), receipt.Status)
 
 	stream, mbHash, mb, err := tc.StreamRegistry.GetStreamWithGenesis(nil, streamId)
 	require.NoError(err)
@@ -125,7 +118,7 @@ func TestBlockchain(t *testing.T) {
 	assert.Equal(uint64(0), stream.LastMiniblockNum)
 
 	// Can't allocate the same stream twice
-	tx1, err = bc1.TxRunner.Submit(
+	tx1, err = bc1.TxPool.Submit(
 		ctx,
 		func(opts *bind.TransactOpts) (*types.Transaction, error) {
 			return tc.StreamRegistry.AllocateStream(opts, streamId, addrs, genesisHash, genesisMiniblock)
@@ -135,7 +128,7 @@ func TestBlockchain(t *testing.T) {
 	require.Equal(Err_ALREADY_EXISTS, AsRiverError(err).Code)
 
 	// Can't allocate with unknown node
-	tx1, err = bc1.TxRunner.Submit(
+	tx1, err = bc1.TxPool.Submit(
 		ctx,
 		func(opts *bind.TransactOpts) (*types.Transaction, error) {
 			streamId := testutils.StreamIdFromBytes([]byte{0x10, 0x22, 0x33})
@@ -151,11 +144,12 @@ func TestBlockchain(t *testing.T) {
 	require.Nil(tx1)
 	require.Equal(Err_UNKNOWN_NODE, AsRiverError(err).Code, "Error: %v", err)
 
+	var lastPendingTx TransactionPoolPendingTransaction
 	// Allocate 20 more streams
 	for i := 0; i < 20; i++ {
 		streamId := testutils.StreamIdFromBytes([]byte{0xa1, byte(i), 0x22, 0x33, 0x44, 0x55})
 		allIds[streamId] = true
-		_, err = bc1.TxRunner.Submit(
+		lastPendingTx, err = bc1.TxPool.Submit(
 			ctx,
 			func(opts *bind.TransactOpts) (*types.Transaction, error) {
 				return tc.StreamRegistry.AllocateStream(
@@ -171,6 +165,9 @@ func TestBlockchain(t *testing.T) {
 	}
 
 	tc.Commit()
+
+	// wait for the last transaction to finish
+	<-lastPendingTx.Wait()
 
 	// Read with pagination
 	const pageSize int64 = 4

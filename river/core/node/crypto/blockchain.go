@@ -45,9 +45,10 @@ type Blockchain struct {
 	Wallet          *Wallet
 	Client          BlockchainClient
 	ClientCloser    Closable
-	TxRunner        *TxRunner
+	TxPool          TransactionPool
 	Config          *config.ChainConfig
 	InitialBlockNum BlockNumber
+	ChainMonitor    ChainMonitor
 }
 
 // NewBlockchain creates a new Blockchain instance that
@@ -64,7 +65,7 @@ func NewBlockchain(ctx context.Context, cfg *config.ChainConfig, wallet *Wallet)
 			Func("NewBlockchain")
 	}
 
-	return NewBlockchainWithClient(ctx, cfg, wallet, client, client)
+	return NewBlockchainWithClient(ctx, cfg, wallet, client, client, NewChainMonitor())
 }
 
 func NewBlockchainWithClient(
@@ -73,6 +74,7 @@ func NewBlockchainWithClient(
 	wallet *Wallet,
 	client BlockchainClient,
 	clientCloser Closable,
+	chainMonitor ChainMonitor,
 ) (*Blockchain, error) {
 	chainId, err := client.ChainID(ctx)
 	if err != nil {
@@ -103,17 +105,15 @@ func NewBlockchainWithClient(
 		ClientCloser:    clientCloser,
 		Config:          cfg,
 		InitialBlockNum: initialBlockNum,
+		ChainMonitor:    chainMonitor,
 	}
 
 	if wallet != nil {
-		bc.TxRunner = NewTxRunner(ctx, &TxRunnerParams{
-			Wallet:  wallet,
-			Client:  bc.Client,
-			ChainId: bc.ChainId,
-			// TODO: timeout config
-		})
-
 		bc.Wallet = wallet
+		bc.TxPool, err = NewTransactionPoolWithPoliciesFromConfig(ctx, *cfg, bc.Client, wallet, bc.ChainMonitor)
+		if err != nil {
+			return nil, err
+		}
 	}
 
 	return bc, nil

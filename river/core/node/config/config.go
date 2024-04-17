@@ -78,10 +78,35 @@ type DatabaseConfig struct {
 	StreamingConnectionsRatio float32
 }
 
+// TransactionPoolConfig specifies when it is time for a replacement transaction and its gas fee costs.
+type TransactionPoolConfig struct {
+	// TransactionTimeout is the duration in which a transaction must be included in the chain before it is marked
+	// eligible for replacement. It is advisable to set the timeout as a multiple of the block period. If not set it
+	// estimates the chains block period and sets Timeout to 3x block period.
+	TransactionTimeout time.Duration
+
+	// GasFeeCap determines for EIP-1559 transaction the maximum amount fee per gas the node operator is willing to
+	// pay. If set to 0 the node will use 2 * chain.BaseFee by default. The base fee + miner tip must be below this
+	// cap, if not the transaction could not be made.
+	GasFeeCap int
+
+	// MinerTipFeeReplacementPercentage is the percentage the miner tip for EIP-1559 transactions is incremented when
+	// replaced. Nodes accept replacements only when the miner tip is at least 10% higher than the original transaction.
+	// The node will add 1 Wei to the miner tip and therefore 10% is the least recommended value. Default is 10.
+	MinerTipFeeReplacementPercentage int
+
+	// GasFeeIncreasePercentage is the percentage by which the gas fee for legacy transaction is incremented when it is
+	// replaced. Recommended is >= 10% since nodes typically only accept replacements transactions with at least 10%
+	// higher gas price. The node will add 1 Wei, therefore 10% will also work. Default is 10.
+	GasFeeIncreasePercentage int
+}
+
 type ChainConfig struct {
 	NetworkUrl  string
 	ChainId     uint64
 	BlockTimeMs uint64
+
+	TransactionPool TransactionPoolConfig
 
 	// TODO: these need to be removed from here
 	LinkedWalletsLimit                 int

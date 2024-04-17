@@ -4,6 +4,7 @@ import (
 	"context"
 	"crypto/rand"
 	"errors"
+	"fmt"
 	"math/big"
 	"os"
 	"sync"
@@ -41,6 +42,7 @@ type BlockchainTestContext struct {
 	ChainId              *big.Int
 	DeployerBlockchain   *Blockchain
 	RemoteNode           bool
+	ChainMonitor         ChainMonitor
 }
 
 func initSimulated(ctx context.Context, numKeys int) ([]*Wallet, *simulated.Backend, error) {
@@ -59,8 +61,14 @@ func initSimulated(ctx context.Context, numKeys int) ([]*Wallet, *simulated.Back
 	return wallets, backend, nil
 }
 
-func initRemoteNode(ctx context.Context, url string, seedWalletPrivateKey string, numKeys int) ([]*Wallet, *ethclient.Client, error) {
-	if len(seedWalletPrivateKey) >= 2 && seedWalletPrivateKey[0] == '0' && (seedWalletPrivateKey[1] == 'x' || seedWalletPrivateKey[1] == 'X') {
+func initRemoteNode(
+	ctx context.Context,
+	url string,
+	seedWalletPrivateKey string,
+	numKeys int,
+) ([]*Wallet, *ethclient.Client, error) {
+	if len(seedWalletPrivateKey) >= 2 && seedWalletPrivateKey[0] == '0' &&
+		(seedWalletPrivateKey[1] == 'x' || seedWalletPrivateKey[1] == 'X') {
 		seedWalletPrivateKey = seedWalletPrivateKey[2:]
 	}
 	seederPrivateKey, err := crypto.HexToECDSA(seedWalletPrivateKey)
@@ -102,7 +110,7 @@ func initRemoteNode(ctx context.Context, url string, seedWalletPrivateKey string
 		tx := types.NewTx(&types.LegacyTx{
 			Nonce:    nonce,
 			To:       &wallets[i].Address,
-			Value:    Eth_100,
+			Value:    big.NewInt(100000000000000),
 			Gas:      21000,
 			GasPrice: gasPrice,
 		})
@@ -124,7 +132,7 @@ func initRemoteNode(ctx context.Context, url string, seedWalletPrivateKey string
 	for {
 		<-time.After(25 * time.Millisecond)
 		receipt, err := client.TransactionReceipt(ctx, lastFundTx.Hash())
-		if receipt != nil && receipt.Status == 1 {
+		if receipt != nil && receipt.Status == TransactionResultSuccess {
 			break
 		} else if receipt != nil && receipt.Status == 0 {
 			return nil, nil, base.RiverError(protocol.Err_INTERNAL, "could not fund wallet")
@@ -218,12 +226,17 @@ func NewBlockchainTestContext(ctx context.Context, numKeys int) (*BlockchainTest
 		return nil, err
 	}
 
+	chainMonitor := NewChainMonitor()
+
 	// Add deployer as operator so it can register nodes
-	deployerBC := makeTestBlockchain(ctx, wallets[len(wallets)-1], client, chainId, nil)
+	deployerBC := makeTestBlockchain(ctx, wallets[len(wallets)-1], client, chainMonitor, chainId, nil)
+
+	go chainMonitor.RunWithBlockPeriod(ctx, client, deployerBC.InitialBlockNum, 10*time.Millisecond)
 
 	btc := &BlockchainTestContext{
 		Backend:              backend,
 		EthClient:            ethClient,
+		ChainMonitor:         chainMonitor,
 		Wallets:              wallets,
 		RiverRegistryAddress: addr,
 		NodeRegistry:         node_registry,
@@ -239,6 +252,14 @@ func NewBlockchainTestContext(ctx context.Context, numKeys int) (*BlockchainTest
 	}
 
 	return btc, nil
+}
+
+// SetNextBlockBaseFee sets the base fee of the next blocks. Only supported for Anvil chains!
+func (c *BlockchainTestContext) SetNextBlockBaseFee(nextBlockBaseFee *big.Int) error {
+	if !c.IsAnvil() {
+		panic("SetGasPrice is only supported for Anvil chains")
+	}
+	return c.EthClient.Client().Call(nil, "anvil_setNextBlockBaseFeePerGas", nextBlockBaseFee)
 }
 
 func (c *BlockchainTestContext) mineBlock() error {
@@ -315,6 +336,18 @@ func (c *BlockchainTestContext) IsAnvil() bool {
 	return c.EthClient != nil
 }
 
+func (c *BlockchainTestContext) AnvilAutoMineEnabled() bool {
+	if !c.IsAnvil() || c.IsRemote() {
+		return false
+	}
+
+	var autoMine bool
+	if err := c.EthClient.Client().Call(&autoMine, "anvil_getAutomine"); err != nil {
+		panic(err)
+	}
+	return autoMine
+}
+
 func (c *BlockchainTestContext) IsSimulated() bool {
 	return c.Backend != nil && !c.RemoteNode
 }
@@ -331,23 +364,26 @@ func makeTestBlockchain(
 	ctx context.Context,
 	wallet *Wallet,
 	client BlockchainClient,
+	chainMonitor ChainMonitor,
 	chainId *big.Int,
 	onSubmit func(),
 ) *Blockchain {
 	bc, err := NewBlockchainWithClient(
 		ctx,
 		&config.ChainConfig{
-			ChainId:     chainId.Uint64(),
-			BlockTimeMs: 100,
+			ChainId:         chainId.Uint64(),
+			BlockTimeMs:     100,
+			TransactionPool: config.TransactionPoolConfig{}, // use defaults
 		},
 		wallet,
 		client,
 		nil,
+		chainMonitor,
 	)
 	if err != nil {
 		panic(err)
 	}
-	bc.TxRunner.SetOnSubmit(onSubmit)
+	bc.TxPool.SetOnSubmitHandler(onSubmit)
 	return bc
 }
 
@@ -359,11 +395,12 @@ func (c *BlockchainTestContext) GetBlockchain(ctx context.Context, index int, au
 	var onSubmit func()
 	if autoMine {
 		onSubmit = func() {
+			fmt.Println("autocommit block")
 			c.Commit()
 		}
 	}
 
-	return makeTestBlockchain(ctx, wallet, c.Client(), c.ChainId, onSubmit)
+	return makeTestBlockchain(ctx, wallet, c.Client(), c.ChainMonitor, c.ChainId, onSubmit)
 }
 
 func (c *BlockchainTestContext) InitNodeRecord(ctx context.Context, index int, url string) error {
@@ -371,9 +408,7 @@ func (c *BlockchainTestContext) InitNodeRecord(ctx context.Context, index int, u
 }
 
 func (c *BlockchainTestContext) InitNodeRecordEx(ctx context.Context, index int, url string, status uint8) error {
-	owner := c.DeployerBlockchain
-
-	tx, err := owner.TxRunner.Submit(
+	pendingTx, err := c.DeployerBlockchain.TxPool.Submit(
 		ctx,
 		func(opts *bind.TransactOpts) (*types.Transaction, error) {
 			return c.NodeRegistry.RegisterNode(opts, c.Wallets[index].Address, url, status)
@@ -388,14 +423,16 @@ func (c *BlockchainTestContext) InitNodeRecordEx(ctx context.Context, index int,
 		return err
 	}
 
-	_, err = WaitMined(ctx, owner.Client, tx.Hash(), time.Millisecond, time.Second*10)
-	return err
+	receipt := <-pendingTx.Wait()
+	if receipt.Status != TransactionResultSuccess {
+		return fmt.Errorf("InitNodeRecordEx transaction failed")
+	}
+
+	return nil
 }
 
 func (c *BlockchainTestContext) UpdateNodeStatus(ctx context.Context, index int, status uint8) error {
-	owner := c.DeployerBlockchain
-
-	tx, err := owner.TxRunner.Submit(
+	pendingTx, err := c.DeployerBlockchain.TxPool.Submit(
 		ctx,
 		func(opts *bind.TransactOpts) (*types.Transaction, error) {
 			return c.NodeRegistry.UpdateNodeStatus(opts, c.Wallets[index].Address, status)
@@ -410,8 +447,12 @@ func (c *BlockchainTestContext) UpdateNodeStatus(ctx context.Context, index int,
 		return err
 	}
 
-	_, err = WaitMined(ctx, owner.Client, tx.Hash(), time.Millisecond, time.Second*10)
-	return err
+	receipt := <-pendingTx.Wait()
+	if receipt.Status != TransactionResultSuccess {
+		return fmt.Errorf("UpdateNodeStatus transaction failed")
+	}
+
+	return nil
 }
 
 func (c *BlockchainTestContext) RegistryConfig() config.ContractConfig {

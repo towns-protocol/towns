@@ -632,6 +632,7 @@ func (s *syncHandlerImpl) addSubscription(
 	defer func() {
 		s.mu.Unlock()
 	}()
+
 	if s.syncIdToSubscription == nil {
 		s.syncIdToSubscription = make(map[string]*syncSubscriptionImpl)
 	}

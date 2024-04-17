@@ -10,8 +10,10 @@ import (
 	"runtime"
 	"slices"
 	"strings"
+	"time"
 
 	"github.com/river-build/river/core/node/config"
+	"github.com/river-build/river/core/node/crypto"
 	"github.com/river-build/river/core/node/dlog"
 	. "github.com/river-build/river/core/node/events"
 	"github.com/river-build/river/core/node/rpc/render"
@@ -62,11 +64,13 @@ func registerDebugHandlers(
 	mux httpMux,
 	cache StreamCache,
 	streamService *Service,
+	riverTxPool crypto.TransactionPool,
 ) {
 	handler := debugHandler{}
 	mux.HandleFunc("/debug", handler.ServeHTTP)
 
 	handler.Handle(mux, "/debug/cache", &cacheHandler{cache: cache})
+	handler.Handle(mux, "/debug/txpool", &txpoolHandler{riverTxPool: riverTxPool})
 	handler.HandleFunc(mux, "/debug/memory", MemoryHandler)
 	handler.Handle(mux, "/debug/multi", MultiHandler(ctx, cfg, streamService))
 	handler.HandleFunc(mux, "/debug/pprof/", pprof.Index)
@@ -101,6 +105,36 @@ func HandleStacksHandler(w http.ResponseWriter, r *http.Request) {
 	output, err := render.Execute(&reply)
 	if err != nil {
 		dlog.FromCtx(ctx).Error("unable to render stack data", "err", err)
+		http.Error(w, http.StatusText(http.StatusInternalServerError), http.StatusInternalServerError)
+		return
+	}
+
+	w.Header().Set("Content-Type", "text/html")
+	w.WriteHeader(http.StatusOK)
+	_, _ = w.Write(output.Bytes())
+}
+
+type txpoolHandler struct {
+	riverTxPool crypto.TransactionPool
+}
+
+func (h *txpoolHandler) ServeHTTP(w http.ResponseWriter, r *http.Request) {
+	var (
+		ctx   = r.Context()
+		reply = render.TransactionPoolData{}
+	)
+
+	reply.River.ProcessedTransactions = h.riverTxPool.ProcessedTransactionsCount()
+	reply.River.PendingTransactions = h.riverTxPool.PendingTransactionsCount()
+	reply.River.ReplacementTransactionsCount = h.riverTxPool.ReplacementTransactionsCount()
+	if reply.River.ReplacementTransactionsCount > 0 {
+		reply.River.LastReplacementTransaction = time.Unix(h.riverTxPool.LastReplacementTransactionUnix(), 0).
+			Format(time.RFC3339)
+	}
+
+	output, err := render.Execute(&reply)
+	if err != nil {
+		dlog.FromCtx(ctx).Error("unable to render transaction pool data", "err", err)
 		http.Error(w, http.StatusText(http.StatusInternalServerError), http.StatusInternalServerError)
 		return
 	}
