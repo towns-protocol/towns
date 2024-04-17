@@ -53,6 +53,7 @@ export { useRoles } from './hooks/use-roles'
 export { useRoom } from './hooks/use-room'
 export {
     useSpaceData,
+    useSpaceDataStore,
     useSpaceDataWithId,
     useInvites,
     useInviteData,

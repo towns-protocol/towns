@@ -19,14 +19,22 @@ const EMPTY_SPACE_INFOS: SpaceInfo[] = []
 export type SpaceDataMap = Record<string, SpaceData | undefined>
 
 export type SpaceDataStore = {
-    spaceDataMap: SpaceDataMap
+    spaceDataMap: SpaceDataMap | undefined
     setSpaceData: (spaceData: SpaceData) => void
 }
 
 export const useSpaceDataStore = create<SpaceDataStore>((set) => ({
-    spaceDataMap: {},
+    spaceDataMap: undefined,
     setSpaceData: (spaceData) =>
         set((state) => {
+            if (!state.spaceDataMap) {
+                useOfflineStore.getState().addOfflineSyncedSpaceId(spaceData.id)
+                return {
+                    spaceDataMap: {
+                        [spaceData.id]: spaceData,
+                    },
+                }
+            }
             if (isEqual(state.spaceDataMap[spaceData.id], spaceData)) {
                 return state
             }
@@ -46,7 +54,7 @@ export function useSpaceData(): SpaceData | undefined {
     const { spaceId: contextSpaceId } = useSpaceContext()
     useSpaceRollup(contextSpaceId, `useSpaceData`)
     const spaceDataMap = useSpaceDataStore((state) => state.spaceDataMap)
-    return contextSpaceId ? spaceDataMap[contextSpaceId] : undefined
+    return contextSpaceId ? spaceDataMap?.[contextSpaceId] : undefined
 }
 
 export function useSpaceDataWithId(
@@ -55,7 +63,7 @@ export function useSpaceDataWithId(
 ): SpaceData | undefined {
     useSpaceRollup(inSpaceId, `useSpaceDataWithId<${fromTag}>`)
     const spaceDataMap = useSpaceDataStore((state) => state.spaceDataMap)
-    return inSpaceId ? spaceDataMap[inSpaceId] : undefined
+    return inSpaceId ? spaceDataMap?.[inSpaceId] : undefined
 }
 
 export function useInvites(): InviteData[] {
