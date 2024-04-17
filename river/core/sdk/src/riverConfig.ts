@@ -5,7 +5,14 @@ import {
     RiverChainConfig,
     Web3Deployment,
     getWeb3Deployment,
+    getWeb3Deployments,
 } from '@river-build/web3'
+import { isDefined } from './check'
+import { check } from '@river-build/dlog'
+
+function getEnvironmentId(): string {
+    return process.env.RIVER_ENV || 'local_single'
+}
 
 function getBaseRpcUrlForChain(chainId: number): string {
     if (process.env.BASE_CHAIN_RPC_URL) {
@@ -14,6 +21,8 @@ function getBaseRpcUrlForChain(chainId: number): string {
     switch (chainId) {
         case 31337:
             return 'http://localhost:8545'
+        case 84532:
+            return 'https://sepolia.base.org'
         default:
             throw new Error(`No preset RPC url for base chainId ${chainId}`)
     }
@@ -33,49 +42,52 @@ function getRiverRpcUrlForChain(chainId: number): string {
     }
 }
 
-function makeWeb3Deployment(): Web3Deployment {
-    const RIVER_ENV = process.env.RIVER_ENV || 'local_single'
-
-    // allow for passing a custom environment
-    if (RIVER_ENV === 'custom') {
-        return {
-            base: {
-                chainId: parseInt(process.env.BASE_CHAIN_ID!),
-                contractVersion: (process.env.CONTRACT_VERSION ?? 'dev') as ContractVersion,
-                addresses: {
-                    spaceFactory: process.env.SPACE_FACTORY_ADDRESS! as Address,
-                    spaceOwner: process.env.SPACE_OWNER_ADDRESS! as Address,
-                    mockNFT: process.env.MOCK_NFT_ADDRESS as Address | undefined,
-                    member: process.env.MEMBER_ADDRESS as Address | undefined,
-                    walletLink: process.env.WALLET_LINK_ADDRESS! as Address,
-                },
-            },
-            river: {
-                chainId: parseInt(process.env.RIVER_CHAIN_ID!),
-                contractVersion: (process.env.CONTRACT_VERSION ?? 'dev') as ContractVersion,
-                addresses: {
-                    riverRegistry: process.env.RIVER_REGISTRY_ADDRESS! as Address,
-                },
-            },
-        }
+function makeWeb3Deployment(environmentId: string): Web3Deployment {
+    if (getWeb3Deployments().includes(environmentId)) {
+        return getWeb3Deployment(environmentId)
     }
-    // otherwise just return the deployment for the current environment
-    return getWeb3Deployment(RIVER_ENV)
+    // Fallback to env vars
+    check(isDefined(process.env.BASE_CHAIN_ID), 'BASE_CHAIN_ID is not defined')
+    check(isDefined(process.env.BASE_CHAIN_RPC_URL), 'BASE_CHAIN_RPC_URL is not defined')
+    check(isDefined(process.env.SPACE_FACTORY_ADDRESS), 'SPACE_FACTORY_ADDRESS is not defined')
+    check(isDefined(process.env.SPACE_OWNER_ADDRESS), 'SPACE_OWNER_ADDRESS is not defined')
+    check(isDefined(process.env.WALLET_LINK_ADDRESS), 'WALLET_LINK_ADDRESS is not defined')
+    check(isDefined(process.env.RIVER_CHAIN_ID), 'RIVER_CHAIN_ID is not defined')
+    check(isDefined(process.env.RIVER_CHAIN_RPC_URL), 'RIVER_CHAIN_RPC_URL is not defined')
+    check(isDefined(process.env.RIVER_REGISTRY_ADDRESS), 'RIVER_REGISTRY_ADDRESS is not defined')
+
+    return {
+        base: {
+            chainId: parseInt(process.env.BASE_CHAIN_ID!),
+            contractVersion: (process.env.CONTRACT_VERSION ?? 'dev') as ContractVersion,
+            addresses: {
+                spaceFactory: process.env.SPACE_FACTORY_ADDRESS! as Address,
+                spaceOwner: process.env.SPACE_OWNER_ADDRESS! as Address,
+                mockNFT: process.env.MOCK_NFT_ADDRESS as Address | undefined,
+                member: process.env.MEMBER_ADDRESS as Address | undefined,
+                walletLink: process.env.WALLET_LINK_ADDRESS! as Address,
+            },
+        } satisfies BaseChainConfig,
+        river: {
+            chainId: parseInt(process.env.RIVER_CHAIN_ID!),
+            contractVersion: (process.env.CONTRACT_VERSION ?? 'dev') as ContractVersion,
+            addresses: {
+                riverRegistry: process.env.RIVER_REGISTRY_ADDRESS! as Address,
+            },
+        } satisfies RiverChainConfig,
+    }
 }
 
-export function makeRiverChainConfig(): {
-    rpcUrl: string
-    chainConfig: RiverChainConfig
-} {
-    const env = makeWeb3Deployment()
+export function makeRiverChainConfig(environmentId?: string) {
+    const env = makeWeb3Deployment(environmentId ?? getEnvironmentId())
     return {
         rpcUrl: getRiverRpcUrlForChain(env.river.chainId),
         chainConfig: env.river,
     }
 }
 
-export function makeBaseChainConfig(): { rpcUrl: string; chainConfig: BaseChainConfig } {
-    const env = makeWeb3Deployment()
+export function makeBaseChainConfig(environmentId?: string) {
+    const env = makeWeb3Deployment(environmentId ?? getEnvironmentId())
     return {
         rpcUrl: getBaseRpcUrlForChain(env.base.chainId),
         chainConfig: env.base,
@@ -84,10 +96,12 @@ export function makeBaseChainConfig(): { rpcUrl: string; chainConfig: BaseChainC
 
 export type RiverConfig = ReturnType<typeof makeRiverConfig>
 
-export const makeRiverConfig = () => {
+export function makeRiverConfig() {
+    const environmentId = getEnvironmentId()
     const config = {
-        base: makeBaseChainConfig(),
-        river: makeRiverChainConfig(),
+        environmentId,
+        base: makeBaseChainConfig(environmentId),
+        river: makeRiverChainConfig(environmentId),
     }
     return config
 }

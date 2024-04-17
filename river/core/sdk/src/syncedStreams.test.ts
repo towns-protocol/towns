@@ -4,13 +4,16 @@
 
 /* eslint-disable jest/no-commented-out-tests */
 import { makeEvent, unpackStream } from './sign'
-import { SyncedStreams } from './syncedStreams'
+import { SyncState, SyncedStreams, stateConstraints } from './syncedStreams'
 import { makeDonePromise, makeRandomUserContext, makeTestRpcClient } from './util.test'
 import { makeUserStreamId, streamIdToBytes, userIdFromAddress } from './id'
 import { make_UserPayload_Inception } from './types'
 import { dlog } from '@river-build/dlog'
 import TypedEmitter from 'typed-emitter'
+import EventEmitter from 'events'
 import { StreamEvents } from './streamEvents'
+import { SyncedStream } from './syncedStream'
+import { StubPersistenceStore } from './persistenceStore'
 
 const log = dlog('csb:test:syncedStreams')
 
@@ -24,11 +27,22 @@ describe('syncStreams', () => {
         log('afterEach')
     })
 
+    test('waitForSyncingStateTransitions', () => {
+        // the syncing, canceling, and not syncing state should not be able to transition to itself, otherwise waitForSyncingState will break
+        expect(stateConstraints[SyncState.Syncing].has(SyncState.Syncing)).toBe(false)
+        expect(stateConstraints[SyncState.Canceling].has(SyncState.Syncing)).toBe(false)
+        expect(stateConstraints[SyncState.NotSyncing].has(SyncState.Syncing)).toBe(false)
+
+        // the starting, and retrying state should both be able to transition to syncing, othwerwise waitForSyncingState will break
+        expect(stateConstraints[SyncState.Starting].has(SyncState.Syncing)).toBe(true)
+        expect(stateConstraints[SyncState.Retrying].has(SyncState.Syncing)).toBe(true) // if this breaks, we just need to change the two conditions in waitForSyncingState
+    })
+
     test('starting->syncing->canceling->notSyncing', async () => {
         log('starting->syncing->canceling->notSyncing')
         /** Arrange */
         const alice = await makeTestRpcClient()
-        const done = makeDonePromise()
+        const done1 = makeDonePromise()
         const alicesContext = await makeRandomUserContext()
 
         const alicesUserId = userIdFromAddress(alicesContext.creatorAddress)
@@ -48,19 +62,23 @@ describe('syncStreams', () => {
         })
         const { streamAndCookie } = await unpackStream(aliceUserStream.stream)
 
-        const mockClientEmitter = {} as TypedEmitter<StreamEvents>
-
-        mockClientEmitter.emit = (event: keyof StreamEvents, ...args: any[]): boolean => {
-            log('event', event, args)
-            if (args[0]) {
-                done.done()
+        const mockClientEmitter = new EventEmitter() as TypedEmitter<StreamEvents>
+        mockClientEmitter.on('streamSyncActive', (isActive) => {
+            if (isActive) {
+                done1.done()
             }
-            return true
-        }
-
+        })
         const alicesSyncedStreams = new SyncedStreams(alicesUserId, alice, mockClientEmitter)
+        const stream = new SyncedStream(
+            alicesUserId,
+            alicesUserStreamIdStr,
+            mockClientEmitter,
+            log,
+            new StubPersistenceStore(),
+        )
         await alicesSyncedStreams.startSyncStreams()
-        await done.promise
+        await done1.promise
+        alicesSyncedStreams.set(alicesUserStreamIdStr, stream)
         await alicesSyncedStreams.addStreamToSync(streamAndCookie.nextSyncCookie)
 
         await alicesSyncedStreams.stopSync()

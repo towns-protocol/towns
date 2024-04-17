@@ -40,20 +40,33 @@ contract MembershipJoinSpace is MembershipBaseSetup {
     membership.joinSpace(address(0));
   }
 
-  function test_revertWhen_CallerIsAlreadyMember() external {
+  function test_joinSpace_passWhen_CallerIsAlreadyMember() external {
     vm.prank(alice);
     membership.joinSpace(alice);
 
     vm.prank(alice); // alice is the caller
-    vm.expectRevert(Membership__AlreadyMember.selector);
     membership.joinSpace(bob);
   }
 
-  function test_revertWhen_ReceiverIsAlreadyMember() external {
+  function test_joinSpace_passWhen_CallerIsFounder() external {
+    vm.prank(founder);
+    membership.joinSpace(bob);
+  }
+
+  function test_joinSpace_revertWhen_ReceiverIsAlreadyMember() external {
     vm.prank(alice);
     membership.joinSpace(alice);
 
     vm.prank(charlie);
+    vm.expectRevert(Membership__AlreadyMember.selector);
+    membership.joinSpace(alice);
+  }
+
+  function test_joinSpace_revertWhen_ReceiverIsCallerAndMember() external {
+    vm.prank(alice);
+    membership.joinSpace(alice);
+
+    vm.prank(alice);
     vm.expectRevert(Membership__AlreadyMember.selector);
     membership.joinSpace(alice);
   }
@@ -165,14 +178,5 @@ contract MembershipJoinSpace is MembershipBaseSetup {
     vm.prank(founder);
     vm.expectRevert(Membership__InvalidMaxSupply.selector);
     membership.setMembershipLimit(1);
-  }
-
-  function test_joinSpace_revert_already_member() external {
-    vm.prank(alice);
-    membership.joinSpace(alice);
-
-    vm.prank(alice);
-    vm.expectRevert(Membership__AlreadyMember.selector);
-    membership.joinSpace(bob);
   }
 }

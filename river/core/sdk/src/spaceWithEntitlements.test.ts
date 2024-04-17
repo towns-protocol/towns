@@ -31,13 +31,14 @@ describe('spaceTestsWithEntitlements', () => {
     test('ownerCanBanOtherUsers', async () => {
         // set up the web3 provider and spacedap
         const baseConfig = makeBaseChainConfig()
+
         const bobsWallet = ethers.Wallet.createRandom()
         const bobsContext = await makeUserContextFromWallet(bobsWallet)
         const bobProvider = new LocalhostWeb3Provider(baseConfig.rpcUrl, bobsWallet)
         await bobProvider.fundWallet()
         const mintReceipt = await bobProvider.mintMockNFT(baseConfig.chainConfig)
         log('mintReceipt', mintReceipt)
-        const spaceDapp = createSpaceDapp(bobProvider, baseConfig.chainConfig)
+        const bobSpaceDapp = createSpaceDapp(bobProvider, baseConfig.chainConfig)
 
         // create a user stream
         const bob = await makeTestClient({ context: bobsContext })
@@ -45,7 +46,7 @@ describe('spaceTestsWithEntitlements', () => {
         await expect(bob.initializeUser()).toResolve()
         bob.startSync()
 
-        const pricingModules = await spaceDapp.listPricingModules()
+        const pricingModules = await bobSpaceDapp.listPricingModules()
         const dynamicPricingModule = getDynamicPricingModule(pricingModules)
         expect(dynamicPricingModule).toBeDefined()
 
@@ -71,7 +72,7 @@ describe('spaceTestsWithEntitlements', () => {
                 ruleData: NoopRuleData,
             },
         }
-        const transaction = await spaceDapp.createSpace(
+        const transaction = await bobSpaceDapp.createSpace(
             {
                 spaceName: 'bobs-space-metadata',
                 spaceMetadata: 'bobs-space-metadata',
@@ -83,7 +84,7 @@ describe('spaceTestsWithEntitlements', () => {
         const receipt = await transaction.wait()
         log('receipt', receipt)
         expect(receipt.status).toEqual(1)
-        const spaceAddress = spaceDapp.getSpaceAddress(receipt)
+        const spaceAddress = bobSpaceDapp.getSpaceAddress(receipt)
         expect(spaceAddress).toBeDefined()
         const spaceId = makeSpaceStreamId(spaceAddress!)
         const channelId = makeDefaultChannelStreamId(spaceAddress!)
@@ -123,8 +124,6 @@ describe('spaceTestsWithEntitlements', () => {
         // join alice
         const alicesWallet = ethers.Wallet.createRandom()
         const alicesContext = await makeUserContextFromWallet(alicesWallet)
-        const aliceProvider = new LocalhostWeb3Provider(baseConfig.rpcUrl, alicesWallet)
-        await aliceProvider.fundWallet()
         const alice = await makeTestClient({
             context: alicesContext,
         })
@@ -132,12 +131,13 @@ describe('spaceTestsWithEntitlements', () => {
         alice.startSync()
         log('Alice created user, about to join space', { alicesUserId: alice.userId })
 
+        // await expect(alice.joinStream(spaceId)).rejects.toThrow() // todo
+
         // first join the space on chain
-        const aliceSpaceDapp = createSpaceDapp(aliceProvider, baseConfig.chainConfig)
-        const transaction2 = await aliceSpaceDapp.joinSpace(
+        const transaction2 = await bobSpaceDapp.joinSpace(
             spaceId,
             alicesWallet.address,
-            aliceProvider.wallet,
+            bobProvider.wallet,
         )
         const receipt2 = await transaction2.wait()
         log('receipt for alice joining space', receipt2)

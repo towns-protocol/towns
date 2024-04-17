@@ -102,7 +102,8 @@ describe('dmsTests', () => {
         const alicesClient = await makeInitAndStartClient()
         const { streamId } = await bobsClient.createDMChannel(alicesClient.userId)
         await expect(bobsClient.waitForStream(streamId)).toResolve()
-
+        // stop syncing and remove stream from cache
+        await bobsClient.streams.removeStreamFromSync(streamId)
         const { streamId: streamId2 } = await bobsClient.createDMChannel(alicesClient.userId)
         expect(streamId).toEqual(streamId2)
     })

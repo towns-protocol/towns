@@ -278,6 +278,7 @@ contract ArchitectTest is
     address spaceInstance = spaceArchitect.createSpace(spaceInfo);
 
     // have another user join the space
+    vm.prank(user);
     IMembership(spaceInstance).joinSpace(user);
 
     // assert that he cannot modify channels

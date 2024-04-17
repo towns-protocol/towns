@@ -1,5 +1,5 @@
 import { Err, SyncCookie, SyncOp, SyncStreamsResponse } from '@river-build/proto'
-import { DLogger, dlog, dlogError, shortenHexString } from '@river-build/dlog'
+import { DLogger, check, dlog, dlogError, shortenHexString } from '@river-build/dlog'
 import { StreamRpcClientType, errorContains } from './makeStreamRpcClient'
 import { unpackStream, unpackStreamAndCookie } from './sign'
 import { StreamStateEvents } from './streamEvents'
@@ -34,7 +34,7 @@ export enum SyncState {
     Retrying --> Retrying: still retrying
 	Canceling --> NotSyncing
  */
-const stateConstraints: Record<SyncState, Set<SyncState>> = {
+export const stateConstraints: Record<SyncState, Set<SyncState>> = {
     [SyncState.NotSyncing]: new Set([SyncState.Starting]),
     [SyncState.Starting]: new Set([SyncState.Syncing, SyncState.Retrying, SyncState.Canceling]),
     [SyncState.Syncing]: new Set([SyncState.Canceling, SyncState.Retrying]),
@@ -253,26 +253,44 @@ export class SyncedStreams {
         }
     }
 
+    private async waitForSyncingState() {
+        // if we can transition to syncing, wait for it
+        if (stateConstraints[this.syncState].has(SyncState.Syncing)) {
+            this.log('waitForSyncing', this.syncState)
+            // listen for streamSyncStateChange event from client emitter
+            return new Promise<void>((resolve) => {
+                const onStreamSyncStateChange = (syncState: SyncState) => {
+                    if (!stateConstraints[this.syncState].has(SyncState.Syncing)) {
+                        this.log('waitForSyncing complete', syncState)
+                        this.clientEmitter.off('streamSyncStateChange', onStreamSyncStateChange)
+                        resolve()
+                    } else {
+                        this.log('waitForSyncing continues', syncState)
+                    }
+                }
+                this.clientEmitter.on('streamSyncStateChange', onStreamSyncStateChange)
+            })
+        }
+    }
+
     // adds stream to the sync subscription
     public async addStreamToSync(syncCookie: SyncCookie): Promise<void> {
-        /*
-        const stream = this.streams.has(syncCookie.streamId)
-        
-        if (stream) {
-            this.log('addStreamToSync streamId already syncing', syncCookie)
-            return
+        const streamId = streamIdAsString(syncCookie.streamId)
+        this.log('addStreamToSync', streamId)
+        check(this.streams.has(streamId), 'streamId not in this.streams')
+        if (this.syncState === SyncState.Starting || this.syncState === SyncState.Retrying) {
+            await this.waitForSyncingState()
         }
-        */
         if (this.syncState === SyncState.Syncing) {
             try {
                 await this.rpcClient.addStreamToSync({
                     syncId: this.syncId,
                     syncPos: syncCookie,
                 })
-                this.log('addedStreamToSync', syncCookie)
+                this.log('addStreamToSync complete', syncCookie)
             } catch (err) {
                 // Trigger restart of sync loop
-                this.log(`addedStreamToSync error`, err)
+                this.log(`addStreamToSync error`, err)
                 if (errorContains(err, Err.BAD_SYNC_COOKIE)) {
                     this.log('addStreamToSync BAD_SYNC_COOKIE', syncCookie)
                     throw err
@@ -281,7 +299,7 @@ export class SyncedStreams {
         } else {
             this.log(
                 'addStreamToSync: not in "syncing" state; let main sync loop handle this with its streams map',
-                syncCookie.streamId,
+                { streamId: syncCookie.streamId, syncState: this.syncState },
             )
         }
     }
@@ -294,6 +312,9 @@ export class SyncedStreams {
             this.log('removeStreamFromSync streamId not found', streamId)
             // no such stream
             return
+        }
+        if (this.syncState === SyncState.Starting || this.syncState === SyncState.Retrying) {
+            await this.waitForSyncingState()
         }
         if (this.syncState === SyncState.Syncing) {
             try {
@@ -312,7 +333,7 @@ export class SyncedStreams {
         } else {
             this.log(
                 'removeStreamFromSync: not in "syncing" state; let main sync loop handle this with its streams map',
-                streamId,
+                { streamId, syncState: this.syncState },
             )
         }
     }
@@ -447,7 +468,10 @@ export class SyncedStreams {
                         }
                     }
                 } finally {
-                    this.log('sync loop stopping ITERATION', iteration)
+                    this.log('sync loop stopping ITERATION', {
+                        iteration,
+                        syncState: this.syncState,
+                    })
                     this.stopPing()
                     if (stateConstraints[this.syncState].has(SyncState.NotSyncing)) {
                         this.setSyncState(SyncState.NotSyncing)
@@ -486,6 +510,7 @@ export class SyncedStreams {
         }
         this.log('syncState', this._syncState, '->', newState)
         this._syncState = newState
+        this.clientEmitter.emit('streamSyncStateChange', newState)
     }
 
     // The sync loop will keep retrying until it is shutdown, it has no max attempts
@@ -600,6 +625,7 @@ export class SyncedStreams {
                     if (stream === undefined) {
                         this.log('sync got stream', streamId, 'NOT FOUND')
                     } else if (syncStream.syncReset) {
+                        this.log('initStream from sync reset', streamId, 'RESET')
                         const response = await unpackStream(syncStream)
                         await stream.initializeFromResponse(response)
                     } else {

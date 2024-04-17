@@ -331,6 +331,7 @@ export class StreamStateView {
                     this.updateMiniblockInfo(payload.value, { max: payload.value.miniblockNum })
                     timelineEvent.confirmedEventNum =
                         payload.value.eventNumOffset + BigInt(payload.value.eventHashes.length)
+                    timelineEvent.miniblockNum = payload.value.miniblockNum
                     confirmed = this.processMiniblockHeader(
                         payload.value,
                         payload.value.eventHashes,

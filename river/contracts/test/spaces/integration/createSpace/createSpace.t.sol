@@ -159,6 +159,7 @@ contract Integration_CreateSpace is BaseSetup, IRolesBase, IArchitectBase {
     vm.prank(founder);
     address newSpace = spaceArchitect.createSpace(spaceInfo);
 
+    vm.prank(member);
     IMembership(newSpace).joinSpace(member);
 
     // look for user entitlement

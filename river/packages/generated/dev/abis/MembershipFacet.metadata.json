@@ -2579,11 +2579,11 @@
       ]
     },
     "contracts/src/spaces/facets/membership/MembershipFacet.sol": {
-      "keccak256": "0x6e5a1beaacd923cb44a411bcf0ddaac59c61d24c0660ec74ce6ab21bfd0b79a6",
+      "keccak256": "0xe5f7d6fb037992dc7a1d8195e67079162006ef783b5e7294b4ce8a2455f082f6",
       "license": "Apache-2.0",
       "urls": [
-        "bzz-raw://ea0592befe3aaa970b7b605386260af5c775125fa575a20f16d72e5e3843e196",
-        "dweb:/ipfs/QmZNuza9xMFkpKr9gieZhXFWnQUC24zAfkAEkEZ95Xa5Tq"
+        "bzz-raw://7dedf3602e0a5c6ce9a86ffa76bec162b39ffa6eee46b914fece275d3ecef602",
+        "dweb:/ipfs/QmZWygG96T9b5BeSTMnuKC4KeZk2DaFPgJ1aYYuSGvuff6"
       ]
     },
     "contracts/src/spaces/facets/membership/MembershipStorage.sol": {

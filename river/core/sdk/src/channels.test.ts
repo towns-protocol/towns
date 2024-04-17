@@ -38,10 +38,8 @@ describe('channelsTests', () => {
 
         const channelId = makeUniqueChannelStreamId(spaceId)
         await expect(bobsClient.createChannel(spaceId, 'Channel', 'Topic', channelId)).toResolve()
-
-        const stream = await bobsClient.waitForStream(channelId)
-
         await bobsClient.sendMessage(channelId, 'Very bad message!')
+        const stream = await bobsClient.waitForStream(channelId)
         let eventId: string | undefined
         await waitFor(() => {
             const event = stream.view.timeline.find(

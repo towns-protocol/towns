@@ -20,6 +20,7 @@ import {
     Miniblock,
     Err,
     ChannelMessage_Post_Attachment,
+    CreateStreamRequest,
 } from '@river-build/proto'
 import {
     bin_fromHexString,
@@ -108,8 +109,7 @@ import {
 
 import debug from 'debug'
 import { Stream } from './stream'
-import { Code } from '@connectrpc/connect'
-import { usernameChecksum, isIConnectError, genPersistenceStoreName } from './utils'
+import { usernameChecksum, genPersistenceStoreName } from './utils'
 import { isEncryptedContentKind, toDecryptedContent } from './encryptedContentTypes'
 import { ClientDecryptionExtensions } from './clientDecryptionExtensions'
 import { PersistenceStore, IPersistenceStore, StubPersistenceStore } from './persistenceStore'
@@ -150,6 +150,7 @@ export class Client
     private getStreamRequests: Map<string, Promise<StreamStateView>> = new Map()
     private getStreamExRequests: Map<string, Promise<StreamStateView>> = new Map()
     private getScrollbackRequests: Map<string, ReturnType<typeof this.scrollback>> = new Map()
+    private creatingStreamIds = new Set<string>()
     private entitlementsDelegate: EntitlementsDelegate
     private decryptionExtensions?: BaseDecryptionExtensions
     private syncedStreamsExtensions?: SyncedStreamsExtension
@@ -259,6 +260,7 @@ export class Client
     }
 
     createSyncedStream(streamId: string | Uint8Array): SyncedStream {
+        check(!this.streams.has(streamId), 'stream already exists')
         const stream = new SyncedStream(
             this.userId,
             streamIdAsString(streamId),
@@ -458,6 +460,31 @@ export class Client
         return unpackStream(response.stream)
     }
 
+    private async createStreamAndSync(
+        request: PlainMessage<CreateStreamRequest>,
+    ): Promise<{ streamId: string }> {
+        const streamId = streamIdAsString(request.streamId)
+        try {
+            this.creatingStreamIds.add(streamId)
+            let response = await this.rpcClient.createStream(request)
+            const stream = this.createSyncedStream(streamId)
+            if (!response.stream) {
+                // if a stream alread exists it will return a nil stream in the response, but no error
+                // fetch the stream to get the client in the rigth state
+                response = await this.rpcClient.getStream({ streamId: request.streamId })
+            }
+            const unpacked = await unpackStream(response.stream)
+            await stream.initializeFromResponse(unpacked)
+            if (stream.view.syncCookie) {
+                await this.streams.addStreamToSync(stream.view.syncCookie)
+            }
+        } catch (err) {
+            this.creatingStreamIds.delete(streamId)
+            throw err
+        }
+        return { streamId: streamId }
+    }
+
     // createSpace
     // param spaceAddress: address of the space contract, or address made with makeSpaceStreamId
     async createSpace(spaceAddressOrId: string): Promise<{ streamId: string }> {
@@ -485,12 +512,7 @@ export class Client
                 initiatorId: this.userId,
             }),
         )
-
-        await this.rpcClient.createStream({
-            events: [inceptionEvent, joinEvent],
-            streamId: spaceId,
-        })
-        return { streamId: streamIdAsString(spaceId) }
+        return this.createStreamAndSync({ events: [inceptionEvent, joinEvent], streamId: spaceId })
     }
 
     async createChannel(
@@ -526,12 +548,10 @@ export class Client
                 initiatorId: this.userId,
             }),
         )
-
-        await this.rpcClient.createStream({
+        return this.createStreamAndSync({
             events: [inceptionEvent, joinEvent],
             streamId: channelId,
         })
-        return { streamId: streamIdAsString(oChannelId) }
     }
 
     async createDMChannel(
@@ -568,21 +588,10 @@ export class Client
                 initiatorId: this.userId,
             }),
         )
-
-        try {
-            await this.rpcClient.createStream({
-                events: [inceptionEvent, joinEvent, inviteEvent],
-                streamId: channelId,
-            })
-            return { streamId: channelIdStr }
-        } catch (err) {
-            // Two users can only have a single DM stream between them.
-            // Return the stream id if it already exists.
-            if (isIConnectError(err) && err.code == (Code.AlreadyExists as number)) {
-                return { streamId: channelIdStr }
-            }
-            throw err
-        }
+        return this.createStreamAndSync({
+            events: [inceptionEvent, joinEvent, inviteEvent],
+            streamId: channelId,
+        })
     }
 
     async createGDMChannel(
@@ -625,11 +634,10 @@ export class Client
             events.push(inviteEvent)
         }
 
-        await this.rpcClient.createStream({
+        return this.createStreamAndSync({
             events: events,
             streamId: channelId,
         })
-        return { streamId: channelIdStr }
     }
 
     async createMediaStream(
@@ -1016,9 +1024,11 @@ export class Client
         }
     }
 
-    private onJoinedStream = (streamId: string): Promise<Stream> => {
+    private onJoinedStream = async (streamId: string): Promise<void> => {
         this.logEvent('onJoinedStream', streamId)
-        return this.initStream(streamId)
+        if (!this.creatingStreamIds.has(streamId)) {
+            await this.initStream(streamId)
+        }
     }
 
     private onInvitedToStream = async (streamId: string): Promise<void> => {

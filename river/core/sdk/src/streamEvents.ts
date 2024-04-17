@@ -16,6 +16,7 @@ import {
 } from './types'
 import { KeySolicitationContent, UserDevice } from '@river-build/encryption'
 import { EncryptedContent } from './encryptedContentTypes'
+import { SyncState } from './syncedStreams'
 
 export type StreamChange = {
     prepended?: RemoteTimelineEvent[]
@@ -52,6 +53,7 @@ export type StreamStateEvents = {
     streamMembershipUpdated: (streamId: string, userId: string) => void
     streamPendingMembershipUpdated: (streamId: string, userId: string) => void
     streamSyncActive: (active: boolean) => void
+    streamSyncStateChange: (newState: SyncState) => void
     userJoinedStream: (streamId: string) => void
     userInvitedToStream: (streamId: string) => void
     userLeftStream: (streamId: string) => void

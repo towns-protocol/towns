@@ -16,7 +16,7 @@ import {
     Session,
     Utility,
 } from './encryptionTypes'
-import { isJest } from '@river-build/dlog'
+import { isNodeEnv } from '@river-build/dlog'
 
 type OlmLib = typeof Olm
 
@@ -42,7 +42,7 @@ export class EncryptionDelegate {
             return
         }
 
-        if (isJest()) {
+        if (isNodeEnv()) {
             await this.delegate.init()
         } else {
             await this.delegate.init({ locateFile: () => olmWasm as unknown })
