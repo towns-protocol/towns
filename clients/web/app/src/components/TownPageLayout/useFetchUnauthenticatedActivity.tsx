@@ -32,7 +32,8 @@ type TownStats = {
 type ChannelStats = {
     numMessages: number
     numActiveUsers: number
-    activeUsers: Set<string>
+    // session storage, this should be an array
+    activeUsers: string[]
 }
 
 const useFetchStore = create(
@@ -52,7 +53,7 @@ const useFetchStore = create(
             channelStats: {
                 numMessages: 0,
                 numActiveUsers: 0,
-                activeUsers: new Set<string>(),
+                activeUsers: [],
             },
             townStats: {
                 numJoinedUsers: 0,
@@ -172,14 +173,12 @@ export const useFetchUnauthenticatedActivity = (townId: string) => {
                     }
                     channelCreatedEvents.concat(channelStats.channelInception)
                     setChannelStats((s) => {
-                        const activeUsers = channelStats.activeUsers.reduce((acc, curr) => {
-                            acc.add(curr.creatorUserId)
-                            return acc
-                        }, s.activeUsers)
-
+                        const activeUsers = Array.from(
+                            new Set<string>([...s.activeUsers, ...channelStats.activeUsers]),
+                        )
                         return {
                             numMessages: s.numMessages + channelStats.numMessages,
-                            numActiveUsers: activeUsers.size,
+                            numActiveUsers: activeUsers.length,
                             activeUsers,
                         }
                     })
@@ -247,11 +246,16 @@ async function getChannelStats(client: UnauthenticatedClient, channelId: string)
 
     const messages = channelMessages.filter((f) => isWithin(f.createdAtEpochMs, DAY_MS))
 
-    const activeUsers = channelMessages.filter((f) => isWithin(f.createdAtEpochMs, DAY_MS))
+    const activeUsers = channelMessages
+        .filter((f) => isWithin(f.createdAtEpochMs, DAY_MS))
+        .reduce((acc, curr) => {
+            acc.add(curr.creatorUserId)
+            return acc
+        }, new Set<string>())
 
     return {
         numMessages: messages.length,
-        numActiveUsers: activeUsers.length,
+        numActiveUsers: activeUsers.size,
         activeUsers,
         channelInception,
     }
