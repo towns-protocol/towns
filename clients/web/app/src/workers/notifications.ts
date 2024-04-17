@@ -183,6 +183,8 @@ export function handleNotifications(worker: ServiceWorkerGlobalScope) {
                     })
                     const url = new URL(worker.location.origin)
                     url.pathname = pathToNavigateTo
+                    url.searchParams.set('track_source', 'push_hnt-5685')
+                    url.searchParams.set('channelId', data.channelId)
                     const window = await worker.clients.openWindow(url.toString())
                     await window?.focus()
                 }
