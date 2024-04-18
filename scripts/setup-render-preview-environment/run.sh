@@ -14,7 +14,7 @@ function main() {
 
     if [ "$mode" = "lite" ]; then
         echo "Lite mode detected. No need to set up transient environment."
-        exit 0
+        return 0
     fi
 
     # install boto3 via pip to use aws. unfortunately, we can't setup aws inside render.
