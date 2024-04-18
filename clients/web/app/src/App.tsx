@@ -69,18 +69,18 @@ export const App = () => {
         }
     }
 
-    const [searchParams] = useSearchParams()
     const location = useLocation()
+    const [searchParams] = useSearchParams()
+    const channelId = searchParams.get('channelId')
 
     useEffect(() => {
-        const channelId = searchParams.get('channelId')
         console.warn('[app] track_source:', 'push_hnt-5685', {
             channelId: channelId ?? 'undefined',
             locationPath: location.pathname,
             locationHash: location.hash,
             locationParams: location.search,
         })
-    }, [location.hash, location.pathname, location.search, searchParams])
+    }, [channelId, location.hash, location.pathname, location.search])
 
     useEffect(() => {
         if (!isTouch || !touchInitialLink) {
