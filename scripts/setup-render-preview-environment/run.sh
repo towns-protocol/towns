@@ -5,6 +5,11 @@ set +v
 
 # Main logic
 function main() {
+    if [ "$IS_PULL_REQUEST" != true ]; then
+        echo "Not a pull request. No preview setup needed."
+        return 0
+    fi
+
     check_env
 
     pr_number=$(get_pr_number_of_preview)
@@ -23,10 +28,6 @@ function main() {
 }
 
 function check_env() {
-    if [ "$IS_PULL_REQUEST" != true ]; then
-        echo "Not a pull request. No preview setup needed."
-        exit 0
-    fi
 
     if [ -z "$RENDER_API_KEY" ] || [ -z "$PREVIEW_DOMAIN_SUFFIX" ]; then
         echo "Must set RENDER_API_KEY and PREVIEW_DOMAIN_SUFFIX environment variables!"
