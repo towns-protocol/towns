@@ -82,3 +82,11 @@ variable "river_node_ssl_cert_secret_arn" {
 variable "system_parameters" {
   type = any
 }
+
+variable "lb" {
+  type = object({
+    lb_arn               = string
+    lb_security_group_id = string
+    lb_dns_name          = string
+  })
+}

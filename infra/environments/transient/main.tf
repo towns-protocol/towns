@@ -152,6 +152,20 @@ module "river_anvil_service" {
   vpc_id          = local.transient_global_remote_state.vpc.vpc_id
 }
 
+locals {
+  # TODO: make this dynamic on gamma, based on the node number.
+  nlb_root_domain_name = "river-nlb-${var.git_pr_number}.nodes.transient"
+}
+
+module "river_nlb" {
+  source       = "../../modules/river-nlb"
+  count        = 1
+  subnets      = local.transient_global_remote_state.vpc.public_subnets
+  vpc_id       = local.transient_global_remote_state.vpc.vpc_id
+  dns_name     = local.nlb_root_domain_name
+  is_transient = true
+}
+
 module "river_node" {
   source      = "../../modules/river-node"
   count       = var.num_nodes
@@ -182,6 +196,8 @@ module "river_node" {
   }
 
   system_parameters = local.create_system_parameters ? module.system_parameters[0] : null
+
+  lb = module.river_nlb[0]
 }
 
 # module "loadtest" {

@@ -136,6 +136,23 @@ module "river_internal_sg" {
     }
   ]
 
+  ingress_with_source_security_group_id = [
+    {
+      from_port                = local.rpc_https_port
+      to_port                  = local.rpc_https_port
+      protocol                 = "tcp"
+      description              = "Allow incoming TCP traffic from the NLB"
+      source_security_group_id = var.lb.lb_security_group_id
+    },
+    {
+      from_port                = local.rpc_https_port
+      to_port                  = local.rpc_https_port
+      protocol                 = "udp"
+      description              = "Allow incoming UDP traffic from the NLB"
+      source_security_group_id = var.lb.lb_security_group_id
+    }
+  ]
+
   egress_cidr_blocks = ["0.0.0.0/0"] # public internet
   egress_rules       = ["all-all"]
 }
@@ -664,6 +681,23 @@ resource "cloudflare_record" "public_ip_a_record" {
   }
 }
 
+# Only create this DNS record for non-transient environments.
+# Since transient environments reuse the same DNS record.
+resource "cloudflare_record" "nlb_cname_dns_record" {
+  count   = var.is_transient == true ? 0 : 1
+  zone_id = data.cloudflare_zone.zone.id
+  # TODO: start with this secondary and redundant DNS record before removing the previous one.
+  # This is necessary for the current phase, where we're just creating and testing infrastructure components,
+  # without replacing the old ones.
+  name  = "nlb-${var.dns_name}"
+  value = var.lb.lb_dns_name
+  type  = "CNAME"
+  ttl   = 60
+  lifecycle {
+    ignore_changes = all
+  }
+}
+
 // MONITORING //
 
 locals {
@@ -715,4 +749,42 @@ module "datadog_sythetics_test" {
     min_failure_duration = 60 #Sec
     min_location_failed  = 1
   }
+}
+
+##################################################################
+# Load Balancer Routing
+##################################################################
+
+
+resource "aws_lb_listener" "transient_lb_listener" {
+  load_balancer_arn = var.lb.lb_arn
+  port              = local.rpc_https_port
+  protocol          = "TCP_UDP"
+
+  default_action {
+    type             = "forward"
+    target_group_arn = aws_lb_target_group.river_node_target_group.arn
+  }
+}
+
+resource "aws_lb_target_group" "river_node_target_group" {
+  name        = "${local.node_name}-tg"
+  port        = local.rpc_https_port
+  protocol    = "TCP_UDP"
+  vpc_id      = var.vpc_id
+  target_type = "ip"
+
+  health_check {
+    // TODO: use the proper healthcheck endpoint here
+    path                = "/info"
+    protocol            = "HTTPS"
+    port                = local.rpc_https_port
+    interval            = 5
+    timeout             = 2
+    healthy_threshold   = 2
+    unhealthy_threshold = 2
+    matcher             = "200"
+  }
+
+  tags = module.global_constants.tags
 }
