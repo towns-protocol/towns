@@ -22,13 +22,6 @@ contract InteractRiverRegistry is Interaction {
     address registry = getDeployment("riverRegistry");
     _addInitialNodes();
 
-    // By default, nodes register under nodes.gamma.towns.com
-    // However, other suffixes can be set using the NODE_URL_SUFFIX env variable
-    string memory nodeUrlSuffix = vm.envOr(
-      "NODE_URL_SUFFIX",
-      string(".nodes.gamma.towns.com")
-    );
-
     uint numNodes = vm.envOr("NUM_NODES", uint(10));
 
     for (uint256 i = 0; i < numNodes; i++) {
@@ -36,9 +29,46 @@ contract InteractRiverRegistry is Interaction {
 
       NodeRegistry(registry).registerNode(
         nodes[i].nodeAddress,
-        string.concat("https://river", vm.toString(i + 1), nodeUrlSuffix),
+        _getNodeUrl(i + 1),
         nodes[i].status
       );
+    }
+  }
+
+  function _getNodeUrl(
+    uint256 nodeNumber
+  ) internal view returns (string memory) {
+    // By default, nodes register under nodes.gamma.towns.com
+    // However, other suffixes can be set using the NODE_URL_SUFFIX env variable
+    string memory nodeUrlSuffix = vm.envOr(
+      "NODE_URL_SUFFIX",
+      string(".nodes.gamma.towns.com")
+    );
+
+    // By default, node urls are incremented via the host name:
+    // i.e river1.nodes.gamma.towns.com, river2.nodes.gamma.towns.com
+    // However, if the env variable NODE_URL_INCREMENT_VIA_PORT is set to true,
+    // the node urls will be incremented via the port number:
+    // i.e river.nodes.gamma.towns.com:3001, river.nodes.gamma.towns.com:3002
+    bool nodeUrlIncrementViaPort = vm.envOr(
+      "NODE_URL_INCREMENT_VIA_PORT",
+      false
+    );
+
+    if (nodeUrlIncrementViaPort) {
+      uint nodeUrlInitialPort = vm.envOr("NODE_URL_INITIAL_PORT", uint(10000));
+      uint nodeUrlPort = nodeUrlInitialPort + nodeNumber;
+
+      return
+        string.concat(
+          "https://river",
+          nodeUrlSuffix,
+          ":",
+          vm.toString(nodeUrlPort)
+        );
+    } else {
+      return
+        string.concat("https://river", vm.toString(nodeNumber), nodeUrlSuffix);
     }
   }
 

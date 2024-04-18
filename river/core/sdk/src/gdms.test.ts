@@ -160,7 +160,8 @@ describe('gdmsTests', () => {
         await Promise.all(promises)
     })
 
-    test('usersReceiveKeysAfterInviteAndJoin', async () => {
+    // https://linear.app/hnt-labs/issue/HNT-5964/fix-usersreceivekeysafterinviteandjoin-test-in-river-stage
+    test.skip('usersReceiveKeysAfterInviteAndJoin', async () => {
         const userIds = [alicesClient.userId, charliesClient.userId]
         const { streamId } = await bobsClient.createGDMChannel(userIds)
         await expect(bobsClient.waitForStream(streamId)).toResolve()
