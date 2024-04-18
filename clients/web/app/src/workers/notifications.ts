@@ -155,14 +155,14 @@ export function handleNotifications(worker: ServiceWorkerGlobalScope) {
                     return
                 }
                 const pathToNavigateTo = pathFromAppNotification(data)
-                log('pathToNavigateTo', pathToNavigateTo)
+                console.warn('sw:push: pathToNavigateTo', pathToNavigateTo)
 
                 const hadWindowToFocus = clientsArr.find((windowClient) =>
                     windowClient.url.includes(worker.location.origin),
                 )
 
                 if (hadWindowToFocus) {
-                    console.warn('notification: posting message', 'push_hnt-5685', {
+                    console.warn('sw:push: posting message', 'push_hnt-5685', {
                         path: pathToNavigateTo,
                         hadWindowToFocus: true,
                     })
@@ -171,7 +171,7 @@ export function handleNotifications(worker: ServiceWorkerGlobalScope) {
                     // avoid reloading the page
                     navigationChannel.postMessage({ path: pathToNavigateTo })
                 } else {
-                    console.warn('notification: opening window', 'push_hnt-5685', {
+                    console.warn('sw:push: opening window', 'push_hnt-5685', {
                         path: pathToNavigateTo,
                         hadWindowToFocus: false,
                     })

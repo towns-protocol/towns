@@ -71,20 +71,15 @@ export const App = () => {
 
     const [searchParams] = useSearchParams()
     const location = useLocation()
-    const trackSourceRef = useRef(false)
 
     useEffect(() => {
-        const source = searchParams.get('track_source')
         const channelId = searchParams.get('channelId')
-        if (source || trackSourceRef.current) {
-            trackSourceRef.current = true
-            console.warn('[app] track_source:', 'push_hnt-5685', {
-                channelId: channelId ?? 'undefined',
-                locationPath: location.pathname,
-                locationHash: location.hash,
-                locationParams: location.search,
-            })
-        }
+        console.warn('[app] track_source:', 'push_hnt-5685', {
+            channelId: channelId ?? 'undefined',
+            locationPath: location.pathname,
+            locationHash: location.hash,
+            locationParams: location.search,
+        })
     }, [location.hash, location.pathname, location.search, searchParams])
 
     useEffect(() => {

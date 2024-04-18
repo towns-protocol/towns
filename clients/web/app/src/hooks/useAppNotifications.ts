@@ -38,12 +38,13 @@ export const useAppNotifications = () => {
                 }
             }
 
+            const path = event.data.path
             log('[useAppNotifications] navigating to', 'push_hnt-5685', {
                 deviceType,
-                url: event.data.path,
+                url: path,
                 refEventId: event.data.refEventId ? event.data.refEventId : 'undefined',
             })
-            navigate(event.data.path)
+            navigate(path)
         }
 
         return () => {

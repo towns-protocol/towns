@@ -55,23 +55,28 @@ async function registerForPushSubscription(userId: string, signal: AbortSignal) 
 
 async function getOrRegisterPushSubscription() {
     console.log('PUSH: getting subscription')
-    const registration = await navigator.serviceWorker.ready
-    console.log('PUSH: got registration')
-    const subscription = await registration.pushManager.getSubscription()
-    console.log('PUSH: got subscription')
-    if (subscription) {
-        return subscription
-    }
+    try {
+        const registration = await navigator.serviceWorker.ready
+        console.log('PUSH: got registration')
+        const subscription = await registration.pushManager.getSubscription()
+        console.log('PUSH: got subscription')
+        if (subscription) {
+            return subscription
+        }
 
-    const applicationServerKey = env.VITE_WEB_PUSH_APPLICATION_SERVER_KEY
-    if (!applicationServerKey) {
-        console.warn('PUSH: VITE_WEB_PUSH_APPLICATION_SERVER_KEY not set')
-        return
+        const applicationServerKey = env.VITE_WEB_PUSH_APPLICATION_SERVER_KEY
+        if (!applicationServerKey) {
+            console.warn('PUSH: VITE_WEB_PUSH_APPLICATION_SERVER_KEY not set')
+            return
+        }
+        return await registration.pushManager.subscribe({
+            userVisibleOnly: true,
+            applicationServerKey: urlB64ToUint8Array(applicationServerKey),
+        })
+    } catch (e) {
+        console.error('PUSH: failed to get subscription', e)
     }
-    return await registration.pushManager.subscribe({
-        userVisibleOnly: true,
-        applicationServerKey: urlB64ToUint8Array(applicationServerKey),
-    })
+    return undefined
 }
 
 function urlB64ToUint8Array(base64String: string) {
