@@ -126,8 +126,8 @@ export const AuthenticatedRoutes = () => {
                                     />
                                     <Route path="*" element={<TownRoutes />} />
                                 </Route>
+                                <Route path="*" element={<OutsideTownRoutes />} />
                             </Route>
-                            <Route path="*" element={<OutsideTownRoutes />} />
                         </Route>
                     </>
                 )}

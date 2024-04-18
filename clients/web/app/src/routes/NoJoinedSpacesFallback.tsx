@@ -1,18 +1,18 @@
 import React, { useCallback, useEffect } from 'react'
 import { useNavigate } from 'react-router'
-import { Membership, useSpaceDataStore, useTownsClient, useTownsContext } from 'use-towns-client'
+import { Membership, useTownsClient, useTownsContext } from 'use-towns-client'
 import { PATHS } from 'routes'
 import { Button, Heading, Icon, Stack, Text } from '@ui'
 
 import { useDevice } from 'hooks/useDevice'
 import { useStore } from 'store/store'
-import { AppSkeletonView, WelcomeLayout } from './layouts/WelcomeLayout'
+import { WelcomeLayout } from './layouts/WelcomeLayout'
 
 export const NoJoinedSpacesFallback = () => {
     const navigate = useNavigate()
     const { spaces } = useTownsContext()
     const { client } = useTownsClient()
-    const spaceDataMap = useSpaceDataStore((s) => s.spaceDataMap)
+    //const spaceDataMap = useSpaceDataStore((s) => s.spaceDataMap)
 
     const spaceIdBookmark = useStore((s) => {
         return s.spaceIdBookmark
@@ -38,9 +38,11 @@ export const NoJoinedSpacesFallback = () => {
         navigate(`/${PATHS.SPACES}/new`)
     }, [navigate])
 
-    if (!spaceDataMap) {
-        return <AppSkeletonView />
-    }
+    // need to default spaceHierarchies to undefined and check for it here
+    // to prevent flash on load
+    // if (!spaceDataMap) {
+    //     return <AppSkeletonView />
+    // }
 
     if (spaces.length) {
         return isTouch ? <WelcomeLayout debugText="no joined space fallback" /> : <></>
