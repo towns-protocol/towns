@@ -1,5 +1,4 @@
-import { fromMarkdown } from 'mdast-util-from-markdown'
-import { toString } from 'mdast-util-to-string'
+import { htmlToText } from 'html-to-text'
 import { User } from './types'
 
 // TODO: should we use this to only show notifications when the tab is not visible?
@@ -62,20 +61,13 @@ export function preferredUsername(user: User): string {
 }
 
 /** Remove all MD formatting and unescape HTML to show in notifications */
-export async function deserializeMdToString(data?: string): Promise<string | undefined> {
-    if (!data || typeof data !== 'string') {
-        return undefined
-    }
-
+export function decodeHtmltoText(data?: string): Promise<string | undefined> {
     return new Promise((resolve) => {
-        queueMicrotask(() => {
-            let parsedString = ''
-            const lines = data.split('\n')
-            lines.forEach((line) => {
-                const tree = fromMarkdown(line)
-                parsedString += decodeURIComponent(toString(tree)) + '\n'
-            })
-            resolve(parsedString)
-        })
+        if (!data) {
+            return resolve(undefined)
+        }
+
+        const parsedString = htmlToText(data)
+        resolve(parsedString)
     })
 }

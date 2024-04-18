@@ -21,16 +21,11 @@ import {
     notificationContentFromEvent,
     pathFromAppNotification,
 } from './notificationParsers'
-import {
-    checkClientIsVisible,
-    deserializeMdToString,
-    getShortenedName,
-    stringHasValue,
-} from './utils'
+import { checkClientIsVisible, decodeHtmltoText, getShortenedName, stringHasValue } from './utils'
 
 import { NotificationCurrentUser } from '../store/notificationCurrentUser'
 import { NotificationStore } from '../store/notificationStore'
-import { env } from '../utils'
+import { env } from '../utils/environment'
 import { getEncryptedData } from './data_transforms'
 
 const MIDDLE_DOT = '\u00B7'
@@ -137,7 +132,6 @@ export function handleNotifications(worker: ServiceWorkerGlobalScope) {
                     tag: notification.content.channelId,
                     silent: false,
                     icon: `https://imagedelivery.net/qaaQ52YqlPXKEVQhjChiDA/${notification.content.senderId}/thumbnail100`,
-                    renotify: true,
                 }
                 await worker.registration.showNotification(content.title, options)
                 log('Notification shown')
@@ -451,10 +445,10 @@ function generateReplyToMessage(
 async function getNotificationContent(
     notification: AppNotification,
 ): Promise<NotificationContent | undefined> {
-    let townName: string | undefined = undefined
-    let channelName: string | undefined = undefined
-    let dmChannelName: string | undefined = undefined
-    let senderName: string | undefined = undefined
+    let townName: string | undefined
+    let channelName: string | undefined
+    let dmChannelName: string | undefined
+    let senderName: string | undefined
     let recipients: UserRecord[] = []
     let currentUserId: string | undefined
     let currentUserDatabaseName: string | undefined
@@ -614,7 +608,8 @@ async function tryDecryptEvent(
         await Promise.race([decryptPromise(encryptedData), timeoutPromise])
         if (plaintext) {
             plaintext.refEventId = encryptedData.refEventId
-            plaintext.body = await deserializeMdToString(plaintext?.body)
+            plaintext.body = await decodeHtmltoText(plaintext.body)
+            log('decodeHtmltoText', plaintext.body)
         }
     } catch (error) {
         logError('error decrypting event', error)
