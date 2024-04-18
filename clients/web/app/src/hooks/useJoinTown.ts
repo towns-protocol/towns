@@ -4,11 +4,13 @@ import { useGetEmbeddedSigner } from '@towns/privy'
 import { isLimitReachedError, isMaybeFundsError, mapToErrorMessage } from '@components/Web3/utils'
 import { createPrivyNotAuthenticatedNotification } from '@components/Notifications/utils'
 import { useStore } from 'store/store'
+import { usePublicPageLoginFlow } from 'routes/PublicTownPage/usePublicPageLoginFlow'
 
 export const useJoinTown = (spaceId: string | undefined, onSuccessfulJoin?: () => void) => {
     const { clientSingleton, signerContext } = useTownsContext()
     const { setRecentlyMintedSpaceToken } = useStore()
     const getSigner = useGetEmbeddedSigner()
+    const { end: endPublicPageLoginFlow } = usePublicPageLoginFlow()
     const [errorDetails, setErrorDetails] = useState<{
         maxLimitReached: boolean
         isNoFundsError: boolean
@@ -44,6 +46,7 @@ export const useJoinTown = (spaceId: string | undefined, onSuccessfulJoin?: () =
                 const result = await clientSingleton.joinTown(roomIdentifier, signer, signerContext)
 
                 if (!result) {
+                    endPublicPageLoginFlow()
                     setErrorDetails({
                         maxLimitReached: false,
                         isNoFundsError: false,
@@ -54,6 +57,7 @@ export const useJoinTown = (spaceId: string | undefined, onSuccessfulJoin?: () =
                     onSuccessfulJoin?.()
                 }
             } catch (error) {
+                endPublicPageLoginFlow()
                 const _error = error as Error
                 if (isLimitReachedError(_error)) {
                     setErrorDetails({
@@ -84,6 +88,7 @@ export const useJoinTown = (spaceId: string | undefined, onSuccessfulJoin?: () =
         clientSingleton,
         spaceId,
         signerContext,
+        endPublicPageLoginFlow,
         setRecentlyMintedSpaceToken,
         onSuccessfulJoin,
     ])

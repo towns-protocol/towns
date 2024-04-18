@@ -1,4 +1,4 @@
-import React from 'react'
+import React, { useCallback } from 'react'
 import { LoginStatus, useConnectivity } from 'use-towns-client'
 import { usePrivy } from '@privy-io/react-auth'
 import { PrivyWrapper } from 'privy/PrivyProvider'
@@ -7,13 +7,17 @@ import { Box, FancyButton } from '@ui'
 import { useErrorToast } from 'hooks/useErrorToast'
 import { mapToErrorMessage } from '@components/Web3/utils'
 
+type LoginComponentProps = {
+    text?: string
+    loggingInText?: string
+    onLoginClick?: () => void
+}
+
 function LoginComponent({
     text = 'Login',
     loggingInText = 'Logging In...',
-}: {
-    text?: string
-    loggingInText?: string
-}) {
+    onLoginClick: onLoginClick,
+}: LoginComponentProps) {
     const { ready: privyReady } = usePrivy()
     const { login, isAutoLoggingInToRiver } = useCombinedAuth()
     const { loginError, loginStatus: libLoginStatus } = useConnectivity()
@@ -35,6 +39,14 @@ function LoginComponent({
         return text
     }
 
+    const onButtonClick = useCallback(async () => {
+        if (!privyReady || isBusy) {
+            return
+        }
+        await onLoginClick?.()
+        await login()
+    }, [onLoginClick, isBusy, login, privyReady])
+
     useErrorToast({
         errorMessage,
         contextMessage: 'There was an error logging in, please try again.',
@@ -47,7 +59,12 @@ function LoginComponent({
     return (
         <Box centerContent gap="lg">
             <Box width="100%">
-                <FancyButton cta disabled={!privyReady || isBusy} spinner={isBusy} onClick={login}>
+                <FancyButton
+                    cta
+                    disabled={!privyReady || isBusy}
+                    spinner={isBusy}
+                    onClick={onButtonClick}
+                >
                     {loginContent()}
                 </FancyButton>
             </Box>
@@ -55,7 +72,7 @@ function LoginComponent({
     )
 }
 
-function LoginWithAuth(props: { text?: string; loggingInText?: string }) {
+function LoginWithAuth(props: LoginComponentProps) {
     return (
         <PrivyWrapper>
             <LoginComponent {...props} />

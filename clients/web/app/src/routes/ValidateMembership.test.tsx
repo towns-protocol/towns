@@ -47,9 +47,13 @@ const mockSpaceData: Lib.SpaceData = {
     hasLoadedMemberships: true,
 }
 
-const Wrapper = () => {
+const Wrapper = ({
+    initialEntries = [`/${PATHS.SPACES}/${spaceRoomIdentifier}`],
+}: {
+    initialEntries?: string[]
+}) => {
     return (
-        <TestApp initialEntries={[`/${PATHS.SPACES}/${spaceRoomIdentifier}`]}>
+        <TestApp initialEntries={initialEntries}>
             <Lib.SpaceContextProvider spaceId={spaceRoomIdentifier}>
                 <Routes>
                     <Route element={<ValidateMembership />}>
@@ -67,6 +71,9 @@ const Wrapper = () => {
 describe('<ValidateMembership />', () => {
     test('shows not found message when town does not exist', async () => {
         vi.spyOn(Lib, 'useSpaceData').mockImplementation(() => undefined)
+        vi.spyOn(Lib, 'useSpaceDataStore').mockImplementation(() => ({
+            spaceDataMap: {}, // loaded spaces
+        }))
 
         render(<Wrapper />)
 

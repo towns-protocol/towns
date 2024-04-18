@@ -23,6 +23,7 @@ import { BlockchainTxNotifier } from '@components/Web3/BlockchainTxNotifier'
 import { SyncNotificationSettings } from '@components/SyncNotificationSettings/SyncNotificationSettings'
 import { PATHS } from 'routes'
 import { useCreateLink } from 'hooks/useCreateLink'
+import { MonitorJoinFlow } from 'routes/PublicTownPage/MontiorJoinFlow'
 
 FontLoader.init()
 
@@ -151,6 +152,7 @@ export const App = () => {
                 <Notifications />
                 <BlockchainTxNotifier />
                 <ServiceWorkerMetadataSyncer />
+                <MonitorJoinFlow />
             </>
         </TownsContextProvider>
     )

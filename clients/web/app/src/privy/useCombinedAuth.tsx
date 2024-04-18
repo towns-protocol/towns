@@ -5,6 +5,7 @@ import { useLogin, usePrivy } from '@privy-io/react-auth'
 import { useEmbeddedWallet, useGetEmbeddedSigner } from '@towns/privy'
 import { clearEmbeddedWalletStorage } from '@towns/privy/EmbeddedSignerContext'
 import { ErrorNotification } from '@components/Notifications/ErrorNotifcation'
+import { usePublicPageLoginFlow } from 'routes/PublicTownPage/usePublicPageLoginFlow'
 import { useAutoLoginToRiverIfEmbeddedWallet } from './useAutoLoginToRiverIfEmbeddedWallet'
 
 type CombinedAuthContext = {
@@ -120,6 +121,7 @@ function usePrivyLoginWithErrorHandler({
     loggedInWalletAddress: Address | undefined
     loginToRiverAfterPrivy?: () => void
 }) {
+    const { end: endPublicPageLoginFlow } = usePublicPageLoginFlow()
     const { login: privyLogin } = useLogin({
         onComplete(user, isNewUser, wasAlreadyAuthenticated, loginMethod) {
             // don't call on page load when user already authenticated
@@ -130,6 +132,7 @@ function usePrivyLoginWithErrorHandler({
             }
         },
         onError: (error) => {
+            endPublicPageLoginFlow()
             if (error === 'exited_auth_flow') {
                 return
             }

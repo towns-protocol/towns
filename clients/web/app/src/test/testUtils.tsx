@@ -37,22 +37,24 @@ export const TestApp = (props: TestAppProps) => {
         },
     })
     return (
-        <ZLayerProvider>
-            <Lib.TownsContextProvider
-                environmentId={environmentId}
-                baseChain={baseChain}
-                baseConfig={web3Deployment.base}
-                riverChain={riverChain}
-                riverConfig={web3Deployment.river}
-                {...props.townsContextProviderProps}
-            >
-                <CombinedAuthContextProvider>
-                    <QueryClientProvider client={queryClient}>
-                        <Router initialEntries={props.initialEntries}>{props.children}</Router>
-                    </QueryClientProvider>
-                </CombinedAuthContextProvider>
-            </Lib.TownsContextProvider>
-        </ZLayerProvider>
+        <Router initialEntries={props.initialEntries}>
+            <ZLayerProvider>
+                <Lib.TownsContextProvider
+                    environmentId={environmentId}
+                    baseChain={baseChain}
+                    baseConfig={web3Deployment.base}
+                    riverChain={riverChain}
+                    riverConfig={web3Deployment.river}
+                    {...props.townsContextProviderProps}
+                >
+                    <CombinedAuthContextProvider>
+                        <QueryClientProvider client={queryClient}>
+                            {props.children}
+                        </QueryClientProvider>
+                    </CombinedAuthContextProvider>
+                </Lib.TownsContextProvider>
+            </ZLayerProvider>
+        </Router>
     )
 }
 

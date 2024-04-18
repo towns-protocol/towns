@@ -1,17 +1,18 @@
 import React, { useCallback, useEffect } from 'react'
 import { useNavigate } from 'react-router'
-import { Membership, useTownsClient, useTownsContext } from 'use-towns-client'
+import { Membership, useSpaceDataStore, useTownsClient, useTownsContext } from 'use-towns-client'
 import { PATHS } from 'routes'
 import { Button, Heading, Icon, Stack, Text } from '@ui'
 
 import { useDevice } from 'hooks/useDevice'
 import { useStore } from 'store/store'
-import { WelcomeLayout } from './layouts/WelcomeLayout'
+import { AppSkeletonView, WelcomeLayout } from './layouts/WelcomeLayout'
 
 export const NoJoinedSpacesFallback = () => {
     const navigate = useNavigate()
     const { spaces } = useTownsContext()
     const { client } = useTownsClient()
+    const spaceDataMap = useSpaceDataStore((s) => s.spaceDataMap)
 
     const spaceIdBookmark = useStore((s) => {
         return s.spaceIdBookmark
@@ -36,6 +37,10 @@ export const NoJoinedSpacesFallback = () => {
     const openTownPanel = useCallback(() => {
         navigate(`/${PATHS.SPACES}/new`)
     }, [navigate])
+
+    if (!spaceDataMap) {
+        return <AppSkeletonView />
+    }
 
     if (spaces.length) {
         return isTouch ? <WelcomeLayout debugText="no joined space fallback" /> : <></>

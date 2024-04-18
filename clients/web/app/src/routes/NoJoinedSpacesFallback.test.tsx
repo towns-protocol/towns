@@ -30,6 +30,12 @@ vi.mock('use-towns-client', async () => {
                 },
             }
         },
+        useSpaceDataStore: () => {
+            return {
+                ...actual.useSpaceDataStore(),
+                spaceDataMap: {}, // defined so "loaded"
+            }
+        },
         useTownsContext: () => {
             return {
                 ...actual.useTownsContext(),
@@ -49,7 +55,7 @@ const Wrapper = () => {
 }
 
 describe('<SpaceHome />', () => {
-    test('renders fallback content when no server space or contract space', async () => {
+    test('renders fallback content when no spaces', async () => {
         spacesMock = []
 
         render(<Wrapper />)

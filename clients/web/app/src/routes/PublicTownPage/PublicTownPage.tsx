@@ -27,6 +27,7 @@ import { useSpaceIdFromPathname } from 'hooks/useSpaceInfoFromPathname'
 import { WelcomeLayout } from '../layouts/WelcomeLayout'
 import { BottomBarContent } from './BottomBarContent'
 import { useConnectedStatus } from './useConnectedStatus'
+import { usePublicPageLoginFlow } from './usePublicPageLoginFlow'
 
 const log = debug('app:public-town')
 log.enabled = true
@@ -39,6 +40,7 @@ const PublicTownPageWithoutAuth = (props: { isPreview?: boolean; onClosePreview?
     const { data: spaceInfo, isLoading } = useContractSpaceInfo(spaceId)
 
     const className = clsx([darkTheme, atoms({ color: 'default' })])
+    const isJoining = !!usePublicPageLoginFlow().joiningSpace
 
     return spaceInfo ? (
         <>
@@ -56,12 +58,15 @@ const PublicTownPageWithoutAuth = (props: { isPreview?: boolean; onClosePreview?
                     }
                     bottomContent={({ leftColWidth, rightColWidth }) => (
                         <BottomBarContent
+                            isJoining={isJoining}
                             leftColWidth={leftColWidth}
                             rightColWidth={rightColWidth}
                         />
                     )}
                     spaceInfo={spaceInfo}
-                    activityContent={<TownPageActivity townId={spaceInfo.networkId} />}
+                    activityContent={
+                        !isJoining && <TownPageActivity townId={spaceInfo.networkId} />
+                    }
                     isPreview={isPreview}
                     spaceId={spaceInfo.networkId}
                 />

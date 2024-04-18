@@ -28,7 +28,6 @@ export const useSpaceDataStore = create<SpaceDataStore>((set) => ({
     setSpaceData: (spaceData) =>
         set((state) => {
             if (!state.spaceDataMap) {
-                useOfflineStore.getState().addOfflineSyncedSpaceId(spaceData.id)
                 return {
                     spaceDataMap: {
                         [spaceData.id]: spaceData,
@@ -39,7 +38,6 @@ export const useSpaceDataStore = create<SpaceDataStore>((set) => ({
                 return state
             }
             console.log(`setSpaceData<${spaceData.id}> data changed`, { spaceData })
-            useOfflineStore.getState().addOfflineSyncedSpaceId(spaceData.id)
             return {
                 spaceDataMap: {
                     ...state.spaceDataMap,

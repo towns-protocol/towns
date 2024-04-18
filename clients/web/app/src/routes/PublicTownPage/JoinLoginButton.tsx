@@ -1,13 +1,5 @@
-import React, { useCallback, useMemo, useState } from 'react'
-import {
-    BlockchainTransactionType,
-    Permission,
-    useConnectivity,
-    useHasPermission,
-    useIsTransactionPending,
-    useMembershipInfo,
-} from 'use-towns-client'
-import { ethers } from 'ethers'
+import React, { useCallback, useEffect, useRef, useState } from 'react'
+import { Permission, useConnectivity, useHasPermission, useTownsClient } from 'use-towns-client'
 import { Box, BoxProps, FancyButton, Icon, IconProps, Text } from '@ui'
 import { useDevice } from 'hooks/useDevice'
 import { useJoinTown } from 'hooks/useJoinTown'
@@ -15,16 +7,17 @@ import { ButtonSpinner } from 'ui/components/Spinner/ButtonSpinner'
 import { ModalContainer } from '@components/Modals/ModalContainer'
 import { TokenVerification } from '@components/Web3/TokenVerification/TokenVerification'
 import { useErrorToast } from 'hooks/useErrorToast'
-import { UserOpTxModal } from '@components/Web3/UserOpTxModal/UserOpTxModal'
-import { useSpaceIdFromPathname } from 'hooks/useSpaceInfoFromPathname'
 import { useConnectedStatus } from './useConnectedStatus'
+import { usePublicPageLoginFlow } from './usePublicPageLoginFlow'
 
 const LoginComponent = React.lazy(() => import('@components/Login/LoginComponent'))
 
 export function JoinLoginButton({ spaceId }: { spaceId: string | undefined }) {
     const isPreview = false
+    const { client } = useTownsClient()
     const { isAuthenticated, loggedInWalletAddress } = useConnectivity()
     const { connected, isLoading: isLoadingConnected } = useConnectedStatus()
+    const { start: startPublicPageloginFlow, joiningSpace } = usePublicPageLoginFlow()
 
     const { isTouch } = useDevice()
     const { joinSpace, errorMessage, isNoFundsError } = useJoinTown(spaceId)
@@ -32,11 +25,8 @@ export function JoinLoginButton({ spaceId }: { spaceId: string | undefined }) {
     const [assetModal, setAssetModal] = useState(false)
     const showAssetModal = () => setAssetModal(true)
     const hideAssetModal = () => setAssetModal(false)
-    const {
-        price: membershipPriceInWei,
-        isLoading: isLoadingMembershipPrice,
-        error: membershipPriceError,
-    } = useMembershipPriceInWei()
+
+    const preventJoinUseEffect = useRef(false)
 
     const { hasPermission: meetsMembershipRequirements, isLoading: isLoadingMeetsMembership } =
         useHasPermission({
@@ -46,7 +36,12 @@ export function JoinLoginButton({ spaceId }: { spaceId: string | undefined }) {
         })
 
     const onJoinClick = useCallback(async () => {
+        if (isJoining) {
+            return
+        }
+        preventJoinUseEffect.current = true
         if (meetsMembershipRequirements) {
+            startPublicPageloginFlow()
             setIsJoining(true)
             await joinSpace()
             setIsJoining(false)
@@ -54,9 +49,27 @@ export function JoinLoginButton({ spaceId }: { spaceId: string | undefined }) {
             // show asset verification modal
             showAssetModal()
         }
-    }, [meetsMembershipRequirements, joinSpace])
+    }, [isJoining, meetsMembershipRequirements, joinSpace, startPublicPageloginFlow])
+
+    const onLoginClick = useCallback(() => {
+        startPublicPageloginFlow()
+    }, [startPublicPageloginFlow])
 
     useErrorToast({ errorMessage: isNoFundsError ? undefined : errorMessage })
+
+    useEffect(() => {
+        // if widnow has join param and user is authenticated and has an embedded wallet
+        if (
+            !preventJoinUseEffect.current &&
+            client &&
+            !!joiningSpace &&
+            isAuthenticated &&
+            connected
+        ) {
+            preventJoinUseEffect.current = true
+            onJoinClick()
+        }
+    }, [isAuthenticated, connected, onJoinClick, joiningSpace, client])
 
     if (isPreview) {
         return
@@ -66,7 +79,7 @@ export function JoinLoginButton({ spaceId }: { spaceId: string | undefined }) {
         if (!isAuthenticated) {
             return (
                 <Box width={isTouch ? undefined : '300'}>
-                    <LoginComponent text="Join" />
+                    <LoginComponent text="Join" onLoginClick={onLoginClick} />
                 </Box>
             )
         }
@@ -111,12 +124,6 @@ export function JoinLoginButton({ spaceId }: { spaceId: string | undefined }) {
                     <TokenVerification spaceId={spaceId} onHide={hideAssetModal} />
                 </ModalContainer>
             )}
-
-            <UserOpTxModal
-                membershipPrice={membershipPriceInWei}
-                isLoadingMembershipPrice={isLoadingMembershipPrice}
-                membershipPriceError={membershipPriceError}
-            />
         </>
     )
 }
@@ -149,32 +156,4 @@ const LoadingStatusMessage = ({
             <Text>{message}</Text>
         </Box>
     )
-}
-
-function useMembershipPriceInWei() {
-    const spaceId = useSpaceIdFromPathname()
-
-    const {
-        data: membershipInfo,
-        isLoading: isLoadingMembershipInfo,
-        error,
-    } = useMembershipInfo(spaceId ?? '')
-    const isJoinPending = useIsTransactionPending(BlockchainTransactionType.JoinSpace)
-
-    return useMemo(() => {
-        if (!isJoinPending) {
-            return { price: undefined, isLoading: false, error }
-        }
-        if (isLoadingMembershipInfo) {
-            return { price: undefined, isLoading: true, error }
-        }
-        if (!membershipInfo) {
-            return { price: undefined, isLoading: false, error }
-        }
-        return {
-            price: ethers.BigNumber.from(membershipInfo.price).toBigInt(),
-            isLoading: false,
-            error,
-        }
-    }, [isJoinPending, isLoadingMembershipInfo, membershipInfo, error])
 }

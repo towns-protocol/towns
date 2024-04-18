@@ -10,6 +10,7 @@ import { ModalContainer } from '@components/Modals/ModalContainer'
 import { isTouch } from 'hooks/useDevice'
 import { useIsSmartAccountDeployed } from 'hooks/useIsSmartAccountDeployed'
 import { useBalance } from 'hooks/useBalance'
+import { usePublicPageLoginFlow } from 'routes/PublicTownPage/usePublicPageLoginFlow'
 import { formatEthDisplay } from '../utils'
 import { CopyWalletAddressButton } from '../TokenVerification/Buttons'
 
@@ -21,13 +22,20 @@ type Props = {
 
 export function UserOpTxModal(props: Props) {
     const { currOpGas, deny } = userOpsStore()
+    const { end: endPublicPageLoginFlow } = usePublicPageLoginFlow()
 
     if (!currOpGas) {
         return null
     }
     return (
-        <ModalContainer minWidth="auto" onHide={() => deny?.()}>
-            <UserOpTxModalContent {...props} />
+        <ModalContainer
+            minWidth="auto"
+            onHide={() => {
+                endPublicPageLoginFlow()
+                deny?.()
+            }}
+        >
+            <UserOpTxModalContent {...props} endPublicPageLoginFlow={endPublicPageLoginFlow} />
         </ModalContainer>
     )
 }
@@ -36,8 +44,10 @@ function UserOpTxModalContent({
     membershipPrice,
     isLoadingMembershipPrice,
     membershipPriceError,
-}: Props) {
+    endPublicPageLoginFlow,
+}: Props & { endPublicPageLoginFlow: () => void }) {
     const { currOpGas, confirm, deny, smartAccountAddress } = userOpsStore()
+
     const {
         data: isSmartAccountDeployed,
         isLoading: isSmartAccountDeployedLoading,
@@ -124,7 +134,15 @@ function UserOpTxModalContent({
 
     return (
         <>
-            <IconButton padding="xs" alignSelf="end" icon="close" onClick={deny} />
+            <IconButton
+                padding="xs"
+                alignSelf="end"
+                icon="close"
+                onClick={() => {
+                    endPublicPageLoginFlow()
+                    deny()
+                }}
+            />
             <Box gap centerContent width={!_isTouch ? '400' : undefined} maxWidth="400">
                 <Box paddingBottom="sm">
                     <Text strong size="lg">

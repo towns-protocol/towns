@@ -1,47 +1,72 @@
-import React, { useEffect } from 'react'
+import React, { useEffect, useState } from 'react'
 import { Outlet } from 'react-router'
-import { Membership, useOfflineStore, useSpaceData, useTownsContext } from 'use-towns-client'
+import { Membership, useSpaceData, useSpaceDataStore, useTownsContext } from 'use-towns-client'
 import AnalyticsService, { AnalyticsEvents } from 'use-towns-client/dist/utils/analyticsService'
 import { useSpaceIdFromPathname } from 'hooks/useSpaceInfoFromPathname'
 import { SetUsernameForm } from '@components/SetUsernameForm/SetUsernameForm'
 import { useUsernameConfirmed } from 'hooks/useUsernameConfirmed'
 import { PublicTownPage } from './PublicTownPage/PublicTownPage'
 import { AppSkeletonView } from './layouts/WelcomeLayout'
+import { usePublicPageLoginFlow } from './PublicTownPage/usePublicPageLoginFlow'
+
+//  Aims to give the best experience to the most common user flow: a user who is a member of a space and loading the app.
+//
+//  Has ?join params
+//    -> public town page
+//
+//  No ?join params
+//    - if no `space` data?
+//      - if loaded spaceDataMap && no data? -> public town page
+//      - else -> AppSkeletonView
+//   - if no membership? -> public town page
+//   - if no cached data? -> AppSkeletonView
+//   - else -> outlet
 
 export const ValidateMembership = () => {
     const space = useSpaceData()
     const { client, clientStatus } = useTownsContext()
     const spaceIdFromPathname = useSpaceIdFromPathname()
     const { confirmed: usernameConfirmed } = useUsernameConfirmed()
-
-    const offlineSyncedSpaceIds = useOfflineStore((s) => s.offlineSyncedSpaceIds)
+    const isJoining = !!usePublicPageLoginFlow().joiningSpace
+    const [_PublicTownPage] = useState(<PublicTownPage />)
+    const spaceDataMap = useSpaceDataStore((s) => s.spaceDataMap)
 
     useEffect(() => {
         console.log('ValidateMembership', spaceIdFromPathname, {
             usernameConfirmed,
             clientStatus,
             client: client !== undefined,
+            isJoining,
         })
-    }, [client, clientStatus, spaceIdFromPathname, usernameConfirmed])
+    }, [client, clientStatus, isJoining, spaceIdFromPathname, usernameConfirmed])
 
     if (!spaceIdFromPathname) {
         return <Outlet />
     }
 
-    // space can take some time to sync on load
-    if (!client || space === undefined) {
-        if (offlineSyncedSpaceIds.includes(spaceIdFromPathname)) {
-            // we can for now assume the user is a member
-            return <AppSkeletonView />
-        } else {
-            // not sure if they're a member yet
-            // while the space loads, show the public town page
-            AnalyticsService.getInstance().trackEventOnce(AnalyticsEvents.PublicTownPage)
-            return <PublicTownPage />
-        }
+    // if a user has hit the join/login button from the non-authenticated public town page
+    // continue to show the public town page and let the page complete the join/login flow
+    if (isJoining) {
+        AnalyticsService.getInstance().trackEventOnce(AnalyticsEvents.PublicTownPage)
+        return _PublicTownPage
     }
 
-    // if you are logged in and a member, it might need some time to get your membership status
+    // space can take some time to sync on load
+    // we need to wait for the space to be ready
+    if (!client || space === undefined) {
+        // if user has loaded other spaces, but not this space, it indicates they've not joined this space
+        if (
+            spaceDataMap &&
+            Object.keys(spaceDataMap).length &&
+            spaceDataMap[spaceIdFromPathname] === undefined
+        ) {
+            AnalyticsService.getInstance().trackEventOnce(AnalyticsEvents.PublicTownPage)
+            return _PublicTownPage
+        }
+
+        return <AppSkeletonView />
+    }
+
     if (!space.hasLoadedMemberships) {
         return <AppSkeletonView />
     }
@@ -50,7 +75,7 @@ export const ValidateMembership = () => {
 
     if (!isMember) {
         AnalyticsService.getInstance().trackEventOnce(AnalyticsEvents.PublicTownPage)
-        return <PublicTownPage />
+        return _PublicTownPage
     }
 
     AnalyticsService.getInstance().trackEventOnce(AnalyticsEvents.IsMember)

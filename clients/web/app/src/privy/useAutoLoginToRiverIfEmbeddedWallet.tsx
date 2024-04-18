@@ -8,6 +8,7 @@ import { usePrivy } from '@privy-io/react-auth'
 import { clearEmbeddedWalletStorage } from '@towns/privy/EmbeddedSignerContext'
 import { ErrorNotification } from '@components/Notifications/ErrorNotifcation'
 import { waitFor } from 'utils'
+import { usePublicPageLoginFlow } from 'routes/PublicTownPage/usePublicPageLoginFlow'
 type UseConnectivtyReturnValue = ReturnType<typeof useConnectivity>
 
 export function useAutoLoginToRiverIfEmbeddedWallet({
@@ -21,6 +22,7 @@ export function useAutoLoginToRiverIfEmbeddedWallet({
 }) {
     const getSigner = useGetEmbeddedSigner()
     const { logout: privyLogout } = usePrivy()
+    const { end: endPublicPageLoginFlow } = usePublicPageLoginFlow()
 
     const [state, send] = useStateMachine({
         context: { isAutoLoggingInToRiver: false, hasSuccessfulLogin: false },
@@ -120,8 +122,9 @@ export function useAutoLoginToRiverIfEmbeddedWallet({
     useEffect(() => {
         if (riverLoginError) {
             send('NO_SIGNER')
+            endPublicPageLoginFlow()
         }
-    }, [riverLoginError, send])
+    }, [riverLoginError, send, endPublicPageLoginFlow])
 
     const resetAutoLoginState = useCallback(() => {
         send('RESET')

@@ -5,12 +5,10 @@ export const useUsernameConfirmed = () => {
     const myUserId = useMyUserId()
     const { usersMap } = useUserLookupContext()
 
-    const confirmed = useMemo(() => {
+    return useMemo(() => {
         if (!myUserId || !usersMap[myUserId]) {
-            return true
+            return { confirmed: true }
         }
-        return usersMap[myUserId].usernameConfirmed
+        return { confirmed: usersMap[myUserId].usernameConfirmed }
     }, [myUserId, usersMap])
-
-    return { confirmed }
 }
