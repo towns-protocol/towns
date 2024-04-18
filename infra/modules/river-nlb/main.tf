@@ -52,6 +52,9 @@ module "nlb" {
 
   security_groups = [aws_security_group.nlb_security_group.id]
 
+  # if this is a transient nlb, we don't enable delete protection
+  enable_deletion_protection = !var.is_transient
+
 
   # TODO: look into recording access logs
   #   access_logs = {

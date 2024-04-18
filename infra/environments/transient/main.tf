@@ -63,6 +63,7 @@ locals {
   create_db_cluster        = var.num_nodes > 0
   create_anvil_service     = var.num_nodes > 0
   create_system_parameters = var.num_nodes > 0
+  create_nlb               = var.num_nodes > 0
   base_chain_id            = 31337
   river_chain_id           = 31338
 
@@ -159,7 +160,7 @@ locals {
 
 module "river_nlb" {
   source       = "../../modules/river-nlb"
-  count        = 1
+  count        = local.create_nlb ? 1 : 0
   subnets      = local.transient_global_remote_state.vpc.public_subnets
   vpc_id       = local.transient_global_remote_state.vpc.vpc_id
   dns_name     = local.nlb_root_domain_name
