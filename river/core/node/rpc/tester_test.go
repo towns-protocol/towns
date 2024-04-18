@@ -46,13 +46,14 @@ func (n *testNodeRecord) Close(ctx context.Context, dbUrl string) {
 }
 
 type serviceTester struct {
-	ctx               context.Context
-	cancel            context.CancelFunc
-	require           *require.Assertions
-	dbUrl             string
-	btc               *crypto.BlockchainTestContext
-	nodes             []*testNodeRecord
-	replicationFactor int
+	ctx                 context.Context
+	cancel              context.CancelFunc
+	require             *require.Assertions
+	dbUrl               string
+	btc                 *crypto.BlockchainTestContext
+	nodes               []*testNodeRecord
+	replicationFactor   int
+	stopBlockAutoMining func()
 }
 
 func newServiceTesterWithReplication(numNodes int, replicationFactor int, require *require.Assertions) *serviceTester {
@@ -108,6 +109,9 @@ func (st *serviceTester) Close() {
 			node.Close(st.ctx, st.dbUrl)
 		}
 	}
+	if st.stopBlockAutoMining != nil {
+		st.stopBlockAutoMining()
+	}
 	if st.btc != nil {
 		st.btc.Close()
 	}
@@ -133,6 +137,13 @@ func (st *serviceTester) setNodesStatus(start, stop int, status uint8) {
 func (st *serviceTester) startNodes(start, stop int) {
 	// creates blocks that signals the river nodes to check and create miniblocks when required.
 	if st.btc.IsSimulated() || (st.btc.IsAnvil() && !st.btc.AnvilAutoMineEnabled()) {
+		ctx, cancel := context.WithCancel(st.ctx)
+		done := make(chan struct{})
+		st.stopBlockAutoMining = func() {
+			cancel()
+			<-done
+		}
+
 		// hack to ensure that the chain always produces blocks (automining=true)
 		// commit on simulated backend with no pending txs can sometimes crash in the simulator.
 		// by having a pending tx with automining enabled we can work around that issue.
@@ -144,15 +155,31 @@ func (st *serviceTester) startNodes(start, stop int) {
 			}
 			signer := types.LatestSignerForChainID(chainID)
 
-			for range blockPeriod.C {
-				_, _ = st.btc.DeployerBlockchain.TxPool.Submit(st.ctx, func(opts *bind.TransactOpts) (*types.Transaction, error) {
-					gp, err := st.btc.Client().SuggestGasPrice(st.ctx)
-					if err != nil {
-						return nil, err
-					}
-					tx := types.NewTransaction(opts.Nonce.Uint64(), st.btc.GetDeployerWallet().Address, big.NewInt(1), 21000, gp, nil)
-					return types.SignTx(tx, signer, st.btc.GetDeployerWallet().PrivateKeyStruct)
-				})
+			for {
+				select {
+				case <-ctx.Done():
+					close(done)
+					return
+				case <-blockPeriod.C:
+					_, _ = st.btc.DeployerBlockchain.TxPool.Submit(
+						ctx,
+						func(opts *bind.TransactOpts) (*types.Transaction, error) {
+							gp, err := st.btc.Client().SuggestGasPrice(ctx)
+							if err != nil {
+								return nil, err
+							}
+							tx := types.NewTransaction(
+								opts.Nonce.Uint64(),
+								st.btc.GetDeployerWallet().Address,
+								big.NewInt(1),
+								21000,
+								gp,
+								nil,
+							)
+							return types.SignTx(tx, signer, st.btc.GetDeployerWallet().PrivateKeyStruct)
+						},
+					)
+				}
 			}
 		}()
 	}
@@ -161,7 +188,6 @@ func (st *serviceTester) startNodes(start, stop int) {
 		err := st.startSingle(i)
 		st.require.NoError(err)
 	}
-
 }
 
 func (st *serviceTester) startSingle(i int) error {

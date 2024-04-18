@@ -86,7 +86,6 @@ type syncNode struct {
 	stub            protocolconnect.StreamServiceClient
 
 	mu     sync.Mutex
-	stream *connect.ServerStreamForClient[SyncStreamsResponse]
 	closed bool
 }
 
@@ -718,6 +717,12 @@ func (n *syncNode) syncRemoteNode(
 		receiver.OnSyncError(err)
 		return
 	}
+	defer responseStream.Close()
+
+	if ctx.Err() != nil || n.isClosed() {
+		log.Debug("SyncStreams: syncRemoteNode receive canceled", "context_error", ctx.Err())
+		return
+	}
 
 	if !responseStream.Receive() {
 		receiver.OnSyncError(responseStream.Err())
@@ -734,15 +739,8 @@ func (n *syncNode) syncRemoteNode(
 	n.remoteSyncId = responseStream.Msg().SyncId
 	n.forwarderSyncId = forwarderSyncId
 
-	if !n.setStream(responseStream) {
-		log.Debug("SyncStreams: syncRemoteNode already closed")
-		// means that n.close() was already called.
-		responseStream.Close()
-		return
-	}
-
-	if ctx.Err() != nil {
-		log.Debug("SyncStreams: syncRemoteNode not receiving", "context_error", ctx.Err())
+	if ctx.Err() != nil || n.isClosed() {
+		log.Debug("SyncStreams: syncRemoteNode receive canceled", "context_error", ctx.Err())
 		return
 	}
 
@@ -835,17 +833,6 @@ func (n *syncNode) removeStreamFromSync(
 	return err
 }
 
-func (n *syncNode) setStream(stream *connect.ServerStreamForClient[SyncStreamsResponse]) bool {
-	n.mu.Lock()
-	defer n.mu.Unlock()
-	if !n.closed {
-		n.stream = stream
-		return true
-	} else {
-		return false
-	}
-}
-
 func (n *syncNode) isClosed() bool {
 	n.mu.Lock()
 	defer n.mu.Unlock()
@@ -855,10 +842,5 @@ func (n *syncNode) isClosed() bool {
 func (n *syncNode) close() {
 	n.mu.Lock()
 	defer n.mu.Unlock()
-	if !n.closed {
-		n.closed = true
-		if n.stream != nil {
-			n.stream.Close()
-		}
-	}
+	n.closed = true
 }

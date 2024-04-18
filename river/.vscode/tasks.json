@@ -204,6 +204,18 @@
       }
     },
     {
+      "label": "Configure Casablanca-Multinode-No-Entitlements",
+      "type": "shell",
+      "command": "./scripts/configure-nodes.sh --multi_ne",
+      "isBackground": true,
+      "problemMatcher": [],
+      "presentation": {
+        "group": "ephemeral",
+        "focus": true,
+        "panel": "shared",
+      }
+    },
+    {
       "label": "Casablanca-Multinode",
       "type": "shell",
       "command": "yarn run --top-level csb:multi -r",

@@ -12,7 +12,7 @@ elif [ "$1" == "--single_ne" ]; then
   ./core/node/run_single.sh -c --de
 elif [ "$1" == "--multi" ]; then
   ./core/node/run_multi.sh -c
-elif [ "$1" == "--multi_de" ]; then
+elif [ "$1" == "--multi_ne" ]; then
   ./core/node/run_multi.sh -c --de
 else
     echo "No flag passed"

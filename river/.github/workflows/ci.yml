@@ -1,11 +1,11 @@
 name: Continuous Integration
 env:
-    FOUNDRY_VERSION: nightly-de33b6af53005037b463318d2628b5cfcaf39916
+    FOUNDRY_VERSION: nightly
     RIVER_BLOCK_TIME: 1
 on:
     schedule:
-        # run during working hours
-        - cron: '0 15-23 * * *'
+        # Run every hour
+        - cron: '0 * * * *'
     pull_request:
     workflow_dispatch: # Allow manual trigger in GitHub UI
         inputs:
@@ -144,18 +144,6 @@ jobs:
 
             - name: Unit Tests
               run: yarn test:unit
-
-            # If CI failed, we send a slack notification
-            - name: Slack notification
-              if: failure() && (github.event_name == 'schedule' || github.event_name == 'workflow_dispatch')
-              uses: rtCamp/action-slack-notify@v2
-              env:
-                  SLACK_WEBHOOK: ${{ secrets.SLACK_CI_CHANNEL_WEBHOOK_URL }}
-                  SLACK_TITLE: 'Failure'
-                  SLACK_USERNAME: 'CI'
-                  SLACK_ICON_EMOJI: ':boom:'
-                  SLACK_COLOR: '#FF0000'
-                  SLACK_MESSAGE: 'CI Failure on ${{ github.repository }}'
 
     Client_NoEntitlements:
         permissions: write-all
@@ -299,18 +287,6 @@ jobs:
                       ./core/node/run_files/
                       !./core/node/run_files/**/bin/**
 
-            # If CI failed, we send a slack notification
-            - name: Slack notification
-              if: failure() && (github.event_name == 'schedule' || github.event_name == 'workflow_dispatch')
-              uses: rtCamp/action-slack-notify@v2
-              env:
-                  SLACK_WEBHOOK: ${{ secrets.SLACK_CI_CHANNEL_WEBHOOK_URL }}
-                  SLACK_TITLE: 'Failure'
-                  SLACK_USERNAME: 'CI'
-                  SLACK_ICON_EMOJI: ':boom:'
-                  SLACK_COLOR: '#FF0000'
-                  SLACK_MESSAGE: 'CI Failure on ${{ github.repository }}'
-
     Multinode:
         permissions: write-all
         if: github.event_name != 'workflow_dispatch' || !inputs.skip_multinode
@@ -439,18 +415,6 @@ jobs:
                       ./core/node/run_files/
                       !./core/node/run_files/**/bin/**
 
-            # If CI failed, we send a slack notification
-            - name: Slack notification
-              if: failure() && (github.event_name == 'schedule' || github.event_name == 'workflow_dispatch')
-              uses: rtCamp/action-slack-notify@v2
-              env:
-                  SLACK_WEBHOOK: ${{ secrets.SLACK_CI_CHANNEL_WEBHOOK_URL }}
-                  SLACK_TITLE: 'Failure'
-                  SLACK_USERNAME: 'CI'
-                  SLACK_ICON_EMOJI: ':boom:'
-                  SLACK_COLOR: '#FF0000'
-                  SLACK_MESSAGE: 'CI Failure on ${{ github.repository }}'
-
     Client_Entitlements:
         permissions: write-all
         if: github.event_name != 'workflow_dispatch' || !inputs.skip_client_entitlements
@@ -575,18 +539,6 @@ jobs:
                   path: |
                       ./core/node/run_files/
                       !./core/node/run_files/**/bin/**
-
-            # If CI failed, we send a slack notification
-            - name: Slack notification
-              if: failure() && (github.event_name == 'schedule' || github.event_name == 'workflow_dispatch')
-              uses: rtCamp/action-slack-notify@v2
-              env:
-                  SLACK_WEBHOOK: ${{ secrets.SLACK_CI_CHANNEL_WEBHOOK_URL }}
-                  SLACK_TITLE: 'Failure'
-                  SLACK_USERNAME: 'CI'
-                  SLACK_ICON_EMOJI: ':boom:'
-                  SLACK_COLOR: '#FF0000'
-                  SLACK_MESSAGE: 'CI Failure on ${{ github.repository }}'
 
     Multinode_Ent:
         permissions: write-all
@@ -717,18 +669,6 @@ jobs:
                       ./core/node/run_files/
                       !./core/node/run_files/**/bin/**
 
-            # If CI failed, we send a slack notification
-            - name: Slack notification
-              if: failure() && (github.event_name == 'schedule' || github.event_name == 'workflow_dispatch')
-              uses: rtCamp/action-slack-notify@v2
-              env:
-                  SLACK_WEBHOOK: ${{ secrets.SLACK_CI_CHANNEL_WEBHOOK_URL }}
-                  SLACK_TITLE: 'Failure'
-                  SLACK_USERNAME: 'CI'
-                  SLACK_ICON_EMOJI: ':boom:'
-                  SLACK_COLOR: '#FF0000'
-                  SLACK_MESSAGE: 'CI Failure on ${{ github.repository }}'
-
     Node:
         permissions: write-all
         if: github.event_name != 'workflow_dispatch' || !inputs.skip_node
@@ -847,18 +787,6 @@ jobs:
               run: go test -timeout 20m  --race ./...
               working-directory: core/node
 
-            # If CI failed, we send a slack notification
-            - name: Slack notification
-              if: failure() && (github.event_name == 'schedule' || github.event_name == 'workflow_dispatch')
-              uses: rtCamp/action-slack-notify@v2
-              env:
-                  SLACK_WEBHOOK: ${{ secrets.SLACK_CI_CHANNEL_WEBHOOK_URL }}
-                  SLACK_TITLE: 'Failure'
-                  SLACK_USERNAME: 'CI'
-                  SLACK_ICON_EMOJI: ':boom:'
-                  SLACK_COLOR: '#FF0000'
-                  SLACK_MESSAGE: 'CI Failure on ${{ github.repository }}'
-
     XChain_Node:
         permissions: write-all
         if: ( github.event_name != 'workflow_dispatch' || !inputs.skip_xchain_node )
@@ -924,15 +852,21 @@ jobs:
             - name: Run xchain common go tests
               run: go test --race ./...
               working-directory: core/xchain
-
-              # If CI failed, we send a slack notification
+    
+    Slack_Notification:
+        # NOTE: We should make sure that new jobs get added here
+        needs: [Common_CI, Client_NoEntitlements, Multinode, Client_Entitlements, Multinode_Ent, Node, XChain_Node]
+        if: failure()
+        runs-on: ubuntu-latest
+        steps:
             - name: Slack notification
-              if: failure() && (github.event_name == 'schedule' || github.event_name == 'workflow_dispatch')
+              if: (github.event_name == 'schedule' || github.event_name == 'workflow_dispatch')
               uses: rtCamp/action-slack-notify@v2
               env:
-                  SLACK_WEBHOOK: ${{ secrets.SLACK_CI_CHANNEL_WEBHOOK_URL }}
-                  SLACK_TITLE: 'Failure'
-                  SLACK_USERNAME: 'CI'
-                  SLACK_ICON_EMOJI: ':boom:'
-                  SLACK_COLOR: '#FF0000'
-                  SLACK_MESSAGE: 'CI Failure on ${{ github.repository }}'
+                SLACK_WEBHOOK: ${{ secrets.SLACK_CI_CHANNEL_WEBHOOK_URL }}
+                SLACK_TITLE: 'Failure'
+                SLACK_USERNAME: 'CI'
+                SLACK_ICON_EMOJI: ':boom:'
+                SLACK_COLOR: '#FF0000'
+                SLACK_MESSAGE: 'CI Failure on ${{ github.repository }} ${{ vars.GOALIE_SLACK_GROUP_ID}}'
+                SLACK_LINK_NAMES: true

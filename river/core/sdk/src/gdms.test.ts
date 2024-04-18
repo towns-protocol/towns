@@ -31,6 +31,13 @@ describe('gdmsTests', () => {
         chucksClient = await makeTestClient()
         await chucksClient.initializeUser()
         chucksClient.startSync()
+
+        log('clients initialized', {
+            chuck: chucksClient.userId,
+            bob: bobsClient.userId,
+            alice: alicesClient.userId,
+            charlie: charliesClient.userId,
+        })
     })
 
     afterEach(async () => {
@@ -167,11 +174,11 @@ describe('gdmsTests', () => {
         await Promise.all(aliceCharliePromises)
 
         // In this test, Bob invites Chuck _after_ sending the message
+        const chuckPromise = createEventDecryptedPromise(chucksClient, 'hello')
         await expect(bobsClient.inviteUser(streamId, chucksClient.userId)).toResolve()
         const stream = await chucksClient.waitForStream(streamId)
         await stream.waitForMembership(MembershipOp.SO_INVITE)
         await expect(chucksClient.joinStream(streamId)).toResolve()
-        const chuckPromise = createEventDecryptedPromise(chucksClient, 'hello')
         await expect(await chuckPromise).toResolve()
     })
 
@@ -191,11 +198,11 @@ describe('gdmsTests', () => {
         await Promise.all(aliceCharliePromises)
         await bobsClient.stop()
 
+        const chuckPromise = createEventDecryptedPromise(chucksClient, 'hello')
         await expect(alicesClient.inviteUser(streamId, chucksClient.userId)).toResolve()
         const stream = await chucksClient.waitForStream(streamId)
         await stream.waitForMembership(MembershipOp.SO_INVITE)
         await expect(chucksClient.joinStream(streamId)).toResolve()
-        const chuckPromise = createEventDecryptedPromise(chucksClient, 'hello')
         await expect(await chuckPromise).toResolve()
     })
 
