@@ -109,7 +109,12 @@ export const EmbeddedMessage = (props: {
                     )}
                 </Stack>
                 <Box gap="md">
-                    {attachedMessage.body && <MessagePreview content={attachedMessage.body} />}
+                    {attachedMessage.body && (
+                        <MessagePreview
+                            content={attachedMessage.body}
+                            mentions={attachedMessage.mentions}
+                        />
+                    )}
                     {props.attachmentChildren}
                 </Box>
 

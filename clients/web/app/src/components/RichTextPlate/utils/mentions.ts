@@ -1,29 +1,26 @@
-import { TDescendant } from '@udecode/plate-common'
-import { ELEMENT_MENTION, TMentionElement } from '@udecode/plate-mention'
+import { ELEMENT_MENTION } from '@udecode/plate-mention'
 import { Mention } from 'use-towns-client'
-
-export type MyMentionElement = TDescendant &
-    TMentionElement & { userId: string; atChannel?: boolean; children: MyMentionElement }
+import { TUserMentionElement } from './ComboboxTypes'
 
 /**
  * @desc Recursively go through the nodes to extract all the `Mention` nodes
  */
-export const getMentions = (children: MyMentionElement[]): Mention[] => {
+export const getMentions = (children: TUserMentionElement[]): Mention[] => {
     const mentions: Mention[] = []
     children.map((node) => recursivelyGetNameAndId(node, mentions))
     return mentions
 }
 
-const recursivelyGetNameAndId = (node: MyMentionElement, mentions: Mention[]) => {
+const recursivelyGetNameAndId = (node: TUserMentionElement, mentions: Mention[]) => {
     if (Array.isArray(node.children) && node.children.length > 0) {
-        node.children.map((n) => recursivelyGetNameAndId(n as MyMentionElement, mentions))
+        node.children.map((n) => recursivelyGetNameAndId(n as TUserMentionElement, mentions))
     }
 
     if (node.type === ELEMENT_MENTION) {
         mentions.push({
-            displayName: (node as MyMentionElement).value,
-            userId: (node as MyMentionElement).userId,
-            atChannel: (node as MyMentionElement).atChannel,
+            displayName: (node as TUserMentionElement).value,
+            userId: (node as TUserMentionElement).userId,
+            atChannel: (node as TUserMentionElement).atChannel,
         })
     }
 }

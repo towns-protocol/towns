@@ -5,6 +5,7 @@ import {
     EmbeddedMessageAttachment,
     Mention,
     MessageType,
+    OTWMention,
     RoomMember,
     SendTextMessageOptions,
     useChannelMembers,
@@ -61,6 +62,7 @@ type Props = {
     threadPreview?: string
     channels: Channel[]
     users: RoomMember[]
+    mentions?: OTWMention[]
     userId?: string
     isFullWidthOnTouch?: boolean
 } & Pick<BoxProps, 'background'>
@@ -93,6 +95,8 @@ const PlateEditorWithoutBoundary = ({
     onCancel,
     displayButtons,
     channels,
+    mentions,
+    users,
     initialValue: _initialValue,
     ...props
 }: Props) => {
@@ -127,35 +131,19 @@ const PlateEditorWithoutBoundary = ({
     const valueFromStore = storageId ? userInput : undefined
     const setInput = useInputStore((state) => state.setChannelmessageInput)
 
-    const initialValue = useMemo(() => {
-        if (!_initialValue) {
-            if (editable && valueFromStore && valueFromStore.trim().length > 0) {
-                return deserializeMd(valueFromStore, channels)
-            } else {
-                return [
-                    {
-                        type: 'p',
-                        children: [{ text: '' }],
-                    },
-                ]
-            }
-        }
-        return deserializeMd(_initialValue, channels)
-    }, [_initialValue, editable, valueFromStore, channels])
-
     const { memberIds: _memberIds } = useChannelMembers()
     const memberIds = useMemo(() => new Set(_memberIds), [_memberIds])
 
     const userMentions: TComboboxItemWithData<TUserWithChannel>[] = useMemo(() => {
         return [AtChannelUser]
-            .concat(props.users)
+            .concat(users)
             .map((user) => ({
                 text: getPrettyDisplayName(user),
                 key: user.userId,
                 data: { ...user, isChannelMember: memberIds.has(user.userId) },
             }))
             .filter(notUndefined)
-    }, [props.users, memberIds])
+    }, [users, memberIds])
 
     const channelMentions: TComboboxItemWithData<Channel>[] = useMemo(() => {
         return channels
@@ -166,6 +154,22 @@ const PlateEditorWithoutBoundary = ({
             }))
             .filter(notUndefined)
     }, [channels])
+
+    const initialValue = useMemo(() => {
+        if (!_initialValue) {
+            if (editable && valueFromStore && valueFromStore.trim().length > 0) {
+                return deserializeMd(valueFromStore, channels, mentions, users)
+            } else {
+                return [
+                    {
+                        type: 'p',
+                        children: [{ text: '' }],
+                    },
+                ]
+            }
+        }
+        return deserializeMd(_initialValue, channels, mentions, users)
+    }, [_initialValue, editable, valueFromStore, channels, mentions, users])
 
     const onFocusChange = useCallback(
         (focus: boolean) => {

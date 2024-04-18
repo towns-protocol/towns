@@ -6,18 +6,20 @@ import { VFile } from 'vfile'
 import { ELEMENT_LIC } from '@udecode/plate-list'
 import { ELEMENT_MENTION } from '@udecode/plate-mention'
 import remarkRehype, { Options } from 'remark-rehype'
-import { Channel } from 'use-towns-client'
+import { Channel, OTWMention, RoomMember } from 'use-towns-client'
 import markdown from 'remark-parse'
 import remarkGfm from 'remark-gfm'
 import { unified } from 'unified'
 import { ELEMENT_MENTION_CHANNEL } from '../plugins/createChannelPlugin'
 import { channelMentionHandler, listContentHandler, userMentionHandler } from './rehypeHandlers'
-import remarkUserMention from './remark/userMentionPlugin'
+import remarkTransformUserAndChannels from './remark/remarkTransformUserAndChannels'
 import remarkPreserveListContent from './remark/remarkPreserveListContent'
 
 type MarkdownRendererProps = React.PropsWithChildren<{
     components: Partial<Components>
     channels?: Channel[]
+    mentions?: OTWMention[]
+    users?: RoomMember[]
 }>
 
 /**
@@ -27,7 +29,13 @@ type MarkdownRendererProps = React.PropsWithChildren<{
  * For edit message, use `deserializeMd` function instead.
  * @see deserializeMd
  */
-const MarkdownRenderer = ({ components, channels = [], children }: MarkdownRendererProps) => {
+const MarkdownRenderer = ({
+    components,
+    channels = [],
+    mentions = [],
+    users = [],
+    children,
+}: MarkdownRendererProps) => {
     if (!children) {
         return null
     }
@@ -37,7 +45,7 @@ const MarkdownRenderer = ({ components, channels = [], children }: MarkdownRende
         .use(markdown)
         .use(remarkGfm)
         .use(remarkPreserveListContent)
-        .use(remarkUserMention(channels))
+        .use(remarkTransformUserAndChannels(channels, mentions, users))
         .use(remarkRehype, {
             passThrough: [ELEMENT_LIC, ELEMENT_MENTION, ELEMENT_MENTION_CHANNEL],
             handlers: {

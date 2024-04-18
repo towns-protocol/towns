@@ -1,6 +1,6 @@
 import React from 'react'
 import { clsx } from 'clsx'
-import { Channel, RoomMember } from 'use-towns-client'
+import { Channel, OTWMention, RoomMember } from 'use-towns-client'
 import { LinkNode } from '@lexical/link'
 import { LexicalComposer } from '@lexical/react/LexicalComposer'
 import { RichTextPlugin } from '@lexical/react/LexicalRichTextPlugin'
@@ -26,7 +26,8 @@ export const RichTextPreview = React.memo(
     (props: {
         content: string
         statusAnnotation?: MessageStatusAnnotation
-        members?: RoomMember[]
+        users?: RoomMember[]
+        mentions?: OTWMention[]
         channels?: Channel[]
         onMentionClick?: (mentionName: string) => void
         onMentionHover?: (element?: HTMLElement, userId?: string) => void
@@ -38,14 +39,14 @@ export const RichTextPreview = React.memo(
             onMentionClick,
             onMentionHover,
             channels = [],
-            members = [],
+            users = [],
             highlightTerms,
         } = props
 
         // note: unnecessary repetition here, could be optimised by handling above
         // inside e.g. space context or timeline
 
-        const { transformers } = useTransformers({ members, channels, highlightTerms })
+        const { transformers } = useTransformers({ members: users, channels, highlightTerms })
 
         const initialConfig = useInitialConfig(
             props.content,

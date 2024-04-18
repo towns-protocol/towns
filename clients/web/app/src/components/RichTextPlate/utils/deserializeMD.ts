@@ -2,9 +2,9 @@ import { Value } from '@udecode/plate-common'
 import markdown from 'remark-parse'
 import remarkGfm from 'remark-gfm'
 import { unified } from 'unified'
-import { Channel } from 'use-towns-client'
+import { Channel, OTWMention, RoomMember } from 'use-towns-client'
 import remarkSlate from './remark/plugin'
-import remarkUserMention from './remark/userMentionPlugin'
+import remarkTransformUserAndChannels from './remark/remarkTransformUserAndChannels'
 
 /**
  * Deserialize content from Markdown format to Slate format.
@@ -14,11 +14,18 @@ import remarkUserMention from './remark/userMentionPlugin'
  *
  * @see MarkdownToJSX
  */
-export const deserializeMd = <V extends Value>(data: string, channels: Channel[] = []): V => {
-    const tree = createUnifiedProcessor(channels).processSync(data)
+export const deserializeMd = <V extends Value>(
+    data: string,
+    channels: Channel[] = [],
+    mentions: OTWMention[] = [],
+    users: RoomMember[] = [],
+): V => {
+    const tree = unified()
+        .use(markdown)
+        .use(remarkGfm)
+        .use(remarkSlate)
+        .use(remarkTransformUserAndChannels(channels, mentions, users))
+        .processSync(data)
 
     return tree.result as V
 }
-
-export const createUnifiedProcessor = (channels: Channel[]) =>
-    unified().use(markdown).use(remarkGfm).use(remarkSlate).use(remarkUserMention(channels))

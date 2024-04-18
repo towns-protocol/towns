@@ -1,12 +1,12 @@
 import React, { ClassAttributes, useCallback, useMemo } from 'react'
-import { ELEMENT_MENTION, TMentionElement } from '@udecode/plate-mention'
+import { ELEMENT_MENTION } from '@udecode/plate-mention'
 import { clsx } from 'clsx'
-import { Channel, RoomMember } from 'use-towns-client'
+import { Channel, OTWMention, RoomMember } from 'use-towns-client'
 import { Components } from 'hast-util-to-jsx-runtime'
-import { CodeBlockElement } from '@components/RichTextPlate/components/plate-ui/CodeBlockElement'
 import { MessageStatusAnnotation } from '@components/RichText/hooks/useInitialConfig'
 import { Box } from '@ui'
-import { TChannelMentionElement } from './utils/ComboboxTypes'
+import { CodeBlockElement } from './components/plate-ui/CodeBlockElement'
+import { TChannelMentionElement, TUserMentionElement } from './utils/ComboboxTypes'
 import { ELEMENT_MENTION_CHANNEL } from './plugins/createChannelPlugin'
 import { MentionElementWithoutPlate } from './components/plate-ui/MentionElement'
 import { ChannelLinkForDisplay } from './components/ChannelLink'
@@ -22,32 +22,44 @@ import MarkdownToJSX from './utils/MarkdownToJSX'
 
 const fieldClassName = clsx([fieldStyles.field, richText])
 
+interface RichTextPreviewProps {
+    content: string
+    statusAnnotation?: MessageStatusAnnotation
+    // Contains the current list of users in the space
+    users?: RoomMember[]
+    // Contains the list of mentions in the message we're currently previewing.
+    // The users may not be in the space any more or their names may have changed
+    mentions?: OTWMention[]
+    channels?: Channel[]
+    onMentionClick?: (mentionName: string) => void
+    onMentionHover?: (element?: HTMLElement, userId?: string) => void
+    highlightTerms?: string[]
+}
+
 export const RichTextPreview = React.memo(
-    (props: {
-        content: string
-        statusAnnotation?: MessageStatusAnnotation
-        members?: RoomMember[]
-        channels?: Channel[]
-        onMentionClick?: (mentionName: string) => void
-        onMentionHover?: (element?: HTMLElement, userId?: string) => void
-        highlightTerms?: string[]
-    }) => {
-        const { content, statusAnnotation, members, channels, onMentionClick, onMentionHover } =
-            props
+    ({
+        content,
+        statusAnnotation,
+        users = [],
+        mentions = [],
+        channels,
+        onMentionClick,
+        onMentionHover,
+    }: RichTextPreviewProps) => {
         const ref = React.useRef<HTMLElement>(null)
         const _onMentionHover = useCallback(
-            (element?: HTMLElement, username?: string) => {
+            (element?: HTMLElement, userId?: string) => {
                 if (!onMentionHover) {
                     return
                 }
-                if (username && element) {
-                    const member = members?.find((m) => m.username === username)
+                if (userId && element) {
+                    const member = users?.find((m) => m.userId === userId)
                     onMentionHover(element, member?.userId)
                 } else {
                     onMentionHover(undefined, undefined)
                 }
             },
-            [members, onMentionHover],
+            [users, onMentionHover],
         )
 
         const isSingleEmoji = useMemo(() => {
@@ -90,9 +102,12 @@ export const RichTextPreview = React.memo(
                 pre: (props: React.PropsWithChildren) => <CodeBlockElement ref={ref} {...props} />,
                 blockquote: BlockquoteElement,
                 a: LinkWithoutPlate,
-                [ELEMENT_MENTION]: (props: React.PropsWithChildren<{ node: TMentionElement }>) => (
+                [ELEMENT_MENTION]: (
+                    props: React.PropsWithChildren<{ node: TUserMentionElement }>,
+                ) => (
                     <MentionElementWithoutPlate
                         value={props.node.value}
+                        userId={props.node.userId}
                         onMentionHover={_onMentionHover}
                         onMentionClick={onMentionClick}
                     />
@@ -109,7 +124,7 @@ export const RichTextPreview = React.memo(
             // ...yet to find out why this occurs
             <div
                 className={atoms({
-                    color: props.statusAnnotation === 'not-sent' ? 'error' : undefined,
+                    color: statusAnnotation === 'not-sent' ? 'error' : undefined,
                 })}
             >
                 <Box
@@ -118,7 +133,12 @@ export const RichTextPreview = React.memo(
                         [singleEmojiMessage]: isSingleEmoji,
                     })}
                 >
-                    <MarkdownToJSX components={memoizedComponents} channels={channels}>
+                    <MarkdownToJSX
+                        components={memoizedComponents}
+                        channels={channels}
+                        mentions={mentions}
+                        users={users}
+                    >
                         {content}
                     </MarkdownToJSX>
                     {statusAnnotation === 'edited' && (

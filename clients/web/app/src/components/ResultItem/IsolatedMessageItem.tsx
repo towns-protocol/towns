@@ -121,7 +121,8 @@ export const IsolatedMessageItem = (
                 <MessagePreview
                     key={props.highligtTerms?.join('')}
                     highlightTerms={props.highligtTerms}
-                    members={users}
+                    users={users}
+                    mentions={content.mentions}
                     channels={[...channels, ...dmChannels]}
                     content={getMessageBody(result.event.eventId, content)}
                     statusAnnotation={

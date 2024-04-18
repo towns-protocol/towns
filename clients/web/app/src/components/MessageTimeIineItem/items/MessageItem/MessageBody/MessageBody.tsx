@@ -95,7 +95,8 @@ export const MessageBody = ({
                 <MessagePreview
                     content={body}
                     statusAnnotation={statusAnnotation}
-                    members={members}
+                    users={members}
+                    mentions={eventContent.mentions}
                     channels={channels}
                     onMentionClick={onMentionClick}
                     onMentionHover={isTouch ? undefined : onMentionHover}

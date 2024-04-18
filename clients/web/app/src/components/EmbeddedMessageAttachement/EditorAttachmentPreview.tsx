@@ -1,4 +1,9 @@
-import { Attachment, EmbeddedMessageAttachment, useUserLookupContext } from 'use-towns-client'
+import {
+    Attachment,
+    EmbeddedMessageAttachment,
+    OTWMention,
+    useUserLookupContext,
+} from 'use-towns-client'
 import React, { useCallback } from 'react'
 import { Box, IconButton, Paragraph } from '@ui'
 import { RichTextPreview } from '@components/RichText/RichTextPreview'
@@ -37,6 +42,7 @@ export const MessageAttachmentPreview = (props: Props) => {
                 attachments={roomMessageEvent.attachments}
                 displayName={displayName}
                 body={roomMessageEvent.body}
+                mentions={roomMessageEvent.mentions}
                 onRemoveClick={onRemoveClick}
             />
         </MessageAttachmentsContext.Provider>
@@ -47,6 +53,7 @@ export const EditorAttachmentPreview = (props: {
     type: 'forward' | 'reply'
     displayName: string
     body: string
+    mentions?: OTWMention[]
     attachments?: Attachment[]
     onRemoveClick: () => void
 }) => {
@@ -67,7 +74,9 @@ export const EditorAttachmentPreview = (props: {
                     {props.type === 'forward' ? 'Forward' : 'Reply to'} {props.displayName}
                     &#39;s message:
                 </Paragraph>
-                {messageAbstract && <MessagePreview content={messageAbstract} />}
+                {messageAbstract && (
+                    <MessagePreview content={messageAbstract} mentions={props.mentions} />
+                )}
                 {props.attachments?.length ? (
                     <Box>
                         <MessageAttachments attachments={props.attachments} />

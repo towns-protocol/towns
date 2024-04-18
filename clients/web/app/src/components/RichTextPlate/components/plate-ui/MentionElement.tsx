@@ -1,28 +1,28 @@
 import React, { useCallback, useRef } from 'react'
 import { withRef } from '@udecode/cn'
 import { PlateElement, getHandler, useElement } from '@udecode/plate-common'
-import { TMentionElement } from '@udecode/plate-mention'
 import { Box } from '@ui'
 import { mentionInput } from '../../RichTextEditor.css'
+import { TUserMentionElement } from '../../utils/ComboboxTypes'
 
 export const MentionElement = withRef<
     typeof PlateElement,
     {
         prefix?: string
         onClick?: (mentionNode: Record<never, never>) => void
-        renderLabel?: (mentionable: TMentionElement) => string
+        renderLabel?: (mentionable: TUserMentionElement) => string
     }
 >(({ children, prefix = '', renderLabel, className, onClick, ...props }, ref) => {
-    const element = useElement<TMentionElement>()
+    const element = useElement<TUserMentionElement>()
 
     return (
         <Box
             as="span"
             display="inline-block"
-            ref={ref}
             data-slate-value={element.value}
-            contentEditable={false}
             onClick={getHandler(onClick, element)}
+            {...props.attributes}
+            ref={ref}
         >
             <MentionElementWithoutPlate value={prefix + element.value} />
             {children}
@@ -32,11 +32,13 @@ export const MentionElement = withRef<
 
 export interface MentionElementWithoutPlateProps {
     value?: string
-    onMentionHover?: (element?: HTMLElement, username?: string) => void
+    userId?: string
+    onMentionHover?: (element?: HTMLElement, userId?: string) => void
     onMentionClick?: (mentionName: string) => void
 }
 export const MentionElementWithoutPlate = ({
     value,
+    userId,
     onMentionHover,
     onMentionClick,
 }: React.PropsWithChildren<MentionElementWithoutPlateProps>) => {
@@ -46,11 +48,8 @@ export const MentionElementWithoutPlate = ({
         if (!onMentionHover || !ref.current) {
             return
         }
-        onMentionHover(
-            ref.current,
-            ref.current.getAttribute('data-mention-username')?.slice(1) || '',
-        )
-    }, [onMentionHover])
+        onMentionHover(ref.current, userId)
+    }, [onMentionHover, userId])
 
     const handleMouseLeave = useCallback(() => {
         if (!onMentionHover) {

@@ -7,6 +7,7 @@ export const userMentionHandler: Handler = (state, node) => ({
     type: 'element',
     tagName: ELEMENT_MENTION,
     value: String(node.value).trim(),
+    userId: node.userId,
     children: state.all(node),
     properties: {},
 })

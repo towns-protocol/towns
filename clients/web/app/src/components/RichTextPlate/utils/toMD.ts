@@ -1,7 +1,8 @@
 import { PlateEditor } from '@udecode/plate-common'
 import { Mention } from 'use-towns-client'
+import { TUserMentionElement } from './ComboboxTypes'
 import { serialize } from './remark'
-import { MyMentionElement, getMentions } from './mentions'
+import { getMentions } from './mentions'
 
 export const toMD = (editor: PlateEditor): Promise<{ message: string; mentions: Mention[] }> => {
     return new Promise((resolve, reject) => {
@@ -13,7 +14,7 @@ export const toMD = (editor: PlateEditor): Promise<{ message: string; mentions: 
                     .trim()
                 resolve({
                     message: markdown,
-                    mentions: getMentions(editor.children as MyMentionElement[]),
+                    mentions: getMentions(editor.children as TUserMentionElement[]),
                 })
             } catch (err) {
                 console.log('[ERROR] Plate -> MD', err)
