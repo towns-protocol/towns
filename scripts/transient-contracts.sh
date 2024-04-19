@@ -50,8 +50,9 @@ function register_nodes() {
         . .env.localhost
         set +a
 
-        export NODE_URL_SUFFIX="-${TRANSIENT_ID}.nodes.transient.towns.com"
         export NUM_NODES=${NUM_NODES}
+        export NODE_URL_SUFFIX="-nlb-${TRANSIENT_ID}.nodes.transient.towns.com"
+        export NODE_URL_INCREMENT_VIA_PORT="true"
         make interact-river-anvil contract=InteractRiverRegistry
 
     popd

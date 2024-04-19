@@ -25,7 +25,7 @@ jobs:
                       const gitPrNumber = process.env.GIT_PR_NUMBER;
                       const webAppUrl = `https://${gitPrNumber}.app-preview.towns.com`;
                       const sampleAppUrl = `https://${gitPrNumber}.sample-app-preview.towns.com`;
-                      const riverNodeUrl = `https://river1-${gitPrNumber}.nodes.transient.towns.com`;
+                      const riverNodeUrl = `https://river-nlb-${gitPrNumber}.nodes.transient.towns.com:10001`;
                       const baseChainRpcUrl = `https://base-anvil-transient-${gitPrNumber}.towns.com`;
                       const riverChainRpcUrl = `https://river-anvil-transient-${gitPrNumber}.towns.com`;
                       const message = `

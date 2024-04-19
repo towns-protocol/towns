@@ -66,9 +66,6 @@ locals {
   create_nlb               = var.num_nodes > 0
   base_chain_id            = 31337
   river_chain_id           = 31338
-
-  nodes     = var.num_nodes == 0 ? [] : slice(module.global_constants.nodes_metadata, 0, var.num_nodes)
-  nodes_csv = join(",", [for node in local.nodes : "${node.address},${node.url}"])
 }
 
 resource "aws_iam_user_policy_attachment" "river_system_parameters" {
@@ -200,15 +197,3 @@ module "river_node" {
 
   lb = module.river_nlb[0]
 }
-
-# module "loadtest" {
-#   count                       = var.has_stress_test_infra ? 1 : 0
-#   source                      = "../../modules/loadtest"
-#   vpc_id                      = local.transient_global_remote_state.vpc.vpc_id
-#   public_subnets              = local.transient_global_remote_state.vpc.public_subnets
-#   private_subnets             = local.transient_global_remote_state.vpc.private_subnets
-#   base_chain_rpc_url_override = var.has_stress_test_infra ? module.base_forked_chain_service[0].network_url : null
-#   river_node_url              = var.has_stress_test_infra ? module.global_constants.nodes_metadata[0].url : null
-#   is_forked_anvil             = true
-# }
-

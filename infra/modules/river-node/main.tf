@@ -9,7 +9,7 @@ data "aws_vpc" "vpc" {
 locals {
   node_name = "river${var.node_number}-${terraform.workspace}"
 
-  rpc_https_port = 443
+  rpc_https_port = var.is_transient ? (var.node_number + 10000) : 443
 
   service_name        = "river-node"
   global_remote_state = module.global_constants.global_remote_state.outputs
@@ -320,8 +320,6 @@ locals {
     password_arn = local.shared_credentials.db_password.arn
   }
 
-  nodes = module.global_constants.nodes_metadata
-
   // we conditionally create these arrays. an empty array, when concatted, does nothing.
   // this is how we conditionally add secrets and env vars to the task definition.
 
@@ -344,6 +342,8 @@ locals {
     name  = "RIVERCHAIN__NETWORKURL"
     value = var.river_chain_network_url_override
   }]
+
+  river_node_image_name = var.is_transient ? "public.ecr.aws/l8h0l2e6/river-node:transient-${var.git_pr_number}-latest" : "public.ecr.aws/h5v6m2x1/river:dev"
 }
 
 data "cloudflare_zone" "zone" {
@@ -376,7 +376,7 @@ resource "aws_ecs_task_definition" "river-fargate" {
 
   container_definitions = jsonencode([{
     name  = "river-node"
-    image = "public.ecr.aws/h5v6m2x1/river:latest"
+    image = local.river_node_image_name
 
     essential = true
     portMappings = [{
@@ -663,6 +663,20 @@ resource "aws_ecs_service" "river-ecs-service" {
     assign_public_ip = true
   }
 
+  load_balancer {
+    target_group_arn = aws_lb_target_group.river_node_target_group.arn
+    container_name   = "river-node"
+    container_port   = local.rpc_https_port
+  }
+
+  # we're saying that a node shall be ready within 5 seconds of booting to accept /health requests.
+  # the benefit of a low number is that the target group will transition from "initial" to "healthy" faster.
+  # the risk is that the node might not be ready to accept requests, so the target group may mark the node as unhealthy.
+  # but we counter this by asking for 2 consecutive unhealthy checks before marking the node as unhealthy.
+  # which will take 10 seconds, which we set at taret_group.health_check.interval. and 10 seconds should be ample
+  # time for the node to be ready to accept requests.
+  health_check_grace_period_seconds = 5
+
   timeouts {
     create = "60m"
     delete = "60m"
@@ -755,7 +769,6 @@ module "datadog_sythetics_test" {
 # Load Balancer Routing
 ##################################################################
 
-
 resource "aws_lb_listener" "transient_lb_listener" {
   load_balancer_arn = var.lb.lb_arn
   port              = local.rpc_https_port
@@ -774,12 +787,15 @@ resource "aws_lb_target_group" "river_node_target_group" {
   vpc_id      = var.vpc_id
   target_type = "ip"
 
+  # TODO: test the best delay
+  deregistration_delay = 0
+
   health_check {
     // TODO: use the proper healthcheck endpoint here
     path                = "/info"
     protocol            = "HTTPS"
     port                = local.rpc_https_port
-    interval            = 5
+    interval            = 10
     timeout             = 2
     healthy_threshold   = 2
     unhealthy_threshold = 2
