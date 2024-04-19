@@ -119,6 +119,14 @@ module "system_parameters" {
   source = "../../modules/river-system-parameters"
 }
 
+module "river_nlb" {
+  source  = "../../modules/river-nlb"
+  count   = local.num_nodes
+  subnets = module.vpc.public_subnets
+  vpc_id  = module.vpc.vpc_id
+  nlb_id  = tostring(count.index + 1)
+}
+
 module "river_node" {
   source      = "../../modules/river-node"
   count       = local.num_nodes
@@ -142,6 +150,8 @@ module "river_node" {
     id   = aws_ecs_cluster.river_ecs_cluster.id
     name = aws_ecs_cluster.river_ecs_cluster.name
   }
+
+  lb = module.river_nlb[count.index]
 }
 
 module "notification_service" {

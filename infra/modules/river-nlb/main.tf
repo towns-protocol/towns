@@ -22,7 +22,10 @@ module "global_constants" {
 }
 
 locals {
-  service_name = "river-nlb-${terraform.workspace}"
+  service_name    = "river-nlb-${terraform.workspace}"
+  nlb_name_suffix = var.nlb_id == "" ? "" : "${var.nlb_id}-"
+
+  nlb_name = "${local.nlb_name_suffix}${local.service_name}"
 
   global_remote_state = module.global_constants.global_remote_state.outputs
 
@@ -30,8 +33,10 @@ locals {
     module.global_constants.tags,
     {
       Service = local.service_name
+      Name    = local.nlb_name
     }
   )
+
 }
 
 ##################################################################
@@ -42,7 +47,7 @@ module "nlb" {
 
   source = "terraform-aws-modules/alb/aws"
 
-  name = local.service_name
+  name = local.nlb_name
 
   load_balancer_type = "network"
   vpc_id             = var.vpc_id
@@ -70,7 +75,7 @@ module "nlb" {
 ##################################################################
 
 resource "aws_security_group" "nlb_security_group" {
-  name        = "${local.service_name}-sg"
+  name        = "${local.nlb_name}-sg"
   description = "Security group for the NLB on ${terraform.workspace}"
   vpc_id      = var.vpc_id
 
@@ -106,7 +111,7 @@ data "cloudflare_zone" "zone" {
 }
 
 resource "cloudflare_record" "nlb_dns_record" {
-  count   = var.is_transient == true ? 1 : 0
+  count   = var.is_transient ? 1 : 0
   zone_id = data.cloudflare_zone.zone.id
   name    = var.dns_name
   value   = module.nlb.dns_name
