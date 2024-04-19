@@ -17,5 +17,10 @@ trap cleanup EXIT
 # Run stackup worker
 sh scripts/run-stackup-worker.sh $1 -o
 
+# Run @towns/userops tests
+sh scripts/run-userops-package-tests.sh $1
+
 # Run userops-lib tests
 sh scripts/run-userops-lib-tests.sh $1
+
+

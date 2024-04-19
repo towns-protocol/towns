@@ -25,11 +25,11 @@ describe.skip('sanity: user operations', () => {
             provider: spaceDapp.provider,
             config: spaceDapp.config,
             spaceDapp,
-            bundlerUrl: process.env.VITE_AA_BUNDLER_URL,
-            paymasterProxyUrl: process.env.VITE_AA_PAYMASTER_PROXY_URL,
-            aaRpcUrl: process.env.VITE_AA_RPC_URL!,
-            entryPointAddress: process.env.VITE_AA_ENTRY_POINT_ADDRESS,
-            factoryAddress: process.env.VITE_AA_FACTORY_ADDRESS,
+            bundlerUrl: process.env.AA_BUNDLER_URL,
+            paymasterProxyUrl: process.env.AA_PAYMASTER_PROXY_URL,
+            aaRpcUrl: process.env.AA_RPC_URL!,
+            entryPointAddress: process.env.AA_ENTRY_POINT_ADDRESS,
+            factoryAddress: process.env.AA_FACTORY_ADDRESS,
         })
         // must fund the AA wallet to pass gas verification checks b/c no paymaster
         await bob.fundWallet(

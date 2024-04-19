@@ -48,34 +48,53 @@ jobs:
             - name: Wait for second stackup worker to be up on 8787
               run: PORT=8787 yarn worker:wait:stackup
 
-            - name: Run userops tests without verification
-              timeout-minutes: 15
-              env:
-                AA_PAYMASTER_PROXY_URL: http://127.0.0.1:8686
-                AA_PAYMASTER_PROXY_AUTH_SECRET: Zm9v
-                DATADOG_API_KEY: ${{ secrets.DD_TOWNS_LOAD_TESTING_KEY }}
-                BASE_CHAIN_RPC_URL: ${{ secrets.USEROPS_RPC_URL }}
-                AA_RPC_URL: ${{ secrets.AA_RPC_URL }}
-                AA_BUNDLER_URL: ${{ secrets.AA_BUNDLER_URL }}
-                RIVER_CHAIN_RPC_URL: https://devnet.rpc.river.build
-                RIVER_ENV: testnet
+            # #### Disabled b/c of error connecting to node
+            # ConnectError: [failed_precondition] CreateStream: createStreamImpl: (62:DOWNSTREAM_NETWORK_ERROR) unavailable: URL "stream.river-testnet.nodes.unit410.com/river.NodeToNode/AllocateStream" missing scheme: use http:// or https:// (unlike grpc-go) 
+            # 
+            # - name: Run userop integration tests without verification (river/lib/base-sepolia)
+            #   timeout-minutes: 15
+            #   env:
+            #     AA_PAYMASTER_PROXY_URL: http://127.0.0.1:8686
+            #     AA_PAYMASTER_PROXY_AUTH_SECRET: Zm9v
+            #     DATADOG_API_KEY: ${{ secrets.DD_TOWNS_LOAD_TESTING_KEY }}
+            #     BASE_CHAIN_RPC_URL: ${{ secrets.USEROPS_RPC_URL }}
+            #     AA_RPC_URL: ${{ secrets.AA_RPC_URL }}
+            #     AA_BUNDLER_URL: ${{ secrets.AA_BUNDLER_URL }}
+            #     RIVER_CHAIN_RPC_URL: https://devnet.rpc.river.build
+            #     RIVER_ENV: testnet
 
-              working-directory: ./clients/web/lib
-              run: yarn test:userops:random-wallet
+            #   working-directory: ./clients/web/lib
+            #   run: yarn test:userops:random-wallet
 
-            - name: Run userops tests with verification
+
+            # #### Disabled b/c of flakiness with river membershipChanged event
+            # 
+            # - name: Run userops tests with verification
+            #   timeout-minutes: 15
+            #   env:
+            #     AA_PAYMASTER_PROXY_URL: http://127.0.0.1:8787
+            #     AA_PAYMASTER_PROXY_AUTH_SECRET: Zm9v
+            #     DATADOG_API_KEY: ${{ secrets.DD_TOWNS_LOAD_TESTING_KEY }}
+            #     BASE_CHAIN_RPC_URL: ${{ secrets.USEROPS_RPC_URL }}
+            #     AA_RPC_URL: ${{ secrets.AA_RPC_URL }}
+            #     AA_BUNDLER_URL: ${{ secrets.AA_BUNDLER_URL }}
+            #     RIVER_CHAIN_RPC_URL: https://devnet.rpc.river.build
+            #     RIVER_ENV: testnet
+
+              # working-directory: ./clients/web/lib
+              # run: yarn test:userops:privy-wallet
+
+            
+            - name: Run @towns/userop package tests with verification (SpaceDapp/base-sepolia)
               timeout-minutes: 15
               env:
                 AA_PAYMASTER_PROXY_URL: http://127.0.0.1:8787
                 AA_PAYMASTER_PROXY_AUTH_SECRET: Zm9v
-                DATADOG_API_KEY: ${{ secrets.DD_TOWNS_LOAD_TESTING_KEY }}
-                BASE_CHAIN_RPC_URL: ${{ secrets.USEROPS_RPC_URL }}
                 AA_RPC_URL: ${{ secrets.AA_RPC_URL }}
                 AA_BUNDLER_URL: ${{ secrets.AA_BUNDLER_URL }}
-                RIVER_CHAIN_RPC_URL: https://devnet.rpc.river.build
                 RIVER_ENV: testnet
 
-              working-directory: ./clients/web/lib
+              working-directory: ./clients/web/userops
               run: yarn test:userops:privy-wallet
 
             # If failed, we send a slack notification
