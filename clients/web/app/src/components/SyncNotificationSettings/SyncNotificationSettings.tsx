@@ -4,10 +4,10 @@ import { Mute } from '@notification-service/types'
 import isEqual from 'lodash/isEqual'
 import { useNotificationSettings } from 'hooks/useNotificationSettings'
 import { useStore } from 'store/store'
-import { useUpdateNotificationSettings } from 'api/lib/notificationSettings'
+import { useSaveNotificationSettings } from 'api/lib/notificationSettings'
 
 export const SyncNotificationSettings = () => {
-    const { mutate: mutateNotificationSettings } = useUpdateNotificationSettings()
+    const { mutate: mutateNotificationSettings } = useSaveNotificationSettings()
     const { spaceSettings, channelSettings } = useNotificationSettings((userSettings) => {
         mutateNotificationSettings({
             userSettings,

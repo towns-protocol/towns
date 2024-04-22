@@ -31,7 +31,7 @@ interface DebouncedEffectProps {
 }
 
 export function useNotificationSettings(
-    onSettingsUpdated: (settings: SaveUserSettingsSchema['userSettings']) => void,
+    onSettingsUpdated?: (settings: SaveUserSettingsSchema['userSettings']) => void,
 ) {
     const {
         dmChannels: tcDmChannels,
@@ -227,7 +227,13 @@ export function useNotificationSettings(
     }, [dmChannels, removedChannelSettings, savedChannelSettings, spaceHierarchies])
 
     useEffect(() => {
-        if (settingsUpdated && updatedSpaceSettings && updatedChannelSettings && userId) {
+        if (
+            settingsUpdated &&
+            updatedSpaceSettings &&
+            updatedChannelSettings &&
+            userId &&
+            onSettingsUpdated
+        ) {
             if (onSettingsUpdatedTimeout.current) {
                 clearTimeout(onSettingsUpdatedTimeout.current)
             }

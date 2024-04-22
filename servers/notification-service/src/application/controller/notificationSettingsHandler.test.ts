@@ -5,6 +5,7 @@ import {
     saveNotificationSettingsHandler,
     deleteNotificationSettingsHandler,
     getNotificationSettingsHandler,
+    patchNotificationSettingsHandler,
 } from './notificationSettingsHandler'
 import { database } from '../../infrastructure/database/prisma'
 import { Mute } from '../../application/schema/notificationSettingsSchema'
@@ -27,7 +28,7 @@ jest.mock('../../infrastructure/database/prisma', () => ({
     },
 }))
 
-describe.skip('saveNotificationSettingsHandler', () => {
+describe('saveNotificationSettingsHandler', () => {
     let req: Request
     let res: Response
 
@@ -76,7 +77,7 @@ describe.skip('saveNotificationSettingsHandler', () => {
     it('should handle errors and return 422 Unprocessable Entity', async () => {
         const error = new Error('Database error')
         jest.spyOn(database, '$transaction').mockImplementation((callback) => callback(database))
-        ;(database.userSettings.upsert as jest.Mock).mockRejectedValue(error)
+        ;(database.userSettings.upsert as jest.Mock).mockRejectedValueOnce(error)
         jest.spyOn(logger, 'error').mockImplementation(() => logger)
 
         await saveNotificationSettingsHandler(req, res)
@@ -88,7 +89,7 @@ describe.skip('saveNotificationSettingsHandler', () => {
     })
 })
 
-describe.skip('deleteNotificationSettingsHandler', () => {
+describe('deleteNotificationSettingsHandler', () => {
     let req: Request
     let res: Response
 
@@ -133,7 +134,7 @@ describe.skip('deleteNotificationSettingsHandler', () => {
     })
 })
 
-describe.skip('getNotificationSettingsHandler', () => {
+describe('getNotificationSettingsHandler', () => {
     let req: Request
     let res: Response
 
@@ -218,5 +219,92 @@ describe.skip('getNotificationSettingsHandler', () => {
 
         expect(database.userSettings.findUnique).toHaveBeenCalledTimes(1)
         expect(res.status).toHaveBeenCalledWith(StatusCodes.NOT_FOUND)
+    })
+})
+
+describe('patchNotificationSettingsHandler', () => {
+    let req: Request
+    let res: Response
+
+    beforeEach(() => {
+        req = {
+            body: {
+                userSettings: {
+                    userId: 'user123',
+                    directMessage: true,
+                    mention: true,
+                    replyTo: true,
+                },
+            },
+        } as unknown as Request
+
+        res = {
+            status: jest.fn().mockReturnThis(),
+            json: jest.fn(),
+        } as unknown as Response
+    })
+
+    afterEach(() => {
+        jest.clearAllMocks()
+    })
+
+    it('should update directmessage only and return 200 OK', async () => {
+        const userSettings = {
+            UserId: 'user123',
+            DirectMessage: true,
+            Mention: true,
+            ReplyTo: true,
+            UserSettingsSpace: [
+                { SpaceId: 'space1', SpaceMute: Mute.Default },
+                { SpaceId: 'space2', SpaceMute: Mute.Unmuted },
+            ],
+            UserSettingsChannel: [
+                { SpaceId: 'space1', ChannelId: 'channel1', ChannelMute: Mute.Unmuted },
+                { SpaceId: 'space2', ChannelId: 'channel2', ChannelMute: Mute.Muted },
+            ],
+        }
+        ;(database.$transaction as jest.Mock).mockImplementation((callback) => callback(database))
+        ;(database.userSettings.findUnique as jest.Mock).mockResolvedValueOnce(userSettings)
+
+        req.body.userSettings.directMessage = false
+
+        await patchNotificationSettingsHandler(req, res)
+
+        expect(database.$transaction).toHaveBeenCalled()
+        expect(database.userSettings.upsert).toHaveBeenCalled()
+        expect(database.userSettingsSpace.upsert).not.toHaveBeenCalled()
+        expect(database.userSettingsChannel.upsert).not.toHaveBeenCalled()
+
+        expect(res.status).toHaveBeenCalledWith(StatusCodes.OK)
+        expect(res.json).toHaveBeenCalledWith(req.body.userSettings)
+    })
+
+    it('should return not found when no user settings is found', async () => {
+        ;(database.$transaction as jest.Mock).mockImplementation((callback) => callback(database))
+        ;(database.userSettings.findUnique as jest.Mock).mockResolvedValueOnce(null)
+
+        req.body.userSettings.directMessage = false
+
+        await patchNotificationSettingsHandler(req, res)
+
+        expect(database.userSettings.findUnique).toHaveBeenCalledWith({
+            where: { UserId: req.body.userSettings.userId },
+        })
+
+        expect(res.status).toHaveBeenCalledWith(StatusCodes.NOT_FOUND)
+    })
+
+    it('should handle errors and return 422 Unprocessable Entity', async () => {
+        const error = new Error('Database error')
+        jest.spyOn(database, '$transaction').mockImplementation((callback) => callback(database))
+        ;(database.userSettings.upsert as jest.Mock).mockRejectedValueOnce(error)
+        jest.spyOn(logger, 'error').mockImplementation(() => logger)
+
+        await saveNotificationSettingsHandler(req, res)
+
+        expect(database.$transaction).toHaveBeenCalledTimes(1)
+        expect(logger.error).toHaveBeenCalledWith('saveSettings error', error)
+        expect(res.status).toHaveBeenCalledWith(StatusCodes.UNPROCESSABLE_ENTITY)
+        expect(res.json).toHaveBeenCalledWith({ error: 'Invalid data' })
     })
 })

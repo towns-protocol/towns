@@ -28,6 +28,32 @@ export const saveUserSettingsSchema = z.object({
     }),
 })
 
+export const patchUserSettingsSchema = z.object({
+    userSettings: z.object({
+        userId: z.string().min(1),
+        spaceSettings: z
+            .array(
+                z.object({
+                    spaceId: z.string().min(1),
+                    spaceMute: z.nativeEnum(Mute),
+                }),
+            )
+            .optional(),
+        channelSettings: z
+            .array(
+                z.object({
+                    spaceId: z.string(),
+                    channelId: z.string().min(1),
+                    channelMute: z.nativeEnum(Mute),
+                }),
+            )
+            .optional(),
+        replyTo: z.boolean().optional(),
+        mention: z.boolean().optional(),
+        directMessage: z.boolean().optional(),
+    }),
+})
+
 export const deleteUserSettingsSchema = z.object({
     userId: z.string().min(1),
 })

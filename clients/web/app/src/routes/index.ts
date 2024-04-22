@@ -34,6 +34,7 @@ export const CHANNEL_INFO_PARAMS = {
     GDM_CHANNEL_INFO: 'gdm',
     INVITE: 'invite',
     PERMISSIONS: 'permissions',
+    PREFERENCES: 'preferences',
     PROFILE: 'profile',
     ROLES: 'roles',
     THREAD: 'thread',

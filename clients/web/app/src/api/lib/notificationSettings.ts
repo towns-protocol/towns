@@ -1,7 +1,12 @@
 import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query'
 import { z } from 'zod'
 import { useMyProfile } from 'use-towns-client'
-import { GetUserSettingsSchema, Mute, SaveUserSettingsSchema } from '@notification-service/types'
+import {
+    GetUserSettingsSchema,
+    Mute,
+    PatchUserSettingsSchema,
+    SaveUserSettingsSchema,
+} from '@notification-service/types'
 import { useMemo } from 'react'
 import { env } from 'utils'
 import { axiosClient } from 'api/apiClient'
@@ -67,7 +72,7 @@ async function getSettings({ userId }: Partial<GetUserSettingsSchema>): Promise<
         console.error('[getSettings] error', error)
         // if the user's settings is not found, create a new one
         console.log('[getSettings] creating new settings')
-        await putSettings({ userSettings })
+        await saveUserNotificationSettings({ userSettings })
     }
     return userSettings
 }
@@ -127,22 +132,50 @@ export function useGetNotificationSettings() {
     })
 }
 
-export async function putSettings({ userSettings }: SaveUserSettingsSchema) {
+export async function saveUserNotificationSettings({ userSettings }: SaveUserSettingsSchema) {
     const url = `${PUSH_WORKER_URL}/api/notification-settings`
     const response = await axiosClient.put(url, {
         userSettings,
     })
-    console.log('[putSettings] settings saved')
+    console.log('[saveUserNotificationSettings] settings saved')
     return response.data
 }
 
-export function useUpdateNotificationSettings() {
+export async function patchNotificationSettings({ userSettings }: PatchUserSettingsSchema) {
+    const url = `${PUSH_WORKER_URL}/api/notification-settings`
+    const response = await axiosClient.patch(url, {
+        userSettings,
+    })
+    console.log('[patchNotificationSettings] settings updated')
+    return response.data
+}
+
+export function useSaveNotificationSettings() {
     const userId = useMyProfile()?.userId
     const queryClient = useQueryClient()
 
     return useMutation({
         mutationFn: async ({ userSettings }: SaveUserSettingsSchema) => {
-            return putSettings({ userSettings })
+            return saveUserNotificationSettings({ userSettings })
+        },
+        onSuccess: async () => {
+            queryClient.invalidateQueries({
+                queryKey: notificationSettingsQueryKeys.getSettings(userId),
+            })
+        },
+        onError: (error: unknown) => {
+            console.error('[useSetNotificationSettings] error', error)
+        },
+    })
+}
+
+export function usePatchNotificationSettings() {
+    const userId = useMyProfile()?.userId
+    const queryClient = useQueryClient()
+
+    return useMutation({
+        mutationFn: async ({ userSettings }: PatchUserSettingsSchema) => {
+            return patchNotificationSettings({ userSettings })
         },
         onSuccess: async () => {
             queryClient.invalidateQueries({
@@ -217,7 +250,7 @@ export function useSetMuteSettingForChannelOrSpace() {
             }
 
             console.log('[useSetNotificationSettings]', 'saving to cloud', notificationSettings)
-            return putSettings({ userSettings: notificationSettings })
+            return saveUserNotificationSettings({ userSettings: notificationSettings })
         },
         onSuccess: async () => {
             queryClient.invalidateQueries({

@@ -43,6 +43,7 @@ import { ConfirmBanUnbanModal } from '@components/ConfirmBanUnbanModal/ConfirmBa
 import { ConfirmBlockModal } from '@components/ConfirmBlockModal/ConfirmBlockModal'
 import { PanelButton } from '@components/Panel/PanelButton'
 import { useBlockedUsers } from 'hooks/useBlockedUsers'
+import { UserPreferences } from '@components/UserProfile/UserPreferences'
 import { usePanelActions } from './layouts/hooks/usePanelActions'
 
 export const SpaceProfilePanel = (props: { children?: React.ReactNode }) => {
@@ -58,6 +59,11 @@ export const SpaceProfile = (props: { children?: React.ReactNode }) => (
         <SpaceProfileWithoutAuth {...props} />
     </PrivyWrapper>
 )
+
+enum ModalType {
+    Wallets = 'wallets',
+    Preferences = 'preferences',
+}
 
 const SpaceProfileWithoutAuth = (props: { children?: React.ReactNode }) => {
     const { client } = useTownsClient()
@@ -83,7 +89,7 @@ const SpaceProfileWithoutAuth = (props: { children?: React.ReactNode }) => {
     }, [isAccountAbstractionEnabled, profileIdFromPath, rootKeyAddress])
 
     const { createDMChannel } = useTownsClient()
-    const [modal, setModal] = useState<'wallets' | undefined>(undefined)
+    const [modal, setModal] = useState<ModalType | undefined>(undefined)
 
     const { requestPushPermission, simplifiedPermissionState } = usePushNotifications()
 
@@ -123,9 +129,17 @@ const SpaceProfileWithoutAuth = (props: { children?: React.ReactNode }) => {
 
     const onWalletLinkingClick = useEvent(() => {
         if (isTouch) {
-            setModal('wallets')
+            setModal(ModalType.Wallets)
         } else {
             openPanel(CHANNEL_INFO_PARAMS.WALLETS)
+        }
+    })
+
+    const onPreferencesClick = useEvent(() => {
+        if (isTouch) {
+            setModal(ModalType.Preferences)
+        } else {
+            openPanel(CHANNEL_INFO_PARAMS.PREFERENCES)
         }
     })
 
@@ -238,7 +252,7 @@ const SpaceProfileWithoutAuth = (props: { children?: React.ReactNode }) => {
                 </Box>
             )}
             {isCurrentUser && (
-                <Stack gap paddingBottom="lg" paddingTop="none">
+                <Stack gap paddingBottom="md" paddingTop="none">
                     {/* wallets */}
                     <PanelButton onClick={onWalletLinkingClick}>
                         <Box width="height_md" alignItems="center">
@@ -283,6 +297,13 @@ const SpaceProfileWithoutAuth = (props: { children?: React.ReactNode }) => {
                         </PanelButton>
                     )}
 
+                    <PanelButton onClick={onPreferencesClick}>
+                        <Box width="height_md" alignItems="center">
+                            <Icon type="settings" size="square_sm" />
+                        </Box>
+                        <Paragraph color="default">Preferences</Paragraph>
+                    </PanelButton>
+
                     <PanelButton onClick={toggleTheme}>
                         <Box
                             border
@@ -307,9 +328,15 @@ const SpaceProfileWithoutAuth = (props: { children?: React.ReactNode }) => {
                 </Stack>
             )}
 
-            {modal === 'wallets' && (
+            {modal === ModalType.Wallets && (
                 <ModalContainer touchTitle="Wallets" onHide={() => setModal(undefined)}>
                     <WalletLinkingPanel />
+                </ModalContainer>
+            )}
+
+            {modal === ModalType.Preferences && (
+                <ModalContainer touchTitle="Preferences" onHide={() => setModal(undefined)}>
+                    <UserPreferences />
                 </ModalContainer>
             )}
 

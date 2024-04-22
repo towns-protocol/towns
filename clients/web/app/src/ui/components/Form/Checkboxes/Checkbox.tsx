@@ -15,10 +15,11 @@ type Props = {
     disabled?: boolean
     checked?: boolean
     defaultChecked?: boolean
+    labelLast?: boolean
 } & Partial<UseFormReturn>
 
 export const Checkbox = (props: Props) => {
-    const { name, label, value, register, width } = props
+    const { name, label, value, register, width, labelLast } = props
     const { onChange, ...registerProps } = register?.(name) || {}
     const _value =
         !value && typeof label === 'string' ? label.replace(' ', '').toLowerCase() : value
@@ -33,7 +34,7 @@ export const Checkbox = (props: Props) => {
                 cursor="pointer"
                 justifyContent="spaceBetween"
             >
-                <Box paddingRight="md">{label}</Box>
+                {!labelLast && <Box paddingRight="md">{label}</Box>}
                 <Box className={style.checkboxWrapper} onClick={props.onClick}>
                     <input
                         data-testid={`checkbox-${name}`}
@@ -49,6 +50,7 @@ export const Checkbox = (props: Props) => {
                     />
                     <CheckIcon className={style.svg} />
                 </Box>
+                {labelLast && <Box paddingLeft="sm">{label}</Box>}
             </Box>
         </Box>
     )

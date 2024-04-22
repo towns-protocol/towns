@@ -18,6 +18,7 @@ import { Panel } from '@components/Panel/Panel'
 import { ChannelSettingsPanel } from '@components/ChannelSettings/ChannelSettings'
 import { useCreateLink } from 'hooks/useCreateLink'
 import { ChannelInvitePanel } from 'routes/ChannelInvitePanel'
+import { UserPreferences } from '@components/UserProfile/UserPreferences'
 
 export const usePanels = () => {
     const [searchParams] = useSearchParams()
@@ -92,6 +93,13 @@ export const usePanels = () => {
         }
         case CHANNEL_INFO_PARAMS.INVITE: {
             return withWrapper(<ChannelInvitePanel />)
+        }
+        case CHANNEL_INFO_PARAMS.PREFERENCES: {
+            return (
+                <Panel padding="lg" label="Preferences">
+                    <UserPreferences />
+                </Panel>
+            )
         }
     }
 

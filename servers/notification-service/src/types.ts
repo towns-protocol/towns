@@ -14,6 +14,7 @@ import {
     deleteUserSettingsSchema,
     getUserSettingsSchema,
     saveUserSettingsSchema,
+    patchUserSettingsSchema,
 } from './application/schema/notificationSettingsSchema'
 import { tagMentionUsersSchema, tagReplyUserSchema } from './application/schema/tagSchema'
 
@@ -32,5 +33,6 @@ export type NotificationPayloadSchema = z.infer<typeof notificationPayloadSchema
 export type NotifyUsersSchema = z.infer<typeof notifyUsersSchema>
 export type RemoveSubscriptionSchema = z.infer<typeof removeSubscriptionSchema>
 export type SaveUserSettingsSchema = z.infer<typeof saveUserSettingsSchema>
+export type PatchUserSettingsSchema = z.infer<typeof patchUserSettingsSchema>
 export type TagMentionUsersSchema = z.infer<typeof tagMentionUsersSchema>
 export type TagReplyUserSchema = z.infer<typeof tagReplyUserSchema>
