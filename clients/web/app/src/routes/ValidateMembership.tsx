@@ -24,7 +24,7 @@ import { usePublicPageLoginFlow } from './PublicTownPage/usePublicPageLoginFlow'
 
 export const ValidateMembership = () => {
     const space = useSpaceData()
-    const { client, clientStatus } = useTownsContext()
+    const { client, clientStatus, signerContext } = useTownsContext()
     const spaceIdFromPathname = useSpaceIdFromPathname()
     const { confirmed: usernameConfirmed } = useUsernameConfirmed()
     const isJoining = !!usePublicPageLoginFlow().joiningSpace
@@ -37,8 +37,21 @@ export const ValidateMembership = () => {
             clientStatus,
             client: client !== undefined,
             isJoining,
+            space: space !== undefined,
+            spaceIdFromPathname,
+            spaceDataMap,
+            signerContext: signerContext !== undefined,
         })
-    }, [client, clientStatus, isJoining, spaceIdFromPathname, usernameConfirmed])
+    }, [
+        client,
+        clientStatus,
+        isJoining,
+        signerContext,
+        space,
+        spaceDataMap,
+        spaceIdFromPathname,
+        usernameConfirmed,
+    ])
 
     if (!spaceIdFromPathname) {
         return <Outlet />
@@ -47,6 +60,13 @@ export const ValidateMembership = () => {
     // if a user has hit the join/login button from the non-authenticated public town page
     // continue to show the public town page and let the page complete the join/login flow
     if (isJoining) {
+        AnalyticsService.getInstance().trackEventOnce(AnalyticsEvents.PublicTownPage)
+        return _PublicTownPage
+    }
+
+    // A user that has never joined a space will not have a client
+    if (signerContext && !client) {
+        // if we're "authenticated" but we don't have a client we need to show the public town page
         AnalyticsService.getInstance().trackEventOnce(AnalyticsEvents.PublicTownPage)
         return _PublicTownPage
     }
