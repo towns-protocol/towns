@@ -1,4 +1,3 @@
-import { htmlToText } from 'html-to-text'
 import { User } from './types'
 
 // TODO: should we use this to only show notifications when the tab is not visible?
@@ -58,16 +57,4 @@ export function preferredUsername(user: User): string {
         : stringHasValue(user.username)
         ? user.username
         : user.userId
-}
-
-/** Remove all MD formatting and unescape HTML to show in notifications */
-export function decodeHtmltoText(data?: string): Promise<string | undefined> {
-    return new Promise((resolve) => {
-        if (!data) {
-            return resolve(undefined)
-        }
-
-        const parsedString = htmlToText(data)
-        resolve(parsedString)
-    })
 }

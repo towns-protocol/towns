@@ -21,12 +21,12 @@ import {
     notificationContentFromEvent,
     pathFromAppNotification,
 } from './notificationParsers'
-import { checkClientIsVisible, decodeHtmltoText, getShortenedName, stringHasValue } from './utils'
+import { checkClientIsVisible, getShortenedName, stringHasValue } from './utils'
 
 import { NotificationCurrentUser } from '../store/notificationCurrentUser'
 import { NotificationStore } from '../store/notificationStore'
 import { env } from '../utils/environment'
-import { getEncryptedData } from './data_transforms'
+import { getEncryptedData, htmlToText } from './data_transforms'
 
 const MIDDLE_DOT = '\u00B7'
 const log = dlog('sw:push')
@@ -608,8 +608,8 @@ async function tryDecryptEvent(
         await Promise.race([decryptPromise(encryptedData), timeoutPromise])
         if (plaintext) {
             plaintext.refEventId = encryptedData.refEventId
-            plaintext.body = await decodeHtmltoText(plaintext.body)
-            log('decodeHtmltoText', plaintext.body)
+            plaintext.body = htmlToText(plaintext.body)
+            log('plaintext', { plaintext: plaintext.body })
         }
     } catch (error) {
         logError('error decrypting event', error)

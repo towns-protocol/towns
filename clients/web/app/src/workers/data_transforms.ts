@@ -1,4 +1,5 @@
 import { EncryptedData } from '@river-build/proto'
+import { convert } from 'html-to-text'
 
 interface ChannelPayload {
     channelPayload: {
@@ -98,4 +99,11 @@ export function hasGdmChannelPayloadData(data: unknown): data is GdmChannelPaylo
         typeof (data as GdmChannelPayload).gdmChannelPayload?.message === 'object' &&
         hasEncryptedData((data as GdmChannelPayload).gdmChannelPayload?.message)
     )
+}
+
+export function htmlToText(html?: string): string | undefined {
+    if (!html) {
+        return
+    }
+    return convert(html)
 }
