@@ -67,6 +67,10 @@ type Props = {
     isFullWidthOnTouch?: boolean
 } & Pick<BoxProps, 'background'>
 
+const EMPTY_NODE: TElement = {
+    type: 'p',
+    children: [{ text: '' }],
+}
 export const RichTextEditor = (props: Props) => {
     useEffect(() => {
         if (window.townsMeasureFlag && props.editable) {
@@ -160,12 +164,7 @@ const PlateEditorWithoutBoundary = ({
             if (editable && valueFromStore && valueFromStore.trim().length > 0) {
                 return deserializeMd(valueFromStore, channels, mentions, users)
             } else {
-                return [
-                    {
-                        type: 'p',
-                        children: [{ text: '' }],
-                    },
-                ]
+                return [{ ...EMPTY_NODE }]
             }
         }
         return deserializeMd(_initialValue, channels, mentions, users)
@@ -227,7 +226,12 @@ const PlateEditorWithoutBoundary = ({
         setInput(storageId, '')
         if (editorRef.current) {
             resetEditor(editorRef.current)
-            focusEditor(editorRef.current)
+            // Delay focusing the editor to wait for the editor to reset and re-render
+            setTimeout(() => {
+                if (editorRef.current) {
+                    focusEditor(editorRef.current)
+                }
+            }, 100)
         }
         setIsSendingMessage(false)
     }, [setInput, storageId, setIsSendingMessage])
