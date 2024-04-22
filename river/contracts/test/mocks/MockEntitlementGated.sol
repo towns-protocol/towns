@@ -3,7 +3,6 @@ pragma solidity ^0.8.23;
 
 import {IEntitlementChecker} from "contracts/src/crosschain/checker/IEntitlementChecker.sol";
 import {EntitlementGated} from "contracts/src/crosschain/EntitlementGated.sol";
-import {RuleEntitlementUtil} from "contracts/test/crosschain/RuleEntitlementUtil.sol";
 import {IRuleEntitlement} from "contracts/src/crosschain/IRuleEntitlement.sol";
 import {console2} from "forge-std/console2.sol";
 

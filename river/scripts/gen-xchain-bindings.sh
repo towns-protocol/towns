@@ -35,3 +35,8 @@ generate_go IEntitlementGated i_entitlement_gated
 generate_go IEntitlement i_entitlement
 generate_go ICustomEntitlement i_custom_entitlement
 generate_go MockCustomEntitlement mock_custom_entitlement
+generate_go MockEntitlementGated mock_entitlement_gated
+
+mkdir -p bin
+go build -o bin/gen-bindings-remove-struct scripts/gen-bindings-remove-struct.go
+./bin/gen-bindings-remove-struct core/xchain/contracts/${VERSION}/mock_entitlement_gated.go IRuleEntitlementCheckOperation,IRuleEntitlementLogicalOperation,IRuleEntitlementOperation,IRuleEntitlementRuleData

@@ -158,7 +158,6 @@ export interface MembershipFacetInterface extends utils.Interface {
     "ownerOf(uint256)": FunctionFragment;
     "postEntitlementCheckResult(bytes32,uint8)": FunctionFragment;
     "renewMembership(uint256)": FunctionFragment;
-    "requestEntitlementCheck(((uint8,uint8)[],(uint8,uint256,address,uint256)[],(uint8,uint8,uint8)[]))": FunctionFragment;
     "safeTransferFrom(address,address,uint256)": FunctionFragment;
     "safeTransferFrom(address,address,uint256,bytes)": FunctionFragment;
     "setApprovalForAll(address,bool)": FunctionFragment;
@@ -209,7 +208,6 @@ export interface MembershipFacetInterface extends utils.Interface {
       | "ownerOf"
       | "postEntitlementCheckResult"
       | "renewMembership"
-      | "requestEntitlementCheck"
       | "safeTransferFrom(address,address,uint256)"
       | "safeTransferFrom(address,address,uint256,bytes)"
       | "setApprovalForAll"
@@ -357,10 +355,6 @@ export interface MembershipFacetInterface extends utils.Interface {
   encodeFunctionData(
     functionFragment: "renewMembership",
     values: [PromiseOrValue<BigNumberish>]
-  ): string;
-  encodeFunctionData(
-    functionFragment: "requestEntitlementCheck",
-    values: [IRuleEntitlement.RuleDataStruct]
   ): string;
   encodeFunctionData(
     functionFragment: "safeTransferFrom(address,address,uint256)",
@@ -537,10 +531,6 @@ export interface MembershipFacetInterface extends utils.Interface {
   ): Result;
   decodeFunctionResult(
     functionFragment: "renewMembership",
-    data: BytesLike
-  ): Result;
-  decodeFunctionResult(
-    functionFragment: "requestEntitlementCheck",
     data: BytesLike
   ): Result;
   decodeFunctionResult(
@@ -1131,11 +1121,6 @@ export interface MembershipFacet extends BaseContract {
       overrides?: PayableOverrides & { from?: PromiseOrValue<string> }
     ): Promise<ContractTransaction>;
 
-    requestEntitlementCheck(
-      arg0: IRuleEntitlement.RuleDataStruct,
-      overrides?: Overrides & { from?: PromiseOrValue<string> }
-    ): Promise<ContractTransaction>;
-
     "safeTransferFrom(address,address,uint256)"(
       from: PromiseOrValue<string>,
       to: PromiseOrValue<string>,
@@ -1335,11 +1320,6 @@ export interface MembershipFacet extends BaseContract {
   renewMembership(
     tokenId: PromiseOrValue<BigNumberish>,
     overrides?: PayableOverrides & { from?: PromiseOrValue<string> }
-  ): Promise<ContractTransaction>;
-
-  requestEntitlementCheck(
-    arg0: IRuleEntitlement.RuleDataStruct,
-    overrides?: Overrides & { from?: PromiseOrValue<string> }
   ): Promise<ContractTransaction>;
 
   "safeTransferFrom(address,address,uint256)"(
@@ -1542,11 +1522,6 @@ export interface MembershipFacet extends BaseContract {
       tokenId: PromiseOrValue<BigNumberish>,
       overrides?: CallOverrides
     ): Promise<void>;
-
-    requestEntitlementCheck(
-      arg0: IRuleEntitlement.RuleDataStruct,
-      overrides?: CallOverrides
-    ): Promise<string>;
 
     "safeTransferFrom(address,address,uint256)"(
       from: PromiseOrValue<string>,
@@ -1982,11 +1957,6 @@ export interface MembershipFacet extends BaseContract {
       overrides?: PayableOverrides & { from?: PromiseOrValue<string> }
     ): Promise<BigNumber>;
 
-    requestEntitlementCheck(
-      arg0: IRuleEntitlement.RuleDataStruct,
-      overrides?: Overrides & { from?: PromiseOrValue<string> }
-    ): Promise<BigNumber>;
-
     "safeTransferFrom(address,address,uint256)"(
       from: PromiseOrValue<string>,
       to: PromiseOrValue<string>,
@@ -2205,11 +2175,6 @@ export interface MembershipFacet extends BaseContract {
     renewMembership(
       tokenId: PromiseOrValue<BigNumberish>,
       overrides?: PayableOverrides & { from?: PromiseOrValue<string> }
-    ): Promise<PopulatedTransaction>;
-
-    requestEntitlementCheck(
-      arg0: IRuleEntitlement.RuleDataStruct,
-      overrides?: Overrides & { from?: PromiseOrValue<string> }
     ): Promise<PopulatedTransaction>;
 
     "safeTransferFrom(address,address,uint256)"(

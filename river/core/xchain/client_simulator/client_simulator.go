@@ -221,13 +221,13 @@ func ClientSimulator(simType SimulationType) {
 		return
 	}
 
-	gatedContract, err := e.NewIEntitlementGated(*xc.GetTestContractAddress(), client)
+	gatedContract, err := e.NewMockEntitlementGated(*xc.GetTestContractAddress(), client)
 	if err != nil {
 		log.Error("Failed to parse contract ABI", "err", err)
 		return
 	}
 
-	resultPosted := make(chan *e.IEntitlementGatedEntitlementCheckResultPosted)
+	resultPosted := make(chan *e.MockEntitlementGatedEntitlementCheckResultPosted)
 
 	checkRequestedResults := make(chan *e.IEntitlementCheckerEntitlementCheckRequested)
 
@@ -242,7 +242,7 @@ func ClientSimulator(simType SimulationType) {
 		Context: bc,
 	} // Replace with appropriate context and filter query if needed
 
-	log.Info("ClientSimulator watching for events...")
+	log.Info("ClientSimulator watching for events...", "contractAddress", xc.GetTestContractAddress())
 
 	// checkRequestedSub, err := checkRequestedFilterer.WatchEntitlementCheckRequested(opts, checkRequestedResults, []common.Address{fromAddress})
 	checkRequestedSub, err := checkerFilterer.WatchEntitlementCheckRequested(
@@ -260,12 +260,6 @@ func ClientSimulator(simType SimulationType) {
 	var checkRequestedSubCh <-chan error
 	if checkRequestedSub != nil {
 		checkRequestedSubCh = checkRequestedSub.Err()
-	}
-
-	gated, err := e.NewIEntitlementGated(*xc.GetTestContractAddress(), client)
-	if err != nil {
-		log.Error("Failed to parse contract ABI", "err", err)
-		return
 	}
 
 	nonce, err := client.PendingNonceAt(context.Background(), fromAddress)
@@ -352,6 +346,8 @@ func ClientSimulator(simType SimulationType) {
 				hex.EncodeToString(transactionId[:]),
 				"BlockNumber",
 				checkRequestedResult.Raw.BlockNumber,
+				"requestBlockNumber",
+				requestBlockNumber,
 			)
 
 			gatedOpts := &bind.WatchOpts{
@@ -359,7 +355,7 @@ func ClientSimulator(simType SimulationType) {
 				Context: bc,
 			} // Replace with appropriate context and filter query if needed
 
-			resultSub, err = gated.WatchEntitlementCheckResultPosted(gatedOpts, resultPosted, [][32]byte{transactionId})
+			resultSub, err = gatedContract.WatchEntitlementCheckResultPosted(gatedOpts, resultPosted, [][32]byte{transactionId})
 			if err != nil {
 				log.Error("Failed call WatchEntitlementCheckResultPosted", "err", err)
 				return
@@ -375,7 +371,6 @@ func ClientSimulator(simType SimulationType) {
 				checkRequestedSubCh = nil
 				log.Info("Client Unsubscribe checkRequestedSub")
 			}
-			return
 
 		case result := <-resultPosted:
 			log.Info(

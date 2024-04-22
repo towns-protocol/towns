@@ -589,11 +589,11 @@
       ]
     },
     "contracts/src/crosschain/IEntitlementGated.sol": {
-      "keccak256": "0x24edee51547b5a766c7b1d0d3bcd4ad7d6bd970a58eae34137fece9987b1ec21",
+      "keccak256": "0x587784f179eded1b28c1b744710cc0bd07605b91dc52a91c2214d8e428bd2742",
       "license": "MIT",
       "urls": [
-        "bzz-raw://20a59c9f5f331e5ebf594007c5662886100b120315fc3dfe20c2b1ddded4dd6b",
-        "dweb:/ipfs/QmQZV3fZf4RXbGBd9BrBHVANCP56drRqugZGY41NFhSNHr"
+        "bzz-raw://38a98bc3c47c27e4cdedeaa5a50e806dbb27598403ae401c09856576b93dac79",
+        "dweb:/ipfs/QmPCt1sgZA8kFWb5ANraox2PgPPSuy1wM9htHNz2MhJnEB"
       ]
     },
     "contracts/src/crosschain/IRuleEntitlement.sol": {

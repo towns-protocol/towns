@@ -397,15 +397,19 @@ func postCheckResult(
 	auth *bind.TransactOpts,
 ) {
 	log := dlog.FromCtx(ctx).With("function", "postCheckResult")
+	// Solidity ENUM is NO_VOTE_STATUS = 0, PASS = 1, FAILED = 2
 	resultCode := uint8(0)
 	if result {
-		resultCode = 1
+		resultCode = uint8(1)
+	} else {
+		resultCode = uint8(2)
 	}
 	log.Info(
 		"posting PostEntitlementCheckResult...",
 		"result", result,
 		"tx", event.TransactionId,
 		"fromAddress", fromAddress.String(),
+		"contractAddress", event.ContractAddress.String(),
 	)
 
 	nonce, err := client.PendingNonceAt(ctx, fromAddress)

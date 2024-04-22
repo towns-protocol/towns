@@ -9,8 +9,6 @@ import {IRuleEntitlement} from "./IRuleEntitlement.sol";
 // libraries
 import {EntitlementGatedStorage} from "./EntitlementGatedStorage.sol";
 
-// contracts
-
 abstract contract EntitlementGatedBase is IEntitlementGatedBase {
   function __EntitlementGatedBase_init(address checker) internal {
     if (checker == address(0)) {

@@ -47,6 +47,78 @@ type IEntitlementGated struct {
 	devIEntitlementGated *dev.IEntitlementGated
 }
 
+type MockEntitlementGated struct {
+	v3MockEntitlementGated  *v3.MockEntitlementGated
+	devMockEntitlementGated *dev.MockEntitlementGated
+}
+
+func NewMockEntitlementGated(address common.Address, backend bind.ContractBackend) (*MockEntitlementGated, error) {
+	res := &MockEntitlementGated{}
+	if config.GetConfig().GetContractVersion() == "v3" {
+		contract, err := v3.NewMockEntitlementGated(address, backend)
+		res.v3MockEntitlementGated = contract
+		return res, err
+	} else {
+		contract, err := dev.NewMockEntitlementGated(address, backend)
+		res.devMockEntitlementGated = contract
+		return res, err
+	}
+}
+
+type MockEntitlementGatedEntitlementCheckResultPosted struct {
+	TransactionId [32]byte
+	Result        uint8
+	Raw           types.Log // Blockchain specific contextual infos
+}
+
+func convertMockV3ToShimResultPosted(v3Event *v3.MockEntitlementGatedEntitlementCheckResultPosted) *MockEntitlementGatedEntitlementCheckResultPosted {
+	return &MockEntitlementGatedEntitlementCheckResultPosted{
+		TransactionId: v3Event.TransactionId,
+		Result:        v3Event.Result,
+		Raw:           v3Event.Raw,
+	}
+}
+
+func convertMockDevToShimResultPosted(devEvent *dev.MockEntitlementGatedEntitlementCheckResultPosted) *MockEntitlementGatedEntitlementCheckResultPosted {
+	return &MockEntitlementGatedEntitlementCheckResultPosted{
+		TransactionId: devEvent.TransactionId,
+		Result:        devEvent.Result,
+		Raw:           devEvent.Raw,
+	}
+}
+
+func (g *MockEntitlementGated) WatchEntitlementCheckResultPosted(opts *bind.WatchOpts, sink chan<- *MockEntitlementGatedEntitlementCheckResultPosted, transactionId [][32]byte) (event.Subscription, error) {
+	if config.GetConfig().GetContractVersion() == "v3" {
+		v3Sink := make(chan *v3.MockEntitlementGatedEntitlementCheckResultPosted)
+		sub, err := g.v3MockEntitlementGated.WatchEntitlementCheckResultPosted(opts, v3Sink, transactionId)
+		go func() {
+			for v3Event := range v3Sink {
+				shimEvent := convertMockV3ToShimResultPosted(v3Event)
+				sink <- shimEvent
+			}
+		}()
+		return sub, err
+	} else {
+		devSink := make(chan *dev.MockEntitlementGatedEntitlementCheckResultPosted)
+		sub, err := g.devMockEntitlementGated.WatchEntitlementCheckResultPosted(opts, devSink, transactionId)
+		go func() {
+			for devEvent := range devSink {
+				shimEvent := convertMockDevToShimResultPosted(devEvent)
+				sink <- shimEvent
+			}
+		}()
+		return sub, err
+	}
+}
+
+func (g *MockEntitlementGated) RequestEntitlementCheck(opts *bind.TransactOpts, ruledata IRuleData) (*types.Transaction, error) {
+	if config.GetConfig().GetContractVersion() == "v3" {
+		return g.v3MockEntitlementGated.RequestEntitlementCheck(opts, convertRuleDataToV3(ruledata))
+	} else {
+		return g.devMockEntitlementGated.RequestEntitlementCheck(opts, convertRuleDataToDev(ruledata))
+	}
+}
+
 type MockCustomEntitlement struct {
 	v3MockCustomEntitlement  *v3.MockCustomEntitlement
 	devMockCustomEntitlement *dev.MockCustomEntitlement
@@ -87,14 +159,6 @@ func NewIEntitlementGated(address common.Address, backend bind.ContractBackend) 
 		contract, err := dev.NewIEntitlementGated(address, backend)
 		res.devIEntitlementGated = contract
 		return res, err
-	}
-}
-
-func (g *IEntitlementGated) RequestEntitlementCheck(opts *bind.TransactOpts, ruledata IRuleData) (*types.Transaction, error) {
-	if config.GetConfig().GetContractVersion() == "v3" {
-		return g.v3IEntitlementGated.RequestEntitlementCheck(opts, convertRuleDataToV3(ruledata))
-	} else {
-		return g.devIEntitlementGated.RequestEntitlementCheck(opts, convertRuleDataToDev(ruledata))
 	}
 }
 

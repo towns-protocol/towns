@@ -80,12 +80,16 @@ jobs:
               with:
                   node-version: '20'
                   cache: 'yarn'
-
             - name: Install node dependencies
               run: yarn install --immutable
 
             - name: Print versions
               run: ./scripts/print-versions.sh
+          
+            # Start an ssh session with tmate if the PR has the 'ssh' label
+            - name: Setup tmate session
+              uses: mxschmitt/action-tmate@v3
+              if: contains(github.event.pull_request.labels.*.name, 'ssh')
 
             - name: Start and configure blockchains
               run: ./scripts/bc-all-start.sh
@@ -211,8 +215,6 @@ jobs:
               with:
                   version: ${{ env.FOUNDRY_VERSION }}
 
-
-
             - uses: actions/setup-node@v4
               with:
                   node-version: '20'
@@ -223,6 +225,11 @@ jobs:
 
             - name: Print versions
               run: ./scripts/print-versions.sh
+          
+            # Start an ssh session with tmate if the PR has the 'ssh' label
+            - name: Setup tmate session
+              uses: mxschmitt/action-tmate@v3
+              if: contains(github.event.pull_request.labels.*.name, 'ssh')
 
             - name: Start and configure blockchains
               run: ./scripts/bc-all-start.sh
@@ -363,6 +370,11 @@ jobs:
 
             - name: Print versions
               run: ./scripts/print-versions.sh
+          
+            # Start an ssh session with tmate if the PR has the 'ssh' label
+            - name: Setup tmate session
+              uses: mxschmitt/action-tmate@v3
+              if: contains(github.event.pull_request.labels.*.name, 'ssh')
 
             - name: Start and configure blockchains
               run: ./scripts/bc-all-start.sh
@@ -481,8 +493,6 @@ jobs:
               with:
                   version: ${{ env.FOUNDRY_VERSION }}
 
-
-
             - uses: actions/setup-node@v4
               with:
                   node-version: '20'
@@ -493,6 +503,11 @@ jobs:
 
             - name: Print versions
               run: ./scripts/print-versions.sh
+
+            # Start an ssh session with tmate if the PR has the 'ssh' label
+            - name: Setup tmate session
+              uses: mxschmitt/action-tmate@v3
+              if: contains(github.event.pull_request.labels.*.name, 'ssh')
 
             - name: Start and configure blockchains
               run: ./scripts/bc-all-start.sh
@@ -617,6 +632,11 @@ jobs:
             - name: Print versions
               run: ./scripts/print-versions.sh
 
+            # Start an ssh session with tmate if the PR has the 'ssh' label
+            - name: Setup tmate session
+              uses: mxschmitt/action-tmate@v3
+              if: contains(github.event.pull_request.labels.*.name, 'ssh')
+
             - name: Start and configure blockchains
               run: ./scripts/bc-all-start.sh
 
@@ -735,8 +755,6 @@ jobs:
               with:
                   version: ${{ env.FOUNDRY_VERSION }}
 
-
-
             - uses: actions/setup-node@v4
               with:
                   node-version: '20'
@@ -747,6 +765,11 @@ jobs:
 
             - name: Print versions
               run: ./scripts/print-versions.sh
+
+            # Start an ssh session with tmate if the PR has the 'ssh' label
+            - name: Setup tmate session
+              uses: mxschmitt/action-tmate@v3
+              if: contains(github.event.pull_request.labels.*.name, 'ssh')
 
             - name: Start and configure blockchains
               run: ./scripts/bc-all-start.sh
@@ -826,6 +849,11 @@ jobs:
 
             - name: Print versions
               run: ./scripts/print-versions.sh
+
+            # Start an ssh session with tmate if the PR has the 'ssh' label
+            - name: Setup tmate session
+              uses: mxschmitt/action-tmate@v3
+              if: contains(github.event.pull_request.labels.*.name, 'ssh')
 
             - name: Start and configure blockchains
               run: ./scripts/bc-all-start.sh

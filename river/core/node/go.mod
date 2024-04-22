@@ -1,8 +1,6 @@
 module github.com/river-build/river/core/node
 
-go 1.21
-
-toolchain go1.21.5
+go 1.22.2
 
 require (
 	connectrpc.com/connect v1.14.0

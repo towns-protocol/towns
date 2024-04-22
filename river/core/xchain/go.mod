@@ -1,8 +1,6 @@
 module core/xchain
 
-go 1.21
-
-toolchain go1.21.5
+go 1.22.2
 
 replace github.com/river-build/river/core/node => ./../node
 

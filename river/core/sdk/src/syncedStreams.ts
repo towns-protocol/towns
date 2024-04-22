@@ -1,5 +1,5 @@
 import { Err, SyncCookie, SyncOp, SyncStreamsResponse } from '@river-build/proto'
-import { DLogger, check, dlog, dlogError, shortenHexString } from '@river-build/dlog'
+import { DLogger, dlog, dlogError, shortenHexString } from '@river-build/dlog'
 import { StreamRpcClientType, errorContains } from './makeStreamRpcClient'
 import { unpackStream, unpackStreamAndCookie } from './sign'
 import { StreamStateEvents } from './streamEvents'
@@ -277,7 +277,10 @@ export class SyncedStreams {
     public async addStreamToSync(syncCookie: SyncCookie): Promise<void> {
         const streamId = streamIdAsString(syncCookie.streamId)
         this.log('addStreamToSync', streamId)
-        check(this.streams.has(streamId), 'streamId not in this.streams')
+        if (!this.streams.has(streamId)) {
+            // perhaps we called stopSync while loading a stream from persistence
+            this.logError('streamId not in this.streams, not adding to sync', streamId)
+        }
         if (this.syncState === SyncState.Starting || this.syncState === SyncState.Retrying) {
             await this.waitForSyncingState()
         }

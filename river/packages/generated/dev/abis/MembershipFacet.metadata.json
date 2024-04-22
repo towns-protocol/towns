@@ -1547,93 +1547,6 @@
       {
         "inputs": [
           {
-            "components": [
-              {
-                "components": [
-                  {
-                    "internalType": "enum IRuleEntitlement.CombinedOperationType",
-                    "name": "opType",
-                    "type": "uint8"
-                  },
-                  {
-                    "internalType": "uint8",
-                    "name": "index",
-                    "type": "uint8"
-                  }
-                ],
-                "internalType": "struct IRuleEntitlement.Operation[]",
-                "name": "operations",
-                "type": "tuple[]"
-              },
-              {
-                "components": [
-                  {
-                    "internalType": "enum IRuleEntitlement.CheckOperationType",
-                    "name": "opType",
-                    "type": "uint8"
-                  },
-                  {
-                    "internalType": "uint256",
-                    "name": "chainId",
-                    "type": "uint256"
-                  },
-                  {
-                    "internalType": "address",
-                    "name": "contractAddress",
-                    "type": "address"
-                  },
-                  {
-                    "internalType": "uint256",
-                    "name": "threshold",
-                    "type": "uint256"
-                  }
-                ],
-                "internalType": "struct IRuleEntitlement.CheckOperation[]",
-                "name": "checkOperations",
-                "type": "tuple[]"
-              },
-              {
-                "components": [
-                  {
-                    "internalType": "enum IRuleEntitlement.LogicalOperationType",
-                    "name": "logOpType",
-                    "type": "uint8"
-                  },
-                  {
-                    "internalType": "uint8",
-                    "name": "leftOperationIndex",
-                    "type": "uint8"
-                  },
-                  {
-                    "internalType": "uint8",
-                    "name": "rightOperationIndex",
-                    "type": "uint8"
-                  }
-                ],
-                "internalType": "struct IRuleEntitlement.LogicalOperation[]",
-                "name": "logicalOperations",
-                "type": "tuple[]"
-              }
-            ],
-            "internalType": "struct IRuleEntitlement.RuleData",
-            "name": "",
-            "type": "tuple"
-          }
-        ],
-        "name": "requestEntitlementCheck",
-        "outputs": [
-          {
-            "internalType": "bytes32",
-            "name": "",
-            "type": "bytes32"
-          }
-        ],
-        "stateMutability": "nonpayable",
-        "type": "function"
-      },
-      {
-        "inputs": [
-          {
             "internalType": "address",
             "name": "from",
             "type": "address"
@@ -2227,11 +2140,11 @@
       ]
     },
     "contracts/src/crosschain/IEntitlementGated.sol": {
-      "keccak256": "0x24edee51547b5a766c7b1d0d3bcd4ad7d6bd970a58eae34137fece9987b1ec21",
+      "keccak256": "0x587784f179eded1b28c1b744710cc0bd07605b91dc52a91c2214d8e428bd2742",
       "license": "MIT",
       "urls": [
-        "bzz-raw://20a59c9f5f331e5ebf594007c5662886100b120315fc3dfe20c2b1ddded4dd6b",
-        "dweb:/ipfs/QmQZV3fZf4RXbGBd9BrBHVANCP56drRqugZGY41NFhSNHr"
+        "bzz-raw://38a98bc3c47c27e4cdedeaa5a50e806dbb27598403ae401c09856576b93dac79",
+        "dweb:/ipfs/QmPCt1sgZA8kFWb5ANraox2PgPPSuy1wM9htHNz2MhJnEB"
       ]
     },
     "contracts/src/crosschain/IRuleEntitlement.sol": {
@@ -2579,11 +2492,11 @@
       ]
     },
     "contracts/src/spaces/facets/membership/MembershipFacet.sol": {
-      "keccak256": "0xe5f7d6fb037992dc7a1d8195e67079162006ef783b5e7294b4ce8a2455f082f6",
+      "keccak256": "0x65935dc465a0932b4e2fee45d231aae25b4f04bad1f82495350e2abe0dc5f951",
       "license": "Apache-2.0",
       "urls": [
-        "bzz-raw://7dedf3602e0a5c6ce9a86ffa76bec162b39ffa6eee46b914fece275d3ecef602",
-        "dweb:/ipfs/QmZWygG96T9b5BeSTMnuKC4KeZk2DaFPgJ1aYYuSGvuff6"
+        "bzz-raw://14faa6eec0a58989aeda4b713045499ae8e7574ad024938e73a887d37adc0e90",
+        "dweb:/ipfs/Qmf1VcViLNnyoP24qrCVx4ofLCNiUrswX69KRTRQCLzqKu"
       ]
     },
     "contracts/src/spaces/facets/membership/MembershipStorage.sol": {

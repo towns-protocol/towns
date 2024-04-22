@@ -406,11 +406,4 @@ contract MembershipFacet is
     super._beforeTokenTransfers(from, to, startTokenId, quantity);
     _setMembershipTokenId(startTokenId, to);
   }
-
-  // For testing
-  function requestEntitlementCheck(
-    IRuleEntitlement.RuleData calldata
-  ) external override returns (bytes32) {
-    revert Entitlement__NotAllowed();
-  }
 }

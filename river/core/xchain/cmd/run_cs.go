@@ -60,6 +60,9 @@ out:
 				go xc.ClientSimulator(xc.ISENTITLED)
 			case 'd':
 				go xc.ClientSimulator(xc.TOGGLEISENTITLED)
+			case 'q':
+				log.Info("Quit Exit")
+				break out
 			}
 
 		case <-interrupt:

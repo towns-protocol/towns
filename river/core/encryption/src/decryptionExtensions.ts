@@ -272,6 +272,24 @@ export abstract class BaseDecryptionExtensions {
         this.checkStartTicking()
     }
 
+    public retryDecryptionFailures(streamId: string): void {
+        removeItem(this.queues.missingKeys, (x) => x.streamId === streamId)
+        if (
+            this.decryptionFailures[streamId] &&
+            Object.keys(this.decryptionFailures[streamId]).length > 0
+        ) {
+            this.log.info(
+                'membership change, re-enqueuing decryption failures for stream',
+                streamId,
+            )
+            insertSorted(
+                this.queues.missingKeys,
+                { streamId, waitUntil: new Date(Date.now() + 100) },
+                (x) => x.waitUntil,
+            )
+        }
+    }
+
     public start(): void {
         check(!this.started, 'start() called twice, please re-instantiate instead')
         this.log.debug('starting')

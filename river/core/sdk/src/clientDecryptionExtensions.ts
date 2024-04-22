@@ -40,6 +40,12 @@ export class ClientDecryptionExtensions extends BaseDecryptionExtensions {
 
         super(client, crypto, delegate, userDevice, userId, upToDateStreams)
 
+        const onMembershipChange = (streamId: string, userId: string) => {
+            if (userId === this.userId) {
+                this.retryDecryptionFailures(streamId)
+            }
+        }
+
         const onStreamUpToDate = (streamId: string) => this.setStreamUpToDate(streamId)
 
         const onNewGroupSessions = (
@@ -65,6 +71,7 @@ export class ClientDecryptionExtensions extends BaseDecryptionExtensions {
         client.on('newEncryptedContent', onNewEncryptedContent)
         client.on('newKeySolicitation', onKeySolicitation)
         client.on('updatedKeySolicitation', onKeySolicitation)
+        client.on('streamNewUserJoined', onMembershipChange)
 
         this._onStopFn = () => {
             client.off('streamUpToDate', onStreamUpToDate)
@@ -72,6 +79,7 @@ export class ClientDecryptionExtensions extends BaseDecryptionExtensions {
             client.off('newEncryptedContent', onNewEncryptedContent)
             client.off('newKeySolicitation', onKeySolicitation)
             client.off('updatedKeySolicitation', onKeySolicitation)
+            client.off('streamNewUserJoined', onMembershipChange)
         }
         this.log.debug('new ClientDecryptionExtensions', { userDevice })
     }

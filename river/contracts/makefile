@@ -27,10 +27,9 @@ anvil :; anvil -m 'test test test test test test test test test test test junk'
 # ===========================
 deploy-base-anvil:;
 	@echo "Deploying $(contract)..."
-	SAVE_DEPLOYMENTS=1 OVERRIDE_DEPLOYMENTS=1 \
+	@SAVE_DEPLOYMENTS=1 OVERRIDE_DEPLOYMENTS=1 \
 	forge script scripts/deployments/$(if $(findstring facet,$(type)),facets/)${contract}.s.sol:${contract} \
-	--ffi --rpc-url base_anvil --private-key ${LOCAL_PRIVATE_KEY} --broadcast \
-	$(if $(findstring contract,$(type)),--slow)
+	--ffi --rpc-url base_anvil --private-key ${LOCAL_PRIVATE_KEY} --broadcast
 
 interact-base-anvil :;
 	@SAVE_DEPLOYMENTS=1 OVERRIDE_DEPLOYMENTS=1 forge script scripts/interactions/${contract}.s.sol:${contract} --ffi --rpc-url base_anvil --private-key ${LOCAL_PRIVATE_KEY} --broadcast
@@ -42,8 +41,7 @@ deploy-river-anvil:
 	@echo "Deploying $(contract)..."
 	@SAVE_DEPLOYMENTS=1 OVERRIDE_DEPLOYMENTS=1 \
 	forge script scripts/deployments/$(if $(findstring facet,$(type)),facets/)${contract}.s.sol:${contract} \
-	--ffi --rpc-url river_anvil --private-key ${LOCAL_PRIVATE_KEY} --broadcast \
-	$(if $(findstring contract,$(type)),--slow)
+	--ffi --rpc-url river_anvil --private-key ${LOCAL_PRIVATE_KEY} --broadcast
 
 interact-river-anvil :;
 	@echo "Interacting through $(contract)..."

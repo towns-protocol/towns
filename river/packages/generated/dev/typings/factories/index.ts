@@ -22,6 +22,7 @@ export { IWalletLink__factory } from "./IWalletLink__factory";
 export { Member__factory } from "./Member__factory";
 export { MembershipFacet__factory } from "./MembershipFacet__factory";
 export { MockERC721A__factory } from "./MockERC721A__factory";
+export { MockEntitlementGated__factory } from "./MockEntitlementGated__factory";
 export { OwnableFacet__factory } from "./OwnableFacet__factory";
 export { TokenPausableFacet__factory } from "./TokenPausableFacet__factory";
 export { UserEntitlement__factory } from "./UserEntitlement__factory";
