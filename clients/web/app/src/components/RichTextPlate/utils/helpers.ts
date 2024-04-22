@@ -51,16 +51,29 @@ export const getTypeaheadPosition = (targetRef: VirtualRef): TypeaheadPositionRe
     if (!targetRef.current) {
         return {}
     }
-
-    const SAFETY_PAD = 50
     const { left, bottom } = targetRef.current.getBoundingClientRect()
+    const SAFETY_PAD = 50
+    const MAX_TYPEAHEAD_SIZE = 250
+    // Check if the typeahead will overflow the right or left side of the screen
+    const isRightOverflow = left + SAFETY_PAD + MAX_TYPEAHEAD_SIZE >= window.innerWidth - SAFETY_PAD
+    const isLeftOverflow = left - SAFETY_PAD - MAX_TYPEAHEAD_SIZE < 0
+
     const absPosition: TypeaheadPositionResult = {
         bottom: `${window.innerHeight - bottom + 30}px`,
     }
-    if (window.innerWidth < left + SAFETY_PAD + 250) {
-        absPosition.right = `${window.innerWidth - left}px`
+
+    if (window.innerWidth < left + SAFETY_PAD + MAX_TYPEAHEAD_SIZE) {
+        if (isLeftOverflow) {
+            absPosition.left = SAFETY_PAD + 'px'
+        } else {
+            absPosition.right = `${window.innerWidth - left}px`
+        }
     } else {
-        absPosition.left = `${left - 20}px`
+        if (isRightOverflow) {
+            absPosition.right = SAFETY_PAD + 'px'
+        } else {
+            absPosition.left = `${left - SAFETY_PAD / 2.5}px`
+        }
     }
     return absPosition
 }
