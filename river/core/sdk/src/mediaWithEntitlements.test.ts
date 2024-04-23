@@ -11,6 +11,9 @@ import { jest } from '@jest/globals'
 import { MembershipStruct, NoopRuleData } from '@river-build/web3'
 import { SignerContext } from './signerContext'
 import { makeBaseChainConfig } from './riverConfig'
+import { dlog } from '@river-build/dlog'
+
+const log = dlog('csb:test:mediaWithEntitlements')
 
 // This is a temporary hack because importing viem via SpaceDapp causes a jest error
 // specifically the code in ConvertersEntitlements.ts - decodeAbiParameters and encodeAbiParameters functions have an import that can't be found
@@ -30,7 +33,7 @@ jest.unstable_mockModule('viem', async () => {
 const { LocalhostWeb3Provider, Permission, createSpaceDapp } = await import('@river-build/web3')
 const ETH_ADDRESS = '0xEeeeeEeeeEeEeeEeEeEeeEEEeeeeEeeeeeeeEEeE'
 
-describe('mediaWithEntitlementsTests', () => {
+describe('mediaWithEntitlements', () => {
     let bobClient: Client
     let bobWallet: Wallet
     let bobContext: SignerContext
@@ -57,6 +60,7 @@ describe('mediaWithEntitlementsTests', () => {
     })
 
     test('clientCanOnlyCreateMediaStreamIfMemberOfSpaceAndChannel', async () => {
+        log('start clientCanOnlyCreateMediaStreamIfMemberOfSpaceAndChannel')
         /**
          * Setup
          * Bob creates a space and a channel, both on chain and in River
@@ -64,7 +68,6 @@ describe('mediaWithEntitlementsTests', () => {
 
         const provider = new LocalhostWeb3Provider(baseConfig.rpcUrl, bobWallet)
         await provider.fundWallet()
-        await provider.mintMockNFT(baseConfig.chainConfig)
         const spaceDapp = createSpaceDapp(provider, baseConfig.chainConfig)
 
         const pricingModules = await spaceDapp.listPricingModules()
@@ -92,6 +95,7 @@ describe('mediaWithEntitlementsTests', () => {
             },
         }
 
+        log('transaction start bob creating space')
         const transaction = await spaceDapp.createSpace(
             {
                 spaceName: 'space-name',
@@ -103,6 +107,7 @@ describe('mediaWithEntitlementsTests', () => {
         )
 
         const receipt = await transaction.wait()
+        log('transaction receipt', receipt)
         const spaceAddress = spaceDapp.getSpaceAddress(receipt)
         expect(spaceAddress).toBeDefined()
         const spaceStreamId = makeSpaceStreamId(spaceAddress!)

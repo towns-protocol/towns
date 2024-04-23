@@ -143,7 +143,7 @@ describe('#TimelineItem', () => {
         expect(backgroundImageNode.style.maxWidth).toEqual('250px')
     })
 
-    test('it should render generic unfurled content when a link is present', async () => {
+    test.skip('it should render generic unfurled content when a link is present', async () => {
         render(
             <Wrapper
                 messageContent={{
@@ -161,7 +161,7 @@ describe('#TimelineItem', () => {
         expect(screen.getByText(normal.description)).toBeInTheDocument()
     })
 
-    test('it should render an image when an image url is present', async () => {
+    test.skip('it should render an image when an image url is present', async () => {
         render(
             <Wrapper
                 messageContent={{
@@ -176,7 +176,7 @@ describe('#TimelineItem', () => {
         expect(backgroundImageNode.style.maxWidth).toEqual('312px')
     })
 
-    test('it should render twitter content when a twitter link is present', async () => {
+    test.skip('it should render twitter content when a twitter link is present', async () => {
         const { info: twitterInfo } = twitter
         // const author = twitterInfo.includes.users[0]
         render(

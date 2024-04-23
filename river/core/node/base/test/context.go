@@ -8,7 +8,7 @@ import (
 	"github.com/river-build/river/core/node/dlog"
 )
 
-func NewTestContext() context.Context {
+func NewTestContext() (context.Context, context.CancelFunc) {
 	logLevel := os.Getenv("RIVER_TEST_LOG")
 	var handler slog.Handler
 	if logLevel == "" {
@@ -29,5 +29,6 @@ func NewTestContext() context.Context {
 		)
 	}
 	//lint:ignore LE0000 context.Background() used correctly
-	return dlog.CtxWithLog(context.Background(), slog.New(handler))
+	ctx := dlog.CtxWithLog(context.Background(), slog.New(handler))
+	return context.WithCancel(ctx)
 }

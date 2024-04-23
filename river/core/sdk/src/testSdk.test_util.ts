@@ -129,6 +129,7 @@ export class RiverSDK {
             },
         }
 
+        log('transaction start creating space')
         const createSpaceTransaction = await this.spaceDapp.createSpace(
             {
                 spaceName: spaceName,
@@ -139,7 +140,7 @@ export class RiverSDK {
             this.walletWithProvider,
         )
         const receipt = await createSpaceTransaction.wait()
-        log('receipt', receipt)
+        log('transaction receipt', receipt)
         if (receipt.status !== 1) {
             throw new Error('Failed to create space')
         }

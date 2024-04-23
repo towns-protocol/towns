@@ -39,6 +39,7 @@ message ChannelMessage {
                 Content.EmbeddedMedia embeddedMedia = 102;
                 Content.ChunkedMedia chunkedMedia = 103;
                 Content.EmbeddedMessage embeddedMessage = 104;
+                Content.UnfurledURL unfurledUrl = 105;
             }
         }
         
@@ -117,6 +118,18 @@ message ChannelMessage {
                 ChannelMessage.Post post = 2;
                 Info info = 3;
                 StaticInfo staticInfo = 4;
+            }
+
+            message UnfurledURL {
+                message Image {
+                    int32 height = 1;
+                    int32 width = 2;
+                    string url = 3;
+                }
+                string url = 1;
+                string description = 2;
+                string title = 3;
+                optional UnfurledURL.Image image = 4;
             }
         }
         

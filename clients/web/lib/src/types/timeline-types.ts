@@ -390,11 +390,22 @@ export type EmbeddedMessageAttachment = {
     id: string
 }
 
+export type UnfurledLinkAttachment = {
+    type: 'unfurled_link'
+    url: string
+    description?: string
+    title?: string
+    image?: { height?: number; width?: number; url?: string }
+    id: string
+    info?: string
+}
+
 export type Attachment =
     | ImageAttachment
     | ChunkedMediaAttachment
     | EmbeddedMediaAttachment
     | EmbeddedMessageAttachment
+    | UnfurledLinkAttachment
 
 export function getFallbackContent(
     senderDisplayName: string,
@@ -555,6 +566,25 @@ export function transformAttachments(attachments?: Attachment[]): ChannelMessage
                     })
                     return value
                 }
+                case 'unfurled_link':
+                    return new ChannelMessage_Post_Attachment({
+                        content: {
+                            case: 'unfurledUrl',
+                            value: {
+                                url: attachment.url,
+                                title: attachment.title,
+                                description: attachment.description,
+                                image: attachment.image
+                                    ? {
+                                          height: attachment.image.height,
+                                          width: attachment.image.width,
+                                          url: attachment.image.url,
+                                      }
+                                    : undefined,
+                            },
+                        },
+                    })
+                //
                 default:
                     return undefined
             }

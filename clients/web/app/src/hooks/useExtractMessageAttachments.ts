@@ -8,7 +8,10 @@ import {
 import { isEqual } from 'lodash'
 import { useCallback } from 'react'
 import { notUndefined } from 'ui/utils/utils'
-import { useExtractInternalLinks as useExtractInternalLinks } from './useExtractInternalLinks'
+import {
+    useExtractExternalLinks,
+    useExtractInternalLinks as useExtractInternalLinks,
+} from './useExtractInternalLinks'
 
 export const useExtractMessageAttachments = (params: { text: string }) => {
     const links = useExtractInternalLinks(params.text)
@@ -51,6 +54,11 @@ export const useExtractMessageAttachments = (params: { text: string }) => {
         (a, b) => isEqual(a, b),
     )
 
+    return { attachments }
+}
+
+export const useExtractExternalLinkAttachments = (params: { text: string }) => {
+    const attachments = useExtractExternalLinks(params.text)
     return { attachments }
 }
 

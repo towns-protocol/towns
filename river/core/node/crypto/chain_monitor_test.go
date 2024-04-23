@@ -18,10 +18,8 @@ import (
 )
 
 func TestChainMonitorBlocks(t *testing.T) {
-	var (
-		require     = require.New(t)
-		ctx, cancel = context.WithCancel(test.NewTestContext())
-	)
+	require := require.New(t)
+	ctx, cancel := test.NewTestContext()
 	defer cancel()
 
 	tc, err := crypto.NewBlockchainTestContext(ctx, 1)
@@ -49,10 +47,8 @@ func TestChainMonitorBlocks(t *testing.T) {
 }
 
 func TestChainMonitorEvents(t *testing.T) {
-	var (
-		require     = require.New(t)
-		ctx, cancel = context.WithCancel(test.NewTestContext())
-	)
+	require := require.New(t)
+	ctx, cancel := test.NewTestContext()
 	defer cancel()
 
 	tc, err := crypto.NewBlockchainTestContext(ctx, 1)

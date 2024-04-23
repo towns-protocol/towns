@@ -34,8 +34,7 @@ func setupTestWithMigration(
 	migrations embed.FS,
 	dbUrl string,
 ) (context.Context, *PostgresEventStore, func(), chan error) {
-	ctx := test.NewTestContext()
-	ctx, closer := context.WithCancel(ctx)
+	ctx, closer := test.NewTestContext()
 
 	instanceId := GenShortNanoid()
 	exitSignal := make(chan error, 1)
@@ -60,7 +59,9 @@ func setupTestWithMigration(
 }
 
 func testMainImpl(m *testing.M) int {
-	ctx := test.NewTestContext()
+	ctx, cancel := test.NewTestContext()
+	defer cancel()
+
 	dbCfg, dbSchemaName, closer, err := dbtestutils.StartDB(ctx)
 	if err != nil {
 		panic(err)
@@ -543,7 +544,8 @@ func TestPromoteBlockNoSuchStreamError(t *testing.T) {
 
 func TestExitIfSecondStorageCreated(t *testing.T) {
 	require := require.New(t)
-	ctx := test.NewTestContext()
+	ctx, cancel := test.NewTestContext()
+	defer cancel()
 
 	_, pgEventStore, closer, exitSignal := setupTest()
 	defer closer()

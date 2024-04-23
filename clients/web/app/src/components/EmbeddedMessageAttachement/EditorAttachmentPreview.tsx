@@ -2,10 +2,11 @@ import {
     Attachment,
     EmbeddedMessageAttachment,
     OTWMention,
+    UnfurledLinkAttachment,
     useUserLookupContext,
 } from 'use-towns-client'
 import React, { useCallback } from 'react'
-import { Box, IconButton, Paragraph } from '@ui'
+import { Box, IconButton, Paragraph, Stack, Text } from '@ui'
 import { RichTextPreview } from '@components/RichText/RichTextPreview'
 import { RichTextPreview as PlateRichTextPreview } from '@components/RichTextPlate/RichTextPreview'
 import { env } from 'utils'
@@ -14,12 +15,12 @@ import { MessageAttachments } from '@components/MessageAttachments/MessageAttach
 import { MessageAttachmentsContext } from '@components/MessageAttachments/MessageAttachmentsContext'
 import { FadeInBox } from '@components/Transitions'
 
-type Props = {
+type MessageAttachmentPreviewProps = {
     attachment: EmbeddedMessageAttachment
     onRemove: (attachmentId: string) => void
 }
 
-export const MessageAttachmentPreview = (props: Props) => {
+export const MessageAttachmentPreview = (props: MessageAttachmentPreviewProps) => {
     const { attachment, onRemove } = props
     const roomMessageEvent = attachment.roomMessageEvent
 
@@ -45,6 +46,19 @@ export const MessageAttachmentPreview = (props: Props) => {
                 mentions={roomMessageEvent.mentions}
                 onRemoveClick={onRemoveClick}
             />
+        </MessageAttachmentsContext.Provider>
+    )
+}
+
+type UnfurledLinkAttachmentPreviewProps = {
+    attachment: UnfurledLinkAttachment
+    onRemove: (attachmentId: string) => void
+}
+
+export const UnfurledLinkAttachmentPreview = (props: UnfurledLinkAttachmentPreviewProps) => {
+    return (
+        <MessageAttachmentsContext.Provider value={{ isMessageAttachementContext: true }}>
+            <UnfurledLinkPreview attachment={props.attachment} onRemove={props.onRemove} />
         </MessageAttachmentsContext.Provider>
     )
 }
@@ -92,6 +106,69 @@ export const EditorAttachmentPreview = (props: {
     )
 }
 
+const UnfurledLinkPreview = (props: {
+    attachment: UnfurledLinkAttachment
+    onRemove?: (attachmentId: string) => void
+}) => {
+    const { onRemove } = props
+    const { url, image, title, description, id } = props.attachment
+    const onRemoveClicked = useCallback(
+        (event: React.MouseEvent) => {
+            event.stopPropagation()
+            event.preventDefault()
+            onRemove?.(id)
+        },
+        [onRemove, id],
+    )
+
+    const onClick = useCallback(() => {
+        window.open(url, '_blank')
+    }, [url])
+
+    return (
+        <FadeInBox
+            hoverable
+            centerContent
+            width="250"
+            padding="md"
+            background="level3"
+            rounded="sm"
+            boxShadow="panel"
+            preset="fadeup"
+            position="relative"
+            cursor="pointer"
+            onClick={onClick}
+        >
+            <Stack gap="sm" alignContent="center" width="100%">
+                <Stack horizontal gap="sm" alignItems="center">
+                    {image?.url && <IconImage url={image.url} />}
+                    {title && (
+                        <Text truncate strong fontSize="sm">
+                            {title}
+                        </Text>
+                    )}
+                </Stack>
+                {description && (
+                    <Box hoverable color={{ hover: 'default', default: 'cta2' }}>
+                        <Text truncate fontSize="sm" fontWeight="medium">
+                            {description}
+                        </Text>
+                    </Box>
+                )}
+            </Stack>
+            <Box position="topRight" padding="xxs">
+                <IconButton
+                    icon="close"
+                    color="default"
+                    tooltip="Remove"
+                    tooltipOptions={{ immediate: true }}
+                    onClick={onRemoveClicked}
+                />
+            </Box>
+        </FadeInBox>
+    )
+}
+
 function getShortTextFromMarkdown(markdown: string, maxChars = 200): string {
     const plainText = markdown
         .replace(/!\[.*?\]\(.*?\)/g, '') // Remove images
@@ -111,4 +188,20 @@ function getShortTextFromMarkdown(markdown: string, maxChars = 200): string {
     }
 
     return plainText.substring(0, maxChars).trim()
+}
+
+const IconImage = ({ url }: { url: string }) => {
+    return (
+        <Box
+            shrink={false}
+            rounded="xs"
+            width="x2"
+            aspectRatio="1/1"
+            style={{
+                backgroundImage: `url(${url})`,
+                backgroundPosition: 'center',
+                backgroundSize: 'cover',
+            }}
+        />
+    )
 }

@@ -13,7 +13,8 @@ import (
 
 func TestServerShutdown(t *testing.T) {
 	require := require.New(t)
-	ctx := test.NewTestContext()
+	ctx, cancel := test.NewTestContext()
+	defer cancel()
 
 	stub, url, closer := createTestServerAndClient(ctx, 1, require)
 	defer func() {

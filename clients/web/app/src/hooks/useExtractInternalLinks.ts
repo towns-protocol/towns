@@ -1,6 +1,9 @@
-import { isEqual, uniqBy } from 'lodash'
+import { isEqual, uniq, uniqBy } from 'lodash'
 import { useMemo, useRef } from 'react'
 import { matchPath } from 'react-router'
+import { UnfurlData } from '@unfurl-worker/types'
+import { UnfurledLinkAttachment } from 'use-towns-client'
+import { useUnfurlContent } from 'api/lib/unfurl'
 import { PATHS } from 'routes'
 import { notUndefined } from 'ui/utils/utils'
 
@@ -25,6 +28,40 @@ export const useExtractInternalLinks = (text: string): EmbeddedMessageLink[] => 
     }, [links])
 }
 
+export const useExtractExternalLinks = (text: string): UnfurledLinkAttachment[] => {
+    const links = getExternalLinks(text)
+    const linksRef = useRef(links)
+    const cleanLinks = useMemo(() => {
+        const cleanLinks = uniq(links ?? [])
+        return isEqual(cleanLinks, linksRef.current)
+            ? linksRef.current
+            : (linksRef.current = cleanLinks)
+    }, [links])
+    const { data: unfurledContent, isError } = useUnfurlContent({
+        urlsArray: cleanLinks.map((l) => l.href),
+        enabled: cleanLinks.length > 0,
+    })
+
+    const unfurledLinks = useMemo(() => {
+        if (!unfurledContent || !Array.isArray(unfurledContent) || isError) {
+            return []
+        }
+
+        return unfurledContent.map((unfurled: UnfurlData) => {
+            return {
+                type: 'unfurled_link',
+                url: unfurled.url,
+                title: unfurled.title ?? '',
+                description: unfurled.description ?? '',
+                image: unfurled.image,
+                id: unfurled.url,
+            } satisfies UnfurledLinkAttachment
+        })
+    }, [unfurledContent, isError])
+
+    return unfurledLinks
+}
+
 function getTownsLinks(text: string) {
     const urls = Array.from(text.matchAll(/https:\/\/[^\s]+/g))
         .map((u) => {
@@ -32,6 +69,23 @@ function getTownsLinks(text: string) {
                 try {
                     const url = new URL(u[0])
                     return parseUrl(url)
+                } catch (e) {
+                    // ignore, trivial error
+                }
+            }
+        })
+        .filter(notUndefined)
+
+    return urls
+}
+
+function getExternalLinks(text: string) {
+    const urls = Array.from(text.matchAll(/https:\/\/[^\s]+/g))
+        .map((u) => {
+            if (u) {
+                try {
+                    const url = new URL(u[0])
+                    return url
                 } catch (e) {
                     // ignore, trivial error
                 }

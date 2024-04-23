@@ -1,7 +1,6 @@
 package crypto_test
 
 import (
-	"context"
 	"fmt"
 	"testing"
 	"time"
@@ -19,7 +18,7 @@ func TestNewTransactionPoolWithReplaceTx(t *testing.T) {
 		require        = require.New(t)
 		assert         = assert.New(t)
 		N              = 3
-		ctx, cancel    = context.WithCancel(test.NewTestContext())
+		ctx, cancel    = test.NewTestContext()
 		resubmitPolicy = crypto.NewTransactionPoolDeadlinePolicy(250 * time.Millisecond)
 		repricePolicy  = crypto.NewDefaultTransactionPricePolicy(0, 15_000_000_000, 0)
 		tc, errTC      = crypto.NewBlockchainTestContext(ctx, 1)

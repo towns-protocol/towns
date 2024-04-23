@@ -16,7 +16,8 @@ import (
 
 func TestNodeEvents(t *testing.T) {
 	require := require.New(t)
-	ctx := test.NewTestContext()
+	ctx, cancel := test.NewTestContext()
+	defer cancel()
 	tt, err := crypto.NewBlockchainTestContext(ctx, 1)
 	require.NoError(err)
 

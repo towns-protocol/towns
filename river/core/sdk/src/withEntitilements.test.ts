@@ -42,8 +42,6 @@ describe('withEntitlements', () => {
         const bobsContext = await makeUserContextFromWallet(bobsWallet)
         const bobProvider = new LocalhostWeb3Provider(baseConfig.rpcUrl, bobsWallet)
         await bobProvider.fundWallet()
-        const mintReceipt = await bobProvider.mintMockNFT(baseConfig.chainConfig)
-        log('mintReceipt', mintReceipt)
         const spaceDapp = createSpaceDapp(bobProvider, baseConfig.chainConfig)
 
         // create a user stream
@@ -78,6 +76,8 @@ describe('withEntitlements', () => {
                 ruleData: NoopRuleData,
             },
         }
+
+        log('transaction start bob creating space')
         const transaction = await spaceDapp.createSpace(
             {
                 spaceName: 'bobs-space-metadata',
@@ -88,7 +88,7 @@ describe('withEntitlements', () => {
             bobProvider.wallet,
         )
         const receipt = await transaction.wait()
-        log('receipt', receipt)
+        log('transaction receipt', receipt)
         expect(receipt.status).toEqual(1)
         const spaceAddress = spaceDapp.getSpaceAddress(receipt)
         expect(spaceAddress).toBeDefined()
@@ -144,13 +144,14 @@ describe('withEntitlements', () => {
 
         // first join the space on chain
         const aliceSpaceDapp = createSpaceDapp(aliceProvider, baseConfig.chainConfig)
+        log('transaction start Alice joining space')
         const transaction2 = await aliceSpaceDapp.joinSpace(
             spaceId,
             alicesWallet.address,
             aliceProvider.wallet,
         )
         const receipt2 = await transaction2.wait()
-        log('receipt for alice joining space', receipt2)
+        log('transaction receipt for alice joining space', receipt2)
 
         await expect(alice.joinStream(spaceId)).toResolve()
         await expect(alice.joinStream(channelId)).toResolve()

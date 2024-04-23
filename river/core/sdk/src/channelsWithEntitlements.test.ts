@@ -24,20 +24,19 @@ import {
 } from '@river-build/web3'
 import { makeBaseChainConfig } from './riverConfig'
 
-const log = dlog('csb:test')
+const log = dlog('csb:test:channelsWithEntitlements')
 const ETH_ADDRESS = '0xEeeeeEeeeEeEeeEeEeEeeEEEeeeeEeeeeeeeEEeE'
 
-describe('channelsTestsWithEntitlements', () => {
+describe('channelsWithEntitlements', () => {
     // Banning with entitlements — users need permission to ban other users.
     test('adminsCanRedactChannelMessages', async () => {
+        log('start adminsCanRedactChannelMessages')
         // set up the web3 provider and spacedap
         const baseConfig = makeBaseChainConfig()
         const bobsWallet = ethers.Wallet.createRandom()
         const bobsContext = await makeUserContextFromWallet(bobsWallet)
         const bobProvider = new LocalhostWeb3Provider(baseConfig.rpcUrl, bobsWallet)
         await bobProvider.fundWallet()
-        const mintReceipt = await bobProvider.mintMockNFT(baseConfig.chainConfig)
-        log('mintReceipt', mintReceipt)
         const spaceDapp = createSpaceDapp(bobProvider, baseConfig.chainConfig)
 
         // create a user stream
@@ -72,6 +71,7 @@ describe('channelsTestsWithEntitlements', () => {
                 ruleData: NoopRuleData,
             },
         }
+        log('transaction start bob creating space')
         const transaction = await spaceDapp.createSpace(
             {
                 spaceName: 'bobs-space-metadata',
@@ -82,7 +82,7 @@ describe('channelsTestsWithEntitlements', () => {
             bobProvider.wallet,
         )
         const receipt = await transaction.wait()
-        log('receipt', receipt)
+        log('transaction receipt', receipt)
         expect(receipt.status).toEqual(1)
         const spaceAddress = spaceDapp.getSpaceAddress(receipt)
         expect(spaceAddress).toBeDefined()
@@ -135,13 +135,14 @@ describe('channelsTestsWithEntitlements', () => {
 
         // first join the space on chain
         const aliceSpaceDapp = createSpaceDapp(aliceProvider, baseConfig.chainConfig)
+        log('transaction start alice joining space')
         const transaction2 = await aliceSpaceDapp.joinSpace(
             spaceId,
             alicesWallet.address,
             aliceProvider.wallet,
         )
         const receipt2 = await transaction2.wait()
-        log('receipt for alice joining space', receipt2)
+        log('transaction receipt for alice joining space', receipt2)
 
         await expect(alice.joinStream(spaceId)).toResolve()
         await expect(alice.joinStream(channelId)).toResolve()

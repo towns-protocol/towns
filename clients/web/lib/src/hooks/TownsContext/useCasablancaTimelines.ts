@@ -938,6 +938,17 @@ function toAttachment(
                   } satisfies EmbeddedMessageAttachment)
                 : undefined
         }
+        case 'unfurledUrl': {
+            const content = attachment.content.value
+            return {
+                type: 'unfurled_link',
+                url: content.url,
+                title: content.title,
+                description: content.description,
+                image: content.image,
+                id,
+            }
+        }
         default:
             return undefined
     }

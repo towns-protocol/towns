@@ -5,7 +5,7 @@ import { axiosClient } from '../apiClient'
 export function getUnfurlContent(urlsArray: string[]) {
     const UNFURL_SERVER_URL = env.VITE_UNFURL_SERVER_URL
     const encodedUrls = urlsArray.map((url) => `&url=${encodeURIComponent(url)}`)
-    return axiosClient.get(`${UNFURL_SERVER_URL}?${encodedUrls}`)
+    return axiosClient.get(`${UNFURL_SERVER_URL}?${encodedUrls.join('')}`)
 }
 
 export function useUnfurlContent({

@@ -31,7 +31,7 @@ type testParams struct {
 }
 
 func makeTestStreamParams(p testParams) (context.Context, *testContext) {
-	ctx := test.NewTestContext()
+	ctx, cancel := test.NewTestContext()
 	btc, err := crypto.NewBlockchainTestContext(ctx, 1)
 	if err != nil {
 		panic(err)
@@ -108,6 +108,7 @@ func makeTestStreamParams(p testParams) (context.Context, *testContext) {
 				if schemaDeleter != nil {
 					schemaDeleter()
 				}
+				cancel()
 			},
 		}
 }

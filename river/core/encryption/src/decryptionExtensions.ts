@@ -287,6 +287,7 @@ export abstract class BaseDecryptionExtensions {
                 { streamId, waitUntil: new Date(Date.now() + 100) },
                 (x) => x.waitUntil,
             )
+            this.checkStartTicking()
         }
     }
 

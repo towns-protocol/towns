@@ -69,7 +69,7 @@ func newServiceTester(numNodes int, require *require.Assertions) *serviceTester 
 		nodes:             make([]*testNodeRecord, numNodes),
 		replicationFactor: 1,
 	}
-	st.ctx, st.cancel = context.WithCancel(test.NewTestContext())
+	st.ctx, st.cancel = test.NewTestContext()
 
 	btc, err := crypto.NewBlockchainTestContext(st.ctx, numNodes)
 	require.NoError(err)

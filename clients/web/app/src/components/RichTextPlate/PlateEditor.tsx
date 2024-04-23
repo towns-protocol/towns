@@ -8,6 +8,7 @@ import {
     OTWMention,
     RoomMember,
     SendTextMessageOptions,
+    UnfurledLinkAttachment,
     useChannelMembers,
     useNetworkStatus,
 } from 'use-towns-client'
@@ -24,6 +25,7 @@ import { getPrettyDisplayName } from 'utils/getPrettyDisplayName'
 import {
     EditorAttachmentPreview,
     MessageAttachmentPreview,
+    UnfurledLinkAttachmentPreview,
 } from '@components/EmbeddedMessageAttachement/EditorAttachmentPreview'
 import { useInlineReplyAttchmentPreview } from '@components/EmbeddedMessageAttachement/hooks/useInlineReplyAttchmentPreview'
 import { useInputStore } from 'store/store'
@@ -45,6 +47,7 @@ import { OnFocusPlugin } from './plugins/OnFocusPlugin'
 import { PasteFilePlugin } from './components/PasteFilePlugin'
 import { CaptureTownsLinkPlugin } from './components/CaptureTownsLinkPlugin'
 import { OfflineIndicator } from './components/OfflineIndicator'
+import { CaptureExternalLinkPlugin } from './components/CaptureExternalLinkPlugin'
 
 type Props = {
     onSend?: (value: string, options: SendTextMessageOptions | undefined) => void
@@ -121,6 +124,7 @@ const PlateEditorWithoutBoundary = ({
     const [embeddedMessageAttachments, setEmbeddedMessageAttachments] = useState<
         EmbeddedMessageAttachment[]
     >([])
+    const [unfurledLinkAttachments, setUnfurledAttachments] = useState<UnfurledLinkAttachment[]>([])
     const disabled = isOffline || !editable || isSendingMessage
     const hasInlinePreview = !!inlineReplyPreview
 
@@ -177,7 +181,7 @@ const PlateEditorWithoutBoundary = ({
         [setFocused],
     )
 
-    const onRemoveAttachment = useCallback(
+    const onRemoveMessageAttachment = useCallback(
         (attachmentId: string) => {
             setEmbeddedMessageAttachments(
                 embeddedMessageAttachments.filter((attachment) => attachment.id !== attachmentId),
@@ -186,8 +190,21 @@ const PlateEditorWithoutBoundary = ({
         [embeddedMessageAttachments],
     )
 
+    const onRemoveUnfurledLinkAttachment = useCallback(
+        (attachmentId: string) => {
+            setUnfurledAttachments(
+                unfurledLinkAttachments.filter((attachment) => attachment.id !== attachmentId),
+            )
+        },
+        [unfurledLinkAttachments],
+    )
+
     const onMessageLinksUpdated = useCallback((links: EmbeddedMessageAttachment[]) => {
         setEmbeddedMessageAttachments(links)
+    }, [])
+
+    const onUnfurledLinksUpdated = useCallback((links: UnfurledLinkAttachment[]) => {
+        setUnfurledAttachments(links)
     }, [])
 
     const onChange = useCallback(() => {
@@ -245,6 +262,7 @@ const PlateEditorWithoutBoundary = ({
 
             const attachments = files.length > 0 ? (await uploadFiles?.()) ?? [] : []
             attachments.push(...embeddedMessageAttachments)
+            attachments.push(...unfurledLinkAttachments)
 
             const options: SendTextMessageOptions = { messageType: MessageType.Text }
             if (mentions.length > 0) {
@@ -260,6 +278,7 @@ const PlateEditorWithoutBoundary = ({
             files.length,
             uploadFiles,
             embeddedMessageAttachments,
+            unfurledLinkAttachments,
             onSend,
             isUploadingFiles,
             resetEditorAfterSend,
@@ -310,7 +329,7 @@ const PlateEditorWithoutBoundary = ({
                         <MessageAttachmentPreview
                             key={attachment.id}
                             attachment={attachment}
-                            onRemove={onRemoveAttachment}
+                            onRemove={onRemoveMessageAttachment}
                         />
                     ))}
                     {inlineReplyPreview ? (
@@ -367,6 +386,7 @@ const PlateEditorWithoutBoundary = ({
                                 onFocusChange={onFocusChange}
                             />
                             <CaptureTownsLinkPlugin onUpdate={onMessageLinksUpdated} />
+                            <CaptureExternalLinkPlugin onUpdate={onUnfurledLinksUpdated} />
                             <EmojiPlugin />
                             <MentionCombobox<TUserWithChannel>
                                 id={ComboboxTypes.userMention}
@@ -387,6 +407,17 @@ const PlateEditorWithoutBoundary = ({
                             </Box>
                         )}
                     </Stack>
+                    {unfurledLinkAttachments.length > 0 && (
+                        <Box horizontal gap padding flexWrap="wrap" width="100%">
+                            {unfurledLinkAttachments.map((attachment) => (
+                                <UnfurledLinkAttachmentPreview
+                                    key={attachment.id}
+                                    attachment={attachment}
+                                    onRemove={onRemoveUnfurledLinkAttachment}
+                                />
+                            ))}
+                        </Box>
+                    )}
                     <Box paddingX="md" paddingBottom="sm">
                         <PasteFilePlugin editableContainerRef={editableContainerRef} />
                     </Box>

@@ -245,7 +245,8 @@ func createChannel(
 
 func testMethods(t *testing.T, client protocolconnect.StreamServiceClient, url string) {
 	require := require.New(t)
-	ctx := test.NewTestContext()
+	ctx, cancel := test.NewTestContext()
+	defer cancel()
 
 	wallet1, _ := crypto.NewWallet(ctx)
 	wallet2, _ := crypto.NewWallet(ctx)
@@ -438,7 +439,8 @@ func testMethods(t *testing.T, client protocolconnect.StreamServiceClient, url s
 
 func testRiverDeviceId(t *testing.T, client protocolconnect.StreamServiceClient, url string) {
 	require := require.New(t)
-	ctx := test.NewTestContext()
+	ctx, cancel := test.NewTestContext()
+	defer cancel()
 
 	wallet, _ := crypto.NewWallet(ctx)
 	deviceWallet, _ := crypto.NewWallet(ctx)
@@ -507,7 +509,8 @@ func testSyncStreams(t *testing.T, client protocolconnect.StreamServiceClient, u
 	Arrange
 	*/
 	// create the test client and server
-	ctx := test.NewTestContext()
+	ctx, cancel := test.NewTestContext()
+	defer cancel()
 
 	// create the streams for a user
 	wallet, _ := crypto.NewWallet(ctx)
@@ -582,7 +585,8 @@ func testAddStreamsToSync(t *testing.T, client protocolconnect.StreamServiceClie
 	Arrange
 	*/
 	// create the test client and server
-	ctx := test.NewTestContext()
+	ctx, cancel := test.NewTestContext()
+	defer cancel()
 	aliceClient := client
 
 	// create alice's wallet and streams
@@ -684,7 +688,8 @@ func testRemoveStreamsFromSync(t *testing.T, client protocolconnect.StreamServic
 	Arrange
 	*/
 	// create the test client and server
-	ctx := test.NewTestContext()
+	ctx, cancel := test.NewTestContext()
+	defer cancel()
 	log := dlog.FromCtx(ctx)
 	aliceClient := client
 
@@ -835,7 +840,9 @@ OuterLoop:
 type testFunc func(*testing.T, protocolconnect.StreamServiceClient, string)
 
 func run(t *testing.T, numNodes int, tf testFunc) {
-	client, url, closer := createTestServerAndClient(test.NewTestContext(), numNodes, require.New(t))
+	ctx, cancel := test.NewTestContext()
+	defer cancel()
+	client, url, closer := createTestServerAndClient(ctx, numNodes, require.New(t))
 	defer closer()
 	tf(t, client, url)
 }
@@ -907,7 +914,8 @@ func TestForwardingWithRetries(t *testing.T) {
 	}
 	for testName, tc := range tests {
 		t.Run(testName, func(t *testing.T) {
-			ctx := test.NewTestContext()
+			ctx, cancel := test.NewTestContext()
+			defer cancel()
 			numNodes := 5
 			replicationFactor := 3
 			serviceTester := newServiceTesterWithReplication(numNodes, replicationFactor, require.New(t))

@@ -8,7 +8,8 @@ import (
 )
 
 func TestSign(t *testing.T) {
-	ctx := test.NewTestContext()
+	ctx, cancel := test.NewTestContext()
+	defer cancel()
 
 	wallet, err := NewWallet(ctx)
 	if err != nil {

@@ -18,7 +18,8 @@ import (
 )
 
 func TestBlockchain(t *testing.T) {
-	ctx := test.NewTestContext()
+	ctx, cancel := test.NewTestContext()
+	defer cancel()
 	require := require.New(t)
 	assert := assert.New(t)
 

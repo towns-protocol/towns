@@ -4,11 +4,13 @@ import {
     ChunkedMediaAttachment,
     EmbeddedMessageAttachment,
     MessageType,
+    UnfurledLinkAttachment,
 } from 'use-towns-client'
 import { ChunkedFile } from '@components/ChunkedFile/ChunkedFile'
 import { EmbeddedMessage } from '@components/EmbeddedMessageAttachement/EmbeddedMessage'
-import { Stack } from '@ui'
+import { Box, Stack, Text } from '@ui'
 import { isMediaMimeType } from 'utils/isMediaMimeType'
+import { RatioedBackgroundImage } from '@components/RatioedBackgroundImage'
 import { MessageAttachmentsContext } from './MessageAttachmentsContext'
 
 const emptyArray: never[] = []
@@ -30,7 +32,7 @@ export const MessageAttachments = (props: {
 
     const mediaAttachments = attachments.filter(isRichMediaAttachment)
     const fileAttachments = attachments.filter(isRegularFileAttachment)
-
+    const unfurledLinkAttachments = attachments.filter(isUnfurledLinkAttachment)
     const messageAttachments = isMessageAttachementContext
         ? emptyArray
         : attachments?.filter(isEmbeddedMessageAttachment)
@@ -101,6 +103,13 @@ export const MessageAttachments = (props: {
                     ))}
                 </Stack>
             )}
+            {unfurledLinkAttachments.length > 0 && (
+                <Box horizontal gap="sm" flexWrap="wrap" width="100%">
+                    {unfurledLinkAttachments.map((attachment) => (
+                        <UnfurledLinkAttachmentContainer key={attachment.id} {...attachment} />
+                    ))}
+                </Box>
+            )}
         </>
     )
 }
@@ -117,6 +126,10 @@ export function isRichMediaAttachment(
 
 function isRegularFileAttachment(attachment: Attachment): attachment is ChunkedMediaAttachment {
     return attachment.type === 'chunked_media' && !isMediaMimeType(attachment.info.mimetype)
+}
+
+function isUnfurledLinkAttachment(attachment: Attachment): attachment is UnfurledLinkAttachment {
+    return attachment.type === 'unfurled_link'
 }
 
 export function isEmbeddedMessageAttachment(
@@ -152,5 +165,48 @@ const EmbeddedMessageContainer = (props: {
                 />
             }
         />
+    )
+}
+
+const UnfurledLinkAttachmentContainer = (props: UnfurledLinkAttachment) => {
+    return (
+        <Box
+            as="a"
+            href={props.url}
+            rel="noopener noreferrer"
+            target="_blank"
+            alignSelf="start"
+            background="level3"
+            padding="md"
+            borderRadius="sm"
+            gap="md"
+            maxWidth="300"
+        >
+            {props.image?.url && (
+                <RatioedBackgroundImage
+                    alt={props.title}
+                    url={props.image.url}
+                    width={props.image.width}
+                    height={props.image.height}
+                />
+            )}
+            <Box>
+                <Text size="md">{props.title}</Text>
+            </Box>
+            <Text size="sm" color="gray2">
+                {props.description}
+            </Text>
+            <Box hoverable color={{ hover: 'default', default: 'cta2' }} maxWidth="100%">
+                <Text
+                    fontWeight="medium"
+                    size="sm"
+                    style={{
+                        overflowWrap: 'break-word',
+                    }}
+                >
+                    {props.url}
+                </Text>
+            </Box>
+        </Box>
     )
 }
