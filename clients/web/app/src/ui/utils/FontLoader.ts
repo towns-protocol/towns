@@ -93,7 +93,7 @@ export const fontSettings: Required<FontFamilySetting>[] = [
             weight: 'normal',
             style: 'normal',
         },
-        targets: ['p', 'ul', 'ol', `.${FontFamilyClass.BodyFont}`],
+        targets: ['p', 'ul', 'ol', 'input', `.${FontFamilyClass.BodyFont}`],
     },
     {
         ...generatedFontFamilySettings[FontFamily.BodyFont],
