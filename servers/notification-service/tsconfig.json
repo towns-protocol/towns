@@ -9,7 +9,7 @@
         "esModuleInterop": true,
         "forceConsistentCasingInFileNames": true,
         "incremental": false,
-        "isolatedModules": false,
+        "isolatedModules": true,
         "lib": ["esnext", "dom"],
         "module": "esnext",
         "moduleResolution": "node",

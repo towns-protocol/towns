@@ -14,10 +14,11 @@
         "db:create-migration:local": "dotenv -e .env.local -- yarn prisma migrate dev --name",
         "db:studio": "dotenv -e .env.local -- yarn prisma studio",
         "dev": "yarn db:local && tsc --watch & yarn my-node --env-file .env.local --watch dist/server.js",
+        "my-jest": "NODE_ENV=test NODE_TLS_REJECT_UNAUTHORIZED=0 $(yarn bin jest) --config jest.config.ts",
         "my-node": "node --experimental-specifier-resolution=node --loader ts-node/esm",
         "start": "node --experimental-specifier-resolution=node --loader ts-node/esm dist/server.js",
         "start:local": "yarn my-node --env-file .env.local dist/server.js",
-        "test": "jest",
+        "test": "yarn my-jest",
         "watch": "tsc --watch",
         "lint": "eslint . --max-warnings=0",
         "lint:fix": "yarn lint --fix"
