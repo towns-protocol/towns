@@ -105,7 +105,7 @@ locals {
   transient_no = local.is_transient ? (tonumber(split("-", terraform.workspace)[1])) : 0
 
   transient_river_node_urls = [
-    for i in range(0, local.num_nodes) : "https://river${i + 1}-${local.transient_no}.nodes.transient.towns.com"
+    for i in range(0, local.num_nodes) : "https://river-nlb-${local.transient_no}.nodes.transient.towns.com:${10000 + i}"
   ]
 
   river_node_urls = local.is_transient ? local.transient_river_node_urls : local.regular_river_node_urls

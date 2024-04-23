@@ -14,8 +14,6 @@ locals {
   service_name        = "river-node"
   global_remote_state = module.global_constants.global_remote_state.outputs
 
-  cloudflare_api_token_secret_arn = local.global_remote_state.cloudflare_api_token_secret.arn
-
   shared_credentials = local.global_remote_state.river_node_credentials_secret[var.node_number - 1]
 
   river_node_tags = merge(
@@ -31,15 +29,6 @@ locals {
     module.global_constants.tags,
     {
       Service     = "dd-agent"
-      Node_Number = var.node_number
-      Node_Name   = local.node_name
-    }
-  )
-
-  service_discovery_tags = merge(
-    module.global_constants.tags,
-    {
-      Service     = "service-discovery"
       Node_Number = var.node_number
       Node_Name   = local.node_name
     }
@@ -246,19 +235,6 @@ resource "aws_cloudwatch_log_subscription_filter" "dd_agent_log_group_filter" {
   destination_arn = module.global_constants.datadug_forwarder_stack_lambda.arn
 }
 
-resource "aws_cloudwatch_log_group" "service_discovery_log_group" {
-  name = "/ecs/service-discovery/${local.node_name}"
-
-  tags = local.service_discovery_tags
-}
-
-resource "aws_cloudwatch_log_subscription_filter" "service_discovery_log_group_filter" {
-  name            = "${local.node_name}-service-discovery-log-group"
-  log_group_name  = aws_cloudwatch_log_group.service_discovery_log_group.name
-  filter_pattern  = ""
-  destination_arn = module.global_constants.datadug_forwarder_stack_lambda.arn
-}
-
 resource "aws_iam_role_policy" "river_node_credentials" {
   name = "${local.node_name}-node-credentials"
   role = aws_iam_role.ecs_task_execution_role.id
@@ -278,7 +254,6 @@ resource "aws_iam_role_policy" "river_node_credentials" {
           "${local.global_remote_state.river_global_dd_agent_api_key.arn}",
           "${local.global_remote_state.base_chain_network_url_secret.arn}",
           "${local.global_remote_state.river_chain_network_url_secret.arn}",
-          "${local.global_remote_state.cloudflare_api_token_secret.arn}",
           "${var.river_node_ssl_cert_secret_arn}"
         ]
       },
@@ -588,45 +563,6 @@ resource "aws_ecs_task_definition" "river-fargate" {
           "awslogs-stream-prefix" = "dd-agent-${local.node_name}"
         }
       }
-    },
-    {
-      name      = "service-discovery"
-      image     = "${local.global_remote_state.public_ecr.repository_url_map["hnt-ecs-service-discovery"]}:latest"
-      essential = false
-
-      # TODO: set cpu and memory for this container.
-
-      secrets = [{
-        name      = "CLOUDFLARE_API_TOKEN"
-        valueFrom = local.cloudflare_api_token_secret_arn
-      }]
-
-      environment = [
-        {
-          name  = "CLUSTER_NAME",
-          value = var.ecs_cluster.name,
-        },
-        {
-          name  = "CLOUDFLARE_ZONE_ID",
-          value = data.cloudflare_zone.zone.id
-        },
-        {
-          name = "NODE_NAME",
-          # TODO: change this env var from NODE_NAME into DNS_NAME
-          value = var.dns_name
-        }
-        // TODO: Run a healthcheck on the node first,
-        // and only then register it with Cloudflare.
-      ]
-
-      logConfiguration = {
-        logDriver = "awslogs"
-        options = {
-          "awslogs-group"         = aws_cloudwatch_log_group.service_discovery_log_group.name
-          "awslogs-region"        = "us-east-1"
-          "awslogs-stream-prefix" = "service-discovery-${local.node_name}"
-        }
-      }
     }
   ])
 
@@ -684,29 +620,15 @@ resource "aws_ecs_service" "river-ecs-service" {
   tags = local.river_node_tags
 }
 
-resource "cloudflare_record" "public_ip_a_record" {
-  zone_id = data.cloudflare_zone.zone.id
-  name    = var.dns_name
-  value   = "192.0.2.0" # this is a placeholder value. it will be updated by the service discovery container. we need this, so that terraform can remember to destroy the record when a transient environment is destroyed.
-  type    = "A"
-  ttl     = 60
-  lifecycle {
-    ignore_changes = all
-  }
-}
-
 # Only create this DNS record for non-transient environments.
-# Since transient environments reuse the same DNS record.
+# Since transient environments reuse the same DNS record that is created in the nlb module.
 resource "cloudflare_record" "nlb_cname_dns_record" {
   count   = var.is_transient == true ? 0 : 1
   zone_id = data.cloudflare_zone.zone.id
-  # TODO: start with this secondary and redundant DNS record before removing the previous one.
-  # This is necessary for the current phase, where we're just creating and testing infrastructure components,
-  # without replacing the old ones.
-  name  = "nlb-${var.dns_name}"
-  value = var.lb.lb_dns_name
-  type  = "CNAME"
-  ttl   = 60
+  name    = var.dns_name
+  value   = var.lb.lb_dns_name
+  type    = "CNAME"
+  ttl     = 60
   lifecycle {
     ignore_changes = all
   }
