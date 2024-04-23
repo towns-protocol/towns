@@ -7,30 +7,19 @@ import { makeUserContextFromWallet, makeTestClient, getDynamicPricingModule } fr
 import { makeDefaultChannelStreamId, makeSpaceStreamId } from './id'
 import { ethers, Wallet } from 'ethers'
 import { Client } from './client'
-import { jest } from '@jest/globals'
-import { MembershipStruct, NoopRuleData } from '@river-build/web3'
+import {
+    LocalhostWeb3Provider,
+    MembershipStruct,
+    NoopRuleData,
+    Permission,
+    createSpaceDapp,
+} from '@river-build/web3'
 import { SignerContext } from './signerContext'
 import { makeBaseChainConfig } from './riverConfig'
 import { dlog } from '@river-build/dlog'
 
 const log = dlog('csb:test:mediaWithEntitlements')
 
-// This is a temporary hack because importing viem via SpaceDapp causes a jest error
-// specifically the code in ConvertersEntitlements.ts - decodeAbiParameters and encodeAbiParameters functions have an import that can't be found
-// Need to use the new space dapp in an actual browser to see if this is a problem there too before digging in further
-jest.unstable_mockModule('viem', async () => {
-    return {
-        BaseError: class extends Error {},
-        hexToString: jest.fn(),
-        encodeFunctionData: jest.fn(),
-        decodeAbiParameters: jest.fn(),
-        encodeAbiParameters: jest.fn(),
-        parseAbiParameters: jest.fn(),
-        zeroAddress: `0x${'0'.repeat(40)}`,
-    }
-})
-
-const { LocalhostWeb3Provider, Permission, createSpaceDapp } = await import('@river-build/web3')
 const ETH_ADDRESS = '0xEeeeeEeeeEeEeeEeEeEeeEEEeeeeEeeeeeeeEEeE'
 
 describe('mediaWithEntitlements', () => {
