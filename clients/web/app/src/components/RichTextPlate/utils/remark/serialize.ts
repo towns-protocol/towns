@@ -23,7 +23,7 @@ const isLeafNode = (node: BlockType | LeafType): node is LeafType => {
 
 const VOID_ELEMENTS: Array<keyof NodeTypes> = ['thematic_break', 'image']
 
-const BREAK_TAG = '\n'
+const BREAK_TAG = '<br>'
 
 export default function serialize(
     chunk: BlockType | LeafType,
