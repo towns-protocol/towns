@@ -6,6 +6,7 @@ interface Options {
     listDepth?: number
     olStartIndex?: number
     ignoreParagraphNewline?: boolean
+    leafIndex?: number
 }
 
 const MENTION_TYPES = [
@@ -33,6 +34,7 @@ export default function serialize(
         nodeTypes: userNodeTypes = defaultNodeTypes,
         ignoreParagraphNewline = false,
         listDepth = 0,
+        leafIndex = undefined,
     } = opts
 
     let text = (chunk as LeafType).text || ''
@@ -58,7 +60,7 @@ export default function serialize(
 
     if (!isLeafNode(chunk)) {
         children = chunk.children
-            .map((c: BlockType | LeafType) => {
+            .map((c: BlockType | LeafType, index) => {
                 const isList = !isLeafNode(c)
                     ? (LIST_TYPES as string[]).includes(c.type || '')
                     : false
@@ -105,6 +107,7 @@ export default function serialize(
                             ? listDepth + 1
                             : listDepth,
                         olStartIndex: (chunk as BlockType).start ?? 1,
+                        leafIndex: index,
                     },
                 )
             })
@@ -116,7 +119,8 @@ export default function serialize(
         !ignoreParagraphNewline &&
         (text === '' || text === '\n') &&
         chunk.parentType === nodeTypes.paragraph &&
-        !MENTION_TYPES.includes(type)
+        !MENTION_TYPES.includes(type) &&
+        leafIndex !== 0
     ) {
         type = nodeTypes.paragraph
         children = BREAK_TAG

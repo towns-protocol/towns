@@ -173,7 +173,6 @@ export const Combobox = <T extends TMentionComboboxTypes>({
     const combobox = useComboboxControls()
     const activeId = useComboboxSelectors.activeId()
     const query = (useComboboxSelectors.text() || '').replace(/[^a-zA-Z0-9-_\s]/gi, '')
-    const targetRange = useComboboxSelectors.targetRange()
     const selectionDefined = useEditorSelector((editor) => !!editor.selection, [])
     const editorId = usePlateSelectors().id()
     const editor = useEditorRef()
@@ -206,7 +205,7 @@ export const Combobox = <T extends TMentionComboboxTypes>({
             comboboxActions.items(emojis)
             comboboxActions.filteredItems(emojis)
         })
-    }, [query, activeId, maxSuggestions, targetRange])
+    }, [query, activeId, maxSuggestions])
 
     if (
         !combobox ||
