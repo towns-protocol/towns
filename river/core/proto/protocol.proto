@@ -158,6 +158,7 @@ message MemberPayload {
             WrappedEncryptedData username = 5;
             WrappedEncryptedData display_name = 6;
             bytes ens_address = 7;
+            Nft nft = 8;
         }
         
         repeated Member joined = 1;
@@ -183,6 +184,12 @@ message MemberPayload {
         repeated string session_ids = 3; 
     }
 
+    message Nft {
+        int32 chain_id = 1;
+        bytes contract_address = 2;
+        bytes token_id = 3;
+    }
+
     oneof content {
         Membership membership = 1;
         KeySolicitation key_solicitation = 2;
@@ -190,6 +197,7 @@ message MemberPayload {
         EncryptedData username = 4;
         EncryptedData display_name = 5;
         bytes ens_address = 6;
+        Nft nft = 7;
     }
 }
 

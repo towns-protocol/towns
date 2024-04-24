@@ -46,7 +46,13 @@ func createStore(
 		return storage.NewMemStorage(), nil
 	} else {
 		schema := storage.DbSchemaNameFromAddress(address)
-		store, err := storage.NewPostgresEventStore(ctx, dbConfig, schema, instanceId, exitSignal)
+
+		pool, err := storage.CreateAndValidatePgxPool(ctx, dbConfig, schema)
+		if err != nil {
+			return nil, err
+		}
+
+		store, err := storage.NewPostgresEventStore(ctx, pool, instanceId, exitSignal)
 		if err != nil {
 			return nil, err
 		}

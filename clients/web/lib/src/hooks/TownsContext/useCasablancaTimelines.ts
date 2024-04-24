@@ -66,6 +66,7 @@ import {
     EventStatus,
     EmbeddedMessageAttachment,
     SpaceEnsAddressEvent,
+    SpaceNftEvent,
 } from '../../types/timeline-types'
 import { useCallback } from 'react'
 import { bin_toHexString, check } from '@river-build/dlog'
@@ -512,6 +513,16 @@ function toTownsContent_MemberPayload(
                     userId: message.creatorUserId,
                     ensAddress: value.content.value,
                 } satisfies SpaceEnsAddressEvent,
+            }
+        case 'nft':
+            return {
+                content: {
+                    kind: ZTEvent.SpaceNft,
+                    userId: message.creatorUserId,
+                    contractAddress: bin_toHexString(value.content.value.contractAddress),
+                    tokenId: bin_toHexString(value.content.value.tokenId),
+                    chainId: value.content.value.chainId,
+                } satisfies SpaceNftEvent,
             }
         case undefined:
             return { error: `Undefined payload case: ${description}` }

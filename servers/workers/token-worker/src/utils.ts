@@ -3,9 +3,11 @@ import {
     ContractMetadata,
     GetContractMetadataAlchemyResponse,
     GetContractsForOwnerAlchemyResponse,
+    GetNftMetadataResponse,
 } from './types'
 import { throwCustomError } from './router'
 import { createPublicClient, http } from 'viem'
+import { GetOwnersForNftResponse } from 'alchemy-sdk'
 
 export const supportedNftNetworks = [
     { vChain: mainnet, alchemyIdentifier: 'eth-mainnet' },
@@ -56,7 +58,7 @@ export const fetchAlchemyNfts = async (
     wallet: string,
     pageKey: string,
 ): Promise<GetContractsForOwnerAlchemyResponse> => {
-    let url = `${rpcUrl}/getContractsForOwner?owner=${wallet}`
+    let url = `${rpcUrl}/getContractsForOwner?owner=${wallet}&withMetadata=true`
 
     if (pageKey) {
         url = url.concat(`&pageKey=${pageKey}`)
@@ -88,6 +90,38 @@ export const fetchAlchemyContractMetadata = async (
     contractAddress: string,
 ): Promise<GetContractMetadataAlchemyResponse> => {
     const response = await fetch(`${rpcUrl}/getContractMetadata?contractAddress=${contractAddress}`)
+    if (!response.ok) {
+        throwCustomError(
+            (await response.text?.()) || 'could not fetch from alchemy',
+            response.status,
+        )
+    }
+    return response.json()
+}
+
+export const fetchAlchemyNftOwners = async (
+    rpcUrl: string,
+    contractAddress: string,
+    tokenId: string,
+): Promise<GetOwnersForNftResponse> => {
+    const url = `${rpcUrl}/getOwnersForNFT?contractAddress=${contractAddress}&tokenId=${tokenId}`
+    const response = await fetch(url)
+    if (!response.ok) {
+        throwCustomError(
+            (await response.text?.()) || 'could not fetch from alchemy',
+            response.status,
+        )
+    }
+    return response.json()
+}
+
+export const fetchAlchemyNftMetadata = async (
+    rpcUrl: string,
+    contractAddress: string,
+    tokenId: string,
+): Promise<GetNftMetadataResponse> => {
+    const url = `${rpcUrl}/getNFTMetadata?contractAddress=${contractAddress}&tokenId=${tokenId}`
+    const response = await fetch(url)
     if (!response.ok) {
         throwCustomError(
             (await response.text?.()) || 'could not fetch from alchemy',

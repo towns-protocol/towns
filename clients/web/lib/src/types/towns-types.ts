@@ -107,6 +107,13 @@ export interface RoomMember {
     displayNameEncrypted: boolean
     avatarUrl?: string
     ensAddress?: string
+    nft?: Nft
+}
+
+export interface Nft {
+    chainId: number
+    contractAddress: string
+    tokenId: string
 }
 
 export interface UserIdToMember {

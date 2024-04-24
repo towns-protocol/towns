@@ -1,4 +1,4 @@
-import { RoomMember } from './towns-types'
+import { Nft, RoomMember } from './towns-types'
 
 export type LookupUserMap = { [key: string]: LookupUser }
 
@@ -19,6 +19,7 @@ export type LookupUser = {
     avatarUrl?: string
     ensAddress?: string
     memberOf?: MemberOf
+    nft?: Nft
 }
 
 export type MemberOf = {

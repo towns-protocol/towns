@@ -14,6 +14,7 @@ import { getCollectionMetadataAcrossNetworks } from './handlers/alchemy/getColle
 import { getTokenType } from './handlers/getTokenType'
 import { getTokenBalance } from './handlers/getTokenBalance'
 import { TokenSchema, WalletList, tokenSchema, walletListSchema } from './requestSchemas'
+import { getNftMetadata } from './handlers/alchemy/getNftMetadata'
 
 // enum for supported providers
 // currently only alchemy is supported
@@ -128,6 +129,44 @@ router
         try {
             const tokenType = getTokenType(address, env.ALCHEMY_API_KEY)
             return new Response(JSON.stringify({ data: tokenType }), { status: 200, headers })
+        } catch (error) {
+            return new Response(JSON.stringify({ error }), { status: 500, headers })
+        }
+    })
+
+    /**
+     * getNftMetadata
+     * get metadata for a specific token id, including owners
+     *
+     * requires a contractAddress query param
+     * requires a tokenId query param
+     * requires a chainId query param
+     *
+     * example
+     *  /api/getNftMetadata?contractAddress=0x1&tokenId=1&chainId=1
+     */
+    .get(`/api/getNftMetadata`, async (request: TokenProviderRequest, env: Env) => {
+        const contractAddress = request.query?.contractAddress
+        const tokenId = request.query?.tokenId
+        const chainId = parseInt(request.query?.chainId ?? '')
+        const headers = withCorsHeaders(request, env.ENVIRONMENT)
+        if (!contractAddress) {
+            return new Response('missing contract address', { status: 400 })
+        }
+        if (!tokenId) {
+            return new Response('missing token id', { status: 400 })
+        }
+        if (isNaN(chainId) || chainId < 1) {
+            return new Response('missing chain id', { status: 400 })
+        }
+        try {
+            const metadata = await getNftMetadata(
+                chainId,
+                contractAddress,
+                tokenId,
+                env.ALCHEMY_API_KEY,
+            )
+            return new Response(JSON.stringify(metadata), { status: 200, headers })
         } catch (error) {
             return new Response(JSON.stringify({ error }), { status: 500, headers })
         }

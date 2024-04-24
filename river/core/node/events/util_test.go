@@ -54,10 +54,14 @@ func makeTestStreamParams(p testParams) (context.Context, *testContext) {
 			panic(err)
 		}
 
+		pool, err := storage.CreateAndValidatePgxPool(ctx, cfg, schema)
+		if err != nil {
+			panic(err)
+		}
+
 		streamStorage, err = storage.NewPostgresEventStore(
 			ctx,
-			cfg,
-			schema,
+			pool,
 			GenShortNanoid(),
 			make(chan error, 1),
 		)

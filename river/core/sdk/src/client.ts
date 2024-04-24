@@ -20,6 +20,7 @@ import {
     Miniblock,
     Err,
     ChannelMessage_Post_Attachment,
+    MemberPayload_Nft,
     CreateStreamRequest,
 } from '@river-build/proto'
 import {
@@ -30,6 +31,7 @@ import {
     check,
     dlog,
     dlogError,
+    bin_fromString,
 } from '@river-build/dlog'
 import { assert, isDefined } from './check'
 import {
@@ -105,6 +107,7 @@ import {
     getRefEventIdFromChannelMessage,
     make_ChannelPayload_Redaction,
     make_MemberPayload_EnsAddress,
+    make_MemberPayload_Nft,
 } from './types'
 
 import debug from 'debug'
@@ -822,6 +825,20 @@ export class Client
 
         await this.makeEventAndAddToStream(streamId, make_MemberPayload_EnsAddress(bytes), {
             method: 'ensAddress',
+        })
+    }
+
+    async setNft(streamId: string, tokenId: string, chainId: number, contractAddress: string) {
+        const payload =
+            tokenId.length > 0
+                ? new MemberPayload_Nft({
+                      chainId: chainId,
+                      contractAddress: bin_fromHexString(contractAddress),
+                      tokenId: bin_fromString(tokenId),
+                  })
+                : new MemberPayload_Nft()
+        await this.makeEventAndAddToStream(streamId, make_MemberPayload_Nft(payload), {
+            method: 'nft',
         })
     }
 

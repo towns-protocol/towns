@@ -221,6 +221,17 @@ export class StreamStateView_Members {
                 )
                 break
             }
+            case 'nft': {
+                const stateMember = this.joined.get(event.creatorUserId)
+                check(isDefined(stateMember), 'nft from non-member')
+                this.userMetadata.appendNft(
+                    event.hashStr,
+                    payload.content.value,
+                    event.creatorUserId,
+                    stateEmitter,
+                )
+                break
+            }
             case undefined:
                 break
             default:
@@ -263,6 +274,7 @@ export class StreamStateView_Members {
             case 'displayName':
             case 'username':
             case 'ensAddress':
+            case 'nft':
                 this.userMetadata.onConfirmedEvent(event, stateEmitter)
                 break
             case undefined:

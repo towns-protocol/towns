@@ -91,6 +91,16 @@ export type GetCollectionsForOwnerAcrossNetworksResponse = {
     error?: unknown
 }
 
+export type GetNftOwnersResponse = {
+    owners: string[]
+}
+
+export type GetNftMetadataResponse = {
+    media: { thumbnail: string; gateway: string; format: string; bytes: number }[]
+    title?: string | null
+    description?: string | null
+}
+
 // worker reponse for /getNftsForOwner
 export interface GetNftsResponse extends Omit<GetNftsAlchemyResponse, 'ownedNfts'> {
     ownedNftsContract: ContractMetadata[]
@@ -106,6 +116,18 @@ export type ContractMetadata = {
     symbol?: string | null
     tokenType?: TokenType
     imageUrl?: string | null // from OpenSea data if available
+    image?: NftImageMetadata | null
+    displayNft?: NftDisplayNft | null
+}
+
+export type NftImageMetadata = {
+    cachedUrl?: string | null
+    thumbnailUrl?: string | null
+}
+
+export type NftDisplayNft = {
+    tokenId?: string | null
+    name?: string | null
 }
 
 export type GetCollectionMetadataAcrossNetworksResponse = {

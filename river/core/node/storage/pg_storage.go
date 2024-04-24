@@ -934,22 +934,73 @@ func getDbURL(dbConfig config.DatabaseConfig) string {
 	return dbConfig.Url
 }
 
-func NewPostgresEventStore(
+type PgxPoolInfo struct {
+	Pool   *pgxpool.Pool
+	Url    string
+	Schema string
+	Config config.DatabaseConfig
+}
+
+func createAndValidatePgxPool(
 	ctx context.Context,
 	cfg config.DatabaseConfig,
 	databaseSchemaName string,
+) (*PgxPoolInfo, error) {
+	databaseUrl := getDbURL(cfg)
+
+	poolConf, err := pgxpool.ParseConfig(databaseUrl)
+	if err != nil {
+		return nil, err
+	}
+
+	// In general, it should be possible to add database schema name into database url as a parameter search_path (&search_path=database_schema_name)
+	// For some reason it doesn't work so have to put it into config explicitly
+	poolConf.ConnConfig.RuntimeParams["search_path"] = databaseSchemaName
+
+	poolConf.ConnConfig.DefaultQueryExecMode = pgx.QueryExecModeSimpleProtocol
+
+	pool, err := pgxpool.NewWithConfig(ctx, poolConf)
+	if err != nil {
+		return nil, err
+	}
+
+	err = pool.Ping(ctx)
+	if err != nil {
+		return nil, err
+	}
+
+	return &PgxPoolInfo{
+		Pool:   pool,
+		Url:    databaseUrl,
+		Schema: databaseSchemaName,
+		Config: cfg,
+	}, nil
+}
+
+func CreateAndValidatePgxPool(
+	ctx context.Context,
+	cfg config.DatabaseConfig,
+	databaseSchemaName string,
+) (*PgxPoolInfo, error) {
+	r, err := createAndValidatePgxPool(ctx, cfg, databaseSchemaName)
+	if err != nil {
+		return nil, AsRiverError(err, Err_DB_OPERATION_FAILURE).Func("CreateAndValidatePgxPool")
+	}
+	return r, nil
+}
+
+func NewPostgresEventStore(
+	ctx context.Context,
+	poolInfo *PgxPoolInfo,
 	instanceId string,
 	exitSignal chan error,
 ) (*PostgresEventStore, error) {
-	database_url := getDbURL(cfg)
-
 	store, err := newPostgresEventStore(
 		ctx,
-		database_url,
-		databaseSchemaName,
-		cfg.StreamingConnectionsRatio,
+		poolInfo,
 		instanceId,
 		exitSignal,
+		migrationsDir,
 	)
 	if err != nil {
 		return nil, AsRiverError(err).Func("NewPostgresEventStore")
@@ -961,33 +1012,16 @@ func NewPostgresEventStore(
 // Disallow allocating more than 30% of connections for streaming connections.
 var MaxStreamingConnectionsRatio float32 = 0.3
 
-func newPostgresEventStoreWithMigrations(
+func newPostgresEventStore(
 	ctx context.Context,
-	databaseUrl string,
-	databaseSchemaName string,
-	streamingConnectionRatio float32,
+	poolInfo *PgxPoolInfo,
 	instanceId string,
 	exitSignal chan error,
 	migrations embed.FS,
 ) (*PostgresEventStore, error) {
 	log := dlog.FromCtx(ctx)
 
-	poolConf, err := pgxpool.ParseConfig(databaseUrl)
-	if err != nil {
-		return nil, WrapRiverError(Err_DB_OPERATION_FAILURE, err).Message("Error parsing config")
-	}
-
-	// In general, it should be possible to add database schema name into database url as a parameter search_path (&search_path=database_schema_name)
-	// For some reason it doesn't work so have to put it into config explicitly
-	poolConf.ConnConfig.RuntimeParams["search_path"] = databaseSchemaName
-
-	poolConf.ConnConfig.DefaultQueryExecMode = pgx.QueryExecModeSimpleProtocol
-
-	pool, err := pgxpool.NewWithConfig(ctx, poolConf)
-	if err != nil {
-		return nil, WrapRiverError(Err_DB_OPERATION_FAILURE, err).Message("New with config error")
-	}
-
+	streamingConnectionRatio := poolInfo.Config.StreamingConnectionsRatio
 	// Bounds check the streaming connection ratio
 	// TODO: when we add streaming calls, we should make the minimum larger, perhaps 5%.
 	if streamingConnectionRatio < 0 {
@@ -1008,7 +1042,7 @@ func newPostgresEventStoreWithMigrations(
 		streamingConnectionRatio = MaxStreamingConnectionsRatio
 	}
 
-	var totalReservableConns int64 = int64(poolConf.MaxConns) - 1 // subtract extra connection for the listeneer
+	var totalReservableConns int64 = int64(poolInfo.Pool.Config().MaxConns) - 1 // subtract extra connection for the listeneer
 	var numRegularConnections int64 = int64(float32(totalReservableConns) * (1 - streamingConnectionRatio))
 	var numStreamingConnections int64 = totalReservableConns - numRegularConnections
 
@@ -1020,17 +1054,17 @@ func newPostgresEventStoreWithMigrations(
 	}
 
 	store := &PostgresEventStore{
-		pool:                 pool,
-		schemaName:           databaseSchemaName,
+		pool:                 poolInfo.Pool,
+		schemaName:           poolInfo.Schema,
 		nodeUUID:             instanceId,
 		exitSignal:           exitSignal,
-		dbUrl:                databaseUrl,
+		dbUrl:                poolInfo.Url,
 		migrationDir:         migrations,
 		regularConnections:   semaphore.NewWeighted(numRegularConnections),
 		streamingConnections: semaphore.NewWeighted(numStreamingConnections),
 	}
 
-	err = store.InitStorage(ctx)
+	err := store.InitStorage(ctx)
 	if err != nil {
 		return nil, err
 	}
@@ -1041,46 +1075,28 @@ func newPostgresEventStoreWithMigrations(
 		store.listenForNewNodes(cancelCtx)
 	}()
 
+	// TODO: publish these as metrics
 	// stats thread
-	go func() {
-		for {
-			timer := time.NewTimer(PG_REPORT_INTERVAL)
-			select {
-			case <-ctx.Done():
-				timer.Stop()
-				return
-			case <-timer.C:
-				stats := pool.Stat()
-				log.Debug("PG pool stats",
-					"acquireCount", stats.AcquireCount(),
-					"acquiredConns", stats.AcquiredConns(),
-					"idleConns", stats.IdleConns(),
-					"totalConns", stats.TotalConns(),
-				)
-			}
-		}
-	}()
+	// go func() {
+	// 	for {
+	// 		timer := time.NewTimer(PG_REPORT_INTERVAL)
+	// 		select {
+	// 		case <-ctx.Done():
+	// 			timer.Stop()
+	// 			return
+	// 		case <-timer.C:
+	// 			stats := pool.Stat()
+	// 			log.Debug("PG pool stats",
+	// 				"acquireCount", stats.AcquireCount(),
+	// 				"acquiredConns", stats.AcquiredConns(),
+	// 				"idleConns", stats.IdleConns(),
+	// 				"totalConns", stats.TotalConns(),
+	// 			)
+	// 		}
+	// 	}
+	// }()
 
 	return store, nil
-}
-
-func newPostgresEventStore(
-	ctx context.Context,
-	database_url string,
-	databaseSchemaName string,
-	streamingConnectionRatio float32,
-	instanceId string,
-	exitSignal chan error,
-) (*PostgresEventStore, error) {
-	return newPostgresEventStoreWithMigrations(
-		ctx,
-		database_url,
-		databaseSchemaName,
-		streamingConnectionRatio,
-		instanceId,
-		exitSignal,
-		migrationsDir,
-	)
 }
 
 // Close removes instance record from singlenodekey table and closes the connection pool

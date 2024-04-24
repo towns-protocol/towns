@@ -71,6 +71,7 @@ export enum ZTEvent {
     SpaceUsername = 'm.space.username',
     SpaceDisplayName = 'm.space.display_name',
     SpaceEnsAddress = 'm.space.ens_name',
+    SpaceNft = 'm.space.nft',
 }
 
 /// a timeline event should have one or none of the following fields set
@@ -98,6 +99,7 @@ export type TimelineEvent_OneOf =
     | SpaceUsernameEvent
     | SpaceDisplayNameEvent
     | SpaceEnsAddressEvent
+    | SpaceNftEvent
     | RoomMessageEncryptedRefEvent
 
 export interface MiniblockHeaderEvent {
@@ -196,6 +198,14 @@ export interface SpaceEnsAddressEvent {
     kind: ZTEvent.SpaceEnsAddress
     userId: string
     ensAddress: Uint8Array
+}
+
+export interface SpaceNftEvent {
+    kind: ZTEvent.SpaceNft
+    userId: string
+    contractAddress: string
+    tokenId: string
+    chainId: number
 }
 
 export interface RoomMessageEncryptedRefEvent {
@@ -458,6 +468,8 @@ export function getFallbackContent(
             return `username: ${content.displayName}`
         case ZTEvent.SpaceEnsAddress:
             return `ensAddress: ${bin_toHexString(content.ensAddress)}`
+        case ZTEvent.SpaceNft:
+            return `contractAddress: ${content.contractAddress}, tokenId: ${content.tokenId}, chainId: ${content.chainId}`
         case ZTEvent.RoomTopic:
             return `newValue: ${content.topic}`
         case ZTEvent.RedactedEvent:

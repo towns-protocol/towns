@@ -12,6 +12,7 @@ import (
 	"github.com/ethereum/go-ethereum/common"
 	. "github.com/river-build/river/core/node/base"
 	"github.com/river-build/river/core/node/base/test"
+	"github.com/river-build/river/core/node/config"
 	. "github.com/river-build/river/core/node/protocol"
 	. "github.com/river-build/river/core/node/shared"
 	"github.com/river-build/river/core/node/testutils"
@@ -36,13 +37,22 @@ func setupTestWithMigration(
 ) (context.Context, *PostgresEventStore, func(), chan error) {
 	ctx, closer := test.NewTestContext()
 
+	pool, err := CreateAndValidatePgxPool(
+		ctx,
+		config.DatabaseConfig{
+			Url: dbUrl,
+		},
+		schemaName,
+	)
+	if err != nil {
+		panic(err)
+	}
+
 	instanceId := GenShortNanoid()
 	exitSignal := make(chan error, 1)
-	store, err := newPostgresEventStoreWithMigrations(
+	store, err := newPostgresEventStore(
 		ctx,
-		dbUrl,
-		schemaName,
-		.1,
+		pool,
 		instanceId,
 		exitSignal,
 		migrations,

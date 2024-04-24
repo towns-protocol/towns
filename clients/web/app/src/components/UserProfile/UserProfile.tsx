@@ -1,8 +1,9 @@
-import { useSpaceData, useUserLookupContext } from 'use-towns-client'
-import React, { useEffect, useMemo, useState } from 'react'
+import { Nft, useSpaceData, useUserLookupContext } from 'use-towns-client'
+import React, { useCallback, useEffect, useMemo, useState } from 'react'
 import { useEvent } from 'react-use-event-hook'
 import { toast } from 'react-hot-toast/headless'
-import { Box, FormRender, Paragraph, Stack, Text, TextButton } from '@ui'
+import { isDefined } from '@river/sdk'
+import { Box, Button, FormRender, Icon, IconButton, Paragraph, Stack, Text, TextButton } from '@ui'
 import { useSetUserBio } from 'hooks/useUserBio'
 import { TextArea } from 'ui/components/TextArea/TextArea'
 import { Spinner } from '@components/Spinner'
@@ -10,9 +11,19 @@ import { errorHasInvalidCookieResponseHeader } from 'api/apiClient'
 import { InvalidCookieNotification } from '@components/Notifications/InvalidCookieNotification'
 import { LargeUploadImageTemplate } from '@components/UploadImage/LargeUploadImageTemplate'
 import { Avatar } from '@components/Avatar/Avatar'
-import { SetUsernameDisplayName } from '@components/SetUsernameDisplayName/SetUsernameDisplayName'
+import {
+    SetUsernameDisplayName,
+    useCurrentStreamID,
+} from '@components/SetUsernameDisplayName/SetUsernameDisplayName'
 import { MutualTowns } from '@components/MutualTowns/MutualTowns'
 import { EnsBadge } from '@components/EnsBadge/EnsBadge'
+import { useNfts } from 'hooks/useNfts'
+import { useSetNftProfilePicture } from 'hooks/useSetNftProfilePicture'
+import { usePanelActions } from 'routes/layouts/hooks/usePanelActions'
+import { CHANNEL_INFO_PARAMS } from 'routes'
+import { ModalContainer } from '@components/Modals/ModalContainer'
+import { ButtonSpinner } from 'ui/components/Spinner/ButtonSpinner'
+import { useDevice } from 'hooks/useDevice'
 import { UserWalletContent } from './UserWalletContent'
 
 type Props = {
@@ -34,6 +45,16 @@ export const UserProfile = (props: Props) => {
     const spaceData = useSpaceData()
     const { usersMap } = useUserLookupContext()
     const user = userId ? usersMap[userId] : undefined
+    const [showNftProfilePicture, setShowNftProfilePicture] = useState(false)
+
+    const { setNft } = useSetNftProfilePicture()
+    const streamId = useCurrentStreamID()
+    const onClearNft = useCallback(() => {
+        if (!streamId) {
+            return
+        }
+        setNft(streamId, '', 0, '')
+    }, [setNft, streamId])
 
     const { mutateAsync: mutateAsyncBio } = useSetUserBio(abstractAccountAddress)
 
@@ -97,6 +118,27 @@ export const UserProfile = (props: Props) => {
                         </LargeUploadImageTemplate>
                     )}
                 </FormRender>
+
+                <Stack horizontal gap="xs">
+                    <Button size="button_sm" onClick={() => setShowNftProfilePicture(true)}>
+                        <Stack
+                            horizontal
+                            gap="sm"
+                            alignItems="center"
+                            color="default"
+                            fontSize="sm"
+                            fontWeight="medium"
+                        >
+                            <Icon type="verifiedEnsName" size="square_xs" />
+                            NFT Profile Picture
+                        </Stack>
+                    </Button>
+                    {user?.nft && (
+                        <Button size="button_sm" onClick={onClearNft}>
+                            <Icon type="close" size="square_xs" />
+                        </Button>
+                    )}
+                </Stack>
             </Stack>
 
             {canEdit ? (
@@ -197,7 +239,13 @@ export const UserProfile = (props: Props) => {
                             )
                         }}
                     </EditModeContainer>
-
+                    {showNftProfilePicture && userId && (
+                        <NftProfilePicture
+                            userId={userId}
+                            currentNft={user?.nft}
+                            onHide={() => setShowNftProfilePicture(false)}
+                        />
+                    )}
                     {!!info?.length &&
                         info.map((n) => (
                             <>
@@ -332,5 +380,110 @@ export const EditModeContainer = (props: EditRowProps) => {
                 })}
             </Stack>
         </>
+    )
+}
+
+const NftProfilePicture = (props: { onHide: () => void; userId: string; currentNft?: Nft }) => {
+    const { onHide, userId, currentNft } = props
+
+    const { isTouch } = useDevice()
+    const { nfts, isFetching } = useNfts(userId)
+    const { setNft } = useSetNftProfilePicture()
+    const streamId = useCurrentStreamID()
+
+    const displayableNfts = useMemo(() => {
+        if (!nfts) {
+            return []
+        }
+        return nfts
+            .filter(isDefined)
+            .filter((nft) => isDefined(nft.data.image?.cachedUrl))
+            .filter((nft) => isDefined(nft.data.displayNft?.tokenId))
+            .map((nft) => {
+                return {
+                    chainId: nft.chainId,
+                    image: nft.data.image,
+                    address: nft.data.address,
+                    tokenId: nft.data.displayNft?.tokenId ?? '',
+                }
+            })
+    }, [nfts])
+
+    const onSelectNft = useCallback(
+        (tokenId: string, contractAddress: string, chainId: number) => {
+            if (!streamId) {
+                return
+            }
+            setNft(streamId, tokenId, chainId, contractAddress)
+        },
+        [setNft, streamId],
+    )
+
+    const { openPanel } = usePanelActions()
+    const onViewLinkedWalletsClick = useCallback(() => {
+        openPanel(CHANNEL_INFO_PARAMS.WALLETS)
+    }, [openPanel])
+
+    return (
+        <ModalContainer onHide={onHide}>
+            <Stack width="100%" maxHeight="400" maxWidth={isTouch ? '100%' : '600'} gap="sm">
+                <Box position="relative">
+                    <IconButton position="topRight" icon="close" onClick={onHide} />
+                </Box>
+                <Stack gap alignItems="center" paddingTop="lg">
+                    <Text size="lg" fontWeight="strong" color="default">
+                        NFT Profile Picture
+                    </Text>
+                </Stack>
+
+                {isFetching && (
+                    <Box padding>
+                        <ButtonSpinner />
+                    </Box>
+                )}
+                {!isFetching && displayableNfts.length === 0 && (
+                    <Box grow centerContent padding>
+                        <Text fontWeight="medium">No Nfts</Text>
+                    </Box>
+                )}
+                <Stack horizontal centerContent scroll flexWrap="wrap" width="100%">
+                    {displayableNfts.map((nft) => (
+                        <Box
+                            padding
+                            key={nft.address}
+                            onClick={() => {
+                                onSelectNft(nft.tokenId, nft.address, nft.chainId)
+                            }}
+                        >
+                            <Box
+                                hoverable
+                                width="x8"
+                                height="x8"
+                                background="level2"
+                                rounded="xs"
+                                border={{
+                                    default:
+                                        nft.tokenId == currentNft?.tokenId &&
+                                        nft.address == currentNft.contractAddress
+                                            ? 'strong'
+                                            : 'none',
+                                    hover: 'level4',
+                                }}
+                                style={{
+                                    backgroundImage: `url(${nft.image?.cachedUrl})`,
+                                    backgroundSize: 'cover',
+                                    backgroundPosition: 'center',
+                                }}
+                            />
+                        </Box>
+                    ))}
+                </Stack>
+            </Stack>
+            <Box shrink={false}>
+                <Button tone="level2" width="100%" onClick={onViewLinkedWalletsClick}>
+                    View Linked Wallets
+                </Button>
+            </Box>
+        </ModalContainer>
     )
 }

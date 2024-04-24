@@ -1,4 +1,8 @@
-import { WrappedEncryptedData as WrappedEncryptedData, EncryptedData } from '@river-build/proto'
+import {
+    WrappedEncryptedData as WrappedEncryptedData,
+    EncryptedData,
+    MemberPayload_Nft,
+} from '@river-build/proto'
 import TypedEmitter from 'typed-emitter'
 import { ConfirmedTimelineEvent, RemoteTimelineEvent } from './types'
 import { StreamEncryptionEvents, StreamStateEvents } from './streamEvents'
@@ -6,16 +10,19 @@ import { UserMetadata_Usernames } from './userMetadata_Usernames'
 import { UserMetadata_DisplayNames } from './userMetadata_DisplayNames'
 import { bin_toHexString } from '@river-build/dlog'
 import { userMetadata_EnsAddresses } from './userMetadata_EnsAddresses'
+import { userMetadata_Nft } from './userMetadata_Nft'
 
 export class StreamStateView_UserMetadata {
     readonly usernames: UserMetadata_Usernames
     readonly displayNames: UserMetadata_DisplayNames
     readonly ensAddresses: userMetadata_EnsAddresses
+    readonly nfts: userMetadata_Nft
 
     constructor(streamId: string) {
         this.usernames = new UserMetadata_Usernames(streamId)
         this.displayNames = new UserMetadata_DisplayNames(streamId)
         this.ensAddresses = new userMetadata_EnsAddresses(streamId)
+        this.nfts = new userMetadata_Nft(streamId)
     }
 
     applySnapshot(
@@ -77,6 +84,7 @@ export class StreamStateView_UserMetadata {
         this.usernames.onConfirmEvent(eventId, stateEmitter)
         this.displayNames.onConfirmEvent(eventId, stateEmitter)
         this.ensAddresses.onConfirmEvent(eventId, stateEmitter)
+        this.nfts.onConfirmEvent(eventId, stateEmitter)
     }
 
     prependEvent(
@@ -135,6 +143,15 @@ export class StreamStateView_UserMetadata {
         this.ensAddresses.addEnsAddressEvent(eventId, EnsAddress, userId, true, stateEmitter)
     }
 
+    appendNft(
+        eventId: string,
+        nft: MemberPayload_Nft,
+        userId: string,
+        stateEmitter: TypedEmitter<StreamStateEvents> | undefined,
+    ): void {
+        this.nfts.addNftEvent(eventId, nft, userId, true, stateEmitter)
+    }
+
     onDecryptedContent(
         eventId: string,
         content: string,
@@ -151,14 +168,21 @@ export class StreamStateView_UserMetadata {
         displayName: string
         displayNameEncrypted: boolean
         ensAddress?: string
+        nft?: {
+            chainId: number
+            tokenId: string
+            contractAddress: string
+        }
     } {
         const usernameInfo = this.usernames.info(userId)
         const displayNameInfo = this.displayNames.info(userId)
         const ensAddress = this.ensAddresses.info(userId)
+        const nft = this.nfts.info(userId)
         return {
             ...usernameInfo,
             ...displayNameInfo,
             ensAddress,
+            nft,
         }
     }
 }

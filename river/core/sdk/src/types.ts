@@ -33,6 +33,7 @@ import {
     MemberPayload_KeyFulfillment,
     MemberPayload_KeySolicitation,
     MemberPayload,
+    MemberPayload_Nft,
 } from '@river-build/proto'
 import { keccak256 } from 'ethereum-cryptography/keccak'
 import { bin_toHexString } from '@river-build/dlog'
@@ -275,6 +276,20 @@ export const make_MemberPayload_EnsAddress = (
         value: {
             content: {
                 case: 'ensAddress',
+                value: value,
+            },
+        },
+    }
+}
+
+export const make_MemberPayload_Nft = (
+    value: MemberPayload_Nft,
+): PlainMessage<StreamEvent>['payload'] => {
+    return {
+        case: 'memberPayload',
+        value: {
+            content: {
+                case: 'nft',
                 value: value,
             },
         },

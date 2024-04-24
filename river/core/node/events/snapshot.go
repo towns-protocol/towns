@@ -482,6 +482,13 @@ func update_Snapshot_Member(
 		}
 		member.EnsAddress = content.EnsAddress
 		return nil
+	case *MemberPayload_Nft_:
+		member, err := findMember(snapshot.Joined, creatorAddress)
+		if err != nil {
+			return err
+		}
+		member.Nft = content.Nft
+		return nil
 	default:
 		return RiverError(Err_INVALID_ARGUMENT, "unknown membership payload type %T", memberPayload.Content)
 	}

@@ -15,7 +15,7 @@ import { EnsBadge } from '@components/EnsBadge/EnsBadge'
 import { usePanelActions } from 'routes/layouts/hooks/usePanelActions'
 import { CHANNEL_INFO_PARAMS } from 'routes'
 
-const useCurrentStreamID = () => {
+export const useCurrentStreamID = () => {
     const { spaceSlug, channelSlug } = useParams()
     if (channelSlug) {
         if (isDMChannelStreamId(channelSlug) || isGDMChannelStreamId(channelSlug)) {

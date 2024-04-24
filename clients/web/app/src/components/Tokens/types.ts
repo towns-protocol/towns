@@ -1,3 +1,4 @@
+import { NftImageMetadata } from '@token-worker/types'
 import { Address } from 'use-towns-client'
 
 export type TokenData = {
@@ -10,6 +11,7 @@ export type TokenData = {
         tokenId?: string | null
         name?: string | null
     }
+    image?: NftImageMetadata
 }
 
 export type TokenDataWithChainId = {

@@ -44,6 +44,7 @@ export const useAllSpaceUsers = (spaceId?: string) => {
         client.on('streamNewUserJoined', onStreamUpdated)
         client.on('streamUserLeft', onStreamUpdated)
         client.on('streamEnsAddressUpdated', onStreamUpdated)
+        client.on('streamNftUpdated', onStreamUpdated)
         return () => {
             client.off('streamInitialized', onStreamUpdated)
             client.off('streamMembershipUpdated', onStreamUpdated)
@@ -54,6 +55,7 @@ export const useAllSpaceUsers = (spaceId?: string) => {
             client.off('streamNewUserJoined', onStreamUpdated)
             client.off('streamUserLeft', onStreamUpdated)
             client.off('streamEnsAddressUpdated', onStreamUpdated)
+            client.off('streamNftUpdated', onStreamUpdated)
         }
     }, [client, spaceId, setUsers])
 

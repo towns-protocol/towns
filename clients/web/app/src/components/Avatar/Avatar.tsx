@@ -1,6 +1,6 @@
 import { clsx } from 'clsx'
 import React, { forwardRef, useCallback, useEffect, useMemo } from 'react'
-import { Address } from 'use-towns-client'
+import { Address, useUserLookupContext } from 'use-towns-client'
 import { AnimatePresence } from 'framer-motion'
 import { ImageVariant, useImageSource } from '@components/UploadImage/useImageSource'
 import { useImageStore } from '@components/UploadImage/useImageStore'
@@ -8,6 +8,7 @@ import { FadeInBox } from '@components/Transitions'
 import { useGreenDot } from 'hooks/useGreenDot'
 import { Box, BoxProps } from '@ui'
 import { useAbstractAccountAddress } from 'hooks/useAbstractAccountAddress'
+import { useResolveNft } from 'hooks/useNfts'
 import {
     AvatarAtoms,
     avatarAtoms,
@@ -17,6 +18,7 @@ import {
 } from './Avatar.css'
 import { Icon, IconProps } from '../../ui/components/Icon'
 import { MotionBox } from '../../ui/components/Motion/MotionComponents'
+const MAX_NFT_IMAGE_SIZE = 1_000_000
 
 type Props = {
     src?: string
@@ -63,10 +65,18 @@ export const Avatar = forwardRef<HTMLElement, Props>((props, ref) => {
 // pass a src prop to force using that image, otherwise pass userId
 export const AvatarWithoutDot = forwardRef<HTMLElement, Props & { dot?: boolean }>((props, ref) => {
     const { src, userId, imageVariant, ...rest } = props
+    const lookup = useUserLookupContext()
+    const user = userId ? lookup.usersMap[userId] : undefined
+
     const { data: abstractAccountAddress } = useAbstractAccountAddress({
         rootKeyAddress: userId as Address | undefined,
     })
     const _imageVariant = imageVariant ?? 'thumbnail100'
+    const resolvedNft = useResolveNft({ walletAddress: userId ?? '', info: user?.nft })
+    const nftUrl =
+        resolvedNft?.image && resolvedNft.image.bytes < MAX_NFT_IMAGE_SIZE
+            ? resolvedNft.image.gateway
+            : resolvedNft?.image?.thumbnail
 
     const { imageSrc, resourceId } = useAvatarImageSrc({
         imageVariant: _imageVariant,
@@ -84,8 +94,8 @@ export const AvatarWithoutDot = forwardRef<HTMLElement, Props & { dot?: boolean 
     return (
         <_Avatar
             key={imageSrc}
-            resourceId={resourceId ? resourceId + '_' + _imageVariant : undefined}
-            src={src ?? imageSrc}
+            resourceId={nftUrl ? nftUrl : resourceId ? resourceId + '_' + _imageVariant : undefined}
+            src={nftUrl ?? src ?? imageSrc}
             {...rest}
             ref={ref}
         />

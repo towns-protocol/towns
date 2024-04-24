@@ -55,6 +55,11 @@ type aeEnsAddressRules struct {
 	address *MemberPayload_EnsAddress
 }
 
+type aeNftRules struct {
+	params *aeParams
+	nft    *MemberPayload_Nft
+}
+
 /*
 *
 * CanAddEvent
@@ -380,6 +385,14 @@ func (params *aeParams) canAddMemberPayload(payload *StreamEvent_MemberPayload) 
 		return aeBuilder().
 			check(params.creatorIsMember).
 			check(ru.validEnsAddress)
+	case *MemberPayload_Nft_:
+		ru := &aeNftRules{
+			params: params,
+			nft:    content.Nft,
+		}
+		return aeBuilder().
+			check(params.creatorIsMember).
+			check(ru.validNft)
 
 	default:
 		return aeBuilder().
@@ -1060,6 +1073,31 @@ func (ru *aeEnsAddressRules) validEnsAddress() (bool, error) {
 	if len(ru.address.EnsAddress) != 0 && len(ru.address.EnsAddress) != 20 {
 		return false, RiverError(Err_INVALID_ARGUMENT, "Invalid ENS address length")
 	}
+	return true, nil
+}
+
+func (ru *aeNftRules) validNft() (bool, error) {
+	if ru.nft == nil {
+		return false, RiverError(Err_INVALID_ARGUMENT, "event is not an NFT address event")
+	}
+
+	// Allow users to clear their NFT or set a valid NFT
+	if len(ru.nft.ContractAddress) == 0 {
+		return true, nil
+	}
+
+	if len(ru.nft.ContractAddress) != 20 {
+		return false, RiverError(Err_INVALID_ARGUMENT, "invalid contract address")
+	}
+
+	if len(ru.nft.TokenId) == 0 {
+		return false, RiverError(Err_INVALID_ARGUMENT, "invalid token id")
+	}
+
+	if ru.nft.ChainId == 0 {
+		return false, RiverError(Err_INVALID_ARGUMENT, "invalid chain id")
+	}
+
 	return true, nil
 }
 
