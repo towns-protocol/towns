@@ -7,9 +7,10 @@ import { NotifyUsersSchema } from '../../types'
 import { PushSubscription } from '@prisma/client'
 import { UserSettingsTables } from '../database/userSettingsTables'
 import { database } from '../../infrastructure/database/prisma'
-import { NotificationKind } from '../schema/tagSchema'
+import { NotificationAttachmentKind, NotificationKind } from '../schema/tagSchema'
 import { PushType } from '../schema/subscriptionSchema'
 import { sendNotificationViaWebPush } from './web-push/send-notification'
+import { StreamPrefix } from './stream/id'
 
 jest.mock('../../infrastructure/database/prisma', () => ({
     database: {
@@ -531,6 +532,162 @@ describe('NotificationService', () => {
                 expect(getMutedDirectMessageUsersMock).toHaveBeenCalledWith(
                     expect.arrayContaining(['user1', 'user2', 'user3']),
                 )
+            })
+        })
+
+        describe('Tag: AtChannel', () => {
+            it('should return the list of all users in the channel as recipients to notify when Notification Tag holds the tag AtChannel', async () => {
+                const notificationData = {
+                    users: ['user1', 'user2', 'user3'],
+                    payload: {
+                        content: {
+                            kind: NotificationKind.AtChannel,
+                            spaceId: 'space123',
+                            channelId: 'channel123',
+                        },
+                    },
+                } as NotifyUsersSchema
+
+                const channelId = 'channel123'
+                const taggedUsers = [
+                    {
+                        UserId: NotificationKind.AtChannel,
+                        Tag: NotificationKind.AtChannel,
+                        SpaceId: 'space123',
+                        ChannelId: 'channel123',
+                    },
+                ]
+
+                const result = await notificationService.getUsersToNotify(
+                    notificationData,
+                    channelId,
+                    taggedUsers,
+                )
+
+                const expected: NotifyUser[] = []
+                expected.push({ userId: 'user1', kind: NotificationKind.AtChannel })
+                expected.push({ userId: 'user2', kind: NotificationKind.AtChannel })
+                expected.push({ userId: 'user3', kind: NotificationKind.AtChannel })
+                expect(result).toEqual(expected)
+            })
+        })
+
+        describe('Tag: Attachment', () => {
+            it('should return the list of all users in the channel as recipients to notify when Notification Tag holds the userId as AtChannel and Tag as NotificationAttachmentKind', async () => {
+                const channelId = `${StreamPrefix.Channel}channel123`
+                const notificationData = {
+                    users: ['user1', 'user2', 'user3', 'user4'],
+                    payload: {
+                        content: {
+                            kind: NotificationKind.NewMessage,
+                            spaceId: 'space123',
+                            channelId,
+                            senderId: 'user4',
+                        },
+                    },
+                    sender: 'user4',
+                } as NotifyUsersSchema
+
+                const taggedUsers = [
+                    {
+                        UserId: NotificationKind.AtChannel,
+                        Tag: NotificationAttachmentKind.File,
+                        SpaceId: 'space123',
+                        ChannelId: channelId,
+                    },
+                ]
+
+                const result = await notificationService.getUsersToNotify(
+                    notificationData,
+                    channelId,
+                    taggedUsers,
+                )
+
+                const expected: NotifyUser[] = []
+                expected.push({ userId: 'user1', kind: NotificationAttachmentKind.File })
+                expected.push({ userId: 'user2', kind: NotificationAttachmentKind.File })
+                expected.push({ userId: 'user3', kind: NotificationAttachmentKind.File })
+                expect(result).toEqual(expected)
+            })
+
+            it('should return the list of selected users as recipients to notify when Notification Tag holds Tag as NotificationAttachmentKind and its a channel', async () => {
+                const channelId = `${StreamPrefix.Channel}channel123`
+                const notificationData = {
+                    users: ['user1', 'user2', 'user3', 'user4'],
+                    payload: {
+                        content: {
+                            kind: NotificationKind.NewMessage,
+                            spaceId: 'space123',
+                            senderId: 'user4',
+                        },
+                    },
+                    sender: 'user4',
+                } as NotifyUsersSchema
+
+                const taggedUsers = [
+                    {
+                        UserId: 'user2',
+                        Tag: NotificationAttachmentKind.Image,
+                        SpaceId: 'space123',
+                        ChannelId: channelId,
+                    },
+                    {
+                        UserId: 'user3',
+                        Tag: NotificationAttachmentKind.Image,
+                        SpaceId: 'space123',
+                        ChannelId: channelId,
+                    },
+                ]
+
+                const result = await notificationService.getUsersToNotify(
+                    notificationData,
+                    channelId,
+                    taggedUsers,
+                )
+
+                const expected: NotifyUser[] = []
+                expected.push({ userId: 'user2', kind: NotificationAttachmentKind.Image })
+                expected.push({ userId: 'user3', kind: NotificationAttachmentKind.Image })
+                expect(result).toEqual(expected)
+            })
+
+            it('should return all users as recipients to notify when Notification Tag holds Tag as NotificationAttachmentKind and its a GDM', async () => {
+                const channelId = `${StreamPrefix.DM}dm123`
+                const notificationData = {
+                    users: ['user1', 'user2', 'user3', 'user4'],
+                    payload: {
+                        content: {
+                            kind: NotificationKind.DirectMessage,
+                            channelId,
+                            senderId: 'user4',
+                            recipients: [],
+                            attachmentOnly: NotificationAttachmentKind.Image,
+                            event: {},
+                        },
+                    },
+                    sender: 'user4',
+                } as NotifyUsersSchema
+
+                const taggedUsers = [
+                    {
+                        UserId: NotificationKind.AtChannel,
+                        Tag: NotificationAttachmentKind.Image,
+                        SpaceId: 'space123',
+                        ChannelId: channelId,
+                    },
+                ]
+
+                const result = await notificationService.getUsersToNotify(
+                    notificationData,
+                    channelId,
+                    taggedUsers,
+                )
+
+                const expected: NotifyUser[] = []
+                expected.push({ userId: 'user1', kind: NotificationAttachmentKind.Image })
+                expected.push({ userId: 'user2', kind: NotificationAttachmentKind.Image })
+                expected.push({ userId: 'user3', kind: NotificationAttachmentKind.Image })
+                expect(result).toEqual(expected)
             })
         })
     })

@@ -15,6 +15,7 @@ import {
     ReplyToUsersRequestParams,
 } from '../types/notification-types'
 import { MediaInfo } from 'types/timeline-types'
+import { isChannelStreamId, isDMChannelStreamId, isGDMChannelStreamId } from '@river/sdk'
 
 interface PushNotificationClientOptions {
     url: string // push notification worker's url
@@ -34,15 +35,23 @@ export class PushNotificationClient {
         options: SendMessageOptions,
     ): Promise<void> {
         console.log('PUSH: sendNotificationTagIfAny', options)
+
         // GiphyPickerCard sendMessage in this format and the GIF's title as message
         const messageIsImageGif =
             options?.messageType === MessageType.Image && options?.info?.mimetype === 'image/gif'
-
         // PlateEditor sendMessage in this format
         const messageIsAttachmentOnly =
             options?.messageType === MessageType.Text && 'attachments' in options && messageIsEmpty
 
-        if (messageIsAttachmentOnly || messageIsImageGif) {
+        const isThreadWithParticipants = isThreadIdOptions(options) && options.threadParticipants
+        const isDMorGDMorChannelWithThread =
+            isDMChannelStreamId(channelId) ||
+            isGDMChannelStreamId(channelId) ||
+            (isChannelStreamId(channelId) && isThreadWithParticipants)
+        const isNotifyAttachment =
+            (messageIsAttachmentOnly || messageIsImageGif) && isDMorGDMorChannelWithThread
+
+        if (isNotifyAttachment) {
             let attachmentKind = NotificationAttachmentKind.File
             if (messageIsAttachmentOnly) {
                 const attachment = options.attachments![0]
@@ -56,10 +65,18 @@ export class PushNotificationClient {
                 attachmentKind = NotificationAttachmentKind.Gif
             }
 
+            // Set userIds with @channel to avoid discovering all user ids in the channel if the message is not in a thread
+            let userIds = new Set<string>([AT_CHANNEL_MENTION])
+            if (isThreadWithParticipants) {
+                userIds = options.threadParticipants!
+            }
+            console.log('PUSH: sendNotificationTagIfAny', { attachmentKind, userIds })
+
             return await this.sendAttachmentNotificationTag(
                 attachmentKind,
                 options.parentSpaceId,
                 channelId,
+                userIds,
             )
         }
 
@@ -82,14 +99,12 @@ export class PushNotificationClient {
                 )
             }
         }
-        if (
-            isThreadIdOptions(options) &&
-            options.threadParticipants // don't do any extra work unless there are thread participants
-        ) {
+
+        if (isThreadWithParticipants) {
             const threadParticipants: Set<string> = new Set<string>()
             // skip any users who were mentioned in the message
             // because they are already being tagged in above logic.
-            options.threadParticipants.forEach((u) => {
+            options.threadParticipants!.forEach((u) => {
                 if (u !== AT_CHANNEL_MENTION && !userMentions.find((m) => m.userId === u)) {
                     threadParticipants.add(u)
                 }
@@ -109,12 +124,14 @@ export class PushNotificationClient {
         tag: NotificationAttachmentKind,
         spaceId: string | undefined,
         channelId: string,
+        userIds: Set<string>,
     ) {
         const headers = this.createHttpHeaders()
         const body = this.createAttachmentNotificationParams({
             spaceId,
             channelId,
             tag,
+            userIds,
         })
         const url = `${this.options.url}/api/tag/attachment`
         console.log('PUSH: sending attachment tag to Push Notification Worker ...', url, body)
@@ -239,15 +256,18 @@ export class PushNotificationClient {
         spaceId,
         channelId,
         tag,
+        userIds,
     }: {
         spaceId?: string
         channelId: string
         tag: NotificationAttachmentKind
+        userIds: Set<string>
     }): AttachmentTagRequestParams {
         const params: AttachmentTagRequestParams = {
             spaceId,
             channelId,
             tag,
+            userIds: Array.from(userIds),
         }
         return params
     }

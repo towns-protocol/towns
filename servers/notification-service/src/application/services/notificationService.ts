@@ -67,12 +67,26 @@ export class NotificationService {
                 .filter((taggedUser) => taggedUser.Tag === NotificationKind.ReplyTo.toString())
                 .map((user) => user.UserId),
         )
-        const attachmentNotificationTag = taggedUsers.find((taggedUser) =>
+        const attachmentUsersTagged = taggedUsers.filter((taggedUser) =>
             Object.values(NotificationAttachmentKind).includes(
                 taggedUser.Tag as NotificationAttachmentKind,
             ),
         )
-        const isAttachmentOnly = attachmentNotificationTag !== undefined
+
+        let attachmentReplyToUsers = new Set()
+        let attachmentDMorGDMUsers = new Set()
+        if (attachmentUsersTagged.length > 0) {
+            const usersTagget = new Set(attachmentUsersTagged.map((user) => user.UserId))
+            if (isChannelStreamId(channelId)) {
+                attachmentReplyToUsers = usersTagget
+            } else if (isDMChannelStreamId(channelId) || isGDMChannelStreamId(channelId)) {
+                attachmentDMorGDMUsers = usersTagget
+            }
+        }
+
+        const isAttachmentNotifyChannel = attachmentUsersTagged.some(
+            (user) => user.UserId === NotificationKind.AtChannel,
+        )
 
         let mutedMentionUsers = new Set()
         if (metionUsersTagged.size > 0) {
@@ -84,7 +98,7 @@ export class NotificationService {
         }
 
         let mutedReplyToUsers = new Set()
-        if (replyToUsersTagged.size > 0) {
+        if (replyToUsersTagged.size > 0 || attachmentReplyToUsers.size > 0) {
             mutedReplyToUsers = new Set(
                 (await UserSettingsTables.getUserMutedInReplyTo(notificationData.users)).map(
                     (user) => user.UserId,
@@ -93,7 +107,7 @@ export class NotificationService {
         }
 
         let mutedDMUsers = new Set()
-        if (isDMorGDM) {
+        if (isDMorGDM || attachmentDMorGDMUsers.size > 0) {
             mutedDMUsers = new Set(
                 (await UserSettingsTables.getUserMutedInDirectMessage(notificationData.users)).map(
                     (user) => user.UserId,
@@ -111,13 +125,17 @@ export class NotificationService {
                 !isDMorGDM &&
                 !metionUsersTagged.has(userId) &&
                 !replyToUsersTagged.has(userId) &&
+                !attachmentUsersTagged.some((user) => user.UserId === userId) &&
                 !isAtChannel &&
-                !isAttachmentOnly
+                !isAttachmentNotifyChannel
+
             const isUserMutedForMention =
                 metionUsersTagged.has(userId) && mutedMentionUsers.has(userId)
             const isUserMutedForReplyTo =
-                replyToUsersTagged.has(userId) && mutedReplyToUsers.has(userId)
-            const isUserMutedForDM = isDMorGDM && mutedDMUsers.has(userId)
+                (attachmentReplyToUsers.size > 0 || replyToUsersTagged.has(userId)) &&
+                mutedReplyToUsers.has(userId)
+            const isUserMutedForDM =
+                (attachmentDMorGDMUsers.size > 0 || isDMorGDM) && mutedDMUsers.has(userId)
 
             if (
                 isUserNotTagged ||
@@ -138,10 +156,14 @@ export class NotificationService {
                     userId,
                     kind: NotificationKind.ReplyTo,
                 }
-            } else if (isAttachmentOnly) {
+            } else if (
+                isAttachmentNotifyChannel ||
+                attachmentReplyToUsers.has(userId) ||
+                attachmentDMorGDMUsers.has(userId)
+            ) {
                 recipients[userId] = {
                     userId,
-                    kind: attachmentNotificationTag.Tag as NotificationAttachmentKind,
+                    kind: attachmentUsersTagged[0].Tag as NotificationAttachmentKind,
                 }
             } else {
                 recipients[userId] = {
@@ -170,7 +192,7 @@ export class NotificationService {
                 kind as unknown as NotificationAttachmentKind,
             )
             if (isAttachmentOnly) {
-                logger.info('Attachment notification', kind)
+                logger.info(`Attachment notification ${kind}`)
                 payload.content.attachmentOnly = kind as NotificationAttachmentKind
                 if (
                     isDMChannelStreamId(payload.content.channelId) ||

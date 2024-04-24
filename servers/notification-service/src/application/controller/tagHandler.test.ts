@@ -110,13 +110,14 @@ describe('tagMentionUsersHandler', () => {
                 channelId: 'channel123',
                 spaceId: 'space123',
                 tag: NotificationAttachmentKind.File,
+                userIds: ['user1'],
             },
         } as unknown as Request
         const tagData = {
             ChannelId: req.body.channelId,
             Tag: NotificationAttachmentKind.File,
             SpaceId: req.body.spaceId,
-            UserId: NotificationAttachmentKind.File,
+            UserId: 'user1',
         }
 
         await tagAttachmentHandler(req, res)
@@ -136,7 +137,7 @@ describe('tagMentionUsersHandler', () => {
         expect(res.status).toHaveBeenCalledWith(StatusCodes.OK)
         expect(res.json).toHaveBeenCalledWith({
             ...req.body,
-            userIds: [NotificationAttachmentKind.File],
+            userIds: [tagData.UserId],
         })
     })
 

@@ -35,4 +35,5 @@ export const tagAttachmentSchema = z.object({
     spaceId: z.string().optional(),
     channelId: z.string(),
     tag: z.nativeEnum(NotificationAttachmentKind),
+    userIds: z.array(z.string()),
 })

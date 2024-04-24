@@ -28,4 +28,5 @@ export interface AttachmentTagRequestParams {
     spaceId?: string
     channelId: string
     tag: NotificationAttachmentKind
+    userIds: string[]
 }
