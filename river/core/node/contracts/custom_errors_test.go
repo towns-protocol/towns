@@ -67,11 +67,17 @@ func TestEVMCustomError(t *testing.T) {
 	if customError.DecodedError.ID != a.Errors["InvalidBlockNumber"].ID {
 		t.Fatalf("unexpected custom error message, exp: '%x', got: '%x'", a.Errors["InvalidBlockNumber"].ID, customError.DecodedError.ID)
 	}
+	if customError.DecodedError.Name != "InvalidBlockNumber" {
+		t.Fatalf("unexpected custom error name, exp: '%x', got: '%x'", "InvalidBlockNumber", customError.DecodedError.Name)
+	}
 	if customError.DecodedError.Sig != "InvalidBlockNumber(uint256)" {
 		t.Fatalf("unexpected custom error message, exp: '%s', got: '%s'", "InvalidBlockNumber(uint256)", customError.DecodedError.Sig)
 	}
 	if customError.Params[0].(*big.Int).Uint64() != 7031376 {
 		t.Fatalf("unexpected custom error message, exp: '%d', got: '%d'", 7031376, customError.Params[0])
+	}
+	if customError.Error() != "InvalidBlockNumber(7031376)" {
+		t.Fatalf("unexpected custom error as string, exp: 'InvalidBlockNumber(7031376)', got: '%s'", customError.Error())
 	}
 }
 

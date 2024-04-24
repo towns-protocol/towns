@@ -8,20 +8,10 @@ import (
 	"sync"
 	"syscall"
 
-	"github.com/river-build/river/core/node/dlog"
-
 	"github.com/spf13/cobra"
 )
 
 func run() error {
-	ctx, cancel := context.WithCancel(context.Background())
-
-	pid := os.Getpid()
-
-	log := dlog.FromCtx(ctx).With("pid", pid)
-
-	ctx = dlog.CtxWithLog(ctx, log)
-
 	// cfg := config.GetConfig()
 	// if cfg.Metrics.Enabled {
 	// 	// Since the xchain server runs alongside the stream node
@@ -29,45 +19,36 @@ func run() error {
 	// 	go infra.StartMetricsService(ctx, cfg.Metrics)
 	// }
 
-	shutdown := make(chan struct{})
-	var once sync.Once
-	closeShutdown := func() {
-		once.Do(func() {
-			close(shutdown)
-			cancel()
-			log.Info("Channel shutdown closed")
-		})
+	var (
+		ctx, cancel = context.WithCancel(context.Background())
+		tasks       sync.WaitGroup
+	)
+
+	// create xchain instance
+	srv, err := server.New(ctx, 1)
+	if err != nil {
+		cancel()
+		return err
 	}
-	wgDone := make(chan struct{})
-	// Start the worker goroutines
-	var wg sync.WaitGroup
-	wg.Add(1)
 
+	// run server in background
+	tasks.Add(1)
 	go func() {
-		wg.Wait()
-		close(wgDone)
+		srv.Run(ctx)
+		tasks.Done()
 	}()
 
-	go func() {
-		defer wg.Done()
-		server.RunServer(ctx, 1, shutdown)
-	}()
-
+	// wait for signal to shut down
 	interrupt := make(chan os.Signal, 1)
 	signal.Notify(interrupt, os.Interrupt, syscall.SIGINT, syscall.SIGTERM)
+	<-interrupt
 
-out:
+	// order background tasks to stop
+	cancel()
 
-	for {
-		select {
-		case <-interrupt:
-			log.Info("Run Interrupted")
-			closeShutdown()
-		case <-wgDone:
-			log.Info("Done")
-			break out
-		}
-	}
+	// wait for background tasks to finish
+	tasks.Wait()
+
 	return nil
 }
 

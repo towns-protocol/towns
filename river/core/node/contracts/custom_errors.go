@@ -2,7 +2,9 @@ package contracts
 
 import (
 	"encoding/hex"
+	"fmt"
 	"reflect"
+	"strings"
 
 	"github.com/ethereum/go-ethereum/accounts/abi"
 	"github.com/ethereum/go-ethereum/accounts/abi/bind"
@@ -17,14 +19,14 @@ var (
 	stringType, _           = abi.NewType("string", "string", nil)
 )
 
-type evmErrorDecoder struct {
+type EvmErrorDecoder struct {
 	abis []*abi.ABI
 }
 
 // NewEVMErrorDecoder returns a evmErrorDecoder that combines multiple ABI
 // definitions to decode errors returned from the EVM.
-func NewEVMErrorDecoder(metaData ...*bind.MetaData) (*evmErrorDecoder, error) {
-	cea := &evmErrorDecoder{}
+func NewEVMErrorDecoder(metaData ...*bind.MetaData) (*EvmErrorDecoder, error) {
+	cea := &EvmErrorDecoder{}
 	for _, md := range metaData {
 		if err := cea.AddMetaData(md); err != nil {
 			return nil, err
@@ -34,7 +36,7 @@ func NewEVMErrorDecoder(metaData ...*bind.MetaData) (*evmErrorDecoder, error) {
 }
 
 // AddMetaData add extra ABI metadata to consider when decoding EVM errors.
-func (ca *evmErrorDecoder) AddMetaData(md *bind.MetaData) error {
+func (ca *EvmErrorDecoder) AddMetaData(md *bind.MetaData) error {
 	a, err := md.GetAbi()
 	if err != nil {
 		return AsRiverError(err, Err_INVALID_ARGUMENT).Func("NewErrorsABI")
@@ -50,7 +52,7 @@ func (ca *evmErrorDecoder) AddMetaData(md *bind.MetaData) error {
 // It will try to decode the EVM message to a custom error defined in any of the
 // wrapped ABI's. If that fails it tries to decode the message as a classical
 // string error. If that fails it returns err as a RiverError.
-func (ca *evmErrorDecoder) DecodeEVMError(err error) (*CustomerError, *StringError, error) {
+func (ca *EvmErrorDecoder) DecodeEVMError(err error) (*CustomerError, *StringError, error) {
 	if err == nil {
 		return nil, nil, nil
 	}
@@ -140,6 +142,20 @@ type CustomerError struct {
 	Params []any
 }
 
+func (ce CustomerError) Error() string {
+	var sb strings.Builder
+	sb.Write([]byte(ce.DecodedError.Name))
+	sb.Write([]byte("("))
+	for i, p := range ce.Params {
+		if i > 0 {
+			sb.Write([]byte(","))
+		}
+		sb.Write([]byte(fmt.Sprintf("%s", p)))
+	}
+	sb.Write([]byte(")"))
+	return sb.String()
+}
+
 // StringError as received from the RPC node.
 type StringError struct {
 	// Code is the received RPC error code
@@ -150,4 +166,8 @@ type StringError struct {
 	// RPCMessage contains the string error, (probably modified) from the RPC
 	// server. You probably want to use EVMError instead.
 	RPCMessage string
+}
+
+func (se StringError) Error() string {
+	return se.EVMError
 }

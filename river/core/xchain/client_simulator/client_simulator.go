@@ -3,13 +3,16 @@ package client_simulator
 import (
 	"context"
 	"core/xchain/config"
+	"core/xchain/contracts"
 	"core/xchain/entitlement"
 	"core/xchain/examples"
 	"crypto/ecdsa"
-	"encoding/hex"
+	"fmt"
 	"math/big"
 	"os"
+	"time"
 
+	node_contracts "github.com/river-build/river/core/node/contracts"
 	node_crypto "github.com/river-build/river/core/node/crypto"
 	"github.com/river-build/river/core/node/dlog"
 
@@ -17,11 +20,12 @@ import (
 
 	e "core/xchain/contracts"
 
+	"github.com/ethereum/go-ethereum/accounts/abi"
 	"github.com/ethereum/go-ethereum/accounts/abi/bind"
 	"github.com/ethereum/go-ethereum/common"
+	"github.com/ethereum/go-ethereum/core/types"
 	"github.com/ethereum/go-ethereum/crypto"
 	"github.com/ethereum/go-ethereum/ethclient"
-	"github.com/ethereum/go-ethereum/event"
 )
 
 var isEntitled = false
@@ -161,7 +165,344 @@ const (
 	TOGGLEISENTITLED
 )
 
+type postResult struct {
+	transactionId [32]byte
+	result        bool
+}
+type clientSimulator struct {
+	wallet *node_crypto.Wallet
+
+	decoder *node_contracts.EvmErrorDecoder
+
+	entitlementGated         *contracts.MockEntitlementGated
+	entitlementGatedABI      *abi.ABI
+	entitlementGatedContract *bind.BoundContract
+
+	checker         *contracts.IEntitlementChecker
+	checkerABI      *abi.ABI
+	checkerContract *bind.BoundContract
+
+	baseChain *node_crypto.Blockchain
+
+	checkRequests chan [32]byte
+	resultPosted  chan postResult
+}
+
+func loadWallet(ctx context.Context) (*node_crypto.Wallet, error) {
+	var wallet *node_crypto.Wallet
+	var err error
+
+	log := dlog.FromCtx(ctx)
+
+	// Read env var WALLETPRIVATEKEY or PRIVATE_KEY
+	privKey := os.Getenv("WALLETPRIVATEKEY")
+	if privKey == "" {
+		privKey = os.Getenv("PRIVATE_KEY")
+	}
+	if privKey != "" {
+		wallet, err = node_crypto.NewWalletFromPrivKey(ctx, privKey)
+	} else {
+		wallet, err = node_crypto.LoadWallet(ctx, node_crypto.WALLET_PATH_PRIVATE_KEY)
+	}
+	if err != nil {
+		log.Error("error finding wallet")
+		return nil, err
+	}
+	return wallet, nil
+}
+
+func New(ctx context.Context) (*clientSimulator, error) {
+	entitlementGated, err := e.NewMockEntitlementGated(*xc.GetTestContractAddress(), nil)
+	if err != nil {
+		return nil, err
+	}
+	checker, err := e.NewIEntitlementChecker(*xc.GetCheckerContractAddress(), nil)
+	if err != nil {
+		return nil, err
+	}
+
+	var (
+		cfg = config.GetConfig()
+
+		entitlementGatedABI      = entitlementGated.GetAbi()
+		entitlementGatedContract = bind.NewBoundContract(
+			*xc.GetTestContractAddress(),
+			*entitlementGated.GetAbi(),
+			nil,
+			nil,
+			nil,
+		)
+
+		checkerABI      = checker.GetAbi()
+		checkerContract = bind.NewBoundContract(*xc.GetCheckerContractAddress(), *checker.GetAbi(), nil, nil, nil)
+	)
+
+	wallet, err := loadWallet(ctx)
+	if err != nil {
+		return nil, err
+	}
+
+	baseChain, err := node_crypto.NewBlockchain(ctx, &cfg.BaseChain, wallet)
+	if err != nil {
+		return nil, err
+	}
+
+	decoder, err := node_contracts.NewEVMErrorDecoder(entitlementGated.GetMetadata(), checker.GetMetadata())
+	if err != nil {
+		return nil, err
+	}
+
+	return &clientSimulator{
+		wallet,
+		decoder,
+		entitlementGated,
+		entitlementGatedABI,
+		entitlementGatedContract,
+		checker,
+		checkerABI,
+		checkerContract,
+		baseChain,
+		make(chan [32]byte, 256),
+		make(chan postResult, 256),
+	}, nil
+}
+
+func (cs *clientSimulator) Stop() {
+	cs.baseChain.Close()
+}
+
+func (cs *clientSimulator) Start(ctx context.Context) {
+	cs.baseChain.ChainMonitor.OnContractWithTopicsEvent(
+		*xc.GetTestContractAddress(),
+		[][]common.Hash{{cs.entitlementGatedABI.Events["EntitlementCheckResultPosted"].ID}},
+		func(ctx context.Context, event types.Log) {
+			cs.onEntitlementCheckResultPosted(ctx, event, cs.resultPosted)
+		},
+	)
+
+	cs.baseChain.ChainMonitor.OnContractWithTopicsEvent(
+		*xc.GetCheckerContractAddress(),
+		[][]common.Hash{{cs.checkerABI.Events["EntitlementCheckRequested"].ID}},
+		func(ctx context.Context, event types.Log) {
+			cs.onEntitlementCheckRequested(ctx, event, cs.checkRequests)
+		},
+	)
+
+	initialBlockNum, err := cs.baseChain.Client.BlockNumber(ctx)
+	if err != nil {
+		dlog.FromCtx(ctx).Error("unable to retrieve latest block number", "err", err)
+		return
+	}
+
+	go func() {
+		cs.baseChain.ChainMonitor.Run(ctx, cs.baseChain.Client, node_crypto.BlockNumber(initialBlockNum))
+	}()
+}
+
+func (cs *clientSimulator) ExecuteCheck(ctx context.Context, ruleData *e.IRuleData) error {
+	log := dlog.FromCtx(ctx)
+
+	pendingTx, err := cs.baseChain.TxPool.Submit(ctx, func(opts *bind.TransactOpts) (*types.Transaction, error) {
+		gated, err := contracts.NewMockEntitlementGated(*xc.GetTestContractAddress(), cs.baseChain.Client)
+		if err != nil {
+			return nil, err
+		}
+		return gated.RequestEntitlementCheck(opts, *ruleData)
+	})
+
+	log.Info("Submitted entitlement check...")
+
+	customErr, stringErr, err := cs.decoder.DecodeEVMError(err)
+	switch {
+	case customErr != nil:
+		log.Error("Failed to submit entitlement check", "err", customErr)
+		return err
+	case stringErr != nil:
+		log.Error("Failed to submit entitlement check", "err", stringErr)
+		return err
+	case err != nil:
+		log.Error("Failed to submit entitlement check", "err", err)
+		return err
+	}
+
+	receipt := <-pendingTx.Wait()
+	log.Info("Entitlement check mined", "receipt", receipt)
+	if receipt.Status == types.ReceiptStatusFailed {
+		log.Error("Failed to execute check - could not execute transaction")
+		return fmt.Errorf("failed to execute check - could not execute transaction")
+	}
+	return nil
+}
+
+func (cs *clientSimulator) WaitForNextRequest(ctx context.Context) ([32]byte, error) {
+	log := dlog.FromCtx(ctx)
+
+	ctx, cancel := context.WithTimeout(ctx, time.Second*5)
+	defer cancel()
+
+	for {
+		select {
+		case transactionId := <-cs.checkRequests:
+			log.Info("Detected entitlement check request", "TransactionId", transactionId)
+			return transactionId, nil
+
+		case <-ctx.Done():
+			log.Error("Timed out waiting for request")
+			return [32]byte{}, ctx.Err()
+		}
+	}
+}
+
+func (cs *clientSimulator) WaitForPostResult(ctx context.Context, txnId [32]byte) (bool, error) {
+	log := dlog.FromCtx(ctx)
+
+	ctx, cancel := context.WithTimeout(ctx, time.Second*5)
+	defer cancel()
+
+	for {
+		select {
+		case result := <-cs.resultPosted:
+			if result.transactionId != txnId {
+				log.Error("Received result for unexpected transaction", "TransactionId", result.transactionId)
+				return false, fmt.Errorf("received result for unexpected transaction")
+			}
+			log.Info(
+				"Detected entitlement check result",
+				"TransactionId",
+				result.transactionId,
+				"Result",
+				result.result,
+			)
+			return result.result, nil
+
+		case <-ctx.Done():
+			log.Error("Timed out waiting for result")
+			return false, ctx.Err()
+		}
+	}
+}
+
+func (cs *clientSimulator) onEntitlementCheckResultPosted(
+	ctx context.Context,
+	event types.Log,
+	postedResults chan postResult,
+) {
+	entitlementCheckResultPosted := cs.entitlementGated.EntitlementCheckResultPosted()
+	log := dlog.FromCtx(ctx).With("function", "onEntitlementCheckResultPosted")
+
+	log.Info(
+		"Unpacking EntitlementCheckResultPosted event",
+		"event",
+		event,
+		"entitlementCheckResultPosted",
+		entitlementCheckResultPosted,
+	)
+
+	if err := cs.entitlementGatedContract.UnpackLog(entitlementCheckResultPosted.Raw(), "EntitlementCheckResultPosted", event); err != nil {
+		log.Error("Failed to unpack EntitlementCheckResultPosted event", "err", err)
+		return
+	}
+
+	log.Info("Received EntitlementCheckResultPosted event",
+		"TransactionId", entitlementCheckResultPosted.TransactionID(),
+		"Result", entitlementCheckResultPosted.Result(),
+	)
+
+	postedResults <- postResult{
+		transactionId: entitlementCheckResultPosted.TransactionID(),
+		result:        entitlementCheckResultPosted.Result() == contracts.NodeVoteStatus__PASSED,
+	}
+}
+
+func (cs *clientSimulator) onEntitlementCheckRequested(
+	ctx context.Context,
+	event types.Log,
+	checkRequests chan [32]byte,
+) {
+	entitlementCheckRequest := cs.checker.EntitlementCheckRequestEvent()
+	log := dlog.FromCtx(ctx).With("function", "onEntitlementCheckRequested")
+
+	log.Info(
+		"Unpacking EntitlementCheckRequested event",
+		"event",
+		event,
+		"entitlementCheckRequest",
+		entitlementCheckRequest,
+	)
+
+	if err := cs.checkerContract.UnpackLog(entitlementCheckRequest.Raw(), "EntitlementCheckRequested", event); err != nil {
+		log.Error("Failed to unpack EntitlementCheckRequested event", "err", err)
+		return
+	}
+
+	log.Info("Received EntitlementCheckRequested event", "TransactionId", entitlementCheckRequest.TransactionID())
+
+	checkRequests <- entitlementCheckRequest.TransactionID()
+}
+
 func ClientSimulator(simType SimulationType) {
+	if simType == TOGGLEISENTITLED {
+		ToggleEntitlement()
+		return
+	}
+
+	ctx, cancel := context.WithCancel(context.Background())
+	defer cancel()
+
+	log := dlog.FromCtx(ctx)
+	log.Info("--- ClientSimulator starting", "simType", simType)
+
+	cs, err := New(ctx)
+	if err != nil {
+		log.Error("--- Failed to create clientSimulator", "err", err)
+		return
+	}
+	cs.Start(ctx)
+	defer cs.Stop()
+
+	var ruleData e.IRuleData
+	switch simType {
+	case ERC721:
+		ruleData = erc721Example()
+	case ERC20:
+		ruleData = erc20Example()
+	case ISENTITLED:
+		ruleData = customEntitlementExample()
+	case TOGGLEISENTITLED:
+		fallthrough
+	default:
+		log.Error("--- ClientSimulator invalid SimulationType", "simType", simType)
+		return
+	}
+
+	log.Info("--- ClientSimulator executing entitlement check", "ruleData", ruleData)
+	err = cs.ExecuteCheck(ctx, &ruleData)
+	if err != nil {
+		log.Error("--- Failed to execute entitlement check", "err", err)
+		return
+	}
+
+	log.Info("--- ClientSimulator waiting for request to publish")
+	txId, err := cs.WaitForNextRequest(ctx)
+	if err != nil {
+		log.Error("Failed to wait for request", "err", err)
+		return
+	} else {
+		log.Info("--- Sanity check - ClientSimulator logged entitlement check request",
+			"TransactionId", txId,
+		)
+	}
+
+	log.Info("--- ClientSimulator waiting for result")
+	result, err := cs.WaitForPostResult(ctx, txId)
+	if err != nil {
+		log.Error("--- Failed to wait for result", "err", err)
+		return
+	}
+	log.Info("--- ClientSimulator logged entitlement check result", "Result", result)
+}
+
+func ToggleEntitlement() {
 	ctx := context.Background()
 	log := dlog.FromCtx(ctx)
 
@@ -209,223 +550,12 @@ func ClientSimulator(simType SimulationType) {
 
 	bc := context.Background()
 	var result interface{}
-	err = client.Client().CallContext(bc, &result, "anvil_setBalance", fromAddress, 1000000000000000000)
+	err = client.Client().CallContext(bc, &result, "anvil_setBalance", fromAddress, 1_000_000_000_000_000_000)
 	if err != nil {
 		log.Info("Failed call anvil_setBalance %v", err)
 		return
 	}
 	log.Info("ClientSimulator add funds on anvil to wallet address", "result", result)
 
-	if simType == TOGGLEISENTITLED {
-		toggleCustomEntitlement(ctx, fromAddress, client, privateKey)
-		return
-	}
-
-	gatedContract, err := e.NewMockEntitlementGated(*xc.GetTestContractAddress(), client)
-	if err != nil {
-		log.Error("Failed to parse contract ABI", "err", err)
-		return
-	}
-
-	resultPosted := make(chan *e.MockEntitlementGatedEntitlementCheckResultPosted)
-
-	checkRequestedResults := make(chan *e.IEntitlementCheckerEntitlementCheckRequested)
-
-	checkerFilterer, err := e.NewIEntitlementChecker(*xc.GetCheckerContractAddress(), client)
-	if err != nil {
-		log.Error("Failed call NewEntitlementCheckerEventsFilterer", "err", err)
-		return
-	}
-
-	checkerOpts := &bind.WatchOpts{
-		Start:   nil,
-		Context: bc,
-	} // Replace with appropriate context and filter query if needed
-
-	log.Info("ClientSimulator watching for events...", "contractAddress", xc.GetTestContractAddress())
-
-	// checkRequestedSub, err := checkRequestedFilterer.WatchEntitlementCheckRequested(opts, checkRequestedResults, []common.Address{fromAddress})
-	checkRequestedSub, err := checkerFilterer.WatchEntitlementCheckRequested(
-		checkerOpts,
-		checkRequestedResults,
-		[]common.Address{fromAddress},
-	)
-	if err != nil {
-		log.Error("Failed call WatchEntitlementCheckRequested", "err", err)
-		return
-	}
-
-	log.Info("ClientSimulator subscribed to checkRequestedSub")
-
-	var checkRequestedSubCh <-chan error
-	if checkRequestedSub != nil {
-		checkRequestedSubCh = checkRequestedSub.Err()
-	}
-
-	nonce, err := client.PendingNonceAt(context.Background(), fromAddress)
-	if err != nil {
-		log.Error("Failed getting PendingNonceAt", "err", err)
-		return
-	}
-
-	gasPrice, err := client.SuggestGasPrice(context.Background())
-	if err != nil {
-		log.Error("Failed SuggestGasPrice", "err", err)
-		return
-	}
-
-	auth, err := bind.NewKeyedTransactorWithChainID(
-		privateKey,
-		big.NewInt(31337),
-	) // replace 31337 with your actual chainID
-	if err != nil {
-		log.Error("NewKeyedTransactorWithChainID", "err", err)
-		return
-	}
-	auth.Nonce = big.NewInt(int64(nonce))
-	auth.Value = big.NewInt(0)       // in wei
-	auth.GasLimit = uint64(30000000) // in units
-	auth.GasPrice = gasPrice
-
-	log.Info("ClientSimulator Requesting entitlement check")
-	var ruleData e.IRuleData
-	switch simType {
-	case ERC721:
-		ruleData = erc721Example()
-	case ERC20:
-		ruleData = erc20Example()
-	case ISENTITLED:
-		ruleData = customEntitlementExample()
-
-	case TOGGLEISENTITLED:
-		fallthrough
-	default:
-		log.Error("ClientSimulator invalid SimulationType", "simType", simType)
-		return
-	}
-
-	tx, err := gatedContract.RequestEntitlementCheck(auth, ruleData)
-	if err != nil {
-		log.Error("RequestEntitlementCheck", "err", err)
-		return
-	}
-
-	rawBlockNumber := xc.WaitForTransaction(client, tx)
-
-	if rawBlockNumber == nil {
-		log.Info("Client RequestEntitlementCheck failed to mine\n")
-		return
-	}
-
-	requestBlockNumber := rawBlockNumber.Uint64()
-
-	log.Info(
-		"Client RequestEntitlementCheck mined in block",
-		"rawBlockNumber",
-		rawBlockNumber,
-		"id",
-		tx.Hash(),
-		"hex",
-		tx.Hash().Hex(),
-	)
-
-	var resultSubCh <-chan error
-	var resultSub event.Subscription
-	var transactionId [32]byte
-
-	// Event loop
-	for {
-		log.Info("ClientSimulator waiting for events")
-		select {
-		case checkRequestedResult := <-checkRequestedResults:
-			log.Info("Client checkRequestedResult event", "TransactionId", checkRequestedResult.TransactionId)
-			transactionId = checkRequestedResult.TransactionId
-			log.Info(
-				"Client checkRequestedResult event transactionId",
-				"transactionId",
-				hex.EncodeToString(transactionId[:]),
-				"BlockNumber",
-				checkRequestedResult.Raw.BlockNumber,
-				"requestBlockNumber",
-				requestBlockNumber,
-			)
-
-			gatedOpts := &bind.WatchOpts{
-				Start:   &requestBlockNumber,
-				Context: bc,
-			} // Replace with appropriate context and filter query if needed
-
-			resultSub, err = gatedContract.WatchEntitlementCheckResultPosted(gatedOpts, resultPosted, [][32]byte{transactionId})
-			if err != nil {
-				log.Error("Failed call WatchEntitlementCheckResultPosted", "err", err)
-				return
-			}
-
-			if resultSub != nil {
-				resultSubCh = resultSub.Err()
-			}
-
-			if checkRequestedSub != nil {
-				checkRequestedSub.Unsubscribe()
-				checkRequestedSub = nil
-				checkRequestedSubCh = nil
-				log.Info("Client Unsubscribe checkRequestedSub")
-			}
-
-		case result := <-resultPosted:
-			log.Info(
-				"Client Result event",
-				"TransactionId",
-				hex.EncodeToString(result.TransactionId[:]),
-				"Result",
-				result.Result,
-				"BlockNumber",
-				result.Raw.BlockNumber,
-			)
-			if result.TransactionId != transactionId {
-				log.Error(
-					"Client Result event transactionId != transactionId",
-					"TransactionId",
-					hex.EncodeToString(result.TransactionId[:]),
-					"transactionId",
-					hex.EncodeToString(transactionId[:]),
-				)
-				return
-			}
-
-			nonce, err = client.PendingNonceAt(context.Background(), fromAddress)
-			if err != nil {
-				log.Error("Client PendingNonceAt error", "err", err)
-				return
-			}
-			auth.Nonce = big.NewInt(int64(nonce))
-
-			if resultSub != nil {
-				resultSub.Unsubscribe()
-				resultSub = nil
-				log.Info("Client Unsubscribe resultSub")
-			}
-			go func() {
-				removeBlockNum := xc.WaitForTransaction(client, tx)
-				log.Info(
-					"Client RemoveTransaction ",
-					"TransactionId",
-					hex.EncodeToString(result.TransactionId[:]),
-					"blcokNumber",
-					removeBlockNum,
-				) // for verifying tx on Etherscan
-			}()
-			return
-		case err := <-checkRequestedSubCh:
-			if err != nil {
-				log.Error("Client checkRequestedSub error", "err", err)
-				return
-			}
-		case err := <-resultSubCh:
-			if err != nil {
-				log.Error("Client resultSub error: %v", "err", err)
-				return
-			}
-		}
-	}
+	toggleCustomEntitlement(ctx, fromAddress, client, privateKey)
 }

@@ -48,6 +48,9 @@ cleanup() {
 # Trap Ctrl+C and call cleanup()
 trap cleanup SIGINT SIGTERM
 
+# Fund the instances
+./fund_multi.sh
+
 # Loop to launch N instances from instance directories
 for (( i=1; i<=N; i++ ))
 do
@@ -61,8 +64,6 @@ do
   echo "Launched instance $i from ${INSTANCE_DIR} with PID $node_pid"
   popd
 done
-# Fund the instances
-./fund_multi.sh
 
 wait
 

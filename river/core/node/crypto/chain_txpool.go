@@ -273,7 +273,6 @@ func (r *transactionPool) OnHead(ctx context.Context, head *types.Header) {
 	defer r.mu.Unlock()
 
 	if r.firstPendingTx == nil {
-		log.Debug("no pending transactions in tx pool")
 		return
 	}
 

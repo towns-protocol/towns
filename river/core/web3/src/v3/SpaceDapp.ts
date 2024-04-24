@@ -8,7 +8,13 @@ import {
     RoleDetails,
 } from '../ContractTypes'
 import { BytesLike, ContractReceipt, ContractTransaction, ethers } from 'ethers'
-import { CreateSpaceParams, ISpaceDapp, UpdateChannelParams, UpdateRoleParams } from '../ISpaceDapp'
+import {
+    CreateSpaceParams,
+    ISpaceDapp,
+    TransactionOpts,
+    UpdateChannelParams,
+    UpdateRoleParams,
+} from '../ISpaceDapp'
 import { createRuleEntitlementStruct, createUserEntitlementStruct } from '../ConvertersEntitlements'
 
 import { IRolesBase } from './IRolesShim'
@@ -20,7 +26,7 @@ import { WalletLink } from './WalletLink'
 import { SpaceInfo } from '../types'
 import { IRuleEntitlement } from './index'
 import { PricingModules } from './PricingModules'
-import { dlogger } from '@river-build/dlog'
+import { dlogger, isJest } from '@river-build/dlog'
 
 const logger = dlogger('csb:SpaceDapp:debug')
 
@@ -44,34 +50,44 @@ export class SpaceDapp implements ISpaceDapp {
         channelNetworkId: string,
         roleId: number,
         signer: ethers.Signer,
+        txnOpts?: TransactionOpts,
     ): Promise<ContractTransaction> {
         const space = this.getSpace(spaceId)
         if (!space) {
             throw new Error(`Space with spaceId "${spaceId}" is not found.`)
         }
-        return space.Channels.write(signer).addRoleToChannel(channelNetworkId, roleId)
+        return wrapTransaction(
+            () => space.Channels.write(signer).addRoleToChannel(channelNetworkId, roleId),
+            txnOpts,
+        )
     }
 
-    public async banWalletAddress(spaceId: string, walletAddress: string, signer: ethers.Signer) {
+    public async banWalletAddress(
+        spaceId: string,
+        walletAddress: string,
+        signer: ethers.Signer,
+        txnOpts?: TransactionOpts,
+    ) {
         const space = this.getSpace(spaceId)
         if (!space) {
             throw new Error(`Space with spaceId "${spaceId}" is not found.`)
         }
         const token = await space.Membership.read.getTokenIdByMembership(walletAddress)
-        return space.Banning.write(signer).ban(token)
+        return wrapTransaction(() => space.Banning.write(signer).ban(token), txnOpts)
     }
 
     public async unbanWalletAddress(
         spaceId: string,
         walletAddress: string,
         signer: ethers.Signer,
+        txnOpts?: TransactionOpts,
     ): Promise<ContractTransaction> {
         const space = this.getSpace(spaceId)
         if (!space) {
             throw new Error(`Space with spaceId "${spaceId}" is not found.`)
         }
         const token = await space.Membership.read.getTokenIdByMembership(walletAddress)
-        return space.Banning.write(signer).unban(token)
+        return wrapTransaction(() => space.Banning.write(signer).unban(token), txnOpts)
     }
 
     public async walletAddressIsBanned(spaceId: string, walletAddress: string): Promise<boolean> {
@@ -99,6 +115,7 @@ export class SpaceDapp implements ISpaceDapp {
     public async createSpace(
         params: CreateSpaceParams,
         signer: ethers.Signer,
+        txnOpts?: TransactionOpts,
     ): Promise<ContractTransaction> {
         const spaceInfo = {
             name: params.spaceName,
@@ -108,7 +125,10 @@ export class SpaceDapp implements ISpaceDapp {
                 metadata: params.channelName || '',
             },
         }
-        return this.spaceRegistrar.SpaceArchitect.write(signer).createSpace(spaceInfo)
+        return wrapTransaction(
+            () => this.spaceRegistrar.SpaceArchitect.write(signer).createSpace(spaceInfo),
+            txnOpts,
+        )
     }
 
     public async createChannel(
@@ -117,6 +137,7 @@ export class SpaceDapp implements ISpaceDapp {
         channelNetworkId: string,
         roleIds: number[],
         signer: ethers.Signer,
+        txnOpts?: TransactionOpts,
     ): Promise<ContractTransaction> {
         const space = this.getSpace(spaceId)
         if (!space) {
@@ -125,7 +146,10 @@ export class SpaceDapp implements ISpaceDapp {
         const channelId = channelNetworkId.startsWith('0x')
             ? channelNetworkId
             : `0x${channelNetworkId}`
-        return space.Channels.write(signer).createChannel(channelId, channelName, roleIds)
+        return wrapTransaction(
+            () => space.Channels.write(signer).createChannel(channelId, channelName, roleIds),
+            txnOpts,
+        )
     }
 
     public async createRole(
@@ -135,25 +159,30 @@ export class SpaceDapp implements ISpaceDapp {
         users: string[],
         ruleData: IRuleEntitlement.RuleDataStruct,
         signer: ethers.Signer,
+        txnOpts?: TransactionOpts,
     ): Promise<ContractTransaction> {
         const space = this.getSpace(spaceId)
         if (!space) {
             throw new Error(`Space with spaceId "${spaceId}" is not found.`)
         }
         const entitlements = await createEntitlementStruct(space, users, ruleData)
-        return space.Roles.write(signer).createRole(roleName, permissions, entitlements)
+        return wrapTransaction(
+            () => space.Roles.write(signer).createRole(roleName, permissions, entitlements),
+            txnOpts,
+        )
     }
 
     public async deleteRole(
         spaceId: string,
         roleId: number,
         signer: ethers.Signer,
+        txnOpts?: TransactionOpts,
     ): Promise<ContractTransaction> {
         const space = this.getSpace(spaceId)
         if (!space) {
             throw new Error(`Space with spaceId "${spaceId}" is not found.`)
         }
-        return space.Roles.write(signer).removeRole(roleId)
+        return wrapTransaction(() => space.Roles.write(signer).removeRole(roleId), txnOpts)
     }
 
     public async getChannels(spaceId: string): Promise<ChannelMetadata[]> {
@@ -229,6 +258,7 @@ export class SpaceDapp implements ISpaceDapp {
         spaceId: string,
         name: string,
         signer: ethers.Signer,
+        txnOpts?: TransactionOpts,
     ): Promise<ContractTransaction> {
         const space = this.getSpace(spaceId)
         if (!space) {
@@ -236,7 +266,11 @@ export class SpaceDapp implements ISpaceDapp {
         }
         const spaceInfo = await space.getSpaceInfo()
         // update the space name
-        return space.SpaceOwner.write(signer).updateSpaceInfo(space.Address, name, spaceInfo.uri)
+        return wrapTransaction(
+            () =>
+                space.SpaceOwner.write(signer).updateSpaceInfo(space.Address, name, spaceInfo.uri),
+            txnOpts,
+        )
     }
 
     public async isEntitledToSpace(
@@ -308,13 +342,17 @@ export class SpaceDapp implements ISpaceDapp {
     public async updateChannel(
         params: UpdateChannelParams,
         signer: ethers.Signer,
+        txnOpts?: TransactionOpts,
     ): Promise<ContractTransaction> {
         const space = this.getSpace(params.spaceId)
         if (!space) {
             throw new Error(`Space with spaceId "${params.spaceId}" is not found.`)
         }
         const encodedCallData = await this.encodedUpdateChannelData(space, params)
-        return space.Multicall.write(signer).multicall(encodedCallData)
+        return wrapTransaction(
+            () => space.Multicall.write(signer).multicall(encodedCallData),
+            txnOpts,
+        )
     }
 
     public async encodedUpdateChannelData(space: Space, params: UpdateChannelParams) {
@@ -343,17 +381,22 @@ export class SpaceDapp implements ISpaceDapp {
     public async updateRole(
         params: UpdateRoleParams,
         signer: ethers.Signer,
+        txnOpts?: TransactionOpts,
     ): Promise<ContractTransaction> {
         const space = this.getSpace(params.spaceNetworkId)
         if (!space) {
             throw new Error(`Space with spaceId "${params.spaceNetworkId}" is not found.`)
         }
         const updatedEntitlemets = await this.createUpdatedEntitlements(space, params)
-        return space.Roles.write(signer).updateRole(
-            params.roleId,
-            params.roleName,
-            params.permissions,
-            updatedEntitlemets,
+        return wrapTransaction(
+            () =>
+                space.Roles.write(signer).updateRole(
+                    params.roleId,
+                    params.roleName,
+                    params.permissions,
+                    updatedEntitlemets,
+                ),
+            txnOpts,
         )
     }
 
@@ -361,15 +404,17 @@ export class SpaceDapp implements ISpaceDapp {
         spaceId: string,
         disabled: boolean,
         signer: ethers.Signer,
+        txnOpts?: TransactionOpts,
     ): Promise<ContractTransaction> {
         const space = this.getSpace(spaceId)
         if (!space) {
             throw new Error(`Space with spaceId "${spaceId}" is not found.`)
         }
+
         if (disabled) {
-            return space.Pausable.write(signer).pause()
+            return wrapTransaction(() => space.Pausable.write(signer).pause(), txnOpts)
         } else {
-            return space.Pausable.write(signer).unpause()
+            return wrapTransaction(() => space.Pausable.write(signer).unpause(), txnOpts)
         }
     }
 
@@ -378,6 +423,7 @@ export class SpaceDapp implements ISpaceDapp {
         channelNetworkId: string,
         disabled: boolean,
         signer: ethers.Signer,
+        txnOpts?: TransactionOpts,
     ): Promise<ContractTransaction> {
         const channelId = channelNetworkId.startsWith('0x')
             ? channelNetworkId
@@ -386,7 +432,10 @@ export class SpaceDapp implements ISpaceDapp {
         if (!space) {
             throw new Error(`Space with spaceId "${spaceId}" is not found.`)
         }
-        return space.Channels.write(signer).updateChannel(channelId, '', disabled)
+        return wrapTransaction(
+            () => space.Channels.write(signer).updateChannel(channelId, '', disabled),
+            txnOpts,
+        )
     }
 
     public async getSpaceMembershipTokenAddress(spaceId: string): Promise<string> {
@@ -401,14 +450,20 @@ export class SpaceDapp implements ISpaceDapp {
         spaceId: string,
         recipient: string,
         signer: ethers.Signer,
+        txnOpts?: TransactionOpts,
     ): Promise<ContractTransaction> {
         const space = this.getSpace(spaceId)
         if (!space) {
             throw new Error(`Space with spaceId "${spaceId}" is not found.`)
         }
-        return space.Membership.write(signer).joinSpace(recipient, {
-            value: await space.Membership.read.getMembershipPrice(),
-        })
+        const price = await space.Membership.read.getMembershipPrice()
+        return wrapTransaction(
+            () =>
+                space.Membership.write(signer).joinSpace(recipient, {
+                    value: price,
+                }),
+            txnOpts,
+        )
     }
 
     public async hasSpaceMembership(spaceId: string, address: string): Promise<boolean> {
@@ -599,4 +654,42 @@ export class SpaceDapp implements ISpaceDapp {
         }
         return undefined
     }
+}
+
+async function wrapTransaction(
+    txFn: () => Promise<ContractTransaction>,
+    txnOpts?: TransactionOpts,
+): Promise<ContractTransaction> {
+    const tx = await txFn()
+    if (!txnOpts) {
+        txnOpts = isJest() ? { retryCount: 3 } : { retryCount: 0 }
+    }
+    if ((txnOpts.retryCount ?? 0) === 0) {
+        return tx
+    }
+    let wait = tx.wait.bind(tx)
+    tx.wait = async function (confirmations?: number) {
+        let retryCount = 0
+        // eslint-disable-next-line no-constant-condition
+        while (true) {
+            try {
+                const receipt = await wait(confirmations)
+                return receipt
+            } catch (error) {
+                retryCount++
+                const bRetrying = retryCount < (txnOpts?.retryCount ?? 0)
+                logger.error('Transaction failed', { error, retryCount, bRetrying })
+                if (!bRetrying) {
+                    throw error
+                } else {
+                    logger.info('Waiting 1 sec for retry', { retryCount })
+                    await new Promise((resolve) => setTimeout(resolve, 1000))
+                    const retryTx = await txFn()
+                    wait = retryTx.wait.bind(retryTx)
+                }
+            }
+        }
+    }
+
+    return tx
 }

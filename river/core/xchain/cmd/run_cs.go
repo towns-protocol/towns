@@ -17,7 +17,12 @@ func keyboardInput(input chan rune) {
 	// Create a new reader to read from standard input
 	reader := bufio.NewReader(os.Stdin)
 
-	log.Println("Press Q to Exit, C to simulate a client...")
+	log.Println("Press:")
+	log.Println(" - 'q' to Exit")
+	log.Println(" - 'a' to simulate ERC20")
+	log.Println(" - 'b' to simulate ERC721")
+	log.Println(" - 'c' to simulate custom IsEntitled")
+	log.Println(" - 'd' to toggle custom IsEntitled")
 
 	for {
 		// Read a single character
@@ -53,13 +58,13 @@ out:
 			log.Info("Input", "char", char)
 			switch char {
 			case 'a':
-				go xc.ClientSimulator(xc.ERC20)
+				xc.ClientSimulator(xc.ERC20)
 			case 'b':
-				go xc.ClientSimulator(xc.ERC721)
+				xc.ClientSimulator(xc.ERC721)
 			case 'c':
-				go xc.ClientSimulator(xc.ISENTITLED)
+				xc.ClientSimulator(xc.ISENTITLED)
 			case 'd':
-				go xc.ClientSimulator(xc.TOGGLEISENTITLED)
+				xc.ClientSimulator(xc.TOGGLEISENTITLED)
 			case 'q':
 				log.Info("Quit Exit")
 				break out

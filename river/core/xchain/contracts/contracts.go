@@ -52,6 +52,46 @@ type MockEntitlementGated struct {
 	devMockEntitlementGated *dev.MockEntitlementGated
 }
 
+type NodeVoteStatus uint8
+
+const (
+	NodeVoteStatus__NOT_VOTED NodeVoteStatus = iota
+	NodeVoteStatus__PASSED
+	NodeVoteStatus__FAILED
+)
+
+type IEntitlementCheckResultPosted interface {
+	TransactionID() common.Hash
+	Result() NodeVoteStatus
+	Raw() interface{}
+}
+
+type entitlementCheckResultPosted struct {
+	v3Inner  *v3.IEntitlementGatedEntitlementCheckResultPosted
+	devInner *dev.IEntitlementGatedEntitlementCheckResultPosted
+}
+
+func (e *entitlementCheckResultPosted) TransactionID() common.Hash {
+	if e.v3Inner != nil {
+		return e.v3Inner.TransactionId
+	}
+	return e.devInner.TransactionId
+}
+
+func (e *entitlementCheckResultPosted) Result() NodeVoteStatus {
+	if e.v3Inner != nil {
+		return NodeVoteStatus(e.v3Inner.Result)
+	}
+	return NodeVoteStatus(e.devInner.Result)
+}
+
+func (e *entitlementCheckResultPosted) Raw() interface{} {
+	if e.v3Inner != nil {
+		return e.v3Inner
+	}
+	return e.devInner
+}
+
 func NewMockEntitlementGated(address common.Address, backend bind.ContractBackend) (*MockEntitlementGated, error) {
 	res := &MockEntitlementGated{}
 	if config.GetConfig().GetContractVersion() == "v3" {
@@ -65,50 +105,29 @@ func NewMockEntitlementGated(address common.Address, backend bind.ContractBacken
 	}
 }
 
-type MockEntitlementGatedEntitlementCheckResultPosted struct {
-	TransactionId [32]byte
-	Result        uint8
-	Raw           types.Log // Blockchain specific contextual infos
-}
-
-func convertMockV3ToShimResultPosted(v3Event *v3.MockEntitlementGatedEntitlementCheckResultPosted) *MockEntitlementGatedEntitlementCheckResultPosted {
-	return &MockEntitlementGatedEntitlementCheckResultPosted{
-		TransactionId: v3Event.TransactionId,
-		Result:        v3Event.Result,
-		Raw:           v3Event.Raw,
-	}
-}
-
-func convertMockDevToShimResultPosted(devEvent *dev.MockEntitlementGatedEntitlementCheckResultPosted) *MockEntitlementGatedEntitlementCheckResultPosted {
-	return &MockEntitlementGatedEntitlementCheckResultPosted{
-		TransactionId: devEvent.TransactionId,
-		Result:        devEvent.Result,
-		Raw:           devEvent.Raw,
-	}
-}
-
-func (g *MockEntitlementGated) WatchEntitlementCheckResultPosted(opts *bind.WatchOpts, sink chan<- *MockEntitlementGatedEntitlementCheckResultPosted, transactionId [][32]byte) (event.Subscription, error) {
+func (g *MockEntitlementGated) EntitlementCheckResultPosted() IEntitlementCheckResultPosted {
 	if config.GetConfig().GetContractVersion() == "v3" {
-		v3Sink := make(chan *v3.MockEntitlementGatedEntitlementCheckResultPosted)
-		sub, err := g.v3MockEntitlementGated.WatchEntitlementCheckResultPosted(opts, v3Sink, transactionId)
-		go func() {
-			for v3Event := range v3Sink {
-				shimEvent := convertMockV3ToShimResultPosted(v3Event)
-				sink <- shimEvent
-			}
-		}()
-		return sub, err
+		return &entitlementCheckResultPosted{&v3.IEntitlementGatedEntitlementCheckResultPosted{}, nil}
 	} else {
-		devSink := make(chan *dev.MockEntitlementGatedEntitlementCheckResultPosted)
-		sub, err := g.devMockEntitlementGated.WatchEntitlementCheckResultPosted(opts, devSink, transactionId)
-		go func() {
-			for devEvent := range devSink {
-				shimEvent := convertMockDevToShimResultPosted(devEvent)
-				sink <- shimEvent
-			}
-		}()
-		return sub, err
+		return &entitlementCheckResultPosted{nil, &dev.IEntitlementGatedEntitlementCheckResultPosted{}}
 	}
+}
+
+func (g *MockEntitlementGated) GetMetadata() *bind.MetaData {
+	if config.GetConfig().GetContractVersion() == "v3" {
+		return v3.MockEntitlementGatedMetaData
+	} else {
+		return dev.MockEntitlementGatedMetaData
+	}
+}
+
+func (g *MockEntitlementGated) GetAbi() *abi.ABI {
+	md := g.GetMetadata()
+	abi, err := md.GetAbi()
+	if err != nil {
+		panic("Failed to parse EntitlementGated ABI")
+	}
+	return abi
 }
 
 func (g *MockEntitlementGated) RequestEntitlementCheck(opts *bind.TransactOpts, ruledata IRuleData) (*types.Transaction, error) {
@@ -306,6 +325,38 @@ func (c *ICustomEntitlement) IsEntitled(opts *bind.CallOpts, user []common.Addre
 	}
 }
 
+func (g *MockEntitlementGated) EntitlementGatedMetaData() *bind.MetaData {
+	if config.GetConfig().GetContractVersion() == "v3" {
+		return v3.IEntitlementGatedMetaData
+	} else {
+		return dev.IEntitlementGatedMetaData
+	}
+}
+
+type EntitlementGatedMetaData struct {
+	v3IEntitlementGatedMetaData  *bind.MetaData
+	devIEntitlementGatedMetaData *bind.MetaData
+}
+
+func NewEntitlementGatedMetaData() EntitlementGatedMetaData {
+	if config.GetConfig().GetContractVersion() == "v3" {
+		return EntitlementGatedMetaData{
+			v3IEntitlementGatedMetaData: v3.IEntitlementGatedMetaData,
+		}
+	} else {
+		return EntitlementGatedMetaData{
+			devIEntitlementGatedMetaData: dev.IEntitlementGatedMetaData,
+		}
+	}
+}
+
+func (e EntitlementGatedMetaData) GetMetadata() *bind.MetaData {
+	if e.v3IEntitlementGatedMetaData != nil {
+		return e.v3IEntitlementGatedMetaData
+	}
+	return e.devIEntitlementGatedMetaData
+}
+
 type IEntitlementChecker struct {
 	v3IEntitlementChecker  *v3.IEntitlementChecker
 	devIEntitlementChecker *dev.IEntitlementChecker
@@ -341,6 +392,63 @@ func (c *IEntitlementChecker) GetAbi() *abi.ABI {
 	return abi
 }
 
+type IEntitlementCheckRequestEvent interface {
+	CallerAddress() common.Address
+	TransactionID() common.Hash
+	SelectedNodes() []common.Address
+	ContractAddress() common.Address
+	Raw() interface{}
+}
+
+type entitlementCheckRequestEvent struct {
+	v3Inner  *v3.IEntitlementCheckerEntitlementCheckRequested
+	devInner *dev.IEntitlementCheckerEntitlementCheckRequested
+}
+
+func (e *entitlementCheckRequestEvent) CallerAddress() common.Address {
+	if e.v3Inner != nil {
+		return e.v3Inner.CallerAddress
+	}
+	return e.devInner.CallerAddress
+}
+
+func (e *entitlementCheckRequestEvent) TransactionID() common.Hash {
+	if e.v3Inner != nil {
+		return e.v3Inner.TransactionId
+	}
+	return e.devInner.TransactionId
+}
+
+func (e *entitlementCheckRequestEvent) SelectedNodes() []common.Address {
+	if e.v3Inner != nil {
+		return e.v3Inner.SelectedNodes
+	}
+	return e.devInner.SelectedNodes
+}
+
+func (e *entitlementCheckRequestEvent) ContractAddress() common.Address {
+	if e.v3Inner != nil {
+		return e.v3Inner.ContractAddress
+	}
+	return e.devInner.ContractAddress
+}
+
+func (e *entitlementCheckRequestEvent) Raw() interface{} {
+	if e.v3Inner != nil {
+		return e.v3Inner
+	}
+	return e.devInner
+
+}
+
+func (c *IEntitlementChecker) EntitlementCheckRequestEvent() IEntitlementCheckRequestEvent {
+	if config.GetConfig().GetContractVersion() == "v3" {
+		return &entitlementCheckRequestEvent{&v3.IEntitlementCheckerEntitlementCheckRequested{}, nil}
+	} else {
+		return &entitlementCheckRequestEvent{nil, &dev.IEntitlementCheckerEntitlementCheckRequested{}}
+	}
+}
+
 func (c *IEntitlementChecker) EstimateGas(ctx context.Context, client *ethclient.Client, From common.Address, To *common.Address, name string, args ...interface{}) (*uint64, error) {
 	log := dlog.FromCtx(ctx)
 	// Generate the data for the contract method call
@@ -371,6 +479,14 @@ func (c *IEntitlementChecker) EstimateGas(ctx context.Context, client *ethclient
 	log.Debug("estimatedGas", "estimatedGas", estimatedGas)
 	return &estimatedGas, nil
 
+}
+
+func (c *IEntitlementChecker) NodeCount(opts *bind.CallOpts) (*big.Int, error) {
+	if config.GetConfig().GetContractVersion() == "v3" {
+		return c.v3IEntitlementChecker.NodeCount(opts)
+	} else {
+		return c.devIEntitlementChecker.NodeCount(opts)
+	}
 }
 
 func (c *IEntitlementChecker) RegisterNode(opts *bind.TransactOpts) (*types.Transaction, error) {

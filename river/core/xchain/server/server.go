@@ -3,45 +3,54 @@ package server
 import (
 	"context"
 	"core/xchain/config"
+	"core/xchain/contracts"
 	"core/xchain/entitlement"
-	"crypto/ecdsa"
-	"encoding/hex"
-	"math/big"
+	"fmt"
 	"os"
 
-	"github.com/river-build/river/core/node/contracts"
-	"github.com/river-build/river/core/node/crypto"
-	"github.com/river-build/river/core/node/dlog"
-
 	xc "core/xchain/common"
-
-	e "core/xchain/contracts"
-
+	"github.com/ethereum/go-ethereum/accounts/abi"
 	"github.com/ethereum/go-ethereum/accounts/abi/bind"
 	"github.com/ethereum/go-ethereum/common"
-	"github.com/ethereum/go-ethereum/ethclient"
+	"github.com/ethereum/go-ethereum/core/types"
+	go_eth_types "github.com/ethereum/go-ethereum/core/types"
+	node_contracts "github.com/river-build/river/core/node/contracts"
+	"github.com/river-build/river/core/node/crypto"
+	"github.com/river-build/river/core/node/dlog"
 )
 
-func isClosed(ch <-chan struct{}) bool {
-	select {
-	case _, ok := <-ch:
-		// if the channel is closed and empty, ok will be false
-		return !ok
-	default:
-		// if the channel is neither closed nor empty, we'll get to the default case
-		return false
+type (
+	// xchain reads entitlement requests from base chain and writes the result after processing back to base.
+	xchain struct {
+		workerID        int
+		checker         *contracts.IEntitlementChecker
+		checkerABI      *abi.ABI
+		checkerContract *bind.BoundContract
+		baseChain       *crypto.Blockchain
+		evmErrDecoder   *node_contracts.EvmErrorDecoder
 	}
-}
 
-func RunServer(ctx context.Context, workerID int, shutdown <-chan struct{}) {
-	log := dlog.FromCtx(ctx).With("worker_id", workerID)
+	// entitlementCheckReceipt holds the outcome of an xchain entitlement check request
+	entitlementCheckReceipt struct {
+		TransactionID common.Hash
+		Outcome       bool
+		Event         contracts.IEntitlementCheckRequestEvent
+	}
 
-	ctx = dlog.CtxWithLog(ctx, log)
+	// pending task to write the entitlement check outcome to base
+	inprogress struct {
+		ptx     crypto.TransactionPoolPendingTransaction
+		outcome *entitlementCheckReceipt
+	}
+)
 
-	var err error
-	var wallet *crypto.Wallet
+func loadWallet(ctx context.Context) (*crypto.Wallet, error) {
+	var (
+		wallet  *crypto.Wallet
+		privKey = os.Getenv("WALLETPRIVATEKEY")
+		err     error
+	)
 	// Read env var WALLETPRIVATEKEY or PRIVATE_KEY
-	privKey := os.Getenv("WALLETPRIVATEKEY")
 	if privKey == "" {
 		privKey = os.Getenv("PRIVATE_KEY")
 	}
@@ -51,331 +60,280 @@ func RunServer(ctx context.Context, workerID int, shutdown <-chan struct{}) {
 		wallet, err = crypto.LoadWallet(ctx, crypto.WALLET_PATH_PRIVATE_KEY)
 	}
 	if err != nil {
-		log.Error("error finding wallet")
-		return
+		return nil, err
 	}
-
-	nodeAddress := wallet.Address
-
-	baseWebsocketURL, err := xc.ConvertHTTPToWebSocket(config.GetConfig().BaseChain.NetworkUrl)
-	if err != nil {
-		log.Error("Failed to convert BaseChain HTTP to WebSocket", "err", err)
-		return
-	}
-
-	err = xc.WaitUntilWalletFunded(ctx, baseWebsocketURL, nodeAddress)
-	if err != nil {
-		log.Error("Failed to confirm wallet has sufficent funds", "err", err)
-		return
-	}
-
-	blockNumber, err := registerNode(ctx, nodeAddress, wallet.PrivateKeyStruct)
-	if err != nil {
-		log.Error("Failed to registerNode", "err", err)
-		return
-	}
-
-	events := make(chan *e.IEntitlementCheckerEntitlementCheckRequested)
-
-	// Event loop
-	for !isClosed(shutdown) {
-		if eventLoop(ctx, blockNumber, events, shutdown, nodeAddress, wallet.PrivateKeyStruct) {
-			return
-		}
-	}
+	return wallet, err
 }
 
-func registerNode(
-	ctx context.Context,
-	fromAddress common.Address,
-	privateKey *ecdsa.PrivateKey,
-) (*uint64, error) {
-	log := dlog.FromCtx(ctx)
-	chainId := big.NewInt(int64(config.GetConfig().BaseChain.ChainId))
-	log.Info(
-		"Registering node",
-		"Url",
-		config.GetConfig().BaseChain.NetworkUrl,
-		"ContractAddress",
-		config.GetConfig().EntitlementContract.Address,
-		"Node",
-		fromAddress.String(),
-	)
-	baseWebsocketURL, err := xc.ConvertHTTPToWebSocket(config.GetConfig().BaseChain.NetworkUrl)
+// New creates a new xchain instance that reads entitlement requests from Base,
+// processes the requests and writes the results back to Base.
+func New(ctx context.Context, workerID int) (*xchain, error) {
+	checker, err := contracts.NewIEntitlementChecker(*xc.GetCheckerContractAddress(), nil)
 	if err != nil {
-		log.Error("Failed to convert BaseChain HTTP to WebSocket", "err", err)
-		return nil, err
-	}
-	client, err := ethclient.Dial(baseWebsocketURL)
-	if err != nil {
-		log.Error("Failed to connect to the Ethereum", "err", err)
-		return nil, err
-	}
-	defer client.Close()
-
-	nonce, err := client.PendingNonceAt(ctx, fromAddress)
-
-	log.Debug("PendingNonceAt", "nonce", nonce)
-	if err != nil {
-		log.Error("Failed PendingNonceAt", "err", err)
-		return nil, err
-	}
-
-	gasPrice, err := client.SuggestGasPrice(ctx)
-	log.Debug("SuggestGasPrice", "gasPrice", gasPrice)
-	if err != nil {
-		log.Error("Failed SuggestGasPrice", "err", err)
-		return nil, err
-	}
-
-	balance, err := client.BalanceAt(ctx, fromAddress, nil) // nil for latest block
-	if err != nil {
-		log.Error("Failed BalanceAt", "err", err)
-		return nil, err
-	}
-
-	// To convert the balance to Ether, you can use the `go-ethereum` units package.
-	etherValue := new(big.Float).Quo(new(big.Float).SetInt(balance), big.NewFloat(float64(1e18)))
-	log.Debug("Balance in Ether", "eth", etherValue.String())
-
-	log.Debug(
-		"NewKeyedTransactorWithChainID",
-		"privateKey",
-		privateKey,
-		"chainId",
-		chainId,
-		"address",
-		*xc.GetCheckerContractAddress(),
-	)
-
-	auth, err := bind.NewKeyedTransactorWithChainID(privateKey, chainId)
-	if err != nil {
-		log.Error("Failed NewKeyedTransactorWithChainID", "err", err)
-		return nil, err
-	}
-	auth.Nonce = big.NewInt(int64(nonce))
-	auth.GasLimit = 0
-
-	checker, err := e.NewIEntitlementChecker(*xc.GetCheckerContractAddress(), client)
-	if err != nil {
-		log.Error("Failed to parse contract ABI", "err", err)
 		return nil, err
 	}
 
 	var (
-		entitlementMD  = checker.GetMetadata()
-		entitlementABI = checker.GetAbi()
+		cfg             = config.GetConfig()
+		checkerABI      = checker.GetAbi()
+		checkerContract = bind.NewBoundContract(
+			*xc.GetCheckerContractAddress(),
+			*checker.GetAbi(),
+			nil,
+			nil,
+			nil,
+		)
+		entitlementGatedMetaData = contracts.NewEntitlementGatedMetaData()
 	)
 
-	alreadyRegisteredId := entitlementABI.Errors["EntitlementChecker_NodeAlreadyRegistered"].ID
-
-	log.Info("AlreadyRegisteredId", "alreadyRegisteredId", alreadyRegisteredId)
-
-	errorDecoder, err := contracts.NewEVMErrorDecoder(entitlementMD)
+	wallet, err := loadWallet(ctx)
 	if err != nil {
-		log.Error("Failed to create error decoder", "err", err)
 		return nil, err
 	}
 
-	// Get the latest block number
-	blockNumber, err := client.BlockNumber(ctx)
+	baseChain, err := crypto.NewBlockchain(ctx, &cfg.BaseChain, wallet)
 	if err != nil {
-		log.Error("Failed to get current block number", "err", err)
 		return nil, err
 	}
 
-	tx, err := checker.RegisterNode(auth)
+	decoder, err := node_contracts.NewEVMErrorDecoder(checker.GetMetadata(), entitlementGatedMetaData.GetMetadata())
 	if err != nil {
-		customError, stringError, err := errorDecoder.DecodeEVMError(err)
-		log.Error("Failed RegisterNode", "err", err, "customError", customError, "stringError", stringError)
+		return nil, err
+	}
 
-		if customError != nil && customError.DecodedError.ID == alreadyRegisteredId {
-			// was if err.Error() == "execution reverted: custom error d1922fc1:" {
-			// This error is returned when the node is already registered
-			// This is not an error, so we just log it and continue
-			log.Warn("Node already registered")
-		} else {
-			log.Error("Failed RegisterNode", "err", err, "Error", err.Error())
+	return &xchain{workerID, checker, checkerABI, checkerContract, baseChain, decoder}, nil
+}
+
+// Run xchain until the given ctx expires.
+// When ctx expires xchain stops reading new xchain requests from Base.
+// Pending requests are processed before Run returns.
+func (x *xchain) Run(ctx context.Context) {
+	var (
+		log                                 = dlog.FromCtx(ctx).With("worker_id", x.workerID)
+		entitlementAddress                  = *xc.GetCheckerContractAddress()
+		entitlementCheckReceipts            = make(chan *entitlementCheckReceipt, 256)
+		onEntitlementCheckRequestedCallback = func(ctx context.Context, event types.Log) {
+			x.onEntitlementCheckRequested(ctx, event, entitlementCheckReceipts)
+		}
+	)
+	log.Info(
+		"Starting xchain node",
+		"entitlementAddress", entitlementAddress.Hex(),
+	)
+
+	// determine block from which to start processing xchain requests
+	initialBlockNum, err := x.baseChain.Client.BlockNumber(ctx)
+	if err != nil {
+		log.Error("unable to retrieve latest block number", "err", err)
+		return
+	}
+
+	// register callback for Base EntitlementCheckRequested events
+	x.baseChain.ChainMonitor.OnContractWithTopicsEvent(
+		entitlementAddress,
+		[][]common.Hash{{x.checkerABI.Events["EntitlementCheckRequested"].ID}},
+		onEntitlementCheckRequestedCallback)
+
+	// read entitlement check requests from chain, process them and write the result to entitlementCheckReceipts
+	go func() {
+		x.baseChain.ChainMonitor.Run(ctx, x.baseChain.Client, crypto.BlockNumber(initialBlockNum))
+		close(entitlementCheckReceipts)
+	}()
+
+	err = x.registerNode(ctx)
+	if err != nil {
+		log.Error("Failed to register node", "err", err)
+		return
+	}
+
+	// read entitlement check results from entitlementCheckReceipts and write the result to Base
+	x.writeEntitlementCheckResults(ctx, entitlementCheckReceipts)
+}
+
+func (x *xchain) registerNode(ctx context.Context) error {
+	log := dlog.FromCtx(ctx).With("worker_id", x.workerID)
+	log.Info("Registering node")
+	pendingTx, err := x.baseChain.TxPool.Submit(ctx, func(opts *bind.TransactOpts) (*types.Transaction, error) {
+		checker, err := contracts.NewIEntitlementChecker(*xc.GetCheckerContractAddress(), x.baseChain.Client)
+		if err != nil {
 			return nil, err
 		}
-	} else {
-		_ = xc.WaitForTransaction(client, tx)
-	}
-	log.Info("Registered node", "blockNumber", blockNumber)
-	temp := blockNumber
-	return &temp, nil
-}
+		return checker.RegisterNode(opts)
+	})
 
-//nolint:unused
-func unregisterNode(ctx context.Context, fromAddress common.Address, privateKey *ecdsa.PrivateKey) {
-	log := dlog.FromCtx(ctx)
-	chainId := big.NewInt(int64(config.GetConfig().BaseChain.ChainId))
-
-	baseWebsocketURL, err := xc.ConvertHTTPToWebSocket(config.GetConfig().BaseChain.NetworkUrl)
-	if err != nil {
-		log.Error("Failed to convert BaseChain HTTP to WebSocket", "err", err)
-		return
-	}
-
-	client, err := ethclient.Dial(baseWebsocketURL)
-	if err != nil {
-		log.Error("Failed to connect to the Ethereum client", "err", err)
-		return
-	}
-	defer client.Close()
-
-	nonce, err := client.PendingNonceAt(ctx, fromAddress)
-	if err != nil {
-		log.Error("Failed PendingNonceAt", "err", err)
-		return
-	}
-
-	gasPrice, err := client.SuggestGasPrice(ctx)
-	if err != nil {
-		log.Error("Failed SuggestGasPrice", "err", err)
-		return
-	}
-
-	auth, err := bind.NewKeyedTransactorWithChainID(privateKey, chainId)
-	if err != nil {
-		log.Error("Failed NewKeyedTransactorWithChainID", "err", err)
-		return
-	}
-	auth.Nonce = big.NewInt(int64(nonce))
-	auth.Value = big.NewInt(0)
-	auth.GasLimit = uint64(300000)
-	auth.GasPrice = gasPrice
-
-	checker, err := e.NewIEntitlementChecker(*xc.GetCheckerContractAddress(), client)
-	if err != nil {
-		log.Error("Failed to parse contract ABI", "err", err)
-		return
-	}
-
-	tx, err := checker.UnregisterNode(auth)
-	if err != nil {
-		log.Error("Failed UnregisterNode", "err", err)
-		return
-	}
-
-	blockNumber := xc.WaitForTransaction(client, tx).Uint64()
-	log.Info("Unregistered node", "block_num", blockNumber)
-}
-
-func eventLoop(
-	ctx context.Context,
-	blockNumber *uint64,
-	events chan *e.IEntitlementCheckerEntitlementCheckRequested,
-	shutdown <-chan struct{},
-	nodeAddress common.Address,
-	privateKey *ecdsa.PrivateKey,
-) bool {
-	log := dlog.FromCtx(ctx)
-
-	chainId := big.NewInt(int64(config.GetConfig().BaseChain.ChainId))
-	baseWebsocketURL, err := xc.ConvertHTTPToWebSocket(config.GetConfig().BaseChain.NetworkUrl)
-	if err != nil {
-		log.Error("Failed to convert BaseChain HTTP to WebSocket", "err", err)
-		return false
-	}
-
-	client, err := ethclient.Dial(baseWebsocketURL)
-	if err != nil {
-		log.Error("Failed to connect to the Ethereum client", "err", err)
-		return false
-	}
-	defer client.Close()
-
-	nonce, err := client.PendingNonceAt(context.Background(), nodeAddress)
-	if err != nil {
-		log.Error("Failed PendingNonceAt", "err", err)
-		return false
-	}
-
-	gasPrice, err := client.SuggestGasPrice(context.Background())
-	if err != nil {
-		log.Error("Failed SuggestGasPrice", "err", err)
-		return false
-	}
-
-	auth, err := bind.NewKeyedTransactorWithChainID(privateKey, chainId)
-	if err != nil {
-		log.Error("Failed NewKeyedTransactorWithChainID", "err", err)
-		return false
-	}
-	auth.Nonce = big.NewInt(int64(nonce))
-	auth.Value = big.NewInt(0)
-	auth.GasLimit = uint64(300000)
-	auth.GasPrice = gasPrice
-
-	nodeCheckerFilterer, err := e.NewIEntitlementChecker(*xc.GetCheckerContractAddress(), client)
-	if err != nil {
-		log.Error("Failed to parse contract ABI", "err", err)
-	}
-	bc := context.Background()
-
-	opts := bind.WatchOpts{Start: blockNumber, Context: bc}
-	sub, err := nodeCheckerFilterer.WatchEntitlementCheckRequested(&opts, events, nil)
-	if err != nil {
-		log.Error("Failed to set up event watch", "err", err, "opts", opts, "events", events)
-	}
-	defer func() {
-		if sub != nil {
-			sub.Unsubscribe()
+	ce, se, err := x.evmErrDecoder.DecodeEVMError(err)
+	switch {
+	case ce != nil:
+		if ce.DecodedError.Sig == "EntitlementChecker_NodeAlreadyRegistered()" {
+			log.Info("Node already registered", "address", x.baseChain.Wallet.Address)
+			return nil
 		}
-	}()
-	for !isClosed(shutdown) {
-		select {
-		case <-shutdown:
-			log.Info("Node shutting down")
-			return true
-		case event := <-events:
-			// Keep track of the highest block number seen
-			// in case the client needs to restart
-			*blockNumber = event.Raw.BlockNumber
+		log.Error("unable to submit transaction for node registration", "err", ce)
+		return ce
+	case se != nil:
+		log.Error("unable to submit transaction for node registration", "err", se)
+		return se
+	case err != nil:
+		log.Error("unable to submit transaction for node registration", "err", err)
+		return err
+	}
 
+	log.Info("Node registration transaction submitted")
+	log.Info("Waiting for node registration transaction to be processed")
+	receipt := <-pendingTx.Wait()
+	log.Info(
+		"Node registration transaction processed",
+		"tx",
+		receipt.TxHash.Hex(),
+		"tx.success",
+		receipt.Status == go_eth_types.ReceiptStatusSuccessful,
+	)
+	if receipt.Status == go_eth_types.ReceiptStatusFailed {
+		return fmt.Errorf("failed to register node - could not execute transaction")
+	}
+	log.Info("Node registered")
+	return nil
+}
+
+// onEntitlementCheckRequested is the callback that the chain monitor calls for each EntitlementCheckRequested
+// event raised on Base in the entitlement contract.
+func (x *xchain) onEntitlementCheckRequested(
+	ctx context.Context,
+	event types.Log,
+	entitlementCheckResults chan<- *entitlementCheckReceipt,
+) {
+	var (
+		log                     = dlog.FromCtx(ctx).With("worker_id", x.workerID)
+		entitlementCheckRequest = x.checker.EntitlementCheckRequestEvent()
+	)
+
+	// try to decode the EntitlementCheckRequested event
+	if err := x.checkerContract.UnpackLog(entitlementCheckRequest.Raw(), "EntitlementCheckRequested", event); err != nil {
+		log.Error("Unable to decode EntitlementCheckRequested event", "err", err)
+		return
+	}
+
+	log.Info("Received EntitlementCheckRequested", "xchain.req.txid", entitlementCheckRequest.TransactionID().Hex())
+
+	// process the entitlement request and post the result to entitlementCheckResults
+	outcome, err := x.handleEntitlementCheckRequest(ctx, entitlementCheckRequest)
+	if err != nil {
+		log.Error("Entitlement check failed to process",
+			"err", err, "xchain.req.txid", entitlementCheckRequest.TransactionID().Hex())
+		return
+	}
+	if outcome != nil { // request was not intended for this xchain instance.
+		log.Info(
+			"Queueing check result for post",
+			"transactionId",
+			outcome.TransactionID.Hex(),
+			"outcome",
+			outcome.Outcome,
+		)
+		entitlementCheckResults <- outcome
+	}
+}
+
+// handleEntitlementCheckRequest processes the given xchain entitlement check request.
+// It can return nil, nil in case the request wasn't targeted for the current xchain instance.
+func (x *xchain) handleEntitlementCheckRequest(
+	ctx context.Context,
+	request contracts.IEntitlementCheckRequestEvent,
+) (*entitlementCheckReceipt, error) {
+	for _, selectedNodeAddress := range request.SelectedNodes() {
+		if selectedNodeAddress == x.baseChain.Wallet.Address {
 			log := dlog.FromCtx(ctx).
-				With("transaction_id", hex.EncodeToString(event.TransactionId[:]), "block_num", event.Raw.BlockNumber)
-
-			eventCtx := dlog.CtxWithLog(ctx, log)
-
-			for _, selectedNodeAddress := range event.SelectedNodes {
-				if selectedNodeAddress == nodeAddress {
-					result, err := evaluateEvent(eventCtx, event, client, event.CallerAddress, nodeAddress)
-					if err != nil {
-						log.Error("Failed to evaluateEvent", "err", err)
-						continue
-					}
-					postCheckResult(eventCtx, result, event, client, nodeAddress, auth)
-				}
+				With("function", "handleEntitlementCheckRequest", "req.txid", request.TransactionID().Hex())
+			log.Info("Processing EntitlementCheckRequested")
+			outcome, err := x.process(ctx, request, x.baseChain.Client, request.CallerAddress())
+			if err != nil {
+				return nil, err
 			}
-		case err := <-sub.Err():
-			log.Error("Node Subscription error", "err", err)
-			return false
+			return &entitlementCheckReceipt{
+				TransactionID: request.TransactionID(),
+				Outcome:       outcome,
+				Event:         request,
+			}, nil
 		}
 	}
-	return true
+	return nil, nil // request not for this xchain instance
 }
 
-func evaluateEvent(
-	ctx context.Context,
-	event *e.IEntitlementCheckerEntitlementCheckRequested,
-	client *ethclient.Client,
-	callerAddress common.Address,
-	fromAddress common.Address,
-) (result bool, err error) {
-	log := dlog.FromCtx(ctx).With("function", "evaluateEvent")
-	log.Info("EntitlementCheckRequested being handled")
+// writeEntitlementCheckResults writes the outcomes of entitlement checks to Base.
+// returns when all items in checkResults are processed.
+func (x *xchain) writeEntitlementCheckResults(ctx context.Context, checkResults <-chan *entitlementCheckReceipt) {
+	var (
+		log     = dlog.FromCtx(ctx).With("worker_id", x.workerID)
+		pending = make(chan *inprogress, 128)
+	)
 
-	gater, err := e.NewIEntitlementGated(event.ContractAddress, client)
+	// write entitlement check outcome to base
+	go func() {
+		for receipt := range checkResults {
+			// 0 - NodeVoteStatus.NOT_VOTED, 1 - pass, 2 - fail
+			outcome := contracts.NodeVoteStatus__FAILED
+			if receipt.Outcome {
+				outcome = contracts.NodeVoteStatus__PASSED
+			}
+
+			pendingTx, err := x.baseChain.TxPool.Submit(ctx, func(opts *bind.TransactOpts) (*types.Transaction, error) {
+				gated, err := contracts.NewIEntitlementGated(receipt.Event.ContractAddress(), x.baseChain.Client)
+				if err != nil {
+					return nil, err
+				}
+				return gated.PostEntitlementCheckResult(opts, receipt.TransactionID, uint8(outcome))
+			})
+
+			ce, se, err := x.evmErrDecoder.DecodeEVMError(err)
+			switch {
+			case ce != nil:
+				log.Error("unable to submit transaction for xchain request",
+					"err", ce, "request.txid", receipt.TransactionID)
+				continue
+			case se != nil:
+				log.Error("unable to submit transaction for xchain request",
+					"err", se, "request.txid", receipt.TransactionID)
+				continue
+			case err != nil:
+				log.Error("unable to submit transaction for xchain request",
+					"err", err, "request.txid", receipt.TransactionID)
+				continue
+			}
+
+			pending <- &inprogress{pendingTx, receipt}
+		}
+		close(pending)
+	}()
+
+	// wait until all transactions are processed before returning
+	for task := range pending {
+		receipt := <-task.ptx.Wait() // Base transaction  receipt
+		log.Info("entitlement check request processed",
+			"tx", receipt.TxHash.Hex(), "tx.success", receipt.Status == crypto.TransactionResultSuccess,
+			"xchain.req.txid", task.outcome.TransactionID, "xchain.req.outcome", task.outcome.Outcome)
+	}
+}
+
+// process the given entitlement request.
+// It returns an indication of the request passes checks.
+func (x *xchain) process(
+	ctx context.Context,
+	request contracts.IEntitlementCheckRequestEvent,
+	client crypto.BlockchainClient,
+	callerAddress common.Address,
+) (result bool, err error) {
+	log := dlog.FromCtx(ctx).With("function", "process", "req.txid", request.TransactionID().Hex())
+	log.Info("Process EntitlementCheckRequested")
+
+	gater, err := contracts.NewIEntitlementGated(request.ContractAddress(), client)
 	if err != nil {
 		log.Error("Failed to NewEntitlementGated watch", "err", err)
 		return false, err
 	}
 
-	ruleData, err := gater.GetRuleData(&bind.CallOpts{}, event.TransactionId)
+	ruleData, err := gater.GetRuleData(&bind.CallOpts{}, request.TransactionID())
 	if err != nil {
-		log.Error("Failed to GetEncodedRuleData watch", "err", err)
+		log.Error("Failed to GetEncodedRuleData", "err", err)
 		return false, err
 	}
 
@@ -386,53 +344,4 @@ func evaluateEvent(
 	}
 
 	return result, nil
-}
-
-func postCheckResult(
-	ctx context.Context,
-	result bool,
-	event *e.IEntitlementCheckerEntitlementCheckRequested,
-	client *ethclient.Client,
-	fromAddress common.Address,
-	auth *bind.TransactOpts,
-) {
-	log := dlog.FromCtx(ctx).With("function", "postCheckResult")
-	// Solidity ENUM is NO_VOTE_STATUS = 0, PASS = 1, FAILED = 2
-	resultCode := uint8(0)
-	if result {
-		resultCode = uint8(1)
-	} else {
-		resultCode = uint8(2)
-	}
-	log.Info(
-		"posting PostEntitlementCheckResult...",
-		"result", result,
-		"tx", event.TransactionId,
-		"fromAddress", fromAddress.String(),
-		"contractAddress", event.ContractAddress.String(),
-	)
-
-	nonce, err := client.PendingNonceAt(ctx, fromAddress)
-	if err != nil {
-		log.Error("Failed PendingNonceAt", "err", err)
-	}
-
-	auth.Nonce = big.NewInt(int64(nonce))
-	gater, err := e.NewIEntitlementGated(event.ContractAddress, client)
-	if err != nil {
-		log.Error("Failed to NewEntitlementGated watch", "err", err)
-		return
-	}
-
-	tx, err := gater.PostEntitlementCheckResult(auth, event.TransactionId, resultCode)
-	if err != nil {
-		log.Error("Failed to PostEntitlementCheckResult watch", "err", err)
-		return
-	}
-
-	go func() {
-		// TODO retry the transaction if it fails
-		postedBlockNumber := xc.WaitForTransaction(client, tx)
-		log.Info("PostEntitlementCheckResult mined", "tx", tx.Hash().Hex(), "posted_block_num", postedBlockNumber)
-	}()
 }

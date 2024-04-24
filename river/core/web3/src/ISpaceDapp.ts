@@ -48,6 +48,10 @@ export interface UpdateRoleParams {
     ruleData: IRuleEntitlement.RuleDataStruct
 }
 
+export interface TransactionOpts {
+    retryCount?: number
+}
+
 type TransactionType = ContractTransaction
 
 export interface ISpaceDapp {
@@ -74,13 +78,18 @@ export interface ISpaceDapp {
     ) => Promise<TransactionType>
     walletAddressIsBanned: (spaceId: string, walletAddress: string) => Promise<boolean>
     bannedWalletAddresses: (spaceId: string) => Promise<string[]>
-    createSpace: (params: CreateSpaceParams, signer: SignerType) => Promise<TransactionType>
+    createSpace: (
+        params: CreateSpaceParams,
+        signer: SignerType,
+        txnOpts?: TransactionOpts,
+    ) => Promise<TransactionType>
     createChannel: (
         spaceId: string,
         channelName: string,
         channelNetworkId: string,
         roleIds: number[],
         signer: SignerType,
+        txnOpts?: TransactionOpts,
     ) => Promise<TransactionType>
     createRole(
         spaceId: string,
@@ -89,12 +98,18 @@ export interface ISpaceDapp {
         users: string[],
         ruleData: IRuleEntitlement.RuleDataStruct,
         signer: SignerType,
+        txnOpts?: TransactionOpts,
     ): Promise<TransactionType>
     createUpdatedEntitlements(
         space: Space,
         params: UpdateRoleParams,
     ): Promise<IRolesBase.CreateEntitlementStruct[]>
-    deleteRole(spaceId: string, roleId: number, signer: SignerType): Promise<TransactionType>
+    deleteRole(
+        spaceId: string,
+        roleId: number,
+        signer: SignerType,
+        txnOpts?: TransactionOpts,
+    ): Promise<TransactionType>
     encodedUpdateChannelData(space: Space, params: UpdateChannelParams): Promise<BytesLike[]>
     getChannels: (spaceId: string) => Promise<ChannelMetadata[]>
     getChannelDetails: (spaceId: string, channelId: string) => Promise<ChannelDetails | null>
@@ -115,9 +130,22 @@ export interface ISpaceDapp {
         spaceId: string,
         logs: ethers.providers.Log[],
     ) => Promise<(ethers.utils.LogDescription | undefined)[]>
-    updateChannel: (params: UpdateChannelParams, signer: SignerType) => Promise<TransactionType>
-    updateRole: (params: UpdateRoleParams, signer: SignerType) => Promise<TransactionType>
-    updateSpaceName: (spaceId: string, name: string, signer: SignerType) => Promise<TransactionType>
+    updateChannel: (
+        params: UpdateChannelParams,
+        signer: SignerType,
+        txnOpts?: TransactionOpts,
+    ) => Promise<TransactionType>
+    updateRole: (
+        params: UpdateRoleParams,
+        signer: SignerType,
+        txnOpts?: TransactionOpts,
+    ) => Promise<TransactionType>
+    updateSpaceName: (
+        spaceId: string,
+        name: string,
+        signer: SignerType,
+        txnOpts?: TransactionOpts,
+    ) => Promise<TransactionType>
     setSpaceAccess: (
         spaceId: string,
         disabled: boolean,

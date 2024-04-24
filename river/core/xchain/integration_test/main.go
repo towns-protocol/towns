@@ -59,9 +59,14 @@ func main() {
 	for i := 1; i <= numWorkers; i++ {
 		wg.Add(1)
 		go func(workerID int) {
+			srv, err := server.New(ctx, workerID)
+			if err != nil {
+				panic(err)
+			}
+
 			defer wg.Done()
 			startedWg.Done()
-			server.RunServer(ctx, workerID, shutdown)
+			srv.Run(ctx)
 		}(i)
 	}
 

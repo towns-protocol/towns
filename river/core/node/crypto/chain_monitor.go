@@ -292,12 +292,12 @@ func (ecm *chainMonitor) runWithPolling(
 
 			took := time.Since(start)
 
-			log.Debug("EVM chain monitor work iteration",
-				"from", query.FromBlock.Uint64(),
-				"to", query.ToBlock.Uint64(),
-				"count", len(collectedLogs),
-				"took", took,
-			)
+			// log.Debug("EVM chain monitor work iteration",
+			// 	"from", query.FromBlock.Uint64(),
+			// 	"to", query.ToBlock.Uint64(),
+			// 	"count", len(collectedLogs),
+			// 	"took", took,
+			// )
 
 			// from and toBlocks are inclusive, start at the next block on next iteration
 			fromBlock = new(big.Int).Add(query.ToBlock, one)
